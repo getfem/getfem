@@ -230,6 +230,27 @@ R o n a l d
 	. Graphiques nettement améliorés avec l'interface MATLAB,
 	  coupes, isosurfaces ...
 
+. Lundi 8 Septembre 2003 :
+  ------------------------
+  Message envoyé à la mailing list :
+
+    GETFEM++ 1.5 is now Available for Download
+
+    What is new :
+    - Cubature formulaes are now separate  files (in the directory
+      cubature), such that it is now simpler to add a new formula.
+    - Composite  and  hierarchical  composite methods works in 3D.
+    - A support exist for Xfem methods (getfem_xfem.h)
+    - GMM,  the  Matrix  library of GETFEM++, is now an indepedant
+      package (still distributed  with GETFEM++ but also available
+      alone)   Some   functionalities   has  been  added  to   GMM
+      (preconditionning, new file format ...)
+    - MATLAB  interface  has  been  completed  with  new graphical
+      possibilities  (see  the  Screenshots  page of the site) and
+      new examples.
+
+    and of course a certain number of bugs fixed.
+
 
 
 
