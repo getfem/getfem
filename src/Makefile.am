@@ -56,6 +56,7 @@ include_HEADERS =                      \
 	getfem_mesh_fem.h              \
 	getfem_mesh_slicers.h	       \
 	getfem_mesh_slice.h	       \
+	getfem_norm.h         	       \
 	getfem_regular_meshes.h        \
 	gmm.h                          \
 	gmm_matrix.h                   \

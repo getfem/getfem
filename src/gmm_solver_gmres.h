@@ -84,7 +84,8 @@ namespace gmm {
 	gmm::mult(A, KS[i], u);
 	gmm::mult(M, u, KS[i+1]);
 	orthogonalize(KS, mat_col(H, i), i);
-	R a = H(i+1, i) = gmm::vect_norm2(KS[i+1]);
+	R a = gmm::vect_norm2(KS[i+1]);
+	H(i+1, i) = T(a);
 	gmm::scale(KS[i+1], T(1) / a);
 	for (size_type k = 0; k < i; ++k)
 	  Apply_Givens_rotation_left(H(k,i), H(k+1,i), c_rot[k], s_rot[k]);

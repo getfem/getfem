@@ -273,9 +273,12 @@ AC_CONFIG_FILES(\
 	bin/Makefile \
 getfem-config getfem-config-notinstalled gmm-config)
 AC_OUTPUT
-chmod +x getfem-config-notinstalled
-chmod +x getfem-config
-chmod +x gmm-config
+chmod a+x getfem-config-notinstalled
+chmod a+x getfem-config
+chmod a+x gmm-config
+chmod a+x getfem-config-notinstalled
+chmod a+x getfem-config
+chmod a+x gmm-config
 echo "If you want to build the shared library of getfem++, use --enable-shared"
 echo "(by default, only the static one will be built)"
 if test "x$useQDlib" = "xyes" ; then  
