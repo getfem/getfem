@@ -65,8 +65,8 @@ namespace ftool
       pmethod method(void) const { return pm_; }
       double num(void) const { return num_; }
       int type(void) const { return type_; }
-      parameter(double e) : type_(0), num_(e) {}
-      parameter(pmethod p) : type_(1), pm_(p) {}
+      parameter(double e) : type_(0), num_(e), pm_(0) {}
+      parameter(pmethod p) : type_(1), num_(0.), pm_(p) {}
     };
     
     
@@ -247,8 +247,6 @@ namespace ftool
 	case 1  : i += l; break;
 	case 2  : 
 	  pm = method(name, i);
-	  //cerr << "params.size()=" << params.size() << ", i=" << i
-	  // << ", name=" << name << ", pm=" << pm << "state="<< state << endl;
 	  params.push_back(parameter(pm));
 	  state = 3; break;
 	case 3  :
