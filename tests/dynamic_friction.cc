@@ -316,6 +316,11 @@ void friction_problem::solve(void) {
   N = mesh.dim();
   cout << "Number of dof for u: " << mf_u.nb_dof() << endl;
 
+  size_type ref_dof = 0;
+  for (size_type i = 1; i < mf_u.nb_dof(); ++i)
+    if (mf_u.point_of_dof(i)[N-1] < mf_u.point_of_dof(ref_dof)[N-1])
+      ref_dof = i;
+
   // Linearized elasticity brick.
   getfem::mdbrick_isotropic_linearized_elasticity<>
     ELAS(mim, mf_u, mf_coef, lambda, mu, true);
@@ -673,31 +678,28 @@ void friction_problem::solve(void) {
 	    nbst++; else nbsl++;
 	}
       }
-      
 
       cout << "t = " << t << " energy : " << J1
 	   << " friction energy : " << J_friction1
 	   << " app. fric. coef : " << Friction_coef_ap
 	   << " (st " << nbst << ", sl " << nbsl << ")" << endl;
       dt = std::min(2.*dt, dt0);
-
-      plain_vector UU1(N), VV1(N), LLN1(N);
-      gmm::copy(gmm::sub_vector(U1, gmm::sub_interval(0,N)), UU1);
-      gmm::copy(gmm::sub_vector(V1, gmm::sub_interval(0,N)), VV1);
-      gmm::copy(gmm::sub_vector(LN1, gmm::sub_interval(0,N)), LLN1);
-
       // cout << "LN1 = " << LN1 << endl;
-      
-      output1 << t/dt << "\n";
-      output2 << J1 << "\n";
-      output3 << gmm::vect_norm2(VV1) << "\n";
-      output4 << gmm::vect_norm2(LLN1) << "\n";
-      output5 <<  gmm::vect_norm2(UU1) << "\n";
       
       gmm::copy(U1, U0); gmm::copy(V1, V0); gmm::copy(A1, A0); J0 = J1;
       gmm::copy(LN1, LN0); gmm::copy(LT1, LT0); J_friction0 = J_friction1;
       if (scheme == 4 || scheme == 5 || scheme == 6) gmm::copy(U2, U1);
       if (dxexport && t >= t_export-dt/20.0) {
+	plain_vector UU1(N), VV1(N);
+	plain_vector LLN1(gmm::vect_size(U0));
+	gmm::mult(gmm::transposed(BN), LN1, LLN1);
+	gmm::copy(gmm::sub_vector(U1, gmm::sub_interval(ref_dof,N)), UU1);
+	gmm::copy(gmm::sub_vector(V1, gmm::sub_interval(ref_dof,N)), VV1);
+	output1 << t/dt << "\n";
+	output2 << J1 << "\n";
+	output3 << gmm::vect_norm2(VV1) << "\n";
+	output4 << -LLN1[ref_dof+N-1] << "\n";
+	output5 <<  gmm::vect_norm2(UU1) << "\n";
 	exp->write_point_data(mf_u, U0);
 	exp->serie_add_object("deformationsteps");
 	t_export += dtexport;
