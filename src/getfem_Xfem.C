@@ -201,24 +201,34 @@ namespace getfem
     base_tensor::const_iterator itvf = tt.begin(), itvf2;
     base_tensor::const_iterator itf = pfp->val(ii).begin(), itf2;
     
+    cerr << "pfp->val(ii)={"; 
+    for (size_type i=0; i < pfp->val(ii).size(); ++i) cerr << pfp->val(ii)[i] << " "; cerr << "}\n";
+
     std::vector<scalar_type> vf(nb_func);
     std::vector<base_vector> gvf(nb_func);
-    for (size_type f = 0; f <= nb_func; ++f)
-      { vf[f] = (*(funcs[f-1]))(xreal); gvf[f] = (*(grads[f-1]))(xreal); }
+    for (size_type f = 0; f < nb_func; ++f)
+      { vf[f] = (*(funcs[f]))(xreal); gvf[f] = (*(grads[f]))(xreal); }
 
-    for (dim_type k = 0; k < n ; ++k)
+    for (dim_type k = 0; k < n ; ++k) {
+      itf = pfp->val(ii).begin();
       for (dim_type q = 0; q < target_dim(); ++q) {
 	for (size_type f = 0; f <= nb_func; ++f) {
 	  if (f == 0) { a = scalar_type(1); v.fill(1); }
 	  else { a = vf[f-1]; v = gvf[f-1]; }
 	  itvf2 = itvf; itf2 = itf;
 	  for (size_type i = 0; i < pfi->nb_base(); ++i, ++it) {
-	    *it = *itvf2 * a;
-	    if (f > 0) *it += v[n] * (*itf2++);
+	    /*	    cerr << "Xfem::real_grad_base_value(ii=" << ii << "): it=" << &(*it) << "=" << *it;
+	    cerr << ", f=" << f << ", k=" << k << ", v[k]=" << v[k] << ", t.begin=" << &t[0] << ", tt.begin=" << &tt[0] 
+		 << ", pfp->val(ii).size()=" << pfp->val(ii).size() << "tt.size()=" << tt.size() << ", t.size()=" << t.size() << endl;
+	    cerr << "itf=" << itf - pfp->val(ii).begin() << ", itf2=" << itf2 - pfp->val(ii).begin() << ", itvf=" << itvf - tt.begin() << ", itvf2=" << itvf2-tt.begin() << endl;
+	    cerr << "*itf=" << *itf << ", *itf2=" << *itf2 << ", *itvf=" << *itvf << ", *itvf2=" << *itvf2 << endl;*/
+	    *it = *itvf2++ * a;
+	    if (f > 0) *it += v[k] * (*itf2++);
 	  }
 	}
 	itvf = itvf2; itf = itf2; 
       }
+    }
   }
   
   void Xfem::real_hess_base_value(pgeotrans_precomp, pfem_precomp,
