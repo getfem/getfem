@@ -295,17 +295,17 @@ namespace bgeot {
 
     static void find_linked_masks(dim_type mnum, const tensor_shape &ts1, const tensor_shape &ts2, 
 				dal::bit_vector& treated1, dal::bit_vector& treated2, 
-				std::vector<const tensor_mask*>& lst1,
-				std::vector<const tensor_mask*>& lst2) {
+				std::vector<const tensor_mask*>& lstA,
+				std::vector<const tensor_mask*>& lstB) {
       // gare aux boucles infinies si aucun des indices n'est valide
       assert(mnum < ts1.masks().size());
       assert(!treated1[mnum]);
       treated1.add(mnum);
-      lst1.push_back(&ts1.mask(mnum));
+      lstA.push_back(&ts1.mask(mnum));
       for (dim_type i=0; i < ts1.mask(mnum).indexes().size(); ++i) {
 	dim_type ii = ts1.mask(mnum).indexes()[i];
 	if (ts2.index_is_valid(ii) && !treated2[ts2.index_to_mask_num(ii)])
-	  find_linked_masks(ts2.index_to_mask_num(ii),ts2,ts1,treated2,treated1,lst2,lst1);
+	  find_linked_masks(ts2.index_to_mask_num(ii),ts2,ts1,treated2,treated1,lstB,lstA);
       }
     }
 
@@ -424,20 +424,20 @@ namespace bgeot {
       tensor_mask_container new_mask;
       dal::bit_vector mask_treated1; mask_treated1.sup(0,masks().size());
       dal::bit_vector mask_treated2; mask_treated2.sup(0,ts2.masks().size());
-      std::vector<const tensor_mask*> lst1, lst2; lst1.reserve(10); lst2.reserve(10);
+      std::vector<const tensor_mask*> lstA, lstB; lstA.reserve(10); lstB.reserve(10);
       for (index_type i = 0; i < ndim(); ++i) {
 	dim_type i1 = index_to_mask_num(i);
 	dim_type i2 = ts2.index_to_mask_num(i);
-	lst1.clear(); lst2.clear();
+	lstA.clear(); lstB.clear();
 	if (index_is_valid(i) && !mask_treated1[i1])
 	  find_linked_masks(i1, *this, ts2, mask_treated1, mask_treated2,
-			    lst1, lst2);
+			    lstA, lstB);
 	else if (ts2.index_is_valid(i) && !mask_treated2[i2])
 	  find_linked_masks(i2, ts2, *this, mask_treated2, mask_treated1,
-			    lst2, lst1);
+			    lstB, lstA);
 	else continue;
-	if (!(lst1.size() || lst2.size())) DAL_INTERNAL_ERROR("");
-	new_mask.push_back(tensor_mask(lst1,lst2,and_op));
+	if (!(lstA.size() || lstB.size())) DAL_INTERNAL_ERROR("");
+	new_mask.push_back(tensor_mask(lstA,lstB,and_op));
       }
       _masks = new_mask;
       update_idx2mask();

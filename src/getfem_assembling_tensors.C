@@ -829,7 +829,7 @@ namespace getfem {
       } else if (tok().compare("sym")==0) {
 	advance(); 
 	tnode t2 = do_expr();
-	if (t2.type() != tnode::TENSOR) ASM_THROW_PARSE_ERROR("can't symmetrise a scalar!");
+	if (t2.type() != tnode::TNTENSOR) ASM_THROW_PARSE_ERROR("can't symmetrise a scalar!");
 	t.assign(record(new ATN_symmetrized_tensor(*t2.tensor())));
       } else ASM_THROW_PARSE_ERROR("unknown identifier: " << tok());
     } else ASM_THROW_PARSE_ERROR("unexpected token: " << tok());
@@ -847,7 +847,7 @@ namespace getfem {
     
     do {
       tnode t = do_tens();
-      if (t.type() == tnode::CONST) {
+      if (t.type() == tnode::TNCONST) {
 	if (ttab.size() == 0) return t;
 	else ASM_THROW_PARSE_ERROR("can't mix tensor and scalar into a reduction expression");
       }
@@ -868,7 +868,7 @@ namespace getfem {
       index_set reorder;
       size_type j = 0;
       dal::bit_vector check_permut;
-      if (t.type() != tnode::TENSOR) ASM_THROW_PARSE_ERROR("can't use reorder braces on a constant!");
+      if (t.type() != tnode::TNTENSOR) ASM_THROW_PARSE_ERROR("can't use reorder braces on a constant!");
       for (;; ++j) {
 	size_type i;
 	if (tok_type() == COLON) i = j;
@@ -909,15 +909,15 @@ namespace getfem {
       else if (advance_if(DIVIDE)) mult = false;
       else break;
       tnode t2 = do_prod();
-      if (mult == false && t.type() == tnode::CONST && t2.type() == tnode::TENSOR) 
+      if (mult == false && t.type() == tnode::TNCONST && t2.type() == tnode::TNTENSOR) 
 	ASM_THROW_PARSE_ERROR("can't divide a constant by a tensor");
-      if (t.type() == tnode::TENSOR && t2.type() == tnode::TENSOR) {
+      if (t.type() == tnode::TNTENSOR && t2.type() == tnode::TNTENSOR) {
 	ASM_THROW_PARSE_ERROR("tensor term-by-term productor division not implemented yet! are you sure you need it ?");
-      } else if (t.type() == tnode::CONST && t2.type() == tnode::CONST) {
+      } else if (t.type() == tnode::TNCONST && t2.type() == tnode::TNCONST) {
 	if (mult) t.assign(t.xval()*t2.xval());
 	else 	{ t2.check0(); t.assign(t.xval()/t2.xval()); }
       } else {
-	if (t.type() != tnode::TENSOR) std::swap(t,t2);
+	if (t.type() != tnode::TNTENSOR) std::swap(t,t2);
 	scalar_type v = t2.xval();
 	if (!mult) {
 	  if (v == 0.) { ASM_THROW_PARSE_ERROR("can't divide by zero"); }
@@ -945,7 +945,7 @@ namespace getfem {
     if (advance_if(MINUS)) negt = true;
     tnode t = do_term();
     if (negt) {
-      if (t.type() == tnode::CONST) t.assign(-t.xval());
+      if (t.type() == tnode::TNCONST) t.assign(-t.xval());
       else t.assign(record(new ATN_tensor_scalar_add(*t.tensor(), 0., -1)));
     }
     while (true) {
@@ -954,16 +954,16 @@ namespace getfem {
       else if (advance_if(MINUS)) plus = -1;
       else break;
       tnode t2 = do_term();
-      if (t.type() == tnode::TENSOR && t2.type() == tnode::TENSOR) {
+      if (t.type() == tnode::TNTENSOR && t2.type() == tnode::TNTENSOR) {
 	if (!t.tensor()->is_tensors_sum_scaled() || t.tensor()->is_frozen()) {
 	  t.assign(record(new ATN_tensors_sum_scaled(*t.tensor(), +1))); 
 	}
 	t.tensor()->is_tensors_sum_scaled()->push_scaled_tensor(*t2.tensor(), scalar_type(plus));
-      } else if (t.type() == tnode::CONST && t2.type() == tnode::CONST) {
+      } else if (t.type() == tnode::TNCONST && t2.type() == tnode::TNCONST) {
 	t.assign(t.xval()+t2.xval()*plus);
       } else {
 	int tsgn = 1;	
-	if (t.type() != tnode::TENSOR) { std::swap(t,t2); if (plus<0) tsgn = -1; }
+	if (t.type() != tnode::TNTENSOR) { std::swap(t,t2); if (plus<0) tsgn = -1; }
 	else if (plus<0) t2.assign(-t2.xval());
 	t.assign(record(new ATN_tensor_scalar_add(*t.tensor(), t2.xval(), tsgn)));
       } 
@@ -977,7 +977,7 @@ namespace getfem {
      M(#mf,#mf) '+=' expr |
      V(#mf) '+=' expr */
   void generic_assembly::do_instr() {
-    enum { ALIAS, OUTPUT_ARRAY, OUTPUT_MATRIX, PRINT, ERROR } what = ERROR;
+    enum { wALIAS, wOUTPUT_ARRAY, wOUTPUT_MATRIX, wPRINT, wERROR } what = wERROR;
     std::string ident;
 
     /* get the rhs */
@@ -995,7 +995,7 @@ namespace getfem {
 
     if (ident.compare("print") == 0) {
       print_mark = tok_mark();
-      what = PRINT;
+      what = wPRINT;
     } else if (tok_type() == ARGNUM_SELECTOR ||
 	       tok_type() == OPEN_PAR) {
       if (tok_type() == ARGNUM_SELECTOR) {
@@ -1007,7 +1007,7 @@ namespace getfem {
 
       /* check the validity of the output statement */
       if (ident.compare("V")==0) {
-	what = OUTPUT_ARRAY;
+	what = wOUTPUT_ARRAY;
 	if (arg_num >= outvec.size()) { outvec.resize(arg_num+1); outvec[arg_num] = 0; }
 	/* if we are allowed to dynamically create vectors */
 	if (outvec[arg_num] == 0) {
@@ -1019,7 +1019,7 @@ namespace getfem {
 	  else ASM_THROW_PARSE_ERROR("output vector $" << arg_num+1 << " does not exist");
 	}
       } else if (vds.nb_mf()==2 && vds.size() == 2 && ident.compare("M")==0) {
-	what = OUTPUT_MATRIX;
+	what = wOUTPUT_MATRIX;
 	if (arg_num >= outmat.size()) { outmat.resize(arg_num+1); outmat[arg_num] = 0; }
 	/* if we are allowed to dynamically create matrices */
 	if (outmat[arg_num] == 0) {
@@ -1033,27 +1033,27 @@ namespace getfem {
       accept(PLUS); 
       accept(EQUAL);
     } else if (advance_if(EQUAL)) {
-      what = ALIAS;
+      what = wALIAS;
     } else ASM_THROW_PARSE_ERROR("missing '=' or ':='");
       
     tnode t = do_expr();
-    if (t.type() != tnode::TENSOR)
+    if (t.type() != tnode::TNTENSOR)
       ASM_THROW_PARSE_ERROR("left hand side is a constant, not a tensor!");
       
     switch (what) {
-    case PRINT: {
+    case wPRINT: {
       record_out(new ATN_print_tensor(*t.tensor(), tok_substr(print_mark, 
 							      tok_mark())));
     } break;
-    case OUTPUT_ARRAY: {
+    case wOUTPUT_ARRAY: {
       ATN *pout = outvec[arg_num]->build_output_tensor(*t.tensor(), vds);
       record_out(pout);
     } break;
-    case OUTPUT_MATRIX: {
+    case wOUTPUT_MATRIX: {
       ATN *pout = outmat[arg_num]->build_output_tensor(*t.tensor(), *vds[0].pmf, *vds[1].pmf);
       record_out(pout);
     } break;
-    case ALIAS: {
+    case wALIAS: {
       vars[ident] = t.tensor(); t.tensor()->freeze();
     } break;
     default: DAL_INTERNAL_ERROR(""); break;

@@ -3,7 +3,9 @@
 #include <getfem_norm.h>
 #include <getfem_regular_meshes.h>
 #include <gmm.h>
-#include <sys/times.h>
+#ifdef HAVE_SYS_TIMES
+# include <sys/times.h>
+#endif
 #include <unistd.h>
 
 using bgeot::base_vector;
@@ -28,6 +30,7 @@ typedef enum {DO_BOUNDARY_MASS,
       DO_LIN_ELAST, 
       NB_TESTS} t_do_what;
 
+#ifdef HAVE_SYS_TIMES
 struct chrono {
   struct ::tms t;
   ::clock_t t_elapsed;
@@ -48,6 +51,22 @@ public:
   float elapsed() const { return _elapsed; }
   float system() const { return _system; }
 };
+#else
+struct chrono {
+  float t,_cpu;
+public:
+  chrono() { }
+  void init() { _cpu=0; }
+  void tic() { t = ::clock()/float(CLOCKS_PER_SEC); }
+  void toc() {
+    float t2 = ::clock()/float(CLOCKS_PER_SEC);
+    _cpu += t2 - t; t = t2;
+  }
+  float cpu() const { return _cpu; }
+  float elapsed() const { return _cpu; }
+  float system() const { return 0.; }
+};
+#endif
 
 std::ostream& operator<<(std::ostream& o, const chrono& c) {
   o << "[elapsed=" << c.elapsed() << ", cpu=" << c.cpu() << ", system=" << c.system() << "]";

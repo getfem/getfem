@@ -328,19 +328,19 @@ namespace getfem {
 
   class tnode {
   public:
-    typedef enum { CONST, TENSOR, NONE } node_type;
+    typedef enum { TNCONST, TNTENSOR, TNNONE } node_type;
   private:
     node_type _type;
     scalar_type x;
     ATN_tensor *t;
   public:
-    tnode() : _type(NONE), x(1e300), t(NULL) {}
+    tnode() : _type(TNNONE), x(1e300), t(NULL) {}
     tnode(scalar_type _x) { assign(_x); }
     tnode(ATN_tensor *_t) { assign(_t); }
-    void assign(scalar_type _x) { _type = CONST; t = NULL; x = _x; }
-    void assign(ATN_tensor *_t) { _type = TENSOR; t = _t; x = 1e300; }
-    ATN_tensor* tensor() { assert(_type == TENSOR); return t; }
-    scalar_type xval() { assert(_type == CONST); return x; }
+    void assign(scalar_type _x) { _type = TNCONST; t = NULL; x = _x; }
+    void assign(ATN_tensor *_t) { _type = TNTENSOR; t = _t; x = 1e300; }
+    ATN_tensor* tensor() { assert(_type == TNTENSOR); return t; }
+    scalar_type xval() { assert(_type == TNCONST); return x; }
     node_type type() { return _type; }
     void check0() { if (xval() == 0) ASM_THROW_ERROR("division by zero"); }
   };
