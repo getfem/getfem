@@ -5,7 +5,7 @@
    the f2c-ed file has been slightly modified (removal of lsame_, added r_sign)
 */
 
-#include "f2c.h"
+#include "BLAS_f2c.h"
 
 /* Table of constant values */
 

@@ -130,7 +130,7 @@ zsp_blas3.c \
 zutil.c 
 
 if USEBLASLITE
-SRC += BLAS.c f2c_lite.c
+SRC += BLAS.c BLAS_f2c.h f2c_lite.c
 endif
 
 #vire: xerbla.c 
