@@ -32,8 +32,8 @@
 #ifndef __BGEOT_POLY_H
 #define __BGEOT_POLY_H
 
-#include <vector>
 #include <bgeot_config.h>
+#include <vector>
 
 namespace bgeot
 {

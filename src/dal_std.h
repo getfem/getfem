@@ -53,16 +53,18 @@
 #  undef __PURE_CNAME
 #  include <stdlib.h>
 #  define __PURE_CNAME
+#else
+#  include <stdlib.h>
 #endif
 #include <stddef.h>
 #include <math.h>
 #include <string.h>
-#include <iostream>
-#include <ios>
-#include <fstream>
 #include <ctype.h>
 #include <assert.h>
 #include <limits.h>
+#include <iostream>
+#include <ios>
+#include <fstream>
 
 /* ********************************************************************** */
 /*	S.T.L. Headers.						          */
