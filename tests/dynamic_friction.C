@@ -78,7 +78,7 @@ struct friction_problem {
   plain_vector Dirichlet_displacement;
   scalar_type T, dt, r;
   scalar_type init_vert_pos, init_vert_speed, hspeed;
-  bool dt_adapt, periodic, dx_export;
+  bool dt_adapt, periodic, dxexport;
 
   std::string datafilename;
   ftool::md_param PARAM;
@@ -147,7 +147,7 @@ void friction_problem::init(void) {
   dt_adapt = (PARAM.int_value("DT_ADAPT", "time step adaptation") != 0);
   periodic = (PARAM.int_value("PERIODICITY", "peridiodic condition or not")
 	      != 0);
-  dx_export = (PARAM.int_value("DX_EXPORT", "Exporting on OpenDX format")
+  dxexport = (PARAM.int_value("DX_EXPORT", "Exporting on OpenDX format")
 	      != 0);
   nocontact_mass = PARAM.int_value("NOCONTACT_MASS", "Suppress the mass "
 				   "of contact nodes");
@@ -306,14 +306,15 @@ void friction_problem::solve(void) {
     + 0.5 * gmm::vect_sp(DYNAMIC.mass_matrix(), V0, V0)
     - gmm::vect_sp(VOL_F.source_term(), U0);
 
-
-  getfem::dx_export exp(datafilename + ".dx");
+  getfem::dx_export *exp = 0;
   getfem::stored_mesh_slice sl;
-  sl.build(mesh, getfem::slicer_boundary(mesh),4); 
-  for (unsigned i=0; i <= 2; ++i) cout << "i=" << i << ", n=" << sl.nb_simplexes(i) << "\n";
-  exp.exporting(sl,true); exp.exporting_mesh_edges();
-  exp.write_point_data(mf_u, U0, "stepinit"); 
-  exp.serie_add_object("deformationsteps");
+  if (dxexport) {
+    exp = new getfem::dx_export(datafilename + ".dx");
+    sl.build(mesh, getfem::slicer_boundary(mesh),4);
+    exp->exporting(sl,true); exp->exporting_mesh_edges();
+    exp->write_point_data(mf_u, U0, "stepinit"); 
+    exp->serie_add_object("deformationsteps");
+  }
   
 
   while (t <= T) {
@@ -415,8 +416,8 @@ void friction_problem::solve(void) {
       dt = std::min(2.*dt, dt0);
 
       gmm::copy(U1, U0); gmm::copy(V1, V0); gmm::copy(A1, A0); J0 = J1;
-      exp.write_point_data(mf_u, U0);
-      exp.serie_add_object("deformationsteps");
+      exp->write_point_data(mf_u, U0);
+      exp->serie_add_object("deformationsteps");
     }
     
   }
