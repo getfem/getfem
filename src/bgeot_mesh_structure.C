@@ -177,7 +177,8 @@ namespace bgeot
   }
 
   size_type mesh_structure::add_segment(size_type a, size_type b) {
-    static pconvex_structure cs = simplex_structure(1);
+    static pconvex_structure cs = NULL;
+    if (!cs) cs = simplex_structure(1);
     size_type t[2]; t[0] = a; t[1] = b;
     return add_convex(cs, &t[0]);
   }
