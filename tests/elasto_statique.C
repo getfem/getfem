@@ -87,7 +87,7 @@ struct pb_data
   sparse_matrix_type RM; /* matrice de rigidite.                     */
   linalg_vector U, B; /* inconnue et second membre.                       */
 
-  int iteimpl, integration;
+  int integration;
 
   ftool::md_param PBSTFR_PARAM;
 
@@ -119,7 +119,6 @@ void pb_data::init(void)
   LY = PBSTFR_PARAM.real_value("LY", "Taille en Y");
   LZ = PBSTFR_PARAM.real_value("LZ", "Taille en Y");
   NX = PBSTFR_PARAM.int_value("NX", "Nombre de pas d'espace ");
-  iteimpl = PBSTFR_PARAM.int_value("ITEIMPL", "Nombre d'iteration pt fixe");
   integration = PBSTFR_PARAM.int_value("INTEGRATION", "Type d'integration");
   residu = PBSTFR_PARAM.real_value("RESIDU", "Valeur pour test d'arret");
   K = PBSTFR_PARAM.int_value("K", "Degre de l'element fini de Lagrange");
@@ -241,7 +240,7 @@ void pb_data::assemble(void)
 }
 
 void pb_data::solve(void)
-{ bgeot::cg(RM, U, B, 20000, residu, false); }
+{ bgeot::cg(RM, U, B, 20000, residu); }
 
 int main(int argc, char *argv[])
 {

@@ -165,8 +165,8 @@ namespace bgeot
     _cv_pr_tl(const _cv_pr_tl_light &ls)
     {
       if (!(ls.cv1->is_linear() && ls.cv2->is_linear()))
-	throw not_linear_error(
-       "linear_product_trans : linear product of non-linear transformations");
+	DAL_THROW(not_linear_error, 
+		  "linear product of non-linear transformations");
       cvr = convex_ref_product(ls.cv1->convex_ref(), ls.cv2->convex_ref());
       is_lin = true;
 
@@ -252,9 +252,8 @@ namespace bgeot
     
     // To be completed
     
-    throw to_be_done_error
-     ("associated_trans : This element is not taken into account. Contact us");
-    
+    DAL_THROW(to_be_done_error, 
+	      "This element is not taken into account. Contact us");   
     return NULL;
   }
 

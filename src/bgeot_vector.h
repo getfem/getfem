@@ -179,16 +179,15 @@ namespace bgeot
       inline size_type capacity() const { return N; }
       /// Return true if the vector has no component (n = 0)
       inline bool empty() const { return (N == 0); }
+      void out_of_range_error(void) const;
 
       #ifdef __GETFEM_VERIFY
         reference operator[](size_type n) { 
-	  if (n >= N) throw std::out_of_range
-			("fsvector::operator [] : out of range");
+	  if (n >= N) out_of_range_error();
 	  return array[n];
 	}
         const_reference operator[](size_type n) const {
-	  if (n >= N) throw std::out_of_range
-			("fsvector::operator [] : out of range");
+	  if (n >= N) out_of_range_error();
 	  return array[n];
 	}
       #else
@@ -201,25 +200,21 @@ namespace bgeot
       fsvector(void) {}
       /// Constructor. For 2 components initialized with a0 and a1.
       fsvector(T a0, T a1) {
-	if (N != 2) throw std::invalid_argument
-		      ("fsvector::fsvector() : out of range");
+	if (N != 2) DAL_THROW(std::invalid_argument, "bad argument");
 	iterator p = begin(); *p++ = a0; *p++ = a1;
       }
       /// Constructor. For 3 components initialized with a0, a1 and a2.
       fsvector(T a0, T a1, T a2) {
-	if (N != 3) throw std::invalid_argument
-		      ("fsvector::fsvector() : out of range");	
+	if (N != 3) DAL_THROW(std::invalid_argument, "bad argument");
 	iterator p = begin(); *p++ = a0; *p++ = a1; *p++ = a2;
       }
       /// Constructor. For 4 components initialized with a0, a1, a2 and a3.
       fsvector(T a0, T a1, T a2, T a3) {
-	if (N != 4) throw std::invalid_argument
-		      ("fsvector::fsvector() : out of range");	 
+	if (N != 4) DAL_THROW(std::invalid_argument, "bad argument");
 	iterator p = begin(); *p++=a0;*p++=a1;*p++=a2;*p++=a3;
       }
       fsvector(size_type l) { 
-	if (N != l) throw std::invalid_argument
-		      ("fsvector::fsvector() : out of range");	 
+	if (N != l) DAL_THROW(std::invalid_argument, "bad argument");
       }
       fsvector(const fsvector<T,N> &v)
       { copy(v.begin(), bgeot_count<N>(), begin()); }
@@ -248,6 +243,9 @@ namespace bgeot
       { return !(egalegal(v.begin(), bgeot_count<N>(), begin())); }
       
   };
+
+  template<class T, int N>  void fsvector<T,N>::out_of_range_error(void) const
+  { DAL_THROW(std::out_of_range, "out of range"); }
 
   /** @name functions on fsvector (fixed size vector)
    */
@@ -317,15 +315,15 @@ namespace bgeot
       typedef typename std::vector<T>::iterator iterator;
       typedef typename std::vector<T>::const_iterator const_iterator;
 
+      void out_of_range_error(void) const;
+
       #ifdef __GETFEM_VERIFY
       inline const T& operator [](size_type l) const {
-	if (l >= size()) throw std::out_of_range
-			   ("vsvector::operator [] : out of range");
+	if (l >= size()) out_of_range_error();
 	return *(begin()+l);
       }
       inline T& operator [](size_type l) { 
-	if (l >= size()) throw std::out_of_range
-			   ("vsvector::operator [] : out of range");
+	if (l >= size()) out_of_range_error();
 	return *(begin()+l);
       }
       #endif
@@ -358,12 +356,16 @@ namespace bgeot
 
   };
 
+  template<class T>  void vsvector<T>::out_of_range_error(void) const
+  { DAL_THROW(std::out_of_range, "out of range"); }
+
+
   template<class T>  void vsvector<T>::addmul(const T &a, const vsvector<T> &v)
   {                             
     register typename vsvector<T>::iterator d1 = begin(), e = end();
     register const_iterator d2 = v.begin();
     if ( v.size() != this->size())
-      throw dimension_error("vsvector<T>::addmul : dimensions mismatch");
+      DAL_THROW(dimension_error, "dimensions mismatch");
     while (d1 != e) *d1++ += (*d2++) * a;
   }
 
@@ -391,8 +393,7 @@ namespace bgeot
   {                             
     register typename vsvector<T>::iterator d1 = begin(), e = end();
     register typename vsvector<T>::const_iterator d2 = w.begin();
-    if (size() != w.size())
-      throw dimension_error("vsvector<T>::operator += : dimensions mismatch");
+    if (size() != w.size()) DAL_THROW(dimension_error, "dimensions mismatch");
     while (d1 != e) *d1++ += (*d2++);
     return *this;
   }
@@ -401,8 +402,7 @@ namespace bgeot
   {    
     register typename vsvector<T>::iterator d1 = begin(), e = end();
     register typename vsvector<T>::const_iterator d2 = w.begin();
-    if (size() != w.size())
-      throw dimension_error("vsvector<T>::operator -= : dimensions mismatch");
+    if (size() != w.size()) DAL_THROW(dimension_error, "dimensions mismatch");
 
     while (d1 != e) *d1++ -= (*d2++);
     return *this;
@@ -449,8 +449,7 @@ namespace bgeot
     register typename vsvector<T>::const_iterator d1 = v.begin(), e = v.end();
     register typename vsvector<T>::const_iterator d2 = w.begin();
     register double res = 0.0;
-    if (v.size() != w.size())
-      throw dimension_error("vect_sp : dimensions mismatch");
+    if (v.size() != w.size()) DAL_THROW(dimension_error,"dimensions mismatch");
    
     while (d1 != e) res += (*d1++) * (*d2++);
     return res;
@@ -516,8 +515,7 @@ namespace bgeot
     register typename VEC::const_iterator d1 = v.begin(), e = v.end();
     register typename VEC::const_iterator d2 = w.begin();
     double res = 0;
-    if (v.size() != w.size())
-      throw dimension_error("vect_dist1 : dimensions mismatch");
+    if (v.size() != w.size()) DAL_THROW(dimension_error,"dimensions mismatch");
     while (d1 != e) res += (double)dal::abs(*d1++ - *d2++);
     return res;
   }
@@ -528,8 +526,7 @@ namespace bgeot
     register typename VEC::const_iterator d1 = v.begin(), e = v.end();
     register typename VEC::const_iterator d2 = w.begin();
     double res = 0;
-    if (v.size() != w.size())
-      throw dimension_error("vect_dist2 : dimensions mismatch");
+    if (v.size() != w.size()) DAL_THROW(dimension_error,"dimensions mismatch");
     while (d1 != e) res += dal::sqr((double)dal::abs(*d1++ - *d2++));
     return sqrt(res);
   }
@@ -540,8 +537,7 @@ namespace bgeot
     register typename VEC::const_iterator d1 = v.begin(), e = v.end();
     register typename VEC::const_iterator d2 = w.begin();
     double res = 0;
-    if (v.size() != w.size())
-      throw dimension_error("vect_distinf : dimensions mismatch");
+    if (v.size() != w.size()) DAL_THROW(dimension_error,"dimensions mismatch");
 
     while (d1 != e) res += std::max(res, (double)dal::abs(*d1++ - *d2++));
     return res;

@@ -343,10 +343,7 @@ namespace dal
     if (ii >= last_accessed)
     {
       if (ii >= INT_MAX) {
-	std::stringstream msg;
-	msg << "dynamic_array<T,pks>::operator [] : index " << long(ii)
-	    << " out of range" << std::ends;
-	throw std::out_of_range(msg.str());
+	DAL_THROW(std::out_of_range, "index" << long(ii) << " out of range.");
       }
 
       last_accessed = ii + 1;

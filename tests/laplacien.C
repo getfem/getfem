@@ -56,7 +56,7 @@ struct lap_pb
   linalg_vector U, B; /* inconnue et second membre.                       */
  
   bool mixte;
-  int iteimpl, integration;
+  int integration;
 
   std::string datafilename;
   ftool::md_param PARAM;
@@ -83,7 +83,6 @@ void lap_pb::init(void)
   LY = PARAM.real_value("LY", "Taille en Y");
   LZ = PARAM.real_value("LZ", "Taille en Y");
   NX = PARAM.int_value("NX", "Nombre de pas d'espace ");
-  iteimpl = PARAM.int_value("ITEIMPL", "Nombre d'iteration pt fixe");
   integration = PARAM.int_value("INTEGRATION", "Type d'integration");
   residu = PARAM.real_value("RESIDU", "Valeur pour test d'arret");
   K = PARAM.int_value("K", "Degre de l'element fini de Lagrange");
@@ -92,7 +91,7 @@ void lap_pb::init(void)
 
   scalar_type FT = PARAM.real_value("FT", "parametre pour la solution exacte");
 
-  char *dds = PARAM.string_value("MIXTE", "Methode de Leila ? ");
+  char *dds = PARAM.string_value("MIXTEHYBRID", "Non conforming P1 ? ");
   mixte = (strcmp("N", dds) && strcmp("n", dds));
 
   sol_K = base_vector(N);
@@ -124,15 +123,33 @@ void lap_pb::init(void)
   cout << "Selecting finite element method.\n";
   getfem::pintegration_method ppi;
   nn = mesh.convex_index(N);
+  if (mixte)
+  { 
+    K = 1;
+    if (N != 2) DAL_THROW(bgeot::dimension_error, 
+			  "Non conforming P1 work only for N = 2");
+  }
+  switch (integration) {
+  case 0 : ppi = bgeot::simplex_poly_integration(N); break;
+  case 1 : ppi = bgeot::Newton_Cotes_approx_integration(N,2*K); break;
+  case 11 : ppi = bgeot::triangle1_approx_integration(); break;
+  case 12 : ppi = bgeot::triangle2_approx_integration(); break;
+  case 13 : ppi = bgeot::triangle3_approx_integration(); break;
+  case 14 : ppi = bgeot::triangle4_approx_integration(); break;
+  case 15 : ppi = bgeot::triangle5_approx_integration(); break;
+  case 16 : ppi = bgeot::triangle6_approx_integration(); break;
+  case 17 : ppi = bgeot::triangle7_approx_integration(); break;
+  case 21 : ppi = bgeot::tetrahedron1_approx_integration(); break;
+  case 22 : ppi = bgeot::tetrahedron2_approx_integration(); break;
+  case 23 : ppi = bgeot::tetrahedron3_approx_integration(); break;
+  case 25 : ppi = bgeot::tetrahedron5_approx_integration(); break;
+  default : DAL_THROW(std::logic_error, "Undefined integration method");
+  }
+
   if (mixte) {
-    if (integration == 0) ppi = bgeot::simplex_poly_integration(N);
-    else ppi = bgeot::Newton_Cotes_approx_integration(N,2);
     mef.set_finite_element(nn, getfem::P1_nonconforming_fem(), ppi);
-    assert(N == 2);
   }
   else {
-    if (integration == 0) ppi = bgeot::simplex_poly_integration(N);
-    else ppi = bgeot::Newton_Cotes_approx_integration(N,2*K);
     mef.set_finite_element(nn, getfem::PK_fem(N, K), ppi);
   }
 
@@ -240,11 +257,7 @@ int main(int argc, char *argv[])
   try {
     
     lap_pb p;
-    dal::bit_vector nn;
-    int l, i;
-    scalar_type exectime, total_time = 0.0;
-    
-    exectime = ftool::uclock_sec();
+    scalar_type exectime = ftool::uclock_sec(), total_time = 0.0;
     
     // cout << "initialisation ...\n";
     p.PARAM.read_command_line(argc, argv);
@@ -252,7 +265,6 @@ int main(int argc, char *argv[])
     // cout << "Initialisation terminee\n";
     
     std::ofstream cres((p.datafilename + ".res").c_str());
-    
     cres << p.N << "\t" <<  p.K << "\t" << p.NX << "\t";
     cres << ftool::uclock_sec() - exectime << "  ";
     
@@ -311,7 +323,8 @@ int main(int argc, char *argv[])
     cres << ftool::uclock_sec() - exectime << "\t";
     total_time += ftool::uclock_sec() - exectime;
     cres << total_time << endl;
-    
+
+    cout.precision(16);
     cout << "L2 error = " << l2norm << endl
 	 << "H1 error = " << h1norm << endl;
     

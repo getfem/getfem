@@ -71,11 +71,10 @@ namespace getfem
 	P.derivative(n);
 	for (size_type j = 0; j < pspt->size(); ++j) {
 	  if ((*pspt)[j].size() != N)
-	    throw dimension_error
-	      ("_geotrans_precomp::_geotrans_precomp : dimensions mismatch");
+	    DAL_THROW(dimension_error, "dimensions mismatch");
 	  if(pgt->convex_ref()->is_in((*pspt)[j]) > 1.0E-7)
-	    throw internal_error
-	      ("_geotrans_precomp::_geotrans_precomp : internal error");
+	    DAL_THROW(internal_error, "point " << j
+		      << " mismatch the element");
 	  pc[j](i,n) = P.eval((*pspt)[j].begin());
 	}
 	for (dim_type m = 0; m <= n; ++m) {
@@ -126,8 +125,8 @@ namespace getfem
     hpc.resize(ls.pspt->size());
     c.resize(ls.pspt->size());
     for (size_type i = 0; i < ls.pspt->size(); ++i) {
-      if ((*ls.pspt)[i].size() != N) 
-	throw dimension_error("fem_precomp::_fem_precomp: dimension mismatch");
+      if ((*ls.pspt)[i].size() != N)
+	DAL_THROW(dimension_error, "dimensions mismatch");
       ls.pf->base_value((*(ls.pspt))[i], c[i]);
       ls.pf->grad_base_value((*(ls.pspt))[i], pc[i]);
       ls.pf->hess_base_value((*(ls.pspt))[i], hpc[i]);

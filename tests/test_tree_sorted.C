@@ -53,7 +53,7 @@ int main(void)
     }
     cout << tsa << endl;
     
-    for (unsigned long i = 0; i < 500000; i++)
+    for (unsigned long i = 0; i < 50000; i++)
     {
       if (!(i % 10000)) cout <<" no " << i << " nb_elt " << tsa.card() << endl;
       

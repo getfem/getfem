@@ -1,29 +1,28 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% parametres du programme elastostatique                                  %
+% parameters for program elasto_statique                                  %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%% parametres physiques :					      %%%%%
-
-N = 2;                  % dimension du probleme.
-PG = 9.81; 		% valeur de la constante de gravitation.
-% G = 77.0;	        % raideur elastique de cisaillement (acier).
-% LAMBDA = 107.0;   	% Coefficient elastique lambda (acier).
-G = 1.0;	        % raideur elastique de cisaillement.
-LAMBDA = 1.0;   	% Coefficient elastique lambda.
-LX = 1.0;		% taille en X.
-LY = 1.0;	        % taille en Y.
-LZ = 1.0;		% taille en Z;
-FT = 0.2;               % parametre pour la solution exacte.   
+%%%%% pde parameters :	        				      %%%%%
+N = 2;                  % dimension of the domain.
+PG = 9.81; 		% constant of gravitation.
+% G = 77.0;	        % Lamé coefficient.
+% LAMBDA = 107.0;   	% Lamé coefficient.
+G = 1.0;	        % Lamé coefficient.
+LAMBDA = 1.0;   	% Lamé coefficient.
+LX = 1.0;		% size in X.
+LY = 1.0;	        % size in Y.
+LZ = 1.0;		% size in Z.
+FT = 0.2;               % parameter for the exact solution.  
 %FT = 3.141593;
 
-%%%%%   parametres de discretisation :  			      %%%%%
-K = 2;                  % Degre de l'element fini de Lagrange.
-INTEGRATION = 0;        % 0 = integration exacte
-			% 1 = Newton Cotes de degré 2 * K
-NX = 5;            	% Nombre de pas d'espace.
-ITEIMPL = 1;            % nombre d'iteration de point fixe.
-RESIDU = 1E-9;     	% Test d'arret pour la methode iterative
+%%%%%   discretisation parameters  :                     	      %%%%%
+K = 2;                  % Finite element degree.
+INTEGRATION = 0;        % 0 = exact integration
+			% 1 = Newton Cotes of degree 2 * K
+NX = 5;            	% space steps.
+RESIDU = 1E-9;     	% residu for conjugate gradient.
 
 
-%%%%%   parametres lies a la sauvegarde ou a la visualisation :       %%%%%
-ROOTFILENAME = 'elasto_statique'; % Racine des fichiers de donnees.
+%%%%%   saving parameters                                             %%%%%
+ROOTFILENAME = 'elasto_statique';  % Root of data files.
+

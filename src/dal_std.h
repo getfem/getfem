@@ -68,7 +68,7 @@
 #include <algorithm>
 #include <vector>
 #include <string>
-#include <sstream>
+#include <strstream>
 
 /* ********************************************************************** */
 /*	STD Needed.                     			          */
@@ -340,6 +340,12 @@ typedef unsigned char uint8_type;
     cerr << "=============================================================\n";\
     cerr << "           An unknown error has been detected !!!            \n";\
     cerr << "=============================================================\n";\
+  }
+
+  #define DAL_THROW(type, thestr) { \
+    std::strstream msg; \
+    msg << "in "__FILE__ << ", line " << __LINE__ << " : " << thestr << ends; \
+    throw (type)(msg.str()); \
   }
 
 } /* end of namespace dal.                                                */

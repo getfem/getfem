@@ -87,6 +87,11 @@ namespace getfem
 	return method.pai->integration_points();
     }
 
+    bgeot::pconvex_structure structure(void) const { 
+      if (is_ppi) return method.ppi->structure();
+      else return method.pai->structure();
+    }
+
     pintegration_method(bgeot::ppoly_integration p)
     { method.ppi = p; is_ppi = true; }
 

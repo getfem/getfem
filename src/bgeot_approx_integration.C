@@ -385,6 +385,7 @@ namespace bgeot
     friend papprox_integration triangle3_approx_integration(void);
     friend papprox_integration triangle4_approx_integration(void);
     friend papprox_integration triangle5_approx_integration(void);
+    friend papprox_integration triangle6_approx_integration(void);
     friend papprox_integration triangle7_approx_integration(void);
     friend papprox_integration tetrahedron1_approx_integration(void);
     friend papprox_integration tetrahedron2_approx_integration(void);
@@ -613,8 +614,8 @@ namespace bgeot
       p->int_coeffs[i] = d; 
       p->repartition[0] = 6;
       // face 0
-      double e = 0.5 - 0.5/::sqrt(3.0 / 5.0);
-      double f = 0.5 + 0.5/::sqrt(3.0 / 5.0);
+      double e = 0.5 - 0.5*::sqrt(3.0 / 5.0);
+      double f = 0.5 + 0.5*::sqrt(3.0 / 5.0);
       ptab[++i][0] = e; ptab[i][1] = f;
       p->int_coeffs[i] = ::sqrt(2.0) * 5.0 / 18.0; 
       ptab[++i][0] = 0.5; ptab[i][1] = 0.5;
@@ -681,8 +682,8 @@ namespace bgeot
       p->int_coeffs[i] = 9.0 / 80.0; 
       p->repartition[0] = 7;
       // face 0
-      double e = 0.5 - 0.5/::sqrt(3.0 / 5.0);
-      double f = 0.5 + 0.5/::sqrt(3.0 / 5.0);
+      double e = 0.5 - 0.5*::sqrt(3.0 / 5.0);
+      double f = 0.5 + 0.5*::sqrt(3.0 / 5.0);
       ptab[++i][0] = e; ptab[i][1] = f;
       p->int_coeffs[i] = ::sqrt(2.0) * 5.0 / 18.0; 
       ptab[++i][0] = 0.5; ptab[i][1] = 0.5;
@@ -709,6 +710,98 @@ namespace bgeot
 
       p->pint_points = store_point_tab(ptab);
       
+    }
+    return p;
+  }
+
+
+  /* ********************************************************************* */
+  /*   triangle6 :    Integration on a triangle of order 6 with 12 points  */
+  /* ********************************************************************* */
+
+  papprox_integration triangle6_approx_integration(void) {
+    static _particular_approx *p = NULL;
+    if (p == NULL)
+    {
+      std::vector<base_node> ptab(24);
+      std::fill(ptab.begin(), ptab.end(), base_node(2));
+      p = new _particular_approx;
+      p->cvs = simplex_structure(2);
+      p->repartition.resize(p->cvs->nb_faces()+1);
+      p->int_coeffs.resize(ptab.size());
+      // volume
+      int i = 0;
+
+      double a1 = 0.063089104491502;
+      double a2 = 0.249286745170910;
+      double aa = 0.310352451033785;
+      double bb = 0.053145049844816;
+
+      ptab[  i][0] = a1; ptab[i][1] = a1;
+      p->int_coeffs[i] = 0.050844906370206 * 0.5; 
+      ptab[++i][0] = 1.0 - 2.0 * a1; ptab[i][1] = a1;
+      p->int_coeffs[i] = 0.050844906370206 * 0.5; 
+      ptab[++i][0] = a1; ptab[i][1] = 1.0 - 2.0 * a1;
+      p->int_coeffs[i] = 0.050844906370206 * 0.5; 
+      ptab[++i][0] = a2; ptab[i][1] = a2;
+      p->int_coeffs[i] = 0.116786275726378 * 0.5; 
+      ptab[++i][0] = 1.0 - 2.0 * a2; ptab[i][1] = a2;
+      p->int_coeffs[i] = 0.116786275726378 * 0.5; 
+      ptab[++i][0] = a2; ptab[i][1] = 1.0 - 2.0 * a2;
+      p->int_coeffs[i] = 0.116786275726378 * 0.5; 
+      ptab[++i][0] = aa; ptab[i][1] = bb;
+      p->int_coeffs[i] = 0.082851075618374 * 0.5; 
+      ptab[++i][0] = aa; ptab[i][1] = 1.0 - aa - bb;
+      p->int_coeffs[i] = 0.082851075618374 * 0.5; 
+      ptab[++i][0] = bb; ptab[i][1] = aa;
+      p->int_coeffs[i] = 0.082851075618374 * 0.5; 
+      ptab[++i][0] = bb; ptab[i][1] = 1.0 - aa - bb;
+      p->int_coeffs[i] = 0.082851075618374 * 0.5; 
+      ptab[++i][0] = 1.0 - aa - bb; ptab[i][1] = aa;
+      p->int_coeffs[i] = 0.082851075618374 * 0.5; 
+      ptab[++i][0] = 1.0 - aa - bb; ptab[i][1] = bb;
+      p->int_coeffs[i] = 0.082851075618374 * 0.5;
+      p->repartition[0] = 12;
+
+      // face 0
+      double a = 0.5 - 0.4305681557970265;
+      double b = 0.5 - 0.1699905217924280;
+      double c = 0.5 + 0.1699905217924280;
+      double d = 0.5 + 0.4305681557970265;
+      double e = 0.326072577431273;
+      double f = 0.173927422568727;
+      ptab[++i][0] = a; ptab[i][1] = d;
+      p->int_coeffs[i] = ::sqrt(2.0) * f; 
+      ptab[++i][0] = b; ptab[i][1] = c;
+      p->int_coeffs[i] = ::sqrt(2.0) * e; 
+      ptab[++i][0] = c; ptab[i][1] = b;
+      p->int_coeffs[i] = ::sqrt(2.0) * e; 
+      ptab[++i][0] = d; ptab[i][1] = a;
+      p->int_coeffs[i] = ::sqrt(2.0) * f; 
+      p->repartition[1] = p->repartition[0] + 4;
+      // face 1
+      ptab[++i][0] = 0.0; ptab[i][1] = a;
+      p->int_coeffs[i] = f; 
+      ptab[++i][0] = 0.0; ptab[i][1] = b;
+      p->int_coeffs[i] = e; 
+      ptab[++i][0] = 0.0; ptab[i][1] = c;
+      p->int_coeffs[i] = e; 
+      ptab[++i][0] = 0.0; ptab[i][1] = d;
+      p->int_coeffs[i] = f; 
+      p->repartition[2] = p->repartition[1] + 4;
+      // face 2
+      ptab[++i][0] = a; ptab[i][1] = 0.0;
+      p->int_coeffs[i] = f; 
+      ptab[++i][0] = b; ptab[i][1] = 0.0;
+      p->int_coeffs[i] = e; 
+      ptab[++i][0] = c; ptab[i][1] = 0.0;
+      p->int_coeffs[i] = e; 
+      ptab[++i][0] = d; ptab[i][1] = 0.0;
+      p->int_coeffs[i] = f; 
+      p->repartition[3] = p->repartition[2] + 4;
+
+      p->pint_points = store_point_tab(ptab);
+      if (++i != ptab.size()) DAL_THROW(internal_error, "internal error");
     }
     return p;
   }
@@ -742,31 +835,31 @@ namespace bgeot
       double w10 = 0.1756152574332;
       double w13 = -0.1495700444677;
       ptab[  i][0] = r1; ptab[i][1] = r1;
-      p->int_coeffs[i] = w1; 
+      p->int_coeffs[i] = w1 * 0.5; 
       ptab[++i][0] = r2; ptab[i][1] = r1;
-      p->int_coeffs[i] = w1; 
+      p->int_coeffs[i] = w1 * 0.5; 
       ptab[++i][0] = r1; ptab[i][1] = r2;
-      p->int_coeffs[i] = w1; 
+      p->int_coeffs[i] = w1 * 0.5; 
       ptab[++i][0] = r4; ptab[i][1] = r6;
-      p->int_coeffs[i] = w4; 
+      p->int_coeffs[i] = w4 * 0.5; 
       ptab[++i][0] = r5; ptab[i][1] = r4;
-      p->int_coeffs[i] = w4; 
+      p->int_coeffs[i] = w4 * 0.5; 
       ptab[++i][0] = r6; ptab[i][1] = r5;
-      p->int_coeffs[i] = w4; 
+      p->int_coeffs[i] = w4 * 0.5; 
       ptab[++i][0] = r5; ptab[i][1] = r6;
-      p->int_coeffs[i] = w4; 
+      p->int_coeffs[i] = w4 * 0.5; 
       ptab[++i][0] = r4; ptab[i][1] = r5;
-      p->int_coeffs[i] = w4; 
+      p->int_coeffs[i] = w4 * 0.5; 
       ptab[++i][0] = r6; ptab[i][1] = r4;
-      p->int_coeffs[i] = w4; 
+      p->int_coeffs[i] = w4 * 0.5; 
       ptab[++i][0] = r10; ptab[i][1] = r10;
-      p->int_coeffs[i] = w10; 
+      p->int_coeffs[i] = w10 * 0.5; 
       ptab[++i][0] = r11; ptab[i][1] = r10;
-      p->int_coeffs[i] = w10; 
+      p->int_coeffs[i] = w10 * 0.5; 
       ptab[++i][0] = r10; ptab[i][1] = r11;
-      p->int_coeffs[i] = w10; 
+      p->int_coeffs[i] = w10 * 0.5; 
       ptab[++i][0] = r13; ptab[i][1] = r13;
-      p->int_coeffs[i] = w13; 
+      p->int_coeffs[i] = w13 * 0.5; 
       p->repartition[0] = 13;
       // face 0
       double a = 0.5 - 0.4305681557970265;
@@ -806,7 +899,8 @@ namespace bgeot
       p->repartition[3] = p->repartition[2] + 4;
 
       p->pint_points = store_point_tab(ptab);
-      
+      if (++i != ptab.size()) DAL_THROW(internal_error, "internal error");
+
     }
     return p;
   }
@@ -833,7 +927,7 @@ namespace bgeot
       p->repartition[0] = 1;
       // face 0
       ptab[++i][0] = 1.0 / 3.0; ptab[i][1] = 1.0 / 3.0; ptab[i][2] = 1.0 / 3.0;
-      p->int_coeffs[i] = ::sqrt(3.0); 
+      p->int_coeffs[i] = 0.5 * ::sqrt(3.0); 
       p->repartition[1] = p->repartition[0] + 1;
       // face 1
       ptab[++i][0] = 0.0; ptab[i][1] = 0.5; ptab[i][2] = 0.5;
@@ -931,77 +1025,61 @@ namespace bgeot
     static _particular_approx *p = NULL;
     if (p == NULL)
     {
-      std::vector<base_node> ptab(21);
-      std::fill(ptab.begin(), ptab.end(), base_node(3));
+      const int NB_PER_VOL = 5;
+      const int NB_PER_FA  = 4;
+      const int NB_FA = 4;
+      const int dim = 3;
+      std::vector<base_node> ptab(NB_PER_VOL + NB_PER_FA * NB_FA);
+      base_vector nullpt(dim); nullpt.fill(0);
+      std::fill(ptab.begin(), ptab.end(), nullpt);
       p = new _particular_approx;
-      p->cvs = simplex_structure(3);
-      p->repartition.resize(p->cvs->nb_faces()+1);
+      p->cvs = simplex_structure(dim);
+      p->repartition.resize(NB_FA+1);
       p->int_coeffs.resize(ptab.size());
+      std::vector<base_node>::iterator itp = ptab.begin();
+      std::vector<scalar_type>::iterator itc = p->int_coeffs.begin(); 
       // volume
-      int i = 0;      
-      ptab[  i][0] = 0.25; ptab[i][1] = 0.25; ptab[i][2] = 0.25;
-      p->int_coeffs[i] = - 4.0 / 30.0; 
-      ptab[++i][0] = 1.0 / 4.0; ptab[i][1] = 1.0 / 4.0; ptab[i][2] = 1.0 / 4.0;
-      p->int_coeffs[i] = 9.0 / 120.0; 
-      ptab[++i][0] = 1.0 / 2.0; ptab[i][1] = 1.0 / 6.0; ptab[i][2] = 1.0 / 6.0;
-      p->int_coeffs[i] = 9.0 / 120.0; 
-      ptab[++i][0] = 1.0 / 6.0; ptab[i][1] = 1.0 / 2.0; ptab[i][2] = 1.0 / 6.0;
-      p->int_coeffs[i] = 9.0 / 120.0; 
-      ptab[++i][0] = 1.0 / 6.0; ptab[i][1] = 1.0 / 6.0; ptab[i][2] = 1.0 / 2.0;
-      p->int_coeffs[i] = 9.0 / 120.0; 
-      p->repartition[0] = 5;
+      *itp++ = base_vector(0.25, 0.25, 0.25);
+      *itc++ = - 4.0 / 30.0;
+      *itp++ = base_vector(1.0 / 6.0, 1.0 / 6.0, 1.0 / 6.0);
+      *itc++ = 9.0 / 120.0; 
+      *itp++ = base_vector(1.0 / 2.0, 1.0 / 6.0, 1.0 / 6.0);
+      *itc++ = 9.0 / 120.0; 
+      *itp++ = base_vector(1.0 / 6.0, 1.0 / 2.0, 1.0 / 6.0);
+      *itc++ = 9.0 / 120.0; 
+      *itp++ = base_vector(1.0 / 6.0, 1.0 / 6.0, 1.0 / 2.0);
+      *itc++ = 9.0 / 120.0; 
+      p->repartition[0] = NB_PER_VOL;
 
-      // face 0
       double a = 1.0 / 3.0;
       double b = 1.0 / 5.0;
-      double c = 1.0 / 5.0;
-      ptab[++i][0] = 1.0 - a - a; ptab[i][1] = a; ptab[i][2] = a;
-      p->int_coeffs[i] = -::sqrt(3.0) * 9.0 / 16.0; 
-      ptab[++i][0] = 1.0 - b - b; ptab[i][1] = b; ptab[i][2] = b;
-      p->int_coeffs[i] = ::sqrt(3.0) * 25 / 48.0; 
-      ptab[++i][0] = 1.0 - c - b; ptab[i][1] = c; ptab[i][2] = b;
-      p->int_coeffs[i] = ::sqrt(3.0) * 25 / 48.0; 
-      ptab[++i][0] = 1.0 - b - c; ptab[i][1] = b; ptab[i][2] = c;
-      p->int_coeffs[i] = ::sqrt(3.0) * 25 / 48.0; 
-      p->repartition[1] = p->repartition[0] + 4;
+      double c = 3.0 / 5.0;
+      double surf = ::sqrt(3.0) * 0.5;
+      for (int i = 0; i < NB_FA; ++i) {
+	int i1 = (i < 2) ? 1 : 0;
+	int i2 = (i < 3) ? 2 : 1;
+	(*itp)[i1] = a; (*itp)[i2] = a;
+	if (i == 0) (*itp)[0] = 1.0 - (*itp)[1] - (*itp)[2];
+	*itc++ = -surf * 9.0 / 16.0; ++itp;
+	(*itp)[i1] = b; (*itp)[i2] = b;
+	if (i == 0) (*itp)[0] = 1.0 - (*itp)[1] - (*itp)[2];
+	*itc++ = surf * 25.0 / 48.0; ++itp;
+	(*itp)[i1] = c; (*itp)[i2] = b;
+	if (i == 0) (*itp)[0] = 1.0 - (*itp)[1] - (*itp)[2];
+	*itc++ = surf * 25.0 / 48.0; ++itp;
+	(*itp)[i1] = b; (*itp)[i2] = c;
+	if (i == 0) (*itp)[0] = 1.0 - (*itp)[1] - (*itp)[2];
+	*itc++ = surf * 25.0 / 48.0; ++itp;
 
-      // face 1
-      ptab[++i][0] = 0.0; ptab[i][1] = a; ptab[i][2] = a;
-      p->int_coeffs[i] = - 9.0 / 32.0; 
-      ptab[++i][0] = 0.0; ptab[i][1] = b; ptab[i][2] = b;
-      p->int_coeffs[i] = 25.0 / 96.0; 
-      ptab[++i][0] = 0.0; ptab[i][1] = c; ptab[i][2] = b;
-      p->int_coeffs[i] = 25.0 / 96.0; 
-      ptab[++i][0] = 0.0; ptab[i][1] = b; ptab[i][2] = c;
-      p->int_coeffs[i] = 25.0 / 96.0; 
-      p->repartition[2] = p->repartition[1] + 4;
-      // face 2
-      ptab[++i][0] = a; ptab[i][1] = 0.0; ptab[i][2] = a;
-      p->int_coeffs[i] = - 9.0 / 32.0; 
-      ptab[++i][0] = b; ptab[i][1] = 0.0; ptab[i][2] = b;
-      p->int_coeffs[i] = 25.0 / 96.0; 
-      ptab[++i][0] = c; ptab[i][1] = 0.0; ptab[i][2] = b;
-      p->int_coeffs[i] = 25.0 / 96.0; 
-      ptab[++i][0] = b; ptab[i][1] = 0.0; ptab[i][2] = c;
-      p->int_coeffs[i] = 25.0 / 96.0; 
-      p->repartition[3] = p->repartition[2] + 4;
-      // face 3
-      ptab[++i][0] = a; ptab[i][1] = a; ptab[i][2] = 0.0;
-      p->int_coeffs[i] = - 9.0 / 32.0; 
-      ptab[++i][0] = b; ptab[i][1] = b; ptab[i][2] = 0.0;
-      p->int_coeffs[i] = 25.0 / 96.0; 
-      ptab[++i][0] = c; ptab[i][1] = b; ptab[i][2] = 0.0;
-      p->int_coeffs[i] = 25.0 / 96.0; 
-      ptab[++i][0] = b; ptab[i][1] = c; ptab[i][2] = 0.0;
-      p->int_coeffs[i] = 25.0 / 96.0; 
-      p->repartition[4] = p->repartition[3] + 4;
+	p->repartition[i+1] = p->repartition[i] + NB_PER_FA;
+	surf = 0.5;
+      }
 
       p->pint_points = store_point_tab(ptab);
-      
+      if (itp != ptab.end()) DAL_THROW(internal_error, "internal error");
     }
     return p;
   }
-
 
   /* ********************************************************************* */
   /* tetrahedron5 : Integration on a tetrahedron of order 5 with 15 points */
@@ -1011,119 +1089,94 @@ namespace bgeot
     static _particular_approx *p = NULL;
     if (p == NULL)
     {
-      std::vector<base_node> ptab(43);
-      std::fill(ptab.begin(), ptab.end(), base_node(3));
+      const int NB_PER_VOL = 15;
+      const int NB_PER_FA  = 7;
+      const int NB_FA = 4;
+      const int dim = 3;
+      std::vector<base_node> ptab(NB_PER_VOL + NB_PER_FA * NB_FA);
+      base_vector nullpt(dim); nullpt.fill(0);
+      std::fill(ptab.begin(), ptab.end(), nullpt);
       p = new _particular_approx;
-      p->cvs = simplex_structure(3);
-      p->repartition.resize(p->cvs->nb_faces()+1);
+      p->cvs = simplex_structure(dim);
+      p->repartition.resize(NB_FA+1);
       p->int_coeffs.resize(ptab.size());
+      std::vector<base_node>::iterator itp = ptab.begin();
+      std::vector<scalar_type>::iterator itc = p->int_coeffs.begin(); 
+
+      DAL_THROW(internal_error,
+       "Method to be corrected, formulae for volume not accurate enought ...");
+
       // volume
-      int i = 0;
       double a1 = 0.091971078052723033;
       double a2 = 0.31979362782962991;
       double a  = 0.13819660112501052;
-      ptab[  i][0] = 0.25; ptab[i][1] = 0.25; ptab[i][2] = 0.25;
-      p->int_coeffs[i] = 0.019753086419753086;
-      ptab[++i][0] = a1; ptab[i][1] = a1; ptab[i][2] = a1;
-      p->int_coeffs[i] = 0.01198951396316977;
-      ptab[++i][0] = 1.0 - 2.0 * a1; ptab[i][1] = a1; ptab[i][2] = a1;
-      p->int_coeffs[i] = 0.01198951396316977;
-      ptab[++i][0] = a1; ptab[i][1] = 1.0 - 2.0 * a1; ptab[i][2] = a1;
-      p->int_coeffs[i] = 0.01198951396316977;
-      ptab[++i][0] = a1; ptab[i][1] = a1; ptab[i][2] = 1.0 - 2.0 * a1;
-      p->int_coeffs[i] = 0.01198951396316977;
-      ptab[++i][0] = a2; ptab[i][1] = a2; ptab[i][2] = a2;
-      p->int_coeffs[i] = 0.011511367871045398;
-      ptab[++i][0] = 1.0 - 2.0 * a2; ptab[i][1] = a2; ptab[i][2] = a2;
-      p->int_coeffs[i] = 0.011511367871045398;
-      ptab[++i][0] = a2; ptab[i][1] = 1.0 - 2.0 * a2; ptab[i][2] = a2;
-      p->int_coeffs[i] = 0.011511367871045398;
-      ptab[++i][0] = a2; ptab[i][1] = a2; ptab[i][2] = 1.0 - 2.0 * a2;
-      p->int_coeffs[i] = 0.011511367871045398;
-      ptab[++i][0] = a; ptab[i][1] = a; ptab[i][2] = 0.5 - a;
-      p->int_coeffs[i] = 0.008818342151675485;
-      ptab[++i][0] = a; ptab[i][1] = 0.5 - a; ptab[i][2] = a;
-      p->int_coeffs[i] = 0.008818342151675485;
-      ptab[++i][0] = 0.5 - a; ptab[i][1] = a; ptab[i][2] = a;
-      p->int_coeffs[i] = 0.008818342151675485;
-      ptab[++i][0] = a; ptab[i][1] = 0.5 - a; ptab[i][2] = 0.5 - a;
-      p->int_coeffs[i] = 0.008818342151675485; 
-      ptab[++i][0] = 0.5 - a; ptab[i][1] = a; ptab[i][2] = 0.5 - a;
-      p->int_coeffs[i] = 0.008818342151675485;
-      ptab[++i][0] = 0.5 - a; ptab[i][1] = 0.5 - a; ptab[i][2] = a;
-      p->int_coeffs[i] = 0.008818342151675485;
-      p->repartition[0] = 15;
+      *itp++ = base_vector(0.25, 0.25, 0.25);
+      *itc++ = 0.019753086419753086;
+      *itp++ = base_vector(a1, a1, a1);
+      *itc++ = 0.01198951396316977;
+      *itp++ = base_vector(1.0 - 2.0 * a1, a1, a1);
+      *itc++ = 0.01198951396316977;
+      *itp++ = base_vector(a1, 1.0 - 2.0 * a1, a1);
+      *itc++ = 0.01198951396316977;
+      *itp++ = base_vector(a1, a1, 1.0 - 2.0 * a1);
+      *itc++ = 0.01198951396316977;
+      *itp++ = base_vector(a2, a2, a2);
+      *itc++ = 0.011511367871045398;
+      *itp++ = base_vector(1.0 - 2.0 * a2, a2, a2);
+      *itc++ = 0.011511367871045398;
+      *itp++ = base_vector(a2, 1.0 - 2.0 * a2, a2);
+      *itc++ = 0.011511367871045398;
+      *itp++ = base_vector(a2, a2, 1.0 - 2.0 * a2);
+      *itc++ = 0.011511367871045398;
+      *itp++ = base_vector(0.5 - a, a, a);
+      *itc++ = 0.008818342151675485;
+      *itp++ = base_vector(a, a, 0.5 - a);
+      *itc++ = 0.008818342151675485;
+      *itp++ = base_vector(a, 0.5 - a, a);
+      *itc++ = 0.008818342151675485;
+      *itp++ = base_vector(0.5 - a, 0.5 - a, a);
+      *itc++ = 0.008818342151675485; 
+      *itp++ = base_vector(a, 0.5 - a, 0.5 - a);
+      *itc++ = 0.008818342151675485;
+      *itp++ = base_vector(0.5 - a, a, 0.5 - a);
+      *itc++ = 0.008818342151675485;
+      p->repartition[0] = NB_PER_VOL;
 
-      // face 0
+      
       double aa1 = 0.10128650732345634;
       double aa2 = 0.47014206410511509;
-      ptab[++i][0] = 1.0 / 3.0; ptab[i][1] = 1.0 / 3.0; ptab[i][2] = 1.0 / 3.0;
-      p->int_coeffs[i] = ::sqrt(3.0) * 9.0 / 40.0; 
-      ptab[++i][0] = 1.0 - aa1 - aa1; ptab[i][1] = aa1; ptab[i][2] = aa1;
-      p->int_coeffs[i] = ::sqrt(3.0) * 0.12593918054482715; 
-      ptab[++i][0] = aa1; ptab[i][1] = aa1; ptab[i][2] = 1.0 - aa1 - aa1;
-      p->int_coeffs[i] = ::sqrt(3.0) * 0.12593918054482715; 
-      ptab[++i][0] = aa1; ptab[i][1] = 1.0 - aa1 - aa1; ptab[i][2] = aa1;
-      p->int_coeffs[i] = ::sqrt(3.0) * 0.12593918054482715; 
-      ptab[++i][0] = 1.0 - aa2 - aa2; ptab[i][1] = aa2; ptab[i][2] = aa2;
-      p->int_coeffs[i] = ::sqrt(3.0) * 0.13239415278850618; 
-      ptab[++i][0] = aa2; ptab[i][1] = aa2; ptab[i][2] = 1.0 - aa2 - aa2;
-      p->int_coeffs[i] = ::sqrt(3.0) * 0.13239415278850618; 
-      ptab[++i][0] = aa2; ptab[i][1] = 1.0 - aa2 - aa2; ptab[i][2] = aa2;
-      p->int_coeffs[i] = ::sqrt(3.0) * 0.13239415278850618; 
-      p->repartition[1] = p->repartition[0] + 7;
+      double surf = ::sqrt(3.0) * 0.5;
+      for (int i = 0; i < NB_FA; ++i) {
+	int i1 = (i < 2) ? 1 : 0;
+	int i2 = (i < 3) ? 2 : 1;
+	(*itp)[i1] = 1.0 / 3.0; (*itp)[i2] = 1.0 / 3.0;
+	if (i == 0) (*itp)[0] = 1.0 - (*itp)[1] - (*itp)[2];
+	*itc++ = surf * 9.0 / 40.0; ++itp;
+	(*itp)[i1] = aa1; (*itp)[i2] = aa1;
+	if (i == 0) (*itp)[0] = 1.0 - (*itp)[1] - (*itp)[2];
+	*itc++ = surf * 0.12593918054482715; ++itp;
+	(*itp)[i1] = aa1; (*itp)[i2] = 1.0 - 2.0 * aa1;
+	if (i == 0) (*itp)[0] = 1.0 - (*itp)[1] - (*itp)[2];
+	*itc++ = surf * 0.12593918054482715; ++itp;
+	(*itp)[i1] = 1.0 - 2.0 * aa1; (*itp)[i2] = aa1;
+	if (i == 0) (*itp)[0] = 1.0 - (*itp)[1] - (*itp)[2];
+	*itc++ = surf * 0.12593918054482715; ++itp;
+	(*itp)[i1] = aa2; (*itp)[i2] = aa2;
+	if (i == 0) (*itp)[0] = 1.0 - (*itp)[1] - (*itp)[2];
+	*itc++ = surf * 0.13239415278850618; ++itp;
+	(*itp)[i1] = aa2; (*itp)[i2] = 1.0 - 2.0 * aa2;
+	if (i == 0) (*itp)[0] = 1.0 - (*itp)[1] - (*itp)[2];
+	*itc++ = surf * 0.13239415278850618; ++itp;
+	(*itp)[i1] = 1.0 - 2.0 * aa2; (*itp)[i2] = aa2;
+	if (i == 0) (*itp)[0] = 1.0 - (*itp)[1] - (*itp)[2];
+	*itc++ = surf * 0.13239415278850618; ++itp;
 
-      // face 1
-      ptab[++i][0] = 0.0; ptab[i][1] = 1.0 / 3.0; ptab[i][2] = 1.0 / 3.0;
-      p->int_coeffs[i] = 0.5 * 9.0 / 40.0; 
-      ptab[++i][0] = 0.0; ptab[i][1] = aa1; ptab[i][2] = aa1;
-      p->int_coeffs[i] = 0.5 * 0.12593918054482715; 
-      ptab[++i][0] = 0.0; ptab[i][1] = 1 - aa1 - aa1; ptab[i][2] = aa1;
-      p->int_coeffs[i] = 0.5 * 0.12593918054482715; 
-      ptab[++i][0] = 0.0; ptab[i][1] = aa1; ptab[i][2] = 1 - aa1 - aa1;
-      p->int_coeffs[i] = 0.5 * 0.12593918054482715; 
-      ptab[++i][0] = 0.0; ptab[i][1] = aa2; ptab[i][2] = aa2;
-      p->int_coeffs[i] = 0.5 * 0.13239415278850618; 
-      ptab[++i][0] = 0.0; ptab[i][1] = 1 - aa2 - aa2; ptab[i][2] = aa2;
-      p->int_coeffs[i] = 0.5 * 0.13239415278850618; 
-      ptab[++i][0] = 0.0; ptab[i][1] = aa2; ptab[i][2] = 1 - aa2 - aa2;
-      p->int_coeffs[i] = 0.5 * 0.13239415278850618; 
-      p->repartition[2] = p->repartition[1] + 7;
-      // face 2
-      ptab[++i][0] =  1.0 / 3.0; ptab[i][1] = 0.0; ptab[i][2] = 1.0 / 3.0;
-      p->int_coeffs[i] = 0.5 * 9.0 / 40.0; 
-      ptab[++i][0] = aa1; ptab[i][1] = 0.0; ptab[i][2] = aa1;
-      p->int_coeffs[i] = 0.5 * 0.12593918054482715; 
-      ptab[++i][0] = 1 - aa1 - aa1; ptab[i][1] = 0.0; ptab[i][2] = aa1;
-      p->int_coeffs[i] = 0.5 * 0.12593918054482715; 
-      ptab[++i][0] = aa1; ptab[i][1] = 0.0; ptab[i][2] = 1 - aa1 - aa1;
-      p->int_coeffs[i] = 0.5 * 0.12593918054482715; 
-      ptab[++i][0] = aa2; ptab[i][1] = 0.0; ptab[i][2] = aa2;
-      p->int_coeffs[i] = 0.5 * 0.13239415278850618; 
-      ptab[++i][0] = 1 - aa2 - aa2; ptab[i][1] = 0.0; ptab[i][2] = aa2;
-      p->int_coeffs[i] = 0.5 * 0.13239415278850618; 
-      ptab[++i][0] = aa2; ptab[i][1] = 0.0; ptab[i][2] = 1 - aa2 - aa2;
-      p->int_coeffs[i] = 0.5 * 0.13239415278850618; 
-      p->repartition[3] = p->repartition[2] + 7;
-      // face 3
-      ptab[++i][0] =  1.0 / 3.0; ptab[i][1] = 1.0 / 3.0; ptab[i][2] = 0.0;
-      p->int_coeffs[i] = 0.5 * 9.0 / 40.0; 
-      ptab[++i][0] = aa1; ptab[i][1] = aa1; ptab[i][2] = 0.0;
-      p->int_coeffs[i] = 0.5 * 0.12593918054482715; 
-      ptab[++i][0] = 1 - aa1 - aa1; ptab[i][1] = aa1; ptab[i][2] = 0.0;
-      p->int_coeffs[i] = 0.5 * 0.12593918054482715; 
-      ptab[++i][0] = aa1; ptab[i][1] = 1 - aa1 - aa1; ptab[i][2] = 0.0;
-      p->int_coeffs[i] = 0.5 * 0.12593918054482715;
-      ptab[++i][0] = aa2; ptab[i][1] = aa2; ptab[i][2] = 0.0;
-      p->int_coeffs[i] = 0.5 * 0.13239415278850618; 
-      ptab[++i][0] = 1 - aa2 - aa2; ptab[i][1] = aa2; ptab[i][2] = 0.0;
-      p->int_coeffs[i] = 0.5 * 0.13239415278850618; 
-      ptab[++i][0] = aa2; ptab[i][1] = 1 - aa2 - aa2; ptab[i][2] = 0.0;
-      p->int_coeffs[i] = 0.5 * 0.13239415278850618; 
-      p->repartition[4] = p->repartition[3] + 7;
+	p->repartition[i+1] = p->repartition[i] + NB_PER_FA;
+	surf = 0.5;
+      }
 
       p->pint_points = store_point_tab(ptab);
-      
+      if (itp != ptab.end()) DAL_THROW(internal_error, "internal error");
     }
     return p;
   }

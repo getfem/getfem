@@ -1,26 +1,26 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% parametres du programme elastostatique                                  %
+% parameters for program laplacien                                        %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%% parametres physiques :					      %%%%%
-
-N = 1;                  % dimension du probleme.
-LX = 1.0;		% taille en X.
-LY = 1.0;	        % taille en Y.
-LZ = 1.0;		% taille en Z.
-FT = 1.0;               % parametre pour la solution exacte.
+%%%%% pde parameters :	        				      %%%%%
+N = 3;                  % dimension of the domain.
+LX = 1.0;		% size in X.
+LY = 1.0;	        % size in Y.
+LZ = 1.0;		% size in Z.
+FT = 1.0;               % parameter for the exact solution.
 % FT = 3.141593;
 
-%%%%%   parametres de discretisation :  			      %%%%%
-K = 2;                  % Degre de l'element fini de Lagrange.
-INTEGRATION = 0;        % 0 = integration exacte
-			% 1 = Newton Cotes de degré 2 * K
-NX = 20;            	% Nombre de pas d'espace.
-ITEIMPL = 1;            % nombre d'iteration de point fixe.
-RESIDU = 1E-9;     	% Test d'arret pour la methode iterative
-MIXTE = 'N';
+%%%%%   discretisation parameters  :                     	      %%%%%
+K = 2;                  % Finite element degree.
+INTEGRATION = 25;        % 0 = exact integration.
+			% 1 = Newton Cotes of degree 2 * K
+			% 11, 12, 13, 14, 15, 16, 17 triangle(n-10)
+			% 21, 22, 23, 25 tetrahedron(n-20)
+NX = 10;            	% space steps.
+RESIDU = 1E-9;     	% residu for conjugate gradient.
+MIXTEHYBRID = 'N';
 
 
-%%%%%   parametres lies a la sauvegarde                               %%%%%
-ROOTFILENAME = 'laplacien';     % Racine des fichiers de donnees.
+%%%%%   saving parameters                                             %%%%%
+ROOTFILENAME = 'laplacien';     % Root of data files.
 

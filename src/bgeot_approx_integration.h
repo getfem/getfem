@@ -117,6 +117,8 @@ namespace bgeot
   papprox_integration triangle4_approx_integration(void);
   /// Integration on a triangle of order 5 with 7 points
   papprox_integration triangle5_approx_integration(void);
+  /// Integration on a triangle of order 6 with 12 points
+  papprox_integration triangle6_approx_integration(void);
   /// Integration on a triangle of order 7 with 13 points
   papprox_integration triangle7_approx_integration(void);
 

@@ -19,9 +19,8 @@ int main(void) {
 
     try {
       t[(unsigned)(-5)] = 8;
-      std::stringstream msg;
-      msg << "dynamic_array.C : negative index does not produce an error\0"; 
-      throw dal::internal_error(msg.str()); 
+      DAL_THROW(dal::internal_error,
+		"negative index does not produce an error");
     }
     catch(std::out_of_range e) {
       cout << "Out of range error successfully catched, ok\n";
@@ -30,7 +29,7 @@ int main(void) {
     t[64] = 13;
     // cout << "capacity : (should be 80) " << t.capacity() << endl;
     if (t.capacity() != 80)
-      throw dal::internal_error("dynamic_array.C : bad capacity");
+      DAL_THROW(dal::internal_error, " bad capacity");
     
     dal::dynamic_array<int, 4>::iterator itb = t.begin(), ite = t.end();
     dal::dynamic_array<int, 4>::iterator ita;
@@ -44,21 +43,19 @@ int main(void) {
     
     // cout << "capacity : (should be 80) " << t.capacity() << endl;
     if (t.capacity() != 80)
-      throw dal::internal_error("dynamic_array.C : bad capacity");
+      DAL_THROW(dal::internal_error, " bad capacity");
     // cout << "t[64] = (should be 3) " << t[64] << endl;
-    if (t[64] != 3)
-      throw dal::internal_error("dynamic_array.C : iterators don't work");
+    if (t[64] != 3) DAL_THROW(dal::internal_error, "iterators don't work");
     
     t.clear();
     // cout << "capacity : (should be 0) " << t.capacity() << endl;
-    if (t.capacity() != 0)
-      throw dal::internal_error("dynamic_array.C : clear does not work");
+    if (t.capacity() != 0) 
+      DAL_THROW(dal::internal_error, " clear does not work");
    
     std::fill(t.begin(), t.end(), int(3));
     // cout << "capacity : (should be 0) " << t.capacity() << endl;
-    if (t.capacity() != 0)
-      throw dal::internal_error("dynamic_array.C : clear does not work");    
-    
+    if (t.capacity() != 0)   
+      DAL_THROW(dal::internal_error, " clear does not work");
     t[64] = 6;
     
     dal::dynamic_array<int, 4> t2, t3;
@@ -68,7 +65,7 @@ int main(void) {
     
     // cout << "capacity : (should be 80) " << t.capacity() << endl;
     if (t.capacity() != 80)
-      throw dal::internal_error("dynamic_array.C : bad capacity");
+      DAL_THROW(dal::internal_error, " bad capacity");
 
     {
       dal::dynamic_array<int, 4>::const_iterator
@@ -88,8 +85,7 @@ int main(void) {
 	  ( (&(*it1)) == (&(*it2)) ) ||
 	  ( (&(*it2)) == (&(*it3)) ) ||
 	  ( (&(*it1)) == (&(*it3)) ) )
-	  throw dal::internal_error("dynamic_array.C : copy does not work");
-	  
+	  DAL_THROW(dal::internal_error, " copy does not work");
       }
     }
     
@@ -112,7 +108,7 @@ int main(void) {
 	    ( (&(*it1)) == (&(*it2)) ) ||
 	    ( (&(*it2)) == (&(*it3)) ) ||
 	    ( (&(*it1)) == (&(*it3)) ) )
-	    throw dal::internal_error("dynamic_array.C : copy does not work");
+	    DAL_THROW(dal::internal_error, " copy does not work");
 	}
     }
     
@@ -121,10 +117,10 @@ int main(void) {
     
     // cout << "t2[64] = (should be 6 6) " << t2[64] << " " << t3[64]<< endl;
     if (t2[64] != 6)
-      throw dal::internal_error("dynamic_array.C : copy does not work");
+       DAL_THROW(dal::internal_error, " copy does not work");
     // cout << "capacity : (should be 80) " << t3.capacity() << endl;
     if (t.capacity() != 80)
-      throw dal::internal_error("dynamic_array.C : bad capacity");
+      DAL_THROW(dal::internal_error, " bad capacity");
 
   }
   DAL_STANDARD_CATCH_ERROR;
