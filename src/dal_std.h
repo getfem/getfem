@@ -78,7 +78,16 @@
 #  if (__GNUC__ < 3)
 #    define USING_BROKEN_GCC295
 #    include <strstream>
-#    define stringstream strstream // not perfectly correct
+//#    define stringstream strstream // not perfectly correct
+namespace std {
+  class stringstream : public strstream {
+  public:
+    std::string str() { (*this) << char(0); return std::string(strstream::str()); }
+    explicit stringstream() : strstream() {}
+    explicit stringstream(const string &s) : strstream() { (*this) << s; }
+    ~stringstream() { delete[] strstream::str(); }
+  };
+}
 #  else
 #    include <sstream>
 #  endif
