@@ -39,8 +39,94 @@
 #include <dal_tree_sorted.h>
 #include <getfem_mesh_slice.h>
 
-namespace getfem
-{
+namespace getfem {
+
+  /* ********************************************************************* */
+  /*								   	   */
+  /*	I. Ventilation of a set of points on a mesh.         		   */
+  /*									   */
+  /* ********************************************************************* */
+
+  class mesh_trans_inv : public bgeot::geotrans_inv {
+
+  protected :
+    typedef gmm::abstract_null_type void_type;
+    const getfem_mesh &mesh;
+    std::vector<std::map<size_type, void_type> > pts_cvx;
+    typedef std::map<size_type, void_type>::const_iterator map_iterator;
+    std::vector<base_node> ref_coords;
+    std::vector<double> dist;
+    std::vector<size_type> cvx_pts;
+    double EPS;
+
+  public :
+
+    size_type nb_points_on_convex(size_type i) const
+    { return pts_cvx[i].size(); }
+    void points_on_convex(size_type i, std::vector<size_type> &itab) const {
+      itab.resize(pts_cvx[i].size()); size_type j = 0;
+      for (map_iterator it = pts_cvx[i].begin(); it != pts_cvx[i].end(); ++it)
+	itab[j++] = it->first;
+    }
+
+    const std::vector<base_node> &reference_coords(void) { return ref_coords; }
+
+    /* projection = false : Only the points inside the mesh are ventilated.
+     * projection = true  : Try to project the exterior points.
+     * TODO : for projection, verify that all the points have been projected
+     *        else project them on the frontiere convexes.
+     */
+    void ventilate(bool projection = false) {
+      size_type nbpts = nb_points();
+      dal::bit_vector nn = mesh.convex_index(), npt;
+      size_type nbcvx = nn.last_true() + 1;
+      ref_coords.resize(nbpts); dist.resize(nbpts);
+      pts_cvx.resize(nbcvx);
+      base_node min, max, pt_ref; /* bound of the box enclosing the convex */
+      bgeot::kdtree_tab_type boxpts;
+
+      for (size_type j = nn.take_first(); j != size_type(-1); j << nn) {
+	pts_cvx[j].clear();
+	bgeot::pgeometric_trans pgt = mesh.trans_of_convex(j);
+	bounding_box(min, max, mesh.points_of_convex(j), pgt);
+	for (size_type k=0; k < min.size(); ++k) { min[k]-=EPS; max[k]+=EPS; }
+	gic.init(mesh.convex(j), pgt);
+	points_in_box(boxpts, min, max);
+	for (size_type l = 0; l < boxpts.size(); ++l) {
+	  bool gicisin = gic.invert(boxpts[l].n, pt_ref, EPS);
+	  bool toadd = projection || gicisin;
+	  double isin = pgt->convex_ref()->is_in(pt_ref);
+	  size_type ind = boxpts[l].i;
+	  if (toadd && npt[ind]) {
+	    if (isin < dist[ind]) pts_cvx[cvx_pts[ind]].erase(ind);
+	    else toadd = false;
+	  }
+	  if (toadd) {
+	    ref_coords[ind] = pt_ref;
+	    dist[ind] = isin;
+	    cvx_pts[ind] = j;
+	    pts_cvx[j][ind] = void_type();
+	    npt[ind] = true;
+	  }
+	}
+      }
+    }
+
+
+    mesh_trans_inv(const getfem_mesh &m) : bgeot::geotrans_inv(1E-12), mesh(m)
+    {}
+
+
+  };
+  
+
+  /* ********************************************************************* */
+  /*								   	   */
+  /*	II. Interpolation.                                  		   */
+  /*									   */
+  /* ********************************************************************* */
+
+
   /**
      interpolation of a solution on same mesh.
      - &mf_target.linked_mesh() == &mf_source.linked_mesh()

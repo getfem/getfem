@@ -137,6 +137,7 @@ SRC =                                   \
 	getfem_mesh_slice.C	        \
 	getfem_regular_meshes.C         \
 	getfem_import.C	                \
+	getfem_interpolation.C          \
 	getfem_export.C                 \
 	getfem_assembling_tensors.C
 
