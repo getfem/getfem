@@ -53,7 +53,7 @@ namespace ftool
   {
     int i = 0, l = strlen(st); char c;
     while (!ist.eof() && i < l)
-      { ist.get(c); if (toupper(c) == st[i]) i++; else i = 0; }
+      { ist.get(c); if (toupper(c) == toupper(st[i])) i++; else i = 0; }
     if (ist.eof()) return false; else return true;
   }
 
@@ -76,6 +76,29 @@ namespace ftool
       { st[i++] = toupper(c); if (ist.eof()) break; ist.get(c); }
     st[i] = 0;
     return true;
+  }
+
+  std::istream& operator>>(std::istream& is, const skip& t) {
+    char c;
+    int i = 0;
+    while (!is.get(c).eof() && isspace(c)) /*continue*/;    
+    for (i=0; t.s[i]; ++i) {
+      if (i) is.get(c);
+      cerr << "skip " << t.s[i] << endl;
+      if (toupper(c) != toupper(t.s[i]) || is.eof()) DAL_THROW(dal::failure_error, "expected token '" << t.s << "' not found");
+    }
+    return is;
+  }
+
+  int casecmp(const char *a, const char *b, unsigned n) {
+    unsigned i;
+    for (i=0; i < n && a[i] && b[i]; ++i) {
+      if (toupper(a[i]) < toupper(b[i])) return -1;
+      else if (toupper(a[i]) > toupper(b[i])) return -1;
+    }
+    if (a[i]) return +1;
+    else if (b[i]) return -1;
+    else return 0;
   }
 
   static char temp_string[512];

@@ -43,6 +43,26 @@ namespace ftool
   bool read_untill(std::istream &ist, const char *st);
   bool get_token(std::istream &ist, char *st, int nb);
 
+  struct skip {
+    const char *s;
+    skip(const char *_s) : s(_s) {}
+  };
+  std::istream& operator>>(std::istream& is, const skip& t);
+
+  /* ********************************************************************* */
+  /*       Case-insensitive string operations                              */
+  /* ********************************************************************* */
+  int casecmp(const char *a, const char *b, unsigned n=unsigned(-1));
+  inline int casecmp(const std::string& a, const char *b, unsigned n=unsigned(-1)) {
+    return casecmp(a.c_str(),b,n);
+  }
+  inline int casecmp(const std::string& a, const std::string& b, unsigned n=unsigned(-1)) {
+    return casecmp(a.c_str(), b.c_str(),n);
+  }
+  inline int casecmp(char a, char b) { 
+    return toupper(a) < toupper(b) ? -1 : (toupper(a) == toupper(b) ? 0 : +1); 
+  }
+
   /* ********************************************************************* */
   /*       Clock functions.                                                */
   /* ********************************************************************* */
