@@ -235,13 +235,24 @@ namespace getfem {
   };
 
   template< typename VEC > class asm_data : public base_asm_data {
-    VEC *v;
+    VEC &v;
+    scalar_type *ptr;
+    std::auto_ptr<std::vector<scalar_type> > v_copy;
   public:
-    asm_data(VEC *v_) : v(v_) {}
-    size_type vect_size() const {
-      return gmm::vect_size(*v); 
+    asm_data(VEC *v_) : v(*v_) {
+      ptr = &v[0];
+      for (size_type i=0; i < vect_size(); ++i) {
+	if (&v[i] != &ptr[i]) { 
+	  DAL_WARNING(2, "non-contiguous assembly data, doing a temporary copy");
+	  v_copy.reset(new std::vector<scalar_type>(v.begin(),v.end()));
+	  ptr = &v[0];
+	}
+      }
     }
-    const scalar_type *get_data_ptr() const { return &((*v)[0]); }
+    size_type vect_size() const {
+      return gmm::vect_size(v); 
+    }
+    const scalar_type *get_data_ptr() const { return ptr; }
   };
 
   class base_asm_vec {
