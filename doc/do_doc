@@ -11,11 +11,14 @@ print F ' \Huge \bf GETFEM++ \end{center}} \newpage', "\n\n";
 print F '\tableofcontents', "\n\n";
 close F;
 
-`extract_latex < ../include/getfem/dal_std.h >> doc.tex`;
-`extract_latex < ../include/getfem/dal_basic.h >> doc.tex`;
-`extract_latex < ../include/getfem/dal_algobase.h >> doc.tex`;
-`extract_latex < ../include/getfem/bgeot_poly.h >> doc.tex`;
-`extract_latex < ../include/getfem/bgeot_geometric_trans.h >> doc.tex`;
+`extract_latex < ../getfem/include/getfem/dal_std.h >> doc.tex`;
+`extract_latex < ../getfem/include/getfem/dal_basic.h >> doc.tex`;
+`extract_latex < ../getfem/include/getfem/dal_algobase.h >> doc.tex`;
+`extract_latex < ../getfem/include/getfem/bgeot_poly.h >> doc.tex`;
+`extract_latex < ../getfem/include/getfem/bgeot_vector.h >> doc.tex`;
+`extract_latex < ../getfem/include/getfem/bgeot_convex_structure.h >> doc.tex`;
+`extract_latex < ../getfem/include/getfem/bgeot_fem_interpolation.h >> doc.tex`;
+`extract_latex < ../getfem/include/getfem/bgeot_geometric_trans.h >> doc.tex`;
 
 open F, ">>doc.tex" or die;
 print F "\n", '\end{document}', "\n";
