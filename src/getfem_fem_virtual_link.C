@@ -179,10 +179,9 @@ namespace getfem
 			      coeff, val);
 	    M(j, k) = val[0];
 	    if (wg) {
-// a refaire !!!
-// 	      pf->complete_interpolation_grad(gauss_ptab[indg].localcoords, G1,
-// 				      pmf1->linked_mesh().trans_of_convex(cv1),
-// 				      coeff, val2);
+ 	      pf->interpolation_grad(gauss_ptab[indg].localcoords, G1,
+				     pmf1->linked_mesh().trans_of_convex(cv1),
+				     coeff, val2);
 	      for (dim_type n = 0; n < pmf2->linked_mesh().dim(); ++n)
 		M(j + (n+1)*nbgauss, k) = val2(0, n);
 	    }

@@ -109,40 +109,62 @@ namespace getfem
 //     }
 //   }
 
-//   void virtual_fem::complete_interpolation_grad(const base_node &x,
-// 						const base_matrix &G,
-// 						bgeot::pgeometric_trans pgt,
-// 						const base_vector &coeff,
-// 						base_matrix &val) const {
-//     dim_type N = G.nrows();
-//     dim_type P = dim();
-//     size_type npt = G.ncols();
-//     base_matrix pc(npt , P);
-//     base_matrix grad(N, P), TMP1(P,P), B0(P,N), CS(P,P);
-//     base_matrix val2(target_dim(), P);
-//     base_poly PP;
-
-//     for (size_type i = 0; i < npt; ++i)
-//       for (dim_type n = 0; n < P; ++n) {
-// 	PP = pgt->poly_vector()[i];
-// 	PP.derivative(n);
-// 	pc(i, n) = PP.eval(x.begin());
-//       }
-      
-//     bgeot::mat_product(G, pc, grad);
-//     if (P != N) {
-//       bgeot::mat_product_tn(grad, grad, CS);
-//       bgeot::mat_inv_cholesky(CS, TMP1);
-//       bgeot::mat_product_tt(CS, grad, B0);
-//     }
-//     else {
-//       bgeot::mat_gauss_inverse(grad, TMP1);
-//       B0 = grad;
-//     }
-
-//     interpolation_grad(x, G, pgt, coeff, val2);
-//     bgeot::mat_product(val2, B0, val);
-//   }
+  void virtual_fem::interpolation_grad(const base_node &x,
+				       const base_matrix &G,
+				       bgeot::pgeometric_trans pgt,
+				       const base_vector &coeff,
+				       base_matrix &val) const {
+    dim_type N = G.nrows();
+    dim_type P = dim();
+    size_type npt = G.ncols();
+    base_matrix pc(npt , P);
+    base_matrix grad(N, P), TMP1(P,P), B0(P,N), CS(P,P), M;
+    base_matrix val2(target_dim(), P);
+    base_poly PP;
+    base_tensor t;
+    
+    for (size_type i = 0; i < npt; ++i)
+      for (dim_type n = 0; n < P; ++n) {
+	PP = pgt->poly_vector()[i];
+	PP.derivative(n);
+	pc(i, n) = PP.eval(x.begin());
+      }
+    
+    bgeot::mat_product(G, pc, grad);
+    if (P != N) {
+      bgeot::mat_product_tn(grad, grad, CS);
+      bgeot::mat_inv_cholesky(CS, TMP1);
+      bgeot::mat_product_tt(CS, grad, B0);
+    }
+    else {
+      bgeot::mat_gauss_inverse(grad, TMP1);
+      B0 = grad;
+    }
+     
+    grad_base_value(x, t);
+    base_tensor::iterator it = t.begin();
+    
+    size_type R = nb_dof(), RR = nb_base();
+    
+    if (!is_equivalent()) { M.resize(RR, R); mat_trans(M, G, pgt); }
+    
+    val2.fill(0.0);
+    
+    for (size_type k = 0; k < x.size(); ++k)
+      for (size_type r = 0; r < target_dim(); ++r)
+ 	for (size_type j = 0; j < RR; ++j, ++it) {
+ 	  scalar_type co = 0.0;
+ 	  if (is_equivalent())
+ 	    co = coeff[j];
+	  else
+ 	    for (size_type i = 0; i < R; ++i)
+ 	      co += coeff[i] * M(i, j);
+	  
+ 	  val2(r,k) += co * (*it);
+ 	} 
+    
+    bgeot::mat_product(val2, B0, val);
+  }
 
 
   void virtual_fem::real_base_value(pgeotrans_precomp, pfem_precomp pfp,
@@ -170,29 +192,6 @@ namespace getfem
     tt.mat_transp_reduction(pfp->grad(ip), B32, 2);
     t -= tt;
   }
-  
-  
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
   /* ******************************************************************** */

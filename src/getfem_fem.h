@@ -167,12 +167,13 @@ namespace getfem
 //                                     const base_matrix &G,
 // 				    bgeot::pgeometric_trans pgt,
 // 				    const base_vector &coeff,
-// 				    base_matrix &val) const = 0;
-//     virtual void complete_interpolation_grad(const base_node &x,
-// 					     const base_matrix &G,
-// 					     bgeot::pgeometric_trans pgt,
-// 					     const base_vector &coeff,
-// 					     base_matrix &val) const;
+// 				    base_matrix &val) const;
+   // function used by virtual_link_fem. Interpolates completely the gradient 
+    virtual void interpolation_grad(const base_node &x,
+					     const base_matrix &G,
+					     bgeot::pgeometric_trans pgt,
+					     const base_vector &coeff,
+					     base_matrix &val) const;
 //     virtual void interpolation_grad(pfem_precomp pfp, size_type ii,
 // 				    const base_matrix &G,
 // 				    bgeot::pgeometric_trans pgt, 
