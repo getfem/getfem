@@ -179,10 +179,11 @@ namespace gmm {
   (std::ostream &o, const gen_sub_row_matrix<PT, SUBI1, SUBI2>& m)
   { gmm::write(o,m); return o; }
 
-  // for GCC 2.95
+#ifdef USING_BROKEN_GCC295
   template <class PT, class SUBI1, class SUBI2>
   struct linalg_traits<const gen_sub_row_matrix<PT, SUBI1, SUBI2> >
     : public linalg_traits<gen_sub_row_matrix<PT, SUBI1, SUBI2> > {};
+#endif
 
   /* ********************************************************************* */
   /*		sub column matrices type                                   */
@@ -329,10 +330,11 @@ namespace gmm {
   (std::ostream &o, const gen_sub_col_matrix<PT, SUBI1, SUBI2>& m)
   { gmm::write(o,m); return o; }
 
-  // for GCC 2.95
+#ifdef USING_BROKEN_GCC295
   template <class PT, class SUBI1, class SUBI2>
   struct linalg_traits<const gen_sub_col_matrix<PT, SUBI1, SUBI2> >
     : public linalg_traits<gen_sub_col_matrix<PT, SUBI1, SUBI2> > {};
+#endif
 
 
   /* ******************************************************************** */
@@ -341,7 +343,9 @@ namespace gmm {
 
   
   template <class PT, class SUBI1, class SUBI2, class ST>
-  struct _sub_matrix_type;
+  struct _sub_matrix_type {
+    typedef abstract_null_type return_type;
+  };
   template <class PT, class SUBI1, class SUBI2>
   struct _sub_matrix_type<PT, SUBI1, SUBI2, col_major>
   { typedef gen_sub_col_matrix<PT, SUBI1, SUBI2> matrix_type; };

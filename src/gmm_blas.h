@@ -542,7 +542,7 @@ namespace gmm {
   /* ******************************************************************** */
   /*		Euclidian norm                             		  */
   /* ******************************************************************** */
-
+  
    template <class V>
    typename number_traits<typename linalg_traits<V>::value_type>
    ::magnitude_type
@@ -554,7 +554,7 @@ namespace gmm {
     for (; it != ite; ++it) res += dal::sqr(dal::abs(*it));
     return sqrt(res);
   }
-
+  
   /* ******************************************************************** */
   /*		Inifity norm                              		  */
   /* ******************************************************************** */

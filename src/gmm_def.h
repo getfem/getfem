@@ -48,8 +48,11 @@ namespace gmm {
   /* ******************************************************************** */
   /*		Specifier types                             		  */
   /* ******************************************************************** */
-
-  struct abstract_null_type {}; // specify an information lake.
+  /* not really null, required by aCC 3.33 */
+  struct abstract_null_type { 
+    abstract_null_type(int=0) {}
+    template <class A,class B,class C> void operator()(A,B,C) {}
+  }; // specify an information lake.
 
   struct linalg_true {};
   struct linalg_false {};
@@ -85,17 +88,30 @@ namespace gmm {
   template<> struct principal_orientation_type<col_and_row>
   { typedef col_major potype; };
 
-  template <class V> struct linalg_traits;
-//   template <class V> struct linalg_traits {    
-//     typedef abstract_null_type this_type;
-//     typedef abstract_null_type value_type;
-//     typedef abstract_null_type reference;
-//     typedef abstract_null_type iterator;
-//     typedef abstract_null_type const_iterator;
-//     typedef abstract_null_type storage_type;
-//     typedef abstract_null_type const_sub_row_type;
-//     typedef abstract_null_type const_sub_col_type;
-//   };
+  //  template <class V> struct linalg_traits;
+  template <class V> struct linalg_traits {    
+    typedef abstract_null_type this_type;
+    typedef abstract_null_type linalg_type;
+    typedef abstract_null_type value_type;
+    typedef abstract_null_type is_reference;
+    typedef abstract_null_type& reference;
+    typedef abstract_null_type* iterator;
+    typedef const abstract_null_type* const_iterator;
+    typedef abstract_null_type storage_type;
+    typedef abstract_null_type const_sub_row_type;
+    typedef abstract_null_type const_sub_col_type;
+    typedef abstract_null_type clear_type;
+    typedef abstract_null_type access_type;
+    typedef abstract_null_type const_sub_row_type;
+    typedef abstract_null_type sub_row_type;
+    typedef abstract_null_type const_row_iterator;
+    typedef abstract_null_type row_iterator;
+    typedef abstract_null_type const_sub_col_type;
+    typedef abstract_null_type sub_col_type;
+    typedef abstract_null_type const_col_iterator;
+    typedef abstract_null_type col_iterator;
+    typedef abstract_null_type sub_orientation;    
+  };
 
   template <class PT, class V> struct vect_ref_type;
   template <class P, class V> struct vect_ref_type<P *, V> {
@@ -132,7 +148,9 @@ namespace gmm {
   /*  types to deal with const object representing a modifiable reference */
   /* ******************************************************************** */
   
-  template <class PT, class R> struct _mref_type;
+  template <class PT, class R> struct _mref_type {
+    typedef abstract_null_type return_type;
+  };
 
   template <class L, class R> struct _mref_type<L *, R>
   { typedef L & return_type; };
@@ -161,7 +179,10 @@ namespace gmm {
 
 
 
-  template <class L, class R> struct _cref_type;
+  template <class L, class R> struct _cref_type {
+    typedef abstract_null_type return_type;
+  };
+
   template <class L> struct _cref_type<L, linalg_modifiable>
   { typedef L & return_type; };
 
@@ -176,7 +197,9 @@ namespace gmm {
 
 
 
-  template <class C1, class C2, class REF> struct _select_return;
+  template <class C1, class C2, class REF> struct _select_return {
+    typedef abstract_null_type return_type;
+  };
   template <class C1, class C2, class L>
   struct _select_return<C1, C2, const L &> { typedef C1 return_type; };
   template <class C1, class C2, class L>
@@ -197,14 +220,18 @@ namespace gmm {
       ::reference reference;
   };
 
-  template <class PT> struct which_reference;
+  template <class PT> struct which_reference {
+    typedef abstract_null_type is_reference;
+  };
   template <class PT> struct which_reference<PT *>
   { typedef linalg_modifiable is_reference; };
   template <class PT> struct which_reference<const PT *>
   { typedef linalg_const is_reference; };
 
 
-  template <class C1, class C2, class R> struct _select_orientation;
+  template <class C1, class C2, class R> struct _select_orientation {
+    typedef abstract_null_type return_type;
+  };
   template <class C1, class C2> struct _select_orientation<C1, C2, row_major>
   { typedef C1 return_type; };
    template <class C1, class C2> struct _select_orientation<C1, C2, col_major>
@@ -251,7 +278,9 @@ namespace gmm {
   /* ******************************************************************** */
 
   
-  template <class R, class S, class L, class V> struct _temporary_vector {};
+  template <class R, class S, class L, class V> struct _temporary_vector {
+    typedef abstract_null_type vector_type;
+  };
   template <class V, class L>
   struct _temporary_vector<linalg_true, abstract_sparse, L, V>
   { typedef wsvector<typename linalg_traits<V>::value_type> vector_type; };
@@ -284,7 +313,9 @@ namespace gmm {
   /*   std::vector if V is a reference or another type of vector          */
   /* ******************************************************************** */
 
-  template <class R, class S, class V> struct _temporary_plain_vector;
+  template <class R, class S, class V> struct _temporary_plain_vector {
+    typedef abstract_null_type vector_type;
+  };
   template <class S, class V> struct _temporary_plain_vector<linalg_true, S, V>
   { typedef std::vector<typename linalg_traits<V>::value_type> vector_type; };
   template <class V>
@@ -309,7 +340,9 @@ namespace gmm {
   /*   wsvector if V is a reference or another type of vector             */
   /* ******************************************************************** */
 
-  template <class R, class S, class V> struct _temporary_sparse_vector;
+  template <class R, class S, class V> struct _temporary_sparse_vector {
+    typedef abstract_null_type vector_type;
+  };
   template <class S, class V>
   struct _temporary_sparse_vector<linalg_true, S, V>
   { typedef wsvector<typename linalg_traits<V>::value_type> vector_type; };
@@ -335,7 +368,9 @@ namespace gmm {
   /*   slvector if V is a reference or another type of vector             */
   /* ******************************************************************** */
 
-  template <class R, class S, class V> struct _temporary_skyline_vector;
+  template <class R, class S, class V> struct _temporary_skyline_vector {
+    typedef abstract_null_type vector_type;
+  };
   template <class S, class V>
   struct _temporary_skyline_vector<linalg_true, S, V>
   { typedef slvector<typename linalg_traits<V>::value_type> vector_type; };
@@ -360,29 +395,26 @@ namespace gmm {
   /*		Standard access and clear objects             		   */
   /* ********************************************************************* */
 
-  template <class V> struct plain_access {
-    typedef typename linalg_traits<V>::value_type value_type;
+  template <class IT, class CIT> struct plain_access {
+
+    typedef typename std::iterator_traits<IT>::value_type value_type;
     typedef value_type &reference;
-    typedef typename linalg_traits<V>::iterator iterator;
-    typedef typename linalg_traits<V>::const_iterator const_iterator;
-    
-    reference operator()(const void *, const iterator &_begin,
-			 const iterator &, size_type i)
+  
+    reference operator()(const void *, const IT &_begin,
+			 const IT &, size_type i)
     { return _begin[i]; }
-    value_type operator()(const void *, const const_iterator &_begin,
-			 const const_iterator &, size_type i)
+    value_type operator()(const void *, const CIT &_begin,
+			 const CIT &, size_type i)
     { return _begin[i]; }
   };
 
-  template <class V> struct plain_clear {
-    typedef typename linalg_traits<V>::value_type value_type;
-    typedef typename linalg_traits<V>::iterator iterator;
-    
-    void operator()(const void *,const iterator &_begin,const iterator &_end);
+  template <class IT> struct plain_clear {
+    typedef typename std::iterator_traits<IT>::value_type value_type;
+    void operator()(const void *,const IT &_begin,const IT &_end);
   };
   
-  template <class V> void plain_clear<V>::operator()(const void *,
-			  const iterator &_begin, const iterator &_end)
+  template <class IT> void plain_clear<IT>::operator()(const void *,
+			  const IT &_begin, const IT &_end)
   { std::fill(_begin, _end, value_type(0)); }
 
 }

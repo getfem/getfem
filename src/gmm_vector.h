@@ -210,7 +210,7 @@ namespace gmm
     size_type size(void) const { return nbl; }
 
     /* Constructeurs */
-    void init(size_type l) { nbl = l; clear(); }
+    void init(size_type l) { nbl = l; this->clear(); }
     explicit wsvector(size_type l){ init(l); }
     wsvector(void) { init(0); }
 
@@ -274,9 +274,10 @@ namespace gmm
   template<class T> std::ostream &operator <<
   (std::ostream &o, const wsvector<T>& v) { gmm::write(o,v); return o; }
 
-  // for GCC 2.95
+#ifdef USING_BROKEN_GCC295
   template <class T> struct linalg_traits<const wsvector<T> >
     : public linalg_traits<wsvector<T> > {};
+#endif
 
   /*************************************************************************/
   /*                                                                       */
@@ -490,9 +491,10 @@ namespace gmm
   template<class T> std::ostream &operator <<
   (std::ostream &o, const rsvector<T>& v) { gmm::write(o,v); return o; }
 
-  // for GCC 2.95
+#ifdef USING_BROKEN_GCC295
   template <class T> struct linalg_traits<const rsvector<T> >
     : public linalg_traits<rsvector<T> > {};
+#endif
 
   template <class V, class T> void copy(const V &v1, rsvector<T> &v2) {
     if ((const void *)(&v1) != (const void *)(&v2)) {
@@ -802,9 +804,10 @@ namespace gmm
   template<class T> std::ostream &operator <<
   (std::ostream &o, const slvector<T>& v) { gmm::write(o,v); return o; }
 
-  // for GCC 2.95
+#ifdef USING_BROKEN_GCC295
   template <class T> struct linalg_traits<const slvector<T> >
     : public linalg_traits<slvector<T> > {};
+#endif
 
 
 }

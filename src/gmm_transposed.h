@@ -117,9 +117,10 @@ namespace gmm {
   }
   
 
-  // for GCC 2.95
+#ifdef USING_BROKEN_GCC295
   template <class PT> struct linalg_traits<const transposed_row_ref<PT> > 
   : public linalg_traits<transposed_row_ref<PT> > {}; 
+#endif
 
   template<class PT> std::ostream &operator <<
   (std::ostream &o, const transposed_row_ref<PT>& m)
@@ -203,15 +204,18 @@ namespace gmm {
   }
 
 
-  // for GCC 2.95
+#ifdef USING_BROKEN_GCC295
   template <class PT> struct linalg_traits<const transposed_col_ref<PT> > 
   : public linalg_traits<transposed_col_ref<PT> > {}; 
+#endif
 
   template<class PT> std::ostream &operator <<
   (std::ostream &o, const transposed_col_ref<PT>& m)
   { gmm::write(o,m); return o; }
 
-  template <class TYPE, class PT> struct _transposed_return;
+  template <class TYPE, class PT> struct _transposed_return {
+    typedef abstract_null_type return_type;
+  };
   template <class PT> struct _transposed_return<row_major, PT> {
     typedef typename std::iterator_traits<PT>::value_type L;
     typedef typename select_return<transposed_row_ref<const L *>,

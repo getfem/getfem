@@ -175,10 +175,11 @@ namespace gmm {
   (std::ostream &o, const sparse_sub_vector<PT, SUBI>& m)
   { gmm::write(o,m); return o; }
 
-  // for GCC 2.95
+#ifdef USING_BROKEN_GCC295
   template <class PT, class SUBI>
   struct linalg_traits<const sparse_sub_vector<PT, SUBI> >
     : public linalg_traits<sparse_sub_vector<PT, SUBI> > {};
+#endif
 
   /* ********************************************************************* */
   /*		skyline sub-vectors                                        */
@@ -318,10 +319,11 @@ namespace gmm {
   (std::ostream &o, const skyline_sub_vector<PT, SUBI>& m)
   { gmm::write(o,m); return o; }
 
-  // for GCC 2.95
+#ifdef USING_BROKEN_GCC295
   template <class PT, class SUBI>
   struct linalg_traits<const skyline_sub_vector<PT, SUBI> >
     : public linalg_traits<skyline_sub_vector<PT, SUBI> > {};
+#endif
 
   /* ******************************************************************** */
   /*		sub vector.                                               */
@@ -330,7 +332,9 @@ namespace gmm {
   /* returned by sub_vector(v, sub_index)                                 */
   /************************************************************************/
 
-  template <class PT, class SUBI, class st_type> struct svrt_ir;
+  template <class PT, class SUBI, class st_type> struct svrt_ir {
+    typedef abstract_null_type return_type;
+  };
 
   template <class PT>
   struct svrt_ir<PT, sub_index, abstract_plain> {

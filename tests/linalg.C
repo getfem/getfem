@@ -49,7 +49,7 @@ int main(void)
     gmm::clear(y);
     gmm::bicgstab(m, y, b, gmm::identity_matrix(), 1000, 1E-16, 0);
     cout << "y = " << y << endl;
-    gmm::add(gmm::scaled(x, -1.0), y);
+    gmm::add(gmm::scaled(x, double(-1.0)), y);
     cout << "y = " << y << endl;
     double error = gmm::vect_norm2(y);
     cout << "Error : " << error << endl;

@@ -186,7 +186,7 @@ namespace dal
     const_tsa_iterator(const dynamic_tree_sorted<T, COMP, pks> &tsa)
     { p = &tsa; depth = 0; }
     void copy(const const_tsa_iterator<T, COMP, pks> &it);
-    const_tsa_iterator(const const_tsa_iterator &it) { copy(it); }
+    const_tsa_iterator(const const_tsa_iterator &it) { this->copy(it); }
     const_tsa_iterator(const tsa_iterator<T, COMP, pks> &it);
     const_tsa_iterator &operator =(const const_tsa_iterator &it)
     { copy(it); return *this; }

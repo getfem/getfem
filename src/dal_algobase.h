@@ -33,12 +33,9 @@
 
 #ifndef __DAL_ALGOBASE_H
 #define __DAL_ALGOBASE_H
-
-
 #include <dal_std.h>
 #include <dal_except.h>
 #include <functional>
-
 namespace dal
 {
 

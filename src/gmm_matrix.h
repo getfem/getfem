@@ -151,9 +151,10 @@ namespace gmm
     static void do_clear(this_type &m) { m.clear_mat(); }
   };
 
-  // for GCC 2.95
+#ifdef USING_BROKEN_GCC295
   template <class V> struct linalg_traits<const row_matrix<V> >
     : public linalg_traits<row_matrix<V> > {};
+#endif
 
    template<class V> std::ostream &operator <<
   (std::ostream &o, const row_matrix<V>& m) { gmm::write(o,m); return o; }
@@ -245,9 +246,10 @@ namespace gmm
   template<class V> std::ostream &operator <<
   (std::ostream &o, const col_matrix<V>& m) { gmm::write(o,m); return o; }
 
-    // for GCC 2.95
+#ifdef USING_BROKEN_GCC295
   template <class V> struct linalg_traits<const col_matrix<V> >
     : public linalg_traits<col_matrix<V> > {};
+#endif
 
   /* ******************************************************************** */
   /*		Block matrix                                		  */

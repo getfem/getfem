@@ -44,7 +44,14 @@
 /* ********************************************************************** */
 /*	C++ Standard Headers.						  */
 /* ********************************************************************** */
-
+/*
+ essai raté pour sun CC 5.0 ...
+#if defined(__SUNPRO_CC) && __SUNPRO_CC >= 0x500
+# include <stdcomp.h>
+# undef _RWSTD_NO_CLASS_PARTIAL_SPEC
+# undef _RWSTD_NO_NAMESPACE
+#endif 
+*/
 #include <stdlib.h>
 #include <stddef.h>
 #include <math.h>
@@ -72,6 +79,7 @@
 
 #if defined(__GNUC__)
 #  if (__GNUC__ < 3)
+#    define USING_BROKEN_GCC295
 #    include <strstream>
 #    define stringstream strstream // not perfectly correct
 #  else

@@ -238,6 +238,13 @@ namespace getfem
     const std::vector<FUNC> &base(void) const { return _base; }
     std::vector<FUNC> &base(void) { return _base; }
     
+    /* just to please for HP aCC and SGI CC */
+    virtual void interpolation(pfem_precomp pfp, size_type ii,
+			       const base_matrix &G,
+			       bgeot::pgeometric_trans pgt, 
+      const base_vector coeff, base_node &val) const { 
+      virtual_fem::interpolation(pfp,ii,G,pgt,coeff,val); 
+    }
     void interpolation(const base_node &x, const base_matrix &G, 
 		       bgeot::pgeometric_trans pgt,
 		       const base_vector coeff, base_node &val) const;

@@ -320,14 +320,26 @@ namespace getfem
     void sup_boundary(size_type b)
       { valid_boundaries.sup(b); boundaries[b].clear(); }
     void swap_boundaries_convex(size_type c1, size_type c2);
-    
+
+    /* explicit calls to parent class 
+       for HP aCC and mipspro CC who complain about hidden functions 
+       (they're right)
+    */
     void receipt(const MESH_CLEAR &);
     void receipt(const MESH_DELETE &);
+    void receipt(const MESH_ADD_POINT &m) { getfem_mesh_receiver::receipt(m); }
+    void receipt(const MESH_SUP_POINT &m) { getfem_mesh_receiver::receipt(m); }
+    void receipt(const MESH_SWAP_POINT &m) { getfem_mesh_receiver::receipt(m); }
+    void receipt(const MESH_ADD_CONVEX &m) { getfem_mesh_receiver::receipt(m); }
     void receipt(const MESH_SUP_CONVEX &m);
     void receipt(const MESH_SWAP_CONVEX &m);
     void receipt(const MESH_REFINE_CONVEX &m);
     void receipt(const MESH_UNREFINE_CONVEX &m);
-    virtual void receipt(const MESH_FEM_TOUCH &m);
+    void receipt(const MESH_WRITE_TO_FILE &m) { getfem_mesh_receiver::receipt(m); }
+    void receipt(const MESH_READ_FROM_FILE &m) { getfem_mesh_receiver::receipt(m); }
+    void receipt(const MESH_FEM_CHANGE &m) { getfem_mesh_receiver::receipt(m); }
+    void receipt(const MESH_FEM_DELETE &m) { getfem_mesh_receiver::receipt(m); }
+    void receipt(const MESH_FEM_TOUCH &m);
     
     size_type memsize() const {
       return dof_structure.memsize() + 

@@ -130,9 +130,10 @@ namespace gmm {
     static void do_clear(this_type &v) { clear_type()(v.origin, v._begin, v._end); }
   };
 
-  // for GCC 2.95
+#ifdef USING_BROKEN_GCC295
   template <class PT> struct linalg_traits<const simple_vector_ref<PT> >
   : public linalg_traits<simple_vector_ref<PT> > {};
+#endif
 
   /* ********************************************************************* */
   /*		                                         		   */
@@ -140,8 +141,8 @@ namespace gmm {
   /*		                                         		   */
   /* ********************************************************************* */
 
-  template <class T> struct linalg_traits<std::vector<T> > {
-    typedef std::vector<T> this_type;
+  template <class T, class alloc> struct linalg_traits<std::vector<T,alloc> > {
+    typedef std::vector<T, alloc> this_type;
     typedef linalg_false is_reference;
     typedef abstract_vector linalg_type;
     typedef T value_type;
@@ -149,8 +150,8 @@ namespace gmm {
     typedef typename this_type::iterator iterator;
     typedef typename this_type::const_iterator const_iterator;
     typedef abstract_plain storage_type;
-    typedef plain_access<this_type> access_type;
-    typedef plain_clear<this_type> clear_type;
+    typedef plain_access<iterator,const_iterator> access_type;
+    typedef plain_clear<iterator> clear_type;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) { return v.begin(); }
     static const_iterator begin(const this_type &v) { return v.begin(); }
@@ -166,10 +167,10 @@ namespace std {
   { gmm::write(o,m); return o; }
 }
 namespace gmm {
-  // for GCC 2.95
+#ifdef USING_BROKEN_GCC295
   template <class T> struct linalg_traits<const std::vector<T> > 
     : public linalg_traits<std::vector<T> > {};
-
+#endif
   // to be done :  std::valarray<T> ...
 
   /* ********************************************************************* */
@@ -203,8 +204,8 @@ namespace gmm {
     typedef typename this_type::iterator iterator;
     typedef typename this_type::iterator const_iterator;
     typedef abstract_plain storage_type;
-    typedef plain_access<this_type> access_type;
-    typedef plain_clear<this_type> clear_type;
+    typedef plain_access<iterator,const_iterator> access_type;
+    typedef plain_clear<iterator> clear_type;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) { return v.begin(); }
     static const_iterator begin(const this_type &v) { return v.begin(); }
@@ -218,9 +219,10 @@ namespace gmm {
   (std::ostream &o, const tab_ref_with_origin<IT>& m)
   { gmm::write(o,m); return o; }
 
-  // for GCC 2.95
+#ifdef USING_BROKEN_GCC295
   template <class IT> struct linalg_traits<const tab_ref_with_origin<IT> >
     : public linalg_traits<tab_ref_with_origin<IT> >{};
+#endif
 
   template <class IT>
   struct tab_ref_reg_spaced_with_origin : public dal::tab_ref_reg_spaced<IT> {
@@ -255,8 +257,8 @@ namespace gmm {
     typedef typename this_type::iterator iterator;
     typedef typename this_type::iterator const_iterator;
     typedef abstract_plain storage_type;
-    typedef plain_access<this_type> access_type;
-    typedef plain_clear<this_type> clear_type;
+    typedef plain_access<iterator,const_iterator> access_type;
+    typedef plain_clear<iterator> clear_type;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) { return v.begin(); }
     static const_iterator begin(const this_type &v) { return v.begin(); }
@@ -270,9 +272,11 @@ namespace gmm {
   (std::ostream &o, const tab_ref_reg_spaced_with_origin<IT>& m)
   { gmm::write(o,m); return o; }
 
-  template <class IT> // for gcc 2.95
+#ifdef USING_BROKEN_GCC295
+  template <class IT> 
   struct linalg_traits<const tab_ref_reg_spaced_with_origin<IT> >
     : public linalg_traits<tab_ref_reg_spaced_with_origin<IT> > {};
+#endif
 
   template <class IT, class ITINDEX>
   struct tab_ref_index_ref_with_origin 
@@ -308,8 +312,8 @@ namespace gmm {
     typedef typename this_type::iterator iterator;
     typedef typename this_type::iterator const_iterator;
     typedef abstract_plain storage_type;
-    typedef plain_access<this_type> access_type;
-    typedef plain_clear<this_type> clear_type;
+    typedef plain_access<iterator,const_iterator> access_type;
+    typedef plain_clear<iterator> clear_type;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) { return v.begin(); }
     static const_iterator begin(const this_type &v) { return v.begin(); }
@@ -323,10 +327,11 @@ namespace gmm {
   (std::ostream &o, const tab_ref_index_ref_with_origin<IT, ITINDEX>& m)
   { gmm::write(o,m); return o; }
 
-  // for GCC 2.95
+#ifdef USING_BROKEN_GCC295
   template <class IT, class ITINDEX>
   struct linalg_traits<const tab_ref_index_ref_with_origin<IT, ITINDEX> >
     : public  linalg_traits<tab_ref_index_ref_with_origin<IT, ITINDEX> > {};
+#endif
 
   /* ********************************************************************* */
   /*		                                         	 	   */
@@ -343,8 +348,8 @@ namespace gmm {
     typedef typename this_type::iterator iterator;
     typedef typename this_type::const_iterator const_iterator;
     typedef abstract_plain storage_type;
-    typedef plain_access<this_type> access_type;
-    typedef plain_clear<this_type> clear_type;
+    typedef plain_access<iterator,const_iterator> access_type;
+    typedef plain_clear<iterator> clear_type;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) { return v.begin(); }
     static const_iterator begin(const this_type &v) { return v.begin(); }
@@ -354,9 +359,10 @@ namespace gmm {
     static void do_clear(this_type &v) { clear_type()(origin(v), begin(v), end(v)); }
   };
 
-  // for GCC 2.95
+#ifdef USING_BROKEN_GCC295
   template <class T, int N> struct linalg_traits<const bgeot::fsvector<T, N> >
     : public linalg_traits<bgeot::fsvector<T, N> > {};
+#endif
 
   template <class T> struct linalg_traits<bgeot::vsvector<T> > {
     typedef bgeot::vsvector<T> this_type;
@@ -367,8 +373,8 @@ namespace gmm {
     typedef typename this_type::iterator iterator;
     typedef typename this_type::const_iterator const_iterator;
     typedef abstract_plain storage_type;
-    typedef plain_access<this_type> access_type;
-    typedef plain_clear<this_type> clear_type;
+    typedef plain_access<iterator,const_iterator> access_type;
+    typedef plain_clear<iterator> clear_type;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) { return v.begin(); }
     static const_iterator begin(const this_type &v) { return v.begin(); }
@@ -378,9 +384,10 @@ namespace gmm {
     static void do_clear(this_type &v) { clear_type()(origin(v), begin(v), end(v)); }
   };
 
-  // for GCC 2.95
+#ifdef USING_BROKEN_GCC295
   template <class T> struct linalg_traits<const bgeot::vsvector<T> > 
     : public linalg_traits<bgeot::vsvector<T> > {};
+#endif
 
   template <class VECT> struct linalg_traits<bgeot::PT<VECT> > {
     typedef bgeot::PT<VECT> this_type;
@@ -391,8 +398,8 @@ namespace gmm {
     typedef typename linalg_traits<VECT>::iterator  iterator;
     typedef typename linalg_traits<VECT>::const_iterator const_iterator;
     typedef typename linalg_traits<VECT>::storage_type storage_type;
-    typedef plain_access<this_type> access_type;
-    typedef plain_clear<this_type> clear_type;
+    typedef plain_access<iterator,const_iterator> access_type;
+    typedef plain_clear<iterator> clear_type;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) { return vect_begin(v); }
     static const_iterator begin(const this_type &v) { return vect_const_begin(v); }
@@ -402,9 +409,10 @@ namespace gmm {
     static void do_clear(this_type &v) { clear_type()(origin(v), begin(v), end(v)); }
   };
 
-  // for GCC 2.95
+#ifdef USING_BROKEN_GCC295
   template <class VECT> struct linalg_traits<const bgeot::PT<VECT> >
   : public linalg_traits<bgeot::PT<VECT> > {};
+#endif
 
   template<class ITER, class MIT> struct plain_compressed_iterator
   {
@@ -519,9 +527,10 @@ namespace gmm {
   { std::fill(m.begin(), m.end(), value_type(0)); }
 
 
-  // for GCC 2.95
+#ifdef USING_BROKEN_GCC295
   template <class T, int N> struct linalg_traits<const bgeot::fsmatrix<T, N> >
     : public linalg_traits<bgeot::fsmatrix<T, N> > {};
+#endif
 
   template <class T> struct bgeot_vsmatrix_access {
     typedef typename linalg_traits<bgeot::vsmatrix<T> >::reference reference;
@@ -591,9 +600,10 @@ namespace gmm {
     static void do_clear(this_type &m) { m.fill(value_type(0)); }
   };
 
-  // for GCC 2.95
+#ifdef USING_BROKEN_GCC295
   template <class T> struct linalg_traits<const bgeot::vsmatrix<T> >
     : public linalg_traits<bgeot::vsmatrix<T> > {};
+#endif
 
 
   /* ******************************************************************** */
@@ -806,10 +816,11 @@ namespace gmm {
     static void do_clear(this_type &m) { m.do_clear(); }
   };
 
-   // for GCC 2.95
+#ifdef USING_BROKEN_GCC295
   template <class PT1, class PT2, class PT3, int shift>
   struct linalg_traits<const csc_matrix_ref<PT1, PT2, PT3, shift> >
     : public linalg_traits<csc_matrix_ref<PT1, PT2, PT3, shift> > {};
+#endif
 
   template <class PT1, class PT2, class PT3, int shift>
   std::ostream &operator <<

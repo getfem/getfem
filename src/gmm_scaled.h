@@ -140,9 +140,10 @@ namespace gmm {
     static const void* origin(const this_type &v) { return v.origin; }
   };
 
-  // for GCC 2.95
+#ifdef USING_BROKEN_GCC295
   template <class V> struct linalg_traits<const scaled_vector_const_ref<V> > 
     : public linalg_traits<scaled_vector_const_ref<V> > {};
+#endif
 
 
   /* ********************************************************************* */
@@ -244,10 +245,11 @@ namespace gmm {
     static const void* origin(const this_type &m) { return m.origin; }
   };
 
-  // for GCC 2.95
+#ifdef USING_BROKEN_GCC295
   template <class M>
   struct linalg_traits<const scaled_row_matrix_const_ref<M> > 
     : public linalg_traits<scaled_row_matrix_const_ref<M> > {};
+#endif
 
 
   template <class M> struct scaled_col_const_iterator {
@@ -345,19 +347,24 @@ namespace gmm {
     static const void* origin(const this_type &m) { return m.origin; }
   };
 
-  // for GCC 2.95
+#ifdef USING_BROKEN_GCC295
   template <class M>
   struct linalg_traits<const scaled_col_matrix_const_ref<M> > 
     : public linalg_traits<scaled_col_matrix_const_ref<M> > {};
+#endif
 
-  template <class L, class R> struct __scaled_return;
+  template <class L, class R> struct __scaled_return {
+    typedef abstract_null_type return_type;
+  };
   template <class L> struct __scaled_return<L, row_major> 
   { typedef scaled_row_matrix_const_ref<L> return_type; };
   template <class L> struct __scaled_return<L, col_major> 
   { typedef scaled_col_matrix_const_ref<L> return_type; };
   
 
-  template <class L, class LT> struct _scaled_return;
+  template <class L, class LT> struct _scaled_return {
+    typedef abstract_null_type return_type;
+  };
   template <class L> struct _scaled_return<L, abstract_vector> 
   { typedef scaled_vector_const_ref<L> return_type; };
   template <class L> struct _scaled_return<L, abstract_matrix> {
