@@ -301,14 +301,6 @@ namespace getfem {
         t[0] += J;
       } else {
         int n0 = es_end[0] - es_beg[0];
-        if (t.size() > 1) {
-          static int cnt = 0;
-          if (++cnt < 5) {
-            cout << "n0 = " << n0 << ", nm = " << nm << ", pt = " << &(*pt) << " ";
-            for (size_type i = 0; i < elmt_stored.size(); ++i) cout << elmt_stored[i].size() << " ";
-            cout << " sz=" << t.size() << "\n";
-          }
-        }
         base_tensor::const_iterator pts0 = pts[0];
 
         /* very heavy reduction .. takes much time */

@@ -475,9 +475,6 @@ AC_OUTPUT
 chmod a+x getfem-config-notinstalled
 chmod a+x getfem-config
 chmod a+x gmm-config
-chmod a+x getfem-config-notinstalled
-chmod a+x getfem-config
-chmod a+x gmm-config
 echo ""
 echo "------------------------------------------------------------------------------"
 echo "If you want to build the shared library of getfem++, use --enable-shared"

@@ -139,11 +139,12 @@ namespace gmm {
   /* ********************************************************************* */
   /* BLAS functions used.                                                  */
   /* ********************************************************************* */
+  extern "C" void daxpy_(const int *n, const double *alpha, const double *x, const int *incx, double *y, const int *incy);
   extern "C" {
     void sgemm_(...); void dgemm_(...); void cgemm_(...); void zgemm_(...);
     void sgemv_(...); void dgemv_(...); void cgemv_(...); void zgemv_(...);
     void strsv_(...); void dtrsv_(...); void ctrsv_(...); void ztrsv_(...);
-    void saxpy_(...); void daxpy_(...); void caxpy_(...); void zaxpy_(...);
+    void saxpy_(...); /*void daxpy_(...); */void caxpy_(...); void zaxpy_(...);
     BLAS_S sdot_ (...); BLAS_D ddot_ (...);
     BLAS_C cdotu_(...); BLAS_Z zdotu_(...);
     BLAS_C cdotc_(...); BLAS_Z zdotc_(...);

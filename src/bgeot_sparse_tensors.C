@@ -1,7 +1,7 @@
 #include <bitset>
+#include "gmm_blas_interface.h"
 #include "bgeot_sparse_tensors.h"
 
-extern "C" void daxpy_(const int *n, const double *alpha, const double *x, const int *incx, double *y, const int *incy);
 
 namespace bgeot {
   std::ostream& operator<<(std::ostream& o, const tensor_ranges& r) {
@@ -825,7 +825,7 @@ namespace bgeot {
 				   of global_range */
     global_range.reserve(16); 
     global_range.assign(reduced_range.begin(), reduced_range.end());
-    global_chars.insert(0, reduced_range.size(), ' ');    
+    global_chars.insert(size_type(0), reduced_range.size(), ' ');    
     for (trtab_iterator it = trtab.begin(); it != trtab.end(); ++it) {
       assert(it->rdim.size() == it->tr().ndim());
       it->gdim = it->rdim;

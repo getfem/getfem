@@ -98,7 +98,7 @@ namespace gmm {
     indperminv = unsorted_sub_index(ipvtinv);
     svector w(mat_ncols(A));
     
-    T tmp;
+    T tmp = T(0);
     gmm::clear(L); gmm::clear(U);
     R prec = default_tol(R()); 
     R max_pivot = gmm::abs(A(0,0)) * prec;

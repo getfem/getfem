@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "f2c.h"
+#include "BLAS_f2c.h"
 
 
 extern void s_wsfe() {;}
