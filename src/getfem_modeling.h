@@ -1342,7 +1342,8 @@ namespace getfem {
       if (!with_multipliers) version |= ASMDIR_SIMPLIFY;
       asm_dirichlet_constraints(M, V, *(this->mesh_ims[0]), mf_u, mf_data,
 				H_, B_, boundary, version);
-
+      //cout <<"M[0,0] = "<<M[0,0]<<" and M[0,1] ="<<M[0,1]<<" and M[1,0] = "<<M[1,0];
+      
       if (!with_H) gmm::resize(H_, 0);
 
       if (version & ASMDIR_BUILDH) {

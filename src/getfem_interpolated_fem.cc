@@ -180,7 +180,9 @@ namespace getfem {
     std::fill(t.begin(), t.end(), scalar_type(0));
     if (nbdof == 0) return;
     
-    if (c.have_pgp()) { 
+    if (c.have_pgp() && 
+	(&c.pgp()->get_point_tab() == 
+	 &mim.int_method_of_element(c.convex_num())->approx_method()->integration_points())) { 
       gausspt_interpolation_data &gpid
 	= elements[c.convex_num()].gausspt[c.ii()];
       if (gpid.flags & 1) {
@@ -201,13 +203,13 @@ namespace getfem {
 	pfem pf = mf.fem_of_element(cv);
 	actualize_fictx(pf, cv, ptref);
 	pf->real_base_value(fictx, taux);
-	for (size_type i = 0; i < nbdof; ++i)
+	for (size_type i = 0; i < elements[cv].nb_dof; ++i)
 	  ind_dof[elements[cv].inddof[i]] = i;
 	for (size_type i = 0; i < pf->nb_dof(cv); ++i)
 	  for (size_type j = 0; j < target_dim(); ++j)
 	    if (ind_dof[mf.ind_dof_of_element(cv)[i]] != size_type(-1))
 	      t(ind_dof[mf.ind_dof_of_element(cv)[i]], j) = taux(i, j);
-	for (size_type i = 0; i < nbdof; ++i)
+	for (size_type i = 0; i < elements[cv].nb_dof; ++i)
 	  ind_dof[elements[cv].inddof[i]] = size_type(-1);
       }
     }
@@ -299,15 +301,17 @@ namespace getfem {
 				     bool store_val)
     : mf(mef), mim(meim), pif(pif_), store_values(store_val),
       blocked_dof(blocked_dof_), mi2(2), mi3(3) {
+    if (mef.get_qdim() != 1) 
+      DAL_THROW(dal::to_be_done_error, "interpolated_fem do not handle qdim != 1");
     this->add_dependency(mf);
     this->add_dependency(mim);
     is_pol = is_lag = false; es_degree = 5;
     is_equiv = real_element_defined = true;
-    update_from_context();
     gmm::resize(trans, mf.linked_mesh().dim(), mf.linked_mesh().dim());
     ntarget_dim = 1; // An extension for vectorial elements should be easy
     // The detection should be done and the multilication of components
     // for scalar elements interpolated.
+    update_from_context();
   }
 
 }  /* end of namespace getfem.                                            */

@@ -37,7 +37,7 @@ namespace bgeot {
 
   const base_node& geotrans_interpolation_context::xref() const { 
     if (!have_xref()) 
-      if (have_pgp()) xref_ = pgp_->get_point_tab()[ii_];
+      if (pspt_) xref_ = (*pspt_)[ii_];
       else DAL_THROW(dal::failure_error, "missing xref");
     return xref_; 
   }
@@ -157,18 +157,24 @@ namespace bgeot {
     if (have_B() && !pgt()->is_linear()) { B_.resize(0,0); }
     if (have_B3() && !pgt()->is_linear()) { 
       B3_.resize(0,0); B32_.resize(0,0); }
-    xreal_.clear(); ii_ = size_type(-1); J_ = scalar_type(-1);
+    xreal_.clear(); ii_ = size_type(-1); J_ = scalar_type(-1); pspt_ = 0;
   }
 
   geotrans_interpolation_context::geotrans_interpolation_context() :
-    G_(0), pgt_(0), pgp_(0), ii_(size_type(-1)), J_(-1) {}
+    G_(0), pgt_(0), pgp_(0), pspt_(0), ii_(size_type(-1)), J_(-1) {}
   geotrans_interpolation_context::geotrans_interpolation_context
   (bgeot::pgeotrans_precomp pgp__, size_type ii__, const base_matrix& G__) :
-    G_(&G__), pgt_(pgp__->get_trans()), pgp_(pgp__), ii_(ii__), J_(-1) {}
+    G_(&G__), pgt_(pgp__->get_trans()), pgp_(pgp__), 
+    pspt_(&pgp__->get_point_tab()), ii_(ii__), J_(-1) {}
+  geotrans_interpolation_context::geotrans_interpolation_context
+  (bgeot::pgeometric_trans pgt__, bgeot::pstored_point_tab pspt__, 
+   size_type ii__,  const base_matrix& G__) :
+    G_(&G__), pgt_(pgt__), pgp_(0), 
+    pspt_(pspt__), ii_(ii__), J_(-1) {}
   geotrans_interpolation_context::geotrans_interpolation_context
   (bgeot::pgeometric_trans pgt__, const base_node& xref__,
    const base_matrix& G__) :
-    xref_(xref__), G_(&G__), pgt_(pgt__), pgp_(0),
+    xref_(xref__), G_(&G__), pgt_(pgt__), pgp_(0), pspt_(0), 
     ii_(size_type(-1)), J_(-1) {}
  
 

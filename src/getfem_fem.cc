@@ -66,7 +66,8 @@ namespace getfem
     } else {
       base_tensor u;
       pf()->grad_base_value(xref(), u);
-      t.mat_transp_reduction(u, B(), 2);
+      if (u.size()) /* only if the FEM can provide grad_base_value */
+	t.mat_transp_reduction(u, B(), 2);
     }
   }
 
@@ -77,19 +78,21 @@ namespace getfem
     } else {
       pf()->hess_base_value(xref(), tt);
     }
-    bgeot::multi_index mim(3);
-    mim[2] = gmm::sqr(tt.sizes()[2]); mim[1] = tt.sizes()[1];
-    mim[0] = tt.sizes()[0];
-    tt.adjust_sizes(mim);
-    t.mat_transp_reduction(tt, B3(), 2);
-    if (have_pfp()) {
-      tt.mat_transp_reduction(pfp()->grad(ii()), B32(), 2);
-    } else {
-      base_tensor u;
-      pf()->grad_base_value(xref(), u);
-      tt.mat_transp_reduction(u, B32(), 2);
+    if (tt.size()) { /* only if the FEM can provide grad_base_value */
+      bgeot::multi_index mim(3);
+      mim[2] = gmm::sqr(tt.sizes()[2]); mim[1] = tt.sizes()[1];
+      mim[0] = tt.sizes()[0];
+      tt.adjust_sizes(mim);
+      t.mat_transp_reduction(tt, B3(), 2);
+      if (have_pfp()) {
+	tt.mat_transp_reduction(pfp()->grad(ii()), B32(), 2);
+      } else {
+	base_tensor u;
+	pf()->grad_base_value(xref(), u);
+	tt.mat_transp_reduction(u, B32(), 2);
+      }
+      t -= tt;
     }
-    t -= tt;
   }
 
   void fem_interpolation_context::set_pfp(pfem_precomp newpfp) {
@@ -115,9 +118,8 @@ namespace getfem
   fem_interpolation_context::fem_interpolation_context
   (bgeot::pgeometric_trans pgt__, pfem_precomp pfp__, size_type ii__, 
    const base_matrix& G__, size_type convex_num__) :
-    bgeot::geotrans_interpolation_context(pgt__,base_node(),G__),
+    bgeot::geotrans_interpolation_context(pgt__,&pfp__->get_point_tab(), ii__, G__),
     convex_num_(convex_num__) {
-      set_ii(ii__);
       set_pfp(pfp__); 
     }
   fem_interpolation_context::fem_interpolation_context(

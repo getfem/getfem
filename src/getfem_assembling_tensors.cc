@@ -48,7 +48,8 @@ namespace getfem {
     r.resize(size());      
     for (const_iterator it = begin(); it != end(); ++it, ++cnt) {
       if ((*it).is_mf_ref()) {
-	r[cnt] = (*it).pmf->nb_dof_of_element(cv);
+	r[cnt] = (*it).pmf->nb_dof_of_element(cv); 
+	ref_mesh_dof_ind_ct::const_iterator ii = (*it).pmf->ind_dof_of_element(cv).begin();
 	str[cnt].resize(r[cnt]);
 	for (index_type j=0; j < r[cnt]; ++j) {
 	  str[cnt][j] = (*it).pmf->ind_dof_of_element(cv)[j]*s;

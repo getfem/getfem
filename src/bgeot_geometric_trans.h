@@ -336,6 +336,7 @@ namespace bgeot
     mutable base_matrix B_, B3_, B32_; /* see documentation for more details */
     pgeometric_trans pgt_;
     pgeotrans_precomp pgp_;
+    pstored_point_tab pspt_; /* if pgp != 0, it is the same as pgp's one */
     size_type ii_; /* index of current point in the pgp */
     mutable scalar_type J_; /* Jacobian */
     void compute_J(void) const;
@@ -363,9 +364,12 @@ namespace bgeot
     bgeot::pgeotrans_precomp pgp() const { return pgp_; }
     void set_ii(size_type ii__);
     void set_xref(const base_node& P);
-
     geotrans_interpolation_context();
     geotrans_interpolation_context(bgeot::pgeotrans_precomp pgp__, 
+				   size_type ii__, 
+				   const base_matrix& G__); 
+    geotrans_interpolation_context(bgeot::pgeometric_trans pgt__,
+				   bgeot::pstored_point_tab pspt__, 
 				   size_type ii__, 
 				   const base_matrix& G__); 
     geotrans_interpolation_context(bgeot::pgeometric_trans pgt__,

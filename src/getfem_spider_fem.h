@@ -90,7 +90,7 @@ namespace getfem {
       
       ~spider_fem () { if (final_fem) delete final_fem; }
       
-      spider_fem(scalar_type R_, mesh_fem &target_fem, unsigned Nr_, unsigned Ntheta_,
+    spider_fem(scalar_type R_, mesh_im &mim/*mesh_fem &target_fem*/, unsigned Nr_, unsigned Ntheta_,
 	     unsigned K_, base_small_vector translation, scalar_type theta0)
         : cartesian_fem(cartesian), enriched_Qk(0), R(R_), Nr(Nr_), Ntheta(Ntheta_), K(K_), final_fem(0) {
         
@@ -104,7 +104,7 @@ namespace getfem {
 	nsubdiv[0] = Nr; nsubdiv[1] = Ntheta;
         getfem::regular_unit_mesh(cartesian, nsubdiv, pgt, false);
 	bgeot::base_matrix M(2,2);
-	M(0,0) = R;
+	M(0,0) = R;   
 	M(1,1) = 2. * M_PI;
 	cartesian.transformation(M);
 	bgeot::base_small_vector V(2);
@@ -131,12 +131,11 @@ namespace getfem {
 
 	
 	std::stringstream ppiname;
-	cartesian_fem.set_finite_element(cartesian.convex_index(),& enriched_Qk,
-					 getfem::int_method_descriptor("IM_TRIANGLE(6)"));//IM_GAUSS_PARALLELEPIPED(2,20)"));  
-      
+	cartesian_fem.set_finite_element(cartesian.convex_index(),& enriched_Qk);  
+	  mim.set_integration_method(cartesian.convex_index(),getfem::int_method_descriptor("IM_TRIANGLE(6)"));//IM_GAUSS_PARALLELEPIPED(2,20)" );
 	dal::bit_vector blocked_dof = cartesian_fem.dof_on_boundary(0);
 
-	final_fem = new interpolated_fem(cartesian_fem, target_fem, &itt, blocked_dof);
+	final_fem = new interpolated_fem(cartesian_fem, mim/*target_fem*/, &itt, blocked_dof);
       }
 
   };

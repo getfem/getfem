@@ -65,6 +65,8 @@ namespace getfem {
     for (size_type i = 0; i < mfs.size(); ++i) {
       if (&(mfs[i]->linked_mesh()) != pmesh)
 	DAL_THROW(failure_error, "Meshes should be the same");
+      if (mfs[i]->get_qdim() != 1) 
+	DAL_THROW(dal::to_be_done_error, "fem_sum do not handle qdim != 1");
       this->add_dependency(*(mfs[i]));
     }
     is_pol = is_lag = false; es_degree = 5;
@@ -168,7 +170,7 @@ namespace getfem {
 				     base_tensor &t) const {
     fem_interpolation_context& c = const_cast<fem_interpolation_context&>(d);
     size_type cv = c.convex_num(), nbdof = nb_dof(cv);
-    mi3[2] = dim(); mi3[1] = target_dim(); mi2[0] = nbdof;
+    mi3[2] = dim(); mi3[1] = target_dim(); mi3[0] = nbdof;
     t.adjust_sizes(mi3);
     bool have_pfp = c.have_pfp();
     pfem_precomp pfp = c.pfp();
@@ -194,7 +196,7 @@ namespace getfem {
     
   void fem_sum::real_hess_base_value(const fem_interpolation_context&, 
 				     base_tensor &) const
-  { DAL_THROW(internal_error, "Sorry, to be done."); }
+  { DAL_THROW(dal::to_be_done_error, "Sorry, to be done."); }
   
   fem_sum::fem_sum(const std::vector<const mesh_fem *> &mfs_)
   { init(mfs_); }

@@ -275,7 +275,9 @@ namespace getfem
 		    const mesh_fem &mf_u, 
 		    const mesh_fem &mf_d, const VECT &Q, 
 		    size_type boundary, T) {
-    generic_assembly assem;    
+    generic_assembly assem;
+    assert(mf_u.nb_dof() <= gmm::mat_nrows(M));
+    assert(mf_u.nb_dof() <= gmm::mat_ncols(M));
     if (mf_u.get_qdim() == 1)
       assem.set("Q=data$1(#2);"
 		"M(#1,#1)+=comp(Base(#1).Base(#1).Base(#2))(:,:,k).Q(k);");

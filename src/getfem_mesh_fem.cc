@@ -242,14 +242,24 @@ namespace getfem {
 	  // cout << "detecting a specialdof\n";
 	  size_type num = pf->index_of_global_dof(cv, i);
 	  if (!(encountered_global_dof[num])) {
-	    ind_global_dof[num] = dof_sort.add(fd);
+	    if (pf->target_dim() == 1 && Qdim != 1) {
+	      for (size_type k = 0; k < Qdim; ++k) {
+		fd.pnd = to_coord_dof(andof, k);
+		j = dof_sort.add(fd);
+		if (k == 0) ind_global_dof[num] = j;
+		else if (j != j_old + 1) {
+		  dof_sort.swap(j, j_old+1);
+		}
+		j_old = j;
+	      }
+	    } else {
+	      ind_global_dof[num] = dof_sort.add(fd);
+	    }
 	    encountered_global_dof[num] = true;
 	  }
-	  j = ind_global_dof[num];
-	  tab[i] = j;
+	  tab[i] = ind_global_dof[num];
 	} else if (pf->target_dim() == 1 && Qdim != 1) {
 	  pdof_description paux = fd.pnd;
-	  
 	  for (size_type k = 0; k < Qdim; ++k) {
 	    fd.pnd = to_coord_dof(paux, k);
 	    
