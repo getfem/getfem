@@ -27,7 +27,7 @@ close(TMPF);
 
 
 $er = 0;
-open F, "elasto_statique $tmp 2>&1 |" or die;
+open F, "./elasto_statique $tmp 2>&1 |" or die;
 while (<F>) {
   # print $_;
   if ($_ =~ /error has been detected/)
@@ -38,6 +38,6 @@ while (<F>) {
   }
 }
 if ($er == 1) { exit(1); }
-`elasto_statique $tmp`;
+`./elasto_statique $tmp`;
 if ($?) { exit(1); }
 

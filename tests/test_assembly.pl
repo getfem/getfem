@@ -8,7 +8,7 @@ sub start_program
 
   # print ("def = $def\n");
 
-  open F, "test_assembly $def 2>&1 |" or die;
+  open F, "./test_assembly $def 2>&1 |" or die;
   while (<F>) {
     if ($_ =~ /FAILED/) {
       $er = 1;

@@ -17,7 +17,7 @@ print TMPF "\n\n";
 close(TMPF);
 
 $er = 0;
-open F, "geo_trans_inv $tmp 2>&1 |" or die;
+open F, "./geo_trans_inv $tmp 2>&1 |" or die;
 while (<F>) {
   # print $_;
   if ($_ =~ /error has been detected/)
@@ -28,5 +28,5 @@ while (<F>) {
   }
 }
 if ($er == 1) { exit(1); }
-`geo_trans_inv $tmp`;
+`./geo_trans_inv $tmp`;
 if ($?) { exit(1); }

@@ -1,5 +1,5 @@
 $er = 0;
-open F, "integration 2>&1 |" or die;
+open F, "./integration 2>&1 |" or die;
 while (<F>) {
   # print $_;
   if ($_ =~ /error has been detected/)
@@ -10,5 +10,5 @@ while (<F>) {
   }
 }
 if ($er == 1) { exit(1); }
-`integration`;
+`./integration`;
 if ($?) { exit(1); }

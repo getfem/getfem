@@ -31,7 +31,7 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
 
   # print ("def = $def\n");
 
-  open F, "test_mat_elem $tmp $def 2>&1 |" or die;
+  open F, "./test_mat_elem $tmp $def 2>&1 |" or die;
   while (<F>) {
     if ($_ =~ /L2 error/) {
       ($a, $b) = split('=', $_);
@@ -46,7 +46,7 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
  # 
  #   print $_;
   }
-  `test_mat_elem $tmp $def`;
+  `./test_mat_elem $tmp $def`;
   if ($?) { `rm -f $tmp`; exit(1); }
 }
 

@@ -1,5 +1,5 @@
 $er = 0;
-open F, "test_int_set 2>&1 |" or die;
+open F, "./test_int_set 2>&1 |" or die;
 while (<F>) {
   # print $_;
     if ($_ =~ /error has been detected/) {

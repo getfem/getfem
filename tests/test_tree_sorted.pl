@@ -1,5 +1,6 @@
+
 $er = 0;
-open F, "test_tree_sorted 2>&1 |" or die;
+open F, "./test_tree_sorted 2>&1 |" or die;
 while (<F>) {
   # print $_;
     if ($_ =~ /error has been detected/) {
@@ -10,5 +11,5 @@ while (<F>) {
 
 }
 if ($er == 1) { exit(1); }
-`test_tree_sorted`;
+`./test_tree_sorted`;
 if ($?) { exit(1); }

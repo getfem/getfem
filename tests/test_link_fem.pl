@@ -21,7 +21,7 @@ close(TMPF);
 
 
 $er = 0;
-open F, "test_link_fem $tmp 2>&1 |" or die;
+open F, "./test_link_fem $tmp 2>&1 |" or die;
 while (<F>) {
   # print $_;
     if ($_ =~ /error has been detected/) {
@@ -32,5 +32,5 @@ while (<F>) {
 
 }
 if ($er == 1) { exit(1); }
-`test_link_fem $tmp`;
+`./test_link_fem $tmp`;
 if ($?) { exit(1); }
