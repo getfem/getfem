@@ -94,8 +94,6 @@ namespace getfem
   template <typename CONT, typename VEC> 
   void _geotrans_precomp::transform(const CONT& G, size_type j, VEC& pt) {
     size_type k = 0;
-    cerr << " coucou transform: j=" << j << endl;
-    cerr << ",pt=" << pt << endl;
     if (c.empty()) init_val();
     for (typename CONT::const_iterator itk = G.begin(); 
          itk != G.end(); ++itk, ++k) {
