@@ -78,7 +78,7 @@ struct elastostatic_problem {
 };
 
 void test(scalar_type a, scalar_type b, scalar_type c) {
-  getfem::SaintVenantKirchhoff_hyperelastic_law AHL;
+  getfem::SaintVenant_Kirchhoff_hyperelastic_law AHL;
   base_matrix L(3,3), L2(3,3), gradU(3,3), gradU2(3,3), dgradU(3,3), Sigma(3,3), Sigma2(3,3), NL(3,3), NL2(3,3),A(3,3),B(3,3);
   getfem::base_tensor dNL(3,3,3,3), tt(3,3,3,3);
   base_vector params(2);
@@ -375,7 +375,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
   // Linearized elasticity brick.
   base_vector p(3); p[0] = p1; p[1] = p2; p[2] = p3;
   /*cout << "test Hooke\n";
-  getfem::SaintVenantKirchhoff_hyperelastic_law lh;
+  getfem::SaintVenant_Kirchhoff_hyperelastic_law lh;
   lh.test_derivatives(3, 0.0001, p);
   cout << "test ciralet\n";
   getfem::Ciarlet_Geymonat_hyperelastic_law l;
@@ -390,7 +390,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
   getfem::abstract_hyperelastic_law *pl = 0;
   switch (law_num) {
     case 0:
-    case 1: pl = new getfem::SaintVenantKirchhoff_hyperelastic_law(); break;
+    case 1: pl = new getfem::SaintVenant_Kirchhoff_hyperelastic_law(); break;
     case 2: pl = new getfem::Ciarlet_Geymonat_hyperelastic_law(); break;
     case 3: pl = new getfem::Mooney_Rivlin_hyperelastic_law(); break;
     default: DAL_THROW(dal::failure_error, "no such law");
@@ -468,7 +468,14 @@ bool elastostatic_problem::solve(plain_vector &U) {
   getfem::standard_model_state MS(final_model);
   size_type maxit = PARAM.int_value("MAXITER"); 
   gmm::iteration iter;
-  
+
+
+  getfem::dx_export exp(datafilename + ".dx",
+			PARAM.int_value("VTK_EXPORT")==1);
+  exp.exporting(mf_u); 
+  exp.begin_series("deformationsteps");
+  exp.write_point_data(mf_u, U, "stepinit");
+
   for (int step = 0; step < nb_step; ++step) {
     plain_vector DF(F);
 
@@ -479,6 +486,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
       scalar_type torsion = PARAM.real_value("TORSION","Amplitude of the torsion");
       torsion *= (step+1)/scalar_type(nb_step);
       scalar_type extension = PARAM.real_value("EXTENSION","Amplitude of the extension");
+      extension *= (step+1)/scalar_type(nb_step);
       base_node G(N); G[0] = G[1] = 0.5;
       for (size_type i = 0; i < nb_dof_rhs; ++i) {
 	const base_node P = mf_rhs.point_of_dof(i) - G;
@@ -495,6 +503,10 @@ bool elastostatic_problem::solve(plain_vector &U) {
     iter = gmm::iteration(residu, PARAM.int_value("NOISY"), maxit ? maxit : 40000);
     cout << "|U0| = " << gmm::vect_norm2(MS.state()) << "\n";
     getfem::standard_solve(MS, final_model, iter);
+
+    ELAS.get_solution(MS, U);
+    char s[100]; sprintf(s, "step%d", step+1);
+    exp.write_point_data(mf_u, U, s);
   }
 
   // Solution extraction

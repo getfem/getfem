@@ -3,25 +3,28 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%% pde parameters :	        				      %%%%%
-LX = 1.0;		% size in X.
+LX = .5;		% size in X.
 LY = 1.0;	        % size in Y.
 LZ = 1.0;		% size in Z.
 P1 = 1.;	        % First elastic coefficient.
 P2 = 1.;   	        % Second elastic coefficient.
 P3 = -1.4;   	        % Third elastic coefficient.
-LAW = 1;
+LAW = 2;     % 0 : SaintVenant-Kirchhoff
+             % 1 : SaintVenant-Kirchhoff+incompressibility
+             % 2 : Ciarlet-Geymonat
+             % 3 : Mooney-Rivlin (+incompressibility)
 FORCEX = 0          % Amplitude of the external force
 FORCEY = 0;
 FORCEZ = 0;
-TORSION = .05; %3.14;
-EXTENSION = 0;
+TORSION = .5; %3.14;
+EXTENSION = 0.0;
 %%%%%   discretisation parameters  :                     	      %%%%%
 %MESH_TYPE = 'GT_PK(3,1)';         % linear triangles
 MESH_TYPE = 'GT_PK(3,2)'; % linear rectangles
 %MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
 NX = 4;            	          % space step.
-NZ = 4;
-LZ = 1;
+NZ = 8;
+LZ = 3;
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 
 %FEM_TYPE = 'FEM_PK(2,1)';  % P1 for triangles
@@ -37,7 +40,7 @@ FEM_TYPE_P = 'FEM_PK(3,1)';  % P1 for triangles
 % DATA_FEM_TYPE must be defined if your main FEM is not Lagrangian
 %DATA_FEM_TYPE = 'FEM_PK(2,1)';
 
-INTEGRATION = 'IM_TETRAHEDRON(5)'
+INTEGRATION = 'IM_TETRAHEDRON(3)'
 %INTEGRATION = 'IM_TRIANGLE(6)'; % quadrature rule for polynomials up
                                % to degree 6 on triangles
 %INTEGRATION = 'IM_EXACT_SIMPLEX(2)'; % exact integration on triangles
@@ -59,8 +62,8 @@ INTEGRATION = 'IM_TETRAHEDRON(5)'
 RESIDU = 1E-9;     	% residu for conjugate gradient.
 MAXITER = 5;
 USE_MULTIPLIERS=0
-NBSTEP = 1;
+NBSTEP = 2;
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'nonlinear_elastostatic';     % Root of data files.
 VTK_EXPORT = 1 % export solution to a .vtk file ?
-NOISY=2
+NOISY=1
