@@ -1175,7 +1175,7 @@ int main(int argc, char *argv[])
   try {
     bool do_old=true, do_new=true;
 
-    getfem::pfem pf = getfem::fem_descriptor("FEM_PK_PRISM_HIERARCHICAL(3,3)");
+    // getfem::pfem pf = getfem::fem_descriptor("FEM_PK_PRISM_HIERARCHICAL(3,3)");
     
     param.init(argc,argv);
 

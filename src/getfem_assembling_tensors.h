@@ -274,7 +274,7 @@ namespace getfem {
   template< typename VEC > class vec_factory : public base_vec_factory, private std::deque<asm_vec<VEC> > {
   public:
     base_asm_vec* create_vec(const tensor_ranges& r) {
-      size_type sz = 1; for (i=0; i < r.size(); ++i) sz *= r[i];
+      size_type sz = 1; for (size_type i=0; i < r.size(); ++i) sz *= r[i];
       if (sz == 0) ASM_THROW_TENSOR_ERROR("can't create a vector of size " << r);
       asm_vec<VEC> v(new VEC(sz));
       push_back(v); return &this->back();

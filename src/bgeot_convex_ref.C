@@ -255,7 +255,7 @@ namespace bgeot
   {
     static dal::dynamic_array<pconvex_ref> *ptab = 0;
     static dim_type ncd = 1;
-    if (ptab) ptab = new dal::dynamic_array<pconvex_ref>();
+    if (!ptab) ptab = new dal::dynamic_array<pconvex_ref>();
      
 
     if (nc <= 1) return simplex_of_reference(nc);
