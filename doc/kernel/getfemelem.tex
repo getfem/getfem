@@ -173,6 +173,64 @@ where {\tt "name of trans"} should be chosen among the following list.
 {\tt "GT\_LINEAR\_PRODUCT(a,b)"} & Description of the direct product of the two transformations {\tt a} and {\tt b} keeping a linear transformation (this is a restriction of he previous function). This allows, for instance, to use exact integrations on regular meshes with parallelograms.\\ \hline
 \end{tabular} \end{center}
 
+
+A tool allows to invert geometric transformations, especially to find out, among a list of points, which ones are inside a specified convex. The object is defined in the file {\tt bgeot\_geotrans\_inv.h}.\\[0.5cm]
+{\tt bgeot::geotrans\_inv gti; }\\[0.5cm]
+To add the list off points to the object use\\[0.5cm]
+{\tt gti.add\_point(pt);  }\\[0.5cm]
+The points to be localized are sorted with ``imbricated\_box\_less'' order
+which is based on a lexicographical order on the decimal
+decomposition of the coordinates. This order allows to find in a 
+fast manner which points are in a specified box. The following function \\[0.5cm]
+{\tt size\_type nb = gti.points\_in\_convex(cv, pgt, ptab, itab); }\\[0.5cm]
+selects the points in the convex given by {\tt cv} and the geometric transformation {\tt pgt}.  To find which points are in a given element, the following algorithm is applied : \\
+- compute a englobing box of the element, assuming that this element,
+even if the geometric transfrmation in non-linear is in the englobing
+box of its nodes times a factor 1.2, \\
+- List all the points in this englobing box, \\
+- For each points, invert the geometric transformation (computation
+of a pseudo inverse in the linear case, and use of a Newton method in
+the non-linear case. \\ \\
+The inversion can be described as follows : \\ \\
+The geometric transformation from the reference element to the real
+element is described by a polynomial function \\
+$ \tau : {I\hspace{-0.3em}R}^P \longrightarrow {I\hspace{-0.3em}R}^N$ \\
+where $P$ is the dimension of the reference element and $N$ the dimension
+of the real element. This transformation is decomposed in \\
+$ \tau(\overline{x}) = \underline{\underline{a}} \ 
+\underline{\cal N}(\overline{x}). $ \\
+where $\underline{\underline{a}}$ is a $N \times n_g$ matrix representing
+the nodes of the real element and $\underline{\cal N}(\overline{x})$ is
+the vector of polynomials representing the geometric transformation. \\
+Then, the gradient $\nabla \tau(\overline{x})$ is the following
+$N \times P$ matrix: \\
+$ \nabla \tau(\overline{x}) = \underline{\underline{a}}\ \nabla
+\underline{\cal N}(\overline{x}). $\\
+\subsubsection*{Linear case}
+If $\tau$ is linear (affin in fact), then \\
+$y = \tau(\overline{x}) = \nabla \tau(0) \overline{x} + y_0.$ \\
+So that \\
+$\overline{x} = (\nabla \tau^T(0) \nabla \tau(0))^{-1} \nabla \tau^T(0) 
+(y - y_0), $ \\
+where \\
+$B(0) = (\nabla \tau^T(0) \nabla \tau(0))^{-1} \nabla \tau^T(0), $ \\
+is a pseudo inverse of $\nabla \tau(0)$. \\ \\
+if $N > P$, the residu \\
+$y - y_0 -  \nabla \tau(0) \overline{x}, $ \\
+indicates wether or not the point in on the "surface" of the convex. \\ 
+\\ \subsubsection*{Non-linear case}
+A Newton method is applied., writing \\
+$y = \tau(\overline{x}+\overline{h}) = \tau(\overline{x})
++ \nabla \tau(\overline{x})\overline{h} + o(\|\overline{h}\|^2). $ \\
+It gives the iterative scheme \\
+$ \overline{x}_{n+1} = \overline{x}_{n}
++ B(\overline{x}_{n})(y - \tau(\overline{x}_{n})), $  \\
+where \\
+$ B(\overline{x}_{n}) = (\nabla \tau^T(\overline{x}_{n})
+\nabla \tau(\overline{x}_{n}))^{-1} \nabla \tau^T(\overline{x}_{n}).$ \\
+The residu is \\
+$ y - \tau(\overline{x}_{n}).$ \\
+
 \section{Finite element methods description}
 
 A finite element method is defined on a reference element $\overline{T} \subset \Reel^P$ by a set of $n_d$ nodes $a^i$ and corresponding base functions 

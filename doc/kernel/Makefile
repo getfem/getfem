@@ -11,13 +11,14 @@ getfemelem.dvi : getfemelem.tex
 
 getfemelem.ps : getfemelem.dvi
 	dvips getfemelem -z -Pamz -Pcmz -o -p1
-	cp getfemelem.ps $(HOME)/public_html/getfem
-	cd $(HOME)/public_html/getfem; make
+	ps2pdf getfemelem.ps getfemelem.pdf; \
+	cp getfemelem.ps getfemelem.pdf ../../../getfem_html/;
 
 getfemlist.dvi : getfemlist.tex getfemlist_segment_Pk.eps getfemlist_extrans.eps 
 	latex getfemlist.tex; latex getfemlist.tex
 
 getfemlist.ps : getfemlist.dvi
 	dvips getfemlist -z -Pamz -Pcmz -o -p1
-	cp getfemlist.ps $(HOME)/public_html/getfem
-	cd $(HOME)/public_html/getfem; make
+	ps2pdf getfemlist.ps getfemlist.pdf; \
+	cp getfemlist.ps getfemlist.pdf ../../../getfem_html/;
+

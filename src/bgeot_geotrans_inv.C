@@ -44,7 +44,7 @@ namespace bgeot
     for (; itx != itex; ++itx, ++ity) {
       long a = long(sfloor((*itx) * c1)), b = long(sfloor((*ity) * c1));
       if ((dal::abs(a) > 10) || (dal::abs(b) > 10)) { 
-	(*((int *)(&exp_max)))++; *((scalar_type *)(&c_max)) /= 10.0;
+	exp_max++; c_max /= 10.0;
 	return (*this)(x,y);
       }
       if (a < b) return -1; else if (a > b) return 1;
@@ -61,9 +61,11 @@ namespace bgeot
     return 0;
   }
   
-  void geotrans_inv::points_in_box(dal::bit_vector &pt, const base_node &min,
-				   const base_node &max) const {
+  size_type geotrans_inv::points_in_box(dal::dynamic_array<size_type> &pt,
+					const base_node &min,
+					const base_node &max) const {
     TAB_TYPE::const_sorted_iterator it, ite;
+    size_type nb = 0;
     
     it = ptab.sorted_ge(min); ite = ptab.sorted_ge(max);
     base_node::const_iterator itl, itmin, itmax, itmine = min.end();
@@ -72,8 +74,9 @@ namespace bgeot
       itl = (*it).begin(); itmin = min.begin(); itmax = max.begin();
       for (; itmin != itmine; ++itmin, ++itmax, ++itl)
 	if (*itl < *itmin || *itl > *itmax) { isin = false; break; }
-      if (isin) pt.add(it.index());
+      if (isin) pt[nb++] = it.index();
     }
+    return nb;
     
     /* The following is a version with a partition, avoiding default */
     /* of the simple search, but which is slower .. in the mean.     */

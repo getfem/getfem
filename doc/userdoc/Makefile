@@ -5,6 +5,7 @@ getfemuser.dvi : getfemuser.tex
 
 getfemuser.ps : getfemuser.dvi
 	dvips getfemuser -z -Pamz -Pcmz -o -p1
-	cp getfemuser.ps $(HOME)/public_html/getfem
-	cd $(HOME)/public_html/getfem; make
+	ps2pdf getfemuser.ps getfemuser.pdf; \
+	cp getfemuser.ps getfemuser.pdf ../../../getfem_html/;
+
 

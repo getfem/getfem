@@ -13,3 +13,4 @@ MESH_TYPE = 0;          % 0 = simplexes
 			% 1 = parallelepipeds
 			% 2 = prisms
 NX = 10;            	% space step.
+NB_POINTS = 10000;       % Number of points
