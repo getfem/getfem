@@ -73,7 +73,7 @@ namespace getfem {
   }
   
   void mesh_fem_level_set::adapt(void) {
-    clear_build_methods();
+    clear();
     enriched_dofs.clear(); enriched_elements.clear();
     dof_enrichments.resize(0);
     dof_enrichments.resize(mf.nb_dof(), 0);

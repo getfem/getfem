@@ -52,6 +52,7 @@ include_HEADERS =                        \
 	getfem_fem.h                     \
 	getfem_interpolated_fem.h        \
 	getfem_fem_sum.h                 \
+	getfem_mesh_fem_sum.h            \
 	getfem_gauss_lobatto_fem_coef.h  \
 	getfem_Xfem.h                    \
 	getfem_spider_fem.h              \
@@ -161,7 +162,8 @@ SRC =                                    \
 	getfem_level_set.cc	         \
 	getfem_mesh_level_set.cc         \
 	getfem_mesh_im_level_set.cc      \
-	getfem_mesh_fem_level_set.cc          \
+	getfem_mesh_fem_level_set.cc     \
+	getfem_mesh_fem_sum.cc           \
 	getfem_fem_level_set.cc          \
 	getfem_mesh_slicers.cc	         \
 	getfem_mesh_slice.cc	         \

@@ -685,6 +685,8 @@ void friction_problem::solve(void) {
       gmm::copy(gmm::sub_vector(U1, gmm::sub_interval(0,N)), UU1);
       gmm::copy(gmm::sub_vector(V1, gmm::sub_interval(0,N)), VV1);
       gmm::copy(gmm::sub_vector(LN1, gmm::sub_interval(0,N)), LLN1);
+
+      // cout << "LN1 = " << LN1 << endl;
       
       output1 << t/dt << "\n";
       output2 << J1 << "\n";
