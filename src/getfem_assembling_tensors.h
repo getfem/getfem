@@ -505,7 +505,7 @@ namespace getfem {
       t->set_name(mark_txt());
       outvars.push_back(t); return t;
     }
-    const mesh_fem& do_mf_arg();
+    const mesh_fem& do_mf_arg(std::vector<const mesh_fem*> *multimf = 0);
     void do_dim_spec(vdim_specif_list& lst);
     ATN_tensor* do_comp();
     ATN_tensor* do_data();

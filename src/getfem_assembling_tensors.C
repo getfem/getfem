@@ -273,6 +273,7 @@ namespace getfem {
   struct mf_comp {
     pnonlinear_elem_term nlt;
     const mesh_fem* pmf;
+    std::vector<const mesh_fem*> auxmf; /* used only by nonlinear terms */
     typedef enum { BASE=1, GRAD=2, HESS=3, NONLIN=4 } op_type;
     op_type op; /* the numerical values indicates the number 
 		   of dimensions in the tensor */
@@ -292,9 +293,9 @@ namespace getfem {
       ...
     */
     mf_comp(const mesh_fem* pmf_, op_type op_, bool vect) :
-      nlt(0), pmf(pmf_), op(op_), vectorize(vect) {}
-    mf_comp(const mesh_fem* pmf_, pnonlinear_elem_term nlt_) : 
-      nlt(nlt_), pmf(pmf_), op(NONLIN), vectorize(false) {}
+      nlt(0), pmf(pmf_), op(op_), vectorize(vect) { }
+    mf_comp(const std::vector<const mesh_fem*> vmf, pnonlinear_elem_term nlt_) : 
+      nlt(nlt_), pmf(vmf[0]), auxmf(vmf.begin()+1, vmf.end()), op(NONLIN), vectorize(false) { }
   };
 
   class ATN_computed_tensor : public ATN_tensor {
@@ -376,13 +377,16 @@ namespace getfem {
 	  size_type target_dim = mfcomp[i].pmf->fem_of_element(cv)->target_dim();
 	  size_type qdim = mfcomp[i].pmf->get_qdim();
 	  switch (mfcomp[i].op) {
-	  case mf_comp::BASE: pme2 = mat_elem_base(mfcomp[i].pmf->fem_of_element(cv)); break;
-	  case mf_comp::GRAD: pme2 = mat_elem_grad(mfcomp[i].pmf->fem_of_element(cv)); break;
-	  case mf_comp::HESS: pme2 = mat_elem_hessian(mfcomp[i].pmf->fem_of_element(cv)); break;
-	  case mf_comp::NONLIN: {
-	    std::vector<pfem> ftab(1); ftab[0] = mfcomp[i].pmf->fem_of_element(cv);
-	    pme2 = mat_elem_nonlinear(mfcomp[i].nlt, ftab); 
-	  } break;
+	    case mf_comp::BASE: pme2 = mat_elem_base(mfcomp[i].pmf->fem_of_element(cv)); break;
+	    case mf_comp::GRAD: pme2 = mat_elem_grad(mfcomp[i].pmf->fem_of_element(cv)); break;
+	    case mf_comp::HESS: pme2 = mat_elem_hessian(mfcomp[i].pmf->fem_of_element(cv)); break;
+	    case mf_comp::NONLIN: {
+	      std::vector<pfem> ftab(1+mfcomp[i].auxmf.size()); 
+	      ftab[0] = mfcomp[i].pmf->fem_of_element(cv);
+	      for (unsigned k=0; k < mfcomp[i].auxmf.size(); ++k) 
+		ftab[k+1] = mfcomp[i].auxmf[k]->fem_of_element(cv);
+	      pme2 = mat_elem_nonlinear(mfcomp[i].nlt, ftab); 
+	    } break;
 	  } 
 	  if (pme == NULL) pme = pme2;
 	  else pme = mat_elem_product(pme, pme2);
@@ -714,12 +718,21 @@ namespace getfem {
       cerr << "]" << endl;*/
   }
 
-  const mesh_fem& generic_assembly::do_mf_arg() {
+  const mesh_fem& generic_assembly::do_mf_arg(std::vector<const mesh_fem*> * multimf) {
     advance(); accept(OPEN_PAR,"expecting '('");
     if (tok_type() != MFREF) ASM_THROW_PARSE_ERROR("expecting mesh_fem reference");
     if (tok_mfref_num() >= mftab.size()) 
       ASM_THROW_PARSE_ERROR("reference to a non-existant mesh_fem #" << tok_mfref_num()+1);
     const mesh_fem& mf_ = *mftab[tok_mfref_num()]; advance();
+    if (multimf) {
+      multimf->resize(1); (*multimf)[0] = &mf_;
+      while (advance_if(COMMA)) {
+	if (tok_type() != MFREF) ASM_THROW_PARSE_ERROR("expecting mesh_fem reference");
+	if (tok_mfref_num() >= mftab.size()) 
+	  ASM_THROW_PARSE_ERROR("reference to a non-existant mesh_fem #" << tok_mfref_num()+1);
+	multimf->push_back(mftab[tok_mfref_num()]); advance();
+      }
+    }
     accept(CLOSE_PAR, "expecting ')'");
     return mf_;
   }
@@ -741,7 +754,8 @@ namespace getfem {
 	size_type num = 0; /* default value */
 	if (advance_if(ARGNUM_SELECTOR)) { num = tok_argnum();  advance(); }
 	if (num >= innonlin.size()) ASM_THROW_PARSE_ERROR("NonLin$" << num << " does not exist");
-	pmf = &do_mf_arg(); what.push_back(mf_comp(pmf, innonlin[num]));
+	std::vector<const mesh_fem*> allmf;
+	pmf = &do_mf_arg(&allmf); what.push_back(mf_comp(allmf, innonlin[num]));
       } else ASM_THROW_PARSE_ERROR("expecting Base, Grad, vBase, NonLin ...");
       if (f[0] != 'v' && pmf->get_qdim() != 1 && f.compare("NonLin")) {
 	ASM_THROW_PARSE_ERROR("Attempt to use a vector mesh_fem as a scalar mesh_fem");
