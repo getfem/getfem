@@ -241,7 +241,7 @@ typedef unsigned char uint8_type;
 #if INT_MAX == 9223372036854775807L || INT_MAX == 9223372036854775807
   typedef signed int    int64_type;
   typedef unsigned int uint64_type;
-#elif LONG_MAX == 9223372036854775807L || INT_MAX == 9223372036854775807
+#elif LONG_MAX == 9223372036854775807L || LONG_MAX == 9223372036854775807
   typedef signed long int    int64_type;
   typedef unsigned long int uint64_type;
 #else
@@ -258,16 +258,10 @@ typedef unsigned char uint8_type;
   //    a += p[3]; a += i.p[3]; p[3] = a; a >>= 16;
   //  }
 
-    /* a continuer, passage au complement a 2 pour la soustraction        */
-    /* multiplication, transtypage, ...                                   */
-    /* a faire si besoin.                                                 */
-
   // };
 
   // struct uint64_type : int64_type
   // {
-    /* regle differente d'ecriture et de transformation en int ...        */
-
 
   // };
 
@@ -275,6 +269,5 @@ typedef unsigned char uint8_type;
   
 } /* end of namespace dal.                                                */
 
-
-
 #endif /* __DAL_STD_H */
+

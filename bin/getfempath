@@ -29,4 +29,6 @@ while($list) {
   }
 }
 
+if ($path eq "") { exit(1); }
+
 print "$path\n";
