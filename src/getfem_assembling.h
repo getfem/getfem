@@ -895,19 +895,20 @@ namespace getfem
 			   const mesh_fem &mf,
 			   size_type dof, scalar_type dof_val) {     
     size_type Q=mf.get_qdim();
+    bgeot::mesh_convex_ind_ct dofcv = mf.convex_to_dof(dof);
     pfem pf1;
 
-    // peu performant !
-    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
-      pf1 = mf.fem_of_element(cv);
+    for (bgeot::mesh_convex_ind_ct::const_iterator it = dofcv.begin();
+	 it != dofcv.end(); ++it) {
+      pf1 = mf.fem_of_element(*it);
       if (pf1->target_dim() != 1)
 	DAL_THROW(to_be_done_error, "sorry, to be done ... ");
       size_type nbd = pf1->nb_dof();
       for (size_type i = 0; i < nbd * Q; i++) {
-	size_type dof1 = mf.ind_dof_of_element(cv)[i];
+	size_type dof1 = mf.ind_dof_of_element(*it)[i];
 	if (dof == dof1) {
 	  for (size_type j = 0; j < nbd * Q; j++) {
-	    size_type dof2 = mf.ind_dof_of_element(cv)[j];
+	    size_type dof2 = mf.ind_dof_of_element(*it)[j];
 	    if (!(dof == dof2)) {
 	      B[dof2] -= RM(dof2, dof1) * dof_val;
 	      RM(dof2, dof1) = RM(dof1, dof2) = 0;
@@ -977,13 +978,17 @@ namespace getfem
     // the solution of minimal norm of D*U = UD in UDD and
     // return the dimension of the kernel. The function is based
     // on a Gramm-Schmidt algorithm.
+    typedef typename gmm::linalg_traits<MATD>::value_type T;
+    typedef typename gmm::number_traits<T>::magnitude_type R;
     typedef typename gmm::temporary_vector<MATD>::vector_type TEMP_VECT;
+    R tol = gmm::default_tol(R());
+    R norminfD = gmm::mat_norminf(D);
     size_type nbd = gmm::mat_ncols(D), nbase = 0, nbr = gmm::mat_nrows(D);
     TEMP_VECT aux(nbr), e(nbd), f(nbd);
     dal::dynamic_array<TEMP_VECT> base_img;
     dal::dynamic_array<TEMP_VECT> base_img_inv;
     size_type nb_bimg = 0;
-    
+
     if (!(gmm::is_col_matrix(D)))
       DAL_WARNING(3,
 		  "Dirichlet_nullspace is inefficient when D is a row matrix");
@@ -991,24 +996,24 @@ namespace getfem
     // vectors of the image of D.
     dal::bit_vector nn;
     for (size_type i = 0; i < nbd; ++i) {
-      gmm::clear(e); e[i] = 1.0;
+      gmm::clear(e); e[i] = T(1);
       gmm::mult(D, e, aux);
-      scalar_type n = gmm::vect_norm2(aux);
+      R n = gmm::vect_norm2(aux);
 
-      if (n < 1.0E-8) { //à scaler sur l'ensemble de D ...
-	G(i, nbase++) = 1.0; nn[i] = true;
+      if (n < norminfD*tol) {
+	G(i, nbase++) = T(1); nn[i] = true;
       }
       else {
 	bool good = true;
 	for (size_type j = 0; j < nb_bimg; ++j)
-	  if (dal::abs(gmm::vect_sp(aux, base_img[j])) > 1.0E-16)
+	  if (dal::abs(gmm::vect_sp(aux, base_img[j])) > T(0))
 	    { good = false; break; }
 	if (good) {
 	  gmm::copy(e, f);
-	  gmm::scale(f, 1.0 / n); gmm::scale(aux, 1.0 / n);
+	  gmm::scale(f, T(R(1)/n)); gmm::scale(aux, T(R(1)/n));
 	  base_img_inv[nb_bimg] = TEMP_VECT(nbd);
 	  gmm::copy(f, base_img_inv[nb_bimg]);
-	  gmm::clean(aux, 1.0E-18);
+	  gmm::clean(aux, gmm::vect_norminf(aux)*tol);
 	  base_img[nb_bimg] = TEMP_VECT(nbr);
 	  gmm::copy(aux, base_img[nb_bimg++]);
 	  nn[i] = true;
@@ -1019,23 +1024,23 @@ namespace getfem
 
     for (size_type i = 0; i < nbd; ++i)
       if (!(nn[i])) {
-	gmm::clear(e); e[i] = 1.0; gmm::clear(f); f[i] = 1.0;
+	gmm::clear(e); e[i] = T(1); gmm::clear(f); f[i] = T(1);
 	gmm::mult(D, e, aux);
 	for (size_type j = 0; j < nb_bimg; ++j) { 
-	  scalar_type c = gmm::vect_sp(aux, base_img[j]);
+	  T c = gmm::vect_sp(aux, base_img[j]);
 	  //	  if (dal::abs(c > 1.0E-6) { // à scaler sur l'ensemble de D ...
-	  if (c != 0.) {
+	  if (c != T(0)) {
 	    gmm::add(gmm::scaled(base_img[j], -c), aux);
 	    gmm::add(gmm::scaled(base_img_inv[j], -c), f);
 	  }
 	}
-	if (gmm::vect_norm2(aux) < 1.0E-8) { // à scaler sur l'ensemble de D ..
+	if (gmm::vect_norm2(aux) < norminfD*tol*R(10000)) {
 	  gmm::copy(f, gmm::mat_col(G, nbase++));
 	}
 	else {
-	  scalar_type n = gmm::vect_norm2(aux);
-	  gmm::scale(f, 1.0 / n); gmm::scale(aux, 1.0 / n);
-	  gmm::clean(f, 1.0E-18); gmm::clean(aux, 1.0E-18);
+	  R n = gmm::vect_norm2(aux);
+	  gmm::scale(f, T(R(1)/n)); gmm::scale(aux, T(R(1)/n));
+	  gmm::clean(f, tol*gmm::vect_norminf(f)); gmm::clean(aux, tol*gmm::vect_norminf(aux));
 	  base_img_inv[nb_bimg] = TEMP_VECT(nbd);
 	  gmm::copy(f, base_img_inv[nb_bimg]);
 	  base_img[nb_bimg] = TEMP_VECT(nbr);
@@ -1051,23 +1056,22 @@ namespace getfem
     // Orthogonalisation of the basis of the kernel of D.
     for (size_type i = nb_triv_base + 1; i < nbase; ++i) {
       for (size_type j = nb_triv_base; j < i; ++j) {
-	scalar_type c = gmm::vect_sp(gmm::mat_col(G,i), gmm::mat_col(G,j));
-	if (c != 0.)
+	T c = gmm::vect_sp(gmm::mat_col(G,i), gmm::mat_col(G,j));
+	if (c != T(0))
 	  gmm::add(gmm::scaled(gmm::mat_col(G,j), -c), gmm::mat_col(G,i));
       }
     }
     // projection of UDD on the orthogonal to the kernel.
     for (size_type j = nb_triv_base; j < nbase; ++j) {
-      scalar_type c = gmm::vect_sp(gmm::mat_col(G,j), UDD);
-      if (c != 0.)
+      T c = gmm::vect_sp(gmm::mat_col(G,j), UDD);
+      if (c != T(0))
 	gmm::add(gmm::scaled(gmm::mat_col(G,j), -c), UDD);
     }
     // Test ...
-    gmm::mult(D, UDD, gmm::scaled(UD, -1.0), aux);
-    if (gmm::vect_norm2(aux) > 1.0E-12)
+    gmm::mult(D, UDD, gmm::scaled(UD, T(-1)), aux);
+    if (gmm::vect_norm2(aux) > gmm::vect_norm2(UDD)*tol*R(10000))
       DAL_WARNING(2, "Dirichlet condition not well inverted: residu="
 		  << gmm::vect_norm2(aux));
-
     return nbase;
   }
   
