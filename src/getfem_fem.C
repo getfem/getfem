@@ -936,7 +936,7 @@ namespace getfem
       G /= scalar_type(cv_node.nb_points());
       for (size_type i=0; i < cv_node.nb_points(); ++i) 
 	cv_node.points()[i] = (1-alpha)*cv_node.points()[i] + alpha*G;
-      cout << "creation of PK_discont(" << nc << "," << k << "," << alpha << "\n";
+      //cout << "creation of PK_discont(" << int(nc) << "," << k << "," << alpha << "\n";
       for (size_type d = 0; d < nc; ++d) {
         base_poly S(1,2); 
         S[0] = -alpha * G[d] / (1-alpha);
@@ -945,12 +945,13 @@ namespace getfem
           _base[j] = bgeot::poly_substitute_var(_base[j],S,d);
         }
       }
-      for (size_type j=0; j < nb_base(); ++j) cout << " base[" << j << "]=" << _base[j] << "\n";
+      /*for (size_type j=0; j < nb_base(); ++j) cout << " base[" << j << "]=" << _base[j] << "\n";
       for (size_type i=0; i < cv_node.nb_points(); ++i) {
         cout << "node=" << cv_node.points()[i] << ":";
         for (size_type j=0; j < nb_base(); ++j) cout << _base[j].eval(cv_node.points()[i].begin()) << " ";
         cout << "\n";
       }
+      */
     }
   };
   
