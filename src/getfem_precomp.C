@@ -133,6 +133,8 @@ namespace getfem
       ls.pf->base_value((*(ls.pspt))[i], c[i]);
       ls.pf->grad_base_value((*(ls.pspt))[i], pc[i]);
       ls.pf->hess_base_value((*(ls.pspt))[i], hpc[i]);
+      // cout << "---------------------------------------------------------\n";
+      // cout << "point " << (*ls.pspt)[i] << " value : " << c[i] << " grad : " << pc[i] << endl;
     }
   }
   

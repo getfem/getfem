@@ -28,10 +28,6 @@
 /* Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.         */
 /*                                                                         */
 /* *********************************************************************** */
-/*                                                                         */
-/* Use DOC++ (http://docpp.sourceforge.net) to extract basic documentation.*/
-/*                                                                         */
-/* *********************************************************************** */
 
 #ifndef __BGEOT_POLY_H
 #define __BGEOT_POLY_H
@@ -39,7 +35,6 @@
 #include <vector>
 #include <bgeot_config.h>
 
-/// Basic GEOmetric Tool.
 namespace bgeot
 {
   /// used as the common size type in the library
@@ -48,7 +43,7 @@ namespace bgeot
   /// used as the common short type integer in the library
   typedef dal::uint16_type short_type;
   ///
-
+  
   /** Return the value of $\frac{(n+p)!}{n!p!}$ which
    * is the number of monomials of a polynomial of $n$
    * variables and degree $d$
@@ -58,20 +53,19 @@ namespace bgeot
   /** Vector of integer (16 bits type) which represent the powers
    *  of a monomial
    */
-  class power_index : public std::vector<short_type>
-  {
-    public :
-      
+  class power_index : public std::vector<short_type> {
+  public :
+    
     /// Gives the next power index 
     const power_index &operator ++();
     /// Gives the next power index 
     const power_index operator ++(int)
-    { power_index res = *this; ++(*this); return res; } 
+      { power_index res = *this; ++(*this); return res; } 
     /// Gives the next previous index 
     const power_index &operator --();
     /// Gives the next previous index 
     const power_index operator --(int)
-    { power_index res = *this; --(*this); return res; }
+      { power_index res = *this; --(*this); return res; }
     /**  Gives the global number of the index (i.e. the position of
      *   the corresponding monomial
      */
@@ -83,7 +77,7 @@ namespace bgeot
     /// Constructor
     power_index(void) {}
   };
-
+  
   /**
    * This class deals with the plain polynomials with
    * several variables. The coefficients are abstract ($<$T$>$).
@@ -143,91 +137,89 @@ namespace bgeot
    *     \subsubsection*{Horner scheme to evaluate polynomials}
    *        To do ...
    */
-  template<class T> class polynomial : public std::vector<T>
-  {
-    protected :
-      
-      short_type n, d;
-
-    public :
-
-      typedef typename std::vector<T>::iterator iterator;
-      typedef typename std::vector<T>::const_iterator const_iterator;
-
-      /// Gives the degree of the polynomial
-      short_type degree(void) const { return d; }
-      /**  gives the degree of the polynomial, considering only non-zero
-       * coefficients
-       */
-      short_type real_degree(void) const;
-      ///     Gives the dimension (number of variables)
-      short_type dim(void) const { return n; }
-      /// Change the degree of the polynomial to d.
-      void change_degree(short_type dd);
-      /** Add to the polynomial a monomial of coefficient a and
-       * correpsonding to the power index pi.
-       */
-      void add_monomial(const T &coeff, const power_index &power);
-      ///  Add Q to P. P contains the result.
-      polynomial &operator +=(const polynomial &Q);
-      /// Substract Q to P. P contains the result.
-      polynomial &operator -=(const polynomial &Q);
-      /// Add Q to P.
-      polynomial operator +(const polynomial &Q) const
+  template<class T> class polynomial : public std::vector<T> {
+  protected :
+    
+    short_type n, d;
+    
+  public :
+    
+    typedef typename std::vector<T>::iterator iterator;
+    typedef typename std::vector<T>::const_iterator const_iterator;
+    
+    /// Gives the degree of the polynomial
+    short_type degree(void) const { return d; }
+    /**  gives the degree of the polynomial, considering only non-zero
+     * coefficients
+     */
+    short_type real_degree(void) const;
+    ///     Gives the dimension (number of variables)
+    short_type dim(void) const { return n; }
+    /// Change the degree of the polynomial to d.
+    void change_degree(short_type dd);
+    /** Add to the polynomial a monomial of coefficient a and
+     * correpsonding to the power index pi.
+     */
+    void add_monomial(const T &coeff, const power_index &power);
+    ///  Add Q to P. P contains the result.
+    polynomial &operator +=(const polynomial &Q);
+    /// Substract Q to P. P contains the result.
+    polynomial &operator -=(const polynomial &Q);
+    /// Add Q to P.
+    polynomial operator +(const polynomial &Q) const
       { polynomial R = *this; R += Q; return R; }
-      /// Substract Q to P.
-      polynomial operator -(const polynomial &Q) const
+    /// Substract Q to P.
+    polynomial operator -(const polynomial &Q) const
       { polynomial R = *this; R -= Q; return R; }
-      polynomial operator -(void) const;
-      /// Multiply P with Q. P contains the result.
-      polynomial &operator *=(const polynomial &Q);
-      /// Multiply P with Q. 
-      polynomial operator *(const polynomial &Q) const
+    polynomial operator -(void) const;
+    /// Multiply P with Q. P contains the result.
+    polynomial &operator *=(const polynomial &Q);
+    /// Multiply P with Q. 
+    polynomial operator *(const polynomial &Q) const
       { polynomial res = *this; res *= Q; return res; }
-      /** Product of P and Q considering that variables of Q come after
-       * variables of P. P contains the result
-       */
-      void direct_product(const polynomial &Q);
-      /// Multiply P with the scalar a. P contains the result.
-      polynomial &operator *=(const T &e);
-      /// Multiply P with the scalar a.
-      polynomial operator *(const T &e) const
+    /** Product of P and Q considering that variables of Q come after
+     * variables of P. P contains the result
+     */
+    void direct_product(const polynomial &Q);
+    /// Multiply P with the scalar a. P contains the result.
+    polynomial &operator *=(const T &e);
+    /// Multiply P with the scalar a.
+    polynomial operator *(const T &e) const
       { polynomial res = *this; res *= e; return res; }
-      /// Divide P with the scalar a. P contains the result.
-      polynomial &operator /=(const T &e);
-      /// Divide P with the scalar a.
-      polynomial operator /(const T &e) const
+    /// Divide P with the scalar a. P contains the result.
+    polynomial &operator /=(const T &e);
+    /// Divide P with the scalar a.
+    polynomial operator /(const T &e) const
       { polynomial res = *this; res /= e; return res; }   
-      /// Derivative of P with respect to the variable k. P contains the result.
-      void derivative(short_type k);
-      /// Makes P = 1.
-      void one(void) { change_degree(0); (*this)[0] = T(1); }
-      template <class ITER> T horner(power_index &mi, short_type k,
-				     short_type de, const ITER &it) const;
-      /** Evaluate the polynomial. "it" is an iterator pointing to the list
-       * of variables. A Horner scheme is used.
-       */
-      template <class ITER> T eval(const ITER &it) const;
-      /// Constructor.
-      polynomial(void) : std::vector<T>(1)
+    /// Derivative of P with respect to the variable k. P contains the result.
+    void derivative(short_type k);
+    /// Makes P = 1.
+    void one(void) { change_degree(0); (*this)[0] = T(1); }
+    void clear(void) { change_degree(0); (*this)[0] = T(0); }
+    template <class ITER> T horner(power_index &mi, short_type k,
+				   short_type de, const ITER &it) const;
+    /** Evaluate the polynomial. "it" is an iterator pointing to the list
+     * of variables. A Horner scheme is used.
+     */
+    template <class ITER> T eval(const ITER &it) const;
+    /// Constructor.
+    polynomial(void) : std::vector<T>(1)
       { n = 0; d = 0; (*this)[0] = 0.0; }
-      /// Constructor.
-      polynomial(short_type nn, short_type dd) : std::vector<T>(alpha(nn,dd))
+    /// Constructor.
+    polynomial(short_type nn, short_type dd) : std::vector<T>(alpha(nn,dd))
       { n = nn; d = dd; std::fill(this->begin(), this->end(), T(0)); }
-       /// Constructor.
-      polynomial(short_type nn, short_type dd, short_type k)
-	: std::vector<T>(alpha(nn,dd))
-      {
-	n = nn; d = std::max(short_type(1), dd);
-	std::fill(this->begin(), this->end(), T(0));
-	(*this)[k+1] = T(1);
-      }
-
+    /// Constructor.
+    polynomial(short_type nn, short_type dd, short_type k)
+      : std::vector<T>(alpha(nn,dd)) {
+      n = nn; d = std::max(short_type(1), dd);
+      std::fill(this->begin(), this->end(), T(0));
+      (*this)[k+1] = T(1);
+    }
+    
   };
-
-
-  template<class T> short_type polynomial<T>::real_degree(void) const
-  {
+  
+  
+  template<class T> short_type polynomial<T>::real_degree(void) const {
     const_iterator it = end() - 1, ite = begin() - 1;
     size_type l = size();
     for ( ; it != ite; --it, --l) { if (*it != T(0)) break; }
@@ -235,79 +227,71 @@ namespace bgeot
     while (dd > 0 && alpha(n, dd-1) > l) --dd;
     return dd;
   }
-
-  template<class T> void polynomial<T>::change_degree(short_type dd)
-  {
+  
+  template<class T> void polynomial<T>::change_degree(short_type dd) {
     resize(alpha(n,dd));
     if (dd > d) std::fill(this->begin() + alpha(n,d), this->end(), T(0));
     d = dd;
   }
-
+  
   template<class T>
-    void polynomial<T>::add_monomial(const T &coeff, const power_index &power)
-  {
+  void polynomial<T>::add_monomial(const T &coeff, const power_index &power) {
     size_type i = power.global_index();
     if (n != power.size()) DAL_THROW(dimension_error, "dimensions mismatch");
     if (i >= size()) { change_degree(power.degree()); }
     ((*this)[i]) += coeff;
   }
-
+  
   template<class T> 
-    polynomial<T> &polynomial<T>::operator +=(const polynomial &Q)
-  {
+  polynomial<T> &polynomial<T>::operator +=(const polynomial &Q) {
     if (Q.dim() != dim())
       DAL_THROW(dimension_error, "dimensions mismatch");
-
+    
     if (Q.degree() > degree()) change_degree(Q.degree());
     iterator it = begin();
     const_iterator itq = Q.begin(), ite = Q.end();
     for ( ; itq != ite; ++itq, ++it) *it += *itq;
     return *this;
   }
-
+  
   template<class T> 
-    polynomial<T> &polynomial<T>::operator -=(const polynomial &Q)
-  {
+  polynomial<T> &polynomial<T>::operator -=(const polynomial &Q) {
     if (Q.dim() != dim() || dim() == 0)
       DAL_THROW(dimension_error, "dimensions mismatch");
-
+    
     if (Q.degree() > degree()) change_degree(Q.degree());
     iterator it = begin();
     const_iterator itq = Q.begin(), ite = Q.end();
     for ( ; itq != ite; ++itq, ++it) *it -= *itq;
     return *this;
   }
-
+  
   template<class T> 
-    polynomial<T> polynomial<T>::operator -(void) const
-  {
+  polynomial<T> polynomial<T>::operator -(void) const {
     polynomial<T> Q = *this;
     iterator itq = Q.begin(), ite = Q.end();
     for ( ; itq != ite; ++itq) *itq = -(*itq);
     return Q;
   }
-
+  
   template<class T>
-    polynomial<T> &polynomial<T>::operator *=(const polynomial &Q)
-  {
+  polynomial<T> &polynomial<T>::operator *=(const polynomial &Q) {
     if (Q.dim() != dim())
       DAL_THROW(dimension_error, "dimensions mismatch");
-  
+    
     polynomial aux = *this;
     change_degree(0); (*this)[0] = T(0);
-
+    
     power_index miq(Q.dim()), mia(dim()), mitot(dim());
     if (dim() > 0) miq[dim()-1] = Q.degree();
     const_iterator itq = Q.end() - 1, ite = Q.begin() - 1;
     for ( ; itq != ite; --itq, --miq)
-      if (*itq != T(0))
-      {
+      if (*itq != T(0)) {
 	iterator ita = aux.end() - 1, itae = aux.begin() - 1;
 	std::fill(mia.begin(), mia.end(), 0);
 	if (dim() > 0) mia[dim()-1] = aux.degree();
 	for ( ; ita != itae; --ita, --mia)
-	  if (*ita != T(0))
-	  {
+	  if (*ita != T(0)) {
 	    power_index::iterator mita = mia.begin(), mitq = miq.begin();
 	    power_index::iterator mit = mitot.begin(), mite = mia.end();
 	    for ( ; mita != mite; ++mita, ++mitq, ++mit)
@@ -320,24 +304,21 @@ namespace bgeot
   }
 
   template<class T>
-    void polynomial<T>::direct_product(const polynomial &Q)
-  { 
+    void polynomial<T>::direct_product(const polynomial &Q) { 
     polynomial aux = *this;
 
     change_degree(0); n += Q.dim(); (*this)[0] = T(0);
-
+    
     power_index miq(Q.dim()), mia(aux.dim()), mitot(dim());
     if (Q.dim() > 0) miq[Q.dim()-1] = Q.degree();
     const_iterator itq = Q.end() - 1, ite = Q.begin() - 1;
     for ( ; itq != ite; --itq, --miq)
-      if (*itq != T(0))
-      {
+      if (*itq != T(0)) {
 	iterator ita = aux.end() - 1, itae = aux.begin() - 1;
 	std::fill(mia.begin(), mia.end(), 0); 
 	if (aux.dim() > 0) mia[aux.dim()-1] = aux.degree();
 	for ( ; ita != itae; --ita, --mia)
-	  if (*ita != T(0))
-	  {
+	  if (*ita != T(0)) {
 	    std::copy(mia.begin(), mia.end(), mitot.begin());
 	    std::copy(miq.begin(), miq.end(), mitot.begin() + aux.dim());
 	    add_monomial((*itq) * (*ita), mitot); /* on pourrait calculer
@@ -347,31 +328,27 @@ namespace bgeot
   }
 
   template<class T>
-    polynomial<T> &polynomial<T>::operator *=(const T &e)
-  {
+    polynomial<T> &polynomial<T>::operator *=(const T &e) {
     iterator it = begin(), ite = end();
     for ( ; it != ite; ++it) (*it) *= e;
     return *this;
   }
 
   template<class T>
-    polynomial<T> &polynomial<T>::operator /=(const T &e)
-  {
+    polynomial<T> &polynomial<T>::operator /=(const T &e) {
     iterator it = begin(), ite = end();
     for ( ; it != ite; ++it) (*it) /= e;
     return *this;
   }
 
   template<class T>
-    void polynomial<T>::derivative(short_type k)
-  {
+    void polynomial<T>::derivative(short_type k) {
     if (k >= n)
       DAL_THROW(std::out_of_range, "index out of range");
     
      iterator it = begin(), ite = end();
      power_index mi(dim());
-     for ( ; it != ite; ++it, ++mi)
-     {
+     for ( ; it != ite; ++it, ++mi) {
        if ((*it) != T(0) && mi[k] > 0)
        { mi[k]--; (*this)[mi.global_index()] = (*it) * T(mi[k] + 1); mi[k]++; }
        *it = T(0);
@@ -381,12 +358,10 @@ namespace bgeot
 
   template<class T> template<class ITER>
     T polynomial<T>::horner(power_index &mi, short_type k, short_type de,
-			    const ITER &it) const
-  {
+			    const ITER &it) const {
     if (k == 0)
       return (*this)[mi.global_index()];
-    else
-    {
+    else {
       T v = (*(it+k-1)), res = T(0);
       short_type *p = &(mi[k-1]);
       for (*p = degree() - de; *p != short_type(-1); (*p)--)
@@ -398,25 +373,24 @@ namespace bgeot
 
 
   template<class T> template<class ITER>
-    T polynomial<T>::eval(const ITER &it) const 
-  { power_index mi(dim()); return horner(mi, dim(), 0, it); }
+    T polynomial<T>::eval(const ITER &it) const {
+    power_index mi(dim());
+    return horner(mi, dim(), 0, it);
+  }
 
 
   /// Print P to the output stream o. for instance cout $<<$ P;
   template<class T>  std::ostream &operator <<(std::ostream &o,
-						     const polynomial<T>& P)
-  { 
+						     const polynomial<T>& P) { 
     bool first = true; size_type n = 0;
     typename polynomial<T>::const_iterator it = P.begin(), ite = P.end();
     power_index mi(P.dim());
-
+    
     if (it != ite && *it != T(0))
-    { o << *it; first = false; ++it; ++n; ++mi; }
-
-    for ( ; it != ite ; ++it, ++mi )
-    {
-      if (*it != T(0))
-      {
+      { o << *it; first = false; ++it; ++n; ++mi; }
+    
+    for ( ; it != ite ; ++it, ++mi ) {
+      if (*it != T(0)) {
 	if (!first) { if (*it < T(0)) o << " - "; else o << " + "; }
 	else if (*it < T(0)) o << "-";
 	if (dal::abs(*it)!=T(1)) o << dal::abs(*it);
@@ -434,8 +408,8 @@ namespace bgeot
   
   typedef polynomial<scalar_type> base_poly;
 
-    /* usual constant polynomials  */
-
+  /* usual constant polynomials  */
+  
   inline base_poly null_poly(short_type n)
     { return base_poly(n, 0); }
   inline base_poly one_poly(short_type n)

@@ -65,6 +65,7 @@ namespace getfem
 	  { PO = pgt->poly_vector()[k]; PO.derivative(n); pc(k,n) = PO[0]; }
     
       bgeot::mat_product(a, pc, B0);
+      B0.transpose();
       bgeot::mat_gauss_inverse(B0, TMP1);
       det[cv] = 1.0 / bgeot::mat_gauss_det(B0, TMP1);
       gtrans[cv] = B0;
@@ -73,16 +74,24 @@ namespace getfem
     }
   }
 
+  polynomial_composite::polynomial_composite(const mesh_precomposite &m)
+      : mp(&m), polytab(m.nb_convex()) {
+    std::fill(polytab.begin(), polytab.end(), base_poly(m.dim(), 0));
+  }
+
   void polynomial_composite::derivative(short_type k) {
-    base_poly P, Q;
+    dim_type N = mp->dim();
+    base_poly P(N, 0), Q;
+    base_vector e(N), f(N);
     for (size_type ic = 0; ic < mp->nb_convex(); ++ic) {
-      base_vector e(mp->dim());
       e.fill(0.0); e[k] = 1.0;
-      e *= mp->gtrans[ic]; // vérifier si ce n'est pas la transposée
+      bgeot::mat_vect_product_t(mp->gtrans[ic], e, f);
       P.clear();
-      for (dim_type n = 0; n < mp->dim(); ++n)
-	{ Q = polytab[ic]; Q.derivative(n); P += Q * e[n]; }
-      polytab[ic] = P;
+      for (dim_type n = 0; n < N; ++n)
+	{ Q = polytab[ic];
+	Q.derivative(n);
+	P += Q * f[n];  }
+      polytab[ic] = P; // faut-il multiplier la dérivée par qlq chose ? non ..
     }
   }
 
@@ -139,13 +148,13 @@ namespace getfem
 		scalar_type c = l * (1.0 / k), d = (l+1) * (1.0 / k);
 		smc.pm->add_triangle_by_points
 		  (base_vector(a, c),
-		   base_vector(a, d),
-		   base_vector(b, ((l+i+k) & 1) ? c : d));
+		   base_vector(b, ((l+i+k) & 1) ? c : d),
+		   base_vector(a, d));
 		if (l+i+1 < k)
 		  smc.pm->add_triangle_by_points
-		    (base_vector(b, c),
-		     base_vector(b, d),
-		     base_vector(a, ((l+i+k) & 1) ? d : c));
+		    (base_vector(a, ((l+i+k) & 1) ? d : c),
+		     base_vector(b, c),
+		     base_vector(b, d));
 	      }
 	    }
 	    break;

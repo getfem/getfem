@@ -143,6 +143,11 @@ void lap_pb::init(void)
       DAL_THROW(dal::internal_error,
 		"This element is only defined on simplexes");
     break;
+  case 3 : 
+    if (mesh_type != 0)
+      DAL_THROW(dal::internal_error,
+		"This element is only defined on simplexes");
+    break;
   default : DAL_THROW(dal::internal_error, "Unknown finite element method");
   }
 
@@ -245,6 +250,12 @@ void lap_pb::init(void)
     
   case 2 :
     sprintf(meth, "FEM_P2K_HIERARCHICAL(%d, %d)", N, K);
+    pfprinc = getfem::fem_descriptor(meth);
+    mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
+    break;
+
+  case 3 :
+    sprintf(meth, "FEM_STRUCTURED_COMPOSITE(FEM_PK(%d,%d), %d)", N, 1, K);
     pfprinc = getfem::fem_descriptor(meth);
     mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
     break;

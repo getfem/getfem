@@ -6,5 +6,7 @@ cd ~/source++/getfem_matlab
 cvsstat
 cd ~/source++/getfem_apps
 cvsstat
+cd ~/source++/getfem_html
+cvsstat
 
 

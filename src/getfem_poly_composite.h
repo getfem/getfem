@@ -77,16 +77,16 @@ namespace getfem
     
 
     polynomial_composite(void) {}
-    polynomial_composite(const mesh_precomposite &m)
-      : mp(&m), polytab(m.nb_convex()) {}
+    polynomial_composite(const mesh_precomposite &m);
 
   };
 
   template <class ITER>
   scalar_type polynomial_composite::eval(const ITER &it) const {
-    base_node pt(mp->dim()), p0;
+    base_node pt(mp->dim()), p0(mp->dim()), p1(mp->dim());
     std::copy(it, it + mp->dim(), pt.begin());
     std::fill(mp->elt.begin(), mp->elt.end(), true);
+    bgeot::mesh_convex_ind_ct::const_iterator itc, itce;
     
     mesh_precomposite::PTAB::const_sorted_iterator
       it1 = mp->vertexes.sorted_ge(pt), it2 = it1;    
@@ -95,26 +95,32 @@ namespace getfem
 
     while (i1 != size_type(-1) || i2 != size_type(-1)) {
       if (i1 != size_type(-1)) {
-	size_type ii = mp->linked_mesh().first_convex_of_point(i1);
-	if (ii == size_type(-1)) DAL_THROW(internal_error, "internal error.");
-	if (mp->elt[ii]) {
-	  mp->elt[ii] = false;
-	  p0 = pt; p0 -= mp->orgs[ii];
-	  p0 *= mp->gtrans[ii];
-	  if (mp->trans_of_convex(ii)->convex_ref()->is_in(p0) < 1E-10)
-	    return  polytab[ii].eval(p0.begin());
+	bgeot::mesh_convex_ind_ct tc = mp->linked_mesh().convex_to_point(i1);
+	itc = tc.begin(); itce = tc.end();
+	for (; itc != itce; ++itc) {
+	  size_type ii = *itc;
+	  if (mp->elt[ii]) {
+	    mp->elt[ii] = false;
+	    p0 = pt; p0 -= mp->orgs[ii];
+	    bgeot::mat_vect_product_t(mp->gtrans[ii], p0, p1);
+	    if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10)
+	      return  polytab[ii].eval(p1.begin());
+	  }
 	}
 	++it1; i1 = it1.index();
       }
       if (i2 != size_type(-1)) {
-	size_type ii = mp->linked_mesh().first_convex_of_point(i2);
-	if (ii == size_type(-1)) DAL_THROW(internal_error, "internal error.");
-	if (mp->elt[ii]) {
-	  mp->elt[ii] = false;
-	  p0 = pt; p0 -= mp->orgs[ii];
-	  p0 *= mp->gtrans[ii];
-	  if (mp->trans_of_convex(ii)->convex_ref()->is_in(p0) < 1E-10)
-	    return  polytab[ii].eval(p0.begin());
+	bgeot::mesh_convex_ind_ct tc = mp->linked_mesh().convex_to_point(i2);
+	itc = tc.begin(); itce = tc.end();
+	for (; itc != itce; ++itc) {
+	  size_type ii = *itc;
+	  if (mp->elt[ii]) {
+	    mp->elt[ii] = false;
+	    p0 = pt; p0 -= mp->orgs[ii];
+	    bgeot::mat_vect_product_t(mp->gtrans[ii], p0, p1);
+	    if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10)
+	      return  polytab[ii].eval(p1.begin());
+	  }
 	}
 	--it2; i2 = it2.index();
       }
