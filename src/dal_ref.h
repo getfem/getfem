@@ -379,6 +379,14 @@ namespace dal
     
   };
 
+  /** 
+      convenience template function for quick obtention of a strided iterator
+      without having to specify its (long) typename
+  */
+  template<typename ITER> _tab_ref_reg_spaced_iterator<ITER> reg_spaced_iterator(ITER it, size_t stride) {
+    return _tab_ref_reg_spaced_iterator<ITER>(it, stride);
+  }
+
   template<class ITER> class tab_ref_reg_spaced
   {
     public :
