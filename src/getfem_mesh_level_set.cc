@@ -2,10 +2,12 @@
 //========================================================================
 //
 // Library : GEneric Tool for Finite Elements Methods (getfem)
-// File    : getfem_mesh_level_set.cc : description of a mesh cut by a number of levelsets.
+// File    : getfem_mesh_level_set.cc : description of a mesh cut by a 
+//           number of levelsets.
 //           
-// Date    : January 26, 2005.
-// Author  : Yves Renard <Yves.Renard@insa-toulouse.fr>
+// Date    : March 04, 2005.
+// Author  : Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+//           Yves Renard <Yves.Renard@insa-toulouse.fr>
 //
 //========================================================================
 //
@@ -28,7 +30,6 @@
 //========================================================================
 
 #include <getfem_mesh_level_set.h>
-
 
 
 namespace getfem {
@@ -300,15 +301,17 @@ struct Chrono {
 //     }
   }
     
-
   static std::string lisible(const std::string &a) {
     std::string res(a);
-    for (size_type i = 0; i < a.size(); ++i) res[i] = "!-0N+$PZ"[a[i]];
+    for (size_type i = 0; i < a.size(); ++i)
+      res[i] = "$-0N+$PZ$B$AD$EC"[int(a[i])];
+    // $ : not possible, N : 0-, P = 0+, Z = 0+-, B = C-, A = C0-,
+    // D = C+, E = C0+, C = C0+-
     return res;
   }
 
   static char char_are_compatible(char a, char b) {
-    if ((a & b) || (a & 2) || (b & 2)) return (a | b);
+    if (((a & b) & 119) || (a & 2) || (b & 2)) return (a | b);
     return 0;
   }
 
@@ -323,6 +326,12 @@ struct Chrono {
     for (size_type i = 0; i < a.size(); ++i) a[i] |= b[i];
   }
 
+  static void string_modify(std::string &a, const std::string &b, 
+			    const std::string &c) {
+    for (size_type i = 0; i < a.size(); ++i) 
+      if (((b[i] & 1) && (c[i] & 4)) || ((b[i] & 4) && (c[i] & 1)))
+	a[i] |= 8;
+  }
 
   static void merge_neighbour(dal::bit_vector &visited,
 			      const getfem_mesh &mesh, std::string &zone, 
@@ -333,8 +342,12 @@ struct Chrono {
       bgeot:: mesh_face_convex_ind_ct ct = neighbour_of_convex(mesh, i, f);
       if (!ct.empty()) {
 	size_type ncv = *(ct.begin());
+	string_modify(zone, subzones[i], subzones[ncv]);
 	if (!visited[ncv]) {
-	  cout << "string " << lisible(subzones[i]) << " and " << lisible(subzones[ncv]) << " are compatible ? " << (string_are_compatible(subzones[i], subzones[ncv]) ? "yes" : "no") << endl;
+// 	  cout << "string " << lisible(subzones[i]) << " and "
+// 	       << lisible(subzones[ncv]) << " are compatible ? "
+// 	       << (string_are_compatible(subzones[i], subzones[ncv])
+// 		   ? "yes" : "no") << endl;
 	  if (string_are_compatible(subzones[i], subzones[ncv])) {
 	    string_merge(zone, subzones[ncv]);
 	    merge_neighbour(visited, mesh, zone, subzones, ncv);
@@ -344,6 +357,19 @@ struct Chrono {
     }
   }
 
+  static void merge_zoneset(std::vector<std::string> &zones,
+			    const std::string &z) {
+    size_type i = 0, j = 0, k = size_type(-1);
+    for (; i < zones.size(); ++i, ++j) {
+      if (i != j) zones[j] = zones[i];
+      if (string_are_compatible(zones[j], z)) {
+	if (k == size_type(-1)) { string_merge(zones[j], z); k = j; }
+	else { string_merge(zones[k], z); j--; }
+      }
+    }
+    if (k == size_type(-1)) zones.push_back(z); else zones.resize(j);
+  }
+
   void mesh_level_set::find_zones_of_elements(size_type cv) {
     /*
       a level set without  secondary level set cuts the space into 
@@ -351,6 +377,8 @@ struct Chrono {
       a level set with a secondary level set cut the space into 
       three parts '+' and '-' and '0' which is the half-space where the
       secondary level set is negative.
+
+    */
       
     // -   : 1
     // 0   : 2
@@ -358,9 +386,10 @@ struct Chrono {
     // 0+  : 6
     // 0-  : 3
     // 0+- : 7
+    // C   : 8 (touch the level set) 
     convex_info &cvi = cut_cv[cv];
     std::vector<std::string> subzones(cvi.pmesh->convex_index().last_true()+1,
-				      std::string(level_sets.size(), char(0)));
+				     std::string(level_sets.size(), char(0)));
     for (dal::bv_visitor i(cvi.pmesh->convex_index()); !i.finished();++i) {
       
       base_node barycentre = dal::mean_value(cvi.pmesh->points_of_convex(i));
@@ -384,15 +413,17 @@ struct Chrono {
 	visited.add(i);
 	std::string zone = subzones[i];
 	merge_neighbour(visited, *(cvi.pmesh), zone, subzones, i);
-	cvi.zones.push_back(zone);
+	merge_zoneset(cvi.zones, zone);
       }
     cout << "element " << cv << " nb of zones : " << cvi.zones.size() << endl;
+    for (size_type i = 0; i < cvi.zones.size(); ++i)
+      cout << "Zone " << i << " : " << lisible(cvi.zones[i]) << endl;
   }
 
 
   void mesh_level_set::cut_element(size_type cv,
-				      const dal::bit_vector &primary,
-				      const dal::bit_vector &secondary) {
+				   const dal::bit_vector &primary,
+				   const dal::bit_vector &secondary) {
     
     cut_cv[cv] = convex_info();
     cut_cv[cv].pmesh = pgetfem_mesh(new getfem_mesh);
@@ -658,7 +689,15 @@ struct Chrono {
 	  pgt2->gradient(pai->point(j), pc);
 	  gmm::mult(G,pc,KK);
 	  scalar_type J = gmm::lu_det(KK);
-	  if (noisy && J * sign < 0) cout << "ATTENTION retrournement de situation en convexe " << i << "sign = " << sign << " J = " << J << " p1 = " << mesh.points_of_convex(i)[0] << " p2 = " << mesh.points_of_convex(i)[1] << " p3 = " << mesh.points_of_convex(i)[2]  << " p4 = " << mesh.points_of_convex(i)[3] << " p5 = " << mesh.points_of_convex(i)[4] << " p6 = " << mesh.points_of_convex(i)[5] << " K = " << int(K) << endl;
+	  if (noisy && J * sign < 0)
+	    cout << "ATTENTION retrournement de situation en convexe " << i
+		 << "sign = " << sign << " J = " << J << " p1 = "
+		 << mesh.points_of_convex(i)[0] << " p2 = "
+		 << mesh.points_of_convex(i)[1] << " p3 = "
+		 << mesh.points_of_convex(i)[2] << " p4 = "
+		 << mesh.points_of_convex(i)[3] << " p5 = "
+		 << mesh.points_of_convex(i)[4] << " p6 = "
+		 << mesh.points_of_convex(i)[5] << " K = " << int(K) << endl;
 	  if (sign == 0 && gmm::abs(J) > 1E-14) sign = J;
 	  new_approx.add_point(c.xreal(), pai->coeff(j) * gmm::abs(J));
 	}
@@ -761,7 +800,8 @@ struct Chrono {
 	 it != dofs.end(); ++it) {
       scalar_type v = ls->values()[*it];
       int p2 = ( (v < -EPS) ? -1 : ((v > EPS) ? +1 : 0));
-      if (p == -2) p=p2; else if (p*p2 < 0) return 0;
+      if (p == -2) p=p2;
+      if (!p2 || p*p2 < 0) return 0;
     }
 
     base_node X(pf->dim()), G(pf->dim());
@@ -798,12 +838,10 @@ struct Chrono {
 	if (noisy) cout << "is cut \n";
 	if ((*it)->has_secondary()) {
 	  int s = is_not_crossed_by(cv, *it, 1);
-	  if (!s)
-	  { sec.add(lsnum); prim.add(lsnum); }
-	  else if (s > 0.) prim.add(lsnum);
+	  if (!s) { sec.add(lsnum); prim.add(lsnum); }
+	  else if (s > 0) prim.add(lsnum);
 	}
-	else
-	  prim.add(lsnum);
+	else prim.add(lsnum);
       }
     }
   }

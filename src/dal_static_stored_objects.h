@@ -101,18 +101,26 @@ namespace dal {
   };
 
 #define DAL_SIMPLE_KEY(class_name, var_type)                         \
-    struct class_name : public dal::simple_key<var_type> {            \
+    struct class_name : public dal::simple_key<var_type> {           \
       class_name(var_type aa) : dal::simple_key<var_type>(aa) {}     \
     }
+
 #define DAL_DOUBLE_KEY(class_name, var_type1, var_type2)	     \
-    struct class_name : public dal::simple_key<std::pair<var_type1,var_type2> > {  \
-      class_name(var_type1 aa, var_type2 bb) :                       \
-	dal::simple_key<std::pair<var_type1,var_type2> >(std::make_pair(aa,bb)) {} \
+    struct class_name :                                              \
+      public dal::simple_key<std::pair<var_type1,var_type2> > {	     \
+        class_name(var_type1 aa, var_type2 bb) :                     \
+	dal::simple_key<std::pair<var_type1,var_type2> >             \
+	(std::make_pair(aa,bb)) {}				     \
     }
+
 #define DAL_TRIPLE_KEY(class_name, var_type1, var_type2, var_type3)  \
-  struct class_name : public dal::simple_key<std::pair<var_type1,std::pair<var_type2,var_type3> > > { \
-    class_name(var_type1 aa, var_type2 bb, var_type3 cc) :				\
-      dal::simple_key<std::pair<var_type1,std::pair<var_type2, var_type3> > >(std::make_pair(aa,std::make_pair(bb,cc))) {} \
+  struct class_name :                                                \
+    public dal::simple_key<std::pair<var_type1,                      \
+				std::pair<var_type2,var_type3> > > { \
+    class_name(var_type1 aa, var_type2 bb, var_type3 cc) :	     \
+      dal::simple_key<std::pair<var_type1,                           \
+				std::pair<var_type2, var_type3> > >  \
+    (std::make_pair(aa,std::make_pair(bb,cc))) {}		     \
   }
 
   typedef const static_stored_object_key *pstatic_stored_object_key;

@@ -5,8 +5,7 @@
 // File    : gmm_lapack_interface.h : specialization of operations for
 //           dense matrices calling lapack.
 // Date    : October 7, 2003.
-// Authors : Caroline Lecalvez, Caroline.Lecalvez@gmm.insa-tlse.fr
-//           Yves Renard <Yves.Renard@insa-toulouse.fr>
+// Authors : Yves Renard <Yves.Renard@insa-toulouse.fr>
 //
 //========================================================================
 //
@@ -254,6 +253,101 @@ namespace gmm {
   gees_interface(dgees_, BLAS_D)
   gees_interface2(cgees_, BLAS_C)
   gees_interface2(zgees_, BLAS_Z)
+
+# define geev_int_right(lapack_name, base_type)			           \
+  template <typename VECT> inline void geev_interface_right(               \
+         const dense_matrix<base_type > &A,  const VECT &eigval_,          \
+         dense_matrix<base_type > &Q) {		                           \
+    GMMLAPACK_TRACE("geev_interface");                                     \
+    int n(mat_nrows(A)), info, lwork(-1); base_type work1;                 \
+    if (!n) return;                                                        \
+    dense_matrix<base_type > H(n,n); gmm::copy(A, H);                      \
+    char jobvl = 'N', jobvr = 'V';                                         \
+    std::vector<base_type > eigvr(n), eigvi(n);                            \
+    lapack_name(&jobvl, &jobvr, &n, &H(0,0), &n, &eigvr[0], &eigvi[0],     \
+		&Q(0,0), &n, &Q(0,0), &n, &work1, &lwork, &info);   	   \
+    lwork = int(gmm::real(work1));                                         \
+    std::vector<base_type > work(lwork);                                   \
+    lapack_name(&jobvl, &jobvr, &n, &H(0,0), &n, &eigvr[0], &eigvi[0],     \
+		&Q(0,0), &n, &Q(0,0), &n, &work[0], &lwork, &info);    	   \
+    if (info) DAL_THROW(failure_error, "QR algorithm failed");             \
+    gmm::copy(eigvr, gmm::real_part(const_cast<VECT &>(eigval_)));	   \
+    gmm::copy(eigvi, gmm::imag_part(const_cast<VECT &>(eigval_)));	   \
+  }
+
+# define geev_int_rightc(lapack_name, base_type)			   \
+  template <typename VECT> inline void geev_interface_right(               \
+         const dense_matrix<base_type > &A,  const VECT &eigval_,          \
+         dense_matrix<base_type > &Q) {		                           \
+    GMMLAPACK_TRACE("geev_interface");                                     \
+    int n(mat_nrows(A)), info, lwork(-1); base_type work1;                 \
+    if (!n) return;                                                        \
+    dense_matrix<base_type > H(n,n); gmm::copy(A, H);                      \
+    char jobvl = 'N', jobvr = 'V';                                         \
+    std::vector<double> rwork(2*n);                                        \
+    std::vector<base_type> eigv(n);                                        \
+    lapack_name(&jobvl, &jobvr, &n, &H(0,0), &n, &eigv[0], &Q(0,0), &n,    \
+		&Q(0,0), &n, &work1, &lwork, &rwork[0], &info);	   	   \
+    lwork = int(gmm::real(work1));                                         \
+    std::vector<base_type > work(lwork);                                   \
+    lapack_name(&jobvl, &jobvr, &n, &H(0,0), &n, &eigv[0], &Q(0,0), &n,    \
+		&Q(0,0), &n, &work[0], &lwork,  &rwork[0],  &info);	   \
+    if (info) DAL_THROW(failure_error, "QR algorithm failed");             \
+    gmm::copy(eigv, const_cast<VECT &>(eigval_));			   \
+  }
+
+  geev_int_right(sgeev_, BLAS_S)
+  geev_int_right(dgeev_, BLAS_D)
+  geev_int_rightc(cgeev_, BLAS_C)
+  geev_int_rightc(zgeev_, BLAS_Z)
+
+# define geev_int_left(lapack_name, base_type)                             \
+  template <typename VECT> inline void geev_interface_left(                \
+         const dense_matrix<base_type > &A,  const VECT &eigval_,          \
+         dense_matrix<base_type > &Q) {	 	                           \
+    GMMLAPACK_TRACE("geev_interface");                                     \
+    int n(mat_nrows(A)), info, lwork(-1); base_type work1;                 \
+    if (!n) return;                                                        \
+    dense_matrix<base_type > H(n,n); gmm::copy(A, H);                      \
+    char jobvl = 'V', jobvr = 'N';                                         \
+    std::vector<base_type > eigvr(n), eigvi(n);                            \
+    lapack_name(&jobvl, &jobvr, &n, &H(0,0), &n, &eigvr[0], &eigvi[0],     \
+		&Q(0,0), &n, &Q(0,0), &n, &work1, &lwork, &info);   	   \
+    lwork = int(gmm::real(work1));                                         \
+    std::vector<base_type > work(lwork);                                   \
+    lapack_name(&jobvl, &jobvr, &n, &H(0,0), &n, &eigvr[0], &eigvi[0],     \
+		&Q(0,0), &n, &Q(0,0), &n, &work[0], &lwork, &info);    	   \
+    if (info) DAL_THROW(failure_error, "QR algorithm failed");             \
+    gmm::copy(eigvr, gmm::real_part(const_cast<VECT &>(eigval_)));	   \
+    gmm::copy(eigvi, gmm::imag_part(const_cast<VECT &>(eigval_)));	   \
+  }
+
+# define geev_int_leftc(lapack_name, base_type)	  		           \
+  template <typename VECT> inline void geev_interface_left(                \
+         const dense_matrix<base_type > &A,  const VECT &eigval_,          \
+         dense_matrix<base_type > &Q) {		                           \
+    GMMLAPACK_TRACE("geev_interface");                                     \
+    int n(mat_nrows(A)), info, lwork(-1); base_type work1;                 \
+    if (!n) return;                                                        \
+    dense_matrix<base_type > H(n,n); gmm::copy(A, H);                      \
+    char jobvl = 'V', jobvr = 'N';                                         \
+    std::vector<double> rwork(2*n);                                        \
+    std::vector<base_type> eigv(n);                                        \
+    lapack_name(&jobvl, &jobvr, &n, &H(0,0), &n, &eigv[0], &Q(0,0), &n,    \
+		&Q(0,0), &n, &work1, &lwork, &rwork[0], &info);	   	   \
+    lwork = int(gmm::real(work1));                                         \
+    std::vector<base_type > work(lwork);                                   \
+    lapack_name(&jobvl, &jobvr, &n, &H(0,0), &n, &eigv[0], &Q(0,0), &n,    \
+		&Q(0,0), &n, &work[0], &lwork,  &rwork[0],  &info);	   \
+    if (info) DAL_THROW(failure_error, "QR algorithm failed");             \
+    gmm::copy(eigv, const_cast<VECT &>(eigval_));			   \
+  }
+
+  geev_int_left(sgeev_, BLAS_S)
+  geev_int_left(dgeev_, BLAS_D)
+  geev_int_leftc(cgeev_, BLAS_C)
+  geev_int_leftc(zgeev_, BLAS_Z) 
+    
 
 }
 

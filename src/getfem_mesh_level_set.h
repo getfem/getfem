@@ -2,10 +2,12 @@
 //========================================================================
 //
 // Library : GEneric Tool for Finite Element Methods (getfem)
-// File    : getfem_mesh_level_set.h : description of a mesh cut by a number of levelsets.
+// File    : getfem_mesh_level_set.h : description of a mesh cut by a
+//           number of levelsets.
 //           
-// Date    : January 26, 2005.
-// Author  : Yves Renard <Yves.Renard@insa-toulouse.fr>
+// Date    : March 04, 2005.
+// Author  : Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+//           Yves Renard <Yves.Renard@insa-toulouse.fr>
 //
 //========================================================================
 //
@@ -39,7 +41,8 @@
 namespace getfem {
 
   /// Describe an integration method linked to a mesh.
-  class mesh_level_set : public getfem_mesh_receiver, public context_dependencies {
+  class mesh_level_set : public getfem_mesh_receiver,
+			 public context_dependencies {
   protected :
     getfem_mesh *linked_mesh_;
     mutable bool is_valid_, is_adapted_;
