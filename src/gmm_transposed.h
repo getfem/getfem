@@ -42,6 +42,7 @@ namespace gmm {
     
     typedef transposed_row_ref<PT> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
+    typedef M * CPT;
     typedef typename std::iterator_traits<PT>::reference ref_M;
     typedef typename linalg_traits<this_type>::col_iterator iterator;
     typedef typename linalg_traits<this_type>::reference reference;
@@ -53,6 +54,9 @@ namespace gmm {
     transposed_row_ref(ref_M m) : _begin(mat_row_begin(m)), 
       _end(mat_row_end(m)),
       origin(linalg_origin(m)) {}
+
+    transposed_row_ref(const transposed_row_ref<CPT> &cr) :
+      _begin(cr._begin),_end(cr._end),origin(cr.origin) {}
 
     reference operator()(size_type i, size_type j) const
     { return access_type()(_begin+j, i); }
@@ -92,7 +96,7 @@ namespace gmm {
     typedef transposed_row_matrix_access<PT> access_type;
     static size_type ncols(const this_type &v) { return v._end - v._begin; }
     static size_type nrows(const this_type &v)
-    { return (ncols(v) == 0) ? 0 : vect_size(mat_col(v, 0)); }
+    { return (ncols(v) == 0) ? 0 : vect_size(const_mat_col(v, 0)); }
     static const_sub_col_type col(const const_col_iterator &it)
     { return linalg_traits<M>::row(it); }
     static sub_col_type col(const col_iterator &it)
@@ -125,6 +129,7 @@ namespace gmm {
     
     typedef transposed_col_ref<PT> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
+    typedef M * CPT;
     typedef typename std::iterator_traits<PT>::reference ref_M;
     typedef typename linalg_traits<this_type>::row_iterator iterator;
     typedef typename linalg_traits<this_type>::reference reference;
@@ -136,6 +141,9 @@ namespace gmm {
     transposed_col_ref(ref_M m) : _begin(mat_col_begin(m)),
 				  _end(mat_col_end(m)),
 				  origin(linalg_origin(m)) {}
+
+    transposed_col_ref(const transposed_col_ref<CPT> &cr) :
+      _begin(cr._begin),_end(cr._end),origin(cr.origin) {}
 
     reference operator()(size_type i, size_type j) const
     { return access_type()(_begin+i, j); }
@@ -175,10 +183,10 @@ namespace gmm {
     typedef transposed_col_matrix_access<PT> access_type;
     static size_type nrows(const this_type &v) { return v._end - v._begin; }
     static size_type ncols(const this_type &v)
-    { return (nrows(v) == 0) ? 0 : vect_size(mat_row(v, 0)); }
+    { return (nrows(v) == 0) ? 0 : vect_size(const_mat_row(v, 0)); }
     static const_sub_row_type row(const const_row_iterator &it)
     { return linalg_traits<M>::col(it); }
-    static sub_row_type row(const row_iterator &it)
+    static sub_row_type row(row_iterator &it)
     { return linalg_traits<M>::col(it); }
     static row_iterator row_begin(this_type &m) { return m._begin; }
     static row_iterator row_end(this_type &m) { return m._end; }

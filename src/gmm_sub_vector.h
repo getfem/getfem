@@ -77,6 +77,7 @@ namespace gmm {
   template <class PT, class SUBI> struct sparse_sub_vector {
     typedef sparse_sub_vector<PT, SUBI> this_type;
     typedef typename std::iterator_traits<PT>::value_type V;
+    typedef V * CPT;
     typedef typename select_return<typename linalg_traits<V>::const_iterator,
             typename linalg_traits<V>::iterator, PT>::return_type iterator;
     typedef typename linalg_traits<this_type>::reference reference;
@@ -96,6 +97,8 @@ namespace gmm {
     sparse_sub_vector(const V &v, const SUBI &s) : _begin(vect_begin(v)),
        _end(vect_end(v)), origin(linalg_origin(v)), si(s) {}
     sparse_sub_vector() {}
+    sparse_sub_vector(const sparse_sub_vector<CPT, SUBI> &cr)
+      : _begin(cr._begin),_end(cr._end),origin(cr.origin), si(cr.si) {}
   };
 
   template <class PT, class SUBI> struct sparse_sub_vector_access {
@@ -226,6 +229,7 @@ namespace gmm {
   template <class PT, class SUBI> struct skyline_sub_vector {
     typedef skyline_sub_vector<PT, SUBI> this_type;
     typedef typename std::iterator_traits<PT>::value_type V;
+    typedef V * CPT;
     typedef typename select_return<typename linalg_traits<V>::const_iterator,
             typename linalg_traits<V>::iterator, PT>::return_type iterator;
     typedef typename linalg_traits<this_type>::reference reference;
@@ -245,6 +249,8 @@ namespace gmm {
     skyline_sub_vector(const V &v, const SUBI &s) : _begin(vect_begin(v)),
        _end(vect_end(v)), origin(linalg_origin(v)), si(s) {}
     skyline_sub_vector() {}
+    skyline_sub_vector(const skyline_sub_vector<CPT, SUBI> &cr)
+      : _begin(cr._begin),_end(cr._end),origin(cr.origin), si(cr.si) {}
   };
 
   template <class PT, class SUBI> struct skyline_sub_vector_access {

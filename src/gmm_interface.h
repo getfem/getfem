@@ -84,6 +84,7 @@ namespace gmm {
   template <class PT> struct simple_vector_ref {
     typedef simple_vector_ref<PT> this_type;
     typedef typename std::iterator_traits<PT>::value_type V;
+    typedef V * CPT;
     typedef typename std::iterator_traits<PT>::reference ref_V;
     typedef typename linalg_traits<V>::value_type value_type;
     typedef typename linalg_traits<this_type>::iterator iterator;
@@ -97,6 +98,9 @@ namespace gmm {
     simple_vector_ref(ref_V v)
       : _begin(vect_begin(v)), _end(vect_end(v)), origin(linalg_origin(v)),
 	_size(vect_size(v)) {}
+
+    simple_vector_ref(const simple_vector_ref<CPT> &cr)
+      : _begin(cr._begin),_end(cr._end),origin(cr.origin),_size(cr._size) {}
 
     reference operator[](size_type i) const
     { return access_type()(origin, _begin, _end, i); }

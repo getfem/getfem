@@ -265,7 +265,7 @@ int main(void)
     cout << "/*      Test of sub_matrices of row_matrix<rsvector>       */\n";
     cout << "/***********************************************************/\n";
 
-    gmm::row_matrix<gmm::rsvector<double> > m8(38, 40);
+    gmm::row_matrix<gmm::rsvector<double> > m8(40, 40);
     gmm::clear(m8);
     gmm::copy(m3, gmm::sub_matrix(m8, sind1, sind2)); //essayer m3 par la suite
     cout << "m8 = " << m8 << endl;
@@ -297,6 +297,23 @@ int main(void)
     if (error > 1.0E-10)
       DAL_THROW(dal::failure_error, "computation error too large : " << error);
 
+    cout << "/***********************************************************/\n";
+    cout << "/*      matrix-matrix multiplication                       */\n";
+    cout << "/***********************************************************/\n";
+
+    gmm::row_matrix<gmm::rsvector<double> > m9(10, 10);
+    gmm::mult(gmm::transposed(gmm::sub_matrix(m8, sint1, ssli2)), 
+	      gmm::sub_matrix(m8, sint1, ssli2), m9);
+    cout << "m9 = " << m9 << endl;
+    gmm::mult(gmm::transposed(gmm::sub_matrix(m8, sint1, ssli2)), b, y);
+    gmm::cg(m9, y3, y, gmm::identity_matrix(), 1000, 1E-16, 0);
+    cout << "y3 = " << y3 << endl;
+    gmm::add(gmm::scaled(x, -1.0), y3);
+    error = gmm::vect_norm2(y3);
+    cout << "Error : " << error << endl;
+    if (error > 1.0E-10)
+      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+    
 
   }
   DAL_STANDARD_CATCH_ERROR;

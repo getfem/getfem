@@ -41,6 +41,7 @@ namespace gmm {
   template <class PT, class SUBI1, class SUBI2> struct gen_sub_row_matrix {
     typedef gen_sub_row_matrix<PT, SUBI1, SUBI2> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
+    typedef M * CPT;
     typedef typename std::iterator_traits<PT>::reference ref_M;
     typedef typename select_return<typename linalg_traits<M>
             ::const_row_iterator, typename linalg_traits<M>::row_iterator,
@@ -63,6 +64,8 @@ namespace gmm {
       : si1(s1), si2(s2), _begin(mat_row_begin(m)),
 	origin(linalg_origin(m)) {}
     gen_sub_row_matrix() {}
+    gen_sub_row_matrix(const gen_sub_row_matrix<CPT, SUBI1, SUBI2> &cr) :
+      si1(cr.si1), si2(cr.si2), _begin(cr._begin),origin(cr.origin) {}
   };
 
   template <class PT, class SUBI1, class SUBI2> 
@@ -188,6 +191,7 @@ namespace gmm {
   template <class PT, class SUBI1, class SUBI2> struct gen_sub_col_matrix {
     typedef gen_sub_col_matrix<PT, SUBI1, SUBI2> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
+    typedef M * CPT;
     typedef typename std::iterator_traits<PT>::reference ref_M;
     typedef typename select_return<typename linalg_traits<M>
             ::const_col_iterator, typename linalg_traits<M>::col_iterator,
@@ -211,6 +215,8 @@ namespace gmm {
       : si1(s1), si2(s2), _begin(mat_col_begin(m)),
         origin(linalg_origin(m)) {}
     gen_sub_col_matrix() {}
+    gen_sub_col_matrix(const gen_sub_col_matrix<CPT, SUBI1, SUBI2> &cr) :
+      si1(cr.si1), si2(cr.si2), _begin(cr._begin),origin(cr.origin) {}
   };
 
   template <class PT, class SUBI1, class SUBI2> 
