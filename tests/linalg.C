@@ -1,6 +1,6 @@
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 2002  Yves Renard.                                        */
+/* Copyright (C) 2002-2003  Yves Renard.                                   */
 /*                                                                         */
 /* This program is free software; you can redistribute it and/or modify    */
 /* it under the terms of the GNU Lesser General Public License as          */
@@ -69,8 +69,10 @@ int main(void)
       j = (j + 6) % 10; k = (k + 15) % 31;
       x[i] = 10.0 * double(i - 5 + ((i >= 5) ? 1 : 0));
     }
+    
     cout << "m = " << m << endl;
     cout << "x = " << x << endl;
+
 
     gmm::mult(m, x, b);
     cout << "b = " << b << endl;
@@ -185,6 +187,45 @@ int main(void)
     if (error > 1.0E-10)
       DAL_THROW(dal::failure_error, "computation error too large : " << error);
 
+
+    cout << "/***********************************************************/\n";
+    cout << "/*             Test of csr_matrix<double>                  */\n";
+    cout << "/***********************************************************/\n";
+
+    gmm::csr_matrix<double> m5ter(10, 10);
+    gmm::copy(m3, m5ter);
+    cout << "m5ter = " << m5ter << endl;
+    cout << "transposed(m5ter) = " << gmm::transposed(m5ter) << endl;
+    gmm::clear(y2);
+    iter.init();
+    gmm::bicgstab(m5ter, y2, b, gmm::identity_matrix(), iter);
+    cout << "y2 = " << y2 << endl;
+    gmm::add(gmm::scaled(x, -1.0), y2);
+    error = gmm::vect_norm2(y2);
+    cout << "Error : " << error << endl;
+    if (error > 1.0E-10)
+      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+
+
+    cout << "/***********************************************************/\n";
+    cout << "/*             Test of csc_matrix<double>                  */\n";
+    cout << "/***********************************************************/\n";
+
+    gmm::csc_matrix<double, 2> m5a(10, 10);
+    gmm::copy(m3, m5a);
+    cout << "m5a = " << m5ter << endl;
+    cout << "transposed(m5a) = " << gmm::transposed(m5a) << endl;
+    gmm::clear(y2);
+    iter.init();
+    gmm::bicgstab(m5a, y2, b, gmm::identity_matrix(), iter);
+    cout << "y2 = " << y2 << endl;
+    gmm::add(gmm::scaled(x, -1.0), y2);
+    error = gmm::vect_norm2(y2);
+    cout << "Error : " << error << endl;
+    if (error > 1.0E-10)
+      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+
+
     cout << "/***********************************************************/\n";
     cout << "/*         Test of sub_matrices of dense_matrix            */\n";
     cout << "/***********************************************************/\n";
@@ -203,8 +244,8 @@ int main(void)
     gmm::copy(m, gmm::sub_matrix(m6, sint1, sint2));
     cout << "m6 = " << m6 << endl;
     cout << "gmm::sub_matrix(m6, sint1, sint2)  = "
-//           << gmm::transposed(gmm::transposed
-// 			     (gmm::sub_matrix(m6,sint2, sint1))) << endl;
+//       << gmm::transposed(gmm::transposed
+// 			   (gmm::sub_matrix(m6,sint2, sint1))) << endl;
 	 << gmm::sub_matrix(m6,sint1, sint2) << endl;
     gmm::clear(y2);
     iter.init();
