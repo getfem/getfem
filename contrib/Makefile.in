@@ -76,8 +76,6 @@ DLLTOOL = @DLLTOOL@
 ECHO = @ECHO@
 GCJ = @GCJ@
 GCJFLAGS = @GCJFLAGS@
-
-GETFEMPATH = @GETFEMPATH@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LIBTOOL = @LIBTOOL@
 LIBTOOL_VERSION_INFO = @LIBTOOL_VERSION_INFO@
@@ -97,12 +95,12 @@ bin_PROGRAMS = \
 
 compare_solutions_SOURCES = compare_solutions.C
 interpole_solution_SOURCES = interpole_solution.C
+
 CXXFLAGS = @APPSCXXFLAGS@
 
-# a arranger, pour MTL et misc
-INCLUDES = -I$(top_srcdir)/misc -I$(top_srcdir)/../$(GETFEMPATH)/src -I/opt/mtl/include -I/usr/local/mtl/include
-LDADD = $(top_srcdir)/../$(GETFEMPATH)/src/.libs/libgetfem.a $(top_srcdir)/misc/.libs/libgetfemmisc.a -lm -L/usr/X11R6/lib -lX11
-subdir = ./interpolation
+INCLUDES = -I$(top_srcdir)/src 
+LDADD = $(top_srcdir)/src/.libs/libgetfem.a 
+subdir = ./contrib
 mkinstalldirs = $(SHELL) $(top_srcdir)/config/mkinstalldirs
 CONFIG_CLEAN_FILES =
 bin_PROGRAMS = compare_solutions$(EXEEXT) interpole_solution$(EXEEXT)
@@ -111,16 +109,12 @@ PROGRAMS = $(bin_PROGRAMS)
 am_compare_solutions_OBJECTS = compare_solutions.$(OBJEXT)
 compare_solutions_OBJECTS = $(am_compare_solutions_OBJECTS)
 compare_solutions_LDADD = $(LDADD)
-compare_solutions_DEPENDENCIES = \
-	$(top_srcdir)/../$(GETFEMPATH)/src/.libs/libgetfem.a \
-	$(top_srcdir)/misc/.libs/libgetfemmisc.a
+compare_solutions_DEPENDENCIES = $(top_srcdir)/src/.libs/libgetfem.a
 compare_solutions_LDFLAGS =
 am_interpole_solution_OBJECTS = interpole_solution.$(OBJEXT)
 interpole_solution_OBJECTS = $(am_interpole_solution_OBJECTS)
 interpole_solution_LDADD = $(LDADD)
-interpole_solution_DEPENDENCIES = \
-	$(top_srcdir)/../$(GETFEMPATH)/src/.libs/libgetfem.a \
-	$(top_srcdir)/misc/.libs/libgetfemmisc.a
+interpole_solution_DEPENDENCIES = $(top_srcdir)/src/.libs/libgetfem.a
 interpole_solution_LDFLAGS =
 
 DEFS = @DEFS@
@@ -160,7 +154,7 @@ distclean-libtool:
 	-rm -f libtool
 $(srcdir)/Makefile.in:  Makefile.am  $(top_srcdir)/configure.in $(ACLOCAL_M4)
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu  ./interpolation/Makefile
+	  $(AUTOMAKE) --gnu  ./contrib/Makefile
 Makefile:  $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe)
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
