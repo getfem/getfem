@@ -138,7 +138,9 @@ namespace getfem
   }
 
 
-
+  /* build a regularly refined mesh for a simplex of dimension <= 3.
+     All simplexes have the same orientation as the original simplex.
+   */
   static void structured_mesh_for_simplex_(bgeot::pconvex_structure cvs, 
 					   bgeot::pgeometric_trans opt_gt, const std::vector<base_node> *opt_gt_pts,
 					   short_type k, pgetfem_mesh &pm) {
@@ -172,6 +174,7 @@ namespace getfem
 	      C = opt_gt->transform(C, *opt_gt_pts); 
 	      D = opt_gt->transform(D, *opt_gt_pts); 
 	    }
+	    /* add triangle with correct orientation (det [B-A;C-A] > 0) */
 	    pm->add_triangle_by_points(A,B,C);
 	    if (l+i+1 < k)
 	      pm->add_triangle_by_points(C,B,D);
@@ -225,6 +228,7 @@ namespace getfem
 	      }
 	      /**
 		 Note that the orientation of each tetrahedron is the same
+		 (det > 0)
 	      */
 	      pm->add_tetrahedron(t[0], t[1], t[2], t[4]);
 	      if (k > 1 && ci+cj+ck < k-1) {
@@ -392,6 +396,7 @@ namespace getfem
       
       if (force_simplexification) {
 	const bgeot::mesh_structure* splx_mesh = cvr->basic_convex_ref()->simplexified_convex();
+	/* splx_mesh is correctly oriented */
 	for (size_type ic=0; ic < splx_mesh->nb_convex(); ++ic) {
 	  std::vector<base_node> cvpts(splx_mesh->nb_points_of_convex(ic));
 	  bgeot::pgeometric_trans sgt = bgeot::simplex_geotrans(cvr->structure()->dim(), 1);

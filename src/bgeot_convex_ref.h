@@ -98,7 +98,7 @@ namespace bgeot
     virtual ~convex_of_reference() {}
 
     /* returns a mesh structure composed of simplexes whose union
-       is the reference convex
+       is the reference convex. All simplexes have the same (direct) orientation.
     */
     const mesh_structure* simplexified_convex() const;
     const convex_of_reference* basic_convex_ref() const { return basic_convex_ref_; }

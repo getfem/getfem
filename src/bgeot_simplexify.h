@@ -109,6 +109,16 @@ namespace bgeot
 	  /* ************************************************************ */
 
 	  tab2[0] = i0; std::copy(tab.begin(), tab.end(), tab2.begin()+1);
+
+	  /* ensure that the simplex has direct orientation */
+	  if (N>1) {
+	    base_matrix M(N,N);
+	    for (size_type i = 0; i < N; ++i)
+	      for (size_type j = 0; j < N; ++j) 
+		M(i,j) = point_list[tab2[i+1]][j] - point_list[tab2[i]][j];
+	    if (gmm::lu_det(M) < 0) std::swap(tab2[0],tab2[1]);
+	  }
+
 	  sl.add_simplex(N, tab2.begin());
 	  
 	  for (size_type i = 0; i < nbi0; ++i)
