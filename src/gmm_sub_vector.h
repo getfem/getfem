@@ -84,7 +84,7 @@ namespace gmm {
 
     iterator _begin, _end;
     const void *origin;
-    const SUBI si;
+    SUBI si;
 
     size_type size(void) const { return si.size(); }
    

@@ -48,8 +48,8 @@ namespace gmm {
     typedef typename linalg_traits<this_type>::reference reference;
     typedef typename linalg_traits<M>::access_type access_type;
 
-    const SUBI1 si1;
-    const SUBI2 si2;
+    SUBI1 si1;
+    SUBI2 si2;
     iterator _begin;
     const void *origin;
     
@@ -93,8 +93,8 @@ namespace gmm {
     typedef gen_sub_row_matrix_iterator<PT, SUBI1, SUBI2> iterator;
 
     ITER it;
-    const SUBI1 si1;
-    const SUBI2 si2;
+    SUBI1 si1;
+    SUBI2 si2;
     size_type ii;
     
     iterator operator ++(int) { iterator tmp = *this; ii++; return tmp; }
@@ -195,8 +195,8 @@ namespace gmm {
     typedef typename linalg_traits<this_type>::reference reference;
     typedef typename linalg_traits<M>::access_type access_type;
 
-    const SUBI1 si1;
-    const SUBI2 si2;
+    SUBI1 si1;
+    SUBI2 si2;
     iterator _begin;
     const void *origin;
     
@@ -241,8 +241,8 @@ namespace gmm {
     typedef gen_sub_col_matrix_iterator<PT, SUBI1, SUBI2> iterator;
 
     ITER it;
-    const SUBI1 si1;
-    const SUBI2 si2;
+    SUBI1 si1;
+    SUBI2 si2;
     size_type ii;
     
     iterator operator ++(int) { iterator tmp = *this; ii++; return tmp; }
