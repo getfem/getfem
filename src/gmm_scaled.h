@@ -101,7 +101,7 @@ namespace gmm {
 	_size(vect_size(v)), r(rr) {}
 
     reference operator[](size_type i) const
-    { return access_type()(origin, _begin, _end, i); }
+    { return r * access_type()(origin, _begin, _end, i); }
   };
 
   template <class V> struct scaled_vector_const_access {

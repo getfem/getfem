@@ -68,12 +68,12 @@ namespace gmm {
   template <class Matrix, class Matps, class Precond, 
             class Vector1, class Vector2>
   int cg(const Matrix& A, Vector1& x, const Vector2& b, const Matps& PS,
-	 const Precond &P, int itemax, double residu, int noisy = 1) {
+	 const Precond &P, int itemax, double residu, int noisy) {
 
     typedef typename temporary_plain_vector<Vector1>::vector_type temp_vector;
     typedef typename linalg_traits<Vector1>::value_type value_type;
 
-    value_type rho(0), rho_1(0), a(0), beta(0), aa, 
+    value_type rho(0), rho_1(0), a(0), beta(0), 
       norm_b = sqrt(vect_sp(PS, b, b));
     temp_vector p(vect_size(x)), q(vect_size(x)), r(vect_size(x)),
       z(vect_size(x));
@@ -83,7 +83,6 @@ namespace gmm {
       clear(x);
     else {
       mult(A, scaled(x, -1.0), b, r);
-      if (noisy > 0)  cout << "norme de r = " << vect_norm2(r) << endl;
       mult(P, r, z);
       rho = vect_sp(PS, r, z);
       
@@ -93,11 +92,7 @@ namespace gmm {
 	else { beta = rho / rho_1; add(r, scaled(p, beta), p); }
 	
 	mult(A, p, q);
-
-	aa = vect_sp(PS, p, q);
-	cout << "aa = " << aa << endl << endl;
-	
-	a = rho / aa;
+	a = rho / vect_sp(PS, p, q);
 	
 	add(scaled(p, a), x);
 	add(scaled(q, -a), r);
@@ -115,12 +110,22 @@ namespace gmm {
   }
 
   template <class Matrix, class Matps, class Precond, 
-            class Vector1, class Vector2>
+            class Vector1, class Vector2> inline 
   int cg(const Matrix& A, const Vector1& x, const Vector2& b, const Matps& PS,
-	 const Precond &P, int itemax, double residu, int noisy = 1)
-  { cg(A, linalg_const_cast(x), b, PS, P, itemax, residu, noisy); }
+	 const Precond &P, int itemax, double residu, int noisy)
+  { return cg(A, linalg_const_cast(x), b, PS, P, itemax, residu, noisy); }
 
-  // PS = preconditionner ?
+  template <class Matrix, class Precond, 
+            class Vector1, class Vector2> inline
+  int cg(const Matrix& A, Vector1& x, const Vector2& b,
+	 const Precond &P, int itemax, double residu, int noisy)
+  { return cg(A, x , b, identity_matrix(), P, itemax, residu, noisy); }
+
+  template <class Matrix, class Precond, 
+            class Vector1, class Vector2> inline
+  int cg(const Matrix& A, const Vector1& x, const Vector2& b,
+	 const Precond &P, int itemax, double residu, int noisy)
+  { return cg(A, x , b , identity_matrix(), P , itemax, residu, noisy); }
   
 }
 

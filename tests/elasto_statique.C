@@ -253,7 +253,7 @@ void pb_data::assemble(void)
 
 void pb_data::solve(void) {
   gmm::cg(RM, U, B, gmm::identity_matrix(), gmm::identity_matrix(),
-	  20000, residu);
+	  20000, residu, 1);
 }
 
 int main(int argc, char *argv[]) {

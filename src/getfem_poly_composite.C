@@ -140,7 +140,7 @@ namespace getfem
 	{ Q = polytab[ic];
 	Q.derivative(n);
 	P += Q * f[n];  }
-      polytab[ic] = P; // faut-il multiplier la dérivée par qlq chose ? non ..
+      polytab[ic] = P;
     }
   }
 

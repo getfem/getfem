@@ -68,7 +68,7 @@ namespace gmm {
 
   template <class Matrix, class Vector, class VectorB, class Preconditioner>
   int bicgstab(const Matrix& A, Vector& x, const VectorB& b,
-	   const Preconditioner& M, int itemax, double residu, int noisy = 1) {
+	   const Preconditioner& M, int itemax, double residu, int noisy) {
 
     typedef typename linalg_traits<Vector>::value_type T;
     typedef typename temporary_plain_vector<Vector>::vector_type temp_vector;
@@ -133,7 +133,7 @@ namespace gmm {
 
   template <class Matrix, class Vector, class VectorB, class Preconditioner>
   int bicgstab(const Matrix& A, const Vector& x, const VectorB& b,
-	   const Preconditioner& M, int itemax, double residu, int noisy = 1) {
+	   const Preconditioner& M, int itemax, double residu, int noisy) {
     return bicgstab(A, linalg_const_cast(x), b, M, itemax, residu, noisy);
   }
   
