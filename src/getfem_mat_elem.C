@@ -304,7 +304,8 @@ namespace getfem
         do {
           for (V = Vtab[k]; k; --k)
             Vtab[k-1] = V = *pts[k] * V;
-          daxpy_(&n0, &V, const_cast<double*>(&(pts0[0])), &one, (double*)&(*pt), &one); 
+          daxpy_(&n0, &V, const_cast<double*>(&(pts0[0])), &one,
+		 (double*)&(*pt), &one); 
           pt+=n0;
           for (k=1; k != nm && ++pts[k] == es_end[k]; ++k)
             pts[k] = es_beg[k];

@@ -196,36 +196,45 @@ void test2() {
   getfem::getfem_mesh m1, m2;
   std::vector<size_type> nsubdiv(2); nsubdiv[0] = nsubdiv[1] = 5;
 
-  getfem::regular_unit_mesh(m1, nsubdiv, bgeot::geometric_trans_descriptor("GT_QK(2,2)"), false);
+  getfem::regular_unit_mesh
+    (m1, nsubdiv, bgeot::geometric_trans_descriptor("GT_QK(2,2)"), false);
 
   std::vector<base_node> v;
   for (size_type k=0; k < 6; ++k) {
     scalar_type c = k/5. * M_PI/2;
     v.push_back(base_node(cos(c), sin(c)));
   }
-  m2.add_convex_by_points(bgeot::geometric_trans_descriptor("GT_PK(1,5)"), v.begin());
-  //m2.add_segment_by_points(bgeot::base_node(.45,.35),bgeot::base_node(.75,.65));
+  m2.add_convex_by_points(bgeot::geometric_trans_descriptor("GT_PK(1,5)"),
+			  v.begin());
+  //m2.add_segment_by_points(bgeot::base_node(.45,.35),
+  //                         bgeot::base_node(.75,.65));
   //m2.add_segment_by_points(bgeot::base_node(.8,.7),bgeot::base_node(.23,.3));
   getfem::mesh_fem mf1(m1), mf2(m2);
-  getfem::pintegration_method pim1 = getfem::int_method_descriptor("IM_QUAD(17)");
-  getfem::pintegration_method pim2 = getfem::int_method_descriptor("IM_GAUSS1D(10)");
-  mf1.set_finite_element(m1.convex_index(),getfem::fem_descriptor("FEM_QK(2,1)"), pim1);
-  mf2.set_finite_element(m2.convex_index(),getfem::fem_descriptor("FEM_PK(1,3)"), pim2);
-
+  getfem::pintegration_method pim1
+    = getfem::int_method_descriptor("IM_QUAD(17)");
+  getfem::pintegration_method pim2
+    = getfem::int_method_descriptor("IM_GAUSS1D(10)");
+  mf1.set_finite_element(m1.convex_index(),
+			 getfem::fem_descriptor("FEM_QK(2,1)"), pim1);
+  mf2.set_finite_element(m2.convex_index(),
+			 getfem::fem_descriptor("FEM_PK(1,3)"), pim2);
+  
   getfem::mesh_fem mflnk(m2);
-  mflnk.set_finite_element(m2.convex_index(), getfem::virtual_link_fem(mf1, mflnk, pim2),
-			   pim2);
+  getfem::interpolated_fem ifem(mf1, mf2);
+  mflnk.set_finite_element(m2.convex_index(), &ifem, pim2);
   sparse_matrix_type MM = sparse_matrix_type(mf2.nb_dof(), mflnk.nb_dof());
   getfem::asm_mass_matrix(MM, mf2, mflnk);
   cout << "MM=" << MM << "\n";
-  cout << "mflnk.nb_dof()=" << mflnk.nb_dof() << ", mf2.nb_dof()=" << mf2.nb_dof() << ", mf1.nb_dof=" << mf1.nb_dof() << "\n";
+  cout << "mflnk.nb_dof()=" << mflnk.nb_dof() << ", mf2.nb_dof()="
+       << mf2.nb_dof() << ", mf1.nb_dof=" << mf1.nb_dof() << "\n";
   cout << "Matrice de masse\n";
   scalar_type sum = 0.0; 
   for (size_type i = 0; i < MM.nrows(); i++) { 
     scalar_type slig = 0;
     for (size_type l = 0; l < MM.ncols(); l++) {
       slig = slig + MM(i, l);
-      //cout << "M(" << i << "," << l << ")=" << MM(i,l) << ", slig = " << slig << "\n";
+      // cout << "M(" << i << "," << l << ")=" << MM(i,l) << ", slig = "
+      //      << slig << "\n";
     }
     sum += slig;
     cout << "sum(line)=" << slig << endl;
@@ -241,10 +250,12 @@ void test2() {
 /*  main program.                                                         */
 /**************************************************************************/
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
+  dal::exception_callback_debug cb;
+  dal::exception_callback::set_exception_callback(&cb);
+  
   try {
-    // test2();
+    test2();
     lap_pb p;
     
     cout << "initialisation ...\n";

@@ -622,7 +622,8 @@ namespace getfem {
         shape_updated_ = shape_updated_ || child(i).is_shape_updated();
       for (size_type i=0; shape_updated_ == false && i < mfcomp.size(); ++i) {
 	if  (current_cv == size_type(-1) || 
-	     mf.fem_of_element(current_cv) != mf.fem_of_element(cv)) 
+	     (mf.fem_of_element(current_cv) != mf.fem_of_element(cv) ||
+	      mf.nb_dof_of_element(current_cv) != mf.nb_dof_of_element(cv))) /* for FEM with non-constant nb_dof.. */ 
 	  shape_updated_ = true;
       }
       if (shape_updated_) {
@@ -712,7 +713,6 @@ namespace getfem {
         do_post_reduction(cv);
         data_base = &fallback_red.out_data[0];
       } else data_base = &(*t.begin());
-      cout << "taille t = " << t.size() << " tsize = " << size_type(tsize) << endl;
       if (t.size() != size_type(tsize)) DAL_INTERNAL_ERROR("");
     }
   };
@@ -1463,6 +1463,9 @@ namespace getfem {
     bool operator()(size_type a, size_type b) {
       for (size_type i=0; i < mf.size(); ++i) {
 	if (mf[i]->fem_of_element(a) < mf[i]->fem_of_element(b))
+	  return true;
+	if (mf[i]->fem_of_element(a) == mf[i]->fem_of_element(b) &&
+	    mf[i]->nb_dof_of_element(a) < mf[i]->nb_dof_of_element(b))
 	  return true;
       }
       return false;

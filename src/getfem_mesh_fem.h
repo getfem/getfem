@@ -289,7 +289,8 @@ namespace getfem
     }
     size_type nb_dof_of_face_of_element(size_type cv, short_type f) const {
       pfem pf = f_elems[cv]->pf;
-      return dof_structure.structure_of_convex(cv)->nb_points_of_face(f) * Qdim / pf->target_dim();
+      return dof_structure.structure_of_convex(cv)->nb_points_of_face(f)
+	* Qdim / pf->target_dim();
     }
 
     /** Gives the number of  degrees of freedom of the element
@@ -321,7 +322,8 @@ namespace getfem
     size_type ind_in_first_convex_of_dof(size_type d) const;
     /** Return the list of convexes attached to the specified dof */
     bgeot::mesh_convex_ind_ct convex_to_dof(size_type ip) const;
-    /** Renumbers the degrees of freedom. You should not have to call this function */
+    /** Renumbers the degrees of freedom. You should not have
+     * to call this function */
     void enumerate_dof(void) const;
     /// Gives the total number of degrees of freedom.
     size_type nb_dof(void) const

@@ -829,27 +829,25 @@ $j=1..N_f$ the additional global functions, the basis functions of the Xfem are 
 
 Most of the time, one only needs an enrichment on a subset of node of the original element. If it is so, one should a posteriori eliminate the unwanted extra-dofs.
 
-\section{Finite element methods defined on two different meshes}
+\section{Interpolation of a finite element method on non-matching meshes}
 
-A special finite element method is defined in \filename{getfem\_fem.h} which is not a real finite element method but allows to interpolate a finite element method defined on another mesh. When an assembling procedure has different finite element methods as arguments, the mesh on which those methods are defined should be the same. If you need to assemble a matrix with finite element methods defined on different meshes, you may use the finite element methods\\[0.5cm]
-\index{GETFEM!getfem::virtual\_link\_fem}
-\cpp{getfem::virtual\_link\_fem(getfem::mesh\_fem mf1, getfem::mesh\_fem mf2,} \\ \cpp{\mbox{}\hspace{12em} getfem::pintegration\_method pim) }\\[0.2cm]
-or\\[0.2cm]
-\cpp{getfem::virtual\_link\_fem\_with\_gradient(getfem::mesh\_fem mf1, getfem::mesh\_fem mf2,} \\ \cpp{\mbox{}\hspace{12em} getfem::pintegration\_method pim) }\\[0.5cm]
-Because each base function of the finite element method has to be interpolated, such a computation can be very slow. The first method does not interpolate the gradient, so that you cannot use assembling procedures where the gradient is needed (stiffness matrices for instance). The interpolation of the gradient is a very heavy procedure. It is highly preferable to use the first method if you need not the gradient.\\[0.5cm]
+(Version 1.7, evolution of \cpp{virtual\_link\_fem}) A special finite element method is defined in \filename{getfem\_interpolated\_fem.h} which is not a real finite element method but allows to interpolate a finite element method defined on another mesh. When an assembling procedure has different finite element methods as arguments, the mesh on which those methods are defined should be the same. If you need to assemble a matrix with finite element methods defined on different meshes, you may use the finite element methods\\[0.5cm]
+\index{GETFEM!getfem::interpolated\_fem}
+\cpp{getfem::interpolated\_fem(getfem::mesh\_fem mf1, getfem::mesh\_fem mf2) }\\[0.2cm]
+Because each base function of the finite element method has to be interpolated, such a computation can be a haevy procedure. By default, the interpolated fem object store the interpolation. \\[0.5cm]
 
-The interpolation is made on each Gauss point of the integration method \cpp{pim}, so that you have to use this integration method in the assembling procedure.\\[0.5cm]
+The interpolation is made on each Gauss point of the integration methods of  \cpp{mf2}, so that you have to use these integration methods in the assembling procedures.\\[0.5cm]
 
-For instance if you need to compute the mass matrix between to different finite element methods defined on two different meshes, this is an example of code which interpol the second f.e.m. on the mesh of the first f.e.m., assuming that \cpp{mf1} and \cpp{mf2} describe the two finite element methods and \cpp{pim} is the chosen integration method.\\[0.5cm]
+For instance if you need to compute the mass matrix between to different finite element methods defined on two different meshes, this is an example of code which interpolate the second f.e.m. on the mesh of the first f.e.m., assuming that \cpp{mf1} and \cpp{mf2} describe the two finite element methods and \cpp{pim} is the chosen integration method.\\[0.5cm]
 \begin{cppcode}
   getfem::mesh\_fem mf\_interpole(mf1.linked\_mesh());
-  getfem::pfem pf = getfem::virtual\_link\_fem(mf2, mf\_interpole, pim);
+  getfem::interpolated\_fem feminterpolated(mf2, mf1);
   dal::bit\_vector nn = mf1.convex\_index();
-  mf\_interpole.set\_finite\_element(nn, pf, pim);
-  getfem::asm\_mass\_matrix(SM1, mf1, mf\_interpole, 1);
+  mf\_interpole.set\_finite\_element(nn, &feminterpolated, pim);
+  getfem::asm\_mass\_matrix(SM1, mf1, mf\_interpole);
 \end{cppcode}
 
-The object defined to build the interpolation will be destroyed when the object \cpp{mf\_interpole} will be destroyed. The information stored by this element can be important.
+The object \cpp{feminterpolated} contains all the information concerning the interpolation. It could use a lot of memory. You have to care that it is not destroyed while you use it in a \cpp{mesh\_fem} structure. To obtain a better accuracy, it is better to refine the integration method (with \cpp{IM_STRUCTURED_COMPOSITE} for instance) rather than improve its order. 
 
 \subsection{mixed methods with different meshes}
   to be described ...

@@ -546,13 +546,6 @@ namespace getfem
   pfem PK_prism_fem(size_type n, short_type k);
 
   std::string name_of_fem(pfem p);
-
-  
-  class mesh_fem;
-  pfem virtual_link_fem(mesh_fem &mf1, mesh_fem &mf2,
-			pintegration_method pim) IS_DEPRECATED;
-  pfem virtual_link_fem_with_gradient(mesh_fem &mf1, mesh_fem &mf2,
-				      pintegration_method pim) IS_DEPRECATED;
   
 }  /* end of namespace getfem.                                            */
 
