@@ -1,0 +1,12 @@
+			BUGS AND REMARKS
+
+___________________________________________________________________________
+
+g++ (3.0) has a bug concerning dynamic libraries. No object with a non
+trivial constructor or destructor can be used.
+___________________________________________________________________________
+
+with cxx (dec compiler) the difficulty to build dynamic libraries is to be
+sure that all the template implementations are linked.
+___________________________________________________________________________
+
