@@ -5,7 +5,7 @@ check_PROGRAMS = \
 	test_kdtree	   \
 	test_rtree	   \
 	test_interpolation \
-	elasto_statique    \
+	elastostatic       \
 	geo_trans          \
 	geo_trans_inv      \
 	integration        \
@@ -22,7 +22,7 @@ check_PROGRAMS = \
 
 CLEANFILES = \
 	laplacian.res laplacian.mesh laplacian.dataelt \
-	elasto_statique.mesh test_mesh.mesh toto.mat test_mat_elem.mesh \
+	elastostatic.mesh test_mesh.mesh toto.mat test_mat_elem.mesh \
 	ii_files/* auto_gmm*
 
 
@@ -34,7 +34,7 @@ test_rtree_SOURCES = test_rtree.C
 test_assembly_SOURCES = test_assembly.C
 laplacian_SOURCES = laplacian.C
 test_interpolation_SOURCES = test_interpolation.C
-elasto_statique_SOURCES = elasto_statique.C
+elastostatic_SOURCES = elastostatic.C
 integration_SOURCES = integration.C
 poly_SOURCES = poly.C
 test_mesh_SOURCES = test_mesh.C
@@ -61,7 +61,7 @@ TESTS = \
 	$(top_srcdir)/tests/test_mat_elem.pl      \
 	$(top_srcdir)/tests/test_assembly.pl      \
 	$(top_srcdir)/tests/laplacian.pl          \
-	$(top_srcdir)/tests/elasto_statique.pl    \
+	$(top_srcdir)/tests/elastostatic.pl       \
 	$(top_srcdir)/tests/integration.pl        \
 	$(top_srcdir)/tests/poly.pl               \
 	$(top_srcdir)/tests/test_mesh.pl          \
@@ -83,7 +83,7 @@ EXTRA_DIST = \
 	test_interpolation.pl             \
 	test_assembly.pl                  \
 	laplacian.pl                      \
-	elasto_statique.pl                \
+	elastostatic.pl                   \
 	integration.pl                    \
 	poly.pl                           \
 	test_mesh.pl                      \
@@ -96,7 +96,7 @@ EXTRA_DIST = \
 	test_tree_sorted.pl               \
 	test_mat_elem.pl                  \
 	laplacian.param                   \
-	elasto_statique.param             \
+	elastostatic.param                \
 	test_link_fem.param               \
 	geo_trans_inv.param               \
 	make_gmm_test.pl                  \

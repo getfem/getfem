@@ -19,7 +19,7 @@
 /* *********************************************************************** */
 
 /**
- * Laplacian (Poisson) problem.
+ * Linear Elastostatic problem.
  *
  * This program is used to check that getfem++ is working. This is also 
  * a good example of use of Getfem++.
@@ -42,6 +42,7 @@ using bgeot::base_small_vector;  /* special class for small (dim < 16) vectors *
 using bgeot::base_node;   /* geometrical nodes (derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
+using bgeot::base_matrix; /* small dense matrix. */
 
 /* definition of some matrix/vector types. These ones are built
    using the predefined types in Gmm++ */
@@ -49,36 +50,66 @@ typedef gmm::rsvector<scalar_type> sparse_vector_type;
 typedef gmm::row_matrix<sparse_vector_type> sparse_matrix_type;
 typedef gmm::col_matrix<sparse_vector_type> col_sparse_matrix_type;
 
-/* Definitions for the exact solution of the Laplacian problem,
- *  i.e. Delta(sol_u) + sol_f = 0
- */
+/**************************************************************************/
+/*  Exact solution.                                                       */
+/**************************************************************************/
 
-base_small_vector sol_K; /* a coefficient */
-/* exact solution */
-scalar_type sol_u(const base_node &x) { return sin(gmm::vect_sp(sol_K, x)); }
-/* righ hand side */
-scalar_type sol_f(const base_node &x)
-{ return gmm::vect_sp(sol_K, sol_K) * sin(gmm::vect_sp(sol_K, x)); }
-/* gradient of the exact solution */
-base_small_vector sol_grad(const base_node &x)
-{ return sol_K * cos(gmm::vect_sp(sol_K, x)); }
+gmm::row_matrix<base_small_vector> sol_K;
+scalar_type sol_lambda, sol_mu;
+
+base_small_vector sol_u(const base_node &x) {
+  int N = x.size(); base_small_vector res(N);
+  for (int i = 0; i < N; ++i) res[i] = sin(gmm::vect_sp(sol_K.row(i), x));
+  return res;
+}
+
+base_small_vector sol_f(const base_node &x) {
+  int N = x.size();
+  base_small_vector res(N);
+  for (int i = 0; i < N; i++) {
+    res[i] = ( sol_mu * gmm::vect_sp(sol_K.row(i), sol_K.row(i)) )
+                  * sin(gmm::vect_sp(sol_K.row(i), x));
+    for (int j = 0; j < N; j++)
+      res[i] += ( (sol_lambda + sol_mu) * sol_K(j,j) * sol_K(j,i))
+	          * sin(gmm::vect_sp(sol_K.row(j), x));
+  }
+  return res;
+}
+
+base_matrix sol_sigma(const base_node &x) {
+  int N = x.size();
+  base_matrix res(N,N);
+  for (int i = 0; i < N; i++)
+    for (int j = 0; j <= i; j++) {
+      res(j,i) = res(i,j) = sol_mu *
+	( sol_K(i,j) * cos(gmm::vect_sp(sol_K.row(i), x))
+       +  sol_K(j,i) * cos(gmm::vect_sp(sol_K.row(j), x))
+	);
+      if (i == j)
+	for (int k = 0; k < N; k++)
+	  res(i,j) += sol_lambda * sol_K(k,k)
+	                         * cos(gmm::vect_sp(sol_K.row(k), x));
+    }
+  return res;
+}
 
 /*
-  structure for the Laplacian problem
+  structure for the Elastostatic problem
 */
-struct laplacian_problem {
+struct elastostatic_problem {
 
   enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
   getfem::getfem_mesh mesh;  /* the mesh */
-  getfem::mesh_fem mf_u;     /* the main mesh_fem, for the Laplacian solution */
-  getfem::mesh_fem mf_rhs;   /* the mesh_fem for the right hand side (f(x),..) */
-  getfem::mesh_fem mf_coef;  /* the mesh_fem used to represent pde coefficients */
+  getfem::mesh_fem mf_u;     /* main mesh_fem, for the elastostatic solution */
+  getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
+  getfem::mesh_fem mf_coef;  /* mesh_fem used to represent pde coefficients  */
+  scalar_type lambda, mu;    /* Lamé coefficients.                           */
 
-  scalar_type residu;        /* max residu for the iterative solvers */
+  scalar_type residu;        /* max residu for the iterative solvers         */
   bool gen_dirichlet;
 
-  sparse_matrix_type SM;     /* stiffness matrix.                           */
-  std::vector<scalar_type> U, B;      /* main unknown, and right hand side  */
+  sparse_matrix_type SM;     /* stiffness matrix.                            */
+  std::vector<scalar_type> U, B;      /* main unknown, and right hand side   */
 
   std::vector<scalar_type> Ud; /* reduced sol. for generic Dirichlet condition. */
   col_sparse_matrix_type NS; /* Dirichlet NullSpace 
@@ -91,13 +122,13 @@ struct laplacian_problem {
   bool solve(void);
   void init(void);
   void compute_error();
-  laplacian_problem(void) : mf_u(mesh), mf_rhs(mesh), mf_coef(mesh) {}
+  elastostatic_problem(void) : mf_u(mesh), mf_rhs(mesh), mf_coef(mesh) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
  * and integration methods and selects the boundaries.
  */
-void laplacian_problem::init(void)
+void elastostatic_problem::init(void)
 {
   const char *MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
   const char *FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
@@ -127,12 +158,17 @@ void laplacian_problem::init(void)
   /* scale the unit mesh to [LX,LY,..] and incline it */
   mesh.transformation(M);
 
-  datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   scalar_type FT = PARAM.real_value("FT", "parameter for exact solution");
   residu = PARAM.real_value("RESIDU"); if (residu == 0.) residu = 1e-10;
-  sol_K.resize(N);
-  for (size_type j = 0; j < N; j++)
-    sol_K[j] = ((j & 1) == 0) ? FT : -FT;
+  gmm::resize(sol_K, N, N);
+  for (size_type i = 0; i < N; i++)
+    for (size_type j = 0; j < N; j++)
+      sol_K(i,j) = (i == j) ? FT : -FT;
+
+  mu = PBSTFR_PARAM.real_value("MU", "Lamé coefficient mu");
+  lambda = PBSTFR_PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
+  sol_lambda = lambda; sol_mu = mu;
+  mf_u.set_qdim(N);
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = 
@@ -181,10 +217,11 @@ void laplacian_problem::init(void)
   }
 }
 
-void laplacian_problem::assembly(void)
+void elastostatic_problem::assembly(void)
 {
   size_type nb_dof = mf_u.nb_dof();
   size_type nb_dof_rhs = mf_rhs.nb_dof();
+  size_type N = mesh.dim();
 
   gmm::resize(B, nb_dof); gmm::clear(B);
   gmm::resize(U, nb_dof); gmm::clear(U); 
@@ -192,17 +229,21 @@ void laplacian_problem::assembly(void)
   
   cout << "Number of dof : " << nb_dof << endl;
   cout << "Assembling stiffness matrix" << endl;
-  getfem::asm_stiffness_matrix_for_laplacian(SM, mf_u, mf_coef, 
-     std::vector<scalar_type>(mf_coef.nb_dof(), 1.0));
+  getfem::asm_stiffness_matrix_for_linear_elasticity(SM, mf_u, mef_coef,
+		      std::vector<scalar_type>(mf_coef.nb_dof(), lambda),
+		      std::vector<scalar_type>(mf_coef.nb_dof(), mu));
   
   cout << "Assembling source term" << endl;
-  std::vector<scalar_type> F(nb_dof_rhs);
+  std::vector<scalar_type> F(nb_dof_rhs * N);
   for (size_type i = 0; i < nb_dof_rhs; ++i)
-    F[i] = sol_f(mf_rhs.point_of_dof(i));
+    for (size_type j = 0; j < N; ++j)
+      gmm::copy(sol_f(mf_rhs.point_of_dof(i)),
+		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
   getfem::asm_source_term(B, mf_u, mf_rhs, F);
   
   cout << "Assembling Neumann condition" << endl;
   /* Fill F with Grad(sol_u).n .. a bit complicated */
+  base_small_vector un(N), v(N);
   for (dal::bv_visitor cv(mf_u.convex_on_boundary(NEUMANN_BOUNDARY_NUM));
        !cv.finished(); ++cv) {
     getfem::pfem pf = mf_rhs.fem_of_element(cv);
@@ -211,11 +252,11 @@ void laplacian_problem::assembly(void)
 	 !f.finished(); ++f) {
       for (size_type l = 0; l< pf->structure()->nb_points_of_face(f); ++l) {
 	size_type n = pf->structure()->ind_points_of_face(f)[l];
-	base_small_vector un = mesh.normal_of_face_of_convex(cv, f,
-							     pf->node_of_dof(n));
+	un = mesh.normal_of_face_of_convex(cv, f, pf->node_of_dof(n));
 	un /= gmm::vect_norm2(un);
 	size_type dof = mf_rhs.ind_dof_of_element(cv)[n];
-	F[dof] = gmm::vect_sp(sol_grad(mf_rhs.point_of_dof(dof)), un);
+	gmm::mult(sol_sigma(mef_data.point_of_dof(dof)), un, v);
+	gmm::copy(v, gmm::sub_vector(F, gmm::sub_interval(dof*N, N)));
       }
     }
   }
@@ -225,12 +266,15 @@ void laplacian_problem::assembly(void)
   if (!gen_dirichlet) {    
     std::vector<scalar_type> D(nb_dof);
     for (size_type i = 0; i < nb_dof; ++i)
-      D[i] = sol_u(mf_u.point_of_dof(i));
-    getfem::assembling_Dirichlet_condition(SM, B, mf_u, 
+      gmm::copy(sol_u(mf_u.point_of_dof(i)),
+		gmm::sub_vector(D, gmm::sub_interval(i*N, N)));
+
+    getfem::assembling_Dirichlet_condition(SM, B, mf_u,
 					   DIRICHLET_BOUNDARY_NUM, D);
   } else {
     for (size_type i = 0; i < nb_dof_rhs; ++i)
-      F[i] = sol_u(mf_rhs.point_of_dof(i));
+      gmm::copy(sol_u(mf_rhs.point_of_dof(i)), 
+		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
     
     gmm::resize(Ud, nb_dof);
     gmm::resize(NS, nb_dof, nb_dof);
@@ -258,7 +302,7 @@ void laplacian_problem::assembly(void)
   }
 }
 
-bool laplacian_problem::solve(void) {
+bool elastostatic_problem::solve(void) {
   cout << "Compute preconditionner\n";
   double time = ftool::uclock_sec();
   gmm::iteration iter(residu, 1, 40000);
@@ -288,15 +332,20 @@ bool laplacian_problem::solve(void) {
 }
 
 /* compute the error with respect to the exact solution */
-void laplacian_problem::compute_error() {
+void elastostatic_problem::compute_error() {
+  size_type N = mesh.dim();
   std::vector<scalar_type> V(mf_rhs.nb_dof());
   getfem::interpolation_solution(mf_u, mf_rhs, U, V);
-  for (size_type i = 0; i < mf_rhs.nb_dof(); ++i)
-    V[i] -= sol_u(mf_rhs.point_of_dof(i));
+  for (size_type i = 0; i < mf_rhs.nb_dof(); ++i) {
+    gmm::add(gmm::scaled(sol_u(mf_rhs.point_of_dof(i)), -1.0),
+	     gmm::sub_vector(V, gmm::sub_interval(i*N, N)));
+  }
   cout.precision(16);
+  mf_rhs.set_qdim(N);
   cout << "L2 error = " << getfem::asm_L2_norm(mf_rhs, V) << endl
        << "H1 error = " << getfem::asm_H1_norm(mf_rhs, V) << endl
-       << "Linfty error = " << gmm::vect_norminf(V) << endl;     
+       << "Linfty error = " << gmm::vect_norminf(V) << endl;
+  mf_rhs.set_qdim(1);
 }
 
 /**************************************************************************/
@@ -312,7 +361,7 @@ int main(int argc, char *argv[]) {
 #endif
 
   try {    
-    laplacian_problem p;
+    elastostatic_problem p;
     p.PARAM.read_command_line(argc, argv);
     p.init();
     p.mesh.write_to_file(p.datafilename + ".mesh");

@@ -28,6 +28,7 @@ close(TMPF);
 $er = 0;
 
 sub start_program { # (N, K, NX, OPTION, SOLVER)
+
   my $def   = $_[0];
 
   # print ("def = $def\n");
