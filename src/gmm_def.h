@@ -149,13 +149,13 @@ namespace gmm {
   template <typename P> struct modifiable_pointer<const P *>
   { typedef P* pointer; };
 
-  inline bool is_sparse_(abstract_sparse)   { return true;  }
-  inline bool is_sparse_(abstract_dense)    { return false; }
-  inline bool is_sparse_(abstract_skyline)  { return true;  }
-  inline bool is_sparse_(abstract_indirect) { return false; }
+  inline bool is_sparse(abstract_sparse)   { return true;  }
+  inline bool is_sparse(abstract_dense)    { return false; }
+  inline bool is_sparse(abstract_skyline)  { return true;  }
+  inline bool is_sparse(abstract_indirect) { return false; }
 
   template <typename L> inline bool is_sparse(const L &) 
-  { return is_sparse_(typename linalg_traits<L>::storage_type()); }
+  { return is_sparse(typename linalg_traits<L>::storage_type()); }
 
   inline bool is_row_matrix_(row_major)     { return true;  }
   inline bool is_row_matrix_(col_major)     { return false; }

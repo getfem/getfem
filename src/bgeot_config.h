@@ -56,6 +56,7 @@ namespace bgeot
   typedef dal::uint16_type short_type;
   typedef size_t size_type;
   typedef double scalar_type;
+  typedef std::complex<double> complex_type;
 #ifndef GETFEM_HAVE_QDLIB
   typedef double long_scalar_type;
   typedef double opt_long_scalar_type;

@@ -70,6 +70,7 @@ include_HEADERS =                       \
 	gmm_transposed.h                \
 	gmm_scaled.h                    \
 	gmm_conjugated.h                \
+	gmm_real_part.h                 \
 	gmm_def.h                       \
 	gmm_sub_index.h                 \
 	gmm_vector_to_matrix.h          \
