@@ -1,4 +1,7 @@
-#!/usr/bin/perl
+
+# -*- perl -*-
+eval 'exec perl -S $0 "$@"'
+  if 0;
 
 $prefix = "sc2dgnplot_tmp";
 $count = int(1000 * rand);
