@@ -196,11 +196,13 @@ namespace getfem
 		scalar_type c = l * (1.0 / k), d = (l+1) * (1.0 / k);
 		smc.pm->add_triangle_by_points
 		  (base_vector(a, c),
-		   base_vector(b, ((l+i+k) & 1) ? c : d),
+		   // base_vector(b, ((l+i+k) & 1) ? c : d),
+		   base_vector(b, c),
 		   base_vector(a, d));
 		if (l+i+1 < k)
 		  smc.pm->add_triangle_by_points
-		    (base_vector(a, ((l+i+k) & 1) ? d : c),
+		    ( // base_vector(a, ((l+i+k) & 1) ? d : c),
+		     base_vector(a, d),
 		     base_vector(b, c),
 		     base_vector(b, d));
 	      }
