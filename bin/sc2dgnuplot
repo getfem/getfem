@@ -12,7 +12,7 @@ while ($li = <DATAF>)
   while ($li)
   { $cov[$c++] = $li; $li = <DATAF>; chomp($li); }
 
-  if (($c == 3) || ($c == 4))  # P1
+  if ($c == 3)  # P1
   {
     print TMPF "$cov[0]\n$cov[1]\n$cov[2]\n$cov[0]\n\n\n";
   }
