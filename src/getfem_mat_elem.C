@@ -366,10 +366,9 @@ namespace getfem
       for (size_type ivt = 0; ivt < indv[ir].size(); ++ivt) {
 	for (short_type hi = 0; hi < nhess; ++hi)
 	  if (ini)
-	    t.addmul(mref_coeff[indcomp(indv[ir][ivt], hi, j)],
+	    t.addmul(mref_coeff[indcomp(indv[ir][ivt], hi, 0)],
 		     mref[indcomp(indv[ir][ivt], hi, j)]);
 	  else {
-	    // cout << "here we put " << indcomp(indv[ir][ivt], hi, j) << " : " << j << "tensor : " << mref[indcomp(indv[ir][ivt], hi, j)] << endl;
 	    t = mref[indcomp(indv[ir][ivt], hi, j)];
 	    t *= mref_coeff[indcomp(indv[ir][ivt], hi, 0)];
 	    ini = true;

@@ -143,16 +143,17 @@ void lap_pb::init(void)
       ppi = bgeot::simplex_poly_integration(N);
     break;
   case 1 :
-    if (mesh_type) {
-      bgeot::papprox_integration pai
-	= bgeot::Newton_Cotes_approx_integration(1,2*K);
-      bgeot::papprox_integration pai2 = pai;
-      for (int i = 1; i < N; ++i) 
-	pai = bgeot::convex_product_approx_integration(pai, pai2);
-      ppi = pai;
-    }
+    if (mesh_type)
+      ppi = bgeot::parallelepiped_Newton_Cotes_approx_integration(N, 2*K);
     else
       ppi = bgeot::Newton_Cotes_approx_integration(N,2*K);
+    break;
+  case 2 :
+    if (mesh_type)
+      ppi = bgeot::parallelepiped_Gauss_approx_integration(N, K+1);
+    else
+      DAL_THROW(dal::internal_error,
+		"Product of 1D Gauss only for parallelepipeds");
     break;
   case 11 : ppi = bgeot::triangle1_approx_integration(); break;
   case 12 : ppi = bgeot::triangle2_approx_integration(); break;

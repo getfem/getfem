@@ -198,7 +198,6 @@ namespace bgeot
   struct _cv_para_t_light
   {
     dim_type nc; short_type r;
-    pgeometric_trans pgt;
     
     bool operator < (const _cv_para_t_light &ls) const
     {

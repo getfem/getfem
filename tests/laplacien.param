@@ -13,13 +13,14 @@ FT = 0.1;               % parameter for the exact solution.
 %%%%%   discretisation parameters  :                     	      %%%%%
 MESH_TYPE = 0;          % 0 = simplexes
 			% 1 = parallelepipeds
-K = 1;                  % Finite element degree.
+K = 2;                  % Finite element degree.
 INTEGRATION = 0;        % 0 = exact integration.
 			% 1 = Newton Cotes of degree 2 * K
+			% 2 = Product of 1D Gauss for parallelepipeds.
 			% 11, 12, 13, 14, 15, 16, 17 triangle(n-10)
 			% 21, 22, 23, 25 tetrahedron(n-20)
 			% 32, 33, 35 quadrilateral(n-30)
-NX = 4;            	% space step.
+NX = 5;            	% space step.
 RESIDU = 1E-9;     	% residu for conjugate gradient.
 MIXTEHYBRID = 'N';
 

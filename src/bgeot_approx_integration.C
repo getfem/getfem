@@ -374,6 +374,86 @@ namespace bgeot
   }
 
   /* ********************************************************************* */
+  /* integration on parallelepiped with Newton Cotes formulae              */
+  /* ********************************************************************* */
+  
+  struct a_par_Ne_light
+  {
+    dim_type N; short_type K;
+    bool operator < (const a_par_Ne_light &ls) const
+    {
+      if (N < ls.N) return true; if (N > ls.N) return false; 
+      if (K < ls.K) return true; return false;
+    }
+    a_par_Ne_light(dim_type NN, short_type KK) { N = NN; K = KK; }
+    a_par_Ne_light(void) { }
+  };
+
+  struct a_par_Ne
+  {
+    papprox_integration pai;
+    a_par_Ne(const a_par_Ne_light &ls)
+    {
+      papprox_integration aux;
+      pai = aux = Newton_Cotes_approx_integration(1, ls.K);
+      for (int i = 1; i < ls.N; ++i)
+	pai = convex_product_approx_integration(pai, aux);
+    }
+  };
+
+  papprox_integration parallelepiped_Newton_Cotes_approx_integration
+  (dim_type N, short_type K)
+  {
+    static dal::FONC_TABLE<a_par_Ne_light, a_par_Ne> *tab;
+    static bool isinit = false;
+    if (!isinit) {
+      tab = new dal::FONC_TABLE<a_par_Ne_light, a_par_Ne>();
+      isinit = true;
+    }
+    return (tab->add(a_par_Ne_light(N, K)))->pai;
+  }
+
+  /* ********************************************************************* */
+  /* integration on parallelepiped with Gauss formulae                     */
+  /* ********************************************************************* */
+  
+  struct a_par_Gauss_light
+  {
+    dim_type N; short_type K;
+    bool operator < (const a_par_Gauss_light &ls) const
+    {
+      if (N < ls.N) return true; if (N > ls.N) return false; 
+      if (K < ls.K) return true; return false;
+    }
+    a_par_Gauss_light(dim_type NN, short_type KK) { N = NN; K = KK;}
+    a_par_Gauss_light(void) { }
+  };
+
+  struct a_par_Gauss
+  {
+    papprox_integration pai;
+    a_par_Gauss(const a_par_Gauss_light &ls)
+    {
+      papprox_integration aux;
+      pai = aux = Gauss_approx_integration(ls.K);
+      for (int i = 1; i < ls.N; ++i)
+	pai = convex_product_approx_integration(pai, aux);
+    }
+  };
+
+  papprox_integration parallelepiped_Gauss_approx_integration
+  (dim_type N, short_type K)
+  {
+    static dal::FONC_TABLE<a_par_Gauss_light, a_par_Gauss> *tab;
+    static bool isinit = false;
+    if (!isinit) {
+      tab = new dal::FONC_TABLE<a_par_Gauss_light, a_par_Gauss>();
+      isinit = true;
+    }
+    return (tab->add(a_par_Gauss_light(N, K)))->pai;
+  }
+
+  /* ********************************************************************* */
   /*                                                                       */
   /*   Particular integration methods on dimension 2.                      */
   /*                                                                       */

@@ -102,6 +102,8 @@ namespace bgeot
    *    nbpt integration nodes. Exact on polynomial of degree nbpt * 2 - 1.
    */
   papprox_integration Gauss_approx_integration(short_type nbpt);
+  papprox_integration parallelepiped_Gauss_approx_integration(dim_type N,
+							      short_type nbpt);
 
   // methods on dimension 2
 
@@ -140,7 +142,11 @@ namespace bgeot
   /// Integration on a tetrahedron of order 5 with 15 points
   papprox_integration tetrahedron5_approx_integration(void);
  
- 
+  /** Give the approximate integration method corresponding to the
+   *    tensorial product of *pai1 and *pai2.
+   */
+  papprox_integration convex_product_approx_integration(papprox_integration,
+							papprox_integration);
 
   // methods on simplexes
 
@@ -148,13 +154,14 @@ namespace bgeot
    *    dimension n and of degree k (corresponds to lagrange interpolation).
    */
   papprox_integration Newton_Cotes_approx_integration(dim_type n,short_type k);
-
-  /** Give the approximate integration method corresponding to the
-   *    tensorial product of *pai1 and *pai2.
-   */
-  papprox_integration convex_product_approx_integration(papprox_integration,
-							papprox_integration);
-    
+  papprox_integration parallelepiped_Newton_Cotes_approx_integration
+  (dim_type N, short_type k);
+  inline papprox_integration prism_Newton_Cotes_approx_integration(dim_type N,
+							       short_type k) {
+    return convex_product_approx_integration
+      (Newton_Cotes_approx_integration(N - 1, k),
+       Newton_Cotes_approx_integration(1, k));
+  }
 
   //@}
 
