@@ -31,11 +31,20 @@
 /*                                                                         */
 /* *********************************************************************** */
 
+//
+//
+//
+//  A TERMINER
+//
+//
+
+
+
+
 #ifndef __BGEOT_SMATRIX_H
 #define __BGEOT_SMATRIX_H
 
-#include <dal_tree_sorted.h>
-#include <bgeot_matrix.h>
+#include <bgeot_svector.h>
 
 namespace bgeot
 {
@@ -51,30 +60,47 @@ namespace bgeot
     typedef vsvector<T> vector_type;
 
     
-    struct elt_m	       	/* basic element of the matrix.		*/
-    {
-      T val;	       	        /* value of the element.	        */
-      size_type rang;	        /* column number.			*/
-      elt_m(T v, size_type r) { val = v; rang = r; }
-      elt_m(size_type r) { rang = r; }
-      elt_m(void) {}
-    };
+    // struct elt_m	       	/* basic element of the matrix.		*/
+//     {
+//       T val;	       	        /* value of the element.	        */
+//       size_type rang;	        /* column number.			*/
+//       elt_m(T v, size_type r) { val = v; rang = r; }
+//       elt_m(size_type r) { rang = r; }
+//       elt_m(void) {}
+//     };
     
-    struct _elt_m_comp
-    {
-      int operator() (const elt_m &m, const elt_m &n) const
-	{ return (int(m.rang) - int(n.rang)); }
-    };
+//     struct _elt_m_comp
+//     {
+//       int operator() (const elt_m &m, const elt_m &n) const
+// 	{ return (int(m.rang) - int(n.rang)); }
+//     };
     
-    typedef dal::dynamic_tree_sorted<elt_m, _elt_m_comp, 3> _line_m;
+//     typedef dal::dynamic_tree_sorted<elt_m, _elt_m_comp, 3> _line_m;
+
+    typedef svector<T> _line_m;
+
     
     size_type nbc, nbl;      /* Number of columns and lines.           	*/
     std::vector<_line_m> li; /* array of lines.                         */
     
     /* Initialisation and copy.                                   	*/
     
-    void init(size_type l, size_type c) { nbl = l; nbc = c; li.resize(l); }
+    void init(size_type l, size_type c) { 
+      nbl = l; nbc = c; li.resize(l); 
+      //cerr << "init(" << l << "," << c << ")\n";
+      //for (size_type i=0; i < l; ++i)
+      //li[i] = svector<T>(c);
+      //cerr << "li[0].nbl=" << li[0].size() << endl;
+      std::fill(li.begin(), li.end(), svector<T>(c));
+    }
     
+    void resize(size_type l, size_type c) {
+      nbc = c; nbl = l;
+      li.resize(l);
+      for (size_type i=0; i < l; ++i)
+	li[i].resize(c);
+    }
+
     /* read and write operations.                                       */
     
     inline _line_m & operator[](size_type i) { return li[i]; }
@@ -84,23 +110,24 @@ namespace bgeot
     { return ref_elt_smatrix<T>(this, l, c); }
     
     inline void w(size_type l, size_type c, T e) { 
-      elt_m el(e,c); _line_m *pl = &(li[l]); size_type num = pl->search(el);
-      if (num != size_type(-1)) (*pl)[num] = el; else pl->add(el);
+      li[l][c] = e;
     }
     
     inline T r(size_type l, size_type c) const { 
-      elt_m el(c); size_type num; const _line_m *pl = &(li[l]);
-      if ((num = pl->search(el)) != size_type(-1)) return (*pl)[num].val;
-      else return T(0);
+      return li[l][c];
     }
 
     inline ref_elt_smatrix<T> operator ()(size_type l, size_type c) const
-    { r(l,c); }
+    { return r(l,c);}
 
 
     /* Manipulation of lines and columns functions.               	*/
 
     inline void clear_line(size_type i) { li[i].clear(); }
+    void clear() { for (size_type i=0; i < nbl; ++i) clear_line(i); }
+
+    inline _line_m& row(size_type i) { return li[i]; }
+    inline const _line_m& row(size_type i) const { return li[i]; }
 
     /* Operations algebriques sur les matrices. */
 
@@ -190,30 +217,30 @@ namespace bgeot
   
   template<class T> T lc_product(const smatrix<T>& m1, size_type i,
 				 const smatrix<T>& m2, size_type j) {
-    typename smatrix<T>::_line_m *t = &(m1.li[i]); typename smatrix<T>::elt_m *e;
+    typename smatrix<T>::_line_m *t = &(m1.li[i]); _elt_svector<T> *e;
     T res = T(0);  
     for (size_type k = t->card()-1; k != size_type(-1); k--)
-      { e = &((*t)[k]); res += e->val*m2.r(e->rang, j); }
+      { e = &((*t)[k]); res += e->e*m2.r(e->c, j); }
     return res;
   }
   
   template<class T> T partial_lc_product(const smatrix<T>& m1, size_type i,
 					 const smatrix<T>& m2, size_type j, size_type k)
   { /* Somme pour l <= k de m1(i,l) * m2(l,j).		*/
-    typename smatrix<T>::_line_m *t = &(m1.li[i]); typename smatrix<T>::elt_m *e;
+    typename smatrix<T>::_line_m *t = &(m1.li[i]); _elt_svector<T> *e;
     T res = 0;
     for (size_type l = t->card()-1; l != size_type(-1); l--)
-      { e =&((*t)[l]); if (e->rang <= k) res += e->val * m2.r(e->rang, j);}
+      { e =&((*t)[l]); if (e->c <= k) res += e->e * m2.r(e->c, j);}
     return res;
   }
   
   template<class T> T ll_product(const smatrix<T>& m1, size_type i,
 				 const smatrix<T>& m2, size_type j)
   { /* Produit de la ligne i de m1 par la ligne j de m2.	*/
-    typename smatrix<T>::_line_m *t = &(m1.li[i]); typename smatrix<T>::elt_m *e;
+    typename smatrix<T>::_line_m *t = &(m1.li[i]); _elt_svector<T> *e;
     T res = 0;
     for (size_type k = t->card()-1; k != size_type(-1); k--)
-      {  e = &((*t)[k]); res += e->val * m2.r(j, e->rang); }
+      {  e = &((*t)[k]); res += e->e * m2.r(j, e->c); }
     return res;
   }
   
@@ -221,27 +248,21 @@ namespace bgeot
 					 const smatrix<T>& m2, size_type j, size_type k)
   { /* Somme pour l <= k de m1(i,l) * m2(j,l).		*/
     const typename smatrix<T>::_line_m *t = &(m1.li[i]);
-    const typename smatrix<T>::elt_m *e;
+    const _elt_svector<T> *e;
     T res = 0;
     for (size_type l = t->card()-1; l != size_type(-1); l--)
-      { e =&((*t)[l]); if (e->rang <= k) res += e->val * m2.r(j, e->rang);}
+      { e =&((*t)[l]); if (e->c <= k) res += e->e * m2.r(j, e->c);}
     return res;
   }
   
   template<class T> T lv_product(const smatrix<T> &m1, size_type i,
 				 const typename smatrix<T>::vector_type &v)
   { 
-    const typename smatrix<T>::_line_m *t = &(m1.li[i]); T res = T(0);  
-    for (size_type k = t->card()-1; k != size_type(-1); k--)
-    {
-      const typename smatrix<T>::elt_m *e = &((*t)[k]);
-      res += e->val * v[e->rang];
-    }
-    return res;
+    return vect_sp(m1.row(i), v);
   }
   
   template<class T> void smatrix<T>::l_mul(size_type l, T x)
-  { for (size_type j = li[l].card() - 1; j != size_type(-1); j--) li[l][j].val *= x; }
+  { for (size_type j = li[l].card() - 1; j != size_type(-1); j--) li[l][j].e *= x; }
   
  
   
@@ -254,7 +275,7 @@ namespace bgeot
   template<class T> smatrix<T>& smatrix<T>::operator /=(T x)
   {
     for (size_type l = 0; l < nbl; l++)
-      for (size_type j = li[l].card() - 1; j != size_type(-1); j--) li[l][j].val /= x;
+      for (size_type j = li[l].card() - 1; j != size_type(-1); j--) li[l][j].e /= x;
     return *this;
   }
 
@@ -276,7 +297,7 @@ namespace bgeot
       for (c = 0; c < nbc; c++)
 	{
 	  T aux = 0.0;
-	  for (i = 0; i < t.card(); i++) aux += t[i].val*m.r(t[i].rang, c);
+	  for (i = 0; i < t.card(); i++) aux += t[i].e*m.r(t[i].c, c);
 	  this->w(l,c,aux);
 	}
     }
@@ -293,8 +314,8 @@ namespace bgeot
     for (size_type l = 0; l < m.nbl; l++)
       for (size_type j = m.li[l].card() - 1; j != size_type(-1); j--)
       {
-	elt_m *d = &(m.li[l][j]);
-	this->w(l, d->rang, this->r(l, d->rang) + d->val);
+	_elt_svector<T> *d = &(m.li[l][j]);
+	this->w(l, d->c, this->r(l, d->c) + d->e);
       }
     return *this;
   }
@@ -308,23 +329,23 @@ namespace bgeot
     for (size_type l = 0; l < m.nbl; l++)
       for (size_type j = m.li[l].card() - 1; j != size_type(-1); j--)
 	{
-	  elt_m *d = &(m.li[l][j]);
-	  this->w(l, d->rang, this->r(l, d->rang) - d->val);
+	  _elt_svector<T> *d = &(m.li[l][j]);
+	  this->w(l, d->c, this->r(l, d->c) - d->e);
 	} 
     return *this;
   }
 
   template<class T> bool smatrix<T>::operator ==(const smatrix<T> &m) const { 
-    size_type l, j; elt_m *d;
+    size_type l, j; _elt_svector<T> *d;
     
     if ( ( nbc != m.nbc ) || ( nbl != m.nbl ) ) return false;
     
     for (l = 0; l < nbl; l++)
       {
 	for (j = li[l].card() - 1; j != size_type(-1); j--)
-	  { d = &(li[l][j]); if ( d->val != m.r(l,d->rang)) return false; }
+	  { d = &(li[l][j]); if ( d->e != m.r(l,d->c)) return false; }
 	for (j = m.li[l].card() - 1; j != size_type(-1); j--)
-	  { d = &(m.li[l][j]); if (d->val != r(l,d->rang)) return false; }
+	  { d = &(m.li[l][j]); if (d->e != r(l,d->c)) return false; }
       }
     return true;
   }

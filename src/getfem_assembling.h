@@ -34,7 +34,7 @@
 #define __GETFEM_ASSEMBLING_H
 
 #include <getfem_mesh_fem.h>
-
+#include <bgeot_svector.h>
 namespace getfem
 {
 
@@ -568,27 +568,31 @@ namespace getfem
     // On veut construire une base orthonormale du noyau de D.
     size_type nbd = D.ncols(), nbase = 0;
     VECT aux(D.nrows());
-    VECT e(nbd), f(nbd);
+    VECT e(nbd);
+    bgeot::svector<scalar_type> f(nbd);
     dal::dynamic_array<VECT> base_img;
-    dal::dynamic_array<VECT> base_img_inv;
+    dal::dynamic_array<bgeot::svector<scalar_type> > base_img_inv;
     size_type nb_bimg = 0;
     e.fill(0.0);
 
     // première passe, on récupére toutes les colonnes vides de D.
     dal::bit_vector nn;
     for (size_type i = 0; i < nbd; ++i) {
-      e[i] = 1.0;
-      mult(G,e, aux);
-      if (norm(aux) < 1.0E-6) { // à scaler sur l'ensemble de D ...
-	G(i, nbase++) = 1.0; nn[i] = true;
+      e[i] = 1.0; f.clear(); f[i] = 1.0;
+      aux = D*e;
+      if (bgeot::vect_norm2(aux) < 1.0E-6) { // à scaler sur l'ensemble de D ...
+	G(nbase++, i) = 1.0; nn[i] = true;
       }
       else {
 	bool good = true;
 	for (size_type j = 0; j < nb_bimg; ++j)
-	  if (dal::abs(sp(aux, base_img[j])) > 1.0E-6)
+	  if (dal::abs(bgeot::vect_sp(aux, base_img[j])) > 1.0E-6)
 	    { good = false; break; }
 	if (good) {
-	  base_img_inv[nb_bimg] = e;
+	  scalar_type n = bgeot::vect_norm2(aux);
+	  f /= n; aux /= n;
+	  base_img_inv[nb_bimg] = f;
+	  cerr << "ajout de " << aux << "\n";
 	  base_img[nb_bimg++] = aux; nn[i] = true;
 	}
       }
@@ -598,22 +602,25 @@ namespace getfem
 
     for (size_type i = 0; i < nbd; ++i)
       if (!(nn[i])) {
-	e[i] = 1.0; f = e;
-	mult(G,e, aux);
+	e[i] = 1.0; f.clear(); f[i] = 1.0;
+	aux = D*e;
 	
 	for (size_type j = 0; j < nb_bimg; ++j) { 
-	  scalar_type c = sp(aux, base_img[j]);
-	  if (c > 1.0E-6) { // à scaler sur l'ensemble de D ...
-	    aux -= base_img[j] * c;
-	    f -= base_img_inv[j] * c;
-	  }
+	  scalar_type c = bgeot::vect_sp(aux, base_img[j]);
+	  //	  if (dal::abs(c > 1.0E-6) { // à scaler sur l'ensemble de D ...
+	  aux -= base_img[j] * c;
+	  f -= base_img_inv[j] * c;
 	}
-	if (norm(aux) < 1.0E-6) { // à scaler sur l'ensemble de D ...
-	  G.col(nbase++) = f;
+	cerr << "norm2(aux)= " << bgeot::vect_norm2(aux) << "\n";
+	if (bgeot::vect_norm2(aux) < 1.0E-6) { // à scaler sur l'ensemble de D ...
+	  G.row(nbase++) = f;
 	}
 	else {
+	  scalar_type n = bgeot::vect_norm2(aux);
+	  f /= n; aux /= n;
 	  base_img_inv[nb_bimg] = f;
 	  base_img[nb_bimg++] = aux;
+	  cerr << "ajout de " << aux << "\n";
 	}
 	e[i] = 0.0;
       }
@@ -621,22 +628,22 @@ namespace getfem
     // calcul d'une solution UDD
     UDD.fill(0.0);
     for (size_type i = 0; i < nb_bimg; ++i) {
-      scalar_type c = sp(UD, base_img[i]);
-       if (c > 1.0E-6) UDD += base_img_inv[i] * c;
+      scalar_type c = bgeot::vect_sp(UD, base_img[i]);
+      UDD += base_img_inv[i] * c;
     }
 
     // On orthogonalise la base du noyau
-    for (size_type i = nb_triv_base + 1; i < nb_base; ++i) {
+    for (size_type i = nb_triv_base + 1; i < nbase; ++i) {
       for (size_type j = nb_triv_base; j < i; ++j) {
-	scalar_type c = sp(G.col(i), G.col(j));
-	if (c > 1.0E-6) G.col(i) -= G.col(j) * sp(G.col(i), G.col(j));
+	scalar_type c = bgeot::vect_sp(G.row(i), G.row(j));
+	G.row(i) -= G.row(j) * c;
       }
     }
 
     // puis on projete UDD sur l'orthogonal du noyau.
-    for (size_type j = nb_triv_base; j < nb_base; ++j) {
-      scalar_type c = sp(UDD, G.col(j));
-      if (c > 1.0E-6) UDD -= G.col(j) * sp(UDD, G.col(j));
+    for (size_type j = nb_triv_base; j < nbase; ++j) {
+      scalar_type c = bgeot::vect_sp(G.row(j), UDD);
+      UDD -= G.row(j) * c;
     }
   }
   

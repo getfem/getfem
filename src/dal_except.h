@@ -134,7 +134,7 @@ namespace dal {
 
   class exception_callback {
   public:
-    virtual void callback(const std::string& msg) {};
+    virtual void callback(const std::string&) {};
   };
   
   void do_exception_callback(const std::string &msg);
