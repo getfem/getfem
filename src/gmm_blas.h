@@ -96,8 +96,8 @@ namespace gmm {
   { return linalg_traits<V>().end(v); }
 
   template <class MAT> inline 
-    typename linalg_traits<MAT>::const_sub_row_type
-    mat_row(const MAT &m, size_type i)
+  typename linalg_traits<MAT>::const_sub_row_type
+  mat_row(const MAT &m, size_type i)
   { return linalg_traits<MAT>().row(m, i); }
 
   template <class MAT> inline  
@@ -193,7 +193,10 @@ namespace gmm {
 				       abstract_sparse) {
     typename linalg_traits<L>::const_iterator it = vect_begin(l),
       ite = vect_end(l);
-    for (; it != ite; ++it) o << " (r" << it.index() << "," << (*it) << ")";
+    for (; it != ite; ++it) 
+      if (it.index() != size_type(-1)
+	  && *it != typename linalg_traits<L>::value_type(0))
+	o << " (r" << it.index() << "," << (*it) << ")";
   }
 
   template <class L> inline void write(std::ostream &o, const L &l,
@@ -539,7 +542,7 @@ namespace gmm {
   {
     size_type nbr = mat_nrows(l1);
     for (size_type i = 0; i < nbr; ++i)
-      copy_vect(mat_row(l1, i), mat_row(l2, i),
+      copy_vect(mat_const_row(l1, i), mat_row(l2, i),
       		typename linalg_traits<L1>::storage_type(),
 		typename linalg_traits<L2>::storage_type());
   }

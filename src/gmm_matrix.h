@@ -204,8 +204,8 @@ namespace gmm
     void do_clear(void);
     // to be done : read and write access to a component
     
-    template <class CONT> void resize(const CONT &c1, const CONT &c2 = c1);
-    template <class CONT> block_matrix(const CONT &c1, const CONT &c2 = c1)
+    template <class CONT> void resize(const CONT &c1, const CONT &c2);
+    template <class CONT> block_matrix(const CONT &c1, const CONT &c2)
     { resize(c1, c2); }
     block_matrix(void) {}
 
@@ -239,10 +239,12 @@ namespace gmm
   void block_matrix<MAT>::resize(const CONT &c1, const CONT &c2) {
     _nrowblocks = c1.size(); _ncolblocks = c2.size();
     blocks.resize(_nrowblocks * _ncolblocks);
+    intcol.resize(_ncolblocks);
+    introw.resize(_nrowblocks);
     for (size_type j = 0, l = 0; j < _ncolblocks; ++j) {
-      intcol = sub_interval(l, l+c2[j]-1); l += c2[j];
+      intcol[j] = sub_interval(l, l+c2[j]-1); l += c2[j];
       for (size_type i = 0, k = 0; i < _nrowblocks; ++i) {
-	if (j == 0) { introw = sub_interval(k, k+c1[j]-1); k += c1[i]; }
+	if (j == 0) { introw[i] = sub_interval(k, k+c1[i]-1); k += c1[i]; }
 	block(i, j) = MAT(c1[i], c2[j]);
       }
     }
@@ -251,28 +253,29 @@ namespace gmm
   template <class MAT, class V1, class V2>
   void mult(const block_matrix<MAT> &m, const V1 &v1, V2 &v2) {
     clear(v2);
+    typename sub_vector_type<V2 *, sub_interval>::vector_type sv;
     for (size_type i = 0; i < m.nrowblocks() ; ++i)
-      for (size_type j = 0; j < m.ncolblocks() ; ++j)
+      for (size_type j = 0; j < m.ncolblocks() ; ++j) {
+	sv = sub_vector(v2, m.subrowinterval(i));
 	mult(m.block(i,j),
-	     sub_vector(v1, m.subcolinterval(j)),
-	     sub_vector(v2, m.subrowinterval(i)),
-	     sub_vector(v2, m.subrowinterval(i)));
+	     sub_vector(v1, m.subcolinterval(j)), sv, sv);
+      }
   }
 
   template <class MAT, class V1, class V2, class V3>
   void mult(const block_matrix<MAT> &m, const V1 &v1, const V2 &v2, V3 &v3) {
+    typename sub_vector_type<V3 *, sub_interval>::vector_type sv;
     for (size_type i = 0; i < m.nrowblocks() ; ++i)
-      for (size_type j = 0; j < m.ncolblocks() ; ++j)
+      for (size_type j = 0; j < m.ncolblocks() ; ++j) {
+	sv = sub_vector(v3, m.subrowinterval(i));
 	if (j == 0)
 	  mult(m.block(i,j),
 	       sub_vector(v1, m.subcolinterval(j)),
-	       sub_vector(v2, m.subrowinterval(i)),
-	       sub_vector(v3, m.subrowinterval(i)));
+	       sub_vector(v2, m.subrowinterval(i)), sv);
 	else
 	  mult(m.block(i,j),
-	       sub_vector(v1, m.subcolinterval(j)),
-	       sub_vector(v3, m.subrowinterval(i)),
-	       sub_vector(v3, m.subrowinterval(i)));
+	       sub_vector(v1, m.subcolinterval(j)), sv, sv);
+      }
     
   }
 

@@ -142,7 +142,7 @@ namespace gmm {
 
   public :
     typedef typename std::iterator_traits<PT>::value_type V;
-    typedef typename std::iterator_traits<PT>::reference_type ref_V;
+    typedef typename std::iterator_traits<PT>::reference ref_V;
     typedef typename linalg_traits<V>::value_type value_type;
     typedef typename vect_ref_type<PT,  V>::access_type access_type;
     size_type size(void) const { si->size(); }
@@ -256,7 +256,7 @@ namespace gmm {
   typename sub_vector_type<const V *, sub_interval>::vector_type
   sub_vector_stc(const V &v, const sub_interval &si, abstract_plain) {
     return  typename sub_vector_type<const V *, sub_interval>
-      ::vector_type(vect_begin(v), v.begin() + si.min, v.begin() + si.max+1,
+      ::vector_type(vect_begin(v) + si.min, vect_begin(v) + si.max+1,
 		    linalg_origin(v));
   }
 
@@ -264,7 +264,7 @@ namespace gmm {
   typename sub_vector_type<V *, sub_interval>::vector_type
   sub_vector_st(V &v, const sub_interval &si, abstract_plain) {
     return  typename sub_vector_type<V *, sub_interval>
-      ::vector_type(vect_begin(v), v.begin() + si.min, v.begin() + si.max+1,
+      ::vector_type(vect_begin(v) + si.min, vect_begin(v) + si.max+1,
 		    linalg_origin(v));
   }
 

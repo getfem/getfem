@@ -89,7 +89,7 @@ namespace dal
       const_reference back(void) const { return *(--(end())); }
       void pop_front(void) { ++_begin; }
 
-      const_reference operator [](size_type ii) const { return *(_begin + ii);}
+      value_type operator [](size_type ii) const { return *(_begin + ii);}
       reference operator [](size_type ii) { return *(_begin + ii); }
 
       tab_ref(void) {}

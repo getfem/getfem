@@ -49,6 +49,7 @@ include_HEADERS =                      \
 	gmm_sub_matrix.h               \
 	gmm_interface.h                \
 	gmm_solver_cg.h                \
+	gmm_solver_bicgstab.h          \
 	gmm_sub_vector.h               \
 	gmm_blas.h                     \
 	linkmsg.h

@@ -142,12 +142,13 @@ namespace gmm {
     return typename sub_matrix_type<M *, SUBI1, SUBI1>::matrix_type(m, si1, si1);
   }
 
-  template <class M, class SUBI1, class SUBI2>  inline
-  typename sub_matrix_type<const M *, SUBI1, SUBI2>::matrix_type
-  sub_matrix(const M &m, const SUBI1 &si1, const SUBI2 &si2) {
-    return typename sub_matrix_type<const M *, SUBI1, SUBI2>::matrix_type(m, si1, si2);
-  }
-
+   template <class M, class SUBI1, class SUBI2>  inline
+   typename sub_matrix_type<const M *, SUBI1, SUBI2>::matrix_type
+   sub_matrix(const M &m, const SUBI1 &si1, const SUBI2 &si2) {
+     return typename sub_matrix_type<const M *, SUBI1, SUBI2>::matrix_type(m,
+								   si1, si2);
+   }
+  
   template <class M, class SUBI1>  inline
   typename sub_matrix_type<const M *, SUBI1, SUBI1>::matrix_type
   sub_matrix(const M &m, const SUBI1 &si1) {
