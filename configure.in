@@ -44,6 +44,7 @@ AC_LANG_CPLUSPLUS
 
 case $CXX in
  cxx)
+	echo "WARNING : Control that you have at least Compaq C++ V6.3"
  	here=`pwd`
  	cd $srcdir
 dnl     il faut utiliser -tweak au lieu des repositories ...
