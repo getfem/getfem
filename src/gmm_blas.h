@@ -409,7 +409,7 @@ namespace gmm {
     typename linalg_traits<V1>::value_type
     vect_sp_with_matr(const MATSP &ps, const V1 &v1, const V2 &v2,
 		      abstract_sparse) {
-    if (vect_size(v1) != mat_ncols() || vect_size(v2) != mat_nrows())
+    if (vect_size(v1) != mat_ncols(ps) || vect_size(v2) != mat_nrows(ps))
       DAL_THROW(dimension_error,"dimensions mismatch");
     size_type nr = mat_nrows(ps);
     typename linalg_traits<V2>::const_iterator
@@ -456,7 +456,7 @@ namespace gmm {
     typename linalg_traits<V1>::value_type
     vect_sp_with_matc(const MATSP &ps, const V1 &v1, const V2 &v2,
 		      abstract_sparse) {
-    if (vect_size(v1) != mat_ncols() || vect_size(v2) != mat_nrows())
+    if (vect_size(v1) != mat_ncols(ps) || vect_size(v2) != mat_nrows(ps))
       DAL_THROW(dimension_error,"dimensions mismatch");
     typename linalg_traits<V1>::const_iterator
       it = vect_const_begin(v1), ite = vect_const_end(v1);
@@ -476,7 +476,7 @@ namespace gmm {
     typename linalg_traits<V1>::value_type
     vect_sp_with_matc(const MATSP &ps, const V1 &v1, const V2 &v2,
 		      abstract_dense) {
-    if (vect_size(v1) != mat_ncols() || vect_size(v2) != mat_nrows())
+    if (vect_size(v1) != mat_ncols(ps) || vect_size(v2) != mat_nrows(ps))
       DAL_THROW(dimension_error,"dimensions mismatch");
     typename linalg_traits<V1>::const_iterator
       it = vect_const_begin(v1), ite = vect_const_end(v1);
