@@ -159,8 +159,10 @@ namespace getfem {
       for (size_type j = 0; j < mfs.size(); ++j) {
 	if (mfs[j]->convex_index().is_in(i)) {
 	  pfem pf = mfs[j]->fem_of_element(i);
-	  pfems.push_back(pf);
-	  if (pf->is_on_real_element()) is_cv_dep = true;
+	  if (pf->nb_dof(i)) {
+	    pfems.push_back(pf);
+	    if (pf->is_on_real_element()) is_cv_dep = true;
+	  }
 	}
       }
       if (pfems.size() == 1) {

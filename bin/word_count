@@ -39,7 +39,7 @@ sub read_line {
 open(TMPF1, ">$tmp1") or die "Open file impossible : $!\n";
 
 if ($ARGV[0]) { $lss = `ls $ARGV[0]`; }
-else { $lss = `ls *.[Ch]`; }
+else { $lss = `ls *.h *.cc`; }
 
 while ($lss) {
 
@@ -56,4 +56,4 @@ while ($lss) {
 close(TMPF1);
 print `wc $tmp1`;
 `rm -f $tmp1`;
-print "(usage : word_count or word_count \"???*.[Ch]\")\n";
+print "(usage : word_count or word_count \"???*.h\")\n";

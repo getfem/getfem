@@ -98,8 +98,8 @@ void sol_ref_infinite_plane(scalar_type nu, scalar_type E, scalar_type sigma, sc
   scalar_type theta = atan2(y,x);
   scalar_type s2 = sin(theta/2); //sint2(x,y);
   scalar_type c2 = cos(theta/2); //cost2(x,y);
-  scalar_type c3 = cos(3*theta/2); //4*c2*c2*c2 - 3*c2; /* cos(3*theta/2) */
-  scalar_type s3 = sin(3*theta/2); //4*s2*c2*c2-s2;  /* sin(3*theta/2) */
+  // scalar_type c3 = cos(3*theta/2); //4*c2*c2*c2 - 3*c2; /* cos(3*theta/2) */
+  // scalar_type s3 = sin(3*theta/2); //4*s2*c2*c2-s2;  /* sin(3*theta/2) */
 
   scalar_type lambda, mu;
   elasticite2lame(E,nu,lambda,mu);
@@ -186,7 +186,7 @@ void sol_ref_infinite_plane(scalar_type nu, scalar_type E, scalar_type sigma, sc
 
 
 gmm::row_matrix<base_small_vector> sol_K;
-static scalar_type sol_lambda, sol_mu, alph = 0.3;
+static scalar_type sol_lambda, sol_mu;
 
 base_small_vector sol_u(const base_node &x) {
   int N = x.size(); base_small_vector res(N);

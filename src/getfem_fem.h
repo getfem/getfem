@@ -530,15 +530,17 @@ namespace getfem {
     size_type R = nb_dof(c.convex_num()), RR = nb_base(c.convex_num());
     
     gmm::clear(val);
+    const base_matrix *M = 0;
+    if (!is_equivalent() && !is_on_real_element()) M = &(c.M());
     base_tensor Z; real_base_value(c,Z);
     for (size_type j = 0; j < RR; ++j) {
       for (size_type q = 0; q < Qmult; ++q) {
 	typename gmm::linalg_traits<CVEC>::value_type co = 0.0;
-	if (is_equivalent())
+	if (is_equivalent() || is_on_real_element())
 	  co = coeff[j*Qmult+q];
 	else
 	  for (size_type i = 0; i < R; ++i)
-	    co += coeff[i*Qmult+q] * c.M()(i, j);	  
+	    co += coeff[i*Qmult+q] * (*M)(i, j);	  
 	for (size_type r = 0; r < target_dim(); ++r)
 	  val[r + q*target_dim()] += co * Z[j + r*R];
       } 
@@ -553,16 +555,18 @@ namespace getfem {
     if (gmm::mat_nrows(M) != Qdim || gmm::mat_ncols(M) != R*Qmult)
       DAL_THROW(dimension_error, "dimensions mismatch");
     
+    const base_matrix *MM = 0;
+    if (!is_equivalent() && !is_on_real_element()) MM = &(c.M());
     gmm::clear(M);
     base_tensor Z; real_base_value(c,Z);
     for (size_type j = 0; j < RR; ++j) {
       for (size_type q = 0; q < Qmult; ++q) {
 	for (size_type r = 0; r < target_dim(); ++r)
-	  if (is_equivalent())
+	  if (is_equivalent() || is_on_real_element())
 	    M(r+q*target_dim(), j*Qmult+q) = Z[j + r*R];
 	  else
 	    for (size_type i = 0; i < R; ++i)
-	      M(r+q*target_dim(), i*Qmult+q) = c.M()(i, j) * Z[j + r*R];
+	      M(r+q*target_dim(), i*Qmult+q) = (*MM)(i, j) * Z[j + r*R];
       } 
     }
   }
@@ -580,7 +584,9 @@ namespace getfem {
     dim_type P = dim();
     base_tensor t;
     size_type R = nb_dof(c.convex_num()), RR = nb_base(c.convex_num());      
-    
+    const base_matrix *M = 0;
+    if (!is_equivalent() && !is_on_real_element()) M = &(c.M());
+
     gmm::clear(val);
     if (!is_on_real_element()) { // optimized case
       if (!c.have_pfp()) {
@@ -596,11 +602,11 @@ namespace getfem {
 	  for (size_type r = 0; r < target_dim(); ++r)
 	    for (size_type j = 0; j < RR; ++j, ++it) {
 	      T co = 0.0;
-	      if (is_equivalent())
+	      if (is_equivalent() || is_on_real_element())
 		co = coeff[j*Qmult+q];
 	      else
 		for (size_type i = 0; i < R; ++i)
-		  co += coeff[i*Qmult+q] * c.M()(i, j);	      
+		  co += coeff[i*Qmult+q] * (*M)(i, j);	      
 	      val2(k, r + q*target_dim()) += co * (*it);
 	    }
       }
@@ -622,11 +628,11 @@ namespace getfem {
 	  for (size_type r = 0; r < target_dim(); ++r)
 	    for (size_type j = 0; j < RR; ++j, ++it) {
 	      T co = 0.0;
-	      if (is_equivalent())
+	      if (is_equivalent() || is_on_real_element())
 		co = coeff[j*Qmult+q];
 	      else
 		for (size_type i = 0; i < R; ++i)
-		  co += coeff[i*Qmult+q] * c.M()(i, j);	      
+		  co += coeff[i*Qmult+q] * (*M)(i, j);	      
 	      val(r + q*target_dim(), k) += co * (*it);
 	    }
       }

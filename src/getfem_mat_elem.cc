@@ -128,7 +128,8 @@ namespace getfem {
 // 	  if((*it).pfi->basic_structure() != pgt->basic_structure())
 // 	    DAL_THROW(std::invalid_argument, "incorrect computation");
 	  
-	  if (!((*it).pfi->is_equivalent()) && (*it).t != GETFEM_NONLINEAR_) {
+	  if (!((*it).pfi->is_equivalent()) && (*it).t != GETFEM_NONLINEAR_
+	      && !computed_on_real_element) {
 	    // TODO : le numero d'indice à reduire peut changer ...
 	    trans_reduction.push_back(k);
 	    trans_reduction_pfi.push_back((*it).pfi);
