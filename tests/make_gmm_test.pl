@@ -20,7 +20,7 @@ if ($srcdir eq "") {
   print "WARNING : no srcdir, taking $srcdir\n";
   $islocal = 1;
 }
-$tests_to_be_done = `ls $srcdir/gmm_test*.C`;  # list of tests
+$tests_to_be_done = `ls $srcdir/gmm_torture*.C`;  # list of tests
 $fix_base_type = -1;
 
 while(@ARGV) {               # read optional parameters

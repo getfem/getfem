@@ -80,10 +80,10 @@ EXTRA_DIST = \
 	test_link_fem.param \
 	geo_trans_inv.param \
 	make_gmm_test.pl \
-	gmm_test_sub.C \
-	gmm_test_mult.C \
-	gmm_test_mat_mult.C \
-	gmm_test_qr.C \
-	gmm_test_lusolve.C
+	gmm_torture_sub.C \
+	gmm_torture_mult.C \
+	gmm_torture_mat_mult.C \
+	gmm_torture_qr.C \
+	gmm_torture_lusolve.C
 
 TESTS_ENVIRONMENT = perl
