@@ -1,7 +1,7 @@
 #!/bin/sh
 aclocal -I config --output=config/aclocal.m4
-cp -f config/aclocal.m4 .
-cp -f config/install-sh .
+#cp -f config/aclocal.m4 .
+#cp -f config/install-sh .
 autoheader
 autoconf -I config
 #pas de ./ devant les noms des makefiles !!!

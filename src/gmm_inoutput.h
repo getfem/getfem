@@ -70,8 +70,11 @@ namespace gmm {
   inline bool is_complex_double__(double) { return false; }
 
   inline int ParseIfmt(const char *fmt, int* perline, int* width) {
-    if (sscanf(fmt, " (%dI%d)", perline, width) != 2) 
-      DAL_THROW(dal::failure_error, "invalid HB I-format : " << fmt);
+    if (sscanf(fmt, " (%dI%d)", perline, width) != 2) {
+      *perline = 1;
+      if (sscanf(fmt, " (I%d)", width) != 1) 
+	DAL_THROW(dal::failure_error, "invalid HB I-format : " << fmt);
+    }
     return *width;
   }
   
@@ -80,13 +83,17 @@ namespace gmm {
     char p;
     *perline = *width = *flag = *prec = 0;
     if (sscanf(fmt, " (%d%c%d.%d)", perline, &p, width, prec) < 3 || 
-	!strchr("PEDF", p)) 
-      DAL_THROW(dal::failure_error, "invalid HB REAL format : " << fmt);
+	!strchr("PEDF", p)) {
+      *perline = 1;
+      if (sscanf(fmt, " (%c%d.%d)", &p, width, prec) < 2 || 
+	  !strchr("PEDF", p))
+	DAL_THROW(dal::failure_error, "invalid HB REAL format : " << fmt);
+    }
     *flag = p;
     return *width;
   }
-
-  /** matrix input/output for Harwell-Boeing format */
+      
+      /** matrix input/output for Harwell-Boeing format */
   struct HarwellBoeing_IO {
     int nrows() const { return Nrow; }
     int ncols() const { return Ncol; }
