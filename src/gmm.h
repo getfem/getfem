@@ -55,6 +55,7 @@
 #include <gmm_vector.h>
 #include <gmm_solvers.h>
 
+
 namespace gmm {
 
   /* ******************************************************************** */
@@ -216,68 +217,6 @@ namespace gmm {
   template <class L> inline bool is_sparse(const L &) 
   { return _is_sparse(linalg_traits<L>::storage_type()); }
 
-  /* ******************************************************************** */
-  /*   Selects a temporary vector type                                    */
-  /*   V if V is a valid vector type,                                     */
-  /*   svector if V is a reference on a sparse vector,                    */
-  /*   std::vector if V is a reference on a plain vector.                 */
-  /* ******************************************************************** */
-
-  template <class R, class S, class V> struct _temporary_vector {};
-  template <class V> struct _temporary_vector<linalg_true, abstract_sparse, V>
-  { typedef wsvector<typename linalg_traits<V>::value_type> vector_type; };
-  template <class V> struct _temporary_vector<linalg_true, abstract_plain, V>
-  { typedef std::vector<typename linalg_traits<V>::value_type> vector_type; };
-  template <class S, class V> struct _temporary_vector<linalg_false, S, V>
-  { typedef V vector_type; };
-
-  template <class V> struct temporary_vector {
-    typedef typename _temporary_vector<typename linalg_traits<V>::is_reference,
-      typename linalg_traits<V>::storage_type, V>::vector_type vector_type;
-  };
-
-  /* ******************************************************************** */
-  /*   Selects a temporary plain vector type                              */
-  /*   V if V is a valid plain vector type,                               */
-  /*   std::vector if V is a reference or a sparse vector                 */
-  /* ******************************************************************** */
-
-  template <class R, class S, class V> struct _temporary_plain_vector;
-  template <class S, class V> struct _temporary_plain_vector<linalg_true, S, V>
-  { typedef std::vector<typename linalg_traits<V>::value_type> vector_type; };
-  template <class V>
-  struct _temporary_plain_vector<linalg_false, abstract_sparse, V>
-  { typedef std::vector<typename linalg_traits<V>::value_type> vector_type; };
-  template <class V>
-  struct _temporary_plain_vector<linalg_false, abstract_plain, V>
-  { typedef V vector_type; };
-
-  template <class V> struct temporary_plain_vector {
-    typedef typename _temporary_vector<typename linalg_traits<V>::is_reference,
-      typename linalg_traits<V>::storage_type, V>::vector_type vector_type;
-  };
-
-  /* ******************************************************************** */
-  /*   Selects a temporary sparse vector type                             */
-  /*   V if V is a valid sparse vector type,                              */
-  /*   std::vector if V is a reference or a plain vector                  */
-  /* ******************************************************************** */
-
-  template <class R, class S, class V> struct _temporary_sparse_vector;
-  template <class S, class V>
-  struct _temporary_sparse_vector<linalg_true, S, V>
-  { typedef wsvector<typename linalg_traits<V>::value_type> vector_type; };
-  template <class V>
-  struct _temporary_sparse_vector<linalg_false, abstract_sparse, V>
-  { typedef V vector_type; };
-  template <class V>
-  struct _temporary_sparse_vector<linalg_false, abstract_plain, V>
-  { typedef wsvector<typename linalg_traits<V>::value_type> vector_type; };
-
-  template <class V> struct temporary_sparse_vector {
-    typedef typename _temporary_vector<typename linalg_traits<V>::is_reference,
-      typename linalg_traits<V>::storage_type, V>::vector_type vector_type;
-  };
 
   /* ******************************************************************** */
   /*		Scalar product                             		  */
@@ -453,7 +392,7 @@ namespace gmm {
    template <class V>
    typename number_traits<typename linalg_traits<V>::value_type>
    ::magnitude_type
-   norm2(const V &v) {
+   vect_norm2(const V &v) {
     typename linalg_traits<V>::const_iterator
       it = vect_begin(v), ite = vect_end(v);
     typename number_traits<typename linalg_traits<V>::value_type>
@@ -469,7 +408,7 @@ namespace gmm {
   template <class V>
   typename number_traits<typename linalg_traits<V>::value_type>
   ::magnitude_type 
-  norminf(const V &v) {
+  vect_norminf(const V &v) {
     typename linalg_traits<V>::const_iterator
       it = vect_begin(v), ite = vect_end(v);
       typename number_traits<typename linalg_traits<V>::value_type>
@@ -485,7 +424,7 @@ namespace gmm {
   template <class V>
   typename number_traits<typename linalg_traits<V>::value_type>
   ::magnitude_type
-  norm1(const V &v) {
+  vect_norm1(const V &v) {
     typename linalg_traits<V>::const_iterator
       it = vect_begin(v), ite = vect_end(v);
     typename number_traits<typename linalg_traits<V>::value_type>

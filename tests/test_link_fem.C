@@ -8,7 +8,7 @@
 #include <getfem_export.h>
 #include <getfem_norm.h>
 #include <getfem_regular_meshes.h>
-#include <bgeot_smatrix.h>
+#include <gmm.h>
 
 using bgeot::base_vector;
 using bgeot::base_node;
@@ -16,8 +16,9 @@ using bgeot::scalar_type;
 using bgeot::size_type;
 using bgeot::dim_type;
 
-typedef bgeot::smatrix<scalar_type> sparse_matrix_type;
-typedef bgeot::vsvector<scalar_type> linalg_vector;
+typedef gmm::wsvector<scalar_type> sparse_vector_type;
+typedef gmm::row_matrix<sparse_vector_type> sparse_matrix_type;
+typedef std::vector<scalar_type> linalg_vector;
 
 /**************************************************************************/
 /*  structure representing the problem.                                   */

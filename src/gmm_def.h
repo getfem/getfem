@@ -160,6 +160,83 @@ namespace gmm {
       resize(n); std::fill(begin(), end(), size_type(-1));
       for (size_type i = 0; it != ite; ++it, ++i) (*this)[*it] = i;
   }
+
+  /* ******************************************************************** */
+  /*   Selects a temporary vector type                                    */
+  /*   V if V is a valid vector type,                                     */
+  /*   svector if V is a reference on a sparse vector,                    */
+  /*   std::vector if V is a reference on a plain vector.                 */
+  /* ******************************************************************** */
+
+  template <class T> class wsvector;
+  template <class R, class S, class L, class V> struct _temporary_vector {};
+  template <class V, class L>
+  struct _temporary_vector<linalg_true, abstract_sparse, L, V>
+  { typedef wsvector<typename linalg_traits<V>::value_type> vector_type; };
+  template <class V, class L>
+  struct _temporary_vector<linalg_true, abstract_plain, L, V>
+  { typedef std::vector<typename linalg_traits<V>::value_type> vector_type; };
+  template <class S, class V>
+  struct _temporary_vector<linalg_false, S, abstract_vector, V>
+  { typedef V vector_type; };
+  template <class V>
+  struct _temporary_vector<linalg_false, abstract_plain, abstract_matrix, V>
+  { typedef std::vector<typename linalg_traits<V>::value_type> vector_type; };
+  template <class V>
+  struct _temporary_vector<linalg_false, abstract_sparse, abstract_matrix, V>
+  { typedef wsvector<typename linalg_traits<V>::value_type> vector_type; };
+
+  template <class V> struct temporary_vector {
+    typedef typename _temporary_vector<typename linalg_traits<V>::is_reference,
+				       typename linalg_traits<V>::storage_type,
+				       typename linalg_traits<V>::linalg_type,
+				       V>::vector_type vector_type;
+  };
+
+  /* ******************************************************************** */
+  /*   Selects a temporary plain vector type                              */
+  /*   V if V is a valid plain vector type,                               */
+  /*   std::vector if V is a reference or a sparse vector                 */
+  /* ******************************************************************** */
+
+  template <class R, class S, class V> struct _temporary_plain_vector;
+  template <class S, class V> struct _temporary_plain_vector<linalg_true, S, V>
+  { typedef std::vector<typename linalg_traits<V>::value_type> vector_type; };
+  template <class V>
+  struct _temporary_plain_vector<linalg_false, abstract_sparse, V>
+  { typedef std::vector<typename linalg_traits<V>::value_type> vector_type; };
+  template <class V>
+  struct _temporary_plain_vector<linalg_false, abstract_plain, V>
+  { typedef V vector_type; };
+
+  template <class V> struct temporary_plain_vector {
+    typedef typename _temporary_vector<typename linalg_traits<V>::is_reference,
+      typename linalg_traits<V>::storage_type, V>::vector_type vector_type;
+  };
+
+  /* ******************************************************************** */
+  /*   Selects a temporary sparse vector type                             */
+  /*   V if V is a valid sparse vector type,                              */
+  /*   std::vector if V is a reference or a plain vector                  */
+  /* ******************************************************************** */
+
+  template <class R, class S, class V> struct _temporary_sparse_vector;
+  template <class S, class V>
+  struct _temporary_sparse_vector<linalg_true, S, V>
+  { typedef wsvector<typename linalg_traits<V>::value_type> vector_type; };
+  template <class V>
+  struct _temporary_sparse_vector<linalg_false, abstract_sparse, V>
+  { typedef V vector_type; };
+  template <class V>
+  struct _temporary_sparse_vector<linalg_false, abstract_plain, V>
+  { typedef wsvector<typename linalg_traits<V>::value_type> vector_type; };
+
+  template <class V> struct temporary_sparse_vector {
+    typedef typename _temporary_vector<typename linalg_traits<V>::is_reference,
+      typename linalg_traits<V>::storage_type, V>::vector_type vector_type;
+  };
+
+
 }
 
 #endif //  __GMM_DEF_H

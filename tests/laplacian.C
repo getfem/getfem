@@ -7,9 +7,8 @@
 #include <getfem_assembling.h>
 #include <getfem_export.h>
 #include <getfem_norm.h>
-#include <bgeot_generic_solvers.h>
 #include <getfem_regular_meshes.h>
-#include <bgeot_smatrix.h>
+#include <gmm.h>
 
 
 using bgeot::base_vector;
@@ -18,8 +17,9 @@ using bgeot::scalar_type;
 using bgeot::size_type;
 using bgeot::dim_type;
 
-typedef bgeot::smatrix<scalar_type> sparse_matrix_type;
-typedef bgeot::vsvector<scalar_type> linalg_vector;
+typedef gmm::wsvector<scalar_type> sparse_vector_type;
+typedef gmm::row_matrix<sparse_vector_type> sparse_matrix_type;
+typedef std::vector<scalar_type> linalg_vector;
 
 /**************************************************************************/
 /*  exact solution                                                        */
@@ -360,7 +360,7 @@ void lap_pb::assemble(void)
 }
 
 void lap_pb::solve(void) {
-  bgeot::cg(RM, U, B, 20000, residu, false);
+  gmm::cg(RM, U, B, 20000, residu, false);
 }
 
 /**************************************************************************/
@@ -378,8 +378,7 @@ int main(int argc, char *argv[])
   exception_cb cb;
   dal::set_exception_callback(&cb);
 
-  try
-    {
+  try {
     
     lap_pb p;
     scalar_type exectime = ftool::uclock_sec(), total_time = 0.0;
