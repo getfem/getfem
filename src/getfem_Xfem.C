@@ -78,97 +78,26 @@ namespace getfem
     is_valid = false;
   }
   
-  // Interpolation method : call the interpolation of pfi for ordinary
-  // base function and for each additional function and sum the
-  // contributions.
-  void Xfem::interpolation(const base_node &x, const base_matrix &G,
-			   bgeot::pgeometric_trans pgt,
-			   const base_vector &coeff, base_vector &val) const {
-    Xfem_func_context ctx(pgt,x,G);
-    base_vector val2(val.size());
-    pfb->interpolation(x, G, pgt, coeff, val);
-    base_vector coeff2;
-    for (size_type k = 0, dofcnt = pfb->nb_base(); k < nb_func; ++k) {
-      coeff2.resize(pfe(k)->nb_base());
-      ctx.pf = pfe(k); 
-      for (ctx.base_num = 0; ctx.base_num != pfe(k)->nb_base(); 
-	   ++ctx.base_num, ++dofcnt) {
-	coeff2[ctx.base_num] = coeff[dofcnt] * funcs[k]->val(ctx);
-      }
-      pfe(k)->interpolation(x, G, pgt, coeff2, val2);
-      val += val2;
-    }
-  }
-
+  /*
   void Xfem::get_fem_precomp_tab(pfem_precomp pfp, std::vector<pfem_precomp>& vpfp) const {
     vpfp.resize(uniq_pfe.size());
     for (size_type k=0; k < uniq_pfe.size(); ++k) 
-      vpfp[k] = (uniq_pfe[k] == pfb) ? pfp : fem_precomp(uniq_pfe[k], pfp->get_point_tab());
+      vpfp[k] = (uniq_pfe[k] == pfb) ? pfp : (*pfp->pool())(uniq_pfe[k], &pfp->get_point_tab());
   }
-
-  // take into account the fact that the pfp is the same for pfi and
-  // the Xfem.
-  void Xfem::interpolation(pfem_precomp pfp, size_type ii,
-			   const base_matrix &G,
-			   bgeot::pgeometric_trans pgt, 
-			   const base_vector &coeff, 
-			   base_vector &val, dim_type Qdim) const {
-    size_type Qmult = size_type(Qdim) / target_dim();
-    base_vector val2(val.size());
-    Xfem_func_context ctx(pgt,(*(pfp->get_point_tab()))[ii],G);
-    pfb->interpolation(pfp, ii, G, pgt, coeff, val, Qdim);
-    base_vector coeff2;
-    std::vector<pfem_precomp> vpfp; get_fem_precomp_tab(pfp,vpfp);
-    for (size_type k = 0, dofcnt = pfb->nb_base(); k < nb_func; ++k) {
-      coeff2.resize(pfe(k)->nb_base() * Qmult);
-      ctx.pf = pfe(k);
-      for (size_type j = 0; j != pfe(k)->nb_base(); ++j, ++dofcnt) {
-	ctx.base_num = j; 
-	scalar_type a = funcs[k]->val(ctx);
-	for (dim_type q = 0; q < Qmult; ++q)
-	  coeff2[j*Qmult + q] = coeff[dofcnt*Qmult + q] * a;
-      }
-      pfe(k)->interpolation(vpfp[func_pf[k]], ii, G, pgt, coeff2, val2, Qdim);
-      val += val2;
-    }
-  }
+  */
   
-  void Xfem::interpolation_grad(const base_node &x,
-				const base_matrix &G,
-				bgeot::pgeometric_trans pgt,
-				const base_vector &coeff,
-				base_matrix &val) const {
-    base_matrix val2(val.nrows(), val.ncols());
-    base_vector val3(ntarget_dim);
-    Xfem_func_context ctx(pgt,x,G);
-    pfb->interpolation_grad(x, G, pgt, coeff, val);
-    base_vector coeff2;
-    // func * grad(base)
-    for (size_type k = 0, dofcnt = pfb->nb_base(); k < nb_func; ++k) {
-      coeff2.resize(pfe(k)->nb_base());
-      ctx.pf = pfe(k);
-      for (size_type j = 0; j != pfe(k)->nb_base(); ++j, ++dofcnt) {
-	ctx.base_num = j;
-	scalar_type a = funcs[k]->val(ctx);
-	coeff2[j] = coeff[dofcnt] * a;
-      }
-      pfe(k)->interpolation_grad(x, G, pgt, coeff2, val2);
-      gmm::add(val2, val);
-    }
-    // grad(func) * base
-    for (size_type k = 0, dofcnt = pfb->nb_base(); k < nb_func; ++k) {
-      coeff2.resize(pfe(k)->nb_base());
-      ctx.pf = pfe(k);
-      for (size_type q = 0; q < G.nrows(); ++q) {
-	for (size_type j = 0; j != pfe(k)->nb_base(); ++j, ++dofcnt) {
-	  ctx.base_num = j;
-	  base_small_vector v = funcs[k]->grad(ctx);
-	  coeff2[j] = coeff[dofcnt] * v[q];
-	}
-	pfe(k)->interpolation(x, G, pgt, coeff2, val3);
-	for (dim_type r = 0; r < ntarget_dim; ++r) val2(r, q) = val3[r];
-      }
-      gmm::add(val2, val);
+  /* create an interpolation_context array based on
+     c0, for each fem of the Xfem. */
+  void Xfem::get_fem_interpolation_context_tab(const fem_interpolation_context& c0,
+					       std::vector<fem_interpolation_context>& vc) const {
+    vc.resize(uniq_pfe.size());
+    for (size_type k=0; k < uniq_pfe.size(); ++k) {
+      vc[k] = c0; 
+      if (c0.have_pfp()) {
+	/* allocate a new pfp for the fem uniq_pfe[k], using the same fem_precomp_pool
+	   than c0.pfp() */
+	vc[k].set_pfp((*c0.pfp()->pool())(uniq_pfe[k], &c0.pfp()->get_point_tab()));
+      } else { vc[k].set_pf(uniq_pfe[k]); }
     }
   }
   
@@ -179,25 +108,22 @@ namespace getfem
   void Xfem::hess_base_value(const base_node &x, base_tensor &t) const
   { pfb->hess_base_value(x, t); }
 
-  void Xfem::real_base_value(pgeotrans_precomp pgp, pfem_precomp pfp,
-			     size_type ii, const base_matrix &G,
-			     base_tensor &t, size_type) const {
+  void Xfem::real_base_value(const fem_interpolation_context &c,
+			     base_tensor &t) const {
     bgeot::multi_index mi(2);
     mi[1] = target_dim(); mi[0] = nb_base();
     t.adjust_sizes(mi);
     scalar_type a;
-    Xfem_func_context ctx(pgp->get_trans(), (*(pfp->get_point_tab()))[ii], G);
-    //base_node xreal = pgp->transform(ii, G);
+    Xfem_func_context ctx(c); 
     base_tensor::iterator it = t.begin();
-    base_tensor::const_iterator itf = pfp->val(ii).begin();
-    std::vector<pfem_precomp> vpfp; get_fem_precomp_tab(pfp,vpfp);
-
+    base_tensor tt; c.base_value(tt);
+    base_tensor::const_iterator itf = tt.begin();
+    std::vector<fem_interpolation_context> vc; get_fem_interpolation_context_tab(c, vc);
     for (dim_type q = 0; q < target_dim(); ++q) {
       for (size_type i = 0; i < pfb->nb_base(); ++i, ++itf, ++it)
-	  *it = *itf;
-
+          *it = *itf;
       for (size_type k = 0; k < nb_func; ++k) {
-	const base_tensor& val_e = vpfp[func_pf[k]]->val(ii);
+	base_tensor val_e; vc[func_pf[k]].base_value(val_e);
 	ctx.pf = pfe(k);
 	for (size_type i = 0; i < pfe(k)->nb_base(); ++i, ++it) {
 	  ctx.base_num = i; a = funcs[k]->val(ctx);
@@ -207,27 +133,22 @@ namespace getfem
     }
   }
 
-  void Xfem::real_grad_base_value(pgeotrans_precomp pgp, pfem_precomp pfp,
-				  size_type ii, const base_matrix &G,
-				  const base_matrix &B, base_tensor &t,
-				  size_type) const {
+  void Xfem::real_grad_base_value(const fem_interpolation_context &c,
+				  base_tensor &t) const {
     bgeot::multi_index mi(3);
-    dim_type n = G.nrows();
-    mi[2] = n; mi[1] = target_dim(); mi[0] = nb_base();
+    mi[2] = c.N(); mi[1] = target_dim(); mi[0] = nb_base();
     t.adjust_sizes(mi);
     
-    Xfem_func_context ctx(pgp->get_trans(), (*(pfp->get_point_tab()))[ii], G);
-    base_tensor tt; tt.mat_transp_reduction(pfp->grad(ii), B, 2);
+    Xfem_func_context ctx(c);
+    base_tensor tt; c.grad_base_value(tt);
 
     base_tensor::iterator it = t.begin();
     base_tensor::const_iterator itvf = tt.begin();
-
-    std::vector<pfem_precomp> vpfp; get_fem_precomp_tab(pfp,vpfp);
-    std::vector<const base_tensor*> val_e(nb_func);
+    std::vector<fem_interpolation_context> vc; get_fem_interpolation_context_tab(c, vc);
+    std::vector<base_tensor> val_e(nb_func);
     std::vector<base_tensor> grad_e(nb_func);
     for (size_type i=0; i < uniq_pfe.size(); ++i) {
-      val_e[i] = &vpfp[i]->val(ii);
-      grad_e[i].mat_transp_reduction(vpfp[i]->grad(ii), B, 2);
+      vc[i].base_value(val_e[i]); vc[i].grad_base_value(grad_e[i]);
     }
     std::vector<std::vector<scalar_type> > vf(nb_func);
     std::vector<std::vector<base_small_vector> > gvf(nb_func);
@@ -244,7 +165,7 @@ namespace getfem
     //    cerr << "pfp->val(ii)={"; 
     //    for (size_type i=0; i < pfp->val(ii).size(); ++i) cerr << pfp->val(ii)[i] << " "; cerr << "}\n";
     
-    for (dim_type k = 0; k < n ; ++k) {      
+    for (dim_type k = 0; k < c.N() ; ++k) {
       for (dim_type q = 0; q < target_dim(); ++q) {
 	for (size_type i = 0; i < pfb->nb_base(); ++i, ++it)
 	    *it = *itvf++;
@@ -253,17 +174,15 @@ namespace getfem
           size_type posv = pfe(f)->nb_base()*q;
 	  for (size_type i = 0; i < pfe(f)->nb_base(); ++i, ++it) {
 	    *it = grad_e[func_pf[f]][i + posg] * vf[f][i];
-	    *it += gvf[f][i][k] * (*val_e[func_pf[f]])[i + posv];
+	    *it += gvf[f][i][k] * (val_e[func_pf[f]])[i + posv];
 	  }
 	}
       }
     }
   }
   
-  void Xfem::real_hess_base_value(pgeotrans_precomp, pfem_precomp,
-				  size_type, const base_matrix &,
-				  const base_matrix &, const base_matrix &,
-				  base_tensor &, size_type) const {
+  void Xfem::real_hess_base_value(const fem_interpolation_context &c,
+				  base_tensor &t) const {
     DAL_THROW(to_be_done_error,
 	      "Sorry order 2 derivatives for Xfem to be done.");
   }

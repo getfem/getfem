@@ -31,7 +31,7 @@
 
 #include <gmm_condition_number.h>
 #include <getfem_mesh.h>
-#include <getfem_precomp.h>
+#include <bgeot_precomp.h>
 namespace getfem
 {
   getfem_mesh::getfem_mesh(dim_type NN) {
@@ -146,25 +146,22 @@ namespace getfem
 
   base_small_vector getfem_mesh::normal_of_face_of_convex(size_type ic, short_type f,
 							  const base_node &pt) const {
-    size_type N  = dim();
     bgeot::pgeometric_trans pgt = trans_of_convex(ic);
-    base_matrix S(N,pgt->nb_points());
-    
-    for (size_type i=0; i < pgt->nb_points(); i++) {
-      std::copy(points_of_convex(ic)[i].begin(), 
-		points_of_convex(ic)[i].end(), S.begin()+i*N);
-    }
-    /* too slow ... */
-    return bgeot::compute_normal(S, f, pgt, pt);
+    base_matrix G(dim(),pgt->nb_points());
+    vectors_to_base_matrix(G,points_of_convex(ic));
+    bgeot::geotrans_interpolation_context c(trans_of_convex(ic), pt, G);
+    return bgeot::compute_normal(c, f);
   }
 
 
   base_small_vector getfem_mesh::normal_of_face_of_convex(size_type ic, short_type f,
 							  size_type n) const {
     bgeot::pgeometric_trans pgt = trans_of_convex(ic);
-    base_node pt = pgt->geometric_nodes()
-      [pgt->structure()->ind_points_of_face(f)[n]];
-    return normal_of_face_of_convex(ic, f, pt);
+    bgeot::pgeotrans_precomp pgp = bgeot::geotrans_precomp(pgt, &pgt->geometric_nodes());
+    base_matrix G(dim(),pgt->nb_points());
+    vectors_to_base_matrix(G,points_of_convex(ic));
+    bgeot::geotrans_interpolation_context c(pgp,pgt->structure()->ind_points_of_face(f)[n], G);
+    return bgeot::compute_normal(c, f);
   }
 
 
@@ -384,9 +381,9 @@ namespace getfem
   scalar_type convex_quality_estimate(bgeot::pgeometric_trans pgt,
 				      const base_matrix& G) {
     static bgeot::pgeometric_trans pgt_old = 0;
-    static pgeotrans_precomp pgp = 0;
+    static bgeot::pgeotrans_precomp pgp = 0;
     if (pgt_old != pgt) {
-      pgt_old=pgt; pgp=geotrans_precomp(pgt, &pgt->convex_ref()->points());
+      pgt_old=pgt; pgp=bgeot::geotrans_precomp(pgt, &pgt->convex_ref()->points());
     }
 
     size_type n = (pgt->is_linear()) ? 1 : pgt->nb_points();
@@ -402,9 +399,9 @@ namespace getfem
   scalar_type convex_radius_estimate(bgeot::pgeometric_trans pgt,
 				     const base_matrix& G) {
     static bgeot::pgeometric_trans pgt_old = 0;
-    static pgeotrans_precomp pgp = 0;
+    static bgeot::pgeotrans_precomp pgp = 0;
     if (pgt_old != pgt) {
-      pgt_old=pgt; pgp=geotrans_precomp(pgt, &pgt->convex_ref()->points());
+      pgt_old=pgt; pgp=bgeot::geotrans_precomp(pgt, &pgt->convex_ref()->points());
     }
     size_type N = G.nrows();
     size_type n = (pgt->is_linear()) ? 1 : pgt->nb_points();

@@ -31,12 +31,121 @@
 
 
 
-#include <bgeot_geometric_trans.h>
 #include <dal_tree_sorted.h>
 #include <ftool_naming.h>
+#include <bgeot_geometric_trans.h>
+#include <bgeot_precomp.h>
 
 namespace bgeot
 {
+  const base_node& geotrans_interpolation_context::xref() const { 
+    if (!have_xref()) 
+      if (have_pgp()) xref_ = pgp_->get_point_tab()[ii_];
+      else DAL_THROW(dal::failure_error, "missing xref");
+    return xref_; 
+  }
+
+  const base_node& geotrans_interpolation_context::xreal() const {
+    if (!have_xreal()) {
+      if (have_pgp()) {
+	xreal_ = pgp_->transform(ii_, G());
+      } else xreal_ = pgt()->transform(xref(),G());
+    }
+    return xreal_;
+  }
+
+  const base_matrix& geotrans_interpolation_context::B() const {
+    if (!have_B()) {
+      if (!have_G() || !have_pgt()) {
+	DAL_THROW(dal::failure_error, "unable to compute B\n");
+      } else {
+	size_type N = G().nrows(), P = pgt_->structure()->dim();
+	B_.resize(N, P);
+	base_matrix K(N,P), CS(P,P);
+	if (have_pgp()) {
+	  gmm::mult(gmm::transposed(pgp_->grad(ii_)), gmm::transposed(G()), K);
+	} else {
+	  base_matrix pc(pgt()->nb_points(), P); 
+	  pgt()->gradient(xref(), pc);
+	  gmm::mult(gmm::transposed(pc), gmm::transposed(G()), K);
+	}
+	if (P != N) {
+	  gmm::mult(gmm::transposed(K), K, CS);
+	  J_ = ::sqrt(gmm::lu_inverse(CS));
+	  gmm::mult(K, CS, B_);
+	} else {
+	  J_ = dal::abs(gmm::lu_inverse(K)); B_.swap(K);
+	}
+      }
+    }
+    return B_;
+  }
+
+  const base_matrix& geotrans_interpolation_context::B3() const {
+    if (!have_B3()) {
+      const base_matrix &BB = B(); 
+      size_type N=gmm::mat_ncols(BB), P=gmm::mat_nrows(BB);
+      B3_.resize(N*N, P*P);
+      for (short_type i = 0; i < P; ++i)
+	for (short_type j = 0; j < P; ++j)
+	  for (short_type k = 0; k < N; ++k)
+	    for (short_type l = 0; l < N; ++l)
+	      B3_(k + N*l, i + P*j) = BB(k, i) * BB(l, j);
+    }
+    return B3_;
+  }
+
+  const base_matrix& geotrans_interpolation_context::B32() const {
+    if (!have_B32()) {
+      const base_matrix &BB = B(); 
+      size_type N=gmm::mat_ncols(BB), P=gmm::mat_nrows(BB);	
+      B32_.resize(N*N, P);
+      if (!pgt()->is_linear()) {
+	base_matrix B2(P*P, P), Htau(N, P*P);
+	const base_matrix& BB3 = B3();
+	if (have_pgp()) {
+	  gmm::mult(G(), pgp_->hessian(ii_), Htau);
+	} else {
+	  DAL_THROW(dal::to_be_done_error,"to be done..");
+	}
+	for (short_type i = 0; i < P; ++i)
+	  for (short_type j = 0; j < P; ++j)
+	    for (short_type k = 0; k < P; ++k)
+	      for (short_type l = 0; l < N; ++l)
+		B2(i + P*j, k) += Htau(l, i + P*j) * BB(l,k);
+	gmm::mult(BB3, B2, B32_);
+      } else gmm::clear(B32_);
+    }
+    return B32_;
+  }
+  
+ void geotrans_interpolation_context::set_ii(size_type ii__) { 
+    if (ii_ == ii__) return;
+    if (have_B() && !pgt()->is_linear()) { B_.resize(0,0); }
+    if (have_B3() && !pgt()->is_linear()) { 
+      B3_.resize(0,0); B32_.resize(0,0); }
+    xref_.clear(); xreal_.clear();
+    ii_=ii__; 
+  }
+
+  void geotrans_interpolation_context::set_xref(const base_node& P) {
+    xref_ = P;
+    if (have_B() && !pgt()->is_linear()) { B_.resize(0,0); }
+    if (have_B3() && !pgt()->is_linear()) { 
+      B3_.resize(0,0); B32_.resize(0,0); }
+    xreal_.clear(); ii_ = size_type(-1);
+  }
+
+  geotrans_interpolation_context::geotrans_interpolation_context() :
+    G_(0), pgt_(0), pgp_(0), ii_(size_type(-1)) {}
+  geotrans_interpolation_context::geotrans_interpolation_context
+  (bgeot::pgeotrans_precomp pgp__, size_type ii__, const base_matrix& G__) :
+    G_(&G__), pgt_(pgp__->get_trans()), pgp_(pgp__), ii_(ii__) {}
+  geotrans_interpolation_context::geotrans_interpolation_context
+  (bgeot::pgeometric_trans pgt__, const base_node& xref__,const base_matrix& G__) :
+    xref_(xref__), G_(&G__), pgt_(pgt__), pgp_(0), ii_(size_type(-1)) {}
+ 
+
   typedef ftool::naming_system<geometric_trans>::param_list gt_param_list;
 
   base_node geometric_trans::transform(const base_node &pt, 
@@ -50,6 +159,21 @@ namespace bgeot
       for (; pit != pite; ++git, ++pit) *pit += a * (*git);
     }
     return P;
+  }
+
+  void geometric_trans::gradient(const base_node& x, base_matrix& pc) const {
+    base_poly PP;
+    pc.resize(nb_points(),dim());
+    for (size_type i = 0; i < nb_points(); ++i)
+      for (dim_type n = 0; n < dim(); ++n) {
+	PP = poly_vector()[i];
+	if (!is_linear()) {
+	  PP.derivative(n);
+	  pc(i, n) = PP.eval(x.begin());
+	} else {
+	  pc(i, n) = PP[n+1];
+	}
+      }
   }
 
   /* ******************************************************************** */
@@ -247,37 +371,12 @@ namespace bgeot
      
      pt is the position of the evaluation point on the reference element
   */
-  base_small_vector compute_normal(const base_matrix &G, size_type ir,
-				   pgeometric_trans pgt, const base_node &pt) {
-    dim_type P = pgt->structure()->dim(), N = G.nrows();
-    short_type NP = pgt->nb_points();
-    base_matrix K(N,P), CS(P,P), B(N,P), Grad(pgt->nb_points(),P);
-    base_small_vector un, up;
-    base_poly Poly;
-    
-    if (G.ncols() != NP) DAL_THROW(dimension_error, "dimensions mismatch");
-    
-    un.resize(P); up.resize(N);
-    un = pgt->normals()[ir];
-    //cout << "un=" << un << endl;
-    
-    for (size_type i = 0; i < pgt->nb_points(); ++i) {
-      for (dim_type n = 0; n < N; ++n) {
-	Poly = pgt->poly_vector()[i];
-	Poly.derivative(n);
-	Grad(i,n) = Poly.eval(pt.begin());
-      }
-    }
-    
-    // on peut simplifier les calculs pour N = P
-    // cout << "mat G : " << G << endl;
-    // cout << "mat grad : " << Grad << endl;
-    gmm::mult(G, Grad, K);
-    gmm::mult(gmm::transposed(K), K, CS);
-    gmm::lu_inverse(CS);
-    gmm::mult(K, CS, B);
-    gmm::mult(B, un, up);
-    
+  base_small_vector compute_normal(const geotrans_interpolation_context& c,
+				   size_type face) {
+    if (c.G().ncols() != c.pgt()->nb_points()) DAL_THROW(dimension_error, "dimensions mismatch");
+    base_small_vector un = c.pgt()->normals()[face];
+    base_small_vector up(c.N());
+    gmm::mult(c.B(), un, up);
     return up;
   }
 

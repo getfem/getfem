@@ -33,6 +33,7 @@
 #include <deque>
 #include <getfem_mat_elem.h>
 #include <getfem_precomp.h>
+#include <bgeot_precomp.h>
 
 namespace getfem
 {
@@ -58,7 +59,7 @@ namespace getfem
 
   struct emelem_comp_structure_ : public mat_elem_computation
   {
-    pgeotrans_precomp pgp;
+    bgeot::pgeotrans_precomp pgp;
     ppoly_integration ppi;
     papprox_integration pai;
     bool is_ppi;
@@ -66,7 +67,6 @@ namespace getfem
     std::vector<pfem_precomp> pfp;
     std::vector<base_tensor> elmt_stored;
     short_type nbf, dim; 
-    base_matrix K, CS, B, Htau, M, B2, B3, B32;
     std::deque<short_type> grad_reduction, hess_reduction, trans_reduction;
     std::deque<pfem> trans_reduction_pfi;
     base_small_vector un, up;
@@ -90,7 +90,7 @@ namespace getfem
     emelem_comp_structure_(const emelem_comp_light_ &ls) {
       
       pgt = ls.pgt;
-      pgp = geotrans_precomp(ls.pgt, &(ls.ppi->integration_points()));
+      pgp = bgeot::geotrans_precomp(ls.pgt, &(ls.ppi->integration_points()));
       pme = ls.pmt;
       ppi = ls.ppi->method.ppi;
       pai = ls.ppi->method.pai;
@@ -136,37 +136,40 @@ namespace getfem
       if (!computed_on_real_element) mref.resize(nbf + 1);
     }
 
-    void add_elem(base_tensor &t, const base_matrix &G, size_type ip,
-		  scalar_type J, dim_type N, size_type elt, 
+    void add_elem(base_tensor &t, fem_interpolation_context& ctx, scalar_type J,
 		  bool first, bool trans = true) {
       mat_elem_type::const_iterator it = pme->begin(), ite = pme->end();
       bgeot::multi_index mi(pme->mi.size()), sizes = pme->mi;
       bgeot::multi_index::iterator mit = sizes.begin();
-      
+      //fem_interpolation_context ctx(pgp,0,ip,G,elt);
       for (size_type k = 0; it != ite; ++it, ++k) {
+	ctx.set_pfp(pfp[k]);
 	++mit; if ((*it).pfi->target_dim() > 1) ++mit;
 	
 	switch ((*it).t) {
 	case GETFEM_BASE_    :
-	  (*it).pfi->real_base_value(pgp, pfp[k], ip, G, elmt_stored[k], elt);
+	  (*it).pfi->real_base_value(ctx, elmt_stored[k]);
+	  //(*it).pfi->real_base_value(pgp, pfp[k], ip, G, elmt_stored[k], elt);
 	  break;
 	case GETFEM_GRAD_    :
 	  if (trans) {
-	    (*it).pfi->real_grad_base_value(pgp, pfp[k], ip, G, B, 
-					    elmt_stored[k], elt);
-	    *mit++ = N;
+	    (*it).pfi->real_grad_base_value(ctx, elmt_stored[k]);
+	    //(*it).pfi->real_grad_base_value(pgp, pfp[k], ip, G, B, 
+	    //elmt_stored[k], elt);
+	    *mit++ = ctx.N();
 	  }
 	  else
-	    elmt_stored[k] = pfp[k]->grad(ip);
+	    elmt_stored[k] = pfp[k]->grad(ctx.ii());
 	  break;
 	case GETFEM_HESSIAN_ :
 	  if (trans) {
-	    (*it).pfi->real_hess_base_value(pgp, pfp[k], ip, G, B3, 
-					    B32, elmt_stored[k], elt);
-	    *mit++ = N*N;
+	    (*it).pfi->real_hess_base_value(ctx, elmt_stored[k]);
+	    //(*it).pfi->real_hess_base_value(pgp, pfp[k], ip, G, B3, 
+	    //B32, elmt_stored[k], elt);
+	    *mit++ = dal::sqr(ctx.N());
 	  }
 	  else {
-	    base_tensor tt = pfp[k]->hess(ip);
+	    base_tensor tt = pfp[k]->hess(ctx.ii());
 	    bgeot::multi_index mim(3);
 	    mim[2] = dal::sqr(tt.sizes()[2]); mim[1] = tt.sizes()[1];
 	    mim[0] = tt.sizes()[0];
@@ -187,8 +190,7 @@ namespace getfem
       base_tensor::iterator pt = t.begin();
       std::vector<base_tensor::const_iterator> pts(pme->size());
       std::vector<scalar_type> Vtab(pme->size());
-            
-      J *= pai->coeff(ip);
+      J *= pai->coeff(ctx.ii());
       for (k = 0; k < pme->size(); ++k)
 	pts[k] = elmt_stored[k].begin();
       base_tensor::const_iterator pts0 = pts[0];
@@ -284,13 +286,14 @@ namespace getfem
       }
       else { 
 	bool first = true;
-	
+	fem_interpolation_context ctx;
 	size_type ind_l = 0, nb_ptc = pai->nb_points_on_convex(), 
 	  nb_pt_l = nb_ptc, nb_pt_tot =(volumic ? nb_ptc : pai->nb_points());
 	for (size_type ip = (volumic ? 0:nb_ptc); ip < nb_pt_tot; ++ip) {
 	  while (ip == nb_pt_l && ind_l < nbf)
 	    { nb_pt_l += pai->nb_points_on_face(ind_l); ind_l++; }
-	  add_elem(mref[ind_l], B, ip, 1.0, 0, 0, first, false);
+	  ctx.set_ii(ip); 
+	  add_elem(mref[ind_l], ctx, 1.0, first, false);
 	  first = false;
 	}
       }
@@ -303,14 +306,10 @@ namespace getfem
 		 size_type elt) {
       dim_type P = dim, N = G.nrows();
       short_type NP = pgt->nb_points();
-      scalar_type J;
+      fem_interpolation_context ctx(pgp,0,0,G,elt);
+
       if (G.ncols() != NP) DAL_THROW(dimension_error, "dimensions mismatch");
       
-      K.resize(N, P); CS.resize(P, P); B.resize(P, N);
-      if (hess_reduction.size() > 0) {
-	B2.resize(P*P, P); B3.resize(N*N, P*P); Htau.resize(N, P*P);
-	B32.resize(N*N, P); B2.fill(0.0);
-      }
       if (ir > 0) {
 	un.resize(P); up.resize(N);
 	un = pgt->normals()[ir-1];
@@ -321,32 +320,14 @@ namespace getfem
       if (!computed_on_real_element) {
 	
 	pre_tensors_for_linear_trans(ir == 0);
-	
-	// computation of the pseudo inverse
-	gmm::mult(gmm::transposed(pgp->grad(0)), gmm::transposed(G), K);
-	if (P != N) {
-	  gmm::mult(K, gmm::transposed(K), CS);
-	  J = ::sqrt(gmm::lu_inverse(CS));
-	  gmm::mult(gmm::transposed(K), CS, B);
-	}
-	else {
-	  J = dal::abs(gmm::lu_inverse(K)); B = K;
-	}
-	
+	const base_matrix& B = ctx.B(); // compute B and J
+	scalar_type J=ctx.J();
 	if (ir > 0) {
 	  gmm::mult(B, un, up);
 	  J *= bgeot::vect_norm2(up);
 	}
      
 	t = mref[ir]; t *= J;
-	
-	if (hess_reduction.size() > 0) {
-	  for (short_type i = 0; i < P; ++i)
-	    for (short_type j = 0; j < P; ++j)
-	      for (short_type k = 0; k < N; ++k)
-		for (short_type l = 0; l < N; ++l)
-		  B3(k + N*l, i + P*j) = B(k, i) * B(l, j);
-	}
 	
 	if (grad_reduction.size() > 0) {
 	  std::deque<short_type>::const_iterator it = grad_reduction.begin(),
@@ -361,51 +342,25 @@ namespace getfem
 	  std::deque<short_type>::const_iterator it = hess_reduction.begin(),
 	    ite = hess_reduction.end();
 	  for (short_type l = 1; it != ite; ++it, l *= 2) {
-	    (flag ? t:taux).mat_transp_reduction(flag ? taux:t, B3, *it);
+	    (flag ? t:taux).mat_transp_reduction(flag ? taux:t, ctx.B3(), *it);
 	    flag = !flag;
 	  }
 	}
 	
-      }
-      else { // non linear transformation and methods defined on real elements
+      } else { // non linear transformation and methods defined on real elements
 
 	bool first = true;
 
 	for (size_type ip=(ir == 0) ? 0 : pai->repart()[ir-1];
 	     ip < pai->repart()[ir]; ++ip, first = false) {
-
-	  // computation of the pseudo inverse
-	  gmm::mult(gmm::transposed(pgp->grad(ip)), gmm::transposed(G), K);
-	  if (P != N) {
-	    gmm::mult(K, gmm::transposed(K), CS);
-	    J = ::sqrt(gmm::lu_inverse(CS));
-	    gmm::mult(gmm::transposed(K), CS, B);
-	  }
-	  else {
-  	    J = dal::abs(gmm::lu_inverse(K)); B = K;
-  	  }
-	  
+	  ctx.set_ii(ip);
+	  const base_matrix& B = ctx.B(); // J computed as side-effect
+	  scalar_type J = ctx.J();
 	  if (ir > 0) {
 	    gmm::mult(B, un, up);
 	    J *= bgeot::vect_norm2(up);
-	  }
-
-	  if (hess_reduction.size() > 0) {
-	    for (short_type i = 0; i < P; ++i)
-	      for (short_type j = 0; j < P; ++j)
-		for (short_type k = 0; k < N; ++k)
-		  for (short_type l = 0; l < N; ++l)
-		    B3(k + N*l, i + P*j) = B(k, i) * B(l, j);
-	    gmm::mult(G, pgp->hessian(ip), Htau);
-	    for (short_type i = 0; i < P; ++i)
-	      for (short_type j = 0; j < P; ++j)
-		for (short_type k = 0; k < P; ++k)
-		  for (short_type l = 0; l < N; ++l)
-		    B2(i + P*j, k) += Htau(l, i + P*j) * B(l,k);
-	    gmm::mult(B3, B2, B32);
-	  }
-
-	  add_elem(t, G,  ip, J, N, elt, first);
+	  }	  
+	  add_elem(t, ctx, J, first);
 	}
       }
 
@@ -416,10 +371,8 @@ namespace getfem
 	  ite = trans_reduction.end();
 	std::deque<pfem>::const_iterator iti = trans_reduction_pfi.begin();
 	for ( ; it != ite; ++it, ++iti) { 
-	  if ((*iti)->nb_dof() != M.nrows() || (*iti)->nb_base()!=M.ncols())
-	    M.resize((*iti)->nb_base(), (*iti)->nb_dof());
-	  (*iti)->mat_trans(M, G, pgt);
-	  (flag ? t:taux).mat_reduction(flag ? taux:t, M, *it);
+	  ctx.set_pf(*iti);
+	  (flag ? t:taux).mat_reduction(flag ? taux:t, ctx.M(), *it);
 	  flag = !flag;
 	}
       }

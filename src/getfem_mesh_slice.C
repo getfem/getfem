@@ -67,6 +67,27 @@ namespace getfem {
     }
   }
 
+  void stored_mesh_slice::build(const getfem::getfem_mesh& m, 
+				const slicer_action *a, const slicer_action *b, const slicer_action *c, 
+				size_type nrefine) {
+    clear();
+    mesh_slicer slicer(m);
+    slicer.push_back_action(*const_cast<slicer_action*>(a));
+    if (b) slicer.push_back_action(*const_cast<slicer_action*>(b));
+    if (c) slicer.push_back_action(*const_cast<slicer_action*>(c));
+    slicer_build_stored_mesh_slice sbuild(*this);
+    slicer.push_back_action(sbuild);
+    slicer.exec(nrefine);
+  }
+
+  void stored_mesh_slice::replay(slicer_action *a, slicer_action *b, slicer_action *c) const {
+    mesh_slicer slicer(linked_mesh());
+    slicer.push_back_action(*a); 
+    if (b) slicer.push_back_action(*b);
+    if (c) slicer.push_back_action(*c);
+    slicer.exec(*this);
+  }
+
   void stored_mesh_slice::set_dim(size_type newdim) {
     dim_ = newdim;
     for (size_type ic=0; ic < nb_convex(); ++ic) {
@@ -106,21 +127,22 @@ namespace getfem {
     size_type sz = sizeof(stored_mesh_slice);
     for (cvlst_ct::const_iterator it = cvlst.begin(); it != cvlst.end(); ++it) {
       sz += sizeof(size_type);
-      cerr << "memsize: convex " << it->cv_num << "\n";
+      /*cerr << "memsize: convex " << it->cv_num << " nodes:" 
+	<< it->nodes.size() << ", splxs:" << it->simplexes.size() << ", sz=" << sz << "\n";*/
       for (size_type i=0; i < it->nodes.size(); ++i) {
-	cerr << "  point " << i << ": size+= " << sizeof(slice_node) << "+" <<  
-          it->nodes[i].pt.memsize() << "+" << it->nodes[i].pt_ref.memsize() << "-" << sizeof(it->nodes[i].pt)*2 << "\n";
+	/*cerr << "  point " << i << ": size+= " << sizeof(slice_node) << "+" <<  
+          it->nodes[i].pt.memsize() << "+" << it->nodes[i].pt_ref.memsize() << "-" << sizeof(it->nodes[i].pt)*2 << "\n";*/
         sz += sizeof(slice_node) + 
           (it->nodes[i].pt.memsize()+it->nodes[i].pt_ref.memsize()) - sizeof(it->nodes[i].pt)*2;
       }
       for (size_type i=0; i < it->simplexes.size(); ++i) {
-	cerr << "  simplex " << i << ": size+= " << sizeof(slice_simplex) << "+" << 
-          it->simplexes[i].inodes.size()*sizeof(size_type) << "\n";
+	/*cerr << "  simplex " << i << ": size+= " << sizeof(slice_simplex) << "+" << 
+          it->simplexes[i].inodes.size()*sizeof(size_type) << "\n";*/
         sz += sizeof(slice_simplex) + 
           it->simplexes[i].inodes.size()*sizeof(size_type);
       }
-      sz += cv2pos.size() * sizeof(size_type);
     }
+    sz += cv2pos.size() * sizeof(size_type);
     return sz;
   }
 

@@ -113,16 +113,20 @@ namespace bgeot
     { return cvr->structure()->basic_structure(); }
     /// Gives the vector of polynomials representing the transformation.
     const std::vector<base_poly> &poly_vector(void) const { return trans; }
-    /// Gives the array of geometric nodes.
+    /// Gives the array of geometric nodes (on reference convex)
     const std::vector<base_node> &geometric_nodes(void) const
     { return cvr->points(); }
-    /// Gives the array of the normals to faces.
+    /// Gives the array of the normals to faces (on reference convex)
     const std::vector<base_small_vector> &normals(void) const
     { return cvr->normals(); }
-    
+    /** Apply the geometric transformation to point pt, 
+	PTAB containsis the points of the real convex */
     template<class CONT> base_node transform(const base_node &pt,
 					     const CONT &PTAB) const;
     base_node transform(const base_node &pt, const base_matrix &G) const;
+    /** Compute the gradient at point x, pc is resized to [nb_points() x dim()]
+	if the transformation is linear, x is not used at all */
+    void gradient(const base_node& x, base_matrix& pc) const;
   };
 
   template<class CONT>
@@ -159,6 +163,60 @@ namespace bgeot
 	{ scalar_type e = (itmax[i]-itmin[i]) * 0.2;  itmin[i] -= e; itmax[i] += e; }
   }
 
+  class geotrans_precomp_;
+  typedef const geotrans_precomp_ *pgeotrans_precomp;
+
+  /* the geotrans_interpolation_context structure is passed as the
+     argument of geometric transformation interpolation
+     functions. This structure can be partially filled (for example
+     the xreal will be computed if needed as long as pgp+ii is known).
+     See also fem_interpolation_context in getfem_fem.h.
+     The name of member data, and the computations done by this structure
+     are heavily described in the Getfem++ Kernel Documentation.
+  */
+  class geotrans_interpolation_context {
+    mutable base_node xref_; /* reference point */
+    mutable base_node xreal_; /* transformed point */
+    const base_matrix *G_; /* pointer to the matrix of real nodes of the convex */
+    mutable base_matrix B_, B3_, B32_; /* see documentation for more details */
+    pgeometric_trans pgt_;
+    pgeotrans_precomp pgp_;
+    size_type ii_; /* index of current point in the pgp */
+    mutable scalar_type J_; /* Jacobian */
+  public:
+    bool have_xref() const { return !xref_.empty(); }
+    bool have_xreal() const { return !xreal_.empty(); }
+    bool have_G() const { return G_ != 0; }
+    bool have_B() const { return !B_.empty(); }
+    bool have_B3() const { return !B3_.empty(); }
+    bool have_B32() const { return !B32_.empty(); }
+    bool have_pgt() const { return pgt_ != 0; }
+    bool have_pgp() const { return pgp_ != 0; }
+    const base_node& xref() const;
+    const base_node& xreal() const;
+    const base_matrix& B() const;
+    const base_matrix& B3() const;
+    const base_matrix& B32() const;
+    bgeot::pgeometric_trans pgt() const { return pgt_; }
+    const base_matrix& G() const { return *G_; }
+    scalar_type J() const { return J_; }
+    size_type N() const { if (have_G()) return G().nrows(); 
+      else if (have_xreal()) return xreal_.size(); 
+      else DAL_THROW(dal::failure_error, "cannot get N"); }
+    size_type ii() const { return ii_; }
+    bgeot::pgeotrans_precomp pgp() const { return pgp_; }
+    void set_ii(size_type ii__);
+    void set_xref(const base_node& P);
+
+    geotrans_interpolation_context();
+    geotrans_interpolation_context(bgeot::pgeotrans_precomp pgp__, 
+				   size_type ii__, 
+				   const base_matrix& G__); 
+    geotrans_interpolation_context(bgeot::pgeometric_trans pgt__,
+				   const base_node& xref__,
+				   const base_matrix& G__);
+  };
+
   /** @name functions on geometric transformations
    */
   //@{
@@ -189,8 +247,8 @@ namespace bgeot
 
      pt is the position of the evaluation point on the reference element
   */
-  base_small_vector compute_normal(const base_matrix &G, size_type ir,
-				   pgeometric_trans pgt, const base_node &pt);
+  base_small_vector compute_normal(const geotrans_interpolation_context& c,
+				   size_type face);
 
    //@}
 

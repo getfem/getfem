@@ -51,20 +51,16 @@ namespace getfem
       if (!(pgt->is_linear()) || N != P) 
 	DAL_THROW(internal_error, "Bad geometric transformations.");
     
-      base_poly PO;
-      base_matrix a(P, pgt->nb_points());
+      base_matrix G(P, pgt->nb_points());
       base_matrix pc(pgt->nb_points() , N);
       base_matrix B0(N, P);
     
-      for (size_type j = 0; j < pgt->nb_points(); ++j)
-	for (size_type k = 0; k < P; ++k)
-	  a(k,j) = (m.points_of_convex(cv)[j])[k];
+      vectors_to_base_matrix(G, m.points_of_convex(cv));
       
-      for (size_type k = 0; k < pgt->nb_points(); ++k)
-	for (dim_type n = 0; n < N; ++n)
-	  { PO = pgt->poly_vector()[k]; PO.derivative(n); pc(k,n) = PO[0]; }
+      base_node x(N);x.fill(0.);
+      pgt->gradient(x, pc);
     
-      gmm::mult(gmm::transposed(pc), gmm::transposed(a), B0);
+      gmm::mult(gmm::transposed(pc), gmm::transposed(G), B0);
       det[cv] = gmm::lu_inverse(B0);
       gtrans[cv] = B0;
       orgs[cv] = m.points_of_convex(cv)[0];

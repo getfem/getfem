@@ -37,122 +37,105 @@
 namespace getfem
 {
   typedef ftool::naming_system<virtual_fem>::param_list fem_param_list;
+  
+  const base_matrix& fem_interpolation_context::M() const {
+    if (!have_pgt() || !have_G() || !have_pf())
+      DAL_THROW(dal::failure_error, "cannot compute M");
+    M_.resize(pf_->nb_base(), pf_->nb_dof());
+    pf_->mat_trans(M_,G(),pgt());
+    return M_;
+  }
+  
+  size_type fem_interpolation_context::convex_num() const { 
+    if (convex_num_ == size_type(-1)) 
+      DAL_INTERNAL_ERROR(""); 
+    return convex_num_; 
+  }
 
-  void virtual_fem::interpolation(pfem_precomp pfp, size_type ii,
-				  const base_matrix &G,
-				  bgeot::pgeometric_trans pgt, 
-				  const base_vector &coeff, base_vector &val,
-				  dim_type Qdim) const {
-    // optimisable.   verifier et faire le vectoriel
-    base_matrix M;
-    size_type Qmult = size_type(Qdim) / target_dim();
-    if (val.size() != Qdim)
-      DAL_THROW(dimension_error, "dimensions mismatch");
-    size_type R = nb_dof(), RR = nb_base();
+  void fem_interpolation_context::base_value(base_tensor& t) const {
+    if (have_pfp()) t=pfp_->val(ii());
+    else pf()->base_value(xref(), t);
+  }
 
-    if (!is_equivalent()) { M.resize(RR, R); mat_trans(M, G, pgt); }
-
-    val.fill(0.0);
-    const base_tensor &Z = pfp->val(ii);
-    for (size_type j = 0; j < RR; ++j) {
-      for (size_type q = 0; q < Qmult; ++q) {
-	scalar_type co = 0.0;
-	if (is_equivalent())
-	  co = coeff[j*Qmult+q];
-	else
-	  for (size_type i = 0; i < R; ++i)
-	    co += coeff[i*Qmult+q] * M(i, j);
-      
-	for (size_type r = 0; r < target_dim(); ++r)
-	  val[r*Qmult+q] += co * Z[j + r*R];
-      } 
+  void fem_interpolation_context::grad_base_value(base_tensor& t) const {
+    if (have_pfp()) {
+      t.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+    } else {
+      base_tensor u;
+      pf()->grad_base_value(xref(), u);
+      t.mat_transp_reduction(u, B(), 2);
     }
   }
 
-  void virtual_fem::interpolation_grad(const base_node &x,
-				       const base_matrix &G,
-				       bgeot::pgeometric_trans pgt,
-				       const base_vector &coeff,
-				       base_matrix &val) const {
-    dim_type N = G.nrows();
-    dim_type P = dim();
-    size_type npt = G.ncols();
-    base_matrix pc(npt , P);
-    base_matrix grad(N, P), B0(P,N), CS(P,P), M;
-    base_matrix val2(target_dim(), P);
-    base_poly PP;
-    base_tensor t;
-    
-    for (size_type i = 0; i < npt; ++i)
-      for (dim_type n = 0; n < P; ++n) {
-	PP = pgt->poly_vector()[i];
-	PP.derivative(n);
-	pc(i, n) = PP.eval(x.begin());
-      }
-    
-    gmm::mult(G, pc, grad);
-    if (P != N) {
-      gmm::mult(gmm::transposed(grad), grad, CS);
-      gmm::lu_inverse(CS);
-      gmm::mult(gmm::transposed(CS), gmm::transposed(grad), B0);
+  void fem_interpolation_context::hess_base_value(base_tensor& t) const {
+    base_tensor tt;
+    if (have_pfp()) {
+      tt = pfp()->hess(ii());
+    } else {
+      pf()->hess_base_value(xref(), tt);
     }
-    else {
-      gmm::lu_inverse(grad);
-      B0 = grad;
-    }
-     
-    grad_base_value(x, t);
-    base_tensor::iterator it = t.begin();
-    
-    size_type R = nb_dof(), RR = nb_base();
-    
-    if (!is_equivalent()) { M.resize(RR, R); mat_trans(M, G, pgt); }
-    
-    val2.fill(0.0);
-    
-    for (size_type k = 0; k < x.size(); ++k)
-      for (size_type r = 0; r < target_dim(); ++r)
- 	for (size_type j = 0; j < RR; ++j, ++it) {
- 	  scalar_type co = 0.0;
- 	  if (is_equivalent())
- 	    co = coeff[j];
-	  else
- 	    for (size_type i = 0; i < R; ++i)
- 	      co += coeff[i] * M(i, j);
-	  
- 	  val2(r,k) += co * (*it);
- 	} 
-    
-    gmm::mult(val2, B0, val);
-  }
-
-
-  void virtual_fem::real_base_value(pgeotrans_precomp, pfem_precomp pfp,
-				    size_type ip, const base_matrix &,
-				    base_tensor &t, size_type) const
-  { t = pfp->val(ip); }
-  void virtual_fem::real_grad_base_value(pgeotrans_precomp,
-					 pfem_precomp pfp,
-					 size_type ip, const base_matrix &,
-					 const base_matrix &B,
-					 base_tensor &t, size_type) const
-  { t.mat_transp_reduction(pfp->grad(ip), B, 2); }
-  void virtual_fem::real_hess_base_value(pgeotrans_precomp,
-					 pfem_precomp pfp,
-					 size_type ip, const base_matrix &,
-					 const base_matrix &B3,
-					 const base_matrix &B32,
-					 base_tensor &t, size_type) const {
-    base_tensor tt = pfp->hess(ip);
     bgeot::multi_index mim(3);
     mim[2] = dal::sqr(tt.sizes()[2]); mim[1] = tt.sizes()[1];
     mim[0] = tt.sizes()[0];
     tt.adjust_sizes(mim);
-    t.mat_transp_reduction(tt, B3, 2);
-    tt.mat_transp_reduction(pfp->grad(ip), B32, 2);
+    t.mat_transp_reduction(tt, B3(), 2);
+    if (have_pfp()) {
+      tt.mat_transp_reduction(pfp()->grad(ii()), B32(), 2);
+    } else {
+      base_tensor u;
+      pf()->grad_base_value(xref(), u);
+      tt.mat_transp_reduction(u, B32(), 2);
+    }
     t -= tt;
   }
 
+  void fem_interpolation_context::set_pfp(pfem_precomp newpfp) {
+    pfp_ = newpfp;
+    if (pfp_) { pf_ = pfp()->get_pfem(); }
+    else pf_ = 0;
+    M_.resize(0,0);
+  }
+
+  void fem_interpolation_context::set_pf(pfem newpf) {
+    set_pfp(0);
+    pf_ = newpf;
+  }
+
+  fem_interpolation_context::fem_interpolation_context() :
+    bgeot::geotrans_interpolation_context(), pf_(0), pfp_(0), 
+    convex_num_(size_type(-1)) {}
+  fem_interpolation_context::fem_interpolation_context
+  (bgeot::pgeotrans_precomp pgp__, pfem_precomp pfp__, size_type ii__, 
+   const base_matrix& G__, size_type convex_num__) : 
+    bgeot::geotrans_interpolation_context(pgp__,ii__,G__), 
+    convex_num_(convex_num__) { set_pfp(pfp__); }
+  fem_interpolation_context::fem_interpolation_context
+  (bgeot::pgeometric_trans pgt__, pfem_precomp pfp__, size_type ii__, 
+   const base_matrix& G__, size_type convex_num__) :
+    bgeot::geotrans_interpolation_context(pgt__,base_node(),G__),
+    convex_num_(convex_num__) {
+      set_ii(ii__);
+      set_pfp(pfp__); 
+    }
+  fem_interpolation_context::fem_interpolation_context(
+   bgeot::pgeometric_trans pgt__, pfem pf__,
+   const base_node& xref__,const base_matrix& G__, size_type convex_num__) :
+    bgeot::geotrans_interpolation_context(pgt__,xref__,G__),
+    pf_(pf__), pfp_(0), convex_num_(convex_num__) {}
+ 
+ 
+  void virtual_fem::real_base_value(const fem_interpolation_context &c, 
+				    base_tensor &t) const {
+    c.base_value(t);
+  }
+  void virtual_fem::real_grad_base_value(const fem_interpolation_context &c, 
+				    base_tensor &t) const {
+    c.grad_base_value(t);
+  }
+  void virtual_fem::real_hess_base_value(const fem_interpolation_context &c, 
+					 base_tensor &t) const {
+    c.hess_base_value(t);
+  }
 
   /* ******************************************************************** */
   /*	Class for description of an interpolation dof.                    */
@@ -873,7 +856,7 @@ namespace getfem
     dim_type P = 1, N = G.nrows();
     base_matrix K(N, P); // optimisable : eviter l'allocation.
     M.fill(1.0);
-    pgeotrans_precomp pgp = geotrans_precomp(pgt, node_tab());
+    bgeot::pgeotrans_precomp pgp = bgeot::geotrans_precomp(pgt, node_tab());
     if (N != 1)
       DAL_THROW(failure_error, "This element cannot be used for Q > 1");
     // gradient au pt 0

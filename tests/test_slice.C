@@ -63,17 +63,17 @@ main() {
   getfem::convex_face_ct cvlst; 
   cvlst.push_back(getfem::convex_face(0,size_type(-1)));
   cvlst.push_back(getfem::convex_face(1,size_type(-1)));
-  getfem::stored_mesh_slice sl;
-  getfem::slicer_half_space slh0(x0,n0,false);
-  getfem::slicer_build_stored_mesh_slice slb0(sl);
-  getfem::mesh_slicer ms0(m); ms0.push_back_action(slh0); ms0.push_back_action(slb0);
-  ms0.exec(10,cvlst);
+  cout << "ok\n";
+  getfem::stored_mesh_slice sl; sl.build(m, getfem::slicer_half_space(x0,n0,false), 10);
   cout << sl << endl;
   cout << "memory 0: " << sl.memsize() << " bytes\n";
 
   sl.clear();
   getfem::slicer_half_space slh1(x1,n1,false);
-  getfem::mesh_slicer ms1(m); ms1.push_back_action(slh1); ms1.push_back_action(slb0);
+  getfem::mesh_slicer ms1(m); 
+  ms1.push_back_action(slh1); 
+  getfem::slicer_build_stored_mesh_slice slb(sl);
+  ms1.push_back_action(slb);
 
   ms1.exec(10,cvlst);
   cout << sl << endl;

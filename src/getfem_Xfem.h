@@ -51,7 +51,7 @@
 
 #include <getfem_fem.h>
 #include <getfem_mesh_fem.h>
-
+#include <getfem_precomp.h>
 /* Works only for tau-equivalent elements                                  */
 
 namespace getfem
@@ -62,11 +62,8 @@ namespace getfem
     bgeot::pgeometric_trans pgt;
     size_type base_num; /* number of the current base function of pf */
     const base_matrix& G;
-    Xfem_func_context(bgeot::pgeometric_trans zpgt, base_node zxref,
-		      const base_matrix& zG) :
-      xref(zxref), pgt(zpgt), G(zG) {
-	xreal = pgt->transform(xref, G);
-      }
+    Xfem_func_context(const fem_interpolation_context &c) :
+      xreal(c.xreal()), xref(c.xref()), pgt(c.pgt()), G(c.G()) {}
   };
 
   // Object representing global functions. To be derived.
@@ -94,7 +91,9 @@ namespace getfem
     std::vector<pXfem_func> funcs; // List of functions to be added
     std::vector<size_type> func_indices;
 
-    void get_fem_precomp_tab(pfem_precomp pfp, std::vector<pfem_precomp>& vpfp) const;
+    void get_fem_interpolation_context_tab(
+		 const fem_interpolation_context& c0,
+		 std::vector<fem_interpolation_context>& vc) const;
     pfem pfe(size_type k) const { return uniq_pfe[func_pf[k]]; }
   public:
 
@@ -106,39 +105,16 @@ namespace getfem
     void add_func(pfem pf, pXfem_func pXf,
 		  size_type ind = size_type(-1));
     
-    void interpolation(const base_node &x, const base_matrix &G,
-		       bgeot::pgeometric_trans pgt,
-		       const base_vector &coeff, base_vector &val) const;
-
-    void interpolation(pfem_precomp pfp, size_type ii,
-		       const base_matrix &G,
-		       bgeot::pgeometric_trans pgt, 
-		       const base_vector &coeff, 
-		       base_vector &val, dim_type Qdim=1) const;
-
-    virtual void interpolation_grad(const base_node &x,
-				    const base_matrix &G,
-				    bgeot::pgeometric_trans pgt,
-				    const base_vector &coeff,
-				    base_matrix &val) const;
-
     void base_value(const base_node &x, base_tensor &t) const;
     void grad_base_value(const base_node &x, base_tensor &t) const;
     void hess_base_value(const base_node &x, base_tensor &t) const;
 
-    void real_base_value(pgeotrans_precomp pgp, pfem_precomp pfp,
-			 size_type ii, const base_matrix &G,
-			 base_tensor &t, size_type elt) const;
-    
-    void real_grad_base_value(pgeotrans_precomp pgp, pfem_precomp pfp,
-			      size_type ii, const base_matrix &G,
-			      const base_matrix &B, base_tensor &t,
-			      size_type elt) const;
-    
-    void real_hess_base_value(pgeotrans_precomp pgp, pfem_precomp pfp,
-			      size_type ii, const base_matrix &G,
-			      const base_matrix &B3, const base_matrix &B32,
-			      base_tensor &t, size_type elt) const;
+    void real_base_value(const fem_interpolation_context& c, 
+			 base_tensor &t) const;    
+    void real_grad_base_value(const fem_interpolation_context& c, 
+			      base_tensor &t) const;
+    void real_hess_base_value(const fem_interpolation_context& c, 
+			      base_tensor &t) const;
     
     Xfem(pfem pfb);
   };

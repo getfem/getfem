@@ -52,17 +52,34 @@ namespace getfem {
 	       mesh_slicer::cs_nodes_ct cv_nodes, 
 	       mesh_slicer::cs_simplexes_ct cv_simplexes, 
 	       dim_type fcnt, dal::bit_vector& splx_in);
+
+    void build(const getfem::getfem_mesh& m, const slicer_action &a, 
+	       size_type nrefine = 1) { build(m,&a,0,0,nrefine); }
+    void build(const getfem::getfem_mesh& m, const slicer_action &a, const slicer_action &b, 
+	       size_type nrefine = 1) { build(m,&a,&b,0,nrefine); }
+    void build(const getfem::getfem_mesh& m, const slicer_action &a, const slicer_action &b, const slicer_action &c, 
+	       size_type nrefine = 1) { build(m,&a,&b,&c,nrefine); }
+    void build(const getfem::getfem_mesh& m, const slicer_action *a, const slicer_action *b, const slicer_action *c, 
+	       size_type nrefine);
+    
+      
+    /* apply the listed slicer_action(s) to the slice object -- 
+       the stored_mesh_slice is not modified */
+    void replay(slicer_action &a) const { replay(&a,0,0); }
+    void replay(slicer_action &a, slicer_action &b) const { replay(&a, &b, 0); }
+    void replay(slicer_action &a, slicer_action &b, slicer_action &c) const { replay(&a, &b, &c); }
+    void replay(slicer_action *a, slicer_action *b, slicer_action *c) const;
+
     /** interpolation of a mesh_fem on a slice (the mesh_fem
 	and the slice must share the same mesh, of course)
     */
     template<typename V1, typename V2> void 
     interpolate(const getfem::mesh_fem &mf, const V1& U, V2& V) {
-      fem_precomp_ fprecomp;
       bgeot::stored_point_tab refpts;
       base_vector coeff;
       base_matrix G;
-      base_vector val(mf.get_qdim());
-      typename V2::iterator out = V.begin();
+      size_type qdim = mf.get_qdim();
+      size_type pos = 0;
       for (size_type i=0; i < nb_convex(); ++i) {
         size_type cv = convex_num(i);
         refpts.resize(nodes(i).size());
@@ -70,21 +87,24 @@ namespace getfem {
         pfem pf = mf.fem_of_element(cv);
 	if (pf->need_G()) 
 	  bgeot::vectors_to_base_matrix(G, mf.linked_mesh().points_of_convex(cv));
-        fem_precomp_not_stored(pf, &refpts, fprecomp);
+	fem_precomp_pool fppool;
+        pfem_precomp pfp = fppool(pf, &refpts);
         
         ref_mesh_dof_ind_ct dof = mf.ind_dof_of_element(cv);
         coeff.resize(mf.nb_dof_of_element(cv));
         base_vector::iterator cit = coeff.begin();
         for (ref_mesh_dof_ind_ct::iterator it=dof.begin(); it != dof.end(); ++it, ++cit)
           *cit = U[*it];
-
+	fem_interpolation_context ctx(mf.linked_mesh().trans_of_convex(cv),pfp,0,G,cv);
         for (size_type j=0; j < refpts.size(); ++j) {
-          pf->interpolation(&fprecomp, j,
-                            G, mf.linked_mesh().trans_of_convex(cv),
-                            coeff, val, mf.get_qdim());
-          out = std::copy(val.begin(), val.end(), out);
+	  ctx.set_ii(j);
+          typename gmm::sub_vector_type<V2*, gmm::sub_interval>::vector_type dest = 
+	    gmm::sub_vector(V,gmm::sub_interval(pos,qdim));
+	  pf->interpolation(ctx,coeff,dest,qdim);
+          pos += qdim;
         }
       }
+      if (pos != V.size()) DAL_INTERNAL_ERROR("");
     }
   };
 

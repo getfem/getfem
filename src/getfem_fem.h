@@ -34,6 +34,7 @@
 #define GETFEM_FEM_H__
 
 #include <bgeot_geometric_trans.h>
+#include <bgeot_precomp.h>
 #include <getfem_integration.h>
 #include <getfem_poly_composite.h>
 #include <getfem_precomp.h>
@@ -87,6 +88,8 @@ namespace getfem
   
   class virtual_fem;
   typedef const virtual_fem * pfem;
+
+  class fem_interpolation_context;
   
   class virtual_fem
   {
@@ -164,21 +167,16 @@ namespace getfem
      *  for non-equivalent elements.
      *  This method take all cases into account (non tau-equivalent element)
      */
-    virtual void interpolation(const base_node &x, const base_matrix &G,
-			       bgeot::pgeometric_trans pgt,
-			       const base_vector &coeff, 
-			       base_vector &val) const = 0;
+    template<typename CVEC, typename VVEC> 
+    void interpolation(const fem_interpolation_context& c, 
+		       const CVEC& coeff, VVEC &val, dim_type Qdim=1) const;
+
     /** Function which interpolates in the ii th point of pfp. coeff is the
      *  vector of coefficient relatively to the shape functions. G and pgt
      *  represent the geometric transformation for non-equivalent elements.
-     *  Qdim take into account a vectorisation of the element.
+     *  Qdim takes into account a vectorisation of the element.
      *  This method take all cases into account (non tau-equivalent element)
      */
-    virtual void interpolation(pfem_precomp pfp, size_type ii,
-			       const base_matrix &G,
-			       bgeot::pgeometric_trans pgt, 
-			       const base_vector &coeff, 
-			       base_vector &val, dim_type Qdim=1) const;
     /** Function which interpolates the gradient in a arbitrary point x
      *  given on the reference element. coeff is the vector of coefficient
      *  relatively to the shape functions. G and pgt
@@ -189,17 +187,10 @@ namespace getfem
      *  transformation).
      *  This function is essentially used by virtual_link_fem.
      */
-    virtual void interpolation_grad(const base_node &x,
-				    const base_matrix &G,
-				    bgeot::pgeometric_trans pgt,
-				    const base_vector &coeff,
-				    base_matrix &val) const;
-    //     virtual void interpolation_grad(pfem_precomp pfp, size_type ii,
-    // 				    const base_matrix &G,
-    // 				    bgeot::pgeometric_trans pgt, 
-    // 				    const base_vector &coeff,
-    // 				    base_matrix &val) const;
-
+    template<typename CVEC, typename VMAT> 
+    void interpolation_grad(const fem_interpolation_context& c, 
+			    const CVEC& coeff, VMAT &val, dim_type Qdim=1) const;
+      
     /** Gives the value of all components of the base functions at the
      *  point x of the reference element. Basic function used essentially
      *  by fem_precomp.
@@ -220,9 +211,9 @@ namespace getfem
      *  Used by elementary computations.
      *  Matrix M for non tau-equivalent elements not taken into account.
      */
-    virtual void real_base_value(pgeotrans_precomp pgp, pfem_precomp pfp,
-				 size_type ii, const base_matrix &G,
-				 base_tensor &t, size_type elt) const;
+    virtual void real_base_value(const fem_interpolation_context &c, 
+				 base_tensor &t) const;
+
     /** Gives the value of all gradients on the real element of the components
      *  of the base functions at the point ii of the pgp possibly using
      *  information on pfp, G and B. B is the matrix wich transforms the
@@ -230,23 +221,18 @@ namespace getfem
      *  Used by elementary computations.
      *  Matrix M for non tau-equivalent elements not taken into account.
      */
-    virtual void real_grad_base_value(pgeotrans_precomp pgp, pfem_precomp pfp,
-				      size_type ii, const base_matrix &G,
-				      const base_matrix &B,
-				      base_tensor &t, size_type elt) const;
-    /** Gives the value of all hessians on the real element of the components
+    virtual void real_grad_base_value(const fem_interpolation_context &c, 
+				      base_tensor &t) const;
+/** Gives the value of all hessians on the real element of the components
      *  of the base functions at the point ii of the pgp possibly using
      *  information on pfp, G, B2 and B32. B2 and B32 are the matrices used
      *  to transform a Hessian on reference element to a Hessian on real
      *  element. Used by elementary computations.
      *  Matrix M for non tau-equivalent elements not taken into account.
      */
-    virtual void real_hess_base_value(pgeotrans_precomp pgp, pfem_precomp pfp,
-				      size_type ii, const base_matrix &G,
-				      const base_matrix &B3,
-				      const base_matrix &B32,
-				      base_tensor &t, size_type elt) const;
 
+    virtual void real_hess_base_value(const fem_interpolation_context &c, 
+				      base_tensor &t) const;
     
     virtual size_type index_of_already_numerate_dof(size_type, size_type) const
       { DAL_THROW(internal_error, "internal error."); }
@@ -282,10 +268,122 @@ namespace getfem
     virtual_fem(const virtual_fem &f) { *this = f; }
 
     virtual ~virtual_fem() {}
-
   };
   
-  
+  /* the fem_interpolation_context structure is passed as the argument
+     of fem interpolation functions. This structure can be partially
+     filled (for example the xreal will be computed if needed as long
+     as pgp+ii is known)
+  */
+  class fem_interpolation_context : public bgeot::geotrans_interpolation_context {
+    mutable base_matrix M_;
+    pfem pf_;
+    pfem_precomp pfp_;
+    size_type convex_num_;
+  public:
+    bool have_pfp() const { return pfp_ != 0; }
+    bool have_pf() const { return pf_ != 0; }
+    const base_matrix& M() const;
+    void base_value(base_tensor& t) const;
+    void grad_base_value(base_tensor& t) const;
+    void hess_base_value(base_tensor& t) const;
+    const pfem pf() const { return pf_; }
+    size_type convex_num() const;
+    pfem_precomp pfp() const { return pfp_; }
+    void set_pfp(pfem_precomp newpfp);
+    void set_pf(pfem newpf);
+    fem_interpolation_context();
+    fem_interpolation_context(bgeot::pgeotrans_precomp pgp__, 
+			      pfem_precomp pfp__, size_type ii__, 
+			      const base_matrix& G__, 
+			      size_type convex_num__);
+    fem_interpolation_context(bgeot::pgeometric_trans pgt__, 
+			      pfem_precomp pfp__, size_type ii__, 
+			      const base_matrix& G__, 
+			      size_type convex_num__);
+    fem_interpolation_context(bgeot::pgeometric_trans pgt__,
+			      pfem pf__,
+			      const base_node& xref__,
+			      const base_matrix& G__,
+			      size_type convex_num__);
+  };
+
+  template <typename CVEC, typename VVEC>
+  void virtual_fem::interpolation(const fem_interpolation_context& c, 
+				  const CVEC& coeff, VVEC &val,
+				  dim_type Qdim) const {
+    size_type Qmult = size_type(Qdim) / target_dim();
+    if (val.size() != Qdim)
+      DAL_THROW(dimension_error, "dimensions mismatch");
+    size_type R = nb_dof(), RR = nb_base();
+    
+    gmm::clear(val);
+    base_tensor Z; real_base_value(c,Z);
+    for (size_type j = 0; j < RR; ++j) {
+      for (size_type q = 0; q < Qmult; ++q) {
+	scalar_type co = 0.0;
+	if (is_equivalent())
+	  co = coeff[j*Qmult+q];
+	else
+	  for (size_type i = 0; i < R; ++i)
+	    co += coeff[i*Qmult+q] * c.M()(i, j);	  
+	for (size_type r = 0; r < target_dim(); ++r)
+	  val[r + q*target_dim()] += co * Z[j + r*R];
+      } 
+    }
+  }
+
+  template<typename CVEC, typename VMAT> 
+  void virtual_fem::interpolation_grad(const fem_interpolation_context& c, 
+			  const CVEC& coeff, VMAT &val, dim_type Qdim) const {
+    size_type Qmult = size_type(Qdim) / target_dim();
+    dim_type N = c.N();
+    if (gmm::mat_nrows(val) != N || gmm::mat_ncols(val) != Qdim)
+      DAL_THROW(dimension_error, "dimensions mismatch");
+    
+    dim_type P = dim();
+    base_tensor t;
+    size_type R = nb_dof(), RR = nb_base();      
+    
+    gmm::clear(val);
+    if (!is_on_real_element()) { // optimized case
+      grad_base_value(c.xref(), t);
+      base_matrix val2(P, Qdim);
+      gmm::clear(val2);
+      for (size_type q = 0; q < Qmult; ++q) {
+	base_tensor::iterator it = t.begin();	
+	for (size_type k = 0; k < P; ++k)
+	  for (size_type r = 0; r < target_dim(); ++r)
+	    for (size_type j = 0; j < RR; ++j, ++it) {
+	      scalar_type co = 0.0;
+	      if (is_equivalent())
+		co = coeff[j*Qmult+q];
+	      else
+		for (size_type i = 0; i < R; ++i)
+		  co += coeff[i*Qmult+q] * c.M()(i, j);	      
+	      val2(k, r + q*target_dim()) += co * (*it);
+	    }
+      }
+      gmm::mult(c.B(), val2, val);
+    } else {
+      real_grad_base_value(c, t);
+      for (size_type q = 0; q < Qmult; ++q) {
+	base_tensor::iterator it = t.begin();
+	for (size_type k = 0; k < N; ++k)
+	  for (size_type r = 0; r < target_dim(); ++r)
+	    for (size_type j = 0; j < RR; ++j, ++it) {
+	      scalar_type co = 0.0;
+	      if (is_equivalent())
+		co = coeff[j*Qmult+q];
+	      else
+		for (size_type i = 0; i < R; ++i)
+		  co += coeff[i*Qmult+q] * c.M()(i, j);	      
+	      val(k, r + q*target_dim()) += co * (*it);
+	    }
+      }
+    }
+  }
+
   
   template <class FUNC> class fem : public virtual_fem {
   protected :
@@ -296,19 +394,6 @@ namespace getfem
     /// Gives the array of basic functions (components).
     const std::vector<FUNC> &base(void) const { return base_; }
     std::vector<FUNC> &base(void) { return base_; }
-    
-    /* just to please for HP aCC and SGI CC */
-    virtual void interpolation(pfem_precomp pfp, size_type ii,
-			       const base_matrix &G,
-			       bgeot::pgeometric_trans pgt, 
-			       const base_vector &coeff, 
-			       base_vector &val, dim_type Qdim=1) const { 
-      virtual_fem::interpolation(pfp,ii,G,pgt,coeff,val,Qdim); 
-    }
-    void interpolation(const base_node &x, const base_matrix &G, 
-		       bgeot::pgeometric_trans pgt,
-		       const base_vector &coeff, base_vector &val) const;
-
     void base_value(const base_node &x, base_tensor &t) const {
       bgeot::multi_index mi(2);
       mi[1] = target_dim(); mi[0] = nb_base();
@@ -350,34 +435,6 @@ namespace getfem
   
   typedef const fem<base_poly> * ppolyfem;
   typedef const fem<polynomial_composite> * ppolycompfem;
-  
-  template <class FUNC>
-  void fem<FUNC>::interpolation(const base_node &x, const base_matrix &G,
-				bgeot::pgeometric_trans pgt, 
-				const base_vector &coeff,
-				base_vector &val) const { 
-    // optimisable.   verifier et faire le vectoriel
-    base_matrix M;
-    if (val.size() != target_dim())
-      DAL_THROW(dimension_error, "dimensions mismatch");
-    
-    size_type R = nb_dof(), RR = nb_base();
-    
-    if (!is_equivalent()) { M.resize(RR, R); mat_trans(M, G, pgt); }
-    
-    val.fill(0.0);
-    for (size_type j = 0; j < RR; ++j) {
-      scalar_type co = 0.0;
-      if (is_equivalent())
-	co = coeff[j];
-      else
-	for (size_type i = 0; i < R; ++i)
-	  co += coeff[i] * M(i, j);
-      
-      for (size_type r = 0; r < target_dim(); ++r)
-	val[r] += co * double(base()[j + r*R].eval(x.begin()));
-    } 
-  }
   
   /** Gives a pointer on the structures describing the more classical fem
    *  of degree k on a geometric convex cvs (coming from the geometric trans).

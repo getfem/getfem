@@ -22,6 +22,7 @@
 #include <deque>
 typedef size_t size_type;
 
+bool quick = false;
 
 void test_speed_part(dal::bit_vector& bv, std::vector<bool>& vb, std::deque<bool>& db) {
   double t0;
@@ -30,19 +31,25 @@ void test_speed_part(dal::bit_vector& bv, std::vector<bool>& vb, std::deque<bool
   for (size_type i=0; i < vb.size(); ++i) {
     cnt += bv[i] ? 1 : 0;
   }
-  cerr << "bit_vector   [random_access] : " << ftool::uclock_sec()-t0 << endl; t0 = ftool::uclock_sec();
+  cerr << "bit_vector   [random_access ]: " << ftool::uclock_sec()-t0 << endl; t0 = ftool::uclock_sec();
+
+  oldcnt=cnt; cnt = 0;
+  for (size_type i=0; i < vb.size(); ++i) {
+    cnt += bv.is_in(i) ? 1 : 0;
+  }
+  cerr << "bit_vector   [is_in         ]: " << ftool::uclock_sec()-t0 << endl; t0 = ftool::uclock_sec(); assert(oldcnt == cnt);
 
   oldcnt=cnt; cnt = 0;
   for (size_type i=0; i < vb.size(); ++i) {
     cnt += vb[i] ? 1 : 0;
   }
-  cerr << "vector<bool> [random_access] : " << ftool::uclock_sec()-t0 << endl; t0 = ftool::uclock_sec(); assert(oldcnt == cnt);
+  cerr << "vector<bool> [random_access ]: " << ftool::uclock_sec()-t0 << endl; t0 = ftool::uclock_sec(); assert(oldcnt == cnt);
 
   oldcnt=cnt; cnt = 0;
   for (size_type i=0; i < db.size(); ++i) {
     cnt += db[i] ? 1 : 0;
   }
-  cerr << "deque <bool> [random_access] : " << ftool::uclock_sec()-t0 << endl; t0 = ftool::uclock_sec(); assert(oldcnt == cnt);
+  cerr << "deque <bool> [random_access ]: " << ftool::uclock_sec()-t0 << endl; t0 = ftool::uclock_sec(); assert(oldcnt == cnt);
 
   oldcnt=cnt; cnt = 0;
   for (dal::bit_vector::const_iterator it = bv.begin(); it != bv.end(); ++it) {
@@ -54,13 +61,13 @@ void test_speed_part(dal::bit_vector& bv, std::vector<bool>& vb, std::deque<bool
   for (dal::bv_visitor i(bv); !i.finished(); ++i) {
     cnt ++; 
   }
-  cerr << "bit_vector   [bv_visitor]: " << ftool::uclock_sec()-t0 << endl; t0 = ftool::uclock_sec();  assert(oldcnt == cnt);
+  cerr << "bit_vector   [bv_visitor    ]: " << ftool::uclock_sec()-t0 << endl; t0 = ftool::uclock_sec();  assert(oldcnt == cnt);
 
   oldcnt=cnt; cnt = 0;
   for (size_type i = bv.take_first(); i != size_type(-1); i << bv) {
     cnt ++; 
   }
-  cerr << "bit_vector   [operator <<  ] : " << ftool::uclock_sec()-t0 << endl; t0 = ftool::uclock_sec(); assert(oldcnt == cnt);
+  cerr << "bit_vector   [operator <<   ]: " << ftool::uclock_sec()-t0 << endl; t0 = ftool::uclock_sec(); assert(oldcnt == cnt);
 
   oldcnt=cnt; cnt = 0;
   for (std::vector<bool>::const_iterator it = vb.begin(); it != vb.end(); ++it) {
@@ -76,7 +83,7 @@ void test_speed_part(dal::bit_vector& bv, std::vector<bool>& vb, std::deque<bool
 }
 
 void test_speed() {
-  size_type N = 1000000;
+  size_type N = quick ? 1000000 : 10000000;
   dal::bit_vector   bv; bv.add(0,N);
   std::vector<bool> vb(N,true);
   std::deque<bool> db(N,true);
@@ -140,10 +147,11 @@ void test_speed() {
 
 
 
-int main(void)
-{
+int main(int argc, char *argv[]) {
   try {
   dal::bit_vector nn;
+
+  if (argc == 2 && strcmp(argv[1],"-quick")==0) quick = true;
 
   cout << "cardinal : " << nn.card() << endl; assert(nn.card() == 0);
   cout << "first true : " << nn.first_true() << endl;

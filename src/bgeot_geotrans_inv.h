@@ -43,8 +43,7 @@ namespace bgeot {
   */
   class geotrans_inv_convex {
     size_type N, P;
-    base_poly PO;
-    base_matrix a, pc, grad, B0, CS;
+    base_matrix G, pc, K, B, CS;
     pgeometric_trans pgt;
     std::vector<base_node> cvpts; /* used only for non-linear geotrans -- we should use the matrix a instead... */
     scalar_type EPS;
@@ -73,48 +72,28 @@ namespace bgeot {
   private:
     bool invert_lin(const base_node& n, base_node& n_ref, scalar_type IN_EPS);
     bool invert_nonlin(const base_node& n, base_node& n_ref, scalar_type IN_EPS);
+    void update_B();
   };
 
   template<class TAB> void geotrans_inv_convex::init(const convex<base_node,
 						     TAB> &cv, pgeometric_trans pgt_) {
     bool geotrans_changed = (pgt != pgt_); if (geotrans_changed) pgt = pgt_;
     if (!cv.points().size()) DAL_INTERNAL_ERROR("empty points!");
-    if (P != cv.points()[0].size()) { P = cv.points()[0].size(); geotrans_changed = true; }
+    if (N != cv.points()[0].size()) { N = cv.points()[0].size(); geotrans_changed = true; }
     if (geotrans_changed) {
-      N = pgt->structure()->dim();
-      pc.resize(pgt->nb_points() , N);
-      grad.resize(P,N); B0.resize(N,P); CS.resize(N,N);
-      a.resize(P, pgt->nb_points());
+      P = pgt->structure()->dim();
+      pc.resize(pgt->nb_points() , P);
+      K.resize(N,P); B.resize(N,P); CS.resize(P,P);
+      G.resize(N, pgt->nb_points());
     }
-    for (size_type j = 0; j < pgt->nb_points(); ++j) {// à optimiser !!
-      base_node pt = cv.points()[j]; /* need a temporary storage since cv.points()[j] may not
-					be a reference to a base_node, but a temporary base_node !!
-				     */
-      base_node::const_iterator it = pt.begin();
-      for (size_type i = 0; i < P; ++i) { 
-        this->a(i,j) = it[i];
-      }
-    }
+    vectors_to_base_matrix(G, cv.points());
     if (pgt->is_linear()) {
       if (geotrans_changed) {
-	for (size_type i = 0; i < pgt->nb_points(); ++i) {
-	  for (dim_type n = 0; n < N; ++n) { 
-	    PO = pgt->poly_vector()[i]; PO.derivative(n); this->pc(i,n) = PO[0]; // optimisable
-	  }
-	}
+	base_node Dummy(P);
+	pgt->gradient(Dummy, pc);
       }
       // computation of the pseudo inverse
-      gmm::mult(a, pc, grad);
-      if (N != P) {
-	gmm::mult(gmm::transposed(grad), grad, CS);
-        gmm::lu_inverse(CS);
-	gmm::mult(gmm::transposed(CS), gmm::transposed(grad), B0);
-      }
-      else {
-        // L'inversion peut être optimisée par le non calcul global de B0
-        // et la resolution d'un système linéaire.
-        gmm::lu_inverse(grad); B0 = grad;
-      }
+      update_B();
     } else { /* not much to precompute for non-linear geometric transformations .. */
       cvpts.resize(cv.nb_points());
       for (size_type j = 0; j < pgt->nb_points(); ++j) 

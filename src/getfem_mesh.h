@@ -356,7 +356,7 @@ namespace getfem
       base_small_vector normal_of_face_of_convex(size_type ic, short_type f,
 						 const base_node &pt) const;
     /* same as above, but n is the index of a point of the reference convex 
-       (on the face..) */
+       (on the face..) -- should be faster since it uses a geotrans_precomp */
       base_small_vector normal_of_face_of_convex(size_type ic, short_type f,
 						 size_type n=0) const;
 

@@ -42,25 +42,7 @@ namespace getfem
 
   class external_data_fem : public virtual_fem {
     
-  public :
-    
-    void interpolation(const base_node &, const base_matrix &,
-		       bgeot::pgeometric_trans ,
-		       const base_vector &, base_vector &) const
-    { DAL_THROW(failure_error, "Uninstantied function"); }
-    
-    void interpolation(pfem_precomp , size_type ,
-		       const base_matrix &,
-		       bgeot::pgeometric_trans , 
-		       const base_vector &, 
-		       base_vector &, dim_type=1) const
-    { DAL_THROW(failure_error, "Uninstantied function"); }
-
-    void interpolation_grad(const base_node &, const base_matrix &,
-			    bgeot::pgeometric_trans ,
-			    const base_vector &, base_matrix &) const
-    { DAL_THROW(failure_error, "Uninstantied function"); }
-
+  public :    
     void base_value(const base_node &, base_tensor &) const
     { DAL_THROW(failure_error, "Uninstantied function"); }
     void grad_base_value(const base_node &, base_tensor &) const
@@ -68,22 +50,16 @@ namespace getfem
     void hess_base_value(const base_node &, base_tensor &) const
     { DAL_THROW(failure_error, "Uninstantied function"); }
 
-    void real_base_value(pgeotrans_precomp , pfem_precomp ,
-			 size_type , const base_matrix &,
-			 base_tensor &, size_type ) const
+    void real_base_value(const fem_interpolation_context &c, 
+			      base_tensor &t) const
     { DAL_THROW(failure_error, "Uninstantied function"); } 
     
-    void real_grad_base_value(pgeotrans_precomp , pfem_precomp ,
-			      size_type , const base_matrix &,
-			      const base_matrix &, base_tensor &,
-			      size_type ) const
+    void real_grad_base_value(const fem_interpolation_context &c, 
+			      base_tensor &t) const
     { DAL_THROW(failure_error, "Uninstantied function"); }
     
-    void real_hess_base_value(pgeotrans_precomp , pfem_precomp ,
-			      size_type , const base_matrix &,
-			      const base_matrix &, const base_matrix &,
-			      base_tensor &,
-			      size_type ) const
+    void real_hess_base_value(const fem_interpolation_context &c, 
+			      base_tensor &t) const
     { DAL_THROW(failure_error, "Uninstantied function"); }
 
     external_data_fem(const bgeot::pconvex_ref cvr_, size_type dim = 1) {

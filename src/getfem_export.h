@@ -55,9 +55,8 @@ namespace getfem
     dim_type P = mf.get_qdim();
     std::ofstream o(filename.c_str());
     if (!o) DAL_THROW(internal_error, "impossible to open file");
-    base_node pt1(N), pt2, pt3(P);
+    base_node pt1(N), pt3(P);
     base_matrix G;
-    base_vector coeff, val(1);
 
     o << "% GETFEM++ DATA FILE\nBEGIN DATA ELEMENT\nN = " << int(N)
       << "\nP = " << int(P) << "\nK = " << K << endl << endl;
@@ -68,7 +67,6 @@ namespace getfem
       pfem pf1 = mf.fem_of_element(cv);
       size_type nbd1 = mf.nb_dof_of_element(cv);
       size_type nbd2 = pfe->nb_dof();
-      coeff.resize(nbd1);
 
       o << "DIM = " << int(pgt->dim()) << endl;
 
@@ -77,7 +75,7 @@ namespace getfem
 
       if (pf1->target_dim() != 1)
 	DAL_THROW(to_be_done_error, "to be done ... ");
-      
+      fem_interpolation_context ctx(pgt,pf1,base_node(),G,cv);
       for (size_type i = 0; i < nbd2; ++i)
       {
 	/* point corresponding to the i th node.                           */
@@ -88,16 +86,9 @@ namespace getfem
 
 	/* interpolation of the solution.                                  */
 	/* faux dans le cas des éléments vectoriel.                        */
-	pt2 = pfe->node_of_dof(i);
-
-	for (size_type k = 0; k < P; ++k) {
-	  for (size_type j = 0; j < nbd1 / P; ++j)
-	    coeff[j] = U[mf.ind_dof_of_element(cv)[j*P+k]];
-	  // il faudrait utiliser les fem_precomp pour accelerer.
-	  pf1->interpolation(pt2, G, pgt, coeff, val);
-	  pt3[k] = val[0];
-	}
-
+	ctx.set_xref(pfe->node_of_dof(i));
+	pf1->interpolation(ctx, 
+	   gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))), pt3,cv);
 	for (size_type j = 0; j < P; ++j) o << pt3[j] << " ";
 	o << endl;
       }
@@ -283,12 +274,13 @@ namespace getfem
       if (pf_s->target_dim() != 1 || pf_t->target_dim() != 1)
 	DAL_THROW(to_be_done_error, "vector FEM interpolation still to be done ... ");
       pfem_precomp pfp = fppool(pf_s, pf_t->node_tab());
-
+      fem_interpolation_context ctx(pgt,pfp,size_type(-1),G,cv);
       itdof = mf_target.ind_dof_of_element(cv).begin();
       for (size_type i = 0; i < nbd_t; ++i, itdof+=mf_target.get_qdim()) {
 	size_type dof_t = *itdof*qmult;
 	/* faux dans le cas des éléments vectoriel.                        */
-	pf_s->interpolation(pfp, i, G, pgt, coeff, val, qdim);
+	ctx.set_ii(i);
+	pf_s->interpolation(ctx, coeff, val, qdim);
 	for (size_type k=0; k < qdim; ++k) 
 	  V[dof_t + k] = val[k];
       }
@@ -307,9 +299,7 @@ namespace getfem
     bgeot::geotrans_inv gti;
     dal::dynamic_array<base_node> ptab;
     dal::dynamic_array<size_type> itab;    
-    std::vector<base_vector> coeff;
     base_matrix G;
-    base_vector val(1);
     
     if (&mf_source.linked_mesh() == &mf_target.linked_mesh()) {
       interpolation_solution_same_mesh(mf_source, mf_target, U, V);
@@ -349,29 +339,22 @@ namespace getfem
 					  pgt, ptab, itab);
       if (!nb) continue;
       pfem pf_s = mf_source.fem_of_element(cv);
-      size_type nbd_s = pf_s->nb_dof();
-      size_type mult_s = qdim_s / pf_s->target_dim();
-      val.resize(pf_s->target_dim());
-
-      /* prepare coefficients for interpolation */
-      coeff.resize(mult_s);
-      for (size_type k=0; k < mult_s; ++k) coeff[k].resize(nbd_s);
-      ref_mesh_dof_ind_ct::iterator itdof = mf_source.ind_dof_of_element(cv).begin();
-      for (size_type j=0; j < nbd_s; ++j) 
-	for (size_type k=0; k < mult_s; ++k) { coeff[k][j] = U[*itdof]; ++itdof; }
       if (pf_s->need_G()) 
 	bgeot::vectors_to_base_matrix(G, mf_source.linked_mesh().points_of_convex(cv));
 
+      fem_interpolation_context ctx(pgt,pf_s,base_node(),G,cv);
+      base_vector coeff(mf_source.nb_dof_of_element(cv));
+      gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf_source.ind_dof_of_element(cv))), coeff);
       for (size_type i = 0; i < nb; ++i) {
 	size_type dof_t = itab[i];
 	if (ddl_touched[dof_t]) {
 	  ddl_touched.sup(dof_t, qdim_t);
-	  for (size_type k = 0, pos=(dof_t*qdim_s)/qdim_t; k < mult_s; ++k) {
-	    pf_s->interpolation(ptab[i], G, pgt, coeff[k], val);
-	    for (size_type l = 0; l < pf_s->target_dim(); ++l) {
-	      V[pos++] = val[l];
-	    }
-	  }
+	  ctx.set_xref(ptab[i]);
+	  size_type pos = dof_t*(qdim_s/qdim_t);
+	  typename gmm::sub_vector_type<VECT*, gmm::sub_interval>::vector_type dest = 
+	    gmm::sub_vector(V,gmm::sub_interval(pos,qdim_s));
+	  pf_s->interpolation(ctx, coeff, dest, qdim_s);
+	  pos += qdim_s;
 	}
       }
     }
@@ -394,9 +377,6 @@ namespace getfem
 				const VECT &U, VECT &V, VECT* PVGRAD = 0) {
     size_type mdim = mf_source.linked_mesh().dim();
     size_type qdim = mf_source.get_qdim();
-
-    base_vector val(1);
-    base_matrix valg(1,mdim);
     dal::dynamic_array<base_node> ptab;
     dal::dynamic_array<size_type> itab;
     base_vector coeff;
@@ -416,29 +396,27 @@ namespace getfem
       // cerr << "is_equiv:" << pf_s->is_equivalent() << ",inerp: G=" << G << ",nrow=" << G.nrows() << ", ncols=" << G.ncols() << endl;
       size_type nbd_s = pf_s->nb_dof();
       coeff.resize(nbd_s);
-      for (size_type i = 0; i < nb; ++i)
-      {
+
+      fem_interpolation_context ctx(pgt,pf_s,base_node(),G,cv);
+      gmm::resize(coeff, mf_source.nb_dof_of_element(cv));
+      gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf_source.ind_dof_of_element(cv))), coeff);
+
+      for (size_type i = 0; i < nb; ++i) {
 	size_type dof_t = itab[i];
-	size_type nrep  = qdim / pf_s->target_dim();
 	if (ddl_touched[dof_t])
 	{ // inverser les deux boucles pour gagner du temps ?
 	  // Il faut verifier que le ddl est bien de Lagrange ...
-	  for (size_type k = 0; k < nrep; ++k) {
-	    for (size_type j = 0; j < nbd_s; ++j) {
-	      size_type dof_s = mf_source.ind_dof_of_element(cv)[j*nrep+k];
-	      coeff[j] = U[dof_s];
-	    }
-	    // cerr << "cv=" << cv << ", ptab[" << i << "]=" << ptab[i] << ", coeff=" << coeff << endl;
-	    pf_s->interpolation(ptab[i], G, pgt, coeff, val);
-	    V[dof_t*qdim + k] = val[0];
-	    
-	    if (PVGRAD) {
-	      pf_s->interpolation_grad(ptab[i], G, pgt, coeff, valg);
-	      dal::copy_n(valg.begin(), mdim,
-			  &(*PVGRAD)[dof_t*qdim*mdim]);
-	    }
-	    ddl_touched.sup(dof_t);
+	  ctx.set_xref(ptab[i]);
+	  // cerr << "cv=" << cv << ", ptab[" << i << "]=" << ptab[i] << ", coeff=" << coeff << endl;
+	  typename gmm::sub_vector_type<VECT*, gmm::sub_interval>::vector_type dest = 
+	    gmm::sub_vector(V,gmm::sub_interval(dof_t*qdim,qdim));
+	  pf_s->interpolation(ctx, coeff, dest, qdim);
+	  if (PVGRAD) {
+	    base_matrix grad(mdim, qdim);
+	    pf_s->interpolation_grad(ctx, coeff, grad, qdim);
+	    std::copy(grad.begin(), grad.end(), V.begin() + dof_t*qdim*mdim);
 	  }
+	  ddl_touched.sup(dof_t, qdim);
 	}
       }
     }

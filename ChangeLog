@@ -1,3 +1,21 @@
+2004-02-09  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/getfem_fem.[Ch] src/getfem_precomp.[Ch],
+	src/bgeot_precomp.[Ch], etc: large modifications of the fem
+	interpolation interface. Now uses fem_interpolation_context (and
+	geotrans_interpolation_context). geotrans_precomp is now part of
+	namespace bgeot.
+
+2004-02-04  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/getfem_precomp.[Ch] (getfem): cleaned up getfem_precomp,
+	replaced the ugly fem_precomp_not_stored and
+	geotrans_precomp_not_stored with the much better fem_precomp_pool
+	and geotrans_precomp_pool.
+
+	* src/getfem_Xfem.C (getfem): small perf improvement (better use
+	of pgeotrans_precomp).
+
 2004-02-02  julien pommier  <pommier@gmm.insa-tlse.fr>
 
 	* src/getfem_mesh_slice.[Ch] src/getfem_mesh_slicers.[Ch]: the

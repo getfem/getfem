@@ -236,7 +236,8 @@ namespace getfem {
        of adjacent convexes)
     */
     {
-      geotrans_precomp_ gp;
+      bgeot::geotrans_precomp_pool gppool;
+      bgeot::pgeotrans_precomp pgp;
       bgeot::stored_point_tab pts, cvm_pts;
       for (size_type i=0; i < em->cvlist.size(); ++i) {
 	size_type cv = em->cvlist[i];
@@ -244,11 +245,11 @@ namespace getfem {
 	if (i == 0 || cvm != em->refined_convexes_mesh[i-1]) {
 	  cvm_pts.resize(cvm->nb_points());
 	  std::copy(cvm->points().begin(), cvm->points().end(), cvm_pts.begin());
-	  geotrans_precomp_not_stored(m.trans_of_convex(cv), 
-				      &cvm_pts, gp);
+	  pgp = gppool(m.trans_of_convex(cv), 
+		       &cvm_pts);
 	  pts.resize(cvm->nb_points());
 	}
-	gp.transform(m.points_of_convex(cv), pts);
+	pgp->transform(m.points_of_convex(cv), pts);
 	for (size_type j=0; j < pts.size(); ++j) {
 	  if (!continuous_data)
 	    em->pts_id.push_back(pt_tab.add(pts[j]));
@@ -334,7 +335,7 @@ namespace getfem {
     std::vector<size_type> Ucnt(em->nb_pts,0);
     /* compute data */
     {
-      fem_precomp_ fp;
+      fem_precomp_pool fppool; pfem_precomp pfp = 0;
       bgeot::stored_point_tab pts, cv_pts, cvm_pts;
       base_vector coeff;
       base_vector val(Q);
@@ -349,25 +350,26 @@ namespace getfem {
 	femprec = fem;
 	fem = mf.fem_of_element(cv);
 
-	if (!fem->is_equivalent()) {
+	if (fem->need_G()) {
 	  cv_pts.resize(m.nb_points_of_convex(cv));
 	  std::copy(m.points_of_convex(cv).begin(),m.points_of_convex(cv).end(),cv_pts.begin());
 	  bgeot::vectors_to_base_matrix(G, cv_pts);
-	}
-	else G.clear();
+	} else G.clear();
 
 	if (i == 0 || cvm != em->refined_convexes_mesh[i-1] || fem != femprec) {
 	  cvm_pts.resize(cvm->nb_points());
 	  std::copy(cvm->points().begin(), cvm->points().end(), cvm_pts.begin());
-	  fem_precomp_not_stored(fem, &cvm_pts, fp);
+	  pfp = fppool(fem, &cvm_pts);
 	}
 	coeff.resize(nbd);
+	fem_interpolation_context ctx(m.trans_of_convex(cv),pfp,0,G,cv);
 	for (size_type r = 0; r < R; ++r) {
 	  for (size_type j = 0; j < coeff.size(); ++j) {
 	    coeff[j] = U[R*cv_dof[j]+r];
 	  }
 	  for (size_type j = pcnt; j < pcnt+cvm->nb_points(); ++j) {
-	    fem->interpolation(&fp, j-pcnt, G, m.trans_of_convex(cv), coeff, val, Q);
+	    ctx.set_ii(j-pcnt);
+	    fem->interpolation(ctx, coeff, val, Q);
 	    for (size_type q = 0; q < Q; ++q) {
 	      //cerr << "out = " << R*(em->pts_id[pcnt]*Q + q)+r << "cv = " << cv << ", pid = " << em->pts_id[pcnt] << ", q=" << q << ", val=" << val[q] << endl;
 	      UU[R*(em->pts_id[j]*Q + q)+r] += val[q];

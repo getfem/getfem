@@ -1,8 +1,5 @@
 include_HEADERS =                      \
 	bgeot_config.h                 \
-	bgeot_small_vector.h           \
-	bgeot_kdtree.h		       \
-	bgeot_rtree.h		       \
 	bgeot_imbricated_box.h	       \
 	bgeot_permutations.h           \
 	bgeot_convex.h                 \
@@ -12,12 +9,16 @@ include_HEADERS =                      \
 	bgeot_convex_structure.h       \
 	bgeot_geometric_trans.h        \
 	bgeot_geotrans_inv.h           \
+	bgeot_kdtree.h		       \
 	bgeot_mesh.h                   \
 	bgeot_mesh_structure.h         \
 	bgeot_poly.h                   \
+	bgeot_precomp.h		       \
+	bgeot_rtree.h		       \
 	bgeot_simplexify.h             \
-	bgeot_tensor.h                 \
+	bgeot_small_vector.h           \
 	bgeot_sparse_tensors.h         \
+	bgeot_tensor.h                 \
 	bgeot_vector.h                 \
 	bgeot_comma_init.h	       \
 	dal_algobase.h                 \
@@ -100,15 +101,16 @@ include_HEADERS =                      \
 SRC =                                  \
 	dal_backtrace.C                \
 	dal_bit_vector.C               \
-	bgeot_small_vector.C           \
-	bgeot_kdtree.C		       \
-	bgeot_rtree.C		       \
-	bgeot_imbricated_box.C         \
 	bgeot_convex_ref.C             \
 	bgeot_convex_structure.C       \
 	bgeot_geometric_trans.C        \
 	bgeot_geotrans_inv.C           \
+	bgeot_imbricated_box.C         \
+	bgeot_kdtree.C		       \
 	bgeot_mesh_structure.C         \
+	bgeot_precomp.C                \
+	bgeot_rtree.C		       \
+	bgeot_small_vector.C           \
 	bgeot_sparse_tensors.C         \
 	bgeot_poly.C                   \
 	ftool.C                        \

@@ -17,6 +17,7 @@ check_PROGRAMS = \
 	test_link_fem      \
 	test_mat_elem      \
 	test_slice         \
+	test_norm	   \
 	test_mesh          \
 	test_tree_sorted
 
@@ -46,6 +47,7 @@ test_link_fem_SOURCES = test_link_fem.C
 test_tree_sorted_SOURCES = test_tree_sorted.C
 test_mat_elem_SOURCES = test_mat_elem.C
 test_slice_SOURCES = test_slice.C
+test_norm_SOURCES = test_norm.C
 #test_fem_SOURCES = test_fem.C
 
 INCLUDES = -I$(top_srcdir)/src -I../src

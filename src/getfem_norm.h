@@ -35,98 +35,132 @@
 #define GETFEM_NORM_H__
 
 #include <getfem_mesh_fem.h>
-#include <getfem_mesh_slice.h>
+#include <getfem_mesh_slicers.h>
 #include <bgeot_geotrans_inv.h>
 #include <getfem_export.h>
+#include <bgeot_rtree.h>
+
 namespace getfem
 {
-  enum { L2_NORM=1, H1_SEMI_NORM=2 };
+  enum { L2_NORM=1, H1_SEMI_NORM=2, H1_NORM=3, LINF_NORM=4 };
 
   template<typename VECT1, typename VECT2>
-  scalar_type L2_or_H1_dist(const mesh_fem& mf1, const VECT1& U1, 
-		      const mesh_fem& mf2, const VECT2& U2,
-		      papprox_integration im, int nrefine=1) {
-    int what = L2_NORM;
-    const getfem_mesh &m1 = mf1.linked_mesh(), &m2 = mf2.linked_mesh();
-    size_type mdim = m1.dim();
-    size_type qdim = mf1.get_qdim();
-    if (mdim != m2.dim()) DAL_THROW(dal::dimension_error,"");
-    if (qdim != mf2.get_qdim()) DAL_THROW(dal::dimension_error,"different values of Qdim");
-    
-    mesh_slice sl(m1);
-    cout << "L2_or_H1_dist building slice\n";
-    if (&m1 != &m2) {
-      slicer_mesh s(m2); sl.build(&s,nrefine);
-    } else {
-      slicer_none s; sl.build(&s,nrefine);
+  class slicer_compute_norm_diff : public slicer_mesh_with_mesh {
+    const mesh_fem &mf1, &mf2;
+    const VECT1& U1;
+    const VECT2& U2;
+    papprox_integration im;
+    int what; /* combiantion of L2_NORM, H1_SEMI_NORM .. */    
+    bgeot::pgeotrans_precomp gp;
+    bgeot::geotrans_inv_convex gti;
+    scalar_type maxd;
+  public:
+    scalar_type l2_norm_sqr, h1_semi_norm_sqr, linf_norm;
+    slicer_compute_norm_diff(const mesh_fem& mf1_, const VECT1 &U1_, 
+			     const mesh_fem& mf2_, const VECT2 &U2_, 
+			     papprox_integration im_, int what_=L2_NORM) 
+      : slicer_mesh_with_mesh(mf2_.linked_mesh()), mf1(mf1_), mf2(mf2_), U1(U1_), U2(U2_), 
+	im(im_), what(what_), gp(0) {
+	l2_norm_sqr = 0.; h1_semi_norm_sqr = 0.; linf_norm = 0.; maxd=0.;
+      }
+    scalar_type norm(int w) { 
+      scalar_type s = 0;
+      if (w & L2_NORM) s += sqrt(l2_norm_sqr);
+      if (w & H1_SEMI_NORM) s += sqrt(h1_semi_norm_sqr);
+      if (w & LINF_NORM) s+= linf_norm;
+      return s;
     }
-    cout << "slice done\n";
-    exit(1);
-    std::vector<scalar_type> V1, V2, J;
-    V1.resize(qdim * sl.nb_simplexes(im->dim()) * im->nb_points_on_convex());
-    V2.resize(qdim * sl.nb_simplexes(im->dim()) * im->nb_points_on_convex());
-    J.reserve(sl.nb_simplexes(im->dim()));
-    bgeot::geotrans_inv gti;
-    bgeot::pgeometric_trans pgt = bgeot::simplex_geotrans(im->dim(),1);
-    for (dal::bv_visitor cv(m1.convex_index()); !cv.finished(); ++cv) {
-      const mesh_slice::cs_nodes_ct& nodes = sl.nodes(cv);
-      const mesh_slice::cs_simplexes_ct& splxs = sl.simplexes(cv);
-      for (size_type scnt=0; scnt < splxs.size(); ++scnt) {
-	const slice_simplex& s = splxs[scnt];
-	if (s.dim() != im->dim()) continue;	
+    /*virtual*/ void intersection_callback(mesh_slicer &ms, size_type slmcv) {
+      if (ms.splx_in.card() == 0) return;
+      const getfem_mesh &m1 = mf1.linked_mesh();
+      const getfem_mesh &m2 = mf2.linked_mesh();
+      bgeot::pgeometric_trans pgt1 = m1.trans_of_convex(ms.cv);
+      bgeot::pgeometric_trans pgt2 = m2.trans_of_convex(slmcv);
+      pfem pf1 = mf1.fem_of_element(ms.cv); 
+      pfem pf2 = mf2.fem_of_element(slmcv);
+      base_matrix G1, G2;
+      size_type qdim = mf1.get_qdim(), mdim = m1.dim();
+      base_vector val1(qdim), val2(qdim);
+      base_matrix gval1(mdim,qdim), gval2(mdim,qdim);
+
+      vectors_to_base_matrix(G1,m1.points_of_convex(ms.cv));
+      vectors_to_base_matrix(G2,m2.points_of_convex(slmcv));
+      fem_interpolation_context ctx1(pgt1,pf1,base_node(),G1,ms.cv);
+      fem_interpolation_context ctx2(pgt2,pf2,base_node(),G2,slmcv);
+
+      /* coordinates on the ref convex of each mesh */
+      std::vector<base_node> nodes1(im->nb_points_on_convex()), 
+	nodes2(im->nb_points_on_convex());
+      gti.init(m2.convex(slmcv), pgt2);
+      //cout << "hello, doing cv " << ms.cv << " <-> " << slmcv << " [" << ms.splx_in.card() << " simplexes]\n";
+      for (dal::bv_visitor is(ms.splx_in); !is.finished(); ++is) {
+	const slice_simplex &s = ms.simplexes[is];
+	if (gp == 0 || s.dim() != im->dim()) 
+	  gp = bgeot::geotrans_precomp(bgeot::simplex_geotrans(s.dim(),1), &im->integration_points());
+	//DAL_THROW(dal::dimension_error, "incompatible dimension of the slice");
 	base_matrix M(s.dim(),s.dim());
+
 	for (size_type i=0; i < s.dim(); ++i) 
 	  for (size_type j=0; j < s.dim(); ++j)
-	    M(i,j) = nodes[s.inodes[i+1]].pt[j] - nodes[s.inodes[0]].pt[j];
-	J.push_back(dal::abs(gmm::lu_det(M)));
-	std::vector<base_node> pts(s.dim()+1);	
-	for (size_type i=0; i < s.dim()+1; ++i) {
-	  pts[i] = nodes[s.inodes[i]].pt;
-	  //cout << "pts[" << i << "]=" << pts[i] << "\n";
-	}
+	    M(i,j) = ms.nodes[s.inodes[i+1]].pt[j] - ms.nodes[s.inodes[0]].pt[j];
+	
+	scalar_type J = dal::abs(gmm::lu_det(M));
+	
+	/* build nodes1 and nodes2 */
+	std::vector<base_node> ptref(s.dim()+1);
+
+	for (size_type k=0; k <= s.dim(); ++k) 
+	  gti.invert(ms.nodes[s.inodes[k]].pt, ptref[k]);
+	base_matrix G; vectors_to_base_matrix(G,ptref);
+	for (size_type k=0; k < nodes1.size(); ++k) 
+	  nodes2[k] = gp->transform(k,G);
+
+	for (size_type k=0; k <= s.dim(); ++k) 
+	  ptref[k] = ms.nodes[s.inodes[k]].pt_ref;	
+	vectors_to_base_matrix(G,ptref);
+	for (size_type k=0; k < nodes1.size(); ++k) 
+	  nodes1[k] = gp->transform(k,G);
+	
+	base_vector coeff1(mf1.nb_dof_of_element(ms.cv)), coeff2(mf2.nb_dof_of_element(slmcv));
+	gmm::copy(gmm::sub_vector(U1,gmm::sub_index(mf1.ind_dof_of_element(ms.cv))),coeff1);
+	gmm::copy(gmm::sub_vector(U2,gmm::sub_index(mf2.ind_dof_of_element(slmcv))),coeff2);
+
 	for (size_type i=0; i < im->nb_points_on_convex(); ++i) {
-	  base_node n = pgt->transform(im->point(i),pts.begin());
-	  //cout << "n=" << n << " " << im->point(i) << "\n";
-	  gti.add_point(n);
-	}
-      }
-    }
-    //cout << "U1.size()" <<U1.size() << "gti.nb_points()"<<gti.nb_points()<<"COEFF.size()"<<COEFF.size()<<"\n";
-    scalar_type res = 0;
-    assert(V1.size() == gti.nb_points()*qdim);
-    cout << "L2_or_H1_dist interpolating\n";
-    if (what == H1_SEMI_NORM) {
-      std::vector<scalar_type> gV1(V1.size()*mdim*qdim);
-      std::vector<scalar_type> gV2(V2.size()*mdim*qdim);
-      interpolation_solution(mf1,gti,U1,V1,&gV1);
-      interpolation_solution(mf2,gti,U2,V2,&gV2);
-      for (size_type i=0, pos=0; i < J.size(); ++i) {
-	for (size_type j=0; j < im->nb_points_on_convex(); ++j) {
-	  for (size_type q=0; q < qdim*mdim; ++q, ++pos) {
-	    res += dal::sqr(gV1[pos]-gV2[pos])*J[i]*im->coeff(j);
+	  ctx1.set_xref(nodes1[i]); ctx2.set_xref(nodes2[i]);
+	  if (what & (L2_NORM | LINF_NORM)) {
+	    pf1->interpolation(ctx1, coeff1, val1, qdim);
+	    pf2->interpolation(ctx2, coeff2, val2, qdim);
+	    for (size_type q=0; q < qdim; ++q) {
+	      l2_norm_sqr += dal::sqr(val1[q]-val2[q])*J*im->coeff(i);
+	      linf_norm = std::max(linf_norm, dal::abs(val1[q]-val2[q]));
+	    }
+	  }
+	  if (what & H1_SEMI_NORM) {
+	    pf1->interpolation_grad(ctx1, coeff1, gval1, qdim);
+	    pf2->interpolation_grad(ctx2, coeff2, gval2, qdim);
+	    for (size_type q=0; q < qdim*mdim; ++q) {
+	      scalar_type v = dal::sqr(gval1[q]-gval2[q])*J*im->coeff(i);
+	      if (v > maxd) { cout << "new maxd: " << v << ", J=" << J << " at " << ctx1.xreal() << ", " << ctx2.xreal() << ", v1=" << gval1[q] << ", v2=" << gval2[q] << "\n"; maxd = v; }
+	      h1_semi_norm_sqr += dal::sqr(gval1[q]-gval2[q])*J*im->coeff(i);
+	    }
 	  }
 	}
       }
-    /*      gmm::add(gmm::scaled(gV2,-1.),gV1);
-      for (size_type i=0; i < COEFF.size(); ++i) {
-	res += COEFF[i]*gmm::vect_norm2_sqr(
-	       gmm::sub_vector(gV1,gmm::sub_interval(i*mdim,mdim))); 
-      }
-    */
-    } else {
-      interpolation_solution(mf1,gti,U1,V1);
-      interpolation_solution(mf2,gti,U2,V2);
     }
-    cout << "L2_or_H1_dist done\n";
-    for (size_type i=0, pos=0; i < J.size(); ++i) {
-      //cout << "J[" << i << "]=" << J[i] << ", res=" << res << ", V1[pos]=" << V1[pos] << ", V2[pos]=" << V2[pos] << "\n";
-      for (size_type j=0; j < im->nb_points_on_convex(); ++j) {
-	for (size_type q=0; q < qdim; ++q, ++pos) {
-	  res += dal::sqr(V1[pos]-V2[pos])*J[i]*im->coeff(j);
-	}
-      }
-    }
-    return sqrt(res);
+  };
+
+  template<typename VECT1, typename VECT2>
+  void solutions_distance(const mesh_fem& mf1, const VECT1& U1, 
+			  const mesh_fem& mf2, const VECT2& U2,
+			  papprox_integration im, scalar_type *pl2=0, scalar_type *psh1=0) {
+    mesh_slicer slicer(mf1.linked_mesh()); 
+    slicer_compute_norm_diff<VECT1,VECT2> 
+      cn(mf1,U1,mf2,U2,im, (pl2 ? L2_NORM : 0) +
+	 (psh1 ? H1_SEMI_NORM : 0));
+    slicer.push_back_action(cn);
+    slicer.exec();
+    if (pl2) *pl2 = cn.norm(L2_NORM);
+    if (psh1) *psh1 = cn.norm(H1_SEMI_NORM);
   }
 }
 #endif 

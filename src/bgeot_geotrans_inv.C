@@ -38,19 +38,33 @@ namespace bgeot
 { 
   /* inversion for linear geometric transformations */
   bool geotrans_inv_convex::invert_lin(const base_node& n, base_node& n_ref, scalar_type IN_EPS) {
-    base_node y(n); for (size_type i=0; i < P; ++i) y[i] -= a(i,0);
-    gmm::mult(B0, y, n_ref); // n_ref = B0 * y;
+    base_node y(n); for (size_type i=0; i < N; ++i) y[i] -= G(i,0);
+    gmm::mult(gmm::transposed(B), y, n_ref);
     if (pgt->convex_ref()->is_in(n_ref) < IN_EPS) {
-      if (N == P) return true;
+      if (P == N) return true;
       else {
-	gmm::mult(grad,gmm::scaled(n_ref,-1.0),y,y);
-	//        y -= grad * n_ref;
+	gmm::mult(K,gmm::scaled(n_ref,-1.0),y,y);
+	//        y -= K * n_ref;
         if (vect_norm2(y) < IN_EPS) return true;
       }
     }
     return false;
   }
   
+  void geotrans_inv_convex::update_B() {
+    gmm::mult(gmm::transposed(pc), gmm::transposed(G), K);
+    if (P != N) {
+      gmm::mult(gmm::transposed(K), K, CS);
+      gmm::lu_inverse(CS);
+      gmm::mult(K, CS, B);
+    }
+    else {
+      // L'inversion peut être optimisée par le non calcul global de B
+      // et la resolution d'un système linéaire.
+      gmm::lu_inverse(K); B.swap(K);
+    }
+  }
+
   /* inversion for non-linear geometric transformations */
   bool geotrans_inv_convex::invert_nonlin(const base_node& n, base_node& x, scalar_type IN_EPS) {
     base_node xn, y;
@@ -67,28 +81,10 @@ namespace bgeot
     scalar_type res = vect_norm2(rn);
     unsigned cnt = 1000;
     while (res > EPS && --cnt) {
-      if (cnt < 30) cout << "res=" << res << ", x=" << x << "\n";
-      /* compute gradient */
-      for (size_type k = 0; k < pgt->nb_points(); ++k) {
-        for (dim_type nn = 0; nn < N; ++nn) {
-          PO = pgt->poly_vector()[k];
-          PO.derivative(nn);
-          pc(k,nn) = PO.eval(x.begin());
-        }
-      }
-      
-      // computation of the pseudo inverse (it should be possible not
-      //  to compute it at each iteration).
-      gmm::mult(a, pc, grad);
-      if (N != P) {
-	gmm::mult(gmm::transposed(grad), grad, CS);
-        gmm::lu_inverse(CS);
-	gmm::mult(gmm::transposed(CS), gmm::transposed(grad), B0);
-      } else {
-        gmm::lu_inverse(grad); B0 = grad;
-      }
+      pgt->gradient(x, pc);
+      update_B();
       xn = x;
-      gmm::mult(B0, rn, x); // x = B0 * rn;
+      gmm::mult(gmm::transposed(B), rn, x);
       x += xn;
       y.fill(0.0);
       for (size_type k = 0; k < pgt->nb_points(); ++k) {
@@ -106,7 +102,7 @@ namespace bgeot
     
     // Test un peu sevère peut-être en ce qui concerne rn.
     if (pgt->convex_ref()->is_in(x) < IN_EPS
-        && (N == P || vect_norm2(rn) < IN_EPS)) {
+        && (P == N || vect_norm2(rn) < IN_EPS)) {
       //cout << "point " << x << "in IN (" << pgt->convex_ref()->is_in(x) << ")\n";
       return true;
     } //else cout << "point IS OUT\n";

@@ -209,6 +209,9 @@ int main() {
 fi;
 dnl -----------------------------END QD TESTS--------------------------------
 
+dnl ------------------------------LAPACK TEST--------------------------------
+dnl -----------------------------END OF LAPACK TEST--------------------------
+
 AC_CHECK_HEADERS(sys/times.h)
 AC_CHECK_HEADERS(cxxabi.h)
 dnl ---------------------------- CHECK FOR __PRETTY_FUNCTION__ MACRO --------

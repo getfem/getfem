@@ -134,7 +134,7 @@ namespace getfem
     base_node pt(P);
     base_vector coeff, val(1);
     std::vector<size_type> ind(npt);
-    base_matrix G1, val2(1, pmf2->linked_mesh().dim());
+    base_matrix G1, val2(pmf2->linked_mesh().dim(), 1);
     base_matrix::const_iterator itm = G.begin();
     for (size_type k = 0; k < npt; ++k, itm += P) {
       std::copy(itm, itm + P, pt.begin());
@@ -174,16 +174,14 @@ namespace getfem
 	      if (coeff.size() < nbd) { coeff.resize(nbd); coeff.fill(0.0); }
 	    }
 	    coeff[nlocdof] = 1.0;
-	    pf->interpolation(gauss_ptab[indg].localcoords, G1,
-			      pmf1->linked_mesh().trans_of_convex(cv1),
-			      coeff, val);
+	    fem_interpolation_context ctx(pmf1->linked_mesh().trans_of_convex(cv1),
+					  pf,gauss_ptab[indg].localcoords, G1,cv1);
+	    pf->interpolation(ctx, coeff, val);
 	    M(j, k) = val[0];
 	    if (wg) {
- 	      pf->interpolation_grad(gauss_ptab[indg].localcoords, G1,
-				     pmf1->linked_mesh().trans_of_convex(cv1),
-				     coeff, val2);
+ 	      pf->interpolation_grad(ctx, coeff, val2);
 	      for (dim_type n = 0; n < pmf2->linked_mesh().dim(); ++n)
-		M(j + (n+1)*nbgauss, k) = val2(0, n);
+		M(j + (n+1)*nbgauss, k) = val2(n, 0);
 	    }
 	    coeff[nlocdof] = 0.0; cv1_old = cv1;
 	  }
@@ -391,27 +389,6 @@ namespace getfem
 
     virtual size_type index_of_already_numerate_dof(size_type cv, size_type i)
       const { return pmflf->ind_of_dof(cv, i); }
-    
-    void interpolation(const base_node &, const base_matrix &, 
-		       bgeot::pgeometric_trans,
-		       const base_vector &, base_vector &) const {
-      DAL_THROW(internal_error,
-	  "You cannot interpolate this element, use the original element.");
-    }
-    void interpolation(pfem_precomp, size_type,
-		       const base_matrix &,
-		       bgeot::pgeometric_trans, 
-		       const base_vector &, base_vector &, dim_type=1) const {
-      DAL_THROW(internal_error,
-	  "You cannot interpolate this element, use the original element.");
-    }
-    void interpolation_grad(const base_node &, const base_matrix &,
-			    bgeot::pgeometric_trans,
-			    const base_vector &, base_matrix &) const {
-      DAL_THROW(internal_error,
-	  "You cannot interpolate this element, use the original element.");
-    }
-
 
     void base_value(const base_node &x, base_tensor &t) const {
       const bgeot::stored_point_tab *p = &(pai->integration_points());
