@@ -25,7 +25,7 @@
  * a good example of use of Getfem++.
 */
 
-#define GMM_USES_SUPERLU
+//define GMM_USES_SUPERLU
 
 #include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
 #include <getfem_regular_meshes.h>
@@ -99,7 +99,6 @@ base_matrix sol_sigma(const base_node &x) {
   }
   res(0,0)=0;
   res(1,0)=-330.; //cas de la force qui va vers le bas
-  //res(0,0)=-1000;
  return res;
 }
 
@@ -252,8 +251,8 @@ bool plasticity_problem::solve(plain_vector &U) {
 
   getfem::mdbrick_plasticity<> PLAS(mf_u, mf_coef, lambda,mu, stress_threshold, TOL, size_type(flag_hyp));
 
-  const size_type Nb_t=1;
-  scalar_type t[Nb_t]={0.9032};
+  const size_type Nb_t=2;
+  scalar_type t[Nb_t]={0.5,1.2};
 
   std::string uname(datafilename+".U");
   std::ofstream f0(uname.c_str()); f0.precision(16);
