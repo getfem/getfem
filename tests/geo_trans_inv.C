@@ -7,7 +7,7 @@ using bgeot::scalar_type;
 using bgeot::base_node;
 using bgeot::base_vector;
 
-dim_type N, MESH_TYPE;
+dim_type N, MESH_TYPE, BASE;
 scalar_type LX, LY, LZ;
 size_type NX, NB_POINTS;
 
@@ -22,6 +22,7 @@ int main(int argc, char *argv[])
     PARAM.read_command_line(argc, argv);
     N = PARAM.int_value("N", "Domaine dimension");
     NB_POINTS = PARAM.int_value("NB_POINTS", "Nb points");
+    BASE = PARAM.int_value("BASE", "Nb points");
     LX = PARAM.real_value("LX", "Size in X");
     LY = PARAM.real_value("LY", "Size in Y");
     LZ = PARAM.real_value("LZ", "Size in Y");
@@ -54,7 +55,7 @@ int main(int argc, char *argv[])
 
     scalar_type exectime = ftool::uclock_sec(), total_time = 0.0;
 
-    bgeot::geotrans_inv gti;
+    bgeot::geotrans_inv gti(BASE);
     bgeot::base_node pt(N);
     dal::dynamic_array<base_node> ptab;
     dal::dynamic_array<size_type> itab;
@@ -74,6 +75,7 @@ int main(int argc, char *argv[])
       size_type nb = gti.points_in_convex(mesh.convex(cv),
 					  mesh.trans_of_convex(cv),
 					  ptab, itab);
+      if ((cv % 100) == 0) cout << "cv : " << cv << endl;
       nbtot += nb;
     }
 

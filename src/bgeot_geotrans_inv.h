@@ -47,12 +47,15 @@ namespace bgeot
   { 
     mutable int exp_max, exp_min;
     mutable scalar_type c_max;
+    int base;
 
     /// comparaison function
     int operator()(const base_node &x, const base_node &y) const;
     
-    imbricated_box_less(int emi = -15, int ema = -2)
-    { exp_max = ema; exp_min = emi;  c_max = pow(10.0, -exp_max); }
+    imbricated_box_less(int ba = 10, int emi = -15, int ema = -2) {
+      base = ba; exp_max = ema; exp_min = emi;
+      c_max = pow(scalar_type(base), -exp_max);
+    }
   };
 
   class geotrans_inv
@@ -97,7 +100,7 @@ namespace bgeot
 				 CONT1 &pftab, CONT2 &itab);
 
       
-      geotrans_inv(void) { EPS = 10E-12; }
+      geotrans_inv(int ba = 10) : ptab(imbricated_box_less(ba)) { EPS = 10E-12; }
   };
 
 
@@ -111,7 +114,7 @@ namespace bgeot
     base_node min(N), max(N);
     base_matrix a(P, pgt->nb_points());
     base_poly PO;
-    base_node x, y;
+    base_node x(N), y(P);
     base_matrix pc(pgt->nb_points() , N);
     base_matrix grad(P, N), TMP1(N,N), B0(N, P), CS(N,N);
     size_type nbpt = 0, i;
@@ -152,32 +155,27 @@ namespace bgeot
 	bgeot::mat_gauss_inverse(grad, TMP1); B0 = grad;
       }
       
-      // cout << "grad inverse : " << B0 << endl;
-      // cout << "points : " << pts << endl;
-      
       for (size_type l = 0; l < nbib; ++l) {
-	i = pts[l];
 	// cout << "point : " << ptab[i] << endl;
-	y = ptab[i]; y -= cv.points()[0];
-	x = B0 * y;
+	y = ptab[pts[l]]; y -= cv.points()[0];
+	mat_vect_product(B0, y, x); // x = B0 * y;
 	if (pgt->convex_ref()->is_in(x) < EPS)
 	  if (N == P) {
 	    // cout << "enregistré en " << nbpt << " : " << x << endl;
-	    pftab[nbpt] = x; itab[nbpt++] = i;
+	    pftab[nbpt] = x; itab[nbpt++] = pts[l];
 	  }
 	  else {
 	    y -= grad * x;
 	    if (vect_norm2(y) < EPS)
-	      { pftab[nbpt] = x; itab[nbpt++] = i; }
+	      { pftab[nbpt] = x; itab[nbpt++] = pts[l]; }
 	  }
       }
       // cout << "fini ... " << endl;
       
     }
-    else {
+    else { // partie non testée
       for (i = 0; i < N; ++i)
 	{ scalar_type e = (max[i]-min[i]) * 0.2;  min[i] -= e; max[i] += e; }
-      pts.clear();
       size_type nbib = points_in_box(pts, min, max);
       
       base_node xn, rn;
@@ -211,14 +209,17 @@ namespace bgeot
 	    bgeot::mat_product_tt(CS, grad, B0);
 	  }
 	  else {
-	    bgeot::mat_inv_cholesky(grad, TMP1); B0 = grad;
+	    bgeot::mat_gauss_inverse(grad, TMP1); B0 = grad;
 	  }
+	  // cout << "grad = " << grad << endl;
 	  xn = x;
-	  x = B0 * rn;
+	  mat_vect_product(B0, rn, x); // x = B0 * rn;
+	  x += xn;
 	  y.fill(0.0);
 	  for (size_type k = 0; k < pgt->nb_points(); ++k)
 	    y.addmul(pgt->poly_vector()[k].eval(x.begin()),
 		     cv.points()[k]);
+	  // cout << "Point : " << x << " : " << y << " ptab : " << ptab[i] << endl; getchar();
 	  rn = ptab[i]; rn -= y; res = vect_dist2(x, xn);
 	}
 	if (pgt->convex_ref()->is_in(x) < EPS

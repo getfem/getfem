@@ -37,24 +37,28 @@ namespace bgeot
   int imbricated_box_less::operator()(const base_node &x,
 				      const base_node &y) const { 
     size_type s = x.size(); 
-    scalar_type c1 = c_max, c2 = c_max*10.0;
+    scalar_type c1 = c_max, c2 = c_max * scalar_type(base);
     if (y.size() != s) DAL_THROW(dimension_error, "dimension error");
     
     base_node::const_iterator itx=x.begin(), itex=x.end(), ity=y.begin();
     for (; itx != itex; ++itx, ++ity) {
       long a = long(sfloor((*itx) * c1)), b = long(sfloor((*ity) * c1));
-      if ((dal::abs(a) > 10) || (dal::abs(b) > 10)) { 
-	exp_max++; c_max /= 10.0;
+      if ((dal::abs(a) > scalar_type(base))
+	  || (dal::abs(b) > scalar_type(base))) { 
+	exp_max++; c_max /= scalar_type(base);
 	return (*this)(x,y);
       }
       if (a < b) return -1; else if (a > b) return 1;
     }
     
-    for (int e = exp_max; e >= exp_min; --e, c1 *= 10.0, c2 *= 10.0) {
+    for (int e = exp_max; e >= exp_min; --e, c1 *= scalar_type(base),
+	   c2 *= scalar_type(base)) {
       itx = x.begin(), itex = x.end(), ity = y.begin();
       for (; itx != itex; ++itx, ++ity) {
-	int a = int(sfloor(((*itx) * c2) - sfloor((*itx) * c1)*10.0));
-	int b = int(sfloor(((*ity) * c2) - sfloor((*ity) * c1)*10.0));
+	int a = int(sfloor(((*itx) * c2) - sfloor((*itx) * c1)
+			   * scalar_type(base)));
+	int b = int(sfloor(((*ity) * c2) - sfloor((*ity) * c1)
+			   * scalar_type(base)));
 	if (a < b) return -1; else if (a > b) return 1;
       }
     }
