@@ -8,14 +8,14 @@ LY = 30.0;	        % size in Y.
 LZ = 30.0;		% size in Z.
 %MU = 7700;	        % Lamé coefficient.
 %LAMBDA = 11500;   	% Lamé coefficient.
-MU = 15;
+MU = 20;
 LAMBDA = 20;
 FRICTION_COEF = 0.4;    % Friction coefficient.
 PG = 9810; 		% gravitation constante (on earth) (mm/s^2).
 %PG = 1000000; 		% gravitation constante (on jupiter !) (mm/s^2).
 RHO = 6e-6;     	% "realistic" density for steel
 T = 2.0;
-DT = 0.001;             % Time step
+DT = 0.00001;             % Time step
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
@@ -23,7 +23,7 @@ MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 %MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
 NX = 6;            	          % space step.
 MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
-RESIDU = 3E-9;     	% residu for Newton.
+RESIDU = 1E-8;     	% residu for Newton.
 NOISY = 0;
 
 SCHEME = 3; % 0 = theta-method, 1 = Newmark, 2 = middle point
@@ -43,10 +43,10 @@ INIT_VERT_SPEED = -100.0;  % Initial vertical velocity
 INIT_VERT_POS = 1.0;       % Initial vertical position
 FOUNDATION_HSPEED = 10.0;  % Horizontal velocity of the rigid foundation
 STATIONARY = 1;            % Initial condition is the stationary solution ?
-PERT_STATIONARY = 10.0;    % Perturbation on the initial velocity
+PERT_STATIONARY = 100.0;    % Perturbation on the initial velocity
 
-FEM_TYPE = 'FEM_PK(2, 2)';     % Main FEM
-DATA_FEM_TYPE = 'FEM_PK(2,2)'; % must be defined for non-Lagrangian main FEM
+FEM_TYPE = 'FEM_PK(2, 1)';     % Main FEM
+DATA_FEM_TYPE = 'FEM_PK(2,1)'; % must be defined for non-Lagrangian main FEM
 INTEGRATION = 'IM_TRIANGLE(6)'; % Quadrature rule
 % INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3,6)'; % Quadrature rule
 
@@ -82,4 +82,4 @@ MESHNAME='splx:';
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'dynamic_friction2';     % Root of data files.
 DX_EXPORT = 1; % export solution to an OpenDX file ?
-DT_EXPORT = 0.005; % Time step for the export
+DT_EXPORT = 0.001; % Time step for the export

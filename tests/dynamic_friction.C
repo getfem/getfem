@@ -389,6 +389,8 @@ void friction_problem::solve(void) {
   plain_vector LT1(gmm::mat_nrows(BT)), LN1(gmm::mat_nrows(BN));
   scalar_type a(1), b(1), dt0 = dt, t(0), t_export(dtexport), alpha(0);
   scalar_type J_friction0(0), J_friction1(0);
+  plain_vector one(mf_u.nb_dof());
+  std::fill(one.begin(), one.end(), 1.0);
 
   // Initial conditions (U0, V0, M A0 = F)
   gmm::clear(U0); gmm::clear(V0); gmm::clear(LT0);
@@ -536,8 +538,27 @@ void friction_problem::solve(void) {
     }
     else {
       t += dt;
-      cout << "t = " << t << " dt = " << dt << " total energy : " << J1
-	   << " frictional energy : " << J_friction1 << endl;
+
+      scalar_type LTtot = gmm::vect_sp(BT,one, LT1);
+      scalar_type LNtot = -gmm::vect_sp(BN,one, LN1);
+      scalar_type Friction_coef_ap = (LNtot >= 0.) ? 0.
+	: gmm::abs(LTtot / LNtot);
+      
+      size_type nbsl= 0, nbst = 0;
+      for (size_type i = 0; i < gmm::mat_nrows(BN); ++i) {
+	if (LN1[i] < -1E-12) {
+	  if (gmm::vect_norm2(gmm::sub_vector(LT1,
+					      gmm::sub_interval(i*(N-1), N-1)))
+	      < -friction_coef * double(LN1[i]) * 0.99999)
+	    nbst++; else nbsl++;
+	}
+      }
+      
+
+      cout << "t = " << t << " energy : " << J1
+	   << " friction energy : " << J_friction1
+	   << " app. fric. coef : " << Friction_coef_ap
+	   << " (" << nbst << ", " << nbsl << ")" << endl;
       dt = std::min(2.*dt, dt0);
 
       gmm::copy(U1, U0); gmm::copy(V1, V0); gmm::copy(A1, A0); J0 = J1;
