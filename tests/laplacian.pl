@@ -6,20 +6,20 @@ $SIG{INT} = 'catch';
 
 open(TMPF, ">$tmp") or die "Open file $tmp impossible : $!\n";
 print TMPF <<
-LX = 1.0;		% size in X.
-LY = 1.0;	        % size in Y.
-LZ = 1.0;		% size in Z.
-INCLINE = 0;            % Incline of the mesh.
-FT = 0.1;               % parameter for the exact solution.
+LX = 1.0;		          % size in X.
+LY = 1.0;	                  % size in Y.
+LZ = 1.0;	                  % size in Z.
+INCLINE = 0;                      % Incline of the mesh.
+FT = 0.1;                         % parameter for the exact solution.
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 NX = 30;            	          % space step.
-MESH_NOISE = 1; % Set to one if you want to "shake" the mesh
-FEM_TYPE = 'FEM_PK(2,1)';  % P1 for triangles
-INTEGRATION = 'IM_TRIANGLE(6)'; % quadrature rule for polynomials up
-                               % to degree 6 on triangles
-RESIDU = 1E-9;     	% residu for conjugate gradient.
-GENERIC_DIRICHLET = 0;  % Generic Dirichlet condition for non-lagrangian elts.
-ROOTFILENAME = 'laplacian';     % Root of data files.
+MESH_NOISE = 1;                   % Set to one if you want to "shake" the mesh
+FEM_TYPE = 'FEM_PK(2,1)';         % P1 for triangles
+INTEGRATION = 'IM_TRIANGLE(6)';   % quadrature rule for polynomials up
+                                  % to degree 6 on triangles
+RESIDU = 1E-9;     	          % residu for conjugate gradient.
+GENERIC_DIRICHLET = 0;            % Generic Dirichlet condition.
+ROOTFILENAME = 'laplacian';       % Root of data files.
 
 ;
 close(TMPF);
@@ -27,8 +27,7 @@ close(TMPF);
 
 $er = 0;
 
-sub start_program # (N, K, NX, OPTION, SOLVER)
-{
+sub start_program # (N, K, NX, OPTION, SOLVER) {
   my $def   = $_[0];
 
   # print ("def = $def\n");

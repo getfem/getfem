@@ -100,11 +100,11 @@ struct laplacian_problem {
 void laplacian_problem::init(void)
 {
   const char *MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
-  const char *FEM_TYPE = PARAM.string_value("FEM_TYPE","FEM name");
+  const char *FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
   const char *INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
-  cout << "FEM_TYPE=" << FEM_TYPE << "\n";
+  cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
 
   /* First step : build the mesh */
@@ -220,7 +220,6 @@ void laplacian_problem::assembly(void)
   }
   getfem::asm_source_term(B, mf_u, mf_rhs, F, NEUMANN_BOUNDARY_NUM);
 
-  
   cout << "take Dirichlet condition into account" << endl;  
   if (!gen_dirichlet) {    
     std::vector<scalar_type> D(nb_dof);
@@ -270,11 +269,10 @@ bool laplacian_problem::solve(void) {
   cout << "Time to compute preconditionner : "
        << ftool::uclock_sec() - time << " seconds\n";
 
-  cout << "Solve\n";
   gmm::cg(SM, U, B, P, iter);
   // gmm::gmres(SM, U, B, P, 50, iter);
   
-  cout << "Time to solve : "
+  cout << "Total time to solve : "
        << ftool::uclock_sec() - time << " seconds\n";
 
   if (gen_dirichlet) {
