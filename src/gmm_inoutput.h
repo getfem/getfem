@@ -32,6 +32,8 @@
 #ifndef __GMM_INOUTPUT_H
 #define __GMM_INOUTPUT_H
 
+#include <cstdio>
+
 namespace gmm {
   
   // Due to aCC excentricity
