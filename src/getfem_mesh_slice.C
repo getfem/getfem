@@ -1,6 +1,7 @@
 #include <map>
 #include <getfem_mesh_fem.h>
 #include <getfem_mesh_slice.h>
+#include <memory> // auto_ptr for g++ 2.95
 
 namespace getfem {
   const float slicer::EPS = 1e-13;
