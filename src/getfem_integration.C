@@ -672,16 +672,11 @@ namespace getfem
 
   struct _particular_approx : public approx_integration
   {
-    friend papprox_integration triangle3_approx_integration(void);
-    friend papprox_integration triangle4_approx_integration(void);
-    friend papprox_integration triangle5_approx_integration(void);
-    friend papprox_integration triangle6_approx_integration(void);
     friend papprox_integration quad2_approx_integration(void);
     friend papprox_integration quad3_approx_integration(void);    
     friend papprox_integration quad5_approx_integration(void);
     friend papprox_integration tetrahedron1_approx_integration(void);
     friend papprox_integration tetrahedron2_approx_integration(void);
-    friend papprox_integration tetrahedron3_approx_integration(void);
     friend papprox_integration tetrahedron5_approx_integration(void);
   };
   
@@ -689,9 +684,8 @@ namespace getfem
     approx_integration *p
       = new approx_integration(bgeot::simplex_of_reference(2));
     p->add_point(base_vector(1.0/3.0, 1.0/3.0), 0.5           );
-    p->add_point(base_vector(0.5,       0.5  ), ::sqrt(2.0), 0);
-    p->add_point(base_vector(0.0,       0.5  ), 1.0        , 1);
-    p->add_point(base_vector(0.5,       0.0  ), 1.0        , 2);
+    for (short_type f = 0; f < p->structure()->nb_faces(); ++f)
+      p->add_method_on_face(int_method_descriptor("IM_GAUSS1D(1)"), f);
     p->valid_method();
     return p;
   }
@@ -706,14 +700,8 @@ namespace getfem
     p->add_point(base_vector(1.0/6.0, 1.0/6.0), 1.0/6.0);
     p->add_point(base_vector(2.0/3.0, 1.0/6.0), 1.0/6.0);
     p->add_point(base_vector(1.0/6.0, 2.0/3.0), 1.0/6.0);
-    double a = 0.5 - 0.5/::sqrt(3.0);
-    double b = 0.5 + 0.5/::sqrt(3.0);
-    p->add_point(base_vector(a  , b), ::sqrt(2.0) * 0.5, 0);
-    p->add_point(base_vector(b  , a), ::sqrt(2.0) * 0.5, 0);
-    p->add_point(base_vector(0.0, a), 0.5              , 1);
-    p->add_point(base_vector(0.0, b), 0.5              , 1);
-    p->add_point(base_vector(a, 0.0), 0.5              , 2);
-    p->add_point(base_vector(b, 0.0), 0.5              , 2);
+    for (short_type f = 0; f < p->structure()->nb_faces(); ++f)
+      p->add_method_on_face(int_method_descriptor("IM_GAUSS1D(2)"), f);
     p->valid_method();
     return p;
   }
@@ -729,14 +717,8 @@ namespace getfem
     p->add_point(base_vector(1.0/2.0, 1.0/2.0), 1.0/6.0);
     p->add_point(base_vector(0.0    , 1.0/2.0), 1.0/6.0);
     p->add_point(base_vector(1.0/2.0, 0.0    ), 1.0/6.0);
-    double a = 0.5 - 0.5/::sqrt(3.0);
-    double b = 0.5 + 0.5/::sqrt(3.0);
-    p->add_point(base_vector(a  , b), ::sqrt(2.0) * 0.5, 0);
-    p->add_point(base_vector(b  , a), ::sqrt(2.0) * 0.5, 0);
-    p->add_point(base_vector(0.0, a), 0.5              , 1);
-    p->add_point(base_vector(0.0, b), 0.5              , 1);
-    p->add_point(base_vector(a, 0.0), 0.5              , 2);
-    p->add_point(base_vector(b, 0.0), 0.5              , 2);
+    for (short_type f = 0; f < p->structure()->nb_faces(); ++f)
+      p->add_method_on_face(int_method_descriptor("IM_GAUSS1D(2)"), f);
     p->valid_method();
     return p;
   }
@@ -1133,24 +1115,8 @@ namespace getfem
     p->add_point(base_vector(r11, r10), w10 * 0.5);
     p->add_point(base_vector(r10, r11), w10 * 0.5);
     p->add_point(base_vector(r13, r13), w13 * 0.5);
-    double a = 0.5 - 0.4305681557970265;
-    double b = 0.5 - 0.1699905217924280;
-    double c = 0.5 + 0.1699905217924280;
-    double d = 0.5 + 0.4305681557970265;
-    double e = 0.326072577431273;
-    double f = 0.173927422568727;
-    p->add_point(base_vector(a, d), ::sqrt(2.0) * f, 0);
-    p->add_point(base_vector(b, c), ::sqrt(2.0) * e, 0);
-    p->add_point(base_vector(c, b), ::sqrt(2.0) * e, 0);
-    p->add_point(base_vector(d, a), ::sqrt(2.0) * f, 0);
-    p->add_point(base_vector(0.0, a), f, 1);
-    p->add_point(base_vector(0.0, b), e, 1);
-    p->add_point(base_vector(0.0, c), e, 1);
-    p->add_point(base_vector(0.0, d), f, 1);
-    p->add_point(base_vector(a, 0.0), f, 2);
-    p->add_point(base_vector(b, 0.0), e, 2);
-    p->add_point(base_vector(c, 0.0), e, 2);
-    p->add_point(base_vector(d, 0.0), f, 2);
+    for (short_type f = 0; f < p->structure()->nb_faces(); ++f)
+      p->add_method_on_face(int_method_descriptor("IM_GAUSS1D(7)"), f);
     p->valid_method();
     return p;
   }
