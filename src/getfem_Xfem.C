@@ -81,7 +81,7 @@ namespace getfem
   // contributions.
   void Xfem::interpolation(const base_node &x, const base_matrix &G,
 			   bgeot::pgeometric_trans pgt,
-			   const base_vector coeff, base_node &val) const {
+			   const base_vector &coeff, base_node &val) const {
     base_node val2(val.size());
     base_node xreal = pgt->transform(x, G);
     size_type nbb = pfi->nb_base();

@@ -487,7 +487,7 @@ namespace dal
       iterator end(void) const { return iterator(_end, cond); }
       bool empty(void) const { return _begin == _end; }
 
-      reference front(void) const { return *begin(); }
+      value_type front(void) const { return *begin(); }
       void pop_front(void) { ++_begin; _begin = begin(); }
 
       COND &condition(void) { return cond; }
