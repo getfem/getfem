@@ -52,7 +52,7 @@ namespace gmm {
   template <typename P, typename local_solver, typename Matrix>
   struct actual_precond {
     typedef P APrecond;
-    static APrecond &transform(const P &PP) { return PP; }
+    static const APrecond &transform(const P &PP) { return PP; }
   };
 
   template <typename Matrix1, typename Precond, typename Vector> 
@@ -84,7 +84,7 @@ namespace gmm {
     typedef SuperLU_factor<value_type> APrecond;
     template <typename PR>
     static APrecond transform(const PR &) { return APrecond(); }
-    static APrecond &transform(const APrecond &PP) { return PP; }
+    static const APrecond &transform(const APrecond &PP) { return PP; }
   };
 
   template <typename Matrix1, typename Precond, typename Vector> 
