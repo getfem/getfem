@@ -92,7 +92,7 @@ namespace getfem
       }
       pf_old = pf;
 
-      base_matrix grad(N,qdim);
+      base_matrix grad(N,qdim), gradt(qdim,N);
       fem_interpolation_context ctx(pgp,pfp,0,G,cv);
       gmm::resize(coeff, mf.nb_dof_of_element(cv));
       gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))), 
@@ -101,7 +101,8 @@ namespace getfem
 	size_type dof_t = mf_target.ind_dof_of_element(cv)[j*target_qdim] * 
 	  N*(qdim/target_qdim);
 	ctx.set_ii(j);
-	pf->interpolation_grad(ctx, coeff, gmm::transposed(grad), qdim);
+	pf->interpolation_grad(ctx, coeff, gradt, qdim); //gmm::transposed(grad), (dim_type)qdim);
+        gmm::copy(gmm::transposed(gradt),grad);
 	std::copy(grad.begin(), grad.end(), V.begin() + dof_t);
       }
     }
