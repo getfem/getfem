@@ -9,7 +9,7 @@
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 1999-2001  Yves Renard.                                   */
+/* Copyright (C) 1999-2003  Yves Renard.                                   */
 /*                                                                         */
 /* This file is a part of GETFEM++                                         */
 /*                                                                         */
@@ -357,7 +357,6 @@ namespace getfem
     lmsg_sender().send(MESH_WRITE_TO_FILE(ost));
   }
 
-
   void getfem_mesh::write_to_file(const std::string &name) const {
     std::ofstream o(name.c_str());
     if (!o)
@@ -368,42 +367,41 @@ namespace getfem
     o.close();
   }
 
-
-  scalar_type convex_quality_estimate(bgeot::pgeometric_trans pgt, const base_matrix& G) {
-    static pgt_old = 0;
+  scalar_type convex_quality_estimate(bgeot::pgeometric_trans pgt,
+				      const base_matrix& G) {
+    static bgeot::pgeometric_trans pgt_old = 0;
     static pgeotrans_precomp pgp = 0;
     if (pgt_old != pgt) {
       pgt_old=pgt; pgp=geotrans_precomp(pgt, &pgt->convex_ref()->points());
     }
 
-    n=pgt->nb_points();
-    if (pgt->is_linear()) n=1;
+    n = (pgt->is_linear()) ? 1 : pgt->nb_points();
     scalar_type q = 1;
     base_matrix K(pgp->grad(0).nrows(), G.ncols());
     for (size_type ip=0; ip < n; ++ip) {
       gmm::mult(gmm::transposed(pgp->grad(ip)), gmm::transposed(G), K);
-      q = std::max(q,gmm::condest(K));
+      q = std::max(q, gmm::condest(K));
     }
     return 1./q;
   }
 
-  scalar_type convex_radius_estimate(bgeot::pgeometric_trans pgt, const base_matrix& G) {
-    static pgt_old = 0;
+  scalar_type convex_radius_estimate(bgeot::pgeometric_trans pgt,
+				     const base_matrix& G) {
+    static bgeot::pgeometric_trans pgt_old = 0;
     static pgeotrans_precomp pgp = 0;
     if (pgt_old != pgt) {
       pgt_old=pgt; pgp=geotrans_precomp(pgt, &pgt->convex_ref()->points());
     }
+    dim_type N = pgp->grad(0).nrows();
 
-    pgeotrans_precomp pgp = geotrans_precomp(pgt, &pgt->convex_ref()->points());
-    n=pgt->nb_points();
-    if (pgt->is_linear()) n=1;
-    scalar_type q = 1;
-    base_matrix K(pgp->grad(0).nrows(), G.ncols());
+    n = (pgt->is_linear()) ? 1 : pgt->nb_points();
+    scalar_type q = 0;
+    base_matrix K(N, G.ncols());
     for (size_type ip=0; ip < n; ++ip) {
       gmm::mult(gmm::transposed(pgp->grad(ip)), gmm::transposed(G), K);
-      q = std::max(q,gmm::norm_lin2_est(K));
+      q = std::max(q, gmm::norm_lin2_est(K));
     }
-    return q;
+    return q * sqrt(N) / N;
   }
 
 }  /* end of namespace getfem.                                             */
