@@ -133,7 +133,7 @@ template <class MAT>  void test_qr(const MAT &m) {
   // cout << "\neigenvalues : " << eigc << endl;
   // cout << "eigenvectors : " << cq << endl;
   MAT cm_conj(nn, nn); /* to avoid a Warning in the mult. */
-  gmm::copy(gmm::conjugated(gmm::transposed(cm)), cm_conj);
+  gmm::copy(gmm::conjugated(cm), cm_conj);
 
   gmm::mult(cm, cm_conj, cq); gmm::copy(cq, cm);
   // print_for_matlab(cm);
@@ -144,7 +144,9 @@ template <class MAT>  void test_qr(const MAT &m) {
   cout.precision(6);
   cout << "\neigenvalues : " << eigc << endl;
   // cout << "eigenvectors : " << cq << endl;
-
+  implicit_qr_algorithm(cm, eigc, cq);
+  cout << "\neigenvalues : " << eigc << endl;
+  
   gmm::fill_random(cq);
   gmm::copy(cq, cr);
   gmm::lu_inverse(cr);

@@ -57,6 +57,11 @@ template <class T> void test_with(T) {
   cout << "R = " << C << endl;
   
 
+  cout << "A = " << A << endl;
+  gmm::mult(B, C, A);
+  cout << "QR = " << A << endl;
+  gmm::mult(gmm::conjugated(B), B, C);
+  cout << "Q*Q = " << C;
   // my_mult(A, B, C);
   cout << "cpu time = " << ftool::uclock_sec() - exectime << endl;
   // cout << "col(B,2) = " << gmm::mat_const_col(B,2) << endl;
@@ -79,10 +84,10 @@ int main(void)
 
   try {
     
-//    test_with(float());
-    test_with(double());
-//     test_with(std::complex<float>());
-//     test_with(std::complex<double>());
+    //    test_with(float());
+    //    test_with(double());
+    //    test_with(std::complex<float>());
+    test_with(std::complex<double>());
     
   }
   DAL_STANDARD_CATCH_ERROR;

@@ -133,7 +133,7 @@ namespace gmm {
     void sgetrs_(...); void dgetrs_(...); void cgetrs_(...); void zgetrs_(...);
     void sgetri_(...); void dgetri_(...); void cgetri_(...); void zgetri_(...);
     void sgeqrf_(...); void dgeqrf_(...); void cgeqrf_(...); void zgeqrf_(...);
-    void sorgqr_(...); void dorgqr_(...); void corgqr_(...); void zorgqr_(...);
+    void sorgqr_(...); void dorgqr_(...); void cungqr_(...); void zungqr_(...);
   }
 
 
@@ -811,8 +811,8 @@ namespace gmm {
 
   geqrf_interface(sgeqrf_, sorgqr_, BLAS_S);
   geqrf_interface(dgeqrf_, dorgqr_, BLAS_D);
-  geqrf_interface(cgeqrf_, corgqr_, BLAS_C);
-  geqrf_interface(zgeqrf_, zorgqr_, BLAS_Z);
+  geqrf_interface(cgeqrf_, cungqr_, BLAS_C);
+  geqrf_interface(zgeqrf_, zungqr_, BLAS_Z);
 
 
 }
