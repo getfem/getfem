@@ -599,8 +599,8 @@ namespace getfem
 	pf_rh = mf_rh.fem_of_element(cv); 
 	size_type f;
 	for (f << nf; f != ST_NIL; f << nf) {
-	  bgeot::pconvex_structure cvs_u = pf_u->structure();
-	  bgeot::pconvex_structure cvs_rh = pf_rh->structure();
+	  bgeot::pconvex_structure cvs_u = pf_u->structure(cv);
+	  bgeot::pconvex_structure cvs_rh = pf_rh->structure(cv);
 	  for (size_type i = 0; i < cvs_u->nb_points_of_face(f); ++i) {
 	    
 	    size_type Q = mf_u.get_qdim();  // pf_u->target_dim() (==1)
@@ -620,8 +620,8 @@ namespace getfem
 		with             H_j*phi_i = R_j     
 	      */
 	      if (tdof_u == tdof_rh &&
-		  bgeot::vect_dist2_sqr(pf_u->node_convex().points()[ind_u], 
-					pf_rh->node_convex().points()[ind_rh])
+		  bgeot::vect_dist2_sqr((*(pf_u->node_tab(cv)))[ind_u], 
+					(*(pf_rh->node_tab(cv)))[ind_rh])
 		  < 1.0E-14) {
 		/* the dof might be "duplicated" */
 		for (size_type q = 0; q < Q; ++q) {

@@ -79,14 +79,14 @@ namespace getfem {
       for (size_type i = 0; i < nbd2; ++i)
       {
 	/* point corresponding to the i th node.                           */
-	pt1 = pgt->transform(pfe->node_of_dof(i),
+	pt1 = pgt->transform(pfe->node_of_dof(cv, i),
 			     mf.linked_mesh().points_of_convex(cv));
 	for (size_type j = 0; j < N; ++j) o << pt1[j] << " ";
 	o << "  ";
 
 	/* interpolation of the solution.                                  */
 	/* faux dans le cas des éléments vectoriel.                        */
-	ctx.set_xref(pfe->node_of_dof(i));
+	ctx.set_xref(pfe->node_of_dof(cv, i));
 	pf1->interpolation(ctx, 
 			   gmm::sub_vector(U,
 	   gmm::sub_index(mf.ind_dof_of_element(cv))), pt3, mf.get_qdim());

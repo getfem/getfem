@@ -437,6 +437,7 @@ namespace getfem
   
   PK_fem_::PK_fem_(dim_type nc, short_type k) {
     cvr = bgeot::simplex_of_reference(nc);
+    dim_ = cvr->structure()->dim();
     is_equiv = is_pol = is_lag = true;
     es_degree = k;
     
@@ -469,8 +470,7 @@ namespace getfem
   /*	Tensorial product of fem (for polynomial fem).                    */
   /* ******************************************************************** */
 
-  struct tproduct_femi : public fem<base_poly>
-  { 
+  struct tproduct_femi : public fem<base_poly> { 
     tproduct_femi(ppolyfem fi1, ppolyfem fi2);
   };
 
@@ -487,8 +487,9 @@ namespace getfem
     is_lag = fi1->is_lagrange() && fi2->is_lagrange();;
     es_degree = fi1->estimated_degree() + fi2->estimated_degree();
     bgeot::convex<base_node> cv 
-      = bgeot::convex_direct_product(fi1->node_convex(), fi2->node_convex());
-    cvr = bgeot::convex_ref_product(fi1->ref_convex(), fi2->ref_convex());
+      = bgeot::convex_direct_product(fi1->node_convex(0), fi2->node_convex(0));
+    cvr = bgeot::convex_ref_product(fi1->ref_convex(0), fi2->ref_convex(0));
+    dim_ = cvr->structure()->dim();
     init_cvs_node();
     
     ntarget_dim = fi2->target_dim();
@@ -523,8 +524,7 @@ namespace getfem
   /*    Generic Hierarchical fem (for polynomial fem). To be interfaced.  */
   /* ******************************************************************** */
 
-  struct thierach_femi : public fem<base_poly>
-  { 
+  struct thierach_femi : public fem<base_poly> { 
     thierach_femi(ppolyfem fi1, ppolyfem fi2);
   };
 
@@ -533,7 +533,7 @@ namespace getfem
     : fem<base_poly>(*fi1) {
     if (fi2->target_dim() != fi1->target_dim())
       DAL_THROW(dimension_error, "dimensions mismatch.");
-    if (fi2->basic_structure() != fi1->basic_structure())
+    if (fi2->basic_structure(0) != fi1->basic_structure(0))
       DAL_THROW(failure_error, "Incompatible elements.");
     if (!(fi1->is_equivalent() &&  fi2->is_equivalent()))
       DAL_THROW(to_be_done_error,
@@ -546,7 +546,7 @@ namespace getfem
       for (size_type j = 0; j < fi1->nb_dof(0); ++j) {
 	if ( dal::lexicographical_less<base_node,
 	     dal::approx_less<scalar_type> >()
-	     (fi2->node_of_dof(i), fi1->node_of_dof(j)) == 0
+	     (fi2->node_of_dof(0,i), fi1->node_of_dof(0,j)) == 0
 	     && dof_hierarchical_compatibility(fi2->dof_types()[i],
 					       fi1->dof_types()[j]))
 	    { found = true; break; }
@@ -554,7 +554,7 @@ namespace getfem
       if (!found) {
 	add_node(deg_hierarchical_dof(fi2->dof_types()[i], 
 				      fi1->estimated_degree()),
-		 fi2->node_of_dof(i));
+		 fi2->node_of_dof(0,i));
 	base_.resize(nb_dof(0));
 	base_[nb_dof(0)-1] = (fi2->base())[i];
       }
@@ -570,7 +570,7 @@ namespace getfem
     : fem<polynomial_composite>(*fi1) {
     if (fi2->target_dim() != fi1->target_dim())
       DAL_THROW(dimension_error, "dimensions mismatch.");
-    if (fi2->basic_structure() != fi1->basic_structure())
+    if (fi2->basic_structure(0) != fi1->basic_structure(0))
       DAL_THROW(failure_error, "Incompatible elements.");
     if (!(fi1->is_equivalent() && fi2->is_equivalent()))
       DAL_THROW(to_be_done_error,
@@ -585,14 +585,14 @@ namespace getfem
       for (size_type j = 0; j < fi1->nb_dof(0); ++j) {
 	if ( dal::lexicographical_less<base_node,
 	     dal::approx_less<scalar_type> >()
-	     (fi2->node_of_dof(i), fi1->node_of_dof(j)) == 0
+	     (fi2->node_of_dof(0,i), fi1->node_of_dof(0,j)) == 0
 	     && dof_hierarchical_compatibility(fi2->dof_types()[i],
 					       fi1->dof_types()[j]))
 	  { found = true; break; }
       }
       if (!found) {
 	add_node(raff_hierarchical_dof(fi2->dof_types()[i], hier_raff),
-		 fi2->node_of_dof(i));
+		 fi2->node_of_dof(0,i));
 	base_.resize(nb_dof(0));
 	base_[nb_dof(0)-1] = (fi2->base())[i];
       }
@@ -682,10 +682,11 @@ namespace getfem
 
 
   /* ******************************************************************** */
-  /* parallelepiped structures.                                           */
+  /* parallelepiped fems.                                                 */
   /* ******************************************************************** */
 
-  static pfem QK_fem_(fem_param_list &params, const std::string& fempk, const std::string femqk) {
+  static pfem QK_fem_(fem_param_list &params, const std::string& fempk,
+		      const std::string femqk) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
 	   "Bad number of parameters : " << params.size() << " should be 2.");
@@ -713,7 +714,7 @@ namespace getfem
 
   
   /* ******************************************************************** */
-  /* prims structures.                                                    */
+  /* prims fems.                                                          */
   /* ******************************************************************** */
 
   static pfem PK_prism_fem(fem_param_list &params) {
@@ -745,7 +746,8 @@ namespace getfem
       DAL_THROW(failure_error, "Bad number of parameters");
     fem<base_poly> *p = new fem<base_poly>;
     remember_for_cleanup(p);
-    p->ref_convex() = bgeot::simplex_of_reference(2);
+    p->mref_convex() = bgeot::simplex_of_reference(2);
+    p->dim() = 2;
     p->is_equivalent() = p->is_polynomial() = p->is_lagrange() = true;
     p->estimated_degree() = 1;
     p->init_cvs_node();
@@ -766,8 +768,7 @@ namespace getfem
    /*	P1 element with a bubble base fonction on a face                   */
    /* ******************************************************************** */
 
-   struct P1_wabbfoaf_ : public PK_fem_
-   {
+   struct P1_wabbfoaf_ : public PK_fem_ {
      P1_wabbfoaf_(dim_type nc);
    };
 
@@ -839,6 +840,7 @@ namespace getfem
   
   PK_GL_fem_::PK_GL_fem_(unsigned k) {
     cvr = bgeot::simplex_of_reference(1);
+    dim_ = cvr->structure()->dim();
     is_equiv = is_pol = is_lag = true;
     es_degree = k;
     
@@ -889,7 +891,7 @@ namespace getfem
     dim_type P = 1, N = G.nrows();
     base_matrix K(N, P); // optimisable : eviter l'allocation.
     M.fill(1.0);
-    bgeot::pgeotrans_precomp pgp = bgeot::geotrans_precomp(pgt, node_tab());
+    bgeot::pgeotrans_precomp pgp = bgeot::geotrans_precomp(pgt, node_tab(0));
     if (N != 1)
       DAL_THROW(failure_error, "This element cannot be used for Q > 1");
     // gradient au pt 0
@@ -905,6 +907,7 @@ namespace getfem
     base_node pt(1);
     base_poly one(1, 0), x(1, 1, 0); one.one();
     cvr = bgeot::simplex_of_reference(1);
+    dim_ = cvr->structure()->dim();
     init_cvs_node();
     es_degree = 3;
     is_pol = true;
@@ -967,20 +970,13 @@ namespace getfem
 	  }
 	}
       }
-      /*for (size_type j=0; j < nb_base(0); ++j) cout << " base[" << j << "]=" << base_[j] << "\n";
-      for (size_type i=0; i < cv_node.nb_points(); ++i) {
-        cout << "node=" << cv_node.points()[i] << ":";
-        for (size_type j=0; j < nb_base(0); ++j) cout << base_[j].eval(cv_node.points()[i].begin()) << " ";
-        cout << "\n";
-      }
-      */
     }
   };
   
   static pfem PK_discontinuous_fem(fem_param_list &params) {
     if (params.size() != 2 && params.size() != 3)
-      DAL_THROW(failure_error, 
-	   "Bad number of parameters : " << params.size() << " should be 2 or 3.");
+      DAL_THROW(failure_error, "Bad number of parameters : " << params.size()
+		<< " should be 2 or 3.");
     if (params[0].type() != 0 || params[1].type() != 0)
       DAL_THROW(failure_error, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
@@ -1041,8 +1037,8 @@ namespace getfem
   /*	classical fem                                                     */
   /* ******************************************************************** */
 
-  static pfem classical_fem_(const char *suffix, bgeot::pgeometric_trans pgt, short_type k)
-  {
+  static pfem classical_fem_(const char *suffix, bgeot::pgeometric_trans pgt,
+			     short_type k) {
     static bgeot::pgeometric_trans pgt_last = 0;
     static short_type k_last = short_type(-1);
     static pfem fm_last = 0;

@@ -124,8 +124,8 @@ namespace getfem
 			 || computed_on_real_element))
 	    DAL_THROW(std::invalid_argument, 
 		      "Exact integration not allowed in this context");
-	  if((*it).pfi->basic_structure() != pgt->basic_structure())
-	    DAL_THROW(std::invalid_argument, "incorrect computation");
+// 	  if((*it).pfi->basic_structure() != pgt->basic_structure())
+// 	    DAL_THROW(std::invalid_argument, "incorrect computation");
 	  
 	  if (!((*it).pfi->is_equivalent()) && (*it).t != GETFEM_NONLINEAR_) {
 	    // TODO : le numero d'indice à reduire peut changer ...

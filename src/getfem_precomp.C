@@ -57,7 +57,7 @@ namespace getfem
   fem_precomp_::fem_precomp_(const pre_fem_light_ &ls) :
     pf(ls.pf), pspt(ls.pspt), pool_(ls.pool) {
       for (size_type i = 0; i < pspt->size(); ++i)
-	if ((*pspt)[i].size() != pf->structure()->dim())
+	if ((*pspt)[i].size() != pf->dim())
 	  DAL_THROW(dimension_error, "dimensions mismatch");
     }
 

@@ -691,7 +691,8 @@ namespace getfem {
       for (unsigned i=0; i < mfcomp.size(); ++i) {
         if (mfcomp[i].op == mf_comp::DATA) {
           size_type fullsz = 1;
-          for (unsigned j=0; j < mfcomp[i].data->ranges().size(); ++j) fullsz *= mfcomp[i].data->ranges()[j];
+          for (unsigned j=0; j < mfcomp[i].data->ranges().size(); ++j)
+	    fullsz *= mfcomp[i].data->ranges()[j];
           if (fullsz != size_type(mfcomp[i].data->tensor().card())) 
             ASM_THROW_TENSOR_ERROR("aaarg inline reduction will explode with non-full tensors. "
                                    "Complain to the author, I was too lazy to do that properly");
@@ -711,6 +712,7 @@ namespace getfem {
         do_post_reduction(cv);
         data_base = &fallback_red.out_data[0];
       } else data_base = &(*t.begin());
+      cout << "taille t = " << t.size() << " tsize = " << size_type(tsize) << endl;
       if (t.size() != size_type(tsize)) DAL_INTERNAL_ERROR("");
     }
   };

@@ -172,7 +172,7 @@ namespace getfem {
       if (pf_s->target_dim() != 1 || pf_t->target_dim() != 1)
 	DAL_THROW(to_be_done_error,
 		  "vector FEM interpolation still to be done ... ");
-      pfem_precomp pfp = fppool(pf_s, pf_t->node_tab());
+      pfem_precomp pfp = fppool(pf_s, pf_t->node_tab(cv));
       fem_interpolation_context ctx(pgt,pfp,size_type(-1),G,cv);
       itdof = mf_target.ind_dof_of_element(cv).begin();
       dof_source.assign(mf_source.ind_dof_of_element(cv).begin(), 

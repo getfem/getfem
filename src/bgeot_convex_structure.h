@@ -143,14 +143,16 @@ namespace bgeot
   /** Gives a pointer on the structures of a prism of dimension d.
    *   i.e. the direct product of a simplex of dimension d-1 and a segment.
    */
-  inline pconvex_structure prism_structure(dim_type nc)
-  { 
+  inline pconvex_structure prism_structure(dim_type nc) { 
     return convex_product_structure(simplex_structure(nc-1),
 				    simplex_structure(1));
   }
 
   /// Simplex structure with the Lagrange grid of degree k.
   pconvex_structure simplex_structure(dim_type n, short_type k);
+
+  /// generic convex with n global nodes
+  pconvex_structure generic_dummy_structure(dim_type nc, size_type n);
 
   //@}
 

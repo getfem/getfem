@@ -60,7 +60,8 @@ namespace bgeot
   /* store a new (read-only) array of points in stored_point_tab_tab */
   template<class CONT> pstored_point_tab store_point_tab(const CONT &TAB) { 
     stored_point_tab spt(TAB.begin(), TAB.end());
-    return &(stored_point_tab_tab::instance()[stored_point_tab_tab::instance().add_norepeat(spt)]);
+    return &(stored_point_tab_tab::instance()
+	     [stored_point_tab_tab::instance().add_norepeat(spt)]);
   }
 
   /* returns the (read-only) origin for points of dimension n */
@@ -91,18 +92,22 @@ namespace bgeot
     mutable mesh_structure *psimplexified_convex;
     convex_of_reference *basic_convex_ref_;
   public :
-    convex_of_reference() : convex<base_node>(), psimplexified_convex(0), basic_convex_ref_(0) {}
+    convex_of_reference() : convex<base_node>(), psimplexified_convex(0),
+			    basic_convex_ref_(0) {}
     virtual scalar_type is_in(const base_node &) const = 0;
     virtual scalar_type is_in_face(short_type, const base_node &) const =0;
-    const std::vector<base_small_vector> &normals(void) const { return normals_; }
+    const std::vector<base_small_vector> &normals(void) const
+    { return normals_; }
     virtual ~convex_of_reference() {}
 
     /* returns a mesh structure composed of simplexes whose union
        is the reference convex. All simplexes have the same (direct) orientation.
     */
     const mesh_structure* simplexified_convex() const;
-    const convex_of_reference* basic_convex_ref() const { return basic_convex_ref_; }
-    void attach_basic_convex_ref(convex_of_reference* cvr) { basic_convex_ref_ = cvr; }
+    const convex_of_reference* basic_convex_ref() const
+    { return basic_convex_ref_; }
+    void attach_basic_convex_ref(convex_of_reference* cvr)
+    { basic_convex_ref_ = cvr; }
   };
 
   typedef const convex_of_reference * pconvex_ref;
@@ -118,6 +123,10 @@ namespace bgeot
   pconvex_ref convex_ref_product(pconvex_ref a, pconvex_ref b);
   /** equilateral simplex (degree 1). used only for mesh quality estimations */
   pconvex_ref equilateral_simplex_of_reference(dim_type nc);
+
+  /** generic convex with n global nodes      */
+  pconvex_ref generic_dummy_convex_ref(dim_type nc, size_type n);
+
 }  /* end of namespace bgeot.                                             */
 
 

@@ -9,7 +9,7 @@
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 2002-2003  Yves Renard.                                   */
+/* Copyright (C) 2002-2004  Yves Renard.                                   */
 /*                                                                         */
 /* This file is a part of GETFEM++                                         */
 /*                                                                         */
@@ -28,14 +28,14 @@
 /* USA.                                                                    */
 /*                                                                         */
 /* *********************************************************************** */
-
+/*                                                                         */
+/* CAUTION : Deprecated file. Use interpolated_fem instead.                */
+/*                                                                         */
+/* *********************************************************************** */
 #include <getfem_fem.h>
 #include <getfem_mesh_fem.h>
+#include <bgeot_rtree.h>
 #include <bgeot_geotrans_inv.h>
-
-/* Inefficient, to be done again as real conf. elements                    */
-/* A refaire, l'élément fini n'est plus supprimé en cas de suppression des */
-/* mesh-fems.                                                              */
 
 namespace getfem {
 
@@ -375,6 +375,7 @@ namespace getfem {
       : pmflf(ls.pmflf), pai(ls.pai), with_grad(ls.with_grad) {
       is_equiv = is_pol = is_lag = false; es_degree = 5;
       cvr = pai->ref_convex();
+      dim_ = cvr->structure()->dim();
       di = ls.pmflf->mf_target().linked_mesh().dim();
       real_element_defined = true;
     }
@@ -393,7 +394,7 @@ namespace getfem {
 		"This element is only defined on approximated integration.");
     if (vlf_tab__ == 0) vlf_tab__ = new virtual_link_fem_table();
     return vlf_tab__->add(virtual_link_fem_light_(mf_link_fem(mf1, mf2),
-						  pim->approx_method(), false));
+						  pim->approx_method(),false));
   }
 	
   pfem virtual_link_fem_with_gradient(mesh_fem &mf1, mesh_fem &mf2,

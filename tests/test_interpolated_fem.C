@@ -19,7 +19,7 @@
 /* *********************************************************************** */
 /***************************************************************************/
 /*                                                                         */
-/*  Test the virtual_link_fem method.                                      */
+/*  Test the interpolated fem method.                                      */
 /*                                                                         */
 /***************************************************************************/
 
@@ -27,6 +27,7 @@
 #include <getfem_export.h>
 #include <getfem_regular_meshes.h>
 #include <gmm.h>
+#include <getfem_interpolated_fem.h>
 
 using bgeot::base_vector;
 using bgeot::base_small_vector;
@@ -43,10 +44,10 @@ typedef std::vector<scalar_type> linalg_vector;
 /*  structure representing the problem.                                   */
 /**************************************************************************/
 
-struct lap_pb
-{
+struct lap_pb {
   getfem::getfem_mesh mesh1, mesh2;
-  getfem::mesh_fem     mef1,  mef2, meflink;
+  getfem::mesh_fem     mef1,  mef2, mefinterpolated;
+  getfem::interpolated_fem ifem;
 
   scalar_type LX, LY, LZ;
   int NX1, NX2, N, K, KI, integration;
@@ -55,11 +56,11 @@ struct lap_pb
 
   void assemble(void);
   void init(void);
-  lap_pb(void) : mef1(mesh1), mef2(mesh2), meflink(mesh1) {}
+  lap_pb(void) : mef1(mesh1), mef2(mesh2), mefinterpolated(mesh1),
+		 ifem(mef2, mef1) {}
 };
 
-void lap_pb::init(void)
-{
+void lap_pb::init(void) {
   dal::bit_vector nn;
 
   /***********************************************************************/
@@ -134,23 +135,21 @@ void lap_pb::init(void)
   nn = mesh2.convex_index(N);
   mef2.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
   nn = mesh1.convex_index(N);
-  meflink.set_finite_element(nn, getfem::virtual_link_fem(mef2, meflink, ppi),
-			     ppi);
- 
+  mefinterpolated.set_finite_element(nn, &ifem, ppi);
 }
 
-void lap_pb::assemble(void)
-{
+void lap_pb::assemble(void) {
   int nb_dof1 = mef1.nb_dof(), nb_dof2 = mef2.nb_dof();
   sparse_matrix_type RM1(nb_dof2, nb_dof2);
   double sum, diff;
   
   cout << "Number of dof : " << nb_dof1 << " : " << nb_dof2 << endl;
 
-  cout << "Number of dof of interpolated method: " << meflink.nb_dof() << endl;
+  cout << "Number of dof of interpolated method: "
+       << mefinterpolated.nb_dof() << endl;
  
   cout << "Assembling interpolated mass matrix" << endl;
-  getfem::asm_mass_matrix(RM1, meflink, meflink);
+  getfem::asm_mass_matrix(RM1, mefinterpolated, mefinterpolated);
 
   cout << "Matrice de masse\n";
   sum = 0.0;
@@ -187,7 +186,8 @@ void lap_pb::assemble(void)
     cout << "] -> sum(line)=" << slig << endl;
   }
   cout << endl << " sum: " << sum << endl << endl;
-  cout << endl << " diff: " << diff << "max_norm=" << gmm::mat_maxnorm(RM1) << endl << endl;  
+  cout << endl << " diff: " << diff << "max_norm="
+       << gmm::mat_maxnorm(RM1) << endl << endl;  
 }
 
 
@@ -244,7 +244,7 @@ void test2() {
 int main(int argc, char *argv[])
 {
   try {
-    test2();
+    // test2();
     lap_pb p;
     
     cout << "initialisation ...\n";

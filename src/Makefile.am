@@ -49,6 +49,7 @@ include_HEADERS =                       \
 	getfem_precomp.h                \
 	getfem_derivatives.h            \
 	getfem_fem.h                    \
+	getfem_interpolated_fem.h       \
 	getfem_gauss_lobatto_fem_coef.h \
 	getfem_Xfem.h                   \
 	getfem_im_list.h                \

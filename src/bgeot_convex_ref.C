@@ -176,8 +176,7 @@ namespace bgeot
   struct simplex_of_reference_FONC_TABLE : 
     public dal::FONC_TABLE<K_simplex_ref_light_, K_simplex_of_ref_> {};
 
-  pconvex_ref simplex_of_reference(dim_type nc, short_type k)
-  {
+  pconvex_ref simplex_of_reference(dim_type nc, short_type k) {
     simplex_of_reference_FONC_TABLE &tab = 
       dal::singleton<simplex_of_reference_FONC_TABLE>::instance();
     bgeot::convex_of_reference * p1 = tab.add(K_simplex_ref_light_(nc, 1));
@@ -187,11 +186,9 @@ namespace bgeot
     return pk;
   }
 
-
   /* products.                                                             */
 
-  struct product_ref_light_
-  {
+  struct product_ref_light_ {
     pconvex_ref cvr1, cvr2;
     bool operator < (const product_ref_light_ &ls) const
     {
@@ -203,8 +200,7 @@ namespace bgeot
     product_ref_light_(void) { }
   };
 
-  struct product_ref_ : public convex_of_reference 
-  {
+  struct product_ref_ : public convex_of_reference {
     pconvex_ref cvr1, cvr2;
  
     scalar_type is_in(const base_node &pt) const;
@@ -315,7 +311,8 @@ namespace bgeot
       for (size_type i=0; i < N+1; ++i) {
         points()[i].resize(N);
         if (i != N) {
-          std::copy(prev->points()[i].begin(), prev->points()[i].end(), points()[i].begin());
+          std::copy(prev->points()[i].begin(), prev->points()[i].end(),
+		    points()[i].begin());
           points()[i][N-1] = 0.;
         } else {
           points()[i] = 1./N * G;
@@ -344,5 +341,35 @@ namespace bgeot
     return stab[nc];
   }
 
+  /* generic convex with n global nodes      */
+
+  class generic_dummy_ : public convex_of_reference {
+  public:
+    scalar_type is_in(const base_node &) const
+    { DAL_THROW(failure_error, "Information not available here"); }
+    scalar_type is_in_face(short_type, const base_node &) const 
+    { DAL_THROW(failure_error, "Information not available here"); }
+  
+    generic_dummy_(dim_type d, size_type n) {
+      cvs = generic_dummy_structure(d, n);
+      points().resize(n);
+      normals_.resize(0);
+      base_node P(d);
+      std::fill(P.begin(), P.end(), scalar_type(1)/scalar_type(20));
+      std::fill(points().begin(), points().end(), P);
+    }
+  };
+
+  pconvex_ref generic_dummy_convex_ref(dim_type nc, size_type n) {
+    static std::vector< std::vector<pconvex_ref> > tab;
+    if (size_type(nc)+1 > tab.size()) tab.resize(nc+1);
+    if (n+1 > tab[nc].size()) {
+      size_type d = tab[nc].size();
+      tab[nc].resize(n+1);
+      for (size_type i = d; i <= n; ++i)
+	tab[nc][i] = new generic_dummy_(nc, i);
+    }
+    return tab[nc][n];
+  }
 
 }  /* end of namespace bgeot.                                              */

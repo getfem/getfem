@@ -92,12 +92,12 @@ namespace getfem {
     f[0].nlt = 0;
     if (pfi->target_dim() == 1) { 
       f.get_mi().resize(2); f.get_mi()[0] = 1;
-      f.get_mi()[1] = pfi->structure()->dim();
+      f.get_mi()[1] = pfi->dim();
     }
     else {
       f.get_mi().resize(3); f.get_mi()[0] = 1;
       f.get_mi()[1] = pfi->target_dim();
-      f.get_mi()[2] = pfi->structure()->dim();
+      f.get_mi()[2] = pfi->dim();
     }
     return add_to_met_tab(f);
   }
@@ -107,12 +107,12 @@ namespace getfem {
     f[0].nlt = 0;
     if (pfi->target_dim() == 1) { 
       f.get_mi().resize(2); f.get_mi()[0] = 1;
-      f.get_mi()[1] = dal::sqr(pfi->structure()->dim());
+      f.get_mi()[1] = dal::sqr(pfi->dim());
     }
     else {
       f.get_mi().resize(3); f.get_mi()[0] = 1;
       f.get_mi()[1] = pfi->target_dim();
-      f.get_mi()[2] = dal::sqr(pfi->structure()->dim());
+      f.get_mi()[2] = dal::sqr(pfi->dim());
     }
     return add_to_met_tab(f);
   }

@@ -163,7 +163,7 @@ namespace getfem
     }
     else {
       if (linked_mesh_->structure_of_convex(cv)->basic_structure() 
-	  != pif->pf->basic_structure() || 
+	  != pif->pf->basic_structure(cv) || 
 	  (pif->pf->target_dim() != Qdim && pif->pf->target_dim() != 1))
 	DAL_THROW(std::logic_error,
 		  "Incompatibility between fem " << name_of_fem(pif->pf) << 
@@ -219,7 +219,7 @@ namespace getfem
   base_node mesh_fem::point_of_dof(size_type cv, size_type i) const {
     pfem pf = f_elems[cv]->pf;
     return linked_mesh().trans_of_convex(cv)->transform
-      (pf->node_of_dof(i * pf->target_dim() / Qdim),
+      (pf->node_of_dof(cv, i * pf->target_dim() / Qdim),
        linked_mesh().points_of_convex(cv));
   }
 
@@ -306,7 +306,7 @@ namespace getfem
       tab.resize(nbd);
       for (size_type i = 0; i < nbd; i++) {
 	fd.P = linked_mesh().trans_of_convex(cv)->transform
-	  (pf->node_of_dof(i), linked_mesh().points_of_convex(cv));
+	  (pf->node_of_dof(cv, i), linked_mesh().points_of_convex(cv));
 	//point_of_dof(cv,i); 
 	fd.pnd = pf->dof_types()[i];
 	size_type j = 0, j_old = 0;
@@ -347,7 +347,7 @@ namespace getfem
 	}
       }
       
-      dof_structure.add_convex_noverif(pf->structure(), tab.begin(), cv);
+      dof_structure.add_convex_noverif(pf->structure(cv), tab.begin(), cv);
       
       if (pile.empty()) cv = nn.take_first();
                  else { cv = pile.front(); pile.pop(); }
@@ -435,9 +435,10 @@ namespace getfem
     valid_boundaries.clear();
   }
 
-  mesh_fem::mesh_fem(getfem_mesh &me, dim_type Q) : dof_enumeration_made(false), Qdim(Q) {
+  mesh_fem::mesh_fem(getfem_mesh &me, dim_type Q)
+    : dof_enumeration_made(false), Qdim(Q) {
     linked_mesh_ = &me;
- 
+    this->add_dependency(me);
     add_sender(me.lmsg_sender(), *this,
 	   lmsg::mask(MESH_CLEAR()) | lmsg::mask(MESH_SUP_CONVEX()) |
 	   lmsg::mask(MESH_SWAP_CONVEX()) | lmsg::mask(MESH_DELETE()));
@@ -527,8 +528,8 @@ namespace getfem
 		//cerr << tab[i] << ",";
 	      }
 	      //cerr << '\n';
-	      dof_structure.add_convex_noverif(fem_of_element(ic)->structure(),
-					       tab.begin(), ic);
+	      dof_structure.add_convex_noverif
+		(fem_of_element(ic)->structure(ic), tab.begin(), ic);
 	    } else DAL_THROW(failure_error, "Missing convex or wrong number "
 			     << "in dof enumeration: '" 
 			     << tmp << "' [pos="

@@ -304,7 +304,7 @@ namespace getfem
      */
     const base_node &reference_point_of_dof(size_type cv,size_type i) const {
       pfem pf = f_elems[cv]->pf;
-      return pf->node_of_dof(i * pf->target_dim() / Qdim);
+      return pf->node_of_dof(cv, i * pf->target_dim() / Qdim);
     }
     /** Gives the point (base_node) corresponding to the degree of freedom
      *  i of the element of index cv in the element of reference.

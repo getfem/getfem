@@ -62,7 +62,7 @@ test_norm_SOURCES = test_norm.C
 schwarz_additive_SOURCES = schwarz_additive.C
 plasticity_SOURCES = plasticity.C
 if QHULL
-test_mesh_generation_SOURCES = test_mesh_generation.C test_mesh_generation.h
+test_mesh_generation_SOURCES = test_mesh_generation.C 
 endif
 #test_fem_SOURCES = test_fem.C
 
@@ -122,7 +122,7 @@ EXTRA_DIST = \
 	schwarz_additive.param            \
 	elastostatic.param                \
 	nonlinear_elastostatic.param      \
-	test_link_fem.param               \
+	test_interpolated_fem.param       \
 	geo_trans_inv.param               \
 	make_gmm_test.pl                  \
 	gmm_torture01_lusolve.C           \

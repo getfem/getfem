@@ -45,7 +45,8 @@ namespace getfem
       DAL_THROW(failure_error, "Meshes are different.");
     fem<polynomial_composite> *p = new fem<polynomial_composite>;
 
-    p->ref_convex() = cr;
+    p->mref_convex() = cr;
+    p->dim() = cr->structure()->dim();
     p->is_polynomialcomp() = p->is_equivalent() = true;
     p->is_polynomial() = false;
     p->is_lagrange() = true;
@@ -98,13 +99,13 @@ namespace getfem
     pgetfem_mesh pm;
     pmesh_precomposite pmp;
 
-    structured_mesh_for_convex(pf->ref_convex(), k, pm, pmp);
+    structured_mesh_for_convex(pf->ref_convex(0), k, pm, pmp);
 
     mesh_fem mf(*pm);
     mf.set_finite_element(pm->convex_index(), pf, 
 			  classical_exact_im(pm->trans_of_convex(0)));
 
-    return composite_fe_method(*pmp, mf, pf->ref_convex());
+    return composite_fe_method(*pmp, mf, pf->ref_convex(0));
   }
 
   pfem PK_composite_hierarch_fem(fem_param_list &params) {

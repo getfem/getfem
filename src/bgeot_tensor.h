@@ -135,6 +135,14 @@ namespace bgeot
 	return *(this->begin() + d);
       }
     
+      inline T& operator ()(size_type i, size_type j, size_type k) {
+	if (order() != 3)
+	  DAL_THROW(std::out_of_range, "Bad tensor order");
+	size_type d = coeff[0]*i + coeff[1]*j + coeff[2]*k;
+	if (d >= size()) DAL_THROW(std::out_of_range, "index out of range");
+	return *(this->begin() + d);
+      }
+    
       inline T& operator ()(size_type i, size_type j) {
 	if (order() != 2)
 	  DAL_THROW(std::out_of_range, "Bad tensor order");
@@ -148,6 +156,15 @@ namespace bgeot
 	if (order() != 4)
 	  DAL_THROW(std::out_of_range, "Bad tensor order");
 	size_type d = coeff[0]*i + coeff[1]*j + coeff[2]*k + coeff[3]*l;
+	if (d >= size()) DAL_THROW(std::out_of_range, "index out of range");
+	return *(this->begin() + d);
+      }
+    
+      inline const T& operator ()(size_type i, size_type j,
+				  size_type k) const {
+	if (order() != 3)
+	  DAL_THROW(std::out_of_range, "Bad tensor order");
+	size_type d = coeff[0]*i + coeff[1]*j + coeff[2]*k;
 	if (d >= size()) DAL_THROW(std::out_of_range, "index out of range");
 	return *(this->begin() + d);
       }

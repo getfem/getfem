@@ -91,17 +91,17 @@ namespace getfem
 
   class fem_interpolation_context;
   
-  class virtual_fem
-  {
+  class virtual_fem {
+
   protected :
 
-    std::vector<pdof_description> dof_types_;
+    mutable std::vector<pdof_description> dof_types_;
     bgeot::convex_structure cvs_node;
     bgeot::convex<base_node> cv_node;
     mutable bgeot::pstored_point_tab pspt;
     mutable bool pspt_valid;
     bgeot::pconvex_ref cvr; // reference element.
-    dim_type ntarget_dim;
+    mutable dim_type ntarget_dim, dim_;
     bool is_equiv, is_lag, is_pol, is_polycomp, real_element_defined;
     short_type es_degree, hier_raff;
     
@@ -121,31 +121,32 @@ namespace getfem
       { return dof_types_; }
     short_type hierarchical_raff(void) const { return hier_raff; }
     /// dimension of the reference element.
-    dim_type dim(void) const { return cvr->structure()->dim(); }
+    dim_type dim(void) const { return dim_; }
+    dim_type &dim(void) { return dim_; }
     /// dimension of the target space.
     dim_type target_dim(void) const { return ntarget_dim; }
-    /// Gives the convex structure of the reference element nodes.
-    bgeot::pconvex_structure structure(void) const
-      { return cv_node.structure(); }
     /// Gives the convex of the reference element.
-    bgeot::pconvex_structure basic_structure(void) const
-      { return cvr->structure(); }
+    virtual bgeot::pconvex_ref ref_convex(size_type) const { return cvr; }
+    bgeot::pconvex_ref &mref_convex() { return cvr; }
     /// Gives the convex of the reference element.
-    bgeot::pconvex_ref ref_convex(void) const { return cvr; }
-    bgeot::pconvex_ref &ref_convex(void) { return cvr; }
+    bgeot::pconvex_structure basic_structure(size_type cv) const
+    { return ref_convex(cv)->structure(); }
     /// Gives the convex representing the nodes on the reference element.
-    const bgeot::convex<base_node> &node_convex(void) const
+    virtual const bgeot::convex<base_node> &node_convex(size_type) const
       { return cv_node; }
-    /// Gives the node corresponding to the dof i.
-    const base_node &node_of_dof(size_type i) const
-      { return cv_node.points()[i];}
-    bgeot::pstored_point_tab node_tab(void) const { 
+    /// Gives the convex structure of the reference element nodes.
+    bgeot::pconvex_structure structure(size_type cv) const
+    { return node_convex(cv).structure(); }
+    virtual bgeot::pstored_point_tab node_tab(size_type) const { 
       if (!pspt_valid) {
 	pspt = bgeot::store_point_tab(cv_node.points());
 	pspt_valid = true;
       }
       return pspt;
     }
+    /// Gives the node corresponding to the dof i.
+    const base_node &node_of_dof(size_type cv, size_type i) const
+      { return (*(node_tab(cv)))[i];}
     bool is_on_real_element(void) const { return real_element_defined; }
     bool is_equivalent(void) const { return is_equiv; }
     bool need_G(void) const
@@ -253,7 +254,8 @@ namespace getfem
       { DAL_THROW(internal_error, "internal error."); }
 
     virtual_fem(void) { 
-      ntarget_dim = 1; is_equiv = is_pol = is_polycomp = is_lag = false;
+      ntarget_dim = 1; dim_ = 1; 
+      is_equiv = is_pol = is_polycomp = is_lag = false;
       pspt_valid = false; hier_raff = 0; real_element_defined = false;
       es_degree = 5;
     }
@@ -271,6 +273,7 @@ namespace getfem
       pspt = 0;
       pspt_valid = false;
       cvr = f.cvr;
+      dim_ = f.dim_;
       ntarget_dim = f.ntarget_dim;
       is_equiv = f.is_equiv;
       is_lag = f.is_lag;
@@ -547,9 +550,9 @@ namespace getfem
   
   class mesh_fem;
   pfem virtual_link_fem(mesh_fem &mf1, mesh_fem &mf2,
-			pintegration_method pim);
+			pintegration_method pim) IS_DEPRECATED;
   pfem virtual_link_fem_with_gradient(mesh_fem &mf1, mesh_fem &mf2,
-				      pintegration_method pim);
+				      pintegration_method pim) IS_DEPRECATED;
   
 }  /* end of namespace getfem.                                            */
 

@@ -39,13 +39,13 @@ namespace getfem
     init_cvs_node();
     /* setup nodes of the base fem */
     for (size_type k = 0; k < pfb->nb_base(0); ++k)
-      add_node(pfb->dof_types()[k], pfb->node_of_dof(k));
+      add_node(pfb->dof_types()[k], pfb->node_of_dof(0,k));
     
     /* setup nodes of the enriched fems */
     for (size_type k = 0; k < nb_func; ++k) {
       for (size_type j = 0; j < pfe(k)->nb_base(0); ++j) {
 	add_node(xfem_dof(pfe(k)->dof_types()[j], func_indices[k]),
-		 pfe(k)->node_of_dof(j));
+		 pfe(k)->node_of_dof(0,j));
       }
     }
     is_valid = true;
@@ -63,7 +63,7 @@ namespace getfem
     funcs.resize(nb_func);
     func_indices.resize(nb_func);
     funcs[nb_func-1] = pXf;
-    if (cvr != pf->ref_convex() || pfb->target_dim() != pf->target_dim())
+    if (cvr != pf->ref_convex(0) || pfb->target_dim() != pf->target_dim())
       DAL_THROW(failure_error, "Incompatible Xfem fems");
 
     /* insert the new fem in the list */
@@ -191,7 +191,8 @@ namespace getfem
     if (!(pfb->is_equivalent()))
       DAL_THROW(to_be_done_error,
 		"Sorry, Xfem for non tau-equivalent elements to be done.");
-    cvr = pfb->ref_convex();
+    cvr = pfb->ref_convex(0);
+    dim_ = cvr->structure()->dim();
     is_equiv = real_element_defined = true;
     is_polycomp = is_pol = is_lag = false;
     es_degree = 5; /* humm ... */

@@ -212,10 +212,10 @@ void laplacian_problem::assembly(void)
     for (dal::bv_visitor f(mf_u.faces_of_convex_on_boundary(cv,
 							NEUMANN_BOUNDARY_NUM));
 	 !f.finished(); ++f) {
-      for (size_type l = 0; l< pf->structure()->nb_points_of_face(f); ++l) {
-	size_type n = pf->structure()->ind_points_of_face(f)[l];
-	base_small_vector un = mesh.normal_of_face_of_convex(cv, f,
-							     pf->node_of_dof(n));
+      for (size_type l = 0; l< pf->structure(cv)->nb_points_of_face(f); ++l) {
+	size_type n = pf->structure(cv)->ind_points_of_face(f)[l];
+	base_small_vector un
+	  = mesh.normal_of_face_of_convex(cv, f, pf->node_of_dof(cv, n));
 	un /= gmm::vect_norm2(un);
 	size_type dof = mf_rhs.ind_dof_of_element(cv)[n];
 	F[dof] = gmm::vect_sp(sol_grad(mf_rhs.point_of_dof(dof)), un);
