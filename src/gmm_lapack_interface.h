@@ -167,13 +167,15 @@ namespace gmm {
 # define gem_p1_t(base_type)                                               \
          const transposed_col_ref<dense_matrix<base_type > *> &_A
 # define gem_trans1_t(base_type) dense_matrix<base_type > &A =             \
-         *(dense_matrix<base_type > *)(linalg_origin(_A)); const char t = 'T'
+         *(dense_matrix<base_type > *)                                     \
+         (const_cast<void *>(linalg_origin(_A))); const char t = 'T'
 # define gem_p1_tc(base_type)                                              \
          const transposed_col_ref<const dense_matrix<base_type > *> &_A
 # define gem_p1_c(base_type)                                               \
          const conjugated_col_matrix_const_ref<dense_matrix<base_type > > &_A
 # define gem_trans1_c(base_type) dense_matrix<base_type > &A =             \
-         *(dense_matrix<base_type > *)(linalg_origin(_A)); const char t = 'C'
+         *(dense_matrix<base_type > *)                                     \
+         (const_cast<void *>(linalg_origin(_A))); const char t = 'C'
 
 
   // second parameter 
@@ -182,8 +184,8 @@ namespace gmm {
 # define gemv_p2_s(base_type)                                              \
          const scaled_vector_const_ref<std::vector<base_type > > &_x
 # define gemv_trans2_s(base_type) std::vector<base_type > &x =             \
-         *(std::vector<base_type > *)(linalg_origin(_x));                  \
-         base_type alpha(_x.r)
+         *(std::vector<base_type > *)                                      \
+         (const_cast<void *>(linalg_origin(_x))); base_type alpha(_x.r)
 
   // third parameter
 # define gemv_p3_n(base_type)  const std::vector<base_type > &y
@@ -191,8 +193,8 @@ namespace gmm {
 # define gemv_p3_s(base_type)                                              \
          const scaled_vector_const_ref<std::vector<base_type > > &_y
 # define gemv_trans3_s(base_type) std::vector<base_type > &y =             \
-         *(std::vector<base_type > *)(linalg_origin(_y));                  \
-         base_type beta(_y.r)  
+         *(std::vector<base_type > *)                                      \
+         (const_cast<void *>(linalg_origin(_y))); base_type beta(_y.r)  
 
 
   // Z <- AX + Y.
@@ -480,7 +482,8 @@ namespace gmm {
          const dense_matrix<base_type > &B,                                \
          dense_matrix<base_type > &C, rcmult) {                            \
     dense_matrix<base_type > &A =                                          \
-                          *(dense_matrix<base_type > *)(linalg_origin(_A));\
+                          *(dense_matrix<base_type > *)                    \
+                          (const_cast<void *>(linalg_origin(_A)));         \
     const char t = 'T', u = 'N';                                           \
     int m = mat_ncols(A), k = mat_nrows(A), n = mat_ncols(B), lda = k;     \
     int ldb = k, ldc = m;                                                  \
@@ -507,7 +510,8 @@ namespace gmm {
          const transposed_col_ref<is_const dense_matrix<base_type > *> &_B,\
          dense_matrix<base_type > &C, c_mult) {                            \
     dense_matrix<base_type > &B =                                          \
-                          *(dense_matrix<base_type > *)(linalg_origin(_B));\
+                          *(dense_matrix<base_type > *)                    \
+                          (const_cast<void *>(linalg_origin(_B)));         \
     const char t = 'N', u = 'T';                                           \
     int m = mat_nrows(A), lda = m, k = mat_ncols(A), n = mat_nrows(B);     \
     int ldb = n, ldc = m;                                                  \
@@ -535,9 +539,11 @@ namespace gmm {
         const transposed_col_ref<isB_const dense_matrix<base_type > *> &_B,\
         dense_matrix<base_type > &C, r_mult) {                             \
     dense_matrix<base_type > &A =                                          \
-                          *(dense_matrix<base_type > *)(linalg_origin(_A));\
+                          *(dense_matrix<base_type > *)                    \
+                          (const_cast<void *>(linalg_origin(_A)));         \
     dense_matrix<base_type > &B =                                          \
-                          *(dense_matrix<base_type > *)(linalg_origin(_B));\
+                          *(dense_matrix<base_type > *)                    \
+                          (const_cast<void *>(linalg_origin(_B)));         \
     const char t = 'T', u = 'T';                                           \
     int m = mat_ncols(A), k = mat_nrows(A), n = mat_nrows(B), lda = k;     \
     int ldb = n, ldc = m;                                                  \
@@ -574,7 +580,8 @@ namespace gmm {
       const dense_matrix<base_type > &B,                                   \
       dense_matrix<base_type > &C, rcmult) {                               \
     dense_matrix<base_type > &A =                                          \
-                          *(dense_matrix<base_type > *)(linalg_origin(_A));\
+                          *(dense_matrix<base_type > *)                    \
+                          (const_cast<void *>(linalg_origin(_A)));         \
     const char t = 'C', u = 'N';                                           \
     int m = mat_ncols(A), k = mat_nrows(A), n = mat_ncols(B), lda = k;     \
     int ldb = k, ldc = m;                                                  \
@@ -597,7 +604,8 @@ namespace gmm {
       const conjugated_col_matrix_const_ref<dense_matrix<base_type > > &_B,\
       dense_matrix<base_type > &C, c_mult) {                               \
     dense_matrix<base_type > &B =                                          \
-                          *(dense_matrix<base_type > *)(linalg_origin(_B));\
+                          *(dense_matrix<base_type > *)                    \
+                          (const_cast<void *>(linalg_origin(_B)));         \
     const char t = 'N', u = 'C';                                           \
     int m = mat_nrows(A), lda = m, k = mat_ncols(A), n = mat_nrows(B);     \
     int ldb = n, ldc = m;                                                  \
@@ -621,9 +629,11 @@ namespace gmm {
       const conjugated_col_matrix_const_ref<dense_matrix<base_type > > &_B,\
       dense_matrix<base_type > &C, r_mult) {                               \
     dense_matrix<base_type > &A =                                          \
-                          *(dense_matrix<base_type > *)(linalg_origin(_A));\
+                          *(dense_matrix<base_type > *)                    \
+                          (const_cast<void *>(linalg_origin(_A)));         \
     dense_matrix<base_type > &B =                                          \
-                          *(dense_matrix<base_type > *)(linalg_origin(_B));\
+                          *(dense_matrix<base_type > *)                    \
+                          (const_cast<void *>(linalg_origin(_B)));         \
     const char t = 'C', u = 'C';                                           \
     int m = mat_ncols(A), k = mat_nrows(A), lda = k, n = mat_nrows(B);     \
     int ldb = n, ldc = m;                                                  \

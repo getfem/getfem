@@ -3,10 +3,6 @@
 eval 'exec perl -S $0 "$@"'
   if 0;
 
-# à ajouter : - les matrices csr et csc (et les interfaces ?)
-#             - Quand les vecteurs ou les matrices sont creux,
-#               les intialiser au moins une fois sur deux réellement creux.
-
 sub numerique { $a <=> $b; }
 
 
@@ -96,7 +92,9 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
   while ($tests_list) {
     ($org_name, $tests_list) = split('\s', $tests_list, 2);
 
-    print "\nTest $iter for $org_name\n";
+    if ($nb_iter == 1) { print "Testing  $org_name\n"; }
+    else { print "\nTest $iter for $org_name\n"; }
+
     $d = $org_name;
     do { ($b, $d) = split('/', $d, 2); } while ($d);
     $dest_name = "auto_$b";
@@ -142,7 +140,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 
 
     $NB_TYPES = 4.0;
-    if ($fix_base_type == -1) { $TYPE = $TYPES[int($NB_TYPES * rand)]; }
+    if ($fix_base_type == -1) { $TYPE = $TYPES[int($NB_TYPES * rand())]; }
     else { $TYPE = $TYPES[$fix_base_type]; }
 
     $VECTOR_TYPES[0] = "std::vector<$TYPE> ";
@@ -165,8 +163,8 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     $NB_MATRIX_TYPES = 10.0;
 
     while ($li = <DATAF>) { print TMPF $li; }
-    $sizep = int($size_max*rand);
-    $theseed = int(10000.0*rand);
+    $sizep = int($size_max*rand());
+    $theseed = int(10000.0*rand());
     print "Parameters for the test:\n";
     print TMPF "\n\n\n";
     print TMPF "int main(void) {\n\n";
@@ -178,26 +176,26 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     print TMPF "  dal::exception_callback::set_exception_callback(&cb);\n\n";
     print TMPF "  try {\n\n";
     for ($j = 0; $j < $nb_param; ++$j) {
-      $a = rand; $b = rand;
+      $a = rand(); $b = rand();
       if ($with_lapack) { $a = $b = 1.0; }
-      $sizepp = $sizep + int(50.0*rand);
+      $sizepp = $sizep + int(50.0*rand());
       $step = $sizep; if ($step == 0) { ++$step; }
-      $step = int(1.0*int($sizepp/$step - 1)*rand) + 1;
+      $step = int(1.0*int($sizepp/$step - 1)*rand()) + 1;
 
       if (($param[$j] == 1) || ($param[$j] == 2)) { # vectors
 	$lt = $VECTOR_TYPES[0];
 	if ($param[$j] == 2 && $with_lapack==0) {
-	  $lt = $VECTOR_TYPES[int($NB_VECTOR_TYPES * rand)];
+	  $lt = $VECTOR_TYPES[int($NB_VECTOR_TYPES * rand())];
 	}
 	if ($a < 0.1) {
 	  $li = "    $lt param$j($sizepp);";
-	  $c = int(1.0*($sizepp-$sizep+1)*rand);
+	  $c = int(1.0*($sizepp-$sizep+1)*rand());
 	  $param_name[$j]
 	    = "gmm::sub_vector(param$j, gmm::sub_interval($c, $sizep))";
 	}
 	elsif ($a < 0.2) {
 	  $li = "    $lt param$j($sizepp);";
-	  $c = int(1.0*($sizepp-($sizep*$step+1))*rand);
+	  $c = int(1.0*($sizepp-($sizep*$step+1))*rand());
 	  $param_name[$j]
 	    = "gmm::sub_vector(param$j, gmm::sub_slice($c, $sizep, $step))";
 	}
@@ -221,13 +219,13 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 	print TMPF "$li\n    gmm::fill_random(param$j);\n";
       }
       elsif ($param[$j] == 3 || $param[$j] == 4) { # matrices
-	$sm = $sizep; if ($a < 0.3) { $sm = $sizep + int(50.0*rand); }
-	$s = $sizep; if ($param[$j] == 3) { $s = int($size_max*rand); }
-	$sn = $s; if ($b < 0.3) { $sn = $s + int(50.0*rand); }
+	$sm = $sizep; if ($a < 0.3) { $sm = $sizep + int(50.0*rand()); }
+	$s = $sizep; if ($param[$j] == 3) { $s = int($size_max*rand()); }
+	$sn = $s; if ($b < 0.3) { $sn = $s + int(50.0*rand()); }
 	$param_name[$j] = "param$j";
 	$lt = $MATRIX_TYPES[0];
 	if ($with_lapack==0) {
-	  $lt = $MATRIX_TYPES[int($NB_MATRIX_TYPES * rand)];
+	  $lt = $MATRIX_TYPES[int($NB_MATRIX_TYPES * rand())];
 	}
 	$li = "    $lt param$j($sm, $sn);";
 	
@@ -235,13 +233,13 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 	  $sub1 = "gmm::sub_interval(0, $sizep)";
 	  $sub2 = "gmm::sub_interval(0, $s)";
 	  if ($a < 0.1) {
-	    $c = int(1.0*($sm-$sizep+1)*rand);
+	    $c = int(1.0*($sm-$sizep+1)*rand());
 	    $sub1 = "gmm::sub_interval($c, $sizep)";
 	  }
 	  elsif ($a < 0.2) {
 	    $step = $sizep; if ($step == 0) { ++$step; }
-	    $step = int(1.0*int($sm/$step - 1)*rand) + 1;
-	    $c = int(1.0*($sm-($sizep*$step+1))*rand);
+	    $step = int(1.0*int($sm/$step - 1)*rand()) + 1;
+	    $c = int(1.0*($sm-($sizep*$step+1))*rand());
 	    $sub1 = "gmm::sub_slice($c, $sizep, $step)";
 	  }
 	  elsif ($a < 0.3) {
@@ -257,13 +255,13 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 	    $sub1 = "gmm::sub_index(&param_t$j [0], &param_t$j [$sizep])";
 	  }
 	  if ($b < 0.1) {
-	    $c = int(1.0*($sn-$s+1)*rand);
+	    $c = int(1.0*($sn-$s+1)*rand());
 	    $sub2 = "gmm::sub_interval($c, $s)";
 	  }
 	  elsif ($b < 0.2) {
 	    $step = $s; if ($step == 0) { ++$step; }
-	    $step = int(1.0*int($sn/$step - 1)*rand) + 1;
-	    $c = int(1.0*($sn-($s*$step+1))*rand);
+	    $step = int(1.0*int($sn/$step - 1)*rand()) + 1;
+	    $c = int(1.0*($sn-($s*$step+1))*rand());
 	    $sub2 = "gmm::sub_slice($c, $s, $step)";
 	  }
 	  elsif ($b < 0.3) {
@@ -280,8 +278,12 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 	  }
 	  $param_name[$j] = "gmm::sub_matrix(param$j, $sub1, $sub2)";
 	}
-
-	print TMPF "$li\n    gmm::fill_random(param$j);\n";
+	if (1.0 * rand() < 0.5) {
+	  print TMPF "$li\n    gmm::fill_random(param$j);\n";
+	}
+	else {
+	  print TMPF "$li\n    gmm::fill_random(param$j, 0.2);\n";
+	}
 	$sizep = $s;
       }
       print "$li ($param_name[$j])\n";
@@ -302,7 +304,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
       print `make $root_name CPPFLAGS=\"-I$srcdir/../src -I$srcdir/../include -I../src  -I../include -lblas -llapack -lg2c -DGMM_USES_LAPACK\"`;
     }
     elsif ($with_qd) {
-      print `make $root_name CPPFLAGS=\"-I$srcdir/../src -I$srcdir/../include -I../src -I../include -lqd\"`;
+      print `make $root_name LDFLAGS=\" -lqd -lm\" CPPFLAGS=\"-I$srcdir/../src -I$srcdir/../include -I../src -I../include \"`;
     }
     else {
       print `make $root_name CPPFLAGS=\"-I$srcdir/../src -I$srcdir/../include -I../src -I../include \"`;
@@ -327,7 +329,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
       print "******************************************************\n";
       exit(1);
     }
-    `rm -f $dest_name`;
+#    `rm -f $dest_name`;
 
   }
 

@@ -191,7 +191,7 @@ namespace gmm {
                          MAT *>::return_type
   mat_col(MAT &m, size_type i)
   { return linalg_traits<MAT>::col(mat_col_begin(m) + i); }
-
+  
   template <class MAT> inline
   typename linalg_traits<MAT>::const_sub_col_type
   mat_const_col(const MAT &m, size_type i)
