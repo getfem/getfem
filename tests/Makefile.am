@@ -47,6 +47,7 @@ EXTRA_DIST = \
 	$(TESTS) \
 	laplacian.param \
 	elasto_statique.param \
-	test_link_fem.param
+	test_link_fem.param \
+	geo_tran_inv.param
 
 TESTS_ENVIRONMENT = perl

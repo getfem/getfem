@@ -1,5 +1,5 @@
 $er = 0;
-open F, "geo_trans_inv 2>&1 |" or die;
+open F, "geo_trans_inv geo_trans_inv.param 2>&1 |" or die;
 while (<F>) {
   # print $_;
   if ($_ =~ /error has been detected/)
@@ -10,5 +10,5 @@ while (<F>) {
   }
 }
 if ($er == 1) { exit(1); }
-`geo_trans_inv`;
+`geo_trans_inv geo_trans_inv.param`;
 if ($?) { exit(1); }
