@@ -225,6 +225,8 @@ namespace gmm {
       typename linalg_traits<V>::storage_type>::vector_type vector_type;
   };
   
+  // à spécifier suivant le type de la référence
+
   template <class V, class SUBI> inline
   typename sub_vector_type<const V *, SUBI>::vector_type
   sub_vector(const V &v, const SUBI &si) {

@@ -252,7 +252,7 @@ namespace getfem
         ic = dal::abs(atoi(tmp));
 	if (ncv.is_in(ic)) 
 	  DAL_THROW(failure_error,
-		    "Negativ or repeated index, loading aborted.");
+		    "Negative or repeated index, loading aborted.");
 	ncv.add(ic);
 	ftool::get_token(ist, tmp, 1023);
 	

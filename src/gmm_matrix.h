@@ -41,9 +41,11 @@ namespace gmm
   struct identity_matrix {};
 
   template <class V1, class V2> inline
-  void mult(const identity_matrix&, const V1 &v1, V2 &v2) { copy(v1, v2); }
+  void mult(const identity_matrix&, const V1 &v1, V2 &v2)
+  { copy(v1, v2); }
   template <class V1, class V2> inline
-  void mult(const identity_matrix&, const V1 &v1, const V2 &v2) { copy(v1, v2); }
+  void mult(const identity_matrix&, const V1 &v1, const V2 &v2) 
+  { copy(v1, v2); }
   template <class V1, class V2, class V3> inline
   void mult(const identity_matrix&, const V1 &v1, const V2 &v2, V3 &v3)
   { add(v1, v2, v3); }

@@ -84,11 +84,24 @@ namespace gmm {
     return 0;
   }
 
+  template <class Matrix, class Matps, class Precond, 
+            class Vector1, class Vector2>
+  int cg(const Matrix& A, const Vector1& x, const Vector2& b, const Matps& PS,
+	 const Precond &P, int itemax, double residu, int noisy = 1)
+  { cg(A, linalg_cast(x), b, PS, P, itemax, residu, noisy); }
+
   template <class Matrix,  class Vector1, class Vector2> inline
   int cg(const Matrix& A, Vector1& x, const Vector2& b,
 	 int itemax, double residu, int noisy = 1) {
     return cg(A, x, b, identity_matrix(), identity_matrix(), itemax,
 	      residu, noisy);
+  }
+  
+  template <class Matrix,  class Vector1, class Vector2> inline
+  int cg(const Matrix& A, const Vector1& x, const Vector2& b,
+	 int itemax, double residu, int noisy = 1) {
+    return cg(A, linalg_cast(x), b, identity_matrix(), identity_matrix(),
+	      itemax, residu, noisy);
   }
   
 }

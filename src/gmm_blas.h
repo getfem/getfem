@@ -71,20 +71,22 @@ namespace gmm {
   inline const void *linalg_origin(const L &l)
   { return linalg_traits<L>().origin(l); }  
 
+  // à spécifier suivant le type de la référence
+
+//   template <class V> inline
+//   typename select_return<typename linalg_traits<V>::const_iterator, typename linalg_traits<V>::iterator, const V *>::return_type vect_begin(const V &v) {
+//     return linalg_traits<V>().begin(linalg_cast(v));
+//   }
+
+
+
+
   template <class V>
   inline typename linalg_traits<V>::const_iterator vect_begin(const V &v)
   { return linalg_traits<V>().const_begin(v); }
 
   template <class V>
   inline typename linalg_traits<V>::const_iterator vect_end(const V &v)
-  { return linalg_traits<V>().const_end(v); }
-
-  template <class V>
-  inline typename linalg_traits<V>::const_iterator vect_const_begin(const V &v)
-  { return linalg_traits<V>().const_begin(v); }
-
-  template <class V>
-  inline typename linalg_traits<V>::const_iterator vect_const_end(const V &v)
   { return linalg_traits<V>().const_end(v); }
 
   template <class V>
@@ -95,6 +97,15 @@ namespace gmm {
   inline typename linalg_traits<V>::iterator vect_end(V &v)
   { return linalg_traits<V>().end(v); }
 
+
+  template <class V>
+  inline typename linalg_traits<V>::const_iterator vect_const_begin(const V &v)
+  { return linalg_traits<V>().const_begin(v); }
+
+  template <class V>
+  inline typename linalg_traits<V>::const_iterator vect_const_end(const V &v)
+  { return linalg_traits<V>().const_end(v); }
+// à spécifier suivant le type de la référence
   template <class MAT> inline 
   typename linalg_traits<MAT>::const_sub_row_type
   mat_row(const MAT &m, size_type i)
@@ -128,12 +139,15 @@ namespace gmm {
   template <class L> inline void clear(L &l)
   { return linalg_traits<L>().do_clear(l); }
 
+  template <class L> inline void clear(const L &l)
+  { return linalg_traits<L>().do_clear(linalg_cast(l)); }
+
   template <class L> inline
     scaled_vector_const_ref<L> scaled(const L &l,
 				      typename linalg_traits<L>::value_type x)
   { return scaled_vector_const_ref<L>(l, x); }
   
-
+// à spécifier suivant le type de la référence
   template <class TYPE, class PT> struct transposed_return;
   template <class PT> struct transposed_return<abstract_vector, PT>
   { typedef vect_transposed_ref<PT> ret_type; };
@@ -454,13 +468,14 @@ namespace gmm {
   /*		Clean                                    		  */
   /* ******************************************************************** */
 
-  template <class L> inline void clean(L &l, double seuil) {
-    clean(l, seuil, typename linalg_traits<L>::linalg_type());
-  }
+  template <class L> inline void clean(L &l, double seuil)
+  { clean(l, seuil, typename linalg_traits<L>::linalg_type()); }
 
-  template <class L> inline void clean(L &l, double seuil, abstract_vector) {
-    clean(l, seuil, typename linalg_traits<L>::storage_type());
-  }
+  template <class L> inline void clean(const L &l, double seuil)
+  { clean(linalg_cast(l), seuil);}
+
+  template <class L> inline void clean(L &l, double seuil, abstract_vector)
+  { clean(l, seuil, typename linalg_traits<L>::storage_type()); }
 
   template <class L> void clean(L &l, double seuil, abstract_plain) {
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
@@ -508,13 +523,7 @@ namespace gmm {
   }
 
   template <class L1, class L2> inline
-  void copy(const L1& l1, const L2& l2) {
-    copy_ref(l1, l2, typename linalg_traits<L2>::is_reference());
-  }
-
-  template <class L1, class L2> inline
-  void copy_ref(const L1& l1, const L2& l2, linalg_true)
-  { copy(l1, const_cast<L2&>(l2)); }
+  void copy(const L1& l1, const L2& l2) { copy(l1, linalg_cast(l2)); }
 
   template <class L1, class L2>
   void copy(const L1& l1, L2& l2, abstract_vector, abstract_vector) {
@@ -718,13 +727,7 @@ namespace gmm {
   }
 
   template <class L1, class L2> inline
-  void add(const L1& l1, const L2& l2) {
-    add_ref(l1, l2, typename linalg_traits<L2>::is_reference());
-  }
-
-  template <class L1, class L2> inline
-  void add_ref(const L1& l1, const L2& l2, linalg_true)
-  { add(l1, const_cast<L2 &>(l2)); }
+  void add(const L1& l1, const L2& l2) { add(l1, linalg_cast(l2)); }
 
   template <class L1, class L2>
     void add_spec(const L1& l1, L2& l2, abstract_vector) {
@@ -749,13 +752,8 @@ namespace gmm {
   }
 
   template <class L1, class L2, class L3> inline
-  void add(const L1& l1, const L2& l2, const L3& l3) {
-    add_ref(l1, l2, l3, typename linalg_traits<L3>::is_reference());
-  }
-
-  template <class L1, class L2, class L3> inline
-  void add_ref(const L1& l1, const L2& l2, const L3& l3, linalg_true)
-  { add(l1, l2, const_cast<L3 &>(l3)); }
+  void add(const L1& l1, const L2& l2, const L3& l3)
+  { add(l1, l2, linalg_cast(l3)); }
 
   template <class IT1, class IT2, class IT3> inline
     void _add_full(IT1 it1, IT2 it2, IT3 it3, IT3 ite) {
@@ -878,173 +876,6 @@ namespace gmm {
   void add(const L1&, L2&, abstract_plain, abstract_sparse)
   { DAL_THROW(failure_error,"Unauthorized addition"); } 
 
-  /* ******************************************************************** */
-  /*		Vector Substraction                                    	  */
-  /* ******************************************************************** */
-  
-  template <class L1, class L2> inline
-    void sub(const L1& l1, L2& l2) {
-      sub_spec(l1, l2, typename linalg_traits<L2>::linalg_type());
-  }
-
-  template <class L1, class L2> inline
-  void sub(const L1& l1, const L2& l2) {
-    sub_ref(l1, l2, typename linalg_traits<L2>::is_reference());
-  }
-
-  template <class L1, class L2> inline
-  void sub_ref(const L1& l1, const L2& l2, linalg_true)
-  { sub(l1, const_cast<L2 &>(l2)); }
-
-  template <class L1, class L2>
-    void sub_spec(const L1& l1, L2& l2, abstract_vector) {
-    if (vect_size(l1) != vect_size(l2))
-      DAL_THROW(dimension_error,"dimensions mismatch");
-    sub(l1, l2, typename linalg_traits<L1>::storage_type(),
-	typename linalg_traits<L2>::storage_type());
-  }
-
-  template <class L1, class L2, class L3>
-    void sub(const L1& l1, const L2& l2, L3& l3) {
-    if (vect_size(l1) != vect_size(l2) || vect_size(l1) != vect_size(l3))
-      DAL_THROW(dimension_error,"dimensions mismatch"); 
-    if ((const void *)(&l1) == (const void *)(&l3))
-      sub(l2, l3);
-    else
-      sub(l1, l2, l3, typename linalg_traits<L1>::storage_type(),
-	  typename linalg_traits<L2>::storage_type(),
-	  typename linalg_traits<L3>::storage_type());
-  }
-
-  template <class L1, class L2, class L3> inline
-  void sub(const L1& l1, const L2& l2, const L3& l3) {
-    sub_ref(l1, l2, l3, typename linalg_traits<L3>::is_reference());
-  }
-
-  template <class L1, class L2, class L3> inline
-  void sub_ref(const L1& l1, const L2& l2, const L3& l3, linalg_true)
-  { sub(l1, l2, const_cast<L3 &>(l3)); }
-
-  template <class IT1, class IT2, class IT3> inline
-    void _sub_full(IT1 it1, IT2 it2, IT3 it3, IT3 ite) {
-    for (; it3 != ite; ++it3, ++it2, ++it1) *it3 = *it1 - *it2;
-  }
-
-  template <class IT1, class IT2, class IT3>
-    void _sub_almost_full(IT1 it1, IT1 ite1, IT2 it2, IT3 it3, IT3 ite3) {
-    IT3 it = it3;
-    for (; it != ite3; ++it, ++it2) *it = *it2;
-    for (; it1 != ite1; ++it1)
-      if (it1.index() != size_type(-1)) *(it3 + it1.index()) -= *it1;
-  }
-
-  template <class IT1, class IT2, class IT3> inline
-  void _sub_to_full(IT1 it1, IT1 ite1, IT2 it2, IT2 ite2,
-		    IT3 it3, IT3 ite3) {
-    IT3 it = it3;
-    for (; it != ite3; ++it) *it = 0;
-    for (; it1 != ite1; ++it1)
-      if (it1.index() != size_type(-1)) *(it3 + it1.index()) = *it1;
-    for (; it2 != ite2; ++it2)
-      if (it2.index() != size_type(-1)) *(it3 + it2.index()) -= *it2;    
-  }
-  
-  template <class L1, class L2, class L3> inline
-  void sub(const L1& l1, const L2& l2, L3& l3,
-	   abstract_plain, abstract_plain, abstract_plain) {
-    _sub_full(vect_begin(l1), vect_begin(l2),
-	      vect_begin(l3), vect_end(l3));
-  }
-  
-  template <class L1, class L2, class L3> inline
-  void sub(const L1& l1, const L2& l2, L3& l3,
-	   abstract_sparse, abstract_plain, abstract_plain) {
-    _sub_almost_full(vect_begin(l1), vect_end(l1), vect_begin(l2),
-		     vect_begin(l3), vect_end(l3));
-  }
-  
-  template <class L1, class L2, class L3> inline
-  void sub(const L1& l1, const L2& l2, L3& l3,
-	   abstract_plain, abstract_sparse, abstract_plain) {
-    _sub_almost_full(vect_begin(l2), vect_end(l2), vect_begin(l1),
-		     vect_begin(l3), vect_end(l3));
-  }
-  
-  template <class L1, class L2, class L3> inline
-  void sub(const L1& l1, const L2& l2, L3& l3,
-	   abstract_sparse, abstract_sparse, abstract_plain) {
-    _sub_to_full(vect_begin(l1), vect_end(l1),
-		 vect_begin(l2), vect_end(l2),
-		 vect_begin(l3), vect_end(l3));
-  }
-  
-  template <class L1, class L2, class L3> inline
-  void sub(const L1& l1, const L2& l2, L3& l3,
-	   abstract_sparse, abstract_sparse, abstract_sparse) {
-    typename linalg_traits<L1>::const_iterator
-      it1 = vect_begin(l1), ite1 = vect_end(l1);
-    typename linalg_traits<L2>::const_iterator
-      it2 = vect_begin(l2), ite2 = vect_end(l2);
-    clear(l3);
-    while (it1 != ite1 && it2 != ite2) {
-      while (it1.index() == size_type(-1) && it1 != ite1) ++it1;
-      while (it2.index() == size_type(-1) && it2 != ite2) ++it2;
-      ptrdiff_t d = it1.index() - it2.index();
-      if (d < 0)
-	{ l3[it1.index()] -= *it1; ++it1; }
-      else if (d > 0)
-	{ l3[it2.index()] -= *it2; ++it2; }
-      else
-	{ l3[it1.index()] = *it1 - *it2; ++it1; ++it2; }
-    }
-    for (; it1 != ite1; ++it1) l3[it1.index()] -= *it1;
-    for (; it2 != ite2; ++it2) l3[it2.index()] -= *it2;   
-  }
-  
-  template <class L1, class L2, class L3> inline
-  void sub(const L1&, const L2&, L3&,
-	   abstract_plain, abstract_sparse, abstract_sparse)
-  { DAL_THROW(failure_error,"Unauthorized substraction"); }
-  template <class L1, class L2, class L3> inline
-  void sub(const L1&, const L2&, L3&,
-	   abstract_plain, abstract_plain, abstract_sparse)
-  { DAL_THROW(failure_error,"Unauthorized substraction"); }
-  template <class L1, class L2, class L3> inline
-  void sub(const L1&, const L2&, L3&,
-	   abstract_sparse, abstract_plain, abstract_sparse)
-  { DAL_THROW(failure_error,"Unauthorized substraction"); }
-  
-  template <class L1, class L2> inline
-  void sub(const L1& l1, L2& l2,
-	   abstract_plain, abstract_plain) {
-    typename linalg_traits<L1>::const_iterator
-      it1 = vect_begin(l1); 
-    typename linalg_traits<L2>::iterator
-      it2 = vect_begin(l2), ite = vect_end(l2);
-    for (; it2 != ite; ++it2, ++it1) *it2 -= *it1;
-  }
-  
-  template <class L1, class L2> inline
-  void sub(const L1& l1, L2& l2,
-	   abstract_sparse, abstract_plain) {
-    typename linalg_traits<L1>::const_iterator
-      it1 = vect_begin(l1), ite1 = vect_end(l1);
-    for (; it1 != ite1; ++it1) 
-      if (it1.index() != size_type(-1)) l2[it1.index()] -= *it1;
-  }
-  
-  template <class L1, class L2> inline
-  void sub(const L1& l1, L2& l2,
-	   abstract_sparse, abstract_sparse) {
-    typename linalg_traits<L1>::const_iterator
-      it1 = vect_begin(l1), ite1 = vect_end(l1);
-    for (; it1 != ite1; ++it1) 
-      if (it1.index() != size_type(-1)) l2[it1.index()] -= *it1;
-  }
-  
-  template <class L1, class L2> inline
-  void sub(const L1&, L2&, abstract_plain, abstract_sparse)
-  { DAL_THROW(failure_error,"Unauthorized substaction"); } 
 
   /* ******************************************************************** */
   /*		scale                                    	          */
@@ -1058,11 +889,7 @@ namespace gmm {
 
   template <class L> inline
   void scale(const L& l, typename linalg_traits<L>::value_type a)
-  { scale_const(l, a, typename linalg_traits<L>::is_reference()); }
-
-  template <class L> inline
-  void scale_const(const L& l, linalg_true)
-  { scale_const(const_cast<L &>(l), a); }
+  { scale(linalg_cast(l), a); }
 
 
   /* ******************************************************************** */
@@ -1088,13 +915,8 @@ namespace gmm {
   }
 
   template <class L1, class L2, class L3> inline
-  void mult(const L1& l1, const L2& l2, const L3& l3) {
-    mult_const(l1, l2, l3, typename linalg_traits<L3>::is_reference());
-  }
-
-  template <class L1, class L2, class L3> inline
-  void mult_const(const L1& l1, const L2& l2, const L3& l3, linalg_true)
-  { mult(l1, l2, const_cast<L3 &>(l3)); }
+  void mult(const L1& l1, const L2& l2, const L3& l3)
+  { mult_const(l1, l2, linalg_cast(l3)); }
 
   template <class L1, class L2, class L3> inline
   void mult_by_row(const L1& l1, const L2& l2, L3& l3, abstract_sparse) {
@@ -1170,14 +992,8 @@ namespace gmm {
   }
   
   template <class L1, class L2, class L3, class L4> inline
-  void mult(const L1& l1, const L2& l2, const L3& l3, const L4& l4) {
-    mult_const(l1, l2, l3, l4, typename linalg_traits<L3>::is_reference());
-  }
-
-  template <class L1, class L2, class L3, class L4> inline
-  void mult_const(const L1& l1, const L2& l2, const L3& l3,
-		  const L4& l4, linalg_true)
-  { mult(l1, l2, l3, const_cast<L4 &>(l4)); }
+  void mult(const L1& l1, const L2& l2, const L3& l3, const L4& l4)
+  { mult_const(l1, l2, l3, linalg_cast(l4)); }
 
   template <class L1, class L2, class L3, class L4> inline
   void mult_by_row(const L1& l1, const L2& l2, const L3& l3,

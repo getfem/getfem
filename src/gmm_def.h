@@ -49,12 +49,12 @@ namespace gmm {
   /*		Specifier types                             		  */
   /* ******************************************************************** */
 
-  
-
   struct abstract_null_type {}; // specify an information lake.
 
   struct linalg_true {};
   struct linalg_false {};
+  struct linalg_const {};
+  struct linalg_modifiable {};
 
   struct abstract_vector {};
   struct abstract_matrix {};
@@ -108,6 +108,46 @@ namespace gmm {
   { typedef const P* pointer; };
   template <class P> struct const_pointer<const P *>
   { typedef const P* pointer; };
+
+
+  /* ******************************************************************** */
+  /*  type to deal with const object representing a modifiable reference  */
+  /* ******************************************************************** */
+  
+  template <class PT, class R> struct _mref_type;
+
+  template <class L, class R> struct _mref_type<L *, R>
+  { typedef L & return_type; };
+  template <class L, class R> struct _mref_type<const L *, R>
+  { typedef const L & return_type; };
+  template <class L> struct _mref_type<L *, linalg_const>
+  { typedef const L & return_type; };
+  template <class L> struct _mref_type<const L *, linalg_true> // à remplacer par linalg_modifiable
+  { typedef L & return_type; };
+
+  template <class PT> struct mref_type {
+    typedef typename std::iterator_traits<PT>::value_type L;
+    typedef typename _mref_type<PT, 
+      typename linalg_traits<L>::is_reference>::return_type return_type;
+  };
+
+  template <class L> typename mref_type<const L *>::return_type 
+  linalg_cast(const L &l)
+  { return const_cast<typename mref_type<const L *>::return_type>(l); }
+  template <class L> typename mref_type<L *>::return_type linalg_cast(L &l)
+  { return const_cast<typename mref_type<L *>::return_type>(l); }
+
+  template <class C1, class C2, class REF> struct _select_return;
+  template <class C1, class C2, class L>
+  struct _select_return<C1, C2, const L &> { typedef C1 return_type; };
+  template <class C1, class C2, class L>
+  struct _select_return<C1, C2, L &> { typedef C2 return_type; };
+  template <class C1, class C2, class PT> struct select_return {
+    typedef typename std::iterator_traits<PT>::value_type L;
+    typedef typename _select_return<C1, C2, 
+      typename mref_type<PT>::return_type>::return_type return_type;
+  };
+
   
   /* ******************************************************************** */
   /*		Operations on scalars                         		  */
