@@ -165,7 +165,7 @@ while($listeC)
   }
   else
   {
-    print MAKEFILE "\t", 'cd ../lib; $(CPLUS) $(COPT)  -c $(INCLUDES)', "..\/getfem++\/$fi -o $fi1.o", '; mex -O $(INCLUDES) libgetfem.so ', "..\/getfem++\/$fi -o $fi1\n";
+    print MAKEFILE "\t", 'cd ../lib; $(CPLUS) $(COPT)  -c $(INCLUDES)', "..\/getfem++\/$fi -o $fi1.o; rm -f $fi1*", '; mex -O $(INCLUDES) libgetfem.so ', "..\/getfem++\/$fi -o $fi1\n";
   }
 }
 
