@@ -54,6 +54,8 @@ namespace bgeot
 
       typedef dal::tab_ref_index_ref< typename PT_TAB::const_iterator,
                      ref_mesh_point_ind_ct::const_iterator> ref_mesh_pt_ct;
+      typedef dal::tab_ref_index_ref< typename PT_TAB::const_iterator, 
+                     ind_ref_mesh_point_ind_ct::const_iterator> ref_mesh_face_pt_ct;
       typedef bgeot::convex<PT, ref_mesh_pt_ct> ref_convex;
 
 
@@ -72,11 +74,21 @@ namespace bgeot
       /* acces aux points directeurs non fait : le faire d'abord dans      */
       /* bgeot_mesh_structure avec container adapte.                       */
 
-      ref_mesh_pt_ct points_of_convex(size_type ic) const 
-      {
-	ref_mesh_point_ind_ct rct = ind_points_of_convex(ic);
-	return ref_mesh_pt_ct(pts.begin(), rct.begin(), rct.end());
+      /**
+	  returns a (pseudo)container of the points of a given convex 
+      */
+      ref_mesh_pt_ct points_of_convex(size_type ic) const {
+        ref_mesh_point_ind_ct rct = ind_points_of_convex(ic);
+        return ref_mesh_pt_ct(pts.begin(), rct.begin(), rct.end());
       } 
+    
+      /** 
+	  returns a (pseudo)container of points of face of a given convex 
+      */
+      ref_mesh_face_pt_ct points_of_face_of_convex(size_type ic, size_type f) const {
+        ind_ref_mesh_point_ind_ct rct = ind_points_of_face_of_convex(ic,f);
+        return ref_mesh_face_pt_ct(pts.begin(), rct.begin(), rct.end());
+      }
 
       PT dir_point_of_convex(size_type ic, size_type j) const
       {	return pts[ind_dir_point_of_convex(ic, j)]; }
