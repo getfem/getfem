@@ -1,12 +1,23 @@
-#!/bin/sh
 
-cd ~/source++/getfem++
-cvsstat
-cd ~/source++/getfem_matlab
-cvsstat
-cd ~/source++/getfem_apps
-cvsstat
-cd ~/source++/getfem_html
-cvsstat
+# -*- perl -*-
+eval 'exec perl -S $0 "$@"'
+  if 0;
+
+$root = "source++";
+if ($ENV{HOME} =~ /pommier/) {
+  $root = "getfem";
+}
+
+print "Check all modifications in getfem++\n";
+print `cd ~/$root/getfem++; cvsstat`;
+print "Check all modifications in getfem_matlab\n";
+print `cd ~/$root/getfem_matlab; cvsstat`;
+print "Check all modifications in getfem_apps\n";
+print `cd ~/$root/getfem_apps; cvsstat`;
+print "Check all modifications in getfem_html\n";
+print `cd ~/$root/getfem_html; cvsstat`;
+
+
+
 
 
