@@ -105,7 +105,7 @@ dnl             CXXFLAGS="$CXXFLAGS -LANG:std  -O3 -ansiW "
 	;;
 	
  g++* | c++)
-	GCCVER=`g++-2.95 --version | head -1 | cut -d ' ' -f3`
+	GCCVER=`$CXX --version | head -1 | cut -d ' ' -f3`
 	echo "Using the GNU g++ compiler $GCCVER"
 	case $GCCVER in
           2.95*)
