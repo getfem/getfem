@@ -111,7 +111,7 @@ namespace bgeot
 					   CONT1 &pftab, CONT2 &itab) {
     size_type N = pgt->structure()->dim(); /* dimension of the convex.*/
     size_type P = cv.points()[0].size(); /* dimension of the image.     */
-    base_node min(N), max(N);
+    base_node min(P), max(P);
     base_matrix a(P, pgt->nb_points());
     base_poly PO;
     base_node x(N), y(P);
@@ -120,7 +120,7 @@ namespace bgeot
     size_type nbpt = 0;
     dal::dynamic_array<size_type> pts;
 
-    min = max = pgt->geometric_nodes()[0];
+    min = max = cv.points()[0];
     for (size_type j = 0; j < pgt->nb_points(); ++j) // à optimiser !!
       for (size_type i = 0; i < P; ++i) { 
 	min[i] = std::min(min[i], cv.points()[j][i]);
