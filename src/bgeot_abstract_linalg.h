@@ -43,6 +43,9 @@
 //   . add : protection contre les écritures sur le même vecteur : contrôler
 //           les origines ...
 //   . faire scale et scaled sur les matrices aussi
+//   . it.index() pour les vecteurs creux peut renvoyer -1 : ne faut-il pas
+//       obliger l'iterateur à passer sur les -1 pour optimiser les cas ou
+//       on a jamais de -1 ?
 //
 
 // Inspired from M.T.L. (http://www.osl.iu.edu/research/mtl)
@@ -1201,7 +1204,8 @@ namespace bgeot {
     if (mat_ncols(l1) != vect_size(l2) || mat_nrows(l1) != vect_size(l3))
       DAL_THROW(dimension_error,"dimensions mismatch");
     if (linalg_origin(l2) != linalg_origin(l3))
-      mult_spec(l1, l2, l3, typename linalg_traits<L1>::sub_orientation());
+      mult_spec(l1, l2, l3, typename principal_orientation_type<typename
+		linalg_traits<L1>::sub_orientation>::potype());
     else {
       #ifdef __GETFEM_VERIFY
         cerr << "Warning, A temporary is used for mult\n";
@@ -1268,7 +1272,7 @@ namespace bgeot {
 	|| mat_nrows(l1) != vect_size(l4))
       DAL_THROW(dimension_error,"dimensions mismatch");
     if (linalg_origin(l2) != linalg_origin(l4))
-      mult_spec(l1, l2, l3, l4, typename linalg_traits<L1>::sub_orientation());
+      mult_spec(l1, l2, l3, l4, typename principal_orientation_type<typename linalg_traits<L1>::sub_orientation>::potype());
     else {
       #ifdef __GETFEM_VERIFY
         cerr << "Warning, A temporary is used for mult\n";
