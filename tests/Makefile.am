@@ -102,6 +102,7 @@ EXTRA_DIST = \
 	test_mat_elem.pl                  \
 	laplacian.param                   \
 	schwarz_additive.pl               \
+	schwarz_additive.param            \
 	elastostatic.param                \
 	test_link_fem.param               \
 	geo_trans_inv.param               \
