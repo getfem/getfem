@@ -1674,7 +1674,8 @@ namespace gmm {
       #ifdef __GETFEM_VERIFY
         DAL_WARNING(2, "A temporary is used for mult");
       #endif
-      L3 temp(mat_nrows(l3), mat_ncols(l3));
+      typename temporary_matrix<L3>::matrix_type
+	temp(mat_nrows(l3), mat_ncols(l3));
       mult_spec(l1, l2, temp, typename mult_t<
 		typename linalg_traits<L1>::sub_orientation,
 		typename linalg_traits<L2>::sub_orientation,

@@ -283,6 +283,9 @@ namespace gmm {
   { typedef wsvector<T> vector_type; };
 
   template <class T> class slvector;
+  template <class T> class dense_matrix;
+  template <class VECT> class row_matrix;
+  
 
   /* ******************************************************************** */
   /*   Selects a temporary vector type                                    */
@@ -319,6 +322,37 @@ namespace gmm {
 				       typename linalg_traits<V>::storage_type,
 				       typename linalg_traits<V>::linalg_type,
 				       V>::vector_type vector_type;
+  };
+
+  /* ******************************************************************** */
+  /*   Selects a temporary matrix type                                    */
+  /*   M if M is a valid matrix type,                                     */
+  /*   row_matrix<wsvector> if M is a reference on a sparse matrix,       */
+  /*   dense_matrix if M is a reference on a dense matrix.                */
+  /* ******************************************************************** */
+
+  
+  template <class R, class S, class L, class V> struct _temporary_matrix {
+    typedef abstract_null_type matrix_type;
+  };
+  template <class V, class L>
+  struct _temporary_matrix<linalg_true, abstract_sparse, L, V>
+  { typedef row_matrix<wsvector<typename linalg_traits<V>::value_type> > matrix_type; };
+  template <class V, class L>
+  struct _temporary_matrix<linalg_true, abstract_skyline, L, V>
+  { typedef row_matrix<slvector<typename linalg_traits<V>::value_type> > matrix_type; };
+  template <class V, class L>
+  struct _temporary_matrix<linalg_true, abstract_dense, L, V>
+  { typedef dense_matrix<typename linalg_traits<V>::value_type> matrix_type; };
+  template <class S, class V>
+  struct _temporary_matrix<linalg_false, S, abstract_matrix, V>
+  { typedef V matrix_type; };
+
+  template <class V> struct temporary_matrix {
+    typedef typename _temporary_matrix<typename is_a_reference<V>::reference,
+				       typename linalg_traits<V>::storage_type,
+				       typename linalg_traits<V>::linalg_type,
+				       V>::matrix_type matrix_type;
   };
 
   /* ******************************************************************** */

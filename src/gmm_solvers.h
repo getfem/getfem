@@ -63,7 +63,7 @@ namespace gmm {
 #include <gmm_solver_cheby.h>
 #include <gmm_solver_constrained_cg.h>
 #include <gmm_solver_Schwarz_additive.h>
-#include <gmm_given_rotation.h>
+#include <gmm_givens_rotation.h>
 #include <gmm_modified_gram_schmidt.h>
 #include <gmm_tri_solve.h>
 #include <gmm_solver_gmres.h>
