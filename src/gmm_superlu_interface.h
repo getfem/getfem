@@ -224,22 +224,23 @@ namespace gmm {
     typedef typename number_traits<T>::magnitude_type R;
 
     csc_matrix<T> csc_A;
-    SuperMatrix SA, SL, SU, SB, SX;
-    SuperLUStat_t stat;
-    superlu_options_t options;
-    std::vector<int> etree, perm_r, perm_c;
-    std::vector<R> Rscale, Cscale;
-    std::vector<R> ferr, berr;
-    std::vector<T> rhs, sol;
-    bool is_init;
-    char equed;
+    mutable SuperMatrix SA, SL, SB, SU, SX;
+    mutable SuperLUStat_t stat;
+    mutable superlu_options_t options;
+    mutable std::vector<int> etree, perm_r, perm_c;
+    mutable std::vector<R> Rscale, Cscale;
+    mutable std::vector<R> ferr, berr;
+    mutable std::vector<T> rhs;
+    mutable std::vector<T> sol;
+    mutable bool is_init;
+    mutable char equed;
 
   public :
     
     void free_supermatrix(void);
     template <class MAT> void build_with(const MAT &A,  int permc_spec = 3);
     template <typename VECTX, typename VECTB> 
-    void solve(const VECTX &X_, const VECTB &B);
+    void solve(const VECTX &X_, const VECTB &B) const;
     SuperLU_factor(void) { is_init = false; }
     ~SuperLU_factor() { free_supermatrix(); }
   };
@@ -320,7 +321,7 @@ namespace gmm {
     }
     
     template <class T> template <typename VECTX, typename VECTB> 
-    void SuperLU_factor<T>::solve(const VECTX &X_, const VECTB &B) {
+    void SuperLU_factor<T>::solve(const VECTX &X_, const VECTB &B) const {
       VECTX &X = const_cast<VECTX &>(X_);
       gmm::copy(B, rhs);
       options.Fact = FACTORED;

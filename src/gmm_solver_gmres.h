@@ -51,7 +51,7 @@ namespace gmm {
   void gmres(const Mat &A, Vec &x, const VecB &b, const Precond &M,
 	     int restart, iteration &outer, Basis& KS) {
 
-    typedef typename linalg_traits<Mat>::value_type T;
+    typedef typename linalg_traits<Vec>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
     
     R a, beta;
@@ -108,7 +108,7 @@ namespace gmm {
   template <typename Mat, typename Vec, typename VecB, typename Precond >
   void gmres(const Mat &A, Vec &x, const VecB &b,
 	     const Precond &M, int restart, iteration& outer) {
-    typedef typename linalg_traits<Mat>::value_type T;
+    typedef typename linalg_traits<Vec>::value_type T;
     modified_gram_schmidt<T> orth(restart, vect_size(x));
     gmres(A, x, b, M, restart, outer, orth); 
   }
