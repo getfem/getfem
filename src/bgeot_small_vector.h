@@ -213,7 +213,7 @@ namespace bgeot {
     }
     /* read-only access */
     const_pointer const_base() const { 
-      SVEC_ASSERT(id == 0 || refcnt()); return static_cast<const_pointer>(allocator().obj_data(id)); 
+      SVEC_ASSERT(id == 0 || refcnt()); return static_cast<pointer>(allocator().obj_data(id)); 
     }
     block_allocator& allocator() const { return alloc; }
     node_id allocate(size_type n) {

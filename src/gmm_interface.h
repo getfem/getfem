@@ -249,7 +249,13 @@ namespace gmm {
   template <typename IT, typename V>
   struct tab_ref_with_origin : public dal::tab_ref<IT> {
     typedef tab_ref_with_origin<IT, V> this_type;
-    typedef typename linalg_traits<this_type>::porigin_type porigin_type;
+    // next line replaced by the 4 following lines in order to please aCC
+    //typedef typename linalg_traits<this_type>::porigin_type porigin_type;
+    typedef typename linalg_traits<V>::origin_type origin_type;
+    typedef typename std::iterator_traits<IT>::pointer PT;
+    typedef typename select_ref<const origin_type *, origin_type *,
+				PT>::ref_type porigin_type;
+   
 
     porigin_type origin;
    
@@ -312,6 +318,9 @@ namespace gmm {
   struct tab_ref_reg_spaced_with_origin : public dal::tab_ref_reg_spaced<IT> {
     typedef  tab_ref_reg_spaced_with_origin<IT, V> this_type;
     typedef typename linalg_traits<this_type>::porigin_type porigin_type;
+    typedef typename dal::tab_ref_reg_spaced<IT>::iterator iterator;
+    typedef typename dal::tab_ref_reg_spaced<IT>::const_iterator const_iterator;
+
 
     porigin_type origin;
     
@@ -379,6 +388,8 @@ namespace gmm {
     : public dal::tab_ref_index_ref<IT, ITINDEX> {
     typedef tab_ref_index_ref_with_origin<IT, ITINDEX, V> this_type;
     typedef typename linalg_traits<this_type>::porigin_type porigin_type;
+    typedef typename dal::tab_ref_index_ref<IT, ITINDEX>::iterator iterator;
+    typedef typename dal::tab_ref_index_ref<IT, ITINDEX>::const_iterator const_iterator;
 
     porigin_type origin;
 

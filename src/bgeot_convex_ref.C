@@ -62,10 +62,8 @@ namespace bgeot
 
   pstored_point_tab org_stored_point_tab(size_type n)
   {
-    static std::vector<pstored_point_tab> *tab;
-    static bool is_init = false;
-    
-    if (!is_init) { tab = new std::vector<pstored_point_tab>(); is_init = true; }
+    static std::vector<pstored_point_tab> *tab = 0;
+    if (!tab) { tab = new std::vector<pstored_point_tab>(); }
     while (n >= tab->size())
     {
       size_type i = tab->size();
@@ -174,11 +172,9 @@ namespace bgeot
 
   pconvex_ref simplex_of_reference(dim_type nc, short_type k)
   {
-    static dal::FONC_TABLE<K_simplex_ref_light_, K_simplex_of_ref_> *tab;
-    static bool isinit = false;
-    if (!isinit) {
+    static dal::FONC_TABLE<K_simplex_ref_light_, K_simplex_of_ref_> *tab = 0;
+    if (!tab) {
       tab = new dal::FONC_TABLE<K_simplex_ref_light_, K_simplex_of_ref_>();
-      isinit = true;
     }
     bgeot::convex_of_reference * p1 = tab->add(K_simplex_ref_light_(nc, 1));
     bgeot::convex_of_reference * pk = tab->add(K_simplex_ref_light_(nc, k));

@@ -217,7 +217,7 @@ namespace gmm {
     typedef typename number_traits<value_type>::magnitude_type magnitude_type;
 
     gmm::mult(conjugated(A),
-	      scaled(V, magnitude_type(-2.0)/vect_norm2_sqr(V)), W);
+	      scaled(V, value_type(magnitude_type(-2)/vect_norm2_sqr(V))), W);
     rank_one_update(A, V, W);
   }
 
@@ -228,7 +228,7 @@ namespace gmm {
     typedef typename linalg_traits<MAT>::value_type value_type;
     typedef typename number_traits<value_type>::magnitude_type magnitude_type;
     
-    gmm::mult(A, scaled(V, magnitude_type(-2.0) / vect_norm2_sqr(V)), W);
+    gmm::mult(A, scaled(V, value_type(magnitude_type(-2) / vect_norm2_sqr(V))), W);
     rank_one_update(A, W, V);
   }
 
