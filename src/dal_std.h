@@ -57,7 +57,7 @@
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
-#include <cassert>
+#include <assert.h>
 #include <iostream>
 //#include <ios> essai
 #include <fstream>
@@ -83,6 +83,7 @@
 #include <string>
 #include <complex>
 #include <limits>
+#include <sstream>
 
 using std::endl;
 using std::cout;
