@@ -3,7 +3,7 @@
 //
 // Library : Generic Matrix Methods  (gmm)
 // File    : gmm_blas.h : generic basic linear algebra algorithms.
-//           (and others ...)
+//           (and some others ...)
 // Date    : October 13, 2002.
 // Author  : Yves Renard <Yves.Renard@insa-toulouse.fr>
 //
