@@ -12,8 +12,8 @@ while($list) {
   ($ch, $list) = split('\s', $list, 2);
   if (-d "..\/$ch") {
     if ($ch eq "getfem++") {
-      print "$ch\n";
-      $path = "..\/getfem++"; continue;
+      $path = "..\/getfem++";
+      $v = 100;
     }
     else {
       ($a, $ext) = split('\+\+', $ch, 2);
@@ -24,21 +24,9 @@ while($list) {
 	  $v = $a; $b = $r;
 	  $path = "..\/$ch";
 	}
-	print "$ch   $ext $a $b\n";
       }
     }
   }
 }
 
-
-print "path = $path\n";
-
-
-
-#if ($ARGV[0] eq "") { $prefix = "_tempfile"; } else { $prefix = $ARGV[0]; }
-#$count = int(1000 * rand);
-#if ($ENV{TMPDIR} eq "") { $tmpdir = "/tmp"; } else { $tmpdir = $ENV{TMPDIR} }
-#if (substr($tmpdir, length($tmpdir)-1, 1) eq "/")
-#  { $tmpdir = substr($tmpdir, 0, length($tmpdir)-1); }
-#do { $name = $tmpdir."/".$prefix."\_$count"; ++$count; } while (-f $name);
-#`touch $name`; print $name;
+print "$path\n";
