@@ -1481,7 +1481,7 @@ namespace getfem {
       if (this->to_be_computed()) { compute_M(); }
       gmm::sub_interval
 	SUBI(i0+this->mesh_fem_positions[num_fem], mf_u->nb_dof());
-      gmm::scale(MS.tangent_matrix(), Kcoef);
+      if (Kcoef != value_type(1)) gmm::scale(MS.tangent_matrix(), Kcoef);
       gmm::add(gmm::scaled(M_, Mcoef),
 	       gmm::sub_matrix(MS.tangent_matrix(), SUBI));
     }
@@ -1490,7 +1490,7 @@ namespace getfem {
       sub_problem.compute_residu(MS, i0, j0);
       gmm::sub_interval
 	SUBI(i0+this->mesh_fem_positions[num_fem], mf_u->nb_dof());
-      gmm::scale(MS.residu(), Kcoef);
+      if (Kcoef != value_type(1))  gmm::scale(MS.residu(), Kcoef);
       gmm::add(gmm::scaled(DF, -value_type(1)),
 	       gmm::sub_vector(MS.residu(), SUBI));
       gmm::mult_add(M_, gmm::scaled(gmm::sub_vector(MS.state(), SUBI), Mcoef),
@@ -1568,8 +1568,9 @@ namespace getfem {
 
     bool is_linear = problem.is_linear();
     // mtype alpha, alpha_min=mtype(1)/mtype(20);
-    mtype alpha, alpha_min=mtype(1)/mtype(20);
-    mtype alpha_mult=mtype(3)/mtype(4), alpha_max_ratio=mtype(3)/mtype(2);
+    mtype alpha, alpha_min=mtype(1)/mtype(10000);
+    mtype alpha_mult=mtype(3)/mtype(5);
+    // mtype alpha_max_ratio=mtype(2)/mtype(2);
     dal::bit_vector mixvar;
     gmm::iteration iter_linsolv0 = iter;
     iter_linsolv0.set_maxiter(10000);
@@ -1682,19 +1683,28 @@ namespace getfem {
        
 	if ((iter.get_iteration() % 10) || (iter.get_iteration() == 0))
 	  alpha = mtype(1); else alpha = mtype(1)/mtype(2);
-	
-	for (; alpha >= alpha_min; alpha *= alpha_mult) {
+
+	mtype previous_res = act_res;
+	for (size_type k = 0; alpha >= alpha_min; alpha *= alpha_mult, ++k) {
 	  gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
 	  problem.compute_residu(MS);
 	  MS.compute_reduced_residu();
 	  // Call to Dirichlet nullspace should be avoided -> we just need Ud
 	  act_res_new = MS.reduced_residu_norm();
-	  if (act_res_new <= act_res * alpha_max_ratio) break;
+	  // cout << " : " << act_res_new;
+	  if (act_res_new <= act_res / mtype(2)) break;
+	  if (k > 0 && act_res_new > previous_res) {
+	    alpha /= alpha_mult;
+	    gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
+	    act_res_new = previous_res; break;
+	  }
+	  
+	  previous_res = act_res_new;
 	}
 
 	// Something should be done to detect oscillating behaviors ...
-        alpha_max_ratio += (mtype(1)-alpha_max_ratio) / mtype(10);
-	alpha_min *= mtype(1) - mtype(1)/mtype(10);
+	// alpha_max_ratio += (mtype(1)-alpha_max_ratio) / mtype(30);
+	// alpha_min *= mtype(1) - mtype(1)/mtype(30);
       }
       act_res = act_res_new; ++iter;
       

@@ -8,13 +8,13 @@ LY = 30.0;	        % size in Y.
 LZ = 30.0;		% size in Z.
 %MU = 7700;	        % Lamé coefficient.
 %LAMBDA = 11500;   	% Lamé coefficient.
-MU = 5;
-LAMBDA = 10;
+MU = 15;
+LAMBDA = 20;
 FRICTION_COEF = 0.4;    % Friction coefficient.
 PG = 9810; 		% gravitation constante (on earth) (mm/s^2).
 %PG = 1000000; 		% gravitation constante (on jupiter !) (mm/s^2).
 RHO = 6e-6;     	% "realistic" density for steel
-T = 1.0;
+T = 2.0;
 DT = 0.001;             % Time step
 
 %%%%%   discretisation parameters  :                     	      %%%%%
@@ -80,6 +80,6 @@ MESHNAME='splx:';
 
 
 %%%%%   saving parameters                                             %%%%%
-ROOTFILENAME = 'dynamic_friction';     % Root of data files.
+ROOTFILENAME = 'dynamic_friction2';     % Root of data files.
 DX_EXPORT = 1; % export solution to an OpenDX file ?
-DT_EXPORT = 0.001; % Time step for the export
+DT_EXPORT = 0.005; % Time step for the export
