@@ -17,6 +17,7 @@ Liste des items a passer en revue pour fabriquer une nouvelle version
 
   a) faire passer gmake check sur des version cvs.
   b) faire passer gmake distcheck sur l'archive
+  c) enlever la date dans les numero de version
 
 - gmake dist
 
@@ -27,7 +28,7 @@ Liste des items a passer en revue pour fabriquer une nouvelle version
    http://www.6dof.com
 
 - Faire passer le numero de version au suivant dans la distribution,
-  mettre à jour la page WEB.
+  mettre à jour la page WEB, remettre la date dans les numéros de version.
 
   Eventuellement faire une revision tag par
 

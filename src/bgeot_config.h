@@ -42,11 +42,11 @@
 #ifdef GETFEM_HAVE_QDLIB
 // #  define NO_INLINE
 #  ifdef GETFEM_QDLIB_USE_QUAD
-#    include <qd.h>
+#    include <qd/qd.h>
 #  else
-#    include <dd.h>
+#    include <qd/dd.h>
 #  endif
-#  include <x86.h>
+#  include <fpu.h>
 #endif
 
 namespace bgeot

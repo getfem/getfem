@@ -80,7 +80,7 @@ namespace bgeot
   };
 
 #ifdef GETFEM_HAVE_QDLIB
-#  include <x86.h>
+#  include <qd/fpu.h>
 #endif
 
   pconvex_structure simplex_structure(dim_type nc)
@@ -91,8 +91,8 @@ namespace bgeot
     if (!isinit) {
 #ifdef GETFEM_HAVE_QDLIB
       /* initialisation for QD on intel CPUs */
-      unsigned short old_cw;
-      x86_fix_start(&old_cw);
+      unsigned int old_cw;
+      fpu_fix_start(&old_cw);
 #endif
       simplex_ = new dal::dynamic_array<simplex_structure_>();
       isinit = true;

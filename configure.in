@@ -19,7 +19,8 @@ PACKAGE="getfem++"
 MAJOR_VERSION="1"
 MINOR_VERSION="6"
 PATCH_VERSION="0"
-VERSION=$MAJOR_VERSION.$MINOR_VERSION-`date +%Y%m%d`
+dnl VERSION=$MAJOR_VERSION.$MINOR_VERSION-`date +%Y%m%d`
+VERSION=$MAJOR_VERSION.$MINOR_VERSION
 AC_DEFINE_UNQUOTED([MAJOR_VERSION],$MAJOR_VERSION,[getfem major version number])
 AC_DEFINE_UNQUOTED([MINOR_VERSION],$MINOR_VERSION,[getfem minor version number])
 AC_DEFINE_UNQUOTED([PATCH_VERSION],$PATCH_VERSION,[getfem patch number (sub minor version)])
@@ -176,14 +177,14 @@ if test "x$useQDlib" = "xyes" ; then
   CPPFLAGS="$CPPFLAGS $QDINC"
 dnl #define NO_INLINE
   AC_TRY_RUN([
-#include <qd.h>
-#include <dd.h>
-#include <x86.h>
+#include <qd/qd.h>
+#include <qd/dd.h>
+#include <qd/fpu.h>
 #include <iostream>
 int main() {
-  unsigned short old_cw;
+  unsigned int old_cw;
   int ok;
-  x86_fix_start(&old_cw);
+  fpu_fix_start(&old_cw);
   qd_real q = 1.0;
   qd_real qq = qd_real("0.01");
   qd_real qqq = "1.010101010101010101010101010101010101010101010101010101010101010E0";
@@ -193,11 +194,11 @@ int main() {
   for (int i=0; i < 100; ++i) { d += dd; dd *= dd_real("0.1"); }
   for (int i=0; i < 100; ++i) { q += qq; qq *= qd_real("0.01"); }
   std::cerr << "d = " << d << std::endl << "q = " << q << std::endl;
-  std::cerr << abs(q - qqq) << endl;
-  std::cerr << abs(d - ddd) << endl;
+  std::cerr << abs(q - qqq) << std::endl;
+  std::cerr << abs(d - ddd) << std::endl;
   if (abs(q - qqq) < 1e-63 && abs(d -ddd) < 1e-31) ok = 1;
   else ok = 0;
-  x86_fix_end(&old_cw); return 1-ok;
+  fpu_fix_end(&old_cw); return 1-ok;
 }
   ], [echo "checking if qd library is working...yes"], [ echo "QD library is not working (check config.log)"; exit 1])
   AC_DEFINE_UNQUOTED([HAVE_QDLIB],1,[defined if the qd library was found and is working])

@@ -121,9 +121,9 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     }
 
     if ($with_qd) {
-      print TMPF "#include <dd.h>\n";
-      print TMPF "#include <qd.h>\n";
-      print TMPF "#include <x86.h>\n\n";
+      print TMPF "#include <qd/dd.h>\n";
+      print TMPF "#include <qd/qd.h>\n";
+      print TMPF "#include <qd/fpu.h>\n\n";
     }
 
     $reading_param = 1;
@@ -188,7 +188,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     print TMPF "\n\n\n";
     print TMPF "int main(void) {\n\n";
     if ($with_qd) {
-      print TMPF "  unsigned short old_cw; x86_fix_start(&old_cw);\n\n";
+      print TMPF "  fpu_fix_start(0);\n\n";
     }
     print TMPF "  srand($theseed);\n\n";
     print TMPF "  dal::exception_callback_debug cb;\n";
