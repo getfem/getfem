@@ -1,9 +1,9 @@
 #!/bin/sh
-aclocal -I config --output=config/aclocal.m4
+aclocal -I config
 #cp -f config/aclocal.m4 .
 #cp -f config/install-sh .
 autoheader
-autoconf -I config
+autoconf
 #pas de ./ devant les noms des makefiles !!!
 automake -a --gnu `find . -name Makefile.am | sed -e 's@\./\(.*\)\.am@\1@g'`
 
