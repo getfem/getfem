@@ -245,9 +245,9 @@ namespace gmm
     typedef abstract_sparse storage_type;
     size_type size(const this_type &v) { return v.size(); }
     iterator begin(this_type &v) { return v.begin(); }
-    const_iterator const_begin(const this_type &v) { return v.begin(); }
+    const_iterator begin(const this_type &v) { return v.begin(); }
     iterator end(this_type &v) { return v.end(); }
-    const_iterator const_end(const this_type &v) { return v.end(); }
+    const_iterator end(const this_type &v) { return v.end(); }
     const void* origin(const this_type &v) { return &v; }
     void do_clear(this_type &v) { v.clear(); }
   };

@@ -101,10 +101,10 @@ namespace gmm {
     typedef typename linalg_traits<V>::storage_type storage_type;
     size_type size(const this_type &v) { return vect_size(v.deref()); }
     iterator begin(this_type &v) { return vect_begin(v.deref()); }
-    const_iterator const_begin(const this_type &v) 
+    const_iterator begin(const this_type &v) 
       { return vect_begin(v.deref()); }
     iterator end(this_type &v) { return vect_end(v.deref()); }
-    const_iterator const_end(const this_type &v) 
+    const_iterator end(const this_type &v) 
       { return vect_end(v.deref()); }
     const void* origin(const this_type &v) { return linalg_origin(v.deref()); }
     void do_clear(this_type &v) { clear(v.deref()); }
@@ -183,11 +183,11 @@ namespace gmm {
     size_type size(const this_type &v)  { return vect_size(v.deref()); }
     iterator begin(this_type &v)
     { return iterator(vect_begin(v.deref()), v.r); }
-    const_iterator const_begin(const this_type &v)
+    const_iterator begin(const this_type &v)
     { return iterator(vect_begin(v.deref()), v.r); }
     iterator end(this_type &v)
     { return iterator(vect_end(v.deref()), v.r); }
-    const_iterator const_end(const this_type &v)
+    const_iterator end(const this_type &v)
     { return iterator(vect_end(v.deref()), v.r); }
     const void* origin(const this_type &v) { return linalg_origin(v.deref()); }
     void do_clear(this_type &v)
@@ -301,9 +301,9 @@ namespace gmm {
     typedef abstract_plain storage_type;
     size_type size(const this_type &v) { return v.size(); }
     iterator begin(this_type &v) { return v.begin(); }
-    const_iterator const_begin(const this_type &v) { return v.begin(); }
+    const_iterator begin(const this_type &v) { return v.begin(); }
     iterator end(this_type &v) { return v.end(); }
-    const_iterator const_end(const this_type &v) { return v.end(); }
+    const_iterator end(const this_type &v) { return v.end(); }
     const void* origin(const this_type &v) { return &v; }
     void do_clear(this_type &v) { std::fill(v.begin(), v.end(), T(0)); }
   };
@@ -353,9 +353,9 @@ namespace gmm {
     typedef abstract_plain storage_type;
     size_type size(const this_type &v) { return v.size(); }
     iterator begin(this_type &v) { return v.begin(); }
-    const_iterator const_begin(const this_type &v) { return v.begin(); }
+    const_iterator begin(const this_type &v) { return v.begin(); }
     iterator end(this_type &v) { return v.end(); }
-    const_iterator const_end(const this_type &v) { return v.end(); }
+    const_iterator end(const this_type &v) { return v.end(); }
     const void* origin(const this_type &v) { return v.origin(); }
     void do_clear(this_type &v)
     { std::fill(v.begin(), v.end(), value_type(0)); }
@@ -400,9 +400,9 @@ namespace gmm {
     typedef abstract_plain storage_type;
     size_type size(const this_type &v) { return v.size(); }
     iterator begin(this_type &v) { return v.begin(); }
-    const_iterator const_begin(const this_type &v) { return v.begin(); }
+    const_iterator begin(const this_type &v) { return v.begin(); }
     iterator end(this_type &v) { return v.end(); }
-    const_iterator const_end(const this_type &v) { return v.end(); }
+    const_iterator end(const this_type &v) { return v.end(); }
     const void* origin(const this_type &v) { return v.origin(); }
     void do_clear(this_type &v)
     { std::fill(v.begin(), v.end(), value_type(0)); }
@@ -448,9 +448,9 @@ namespace gmm {
     typedef abstract_plain storage_type;
     size_type size(const this_type &v) { return v.size(); }
     iterator begin(this_type &v) { return v.begin(); }
-    const_iterator const_begin(const this_type &v) { return v.begin(); }
+    const_iterator begin(const this_type &v) { return v.begin(); }
     iterator end(this_type &v) { return v.end(); }
-    const_iterator const_end(const this_type &v) { return v.end(); }
+    const_iterator end(const this_type &v) { return v.end(); }
     const void* origin(const this_type &v) { return v.origin(); }
     void do_clear(this_type &v)
     { std::fill(v.begin(), v.end(), value_type(0)); }
@@ -473,14 +473,12 @@ namespace gmm {
     typedef abstract_plain storage_type;
     size_type size(const this_type &) { return N; }
     iterator begin(this_type &v) { return v.begin(); }
-    const_iterator const_begin(const this_type &v) { return v.begin(); }
+    const_iterator begin(const this_type &v) { return v.begin(); }
     iterator end(this_type &v) { return v.end(); }
-    const_iterator const_end(const this_type &v) { return v.end(); }
+    const_iterator end(const this_type &v) { return v.end(); }
     const void* origin(const this_type &v) { return &v; }
     void do_clear(this_type &v) { v.fill(T(0)); }
   };
-
-  
 
   template <class T> struct linalg_traits<bgeot::vsvector<T> > {
     typedef bgeot::vsvector<T> this_type;
@@ -493,14 +491,12 @@ namespace gmm {
     typedef abstract_plain storage_type;
     size_type size(const this_type &v) { return v.size(); }
     iterator begin(this_type &v) { return v.begin(); }
-    const_iterator const_begin(const this_type &v) { return v.begin(); }
+    const_iterator begin(const this_type &v) { return v.begin(); }
     iterator end(this_type &v) { return v.end(); }
-    const_iterator const_end(const this_type &v) { return v.end(); }
+    const_iterator end(const this_type &v) { return v.end(); }
     const void* origin(const this_type &v) { return &v; }
     void do_clear(this_type &v) { v.fill(T(0)); }
   };
-
-  
 
   template <class VECT> struct linalg_traits<bgeot::PT<VECT> > {
     typedef bgeot::PT<VECT> this_type;
@@ -513,16 +509,14 @@ namespace gmm {
     typedef typename linalg_traits<VECT>::storage_type storage_type;
     size_type size(const this_type &v) { return v.size(); }
     iterator begin(this_type &v) { return linalg_traits<VECT>().begin(v); }
-    const_iterator const_begin(const this_type &v)
+    const_iterator begin(const this_type &v)
     { return linalg_traits<VECT>().const_begin(v); }
     iterator end(this_type &v) { return linalg_traits<VECT>().end(v); }
-    const_iterator const_end(const this_type &v)
+    const_iterator end(const this_type &v)
     { return linalg_traits<VECT>().const_end(v); }
     const void* origin(const this_type &v) { return &v; }
     void do_clear(this_type &v) { v.fill(T(0)); }
   };
-
-  
 
   template <class T, int N> struct linalg_traits<bgeot::fsmatrix<T, N> > {
     typedef bgeot::fsmatrix<T, N> this_type;
@@ -683,9 +677,9 @@ namespace gmm {
     typedef abstract_sparse storage_type;
     size_type size(const this_type &v) { return v.size(); }
     iterator begin(this_type &v) { return v.begin(); }
-    const_iterator const_begin(const this_type &v) { return v.begin(); }
+    const_iterator begin(const this_type &v) { return v.begin(); }
     iterator end(this_type &v) { return v.end(); }
-    const_iterator const_end(const this_type &v) { return v.end(); }
+    const_iterator end(const this_type &v) { return v.end(); }
     const void* origin(const this_type &v) { return v.pr; }
   };
 

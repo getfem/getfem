@@ -56,7 +56,7 @@ namespace gmm {
     mat_sub_vector(void) {}
   };
 
-  template <class PT, class SUBI>
+  template <class PT, class SUBI> // à supprimer à terme...
   struct linalg_traits<mat_sub_vector<PT, SUBI> > {
     typedef mat_sub_vector<PT, SUBI> this_type;
     typedef typename std::iterator_traits<PT>::value_type V;
@@ -71,12 +71,12 @@ namespace gmm {
     size_type size(const this_type &v) { return vect_size(v.sv); }
     iterator begin(this_type &v)
       { return vect_begin(v.sv); }
-    const_iterator const_begin(const this_type &v)
-      { return vect_const_begin(v.sv); }
+    const_iterator begin(const this_type &v)
+      { return vect_begin(v.sv); }
     iterator end(this_type &v)
       { return vect_end(v.sv); }
-    const_iterator const_end(const this_type &v)
-      { return vect_const_end(v.sv); }
+    const_iterator end(const this_type &v)
+      { return vect_end(v.sv); }
     const void* origin(const this_type &v) { return linalg_origin(v.ref_vect);}
     void do_clear(this_type &v) { std::fill(begin(v), end(v), value_type(0)); }
   };

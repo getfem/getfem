@@ -171,11 +171,11 @@ namespace gmm {
     size_type size(const this_type &v) { return v.size(); }
     iterator begin(this_type &v)
       { return iterator(vect_begin(v.deref()), v.sindex()); }
-    const_iterator const_begin(const this_type &v)
+    const_iterator begin(const this_type &v)
       { return const_iterator(vect_begin(v.deref()), v.sindex()); }
     iterator end(this_type &v)
       { return iterator(vect_end(v.deref()), v.sindex()); }
-    const_iterator const_end(const this_type &v)
+    const_iterator end(const this_type &v)
       { return const_iterator(vect_end(v.deref()), v.sindex()); }
     const void* origin(const this_type &v) { return linalg_origin(v.deref()); }
     void do_clear(this_type &v) { std::fill(begin(v), end(v), value_type(0)); }

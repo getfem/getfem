@@ -69,51 +69,38 @@ namespace gmm {
 
   template <class L>
   inline const void *linalg_origin(const L &l)
-  { return linalg_traits<L>().origin(l); }  
+  { return linalg_traits<L>().origin(l); }
 
-  // à spécifier suivant le type de la référence
+  template <class V> inline
+  typename select_return<typename linalg_traits<V>::const_iterator,
+                         typename linalg_traits<V>::iterator,
+                         const V *>::return_type
+  vect_begin(const V &v)
+  { return linalg_traits<V>().begin(linalg_cast(v)); }
 
-//   template <class V> inline
-//   typename select_return<typename linalg_traits<V>::const_iterator,
-//                          typename linalg_traits<V>::iterator,
-//                          const V *>::return_type vect_begin(const V &v)
-//   { return linalg_traits<V>().begin(linalg_cast(v)); }
+  template <class V> inline
+  typename select_return<typename linalg_traits<V>::const_iterator,
+                         typename linalg_traits<V>::iterator,
+                         V *>::return_type
+  vect_begin(V &v)
+  { return linalg_traits<V>().begin(linalg_cast(v)); }
 
-//   template <class V> inline
-//   typename select_return<typename linalg_traits<V>::const_iterator,
-//                          typename linalg_traits<V>::iterator,
-//                          V *>::return_type vect_begin(V &v)
-//   { return linalg_traits<V>().begin(linalg_cast(v)); }
+  template <class V> inline
+  typename select_return<typename linalg_traits<V>::const_iterator,
+                         typename linalg_traits<V>::iterator,
+                         const V *>::return_type
+  vect_end(const V &v)
+  { return linalg_traits<V>().end(linalg_cast(v)); }
 
-
-
-  // le reste est inutile normalement y compris les vect_const_begin ...
-
-
-  template <class V>
-  inline typename linalg_traits<V>::const_iterator vect_begin(const V &v)
-  { return linalg_traits<V>().const_begin(v); }
-
-  template <class V>
-  inline typename linalg_traits<V>::const_iterator vect_end(const V &v)
-  { return linalg_traits<V>().const_end(v); }
-
-  template <class V>
-  inline typename linalg_traits<V>::iterator vect_begin(V &v)
-  { return linalg_traits<V>().begin(v); }
-
-  template <class V>
-  inline typename linalg_traits<V>::iterator vect_end(V &v)
-  { return linalg_traits<V>().end(v); }
+  template <class V> inline
+  typename select_return<typename linalg_traits<V>::const_iterator,
+                         typename linalg_traits<V>::iterator,
+                         V *>::return_type
+  vect_end(V &v)
+  { return linalg_traits<V>().end(linalg_cast(v)); }
 
 
-  template <class V>
-  inline typename linalg_traits<V>::const_iterator vect_const_begin(const V &v)
-  { return linalg_traits<V>().const_begin(v); }
-
-  template <class V>
-  inline typename linalg_traits<V>::const_iterator vect_const_end(const V &v)
-  { return linalg_traits<V>().const_end(v); }
+ 
 // à spécifier suivant le type de la référence
   template <class MAT> inline 
   typename linalg_traits<MAT>::const_sub_row_type
