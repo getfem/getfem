@@ -1,3 +1,7 @@
+2004-01-27  Yves Renard <renard@gmm.insa-tlse.fr>
+	
+	* tests/elastostatic.C: simplification, copied from laplacian.C
+	
 2004-01-27  julien pommier  <pommier@gmm.insa-tlse.fr>
 
 	* tests/laplacian.C: huge simplification of the sources..
