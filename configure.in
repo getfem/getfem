@@ -46,8 +46,8 @@ case $CXX in
  cxx)
  	here=`pwd`
  	cd $srcdir
-	APPSCXXFLAGS="$CXXFLAGS -ptr `pwd`/src/cxx_repository -O3 -std strict_ansi"
-	CXXFLAGS="$CXXFLAGS -std strict_ansi -O3"
+	APPSCXXFLAGS="$CXXFLAGS -ptr `pwd`/src/cxx_repository -O3 -std strict_ansi -tused"
+	CXXFLAGS="$CXXFLAGS -std strict_ansi -O3 -tused"
 dnl 	CXXFLAGS="$CXXFLAGS -ptr `pwd`/cxx_repository -std strict_ansi -O3"
 	MEX_NEEDS_TWOCOMP=""
  	cd $here
