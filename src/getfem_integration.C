@@ -37,7 +37,7 @@ namespace getfem
 {
   typedef ftool::naming_system<integration_method>::param_list im_param_list;
 
-  scalar_type poly_integration::int_poly(const base_poly &P) const
+  long_scalar_type poly_integration::int_poly(const base_poly &P) const
   {
     long_scalar_type res = 0.0;
     if (P.size() > int_monomials.size())
@@ -54,10 +54,10 @@ namespace getfem
     for ( ; it != ite; ++it, ++itb) {
       res += long_scalar_type(*it) * long_scalar_type(*itb);
     }
-    return scalar_type(res);
+    return res;
   }
 
-  scalar_type
+  long_scalar_type
     poly_integration::int_poly_on_face(const base_poly &P, short_type f) const
   {
     long_scalar_type res = 0.0;
@@ -72,7 +72,7 @@ namespace getfem
     base_poly::const_iterator it = P.begin(), ite = P.end();
     std::vector<long_scalar_type>::const_iterator itb = hum->begin();
     for ( ; it != ite; ++it, ++itb) res += long_scalar_type(*it) * long_scalar_type(*itb);
-    return scalar_type(res);
+    return res;
   }
 
   /* ******************************************************************** */

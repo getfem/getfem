@@ -66,11 +66,11 @@ namespace getfem
 					       &power, short_type f) const = 0;
 
       /// Evaluate the integral of the polynomial P on the reference element.
-      scalar_type int_poly(const base_poly &P) const;
+      long_scalar_type int_poly(const base_poly &P) const;
       /** Evaluate the integral of the polynomial P on the face f of the
        *    reference element.
        */
-      scalar_type int_poly_on_face(const base_poly &P, short_type f) const;
+      long_scalar_type int_poly_on_face(const base_poly &P, short_type f) const;
 
       virtual ~poly_integration() {}
 
