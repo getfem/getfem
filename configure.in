@@ -53,14 +53,17 @@ dnl 	CXXFLAGS="$CXXFLAGS -ptr `pwd`/cxx_repository -std strict_ansi -O3"
  	cd $here
 	;;
  CC)
+	APPSCXXFLAGS="$CXXFLAGS -LANG:std -O3"
  	CXXFLAGS="$CXXFLAGS -LANG:std -O3"
 	MEX_NEEDS_TWOCOMP="#"
 	;;
  g++ | c++)
+ 	APPSCXXFLAGS="$CXXFLAGS -ftemplate-depth-40 -pedantic -O3"
  	CXXFLAGS="$CXXFLAGS -ftemplate-depth-40 -pedantic -O3"
 	MEX_NEEDS_TWOCOMP="#"
 	;;
  *)
+ 	APPSCXXFLAGS="$CXXFLAGS -O3"
  	CXXFLAGS="$CXXFLAGS -O3"
 	MEX_NEEDS_TWOCOMP="#"
 	;;
