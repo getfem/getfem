@@ -361,6 +361,21 @@ namespace getfem
     assem.volumic_assembly();
   }
 
+  template<class MAT, class VECT>
+  void asm_Helmholtz(MAT &M, const mesh_fem &mf_u, const mesh_fem &mfdata, const VECT &K_squared) {
+    generic_assembly assem("Kr=data$1(#2); Ki=data$2(#2);"
+			   "m = comp(Base(#1).Base(#1).Base(#2)); "
+			   "M$1(#1,#1)+=sym(comp(Grad(#1).Grad(#1))(:,i,:,i) + m(:,:,i).Kr(i)); "
+			   "M$2(#1,#1)+=sym(m(:,:,i).Ki(i));");
+    assem.push_mf(mf_u);
+    assem.push_mf(mfdata);
+    assem.push_data(gmm::real_part(K_squared));
+    assem.push_data(gmm::imag_part(K_squared));
+    assem.push_mat(gmm::real_part(M));
+    assem.push_mat(gmm::imag_part(M));
+    assem.volumic_assembly();
+  }
+
 
   /* 
      new version, which takes into account the qdim dimension of the mesh_fem 
