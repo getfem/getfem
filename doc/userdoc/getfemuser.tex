@@ -45,9 +45,9 @@
 \section*{Introduction}
 
 
-The GETFEM++ project is centered around the development of a generic and efficient C++ library for elementary computations for finite element methods. The goal is to build a library which allows to compute any elementary matrix (even for mixed methods) on the largest class of methods and elements and for arbitrary dimension. It offers a complete separation between integration methods (exact or approximated), geometric transformations (linear or not) and finite element methods of arbitrary degrees.
+The GETFEM++ project is centered around the development of a generic and efficient elementary computations C++ for finite element methods. The goal is to build a library which allows to compute any elementary matrix (even for mixed methods) on the largest class of methods and elements and for arbitrary dimension. It offers a complete separation between integration methods (exact or approximated), geometric transformations (linear or not) and finite element methods of arbitrary degrees.
 
- Moreover, the library includes other tools for computation with finite element such as assembling methods for classical PDEs, interpolation methods, computation of norms, mesh operations, boundary conditions ... This library allows t build finite elements codes which are completely independent of the dimension, the particular method or element. Examples are provided.\\[5cm]
+ Moreover, the library includes other tools for computation with finite element such as assembling methods for classical PDEs, interpolation methods, computation of norms, mesh operations, boundary conditions ... This library allows to build finite elements codes which are completely independent of the dimension, the particular method or element. Examples are provided.\\[5cm]
 Copyright (C) 2002\\
 The program GETFEM++ is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -69,7 +69,7 @@ GETFEM++ has it own structure to store meshes defined in the files {\tt bgeot\_m
 {\tt getfem::getfem\_mesh }\\[0.5cm]
 This object is able to store any element in any dimension even if you mix elements with different dimensions.\\[0.5cm]
 
-There is no meshing procedures in GETFEM++ to mesh complex geometries. This is no the goal of this package. But you can easily load a mesh from any format.
+There is no meshing procedures in GETFEM++ to mesh complex geometries. This is not the goal of this package. But you can easily load a mesh from any format.
 
 \subsection{Add an element to a mesh}
 Suppose the variable mesh has been declared by\\[0.5cm]
@@ -240,7 +240,7 @@ At this stage of development, the loading function only accepts to load classica
 
 A little tool allows to display a mesh using Gnuplot (and Perl). This tool is present in the directory {\tt contrib/} and of course you need to have a working distribution of Gnuplot installed on your system. This little tool is built when you execute a {\tt make} instruction on the root directory of GETFEM++. So, if GETFEM++ is normally installed on your system, you can change your current directory to {\tt contrib/} and execute the command \\[0.5cm]
 {\tt draw\_mesh filename.mesh} \\[0.5cm]
-where {\tt filename.mesh} is the file containing the mesh. This works only for meshes whose principal dimension is between 1 and 3. Examples of mesh files are also present into the directory {\tt contrib/} to test the program.
+where {\tt filename.mesh} is the file containing the mesh. This works only for meshes whose principal dimension is between 1 and 3. Examples of mesh files are also provided into the directory {\tt contrib/} to test the program.
 
 \subsection{example}
 
@@ -338,7 +338,7 @@ Once a finite element method is defined on a mesh, it is possible to obtain info
 
 \section{Use standard assembling procedures}
 
-Procedures defined in the file {\tt getfem\_assembling.h} allow to assemble rigidity matrices, mass matrices and boundary conditions for a few amount of classical partial differential equation problems. All the procedures have vectors and matrices template parameters in order to be used with any matrix library (Dense an sparse matrix are defined in {\tt bgeot\_matrix.h} and {\tt bgeot\_smatrix.h} but it is preferable to use a matrix library such as MTL / ITL.).
+Procedures defined in the file {\tt getfem\_assembling.h} allow to assemble rigidity matrices, mass matrices and boundary conditions for a few amount of classical partial differential equation problems. All the procedures have vectors and matrices template parameters in order to be used with any matrix library (Dense and sparse matrix are defined in {\tt bgeot\_matrix.h} and {\tt bgeot\_smatrix.h} but it is preferable to use a matrix library such as MTL / ITL.).
 
 \subsection{Laplacian (Poisson) problem}
 
@@ -393,22 +393,83 @@ To be done ... please read \cite{BAS_COMP}.
 
 Basically, It is sufficient to describe an element on the reference element, i.e. to describe each base function of each degree of freedom. Vectorial elements and non-equivalent elements are partially supported ... (supported by the finite element kernel but not by assembling procedures). To be done ... please read \cite{BAS_COMP} for more details and see the file {\tt getfem\_fem.C} for practical implementation.
 
-\section{Interpolate on different meshes}
-
 \section{Compute $L^2$ and $H^1$ norms}
+
+The file {\tt getfem\_norm.h} defines the functions to compute $L^2$ and $H^1$ norms of a solution. The following functions compute the different norms\\[0.5cm]
+{\tt getfem::L2\_norm(mef, U, N); } \\[0.5cm]
+{\tt getfem::H1\_semi\_norm(mef, U, N); } \\[0.5cm]
+{\tt getfem::H1\_norm(mef, U, N); } \\[0.5cm]
+where {\tt mef} is a variable of type {\tt getfem::mesh\_fem} and describes the finite element method on which the solution is defined, {\tt U} is the vector of values of the solution on each degree of freedom of {\tt mef} and 
+{\tt N} is the dimension of the solution for vectorial solutions. The size of  {\tt U} should be {\tt N * mef.nb\_dof()}.\\[0.5cm]
 
 \section{Compute derivatives}
 
+The file {\tt getfem\_derivatives.h}  defines the following function to compute the gradient of a solution\\[0.5cm]
+{\tt getfem::compute\_gradient(mef1, mef2, U, V, Q); }\\[0.5cm]
+where {\tt mef1} is a variable of type {\tt getfem::mesh\_fem} and describes the finite element method on which the solution is defined, {\tt mef2} describes the fintie element method to compute the gradient, {\tt U} is a vector representing the solution and should be of size {\tt Q * mef1.nb\_dof()}, {\tt V} is the vector on which the gradient will be computed and should be of size
+{\tt N * Q * mef2.nb\_dof()} where {\tt N} is the dimension of the domain and {\tt Q} is the dimension of the solution for vectorial solutions. IMPORTANT : This function only work when {\tt mef2} is a Lagrange element. This element should be, most of the time, a discontinuous lagrangian element, because for usual element, the gradient is not continuous.
+
 \section{Export and view a solution}
 
+The file {\tt getfem\_export.h} defines the following function to save a solution in a file\\[0.5cm]
+{\tt getfem::save\_solution(filename, mef, U, Q, K); }\\[0.5cm]
+where {\tt filename} is of type {\tt std::string}, {\tt mef}  is a variable of type {\tt getfem::mesh\_fem} and describes the finite element method on which the solution is defined, {\tt U} is a vector representing the solution and should be of size {\tt Q * mef.nb\_dof()} and {\tt K} is the degree of the standard lagrange element used to save the solution. The solution is interpolated on each element on the more classical lagrange element of degree {\tt K} defined on this element.\\[0.5cm]
+To view a solution, two perl shells are provided (in the directory {\tt bin/}) but work only for 2D domains and are very basic.\\[0.5cm]
+{\tt sc2dgnuplot filename}\\[0.5cm]
+{\tt dr2dgnuplot filename S}\\[0.5cm]
+Both shells use Gnuplot to draw the solution and thus you need to have a working distribution of Gnuplot installed on your system. {\tt S} is a coefficient to zoom the solution. {\tt sc2dgnuplot} draw a scalar solution and {\tt dr2dgnuplot} a vectorial solution. See also the matlab interface for more elaborated draw procedures.
+
+\section{Interpolate on different meshes}
+
+The file {\tt getfem\_export.h} defines the following function to interpolate a solution from a mesh and a finite element method  to another mesh and another Lagrange finite element method.\\[0.5cm]
+{\tt getfem::interpolation\_solution(mef1, mef2, U, V, Q); }\\[0.5cm]
+where {\tt mef1}  is a variable of type {\tt getfem::mesh\_fem} and describes the finite element method on which the solution is defined, {\tt mef2} is the finite element method on which the solution will be interpolate,  {\tt U} is a vector representing the solution and should be of size {\tt Q * mef1.nb\_dof()}, {\tt V} is a vector on which the interpolation will be computed and should be of size {\tt Q * mef2.nb\_dof()} and {\tt Q} is the dimension of the solution for vectorial solutions. IMPORTANT : {\tt mef2} should be of lagrange type for the interpolation to makes sense but the meshes linked to {\tt mef1} and {\tt mef2} may be different (and this is the interest of this function). There is no restriction for the dimension of the domain. 
+ 
 \section{Catch errors}
 
-\section{Example : Laplacian program} (or own documentation ? )
+Errors used in getfem++ are defined in the file {\tt dal\_std.h}. In order to make easier  the error catching all errors derive from the type {\tt std::logic\_error} defined in the file {\tt  stdexcept} of the S.T.L.\\[0.5cm]
+A standard procedure, {\tt DAL\_STANDARD\_CATCH\_ERROR}, is defined in {\tt dal\_std.h}. This procedure catches all errors and print the error message when an error occurs. It can be used in the main procedure of the program as follows\\[0.5cm]
+{\tt
+  int main(void) \{ \\
+  $\mbox{}\ \ $try \{ \\
+  \\
+  $\mbox{}\ \ \ \ $ ... main program ... \\
+  \\
+  $\mbox{}\ \ $\} \\
+  $\mbox{}\ \ $DAL\_STANDARD\_CATCH\_ERROR; \\
+  \}
+}
 
-\section{Compare solutions program} (or own documentation ? )
+\section{Example : Laplacian program}
 
-\section{Interpolation program} (or own documentation ? )
+The program {\tt laplacian} is provided in the directory {\tt tests}. This program compute the solution of the Poisson problem in a parellepiped domain in any dimension with various finite element methods and elements. This program can be used as a model to build application programs. To compile it execute a {\tt gmake check} on the root directory of GETFEM++. Once the program is compiled you can test it executing the command\\[0.5cm]
+{\tt laplacian laplacian.param}\\[0.5cm]
+The file {\tt laplacian.param} is the parameter file. You can edit it and test various situation. The following parameter can be changed\\[0.5cm]
+\begin{center} \begin{tabular}{|m{0.2\linewidth}|m{0.75\linewidth}|} \hline
 
+  {\tt N} & Dimension of the domain, $1 \le {\tt N} \le 255$ for parellepipedic elements, mesh generation limited to ${\tt N} \le 4$ for simplexes and ${\tt N} \le 5$ for prisms.  \\ \hline
+
+  {\tt LX, LY} and {\tt LZ} &  Sizes of the domain. \\ \hline
+
+  {\tt FT} &  parameter for the exact solution. \\ \hline
+
+  {\tt MESH\_TYPE} &  {\tt MESH\_TYPE = 0} for a mesh with simplexes,   {\tt MESH\_TYPE = 1} for a mesh with parallelepipeds elements or {\tt MESH\_TYPE = 2} for a mesh with prisms. \\ \hline
+
+  {\tt INCLINE} &  Incline of the mesh.\\ \hline
+
+  {\tt K} &  Degree of the finite element method. \\ \hline
+
+  {\tt INTEGRATION} & Select the integration method.  \\ \hline
+
+  {\tt NX} &  Number of element in each dimension. \\ \hline
+
+  {\tt RESIDU} & Residu for conjugate gradient. \\ \hline
+
+  {\tt ROOTFILENAME} & Root name for data files. \\ \hline
+
+\end{tabular} \end{center}
+The mesh is exported as {\tt laplacian.mesh} and the solution is exported as {\tt laplacian.dataelt}. The mesh can be viewed using {\tt ../contrib/draw\_mesh laplacian.mesh} and the solution with {\tt ../bin/sc2dgnuplot laplacian.dataelt}. The program print the $L^2$ and $H^1$ error from an exact solution.\\[0.5cm]
+The program {\tt elastostatic} is built in a same way and compute the solution of linear elasticity problem.
 
 \begin{thebibliography}{99}
 % \bibliographystyle{apalike}

@@ -1,8 +1,13 @@
 eval 'exec perl -S $0 "$@"'
   if 0;
 
-$tmp1 = `createmp dr2dgnplot_tmp`;
-$tmp2 = `createmp dr2dgnplot_tmp`;
+$prefix = "dr2dgnplot_tmp";
+$count = int(1000 * rand);
+if ($ENV{TMPDIR} eq "") { $tmpdir = "/tmp"; } else { $tmpdir = $ENV{TMPDIR} }
+if (substr($tmpdir, length($tmpdir)-1, 1) eq "/")
+  { $tmpdir = substr($tmpdir, 0, length($tmpdir)-1); }
+do { $tmp1 = $tmpdir."/".$prefix."\_$count"; ++$count; } while (-f $tmp1);
+do { $tmp2 = $tmpdir."/".$prefix."\_$count"; ++$count; } while (-f $tmp2);
 
 sub catch { `rm -f $tmp1 $tmp2`; }
 $SIG{INT} = 'catch';

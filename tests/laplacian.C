@@ -6,6 +6,7 @@
 /**************************************************************************/
 
 #include <getfem_assembling.h>
+#include <getfem_export.h>
 #include <getfem_norm.h>
 #include <getfem_regular_meshes.h>
 #include <bgeot_smatrix.h>
@@ -55,7 +56,6 @@ struct lap_pb
   sparse_matrix_type RM;   /* rigidity matrix.                            */
   linalg_vector U, B; /* inconnue et second membre.                       */
  
-  bool mixte;
   int integration, mesh_type;
 
   std::string datafilename;
@@ -90,8 +90,6 @@ void lap_pb::init(void)
 			     "File name for saving"));
 
   scalar_type FT = PARAM.real_value("FT", "parameter for exact solution");
-  char *dds = PARAM.string_value("MIXTEHYBRID", "Use nonconformaing P1 ? ");
-  mixte = (strcmp("N", dds) && strcmp("n", dds));
 
   sol_K = base_vector(N);
   for (j = 0; j < N; j++)
@@ -130,13 +128,6 @@ void lap_pb::init(void)
   cout << "Selecting finite element method.\n";
   getfem::pintegration_method ppi;
   nn = mesh.convex_index(N);
-  if (mixte)
-  { 
-    K = 1;
-    if (N != 2 || mesh_type) 
-      DAL_THROW(bgeot::dimension_error, 
-		"Non conforming P1 work only for N = 2");
-  }
   switch (integration) {
   case 0 :
     switch (mesh_type) { 
@@ -185,10 +176,7 @@ void lap_pb::init(void)
   
   switch (mesh_type) {
   case 0 : 
-    if (mixte)
-      mef.set_finite_element(nn, getfem::P1_nonconforming_fem(), ppi);
-    else
-      mef.set_finite_element(nn, getfem::PK_fem(N, K), ppi);
+    mef.set_finite_element(nn, getfem::PK_fem(N, K), ppi);
     mef_data.set_finite_element(nn, getfem::PK_fem(N, K),
 				bgeot::simplex_poly_integration(N));
     mef_data2.set_finite_element(nn, getfem::PK_fem(N, 0),
@@ -380,6 +368,8 @@ int main(int argc, char *argv[])
     cout.precision(16);
     cout << "L2 error = " << l2norm << endl
 	 << "H1 error = " << h1norm << endl;
+
+    getfem::save_solution(p.datafilename + ".dataelt", p.mef, p.U, 1, p.K);
     
     // cout << "calcul termine" << endl; exit(0);
   }

@@ -37,12 +37,6 @@
 
 namespace getfem
 {
-  /* ********************************************************************* */
-  /*                                                                       */
-  /*  Calcul de normes L2 et H1.                                           */
-  /*                                                                       */
-  /* ********************************************************************* */
-
 
   template<class MESH_FEM, class VECT>
     scalar_type L2_norm(MESH_FEM &mf, const VECT &U, size_type N)

@@ -2,7 +2,7 @@
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  GEneric Tool for Finite Element Methods (getfem)             */
-/* File    :  getfem_assembling.h : assemble linear system for fem.        */
+/* File    :  getfem_derivatives.h : .                                     */
 /*     									   */
 /* Date : June 17, 2002.                                                   */
 /* Authors : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                     */
@@ -32,10 +32,7 @@
 #ifndef __GETFEM_DERIVATIVES_H
 #define __GETFEM_DERIVATIVES_H
 
-//#include <bgeot_geometric_trans.h>
 #include <getfem_mesh_fem.h>
-
-// module à tester ...
 
 namespace getfem
 {
@@ -50,11 +47,9 @@ namespace getfem
   {
     size_type cv;
     size_type N = mf.linked_mesh().dim();
-
     
     if (&mf.linked_mesh() != &mf_target.linked_mesh())
-      throw std::invalid_argument
-	("getfem::compute_gradient : meshes are not the same");
+      DAL_THROW(std::invalid_argument, "meshes are not the same");
 
     base_matrix G, val;
     base_vector coeff;
@@ -70,9 +65,8 @@ namespace getfem
       pf = mf.fem_of_element(cv);
       pf_target = mf_target.fem_of_element(cv);
       if (!(pf_target->is_equivalent()) || !(pf_target->is_lagrange()))
-      throw std::invalid_argument
-	("getfem::compute_gradient : finite element target is not convenient");
-	
+	DAL_THROW(std::invalid_argument, 
+		  "finite element target not convenient");
 
       pgt = mf.linked_mesh().trans_of_convex(cv);
       if (pf_targetold != pf_target) {
@@ -84,7 +78,6 @@ namespace getfem
 	pfp = fem_precomp(pf, pf_target->node_tab());
       }
       pf_old = pf;
-
 
       size_type P = pgt->structure()->dim(); /* dimension of the convex.*/
       base_matrix a(N, pgt->nb_points());
@@ -116,8 +109,7 @@ namespace getfem
 	}
 
 	if (pf_target->target_dim() != 1)
-	  throw to_be_done_error
-	    ("getfem::compute_gradient : vectorial gradient, to be done ... ");
+	  DAL_THROW(to_be_done_error, "vectorial gradient, to be done ... ");
 
 	for (size_type q = 0; q < Q; ++q) {
 	  for (size_type l = 0; l < pf->nb_dof(); ++l)
@@ -132,13 +124,6 @@ namespace getfem
 	
     }
   }
-
-
-
-
-
-
-
 }
 
 #endif
