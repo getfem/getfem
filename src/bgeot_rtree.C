@@ -104,9 +104,9 @@ namespace bgeot {
       //cout << "find_matching_boxes_ in branch\n";
       const rtree_node *rn = static_cast<rtree_node*>(n);
       if (p.accept(rn->left->rmin,rn->left->rmax)) 
-	find_matching_boxes_(rn->left, boxlst, p);
+	bgeot::find_matching_boxes_(rn->left, boxlst, p);
       if (p.accept(rn->right->rmin,rn->right->rmax)) 
-	find_matching_boxes_(rn->right, boxlst, p);
+	bgeot::find_matching_boxes_(rn->right, boxlst, p);
     }
   }
 
