@@ -181,8 +181,8 @@ namespace getfem
     }
   }
   
-  void Xfem::real_hess_base_value(const fem_interpolation_context &c,
-				  base_tensor &t) const {
+  void Xfem::real_hess_base_value(const fem_interpolation_context &,
+				  base_tensor &) const {
     DAL_THROW(to_be_done_error,
 	      "Sorry order 2 derivatives for Xfem to be done.");
   }

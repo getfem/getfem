@@ -37,7 +37,7 @@ namespace getfem
   {
     for (dal::bv_visitor cv(mf.linked_mesh().convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
-      mf.set_finite_element(cv, classical_fem(pgt,K), exact_classical_im(pgt));
+      mf.set_finite_element(cv, classical_fem(pgt,K), classical_exact_im(pgt));
     }
   }
 
