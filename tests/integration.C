@@ -45,6 +45,9 @@ int main(void)
     sprintf(meth, "IM_STRUCTURED_COMPOSITE(IM_NC(2, 2), 1)");
     print_method(getfem::int_method_descriptor(meth));
 
+    sprintf(meth, "IM_TRIANGLE(3)");
+    print_method(getfem::int_method_descriptor(meth));
+
     sprintf(meth, "IM_TETRAHEDRON(3)");
     print_method(getfem::int_method_descriptor(meth));
 

@@ -117,7 +117,7 @@ namespace dal
     typedef _tab_ref_index_iterator<ITER> iterator;
     
 
-    const ITER *piter;
+    ITER piter;
     
     iterator operator ++(int)
     { iterator tmp = *this; ++(*((_dnas_iterator *)(this))); return tmp; }
@@ -139,28 +139,26 @@ namespace dal
     { return *((_dnas_iterator *)(this)) - *((_dnas_iterator *)(&i)); }
 	
     reference operator *() const
-    { return *(*piter + *((*((_dnas_iterator *)(this))))); }
+    { return *(piter + *((*((_dnas_iterator *)(this))))); }
     reference operator [](int ii)
-    { return *(*piter + *((*((_dnas_iterator *)(this+ii))))); }
+    { return *(piter + *((*((_dnas_iterator *)(this+ii))))); }
     
     bool operator ==(const iterator &i) const
     { 
-      return ((*piter) == (*(i.piter))
+      return ((piter) == ((i.piter))
        && *((_dnas_iterator *)(this)) == *((*((_dnas_iterator *)(this)))));
     }
     bool operator !=(const iterator &i) const
     { return !(i == *this); }
     bool operator < (const iterator &i) const
     { 
-      return ((*piter) == (*(i.piter))
+      return ((piter) == ((i.piter))
 	 && *((_dnas_iterator *)(this)) < *((*((_dnas_iterator *)(this)))));
     }
 
     _tab_ref_index_iterator(void) {}
     _tab_ref_index_iterator(const ITER &iter, const _dnas_iterator &dnas_iter)
-	                                       : _dnas_iterator(dnas_iter)
-    { piter = &iter; }
-    
+      : _dnas_iterator(dnas_iter), piter(iter) {}
   };
 
 
@@ -237,7 +235,7 @@ namespace dal
       typedef _tab_ref_index_ref_iterator<ITER, ITER_INDEX> iterator;
       typedef size_t size_type;
 
-      const ITER *piter;
+      ITER piter;
       ITER_INDEX iter_index;
       
       iterator operator ++(int)
@@ -258,25 +256,20 @@ namespace dal
       { return iter_index - i.iter_index; }
 	
       reference operator *() const
-      {
-	// cout << "&iter = " << piter << endl;
-	// cout << "*iter_index = " << *iter_index << endl;
-	// cout << "*(*piter + *iter_index) = " << *(*piter + *iter_index) << endl;
-	return *(*piter + *iter_index);
-      }
+      { return *(piter + *iter_index); }
       reference operator [](int ii) const
-      { return *(*piter + *(iter_index+ii)); }
+      { return *(piter + *(iter_index+ii)); }
       
       bool operator ==(const iterator &i) const
-      { return ((*piter) == (*(i.piter)) && iter_index == i.iter_index); }
+      { return ((piter) == ((i.piter)) && iter_index == i.iter_index); }
       bool operator !=(const iterator &i) const { return !(i == *this); }
       bool operator < (const iterator &i) const
-      { return ((*piter) == (*(i.piter)) && iter_index < i.iter_index); }
+      { return ((piter) == ((i.piter)) && iter_index < i.iter_index); }
 
       _tab_ref_index_ref_iterator(void) {}
-      _tab_ref_index_ref_iterator(const ITER &iter,
+      _tab_ref_index_ref_iterator(const ITER &iter, 
 				  const ITER_INDEX &dnas_iter)
-      { piter = &iter; iter_index = dnas_iter; }
+	: piter(iter), iter_index(dnas_iter) {}
       
     };
 
