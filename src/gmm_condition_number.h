@@ -38,7 +38,7 @@
 namespace gmm {
 
   /** computation of the condition number using SVD
-   * (with symmetric_qr_algorithm => dense matrix only)
+   * (with symmetric_qr_algorithm => dense matrices only)
    */
 
   template <typename MAT> 
@@ -53,26 +53,31 @@ namespace gmm {
     typedef typename number_traits<T>::magnitude_type R;
 
     size_type m = mat_nrows(M), n = mat_ncols(M);
+    emax = emin = R(0);
+    std::vector<R> eig(m+n);
 
-    if (m+n > 0) { // not very efficient ??
+    if (m+n == 0) return R(0);
 
-      dense_matrix<T> B(m+n, m+n);
-      std::vector<R> eig(m+n);
+    if (is_hermitian(M)) {
+      eig.resize(m);
+      gmm::symmetric_qr_algorithm(M, eig);
+    }
+    else {
+      dense_matrix<T> B(m+n, m+n); // not very efficient ??
       gmm::copy(M, sub_matrix(B, sub_interval(m, n), sub_interval(0, m)));
       gmm::copy(conjugated(M), sub_matrix(B, sub_interval(0, m),
 					  sub_interval(m, n)));
+    
       gmm::symmetric_qr_algorithm(B, eig);
-      
-      emin = emax = gmm::abs(eig[0]);
-      for (size_type i = 1; i < m+n; ++i) {
-	R e = gmm::abs(eig[i]); 
-	emin = std::min(emin, e);
-	emax = std::max(emax, e);
-      }
-      return emax / emin;
     }
-    emax = emin = R(0);
-    return R(0);
+    
+    emin = emax = gmm::abs(eig[0]);
+    for (size_type i = 1; i < eig.size(); ++i) {
+      R e = gmm::abs(eig[i]); 
+      emin = std::min(emin, e);
+      emax = std::max(emax, e);
+    }
+    return emax / emin;
   }
 
   template <typename MAT> 
@@ -85,8 +90,8 @@ namespace gmm {
   }
 
 
-  /** estimation of the condition number 
-   * (using symmetric_qr_algorithm => dense matrix only)
+  /** estimation of the condition number (to be done ...)
+   * (using symmetric_qr_algorithm => dense matrices only)
    */
 
   template <typename MAT> 

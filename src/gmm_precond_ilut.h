@@ -134,7 +134,7 @@ namespace gmm {
       if ((tmp = w[i]) == value_type(0)) {
 	DAL_WARNING(2, "pivot " << i << " is zero");
 	tmp = value_type(1);
-	if (_try <= 10)
+	if (_try <= 10 && i > 0)
 	  { ++K; eps /= 2.0; do_ilut(A, row_major(), ++_try); return; }
       }
 

@@ -55,7 +55,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2, const MAT3 &_m3) {
   R error = gmm::mat_euclidean_norm(gmm::sub_matrix(m3, gmm::sub_interval(0,mm),
 					   gmm::sub_interval(0,nn)));
 
-  if (error > prec * R(10000)) 
+  if (!(error <= prec * R(10000)))
     DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
   if (nn <= gmm::mat_nrows(m3) && mm <= gmm::mat_ncols(m3)) {
@@ -74,7 +74,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2, const MAT3 &_m3) {
     error = gmm::mat_euclidean_norm(gmm::sub_matrix(m3, gmm::sub_interval(0,nn),
 					   gmm::sub_interval(0,mm)));
     
-    if (error > prec * R(10000)) 
+    if (!(error <= prec * R(10000)))
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
   }
   

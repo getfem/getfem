@@ -259,7 +259,7 @@ namespace gmm {
   /* ********************************************************************* */
 
   template <typename MAT, typename Ttol>
-  void stop_criterion(MAT &A, size_type &p, size_type &q, Ttol tol) {
+  void qr_stop_criterion(MAT &A, size_type &p, size_type &q, Ttol tol) {
     typedef typename linalg_traits<MAT>::value_type value_type;
     size_type n = mat_nrows(A);
     for (size_type i = 1; i < n-q; ++i)
@@ -274,7 +274,7 @@ namespace gmm {
   }
   
   template <typename MAT, typename Ttol> inline
-  void symmetric_stop_criterion(const MAT &AA, size_type &p, size_type &q,
+  void symmetric_qr_stop_criterion(const MAT &AA, size_type &p, size_type &q,
 				Ttol tol) {
     typedef typename linalg_traits<MAT>::value_type value_type;
     MAT& A = const_cast<MAT&>(AA);
@@ -317,14 +317,14 @@ namespace gmm {
     gmm::copy(A, A1);
 
     Hessenberg_reduction(A1, eigvect, compvect);
-    stop_criterion(A1, p, q, tol);
+    qr_stop_criterion(A1, p, q, tol);
 
     while (q < n) {
       qr_factor(A1, Q, R);
       gmm::mult(R, Q, A1);
       if (compvect) { gmm::mult(eigvect, Q, R); gmm::copy(R, eigvect); }
       
-      stop_criterion(A1, p, q, tol);
+      qr_stop_criterion(A1, p, q, tol);
       if (++ite > n*1000) DAL_THROW(failure_error, "QR algorithm failed");
     }
     extract_eig(A1, eigval, tol); 
@@ -478,7 +478,7 @@ namespace gmm {
 
     gmm::copy(A, H);
     Hessenberg_reduction(H, Q, compvect);
-    stop_criterion(H, p, q, tol);
+    qr_stop_criterion(H, p, q, tol);
 
     while (q < n) {
       sub_interval SUBI(p, n-p-q), SUBJ(0, mat_ncols(Q)), SUBK(p, n-p-q);
@@ -490,7 +490,7 @@ namespace gmm {
 				     tol, (its == 10 || its == 20), compvect);
 
       q_old = q;
-      stop_criterion(H, p, q, tol);
+      qr_stop_criterion(H, p, q, tol);
       if (q != q_old) its = 0;
       ++its;
       if (++ite > n*100) DAL_THROW(failure_error, "QR algorithm failed");
@@ -511,37 +511,38 @@ namespace gmm {
   /* ********************************************************************* */
 
   template <typename MAT1, typename MAT2> 
-    void symmetric_Wilkinson_qr_step(const MAT1& TT, const MAT2 &ZZ,
+    void symmetric_Wilkinson_qr_step(const MAT1& MM, const MAT2 &ZZ,
 				     bool compute_z) {
-    MAT1& T = const_cast<MAT1&>(TT); MAT2& Z = const_cast<MAT2&>(ZZ);
-    typedef typename linalg_traits<MAT1>::value_type value_type;
+    MAT1& M = const_cast<MAT1&>(MM); MAT2& Z = const_cast<MAT2&>(ZZ);
+    typedef typename linalg_traits<MAT1>::value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
     // to be optimized (use a real tridiag matrix).
     
-    size_type n = mat_nrows(T);
-    value_type d = (T(n-2, n-2) - T(n-1, n-1)) / value_type(2);
-    value_type e = gmm::sqr(T(n-1, n-2));
-    value_type mu = T(n-1, n-1) - e / (d + gmm::sgn(d) * gmm::sqrt(d*d + e));
-    value_type x = T(0,0) - mu, z = T(1, 0), c, s;
+    size_type n = mat_nrows(M);
+    R d = gmm::real(M(n-2, n-2) - M(n-1, n-1)) / R(2);
+    T e = gmm::sqr(M(n-1, n-2));
+    T mu = M(n-1, n-1) - e / (d + gmm::sgn(d) * gmm::sqrt(d*d + e));
+    T x = M(0,0) - mu, z = M(1, 0), c, s;
 
     for (size_type k = 1; k < n; ++k) {
       Givens_rotation(x, z, c, s);
 
-      // if (k > 2) Apply_Givens_rotation_left(T(k-1,k-3), T(k,k-3), c, s);
-      if (k > 1) Apply_Givens_rotation_left(T(k-1,k-2), T(k,k-2), c, s);
-      Apply_Givens_rotation_left(T(k-1,k-1), T(k,k-1), c, s);
-      Apply_Givens_rotation_left(T(k-1,k  ), T(k,k  ), c, s);
-      if (k < n-1) Apply_Givens_rotation_left(T(k-1,k+1), T(k,k+1), c, s);
-      // if (k < n-2) Apply_Givens_rotation_left(T(k-1,k+2), T(k,k+2), c, s);
+      // if (k > 2) Apply_Givens_rotation_left(M(k-1,k-3), M(k,k-3), c, s);
+      if (k > 1) Apply_Givens_rotation_left(M(k-1,k-2), M(k,k-2), c, s);
+      Apply_Givens_rotation_left(M(k-1,k-1), M(k,k-1), c, s);
+      Apply_Givens_rotation_left(M(k-1,k  ), M(k,k  ), c, s);
+      if (k < n-1) Apply_Givens_rotation_left(M(k-1,k+1), M(k,k+1), c, s);
+      // if (k < n-2) Apply_Givens_rotation_left(M(k-1,k+2), M(k,k+2), c, s);
 
-      // if (k > 2) Apply_Givens_rotation_right(T(k-3,k-1), T(k-3,k), c, s);
-      if (k > 1) Apply_Givens_rotation_right(T(k-2,k-1), T(k-2,k), c, s);
-      Apply_Givens_rotation_right(T(k-1,k-1), T(k-1,k), c, s);
-      Apply_Givens_rotation_right(T(k  ,k-1), T(k,k)  , c, s);
-      if (k < n-1) Apply_Givens_rotation_right(T(k+1,k-1), T(k+1,k), c, s);
-      // if (k < n-2) Apply_Givens_rotation_right(T(k+2,k-1), T(k+2,k), c, s);
+      // if (k > 2) Apply_Givens_rotation_right(M(k-3,k-1), M(k-3,k), c, s);
+      if (k > 1) Apply_Givens_rotation_right(M(k-2,k-1), M(k-2,k), c, s);
+      Apply_Givens_rotation_right(M(k-1,k-1), M(k-1,k), c, s);
+      Apply_Givens_rotation_right(M(k  ,k-1), M(k,k)  , c, s);
+      if (k < n-1) Apply_Givens_rotation_right(M(k+1,k-1), M(k+1,k), c, s);
+      // if (k < n-2) Apply_Givens_rotation_right(M(k+2,k-1), M(k+2,k), c, s);
       
       if (compute_z) col_rot(Z, c, s, k-1, k);
-      if (k < n-1) { x = T(k, k-1); z = T(k+1, k-1); }
+      if (k < n-1) { x = M(k, k-1); z = M(k+1, k-1); }
     }
 
   }
@@ -575,7 +576,7 @@ namespace gmm {
 //     gmm::add(scaled(A, -1), aux2);
 //     cout << "it gives : " << mat_euclidean_norm(aux2) << endl;
     
-    symmetric_stop_criterion(T, p, q, tol);
+    symmetric_qr_stop_criterion(T, p, q, tol);
     
     while (q < n) {
 
@@ -583,11 +584,13 @@ namespace gmm {
       if (!compvect) SUBK = sub_interval(0,0);
       symmetric_Wilkinson_qr_step(sub_matrix(T, SUBI), 
 				  sub_matrix(eigvect, SUBJ, SUBK), compvect);
-      symmetric_stop_criterion(T, p, q, tol);
+      symmetric_qr_stop_criterion(T, p, q, tol);
       if (++ite > n*100) DAL_THROW(failure_error, "QR algorithm failed. "
 				   "Probably, your matrix is not real "
 				   "symmetric or complex hermitian");
     }
+    
+
     extract_eig(T, eigval, tol);
   }
 

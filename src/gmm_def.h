@@ -315,6 +315,9 @@ namespace gmm {
   template <typename T> inline bool is_complex(T a) { return false; }
   template <typename T> inline bool is_complex(std::complex<T> a)
   { return true; }
+
+# define magnitude_of_linalg(M) typename number_traits<typename \
+                    linalg_traits<M>::value_type>::magnitude_type
   
 
   /* ******************************************************************** */

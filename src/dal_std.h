@@ -209,8 +209,6 @@ namespace dal
   template <typename T> inline T pos(T a) { return (a < T(0)) ? T(0) : a; }
   template <typename T> inline T neg(T a) { return (a < T(0)) ? T(-a) : T(0); }
   template <typename T> inline T sgn(T a) { return (a < T(0)) ? T(-1) : T(1); }
-  template <typename T> inline T sgn(std::complex<T> a)
-  { return (a.real() / dal::abs(a) < T(0.1)) ? sgn(a.imag()) : sgn(a.real()); }
   inline double random() { return double(rand())/(RAND_MAX+0.5); }
   template <typename T> inline T random(T)
   { return T(rand()*2.0)/(T(RAND_MAX)+T(1)/T(2)) - T(1); }

@@ -2060,7 +2060,134 @@ namespace gmm {
 
   template <typename L1, typename L2, typename L3> inline
   void mult_spec(const L1& l1, const L2& l2, L3& l3, crmult, abstract_skyline)
-  { mult_spec(l1, l2, l3, crmult(), abstract_sparse()); }}
+  { mult_spec(l1, l2, l3, crmult(), abstract_sparse()); }
   
+
+  /* ******************************************************************** */
+  /*		Symmetry test.                                     	  */
+  /* ******************************************************************** */
+
+  // test if A is symmetric
+  template <typename MAT> inline
+  bool is_symmetric(const MAT &A, magnitude_of_linalg(MAT) tol
+		    = magnitude_of_linalg(MAT)(-1)) {
+    typedef magnitude_of_linalg(MAT) R;
+    if (tol < R(0)) tol = default_tol(R()) * mat_maxnorm(A);
+    if (mat_nrows(A) != mat_ncols(A)) return false;
+    return is_symmetric(A, tol, typename linalg_traits<MAT>::storage_type());
+  }
+
+  template <typename MAT> 
+  bool is_symmetric(const MAT &A, magnitude_of_linalg(MAT) tol, 
+		    abstract_dense) {
+    size_type m = mat_nrows(A);
+    for (size_type i = 1; i < m; ++i)
+      for (size_type j = 0; j < i; ++j)
+	if (gmm::abs(A(i, j)-A(j, i)) > tol) return false;
+    return true;
+  }
+
+  template <typename MAT> 
+  bool is_symmetric(const MAT &A, magnitude_of_linalg(MAT) tol, 
+		    abstract_sparse) {
+    return is_symmetric(A, tol, typename principal_orientation_type<typename
+			linalg_traits<MAT>::sub_orientation>::potype());
+  }
+
+  template <typename MAT> 
+  bool is_symmetric(const MAT &A, magnitude_of_linalg(MAT) tol, 
+		    row_major) {
+    for (size_type i = 0; i < mat_nrows(A); ++i) {
+      typedef typename linalg_traits<MAT>::const_sub_row_type row_type;
+      row_type row = mat_const_row(A, i);
+      typename linalg_traits<row_type>::const_iterator
+	it = vect_const_begin(row), ite = vect_const_end(row);
+      for (; it != ite; ++it)
+	if (gmm::abs(*it - A(it.index(), i)) > tol) return false;
+    }
+    return true;
+  }
+
+  template <typename MAT> 
+  bool is_symmetric(const MAT &A, magnitude_of_linalg(MAT) tol, 
+		    col_major) {
+    for (size_type i = 0; i < mat_ncols(A); ++i) {
+      typedef typename linalg_traits<MAT>::const_sub_col_type col_type;
+      col_type col = mat_const_col(A, i);
+      typename linalg_traits<col_type>::const_iterator
+	it = vect_const_begin(col), ite = vect_const_end(col);
+      for (; it != ite; ++it)
+	if (gmm::abs(*it - A(i, it.index())) > tol) return false;
+    }
+    return true;
+  }
+
+  template <typename MAT> 
+  bool is_symmetric(const MAT &A, magnitude_of_linalg(MAT) tol, 
+		    abstract_skyline)
+  { return is_symmetric(A, tol, abstract_sparse()); }
+
+  // test if A is hermitian
+  template <typename MAT> inline
+  bool is_hermitian(const MAT &A, magnitude_of_linalg(MAT) tol
+		    = magnitude_of_linalg(MAT)(-1)) {
+    typedef magnitude_of_linalg(MAT) R;
+    if (tol < R(0)) tol = default_tol(R()) * mat_maxnorm(A);
+    if (mat_nrows(A) != mat_ncols(A)) return false;
+    return is_hermitian(A, tol, typename linalg_traits<MAT>::storage_type());
+  }
+
+  template <typename MAT> 
+  bool is_hermitian(const MAT &A, magnitude_of_linalg(MAT) tol,
+		    abstract_dense) {
+    size_type m = mat_nrows(A);
+    for (size_type i = 1; i < m; ++i)
+      for (size_type j = 0; j < i; ++j)
+	if (gmm::abs(A(i, j)-gmm::conj(A(j, i))) > tol) return false;
+    return true;
+  }
+
+  template <typename MAT> 
+  bool is_hermitian(const MAT &A, magnitude_of_linalg(MAT) tol, 
+		    abstract_sparse) {
+    return is_hermitian(A, tol, typename principal_orientation_type<typename
+			linalg_traits<MAT>::sub_orientation>::potype());
+  }
+
+  template <typename MAT> 
+  bool is_hermitian(const MAT &A, magnitude_of_linalg(MAT) tol, 
+		    row_major) {
+    for (size_type i = 0; i < mat_nrows(A); ++i) {
+      typedef typename linalg_traits<MAT>::const_sub_row_type row_type;
+      row_type row = mat_const_row(A, i);
+      typename linalg_traits<row_type>::const_iterator
+	it = vect_const_begin(row), ite = vect_const_end(row);
+      for (; it != ite; ++it)
+	if (gmm::abs(gmm::conj(*it) - A(it.index(), i)) > tol) return false;
+    }
+    return true;
+  }
+
+  template <typename MAT> 
+  bool is_hermitian(const MAT &A, magnitude_of_linalg(MAT) tol, 
+		    col_major) {
+    for (size_type i = 0; i < mat_ncols(A); ++i) {
+      typedef typename linalg_traits<MAT>::const_sub_col_type col_type;
+      col_type col = mat_const_col(A, i);
+      typename linalg_traits<col_type>::const_iterator
+	it = vect_const_begin(col), ite = vect_const_end(col);
+      for (; it != ite; ++it)
+	if (gmm::abs(gmm::conj(*it) - A(i, it.index())) > tol) return false;
+    }
+    return true;
+  }
+
+  template <typename MAT> 
+  bool is_hermitian(const MAT &A, magnitude_of_linalg(MAT) tol, 
+		    abstract_skyline)
+  { return is_hermitian(A, tol, abstract_sparse()); }
+
+}
+
 
 #endif //  __GMM_BLAS_H
