@@ -221,7 +221,7 @@ namespace dal
   { return std::conj(a); }
   template <typename T> inline T real(T a) { return a; }
   template <typename T> inline T real(std::complex<T> a) { return a.real(); }
-  template <typename T> inline T imag(T a) { return T(0); }
+  template <typename T> inline T imag(T ) { return T(0); }
   template <typename T> inline T imag(std::complex<T> a) { return a.imag(); }  
   template <typename T> inline T sqrt(T a) { return ::sqrt(a); }
   template <typename T> inline std::complex<T> sqrt(std::complex<T> a) {
