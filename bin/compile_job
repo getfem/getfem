@@ -1,39 +1,10 @@
 #!/usr/bin/perl
 
-#######################################
-#       System identification         #
-#######################################
 
 $rootlib = `pwd`; chomp($rootlib);
 $machine = `uname -m`; chomp($machine);
 $systeme = `uname -s`; chomp($systeme); $systeme .= `uname -r`;chomp($systeme);
 $getfem_lib = "libgetfem.a";
-
-#######################################
-# Environnement variables for shell   #
-#######################################
-
-$ENV{PATH} = "/bin:/usr/dt/bin:.:/usr/ucb:/sbin:/usr/bin:/usr/sbin:/etc:/usr/etc:/usr/lib:/usr/ccs/bin:/usr/local/bin:/usr/local/opt/bin:/usr/bin/X11:/usr/local/opt/sbin:/usr/bin:/usr/local/bin:/usr/bin/X11:/usr/dt/bin:/usr/local/texmf/bin/alpha_osf1:opt/bin:";
-$ENV{SHELL} = "/usr/bin/tcsh";
-if ($systeme =~ /Linux/)
-{
-  $ENV{SYSDEX} = "Linux";
-}
-else
-{
-  $ENV{SYSDEX} = "OSF1";
-  $ENV{TEXMF} = "/usr/local/texmf";
-  $ENV{TEXMFUPD} = "/usr/local";
-  $ENV{LU_TEXENV} = "=1";
-  $ENV{MTPK_DESTROOT} = "/usr/local/texmf/fonts";
-  $ENV{MTP_MAPFILE} = "/usr/local/texmf/dvips/psfonts.map";
-  $ENV{TEXMFCNF} = "/usr/local/texmf/web2c";
-}
-
-
-#######################################
-#         Updating files              #
-#######################################
 
 print "Checkout for files\n";
 print `cd ..; cvs -d :pserver:renard\@gmmlinux2.gmm.priv:\/var\/cvs checkout getfem++`;
@@ -44,9 +15,6 @@ print "\n\nMaking links\n";
 `mkdir -p sources`;
 `cd sources; ln -sf ../dal/*.C .; ln -sf ../bgeot/*.C .;  ln -sf ../ftool/*.C .; ln -sf ../getfem/*.C .; ln -sf ../misc/*.C .; ln -sf ../misc/LEDAWIN/*.C .`; print "\n\n";
 
-#######################################
-#        Building Makefile            #
-#######################################
 
 print "Building Makefile\n";
 open(MAKEFILE, ">Makefile") or die "Open \'Makefile\' impossible : $!\n";
@@ -92,7 +60,10 @@ print MAKEFILE "CPLUSOPTDEBUG = \$(COMP) \$(OPTIONS_STANDARD)";
 print MAKEFILE " \$(OPTIONS_BOTH) \n";
 print MAKEFILE "INCLUDES = \$(INCLUDES_STANDARD) \$(INCLUDES_MTL)";
 print MAKEFILE " \$(INCLUDES_ITL) -I$rootlib\/include \n\n\n";
-print MAKEFILE "LIB = $getfem_lib -lm\n";
+
+close(MAKEFILE);
+print `cp Makefile defmakefile`;
+open(MAKEFILE, ">>Makefile") or die "Open \'Makefile\' impossible : $!\n";
 
 print MAKEFILE "\n\n\n", "all : \$(GETFEM_LIB)\n\n";
 
@@ -112,6 +83,8 @@ while($listeo)
   $fi =~ s/\.C/\.o/;
   print MAKEFILE " sources\/", $fi;
 }
+
+
 
 print MAKEFILE "\n\n", '# Compilation lines : ',  "\n";
 
@@ -135,18 +108,10 @@ print MAKEFILE "\t \/bin\/rm -f sources\/\*.o sources\/\*.a\n";
 
 close(MAKEFILE);
 
-#######################################
-#         Compiling                   #
-#######################################
-
 print "\n\nCompiling\n";
 
 # open F, "make |" or die; print $_ while (<F>); close F;
 print `make`;
-
-#######################################
-#         Documentation               #
-#######################################
 
 # fabrication de la doc.
 if ($systeme =~ /Linux/)
