@@ -65,7 +65,7 @@ print MAKEFILE "\n\n", '# compiler options :', "\n";
 if ($systeme =~ /Linux/)
 {
   print MAKEFILE "COMP = g++\n";
-  print MAKEFILE "OPTIONS_STANDARD = -ainsi -ftemplate-depth-40\n";
+  print MAKEFILE "OPTIONS_STANDARD = -ftemplate-depth-40\n";
   print MAKEFILE "OPTIONS_DEBUG    = -g\n";
   print MAKEFILE "OPTIONS_OPTIMIZE = -O3\n";
   print MAKEFILE "OPTIONS_BOTH     = -g -O3\n";
