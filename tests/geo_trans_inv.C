@@ -88,7 +88,7 @@ void test_inversion(bgeot::pgeometric_trans pgt, bool verbose) {
     cvpts[i] += translat;
     for (size_type j=0; j < cvpts[i].size(); ++j) { 
       cvpts[i][j] *= scale;
-      cvpts[i][j] += dal::random(double())*0.1*scale;
+      cvpts[i][j] += dal::random(double())*0.05*scale;
     }
   }
   bgeot::geotrans_inv_convex gic;
@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
   getfem::getfem_mesh mesh;
 
   try {
-    test_inversion(false);
+    test_inversion(true);
     PARAM.read_command_line(argc, argv);
     N = PARAM.int_value("N", "Domaine dimension");
     NB_POINTS = PARAM.int_value("NB_POINTS", "Nb points");

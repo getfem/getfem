@@ -296,9 +296,9 @@ namespace gmm {
   }
   
 
-  
+  template <typename IND_TYPE>   
   inline int readHB_mat_double(const char* filename,
-			       size_type colptr[], size_type rowind[], 
+			       IND_TYPE colptr[], IND_TYPE rowind[], 
 			       double val[]) {
     /************************************************************************/
     /*  This function opens and reads the specified file, interpreting its  */
@@ -440,9 +440,10 @@ namespace gmm {
   }
 
 
+  template <typename IND_TYPE> 
   inline int writeHB_mat_double(const char* filename, int M, int N, int nz,
-				const size_type colptr[],
-				const size_type rowind[], 
+				const IND_TYPE colptr[],
+				const IND_TYPE rowind[], 
 				const double val[], int Nrhs,
 				const double /*rhs*/[], const double /*guess*/[],
 				const double /*exact*/[], const char* Title,
@@ -596,15 +597,17 @@ namespace gmm {
 
   template <typename T, int shift> void
   Harwell_Boeing_load(const char *filename, csc_matrix<T, shift>& A) {
+    typedef typename csc_matrix<T, shift>::IND_TYPE IND_TYPE;
     int M, N, nonzeros, i;
     int Nrhs;
     char Type[5]; memset(Type, 0 , sizeof Type);
     readHB_info(filename, &M, &N, &nonzeros, Type, &Nrhs);
 
+
     if (A.pr) { delete[] A.pr; delete[] A.ir; delete[] A.jc; }
     A.nc = N; A.nr = M;
-    std::auto_ptr<size_type> jc(new size_type[N+1]);
-    std::auto_ptr<size_type> ir(new size_type[nonzeros]);
+    std::auto_ptr<IND_TYPE> jc(new IND_TYPE[N+1]);
+    std::auto_ptr<IND_TYPE> ir(new IND_TYPE[nonzeros]);
     std::auto_ptr<double> pr;
     if ((__is_complex_double(T()) && (Type[0] == 'R' || Type[0] == 'P')) ||
 	(!__is_complex_double(T()) && (Type[0] == 'C' || Type[0] == 'P')))

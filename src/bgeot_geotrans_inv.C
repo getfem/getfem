@@ -67,6 +67,7 @@ namespace bgeot
     scalar_type res = vect_norm2(rn);
     unsigned cnt = 1000;
     while (res > EPS && --cnt) {
+      if (cnt < 30) cout << "res=" << res << ", x=" << x << "\n";
       /* compute gradient */
       for (size_type k = 0; k < pgt->nb_points(); ++k) {
         for (dim_type nn = 0; nn < N; ++nn) {

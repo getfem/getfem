@@ -4,6 +4,7 @@ include_HEADERS =                      \
 	bgeot_small_vector.h           \
 	bgeot_kdtree.h		       \
 	bgeot_imbricated_box.h	       \
+	bgeot_permutations.h           \
 	bgeot_convex.h                 \
 	bgeot_convex_hull.h            \
 	bgeot_convex_intersect.h       \

@@ -300,7 +300,22 @@ namespace getfem
   }
 
   /**
-     assembly of $\int_\Omega A(x)\nabla u.\nabla v$, where $A(x)$ is a matrix.
+     assembly of $\int_\Omega A(x)\nabla u.\nabla v$, where $A(x)$ is a NxN matrix.
+     Arguments:
+      - M  : a sparse matrix of dimensions mf.nb_dof() x mf.nb_dof()
+
+      - mf : the mesh_fem that describes the solution, with
+      mf.get_qdim() == N.
+
+      - mfdata : the mesh_fem that describes the coefficients of A
+      (mfdata.get_qdim() == 1).
+
+      - _A_ : a (very large) vector, which is a flattened (n x n x
+      mfdata.nb_dof()) 3D array. For each dof of mfdata, it contains
+      the n x n coefficients of A. As usual, the order is the
+      "fortran-order", i.e. _A_ = [A_11(dof1) A_21(dof1) A_31(dof1)
+      A_12(dof1) A_22(dof1) ... A_33(dof) A_11(dof2)
+      .... A_33(lastdof)]
   */
   template<class MAT, class VECT>
     void asm_stiffness_matrix_for_scalar_elliptic(MAT &M, const mesh_fem &mf,
