@@ -465,13 +465,17 @@ namespace gmm {
             sub_row_type;
     typedef tab_ref_reg_spaced_with_origin<typename this_type
             ::const_iterator> const_sub_row_type;
-    typedef plain_compressed_iterator<T *, T *> row_iterator;
-    typedef plain_compressed_iterator<const T *, T *> const_row_iterator;
+    typedef plain_compressed_iterator<typename this_type::iterator,
+            typename this_type::iterator> row_iterator;
+    typedef plain_compressed_iterator<typename this_type::const_iterator, 
+            typename this_type::iterator> const_row_iterator;
     typedef tab_ref_with_origin<typename this_type::iterator> sub_col_type;
     typedef tab_ref_with_origin<typename this_type::const_iterator>
             const_sub_col_type;
-    typedef plain_compressed_iterator<T *, T *> col_iterator;
-    typedef plain_compressed_iterator<const T *, T *> const_col_iterator;
+    typedef plain_compressed_iterator<typename this_type::iterator,
+            typename this_type::iterator> col_iterator;
+    typedef plain_compressed_iterator<typename this_type::const_iterator, 
+            typename this_type::iterator> const_col_iterator;
     typedef col_and_row sub_orientation;
     typedef bgeot_matrix_access<T> access_type;
     size_type nrows(const this_type &m) { return N; }
@@ -520,13 +524,17 @@ namespace gmm {
             sub_row_type;
     typedef tab_ref_reg_spaced_with_origin<typename this_type
             ::const_iterator> const_sub_row_type;
-    typedef plain_compressed_iterator<T *, T *> row_iterator;
-    typedef plain_compressed_iterator<const T *, T *> const_row_iterator;
+    typedef plain_compressed_iterator<typename this_type::iterator,
+	    typename this_type::iterator> row_iterator;
+    typedef plain_compressed_iterator<typename this_type::const_iterator,
+	    typename this_type::iterator> const_row_iterator;
     typedef tab_ref_with_origin<typename this_type::iterator> sub_col_type;
     typedef tab_ref_with_origin<typename this_type::const_iterator>
             const_sub_col_type;
-    typedef plain_compressed_iterator<T *, T *> col_iterator;
-    typedef plain_compressed_iterator<const T *, T *> const_col_iterator;
+    typedef plain_compressed_iterator<typename this_type::iterator,
+	    typename this_type::iterator> col_iterator;
+    typedef plain_compressed_iterator<typename this_type::const_iterator,
+	    typename this_type::iterator> const_col_iterator;
     typedef col_and_row sub_orientation;
     typedef bgeot_matrix_access<T> access_type;
     size_type nrows(const this_type &m) { return m.nrows(); }
@@ -703,7 +711,7 @@ namespace gmm {
     bool operator < (const iterator &i) const { return (jc < i.jc); }
 
     sparse_compressed_iterator(void) {}
-    sparse_compressed_iterator(PT1 p1,PT2 p2,PT3 p3,size_type n,const void *o)
+    sparse_compressed_iterator(PT1 p1,PT2 p2,PT3 p3,size_type nn,const void *o)
       : pr(p1), ir(p2), jc(p3), n(nn), origin(o) { }
     
   };
