@@ -34,6 +34,7 @@
 #define __BGEOT_GEOTRANS_INV_H
 
 #include <bgeot_geometric_trans.h>
+#include <bgeot_vector.h>
 
 namespace bgeot
 {
