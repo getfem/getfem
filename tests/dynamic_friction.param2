@@ -33,8 +33,12 @@ NOISY = 0;
 
 SCHEME = 3; % 0 = theta-method, 1 = Newmark, 2 = middle point
             % 3 = middle point with modified contact forces
+	    % 4 = Paoli-Schatzman scheme
+	    % 5 = modified Paoli-Schatzman scheme
+
 THETA = 1.0;
 BETA = 1.0;
+RESTIT = 1.0;           % Restitution coefficient for Paoli-Schatzman scheme
 GAMMA=0.5;
 NOCONTACT_MASS = 0;     % Suppress or not the mass of contact nodes
 PERIODICITY=0;          % Periodic condition

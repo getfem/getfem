@@ -157,7 +157,6 @@ EXTRA_DIST = \
 	nonlinear_elastostatic.pl         \
 	dynamic_friction.pl               \
 	dynamic_friction.param            \
-	dynamic_friction.net              \
 	plasticity.pl                     \
 	nonlinear_elastostatic.param      \
 	test_interpolated_fem.param       \

@@ -25,12 +25,14 @@
  * a good example of use of Getfem++.
 */
 
+
 #include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
 #include <getfem_export.h>   /* export functions (save solution in a file)  */
 #include <getfem_import.h>
 #include <getfem_regular_meshes.h>
 #include <getfem_Coulomb_friction.h>
 #include <gmm.h>
+#include <fstream>
 /* try to enable the SIGFPE if something evaluates to a Not-a-number
  * of infinity during computations
  */
@@ -75,7 +77,7 @@ struct friction_problem {
   int scheme;  /* 0 = theta method, 1 = Newmark, 2 = middle point,           */
                /* 3 = middle point with separated contact forces.            */
   size_type N, noisy, nocontact_mass;
-  scalar_type beta, theta, gamma;
+  scalar_type beta, theta, gamma, restit;
   scalar_type T, dt, r;
   scalar_type init_vert_pos, init_vert_speed, hspeed, dtexport;
   scalar_type pert_stationary, Dirichlet_ratio;
@@ -139,6 +141,7 @@ void friction_problem::init(void) {
   theta = PARAM.real_value("THETA", "Parameter for the theta-method"); 
   beta = PARAM.real_value("BETA", "Parameter beta for Newmark");
   gamma = PARAM.real_value("GAMMA", "Parameter gamma for Newmark");
+  restit = PARAM.real_value("RESTIT", "Resitution parameter");
 
   Dirichlet = PARAM.int_value("DIRICHLET","Dirichlet condition or not");
   Dirichlet_ratio = PARAM.real_value("DIRICHLET_RATIO",
@@ -385,14 +388,21 @@ void friction_problem::solve(void) {
   getfem::standard_model_state MS(PERIODIC);
 
   plain_vector WT(mf_u.nb_dof()), DF(mf_u.nb_dof()), HSPEED(mf_u.nb_dof());
+  plain_vector U2(mf_u.nb_dof());
   plain_vector U0(mf_u.nb_dof()), V0(mf_u.nb_dof()), A0(mf_u.nb_dof());
   plain_vector U1(mf_u.nb_dof()), V1(mf_u.nb_dof()), A1(mf_u.nb_dof());
+  plain_vector Vdemi(mf_u.nb_dof()), V_demi(mf_u.nb_dof()), Vmi(mf_u.nb_dof());
+  plain_vector UU1(N), VV1(N), LLN1(N), ACC(mf_u.nb_dof());
   plain_vector LT0(gmm::mat_nrows(BT)), LN0(gmm::mat_nrows(BN));
   plain_vector LT1(gmm::mat_nrows(BT)), LN1(gmm::mat_nrows(BN));
   scalar_type a(1), b(1), dt0 = dt, t(0), t_export(dtexport), alpha(0);
   scalar_type J_friction0(0), J_friction1(0);
   plain_vector one(mf_u.nb_dof());
   std::fill(one.begin(), one.end(), 1.0);
+
+  sparse_matrix BBT(gmm::mat_nrows(BN), gmm::mat_nrows(BN));
+  if (scheme == 4 || scheme == 5) gmm::mult(BN, gmm::transposed(BN), BBT);
+
 
   // Initial conditions (U0, V0, M A0 = F)
   gmm::clear(U0); gmm::clear(V0); gmm::clear(LT0);
@@ -439,6 +449,13 @@ void friction_problem::solve(void) {
     exp->serie_add_object("deformationsteps");
   }
   
+  std::ofstream Houari1("iter", std::ios::out);   
+  std::ofstream Houari2("nrj", std::ios::out);
+  std::ofstream Houari3("vts", std::ios::out);
+  std::ofstream Houari4("FN0", std::ios::out);
+  std::ofstream Houari5("depl", std::ios::out);
+  
+  
 
   while (t <= T) {
 
@@ -473,18 +490,32 @@ void friction_problem::solve(void) {
       gmm::mult_add(gmm::transposed(BT), gmm::scaled(LN0, (1.-theta)), DF);
       gmm::copy(gmm::scaled(U0, -1.), WT);
       break;
+    case 4 : // Paoli-Schatzman scheme DF --> F^n
+      gmm::mult(ELAS.stiffness_matrix(), gmm::scaled(U1, -1.),  VOL_F.source_term(), A1);
+      iter.init();
+      gmm::cg(DYNAMIC.mass_matrix(), DF, A1, gmm::identity_matrix(), iter);
+      break;
+    case 5:
+     
+      
+      break;
     }
-    gmm::add(gmm::scaled(HSPEED, -1./alpha), WT);
 
-    FRICTION.set_WT(WT); FRICTION.set_r(r); FRICTION.set_alpha(alpha); 
-    DYNAMIC.set_dynamic_coeff(a, b);
-    DYNAMIC.set_DF(DF);
-    
-    iter.init();
-    getfem::standard_solve(MS, PERIODIC, iter);
-    gmm::copy(ELAS.get_solution(MS), U1);
-    gmm::copy(FRICTION.get_LN(MS), LN1);
-    gmm::copy(FRICTION.get_LT(MS), LT1);
+
+    if (scheme  != 4 && scheme  != 5) {
+      gmm::add(gmm::scaled(HSPEED, -1./alpha), WT);
+      
+      FRICTION.set_WT(WT); FRICTION.set_r(r); FRICTION.set_alpha(alpha); 
+      DYNAMIC.set_dynamic_coeff(a, b);
+      DYNAMIC.set_DF(DF);
+      
+      iter.init();
+      getfem::standard_solve(MS, PERIODIC, iter);
+      gmm::copy(ELAS.get_solution(MS), U1); 
+      gmm::copy(FRICTION.get_LN(MS), LN1);
+      gmm::copy(FRICTION.get_LT(MS), LT1);
+    }
+    std::vector<scalar_type> BU(gmm::mat_nrows(BN)), AA(gmm::mat_nrows(BN));
 
     switch (scheme) { // computation of U^{n+1}, V^{n+1}, A^{n+1}, J_friction1
     case 0 :
@@ -520,8 +551,77 @@ void friction_problem::solve(void) {
       J_friction1 = J_friction0 + dt * 0.5 * gmm::vect_sp(BT,V1, LT1);
       gmm::add(gmm::scaled(V0, -1), V1);
       break;
-    }
+    case 4 :
+      if (t == 0)
+	gmm::add(gmm::scaled(V0, dt), U0, U1); // + terme d'orde supérieur ...
+      
+      /* calcul de la force normal */
+      gmm::add(U0,gmm::scaled(U1, -2.), ACC);
+      gmm::add(U2, ACC);
+      gmm::add(DF, gmm::scaled(ACC, -1./(dt*dt)), ACC);
+      gmm::mult(DYNAMIC.mass_matrix(), ACC, ACC);
+      gmm::mult(BN, ACC, LN1);
 
+      gmm::add(gmm::scaled(DF, dt*dt), gmm::scaled(U0, restit-1.), U2);
+      gmm::add(gmm::scaled(U1, 2.), U2);
+      gmm::scale(U2, 1./(1.+restit));
+      gmm::mult(BN, U2, BU);
+      for (size_type i = 0; i < gmm::mat_nrows(BN); ++i)
+	AA[i] = (std::min(BU[i], gap[i]) - BU[i]) / BBT(i,i);
+      gmm::mult(gmm::transposed(BN), AA, U2, U2);
+      gmm::scale(U2, 1.+restit);
+      gmm::add(gmm::scaled(U0, -restit), U2);
+      gmm::add(gmm::scaled(U2, 1./(2.*dt)), gmm::scaled(U0, -1./(2.*dt)), V1);
+      
+      break;
+    case 5:
+      gmm::add(gmm::scaled(U1, 2.), U0, A0);
+      gmm::add(gmm::scaled(U1, -2.), U0, A1);
+      gmm::mult(DYNAMIC.mass_matrix(), A1, A1);
+      gmm::mult(ELAS.stiffness_matrix(), A0, A0);
+      gmm::mult(gmm::transposed(BN), LN0, DF);
+      gmm::mult(gmm::transposed(BT), LT0, DF, DF);
+      gmm::add(VOL_F.source_term(), DF, DF);
+      gmm::add(gmm::scaled(A0, 1./(dt*dt)), DF, DF);
+      gmm::add(gmm::scaled(A1, 0.25), DF, DF);
+      
+      gmm::add(U2, gmm::scaled(U1, -1.), Vdemi);
+      gmm::copy(gmm::scaled(Vdemi, 1./(2*dt*dt)), Vdemi);
+      gmm::add(U1, gmm::scaled(U0, -1.), V_demi);
+      gmm::copy(gmm::scaled(V_demi, 1./(2*dt*dt)), V_demi);
+      gmm::add(Vdemi, V_demi, Vmi);
+
+      
+     
+
+      if (t == 0)
+	gmm::add(gmm::scaled(V0, dt), U0, U1); // + terme d'orde supérieur ...
+      sparse_matrix DMM(mf_u.nb_dof(), mf_u.nb_dof());
+      iter.init();
+      gmm::add(gmm::scaled(DYNAMIC.mass_matrix(), 1./(dt*dt)), 
+	       gmm::scaled(ELAS.stiffness_matrix(), 0.25), DMM); 
+      gmm::cg(DMM, U2, DF, gmm::identity_matrix(), iter);
+      
+      gmm::add(gmm::scaled(U0, restit), U2);
+      gmm::scale(U2, 1./(1.+restit));
+      gmm::mult(BN, U2, BU);
+      gmm::add(gmm::scaled(BU, (1.+restit)/(dt*dt)), LN0, BU);
+      
+      for (size_type i = 0; i < gmm::mat_nrows(BN); ++i)
+	AA[i] = (std::min(BU[i], gap[i]) - BU[i]) / BBT(i,i);
+      gmm::add(AA, LN0);
+      
+      r = gmm::vect_norm2(LN0);
+      if (r <= 0){
+	for (size_type i = 0; i < gmm::mat_nrows(BN); ++i) 
+	  LT0[i] = 0;
+      }
+      else{
+       	gmm::mult(BN, gmm::scaled(Vmi, r/gmm::vect_norm2(Vmi)), LT0);
+      }
+      break;
+    }
+    
 //     {
 //       plain_vector w(gmm::mat_nrows(BN));
 //       gmm::mult(BN, U1, gmm::scaled(gap, -1.), w);
@@ -563,8 +663,25 @@ void friction_problem::solve(void) {
 	   << " (st " << nbst << ", sl " << nbsl << ")" << endl;
       dt = std::min(2.*dt, dt0);
 
+      gmm::copy(gmm::sub_vector(U1, gmm::sub_interval(0,N)), UU1);
+      gmm::copy(gmm::sub_vector(V1, gmm::sub_interval(0,N)), VV1);
+      gmm::copy(gmm::sub_vector(LN1, gmm::sub_interval(0,N)), LLN1);
+      
+      scalar_type FN0 = gmm::vect_norm2(LLN1);
+      scalar_type depl = gmm::vect_norm2(UU1);
+      scalar_type Vts = gmm::vect_norm2(VV1);
+      scalar_type time_iteration = t/dt;
+      
+      
+      Houari1 << time_iteration << "\n";
+      Houari2 << J1 << "\n";
+      Houari3 << Vts << "\n";
+      Houari4 << FN0 << "\n";
+      Houari5 << depl << "\n";
+      
       gmm::copy(U1, U0); gmm::copy(V1, V0); gmm::copy(A1, A0); J0 = J1;
       gmm::copy(LN1, LN0); gmm::copy(LT1, LT0); J_friction0 = J_friction1;
+      if (scheme == 4 || scheme == 5) gmm::copy(U2, U1);
       if (dxexport && t >= t_export-dt/20.0) {
 	exp->write_point_data(mf_u, U0);
 	exp->serie_add_object("deformationsteps");

@@ -446,7 +446,7 @@ namespace gmm {
 	  gmm::clear(xi);
 	  gmm::copy(u, x);
 	  NS.compute_sub_F(fi, x, isd); gmm::scale(fi, value_type(-1));
-	  mtype r = gmm::vect_norm2(fi), r_t;
+	  mtype r = gmm::vect_norm2(fi), r_t(r);
 	  if (r > value_type(0)) {
 	    iternc.set_rhsnorm(std::max(r, mtype(1)));
 	    while(!iternc.finished(r)) {

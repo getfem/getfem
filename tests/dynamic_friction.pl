@@ -26,6 +26,7 @@ SCHEME = 3; % 0 = theta-method, 1 = Newmark, 2 = middle point
 THETA=1.0;
 BETA=1.0;
 GAMMA=0.5;
+RESTIT = 1.0;           % Restitution coefficient for Paoli scheme
 NOCONTACT_MASS = 0;     % Suppress or not the mass of contact nodes
 PERIODICITY=0;          % Periodic condition
 DT_ADAPT = 0;           % Time step adaptation regarding the energy
