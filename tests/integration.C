@@ -97,8 +97,8 @@ static void check_im_order(const std::string& s, size_type expected_pk=size_type
         size_type fa = 1;
         for (size_type z = 0; z < dim; z++)
           for (size_type k = 1; k <= idx[z]; ++k, ++fa)
-            realsum *= opt_long_scalar_type(k) / opt_long_scalar_type(fa);
-        for (size_type k = 0; k < dim; k++) { realsum /= opt_long_scalar_type(fa); fa++; }
+            realsum *= opt_long_scalar_type(scalar_type(k)) / opt_long_scalar_type(scalar_type(fa));
+        for (size_type k = 0; k < dim; k++) { realsum /= opt_long_scalar_type(scalar_type(fa)); fa++; }
     /*	for (size_type d=dim-1, c=0; d+1 != 0; --d) { c += idx[d]+1; realsum *= opt_long_scalar_type(c); }
       realsum = opt_long_scalar_type(1.)/realsum;*/
       } else if (ppi->structure()->basic_structure() == bgeot::parallelepiped_structure(dim)) {
