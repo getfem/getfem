@@ -52,6 +52,7 @@ include_HEADERS =                      \
 	gmm_sub_matrix.h               \
 	gmm_interface.h                \
 	gmm_solver_cg.h                \
+	gmm_solver_constrained_cg.h    \
 	gmm_solver_bicgstab.h          \
 	gmm_solver_Schwarz_additive.h  \
 	gmm_blas.h                     \
