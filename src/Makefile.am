@@ -63,6 +63,7 @@ include_HEADERS =                      \
 	gmm_solver_cg.h                \
 	gmm_solver_constrained_cg.h    \
 	gmm_modified_gram_schmidt.h    \
+	gmm_dense_lu.h                 \
 	gmm_tri_solve.h                \
 	gmm_solver_gmres.h             \
 	gmm_solver_qmr.h               \

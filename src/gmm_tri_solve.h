@@ -32,8 +32,6 @@
 // Copyright 1997, 1998, 1999 University of Notre Dame.
 // Authors: Andrew Lumsdaine, Jeremy G. Siek, Lie-Quan Lee
 //
-// This file is part of the Matrix Template Library
-//
 // You should have received a copy of the License Agreement for the
 // Matrix Template Library along with the software;  see the
 // file LICENSE.  If not, contact Office of Research, University of Notre
@@ -110,7 +108,7 @@ namespace gmm {
   
   template <class TriMatrix, class VecX>
   inline void lower_tri_solve__(const TriMatrix& T, VecX& x, size_t k,
-				col_major, abstract_plain) {
+				col_major, abstract_plain, bool is_unit) {
     typename linalg_traits<TriMatrix>::value_type x_j;
     for (int j = 0; j < int(k); ++j) {
       typedef typename linalg_traits<TriMatrix>::const_sub_col_type COL;
@@ -221,7 +219,7 @@ namespace gmm {
 
   template <class TriMatrix, class VecX>
   void upper_tri_solve(const TriMatrix& T, VecX &x_, size_t k,
-		       bool is_unit = false) {
+		       bool is_unit) {
     VecX& x = const_cast<VecX&>(x_);
     if ((mat_nrows(T) < k) || (vect_size(x) < k)
 	|| (mat_ncols(T) < k) || is_sparse(x_))
@@ -235,7 +233,7 @@ namespace gmm {
   
   template <class TriMatrix, class VecX>
   void lower_tri_solve(const TriMatrix& T, VecX &x_, size_t k,
-		       bool is_unit = false) {
+		       bool is_unit) {
     VecX& x = const_cast<VecX&>(x_);
     if ((mat_nrows(T) < k) || (vect_size(x) < k)
 	|| (mat_ncols(T) < k) || is_sparse(x_))

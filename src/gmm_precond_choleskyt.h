@@ -2,9 +2,9 @@
 /*                                                                         */
 /* Library :  Generic Matrix Methods  (gmm)                                */
 /* File    :  gmm_precond_choleskyt.h : Incomplete Cholesky with fill-in   */
-/*                                      and threshlod.                     */
+/*                                      and threshold.                     */
 /*     									   */
-/* Date : June 30, 2003.                                                    */
+/* Date : June 30, 2003.                                                   */
 /* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
 /*                                                                         */
 /* *********************************************************************** */

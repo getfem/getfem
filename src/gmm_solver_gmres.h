@@ -4,8 +4,6 @@
 // Authors: Andrew Lumsdaine <lums@osl.iu.edu> 
 //          Lie-Quan Lee     <llee@osl.iu.edu>
 //
-// This file is part of the Iterative Template Library
-//
 // You should have received a copy of the License Agreement for the
 // Iterative Template Library along with the software;  see the
 // file LICENSE.  
@@ -129,7 +127,7 @@ namespace gmm {
 	++inner, ++outer, ++i;
       } while (! inner.finished(dal::abs(s[i])));
 
-      gmm::upper_tri_solve(H, s, i);
+      gmm::upper_tri_solve(H, s, i, false);
       gmm::combine(KS, s, x, i);
       gmm::mult(A, gmm::scaled(x, -1.0), b, w);
       gmm::mult(M, w, r);
