@@ -326,4 +326,4 @@ Future version 1.6, avancées :
         conjugated, Tests dans les complexes. interface LAPACK.
 . GETFEM : estimation du rayon et de la qualité de éléments, bugs fixés dans
         les methodes d'integrations, + de méthodes. Xfem élargi. suport pour
-        les domaines 2D fracturés avec xfem.
+        les domaines 2D fracturés avec xfem. geotrans inverse optimisé.

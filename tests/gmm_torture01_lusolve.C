@@ -28,7 +28,7 @@ bool test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
   R cond = gmm::condition_number(m1);
 
   if (print_debug) cout << "cond = " << cond << " det = " << det << endl;
-  if (det == R(0) && cond < R(1) / prec && cond != R(0))
+  if (det == R(0) && cond < R(0.01) / prec && cond != R(0))
     DAL_THROW(gmm::failure_error, "Inconsistent condition number: " << cond);
 
   if (prec * cond < R(1)/R(10000) && det != R(0)) {

@@ -78,6 +78,7 @@ namespace gmm {
     typedef typename linalg_traits<MAT1>::value_type T;
     size_type m = mat_nrows(QR), n = mat_ncols(QR);
     if (m != mat_ncols(A)) DAL_THROW(dimension_error, "dimensions mismatch");
+    if (m == 0) return;
     std::vector<T> V(m), W(mat_nrows(A));
     V[0] = T(1);
     for (size_type j = 0; j < n; ++j) {
@@ -97,6 +98,7 @@ namespace gmm {
     typedef typename linalg_traits<MAT1>::value_type T;
     size_type m = mat_nrows(QR), n = mat_ncols(QR);
     if (m != mat_nrows(A)) DAL_THROW(dimension_error, "dimensions mismatch");
+    if (m == 0) return;
     std::vector<T> V(m), W(mat_ncols(A));
     V[0] = T(1);
     for (size_type j = 0; j < n; ++j) {

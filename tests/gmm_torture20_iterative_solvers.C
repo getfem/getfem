@@ -214,7 +214,7 @@ bool test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
   gmm::cholesky_precond<MAT1> P6(m1);
   gmm::choleskyt_precond<MAT1> P7(m1, 10, prec);
   
-  if (!is_hermitian(m1))
+  if (!is_hermitian(m1, prec*R(100)))
     DAL_THROW(gmm::failure_error, "The matrix is not hermitian");
   
   if (print_debug) cout << "\nCG with no preconditionner\n";
