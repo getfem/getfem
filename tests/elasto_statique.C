@@ -17,11 +17,11 @@
 /* USA.                                                                    */
 /*                                                                         */
 /* *********************************************************************** */
-/**************************************************************************/
-/*                                                                        */
-/*  Calcul sur une structure lineairement elastique                       */
-/*                                                                        */
-/**************************************************************************/
+/* *********************************************************************** */
+/*                                                                         */
+/*  Calcul sur une structure lineairement elastique                        */
+/*                                                                         */
+/* *********************************************************************** */
 
 #include <getfem_assembling.h>
 #include <getfem_norm.h>
@@ -96,7 +96,7 @@ struct pb_data {
 
   scalar_type G, lambda;
   scalar_type LX, LY, LZ, residu;
-  size_type NX, N, K;
+  size_type NX, N, K, KI, mesh_type;
 
   sparse_matrix_type SM; /* matrice de rigidite.                     */
   linalg_vector U, B; /* inconnue et second membre.                       */
@@ -132,6 +132,8 @@ void pb_data::init(void) {
   LX = PBSTFR_PARAM.real_value("LX", "Size in X");
   LY = PBSTFR_PARAM.real_value("LY", "Size in Y");
   LZ = PBSTFR_PARAM.real_value("LZ", "Size in Y");
+  mesh_type = PBSTFR_PARAM.int_value("MESH_TYPE", "Mesh type ");
+  KI = PBSTFR_PARAM.int_value("KI", "Integration degree");
   NX = PBSTFR_PARAM.int_value("NX", "Number of space steps ");
   integration = PBSTFR_PARAM.int_value("INTEGRATION", "integration method");
   residu = PBSTFR_PARAM.real_value("RESIDU", "residu for c.g.");
@@ -161,8 +163,18 @@ void pb_data::init(void) {
     vtab[i] = base_vector(N); vtab[i].fill(0.0);
     (vtab[i])[i] = ((i == 0) ? LX : ((i == 1) ? LY : LZ)) / scalar_type(NX);
   }
-  getfem::parallelepiped_regular_simplex_mesh(mesh, N, org,
-					     vtab.begin(), ref.begin());
+
+  if (mesh_type == 2 && N <= 1) mesh_type = 0;
+  
+  switch (mesh_type) {
+  case 0 : getfem::parallelepiped_regular_simplex_mesh
+		   (mesh, N, org, vtab.begin(), ref.begin()); break;
+  case 1 : getfem::parallelepiped_regular_mesh
+		   (mesh, N, org, vtab.begin(), ref.begin()); break;
+  case 2 : getfem::parallelepiped_regular_prism_mesh
+		   (mesh, N, org, vtab.begin(), ref.begin()); break;
+  default : DAL_THROW(dal::internal_error, "Unknown type of mesh");
+  }
 
   mesh.optimize_structure();
 
@@ -170,14 +182,106 @@ void pb_data::init(void) {
   char meth[500];
   getfem::pintegration_method ppi;
   nn = mesh.convex_index(N);
-  if (integration == 0) sprintf(meth, "IM_EXACT_SIMPLEX(%d)", int(N));
-  else sprintf(meth, "IM_NC(%d, %d)", int(N), int(2*K));
+
+  switch (integration) {
+  case 0 :
+    switch (mesh_type) { 
+    case 0 : sprintf(meth, "IM_EXACT_SIMPLEX(%d)", int(N)); break;
+    case 1 : sprintf(meth, "IM_EXACT_PARALLELEPIPED(%d)", int(N)); break;
+    default : DAL_THROW(dal::internal_error, 
+    "Exact integration not allowed in this context");
+    }
+    break;
+  case 1 :
+    switch (mesh_type) { 
+    case 0 : 
+      sprintf(meth, "IM_NC(%d,%d)", int(N), int(2*K));
+      break;
+    case 1 : 
+      sprintf(meth, "IM_NC_PARALLELEPIPED(%d,%d)", int(N), int(2*K));
+      break;
+    case 2 :
+      sprintf(meth, "IM_NC_PRISM(%d,%d)", int(N), int(2*K));
+      break;
+    }
+    break;
+  case 2 :
+    if (mesh_type == 1)
+      sprintf(meth, "IM_GAUSS_PARALLELEPIPED(%d,%d)", int(N), int(2*K));
+    else
+      DAL_THROW(dal::internal_error,
+		"Product of 1D Gauss only for parallelepipeds");
+    break;
+  case 3 :
+    if (mesh_type == 0) {
+      if (N == 1)
+	sprintf(meth, "IM_STRUCTURED_COMPOSITE(IM_GAUSS1D(%d), %d)",2,int(KI));
+      else if (N == 2)
+	sprintf(meth, "IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(%d), %d)",
+		2,int(KI));
+      else
+	sprintf(meth, "IM_STRUCTURED_COMPOSITE(IM_NC(%d, %d), %d)",
+		int(N), int(2*K), int(KI));
+    }
+    else
+      DAL_THROW(dal::internal_error,
+		"Composite integration only for simplexes");
+    break;
+  case 11 : sprintf(meth, "IM_TRIANGLE(1)"); break;
+  case 12 : sprintf(meth, "IM_TRIANGLE(2)"); break;
+  case 13 : sprintf(meth, "IM_TRIANGLE(3)"); break;
+  case 14 : sprintf(meth, "IM_TRIANGLE(4)"); break;
+  case 15 : sprintf(meth, "IM_TRIANGLE(5)"); break;
+  case 16 : sprintf(meth, "IM_TRIANGLE(6)"); break;
+  case 17 : sprintf(meth, "IM_TRIANGLE(7)"); break;
+  case 21 : sprintf(meth, "IM_TETRAHEDRON(1)"); break;
+  case 22 : sprintf(meth, "IM_TETRAHEDRON(2)"); break;
+  case 23 : sprintf(meth, "IM_TETRAHEDRON(3)"); break;
+  case 25 : sprintf(meth, "IM_TETRAHEDRON(5)"); break;
+  case 32 : sprintf(meth, "IM_QUAD(2)"); break;
+  case 33 : sprintf(meth, "IM_QUAD(3)"); break;
+  case 35 : sprintf(meth, "IM_QUAD(5)"); break;
+  default : DAL_THROW(std::logic_error, "Undefined integration method");
+  }
   ppi = getfem::int_method_descriptor(meth);
-  sprintf(meth, "FEM_PK(%d,%d)", int(N), int(K));
-  mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
-  mef_data.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
-  sprintf(meth, "FEM_PK(%d,%d)", int(N), 0);
-  mef_data2.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
+  getfem::pfem pfprinc = 0;
+  switch (mesh_type) {
+  case 0 :
+    sprintf(meth, "FEM_PK(%d,%d)", int(N), int(K));
+    pfprinc = getfem::fem_descriptor(meth);
+    mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
+    mef_data.set_finite_element(nn, getfem::fem_descriptor(meth),
+				getfem::exact_simplex_im(N));
+    sprintf(meth, "FEM_PK(%d,%d)", int(N), 0);
+    mef_data2.set_finite_element(nn, getfem::fem_descriptor(meth),
+				 getfem::exact_simplex_im(N));
+    break;
+  case 1 :
+    sprintf(meth, "FEM_QK(%d,%d)", int(N), K);
+    pfprinc = getfem::fem_descriptor(meth);
+    mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi); 
+    mef_data.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
+    sprintf(meth, "FEM_QK(%d,%d)", int(N), 0);
+    mef_data2.set_finite_element(nn, getfem::fem_descriptor(meth),  ppi);
+    break;
+  case 2 :
+    sprintf(meth, "FEM_PK_PRISM(%d,%d)", int(N), K);
+    pfprinc = getfem::fem_descriptor(meth);
+    mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
+    mef_data.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
+    sprintf(meth, "FEM_PK_PRISM(%d,%d)", int(N), 0);
+    mef_data2.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
+    break;
+  }
+
+//   if (integration == 0) sprintf(meth, "IM_EXACT_SIMPLEX(%d)", int(N));
+//   else sprintf(meth, "IM_NC(%d, %d)", int(N), int(2*K));
+//   ppi = getfem::int_method_descriptor(meth);
+//   sprintf(meth, "FEM_PK(%d,%d)", int(N), int(K));
+//   mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
+//   mef_data.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
+//   sprintf(meth, "FEM_PK(%d,%d)", int(N), 0);
+//   mef_data2.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
 
   cout << "Selecting Neumann and Dirichlet boundaries\n";
   nn = mesh.convex_index(N);
@@ -269,8 +373,8 @@ int main(int argc, char *argv[]) {
     cout << "Assembling\n";
     p.assemble();
     
-    //   cout << "Matrice de rigidite\n";
-    //   gmm::write(p.SM, cout);
+    // cout << "Matrice de rigidite\n";
+    // cout << p.SM << endl;
     
     cout << "Solving linear system\n";
     p.solve();
@@ -281,7 +385,7 @@ int main(int argc, char *argv[]) {
     linalg_vector V(nbdof); V = p.U;
     base_vector S;
     
-    for (int i = 0; i < nbdof/p.N; ++i) {
+    for (int i = 0; i < int(nbdof/p.N); ++i) {
       S = sol_u(p.mef.point_of_dof(i*p.N));
       for (dim_type k = 0; k < p.N; ++k) V[i*p.N + k] -= S[k];
     }

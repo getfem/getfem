@@ -32,7 +32,7 @@
 \end{center}
 
 % \begin{abstract}
-% Basic user documentation for GETFEM++.
+% Basic user documentation for {\sc Getfem++}.
 % \end{abstract}
 
 
@@ -43,7 +43,7 @@
 \section*{Introduction}
 
 
-The GETFEM++ project is centered around the development of a generic and efficient elementary computations C++ library for finite element methods. The goal is to build a library which allows to compute any elementary matrix (even for mixed methods) on the largest class of methods and elements and for arbitrary dimension. It offers a complete separation between integration methods (exact or approximated), geometric transformations (linear or not) and finite element methods of arbitrary degrees. It allows to write finite element code which are independent of the particular method, and thus to test easily various finite element method on the same problem.
+The {\sc Getfem++} project is centered around the development of a generic and efficient elementary computations C++ library for finite element methods. The goal is to build a library which allows to compute any elementary matrix (even for mixed methods) on the largest class of methods and elements and for arbitrary dimension. It offers a complete separation between integration methods (exact or approximated), geometric transformations (linear or not) and finite element methods of arbitrary degrees. It allows to write finite element code which are independent of the particular method, and thus to test easily various finite element method on the same problem.
 
  Moreover, the library includes other tools for computation with finite element such as assembling methods for classical PDEs, interpolation methods, computation of norms, mesh operations, boundary conditions ... This library allows to build finite elements codes which are completely independent of the dimension, the particular method or element. Examples are provided.\\[2cm]
 \input{../license.tex}
@@ -52,12 +52,47 @@ The GETFEM++ project is centered around the development of a generic and efficie
 \tableofcontents
 \newpage
 
+\section{How to install}
+
+Since we used standard GNU tools, the installation of the {\sc Getfem++} library is somewhat standard. If the {\sc Getfem++} archive is on your current directory you can unpack it and enter inside the directory of the distribution  with the commands
+\begin{alltt}
+  gzcat getfem-x.xx.tar.gz | tar xvf -
+  cd  getfem-x.xx
+\end{alltt}
+Then you you have to run the configure script just typing
+\begin{alltt}
+  ./configure
+\end{alltt}
+or if you want to set the prefix directory where to install the library you can use the {\tt --prefix} option (the default prefix directory is {\tt /usr/local}):
+\begin{alltt}
+  ./configure --prefix=\textit{dest_dir}
+\end{alltt}
+then lauch the compilation with
+\begin{alltt}
+  make
+\end{alltt}
+and the installation with
+\begin{alltt}
+  make install
+\end{alltt}
+You can also check if the installation is ok with
+\begin{alltt}
+  make check
+\end{alltt}
+
+If you want to use a different compiler than the one choosen
+automatically by the \texttt{./configure} script, just specify its
+name on the command line: \texttt{./configure CXX=mycompiler}
+
+More specific instructions can be found in the \texttt{README*} files of
+the distribution.
+
 \section{Build a mesh}
-GETFEM++ has it own structure to store meshes defined in the files {\tt bgeot\_mesh\_structure.h}, $\;$ ${\tt bgeot\_mesh.h}$ and {\tt getfem\_mesh.h}. The main structure is defined in {\tt getfem\_mesh.h} by the object\\[0.5cm]
+{\sc Getfem++} has it own structure to store meshes defined in the files {\tt bgeot\_mesh\_structure.h}, $\;$ ${\tt bgeot\_mesh.h}$ and {\tt getfem\_mesh.h}. The main structure is defined in {\tt getfem\_mesh.h} by the object\\[0.5cm]
 {\tt getfem::getfem\_mesh }\\[0.5cm]
 This object is able to store any element in any dimension even if you mix elements with different dimensions.\\[0.5cm]
 
-There is no meshing procedures in GETFEM++ to mesh complex geometries. This is not the goal of this package. But you can easily load a mesh from any format.
+There is no meshing procedures in {\sc Getfem++} to mesh complex geometries. This is not the goal of this package. But you can easily load a mesh from any format.
 
 \subsection{Add an element to a mesh}
 Suppose the variable mesh has been declared by\\[0.5cm]
@@ -226,7 +261,7 @@ In {\tt getfem\_mesh.h}, two methods are defined to load meshes from file and wr
 
 \end{tabular} \\[0.5cm]
 
-A little tool allows to display a mesh using Gnuplot (and Perl). This tool is present in the directory {\tt contrib/} and of course you need to have a working distribution of Gnuplot installed on your system. This little tool is built when you execute a {\tt make} instruction on the root directory of GETFEM++. So, if GETFEM++ is normally installed on your system, you can change your current directory to {\tt contrib/} and execute the command \\[0.5cm]
+A little tool allows to display a mesh using Gnuplot (and Perl). This tool is present in the directory {\tt contrib/} and of course you need to have a working distribution of Gnuplot installed on your system. This little tool is built when you execute a {\tt make} instruction on the root directory of {\sc Getfem++}. So, if {\sc Getfem++} is normally installed on your system, you can change your current directory to {\tt contrib/} and execute the command \\[0.5cm]
 {\tt draw\_mesh filename.mesh} \\[0.5cm]
 where {\tt filename.mesh} is the file containing the mesh. This works only for meshes whose principal dimension is between 1 and 3. Examples of mesh files are also provided into the directory {\tt contrib/} to test the program.
 
@@ -383,11 +418,13 @@ $$ [RM] U = B, $$
 where $U$ is the discrete unknown.\\[0.5cm]
 
 For the second manner, one should use\\[0.5cm]
-{\tt getfem::asm\_dirichlet\_constraints($\tilde{H}$, $\tilde{R}$, mf\_u, mf\_rh,$H$, $R$, nbound)}. See the Dirichlet condition as a general linear constraint that must satisfy the solution $u$. Here, $H$ is a (sparse) matrix, with {\tt mf\_rh.nb\_dof()} columns, and $n_c$ lines, where $n_c$ is the number of constraints. Hence $u$ must satisfy $Hu=R$, which is expressed on $mf\_rh$ (hopefully lagragian). This function just assemble these constraints into a new linear system $\tilde{H}u=\tilde{R}$, doing some additionnal simplification in order to obtain a ``simple'' constraints matrix.
-Then, one should call {\tt getfem::Dirichlet\_null_space($\tilde{H}$, N, $\tilde{R}$, Ud)}, which will return a vector $U_d$ which satisfies $MU_d=B$, and an orthogonal basis $N$ of the kernel of $\tilde{H}$. Hence, the discrete system that must be solved is 
+{\tt getfem::asm\_dirichlet\_constraints($\tilde{H}$, $\tilde{R}$, mf\_u, mf\_rh,$H$, $R$, nbound)}.\\[0.5cm]
+See the Dirichlet condition as a general linear constraint that must satisfy the solution $u$. Here, $H$ is a (sparse) matrix, with {\tt mf\_rh.nb\_dof()} columns, and $n_c$ lines, where $n_c$ is the number of constraints. Hence $u$ must satisfy $Hu=R$, which is expressed on $mf\_rh$ (hopefully lagragian). This function just assemble these constraints into a new linear system $\tilde{H}u=\tilde{R}$, doing some additionnal simplification in order to obtain a ``simple'' constraints matrix.
+Then, one should call \\[0.5cm]{\tt getfem::Dirichlet\_null_space($\tilde{H}$, N, $\tilde{R}$, Ud)},\\[0.5cm] which will return a vector $U_d$ which satisfies $MU_d=B$, and an orthogonal basis $N$ of the kernel of $\tilde{H}$. Hence, the discrete system that must be solved is 
 $$ (N'[RM]N) U_{int}=N'(B-[RM]U_d),$$
 and the solution is $U=N.U_{int}+U_d$.
-
+A big advantage of this approach is to be generic, and do not prescribed for the finite element method {\tt mf\_u} to be of Lagrange type. If {\tt mf\_u} and 
+{\tt mf\_d} are different, there is implicitely a projection (with respect to the $L^2$ norm) of the data on the finite element {\tt mf\_u}.
 
 \subsection{Linear Elasticity problem}
 
@@ -507,7 +544,7 @@ The {\tt print} command can be used to see the tensor: {\tt "print comp(Base(\#1
 
 If there is more than one data array, output array  or output sparse matrix, one can use {\tt data\$2, data\$3, V\$2, M\$2,}\ldots
 
-\section{Incorporate new finite element methods in GETFEM++}
+\section{Incorporate new finite element methods in {\sc Getfem++}}
 
 Basically, It is sufficient to describe an element on the reference element, i.e. to describe each base function of each degree of freedom. Vectorial elements and non-equivalent elements are partially supported ... (supported by the finite element kernel but not by assembling procedures). To be done ... please read \cite{BASCOMP} for more details and see the file {\tt getfem\_fem.C} for practical implementation.
 
@@ -559,7 +596,7 @@ where {\tt mef1} is a variable of type {\tt getfem::mesh\_fem} and describes the
 The file {\tt getfem\_export.h} defines the following function to save a solution in a file\\[0.5cm]
 {\tt getfem::save\_solution(filename, mef, U, Q, K); }\\[0.5cm]
 where {\tt filename} is of type {\tt std::string}, {\tt mef}  is a variable of type {\tt getfem::mesh\_fem} and describes the finite element method on which the solution is defined, {\tt U} is a vector representing the solution and should be of size {\tt Q * mef.nb\_dof()} and {\tt K} is the degree of the standard lagrange element used to save the solution. The solution is interpolated on each element on the more classical lagrange element of degree {\tt K} defined on this element.\\[0.5cm]
-To view a solution, two perl scripts are provided (in the directory {\tt bin/} of GETFEM++ distribution) but work only for 2D domains and are very basic.\\[0.5cm]
+To view a solution, two perl scripts are provided (in the directory {\tt bin/} of {\sc Getfem++} distribution) but work only for 2D domains and are very basic.\\[0.5cm]
 {\tt sc2dgnuplot filename}\\[0.5cm]
 {\tt dr2dgnuplot filename S}\\[0.5cm]
 Both scripts use Gnuplot to draw the solution and thus you need to have a working distribution of Gnuplot installed on your system. {\tt S} is a coefficient to zoom the solution. {\tt sc2dgnuplot} draw a scalar solution and {\tt dr2dgnuplot} a vectorial solution. See also the matlab interface for more elaborated draw procedures.
@@ -587,7 +624,7 @@ A standard procedure, {\tt DAL\_STANDARD\_CATCH\_ERROR}, is defined in {\tt dal\
 
 \section{Example : Laplacian program}
 
-The program {\tt laplacian} is provided in the directory {\tt tests} of GETFEM++ distribution. This program compute the solution of the Poisson problem in a parellepiped domain in any dimension with various finite element methods and elements. This program can be used as a model to build application programs. To compile it execute a {\tt gmake check} on the root directory of GETFEM++. Once the program is compiled you can test it executing the command\\[0.5cm]
+The program {\tt laplacian} is provided in the directory {\tt tests} of {\sc Getfem++} distribution. This program compute the solution of the Poisson problem in a parellepiped domain in any dimension with various finite element methods and elements. This program can be used as a model to build application programs. To compile it execute a {\tt gmake check} on the root directory of {\sc Getfem++}. Once the program is compiled you can test it executing the command\\[0.5cm]
 {\tt laplacian laplacian.param}\\[0.5cm]
 The file {\tt laplacian.param} is the parameter file. You can edit it and test various situation. The following parameter can be changed\\[0.5cm]
 \begin{center} \begin{tabular}{|m{0.2\linewidth}|m{0.75\linewidth}|} \hline
@@ -629,11 +666,11 @@ The program {\tt elastostatic} is built in a same way and compute the solution o
 
 \bibitem{BASCOMP}
   Y. {\sc Renard},
-  {\it Elementary Computations in GETFEM++}, 2002.
+  {\it Elementary Computations in {\sc Getfem++}}, 2002.
 
 \bibitem{FEMLIST}
   Y. {\sc Renard},
-  {\it Description of Finite Element and Integration Methods in GETFEM++}, 2002.
+  {\it Description of Finite Element and Integration Methods in {\sc Getfem++}}, 2002.
 
 \end{thebibliography}
 \end{document}

@@ -14,7 +14,7 @@ MESH_TYPE = 0;          % 0 = simplexes
 			% 1 = parallelepipeds
 			% 2 = prisms
 INCLINE = 0;            % Incline of the mesh.
-K = 2;                % Finite element degree.
+K = 2;                  % Finite element degree.
 FEM_TYPE = 3;           % Finite element method
 			% 0 = classical Lagrange element
 			% 1 = Hermite element on the segment

@@ -40,7 +40,7 @@
 \end{center}
 
 % \begin{abstract}
-% Basic description of the structure of the finite element kernel of GETFEM++.
+% Basic description of the structure of the finite element kernel of {\sc Getfem++}.
 % \end{abstract}
 
 
@@ -49,7 +49,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section*{Introduction}
-This documentation describes the different finite element methods and approximative integration methods available in GETFEM++.\\[4cm]
+This documentation describes the different finite element methods and approximative integration methods available in {\sc Getfem++}.\\[4cm]
 \input{../license.tex}
 
 \newpage
@@ -58,7 +58,7 @@ This documentation describes the different finite element methods and approximat
 
 \section{Finite element methods}
 
-all finite element methods defined in GETFEM++ are interfaced in the file {\tt getfem\_fem.h}.
+all finite element methods defined in {\sc Getfem++} are interfaced in the file {\tt getfem\_fem.h}.
 A descriptor on a finite element method is available thanks to the function\\[0.5cm]
 {\tt getfem::pfem pf = getfem::fem\_descriptor("name of method");
 }\\[0.5cm]
@@ -76,13 +76,13 @@ where {\tt "name of method"} is a string to be choosen among the existing method
 A finite element method is defined on a reference element $\overline{T} \subset \Reel^P$ by a set of $n_d$ nodes $a^i$ and corresponding base functions 
 $$ \overline{\varphi}^i : \overline{T} \subset \Reel^P \longrightarrow \Reel^Q. $$
 Each base function corresponds to a degree of freedom (d.o.f).
-Most finite element methods are scalar, which means that $Q = 1$, but GETFEM++ support also intrinsic vectorial elements. The map between the reference element and the real element is called the geometric transformation and is denoted by 
+Most finite element methods are scalar, which means that $Q = 1$, but {\sc Getfem++} support also intrinsic vectorial elements. The map between the reference element and the real element is called the geometric transformation and is denoted by 
 $$ \tau :  \overline{T} \longrightarrow T, $$
 and is supposed to be polynomial (see \cite{dh-to1984} or \cite{BAS_COMP}). The base functions $\overline{\varphi}^i$ defined on the reference element define a set of base function on the real element defined by
 $$ \tilde{\varphi}^i(x) = \overline{\varphi}^i(\overline{x}) = \overline{\varphi}^i(\tau^{-1}(x)), $$
 If the element is said to be equivalent throught the geometric transformation $\tau$ (or $\tau$-equivalent) then base functions on the real element are just defined by
 $$\varphi(x) = \tilde{\varphi}^i(x).$$
-This is generally the case for Lagrange element, but not for Hermite elements (when the gradient of the functions is taken into account). When the element is not equivalent throught the geometric transformation then GETFEM++ allows to define a matrix $\tilde{M}$ depending on the real element (i.e. on the geometric transformation) such that base functions on the real element are defined by
+This is generally the case for Lagrange element, but not for Hermite elements (when the gradient of the functions is taken into account). When the element is not equivalent throught the geometric transformation then {\sc Getfem++} allows to define a matrix $\tilde{M}$ depending on the real element (i.e. on the geometric transformation) such that base functions on the real element are defined by
 $$ \varphi^i(x) = \sum_{j = 0}^{n_d - 1} \tilde{M}_{ij} \tilde{\varphi}^j(x). $$
 Most of the time, the matrix $\tilde{M}$ is a square matrix, but for special elements a non-square matrix can be defined.
 We denote by
@@ -169,7 +169,7 @@ The number of degree of freedom for a classical ``$P_K$'' Lagrange element of di
   \caption{ \it Examples of classical $P_K$ Lagrange elements on a tetrahedron.} \label{fig:tetrahedronpk}
 \end{figure}
 
-The particular way selected in GETFEM++ to numerate the nodes are also shown in figures \ref{fig:segmentpk}, \ref{fig:trianglepk} and \ref{fig:tetrahedronpk}. Using another numeration, let 
+The particular way selected in {\sc Getfem++} to numerate the nodes are also shown in figures \ref{fig:segmentpk}, \ref{fig:trianglepk} and \ref{fig:tetrahedronpk}. Using another numeration, let 
 $$ i_0, i_1, ... i_P, $$
 be somme indexes such that
 $$ 0 \le i_0, i_1, ... i_P \le K, \ \mbox{ and } \ \sum_{n = 0}^{P} i_n = K.$$
@@ -182,7 +182,7 @@ where $\lambda_n$ are the barycentric coordinates, i.e. the polynomials of degre
 $$ \lambda_n = x_n, \ \ 0 \le n < P, $$
 $$ \lambda_P = 1 - x_0 - x_1 - ... - x_{P-1}. $$
 
-When between two elements of the same degrees (even with different dimensions), the d.o.f. of a common face are linked, the element is of class $C^0$. This means that the global polynomial is continuous. If you try to link elements of different degrees, you will get some trouble with the unlinked d.o.f. This is not automatically supported by GETFEM++, so you will have to support it (add constraints on these d.o.f.).\\
+When between two elements of the same degrees (even with different dimensions), the d.o.f. of a common face are linked, the element is of class $C^0$. This means that the global polynomial is continuous. If you try to link elements of different degrees, you will get some trouble with the unlinked d.o.f. This is not automatically supported by {\sc Getfem++}, so you will have to support it (add constraints on these d.o.f.).\\
 
 For some applications (computation of a gradient for instance) one does not want the d.o.f. of a common face to be linked. This is why there are two versions of the classical ``$P_K$'' Lagrange element.\\[1cm]
 
@@ -1115,11 +1115,11 @@ to be described ...
 
 \bibitem{BAS_COMP}
   Y. {\sc Renard},
-  {\it Elementary Computations in GETFEM++}, 2002.
+  {\it Elementary Computations in {\sc Getfem++}}, 2002.
 
 \bibitem{USER_DOC}
-  Y. {\sc Renard},
-  {\it Short User Documentation of GETFEM++}, 2002.
+  Y. {\sc Renard}, J. {\sc Pommier}
+  {\it Short User Documentation of {\sc Getfem++}}, 2003.
 
 \bibitem{nedelec1991}
   J.-C. {\sc Nedelec},
