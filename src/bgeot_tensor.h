@@ -101,14 +101,14 @@ namespace bgeot
       {
 	typename CONT::const_iterator it = c.begin();
 	multi_index::const_iterator q = coeff.begin(), e = coeff.end();
-	#ifdef __GETFEM_VERIFY
+	#ifdef GETFEM_VERIFY
 	  multi_index::const_iterator qv = _sizes.begin();
 	#endif
 	size_type d = 0;
 	for ( ; q != e; ++q, ++it)
 	{ 
 	  d += (*q) * (*it);
-	  #ifdef __GETFEM_VERIFY
+	  #ifdef GETFEM_VERIFY
 	    if (*it >= *qv) DAL_THROW(std::out_of_range, "index out of range");
 	    ++qv;
           #endif

@@ -32,7 +32,9 @@
 #ifndef __DAL_STD_H
 #define __DAL_STD_H
 
-#define __GETFEM_VERIFY
+#ifndef NOGETFEM_VERIFY
+#  define GETFEM_VERIFY
+#endif
 
 #ifndef __USE_STD_IOSTREAM
   #define __USE_STD_IOSTREAM
@@ -143,7 +145,7 @@ using std::cin;
  *       int16\_type; uint16\_type; \\
  *       int32\_type; uint32\_type; \\ \\
  *     - The macro
- *       {\tt __GETFEM_VERIFY -CODE }
+ *       {\tt GETFEM_VERIFY -CODE }
  *       allows to switch on or off verifications on libraries,
  *       such as verification of range on arrays, on vectors ...
  */

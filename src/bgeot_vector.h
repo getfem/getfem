@@ -60,7 +60,7 @@ namespace bgeot
 
       void out_of_range_error(void) const;
 
-      #ifdef __GETFEM_VERIFY
+      #ifdef GETFEM_VERIFY
       inline const T& operator [](size_type l) const
       { if (l>=this->size()) out_of_range_error(); return *(this->begin()+l); }
       inline T& operator [](size_type l)
