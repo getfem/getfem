@@ -18,7 +18,7 @@ int main(void) {
     dal::dynamic_array<int, 4> t;
 
     try {
-      t[(unsigned)-5] = 8;
+      t[(unsigned)(-5)] = 8;
       std::stringstream msg;
       msg << "dynamic_array.C : negative index does not produce an error\0"; 
       throw dal::internal_error(msg.str()); 
@@ -127,8 +127,7 @@ int main(void) {
       throw dal::internal_error("dynamic_array.C : bad capacity");
 
     cout << "Dynamic_array test ok\n";
-
-    return 0;
   }
   DAL_STANDARD_CATCH_ERROR;
+  return 0;
 }

@@ -8,11 +8,6 @@
 #include <getfem_regular_meshes.h>
 
 #include <linear_systems.h>
-#include <model_param.h>
-#include <graph_visu_3D.h>
-#include <geo_mesh_visu_3D.h>
-#include <clock.h>
-
 
 /**************************************************************************/
 /*  Definition de la solution test.                                       */
@@ -82,18 +77,13 @@ struct pb_data
 
   int iteimpl, integration;
 
-  md_param PBSTFR_PARAM;
+  ftool::md_param PBSTFR_PARAM;
 
-  int NBLEVEL;
-  bool draw;
   string datafilename;
-  
-  scalar_type muldep;
 
   void init();
   void assemble(void);
   void solve(void);
-  void visu(void);
 
   pb_data(void) : mef(mesh), mef_data(mesh), mef_data2(mesh) {}
 };
@@ -120,15 +110,10 @@ void pb_data::init(void)
   iteimpl = PBSTFR_PARAM.int_value("ITEIMPL", "Nombre d'iteration pt fixe");
   integration = PBSTFR_PARAM.int_value("INTEGRATION", "Type d'integration");
   residu = PBSTFR_PARAM.real_value("RESIDU", "Valeur pour test d'arret");
-  muldep = PBSTFR_PARAM.real_value("MULDEP", "Coeff de grossissement");
-  NBLEVEL = PBSTFR_PARAM.int_value("NBLEVEL", "Nombre de courbes de niveau");
   K = PBSTFR_PARAM.int_value("K", "Degre de l'element fini de Lagrange");
 
   datafilename = string(PBSTFR_PARAM.string_value("ROOTFILENAME",
 			     "Nom du fichier de sauvegarde sans extension"));
-  const char *dds = PBSTFR_PARAM.string_value("GRAPHICS", "Dessin ? ");
-  draw = (strcmp("N", dds) && strcmp("n", dds));
- 
   scalar_type FT = PBSTFR_PARAM.real_value("FT", "parametre pour solution exacte");
   for (i = 0; i < N; i++)
   {
@@ -167,8 +152,6 @@ void pb_data::init(void)
 
   mef_data.set_finite_element(nn, getfem::PK_fem(N, K), ppi);
   mef_data2.set_finite_element(nn, getfem::PK_fem(N, 0), ppi);
-
-  if (draw) simple_mesh_visu(mesh, "Maillage", NX <= 5);
 
   cout << "Reperage des bord Neumann et Dirichlet\n";
   nn = mesh.convex_index(N);
@@ -249,75 +232,51 @@ void pb_data::assemble(void)
 void pb_data::solve(void)
 { precond_cg(RM, U, B, 20000, residu); }
 
-void pb_data::visu(void)
-{
-  dal::dynamic_array<base_node> ptab;
-  dal::bit_vector nn = mef.convex_index();
-  int c;
-  for (int i = 0; i < mesh.points().index().last()+1; ++i)
-  { ptab[i] = base_node(N); ptab[i].fill(0.0); }
-
-  for (c << nn; c >= 0; c << nn)
-  {
-    for (int i = 0; i < mef.nb_dof_of_element(c); ++i)
-    {
-      int l = mef.ind_dof_of_element(c)[i];
-      int k = mesh.search_point(mef.point_of_dof(l));
-      if (k >= 0)
-      {
-	for (int j = 0; j < N; ++j) ptab[k][j] = U[l * N + j];
-	ptab[k] *= muldep;
-      }
-    }
-  }
-  simple_mesh_visu(mesh, "Configuration deformee", NX <= 5, ptab);
-}
-
 int main(int argc, char *argv[])
 {
-  pb_data p;
-
-  cout << "initialisation ...\n";
-  p.PBSTFR_PARAM.read_command_line(argc, argv);
-  p.init();
-  cout << "Initialisation terminee\n";
-  p.mesh.stat();
-  p.mesh.write_to_file(p.datafilename + ".mesh" + char(0));
- 
-  cout << "Debut de l'assemblage\n";
-  p.assemble();
-  cout << "Assemblage termine\n";
-
-//   cout << "Matrice de rigidite\n";
-//   for (int i = 0; i < p.RM.nrows(); i++)
-//   { 
-//     cout << "ligne " << i << " [ ";
-//     for (l = 0; l < p.RM.nrows(); l++)
-//       if (p.RM(i, l) != 0.0)
-// 	cout << "(" << l << "," << p.RM(i, l) << ")  ";
-//     cout << "]" << endl;
-//   }
-//   cout << endl << endl;
-
-  cout << "Resolution\n";
-  p.solve();
-
-  cout << "Calcul de l'erreur\n";
-
-  int nbdof = p.mef.nb_dof();
-  linalg_vector V(nbdof*p.N); mtl::copy(p.U, V);
-  base_vector S;
-
-  for (int i = 0; i < nbdof; ++i)
-  {
-    S = sol_u(p.mef.point_of_dof(i));
-    for (int k = 0; k < p.N; ++k) V[i*p.N + k] -= S[k];
+  try {
+    pb_data p;
+    
+    cout << "initialisation ...\n";
+    p.PBSTFR_PARAM.read_command_line(argc, argv);
+    p.init();
+    cout << "Initialisation terminee\n";
+    p.mesh.stat();
+    p.mesh.write_to_file(p.datafilename + ".mesh" + char(0));
+    
+    cout << "Debut de l'assemblage\n";
+    p.assemble();
+    cout << "Assemblage termine\n";
+    
+    //   cout << "Matrice de rigidite\n";
+    //   for (int i = 0; i < p.RM.nrows(); i++)
+    //   { 
+    //     cout << "ligne " << i << " [ ";
+    //     for (l = 0; l < p.RM.nrows(); l++)
+    //       if (p.RM(i, l) != 0.0)
+    // 	cout << "(" << l << "," << p.RM(i, l) << ")  ";
+    //     cout << "]" << endl;
+    //   }
+    //   cout << endl << endl;
+    
+    cout << "Resolution\n";
+    p.solve();
+    
+    cout << "Calcul de l'erreur\n";
+    
+    int nbdof = p.mef.nb_dof();
+    linalg_vector V(nbdof*p.N); mtl::copy(p.U, V);
+    base_vector S;
+    
+    for (int i = 0; i < nbdof; ++i) {
+      S = sol_u(p.mef.point_of_dof(i));
+      for (int k = 0; k < p.N; ++k) V[i*p.N + k] -= S[k];
+    }
+    
+    cout <<  "Error L^2 " << getfem::L2_norm(p.mef, V, p.N) << endl;
+    cout <<  "Error H^1 " << getfem::H1_norm(p.mef, V, p.N) << endl;
   }
-
-  cout <<  "Error L^2 " << getfem::L2_norm(p.mef, V, p.N) << endl;
-  cout <<  "Error H^1 " << getfem::H1_norm(p.mef, V, p.N) << endl;
-
-  if (p.draw) p.visu();
+  DAL_STANDARD_CATCH_ERROR;
 
   return 0;
 }

@@ -1,8 +1,10 @@
 check_PROGRAMS = \
 	dynamic_array \
-	dynamic_tas
+	dynamic_tas \
+	laplacien
 dynamic_array_SOURCES = dynamic_array.C 
 dynamic_tas_SOURCES = dynamic_tas.C 
+laplacien_SOURCES = laplacien.C
 
 INCLUDES = -I$(top_srcdir)/src
 LDADD    = ../src/.libs/libgetfem.a -lm
