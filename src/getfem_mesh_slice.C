@@ -349,7 +349,7 @@ namespace getfem {
   /* of course, nodes created from edge/slice intersection are almost always duplicated */
   mesh_slice::mesh_slice(const getfem_mesh& m, const slicer& ms, size_type nrefine, 
                          convex_face_ct& in_cvlst, mesh_slice_cv_dof_data_base *def_mf_data) 
-    : simplex_cnt(m.dim()+1, 0), points_cnt(0), _dim(m.dim()) {
+    : simplex_cnt(m.dim()+1, size_type(0)), points_cnt(0), _dim(m.dim()) {
     _geotrans_precomp gp;
     bgeot::stored_point_tab cvm_pts;
     bgeot::pconvex_ref prev_cvr = 0;

@@ -22,6 +22,7 @@ namespace getfem {
     slice_simplex(size_type n) : inodes(n) {} 
     slice_simplex() : inodes(4) {}
     bool operator==(const slice_simplex& o) const { return inodes == o.inodes; }
+    bool operator!=(const slice_simplex& o) const { return inodes != o.inodes; }
   };
   
 
