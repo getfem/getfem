@@ -54,6 +54,7 @@ namespace getfem
   { // a corriger
     dim_type N = mf.linked_mesh().dim();
     dim_type P = mf.get_qdim();
+
     std::ofstream o(filename.c_str());
     if (!o) DAL_THROW(internal_error, "impossible to open file");
     base_node pt1(N), pt3(P);

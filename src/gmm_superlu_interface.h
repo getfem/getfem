@@ -39,21 +39,21 @@
 #include <gmm_kernel.h>
 
 typedef int int_t;
-#include "SuperLU/SRC/Cnames.h"
-#include "SuperLU/SRC/supermatrix.h"
+#include "SRC/Cnames.h"
+#include "SRC/supermatrix.h"
 namespace SuperLU_S {
-#include "SuperLU/SRC/ssp_defs.h"
+#include "SRC/ssp_defs.h"
 }
 namespace SuperLU_D {
-#include "SuperLU/SRC/dsp_defs.h"
+#include "SRC/dsp_defs.h"
 }
 namespace SuperLU_C {
-#include "SuperLU/SRC/csp_defs.h"
+#include "SRC/csp_defs.h"
 }
 namespace SuperLU_Z {
-#include "SuperLU/SRC/zsp_defs.h" 
+#include "SRC/zsp_defs.h" 
 }
-#include "SuperLU/SRC/util.h"
+#include "SRC/util.h"
 
 
 
