@@ -41,7 +41,12 @@ namespace getfem
     mf_target should be a lagrange discontinous element
     does not work with vectorial elements. ... to be done ...
 
-    mf_target is supposed to have the same Qdim than mf
+    mf_target may have the same Qdim than mf, or it may
+    be a scalar mesh_fem, in which case the derivatives are stored in
+    the order: DxUx,DyUx,DzUx,DxUy,DyUy,...
+
+    in any case, the size of V should be (mf_target.nbdof/mf_target.qdim) *
+    (mf.qdim)^2 elements (this is not checked by the function!)
   */
   template<class VECT>
   void compute_gradient(mesh_fem &mf, mesh_fem &mf_target,
@@ -50,11 +55,14 @@ namespace getfem
     size_type cv;
     size_type N = mf.linked_mesh().dim();
     size_type qdim = mf.get_qdim();
+    size_type target_qdim = mf_target.get_qdim();
+
+
     if (&mf.linked_mesh() != &mf_target.linked_mesh())
       DAL_THROW(std::invalid_argument, "meshes are different.");
 
-    if (mf_target.get_qdim() != mf.get_qdim()) {
-      DAL_THROW(std::invalid_argument, "invalid Qdim for gradient");
+    if (target_qdim != qdim && target_qdim != 1) {
+      DAL_THROW(std::invalid_argument, "invalid Qdim for gradient mesh_fem");
     }
 
     base_matrix G, val;
@@ -124,8 +132,13 @@ namespace getfem
 	  pf->interpolation_grad(pfp, j, G, pgt, coeff, val);
 	  bgeot::mat_product(val, B0, B1);
 
-	  for (size_type l = 0; l < N; ++l)
-	    V[mf_target.ind_dof_of_element(cv)[j*qdim+q]*N+l] = B1(0, l);
+	  if (target_qdim != 1) {
+	    for (size_type l = 0; l < N; ++l)
+	      V[mf_target.ind_dof_of_element(cv)[j*qdim+q]*N+l] = B1(0, l);
+	  } else {
+	    for (size_type l = 0; l < N; ++l)
+	      V[(mf_target.ind_dof_of_element(cv)[j]*qdim + q)*N+l] = B1(0, l);	    
+	  }
 	}
       }
     }
