@@ -366,8 +366,8 @@ void pb_data::assemble(void)
 
 void pb_data::solve(void) {
   gmm::iteration iter(residu);
-  // gmm::choleskyt_precond<sparse_matrix_type> P(SM, 5, 1E-7);
-  gmm::cholesky_precond<sparse_matrix_type> P(SM);
+  gmm::choleskyt_precond<sparse_matrix_type> P(SM, 5, 1E-7);
+  // gmm::cholesky_precond<sparse_matrix_type> P(SM);
   gmm::cg(SM, U, B, P, iter);
 }
 

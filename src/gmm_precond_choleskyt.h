@@ -2,8 +2,9 @@
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Generic Matrix Methods  (gmm)                                */
-/* File    :  gmm_precond_choleskyt.h : Incomplete Cholesky with fill-in   */
-/*                                      and threshold.                     */
+/* File    :  gmm_precond_choleskyt.h : Incomplete LDLT factorisation      */
+/*                                      with fill-in and threshold.        */
+/*					                                   */
 /*     									   */
 /* Date : June 30, 2003.                                                   */
 /* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
@@ -36,7 +37,11 @@
 #include <gmm_tri_solve.h>
 #include <gmm_interface.h>
 
+
+
 namespace gmm {
+
+#define ildltt_precond choleskyt_precond
 
   template <class Matrix>
   class choleskyt_precond  {
@@ -51,7 +56,7 @@ namespace gmm {
     int K;
     double eps;    
 
-    template<class M> void do_choleskyt(const M&, row_major);
+    template<class M> void do_choleskyt(const M&, row_major, int = 0);
     void do_choleskyt(const Matrix&, col_major);
 
   public:
@@ -70,10 +75,11 @@ namespace gmm {
   };
 
   template<class Matrix> template<class M> 
-  void choleskyt_precond<Matrix>::do_choleskyt(const M& A, row_major) {
+  void choleskyt_precond<Matrix>::do_choleskyt(const M& A,row_major,int _try) {
     svector w(mat_ncols(A));
-    value_type a;
+    value_type tmp;
 
+    gmm::clear(U);
     for (size_type i = 0; i < mat_nrows(A); ++i) {
       gmm::copy(mat_const_row(A, i), w);
       double norm_row = gmm::vect_norm2(w);
@@ -85,15 +91,29 @@ namespace gmm {
       for (size_type krow = 0, k; krow < w.nb_stored(); ++krow) {
 	typename svector::iterator wk = w.begin() + krow;
 	if ((k = wk->c) >= i) break;
-	a = (wk->e);
-	if (dal::abs(a) < eps * norm_row) { w.sup(k); --krow; } 
-	else { wk->e += a; gmm::add(scaled(mat_row(U, k), -a), w); }
+	tmp = (wk->e);
+	if (dal::abs(tmp) < eps * norm_row) { w.sup(k); --krow; } 
+	else { wk->e += tmp; gmm::add(scaled(mat_row(U, k), -tmp), w); }
       }
 
-      if ((a = w[i]) == value_type(0))
-      { DAL_WARNING(2, "pivot " << i << " is zero"); a = 1.0; }
+      if ((tmp = w[i]) == value_type(0)) {
+	DAL_WARNING(2, "pivot " << i << " is zero");
+	if (_try > 10)
+	  tmp = 1.0;
+	else {
+	  ++K; eps /= value_type(2);
+	  DAL_WARNING(2, "trying with " << K
+		      << " additional elements and threshold " << eps);
+	  do_choleskyt(A, row_major(), ++_try);
+	  return;
+	}
+      }
 
-      indiag[i] = 1.0 / a;
+
+      if ((tmp = w[i]) == value_type(0))
+      { DAL_WARNING(2, "pivot " << i << " is zero"); tmp = 1.0; }
+
+      indiag[i] = 1.0 / tmp;
       gmm::clean(w, eps * norm_row);
       gmm::scale(w, indiag[i]);
       std::sort(w.begin(), w.end(), _elt_rsvector_value_less<value_type>());

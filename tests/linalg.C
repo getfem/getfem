@@ -122,8 +122,6 @@ int main(void)
     gmm::Harwell_Boeing_save("toto.mat", cscm);
     gmm::Harwell_Boeing_load("toto.mat", cscm2);
 
-    
-
 
     gmm::row_matrix<gmm::wsvector<double> > m3(10, 10);
     gmm::copy(m, m3);
@@ -131,7 +129,8 @@ int main(void)
     cout << "transposed(m3) = " << gmm::transposed(m3) << endl;
     gmm::clear(y2);
     iter.init();
-    gmm::bicgstab(m3, y2, b, gmm::identity_matrix(), iter);
+    gmm::ilut_precond<gmm::row_matrix<gmm::wsvector<double> > > P(m3, 2, 1E-3);
+    gmm::bicgstab(m3, y2, b, P, iter);
     cout << "y2 = " << y2 << endl;
     gmm::add(gmm::scaled(x, -1.0), y2);
     error = gmm::vect_norm2(y2);

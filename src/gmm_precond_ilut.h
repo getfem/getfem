@@ -92,7 +92,7 @@ namespace gmm {
     int K;
     double eps;    
 
-    template<class M> void do_ilut(const M&, row_major);
+    template<class M> void do_ilut(const M&, row_major, int = 0);
     void do_ilut(const Matrix&, col_major);
 
   public:
@@ -112,10 +112,11 @@ namespace gmm {
   };
 
   template<class Matrix> template<class M> 
-  void ilut_precond<Matrix>::do_ilut(const M& A, row_major) {
+  void ilut_precond<Matrix>::do_ilut(const M& A, row_major, int _try) {
     std::vector<value_type> indiag(mat_nrows(A));
     svector w(mat_ncols(A));
     value_type tmp;
+    gmm::clear(U); gmm::clear(L);
 
     for (size_type i = 0; i < mat_nrows(A); ++i) {
       gmm::copy(mat_const_row(A, i), w);
@@ -134,11 +135,21 @@ namespace gmm {
 	else { wk->e += tmp; gmm::add(scaled(mat_row(U, k), -tmp), w); }
       }
       
-      if ((tmp = w[i]) == value_type(0))
-      { DAL_WARNING(2, "pivot " << i << " is zero"); tmp = 1.0; }
+      if ((tmp = w[i]) == value_type(0)) {
+	DAL_WARNING(2, "pivot " << i << " is zero");
+	if (_try > 10)
+	  tmp = 1.0;
+	else {
+	  ++K; eps /= value_type(2);
+	  DAL_WARNING(2, "trying with " << K
+		      << " additional elements and threshold " << eps);
+	  do_ilut(A, row_major(), ++_try);
+	  return;
+	}
+      }
 
       indiag[i] = 1.0 / tmp;
-      U(i,i) = w[i]; gmm::clean(w, eps * norm_row); w[i] = 0.0;
+      U(i,i) = tmp; gmm::clean(w, eps * norm_row); w[i] = 0.0;
       std::sort(w.begin(), w.end(), _elt_rsvector_value_less<value_type>());
       typename svector::const_iterator wit = w.begin(), wite = w.end();
       size_type nnl = 0, nnu = 0;
