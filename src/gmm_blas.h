@@ -786,13 +786,18 @@ namespace gmm {
     std::copy(vect_begin(l1), vect_end(l1), vect_begin(l2));
   }
 
-  template <class L1, class L2> inline
+  template <class L1, class L2> inline // à optimiser ?
   void copy_vect(const L1 &l1, L2 &l2, abstract_skyline, abstract_skyline) {
     typename linalg_traits<L1>::const_iterator it1 = vect_begin(l1),
       ite1 = vect_end(l1);
+    while (it1 != ite1 && *it1 == typename linalg_traits<L1>::value_type(0))
+      ++it1;
+
     if (ite1 - it1 > 0) {
+      clear(l2);
       typename linalg_traits<L2>::const_iterator it2 = vect_begin(l1), 
 	ite2 = vect_end(l2);
+      while (*(ite1-1) == typename linalg_traits<L1>::value_type(0)) ite1--;
       
       ptrdiff_t m = it1.index() - it2.index();
       if (m >= 0 && ite1.index() <= ite2.index())
@@ -800,7 +805,7 @@ namespace gmm {
       else {
 	if (m < 0) l2[it1.index()] = *it1;
 	if (ite1.index() > ite2.index()) l2[ite1.index()-1] = *(ite1-1);
-	it2 = vect_begin(l1); ite2 = vect_end(l2);
+	it2 = vect_begin(l2); ite2 = vect_end(l2);
 	m = it1.index() - it2.index();
 	std::copy(it1, ite1, it2 + m);
       }
@@ -1104,6 +1109,41 @@ namespace gmm {
              it2 = vect_begin(l2), ite = vect_end(l2);
     for (; it2 != ite; ++it2, ++it1) *it2 += *it1;
   }
+
+  template <class L1, class L2>
+  void add(const L1& l1, L2& l2,
+	   abstract_plain, abstract_skyline) {
+    typename linalg_traits<L1>::const_iterator it1 = vect_begin(l1),
+      ite1 = vect_end(l1); 
+    size_type i1 = 0, ie1 = ite1 - it1;
+    while (it1 != ite1 && *it1 == typename linalg_traits<L1>::value_type(0))
+      { ++it1; ++i1; }
+    if (ite1 - it1 > 0) {
+      typename linalg_traits<L2>::const_iterator
+	it2 = vect_begin(l2), ite2 = vect_end(l2);
+      while (*(ite1-1) == typename linalg_traits<L1>::value_type(0))
+	{ ite1--; --ie1; }
+      
+      if (i1 < it2.index()) l2[it1.index()] = *it1; 
+      if (ie1 > ite2.index()) l2[ie1 - 1] = *(ite1 - 1);
+      it2 = vect_begin(l2);
+      ptrdiff_t m = i1 - it2.index();
+      it2 += m;
+      for (; it1 != ite1; ++it1, ++it2) *it2 += *it1;
+    }
+  }
+
+
+  template <class L1, class L2>
+  void add(const L1& l1, L2& l2,
+	   abstract_skyline, abstract_plain) {
+    typename linalg_traits<L1>::const_iterator it1 = vect_begin(l1),
+      ite1 = vect_end(l1);; 
+    typename linalg_traits<L2>::iterator it2 = vect_begin(l2);
+    it2 += it1.index();
+    for (; it1 != ite1; ++it2, ++it1) *it2 += *it1;
+  }
+
   
   template <class L1, class L2>
   void add(const L1& l1, L2& l2,
@@ -1119,6 +1159,47 @@ namespace gmm {
     typename linalg_traits<L1>::const_iterator
       it1 = vect_begin(l1), ite1 = vect_end(l1);
     for (; it1 != ite1; ++it1) l2[it1.index()] += *it1;
+  }
+
+  template <class L1, class L2>
+  void add(const L1& l1, L2& l2,
+	   abstract_sparse, abstract_skyline) {
+    typename linalg_traits<L1>::const_iterator
+      it1 = vect_begin(l1), ite1 = vect_end(l1);
+    for (; it1 != ite1; ++it1) l2[it1.index()] += *it1;
+  }
+
+
+  template <class L1, class L2>
+  void add(const L1& l1, L2& l2,
+	   abstract_skyline, abstract_sparse) {
+    typename linalg_traits<L1>::const_iterator
+      it1 = vect_begin(l1), ite1 = vect_end(l1);
+    for (; it1 != ite1; ++it1)
+      if (*it1 != typename linalg_traits<L1>::value_type(0))
+	l2[it1.index()] += *it1;
+  }
+
+  template <class L1, class L2>
+  void add(const L1& l1, L2& l2,
+	   abstract_skyline, abstract_skyline) {
+    typename linalg_traits<L1>::const_iterator
+      it1 = vect_begin(l1), ite1 = vect_end(l1);
+    
+    while (it1 != ite1 && *it1 == typename linalg_traits<L1>::value_type(0))
+      ++it1;
+    if (ite1 - it1 > 0) {
+      typename linalg_traits<L2>::const_iterator
+	it2 = vect_begin(l2), ite2 = vect_end(l2);
+      while (*(ite1-1) == typename linalg_traits<L1>::value_type(0)) ite1--;
+
+      if (it1.index() < it2.index()) l2[it1.index()] = *it1; 
+      if (ite1.index() > ite2.index()) l2[ite1.index() - 1] = *(ite1 - 1);
+      it2 = vect_begin(l2);
+      ptrdiff_t m = it1.index() - it2.index();
+      it2 += m;
+      for (; it1 != ite1; ++it1, ++it2) *it2 += *it1;
+    }
   }
   
   template <class L1, class L2>
