@@ -101,7 +101,7 @@ namespace gmm {
       }
       
       mult(transposed(C), e, l); /* l is the i nd row of CINV     */
-      cout << "l = " << l << endl;
+      // cout << "l = " << l << endl;
       clean(l, 1E-15);
       copy(l, mat_row(CINV, i));
       
@@ -117,8 +117,7 @@ namespace gmm {
 		      const VectorB& b, const VectorF& f,const Matps& PS,
 		      const Preconditioner& M, iteration &iter) {
     typedef typename temporary_plain_vector<VectorX>::vector_type TmpVec;
-    typedef typename temporary_vector<typename
-      linalg_traits<CMatrix>::sub_row_type>::vector_type TmpCVec;
+    typedef typename temporary_vector<CMatrix>::vector_type TmpCVec;
     typedef row_matrix<TmpCVec> TmpCmat;
     
     typedef size_t size_type;

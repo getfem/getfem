@@ -106,7 +106,7 @@ namespace gmm
     
     inline size_type nrows(void) const { return li.size(); }
     inline size_type ncols(void) const
-    { return (nrows() == 0) ? 0 : li[0].size(); }
+    { return (nrows() == 0) ? 0 : vect_size(li[0]); }
   };
 
   template<class V> void row_matrix<V>::clear_mat()
@@ -203,7 +203,7 @@ namespace gmm
     
     inline size_type ncols(void) const { return li.size(); }
     inline size_type nrows(void) const
-    { return (ncols() == 0) ? 0 : li[0].size(); }
+    { return (ncols() == 0) ? 0 : vect_size(li[0]); }
   };
 
   template<class V> void col_matrix<V>::clear_mat()

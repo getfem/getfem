@@ -132,7 +132,9 @@ dnl -Xc is for ansi conformance
 esac
 
 AC_SUBST(SUPLDFLAGS)
-
+INCLUDE_ANYWAY="include"
+AC_SUBST(INCLUDE_ANYWAY)
+rm -f cubature/im_list.mak
 
 dnl ------------------------------------------------------------------------
 dnl   init libtools for shared libraries

@@ -23,17 +23,27 @@
 /* *********************************************************************** */
 
 
- 
+
 namespace getfem {
+
+
+  struct im_desc {
+      const char *method_name;
+      const char *geotrans_name;
+      size_type nb_points;
+      size_type firstreal;
+      size_type firstface;
+      size_type firsttype;
+  };
 
 
   static const int NB_IM=4;
 
   static im_desc im_desc_tab[NB_IM] = {
-    "IM_NC(0,0)", "GT_PK(0,0)", 0, 0, 0,
-    "IM_TRIANGLE(1)", "GT_PK(2,1)", 1, 0, 1,
-    "IM_TRIANGLE(2)", "GT_PK(2,1)", 4, 3, 2,
-    "IM_TRIANGLE(3)", "GT_PK(2,1)", 13, 6, 5,
+    {"IM_NC(0,0)", "GT_PK(0,0)", 1, 0, 0, 0},
+    {"IM_TRIANGLE(1)", "GT_PK(2,1)", 1, 1, 0, 1},
+    {"IM_TRIANGLE(2)", "GT_PK(2,1)", 3, 4, 3, 2},
+    {"IM_TRIANGLE(3)", "GT_PK(2,1)", 4, 13, 6, 5},
   };
 
   static const int NB_IMR=25; 
@@ -72,7 +82,7 @@ namespace getfem {
 
   static const int NB_IMF=9; 
 
-  static char * im_desc_face_meth[NB_IMF] = {
+  static const char * im_desc_face_meth[NB_IMF] = {
     // IM_TRIANGLE(1)
     "IM_GAUSS1D(1)","IM_GAUSS1D(1)","IM_GAUSS1D(1)",
     // IM_TRIANGLE(2)
@@ -83,7 +93,7 @@ namespace getfem {
 
   static const int NB_IMN=9; 
 
-  static char * im_desc_node_type[NB_IMN] = {
+  static size_type im_desc_node_type[NB_IMN] = {
     0,  // IM_NC(0,0)
     0,  // IM_TRIANGLE(1)
     0, 0, 0,  // IM_TRIANGLE(2)

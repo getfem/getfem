@@ -34,6 +34,8 @@
 #include <ftool_naming.h>
 #include <gmm.h>
 
+#include <getfem_im_list.h>
+
 namespace getfem
 {
   typedef ftool::naming_system<integration_method>::param_list im_param_list;
@@ -240,7 +242,7 @@ namespace getfem
 
   void approx_integration::add_point(base_node pt,scalar_type w,short_type f) {
     if (valid) DAL_THROW(internal_error, 
-			 "Impossible to modify a valid intergation method.");
+			 "Impossible to modify a valid integration method.");
     if (dal::abs(w) > 1.0E-12) {
       ++f;
       if (f > cvr->structure()->nb_faces())
@@ -307,6 +309,41 @@ namespace getfem
     pt_to_store = std::vector<PT_TAB>();
     pt_to_store.clear();
     valid = true;
+  }
+
+
+  /* ********************************************************************* */
+  /* methods stored in getfem_im_list.h                                    */
+  /* ********************************************************************* */
+  /// search a method in the getfem_im_list.
+
+  pintegration_method im_list_integration(std::string name) {
+    for (int i = 0; i < NB_IM; ++i)
+      if (!strcmp(name.data(), im_desc_tab[i].method_name)) {
+	bgeot::pgeometric_trans pgt
+	  = bgeot::geometric_trans_descriptor(im_desc_tab[i].geotrans_name);
+	dim_type N = pgt->structure()->dim();
+	base_node pt(N);
+	approx_integration *p = new approx_integration(pgt->convex_ref());
+	size_type fr = im_desc_tab[i].firstreal;
+	for (size_type j = 0; j < im_desc_tab[i].nb_points; ++j) {
+	  for (dim_type k = 0; k < N; ++k)
+	    pt[k] = im_desc_real[fr + j * (N+1) + k];
+	  p->add_point(pt, im_desc_real[fr + j * (N+1) + N]);
+	  // ajouter la gestion des symétries
+	}
+
+	for (short_type f = 0; f < pgt->structure()->nb_faces(); ++f) {
+	  p->add_method_on_face
+	    (int_method_descriptor
+	     (im_desc_face_meth[im_desc_tab[i].firstface + f]), f);
+	}
+
+	p->valid_method();
+	return new integration_method(p);
+      }
+    
+    return 0;
   }
 
 

@@ -1246,10 +1246,8 @@ namespace gmm {
       mult_spec(l1, l2, l3, typename principal_orientation_type<typename
 		linalg_traits<L1>::sub_orientation>::potype());
     else {
-      #ifdef __GETFEM_VERIFY
-        cerr << "Warning, A temporary is used for mult\n";
-      #endif
-      L3 temp(vect_size(l3));
+      DAL_WARNING(2, "Warning, A temporary is used for mult\n");
+      typename temporary_vector<L3>::vector_type temp(vect_size(l3));
       mult_spec(l1, l2, temp, typename principal_orientation_type<typename
 		linalg_traits<L1>::sub_orientation>::potype());
       copy(temp, l3);
