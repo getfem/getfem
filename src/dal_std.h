@@ -34,7 +34,7 @@
 #define __DAL_STD_H
 
 #define __GETFEM_VERSION 1
-#define __GETFEM_REVISION 2
+#define __GETFEM_REVISION 3
 
 #define __DAL_VERSION 1
 #define __DAL_REVISION 0
