@@ -62,48 +62,8 @@ template<typename VEC> static void vecsave(std::string fname, const VEC& V) {
   for (size_type i=0; i < V.size(); ++i) f << V[i] << "\n"; 
 }
 
-/**************************************************************************/
-/*  Exact solution.                                                       */
-/**************************************************************************/
-
-gmm::row_matrix<base_small_vector> sol_K;
-scalar_type sol_lambda, sol_mu;
-
-base_small_vector sol_u(const base_node &x) {
-  int N = x.size(); base_small_vector res(N);
-  for (int i = 0; i < N; ++i) res[i] = 0.;
-  return res;
-}
-
-
-
-base_small_vector sol_f(const base_node &x) {
-  int N = x.size();
-  base_small_vector res(N);
-  for (int i = 0; i < N; i++) {
-    res[i]=0; 
-  }
-  return res;
-}
-
-base_matrix sol_sigma(const base_node &x) {
-  int N = x.size();
-  base_matrix res(N,N);
-  // on remplit sigma pour que la force sur la bord droit soit vers le bas, selon Oy
-  // les seuls coefficients non quelconques sont res(1,0) qui doi etre negatif, et res(0,0) qui doit etre nul
-  // tous les autre coefficicnets sont quelconques, on choisit de les mettre a 0
-  for (int i = 0; i < N; i++){
-    for (int j = 0; j <N; j++) {
-      res(i,j)=0.;   
-    }
-  }
-  res(0,0)=0;
-  res(1,0)=-330.; //cas de la force qui va vers le bas
- return res;
-}
-
 /*
-  structure for the elastostatic problem
+  structure for the elastoplatic problem
 */
 struct plasticity_problem {
 
@@ -116,7 +76,8 @@ struct plasticity_problem {
 
   scalar_type residu;        /* max residu for the iterative solvers         */
 
-  scalar_type stress_threshold, TOL, flag_hyp;
+  scalar_type stress_threshold;
+  size_type flag_hyp;
   std::vector<std::vector<scalar_type> > sigma_b;
 
   std::string datafilename;
@@ -139,6 +100,8 @@ void plasticity_problem::init(void)
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
+
+  residu = PARAM.real_value("RESIDU", "residu");
 
   //  file to save the mesh
   datafilename=std::string(PARAM.string_value("ROOTFILENAME","Filename for saving"));
@@ -175,16 +138,8 @@ void plasticity_problem::init(void)
     pgt = mesh.trans_of_convex(mesh.convex_index().first_true());
   }
 
-  scalar_type FT = PARAM.real_value("FT", "parameter for exact solution");
- 
-  gmm::resize(sol_K, N, N);
-  for (size_type i = 0; i < N; i++)
-    for (size_type j = 0; j < N; j++)
-      sol_K(i,j) = (i == j) ? FT : -FT;
-
   mu = PARAM.real_value("MU", "Lamé coefficient mu");
   lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
-  sol_lambda = lambda; sol_mu = mu;
   mf_u.set_qdim(N);
 
   /* set the finite element on the mf_u */
@@ -234,8 +189,8 @@ void plasticity_problem::init(void)
   }
  
   //PARTIE RELATIVE A LA PLASTICITE  
-  stress_threshold = PARAM.real_value("STRESS_THRESHOLD", "plasticity stress_threshold");
-  TOL=PARAM.real_value("TOL", "TOL to define what is zero");
+  stress_threshold = PARAM.real_value("STRESS_THRESHOLD",
+				      "plasticity stress_threshold");
   flag_hyp=PARAM.int_value("FLAG_HYP");
 }
 
@@ -249,7 +204,18 @@ bool plasticity_problem::solve(plain_vector &U) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   size_type N = mesh.dim();
 
-  getfem::mdbrick_plasticity<> PLAS(mf_u, mf_coef, lambda,mu, stress_threshold, TOL, size_type(flag_hyp));
+
+  plain_vector F(nb_dof_rhs * N);
+  getfem::VM_projection proj(flag_hyp);
+  getfem::mdbrick_plasticity<> PLAS(mf_u, mf_coef, lambda, mu,
+				    stress_threshold, proj);
+  
+  // Neumann condition brick
+  getfem::mdbrick_source_term<> NEUMANN(PLAS, mf_rhs, F,NEUMANN_BOUNDARY_NUM);
+  // Dirichlet condition brick.
+  getfem::mdbrick_Dirichlet<> final_model(NEUMANN, mf_rhs,
+					  F, DIRICHLET_BOUNDARY_NUM, false);
+  getfem::standard_model_state MS(final_model);
 
   const size_type Nb_t=2;
   scalar_type t[Nb_t]={0.5,1.2};
@@ -266,60 +232,20 @@ bool plasticity_problem::solve(plain_vector &U) {
 
   for (size_type nb = 0; nb < Nb_t;++nb) {
 
-    // Defining the volumic source term.
-    plain_vector F(nb_dof_rhs * N);
-    for (size_type i = 0; i < nb_dof_rhs; ++i)
-      gmm::copy(sol_f(mf_rhs.point_of_dof(i)),
-		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
-    /**/	//  gmm::scale(F,t[nb]);
-
-    // Volumic source term brick.
-    getfem::mdbrick_source_term<> VOL_F(PLAS, mf_rhs, F);
-        
     // Defining the Neumann condition right hand side.
-    base_small_vector un(N), v(N);
-    for (dal::bv_visitor cv(mf_u.convex_on_boundary(NEUMANN_BOUNDARY_NUM));
-	 !cv.finished(); ++cv) {
-      getfem::pfem pf = mf_rhs.fem_of_element(cv);
-
-      for (dal::bv_visitor f(mf_u.faces_of_convex_on_boundary(cv,
-							      NEUMANN_BOUNDARY_NUM));
-	   !f.finished(); ++f) {
-	for (size_type l = 0; l< pf->structure()->nb_points_of_face(f); ++l) {
-	  size_type n = pf->structure()->ind_points_of_face(f)[l];	  
-
-	  un = mesh.normal_of_face_of_convex(cv, f, pf->node_of_dof(n));
-	  
-	  un /= gmm::vect_norm2(un);
-	  size_type dof = mf_rhs.ind_dof_of_element(cv)[n];
-	  gmm::mult(sol_sigma(mf_rhs.point_of_dof(dof)), un, v);
-
-  	  gmm::scale(v,t[nb]);
-	  gmm::copy(v, gmm::sub_vector(F, gmm::sub_interval(dof*N, N)));
-	}
-      }
-    }
-
-    // Neumann condition brick.
-    getfem::mdbrick_source_term<> NEUMANN(VOL_F, mf_rhs, F, NEUMANN_BOUNDARY_NUM);
+    base_small_vector v(N);
+    v[N-1] = -330.0;
+    gmm::scale(v,t[nb]);
     
-    // Defining the Dirichlet condition value.
     for (size_type i = 0; i < nb_dof_rhs; ++i)
-      gmm::copy(sol_u(mf_rhs.point_of_dof(i)), 
-    		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
-   
-    //Dirichlet condition brick.
-    getfem::mdbrick_Dirichlet<> final_model(NEUMANN, mf_rhs,
-    					    F, DIRICHLET_BOUNDARY_NUM, false);
+      gmm::copy(v, gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
+
+    NEUMANN.set_rhs(F);
     
     // Generic solve.
     cout << "Number of variables : " << final_model.nb_dof() << endl;
-    getfem::standard_model_state MS(final_model);
 
-    // initialize MS.state()
-    gmm::clear(MS.state());
-
-    gmm::iteration iter(TOL,2,40000);
+    gmm::iteration iter(residu, 2, 40000);
     getfem::standard_solve(MS, final_model, iter);
 
     PLAS.compute_constraints(MS);
