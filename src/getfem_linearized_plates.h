@@ -858,7 +858,7 @@ namespace getfem {
 	  gmm::copy(V, gmm::mat_row(CO, k));
 	  mf_theta->sup_boundary(boundary);
 	}
-	
+	cout << "CO = " << CO << endl;
       }
       this->computed();
     }

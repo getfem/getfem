@@ -47,17 +47,17 @@ namespace getfem {
   // Object representing global transformation. To be derived.
 
   struct virtual_interpolated_func {
-    virtual void val(const base_small_vector&, base_small_vector &)
+    virtual void val(const base_node&, base_node &) const
     { DAL_THROW(dal::failure_error,"this interpolated_func has no value"); }
-    virtual void grad(const base_small_vector&, base_matrix &)
+    virtual void grad(const base_node&, base_matrix &) const
     { DAL_THROW(dal::failure_error,"this interpolated_func has no gradient"); }
-    virtual void hess(const base_small_vector&, base_matrix &)
+    virtual void hess(const base_node&, base_matrix &) const
     { DAL_THROW(dal::failure_error,"this interpolated_func has no hessian"); }
     virtual ~virtual_interpolated_func() {}
   };
 
 
-  typedef virtual_interpolated_func *pinterpolated_func;
+  typedef const virtual_interpolated_func *pinterpolated_func;
 
 
 
@@ -87,7 +87,7 @@ namespace getfem {
                             // to be interpolated.
     const mesh_fem &mf2;    // mesh on which mf1 is interpolated. contains
                             // also the integration method.
-    pinterpolated_func *pif; // optional transformation
+    pinterpolated_func pif; // optional transformation
 
     bool store_values;
     dal::bit_vector blocked_dof;
@@ -107,10 +107,11 @@ namespace getfem {
     mutable std::vector<base_node> node_tab_;
     mutable bgeot::multi_index mi2, mi3;
     mutable base_node ptref;
+    mutable gmm::dense_matrix<scalar_type> trans;
 
     void build_rtree(void) const;
 
-    bool find_a_point(const base_node &pt, base_node &ptr,
+    bool find_a_point(base_node pt, base_node &ptr,
 		      size_type &cv) const;
 
     void update_from_context(void) const;
