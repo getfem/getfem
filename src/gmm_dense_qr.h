@@ -274,28 +274,23 @@ namespace gmm {
     void power_qr_algorithm(const MAT1 &A, VECT &eigval, MAT2 &eigvect,
 		      double tol = 1E-12, bool compvect = true) {
     typedef typename linalg_traits<MAT1>::value_type value_type;
-    typedef typename number_traits<value_type>::magnitude_type magnitude_type;
-    typedef typename linalg_traits<VECT>::value_type vect_value_type;
 
     size_type n = mat_nrows(A), p, q;
     MAT1 Q(n, n), R(n,n), A1(n,n); 
     gmm::copy(A, A1);
 
     Hessenberg_reduction(A1, eigvect, compvect);
-    
-    for (size_type ite = 0; ite < n*1000; ++ite) {
+    stop_criterion(A1, p, q, tol);
+
+    for (size_type ite = 0; q < n; ++ite) {
       qr_factor(A1, Q, R);
       gmm::mult(R, Q, A1);
       if (compvect) { gmm::mult(eigvect, Q, R); gmm::copy(R, eigvect); }
-
-      magnitude_type vmax(0);
-      for (size_type i = 0; i < n; ++i)
-	vmax = std::max(vmax, dal::abs(A1(i,i)));
       
       stop_criterion(A1, p, q, tol);
-      if (q >= n) { extract_eig(A1, eigval, tol); return; }
+      if (ite > n*1000) DAL_THROW(failure_error, "QR algorithm failed");
     }
-    DAL_THROW(failure_error, "QR algorithm failed");
+    extract_eig(A1, eigval, tol); 
   }
 
   template <class MAT1, class VECT>
@@ -327,8 +322,7 @@ namespace gmm {
     for (size_type k = 0; k < n - 2; ++k) {
       w[0] = x; w[1] = y; w[2] = z;
       house_vector(sub_vector(w, sub_interval(0, 3)), v);
-      size_type r = std::min(k+4, n);
-      size_type q = (k==0) ? 0 : k-1;
+      size_type r = std::min(k+4, n), q = (k==0) ? 0 : k-1;
       sub_interval SUBI(k, 3), SUBJ(0, r), SUBK(q, n-q);
       
       row_house_update(sub_matrix(H, SUBI, SUBK),  v, sub_vector(w, SUBK));
@@ -362,30 +356,23 @@ namespace gmm {
     void implicit_qr_algorithm(const MAT1 &A, VECT &eigval, MAT2 &eigvect,
 			       double tol = 1E-12, bool compvect = true) {
     typedef typename linalg_traits<MAT1>::value_type value_type;
-    typedef typename number_traits<value_type>::magnitude_type magnitude_type;
-    typedef typename linalg_traits<VECT>::value_type vect_value_type;
 
     size_type n = mat_nrows(A), q = 0, p;
     dense_matrix<value_type> Z(n,n), B(n,n), H(n,n);
     gmm::copy(A, H);
     Hessenberg_reduction(H, eigvect, compvect);
-    
+    stop_criterion(H, p, q, tol);
+
     while (q < n) {
-      
+      sub_interval SUBI(p, n-p-q), SUBJ(0,n);
+      Francis_qr_step(sub_matrix(H, SUBI, SUBI),
+		      sub_matrix(Z, SUBI, SUBI), compvect);
+      if (compvect) {
+	gmm::mult(sub_matrix(eigvect, SUBJ, SUBI),
+		  sub_matrix(Z, SUBI, SUBI), sub_matrix(B, SUBJ, SUBI));
+	gmm::copy(sub_matrix(B, SUBJ, SUBI), sub_matrix(eigvect, SUBJ, SUBI));
+      }
       stop_criterion(H, p, q, tol);
-      
-      if (q < n) {
- 	sub_interval SUBI(p, n-p-q), SUBJ(0,n);
- 	Francis_qr_step(sub_matrix(H, SUBI, SUBI),
- 			sub_matrix(Z, SUBI, SUBI), compvect);
- 	if (compvect) {
- 	  gmm::mult(sub_matrix(eigvect, SUBJ, SUBI),
- 		    sub_matrix(Z, SUBI, SUBI),
- 		    sub_matrix(B, SUBJ, SUBI));
- 	  gmm::copy(sub_matrix(B, SUBJ, SUBI),
- 		    sub_matrix(eigvect, SUBJ, SUBI));
- 	}
-      } 
     }
     extract_eig(H, eigval, tol);
   }
