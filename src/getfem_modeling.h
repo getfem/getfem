@@ -195,6 +195,7 @@ namespace getfem {
     T_MATRIX K;
 
     void compute_K(void) {
+      gmm::clear(K);
       gmm::resize(K, nb_dof(), nb_dof());
       VECTOR lambda(mf_data.nb_dof()), mu(mf_data.nb_dof());
       if (homogeneous) {
@@ -311,6 +312,7 @@ namespace getfem {
 	DAL_THROW(failure_error, "The data mesh fem structure has changed, "
 		  " You have to change the rhs in that case.");
       gmm::resize(F_, sub_problem.main_mesh_fem().nb_dof());
+      gmm::clear(F_);
       asm_source_term(F_, sub_problem.main_mesh_fem(),mf_data, B_,boundary);
       this->computed();
     }
@@ -406,6 +408,7 @@ namespace getfem {
 	  for (size_type q=0; q < Q; ++q)  H_[i*Q*Q+q*Q+q] = value_type(1);
       }
       if (!with_multipliers) version |= 4;
+      gmm::clear(M); gmm::clear(V);
       asm_dirichlet_constraints(M, V, sub_problem.main_mesh_fem(),
 				mf_data, H_, B_, boundary, version);
 
