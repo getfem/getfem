@@ -64,15 +64,14 @@ namespace gmm {
   template <class Vec>
   class modified_gram_schmidt {
   public:
-    typedef typename linalg_traits<Vec>::size_type size_type; 
 
     template <class Size>
     modified_gram_schmidt(int restart, const Size& s) 
       : V(restart+1) { do_initialize(s); }
     
-    const Vec& operator[](size_type i) const { return V[i]; }
+    const Vec& operator[](size_t i) const { return V[i]; }
 
-    Vec& operator[](size_type i) { return V[i]; }
+    Vec& operator[](size_t i) { return V[i]; }
     
   protected:
   

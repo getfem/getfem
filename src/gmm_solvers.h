@@ -40,6 +40,7 @@
 #include <gmm_solver_Schwarz_additive.h>
 #include <gmm_given_rotation.h>
 #include <gmm_modified_gram_schmidt.h>
+#include <gmm_tri_solve.h>
 #include <gmm_solver_gmres.h>
 
 
