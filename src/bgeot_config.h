@@ -36,9 +36,9 @@
 
 #include <dal_except.h>
 
-#ifdef HAVE_QDLIB
+#ifdef GETFEM_HAVE_QDLIB
 #  define NO_INLINE
-#  ifdef QDLIB_USE_QUAD
+#  ifdef GETFEM_QDLIB_USE_QUAD
 #    include <qd.h>
 #  else
 #    include <dd.h>
@@ -53,12 +53,12 @@ namespace bgeot
   typedef dal::uint16_type short_type;
   typedef size_t size_type;
   typedef double scalar_type;
-#ifndef HAVE_QDLIB
+#ifndef GETFEM_HAVE_QDLIB
   typedef double long_scalar_type;
   typedef double opt_long_scalar_type;
 # define LONG_SCAL(xx) long_scalar_type(xx)
 #else
-#  ifdef QDLIB_USE_QUAD
+#  ifdef GETFEM_QDLIB_USE_QUAD
   typedef qd_real long_scalar_type;
   typedef qd_real opt_long_scalar_type;
 #  else

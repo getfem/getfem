@@ -569,8 +569,7 @@ namespace getfem
     if (!o)
       DAL_THROW(failure_error, "impossible to open file '" << name << "'");
     o << "% GETFEM MESH_FEM FILE " << endl;
-    o << "% GETFEM VERSION " << __GETFEM_VERSION << "."
-      << __GETFEM_REVISION << endl << endl << endl;
+    o << "% GETFEM VERSION " << GETFEM_VERSION << endl << endl << endl;
     write_to_file(o);
     o.close();
   }

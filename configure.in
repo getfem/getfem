@@ -9,7 +9,8 @@ define([AC_CACHE_LOAD], )dnl
 define([AC_CACHE_SAVE], )dnl
 
 AC_INIT(config/install-sh)
-AC_CONFIG_HEADER(src/getfem_arch_config.h)
+AC_CONFIG_HEADER(config.h)
+AX_PREFIX_CONFIG_H(src/getfem_arch_config.h,GETFEM) 
 AC_PREREQ(2.56)
 AC_ARG_PROGRAM
 AC_CONFIG_AUX_DIR([config])
@@ -158,7 +159,7 @@ dnl -----------------------------QD TESTS--------------------------------
 AC_ARG_WITH(qd-lib-dir, [  --with-qd-lib-dir       directory in which the libqd.a can be found],
 	QDLIB="$withval/libqd.a",QDLIB="$GFPREFIX/lib/libqd.a")
 AC_ARG_WITH(qd-include-dir, [  --with-include-dir      directory in which the qd.h header can be found],
-	QDINC="-I $withval",QDINC="-I $GFPREFIX/include")
+	QDINC="-I$withval",QDINC="-I$GFPREFIX/include")
 AC_ARG_ENABLE(dd,
  [  --enable-dd             enable the use of the qd library (some computation will be done with double-double precision, usefull for high order FEMs)],
  [ if   test "x$enableval" = "xyes" ; then useQDlib="yes"; QD_PREC="double"; fi], [useQDlib="no"])
@@ -167,7 +168,7 @@ AC_ARG_ENABLE(qd,
  [ if   test "x$enableval" = "xyes" ; then useQDlib="yes"; QD_PREC="quad"; fi], [if test "x$useQDlib" = "xyes"; then useQDlib="yes"; else useQDlib="no"; fi])
 if test "x$useQDlib" = "xyes" ; then  
   LIBS="$LIBS $QDLIB -lm"
-  CXXFLAGS="$CXXFLAGS $QDINC"
+  CPPFLAGS="$CPPFLAGS $QDINC"
   AC_TRY_RUN([
 #define NO_INLINE
 #include <qd.h>
@@ -195,14 +196,19 @@ int main() {
 }
   ], [echo "checking if qd library is working...yes"], [ echo "QD library is not working (check config.log)"; exit 1])
   AC_DEFINE_UNQUOTED([HAVE_QDLIB],1,[defined if the qd library was found and is working])
+  HAVE_QDLIB=1;
   if test "x$QD_PREC" = "xquad"; then
     AC_DEFINE_UNQUOTED([QDLIB_USE_QUAD],1,[defined if quad-doubles are to be used instead of double-double])
   fi;
 fi;
 dnl -----------------------------END QD TESTS--------------------------------
 
-
-
+BUILDER=`whoami`
+AC_SUBST(BUILDER)
+BUILDDATE=`date +%D,%H:%M:%S`
+AC_SUBST(BUILDDATE)
+CONFIGURE_ARGS=$ac_configure_args
+AC_SUBST(CONFIGURE_ARGS)
 LIBTOOL_VERSION_INFO="-version-info ${MAJOR_VERSION}:${MINOR_VERSION}:0"
 AC_SUBST(LIBTOOL_VERSION_INFO)
 
@@ -217,8 +223,8 @@ AC_CONFIG_FILES(\
 	src/Makefile \
 	tests/Makefile \
 	contrib/Makefile \
-	bin/Makefile \
-	)
+	bin/Makefile
+	getfem-config)
 AC_OUTPUT
 
 if test "x$useQDlib" = "xyes" ; then  

@@ -7,3 +7,4 @@ EXTRA_DIST = \
 CLEANFILES = so_locations
 
 
+bin_SCRIPTS=getfem-config

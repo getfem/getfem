@@ -30,6 +30,7 @@
 
 
 #include <bgeot_convex_ref.h>
+#include <bgeot_simplexify.h>
 
 namespace bgeot
 {
@@ -76,7 +77,19 @@ namespace bgeot
   }
 
 
-
+  const mesh_structure&
+  convex_of_reference::simplexified_convex() const {
+    if (psimplexified_convex == NULL) {
+      psimplexified_convex = new mesh_structure();
+      mesh_structure ms;
+      std::vector<size_type> ipts(nb_points());
+      for (size_type i=0; i < ipts.size(); ++i) ipts[i] = i;
+      ms.add_convex(structure(), ipts.begin());
+      ms.to_edges();
+      bgeot::simplexify(ms,*psimplexified_convex, points(), std::max(structure()->dim(),dim_type(1)), 1e-12);
+    }
+    return *psimplexified_convex;
+  }
 
   /* simplexes.                                                            */
 

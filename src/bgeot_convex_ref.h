@@ -78,20 +78,25 @@ namespace bgeot
 
   pstored_point_tab org_stored_point_tab(size_type n);
 
+  class mesh_structure;
+
   /* structures de reference.                                             */
 
-  class convex_of_reference : public convex<base_node>
-  {
-    protected : 
+  class convex_of_reference : public convex<base_node> {
+  protected :     
+    std::vector<base_vector> _normals;
+    mutable mesh_structure *psimplexified_convex;
+  public :
+    convex_of_reference() : convex<base_node>() { psimplexified_convex = NULL; }
+    virtual scalar_type is_in(const base_node &) const = 0;
+    virtual scalar_type is_in_face(short_type, const base_node &) const =0;
+    const std::vector<base_vector> &normals(void) const { return _normals; }
+    virtual ~convex_of_reference() {}
 
-      std::vector<base_vector> _normals;
-
-    public :
-
-      virtual scalar_type is_in(const base_node &) const = 0;
-      virtual scalar_type is_in_face(short_type, const base_node &) const =0;
-      const std::vector<base_vector> &normals(void) const { return _normals; }
-      virtual ~convex_of_reference() {}
+    /* returns a mesh structure composed of simplexes whose union
+       is the reference convex
+    */
+    const mesh_structure& simplexified_convex() const;
   };
 
   typedef const convex_of_reference * pconvex_ref;

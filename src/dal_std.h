@@ -32,9 +32,6 @@
 #ifndef __DAL_STD_H
 #define __DAL_STD_H
 
-#define __GETFEM_VERSION 1
-#define __GETFEM_REVISION 5
-
 #include <getfem_arch_config.h>
 
 #define __GETFEM_VERIFY

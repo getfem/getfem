@@ -1,0 +1,85 @@
+#!/bin/sh
+# @configure_input@
+prefix="@prefix@"
+exec_prefix="@exec_prefix@"
+includedir="@includedir@"
+libdir="@libdir@"
+bindir="@bindir@"
+datadir="@datadir@"
+mandir="@mandir@"
+sysconfdir="@sysconfdir@"
+sharedstatedir="@sharedstatedir@"
+
+build_CXXFLAGS="@CXXFLAGS@"
+build_LDFLAGS="@LDFLAGS@"
+CXX="@CXX@"
+LDFLAGS="-L$libdir -lgetfem++ @LIBS@"
+STATICLDFLAGS="$libdir/libgetfem++.a @LIBS@"
+CFLAGS="@CPPFLAGS@ -I$includedir"
+build="@BUILDER@-@BUILDDATE@"
+configure_args="@CONFIGURE_ARGS@"
+usage()
+{
+	cat <<EOF
+Usage: getfem-config [OPTIONS]
+Options:
+	[--prefix]
+	[--exec-prefix]
+	[--version]
+	[--libs]
+	[--cflags]
+	[--cxx]
+	[--build-flags]
+	[--build-libs]
+	[--configure-args]
+EOF
+	exit $1
+}
+
+while test $# -gt 0; do
+  case "$1" in
+  -*=*) optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*=//'` ;;
+  *) optarg= ;;
+  esac
+
+  case $1 in
+    --prefix)
+      echo $prefix
+      ;;
+    --exec-prefix)
+      echo $exec_prefix
+      ;;
+    --version)
+      echo @VERSION@
+      ;;
+    --cflags)
+      echo $CFLAGS
+      ;;
+    --libs)
+      echo $LDFLAGS
+      ;;
+    --static-libs)
+      echo $STATICLDFLAGS
+      ;;
+    --build)
+      echo $build
+      ;;
+    --build-flags)
+      echo $build_CXXFLAGS
+      ;;
+    --build-libs)
+      echo $build_LDFLAGS
+      ;;
+    --cxx)
+      echo $cxx
+      ;;
+    --configure-args)
+      echo $configure_args
+      ;;
+    *)
+      usage 1 1>&2
+      ;;
+  esac
+  shift
+done
+
