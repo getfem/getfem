@@ -81,6 +81,25 @@ namespace getfem
     inline size_type indcomp(size_type ip, short_type h, short_type c)
     { return ip * nhess * 3 + size_type(h) * 3 + size_type(c); }
 
+    size_type memsize() const {
+      size_type sz = sizeof(_emelem_comp_structure) +
+	mref.capacity()*sizeof(base_tensor) +
+	mref_count.capacity()*sizeof(short_type) +
+	mref_coeff.capacity()*sizeof(scalar_type) +
+	grad_reduction.size()*sizeof(short_type) +
+	hess_reduction.size()*sizeof(short_type) +
+	trans_reduction.size()*sizeof(short_type) +
+	trans_reduction_pfi.size()*sizeof(pfem) + 
+	K.memsize() + CS.memsize()+ TMP1.memsize()+ 
+	B.memsize()+ Htau.memsize()+ M.memsize()+ 
+	B2.memsize()+ B3.memsize()+ B32.memsize() +
+	un.memsize() + up.memsize() +
+	indv.capacity() * sizeof(std::vector<short_type>);
+
+      for (size_type i=0; i < mref.size(); ++i) sz += mref[i].memsize();
+      for (size_type i=0; i < indv.size(); ++i) sz += indv[i].capacity() * sizeof(short_type);
+      return sz;
+    }
 
     _emelem_comp_structure(const _emelem_comp_light &ls)
     { // optimisable ... !!

@@ -207,6 +207,11 @@ namespace getfem
       void receipt(const MESH_REFINE_CONVEX &m);
       void receipt(const MESH_UNREFINE_CONVEX &m);
       void receipt(const MESH_FEM_TOUCH &m);
+
+      size_type memsize() const { return bgeot::mesh_structure::memsize() + 
+				    sizeof(mesh_fem) - sizeof(bgeot::mesh_structure) +
+				    boundaries.memsize() + valid_boundaries.memsize() +
+				    f_elems.memsize() + fe_convex.memsize(); }
       
       mesh_fem(getfem_mesh &me); 
       virtual ~mesh_fem();

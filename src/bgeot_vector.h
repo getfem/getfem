@@ -242,6 +242,7 @@ namespace bgeot
       bool operator !=(const fsvector<T,N> &v) const
       { return !(egalegal(v.begin(), bgeot_count<N>(), begin())); }
       
+    size_type memsize() const { return sizeof(fsvector<T,N>); }
   };
 
   template<class T, int N>  void fsvector<T,N>::out_of_range_error(void) const
@@ -354,6 +355,7 @@ namespace bgeot
       /// Constructor.
       vsvector(void) : std::vector<T>() {}
 
+    size_type memsize() const { return std::vector<T>::capacity()*sizeof(T) + sizeof(vsvector<T>); }
   };
 
   template<class T>  void vsvector<T>::out_of_range_error(void) const

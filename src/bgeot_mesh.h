@@ -87,8 +87,10 @@ namespace bgeot
       void clear(void)
       { dimension = dim_type(-1); mesh_structure::clear(); pts.clear(); }
 
-      mesh(void) { dimension = dim_type(-1); }
- 
+    mesh(void) { dimension = dim_type(-1); }
+    size_type memsize(void) const { return mesh_structure::memsize() + 
+				    sizeof(mesh) - sizeof(mesh_structure) + 
+				    pts.memsize(); }
   };
 
 }  /* end of namespace bgeot.                                              */

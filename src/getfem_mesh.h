@@ -362,7 +362,12 @@ namespace getfem
       void write_to_file(std::ostream &ost) const;
       void read_from_file(const std::string &name);
       void read_from_file(std::istream &ist);
-     
+    
+    size_type memsize() const { return bgeot::mesh<base_node>::memsize() + 
+			    (pts.index().last_true()+1)*dim()*sizeof(scalar_type)+
+			    sizeof(getfem_mesh) - sizeof(bgeot::mesh<base_node>)
+			    +trans_exists.memsize() + gtab.memsize(); }
+
     ~getfem_mesh() { lmsg_sender().send(MESH_DELETE()); }
   };
 

@@ -238,7 +238,7 @@ namespace dal
       void clear(void);
       void swap(size_type i1, size_type i2);
       size_type memsize(void) const
-      {	return bit_container::memsize() + sizeof(bit_vector); }
+      {	return bit_container::memsize() + sizeof(bit_vector) - sizeof(bit_container); }
       size_type card(void) const;
       size_type first_true(void) const;
       size_type first_false(void) const;

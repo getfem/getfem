@@ -68,6 +68,8 @@ namespace bgeot
 
       multi_index(void) {}
 
+    size_type memsize() const { return std::vector<short_type>::capacity()*sizeof(short_type) + 
+				  sizeof(multi_index); }
   };
 
   inline std::ostream &operator <<(std::ostream &o,
@@ -152,6 +154,8 @@ namespace bgeot
       void mat_transp_reduction(const tensor &t, const vsmatrix<T> &m, int ni);
 
       void mat_reduction(const tensor &t, const vsmatrix<T> &m, int ni);
+    size_type memsize() const { return vsvector<T>::memsize() +
+				  _sizes.memsize() + coeff.memsize(); }
   };
 
   template<class T> void tensor<T>::mat_transp_reduction (const tensor &t,

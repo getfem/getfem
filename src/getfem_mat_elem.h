@@ -68,6 +68,7 @@ namespace getfem
       { transfert_to_G(pa, a); compute_on_face(t, pa, f); }
 
       virtual ~mat_elem_computation() {}
+      virtual size_type memsize() const = 0;
   };
 
   typedef mat_elem_computation *pmat_elem_computation;
