@@ -45,6 +45,7 @@ int main(void)
     
     bgeot::smatrix<double> n(10, 10);
     
+    copy(m, transposed(n));
     copy(transposed(m), n);
     cout << "m = " << m << endl;
     cout << "n = " << n << endl;

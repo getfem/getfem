@@ -117,7 +117,8 @@ namespace bgeot
 
     void out_of_range_error(void) const;
     void clean(double eps) {
-      for (tas_iterator it = tas_begin() ; it != tas_end(); ++it)
+      tas_iterator it = tas_begin(), ite = tas_end();
+      for ( ; it != ite; ++it)
 	if (dal::abs((*it).e) <= eps) sup(it.index());
     }
     

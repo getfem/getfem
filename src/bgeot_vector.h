@@ -60,7 +60,7 @@ namespace bgeot
   { *first = a; fill(++first, bgeot_count<N-1>(), a); }
 
   template <class OutIter, class T> inline
-    void fill(OutIter first, bgeot_count<0>, const T& a)
+    void fill(OutIter , bgeot_count<0>, const T&)
   { }
 
   template <int N, class InIter, class OutIter, class T> inline
