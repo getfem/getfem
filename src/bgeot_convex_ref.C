@@ -208,36 +208,27 @@ namespace bgeot
   };
 
   scalar_type _product_ref::is_in(const base_node &pt) const {
-    static base_node *pt1, *pt2;
-    static bool isinit = false;
-    if (!isinit) { pt1=new base_node(1); pt2=new base_node(1); isinit=true; }
     dim_type n1 = cvr1->structure()->dim(), n2 = cvr2->structure()->dim();
+    base_node pt1(n1), pt2(n2);
     if (pt.size() != cvs->dim())
       throw dimension_error(
 			    "_product_ref::is_in : Dimension does not match");
-    if (pt1->size() != n1) { delete pt1; pt1 = new base_node(n1); }
-    if (pt2->size() != n2) { delete pt2; pt2 = new base_node(n2); }
-    std::copy(pt.begin(), pt.begin()+n1, pt1->begin());
-    std::copy(pt.begin()+n1,   pt.end(), pt2->begin());
-    return std::max(cvr1->is_in(*pt1), cvr2->is_in(*pt2));
+    std::copy(pt.begin(), pt.begin()+n1, pt1.begin());
+    std::copy(pt.begin()+n1,   pt.end(), pt2.begin());
+    return std::max(cvr1->is_in(pt1), cvr2->is_in(pt2));
   }
 
   scalar_type _product_ref::is_in_face(short_type f, const base_node &pt) const
   { // ne controle pas si le point est dans le convexe mais si un point
     // supposé appartenir au convexe est dans une face donnée
-    static base_node *pt1, *pt2;
-    static bool isinit = false;
-    if (!isinit) { pt1=new base_node(1); pt2=new base_node(1); isinit=true; }
     dim_type n1 = cvr1->structure()->dim(), n2 = cvr2->structure()->dim();
+    base_node pt1(n1), pt2(n2);
     if (pt.size() != cvs->dim())
       DAL_THROW(dimension_error, "Dimensions mismatch");
-    if (pt1->size() != n1) { delete pt1; pt1 = new base_node(n1); }
-    if (pt2->size() != n2) { delete pt2; pt2 = new base_node(n2); }
-    std::copy(pt.begin(), pt.begin()+n1, pt1->begin());
-    std::copy(pt.begin()+n1,   pt.end(), pt2->begin());
-    
-    if (f < cvr1->structure()->nb_faces()) return cvr1->is_in_face(f, *pt1);
-    else return cvr2->is_in_face(f - cvr1->structure()->nb_faces(), *pt2);
+    std::copy(pt.begin(), pt.begin()+n1, pt1.begin());
+    std::copy(pt.begin()+n1,   pt.end(), pt2.begin());
+    if (f < cvr1->structure()->nb_faces()) return cvr1->is_in_face(f, pt1);
+    else return cvr2->is_in_face(f - cvr1->structure()->nb_faces(), pt2);
   }
   
   
@@ -258,15 +249,13 @@ namespace bgeot
   }
   
 
-  pconvex_ref convex_ref_product(pconvex_ref a, pconvex_ref b)
-  { 
+  pconvex_ref convex_ref_product(pconvex_ref a, pconvex_ref b) { 
     static dal::FONC_TABLE<_product_ref_light, _product_ref> *tab = 0;
     if (!tab) tab = new dal::FONC_TABLE<_product_ref_light, _product_ref>();
     return tab->add(_product_ref_light(a, b));
   }
 
-  pconvex_ref parallelepiped_of_reference(dim_type nc)
-  {
+  pconvex_ref parallelepiped_of_reference(dim_type nc) {
     static dal::dynamic_array<pconvex_ref> *ptab = 0;
     static dim_type ncd = 1;
     if (!ptab) ptab = new dal::dynamic_array<pconvex_ref>();
@@ -281,75 +270,5 @@ namespace bgeot
     }
     return (*ptab)[nc];
   }
-
-  /* ******************************************************************** */
-  /* multiple structures.                                                 */
-  /* ******************************************************************** */
-
-//   struct _cv_mul_ref_light
-//   {
-//     pconvex_ref cv;
-//     dim_type mul;
-//     bool operator < (const _cv_mul_ref_light &ls) const
-//     {
-//       if (cv < ls.cv) return true; if (cv > ls.cv) return false; 
-//       if (mul < ls.mul) return true; return false;
-//     }
-//     _cv_mul_ref_light(pconvex_ref a, dim_type m) { cv = a; mul = m; }
-//     _cv_mul_ref_light(void) { }
-   
-//   };
-
-
-//   struct _cv_mul_ref : public convex_of_reference
-//   {
-//     pconvex_ref cv;
-//     scalar_type is_in(const base_node &pt) const
-//     { return cv->is_in(pt); }
-//     scalar_type is_in_face(short_type f, const base_node &pt) const
-//     { return cv->is_in_face(f, pt); }
-
-//     _cv_mul_ref(const _cv_mul_ref_light &ls)
-//     { 
-//       cv = ls.cv;
-//       *((convex<base_node> *)(this)) = convex_multiply(*(ls.cv), ls.mul);
-//       _normals.resize(cvs->nb_faces());
-//       std::copy(cv->normals().begin(), cv->normals().end(), _normals.begin());
-//     }
-//   };
-
-//   pconvex_ref multiply_convex_of_reference(pconvex_ref a, dim_type n)
-//   { 
-//     static dal::FONC_TABLE<_cv_mul_ref_light, _cv_mul_ref> *tab;
-//      static bool isinit = false;
-//    if (!isinit) {
-//      tab = new dal::FONC_TABLE<_cv_mul_ref_light, _cv_mul_ref>();
-//      isinit = true;
-//    }
-//     assert(n != 0); if (n == 1) return a;
-//     return tab->add(_cv_mul_ref_light(a, n));
-//   }
-
-  /* ******************************************************************** */
-  /* nonconforming triangle structure.                                    */
-  /* ******************************************************************** */
-
-//   struct _ncf_triangle_ref : public _K_simplex_of_ref
-//   {
-//     _ncf_triangle_ref(void) : _K_simplex_of_ref(_K_simplex_ref_light(2, 1))
-//     {
-//       cvs = nonconforming_triangle_structure();
-//       for (int i = 0; i < 3; i++) points()[i].fill(0.5);
-//       points()[1][0] = 0.0; points()[2][1] = 0.0;
-//     }
-//   };
-
-//   pconvex_ref nonconforming_triangle_ref(void)
-//   {
-//     static _ncf_triangle_ref *cs;
-//     static bool initialized = false;
-//     if (!initialized) { cs = new _ncf_triangle_ref(); initialized = true; }
-//     return cs;
-//   }
 
 }  /* end of namespace bgeot.                                              */
