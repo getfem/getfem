@@ -379,6 +379,8 @@ namespace getfem
       void copy_from(const getfem_mesh& m); /* might be the copy constructor */
       size_type memsize() const;
       ~getfem_mesh() { lmsg_sender().send(MESH_DELETE()); }
+  private:
+    void to_edges() {} /* to be done, the to_edges of mesh_structure does not handle geotrans */
   };
 
   template<class ITER>

@@ -264,7 +264,7 @@ namespace getfem
 	if (ip != ipl) {
 	  if (npt.is_in(ipl))
 	    DAL_THROW(failure_error, 
-		    "Two points with the same coords. loading aborted.");
+		      "Two points [#" << ip << " and #" << ipl << "] with the same coords. loading aborted.");
 	  swap_points(ip, ipl);
 	}
       } else if (strlen(tmp)) {
@@ -396,6 +396,24 @@ namespace getfem
       sizeof(getfem_mesh) - sizeof(bgeot::mesh<base_node>)
       +trans_exists.memsize() + gtab.memsize();
   }
+
+
+  static const base_matrix &equilateral_to_GT_PK_grad(dim_type N) {
+    static std::vector<base_matrix> *pbm = 0;
+    if (pbm == 0) pbm = new std::vector<base_matrix>();
+    if (N > pbm->size()) pbm->resize(N);    
+    if ((*pbm)[N-1].empty()) {
+      bgeot::pgeometric_trans pgt = bgeot::simplex_geotrans(N,1);
+      base_matrix Gr(N,N);
+      base_matrix G(N,N+1); 
+      vectors_to_base_matrix(G, bgeot::equilateral_simplex_of_reference(N)->points());
+      cout << "equilateral_simplex_of_reference: G[" << N << "]=" << G << "\n";
+      gmm::mult(G, bgeot::geotrans_precomp(pgt, &pgt->convex_ref()->points())->grad(0), Gr);
+      gmm::lu_inverse(Gr);
+      (*pbm)[N-1].swap(Gr);
+    }
+    return (*pbm)[N-1];
+  }
     
   /* TODO : use the geotrans from an "equilateral" reference element to the real element 
      check if the sign of the determinants does change (=> very very bad quality of the convex)
@@ -410,9 +428,14 @@ namespace getfem
 
     size_type n = (pgt->is_linear()) ? 1 : pgt->nb_points();
     scalar_type q = 1;
-    base_matrix K(pgp->grad(0).ncols(),G.nrows());
+    size_type N = G.nrows(), P = pgt->structure()->dim();
+    base_matrix K(N,P);
     for (size_type ip=0; ip < n; ++ip) {
-      gmm::mult(gmm::transposed(pgp->grad(ip)), gmm::transposed(G), K);
+      gmm::mult(G, pgp->grad(ip), K);
+      /* TODO : this is an ugly fix for simplexes only.. there should be a transformation
+         of any pgt to the equivalent equilateral pgt (for prisms etc) */
+      if (pgt->structure()->basic_structure() == bgeot::simplex_structure(P)) 
+        gmm::mult(base_matrix(K),equilateral_to_GT_PK_grad(P),K);
       q = std::max(q, gmm::condition_number(K));
     }
     return 1./q;
