@@ -520,8 +520,10 @@ namespace getfem
   /* ********************************************************************* */
 
   template<class MATRM, class VECT1, class VECT2>
-    void assembling_Dirichlet_condition(MATRM &RM, VECT1 &B, const mesh_fem &mf,
-					size_type boundary, const VECT2 &F, dim_type N)
+    void assembling_Dirichlet_condition(MATRM &RM, VECT1 &B,
+					const mesh_fem &mf,
+					size_type boundary,
+					const VECT2 &F, dim_type N)
   { /* Y-a-il un moyen plus performant ? */
     // Marche uniquement pour des ddl de lagrange.
     size_type cv;
@@ -563,31 +565,80 @@ namespace getfem
   template<class MATD, class VECT>
     void treat_Dirichlet_condition(const MATD &D, MATD &G,
 				   const VECT &UD, VECT &UDD) {
-      dal::bit_vector nn;
-      size_type s = UD.size(), i, j, k;
-      VECT E(s), F(s);
-      std::fill(E.begin(), E.end(), 0);
-      for (i = 0; i < s; ++i) {
-	E[i] = 1.0;
-	getfem::mult(D, E, F);
-	if (getfem::dot(F,F) < 1.0E-30) nn.add(i);
-	// définir getfem::dot de manière générique et trouver un moyen
-	// pour avoir un getfem::mult générique aussi ... 
-      }
-      size_type sn = nn.card(), son = s - sn;
-      G = MATD(s, sn);
-      MATD B(s, son);
-      for (i = j = k = 0; i < s; ++i)
-	if (nn[i]) G(i,j++) = 1.0; else B(i, k++) = 1.0;
-      
-      // ...
-      // il faut résoudre le système B^T D B UDDR = B^T UD
-      // On a alors UDD = B UDDR
-      // pour cela faire une factorisation LU (cf MATLAB null ...)
-      // En profiter pour tester si ce système est inversible
-      // s'il ne l'est pas il faut trouver son noyau
+    // On veut construire une base orthonormale du noyau de D.
+    size_type nbd = D.ncols(), nbase = 0;
+    VECT aux(D.nrows());
+    VECT e(nbd), f(nbd);
+    dal::dynamic_array<VECT> base_img;
+    dal::dynamic_array<VECT> base_img_inv;
+    size_type nb_bimg = 0;
+    e.fill(0.0);
 
+    // première passe, on récupére toutes les colonnes vides de D.
+    dal::bit_vector nn;
+    for (size_type i = 0; i < nbd; ++i) {
+      e[i] = 1.0;
+      mult(G,e, aux);
+      if (norm(aux) < 1.0E-6) { // à scaler sur l'ensemble de D ...
+	G(i, nbase++) = 1.0; nn[i] = true;
+      }
+      else {
+	bool good = true;
+	for (size_type j = 0; j < nb_bimg; ++j)
+	  if (dal::abs(sp(aux, base_img[j])) > 1.0E-6)
+	    { good = false; break; }
+	if (good) {
+	  base_img_inv[nb_bimg] = e;
+	  base_img[nb_bimg++] = aux; nn[i] = true;
+	}
+      }
+      e[i] = 0.0;
     }
+    size_type nb_triv_base = nbase;
+
+    for (size_type i = 0; i < nbd; ++i)
+      if (!(nn[i])) {
+	e[i] = 1.0; f = e;
+	mult(G,e, aux);
+	
+	for (size_type j = 0; j < nb_bimg; ++j) { 
+	  scalar_type c = sp(aux, base_img[j]);
+	  if (c > 1.0E-6) { // à scaler sur l'ensemble de D ...
+	    aux -= base_img[j] * c;
+	    f -= base_img_inv[j] * c;
+	  }
+	}
+	if (norm(aux) < 1.0E-6) { // à scaler sur l'ensemble de D ...
+	  G.col(nbase++) = f;
+	}
+	else {
+	  base_img_inv[nb_bimg] = f;
+	  base_img[nb_bimg++] = aux;
+	}
+	e[i] = 0.0;
+      }
+
+    // calcul d'une solution UDD
+    UDD.fill(0.0);
+    for (size_type i = 0; i < nb_bimg; ++i) {
+      scalar_type c = sp(UD, base_img[i]);
+       if (c > 1.0E-6) UDD += base_img_inv[i] * c;
+    }
+
+    // On orthogonalise la base du noyau
+    for (size_type i = nb_triv_base + 1; i < nb_base; ++i) {
+      for (size_type j = nb_triv_base; j < i; ++j) {
+	scalar_type c = sp(G.col(i), G.col(j));
+	if (c > 1.0E-6) G.col(i) -= G.col(j) * sp(G.col(i), G.col(j));
+      }
+    }
+
+    // puis on projete UDD sur l'orthogonal du noyau.
+    for (size_type j = nb_triv_base; j < nb_base; ++j) {
+      scalar_type c = sp(UDD, G.col(j));
+      if (c > 1.0E-6) UDD -= G.col(j) * sp(UDD, G.col(j));
+    }
+  }
   
 
   
