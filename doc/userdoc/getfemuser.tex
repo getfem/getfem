@@ -688,7 +688,7 @@ The linear algebra library used by \gf is Gmm++ which is now a separate library.
 Note that Getfem++ includes (since release 1.7) its own version of SuperLU 3.0 (http://crd.lbl.gov/\verb\~\xiaoye/SuperLU/), hence a direct sparse solver is available out of the box.
 
 
-\section{Standard assembling procedures}
+\section{Standard assembly procedures}
 
 Procedures defined in the file \filename{getfem\_assembling.h} allow to assemble stiffness matrices, mass matrices and boundary conditions for a few amount of classical partial differential equation problems. All the procedures have vectors and matrices template parameters in order to be used with any matrix library.
 
@@ -710,14 +710,14 @@ An assembling procedure is defined to solve the problem
 where $\Omega$ is an open domain of arbitrary dimension, $\Gamma_{D}$ and $\Gamma_{N}$ are parts of the boundary of $\Omega$, $u(x)$ is the unknown, $a(x)$ is a given coefficient, $f(x)$ is a given source term, $U(x)$ the prescribed value of $u(x)$ on $\Gamma_{D}$ and $F(x)$ is the prescribed normal derivative of $u(x)$ on $\Gamma_{N}$.
 The function to be called to assemble the stiffness matrix is\\[0.5cm]
 \index{GETFEM!getfem::asm\_stiffness\_matrix\_for\_laplacian}
-\cpp{getfem::asm\_stiffness\_matrix\_for\_laplacian(SM, mef1, mef2, A);} \\[0.5cm]
-where \cpp{SM} is a matrix of any type having the right dimension (i.e. \cpp{me1.nb\_dof()}), \cpp{mef1} is a variable of type \cpp{getfem::mesh\_fem} and should define the finite element method for the solution, \cpp{mef2}  is a variable of type \cpp{getfem::mesh\_fem} (possibly equal to \cpp{mef1}) describing the finite element method on which the coefficient $a(x)$ is defined, and \cpp{A} is the vector of the values of this coefficient on each degree of freedom of \cpp{mef2}. Both should use the same mesh. It is important to pay attention to the fact that the integration methods used to compute the elementary matrices are the ones declared in \cpp{mef1}. This integration method have to be chosen of sufficient order. The order has to be determined considering the degrees of element in \cpp{mef1}, in \cpp{mef2} and the geometric transformations for non-linear cases. Integration methods defined in \cpp{mef2} are ignored, hence you can use the dummy integration method \index{IM_NONE}{\tt IM\_NONE} with mef2.\\[0.5cm]
+\cpp{getfem::asm\_stiffness\_matrix\_for\_laplacian(SM, mim, mef1, mef2, A);} \\[0.5cm]
+where \cpp{SM} is a matrix of any type having the right dimension (i.e. \cpp{me1.nb\_dof()}), \cpp{mim} is a variable of type  \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mef1} is a variable of type \cpp{getfem::mesh\_fem} and should define the finite element method for the solution, \cpp{mef2}  is a variable of type \cpp{getfem::mesh\_fem} (possibly equal to \cpp{mef1}) describing the finite element method on which the coefficient $a(x)$ is defined, and \cpp{A} is the vector of the values of this coefficient on each degree of freedom of \cpp{mef2}. Both should use the same mesh. It is important to pay attention to the fact that the integration methods used to compute the elementary matrices are the ones declared in \cpp{mef1}. This integration method have to be chosen of sufficient order. The order has to be determined considering the degrees of element in \cpp{mef1}, in \cpp{mef2} and the geometric transformations for non-linear cases. Integration methods defined in \cpp{mef2} are ignored, hence you can use the dummy integration method \index{IM_NONE}{\tt IM\_NONE} with mef2.\\[0.5cm]
 To assemble the source term, the  function to be called is\\[0.5cm]
 \index{GETFEM!getfem::asm\_source\_term}
-\cpp{getfem::asm\_source\_term(B, mef1, mef2, V);} \\[0.5cm]
-where \cpp{B} is a vector of any type having the right dimension (still \cpp{me1.nb\_dof()}), \cpp{mef2}  is a variable of type \cpp{getfem::mesh\_fem} (possibly equal to \cpp{mef1}) describing the finite element method on which $f(x)$ is defined, \cpp{V} is the vector of the values of $f(x)$ on each degree of freedom of \cpp{mef2}.\\[0.5cm]
+\cpp{getfem::asm\_source\_term(B, mim, mef1, mef2, V);} \\[0.5cm]
+where \cpp{B} is a vector of any type having the right dimension (still \cpp{me1.nb\_dof()}), \cpp{mim} is a variable of type  \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mef2}  is a variable of type \cpp{getfem::mesh\_fem} (possibly equal to \cpp{mef1}) describing the finite element method on which $f(x)$ is defined, \cpp{V} is the vector of the values of $f(x)$ on each degree of freedom of \cpp{mef2}.\\[0.5cm]
 For the Neumann condition on $\Gamma_{N}$, the same function\\[0.5cm]
-\cpp{getfem::asm\_source\_term(B, mef1, mef2, V, nbound);} \\[0.5cm]
+\cpp{getfem::asm\_source\_term(B, mim, mef1, mef2, V, nbound);} \\[0.5cm]
 is used again, but an additional argument has been added: \cpp{nbound} is the index of the boundary in \cpp{mef1} (see previous section on how to describe a boundary) where the Neumann condition is applied. Hence the assembly is done on the indicated boundary, and no more on the whole domain. \cpp{mef2}  is a variable of type \cpp{getfem::mesh\_fem} describing the finite element method on which $F(x)$ is defined, \cpp{V} is the vector of the values of $F(x)$ on each degree of freedom of \cpp{mef2}.\\[0.5cm]
 there is two manner to take into account the Dirichlet condition on $\Gamma_{D}$, changing the linear system or explicitly reduce to the kernel of the Dirichlet condition. For the first manner, the following function is defined \\[0.5cm]
 \index{GETFEM!getfem::assembling\_Dirichlet\_condition}
@@ -736,7 +736,7 @@ where $U$ is the discrete unknown.\\[0.5cm]
 
 For the second manner, one should use\\[0.5cm]
 \index{GETFEM!getfem::asm\_dirichlet\_constraints}
-\cpp{getfem::asm\_dirichlet\_constraints($\tildeH$, $\tildeR$, mf\_u, mf\_rh,$H$, $R$, nbound)}.\\[0.5cm]
+\cpp{getfem::asm\_dirichlet\_constraints($\tildeH$, $\tildeR$, mim, mf\_u, mf\_rh,$H$, $R$, nbound)}.\\[0.5cm]
 See the Dirichlet condition as a general linear constraint that must
 satisfy the solution $u$. This function does the assembly of 
 Dirichlet conditions of type $h(x).u(x) = r(x)$ where h is a small square matrix
@@ -770,8 +770,8 @@ If you want to treat the more general scalar elliptic equation $\Div A(x)\nabla 
 
 the following function assembles the stiffness matrix for linear elasticity\\[0.5cm]
 \index{GETFEM!getfem::asm\_stiffness\_matrix\_for\_linear\_elasticity}
-\cpp{getfem::asm\_stiffness\_matrix\_for\_linear\_elasticity(SM, mef1, mef2, LAMBDA, MU); } \\[0.5cm]
-where \cpp{SM} is a matrix of any type having the right dimension (i.e. here \cpp{me1.nb\_dof()}), \cpp{mef1} is a variable of type \cpp{getfem::mesh\_fem} and should define the finite element method for the solution, \cpp{mef2}  is a variable of type \cpp{getfem::mesh\_fem} (possibly equal to \cpp{mef1}) describing the finite element method on which the Lam{é} coefficient are defined, \cpp{LAMBDA} and \cpp{MU} are vectors of the values of Lam{é} coefficients on each degree of freedom of \cpp{mef2}. It is important to pay attention to the fact that the integration methods used to compute the elementary matrices is the ones declared in \cpp{mef1} and must be of sufficient order.\\[0.5cm]
+\cpp{getfem::asm\_stiffness\_matrix\_for\_linear\_elasticity(SM, mim, mef1, mef2, LAMBDA, MU); } \\[0.5cm]
+where \cpp{SM} is a matrix of any type having the right dimension (i.e. here \cpp{me1.nb\_dof()}), \cpp{mim} is a variable of type  \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mef1} is a variable of type \cpp{getfem::mesh\_fem} and should define the finite element method for the solution, \cpp{mef2}  is a variable of type \cpp{getfem::mesh\_fem} (possibly equal to \cpp{mef1}) describing the finite element method on which the Lam{é} coefficient are defined, \cpp{LAMBDA} and \cpp{MU} are vectors of the values of Lam{é} coefficients on each degree of freedom of \cpp{mef2}. It is important to pay attention to the fact that the integration methods used to compute the elementary matrices is the ones declared in \cpp{mef1} and must be of sufficient order.\\[0.5cm]
 
 CAUTION : Linear elasticity problem is a vectorial problem, so the target dimension of \cpp{mef1} (see \cpp{mef.set_qdim(Q)}) should be the same as the dimension of the mesh.\\[0.5cm]
 
@@ -784,10 +784,10 @@ to be described ... (see the file \filename{getfem\_assembling.h} and the MATLAB
 \subsection{Assembling a mass matrix}
 
 The following function allows to assemble a mass matrix for a finite element method\\[0.5cm]
-\cpp{getfem::asm_mass\_matrix(M, mef); } \\[0.5cm]
-where \cpp{M} is a matrix of any type having the right dimension (i.e. here \cpp{me1.nb\_dof()}), \cpp{mef} is a variable of type \cpp{getfem::mesh\_fem} and should define the finite element method. \cpp{mef} could represent a vectorial finite element method (i.e. \cpp{mef.get_qdim } $> 1$).
+\cpp{getfem::asm_mass\_matrix(M, mim, mef); } \\[0.5cm]
+where \cpp{M} is a matrix of any type having the right dimension (i.e. here \cpp{me1.nb\_dof()}), \cpp{mim} is a variable of type  \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mef} is a variable of type \cpp{getfem::mesh\_fem} and should define the finite element method. \cpp{mef} could represent a vectorial finite element method (i.e. \cpp{mef.get_qdim } $> 1$).
 It is also possible to obtain  mass matrix on a boundary with the same function:
-\cpp{getfem::asm_mass\_matrix(M, mef, nbound); } \\[0.5cm]
+\cpp{getfem::asm_mass\_matrix(M, mim, mef, nbound); } \\[0.5cm]
 where \cpp{nbound} is the index of the boundary in \cpp{mef}.
 
 
@@ -861,6 +861,7 @@ call \cpp{assem.boundary_assembly(boundary_num)}.
 
 The third example shows how to compute the $L^2$ norm of a scalar or vector field on a mesh boundary:
 \begin{cppcode}
+    assem.push_im(mim);
     assem.push_mf(mf);
     assem.push_data(U);
     std::vector<scalar_type> v(1);
@@ -974,18 +975,18 @@ Most of the time, one only needs an enrichment on a subset of node of the origin
 
 (evolution of \cpp{virtual\_link\_fem}) A special finite element method is defined in \filename{getfem\_interpolated\_fem.h} which is not a real finite element method but allows to interpolate a finite element method defined on another mesh. When an assembling procedure has different finite element methods as arguments, the mesh on which those methods are defined should be the same. If you need to assemble a matrix with finite element methods defined on different meshes, you may use the finite element methods\\[0.5cm]
 \index{GETFEM!getfem::interpolated\_fem}
-\cpp{getfem::interpolated\_fem(getfem::mesh\_fem mf1, getfem::mesh\_fem mf2) }\\[0.2cm]
-Because each base function of the finite element method has to be interpolated, such a computation can be a haevy procedure. By default, the interpolated fem object store the interpolation. \\[0.5cm]
+\cpp{getfem::interpolated\_fem(getfem::mesh\_fem mf, getfem::mesh\_um mim) }\\[0.2cm]
+Because each base function of the finite element method has to be interpolated, such a computation can be a heavy procedure. By default, the interpolated fem object store the interpolation. \\[0.5cm]
 
-The interpolation is made on each Gauss point of the integration methods of  \cpp{mf2}, so that you have to use these integration methods in the assembling procedures.\\[0.5cm]
+The interpolation is made on each Gauss point of the integration methods of  \cpp{mim}, so that you have to use these integration methods in the assembling procedures.\\[0.5cm]
 
 For instance if you need to compute the mass matrix between to different finite element methods defined on two different meshes, this is an example of code which interpolate the second f.e.m. on the mesh of the first f.e.m., assuming that \cpp{mf1} and \cpp{mf2} describe the two finite element methods and \cpp{pim} is the chosen integration method.\\[0.5cm]
 \begin{cppcode}
   getfem::mesh\_fem mf\_interpole(mf1.linked\_mesh());
-  getfem::interpolated\_fem feminterpolated(mf2, mf1);
+  getfem::interpolated\_fem feminterpolated(mf2, mim);
   dal::bit\_vector nn = mf1.convex\_index();
-  mf\_interpole.set\_finite\_element(nn, &feminterpolated, pim);
-  getfem::asm\_mass\_matrix(SM1, mf1, mf\_interpole);
+  mf\_interpole.set\_finite\_element(nn, &feminterpolated);
+  getfem::asm\_mass\_matrix(SM1, mim, mf1, mf\_interpole);
 \end{cppcode}
 
 The object \cpp{feminterpolated} contains all the information concerning the interpolation. It could use a lot of memory. You have to care that it is not destroyed while you use it in a \cpp{mesh\_fem} structure. To obtain a better accuracy, it is better to refine the integration method (with \cpp{IM_STRUCTURED_COMPOSITE} for instance) rather than improve its order. 
@@ -1010,7 +1011,7 @@ where \cpp{mef} is a variable of type \cpp{getfem::mesh\_fem} and describes the 
 
 The file \filename{getfem\_derivatives.h}  defines the following function to compute the gradient of a solution\\[0.5cm]
 \index{GETFEM!getfem::compute\_gradient}
-\cpp{getfem::compute\_gradient(mef1, mef2, U, V); }\\[0.5cm]
+\cpp{getfem::compute\_gradient(mim, mef1, mef2, U, V); }\\[0.5cm]
 where \cpp{mef1} is a variable of type \cpp{getfem::mesh\_fem} and describes the finite element method on which the solution is defined, \cpp{mef2} describes the finite element method to compute the gradient, \cpp{U} is a vector representing the solution and should be of size \cpp{mef1.nb\_dof()}, \cpp{V} is the vector on which the gradient will be computed and should be of size
 \cpp{N * mef2.nb\_dof()} where \cpp{N} is the dimension of the domain. IMPORTANT : This function only work when \cpp{mef2} is a Lagrange element. This element should be, most of the time, a discontinuous Lagrangian element, because for usual element (for instance \cpp{getfem::PK\_discontinuous\_fem(n, k)}), the gradient is not continuous.
 
@@ -1102,15 +1103,15 @@ $$ -div(k\nabla u) = ... $$
 
 where $u$ is a scalar field and $k$ is a positive scalar or a symmetric positive definite order two tensor field. There is two constructors for this brick. The first one is for constant scalar coefficient $k$:
 \begin{alltt}
-  getfem::mdbrick_scalar_elliptic<MODEL_STATE> brick(mf_u, mf_data, k, mat_stored);
+  getfem::mdbrick_scalar_elliptic<MODEL_STATE> brick(mim, mf_u, mf_data, k, mat_stored);
 \end{alltt}
-where \cpp{mf_u} and \cpp{mf_data} are two valid fem descriptor on the same mesh. \cpp{mf_u} describe the finite element method used for the unknown and \cpp{mf_data} the finite element method used for the parameter $k$. As $k$ is constant \cpp{mf_data} will be chosen to be a constant fem like $P_0$ or $Q_0$ elements. \cpp{k} is a real defining a constant \cpp{k} and \cpp{mat_stored} is an optional parameter (the default value is \cpp{false}) specifying if the stiffness matrix has to be stored in the brick or not. Storing the stiffness matrix in the brick will have a memory cost but allows not to recompute it each time when \cpp{compute_tangent_matrix(...)} is called.
+where \cpp{mim} is a variable of type \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mf_u} and \cpp{mf_data} are two valid fem descriptor on the same mesh. \cpp{mf_u} describe the finite element method used for the unknown and \cpp{mf_data} the finite element method used for the parameter $k$. As $k$ is constant \cpp{mf_data} will be chosen to be a constant fem like $P_0$ or $Q_0$ elements. \cpp{k} is a real defining a constant \cpp{k} and \cpp{mat_stored} is an optional parameter (the default value is \cpp{false}) specifying if the stiffness matrix has to be stored in the brick or not. Storing the stiffness matrix in the brick will have a memory cost but allows not to recompute it each time when \cpp{compute_tangent_matrix(...)} is called.
 
 The second constructor is for an arbitrary coefficient $k$:
 \begin{alltt}
-  getfem::mdbrick_scalar_elliptic<MODEL_STATE> brick(mf_u, mf_data, k, laplace, mat_stored);
+  getfem::mdbrick_scalar_elliptic<MODEL_STATE> brick(mim, mf_u, mf_data, k, laplace, mat_stored);
 \end{alltt}
-where \cpp{mf_u} and \cpp{mf_data} are still two valid fem descriptor on the same mesh. Very often, \cpp{k} is still constant or piecewise constant which meand that \cpp{mf_data} will be chosen to be a constant fem like $P_0$ or $Q_0$ elements. \cpp{k} is a vector of type \cpp{MODEL_STATE::vector_type} where \cpp{MODEL_STATE} is the type of model state variable used. \cpp{laplace} is a boolean, it has to be \cpp{true} if \cpp{k} is scalar and \cpp{false} if \cpp{k} is an order two tensor value. The vector \cpp{k} will be filled with either one tensorial or scalar value if the coefficient is constant or with a value on each degree of freedom of \cpp{mf_data} if not. \cpp{mat_stored} is still an optional parameter (the default value is false) specifying if the stiffness matrix has to be stored in the brick or not.
+where \cpp{mim} is a variable of type \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mf_u} and \cpp{mf_data} are still two valid fem descriptor on the same mesh. Very often, \cpp{k} is still constant or piecewise constant which meand that \cpp{mf_data} will be chosen to be a constant fem like $P_0$ or $Q_0$ elements. \cpp{k} is a vector of type \cpp{MODEL_STATE::vector_type} where \cpp{MODEL_STATE} is the type of model state variable used. \cpp{laplace} is a boolean, it has to be \cpp{true} if \cpp{k} is scalar and \cpp{false} if \cpp{k} is an order two tensor value. The vector \cpp{k} will be filled with either one tensorial or scalar value if the coefficient is constant or with a value on each degree of freedom of \cpp{mf_data} if not. \cpp{mat_stored} is still an optional parameter (the default value is false) specifying if the stiffness matrix has to be stored in the brick or not.
 
 The following additional methods are available on this brick:
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
@@ -1167,7 +1168,7 @@ If \cpp{mf_u} and \cpp{mf_data} are valid finite element description on a mesh r
   plain_vector U(mf_u.nb_dof()), F(mf_data.nb_dof());
 
   double k = 1.0;
-  getfem::mdbrick_scalar_elliptic<> laplacian(mf_u, mf_data, k);
+  getfem::mdbrick_scalar_elliptic<> laplacian(mim, mf_u, mf_data, k);
   
   plain_vector F(mf_data.nb_dof());
   for (int i = 0; i < mf_data.nb_dof(); ++i) F(i) = ...;
@@ -1208,13 +1209,13 @@ $\varepsilon(u)$ is the small strain tensor, $\sigma$ is the stress tensor, $\la
 There is two constructors for this brick. The first one is for constant Lamé coefficients:
 \begin{alltt}
   getfem::mdbrick_isotropic_linearized_elasticity<MODEL_STATE>
-     brick(mf_u, mf_data, lambda, mu, mat_stored);
+     brick(mim, mf_u, mf_data, lambda, mu, mat_stored);
 \end{alltt}
-where \cpp{mf_u} and \cpp{mf_data} are two valid fem descriptor on the same mesh. \cpp{mf_u} describe the finite element method used for the unknown and \cpp{mf_data} the finite element method used for the Lamé coefficients. As they are constant \cpp{mf_data} will be chosen to be a constant fem like $P_0$ or $Q_0$ elements. \cpp{lambda} and \cpp{mu} are two real defining the constant Lamé coefficients. \cpp{mat_stored} is an optional parameter (the default value is \cpp{false}) specifying if the stiffness matrix has to be stored in the brick or not. Storing the stiffness matrix in the brick will have a memory cost but allows not to recompute it each time when \cpp{compute_tangent_matrix(...)} is called.
+where \cpp{mim} is a variable of type \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mf_u} and \cpp{mf_data} are two valid fem descriptor on the same mesh. \cpp{mf_u} describe the finite element method used for the unknown and \cpp{mf_data} the finite element method used for the Lamé coefficients. As they are constant \cpp{mf_data} will be chosen to be a constant fem like $P_0$ or $Q_0$ elements. \cpp{lambda} and \cpp{mu} are two real defining the constant Lamé coefficients. \cpp{mat_stored} is an optional parameter (the default value is \cpp{false}) specifying if the stiffness matrix has to be stored in the brick or not. Storing the stiffness matrix in the brick will have a memory cost but allows not to recompute it each time when \cpp{compute_tangent_matrix(...)} is called.
 
 The second constructor is for non homogeneous Lamé coefficients:
 \begin{alltt}
-  getfem::mdbrick_isotropic_linearized_elasticity(mf_u, mf_data, lambda, mu, mat_stored);
+  getfem::mdbrick_isotropic_linearized_elasticity(mim, mf_u, mf_data, lambda, mu, mat_stored);
 \end{alltt}
 It has the same form but here \cpp{lambda} and \cpp{mu} are two vectors of type \cpp{MODEL_STATE::vector_type} defining the Lamé coefficients on \cpp{mf_data}.
 
@@ -1260,9 +1261,9 @@ where $k$ the wave number is a real or complex value. For a complex version, a c
 
 The constructor is
 \begin{alltt}
-  getfem::mdbrick_Helmholtz<MODEL_STATE> brick(mf_u, mf_data, k, mat_stored);
+  getfem::mdbrick_Helmholtz<MODEL_STATE> brick(mim, mf_u, mf_data, k, mat_stored);
 \end{alltt}
-where \cpp{mf_u} and \cpp{mf_data} are two valid fem descriptor on the same mesh. \cpp{mf_u} describe the finite element method used for the unknown and \cpp{mf_data} the finite element method used for the wave number. \cpp{k} is a real or a vector of type \cpp{MODEL_STATE::vector_type} defining the wave number and  \cpp{mat_stored} is an optional parameter (the default value is \cpp{false}) specifying if the stiffness matrix has to be stored in the brick or not. Storing the stiffness matrix in the brick will have a memory cost but allows not to recompute it each time when \cpp{compute_tangent_matrix(...)} is called.
+where \cpp{mim} is a variable of type \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mf_u} and \cpp{mf_data} are two valid fem descriptor on the same mesh. \cpp{mf_u} describe the finite element method used for the unknown and \cpp{mf_data} the finite element method used for the wave number. \cpp{k} is a real or a vector of type \cpp{MODEL_STATE::vector_type} defining the wave number and  \cpp{mat_stored} is an optional parameter (the default value is \cpp{false}) specifying if the stiffness matrix has to be stored in the brick or not. Storing the stiffness matrix in the brick will have a memory cost but allows not to recompute it each time when \cpp{compute_tangent_matrix(...)} is called.
 
 The following additional methods are available on this brick:
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
@@ -1310,7 +1311,7 @@ For instance, the following program defines a Stokes problem with a source term 
 
   double mu = 1.0;
   getfem::mdbrick_isotropic_linearized_elasticity<>
-    stokes(mf_u, mf_coef, 0.0, mu);
+    stokes(mim, mf_u, mf_coef, 0.0, mu);
 
   getfem::mdbrick_linear_incomp<> incomp(stokes, mf_p);
   
@@ -1338,7 +1339,7 @@ Plasticity happens when you stress an object too much, so that even when you rem
 Quasi-static means that we do not take inertia into account, but that the algorithm used needs some kind of a time representation. It is not possible to put the charge on the model at once, as it will render false results. Instead, we have to put the charge only a bit at a time, and calculate the deformation each time,  hence the 'quasi-static' name. For instance, if you wish to put a 100N/m charge on your object, you should put it by small steps (20,40,60,80,100 is ok). We have to use that method to keep the consistency of the problem.
 
 
-A brick behaves like a black-box, that is defined by its constructor. A constructor is something like \cpp{getfem::mdbrick_plasticity<> brick(mf_u, mf_coef, lambda, mu, stress_threshold, TOL, flag_hyp);} where :
+A brick behaves like a black-box, that is defined by its constructor. A constructor is something like \cpp{getfem::mdbrick_plasticity<> brick(mim, mf_u, mf_coef, lambda, mu, stress_threshold, TOL, flag_hyp);} where :
 \begin{itemize}
 \item mf_u and mf_coef are 2 meshes that define the geometry and the finite elements method of the problem (type : \cpp{getfem::mesh_fem})
 \item lambda and mu are Lame coefficients that define the problem (type : if the problem is homogeneous, \cpp{scalar_type}. If not, \cpp{gmm::vector<scalar_type>}. Its size must be equal to the number of degree of freedom of the system.)
@@ -1366,7 +1367,7 @@ This brick represent a large strain elasticity problem. It is defined in \cpp{ge
 
 The constructor is:
 \begin{alltt}
-  getfem::mdbrick_nonlinear_elasticity<MODEL_STATE> brick(Hyperelastic_Law, mf_u, mf_data, params);
+  getfem::mdbrick_nonlinear_elasticity<MODEL_STATE> brick(Hyperelastic_Law, mim, mf_u, mf_data, params);
 \end{alltt}
 where \cpp{Hyperelastic_Law} is an object representing the considered hyperelastic law. It has to be chosen between:
 \begin{alltt}
