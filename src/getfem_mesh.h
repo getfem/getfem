@@ -363,7 +363,7 @@ namespace getfem
   template<class ITER>
     size_type getfem_mesh::add_prism_by_points
     (dim_type dim, const ITER &pts)
-  { return add_convex_by_points(bgeot::prism_trans(dim), pts); }
+  { return add_convex_by_points(bgeot::prism_trans(dim, 1), pts); }
 
 }  /* end of namespace getfem.                                             */
 

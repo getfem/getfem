@@ -143,10 +143,12 @@ namespace getfem
   {
     dim_type N = mf.linked_mesh().dim();
     size_type cv, nb;
-    base_node pt3(P), pt4(P);
+    base_node pt3(P), pt4(P), val(1);
     bgeot::geotrans_inv gti;
     dal::dynamic_array<base_node> ptab;
     dal::dynamic_array<size_type> itab;
+    base_vector coeff;
+    base_matrix G;
 
     // cout << "entering interpolation ... P = " << int(P) << " \n";
     
@@ -161,11 +163,12 @@ namespace getfem
     {
       // cout << "dealing with convex " << cv << endl;
       nb = gti.points_in_convex(mf.linked_mesh().convex(cv),
-				mf.pgeo_trans(cv), ptab, itab);
+			    mf.linked_mesh().trans_of_convex(cv), ptab, itab);
       // cout << "nb points in this convex " << nb << endl;
       // cout << "convex : " << mf.linked_mesh().convex(cv) << endl;
       pfem pfe = mf.fem_of_element(cv);
       size_type nbd1 = pfe->nb_dof();
+      coeff.resize(nbd1);
       for (size_type i = 0; i < nb; ++i)
       {
 	// cout << "dealing with ddl : " << itab[i] << "  coords : " << mf_target.point_of_dof(itab[i]) << " internal coords : " << ptab[i] << endl;
@@ -173,16 +176,16 @@ namespace getfem
 	{ // inverser les deux boucles pour gagner du temps ?
 	  // Il faut verifier que le ddl est bien de Lagrange ...
 	  pt3.fill(0.0);
-	  for (size_type j = 0; j < nbd1; ++j)
-	  {
-	    size_type dof1 = mf.ind_dof_of_element(cv)[j];
-	    std::copy(U.begin() + dof1*P, U.begin() + (dof1+1)*P, pt4.begin());
-	    // cout << "Eval au dof local : " << j << " : " << pt4 << endl;
-	    // attention, faux quand les elt. finis sont non tau-equivalents.
-	    // il faut utiliser les méthodes d'interpolation de
-	    // fem_interpolation
-	    pt3.addmul(mf.base_of_dof(cv, j).eval(ptab[i].begin()), pt4);
+	  for (size_type k = 0; k < P; ++k) {
+	    for (size_type j = 0; j < nbd1; ++j) {
+	      size_type dof1 = mf.ind_dof_of_element(cv)[j];
+	      coeff[j] = U[dof1*P+k];
+	    }
+	    pfe->interpolation(pt4, G, coeff, val);
+	    pt3[k] = val[0];
+
 	  }
+	  
 	  // cout << "Résultat : " << pt3 << endl;
 	  for (size_type j = 0; j < P; ++j) V[itab[i]*P+j] = pt3[j];
 	  ddl_touched.sup(itab[i]);
