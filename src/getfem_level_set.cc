@@ -53,7 +53,7 @@ namespace getfem {
     mesh_fem_tab& mesh_fems = dal::singleton<mesh_fem_tab>::instance();
     mf__key_ key(mesh, o);
     mesh_fem_tab::iterator it = mesh_fems.find(key);
-    if (!(it->second->is_valid()))
+    if (it != mesh_fems.end() && !(it->second->is_valid()))
       { mesh_fems.erase(key); it = mesh_fems.end(); }
     if (it == mesh_fems.end()) {
       mesh_fem *pmf = new mesh_fem(mesh);

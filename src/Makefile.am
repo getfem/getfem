@@ -62,6 +62,7 @@ include_HEADERS =                        \
 	getfem_mesh_fem.h                \
 	getfem_mesh_im.h                 \
 	getfem_level_set.h	         \
+	getfem_mesh_level_set.h          \
 	getfem_mesh_im_level_set.h       \
 	getfem_mesh_slicers.h	         \
 	getfem_mesh_slice.h	         \
@@ -156,6 +157,7 @@ SRC =                                    \
 	getfem_mat_elem_type.cc          \
 	getfem_mesh.cc                   \
 	getfem_level_set.cc	         \
+	getfem_mesh_level_set.cc         \
 	getfem_mesh_im_level_set.cc      \
 	getfem_mesh_slicers.cc	         \
 	getfem_mesh_slice.cc	         \

@@ -2,7 +2,7 @@
 //========================================================================
 //
 // Library : GEneric Tool for Finite Element Methods (getfem)
-// File    : getfem_mesh_im.h : Integration methods on convex meshes.
+// File    : getfem_mesh_level_set.h : description of a mesh cut by a number of levelsets.
 //           
 // Date    : January 26, 2005.
 // Author  : Yves Renard <Yves.Renard@insa-toulouse.fr>
@@ -28,57 +28,48 @@
 //========================================================================
 
 
-#ifndef GETFEM_MESH_IM_H__
-#define GETFEM_MESH_IM_H__
+#ifndef GETFEM_MESH_LEVEL_SET_H__
+#define GETFEM_MESH_LEVEL_SET_H__
 
 #include <getfem_integration.h>
+#include <getfem_level_set.h>
 #include <getfem_fem.h>
+
 
 namespace getfem {
 
   /// Describe an integration method linked to a mesh.
-  class mesh_im : public getfem_mesh_receiver, public context_dependencies {
+  class mesh_level_set : public getfem_mesh_receiver, public context_dependencies {
   protected :
-    
-    dal::dynamic_array<pintegration_method> ims;
-    dal::bit_vector im_convexes;
     getfem_mesh *linked_mesh_;
-    bool is_valid_;
+    mutable bool is_valid_, is_adapted_;
+
+    typedef level_set *plevel_set;
+    std::set<plevel_set> level_sets; // set of level set
+    
+    typedef boost::intrusive_ptr<getfem_mesh> pgetfem_mesh;
+
+    struct convex_info {
+      pgetfem_mesh pmesh;
+      std::vector<std::string> zones;
+    };
+
+    std::map<size_type, convex_info> cut_cv;
+
+    void find_zones_of_elements(size_type cv);
+
   public :
     bool is_valid() const { return is_valid_; }
-    void update_from_context(void) const {}
-
-    /** Gives in a structure dal::bit\_vector all convexes of the
-     *          mesh where an integration method is defined.
-     */
-    inline const dal::bit_vector &convex_index(void) const
-    { return im_convexes; }
+    void update_from_context(void) const { is_adapted_= false; }
+    bool is_convex_cut(size_type i) const
+    { return (cut_cv.find(i) != cut_cv.end()); }
+    const getfem_mesh& mesh_of_convex(size_type i) const {
+      if (is_convex_cut(i)) return *((cut_cv.find(i))->second.pmesh);
+      DAL_THROW(failure_error, "This element is not cut !");
+    }
     
     /// Gives a reference to the linked mesh of type getfem\_mesh.
     getfem_mesh &linked_mesh(void) const { return *linked_mesh_; }
-    /** Set the integration method on the convex of index i
-     */
-    void set_integration_method(size_type cv, pintegration_method pim);
-    /** Set the integration method on all the convexes of indexes in bv,
-     *  which is of type dal::bit\_vector.
-     */
-    void set_integration_method(const dal::bit_vector &cvs, 
-				pintegration_method pim);
-    /** shortcut for
-	set_integration_method(linked_mesh().convex_index(),ppi); */
-    void set_integration_method(pintegration_method ppi);
-    /** Set an approximate integration method chosen to be exact for
-	polynomials of degree 'im_degree'
-    */
-    void set_integration_method(const dal::bit_vector &cvs, 
-				dim_type im_degree);
-    
-    /** return the integration method associated with an element (in
-	no integration is associated, the function will crash! use the
-	convex_index() of the mesh_im to check that a fem is
-	associated to a given convex) */
-    pintegration_method int_method_of_element(size_type cv) const
-    { return  ims[cv]; }
     void clear(void);
     /* explicit calls to parent class 
        for HP aCC and mipspro CC who complain about hidden functions 
@@ -92,22 +83,41 @@ namespace getfem {
     
     size_type memsize() const {
       return 
-	sizeof(mesh_im) +
-	ims.memsize() + im_convexes.memsize();
+	sizeof(mesh_level_set);
     }
+
+    void add_level_set(level_set &ls) {
+      level_sets.insert(&ls); touch();
+      is_adapted_ = false;
+    }
+    void sup_level_set(level_set &ls) {
+      level_sets.erase(&ls);
+      is_adapted_ = false;
+      touch();
+    }
+
+    void adapt(void);
     
-    mesh_im(getfem_mesh &me);
-    virtual ~mesh_im();
-    void read_from_file(std::istream &ist);
-    void read_from_file(const std::string &name);
-    void write_to_file(std::ostream &ost) const;
-    void write_to_file(const std::string &name, bool with_mesh=false) const;
+
+    mesh_level_set(getfem_mesh &me);
+    virtual ~mesh_level_set();
   private:
-    mesh_im(const mesh_im &);
-    mesh_im & operator=(const mesh_im &);
+    mesh_level_set(const mesh_level_set &);
+    mesh_level_set & operator=(const mesh_level_set &);
+    void cut_element(size_type cv, const dal::bit_vector &primary,
+		     const dal::bit_vector &secondary);    
+    int is_not_crossed_by(size_type c, plevel_set ls, unsigned lsnum);
+    void find_crossing_level_set(size_type cv, 
+				 dal::bit_vector &prim, 
+				 dal::bit_vector &sec);
+    void run_delaunay(std::vector<base_node> &fixed_points,
+		      gmm::dense_matrix<size_type> &simplexes,
+		      std::vector<dal::bit_vector> &fixed_points_constraints);
   };
-  
+
+  void getfem_mesh_level_set_noisy(void);
+
 }  /* end of namespace getfem.                                             */
 
 
-#endif /* GETFEM_MESH_IM_H__  */
+#endif /* GETFEM_MESH_LEVEL_SET_H__  */

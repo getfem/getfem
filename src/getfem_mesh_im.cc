@@ -34,7 +34,7 @@ namespace getfem {
   
   void mesh_im::receipt(const MESH_CLEAR &) { clear(); }
   void mesh_im::receipt(const MESH_DELETE &) {
-    clear(); 
+    clear(); is_valid_ = false;
     sup_sender(linked_mesh_->lmsg_sender());
   }
   void mesh_im::receipt(const MESH_SUP_CONVEX &m) { 
@@ -87,7 +87,7 @@ namespace getfem {
   }
 
   mesh_im::mesh_im(getfem_mesh &me) {
-    linked_mesh_ = &me;
+    linked_mesh_ = &me; is_valid_ = true;
     this->add_dependency(me);
     add_sender(me.lmsg_sender(), *this,
 	   lmsg::mask(MESH_CLEAR()) | lmsg::mask(MESH_SUP_CONVEX()) |

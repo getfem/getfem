@@ -16,7 +16,8 @@ using bgeot::base_matrix; /* small dense matrix. */
 void test_2d() {
   getfem::getfem_mesh m; m.read_from_file("meshes/disc_2D_degree3.mesh");
   getfem::mesh_fem mf(m);
-  getfem::mesh_im_level_set mim(m,
+  getfem::mesh_level_set mls(m);
+  getfem::mesh_im_level_set mim(mls,
 				getfem::int_method_descriptor("IM_TRIANGLE(6)"));
   getfem::level_set ls1(m, 2), ls2(m, 2), ls3(m, 2);
   const getfem::mesh_fem &ls1mf = ls1.get_mesh_fem();
@@ -57,11 +58,10 @@ void test_2d() {
   cout << "Area of largest circle : " << area
        << " compared to exact value : " << M_PI*R1*R1 << endl;
     
-  mim.add_level_set(ls1);
-  mim.add_level_set(ls2);
-  mim.add_level_set(ls3);
-  mim.adapt();
-
+  mls.add_level_set(ls1);
+  mls.add_level_set(ls2);
+  mls.add_level_set(ls3);
+  mls.adapt(); mim.adapt();
   // Test computing the area of largest circle
   area = 0.;
   for (dal::bv_visitor i(m.convex_index()); !i.finished(); ++i) {
@@ -85,7 +85,8 @@ void test_2d() {
 void test_3d() {
   getfem::getfem_mesh m; m.read_from_file("meshes/ball_3D_P2_84_elements.mesh");
   getfem::mesh_fem mf(m);
-  getfem::mesh_im_level_set mim(m,
+  getfem::mesh_level_set mls(m);
+  getfem::mesh_im_level_set mim(mls,
 				getfem::int_method_descriptor("IM_TETRAHEDRON(6)"));
   getfem::level_set ls1(m, 2), ls2(m, 2), ls3(m, 2);
   const getfem::mesh_fem &ls1mf = ls1.get_mesh_fem();
@@ -126,10 +127,10 @@ void test_3d() {
   cout << "Area of largest circle : " << area
        << " compared to exact value : " << 4/3.*M_PI*R1*R1*R1 << endl;
     
-  mim.add_level_set(ls1);
+  mls.add_level_set(ls1);
   //mim.add_level_set(ls2);
   //mim.add_level_set(ls3);
-  mim.adapt();
+  // mim.adapt();
 
   // Test computing the area of largest circle
   area = 0.;
@@ -158,8 +159,8 @@ int main(/* int argc, char **argv */) {
   feenableexcept(FE_DIVBYZERO | FE_INVALID);
 #endif
   try {
-    getfem::getfem_mesh_im_level_set_noisy();
-    test_3d();
+    getfem::getfem_mesh_level_set_noisy();
+    test_2d();
   }
   DAL_STANDARD_CATCH_ERROR;
   return 0;
