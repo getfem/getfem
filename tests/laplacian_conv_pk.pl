@@ -178,7 +178,7 @@ while ($NX**$N <= $NDDLMAX) {
     ++$K;
   }
   print RES "\n"; print "\n";
-  if ($NX >= 5) { $NX = int($NX * 1.5); } else { ++$NX; }
+  $NX = int($NX * 2.001);
 }
 close(RES);
 
@@ -195,10 +195,7 @@ print GNF "     '$tmp_res' using ((\$1)*25):6 title 'PK(2,5)',";
 print GNF "     '$tmp_res' using ((\$1)*36):7 title 'PK(2,6)',";
 print GNF "     '$tmp_res' using ((\$1)*49):8 title 'PK(2,7)',";
 print GNF "     '$tmp_res' using ((\$1)*64):9 title 'PK(2,8)',";
-print GNF "     '$tmp_res' using ((\$1)*81):10 title 'PK(2,9)',";
-print GNF "     '$tmp_res' using ((\$1)*100):11 title 'PK(2,10)',";
-print GNF "     '$tmp_res' using ((\$1)*121):12 title 'PK(2,11)',";
-print GNF "     '$tmp_res' using ((\$1)*144):13 title 'PK(2,12)'\n";
+print GNF "     '$tmp_res' using ((\$1)*81):10 title 'PK(2,9)'\n";
 if ($PAUSE) { print GNF "pause -1;\n"; }
 print GNF "set output 'laplacian_2D_$INTE.ps'\n";
 print GNF "set term postscript color\n";
@@ -228,7 +225,7 @@ while ($NX**$N <= $NDDLMAX) {
     ++$K;
   }
   print RES "\n"; print "\n";
-  if ($NX >= 5) { $NX = int($NX * 1.5); } else { ++$NX; }
+  $NX = int($NX * 2.001);
 }
 close(RES);
 
@@ -245,10 +242,7 @@ print GNF "     '$tmp_res' using ((\$1)*25):6 title 'PK(2,5)',";
 print GNF "     '$tmp_res' using ((\$1)*36):7 title 'PK(2,6)',";
 print GNF "     '$tmp_res' using ((\$1)*49):8 title 'PK(2,7)',";
 print GNF "     '$tmp_res' using ((\$1)*64):9 title 'PK(2,8)',";
-print GNF "     '$tmp_res' using ((\$1)*81):10 title 'PK(2,9)',";
-print GNF "     '$tmp_res' using ((\$1)*100):11 title 'PK(2,10)',";
-print GNF "     '$tmp_res' using ((\$1)*121):12 title 'PK(2,11)',";
-print GNF "     '$tmp_res' using ((\$1)*144):13 title 'PK(2,12)'\n";
+print GNF "     '$tmp_res' using ((\$1)*81):10 title 'PK(2,9)'\n";
 if ($PAUSE) { print GNF "pause -1;\n"; }
 print GNF "set output 'laplacian_2D_hier_$INTE.ps'\n";
 print GNF "set term postscript color\n";
