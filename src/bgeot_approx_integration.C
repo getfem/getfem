@@ -99,7 +99,7 @@ namespace bgeot
       if (nbpt > 32000)
 	throw std::out_of_range("_gauss_approx_integration : too much points");
       
-      cvs = simplex_structure(1);
+      cvr = simplex_of_reference(1);
       stored_point_tab int_points(nbpt+2);
       int_coeffs.resize(nbpt+2);
       repartition.resize(3);
@@ -193,7 +193,7 @@ namespace bgeot
 
     _Newton_Cotes_approx_integration(const _NC_apx_light &ls)
     {
-      cvs = simplex_structure(ls.n);
+      cvr = simplex_of_reference(ls.n);
       size_type R = alpha(ls.n,ls.k);
       size_type R2 = (ls.n > 0) ? alpha(ls.n-1,ls.k) : 0;
       base_poly P;
@@ -296,13 +296,13 @@ namespace bgeot
 
     a_int_pro_integration(const a_int_pro_light &ls)
     {
-      cvs = convex_product_structure(ls.cv1->structure(), ls.cv2->structure());
+      cvr = convex_ref_product(ls.cv1->ref_convex(), ls.cv1->ref_convex());
       size_type n1 = ls.cv1->nb_points_on_convex();
       size_type n2 = ls.cv2->nb_points_on_convex();
       stored_point_tab int_points;
       int_points.resize(n1 * n2);
       int_coeffs.resize(n1 * n2);
-      repartition.resize(cvs->nb_faces()+1);
+      repartition.resize(cvr->structure()->nb_faces()+1);
       repartition[0] = n1 * n2;
       for (size_type i1 = 0; i1 < n1; ++i1)
 	for (size_type i2 = 0; i2 < n2; ++i2)
@@ -489,8 +489,8 @@ namespace bgeot
       std::vector<base_node> ptab(4);
       std::fill(ptab.begin(), ptab.end(), base_node(2));
       p = new _particular_approx;
-      p->cvs = simplex_structure(2);
-      p->repartition.resize(p->cvs->nb_faces()+1);
+      p->cvr = simplex_of_reference(2);
+      p->repartition.resize(p->cvr->structure()->nb_faces()+1);
       p->int_coeffs.resize(ptab.size());
       // volume
       int i = 0;
@@ -527,8 +527,8 @@ namespace bgeot
       std::vector<base_node> ptab(9);
       std::fill(ptab.begin(), ptab.end(), base_node(2));
       p = new _particular_approx;
-      p->cvs = simplex_structure(2);
-      p->repartition.resize(p->cvs->nb_faces()+1);
+      p->cvr = simplex_of_reference(2);
+      p->repartition.resize(p->cvr->structure()->nb_faces()+1);
       p->int_coeffs.resize(ptab.size());
       // volume
       int i = 0;
@@ -577,8 +577,8 @@ namespace bgeot
       std::vector<base_node> ptab(9);
       std::fill(ptab.begin(), ptab.end(), base_node(2));
       p = new _particular_approx;
-      p->cvs = simplex_structure(2);
-      p->repartition.resize(p->cvs->nb_faces()+1);
+      p->cvr = simplex_of_reference(2);
+      p->repartition.resize(p->cvr->structure()->nb_faces()+1);
       p->int_coeffs.resize(ptab.size());
       // volume
       int i = 0;
@@ -627,8 +627,8 @@ namespace bgeot
       std::vector<base_node> ptab(10);
       std::fill(ptab.begin(), ptab.end(), base_node(2));
       p = new _particular_approx;
-      p->cvs = simplex_structure(2);
-      p->repartition.resize(p->cvs->nb_faces()+1);
+      p->cvr = simplex_of_reference(2);
+      p->repartition.resize(p->cvr->structure()->nb_faces()+1);
       p->int_coeffs.resize(ptab.size());
       // volume
       int i = 0;
@@ -680,8 +680,8 @@ namespace bgeot
       std::vector<base_node> ptab(15);
       std::fill(ptab.begin(), ptab.end(), base_node(2));
       p = new _particular_approx;
-      p->cvs = simplex_structure(2);
-      p->repartition.resize(p->cvs->nb_faces()+1);
+      p->cvr = simplex_of_reference(2);
+      p->repartition.resize(p->cvr->structure()->nb_faces()+1);
       p->int_coeffs.resize(ptab.size());
       // volume
       int i = 0;
@@ -746,8 +746,8 @@ namespace bgeot
       std::vector<base_node> ptab(16);
       std::fill(ptab.begin(), ptab.end(), base_node(2));
       p = new _particular_approx;
-      p->cvs = simplex_structure(2);
-      p->repartition.resize(p->cvs->nb_faces()+1);
+      p->cvr = simplex_of_reference(2);
+      p->repartition.resize(p->cvr->structure()->nb_faces()+1);
       p->int_coeffs.resize(ptab.size());
       // volume
       int i = 0;
@@ -815,8 +815,8 @@ namespace bgeot
       std::vector<base_node> ptab(24);
       std::fill(ptab.begin(), ptab.end(), base_node(2));
       p = new _particular_approx;
-      p->cvs = simplex_structure(2);
-      p->repartition.resize(p->cvs->nb_faces()+1);
+      p->cvr = simplex_of_reference(2);
+      p->repartition.resize(p->cvr->structure()->nb_faces()+1);
       p->int_coeffs.resize(ptab.size());
       // volume
       int i = 0;
@@ -906,8 +906,8 @@ namespace bgeot
       std::vector<base_node> ptab(25);
       std::fill(ptab.begin(), ptab.end(), base_node(2));
       p = new _particular_approx;
-      p->cvs = simplex_structure(2);
-      p->repartition.resize(p->cvs->nb_faces()+1);
+      p->cvr = simplex_of_reference(2);
+      p->repartition.resize(p->cvr->structure()->nb_faces()+1);
       p->int_coeffs.resize(ptab.size());
       // volume
       int i = 0;
@@ -1010,7 +1010,7 @@ namespace bgeot
       base_vector nullpt(dim); nullpt.fill(0);
       std::fill(ptab.begin(), ptab.end(), nullpt);
       p = new _particular_approx;
-      p->cvs = parallelepiped_structure(dim);
+      p->cvr = parallelepiped_of_reference(dim);
       p->repartition.resize(NB_FA+1);
       p->int_coeffs.resize(ptab.size());
       std::vector<base_node>::iterator itp = ptab.begin();
@@ -1062,7 +1062,7 @@ namespace bgeot
       base_vector nullpt(dim); nullpt.fill(0);
       std::fill(ptab.begin(), ptab.end(), nullpt);
       p = new _particular_approx;
-      p->cvs = parallelepiped_structure(dim);
+      p->cvr = parallelepiped_of_reference(dim);
       p->repartition.resize(NB_FA+1);
       p->int_coeffs.resize(ptab.size());
       std::vector<base_node>::iterator itp = ptab.begin();
@@ -1117,7 +1117,7 @@ namespace bgeot
       base_vector nullpt(dim); nullpt.fill(0);
       std::fill(ptab.begin(), ptab.end(), nullpt);
       p = new _particular_approx;
-      p->cvs = parallelepiped_structure(dim);
+      p->cvr = parallelepiped_of_reference(dim);
       p->repartition.resize(NB_FA+1);
       p->int_coeffs.resize(ptab.size());
       std::vector<base_node>::iterator itp = ptab.begin();
@@ -1182,8 +1182,8 @@ namespace bgeot
       std::vector<base_node> ptab(5);
       std::fill(ptab.begin(), ptab.end(), base_node(3));
       p = new _particular_approx;
-      p->cvs = simplex_structure(3);
-      p->repartition.resize(p->cvs->nb_faces()+1);
+      p->cvr = simplex_of_reference(3);
+      p->repartition.resize(p->cvr->structure()->nb_faces()+1);
       p->int_coeffs.resize(ptab.size());
       // volume
       int i = 0;
@@ -1224,8 +1224,8 @@ namespace bgeot
       std::vector<base_node> ptab(16);
       std::fill(ptab.begin(), ptab.end(), base_node(3));
       p = new _particular_approx;
-      p->cvs = simplex_structure(3);
-      p->repartition.resize(p->cvs->nb_faces()+1);
+      p->cvr = simplex_of_reference(3);
+      p->repartition.resize(p->cvr->structure()->nb_faces()+1);
       p->int_coeffs.resize(ptab.size());
       // volume
       int i = 0;
@@ -1298,7 +1298,7 @@ namespace bgeot
       base_vector nullpt(dim); nullpt.fill(0);
       std::fill(ptab.begin(), ptab.end(), nullpt);
       p = new _particular_approx;
-      p->cvs = simplex_structure(dim);
+      p->cvr = simplex_of_reference(dim);
       p->repartition.resize(NB_FA+1);
       p->int_coeffs.resize(ptab.size());
       std::vector<base_node>::iterator itp = ptab.begin();
@@ -1362,7 +1362,7 @@ namespace bgeot
       base_vector nullpt(dim); nullpt.fill(0);
       std::fill(ptab.begin(), ptab.end(), nullpt);
       p = new _particular_approx;
-      p->cvs = simplex_structure(dim);
+      p->cvr = simplex_of_reference(dim);
       p->repartition.resize(NB_FA+1);
       p->int_coeffs.resize(ptab.size());
       std::vector<base_node>::iterator itp = ptab.begin();

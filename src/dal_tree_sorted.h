@@ -380,6 +380,7 @@ namespace dal
       void clear(void)
       { first_node = ST_NIL; nodes.clear(); dynamic_tas<T,pks>::clear(); }
       size_type add(const T &);
+      void add_to_index(size_type, const T &);
       size_type add_norepeat(const T &, bool replace = false,
 			                bool *present = NULL);
       void resort(void);
@@ -647,6 +648,16 @@ namespace dal
     size_type num = dynamic_tas<T,pks>::add(f);
     add_index(num, it);
     return num;
+  }
+
+  template<class T, class COMP, int pks> void
+      dynamic_tree_sorted<T, COMP, pks>::add_to_index(size_type i,const T &f) {
+    if (!(index_valid(i) && compar(f, (*this)[i]) == 0)) {
+      if (index_valid(i)) sup(i);
+      dynamic_tas<T,pks>::add_to_index(i, f);
+      const_sorted_iterator it(*this); insert_path(f, it);
+      add_index(i, it);
+    }
   }
 
   template<class T, class COMP, int pks>

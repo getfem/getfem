@@ -265,11 +265,10 @@ Les diff\'erentes biblioth\`eques :
   \item BGEOT : (Basic Geometric Tool) diverses description g\'eom\'etriques (points, vecteurs, matrices, tenseurs, convexes, maillages \'el\'ementaires, polyn\^omes de plusieurs variables, d\'efinition d'\'el\'ements finis).\\[0.2cm]
   \item GETFEMLIB : (GEneric Tool for Finite Element Methods Library) Maillage permettant la gestion \'el\'ement finis, description des m\'ethodes d'\'el\'ements finis, m\'ethodes d'assemblage. \\[0.2cm]
   \item MATLABINT : (Matlab Interface) Fonctions C++ permettant la gestion de variables et d'algorithmes utilisées par les Mex files pour une utilisation sous Matlab \\[0.2cm]
-  \item MISC : Partie du projet recevant les algorithmes r\'ecents et non organis\'es en biblioth\`eques. Les algorithmes de r\'esolutions sont pour le moment rangés ici. Certaines parties de cet ensemble de fichiers sont destin\'es à dispara\^\i tre. \\[0.2cm]
 \end{itemize}
 
-\section{Organigramme simplifi\'e de GETFEM}
-GETFEM repr\'esente une sur-couche de GETFEM++ compos\'ee de sources C - C++ faisant interface \`a des commandes MATLAB et des sources MATLAB.
+\section{Organigramme simplifi\'e de l'interface MATLAB}
+L'interface MATLAB repr\'esente une sur-couche de GETFEM++ compos\'ee de sources C++ faisant interface \`a des commandes MATLAB et des sources MATLAB.
 
 \begin{center}
 \includegraphics[width=17cm,angle=0]{getfemlab_orga.eps}
@@ -282,6 +281,7 @@ Afin de pouvoir utiliser les commandes de GETFEM sous MATLAB il faut définir les
   setenv MATLABPATH /usr/local/getfem/lib
 \end{alltt}
 \end{figure}
+(Le répertoire {\tt /usr/local/getfem/lib} est donné ici comme exemple).
 
 \section{Organisation du projet avec CVS}
 
@@ -406,24 +406,10 @@ L\`a aussi, il faut valider l'op\'eration par un
 \section{charte de documentation}
   Les documentations sont \`a r\'ealiser en anglais.
   \subsection{Documentation des sources C et C++}
-  Le choix s'est porté sur un outils de documentation automatique des sources. Il s'agit du logiciel DOC++ (http::\/\/docpp.sourceforge.net). Son utilisation est simple et consiste à documenter dans les sources C ou C++ (voir aussi la doc dans getfem++/doc/doc++.ps). Pour cela deux types de commentaires peuvent être introduits. Sur une seule ligne par :\\
-{\tt
- /// comment
-}
-\\ ou sur plusieurs lignes par :
-\begin{alltt}
-/** comment 1 
- *  comment 2 
- *  comment 3 
- */ 
-\end{alltt}
-Ces commentaires doivent préceder directement les éléments à commenter (fonctions, classes, méthodes d'une classe). Se reporter aux modules correctement commenter pour avoir une idée des formats.
-on veillera \`a respecter les points suivants :
-   \begin{itemize}
-     \item Essayer de commenter toutes les classes, fonctions, méthodes, et en priorité les éléments exportables.
-     \item Donner tout les éléments nécessaire à la compréhension du module. En règle générale, on fournira des informations extensive que l'on rattachera à la classe principale du module (méthode de calcul, calcul intérmédiaires, détails d'implémentation ...)
-     \item Donner si possible quelques exemples d'utilisation des classes.
-   \end{itemize}
+  Des documentation partielles existent pour les différentes parties.
+  Les compléter en prenant soin de donner suffisamment d'exemples sur les
+  differentes classes.
+  \`a compl\'eter
   \subsection{Documentation des sources Matlab}
   \`a compl\'eter
   \subsection{Documentation des exemples d'application}

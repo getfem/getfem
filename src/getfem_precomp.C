@@ -118,7 +118,8 @@ namespace getfem
    
   };
 
-  _fem_precomp::_fem_precomp(const _pre_fem_light &ls) : pf(ls.pf), pspt(ls.pspt) {
+  _fem_precomp::_fem_precomp(const _pre_fem_light &ls)
+    : pf(ls.pf), pspt(ls.pspt) {
     dim_type N = ls.pf->structure()->dim();
     size_type npt = ls.pspt->size();
     // cout << "Dimension = " << N << endl;

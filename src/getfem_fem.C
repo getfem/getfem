@@ -88,7 +88,7 @@ namespace getfem
     val.fill(0.0);
     for (size_type k = 0; k < P; ++k) {
       for (size_type r = 0; r < target_dim(); ++r) {
-	for (size_type j = 0; j < R; ++j, ++it) {
+	for (size_type j = 0; j < RR; ++j, ++it) {
 	  
 	  scalar_type co = 0.0;
 	  if (is_equivalent())
@@ -107,7 +107,8 @@ namespace getfem
   /*	Class for description of an interpolation dof.                    */
   /* ******************************************************************** */
 
-  enum ddl_type { LAGRANGE, NORM_DERIVATIVE, DERIVATIVE, MEAN_VALUE, BUBBLE1, LAGRANGE_NONCONFORMING };
+  enum ddl_type { LAGRANGE, NORM_DERIVATIVE, DERIVATIVE, MEAN_VALUE, BUBBLE1, 
+		  LAGRANGE_NONCONFORMING, ALREADY_NUMERATE };
 
   struct dof_description
   {
@@ -209,6 +210,17 @@ namespace getfem
     size_type ii = (*_dof_d_tab).add_norepeat(l);
     return &((*_dof_d_tab)[ii]);
   }
+
+  pdof_description already_numerate_dof(dim_type n)
+  {
+    init_tab();
+    dof_description l;
+    l.ddl_desc.resize(n);
+    std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), ALREADY_NUMERATE);
+    size_type i = _dof_d_tab->add_norepeat(l);
+    return &((*_dof_d_tab)[i]);
+  }
+
 
   pdof_description change_coord_index_dof(pdof_description a, dim_type n)
   {
@@ -342,12 +354,8 @@ namespace getfem
 
   ppolyfem PK_fem(dim_type n, short_type k)
   {
-    static dal::FONC_TABLE<_PK_femi_light, _PK_fem> *tab;
-    static bool isinit = false;
-    if (!isinit) {
-      tab = new dal::FONC_TABLE<_PK_femi_light, _PK_fem>();
-      isinit = true;
-    }
+    static dal::FONC_TABLE<_PK_femi_light, _PK_fem> *tab = 0;
+    if (tab == 0) tab = new dal::FONC_TABLE<_PK_femi_light, _PK_fem>();
     return tab->add(_PK_femi_light(n, k));
   }
 
@@ -407,12 +415,8 @@ namespace getfem
   };
 
   ppolyfem product_fem(ppolyfem fex, ppolyfem fey) {
-    static dal::FONC_TABLE<_pr_fem_int_light, tproduct_femi> *tab;
-    static bool isinit = false;
-    if (!isinit) {
-      tab = new dal::FONC_TABLE<_pr_fem_int_light, tproduct_femi>();
-      isinit = true;
-    }
+    static dal::FONC_TABLE<_pr_fem_int_light, tproduct_femi> *tab = 0;
+    if (tab==0) tab = new dal::FONC_TABLE<_pr_fem_int_light, tproduct_femi>();
     return tab->add(_pr_fem_int_light(fex, fey));
   }
 
@@ -637,12 +641,8 @@ namespace getfem
 
   ppolyfem PK_discontinuous_fem(dim_type n, short_type k)
   {
-    static dal::FONC_TABLE<_PK_femi_light, _PK_discont> *tab;
-    static bool isinit = false;
-    if (!isinit) {
-      tab = new dal::FONC_TABLE<_PK_femi_light, _PK_discont>();
-      isinit = true;
-    }
+    static dal::FONC_TABLE<_PK_femi_light, _PK_discont> *tab = 0;
+    if (tab == 0) tab = new dal::FONC_TABLE<_PK_femi_light, _PK_discont>();
     return tab->add(_PK_femi_light(n, k));
   }
 
@@ -676,16 +676,10 @@ namespace getfem
 
   ppolyfem PK_with_cubic_bubble_fem(dim_type n, short_type k)
   {
-    static dal::FONC_TABLE<_PK_femi_light, _PK_with_cubic_bubble> *tab;
-    static bool isinit = false;
-
-    if (k >= n+1)
-      DAL_THROW(dimension_error, "dimensions mismatch");
-    
-    if (!isinit) {
+    static dal::FONC_TABLE<_PK_femi_light, _PK_with_cubic_bubble> *tab = 0;
+    if (k >= n+1) DAL_THROW(dimension_error, "dimensions mismatch");
+    if (tab == 0)
       tab = new dal::FONC_TABLE<_PK_femi_light, _PK_with_cubic_bubble>();
-      isinit = true;
-    }
     return tab->add(_PK_femi_light(n, k));
   }
 

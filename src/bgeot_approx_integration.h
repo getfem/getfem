@@ -34,8 +34,8 @@
 #define __BGEOT_APPROX_INTEGRATION_H
 
 #include <dal_tree_sorted.h>
-#include <bgeot_config.h>
 #include <bgeot_poly_integration.h>
+#include <bgeot_convex_ref.h>
 
 
 namespace bgeot
@@ -50,7 +50,7 @@ namespace bgeot
   {
     protected :
 
-      pconvex_structure cvs;
+      pconvex_ref cvr;
       pstored_point_tab pint_points;
       std::vector<scalar_type> int_coeffs;
       std::vector<size_type> repartition;
@@ -58,7 +58,7 @@ namespace bgeot
     public :
 
       /// Dimension of reference convex.
-      dim_type dim(void) const { return cvs->dim(); }
+      dim_type dim(void) const { return cvr->structure()->dim(); }
       size_type nb_points(void) const { return int_coeffs.size(); }
       /// Number of integration nodes on the reference element.
       size_type nb_points_on_convex(void) const { return repartition[0]; }
@@ -66,7 +66,9 @@ namespace bgeot
       size_type nb_points_on_face(short_type f) const
       { return repartition[f+1] - repartition[f]; }
       /// Structure of the reference element.
-      pconvex_structure structure(void) const { return cvs; }
+      pconvex_structure structure(void) const
+        { return cvr->structure()->basic_structure(); }
+      pconvex_ref ref_convex(void) const { return cvr; }
 
       /// Gives an array of integration nodes.
       const stored_point_tab  &

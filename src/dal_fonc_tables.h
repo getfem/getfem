@@ -1,3 +1,4 @@
+/* -*- c++ -*- (enables emacs c++ mode)                                    */
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Dynamic Array Library (dal)                                  */
@@ -28,7 +29,6 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-
 #ifndef __DAL_FONC_TABLES_H
 #define __DAL_FONC_TABLES_H
 
@@ -36,47 +36,50 @@
 
 namespace dal
 {
-
   /* ********************************************************************* */
-  /* Assuptions :                                                          */
+  /* Assumptions :                                                         */
   /*   1 - class LIGHT as a default comparator <.                          */
   /*   2 - class DESC as a constructor with a class LIGHT.                 */
   /* ********************************************************************* */
-
   
-  template<class LIGHT, class DESC> class FONC_TABLE
-  {
-    protected :
-
-      typedef DESC * pDESC;
-      typedef typename dynamic_tree_sorted<LIGHT>::size_type size_type;
-      dynamic_tree_sorted<LIGHT> _light_table;
-      dynamic_array<pDESC, 2> desc_table;
-
-    public :
-
-      size_type search(const LIGHT &l) const
-      { return _light_table.search(l); }
-
-      pDESC add(const LIGHT &l)
-      {
-	size_type i = _light_table.search(l);
-	if (i == size_type(-1))
+  template<class LIGHT, class DESC> class FONC_TABLE {
+  public :
+    
+    typedef DESC * pDESC;
+    typedef typename dynamic_tree_sorted<LIGHT>::size_type size_type;
+    typedef dynamic_array<pDESC, 2> desc_table_type;
+    
+  protected :
+    
+    dynamic_tree_sorted<LIGHT> _light_table;
+    desc_table_type desc_table;
+    
+  public :
+    
+    size_type search(const LIGHT &l) const { return _light_table.search(l); }
+    
+    pDESC add(const LIGHT &l) {
+      size_type i = _light_table.search(l);
+      if (i == size_type(-1))
 	{ i = _light_table.add(l); desc_table[i] = new DESC(l); }
-	return desc_table[i];
-      }
-      const dynamic_array<pDESC, 2> &table(void) { return desc_table; }
-      const dynamic_tree_sorted<LIGHT> &light_table(void)
+      return desc_table[i];
+    }
+    void sup(const LIGHT &l) {
+      size_type i = _light_table.search(l);
+      if (i != size_type(-1))
+	{ _light_table.sup(i); delete desc_table[i]; desc_table[i] = 0;}
+    }
+    const desc_table_type &table(void) { return desc_table; }
+    const dynamic_tree_sorted<LIGHT> &light_table(void)
       { return _light_table; }
-      const bit_vector &index(void) { return _light_table.index(); }
-      ~FONC_TABLE(void)
-      { 
-	dal::bit_vector nn = _light_table.index();
-	size_type i;
-	for (i << nn; i != size_type(-1); i << nn) delete desc_table[i];
-      }
+    const bit_vector &index(void) { return _light_table.index(); }
+    ~FONC_TABLE(void) { 
+      dal::bit_vector nn = _light_table.index();
+      size_type i;
+      for (i << nn; i != size_type(-1); i << nn) delete desc_table[i];
+    }
   };
-
+  
 }
 
 #endif /* __DAL_FONC_TABLES_H */

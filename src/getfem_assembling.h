@@ -462,12 +462,12 @@ namespace getfem
     for (cv << nn; cv != ST_NIL; cv << nn)
     {
       pf1 = mf.fem_of_element(cv);
+      pdof_description ldof = lagrange_dof(pf1->dim());
       size_type nbd = pf1->nb_dof();
       for (size_type i = 0; i < nbd; i++)
       {
-	
 	size_type dof1 = mf.ind_dof_of_element(cv)[i];
-	if (nndof.is_in(dof1) && pf1->dof_types()[i] == lagrange_dof(pf1->dim()))
+	if (nndof.is_in(dof1) && pf1->dof_types()[i] == ldof)
 	{
 	  // cout << "dof : " << i << endl;
 	  for (size_type j = 0; j < nbd; j++)

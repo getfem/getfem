@@ -167,6 +167,8 @@ namespace dal
       void compact(void);
       size_type add(const T &e)
       { size_type n=ind.first_false(); ind[n]=true; (*this)[n]=e;  return n; }
+      void add_to_index(size_type i, const T &e)
+      { ind[i] = true; (*this)[i] = e; }
       void sup(size_type n) { ind[n] = false; }
       void clear(void) { dynamic_array<T,pks>::clear(); ind.clear(); }
   };

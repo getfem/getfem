@@ -220,30 +220,24 @@ namespace bgeot
 
   };
   
-  pconvex_structure simplex_structure(dim_type nc, short_type K)
-  {
-    static dal::FONC_TABLE<_K_simplex_light, _K_simplex_structure> *tab;
-    static bool isinit = false;
-    if (!isinit) {
+  pconvex_structure simplex_structure(dim_type nc, short_type K) {
+    static dal::FONC_TABLE<_K_simplex_light, _K_simplex_structure> *tab = 0;
+    if (tab == 0)
       tab = new dal::FONC_TABLE<_K_simplex_light, _K_simplex_structure>();
-      isinit = true;
-    }
     if (nc == 0) return simplex_structure(0);
     if (K == 1) return simplex_structure(nc);
     return tab->add(_K_simplex_light(nc, K));
   }
 
-
   /* ******************************************************************** */
   /* polygon structures                                                   */
   /* ******************************************************************** */
 
-  class _polygon_structure : public convex_structure
-  {
+  class _polygon_structure : public convex_structure {
     friend pconvex_structure polygon_structure(short_type nc);
   };
-
-  static dal::bit_vector *_ind_polygon = NULL;
+  
+  static dal::bit_vector *_ind_polygon = 0;
 
   pconvex_structure polygon_structure(short_type nbt)
   {
@@ -288,17 +282,14 @@ namespace bgeot
   /* direct product of convex structures                                  */
   /* ******************************************************************** */
 
-  struct _cv_pr_light
-  {
+  struct _cv_pr_light {
     pconvex_structure cv1, cv2;
-    bool operator < (const _cv_pr_light &ls) const
-    {
+    bool operator < (const _cv_pr_light &ls) const {
       if (cv1 < ls.cv1) return true; if (cv1 > ls.cv1) return false; 
       if (cv2 < ls.cv2) return true; return false;
     }
     _cv_pr_light(pconvex_structure a, pconvex_structure b) { cv1=a; cv2=b; }
     _cv_pr_light(void) { }
-   
   };
 
 
@@ -369,18 +360,13 @@ namespace bgeot
     }
   };
 
-  static dal::FONC_TABLE<_cv_pr_light, _cv_pr_structure> *_cv_pr_tab;
+  static dal::FONC_TABLE<_cv_pr_light, _cv_pr_structure> *_cv_pr_tab = 0;
   
-
   pconvex_structure convex_product_structure(pconvex_structure a,
-					     pconvex_structure b)
-  {
+					     pconvex_structure b) {
     static bool initialized = false;
-    if (!initialized) 
-    {
-      initialized = true;
+    if (_cv_pr_tab == 0) 
       _cv_pr_tab = new dal::FONC_TABLE<_cv_pr_light, _cv_pr_structure>();
-    }
     return _cv_pr_tab->add(_cv_pr_light(a, b));
   }
 

@@ -61,6 +61,8 @@ namespace getfem
   pdof_description norm_derivative_dof(dim_type);
   /// Description of a unique dof of mean value type.
   pdof_description mean_value_dof(dim_type);
+  
+  pdof_description already_numerate_dof(dim_type);
   /// Product description of the descriptions *pnd1 and *pnd2.
   pdof_description product_dof(pdof_description, pdof_description);
   
@@ -144,11 +146,11 @@ namespace getfem
     
   public :
     /// Number of degrees of freedom.
-    size_type nb_dof(void) const { return _dof_types.size(); }
+    virtual size_type nb_dof(void) const { return _dof_types.size(); }
     /// Number of components (nb_dof() * dimension of the target space).
     virtual size_type nb_base(void) const { return nb_dof(); }
-    virtual size_type nb_base_components(void) const
-      { return nb_dof() * ntarget_dim; }
+    size_type nb_base_components(void) const
+      { return nb_base() * ntarget_dim; }
     size_type nb_components(void) const
       { return nb_dof() * ntarget_dim; }
     /// Gives the array of pointer on dof description.
@@ -218,6 +220,9 @@ namespace getfem
      */
     virtual void hess_base_value(const base_node &x, base_tensor &t) const = 0;
     
+    virtual size_type index_of_already_numerate_dof(size_type, size_type) const
+      { DAL_THROW(internal_error, "internal error."); return 0; }
+
     virtual_fem(void) { 
       ntarget_dim = 1; is_equiv = is_pol = is_lag = false;
       pspt_valid = false;
@@ -400,59 +405,14 @@ namespace getfem
    *  of degree k on a geometric convex cvs (coming from the geometric trans).
    */
   pfem classical_fem(bgeot::pgeometric_trans pg, short_type k);
+
+  
+  class mesh_fem;
+  class pintegration_method;
+  pfem virtual_link_fem(const mesh_fem &mf1, const mesh_fem &mf2,
+			pintegration_method pim);
   
   //@}
-
-  /* ******************************************************************** */
-  /*	virtual_link_fem : a virtual fem describing a fem defined on      */
-  /* another mesh.                                                        */
-  /* ******************************************************************** */
-
-  class mesh_fem;
-
-  class mesh_fem_link_fem : public getfem_mesh_receiver {
- 
-  protected :
-
-    struct gauss_pt_info {
-      base_node localcoords;
-      size_type indcv;
-      gauss_pt_info(void) { indcv = size_type(-1); }
-    };
-
-    struct cv_info {
-      std::vector<size_type> indgausstab;
-      std::deque<size_type> doftab;
-    };
-
-    mesh_fem *pmf1, *pmf2; // pmf1 -> mef to interpolated.
-                           // pmf2 -> mef to build.
-    bool to_be_computed;
-    bool valid;
-    std::vector<gauss_pt_info> gauss_ptab;
-    std::vector<cv_info> cv_info_tab;
-
-    void add_dof_to_cv(size_type cv, size_type i);
-    
-    void compute(void);
-
-  public :
-    void receipt(const MESH_CLEAR &);
-    void receipt(const MESH_SUP_CONVEX &m);
-    void receipt(const MESH_SWAP_CONVEX &m);
-    void receipt(const MESH_REFINE_CONVEX &m);
-    void receipt(const MESH_UNREFINE_CONVEX &m);
-    void receipt(const MESH_FEM_DELETE &m);
-    void receipt(const MESH_FEM_CHANGE &m);
-
-    mesh_fem_link_fem(mesh_fem &mf1, mesh_fem &mf2);
-    ~mesh_fem_link_fem();
-
-  };
-
-  class pintegration_method;
-  pfem virtual_link_fem(mesh_fem_link_fem, pintegration_method pim);
-
   
 }  /* end of namespace getfem.                                            */
 

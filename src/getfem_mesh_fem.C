@@ -278,9 +278,9 @@ namespace getfem
     {
       /* ajout des voisins dans la pile.                                  */
 
-      // std::cout << "cv = " << cv << " nbd = " << nb_dof_of_element(cv) << endl;
       size_type nbp = _linked_mesh->nb_points_of_convex(cv);
-      
+      pfem pf = fem_of_element(cv);
+
       for (size_type i = 0; i < nbp; i++)
       {
 	size_type ip = _linked_mesh->ind_points_of_convex(cv)[i];
@@ -292,18 +292,32 @@ namespace getfem
       }
       
       size_type nbd = nb_dof_of_element(cv);
+      pdof_description andof = already_numerate_dof(pf->dim());
       tab.resize(nbd);
       for (size_type i = 0; i < nbd; i++)
       {
+	
 	// std::cout << "dof " << i << " of convex " << cv << endl;
 	fd.P = point_of_dof(cv, i); // optimisable ...
 	// std::cout << "point of dof : " << fd.P << endl;
-	fd.pnd = f_elems[cv]->pf->dof_types()[i];
+	fd.pnd = pf->dof_types()[i];
 	size_type j;
-	if (dof_linkable(fd.pnd)) {
-	  j = dof_sort.add_norepeat(fd);
-	} else
-	  j = dof_sort.add(fd);
+	if (fd.pnd == andof) {
+	  j = pf->index_of_already_numerate_dof(cv, i);
+	  if (dof_sort.index_valid(j)) {
+	    if (dof_sort[j].pnd != andof)
+	      DAL_THROW(internal_error,
+	      "Conflict between an already numerate dof and an existing dof.");
+	  }
+	  else
+	    dof_sort.add_to_index(j, fd);
+	}
+	else {
+	  if (dof_linkable(fd.pnd))
+	    j = dof_sort.add_norepeat(fd);
+	  else
+	    j = dof_sort.add(fd);
+	}
 	count++;
 	tab[i] = j;
       }
