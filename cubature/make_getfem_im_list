@@ -33,7 +33,7 @@ open(TMPF4, ">$tmp4") or die "Open file impossible : $!\n";
 open(TMPF5, ">$tmp5") or die "Open file impossible : $!\n";
 
 print TMPF1 "  static im_desc im_desc_tab[NB_IM] = {\n";
-print TMPF3 "  static long_scalar_type im_desc_real[NB_IMR] = {\n";
+print TMPF3 "  static double im_desc_real[NB_IMR] = {\n";
 print TMPF4 "  static const char * im_desc_face_meth[NB_IMF] = {\n";
 print TMPF5 "  static size_type im_desc_node_type[NB_IMN] = {\n";
 

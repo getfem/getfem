@@ -228,7 +228,7 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_,
   test_mat_swap(m1, typename gmm::linalg_traits<MAT1>::is_reference());
   test_vect_swap(v1, typename gmm::linalg_traits<VECT1>::is_reference());
   
-  if (nb_iter == 200) return true;
+  if (nb_iter == 100) return true;
   return false;
 }
 

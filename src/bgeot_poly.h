@@ -221,17 +221,22 @@ namespace bgeot
     polynomial(void) : std::vector<T>(1)
       { n = 0; d = 0; (*this)[0] = 0.0; }
     /// Constructor.
-    polynomial(short_type nn, short_type dd) : std::vector<T>(alpha(nn,dd))
-      { n = nn; d = dd; std::fill(this->begin(), this->end(), T(0)); }
+    polynomial(short_type nn, short_type dd);
     /// Constructor.
-    polynomial(short_type nn, short_type dd, short_type k)
-      : std::vector<T>(alpha(nn,dd)) {
-      n = nn; d = std::max(short_type(1), dd);
-      std::fill(this->begin(), this->end(), T(0));
-      (*this)[k+1] = T(1);
-    }
-    
+    polynomial(short_type nn, short_type dd, short_type k);
   };
+
+  template<typename T> polynomial<T>::polynomial(short_type nn, short_type dd)
+    : std::vector<T>(alpha(nn,dd))
+  { n = nn; d = dd; std::fill(this->begin(), this->end(), T(0)); }
+
+  template<typename T> polynomial<T>::polynomial(short_type nn,
+						 short_type dd, short_type k)
+    : std::vector<T>(alpha(nn,dd)) {
+    n = nn; d = std::max(short_type(1), dd);
+    std::fill(this->begin(), this->end(), T(0));
+    (*this)[k+1] = T(1);
+  }
   
   template<typename T> short_type polynomial<T>::real_degree(void) const {
     const_iterator it = this->end() - 1, ite = this->begin() - 1;

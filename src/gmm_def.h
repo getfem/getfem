@@ -689,7 +689,7 @@ namespace gmm {
 	int i=sizeof(T)/4; while(i-- > 0) tol*=T(1E-8); 
 	DAL_WARNING(1, "The numeric type " << typeid(T).name()
 		    << " has no numeric_limits defined !!\n"
-		    << "Taking " << tol << " has default tolerance");
+		    << "Taking " << tol << " as default tolerance");
       }
     }
     return tol;
@@ -707,7 +707,7 @@ namespace gmm {
 	mi = T(0);
 	DAL_WARNING(1, "The numeric type " << typeid(T).name()
 		    << " has no numeric_limits defined !!\n"
-		    << "Taking 0 has default minimum");
+		    << "Taking 0 as default minimum");
       }
     }
     return mi;

@@ -280,7 +280,7 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_) {
   if (!(error <= sqrt(prec) * gmm::vect_norm2(cvr) * R(10)))
     DAL_THROW(gmm::failure_error, "Error in QR algorithm.");
 
-  if (nb_iter == 200) return true;
+  if (nb_iter == 100) return true;
   return false;
 
 }

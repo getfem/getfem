@@ -176,7 +176,7 @@ namespace getfem {
 
   static const int NB_IMR=3473; 
 
-  static long_scalar_type im_desc_real[NB_IMR] = {
+  static double im_desc_real[NB_IMR] = {
     // IM_CUBE4D(5)
 
   .9472135954999579392818347337462550,

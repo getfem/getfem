@@ -68,6 +68,6 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_) {
   if (!((error = gmm::vect_norm2(v1)) <= prec * R(2000)))
     DAL_THROW(gmm::failure_error, "Error too large: " << error);
   
-  if (nb_iter == 200) return true;
+  if (nb_iter == 100) return true;
   return false;
 }

@@ -60,7 +60,7 @@ namespace getfem
   }
 
   long_scalar_type
-    poly_integration::int_poly_on_face(const base_poly &P, short_type f) const {
+    poly_integration::int_poly_on_face(const base_poly &P,short_type f) const {
     long_scalar_type res = 0.0;
     std::vector<long_scalar_type> *hum = &(int_face_monomials[f]);
     if (P.size() > hum->size()) {

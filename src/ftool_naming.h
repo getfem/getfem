@@ -34,7 +34,7 @@
 #define FTOOL_NAMING_H
 
 #include <stdio.h>
-#include <dal_basic.h>
+#include <dal_tree_sorted.h>
 #include <ctype.h>
 #include <deque>
 

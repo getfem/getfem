@@ -3,7 +3,7 @@
 /*                                                                         */
 /* Library :  Basic GEOmetric Tool  (bgeot)                                */
 /* File    :  bgeot_permutations.h                                         */
-/*     							                        */
+/*     							                   */
 /* Date : 2004/01/12.                                                      */
 /* Author : julien pommier                                                 */
 /*                                                                         */
@@ -29,6 +29,7 @@
 /*                                                                         */
 /* *********************************************************************** */
 #include <vector>
+#include <bgeot_config.h>
 
 namespace bgeot {
   /**
