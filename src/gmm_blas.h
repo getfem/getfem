@@ -1800,18 +1800,20 @@ namespace gmm {
   template <typename L1, typename L2, typename L3, typename L4> inline
   void mult(const L1& l1, const L2& l2, const L3& l3, L4& l4) {
     size_type m = mat_nrows(l1), n = mat_ncols(l1);
+    copy(l3, l4);
     if (!m || !n) { gmm::copy(l3, l4); return; }
-    if (n != vect_size(l2) || m != vect_size(l3) || m != vect_size(l4))
+    if (n != vect_size(l2) || m != vect_size(l4))
       DAL_THROW(dimension_error,"dimensions mismatch");
-    if (!same_origin(l2, l4))
-      mult_spec(l1, l2, l3, l4, typename principal_orientation_type<typename
-		linalg_traits<L1>::sub_orientation>::potype());
+    if (!same_origin(l2, l4)) {
+      mult_add_spec(l1, l2, l4, typename principal_orientation_type<typename
+		    linalg_traits<L1>::sub_orientation>::potype());
+    }
     else {
       DAL_WARNING(2, "Warning, A temporary is used for mult\n");
-      typename temporary_vector<L4>::vector_type temp(vect_size(l3));
-      mult_spec(l1,l2,l3, temp, typename principal_orientation_type<typename
+      typename temporary_vector<L2>::vector_type temp(vect_size(l2));
+      copy(l2, temp);
+      mult_add_spec(l1,temp, l4, typename principal_orientation_type<typename
 		linalg_traits<L1>::sub_orientation>::potype());
-      copy(temp, l4);
     }
   }
 
@@ -1819,91 +1821,95 @@ namespace gmm {
   void mult(const L1& l1, const L2& l2, const L3& l3, const L4& l4)
   { mult(l1, l2, l3, linalg_const_cast(l4)); } 
 
-  template <typename L1, typename L2, typename L3, typename L4>
-  void mult_by_row(const L1& l1, const L2& l2, const L3& l3,
-		   L4& l4, abstract_sparse) {
-    typedef typename linalg_traits<L1>::value_type T;
-    copy(l3, l4);
-    size_type nr = mat_nrows(l1);
-    for (size_type i = 0; i < nr; ++i) {
-      T aux = vect_sp(mat_const_row(l1, i), l2);
-      if (aux != T(0)) l4[i] += aux;
+
+  template <typename L1, typename L2, typename L3> inline
+  void mult_add(const L1& l1, const L2& l2, L3& l3) {
+    size_type m = mat_nrows(l1), n = mat_ncols(l1);
+    if (!m || !n) return;
+    if (n != vect_size(l2) || m != vect_size(l3))
+      DAL_THROW(dimension_error,"dimensions mismatch");
+    if (!same_origin(l2, l3)) {
+      mult_add_spec(l1, l2, l3, typename principal_orientation_type<typename
+		    linalg_traits<L1>::sub_orientation>::potype());
+    }
+    else {
+      DAL_WARNING(2, "Warning, A temporary is used for mult\n");
+      typename temporary_vector<L3>::vector_type temp(vect_size(l2));
+      copy(l2, temp);
+      mult_add_spec(l1,temp, l3, typename principal_orientation_type<typename
+		linalg_traits<L1>::sub_orientation>::potype());
     }
   }
 
-  template <typename L1, typename L2, typename L3, typename L4>
-  void mult_by_row(const L1& l1, const L2& l2, const L3& l3,
-		   L4& l4, abstract_skyline) {
+  template <typename L1, typename L2, typename L3> inline
+  void mult_add(const L1& l1, const L2& l2, const L3& l3)
+  { mult_add(l1, l2, linalg_const_cast(l3)); } 
+
+  template <typename L1, typename L2, typename L3>
+  void mult_add_by_row(const L1& l1, const L2& l2, L3& l3, abstract_sparse) {
     typedef typename linalg_traits<L1>::value_type T;
-    copy(l3, l4);
     size_type nr = mat_nrows(l1);
     for (size_type i = 0; i < nr; ++i) {
       T aux = vect_sp(mat_const_row(l1, i), l2);
-      if (aux != T(0)) l4[i] += aux;
+      if (aux != T(0)) l3[i] += aux;
     }
   }
 
-  template <typename L1, typename L2, typename L3, typename L4>
-  void mult_by_row(const L1& l1, const L2& l2, const L3& l3, L4& l4,
-		   abstract_dense) {
-    copy(l3, l4); 
-    typename linalg_traits<L4>::iterator it=vect_begin(l4), ite=vect_end(l4);
+  template <typename L1, typename L2, typename L3>
+  void mult_add_by_row(const L1& l1, const L2& l2, L3& l3, abstract_skyline) {
+    typedef typename linalg_traits<L1>::value_type T;
+    size_type nr = mat_nrows(l1);
+    for (size_type i = 0; i < nr; ++i) {
+      T aux = vect_sp(mat_const_row(l1, i), l2);
+      if (aux != T(0)) l3[i] += aux;
+    }
+  }
+
+  template <typename L1, typename L2, typename L3>
+  void mult_add_by_row(const L1& l1, const L2& l2, L3& l3, abstract_dense) {
+    typename linalg_traits<L3>::iterator it=vect_begin(l3), ite=vect_end(l3);
     typename linalg_traits<L1>::const_row_iterator
       itr = mat_row_const_begin(l1);
     for (; it != ite; ++it, ++itr)
       *it += vect_sp(linalg_traits<L1>::row(itr), l2);
   }
 
-  template <typename L1, typename L2, typename L3, typename L4>
-  void mult_by_col(const L1& l1, const L2& l2, const L3& l3, L4& l4,
-		   abstract_dense) {
-    copy(l3, l4);
+  template <typename L1, typename L2, typename L3>
+  void mult_add_by_col(const L1& l1, const L2& l2, L3& l3, abstract_dense) {
     size_type nc = mat_ncols(l1);
     for (size_type i = 0; i < nc; ++i)
-      add(scaled(mat_const_col(l1, i), l2[i]), l4);
+      add(scaled(mat_const_col(l1, i), l2[i]), l3);
   }
 
-  template <typename L1, typename L2, typename L3, typename L4>
-  void mult_by_col(const L1& l1, const L2& l2, const L3& l3, L4& l4,
-		   abstract_sparse) {
-    copy(l3, l4);
+  template <typename L1, typename L2, typename L3>
+  void mult_add_by_col(const L1& l1, const L2& l2, L3& l3, abstract_sparse) {
     typename linalg_traits<L2>::const_iterator it = vect_const_begin(l2),
       ite = vect_const_end(l2);
     for (; it != ite; ++it)
       if (*it != typename linalg_traits<L2>::value_type(0))
-	add(scaled(mat_const_col(l1, it.index()), *it), l4);
+	add(scaled(mat_const_col(l1, it.index()), *it), l3);
   }
 
-  template <typename L1, typename L2, typename L3, typename L4>
-  void mult_by_col(const L1& l1, const L2& l2, const L3& l3, L4& l4,
-		   abstract_skyline) {
-    copy(l3, l4);
+  template <typename L1, typename L2, typename L3>
+  void mult_add_by_col(const L1& l1, const L2& l2, L3& l3, abstract_skyline) {
     typename linalg_traits<L2>::const_iterator it = vect_const_begin(l2),
       ite = vect_const_end(l2);
     for (; it != ite; ++it)
       if (*it != typename linalg_traits<L2>::value_type(0))
-	add(scaled(mat_const_col(l1, it.index()), *it), l4);
+	add(scaled(mat_const_col(l1, it.index()), *it), l3);
   }
 
-  template <typename L1, typename L2, typename L3, typename L4> inline
-  void mult_spec(const L1& l1, const L2& l2, const L3& l3, L4& l4, row_major)
-  { mult_by_row(l1, l2, l3, l4, typename linalg_traits<L4>::storage_type()); }
+  template <typename L1, typename L2, typename L3> inline
+  void mult_add_spec(const L1& l1, const L2& l2, L3& l3, row_major)
+  { mult_add_by_row(l1, l2, l3, typename linalg_traits<L3>::storage_type()); }
 
-  template <typename L1, typename L2, typename L3, typename L4> inline
-  void mult_spec(const L1& l1, const L2& l2, const L3& l3, L4& l4, col_major)
-  { mult_by_col(l1, l2, l3, l4, typename linalg_traits<L2>::storage_type()); }
+  template <typename L1, typename L2, typename L3> inline
+  void mult_add_spec(const L1& l1, const L2& l2, L3& l3, col_major)
+  { mult_add_by_col(l1, l2, l3, typename linalg_traits<L2>::storage_type()); }
 
-  template <typename L1, typename L2, typename L3, typename L4> inline
-  void mult_spec(const L1& l1, const L2& l2, const L3& l3,
-		 L4& l4, abstract_null_type)
-  { mult_ind(l1, l2, l3, l4, typename linalg_traits<L1>::storage_type()); }
-
-  template <typename L1, typename L2, typename L3, typename L4>
-  void mult_ind(const L1& l1, const L2& l2, const L3& l3,
-		L4& l4, abstract_indirect) {
-    DAL_THROW(failure_error,
-	  "You have to define gmm::mult(m, v1, v2) for this kind of matrix");
-  }
+  template <typename L1, typename L2, typename L3> inline
+  void mult_add_spec(const L1& l1, const L2& l2, L3& l3, abstract_null_type)
+  { mult_ind(l1, l2, l3, typename linalg_traits<L1>::storage_type()); }
 
   template <typename L1, typename L2, typename L3>
   void transposed_mult(const L1& l1, const L2& l2, const L3& l3)

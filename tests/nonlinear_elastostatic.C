@@ -189,7 +189,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
 
   // Generic solve.
   cout << "Number of variables : " << final_model.nb_dof() << endl;
-  getfem::standard_model_state MS;
+  getfem::standard_model_state MS(final_model);
   size_type maxit = PARAM.int_value("MAXITER"); 
   gmm::iteration iter(residu, 1, maxit ? maxit : 40000);
   getfem::standard_solve(MS, final_model, iter);

@@ -141,7 +141,9 @@ namespace getfem {
     ctx_ident_type ident(void) { return ident_; }
     void touch(void) { ident_ = context_dependencies::new_ident(); }
     void adapt_sizes(mdbrick_abstract<model_state> &problem);
-    model_state(void) { ident_ = context_dependencies::new_ident(); }
+    model_state(void) { touch(); }
+    model_state(mdbrick_abstract<model_state> &problem)
+    { adapt_sizes(problem); }
   };
 
   template<typename T_MATRIX, typename C_MATRIX, typename VECTOR>
@@ -171,12 +173,16 @@ namespace getfem {
   void model_state<T_MATRIX, C_MATRIX, VECTOR>::
   adapt_sizes(mdbrick_abstract<model_state> &problem) {
     size_type ndof = problem.nb_dof(), nc = problem.nb_constraints();
-    gmm::resize(tangent_matrix_, ndof, ndof);
-    gmm::resize(constraints_matrix_, nc, ndof);
-    gmm::resize(constraints_rhs_, nc);
-    gmm::resize(state_, ndof);
-    gmm::resize(residu_, ndof);
-    touch();
+
+    if (gmm::mat_nrows(tangent_matrix_) != ndof
+	|| gmm::mat_nrows(constraints_matrix_) != nc) {
+      gmm::resize(tangent_matrix_, ndof, ndof);
+      gmm::resize(constraints_matrix_, nc, ndof);
+      gmm::resize(constraints_rhs_, nc);
+      gmm::resize(state_, ndof); gmm::clear(state_);
+      gmm::resize(residu_, ndof);
+      touch();
+    }
   } 
 
   template<typename MODEL_STATE>
@@ -947,8 +953,13 @@ namespace getfem {
 	gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), dof_on_bound.card());
 	gmm::sub_interval SUBJ(i0, sub_problem.nb_dof());
 	gmm::mult(G, gmm::sub_vector(MS.state(), SUBJ),
-		  gmm::scaled(CRHS, value_type(1)),
+		  gmm::scaled(CRHS, value_type(-1)),
 		  gmm::sub_vector(MS.residu(), SUBI));
+	cout << "MS.residu() = " << MS.residu() << endl;
+     
+	gmm::mult_add(gmm::transposed(G), gmm::sub_vector(MS.state(), SUBI),
+		      gmm::sub_vector(MS.residu(), SUBJ));
+	cout << "MS.residu() = " << MS.residu() << endl;
       }
       else {
 	size_type nd = sub_problem.main_mesh_fem().nb_dof();
@@ -1027,9 +1038,7 @@ namespace getfem {
     gmm::iteration iter_linsolv0 = iter;
     if (!is_linear) { iter_linsolv0.reduce_noisy(); }
 
-    MS.adapt_sizes(problem);
-    if (!is_linear) gmm::fill_random(MS.state()); 
-    else gmm::clear(MS.state());
+    MS.adapt_sizes(problem); // to be sure it is ok, but should be done before
     problem.compute_residu(MS);
     problem.compute_tangent_matrix(MS);
     MS.compute_reduced_system();
@@ -1061,8 +1070,8 @@ namespace getfem {
 	}
 	else {
 	  cout << "there is " << mixvar.card() << " mixed variables\n";
-	  gmm::ilut_precond<T_MATRIX> P(MS.reduced_tangent_matrix(),100,1E-10);
-	  //gmm::identity_matrix P()
+	  // gmm::ilut_precond<T_MATRIX> P(MS.reduced_tangent_matrix(),100,1E-10);
+	  gmm::identity_matrix P;
 	  gmm::gmres(MS.reduced_tangent_matrix(), dr, 
 		     gmm::scaled(MS.reduced_residu(),  value_type(-1)),
 		     P, 300, iter_linsolv);
