@@ -45,7 +45,7 @@
   \htmlpanelfield{Index}{getfemuser}
   \htmlcss{docstyle.css}
   \newcommand{\text}[1]{\mathrm{#1}}
-  \newcommand{\WEB}[2]{\xmlattributes*{a}{target="_top"}\xlink{#2}{#1}}
+  \newcommand{\WEB}[2]{\xlink{#2}{#1}}
   \newcommand{\nabla}{\htmlsym{nabla}}%renamed \xmlent by lastest version of hyperlatex
   \newcommand{\ell}{\htmlsym{tau}}
   \newcommand{\lambda}{\htmlsym{lambda}}
@@ -511,7 +511,7 @@ Once a finite element method is defined on a mesh, it is possible to obtain info
 \end{tabular} \end{center}
 
 \section{Linear algebra procedures}
-The linear algebra library used by \gf is GMM++ which is now a separate library. Please see the GMM++ user documentation.
+The linear algebra library used by \gf is GMM++ which is now a separate library. Please see the \WEB{http://www.gmm.insa-tlse.fr/getfem/gmmuser/gmmuser.html}{GMM++ user documentation}.
 
 
 \section{Standard assembling procedures}
@@ -872,36 +872,41 @@ A standard procedure, \cpp{DAL\_STANDARD\_CATCH\_ERROR}, is defined in \cpp{dal\
 \section{Example : Laplacian program}
 \index{laplacian}
 \index{Poisson problem}
-Caution: \filename{laplacian.C} should really be rewritten from scratch.\\
+Caution: \filename{laplacian.C} from release 1.6 really had to be rewritten from scratch -- a cleaned up version of laplacian.C is available in the unstable 1.7-cvs getfem++ tarballs.\\
 
 The program \filename{laplacian} is provided in the directory \filename{tests} of \gf  distribution. This program compute the solution of the Poisson problem in a parellepiped domain in any dimension with various finite element methods and elements. This program can be used as a model to build application programs. To compile it execute a {\tt gmake check} on the root directory of \gf . Once the program is compiled you can test it executing the command\\[0.5cm]
 {\tt laplacian laplacian.param}\\[0.5cm]
 The file \filename{laplacian.param} is the parameter file. You can edit it and test various situation. The following parameter can be changed\\[0.5cm]
-\begin{center} \begin{tabular}{|m{0.2\linewidth}|m{0.75\linewidth}|} \hline
 
+\begin{tabular}{|m{0.2\linewidth}|l|} \hline
   {\tt N} & Dimension of the domain, $1 \leq {\tt N} \leq 255$ for parellepipedic elements, mesh generation limited to ${\tt N} \leq 4$ for simplices and ${\tt N} \leq 5$ for prisms.  \\ \hline
-
-  {\tt LX, LY} and {\tt LZ} &  Sizes of the domain. \\ \hline
-
+  {\tt LX, LY} and {\tt LZ} &  Dimensions of the domain. \\ \hline
   {\tt FT} &  parameter for the exact solution. \\ \hline
-
   {\tt MESH\_TYPE} &  {\tt MESH\_TYPE = 0} for a mesh with simplices,   {\tt MESH\_TYPE = 1} for a mesh with parallelepipeds elements or {\tt MESH\_TYPE = 2} for a mesh with prisms. \\ \hline
-
   {\tt INCLINE} &  Incline of the mesh.\\ \hline
-
   {\tt K} &  Degree of the finite element method. \\ \hline
-
   {\tt FEM\_TYPE} &  finite element method.  {\tt FEM\_TYPE = 0} for classical lagrange element\\ \hline
-
   {\tt INTEGRATION} & Selects the integration method.  \\ \hline
-
   {\tt NX} &  Number of element in each dimension. \\ \hline
-
   {\tt RESIDU} & Residu for conjugate gradient. \\ \hline
-
   {\tt ROOTFILENAME} & Root name for data files. \\ \hline
+\end{tabular}
 
-\end{tabular} \end{center}
+As a consequence of the rewrite of laplacian.C, the format of the parameter file will change in Getfem++-1.7:
+\begin{tabular}{|m{0.2\linewidth}|l|} \hline
+  {\tt LX, LY} and {\tt LZ} &  Dimensions of the domain. \\ \hline
+  {\tt FT} &  parameter for the exact solution. \\ \hline
+  {\tt MESH\_TYPE} & name of the geometric transformation used for the mesh cells, for example ``GT_PK(2,1)'' for triangles\\ \hline
+  {\tt NX} &  Number of element in each dimension. \\ \hline
+  {\tt MESH_NOISE} &  if non-zero, a random perturbation is applied to the interior nodes of the mesh.\\ \hline
+  {\tt INCLINE} &  Incline of the mesh.\\ \hline
+  {\tt FEM\_TYPE} & name of finite element method (i.e. FEM_PK(2,1))\\ \hline
+  {\tt INTEGRATION} & name of integration method (i.e. IM_TRIANGLE(6))\\ \hline
+  {\tt RESIDU} & Residu for conjugate gradient. \\ \hline
+  {\tt ROOTFILENAME} & Root name for data files. \\ \hline
+\end{tabular}
+
+
 The mesh is exported as \filename{laplacian.mesh} and the solution is exported as \filename{laplacian.dataelt}. The mesh can be viewed using {\tt ../contrib/draw\_mesh laplacian.mesh} and the solution with {\tt ../bin/sc2dgnuplot laplacian.dataelt}. The program print the $L^2$ and $H^1$ error from an exact solution.\\[0.5cm]
 \index{elastostatic}
 The program \filename{elastostatic} is built in a same way and compute the solution of linear elasticity problem.
