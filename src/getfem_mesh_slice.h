@@ -122,6 +122,7 @@ namespace getfem {
 		      
     size_type nb_convex() const { return cvlst.size(); }
     size_type convex_num(size_type ic) const { return cvlst[ic].cv_num; }
+    void set_dim(size_type newdim);
     size_type dim() const { return _dim; }
     const getfem_mesh& linked_mesh() const { return m; }
     void nb_simplexes(std::vector<size_type>& c) const { c = simplex_cnt; }

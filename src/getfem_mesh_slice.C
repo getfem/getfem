@@ -110,7 +110,8 @@ namespace getfem {
         slice_simplex s2(3);
         for (size_type j=0; j < 4; ++j) {
           /* usage of s forbidden in this loop since push_back happens .. */
-          for (size_type k=0; k < 3; ++k) { s2.inodes[k] = splxs[cnt].inodes[k + (k<j ? 0 : 1)]; }
+	  static unsigned ord[][3] = {{0,2,1},{1,2,3},{1,3,0},{0,3,2}}; /* keep orientation of faces */
+          for (size_type k=0; k < 3; ++k) { s2.inodes[k] = splxs[cnt].inodes[ord[j][k]]; } //k + (k<j ? 0 : 1)]; }
 	  /*cerr << " -> testing "; for (size_type iA=0; iA < s2.dim()+1; ++iA) cerr << s2.inodes[iA] << " "; 
 	    cerr << " : " << test_bound(s2, fmask, nodes) << endl;*/
           if (test_bound(s2, fmask, nodes)) {
@@ -668,6 +669,14 @@ namespace getfem {
     }
   }
 
+  void mesh_slice::set_dim(size_type newdim) {
+    _dim = newdim;
+    for (size_type ic=0; ic < nb_convex(); ++ic) {
+      for (cs_nodes_ct::iterator it=nodes(ic).begin(); it != nodes(ic).end(); ++it) {
+	it->pt.resize(newdim);
+      }
+    }
+  }
 
   void mesh_slice::merge(const mesh_slice& sl) {
     if (dim() != sl.dim()) DAL_THROW(dal::dimension_error, "inconsistent dimensions for slice merging");
