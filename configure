@@ -14,7 +14,7 @@ while ($ARGV[0])
   { 
     die "Sorry, unrecognized option";
   }
-  shift ARGV;	
+  shift ARGV;
 }
 
 print "Compiler selected : $CC\n";
