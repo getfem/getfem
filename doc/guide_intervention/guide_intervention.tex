@@ -323,7 +323,7 @@ Par exemple la commande
 va cr\'eer dans le r\'epertoire courant la structure de r\'epertoire \begin{alltt} getfem++/dal/test/ \end{alltt} et y mettre les fichier correspondants, c'est \`a dire les programmes de test de la biblioth\`eque dal.
 
 \subsection{Plus pratique, les shells d'installation et de mise \`a jour}
-Les shells d'installation et de mise \`a jour regroupent toutes les instructions permettant de r\'ecup\'erer la partie des sources que vous souhaitez modifier, et d'installer un environnement de compilation et de test. Pour r\'ecup\'erer l'ensemble des shells d'installation, ex\'ecuter la commande
+Les shells d'installation et de mise \`a jour regroupent toutes les instructions permettant de r\'ecup\'erer les sources, et d'installer un environnement de compilation et de test. Pour r\'ecup\'erer l'ensemble des shells d'installation, ex\'ecuter la commande
 \begin{alltt}
   cvs checkout getfem++/bin
 \end{alltt}
@@ -331,11 +331,8 @@ Cette commande rapatrie en fait tout les shells ex\'ecutables du projet getfem++
 \begin{alltt} cd getfem++ \end{alltt}
 et taper
 \begin{alltt} 
-  bin/startdal, bin/startbgeot, bin/startgetfem,
-  bin/startftool, bin/startlinkmsg, bin/startmisc,
-  bin/startmatlab_interface, ou bin/startgetfemlab
+  bin/install_from_cvs
 \end{alltt}
-ces shells chargent l'int\'egralit\'e des biblioth\`eques consid\'er\'ees et pr\'eparent un makefile pour compiler celles-ci, ainsi que les programmes de test qui lui sont li\'es. Vous pouvez encha\^\i ner plusieurs shells si vous voulez intervenir sur plusieurs biblioth\`eques dans la m\^eme session, ou si vous n'allez tester les modifications apport\'ees dans des biblioth\`eques autre que celle que vous modifiez.\\[0.4cm]
 
 Une fois les modifications apport\'ees, il faut passer \`a une phase de test, i.e. compilation et lancement des programmes de tests. Si la partie que vous avez modifi\'ee n'a pas de programme de test correspondant, cr\'eez-en un, en essayant de tester toutes les fonctionnalit\'es.\\[0.4cm]
 
@@ -356,7 +353,7 @@ D'une mani\`ere g\'en\'erale, ne gardez pas trop longtemps ouverte une session. 
 \begin{alltt}
   cvs checkout getfem++/bin
   cd getfem++
-  bin/startbgeot
+  bin/install_from_cvs
   xemacs bgeot/bgeot_poly.h (+ modifications)
   make
   make test
