@@ -131,7 +131,9 @@ namespace getfem {
 				 MAT &M, int version) {
     base_matrix G;
     size_type qdim = mf_source.get_qdim();
-    base_vector coeff, val(qdim);
+    size_type qqdim = gmm::vect_size(U)/mf_source.nb_dof();
+    base_vector val(qdim);
+    std::vector<base_vector> coeff;
     std::vector<size_type> dof_source;
     if (qdim != mf_target.get_qdim() && mf_target.get_qdim() != 1)
       DAL_THROW(failure_error, "Attempt to interpolate a field of dimension "
@@ -154,10 +156,13 @@ namespace getfem {
       ref_mesh_dof_ind_ct::iterator itdof;
 
       if (version == 0) {
-	coeff.resize(nbd_s*qdim);
-	itdof = mf_source.ind_dof_of_element(cv).begin();
-	for (size_type k = 0; k < mf_source.nb_dof_of_element(cv);
-	     ++k, ++itdof) coeff[k] = U[*itdof];
+        coeff.resize(qqdim);
+        for (size_type qq=0; qq < qqdim; ++qq) {
+          coeff[qq].resize(nbd_s*qdim);
+          itdof = mf_source.ind_dof_of_element(cv).begin();
+          for (size_type k = 0; k < mf_source.nb_dof_of_element(cv);
+               ++k, ++itdof) coeff[qq][k] = U[(*itdof)*qqdim+qq];
+        }
       }
       if (pf_s->need_G()) 
 	bgeot::vectors_to_base_matrix(G,
@@ -178,8 +183,10 @@ namespace getfem {
 	/* faux dans le cas des éléments vectoriel.                        */
 	ctx.set_ii(i);
 	if (version == 0) {
-	  pf_s->interpolation(ctx, coeff, val, qdim);
-	  for (size_type k=0; k < qdim; ++k) V[dof_t + k] = val[k];
+          for (size_type qq=0; qq < qqdim; ++qq) {
+            pf_s->interpolation(ctx, coeff[qq], val, qdim);
+            for (size_type k=0; k < qdim; ++k) V[(dof_t + k)*qqdim+qq] = val[k];
+          }
 	}
 	else {
 	  base_matrix Mloc(qdim, mf_source.nb_dof_of_element(cv));
@@ -215,6 +222,7 @@ namespace getfem {
 
     const getfem_mesh &mesh(mf_source.linked_mesh());
     size_type qdim_s = mf_source.get_qdim();
+    size_type qqdim = gmm::vect_size(U)/mf_source.nb_dof();
     
     mti.distribute(extrapolation);
     std::vector<size_type> itab;    
@@ -224,7 +232,8 @@ namespace getfem {
 
     /* interpolation */
     dal::bit_vector dof_done; dof_done.add(0, mti.nb_points());
-    base_vector val(qdim_s), coeff;
+    base_vector val(qdim_s);
+    std::vector<base_vector> coeff;
     base_tensor Z;
     std::vector<size_type> dof_source;
 
@@ -239,9 +248,12 @@ namespace getfem {
 
       fem_interpolation_context ctx(pgt, pf_s, base_node(), G, cv);
       if (version == 0) {
-	coeff.resize(mf_source.nb_dof_of_element(cv));
-	gmm::copy(gmm::sub_vector(U,
-		  gmm::sub_index(mf_source.ind_dof_of_element(cv))), coeff);
+        coeff.resize(qqdim);
+        for (size_type qq=0; qq < qqdim; ++qq) {
+          coeff[qq].resize(mf_source.nb_dof_of_element(cv));
+          gmm::copy(gmm::sub_vector(U,
+                    gmm::sub_index(mf_source.ind_dof_of_element(cv))), coeff[qq]);
+        }
       }
       dof_source.assign(mf_source.ind_dof_of_element(cv).begin(), 
                         mf_source.ind_dof_of_element(cv).end());
@@ -252,8 +264,10 @@ namespace getfem {
 	  ctx.set_xref(mti.reference_coords()[dof_t]);
 	  size_type pos = dof_t * qdim_s;
 	  if (version == 0) {
-	    pf_s->interpolation(ctx, coeff, val, qdim_s);
-	    for (size_type k=0; k < qdim_s; ++k) V[pos + k] = val[k];
+            for (size_type qq=0; qq < qqdim; ++qq) {           
+              pf_s->interpolation(ctx, coeff[qq], val, qdim_s);
+              for (size_type k=0; k < qdim_s; ++k) V[(pos + k)*qqdim+qq] = val[k];
+            }
 	    // Partie à arranger si on veut en option pouvoir interpoler
 	    // le gradient.
 	    //	  if (PVGRAD) {
@@ -289,7 +303,7 @@ namespace getfem {
   void interpolation(const mesh_fem &mf_source, mesh_trans_inv &mti,
 		     const VECTU &U, VECTV &V, bool extrapolation = false) {
     base_matrix M;
-    if (mf_source.nb_dof() != gmm::vect_size(U) || gmm::vect_size(V) == 0)
+    if ((gmm::vect_size(U) % mf_source.nb_dof()) != 0 || gmm::vect_size(V) == 0)
       DAL_THROW(dimension_error, "Dimensions mismatch");
     interpolation(mf_source, mti, U, V, M, 0, extrapolation);
   }
@@ -331,7 +345,7 @@ namespace getfem {
   void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
 		     const VECTU &U, VECTV &V, bool extrapolation) {
     base_matrix M;
-    if (mf_source.nb_dof() != gmm::vect_size(U)
+    if ((gmm::vect_size(U) % mf_source.nb_dof()) != 0
 	|| (gmm::vect_size(V) % mf_target.nb_dof()) != 0
 	|| gmm::vect_size(V) == 0)
       DAL_THROW(dimension_error, "Dimensions mismatch");
@@ -372,7 +386,7 @@ namespace getfem {
 			      const VECTU &U, VECTV &V,
 			      bool extrapolation) {
     base_matrix M;
-    if (mf_source.nb_dof() != gmm::vect_size(U)
+    if ((gmm::vect_size(U) % mf_source.nb_dof()) != 0
 	|| (gmm::vect_size(V) % mf_target.nb_dof()) != 0
 	|| gmm::vect_size(V) == 0)
       DAL_THROW(dimension_error, "Dimensions mismatch");

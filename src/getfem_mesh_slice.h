@@ -123,10 +123,12 @@ namespace getfem {
     template<typename V1, typename V2> void 
     interpolate(const getfem::mesh_fem &mf, const V1& U, V2& V) const {
       bgeot::stored_point_tab refpts;
-      base_vector coeff;
+      std::vector<base_vector> coeff;
       base_matrix G;
       size_type qdim = mf.get_qdim();
+      size_type qqdim = gmm::vect_size(U)/mf.nb_dof();
       size_type pos = 0;
+      coeff.resize(qqdim);
       for (size_type i=0; i < nb_convex(); ++i) {
         size_type cv = convex_num(i);
         refpts.resize(nodes(i).size());
@@ -138,20 +140,24 @@ namespace getfem {
         pfem_precomp pfp = fppool(pf, &refpts);
         
         ref_mesh_dof_ind_ct dof = mf.ind_dof_of_element(cv);
-        coeff.resize(mf.nb_dof_of_element(cv));
-        base_vector::iterator cit = coeff.begin();
-        for (ref_mesh_dof_ind_ct::iterator it=dof.begin(); it != dof.end(); ++it, ++cit)
-          *cit = U[*it];
+        for (size_type qq=0; qq < qqdim; ++qq) {
+          coeff[qq].resize(mf.nb_dof_of_element(cv));
+          base_vector::iterator cit = coeff[qq].begin();
+          for (ref_mesh_dof_ind_ct::iterator it=dof.begin(); it != dof.end(); ++it, ++cit)
+            *cit = U[(*it)*qqdim+qq];
+        }
 	fem_interpolation_context ctx(mf.linked_mesh().trans_of_convex(cv),pfp,0,G,cv);
         for (size_type j=0; j < refpts.size(); ++j) {
 	  ctx.set_ii(j);
-          typename gmm::sub_vector_type<V2*, gmm::sub_interval>::vector_type dest = 
-	    gmm::sub_vector(V,gmm::sub_interval(pos,qdim));
-	  pf->interpolation(ctx,coeff,dest,qdim);
-          pos += qdim;
+          for (size_type qq = 0; qq < qqdim; ++qq) {
+            typename gmm::sub_vector_type<V2*, gmm::sub_interval>::vector_type dest = 
+              gmm::sub_vector(V,gmm::sub_interval(pos,qdim));
+            pf->interpolation(ctx,coeff[qq],dest,qdim);
+            pos += qdim;
+          }
         }
       }
-      if (pos != V.size()) DAL_INTERNAL_ERROR("");
+      if (pos != V.size()) DAL_THROW(dal::failure_error, "bad dimensions");
     }
   };
 

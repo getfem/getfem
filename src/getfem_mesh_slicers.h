@@ -382,7 +382,8 @@ namespace getfem {
   class slicer_union : public slicer_action {
     slicer_action *A, *B;
   public:
-    slicer_union(slicer_action &sA, slicer_action &sB) : A(&sA), B(&sB) {}
+    slicer_union(const slicer_action &sA, const slicer_action &sB) : 
+      A(&const_cast<slicer_action&>(sA)), B(&const_cast<slicer_action&>(sB)) {}
     void exec(mesh_slicer &ms);
   };
 
