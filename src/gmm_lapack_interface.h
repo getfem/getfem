@@ -134,6 +134,8 @@ namespace gmm {
     void sgetri_(...); void dgetri_(...); void cgetri_(...); void zgetri_(...);
     void sgeqrf_(...); void dgeqrf_(...); void cgeqrf_(...); void zgeqrf_(...);
     void sorgqr_(...); void dorgqr_(...); void cungqr_(...); void zungqr_(...);
+    void  sgees_(...); void  dgees_(...); void  cgees_(...);  void zgees_(...);
+    void  sgeev_(...); void  dgeev_(...); void  cgeev_(...);  void zgeev_(...);
   }
 
 
@@ -790,7 +792,6 @@ namespace gmm {
   /* QR factorization.                                                     */
   /* ********************************************************************* */
   
-  
 # define geqrf_interface(lapack_name1, lapack_name2, base_type) inline     \
   void qr_factor(const dense_matrix<base_type> &A,                         \
        dense_matrix<base_type> &Q, dense_matrix<base_type> &R) {           \
@@ -814,6 +815,37 @@ namespace gmm {
   geqrf_interface(cgeqrf_, cungqr_, BLAS_C);
   geqrf_interface(zgeqrf_, zungqr_, BLAS_Z);
 
+  /* ********************************************************************* */
+  /* QR algorithm for eigenvalues search.                                  */
+  /* ********************************************************************* */
+
+
+# define gees_interface(lapack_name, base_type)                            \
+  template <class VECT> inline void implicit_qr_algorithm(                 \
+         const dense_matrix<base_type> &A,  const VECT &eigval_,           \
+         dense_matrix<base_type> &Q,                                       \
+         double tol=gmm::default_tol(base_type()), bool compvect = true) { \
+    typedef bool (*L_fp)(...);  L_fp p = 0;                                \
+    int n(mat_nrows(A)), info, lwork(-1), sdim; base_type work1;           \
+    dense_matrix<base_type> H(n,n); gmm::copy(A, H);                       \
+    char jobvs = (compvect ? 'V' : 'N'), sort = 'N';                       \
+    std::vector<double> rwork(n), eigvv(n*4);                              \
+    lapack_name(&jobvs, &sort, p, &n, &H(0,0), &n, &sdim, &eigvv,          \
+                &Q(0,0), &n,  &work1, &lwork, &rwork, &rwork, &info);      \
+    lwork = int(dal::real(work1));                                         \
+    cout << "zone = " << lwork << endl; \
+    cout << "jobvs = " <<  jobvs << endl; \
+    std::vector<base_type> work(lwork);                                    \
+    lapack_name(&jobvs, &sort, p, &n, &H(0,0), &n, &sdim, &eigvv,          \
+                &Q(0,0), &n,  &work,  &lwork, &rwork, &rwork, &info);      \
+    if (info) DAL_THROW(failure_error, "QR algorithm failed");             \
+    extract_eig(H, const_cast<VECT &>(eigval_), tol);                      \
+  }
+
+  // gees_interface(sgees_, BLAS_S); // à faire, les params sont !=
+  // gees_interface(dgees_, BLAS_D);
+  gees_interface(cgees_, BLAS_C);
+  gees_interface(zgees_, BLAS_Z);
 
 }
 
