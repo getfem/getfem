@@ -35,11 +35,11 @@
 
 namespace getfem
 { 
-  static papprox_integration composite_approx_int_method(const mesh_fem &mf,
-						  bgeot::pconvex_ref cr) {
+  static papprox_integration
+  composite_approx_int_method(const mesh_precomposite &mp, const mesh_fem &mf,
+			      bgeot::pconvex_ref cr) {
     dal::bit_vector nn = mf.convex_index();
     approx_integration *p = new approx_integration(cr);
-    mesh_precomposite mp(mf.linked_mesh());
 
     for (size_type cv = nn.take_first(); cv != size_type(-1); cv << nn) {
 
@@ -55,7 +55,7 @@ namespace getfem
       for (size_type j = 0; j < pai->nb_points_on_convex(); ++j) {
 	base_node pt = pgt->transform(pim->integration_points()[j],
 				      mf.linked_mesh().points_of_convex(cv));
-	p->add_point(pt, pai->coeff(j) * mp.det[cv]);
+	p->add_point(pt, pai->coeff(j) * dal::abs(mp.det[cv]));
       }
       for (short_type f = 0; f < pgt->structure()->nb_faces(); ++f) {
 
@@ -72,8 +72,8 @@ namespace getfem
 	    { f2 = f3; break;}
 	}
 	if (f2 != short_type(-1)) {
-	  scalar_type coeff_mul
-	    = bgeot::vect_norm2(mp.gtrans[cv]*pgt->normals()[f]) * mp.det[cv];
+	  scalar_type coeff_mul = dal::abs
+	    (bgeot::vect_norm2(mp.gtrans[cv]*pgt->normals()[f]) * mp.det[cv]);
 	  for (size_type j = 0; j < pai->nb_points_on_face(f); ++j) {
 	    base_node pt = pgt->transform
 	      (pai->point_on_face(f, j), 
@@ -85,13 +85,17 @@ namespace getfem
       }
 
     }
-    p->valid_method();
+    p->valid_method();	
+
     return p;
   }
 
   typedef ftool::naming_system<integration_method>::param_list im_param_list;
 
   pintegration_method structured_composite_int_method(im_param_list &params) {
+
+    cout << "structured_composite_int_method enter\n";
+
     if (params.size() != 2)
       DAL_THROW(failure_error, 
 	  "Bad number of parameters : " << params.size() << " should be 2.");
@@ -112,7 +116,8 @@ namespace getfem
 			  classical_fem(pm->trans_of_convex(0), 0), pim);
 
     return new integration_method
-      (composite_approx_int_method(mf, pim->approx_method()->ref_convex()));
+      (composite_approx_int_method(*pmp, mf,
+				   pim->approx_method()->ref_convex()));
   }
   
 }  /* end of namespace getfem.                                            */

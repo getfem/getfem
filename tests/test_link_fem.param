@@ -3,15 +3,15 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%% pde parameters :	        				      %%%%%
-N = 1;                  % dimension of the domain.
+N = 2;                  % dimension of the domain.
 LX = 1.0;		% size in X.
 LY = 1.0;	        % size in Y.
 LZ = 1.0;		% size in Z.
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 K = 1;                  % Finite element degree.
-KI = 2;                 % Integration degree
-INTEGRATION = 2;        % 0 = exact integration.
+KI = 6;                 % Integration degree
+INTEGRATION = 3;        % 0 = exact integration.
 			% 1 = Newton Cotes of degree KI
 			% 2 = Gauss for segment of degree KI
 			% 3 = composite with Newton cotes, order 2*K, KI decomp

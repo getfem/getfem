@@ -39,36 +39,37 @@ namespace getfem
     orgs.resize(m.nb_convex());
     gtrans.resize(m.nb_convex());
     dal::bit_vector nn = m.points().index();
-    size_type i;
-    for (i = 0; i <= nn.last_true(); ++i) {
+    for (size_type i = 0; i <= nn.last_true(); ++i) {
       vertexes.add(m.points()[i]);
     }
     nn = m.convex_index();
-    for (i << nn; i != size_type(-1); i << nn) {
+    for (size_type cv = nn.take_first(); cv != size_type(-1); cv << nn) {
       
-      bgeot::pgeometric_trans pgt = m.trans_of_convex(i);
+      bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
       size_type N = pgt->structure()->dim();
       size_type P = m.dim();
       if (!(pgt->is_linear()) || N != P) 
 	DAL_THROW(internal_error, "Bad geometric transformations.");
-      
+    
       base_poly PO;
       base_matrix a(P, pgt->nb_points());
       base_matrix pc(pgt->nb_points() , N);
       base_matrix TMP1(N,N), B0(N, P);
-      
+    
       for (size_type j = 0; j < pgt->nb_points(); ++j)
 	for (size_type k = 0; k < P; ++k)
-	  a(i,j) = (m.points_of_convex(i)[j])[i];
+	  a(k,j) = (m.points_of_convex(cv)[j])[k];
       
       for (size_type k = 0; k < pgt->nb_points(); ++k)
 	for (dim_type n = 0; n < N; ++n)
 	  { PO = pgt->poly_vector()[k]; PO.derivative(n); pc(k,n) = PO[0]; }
+    
       bgeot::mat_product(a, pc, B0);
       bgeot::mat_gauss_inverse(B0, TMP1);
-      det[i] = bgeot::mat_gauss_det(B0, TMP1);
-      gtrans[i] = B0;
-      orgs[i] = m.points_of_convex(i)[0];
+      det[cv] = 1.0 / bgeot::mat_gauss_det(B0, TMP1);
+      gtrans[cv] = B0;
+      orgs[cv] = m.points_of_convex(cv)[0];
+    
     }
   }
 
@@ -152,6 +153,8 @@ namespace getfem
 	    delete smc.pm;
 	    DAL_THROW(to_be_done_error, "Sorry, not implemented.");
 	  }
+	  // smc.pm->write_to_file(cout);
+
 	  smc.pmp = new mesh_precomposite(*(smc.pm));
 	  iss = __str_mesh_cv_tab->add(smc);
 	  found = true;
@@ -179,6 +182,8 @@ namespace getfem
       DAL_THROW(to_be_done_error,
 		"This element is not taken into account. Contact us");
     
+
+   
     pm  = (*__str_mesh_cv_tab)[iss].pm;
     pmp = (*__str_mesh_cv_tab)[iss].pmp;
 

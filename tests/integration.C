@@ -55,6 +55,18 @@ int main(void)
 	cout << endl << endl;
       }
     }
+
+    sprintf(meth, "IM_STRUCTURED_COMPOSITE(IM_NC(2, 1), 3)");
+    pai = getfem::int_method_descriptor(meth)->method.pai;
+
+    cout << "methode produit\n";
+    
+    for (size_type k = 0; k < pai->nb_points(); ++k) {
+      cout << "Coeff " << k << " : " << pai->integration_coefficients()[k];
+      cout << "\t point : " << pai->integration_points()[k] << endl;
+      
+    }
+
   }
   DAL_STANDARD_CATCH_ERROR;
   

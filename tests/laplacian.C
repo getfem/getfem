@@ -53,7 +53,7 @@ struct lap_pb
 
   scalar_type LX, LY, LZ, incline, residu;
   size_type N;
-  int NX, K, fem_type;
+  int NX, K, fem_type, KI;
 
   sparse_matrix_type RM;   /* rigidity matrix.                            */
   linalg_vector U, B; /* inconnue et second membre.                       */
@@ -87,6 +87,7 @@ void lap_pb::init(void)
   mesh_type = PARAM.int_value("MESH_TYPE", "Mesh type ");
   residu = PARAM.real_value("RESIDU", "Residu for c.g.");
   K = PARAM.int_value("K", "Finite element degree");
+  KI = PARAM.int_value("KI", "Integration degree");
   fem_type = PARAM.int_value("FEM_TYPE", "Finite element method");
   datafilename = std::string( PARAM.string_value("ROOTFILENAME",
 			     "File name for saving"));
@@ -176,6 +177,14 @@ void lap_pb::init(void)
     else
       DAL_THROW(dal::internal_error,
 		"Product of 1D Gauss only for parallelepipeds");
+    break;
+  case 3 :
+    if (mesh_type == 0)
+      sprintf(meth, "IM_STRUCTURED_COMPOSITE(IM_NC(%d, %d), %d)",
+	      N, 2*K, KI);
+    else
+      DAL_THROW(dal::internal_error,
+		"Composite integration only for simplexes");
     break;
   case 11 : sprintf(meth, "IM_TRIANGLE(1)"); break;
   case 12 : sprintf(meth, "IM_TRIANGLE(2)"); break;
