@@ -473,7 +473,6 @@ namespace getfem
       
       std::stringstream name2;
       name2 << "IM_NC(" << int(nc-1) << "," << int(k) << ")";
-      cout << "name in face : " << name2.str() << endl;
       for (short_type f = 0; f < structure()->nb_faces(); ++f)
 	add_method_on_face(int_method_descriptor(name2.str()), f);
     }
