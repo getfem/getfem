@@ -91,6 +91,7 @@ while ($lss) {
   if ($nbf) { print TMPF4 "    // $name\n    "; }
   for ($i = 0; $i < $nbf; ++$i) {
     read_line;
+    if (!($li=~/IM_/)) { $li = "IM_".$li; }
     print TMPF4 "\"$li\",";
   }
   if ($nbf) { print TMPF4 "\n"; }
