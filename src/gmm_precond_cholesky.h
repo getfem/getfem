@@ -94,8 +94,12 @@ namespace gmm {
     size_type ncols(col_major) const { return mat_ncols(col_trimatrix); }
     size_type ncols(void) const      { return ncols(sub_orientation()); }
     
-    cholesky_precond(const Matrix& A) : Tri_ptr(A.nrows()+1)
-    { do_cholesky(A, sub_orientation()); }
+    cholesky_precond(const Matrix& A) : Tri_ptr(A.nrows()+1) { 
+      if (!is_sparse(A))
+	DAL_THROW(failure_error,
+		  "Matrix should be sparse for incomplete cholesky");
+      do_cholesky(A, sub_orientation());
+    }
   };
 
   template <class Matrix, class V2> inline
@@ -124,13 +128,13 @@ namespace gmm {
 
   template <class Matrix>
   void cholesky_precond<Matrix>::do_cholesky(const Matrix& A, row_major) {
-    size_type Tri_loc, n = mat_nrows(A), d, g, h, i, j, k;
+    size_type Tri_loc = 0, n = mat_nrows(A), d, g, h, i, j, k, at;
     value_type z;
     Tri_ptr[0] = 0;
     
     for (int count = 0; count < 2; ++count) {
       if (count) { Tri_val.resize(Tri_loc); Tri_ind.resize(Tri_loc); }
-      for (Tri_loc = 0, i = 0; i < n; ++i) {
+      for (at = 0, Tri_loc = 0, i = 0; i < n; ++i) {
 	typedef typename linalg_traits<Matrix>::const_sub_row_type row_type;
 	row_type row = mat_const_row(A, i);
         typename linalg_traits<row_type>::const_iterator
@@ -138,17 +142,25 @@ namespace gmm {
 	
 	for (; it != ite; ++it)
 	  if (it.index() >= i) {
-	    if (count) { Tri_val[Tri_loc] = *it; Tri_ind[Tri_loc]=it.index(); }
+	    if (count) { 
+	      Tri_val[Tri_loc] = *it; Tri_ind[Tri_loc]=it.index();
+	      for (j = Tri_loc; j > at; --j)
+		if (Tri_ind[j] < Tri_ind[j-1]) {
+		  std::swap(Tri_ind[j], Tri_ind[j-1]);
+		  std::swap(Tri_val[j], Tri_val[j-1]);
+		}
+	    }
 	    ++Tri_loc;
 	  }
-	if (count) Tri_ptr[i+1] = Tri_loc;
+	if (count) at = Tri_ptr[i+1] = Tri_loc;
       }
     }
     
-    for (k = 0; k < n - 1; k++) {
+    for (k = 0; k < n /* - 1 */ ; k++) {
       d = Tri_ptr[k];
+      if (Tri_val[d] < 0) DAL_THROW(failure_error, "negative value found");
       z = Tri_val[d] = sqrt(Tri_val[d]);
-      
+
       for (i = d + 1; i < Tri_ptr[k+1]; i++) Tri_val[i] /= z;
       for (i = d + 1; i < Tri_ptr[k+1]; i++) {
 	z = Tri_val[i];
@@ -160,16 +172,13 @@ namespace gmm {
 	    if (Tri_ind[g] == Tri_ind[j]) Tri_val[j] -= z * Tri_val[g];
       }
     }
-    d = Tri_ptr[n-1];
-    Tri_val[d] = sqrt(Tri_val[d]);
-    
     row_trimatrix = csr_matrix_ref<value_type *, size_type *, size_type *, 0>
       (&(Tri_val[0]), &(Tri_ind[0]), &(Tri_ptr[0]), mat_nrows(A),mat_ncols(A));
   }
   
   template <class Matrix>
   void cholesky_precond<Matrix>::do_cholesky(const Matrix& A, col_major) {
-    size_type Tri_loc, d, g, h, i, j, k, n = mat_nrows(A);
+    size_type Tri_loc = 0, d, g, h, i, j, k, n = mat_nrows(A);
     value_type z;
     Tri_ptr[0] = 0;
     
@@ -183,15 +192,23 @@ namespace gmm {
 	
 	for (; it != ite; ++it)
 	  if (it.index() >= i) {
-	    if (count) { Tri_val[Tri_loc] = *it; Tri_ind[Tri_loc]=it.index(); }
+	    if (count) {
+	      Tri_val[Tri_loc] = *it; Tri_ind[Tri_loc]=it.index(); 
+	      for (j = Tri_loc; j > at; --j)
+		if (Tri_ind[j] < Tri_ind[j-1]) {
+		  std::swap(Tri_ind[j], Tri_ind[j-1]);
+		  std::swap(Tri_val[j], Tri_val[j-1]);
+		}
+	    }
 	    ++Tri_loc;
 	  }
 	if (count) Tri_ptr[i+1] = Tri_loc;
       }
     }
     
-    for (k = 0; k < n - 1; k++) {
+    for (k = 0; k < n; k++) {
       d = Tri_ptr[k];
+      if (Tri_val[d] < 0) DAL_THROW(failure_error, "negative value found");
       z = Tri_val[d] = sqrt(Tri_val[d]);
       
       for (i = d + 1; i < Tri_ptr[k+1]; i++) Tri_val[i] /= z;
@@ -205,8 +222,6 @@ namespace gmm {
 	    if (Tri_ind[g] == Tri_ind[j]) Tri_val[j] -= z * Tri_val[g];
       }
     }
-    d = Tri_ptr[n-1];
-    Tri_val[d] = sqrt(Tri_val[d]);
     
     col_trimatrix = csc_matrix_ref<value_type *, size_type *, size_type *, 0>
       (&(Tri_val[0]), &(Tri_ind[0]), &(Tri_ptr[0]), mat_nrows(A),mat_ncols(A));
