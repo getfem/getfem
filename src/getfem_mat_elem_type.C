@@ -93,12 +93,20 @@ namespace getfem {
     return add_to_met_tab(f);
   }
 
-  pmat_elem_type mat_elem_nonlinear(const nonlinear_elem_term &nlt, pfem pfi) {
-    mat_elem_type f; f.resize(1); f[0].t = GETFEM_NONLINEAR_;
+  static pmat_elem_type mat_elem_nonlinear_(pnonlinear_elem_term nlt, pfem pfi, unsigned nl_part) {
+    mat_elem_type f; f.resize(1); 
+    f[0].t = GETFEM_NONLINEAR_; f[0].nl_part = nl_part;
     f[0].pfi = pfi;
-    f[0].nlt = &nlt;
-    f.mi = nlt.sizes();
+    f[0].nlt = nlt;
+    f.mi = nlt->sizes();
     return add_to_met_tab(f);
+  }
+
+  pmat_elem_type mat_elem_nonlinear(pnonlinear_elem_term nlt, std::vector<pfem> pfi) {
+    if (pfi.size() == 0) DAL_THROW(dal::dimension_error, "mat_elem_nonlinear with no pfem!");
+    pmat_elem_type me = mat_elem_nonlinear_(nlt, pfi[0], 0);
+    for (size_type i=1; i < pfi.size(); ++i) me = mat_elem_product(mat_elem_nonlinear_(nlt, pfi[i], i),me);
+    return me;
   }
 
   pmat_elem_type mat_elem_product(pmat_elem_type a, pmat_elem_type b) {

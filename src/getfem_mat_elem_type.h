@@ -1,3 +1,4 @@
+/* -*- c++ -*- (enables emacs c++ mode)                                    */
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  GEneric Tool for Finite Element Methods (getfem)             */
@@ -42,25 +43,44 @@ namespace getfem
 {
 
   enum constituant_type
-    { GETFEM_BASE_, GETFEM_GRAD_, GETFEM_HESSIAN_, GETFEM_NONLINEAR_ };
+  { GETFEM_BASE_, GETFEM_GRAD_, GETFEM_HESSIAN_, GETFEM_NONLINEAR_ };
 
+  /**
+     abstract class for integration of non-linear terms into the mat_elem computations
+     the nonlinear term is added into the mat_elem_type via mat_elem_nonlinear
+
+     The lifetime of this object should be the whole lifetime of the program.. do not destroy it!
+     
+     The object must depend on one pfem (and may depend on other optional pfem)
+
+     During elementary computations, the function "prepare" is called
+     for each optional pfem. Then the method "compute" is called with
+     the main fem context.
+  */
   class nonlinear_elem_term {
     public :
       virtual const bgeot::multi_index &sizes() const = 0;
-      virtual void compute(fem_interpolation_context& ctx,
-			   base_tensor &t)  const = 0;
+      virtual void compute(fem_interpolation_context& /*ctx*/,
+			   base_tensor &/*output*/) const {}
+      virtual void prepare(fem_interpolation_context& /*ctx*/, size_type /*nl_part*/) const {}
       virtual ~nonlinear_elem_term() {}
   };
+
+  typedef const nonlinear_elem_term *pnonlinear_elem_term;
 
   struct constituant {
     constituant_type t;
     pfem pfi;
+    unsigned nl_part; /* only usefull with GETFEM_NONLINEAR_ : since the nonlinear term may use
+			 more than one pfem, it will be splitted into one "constituant" per fem
+			 for (nl_part = 0), the mat_elem_* computations will call nlt->compute,
+			 for (nl_part != 0) they will cal nlt->prepare(ctx,nl_part) */
     const nonlinear_elem_term *nlt;
   };
 
   /** Description of an elementary matrix.  This class 
-   *       is not to be manipulate by itself. Use pmat\_elem\_type and
-   *       the functions written to produce those descriptions.
+   *  is not to be manipulate by itself. Use pmat\_elem\_type and
+   *  the functions written to produce those descriptions.
    */ 
   struct mat_elem_type : public std::vector<constituant>
   {
@@ -90,8 +110,12 @@ namespace getfem
   pmat_elem_type mat_elem_hessian(pfem pfi);
   /** Gives a pointer to the structure describing the elementary matrix
    *   which compute the integral of a nonlinear term.
+   * The pnonlinear_elem_term must not be destroyed, at any time!
+   * vector pfi can not be empty
    */
-  pmat_elem_type mat_elem_nonlinear(const nonlinear_elem_term &, pfem pfi);
+  pmat_elem_type mat_elem_nonlinear(pnonlinear_elem_term, std::vector<pfem> pfi);
+
+  //pmat_elem_type mat_elem_nonlinear_assistant(pnonlinear_elem_term, pfem pfi);
   /** Gives a pointer to the structure describing the elementary matrix
    *   which compute the integral of product of the integrals described by
    *   *pet1 and *pet2.

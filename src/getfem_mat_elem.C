@@ -131,11 +131,13 @@ namespace getfem
 	  break;
 	case GETFEM_HESSIAN_ : ++k; hess_reduction.push_back(k); break;
 	case GETFEM_NONLINEAR_ :
-	  for (dim_type ii = 1; ii < (*it).nlt->sizes().size(); ++ii) ++k;
-	  if (is_ppi)
-	    DAL_THROW(failure_error,
-	       "For nonlinear terms you have to use approximated integration");
-	  computed_on_real_element = true;
+	  if ((*it).nl_part == 0) {
+	    for (dim_type ii = 1; ii < (*it).nlt->sizes().size(); ++ii) ++k;
+	    if (is_ppi)
+	      DAL_THROW(failure_error,
+			"For nonlinear terms you have to use approximated integration");
+	    computed_on_real_element = true;
+	  }
 	  break;
 	}
       }
@@ -187,8 +189,16 @@ namespace getfem
 	  }
 	  break;
 	case GETFEM_NONLINEAR_ :
-	  (*it).nlt->compute(ctx, elmt_stored[k]);
-	  for (dim_type ii = 1; ii < (*it).nlt->sizes().size(); ++ii) ++mit;
+	  if ((*it).nl_part != 0) { /* for auxiliary fem of the nonlinear_term, the "prepare" method is called */
+	    (*it).nlt->prepare(ctx, (*it).nl_part);
+	    /* the dummy assistant multiplies everybody by 1
+	       -> not efficient ! */
+	    bgeot::multi_index sz(1); sz[0] = 1;
+	    elmt_stored[k].adjust_sizes(sz); t[0] = 1.;
+	  } else {
+	    (*it).nlt->compute(ctx, elmt_stored[k]);
+	    for (dim_type ii = 1; ii < (*it).nlt->sizes().size(); ++ii) ++mit;
+	  }
 	  break;
 	}
       }
@@ -214,7 +224,7 @@ namespace getfem
       do {
         for (V = Vtab[k]; k; --k)
           Vtab[k-1] = V = *pts[k] * V;
-        for (; k < n0/*elmt_stored[0].size()*/; ++k)
+        for (; k < n0; ++k)
           *pt++ += V * pts0[k];
         for (k=1; k != pme->size() && ++pts[k] == elmt_stored[k].end(); ++k)
           pts[k] = elmt_stored[k].begin();

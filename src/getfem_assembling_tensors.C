@@ -271,7 +271,7 @@ namespace getfem {
   /*
    */
   struct mf_comp {
-    const nonlinear_elem_term* nlt;
+    pnonlinear_elem_term nlt;
     const mesh_fem* pmf;
     typedef enum { BASE=1, GRAD=2, HESS=3, NONLIN=4 } op_type;
     op_type op; /* the numerical values indicates the number 
@@ -293,7 +293,7 @@ namespace getfem {
     */
     mf_comp(const mesh_fem* pmf_, op_type op_, bool vect) :
       nlt(0), pmf(pmf_), op(op_), vectorize(vect) {}
-    mf_comp(const mesh_fem* pmf_, const nonlinear_elem_term* nlt_) : 
+    mf_comp(const mesh_fem* pmf_, pnonlinear_elem_term nlt_) : 
       nlt(nlt_), pmf(pmf_), op(NONLIN), vectorize(false) {}
   };
 
@@ -379,8 +379,11 @@ namespace getfem {
 	  case mf_comp::BASE: pme2 = mat_elem_base(mfcomp[i].pmf->fem_of_element(cv)); break;
 	  case mf_comp::GRAD: pme2 = mat_elem_grad(mfcomp[i].pmf->fem_of_element(cv)); break;
 	  case mf_comp::HESS: pme2 = mat_elem_hessian(mfcomp[i].pmf->fem_of_element(cv)); break;
-	  case mf_comp::NONLIN: pme2 = mat_elem_nonlinear(*mfcomp[i].nlt, mfcomp[i].pmf->fem_of_element(cv)); break;
-	  }
+	  case mf_comp::NONLIN: {
+	    std::vector<pfem> ftab(1); ftab[0] = mfcomp[i].pmf->fem_of_element(cv);
+	    pme2 = mat_elem_nonlinear(mfcomp[i].nlt, ftab); 
+	  } break;
+	  } 
 	  if (pme == NULL) pme = pme2;
 	  else pme = mat_elem_product(pme, pme2);
 	  
