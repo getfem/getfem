@@ -214,13 +214,18 @@ R o n a l d
 
 ------------------------------------------------------------------------------
 
-
-. Vers la version 1.5 :
-	. 8 x précision (ou 4 x) pour certains calculs élémentaires
-	. methode de quadratures sur des fichiers
+. Le Vendredi 25 Juillet 2003 :
+  -----------------------------
+  Version 1.5 bouclée. Nouveautés par rapport à la 1.4 :
+	. Possibilité d'utiliser 8 x précision (ou 4 x) pour certains
+	  calculs élémentaires (avec QD).
+	. Les methodes de quadratures sont dans des fichiers à part, inclus
+	  par un script perl.
 	. méthodes composites et hierarchiques composites en 3D
-	. Support pour Xfem
-	. Preconditionnneurs dans GMM -> future version indép.
-	. Nouvelle interfaçage de l'interface MATLAB
+	. Support pour les Xfems
+	. Preconditionnneurs dans GMM et version indépentande de GMM.
+	  Sauvegarde au format Harwell-Boeing et Matrix-Market.
+	  Nombreux bugs fixés.
+	. Nouvelle interfaçage de l'interface MATLAB (un seul mex file).
 	. Graphiques nettement améliorés avec l'interface MATLAB,
-	  coupes, isosurfaces, ... voir les exemples dans "Screenshots"
+	  coupes, isosurfaces ...

@@ -54,13 +54,12 @@ namespace getfem
 		 pfi->node_of_dof(j));
       }
     }
-    cout << "valid ok\n";
     is_valid = true;
   }
   
   size_type Xfem::nb_dof(void) const {
-    if (!is_valid) DAL_THROW(failure_error,
-			     "Valid the Xfem element before using it");
+    if (!is_valid)
+      DAL_THROW(failure_error, "Valid the Xfem element before using it");
     return _dof_types.size();
   }
 
