@@ -179,7 +179,7 @@ namespace gmm {
     clear(f);
     typename linalg_traits<Vector3>::const_iterator it2=fi[i].begin();
     for (size_type j = 0, l = cor[i].size(); j < l; ++j, ++it2) {
-      f[cor[i].index(j)] += *it2;
+      f[cor[i].index(j)] = *it2;
     }
   }
   
@@ -225,6 +225,9 @@ namespace gmm {
     global_to_local(f, fi, cor);
     // global_to_local(cof, cofi, cor); // pas bon, il faudrait un cor pour les contraintes ...
 
+    iteration iter2 = iter;
+    iter2.reduce_noisy();
+
     for (;;) {
 
       // Step 1
@@ -236,9 +239,6 @@ namespace gmm {
 	gmm::add(fi[i], gmm::scaled(wi[i], -1.0), wi[i]);
 	clear(gi[i]);
       }
-      
-      iteration iter2 = iter;
-      iter2.reduce_noisy();
       
       for (size_type i = 0; i < ms; ++i) {
 	iter2.init();
@@ -276,15 +276,19 @@ namespace gmm {
       } // to be optimized (passer à des produits locaux)
       
       for (size_type i = 0; i < nb_sub; ++i) {
-	gmm::mult(CO, Gi[i], gmm::mat_col(global_CO1, i));
-	gmm::mult(CO, u, cof, global_cof);
+	if (mat_nrows(CO) > 0) {
+	  gmm::mult(CO, Gi[i], gmm::mat_col(global_CO1, i));
+	  gmm::mult(CO, u, cof, global_cof);
+	}
 	gmm::mult(A, Gi[i], W);
 	global_f[i] = gmm::vect_sp(f, Gi[i]) - gmm::vect_sp(w, Gi[i]) ;
-	for (size_type j = 0; j < nb_sub; ++j)
-	  global_sm(i,j) = gmm::vect_sp(W, Gi[i]);
+	for (size_type j = 0; j <= i; ++j)
+	  global_sm(i,j) = global_sm(j,i) = gmm::vect_sp(W, Gi[j]);
       } // to be optimized (symmetrie et produits locaux)
 
-      gmm::copy(global_CO1, global_CO2);
+      cout << "global_sm = " << global_sm << endl;
+
+      if (mat_nrows(CO) > 0) gmm::copy(global_CO1, global_CO2);
       
       
       size_type nbconst = 0;
@@ -301,15 +305,19 @@ namespace gmm {
 	  copy(mat_row(global_CO2, i), mat_row(global_CO3, ++k));
 	}
       }
-      cout << "global_CO3 = " << global_CO3 << endl;
-
+     
       iteration iter3 = iter;
       iter3.reduce_noisy();
       iter3.init();
       gmm::clear(alpha);
-      constrained_cg(global_sm, global_CO3, alpha
-, global_f, global_cof2,
-		     identity_matrix(), identity_matrix(), iter3);
+
+//        global_CO3(nbconst, 0) = -1.0; global_cof2[nbconst] = -10.0;
+//        alpha[0] = 10;
+
+      cout << "global_CO3 = " << global_CO3 << endl;
+
+      constrained_cg(global_sm, global_CO3, alpha, global_f, global_cof2,
+ 		     identity_matrix(), identity_matrix(), iter3);
       value_type res = 0, sum_alphai = 0;
       for (size_type i = 0; i < nb_sub; ++i) {
 	cout << "alpha[" << i << "] = " << alpha[i] << endl;
