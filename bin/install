@@ -155,7 +155,12 @@ if (-d "matlabcom")
   $listeB =~ s/matlabcom\//lib\//g;
   print MAKEFILE "\n\n", 'matlabcom : lib/libgetfem.so ', $listeB, "\n\n";
   print MAKEFILE 'lib/libgetfem.so : ', " \$(GETFEM_LIB) .\/sources\/*.o \n";
-  print MAKEFILE "\t ld", ' -shared sources/dal*.o sources/bgeot*.o sources/ftool*.o sources/getfem*.o sources/matlabint*.o -o lib/libgetfem.so', "\n\n";
+  if ($systeme =~ /Linux/) {
+    print MAKEFILE "\t ld", ' -shared sources/dal*.o sources/bgeot*.o sources/ftool*.o sources/getfem*.o sources/matlabint*.o -o ../lib/libgetfem.so', "\n\n";
+  }
+  else {
+    print MAKEFILE "\t rm -f ../lib/libgetfem.so; ", 'cxx -shared sources/dal*.o sources/bgeot*.o sources/ftool*.o sources/getfem*.o sources/matlabint*.o -o ../lib/libgetfem.so -lm', "\n\n";
+  }
 # il faut moduler ça si tout n'est pas chargé ...
 
 # il faudrait faire proprement les dépendences des Mex files.
