@@ -201,6 +201,7 @@ namespace dal
   template <class T> inline T abs(std::complex<T> a) { return std::abs(a); }
   template <class T> inline T pos(T a) { return (a < T(0)) ? T(0) : a; }
   template <class T> inline T neg(T a) { return (a < T(0)) ? -a : T(0); }
+  template <class T> inline T sgn(T a) { return (a < T(0)) ? T(-1) : T(1); }
   inline double random() { return double(rand())/(RAND_MAX+1); }
   template <class T> inline T irandom(T max) { return T(random() * max); }
 }

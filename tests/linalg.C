@@ -72,6 +72,16 @@ int main(void)
     cout << "m = " << m << endl;
     cout << "x = " << x << endl;
 
+    gmm::dense_matrix<double> r(10, 10), q(10, 10), qr(10, 10), qqt(10, 10);
+    gmm::qr_factor(m, q, r);
+    cout << "r = " << r << endl;
+    cout << "q = " << q << endl;
+    gmm::mult(q, r, qr);
+    cout << "qr = " << qr << endl;
+    gmm::mult(q, gmm::transposed(q), qqt);
+    cout << "qqt = " << qqt << endl;
+    // getchar();
+
     gmm::mult(m, x, b);
     cout << "b = " << b << endl;
     gmm::clear(y);

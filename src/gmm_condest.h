@@ -59,9 +59,9 @@ namespace gmm {
       if (d == 0)
 	mult(B,v,tmp);
       else if (d > 0)
-	mult(B,v,tmp2); mult(transposed(B),tmp2,tmp);
+	{ mult(B,v,tmp2); mult(transposed(B),tmp2,tmp); }
       else 
-	mult(transposed(B),v,tmp2); mult(B,tmp2,tmp);
+	{ mult(transposed(B),v,tmp2); mult(B,tmp2,tmp); }
       
       e = vect_norm2(tmp);
       scale(tmp, 1.0 / e);
