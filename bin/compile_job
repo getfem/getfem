@@ -143,8 +143,7 @@ close(MAKEFILE);
 
 print "\n\nCompiling\n";
 
-# open F, "make |" or die; print $_ while (<F>); close F;
-print `make`;
+open F, "make |" or die; print $_ while (<F>); close F;
 
 #######################################
 #         Documentation               #
