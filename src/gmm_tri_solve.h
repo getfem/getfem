@@ -125,10 +125,12 @@ namespace gmm {
   template <class TriMatrix, class VecX>
   inline void upper_tri_solve__(const TriMatrix& T, VecX& x, size_t k,
 				row_major, abstract_sparse, bool is_unit) {
+    typedef typename linalg_traits<TriMatrix>::const_sub_row_type ROW;
     typename linalg_traits<TriMatrix>::value_type t;
-    for (int i = k - 1; i >= 0; --i) {
-      typedef typename linalg_traits<TriMatrix>::const_sub_row_type ROW;
-      ROW c = mat_const_row(T, i);
+    typename linalg_traits<TriMatrix>::const_row_iterator
+      itr = mat_row_const_end(T) - 1;
+    for (int i = k - 1; i >= 0; --i, --itr) {
+      ROW c = linalg_traits<TriMatrix>::row(itr);
       typename linalg_traits<ROW>::const_iterator 
 	it = vect_const_begin(c), ite = vect_const_end(c);
       for (t = x[i]; it != ite; ++it)

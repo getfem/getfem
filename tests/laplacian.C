@@ -435,8 +435,8 @@ void lap_pb::solve(void) {
   // gmm::identity_matrix P;
   // gmm::diagonal_precond<sparse_matrix_type> P(SM);
   // gmm::mr_approx_inverse_precond<sparse_matrix_type> P(SM, 10, 10E-17);
-  // gmm::cholesky_precond<sparse_matrix_type> P(SM);
-  gmm::choleskyt_precond<sparse_matrix_type> P(SM, 0, 1E-9);
+  gmm::cholesky_precond<sparse_matrix_type> P(SM);
+  // gmm::choleskyt_precond<sparse_matrix_type> P(SM, 0, 1E-9);
   // gmm::ilu_precond<sparse_matrix_type> P(SM);
   cout << "Time to compute preconditionner : "
        << ftool::uclock_sec() - time << " seconds\n";
@@ -444,6 +444,9 @@ void lap_pb::solve(void) {
   cout << "Solve\n";
   gmm::cg(SM, U, B, P, iter);
   // gmm::gmres(SM, U, B, P, 50, iter);
+  
+  cout << "Time to solve : "
+       << ftool::uclock_sec() - time << " seconds\n";
 
   if (gen_dirichlet) {
     linalg_vector Uaux(nb_dof);
@@ -451,6 +454,8 @@ void lap_pb::solve(void) {
     U = linalg_vector(nb_dof);
     gmm::copy(Uaux, U);
   }
+
+  
 
   failed = !(iter.converged());
 }
@@ -494,7 +499,7 @@ int main(int argc, char *argv[])
     
     exectime = ftool::uclock_sec();
     p.solve();
-    cout << "solve time : " << ftool::uclock_sec() - exectime << "seconds" << endl;
+    
     if (p.failed) { cerr << "Solve procedure has failed\n"; }
     
     total_time += ftool::uclock_sec() - exectime;
@@ -520,7 +525,7 @@ int main(int argc, char *argv[])
 	 << "H1 error = " << h1norm << endl
 	 << "Linfty error = " << linfnorm << endl;
      
-    getfem::save_solution(p.datafilename + ".dataelt", p.mef, p.U, p.K);
+    // getfem::save_solution(p.datafilename + ".dataelt", p.mef, p.U, p.K);
   }
   DAL_STANDARD_CATCH_ERROR;
   return 0; 
