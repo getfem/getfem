@@ -472,7 +472,7 @@ int main(int argc, char *argv[])
 	 << "Linfty error = " << linfnorm << endl;
      
 
-    getfem::save_solution(p.datafilename + ".dataelt", p.mef, p.U, 1, p.K);
+    getfem::save_solution(p.datafilename + ".dataelt", p.mef, p.U, p.K);
   }
   DAL_STANDARD_CATCH_ERROR;
   return 0; 

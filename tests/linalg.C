@@ -47,7 +47,8 @@ int main(void)
     gmm::mult(m, x, b);
     cout << "b = " << b << endl;
     gmm::clear(y);
-    gmm::bicgstab(m, y, b, gmm::identity_matrix(), 1000, 1E-16, 0);
+    gmm::iteration iter(1e-16);
+    gmm::bicgstab(m, y, b, gmm::identity_matrix(), iter);
     cout << "y = " << y << endl;
     gmm::add(gmm::scaled(x, double(-1.0)), y);
     cout << "y = " << y << endl;
@@ -66,7 +67,8 @@ int main(void)
     std::vector<double> y2(10), b2(10);
     gmm::copy(b, b2);
     gmm::clear(y2);
-    gmm::bicgstab(m2, y2, b2, gmm::identity_matrix(), 1000, 1E-16, 0);
+    iter.init();
+    gmm::bicgstab(m2, y2, b2, gmm::identity_matrix(), iter);
     cout << "y2 = " << y2 << endl;
     gmm::add(gmm::scaled(x, -1.0), y2);
     error = gmm::vect_norm2(y2);
@@ -92,7 +94,8 @@ int main(void)
     cout << "m3 = " << m3 << endl;
     cout << "transposed(m3) = " << gmm::transposed(m3) << endl;
     gmm::clear(y2);
-    gmm::bicgstab(m3, y2, b, gmm::identity_matrix(), 1000, 1E-16, 0);
+    iter.init();
+    gmm::bicgstab(m3, y2, b, gmm::identity_matrix(), iter);
     cout << "y2 = " << y2 << endl;
     gmm::add(gmm::scaled(x, -1.0), y2);
     error = gmm::vect_norm2(y2);
@@ -109,7 +112,8 @@ int main(void)
     cout << "m4 = " << m4 << endl;
     cout << "transposed(m4) = " << gmm::transposed(m4) << endl;
     gmm::clear(y2);
-    gmm::bicgstab(m4, y2, b, gmm::identity_matrix(), 1000, 1E-16, 0);
+    iter.init();
+    gmm::bicgstab(m4, y2, b, gmm::identity_matrix(), iter);
     cout << "y2 = " << y2 << endl;
     gmm::add(gmm::scaled(x, -1.0), y2);
     error = gmm::vect_norm2(y2);
@@ -126,7 +130,8 @@ int main(void)
     cout << "m5 = " << m5 << endl;
     cout << "transposed(m5) = " << gmm::transposed(m5) << endl;
     gmm::clear(y2);
-    gmm::bicgstab(m5, y2, b, gmm::identity_matrix(), 1000, 1E-16, 0);
+    iter.init();
+    gmm::bicgstab(m5, y2, b, gmm::identity_matrix(), iter);
     cout << "y2 = " << y2 << endl;
     gmm::add(gmm::scaled(x, -1.0), y2);
     error = gmm::vect_norm2(y2);
@@ -143,7 +148,8 @@ int main(void)
     cout << "m5bis = " << m5bis << endl;
     cout << "transposed(m5bis) = " << gmm::transposed(m5bis) << endl;
     gmm::clear(y2);
-    gmm::bicgstab(m5bis, y2, b, gmm::identity_matrix(), 1000, 1E-16, 0);
+    iter.init();
+    gmm::bicgstab(m5bis, y2, b, gmm::identity_matrix(), iter);
     cout << "y2 = " << y2 << endl;
     gmm::add(gmm::scaled(x, -1.0), y2);
     error = gmm::vect_norm2(y2);
@@ -173,8 +179,9 @@ int main(void)
 // 			     (gmm::sub_matrix(m6,sint2, sint1))) << endl;
 	 << gmm::sub_matrix(m6,sint1, sint2) << endl;
     gmm::clear(y2);
+    iter.init();
     gmm::bicgstab(gmm::sub_matrix(m6, sint1, sint2), y2, b,
-		  gmm::identity_matrix(), 1000, 1E-16, 0);
+		  gmm::identity_matrix(), iter);
     cout << "y2 = " << y2 << endl;
     gmm::add(gmm::scaled(x, -1.0), y2);
     error = gmm::vect_norm2(y2);
@@ -187,8 +194,9 @@ int main(void)
     cout << "gmm::sub_matrix(m6, ssli1, ssli2)  = "
 	 << gmm::sub_matrix(m6, ssli1, ssli2) << endl;
     gmm::clear(y2);
+    iter.init();
     gmm::bicgstab(gmm::sub_matrix(m6, ssli1, ssli2), y2, b,
-		  gmm::identity_matrix(), 1000, 1E-16, 0);
+		  gmm::identity_matrix(), iter);
     cout << "y2 = " << y2 << endl;
     gmm::add(gmm::scaled(x, -1.0), y2);
     error = gmm::vect_norm2(y2);
@@ -201,8 +209,9 @@ int main(void)
     cout << "gmm::sub_matrix(m6, sint1, ssli2)  = "
 	 << gmm::sub_matrix(m6, sint1, ssli2) << endl;
     gmm::clear(y2);
+    iter.init();
     gmm::bicgstab(gmm::sub_matrix(m6, sint1, ssli2), y2, b,
-		  gmm::identity_matrix(), 1000, 1E-16, 0);
+		  gmm::identity_matrix(), iter);
     cout << "y2 = " << y2 << endl;
     gmm::add(gmm::scaled(x, -1.0), y2);
     error = gmm::vect_norm2(y2);
@@ -216,8 +225,9 @@ int main(void)
     cout << "gmm::sub_matrix(m6, sind1, sind2)  = "
 	 << gmm::sub_matrix(m6, sind1, sind2) << endl;
     gmm::clear(y3);
+    iter.init();
     gmm::bicgstab(gmm::sub_matrix(m6, sind1, sind2), y3, b,
-		  gmm::identity_matrix(), 1000, 1E-16, 0);
+		  gmm::identity_matrix(), iter);
     cout << "y3 = " << y3 << endl;
     gmm::add(gmm::scaled(x, -1.0), y3);
     error = gmm::vect_norm2(y3);
@@ -236,8 +246,9 @@ int main(void)
     cout << "gmm::transposed(gmm::sub_matrix(m7, sind1, sind2))  = "
 	 << gmm::transposed(gmm::sub_matrix(m7, sind1, sind2)) << endl;
     gmm::clear(y);
+    iter.init();
     gmm::bicgstab(gmm::sub_matrix(m7, sind1, sind2), y, b,
-		  gmm::identity_matrix(), 1000, 1E-16, 0);
+		  gmm::identity_matrix(), iter);
     cout << "y = " << y << endl;
     gmm::add(gmm::scaled(x, -1.0), y);
     error = gmm::vect_norm2(y);
@@ -252,8 +263,9 @@ int main(void)
 	 << gmm::transposed(gmm::transposed(gmm::sub_matrix(m7, sint1, ssli2)))
 	 << endl;
     gmm::clear(y3);
+    iter.init();
     gmm::bicgstab(gmm::sub_matrix(m7, sint1, ssli2), y3, b,
-		  gmm::identity_matrix(), 1000, 1E-16, 0);
+		  gmm::identity_matrix(), iter);
     cout << "y3 = " << y3 << endl;
     gmm::add(gmm::scaled(x, -1.0), y3);
     error = gmm::vect_norm2(y3);
@@ -272,8 +284,9 @@ int main(void)
     cout << "gmm::transposed(gmm::sub_matrix(m8, sind1, sind2))  = "
 	 << gmm::transposed(gmm::sub_matrix(m8, sind1, sind2)) << endl;
     gmm::clear(y);
+    iter.init();
     gmm::bicgstab(gmm::sub_matrix(m8, sind1, sind2), y, b,
-		  gmm::identity_matrix(), 1000, 1E-16, 0);
+		  gmm::identity_matrix(), iter);
     cout << "y = " << y << endl;
     gmm::add(gmm::scaled(x, -1.0), y);
     error = gmm::vect_norm2(y);
@@ -288,8 +301,9 @@ int main(void)
 	 << gmm::transposed(gmm::transposed(gmm::sub_matrix(m8, sint1, ssli2)))
 	 << endl;
     gmm::clear(y3);
+    iter.init();
     gmm::bicgstab(gmm::sub_matrix(m8, sint1, ssli2), y3, b,
-		  gmm::identity_matrix(), 1000, 1E-16, 0);
+		  gmm::identity_matrix(), iter);
     cout << "y3 = " << y3 << endl;
     gmm::add(gmm::scaled(x, -1.0), y3);
     error = gmm::vect_norm2(y3);
@@ -306,7 +320,8 @@ int main(void)
 	      gmm::sub_matrix(m8, sint1, ssli2), m9);
     cout << "m9 = " << m9 << endl;
     gmm::mult(gmm::transposed(gmm::sub_matrix(m8, sint1, ssli2)), b, y);
-    gmm::cg(m9, y3, y, gmm::identity_matrix(), 1000, 1E-16, 0);
+    iter.init();
+    gmm::cg(m9, y3, y, gmm::identity_matrix(), iter);
     cout << "y3 = " << y3 << endl;
     gmm::add(gmm::scaled(x, -1.0), y3);
     error = gmm::vect_norm2(y3);

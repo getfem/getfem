@@ -708,6 +708,8 @@ namespace getfem {
   const mesh_fem& generic_assembly::do_mf_arg() {
     advance(); accept(OPEN_PAR,"expecting '('");
     if (tok_type() != MFREF) ASM_THROW_PARSE_ERROR("expecting mesh_fem reference");
+    if (tok_mfref_num() >= mftab.size()) 
+      ASM_THROW_PARSE_ERROR("reference to a non-existant mesh_fem #" << tok_mfref_num()+1);
     const mesh_fem& _mf = *mftab[tok_mfref_num()]; advance();
     accept(CLOSE_PAR, "expecting ')'");
     return _mf;
@@ -718,12 +720,8 @@ namespace getfem {
     std::vector<mf_comp> what;
     do {
       if (tok_type() != IDENT) ASM_THROW_PARSE_ERROR("expecting Base or Grad or Hess..");
-      std::string f = tok(); advance();
-      accept(OPEN_PAR);
-      if (tok_type() != MFREF) ASM_THROW_PARSE_ERROR("expecting mesh_fem reference #number");
-      const mesh_fem* pmf = mftab[tok_mfref_num()];
-      advance();
-      accept(CLOSE_PAR);
+      std::string f = tok(); 
+      const mesh_fem *pmf = &do_mf_arg();
       if (f.compare("Base")==0 || f.compare("vBase")==0) {
 	what.push_back(mf_comp(pmf, mf_comp::BASE, f[0] == 'v'));
       } else if (f.compare("Grad")==0 || f.compare("vGrad")==0) {
@@ -749,11 +747,11 @@ namespace getfem {
 	else if (tok().compare("qdim")==0) lst.push_back(vdim_specif(do_mf_arg().get_qdim()));
 	else ASM_THROW_PARSE_ERROR("expecting mdim(#mf) or qdim(#mf) or a number or a mesh_fem #id");
       } else if (tok_type() == NUMBER) {
-	lst.push_back(vdim_specif(tok_number_ival()));
+	lst.push_back(vdim_specif(tok_number_ival()+1));
 	advance();
       } else if (tok_type() == MFREF) {
 	if (tok_mfref_num() >= mftab.size()) 
-	  ASM_THROW_PARSE_ERROR("reference to a non-existant mesh_fem #" << tok_mfref_num());	  
+	  ASM_THROW_PARSE_ERROR("reference to a non-existant mesh_fem #" << tok_mfref_num()+1);
 	lst.push_back(vdim_specif(mftab[tok_mfref_num()]));
 	advance();
       } else if (tok_type() != CLOSE_PAR) ASM_THROW_PARSE_ERROR("expecting mdim(#mf) or qdim(#mf) or a number or a mesh_fem #id");
@@ -1014,7 +1012,9 @@ namespace getfem {
 	/* if we are allowed to dynamically create vectors */
 	if (outvec[arg_num] == 0) {
 	  if (vec_fact != 0) {
-	    outvec[arg_num] = vec_fact->create_vec(vds.nbelt());
+	    tensor_ranges r(vds.size());
+	    for (size_type i=0; i < vds.size(); ++i) r[i] = vds[i].dim;
+	    outvec[arg_num] = vec_fact->create_vec(r);
 	  }
 	  else ASM_THROW_PARSE_ERROR("output vector $" << arg_num+1 << " does not exist");
 	}

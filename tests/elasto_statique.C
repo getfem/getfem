@@ -249,28 +249,28 @@ void pb_data::init(void) {
   case 0 :
     sprintf(meth, "FEM_PK(%d,%d)", int(N), int(K));
     pfprinc = getfem::fem_descriptor(meth);
-    mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
-    mef_data.set_finite_element(nn, getfem::fem_descriptor(meth),
+    mef.set_finite_element(nn, pfprinc, ppi);
+    mef_data.set_finite_element(nn, pfprinc,
 				getfem::exact_simplex_im(N));
     sprintf(meth, "FEM_PK(%d,%d)", int(N), 0);
-    mef_data2.set_finite_element(nn, getfem::fem_descriptor(meth),
+    mef_data2.set_finite_element(nn, pfprinc,
 				 getfem::exact_simplex_im(N));
     break;
   case 1 :
     sprintf(meth, "FEM_QK(%d,%d)", int(N), K);
     pfprinc = getfem::fem_descriptor(meth);
-    mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi); 
-    mef_data.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
+    mef.set_finite_element(nn, pfprinc, ppi); 
+    mef_data.set_finite_element(nn, pfprinc, ppi);
     sprintf(meth, "FEM_QK(%d,%d)", int(N), 0);
-    mef_data2.set_finite_element(nn, getfem::fem_descriptor(meth),  ppi);
+    mef_data2.set_finite_element(nn, pfprinc,  ppi);
     break;
   case 2 :
     sprintf(meth, "FEM_PK_PRISM(%d,%d)", int(N), K);
     pfprinc = getfem::fem_descriptor(meth);
-    mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
-    mef_data.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
+    mef.set_finite_element(nn, pfprinc, ppi);
+    mef_data.set_finite_element(nn, pfprinc, ppi);
     sprintf(meth, "FEM_PK_PRISM(%d,%d)", int(N), 0);
-    mef_data2.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
+    mef_data2.set_finite_element(nn, pfprinc, ppi);
     break;
   }
 

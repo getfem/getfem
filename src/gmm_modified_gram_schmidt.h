@@ -57,7 +57,7 @@
 #ifndef GMM_MODIFIED_GRAM_SCHMIDT_ORTHOGONALIZATION_H
 #define GMM_MODIFIED_GRAM_SCHMIDT_ORTHOGONALIZATION_H
 
-#include <gmm_sovers.h>
+#include <gmm_solvers.h>
 
 namespace gmm {
 
