@@ -75,7 +75,7 @@ int main(void)
   cout << "first element : " << nn.first() << endl; assert(nn.first() == 1);
   cout << "last  element : " << nn.last()  << endl; assert(nn.last() == 11);
 
-  nn.sup(8,11); nn.add(3);
+  nn.sup(8,4); nn.add(3);
   cout << nn << endl;
   cout << "first element : " << nn.first() << endl; assert(nn.first() == 1);
   cout << "last  element : " << nn.last()  << endl; assert(nn.last() == 5);
