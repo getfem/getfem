@@ -1753,7 +1753,7 @@ namespace gmm {
     typedef typename linalg_traits<L3>::value_type T;
     DAL_WARNING(2, "Inefficient generic matrix-matrix mult is used");
     for (size_type i = 0; i < mat_nrows(l3) ; ++i)
-      for (size_type j = 0; j < mat_nrows(l3) ; ++j) {
+      for (size_type j = 0; j < mat_ncols(l3) ; ++j) {
 	T a(0);
 	for (size_type k = 0; k < mat_nrows(l2) ; ++k) a += l1(i, k)*l2(k, j);
 	l3(i, j) = a;
@@ -1773,10 +1773,15 @@ namespace gmm {
       ite = linalg_traits<L2>::col_end(l2);
     size_type i,j, k = mat_nrows(l1);
 
+    cout << "m = " << mat_nrows(l1) << " n = " << mat_ncols(l1) << " k = " << mat_ncols(l2) << endl;
+
     for (i = 0; i < k; ++i) {
       typename linalg_traits<L1>::const_sub_row_type r1 = mat_const_row(l1, i);
-      for (it2 = it2b, j = 0; it2 != ite; ++it2, ++j)
+      for (it2 = it2b, j = 0; it2 != ite; ++it2, ++j) {
+	cout << "l3 = " << l3 << endl;
+	cout << "i = " << i << " j = " << j << endl;
 	l3(i,j) = vect_sp(r1, linalg_traits<L2>::col(it2));
+      }
     }
   }
 
