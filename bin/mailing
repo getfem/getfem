@@ -7,7 +7,7 @@ $nb_param = 0; $domail = 1;
 
 if (@ARGV) { $list_name = $ARGV[0]; ++$nb_param; shift @ARGV; }
 if (@ARGV) { $mail_name = $ARGV[0]; ++$nb_param; shift @ARGV; }
-if (@ARGV) { $subject = $ARGV[0]; ++$nb_param; shift @ARGV; }
+if (@ARGV) { $subject   = $ARGV[0]; ++$nb_param; shift @ARGV; }
 if (@ARGV) { if ($ARGV[0] eq "nomail") { $domail = 0; } else { ++$nb_param; } }
 
 if ($nb_param != 3) {
