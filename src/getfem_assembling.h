@@ -950,6 +950,46 @@ namespace getfem
     }
   }
 
+  /* add a dirichlet condition on a single dof, modifiying the matrix
+     RM and the rhs B.  (keeping the symmetry properties) */
+  template<class MATRM, class VECT1>
+    void add_Dirichlet_dof(MATRM &RM, VECT1 &B,
+			   const mesh_fem &mf,
+			   size_type dof, scalar_type dof_val)
+  {     
+    size_type cv, Q=mf.get_qdim();
+    dal::bit_vector nn = mf.convex_index();
+    pfem pf1;
+
+    // peu performant
+    for (cv << nn; cv != ST_NIL; cv << nn)
+    {
+      pf1 = mf.fem_of_element(cv);
+      size_type nbd = pf1->nb_dof();
+      for (size_type i = 0; i < nbd; i++)
+      {
+	size_type dof1 = mf.ind_dof_of_element(cv)[i*Q];
+	if (dof == dof1)
+	{
+	  // cout << "dof : " << i << endl;
+	  for (size_type j = 0; j < nbd; j++)
+	  {
+	    size_type dof2 = mf.ind_dof_of_element(cv)[j*Q];
+	    for (size_type k = 0; k < Q; ++k)
+	      for (size_type l = 0; l < Q; ++l)
+	      {
+		if (!(dof == dof2))
+		  B[dof2+k] -= RM(dof2+k, dof1+l) * F[dof1+l];
+		RM(dof2+k, dof1+l) = RM(dof1+l, dof2+k) = 0;
+	      }
+	  }
+	  for (size_type k = 0; k < Q; ++k)
+	  { RM(dof1+k, dof1+k) = 1; B[dof1+k] = F[dof1+k]; }
+	}
+      }
+    }
+  }
+
 
   template<class MATRM, class VECT1, class VECT2>
     void old_assembling_Dirichlet_condition(MATRM &RM, VECT1 &B,
