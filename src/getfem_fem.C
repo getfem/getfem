@@ -1026,6 +1026,7 @@ namespace getfem
     base_[j] = base_poly(nc, 0);
     base_[j].one();
     for (size_type i = 0; i < P1.nb_dof(); i++) base_[j] *= P1.base()[i];
+    // cout << "buble = " << base_[j] << endl;
   }
 
   static pfem PK_with_cubic_bubble(fem_param_list &params) {

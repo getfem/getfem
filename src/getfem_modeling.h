@@ -179,10 +179,15 @@ namespace getfem {
 
     if (gmm::mat_nrows(tangent_matrix_) != ndof
 	|| gmm::mat_nrows(constraints_matrix_) != nc) {
+      gmm::clear(state_);
+      gmm::clear(residu_);
+      gmm::clear(tangent_matrix_);
+      gmm::clear(constraints_matrix_);
+      gmm::clear(constraints_rhs_);
       gmm::resize(tangent_matrix_, ndof, ndof);
       gmm::resize(constraints_matrix_, nc, ndof);
       gmm::resize(constraints_rhs_, nc);
-      gmm::resize(state_, ndof); gmm::clear(state_);
+      gmm::resize(state_, ndof);
       gmm::resize(residu_, ndof);
       touch();
     }
@@ -825,6 +830,11 @@ namespace getfem {
   /*		Mixed linear incompressible condition brick.              */
   /* ******************************************************************** */
 
+//  bool Esort(double x, double y) { return gmm::abs(x) > gmm::abs(y); }
+
+// TODO take into account boundary conditions for the pressure.
+
+
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_linear_incomp : public mdbrick_abstract<MODEL_STATE>  {
     
@@ -845,6 +855,15 @@ namespace getfem {
       size_type nd = mf_u.nb_dof(), ndd = mf_p.nb_dof();
       gmm::clear(B); gmm::resize(B, ndd, nd);
       asm_stokes_B(B, mf_u, mf_p);
+
+      
+//        gmm::dense_matrix<value_type> MM(ndd, ndd);
+//        std::vector<value_type> eigval(ndd);
+//        gmm::mult(B, gmm::transposed(B), MM);
+//        gmm::symmetric_qr_algorithm(MM, eigval);
+//        std::sort(eigval.begin(), eigval.end(), Esort);
+//        cout << "eival of BBT = " << eigval << endl;
+
       if (penalized) {
 	VECTOR epsilon(mf_data.nb_dof());
 	if (homogeneous) std::fill(epsilon.begin(), epsilon.end(),epsilon_[0]);
@@ -1167,8 +1186,6 @@ namespace getfem {
   /* ******************************************************************** */
   /*		Generic solvers.                                          */
   /* ******************************************************************** */
-
-  bool Esort(double x, double y) { return gmm::abs(x) < gmm::abs(y); }
 
   // faire une version avec using_cg, using_gmres ... (appelée par celle-ci)
   template <typename MODEL_STATE> void

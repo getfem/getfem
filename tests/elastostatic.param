@@ -18,10 +18,10 @@ FT = 1;               % parameter for the exact solution.
 MESH_TYPE = 'GT_PK(3,1)';         % linear triangles
 %MESH_TYPE = 'GT_LINEAR_QK(2,1)'; % linear rectangles
 %MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
-NX = 4;            	          % space step.
+NX = 3;            	          % space step.
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 
-FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(3, 1)';
+FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(3, 2)';
 %FEM_TYPE = 'FEM_PK(3,2)';  % PK element
 %FEM_TYPE = 'FEM_QK(2,1)';  % Q1 fem for quadrangles
 %FEM_TYPE = 'FEM_PRODUCT(FEM_PK(2,1),FEM_PK(1,1))'; % tensorial product of FEM for prisms
@@ -30,8 +30,8 @@ FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(3, 1)';
 %FEM_TYPE = 'FEM_PK_HIERARCHICAL_COMPOSITE(2,1,2)'; % Hierarchical PK with s divisions
 
 MIXED_PRESSURE=1;       % Mixed version or not.
-FEM_TYPE_P = 'FEM_PK(3,1)';  % P1 for triangles
-% FEM_TYPE_P = 'FEM_PK_DISCONTINUOUS(3,0)';  % Discontinuous P1 for triangles
+% FEM_TYPE_P = 'FEM_PK(3,1)';  % P1 for triangles
+FEM_TYPE_P = 'FEM_PK_DISCONTINUOUS(3,0)';  % Discontinuous P1 for triangles
 
 
 % DATA_FEM_TYPE must be defined if your main FEM is not Lagrangian
