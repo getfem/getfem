@@ -417,78 +417,17 @@ namespace gmm
     typedef T value_type;
     typedef T& access_type;
 
+    template <class Matrix> void init_with_good_format(const Matrix &B);
+    template <class Matrix> void init_with(const Matrix &A);
+    void init_with(const col_matrix<gmm::rsvector<T> > &B)
+    { init_with_good_format(B); }
+    void init_with(const col_matrix<wsvector<T> > &B)
+    { init_with_good_format(B); }
 
-    void init_with(const col_matrix<gmm::rsvector<T> > &B) {
-      if (pr) { delete[] pr; delete[] ir; delete[] jc; }
-      nc = mat_ncols(B); nr = mat_nrows(B);
-      jc = new size_type[nc+1];
-      jc[0] = shift;
-      for (size_type j = 0; j < nc; ++j)
-	jc[j+1] = jc[j] + B.col(j).nb_stored();
-      pr = new T[jc[nc]];
-      ir = new size_type[jc[nc]];
-      for (size_type j = 0; j < nc; ++j) {
-	typename linalg_traits<wsvector<T> >::const_iterator
-	  it = vect_const_begin(B.col(j)), ite = vect_const_end(B.col(j));
-	for (size_type k = 0; it != ite; ++it, ++k)
-	  { pr[jc[j]-shift+k] = *it; ir[jc[j]-shift+k] = it.index() + shift; }
-      }
-    }
-
-    void init_with(const col_matrix<wsvector<T> > &B) {
-      if (pr) { delete[] pr; delete[] ir; delete[] jc; }
-      nc = mat_ncols(B); nr = mat_nrows(B);
-      jc = new size_type[nc+1];
-      jc[0] = shift;
-      for (size_type j = 0; j < nc; ++j)
-	jc[j+1] = jc[j] + B.col(j).nb_stored();
-      pr = new T[jc[nc]];
-      ir = new size_type[jc[nc]];
-      for (size_type j = 0; j < nc; ++j) {
-	typename linalg_traits<wsvector<T> >::const_iterator
-	  it = vect_const_begin(B.col(j)), ite = vect_const_end(B.col(j));
-	for (size_type k = 0; it != ite; ++it, ++k)
-	  { pr[jc[j]-shift+k] = *it; ir[jc[j]-shift+k] = it.index() + shift; }
-      }
-    }
-
-    template <class Matrix> void init_with(const Matrix &A) {
-      if (pr) { delete[] pr; delete[] ir; delete[] jc; }
-      nc = mat_ncols(A); nr = mat_nrows(A);
-      col_matrix<wsvector<T> > B(nr, nc);
-      copy(A, B); // éviter quand la matrice est déja dans le bon format
-      jc = new size_type[nc+1];
-      jc[0] = shift;
-      for (size_type j = 0; j < nc; ++j)
-	jc[j+1] = jc[j] + B.col(j).nb_stored();
-      pr = new T[jc[nc]];
-      ir = new size_type[jc[nc]];
-      for (size_type j = 0; j < nc; ++j) {
-	typename linalg_traits<wsvector<T> >::const_iterator
-	  it = vect_const_begin(B.col(j)), ite = vect_const_end(B.col(j));
-	for (size_type k = 0; it != ite; ++it, ++k)
-	  { pr[jc[j]-shift+k] = *it; ir[jc[j]-shift+k] = it.index() + shift; }
-      }
-    }
-
-    void init_with_identity(size_type n) {
-      if (pr) { delete[] pr; delete[] ir; delete[] jc; }
-      nc = nr = n; 
-      pr = new T[nc];
-      ir = new size_type[nc];
-      jc = new size_type[nc+1];
-      for (size_type j = 0; j < nc; ++j)
-	{ ir[j] = jc[j] = shift + j; pr[j] = T(1); }
-      jc[nc] = shift + nc;
-    }
+    void init_with_identity(size_type n);
 
     csc_matrix(void) : pr(0), ir(0), jc(0), nc(0), nr(0) {}
-    csc_matrix(size_type nnr, size_type nnc) : nc(nnc), nr(nnr) {
-      pr = new T[1];  ir = new size_type[1];
-      jc = new size_type[nc+1];
-      for (size_type j = 0; j < nc; ++j) jc[j] = shift;
-      jc[nc] = shift;
-    }
+    csc_matrix(size_type nnr, size_type nnc);
     ~csc_matrix() { if (pr) { delete[] pr; delete[] ir; delete[] jc; } }
 
     size_type nrows(void) const { return nr; }
@@ -497,6 +436,53 @@ namespace gmm
     value_type operator()(size_type i, size_type j) const
       { return mat_col(*this, j)[i]; }
   };
+
+  template <class T, int shift> template<class Matrix>
+  void csc_matrix<T, shift>::init_with_good_format(const Matrix &B) {
+    if (pr) { delete[] pr; delete[] ir; delete[] jc; }
+    nc = mat_ncols(B); nr = mat_nrows(B);
+    jc = new size_type[nc+1];
+    jc[0] = shift;
+    for (size_type j = 0; j < nc; ++j)
+      jc[j+1] = jc[j] + B.col(j).nb_stored();
+    pr = new T[jc[nc]];
+    ir = new size_type[jc[nc]];
+    for (size_type j = 0; j < nc; ++j) {
+      typename linalg_traits<wsvector<T> >::const_iterator
+	it = vect_const_begin(B.col(j)), ite = vect_const_end(B.col(j));
+      for (size_type k = 0; it != ite; ++it, ++k)
+	{ pr[jc[j]-shift+k] = *it; ir[jc[j]-shift+k] = it.index() + shift; }
+    }
+  }
+  
+  template <class T, int shift> template <class Matrix>
+  void csc_matrix<T, shift>::init_with(const Matrix &A) {
+    col_matrix<wsvector<T> > B(mat_nrows(A), mat_ncols(A));
+    copy(A, B);
+    init_with_good_format(B);
+  }
+  
+  template <class T, int shift>
+  void csc_matrix<T, shift>::init_with_identity(size_type n) {
+    if (pr) { delete[] pr; delete[] ir; delete[] jc; }
+    nc = nr = n; 
+    pr = new T[nc];
+    ir = new size_type[nc];
+    jc = new size_type[nc+1];
+    for (size_type j = 0; j < nc; ++j)
+      { ir[j] = jc[j] = shift + j; pr[j] = T(1); }
+    jc[nc] = shift + nc;
+  }
+  
+  template <class T, int shift>
+  csc_matrix<T, shift>::csc_matrix(size_type nnr, size_type nnc)
+    : nc(nnc), nr(nnr) {
+    pr = new T[1];  ir = new size_type[1];
+    jc = new size_type[nc+1];
+    for (size_type j = 0; j < nc; ++j) jc[j] = shift;
+    jc[nc] = shift;
+  }
+  
 
   template <class T, int shift>
   struct linalg_traits<csc_matrix<T, shift> > {
@@ -569,7 +555,30 @@ namespace gmm
     typedef T value_type;
     typedef T& access_type;
 
-    void init_with(const row_matrix<wsvector<T> > &B) {
+
+    template <class Matrix> void init_with_good_format(const Matrix &B);
+    void init_with(const row_matrix<wsvector<T> > &B)
+    { init_with_good_format(B); }
+    void init_with(const row_matrix<rsvector<T> > &B)
+    { init_with_good_format(B); }
+
+    template <class Matrix> void init_with(const Matrix &A);
+    void init_with_identity(size_type n);
+
+    csr_matrix(void) : pr(0), ir(0), jc(0), nc(0), nr(0) {}
+    csr_matrix(size_type nnr, size_type nnc);
+    ~csr_matrix() { if (pr) { delete[] pr; delete[] ir; delete[] jc; } }
+
+    size_type nrows(void) const { return nr; }
+    size_type ncols(void) const { return nc; }
+   
+    value_type operator()(size_type i, size_type j) const
+      { return mat_col(*this, j)[i]; }
+  };
+
+
+  template <class T, int shift> template <class Matrix>
+  void csr_matrix<T, shift>::init_with_good_format(const Matrix &B) {
       if (pr) { delete[] pr; delete[] ir; delete[] jc; }
       nc = mat_ncols(B); nr = mat_nrows(B);
       jc = new size_type[nr+1];
@@ -586,43 +595,15 @@ namespace gmm
       }
     }
 
-    void init_with(const row_matrix<rsvector<T> > &B) {
-      if (pr) { delete[] pr; delete[] ir; delete[] jc; }
-      nc = mat_ncols(B); nr = mat_nrows(B);
-      jc = new size_type[nr+1];
-      jc[0] = shift;
-      for (size_type j = 0; j < nr; ++j)
-	jc[j+1] = jc[j] + B.row(j).nb_stored();
-      pr = new T[jc[nr]];
-      ir = new size_type[jc[nr]];
-      for (size_type j = 0; j < nr; ++j) {
-	typename linalg_traits<wsvector<T> >::const_iterator
-	  it = vect_const_begin(B.row(j)), ite = vect_const_end(B.row(j));
-	for (size_type k = 0; it != ite; ++it, ++k)
-	  { pr[jc[j]-shift+k] = *it; ir[jc[j]-shift+k] = it.index()+shift; }
-      }
+    template <class T, int shift> template <class Matrix> 
+    void csr_matrix<T, shift>::init_with(const Matrix &A) { 
+      row_matrix<wsvector<T> > B(mat_nrows(A), mat_ncols(A)); 
+      copy(A, B); 
+      init_with_good_format(B);
     }
 
-    template <class Matrix> void init_with(const Matrix &A) {
-      if (pr) { delete[] pr; delete[] ir; delete[] jc; }
-      nc = mat_ncols(A); nr = mat_nrows(A);
-      row_matrix<wsvector<T> > B(nr, nc);
-      copy(A, B); // éviter quand la matrice est déja dans le bon format
-      jc = new size_type[nr+1];
-      jc[0] = shift;
-      for (size_type j = 0; j < nr; ++j)
-	jc[j+1] = jc[j] + B.row(j).nb_stored();
-      pr = new T[jc[nr]];
-      ir = new size_type[jc[nr]];
-      for (size_type j = 0; j < nr; ++j) {
-	typename linalg_traits<wsvector<T> >::const_iterator
-	  it = vect_const_begin(B.row(j)), ite = vect_const_end(B.row(j));
-	for (size_type k = 0; it != ite; ++it, ++k)
-	  { pr[jc[j]-shift+k] = *it; ir[jc[j]-shift+k] = it.index()+shift; }
-      }
-    }
-
-    void init_with_identity(size_type n) {
+    template <class T, int shift> 
+    void csr_matrix<T, shift>::init_with_identity(size_type n) {
       if (pr) { delete[] pr; delete[] ir; delete[] jc; }
       nc = nr = n; 
       pr = new T[nr];
@@ -633,21 +614,15 @@ namespace gmm
       jc[nr] = shift + nr;
     }
 
-    csr_matrix(void) : pr(0), ir(0), jc(0), nc(0), nr(0) {}
-    csr_matrix(size_type nnr, size_type nnc) : nc(nnc), nr(nnr) {
+    template <class T, int shift>
+    csr_matrix<T, shift>::csr_matrix(size_type nnr, size_type nnc)
+      : nc(nnc), nr(nnr) {
       pr = new T[1];  ir = new size_type[1];
       jc = new size_type[nr+1];
       for (size_type j = 0; j < nr; ++j) jc[j] = shift;
       jc[nr] = shift;
     }
-    ~csr_matrix() { if (pr) { delete[] pr; delete[] ir; delete[] jc; } }
 
-    size_type nrows(void) const { return nr; }
-    size_type ncols(void) const { return nc; }
-   
-    value_type operator()(size_type i, size_type j) const
-      { return mat_col(*this, j)[i]; }
-  };
 
   template <class T, int shift>
   struct linalg_traits<csr_matrix<T, shift> > {
