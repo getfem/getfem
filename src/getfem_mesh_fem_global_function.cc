@@ -77,20 +77,27 @@ namespace getfem {
     base_small_vector G(dim());
     for (size_type i=0; i < functions.size(); ++i) {
       (*functions[i]).grad(c,G);
-      std::copy(G.const_begin(), G.const_end(), t.begin() + i*dim());
+      for (unsigned j=0; j < dim(); ++j)
+	t[j*functions.size() + i] = G[j];
+      //std::copy(G.const_begin(), G.const_end(), t.begin() + i*dim());
     }
   }
   
   void global_function_fem::real_hess_base_value
   (const fem_interpolation_context& c, base_tensor &t) const { 
+    DAL_THROW(dal::to_be_done_error, "");
+    /*
     mih.resize(4); 
     mih[3] = mih[2] = dim(); mih[1] = target_dim(); mih[0] = functions.size();
     t.adjust_sizes(mih);
     base_matrix H(dim(),dim());
     for (size_type i=0; i < functions.size(); ++i) {
       (*functions[i]).hess(c,H);
+      
+      NO !! NOT THE RIGHT ORDER!
       std::copy(H.begin(), H.end(), t.begin() + i*H.size());
     }
+    */
   }
   
   DAL_SIMPLE_KEY(special_int_globf_fem_key, pfem);
@@ -202,6 +209,7 @@ namespace getfem {
   struct crack_singular : public global_function, public context_dependencies {
     size_type l;
     const level_set &ls;
+    scalar_type a4;
     mutable mesher_level_set mls0, mls1;
     mutable size_type cv;
 
@@ -218,15 +226,34 @@ namespace getfem {
 //       cout << "Xreal = " << c.xreal()
 //            << " f(" << x << ", " << y << ", " << l << ") = "
 // 	      << sing_function(x, y, l) << endl;
-      return sing_function(x, y, l);
+      scalar_type v=sing_function(x, y, l);
+      return v*cutoff(x,y);
+    }
+
+    scalar_type cutoff(scalar_type x, scalar_type y) const {
+      if (a4>0) return exp(-a4 * gmm::sqr(x*x+y*y));
+      else return 1;
+    }
+
+    base_small_vector cutoff_grad(scalar_type x, scalar_type y) const {
+      base_small_vector g(2);
+      scalar_type r2 = x*x+y*y;
+      g[0] = cutoff(x,y) * (-4*a4*r2*x);
+      g[1] = cutoff(x,y) * (-4*a4*r2*y);
+      return g;
     }
 
     virtual void grad(const fem_interpolation_context& c,
 		      base_small_vector &v) const {
       update_mls(c.convex_num());
-      base_small_vector dx(2), dy(2), df(2);
+      base_small_vector dx(2), dy(2), dfs(2), dfc(2), dfr(2), df(2);
       scalar_type x = mls1.grad(c.xref(), dx), y = mls0.grad(c.xref(), dy);
-      df = sing_function_grad(x, y, l);
+      scalar_type fc = cutoff(x,y), fs = sing_function(x,y,l);
+      dfs = sing_function_grad(x, y, l);
+      dfc = cutoff_grad(x,y);
+      dfr = fs*dfc + fc*dfs;
+
+      gmm::mult(c.B(), dfr, df);
       v[0] = df[0]*dx[0] + df[1]*dy[0];
       v[1] = df[0]*dx[1] + df[1]*dy[1];
     }
@@ -236,20 +263,22 @@ namespace getfem {
 
     void update_from_context(void) const { cv =  size_type(-1); }
 
-    crack_singular(size_type l_, const level_set &ls_) : l(l_), ls(ls_) {
+    crack_singular(size_type l_, const level_set &ls_, 
+		   scalar_type cutoff_R) 
+      : l(l_), ls(ls_) {
+      if (cutoff_R) a4 = pow(2.7/cutoff_R,4);
+      else a4 = 0;
       cv = size_type(-1);
       this->add_dependency(ls);
     }
 
   };
 
-
   pglobal_function isotropic_crack_singular_2D(size_type i,
-					       const level_set &ls) {
-    return new crack_singular(i, ls);
+					       const level_set &ls, 
+					       scalar_type cutoff_radius) {
+    return new crack_singular(i, ls, cutoff_radius);
   }
-
-
 
 }  /* end of namespace getfem.                                            */
 

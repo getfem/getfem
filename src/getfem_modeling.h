@@ -167,9 +167,10 @@ namespace getfem {
     gmm::resize(Ud, ndof);
     
     size_type nbcols=Dirichlet_nullspace(constraints_matrix(),
-						 NS, constraints_rhs(), Ud);
+					 NS, constraints_rhs(), Ud);
     gmm::resize(NS, ndof, nbcols);
     gmm::resize(SM, nbcols, nbcols);
+    cout << "NS = " << NS << endl;
     VECTOR RHaux(ndof);
     gmm::mult(tangent_matrix(), Ud, residu(), RHaux);
     gmm::resize(reduced_residu_, nbcols);
@@ -1776,7 +1777,7 @@ namespace getfem {
 	problem.compute_tangent_matrix(MS);
 	MS.compute_reduced_system();
       }
-
+      
 //       if (iter.get_noisy())
 // 	cout << "tangent matrix is "
 // 	   << (gmm::is_symmetric(MS.tangent_matrix(),

@@ -28,6 +28,7 @@
 
 #include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
 #include <getfem_export.h>   /* export functions (save solution in a file)  */
+#include <getfem_derivatives.h>
 #include <getfem_regular_meshes.h>
 #include <getfem_modeling.h>
 #include <getfem_mesh_im_level_set.h>
@@ -325,9 +326,11 @@ struct crack_problem {
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
 
   getfem::level_set ls;      /* The two level sets defining the crack.       */
+  getfem::level_set ls2, ls3;  /* The two level sets defining the additional crack.       */
   
   scalar_type residue;       /* max residue for the iterative solvers        */
-  bool mixed_pressure;
+  bool mixed_pressure, add_crack;
+  scalar_type cutoff_radius;
 
   std::string datafilename;
   ftool::md_param PARAM;
@@ -337,7 +340,7 @@ struct crack_problem {
   crack_problem(void) : mls(mesh), mim(mls), mf_pre_u(mesh),
 			mfls_u(mls, mf_pre_u), mf_sing_u(mesh), mf_u_sum(mesh),
 			mf_rhs(mesh), mf_p(mesh), mf_coef(mesh),
-			exact_sol(mesh),  ls(mesh, 1, true) {}
+			exact_sol(mesh),  ls(mesh, 1, true),  ls2(mesh, 2, true), ls3(mesh, 1, true) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
@@ -350,6 +353,8 @@ void crack_problem::init(void) {
 					       "Name of integration method");
   const char *SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION",
 					 "Name of simplex integration method");
+
+  add_crack = (PARAM.int_value("ADDITIONAL_CRACK", "An additional crack ?") != 0);
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
@@ -371,6 +376,7 @@ void crack_problem::init(void) {
 
   mu = PARAM.real_value("MU", "Lamé coefficient mu");
   lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
+  cutoff_radius = PARAM.real_value("CUTOFF", "Cutoff");
   mf_u().set_qdim(N);
 
   /* set the finite element on the mf_u */
@@ -383,6 +389,7 @@ void crack_problem::init(void) {
 
   mim.set_integration_method(mesh.convex_index(), ppi);
   mls.add_level_set(ls);
+  if (add_crack) { mls.add_level_set(ls2); mls.add_level_set(ls3); }
   mim.set_simplex_im(sppi);
   mf_pre_u.set_finite_element(mesh.convex_index(), pf_u);
   
@@ -449,15 +456,31 @@ bool crack_problem::solve(plain_vector &U) {
   }
   ls.touch();
 
+  if (add_crack) {
+    ls2.reinit();
+    for (size_type d = 0; d < ls2.get_mesh_fem().nb_dof(); ++d) {
+      ls2.values(0)[d] = gmm::vect_dist2(ls2.get_mesh_fem().point_of_dof(d), base_node(0.5, 0.0)) - 0.25;
+      ls2.values(1)[d] = gmm::vect_dist2(ls2.get_mesh_fem().point_of_dof(d), base_node(0.25, 0.0)) - 0.27;
+    }
+    ls2.touch();
+    
+    ls3.reinit();
+    for (size_type d = 0; d < ls3.get_mesh_fem().nb_dof(); ++d) {
+      ls3.values(0)[d] = (ls.get_mesh_fem().point_of_dof(d))[0] - 0.25;
+      ls3.values(1)[d] = gmm::vect_dist2(ls3.get_mesh_fem().point_of_dof(d), base_node(0.25, 0.0)) - 0.35;
+    }
+    ls3.touch();
+  }
+
   mls.adapt();
   mim.adapt();
   mfls_u.adapt();
   std::vector<getfem::pglobal_function> vfunc(4);
   for (size_type i = 0; i < 4; ++i)
-    vfunc[i] = isotropic_crack_singular_2D(i, ls);
+    vfunc[i] = isotropic_crack_singular_2D(i, ls, cutoff_radius);
   
   mf_sing_u.set_functions(vfunc);
-  mf_u_sum.set_mesh_fems(mfls_u, mf_sing_u);
+  mf_u_sum.set_mesh_fems(mf_sing_u, mfls_u);
 
 
   U.resize(mf_u().nb_dof());
@@ -500,7 +523,7 @@ bool crack_problem::solve(plain_vector &U) {
 					  //mf_rhs, F, 
 					  exact_sol.mf, exact_sol.U, 
 					  //toto.mf, toto.U,
-					  DIRICHLET_BOUNDARY_NUM);
+					  DIRICHLET_BOUNDARY_NUM, 0, true);
 
   // Generic solve.
   cout << "Total number of variables : " << final_model.nb_dof() << endl;
@@ -541,7 +564,7 @@ int main(int argc, char *argv[]) {
       p.mls.global_cut_mesh(mcut);
       getfem::mesh_fem mf(mcut, p.mf_u().get_qdim());
       mf.set_finite_element
-	(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 2, 0.00001)"));
+	(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 2, 0.01)"));
       plain_vector V(mf.nb_dof());
 
       getfem::interpolation(p.mf_u(), mf, U, V);
@@ -549,14 +572,14 @@ int main(int argc, char *argv[]) {
       getfem::stored_mesh_slice sl;
       getfem::getfem_mesh mcut_refined;
       sl.build(mcut, 
-	       getfem::slicer_build_mesh(mcut_refined), 6);
+	       getfem::slicer_build_mesh(mcut_refined), 4);
       getfem::mesh_im mim_refined(mcut_refined); 
       mim_refined.set_integration_method(getfem::int_method_descriptor
 					 ("IM_TRIANGLE(6)"));
 
       getfem::mesh_fem mf_refined(mcut_refined, p.mf_u().get_qdim());
       mf_refined.set_finite_element
-	(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 1, 0.00001)"));
+	(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 1, 0.01)"));
       plain_vector W(mf_refined.nb_dof());
       getfem::interpolation(p.mf_u(), mf_refined, U, W);
 
@@ -571,8 +594,8 @@ int main(int argc, char *argv[]) {
 	cout << "export to " << p.datafilename + ".vtk" << "..\n";
 	getfem::vtk_export exp(p.datafilename + ".vtk",
 			       p.PARAM.int_value("VTK_EXPORT")==1);
-	exp.exporting(mf_refined); 
-	exp.write_point_data(mf_refined, W, "elastostatic_displacement");
+	exp.exporting(mf); 
+	exp.write_point_data(mf, V, "elastostatic_displacement");
 	cout << "export done, you can view the data file with (for example)\n"
 	  "mayavi -d " << p.datafilename << ".vtk -f ExtractVectorNorm -f "
 	  "WarpVector -m BandedSurfaceMap -m Outline\n";
@@ -584,10 +607,17 @@ int main(int argc, char *argv[]) {
 			     "reference solution");
       }
 
-      plain_vector DIFF(EXACT); gmm::add(gmm::scaled(W,-1),DIFF);
-      cout << "ERROR L2:" << getfem::asm_L2_norm(mim_refined,mf_refined,DIFF) 
-	   << " H1:" << getfem::asm_H1_norm(mim_refined,mf_refined,DIFF)
+      cout << "ERROR L2:" << getfem::asm_L2_dist(p.mim, p.mf_u(), U, p.exact_sol.mf, p.exact_sol.U)
+	   << " H1:" << getfem::asm_H1_dist(p.mim, p.mf_u(), U, p.exact_sol.mf, p.exact_sol.U)
 	   << "\n";
+      
+      plain_vector DIFF(EXACT); gmm::add(gmm::scaled(W,-1),DIFF);
+      cout << "OLD ERROR L2:" << getfem::asm_L2_norm(mim_refined,mf_refined,DIFF) 
+	   << " H1:" << getfem::asm_H1_dist(mim_refined,mf_refined,EXACT,mf_refined,W)
+	   << "\n";
+
+      cout << "ex = " << p.exact_sol.U << "\n";
+      cout << "U  = " << gmm::sub_vector(U, gmm::sub_interval(0,8)) << "\n";
     }
   }
   DAL_STANDARD_CATCH_ERROR;

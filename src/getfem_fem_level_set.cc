@@ -139,7 +139,7 @@ namespace getfem {
       mesher_level_set eval = mls.get_level_set(i)->
 	mls_of_convex(c.convex_num());
       lsval[i] = eval(c.xref());
-      cout << "cv=" << c.convex_num() << ", xref=" << c.xref() << " (xreal=" << c.xreal() << " : lsval[" << i << "]=" << lsval[i] << "\n";
+      //cout << "cv=" << c.convex_num() << ", xref=" << c.xref() << " (xreal=" << c.xreal() << " : lsval[" << i << "]=" << lsval[i] << "\n";
     }
     for (dim_type i = 0; i < c.N() ; ++i) {
       for (dim_type q = 0; q < target_dim(); ++q) {

@@ -14,6 +14,8 @@ print TMPF "INTEGRATION = 'IM_TRIANGLE(4)';\n";
 print TMPF "SIMPLEX_INTEGRATION = 'IM_TRIANGLE(4)';\n";
 print TMPF "NX = 5;\n";
 print TMPF "RESIDU = 1E-9;\n";
+print TMPF "CUTOFF=0.3;\n";
+print TMPF "ADDITIONAL_CRACK = 1;\n";
 print TMPF "FEM_TYPE = 'FEM_PK(2,1)';\n";
 print TMPF "ROOTFILENAME = 'crack';\n";
 print TMPF "\n\n";

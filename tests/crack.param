@@ -33,11 +33,15 @@ DATA_FEM_TYPE = 'FEM_PK(2,1)';
                                % to degree 6 on tetra
 INTEGRATION = 'IM_TRIANGLE(6)'; % quadrature rule for polynomials up
                                % to degree 6 on triangles
+%INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 5)';
 %INTEGRATION = 'IM_EXACT_SIMPLEX(2)'; % exact integration on triangles
 %INTEGRATION = 'IM_NC(2,6)';     % newton-cotes of degree 6 on triangles
 
 SIMPLEX_INTEGRATION = 'IM_TRIANGLE(6)';
 
+CUTOFF=0.3;
+
+ADDITIONAL_CRACK = 1;
 
 RESIDUE = 1E-9;     	% residue for conjugate gradient.
 

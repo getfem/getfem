@@ -58,7 +58,7 @@ namespace getfem
     assem.push_mi(mim);
     assem.push_mf(mf);
     assem.push_data(U);
-    bgeot::vsvector<scalar_type> v(1);
+    std::vector<scalar_type> v(1);
     assem.push_vec(v);
     if (cvset+1) assem.boundary_assembly(cvset);
     else         assem.volumic_assembly();
@@ -70,6 +70,36 @@ namespace getfem
 			      size_type cvset=size_type(-1), std::complex<T>) {
     return asm_L2_norm_sqr(mim, mf,gmm::real_part(U),cvset,T()) + 
       asm_L2_norm_sqr(mim, mf,gmm::imag_part(U),cvset,T());
+  }
+
+  /**
+     Compute the distance between U1 and U2, defined on two different mesh_fems 
+     (but sharing the same mesh), without interpolating U1 on mf2.
+  */
+  template<typename VEC1, typename VEC2>
+  scalar_type asm_L2_dist(const mesh_im &mim, 
+			  const mesh_fem &mf1, const VEC1 &U1,
+			  const mesh_fem &mf2, const VEC2 &U2) {    
+    generic_assembly assem;    
+    if (mf1.get_qdim() == 1)
+      assem.set("u1=data$1(#1); u2=data$2(#2); "
+		"V()+=u1(i).u1(j).comp(Base(#1).Base(#1))(i,j)"
+		"+ u2(i).u2(j).comp(Base(#2).Base(#2))(i,j)"
+		"- 2*u1(i).u2(j).comp(Base(#1).Base(#2))(i,j)");
+    else 
+      assem.set("u1=data$1(#1); u2=data$2(#2); "
+		"V()+=u1(i).u1(j).comp(vBase(#1).vBase(#1))(i,k,j,k)"
+		"+ u2(i).u2(j).comp(vBase(#2).vBase(#2))(i,k,j,k)"
+		"- 2*u1(i).u2(j).comp(vBase(#1).vBase(#2))(i,k,j,k)");
+    assem.push_mi(mim);
+    assem.push_mf(mf1);
+    assem.push_mf(mf2);
+    assem.push_data(U1);
+    assem.push_data(U2);
+    std::vector<scalar_type> v(1);
+    assem.push_vec(v);
+    assem.volumic_assembly();
+    return sqrt(v[0]);
   }
 
   
@@ -94,7 +124,7 @@ namespace getfem
     assem.push_mi(mim);
     assem.push_mf(mf);
     assem.push_data(U);
-    bgeot::vsvector<scalar_type> v(1);
+    std::vector<scalar_type> v(1);
     assem.push_vec(v);
     if (cvset == size_type(-1))
       assem.volumic_assembly();
@@ -109,6 +139,32 @@ namespace getfem
       asm_H1_semi_norm_sqr(mim, mf, gmm::imag_part(U), cvset, T());
   }
 
+  
+  template<typename VEC1, typename VEC2>
+  scalar_type asm_H1_semi_dist(const mesh_im &mim, 
+			       const mesh_fem &mf1, const VEC1 &U1,
+			       const mesh_fem &mf2, const VEC2 &U2) {    
+    generic_assembly assem;    
+    if (mf1.get_qdim() == 1)
+      assem.set("u1=data$1(#1); u2=data$2(#2); "
+		"V()+=u1(i).u1(j).comp(Grad(#1).Grad(#1))(i,d,j,d)"
+		"+ u2(i).u2(j).comp(Grad(#2).Grad(#2))(i,d,j,d)"
+		"- 2*u1(i).u2(j).comp(Grad(#1).Grad(#2))(i,d,j,d)");
+    else 
+      assem.set("u1=data$1(#1); u2=data$2(#2); "
+		"V()+=u1(i).u1(j).comp(vGrad(#1).vGrad(#1))(i,k,d,j,k,d)"
+		"+ u2(i).u2(j).comp(vGrad(#2).vGrad(#2))(i,k,d,j,k,d)"
+		"- 2*u1(i).u2(j).comp(vGrad(#1).vGrad(#2))(i,k,d,j,k,d)");
+    assem.push_mi(mim);
+    assem.push_mf(mf1);
+    assem.push_mf(mf2);
+    assem.push_data(U1);
+    assem.push_data(U2);
+    std::vector<scalar_type> v(1);
+    assem.push_vec(v);
+    assem.volumic_assembly();
+    return sqrt(v[0]);    
+  }
 
   /** 
    *   compute the H1 norm of U.
@@ -120,6 +176,14 @@ namespace getfem
 		+gmm::sqr(asm_H1_semi_norm(mim, mf, U, cvset)));
   }
   
+  template<typename VEC1, typename VEC2>
+  scalar_type asm_H1_dist(const mesh_im &mim, 
+			       const mesh_fem &mf1, const VEC1 &U1,
+			       const mesh_fem &mf2, const VEC2 &U2) {
+    return sqrt(gmm::sqr(asm_L2_dist(mim,mf1,U1,mf2,U2)) + 
+		gmm::sqr(asm_H1_semi_dist(mim,mf1,U1,mf2,U2)));
+  }
+
   /** 
    *  generic mass matrix assembly (on the whole mesh or on the specified
    *  boundary) 
@@ -900,7 +964,7 @@ namespace getfem
     }
     size_type nb_triv_base = nbase;
 
-    for (size_type i = 0; i < nbd; ++i)
+    for (size_type i = 0; i < nbd; ++i) {
       if (!(nn[i])) {
 	gmm::clear(e); e[i] = T(1); gmm::clear(f); f[i] = T(1);
 	gmm::mult(H, e, aux);
@@ -921,11 +985,12 @@ namespace getfem
 	  gmm::clean(f, tol*gmm::vect_norminf(f));
 	  gmm::clean(aux, tol*gmm::vect_norminf(aux));
 	  base_img_inv[nb_bimg] = TEMP_VECT(nbd);
-	  gmm::copy(f, base_img_inv[nb_bimg]);
+      	  gmm::copy(f, base_img_inv[nb_bimg]);
 	  base_img[nb_bimg] = TEMP_VECT(nbr);
 	  gmm::copy(aux, base_img[nb_bimg++]);
 	}
       }
+    }
     // Compute a solution in U0
     gmm::clear(U0);
     for (size_type i = 0; i < nb_bimg; ++i) {
