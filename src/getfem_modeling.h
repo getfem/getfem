@@ -154,8 +154,6 @@ namespace getfem {
       gmm::copy(gmm::transposed(NS), NST);
       gmm::mult(NST, tangent_matrix(), SMaux);
       gmm::mult(SMaux, NS, SM);
-      cout << "compute_reduced_system, [rhs| = " << gmm::vect_norm2(constraints_rhs()) << ", |Ud| = " << gmm::vect_norm2(Ud) << "\n";
-
     }
     VECTOR &residu(void) { return residu_; }
     ctx_ident_type ident(void) { return ident_; }
@@ -288,7 +286,7 @@ namespace getfem {
       if (!matrix_stored) gmm::clear(K);
     }
     virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
-				size_type j0 = 0) {
+				size_type = 0) {
       react(MS, i0, false);
       gmm::sub_interval SUBI(i0, nb_dof());
       if (this->to_be_computed()) { 
@@ -405,7 +403,7 @@ namespace getfem {
       if (!matrix_stored) gmm::clear(K);
     }
     virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
-				size_type j0 = 0) {
+				size_type = 0) {
       react(MS, i0, false);
       gmm::sub_interval SUBI(i0, nb_dof());
       if (this->to_be_computed()) {
@@ -423,7 +421,6 @@ namespace getfem {
 		  gmm::sub_vector(MS.state(), SUBI),
 		  gmm::sub_vector(MS.residu(), SUBI));
       }
-      cout << "mdbrick_Helmholtz : |state| = " << gmm::vect_norm2(sub_vector(MS.state(), SUBI)) << ", residu = " << gmm::vect_norm2(gmm::sub_vector(MS.residu(), SUBI)) << "\n";
     }
     virtual mesh_fem &main_mesh_fem(void) { return mf_u; }
 
@@ -596,7 +593,6 @@ namespace getfem {
       gmm::mult(K, gmm::sub_vector(MS.state(), SUBI),
 		gmm::sub_vector(MS.residu(), SUBI),
 		gmm::sub_vector(MS.residu(), SUBI));
-      cout << "mdbrick_QU_term: |state| = " << gmm::vect_norm2(sub_vector(MS.state(), SUBI)) << ", residu = " << gmm::vect_norm2(gmm::sub_vector(MS.residu(), SUBI)) << "\n";
     }
     virtual mesh_fem &main_mesh_fem(void) { return sub_problem.main_mesh_fem(); }
 
@@ -702,7 +698,6 @@ namespace getfem {
 	gmm::copy(gmm::sub_matrix(M, SUBI, gmm::sub_interval(0, nd)), G);
       gmm::resize(CRHS, nb_const);
       gmm::copy(gmm::sub_vector(V, SUBI), CRHS);
-      cout << "CRHS=" << gmm::vect_norm2(CRHS) << "\n";
       this->computed();
     }
 
@@ -740,7 +735,6 @@ namespace getfem {
 	fixing_dimensions();
 	compute_constraints(ASMDIR_BUILDH + ASMDIR_BUILDR);
       }
-      cout << "dirichlet" << this->to_be_transferred() << "\n";
       if (this->to_be_transferred()) {
 	if (with_multipliers) {
 	  gmm::sub_interval SUBI(i0+sub_problem.nb_dof(), dof_on_bound.card());
@@ -754,8 +748,6 @@ namespace getfem {
 	  size_type ncs = sub_problem.nb_constraints();
 	  gmm::sub_interval SUBI(j0+ncs,nb_const), SUBJ(i0, nd);
 	  gmm::copy(G, gmm::sub_matrix(MS.constraints_matrix(), SUBI, SUBJ));
-	  
-	  cout << "dirichlet : constraints_rhs <= " << gmm::vect_norm2(MS.constraints_rhs()) << "\n";
 	}
 	this->transferred();
       }
@@ -856,14 +848,11 @@ namespace getfem {
     problem.compute_tangent_matrix(MS);
     MS.compute_reduced_system();
     mtype act_res = MS.reduced_residu_norm(), act_res_new(0);
-    cout << "act_res_new = " << act_res <<  "\n";
-    cout << "VVVVVVIRRREEEZZ MOI\n";
     while(act_res > iter.get_resmax()) {
       
       VECTOR d(ndof), dr(gmm::vect_size(MS.reduced_residu()));
 
       if (!(iter.first())) problem.compute_tangent_matrix(MS);
-      cout << "jhhjhjhjhj" << gmm::mat_ncols(MS.reduced_tangent_matrix()) << " == " << dr.size() << "\n";
       if (problem.is_coercive()) {
 	gmm::ildlt_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
 	gmm::cg(MS.reduced_tangent_matrix(), dr, 

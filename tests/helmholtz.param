@@ -12,6 +12,7 @@ R1 = 10.;
 GTDEGREE = 3
 NTHETA = 16
 NR = 20;            	          % space step.
+DIRICHLET_WITH_MULTIPLIERS = 0;
 
 FEM_TYPE = 'FEM_QK(2,4)';  % P1 for triangles
 %FEM_TYPE = 'FEM_QK(2,1)';  % Q1 fem for quadrangles

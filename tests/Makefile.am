@@ -14,7 +14,6 @@ check_PROGRAMS = \
 	poly               \
 	schwarz_additive    \
 	speed_test_for_gmm \
-	test_mesh_generation \
 	test_assembly      \
 	test_int_set       \
 	test_link_fem      \
@@ -35,7 +34,6 @@ dynamic_tas_SOURCES = dynamic_tas.C
 test_small_vector_SOURCES = test_small_vector.C
 test_kdtree_SOURCES = test_kdtree.C
 test_rtree_SOURCES = test_rtree.C
-test_mesh_generation_SOURCES = test_mesh_generation.C
 test_assembly_SOURCES = test_assembly.C
 laplacian_SOURCES = laplacian.C
 test_interpolation_SOURCES = test_interpolation.C
@@ -70,6 +68,7 @@ TESTS = \
 	$(top_srcdir)/tests/test_assembly.pl      \
 	$(top_srcdir)/tests/laplacian.pl          \
 	$(top_srcdir)/tests/elastostatic.pl       \
+	$(top_srcdir)/tests/helmholtz.pl          \
 	$(top_srcdir)/tests/integration.pl        \
 	$(top_srcdir)/tests/poly.pl               \
 	$(top_srcdir)/tests/test_mesh.pl          \
@@ -93,6 +92,7 @@ EXTRA_DIST = \
 	test_assembly.pl                  \
 	laplacian.pl                      \
 	elastostatic.pl                   \
+	helmholtz.pl                      \
 	integration.pl                    \
 	poly.pl                           \
 	test_mesh.pl                      \

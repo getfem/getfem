@@ -65,6 +65,7 @@ struct Helmholtz_problem {
   complex_type wave_number;
 
   scalar_type residu;        /* max residu for the iterative solvers         */
+  bool with_mult;
 
   std::string datafilename;
   ftool::md_param PARAM;
@@ -97,7 +98,8 @@ void Helmholtz_problem::init(void) {
   /* First step : build the mesh */
   size_type Nt = PARAM.int_value("NTHETA", "Nomber of space steps "), 
     Nr=PARAM.int_value("NR", "Nomber of space steps ");
-  size_type gt_order = PARAM.int_value("GTDEGREE", "polynomial degree of geometric transformation");
+  size_type gt_order = PARAM.int_value("GTDEGREE",
+		       "polynomial degree of geometric transformation");
   scalar_type dtheta=2*M_PI*1./Nt;
   scalar_type R0 = PARAM.real_value("R0","R0");
   scalar_type R1 = PARAM.real_value("R1","R1");
@@ -120,8 +122,12 @@ void Helmholtz_problem::init(void) {
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residu = PARAM.real_value("RESIDU"); if (residu == 0.) residu = 1e-10;
 
-  wave_number = complex_type(PARAM.real_value("WAVENUM_R", "Real part of the wave number"),
-			     PARAM.real_value("WAVENUM_I", "Imaginary part of the wave number"));
+  wave_number = complex_type
+    (PARAM.real_value("WAVENUM_R", "Real part of the wave number"),
+     PARAM.real_value("WAVENUM_I", "Imaginary part of the wave number"));
+
+  with_mult = PARAM.int_value("DIRICHLET_WITH_MULTIPLIERS",
+			      "with multipliers");
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = 
@@ -159,24 +165,10 @@ void Helmholtz_problem::init(void) {
   for (getfem::convex_face_ct::const_iterator it = border_faces.begin();
        it != border_faces.end(); ++it) {
     assert(it->f != size_type(-1));
-    if (bgeot::vect_norm2(mesh.points_of_face_of_convex(it->cv, it->f)[0]) > 5.) {
+    if (bgeot::vect_norm2(mesh.points_of_face_of_convex(it->cv,
+							it->f)[0]) > 5.) {
       mf_u.add_boundary_elt(ROBIN_BOUNDARY_NUM, it->cv, it->f);
     } else mf_u.add_boundary_elt(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
-
-#if 0
-    base_node un = mesh.normal_of_face_of_convex(it->cv, it->f);
-    un /= gmm::vect_norm2(un);
-    if (dal::abs(un[0]) < 1.0E-7) {
-      //mf_u.add_boundary_elt(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
-      mf_u.add_boundary_elt(ROBIN_BOUNDARY_NUM, it->cv, it->f);
-    } else if (dal::abs(un[0] + 1.) < 1e-7) {
-      //mf_u.add_boundary_elt(ROBIN_BOUNDARY_NUM, it->cv, it->f);
-      mf_u.add_boundary_elt(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
-    } else if (dal::abs(un[0] - 1.) < 1e-7) {
-      //mf_u.add_boundary_elt(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
-      mf_u.add_boundary_elt(ROBIN_BOUNDARY_NUM, it->cv, it->f);
-    }
-#endif
   }
 }
 
@@ -184,37 +176,31 @@ void Helmholtz_problem::init(void) {
 /*  Model.                                                                */
 /**************************************************************************/
 
+typedef getfem::standard_complex_model_state MODELSTATE;
+
 bool Helmholtz_problem::solve(plain_vector &U) {
-  size_type nb_dof_rhs = mf_rhs.nb_dof();
 
   // Helmholtz brick.
-  getfem::mdbrick_Helmholtz<> WAVE(mf_u, mf_coef, wave_number);
+  getfem::mdbrick_Helmholtz<MODELSTATE> WAVE(mf_u, mf_coef, wave_number);
   
   // (homogeneous) Robin condition
-  getfem::mdbrick_QU_term<getfem::standard_complex_model_state> 
-    ROBIN(WAVE, mf_rhs, wave_number * complex_type(0,1.), 
-	  ROBIN_BOUNDARY_NUM);
+  getfem::mdbrick_QU_term<MODELSTATE> 
+    ROBIN(WAVE, mf_rhs, wave_number * complex_type(0,1.), ROBIN_BOUNDARY_NUM);
   
   // Defining the Dirichlet condition value.
+  size_type nb_dof_rhs = mf_rhs.nb_dof();
   plain_vector F(nb_dof_rhs);
   for (size_type i = 0; i < nb_dof_rhs; ++i)
     F[i] = incoming_field(mf_rhs.point_of_dof(i), wave_number.real());
 
-  cout << "|F| = " << gmm::vect_norm2(F) << "\n";
-
   // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<getfem::standard_complex_model_state> 
-    final_model(ROBIN, mf_rhs,
-		F, DIRICHLET_BOUNDARY_NUM,true);
-
-  mf_rhs.write_to_file("mf_rhs",true);
-  mf_u.write_to_file("mf_u",true);
-  
+  getfem::mdbrick_Dirichlet<MODELSTATE> 
+    final_model(ROBIN, mf_rhs, F, DIRICHLET_BOUNDARY_NUM, with_mult);
   
   // Generic solve.
   cout << "Number of variables : " << final_model.nb_dof() << endl;
   cout << "Number of constraints : " << final_model.nb_constraints() << endl;
-  getfem::standard_complex_model_state MS;
+  MODELSTATE MS;
   gmm::iteration iter(residu, 1, 400000);
   getfem::standard_solve(MS, final_model, iter);
 
@@ -240,11 +226,8 @@ int main(int argc, char *argv[]) {
     Helmholtz_problem p;
     p.PARAM.read_command_line(argc, argv);
     p.init();
-    //p.mesh.write_to_file(p.datafilename + ".mesh");
     plain_vector U(p.mf_u.nb_dof());
     if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
-
-    cout << "|U| = " << getfem::asm_H1_norm(p.mf_u, U) << "\n";
 
     if (p.PARAM.int_value("VTK_EXPORT")) {
       cout << "export to " << p.datafilename + ".vtk" << "..\n";
@@ -254,9 +237,9 @@ int main(int argc, char *argv[]) {
       exp.write_dataset(p.mf_u, gmm::real_part(U), "helmholtz_rfield");
       exp.write_dataset(p.mf_u, gmm::imag_part(U), "helmholtz_ifield");
       cout << "export done, you can view the data file with (for example)\n"
-	"mayavi -d helmholtz.vtk -f WarpScalar -m BandedSurfaceMap -m Outline\n";
+	"mayavi -d helmholtz.vtk -f WarpScalar -m BandedSurfaceMap -m Outline"
+	"\n";
     }
-    // getfem::save_solution(p.datafilename + ".dataelt", p.mf_u, p.U, p.K);
   }
   DAL_STANDARD_CATCH_ERROR;
 
