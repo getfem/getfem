@@ -328,11 +328,11 @@ namespace getfem
 	gmm::mult(gmm::transposed(pgp->grad(0)), gmm::transposed(G), K);
 	if (P != N) {
 	  gmm::mult(K, gmm::transposed(K), CS);
-	  J = ::sqrt(bgeot::mat_inverse(CS));
+	  J = ::sqrt(gmm::lu_inverse(CS));
 	  gmm::mult(gmm::transposed(K), CS, B);
 	}
 	else {
-	  J = dal::abs(bgeot::mat_inverse(K)); B = K;
+	  J = dal::abs(gmm::lu_inverse(K)); B = K;
 	}
 	
 	if (ir > 0) {
@@ -380,11 +380,11 @@ namespace getfem
 	  gmm::mult(gmm::transposed(pgp->grad(ip)), gmm::transposed(G), K);
 	  if (P != N) {
 	    gmm::mult(K, gmm::transposed(K), CS);
-	    J = ::sqrt(bgeot::mat_inverse(CS));
+	    J = ::sqrt(gmm::lu_inverse(CS));
 	    gmm::mult(gmm::transposed(K), CS, B);
 	  }
 	  else {
-  	    J = dal::abs(bgeot::mat_inverse(K)); B = K;
+  	    J = dal::abs(gmm::lu_inverse(K)); B = K;
   	  }
 	  
 	  if (ir > 0) {

@@ -275,7 +275,6 @@ namespace gmm
 
   template<class T> class dense_matrix : public std::vector<T> {
   public:
-    
     typedef typename std::vector<T>::size_type size_type;
     typedef typename std::vector<T>::iterator iterator;
     typedef typename std::vector<T>::const_iterator const_iterator;

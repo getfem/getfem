@@ -29,7 +29,7 @@ void test_gauss_det() {
       m(i,j) = 1; for (unsigned k=j; k < m.ncols()-1; ++k) m(i,j) *= (i+1);
     }
   cout << "m=" << m << endl;
-  double det = bgeot::mat_inverse(m);
+  double det = gmm::lu_inverse(m);
   cout << "det = " << det << "\n m=" << m << endl;
 }
 

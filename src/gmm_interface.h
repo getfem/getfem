@@ -485,8 +485,10 @@ namespace gmm {
     const_iterator begin(void) const { return const_iterator(pr, ir); }
     const_iterator end(void) const { return const_iterator(pr+n, ir+n); }
     
-    value_type operator[](size_type i) const
-    { return typename linalg_traits<this_type>::access_type()(pr, begin(), end(),i); }
+    value_type operator[](size_type i) const {
+      return typename linalg_traits<this_type>::access_type()(pr, begin(),
+							      end(),i);
+    }
   };
 
   template <class PT1, class PT2, int shift> struct cs_vector_access {

@@ -274,7 +274,7 @@ namespace bgeot
     // cout << "mat grad : " << Grad << endl;
     gmm::mult(G, Grad, K);
     gmm::mult(gmm::transposed(K), K, CS);
-    mat_inverse(CS);
+    gmm::lu_inverse(CS);
     gmm::mult(K, CS, B);
     gmm::mult(B, un, up);
     

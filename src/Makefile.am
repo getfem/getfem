@@ -52,6 +52,7 @@ include_HEADERS =                      \
 	gmm_matrix.h                   \
 	gmm_solvers.h                  \
 	gmm_iter.h                     \
+	gmm_inoutput.h                 \
 	gmm_vector.h                   \
 	gmm_transposed.h               \
 	gmm_scaled.h                   \
@@ -78,6 +79,7 @@ include_HEADERS =                      \
 	gmm_precond_ilut.h             \
 	gmm_given_rotation.h           \
 	gmm_blas.h                     \
+	gmm_opt.h                      \
 	linkmsg.h
 
 SRC =                                  \

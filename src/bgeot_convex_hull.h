@@ -88,7 +88,7 @@ namespace bgeot
 	    A(i,j) = A(j,i) = vect_sp(vect_list[i], vect_list[j]);
 	}
 
-	double s = mat_inverse(A);
+	double s = gmm::lu_inverse(A);
 
 	/* if the simplex is not flat .. */
 	if (dal::abs(s) > EPS)

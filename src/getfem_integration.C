@@ -334,7 +334,7 @@ namespace getfem
 	  a(i, j) = pts[j][i];
       
       gmm::mult(gmm::transposed(a), a, b);
-      det = ::sqrt(dal::abs(bgeot::mat_det(b)));
+      det = ::sqrt(dal::abs(gmm::lu_det(b)));
     }
     for (size_type i = 0; i < pai->nb_points_on_convex(); ++i) {
       pt = (cvr->dir_points_of_face(f))[0];

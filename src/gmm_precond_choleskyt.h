@@ -85,7 +85,8 @@ namespace gmm {
 	else { wk->e += a; gmm::add(scaled(mat_row(U, k), -a), w); }
       }
 
-      if ((a = w[i]) <= 0) DAL_THROW(failure_error, "negative value found");
+      if ((a = w[i]) <= 0)
+	DAL_THROW(failure_error, "negative value found : " << a);
       a = sqrt(a);
 
       U(i,i) = a; gmm::clean(w, eps * norm_row); gmm::scale(w, 1.0 / a);

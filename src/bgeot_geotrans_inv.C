@@ -174,10 +174,10 @@ namespace bgeot
       gmm::mult(a, pc, grad);
       if (N != P) {
 	gmm::mult(gmm::transposed(grad), grad, CS);
-	bgeot::mat_inverse(CS);
+        gmm::lu_inverse(CS);
 	gmm::mult(gmm::transposed(CS), gmm::transposed(grad), B0);
       } else {
-        bgeot::mat_inverse(grad); B0 = grad;
+        gmm::lu_inverse(grad); B0 = grad;
       }
       xn = x;
       gmm::mult(B0, rn, x); // x = B0 * rn;

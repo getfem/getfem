@@ -43,6 +43,6 @@
 #include <gmm_matrix.h>
 #include <gmm_vector.h>
 #include <gmm_solvers.h>
-
+#include <gmm_opt.h>
 
 #endif //  __GMM_H
