@@ -169,7 +169,7 @@ namespace getfem
 	    if (p[nlocdof] == ndof) break;
 	  if (nlocdof < nbd) {
 	    if (cv1 != cv1_old) {
-	      if (!(pf->is_equivalent())) 
+	      if (pf->need_G()) 
 		transfert_to_G(G1, pmf1->linked_mesh().points_of_convex(cv1));
 	      if (coeff.size() < nbd) { coeff.resize(nbd); coeff.fill(0.0); }
 	    }

@@ -78,7 +78,7 @@ namespace getfem
     for (cv << nn; cv != ST_NIL; cv << nn) {
       pf = mf.fem_of_element(cv);
       pf_target = mf_target.fem_of_element(cv);
-      if (!(pf_target->is_equivalent()) || !(pf_target->is_lagrange()))
+      if (pf_target->need_G() || !(pf_target->is_lagrange()))
 	DAL_THROW(std::invalid_argument, 
 		  "finite element target not convenient");
       

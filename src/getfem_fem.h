@@ -142,6 +142,8 @@ namespace getfem
     }
     bool is_on_real_element(void) const { return real_element_defined; }
     bool is_equivalent(void) const { return is_equiv; }
+    bool need_G(void) const
+    { return !(is_equivalent()) || real_element_defined; }
     bool is_lagrange(void) const { return is_lag; }
     bool is_polynomial(void) const { return is_pol; }
     bool is_polynomialcomp(void) const { return is_polycomp; }

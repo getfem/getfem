@@ -2,7 +2,7 @@
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Basic GEOmetric Tool  (bgeot)                                */
-/* File    :  bgeot_geotrans_inv.h : Allow to inverse geometric transf-    */
+/* File    :  bgeot_geotrans_inv.h : Allows to inverse geometric transf-   */
 /*     	      ormations and to localize a set of points.    	       	   */
 /*                                                                         */
 /* Date : December 20, 2000.                                               */
@@ -272,11 +272,12 @@ namespace bgeot
     scalar_type EPS;
   public:
     geotrans_inv_convex(scalar_type e=10e-12) : pgt(0), EPS(e) {};
-    template<class TAB> geotrans_inv_convex(const convex<base_node, TAB> &cv, pgeometric_trans pgt_, 
-                                            scalar_type e=10e-12) {
-      EPS=e; init(cv,pgt_);
-    };
-    template<class TAB> void init(const convex<base_node, TAB> &cv, pgeometric_trans pgt_);
+    template<class TAB> geotrans_inv_convex(const convex<base_node, TAB> &cv,
+					    pgeometric_trans pgt_, 
+                                            scalar_type e=10e-12) 
+    { EPS=e; init(cv,pgt_); }
+    template<class TAB> void init(const convex<base_node, TAB> &cv,
+				  pgeometric_trans pgt_);
     
     /**
        given the node on the real element, returns the node
@@ -296,7 +297,8 @@ namespace bgeot
     bool invert_nonlin(const base_node& n, base_node& n_ref);
   };
 
-  template<class TAB> void geotrans_inv_convex::init(const convex<base_node, TAB> &cv, pgeometric_trans pgt_) {
+  template<class TAB> void geotrans_inv_convex::init(const convex<base_node,
+					  TAB> &cv, pgeometric_trans pgt_) {
     pgt = pgt_;
     N = pgt->structure()->dim();
     if (!cv.points().size()) DAL_INTERNAL_ERROR("");

@@ -245,8 +245,8 @@ namespace getfem
       DAL_THROW(to_be_done_error,
 		"Sorry, Xfem for non tau-equivalent elements to be done.");
     cvr = pfi->ref_convex();
-    real_element_defined = true;
-    is_equiv = is_polycomp = is_pol = is_lag = false;
+    is_equiv = real_element_defined = true;
+    is_polycomp = is_pol = is_lag = false;
     es_degree = 5;
     ntarget_dim = pfi->target_dim();
   }

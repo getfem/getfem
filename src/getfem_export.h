@@ -75,7 +75,7 @@ namespace getfem
 
       o << "DIM = " << int(pgt->dim()) << endl;
 
-      if (!(pf1->is_equivalent())) 
+      if (pf1->need_G()) 
 	transfert_to_G(G, mf.linked_mesh().points_of_convex(cv));
 
       if (pf1->target_dim() != 1)
@@ -276,7 +276,7 @@ namespace getfem
       size_type nbd_t = pf_t->nb_dof();
       coeff.resize(nbd_s);
 
-      if (!(pf_s->is_equivalent())) 
+      if (pf_s->need_G()) 
 	transfert_to_G(G, mf_source.linked_mesh().points_of_convex(cv));
 
       if (pf_s->target_dim() != 1 || pf_t->target_dim() != 1)
@@ -370,7 +370,7 @@ namespace getfem
       size_type nb = gti.points_in_convex(mf_source.linked_mesh().convex(cv),
 					  pgt, ptab, itab);
       pfem pf_s = mf_source.fem_of_element(cv);
-      if (!(pf_s->is_equivalent())) 
+      if (pf_s->need_G()) 
 	transfert_to_G(G, mf_source.linked_mesh().points_of_convex(cv));
       size_type nbd_s = pf_s->nb_dof();
       coeff.resize(nbd_s);
@@ -428,7 +428,7 @@ namespace getfem
 					  pgt, ptab, itab);
       pfem pf_s = mf_source.fem_of_element(cv);
 
-      if (!(pf_s->is_equivalent()))
+      if (pf_s->need_G())
 	transfert_to_G(G, mf_source.linked_mesh().points_of_convex(cv));
       // cerr << "is_equiv:" << pf_s->is_equivalent() << ",inerp: G=" << G << ",nrow=" << G.nrows() << ", ncols=" << G.ncols() << endl;
       size_type nbd_s = pf_s->nb_dof();
@@ -488,7 +488,7 @@ namespace getfem
       size_type nbd2 = pfe->nb_dof();
       coeff.resize(nbd1);
 
-      if (!(pf1->is_equivalent())) 
+      if (pf1->need_G()) 
 	transfert_to_G(G, mf.linked_mesh().points_of_convex(cv));
 
       if (pf1->target_dim() != 1)
@@ -558,7 +558,7 @@ namespace getfem
       //cout << "nb points in this convex " << nb << endl;
       // cout << "convex : " << mf.linked_mesh().convex(cv) << endl;
       pfem pfe = mf.fem_of_element(cv);
-      if (!(pfe->is_equivalent())) 
+      if (pfe->need_G()) 
 	transfert_to_G(G, mf.linked_mesh().points_of_convex(cv));
       size_type nbd1 = pfe->nb_dof();
       coeff.resize(nbd1);
