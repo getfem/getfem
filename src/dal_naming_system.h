@@ -85,7 +85,7 @@ namespace dal {
     std::map<std::string, std::string> aliases;
     int nb_genfunctions;
     
-    struct method_key : public static_stored_object_key {
+    struct method_key : virtual public static_stored_object_key {
       std::string name;
       
       virtual bool compare(const static_stored_object_key &oo) const {

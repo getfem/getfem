@@ -69,7 +69,7 @@ namespace bgeot {
   }
 
   // Key type for static storing
-  class convex_structure_key : public dal::static_stored_object_key {
+  class convex_structure_key : virtual public dal::static_stored_object_key {
     int type; // 0 = simplex structure degree K
               // 1 = polygon (N = nb of points, K = 0)
               // 2 = dummy (N = dimension, K = nbpt)
@@ -254,7 +254,7 @@ namespace bgeot {
   /* direct product of convex structures                                  */
   /* ******************************************************************** */
 
-  struct cv_pr_key_ : public dal::static_stored_object_key {
+  struct cv_pr_key_ : virtual public dal::static_stored_object_key {
     pconvex_structure cv1, cv2;
     virtual bool compare(const static_stored_object_key &oo) const {
       const cv_pr_key_ &o = dynamic_cast<const cv_pr_key_ &>(oo);
@@ -346,11 +346,11 @@ namespace bgeot {
   /* parallelepiped structures.                                           */
   /* ******************************************************************** */
 
-  struct parallelepiped_ : public dal::static_stored_object {
+  struct parallelepiped_ : virtual public dal::static_stored_object {
     pconvex_structure p;
   };
 
-  struct parallelepiped_key_ : public dal::static_stored_object_key {
+  struct parallelepiped_key_ : virtual public dal::static_stored_object_key {
     dim_type n;
     virtual bool compare(const static_stored_object_key &oo) const {
       const parallelepiped_key_ &o

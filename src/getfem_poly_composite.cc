@@ -343,8 +343,25 @@ namespace getfem
     }
   }
 
+  class str_mesh_key : virtual public dal::static_stored_object_key {
+    bgeot::pconvex_structure cvs;
+    short_type n;
+    bool simplex_mesh;
+  public :
+    virtual bool compare(const static_stored_object_key &oo) const {
+      const str_mesh_key &o = dynamic_cast<const str_mesh_key &>(oo);
+      if (cvs < o.cvs) return true;
+      if (o.cvs < cvs) return false;
+      if (n < o.n) return true;
+      if (o.n < n) return false;
+      if (simplex_mesh < o.simplex_mesh) return true;
+      return false;
+    }
+    str_mesh_key(bgeot::pconvex_structure cv, short_type nn, bool b)
+      : cvs(cv), n(nn), simplex_mesh(b) {}
+  };
 
-  struct str_mesh_cv__ {
+  struct str_mesh_cv__  : virtual public dal::static_stored_object {
     bgeot::pconvex_structure cvs;
     short_type n;
     bool simplex_mesh; /* true if the convex has been splited into simplexes, which were refined */
@@ -352,24 +369,16 @@ namespace getfem
     std::vector<bgeot::mesh_structure *> pfacem; /* array of mesh_structures for faces */
     dal::bit_vector nodes_on_edges;
     mesh_precomposite *pmp;
-    bool operator < (const str_mesh_cv__ &ls) const {
-      if (cvs < ls.cvs) return true; if (ls.cvs < cvs) return false; 
-      if (n < ls.n) return true; return false;
-    }
     str_mesh_cv__(void) : pm(0), pmp(0) {}
     str_mesh_cv__(bgeot::pconvex_structure c, short_type k, bool smesh_) : 
       cvs(c), n(k), simplex_mesh(smesh_) {}
-    void destroy() { 
+    ~str_mesh_cv__() { 
       if (pm) delete pm; if (pmp) delete pmp; pm = 0; pmp = 0;
       for (size_type i=0; i < pfacem.size(); ++i) delete pfacem[i];
     }
   };
 
-  struct stored_str_mesh_cv : public dal::dynamic_tree_sorted<str_mesh_cv__> {
-    ~stored_str_mesh_cv() {
-      for (size_type i=0; i < size(); ++i) (*this)[i].destroy();
-    }
-  };
+  typedef boost::intrusive_ptr<const str_mesh_cv__> pstr_mesh_cv__;
 
   /**
    * This function returns a mesh in pm which contains a refinement of the convex cvr
@@ -382,30 +391,42 @@ namespace getfem
                                   bool force_simplexification) {
     size_type n = cvr->structure()->dim();
     size_type nbp = cvr->structure()->basic_structure()->nb_points();
-    
-    stored_str_mesh_cv &tab = 
-      dal::singleton< stored_str_mesh_cv >::instance();
 
-    
-    str_mesh_cv__ smc(cvr->structure()->basic_structure(), k, (force_simplexification || nbp == n+1));
-    
-    size_type iss = tab.search(smc);
-    if (iss == size_type(-1)) {
+    force_simplexification = force_simplexification || (nbp == n+1);
+
+    dal::pstatic_stored_object o
+      = dal::search_stored_object(str_mesh_key(cvr->structure()
+					       ->basic_structure(), k,
+					       force_simplexification));
+    pstr_mesh_cv__ psmc;
+    if (o) {
+      psmc = dal::stored_cast<str_mesh_cv__>(o);
+    } 
+    else {
+      str_mesh_cv__ &smc(*(new str_mesh_cv__(cvr->structure()
+					     ->basic_structure(), k,
+					     force_simplexification)));
+      psmc = &smc;
+      
       smc.pm = new getfem_mesh();
       
       if (force_simplexification) {
-	cout << "cvr = " << int(cvr->structure()->dim()) << " : " << cvr->structure()->nb_points() << endl;
-	const bgeot::mesh_structure* splx_mesh = cvr->basic_convex_ref()->simplexified_convex();
+	// cout << "cvr = " << int(cvr->structure()->dim()) << " : "
+	//      << cvr->structure()->nb_points() << endl;
+	const bgeot::mesh_structure* splx_mesh
+	  = cvr->basic_convex_ref()->simplexified_convex();
 	/* splx_mesh is correctly oriented */
 	for (size_type ic=0; ic < splx_mesh->nb_convex(); ++ic) {
 	  std::vector<base_node> cvpts(splx_mesh->nb_points_of_convex(ic));
-	  bgeot::pgeometric_trans sgt = bgeot::simplex_geotrans(cvr->structure()->dim(), 1);
+	  bgeot::pgeometric_trans sgt
+	    = bgeot::simplex_geotrans(cvr->structure()->dim(), 1);
 	  for (size_type j=0; j < cvpts.size(); ++j) {
-	    cvpts[j] = cvr->basic_convex_ref()->points()[splx_mesh->ind_points_of_convex(ic)[j]];
+	    cvpts[j] = cvr->basic_convex_ref()->points()
+	      [splx_mesh->ind_points_of_convex(ic)[j]];
 	    //cerr << "cvpts[" << j << "]=" << cvpts[j] << endl;
 	  }
-	  structured_mesh_for_convex_(splx_mesh->structure_of_convex(ic), sgt, &cvpts, k, 
-				      smc.pm);
+	  structured_mesh_for_convex_(splx_mesh->structure_of_convex(ic),
+				      sgt, &cvpts, k, smc.pm);
 	}
       } else {
 	structured_mesh_for_convex_(cvr->structure(), 0, 0, k, smc.pm);
@@ -417,15 +438,17 @@ namespace getfem
       }
 
       smc.pmp = new mesh_precomposite(*(smc.pm));
-      iss = tab.add(smc);
+      dal::add_stored_object(new str_mesh_key(cvr->structure()
+					      ->basic_structure(), k,
+					      force_simplexification), psmc,
+			     cvr->structure()->basic_structure());
     }
-    pm  = tab[iss].pm;
-    pmp = tab[iss].pmp;
+    pm  = psmc->pm;
+    pmp = psmc->pmp;
   }
 
   const getfem_mesh *
-  refined_simplex_mesh_for_convex(bgeot::pconvex_ref cvr, 
-                                  short_type k) {
+  refined_simplex_mesh_for_convex(bgeot::pconvex_ref cvr, short_type k) {
     pgetfem_mesh pm; pmesh_precomposite pmp; 
     structured_mesh_for_convex(cvr,k,pm,pmp,true);
     return pm;
@@ -434,12 +457,15 @@ namespace getfem
   const std::vector<bgeot::mesh_structure*>& 
   refined_simplex_mesh_for_convex_faces(bgeot::pconvex_ref cvr, 
                                   short_type k) {
-    stored_str_mesh_cv &tab = 
-      dal::singleton< stored_str_mesh_cv >::instance();
-    str_mesh_cv__ smc(cvr->structure()->basic_structure(), k, true);    
-    size_type iss = tab.search(smc);
-    if (iss == size_type(-1)) DAL_THROW(dal::internal_error, "call refined_simplex_mesh_for_convex first (or fix me)");
-    return tab[iss].pfacem;
+    dal::pstatic_stored_object o
+      = dal::search_stored_object(str_mesh_key(cvr->structure()
+					       ->basic_structure(), k, true));
+    if (o) {
+      pstr_mesh_cv__ psmc = dal::stored_cast<str_mesh_cv__>(o);
+      return psmc->pfacem;
+    } 
+    else DAL_THROW(dal::internal_error,
+		   "call refined_simplex_mesh_for_convex first (or fix me)");
   }
 
 }  /* end of namespace getfem.                                            */

@@ -59,7 +59,9 @@ namespace getfem {
      the main fem context.
   */
   class nonlinear_elem_term {
-    mutable std::set<pmat_elem_type> melt_list; /* list of melt that will be destroyed by ~nonlinear_elem_term */
+    mutable std::set<pmat_elem_type> melt_list; /* list of melt that will
+						 * be destroyed by
+						 * ~nonlinear_elem_term */
   public :
     virtual const bgeot::multi_index &sizes() const = 0;
     virtual void compute(fem_interpolation_context& /*ctx*/,
@@ -67,7 +69,8 @@ namespace getfem {
     virtual void prepare(fem_interpolation_context& /*ctx*/,
                          size_type /*nl_part*/) {}
     virtual ~nonlinear_elem_term();
-    void register_mat_elem(pmat_elem_type p) { melt_list.insert(p); } /* internal use */
+    void register_mat_elem(pmat_elem_type p) /* internal use */
+    { melt_list.insert(p); }
   };
 
   typedef nonlinear_elem_term* pnonlinear_elem_term;
@@ -91,7 +94,7 @@ namespace getfem {
    *  the functions written to produce those descriptions.
    */ 
   struct mat_elem_type
-    : public dal::static_stored_object, std::vector<constituant> {
+    : virtual public dal::static_stored_object, std::vector<constituant> {
   protected :
     bgeot::multi_index mi;
   public :

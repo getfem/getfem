@@ -166,7 +166,7 @@ namespace getfem
      this structure is not intended to be used directly. It is built via
      the int_method_descriptor() function
   */
-  class integration_method : public dal::static_stored_object {    
+  class integration_method : virtual public dal::static_stored_object {    
     union {
       ppoly_integration ppi; /* for exact integrations */
       papprox_integration pai; /* for approximate integrations (i.e. cubatures) */

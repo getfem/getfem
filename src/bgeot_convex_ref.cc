@@ -37,7 +37,7 @@ namespace bgeot {
   /*       Point tab storage.                                              */
   /* ********************************************************************* */
 
-  struct stored_point_tab_key : public dal::static_stored_object_key  {
+  struct stored_point_tab_key : virtual public dal::static_stored_object_key  {
     const stored_point_tab * pspt;
     virtual bool compare(const static_stored_object_key &oo) const {
       const stored_point_tab_key &o
@@ -97,7 +97,7 @@ namespace bgeot {
   }
 
   // Key type for static storing
-  class convex_of_reference_key : public dal::static_stored_object_key {
+  class convex_of_reference_key : virtual public dal::static_stored_object_key{
     int type; // 0 = simplex structure degree K
               // 1 = equilateral simplex of ref.
               // 2 = dummy
@@ -200,7 +200,7 @@ namespace bgeot {
 
   /* products.                                                             */
 
-  struct product_ref_key_ : public dal::static_stored_object_key {
+  struct product_ref_key_ : virtual public dal::static_stored_object_key {
     pconvex_ref cvr1, cvr2;
     virtual bool compare(const static_stored_object_key &oo) const {
       const product_ref_key_ &o = dynamic_cast<const product_ref_key_ &>(oo);
@@ -277,18 +277,20 @@ namespace bgeot {
     return p;
   }
 
+  struct parallelepiped_of_reference_tab
+    : public dal::dynamic_array<pconvex_ref> {};
 
   pconvex_ref parallelepiped_of_reference(dim_type nc) {
-    static dal::dynamic_array<pconvex_ref> *ptab = 0;
+    parallelepiped_of_reference_tab &tab
+      = dal::singleton<parallelepiped_of_reference_tab>::instance();
     static dim_type ncd = 1;
-    if (!ptab) ptab = new dal::dynamic_array<pconvex_ref>();
     if (nc <= 1) return simplex_of_reference(nc);
     if (nc > ncd) { 
-      (*ptab)[nc] = convex_ref_product(parallelepiped_of_reference(nc-1),
-				       simplex_of_reference(1));
+      tab[nc] = convex_ref_product(parallelepiped_of_reference(nc-1),
+				   simplex_of_reference(1));
       ncd = nc;
     }
-    return (*ptab)[nc];
+    return tab[nc];
   }
 
   /* equilateral ref convexes are used for estimation of convex quality */

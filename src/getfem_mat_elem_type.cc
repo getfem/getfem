@@ -40,7 +40,7 @@ namespace getfem {
     return false;
   }
 
-  struct mat_elem_type_key : public dal::static_stored_object_key {
+  struct mat_elem_type_key : virtual public dal::static_stored_object_key {
     const mat_elem_type *pmet;
   public :
     virtual bool compare(const static_stored_object_key &oo) const {
@@ -152,8 +152,10 @@ namespace getfem {
     f.get_mi().reserve(a->get_mi().size() + b->get_mi().size());
     f.insert(f.end(), (*a).begin(), (*a).end());
     f.insert(f.end(), (*b).begin(), (*b).end());
-    f.get_mi().insert(f.get_mi().end(), (*a).get_mi().begin(), (*a).get_mi().end());
-    f.get_mi().insert(f.get_mi().end(), (*b).get_mi().begin(), (*b).get_mi().end());
+    f.get_mi().insert(f.get_mi().end(), (*a).get_mi().begin(),
+		      (*a).get_mi().end());
+    f.get_mi().insert(f.get_mi().end(), (*b).get_mi().begin(),
+		      (*b).get_mi().end());
 
     /*    mat_elem_type f; f.resize(a->size() + b->size());
 	  f.mi.resize(a->mi.size() + b->mi.size());

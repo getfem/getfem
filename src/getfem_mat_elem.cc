@@ -44,7 +44,7 @@ namespace getfem {
   /*       Elementary matrices computation.                                */
   /* ********************************************************************* */
 
-  struct emelem_comp_light_ {
+  struct emelem_comp_key_  : virtual public dal::static_stored_object_key {
     pmat_elem_type pmt;
     pintegration_method ppi;
     bgeot::pgeometric_trans pgt;
@@ -52,35 +52,35 @@ namespace getfem {
        element if possible (i.e. if no exact integration is used); this allow
        using inline reduction during the integration */
     bool prefer_comp_on_real_element; 
-    bool operator < (const emelem_comp_light_ &ls) const {
-      if (pmt < ls.pmt) return true; if (ls.pmt < pmt) return false; 
-      if (ppi < ls.ppi) return true; if (ls.ppi < ppi) return false; 
-      if (pgt < ls.pgt) return true; if (ls.pgt < pgt) return false;
-      if (prefer_comp_on_real_element < ls.prefer_comp_on_real_element) return true;
+    virtual bool compare(const static_stored_object_key &oo) const {
+      const emelem_comp_key_ &o = dynamic_cast<const emelem_comp_key_ &>(oo);  
+      if (pmt < o.pmt) return true; if (o.pmt < pmt) return false; 
+      if (ppi < o.ppi) return true; if (o.ppi < ppi) return false; 
+      if (pgt < o.pgt) return true; if (o.pgt < pgt) return false;
+      if (prefer_comp_on_real_element < o.prefer_comp_on_real_element)
+	return true;
       return false;
     }
-    emelem_comp_light_(pmat_elem_type pm, pintegration_method pi,
+    emelem_comp_key_(pmat_elem_type pm, pintegration_method pi,
 		       bgeot::pgeometric_trans pg, bool on_relt)
     { pmt = pm; ppi = pi; pgt = pg; prefer_comp_on_real_element = on_relt; }
-    emelem_comp_light_(void) { }
+    emelem_comp_key_(void) { }
   };
-
   
-  struct emelem_comp_structure_ : public mat_elem_computation
-  {
+  struct emelem_comp_structure_ : public mat_elem_computation {
     bgeot::pgeotrans_precomp pgp;
     ppoly_integration ppi;
     papprox_integration pai;
     bool is_ppi;
-    std::vector<base_tensor> mref;
-    std::vector<pfem_precomp> pfp;
-    std::vector<base_tensor> elmt_stored;
+    mutable std::vector<base_tensor> mref;
+    mutable std::vector<pfem_precomp> pfp;
+    mutable std::vector<base_tensor> elmt_stored;
     short_type nbf, dim; 
     std::deque<short_type> grad_reduction, hess_reduction, trans_reduction;
     std::deque<pfem> trans_reduction_pfi;
-    base_small_vector un, up;
-    bool faces_computed;
-    bool volume_computed;
+    mutable base_small_vector un, up;
+    mutable bool faces_computed;
+    mutable bool volume_computed;
     bool is_linear;
     bool computed_on_real_element;
     size_type memsize() const {
@@ -95,23 +95,25 @@ namespace getfem {
       return sz;
     }
 
-    emelem_comp_structure_(const emelem_comp_light_ &ls) {
+    emelem_comp_structure_(pmat_elem_type pm, pintegration_method pi,
+			   bgeot::pgeometric_trans pg, 
+			   bool prefer_comp_on_real_element) {
       
-      pgt = ls.pgt;
-      pgp = bgeot::geotrans_precomp(ls.pgt, &(ls.ppi->integration_points()));
-      pme = ls.pmt;
-      switch (ls.ppi->type()) {
+      pgt = pg;
+      pgp = bgeot::geotrans_precomp(pg, &(pi->integration_points()));
+      pme = pm;
+      switch (pi->type()) {
       case IM_EXACT: 
-	ppi = ls.ppi->exact_method(); pai = 0;  is_ppi = true; break;
+	ppi = pi->exact_method(); pai = 0;  is_ppi = true; break;
       case IM_APPROX: 
-	ppi = 0; pai = ls.ppi->approx_method(); is_ppi = false; break;
+	ppi = 0; pai = pi->approx_method(); is_ppi = false; break;
       case IM_NONE: 
 	DAL_THROW(dal::failure_error, 
 		  "Attempt to use IM_NONE integration method in assembly!\n");
       }
       faces_computed = volume_computed = false;
       is_linear = pgt->is_linear();
-      computed_on_real_element = !is_linear || (ls.prefer_comp_on_real_element && !is_ppi);
+      computed_on_real_element = !is_linear || (prefer_comp_on_real_element && !is_ppi);
       nbf = pgt->structure()->nb_faces();
       dim = pgt->structure()->dim();
       mat_elem_type::const_iterator it = pme->begin(), ite = pme->end();
@@ -165,7 +167,7 @@ namespace getfem {
     void add_elem(base_tensor &t, fem_interpolation_context& ctx,
                   scalar_type J, bool first, bool trans, 
                   mat_elem_integration_callback *icb,
-		  bgeot::multi_index sizes) {
+		  bgeot::multi_index sizes) const {
       mat_elem_type::const_iterator it = pme->begin(), ite = pme->end();
 
       bgeot::multi_index::iterator mit = sizes.begin();
@@ -240,7 +242,7 @@ namespace getfem {
     }
 
 
-    void expand_product_old(base_tensor &t, scalar_type J, bool first) {
+    void expand_product_old(base_tensor &t, scalar_type J, bool first) const {
       scalar_type V;
       size_type k;
       if (first) std::fill(t.begin(), t.end(), 0.0);
@@ -277,7 +279,7 @@ namespace getfem {
 
        efficiency is maximized when the first tensor has a large dimension
      */
-    void expand_product_daxpy(base_tensor &t, scalar_type J, bool first) {
+    void expand_product_daxpy(base_tensor &t, scalar_type J, bool first)const {
       size_type k;
       base_tensor::iterator pt = t.begin();
       static std::vector<base_tensor::const_iterator> pts, es_beg, es_end;
@@ -318,7 +320,7 @@ namespace getfem {
     }
 
 
-    void pre_tensors_for_linear_trans(bool volumic) {
+    void pre_tensors_for_linear_trans(bool volumic) const {
 
       if ((volumic && volume_computed) || (!volumic && faces_computed)) return;
       // scalar_type exectime = ftool::uclock_sec();
@@ -421,7 +423,7 @@ namespace getfem {
 
 
     void compute(base_tensor &t, const base_matrix &G, size_type ir,
-		 size_type elt, mat_elem_integration_callback *icb = 0) {
+		 size_type elt, mat_elem_integration_callback *icb = 0) const {
       dim_type P = dim, N = G.nrows();
       short_type NP = pgt->nb_points();
       fem_interpolation_context ctx(pgp,0,0,G,elt);
@@ -504,46 +506,29 @@ namespace getfem {
     }
     
     void compute(base_tensor &t, const base_matrix &G, size_type elt, 
-		 mat_elem_integration_callback *icb)   
-    {
-      compute(t, G, 0, elt, icb); 
-    }
+		 mat_elem_integration_callback *icb) const   
+    { compute(t, G, 0, elt, icb); }
 
     void compute_on_face(base_tensor &t, const base_matrix &G,
 			 short_type f, size_type elt, 
-			 mat_elem_integration_callback *icb)
+			 mat_elem_integration_callback *icb) const
     { compute(t, G, f+1, elt, icb); }
 
-  };   
-
-  struct emelem_comp_light_FUNC_TABLE : 
-    public dal::FONC_TABLE<emelem_comp_light_, emelem_comp_structure_> { };
-
-  size_type stored_mat_elem_memsize() {
-    const emelem_comp_light_FUNC_TABLE & f = 
-      dal::singleton<emelem_comp_light_FUNC_TABLE>::const_instance();
-    size_type sz = 0;
-    for (dal::bv_visitor i(f.index()); !i.finished(); ++i) {
-      sz += f.table()[i]->memsize();
-    }
-    return sz;
-  }
+  };
 
   pmat_elem_computation mat_elem(pmat_elem_type pm, pintegration_method pi,
 				 bgeot::pgeometric_trans pg, 
                                  bool prefer_comp_on_real_element) { 
-    return dal::singleton<emelem_comp_light_FUNC_TABLE>
-      ::instance().add(emelem_comp_light_(pm, pi, pg,
-					  prefer_comp_on_real_element));
-  }
-
-  /* remove all occurences of pm from the emelem_comp_light_FUNC_TABLE */
-  void mat_elem_forget_mat_elem_type(pmat_elem_type pm) {
-    emelem_comp_light_FUNC_TABLE& f = 
-      dal::singleton<emelem_comp_light_FUNC_TABLE>::instance();
-    for (dal::bv_visitor_c i(f.index()); !i.finished(); ++i) { 
-      if (f.light_table()[i].pmt == pm) f.sup(f.light_table()[i]);
-    }
+    dal::pstatic_stored_object o
+      = dal::search_stored_object(emelem_comp_key_(pm, pi, pg,
+						prefer_comp_on_real_element));
+    if (o) return dal::stored_cast<mat_elem_computation>(o);
+    pmat_elem_computation p = new emelem_comp_structure_(pm, pi, pg,
+						prefer_comp_on_real_element);
+    dal::add_stored_object(new emelem_comp_key_(pm, pi, pg,
+					       prefer_comp_on_real_element),
+			   p, pm, pi, pg);
+    return p;
   }
 
 

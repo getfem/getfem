@@ -90,6 +90,8 @@ namespace dal {
     stored_object_tab& stored_objects
       = dal::singleton<stored_object_tab>::instance();
     pstatic_stored_object_key k = key_of_stored_object(o);
+    if (!k) cout << "No stored object for " << o.get() << endl;
+    else cout << "Stored object "  << o.get() << "has a key " << endl; 
     if (k) return stored_objects.find(enr_static_stored_object_key(k));
     return stored_objects.end();
   }
@@ -132,6 +134,7 @@ namespace dal {
     stored_keys[o] = k;
     stored_objects[enr_static_stored_object_key(k)]
       = enr_static_stored_object(o, perm);
+    cout << "add object " << o.get() << endl;
   }
 
   // Only delete the object but not the dependencies
@@ -141,6 +144,7 @@ namespace dal {
     stored_key_tab& stored_keys = dal::singleton<stored_key_tab>::instance();
     std::list<pstatic_stored_object>::iterator it;
     for (it = to_delete.begin(); it != to_delete.end(); ++it) {
+      cout << "delete object " << (*it).get() << endl;
       pstatic_stored_object_key k = key_of_stored_object(*it);
       stored_object_tab::iterator ito = stored_objects.find(k);
       if (k) stored_keys.erase(*it);
@@ -156,15 +160,21 @@ namespace dal {
     stored_object_tab& stored_objects
       = dal::singleton<stored_object_tab>::instance();
     std::list<pstatic_stored_object>::iterator it;
-    for (it = to_delete.begin(); it != to_delete.end(); ++it)
+    for (it = to_delete.begin(); it != to_delete.end(); ++it) {
+      stored_object_tab::iterator ito = iterator_of_object(*it);
+      if (ito == stored_objects.end())
+	DAL_THROW(failure_error, "This object is not stored : " << it->get());
       iterator_of_object(*it)->second.valid = false;
+    }
     std::set<pstatic_stored_object>::iterator itd;
     for (it = to_delete.begin(); it != to_delete.end(); ++it) {
       if (*it) {
 	stored_object_tab::iterator ito = iterator_of_object(*it);
+	if (ito == stored_objects.end())
+	  DAL_THROW(internal_error, "An object disapeared !");
 	ito->second.valid = false;
-	for (itd = ito->second.dependencies.begin();
-	     itd != ito->second.dependencies.end(); ++itd) {
+	std::set<pstatic_stored_object> dep = ito->second.dependencies;
+	for (itd = dep.begin(); itd != dep.end(); ++itd) {
 	  if (del_dependency(*it, *itd)) {
 	    stored_object_tab::iterator itod=iterator_of_object(*itd);
 	    if (itod->second.perm == AUTODELETE_STATIC_OBJECT

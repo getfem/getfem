@@ -90,7 +90,7 @@ namespace getfem {
 
   class fem_interpolation_context;
   
-  class virtual_fem : public dal::static_stored_object {
+  class virtual_fem : virtual public dal::static_stored_object {
 
   protected :
 
@@ -287,119 +287,6 @@ namespace getfem {
     virtual ~virtual_fem() {}
   };
 
-  template <typename CVEC, typename VVEC>
-  void virtual_fem::interpolation(const fem_interpolation_context& c, 
-				  const CVEC& coeff, VVEC &val,
-				  dim_type Qdim) const {
-    size_type Qmult = size_type(Qdim) / target_dim();
-    if (gmm::vect_size(val) != Qdim)
-      DAL_THROW(dimension_error, "dimensions mismatch");
-    size_type R = nb_dof(c.convex_num()), RR = nb_base(c.convex_num());
-    
-    gmm::clear(val);
-    base_tensor Z; real_base_value(c,Z);
-    for (size_type j = 0; j < RR; ++j) {
-      for (size_type q = 0; q < Qmult; ++q) {
-	typename gmm::linalg_traits<CVEC>::value_type co = 0.0;
-	if (is_equivalent())
-	  co = coeff[j*Qmult+q];
-	else
-	  for (size_type i = 0; i < R; ++i)
-	    co += coeff[i*Qmult+q] * c.M()(i, j);	  
-	for (size_type r = 0; r < target_dim(); ++r)
-	  val[r + q*target_dim()] += co * Z[j + r*R];
-      } 
-    }
-  }
-
-  template <typename MAT>
-  void virtual_fem::interpolation(const fem_interpolation_context& c, 
-				  MAT &M, dim_type Qdim) const {
-    size_type Qmult = size_type(Qdim) / target_dim();
-    size_type R = nb_dof(c.convex_num()), RR = nb_base(c.convex_num());
-    if (gmm::mat_nrows(M) != Qdim || gmm::mat_ncols(M) != R*Qmult)
-      DAL_THROW(dimension_error, "dimensions mismatch");
-    
-    gmm::clear(M);
-    base_tensor Z; real_base_value(c,Z);
-    for (size_type j = 0; j < RR; ++j) {
-      for (size_type q = 0; q < Qmult; ++q) {
-	for (size_type r = 0; r < target_dim(); ++r)
-	  if (is_equivalent())
-	    M(r+q*target_dim(), j*Qmult+q) = Z[j + r*R];
-	  else
-	    for (size_type i = 0; i < R; ++i)
-	      M(r+q*target_dim(), i*Qmult+q) = c.M()(i, j) * Z[j + r*R];
-      } 
-    }
-  }
-
-
-  template<typename CVEC, typename VMAT> 
-  void virtual_fem::interpolation_grad(const fem_interpolation_context& c, 
-			  const CVEC& coeff, VMAT &val, dim_type Qdim) const {
-    typedef typename gmm::linalg_traits<CVEC>::value_type T;
-    size_type Qmult = size_type(Qdim) / target_dim();
-    dim_type N = c.N();
-    if (gmm::mat_ncols(val) != N || gmm::mat_nrows(val) != Qdim)
-      DAL_THROW(dimension_error, "dimensions mismatch");
-    
-    dim_type P = dim();
-    base_tensor t;
-    size_type R = nb_dof(c.convex_num()), RR = nb_base(c.convex_num());      
-    
-    gmm::clear(val);
-    if (!is_on_real_element()) { // optimized case
-      if (!c.have_pfp()) {
-	grad_base_value(c.xref(), t);
-      } else {
-	t = c.pfp()->grad(c.ii());
-      }
-      gmm::dense_matrix<T> val2(P, Qdim);
-      gmm::clear(val2);
-      for (size_type q = 0; q < Qmult; ++q) {
-	base_tensor::const_iterator it = t.begin();	
-	for (size_type k = 0; k < P; ++k)
-	  for (size_type r = 0; r < target_dim(); ++r)
-	    for (size_type j = 0; j < RR; ++j, ++it) {
-	      T co = 0.0;
-	      if (is_equivalent())
-		co = coeff[j*Qmult+q];
-	      else
-		for (size_type i = 0; i < R; ++i)
-		  co += coeff[i*Qmult+q] * c.M()(i, j);	      
-	      val2(k, r + q*target_dim()) += co * (*it);
-	    }
-      }
-      gmm::mult(c.B(), val2, gmm::transposed(val));
-      // replaced by the loop because gmm does not support product
-      // of a complex<> matrix with a real matrix
-      /*for (size_type i=0; i < Qdim; ++i)
-	for (size_type j=0; j < N; ++j) {
-	  T s = 0;
-	  for (size_type k=0; k < P; ++k) s += c.B()(j,k)*val2(k,i);
-	  val(i,j) = s;
-	}
-      */
-    } else {
-      real_grad_base_value(c, t);
-      for (size_type q = 0; q < Qmult; ++q) {
-	base_tensor::const_iterator it = t.begin();
-	for (size_type k = 0; k < N; ++k)
-	  for (size_type r = 0; r < target_dim(); ++r)
-	    for (size_type j = 0; j < RR; ++j, ++it) {
-	      T co = 0.0;
-	      if (is_equivalent())
-		co = coeff[j*Qmult+q];
-	      else
-		for (size_type i = 0; i < R; ++i)
-		  co += coeff[i*Qmult+q] * c.M()(i, j);	      
-	      val(r + q*target_dim(), k) += co * (*it);
-	    }
-      }
-    }
-  }
-
   
   template <class FUNC> class fem : public virtual_fem {
   protected :
@@ -510,7 +397,7 @@ namespace getfem {
    * Pre-computations on a fem.     
    */
   
-  class fem_precomp_ : public dal::static_stored_object {
+  class fem_precomp_ : virtual public dal::static_stored_object {
   protected:      
     pfem pf;
     bgeot::pstored_point_tab pspt;
@@ -633,6 +520,119 @@ namespace getfem {
 			      const base_matrix& G__,
 			      size_type convex_num__);
   };
+
+  template <typename CVEC, typename VVEC>
+  void virtual_fem::interpolation(const fem_interpolation_context& c, 
+				  const CVEC& coeff, VVEC &val,
+				  dim_type Qdim) const {
+    size_type Qmult = size_type(Qdim) / target_dim();
+    if (gmm::vect_size(val) != Qdim)
+      DAL_THROW(dimension_error, "dimensions mismatch");
+    size_type R = nb_dof(c.convex_num()), RR = nb_base(c.convex_num());
+    
+    gmm::clear(val);
+    base_tensor Z; real_base_value(c,Z);
+    for (size_type j = 0; j < RR; ++j) {
+      for (size_type q = 0; q < Qmult; ++q) {
+	typename gmm::linalg_traits<CVEC>::value_type co = 0.0;
+	if (is_equivalent())
+	  co = coeff[j*Qmult+q];
+	else
+	  for (size_type i = 0; i < R; ++i)
+	    co += coeff[i*Qmult+q] * c.M()(i, j);	  
+	for (size_type r = 0; r < target_dim(); ++r)
+	  val[r + q*target_dim()] += co * Z[j + r*R];
+      } 
+    }
+  }
+
+  template <typename MAT>
+  void virtual_fem::interpolation(const fem_interpolation_context& c, 
+				  MAT &M, dim_type Qdim) const {
+    size_type Qmult = size_type(Qdim) / target_dim();
+    size_type R = nb_dof(c.convex_num()), RR = nb_base(c.convex_num());
+    if (gmm::mat_nrows(M) != Qdim || gmm::mat_ncols(M) != R*Qmult)
+      DAL_THROW(dimension_error, "dimensions mismatch");
+    
+    gmm::clear(M);
+    base_tensor Z; real_base_value(c,Z);
+    for (size_type j = 0; j < RR; ++j) {
+      for (size_type q = 0; q < Qmult; ++q) {
+	for (size_type r = 0; r < target_dim(); ++r)
+	  if (is_equivalent())
+	    M(r+q*target_dim(), j*Qmult+q) = Z[j + r*R];
+	  else
+	    for (size_type i = 0; i < R; ++i)
+	      M(r+q*target_dim(), i*Qmult+q) = c.M()(i, j) * Z[j + r*R];
+      } 
+    }
+  }
+
+
+  template<typename CVEC, typename VMAT> 
+  void virtual_fem::interpolation_grad(const fem_interpolation_context& c, 
+			  const CVEC& coeff, VMAT &val, dim_type Qdim) const {
+    typedef typename gmm::linalg_traits<CVEC>::value_type T;
+    size_type Qmult = size_type(Qdim) / target_dim();
+    dim_type N = c.N();
+    if (gmm::mat_ncols(val) != N || gmm::mat_nrows(val) != Qdim)
+      DAL_THROW(dimension_error, "dimensions mismatch");
+    
+    dim_type P = dim();
+    base_tensor t;
+    size_type R = nb_dof(c.convex_num()), RR = nb_base(c.convex_num());      
+    
+    gmm::clear(val);
+    if (!is_on_real_element()) { // optimized case
+      if (!c.have_pfp()) {
+	grad_base_value(c.xref(), t);
+      } else {
+	t = c.pfp()->grad(c.ii());
+      }
+      gmm::dense_matrix<T> val2(P, Qdim);
+      gmm::clear(val2);
+      for (size_type q = 0; q < Qmult; ++q) {
+	base_tensor::const_iterator it = t.begin();	
+	for (size_type k = 0; k < P; ++k)
+	  for (size_type r = 0; r < target_dim(); ++r)
+	    for (size_type j = 0; j < RR; ++j, ++it) {
+	      T co = 0.0;
+	      if (is_equivalent())
+		co = coeff[j*Qmult+q];
+	      else
+		for (size_type i = 0; i < R; ++i)
+		  co += coeff[i*Qmult+q] * c.M()(i, j);	      
+	      val2(k, r + q*target_dim()) += co * (*it);
+	    }
+      }
+      gmm::mult(c.B(), val2, gmm::transposed(val));
+      // replaced by the loop because gmm does not support product
+      // of a complex<> matrix with a real matrix
+      /*for (size_type i=0; i < Qdim; ++i)
+	for (size_type j=0; j < N; ++j) {
+	  T s = 0;
+	  for (size_type k=0; k < P; ++k) s += c.B()(j,k)*val2(k,i);
+	  val(i,j) = s;
+	}
+      */
+    } else {
+      real_grad_base_value(c, t);
+      for (size_type q = 0; q < Qmult; ++q) {
+	base_tensor::const_iterator it = t.begin();
+	for (size_type k = 0; k < N; ++k)
+	  for (size_type r = 0; r < target_dim(); ++r)
+	    for (size_type j = 0; j < RR; ++j, ++it) {
+	      T co = 0.0;
+	      if (is_equivalent())
+		co = coeff[j*Qmult+q];
+	      else
+		for (size_type i = 0; i < R; ++i)
+		  co += coeff[i*Qmult+q] * c.M()(i, j);	      
+	      val(r + q*target_dim(), k) += co * (*it);
+	    }
+      }
+    }
+  }
 
 }  /* end of namespace getfem.                                            */
 

@@ -572,7 +572,7 @@ namespace bgeot {
   /*       Precomputation on geometric transformations.                    */
   /* ********************************************************************* */
 
-  struct pre_geot_key_ : public dal::static_stored_object_key  {
+  struct pre_geot_key_ : virtual public dal::static_stored_object_key  {
     pgeometric_trans pgt;
     pstored_point_tab pspt;
     virtual bool compare(const static_stored_object_key &oo) const {

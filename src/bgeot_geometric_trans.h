@@ -87,7 +87,7 @@ namespace bgeot
    *   \subsubsection*{Inverse transformation and pseudo-inverse}
    *     to do ...
    */
-  class geometric_trans : public dal::static_stored_object {
+  class geometric_trans : virtual public dal::static_stored_object {
   protected :
     
     bool is_lin;
@@ -219,7 +219,7 @@ namespace bgeot
    *  repetitive evaluation of a geometric transformations on a set of
    *  points "pspt" in the the reference convex which do not change.
    */
-  class geotrans_precomp_ : public dal::static_stored_object {
+  class geotrans_precomp_ : virtual public dal::static_stored_object {
   protected:      
     pgeometric_trans pgt;
     pstored_point_tab pspt;  /* a set of points in the reference elt*/

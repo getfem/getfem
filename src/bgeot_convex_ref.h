@@ -36,7 +36,7 @@
 namespace bgeot {
 
   /** Point tab storage. */
-  struct stored_point_tab : public dal::static_stored_object,
+  struct stored_point_tab : virtual public dal::static_stored_object,
 			    public std::vector<base_node> {
     const base_node &operator[](size_type i) const
     { return std::vector<base_node>::operator [](i); }
@@ -76,7 +76,7 @@ namespace bgeot {
   typedef boost::intrusive_ptr<const convex_of_reference> pconvex_ref;
   
   
-  class convex_of_reference : public dal::static_stored_object, 
+  class convex_of_reference : virtual public dal::static_stored_object, 
 			      public convex<base_node> {
   protected :     
     std::vector<base_small_vector> normals_;

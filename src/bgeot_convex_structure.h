@@ -62,7 +62,7 @@ namespace bgeot {
    *       that there is no need for having more than one convex structure
    *       for the same type of convex. 
    */
-  class convex_structure : public dal::static_stored_object {
+  class convex_structure : virtual public dal::static_stored_object {
     protected :
 
       dim_type Nc;

@@ -7,7 +7,6 @@ include_HEADERS =                        \
 	dal_shared_ptr.h                 \
 	dal_basic.h                      \
 	dal_bit_vector.h                 \
-	dal_fonc_tables.h                \
 	dal_static_stored_objects.h      \
 	dal_naming_system.h              \
 	dal_ref.h                        \

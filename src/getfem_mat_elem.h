@@ -34,7 +34,6 @@
 #include <bgeot_geometric_trans.h>
 #include <getfem_mat_elem_type.h>
 #include <getfem_fem.h>
-#include <dal_fonc_tables.h>
 
 namespace getfem {
   /** (optional) callback to be called for each point of the
@@ -62,21 +61,22 @@ namespace getfem {
       this class (whose intances are returned by the mat_elem function, see below)
       holds all computations of elementary integrals over convexes or faces of convexes
   */
-  class mat_elem_computation {
+  class mat_elem_computation : virtual public dal::static_stored_object {
   protected : 
     
     bgeot::pgeometric_trans pgt;
     pmat_elem_type pme;
-    base_matrix pa;
+    mutable base_matrix pa;
     
   public :
     
     virtual void compute(base_tensor &t, const base_matrix &a,
                          size_type elt, 
-			 mat_elem_integration_callback *icb = 0) = 0;
+			 mat_elem_integration_callback *icb = 0) const = 0;
     virtual void compute_on_face(base_tensor &t, const base_matrix &a,
                                  short_type f, size_type elt, 
-				 mat_elem_integration_callback *icb = 0) = 0;
+				 mat_elem_integration_callback *icb = 0)
+      const = 0;
     /**
        perform the integration on the volume of a convex.
        @param t     the destination tensor
@@ -86,7 +86,7 @@ namespace getfem {
     */
     template <class CONT> void 
     gen_compute(base_tensor &t, const CONT &a,  size_type elt, 
-		mat_elem_integration_callback *icb = 0) { 
+		mat_elem_integration_callback *icb = 0) const { 
       bgeot::vectors_to_base_matrix(pa, a); 
       compute(t, pa, elt, icb); 
     }
@@ -96,7 +96,7 @@ namespace getfem {
     template <class CONT> void 
     gen_compute_on_face(base_tensor &t,
                         const CONT &a, short_type f, size_type elt, 
-			mat_elem_integration_callback *icb = 0) {
+			mat_elem_integration_callback *icb = 0) const {
       bgeot::vectors_to_base_matrix(pa, a); 
       compute_on_face(t, pa, f, elt, icb); 
     }
@@ -105,7 +105,8 @@ namespace getfem {
     virtual size_type memsize() const = 0;
   };
 
-  typedef mat_elem_computation *pmat_elem_computation;
+  typedef boost::intrusive_ptr<const mat_elem_computation>
+  pmat_elem_computation;
 
   /** 
       allocate a structure for computation (integration over elements or faces
@@ -116,19 +117,6 @@ namespace getfem {
 				 pintegration_method pi,
 				 bgeot::pgeometric_trans pg,
                                  bool prefer_comp_on_real_element = false);
-
-  /** 
-      return the number of bytes used for storage of all cached data associated
-      to pmat_elem_computation objects
-  */
-  size_type stored_mat_elem_memsize();
-
-  /**
-     free all caches associated to the given type of elementary matrix (when
-     using high degree elements and large mat_elem_type, these may become quite
-     memory consuming).
-  */
-  void mat_elem_forget_mat_elem_type(pmat_elem_type pm);
 
 
 }  /* end of namespace getfem.                                             */
