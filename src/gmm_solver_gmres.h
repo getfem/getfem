@@ -82,8 +82,8 @@ namespace gmm {
       size_type i = 0; inner.init();
       
       do {
-	gmm::mult(A, KS[i], u);
-	gmm::mult(M, u, KS[i+1]);
+	mult(A, KS[i], u);
+	mult(M, u, KS[i+1]);
 	orthogonalize(KS, mat_col(H, i), i);
 	R a = gmm::vect_norm2(KS[i+1]);
 	H(i+1, i) = T(a);
@@ -98,9 +98,9 @@ namespace gmm {
 	++inner, ++outer, ++i;
       } while (! inner.finished(gmm::abs(s[i])));
 
-      gmm::upper_tri_solve(H, s, i, false);
-      gmm::combine(KS, s, x, i);
-      gmm::mult(A, gmm::scaled(x, -T(1)), b, w);
+      upper_tri_solve(H, s, i, false);
+      combine(KS, s, x, i);
+      mult(A, gmm::scaled(x, -T(1)), b, w);
       mult(M, w, r);
       beta_old = std::min(beta, beta_old); beta = gmm::vect_norm2(r);
       if (int(inner.get_iteration()) < restart -1 || beta_old <= beta)

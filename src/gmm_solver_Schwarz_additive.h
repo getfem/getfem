@@ -156,7 +156,7 @@ namespace gmm {
     if (iter.get_noisy()) cout << "\n";
   }
   
-    template <typename Matrix1, typename Matrix2, typename Precond,
+  template <typename Matrix1, typename Matrix2, typename Precond,
 	    typename Vector2, typename Vector3, typename local_solver>
   void mult(const add_schwarz_mat<Matrix1, Matrix2, Precond, local_solver> &M,
 	    const Vector2 &p, Vector3 &q) {
@@ -176,11 +176,27 @@ namespace gmm {
   }
 
   template <typename Matrix1, typename Matrix2, typename Precond,
+	    typename Vector2, typename Vector3, typename local_solver>
+  void mult(const add_schwarz_mat<Matrix1, Matrix2, Precond, local_solver> &M,
+	    const Vector2 &p, const Vector3 &q) {
+    mult(M, p, const_cast<Vector3 &>(q));
+  }
+
+  template <typename Matrix1, typename Matrix2, typename Precond,
 	    typename Vector2, typename Vector3, typename Vector4,
 	    typename local_solver>
   void mult(const add_schwarz_mat<Matrix1, Matrix2, Precond, local_solver> &M,
 	    const Vector2 &p, const Vector3 &p2, Vector4 &q)
   { mult(M, p, q); add(p2, q); }
+
+  template <typename Matrix1, typename Matrix2, typename Precond,
+	    typename Vector2, typename Vector3, typename Vector4,
+	    typename local_solver>
+  void mult(const add_schwarz_mat<Matrix1, Matrix2, Precond, local_solver> &M,
+	    const Vector2 &p, const Vector3 &p2, const Vector4 &q)
+  { mult(M, p, const_cast<Vector4 &>(q)); add(p2, q); }
+
+  
 
   template <typename Matrix2, typename Vector2, typename Vector3>
   void globaltolocal(const Vector2 &f, std::vector<Vector3> &fi,

@@ -48,6 +48,8 @@ namespace getfem {
   /*		Generic definitions.                                      */
   /* ******************************************************************** */
  
+  template<typename MODEL_STATE> class mdbrick_abstract;
+
   template<typename T_MATRIX, typename C_MATRIX, typename VECTOR>
   class model_state {
 
@@ -78,6 +80,14 @@ namespace getfem {
     VECTOR &residu(void) { return residu_; }
     long ident(void) { return ident_; }
     void touch(void) { ident_ = context_dependencies::new_ident(); }
+    void adapt_sizes(mdbrick_abstract<model_state> &problem) {
+      size_type ndof = problem.nb_dof(), nc = problem.nb_constraints();
+      gmm::resize(tangent_matrix_, ndof, ndof);
+      gmm::resize(constraints_matrix_, nc, ndof);
+      gmm::resize(constraints_rhs_, nc);
+      gmm::resize(state_, ndof);
+      gmm::resize(residu_, ndof);
+    } 
 
     model_state(void) { ident_ = context_dependencies::new_ident(); }
   };
@@ -130,7 +140,7 @@ namespace getfem {
     virtual void constraints_system(MODEL_STATE &, size_type = 0,
 				    size_type = 0) {}
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0) {
-      if (ident_ms != MS.ident() || mdbrick_abstract<MODEL_STATE>::context_changed()) {
+      if (ident_ms != MS.ident() || this->context_changed()) {
 	gmm::sub_interval SUBI(i0, nb_dof());
 	asm_stiffness_matrix_for_linear_elasticity
 	  (gmm::sub_matrix(MS.tangent_matrix(), SUBI), mf_u, mf_data, 
@@ -166,7 +176,7 @@ namespace getfem {
       gmm::resize(mu_, mf_data_.nb_dof());
       std::fill(gmm::vect_begin(lambda_), gmm::vect_end(lambda_), lambdai);
       std::fill(gmm::vect_begin(mu_), gmm::vect_end(mu_), mui);
-      mdbrick_abstract<MODEL_STATE>::add_dependency(mf_u); mdbrick_abstract<MODEL_STATE>::add_dependency(mf_data); 
+      this->add_dependency(mf_u); this->add_dependency(mf_data); 
     }
 
   };
@@ -188,7 +198,7 @@ namespace getfem {
     mesh_fem &mf_data;
     VECTOR B_;
     VECTOR F_;
-    size_type boundary;
+    size_type boundary, qmult;
     int ident_ms;
     
     void fixing_dimensions(void) {
@@ -197,8 +207,7 @@ namespace getfem {
       if (qdim != q && q != 1)
 	DAL_THROW(dimension_error,"incompatible dimension of mesh_fem"
 		  " structure for source term ");
-      size_type qmult = qdim / q;
-      gmm::resize(F_, sub_problem.main_mesh_fem().nb_dof());
+      qmult = qdim / q;
       gmm::resize(B_, mf_data.nb_dof() * qmult);
     }
 
@@ -216,7 +225,12 @@ namespace getfem {
     { sub_problem.compute_tangent_matrix(MS, i0); }
     virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0) {
       sub_problem.compute_residu(MS, i0);
-      if (ident_ms != MS.ident()) {
+      if (ident_ms != MS.ident() || this->context_changed()) {
+	qmult = sub_problem.main_mesh_fem().get_qdim() / mf_data.get_qdim();
+	if (gmm::vect_size(B_) != mf_data.nb_dof() * qmult) 
+	  DAL_THROW(failure_error, "The data mesh fem structure has changed, "
+		    " You have to change the rhs in that case.");
+	gmm::resize(F_, sub_problem.main_mesh_fem().nb_dof());
 	asm_source_term(F_, sub_problem.main_mesh_fem(),mf_data, B_,boundary);
 	ident_ms = MS.ident();
       }
@@ -227,7 +241,7 @@ namespace getfem {
     { return sub_problem.main_mesh_fem(); }
 
     void changing_rhs(const VECTOR &B__)
-    { gmm::copy(B__, B_); ident_ms = -1; }
+    { fixing_dimensions(); gmm::copy(B__, B_); ident_ms = -1; }
 
     // Constructor which does not define the rhs
     mdbrick_source_term(mdbrick_abstract<MODEL_STATE> &problem,
@@ -235,7 +249,8 @@ namespace getfem {
       : sub_problem(problem), mf_data(mf_data_), boundary(bound), ident_ms(-1){
       fixing_dimensions();
       gmm::clear(B_);
-      add_dependency(mf_data); add_dependency(sub_problem.main_mesh_fem());
+      this->add_dependency(mf_data);
+      this->add_dependency(sub_problem.main_mesh_fem());
     }
 
     // Constructor defining the rhs
@@ -245,7 +260,8 @@ namespace getfem {
       : sub_problem(problem), mf_data(mf_data_), boundary(bound), ident_ms(-1){
       fixing_dimensions();
       gmm::copy(B__, B_);
-      add_dependency(mf_data); add_dependency(sub_problem.main_mesh_fem());
+      this->add_dependency(mf_data);
+      this->add_dependency(sub_problem.main_mesh_fem());
     }
 
   };
@@ -327,6 +343,8 @@ namespace getfem {
     virtual void constraints_system(MODEL_STATE &MS, size_type i0 = 0,
 				    size_type j0 = 0) {
       sub_problem.constraints_system(MS, i0, j0);
+      if (this->context_changed()) compute_constraints();
+
       size_type nd = sub_problem.main_mesh_fem().nb_dof();
       size_type ncs = sub_problem.nb_constraints();
       gmm::sub_interval SUBI(j0+ncs,nb_const), SUBJ(i0, nd);
@@ -342,14 +360,21 @@ namespace getfem {
     virtual mesh_fem &main_mesh_fem(void)
     { return sub_problem.main_mesh_fem(); }
 
+    void changing_rhs(const VECTOR &B__) {
+      if (this->context_changed()) fixing_dimensions();
+      gmm::copy(B__, B_); compute_constraints();
+    }
+
     // Constructor which does not define the rhs
     mdbrick_Dirichlet(mdbrick_abstract<MODEL_STATE> &problem,
 		     mesh_fem &mf_data_, size_type bound)
       : sub_problem(problem), mf_data(mf_data_), boundary(bound),
 	ident_ms(-1) {
-      gmm::resize(B_, mf_data_.nb_dof()); gmm::clear(B_); 
+      fixing_dimensions();
+      gmm::clear(B_); 
       compute_constraints();
-      add_dependency(mf_data); add_dependency(sub_problem.main_mesh_fem());
+      this->add_dependency(mf_data);
+      this->add_dependency(sub_problem.main_mesh_fem());
     }
 
     // Constructor defining the rhs
@@ -358,10 +383,11 @@ namespace getfem {
 		     size_type bound)
       : sub_problem(problem), mf_data(mf_data_), boundary(bound),
 	ident_ms(-1) {
-      gmm::resize(B_, mf_data_.nb_dof()
-	    * sub_problem.main_mesh_fem().get_qdim()); gmm::copy(B__, B_); 
+      fixing_dimensions();
+      gmm::copy(B__, B_); 
       compute_constraints();
-      add_dependency(mf_data); add_dependency(sub_problem.main_mesh_fem());
+      this->add_dependency(mf_data);
+      this->add_dependency(sub_problem.main_mesh_fem());
     }
     
   };
@@ -384,11 +410,7 @@ namespace getfem {
 
     size_type ndof = problem.nb_dof(), nc = problem.nb_constraints();
     
-    gmm::resize(MS.tangent_matrix(), ndof, ndof);
-    gmm::resize(MS.constraints_matrix(), nc, ndof);
-    gmm::resize(MS.constraints_rhs(), nc);
-    gmm::resize(MS.state(), ndof);
-    gmm::resize(MS.residu(), ndof);
+    MS.adapt_sizes(problem);
     gmm::fill_random(MS.state());
 
     problem.compute_tangent_matrix(MS);
