@@ -5,6 +5,10 @@
 int main(void)
 {
   try {
+    std::vector<std::complex<float> > cc(10);
+    gmm::clear(cc);
+    cout << "cc = "; gmm::write(cc, cout); cout << endl;
+
     std::vector<double> v(10), w(10);
     gmm::clear(v);
     gmm::clear(w);

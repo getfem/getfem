@@ -32,8 +32,6 @@
 #ifndef __GMM_SOLVER_CG_H
 #define __GMM_SOLVER_CG_H
 
-#include <gmm.h>
-
 namespace gmm {
 
   /* ******************************************************************** */

@@ -31,8 +31,6 @@
 #ifndef __GMM_SUB_MATRIX_H
 #define __GMM_SUB_MATRIX_H
 
-#include <gmm_sub_vector.h>
-
 namespace gmm {
 
   /* ********************************************************************* */

@@ -31,7 +31,6 @@
 #ifndef __GMM_INTERFACE_H
 #define __GMM_INTERFACE_H
 
-#include <gmm.h>
 #include <bgeot_matrix.h>
 
 namespace gmm {

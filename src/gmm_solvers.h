@@ -32,7 +32,6 @@
 #ifndef __GMM_SOLVERS_H
 #define __GMM_SOLVERS_H
 
-#include <gmm.h>
 #include <gmm_solver_cg.h>
 #include <gmm_solver_Schwarz_additive.h>
 

@@ -32,8 +32,6 @@
 #ifndef __GMM_SOLVERS_SCHWARZ_ADDITIVE_H
 #define __GMM_SOLVERS_SCHWARZ_ADDITIVE_H
 
-#include <gmm.h>
-
 namespace gmm {
       
   /* ******************************************************************** */

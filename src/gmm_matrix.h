@@ -31,8 +31,6 @@
 #ifndef __GMM_MATRIX_H
 #define __GMM_MATRIX_H
 
-#include <gmm.h>
-
 namespace gmm
 {
 

@@ -32,7 +32,6 @@
 #define __GMM_VECTOR_H
 
 #include <dal_tree_sorted.h>
-#include <gmm.h>
 
 namespace gmm
 {
