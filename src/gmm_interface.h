@@ -536,6 +536,9 @@ namespace gmm {
   (std::ostream &o, const cs_vector_ref<PT1, PT2, shift>& m)
   { gmm::write(o,m); return o; }
 
+  template <class PT1, class PT2, int shift>
+  inline size_type nnz(const cs_vector_ref<PT1, PT2, shift>& l) { return l.n; }
+
   /* ******************************************************************** */
   /*	    Read only reference on a compressed sparse column matrix      */
   /* ******************************************************************** */

@@ -289,6 +289,9 @@ namespace gmm
     svr->_begin = vect_begin(*pv); svr->_end = vect_end(*pv);
   }
 
+  template <class T>
+  inline size_type nnz(const wsvector<T>& l) { return l.nb_stored(); }
+
   /*************************************************************************/
   /*                                                                       */
   /*    rsvector: sparse vector optimized for linear algebra operations.   */
@@ -632,6 +635,8 @@ namespace gmm
     svr->_begin = vect_begin(*pv); svr->_end = vect_end(*pv);
   }
   
+  template <class T>
+  inline size_type nnz(const rsvector<T>& l) { return l.nb_stored(); }
 
   /*************************************************************************/
   /*                                                                       */

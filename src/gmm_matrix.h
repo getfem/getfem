@@ -121,7 +121,7 @@ namespace gmm
     typedef typename linalg_traits<row_matrix<V> >::row_iterator iterator;
     typedef typename linalg_traits<row_matrix<V> >::value_type value_type;
     typedef typename linalg_traits<row_matrix<V> >::const_row_iterator
-          const_iterator;
+    const_iterator;
     
     reference operator()(const iterator &itrow, size_type j)
     { return (*itrow)[j]; }
@@ -165,8 +165,8 @@ namespace gmm
     : public linalg_traits<row_matrix<V> > {};
 #endif
 
-   template<class V> std::ostream &operator <<
-  (std::ostream &o, const row_matrix<V>& m) { gmm::write(o,m); return o; }
+  template<class V> std::ostream &operator <<
+    (std::ostream &o, const row_matrix<V>& m) { gmm::write(o,m); return o; }
 
   /* ******************************************************************** */
   /*		                                            		  */
@@ -220,7 +220,7 @@ namespace gmm
     typedef typename linalg_traits<col_matrix<V> >::col_iterator iterator;
     typedef typename linalg_traits<col_matrix<V> >::value_type value_type;
     typedef typename linalg_traits<col_matrix<V> >::const_col_iterator
-          const_iterator;
+    const_iterator;
     
     reference operator()(const iterator &itcol, size_type j)
     { return (*itcol)[j]; }
@@ -260,7 +260,7 @@ namespace gmm
   };
 
   template<class V> std::ostream &operator <<
-  (std::ostream &o, const col_matrix<V>& m) { gmm::write(o,m); return o; }
+    (std::ostream &o, const col_matrix<V>& m) { gmm::write(o,m); return o; }
 
 #ifdef USING_BROKEN_GCC295
   template <class V> struct linalg_traits<const col_matrix<V> >
@@ -341,20 +341,20 @@ namespace gmm
     typedef T& reference;
     typedef abstract_plain storage_type;
     typedef tab_ref_reg_spaced_with_origin<typename this_type::iterator>
-            sub_row_type;
+    sub_row_type;
     typedef tab_ref_reg_spaced_with_origin<typename this_type
-            ::const_iterator> const_sub_row_type;
+    ::const_iterator> const_sub_row_type;
     typedef plain_compressed_iterator<typename this_type::iterator,
-	    typename this_type::iterator> row_iterator;
+				      typename this_type::iterator> row_iterator;
     typedef plain_compressed_iterator<typename this_type::const_iterator,
-	    typename this_type::iterator> const_row_iterator;
+				      typename this_type::iterator> const_row_iterator;
     typedef tab_ref_with_origin<typename this_type::iterator> sub_col_type;
     typedef tab_ref_with_origin<typename this_type::const_iterator>
-            const_sub_col_type;
+    const_sub_col_type;
     typedef plain_compressed_iterator<typename this_type::iterator,
-	    typename this_type::iterator> col_iterator;
+				      typename this_type::iterator> col_iterator;
     typedef plain_compressed_iterator<typename this_type::const_iterator,
-	    typename this_type::iterator> const_col_iterator;
+				      typename this_type::iterator> const_col_iterator;
     typedef col_and_row sub_orientation;
     typedef dense_matrix_access<T> access_type;
     static size_type nrows(const this_type &m) { return m.nrows(); }
@@ -394,7 +394,7 @@ namespace gmm
   };
 
   template<class T> std::ostream &operator <<
-  (std::ostream &o, const dense_matrix<T>& m) { gmm::write(o,m); return o; }
+    (std::ostream &o, const dense_matrix<T>& m) { gmm::write(o,m); return o; }
 
 #ifdef USING_BROKEN_GCC295
   template <class T> struct linalg_traits<const dense_matrix<T> >
@@ -423,7 +423,8 @@ namespace gmm
     { init_with_good_format(B); }
     void init_with(const col_matrix<wsvector<T> > &B)
     { init_with_good_format(B); }
-
+    template <class PT1, class PT2, class PT3, int cshift> void init_with(const csc_matrix_ref<PT1,PT2,PT3,cshift>& B)
+    { init_with_good_format(B); }
     void init_with_identity(size_type n);
 
     csc_matrix(void) : pr(0), ir(0), jc(0), nc(0), nr(0) {}
@@ -434,22 +435,25 @@ namespace gmm
     size_type ncols(void) const { return nc; }
    
     value_type operator()(size_type i, size_type j) const
-      { return mat_col(*this, j)[i]; }
+    { return mat_col(*this, j)[i]; }
   };
 
   template <class T, int shift> template<class Matrix>
   void csc_matrix<T, shift>::init_with_good_format(const Matrix &B) {
+    typedef typename linalg_traits<Matrix>::const_sub_col_type col_type;
     if (pr) { delete[] pr; delete[] ir; delete[] jc; }
     nc = mat_ncols(B); nr = mat_nrows(B);
     jc = new size_type[nc+1];
     jc[0] = shift;
-    for (size_type j = 0; j < nc; ++j)
-      jc[j+1] = jc[j] + B.col(j).nb_stored();
+    for (size_type j = 0; j < nc; ++j) {
+      jc[j+1] = jc[j] + nnz(mat_const_col(B, j));
+    }
     pr = new T[jc[nc]];
     ir = new size_type[jc[nc]];
     for (size_type j = 0; j < nc; ++j) {
-      typename linalg_traits<wsvector<T> >::const_iterator
-	it = vect_const_begin(B.col(j)), ite = vect_const_end(B.col(j));
+      col_type col = mat_const_col(B, j);
+      typename linalg_traits<col_type>::const_iterator
+	it = vect_const_begin(col), ite = vect_const_end(col);
       for (size_type k = 0; it != ite; ++it, ++k)
 	{ pr[jc[j]-shift+k] = *it; ir[jc[j]-shift+k] = it.index() + shift; }
     }
@@ -498,10 +502,10 @@ namespace gmm
     typedef abstract_null_type const_row_iterator;
     typedef abstract_null_type sub_col_type;
     typedef cs_vector_ref<const T *, const size_type *, shift>
-                                       const_sub_col_type;
+    const_sub_col_type;
     typedef sparse_compressed_iterator<const T *, const size_type *,
 				       const size_type *, shift>
-                                       const_col_iterator;
+    const_col_iterator;
     typedef abstract_null_type col_iterator;
     typedef csc_matrix_access<T *, size_type *, size_type *, shift> 
     access_type;
@@ -514,7 +518,7 @@ namespace gmm
     { return const_col_iterator(m.pr, m.ir, m.jc + m.nc, m.nr, m.pr); }
     static const_sub_col_type col(const const_col_iterator &it) {
       return const_sub_col_type(it.pr + *(it.jc) - shift,
-	     it.ir + *(it.jc) - shift, *(it.jc + 1) - *(it.jc), it.n);
+				it.ir + *(it.jc) - shift, *(it.jc + 1) - *(it.jc), it.n);
     }
     static const void* origin(const this_type &m) { return m.pr; }
     static void do_clear(this_type &m) { m.do_clear(); }
@@ -528,7 +532,7 @@ namespace gmm
 
   template <class T, int shift>
   std::ostream &operator <<
-  (std::ostream &o, const csc_matrix<T, shift>& m)
+    (std::ostream &o, const csc_matrix<T, shift>& m)
   { gmm::write(o,m); return o; }
   
   template <class T, int shift>
@@ -561,6 +565,8 @@ namespace gmm
     { init_with_good_format(B); }
     void init_with(const row_matrix<rsvector<T> > &B)
     { init_with_good_format(B); }
+    template <class PT1, class PT2, class PT3, int cshift> void init_with(const csr_matrix_ref<PT1,PT2,PT3,cshift>& B)
+    { init_with_good_format(B); }
 
     template <class Matrix> void init_with(const Matrix &A);
     void init_with_identity(size_type n);
@@ -573,55 +579,57 @@ namespace gmm
     size_type ncols(void) const { return nc; }
    
     value_type operator()(size_type i, size_type j) const
-      { return mat_col(*this, j)[i]; }
+    { return mat_col(*this, j)[i]; }
   };
-
-
+  
   template <class T, int shift> template <class Matrix>
   void csr_matrix<T, shift>::init_with_good_format(const Matrix &B) {
-      if (pr) { delete[] pr; delete[] ir; delete[] jc; }
-      nc = mat_ncols(B); nr = mat_nrows(B);
-      jc = new size_type[nr+1];
-      jc[0] = shift;
-      for (size_type j = 0; j < nr; ++j)
-	jc[j+1] = jc[j] + B.row(j).nb_stored();
-      pr = new T[jc[nr]];
-      ir = new size_type[jc[nr]];
-      for (size_type j = 0; j < nr; ++j) {
-	typename linalg_traits<wsvector<T> >::const_iterator
-	  it = vect_const_begin(B.row(j)), ite = vect_const_end(B.row(j));
-	for (size_type k = 0; it != ite; ++it, ++k)
-	  { pr[jc[j]-shift+k] = *it; ir[jc[j]-shift+k] = it.index()+shift; }
-      }
+    typedef typename linalg_traits<Matrix>::const_sub_row_type row_type;
+    if (pr) { delete[] pr; delete[] ir; delete[] jc; }
+    nc = mat_ncols(B); nr = mat_nrows(B);
+    jc = new size_type[nr+1];
+    jc[0] = shift;
+    for (size_type j = 0; j < nr; ++j) {
+      jc[j+1] = jc[j] + nnz(mat_const_row(B, j));
     }
+    pr = new T[jc[nr]];
+    ir = new size_type[jc[nr]];
+    for (size_type j = 0; j < nr; ++j) {
+      row_type row = mat_const_row(B, j);
+      typename linalg_traits<row_type>::const_iterator
+	it = vect_const_begin(row), ite = vect_const_end(row);
+      for (size_type k = 0; it != ite; ++it, ++k)
+	{ pr[jc[j]-shift+k] = *it; ir[jc[j]-shift+k] = it.index()+shift; }
+    }
+  }
 
-    template <class T, int shift> template <class Matrix> 
-    void csr_matrix<T, shift>::init_with(const Matrix &A) { 
-      row_matrix<wsvector<T> > B(mat_nrows(A), mat_ncols(A)); 
-      copy(A, B); 
-      init_with_good_format(B);
-    }
+  template <class T, int shift> template <class Matrix> 
+  void csr_matrix<T, shift>::init_with(const Matrix &A) { 
+    row_matrix<wsvector<T> > B(mat_nrows(A), mat_ncols(A)); 
+    copy(A, B); 
+    init_with_good_format(B);
+  }
 
-    template <class T, int shift> 
-    void csr_matrix<T, shift>::init_with_identity(size_type n) {
-      if (pr) { delete[] pr; delete[] ir; delete[] jc; }
-      nc = nr = n; 
-      pr = new T[nr];
-      ir = new size_type[nr];
-      jc = new size_type[nr+1];
-      for (size_type j = 0; j < nr; ++j)
-	{ ir[j] = jc[j] = shift + j; pr[j] = T(1); }
-      jc[nr] = shift + nr;
-    }
+  template <class T, int shift> 
+  void csr_matrix<T, shift>::init_with_identity(size_type n) {
+    if (pr) { delete[] pr; delete[] ir; delete[] jc; }
+    nc = nr = n; 
+    pr = new T[nr];
+    ir = new size_type[nr];
+    jc = new size_type[nr+1];
+    for (size_type j = 0; j < nr; ++j)
+      { ir[j] = jc[j] = shift + j; pr[j] = T(1); }
+    jc[nr] = shift + nr;
+  }
 
-    template <class T, int shift>
-    csr_matrix<T, shift>::csr_matrix(size_type nnr, size_type nnc)
-      : nc(nnc), nr(nnr) {
-      pr = new T[1];  ir = new size_type[1];
-      jc = new size_type[nr+1];
-      for (size_type j = 0; j < nr; ++j) jc[j] = shift;
-      jc[nr] = shift;
-    }
+  template <class T, int shift>
+  csr_matrix<T, shift>::csr_matrix(size_type nnr, size_type nnc)
+    : nc(nnc), nr(nnr) {
+    pr = new T[1];  ir = new size_type[1];
+    jc = new size_type[nr+1];
+    for (size_type j = 0; j < nr; ++j) jc[j] = shift;
+    jc[nr] = shift;
+  }
 
 
   template <class T, int shift>
@@ -638,13 +646,13 @@ namespace gmm
     typedef abstract_null_type const_col_iterator;
     typedef abstract_null_type sub_row_type;
     typedef cs_vector_ref<const T *, const size_type *, shift>
-                                       const_sub_row_type;
+    const_sub_row_type;
     typedef sparse_compressed_iterator<const T *, const size_type *,
 				       const size_type *, shift>
-                                       const_row_iterator;
+    const_row_iterator;
     typedef abstract_null_type row_iterator;
     typedef csr_matrix_access<T *, size_type *, size_type *, shift> 
-            access_type;
+    access_type;
     typedef row_major sub_orientation;
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static size_type ncols(const this_type &m) { return m.ncols(); }
@@ -654,7 +662,7 @@ namespace gmm
     { return const_row_iterator(m.pr, m.ir, m.jc + m.nc, m.nr, m.pr); }
     static const_sub_row_type row(const const_row_iterator &it) {
       return const_sub_row_type(it.pr + *(it.jc) - shift,
-	     it.ir + *(it.jc) - shift, *(it.jc + 1) - *(it.jc), it.n);
+				it.ir + *(it.jc) - shift, *(it.jc + 1) - *(it.jc), it.n);
     }
     static const void* origin(const this_type &m) { return m.pr; }
     static void do_clear(this_type &m) { m.do_clear(); }
@@ -668,7 +676,7 @@ namespace gmm
 
   template <class T, int shift>
   std::ostream &operator <<
-  (std::ostream &o, const csr_matrix<T, shift>& m)
+    (std::ostream &o, const csr_matrix<T, shift>& m)
   { gmm::write(o,m); return o; }
   
   template <class T, int shift>

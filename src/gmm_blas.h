@@ -212,6 +212,33 @@ namespace gmm {
   template <class L> inline void clear(const L &l)
   { linalg_traits<L>::do_clear(linalg_const_cast(l)); }
 
+  template <class L> inline size_type nnz(const L& l)
+  { return nnz(l, typename linalg_traits<L>::linalg_type()); }
+
+  template <class L> inline size_type nnz(const L& l, abstract_vector) { 
+    typename linalg_traits<L>::const_iterator it = vect_const_begin(l), ite = vect_const_end(l);
+    size_type res(0);
+    for (; it != ite; ++it) ++res;
+    return res;
+  }
+
+  template <class L> inline size_type nnz(const L& l, abstract_matrix) {
+    return nnz(l,  typename principal_orientation_type<typename
+	       linalg_traits<L>::sub_orientation>::potype());
+  }
+
+  template <class L> inline size_type nnz(const L& l, row_major) {
+    size_type res(0);
+    for (size_type i = 0; i < mat_nrows(l); ++i) res += nnz(mat_const_row(l, i));
+    return res;
+  } 
+
+  template <class L> inline size_type nnz(const L& l, col_major) {
+    size_type res(0);
+    for (size_type i = 0; i < mat_ncols(l); ++i) res += nnz(mat_const_col(l, i));
+    return res;
+  }
+
   /* ******************************************************************** */
   /*		Write                                   		  */
   /* ******************************************************************** */
@@ -1319,7 +1346,7 @@ namespace gmm {
       mult_spec(l1, l2, l3, typename principal_orientation_type<typename
 		linalg_traits<L1>::sub_orientation>::potype());
     else {
-      DAL_WARNING(2, "Warning, A temporary is used for mult\n");
+      DAL_WARNING(2, "Warning, A temporary is used for mult\n");assert(0);
       typename temporary_vector<L3>::vector_type temp(vect_size(l3));
       mult_spec(l1, l2, temp, typename principal_orientation_type<typename
 		linalg_traits<L1>::sub_orientation>::potype());

@@ -230,6 +230,20 @@ namespace bgeot
   typedef vsvector<scalar_type> base_vector;
   typedef PT<base_vector> base_node;
 
+  /*  template<class T>
+    vsvector<T> operator *(const gmm::dense_matrix<T>& m, const vsvector<T>& v)
+  { vsvector<T> res(m.nrows()); gmm::mult(m, v, res); return res; }
+
+  template<class T>
+  gmm::dense_matrix<T> operator *(const gmm::dense_matrix<T>& m,
+				  const gmm::dense_matrix<T>& n) {
+    gmm::dense_matrix<T> res(m.nrows(), n.ncols()); 
+    gmm::mult(m, n, res);
+    return res;
+  }
+  */
+  typedef gmm::dense_matrix<scalar_type> base_matrix;
+
 
 }  /* end of namespace bgeot.                                           */
 

@@ -40,10 +40,10 @@ namespace bgeot
 {
 
   // Some further functions on gmm::dense_matrix<T>
-
+  /*
   template<class T> vsvector<T>& operator *=(vsvector<T>& v,
 					     const gmm::dense_matrix<T>& m)
-  { gmm::mult(m, v, v); return v; }
+  { vsvector<T> w(v); gmm::mult(m, w, v); return v; }
 
   template<class T>
     vsvector<T> operator *(const gmm::dense_matrix<T>& m, const vsvector<T>& v)
@@ -58,7 +58,7 @@ namespace bgeot
   }
 
   typedef gmm::dense_matrix<scalar_type> base_matrix;
-
+  */
 
 }  /* end of namespace bgeot.                                           */
 

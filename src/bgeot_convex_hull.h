@@ -123,8 +123,8 @@ namespace bgeot
 		d0[j] = vect_sp(D0, vect_list[j]);
 		dV[j] = vect_sp(DV, vect_list[j]);
 	      }
-	      dd0 = d0; dd0 *= A;
-	      ddV = dV; ddV *= A;
+	      gmm::mult(A,d0,dd0);
+	      gmm::mult(A,dV,ddV);
 	      
 	      double a = vect_sp(dd0, v11);
 	      double b = vect_sp(ddV, v11);

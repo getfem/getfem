@@ -107,14 +107,14 @@ namespace getfem
       for (size_type j = 0; j < pf_target->nb_dof(); ++j) {
 	if (!pgt->is_linear() || j == 0) {
 	  // computation of the pseudo inverse
-	  bgeot::mat_product_tt(pgp->grad(j), G, grad);
+	  gmm::mult(gmm::transposed(pgp->grad(j)), gmm::transposed(G), grad);
 	  if (P != N) {
-	    bgeot::mat_product_nt(grad, grad, CS);
-	    bgeot::mat_inv_cholesky(CS, TMP1);
-	    bgeot::mat_product_tn(grad, CS, B0);
+	    gmm::mult(grad, gmm::transposed(grad), CS);
+	    gmm::lu_inverse(CS);
+	    gmm::mult(gmm::transposed(grad), CS, B0);
 	  }
 	  else {
-	    bgeot::mat_gauss_inverse(grad, TMP1); B0 = grad;
+	    gmm::lu_inverse(grad); B0 = grad;
 	  }
 	}
 

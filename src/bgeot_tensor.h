@@ -34,7 +34,7 @@
 #ifndef __BGEOT_TENSOR_H
 #define __BGEOT_TENSOR_H
 
-#include <bgeot_matrix.h>
+#include <bgeot_vector.h>
 
 namespace bgeot
 {

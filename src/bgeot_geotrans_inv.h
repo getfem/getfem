@@ -189,7 +189,8 @@ namespace bgeot
             itab[nbpt++] = pts[l];
 	  }
 	  else {
-	    y -= grad * x;
+	    gmm::mult(grad, gmm::scaled(x,-1), y, y);
+	    //y -= grad * x;
 	    if (vect_norm2(y) < EPS) { 
               pftab[nbpt] = x; 
               itab[nbpt++] = pts[l]; 

@@ -138,7 +138,8 @@ namespace bgeot
     if (pgt->convex_ref()->is_in(n_ref) < EPS) {
       if (N == P) return true;
       else {
-        y -= grad * n_ref;
+	gmm::mult(grad,gmm::scaled(n_ref,-1),y,y);
+	//        y -= grad * n_ref;
         if (vect_norm2(y) < EPS) return true;
       }
     }

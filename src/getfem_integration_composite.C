@@ -41,7 +41,7 @@ namespace getfem
 			      bgeot::pconvex_ref cr) {
     dal::bit_vector nn = mf.convex_index();
     approx_integration *p = new approx_integration(cr);
-
+    base_vector w;
     for (size_type cv = nn.take_first(); cv != size_type(-1); cv << nn) {
 
       pintegration_method pim = mf.int_method_of_element(cv);
@@ -73,8 +73,9 @@ namespace getfem
 	    { f2 = f3; break;}
 	}
 	if (f2 != short_type(-1)) {
-	  scalar_type coeff_mul = dal::abs
-	    (bgeot::vect_norm2(mp.gtrans[cv]*pgt->normals()[f]) * mp.det[cv]);
+	  w.resize(gmm::mat_nrows(mp.gtrans[cv]));
+	  gmm::mult(mp.gtrans[cv], pgt->normals()[f], w);
+	  scalar_type coeff_mul = dal::abs(gmm::vect_norm2(w) * mp.det[cv]);
 	  for (size_type j = 0; j < pai->nb_points_on_face(f); ++j) {
 	    base_node pt = pgt->transform
 	      (pai->point_on_face(f, j), 

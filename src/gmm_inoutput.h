@@ -1023,10 +1023,11 @@ typedef char MM_typecode[4];
     size_type nnz = A.jc[mat_ncols(A)];
 
     int *I = new int[nnz], *J = new int[nnz];
-    for (size_type i = 0, cn = 1; i < nnz; ++i) {
-      I[i] = A.ir[i] + 1 - shift;
-      J[i] = cn;
-      while (A.jc[cn] == i + shift) ++cn;
+    for (size_type j=0; j < mat_ncols(A); ++j) {      
+      for (size_type i = A.jc[j]; i < A.jc[j+1]; ++i) {
+	I[i] = A.ir[i] + 1 - shift;
+	J[i] = j + 1;
+      }
     }
 
     mm_write_mtx_crd(filename, mat_nrows(A), mat_ncols(A),
@@ -1095,7 +1096,7 @@ typedef char MM_typecode[4];
     double *PR = new double[nz];
     mm_read_mtx_crd_data(fin, row, col, nz, I, J, PR, matcode);
 
-    for (size_type i = 0, cn = 1; i < nz; ++i) A(I[i]-1, J[i]-1) = PR[i];
+    for (size_type i = 0; i < size_type(nz); ++i) A(I[i]-1, J[i]-1) = PR[i];
 
     delete[] I; delete[] J; delete[] PR;
   }

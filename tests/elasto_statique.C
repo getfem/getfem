@@ -337,7 +337,7 @@ void pb_data::assemble(void)
   getfem::base_node pt(N);
   for (size_type nb = 1; nb <= 2*N; ++nb) {
     dal::bit_vector nn = mesh.convex_index(N);
-    getfem::base_vector un, v;
+    getfem::base_vector un, v(N);
     size_type j;
      for (j << nn; j != size_type(-1); j << nn) {
       getfem::pfem pf = mef_data.fem_of_element(j);
@@ -349,7 +349,7 @@ void pb_data::assemble(void)
 	  un = mesh.normal_of_face_of_convex(j, i, pf->node_of_dof(n));
 	  un /= bgeot::vect_norm2(un);
 	  size_type dof = mef_data.ind_dof_of_element(j)[n];
-	  v = sol_sigma(mef_data.point_of_dof(dof)) *  un;
+	  gmm::mult(sol_sigma(mef_data.point_of_dof(dof)), un, v);
 	  for (size_type k = 0; k < N; ++k) ST1[dof*N+k] = v[k];
 	}
       }

@@ -91,8 +91,10 @@ namespace getfem
   {
     dal::bit_vector nn = points().index();
     size_type i;
-    for (i << nn; i != ST_NIL; i << nn)
-      points()[i] *= M;
+    base_vector w(M.nrows());
+    for (i << nn; i != ST_NIL; i << nn) {
+      w = points()[i]; gmm::mult(M,w,points()[i]);
+    }
     points().resort();
   }
 

@@ -3,6 +3,7 @@
 #define GETFEM_MESH_SLICES_H
 
 #include <bitset>
+#include <gmm.h>
 #include <getfem_mesh.h>
 #include <getfem_fem.h>
 #include <getfem_poly_composite.h>
@@ -207,7 +208,7 @@ namespace getfem {
       for (ref_mesh_dof_ind_ct::iterator it=dof.begin(); it != dof.end(); ++it, ++out)
         *out = u[*it];
     }
-    scalar_type maxval() const { return bgeot::vect_norminf(u); }
+    scalar_type maxval() const { return gmm::vect_norminf(u); }
     virtual mesh_slice_cv_dof_data_base* clone() const {
       return new mesh_slice_cv_dof_data<VEC>(*this);
     }

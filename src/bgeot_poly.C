@@ -32,7 +32,7 @@
 
 
 #include <bgeot_poly.h>
-#include <bgeot_matrix.h>
+#include <bgeot_vector.h>
 
 namespace bgeot
 {
