@@ -280,11 +280,12 @@ namespace getfem
   }
 
   /**
-     assembly of $\int_\Omega A(x)\nabla u.\nabla v$ , where $A(x)$ is a matrix.
+     assembly of $\int_\Omega A(x)\nabla u.\nabla v$, where $A(x)$ is a matrix.
   */
   template<class MAT, class VECT>
     void asm_stiffness_matrix_for_scalar_elliptic(MAT &M, const mesh_fem &mf,
-						  const mesh_fem &mfdata, VECT &A)
+						  const mesh_fem &mfdata,
+						  VECT &A)
   {
     generic_assembly assem("a=data$1(mdim(#1),mdim(#1),#2); M$1(#1,#1)+=comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,j,k).a(j,i,k)");
     assem.push_mf(mf);
