@@ -100,15 +100,15 @@
   a Generic Finite Element library in C++ \\[0.5cm]
   {\LARGE Documentation, part \Huge 2} \\[0.5cm]
   \fbox{\Huge \sc Short User Documentation} \\[0.5cm]
-  { \large Yves {\sc Renard}, Julien {\sc Pommier} \footnote{ \it MIP, INSAT, Complexe scientifique de Rangueil, 31077 Toulouse, France, Yves.Renard@gmm.insa-tlse.fr } } \\[1.0cm]
+  { \large Yves {\sc Renard}, Julien {\sc Pommier} \footnote{ \it MIP, INSAT, Complexe scientifique de Rangueil, 31077 Toulouse, France, Yves.Renard@insa-toulouse.fr } } \\[1.0cm]
   \today \\[1.0cm]
 }
 \htmlonly{
-  \xlink{\htmlimg{logogetfem.png}{The Getfem++ logo}}{http://www.gmm.insa-tlse.fr/getfem}\\[2cm]
+  \xlink{\htmlimg{logogetfem.png}{The Getfem++ logo}}{http://www-gmm.insa-toulouse.fr/getfem}\\[2cm]
   a Generic Finite Element library in C++ \par\par
   {\LARGE Documentation, part \Huge 2} \par\par
   {\Huge Short User Documentation } \par
-  { \large \xlink{Yves Renard}{mailto:Yves.Renard@gmm.insa-tlse.fr}, \xlink{Julien Pommier}{mailto:Julien.Pommier@gmm.insa-tlse.fr}}\\
+  { \large \xlink{Yves Renard}{mailto:Yves.Renard@insa-toulouse.fr}, \xlink{Julien Pommier}{mailto:Julien.Pommier@insa-toulouse.fr}}\\
   {\it MIP, INSAT, Complexe scientifique de Rangueil, 31077 Toulouse, France.}\par
   \today \par\par
 }
@@ -180,7 +180,9 @@ the distribution.
 \cpp{getfem::getfem\_mesh }\\[0.5cm]
 This object is able to store any element in any dimension even if you mix elements with different dimensions.\\[0.5cm]
 
-There is no meshing procedures in \gf  to mesh complex geometries. This is not the goal of this package. But you can easily load a mesh from any format (some procedures are in \filename{getfem_import.h} to load meshes from some public domain mesh generator).
+There is no meshing procedures in \gf  to mesh complex geometries. This is not the goal of this package. But you can easily load a mesh from any format (some procedures are in \filename{getfem_import.h} to load meshes from some public domain mesh generator).\\[0.5cm]
+
+The structure \cpp{getfem::getfem\_mesh } may contains also a description about sub part of a mesh such as a part of the boundary or sub set of elements.
 
 \subsection{Add an element to a mesh}
 Suppose the variable mesh has been declared by
@@ -282,56 +284,150 @@ For instance, to build a mesh with tetrahedrons for a unit cube with $10×10×10$ 
 
 Remark: \cpp{base\_node} and \cpp{base\_small\_vector} are almost identical, they are both ``small'' vector classes (they cannot store more than 16 elements), used to describe geometrical points, and geometrical vectors. Their memory footprint is lower than a \cpp{std::vector}.
 
-\subsection{How to get information from a mesh}
+\subsection{Methods of the \cpp{getfem_mesh} object}
 
-Here is a list of functions to get information from an existing mesh. The list is not exhaustive.
+The list is not exhaustive.
 
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
   \cpp{mesh.dim()} & main dimension of the mesh.  \\ \hline
-
-  \cpp{mesh.points\_index()} & gives a \cpp{dal::bit\_vector} object which represents all the indexes of valid points of a mesh (see in the following)  \\ \hline
-
-  \cpp{mesh.points()[i]} & gives the point of index \cpp{i} (a \cpp{bgeot::base\_node} ). \\ \hline
   
-  \cpp{mesh.convex\_index()} & gives a \cpp{dal::bit\_vector} object which represents all the indexes of valid elements of a mesh (see in the following) \\ \hline
+  \cpp{mesh.points\_index()} & gives a \cpp{dal::bit\_vector} object
+  which represents all the indexes of valid points of a mesh (see in
+  the following) \\ \hline
+  
+  \cpp{mesh.points()[i]} & gives the point of index \cpp{i} (a
+  \cpp{bgeot::base\_node} ). \\ \hline
+  
+  \cpp{mesh.convex\_index()} & gives a \cpp{dal::bit\_vector} object
+  which represents all the indexes of valid elements of a mesh (see in
+  the following) \\ \hline
+  
+  \cpp{mesh.structure\_of\_convex(i)} & gives the description of the
+  structure of element of index \cpp{i}. The function return a
+  \cpp{bgeot::pconvex\_structure}. \\ \hline
+  
+  \cpp{mesh.structure\_of\_convex(i)\hspace{5em}->nb_faces()} & number
+  of faces of element of index \cpp{i}. \\ \hline
+  
+  \cpp{mesh.structure\_of\_convex(i)\hspace{5em}->nb\_points()} &
+  number of vertices of element of index \cpp{i}. \\ \hline
+  
+  \cpp{mesh.structure\_of\_convex(i)->dim()} & intrinsic dimension of
+  element of index \cpp{i}. \\ \hline
+  
 
-  \cpp{mesh.structure\_of\_convex(i)} & gives the description of the structure of element of index \cpp{i}. The function return a \cpp{bgeot::pconvex\_structure}. \\ \hline
-
-  \cpp{mesh.structure\_of\_convex(i)\hspace{5em}->nb_faces()} & number of faces of  element of index \cpp{i}. \\ \hline
-
-  \cpp{mesh.structure\_of\_convex(i)\hspace{5em}->nb\_points()} & number of vertices of  element of index \cpp{i}. \\ \hline
-
-  \cpp{mesh.structure\_of\_convex(i)->dim()} & intrinsic dimension of element of index \cpp{i}. \\ \hline
-
-  \cpp{mesh.structure\_of\_convex(i)\hspace{5em}->nb\_points\_of\_face(f)} & number of vertices of the face of local index \cpp{f} of  element of index \cpp{i}.\\ \hline
+  \cpp{mesh.structure\_of\_convex(i)\hspace{5em}->nb\_points\_of\_face(f)}
+  & number of vertices of the face of local index \cpp{f} of element
+  of index \cpp{i}.\\ \hline
  
-  \cpp{mesh.structure\_of\_convex(i)\hspace{5em}->ind\_points\_of\_face(f)} & return a container with the local indexes of all vertices of the face of local index \cpp{f} of  element of index \cpp{i}. For instance \cpp{mesh.structure\_of\_convex(i) ->ind\_points\_of\_face(f)[0]} is the local index of the first vertex. \\ \hline
 
-  \cpp{mesh.structure\_of\_convex(i)\hspace{5em}->face\_structure(f)} & gives the structure (a \cpp{bgeot::pconvex\_structure}) of local index \cpp{f} of  element of index \cpp{i}.\\ \hline
-
-  \cpp{mesh.ind\_points\_of\_convex(i)} & gives a container with the global indexes of  vertices of element of index \cpp{i}.\\ \hline
-
-  \cpp{mesh.points\_of\_convex(i)} & gives a container with the  vertices of element of index \cpp{i}. This is an array of \cpp{bgeot::base\_node}.\\ \hline
-
-  \cpp{mesh.convex\_to\_point(ipt)} & gives a container with the indexes of all elements attached to the point of global index \cpp{ipt}.\\ \hline
-
-  \cpp{convex\_with\_points(mesh, nb, ipts) } & gives a container with the indexes of all elements in \cpp{mesh} having a certain set of points for vertices. The set of points is describe by an iterator \cpp{ipts} on an array and the number of points \cpp{nb}.\\ \hline
-
-  \cpp{neighbour\_of\_convex(mesh, ic, f)} & gives a container with the indexes of all elements in \cpp{mesh} having the common face of local index \cpp{f} of element \cpp{ic} except element \cpp{ic}. \\ \hline
-
-  \cpp{mesh.stat()} & print in \cpp{std::cout} main information on the mesh. \\ \hline
-
-  \cpp{mesh.clear()} & delete all elements and points from the mesh. \\ \hline
+  \cpp{mesh.structure\_of\_convex(i)\hspace{5em}->ind\_points\_of\_face(f)}
+  & return a container with the local indexes of all vertices of the
+  face of local index \cpp{f} of element of index \cpp{i}. For
+  instance \cpp{mesh.structure\_of\_convex(i)
+    ->ind\_points\_of\_face(f)[0]} is the local index of the first
+  vertex. \\ \hline
+  
+  \cpp{mesh.structure\_of\_convex(i)\hspace{5em}->face\_structure(f)}
+  & gives the structure (a \cpp{bgeot::pconvex\_structure}) of local
+  index \cpp{f} of element of index \cpp{i}.\\ \hline
+  
+  \cpp{mesh.ind\_points\_of\_convex(i)} & gives a container with the
+  global indexes of vertices of element of index \cpp{i}.\\ \hline
+  
+  \cpp{mesh.points\_of\_convex(i)} & gives a container with the
+  vertices of element of index \cpp{i}. This is an array of
+  \cpp{bgeot::base\_node}.\\ \hline
+  
+  \cpp{mesh.convex\_to\_point(ipt)} & gives a container with the
+  indexes of all elements attached to the point of global index
+  \cpp{ipt}.\\ \hline
+  
+  \cpp{convex\_with\_points(mesh, nb, ipts) } & gives a container with
+  the indexes of all elements in \cpp{mesh} having a certain set of
+  points for vertices. The set of points is describe by an iterator
+  \cpp{ipts} on an array and the number of points \cpp{nb}.\\ \hline
+  
+  \cpp{neighbour\_of\_convex(mesh, ic, f)} & gives a container with
+  the indexes of all elements in \cpp{mesh} having the common face of
+  local index \cpp{f} of element \cpp{ic} except element \cpp{ic}. \\ 
+  \hline
+  
+  \cpp{mesh.stat()} & print in \cpp{std::cout} main information on the
+  mesh. \\ \hline
+  
+  \cpp{mesh.clear()} & delete all elements and points from the mesh.
+  \\ \hline
 
   \cpp{mesh.optimize\_structure()} & compact the structure. \\ \hline
+  
+  \cpp{mesh.trans\_of\_convex(i)} & geometric transformation of the
+  element of index \cpp{i}. return a \cpp{bgeot::pgeometric\_trans}
+  (see \cite{BASCOMP} for more details).  \\ \hline
+  
+  \cpp{mesh.normal\_of\_face\_of\_convex(ic, f, pt)} & gives a
+  \cpp{bgeot::base\_small\_vector} representing an outward normal to
+  the element at the face of local index \cpp{f} at the point of local
+  coordinates (coordinates in the element of reference) \cpp{pt}. The
+  point \cpp{pt} has no influence if the geometric transformation is
+  linear. This is not a unit normal, the norm of the resulting vector
+  is the ratio between the surface of the face of the reference
+  element and the the surface of the face of the real element. \\ 
+  \hline
+  
+  \cpp{mesh.convex\_quality\_estimate(ic)} & gives an rought estimate
+  of the quality of element \cpp{ic}. \\ \hline
+  
+  \cpp{mesh.convex\_radius\_estimate(ic)} & gives an estimate of the
+  radius of element \cpp{ic}. \\ \hline 
+  
+  \cpp{i = mesh.add\_convex\_set()} & create a new set of convexes.
+  Return the index \cpp{i} of this set. \\ \hline
+   
+  \cpp{i = mesh.add\_face\_set()} & create a new set of faces
+  (representation of a boundary). Return the index \cpp{i} of this set. \\
+  \hline
+  
+  \cpp{b = mesh.set_exists(i)} & return a boolean. Says if the set of
+  index \cpp{i} exists or not.\\ \hline
+  
+  \cpp{b = mesh.set_is_boundary(i)} & return a boolean. Says if the
+  set of index \cpp{i} is a set of convexes or a set of faces.\\ 
+  \hline
 
-  \cpp{mesh.trans\_of\_convex(i)} & geometric transformation of the element of index \cpp{i}. return a \cpp{bgeot::pgeometric\_trans} (see \cite{BASCOMP} for more details).  \\ \hline
+  \cpp{b = mesh.set_is_boundary(i)} & return a boolean. Says if the
+  set of index \cpp{i} is a set of convexes or a set of faces.\\ 
+  \hline
+  
+  \cpp{add_convex_to_set(i, c)} & add the convex of index \cpp{c} to
+  the set of index \cpp{i}.\\ \hline
+  
+  \cpp{add_face_to_set(i, c, f)} & add the face of local index \cpp{f}
+  of the convex of index \cpp{c} to the set of index \cpp{i}.\\ \hline
+  
+  \cpp{b = is_convex_in_set(i, c)} & return a boolean. Says if the set
+  of index \cpp{i} contains the convex of index \cpp{c} or a face of
+  this convex.\\ \hline
+  
+  \cpp{b = is_face_in_set(i, c, f)} & return a boolean. Says if the
+  set of index \cpp{i} contains the face of local index \cpp{f} of the
+  convex of index \cpp{c}.\\ \hline
+  
+  \cpp{convexes_in_set(i)} & return a \cpp{dal::bit\_vector} which
+  represents the indices of all the convexes which are present in the set of
+  index \cpp{i}, or if it is a faces set, the indices of all the
+  convexes having a face in this set.\\ \hline
+  
+  \cpp{faces_of_convex_in_set(i, c)} & return a
+  \cpp{getfem::mesh_cvf_set::face_bitset} which represents the local
+  indices of all the faces of the convex of index \cpp{c} which are
+  present in the set of index \cpp{i}.\\ \hline
 
-  \cpp{mesh.normal\_of\_face\_of\_convex(ic, f, pt)} & gives a \cpp{bgeot::base\_small\_vector} representing an outward normal to the element at the face of local index \cpp{f} at the point of local coordinates (coordinates in the element of reference) \cpp{pt}. The point \cpp{pt} has no influence if the geometric transformation is linear. This is not a unit normal, the norm of the resulting vector is the ratio between the surface of the face of the reference element and the the surface of the face of the real element. \\ \hline
+  \cpp{sup_face_from_set(i, c, f)} & delete the face of local index \cpp{f}
+  of the convex of index \cpp{c} from the set of index \cpp{i}.\\ \hline
 
-  \cpp{mesh.convex\_quality\_estimate(ic)} & gives an rought estimate of the quality of element \cpp{ic}. \\ \hline
-
-  \cpp{mesh.convex\_radius\_estimate(ic)} & gives an estimate of the radius of element \cpp{ic}. \hline
+  \cpp{sup_set(size_type b)} & delete the set of index \cpp{i}. \\
+  \hline
 
 \end{ctableau}
 
@@ -541,25 +637,10 @@ Once a finite element method is defined on a mesh, it is possible to obtain info
 
   \cpp{mef.clear()} & Clear the structure, no finite element method is still defined.  \\ \hline
 
-  \cpp{mef.add\_boundary\_elt(b, c, f)} & Add a face to a description of a boundary. Add the face \cpp{f} of the element of index \cpp{c} to the boundary of index \cpp{b}.  \\ \hline
-  
-  \cpp{mef.sup\_boundary\_elt(b, c, f)} & remove a face to a description of a boundary. remove the face \cpp{f} of the element of index \cpp{c} to the boundary of index \cpp{b}.  \\ \hline
-\end{tabular} \end{center}
-
-\begin{center} \begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline
-  
-  \cpp{mef.is\_convex\_on\_boundary(c, b)} & return either or not the convex of index \cpp{c}  has a face on the boundary of index \cpp{b}.  \\ \hline
-  
-  \cpp{mef.convex\_on\_boundary(b)} & return a \cpp{dal::bit\_vector} containing all the indexes of all the elements having at least one face on boundary of index \cpp{b}.  \\ \hline
-
-  \cpp{mef.faces\_of\_convex\_on\_boundary(c, b) } & return a \cpp{dal::bit\_vector} containing all the local indexes of faces of the element of index \cpp{c} which contained on the boundary of index \cpp{b}.  \\ \hline
-
-  \cpp{mef.sup\_boundary(b) } & remove the boundary of index \cpp{b}.  \\ \hline
-
 \end{tabular} \end{center}
 
 \section{Linear algebra procedures}
-The linear algebra library used by \gf is Gmm++ which is now a separate library. Please see the \WEB{http://www.gmm.insa-tlse.fr/getfem/gmmuser/gmmuser.html}{GMM++ user documentation}.\\
+The linear algebra library used by \gf is Gmm++ which is now a separate library. Please see the \WEB{http://www-gmm.insa-toulouse.fr/getfem/gmm_intro}{GMM++ user documentation}.\\
 
 Note that Getfem++ includes (since release 1.7) its own version of SuperLU 3.0 (http://crd.lbl.gov/\verb\~\xiaoye/SuperLU/), hence a direct sparse solver is available out of the box.
 
@@ -690,7 +771,7 @@ something that will be executed for each convex \cpp{cv} of the mesh. The terms
 \cpp{\#1} and \cpp{\#2} refer to the first \cpp{mesh\_fem} and the second one
 (i.e. \cpp{mf} and \cpp{mfdata}).  The instruction \cpp{Z=data(\#2);}
 means that for each convex, the ``tensor'' \cpp{Z} will receive the values of the first data argument provided with \cpp{push\_data},
-at indexes corresponding to the degrees of freedom attached to the convex of the second (\cpp{\#2}) \cpp{mesh_fem} (here, \cpp{Z $\gets$ F[mfdata.ind_dof_of_element(cv)]}. The
+at indexes corresponding to the degrees of freedom attached to the convex of the second (\cpp{\#2}) \cpp{mesh_fem} (here, \cpp{Z $\leftarrow$ F[mfdata.ind_dof_of_element(cv)]}. The
 part \cpp{V(\#1)+=\ldots} means that the result of the next expression will be
 accumulated into the output vector (provided with \cpp{push\_vec}). Here
 again, \cpp{\#1} means that we will write the result at indexes

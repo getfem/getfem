@@ -57,7 +57,7 @@ namespace getfem {
     if (!dof_enumeration_made) this->enumerate_dof();
     dal::bit_vector res;
     if (linked_mesh().set_exists(b)) {
-      for (dal::bv_visitor cv(linked_mesh().convex_in_set(b));
+      for (dal::bv_visitor cv(linked_mesh().convexes_in_set(b));
 	   !cv.finished(); ++cv) {
 	if (linked_mesh().set_is_boundary(b)) {
 	  mesh_cvf_set::face_bitset fb

@@ -306,7 +306,7 @@ namespace getfem
     { linked_mesh().add_face_to_set(b, c, f); }
     /// Says whether or not element i is on the boundary b. 
     bool is_convex_on_boundary(size_type c, size_type b) const IS_DEPRECATED
-    { return linked_mesh().is_convex_in_set(c, b); }
+    { return linked_mesh().is_convex_in_set(b, c); }
     bool is_face_on_boundary(size_type b, size_type c, short_type f)
       const IS_DEPRECATED { return linked_mesh().is_face_in_set(b,c,f); }
     /** returns the list of convexes on the boundary b */

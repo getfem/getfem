@@ -323,31 +323,31 @@ namespace getfem {
     void transformation(base_matrix);
     
 
-    bool set_exists(size_type s) const { return valid_cvf_sets[s]; }
-    bool set_is_boundary(size_type s) const
-    { return cvf_sets[s].is_boundary(); }
     size_type add_cvf_set(bool is_bound) {
       size_type d = valid_cvf_sets.first_false(); valid_cvf_sets.add(d);
       cvf_sets[d] = mesh_cvf_set(is_bound);
       return d;
     }
     size_type add_convex_set(void) { return add_cvf_set(false); }
+    size_type add_face_set(void) { return add_cvf_set(true); }
+    bool set_exists(size_type s) const { return valid_cvf_sets[s]; }
+    bool set_is_boundary(size_type s) const
+    { return cvf_sets[s].is_boundary(); }
     void add_convex_to_set(size_type s, size_type c) {
       if (!(valid_cvf_sets[s]))
 	{ cvf_sets[s] = mesh_cvf_set(false); valid_cvf_sets.add(s); }
       cvf_sets[s].add_convex(c); touch();
     }
-    size_type add_face_set(void) { return add_cvf_set(true); }
     void add_face_to_set(size_type s, size_type c, short_type f) {
       if (!(valid_cvf_sets[s]))
 	{ cvf_sets[s] = mesh_cvf_set(true); valid_cvf_sets.add(s); }
       cvf_sets[s].add_elt(c, f); touch();
     }
-    bool is_convex_in_set(size_type c, size_type s) const
+    bool is_convex_in_set(size_type s, size_type c) const
     { return (valid_cvf_sets[s] && cvf_sets[s].is_convex(c)); }
     bool is_face_in_set(size_type s, size_type c, short_type f) const
     { return (valid_cvf_sets[s] && cvf_sets[s].is_elt(c, f)); }
-    const dal::bit_vector &convex_in_set(size_type s) const;
+    const dal::bit_vector &convexes_in_set(size_type s) const;
     const mesh_cvf_set::face_bitset
       &faces_of_convex_in_set(size_type c, size_type s) const;
     const dal::bit_vector &get_valid_sets() const { return valid_cvf_sets; }

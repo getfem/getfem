@@ -71,22 +71,16 @@
 /* ********************************************************************** */
 /*	C++ Standard Headers.						  */
 /* ********************************************************************** */
-#include <stdlib.h>
-#include <stddef.h>
-#include <math.h>
-#include <string.h>
-#include <ctype.h>
-#include <assert.h>
+#include <cstdlib>
+#include <cstddef>
+#include <cmath>
+#include <cstring>
+#include <cctype>
+#include <cassert>
 #include <iostream>
-//#include <ios> essai
+//#include <ios> // essai
 #include <fstream>
 #include <ctime>
-
-/* ********************************************************************** */
-/*	S.T.L. Headers.						          */
-/* ********************************************************************** */
-
-// #include <cstdlib>  CC de SGI ne reconnait pas ce header.
 #include <exception>
 #include <typeinfo>
 #include <stdexcept>
@@ -106,8 +100,8 @@ using std::ends; using std::cin;
 /*	Math functions.                     			          */
 /* ********************************************************************** */
 
-namespace dal
-{
+namespace dal {
+
   template <typename T> inline T sqr(T a) { return a * a; }
   template <typename T> inline T abs(T a) { return (a < T(0)) ? T(-a) : a; }
   template <typename T> inline T abs(std::complex<T> a) { return std::abs(a); }
@@ -142,7 +136,6 @@ namespace dal
     return x > T(0) ? std::complex<T>(u, y / t)
       : std::complex<T>(dal::abs(y) / t, y < T(0) ? -u : u);
   }
-
 
 }
 
