@@ -1,7 +1,7 @@
 #!/bin/sh
 
-if test $# -lt 1; then
- echo usage : test_dist getfem++-1.4 machine compilo login
+if test $# -lt 3; then
+ echo usage : test_dist getfem++-1.4 machine compiler login
  echo machines : telline.cict.fr avec aCC
  echo          : calmip.cict.fr avec CC
  echo          : superdec avec cxx
@@ -15,8 +15,8 @@ else
   u=$4
 fi
 
-echo you are $u
+echo login name: $u
 
 
 scp $1.tar.gz $u@$2:
-ssh $u@$2 "/bin/sh -c 'PATH=/usr/bin:/usr/bsd:/usr/local/bin:/opt/aCC/bin:$PATH && export PATH && CXX=$3 && export CXX && mkdir -p temp_dist/$2/$3 && chmod -R u+rw temp_dist/$2/$3 && rm -rf temp_dist/$2/$3 && mkdir -p temp_dist/$2/$3 && cd temp_dist/$2/$3 && gunzip -c ../../../$1.tar.gz | tar xvf - && cd $1 && echo \$CXX && which \$CXX && ./configure && (which gmake; if test \$? -ne 0; then make distcheck; else gmake distcheck; fi) && cd .. && chmod -R u+rw $1 && rm -fr $1 && touch $1.ok'"
+ssh $u@$2 "/bin/sh -c 'PATH=/usr/bin:/usr/bsd:/usr/local/bin:/opt/aCC/bin:$PATH && export PATH && CXX=$3 && export CXX && mkdir -p temp_dist/$2/$3 && chmod -R u+rw temp_dist/$2/$3 && rm -rf temp_dist/$2/$3 && mkdir -p temp_dist/$2/$3 && cd temp_dist/$2/$3 && gunzip -c ../../../$1.tar.gz | tar xvf - && cd $1 && ./configure && (which gmake; if test \$? -ne 0; then make distcheck; else gmake distcheck; fi) && cd .. && chmod -R u+rw $1 && rm -fr $1 && touch $1.ok'"

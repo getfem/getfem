@@ -14,6 +14,11 @@ check_PROGRAMS = \
 	test_link_fem \
 	test_tree_sorted
 
+DISTCLEANFILES = \
+	laplacian.res laplacian.mesh laplacian.dataelt \
+	elasto_statique.mesh test_mesh.mesh
+
+
 dynamic_array_SOURCES = dynamic_array.C 
 dynamic_tas_SOURCES = dynamic_tas.C 
 test_assembly_SOURCES = test_assembly.C
