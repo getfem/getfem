@@ -42,7 +42,7 @@ int main(void)
     
     for (size_type n = 1; n < 6; n++) {
       cout << "methode Newton-Cotes en dimension " << n << "\n";
-      for (size_type i = 0; i < 2; ++i) {
+      for (size_type i = 0; i < 3; ++i) {
 	cout << "methode d'ordre  " << i << "\n";
 	sprintf(meth, "IM_NC(%d,%d)", n, i);
 	pai = getfem::int_method_descriptor(meth)->method.pai;
@@ -56,11 +56,30 @@ int main(void)
       }
     }
 
-    sprintf(meth, "IM_STRUCTURED_COMPOSITE(IM_NC(2, 1), 3)");
+    sprintf(meth, "IM_NC(2, 2)");
     pai = getfem::int_method_descriptor(meth)->method.pai;
 
-    cout << "methode produit\n";
-    
+    cout << "methode : " << meth << endl;
+
+    cout << "Nb points on convex " << pai->nb_points_on_convex() << endl;
+    for (size_type k = 0; k < pai->structure()->nb_faces(); ++k)
+      cout << "Nb points on face " << k << " : "
+	   <<  pai->nb_points_on_face(k) << endl;
+    for (size_type k = 0; k < pai->nb_points(); ++k) {
+      cout << "Coeff " << k << " : " << pai->integration_coefficients()[k];
+      cout << "\t point : " << pai->integration_points()[k] << endl;
+      
+    }
+
+    sprintf(meth, "IM_STRUCTURED_COMPOSITE(IM_NC(2, 2), 1)");
+    pai = getfem::int_method_descriptor(meth)->method.pai;
+
+    cout << "methode : " << meth << endl;
+
+    cout << "Nb points on convex " << pai->nb_points_on_convex() << endl;
+    for (size_type k = 0; k < pai->structure()->nb_faces(); ++k)
+      cout << "Nb points on face " << k << " : "
+	   <<  pai->nb_points_on_face(k) << endl;
     for (size_type k = 0; k < pai->nb_points(); ++k) {
       cout << "Coeff " << k << " : " << pai->integration_coefficients()[k];
       cout << "\t point : " << pai->integration_points()[k] << endl;

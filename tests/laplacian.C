@@ -253,6 +253,8 @@ void lap_pb::init(void)
   
   cout << "Name of principal finite element method : "
        << getfem::name_of_fem(pfprinc) << endl;
+  cout << "Name of principal integration method : "
+       << getfem::name_of_int_method(ppi) << endl;
 
   cout << "Selecting Neumann and Dirichlet boundaries\n";
   nn = mesh.convex_index(N);

@@ -236,8 +236,8 @@ namespace getfem
       int_coeffs.resize(int_coeffs.size() + 1); 
       for (size_type j = f; j <= cvr->structure()->nb_faces(); ++j)
 	repartition[j] += 1;
-      for (size_type j = repartition[f]; j < int_coeffs.size(); ++j)
-	int_coeffs[j] = int_coeffs[j-1];
+      for (size_type j = int_coeffs.size(); j > repartition[f]; --j)
+	int_coeffs[j-1] = int_coeffs[j-2];
       int_coeffs[repartition[f]-1] = 0.0;
     }
     int_coeffs[((f == 0) ? 0 : repartition[f-1]) + i] += w;
