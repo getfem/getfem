@@ -10,12 +10,7 @@ $islocal = 0;
 $with_qd = 0;                # test also with dd_real and qd_real
 $with_lapack = 0;            # link with lapack
 $srcdir = $ENV{srcdir};      # source directory
-if ($srcdir eq "") {
-  $srcdir="../../tests";
-  print "WARNING : no srcdir, taking $srcdir\n";
-  $islocal = 1;
-}
-$tests_to_be_done = `ls $srcdir/gmm_torture*.C`;  # list of tests
+$tests_to_be_done = "";
 $fix_base_type = -1;
 
 while(@ARGV) {               # read optional parameters
@@ -24,10 +19,10 @@ while(@ARGV) {               # read optional parameters
   if ($param =~ /.C/) {
     $tests_to_be_done = $param;
   }
-  elsif ($param eq "with_qd") {
+  elsif ($param eq "with-qd") {
     $with_qd = 1;
   }
-  elsif ($param eq "with_lapack") {
+  elsif ($param eq "with-lapack") {
     $with_lapack = 1;
   }
   elsif ($param eq "float") {
@@ -54,6 +49,9 @@ while(@ARGV) {               # read optional parameters
   elsif ($param eq "complex_qd_real") {
     $fix_base_type = 3; $with_qd = 1;
   }
+  elsif ($param =~ "srcdir=") {
+    ($param, $srcdir)=split('=', $param, 2);
+  }
   elsif ($val != 0) {
     $nb_iter = $val;
   }
@@ -61,14 +59,24 @@ while(@ARGV) {               # read optional parameters
     print "Unrecognized parameter: $param\n";
     print "valid parameters are:\n";
     print ". the number of iterations on each test\n";
-    print ". with_qd : test also with dd_real and qd_real\n";
-    print ". with_lapack : link with lapack\n";
+    print ". with-qd : test also with dd_real and qd_real\n";
+    print ". with-lapack : link with lapack\n";
     print ". double, float, complex_double or complex_float";
     print " to fix the base type\n";
     print ". source name of a test procedure\n";
+    print ". srcdir=name\n";
     exit(1);
   }
   shift @ARGV;
+}
+
+if ($srcdir eq "") {
+  $srcdir="../../tests";
+  print "WARNING : no srcdir, taking $srcdir\n";
+  $islocal = 1;
+}
+if ($tests_to_be_done eq "") {
+  $tests_to_be_done = `ls $srcdir/gmm_torture*.C`;  # list of tests
 }
 
 if ($with_qd && $with_lapack) {

@@ -1242,7 +1242,6 @@ namespace gmm {
     typedef typename linalg_traits<L1>::value_type T;
     typedef typename linalg_traits<L1>::const_iterator l1_const_iterator;
     typedef typename linalg_traits<L2>::iterator l2_iterator;
-
     l1_const_iterator it = vect_const_begin(l1), ite = vect_const_end(l1);
     if (it == ite)
       gmm::clear(l2);

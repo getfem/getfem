@@ -238,11 +238,11 @@ namespace gmm {
     void Hessenberg_reduction(const MAT1& AA, const MAT2 &QQ, bool compute_Q){
     MAT1& A = const_cast<MAT1&>(AA); MAT2& Q = const_cast<MAT2&>(QQ);
     typedef typename linalg_traits<MAT1>::value_type value_type;
-    size_type n = mat_nrows(A);
-    std::vector<value_type> v(n), w(n);
     if (compute_Q) gmm::copy(identity_matrix(), Q);
+    size_type n = mat_nrows(A); if (n < 2) return;
+    std::vector<value_type> v(n), w(n);
     sub_interval SUBK(0,n);
-    for (size_type k = 1; k < n-1; ++k) {
+    for (size_type k = 1; k+1 < n; ++k) {
       sub_interval SUBI(k, n-k), SUBJ(k-1,n-k+1);
       v.resize(n-k);
       for (size_type j = k; j < n; ++j) v[j-k] = A(j, k-1);
@@ -266,13 +266,12 @@ namespace gmm {
     typedef typename number_traits<T>::magnitude_type R;
     // to be optimized
 
-    size_type n = mat_nrows(A); 
+    if (compute_q) gmm::copy(identity_matrix(), Q);
+    size_type n = mat_nrows(A); if (n < 2) return;
     std::vector<T> v(n), p(n), w(n), ww(n);
     sub_interval SUBK(0,n);
 
-    if (compute_q) gmm::copy(identity_matrix(), Q);
-
-    for (size_type k = 1; k < n-1; ++k) { // not optimized ...
+    for (size_type k = 1; k+1 < n; ++k) { // not optimized ...
       sub_interval SUBI(k, n-k);
       v.resize(n-k); p.resize(n-k); w.resize(n-k); 
       for (size_type l = k; l < n; ++l) 

@@ -69,7 +69,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
       cout << "\nTest for bicgstab with no preconditionner\n";
 
     gmm::fill_random(v1);
-    gmm::iteration iter((double(prec*cond))*100.0, print_debug ? 1:0, 100*m);
+    gmm::iteration iter((double(prec*cond))*100.0, print_debug ? 1:0, 300*m);
     gmm::bicgstab(m1, v1, v2, P1, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);

@@ -298,13 +298,15 @@ namespace gmm {
 
   template <typename IT, typename SUBI>
   void update_for_sub_skyline(IT &it, IT &ite, const SUBI &si) {
-
-    if (it.index() >= si.max || ite.index() <= si.min) { it = ite; }
-    else {
-      ptrdiff_t dec1 = si.min - it.index(), dec2 = ite.index() - si.max;
-      if (dec1 > 0) { it  += dec1; }
-      if (dec2 > 0) { ite -= dec2; }
-    }
+    if (it.index() >= si.max || ite.index() <= si.min) { it = ite; return; }
+    ptrdiff_t dec1 = si.min - it.index(), dec2 = ite.index() - si.max;
+    size_type min = si.min;
+    if (dec1 < 0)
+      it += (si.step() - ((-dec1) % si.step())) % si.step();
+    else it  += dec1;
+    if (dec2 < 0)
+      ite -= (si.step() - ((-dec2) % si.step())) % si.step();
+    else { ite -= dec2; }
   }
 
   template <typename PT, typename SUBI> struct skyline_sub_vector {

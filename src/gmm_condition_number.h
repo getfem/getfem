@@ -71,7 +71,7 @@ namespace gmm {
       gmm::symmetric_qr_algorithm(B, eig);
     }
     
-    // cout << "val propres = " << eig << endl;
+    // cout << "eigenvalues = " << eig << endl;
     emin = emax = gmm::abs(eig[0]);
     for (size_type i = 1; i < eig.size(); ++i) {
       R e = gmm::abs(eig[i]); 
