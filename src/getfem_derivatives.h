@@ -121,7 +121,7 @@ namespace getfem
 	if (pf_target->target_dim() != 1 || pf->target_dim() != 1)
 	  DAL_THROW(to_be_done_error, "vectorial gradient, to be done ... ");
 
-	pf->real_grad_base_value(pgp, pfp, j, G, B0, t);
+	pf->real_grad_base_value(pgp, pfp, j, G, B0, t, cv);
 
 	for (size_type q = 0; q < qdim; ++q) {
 	  for (size_type l = 0; l < pf->nb_base(); ++l)
