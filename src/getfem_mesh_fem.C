@@ -407,21 +407,19 @@ namespace getfem
     dal::bit_vector npt;
     dal::dynamic_array<double> tmpv;
     char tmp[1024];
-    bool te = false, please_get = true;
 
     ist.precision(16);
     clear();
     ist.seekg(0);
     ftool::read_untill(ist, "BEGIN MESH_FEM");
 
-    while (!te)
+    while (true)
     {
-      if (please_get) ftool::get_token(ist, tmp, 1023); else please_get = true;
+      ftool::get_token(ist, tmp, 1023);
 
-      if (!strcmp(tmp, "END"))
-      { te = true; }
-      else if (!strcmp(tmp, "CONVEX"))
-      {
+      if (strcmp(tmp, "END")==0) {
+	break;
+      } else if (strcmp(tmp, "CONVEX")==0) {
 	ftool::get_token(ist, tmp, 1023);
 	size_type ic = atoi(tmp);
 	if (!linked_mesh().convex_index().is_in(ic)) {
@@ -439,9 +437,29 @@ namespace getfem
 	
 	dal::bit_vector bv; bv.add(ic);
 	set_finite_element(bv, fem, pfi);
+      } else if (strcmp(tmp, "BEGIN")==0) {
+	ftool::get_token(ist, tmp, 1023);
+	if (!strcmp(tmp, "BOUNDARY")) {
+	  ftool::get_token(ist, tmp, 1023);
+	  size_type bnum = atoi(tmp);
+	  while (true) {
+	    ftool::get_token(ist, tmp, 1023);
+	    if (strcmp(tmp, "END")!=0) {
+	      //	      cerr << "tmp = '" << tmp << "'" << endl;
+	      size_type ic = atoi(tmp);
+	      char *sf = strchr(tmp, '/');
+	      if (sf) {
+		size_type f = atoi(sf+1);
+		add_boundary_elt(bnum, ic, f);
+	      } else DAL_THROW(failure_error, "Syntax error in boundary " << bnum);
+	    } else break;
+	  }
+	  ftool::get_token(ist, tmp, 1023);
+	  ftool::get_token(ist, tmp, 1023);
+	} else DAL_THROW(failure_error, "Syntax error in file at token" << tmp);
+      } else {
+	DAL_THROW(failure_error, "Syntax error2 in file at token " << tmp);
       }
-      else
-	DAL_THROW(failure_error, "Syntax error in file.");
     }
   }
 
@@ -464,6 +482,24 @@ namespace getfem
       ost << " " << name_of_fem(fem_of_element(cv));
       ost << " " << name_of_int_method(int_method_of_element(cv));
       ost << endl;
+    }
+    bv = get_valid_boundaries();
+
+    dal::bit_vector blst = get_valid_boundaries();
+    size_type bnum;
+    for (bnum << blst; bnum != size_type(-1); bnum << blst) {
+      ost << " BEGIN BOUNDARY " << bnum;
+      dal::bit_vector cvlst = boundaries[bnum].cvindex;
+      size_type cnt = 0;
+      for (cv << cvlst; cv != size_type(-1); cv << cvlst) {
+	dal::bit_vector cvflst = boundaries[bnum].faces_of_convex(cv);
+	size_type f;
+	for (f << cvflst; f != size_type(-1); f << cvflst, ++cnt) {
+	  if ((cnt % 10) == 0) ost << endl << " ";
+	  ost << " " << cv << "/" << f;
+	}
+      }
+      ost << endl << " END BOUNDARY " << bnum << endl;
     }
     ost << "END MESH_FEM" << endl;
   }
