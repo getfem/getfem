@@ -108,7 +108,7 @@ namespace gmm {
 
   template <typename FUNCTION, typename DERIVATIVE, typename VECTOR> 
   void bfgs(FUNCTION f, DERIVATIVE grad, VECTOR &x,
-	    int restart, iteration& iter, int version = 0) {
+	    int restart, iteration& iter, int version = 0, double lambda_init=0.001) {
 
     typedef typename linalg_traits<VECTOR>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
@@ -116,7 +116,7 @@ namespace gmm {
     bfgs_invhessian<VECTOR> invhessian(version);
     VECTOR r(vect_size(x)), d(vect_size(x)), y(vect_size(x)), r2(vect_size(x));
     grad(x, r);
-    R lambda(0.001), valx = f(x), valy;
+    R lambda = lambda_init, valx = f(x), valy;
     
     if (iter.get_noisy() >= 1) cout << "value " << valx << " ";
     while (! iter.finished_vect(r)) {
@@ -149,7 +149,7 @@ namespace gmm {
 	else  lambda = (lambda_max + lambda_min) / R(2);
 	if (valy <= R(2)*valx &&
 	    (lambda < R(1E-7) || lambda_max - lambda_min < R(1E-7)))
-	{ blocked = true; lambda = 0.001; break; }
+	{ blocked = true; lambda = lambda_init; break; }
       }
 
       // Rank two update

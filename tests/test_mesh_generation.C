@@ -15,102 +15,11 @@ extern "C"
 #include <qhull/stat.h>
 }
 
+#include <bgeot_comma_init.h>
 #include <gmm_solver_bfgs.h>
 #include <getfem_export.h>
 #include <bgeot_kdtree.h>
 #include <typeinfo>
-
-
-
-
-
-
-
-// Test du gradient ...
-
-
-// scalar product working also for matrices (to be done in GMM++ ...
-template<class VAR> 
-typename gmm::linalg_traits<VAR>::value_type
-local_sp(const VAR &X, const VAR &Y)
-{ return local_sp(X, Y, typename gmm::linalg_traits<VAR>::linalg_type()); }
-
-template<class VAR> 
-typename gmm::linalg_traits<VAR>::value_type
-local_sp(const VAR &X, const VAR &Y, gmm::abstract_vector)
-{ return gmm::vect_sp(X, Y); }
-
-template<class VAR> 
-typename gmm::linalg_traits<VAR>::value_type
-local_sp(const VAR &X, const VAR &Y, gmm::abstract_matrix) {
-  typename gmm::linalg_traits<VAR>::value_type res(0);
-  for (gmm::size_type i = 0; i < gmm::mat_nrows(X); ++i) 
-    for (gmm::size_type j = 0; j < gmm::mat_ncols(X); ++j)
-      res += X(i, j) * Y(i, j);
-  return res;
-}
-
-
-
-// Make a test of the gradient around X.
-template <class FUNC, class GRAD, class VAR> 
-void test_grad_at(FUNC f, GRAD grad, const VAR &X) {
-  
-  typedef typename gmm::linalg_traits<VAR>::value_type T;
-  typedef typename gmm::number_traits<T>::magnitude_type R;
-  VAR Y(X), Z(X), G(X);
-  
-  grad(X, G);
-  T valx = f(X);
-
-  R eps(1), max_ratio(1), ecart, ecart_old, min_ecart(1);
-  gmm::fill_random(Z);
-  T derdir = local_sp(G, Z), estimate_derdir;
-  for (int i = 0; i < 10; ++i, eps /= R(10)) {
-    gmm::add(gmm::scaled(Z, eps), X, Y);
-    estimate_derdir = (f(Y) - valx) / eps;
-    ecart = gmm::abs(derdir - estimate_derdir);
-    min_ecart = std::min(ecart, min_ecart);
-    // The goal is of course to obtain a clear decreasing sequence
-    cout << " " << ecart;
-    if (i >= 1)
-      if (ecart != T(0)) max_ratio = std::max(max_ratio, ecart_old / ecart);
-      else max_ratio = R(10);
-    ecart_old = ecart;
-  }
-  cout << endl;
-  if (max_ratio < R(9) && min_ecart > 1E-9) {
-    cout << "ERROR, The gradient does not seem to be ok !! max_ratio = "
-	 << max_ratio << "\n";
-    exit(1);
-  }
-}
-
-template <class FUNC, class GRAD, class VAR> 
-void test_grad(FUNC f, GRAD grad, const VAR &X) {
-  VAR Y(X);
-  for (long i = 0; i < 10000; ++i) {
-    gmm::fill_random(Y); gmm::scale(Y, 0.0001); gmm::add(X, Y);
-    // gmm::scale(Y, rand() / 1000 + 1);
-    cout << "Expe " << i+1; //  << " X = " << Y;
-    test_grad_at(f, grad, Y);
-    cout << endl;
-  }
-  cout << "The gradient seems to be ok !!\n";
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 int ORIGINAL = 1;
@@ -191,16 +100,6 @@ namespace getfem {
     if (curlong || totlong)
       cerr << "qhull internal warning (main): did not free " << totlong << 
         " bytes of long memory (" << curlong << " pieces)\n";
-  }
-
-  template<class TAB> scalar_type simplex_quality(size_type N, const TAB &pts) {
-    base_matrix G(N,N);
-    base_matrix::iterator it = G.begin();
-    for (size_type i=0; i < N; ++i) {
-      base_node P = pts[i+1] - pts[0];
-      std::copy(P.const_begin(), P.const_begin()+N, G.begin()+i*N);
-    }
-    return dal::abs(1./gmm::condition_number(G));
   }
 
   class mesher_virtual_function {
@@ -457,10 +356,24 @@ namespace getfem {
       run(m,fixed_points);
     }
 
+    template<class TAB> scalar_type simplex_quality(const TAB &ppts) {
+      base_matrix G(N,N), GW(N, N);
+      base_matrix::iterator it = G.begin();
+      for (size_type i=0; i < N; ++i) {
+	base_node P = ppts[i+1] - ppts[0];
+	std::copy(P.const_begin(), P.const_begin()+N, G.begin()+i*N);
+      }
+      gmm::mult(G, W, GW);
+      return dal::abs(1./gmm::condition_number(GW));
+    }
+
+    scalar_type worst_element, best_element;
+    
     scalar_type fbcond_cost_function(const base_vector &c) {
       unsigned nbt = gmm::mat_ncols(t);
       scalar_type cost = 0;
       base_matrix S(N,N), SW(N,N);
+      worst_element = 1; best_element = 1E40;
       for (unsigned i=0; i < nbt; ++i) {
 	for (size_type j=0; j < N; ++j) {
 	  for (size_type k=0; k < N; ++k) {
@@ -469,14 +382,31 @@ namespace getfem {
 	}
 	gmm::mult(S,W,SW);
 	if (gmm::lu_det(SW) < 0) cost += 1e30;
-	else cost += gmm::Frobenius_condition_number_sqr(SW);
+	else {
+	  scalar_type qual = gmm::Frobenius_condition_number_sqr(SW);
+	  cost += qual;
+// 	  if (qual > 20000.0) { 
+// 	    cout << "element " << i << "is horrible" << endl;
+// 	    cout << "real precond : " << gmm::condition_number(SW) << endl;
+// 	    for (uint k = 0; k < N+1; ++k)
+// 	      cout << "point " << k << " : " << pts[t(k, i)] << endl;
+// 	  }
+	  bool att = true;
+	  for (uint k = 0; k < N+1; ++k)
+	    if (!(pts_attr[t(k, i)]->constraints.card() || pts_attr[t(k, i)]->fixed))
+	      att = false;
+//	  if (att) cout << "Element " << i << "is comp. attached\n";
+
+	  worst_element = std::max(worst_element, qual / (N*N));
+	  best_element = std::min(best_element, qual / (N*N));
+	}
       }
       return cost / scalar_type(nbt * N * N);
     }
 
     void fbcond_cost_function_derivative(const base_vector& c, base_vector &grad) {
       gmm::clear(grad);
-      base_matrix Dcond(N,N), G(N,N), S(N,N);
+      base_matrix Dcond(N,N), G(N,N), S(N,N), SW(N,N);
       unsigned nbt = gmm::mat_ncols(t);
       
       for (unsigned i=0; i < nbt; ++i) {
@@ -485,8 +415,10 @@ namespace getfem {
 	    S(k,j) = c[t(j+1,i)*N+k] - c[t(0,i)*N+k];
 	  }
 	}
-	Frobenius_condition_number_sqr_gradient(S,Dcond);
+	gmm::mult(S,W,SW);
+	Frobenius_condition_number_sqr_gradient(SW,Dcond);
 	gmm::mult(Dcond, gmm::transposed(W), G);
+	// gmm::mult(W, gmm::transposed(Dcond), G);
 	for (size_type j=0; j < N; ++j) {
 	  for (size_type k=0; k < N; ++k) {
 	    grad[t(j+1,i)*N+k] += G(k,j);
@@ -494,13 +426,16 @@ namespace getfem {
 	  }
 	}
       }
-      for (unsigned i=0; i < pts.size(); ++i) {
- 	if (pts_attr[i]->constraints.card() || pts_attr[i]->fixed) 
- 	  for (size_type k=0; k < N; ++k) {
- 	    grad[i*N+k] = 0;
- 	  }
-      }
+       for (unsigned i=0; i < pts.size(); ++i) {
+   	if (pts_attr[i]->constraints.card() || pts_attr[i]->fixed) 
+    	  for (size_type k=0; k < N; ++k) {
+//    	    grad[i*N+k] = 0;
+//	    cout << " " << grad[i*N+k];
+    	  }
+       }
+       cout << endl;
       gmm::scale(grad, scalar_type(1) / scalar_type(nbt * N * N));
+      
     }
 
     struct fbcond_cost_function_object {
@@ -516,6 +451,22 @@ namespace getfem {
     };
 
     void optimize_quality() {
+
+
+//       pts_attr[0] = pts_attr[1] = pts_attr[2] = pts_attr[3]
+// 	= get_attr(true, dal::bit_vector(), false);
+//       pts_attr[4] = get_attr(false, dal::bit_vector(), false);
+//       gmm::resize(t, 3, 4);
+//       pts[0] = base_node(0., 0.);
+//       pts[1] = base_node(1., 0.);
+//       pts[2] = base_node(0., 1.);
+//       pts[3] = base_node(1., 1.);
+//       pts[4] = base_node(0.7, 0.5);
+//       bgeot::sc(t) = 0, 1, 4,
+// 	1, 3, 4,
+// 	3, 2, 4,
+// 	2, 0, 4;
+
 	    cout << "Opt qual ...\n";
       base_vector X(pts.size() * N);
       for (unsigned i=0; i < pts.size(); ++i)
@@ -538,21 +489,24 @@ namespace getfem {
 	}
 	if (dal::abs(lu_det(S)) < 1e-10) cout << "oulala " << i << ", " << dal::abs(lu_det(S)) << "\n";
 	gmm::mult(S,W,SW);
-	assert(gmm::lu_det(S) > 0);
-	assert(gmm::lu_det(SW) > 0);
+	
+	assert(gmm::lu_det(S) >= 0);
+	assert(gmm::lu_det(SW) >= 0);
       }
-
-      test_grad(fbcond_cost_function_object(*this),
-		fbcond_cost_function_derivative_object(*this),
-		X);
       
       cout << "Initial quality: " << fbcond_cost_function(X) << "\n";
-      gmm::iteration iter; iter.set_noisy(1);
+      cout << "best element : " << sqrt(best_element) << " worst element : "
+	   << sqrt(worst_element) << endl;
+      gmm::iteration iter; iter.set_noisy(2); iter.set_maxiter(1000);
+      iter.set_resmax(1E-7);
       gmm::bfgs(fbcond_cost_function_object(*this), 
 		fbcond_cost_function_derivative_object(*this),
-		X, 3, iter);
+		X, 50, iter, 0, 5.0);
 
       cout << "Final quality: " << fbcond_cost_function(X) << "\n";
+      cout << "best element : " << sqrt(best_element) << " worst element : "
+	   << sqrt(worst_element) << endl;
+
       for (unsigned i=0; i < pts.size(); ++i)
 	dal::copy_n(X.begin() + i*N, N, pts[i].begin());      
     }
@@ -636,10 +590,16 @@ namespace getfem {
       }
     }
 
-    void distribute_points_regularly(getfem_mesh &m, const std::vector<base_node> &fixed_points) {
+    void distribute_points_regularly(getfem_mesh &m,
+				     const std::vector<base_node> &fixed_points) {
       size_type nbpt = 1;
       std::vector<size_type> gridnx(N);
       cout << "N = " << N << ", bounding box = " << bounding_box_min << "," << bounding_box_max << "\n";
+
+//       bgeot::small_vector<scalar_type> dire = bounding_box_max - bounding_box_min;
+//       bounding_box_min -= scalar_type(2)*dire;
+//       bounding_box_max += scalar_type(2)*dire;
+
       for (size_type i=0; i < N; ++i) 
 	h0 = std::min(h0, bounding_box_max[i] - bounding_box_min[i]);
       for (size_type i=0; i < N; ++i) {
@@ -666,7 +626,7 @@ namespace getfem {
 	bool is_on_bounding_box = false;
 	for (size_type k=0, r = i; k < N; ++k) {
 	  unsigned p =  r % gridnx[k];
-	  //if (p == 0 || p == gridnx[k]-1) is_on_bounding_box = true;
+	  // if (p == 0 || p == gridnx[k]-1) is_on_bounding_box = true;
 	  P[k] = p * (bounding_box_max[k] - bounding_box_min[k]) / 
 	    (gridnx[k]-1) + bounding_box_min[k];
 	  if (N==2 && k==0 && ((r/gridnx[0])&1)==1) P[k] += h0/2;
@@ -738,7 +698,7 @@ namespace getfem {
 	    tree.points_in_box(neighbours, bmin, bmax);
 	    for (size_type k=0; k < neighbours.size(); ++k) {
 	      if (neighbours[k].i != i && keep_pts.is_in(neighbours[k].i)) {
-		cout << "point #" << i << " " << P << " is too near of point #" 
+		cout << "point #" << i << " " << P << " is too near from point #" 
 		     << neighbours[k].i << pts[idx[neighbours[k].i]] << " : will be removed\n";
                keep_pts.sup(i);
 	      }
@@ -763,6 +723,70 @@ namespace getfem {
 	std::copy(pts.begin(), pts.end(), pts_prev.begin());*/
     }
 
+    scalar_type worst_q;
+    base_node worst_q_P;
+
+    void select_elements(int version) {
+      worst_q = 1.;
+      base_node weights(N+1);
+      for (size_type i=0; i < gmm::mat_ncols(t); )  {
+	base_node G = pts[t(0,i)];
+	for (size_type k=1; k < N+1; ++k) G += pts[t(k,i)];
+	gmm::scale(G, 1./(N+1));
+	scalar_type dG = dist(G);
+	gmm::clear(weights);
+	scalar_type tot(0);
+	for (size_type k = 0; k <= N; ++k) {
+	  for (size_type l = 0; l <= N; ++l) {
+	    scalar_type d = gmm::vect_dist2(pts[t(k,i)], pts[t(l,i)]);
+	    weights[k] += d; tot +=d;
+	  }
+	}
+	gmm::clear(G);
+	for (size_type k = 0; k <= N; ++k)
+	  gmm::add(gmm::scaled(pts[t(k,i)], weights[k] / tot), G);
+	scalar_type dWG = dist(G);
+
+
+	scalar_type q = simplex_quality(
+		        dal::index_ref_iterator(pts.begin(), gmm::mat_col(t,i).begin()));
+	
+	bool boundary_simplex = true;
+	bool is_bridge_simplex = false;
+	bool is_bounding_box_simplex = false;
+	for (size_type k=0; k < N+1; ++k) {
+	  if (pts_attr[t(k,i)]->constraints.card() == 0) {
+	    boundary_simplex = false;
+	  }
+	  if (pts_attr[t(k,i)]->on_bounding_box) is_bounding_box_simplex = true;
+	}
+	if (boundary_simplex) {
+	  dal::bit_vector all_cts;
+	  for (size_type k=0; k < N+1; ++k) 
+	    all_cts |= pts_attr[t(k,i)]->constraints;
+	  for (size_type k=0; k < N+1; ++k)
+	    if (pts_attr[t(k,i)]->constraints.contains(all_cts))
+	      is_bridge_simplex = true;
+	}
+	//qf << q << "\n";
+
+	if ( (version == 0) && (q < 1e-3 || dG > 0 || dWG > 0
+				|| (is_bridge_simplex && dG>-geps)
+				|| is_bounding_box_simplex)
+	     || ((version == 1) && (dG > 0 || dWG > 0 || q < 1e-30))) {
+	  if (i != gmm::mat_ncols(t)-1) {
+	    for (size_type k=0; k < N+1; ++k) std::swap(t(k,i), t(k,gmm::mat_ncols(t)-1));
+	  }
+	  t.resize(N+1,gmm::mat_ncols(t)-1);
+	} else {
+	  ++i;
+	  if (q < worst_q) { worst_q = q; worst_q_P = G*(1./(N+1)); }
+	}
+      }
+      
+    }
+
+
     void run(getfem_mesh &m,
 	     const std::vector<base_node> &fixed_points) {
       /* Create initial distribution in bounding box */
@@ -783,7 +807,6 @@ namespace getfem {
 	  cout << "-----> NEW DELAUNAY\n";
 	  first = false;
 
-	  scalar_type worst_q = 1.; base_node worst_q_P;
 	  for (unsigned repeat=0; repeat < 2; ++repeat) {
 	    cleanup_points(); /* and copy pts to pts_prev */
 	    cout << "running delaunay on " << pts.size() << " points\n";
@@ -794,40 +817,7 @@ namespace getfem {
 	      qf.open(s);
 	    }
 	    */
-	    for (size_type i=0; i < gmm::mat_ncols(t); ) {
-	      base_node G = pts[t(0,i)];
-	      for (size_type k=1; k < N+1; ++k) G += pts[t(k,i)];
-	      scalar_type q = simplex_quality(N, dal::index_ref_iterator(pts.begin(), gmm::mat_col(t,i).begin()));
-	      
-	      bool boundary_simplex = true;
-	      bool is_bridge_simplex = false;
-	      bool is_bounding_box_simplex = false;
-	      for (size_type k=0; k < N+1; ++k) {
-		if (pts_attr[t(k,i)]->constraints.card() == 0) {
-		  boundary_simplex = false;
-		}
-		if (pts_attr[t(k,i)]->on_bounding_box) is_bounding_box_simplex = true;
-	      }
-	      if (boundary_simplex) {
-		dal::bit_vector all_cts;
-		for (size_type k=0; k < N+1; ++k) 
-		  all_cts |= pts_attr[t(k,i)]->constraints;
-		for (size_type k=0; k < N+1; ++k)
-		  if (pts_attr[t(k,i)]->constraints.contains(all_cts))
-		    is_bridge_simplex = true;
-	      }
-	      //qf << q << "\n";
-	      scalar_type dG = dist(G*(1./(N+1)));
-	      if (q < 1e-3 || dG > 0 || (is_bridge_simplex && dG>-geps) || is_bounding_box_simplex) {
-		if (i != gmm::mat_ncols(t)-1) {
-		  for (size_type k=0; k < N+1; ++k) std::swap(t(k,i), t(k,gmm::mat_ncols(t)-1));
-		}
-		t.resize(N+1,gmm::mat_ncols(t)-1);
-	      } else {
-		++i;
-		if (q < worst_q) { worst_q = q; worst_q_P = G*(1./(N+1)); }
-	      }
-	    }
+	    select_elements(0);
 	    cout << " worst q = " << worst_q << "\n";
 	    /*if (worst_q < 1e-2) {
 	      cout << "Inserting a new node @" << worst_q_P << "\n";	      
@@ -888,8 +878,10 @@ namespace getfem {
 	    if (F) {
 	      base_node Fbar = (bar)*(F/L[ie]);
 
-	      if (!pts_attr[iA]->fixed && !pts_attr[iA]->on_bounding_box) pts[iA] -= deltat*Fbar; 
-	      if (!pts_attr[iB]->fixed && !pts_attr[iB]->on_bounding_box) pts[iB] += deltat*Fbar;
+	      if (!pts_attr[iA]->on_bounding_box && !pts_attr[iB]->on_bounding_box) {
+		if (!pts_attr[iA]->fixed) pts[iA] -= deltat*Fbar; 
+		if (!pts_attr[iB]->fixed) pts[iB] += deltat*Fbar;
+	      }
 	    }
 	  }
 	  for (size_type ip=0; ip < pts.size(); ++ip) {
@@ -1008,9 +1000,17 @@ namespace getfem {
 	  m.write_to_file(s);
 	}
 	//getchar();
-      } while ((count < 40 || sqrt(maxdp)*deltat > ptol * h0) && count < 50);
+      } while ((count < 40 || sqrt(maxdp)*deltat > ptol * h0) && count < 100);
       delaunay(pts, t);
+      select_elements(1);
       
+      m.optimize_structure();
+      {
+        getfem::vtk_export exp("toto1.vtk");
+	exp.exporting(m);
+        exp.write_mesh_quality(m);
+      }
+
       optimize_quality();
 
       { m.clear();
@@ -1020,7 +1020,7 @@ namespace getfem {
       cout << "mesh done! (" << count << " iter, method = " << (ORIGINAL ? "ORIGINAL" : "NEWTON") << ")\n";
       base_vector simplex_q; simplex_q.reserve(m.convex_index().card());
       for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
-	simplex_q.push_back(simplex_quality(N, dal::index_ref_iterator(pts.begin(), t.begin()+cv*(N+1))));
+	simplex_q.push_back(simplex_quality(dal::index_ref_iterator(pts.begin(), t.begin()+cv*(N+1))));
       }
       scalar_type mean_q = dal::mean_value(simplex_q.begin(), simplex_q.end());
       scalar_type std_dev_q = 0, max_q = 0., min_q = 1.;
@@ -1059,27 +1059,27 @@ namespace getfem {
 	  assert(cvnum == i);
 	}
       }
-      while (1) {
-	getfem::convex_face_ct border_faces;
-	getfem::outer_faces_of_mesh(m, border_faces);
-	size_type nbrm = 0;
-	for (getfem::convex_face_ct::const_iterator it = border_faces.begin();
-	     it != border_faces.end(); ++it) {
-	  if (!m.convex_index()[it->cv]) continue;
-	  scalar_type q = simplex_quality(N, dal::index_ref_iterator(pts.begin(), &t[it->cv*(N+1)]));
-	  scalar_type dG = dist(dal::mean_value(m.points_of_convex(it->cv).begin(), m.points_of_convex(it->cv).end()));
-	  if (q < .01) {
-	    //cout << "removing flat border convex " << it->cv << " (q=" << q << ")\n";
-	    //for (size_type i=0; i < N+1; ++i) cout << " " << m.points_of_convex(it->cv)[i]; cout << "\n";
-	    m.sup_convex(it->cv); nbrm++;
-	  } else if (dG > -0.0) {
-	    //cout << "removing convex because of its gravity center is too near" << it->cv << " (dG=" << dG << ")\n";
-	    m.sup_convex(it->cv); nbrm++;  
-	  }
-	}
-	if (nbrm == 0) break;
-	//else cout << "\n\n !!!!! ON CONTINUE ENCORE UN COUP..\n\n";
-      }
+//       while (1) {
+// 	getfem::convex_face_ct border_faces;
+// 	getfem::outer_faces_of_mesh(m, border_faces);
+// 	size_type nbrm = 0;
+// 	for (getfem::convex_face_ct::const_iterator it = border_faces.begin();
+// 	     it != border_faces.end(); ++it) {
+// 	  if (!m.convex_index()[it->cv]) continue;
+// 	  scalar_type q = simplex_quality(dal::index_ref_iterator(pts.begin(), &t[it->cv*(N+1)]));
+// 	  scalar_type dG = dist(dal::mean_value(m.points_of_convex(it->cv).begin(), m.points_of_convex(it->cv).end()));
+// 	  if (q < .01) {
+// 	    //cout << "removing flat border convex " << it->cv << " (q=" << q << ")\n";
+// 	    //for (size_type i=0; i < N+1; ++i) cout << " " << m.points_of_convex(it->cv)[i]; cout << "\n";
+// 	    m.sup_convex(it->cv); nbrm++;
+// 	  } else if (dG > -0.0) {
+// 	    //cout << "removing convex because of its gravity center is too near" << it->cv << " (dG=" << dG << ")\n";
+// 	    m.sup_convex(it->cv); nbrm++;  
+// 	  }
+// 	}
+// 	if (nbrm == 0) break;
+// 	//else cout << "\n\n !!!!! ON CONTINUE ENCORE UN COUP..\n\n";
+//       }
       if (degree>1) {
 	//m.optimize_structure();
 	getfem::convex_face_ct border_faces;
@@ -1122,7 +1122,7 @@ namespace getfem {
       }
       m.optimize_structure();
       {
-        getfem::vtk_export exp("toto.vtk");
+        getfem::vtk_export exp("toto2.vtk");
 	exp.exporting(m);
         exp.write_mesh_quality(m);
       }
