@@ -91,7 +91,7 @@ namespace gmm {
     outer.set_rhsnorm(gmm::vect_norm2(b));
     if (outer.get_rhsnorm() == 0.0) { clear(x); return; }
     
-    std::vector< gmm::givens_rotation<T> > rotations(restart+1);
+    std::vector<T> c_rot(restart+1), s_rot(restart+1);
     
     mult(A, scaled(x, -1.0), b, w);
     
@@ -118,11 +118,11 @@ namespace gmm {
 	H(i+1, i) = a = gmm::vect_norm2(KS[i+1]);
 	gmm::scale(KS[i+1], 1.0 / a);
 	for (size_type k = 0; k < i; k++)
- 	  rotations[k].scalar_apply(H(k,i), H(k+1,i));
+	  Apply_Givens_rotation(H(k,i), H(k+1,i), c_rot[k], s_rot[k]);
 	
-	rotations[i] = givens_rotation<T>(H(i,i), H(i+1,i));
-	rotations[i].scalar_apply(H(i,i), H(i+1,i));
-	rotations[i].scalar_apply(s[i], s[i+1]);
+	Givens_rotation(H(i,i), H(i+1,i), c_rot[i], s_rot[i]);
+	Apply_Givens_rotation(H(i,i), H(i+1,i), c_rot[i], s_rot[i]);
+	Apply_Givens_rotation(s[i], s[i+1], c_rot[i], s_rot[i]);
 	
 	++inner, ++outer, ++i;
       } while (! inner.finished(dal::abs(s[i])));

@@ -241,13 +241,14 @@ namespace gmm {
   }
 
   template <class L> inline void fill_random(L& l, abstract_vector) {
-    for (size_type i = 0; i < vect_size(l); ++i) l[i] = dal::random();
+    for (size_type i = 0; i < vect_size(l); ++i)
+      l[i] = dal::random(typename linalg_traits<L>::value_type());
   }
 
   template <class L> inline void fill_random(L& l, abstract_matrix) {
     for (size_type i = 0; i < mat_nrows(l); ++i)
       for (size_type j = 0; j < mat_ncols(l); ++j)
-	l(i,j) = dal::random();
+	l(i,j) = dal::random(typename linalg_traits<L>::value_type());
   }
 
   template <class L> inline void fill_random(L& l, double cfill) {
@@ -261,10 +262,10 @@ namespace gmm {
   template <class L> inline void fill_random(L& l, double cfill, abstract_vector) {
     if (cfill > 0.1) {
       for (size_type i = 0; i < vect_size(l); ++i) 
-	if (dal::random() < cfill) l[i] = dal::random(); else l[i] = 0;
+	if (dal::random(typename linalg_traits<L>::value_type()) < cfill) l[i] = dal::random(typename linalg_traits<L>::value_type()); else l[i] = 0;
     } else {
       for (size_type i=0; i < size_type(vect_size(l)*cfill)+1; ++i) {
-	l[dal::irandom(vect_size(l))]=dal::random();
+	l[dal::irandom(vect_size(l))]=dal::random(typename linalg_traits<L>::value_type());
       }
     }
   }

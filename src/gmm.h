@@ -36,6 +36,7 @@
 #include <gmm_sub_index.h>
 #include <gmm_interface.h>
 #include <gmm_scaled.h>
+#include <gmm_conjugated.h>
 #include <gmm_transposed.h>
 #include <gmm_blas.h>
 #include <gmm_sub_vector.h>

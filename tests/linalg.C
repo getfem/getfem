@@ -47,53 +47,109 @@ void const_ref_test(const M1 &m1, const M2 &m2) {
 }
 
 void test_qr(void) {
+
+  std::vector<std::complex<double> > cv(8);
+  gmm::fill_random(cv);
+  cout.precision(6);
+  cout << "cv = " << cv << endl;
+  cout << "conj(cv) = " << gmm::conjugated(cv) << endl;
+
+
+  gmm::dense_matrix<std::complex<double> > cm(8,8), cq(8,8), cr(8,8), ca(8,8);
+  gmm::fill_random(cm);
+
+  cout << "cm = " << cm << endl;
+  cout << "conj(cm) = " << gmm::scaled(cm, -1.0) << endl;
+
+  gmm::qr_factor(cm, cq, cr);
+
+
+  gmm::mult(gmm::conjugated(gmm::transposed(cq)), cq, ca);
+  cout << "cm = " << cm << endl;
+
+  gmm::mult(cq, cr, ca);
+  
+  cout << "cm = " << cm << endl;
+  cout << "ca = " << ca << endl;
+  
+
+
+  gmm::add(gmm::scaled(ca, -1.0), cm);
+  
+  gmm::clean(cm, 1E-12);
+  cout << "cm = " << cm << endl; getchar();
+
+  
+
+
   cout << "/***********************************************************/\n";
   cout << "/*                   Test of QR algorithms                 */\n";
   cout << "/***********************************************************/\n";
 
-  int nn = 16;
+  int nn = 8;
   gmm::dense_matrix<double> mm(nn,nn), r(nn, nn), q(nn, nn),
     qr(nn, nn), mmt(nn, nn);
-  std::vector<std::complex<double> > eig(nn);
+  std::vector<std::complex<double> > eigc(nn);
   gmm::fill_random(mm);
-
-//   cout << "[" << endl;
-//   for (int i = 0; i < nn; ++i) {
-//     for (int j = 0; j < nn; ++j)
-//       cout << " " << mm(i,j);
-//     if (i != nn-1) cout << " ; \n";
-//   }
-//   cout << "]" << endl;
   
+  cout.precision(16);
+  cout << "[" << endl;
+  for (int i = 0; i < nn; ++i) {
+    for (int j = 0; j < nn; ++j) cout << " " << mm(i,j);
+    if (i != nn-1) cout << " ; \n";
+  }
+  cout << "]" << endl;
+  
+  cout.precision(8);
   double exectime = ftool::uclock_sec();
-  power_qr_algorithm(mm, eig, q);
-  cout << "time to compute power QR : " << ftool::uclock_sec() - exectime;
-  cout << "\neigenvalues : " << eig << endl;
-  cout << "eigenvectors : " << q << endl;
+//   power_qr_algorithm(mm, eigc, q);
+//   cout << "time to compute power QR : " << ftool::uclock_sec() - exectime;
+//   cout << "\neigenvalues : " << eigc << endl;
+//   cout << "eigenvectors : " << q << endl;
   
-  exectime = ftool::uclock_sec();
-  implicit_qr_algorithm(mm, eig, q);
-  cout << "time to compute implicit QR : " << ftool::uclock_sec()-exectime;
-  cout << "\neigenvalues : " << eig << endl;
-  cout << "eigenvectors : " << q << endl;
+//   exectime = ftool::uclock_sec();
+//   implicit_qr_algorithm(mm, eigc, q);
+//   cout << "time to compute implicit QR : " << ftool::uclock_sec()-exectime;
+//   cout << "\neigenvalues : " << eigc << endl;
+//   cout << "eigenvectors : " << q << endl;
   
   // getchar();
   
-  gmm::mult(mm, gmm::transposed(mm), mmt);
-  cout << "mmt = " << mmt << endl;
-  
   gmm::qr_factor(mm, q, r);
-  gmm::clean(r, 1E-13);
-  cout << "r = " << r << endl;
-  cout << "q = " << q << endl;
+  // gmm::clean(r, 1E-13);
+  // cout << "r = " << r << endl;
+  // cout << "q = " << q << endl;
   gmm::mult(q, r, qr);
-  gmm::clean(qr, 1E-13);
-  cout << "qr = " << qr << endl;
-  
+  // gmm::clean(qr, 1E-13);
+  // cout << "qr = " << qr << endl;
   gmm::add(gmm::scaled(mm, -1.0), qr);
   
   if (gmm::mat_norm2(qr) > 1E-10) 
     DAL_THROW(dal::failure_error, "Error on QR factorisation.");
+
+  gmm::mult(mm, gmm::transposed(mm), mmt);
+  cout.precision(16);
+  cout << "[" << endl;
+  for (int i = 0; i < nn; ++i) {
+    for (int j = 0; j < nn; ++j) cout << " " << mmt(i,j);
+    if (i != nn-1) cout << " ; \n";
+  }
+  cout << "]" << endl;
+  
+  cout.precision(8);
+  std::vector<double> eig(nn);
+
+  exectime = ftool::uclock_sec();
+  symmetric_qr_algorithm(mmt, eig, q);
+  cout << "time to compute symmetric QR : " << ftool::uclock_sec()-exectime;
+  cout << "\neigval = " << eig << endl;
+  
+
+  implicit_qr_algorithm(mmt, eig, q);
+  cout << "\neigval(par impl qr) = " << eig << endl;
+  getchar();
+
+
 }
 
 int main(void)

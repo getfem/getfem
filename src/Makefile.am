@@ -56,6 +56,7 @@ include_HEADERS =                      \
 	gmm_vector.h                   \
 	gmm_transposed.h               \
 	gmm_scaled.h                   \
+	gmm_conjugated.h               \
 	gmm_def.h                      \
 	gmm_sub_index.h                \
 	gmm_sub_vector.h               \
@@ -79,7 +80,6 @@ include_HEADERS =                      \
 	gmm_precond_diagonal.h         \
 	gmm_precond_ilu.h              \
 	gmm_precond_ilut.h             \
-	gmm_given_rotation.h           \
 	gmm_blas.h                     \
 	gmm_condest.h                  \
 	gmm_opt.h                      \

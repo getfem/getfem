@@ -199,11 +199,18 @@ namespace dal
   template <class T> inline T sqr(T a) { return a * a; }
   template <class T> inline T abs(T a) { return (a < T(0)) ? -a : a; }
   template <class T> inline T abs(std::complex<T> a) { return std::abs(a); }
+  template <class T> inline T abs_sqr(T a) { return a*a; }
+  template <class T> inline T abs_sqr(std::complex<T> a)
+  { return dal::sqr(a.real()) + dal::imag(a.imag()); }
   template <class T> inline T pos(T a) { return (a < T(0)) ? T(0) : a; }
   template <class T> inline T neg(T a) { return (a < T(0)) ? -a : T(0); }
   template <class T> inline T sgn(T a) { return (a < T(0)) ? T(-1) : T(1); }
-  template <class T> inline T sgn(std::complex<T> a) { return sgn(a.real()); }
+  template <class T> inline T sgn(std::complex<T> a)
+  { return (a.real() / dal::abs(a) < T(0.1)) ? sgn(a.imag()) : sgn(a.real()); }
   inline double random() { return double(rand())/(RAND_MAX+1); }
+  template <class T> inline T random(T) { return random(); }
+  template <class T> inline std::complex<T> random(std::complex<T>)
+  { return std::complex<T>(random(), random()); }
   template <class T> inline T irandom(T max) { return T(random() * max); }
 }
 
