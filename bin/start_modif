@@ -102,7 +102,7 @@ while($listeC)
   $fi2 = $fi1;
   $fi2 =~ s/\.o/_h/;
 #  $fi2 =~ s/\.o/.h/;
-  print MAKEFILE "\n", "programs\/$fi1 : $fi \$(GETFEM_LIB) \n";
+  print MAKEFILE "\n", "programs\/$fi1 : $fi \$(GETFEM_LIB) .\/sources\/*.o \n";
   print MAKEFILE "\t", '$(CPLUS) $(COPT) $(INCLUDES) ./sources/*.o ', $fi, " -o programs\/$fi1", ' $(LIB) ', "\n";
 
 }
