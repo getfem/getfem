@@ -62,6 +62,7 @@ include_HEADERS =                       \
 	getfem_regular_meshes.h         \
 	getfem_modeling.h               \
 	getfem_nonlinear_elasticity.h   \
+	getfem_superlu.h		\
 	getfem_plasticity.h             \
 	gmm.h                           \
 	gmm_matrix.h                    \
@@ -126,6 +127,7 @@ SRC =                                   \
 	bgeot_sparse_tensors.C          \
 	bgeot_poly.C                    \
 	ftool.C                         \
+	getfem_superlu.C		\
 	getfem_context.C                \
 	getfem_mesh_fem.C               \
 	getfem_integration.C            \
@@ -150,6 +152,7 @@ SRC =                                   \
 lib_LTLIBRARIES = libgetfem.la
 libgetfem_la_SOURCES = $(SRC)
 libgetfem_la_LDFLAGS = ${LIBTOOL_VERSION_INFO}
+libgetfem_la_LIBADD = ../superlu/libsuperlu.la
 
 CLEANFILES = ii_files/* *.o.d
 DISTCLEANFILES = getfem_arch_config.h

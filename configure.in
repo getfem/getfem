@@ -44,9 +44,12 @@ dnl test du c++
 dnl -----------------------------------------------
 
 USER_CXXFLAGS="$CXXFLAGS"
+USER_CFLAGS="$CFLAGS"
 AC_PROG_CXX(cxx KCC CC cc++ xlC aCC g++ c++ icpc)
+AC_PROG_CC(gcc icc cc)
 AC_PROG_CXXCPP
 CXXFLAGS="${USER_CXXFLAGS}"
+CFLAGS="${USER_CFLAGS}"
 SUPLDFLAGS=""
 
 AC_LANG_CPLUSPLUS
@@ -88,6 +91,7 @@ case $CXX in
 dnl     il faut utiliser -tweak au lieu des repositories ...
 	CXXFLAGS="$CXXFLAGS -tweak -std strict_ansi -fast -Wl,-S -nopure_cname"
 dnl 	CXXFLAGS="$CXXFLAGS -ptr `pwd`/cxx_repository -std strict_ansi -O3"
+	CFLAGS="$CFLAGS -fast -Wl,-S -nopure_cname"
  	cd $here
 	;;
  CC)
@@ -132,16 +136,19 @@ dnl             CXXFLAGS="$CXXFLAGS -LANG:std  -O3 -ansiW "
 
 dnl 	CXXFLAGS="$CXXFLAGS -fmessage-length=0 -ftemplate-depth-40 -pedantic -O3 -Wall -W $WSHADOW -Wpointer-arith -Wcast-qual -Wwrite-strings -Wconversion -Wredundant-decls -Wno-long-double"
 dnl	SUPLDFLAGS="-rdynamic" # -rdynamic for backtraces
+        CFLAGS="-O3"
 	;;
  icc | icpc)
 	echo "Using INTEL icc"
 dnl -tpp6 is for pentiumII and more
 dnl -Xc is for ansi conformance
 	CXXFLAGS="$CXXFLAGS -O3 -tpp6 -Xc -ansi"
+        CFLAGS="$CFLAGS -O3 -tpp6 -Xc -ansi"
 	;;
  *)
 	echo "Using a unknown compiler"
  	CXXFLAGS="$CXXFLAGS -O3"
+        CFLAGS="$CFLAGS -O3"
 	;;
 esac
 
@@ -160,6 +167,33 @@ dnl AM_PROG_LIBTOOL
 AM_PROG_LIBTOOL
 AC_SUBST([LIBTOOL_DEPS])
 
+dnl -------------------------------BLAS----------------------------------
+ACX_BLAS
+LIBS="$LIBS $BLAS_LIBS"
+CPPFLAGS="$CPPFLAGS -DGMM_USES_BLAS"
+
+dnl ------------------------------SuperLU config-------------------------
+AC_F77_FUNC(sgemm)
+
+case $sgemm in
+  sgemm)
+        F77_CALL_C="NOCHANGE";
+        ;;
+  sgemm_)
+        F77_CALL_C="ADD_";
+        ;;
+  SGEMM)
+        F77_CALL_C="UPCASE";
+        ;;
+  sgemm__)
+        F77_CALL_C="ADD__";
+        ;;
+  *)
+        AC_MSG_ERROR(["superlu won't handle this calling convention: sgemm -> $sgemm"])
+        ;;
+esac
+SUPERLU_CPPFLAGS="$CPPFLAGS -DUSE_VENDOR_BLAS -DF77_CALL_C=$F77_CALL_C"
+AC_SUBST(SUPERLU_CPPFLAGS)
 
 dnl -----------------------------QD TESTS--------------------------------
 AC_ARG_WITH(qd-lib-dir, [  --with-qd-lib-dir       directory in which the libqd.a can be found],
@@ -286,6 +320,7 @@ AC_CONFIG_FILES(\
 	Makefile \
 	config/Makefile \
 	cubature/Makefile \
+        superlu/Makefile \
 	src/Makefile \
 	tests/Makefile \
 	contrib/Makefile \

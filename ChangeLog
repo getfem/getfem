@@ -1,3 +1,7 @@
+2004-08-03  julien pommier  <pommier@gmm.insa-tlse.fr>
+	* superlu: SuperLU is included into getfem, which does now depend
+	on BLAS.
+
 2004-08-02  Yves Renard  <Yves.Renard@gmm.insa-tlse.fr>
 	* src/gmm_dense_qr.h: Bug fixed on the computation of Schur vectors.
 	the reductible 2x2 blocks has to be reduced to obtain the Schur

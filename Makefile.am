@@ -1,4 +1,4 @@
-SUBDIRS = config cubature src tests contrib bin
+SUBDIRS = config cubature superlu src tests contrib bin
 
 EXTRA_DIST = \
 	BUGS \
