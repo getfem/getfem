@@ -302,7 +302,7 @@ namespace dal
   template<class T, unsigned char pks> dynamic_array<T,pks>
   &dynamic_array<T,pks>::operator = (const dynamic_array<T,pks> &da) {
     clear(); /* evitable ... ? */
-    array = da.array;
+    array.resize(da.array.size());
     last_ind = da.last_ind;
     last_accessed = da.last_accessed;
     ppks = da.ppks; m_ppks = da.m_ppks;
