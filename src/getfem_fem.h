@@ -408,14 +408,15 @@ namespace getfem
 	      val2(k, r + q*target_dim()) += co * (*it);
 	    }
       }
-      //gmm::mult(c.B(), val2, gmm::transposed(val));
+      gmm::mult(c.B(), val2, gmm::transposed(val));
       // replaced by the loop because gmm does not support product of a complex<> matrix with a real matrix
-      for (size_type i=0; i < Qdim; ++i)
+      /*for (size_type i=0; i < Qdim; ++i)
 	for (size_type j=0; j < N; ++j) {
 	  T s = 0;
-	  for (size_type k=0; k < P; ++k) s += c.B()(i,k)*val2(k,j);
-	  val(j,i) = s;
+	  for (size_type k=0; k < P; ++k) s += c.B()(j,k)*val2(k,i);
+	  val(i,j) = s;
 	}
+      */
     } else {
       real_grad_base_value(c, t);
       for (size_type q = 0; q < Qmult; ++q) {

@@ -388,9 +388,9 @@ namespace getfem {
       +trans_exists.memsize() + gtab.memsize();
   }
 
-
+  struct equilateral_to_GT_PK_grad_aux : public std::vector<base_matrix> {};
   static const base_matrix &equilateral_to_GT_PK_grad(dim_type N) {
-    std::vector<base_matrix> &pbm = dal::singleton<std::vector<base_matrix> >::instance();
+    std::vector<base_matrix> &pbm = dal::singleton<equilateral_to_GT_PK_grad_aux >::instance();
     if (N > pbm.size()) pbm.resize(N);
     if (pbm[N-1].empty()) {
       bgeot::pgeometric_trans pgt = bgeot::simplex_geotrans(N,1);

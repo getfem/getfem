@@ -257,6 +257,16 @@ namespace gmm {
        transp = LU_CONJUGATED -> solves conj(A)X = B */
     void solve(const VECTX &X_, const VECTB &B, int transp=LU_NOTRANSP) const;
     SuperLU_factor(void) { is_init = false; }
+    SuperLU_factor(const SuperLU_factor& other) {
+      if (other.is_init) 
+	DAL_THROW(dal::failure_error, "copy of initialized SuperLU_factor is forbidden");
+      is_init = false;
+    }
+    SuperLU_factor& operator=(const SuperLU_factor& other) {
+      if (other.is_init || is_init) 
+	DAL_THROW(dal::failure_error, "assignment of initialized SuperLU_factor is forbidden");
+      return *this;
+    }
     ~SuperLU_factor() { free_supermatrix(); }
     float memsize() { return memory_used; }
   };

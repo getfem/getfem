@@ -179,9 +179,9 @@ namespace dal
     typename std::iterator_traits<ITER>::value_type
       mean_value(ITER first, const ITER &last)
   {
-    typename std::iterator_traits<ITER>::value_type res;
+    if (first == last) DAL_INTERNAL_ERROR("mean value of empty container");
     size_t n = 1;
-    if (first != last) { res = *first; ++first; }
+    typename std::iterator_traits<ITER>::value_type res = *first++;
     while (first != last) { res += *first; ++first; ++n; }
     res /= n;
     return res;

@@ -87,7 +87,7 @@ namespace gmm {
     outer.set_rhsnorm(gmm::vect_norm2(r));
     if (outer.get_rhsnorm() == 0.0) { clear(x); return; }
     
-    mult(A, scaled(x, -T(1)), b, w);
+    mult(A, scaled(x, -1), b, w);
     mult(M, w, r);
     R beta = gmm::vect_norm2(r), beta_old = beta;
     int blocked = 0;
@@ -99,7 +99,7 @@ namespace gmm {
 
     while (! outer.finished(beta)) {
       
-      gmm::copy(gmm::scaled(r, T(1)/beta), KS[0]);
+      gmm::copy(gmm::scaled(r, R(1)/beta), KS[0]);
       gmm::clear(s);
       s[0] = beta;
       
@@ -124,7 +124,7 @@ namespace gmm {
 
       upper_tri_solve(H, s, i, false);
       combine(KS, s, x, i);
-      mult(A, gmm::scaled(x, -T(1)), b, w);
+      mult(A, gmm::scaled(x, -1), b, w);
       mult(M, w, r);
       beta_old = std::min(beta, beta_old); beta = gmm::vect_norm2(r);
       if (int(inner.get_iteration()) < restart -1 || beta_old <= beta)

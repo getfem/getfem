@@ -34,6 +34,7 @@
 #ifndef GETFEM_NONLINEAR_ELASTICITY_H__
 #define GETFEM_NONLINEAR_ELASTICITY_H__
 
+#include <getfem_modeling.h>
 #include <getfem_assembling_tensors.h>
 
 namespace getfem {

@@ -348,6 +348,21 @@ namespace gmm {
     delete impl;
   }
 
+  template<typename T> 
+  SuperLU_factor<T>::SuperLU_factor(const SuperLU_factor& other) {
+    impl = new SuperLU_factor_impl<T>();
+    if (other.impl->is_init) 
+      DAL_THROW(dal::failure_error, "copy of initialized SuperLU_factor is forbidden");
+    other.impl->is_init = false;
+  }
+
+  template<typename T> SuperLU_factor<T>&  
+  SuperLU_factor<T>::operator=(const SuperLU_factor& other) {
+    if (other.impl->is_init || impl->is_init) 
+      DAL_THROW(dal::failure_error, "assignment of initialized SuperLU_factor is forbidden");
+    return *this;
+  }
+
   template<typename T> float 
   SuperLU_factor<T>::memsize() const {
     return impl->memory_used;

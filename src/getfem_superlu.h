@@ -50,9 +50,12 @@ namespace gmm {
     SuperLU_factor();
     ~SuperLU_factor();
     float memsize() const;
-  private:
-    SuperLU_factor(const SuperLU_factor&);
+    SuperLU_factor(const SuperLU_factor& other);
     SuperLU_factor& operator=(const SuperLU_factor& other);
+  private:
+    /*    SuperLU_factor(const SuperLU_factor&);
+    SuperLU_factor& operator=(const SuperLU_factor& other);
+    */
   };
 
   template <typename T, typename V1, typename V2> inline
