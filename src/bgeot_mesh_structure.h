@@ -202,11 +202,7 @@ namespace bgeot
 			     ITER ipts, bool *present = NULL);
       template<class ITER> size_type add_simplex(dim_type dim, ITER ipts)
       { return add_convex(simplex_structure(dim), ipts); }
-      size_type add_segment(size_type a, size_type b)
-      {
-	static pconvex_structure cs = simplex_structure(1);
-	size_type t[2]; t[0] = a; t[1] = b; return add_convex(cs, &t[0]);
-      }
+      size_type add_segment(size_type a, size_type b);
 
       void sup_convex(size_type ic);
       template<class ITER> 

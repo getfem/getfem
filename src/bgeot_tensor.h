@@ -151,98 +151,103 @@ namespace bgeot
       tensor(const multi_index &c) { init(c); }
       tensor(void) {}
 
-      void mat_transp_reduction(const tensor &t, const vsmatrix<T> &m, int ni)
-      { 
-	/* reduction du tenseur t par son indice ni et la matrice          */
-	/* transposee de m.                                                */
+      void mat_transp_reduction(const tensor &t, const vsmatrix<T> &m, int ni);
 
-	static std::vector<T> *tmp;
-	static multi_index *mi;
-	static bool isinit = false;
-	if (!isinit) {
-	  tmp = new std::vector<T>(3); mi = new multi_index(); isinit = true;
+      void mat_reduction(const tensor &t, const vsmatrix<T> &m, int ni);
+  };
+
+  template<class T> void tensor<T>::mat_transp_reduction (const tensor &t,
+					      const vsmatrix<T> &m, int ni) { 
+    /* reduction du tenseur t par son indice ni et la matrice          */
+    /* transposee de m.                                                */
+    
+    static std::vector<T> *tmp;
+    static multi_index *mi;
+    static bool isinit = false;
+    if (!isinit) {
+      tmp = new std::vector<T>(3); mi = new multi_index(); isinit = true;
+    }
+    
+    *mi = t.sizes();
+    size_type dimt = (*mi)[ni], dim = m.nrows();
+    
+    if (dimt != m.ncols())
+      throw dimension_error
+	("tensor::mat_transp_reduction : dimensions mismatch");
+    
+    (*mi)[ni] = dim;
+    if (tmp->size() < dimt) tmp->resize(dimt);
+    adjust_sizes(*mi);
+    const_iterator pft = t.begin();
+    iterator pf = begin();
+    size_type dd  =   coeff[ni]*(  sizes()[ni]-1)-1, co  =   coeff[ni];
+    size_type ddt = t.coeff[ni]*(t.sizes()[ni]-1)-1, cot = t.coeff[ni];
+    std::fill(mi->begin(), mi->end(), 0);
+    for (;!mi->finished(sizes()); mi->incrementation(sizes()), ++pf, ++pft)
+      if ((*mi)[ni] != 0)
+	{ 
+	  for (short_type k = 0; k <= ni; ++k) (*mi)[k] = sizes()[k] - 1;
+	  pf += dd; pft += ddt;
 	}
-
-	*mi = t.sizes();
-	size_type dimt = (*mi)[ni], dim = m.nrows();
-       
-	  if (dimt != m.ncols())
-	    throw dimension_error
-	      ("tensor::mat_transp_reduction : dimensions mismatch");
-
-	(*mi)[ni] = dim;
-	if (tmp->size() < dimt) tmp->resize(dimt);
-	adjust_sizes(*mi);
-	const_iterator pft = t.begin();
-	iterator pf = begin();
-	size_type dd  =   coeff[ni]*(  sizes()[ni]-1)-1, co  =   coeff[ni];
-	size_type ddt = t.coeff[ni]*(t.sizes()[ni]-1)-1, cot = t.coeff[ni];
-	std::fill(mi->begin(), mi->end(), 0);
-	for (;!mi->finished(sizes()); mi->incrementation(sizes()), ++pf, ++pft)
-	  if ((*mi)[ni] != 0)
-	  { 
-	    for (short_type k = 0; k <= ni; ++k) (*mi)[k] = sizes()[k] - 1;
-	    pf += dd; pft += ddt;
-	  }
-	  else
-	  {
-	    const_iterator pl = pft; iterator pt = tmp->begin();
-	    for(size_type k = 0; k < dimt; ++k, pl += cot, ++pt) *pt = *pl;
-	    
-	    iterator pff = pf; pl = m.begin();
-	    for (size_type k = 0; k < dim; ++k, pff += co)
+      else
+	{
+	  const_iterator pl = pft; iterator pt = tmp->begin();
+	  for(size_type k = 0; k < dimt; ++k, pl += cot, ++pt) *pt = *pl;
+	  
+	  iterator pff = pf; pl = m.begin();
+	  for (size_type k = 0; k < dim; ++k, pff += co)
 	    {
 	      *pff = T(0); pt = tmp->begin();
 	      for (size_type l = 0; l < dimt; ++l, ++pt, ++pl)
 		*pff += (*pl) * (*pt);
 	    }
-	  }
-      }
-
-      void mat_reduction(const tensor &t, const vsmatrix<T> &m, int ni)
-      {
-	/* reduction du tenseur t par son indice ni et la matrice m.       */
-	static std::vector<T> *tmp;
-	static multi_index *mi;
-	static bool isinit = false;
-	if (!isinit) {
-	  tmp = new std::vector<T>(3); mi = new multi_index(); isinit = true;
 	}
-	*mi = t.sizes();
-	size_type dimt = (*mi)[ni], dim = m.ncols();
-	if (dimt != m.nrows())
-	  throw dimension_error
-	    ("tensor::mat_reduction : dimensions mismatch");
-	
-	(*mi)[ni] = dim;
-	if (tmp->size() < dimt) tmp->resize(dimt);
-	adjust_sizes(*mi);
-	const_iterator pft = t.begin();
-	iterator pf = begin();
-	size_type dd  =   coeff[ni]*(  sizes()[ni]-1)-1, co  =   coeff[ni];
-	size_type ddt = t.coeff[ni]*(t.sizes()[ni]-1)-1, cot = t.coeff[ni];
-	std::fill(mi->begin(), mi->end(), 0);
-	for (;!mi->finished(sizes()); mi->incrementation(sizes()), ++pf, ++pft)
-	  if ((*mi)[ni] != 0)
-	  { 
-	    for (short_type k = 0; k <= ni; ++k) (*mi)[k] = sizes()[k] - 1;
-	    pf += dd; pft += ddt;
-	  }
-	  else
-	  {
-	    const_iterator pl = pft; iterator pt = tmp->begin();
-	    for(size_type k = 0; k < dimt; ++k, pl += cot, ++pt) *pt = *pl;
-	    
-	    iterator pff = pf;
-	    for (size_type k = 0; k < dim; ++k, pff += co)
+  }
+  
+  template<class T> void tensor<T>::mat_reduction(const tensor &t,
+					 const vsmatrix<T> &m, int ni) {
+    /* reduction du tenseur t par son indice ni et la matrice m.       */
+    static std::vector<T> *tmp;
+    static multi_index *mi;
+    static bool isinit = false;
+    if (!isinit) {
+      tmp = new std::vector<T>(3); mi = new multi_index(); isinit = true;
+    }
+    *mi = t.sizes();
+    size_type dimt = (*mi)[ni], dim = m.ncols();
+    if (dimt != m.nrows())
+      throw dimension_error
+	("tensor::mat_reduction : dimensions mismatch");
+    
+    (*mi)[ni] = dim;
+    if (tmp->size() < dimt) tmp->resize(dimt);
+    adjust_sizes(*mi);
+    const_iterator pft = t.begin();
+    iterator pf = begin();
+    size_type dd  =   coeff[ni]*(  sizes()[ni]-1)-1, co  =   coeff[ni];
+    size_type ddt = t.coeff[ni]*(t.sizes()[ni]-1)-1, cot = t.coeff[ni];
+    std::fill(mi->begin(), mi->end(), 0);
+    for (;!mi->finished(sizes()); mi->incrementation(sizes()), ++pf, ++pft)
+      if ((*mi)[ni] != 0)
+	{ 
+	  for (short_type k = 0; k <= ni; ++k) (*mi)[k] = sizes()[k] - 1;
+	  pf += dd; pft += ddt;
+	}
+      else
+	{
+	  const_iterator pl = pft; iterator pt = tmp->begin();
+	  for(size_type k = 0; k < dimt; ++k, pl += cot, ++pt) *pt = *pl;
+	  
+	  iterator pff = pf;
+	  for (size_type k = 0; k < dim; ++k, pff += co)
 	    {
 	      *pff = T(0); pt = tmp->begin(); pl = m.begin() + k;
 	      for (size_type l = 0; l < dimt; ++l, ++pt, pl += dim)
 		*pff += (*pl) * (*pt);
 	    }
-	  }
-      }
-  };
+	}
+  }
+  
 
   template<class T> STD_NEEDED ostream &operator <<(STD_NEEDED ostream &o,
 						    const tensor<T>& t)

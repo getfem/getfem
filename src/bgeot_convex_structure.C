@@ -68,8 +68,8 @@ namespace bgeot
 
   static dal::dynamic_tree_sorted<pconvex_structure> *_numeration;
 
-  static inline void init_tab(void) // because of problem with initialization
-  {                                 // in dynamic libraries.
+  static void init_tab(void)     // because of problem with initialization
+  {                              // in dynamic libraries.
     static bool initialized = false;
     if (!initialized)
     { 

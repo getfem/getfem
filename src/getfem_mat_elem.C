@@ -106,7 +106,7 @@ namespace getfem
 	if (is_ppi && (!((*it).pfi->is_polynomial()) || 
 		       !(pgt->is_linear())))
 	  DAL_THROW(std::invalid_argument, 
-		    "Exact computation not allowed in this context");
+		    "Exact integration not allowed in this context");
 	if((*it).pfi->basic_structure() != pgt->basic_structure())
 	  DAL_THROW(std::invalid_argument, "incorrect computation");
 	

@@ -184,57 +184,63 @@ namespace bgeot
   {
     pconvex_ref cvr1, cvr2;
  
-    scalar_type is_in(const base_node &pt) const
-    {
-      static base_node *pt1, *pt2;
-      static bool isinit = false;
-      if (!isinit) { pt1=new base_node(1); pt2=new base_node(1); isinit=true; }
-      dim_type n1 = cvr1->structure()->dim(), n2 = cvr2->structure()->dim();
-      if (pt.size() != cvs->dim())
-	throw dimension_error(
-		   "_product_ref::is_in : Dimension does not match");
-      if (pt1->size() != n1) { delete pt1; pt1 = new base_node(n1); }
-      if (pt2->size() != n2) { delete pt2; pt2 = new base_node(n2); }
-      std::copy(pt.begin(), pt.begin()+n1, pt1->begin());
-      std::copy(pt.begin()+n1,   pt.end(), pt2->begin());
-      return std::max(cvr1->is_in(*pt1), cvr2->is_in(*pt2));
-    }
-    scalar_type is_in_face(short_type f, const base_node &pt) const
-    { // ne controle pas si le point est dans le convexe mais si un point
-      // supposé appartenir au convexe est dans une face donnée
-      static base_node *pt1, *pt2;
-      static bool isinit = false;
-      if (!isinit) { pt1=new base_node(1); pt2=new base_node(1); isinit=true; }
-      dim_type n1 = cvr1->structure()->dim(), n2 = cvr2->structure()->dim();
-      if (pt.size() != cvs->dim())
-	throw dimension_error(
-		   "_product_ref::is_in_face : Dimension does not match");
-      if (pt1->size() != n1) { delete pt1; pt1 = new base_node(n1); }
-      if (pt2->size() != n2) { delete pt2; pt2 = new base_node(n2); }
-      std::copy(pt.begin(), pt.begin()+n1, pt1->begin());
-      std::copy(pt.begin()+n1,   pt.end(), pt2->begin());
-
-      if (f < cvr1->structure()->nb_faces()) return cvr1->is_in_face(f, *pt1);
-        else return cvr2->is_in_face(f - cvr1->structure()->nb_faces(), *pt2);
-    }
+    scalar_type is_in(const base_node &pt) const;
+    scalar_type is_in_face(short_type f, const base_node &pt) const;
 
 
-    _product_ref(const _product_ref_light &ls)
-    { 
-      cvr1 = ls.cvr1; cvr2 = ls.cvr2;
-      *((convex<base_node> *)(this)) = convex_direct_product(*(ls.cvr1), *(ls.cvr2));
-      _normals.resize(cvs->nb_faces());
-      base_vector null(cvs->dim()); null.fill(0.0);
-      std::fill(_normals.begin(), _normals.end(), null);
-      for (size_type r = 0; r < cvr1->structure()->nb_faces(); r++)
-	std::copy(cvr1->normals()[r].begin(), cvr1->normals()[r].end(),
-		  _normals[r].begin());
-      for (size_type r = 0; r < cvr2->structure()->nb_faces(); r++)
-	std::copy(cvr2->normals()[r].begin(), cvr2->normals()[r].end(),
-		  _normals[r+cvr1->structure()->nb_faces()].begin()
-		  + cvr1->structure()->dim());
-    }
+    _product_ref(const _product_ref_light &ls);
   };
+
+  scalar_type _product_ref::is_in(const base_node &pt) const {
+    static base_node *pt1, *pt2;
+    static bool isinit = false;
+    if (!isinit) { pt1=new base_node(1); pt2=new base_node(1); isinit=true; }
+    dim_type n1 = cvr1->structure()->dim(), n2 = cvr2->structure()->dim();
+    if (pt.size() != cvs->dim())
+      throw dimension_error(
+			    "_product_ref::is_in : Dimension does not match");
+    if (pt1->size() != n1) { delete pt1; pt1 = new base_node(n1); }
+    if (pt2->size() != n2) { delete pt2; pt2 = new base_node(n2); }
+    std::copy(pt.begin(), pt.begin()+n1, pt1->begin());
+    std::copy(pt.begin()+n1,   pt.end(), pt2->begin());
+    return std::max(cvr1->is_in(*pt1), cvr2->is_in(*pt2));
+  }
+
+  scalar_type _product_ref::is_in_face(short_type f, const base_node &pt) const
+  { // ne controle pas si le point est dans le convexe mais si un point
+    // supposé appartenir au convexe est dans une face donnée
+    static base_node *pt1, *pt2;
+    static bool isinit = false;
+    if (!isinit) { pt1=new base_node(1); pt2=new base_node(1); isinit=true; }
+    dim_type n1 = cvr1->structure()->dim(), n2 = cvr2->structure()->dim();
+    if (pt.size() != cvs->dim())
+      DAL_THROW(dimension_error, "Dimensions mismatch");
+    if (pt1->size() != n1) { delete pt1; pt1 = new base_node(n1); }
+    if (pt2->size() != n2) { delete pt2; pt2 = new base_node(n2); }
+    std::copy(pt.begin(), pt.begin()+n1, pt1->begin());
+    std::copy(pt.begin()+n1,   pt.end(), pt2->begin());
+    
+    if (f < cvr1->structure()->nb_faces()) return cvr1->is_in_face(f, *pt1);
+    else return cvr2->is_in_face(f - cvr1->structure()->nb_faces(), *pt2);
+  }
+  
+  
+  _product_ref::_product_ref(const _product_ref_light &ls) { 
+    cvr1 = ls.cvr1; cvr2 = ls.cvr2;
+    *((convex<base_node> *)(this)) 
+      = convex_direct_product(*(ls.cvr1), *(ls.cvr2));
+    _normals.resize(cvs->nb_faces());
+    base_vector null(cvs->dim()); null.fill(0.0);
+    std::fill(_normals.begin(), _normals.end(), null);
+    for (size_type r = 0; r < cvr1->structure()->nb_faces(); r++)
+      std::copy(cvr1->normals()[r].begin(), cvr1->normals()[r].end(),
+		_normals[r].begin());
+    for (size_type r = 0; r < cvr2->structure()->nb_faces(); r++)
+      std::copy(cvr2->normals()[r].begin(), cvr2->normals()[r].end(),
+		_normals[r+cvr1->structure()->nb_faces()].begin()
+		+ cvr1->structure()->dim());
+  }
+  
 
   pconvex_ref convex_ref_product(pconvex_ref a, pconvex_ref b)
   { 

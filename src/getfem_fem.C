@@ -144,7 +144,7 @@ namespace getfem
   static dal::dynamic_tree_sorted<dof_description, __dof_description_comp>
                                               *_dof_d_tab;
 
-  static inline void init_tab(void) // because of problem with initialization
+  static void init_tab(void) // because of problem with initialization
   {                                 // in dynamic libraries.
     static bool initialized = false;
     if (!initialized)

@@ -176,6 +176,12 @@ namespace bgeot
     for ( ; dmax > 1; --dmax) to_faces(dmax);
   }
 
+  size_type mesh_structure::add_segment(size_type a, size_type b) {
+    static pconvex_structure cs = simplex_structure(1);
+    size_type t[2]; t[0] = a; t[1] = b;
+    return add_convex(cs, &t[0]);
+  }
+
   void mesh_structure::swap_convex(size_type i, size_type j)
   {
     size_type ip, ic, *p;

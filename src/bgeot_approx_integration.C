@@ -247,12 +247,13 @@ namespace bgeot
 	  (fa[0])++;
 	}  
 
-	l = 0; c[l] += 1.0 / scalar_type(ls.k); sum++;
-	while (sum > ls.k)
-	{
-	  sum -= int(floor(0.5+(c[l] * ls.k)));
-	  c[l] = 0.0; l++; if (l == ls.n) break;
-	  c[l] += 1.0 / scalar_type(ls.k); sum++;
+	if (ls.k != 0) {
+	  l = 0; c[l] += 1.0 / scalar_type(ls.k); sum++;
+	  while (sum > ls.k) {
+	    sum -= int(floor(0.5+(c[l] * ls.k)));
+	    c[l] = 0.0; l++; if (l == ls.n) break;
+	    c[l] += 1.0 / scalar_type(ls.k); sum++;
+	  }
 	}
       }
       pint_points = store_point_tab(int_points);
