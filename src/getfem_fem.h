@@ -380,7 +380,11 @@ namespace getfem
     
     gmm::clear(val);
     if (!is_on_real_element()) { // optimized case
-      grad_base_value(c.xref(), t);
+      if (!c.have_pfp()) {
+	grad_base_value(c.xref(), t);
+      } else {
+	t = c.pfp()->grad(c.ii());
+      }
       base_matrix val2(P, Qdim);
       gmm::clear(val2);
       for (size_type q = 0; q < Qmult; ++q) {
