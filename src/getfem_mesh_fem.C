@@ -454,7 +454,7 @@ namespace getfem
     dal::bit_vector npt;
     dal::dynamic_array<double> tmpv;
     char tmp[1024];
-
+    bool dof_read = false;
     ist.precision(16);
     clear();
     ist.seekg(0);ist.clear();
@@ -505,10 +505,45 @@ namespace getfem
 	  }
 	  ftool::get_token(ist, tmp, 1023);
 	  ftool::get_token(ist, tmp, 1023);
+	} else if (!strcmp(tmp,"DOF_ENUMERATION")) {
+	  cerr << "begin dof enumeration" << endl;
+	  dal::bit_vector doflst;
+	  dof_structure.clear(); dof_enumeration_made = false;
+	  while (true) {
+	    ftool::get_token(ist, tmp, 1023);
+	    if (strcmp(tmp, "END")==0) { cerr << "end of dof enumeration\n"; break;}
+	    size_type ic = atoi(tmp);
+	    std::vector<size_type> tab;
+	    if (convex_index().is_in(ic) && strlen(tmp) && tmp[strlen(tmp)-1] == ':') {
+	      tab.resize(nb_dof_of_element(ic));
+	      cerr << "convex " << ic << ", tab=";
+	      for (size_type i=0; i < fem_of_element(ic)->nb_dof(); i++) {
+		ist >> tab[i];
+		for (size_type q=0; q < size_type(get_qdim())/fem_of_element(ic)->target_dim(); ++q)
+		  doflst.add(tab[i]+q);
+		cerr << tab[i] << ",";
+	      }
+	      cerr << endl;
+	      dof_structure.add_convex_noverif(fem_of_element(ic)->structure(), tab.begin(), ic);
+	    } else DAL_THROW(failure_error, "Missing convex or wrong number in dof enumeration: '" 
+			     << tmp << "' [pos=" << ist.tellg() << "]");
+	  } 
+	  dof_read = true;
+	  this->dof_enumeration_made = true;
+	  this->nb_total_dof = doflst.card();
+	  ist >> ftool::skip("DOF_ENUMERATION");
+	  /*	  cerr << "end of dof enum, nb_dof=" << nb_dof() << endl;
+	  dal::bit_vector bv = convex_index(); size_type cv;
+	  for (cv << bv; cv != size_type(-1); cv << bv) {
+	    cerr << "  " << cv << ":" << endl;
+	    ref_mesh_dof_ind_ct::const_iterator it = ind_dof_of_element(cv).begin();
+	    while (it != ind_dof_of_element(cv).end()) cerr << " " << *it; ++it;
+	    cerr << endl;
+	  }
+	  */
 	} else if (strlen(tmp)) DAL_THROW(failure_error, "Syntax error in file at token '" << tmp << "' [pos=" << ist.tellg() << "]");
-      } else if (ist.eof()) {
-	DAL_THROW(failure_error, "Unexpected end of stream");	
       } else if (strcmp(tmp, "QDIM")==0) {
+	if (dof_read) DAL_THROW(failure_error, "Can't change QDIM after dof enumeration");
 	ftool::get_token(ist, tmp, 1023);
 	int q = atoi(tmp);
 	if (q <= 0 || q > 250) DAL_THROW(failure_error, "invalid qdim: "<<q);
@@ -516,7 +551,7 @@ namespace getfem
       } else if (strlen(tmp)) {
 	DAL_THROW(failure_error, "Unexpected token '" << tmp << "' [pos=" << ist.tellg() << "]");
       } else if (ist.eof()) {
-	DAL_THROW(failure_error, "Unexpected end of stream");	
+	DAL_THROW(failure_error, "Unexpected end of stream (missing BEGIN MESH_FEM/END MESH_FEM ?)");	
       }
     }
   }
@@ -560,16 +595,30 @@ namespace getfem
       }
       ost << endl << " END BOUNDARY " << bnum << endl;
     }
+    ost << " BEGIN DOF_ENUMERATION " << endl;
+    bv = convex_index();
+    for (cv << bv; cv != size_type(-1); cv << bv) {
+      ost << "  " << cv << ": ";
+      ref_mesh_dof_ind_ct::const_iterator it = ind_dof_of_element(cv).begin();
+      while (it != ind_dof_of_element(cv).end()) {
+	ost << " " << *it;
+	// skip repeated dofs for "pseudo" vector elements
+	for (size_type i=0; i < size_type(get_qdim())/fem_of_element(cv)->target_dim(); ++i) ++it;
+      }
+      ost << endl;
+    }
+    ost << " END DOF_ENUMERATION " << endl;
     ost << "END MESH_FEM" << endl;
   }
 
-  void mesh_fem::write_to_file(const std::string &name) const
+  void mesh_fem::write_to_file(const std::string &name, bool with_mesh) const
   {
     std::ofstream o(name.c_str());
     if (!o)
       DAL_THROW(failure_error, "impossible to open file '" << name << "'");
     o << "% GETFEM MESH_FEM FILE " << endl;
     o << "% GETFEM VERSION " << GETFEM_VERSION << endl << endl << endl;
+    if (with_mesh) linked_mesh().write_to_file(o);
     write_to_file(o);
     o.close();
   }
