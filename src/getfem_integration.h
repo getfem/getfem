@@ -141,6 +141,7 @@ namespace getfem
       { return int_coeffs[repartition[f] + i]; }
 
       void add_point(base_node pt, scalar_type w, short_type f=short_type(-1));
+      void add_point_norepeat(base_node pt, scalar_type w, short_type f=short_type(-1));
       void add_method_on_face(pintegration_method ppi, short_type f);
       void valid_method(void);
 

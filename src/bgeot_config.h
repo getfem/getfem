@@ -56,6 +56,7 @@ namespace bgeot
 #ifndef HAVE_QDLIB
   typedef double long_scalar_type;
   typedef double opt_long_scalar_type;
+# define LONG_SCAL(xx) long_scalar_type(xx)
 #else
 #  ifdef QDLIB_USE_QUAD
   typedef qd_real long_scalar_type;
@@ -64,6 +65,7 @@ namespace bgeot
   typedef dd_real long_scalar_type;
   typedef dd_real opt_long_scalar_type;
 #  endif
+#  define LONG_SCAL(xx) long_scalar_type(#xx) /* string assignment to preserve the precision */
 #endif
   using dal::dimension_error;
   using dal::file_not_found_error;

@@ -314,10 +314,11 @@ typedef unsigned char uint8_type;
   */
   struct just_for_the_fine_cxx {
     static void f() {
+      long double z(1.0);
       std::stringstream s; s << int(1) << double(2.0) 
 			     << "hello" << std::string("hello") << unsigned(1) << float(2) 
 			     << char('a') << (unsigned char)('b') << short(1) << (unsigned short)(2) 
-			     << long(1) << (unsigned long)(2) << (const void*)NULL;
+			     << long(1) << (unsigned long)(2) << (const void*)NULL << bool(1) << z;
     }
   };
   

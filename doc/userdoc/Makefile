@@ -38,6 +38,11 @@ getfemuser.pdf: getfemuser.tex $(PDFFIGS)
 html:	getfemuser.tex getfemuser.idx $(PNGFIGS)
 	hyperlatex getfemuser.tex
 
+pdf: getfemuser.pdf
+	if [ -d ../../../getfem_html ]; then \
+           cp getfemuser.pdf ../../../getfem_html; \
+        fi
+
 htmltar: html
 	cp $(PNGFIGS) getfemuser/
 	cp getfemuser.css getfemuser/
@@ -47,6 +52,7 @@ htmltar: html
            cp html_getfemuser.tar.gz ../../../getfem_html; \
         fi
 
+all: htmltar pdf
 
 clean:
 	-rm -f *.dvi *.log *.toc *.bbl *.aux *.tmp *.ps.gz getfemuser.ps getfemuser.pdf getfemuser.blg getfemuser.out

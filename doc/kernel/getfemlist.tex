@@ -129,9 +129,9 @@ second derivative type & $\Frac{\partial^2}{\partial x_i\partial x_j}\phi(a_i)$ 
   \caption{ \it Symbols representing degree of freedom types}
 \end{figure}
 
-% a chaque élément : 
+% a chaque {\'e}l{\'e}ment : 
 % dessin des ddl avec code
-% nb de ddl, degre, equivalence via la transformation géometrique, vectoriel ou non, analyse du raccord
+% nb de ddl, degre, equivalence via la transformation g{\'e}ometrique, vectoriel ou non, analyse du raccord
 
 \subsection{Classical ``$P_K$'' Lagrange elements on simplexes}
 
@@ -173,14 +173,14 @@ The number of degree of freedom for a classical ``$P_K$'' Lagrange element of di
 The particular way selected in {\sc Getfem++} to numerate the nodes are also shown in figures \ref{fig:segmentpk}, \ref{fig:trianglepk} and \ref{fig:tetrahedronpk}. Using another numeration, let 
 $$ i_0, i_1, ... i_P, $$
 be somme indexes such that
-$$ 0 \le i_0, i_1, ... i_P \le K, \ \mbox{ and } \ \sum_{n = 0}^{P} i_n = K.$$
+$$ 0 \leq i_0, i_1, ... i_P \leq K, \ \mbox{ and } \ \sum_{n = 0}^{P} i_n = K.$$
 Then, the coordinate of a node can be computed as
-$$ a_{i_0, i_1, ... i_P} = \sum_{n = 0}^{P} \Frac{i_n}{K}S_n, \ \ \mbox{ for } K \ne 0, $$
+$$ a_{i_0, i_1, ... i_P} = \sum_{n = 0}^{P} \Frac{i_n}{K}S_n, \ \ \mbox{ for } K \neq 0, $$
 where $S_0, S_1, ... S_N$ are the vertexes of the simplex (for $K = 0$ the particular choice $a_{0, 0, ... 0} = \ds \sum_{n = 0}^{P} \Frac{1}{P+1}S_n$ has been chosen).
 Then each base function, corresponding of each node $a_{i_0, i_1, ... i_P}$ is defined as
 $$ \phi_{i_0, i_1, ... i_P} = \prod_{n = 0}^{P} \prod_{j=0}^{i_n-1} \left(\Frac{K \lambda_n - j}{j+1}\right).$$
 where $\lambda_n$ are the barycentric coordinates, i.e. the polynomials of degree 1 whose value is $1$ on the vertex $S_n$ and whose value is $0$ on other vertices. On the reference element, one has
-$$ \lambda_n = x_n, \ \ 0 \le n < P, $$
+$$ \lambda_n = x_n, \ \ 0 \leq n < P, $$
 $$ \lambda_P = 1 - x_0 - x_1 - ... - x_{P-1}. $$
 
 When between two elements of the same degrees (even with different dimensions), the d.o.f. of a common face are linked, the element is of class $C^0$. This means that the global polynomial is continuous. If you try to link elements of different degrees, you will get some trouble with the unlinked d.o.f. This is not automatically supported by {\sc Getfem++}, so you will have to support it (add constraints on these d.o.f.).\\
@@ -194,7 +194,7 @@ For some applications (computation of a gradient for instance) one does not want
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial \\ \hline
-\small $K$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 1 \le P \le 255$} & $\Frac{(K+P)!}{K! P!}$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)} & Yes \\ \hline
+\small $K$, \mbox{$0 \leq K \leq 255$} & \small $P$, \mbox{$\ 1 \leq P \leq 255$} & $\Frac{(K+P)!}{K! P!}$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)} & Yes \\ \hline
 \end{tabular}
 \end{center}
 \begin{center}
@@ -204,7 +204,7 @@ Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial \\ \hline
-\small $K$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 1 \le P \le 255$} & $\Frac{(K+P)!}{K! P!}$ & discon-tinuous & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)} & Yes \\ \hline
+\small $K$, \mbox{$0 \leq K \leq 255$} & \small $P$, \mbox{$\ 1 \leq P \leq 255$} & $\Frac{(K+P)!}{K! P!}$ & discon-tinuous & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)} & Yes \\ \hline
 \end{tabular}
 \end{center}$\ $\\[3cm]
 
@@ -256,7 +256,7 @@ A prism in dimension $P > 1$ is the direct product of a simplex of dimension $P-
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial \\ \hline
-\small $KP$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 2 \le P \le 255$} & $(K+1)^P$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)}  & Yes \\ \hline
+\small $KP$, \mbox{$0 \leq K \leq 255$} & \small $P$, \mbox{$\ 2 \leq P \leq 255$} & $(K+1)^P$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)}  & Yes \\ \hline
 \end{tabular}
 \end{center}
 
@@ -267,7 +267,7 @@ Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
-\small $2K$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 2 \le P \le 255$} & \mbox{$(K+1)$} \mbox{$\times \Frac{(K+P-1)!}{K! (P-1)!}$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)}  & Yes\\ \hline
+\small $2K$, \mbox{$0 \leq K \leq 255$} & \small $P$, \mbox{$\ 2 \leq P \leq 255$} & \mbox{$(K+1)$} \mbox{$\times \Frac{(K+P-1)!}{K! (P-1)!}$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)}  & Yes\\ \hline
 \end{tabular}
 \end{center}
 
@@ -278,7 +278,7 @@ Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
-\small \mbox{$K_1+K_2$}, \tiny \mbox{$0 \le K_1,K_2 \le 255$} & \small $P$, \mbox{$\ 2 \le P \le 255$} & \mbox{$(K_2+1)$} \mbox{$\times \Frac{(K_1+P-1)!}{K_1! (P-1)!}$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)}  & Yes\\ \hline
+\small \mbox{$K_1+K_2$}, \tiny \mbox{$0 \leq K_1,K_2 \leq 255$} & \small $P$, \mbox{$\ 2 \leq P \leq 255$} & \mbox{$(K_2+1)$} \mbox{$\times \Frac{(K_1+P-1)!}{K_1! (P-1)!}$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)}  & Yes\\ \hline
 \end{tabular}
 \end{center}
 
@@ -306,7 +306,7 @@ Among the advantages, the condition number of  rigidity matrices can be greatly 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
-\small \mbox{$K$}, \small \mbox{$0 \le K\le 255$} & \small $P$, \mbox{$\ 1 \le P \le 255$} & \mbox{$\Frac{(K_1+P)!}{K_1! P!}$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)}  & Yes\\ \hline
+\small \mbox{$K$}, \small \mbox{$0 \leq K\leq 255$} & \small $P$, \mbox{$\ 1 \leq P \leq 255$} & \mbox{$\Frac{(K_1+P)!}{K_1! P!}$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)}  & Yes\\ \hline
 \end{tabular}
 \end{center}
 
@@ -317,7 +317,7 @@ Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
-\small \mbox{$K$}, \small \mbox{$0 \le K\le 255$} & \small $P$, \mbox{$\ 2 \le P \le 255$} & \mbox{$(K+1)^P$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)}  & Yes\\ \hline
+\small \mbox{$K$}, \small \mbox{$0 \leq K\leq 255$} & \small $P$, \mbox{$\ 2 \leq P \leq 255$} & \mbox{$(K+1)^P$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)}  & Yes\\ \hline
 \end{tabular}
 \end{center}
 
@@ -328,7 +328,7 @@ Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
-\small \mbox{$K$}, \small \mbox{$0 \le K\le 255$} & \small $P$, \mbox{$\ 2 \le P \le 255$} & \mbox{$(K+1)$} \mbox{$\times \Frac{(K+P-1)!}{K! (P-1)!}$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)}  & Yes\\ \hline
+\small \mbox{$K$}, \small \mbox{$0 \leq K\leq 255$} & \small $P$, \mbox{$\ 2 \leq P \leq 255$} & \mbox{$(K+1)$} \mbox{$\times \Frac{(K+P-1)!}{K! (P-1)!}$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)}  & Yes\\ \hline
 \end{tabular}
 \end{center}
 
@@ -913,6 +913,9 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
   \mbox{$k = -0.0747850222338$.}\hspace{5em}
   \\ \hline
 \end{tabular}  
+
+{\tt \small "IM\_TRIANGLE(13)"}\cite{EncyclopCubature} \hspace{7em} \mbox{37 points, order 13}\hspace{7em}
+
 \begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_quad2.eps} & 
@@ -1124,7 +1127,11 @@ to be described ...
 
 \bibitem{nedelec1991}
   J.-C. {\sc Nedelec},
-  {\it Notions sur les techniques d'\'el\'ements finis}, Ellipses, SMAI, Mathématiques \& Applications n°7, 1991.
+  {\it Notions sur les techniques d'{\'e}l{\'e}ments finis}, Ellipses, SMAI, Math{\'e}matiques \& Applications n{\textdegree}7, 1991.
+
+\bibitem{EncyclopCubature}
+  R. {\sc Cools}
+  {\it An Encyclopaedia of Cubature Formulas}, J. Complexity, {\tt http://www.cs.kuleuven.ac.be/\~nines/research/ecf/ecf.html}
 \end{thebibliography}
 
 

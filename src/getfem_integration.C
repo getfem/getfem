@@ -258,6 +258,11 @@ namespace getfem
     }
   }
 
+  void approx_integration::add_point_norepeat(base_node pt,scalar_type w,short_type f) {
+    short_type f2 = f; f2++;
+    if (pt_to_store[f2].search(pt) == size_type(-1)) add_point(pt,w,f);
+  }
+
   void approx_integration::add_method_on_face(pintegration_method ppi,
 					      short_type f) {
     papprox_integration pai = ppi->approx_method();
@@ -673,6 +678,24 @@ namespace getfem
   /*    Integration on a triangle                                          */
   /* ********************************************************************* */
 
+  static void triangle_add_point_full_symmetric(approx_integration *p, 
+                                                long_scalar_type c1, 
+                                                long_scalar_type c2,
+                                                long_scalar_type w) {
+    long_scalar_type c3 = 1.-c1-c2;
+    p->add_point_norepeat(base_vector(c1,c2),w);
+    p->add_point_norepeat(base_vector(c2,c1),w);
+    p->add_point_norepeat(base_vector(c1,c3),w);
+    p->add_point_norepeat(base_vector(c3,c1),w);
+    p->add_point_norepeat(base_vector(c2,c3),w);
+    p->add_point_norepeat(base_vector(c3,c2),w);
+  }
+  static void triangle_add_point_full_symmetric(approx_integration *p, 
+                                                long_scalar_type c, 
+                                                long_scalar_type w) {
+    triangle_add_point_full_symmetric(p,c,c,w);
+  }
+
   static pintegration_method approx_triangle(im_param_list &params) {
     if (params.size() != 1)
       DAL_THROW(failure_error, 
@@ -777,6 +800,49 @@ namespace getfem
 	p->add_point(base_vector(r11, r10), w10 * 0.5);
 	p->add_point(base_vector(r10, r11), w10 * 0.5);
 	p->add_point(base_vector(r13, r13), w13 * 0.5);
+      }
+      break;
+    case 13:
+      /*
+	taken from the  Encyclopaedia of Cubature Formulas
+	 http://www.cs.kuleuven.ac.be/~nines/research/ecf/ecf.html
+      */
+      {
+        triangle_add_point_full_symmetric(p, /* +3 */
+                                          LONG_SCAL(0.5),
+                                          LONG_SCAL(0.00267845189554543044455908674650066));
+        triangle_add_point_full_symmetric(p, /* +1 */
+                                          LONG_SCAL(0.333333333333333333333333333333333),
+                                          LONG_SCAL(0.0293480398063595158995969648597808));
+        triangle_add_point_full_symmetric(p, /* +3 */
+                                          LONG_SCAL(0.0246071886432302181878499494124643),
+                                          LONG_SCAL(0.00392538414805004016372590903990464));
+        triangle_add_point_full_symmetric(p, /* +3 */
+                                          LONG_SCAL(0.420308753101194683716920537182100),
+                                          LONG_SCAL(0.0253344765879434817105476355306468));
+        triangle_add_point_full_symmetric(p, /* +3 */
+                                          LONG_SCAL(0.227900255506160619646298948153592),
+                                          LONG_SCAL(0.0250401630452545330803738542916538));
+        triangle_add_point_full_symmetric(p, /* +3 */
+                                          LONG_SCAL(0.116213058883517905247155321839271),
+                                          LONG_SCAL(0.0158235572961491595176634480481793));
+        triangle_add_point_full_symmetric(p, /* +3 */
+                                          LONG_SCAL(0.476602980049079152951254215211496),
+                                          LONG_SCAL(0.0157462815379843978450278590138683));
+        triangle_add_point_full_symmetric(p, /* +6 */
+                                          LONG_SCAL(0.851775587145410469734660003794168),
+                                          LONG_SCAL(0.0227978945382486125477207592747430),
+                                          LONG_SCAL(0.00790126610763037567956187298486575));
+        triangle_add_point_full_symmetric(p, /* +6 */
+                                          LONG_SCAL(0.692797317566660854594116289398433),
+                                          LONG_SCAL(0.0162757709910885409437036075960413),
+                                          LONG_SCAL(0.00799081889046420266145965132482933));
+        triangle_add_point_full_symmetric(p, /* +6 */
+                                          LONG_SCAL(0.637955883864209538412552782122039),
+                                          LONG_SCAL(0.0897330604516053590796290561145196),
+                                          LONG_SCAL(0.0182757511120486476280967518782978));
+        /* total : 37 points */
+        assert(p->nb_points() == 37);
       }
       break;
     default : DAL_THROW(failure_error, "Method not implemented");
