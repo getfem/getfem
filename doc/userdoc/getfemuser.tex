@@ -29,7 +29,7 @@
 \begin{center}
   \includegraphics[width=10cm,angle=0]{getfem_logo.eps}\\[0.2cm]
   a Generic Finite Element library in C++ \\[0.5cm]
-  {\Huge \sc User Documentation} \\[0.5cm]
+  {\Huge \sc Short User Documentation} \\[0.5cm]
   { \large Yves \sc Renard\footnote{ \it MIP, INSAT, Complexe scientifique de Rangueil, 31077 Toulouse, France, Yves.Renard@gmm.insa-tlse.fr } } \\[1.0cm]
 \end{center}
 
@@ -281,7 +281,64 @@ The following is an example of how to load a mesh and extract information on it.
 
 \section{Select finite element and integration methods}
 
+In order to define a complete finite element procedure on a mesh, the structure {\tt getfem::mesh\_fem} is defined in the file {\tt getfem\_mesh\_fem.h}. Basically, this structure describe the finite element method on each element of the mesh, and can store information about boundary structure. It is possible to have an arbitrary number of finite element description for a single mesh. This is particularly necessary for mixed methods, but also to describe different data on the same mesh. One can instantiate a {\tt getfem::mesh\_fem} object as follows\\[0.5cm]
+{\tt getfem::mesh\_fem mef(mesh); }\\[0.5cm]
+where {\tt mesh} is an already existing mesh. The structure will be linked to this mesh and will react when modifications will be done on it. \\[0.5cm]
+It is possible to specify element by element the finite element method, so that element of mixed types can be treated, even if the dimensions are different. For usual elements, the connection between two elements is done when the two elements are compatibles (same degrees of freedom on the common face). A numeration of the degrees of freedom is automatically done with a Cuthill Mc Kee like algorithm. You have to keep in mind that there is absolutely no connection between the numeration of vertices of the mesh and the numeration of the degrees of freedom. Every {\tt getfem::mesh\_fem} object has its own numeration. \\[0.5cm]
+To select a particular finite element method on a given element, one can use \\[0.5cm]
+{\tt mef.set\_finite\_element(i, ppf, ppi); }\\[0.5cm]
+where {\tt i} is the index of the element, {\tt ppf} is the descriptor of the finite element method, and {\tt ppi} is the descriptor of the integration method. The list of all disponible descriptors of finite element methods is disponible in the file {\tt getfem\_fem.h}. A short description is also given in \cite{BAS_COMP}. The list of all disponible descriptors of integration methods is diponible in the file {\tt bgeot\_poly\_integration.h} for exact integration methods and in the file {\tt bgeot\_approx\_integration.h} for approximate integration methods.\\[0.5cm]
+For instance if one needs to have a description of a $P_1$ finite element method on a triangle with an exact integration, the way set it is\\[0.5cm]
+{\tt mef.set\_finite\_element(i, getfem::PK\_fem(2, 1), bgeot::simplex\_poly\_integration(2)); }\\[0.5cm]
+where {\tt i} is still the index of the triangle. It is also possible to select a particular method directly on a set of element, paasing to {\tt mef.set\_finite\_element} a {\tt dal::bit\_vector} instead of a single index. For instance\\[0.5cm]
+{\tt mef.set\_finite\_element(mesh.convex\_index(), getfem::PK\_fem(2, 1),\\$\mbox{}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ $ bgeot::simplex\_poly\_integration(2)); }\\[0.5cm]
+select the method on all the element of the mesh.
+
+Once a finite element method is defined on a mesh, it is possible to obtain information on it with the following methods (the list is not exhaustive).\\[0.5cm]
+\begin{center} \begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline
+
+  {\tt mef.convex\_index()} & Set of indexes (a {\tt dal::bit\_vector}) on which a finite element method is defined.  \\ \hline
+
+  {\tt mef.linked\_mesh()} & gives a reference to the linked mesh.  \\ \hline
+
+  {\tt mef.fem\_of\_element(i)} & gives a descriptor on the finite element method defined on element of index {\tt i}.  \\ \hline
+
+  {\tt mef.int\_method\_of\_element(i)} & gives a descriptor on the integration method defined on element of index {\tt i}.  \\ \hline
+
+  {\tt mef.nb\_dof\_of\_element(i)} & gives the number of degrees of freedom on the element of index {\tt i}.  \\ \hline
+
+  {\tt mef.ind\_dof\_of\_element(i)} & gives a container (an array) with all the global indexes of the degrees of freedom of element of index {\tt i}.  \\ \hline
+
+  {\tt mef.point\_of\_dof(i, j)} & gives a {\tt bgeot::base\_node} which represents the point associated with the dof of local index {\tt j} on element of index {\tt i}.  \\ \hline
+
+  {\tt mef.point\_of\_dof(j)} & gives a {\tt bgeot::base\_node} which represents the point associated with the dof of global index {\tt j}.  \\ \hline
+
+  {\tt mef.reference\_point\_of\_dof(i, j)} & gives a {\tt bgeot::base\_node} which represents the point associated with the dof of local index {\tt j} on element of index {\tt i} in the coordinates of the reference element.  \\ \hline
+
+  {\tt mef.first\_convex\_of\_dof(j)} & gives the index of the first element on which the degree of freedom of global index {\tt j} is defined.  \\ \hline
+  
+  {\tt mef.nb\_dof()} & gives the total number of different degrees of freedom.  \\ \hline
+
+  {\tt mef.clear()} & Clear the structure, no finite element method is still defined.  \\ \hline
+
+  {\tt mef.add\_boundary\_elt(b, c, f)} & Add a face to a description of a boundary. Add the face {\tt f} of the element of index {\tt c} to the boundary of index {\tt b}.  \\ \hline
+  
+  {\tt mef.sup\_boundary\_elt(b, c, f)} & remove a face to a description of a boundary. remove the face {\tt f} of the element of index {\tt c} to the boundary of index {\tt b}.  \\ \hline
+  
+  {\tt mef.is\_convex\_on\_boundary(c, b)} & return wether or not the convex of index {\tt c}  has a face on the boundary of index {\tt b}.  \\ \hline
+  
+  {\tt mef.convex\_on\_boundary(b)} & return a {\tt dal::bit\_vector} containing all the indexes of all the elements having at least one face on boundary of index {\tt b}.  \\ \hline
+
+  {\tt mef.faces\_of\_convex\_on\_boundary(c, b) } & return a {\tt dal::bit\_vector} containing all the local indexes of faces of the element of index {\tt c} which contained on the boundary of index {\tt b}.  \\ \hline
+
+  {\tt mef.sup\_boundary(b) } & remove the boundary of index {\tt b}.  \\ \hline
+
+\end{tabular} \end{center}
+
+
 \section{Use standard assembling procedures}
+
+
 
 \section{Compute arbitrary elementary matrices}
 
@@ -297,7 +354,7 @@ The following is an example of how to load a mesh and extract information on it.
 
 \section{Catch errors}
 
-\section{Example : Laplacian program}
+\section{Example : Laplacian program} (or own documentation ? )
 
 
 \begin{thebibliography}{99}
@@ -310,7 +367,7 @@ The following is an example of how to load a mesh and extract information on it.
  J. Wiley \& Sons,  New York, 1984.
 \bibitem{BAS_COMP}
   Y. {\sc Renard} (2002),
-  {\it Basic Computations in GETFEM++}.
+  {\it Elementary Computations in GETFEM++}.
 \end{thebibliography}
 
 \end{document}
