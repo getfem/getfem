@@ -86,7 +86,7 @@ namespace getfem
     return false;
   }
   
-  pintfem give_intfem(pfem ppf, const pintegration_method ppi) {
+  pintfem give_intfem(pfem ppf, pintegration_method ppi) {
     static dal::FONC_TABLE<intfem, intfem> *tab;
     static pintegration_method im_none = 0; // the dummy integration method
     static bool isinit = false;
@@ -204,12 +204,44 @@ namespace getfem
   }
 
   void mesh_fem::set_finite_element(const dal::bit_vector &cvs, pfem ppf,
-			      const pintegration_method ppi) { 
+				    pintegration_method ppi) { 
     pintfem pif =  give_intfem(ppf, ppi);
     for (dal::bv_visitor cv(cvs); !cv.finished(); ++cv)
       set_finite_element(cv, pif);
   }
+
+  void mesh_fem::set_finite_element(pfem ppf, pintegration_method ppi) { 
+    set_finite_element(linked_mesh().convex_index(), ppf, ppi);
+  }
   
+  void mesh_fem::set_classical_finite_element(const dal::bit_vector &cvs, 
+					      dim_type fem_degree, dim_type im_degree) {
+    for (dal::bv_visitor cv(cvs); !cv.finished(); ++cv) {
+      pfem pf = getfem::classical_fem(linked_mesh().trans_of_convex(cv), fem_degree);
+      pintegration_method pim = im_degree != dim_type(-1) ? 
+	getfem::classical_approx_im(linked_mesh().trans_of_convex(cv), im_degree) : 0;
+      set_finite_element(cv, pf, pim);
+    }
+  }
+
+  void mesh_fem::set_classical_finite_element(dim_type fem_degree, dim_type im_degree) { 
+    set_classical_finite_element(linked_mesh().convex_index(), fem_degree, im_degree);
+  }
+
+  void mesh_fem::set_classical_discontinuous_finite_element(const dal::bit_vector &cvs, 
+							    dim_type fem_degree, dim_type im_degree) {
+    for (dal::bv_visitor cv(cvs); !cv.finished(); ++cv) {
+      pfem pf = getfem::classical_discontinuous_fem(linked_mesh().trans_of_convex(cv), fem_degree);
+      pintegration_method pim = im_degree != dim_type(-1) ? 
+	getfem::classical_approx_im(linked_mesh().trans_of_convex(cv), im_degree) : 0;
+      set_finite_element(cv, pf, pim);
+    }
+  }
+
+  void mesh_fem::set_classical_discontinuous_finite_element(dim_type fem_degree, dim_type im_degree) { 
+    set_classical_discontinuous_finite_element(linked_mesh().convex_index(), fem_degree, im_degree);
+  }
+
   base_node mesh_fem::point_of_dof(size_type cv, size_type i) const {
     pfem pf = f_elems[cv]->pf;
     return linked_mesh().trans_of_convex(cv)->transform
@@ -621,7 +653,6 @@ namespace getfem
     write_to_file(o);
     o.close();
   }
-
 }  /* end of namespace getfem.                                             */
 
 

@@ -188,7 +188,7 @@ namespace getfem
   };
   
   typedef const intfem * pintfem;
-  pintfem give_intfem(pfem ppf, const pintegration_method ppi);
+  pintfem give_intfem(pfem ppf, pintegration_method ppi);
   
   typedef tab_scal_to_vect<bgeot::ref_mesh_point_ind_ct> ref_mesh_dof_ind_ct;
   typedef tab_scal_to_vect<bgeot::ind_ref_mesh_point_ind_ct> 
@@ -234,7 +234,7 @@ namespace getfem
      *          type pintegration_method.
      */
     void set_finite_element(size_type cv, pfem ppf,
-			    const pintegration_method ppi)
+			    pintegration_method ppi=0)
       { set_finite_element(cv, give_intfem(ppf, ppi)); }	
     /** Set on all the convexes of indexes in bv, which is of type
      *          dal::bit\_vector, the finite element method
@@ -244,10 +244,32 @@ namespace getfem
      * method IM_NONE() will be used.
      */
     void set_finite_element(const dal::bit_vector &cvs, pfem ppf,
-			    const pintegration_method ppi = 0);
+			    pintegration_method ppi = 0);
+    /** shortcut for set_finite_element(linked_mesh().convex_index(),pf,ppf); */
+    void set_finite_element(pfem pf, pintegration_method ppi = 0);
+    /** Set a classical (i.e. lagrange polynomial) finite element on
+	the convexes listed in cvs (using getfem::classical_fem). If
+	im_degree is not specified then IM_NONE will by used. If it is
+	specified, the an appropriate approximated integration method
+	will be selected (using getfem::classical_approx_im)
+    */
+    void set_classical_finite_element(const dal::bit_vector &cvs, 
+				      dim_type fem_degree, dim_type im_degree=dim_type(-1));
+    /** Similar to set_classical_finite_element, but uses discontinuous lagrange elements */
+    void set_classical_discontinuous_finite_element(const dal::bit_vector &cvs, 
+						    dim_type fem_degree, dim_type im_degree=dim_type(-1));
+    /** shortcut for set_classical_finite_element(linked_mesh().convex_index(),...) */
+    void set_classical_finite_element(dim_type fem_degree, dim_type im_degree=dim_type(-1));
+    /** shortcut for set_classical_discontinuous_finite_element(linked_mesh().convex_index(),...) */
+    void set_classical_discontinuous_finite_element(dim_type fem_degree, dim_type im_degree=dim_type(-1));
+    
+    /** return the fem associated with an element (in no fem is
+	associated, the function will crash! use the convex_index() of
+	the mesh_fem to check that a fem is associated to a given
+	convex) */
     pfem fem_of_element(size_type cv) const
       { return  f_elems[cv]->pf; }
-    const pintegration_method &int_method_of_element(size_type cv) const
+    pintegration_method int_method_of_element(size_type cv) const
       { return  f_elems[cv]->pi; }
     /** Gives an array of the degrees of freedom of the element
      *           of the convex of index i. 
@@ -294,10 +316,12 @@ namespace getfem
     base_node point_of_dof(size_type d) const;
     /* Gives the dof component number (0<= x <Qdim) */
     dim_type dof_qdim(size_type d) const;
+    /** Shortcut for convex_to_dof(d)[0] */
     size_type first_convex_of_dof(size_type d) const;
     size_type ind_in_first_convex_of_dof(size_type d) const;
+    /** Return the list of convexes attached to the specified dof */
     bgeot::mesh_convex_ind_ct convex_to_dof(size_type ip) const;
-    
+    /** Renumbers the degrees of freedom. You should not have to call this function */
     void enumerate_dof(void) const;
     /// Gives the total number of degrees of freedom.
     size_type nb_dof(void) const
