@@ -707,16 +707,19 @@ struct Chrono {
     mesher_level_set mls0 = ls->mls_of_convex(cv, 0), mls1(mls0);
     if (ls->has_secondary()) mls1 = ls->mls_of_convex(cv, 1);
     int p = 0;
-    scalar_type d2 = 0;
+    bool cutted = false;
+    scalar_type d2 = 0, d1 = 1, d = 0;
     for (size_type i = 0; i < pgt2->nb_points(); ++i) {
       scalar_type d = mls0(cvi.pmesh->points_of_convex(sub_cv)[i]);
+      if (ls->has_secondary())
+	d1 = std::min(d1, mls1(cvi.pmesh->points_of_convex(sub_cv)[i]));
+      
       int p2 = ( (d < -EPS) ? -1 : ((d > EPS) ? +1 : 0));
-      if (p*p2 < 0) return 0;
       if (p == 0) p = p2;
       if (gmm::abs(d) > gmm::abs(d2)) d2 = d;
-      if (!p2 && ls->has_secondary() && 
-	  mls1(cvi.pmesh->points_of_convex(sub_cv)[i]) < -EPS) return 0;
+      if (!p2 || p*p2 < 0) cutted = true;
     }
+    if (cutted && d1 < -EPS) return 0;
     return (d2 < 0.) ? -1 : ((d2 > 0.) ? 1 : 0);
   }
 
