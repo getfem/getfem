@@ -151,7 +151,7 @@ namespace gmm {
 
   template <class M> struct scaled_row_const_iterator {
     typedef scaled_row_const_iterator<M> iterator;
-    typedef typename linalg_traits<M>::row_iterator ITER;
+    typedef typename linalg_traits<M>::const_row_iterator ITER;
     typedef typename linalg_traits<M>::value_type value_type;
     typedef ptrdiff_t difference_type;
     typedef size_t size_type;
@@ -188,7 +188,7 @@ namespace gmm {
   template <class M> struct  scaled_row_matrix_const_ref {
     
     typedef scaled_row_matrix_const_ref<M> this_type;
-    typedef typename linalg_traits<M>::row_iterator iterator;
+    typedef typename linalg_traits<M>::const_row_iterator iterator;
     typedef typename linalg_traits<M>::value_type value_type;
     typedef typename linalg_traits<M>::access_type access_type;
 
@@ -252,7 +252,7 @@ namespace gmm {
 
   template <class M> struct scaled_col_const_iterator {
     typedef scaled_col_const_iterator<M> iterator;
-    typedef typename linalg_traits<M>::col_iterator ITER;
+    typedef typename linalg_traits<M>::const_col_iterator ITER;
     typedef typename linalg_traits<M>::value_type value_type;
     typedef ptrdiff_t difference_type;
     typedef size_t size_type;
@@ -289,7 +289,7 @@ namespace gmm {
   template <class M> struct  scaled_col_matrix_const_ref {
     
     typedef scaled_col_matrix_const_ref<M> this_type;
-    typedef typename linalg_traits<M>::col_iterator iterator;
+    typedef typename linalg_traits<M>::const_col_iterator iterator;
     typedef typename linalg_traits<M>::value_type value_type;
     typedef typename linalg_traits<M>::access_type access_type;
 
