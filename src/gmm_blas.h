@@ -879,6 +879,7 @@ namespace gmm {
 		 abstract_sparse, abstract_sparse) {
     typename linalg_traits<L1>::const_iterator
       it  = vect_begin(l1), ite = vect_end(l1);
+    clear(l2);
     for (; it != ite; ++it)
       if (*it != (typename linalg_traits<L1>::value_type)(0))
 	l2[it.index()] = *it;
