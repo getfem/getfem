@@ -349,6 +349,64 @@ namespace getfem
   }
 
 
+  template<class MAT, class VECT>
+  void assembling_dirichlet_constraints(MAT &M, VECT &B, const mesh_fem &mf_u,
+					size_type boundary,
+					const mesh_fem &mf_rh,
+				        const VECT &H, const VECT &R,
+					dim_type N) {
+    size_type cv;
+    dal::bit_vector nn = mf_u.convex_index(), nf;
+    pfem pf_u, pf_rh;
+    
+    assembling_boundary_qu_term(M, mf_u, boundary, mf_rh, H, N);
+    assembling_Neumann_condition(B, mf_u, boundary, mf_rh, R, N);
+
+    for (cv << nn; cv != ST_NIL; cv << nn) {
+      nf = mf_u.faces_of_convex_on_boundary(cv, boundary);
+      if (nf.card() > 0) {
+	pf_u = mf_u.fem_of_element(cv); nbdof_u = pf_u->nb_dof();
+	pf_rh = mf_rh.fem_of_element(cv); nbdof_rh = pf_rh->nb_dof();
+	for (f << nf; f != ST_NIL; f << nf) {
+	  bgeot::pconvex_structure cvs_u = pf_u->structure();
+	  bgeot::pconvex_structure cvs_rh = pf_rh->structure();
+	  for (size_type i = 0; i < cvs_u->nb_points_of_face(f); ++i) {
+	    size_type ind_u = cvs_u->ind_points_of_face(f)[i];
+	    pdof_description tdof_u = pf_u->dof_types()[ind_u];
+	    size_type dof_u = mf_u.ind_dof_of_element(cv)[ind_u];
+	    for (size_type j = 0; j < cvs_rh->nb_points_of_face(f); ++j) {
+	      size_type ind_rh = cvs_rh->ind_points_of_face(f)[j];
+	      pdof_description tdof_rh = pf_rh->dof_types()[ind_rh];
+	      if (tdof_u == tdof_rh) {
+		if (bgeot::vect_dist2(pf_u->node_convex().points()[ind_u], 
+				      pf_rh->node_convex().points()[ind_rh])
+		    < 1.0E-7) {
+		  // à optimiser (racine carrée
+		  // à ce niveau on a HU = R localement
+		  
+		  for (size_type k = 0; k < pf_u->nb_dof(); ++k) {
+		    size_type dof_k = mf_u.ind_dof_of_element(cv)[k];
+		    for (int ii=0; ii < N; ii++)
+		      for (int jj=0; jj < N; jj++)
+			M(dof_u*N+ii, dof_k*N+jj) = 0.0;
+		  }
+
+		  size_type dof_rh = mf_rh.ind_dof_of_element(cv)[ind_rh];
+		  for (int ii=0; ii < N; ii++) {
+		    for (int jj=0; jj < N; jj++)
+		      M(dof_u*N+ii, dof_u*N+jj) = Q[(jj*N+ii) + N*N*(dof_rh)];
+		    B[dof_u*N+ii] = R[dof_rh*N+ii];
+		  }
+		}
+	      }      
+	    }
+	  }
+	}
+      }
+    }
+  }
+
+
   /* ********************************************************************* */
   /*	Mass matrix.                                                       */
   /* ********************************************************************* */
