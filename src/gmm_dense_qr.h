@@ -144,10 +144,11 @@ namespace gmm {
   /*    Compute eigenvalue vector.                                         */
   /* ********************************************************************* */
 
-  template <typename TA, typename TV, typename MAT, typename VECT>
-  void extract_eig(const MAT &A, VECT &V, double tol, TA, TV) {
+  template <typename TA, typename TV, typename Ttol, 
+	    typename MAT, typename VECT>
+  void extract_eig(const MAT &A, VECT &V, Ttol tol, TA, TV) {
     size_type n = mat_nrows(A);
-    tol *= 2.0;
+    tol *= Ttol(2);
     for (size_type i = 0; i < n; ++i) {
       if ((i < n-1) &&
 	  gmm::abs(A(i+1,i)) >= (gmm::abs(A(i,i))+gmm::abs(A(i+1,i+1)))*tol) {
@@ -155,7 +156,7 @@ namespace gmm {
 	TA det = A(i,i)*A(i+1, i+1) - A(i,i+1)*A(i+1, i);
 	TA delta = tr*tr - TA(4) * det;
 	if (delta < TA(0)) {
-	  DAL_WARNING(2, "A complex eigenvalue has been detected");
+	  DAL_WARNING(3, "A complex eigenvalue has been detected");
 	  V[i] = V[i+1] = tr / TA(2);
 	}
 	else {
@@ -169,11 +170,11 @@ namespace gmm {
     }
   }
 
-  template <typename TA, typename TV, typename MAT, typename VECT>
-  void extract_eig(const MAT &A, VECT &V, double tol,
-		   TA, std::complex<TV>) {
+  template <typename TA, typename TV, typename Ttol, 
+	    typename MAT, typename VECT>
+  void extract_eig(const MAT &A, VECT &V, Ttol tol, TA, std::complex<TV>) {
     size_type n = mat_nrows(A);
-    tol *= 2.0;
+    tol *= Ttol(2);
     for (size_type i = 0; i < n; ++i)
       if ((i == n-1) ||
 	  gmm::abs(A(i+1,i)) < (gmm::abs(A(i,i))+gmm::abs(A(i+1,i+1)))*tol)
@@ -194,37 +195,44 @@ namespace gmm {
       }
   }
 
-  template <typename TA, typename TV, typename MAT, typename VECT>
-  void extract_eig(const MAT &A, VECT &V, double tol,
-		   std::complex<TA>, TV) {
+  template <typename TA, typename TV, typename Ttol,
+	    typename MAT, typename VECT>
+  void extract_eig(const MAT &A, VECT &V, Ttol tol, std::complex<TA>, TV) {
+    typedef std::complex<TA> T;
     size_type n = mat_nrows(A);
-    tol *= 2.0;
+    tol *= Ttol(2);
+    Ttol tol_cplx = tol * Ttol(10);
     for (size_type i = 0; i < n; ++i)
       if ((i == n-1) ||
 	  gmm::abs(A(i+1,i)) < (gmm::abs(A(i,i))+gmm::abs(A(i+1,i+1)))*tol) {
-	if (std::imag(A(i,i)) != TA(0))
-	  DAL_WARNING(2, "A complex eigenvalue has been detected");
+	if (gmm::abs(std::imag(A(i,i))) > tol_cplx*gmm::abs(std::real(A(i,i))))
+	  DAL_WARNING(3, "A complex eigenvalue has been detected : "
+		      << T(A(i,i)) << " : "  << gmm::abs(std::imag(A(i,i)))
+		      / gmm::abs(std::real(A(i,i))) << " : " << tol);
 	V[i] = std::real(A(i,i));
       }
       else {
-	std::complex<TA> tr = A(i,i) + A(i+1, i+1);
-	std::complex<TA> det = A(i,i)*A(i+1, i+1) - A(i,i+1)*A(i+1, i);
-	std::complex<TA> delta = tr*tr - TA(4) * det;
-	std::complex<TA> a1 = (tr + gmm::sqrt(delta)) / TA(2);
-	std::complex<TA> a2 = (tr - gmm::sqrt(delta)) / TA(2);
-	if (std::imag(a1) != TA(0) || std::imag(a2) != TA(0))
-	  DAL_WARNING(2, "A complex eigenvalue has been detected");
+	T tr = A(i,i) + A(i+1, i+1);
+	T det = A(i,i)*A(i+1, i+1) - A(i,i+1)*A(i+1, i);
+	T delta = tr*tr - TA(4) * det;
+	T a1 = (tr + gmm::sqrt(delta)) / TA(2);
+	T a2 = (tr - gmm::sqrt(delta)) / TA(2);
+	if (gmm::abs(std::imag(a1)) > tol_cplx * gmm::abs(std::real(a1)))
+	  DAL_WARNING(3, "A complex eigenvalue has been detected : " << a1);
+	if (gmm::abs(std::imag(a2)) > tol_cplx * gmm::abs(std::real(a2)))
+	  DAL_WARNING(3, "A complex eigenvalue has been detected : " << a2);
 
 	V[i] = std::real(a1); V[i+1] = std::real(a2);
 	++i;
       }
   }
 
-  template <typename TA, typename TV, typename MAT, typename VECT>
-  void extract_eig(const MAT &A, VECT &V, double tol,
+  template <typename TA, typename TV, typename Ttol,
+	    typename MAT, typename VECT>
+  void extract_eig(const MAT &A, VECT &V, Ttol tol,
 		   std::complex<TA>, std::complex<TV>) {
     size_type n = mat_nrows(A);
-    tol *= 2.0;
+    tol *= Ttol(2);
     for (size_type i = 0; i < n; ++i)
       if ((i == n-1) ||
 	  gmm::abs(A(i+1,i)) < (gmm::abs(A(i,i))+gmm::abs(A(i+1,i+1)))*tol)
@@ -239,8 +247,8 @@ namespace gmm {
       }
   }
 
-  template <typename MAT, typename VECT> inline
-  void extract_eig(const MAT &A, const VECT &V, double tol) {
+  template <typename MAT, typename Ttol, typename VECT> inline
+  void extract_eig(const MAT &A, const VECT &V, Ttol tol) {
     extract_eig(A, const_cast<VECT&>(V), tol,
 		typename linalg_traits<MAT>::value_type(),
 		typename linalg_traits<VECT>::value_type());
@@ -250,8 +258,8 @@ namespace gmm {
   /*    Stop criterion for QR algorithms                                   */
   /* ********************************************************************* */
 
-  template <typename MAT>
-  void stop_criterion(MAT &A, size_type &p, size_type &q, double tol) {
+  template <typename MAT, typename Ttol>
+  void stop_criterion(MAT &A, size_type &p, size_type &q, Ttol tol) {
     typedef typename linalg_traits<MAT>::value_type value_type;
     size_type n = mat_nrows(A);
     for (size_type i = 1; i < n-q; ++i)
@@ -265,9 +273,9 @@ namespace gmm {
     while (p > 0 && A(p,p-1) != value_type(0)) --p;
   }
   
-  template <typename MAT> inline
+  template <typename MAT, typename Ttol> inline
   void symmetric_stop_criterion(const MAT &AA, size_type &p, size_type &q,
-				double tol) {
+				Ttol tol) {
     typedef typename linalg_traits<MAT>::value_type value_type;
     MAT& A = const_cast<MAT&>(AA);
     size_type n = mat_nrows(A);
@@ -286,13 +294,18 @@ namespace gmm {
   /*    Basic qr algorithm.                                                */
   /* ********************************************************************* */
 
+  #define tol_type_for_qr typename number_traits<typename \
+                          linalg_traits<MAT1>::value_type>::magnitude_type
+  #define default_tol_for_qr gmm::default_tol(typename \
+                             linalg_traits<MAT1>::value_type())
+
   // QR method for real or complex square matrices based on QR factorisation.
   // eigval has to be a complex vector if A has complex eigeinvalues.
   // Very slow method. Use implicit_qr_method instead.
   template <typename MAT1, typename VECT, typename MAT2>
     void rudimentary_qr_algorithm(const MAT1 &A, const VECT &eigval_,
-				  const MAT2 &eigvect_, double tol =
-		 gmm::default_tol(typename linalg_traits<MAT1>::value_type()),
+				  const MAT2 &eigvect_,
+				  tol_type_for_qr tol = default_tol_for_qr,
 				  bool compvect = true) {
     VECT &eigval = const_cast<VECT &>(eigval_);
     MAT2 &eigvect = const_cast<MAT2 &>(eigvect_);
@@ -319,8 +332,7 @@ namespace gmm {
 
   template <typename MAT1, typename VECT>
     void rudimentary_qr_algorithm(const MAT1 &a, VECT &eigval,
-				  double tol = gmm::default_tol(typename
-				  linalg_traits<MAT1>::value_type())) {
+				  tol_type_for_qr tol = default_tol_for_qr) {
     dense_matrix<typename linalg_traits<MAT1>::value_type> m(0,0);
     rudimentary_qr_algorithm(a, eigval, m, tol, false); 
   }
@@ -374,9 +386,9 @@ namespace gmm {
   /*    Wilkinson Double shift QR step (from Lapack).                      */
   /* ********************************************************************* */
 
-  template <typename MAT1, typename MAT2>
+  template <typename MAT1, typename MAT2, typename Ttol>
   void Wilkinson_double_shift_qr_step(const MAT1& HH, const MAT2 &QQ,
-				      double tol, bool exc, bool compute_Q) {
+				      Ttol tol, bool exc, bool compute_Q) {
     MAT1& H = const_cast<MAT1&>(HH); MAT2& Q = const_cast<MAT2&>(QQ);
     typedef typename linalg_traits<MAT1>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
@@ -454,9 +466,9 @@ namespace gmm {
   // eigenvectors are computed
   template <typename MAT1, typename VECT, typename MAT2>
     void implicit_qr_algorithm(const MAT1 &A, const VECT &eigval_,
-			       const MAT2 &Q_,
-			       double tol = gmm::default_tol(typename
-		   linalg_traits<MAT1>::value_type()), bool compvect = true) {
+			       const MAT2 &Q_, 
+			       tol_type_for_qr tol = default_tol_for_qr,
+			       bool compvect = true) {
     VECT &eigval = const_cast<VECT &>(eigval_);
     MAT2 &Q = const_cast<MAT2 &>(Q_);
     typedef typename linalg_traits<MAT1>::value_type value_type;
@@ -469,11 +481,12 @@ namespace gmm {
     stop_criterion(H, p, q, tol);
 
     while (q < n) {
-      sub_interval SUBI(p, n-p-q), SUBJ(0,n);
+      sub_interval SUBI(p, n-p-q), SUBJ(0, mat_ncols(Q)), SUBK(p, n-p-q);
+      if (!compvect) SUBK = sub_interval(0,0);
 //       Francis_qr_step(sub_matrix(H, SUBI),
-// 		      sub_matrix(Q, SUBJ, SUBI), compvect);
+// 		      sub_matrix(Q, SUBJ, SUBK), compvect);
       Wilkinson_double_shift_qr_step(sub_matrix(H, SUBI), 
-				     sub_matrix(Q, SUBJ, SUBI),
+				     sub_matrix(Q, SUBJ, SUBK),
 				     tol, (its == 10 || its == 20), compvect);
 
       q_old = q;
@@ -487,9 +500,8 @@ namespace gmm {
 
 
   template <typename MAT1, typename VECT>
-    void implicit_qr_algorithm(const MAT1 &a, VECT &eigval, 
-			       double tol = gmm::default_tol(typename 
-			       linalg_traits<MAT1>::value_type())) {
+    void implicit_qr_algorithm(const MAT1 &a, VECT &eigval,
+			       tol_type_for_qr tol = default_tol_for_qr) {
     dense_matrix<typename linalg_traits<MAT1>::value_type> m(0,0);
     implicit_qr_algorithm(a, eigval, m, tol, false); 
   }
@@ -514,15 +526,19 @@ namespace gmm {
     for (size_type k = 1; k < n; ++k) {
       Givens_rotation(x, z, c, s);
 
+      // if (k > 2) Apply_Givens_rotation_left(T(k-1,k-3), T(k,k-3), c, s);
       if (k > 1) Apply_Givens_rotation_left(T(k-1,k-2), T(k,k-2), c, s);
       Apply_Givens_rotation_left(T(k-1,k-1), T(k,k-1), c, s);
       Apply_Givens_rotation_left(T(k-1,k  ), T(k,k  ), c, s);
       if (k < n-1) Apply_Givens_rotation_left(T(k-1,k+1), T(k,k+1), c, s);
-      
+      // if (k < n-2) Apply_Givens_rotation_left(T(k-1,k+2), T(k,k+2), c, s);
+
+      // if (k > 2) Apply_Givens_rotation_right(T(k-3,k-1), T(k-3,k), c, s);
       if (k > 1) Apply_Givens_rotation_right(T(k-2,k-1), T(k-2,k), c, s);
       Apply_Givens_rotation_right(T(k-1,k-1), T(k-1,k), c, s);
       Apply_Givens_rotation_right(T(k  ,k-1), T(k,k)  , c, s);
       if (k < n-1) Apply_Givens_rotation_right(T(k+1,k-1), T(k+1,k), c, s);
+      // if (k < n-2) Apply_Givens_rotation_right(T(k+2,k-1), T(k+2,k), c, s);
       
       if (compute_z) col_rot(Z, c, s, k-1, k);
       if (k < n-1) { x = T(k, k-1); z = T(k+1, k-1); }
@@ -531,16 +547,17 @@ namespace gmm {
   }
 
   /* ********************************************************************* */
-  /*    Implicit QR algorithm for symmetric matrices.                      */
+  /*    Implicit QR algorithm for symmetric or hermitian matrices.         */
   /* ********************************************************************* */
 
-  // implicit QR method for real square symmetric matrices.
+  // implicit QR method for real square symmetric matrices or complex
+  // hermitian matrices.
   // eigval has to be a complex vector if A has complex eigeinvalues.
   // complexity about 4n^3/3, 9n^3 if eigenvectors are computed
   template <typename MAT1, typename VECT, typename MAT2>
   void symmetric_qr_algorithm(const MAT1 &A, const VECT &eigval_,
-			      const MAT2 &eigvect_, double tol =
-		 gmm::default_tol(typename linalg_traits<MAT1>::value_type()),
+			      const MAT2 &eigvect_,
+			      tol_type_for_qr tol = default_tol_for_qr,
 			      bool compvect = true) {
     VECT &eigval = const_cast<VECT &>(eigval_);
     MAT2 &eigvect = const_cast<MAT2 &>(eigvect_);
@@ -561,20 +578,23 @@ namespace gmm {
     symmetric_stop_criterion(T, p, q, tol);
     
     while (q < n) {
-      sub_interval SUBI(p, n-p-q), SUBJ(0,n);
+
+      sub_interval SUBI(p, n-p-q), SUBJ(0, mat_ncols(eigvect)), SUBK(p, n-p-q);
+      if (!compvect) SUBK = sub_interval(0,0);
       symmetric_Wilkinson_qr_step(sub_matrix(T, SUBI), 
-				  sub_matrix(eigvect, SUBJ, SUBI), compvect);
+				  sub_matrix(eigvect, SUBJ, SUBK), compvect);
       symmetric_stop_criterion(T, p, q, tol);
-      if (++ite > n*100) DAL_THROW(failure_error, "QR algorithm failed");
+      if (++ite > n*100) DAL_THROW(failure_error, "QR algorithm failed. "
+				   "Probably, your matrix is not real "
+				   "symmetric or complex hermitian");
     }
     extract_eig(T, eigval, tol);
   }
 
 
   template <typename MAT1, typename VECT>
-    void symmetric_qr_algorithm(const MAT1 &a, VECT &eigval, 
-				double tol = gmm::default_tol(typename
-				linalg_traits<MAT1>::value_type())) {
+    void symmetric_qr_algorithm(const MAT1 &a, VECT &eigval,
+				tol_type_for_qr tol = default_tol_for_qr) {
     dense_matrix<typename linalg_traits<MAT1>::value_type> m(0,0);
     symmetric_qr_algorithm(a, eigval, m, tol, false);
   }

@@ -37,7 +37,7 @@
 #include <gmm_dense_qr.h>
 
 #include <gmm_iter_solvers.h>
-#include <gmm_condest.h>
+#include <gmm_condition_number.h>
 #include <gmm_inoutput.h>
 
 #include <gmm_lapack_interface.h>

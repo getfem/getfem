@@ -137,7 +137,7 @@ namespace gmm {
   /*   Solve sylvester equation.                                           */
   /* ********************************************************************* */
 
-  
+  // very prohibitive solver, to be replaced ... 
   template <typename MAT1, typename MAT2, typename MAT3, typename MAT4 >
   void sylvester(const MAT1 &m1, const MAT2 &m2, const MAT3 &m3,
 		 const MAT4 &_m4) {

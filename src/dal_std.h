@@ -5,7 +5,8 @@
 /* File    :  dal_std.h : Compatibility Header.                            */
 /*                                                                         */
 /* Date : June 01, 1995.                                                   */
-/* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
+/* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr,                     */
+/*          Julien Pommier, Julien.Pommier@gmm.insa-tlse.fr.               */
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */
@@ -200,13 +201,13 @@ namespace dal
 namespace dal
 {
   template <typename T> inline T sqr(T a) { return a * a; }
-  template <typename T> inline T abs(T a) { return (a < T(0)) ? -a : a; }
+  template <typename T> inline T abs(T a) { return (a < T(0)) ? T(-a) : a; }
   template <typename T> inline T abs(std::complex<T> a) { return std::abs(a); }
   template <typename T> inline T abs_sqr(T a) { return a*a; }
   template <typename T> inline T abs_sqr(std::complex<T> a)
   { return dal::sqr(a.real()) + dal::sqr(a.imag()); }
   template <typename T> inline T pos(T a) { return (a < T(0)) ? T(0) : a; }
-  template <typename T> inline T neg(T a) { return (a < T(0)) ? -a : T(0); }
+  template <typename T> inline T neg(T a) { return (a < T(0)) ? T(-a) : T(0); }
   template <typename T> inline T sgn(T a) { return (a < T(0)) ? T(-1) : T(1); }
   template <typename T> inline T sgn(std::complex<T> a)
   { return (a.real() / dal::abs(a) < T(0.1)) ? sgn(a.imag()) : sgn(a.real()); }
@@ -318,24 +319,7 @@ typedef unsigned char uint8_type;
   typedef unsigned long int uint64_type;
 #else
 
-  // struct int64_type
-  // {
-  //   uint16_type p[4];
-
-  //  int64_type &operator +=(const int64_type &i)
-  //  { 
-  //    uint32_type a = p[0]; a += i.p[0]; p[0] = a; a >>= 16;
-  //    a += p[1]; a += i.p[1]; p[1] = a; a >>= 16;
-  //    a += p[2]; a += i.p[2]; p[2] = a; a >>= 16;
-  //    a += p[3]; a += i.p[3]; p[3] = a; a >>= 16;
-  //  }
-
-  // };
-
-  // struct uint64_type : int64_type
-  // {
-
-  // };
+  // try with long long ...
 
 #endif
 

@@ -92,6 +92,10 @@ namespace gmm {
     inline void test_rind(void) const
       { if (!rind) rind = index_generator::create_rindex(ind); }
     size_type size(void) const { return ind->size(); }
+    size_type first(void) const
+    { return (ind->size() == 0) ? size_type(0) : (*ind)[0]; }
+    size_type last(void) const 
+    { return (ind->size() == 0) ? size_type(0) : (*ind)[ind->size()-1]+1; }
     size_type index(size_type i) const { return (*ind)[i]; }
     size_type rindex(size_type i) const {
       test_rind();
@@ -132,6 +136,8 @@ namespace gmm {
     size_type min, max; 
 
     size_type size(void) const { return max - min; }
+    size_type first(void) const { return min; }
+    size_type last(void) const { return max; }
     size_type index(size_type i) const { return min + i; }
     size_type step(void) const { return 1; }
     size_type rindex(size_type i) const
@@ -147,6 +153,8 @@ namespace gmm {
     size_type min, max, N; 
 
     size_type size(void) const { return (max - min) / N; }
+    size_type first(void) const { return min; }
+    size_type last(void) const { return (min == max) ? max : max+1-N; }
     size_type step(void) const { return N; }
     size_type index(size_type i) const { return min + N * i; }
     size_type rindex(size_type i) const { 

@@ -1766,30 +1766,27 @@ namespace gmm {
   void mult_spec(const L1& l1, const L2& l2, L3& l3, rcmult) {
 
     if (is_sparse(l1) || is_sparse(l2))
-      DAL_WARNING(3, "Inefficient matrix-matrix mult for sparse matrices");
+      DAL_WARNING(3,
+	  "Inefficient row matrix - col matrix mult for sparse matrices");
 
     typename linalg_traits<L2>::const_col_iterator
       it2b = linalg_traits<L2>::col_begin(l2), it2,
       ite = linalg_traits<L2>::col_end(l2);
     size_type i,j, k = mat_nrows(l1);
 
-    cout << "m = " << mat_nrows(l1) << " n = " << mat_ncols(l1) << " k = " << mat_ncols(l2) << endl;
-
     for (i = 0; i < k; ++i) {
       typename linalg_traits<L1>::const_sub_row_type r1 = mat_const_row(l1, i);
-      for (it2 = it2b, j = 0; it2 != ite; ++it2, ++j) {
-	cout << "l3 = " << l3 << endl;
-	cout << "i = " << i << " j = " << j << endl;
+      for (it2 = it2b, j = 0; it2 != ite; ++it2, ++j)
 	l3(i,j) = vect_sp(r1, linalg_traits<L2>::col(it2));
-      }
     }
   }
 
   // row - row matrix-matrix mult
 
   template <typename L1, typename L2, typename L3> inline
-  void mult_spec(const L1& l1, const L2& l2, L3& l3, r_mult)
-  { mult_spec(l1, l2, l3, r_mult(), typename linalg_traits<L1>::storage_type()); }
+  void mult_spec(const L1& l1, const L2& l2, L3& l3, r_mult) {
+    mult_spec(l1, l2, l3,r_mult(),typename linalg_traits<L1>::storage_type());
+  }
 
 
 
@@ -1895,7 +1892,7 @@ namespace gmm {
     size_type nn = mat_ncols(l1), mm = mat_nrows(l1);
     for (size_type i = 0; i < nn; ++i) {
       for (size_type j = 0; j < mm; ++j)
-      add(scaled(mat_const_row(l2, i), l2(j, i)), mat_row(l3, j));
+      add(scaled(mat_const_row(l2, i), l1(j, i)), mat_row(l3, j));
     }
   }
 

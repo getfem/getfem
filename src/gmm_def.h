@@ -646,9 +646,18 @@ namespace gmm {
   /* Default tolerance.                                                    */
   /* ********************************************************************* */
   
-  template<typename T> inline double default_tol(T)
-  { int i=sizeof(T)/4; double tol(2); while(i-- > 0) tol*=1E-8; return tol; }
-  template<typename T> inline double default_tol(std::complex<T>)
+  template<typename T> inline T default_tol(T) {
+    using namespace std;
+    if (!numeric_limits<T>::is_specialized) {
+      int i=sizeof(T)/4; T tol(2); while(i-- > 0) tol*=T(1E-8); 
+      DAL_WARNING(0, "The numeric type " << typeid(T).name()
+		  << " has no numeric_limits defined !!\n"
+		  << "Taking " << tol << " has default tolerance");
+      return tol;
+    }
+    return numeric_limits<T>::epsilon(); 
+  }
+  template<typename T> inline T default_tol(std::complex<T>)
   { return default_tol(T()); }
 
   

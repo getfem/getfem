@@ -53,8 +53,8 @@ namespace gmm {
    * iterations of dichotomie and regula falsi are applied.
    */
   template <typename FUNC, typename T>
-  T find_root(const FUNC &G, T a = 0.0, T b = 1.0,
-	      double tol = gmm::default_tol(T())) {
+  T find_root(const FUNC &G, T a = T(0), T b = T(1),
+	      T tol = gmm::default_tol(T())) {
     
     T c, Ga = G(a), Gb = G(b), Gc, d;
     d = abs(b - a);

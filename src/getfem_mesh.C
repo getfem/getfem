@@ -29,7 +29,7 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#include <gmm_condest.h>
+#include <gmm_condition_number.h>
 #include <getfem_mesh.h>
 #include <getfem_precomp.h>
 #include <getfem_mat_elem.h> // --- FIXME --- :
@@ -389,7 +389,7 @@ namespace getfem
     base_matrix K(pgp->grad(0).ncols(),G.nrows());
     for (size_type ip=0; ip < n; ++ip) {
       gmm::mult(gmm::transposed(pgp->grad(ip)), gmm::transposed(G), K);
-      q = std::max(q, gmm::condest(K));
+      q = std::max(q, gmm::condition_number(K));
     }
     return 1./q;
   }
@@ -407,7 +407,7 @@ namespace getfem
     base_matrix K(pgp->grad(0).ncols(),G.nrows());
     for (size_type ip=0; ip < n; ++ip) {
       gmm::mult(gmm::transposed(pgp->grad(ip)), gmm::transposed(G), K);
-      scalar_type emax,emin; gmm::condest(K,emax,emin);
+      scalar_type emax, emin; gmm::condition_number(K,emax,emin);
       q = std::max(q, emax);
     }
     return q * sqrt(scalar_type(N)) / scalar_type(N);

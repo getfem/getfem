@@ -57,7 +57,7 @@ namespace gmm {
     iterator _begin;
     porigin_type origin;
     
-    reference operator()(size_type i, size_type j) const
+    reference operator()(size_type i, size_type j) const 
     { return linalg_traits<M>::access(_begin + si1.index(i), si2.index(j)); }
    
     size_type nrows(void) const { return si1.size(); }
@@ -177,8 +177,9 @@ namespace gmm {
     { return linalg_traits<M>::access(*itrow, itrow.si2.index(i)); }
   };
   
-  template <typename PT, typename SUBI1, typename SUBI2> std::ostream &operator <<
-  (std::ostream &o, const gen_sub_row_matrix<PT, SUBI1, SUBI2>& m)
+  template <typename PT, typename SUBI1, typename SUBI2>
+  std::ostream &operator <<(std::ostream &o,
+			    const gen_sub_row_matrix<PT, SUBI1, SUBI2>& m)
   { gmm::write(o,m); return o; }
 
 #ifdef USING_BROKEN_GCC295
@@ -366,6 +367,10 @@ namespace gmm {
     ::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI2>::matrix_type,
     M *>::return_type
   sub_matrix(M &m, const SUBI1 &si1, const SUBI2 &si2) {
+#   ifdef GMM_VERIFY
+    if (si1.last() > mat_nrows(m) || si2.last() > mat_ncols(m))
+      DAL_THROW(dimension_error, "sub matrix too large");
+#   endif
     return typename select_return<typename sub_matrix_type<const M *, SUBI1,
       SUBI2>::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI2>
       ::matrix_type, M *>::return_type(linalg_cast(m), si1, si2);
@@ -376,6 +381,11 @@ namespace gmm {
     ::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI2>::matrix_type,
     const M *>::return_type
   sub_matrix(const M &m, const SUBI1 &si1, const SUBI2 &si2) {
+#   ifdef GMM_VERIFY
+    if (si1.last() > mat_nrows(m) || si2.last() > mat_ncols(m))
+      DAL_THROW(dimension_error, "sub matrix too large");
+#   endif
+
     return typename select_return<typename sub_matrix_type<const M *, SUBI1,
       SUBI2>::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI2>
       ::matrix_type, const M *>::return_type(linalg_cast(m), si1, si2);
@@ -386,6 +396,10 @@ namespace gmm {
     ::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI1>::matrix_type,
     M *>::return_type
   sub_matrix(M &m, const SUBI1 &si1) {
+#   ifdef GMM_VERIFY
+    if (si1.last() > mat_nrows(m) || si1.last() > mat_ncols(m))
+      DAL_THROW(dimension_error, "sub matrix too large");
+#   endif
     return typename select_return<typename sub_matrix_type<const M *, SUBI1,
       SUBI1>::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI1>
       ::matrix_type, M *>::return_type(linalg_cast(m), si1, si1);
@@ -396,6 +410,10 @@ namespace gmm {
     ::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI1>::matrix_type,
     const M *>::return_type
   sub_matrix(const M &m, const SUBI1 &si1) {
+#   ifdef GMM_VERIFY
+    if (si1.last() > mat_nrows(m) || si1.last() > mat_ncols(m))
+      DAL_THROW(dimension_error, "sub matrix too large");
+#   endif
     return typename select_return<typename sub_matrix_type<const M *, SUBI1,
       SUBI1>::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI1>
       ::matrix_type, const M *>::return_type(linalg_cast(m), si1, si1);
