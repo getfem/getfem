@@ -1020,6 +1020,8 @@ Composition of the integration node definition :
 
 {\tt NBF} is the number of faces of the reference element (should correpond to {\tt GEOTRANS}). Then follows an already existing integration method for each face (each on a line). This is necessary to make integrations on boundaries.
 
+The file format is inspired from \cite{EncyclopCubature}.
+
 \section{Finite element methods defined on two different meshes}
 
 A special finite element method is defined in \filename{getfem\_fem.h} which is not a real finite element method but allows to interpolate a finite element method defined on another mesh. When an assembling procedure has different finite element methods as arguments, the mesh on which those methods are defined should be the same. If you need to assemble a matrix with finite element methods defined on different meshes, you may use the finite element methods\\[0.5cm]
@@ -1138,6 +1140,12 @@ The program \filename{elastostatic} is built in a same way and compute the solut
 % \bibliographystyle{apalike}
 % \bibliographystyle{plain}
 % \bibliography{all}
+
+\bibitem{EncyclopCubature}
+  R. {\texonly{\sc} Cools}
+  {\it An Encyclopaedia of Cubature Formulas}, J. Complexity, {\tt http://www.cs.kuleuven.ac.be/{\~n}ines/research/ecf/ecf.html}
+
+
 \bibitem{dh-to1984} 
   {\texonly{\sc} G. Dhatt, and  G. Touzot}
   {\it The Finite Element Method Displayed}, 
