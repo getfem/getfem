@@ -7,11 +7,12 @@ $tabdep[0] = "null";
 sub add_fname
 {
   my $fname   = $_[0];
+  my $i;
   for ($i = 0; $i < $nb_file; $i++)
   {
     if ($tabdep[$i] eq $fname) { return; }
   }
-  $tabdep[$nb_file++] = $_;
+  $tabdep[$nb_file++] = $fname;
 }
 
 
