@@ -15,7 +15,7 @@ FT = 1.0;               % parametre pour la solution exacte.
 K = 2;                  % Degre de l'element fini de Lagrange.
 INTEGRATION = 0;        % 0 = integration exacte
 			% 1 = Newton Cotes de degré 2 * K
-NX = 128;            	% Nombre de pas d'espace.
+NX = 10;            	% Nombre de pas d'espace.
 ITEIMPL = 1;            % nombre d'iteration de point fixe.
 RESIDU = 1E-9;     	% Test d'arret pour la methode iterative
 MIXTE = 'N';
