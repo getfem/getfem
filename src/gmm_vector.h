@@ -827,7 +827,7 @@ namespace gmm
     slvector(void) : data(0), shift(0), size_(0) {}
     explicit slvector(size_type l) : data(0), shift(0), size_(l) {}
     slvector(size_type l, size_type d, size_type s)
-      : data(d), shift(d), size_(l) {}
+      : data(d), shift(s), size_(l) {}
 
   };
 
