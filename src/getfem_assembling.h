@@ -563,24 +563,34 @@ namespace getfem
   }
 
   template<class MATD, class VECT>
-    void treat_Dirichlet_condition(const MATD &D, MATD &G,
+    size_type treat_Dirichlet_condition(const MATD &D, MATD &G,
 				   const VECT &UD, VECT &UDD) {
-    // On veut construire une base orthonormale du noyau de D.
+    // To be finalized.
+    //  . In order to be used with any sparse matrix type
+    //  . transpose the result and give the effective dimension of
+    //    the kernel
+    //  . Compute the ctes / D.
+    //  . Optimization (suppress temporary ...). 
+
+    // Build an orthogonal base of the kernel of D in G, give
+    // the solution of minimal norm of D*U = UD in UDD and
+    // return the dimension of the kernel. The function is based
+    // on a Gramm-Schmidt algorithm.
+
     size_type nbd = D.ncols(), nbase = 0;
-    VECT aux(D.nrows());
-    VECT e(nbd);
+    bgeot::svector<scalar_type> aux(D.nrows()), e(nbd);
     bgeot::svector<scalar_type> f(nbd);
-    dal::dynamic_array<VECT> base_img;
+    dal::dynamic_array<bgeot::svector<scalar_type> > base_img;
     dal::dynamic_array<bgeot::svector<scalar_type> > base_img_inv;
     size_type nb_bimg = 0;
-    e.fill(0.0);
 
-    // première passe, on récupére toutes les colonnes vides de D.
+    // First, detection of null columns of D, and already orthogonals 
+    // vectors of the image of D.
     dal::bit_vector nn;
     for (size_type i = 0; i < nbd; ++i) {
-      e[i] = 1.0; f.clear(); f[i] = 1.0;
+      e.clear(); e[i] = 1.0; f.clear(); f[i] = 1.0;
       aux = D*e;
-      if (bgeot::vect_norm2(aux) < 1.0E-6) { // à scaler sur l'ensemble de D ...
+      if (bgeot::vect_norm2(aux) < 1.0E-8) { //à scaler sur l'ensemble de D ...
 	G(nbase++, i) = 1.0; nn[i] = true;
       }
       else {
@@ -593,18 +603,17 @@ namespace getfem
 	  f /= n; aux /= n;
 	  base_img_inv[nb_bimg] = f;
 	  cerr << "ajout de " << aux << "\n";
+	  aux.clean(1.0E-18);
 	  base_img[nb_bimg++] = aux; nn[i] = true;
 	}
       }
-      e[i] = 0.0;
     }
     size_type nb_triv_base = nbase;
 
     for (size_type i = 0; i < nbd; ++i)
       if (!(nn[i])) {
-	e[i] = 1.0; f.clear(); f[i] = 1.0;
+	e.clear(); e[i] = 1.0; f.clear(); f[i] = 1.0;
 	aux = D*e;
-	
 	for (size_type j = 0; j < nb_bimg; ++j) { 
 	  scalar_type c = bgeot::vect_sp(aux, base_img[j]);
 	  //	  if (dal::abs(c > 1.0E-6) { // à scaler sur l'ensemble de D ...
@@ -612,7 +621,7 @@ namespace getfem
 	  f -= base_img_inv[j] * c;
 	}
 	cerr << "norm2(aux)= " << bgeot::vect_norm2(aux) << "\n";
-	if (bgeot::vect_norm2(aux) < 1.0E-6) { // à scaler sur l'ensemble de D ...
+	if (bgeot::vect_norm2(aux) < 1.0E-8) { // à scaler sur l'ensemble de D ...
 	  G.row(nbase++) = f;
 	}
 	else {
@@ -620,19 +629,20 @@ namespace getfem
 	  f /= n; aux /= n;
 	  base_img_inv[nb_bimg] = f;
 	  base_img[nb_bimg++] = aux;
+	  f.clean(1.0E-18); aux.clean(1.0E-18);
 	  cerr << "ajout de " << aux << "\n";
 	}
 	e[i] = 0.0;
       }
 
-    // calcul d'une solution UDD
+    // Compute a solution in UDD
     UDD.fill(0.0);
     for (size_type i = 0; i < nb_bimg; ++i) {
       scalar_type c = bgeot::vect_sp(UD, base_img[i]);
       UDD += base_img_inv[i] * c;
     }
 
-    // On orthogonalise la base du noyau
+    // Orthogonalisation of the basis of the kernel of D.
     for (size_type i = nb_triv_base + 1; i < nbase; ++i) {
       for (size_type j = nb_triv_base; j < i; ++j) {
 	scalar_type c = bgeot::vect_sp(G.row(i), G.row(j));
@@ -640,11 +650,17 @@ namespace getfem
       }
     }
 
-    // puis on projete UDD sur l'orthogonal du noyau.
+    // projection of UDD on the orthogonal to the kernel.
     for (size_type j = nb_triv_base; j < nbase; ++j) {
       scalar_type c = bgeot::vect_sp(G.row(j), UDD);
       UDD -= G.row(j) * c;
     }
+
+    // Test ...
+    if (bgeot::vect_norm2(D * UDD - UD) > 1.0E-12)
+      cerr << "Dirichlet condition not well inverted\n";
+
+    return nbase;
   }
   
 

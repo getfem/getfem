@@ -34,8 +34,8 @@
 //
 //
 //
-//  A TERMINER
-//
+//  A TERMINER : modifier les méthodes en tenant compte du fait que
+//               les lignes sont des svector<T>
 //
 
 
