@@ -161,6 +161,14 @@ namespace dal {
     throw (type)(msg.str());                                         \
   }
 
+#ifdef DEBUG_MODE
+#  define DAL_INTERNAL_ERROR(thestr) { \
+   cerr << "Internal error: " << thestr << endl; \
+   ::abort(); \
+   }
+#else
+#  define DAL_INTERNAL_ERROR(thestr) DAL_THROW(dal::internal_error, "Internal error: " << thestr)
+#endif
   struct warning_level {
     static int level(int l = -2) {
       static int _level = 3;
