@@ -445,18 +445,20 @@ namespace gmm
     if (i > j) std::swap(i, j);
     if (i != j) {
       int situation = 0;
-      elt_rsvector_<T> a;
-      iterator it = this->begin(), ite = this->end(), iti = it, itj = ite;
-      for (; it != ite; ++it)
-	if (it->c == i) { situation |= 1; iti = it; }
-	else if (it->c == j) { situation |= 2; itj = it; }
+      elt_rsvector_<T> ei(i), ej(j), a;
+      iterator it, ite, iti, itj;
+      iti = std::lower_bound(this->begin(), this->end(), ei);
+      if (iti != this->end() && iti->c == i) situation += 1;
+      itj = std::lower_bound(this->begin(), this->end(), ej);
+      if (itj != this->end() && itj->c == j) situation += 2;
+
       switch (situation) {
-      case 1 : a = *iti; a.c = j; it = iti; ++it;
+      case 1 : a = *iti; a.c = j; it = iti; ++it; ite = this->end();
 	       for (; it != ite && it->c <= j; ++it, ++iti) *iti = *it;
 	       *iti = a;
 	       break;
-      case 2 : a = *itj; a.c = i; it = itj; --it;
-	       for (; it >= iti && it->c >= i; --it, --itj) *itj = *it;
+      case 2 : a = *itj; a.c = i; it = itj; --it; ite = this->begin();
+	       for (; it >= ite && it->c >= i; --it, --itj) *itj = *it;
 	       *itj = a;
 	       break;
       case 3 : std::swap(iti->e, itj->e);

@@ -151,6 +151,7 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_) {
   gmm::mr_approx_inverse_precond<MAT1> P3(m1, 10, prec);
   gmm::ilu_precond<MAT1> P4(m1);
   gmm::ilut_precond<MAT1> P5(m1, 15, prec);
+  gmm::ilutp_precond<MAT1> P5b(m1, 15, prec);
   
   R detmr = gmm::abs(gmm::lu_det(P3.approx_inverse()));
 
@@ -172,6 +173,9 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_) {
     
     if (print_debug) cout << "\nBicgstab with ilut preconditionner\n";
     do_test(BICGSTAB(), m1, v1, v2, P5, cond); 
+
+    if (print_debug) cout << "\nBicgstab with ilutp preconditionner\n";
+    do_test(BICGSTAB(), m1, v1, v2, P5b, cond); 
   }
 
   if (print_debug) cout << "\nGmres with no preconditionner\n";
@@ -191,6 +195,9 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_) {
   if (print_debug) cout << "\nGmres with ilut preconditionner\n";
   do_test(GMRES(), m1, v1, v2, P5, cond);
   
+  if (print_debug) cout << "\nGmres with ilutp preconditionner\n";
+  do_test(GMRES(), m1, v1, v2, P5b, cond);
+  
   if (sizeof(R) > 4 || m < 20) {
 
     if (print_debug) cout << "\nQmr with no preconditionner\n";
@@ -204,6 +211,9 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_) {
     
     if (print_debug) cout << "\nQmr with ilut preconditionner\n";
     do_test(QMR(), m1, v1, v2, P5, cond);  
+
+    if (print_debug) cout << "\nQmr with ilutp preconditionner\n";
+    do_test(QMR(), m1, v1, v2, P5b, cond);  
   }
 
   gmm::dense_matrix<T> m2(m, m), m3(m, m);
@@ -246,6 +256,7 @@ bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_) {
     print_stat(P3, "mr precond");
     print_stat(P4, "ilu precond");
     print_stat(P5, "ilut precond");
+    print_stat(P5b, "ilutp precond");
     print_stat(P6, "ildlt precond");
     print_stat(P7, "ildltt precond");
     if (ratio_max > 0.2) DAL_THROW(gmm::failure_error, "something wrong ..");
