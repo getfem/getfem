@@ -262,6 +262,18 @@ namespace getfem {
     } while (!f.eof());
   }
 
+  static double round_to_nth_significant_number(double x, int ndec) {
+    double p = 1.;
+    double s = (x < 0 ? -1 : 1);
+    double pdec = pow(10.,ndec);
+    if (x == 0) return 0.;
+    x = dal::abs(x);
+    while (x > 1) { x /= 10.0; p*=10; }
+    while (x < 0.1) { x *= 10.0; p/=10; }
+    //cerr << "x=" << x << ", p=" << p << ", pdec=" << pdec << "\n";
+    x = s * (floor(x * pdec + 0.5) / pdec) * p;
+    return x;
+  }
 
   /* mesh file from emc2 [http://pauillac.inria.fr/cdrom/prog/unix/emc2/eng.htm], am_fmt format
 
@@ -277,11 +289,49 @@ namespace getfem {
     tri.resize(nbt*3);
     for (size_type i=0; i < nbt*3; ++i) f >> tri[i];
     for (size_type j=0; j < nbs; ++j) {
-      f >> P[0] >> P[1];
+      f >> P[0] >> P[1]; 
+      cerr.precision(16);
+      P[0]=round_to_nth_significant_number(P[0],6); // force 9.999999E-1 to be converted to 1.0
+      P[1]=round_to_nth_significant_number(P[1],6);
       if (m.add_point(P) != j) DAL_INTERNAL_ERROR("ouch");
     }
     for (size_type i=0; i < nbt*3; i+=3)
       m.add_triangle(tri[i]-1,tri[i+1]-1,tri[i+2]-1);
+  }
+
+  /* mesh file from emc2 [http://pauillac.inria.fr/cdrom/prog/unix/emc2/eng.htm], am_fmt format
+
+    triangular/quadrangular 2D meshes
+  */
+  static void import_emc2_mesh_file(std::ifstream& f, getfem_mesh& m) {
+    /* read the node list */
+    std::vector<size_type> tri;      
+    size_type nbs=0,nbt=0,nbq=0,dummy;
+    base_node P(2);
+    ftool::read_until(f,"Vertices");
+    f >> nbs;
+    for (size_type j=0; j < nbs; ++j) {
+      f >> P[0] >> P[1] >> dummy; 
+      if (m.add_point(P) != j) DAL_INTERNAL_ERROR("ouch");
+    }
+    while (!f.eof()) {
+      size_type ip[4];
+      std::string ls;
+      std::getline(f,ls);
+      if (ls.find("Triangles")+1) {
+        f >> nbt;
+        for (size_type i=0; i < nbt; ++i) {
+          f >> ip[0] >> ip[1] >> ip[2] >> dummy; ip[0]--; ip[1]--; ip[2]--;
+          m.add_triangle(ip[0],ip[1],ip[2]);
+        }
+      } else if (ls.find("Quadrangles")+1) {
+        f >> nbq;
+        for (size_type i=0; i < nbq; ++i) {
+          f >> ip[0] >> ip[1] >> ip[2] >> ip[3] >> dummy; ip[0]--; ip[1]--; ip[2]--; ip[3]--;
+          m.add_parallelepiped(2, &ip[0]);
+        }
+      } else if (ls.find("End")+1) break;
+    }
   }
 
   void import_mesh(const std::string& filename, const std::string& format, getfem_mesh& m) {
@@ -317,6 +367,8 @@ namespace getfem {
       import_gid_msh_file(f,m);
     else if (ftool::casecmp(format,"am_fmt")==0)
       import_am_fmt_file(f,m);
+    else if (ftool::casecmp(format,"emc2_mesh")==0)
+      import_emc2_mesh_file(f,m);
     else DAL_THROW(dal::failure_error, "can't import " << format << " mesh type : unknown mesh type");
   }
 }
