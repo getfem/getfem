@@ -84,7 +84,8 @@ dnl 	CXXFLAGS="$CXXFLAGS -ptr `pwd`/cxx_repository -std strict_ansi -O3"
  CC)
 	case $host in
 	*irix*)
-		echo "Using MIPSPRO CC on IRIX                          !!![ always use ./configure CXX=CC CC=cc LD=CC] "
+		echo "Using MIPSPRO CC on IRIX  (LD is set to CC)"
+		LD=CC   dnl sinon getfem_matlab a des problèmes (unresolved symbol __record_needed_destruction)
 dnl 		CXXFLAGS="$CXXFLAGS -LANG:std -O3 -OPT:Olimit=0:roundoff=3:div_split=ON:alias=typed -TARG:platform=ip25"
  		CXXFLAGS="$CXXFLAGS -LANG:std  -O3"
 		APPSCXXFLAGS="$CXXFLAGS"
@@ -130,15 +131,17 @@ dnl ------------------------------------------------------------------------
 dnl   init libtools for shared libraries
 dnl ------------------------------------------------------------------------
 
-AC_DISABLE_FAST_INSTALL
+dnl AC_DISABLE_FAST_INSTALL
 
 AM_ENABLE_STATIC
 
+dnl AM_PROG_LIBTOOL
 AM_PROG_LIBTOOL
+AC_SUBST([LIBTOOL_DEPS])
 
-AC_SUBST(LIBTOOL_VERSION_INFO)
+dnl AC_SUBST(LIBTOOL_VERSION_INFO)
 
-LIBTOOL_VERSION_INFO="-version-info ${MAJOR_VERSION}:${MINOR_VERSION}:0"
+dnl LIBTOOL_VERSION_INFO="-version-info ${MAJOR_VERSION}:${MINOR_VERSION}:0"
 
 dnl AC_CHECK_PROGS(RANLIB, ranlib)
 
