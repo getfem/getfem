@@ -534,12 +534,15 @@ namespace gmm {
     MAT1& M = const_cast<MAT1&>(MM); MAT2& Z = const_cast<MAT2&>(ZZ);
     typedef typename linalg_traits<MAT1>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
-    // to be optimized (use a hermitian tridiag matrix).
+    // to be optimized (use a hermitian tridiag matrix storage).
     size_type n = mat_nrows(M);
 
-    for (size_type i = 1; i < n; ++i) { // unusefull if the matrix is stored
-      T a = (M(i, i-1) + gmm::conj(M(i-1, i)))/R(2); // in an hermitian format
-      M(i, i-1) = a; M(i-1, i) = gmm::conj(a);
+    for (size_type i = 0; i < n; ++i) { // unusefull if the matrix is stored
+      M(i, i) = T(gmm::real(M(i, i)));  // in an hermitian format
+      if (i > 0) {
+	T a = (M(i, i-1) + gmm::conj(M(i-1, i)))/R(2);
+	M(i, i-1) = a; M(i-1, i) = gmm::conj(a);
+      }
     }
 
     T d = (M(n-2, n-2) - M(n-1, n-1)) / T(2);
@@ -547,8 +550,6 @@ namespace gmm {
     R e = gmm::abs_sqr(M(n-1, n-2));
     T mu = M(n-1, n-1) - T(e / (d + gmm::sgn(rd)*gmm::sqrt(rd*rd+e)));
     T x = M(0,0) - mu, z = M(1, 0), c, s;
-
-
 
     for (size_type k = 1; k < n; ++k) {
       Givens_rotation(x, z, c, s);
@@ -612,6 +613,7 @@ namespace gmm {
       symmetric_Wilkinson_qr_step(sub_matrix(Tri, SUBI), 
 				  sub_matrix(eigvect, SUBJ, SUBK), compvect);
       
+      // cout << "Tri = " << Tri << endl << "q = " << q << " p = " << p << endl;
       symmetric_qr_stop_criterion(Tri, p, q, tol*R(2));
       if (++ite > n*100) DAL_THROW(failure_error, "QR algorithm failed. "
 				   "Probably, your matrix is not real "
