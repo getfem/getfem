@@ -386,16 +386,18 @@ namespace getfem {
   struct mf_comp_vect : public std::vector<mf_comp> {
     const mesh_im *main_im;
   public:
-    mf_comp_vect() : std::vector<mf_comp>(), main_im(0) {}
+    mf_comp_vect() : std::vector<mf_comp>(), main_im(0) { }
+    mf_comp_vect(const mf_comp_vect &other) : std::vector<mf_comp>(other), main_im(other.main_im) {
+      for (size_type i=0; i < size(); ++i) (*this)[i].owner = this;
+    }
     void set_im(const mesh_im &mim) {
-      cerr << " set_im:" << &mim << "\n";
       main_im = &mim;
     }
     const mesh_im& get_im() const { 
-      cerr << "get_im: this = " << this << ", main_im=" << main_im << endl;
       return *main_im; 
     }
-    ~mf_comp_vect() { cerr << "delete called for "<< this<< endl; }
+  private:
+    mf_comp_vect& operator=(const mf_comp_vect &other);
   };
 
   void mf_comp::push_back_dimensions(size_type cv, tensor_ranges &rng,
@@ -414,8 +416,6 @@ namespace getfem {
       case NORMAL:
 	assert(pmf==0);
 	assert(&owner->get_im());
-	cerr << "Normal: mdim = " << int(owner->get_im().linked_mesh().dim()) << "\n";
-	cerr << "convex_index() = " << owner->get_im().linked_mesh().convex_index() << "\n";
 	assert(owner->get_im().linked_mesh().dim() != dim_type(-1));
 	rng.push_back(owner->get_im().linked_mesh().dim());
 	break;
@@ -670,8 +670,6 @@ namespace getfem {
 
     void check_shape_update(size_type cv, dim_type) {
       const mesh_im& mi = mfcomp.get_im();
-      cerr << "check_shape_update: mi = " << &mi << "\n";
-      cerr << "  -> mdim = " << int(mi.linked_mesh().dim()) << "\n";
       pintegration_method pim2;
       bgeot::pgeometric_trans pgt2;
       pgt2 = mi.linked_mesh().trans_of_convex(cv);
