@@ -99,18 +99,18 @@ namespace getfem {
     }
   };
 
-//   int check_symmetry(const base_tensor &t) {
-//     int flags = 7; size_type N = 3;
-//     for (size_type n = 0; n < N; ++n)
-//       for (size_type m = 0; m < N; ++m)
-// 	for (size_type l = 0; l < N; ++l)
-// 	  for (size_type k = 0; k < N; ++k) {
-// 	    if (dal::abs(t(n,m,l,k) - t(l,k,n,m))>1e-10) flags &= (~1); 
-// 	    if (dal::abs(t(n,m,l,k) - t(m,n,l,k))>1e-10) flags &= (~2); 
-// 	    if (dal::abs(t(n,m,l,k) - t(n,m,k,l))>1e-10) flags &= (~4);
-// 	  }
-//     return flags;
-//   }
+  int check_symmetry(const base_tensor &t) {
+    int flags = 7; size_type N = 3;
+    for (size_type n = 0; n < N; ++n)
+      for (size_type m = 0; m < N; ++m)
+	for (size_type l = 0; l < N; ++l)
+	  for (size_type k = 0; k < N; ++k) {
+	    if (dal::abs(t(n,m,l,k) - t(l,k,n,m))>1e-10) flags &= (~1); 
+	    if (dal::abs(t(n,m,l,k) - t(m,n,l,k))>1e-10) flags &= (~2); 
+	    if (dal::abs(t(n,m,l,k) - t(n,m,k,l))>1e-10) flags &= (~4);
+	  }
+    return flags;
+  }
 
   // TODO : fonctions à mettre dans le .C
 
@@ -320,21 +320,19 @@ namespace getfem {
 	  for (size_type m = 0; m < N; ++m)
 	    for (size_type l = 0; l < N; ++l)
 	      for (size_type k = 0; k < N; ++k) {
-		//scalar_type aux = (k == l) ? Sigma(m, l) : 0.0;
-		//scalar_type aux = (m == l) ? Sigma(k,n) : 0.0;
 		scalar_type aux = (k == n) ? Sigma(m,l) : 0.0;
 		for (size_type j = 0; j < N; ++j)
 		  for (size_type i = 0; i < N; ++i) {
 		    aux += gradU(n ,j) * gradU(k, i) * tt(j, m, i, l);
-		    //aux += gradU(n ,i) * gradU(j, k) * tt(i,m,j,l);
 		  }
 		t(n, m, k, l) = aux;
 	      }
-	/*cout << "sym = " << check_symmetry(t) << "\n";
-	  if (check_symmetry(t) != 7) cout << "t=" << t << "\n";*/
+	// cout << "sym = " << check_symmetry(t) << "\n";
+        if (check_symmetry(t) != 1)
+	  cout << "sym = " << check_symmetry(t) << "\n"  << "t=" << t << "\n";
       } else {
-	scalar_type J = gmm::lu_det(gradU);
-	if (J < 0) gmm::scale(gradU, 1e10);
+	// scalar_type J = gmm::lu_det(gradU);
+        // if (J < 0) gmm::scale(gradU, -1000);
 
 	for (size_type i = 0; i < N; ++i)
 	  for (size_type j = 0; j < N; ++j) {

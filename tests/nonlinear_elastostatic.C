@@ -5,7 +5,7 @@
 /* This program is free software; you can redistribute it and/or modify    */
 /* it under the terms of the GNU Lesser General Public License as          */
 /* published by the Free Software Foundation; version 2.1 of the License.  */
-/*                                                                        */
+/*                                                                         */
 /* This program is distributed in the hope that it will be useful,         */
 /* but WITHOUT ANY WARRANTY; without even the implied warranty of          */
 /* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           */
@@ -96,8 +96,8 @@ template <typename MODEL_STATE> void
     size_type ndof = problem.nb_dof();
     bool is_linear = problem.is_linear();
     //mtype alpha, alpha_min=mtype(1)/mtype(32), alpha_mult=mtype(3)/mtype(4);
-    mtype alpha, alpha_min=mtype(1)/mtype(1024), alpha_mult=mtype(2)/mtype(3);
-    mtype alpha_max_ratio(1);
+    mtype alpha, alpha_min=mtype(1)/mtype(1000000);
+    mtype alpha_mult=mtype(2)/mtype(3), alpha_max_ratio(2);
     dal::bit_vector mixvar;
     gmm::iteration iter_linsolv0 = iter;
     iter_linsolv0.set_maxiter(10000);
@@ -126,7 +126,9 @@ template <typename MODEL_STATE> void
 
       if (iter.get_noisy())
        	cout << "tangent matrix is "
-	     << (gmm::is_symmetric(MS.tangent_matrix()) ? "" : "not ")
+	     << (gmm::is_symmetric(MS.tangent_matrix(),
+				   1E-6*gmm::mat_maxnorm(MS.tangent_matrix()))
+		 ? "" : "not ")
 	     <<  "symmetric. ";
 
       if (1)
@@ -201,7 +203,7 @@ template <typename MODEL_STATE> void
 	  break;
 	}
       }
-      cout << "alpha = " << alpha << ", |U| = " << gmm::vect_norm2(MS.state()) << ", residu = " << act_res_new << "\n";
+      cout << "alpha = " << alpha << ", |U| = " << gmm::vect_norm2(MS.state()) << ", ";
       act_res = act_res_new; ++iter;
     }
   }

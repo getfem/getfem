@@ -1166,7 +1166,8 @@ namespace getfem {
       }
 //       if (iter.get_noisy())
 // 	cout << "tangent matrix is "
-// 	   << (gmm::is_symmetric(MS.tangent_matrix()) ? "" : "not ")
+// 	   << (gmm::is_symmetric(MS.tangent_matrix(),
+//             1E-6 * gmm::mat_maxnorm(MS.tangent_matrix())) ? "" : "not ")
 // 	   <<  "symmetric. ";
 
 #ifdef GMM_USES_SUPERLU
