@@ -31,11 +31,9 @@ namespace getfem {
     mesh_faces_by_pts_list lst;
     dal::bit_vector convex_tested;
   
-    //cerr << "outer_faces_of_mesh, cvlst=" << cvlst << endl;
     for (dal::bit_vector::const_iterator it_cv = cvlst.begin(); it_cv != cvlst.end(); ++it_cv) {
       if (!(*it_cv)) continue;
       size_type ic = it_cv.index();
-      //cerr << "outer_faces_of_mesh, doing cv " << ic << " of dimension " << int(m.structure_of_convex(ic)->dim()) << endl;
       if (m.structure_of_convex(ic)->dim() == m.dim()) {
 	for (size_type f = 0; f < m.structure_of_convex(ic)->nb_faces(); f++) {
 	  size_type idx = lst.add_norepeat(mesh_faces_by_pts_list_elt(ic,f,m.ind_points_of_face_of_convex(ic, f)));
@@ -48,7 +46,6 @@ namespace getfem {
 	lst[idx].cnt++;
       }
     }
-
     size_type fcnt = 0;
     for (size_type i = 0; i < lst.size(); i++)
       if (lst[i].cnt == 1) ++fcnt;
@@ -130,9 +127,10 @@ namespace getfem {
     bgeot::stored_point_tab refpts(nodes.size());
     Uval.resize(nodes.size());
     base_vector coeff;
-    base_matrix G; /* --- TODO --- : transfert_to_G ? */
+    base_matrix G;
     pfem pf = mfU.pmf->fem_of_element(cv);
     _fem_precomp fprecomp;
+    if (pf->need_G())transfert_to_G(G, mfU.pmf->linked_mesh().points_of_convex(cv));
     for (size_type i=0; i < nodes.size(); ++i) refpts[i] = nodes[i].pt_ref;
     fem_precomp_not_stored(pf, &refpts, fprecomp);
     mfU.copy(cv, coeff);
@@ -467,6 +465,7 @@ namespace getfem {
     return o;
   }
 
+  /* apply a precompted deformation before slicing */
   class mesh_slice_pre_deform {
     mesh_slice_cv_dof_data_base *defdata;
     pfem pf;
@@ -488,6 +487,7 @@ namespace getfem {
       if (defdata) {
         if (force_update || defdata->pmf->fem_of_element(cv) != pf) {
           pf = defdata->pmf->fem_of_element(cv);
+	  if (pf->need_G())transfert_to_G(G, defdata->pmf->linked_mesh().points_of_convex(cv));
           fem_precomp_not_stored(pf, &refpts, fprecomp);
         }
         defdata->copy(cv, coeff);
@@ -580,9 +580,10 @@ namespace getfem {
   }
 
   /* of course, nodes created from edge/slice intersection are almost always duplicated */
-  mesh_slice::mesh_slice(const getfem_mesh& m_, slicer* ms, size_type nrefine, 
-                         convex_face_ct& in_cvlst, mesh_slice_cv_dof_data_base *def_mf_data) 
-    : m(m_), simplex_cnt(m.dim()+1, size_type(0)), points_cnt(0), _dim(m.dim()) {
+  void mesh_slice::build(slicer* ms, size_type nrefine, 
+			 convex_face_ct& in_cvlst, mesh_slice_cv_dof_data_base *def_mf_data) 
+  {
+    if (cvlst.size()) DAL_THROW(dal::failure_error, "non empty slice: should use mesh_slice::merge");
     _geotrans_precomp gp;
     bgeot::stored_point_tab cvm_pts;
     bgeot::pconvex_ref prev_cvr = 0;
@@ -603,7 +604,6 @@ namespace getfem {
       size_type face = (*it).f;
       bgeot::pconvex_ref cvr = m.trans_of_convex(cv)->convex_ref();
 
-      //cerr << "mesh_slice::mesh_slice: doing convex " << cv << endl;
       /* update structure-dependent data */
       if (prev_cvr != cvr) {
 	prev_cvr = cvr;
@@ -620,18 +620,50 @@ namespace getfem {
         cvms = getfem::refined_simplex_mesh_for_convex_faces(cvr, nrefine)[face];
       else
         cvms = cvm; 
-
-      /*cerr << "doing convex " << cv << ", face=" << face << ", cvm->nb_convex=" << cvm->nb_convex() 
-	<< ", cvms->nb_convex=" << cvms->nb_convex() << endl;*/
-
-
       def->apply(m, cvms, gp, cvm_pts, points_on_faces, cv_nodes, cv_simplexes);
 
       dal::bit_vector splx_in; splx_in.add(0, cv_simplexes.size());
       do_slicing(cv, cvr, ms, cv_nodes, cv_simplexes, splx_in);
     }
-    //cerr << *this << endl;
   }
+
+  void mesh_slice::build_from_slice(const mesh_slice& sl, slicer* ms) 
+  {
+    if (cvlst.size()) DAL_THROW(dal::failure_error, "non empty slice: should use mesh_slice::merge");
+    if (&sl.linked_mesh() != &m) DAL_THROW(dal::failure_error, "wrong mesh");
+    cs_nodes_ct cv_nodes;
+    cs_simplexes_ct cv_simplexes;
+    for (cvlst_ct::const_iterator it = sl.cvlst.begin(); it != sl.cvlst.end(); ++it) {
+      cv_nodes = it->nodes;
+      cv_simplexes = it->simplexes;
+      dal::bit_vector splx_in; splx_in.add(0, cv_simplexes.size());
+      do_slicing(it->cv_num, m.trans_of_convex(it->cv_num)->convex_ref(), ms, cv_nodes, cv_simplexes, splx_in);
+    }
+  }
+  
+  void mesh_slice::build_from_points(const std::vector<base_node>& pts, slicer* ms) {
+    if (cvlst.size()) DAL_THROW(dal::failure_error,"non empty slice: should use mesh_slice::merge");
+    bgeot::geotrans_inv gti;
+    gti.add_points(pts);
+    dal::bit_vector nn = m.convex_index();
+    dal::dynamic_array<base_node> ptab;
+    dal::dynamic_array<size_type> itab;
+    cs_nodes_ct cv_nodes;
+    cs_simplexes_ct cv_simplexes;
+    for (size_type cv = nn.take_first(); cv != size_type(-1); cv << nn) {
+      bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
+      size_type nb = gti.points_in_convex(m.convex(cv), pgt, ptab, itab);
+      if (nb) {
+	for (size_type i=0; i < nb; ++i) {
+	  cv_nodes.push_back(slice_node(pts[itab[i]],ptab[i])); cv_nodes.back().faces=0;
+	  cv_simplexes.push_back(slice_simplex(1)); cv_simplexes.back().inodes[0] = cv_nodes.size()-1;
+	}
+	dal::bit_vector splx_in; splx_in.add(0, cv_simplexes.size());
+	do_slicing(cv, pgt->convex_ref(), ms, cv_nodes, cv_simplexes, splx_in);
+      }
+    }
+  }
+
 
   void mesh_slice::merge(const mesh_slice& sl) {
     if (dim() != sl.dim()) DAL_THROW(dal::dimension_error, "inconsistent dimensions for slice merging");

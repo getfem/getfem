@@ -8,6 +8,8 @@
 #include <getfem_poly_composite.h>
 
 namespace getfem {
+
+  /* this should not stay here .. */
   struct convex_face  {
     size_type cv;
     size_type f;
@@ -60,6 +62,7 @@ namespace getfem {
     typedef std::vector<slice_node> cs_nodes_ct;
     typedef std::vector<slice_simplex> cs_simplexes_ct;
   private:
+    /* nodes lists and simplexes lists for each convex of the original mesh */
     struct convex_slice {
       size_type cv_num; 
       dim_type cv_dim;
@@ -68,6 +71,8 @@ namespace getfem {
       cs_simplexes_ct simplexes;
     };
     typedef std::deque<convex_slice> cvlst_ct;
+
+    /* keep track of the original mesh (hence it should not be destroyed before the slice) */
     const getfem_mesh& m;
     std::vector<size_type> simplex_cnt; // count simplexes of dimension 0,1,...,dim
     size_type points_cnt;
@@ -76,14 +81,45 @@ namespace getfem {
     void do_slicing(size_type cv, bgeot::pconvex_ref cvr, slicer *ms, cs_nodes_ct cv_nodes, 
 		    cs_simplexes_ct cv_simplexes, dal::bit_vector& splx_in);
   protected:
-    mesh_slice(const getfem_mesh& m);
     size_type set_convex(size_type pos, size_type cv, bgeot::pconvex_ref cvr, 
                          cs_nodes_ct cv_nodes, cs_simplexes_ct cv_simplexes, 
                          dim_type fcnt, dal::bit_vector& splx_in);
 
   public:
-    mesh_slice(const getfem_mesh& m, slicer* ms, size_type nrefine, 
-               convex_face_ct& cvlst, mesh_slice_cv_dof_data_base *def_mf_data=0);
+    mesh_slice(const getfem_mesh& m);
+    virtual ~mesh_slice() {}
+    /**
+       build a new mesh_slice given:
+       @param m the mesh that is to be sliced
+       @param ms a slicer
+       @param nrefine number of refinments for each convex of the original mesh
+       @param cvlst the list of convex numbers (or convex faces) of m that will 
+       be taken into account for the slice
+       @param def_mf_data an optional pointer to a mesh_slice_cv_dof_data object 
+       describing a deformation to apply to the mesh before slicing it.
+    */
+    void build(slicer* ms, size_type nrefine, convex_face_ct& cvlst, 
+	       mesh_slice_cv_dof_data_base *def_mf_data=0);
+
+    /**
+       build a new mesh slice given:
+       @param sl an initial mesh_slice
+       @param ms a slicer
+    */
+    void build_from_slice(const mesh_slice& sl, slicer* ms);
+
+    /**
+       build a new mesh_slice than can be used to interpolate a field
+       on a fixed set of points.
+
+       @param m the mesh that is to be sliced
+       @param ms a slicer
+       @param cvlst the list of convex numbers (or convex faces) of m that will 
+       be taken into account for the slice       
+       @param pts the list of points
+     */
+    void build_from_points(const std::vector<base_node>& pts, slicer* ms);
+		      
     size_type nb_convex() const { return cvlst.size(); }
     size_type convex_num(size_type ic) const { return cvlst[ic].cv_num; }
     size_type dim() const { return _dim; }
@@ -116,6 +152,7 @@ namespace getfem {
         refpts.resize(nodes(i).size());
         for (size_type j=0; j < refpts.size(); ++j) refpts[j] = nodes(i)[j].pt_ref;
         pfem pf = mf.fem_of_element(cv);
+	if (pf->need_G())transfert_to_G(G, mf.linked_mesh().points_of_convex(cv));
         fem_precomp_not_stored(pf, &refpts, fprecomp);
         
         ref_mesh_dof_ind_ct dof = mf.ind_dof_of_element(cv);
@@ -173,24 +210,21 @@ namespace getfem {
   
   /**
      generic slicer class: given a list of slice_simplex/slice_node, it 
-     build a news list of slice_simplex/slice_node
+     build a news list of slice_simplex/slice_node, indicating which ones 
+     are in the slice with the bit_vector splx_in
   */
   class slicer {
   public:
-    //enum { IN=1, BOUND=2, OUT=4 };
     static const float EPS;
     virtual void slice(size_type cv, dim_type& fcnt,
                        mesh_slice::cs_nodes_ct& nodes, mesh_slice::cs_simplexes_ct& splxs, 
                        dal::bit_vector& splx_in) = 0;    
-    /*    size_type is_in(const mesh_slice::cs_nodes_ct& nodes, const slice_simplex& s, int where=IN|BOUND) const {
-      size_type in_cnt = 0;
-      for (size_type i=0; i < s.dim()+1; ++i)
-        if (is_in(nodes[s.inodes[i]].pt,where)) ++in_cnt;
-      return in_cnt;
-      }*/
     virtual ~slicer() {}
   };
 
+  /**
+     extraction of the boundary of a slice
+  */
   class slicer_boundary : public slicer {
     slicer *A;
     std::vector<slice_node::faces_ct> convex_faces;
@@ -203,6 +237,9 @@ namespace getfem {
                dal::bit_vector& splx_in);
   };
 
+  /**
+     base class for general slices of a mesh (planar, sphere, cylinder,isosurface)
+  */
   class slicer_volume : public slicer {
   protected:
     enum {VOLIN=-1, VOLBOUND=0, VOLOUT=+1}; 
@@ -245,6 +282,9 @@ namespace getfem {
 	       dal::bit_vector& splx_in);
   };
 
+  /**
+     slices a mesh with a half-space (or its boundary)
+  */
   class slicer_half_space : public slicer_volume {
     base_node x0, n; /* normal directed from inside toward outside */
     void test_point(const base_node& P, bool& in, bool& bound) const {
@@ -267,6 +307,9 @@ namespace getfem {
     }
   };
 
+  /**
+     slices a mesh with a sphere (or its boundary)
+  */
   class slicer_sphere : public slicer_volume {
     base_node x0;
     scalar_type R;
@@ -289,6 +332,9 @@ namespace getfem {
       slicer_volume(orient_), x0(x0_), R(R_) {} //cerr << "slicer_volume, x0=" << x0 << ", R=" << R << endl; }
   };
   
+  /**
+     slices a mesh with a cylinder (or its boundary)
+  */
   class slicer_cylinder : public slicer_volume {
     base_node x0, d;
     scalar_type R;
@@ -315,6 +361,9 @@ namespace getfem {
   };
 
 
+  /**
+     extract an isosurface
+  */
   class slicer_isovalues : public slicer_volume {
     const mesh_slice_cv_dof_data_base& mfU;
     scalar_type val;
@@ -322,7 +371,7 @@ namespace getfem {
     std::vector<scalar_type> Uval;
     void prepare(size_type cv, const mesh_slice::cs_nodes_ct& nodes);
     scalar_type edge_intersect(size_type iA, size_type iB, const mesh_slice::cs_nodes_ct& /*nodes*/) const {
-      assert(iA < Uval.size() && iB < Uval.size()); /* this should nver happen! */
+      assert(iA < Uval.size() && iB < Uval.size()); /* this should never happen! */
       if (((Uval[iA] < val) && (Uval[iB] > val)) ||
 	  ((Uval[iA] > val) && (Uval[iB] < val)))
 	return (val-Uval[iA])/(Uval[iB]-Uval[iA]);
@@ -337,7 +386,9 @@ namespace getfem {
     }
   };
 
-
+  /**
+     union of two slices
+  */
   class slicer_union : public slicer {
     slicer *A, *B;
   public:
@@ -353,6 +404,9 @@ namespace getfem {
 	       dal::bit_vector& splx_in);
   };
 
+  /**
+     intersection of two slices
+  */
   class slicer_intersect : public slicer {
     slicer *A, *B;
   public:
@@ -368,6 +422,9 @@ namespace getfem {
 	       dal::bit_vector& splx_in);
   };
 
+  /**
+     complementary of a slice
+  */
   class slicer_complementary : public slicer {
     slicer *A;
   public:
@@ -381,7 +438,9 @@ namespace getfem {
   };
   
 
-  /** this slicer does nothing! */
+  /** 
+      this slicer does nothing! 
+  */
   class slicer_none : public slicer {
   public:
     slicer_none() {}
