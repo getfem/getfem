@@ -47,159 +47,125 @@
 #define __GMM_INOUTPUT_H
 
 namespace gmm {
-  
-  // A Matrix File Input Stream for Harwell-Boeing Matrix Files (from MTL)
-  //  
-  //  This class simplifies the job of creating matrices from files stored
-  //  in the Harwell-Boeing format. All matrix types have a constructor that
-  //  takes a harwell_boeing_stream object. One can also access the
-  //  elements from a matrix stream using  operator>>(). The stream
-  //  handles both real and complex numbers.
-  //
-  //   Usage:
-  //     harwell_boeing_stream mms( fielname );
-  //     Matrix A(mms);
-  //
-  template <class T>
-  class harwell_boeing_stream {
-  public:
-    
-    int readHB_info(const char* filename, int* M, 
-		    int* N, int* nz, char** Type, int* Nrhs);
-    
-    int readHB_header(FILE* in_file, char* Title,
-		      char* Key, char* Type, 
-		      int* Nrow, int* Ncol, int* Nnzero, int* Nrhs,
-		      char* Ptrfmt, char* Indfmt, char* Valfmt, char* Rhsfmt, 
-		      int* Ptrcrd, int* Indcrd, int* Valcrd, int* Rhscrd, 
-		      char *Rhstype);
 
-    int readHB_mat_double(const char* filename, int colptr[], int rowind[], 
-			  double val[]);
+  /*************************************************************************/
+  /*                                                                       */
+  /*  Functions to read and write Harwell Boeing format.                   */
+  /*                                                                       */
+  /*************************************************************************/
 
-    int writeHB_mat_double(const char* filename, int M, int N, 
-			   int nz, const int colptr[], const int rowind[], 
-			   const double val[], int Nrhs, const double rhs[], 
-			   const double guess[], const double exact[],
-			   const char* Title, const char* Key,
-			   const char* Type, char* Ptrfmt, char* Indfmt,
-			   char* Valfmt, char* Rhsfmt, const char* Rhstype);
-      
-    void IOHBTerminate(char *txt) { DAL_THROW(failure_error, txt); }
+  inline void IOHBTerminate(const char *a) { DAL_THROW(failure_error, a); }
 
-    void upcase(char* S)
-    { if (S) for (int i = 0; i < strlen(S); i++) S[i] = toupper(S[i]); }
-    
-    //: Construct from file name
-    harwell_boeing_stream(char* filename) {
-      int Nrhs;
-      char* Type;
-      Type = new char[4];
-      isComplex = false;
-      readHB_info(filename, &M, &N, &nonzeros, &Type, &Nrhs);
-      colptr = new int(N+1);
-      rowind = new int(nonzeros);
-      if (!rowind || !colptr)
-	DAL_THROW(failure_error, "Insufficient memory for rowind.\n");
-      
-      if (Type[0] == 'C') {
-	isComplex = true;
-	val = new double[nonzeros*2];
-	if (!val) DAL_THROW(failure_error, "Insufficient memory for val.\n");
-	
-      } else {
-	if (Type[0] != 'P') {   
-	  val = new double[nonzeros];
-	  if (!val) DAL_THROW(failure_error, "Insufficient memory for val.\n");
-	}
-      }
-      
-      readHB_mat_double(filename, colptr, rowind, (double *)(val));
-      
-      cnt = 0;
-      col = 0;
-      delete [] Type;
+  inline char* substr(const char* S, int pos, int len) {
+    int i;
+    char *SubS;
+    if ( pos+len <= int(strlen(S))) {
+      SubS = (char *)malloc(len+1);
+      if ( SubS == 0 ) IOHBTerminate("Insufficient memory for SubS.");
+      for (i=0;i<len;i++) SubS[i] = S[pos+i];
+      SubS[len] = (char) NULL;
+    } else {
+      SubS = NULL;
     }
-    //: Destructor
-    ~harwell_boeing_stream() { free(colptr); free(rowind); free(val); }
-    
-    inline int nrows() const { return M; }
-    inline int ncols() const { return N; }
-    inline int nnz() const { return nonzeros; }
-    inline bool eof() { return cnt == nonzeros; }
-    inline bool is_complex() { return isComplex; }
-    
-    /*  JGS see above */
-    int cnt;
-    int col; /* use it in >> to refer to current col index */
-    int* colptr;
-    bool isComplex;
-    int M;
-    int N;
-    int nonzeros;
-    int* rowind;
-    T* val;
-    
-  };
-  
-  int harwell_boeing_stream::readHB_info(const char* filename, int* M, 
-				     int* N, int* nz, char** Type, int* Nrhs)
-  {
-    /***********************************************************************/
-    /*  The readHB_info function opens and reads the header information    */
-    /*  form the specified Harwell-Boeing file, and reports back the       */
-    /*  number of rows and columns in the stored matrix (M and N), the     */
-    /*  number of nonzeros in the matrix (nz), and the number of           */
-    /*  right-hand-sides stored along with the matrix (Nrhs).              */
-    /*                                                                     */
-    /*  For a description of the Harwell Boeing standard, see:             */
-    /*            Duff, et al.,  ACM TOMS Vol.15, No.1, March 1989         */
-    /*                                                                     */
-    /*    ----------                                                       */
-    /*    **CAVEAT**                                                       */
-    /*    ----------                                                       */
-    /*  **  If the input file does not adhere to the H/B format, the  **   */
-    /*  **             results will be unpredictable.                 **   */
-    /*                                                                     */
-    /***********************************************************************/
-    FILE *in_file;
-    int Ptrcrd, Indcrd, Valcrd, Rhscrd; 
-    int Nrow, Ncol, Nnzero;
-    char* mat_type;
-    char Title[73], Key[9], Rhstype[4];
-    char Ptrfmt[17], Indfmt[17], Valfmt[21], Rhsfmt[21];
+    return SubS;
+  }
 
-    mat_type = *Type;
-    if ( mat_type == NULL ) IOHBTerminate("Insufficient memory for mat_typen");
+  inline void upcase(char *t)
+  { if (t) while (*t) { *t = toupper(*t); ++t; } }
+
+  inline int ParseIfmt(char* fmt, int* perline, int* width) {
+    /*************************************************/
+    /*  Parse an *integer* format field to determine */
+    /*  width and number of elements per line.       */
+    /*************************************************/
+    char *tmp;
+    if (fmt == NULL ) {
+      *perline = 0; *width = 0; return 0;
+    }
+    tmp = strchr(fmt,'(');
+    tmp = substr(fmt,tmp - fmt + 1, strchr(fmt,'I') - tmp - 1);
+    *perline = atoi(tmp);
+    tmp = strchr(fmt,'I');
+    tmp = substr(fmt,tmp - fmt + 1, strchr(fmt,')') - tmp - 1);
+    return *width = atoi(tmp);
+  }
+  
+  inline int ParseRfmt(char* fmt, int* perline, int* width,
+		       int* prec, int* flag) {
+    /*************************************************/
+    /*  Parse a *real* format field to determine     */
+    /*  width and number of elements per line.       */
+    /*  Also sets flag indicating 'E' 'F' 'P' or 'D' */
+    /*  format.                                      */
+    /*************************************************/
+    char* tmp;
+    char* tmp2;
+    char* tmp3;
+    int len;
     
-    if ( (in_file = fopen( filename, "r")) == NULL ) {
-      fprintf(stderr,"Error: Cannot open file: %s\n",filename);
+    if (fmt == NULL ) {
+      *perline = 0; 
+      *width = 0; 
+      flag = NULL;  
       return 0;
     }
     
-    readHB_header(in_file, Title, Key, mat_type, &Nrow, &Ncol, &Nnzero, Nrhs,
-                  Ptrfmt, Indfmt, Valfmt, Rhsfmt, 
-                  &Ptrcrd, &Indcrd, &Valcrd, &Rhscrd, Rhstype);
-    fclose(in_file);
-    *Type = mat_type;
-    *(*Type+3) = (char) NULL;
-    *M    = Nrow;
-    *N    = Ncol;
-    *nz   = Nnzero;
-    if (Rhscrd == 0) {*Nrhs = 0;}
-    return 1;
-    
+    if (strchr(fmt,'(') != NULL)  fmt = strchr(fmt,'(');
+    if (strchr(fmt,')') != NULL)  {
+      tmp2 = strchr(fmt,')');
+      while ( strchr(tmp2+1,')') != NULL ) {
+	tmp2 = strchr(tmp2+1,')');
+      }
+      // *(tmp2+1) = 0;
+    }
+    if (strchr(fmt,'P') != NULL)  /* Remove any scaling factor, which */
+      {                             /* affects output only, not input */
+	if (strchr(fmt,'(') != NULL) {
+	  tmp = strchr(fmt,'P');
+	  if ( *(++tmp) == ',' ) tmp++;
+	  tmp3 = strchr(fmt,'(')+1;
+	  len = tmp-tmp3;
+	  tmp2 = tmp3;
+	  while ( *(tmp2+len) != 0 ) {
+	    *tmp2=*(tmp2+len);
+	    tmp2++; 
+	  }
+	  // *(strchr(fmt,')')+1) = 0;
+	}
+      }
+    if (strchr(fmt,'E') != NULL) { 
+      *flag = 'E';
+    } else if (strchr(fmt,'D') != NULL) { 
+      *flag = 'D';
+    } else if (strchr(fmt,'F') != NULL) { 
+      *flag = 'F';
+    } else {
+      fprintf(stderr,"Real format %s in H/B file not supported.\n",fmt);
+      return 0;
+    }
+    tmp = strchr(fmt,'(');
+    tmp = substr(fmt,tmp - fmt + 1, strchr(fmt,*flag) - tmp - 1);
+    *perline = atoi(tmp);
+    tmp = strchr(fmt,*flag);
+    if ( strchr(fmt,'.') ) {
+      *prec = atoi(substr( fmt, strchr(fmt,'.') - fmt + 1, strchr(fmt,')') 
+			   - strchr(fmt,'.')-1) );
+      tmp = substr(fmt,tmp - fmt + 1, strchr(fmt,'.') - tmp - 1);
+    } else {
+      tmp = substr(fmt,tmp - fmt + 1, strchr(fmt,')') - tmp - 1);
+    }
+    return *width = atoi(tmp);
   }
   
-  int harwell_boeing_stream::readHB_header(FILE* in_file, char* Title,
-					   char* Key, char* Type, 
-					   int* Nrow, int* Ncol, int* Nnzero,
-					   int* Nrhs, char* Ptrfmt,
-					   char* Indfmt, char* Valfmt,
-					   char* Rhsfmt, int* Ptrcrd,
-					   int* Indcrd, int* Valcrd,
-					   int* Rhscrd, char *Rhstype)
-  {
+  
+  inline int readHB_header(FILE* in_file, char* Title,
+			   char* Key, char* Type, 
+			   int* Nrow, int* Ncol, int* Nnzero,
+			   int* Nrhs, char* Ptrfmt,
+			   char* Indfmt, char* Valfmt,
+			   char* Rhsfmt, int* Ptrcrd,
+			   int* Indcrd, int* Valcrd,
+			   int* Rhscrd, char *Rhstype) {
     /*************************************************************************/
     /*  Read header information from the named H/B file...                   */
     /*************************************************************************/
@@ -267,10 +233,59 @@ namespace gmm {
     return 1;
   }
   
-  int harwell_boeing_stream::readHB_mat_double(const char* filename,
-					       int colptr[], int rowind[], 
-					       double val[])
-  {
+  inline int readHB_info(const char* filename, int* M, 
+		  int* N, int* nz, char** Type, int* Nrhs) {
+    /***********************************************************************/
+    /*  The readHB_info function opens and reads the header information    */
+    /*  form the specified Harwell-Boeing file, and reports back the       */
+    /*  number of rows and columns in the stored matrix (M and N), the     */
+    /*  number of nonzeros in the matrix (nz), and the number of           */
+    /*  right-hand-sides stored along with the matrix (Nrhs).              */
+    /*                                                                     */
+    /*  For a description of the Harwell Boeing standard, see:             */
+    /*            Duff, et al.,  ACM TOMS Vol.15, No.1, March 1989         */
+    /*                                                                     */
+    /*    ----------                                                       */
+    /*    **CAVEAT**                                                       */
+    /*    ----------                                                       */
+    /*  **  If the input file does not adhere to the H/B format, the  **   */
+    /*  **             results will be unpredictable.                 **   */
+    /*                                                                     */
+    /***********************************************************************/
+    FILE *in_file;
+    int Ptrcrd, Indcrd, Valcrd, Rhscrd; 
+    int Nrow, Ncol, Nnzero;
+    char* mat_type;
+    char Title[73], Key[9], Rhstype[4];
+    char Ptrfmt[17], Indfmt[17], Valfmt[21], Rhsfmt[21];
+
+    mat_type = *Type;
+    if ( mat_type == NULL ) IOHBTerminate("Insufficient memory for mat_typen");
+    
+    if ( (in_file = fopen( filename, "r")) == NULL ) {
+      fprintf(stderr,"Error: Cannot open file: %s\n",filename);
+      return 0;
+    }
+    
+    readHB_header(in_file, Title, Key, mat_type, &Nrow, &Ncol, &Nnzero, Nrhs,
+                  Ptrfmt, Indfmt, Valfmt, Rhsfmt, 
+                  &Ptrcrd, &Indcrd, &Valcrd, &Rhscrd, Rhstype);
+    fclose(in_file);
+    *Type = mat_type;
+    *(*Type+3) = (char) NULL;
+    *M    = Nrow;
+    *N    = Ncol;
+    *nz   = Nnzero;
+    if (Rhscrd == 0) {*Nrhs = 0;}
+    return 1;
+    
+  }
+  
+
+  
+  inline int readHB_mat_double(const char* filename,
+			       size_type colptr[], size_type rowind[], 
+			       double val[]) {
     /************************************************************************/
     /*  This function opens and reads the specified file, interpreting its  */
     /*  contents as a sparse matrix stored in the Harwell/Boeing standard   */
@@ -319,7 +334,7 @@ namespace gmm {
     
     /*  Read column pointer array:   */
     
-    offset = 1-_SP_base;/* if base 0 storage is declared (via macro def),  */
+    offset = 0;         /* if base 0 storage is declared (via macro def),  */
                         /* then storage entries are offset by 1            */
     
     ThisElement = (char *) malloc(Ptrwidth+1);
@@ -412,21 +427,20 @@ namespace gmm {
   }
 
 
-  int harwell_boeing_stream::writeHB_mat_double(const char* filename,
-						int M, int N, int nz,
-						const int colptr[],
-						const int rowind[], 
-						const double val[], int Nrhs,
-						const double rhs[], 
-						const double guess[],
-						const double exact[],
-						const char* Title,
-						const char* Key,
-						const char* Type, 
-						char* Ptrfmt, char* Indfmt,
-						char* Valfmt, char* Rhsfmt,
-						const char* Rhstype)
-  {
+  inline int writeHB_mat_double(const char* filename,
+				int M, int N, int nz,
+				const size_type colptr[],
+				const size_type rowind[], 
+				const double val[], int Nrhs,
+				const double rhs[], 
+				const double guess[],
+				const double exact[],
+				const char* Title,
+				const char* Key,
+				const char* Type, 
+			        char* Ptrfmt, char* Indfmt,
+			        char* Valfmt, char* Rhsfmt,
+				const char* Rhstype, int shift) {
     /************************************************************************/
     /*  The writeHB function opens the named file and writes the specified  */
     /*  matrix and optional right-hand-side(s) to that file in              */
@@ -462,7 +476,7 @@ namespace gmm {
       }
     } else out_file = stdout;
     
-    if ( Ptrfmt == NULL ) Ptrfmt = "(8I10)";
+    if ( Ptrfmt == NULL ) Ptrfmt = const_cast<char *>("(8I10)");
     ParseIfmt(Ptrfmt,&Ptrperline,&Ptrwidth);
     sprintf(pformat,"%%%dd",Ptrwidth);
     ptrcrd = (N+1)/Ptrperline;
@@ -475,7 +489,7 @@ namespace gmm {
     if ( nz%Indperline != 0) indcrd++;
     
     if ( Type[0] != 'P' ) {          /* Skip if pattern only  */
-      if ( Valfmt == NULL ) Valfmt = "(4E20.13)";
+      if ( Valfmt == NULL ) Valfmt = const_cast<char *>("(4E20.13)");
       ParseRfmt(Valfmt,&Valperline,&Valwidth,&Valprec,&Valflag);
       if (Valflag == 'D') *strchr(Valfmt,'D') = 'E';
       if (Valflag == 'F')
@@ -516,8 +530,8 @@ namespace gmm {
       fprintf(out_file,"%-20s\n%-14s%d\n",Rhsfmt,Rhstype,Nrhs);
     } else fprintf(out_file,"\n");
     
-    offset = 1-_SP_base;  /* if base 0 storage is declared (via macro def), */
-                          /* then storage entries are offset by 1           */
+    offset = 1 - shift;  /* if base 0 storage is declared (via macro def), */
+                         /* then storage entries are offset by 1           */
     
     /*  Print column pointers:   */
     for (i=0;i<N+1;i++) {
@@ -596,6 +610,64 @@ namespace gmm {
     } else return 1;
     
   }
+
+  // not securized, to be used with "double" or "std::complex<double>"
+
+  template <class T, int shift> void
+  Harwell_Boeing_save(const char *filename, const csc_matrix<T, shift>& A) {
+    static const char *type1 = "RRA";  // real not squared
+    static const char *type2 = "RUA";  // real squared
+    static const char *type3 = "CRA";  // complex not squared
+    static const char *type4 = "CUA";  // complex squared
+    const char *t = 0;
+
+    if (sizeof(T) == sizeof(std::complex<double>))
+      if (mat_nrows(A) == mat_ncols(A)) t = type4; else t = type3;
+    else
+      if (mat_nrows(A) == mat_ncols(A)) t = type2; else t = type1;
+    
+    writeHB_mat_double(filename, mat_nrows(A), mat_ncols(A),
+		       A.jc[mat_ncols(A)], A.jc, A.ir,
+		       (double *)A.pr,
+		       0, 0, 0, 0, "GETFEM++ CSC MATRIX", "CSCMAT",
+		       t, 0, 0, 0, 0, "F", shift);
+  }
+
+  template <class T, int shift> void
+  Harwell_Boeing_load(const char *filename, csc_matrix<T, shift>& A) {
+    int M, N, nonzeros;
+    int Nrhs;
+    char* Type;
+    Type = new char[4];
+    readHB_info(filename, &M, &N, &nonzeros, &Type, &Nrhs);
+
+    if (A.pr) { delete[] A.pr; delete[] A.ir; delete[] A.jc; }
+    A.nc = N; A.nr = M;
+    A.jc = new size_type[N+1];
+    A.ir = new size_type[nonzeros];
+    if (!(A.jc) || !(A.ir))
+      DAL_THROW(failure_error, "Insufficient memory for rowind.\n");
+    
+    if (Type[0] == 'C') {
+      A.pr = new double[2*nonzeros];
+      if (!(A.pr)) DAL_THROW(failure_error, "Insufficient memory for val.\n");
+      
+    } else {
+      if (Type[0] != 'P') { 
+	A.pr = new double[nonzeros];
+	if (!(A.pr))
+	  DAL_THROW(failure_error, "Insufficient memory for val.\n");
+      }
+    }
+    readHB_mat_double(filename, A.jc, A.ir, (double *)(A.pr));
+    for (size_type i = 0; i <= N; ++i)
+      { A.jc[i] += shift; A.jc[i] -= 1; }
+    for (size_type i = 0; i < nonzeros; ++i)
+      { A.ir[i] += shift; A.ir[i] -= 1; }
+    delete [] Type;
+  }
+
+
 
 }
 
