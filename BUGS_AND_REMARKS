@@ -16,7 +16,8 @@ ___________________________________________________________________________
 cxx need the following definition
 #define __USE_STD_IOSTREAM
 which is present in dal_std.h. This means that dal_std.h should be include
-first in any application which uses GETFEM
+first in any application which uses GETFEM (or __USE_STD_IOSTREAM should be
+defined before any standard include file)
 ___________________________________________________________________________
 
 
