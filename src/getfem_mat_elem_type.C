@@ -120,7 +120,7 @@ namespace getfem {
       case GETFEM_GRAD_      : *itmf++ = *(*itm)++; *itmf++ = *(*itm)++; break;
       case GETFEM_HESSIAN_   : *itmf++ = *(*itm)++; *itmf++ = *(*itm)++; break;
       case GETFEM_NONLINEAR_ :
-	for (dim_type i = 0; i < (*it).nlt->dim(); ++i) *itmf++ = *(*itm)++;
+	for (dim_type i = 0; i < (*it).nlt->sizes().size(); ++i) *itmf++ = *(*itm)++;
 	break;
       }
     }

@@ -131,7 +131,7 @@ namespace getfem
 	  break;
 	case GETFEM_HESSIAN_ : ++k; hess_reduction.push_back(k); break;
 	case GETFEM_NONLINEAR_ :
-	  for (dim_type ii = 1; ii < (*it).nlt->dim(); ++ii) ++k;
+	  for (dim_type ii = 1; ii < (*it).nlt->sizes().size(); ++ii) ++k;
 	  if (is_ppi)
 	    DAL_THROW(failure_error,
 	       "For nonlinear terms you have to use approximated integration");
@@ -188,7 +188,7 @@ namespace getfem
 	  break;
 	case GETFEM_NONLINEAR_ :
 	  (*it).nlt->compute(ctx, elmt_stored[k]);
-	  for (dim_type ii = 1; ii < (*it).nlt->dim(); ++ii) ++mit;
+	  for (dim_type ii = 1; ii < (*it).nlt->sizes().size(); ++ii) ++mit;
 	  break;
 	}
       }

@@ -119,7 +119,7 @@ namespace getfem
       else
 	assem.set("M(#1,#2)+=comp(vBase(#1).vBase(#2))(:,i,:,i);");
     else
-      if (mf_u1.get_qdim() == 1 && mf_u2.get_qdim() == 1)
+      if (mf_u1.get_qdim() == 1)
 	assem.set("M(#1,#2)+=sym(comp(Base(#1).Base(#2)))");
       else
 	assem.set("M(#1,#2)+=sym(comp(vBase(#1).vBase(#2))(:,i,:,i));");

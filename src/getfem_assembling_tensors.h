@@ -6,6 +6,7 @@
 #include <gmm_kernel.h>
 #include <getfem_mesh_fem.h>
 #include <bgeot_sparse_tensors.h>
+#include <getfem_mat_elem_type.h>
 #include <numeric>
 #include <map>
 
@@ -64,8 +65,8 @@ namespace getfem {
      */
     virtual void update_childs_required_shape();
 
-    /* numérotation des tenseurs, telle que si i < j alors le tenseur(j) 
-       ne peut pas etre dans le sous-arbre du tenseur(i) */
+    /* numbering og tensors, such that if i < j then tensor(j)
+       cannot be in the sub-tree of tensor(i) */
     void set_number(unsigned &gcnt);
     unsigned number() const { return number_; }
   private:
@@ -81,10 +82,10 @@ namespace getfem {
     bool shape_updated_;
     tensor_ref   tr;
     tensor_shape req_shape;
-    bool frozen_; /* pour reconnaitre les resultats intermédiaires de calculs
-		     stockés dans une variable temporaire: ils ne peuvent pas être
-		     modifiés à posteriori (comme ça pourrait arriver avec un 
-		     ATN_tensors_sum_scaled) */
+    bool frozen_; /* used to recognize intermediate results of
+		     computations stored in a temporary variable: they
+		     cannot be modified a posteriori (like it could
+		     happen with an ATN_tensors_sum_scaled) */
   public:
     ATN_tensor() { shape_updated_ = false; frozen_ = false; }
     bool is_shape_updated() const { return shape_updated_; }
@@ -107,8 +108,8 @@ namespace getfem {
 	child(i).merge_required_shape(req_shape);
       }
     }
-    /* ... puis reserve de la memoire si necessaire pour le stockage du tenseur 
-       dans 'reinit' (heritee ici de la class ATN)
+    /* ... then reserve some memory if necessary for tensor storage 
+       in 'reinit' (inherited here from ATN)
      */
     tensor_ref& tensor() { 
       return tr; 
@@ -412,7 +413,7 @@ namespace getfem {
   /* main class for generic assembly */
   class generic_assembly : public asm_tokenizer {
     std::deque<const mesh_fem *> mftab;/* list of the mesh_fem used in the computation */
-  
+    std::deque<const nonlinear_elem_term*> innonlin;  /* alternatives to base, grad, hess in comp() for non-linear computations) */
     std::deque<base_asm_data*> indata;              /* data sources */
     std::deque<base_asm_vec*> outvec;               /* vectors in which is done the assembly */
     std::deque<base_asm_mat*> outmat;               /* matrices in which is done the assembly */
@@ -458,10 +459,14 @@ namespace getfem {
 
     void set(const std::string& s_) { set_str(s_); }
     const std::deque<const mesh_fem*>& mf() const { return mftab; }
+    const std::deque<const nonlinear_elem_term *> nonlin() const { return innonlin; }
     const std::deque<base_asm_data*>& data() const { return indata; }
     const std::deque<base_asm_vec*>& vec() const { return outvec; }
     const std::deque<base_asm_mat*>& mat() const { return outmat; }
     void push_mf(const mesh_fem& mf_) { mftab.push_back(&mf_); }
+    void push_nonlinear_term(const nonlinear_elem_term *net) {
+      innonlin.push_back(net);
+    }
     template< typename VEC > void push_data(VEC& d) { 
       indata.push_back(new asm_data<VEC>(&d)); 
     }

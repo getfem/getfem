@@ -271,8 +271,9 @@ namespace getfem {
   /*
    */
   struct mf_comp {
+    const nonlinear_elem_term* nlt;
     const mesh_fem* pmf;
-    typedef enum { BASE=1, GRAD=2, HESS=3 } op_type;
+    typedef enum { BASE=1, GRAD=2, HESS=3, NONLIN=4 } op_type;
     op_type op; /* the numerical values indicates the number 
 		   of dimensions in the tensor */
     bool vectorize; /* true if vectorization was required (adds
@@ -291,7 +292,9 @@ namespace getfem {
       ...
     */
     mf_comp(const mesh_fem* pmf_, op_type op_, bool vect) :
-      pmf(pmf_), op(op_), vectorize(vect) {}
+      nlt(0), pmf(pmf_), op(op_), vectorize(vect) {}
+    mf_comp(const mesh_fem* pmf_, const nonlinear_elem_term* nlt_) : 
+      nlt(nlt_), pmf(pmf_), op(NONLIN), vectorize(false) {}
   };
 
   class ATN_computed_tensor : public ATN_tensor {
@@ -376,28 +379,36 @@ namespace getfem {
 	  case mf_comp::BASE: pme2 = mat_elem_base(mfcomp[i].pmf->fem_of_element(cv)); break;
 	  case mf_comp::GRAD: pme2 = mat_elem_grad(mfcomp[i].pmf->fem_of_element(cv)); break;
 	  case mf_comp::HESS: pme2 = mat_elem_hessian(mfcomp[i].pmf->fem_of_element(cv)); break;
+	  case mf_comp::NONLIN: pme2 = mat_elem_nonlinear(*mfcomp[i].nlt, mfcomp[i].pmf->fem_of_element(cv)); break;
 	  }
 	  if (pme == NULL) pme = pme2;
 	  else pme = mat_elem_product(pme, pme2);
 	  
 	  index_type d = r_.size();
-	  r_.push_back(mfcomp[i].pmf->nb_dof_of_element(cv));
-	  if (mfcomp[i].vectorize) {
-	    r_.push_back(mfcomp[i].pmf->get_qdim());
-	    if (target_dim == qdim) {
+	  if (mfcomp[i].op == mf_comp::NONLIN) {
+	    for (size_type j=0; j < mfcomp[i].nlt->sizes().size(); ++j) {
+	      r_.push_back(mfcomp[i].nlt->sizes()[j]);
+	      tsize = add_dim(r_.size()-1, tsize);
+	    }
+	  } else {
+	    r_.push_back(mfcomp[i].pmf->nb_dof_of_element(cv));
+	    if (mfcomp[i].vectorize) {
+	      r_.push_back(mfcomp[i].pmf->get_qdim());
+	      if (target_dim == qdim) {
+		tsize = add_dim(d, tsize);
+		tsize = add_dim(d+1, tsize);
+	      } else tsize = add_vdim(d, tsize);
+	    } else tsize = add_dim(d, tsize);
+	    d = r_.size();
+	    if (mfcomp[i].op == mf_comp::GRAD || mfcomp[i].op == mf_comp::HESS) {
+	      r_.push_back(mf.linked_mesh().dim());
 	      tsize = add_dim(d, tsize);
-	      tsize = add_dim(d+1, tsize);
-	    } else tsize = add_vdim(d, tsize);
-	  } else tsize = add_dim(d, tsize);
-	  d = r_.size();
-	  if (mfcomp[i].op == mf_comp::GRAD || mfcomp[i].op == mf_comp::HESS) {
-	    r_.push_back(mf.linked_mesh().dim());
-	    tsize = add_dim(d, tsize);
-	  }
-	  d = r_.size();
-	  if (mfcomp[i].op == mf_comp::HESS) {
-	    r_.push_back(mf.linked_mesh().dim());
-	    tsize = add_dim(d, tsize);
+	    }
+	    d = r_.size();
+	    if (mfcomp[i].op == mf_comp::HESS) {
+	      r_.push_back(mf.linked_mesh().dim());
+	      tsize = add_dim(d, tsize);
+	    }
 	  }
 	}
 
@@ -727,15 +738,20 @@ namespace getfem {
     do {
       if (tok_type() != IDENT) ASM_THROW_PARSE_ERROR("expecting Base or Grad or Hess..");
       std::string f = tok(); 
-      const mesh_fem *pmf = &do_mf_arg();
+      const mesh_fem *pmf = 0;
       if (f.compare("Base")==0 || f.compare("vBase")==0) {
-	what.push_back(mf_comp(pmf, mf_comp::BASE, f[0] == 'v'));
+	pmf = &do_mf_arg(); what.push_back(mf_comp(pmf, mf_comp::BASE, f[0] == 'v'));
       } else if (f.compare("Grad")==0 || f.compare("vGrad")==0) {
-	what.push_back(mf_comp(pmf, mf_comp::GRAD, f[0] == 'v'));
+	pmf = &do_mf_arg(); what.push_back(mf_comp(pmf, mf_comp::GRAD, f[0] == 'v'));
       } else if (f.compare("Hess")==0 || f.compare("vHess")==0) {
-	what.push_back(mf_comp(pmf, mf_comp::HESS, f[0] == 'v'));
-      } else ASM_THROW_PARSE_ERROR("expecting Base, Grad, vBase ...");
-      if (f[0] != 'v' && pmf->get_qdim() != 1) {
+	pmf = &do_mf_arg(); what.push_back(mf_comp(pmf, mf_comp::HESS, f[0] == 'v'));
+      } else if (f.compare("NonLin")==0) {	
+	size_type num = 0; /* default value */
+	if (advance_if(ARGNUM_SELECTOR)) { num = tok_argnum();  advance(); }
+	if (num >= innonlin.size()) ASM_THROW_PARSE_ERROR("NonLin$" << num << " does not exist");
+	pmf = &do_mf_arg(); what.push_back(mf_comp(pmf, innonlin[num]));
+      } else ASM_THROW_PARSE_ERROR("expecting Base, Grad, vBase, NonLin ...");
+      if (f[0] != 'v' && pmf->get_qdim() != 1 && f.compare("NonLin")) {
 	ASM_THROW_PARSE_ERROR("Attempt to use a vector mesh_fem as a scalar mesh_fem");
       }
     } while (advance_if(PRODUCT));
