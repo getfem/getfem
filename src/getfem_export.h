@@ -46,7 +46,7 @@ namespace getfem
 
   template<class VECT>
     void save_solution(const std::string &filename, mesh_fem &mf,
-		       const VECT &U, dim_type P, short_type K )
+		       const VECT &U, dim_type P, short_type K)
   { 
     dim_type N = mf.linked_mesh().dim();
     STD_NEEDED ofstream o((filename + char(0)).data());
