@@ -754,19 +754,22 @@ void gen_mesh(getfem::getfem_mesh& mesh) {
     }*/
 }
 
-void init_mesh_fem(getfem::mesh_fem &mf, bool datamf) {
+void init_mesh_fem(getfem::mesh_fem &mf, bool datamf, bool use_exact_im=true) {
   size_type cv;
   if (datamf)
-    getfem::classical_mesh_fem(mf, param.Kdata);
+    mf.set_classical_finite_element(param.Kdata);
   else {
     dal::bit_vector cvlst = mf.linked_mesh().convex_index();
     for (cv << cvlst; cv != size_type(-1); cv << cvlst) {
       if ((cv+1) % 100) {
 	bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
-	mf.set_finite_element(cv, getfem::classical_fem(pgt,param.K), getfem::classical_exact_im(pgt));
+	mf.set_finite_element(cv, getfem::classical_fem(pgt,param.K), 
+			      use_exact_im ? getfem::classical_exact_im(pgt) : 
+			      getfem::classical_approx_im(pgt,param.K*3));
       } else {
 	bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
-	mf.set_finite_element(cv, getfem::classical_fem(pgt,param.K2), getfem::classical_exact_im(pgt));
+	mf.set_finite_element(cv, getfem::classical_fem(pgt,param.K2), use_exact_im ? getfem::classical_exact_im(pgt) : 
+			      getfem::classical_approx_im(pgt,param.K2*3));
       }
     }
   }
@@ -790,7 +793,7 @@ void comp_mat(const sparse_matrix_type& M1, const sparse_matrix_type& M2)
     gmm::add(gmm::scaled(gmm::mat_const_row(M1,i), -1.0),r);
     scalar_type d2 = gmm::vect_norminf(r);
     d = std::max(d,d2);
-    if (mx != 0. && d/mx > 1e-6) {
+    if (mx > 1e-10 && d/mx > 1e-6) {
       sparse_vector_type r1(gmm::mat_ncols(M1));
       sparse_vector_type r2(gmm::mat_ncols(M2));
       gmm::copy(gmm::mat_const_row(M1,i),r1);
@@ -880,6 +883,16 @@ void tensor_ref_check() {
   
   bgeot::tensor_ref tr2(tr1, bgeot::tensor_mask::Slice(0,1));
   cerr << "tr2=tr1(1,:,:)=" << tr2 << endl;
+
+  bgeot::tensor_ref tr20(tr1, bgeot::tensor_mask::Slice(1,1));
+  cerr << "tr20=tr1(:,1,:)=" << tr20 << endl;
+
+  bgeot::tensor_ref tr21(tr1, bgeot::tensor_mask::Slice(2,1));
+  cerr << "tr21=tr1(:,:,1)=" << tr21 << endl;
+
+  bgeot::tensor_ref tr22(tr21, bgeot::tensor_mask::Slice(1,1));
+  cerr << "tr22=tr1(:,1,1)=" << tr22 << endl;
+
   bgeot::tensor_ref tr3(tr2, bgeot::tensor_mask::Diagonal(0,1));
   cerr << "tr3=tr2(i,i)=[2 0;0 11]=" << tr3 << endl;
 
@@ -1206,6 +1219,46 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
   }
 }
 
+
+struct dummy_nonlin : public getfem::nonlinear_elem_term {
+  unsigned i,j;
+  bgeot::multi_index sizes_;
+  dummy_nonlin(size_type N) : sizes_(2) { sizes_[0] = sizes_[1] = N; }
+  const bgeot::multi_index &sizes() const { return sizes_; }
+  virtual void compute(getfem::fem_interpolation_context& /*ctx*/,
+		       bgeot::base_tensor &t) const {
+    t.adjust_sizes(sizes_); std::fill(t.begin(), t.end(), 0.);
+    t[j*sizes_[0]+i] = 1.0;
+  }
+};
+
+void test_nonlin(const getfem::mesh_fem &mf)
+{
+  size_type N = mf.linked_mesh().dim();
+  dummy_nonlin bidon(N);
+  cerr << "testing assembly of nonlinear terms\n";
+  for (bidon.i=0; bidon.i < N; ++bidon.i) {
+    for (bidon.j=0; bidon.j < N; ++bidon.j) {
+      std::vector<scalar_type> V1(mf.nb_dof()), V2(mf.nb_dof());
+      char s[512]; sprintf(s,"t=comp(NonLin(#1).vGrad(#1));"
+			   "V$1(#1) += t(i,j,:,i,j); "
+			   "V$2(#1) += comp(vGrad(#1))(:,%d,%d)", bidon.i+1, bidon.j+1);
+      cout << s << "\n";
+      getfem::generic_assembly assem(s);
+      assem.push_mf(mf);
+      assem.push_nonlinear_term(&bidon);
+      assem.push_vec(V1);
+      assem.push_vec(V2);
+      assem.volumic_assembly();
+      gmm::add(gmm::scaled(V2,-1.),V1);
+      scalar_type err = gmm::vect_norm2(V1);
+      cout << "i=" << bidon.i << ", j=" << bidon.j << " |V1-V2| = " << err << "\n";
+      assert(err < 1e-10);      
+    }
+  }
+}
+
+
 int main(int argc, char *argv[])
 {
 #ifdef GETFEM_HAVE_FEENABLEEXCEPT
@@ -1237,10 +1290,10 @@ int main(int argc, char *argv[])
      mfq.set_qdim(m.dim());
      getfem::classical_mesh_fem(mfq, 2);
      getfem::mesh_fem mfd(m); 
-     getfem::classical_mesh_fem(mfd, 1);
+     mfd.set_classical_finite_element(1);
      getfem::mesh_fem mfdq(m); 
+     mfdq.set_classical_finite_element(1);
      mfdq.set_qdim(m.dim());     
-     getfem::classical_mesh_fem(mfdq, 1);
      run_tests(mf,mfq,mfd,mfdq,do_new,do_old,tests,1,1);
    }
 
@@ -1250,18 +1303,23 @@ int main(int argc, char *argv[])
      gen_mesh(m);
      
      getfem::mesh_fem mf(m);  
-     init_mesh_fem(mf,false);
+     init_mesh_fem(mf,false,false);
   
      getfem::mesh_fem mfq(m); 
      mfq.set_qdim(m.dim());
-     init_mesh_fem(mfq,false); 
-     
+     init_mesh_fem(mfq,false,false);  
+     test_nonlin(mfq);
+
      getfem::mesh_fem mfd(m); 
      init_mesh_fem(mfd,true);
      
      getfem::mesh_fem mfdq(m); 
      mfdq.set_qdim(m.dim());
      init_mesh_fem(mfdq,true);
+     
+     mf.write_to_file("toto1.mf",true);
+     mfq.write_to_file("totoq.mf",true);
+
      run_tests(mf,mfq,mfd,mfdq,param.do_new,param.do_old,tests,1,1);
    }
   }
