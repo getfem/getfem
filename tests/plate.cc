@@ -182,9 +182,7 @@ void plate_problem::init(void) {
     base_node un = mesh.normal_of_face_of_convex(it->cv, it->f);
     un /= gmm::vect_norm2(un);
     if (dal::abs(un[1]) <= 1.0E-7) { // new Neumann face
-      mf_ut.add_boundary_elt(SIMPLY_FIXED_BOUNDARY_NUM, it->cv, it->f);
-      mf_theta.add_boundary_elt(SIMPLY_FIXED_BOUNDARY_NUM, it->cv, it->f);
-      mf_u3.add_boundary_elt(SIMPLY_FIXED_BOUNDARY_NUM, it->cv, it->f);
+      mesh.add_face_to_set(SIMPLY_FIXED_BOUNDARY_NUM, it->cv, it->f);
     }
   }
 }

@@ -588,7 +588,7 @@ namespace getfem
 				 const VECT2 &h_data, const VECT3 &r_data,
 				 size_type boundary,
 				 int version =  ASMDIR_BUILDALL) {
-    dal::bit_vector nf;
+    mesh_cvf_set::face_bitset nf;
     pfem pf_u, pf_rh;
     
     if (mf_rh.get_qdim() != 1)
@@ -596,7 +596,7 @@ namespace getfem
     if (version & ASMDIR_BUILDH) {
       asm_qu_term(H, mf_u, mf_rh, h_data, boundary);
       std::vector<size_type> ind(0);
-      dal::bit_vector bdof = mf_u.dof_on_boundary(boundary);
+      dal::bit_vector bdof = mf_u.dof_on_set(boundary);
       for (size_type i = 0; i < mf_u.nb_dof(); ++i)
 	if (!(bdof[i])) ind.push_back(i);
       gmm::clear(gmm::sub_matrix(H, gmm::sub_index(ind)));
@@ -605,28 +605,30 @@ namespace getfem
     if (!(version & ASMDIR_SIMPLIFY)) return;
 
     /* step 2 : simplification of simple dirichlet conditions */
-    dal::bit_vector bv = mf_u.convex_on_boundary(boundary);
+    dal::bit_vector bv = mf_u.linked_mesh().convex_in_set(boundary);
     for (dal::bv_visitor cv(bv); !cv.finished(); ++cv) {
-      nf = mf_u.faces_of_convex_on_boundary(cv, boundary);
+      nf = mf_u.linked_mesh().faces_of_convex_in_set(cv, boundary);
+      size_type nbf = mf_u.linked_mesh().structure_of_convex(cv)->nb_faces();
       /* don't try anything with vector elements */
       if (mf_u.fem_of_element(cv)->target_dim() != 1) continue;
-      if (nf.card() > 0) {
+      if (nf.count() > 0) {
 	pf_u = mf_u.fem_of_element(cv); 
-	pf_rh = mf_rh.fem_of_element(cv); 
-	size_type f;
-	for (f << nf; f != ST_NIL; f << nf) {
-	  bgeot::pconvex_structure cvs_u = pf_u->structure(cv);
-	  bgeot::pconvex_structure cvs_rh = pf_rh->structure(cv);
-	  for (size_type i = 0; i < cvs_u->nb_points_of_face(f); ++i) {
-	    
-	    size_type Q = mf_u.get_qdim();  // pf_u->target_dim() (==1)
-	    
-	    size_type ind_u = cvs_u->ind_points_of_face(f)[i];
-	    pdof_description tdof_u = pf_u->dof_types()[ind_u];
-	    
-	    for (size_type j = 0; j < cvs_rh->nb_points_of_face(f); ++j) {
-	      size_type ind_rh = cvs_rh->ind_points_of_face(f)[j];
-	      pdof_description tdof_rh = pf_rh->dof_types()[ind_rh];
+	pf_rh = mf_rh.fem_of_element(cv);
+	
+	for (size_type f = 0; f < nbf; ++f)
+	  if (nf[f]) {
+	    bgeot::pconvex_structure cvs_u = pf_u->structure(cv);
+	    bgeot::pconvex_structure cvs_rh = pf_rh->structure(cv);
+	    for (size_type i = 0; i < cvs_u->nb_points_of_face(f); ++i) {
+	      
+	      size_type Q = mf_u.get_qdim();  // pf_u->target_dim() (==1)
+	      
+	      size_type ind_u = cvs_u->ind_points_of_face(f)[i];
+	      pdof_description tdof_u = pf_u->dof_types()[ind_u];
+	      
+	      for (size_type j = 0; j < cvs_rh->nb_points_of_face(f); ++j) {
+		size_type ind_rh = cvs_rh->ind_points_of_face(f)[j];
+		pdof_description tdof_rh = pf_rh->dof_types()[ind_rh];
 	      /*
 		same kind of dof and same location of dof ? 
 		=> then the previous was not useful for this dofs (introducing
@@ -635,33 +637,33 @@ namespace getfem
 		we replace \int{(H_j.psi_j)*phi_i}=\int{R_j.psi_j} (sum over j)
 		with             H_j*phi_i = R_j     
 	      */
-	      if (tdof_u == tdof_rh &&
-		  bgeot::vect_dist2_sqr((*(pf_u->node_tab(cv)))[ind_u], 
-					(*(pf_rh->node_tab(cv)))[ind_rh])
-		  < 1.0E-14) {
-		/* the dof might be "duplicated" */
-		for (size_type q = 0; q < Q; ++q) {
-		  size_type dof_u = mf_u.ind_dof_of_element(cv)[ind_u*Q + q];
-		  
-		  /* "erase" the row */
-		  if (version & ASMDIR_BUILDH)
-		    for (size_type k=0; k < mf_u.nb_dof_of_element(cv); ++k)
-		      H(dof_u, mf_u.ind_dof_of_element(cv)[k]) = 0.0;
-		  
-		  size_type dof_rh = mf_rh.ind_dof_of_element(cv)[ind_rh];
-		  /* set the "simplified" row */
-		  if (version & ASMDIR_BUILDH)
-		    for (unsigned jj=0; jj < Q; jj++) {
-		      size_type dof_u2
-			= mf_u.ind_dof_of_element(cv)[ind_u*Q+jj];
-		      H(dof_u, dof_u2) = h_data[(jj*Q+q) + Q*Q*(dof_rh)];
-		    }
-		  if (version & ASMDIR_BUILDR) R[dof_u] = r_data[dof_rh*Q+q];
+		if (tdof_u == tdof_rh &&
+		    bgeot::vect_dist2_sqr((*(pf_u->node_tab(cv)))[ind_u], 
+					  (*(pf_rh->node_tab(cv)))[ind_rh])
+		    < 1.0E-14) {
+		  /* the dof might be "duplicated" */
+		  for (size_type q = 0; q < Q; ++q) {
+		    size_type dof_u = mf_u.ind_dof_of_element(cv)[ind_u*Q + q];
+		    
+		    /* "erase" the row */
+		    if (version & ASMDIR_BUILDH)
+		      for (size_type k=0; k < mf_u.nb_dof_of_element(cv); ++k)
+			H(dof_u, mf_u.ind_dof_of_element(cv)[k]) = 0.0;
+		    
+		    size_type dof_rh = mf_rh.ind_dof_of_element(cv)[ind_rh];
+		    /* set the "simplified" row */
+		    if (version & ASMDIR_BUILDH)
+		      for (unsigned jj=0; jj < Q; jj++) {
+			size_type dof_u2
+			  = mf_u.ind_dof_of_element(cv)[ind_u*Q+jj];
+			H(dof_u, dof_u2) = h_data[(jj*Q+q) + Q*Q*(dof_rh)];
+		      }
+		    if (version & ASMDIR_BUILDR) R[dof_u] = r_data[dof_rh*Q+q];
+		  }
 		}
 	      }
-	    }      
+	    }
 	  }
-	}
       }
     }
   }
@@ -697,7 +699,7 @@ namespace getfem
 					const VECT2 &F)
   { // Marche uniquement pour des ddl de lagrange.
     size_type Q=mf.get_qdim();
-    dal::bit_vector nndof = mf.dof_on_boundary(boundary);
+    dal::bit_vector nndof = mf.dof_on_set(boundary);
     pfem pf1;
     for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       pf1 = mf.fem_of_element(cv);

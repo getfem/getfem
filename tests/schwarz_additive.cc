@@ -151,7 +151,7 @@ void pb_data::init(ftool::md_param &params) {
       if (bgeot::neighbour_of_convex(mesh, j, i).empty()) {
 	gmm::copy(mesh.normal_of_face_of_convex(j, i, 0), un);
 	un /= bgeot::vect_norm2(un);	
-	if (dal::abs(un[N-1] - 1.0) < 1.0E-3) mef.add_boundary_elt(0, j, i);
+	if (dal::abs(un[N-1] - 1.0) < 1.0E-3) mesh.add_face_to_set(0, j, i);
       }
     }
   }
@@ -161,7 +161,7 @@ void pb_data::assemble(void) {
   size_type nb_dof = mef.nb_dof();
   std::cout << "number of dof : "<< nb_dof << endl;
   size_type nb_dof_data = mef_data.nb_dof();
-  dal::bit_vector ddlD = mef.dof_on_boundary(0);
+  dal::bit_vector ddlD = mef.dof_on_set(0);
  
   F.resize(nb_dof); gmm::clear(F);
   U.resize(nb_dof); gmm::clear(U);

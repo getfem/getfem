@@ -43,8 +43,11 @@
 #include <bgeot_poly.h>
 #include <dal_fonc_tables.h>
 
-namespace bgeot
-{
+namespace bgeot {
+
+  // The number of faces for a convex is limited in certain applications
+#  define MAX_FACES_PER_CV 32
+
   class convex_structure;
 
   /// Pointer on a convex structure description. 
@@ -111,7 +114,8 @@ namespace bgeot
 
       void init_for_adaptative(pconvex_structure cvs);
       void add_point_adaptative(short_type i, short_type f);
-      bool is_product(pconvex_structure *pprod1=0, pconvex_structure *pprod2=0) const {
+      bool is_product(pconvex_structure *pprod1=0,
+		      pconvex_structure *pprod2=0) const {
 	if (pprod1) *pprod1 = prod_a;
 	if (pprod2) *pprod2 = prod_b;
 	return prod_a ? true : false;

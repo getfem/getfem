@@ -1556,10 +1556,12 @@ namespace getfem {
     get_convex_order(mftab, mftab[0]->convex_index(), cv);
     parse();
     for (size_type i=0; i < cv.size(); ++i) {
-      for (dal::bv_visitor_c f(mftab[0]->faces_of_convex_on_boundary(cv[i], boundary_number));
-           !f.finished(); ++f) {
-        exec(cv[i], f);
-      }
+      mesh_cvf_set::face_bitset nf
+	=mftab[0]->linked_mesh().faces_of_convex_in_set(cv[i],boundary_number);
+      size_type nbf
+	= mftab[0]->linked_mesh().structure_of_convex(cv[i])->nb_faces();
+      for (unsigned f = 0; f < nbf; ++f)
+	if (nf[f]) exec(cv[i], f);
     }
   }
 } /* end of namespace */

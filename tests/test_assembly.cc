@@ -34,7 +34,7 @@ void classical_mesh_fem(getfem::mesh_fem& mf, getfem::short_type K) {
        ++cv) {
     bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
     mf.set_finite_element(cv, getfem::classical_fem(pgt,K),
-                          getfem::exact_classical_im(pgt));
+                          getfem::classical_exact_im(pgt));
   }
   //mf.set_classical_finite_element(K,2*K);
 }
@@ -229,7 +229,8 @@ namespace getfem {
 				       const MESH_FEM &mf2, size_type boundary, dim_type N)
   {
     size_type cv, nbd1, nbd2, f;
-    dal::bit_vector nn = mf1.convex_index(), nf;
+    dal::bit_vector nn = mf1.convex_index();
+    getfem::mesh_cvf_set::face_bitset nf;
     base_tensor t;
     pfem pf1, pf1prec = 0, pf2, pf2prec = 0;
     pintegration_method pim, pimprec = 0;
@@ -243,8 +244,8 @@ namespace getfem {
 
     for (cv << nn; cv != ST_NIL; cv << nn)
       {
-	nf = mf1.faces_of_convex_on_boundary(cv, boundary);
-	if (nf.card() > 0) {
+	nf = mf1.linked_mesh().faces_of_convex_in_set(cv, boundary);
+	if (nf.count() > 0) {
 	  pf1 = mf1.fem_of_element(cv); nbd1 = pf1->nb_dof(cv);
 	  pf2 = mf2.fem_of_element(cv); nbd2 = pf2->nb_dof(cv);
 	  pgt = mf1.linked_mesh().trans_of_convex(cv);
@@ -256,7 +257,7 @@ namespace getfem {
 	    pf1prec = pf1; pf2prec = pf2; pgtprec = pgt; pimprec = pim;
 	  }
 
-	  for (f << nf; f != ST_NIL; f << nf) {
+	  for (f = 0; f < MAX_FACES_PER_CV; ++f) if (nf[f]) {
 
 	    pmec->gen_compute_on_face(t,
 				      mf1.linked_mesh().points_of_convex(cv),
@@ -843,7 +844,7 @@ void init_mesh_fem(getfem::mesh_fem &mf, bool datamf, bool use_exact_im=true) {
   }
   for (cv=0; cv < std::min(mf.convex_index().card(),
 			   param.NX*param.Ndim*param.Ndim*10); cv += 2) {
-    mf.add_boundary_elt(1, cv, (cv/4) % (param.Ndim > 1 ? 3 : 2)); 
+    mf.linked_mesh().add_face_to_set(1, cv, (cv/4) % (param.Ndim > 1 ? 3 : 2)); 
   }
 }
 

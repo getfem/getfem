@@ -38,8 +38,6 @@
 /*									   */
 /* Ameliorations :                                                         */
 /*    - faire un vrai Cutill-Mc Kee pour la numerotation des ddl.          */
-/*    - gerer le rafinement / derafinement et le suivi de bord.            */
-/*      avec possibilite de bord courbes ... ?                             */
 /*                                                                         */
 /* *********************************************************************** */
 
@@ -149,37 +147,6 @@ namespace getfem
     base_node P;
     pdof_description pnd;
   };
-  
-  ///  Describe a boundary as a list of faces of elements.
-  struct boundary_description  {
-    
-    dal::bit_vector cvindex;
-    dal::dynamic_tree_sorted<size_type> cv_in;
-    dal::dynamic_array<dal::bit_vector> faces;
-    /** Return true if the face f of convex c is part of the boundary
-     */
-    bool is_elt(size_type c, short_type f) const;
-    /** Add a boudary element from the face f of the convex of index
-     *          i of the mesh.
-     */
-    void add_elt(size_type c, short_type f);
-    /** Delete a boudary element which is the face f of the convex of 
-     *          index i of the mesh.
-     */
-    void sup_elt(size_type c, short_type f);
-    /** Delete all boudary element linked with the convex of 
-     *          index i of the mesh.
-     */
-    void sup_convex(size_type c);
-    /** Gives in a structure dal::bit\_vector all the faces of convex
-     *          of index i in the boundary.
-     */
-    const dal::bit_vector &faces_of_convex(size_type c) const;
-    void swap_convex(size_type c1, size_type c2);
-    size_type nb_convex(void) { return cvindex.card(); }
-    void clear(void) { cv_in.clear(); faces.clear(); cvindex.clear(); }
-    
-  };
 
   struct intfem  { // integrable fem
     pfem pf;
@@ -199,8 +166,6 @@ namespace getfem
   class mesh_fem : public getfem_mesh_receiver, public context_dependencies {
   protected :
     
-    dal::dynamic_array<boundary_description> boundaries;
-    dal::bit_vector valid_boundaries;
     dal::dynamic_array<pintfem> f_elems;
     dal::bit_vector fe_convex;
     getfem_mesh *linked_mesh_;
@@ -221,7 +186,7 @@ namespace getfem
     inline const dal::bit_vector &convex_index(void) const
       { return fe_convex; }
     
-    /// Gives a pointer to the linked mesh of type getfem\_mesh.
+    /// Gives a reference to the linked mesh of type getfem\_mesh.
     getfem_mesh &linked_mesh(void) const { return *linked_mesh_; }
     /** Set on the convex of index i the integrable finite element method
      *          with the description pif which is of type pintfem.
@@ -331,31 +296,37 @@ namespace getfem
     /// Gives the total number of degrees of freedom.
     size_type nb_dof(void) const
       { if (!dof_enumeration_made) enumerate_dof(); return nb_total_dof; }
-    dal::bit_vector dof_on_boundary(size_type b) const;
+    dal::bit_vector dof_on_set(size_type b) const;
+    dal::bit_vector dof_on_boundary(size_type b) const IS_DEPRECATED
+    { return  dof_on_set(b); }
     void clear(void);
     
     /// Add to the boundary b the face f of the element i.
-    void add_boundary_elt(size_type b, size_type c, short_type f)
-      { valid_boundaries.add(b); boundaries[b].add_elt(c, f); touch(); }
+    void add_boundary_elt(size_type b, size_type c, short_type f) IS_DEPRECATED
+    { linked_mesh().add_face_to_set(b, c, f); }
     /// Says whether or not element i is on the boundary b. 
-    bool is_convex_on_boundary(size_type c, size_type b) const
-      { return (valid_boundaries[b] && boundaries[b].cvindex[c]); }
-    bool is_face_on_boundary(size_type b, size_type c, short_type f) const
-    { return (valid_boundaries[b] && boundaries[b].is_elt(c, f)); }
+    bool is_convex_on_boundary(size_type c, size_type b) const IS_DEPRECATED
+    { return linked_mesh().is_convex_in_set(c, b); }
+    bool is_face_on_boundary(size_type b, size_type c, short_type f)
+      const IS_DEPRECATED { return linked_mesh().is_face_in_set(b,c,f); }
     /** returns the list of convexes on the boundary b */
-    const dal::bit_vector &convex_on_boundary(size_type b) const;
-    const dal::bit_vector &faces_of_convex_on_boundary(size_type c,
-						       size_type b) const;
+    const dal::bit_vector &convex_on_boundary(size_type b) const IS_DEPRECATED
+    { return linked_mesh().convex_in_set(b); }
+    const mesh_cvf_set::face_bitset
+      &faces_of_convex_on_boundary(size_type c, size_type b) const 
+      IS_DEPRECATED { return linked_mesh().faces_of_convex_in_set(c,b); }
     /** returns the list of boundary numbers */
-    const dal::bit_vector &get_valid_boundaries() const 
-      { return valid_boundaries; }
+    const dal::bit_vector &get_valid_boundaries() const IS_DEPRECATED
+    { return linked_mesh().get_valid_sets(); }
     
-    void sup_boundaries_of_convex(size_type c);
+    void sup_boundaries_of_convex(size_type c) IS_DEPRECATED 
+    { linked_mesh().sup_convex_from_sets(c); }
     void sup_boundary_elt(size_type b, size_type c, short_type f)
-      { if (valid_boundaries[b]) boundaries[b].sup_elt(c,f); touch(); }
-    void sup_boundary(size_type b)
-      { valid_boundaries.sup(b); boundaries[b].clear(); touch(); }
-    void swap_boundaries_convex(size_type c1, size_type c2);
+      IS_DEPRECATED { linked_mesh().sup_face_from_set(b,c,f); }
+    void sup_boundary(size_type b) IS_DEPRECATED
+    { linked_mesh().sup_set(b); }
+    void swap_boundaries_convex(size_type c1, size_type c2) IS_DEPRECATED
+    { linked_mesh().swap_convex_in_sets(c1, c2); }
 
     /* explicit calls to parent class 
        for HP aCC and mipspro CC who complain about hidden functions 
@@ -370,7 +341,6 @@ namespace getfem
     size_type memsize() const {
       return dof_structure.memsize() + 
 	sizeof(mesh_fem) - sizeof(bgeot::mesh_structure) +
-	boundaries.memsize() + valid_boundaries.memsize() +
 	f_elems.memsize() + fe_convex.memsize();
     }
     

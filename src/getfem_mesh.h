@@ -34,6 +34,7 @@
 #ifndef GETFEM_MESH_H__
 #define GETFEM_MESH_H__
 
+#include <bitset>
 #include <bgeot_mesh.h>
 #include <bgeot_geotrans_inv.h>
 #include <linkmsg.h>
@@ -96,7 +97,57 @@ namespace getfem {
 
   /* ********************************************************************* */
   /*								   	   */
-  /*	II. Class getfem_mesh                                 		   */
+  /*	II. Class convex or face set                        		   */
+  /*									   */
+  /* ********************************************************************* */
+
+  ///  Describe a selection of convexes or a selection of faces of convexes
+  struct mesh_cvf_set  {
+    
+    typedef std::bitset<MAX_FACES_PER_CV> face_bitset;
+    bool is_bound;
+    dal::bit_vector cvindex;
+    dal::dynamic_tree_sorted<size_type> cv_in;
+    dal::dynamic_array<face_bitset> faces;
+    /** Add the convex to the convex set.
+     */
+    void add_convex(size_type c) { cvindex.add(c); }
+    /** Return true if the convex is referenced.
+     */
+    bool is_convex(size_type c) const { return cvindex[c]; }
+    /** Return true if the face f of convex c is part of the boundary
+     */
+    bool is_elt(size_type c, short_type f) const;
+    /** Add a boudary element from the face f of the convex of index
+     *          i of the mesh.
+     */
+    void add_elt(size_type c) { cvindex.add(c); }
+    /** Add a convex to a set of convexes.
+     */
+    void add_elt(size_type c, short_type f);
+    /** Delete a boudary element which is the face f of the convex of 
+     *          index i of the mesh.
+     */
+    void sup_elt(size_type c, short_type f);
+    /** Delete all boudary element linked with the convex of 
+     *          index i of the mesh.
+     */
+    void sup_convex(size_type c);
+    /** Gives in a structure face_bitset all the faces of convex
+     *          of index i on the boundary.
+     */
+    const face_bitset &faces_of_convex(size_type c) const;
+    bool is_boundary(void) const { return is_bound; }
+    void swap_convex(size_type c1, size_type c2);
+    size_type nb_convex(void) { return cvindex.card(); }
+    void clear(void) { cv_in.clear(); faces.clear(); cvindex.clear(); }
+    mesh_cvf_set(bool is_bound_) { is_bound = is_bound_; }
+    mesh_cvf_set() {}
+  };
+
+  /* ********************************************************************* */
+  /*								   	   */
+  /*	III. Class getfem_mesh                                 		   */
   /*									   */
   /* ********************************************************************* */
 
@@ -106,181 +157,224 @@ namespace getfem {
    */
   class getfem_mesh : public bgeot::mesh<base_node>,
 		      public context_dependencies {
-    public :
-
-      typedef lmsg::linkmsg_sender<getfem_mesh_receiver> msg_sender;
-
-    protected :
+  public :
+    
+    typedef lmsg::linkmsg_sender<getfem_mesh_receiver> msg_sender;
+    
+  protected :
     /* if a new field is added here, do NOT forget to add it in the
      * copy_from method! */
-
-      double eps_p;  /* infinity distance under wich two points are equal. */
-      msg_sender lkmsg; /* gestionnaire de msg.                            */
-      dal::dynamic_array<bgeot::pgeometric_trans> gtab;
-      dal::bit_vector trans_exists;
-
-    public :
-
-      /// Constructor.
-      getfem_mesh(dim_type NN = dim_type(-1)); 
-      double eps(void) const { return eps_p; }
-      const msg_sender &lmsg_sender(void) const { return lkmsg; }
-      msg_sender &lmsg_sender(void) { return lkmsg; }
-      void update_from_context(void) const {}
-
-      /** Add the point pt to the mesh and return the index of the
-       *          point. If the point is to close to an existing point, the
-       *          function do not add the point and return the index of the
-       *          already existing point. pt should be of type base\_node.
-       */
-      size_type add_point(const base_node &pt);
-      /// Gives the number of points in the mesh.
-      size_type nb_points(void) const { return pts.card(); }
-      /// points index
-      const dal::bit_vector &points_index(void) const { return pts.index(); }
-      /// Delete the point of index i from the mesh.
-      void sup_point(size_type i);
-      /// Swap the indexes of points of index i and j in the whole structure.
-      void swap_points(size_type i, size_type j);
-      /** Search if the point pt is in (or approximatively in)
-       *          the mesh, and return the index of the point, or
-       *          size\_type(-1) if not found.
-       */
-      size_type search_point(const base_node &pt) const
-      { return pts.search(pt); }
-
-      bgeot::pgeometric_trans trans_of_convex(size_type ic) const
-      { 
-	if (!(trans_exists[ic]))
-	  DAL_THROW(internal_error, "internal error");
-	return gtab[ic]; 
-      }
-
-      /** Add a convex to the mesh. cvs is of type 
-       *          bgeot::convex\_structure and "it" is an iterator on a list
-       *          of indexes of points. Return the index
-       *          of the convex in the mesh.
-       */
-      template<class ITER>
-	size_type add_convex(bgeot::pgeometric_trans pgt, ITER ipts) { 
-	bool present;
-	size_type i = bgeot::mesh<base_node>::add_convex(pgt->structure(),
-							 ipts, &present);
-	gtab[i] = pgt; trans_exists[i] = true;
-	if (!present) { lmsg_sender().send(MESH_ADD_CONVEX(i)); touch(); }
-	return i;
-      }
-
-      /** Add a convex to the mesh. cvs is of type 
-       *          bgeot::convex\_structure and "it" is an iterator on a list
-       *          of points of type base\_node. Return the index
-       *          of the convex in the mesh.
-       */
-      template<class ITER>
-	size_type add_convex_by_points(bgeot::pgeometric_trans pgt, ITER ipts);
-	
-      /** Add a simplex of dimension dim to the mesh. 
-       *          "it" is an iterator on a list of indexes of the points.
-       *          Return the index of the convex in the mesh.
-       */
-      template<class ITER>
-      size_type add_simplex(dim_type di, ITER ipts)
-      { return add_convex(bgeot::simplex_geotrans(di, 1), ipts); }
-      /** Add a simplex of dimension dim to the mesh. 
-       *          "it" is an iterator on a list of points of type base\_node.
-       *          Return the index of the convex in the mesh.
-       */
-      template<class ITER>
-	size_type add_simplex_by_points(dim_type dim, ITER ipts);
-      size_type add_segment(size_type a, size_type b);
-      size_type add_segment_by_points(const base_node &pt1,
-				      const base_node &pt2)
-      { return add_segment(add_point(pt1), add_point(pt2)); }
-      size_type add_triangle(size_type a,size_type b, size_type c);
-      size_type add_triangle_by_points(const base_node &p1,
-				       const base_node &p2,
-				       const base_node &p3);
-      size_type add_tetrahedron(size_type a,
-				size_type b, size_type c, size_type d);
-      size_type add_tetrahedron_by_points(const base_node &p1,
-					  const base_node &p2,
-					  const base_node &p3,
-					  const base_node &p4);
-      /** Add a parallelepiped of dimension dim to the mesh. 
-       *          "it" is an iterator on a list of indexes of the points.
-       *          Return the index of the convex in the mesh.
-       */
-      template<class ITER>
-	size_type add_parallelepiped(dim_type di, const ITER &ipts);
-      /** Add a parallelepiped of dimension dim to the mesh. 
-       *          "it" is an iterator on a list of points of type base\_node.
-       *          Return the index of the convex in the mesh.
-       */
-      template<class ITER>
-	size_type add_parallelepiped_by_points(dim_type di, const ITER &ps);
-      /** Add a parallelepiped of dimension dim to the
-       *          mesh. org is the point of type base\_node representing
-       *          the origine and "it" is an iterator on a list of
-       *          vectors of type base\_vector.
-       *          Return the index of the convex in the mesh.
-       */
-      template<class ITER>
-	size_type add_parallelepiped_by_vectors(dim_type di,
-				    const base_node &org, const ITER &vects);
-
-      /** Add a prism of dimension dim to the mesh. 
-       *          "it" is an iterator on a list of indexes of the points.
-       *          Return the index of the convex in the mesh.
-       */
-      template<class ITER>
-	size_type add_prism(dim_type di, const ITER &ipts);
-
-       /** Add a prism of dimension dim to the mesh. 
-       *          "it" is an iterator on a list of points of type base\_node.
-       *          Return the index of the convex in the mesh.
-       */
-      template<class ITER>
-	size_type add_prism_by_points(dim_type di, const ITER &ps);
-
-      /// Delete the convex of index i from the mesh.
-      void sup_convex(size_type ic);
-      /** Swap the indexes of the convex of indexes i and j 
-       *          in the whole structure.
-       */
-      void swap_convex(size_type i, size_type j);
-
-      /* returns the normal of face 'f' evaluated at the point 'pt'       */
-      /* (pt is a position in the reference convex)                       */
-      /* pt should of course be on the face, except if the geometric
-         transformation is linear */
-      base_small_vector normal_of_face_of_convex(size_type ic, short_type f,
-						 const base_node &pt) const;
+    
+    double eps_p;  /* infinity distance under wich two points are equal. */
+    msg_sender lkmsg; /* gestionnaire de msg.                            */
+    dal::dynamic_array<bgeot::pgeometric_trans> gtab;
+    dal::bit_vector trans_exists;
+    
+    dal::dynamic_array<mesh_cvf_set> cvf_sets;
+    dal::bit_vector valid_cvf_sets;
+    
+  public :
+    
+    /// Constructor.
+    getfem_mesh(dim_type NN = dim_type(-1)); 
+    double eps(void) const { return eps_p; }
+    const msg_sender &lmsg_sender(void) const { return lkmsg; }
+    msg_sender &lmsg_sender(void) { return lkmsg; }
+    void update_from_context(void) const {}
+    
+    /** Add the point pt to the mesh and return the index of the
+     *          point. If the point is to close to an existing point, the
+     *          function do not add the point and return the index of the
+     *          already existing point. pt should be of type base\_node.
+     */
+    size_type add_point(const base_node &pt);
+    /// Gives the number of points in the mesh.
+    size_type nb_points(void) const { return pts.card(); }
+    /// points index
+    const dal::bit_vector &points_index(void) const { return pts.index(); }
+    /// Delete the point of index i from the mesh.
+    void sup_point(size_type i);
+    /// Swap the indexes of points of index i and j in the whole structure.
+    void swap_points(size_type i, size_type j);
+    /** Search if the point pt is in (or approximatively in)
+     *          the mesh, and return the index of the point, or
+     *          size\_type(-1) if not found.
+     */
+    size_type search_point(const base_node &pt) const
+    { return pts.search(pt); }
+    
+    bgeot::pgeometric_trans trans_of_convex(size_type ic) const { 
+      if (!(trans_exists[ic]))
+	DAL_THROW(internal_error, "internal error");
+      return gtab[ic]; 
+    }
+    
+    /** Add a convex to the mesh. cvs is of type 
+     *          bgeot::convex\_structure and "it" is an iterator on a list
+     *          of indexes of points. Return the index
+     *          of the convex in the mesh.
+     */
+    template<class ITER>
+    size_type add_convex(bgeot::pgeometric_trans pgt, ITER ipts) { 
+      bool present;
+      size_type i = bgeot::mesh<base_node>::add_convex(pgt->structure(),
+						       ipts, &present);
+      gtab[i] = pgt; trans_exists[i] = true;
+      if (!present) { lmsg_sender().send(MESH_ADD_CONVEX(i)); touch(); }
+      return i;
+    }
+    
+    /** Add a convex to the mesh. cvs is of type 
+     *          bgeot::convex\_structure and "it" is an iterator on a list
+     *          of points of type base\_node. Return the index
+     *          of the convex in the mesh.
+     */
+    template<class ITER>
+    size_type add_convex_by_points(bgeot::pgeometric_trans pgt, ITER ipts);
+    
+    /** Add a simplex of dimension dim to the mesh. 
+     *          "it" is an iterator on a list of indexes of the points.
+     *          Return the index of the convex in the mesh.
+     */
+    template<class ITER>
+    size_type add_simplex(dim_type di, ITER ipts)
+    { return add_convex(bgeot::simplex_geotrans(di, 1), ipts); }
+    /** Add a simplex of dimension dim to the mesh. 
+     *          "it" is an iterator on a list of points of type base\_node.
+     *          Return the index of the convex in the mesh.
+     */
+    template<class ITER>
+    size_type add_simplex_by_points(dim_type dim, ITER ipts);
+    size_type add_segment(size_type a, size_type b);
+    size_type add_segment_by_points(const base_node &pt1,
+				    const base_node &pt2)
+    { return add_segment(add_point(pt1), add_point(pt2)); }
+    size_type add_triangle(size_type a,size_type b, size_type c);
+    size_type add_triangle_by_points(const base_node &p1,
+				     const base_node &p2,
+				     const base_node &p3);
+    size_type add_tetrahedron(size_type a,
+			      size_type b, size_type c, size_type d);
+    size_type add_tetrahedron_by_points(const base_node &p1,
+					const base_node &p2,
+					const base_node &p3,
+					const base_node &p4);
+    /** Add a parallelepiped of dimension dim to the mesh. 
+     *          "it" is an iterator on a list of indexes of the points.
+     *          Return the index of the convex in the mesh.
+     */
+    template<class ITER>
+    size_type add_parallelepiped(dim_type di, const ITER &ipts);
+    /** Add a parallelepiped of dimension dim to the mesh. 
+     *          "it" is an iterator on a list of points of type base\_node.
+     *          Return the index of the convex in the mesh.
+     */
+    template<class ITER>
+    size_type add_parallelepiped_by_points(dim_type di, const ITER &ps);
+    /** Add a parallelepiped of dimension dim to the
+     *          mesh. org is the point of type base\_node representing
+     *          the origine and "it" is an iterator on a list of
+     *          vectors of type base\_vector.
+     *          Return the index of the convex in the mesh.
+     */
+    template<class ITER>
+    size_type add_parallelepiped_by_vectors(dim_type di,
+				  const base_node &org, const ITER &vects);
+    
+    /** Add a prism of dimension dim to the mesh. 
+     *          "it" is an iterator on a list of indexes of the points.
+     *          Return the index of the convex in the mesh.
+     */
+    template<class ITER>
+    size_type add_prism(dim_type di, const ITER &ipts);
+    
+    /** Add a prism of dimension dim to the mesh. 
+     *          "it" is an iterator on a list of points of type base\_node.
+     *          Return the index of the convex in the mesh.
+     */
+    template<class ITER>
+    size_type add_prism_by_points(dim_type di, const ITER &ps);
+    
+    /// Delete the convex of index i from the mesh.
+    void sup_convex(size_type ic);
+    /** Swap the indexes of the convex of indexes i and j 
+     *          in the whole structure.
+     */
+    void swap_convex(size_type i, size_type j);
+    
+    /* returns the normal of face 'f' evaluated at the point 'pt'       */
+    /* (pt is a position in the reference convex)                       */
+    /* pt should of course be on the face, except if the geometric
+       transformation is linear */
+    base_small_vector normal_of_face_of_convex(size_type ic, short_type f,
+					       const base_node &pt) const;
     /* same as above, but n is the index of a point of the reference convex 
        (on the face..) -- should be faster since it uses a geotrans_precomp */
-      base_small_vector normal_of_face_of_convex(size_type ic, short_type f,
-						 size_type n=0) const;
-      base_matrix local_basis_of_face_of_convex(size_type ic, short_type f,
-	                                        const base_node &pt) const;
-      base_matrix local_basis_of_face_of_convex(size_type ic, short_type f,
-	                                        size_type n) const;
-      scalar_type convex_quality_estimate(size_type ic) const;
-      scalar_type convex_radius_estimate(size_type ic) const;
-      scalar_type minimal_convex_radius_estimate() const;
-      void translation(base_small_vector);
-      void transformation(base_matrix);
-  
-      void optimize_structure(void);
-      void clear(void);
-      
-      void write_to_file(const std::string &name) const;
-      void write_to_file(std::ostream &ost) const;
-      void read_from_file(const std::string &name);
-      void read_from_file(std::istream &ist);
-      void copy_from(const getfem_mesh& m); /* might be the copy constructor */
-      size_type memsize() const;
-      ~getfem_mesh() { lmsg_sender().send(MESH_DELETE()); }
+    base_small_vector normal_of_face_of_convex(size_type ic, short_type f,
+					       size_type n=0) const;
+    base_matrix local_basis_of_face_of_convex(size_type ic, short_type f,
+					      const base_node &pt) const;
+    base_matrix local_basis_of_face_of_convex(size_type ic, short_type f,
+					      size_type n) const;
+    scalar_type convex_quality_estimate(size_type ic) const;
+    scalar_type convex_radius_estimate(size_type ic) const;
+    scalar_type minimal_convex_radius_estimate() const;
+    void translation(base_small_vector);
+    void transformation(base_matrix);
+    
+
+    bool set_exists(size_type s) const { return valid_cvf_sets[s]; }
+    bool set_is_boundary(size_type s) const
+    { return cvf_sets[s].is_boundary(); }
+    size_type add_cvf_set(bool is_bound) {
+      size_type d = valid_cvf_sets.first_false(); valid_cvf_sets.add(d);
+      cvf_sets[d] = mesh_cvf_set(is_bound);
+      return d;
+    }
+    size_type add_convex_set(void) { return add_cvf_set(false); }
+    void add_convex_to_set(size_type s, size_type c) {
+      if (!(valid_cvf_sets[s]))
+	{ cvf_sets[s] = mesh_cvf_set(false); valid_cvf_sets.add(s); }
+      cvf_sets[s].add_convex(c); touch();
+    }
+    size_type add_face_set(void) { return add_cvf_set(true); }
+    void add_face_to_set(size_type s, size_type c, short_type f) {
+      if (!(valid_cvf_sets[s]))
+	{ cvf_sets[s] = mesh_cvf_set(true); valid_cvf_sets.add(s); }
+      cvf_sets[s].add_elt(c, f); touch();
+    }
+    bool is_convex_in_set(size_type c, size_type s) const
+    { return (valid_cvf_sets[s] && cvf_sets[s].is_convex(c)); }
+    bool is_face_in_set(size_type s, size_type c, short_type f) const
+    { return (valid_cvf_sets[s] && cvf_sets[s].is_elt(c, f)); }
+    const dal::bit_vector &convex_in_set(size_type s) const;
+    const mesh_cvf_set::face_bitset
+      &faces_of_convex_in_set(size_type c, size_type s) const;
+    const dal::bit_vector &get_valid_sets() const { return valid_cvf_sets; }
+    void sup_convex_from_sets(size_type c);
+    
+
+    void sup_face_from_set(size_type b, size_type c, short_type f)
+    { if (valid_cvf_sets[b]) { cvf_sets[b].sup_elt(c,f); touch(); } }
+    void sup_set(size_type b) {
+      if (valid_cvf_sets[b])
+	{ valid_cvf_sets.sup(b); cvf_sets[b].clear(); touch(); }
+    }
+    void swap_convex_in_sets(size_type c1, size_type c2);
+
+    void optimize_structure(void);
+    void clear(void);
+    
+    void write_to_file(const std::string &name) const;
+    void write_to_file(std::ostream &ost) const;
+    void read_from_file(const std::string &name);
+    void read_from_file(std::istream &ist);
+    void copy_from(const getfem_mesh& m); /* might be the copy constructor */
+    size_type memsize() const;
+    ~getfem_mesh() { lmsg_sender().send(MESH_DELETE()); }
   private:
-    void to_edges() {} /* to be done, the to_edges of mesh_structure does not handle geotrans */
+    void to_edges() {} /* to be done, the to_edges of mesh_structure does   */
+                       /* not handle geotrans */
   };
 
 
@@ -336,11 +430,13 @@ namespace getfem {
 
   /** rough estimate of the maximum value of the condition 
    * number of the jacobian of the geometric transformation */
-  scalar_type convex_quality_estimate(bgeot::pgeometric_trans pgt, const base_matrix& pts);
+  scalar_type convex_quality_estimate(bgeot::pgeometric_trans pgt,
+				      const base_matrix& pts);
 
   /** rough estimate of the radius of the convex using the largest eigenvalue
    * of the jacobian of the geometric transformation */
-  scalar_type convex_radius_estimate(bgeot::pgeometric_trans pgt, const base_matrix& pts);
+  scalar_type convex_radius_estimate(bgeot::pgeometric_trans pgt,
+				     const base_matrix& pts);
 
   /* 
      stores a convex face. if f == -1, it is the whole convex

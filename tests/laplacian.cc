@@ -177,9 +177,9 @@ void laplacian_problem::init(void)
     base_node un = mesh.normal_of_face_of_convex(it->cv, it->f);
     un /= gmm::vect_norm2(un);
     if (dal::abs(un[N-1] - 1.0) < 1.0E-7) { // new Neumann face
-      mf_u.add_boundary_elt(NEUMANN_BOUNDARY_NUM, it->cv, it->f);
+      mesh.add_face_to_set(NEUMANN_BOUNDARY_NUM, it->cv, it->f);
     } else {
-      mf_u.add_boundary_elt(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
+      mesh.add_face_to_set(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
     }
   }
 }
@@ -206,12 +206,12 @@ void laplacian_problem::assembly(void)
   
   cout << "Assembling Neumann condition" << endl;
   /* Fill F with Grad(sol_u).n .. a bit complicated */
-  for (dal::bv_visitor cv(mf_u.convex_on_boundary(NEUMANN_BOUNDARY_NUM));
+  for (dal::bv_visitor cv(mesh.convex_in_set(NEUMANN_BOUNDARY_NUM));
        !cv.finished(); ++cv) {
     getfem::pfem pf = mf_rhs.fem_of_element(cv);
-    for (dal::bv_visitor f(mf_u.faces_of_convex_on_boundary(cv,
-							NEUMANN_BOUNDARY_NUM));
-	 !f.finished(); ++f) {
+    getfem::mesh_cvf_set::face_bitset fb = mesh.faces_of_convex_in_set(cv,
+						      NEUMANN_BOUNDARY_NUM);
+    for (unsigned f = 0; f < MAX_FACES_PER_CV; ++f) if (fb[f]) {
       for (size_type l = 0; l< pf->structure(cv)->nb_points_of_face(f); ++l) {
 	size_type n = pf->structure(cv)->ind_points_of_face(f)[l];
 	base_small_vector un

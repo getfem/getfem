@@ -1176,7 +1176,7 @@ namespace getfem {
 	R tol=gmm::mat_maxnorm(M)*gmm::default_tol(value_type())*R(100);
 	gmm::clean(M, tol);
 	std::vector<size_type> ind_ct;
-	dal::bit_vector nn = mf_u.dof_on_boundary(boundary);
+	dal::bit_vector nn = mf_u.dof_on_set(boundary);
 	// The following filter is not sufficient for an arbitrary matrix field
 	// H for the multipliers version. To be ameliorated.
 	for (size_type i = nn.take_first(); i != size_type(-1); i << nn)
@@ -1517,7 +1517,7 @@ namespace getfem {
     }
 
     void no_mass_on_boundary(size_type b) {
-      dal::bit_vector bv = mf_u->dof_on_boundary(b);
+      dal::bit_vector bv = mf_u->dof_on_set(b);
       for (dal::bv_visitor i(bv); !i.finished(); ++i)
 	ind.push_back(i);
       SUBS = gmm::unsorted_sub_index(ind);

@@ -1,5 +1,13 @@
 2005-01-24 Yves Renard  <Yves.Renard@insa-toulouse.fr> 
 
+	* src/getfem_mesh the description of the boundaries is moved
+	from the structure mesh_fem to getfem_mesh. The methods in
+	mesh_fem are declared deprecated. Consequences : incompatibility
+	of the description of the set of faces : bitset in place of a 
+	dal::bit_vector, incompatibility of the mesh and mesh_fem files.
+
+2005-01-24 Yves Renard  <Yves.Renard@insa-toulouse.fr> 
+
 	* Changing the extension from .C to .cc for compatibility with
 	Windows.
 

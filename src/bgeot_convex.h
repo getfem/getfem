@@ -36,8 +36,7 @@
 
 #include <bgeot_convex_structure.h>
 
-namespace bgeot
-{
+namespace bgeot {
   
   template<class PT, class PT_TAB = std::vector<PT> > class convex {
   public :

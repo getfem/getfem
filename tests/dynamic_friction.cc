@@ -201,11 +201,11 @@ void friction_problem::init(void) {
 	base_node pt = mesh.points_of_face_of_convex(cv,f)[0];
 	if (un[N-1] < -0.000001 && (N != 3 || (bgeot::vect_dist2(pt, center)
 			   > .99*sqrt(25. + 15*15) && pt[N-1] < 20.1)))
-	  mf_u.add_boundary_elt(CONTACT_BOUNDARY, cv, f); 
-	if (un[0] > 0.98) mf_u.add_boundary_elt(PERIODIC_BOUNDARY1, cv, f); 
-	if (un[0] < -0.98) mf_u.add_boundary_elt(PERIODIC_BOUNDARY2, cv, f); 
+	  mesh.add_face_to_set(CONTACT_BOUNDARY, cv, f); 
+	if (un[0] > 0.98) mesh.add_face_to_set(PERIODIC_BOUNDARY1, cv, f); 
+	if (un[0] < -0.98) mesh.add_face_to_set(PERIODIC_BOUNDARY2, cv, f); 
 	if (un[N-1] > 0.1 && Dirichlet)
-	  mf_u.add_boundary_elt(DIRICHLET_BOUNDARY, cv, f);
+	  mesh.add_face_to_set(DIRICHLET_BOUNDARY, cv, f);
       }
     }
   }
@@ -240,8 +240,8 @@ void friction_problem::stationary(plain_vector &U0, plain_vector &LN,
   getfem::mdbrick_Dirichlet<> DIRICHLET(VOL_F, mf_rhs, F, DIRICHLET_BOUNDARY);
 
   // contact condition for Lagrange elements
-  dal::bit_vector cn = mf_u.dof_on_boundary(CONTACT_BOUNDARY);
-  if (periodic) cn.setminus(mf_u.dof_on_boundary(PERIODIC_BOUNDARY1));
+  dal::bit_vector cn = mf_u.dof_on_set(CONTACT_BOUNDARY);
+  if (periodic) cn.setminus(mf_u.dof_on_set(PERIODIC_BOUNDARY1));
   sparse_matrix BN(cn.card()/N, mf_u.nb_dof());
   sparse_matrix BT((N-1)*cn.card()/N, mf_u.nb_dof());
   plain_vector gap(cn.card()/N);
@@ -260,9 +260,9 @@ void friction_problem::stationary(plain_vector &U0, plain_vector &LN,
   // Eventual periodic condition (lagrange elements only).
   sparse_matrix BP(0,mf_u.nb_dof());
   if (periodic) {
-    dal::bit_vector b1 = mf_u.dof_on_boundary(PERIODIC_BOUNDARY1);
-    dal::bit_vector b2 = mf_u.dof_on_boundary(PERIODIC_BOUNDARY2);
-    dal::bit_vector bd = mf_u.dof_on_boundary(DIRICHLET_BOUNDARY);
+    dal::bit_vector b1 = mf_u.dof_on_set(PERIODIC_BOUNDARY1);
+    dal::bit_vector b2 = mf_u.dof_on_set(PERIODIC_BOUNDARY2);
+    dal::bit_vector bd = mf_u.dof_on_set(DIRICHLET_BOUNDARY);
     b1.setminus(bd); b2.setminus(bd);
     gmm::resize(BP, b1.card(), mf_u.nb_dof());
     size_type k =0;
@@ -331,8 +331,8 @@ void friction_problem::solve(void) {
   getfem::mdbrick_Dirichlet<> DIRICHLET(VOL_F, mf_rhs, F, DIRICHLET_BOUNDARY);
   
   // contact condition for Lagrange elements
-  dal::bit_vector cn = mf_u.dof_on_boundary(CONTACT_BOUNDARY);
-  if (periodic) cn.setminus(mf_u.dof_on_boundary(PERIODIC_BOUNDARY1));
+  dal::bit_vector cn = mf_u.dof_on_set(CONTACT_BOUNDARY);
+  if (periodic) cn.setminus(mf_u.dof_on_set(PERIODIC_BOUNDARY1));
   sparse_matrix BN(cn.card()/N, mf_u.nb_dof());
   sparse_matrix BT((N-1)*cn.card()/N, mf_u.nb_dof());
   plain_vector gap(cn.card()/N);
@@ -356,9 +356,9 @@ void friction_problem::solve(void) {
   // Eventual periodic condition (lagrange element only).
   sparse_matrix BP(0,mf_u.nb_dof());
   if (periodic) {
-    dal::bit_vector b1 = mf_u.dof_on_boundary(PERIODIC_BOUNDARY1);
-    dal::bit_vector b2 = mf_u.dof_on_boundary(PERIODIC_BOUNDARY2);
-    dal::bit_vector bd = mf_u.dof_on_boundary(DIRICHLET_BOUNDARY);
+    dal::bit_vector b1 = mf_u.dof_on_set(PERIODIC_BOUNDARY1);
+    dal::bit_vector b2 = mf_u.dof_on_set(PERIODIC_BOUNDARY2);
+    dal::bit_vector bd = mf_u.dof_on_set(DIRICHLET_BOUNDARY);
     b1.setminus(bd); b2.setminus(bd);
     gmm::resize(BP, b1.card(), mf_u.nb_dof());
     size_type k =0;

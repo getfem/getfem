@@ -419,7 +419,7 @@ namespace getfem {
     }
     virtual size_type nb_constraints(void) { return 0; }
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
-					size_type j0= 0, bool modified = false) {
+					size_type = 0, bool modified = false) {
       if (modified && !matrix_stored) 
 	DAL_THROW(failure_error, "The residu will not be consistant. "
 		  "Use this brick with the stiffness matrix stored option");
@@ -782,14 +782,14 @@ namespace getfem {
     
       getfem::convex_face_ct border_faces;
       getfem::outer_faces_of_mesh(*mesh, border_faces);
-      dal::bit_vector vb = (this->mesh_fems[num_fem])->get_valid_boundaries();
+      dal::bit_vector vb = mesh->get_valid_sets();
       
       for (getfem::convex_face_ct::const_iterator it = border_faces.begin();
 	   it != border_faces.end(); ++it) {
 	bool add = true;
 	// cout << "face " << it->f << " of cv " << it->cv << "boundaries : ";
 	for (dal::bv_visitor i(vb); !i.finished(); ++i) {
-	  if ((this->mesh_fems[num_fem])->is_face_on_boundary(i,it->cv,it->f)) {
+	  if (mesh->is_face_in_set(i,it->cv,it->f)) {
 	    // cout << i << endl;
 	    bound_cond_type bct = this->boundary_type(num_fem, i);
 	    if (bct != MDBRICK_UNDEFINED && bct != MDBRICK_NEUMANN) add = false;
@@ -848,20 +848,20 @@ namespace getfem {
 	gmm::resize(CO, 0, 0);
       }
       else {
-	vb = mf_theta->get_valid_boundaries();
-	size_type boundary = vb.first_false();
+	size_type boundary = mf_theta->linked_mesh().add_face_set();
 	gmm::resize(CO, comp_conn, mf_theta->nb_dof());
 	for (size_type k = 0; k < comp_conn; ++k) {
 	  for (size_type i = 0; i < comp_conns.size(); ++i)
 	    if (comp_conns[i] == k)
-	      mf_theta->add_boundary_elt(boundary, cv_nums[i], face_nums[i]);
+	      mf_theta->linked_mesh().add_face_to_set(boundary, cv_nums[i],
+						      face_nums[i]);
 
 	  std::vector<value_type> V(mf_theta->nb_dof());
 	  asm_constraint_on_theta(V, *mf_theta, boundary);
 	  gmm::copy(V, gmm::mat_row(CO, k));
-	  mf_theta->sup_boundary(boundary);
+	  mf_theta->linked_mesh().sup_set(boundary);
 	}
-	cout << "CO = " << CO << endl;
+	// cout << "CO = " << CO << endl;
       }
       this->computed();
     }

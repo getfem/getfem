@@ -34,55 +34,7 @@
 #include <dal_singleton.h>
 #include <getfem_mesh_fem.h>
 
-namespace getfem
-{
-
-  bool boundary_description::is_elt(size_type c, short_type f) const {
-    return (cvindex[c]) ? ((faces[cv_in.search(c)])[f]) : false;
-  }
-
-  void boundary_description::add_elt(size_type c, short_type f) { 
-    faces[  (cvindex[c]) ? cv_in.search(c) : cv_in.add(c)  ].add(f); 
-    cvindex.add(c);
-  }
-  
-  void boundary_description::sup_elt(size_type c, short_type f) {
-    if (cvindex[c]) { 
-      size_type i = cv_in.search(c);
-      faces[i].sup(f);
-      if (faces[i].card() == 0) cvindex.sup(c);
-    }
-  }
-
-  void boundary_description::sup_convex(size_type c) {
-    if (cvindex[c]) { 
-      size_type i = cv_in.search(c); faces[i].clear();
-      cvindex.sup(c); cv_in.sup(i);
-    }
-  }
-  
-  struct empty_bit_vector {
-    dal::bit_vector bv;
-  };
-
-  const dal::bit_vector &boundary_description::faces_of_convex(size_type c)
-    const {
-    return (cvindex[c]) ? faces[cv_in.search(c)] : dal::singleton<empty_bit_vector>::instance().bv;
-  }
-
-  void boundary_description::swap_convex(size_type c1, size_type c2) {
-    size_type i1, i2;
-    dal::bit_vector b1, b2;
-    if (cvindex[c1])
-      { i1=cv_in.search(c1); b1=faces[i1]; faces[i1].clear(); cv_in.sup(i1); }
-    if (cvindex[c2])
-      { i2=cv_in.search(c2); b2=faces[i2]; faces[i2].clear(); cv_in.sup(i2); }
-    if (cvindex[c1])
-      { i1 = cv_in.add(c2);  faces[i1] = b1; }
-    if (cvindex[c2])
-      { i2 = cv_in.add(c1);  faces[i2] = b2; }
-    cvindex.swap(c1, c2);
-  }
+namespace getfem {
   
   bool intfem::operator < (const intfem &l) const {
     if (pf < l.pf) return true; if (pf > l.pf) return false; 
@@ -101,41 +53,36 @@ namespace getfem
       ::instance().add(intfem(ppf, ppi ? ppi : im_none));
   }
   
-  const dal::bit_vector &mesh_fem::convex_on_boundary(size_type b) const {
-    return (valid_boundaries[b]) ?  
-      boundaries[b].cvindex : dal::singleton<empty_bit_vector>::instance().bv;
-  }
-  
-  const dal::bit_vector &mesh_fem::faces_of_convex_on_boundary(size_type c,
-							  size_type b) const {
-    return (valid_boundaries[b]) ? 
-      boundaries[b].faces_of_convex(c) : dal::singleton<empty_bit_vector>::instance().bv;
-  }
-  
-  void mesh_fem::sup_boundaries_of_convex(size_type c) {
-    for (dal::bv_visitor i(valid_boundaries); !i.finished(); ++i)
-      boundaries[i].sup_convex(c);
-    touch();
-  }
-  
-  void mesh_fem::swap_boundaries_convex(size_type c1, size_type c2) {
-    for (dal::bv_visitor i(valid_boundaries); !i.finished(); ++i)
-      boundaries[i].swap_convex(c1, c2);
-  }
-  
-  dal::bit_vector mesh_fem::dof_on_boundary(size_type b) const {
+  dal::bit_vector mesh_fem::dof_on_set(size_type b) const {
     if (!dof_enumeration_made) this->enumerate_dof();
     dal::bit_vector res;
-    if (valid_boundaries[b]) {
-      for (dal::bv_visitor cv(boundaries[b].cvindex); !cv.finished(); ++cv) {
-        for (dal::bv_visitor f(boundaries[b].faces_of_convex(cv)); !f.finished(); ++f) {
-          size_type nbb = dof_structure.structure_of_convex(cv)->nb_points_of_face(f);
-          for (size_type i = 0; i < nbb; ++i) {
-            size_type n = Qdim / fem_of_element(cv)->target_dim();
-            for (size_type ll = 0; ll < n; ++ll)
-              res.add(dof_structure.ind_points_of_face_of_convex(cv,f)[i] + ll);
-          }
+    if (linked_mesh().set_exists(b)) {
+      for (dal::bv_visitor cv(linked_mesh().convex_in_set(b));
+	   !cv.finished(); ++cv) {
+	if (linked_mesh().set_is_boundary(b)) {
+	  mesh_cvf_set::face_bitset fb
+	    = linked_mesh().faces_of_convex_in_set(cv, b);
+	  for (unsigned f = 0;
+	       f < linked_mesh().structure_of_convex(cv)->nb_faces(); ++f)
+	    if (fb[f]) {
+	    size_type nbb =
+	      dof_structure.structure_of_convex(cv)->nb_points_of_face(f);
+	    for (size_type i = 0; i < nbb; ++i) {
+	      size_type n = Qdim / fem_of_element(cv)->target_dim();
+	      for (size_type ll = 0; ll < n; ++ll)
+	       res.add(dof_structure.ind_points_of_face_of_convex(cv,f)[i]+ll);
+	    }
+	  }
         }
+	else {
+	  size_type nbb =
+	    dof_structure.structure_of_convex(cv)->nb_points();
+	  for (size_type i = 0; i < nbb; ++i) {
+	    size_type n = Qdim / fem_of_element(cv)->target_dim();
+	    for (size_type ll = 0; ll < n; ++ll)
+	      res.add(dof_structure.ind_points_of_convex(cv)[i]+ll);
+	  }
+	}
       }
     }
     return res;
@@ -149,12 +96,10 @@ namespace getfem
   void mesh_fem::receipt(const MESH_SUP_CONVEX &m) { 
     if (fe_convex[m.icv])
       { fe_convex[m.icv] = false; dof_enumeration_made = false; }
-    sup_boundaries_of_convex(m.icv);
   }
   void mesh_fem::receipt(const MESH_SWAP_CONVEX &m) { 
     fe_convex.swap(m.icv1, m.icv2);
     f_elems.swap(m.icv1, m.icv2);
-    swap_boundaries_convex(m.icv1, m.icv2);
   }
    
   void mesh_fem::set_finite_element(size_type cv, pintfem pif) {
@@ -434,8 +379,6 @@ namespace getfem
     dof_enumeration_made = false;
     touch();
     dof_structure.clear();
-    boundaries.clear();
-    valid_boundaries.clear();
   }
 
   mesh_fem::mesh_fem(getfem_mesh &me, dim_type Q)
@@ -489,25 +432,7 @@ namespace getfem
 	set_finite_element(bv, fem, pfi);
       } else if (strcmp(tmp, "BEGIN")==0) {
 	ftool::get_token(ist, tmp, 1023);
-	if (!strcmp(tmp, "BOUNDARY")) {
-	  ftool::get_token(ist, tmp, 1023);
-	  size_type bnum = atoi(tmp);
-	  while (true) {
-	    ftool::get_token(ist, tmp, 1023);
-	    if (strcmp(tmp, "END")!=0) {
-	      //	      cerr << "tmp = '" << tmp << "'" << '\n';
-	      size_type ic = atoi(tmp);
-	      char *sf = strchr(tmp, '/');
-	      if (sf) {
-		size_type f = atoi(sf+1);
-		add_boundary_elt(bnum, ic, f);
-	      } else DAL_THROW(failure_error, "Syntax error in boundary "
-			       << bnum);
-	    } else break;
-	  }
-	  ftool::get_token(ist, tmp, 1023);
-	  ftool::get_token(ist, tmp, 1023);
-	} else if (!strcmp(tmp,"DOF_ENUMERATION")) {
+	if (!strcmp(tmp,"DOF_ENUMERATION")) {
 	  //cerr << "begin dof enumeration" << '\n';
 	  dal::bit_vector doflst;
 	  dof_structure.clear(); dof_enumeration_made = false; touch();
@@ -584,20 +509,6 @@ namespace getfem
       ost << '\n';
     }
 
-    for (dal::bv_visitor bnum(get_valid_boundaries()); !bnum.finished();
-	 ++bnum) {
-      ost << " BEGIN BOUNDARY " << bnum;
-      size_type cnt = 0;
-      for (dal::bv_visitor cv(boundaries[bnum].cvindex); !cv.finished();
-	   ++cv) {
-        for (dal::bv_visitor_c f(boundaries[bnum].faces_of_convex(cv));
-	     !f.finished(); ++f, ++cnt) {
-	  if ((cnt % 10) == 0) ost << '\n' << " ";
-	  ost << " " << cv << "/" << f;
-	}
-      }
-      ost << '\n' << " END BOUNDARY " << bnum << '\n';
-    }
     ost << " BEGIN DOF_ENUMERATION " << '\n';
     for (dal::bv_visitor cv(convex_index()); !cv.finished(); ++cv) {
       ost << "  " << cv << ": ";

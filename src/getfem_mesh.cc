@@ -33,7 +33,87 @@
 #include <gmm_condition_number.h>
 #include <getfem_mesh.h>
 #include <bgeot_precomp.h>
+
 namespace getfem {
+ bool mesh_cvf_set::is_elt(size_type c, short_type f) const {
+    return (cvindex[c]) ? ((faces[cv_in.search(c)])[f]) : false;
+  }
+
+  void mesh_cvf_set::add_elt(size_type c, short_type f) {
+    if (f >= MAX_FACES_PER_CV) 
+      DAL_THROW(internal_error, "Number of face too large");
+    if (!is_bound)
+      DAL_THROW(internal_error,
+		"This selection does not represent a boundary");
+    faces[  (cvindex[c]) ? cv_in.search(c) : cv_in.add(c)  ][f] = true; 
+    cvindex.add(c);
+  }
+  
+  void mesh_cvf_set::sup_elt(size_type c, short_type f) {
+    if (cvindex[c]) { 
+      size_type i = cv_in.search(c);
+      faces[i][f] = false;
+      if (faces[i].count() == 0) cvindex.sup(c);
+    }
+  }
+
+  void mesh_cvf_set::sup_convex(size_type c) {
+    if (cvindex[c]) { 
+      size_type i = cv_in.search(c); faces[i].reset();
+      cvindex.sup(c); cv_in.sup(i);
+    }
+  }
+
+  struct empty_bit_vector {
+    dal::bit_vector bv;
+  };
+  struct empty_face_bitset {
+     mesh_cvf_set::face_bitset bv;
+  };
+
+  const mesh_cvf_set::face_bitset
+    &mesh_cvf_set::faces_of_convex(size_type c) const {
+    return (cvindex[c]) ? faces[cv_in.search(c)]
+      : dal::singleton<empty_face_bitset>::instance().bv;
+  }
+
+  void mesh_cvf_set::swap_convex(size_type c1, size_type c2) {
+    size_type i1, i2;
+    face_bitset b1, b2;
+    if (cvindex[c1])
+      { i1=cv_in.search(c1); b1=faces[i1]; faces[i1].reset(); cv_in.sup(i1); }
+    if (cvindex[c2])
+      { i2=cv_in.search(c2); b2=faces[i2]; faces[i2].reset(); cv_in.sup(i2); }
+    if (cvindex[c1])
+      { i1 = cv_in.add(c2);  faces[i1] = b1; }
+    if (cvindex[c2])
+      { i2 = cv_in.add(c1);  faces[i2] = b2; }
+    cvindex.swap(c1, c2);
+  }
+
+  const dal::bit_vector &getfem_mesh::convex_in_set(size_type b) const {
+    return (valid_cvf_sets[b]) ?  
+      cvf_sets[b].cvindex : dal::singleton<empty_bit_vector>::instance().bv;
+  }
+
+  const mesh_cvf_set::face_bitset &getfem_mesh::faces_of_convex_in_set
+    (size_type c, size_type b) const {
+    return (valid_cvf_sets[b]) ? 
+      cvf_sets[b].faces_of_convex(c)
+      : dal::singleton<empty_face_bitset>::instance().bv;
+  }
+
+  void getfem_mesh::sup_convex_from_sets(size_type c) {
+    for (dal::bv_visitor i(valid_cvf_sets); !i.finished(); ++i)
+      cvf_sets[i].sup_convex(c);
+    touch();
+  }
+
+  void getfem_mesh::swap_convex_in_sets(size_type c1, size_type c2) {
+    for (dal::bv_visitor i(valid_cvf_sets); !i.finished(); ++i)
+      cvf_sets[i].swap_convex(c1, c2);
+    touch();
+  }
 
   getfem_mesh::getfem_mesh(dim_type NN) {
     dimension = NN; eps_p = 1.0E-10;
@@ -91,9 +171,10 @@ namespace getfem {
     points().resort();
   }
 
-  void getfem_mesh::clear(void) { 
+  void getfem_mesh::clear(void) {
     bgeot::mesh<base_node>::clear();
     gtab.clear(); trans_exists.clear();
+    cvf_sets.clear(); valid_cvf_sets.clear();
     lmsg_sender().send(MESH_CLEAR()); touch();
   }
 
@@ -129,6 +210,7 @@ namespace getfem {
   void getfem_mesh::sup_convex(size_type ic) {
     bgeot::mesh<base_node>::sup_convex(ic);
     trans_exists[ic] = false;
+    sup_convex_from_sets(ic);
     lmsg_sender().send(MESH_SUP_CONVEX(ic)); touch();
   }
 
@@ -137,6 +219,7 @@ namespace getfem {
       bgeot::mesh<base_node>::swap_convex(i,j);
       trans_exists.swap(i, j);
       gtab.swap(i,j);
+      swap_convex_in_sets(i, j);
       lmsg_sender().send(MESH_SWAP_CONVEX(i, j)); touch();
     }
   }
@@ -306,6 +389,51 @@ namespace getfem {
 	  cv_pt[cv[ic].pts+i] = dal::abs(atoi(tmp));
 	}
       }
+      else if (strcmp(tmp, "BEGIN")==0) {
+	ftool::get_token(ist, tmp, 1023);
+	if (!strcmp(tmp, "BOUNDARY")) {
+	  ftool::get_token(ist, tmp, 1023);
+	  size_type bnum = atoi(tmp);
+	  while (true) {
+	    ftool::get_token(ist, tmp, 1023);
+	    if (strcmp(tmp, "END")!=0) {
+	      size_type ic = atoi(tmp);
+	      char *sf = strchr(tmp, '/');
+	      if (sf) {
+		size_type f = atoi(sf+1);
+		add_face_to_set(bnum, ic, f);
+	      } else DAL_THROW(failure_error, "Syntax error in boundary "
+			       << bnum);
+	    } else break;
+	  }
+	  ftool::get_token(ist, tmp, 1023);
+	  ftool::get_token(ist, tmp, 1023);
+	  ftool::get_token(ist, tmp, 1023);
+	}
+	else if (!strcmp(tmp, "CONVEX")) {
+	  ftool::get_token(ist, tmp, 1023);
+	  if (!strcmp(tmp, "SET")) {
+	    ftool::get_token(ist, tmp, 1023);
+	    size_type bnum = atoi(tmp);
+	    
+	    while (true) {
+	    ftool::get_token(ist, tmp, 1023);
+	    if (strcmp(tmp, "END")!=0) {
+	      size_type ic = atoi(tmp);
+	      add_convex_to_set(bnum, ic);
+	    } else break;
+	  }
+	  ftool::get_token(ist, tmp, 1023);
+	  ftool::get_token(ist, tmp, 1023);
+	  }
+	  else DAL_THROW(failure_error, "Syntax error in file at token '"
+		       << tmp << "' [pos=" << std::streamoff(ist.tellg())
+		       << "]");
+	}
+	else DAL_THROW(failure_error, "Syntax error in file at token '"
+		       << tmp << "' [pos=" << std::streamoff(ist.tellg())
+		       << "]");
+      }
       else if (strlen(tmp)) {
 	DAL_THROW(failure_error, "Syntax error reading a mesh file "
 		  " at pos " << std::streamoff(ist.tellg())
@@ -369,6 +497,32 @@ namespace getfem {
     write_convex_to_file_(*this, ost, convex_tab.tas_begin(),
 			              convex_tab.tas_end());
     ost << '\n' << "END MESH STRUCTURE DESCRIPTION" << '\n';
+
+    for (dal::bv_visitor bnum(valid_cvf_sets); !bnum.finished(); ++bnum) {
+      if (set_is_boundary(bnum)) {
+	ost << " BEGIN BOUNDARY " << bnum;
+	size_type cnt = 0;
+	for (dal::bv_visitor cv(cvf_sets[bnum].cvindex); !cv.finished();
+	     ++cv) {
+	  for (size_type f = 0; f < MAX_FACES_PER_CV; ++f)
+	    if (cvf_sets[bnum].faces_of_convex(cv)[f]) {
+	      if ((cnt++ % 10) == 0) ost << '\n' << " ";
+	      ost << " " << cv << "/" << f;
+	  }
+	}
+	ost << '\n' << " END BOUNDARY " << bnum << '\n';
+      }
+      else {
+	ost << " BEGIN CONVEX SET " << bnum;
+	size_type cnt = 0;
+	for (dal::bv_visitor cv(cvf_sets[bnum].cvindex); !cv.finished();
+	     ++cv, ++cnt) {
+	  if ((cnt % 20) == 0) ost << '\n' << " ";
+	  ost << " " << cv;
+	}
+	ost << '\n' << " END CONVEX SET " << bnum << '\n';
+      }
+    }
   }
 
   void getfem_mesh::write_to_file(const std::string &name) const {
@@ -385,7 +539,8 @@ namespace getfem {
     return bgeot::mesh<base_node>::memsize() + 
       (pts.index().last_true()+1)*dim()*sizeof(scalar_type)+
       sizeof(getfem_mesh) - sizeof(bgeot::mesh<base_node>)
-      +trans_exists.memsize() + gtab.memsize();
+      + trans_exists.memsize() + gtab.memsize()
+      + cvf_sets.memsize() + valid_cvf_sets.memsize();
   }
 
   struct equilateral_to_GT_PK_grad_aux : public std::vector<base_matrix> {};

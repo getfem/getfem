@@ -301,9 +301,9 @@ void elastostatic_problem::init(void) {
     base_node un = mesh.normal_of_face_of_convex(it->cv, it->f);
     un /= gmm::vect_norm2(un);
     if (dal::abs(un[N-1] - 1.0) < 1.0E-7) { 
-      mf_u.add_boundary_elt(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
+      mesh.add_face_to_set(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
     } else if (dal::abs(un[N-1] + 1.0) < 1.0E-7) {
-      mf_u.add_boundary_elt(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
+      mesh.add_face_to_set(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
     }
   }
 }
