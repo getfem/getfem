@@ -15,7 +15,7 @@ PG = 9810; 		% constante de gravitation (sur terre) (en mm/s^2).
 %PG = 1000000; 		% constante de gravitation (sur jupiter !) (em mm/s^2).
 RHO = 6e-6;     	% densite massique "realiste" pour l'acier
 T = 0.05;
-DT = 0.0001;            % Time step
+DT = 0.001;            % Time step
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles

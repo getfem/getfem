@@ -272,9 +272,9 @@ void friction_problem::solve(void) {
   size_type j = 0;
   for (dal::bv_visitor i(cn); !i.finished(); ++i)
     if (i % N == 0) {
-      BN(j, i/N+N-1) = -1.;
+      BN(j, i+N-1) = -1.;
       gap[j] = mf_u.point_of_dof(i)[N-1];
-      for (size_type k = 0; k < N-1; ++k) BT(j+k, i/N+k) = 1.;
+      for (size_type k = 0; k < N-1; ++k) BT(j+k, i+k) = 1.;
       ++j;
     }
   getfem::mdbrick_Coulomb_friction<> FRICTION(DYNAMIC, BN, gap,
@@ -306,10 +306,10 @@ void friction_problem::solve(void) {
     + 0.5 * gmm::vect_sp(DYNAMIC.mass_matrix(), V0, V0)
     - gmm::vect_sp(VOL_F.source_term(), U0);
 
-  getfem::dx_export *exp = 0;
+  std::auto_ptr<getfem::dx_export> exp;
   getfem::stored_mesh_slice sl;
   if (dxexport) {
-    exp = new getfem::dx_export(datafilename + ".dx");
+    exp.reset(new getfem::dx_export(datafilename + ".dx", true));
     sl.build(mesh, getfem::slicer_boundary(mesh),4);
     exp->exporting(sl,true); exp->exporting_mesh_edges();
     exp->write_point_data(mf_u, U0, "stepinit"); 
