@@ -1,0 +1,52 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% parameters for program elastostatic                                     %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%% pde parameters :	        				      %%%%%
+LX = 1.0;		% size in X.
+LY = 1.0;	        % size in Y.
+LZ = 1.0;		% size in Z.
+% MU = 77.0;	        % Lamé coefficient.
+% LAMBDA = 107.0;   	% Lamé coefficient.
+MU = 1.0;	        % Lamé coefficient.
+LAMBDA = 0.0;   	% Lamé coefficient.
+EPSILON = 0.001;        % thickness of the plate
+
+PRESSURE = 100.0;       % pressure on the top surface of the plate
+			%  (will be multiplied by EPSILON^3.
+
+
+NX = 10;
+RESIDU = 1E-9;     	% residu for conjugate gradient.
+MESH_NOISED = 1; % Set to one if you want to "shake" the mesh
+MIXED = 1;
+SYMMETRIZED = 0;
+
+%%%%% parameters for quadrangles
+
+% MESH_TYPE = 'GT_LINEAR_QK(2)'; % linear rectangles
+
+% MESH_TYPE = 'GT_QK(2,1)'; % linear rectangles
+% FEM_TYPE_UT = 'FEM_QK(2,2)';
+% FEM_TYPE_U3 = 'FEM_QK(2,2)';
+% FEM_TYPE_THETA= 'FEM_QK(2,2)';
+% INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,10)';
+% INTEGRATION_CT = 'IM_GAUSS_PARALLELEPIPED(2,3)';
+
+%%%%% parameters for triangles
+
+MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
+FEM_TYPE_UT = 'FEM_PK(2,1)';
+FEM_TYPE_U3 = 'FEM_PK(2,1)';
+FEM_TYPE_THETA= 'FEM_PK(2,2)';
+INTEGRATION = 'IM_TRIANGLE(6)';
+INTEGRATION_CT = 'IM_TRIANGLE(6)';
+
+%%%%% Other parameters
+
+% DATA_FEM_TYPE must be defined if your main FEM is not Lagrangian
+% DATA_FEM_TYPE = 'FEM_QK(2,1)';
+
+%%%%%   saving parameters                                             %%%%%
+ROOTFILENAME = 'plate';     % Root of data files.
+VTK_EXPORT = 2 % export solution to a .vtk file ?

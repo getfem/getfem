@@ -474,6 +474,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
 
   // Solution extraction
   ELAS.get_solution(MS, U);
+
+  if (law_num == 3) delete pINCOMP;
   
   return (iter.converged());
 }

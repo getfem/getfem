@@ -24,6 +24,7 @@ check_PROGRAMS = \
 	test_int_set       \
 	test_interpolated_fem      \
 	test_mat_elem      \
+	plate              \
 	test_slice         \
 	test_norm	   \
 	test_mesh          \
@@ -44,6 +45,7 @@ test_kdtree_SOURCES = test_kdtree.C
 test_rtree_SOURCES = test_rtree.C
 test_assembly_SOURCES = test_assembly.C
 laplacian_SOURCES = laplacian.C
+plate_SOURCES = plate.C
 test_interpolation_SOURCES = test_interpolation.C
 elastostatic_SOURCES = elastostatic.C
 nonlinear_elastostatic_SOURCES = nonlinear_elastostatic.C
@@ -81,8 +83,11 @@ TESTS = \
 	$(top_srcdir)/tests/test_interpolation.pl \
 	$(top_srcdir)/tests/test_mat_elem.pl      \
 	$(top_srcdir)/tests/test_assembly.pl      \
+	$(top_srcdir)/tests/plate.pl              \
 	$(top_srcdir)/tests/laplacian.pl          \
 	$(top_srcdir)/tests/elastostatic.pl       \
+	$(top_srcdir)/tests/nonlinear_elastostatic.pl       \
+	$(top_srcdir)/tests/plasticity.pl       \
 	$(top_srcdir)/tests/helmholtz.pl          \
 	$(top_srcdir)/tests/integration.pl        \
 	$(top_srcdir)/tests/poly.pl               \
@@ -118,9 +123,13 @@ EXTRA_DIST = \
 	test_tree_sorted.pl               \
 	test_mat_elem.pl                  \
 	laplacian.param                   \
+	plate.param                       \
+	plate.pl                          \
 	schwarz_additive.pl               \
 	schwarz_additive.param            \
 	elastostatic.param                \
+	nonlinear_elastostatic.pl         \
+	plasticity.pl                     \
 	nonlinear_elastostatic.param      \
 	test_interpolated_fem.param       \
 	geo_trans_inv.param               \

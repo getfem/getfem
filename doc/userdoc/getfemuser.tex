@@ -940,14 +940,6 @@ Each brick will participate on the global linear system to be solved (the tangen
   \cpp{brick.nb_constraints()} & number of linear constraints on the system
   including the constraints defined in the sub-problem(s) if any. \\ \hline
 
-  \cpp{brick.is_linear()} & true if the problem is linear. \\ \hline
-
-  \cpp{brick.is_symmetric()} & true if the problem is symmetric
-  (or hermitian for complex variables).\\ \hline
-
-  \cpp{brick.is_coercive()} & true if the problem is symmetric
-  (or hermitian) and coercive.\\ \hline
-
   \cpp{brick.compute_tangent_matrix}\cpp{(MS, i0, j0, modified)} & the brick
   has to call the \cpp{compute_tangent_matrix(MS, i0,modified)} of
   sub-problem(s) if any and to compute its own part of the tangent and
@@ -966,13 +958,11 @@ Each brick will participate on the global linear system to be solved (the tangen
   (a \cpp{dal::bit_vector}) the indices of the variables which are
   considered as multipliers or mixed variables\\ \hline
 
-  \cpp{brick.main_mesh_fem()} & the principal finite element method.
-  For instance a Dirichlet condition will act on this main mesh_fem.
-  For a mixed method, the main fem will be the primal variable fem. \hline
-
 \end{ctableau}
 
-Of course, each specific brick may have additional methods to build the brick, define some parameters and extract the solution from the model state variable.
+Of course, each specific brick may have additional methods to build
+the brick, define some parameters and extract the solution from the
+model state variable.
 
 \subsection{Scalar elliptic brick}
 The Scalar elliptic brick is a basic brick representing a term such as\\
@@ -1004,6 +994,7 @@ The following additional methods are available on this brick:
 \end{ctableau}
 
 \subsection{Source term brick}
+(version 1.7) (ajouter le numero de fem en parametre ...)
 This brick represent either a volumic source term or a Neumann condition, i.e. a term $\int_{\Omega} f.v dx$ or $\int_{\Gamma} f.v dx$ in the weak formulation , with $\Gamma$ a part of$\partial \Omega$. This brick works for both real or complex terms in scalar or vectorial problems. The constructor of this brick is:
 
 \begin{alltt}

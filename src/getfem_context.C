@@ -68,11 +68,12 @@ namespace getfem {
 
   void context_dependencies::add_dependency(const context_dependencies &cd) {
     // cout << "adding dep " << &cd << " à " << this << endl;
+    iterator_list it = dependencies.begin(), ite = dependencies.end();
+    for (; it != ite; ++it) if ((*it) == &cd) return;
     dependencies.push_back(&cd);
     cd.dependent.push_back(this);
-    touched=false;
+    touched = false;
   }
-
   
   void context_dependencies::context_check(void) const {
     if (state == CONTEXT_CHANGED) {

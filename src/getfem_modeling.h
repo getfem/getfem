@@ -37,12 +37,10 @@
 /*  to a sub brick.                                                        */
 /*  The virtual functions of a brick :                                     */
 /*  - nb_dof() : number of total variables including the variables of the  */
-/*        sub-problem(s) if any.                                           */
+/*        sub-problem(s) if any : to be redefine olny if there is          */
+/*        additional dof not coming from proper mesh_fems                  */
 /*  - nb_constraints() : number of linear constraints on the system        */
 /*        including the constraints defined in the sub-problem(s) if any.  */
-/*  - is_linear()    : true if the problem is linear.                      */
-/*  - is_symmetric() : true if the problem is symmetric (or hermitian).    */
-/*  - is_coercive()  : true if the problem is symmetric (or hermitian)     */
 /*                     coercive.                                           */
 /*  - compute_tangent_matrix(MS, i0, j0, modified) : the brick has to call */
 /*        the compute_tangent_matrix(MS, i0,modified) of sub-problem(s) if */
@@ -57,15 +55,26 @@
 /*        residu vectors defined in MS)                                    */
 /*  - mixed_variables(bv, i0) : indicates in bv the indices of the         */
 /*        variables which are considered as multipliers or mixed variables.*/
-/*  - main_mesh_fem() : the principal finite element method. For instance  */
-/*         a Dirichlet condition will act on this main mesh_fem. For a     */
-/*         mixed method, the main fem will be the primal variable fem.     */
 /*                                                                         */
 /* Dependencies.                                                           */
 /*   A brick depends at least on some mesh_fem structures and has to       */
 /* react if some changements occur in these mesh_fem structures.           */
 /*                                                                         */
 /***************************************************************************/
+/*                                                                         */
+/* Brick idents :                                                          */
+/* MDBRICK_SCALAR_ELLIPTIC       174397                                    */
+/* MDBRICK_LIN_ISO_ELASTICITY    852327                                    */
+/* MDBRICK_HELMHOLTZ             354864                                    */
+/* MDBRICK_LINEAR_INCOMP         239898                                    */
+/* MDBRICK_NONLINEAR_ELASTICITY  821357                                    */
+/* MDBRICK_NONLINEAR_INCOMP      964552                                    */
+/* MDBRICK_SMALL_DEF_PLASTICITY  556433                                    */
+/* MDBRICK_LINEAR_PLATE          897523                                    */
+/* MDBRICK_MIXED_LINEAR_PLATE    213456                                    */
+/*                                                                         */
+/***************************************************************************/
+
 
 #ifndef GETFEM_MODELING_H__
 #define GETFEM_MODELING_H__
@@ -221,7 +230,62 @@ namespace getfem {
     size_type MS_i0;
     long ident_ms;
 
-    void update_from_context(void) const { to_compute = true; }
+    struct mesh_fem_info_ {
+      size_type brick_ident;
+      size_type info;
+      mesh_fem_info_(size_type id, size_type in) : brick_ident(id), info(in) {}
+    };
+
+    std::vector<mdbrick_abstract *> sub_bricks;
+    mutable std::vector<mesh_fem *> mesh_fems;
+    mutable std::vector<mesh_fem_info_> mesh_fems_info;
+    mutable std::vector<size_type> mesh_fem_positions;
+    std::vector<mesh_fem *> proper_mesh_fems;
+    std::vector<mesh_fem_info_> proper_mesh_fems_info;
+
+    bool proper_is_linear_, proper_is_symmetric_, proper_is_coercive_;
+    mutable bool is_linear_, is_symmetric_, is_coercive_;
+    mutable size_type nb_total_dof;
+
+    void update_from_context(void) const {
+      to_compute = true;
+      nb_total_dof = 0;
+      is_linear_ = proper_is_linear_;
+      is_symmetric_ = proper_is_symmetric_;
+      is_coercive_ = proper_is_coercive_;
+      mesh_fems.resize(0); mesh_fem_positions.resize(0);
+      for (size_type i = 0; i < sub_bricks.size(); ++i) {
+	for (size_type j = 0; j < sub_bricks[i]->mesh_fems.size(); ++j) {
+	  mesh_fems.push_back(sub_bricks[i]->mesh_fems[j]);
+	  mesh_fems_info.push_back(sub_bricks[i]->mesh_fems_info[j]);
+	  mesh_fem_positions.push_back(nb_total_dof 
+				       + sub_bricks[i]->mesh_fem_positions[j]);
+	  is_linear_ = is_linear_ && sub_bricks[i]->is_linear();
+	  is_symmetric_ = is_symmetric_ && sub_bricks[i]->is_symmetric();
+	  is_coercive_ = is_coercive_ && sub_bricks[i]->is_coercive();
+	}
+	nb_total_dof += sub_bricks[i]->nb_dof();
+      }
+      for (size_type j = 0; j < proper_mesh_fems.size(); ++j) {
+	mesh_fems.push_back(proper_mesh_fems[j]);
+	mesh_fems_info.push_back(proper_mesh_fems_info[j]);
+	mesh_fem_positions.push_back(nb_total_dof);
+	nb_total_dof += proper_mesh_fems[j]->nb_dof();
+      }
+    }
+
+    void add_sub_brick(mdbrick_abstract &mdb) {
+      sub_bricks.push_back(&mdb);
+      add_dependency(mdb);
+    }
+
+    void add_proper_mesh_fem(mesh_fem &mf, size_type brick_ident,
+			     size_type info = 0) {
+      mesh_fem_info_ mfi(brick_ident, info);
+      proper_mesh_fems.push_back(&mf);
+      proper_mesh_fems_info.push_back(mfi);
+      add_dependency(mf);
+    }
 
     // to_be_computed : the context has changed (or it is the first call).
     // to_be_transferred : the structure MODEL_STATE has changed, the 
@@ -244,25 +308,28 @@ namespace getfem {
 
   public :
 
-    virtual size_type nb_dof(void) = 0;
+    dim_type dim(void) { return mesh_fems[0]->linked_mesh().dim(); }
+    virtual size_type nb_dof(void) { return nb_total_dof; }
     virtual size_type nb_constraints(void) = 0;
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
 				  size_type j0=0, bool modified = false) = 0;
     virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
 				size_type j0 = 0) = 0;
-    virtual mesh_fem &main_mesh_fem(void) = 0;
-    virtual bool is_linear(void) = 0;
-    virtual bool is_symmetric(void) = 0;
-    virtual bool is_coercive(void) = 0;
+    bool is_linear(void) { return is_linear_; }
+    bool is_symmetric(void) { return is_symmetric_; }
+    bool is_coercive(void) { return is_coercive_; }
     virtual void mixed_variables(dal::bit_vector &, size_type = 0) = 0;
-    mdbrick_abstract(void) :  to_compute(true), to_transfer(true),
-			      MS_i0(0), ident_ms(-1) { }
+    mdbrick_abstract(void) : to_compute(true), to_transfer(true),
+			     MS_i0(0), ident_ms(-1)
+    { proper_is_linear_ = proper_is_symmetric_ = proper_is_coercive_ = true; }
     virtual ~mdbrick_abstract() {}
   };
 
   /* ******************************************************************** */
   /*		general scalar elliptic brick.                            */
   /* ******************************************************************** */
+
+# define MDBRICK_SCALAR_ELLIPTIC 174397
 
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_scalar_elliptic : public mdbrick_abstract<MODEL_STATE> {
@@ -281,18 +348,12 @@ namespace getfem {
 
   public :
 
-    virtual bool is_linear(void) { return true; }
-    virtual bool is_coercive(void) { return true; }
-    virtual bool is_symmetric(void) { return true; }
     virtual void mixed_variables(dal::bit_vector &, size_type = 0) {}
-    virtual size_type nb_dof(void) { return mf_u.nb_dof(); }
     virtual size_type nb_constraints(void) { return 0; }
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
 					size_type = 0, bool modified = false);
     virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
 				size_type = 0);
-    virtual mesh_fem &main_mesh_fem(void) { return mf_u; }
-
     
     void set_coeff(value_type a) {
       homogeneous = true; laplacian = true;
@@ -321,32 +382,33 @@ namespace getfem {
     }
 
     template<typename VECT> void get_solution(MODEL_STATE &MS, VECT &V) {
-      gmm::sub_interval SUBI(this->first_index(), nb_dof());
+      gmm::sub_interval SUBI(this->first_index(), this->nb_dof());
       gmm::copy(gmm::sub_vector(MS.state(), SUBI), V);
+    }
+
+    void init_(void) {
+      this->add_dependency(mf_data);
+      this->add_proper_mesh_fem(mf_u, MDBRICK_SCALAR_ELLIPTIC);
+      this->update_from_context();
     }
 
     // constructor for the Laplace operator
     mdbrick_scalar_elliptic(mesh_fem &mf_u_, mesh_fem &mf_data_,
        value_type a, bool mat_stored = false)
-      : mf_u(mf_u_), mf_data(mf_data_), matrix_stored(mat_stored) {
-      set_coeff(a);
-      this->add_dependency(mf_u); this->add_dependency(mf_data);
-    }
+      : mf_u(mf_u_), mf_data(mf_data_), matrix_stored(mat_stored)
+    { set_coeff(a); init_(); }
 
     // constructor for a non-homogeneous material
     mdbrick_scalar_elliptic(mesh_fem &mf_u_, mesh_fem &mf_data_,
        const VECTOR &coeff, bool laplace, bool mat_stored = false)
-      : mf_u(mf_u_), mf_data(mf_data_),	matrix_stored(mat_stored) {
-      set_coeff(coeff, laplace);
-      this->add_dependency(mf_u); this->add_dependency(mf_data);
-    }
- 
+      : mf_u(mf_u_), mf_data(mf_data_),	matrix_stored(mat_stored)
+    { set_coeff(coeff, laplace); init_(); }
   };
 
   template<typename MODEL_STATE>
    void mdbrick_scalar_elliptic<MODEL_STATE>::compute_K(void) {
     gmm::clear(K);
-    gmm::resize(K, nb_dof(), nb_dof());
+    gmm::resize(K, this->nb_dof(), this->nb_dof());
     size_type n = laplacian ? 1 : dal::sqr(mf_u.linked_mesh().dim());
     VECTOR coeffs(n * mf_data.nb_dof());
     if (homogeneous) {
@@ -369,7 +431,7 @@ namespace getfem {
       DAL_THROW(failure_error, "The residu will not be consistant. "
 		"Use this brick with the stiffness matrix stored option");
     react(MS, i0, modified);
-    gmm::sub_interval SUBI(i0, nb_dof());
+    gmm::sub_interval SUBI(i0, this->nb_dof());
     if (this->to_be_computed()
 	|| (!matrix_stored && this->to_be_transferred()))
       compute_K();
@@ -384,7 +446,7 @@ namespace getfem {
   void mdbrick_scalar_elliptic<MODEL_STATE>::
   compute_residu(MODEL_STATE &MS, size_type i0, size_type) {
     react(MS, i0, false);
-    gmm::sub_interval SUBI(i0, nb_dof());
+    gmm::sub_interval SUBI(i0, this->nb_dof());
     if (this->to_be_computed()) { 
       compute_K();
       if (!matrix_stored) {
@@ -407,6 +469,8 @@ namespace getfem {
   /*		Linearized elasticity bricks.                             */
   /* ******************************************************************** */
 
+# define MDBRICK_LIN_ISO_ELASTICITY 852327
+
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_isotropic_linearized_elasticity
     : public mdbrick_abstract<MODEL_STATE> {
@@ -425,17 +489,12 @@ namespace getfem {
 
   public :
 
-    virtual bool is_linear(void) { return true; }
-    virtual bool is_coercive(void) { return true; }
-    virtual bool is_symmetric(void) { return true; }
     virtual void mixed_variables(dal::bit_vector &, size_type = 0) {}
-    virtual size_type nb_dof(void) { return mf_u.nb_dof(); }
     virtual size_type nb_constraints(void) { return 0; }
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
 					size_type = 0, bool modified = false);
     virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
 				size_type = 0);
-    virtual mesh_fem &main_mesh_fem(void) { return mf_u; }
 
     void set_Lame_coeff(value_type lambdai, value_type mui) {
       homogeneous = true;
@@ -452,33 +511,36 @@ namespace getfem {
     }
 
     template<typename VECT> void get_solution(MODEL_STATE &MS, VECT &V) {
-      gmm::sub_interval SUBI(this->first_index(), nb_dof());
+      gmm::sub_interval SUBI(this->first_index(), this->nb_dof());
       gmm::copy(gmm::sub_vector(MS.state(), SUBI), V);
     }
 
-    // constructor for a homogeneous material (constant lambda and mu)
-    mdbrick_isotropic_linearized_elasticity(mesh_fem &mf_u_, mesh_fem &mf_data_,
-       value_type lambdai, value_type mui, bool mat_stored = false)
-      : mf_u(mf_u_), mf_data(mf_data_), matrix_stored(mat_stored) {
-      set_Lame_coeff(lambdai, mui);
-      this->add_dependency(mf_u); this->add_dependency(mf_data);
+    void init_(void) {
+      this->add_dependency(mf_data);
+      this->add_proper_mesh_fem(mf_u, MDBRICK_LIN_ISO_ELASTICITY);
+      this->update_from_context();
     }
 
+    // constructor for a homogeneous material (constant lambda and mu)
+    mdbrick_isotropic_linearized_elasticity
+    (mesh_fem &mf_u_, mesh_fem &mf_data_,
+     value_type lambdai, value_type mui, bool mat_stored = false)
+      : mf_u(mf_u_), mf_data(mf_data_), matrix_stored(mat_stored)
+    { set_Lame_coeff(lambdai, mui); init_(); }
+
     // constructor for a non-homogeneous material
-    mdbrick_isotropic_linearized_elasticity(mesh_fem &mf_u_, mesh_fem &mf_data_,
-       const VECTOR &lambdai, const VECTOR &mui, bool mat_stored = false)
-      : mf_u(mf_u_), mf_data(mf_data_),	matrix_stored(mat_stored) {
-      set_Lame_coeff(lambdai, mui);
-      this->add_dependency(mf_u); this->add_dependency(mf_data);
-    }
- 
+    mdbrick_isotropic_linearized_elasticity
+    (mesh_fem &mf_u_, mesh_fem &mf_data_,
+     const VECTOR &lambdai, const VECTOR &mui, bool mat_stored = false)
+      : mf_u(mf_u_), mf_data(mf_data_),	matrix_stored(mat_stored)
+    { set_Lame_coeff(lambdai, mui); init_(); }
   };
 
 
   template<typename MODEL_STATE>
    void mdbrick_isotropic_linearized_elasticity<MODEL_STATE>::compute_K(void) {
     gmm::clear(K);
-    gmm::resize(K, nb_dof(), nb_dof());
+    gmm::resize(K, this->nb_dof(), this->nb_dof());
     VECTOR lambda(mf_data.nb_dof()), mu(mf_data.nb_dof());
     if (homogeneous) {
       std::fill(lambda.begin(), lambda.end(), value_type(lambda_[0]));
@@ -497,7 +559,7 @@ namespace getfem {
       DAL_THROW(failure_error, "The residu will not be consistant. "
 		"Use this brick with the stiffness matrix stored option");
     react(MS, i0, modified);
-    gmm::sub_interval SUBI(i0, nb_dof());
+    gmm::sub_interval SUBI(i0, this->nb_dof());
     if (this->to_be_computed()
 	|| (!matrix_stored && this->to_be_transferred()))
       compute_K();
@@ -512,7 +574,7 @@ namespace getfem {
   void mdbrick_isotropic_linearized_elasticity<MODEL_STATE>::
   compute_residu(MODEL_STATE &MS, size_type i0, size_type) {
     react(MS, i0, false);
-    gmm::sub_interval SUBI(i0, nb_dof());
+    gmm::sub_interval SUBI(i0, this->nb_dof());
     if (this->to_be_computed()) { 
       compute_K();
       if (!matrix_stored) {
@@ -537,6 +599,9 @@ namespace getfem {
   /* ******************************************************************** */
   /*		Helmholtz brick.                                          */
   /* ******************************************************************** */
+
+# define MDBRICK_HELMHOLTZ 354864
+
  template<typename MODEL_STATE = standard_model_state>
   class mdbrick_Helmholtz
     : public mdbrick_abstract<MODEL_STATE> {
@@ -553,13 +618,13 @@ namespace getfem {
 
     void compute_K(void) {
       gmm::clear(K);
-      gmm::resize(K, nb_dof(), nb_dof());
+      gmm::resize(K, this->nb_dof(), this->nb_dof());
       VECTOR wave_number2(mf_data.nb_dof());
       if (homogeneous)
 	std::fill(wave_number2.begin(), wave_number2.end(),
 		  value_type(dal::sqr(wave_number[0])));
       else
-	for (size_type i=0; i < nb_dof(); ++i)
+	for (size_type i=0; i < this->nb_dof(); ++i)
 	  wave_number2[i] = dal::sqr(wave_number[i]);
       
       asm_Helmholtz(K, mf_u, mf_data, wave_number2);
@@ -568,11 +633,7 @@ namespace getfem {
 
   public :
 
-    virtual bool is_linear(void) { return true; }
-    virtual bool is_coercive(void) { return false; }
-    virtual bool is_symmetric(void) { return true; }
     virtual void mixed_variables(dal::bit_vector &, size_type = 0) {}
-    virtual size_type nb_dof(void) { return mf_u.nb_dof(); }
     virtual size_type nb_constraints(void) { return 0; }
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
 					size_type = 0, bool modified = false) {
@@ -580,7 +641,7 @@ namespace getfem {
 	DAL_THROW(failure_error, "The residu will not be consistant. "
 		  "Use this brick with the stiffness matrix stored option");
       react(MS, i0, modified);
-      gmm::sub_interval SUBI(i0, nb_dof());
+      gmm::sub_interval SUBI(i0, this->nb_dof());
       if (this->to_be_computed()
 	  || (!matrix_stored && this->to_be_transferred()))
 	  compute_K();
@@ -593,7 +654,7 @@ namespace getfem {
     virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
 				size_type = 0) {
       react(MS, i0, false);
-      gmm::sub_interval SUBI(i0, nb_dof());
+      gmm::sub_interval SUBI(i0, this->nb_dof());
       if (this->to_be_computed()) {
 	compute_K();
 	if (!matrix_stored) {
@@ -610,7 +671,6 @@ namespace getfem {
 		  gmm::sub_vector(MS.residu(), SUBI));
       }
     }
-    virtual mesh_fem &main_mesh_fem(void) { return mf_u; }
 
     void set_wave_number(value_type k) {
       homogeneous = true;
@@ -625,25 +685,29 @@ namespace getfem {
     }
 
     template<typename VECT> void get_solution(MODEL_STATE &MS, VECT &V) {
-      gmm::sub_interval SUBI(this->first_index(), nb_dof());
+      gmm::sub_interval SUBI(this->first_index(), this->nb_dof());
       gmm::copy(gmm::sub_vector(MS.state(), SUBI), V);
+    }
+
+    void init_(void) {
+      this->add_dependency(mf_data);
+      this->add_proper_mesh_fem(mf_u, MDBRICK_HELMHOLTZ);
+      this->proper_is_coercive_ = false;
+      this->update_from_context();
     }
 
     // constructor for a homogeneous wave number
     mdbrick_Helmholtz(mesh_fem &mf_u_, mesh_fem &mf_data_,
        value_type k, bool mat_stored = true)
-      : mf_u(mf_u_), mf_data(mf_data_), matrix_stored(mat_stored) {
-      set_wave_number(k);
-      this->add_dependency(mf_u); this->add_dependency(mf_data);
-    }
+      : mf_u(mf_u_), mf_data(mf_data_), matrix_stored(mat_stored)
+    { set_wave_number(k); init_(); }
 
     // constructor for a non-homogeneous wave number
     mdbrick_Helmholtz(mesh_fem &mf_u_, mesh_fem &mf_data_,
 		      const VECTOR &k, bool mat_stored = true)
-      : mf_u(mf_u_), mf_data(mf_data_),	matrix_stored(mat_stored) {
-      set_wave_number(k);
-      this->add_dependency(mf_u); this->add_dependency(mf_data);
-    }
+      : mf_u(mf_u_), mf_data(mf_data_),	matrix_stored(mat_stored)
+    { set_wave_number(k); init_(); }
+    
   };
 
 
@@ -661,23 +725,27 @@ namespace getfem {
     mesh_fem &mf_data;
     VECTOR B_;
     VECTOR F_;
-    size_type boundary, qmult;
+    size_type boundary, qmult, num_fem;
+    size_type i1, nbd;
 
     void compute_F(void) {
-      qmult = sub_problem.main_mesh_fem().get_qdim() / mf_data.get_qdim();
+      mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
+      i1 = this->mesh_fem_positions[num_fem];
+      nbd = mf_u.nb_dof();
+      qmult = mf_u.get_qdim() / mf_data.get_qdim();
       if (gmm::vect_size(B_) != mf_data.nb_dof() * qmult) 
 	DAL_THROW(failure_error, "The data mesh fem structure has changed, "
 		  " You have to change the rhs in that case.");
-      gmm::resize(F_, sub_problem.main_mesh_fem().nb_dof());
+      gmm::resize(F_, mf_u.nb_dof());
       gmm::clear(F_);
-      
-      asm_source_term(F_, main_mesh_fem(), mf_data, B_, boundary);
+      asm_source_term(F_, mf_u, mf_data, B_, boundary);
       this->computed();
     }
 
     void fixing_dimensions(void) {
+      mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
       size_type q = mf_data.get_qdim();
-      size_type qdim = sub_problem.main_mesh_fem().get_qdim();
+      size_type qdim = mf_u.get_qdim();
       if (qdim != q && q != 1)
 	DAL_THROW(dimension_error,"incompatible dimension of mesh_fem"
 		  " structure for source term ");
@@ -687,12 +755,8 @@ namespace getfem {
 
   public :
 
-    virtual bool is_linear(void) { return sub_problem.is_linear(); }
-    virtual bool is_coercive(void) { return sub_problem.is_coercive(); }
-    virtual bool is_symmetric(void) { return sub_problem.is_symmetric(); }
     virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0)
     { sub_problem.mixed_variables(b, i0); }
-    virtual size_type nb_dof(void) { return sub_problem.nb_dof(); }
     virtual size_type nb_constraints(void)
     { return sub_problem.nb_constraints(); }
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
@@ -705,23 +769,23 @@ namespace getfem {
       if (this->to_be_computed()) {compute_F();}
       
       gmm::add(gmm::scaled(F_, value_type(-1)), gmm::sub_vector(MS.residu(),
-	       gmm::sub_interval(i0, sub_problem.main_mesh_fem().nb_dof())));
+	       gmm::sub_interval(i0+i1, nbd)));
 
     }
-    virtual mesh_fem &main_mesh_fem(void)
-    { return sub_problem.main_mesh_fem(); }
 
     void set_rhs(const VECTOR &B__)
     { fixing_dimensions(); gmm::copy(B__, B_); this->force_recompute(); }    
     // Constructor defining the rhs
     mdbrick_source_term(mdbrick_abstract<MODEL_STATE> &problem,
-		       mesh_fem &mf_data_, const VECTOR &B__,
-		       size_type bound = size_type(-1))
-      : sub_problem(problem), mf_data(mf_data_), boundary(bound) {
-      fixing_dimensions();
-      gmm::copy(B__, B_);
+			mesh_fem &mf_data_, const VECTOR &B__,
+			size_type bound = size_type(-1), size_type num_fem_=0)
+      : sub_problem(problem), mf_data(mf_data_), boundary(bound),
+	num_fem(num_fem_) {
       this->add_dependency(mf_data);
-      this->add_dependency(sub_problem.main_mesh_fem());
+      this->add_sub_brick(problem);
+      this->update_from_context();
+      fixing_dimensions();
+       gmm::copy(B__, B_);
     }
   };
 
@@ -740,13 +804,15 @@ namespace getfem {
     mesh_fem &mf_data;
     VECTOR Q;
     bool homogeneous;
-    size_type boundary;
+    size_type boundary, num_fem, i1, nbd;
     T_MATRIX K;
 
     void compute_K(void) {
-      mesh_fem &mf_u = sub_problem.main_mesh_fem();
+      mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
+      i1 = this->mesh_fem_positions[num_fem];
+      nbd = mf_u.nb_dof();
       gmm::clear(K);
-      gmm::resize(K, nb_dof(), nb_dof());
+      gmm::resize(K, this->nb_dof(), this->nb_dof());
       size_type N2 = dal::sqr(mf_u.get_qdim());
       VECTOR vQ(mf_data.nb_dof() * N2);
       if (homogeneous) {
@@ -762,37 +828,28 @@ namespace getfem {
 
   public :
 
-    virtual bool is_linear(void) { return sub_problem.is_linear(); }
-    virtual bool is_coercive(void) { return false; }
-    virtual bool is_symmetric(void) { return sub_problem.is_symmetric(); }
     virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0)
     { sub_problem.mixed_variables(b, i0); }
-    virtual size_type nb_dof(void) { return sub_problem.nb_dof(); }    
     virtual size_type nb_constraints(void)
     { return sub_problem.nb_constraints(); }
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
 					size_type j0 = 0, bool = false) {
       sub_problem.compute_tangent_matrix(MS, i0, j0, true);
       react(MS, i0, true);
-      gmm::sub_interval SUBI(i0, nb_dof());
-      if (this->to_be_computed())
-	  compute_K();
+      if (this->to_be_computed()) compute_K();
+      gmm::sub_interval SUBI(i0+i1, nbd);
       gmm::add(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI));
     }
     virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
 				size_type j0 = 0) {
       sub_problem.compute_residu(MS, i0, j0);
       react(MS, i0, false);
-      gmm::sub_interval SUBI(i0, nb_dof());
-      if (this->to_be_computed()) { 
-	compute_K();
-      }
+      if (this->to_be_computed()) compute_K();
+      gmm::sub_interval SUBI(i0+i1, nbd);
       typename gmm::sub_vector_type<VECTOR *, gmm::sub_interval>::vector_type
 	SUBV = gmm::sub_vector(MS.residu(), SUBI);
       gmm::mult(K, gmm::sub_vector(MS.state(), SUBI), SUBV, SUBV);
     }
-    virtual mesh_fem &main_mesh_fem(void)
-    { return sub_problem.main_mesh_fem(); }
 
     void set_Q(value_type q) {
       homogeneous = true;
@@ -802,29 +859,33 @@ namespace getfem {
 
     void set_Q(const VECTOR &q) {
       homogeneous = false;
-      gmm::resize(Q, mf_data.nb_dof()*dal::sqr(main_mesh_fem().get_qdim())); 
+      gmm::resize(Q, mf_data.nb_dof()*dal::sqr(this->mesh_fems[num_fem]->get_qdim())); 
       gmm::copy(q, Q);
       this->force_recompute();
     }
+
+    void init_(void) {
+      this->add_dependency(mf_data);
+      this->add_sub_brick(sub_problem);
+      this->proper_is_coercive_ = false;
+      this->update_from_context();
+    }
+
     // Constructor which homogeneous diagonal Q
     mdbrick_QU_term(mdbrick_abstract<MODEL_STATE> &problem,
 		    mesh_fem &mf_data_, value_type q=value_type(1),
-		    size_type bound = size_type(-1)) 
-      : sub_problem(problem), mf_data(mf_data_), boundary(bound) {
-      this->add_dependency(mf_data);
-      this->add_dependency(sub_problem.main_mesh_fem());
-      set_Q(q);
-    }
+		    size_type bound = size_type(-1), size_type num_fem_=0) 
+      : sub_problem(problem), mf_data(mf_data_), boundary(bound),
+	num_fem(num_fem_)
+    { set_Q(q); init_(); }
 
     // Constructor defining an arbitrary Q
     mdbrick_QU_term(mdbrick_abstract<MODEL_STATE> &problem,
 		    mesh_fem &mf_data_, const VECTOR &q,
-		    size_type bound = size_type(-1))
-      : sub_problem(problem), mf_data(mf_data_), boundary(bound) {
-      this->add_dependency(mf_data);
-      this->add_dependency(sub_problem.main_mesh_fem());
-      set_Q(q);
-    }
+		    size_type bound = size_type(-1), size_type num_fem_=0)
+      : sub_problem(problem), mf_data(mf_data_), boundary(bound),
+	num_fem(num_fem_)
+    { set_Q(q); init_(); }
   };
 
 
@@ -832,10 +893,7 @@ namespace getfem {
   /*		Mixed linear incompressible condition brick.              */
   /* ******************************************************************** */
 
-//  bool Esort(double x, double y) { return gmm::abs(x) > gmm::abs(y); }
-
-// TODO take into account boundary conditions for the pressure.
-
+# define MDBRICK_LINEAR_INCOMP 239898
 
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_linear_incomp : public mdbrick_abstract<MODEL_STATE>  {
@@ -850,15 +908,16 @@ namespace getfem {
     T_MATRIX B, M;
     bool penalized, homogeneous;
     VECTOR epsilon_; // penalization coefficient if any.
-   
+    size_type num_fem, i1, nbd;
 
     void compute_B() {
-      mesh_fem &mf_u = sub_problem.main_mesh_fem();
+      mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
+      i1 = this->mesh_fem_positions[num_fem];
+      nbd = mf_u.nb_dof();
       size_type nd = mf_u.nb_dof(), ndd = mf_p.nb_dof();
       gmm::clear(B); gmm::resize(B, ndd, nd);
       asm_stokes_B(B, mf_u, mf_p);
-
-      
+ 
 //        gmm::dense_matrix<value_type> MM(ndd, ndd);
 //        std::vector<value_type> eigval(ndd);
 //        gmm::mult(B, gmm::transposed(B), MM);
@@ -879,9 +938,6 @@ namespace getfem {
 
   public :
     
-    virtual bool is_linear(void)   { return sub_problem.is_linear(); }
-    virtual bool is_coercive(void) { return false; }
-    virtual bool is_symmetric(void) { return sub_problem.is_symmetric(); }
     virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0) {
       sub_problem.mixed_variables(b, i0);
       this->context_check();
@@ -890,9 +946,6 @@ namespace getfem {
 	compute_B();
       }
       b.add(i0 + sub_problem.nb_dof(), mf_p.nb_dof());
-    }
-    virtual size_type nb_dof(void) {
-      return sub_problem.nb_dof() + mf_p.nb_dof();
     }
     
     virtual size_type nb_constraints(void) {
@@ -906,7 +959,7 @@ namespace getfem {
       
       if (this->to_be_transferred()) {
 	gmm::sub_interval SUBI(i0+sub_problem.nb_dof(), mf_p.nb_dof());
-	gmm::sub_interval SUBJ(i0, main_mesh_fem().nb_dof());
+	gmm::sub_interval SUBJ(i0+i1, nbd);
 	gmm::copy(B, gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBJ));
 	gmm::copy(gmm::transposed(B),
 		  gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBI));
@@ -924,15 +977,12 @@ namespace getfem {
       if (this->to_be_computed()) compute_B();
      
       gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), mf_p.nb_dof());
-      gmm::sub_interval SUBJ(i0, main_mesh_fem().nb_dof());
+      gmm::sub_interval SUBJ(i0+i1, nbd);
       gmm::mult(B, gmm::sub_vector(MS.state(), SUBJ),
 		gmm::sub_vector(MS.residu(), SUBI));
       gmm::mult_add(gmm::transposed(B), gmm::sub_vector(MS.state(), SUBI),
 		    gmm::sub_vector(MS.residu(), SUBJ));
     }
-    virtual mesh_fem &main_mesh_fem(void)
-    { return sub_problem.main_mesh_fem(); }
-
 
      void set_coeff(value_type epsiloni) {
       homogeneous = true;
@@ -946,33 +996,35 @@ namespace getfem {
       this->force_recompute();
     }
 
+    void init_(void) {
+      this->add_dependency(mf_data);
+      this->add_proper_mesh_fem(mf_p, MDBRICK_LINEAR_INCOMP);
+      this->add_sub_brick(sub_problem);
+      this->proper_is_coercive_ = false;
+      this->update_from_context();
+    }
+
     // Constructor for the incompressibility condition
     mdbrick_linear_incomp(mdbrick_abstract<MODEL_STATE> &problem,
-		      mesh_fem &mf_p_)
-      : sub_problem(problem), mf_p(mf_p_), mf_data(mf_p_), penalized(false) {
-      this->add_dependency(mf_p);
-      this->add_dependency(sub_problem.main_mesh_fem());
-      compute_B();
-    }
+		      mesh_fem &mf_p_, size_type num_fem_=0)
+      : sub_problem(problem), mf_p(mf_p_), mf_data(mf_p_),
+	penalized(false), num_fem(num_fem_)
+    { init_(); compute_B(); }
 
     // Constructor for the nearly incompressibility condition
     mdbrick_linear_incomp(mdbrick_abstract<MODEL_STATE> &problem,
-		      mesh_fem &mf_p_, mesh_fem &mf_data_, value_type epsilon)
-      : sub_problem(problem), mf_p(mf_p_), mf_data(mf_data_), penalized(true) {
-      this->add_dependency(mf_p);
-      this->add_dependency(sub_problem.main_mesh_fem());
-      set_coeff(epsilon);
-      compute_B();
-    }
+		      mesh_fem &mf_p_, mesh_fem &mf_data_, value_type epsilon,
+			  size_type num_fem_=0)
+      : sub_problem(problem), mf_p(mf_p_), mf_data(mf_data_),
+	penalized(true), num_fem(num_fem_)
+    { set_coeff(epsilon); init_(); compute_B(); }
+
     mdbrick_linear_incomp(mdbrick_abstract<MODEL_STATE> &problem,
 			  mesh_fem &mf_p_, mesh_fem &mf_data_,
-			  const VECTOR& epsilon)
-      : sub_problem(problem), mf_p(mf_p_), mf_data(mf_data_), penalized(true) {
-      this->add_dependency(mf_p);
-      this->add_dependency(sub_problem.main_mesh_fem());
-      set_coeff(epsilon);
-      compute_B();
-    }
+			  const VECTOR& epsilon, size_type num_fem_=0)
+      : sub_problem(problem), mf_p(mf_p_), mf_data(mf_data_),
+	penalized(true), num_fem(num_fem_)
+    { set_coeff(epsilon); init_(); compute_B(); }
 
   };
 
@@ -994,15 +1046,17 @@ namespace getfem {
     VECTOR B_, H_;
     C_MATRIX G;
     VECTOR CRHS;
-    size_type boundary, nb_const;
+    size_type boundary, nb_const, num_fem;
     dal::bit_vector dof_on_bound;
     bool with_H, with_multipliers;
     gmm::sub_index SUB_CT;
     std::vector<size_type> ind_ct;
+    size_type i1, nbd;
 
     void fixing_dimensions(void) {
+      mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
       size_type q = mf_data.get_qdim();
-      size_type qdim = sub_problem.main_mesh_fem().get_qdim();
+      size_type qdim = mf_u.get_qdim();
       if (qdim != q && q != 1)
 	DAL_THROW(dimension_error,"incompatible dimension of mesh_fem"
 		  " structure for source term ");
@@ -1011,7 +1065,9 @@ namespace getfem {
     }
 
     void compute_constraints(int version) {
-      mesh_fem &mf_u = main_mesh_fem();
+      mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
+      i1 = this->mesh_fem_positions[num_fem];
+      nbd = mf_u.nb_dof();
       size_type Q = mf_u.get_qdim();
       size_type nd = mf_u.nb_dof(), ndd = mf_data.nb_dof();
       gmm::row_matrix<gmm::rsvector<value_type> > M(nd, nd);
@@ -1023,8 +1079,7 @@ namespace getfem {
 	  for (size_type q=0; q < Q; ++q)  H_[i*Q*Q+q*Q+q] = value_type(1);
       }
       if (!with_multipliers) version |= ASMDIR_SIMPLIFY;
-      asm_dirichlet_constraints(M, V, sub_problem.main_mesh_fem(),
-				mf_data, H_, B_, boundary, version);
+      asm_dirichlet_constraints(M, V, mf_u, mf_data,H_, B_, boundary, version);
 
       if (!with_H) gmm::resize(H_, 0);
 
@@ -1052,10 +1107,6 @@ namespace getfem {
 
   public :
 
-    virtual bool is_linear(void)   { return sub_problem.is_linear(); }
-    virtual bool is_coercive(void) 
-    { return (!with_multipliers && sub_problem.is_coercive()); }
-    virtual bool is_symmetric(void) { return sub_problem.is_symmetric(); }
     virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0) {
       sub_problem.mixed_variables(b, i0);
       this->context_check();
@@ -1103,16 +1154,15 @@ namespace getfem {
       if (this->to_be_transferred()) {
 	if (with_multipliers) {
 	  gmm::sub_interval SUBI(i0+sub_problem.nb_dof(), dof_on_bound.card());
-	  gmm::sub_interval SUBJ(i0, main_mesh_fem().nb_dof());
+	  gmm::sub_interval SUBJ(i0+i1, nbd);
 	  gmm::copy(G, gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBJ));
 	  gmm::copy(gmm::transposed(G),
 		    gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBI));
 	  gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBI));
 	}
 	else {	  
-	  size_type nd = sub_problem.main_mesh_fem().nb_dof();
 	  size_type ncs = sub_problem.nb_constraints();
-	  gmm::sub_interval SUBI(j0+ncs,nb_const), SUBJ(i0, nd);
+	  gmm::sub_interval SUBI(j0+ncs,nb_const), SUBJ(i0+i1, nbd);
 	  gmm::copy(G, gmm::sub_matrix(MS.constraints_matrix(), SUBI, SUBJ));
 	}
 	this->transferred();
@@ -1130,7 +1180,7 @@ namespace getfem {
       if (with_multipliers) {
 
 	gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), dof_on_bound.card());
-	gmm::sub_interval SUBJ(i0, main_mesh_fem().nb_dof());
+	gmm::sub_interval SUBJ(i0+i1, nbd);
 	
 	gmm::mult(G, gmm::sub_vector(MS.state(), SUBJ),
 		  gmm::scaled(CRHS, value_type(-1)),
@@ -1141,16 +1191,13 @@ namespace getfem {
       }
       else {
 
-	size_type nd = sub_problem.main_mesh_fem().nb_dof();
 	size_type ncs = sub_problem.nb_constraints();
-	gmm::sub_interval SUBI(j0+ncs,nb_const), SUBJ(i0, nd);
+	gmm::sub_interval SUBI(j0+ncs,nb_const), SUBJ(i0+i1, nbd);
 	gmm::mult(G, gmm::scaled(gmm::sub_vector(MS.state(), SUBJ), 
 				 value_type(-1)),
 		  CRHS, gmm::sub_vector(MS.constraints_rhs(), SUBI));
       }
     }
-    virtual mesh_fem &main_mesh_fem(void)
-    { return sub_problem.main_mesh_fem(); }
 
     void set_rhs(const VECTOR &B__) {
       this->context_check();
@@ -1162,29 +1209,32 @@ namespace getfem {
 	{ gmm::copy(B__, B_); compute_constraints(ASMDIR_BUILDR); }
     }
 
+    void init_(void) {
+      this->add_dependency(mf_data);
+      this->add_sub_brick(sub_problem);
+      this->proper_is_coercive_ = !with_multipliers;
+      this->update_from_context();
+      fixing_dimensions();
+    }
+
     // Constructor which does not define the rhs (0 rhs in fact)
     mdbrick_Dirichlet(mdbrick_abstract<MODEL_STATE> &problem,
 		      mesh_fem &mf_data_, size_type bound,
-		      bool with_mult = false)
+		      size_type num_fem_=0, bool with_mult = false)
       : sub_problem(problem), mf_data(mf_data_), boundary(bound),
-	with_H(false), with_multipliers(with_mult) {
-      this->add_dependency(mf_data);
-      this->add_dependency(sub_problem.main_mesh_fem());
-      fixing_dimensions();
-      gmm::clear(B_);
+	num_fem(num_fem_), with_H(false), with_multipliers(with_mult) {
+      init_(); gmm::clear(B_);
       compute_constraints(ASMDIR_BUILDH + ASMDIR_BUILDR);
     }
 
     // Constructor defining the rhs
     mdbrick_Dirichlet(mdbrick_abstract<MODEL_STATE> &problem,
-		     mesh_fem &mf_data_, const VECTOR &B__,
-		      size_type bound, bool with_mult = false)
+		      mesh_fem &mf_data_, const VECTOR &B__,
+		      size_type bound, size_type num_fem_=0, 
+		      bool with_mult = false)
       : sub_problem(problem), mf_data(mf_data_), boundary(bound),
-	with_H(false), with_multipliers(with_mult) {
-      this->add_dependency(mf_data);
-      this->add_dependency(sub_problem.main_mesh_fem());
-      fixing_dimensions();
-      gmm::copy(B__, B_);
+	num_fem(num_fem_), with_H(false), with_multipliers(with_mult) {
+      init_(); gmm::copy(B__, B_);
       compute_constraints(ASMDIR_BUILDH + ASMDIR_BUILDR);
     }
     
@@ -1209,7 +1259,7 @@ namespace getfem {
     //        max residu.
 
     size_type ndof = problem.nb_dof();
-    size_type dim = problem.main_mesh_fem().linked_mesh().dim();
+    size_type dim = problem.dim();
 
     bool is_linear = problem.is_linear();
     mtype alpha, alpha_min=mtype(1)/mtype(100000);
@@ -1262,7 +1312,7 @@ namespace getfem {
 
       // if (0) {
       if ((ndof < 200000 && dim <= 2) || (ndof < 10000 && dim <= 3)
-       || (ndof < 1000)) {
+	  || (ndof < 1000)) {
 	
 	// cout << "M = " << MS.reduced_tangent_matrix() << endl;
 	// cout << "L = " << MS.reduced_residu() << endl;
@@ -1294,7 +1344,8 @@ namespace getfem {
 		       gmm::scaled(MS.reduced_residu(),  value_type(-1)),
 		       P, 300, iter_linsolv);
 	  }
-	  if (!iter_linsolv.converged()) DAL_WARNING(2,"gmres did not converge!");
+	  if (!iter_linsolv.converged())
+	    DAL_WARNING(2,"gmres did not converge!");
 	}
       }
       MS.unreduced_solution(dr,d);

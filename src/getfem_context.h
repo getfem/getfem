@@ -50,8 +50,8 @@ namespace getfem {
   //                      has change in the object. This make the dependent
   //                      objects to be in the CHANGED state
   // context_check()    : check if the object has to be updated. if it is the
-  //                      case make first a check to the dependency list and
-  //                      call the update function of the object.
+  //                      case it makes first a check to the dependency list
+  //                      and call the update function of the object.
   //                      (the update function of the dependencies are called
   //                      before the update function of the current object).
   // context_valid()    : says if the object has still a valid context

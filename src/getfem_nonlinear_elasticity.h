@@ -386,6 +386,8 @@ namespace getfem {
   /*		Nonlinear elasticity brick.                               */
   /* ******************************************************************** */
 
+# define MDBRICK_NONLINEAR_ELASTICITY 821357
+
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_nonlinear_elasticity : public mdbrick_abstract<MODEL_STATE> {
 
@@ -400,11 +402,7 @@ namespace getfem {
 
   public :
 
-    virtual bool is_linear(void) { return false; }
-    virtual bool is_coercive(void) { return true; }
-    virtual bool is_symmetric(void) { return true; }
     virtual void mixed_variables(dal::bit_vector &, size_type = 0) {}
-    virtual size_type nb_dof(void) { return mf_u.nb_dof(); }
     virtual size_type nb_constraints(void) { return 0; }
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
 					size_type = 0, bool modified = false) {
@@ -420,7 +418,7 @@ namespace getfem {
       else
 	gmm::copy(PARAMS_, PARAMS);
 
-      gmm::sub_interval SUBI(i0, nb_dof());
+      gmm::sub_interval SUBI(i0, this->nb_dof());
       gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBI));
       double t0 = ftool::uclock_sec();
       asm_nonlinear_elasticity_tangent_matrix
@@ -442,13 +440,12 @@ namespace getfem {
       else
 	gmm::copy(PARAMS_, PARAMS);
 
-      gmm::sub_interval SUBI(i0, nb_dof());
+      gmm::sub_interval SUBI(i0, this->nb_dof());
       gmm::clear(gmm::sub_vector(MS.residu(), SUBI));
       asm_nonlinear_elasticity_rhs(gmm::sub_vector(MS.residu(), SUBI), mf_u,
 				   gmm::sub_vector(MS.state(), SUBI), 
 				   mf_data, PARAMS, AHL);
     }
-    virtual mesh_fem &main_mesh_fem(void) { return mf_u; }
 
     void set_params(const VECTOR &PARAMS) {
       homogeneous = gmm::vect_size(PARAMS) == AHL.nb_params();
@@ -458,16 +455,23 @@ namespace getfem {
     }
 
     template<typename VECT> void get_solution(MODEL_STATE &MS, VECT &V) {
-      gmm::sub_interval SUBI(this->first_index(), nb_dof());
+      gmm::sub_interval SUBI(this->first_index(), this->nb_dof());
       gmm::copy(gmm::sub_vector(MS.state(), SUBI), V);
+    }
+
+    void init_(void) {
+      this->add_dependency(mf_data);
+      this->add_proper_mesh_fem(mf_u, MDBRICK_NONLINEAR_ELASTICITY);
+      this->proper_is_linear_ = false;
+      this->proper_is_coercive_ = this->proper_is_symmetric_ = true;
+      this->update_from_context();
     }
 
     mdbrick_nonlinear_elasticity(const abstract_hyperelastic_law &AHL_,
 				 mesh_fem &mf_u_, mesh_fem &mf_data_,
 				 const VECTOR &PARAMS)
       : AHL(AHL_), mf_u(mf_u_), mf_data(mf_data_) {
-      set_params(PARAMS);
-      this->add_dependency(mf_u); this->add_dependency(mf_data);
+      set_params(PARAMS); init_();
     }
  
     mdbrick_nonlinear_elasticity(const abstract_hyperelastic_law &AHL_,
@@ -475,8 +479,7 @@ namespace getfem {
 				 value_type p1, value_type p2)
       : AHL(AHL_), mf_u(mf_u_), mf_data(mf_data_) {
       VECTOR PARAMS(2); PARAMS[0] = p1;  PARAMS[1] = p2; 
-      set_params(PARAMS);
-      this->add_dependency(mf_u); this->add_dependency(mf_data);
+      set_params(PARAMS); init_();
     }
 
     mdbrick_nonlinear_elasticity(const abstract_hyperelastic_law &AHL_,
@@ -484,20 +487,17 @@ namespace getfem {
 				 value_type p1, value_type p2, value_type p3)
       : AHL(AHL_), mf_u(mf_u_), mf_data(mf_data_) {
       VECTOR PARAMS(3); PARAMS[0] = p1;  PARAMS[1] = p2; PARAMS[2] = p3;
-      set_params(PARAMS);
-      this->add_dependency(mf_u); this->add_dependency(mf_data);
+      set_params(PARAMS); init_();
     }
 
   };
-
-
-
 
 
   /* ******************************************************************** */
   /*		Mixed nonlinear incompressible condition brick.           */
   /* ******************************************************************** */
 
+# define MDBRICK_NONLINEAR_INCOMP 964552
 
   template<typename VECT1> class incomp_nonlinear_term 
     : public getfem::nonlinear_elem_term {
@@ -624,18 +624,13 @@ namespace getfem {
 
     mdbrick_abstract<MODEL_STATE> &sub_problem;
     mesh_fem &mf_p;
+    size_type num_fem;
 
   public :
     
-    virtual bool is_linear(void)   { return false; }
-    virtual bool is_coercive(void) { return false; }
-    virtual bool is_symmetric(void) { return sub_problem.is_symmetric(); }
     virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0) {
       sub_problem.mixed_variables(b, i0);
       b.add(i0 + sub_problem.nb_dof(), mf_p.nb_dof());
-    }
-    virtual size_type nb_dof(void) {
-      return sub_problem.nb_dof() + mf_p.nb_dof();
     }
     
     virtual size_type nb_constraints(void) {
@@ -644,18 +639,19 @@ namespace getfem {
 
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
 				    size_type j0 = 0, bool modified = false) {
+      mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
+      size_type i1 = this->mesh_fem_positions[num_fem];
       sub_problem.compute_tangent_matrix(MS, i0, j0, modified);
       gmm::sub_interval SUBI(i0+sub_problem.nb_dof(), mf_p.nb_dof()); /* P */
-      gmm::sub_interval SUBJ(i0, main_mesh_fem().nb_dof());           /* U */
+      gmm::sub_interval SUBJ(i0+i1, mf_u.nb_dof());           /* U */
 
-      T_MATRIX B(main_mesh_fem().nb_dof(), mf_p.nb_dof());
+      T_MATRIX B(mf_u.nb_dof(), mf_p.nb_dof());
 
       asm_nonlinear_incomp_tangent_matrix(gmm::sub_matrix(MS.tangent_matrix(),
 							  SUBJ, SUBJ), B,
-					  main_mesh_fem(), mf_p, 
+					  mf_u, mf_p, 
 					  gmm::sub_vector(MS.state(), SUBJ), 
 					  gmm::sub_vector(MS.state(), SUBI));
-      // cout << "B = " << B << endl;
       gmm::copy(B, gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBI));
       gmm::copy(gmm::transposed(B),
 		gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBJ));
@@ -664,29 +660,29 @@ namespace getfem {
 
     virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
 				size_type j0 = 0) {
+      mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
+      size_type i1 = this->mesh_fem_positions[num_fem];      
       sub_problem.compute_residu(MS, i0, j0);
      
       gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), mf_p.nb_dof());
-      gmm::sub_interval SUBJ(i0, main_mesh_fem().nb_dof());
+      gmm::sub_interval SUBJ(i0+i1, mf_u.nb_dof());
       gmm::clear(gmm::sub_vector(MS.residu(), SUBI));
 
       asm_nonlinear_incomp_rhs(gmm::sub_vector(MS.residu(), SUBJ),
 			       gmm::sub_vector(MS.residu(), SUBI),
-			       main_mesh_fem(), mf_p, 
+			       mf_u, mf_p, 
 			       gmm::sub_vector(MS.state(), SUBJ),
 			       gmm::sub_vector(MS.state(), SUBI));
-
-      // cout << "residu 1 = " << gmm::sub_vector(MS.residu(), SUBJ) << endl;
-      // cout << "residu 2 = " << gmm::sub_vector(MS.residu(), SUBI) << endl;
     }
-    virtual mesh_fem &main_mesh_fem(void)
-    { return sub_problem.main_mesh_fem(); }
 
     mdbrick_nonlinear_incomp(mdbrick_abstract<MODEL_STATE> &problem,
-		      mesh_fem &mf_p_)
-      : sub_problem(problem), mf_p(mf_p_) {
-      this->add_dependency(mf_p);
-      this->add_dependency(sub_problem.main_mesh_fem());
+			     mesh_fem &mf_p_, size_type num_fem_=0)
+      : sub_problem(problem), mf_p(mf_p_), num_fem(num_fem_) {
+      this->add_proper_mesh_fem(mf_p, MDBRICK_NONLINEAR_INCOMP);
+      this->add_sub_brick(sub_problem);
+      this->proper_is_linear_ = this->proper_is_coercive_ = false;
+      this->proper_is_symmetric_ = true;
+      this->update_from_context();
     }
   };
 

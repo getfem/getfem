@@ -376,6 +376,8 @@ namespace getfem {
   /* TODO :
    *  - plan strain, plan stress  (cf flag_hyp) 
    */
+
+# define MDBRICK_SMALL_DEF_PLASTICITY 556433
   
   template<typename MODEL_STATE = standard_model_state> 
     class mdbrick_plasticity : public mdbrick_abstract<MODEL_STATE> {
@@ -414,14 +416,10 @@ namespace getfem {
       public:
       
       virtual void mixed_variables(dal::bit_vector &, size_type = 0) {}
-      virtual bool is_linear(void) { return false; }
-      virtual bool is_coercive(void) { return false; }
-      virtual bool is_symmetric(void) { return true; }
-      virtual size_type nb_dof(void) { return mf_u.nb_dof(); }
       virtual size_type nb_constraints(void) { return 0; }
       
       template<typename VECT> void get_solution(MODEL_STATE &MS, VECT &V) {
-	gmm::sub_interval SUBI(this->first_index(), nb_dof());
+	gmm::sub_interval SUBI(this->first_index(), this->nb_dof());
 	gmm::copy(gmm::sub_vector(MS.state(), SUBI), V);
       }
       
@@ -436,8 +434,8 @@ namespace getfem {
       virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
 					  size_type = 0, bool = false) {
 	
-	gmm::sub_interval SUBI(i0, nb_dof());      
-	T_MATRIX K(nb_dof(), nb_dof());
+	gmm::sub_interval SUBI(i0, this->nb_dof());      
+	T_MATRIX K(this->nb_dof(), this->nb_dof());
 	VECTOR lambda(mf_data.nb_dof()), mu(mf_data.nb_dof()),
 	  stress_threshold(mf_data.nb_dof());
 
@@ -458,8 +456,8 @@ namespace getfem {
 	  stress_threshold(mf_data.nb_dof());
 	fill_coeff(lambda, mu, stress_threshold);
 
-	gmm::sub_interval SUBI(i0, nb_dof());        
-	VECTOR K(nb_dof());
+	gmm::sub_interval SUBI(i0, this->nb_dof());        
+	VECTOR K(this->nb_dof());
 	plasticity_projection proj(mf_u, mf_data, MS.state(), stress_threshold,
 				   lambda, mu, &t_proj, sigma_bar,
 				   saved_proj, 0, false);
@@ -473,7 +471,7 @@ namespace getfem {
 	VECTOR lambda(mf_data.nb_dof()), mu(mf_data.nb_dof()),
 	  stress_threshold(mf_data.nb_dof());
 	fill_coeff(lambda, mu, stress_threshold);
-	VECTOR K(nb_dof());
+	VECTOR K(this->nb_dof());
 	
 	plasticity_projection proj(mf_u, mf_data, MS.state(), stress_threshold,
 				   lambda, mu, &t_proj, sigma_bar,
@@ -482,9 +480,6 @@ namespace getfem {
 	/* Calculate the actual vector */
 	asm_rhs_for_plasticity(K, mf_u, mf_data, &proj);
       }
-
-
-      virtual mesh_fem &main_mesh_fem(void) { return mf_u; }
       
       void set_coeff(value_type lambdai, value_type mui,
 			  value_type stress_threshold) {
@@ -504,27 +499,31 @@ namespace getfem {
 	gmm::copy(stress_threshold, stress_threshold_);
       }
 
+      void init_(void) {
+	this->add_dependency(mf_data);
+	this->add_proper_mesh_fem(mf_u, MDBRICK_SMALL_DEF_PLASTICITY);
+	this->proper_is_coercive_ = this->proper_is_linear_ = false;
+	this->proper_is_symmetric_ = true;
+	N = mf_data.linked_mesh().dim();
+	this->update_from_context();
+      }
+
       // constructor for a homogeneous material (constant lambda, mu and
       // stress_threshold)
       mdbrick_plasticity(mesh_fem &mf_u_, mesh_fem &mf_data_,
 			 value_type lambdai, value_type mui,
 			 value_type stress_threshold,
 			 const type_proj &t_proj_) 
-      : mf_u(mf_u_), mf_data(mf_data_), t_proj(t_proj_) {
-	set_coeff(lambdai, mui, stress_threshold);
-	N = mf_data.linked_mesh().dim();
-	this->add_dependency(mf_u); this->add_dependency(mf_data);
-      }
+      : mf_u(mf_u_), mf_data(mf_data_), t_proj(t_proj_)
+      { set_coeff(lambdai, mui, stress_threshold); init_(); }
+
       // constructor for a non-homogeneous material
       mdbrick_plasticity(mesh_fem &mf_u_, mesh_fem &mf_data_,
 			 const VECTOR &lambdai, const VECTOR &mui,
 			 const VECTOR &stress_threshold,
 			 const type_proj &t_proj_)
-      : mf_u(mf_u_), mf_data(mf_data_), t_proj(t_proj_) {
-	set_coeff(lambdai, mui, stress_threshold);
-	N = mf_data.linked_mesh().dim();
-	this->add_dependency(mf_u); this->add_dependency(mf_data);
-      }
+      : mf_u(mf_u_), mf_data(mf_data_), t_proj(t_proj_)
+      { set_coeff(lambdai, mui, stress_threshold); init_(); }
 
     };
 

@@ -137,9 +137,9 @@ namespace getfem
    *  boundary) 
    */
   template<typename MAT>
-  void asm_mass_matrix(MAT &M, const mesh_fem &mf_u1,
+  void asm_mass_matrix(const MAT &M, const mesh_fem &mf_u1,
 		       size_type boundary=size_type(-1)) {
-    asm_mass_matrix(M,mf_u1,mf_u1, boundary);
+    asm_mass_matrix(const_cast<MAT &>(M),mf_u1,mf_u1, boundary);
   }
 
   /** 
@@ -431,6 +431,22 @@ namespace getfem
     assem.push_mat(B);
     assem.volumic_assembly();
   }
+
+
+  /**
+     assembly of $\int_\Omega a(x)\nabla u.\nabla v$ , where $a(x)$ is scalar.
+  */
+  template<typename MAT>
+    void asm_stiffness_matrix_for_homogeneous_laplacian(const MAT &M_,
+							const mesh_fem &mf) {
+    MAT &M = const_cast<MAT &>(M_);
+    generic_assembly 
+      assem("M$1(#1,#1)+=sym(comp(Grad(#1).Grad(#1))(:,i,:,i))");
+    assem.push_mf(mf);
+    assem.push_mat(M);
+    assem.volumic_assembly();
+  }
+
 
   /**
      assembly of $\int_\Omega a(x)\nabla u.\nabla v$ , where $a(x)$ is scalar.
