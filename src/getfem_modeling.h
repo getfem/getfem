@@ -316,19 +316,9 @@ namespace getfem {
       gmm::rsvector<value_type> ei(nd), hi(nd);
       std::vector<size_type> ind(0);
       
-      dal::bit_vector bcv = mf_u.convex_on_boundary(boundary), bdof;
-      for (size_type i = bcv.take_first(); i != size_type(-1); i << bcv)
-	for (size_type j = 0; j < mf_u.nb_dof_of_element(i); ++j)
-	  bdof.add(mf_u.ind_dof_of_element(i)[j]);
-      
-      cout << "reduction des contraintes de Dirichlet" << endl;
-      for (size_type i = bdof.take_first(); i != size_type(-1); i << bdof) {
-	gmm::clear(ei); ei[i] = value_type(1);
-	gmm::mult(gmm::transposed(H), ei, hi);
-	if (gmm::vect_norm2(hi) != R(0)) ind.push_back(i);
-      }
-      cout << "Nb de contraintes de Dirichlet effectives : "
-	   << ind.size() << " sur " << nd << endl;
+      dal::bit_vector bdof = mf_u.dof_on_boundary(boundary);
+      for (size_type i = bdof.take_first(); i != size_type(-1); i << bdof)
+        ind.push_back(i);
       nb_const = ind.size();
       gmm::resize(G, nb_const, nd);
       gmm::copy(gmm::sub_matrix(H, gmm::sub_index(ind),

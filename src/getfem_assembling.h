@@ -373,10 +373,17 @@ namespace getfem
     pfem pf_u, pf_rh;
     
     if (mf_rh.get_qdim() != 1)
-      DAL_THROW(std::invalid_argument, "invalid data mesh fem for dirichlet (Qdim=1 required)");
+      DAL_THROW(std::invalid_argument,
+		"invalid data mesh fem for dirichlet (Qdim=1 required)");
     asm_qu_term(M, mf_u, mf_rh, H, boundary);
     asm_source_term(B, mf_u, mf_rh, R, boundary);
 
+    std::vector<size_type> ind(0);
+    dal::bit_vector bdof = mf_u.dof_on_boundary(boundary);
+    for (size_type i = 0; i < mf_u.nb_dof(); ++i)
+      if (!(bdof[i])) ind.push_back(i);
+    gmm::clear(gmm::sub_matrix(M, gmm::sub_index(ind)));
+    
     /* step 2 : simplification of simple dirichlet conditions */
     dal::bit_vector bv = mf_u.convex_on_boundary(boundary);
     for (dal::bv_visitor cv(bv); !cv.finished(); ++cv) {

@@ -254,7 +254,8 @@ namespace getfem
       es_degree = 5;
     }
 
-    void add_node(const pdof_description &d, const base_node &pt) ;
+    void add_node(const pdof_description &d, const base_node &pt,
+		  bool all_faces = false) ;
     void init_cvs_node(void);
     void unfreeze_cvs_node(void);
 

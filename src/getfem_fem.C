@@ -373,7 +373,8 @@ namespace getfem
     return true;
   }
 
-  void virtual_fem::add_node(const pdof_description &d, const base_node &pt) {
+  void virtual_fem::add_node(const pdof_description &d, const base_node &pt,
+			     bool all_faces) {
     short_type nb = cv_node.nb_points();
     cv_node.points().resize(nb+1);
     cv_node.points()[nb] = pt;
@@ -381,7 +382,7 @@ namespace getfem
     dof_types_[nb] = d;
     cvs_node.add_point_adaptative(nb, short_type(-1));
     for (short_type f = 0; f < cvs_node.nb_faces(); ++f)
-      if (dal::abs(cvr->is_in_face(f, pt)) < 1.0E-7)
+      if (all_faces || dal::abs(cvr->is_in_face(f, pt)) < 1.0E-7)
 	cvs_node.add_point_adaptative(nb, f);
     pspt_valid = false;
   }
@@ -443,7 +444,7 @@ namespace getfem
     bgeot::pconvex_ref cvn = bgeot::simplex_of_reference(nc, k);
     size_type R = cvn->nb_points();
     for (size_type i = 0; i < R; ++i)
-      add_node(lagrange_dof(nc), cvn->points()[i]);
+      add_node(lagrange_dof(nc), cvn->points()[i], (k == 0));
     
     base_.resize(R);
     for (size_type r = 0; r < R; r++) calc_base_func(base_[r], r, k);
