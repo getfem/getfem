@@ -48,9 +48,10 @@ namespace getfem
 
   template<class VECT>
     void save_solution(const std::string &filename, mesh_fem &mf,
-		       const VECT &U, dim_type P, short_type K)
-  { 
+		       const VECT &U, short_type K)
+  { // a corriger
     dim_type N = mf.linked_mesh().dim();
+    dim_type P = mf.get_qdim();
     std::ofstream o(filename.c_str());
     if (!o) DAL_THROW(internal_error, "impossible to open file");
     dal::bit_vector nn = mf.convex_index();
@@ -92,8 +93,8 @@ namespace getfem
 	pt2 = pfe->node_of_dof(i);
 	for (size_type k = 0; k < P; ++k) {
 	  for (size_type j = 0; j < nbd1; ++j) {
-	    size_type dof1 = mf.ind_dof_of_element(cv)[j];
-	    coeff[j] = U[dof1*P+k];
+	    size_type dof1 = mf.ind_dof_of_element(cv)[j * P + k];
+	    coeff[j] = U[dof1];
 	  }
 	  // il faudrait utiliser les fem_precomp pour accelerer.
 	  pf1->interpolation(pt2, G, pgt, coeff, val);
@@ -111,7 +112,7 @@ namespace getfem
 
   template<class VECT>
     void load_solution(const std::string &fi, getfem_mesh &mesh,
-		       mesh_fem &mef, VECT &U, dim_type &P, short_type &K) {
+		       mesh_fem &mef, VECT &U, short_type &K) {
     std::ifstream ist(fi.c_str());
     size_type token, DIM, Np, N;
     char tmp[100], c;
@@ -119,6 +120,7 @@ namespace getfem
     dal::dynamic_array<base_node> ptab;
     dal::dynamic_array<scalar_type> vtab;
     size_type nbvtab = 0;
+    dim_type &P;
     
     if (!ist) DAL_THROW(file_not_found_error, "File " << fi << " not found");
 
@@ -145,7 +147,7 @@ namespace getfem
 	  // cout << "token " << token << " val = " << k << endl;
 	  switch (token) {
 	  case 1 : DIM = N = k; if (k == 0) error = true; break;
-	  case 2 : P = k; if (k == 0) error = true; break;
+	  case 2 : P = k; mef.set_qdim(P); if (k == 0) error = true; break;
 	  case 3 : K = k; break;
 	  case 4 : DIM = k; break;
 	  }
@@ -217,6 +219,7 @@ namespace getfem
     if (error) DAL_THROW(failure_error, "Format error in file " << fi);
     
     // Data repartition
+    // à corriger
     
     dal::bit_vector nn = mesh.convex_index();
     U.resize(mef.nb_dof() * P);
@@ -239,7 +242,6 @@ namespace getfem
     }
     
   }
-
 
   /* ********************************************************************* */
   /*                                                                       */

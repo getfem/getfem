@@ -160,7 +160,7 @@ namespace bgeot
   }
 
   void mesh_structure::add_faces_of_convex(size_type ic)
-  {
+  { // a refaire
     // cout << "debut de add_faces(" << ic << ")" << endl;
     // write_to_file(cout); 
     pconvex_structure ps = structure_of_convex(ic);
@@ -172,7 +172,7 @@ namespace bgeot
   }
     
   void mesh_structure::to_faces(dim_type n)
-  {
+  { // a refaire
     // cout << "debut de to_faces(" << int(n) << ")" << endl;
     mesh_convex_ct::tas_iterator b = convex_tab.tas_begin(),
                                  e = convex_tab.tas_end();
@@ -184,7 +184,7 @@ namespace bgeot
   }
 
   void mesh_structure::to_edges(void)
-  { // inefficace, a refaire
+  { // a refaire
     dim_type dmax = 0;
     mesh_convex_ct::tas_iterator b = convex_tab.tas_begin(),
                                  e = convex_tab.tas_end();

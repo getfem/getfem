@@ -61,8 +61,9 @@
 
 namespace gmm {
 
-template <class CMatrix, class CINVMatrix, class VectorX>
-void pseudo_inverse(const CMatrix &C, CINVMatrix &CINV, VectorX&)
+template <class CMatrix, class CINVMatrix, class Matps, class VectorX>
+void pseudo_inverse(const CMatrix &C, CINVMatrix &CINV, const Matps& PS,
+		    VectorX&)
 {
   // compute the pseudo inverse of the non-square matrix C such
   // CINV = inv(C * trans(C)) * C.
@@ -108,10 +109,10 @@ void pseudo_inverse(const CMatrix &C, CINVMatrix &CINV, VectorX&)
   }
 }
 
-template < class Matrix, class CMatrix, class VectorX, class VectorB, 
-           class Preconditioner >
+template < class Matrix, class CMatrix, class Matps, class VectorX,
+	   class VectorB, class Preconditioner >
 int constrained_cg(const Matrix& A, const CMatrix& C, VectorX& x,
-		   const VectorB& b, const Preconditioner& M,
+		   const VectorB& b, const Matps& PS, const Preconditioner& M,
 		   int itemax, double residu, int noisy)
 {
   typedef typename temporary_plain_vector<VectorX>::vector_type TmpVec;
@@ -121,7 +122,7 @@ int constrained_cg(const Matrix& A, const CMatrix& C, VectorX& x,
   
   typedef size_t size_type;
   typedef typename linalg_traits<VectorX>::value_type value_type;
-  value_type rho = 1.0, rho_1, lambda, gamma, norm_b = vect_norm2(b);
+  value_type rho = 1.0, rho_1, lambda, gamma, norm_b = sqrt(vect_sp(PS, b, b));
   TmpVec p(vect_size(x)), q(vect_size(x)), q2(vect_size(x)),
     r(vect_size(x)), old_z(vect_size(x)), z(vect_size(x)), memox(vect_size(x));
   std::vector<bool> satured(mat_nrows(C));
@@ -129,7 +130,7 @@ int constrained_cg(const Matrix& A, const CMatrix& C, VectorX& x,
   int iter = 0;
 
   TmpCmat CINV(mat_nrows(C), mat_ncols(C));
-  pseudo_inverse(C, CINV, x);
+  pseudo_inverse(C, CINV, PS, x);
 
   // cout << "C = " << C << " CINV = " << CINV << endl;
 
@@ -160,7 +161,7 @@ int constrained_cg(const Matrix& A, const CMatrix& C, VectorX& x,
     
     // descent direction
     // rho_1 = rho; rho = itl::dot(r, r);
-    rho_1 = rho; rho = vect_sp(z, z); // ...
+    rho_1 = rho; rho = vect_sp(PS, z, z); // ...
     // std::cout << "norm of residu : " << rho << endl; getchar();
 
 
@@ -171,7 +172,7 @@ int constrained_cg(const Matrix& A, const CMatrix& C, VectorX& x,
     else
       // gamma = std::max(0.0, (rho - itl::dot(old_r, r) ) / rho_1);
       // gamma = rho / rho_1;
-      gamma = std::max(0.0, (rho - vect_sp(old_z, z) ) / rho_1); // ...
+      gamma = std::max(0.0, (rho - vect_sp(PS, old_z, z) ) / rho_1); // ...
     // std::cout << "gamma = " << gamma << endl;
     // itl::add(r, itl::scaled(p, gamma), p);
     add(z, scaled(p, gamma), p); // ...
@@ -180,7 +181,7 @@ int constrained_cg(const Matrix& A, const CMatrix& C, VectorX& x,
     // one dimensionnal optimization
     mult(A, p, q2);
     mult(M, q2, q);
-    lambda = rho / vect_sp(q,p);
+    lambda = rho / vect_sp(PS, q, p);
     for (size_type i = 0; i < mat_nrows(C); ++i)
       if (!satured[i])
       {

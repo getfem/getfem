@@ -390,7 +390,7 @@ Once a finite element method is defined on a mesh, it is possible to obtain info
 
 \section{Linear algebra procedures}
 
-Assembling procedures, especially for Dirichlet boundary conditions need some basic linear algebra computation. In order to make {\sc Getfem++} independent of any matrix library, it contains one called GMM (for Generic Matrix Methods). Theoretically, this library provides a mean to interface any other matrix library. If you want to use your own matrix library, you have just to write some ``traits''. GMM provide also some basic types of sparse and plain matrices and vectors and basic operations on them (copy, addition, multiplication, sub vector and matrices, solvers ... ). The syntax og GMM is very closed to MTL (
+Assembling procedures, especially for Dirichlet boundary conditions need some basic linear algebra computation. In order to make {\sc Getfem++} independent of any matrix library, it contains one called GMM (for Generic Matrix Methods). Theoretically, this library provides a mean to interface any other matrix library. If you want to use your own matrix library, you have just to write some ``traits''. GMM provide also some basic types of sparse and plain matrices and vectors and basic operations on them (copy, addition, multiplication, sub vector and matrices, solvers ... ). The syntax of GMM is very closed to MTL (see http://www.osl.iu.edu/research/mtl/). Although it has been reasonnabily optimized, GMM is not
 
 \section{Standard assembling procedures}
 
