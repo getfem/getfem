@@ -35,13 +35,11 @@ void test_grad_at(FUNC f, GRAD grad, const VAR &X) {
 
   R eps(1), max_ratio(1), ecart, ecart_old, min_ecart(1);
   gmm::fill_random(Z);
-  cout << "Z = " << Z << endl;
   T derdir = local_sp(G, Z), estimate_derdir;
   for (int i = 0; i < 10; ++i, eps /= R(10)) {
     gmm::add(gmm::scaled(Z, eps), X, Y);
     estimate_derdir = (f(Y) - valx) / eps;
     ecart = gmm::abs(derdir - estimate_derdir);
-    cout << "\n derdir = " << derdir << " estimate_derdir = " << estimate_derdir << endl;
     min_ecart = std::min(ecart, min_ecart);
     // The goal is of course to obtain a clear decreasing sequence
     cout << " " << ecart;
@@ -71,6 +69,9 @@ void test_grad(FUNC f, GRAD grad, const VAR &X) {
   cout << "The gradient seems to be ok !!\n";
 }
 
+//
+// Gradient of the Frobenius condition number
+//
 
 template <typename MAT, typename MAT2> void
 squared_Frobenius_condition_number_gradient(const MAT& M, MAT2& G) { 
@@ -100,34 +101,14 @@ struct grad {
     { squared_Frobenius_condition_number_gradient(M, G); }
 };
 
-
-struct func2 {
-
-  double operator()(const DM &M) {
-    DM B(M);
-    double trB = gmm::mat_trace(B);
-    gmm::lu_inverse(B);
-    return trB*gmm::mat_trace(B);
-  }
-
-};
-
-struct grad2 {
-  void operator()(const DM &M, DM &G) { 
-    DM B(M), C(M);
-    double trB = gmm::mat_trace(B);
-    gmm::lu_inverse(B);
-    gmm::copy(gmm::identity_matrix(), G);
-    gmm::scale(G, gmm::mat_trace(B));
-    gmm::mult(B, B, C);
-    gmm::add(gmm::scaled(gmm::transposed(C), -trB), G);
-  }
-};
+//
+// Signed distance for the torus
+//
 
 typedef std::vector<double> base_node;
 typedef double scalar_type;
 
-struct func3 {
+struct func2 {
   scalar_type operator()(const base_node &P) const {
     scalar_type R = 2.0, r = 0.5;
 
@@ -139,15 +120,8 @@ struct func3 {
 };
 
 
-struct grad3 {
+struct grad2 {
   void operator()(const base_node &P, base_node &G) const {
-    //    double R = 2.0, r = 0.5;
-    //    double x = P[0], y = P[1], z= P[2];
-    //     G[0] = (-sqrt(x*x+y*y)+R)*x/sqrt(x*x+y*y)
-    //            /sqrt(x*x+R*R+y*y-2.0*sqrt(x*x+y*y)*R+z*z);
-    //     G[1] = -(-sqrt(x*x+y*y)+R)*y/sqrt(x*x+y*y)
-    //            /sqrt(x*x+R*R+y*y-2.0*sqrt(x*x+y*y)*R+z*z);
-    //     G[2] = 1/(sqrt(x*x+R*R+y*y-2.0*sqrt(x*x+y*y)*R+z*z))*z;
     gmm::clear(G); 
     scalar_type R = 2.0, r = 0.5;
     scalar_type x = P[0], y = P[1], z = P[2];
@@ -164,13 +138,8 @@ struct grad3 {
 
 int main(void) {
 
-
-  // test_grad(func(), grad(), DM(10, 10));
-  
-  base_node PP(3);
-  gmm::fill_random(PP);
-
-  test_grad(func3(), grad3(), PP);
+  test_grad(func(), grad(), DM(5, 5));
+  test_grad(func2(), grad2(), base_node(3));
 
   return 0;
 }

@@ -67,9 +67,11 @@ namespace getfem {
   public:
     mesher_signed_distance() : id(size_type(-1)) {}
     virtual bool bounding_box(base_node &bmin, base_node &bmax) const = 0;
-    virtual scalar_type operator()(const base_node &P, dal::bit_vector &bv) const = 0;
+    virtual scalar_type operator()(const base_node &P,
+				   dal::bit_vector &bv) const = 0;
     virtual base_small_vector grad(const base_node &P) const = 0;
-    virtual void register_constraints(std::vector<const mesher_signed_distance*>& list) const = 0;
+    virtual void register_constraints(std::vector<const
+				      mesher_signed_distance*>& list) const=0;
     virtual scalar_type operator()(const base_node &P) const  = 0;
   };
 
@@ -88,11 +90,47 @@ namespace getfem {
       bv[id] = (dal::abs(d) < SEPS);
       return d;
     }
-    virtual void register_constraints(std::vector<const mesher_signed_distance*>& list) const {
+    virtual void register_constraints(std::vector<const
+				      mesher_signed_distance*>& list) const {
       id = list.size(); list.push_back(this);
     }
     virtual base_small_vector grad(const base_node &) const {
       return -1.*n;
+    }
+  };
+
+  class mesher_tube : public mesher_signed_distance {
+    base_node x0; base_node n; scalar_type R;
+  public:
+      mesher_tube(base_node x0_, base_node n_, scalar_type R_)
+	: x0(x0_), n(n_), R(R_)
+    { n /= gmm::vect_norm2(n); }
+    bool bounding_box(base_node &, base_node &) const
+    { return false; }
+    virtual scalar_type operator()(const base_node &P) const {
+      base_node v(P); v -= x0;
+      gmm::add(gmm::scaled(n, -gmm::vect_sp(v, n)), v);
+      return gmm::vect_norm2(v) - R;
+    }
+    virtual scalar_type operator()(const base_node &P,
+				   dal::bit_vector &bv) const {
+      scalar_type d = (*this)(P);
+      bv[id] = (dal::abs(d) < SEPS);
+      return d;
+    }
+    virtual void register_constraints(std::vector<const
+				      mesher_signed_distance*>& list) const {
+      id = list.size(); list.push_back(this);
+    }
+    virtual base_small_vector grad(const base_node &P) const {
+      base_node v(P); v -= x0;
+      scalar_type norm(0);
+      for ( ; norm == 0.; gmm::fill_random(v)) {
+	gmm::add(gmm::scaled(n, -gmm::vect_sp(v, n)), v);
+	norm = gmm::vect_norm2(v);
+      }
+      v /= norm;
+      return v;
     }
   };
 
@@ -106,21 +144,23 @@ namespace getfem {
       for (size_type i=0; i < x0.size(); ++i) { bmin[i] -= R; bmax[i] += R; }
       return true;
     }
-    virtual scalar_type operator()(const base_node &P, dal::bit_vector &bv) const {
+    virtual scalar_type operator()(const base_node &P,
+				   dal::bit_vector &bv) const {
       scalar_type d = bgeot::vect_dist2(P,x0)-R;
       bv[id] = (dal::abs(d) < SEPS);
       return d;
     }
     virtual scalar_type operator()(const base_node &P) const
     { return bgeot::vect_dist2(P,x0)-R; }
-    virtual void register_constraints(std::vector<const mesher_signed_distance*>& list) const {
+    virtual void register_constraints(std::vector<const
+				      mesher_signed_distance*>& list) const {
       id = list.size(); list.push_back(this);
     }
     virtual base_small_vector grad(const base_node &P) const {
       base_small_vector g(P - x0);
       scalar_type d= gmm::vect_norm2(g);
-      if (d != scalar_type(0)) return g / d; else return P;
-      return g/gmm::vect_norm2(g);
+      if (d != scalar_type(0)) { g /= d; return g; }
+      else { gmm::fill_random(g); g /= gmm::vect_norm2(g); return g; }
     }
   };
 
@@ -179,7 +219,8 @@ namespace getfem {
   class mesher_union : public mesher_signed_distance {
     const mesher_signed_distance &a, &b;
   public:
-    mesher_union(const mesher_signed_distance& a_, const mesher_signed_distance &b_) : a(a_), b(b_) {}
+    mesher_union(const mesher_signed_distance& a_,
+		 const mesher_signed_distance &b_) : a(a_), b(b_) {}
     bool bounding_box(base_node &bmin, base_node &bmax) const {
       base_node bmin2(bmin.size()), bmax2(bmin.size());
       bool ba = a.bounding_box(bmin, bmax);
@@ -214,7 +255,7 @@ namespace getfem {
   class mesher_intersection : public mesher_signed_distance {
     const mesher_signed_distance &a, &b;
   public:
-    mesher_intersection(const mesher_signed_distance& a_,
+    mesher_intersection(const mesher_signed_distance &a_,
 			const mesher_signed_distance &b_) : a(a_), b(b_) {}
     bool bounding_box(base_node &bmin, base_node &bmax) const {
       bool ba = a.bounding_box(bmin, bmax);
@@ -277,31 +318,83 @@ namespace getfem {
     }
   };
   
-  class mesher_cylinder : public mesher_signed_distance { // to be done
+  class mesher_cylinder : public mesher_signed_distance {
+    base_node x0; base_small_vector n;
+    scalar_type L, R;
+    mesher_tube t;
+    mesher_half_space p1, p2;
+    mesher_intersection i1, i2;
   public:
-    mesher_cylinder() {}
+    mesher_cylinder(const base_node &center, const base_small_vector &no,
+		    scalar_type L_, scalar_type R_)
+      : x0(center), n(no/gmm::vect_norm2(no)), L(L_), R(R_), t(x0, n, R_),
+	p1(x0, n), p2(x0+n*L, -1.0 * n), i1(p1, p2), i2(i1, t) {}
     bool bounding_box(base_node &bmin, base_node &bmax) const {
-      bmin = base_node(3); bmax = base_node(3); 
-      for (size_type i=0; i < 3; ++i) { bmin[i] = -1.; bmax[i] = 1.; }
+      base_node x1(x0+n*L);
+      bmin = bmax = base_node(3);
+      for (unsigned i = 0; i < 3; ++i) {
+	bmin[i] = std::min(x0[i], x1[i]) - R;
+	bmax[i] = std::max(x0[i], x1[i]) + R;
+      }
       return true;
     }
-    virtual scalar_type operator()(const base_node &P) const {
-      scalar_type d1 = sqrt(dal::sqr(P[0])+dal::sqr(P[1])) - 1;
-      scalar_type d2 = -1 - P[2];
-      scalar_type d3 = P[2] - 1;
-      scalar_type d = std::max(std::max(d1,d2),d3);
-      if (d1 > 0 && d2 > 0) d = sqrt(dal::sqr(d1)+dal::sqr(d2));
-      else if (d1 > 0 && d3 > 0) d = sqrt(dal::sqr(d1)+dal::sqr(d3));
-      return d;
+    virtual scalar_type operator()(const base_node &P) const { return i2(P); }
+    virtual scalar_type operator()(const base_node &P,
+				   dal::bit_vector& bv) const
+    { return i2(P, bv); }
+    virtual base_small_vector grad(const base_node &P) const
+    { return i2.grad(P); }
+    virtual void register_constraints(std::vector<const
+				      mesher_signed_distance*>& list) const
+    { i2.register_constraints(list); }
+  };
+
+
+class mesher_ellipse : public mesher_signed_distance { // TODO
+  base_node x0; base_small_vector n, t;
+  scalar_type r, R, a;
+  public:
+    mesher_ellipse(const base_node &center, const base_small_vector &no,
+		    scalar_type r_, scalar_type R_)
+      : x0(center), n(no/gmm::vect_norm2(no)), r(r_), R(R_) {
+      t[0] = -n[1]; t[1] = n[0];
+      if (R < r) { std::swap(r, R); std::swap(n, t); }
+      a = sqrt(R*R - r*r);
     }
-    virtual scalar_type operator()(const base_node &P, dal::bit_vector& )
-      const {
+    bool bounding_box(base_node &bmin, base_node &bmax) const {
+      bmin = bmax = x0;
+      for (unsigned i = 0; i < 2; ++i) { bmin[i] -= R; bmax[i] += R; }
+      return true;
+    }
+    virtual scalar_type operator()(const base_node &P) const { 
+      base_small_vector v(P); v -= x0;
+      scalar_type vt = gmm::vect_sp(v, t);
+      vt = std::max(-a, std::min(a, vt));
+      base_node x1 = x0 + t*vt;
+      base_small_vector v1(P); v1 -= x1;
+      scalar_type v1n = gmm::vect_sp(v1, n), v1t = gmm::vect_sp(v1, t);
+      scalar_type x1n = gmm::vect_sp(x1, n), x1t = gmm::vect_sp(x1, t);
+      scalar_type ea = v1n*v1n / (r*r) + v1t * v1t / (R*R);
+      scalar_type eb = 2. * (x1n*v1n / (r*r) + x1t*v1t / (R*R));
+      scalar_type ec = x1n*x1n / (r*r) + x1t * x1t / (R*R);
+
+      scalar_type delta = eb*eb - 4 * ea * ec;
+      assert(delta >= 0);
+      scalar_type lambda = (-eb + sqrt(delta)) / (2. * ea);
+      base_node x2 = lambda*P + (1-lambda)*x1;
+      return (1.-lambda)*gmm::vect_norm2(v1);
+    }
+    virtual scalar_type operator()(const base_node &P,
+				   dal::bit_vector& bv) const {
       scalar_type d = this->operator()(P);
-      // to be done
+      bv[id] = (dal::abs(d) < SEPS);
       return d;
     }
-    virtual base_small_vector grad(const base_node &) const { assert(0); }
-    virtual void register_constraints(std::vector<const mesher_signed_distance*>&) const { assert(0); }
+    virtual base_small_vector grad(const base_node &P) const
+  { assert(0); }
+    virtual void register_constraints(std::vector<const
+				      mesher_signed_distance*>& list) const
+    { id = list.size(); list.push_back(this); }
   };
 
 
@@ -317,12 +410,8 @@ namespace getfem {
       return true;
     }
     virtual scalar_type operator()(const base_node &P) const {
-      scalar_type a = P[0];
-      scalar_type b = P[1];
-      scalar_type c = sqrt(a*a + b*b);
-      if (c == 0.) return R - r;
-      scalar_type d = 1. - R / c;
-      return sqrt(gmm::sqr(d*P[0]) + gmm::sqr(d*P[1]) + gmm::sqr(P[2])) - r;
+      scalar_type x = P[0], y = P[1], z = P[2], c = sqrt(x*x + y*y);
+      return (c == 0.) ? R - r : sqrt(gmm::sqr(c-R) + z*z) - r;
     }
     virtual scalar_type operator()(const base_node &P, dal::bit_vector&bv)
       const {
@@ -332,17 +421,19 @@ namespace getfem {
     }
     virtual base_small_vector grad(const base_node &P) const {
       base_node G(3);
-      scalar_type a = P[0];
-      scalar_type b = P[1];
-      scalar_type c = sqrt(a*a + b*b);
-      if (c == 0.) return G;
-      scalar_type d = 1. - R / c;
-      scalar_type e = sqrt(gmm::sqr(d*P[0])+gmm::sqr(d*P[1]) + gmm::sqr(P[2]));
-      if (e == 0) return G;
-
-      G[0] = (gmm::sqr(d) + d * R*gmm::sqr(P[0]) / (c*c*c)) * P[0]/ e;
-      G[1] = (gmm::sqr(d) + d * R*gmm::sqr(P[1]) / (c*c*c)) * P[1]/ e;
-      G[2] = P[2] / e;
+      scalar_type x = P[0], y = P[1], z = P[2], c = sqrt(x*x + y*y);
+      if (c == 0.) { 
+	gmm::fill_random(G); G[2] = 0.0; G /= gmm::vect_norm2(G);
+      }
+      else {
+	scalar_type w = 1. - R / c, e = sqrt(gmm::sqr(c-R) + z*z);
+	if (e == 0.) {
+	  gmm::fill_random(G); G[0] = x; G[1] = y; G /= gmm::vect_norm2(G);
+	}
+	else {
+	  G[0] = x * w / e; G[1] = y * w / e; G[2] = z / e;
+	}
+      }
       return G;
     }
     virtual void register_constraints(std::vector<const
@@ -361,7 +452,9 @@ namespace getfem {
   // mesher
   void build_mesh(getfem_mesh &m, const mesher_signed_distance& dist_,
 		  scalar_type h0, const std::vector<base_node> &fixed_points
-		  = std::vector<base_node>(), size_type K = 1);
+		  = std::vector<base_node>(), size_type K = 1, int noise = 1,
+		  size_type iter_max = 1000, scalar_type dist_point_hull = 5,
+		  scalar_type boundary_threshold_flatness = 0.11);
 
 
 }

@@ -86,7 +86,7 @@ namespace bgeot
 	  gmm::mult(K, CS, B_);/*O*/
 	} else {
 	  //J_ = dal::abs(gmm::lu_inverse(K)); B_.swap(K); /*O*/
-	  J_ = dal::abs(gmm::lu_inverse(K)); gmm::copy(gmm::transposed(K), B_);
+	 J_ = dal::abs(gmm::lu_inverse(K)); gmm::copy(gmm::transposed(K), B_);
 	}
       }
     }
@@ -394,7 +394,8 @@ namespace bgeot
   */
   base_small_vector compute_normal(const geotrans_interpolation_context& c,
 				   size_type face) {
-    if (c.G().ncols() != c.pgt()->nb_points()) DAL_THROW(dimension_error, "dimensions mismatch");
+    if (c.G().ncols() != c.pgt()->nb_points())
+      DAL_THROW(dimension_error, "dimensions mismatch");
     base_small_vector up = c.pgt()->normals()[face];
     base_small_vector un(c.N());
     gmm::mult(c.B(), up, un);

@@ -4,6 +4,7 @@
 #  include <fenv.h>
 #endif
 
+using getfem::base_node;
 
 int main(int argc, char **argv) {
   dal::exception_callback_debug cb;
@@ -22,122 +23,90 @@ int main(int argc, char **argv) {
     if (argc > 3) { K = atoi(argv[3]); }
     assert(K>0); assert(h>0.); 
     std::vector<getfem::base_node> fixed;
+    
+
+    getfem::mesher_ball D0(base_node(0.,0.),1.);
+
+    getfem::mesher_ball B1(base_node(1.5,0.),2.);
+    getfem::mesher_ball B2(base_node(-1.5,0.),2.);
+    getfem::mesher_union D2(B1, B2);
+
+    getfem::mesher_rectangle D3(base_node(0.,0.,0.), base_node(1.,1.,1.));
+
+    getfem::mesher_cylinder D4(base_node(0.,0.,0.), base_node(0.,1.,1.),
+			       2.0, 1.0);
+
+    getfem::mesher_ball D5(base_node(0.,0.,0.),1.);
+
+    getfem::mesher_ball B3(base_node(1.5,0.,0.),2.);
+    getfem::mesher_ball B4(base_node(-1.5,0.,0.),2.);
+    getfem::mesher_union D6(B3, B4);
+
+    getfem::mesher_ball B5(base_node(0,1.,0.),2.);
+    getfem::mesher_union D7(D6, B5);
+
+    getfem::mesher_ball B6(getfem::base_node(0,1.),2.);
+    getfem::mesher_union D8(D2, B6);
+
+    getfem::mesher_half_space P1(getfem::base_node(0,.1,.1),
+				 getfem::base_node(.1,-.03,1.));
+    getfem::mesher_intersection D9(D7, P1);
+
+    getfem::mesher_ball D10(getfem::base_node(0.,20.),20.);
+
+    getfem::mesher_half_space P2(getfem::base_node(0,.1,.1), 
+				 getfem::base_node(.1,-.03,.5));
+    getfem::mesher_intersection D11(D5, P2);
+
+    getfem::mesher_ball B7(getfem::base_node(-1.,0.,0.),1.5);
+    getfem::mesher_ball B8(getfem::base_node(1.,0.,0.),1.5);
+    getfem::mesher_intersection I1(B7, B8);
+    getfem::mesher_ball B9(getfem::base_node(0,-1.,.5),1.5);
+    getfem::mesher_ball B10(getfem::base_node(0.,1.,.5),1.5);
+    getfem::mesher_intersection I2(B9, B10);
+    getfem::mesher_union D12(I1, I2);
+    
+    getfem::mesher_ball B11(getfem::base_node(0.,0.),2.);
+    getfem::mesher_ball B12(getfem::base_node(1.,0.),2);
+    getfem::mesher_setminus D13(B11, B12);
+
+    getfem::mesher_ball B13(getfem::base_node(0.,0.,0.),2.);
+    getfem::mesher_ball B14(getfem::base_node(1.,0.,0.),2);
+    getfem::mesher_setminus D14(B13, B14);
+    
+    getfem::mesher_torus D15(2.0, 0.5);
+
+    getfem::mesher_signed_distance *dist = &D0;
     switch (opt) {
-    case 0: {
-      getfem::build_mesh(m, getfem::mesher_ball(getfem::base_node(0.,0.),1.), 
-			 h, fixed, K);
-    } break;
+    case 0: dist = &D0; break; /* disk */
     case 1: {
       getfem::scalar_type z = sqrt(4 - 1.5*1.5);
-      fixed.push_back(getfem::base_node(0,z));
-      fixed.push_back(getfem::base_node(0,-z));
+      fixed.push_back(base_node(0,z));
+      fixed.push_back(base_node(0,-z));
     }
-    case 2: {
-      getfem::build_mesh(m, getfem::mesher_union
-			 (getfem::mesher_ball(getfem::base_node(1.5,0.),2.),
-			  getfem::mesher_ball(getfem::base_node(-1.5,0.),2.)),
-			 h, fixed, K);
-    } break;
-    case 3: {
-      getfem::build_mesh(m, getfem::mesher_rectangle
-			 (getfem::base_node(0.,0.,0.),
-			  getfem::base_node(1.,1.,1.)),
-			 h, fixed, K);
-    } break;
-    case 4: {
-      getfem::build_mesh(m, getfem::mesher_cylinder(), 
-			 h, fixed, K);
-    } break;
-    case 5: {
-      getfem::build_mesh
-	(m, getfem::mesher_ball(getfem::base_node(0.,0.,0.),1.), 
-	 h, fixed, K);
-    } break;
-    case 6: {
-      getfem::build_mesh
-	(m, getfem::mesher_union
-	 (getfem::mesher_ball(getfem::base_node(1.5,0.,0.),2.),
-	  getfem::mesher_ball(getfem::base_node(-1.5,0.,0.),2.)),
-	 h, fixed, K);
-    } break;
-    case 7: { /* union of 2 balls */
-      getfem::build_mesh
-	(m, getfem::mesher_union
-	 (getfem::mesher_union
-	  (getfem::mesher_ball(getfem::base_node(1.5,0.,0.),2.),
-	   getfem::mesher_ball(getfem::base_node(-1.5,0.,0.),2.)),
-	  getfem::mesher_ball(getfem::base_node(0,1.,0.),2.)),
-	 h, fixed, K);
-    } break;
-    case 8: { /* union of 2 disks */
-      getfem::build_mesh
-	(m, getfem::mesher_union
-	 (getfem::mesher_union
-	  (getfem::mesher_ball(getfem::base_node(1.5,0.),2.),
-	   getfem::mesher_ball(getfem::base_node(-1.5,0.),2.)),
-	  getfem::mesher_ball(getfem::base_node(0,1.),2.)),
-	 h, fixed, K);
-    } break;
-    case 9: { /* tri-balls + half-plan */
-      getfem::build_mesh
-	(m, getfem::mesher_intersection
-	 (getfem::mesher_union
-	  (getfem::mesher_union
-	   (getfem::mesher_ball(getfem::base_node(1.5,0.,0.),2.),
-	    getfem::mesher_ball(getfem::base_node(-1.5,0.,0.),2.)),
-	   getfem::mesher_ball(getfem::base_node(0,1.,0.),2.)),
-	  getfem::mesher_half_space(getfem::base_node(0,.1,.1),
-				      getfem::base_node(.1,-.03,1.))),
-	 h, fixed, K);
-    } break;
-
-    case 10: { /* disk r=20 */
+    case 2: dist = &D2; break; /* union of 2 disks */
+    case 3: dist = &D3; break; /* cube */
+    case 4: dist = &D4; break; /* cylinder */
+    case 5: dist = &D5; break; /* ball */
+    case 6: dist = &D6; break; /* union of 2 balls */
+    case 7: dist = &D7; break; /* union of 3 balls */
+    case 8: dist = &D8; break; /* union of 3 disks */
+    case 9: dist = &D9; break; /* union of 3 half balls */
+    case 10: dist = &D10;      /* disk r=20 with fixed points */
       fixed.push_back(getfem::base_node(0.,0.));
       fixed.push_back(getfem::base_node(0.,20.));
       fixed.push_back(getfem::base_node(-20.,20.));
       fixed.push_back(getfem::base_node(20.,20.));
       fixed.push_back(getfem::base_node(0.,40.));
-      getfem::build_mesh
-	(m, getfem::mesher_ball(getfem::base_node(0.,20.),20.), 
-	 h, fixed, K);
-    } break;
-    case 11: { /* half-balls */
-      getfem::build_mesh
-	(m, getfem::mesher_intersection
-	 (getfem::mesher_ball(getfem::base_node(0.,0.,0.),1.),
-	  getfem::mesher_half_space(getfem::base_node(0,.1,.1), 
-				    getfem::base_node(.1,-.03,.5))),
-	 h, fixed, K);
-    } break;
-    case 12: { /* UFO */
-      getfem::build_mesh
-	(m, getfem::mesher_union
-	 (getfem::mesher_intersection
-	  (getfem::mesher_ball(getfem::base_node(-1.,0.,0.),1.5),
-	   getfem::mesher_ball(getfem::base_node(1.,0.,0.),1.5)),
-	  getfem::mesher_intersection
-	  (getfem::mesher_ball(getfem::base_node(0,-1.,.5),1.5),
-	   getfem::mesher_ball(getfem::base_node(0.,1.,.5),1.5))),
-	 h, fixed, K);
-    } break;
-    case 13: { /* moon */
-      getfem::build_mesh
-	(m, getfem::mesher_setminus
-	 (getfem::mesher_ball(getfem::base_node(0.,0.),2.),
-	  getfem::mesher_ball(getfem::base_node(1.,0.),2)),
-	 h, fixed, K);
-    } break;
-    case 14: { /* substraction of two balls */
-      getfem::build_mesh
-	(m, getfem::mesher_setminus
-	 (getfem::mesher_ball(getfem::base_node(0.,0.,0.),2.),
-	  getfem::mesher_ball(getfem::base_node(1.,0.,0.),2)),
-	 h, fixed, K);
-    } break;
-    case 15: { /* torus */
-      getfem::build_mesh(m, getfem::mesher_torus(2.0, 3.0), h, fixed, K);
-    } break;
-  }
+      dist = &D10; 
+      break;
+    case 11: dist = &D11; break; /* half-balls */
+    case 12: dist = &D12; break; /* UFO */
+    case 13: dist = &D13; break; /* moon */
+    case 14: dist = &D14; break; /* substraction of two balls */
+    case 15: dist = &D15; break; /* torus */
+    }
+    getfem::build_mesh(m, *dist, h, fixed, K, 2);
   }
   DAL_STANDARD_CATCH_ERROR;
   return 0;
