@@ -347,7 +347,7 @@ typedef unsigned char uint8_type;
 
   #define DAL_THROW(type, thestr) { \
     std::strstream msg; \
-    msg << "in "__FILE__ << ", line " << __LINE__ << " : " << thestr << ends; \
+    msg << "in "__FILE__ << ", line " << __LINE__ << ": \n" << thestr << ends;\
     throw (type)(msg.str()); \
   }
 

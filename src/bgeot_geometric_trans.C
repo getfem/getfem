@@ -238,16 +238,13 @@ namespace bgeot
   pgeometric_trans associated_trans(pconvex_structure cvs)
   {
     size_type n = cvs->dim(), nbp = cvs->nb_points();
-    if (nbp = n+1)
-      if (cvs == bgeot::simplex_structure(n))
-	return simplex_trans(n, 1);
+    if (nbp == n+1 && cvs == bgeot::simplex_structure(n))
+      return simplex_trans(n, 1);
 
-    if (nbp == (1 << n))
-      if (cvs == bgeot::parallelepiped_structure(n))
-	return parallelepiped_trans(n, 1);
+    if (nbp == (1 << n) && cvs == bgeot::parallelepiped_structure(n))
+      return parallelepiped_trans(n, 1);
 
-    if (nbp == 2 * n)
-      if (cvs == bgeot::prism_structure(n))
+    if (nbp == 2 * n && cvs == bgeot::prism_structure(n))
 	return prism_trans(n, 1);
     
     // To be completed

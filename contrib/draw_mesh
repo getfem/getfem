@@ -1,0 +1,40 @@
+
+#  -*- perl -*-
+eval 'exec perl -S $0 "$@"'
+  if 0;
+
+$tmp1 = `../bin/createmp dr2dgnplot_tmp`;
+$tmp2 = `../bin/createmp dr2dgnplot_tmp`;
+
+sub catch { `rm -f $tmp1 $tmp2`; }
+$SIG{INT} = 'catch';
+
+if (!(open(F, "./draw_mesh_doedges $ARGV[0] 2>&1 |")))
+  { catch(); die "Start program impossible : $!\n";}
+
+if (!(open(FT, ">$tmp1"))) { catch; die "Open file impossible : $!\n";}
+
+while (<F>) {
+  if ($_ =~ /N =/) { ($a, $N) = split('=', $_);  }
+  elsif (($_ =~ /=/) || ($_ =~ /for/)) {
+    print $_; while (<F>) { print $_; }
+    close(FT); close(F); catch; exit(1);
+  }
+  else { print FT $_; }
+}
+
+close(FT);
+close(F);
+
+if (!(open(GNF, ">$tmp2"))) { catch; die "Open file impossible : $!\n";}
+print GNF "set data style line \n";
+if ($N <= 2) { print GNF "plot \'$tmp1\' title \'mesh\'\n"; }
+else { print GNF "splot \'$tmp1\' title \'mesh\'\n"; }
+print GNF "pause -1\n";
+print GNF "set term postscript\n";
+print GNF "set output \'$ARGV[0].ps\'\n";
+print GNF "replot\n";
+close(GNF);
+`gnuplot $tmp2`;
+
+`rm -f $tmp1 $tmp2`;

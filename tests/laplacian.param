@@ -3,7 +3,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%% pde parameters :	        				      %%%%%
-N = 1;                  % dimension of the domain.
+N = 2;                  % dimension of the domain.
 LX = 1.0;		% size in X.
 LY = 1.0;	        % size in Y.
 LZ = 1.0;		% size in Z.
@@ -13,7 +13,7 @@ FT = 0.1;               % parameter for the exact solution.
 MESH_TYPE = 0;          % 0 = simplexes
 			% 1 = parallelepipeds
 			% 2 = prisms
-INCLINE = 0.0;          % Incline of the mesh.
+INCLINE = 0.2;          % Incline of the mesh.
 K = 1;                  % Finite element degree.
 INTEGRATION = 1;        % 0 = exact integration.
 			% 1 = Newton Cotes of degree 2 * K
