@@ -1,0 +1,26 @@
+#!/usr/bin/perl
+
+$CC = $ENV{CC};
+
+if (! $CC) {
+print "No compiler, searching one\n";
+
+`CC -v`;  if ($? == 0) { print "CC  detected\n"; $CC = "CC";  }
+`g++ -v`; if ($? == 0) { print "g++ detected\n"; $CC = "g++"; }
+`cxx -V`; if ($? == 0) { print "cxx detected\n"; $CC = "cxx"; }
+}
+
+if (! $CC) { die "No compiler found, aborting\n"; }
+
+if ($CC =~ /CC/) {
+}
+elsif ($CC =~ /cxx/) {
+  $rep = `cxx -V`;
+  print "rep = $rep\n";
+}
+elsif ($CC =~ /g\+\+/) {
+  `g++ -v \>\& __toto`;
+  $rep = `more  __toto`; # `rm -f  __toto`;
+  print "rep = $rep\n";
+}
+else { die "Compiler unidentified\n"; }
