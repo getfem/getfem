@@ -1,19 +1,19 @@
 //
-// time: Mon Jan 10 15:48:56 2005
+// time: Fri Jan 14 10:45:28 2005
 //
 // version: 3.2.0 (format), 4.3.2 (DX)
 //
 //
 // MODULE main
-// workspace: width = 800, height = 680
+// workspace: width = 800, height = 549
 // layout: snap = 0, width = 50, height = 50, align = NN
 //
 macro main(
 ) -> (
 ) {
     // 
-    // node Import[4]: x = 704, y = 10, inputs = 6, label = Import
-    // input[1]: defaulting = 0, visible = 1, type = 32, value = "dynamic_friction.dx"
+    // node Import[4]: x = 563, y = 86, inputs = 6, label = Import
+    // input[1]: defaulting = 0, visible = 1, type = 32, value = "dynamic_friction2.dx"
     // input[2]: defaulting = 0, visible = 1, type = 32, value = "deformationsteps_edges"
     //
 main_Import_4_out_1 = 
@@ -26,7 +26,7 @@ main_Import_4_out_1 =
     main_Import_4_in_6
     ) [instance: 4, cache: 1];
     // 
-    // node Compute[4]: x = 586, y = 96, inputs = 3, label = Compute
+    // node Compute[4]: x = 432, y = 114, inputs = 3, label = Compute
     // input[1]: defaulting = 0, visible = 0, type = 32, value = "$0*1"
     // expression: value = a*1
     // name[2]: value = a
@@ -39,8 +39,8 @@ main_Compute_4_out_1 =
     main_Compute_4_in_3
     ) [instance: 4, cache: 1];
     // 
-    // node Import[1]: x = 603, y = 11, inputs = 6, label = Import
-    // input[1]: defaulting = 0, visible = 1, type = 32, value = "dynamic_friction.dx"
+    // node Import[1]: x = 554, y = 5, inputs = 6, label = Import
+    // input[1]: defaulting = 0, visible = 1, type = 32, value = "dynamic_friction2.dx"
     // input[2]: defaulting = 0, visible = 1, type = 32, value = "deformationsteps"
     //
 main_Import_1_out_1 = 
@@ -53,17 +53,30 @@ main_Import_1_out_1 =
     main_Import_1_in_6
     ) [instance: 1, cache: 1];
     // 
-    // node Inquire[1]: x = 307, y = 21, inputs = 3, label = Inquire
+    // node Compute[5]: x = 430, y = 31, inputs = 3, label = Compute
+    // input[1]: defaulting = 0, visible = 0, type = 32, value = "$0*1"
+    // expression: value = a*1
+    // name[2]: value = a
+    // name[3]: value = b
+    //
+main_Compute_5_out_1 = 
+    Compute(
+    main_Compute_5_in_1,
+    main_Import_1_out_1,
+    main_Compute_5_in_3
+    ) [instance: 5, cache: 1];
+    // 
+    // node Inquire[1]: x = 291, y = 64, inputs = 3, label = Inquire
     // input[2]: defaulting = 0, visible = 1, type = 32, value = "member count"
     //
 main_Inquire_1_out_1 = 
     Inquire(
-    main_Import_1_out_1,
+    main_Compute_5_out_1,
     main_Inquire_1_in_2,
     main_Inquire_1_in_3
     ) [instance: 1, cache: 1];
     // 
-    // node Compute[2]: x = 338, y = 97, inputs = 3, label = Compute
+    // node Compute[2]: x = 315, y = 133, inputs = 3, label = Compute
     // input[1]: defaulting = 0, visible = 0, type = 32, value = "$0-1"
     // expression: value = a-1
     // name[2]: value = a
@@ -76,14 +89,14 @@ main_Compute_2_out_1 =
     main_Compute_2_in_3
     ) [instance: 2, cache: 1];
     // 
-    // node Sequencer[1]: x = 299, y = 176, inputs = 7, label = Sequencer
+    // node Sequencer[1]: x = 318, y = 218, inputs = 7, label = Sequencer
     // input[1]: defaulting = 0, visible = 0, type = 32, value = "Sequencer_1"
     // input[4]: defaulting = 0, visible = 1, type = 1, value = 0
-    // input[5]: defaulting = 1, visible = 1, type = 1, value = 0
+    // input[5]: defaulting = 1, visible = 1, type = 1, value = 2000
     // input[6]: defaulting = 1, visible = 0, type = 1, value = 1
-    // input[7]: defaulting = 0, visible = 0, type = 16777217, value = { 0 0 1 0 0 1 }
-    // vcr[1]: min = 0, max = 0, beg = 0, end = 0, cur = 0, inc = 1, loop = off, step = off, pal = off
-    // window: position = (0.1891,0.6152), size = 0.3023x0.1172
+    // input[7]: defaulting = 0, visible = 0, type = 16777217, value = { 0 2000 1 0 2000 1 }
+    // vcr[1]: min = 0, max = 2000, beg = 0, end = 2000, cur = 0, inc = 1, loop = off, step = off, pal = off
+    // window: position = (0.6922,0.8467), size = 0.3023x0.1172
     //
     main_Sequencer_1_in_3 = @frame;
 main_Sequencer_1_out_1[cache: 2] = 
@@ -161,7 +174,7 @@ main_Color_2_out_1 =
     //
 main_Select_1_out_1 = 
     Select(
-    main_Import_1_out_1,
+    main_Compute_5_out_1,
     main_Sequencer_1_out_1,
     main_Select_1_in_3
     ) [instance: 1, cache: 1];
@@ -216,7 +229,7 @@ main_Collect_1_out_1 =
     main_Color_1_out_1
     ) [instance: 1, cache: 1];
     // 
-    // node Shade[1]: x = 621, y = 477, inputs = 8, label = Shade
+    // node Shade[1]: x = 545, y = 474, inputs = 8, label = Shade
     // input[2]: defaulting = 0, visible = 1, type = 3, value = NULL
     // input[3]: defaulting = 0, visible = 1, type = 32, value = "smooth"
     //
@@ -232,16 +245,16 @@ main_Shade_1_out_1 =
     main_Shade_1_in_8
     ) [instance: 1, cache: 1];
     // 
-    // node Image[1]: x = 523, y = 618, inputs = 49, label = Image
+    // node Image[1]: x = 670, y = 487, inputs = 49, label = Image
     // input[1]: defaulting = 0, visible = 0, type = 67108863, value = "Image_1"
     // input[4]: defaulting = 0, visible = 0, type = 1, value = 1
-    // input[5]: defaulting = 0, visible = 0, type = 8, value = [-5.72205e-06 15.5214 0]
-    // input[6]: defaulting = 0, visible = 0, type = 8, value = [-5.72205e-06 15.5214 102.948]
-    // input[7]: defaulting = 0, visible = 0, type = 5, value = 55.17
-    // input[8]: defaulting = 0, visible = 0, type = 1, value = 471
-    // input[9]: defaulting = 0, visible = 0, type = 5, value = 1.192
+    // input[5]: defaulting = 0, visible = 0, type = 8, value = [15.1572 14.85 0]
+    // input[6]: defaulting = 0, visible = 0, type = 8, value = [15.1572 14.85 105.519]
+    // input[7]: defaulting = 0, visible = 0, type = 5, value = 56.5477
+    // input[8]: defaulting = 0, visible = 0, type = 1, value = 914
+    // input[9]: defaulting = 0, visible = 0, type = 5, value = 0.758
     // input[10]: defaulting = 0, visible = 0, type = 8, value = [0 1 0]
-    // input[11]: defaulting = 1, visible = 0, type = 5, value = 30.0002
+    // input[11]: defaulting = 1, visible = 0, type = 5, value = 30.0001
     // input[12]: defaulting = 0, visible = 0, type = 1, value = 0
     // input[14]: defaulting = 0, visible = 0, type = 1, value = 1
     // input[15]: defaulting = 1, visible = 0, type = 32, value = "none"
@@ -255,7 +268,7 @@ main_Shade_1_out_1 =
     // input[29]: defaulting = 1, visible = 0, type = 3, value = 0
     // input[41]: defaulting = 0, visible = 0, type = 32, value = "none"
     // depth: value = 24
-    // window: position = (0.0992,0.0000), size = 0.3789x0.5889
+    // window: position = (0.0742,0.0137), size = 0.7250x0.7168
     // internal caching: 1
     //
 main_Image_1_out_1,
@@ -316,7 +329,7 @@ main_Image_1_out_3 =
     // node Print[1]: x = 33, y = 159, inputs = 3, label = Print
     //
     Print(
-    main_Import_1_out_1,
+    main_Compute_5_out_1,
     main_Print_1_in_2,
     main_Print_1_in_3
     ) [instance: 1, cache: 1];
@@ -335,7 +348,7 @@ main_Tube_1_out_1 =
 // network: end of macro body
 CacheScene(main_Image_1_in_1, main_Image_1_out_1, main_Image_1_out_2);
 }
-main_Import_4_in_1 = "dynamic_friction.dx";
+main_Import_4_in_1 = "dynamic_friction2.dx";
 main_Import_4_in_2 = "deformationsteps_edges";
 main_Import_4_in_3 = NULL;
 main_Import_4_in_4 = NULL;
@@ -345,13 +358,16 @@ main_Import_4_out_1 = NULL;
 main_Compute_4_in_1 = "$0*1";
 main_Compute_4_in_3 = NULL;
 main_Compute_4_out_1 = NULL;
-main_Import_1_in_1 = "dynamic_friction.dx";
+main_Import_1_in_1 = "dynamic_friction2.dx";
 main_Import_1_in_2 = "deformationsteps";
 main_Import_1_in_3 = NULL;
 main_Import_1_in_4 = NULL;
 main_Import_1_in_5 = NULL;
 main_Import_1_in_6 = NULL;
 main_Import_1_out_1 = NULL;
+main_Compute_5_in_1 = "$0*1";
+main_Compute_5_in_3 = NULL;
+main_Compute_5_out_1 = NULL;
 main_Inquire_1_in_2 = "member count";
 main_Inquire_1_in_3 = NULL;
 main_Inquire_1_out_1 = NULL;
@@ -363,12 +379,12 @@ main_Sequencer_1_in_2 = NULL;
 main_Sequencer_1_in_3 = NULL;
 main_Sequencer_1_in_4 = 0;
 main_Sequencer_1_in_6 = NULL;
-main_Sequencer_1_in_7 = { 0 0 1 0 0 1 };
+main_Sequencer_1_in_7 = { 0 2000 1 0 2000 1 };
 main_Sequencer_1_out_1 = NULL;
 
 @startframe = 0;
 @nextframe  = @startframe;
-@endframe   = 0;
+@endframe   = 2000;
 @deltaframe = 1;
 main_Select_6_in_3 = NULL;
 main_Select_6_out_1 = NULL;
@@ -721,11 +737,11 @@ macro Image(
 main_Image_1_in_1 = "Image_1";
 main_Image_1_in_3 = "X24,,";
 main_Image_1_in_4 = 1;
-main_Image_1_in_5 = [-5.72205e-06 15.5214 0];
-main_Image_1_in_6 = [-5.72205e-06 15.5214 102.948];
-main_Image_1_in_7 = 55.17;
-main_Image_1_in_8 = 471;
-main_Image_1_in_9 = 1.192;
+main_Image_1_in_5 = [15.1572 14.85 0];
+main_Image_1_in_6 = [15.1572 14.85 105.519];
+main_Image_1_in_7 = 56.5477;
+main_Image_1_in_8 = 914;
+main_Image_1_in_9 = 0.758;
 main_Image_1_in_10 = [0 1 0];
 main_Image_1_in_11 = NULL;
 main_Image_1_in_12 = 0;

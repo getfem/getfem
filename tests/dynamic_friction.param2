@@ -8,10 +8,11 @@ LY = 30.0;	        % size in Y.
 LZ = 30.0;		% size in Z.
 %MU = 7700;	        % Lamé coefficient.
 %LAMBDA = 11500;   	% Lamé coefficient.
-MU = 40;
-LAMBDA = 40;
-FRICTION_COEF = 0.4;    % Friction coefficient.
-PG = 9810; 		% gravitation constante (on earth) (mm/s^2).
+MU = 1.;
+LAMBDA = 1.;
+FRICTION_COEF = 1.0;    % Friction coefficient.
+PG = 0.0;
+%PG = 9810; 		% gravitation constante (on earth) (mm/s^2).
 %PG = 1000000; 		% gravitation constante (on jupiter !) (mm/s^2).
 RHO = 6e-6;     	% "realistic" density for steel
 T = 2.0;
@@ -34,16 +35,16 @@ GAMMA=0.5;
 NOCONTACT_MASS = 0;     % Suppress or not the mass of contact nodes
 PERIODICITY=1;          % Periodic condition
 DT_ADAPT = 0;           % Time step adaptation regarding the energy
-R = 10.0;               % Augmentation parameter
+R = 1.0;                % Augmentation parameter
 
 
 DIRICHLET = 1;
-DIRICHLET_RATIO = -0.2;	   % parametre pour la condition de Dirichlet
+DIRICHLET_RATIO = -0.01;   % parametre pour la condition de Dirichlet
 INIT_VERT_SPEED = -100.0;  % Initial vertical velocity
 INIT_VERT_POS = 1.0;       % Initial vertical position
 FOUNDATION_HSPEED = 10.0;  % Horizontal velocity of the rigid foundation
 STATIONARY = 1;            % Initial condition is the stationary solution ?
-PERT_STATIONARY = 1000.0;    % Perturbation on the initial velocity
+PERT_STATIONARY = 1.0;     % Perturbation on the initial velocity
 
 FEM_TYPE = 'FEM_PK(2, 1)';     % Main FEM
 DATA_FEM_TYPE = 'FEM_PK(2,1)'; % must be defined for non-Lagrangian main FEM
