@@ -60,11 +60,9 @@ namespace getfem
       }
       for (short_type f = 0; f < pgt->structure()->nb_faces(); ++f) {
 
-	base_node barycentre = mf.linked_mesh().points()
-	  [(mf.linked_mesh().ind_points_of_face_of_convex(cv, f))[0]];
+	base_node barycentre = mf.linked_mesh().points_of_face_of_convex(cv, f)[0];
 	for (size_type k = 1; k < pgt->structure()->nb_points_of_face(f); ++k)
-	  barycentre += mf.linked_mesh().points()
-	    [(mf.linked_mesh().ind_points_of_face_of_convex(cv, f))[k]];
+	  barycentre += mf.linked_mesh().points_of_face_of_convex(cv, f)[k];
 	barycentre /= scalar_type(pgt->structure()->nb_points_of_face(f));
  
 	short_type f2 = short_type(-1);
