@@ -106,6 +106,7 @@ namespace bgeot
   pconvex_ref simplex_of_reference(dim_type nc, short_type k = 1);
   pconvex_ref parallelepiped_of_reference(dim_type nc);
   pconvex_ref convex_ref_product(pconvex_ref a, pconvex_ref b);
+  pconvex_ref equilateral_simplex_of_reference(dim_type nc);
 
   /* fonctions en sursis ... */
   // pconvex_ref multiply_convex_of_reference(pconvex_ref a, dim_type n);

@@ -280,4 +280,58 @@ namespace bgeot
     return (*ptab)[nc];
   }
 
+  /* equilateral ref convexes are used for estimation of convex quality */
+  class equilateral_simplex_of_ref_ : public convex_of_reference {
+  public:
+    scalar_type is_in(const base_node &pt) const {
+      scalar_type d;
+      for (size_type f = 0; f < normals().size(); ++f) {
+        const base_node &x0 = (f ? points()[f-1] : points().back());
+        scalar_type v = gmm::vect_sp(pt-x0, normals()[f]);
+        if (f == 0) d = v; else d = std::max(d,v);
+      }
+      return d;
+    }
+    scalar_type is_in_face(short_type f, const base_node &pt) const {
+      const base_node &x0 = (f ? points()[f-1] : points().back());
+      return dal::abs(gmm::vect_sp(pt-x0, normals()[f])); 
+    }
+    equilateral_simplex_of_ref_(size_type N) {
+      pconvex_ref prev = equilateral_simplex_of_reference(N-1);
+      basic_convex_ref_ = this;
+      cvs = simplex_structure(N, 1);
+      points().resize(N+1);
+      normals_.resize(N+1);
+      base_node G(N); G.fill(0.);
+      for (size_type i=0; i < N+1; ++i) {
+        points()[i].resize(N);
+        if (i != N) {
+          std::copy(prev->points()[i].begin(), prev->points()[i].end(), points()[i].begin());
+          points()[i][N-1] = 0.;
+        } else {
+          points()[i] = 1./N * G;
+          points()[i][N-1] = sqrt(1. - gmm::vect_norm2_sqr(points()[i]));
+        }
+        G += points()[i];
+      }
+      gmm::scale(G, 1./(N+1));
+      for (size_type f=0; f < N+1; ++f) {
+        normals_[f] = G - points()[f]; 
+        gmm::scale(normals_[f], 1/gmm::vect_norm2(normals_[f]));
+      }
+    }
+  };
+
+  pconvex_ref equilateral_simplex_of_reference(dim_type nc) {
+    static std::vector<pconvex_ref> *stab = 0;
+    if (!stab) stab = new std::vector<pconvex_ref>();
+    if (nc <= 1) return simplex_of_reference(nc);
+    if (nc >= stab->size()) stab->resize(nc+1);
+    if ((*stab)[nc] == 0) {
+      (*stab)[nc] = new equilateral_simplex_of_ref_(nc);
+    }
+    return (*stab)[nc];
+  }
+
+
 }  /* end of namespace bgeot.                                              */
