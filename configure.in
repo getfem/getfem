@@ -86,7 +86,7 @@ dnl 	CXXFLAGS="$CXXFLAGS -ptr `pwd`/cxx_repository -std strict_ansi -O3"
 		echo "Using MIPSPRO CC on IRIX  (LD is set to CC)"
 		LD=CC   dnl sinon getfem_matlab a des problèmes (unresolved symbol __record_needed_destruction)
 dnl 		CXXFLAGS="$CXXFLAGS -LANG:std -O3 -OPT:Olimit=0:roundoff=3:div_split=ON:alias=typed -TARG:platform=ip25"
- 		CXXFLAGS="$CXXFLAGS -LANG:std  -O3"
+ 		CXXFLAGS="$CXXFLAGS -LANG:std  -O3 -ansiW "
 		APPSCXXFLAGS="$CXXFLAGS"
 		SUPLDFLAGS="-lCio"
 		;;

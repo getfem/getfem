@@ -389,16 +389,6 @@ namespace gmm {
       ::matrix_type, M *>::return_type(linalg_cast(m), si1, si2);
   }
 
-  template <class M, class SUBI1, class SUBI2>  inline
-    typename select_return<typename sub_matrix_type<const M *, SUBI1, SUBI2>
-    ::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI2>::matrix_type,
-    const M *>::return_type
-  sub_matrix(const M &m, const SUBI1 &si1, const SUBI2 &si2) {
-    return typename select_return<typename sub_matrix_type<const M *, SUBI1,
-      SUBI2>::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI2>
-      ::matrix_type, const M *>::return_type(linalg_cast(m), si1, si2);
-  }
-
   template <class M, class SUBI1>  inline
     typename select_return<typename sub_matrix_type<const M *, SUBI1, SUBI1>
     ::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI1>::matrix_type,
@@ -408,17 +398,6 @@ namespace gmm {
       SUBI1>::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI1>
       ::matrix_type, M *>::return_type(linalg_cast(m), si1, si1);
   }
-
-  template <class M, class SUBI1>  inline
-    typename select_return<typename sub_matrix_type<const M *, SUBI1, SUBI1>
-    ::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI1>::matrix_type,
-    const M *>::return_type
-  sub_matrix(const M &m, const SUBI1 &si1) {
-    return typename select_return<typename sub_matrix_type<const M *, SUBI1,
-      SUBI1>::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI1>
-      ::matrix_type, const M *>::return_type(linalg_cast(m), si1, si1);
-  }
-  
 
 }
 
