@@ -6,17 +6,24 @@ eval 'exec perl -S $0 "$@"'
 # à ajouter : - les sous-matrices
 #             - Gerer l'interface Lapack, SuperLU et QD.
 
+$islocal = 0;
+
 if ($ARGV[0] eq "") { $nb_iter = 1; } else { $nb_iter = int($ARGV[0]); }
 if ($nb_iter == 0) { $nb_iter = 1; }
 $srcdir = $ENV{srcdir};
-if ($srcdir eq "") { $srcdir="../../tests"; print "WARNING : no srcdir\n"; }
+if ($srcdir eq "") {
+  $srcdir="../../tests";
+  print "WARNING : no srcdir, taking $srcdir\n";
+  $islocal = 1;
+}
 $inc_dir = "$srcdir/../src";
 
 print "Gmm tests : Making $nb_iter execution(s) of each test\n";
 
 for ($iter = 0; $iter < $nb_iter; ++$iter) {
 
-  $tests_to_be_done =  `ls $srcdir/gmm_test*.C`;
+  if ($ARGV[1] eq "") {  $tests_to_be_done = `ls $srcdir/gmm_test*.C`; }
+  else {  $tests_to_be_done = $ARGV[1]; }
 
   while ($tests_to_be_done) {
     ($org_name, $tests_to_be_done) = split('\s', $tests_to_be_done, 2);
@@ -71,9 +78,14 @@ for ($iter = 0; $iter < $nb_iter; ++$iter) {
 
     while ($li = <DATAF>) { print TMPF $li; }
     $sizep = int($size_max*rand);
+    $theseed = int(10000.0*rand);
     print "Parameters for the test:\n";
     print TMPF "\n\n\n";
-    print TMPF "int main(void) {\n\n";
+    print TMPF "int main(void) {\n\n  srand($theseed);\n\n";
+    if ($islocal == 1) {
+      print TMPF "  dal::exception_callback_debug cb;\n";
+      print TMPF "  dal::exception_callback::set_exception_callback(&cb);\n\n";
+    }
     print TMPF "  try {\n\n";
     for ($j = 0; $j < $nb_param; ++$j) {
       $a = rand;
@@ -99,12 +111,13 @@ for ($iter = 0; $iter < $nb_iter; ++$iter) {
 	    = "gmm::sub_vector(param$j, gmm::sub_slice($c, $sizep, $step))";
 	}
 	elsif ($a < 0.3) {
-	  $li = "    $lt param$j($sizepp);";
-	  do {
-	    $sub_index[0] = int(2.0*rand);
-	    for ($k = 1; $k < $sizep; ++$k)
-	      { $sub_index[$k] = $sub_index[$k-1] + int(1.0*$step*rand)+1; }
-	  } while ($sub_index[$sizep-1] >  $sizepp);
+	  $li = "    $lt param$j($sizepp);"; @sub_index = ();
+	  @sortind = 0 .. ($sizepp-1);
+	  while (@sortind)
+	    { push (@sub_index, splice(@sortind , rand @sortind, 1)); }
+	  @sub_index = @sub_index[0..$sizep-1];
+	  sub numerique { $_a <=> $_b; }
+	  @sub_index = sort numerique @sub_index;
 	  $li= "$li\n    gmm::size_type param_tab$j [$sizep] = {$sub_index[0]";
 	  for ($k = 1; $k < $sizep; ++$k) { $li = "$li , $sub_index[$k]"; }
 	  $li = "$li};";

@@ -1438,22 +1438,23 @@ namespace gmm {
 
   template <class L1, class L2, class L3>
   void mult_by_row(const L1& l1, const L2& l2, L3& l3, abstract_sparse) {
+    typedef typename  linalg_traits<L1>::value_type T;
     clear(l3);
     size_type nr = mat_nrows(l1);
     for (size_type i = 0; i < nr; ++i) {
-      typename linalg_traits<L1>::value_type
-	aux = vect_sp(mat_const_row(l1, i), l2);
-      if (aux != 0) l3[i] = aux;
+      T aux = vect_sp(mat_const_row(l1, i), l2);
+      if (aux != T(0)) l3[i] = aux;
     }
   }
 
   template <class L1, class L2, class L3>
   void mult_by_row(const L1& l1, const L2& l2, L3& l3, abstract_skyline) {
+    typedef typename  linalg_traits<L1>::value_type T;
     clear(l3);
     size_type nr = mat_nrows(l1);
     for (size_type i = 0; i < nr; ++i) {
-      typename linalg_traits<L1>::value_type aux = vect_sp(mat_const_row(l1, i), l2);
-      if (aux != 0) l3[i] = aux;
+      T aux = vect_sp(mat_const_row(l1, i), l2);
+      if (aux != T(0)) l3[i] = aux;
     }
   }
 
@@ -1478,22 +1479,22 @@ namespace gmm {
 
   template <class L1, class L2, class L3>
   void mult_by_col(const L1& l1, const L2& l2, L3& l3, abstract_sparse) {
+    typedef typename linalg_traits<L1>::value_type T;
     clear(l3);
     typename linalg_traits<L2>::const_iterator it = vect_const_begin(l2),
       ite = vect_const_end(l2);
     for (; it != ite; ++it)
-      if (*it != typename linalg_traits<L2>::value_type(0))
-	add(scaled(mat_const_col(l1, it.index()), *it), l3);
+      if (*it != T(0)) add(scaled(mat_const_col(l1, it.index()), *it), l3);
   }
 
   template <class L1, class L2, class L3>
   void mult_by_col(const L1& l1, const L2& l2, L3& l3, abstract_skyline) {
+    typedef typename linalg_traits<L1>::value_type T;
     clear(l3);
     typename linalg_traits<L2>::const_iterator it = vect_const_begin(l2),
       ite = vect_const_end(l2);
     for (; it != ite; ++it)
-      if (*it != typename linalg_traits<L2>::value_type(0))
-	add(scaled(mat_const_col(l1, it.index()), *it), l3);
+      if (*it != T(0)) add(scaled(mat_const_col(l1, it.index()), *it), l3);
   }
 
   template <class L1, class L2, class L3> inline
@@ -1540,24 +1541,24 @@ namespace gmm {
   template <class L1, class L2, class L3, class L4>
   void mult_by_row(const L1& l1, const L2& l2, const L3& l3,
 		   L4& l4, abstract_sparse) {
+    typedef typename linalg_traits<L1>::value_type T;
     copy(l3, l4);
     size_type nr = mat_nrows(l1);
     for (size_type i = 0; i < nr; ++i) {
-      typename linalg_traits<L1>::value_type
-	aux = vect_sp(mat_const_row(l1, i), l2);
-      if (aux != 0) l4[i] += aux;
+      T aux = vect_sp(mat_const_row(l1, i), l2);
+      if (aux != T(0)) l4[i] += aux;
     }
   }
 
   template <class L1, class L2, class L3, class L4>
   void mult_by_row(const L1& l1, const L2& l2, const L3& l3,
 		   L4& l4, abstract_skyline) {
+    typedef typename linalg_traits<L1>::value_type T;
     copy(l3, l4);
     size_type nr = mat_nrows(l1);
     for (size_type i = 0; i < nr; ++i) {
-      typename linalg_traits<L1>::value_type
-	aux = vect_sp(mat_const_row(l1, i), l2);
-      if (aux != 0) l4[i] += aux;
+      T aux = vect_sp(mat_const_row(l1, i), l2);
+      if (aux != T(0)) l4[i] += aux;
     }
   }
 
