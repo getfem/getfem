@@ -64,7 +64,7 @@
 /*	S.T.L. Headers.						          */
 /* ********************************************************************** */
 
-#include <cstdlib>
+// #include <cstdlib>  CC de SGI ne reconnait pas ce header.
 #include <exception>
 #include <typeinfo>
 #include <stdexcept>
