@@ -186,41 +186,42 @@ namespace bgeot
   void mesh_structure::swap_convex(size_type i, size_type j)
   {
     size_type ip, ic, *p;
+    dal::bit_vector nn;
 
-    if (i != j)
-    {
-      if (convex_is_valid(i))
-      {
+    if (i != j) {
+      if (convex_is_valid(i)) {
+	nn.clear();
 	ref_mesh_point_ind_ct pt = ind_points_of_convex(i);
-	for( ; !pt.empty(); pt.pop_front())
-	{
+	for( ; !pt.empty(); pt.pop_front()) {
 	  ip = pt.front(); p = &(points_tab[ip].first);
-	  mesh_convex_ind_ct ct = convex_to_point(ip);
-
-	  for( ; !ct.empty(); ct.pop_front())
-	  {
-	    ic = ct.front();
-	    if (*p == i) *p = j; else if (*p == j) *p = i;
-	    p = &(point_links[convex_tab[ic].pts+ct.begin().ind_in_cv].next);
-	  }
-	}
-      }
-      if (convex_is_valid(j))
-      {
-	ref_mesh_point_ind_ct pt = ind_points_of_convex(j);
-	for( ; !pt.empty(); pt.pop_front())
-	{
-	  ip = pt.front();
-	  if (!convex_is_valid(i) || !is_convex_has_points( i, 1, &ip))
-	  {
-	    p = &(points_tab[ip].first);
+	  if (!(nn[ip])) {
+	    nn[ip] = true;
 	    mesh_convex_ind_ct ct = convex_to_point(ip);
-
-	    for( ; !ct.empty(); ct.pop_front())
-	    {
+	    
+	    for( ; !ct.empty(); ct.pop_front()) {
 	      ic = ct.front();
 	      if (*p == i) *p = j; else if (*p == j) *p = i;
 	      p = &(point_links[convex_tab[ic].pts+ct.begin().ind_in_cv].next);
+	    }
+	  }
+	}
+      }
+      if (convex_is_valid(j)) {
+	nn.clear();
+	ref_mesh_point_ind_ct pt = ind_points_of_convex(j);
+	for( ; !pt.empty(); pt.pop_front()) {
+	  ip = pt.front();
+	  if (!(nn[ip])) {
+	    nn[ip] = true;
+	    if (!convex_is_valid(i) || !is_convex_has_points( i, 1, &ip)) {
+	      p = &(points_tab[ip].first);
+	      mesh_convex_ind_ct ct = convex_to_point(ip);
+	      
+	      for( ; !ct.empty(); ct.pop_front()) {
+		ic = ct.front();
+		if (*p == i) *p = j; else if (*p == j) *p = i;
+		p=&(point_links[convex_tab[ic].pts+ct.begin().ind_in_cv].next);
+	      }
 	    }
 	  }
 	}

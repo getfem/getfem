@@ -270,6 +270,8 @@ namespace getfem
     std::vector<size_type> tab;
     fem_dof fd;
 
+    // cout << "\n\nEntering enumerate_dof\n\n\n\n\n";
+
     cv = nn.take_first();
     bgeot::mesh_structure::clear();
 
@@ -297,6 +299,7 @@ namespace getfem
 	fd.pnd = pf->dof_types()[i];
 	size_type j;
 	if (fd.pnd == andof) {
+	  // cout << "detecting a specialdof\n";
 	  j = pf->index_of_already_numerate_dof(cv, i);
 	  if (dof_sort.index_valid(j)) {
 	    if (dof_sort[j].pnd != andof)
@@ -314,17 +317,11 @@ namespace getfem
 	}
 	tab[i] = j;
       }
-
-      size_type k = add_convex_noverif(pf->structure(), tab.begin());
-      cout << "convex_index = " << convex_index() << endl;
-      cout << "pf->structure()->nb_points() = " << pf->structure()->nb_points() << endl;
-      cout << "k = " << k << " cv = " << cv << endl;
-      if (k != cv) bgeot::mesh_structure::swap_convex(k, cv);
-      cout << "swap effectué\n";
+      
+      size_type k = add_convex_noverif(pf->structure(), tab.begin(), cv);
       
       if (pile.empty()) cv = nn.take_first();
                  else { cv = pile.front(); pile.pop(); }
-      cout << "choix effectué\n";
     }
     
     dof_enumeration_made = true;

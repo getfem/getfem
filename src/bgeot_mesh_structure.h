@@ -199,10 +199,11 @@ namespace bgeot
 
 
       template<class ITER>
-       size_type add_convex_noverif(pconvex_structure cs, ITER ipts);
+       size_type add_convex_noverif(pconvex_structure cs, ITER ipts,
+				    size_type to_index = size_type(-1));
       template<class ITER>
 	size_type add_convex(pconvex_structure cs,
-			     ITER ipts, bool *present = NULL);
+			     ITER ipts, bool *present = 0);
       template<class ITER> size_type add_simplex(dim_type dim, ITER ipts)
       { return add_convex(simplex_structure(dim), ipts); }
       size_type add_segment(size_type a, size_type b);
@@ -342,14 +343,20 @@ namespace bgeot
 
   template<class ITER>
     size_type mesh_structure::add_convex_noverif(pconvex_structure cs,
-						 ITER ipts)
+						 ITER ipts, size_type is)
   {
     short_type nb = cs->nb_points();
     mesh_convex_structure s; s.cstruct = cs; s.pts = point_links.alloc(nb);
     if (nb > 0)
       { point_lists[s.pts+nb-1] = 0; point_links[s.pts+nb-1].next = 0; }
     dal::copy_n(ipts, nb, point_lists.begin()+s.pts);
-    size_type is = convex_tab.add(s);
+
+    if (is != size_type(-1)) {
+      if (convex_index()[is]) sup_convex(is);
+      convex_tab.add_to_index(is, s);
+    }
+    else
+      is = convex_tab.add(s);
 
     mesh_link_ct::iterator ipl = point_links.begin(); ipl += s.pts;
     for (short_type i = 0; i < nb; ++i, ++ipts, ++ipl)
