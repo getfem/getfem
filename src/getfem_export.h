@@ -71,7 +71,7 @@ namespace getfem
       size_type nbpt = pgt->nb_points();
       coeff.resize(nbd1);
 
-      o << "DIM = " << pgt->dim() << endl;
+      o << "DIM = " << int(pgt->dim()) << endl;
 
       if (pf1->target_dim() != 1 || !(pf1->is_equivalent()))
 	DAL_THROW(to_be_done_error, "to be done ... ");
