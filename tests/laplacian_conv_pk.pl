@@ -59,7 +59,8 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
 # $NDDLMAX = 20800;
 $NDDLMAX = 4800;
 $PAUSE = 0;
-$SKIP = 0;
+$SKIP = 2;
+$GRAPHONLY=1;
 $FT = 20.0;
 $GENDIR = 0;
 $AFFICH = 0;
@@ -72,20 +73,22 @@ print "   TESTS EN DIMENSION 1, ET ELEMENTS PK                         \n";
 $FEM_TYPE = 0;
 $INTE = 0;
 while ($INTE < 3 && $SKIP < 1) {
-open(RES, ">laplacian_1D_$INTE.res");
-$N = 1;  $NX = 1;
-while ($NX**$N <= $NDDLMAX) {
-  print "Test for NX = $NX \t"; print RES $NX**$N;
-  foreach $K (@Ks) {
-    if ((($K * $NX)**$N) * $K <= 2*$NDDLMAX) {
-      start_program("-d N=$N -d NX=$NX -d K=$K -d FT=$FT -d INTEGRATION=$INTE -d FEM_TYPE=$FEM_TYPE");
-      print RES "$linferror "; print ".";
+  if (!($GRAPHONLY)) {
+    open(RES, ">laplacian_1D_$INTE.res");
+    $N = 1;  $NX = 1;
+    while ($NX**$N <= $NDDLMAX) {
+      print "Test for NX = $NX \t"; print RES $NX**$N;
+      foreach $K (@Ks) {
+	if ((($K * $NX)**$N) * $K <= 2*$NDDLMAX) {
+	  start_program("-d N=$N -d NX=$NX -d K=$K -d FT=$FT -d INTEGRATION=$INTE -d FEM_TYPE=$FEM_TYPE");
+	  print RES "$linferror "; print ".";
+	}
+      }
+      print RES "\n"; print "\n";
+      if ($NX >= 5) { $NX = int($NX * 2); } else { ++$NX; }
     }
+    close(RES);
   }
-  print RES "\n"; print "\n";
-  if ($NX >= 5) { $NX = int($NX * 2); } else { ++$NX; }
-}
-close(RES);
 
 open(GNF, ">$tmp_gnuplot");
 print GNF "set data style line\n";
@@ -118,6 +121,7 @@ print "   TESTS EN DIMENSION 1, ET ELEMENTS PK HIERARCHIQUES           \n";
 $FEM_TYPE = 2;
 $INTE = 0;
 while ($INTE < 3 && $SKIP < 2) {
+  if (!($GRAPHONLY)) {
 open(RES, ">laplacian_1D_hier_$INTE.res");
 $K = 1; $N = 1; $NX = 1;
 while ($NX**$N <= $NDDLMAX) {
@@ -132,6 +136,7 @@ while ($NX**$N <= $NDDLMAX) {
   if ($NX >= 5) { $NX = int($NX * 2); } else { ++$NX; }
 }
 close(RES);
+}
 
 open(GNF, ">$tmp_gnuplot");
 print GNF "set data style line\n";
@@ -165,6 +170,7 @@ $NDDLMAX = 100000; $FT = 10.0;
 $FEM_TYPE = 0;
 $INTE = 0;
 while ($INTE < 2 && $SKIP < 3) {
+if (!($GRAPHONLY)) {
 open(RES, ">laplacian_2D_$INTE.res");
 $K = 1; $N = 2; $NX = 1;
 while ($NX**$N <= $NDDLMAX) {
@@ -179,6 +185,7 @@ while ($NX**$N <= $NDDLMAX) {
   $NX = int($NX * 2.001);
 }
 close(RES);
+}
 
 open(GNF, ">$tmp_gnuplot");
 print GNF "set data style line\n";
@@ -215,7 +222,8 @@ $INTE = 0;
 $GENDIR = 1;
 
 while ($INTE < 2 && $SKIP < 3) {
-open(RES, ">laplacian_2D_$INTE.res");
+if (!($GRAPHONLY)) {
+open(RES, ">laplacian_2D_hier_$INTE.res");
 $K = 1; $N = 2; $NX = 1;
 while ($NX**$N <= $NDDLMAX) {
   print "Test for NX = $NX \t"; print RES $NX**$N;
@@ -229,6 +237,7 @@ while ($NX**$N <= $NDDLMAX) {
   $NX = int($NX * 2.001);
 }
 close(RES);
+}
 
 open(GNF, ">$tmp_gnuplot");
 print GNF "set data style line\n";
@@ -240,12 +249,12 @@ $first = 0; $rank = 2;
 foreach $K (@Ks) {
   if ($first) { print GNF ", "; }
   $KK = $K * $K;
-  print GNF " 'laplacian_2D_$INTE.res' using ((\$1)*$KK):$rank title 'HIERARCHICAL_PK(2,$K)'";
+  print GNF " 'laplacian_2D_hier_$INTE.res' using ((\$1)*$KK):$rank title 'HIERARCHICAL_PK(2,$K)'";
   $first = 1; ++$rank;
 }
 print GNF "\n";
 if ($PAUSE) { print GNF "pause -1;\n"; }
-print GNF "set output 'laplacian_2D_$INTE.ps'\n";
+print GNF "set output 'laplacian_2D_hier_$INTE.ps'\n";
 print GNF "set term postscript color\n";
 print GNF "replot\n";
 
@@ -264,6 +273,7 @@ $NDDLMAX = 100000; $FT = 2.0;
 $FEM_TYPE = 0;
 $INTE = 1;
 while ($INTE < 2 && $SKIP < 4) {
+if (!($GRAPHONLY)) {
 open(RES, ">laplacian_3D_$INTE.res");
 $K = 1; $N = 3; $NX = 1;
 while ($NX**$N <= $NDDLMAX) {
@@ -278,6 +288,7 @@ while ($NX**$N <= $NDDLMAX) {
   $NX = int($NX * 2.001);
 }
 close(RES);
+}
 
 open(GNF, ">$tmp_gnuplot");
 print GNF "set data style line\n";
@@ -311,6 +322,7 @@ print "   TESTS EN DIMENSION 4, ET ELEMENTS PK                        \n";
 $FEM_TYPE = 0;
 $INTE = 1;
 while ($INTE < 2 && $SKIP < 4) {
+if (!($GRAPHONLY)) {
 open(RES, ">laplacian_4D_$INTE.res");
 $K = 1; $N = 4; $NX = 1;
 while ($NX**$N <= $NDDLMAX) {
@@ -325,6 +337,7 @@ while ($NX**$N <= $NDDLMAX) {
   $NX = int($NX * 2.001);
 }
 close(RES);
+}
 
 open(GNF, ">$tmp_gnuplot");
 print GNF "set data style line\n";

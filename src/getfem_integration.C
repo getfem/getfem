@@ -32,7 +32,7 @@
 
 #include <getfem_integration.h>
 #include <ftool_naming.h>
-// #include <gmm.h>
+#include <gmm.h>
 
 namespace getfem
 {
@@ -467,12 +467,35 @@ namespace getfem
 	  }
 	}
       }
-      
+
+//       if (nc == 1) {
+// 	M = bgeot::vsmatrix<long_scalar_type>((R+1)/2, (R+1)/2);
+// 	U = F = bgeot::vsvector<long_scalar_type>((R+1)/2);
+// 	gmm::clear(M);
+//       }
+
       for (size_type r = 0; r < R; ++r) {
-	F[r] = ppi->int_monomial(base[r]);
-	cout << "F[" << r << "] = " << F[r] << endl;
+// 	if (nc == 1) {
+// 	  if (r < (R+1)/2) {
+// 	    F[r] = ppi->int_monomial(base[R-1-r]);
+// 	    cout << "F[" << r << "] = " << F[r] << endl; 
+// 	  }
+// 	}
+// 	else {
+	  F[r] = ppi->int_monomial(base[r]);
+	  cout << "F[" << r << "] = " << F[r] << endl;
+// 	}
 	for (size_type q = 0; q < R; ++q) {
-	  M(r, q) = bgeot::eval_monomial(base[r], nodes[q].begin());
+// 	  if (nc == 1) {
+// 	    if (r < (R+1)/2) {
+// 	      if (q < (R+1)/2) 
+// 		M(r, q) += bgeot::eval_monomial(base[R-1-r], nodes[q].begin());
+// 	      else
+// 		M(r, R-1-q) += bgeot::eval_monomial(base[R-1-r], nodes[q].begin());
+// 	    }
+// 	  }
+// 	  else
+	    M(r, q) = bgeot::eval_monomial(base[r], nodes[q].begin());
 	}
       }
       
@@ -480,11 +503,15 @@ namespace getfem
       // gmm::gmres(M, U, F, gmm::identity_matrix(), gmm::mat_nrows(M), iter);
       bgeot::mat_gauss_solve(M, F, U, LONG_SCALAR_EPS * 100);
       // bgeot::mat_gauss_solve(M, F, U, 1E-15);
+//       if (nc == 1) {
+// 	U.resize(R);
+// 	for (size_type q = 0; q < R/2; ++q) U[R-q-1] = U[q];
+//       }
 
       if (nc == 1)
 	for (size_type r = 0; r < R; ++r)
 	  cout << "node " << r << " : " << nodes[r] << " poids : " 
-	       << U[r]<< endl;
+	       << U[r] << endl;
       
       for (size_type r = 0; r < R; ++r)
 	add_point(nodes[r], U[r]);
