@@ -126,7 +126,7 @@ namespace getfem
 
     N = 1; P = 1; K = 1; DIM = 1; // Default parameters
     
-    if (!(ftool::read_untill(ist, "BEGIN DATA ELEMENT"))) error = true;
+    if (!(ftool::read_until(ist, "BEGIN DATA ELEMENT"))) error = true;
 
     while (!error) {
       if (ist.eof()) { error = true; break; }

@@ -524,13 +524,7 @@ main(int argc, char *argv[]) {
       std::string fmt = args.pop();
       std::string fname = args.pop();
       cout << "importing mesh from " << fmt << " file '" << fname << "'" << endl;
-      if (fmt.compare("gmsh")==0) {	
-	getfem::import_gmsh_msh_file(fname,m);
-      } else if (fmt.compare("gid")==0) {
-	getfem::import_gid_msh_file(fname, m);
-      } else {
-	cerr << "sorry but I don't known anything about " << fmt << "files" << endl;
-      }
+      getfem::import_mesh(fname, fmt, m);
     }
     if (args("-data")) {
       check_empty(&m,&mf);

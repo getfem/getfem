@@ -467,7 +467,7 @@ namespace getfem
     ist.precision(16);
     clear();
     ist.seekg(0);ist.clear();
-    ftool::read_untill(ist, "BEGIN MESH_FEM");
+    ftool::read_until(ist, "BEGIN MESH_FEM");
 
     while (true)
     {
@@ -503,7 +503,7 @@ namespace getfem
 	  while (true) {
 	    ftool::get_token(ist, tmp, 1023);
 	    if (strcmp(tmp, "END")!=0) {
-	      //	      cerr << "tmp = '" << tmp << "'" << endl;
+	      //	      cerr << "tmp = '" << tmp << "'" << '\n';
 	      size_type ic = atoi(tmp);
 	      char *sf = strchr(tmp, '/');
 	      if (sf) {
@@ -515,7 +515,7 @@ namespace getfem
 	  ftool::get_token(ist, tmp, 1023);
 	  ftool::get_token(ist, tmp, 1023);
 	} else if (!strcmp(tmp,"DOF_ENUMERATION")) {
-	  //cerr << "begin dof enumeration" << endl;
+	  //cerr << "begin dof enumeration" << '\n';
 	  dal::bit_vector doflst;
 	  dof_structure.clear(); dof_enumeration_made = false;
 	  while (true) {
@@ -535,7 +535,7 @@ namespace getfem
 		  doflst.add(tab[i]+q);
 		//cerr << tab[i] << ",";
 	      }
-	      //cerr << endl;
+	      //cerr << '\n';
 	      dof_structure.add_convex_noverif(fem_of_element(ic)->structure(), tab.begin(), ic);
 	    } else DAL_THROW(failure_error, "Missing convex or wrong number in dof enumeration: '" 
 			     << tmp << "' [pos=" << ist.tellg() << "]");
@@ -544,13 +544,13 @@ namespace getfem
 	  this->dof_enumeration_made = true;
 	  this->nb_total_dof = doflst.card();
 	  ist >> ftool::skip("DOF_ENUMERATION");
-	  /*	  cerr << "end of dof enum, nb_dof=" << nb_dof() << endl;
+	  /*	  cerr << "end of dof enum, nb_dof=" << nb_dof() << '\n';
 	  dal::bit_vector bv = convex_index(); size_type cv;
 	  for (cv << bv; cv != size_type(-1); cv << bv) {
-	    cerr << "  " << cv << ":" << endl;
+	    cerr << "  " << cv << ":" << '\n';
 	    ref_mesh_dof_ind_ct::const_iterator it = ind_dof_of_element(cv).begin();
 	    while (it != ind_dof_of_element(cv).end()) cerr << " " << *it; ++it;
-	    cerr << endl;
+	    cerr << '\n';
 	  }
 	  */
 	} else if (strlen(tmp)) DAL_THROW(failure_error, "Syntax error in file at token '" << tmp << "' [pos=" << ist.tellg() << "]");
@@ -579,15 +579,15 @@ namespace getfem
 
   void mesh_fem::write_to_file(std::ostream &ost) const
   {
-    ost << endl << "BEGIN MESH_FEM" << endl << endl;
-    ost << "QDIM " << size_type(get_qdim()) << endl;
+    ost << '\n' << "BEGIN MESH_FEM" << '\n' << '\n';
+    ost << "QDIM " << size_type(get_qdim()) << '\n';
     dal::bit_vector bv = convex_index();
     size_type cv;
     for (cv << bv; cv != size_type(-1); cv << bv) {
       ost << " CONVEX " << cv;
       ost << " " << name_of_fem(fem_of_element(cv));
       ost << " " << name_of_int_method(int_method_of_element(cv));
-      ost << endl;
+      ost << '\n';
     }
     bv = get_valid_boundaries();
 
@@ -601,13 +601,13 @@ namespace getfem
 	dal::bit_vector cvflst = boundaries[bnum].faces_of_convex(cv);
 	size_type f;
 	for (f << cvflst; f != size_type(-1); f << cvflst, ++cnt) {
-	  if ((cnt % 10) == 0) ost << endl << " ";
+	  if ((cnt % 10) == 0) ost << '\n' << " ";
 	  ost << " " << cv << "/" << f;
 	}
       }
-      ost << endl << " END BOUNDARY " << bnum << endl;
+      ost << '\n' << " END BOUNDARY " << bnum << '\n';
     }
-    ost << " BEGIN DOF_ENUMERATION " << endl;
+    ost << " BEGIN DOF_ENUMERATION " << '\n';
     bv = convex_index();
     for (cv << bv; cv != size_type(-1); cv << bv) {
       ost << "  " << cv << ": ";
@@ -617,10 +617,10 @@ namespace getfem
 	// skip repeated dofs for "pseudo" vector elements
 	for (size_type i=0; i < size_type(get_qdim())/fem_of_element(cv)->target_dim(); ++i) ++it;
       }
-      ost << endl;
+      ost << '\n';
     }
-    ost << " END DOF_ENUMERATION " << endl;
-    ost << "END MESH_FEM" << endl;
+    ost << " END DOF_ENUMERATION " << '\n';
+    ost << "END MESH_FEM" << '\n';
   }
 
   void mesh_fem::write_to_file(const std::string &name, bool with_mesh) const
@@ -628,8 +628,8 @@ namespace getfem
     std::ofstream o(name.c_str());
     if (!o)
       DAL_THROW(failure_error, "impossible to open file '" << name << "'");
-    o << "% GETFEM MESH_FEM FILE " << endl;
-    o << "% GETFEM VERSION " << GETFEM_VERSION << endl << endl << endl;
+    o << "% GETFEM MESH_FEM FILE " << '\n';
+    o << "% GETFEM VERSION " << GETFEM_VERSION << '\n' << '\n' << '\n';
     if (with_mesh) linked_mesh().write_to_file(o);
     write_to_file(o);
     o.close();
