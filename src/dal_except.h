@@ -133,6 +133,7 @@ namespace dal {
 //     exit(1);
 //   } 
 
+  /* callback handler for gmm/getfem exceptions */
   struct exception_callback {
     virtual void callback(const std::string&) = 0; //{};
 
@@ -150,25 +151,33 @@ namespace dal {
 
   };
 
+  /* crashing callback for debug mode */
   struct exception_callback_debug : public dal::exception_callback  {
     virtual void callback(const std::string& msg)
     { cerr << msg << endl; *(int *)(0) = 0; }
   };
 
+  /** user function for changing the default exception callback */ 
   inline void set_exception_callback(exception_callback *e)
   { exception_callback::which_except(e); }
+
+#ifdef GETFEM_HAVE_PRETTY_FUNCTION
+#  define DAL_PRETTY_FUNCTION __PRETTY_FUNCTION__
+#else 
+#  define DAL_PRETTY_FUNCTION ""
+#endif
 
 #define DAL_THROW(type, thestr) {                                    \
     std::stringstream msg;                                           \
     msg << "Error in "__FILE__ << ", line "                          \
-        << __LINE__ << ": \n" << thestr << ends;                     \
+        << __LINE__ << " " << DAL_PRETTY_FUNCTION << ": \n" << thestr << ends; \
     dal::exception_callback::do_exception_callback(msg.str());       \
     throw (type)(msg.str());                                         \
   }
 
 #ifdef DEBUG_MODE
 #  define DAL_INTERNAL_ERROR(thestr) { \
-   cerr << "Internal error: " << thestr << endl; \
+  cerr << "Internal error: " << DAL_PRETTY_FUNCTION << " " << thestr << endl; \
    ::abort(); \
    }
 #else
@@ -186,7 +195,7 @@ namespace dal {
 #define DAL_WARNING(level_, thestr) {                                 \
     std::stringstream msg;                                            \
     msg << "Level " << level_ << " Warning in "__FILE__ << ", line "  \
-        << __LINE__ << ": \n" << thestr << ends;                      \
+        << __LINE__ << " " << DAL_PRETTY_FUNCTION << ": \n" << thestr << ends; \
     if ((level_) <= dal::warning_level::level())                      \
        std::cerr << msg.str() << std::endl;                           \
   } 
