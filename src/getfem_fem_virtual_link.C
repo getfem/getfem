@@ -40,6 +40,25 @@
 namespace getfem
 {
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#if 0
+
   struct mesh_fem_link_fem_light {
     mesh_fem *pmf1, *pmf2;
     bool operator < (const mesh_fem_link_fem_light &l) const {
@@ -418,5 +437,7 @@ namespace getfem
 			  (*it)->is_with_grad()));
     }
   }
+
+#endif
 
 }  /* end of namespace getfem.                                            */
