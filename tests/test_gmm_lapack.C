@@ -42,7 +42,7 @@ template<class MAT> void my_mult(const MAT &A, const MAT &B, MAT &C) {
 template <class T> void test_with(T) {
   size_type n = 5;
 
-  gmm::dense_matrix<T> A(n+2, n), B(n+2, n), C(n, n);
+  gmm::dense_matrix<T> A(n, n), B(n, n), C(n, n);
   std::vector<T> x(n), y(n), z(n);
   
   gmm::fill_random(A);
@@ -52,16 +52,12 @@ template <class T> void test_with(T) {
   
   
   double exectime = ftool::uclock_sec();
-  qr_factor(A, B, C);
-  cout << "Q = " << B << endl;
-  cout << "R = " << C << endl;
+  implicit_qr_algorithm(A, x, C);
   
 
   cout << "A = " << A << endl;
-  gmm::mult(B, C, A);
-  cout << "QR = " << A << endl;
-  gmm::mult(gmm::conjugated(B), B, C);
-  cout << "Q*Q = " << C;
+  cout << "x = " << x << endl;
+  cout << "C = " << C << endl;
   // my_mult(A, B, C);
   cout << "cpu time = " << ftool::uclock_sec() - exectime << endl;
   // cout << "col(B,2) = " << gmm::mat_const_col(B,2) << endl;
@@ -87,7 +83,7 @@ int main(void)
     //    test_with(float());
     //    test_with(double());
     //    test_with(std::complex<float>());
-    test_with(std::complex<double>());
+    test_with(std::complex<float>());
     
   }
   DAL_STANDARD_CATCH_ERROR;

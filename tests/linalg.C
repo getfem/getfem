@@ -17,7 +17,6 @@
 /* USA.                                                                    */
 /*                                                                         */
 /* *********************************************************************** */
-#include <ftool.h>
 #include <gmm.h>
 #include <gmm_inoutput.h>
 
@@ -113,10 +112,10 @@ template <class MAT>  void test_qr(const MAT &m) {
   gmm::fill_random(cm);
   gmm::copy(cm, cq);
   // cout << "cm = " << cm << endl;
-  double exectime = ftool::uclock_sec();
+  double exectime = dal::uclock_sec();
   gmm::lu_inverse(cq);
   cout << "time to compute LU inverse : "
-       << ftool::uclock_sec()-exectime << "\n\n";
+       << dal::uclock_sec()-exectime << "\n\n";
   // cout << "cm^{-1} = " << cq << endl;
   gmm::mult(cm, cq, ca);
   // cout << "ca = " << ca << endl;
@@ -126,10 +125,10 @@ template <class MAT>  void test_qr(const MAT &m) {
   if (gmm::mat_norm2(ca) > sqrt(tol))
     DAL_THROW(dal::failure_error, "Error on LU factorisation.");
 
-  exectime = ftool::uclock_sec();
+  exectime = dal::uclock_sec();
   // cout.precision(6);
   // rudimentary_qr_algorithm(cm, eigc, cq);
-  // cout << "time to compute rudimentary QR : "<<ftool::uclock_sec()-exectime;
+  // cout << "time to compute rudimentary QR : "<<dal::uclock_sec()-exectime;
   // cout << "\neigenvalues : " << eigc << endl;
   // cout << "eigenvectors : " << cq << endl;
   MAT cm_conj(nn, nn); /* to avoid a Warning in the mult. */
@@ -137,10 +136,10 @@ template <class MAT>  void test_qr(const MAT &m) {
 
   gmm::mult(cm, cm_conj, cq); gmm::copy(cq, cm);
   // print_for_matlab(cm);
-  exectime = ftool::uclock_sec();
+  exectime = dal::uclock_sec();
   symmetric_qr_algorithm(cm, eigc, cq);
   cout << "time to compute symmetric implicit QR : "
-       << ftool::uclock_sec()-exectime;
+       << dal::uclock_sec()-exectime;
   cout.precision(6);
   cout << "\neigenvalues : " << eigc << endl;
   // cout << "eigenvectors : " << cq << endl;
@@ -172,10 +171,10 @@ template <class MAT>  void test_qr(const MAT &m) {
   gmm::mult(ca, cr, cm);
   // print_for_matlab(cm);
   cout << "\neigenvalues to be computed : " << cv << endl;
-  exectime = ftool::uclock_sec();
+  exectime = dal::uclock_sec();
   implicit_qr_algorithm(cm, eigc, cq);
   cout << "time to compute implicit QR : "
-       << ftool::uclock_sec()-exectime;
+       << dal::uclock_sec()-exectime;
   /* gmm::clean(eigc, 1E-10); */ cout << "\neigenvalues found : " << eigc << endl;
   gmm::clean(cq, 1E-10);
   cout.precision(6);
