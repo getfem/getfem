@@ -220,7 +220,7 @@ void lap_pb::init(void)
 		2,int(KI));
       else
 	sprintf(meth, "IM_STRUCTURED_COMPOSITE(IM_NC(%d, %d), %d)",
-		int(N), int(2*K), int(KI));
+		int(N), 2, int(KI));
     }
     else
       DAL_THROW(dal::internal_error,
