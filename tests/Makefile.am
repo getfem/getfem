@@ -37,7 +37,7 @@ test_tree_sorted_SOURCES = test_tree_sorted.C
 test_mat_elem_SOURCES = test_mat_elem.C
 
 INCLUDES = -I$(top_srcdir)/src -I../src
-LDADD    = ../src/.libs/libgetfem.a -lm @SUPLDFLAGS@
+LDADD    = ../src/libgetfem.la -lm @SUPLDFLAGS@
 
 TESTS = \
 	$(top_srcdir)/tests/dynamic_array.pl \
