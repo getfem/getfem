@@ -78,50 +78,6 @@ namespace getfem
   /*	Classes for description of a finite element.                      */
   /* ******************************************************************** */
   
-  /** Describe a finite element method on a reference element. At the
-   *  level of the description of nodes, basic functions, ...
-   *  This class is not to be manipulate by itself. Use pfem\_interpolation
-   *  and the functions written to produce the descriptions from the
-   *  basic descriptions.
-   *   \subsubsection{General finite element method}
-   *   A general finite element method is described by the set of the
-   *   three following things:
-   *   \begin{itemize}
-   *      \item An element $T$ (geometric figure, polyhedric and convex),
-   *      \item A functional vectorial space $V$, of finite dimension $n_d$,
-   *      \item A set of $n_d$ linear functional \\
-   *    $ l_i : V \longrightarrow {I\hspace{-0.3em}R}, \ \ \ i = 1..n_g. $ \\
-   *   \end{itemize}
-   *   Very often, each linear functional $l_i$ will be associated with
-   *   a node $a^i$, which is a particular point of $T$. \\
-   *   The shape functions of the finite element are the functions
-   *   $\varphi_i \in V$ which satisfy \\
-   *   $ l_i(\varphi_j) = \delta_{ij}, i,j = 1..n_g. $
-   *   The finite element is said "unisolvant" when the set of shape functions
-   *   are uniquely defined. \\
-   *   Often $V$ is a space of polynomials, but not always. \\
-   *   
-   *   \subsubsection{Considered finite element methods}
-   *   The finite element methods treaten in {\sc Getfem++}, are
-   *   the methods satisfying the following assumptions :
-   *  
-   *   \begin{itemize}
-   *     \item the method is equivalent throw a polynomial geometric
-   *       transformation to a method defined on a reference element.
-   *       This means that there exist a reference element $\overline{T}$, and
-   *       a transformation \\
-   *       $ \begin{array}{rcl} \tau : \overline{T} &\longrightarrow& T, \\
-   *          \overline{x} &\longmapsto& x, \end{array} $ \\
-   *       which is polynomial.
-   *     \item An additionnal linear transformation is allowed: \\
-   *     $ \tilde{\varphi}_i(x) =  \overline{\varphi}_i(\tau(\overline{x})),$\\
-   *     and  \\
-   *     $ \varphi_i = \sum_{j = 1}^{n_d} \tilde{M}_{ij} \tilde{\varphi}_j $\\
-   *     This additionnal matrix may be dependant on the real element and allow
-   *     non-equivalent element such as Hermite elements. (...)
-   *   \end{itemize}
-   */
-  
   class virtual_fem;
   typedef const virtual_fem * pfem;
   
