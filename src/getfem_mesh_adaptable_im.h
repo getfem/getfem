@@ -46,13 +46,16 @@ namespace getfem {
 
     std::set<plevel_set> level_sets; // set of level set
     pintegration_method regular_simplex_pim;
-    pintegration_method singular_simplex_pim;
+    pintegration_method singular_simplex_pim; // en 3D ?
 
     // + set of stored adapted integration methods
+    // + original methods ?
     
   public :
 
-    void clear(void);
+    void adapt(void);
+
+    void clear(void); // to be adapted
 
     void add_level_set(level_set &ls) { level_sets.insert(&ls); }
     void sup_level_set(level_set &ls) { level_sets.erase(&ls); }
@@ -67,11 +70,14 @@ namespace getfem {
       return mesh_im::memsize(); // + ... ;
     }
     
-    mesh_adaptable_im(getfem_mesh &me);
+    mesh_adaptable_im(getfem_mesh &me, pintegration_method reg,
+		      pintegration_method sing = 0);
     
   private:
     mesh_adaptable_im(const mesh_adaptable_im &);
     mesh_adaptable_im & operator=(const mesh_adaptable_im &);
+  
+
   };
   
 }  /* end of namespace getfem.                                             */

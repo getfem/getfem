@@ -37,8 +37,34 @@ namespace getfem {
   void mesh_adaptable_im::receipt(const MESH_DELETE &) { clear(); }
   void mesh_adaptable_im::clear(void) { mesh_im::clear(); level_sets.clear(); }
 
-  mesh_adaptable_im::mesh_adaptable_im(getfem_mesh &me) : mesh_im(me) { }
+  mesh_adaptable_im::mesh_adaptable_im(getfem_mesh &me,
+				       pintegration_method reg,
+				       pintegration_method sing):mesh_im(me) {
+    regular_simplex_pim = reg;
+    singular_simplex_pim = (sing == 0) ? reg : sing;
+  }
 
+  void mesh_adaptable_im::adapt(void) {
+
+    // compute the elements touched by each level set
+    // for each element touched, compute the sub mesh
+    //   then compute the adapted integration method
+
+
+#ifndef GETFEM_HAVE_QHULL_QHULL_H
+
+    DAL_THROW(failure_error, "Qhull header files not installed. "
+	      "This part of getfem++ needs Qhull."
+	      "Install qhull library and reinstall Getfem++ library.");
+    
+#else
+    
+    
+
+
+#endif
+
+  }
 
   
 }  /* end of namespace getfem.                                             */
