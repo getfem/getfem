@@ -855,7 +855,7 @@ namespace bgeot {
     typedef typename traits_type::reference         reference;
     typedef typename traits_type::difference_type   difference_type;
     typedef std::forward_iterator_tag               iterator_category;
-    typedef typename traits_type::size_type         size_type;
+    typedef size_t                                  size_type;
     typedef sparse_sub_vector_iterator<IT>          iterator;
 
     size_type index(void) const { return (*_r_i)[it.index()]; }
@@ -884,6 +884,7 @@ namespace bgeot {
     V *v;
 
   public :
+    size_type size(void) const { return end - begin; }
     const reverse_index &rindex(void) const { return *_r_i; }
     V& deref(void) const { return *v; }
     typedef typename linalg_traits<V>::reference_type reference_type;
@@ -892,6 +893,7 @@ namespace bgeot {
     sparse_sub_vector(V& w, const IT &b,
 		      const IT &e, const reverse_index &ri)
       : _r_i(&ri), begin(b), end(e), v(&w) {}
+    sparse_sub_vector() {}
   };
 
   template <class IT> struct const_sparse_sub_vector_iterator {
@@ -905,14 +907,14 @@ namespace bgeot {
     typedef typename traits_type::value_type        reference;
     typedef typename traits_type::difference_type   difference_type;
     typedef std::forward_iterator_tag               iterator_category;
-    typedef typename traits_type::size_type         size_type;
-    typedef sparse_sub_vector_iterator<IT>          iterator;
+    typedef size_t                                  size_type;
+    typedef const_sparse_sub_vector_iterator<IT>    iterator;
 
-    size_type index(void) const { return (*_r_i)[it.index()]; }
+    size_type index(void) const { return (*_r_i)[itb.index()]; }
     iterator &operator ++() { ++itb; return *this; }
     iterator operator ++(int) { iterator tmp = *this; ++(*this); return tmp; }
     reference operator *() const
-    { return (index() == size_type(-1)) ? value_type(0) : *it; }
+    { return (index() == size_type(-1)) ? value_type(0) : *itb; }
 
     bool operator ==(const iterator &i) const { return itb == i.itb; }
     bool operator !=(const iterator &i) const { return !(i == *this); }
@@ -931,6 +933,7 @@ namespace bgeot {
     const V *v;
 
   public :
+    size_type size(void) const { return end - begin; }
     const reverse_index &rindex(void) const { return *_r_i; }
     const V& deref(void) const { return *v; }
     typedef typename linalg_traits<V>::value_type value_type;
@@ -939,6 +942,7 @@ namespace bgeot {
     const_sparse_sub_vector(const V& w, const IT &b,
 			    const IT &e, const reverse_index &ri)
       : _r_i(&ri), begin(b), end(e), v(&w) {}
+    const_sparse_sub_vector() {}
 
   };
 
@@ -959,17 +963,17 @@ namespace bgeot {
     typedef simple_vector_ref<this_type> sub_col_type;
     typedef simple_vector_const_ref<this_type> const_sub_col_type;
     typedef col_major sub_orientation;
-    size_type size(const this_type &v) { return vect_size(v.deref()); }
-    size_type nrows(const this_type &v) { return vect_size(v.deref()); }
+    size_type size(const this_type &v) { return v.size(); }
+    size_type nrows(const this_type &v) { return v.size(); }
     size_type ncols(const this_type &) { return 1; }
     iterator begin(this_type &v)
-      { return iterator(vect_begin(v.deref()), v.rbegin()); }
+      { return iterator(vect_begin(v.deref()), v.rindex()); }
     const_iterator const_begin(const this_type &v)
-      { return const_iterator(vect_begin(v.deref()), v.rbegin()); }
+      { return const_iterator(vect_begin(v.deref()), v.rindex()); }
     iterator end(this_type &v)
-      { return iterator(vect_end(v.deref()), v.rbegin()); }
+      { return iterator(vect_end(v.deref()), v.rindex()); }
     const_iterator const_end(const this_type &v)
-      { return const_iterator(vect_end(v.deref()), v.rbegin()); }
+      { return const_iterator(vect_end(v.deref()), v.rindex()); }
     const_sub_row_type row(const this_type &, size_type )
     { DAL_THROW(failure_error,"Sorry, to be done"); }
     const_sub_col_type col(const this_type &v, size_type i)
@@ -1000,17 +1004,17 @@ namespace bgeot {
     typedef simple_vector_const_ref<this_type> sub_col_type;
     typedef simple_vector_const_ref<this_type> const_sub_col_type;
     typedef col_major sub_orientation;
-    size_type size(const this_type &v) { return vect_size(v.deref()); }
-    size_type nrows(const this_type &v) { return vect_size(v.deref()); }
+    size_type size(const this_type &v) { return v.size(); }
+    size_type nrows(const this_type &v) { return v.size(); }
     size_type ncols(const this_type &) { return 1; }
     iterator begin(this_type &v)
-      { return iterator(vect_begin(v.deref()), v.rbegin()); }
+      { return iterator(vect_begin(v.deref()), v.rindex()); }
     const_iterator const_begin(const this_type &v)
-      { return const_iterator(vect_begin(v.deref()), v.rbegin()); }
+      { return const_iterator(vect_begin(v.deref()), v.rindex()); }
     iterator end(this_type &v)
-      { return iterator(vect_end(v.deref()), v.rbegin()); }
+      { return iterator(vect_end(v.deref()), v.rindex()); }
     const_iterator const_end(const this_type &v)
-      { return const_iterator(vect_end(v.deref()), v.rbegin()); }
+      { return const_iterator(vect_end(v.deref()), v.rindex()); }
     const_sub_row_type row(const this_type &, size_type )
     { DAL_THROW(failure_error,"Sorry, to be done"); }
     const_sub_col_type col(const this_type &v, size_type i)
@@ -1045,6 +1049,7 @@ namespace bgeot {
 	         const IT1 &it2, const IT1 &e2, const reverse_index &rindex1,
 			  const reverse_index &)
       : _r_i(&rindex1), begin1(it1), end1(e1), begin2(it2), end2(e2), m(&mm) {}
+    sparse_row_sub_matrix() {}
 
 
   };
@@ -1103,7 +1108,7 @@ namespace bgeot {
 		  const IT1 &it2, const IT1 &e2, const reverse_index &rindex1,
 				const reverse_index &)
       : _r_i(&rindex1), begin1(it1), end1(e1), begin2(it2), end2(e2), m(&mm) {}
-
+    const_sparse_row_sub_matrix() {}
 
   };
 
@@ -1161,7 +1166,7 @@ namespace bgeot {
 		 const IT1 &it2, const IT1 &e2, const reverse_index &,
 			  const reverse_index &rindex2)
       : _r_i(&rindex2), begin1(it1), end1(e1), begin2(it2), end2(e2), m(&mm) {}
-
+    sparse_col_sub_matrix() {}
 
   };
 
@@ -1219,7 +1224,7 @@ namespace bgeot {
 		 const IT1 &it2, const IT1 &e2, const reverse_index &,
 				const reverse_index &rindex2)
       : _r_i(&rindex2), begin1(it1), end1(e1), begin2(it2), end2(e2), m(&mm) {}
-
+    const_sparse_col_sub_matrix() {}
   };
 
   template <class M, class IT1, class IT2>
@@ -1279,7 +1284,7 @@ namespace bgeot {
     plain_row_sub_matrix(M &mm, const IT1 &it1, const IT1 &e1,
 			 const IT1 &it2, const IT1 &e2)
       : begin1(it1), end1(e1), begin2(it2), end2(e2), m(&mm) {}
-
+    plain_row_sub_matrix() {}
   };
 
   template <class M, class IT1, class IT2>
@@ -1335,7 +1340,7 @@ namespace bgeot {
     const_plain_row_sub_matrix(const M &mm, const IT1 &it1, const IT1 &e1,
 			       const IT1 &it2, const IT1 &e2)
       : begin1(it1), end1(e1), begin2(it2), end2(e2), m(&mm) {}
-
+    const_plain_row_sub_matrix() {}
   };
 
   template <class M, class IT1, class IT2>
@@ -1390,7 +1395,7 @@ namespace bgeot {
     plain_col_sub_matrix(M &mm, const IT1 &it1, const IT1 &e1,
 			 const IT1 &it2, const IT1 &e2)
       : begin1(it1), end1(e1), begin2(it2), end2(e2), m(&mm) {}
-
+    plain_col_sub_matrix() {}
 
   };
 
@@ -1446,7 +1451,7 @@ namespace bgeot {
     const_plain_col_sub_matrix(const M &mm, const IT1 &it1, const IT1 &e1,
 			       const IT1 &it2, const IT1 &e2)
       : begin1(it1), end1(e1), begin2(it2), end2(e2), m(&mm) {}
-
+    const_plain_col_sub_matrix() {}
   };
 
   template <class M, class IT1, class IT2>

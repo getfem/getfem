@@ -1,9 +1,8 @@
 /* -*- c++ -*- (enables emacs c++ mode)                                    */
 /* *********************************************************************** */
 /*                                                                         */
-/* Library :  Basic GEOmetric Tool  (bgeot)                                */
-/* File    :  bgeot_abstract_linalg.h : generic algorithms on linear       */
-/*                                      algebra                            */
+/* Library :  Generic Matrix Methods  (gmm)                                */
+/* File    :  gmm.h : generic algorithms on linear  algebra                */
 /*     									   */
 /* Date : October 13, 2002.                                                */
 /* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
@@ -29,11 +28,6 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-// G.M.M. : Generic Matrix Methods
-// T.M.M. : Template Matrix Methods
-// A.M.A. : Abstract Matrix Algorithms
-// T.M.A. : Template Matrix Algorithms
-
 //
 // A faire
 //
@@ -50,117 +44,18 @@
 
 // Inspired from M.T.L. (http://www.osl.iu.edu/research/mtl)
 
-#ifndef __BGEOT_ABSTRACT_LINALG_H
-#define __BGEOT_ABSTRACT_LINALG_H
+#ifndef __GMM_H
+#define __GMM_H
 
-#include <dal_ref.h>
-#include <complex>
-#include <bgeot_matrix.h>
-#include <bgeot_smatrix.h>
+#include <gmm_def.h>
+#include <gmm_interface.h>
+#include <gmm_sub_vector.h>
+#include <gmm_sub_matrix.h>
+#include <gmm_matrix.h>
+#include <gmm_vector.h>
+#include <gmm_solvers.h>
 
-
-namespace bgeot {
-
-  /* ******************************************************************** */
-  /*		Specifier types                             		  */
-  /* ******************************************************************** */
-
-  struct abstract_null_type {}; // specify an information lake.
-
-  struct linalg_true {};
-  struct linalg_false {};
-
-  struct abstract_vector {};
-  struct abstract_matrix {};
-  
-  struct abstract_sparse {};    // sparse matrix or vector
-  struct abstract_plain {};     // plain matrix or vector
-  struct abstract_indirect {};  // matrix given by the product with a vector
-
-  struct row_major {};          // matrix with a row access.
-  struct col_major {};       // matrix with a column access
-  struct row_and_col {};     // both accesses but row preference
-  struct col_and_row {};     // both accesses but column preference
-
-  template <class T> struct transposed_type;
-  template<> struct transposed_type<row_major>   {typedef col_major   t_type;};
-  template<> struct transposed_type<col_major>   {typedef row_major   t_type;};
-  template<> struct transposed_type<row_and_col> {typedef col_and_row t_type;};
-  template<> struct transposed_type<col_and_row> {typedef row_and_col t_type;};
-
-  template <class T> struct principal_orientation_type;
-  template<> struct principal_orientation_type<row_major>
-  { typedef row_major potype; };
-  template<> struct principal_orientation_type<col_major>
-  { typedef col_major potype; };
-  template<> struct principal_orientation_type<row_and_col>
-  { typedef row_major potype; };
-  template<> struct principal_orientation_type<col_and_row>
-  { typedef col_major potype; };
-  
-  template <class V> struct linalg_traits;
-
-  /* ******************************************************************** */
-  /*		Operations on scalars                         		  */
-  /* ******************************************************************** */
-
-  template <class T> struct number_traits
-  { typedef T magnitude_type; };
- 
-  template <class T> struct number_traits<std::complex<T> >
-  { typedef T magnitude_type; };
-
-  template <class T> T conj_product(T a, T b) { return a * b; }
-  template <class T> std::complex<T> conj_product(const std::complex<T> &a,
-						  const std::complex<T> &b)
-  { return std::conj(a) * b; }
-  
-  template <class T> T modulus(T a)
-  { return dal::abs(a); }
-  template <class T> T modulus(const std::complex<T> &a)
-  { return std::abs(a); }
-
-
-  /* ******************************************************************** */
-  /*		reverse indexes                             		  */
-  /* ******************************************************************** */
-
-  class reverse_index : public std::vector<size_t> {
-  public :
-    typedef std::vector<size_t> base_type;
-    typedef base_type::value_type value_type;
-    typedef base_type::iterator iterator;
-    typedef base_type::const_iterator const_iterator;
-    typedef base_type::reverse_iterator reverse_iterator;
-    typedef base_type::const_reverse_iterator const_reverse_iterator;
-    typedef base_type::pointer pointer;
-    typedef base_type::const_pointer const_pointer;
-    typedef base_type::reference reference;
-    typedef base_type::const_reference const_reference;
-    typedef base_type::size_type size_type;
-    typedef base_type::difference_type difference_type;
-    
-    reverse_index(void) {}
-    template <class IT> void init(IT it, IT ite, size_type n,
-				  abstract_sparse = abstract_sparse());
-    template <class IT> void init(IT, IT, size_type, abstract_plain) { }
-
-    template <class IT, class L> reverse_index(IT it, IT ite,
-					       size_type n, const L &)
-    { init(it, ite, n, typename linalg_traits<L>::storage_type()); }
-  };
-
-  template <class IT>
-  void reverse_index::init(IT it, IT ite, size_type n, abstract_sparse) {
-      resize(n); std::fill(begin(), end(), size_type(-1));
-      for (size_type i = 0; it != ite; ++it, ++i) (*this)[*it] = i;
-  }
-
-}
-
-#include <bgeot_linalg_interface.h>
-
-namespace bgeot {
+namespace gmm {
 
   /* ******************************************************************** */
   /*		Identity matrix                         		  */
@@ -280,11 +175,39 @@ namespace bgeot {
   { return scaled_vector_const_ref<L>(l, x); }
   
 
-  template <class L> inline transposed_ref<L> transposed(L &l)
-  { return transposed_ref<L>(l); }
+  template <class TYPE, class PT> struct transposed_return;
+  template <class PT> struct transposed_return<abstract_vector, PT>
+  { typedef vect_transposed_ref<PT> ret_type; };
+  template <class PT> struct transposed_return<abstract_matrix, PT>
+  { typedef transposed_ref<PT> ret_type; };
 
-  template <class L> inline transposed_const_ref<L> transposed(const L &l)
-  { return transposed_const_ref<L>(l); }
+  template <class L> inline 
+  transposed_ref<L *> transposed(L &l, abstract_matrix)
+  { return transposed_ref<L *>(l); }
+
+  template <class L> inline 
+  transposed_ref<const L *> transposed(const L &l, abstract_matrix)
+  { return transposed_ref<const L *>(l); }
+
+  template <class L> inline
+  vect_transposed_ref<L *> transposed(L &l, abstract_vector)
+  { return vect_transposed_ref<L *>(l); }
+
+  template <class L> inline 
+  vect_transposed_ref<const L *> transposed(const L &l, abstract_vector)
+  { return vect_transposed_ref<const L *>(l); }
+
+  template <class L> inline
+  typename transposed_return<typename linalg_traits<L>::linalg_type,
+							L *>::ret_type
+  transposed(L &l)
+  { return transposed(l, typename linalg_traits<L>::linalg_type()); }
+
+  template <class L> inline
+  typename transposed_return<typename linalg_traits<L>::linalg_type,
+							const L *>::ret_type
+  transposed(const L &l)
+  { return transposed(l, typename linalg_traits<L>::linalg_type()); }
 
   inline bool _is_sparse(abstract_sparse)  { return true;  }
   inline bool _is_sparse(abstract_plain)   { return false; }
@@ -302,7 +225,7 @@ namespace bgeot {
 
   template <class R, class S, class V> struct _temporary_vector {};
   template <class V> struct _temporary_vector<linalg_true, abstract_sparse, V>
-  { typedef svector<typename linalg_traits<V>::value_type> vector_type; };
+  { typedef wsvector<typename linalg_traits<V>::value_type> vector_type; };
   template <class V> struct _temporary_vector<linalg_true, abstract_plain, V>
   { typedef std::vector<typename linalg_traits<V>::value_type> vector_type; };
   template <class S, class V> struct _temporary_vector<linalg_false, S, V>
@@ -343,262 +266,18 @@ namespace bgeot {
   template <class R, class S, class V> struct _temporary_sparse_vector;
   template <class S, class V>
   struct _temporary_sparse_vector<linalg_true, S, V>
-  { typedef svector<typename linalg_traits<V>::value_type> vector_type; };
+  { typedef wsvector<typename linalg_traits<V>::value_type> vector_type; };
   template <class V>
   struct _temporary_sparse_vector<linalg_false, abstract_sparse, V>
   { typedef V vector_type; };
   template <class V>
   struct _temporary_sparse_vector<linalg_false, abstract_plain, V>
-  { typedef svector<typename linalg_traits<V>::value_type> vector_type; };
+  { typedef wsvector<typename linalg_traits<V>::value_type> vector_type; };
 
   template <class V> struct temporary_sparse_vector {
     typedef typename _temporary_vector<typename linalg_traits<V>::is_reference,
       typename linalg_traits<V>::storage_type, V>::vector_type vector_type;
   };
-
-  /* ******************************************************************** */
-  /*		sub vector with an array of indexes.                      */
-  /* ******************************************************************** */
-
-  template <class V, class IT, class st_type> struct const_svrt_ir;
-
-  template <class V, class IT>
-  struct const_svrt_ir<V, IT, abstract_plain> {
-    typedef tab_ref_index_ref_with_origin<typename linalg_traits<V>
-    ::const_iterator, IT> vector_type;
-  }; 
-
-  template <class V, class IT>
-  struct const_svrt_ir<V, IT, abstract_sparse> {
-    typedef sparse_sub_vector<V, IT> vector_type;
-  }; 
-
-  template <class V, class IT, class st_type> struct svrt_ir;
-
-  template <class V, class IT>
-  struct svrt_ir<V, IT, abstract_plain> {
-    typedef tab_ref_index_ref_with_origin<typename linalg_traits<V>
-    ::iterator, IT> vector_type;
-  }; 
-
-  template <class V, class IT>
-  struct svrt_ir<V, IT, abstract_sparse> {
-    typedef const_sparse_sub_vector<V, IT> vector_type;
-  };
-
-  template <class V, class IT>
-  struct sub_vector_type {
-    typedef typename svrt_ir<V, IT,
-      typename linalg_traits<V>::storage_type>::vector_type vector_type;
-  };
-
-  template <class V, class IT>
-  struct const_sub_vector_type {
-    typedef typename const_svrt_ir<V, IT,
-      typename linalg_traits<V>::storage_type>::vector_type vector_type;
-  };
-  
-  template <class V, class IT> inline
-  typename const_sub_vector_type<V, IT>::vector_type
-  sub_vector(const V &v, const IT &it, const IT &e) {
-    return sub_vector_stc(v, it, e,
-			  typename linalg_traits<V>::storage_type());
-  }
-
-  template <class V, class IT>  inline
-  typename sub_vector_type<V, IT>::vector_type
-  sub_vector(V &v, const IT &it, const IT &e) {
-    return sub_vector_st(v, it, e,
-			 typename linalg_traits<V>::storage_type());
-  }
-
-  template <class V, class IT> inline
-  typename const_sub_vector_type<V, IT>::vector_type
-  sub_vector(const V &v, const IT &it, const IT &e, 
-	     const reverse_index &rindex) {
-    return sub_vector_stc(v, it, e, 
-			  typename linalg_traits<V>::storage_type(), &rindex);
-  }
-
-  template <class V, class IT>  inline
-  typename sub_vector_type<V, IT>::vector_type
-  sub_vector(V &v, const IT &it, const IT &e, const reverse_index &rindex) {
-    return sub_vector_st(v, it, e, 
-			 typename linalg_traits<V>::storage_type(), &rindex);
-  }
-
-  template <class V, class IT> inline
-  typename const_sub_vector_type<V, IT>::vector_type
-  sub_vector_stc(const V &v, const IT &it, const IT &e,
-		 abstract_plain, const reverse_index * = 0) {
-    return  typename const_sub_vector_type<V, IT>
-      ::vector_type(vect_begin(v), it, e, linalg_origin(v));
-  }
-
-  template <class V, class IT> inline
-  typename const_sub_vector_type<V, IT>::vector_type
-  sub_vector_stc(const V &v, const IT &it, const IT &e,
-		 abstract_sparse, const reverse_index *rindex = 0) {
-    return typename const_sub_vector_type<V, IT>
-      ::vector_type(v, it, e, *rindex);
-  }
-
-  template <class V, class IT> inline
-  typename sub_vector_type<V, IT>::vector_type
-  sub_vector_st(V &v, const IT &it, const IT &e,
-		abstract_plain, const reverse_index * = 0) {
-    return typename sub_vector_type<V, IT>
-      ::vector_type(vect_begin(v), it, e, linalg_origin(v));
-  }
-
-  template <class V, class IT> inline
-  typename sub_vector_type<V, IT>::vector_type
-  sub_vector_st(V &v, const IT &it, const IT &e,
-		abstract_sparse, const reverse_index *rindex = 0) {
-    return typename sub_vector_type<V, IT>
-      ::vector_type(v, it, e, *rindex);
-  }
-
-  /* ******************************************************************** */
-  /*		sub matrices with two array of indexes.                   */
-  /* ******************************************************************** */
-  
-  template <class M, class IT1, class IT2, class st_type, class orient>
-  struct smrt_ir;
-  
-  template <class M, class IT1, class IT2>
-  struct smrt_ir<M, IT1, IT2, abstract_plain, row_major> {
-    typedef plain_row_sub_matrix<M, IT1, IT2> matrix_type;
-  };
-
-  template <class M, class IT1, class IT2>
-  struct smrt_ir<M, IT1, IT2, abstract_plain, col_major> {
-    typedef plain_col_sub_matrix<M, IT1, IT2> matrix_type;
-  };
-
-    template <class M, class IT1, class IT2>
-  struct smrt_ir<M, IT1, IT2, abstract_sparse, row_major> {
-    typedef sparse_row_sub_matrix<M, IT1, IT2> matrix_type;
-  };
-
-  template <class M, class IT1, class IT2>
-  struct smrt_ir<M, IT1, IT2, abstract_sparse, col_major> {
-    typedef sparse_col_sub_matrix<M, IT1, IT2> matrix_type;
-  };
-
-    template <class M, class IT1, class IT2, class st_type, class orient>
-  struct const_smrt_ir;
-  
-  template <class M, class IT1, class IT2>
-  struct const_smrt_ir<M, IT1, IT2, abstract_plain, row_major> {
-    typedef const_plain_row_sub_matrix<M, IT1, IT2> matrix_type;
-  };
-
-  template <class M, class IT1, class IT2>
-  struct const_smrt_ir<M, IT1, IT2, abstract_plain, col_major> {
-    typedef const_plain_col_sub_matrix<M, IT1, IT2> matrix_type;
-  };
-
-    template <class M, class IT1, class IT2>
-  struct const_smrt_ir<M, IT1, IT2, abstract_sparse, row_major> {
-    typedef const_sparse_row_sub_matrix<M, IT1, IT2> matrix_type;
-  };
-
-  template <class M, class IT1, class IT2>
-  struct const_smrt_ir<M, IT1, IT2, abstract_sparse, col_major> {
-    typedef const_sparse_col_sub_matrix<M, IT1, IT2> matrix_type;
-  };
-
-  template <class M, class IT1, class IT2>
-  struct sub_matrix_type {
-    typedef typename smrt_ir<M, IT1, IT2,
-      typename linalg_traits<M>::storage_type,
-      typename principal_orientation_type<typename
-    linalg_traits<M>::sub_orientation>::potype>::matrix_type matrix_type;
-  };
-
-  template <class M, class IT1, class IT2>
-  struct const_sub_matrix_type {
-    typedef typename const_smrt_ir<M, IT1, IT2,
-      typename linalg_traits<M>::storage_type,
-      typename principal_orientation_type<typename
-    linalg_traits<M>::sub_orientation>::potype>::matrix_type matrix_type;
-  };
-
-  
-  template <class M, class IT1, class IT2> inline
-  typename const_sub_matrix_type<M, IT1, IT2>::matrix_type
-  sub_matrix(const M &m, const IT1 &it1, const IT1 &e1,
-	     const IT2 &it2, const IT2 &e2) {
-    return sub_matrix_stc(m, it1, e1, it2, e2,
-			  typename linalg_traits<M>::storage_type());
-  }
-
-  template <class M, class IT1, class IT2>  inline
-  typename sub_matrix_type<M, IT1, IT2>::matrix_type
-  sub_matrix(M &m, const IT1 &it1, const IT1 &e1,
-	     const IT2 &it2, const IT2 &e2) {
-    return sub_matrix_st(m, it1, e1, it2, e2,
-			 typename linalg_traits<M>::storage_type());
-  }
-
-  template <class M, class IT1, class IT2> inline
-  typename const_sub_matrix_type<M, IT1, IT2>::matrix_type
-  sub_matrix(const M &m, const IT1 &it1, const IT1 &e1,
-	     const IT2 &it2, const IT2 &e2,
-	     const reverse_index &rindex1, const reverse_index &rindex2) {
-    return sub_matrix_stc(m, it1, e1, it2, e2, 
-			  typename linalg_traits<M>::storage_type(),
-			  &rindex1, &rindex2);
-  }
-
-  template <class M, class IT1, class IT2>  inline
-  typename sub_matrix_type<M, IT1, IT2>::matrix_type
-  sub_matrix(M &m, const IT1 &it1, const IT1 &e1,
-	     const IT2 &it2, const IT2 &e2,
-	     const reverse_index &rindex1, const reverse_index &rindex2) {
-    return sub_matrix_st(m, it1, e1, it2, e2, 
-			 typename linalg_traits<M>::storage_type(),
-			 &rindex1, &rindex2);
-  }
-
-  template <class M, class IT1, class IT2> inline
-  typename const_sub_matrix_type<M, IT1, IT2>::matrix_type
-  sub_matrix_stc(const M &m, const IT1 &it1, const IT1 &e1,
-		 const IT2 &it2, const IT2 &e2, abstract_plain,
-		 const reverse_index * = 0, const reverse_index * = 0) {
-    return typename const_sub_matrix_type<M, IT1, IT2>::matrix_type
-      (m, it1, e1, it2, e2);
-  }
-
-  template <class M, class IT1, class IT2> inline
-  typename sub_matrix_type<M, IT1, IT2>::matrix_type
-  sub_matrix_st(M &m, const IT1 &it1, const IT1 &e1,
-		const IT2 &it2, const IT2 &e2, abstract_plain,
-		const reverse_index * = 0, const reverse_index * = 0) {
-    return typename sub_matrix_type<M, IT1, IT2>::matrix_type
-      (m, it1, e1, it2, e2);
-  }
-
-  template <class M, class IT1, class IT2> inline
-  typename const_sub_matrix_type<M, IT1, IT2>::matrix_type
-  sub_matrix_stc(const M &m, const IT1 &it1, const IT1 &e1,
-		 const IT2 &it2, const IT2 &e2, abstract_sparse,
-		 const reverse_index *rindex1 = 0,
-		 const reverse_index *rindex2 = 0) {
-    return typename const_sub_matrix_type<M, IT1, IT2>::matrix_type
-      (m, it1, e1, it2, e2, *rindex1, *rindex2);
-  }
-
-  template <class M, class IT1, class IT2> inline
-  typename sub_matrix_type<M, IT1, IT2>::matrix_type
-  sub_matrix_st(M &m, const IT1 &it1, const IT1 &e1,
-		const IT2 &it2, const IT2 &e2, abstract_sparse,
-		const reverse_index *rindex1 = 0,
-		const reverse_index *rindex2 = 0) {
-    return typename sub_matrix_type<M, IT1, IT2>::matrix_type
-      (m, it1, e1, it2, e2, *rindex1, *rindex2);
-  }
 
   /* ******************************************************************** */
   /*		Scalar product                             		  */
@@ -719,6 +398,17 @@ namespace bgeot {
     typename std::iterator_traits<IT1>::value_type
     _vect_sp_plain(IT1 it, IT1 ite, IT2 it2) {
     typename std::iterator_traits<IT1>::value_type res(0);
+    size_type n = ((ite - it) >> 3);
+    for (size_type i = 0; i < n; ++i, ++it, ++it2) {
+      res += conj_product(*it, *it2);
+      res += conj_product(*++it, *++it2);
+      res += conj_product(*++it, *++it2);
+      res += conj_product(*++it, *++it2);
+      res += conj_product(*++it, *++it2);
+      res += conj_product(*++it, *++it2);
+      res += conj_product(*++it, *++it2);
+      res += conj_product(*++it, *++it2);
+    }
     for (; it != ite; ++it, ++it2) res += conj_product(*it, *it2);
     return res;
   }
@@ -761,10 +451,13 @@ namespace bgeot {
   /* ******************************************************************** */
 
    template <class V>
-    typename linalg_traits<V>::value_type norm2(const V &v) {
+   typename number_traits<typename linalg_traits<V>::value_type>
+   ::magnitude_type
+   norm2(const V &v) {
     typename linalg_traits<V>::const_iterator
       it = vect_begin(v), ite = vect_end(v);
-    typename linalg_traits<V>::value_type res(0);
+    typename number_traits<typename linalg_traits<V>::value_type>
+      ::magnitude_type res(0);
     for (; it != ite; ++it) res += dal::sqr(modulus(*it));
     return sqrt(res);
   }
@@ -774,10 +467,13 @@ namespace bgeot {
   /* ******************************************************************** */
 
   template <class V>
-    typename linalg_traits<V>::value_type norminf(const V &v) {
+  typename number_traits<typename linalg_traits<V>::value_type>
+  ::magnitude_type 
+  norminf(const V &v) {
     typename linalg_traits<V>::const_iterator
       it = vect_begin(v), ite = vect_end(v);
-    typename linalg_traits<V>::value_type res(0);
+      typename number_traits<typename linalg_traits<V>::value_type>
+	::magnitude_type res(0);
     for (; it != ite; ++it) res = std::max(res, modulus(*it));
     return res;
   }
@@ -787,10 +483,13 @@ namespace bgeot {
   /* ******************************************************************** */
 
   template <class V>
-    typename linalg_traits<V>::value_type norm1(const V &v) {
+  typename number_traits<typename linalg_traits<V>::value_type>
+  ::magnitude_type
+  norm1(const V &v) {
     typename linalg_traits<V>::const_iterator
       it = vect_begin(v), ite = vect_end(v);
-    typename linalg_traits<V>::value_type res(0);
+    typename number_traits<typename linalg_traits<V>::value_type>
+	::magnitude_type res(0);
     for (; it != ite; ++it) res += modulus(*it);
     return res;
   }
@@ -1011,7 +710,7 @@ namespace bgeot {
 
   /* ******************************************************************** */
   /*		Vector Addition                                    	  */
-  /*   algorithms are build in order to avoid some conflicts whith        */
+  /*   algorithms are built in order to avoid some conflicts whith        */
   /*   repeated arguments or with overlapping part of a same object.      */
   /*   In the latter case, conflicts are still possible.                  */
   /* ******************************************************************** */
@@ -1034,8 +733,6 @@ namespace bgeot {
     void add_spec(const L1& l1, L2& l2, abstract_vector) {
     if (vect_size(l1) != vect_size(l2))
       DAL_THROW(dimension_error,"dimensions mismatch");
-    if (mat_ncols(l1) != 1 || mat_ncols(l2) != 1)
-      DAL_THROW(to_be_done_error,"to be done.");
     add(l1, l2, typename linalg_traits<L1>::storage_type(),
 	typename linalg_traits<L2>::storage_type());
   }
@@ -1044,8 +741,6 @@ namespace bgeot {
     void add(const L1& l1, const L2& l2, L3& l3) {
     if (vect_size(l1) != vect_size(l2) || vect_size(l1) != vect_size(l3))
       DAL_THROW(dimension_error,"dimensions mismatch"); 
-    if (mat_ncols(l1) != 1 || mat_ncols(l2) != 1 || mat_ncols(l3) != 1)
-      DAL_THROW(to_be_done_error,"to be done.");
     if ((const void *)(&l1) == (const void *)(&l3))
       add(l2, l3);
     else if ((const void *)(&l2) == (const void *)(&l3))
@@ -1282,7 +977,8 @@ namespace bgeot {
 	|| mat_nrows(l1) != vect_size(l4))
       DAL_THROW(dimension_error,"dimensions mismatch");
     if (linalg_origin(l2) != linalg_origin(l4))
-      mult_spec(l1, l2, l3, l4, typename principal_orientation_type<typename linalg_traits<L1>::sub_orientation>::potype());
+      mult_spec(l1, l2, l3, l4, typename principal_orientation_type<typename
+		linalg_traits<L1>::sub_orientation>::potype());
     else {
       #ifdef __GETFEM_VERIFY
         cerr << "Warning, A temporary is used for mult\n";
@@ -1352,5 +1048,4 @@ namespace bgeot {
 
 }
 
-
-#endif //  __BGEOT_ABSTRACT_LINALG_H
+#endif //  __GMM_H
