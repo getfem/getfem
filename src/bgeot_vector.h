@@ -362,8 +362,8 @@ namespace bgeot
 
   template<class T>  void vsvector<T>::addmul(const T &a, const vsvector<T> &v)
   {                             
-    register typename vsvector<T>::iterator d1 = begin(), e = end();
-    register const_iterator d2 = v.begin();
+    typename vsvector<T>::iterator d1 = begin(), e = end();
+    const_iterator d2 = v.begin();
     if ( v.size() != this->size())
       DAL_THROW(dimension_error, "dimensions mismatch");
     while (d1 != e) *d1++ += (*d2++) * a;
@@ -371,28 +371,28 @@ namespace bgeot
 
   template<class T>  void vsvector<T>::fill(const T &x)
   {
-    register typename vsvector<T>::iterator d = begin(), e = end();
+    typename vsvector<T>::iterator d = begin(), e = end();
     while (d != e) *d++ = x;
   }
  
   template<class T>  vsvector<T>& vsvector<T>::operator *=(const T &x)
   {
-    register typename vsvector<T>::iterator d = begin(), e = end();
+    typename vsvector<T>::iterator d = begin(), e = end();
     while (d != e) *d++ *= x;
     return *this;
   }
 
   template<class T>  vsvector<T>& vsvector<T>::operator /=(const T &x)
   {
-    register typename vsvector<T>::iterator d = begin(), e = end();
+    typename vsvector<T>::iterator d = begin(), e = end();
     while (d != e) *d++ /= x;
     return *this;
   }
 
   template<class T> vsvector<T>& vsvector<T>::operator +=(const vsvector<T>& w)
   {                             
-    register typename vsvector<T>::iterator d1 = begin(), e = end();
-    register typename vsvector<T>::const_iterator d2 = w.begin();
+    typename vsvector<T>::iterator d1 = begin(), e = end();
+    typename vsvector<T>::const_iterator d2 = w.begin();
     if (size() != w.size()) DAL_THROW(dimension_error, "dimensions mismatch");
     while (d1 != e) *d1++ += (*d2++);
     return *this;
@@ -400,8 +400,8 @@ namespace bgeot
 
   template<class T> vsvector<T>& vsvector<T>::operator -=(const vsvector<T>& w)
   {    
-    register typename vsvector<T>::iterator d1 = begin(), e = end();
-    register typename vsvector<T>::const_iterator d2 = w.begin();
+    typename vsvector<T>::iterator d1 = begin(), e = end();
+    typename vsvector<T>::const_iterator d2 = w.begin();
     if (size() != w.size()) DAL_THROW(dimension_error, "dimensions mismatch");
 
     while (d1 != e) *d1++ -= (*d2++);
@@ -446,9 +446,9 @@ namespace bgeot
   /// Scalar product between v and w.
   template<class T> double vect_sp(const vsvector<T>&v, const vsvector<T>&w)
   { /* pas bon sur les complexes.                                           */
-    register typename vsvector<T>::const_iterator d1 = v.begin(), e = v.end();
-    register typename vsvector<T>::const_iterator d2 = w.begin();
-    register double res = 0.0;
+    typename vsvector<T>::const_iterator d1 = v.begin(), e = v.end();
+    typename vsvector<T>::const_iterator d2 = w.begin();
+    double res = 0.0;
     if (v.size() != w.size()) DAL_THROW(dimension_error,"dimensions mismatch");
    
     while (d1 != e) res += (*d1++) * (*d2++);
@@ -485,8 +485,8 @@ namespace bgeot
   /// Gives $\displaystyle \sum_{i=0..(n-1)} |v_i|$.
   template<class VEC> double vect_norm1(const VEC &v)
   {
-    register typename VEC::const_iterator d1 = v.begin(), e = v.end();
-    register double res = 0.0;
+    typename VEC::const_iterator d1 = v.begin(), e = v.end();
+    double res = 0.0;
     while (d1 != e) res += (double)dal::abs(*d1++);
     return v;
   }
@@ -494,8 +494,8 @@ namespace bgeot
   /// Gives $\displaystyle (\sum_{i=0..(n-1)} (v_i)^2)^{1/2}$.
   template<class VEC> double vect_norm2(const VEC &v)
   {
-    register typename VEC::const_iterator d1 = v.begin(), e = v.end();
-    register double res = 0.0;
+    typename VEC::const_iterator d1 = v.begin(), e = v.end();
+    double res = 0.0;
     while (d1 != e) res += dal::sqr((double)dal::abs(*d1++));
     return sqrt(res);
   }
@@ -503,8 +503,8 @@ namespace bgeot
   /// Gives $\displaystyle \sup_{i=0..(n-1)} |v_i|$.
   template<class VEC> double vect_norminf(const VEC &v)
   {
-    register typename VEC::const_iterator d1 = v.begin(), e = v.end();
-    register double res = 0.0;
+    typename VEC::const_iterator d1 = v.begin(), e = v.end();
+    double res = 0.0;
     while (d1 != e) res = std::max(res, (double)dal::abs(*d1++));
     return res;
   }
@@ -512,8 +512,8 @@ namespace bgeot
   /// Gives $\displaystyle \sum_{i=0..(n-1)} |v_i - w_i|$.
   template<class VEC> double vect_dist1(const VEC &v, const VEC &w)
   { 
-    register typename VEC::const_iterator d1 = v.begin(), e = v.end();
-    register typename VEC::const_iterator d2 = w.begin();
+    typename VEC::const_iterator d1 = v.begin(), e = v.end();
+    typename VEC::const_iterator d2 = w.begin();
     double res = 0;
     if (v.size() != w.size()) DAL_THROW(dimension_error,"dimensions mismatch");
     while (d1 != e) res += (double)dal::abs(*d1++ - *d2++);
@@ -523,8 +523,8 @@ namespace bgeot
   /// Gives $\displaystyle (\sum_{i=0..(n-1)} |v_i - w_i|^2)^{1/2}$.
   template<class VEC> double vect_dist2(const VEC &v, const VEC &w)
   {
-    register typename VEC::const_iterator d1 = v.begin(), e = v.end();
-    register typename VEC::const_iterator d2 = w.begin();
+    typename VEC::const_iterator d1 = v.begin(), e = v.end();
+    typename VEC::const_iterator d2 = w.begin();
     double res = 0;
     if (v.size() != w.size()) DAL_THROW(dimension_error,"dimensions mismatch");
     while (d1 != e) res += dal::sqr((double)dal::abs(*d1++ - *d2++));
@@ -534,8 +534,8 @@ namespace bgeot
   /// Gives $\displaystyle \sup_{i=0..(n-1)} |v_i - w_i|$.
   template<class VEC> double vect_distinf(const VEC &v, const VEC &w)
   {
-    register typename VEC::const_iterator d1 = v.begin(), e = v.end();
-    register typename VEC::const_iterator d2 = w.begin();
+    typename VEC::const_iterator d1 = v.begin(), e = v.end();
+    typename VEC::const_iterator d2 = w.begin();
     double res = 0;
     if (v.size() != w.size()) DAL_THROW(dimension_error,"dimensions mismatch");
 
