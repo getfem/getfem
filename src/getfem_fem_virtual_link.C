@@ -361,7 +361,7 @@ namespace getfem
     virtual size_type nb_dof(void) const {
       size_type nb = pmflf->nb_max_dof_per_element();
       if (nb != _dof_types.size()) 
-	((_virtual_link_fem *)(this))->build_dof(nb);
+	(const_cast<_virtual_link_fem *>(this))->build_dof(nb);
       return nb;
     }
     virtual size_type nb_base(void) const

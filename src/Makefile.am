@@ -14,9 +14,6 @@ include_HEADERS =                      \
 	bgeot_simplexify.h             \
 	bgeot_tensor.h                 \
 	bgeot_vector.h                 \
-	bgeot_abstract_linalg.h        \
-	bgeot_linalg_interface.h       \
-	bgeot_generic_solvers.h        \
 	dal_algobase.h                 \
 	dal_alloc.h                    \
 	dal_basic.h                    \
