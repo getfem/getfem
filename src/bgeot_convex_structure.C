@@ -61,32 +61,6 @@ namespace bgeot
     nbpt = 0;
   }
 
-
-  /* ******************************************************************** */
-  /* Numeration of convex structures                                      */
-  /* ******************************************************************** */
-
-  static dal::dynamic_tree_sorted<pconvex_structure> *_numeration;
-
-  static void init_tab(void)     // because of problem with initialization
-  {                              // in dynamic libraries.
-    static bool initialized = false;
-    if (!initialized)
-    { 
-      initialized = true;
-      _numeration = new dal::dynamic_tree_sorted<pconvex_structure>();
-    }
-  }
-  
-  void numerate_convex_structure(pconvex_structure cvs)
-  { init_tab(); _numeration->add(cvs); }
-
-  pconvex_structure convex_structure_with_number(size_t i)
-  { init_tab(); return (*_numeration)[i]; }
-
-  size_t number_of_convex_structure(pconvex_structure cvs)
-  { init_tab(); return _numeration->search(cvs); }
-
   std::ostream &operator <<(std::ostream &o, const convex_structure &cv)
   {
     o << "convex structure of dimension " << int(cv.dim()) << " with "
@@ -140,7 +114,6 @@ namespace bgeot
 	    (p->faces[i])[j] = (j >= i) ? (j + 1) : j;
 	}
       
-      numerate_convex_structure(p);
       __nb_simplex=_nb_simplex = nc;
     }
     return p;
@@ -214,8 +187,6 @@ namespace bgeot
 	      _dir_points[pd++] = r;
 	  }
 	}
-	
-	numerate_convex_structure(this);
       }
 
   };
@@ -272,7 +243,6 @@ namespace bgeot
       p->_dir_points[1] = 1;
       p->_dir_points[2] = nbt - 1;
 
-      numerate_convex_structure(p);
       _ind_polygon->add(nbt);
     }
     return p;
@@ -356,7 +326,6 @@ namespace bgeot
 	      = l + (ls.cv2->ind_points_of_face(i))[j] * ls.cv1->nb_points(); 
 	  }
       }
-      numerate_convex_structure(this);
     }
   };
 
@@ -396,112 +365,6 @@ namespace bgeot
     return (*tab)[nc];
   }
 
-
-  /* ******************************************************************** */
-  /* read-write convex structures to files.                               */
-  /* ******************************************************************** */
-
-  void write_convex_structures_to_file(std::ostream &ost)
-  {
-    int i;
-
-    ost << endl << "BEGIN CONVEX STRUCTURE DESCRIPTION" << endl << endl;
-    
-    simplex_structure(1); // to be sure that initialization is done.
-    for (i = 0; i <= __nb_simplex; i++ )
-      ost << "CONVEX "
-	  << number_of_convex_structure(simplex_structure(i))
-	  << "\t= SIMPLEX " << i << endl;
-
-    polygon_structure(2); // to be sure that initialization is done.
-    dal::bit_vector nn = (*_ind_polygon);
-    for(i << nn; i >= 0; i << nn)
-      ost << "CONVEX "
-	  << number_of_convex_structure(polygon_structure(i))
-	  << "\t= POLYGON " << i << endl;
-    
-    convex_product_structure(simplex_structure(1), simplex_structure(1));
-    nn = _cv_pr_tab->index();
-    for(i << nn; i >= 0; i << nn)
-      ost << "CONVEX "
-	  << number_of_convex_structure(_cv_pr_tab->table()[i])
-	  << "\t= PRODUCT "
-	  << int(number_of_convex_structure(_cv_pr_tab->light_table()[i].cv1))
-	  << " \t"
-	  << int(number_of_convex_structure(_cv_pr_tab->light_table()[i].cv2))
-	  << endl;
-
-    ost << endl << "END CONVEX STRUCTURE DESCRIPTION" << endl;
-
-  }
-
-  int read_convex_structures_from_file(std::istream &ist,
-			dal::dynamic_array<pconvex_structure> &tab)
-  {
-    bool te = false, please_get = true; bool error = false;
-    char tmp[100];
-    dal::bit_vector nn;
-
-    ist.seekg(0);
-    ftool::read_untill(ist, "BEGIN CONVEX STRUCTURE DESCRIPTION");
-
-    while (!te)
-    {
-      if (please_get) ftool::get_token(ist, tmp, 99); else please_get = true;
-      
-      if (!strcmp(tmp, "END"))
-      { te = true; }
-      else if (!strcmp(tmp, "CONVEX"))
-      {
-	ftool::get_token(ist, tmp, 99);
-	int ics = dal::abs(atoi(tmp));
-	ftool::get_token(ist, tmp, 99);
-	ftool::get_token(ist, tmp, 99);
-	if (!strcmp(tmp, "SIMPLEX"))
-	{
-	  ftool::get_token(ist, tmp, 99);
-	  int dim = atoi(tmp);
-	  tab[ics] = simplex_structure(dim);
-	  nn.add(ics);
-	}
-	else if (!strcmp(tmp, "POLYGON"))
-	{
-	  ftool::get_token(ist, tmp, 99);
-	  int nbt = dal::abs(atoi(tmp));
-	  tab[ics] = polygon_structure(nbt);
-	  nn.add(ics);
-	}
-	else if (!strcmp(tmp, "PRODUCT"))
-	{
-	  ftool::get_token(ist, tmp, 99);
-	  int cv1 = dal::abs(atoi(tmp));
-	  ftool::get_token(ist, tmp, 99);
-	  int cv2 = dal::abs(atoi(tmp));
-	  if (nn.is_in(cv1) && nn.is_in(cv2))
-	    tab[ics] = convex_product_structure(tab[cv1], tab[cv2]);
-	  else
-	    { error = true; te = true; }
-	  nn.add(ics);
-	}
-	else
-	{
-	  error = true; te = true;
-	}
-
-      }
-      else
-      {
-	error = true; te = true;
-      }
-    }
-
-    if (error)
-    {
-      cerr << "BGEOT_CONVEX : Warning, file not valid." << endl;
-      return -1;
-    }
-    return 0;
-  }
 
 }  /* end of namespace bgeot.                                            */
 

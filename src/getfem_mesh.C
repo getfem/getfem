@@ -178,20 +178,104 @@ namespace getfem
     return normal_of_face_of_convex(ic, f, pt);
   }
 
+  struct mesh_convex_structure_loc
+  {
+    bgeot::pgeometric_trans cstruct;
+    size_type pts;
+  };
+
   int getfem_mesh::read_from_file(std::istream &ist) {
    
-    int r = bgeot::mesh<base_node>::read_from_file(ist);
-    dal::bit_vector nn = convex_index();
-    size_type i;
-    for (i << nn; i != size_type(-1); i << nn)
-      if (!(trans_exists[i])) {
-	DAL_THROW(internal_error, "A refaire ...");
-	//	gtab[i] = bgeot::associated_trans(structure_of_convex(i));
-	trans_exists[i] = true;
+    dal::bit_vector npt;
+    dal::dynamic_array<double> tmpv;
+    char tmp[1024];
+    bool te = false, please_get = true;
+
+    clear();
+    ist.seekg(0);
+    ftool::read_untill(ist, "BEGIN POINTS LIST");
+
+    while (!te)
+    {
+      if (please_get) ftool::get_token(ist, tmp, 1023); else please_get = true;
+
+      if (!strcmp(tmp, "END"))
+      { te = true; }
+      else if (!strcmp(tmp, "POINT"))
+      {
+	ftool::get_token(ist, tmp, 1023);
+        size_type ip = atoi(tmp);
+        dim_type d = 0;
+	if (npt.is_in(ip))
+	  DAL_THROW(failure_error, 
+		    "Two points with the same index. loading aborted.");
+	npt.add(ip);
+	ftool::get_token(ist, tmp, 1023);
+	while (isdigit(tmp[0]) || tmp[0] == '-' || tmp[0] == '+'
+	                       || tmp[0] == '.')
+	{ tmpv[d++] = atof(tmp); ftool::get_token(ist, tmp, 1023); }
+	please_get = false;
+	if (dimension == dim_type(-1)) dimension = d;
+	else if (dimension != d)
+	  DAL_THROW(failure_error, "Points of different dimensions.");
+	base_node v(d);
+	for (size_type i = 0; i < d; i++) v[i] = tmpv[i];
+	points()[ip] = v;
       }
+      else
+	DAL_THROW(failure_error, "Syntax error in file.");
+    }
+
+    bool tend = false;
+    dal::dynamic_alloc<size_type> cv_pt;
+    dal::dynamic_array<mesh_convex_structure_loc> cv;
+    dal::bit_vector ncv;
+    size_type ic;
+    
+    ist.seekg(0);
+    if (!ftool::read_untill(ist, "BEGIN MESH STRUCTURE DESCRIPTION"))
+      return -1;
+
+    while (!tend)
+    {
+      tend = !ftool::get_token(ist, tmp, 1023);
+      if (!strcmp(tmp, "END"))
+      { tend = true; }
+      else if (!strcmp(tmp, "CONVEX"))
+      {
+	ftool::get_token(ist, tmp, 1023);
+        ic = dal::abs(atoi(tmp));
+	if (ncv.is_in(ic)) 
+	  DAL_THROW(failure_error, 
+		    "Fatal Error, negativ index or two convex with" 
+		    << "the same index. loading aborted");
+	ncv.add(ic);
+	ftool::get_token(ist, tmp, 1023);
+	// incorrect
+	bgeot::pgeometric_trans pgt = bgeot::geometric_trans_descriptor(tmp);
+
+       
+	size_type nb = pgt->nb_points();
+
+	cv[ic].cstruct = pgt;
+	cv[ic].pts = cv_pt.alloc(nb);
+	for (size_type i = 0; i < nb; i++)
+	{
+	  ftool::get_token(ist, tmp, 1023);
+	  cv_pt[cv[ic].pts+i] = dal::abs(atoi(tmp));
+	}
+      }
+      else
+      { DAL_THROW(failure_error, "Syntax error reading a mesh file"); }
+    }
+
+    for (ic << ncv; ic != size_type(-1); ic << ncv) {
+      size_type i = add_convex(cv[ic].cstruct, cv_pt.begin() + cv[ic].pts);
+      if (i != ic) swap_convex(i, ic);
+    }
 
     lmsg_sender().send(MESH_READ_FROM_FILE(ist));
-    return r;
+    return 0;
   }
 
   int getfem_mesh::read_from_file(const std::string &name)
@@ -202,12 +286,48 @@ namespace getfem
     return read_from_file(o);
   }
 
+  template<class ITER>
+    static void _write_tab_to_file(std::ostream &ost, ITER b, ITER e)
+  { for ( ; b != e; ++b) ost << "  " << *b; }
+
+  template<class ITER>
+    static void _write_convex_to_file(const getfem_mesh &ms,
+				      std::ostream &ost,
+				      ITER b, ITER e) {
+    for ( ; b != e; ++b) {
+      size_type i = b.index();
+      ost << "CONVEX " << i << "    "
+	  << bgeot::name_of_geometric_trans(ms.trans_of_convex(i)) << "    ";
+      _write_tab_to_file(ost, ms.ind_points_of_convex(i).begin(),
+			 ms.ind_points_of_convex(i).end()  );
+      ost << endl;
+    }
+  }
+
+  template<class ITER> static void _write_point_to_file(std::ostream &ost,
+						  ITER b, ITER e)
+  { for ( ; b != e; ++b) ost << "  " << *b; ost << endl; }
+
   int getfem_mesh::write_to_file(std::ostream &ost) const
   {
-    bgeot::mesh<base_node>::write_to_file(ost);
+    ost << endl << "BEGIN POINTS LIST" << endl << endl;
+    bgeot::mesh_point_st_ct::const_iterator b = point_structures().begin();
+    bgeot::mesh_point_st_ct::const_iterator e = point_structures().end();
+    for (size_type i = 0; b != e; ++b, ++i)
+      if ( (*b).is_valid() ) {
+	ost << "  POINT  " << i;
+	_write_point_to_file(ost, points()[i].begin(), points()[i].end());
+      }
+    ost << endl << "END POINTS LIST" << endl << endl << endl;
+    
+    ost << endl << "BEGIN MESH STRUCTURE DESCRIPTION" << endl << endl;
+    _write_convex_to_file(*this, ost, convex_tab.tas_begin(),
+			              convex_tab.tas_end());
+    ost << endl << "END MESH STRUCTURE DESCRIPTION" << endl;
     lmsg_sender().send(MESH_WRITE_TO_FILE(ost));
     return 0;
   }
+
 
   int getfem_mesh::write_to_file(const std::string &name) const
   {
@@ -216,9 +336,7 @@ namespace getfem
     {
       o << "% GETFEM MESH FILE " << endl;
       o << "% GETFEM VERSION " << __GETFEM_VERSION << "."
-	                      << __GETFEM_REVISION << endl;
-      o << "% Yves.Renard@gmm.insa-tlse.fr " << endl
-	<< endl << endl;
+	<< __GETFEM_REVISION << endl << endl << endl;
     
       return write_to_file(o);
     }

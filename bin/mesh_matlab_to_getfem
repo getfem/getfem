@@ -31,20 +31,13 @@ while ($ligne = <F1>)
 print "\nEND POINTS LIST \n\n";
 
 
-print "BEGIN CONVEX STRUCTURE DESCRIPTION\n\n";
-print "CONVEX 0	= SIMPLEX 0\n";
-print "CONVEX 1	= SIMPLEX 1\n";
-print "CONVEX 3	= SIMPLEX 2\n";
-print "\nEND CONVEX STRUCTURE DESCRIPTION\n\n";
-
-
 
 print "BEGIN MESH STRUCTURE DESCRIPTION\n\n";
 $i = 0;
 while ($ligne = <F2>)
 {
   ($j, $k, $l, $m) = split(' ', $ligne, 4);
-  print "CONVEX $i 3 ", $j - 1,' ', $k - 1,' ', $l - 1, "\n";
+  print "CONVEX $i GT_PK(3,1) ", $j - 1,' ', $k - 1,' ', $l - 1, "\n";
   $i++;
 }
 

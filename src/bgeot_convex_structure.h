@@ -141,14 +141,6 @@ namespace bgeot
 				    simplex_structure(1));
   }
 
-  void numerate_convex_structure(pconvex_structure cvs);
-  pconvex_structure convex_structure_with_number(size_type i);
-  size_t number_of_convex_structure(pconvex_structure cvs);
-  
-  void write_convex_structures_to_file(std::ostream &ost);
-  int read_convex_structures_from_file(std::istream &ist,
-		       	dal::dynamic_array<pconvex_structure> &tab);
-
   /// Simplex structure with the Lagrange grid of degree k.
   pconvex_structure simplex_structure(dim_type n, short_type k);
 

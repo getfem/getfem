@@ -102,11 +102,11 @@ namespace lmsg
   {
     typename RECEIVERTAB::tas_iterator it = receivers.tas_begin(),
       ite = receivers.tas_end();
-    cerr << "sup_receiver " << p << " " << receivers.card() << endl;
+    // cerr << "sup_receiver " << p << " " << receivers.card() << endl;
     for (; it != ite; ++it)
       if (*it == p) {
 	receivers.sup(it.index());
-	cerr << " sup " << it.index() << endl;
+	// cerr << " sup " << it.index() << endl;
       }
   }
 
