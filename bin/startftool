@@ -16,7 +16,7 @@ print "Making links for includes files\n";
 print "Making links for test progams\n";
 `mkdir -p programs`;
 print "WARNING : No test programs\n";
-#`cd programs; ln -sf ../dal/test/*.C .`; print "\n\n";
+#`cd programs; ln -sf ../dal/test/* .`; print "\n\n";
 
 print `bin/start_modif`;
 

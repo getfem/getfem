@@ -15,7 +15,7 @@ print "Making links for includes files\n";
 
 print "Making links for test progams\n";
 `mkdir -p programs`;
-`cd programs; ln -sf ../getfem/test/*.C .`; print "\n\n";
+`cd programs; ln -sf ../getfem/test/* .`; print "\n\n";
 
 
 print `bin/start_modif`;
