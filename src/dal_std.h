@@ -304,7 +304,7 @@ typedef unsigned char uint8_type;
 	  std::basic_ostream<char, std::char_traits<char> >::operator <<(short) | 0000000000006368 | T | 0000000000000008
 	  std::basic_ostream<char, std::char_traits<char> >::operator <<(long double64) | 0000000000006368 | T | 0000000000000008
   */
-  class just_for_the_fine_cxx {
+  struct just_for_the_fine_cxx {
     static void f() {
       std::stringstream s; s << int(1) << double(2.0) 
 			     << "hello" << std::string("hello") << unsigned(1) << float(2) 

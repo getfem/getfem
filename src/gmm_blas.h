@@ -225,6 +225,15 @@ namespace gmm {
     for (; it != ite; ++it) o << ", " << cast_char(*it);
   }
 
+  template <class L> void write(std::ostream &o, const L &l,
+				       abstract_skyline) {
+    typename linalg_traits<L>::const_iterator it = vect_begin(l),
+      ite = vect_end(l);
+    o << "banded(" << it.index() << ", " << it.end()-1 << ") ";
+    if (it != ite) o << " " << cast_char(*it++);
+    for (; it != ite; ++it) o << ", " << cast_char(*it);
+  }
+
   template <class L> inline void write(std::ostream &o, const L &l,
 				       abstract_matrix) {
     write(o, l, typename linalg_traits<L>::sub_orientation());
@@ -728,7 +737,7 @@ namespace gmm {
   }
 
   /* ******************************************************************** */
-  /*		Vector Addition                                    	  */
+  /*		Matrix and vector addition                             	  */
   /*   algorithms are built in order to avoid some conflicts whith        */
   /*   repeated arguments or with overlapping part of a same object.      */
   /*   In the latter case, conflicts are still possible.                  */
@@ -749,6 +758,92 @@ namespace gmm {
     add(l1, l2, typename linalg_traits<L1>::storage_type(),
 	typename linalg_traits<L2>::storage_type());
   }
+
+  template <class L1, class L2> inline
+    void add_spec(const L1& l1, L2& l2, abstract_matrix) {
+    if (mat_nrows(l1) != mat_nrows(l2) || mat_ncols(l1) != mat_ncols(l2))
+      DAL_THROW(dimension_error, "dimensions mismatch");
+    add(l1, l2, typename linalg_traits<L1>::sub_orientation(),
+	typename linalg_traits<L2>::sub_orientation());
+  }
+
+  template <class L1, class L2>
+  void add(const L1& l1, L2& l2, row_major, row_major) {
+    typename linalg_traits<L1>::const_row_iterator it1 = mat_row_begin(l1),
+      ite = mat_row_end(l1);
+    typename linalg_traits<L2>::row_iterator it2 = mat_row_begin(l2);
+    for ( ; it1 != ite; ++it1, ++it2)
+      add_spec(linalg_traits<L1>::row(*it1),
+	       linalg_traits<L2>::row(*it2), abstract_vector());
+  }
+
+  template <class L1, class L2>
+  void add(const L1& l1, L2& l2, col_major, col_major) {
+    typename linalg_traits<L1>::const_col_iterator it1 = mat_col_begin(l1),
+      ite = mat_col_end(l1);
+    typename linalg_traits<L2>::col_iterator it2 = mat_col_begin(l2);
+    for ( ; it1 != ite; ++it1, ++it2)
+      add_spec(linalg_traits<L1>::col(*it1),
+	       linalg_traits<L2>::col(*it2), abstract_vector());
+  }
+
+  template <class L1, class L2>
+  void add(const L1& l1, L2& l2, row_major, col_major) {
+    DAL_THROW(to_be_done_error, "Sorry, to be done");
+  }
+
+  template <class L1, class L2>
+  void add(const L1& l1, L2& l2, col_major, row_major) {
+    DAL_THROW(to_be_done_error, "Sorry, to be done");
+  }
+
+  template <class L1, class L2> inline
+  void add(const L1& l1, L2& l2, row_and_col, row_major)
+  { add(l1, l2, row_major(), row_major()); }
+
+  template <class L1, class L2> inline
+  void add(const L1& l1, L2& l2, row_and_col, row_and_col)
+  { add(l1, l2, row_major(), row_major()); }
+
+  template <class L1, class L2> inline
+  void add(const L1& l1, L2& l2, row_and_col, col_and_row)
+  { add(l1, l2, row_major(), row_major()); }
+
+  template <class L1, class L2> inline
+  void add(const L1& l1, L2& l2, col_and_row, row_and_col)
+  { add(l1, l2, row_major(), row_major()); }
+
+  template <class L1, class L2> inline
+  void add(const L1& l1, L2& l2, row_major, row_and_col)
+  { add(l1, l2, row_major(), row_major()); }
+
+  template <class L1, class L2> inline
+  void add(const L1& l1, L2& l2, col_and_row, row_major)
+  { add(l1, l2, row_major(), row_major()); }
+
+  template <class L1, class L2> inline
+  void add(const L1& l1, L2& l2, row_major, col_and_row)
+  { add(l1, l2, row_major(), row_major()); }
+
+  template <class L1, class L2> inline
+  void add(const L1& l1, L2& l2, row_and_col, col_major)
+  { add(l1, l2, col_major(), col_major()); }
+
+  template <class L1, class L2> inline
+  void add(const L1& l1, L2& l2, col_major, row_and_col)
+  { add(l1, l2, col_major(), col_major()); }
+
+  template <class L1, class L2> inline
+  void add(const L1& l1, L2& l2, col_and_row, col_major)
+  { add(l1, l2, col_major(), col_major()); }
+
+  template <class L1, class L2> inline
+  void add(const L1& l1, L2& l2, col_and_row, col_and_row)
+  { add(l1, l2, col_major(), col_major()); }
+
+  template <class L1, class L2> inline
+  void add(const L1& l1, L2& l2, col_major, col_and_row)
+  { add(l1, l2, col_major(), col_major()); }
 
   template <class L1, class L2, class L3> inline
     void add(const L1& l1, const L2& l2, L3& l3) {

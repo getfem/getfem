@@ -396,7 +396,7 @@ class exception_cb : public dal::exception_callback  {
 int main(int argc, char *argv[])
 {
   exception_cb cb;
-  dal::set_exception_callback(&cb);
+  dal::exception_callback::set_exception_callback(&cb);
 
   try {
     

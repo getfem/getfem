@@ -189,7 +189,16 @@ namespace dal
       mutable size_type icard;
       mutable bool icard_valid;
 
-      void fill_false(size_type i1, size_type i2);
+    void fill_false(size_type i1, size_type i2) {
+      size_type f = i1 / WD_BIT, r = i1 & (WD_BIT-1), l = i2 / WD_BIT;
+      (*((bit_container *)(this)))[l];
+      
+      if (r != 0) f++; l++;
+      if (f < l)
+	std::fill(bit_container::begin()+f, bit_container::begin()+l, 0);
+      
+      ilast_false = i2;
+    }
  
    public : 
       
@@ -208,7 +217,8 @@ namespace dal
 
       typedef dal::reverse_iter<const_iterator> const_reverse_iterator;
       typedef dal::reverse_iter<iterator> reverse_iterator;
-      size_type size(void) const { return std::max(ilast_true, ilast_false)+1;}
+      size_type size(void) const 
+      { return std::max(ilast_true, ilast_false)+1;}
       
       iterator begin(void) { return iterator(*this, 0); }
       const_iterator begin(void) const { return const_iterator(*this, 0); }
@@ -234,11 +244,28 @@ namespace dal
       const_reference operator [](size_type ii) const
       { return (ii >= size()) ? false : *const_iterator(*this, ii); }
       reference operator [](size_type ii)
-      { if (ii >= size()) fill_false(size(),ii); return *iterator(*this, ii); }
+      { if (ii >= size()) fill_false(size(),ii); return *iterator(*this, ii);}
 
-      void swap(bit_vector &da);
-      void clear(void);
-      void swap(size_type i1, size_type i2);
+      void swap(bit_vector &da) {
+	((bit_container *)(this))->swap(da);
+	std::swap(ifirst_true, da.ifirst_true);
+	std::swap(ifirst_false, da.ifirst_false);
+	std::swap(ilast_true, da.ilast_true);
+	std::swap(ilast_false, da.ilast_false);
+	std::swap(icard, da.icard);
+	std::swap(icard_valid, da.icard_valid);
+      }
+      void clear(void) {
+	icard = 0; icard_valid = true;
+	ifirst_false = ilast_false = ifirst_true = ilast_true = 0;
+	fill_false(0,0); 
+      }
+      void swap(size_type i1, size_type i2) {
+	if (i1 != i2) {
+	  reference r1 = (*this)[i1], r2 = (*this)[i2];
+	  bool tmp = r1; r1 = r2; r2 = tmp;
+	}
+      }
       size_type memsize(void) const {
 	return bit_container::memsize() + sizeof(bit_vector) 
 	  - sizeof(bit_container);

@@ -36,18 +36,18 @@ namespace dal
 {
 
   bit_reference& bit_reference::operator = (bool x) {
-    if (x) { if (!(*p&mask)) { *p |= mask; bv->change_for_true(ind); } } 
-    else  { if (*p & mask) { *p &= ~mask; bv->change_for_false(ind); } }
-    return *this;
+      if (x) { if (!(*p & mask)) { *p |= mask; bv->change_for_true(ind); } } 
+      else  { if (*p & mask) { *p &= ~mask; bv->change_for_false(ind); } }
+      return *this;
   }
 
   bit_iterator::bit_iterator(bit_vector &b, size_type i) : p(b, i / WD_BIT)
   { ind = i; bv = &b, mask = bit_support(1) << (i & WD_MASK); }
 
-  bit_iterator& bit_iterator::operator+=(difference_type i) {
-    ind+=i; mask = bit_support(1) << (ind & WD_MASK); 
-    p=bit_container::iterator(*bv, ind/WD_BIT);
-    return *this;
+  bit_iterator& bit_iterator::operator+=(difference_type i){
+      ind+=i; mask = bit_support(1) << (ind & WD_MASK); 
+      p=bit_container::iterator(*bv, ind/WD_BIT);
+      return *this;
   }
 
   bit_const_iterator::bit_const_iterator(const bit_vector &b, size_type i)
@@ -60,39 +60,6 @@ namespace dal
     return *this;
   }
 
-  void bit_vector::fill_false(size_type i1, size_type i2) {
-    size_type f = i1 / WD_BIT, r = i1 & (WD_BIT-1), l = i2 / WD_BIT;
-    (*((bit_container *)(this)))[l];
-    
-    if (r != 0) f++; l++;
-    if (f < l)
-      std::fill(bit_container::begin()+f, bit_container::begin()+l, 0);
-
-    ilast_false = i2;
-  }
-
-  void bit_vector::swap(bit_vector &da) {
-    ((bit_container *)(this))->swap(da);
-    std::swap(ifirst_true, da.ifirst_true);
-    std::swap(ifirst_false, da.ifirst_false);
-    std::swap(ilast_true, da.ilast_true);
-    std::swap(ilast_false, da.ilast_false);
-    std::swap(icard, da.icard);
-    std::swap(icard_valid, da.icard_valid);
-  }
-  
-  void bit_vector::swap(size_type i1, size_type i2) {
-    if (i1 != i2) {
-      reference r1 = (*this)[i1], r2 = (*this)[i2];
-      bool tmp = r1; r1 = r2; r2 = tmp;
-    }
-  }
-
-  void bit_vector::clear(void) {
-    icard = 0; icard_valid = true;
-    ifirst_false = ilast_false = ifirst_true = ilast_true = 0;
-    fill_false(0,0); 
-  }
 
   bit_vector::size_type bit_vector::card(void) const {
     if (!icard_valid) {
@@ -185,7 +152,7 @@ namespace dal
 
   std::ostream &operator <<(std::ostream &o, const bit_vector &s) {
     bit_vector u = s; int i;
-    o << "ensemble d'entier";
+    o << "int set ";
     for (i << u; i != int(-1); i << u) o << " : " << i;
     o << " ";
     return o;

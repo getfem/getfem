@@ -60,6 +60,7 @@ namespace gmm {
   struct abstract_matrix {};
   
   struct abstract_sparse {};    // sparse matrix or vector
+  struct abstract_skyline {};   // 'sky-line' matrix or vector
   struct abstract_plain {};     // plain matrix or vector
   struct abstract_indirect {};  // matrix given by the product with a vector
 
@@ -110,6 +111,7 @@ namespace gmm {
 
   inline bool _is_sparse(abstract_sparse)  { return true;  }
   inline bool _is_sparse(abstract_plain)   { return false; }
+  inline bool _is_sparse(abstract_skyline)   { return true; }
   inline bool _is_sparse(abstract_indirect)  { return false; }
 
   template <class L> inline bool is_sparse(const L &) 
@@ -229,6 +231,8 @@ namespace gmm {
   template<class T> struct sparse_vector_type 
   { typedef wsvector<T> vector_type; };
 
+  template <class T> class slvector;
+
   /* ******************************************************************** */
   /*   Selects a temporary vector type                                    */
   /*   V if V is a valid vector type,                                     */
@@ -241,6 +245,9 @@ namespace gmm {
   template <class V, class L>
   struct _temporary_vector<linalg_true, abstract_sparse, L, V>
   { typedef wsvector<typename linalg_traits<V>::value_type> vector_type; };
+  template <class V, class L>
+  struct _temporary_vector<linalg_true, abstract_skyline, L, V>
+  { typedef slvector<typename linalg_traits<V>::value_type> vector_type; };
   template <class V, class L>
   struct _temporary_vector<linalg_true, abstract_plain, L, V>
   { typedef std::vector<typename linalg_traits<V>::value_type> vector_type; };
@@ -264,7 +271,7 @@ namespace gmm {
   /* ******************************************************************** */
   /*   Selects a temporary plain vector type                              */
   /*   V if V is a valid plain vector type,                               */
-  /*   std::vector if V is a reference or a sparse vector                 */
+  /*   std::vector if V is a reference or another type of vector          */
   /* ******************************************************************** */
 
   template <class R, class S, class V> struct _temporary_plain_vector;
@@ -272,6 +279,9 @@ namespace gmm {
   { typedef std::vector<typename linalg_traits<V>::value_type> vector_type; };
   template <class V>
   struct _temporary_plain_vector<linalg_false, abstract_sparse, V>
+  { typedef std::vector<typename linalg_traits<V>::value_type> vector_type; };
+  template <class V>
+  struct _temporary_plain_vector<linalg_false, abstract_skyline, V>
   { typedef std::vector<typename linalg_traits<V>::value_type> vector_type; };
   template <class V>
   struct _temporary_plain_vector<linalg_false, abstract_plain, V>
@@ -286,7 +296,7 @@ namespace gmm {
   /* ******************************************************************** */
   /*   Selects a temporary sparse vector type                             */
   /*   V if V is a valid sparse vector type,                              */
-  /*   wsvector if V is a reference or a plain vector                     */
+  /*   wsvector if V is a reference or another type of vector             */
   /* ******************************************************************** */
 
   template <class R, class S, class V> struct _temporary_sparse_vector;
@@ -299,12 +309,42 @@ namespace gmm {
   template <class V>
   struct _temporary_sparse_vector<linalg_false, abstract_plain, V>
   { typedef wsvector<typename linalg_traits<V>::value_type> vector_type; };
+  template <class V>
+  struct _temporary_sparse_vector<linalg_false, abstract_skyline, V>
+  { typedef wsvector<typename linalg_traits<V>::value_type> vector_type; };
 
   template <class V> struct temporary_sparse_vector {
     typedef typename _temporary_sparse_vector<typename
     is_a_reference<V>::reference,
     typename linalg_traits<V>::storage_type, V>::vector_type vector_type;
   };
+
+  /* ******************************************************************** */
+  /*   Selects a temporary sky-line vector type                           */
+  /*   V if V is a valid sky-line vector type,                            */
+  /*   slvector if V is a reference or another type of vector             */
+  /* ******************************************************************** */
+
+  template <class R, class S, class V> struct _temporary_skyline_vector;
+  template <class S, class V>
+  struct _temporary_skyline_vector<linalg_true, S, V>
+  { typedef slvector<typename linalg_traits<V>::value_type> vector_type; };
+  template <class V>
+  struct _temporary_skyline_vector<linalg_false, abstract_skyline, V>
+  { typedef V vector_type; };
+  template <class V>
+  struct _temporary_skyline_vector<linalg_false, abstract_plain, V>
+  { typedef slvector<typename linalg_traits<V>::value_type> vector_type; };
+  template <class V>
+  struct _temporary_skyline_vector<linalg_false, abstract_sparse, V>
+  { typedef slvector<typename linalg_traits<V>::value_type> vector_type; };
+
+  template <class V> struct temporary_skylines_vector {
+    typedef typename _temporary_skyline_vector<typename
+    is_a_reference<V>::reference,
+    typename linalg_traits<V>::storage_type, V>::vector_type vector_type;
+  };
+
 
   /* ********************************************************************* */
   /*		Standard access and clear objects             		   */
