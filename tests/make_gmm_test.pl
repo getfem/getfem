@@ -347,7 +347,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
       $compile_options="$compile_options -DGMM_USES_LAPACK"
     }
     if ($with_qd) { $compile_libs="-lqd $compile_libs"; }
-    print "$compilo $compile_options $dest_name -o $root_name $compile_libs\n";
+#   print "$compilo $compile_options $dest_name -o $root_name $compile_libs\n";
     print `$compilo $compile_options $dest_name -o $root_name $compile_libs`;
 
     if ($? != 0) {
