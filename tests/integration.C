@@ -5,7 +5,7 @@ int main(void)
 {
   try {
   bgeot::papprox_integration pai;
-
+  cout.precision(16);
   
   for (int i = 1; i < 15; ++i)
   {

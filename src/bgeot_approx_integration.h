@@ -99,7 +99,7 @@ namespace bgeot
   // methods on dimension 1
   
   /** Give the Gauss approximate integration method in dimension 1 with
-   *    nbpt integration nodes.
+   *    nbpt integration nodes. Exact on polynomial of degree nbpt * 2 - 1.
    */
   papprox_integration Gauss_approx_integration(short_type nbpt);
 
@@ -133,7 +133,7 @@ namespace bgeot
  
  
 
-  // methods on simplex
+  // methods on simplexes
 
   /** Give the Newton Cotes approximate integration method in simplex of
    *    dimension n and of degree k (corresponds to lagrange interpolation).
