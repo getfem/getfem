@@ -247,6 +247,7 @@ namespace gmm {
     MAT1 &A = const_cast<MAT1 &>(AA); MAT2 &Q = const_cast<MAT2 &>(QQ);
     typedef typename linalg_traits<MAT1>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
+    // to be optimized
 
     size_type n = mat_nrows(A); 
     std::vector<T> v(n), p(n), w(n), ww(n);
@@ -266,7 +267,7 @@ namespace gmm {
       gmm::mult(sub_matrix(A, SUBI), gmm::scaled(v, T(-2) / norm), p);
       gmm::add(p, gmm::scaled(v, -vect_hp(p, v) / norm), w);
       rank_two_update(sub_matrix(A, SUBI), v, w);
-      // it is possible to compute only the upper or lower part
+      // it should be possible to compute only the upper or lower part
 
       if (compute_q) col_house_update(sub_matrix(Q, SUBK, SUBI), v, ww);
     }

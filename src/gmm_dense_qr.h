@@ -2,8 +2,8 @@
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Generic Matrix Methods  (gmm)                                */
-/* File    :  gmm_dense_qr.h : QR decomposition and QR method for dense    */
-/*                             matrices.                                   */
+/* File    :  gmm_dense_qr.h : QR decomposition and QR algorithms for      */
+/*                             dense matrices.                             */
 /*                                                                         */
 /* ref :  G.H. Golub, C.F. Van Loan, Matrix Computations, second edition   */
 /*        The Johns Hopkins University Press, 1989.                        */
@@ -61,39 +61,29 @@ namespace gmm {
 
     size_type m = mat_nrows(A), n = mat_ncols(A);
     if (m < n) DAL_THROW(dimension_error, "dimensions mismatch");
-    dense_matrix<value_type> *MWORK;
-    std::auto_ptr< dense_matrix<value_type> > auto_MWORK;
-    if (m == n)
-      { gmm::copy(A, R); MWORK = &R; }
-    else
-      { MWORK = new dense_matrix<value_type>(m,n); auto_MWORK.reset(MWORK); gmm::copy(A, *MWORK); }
-    gmm::copy(identity_matrix(), Q);
+    gmm::copy(A, Q);
     
     std::vector<value_type> W(m);
     dense_matrix<value_type> VV(m, n);
 
     for (size_type j = 0; j < n; ++j) {
-      sub_interval SUBI(j, m-j), SUBJ(j, n-j) /* , SUBK(0, m) */;
+      sub_interval SUBI(j, m-j), SUBJ(j, n-j);
 
-      for (size_type i = j; i < m; ++i) VV(i,j) = (*MWORK)(i, j);
+      for (size_type i = j; i < m; ++i) VV(i,j) = Q(i, j);
       house_vector(sub_vector(mat_col(VV,j), SUBI));
 
-      row_house_update(sub_matrix(*MWORK, SUBI, SUBJ),
+      row_house_update(sub_matrix(Q, SUBI, SUBJ),
 		       sub_vector(mat_col(VV,j), SUBI), sub_vector(W, SUBJ));
-      //      col_house_update(sub_matrix(Q, SUBK, SUBI), 
-      //	       sub_vector(mat_col(VV,j), SUBI), sub_vector(W, SUBK));
     }
 
+    gmm::copy(sub_matrix(Q, sub_interval(0, n), sub_interval(0, n)), R);
+    gmm::copy(identity_matrix(), Q);
+    
     for (size_type j = n-1; j != size_type(-1); --j) {
       sub_interval SUBI(j, m-j), SUBJ(j, n-j);
       row_house_update(sub_matrix(Q, SUBI, SUBJ), 
 		       sub_vector(mat_col(VV,j), SUBI), sub_vector(W, SUBJ));
     }
-    
-    if (m != n) {
-      gmm::copy(sub_matrix(*MWORK, sub_interval(0, n), sub_interval(0, n)), R);
-    }
-
   }
 
   /* ********************************************************************* */
@@ -484,6 +474,7 @@ namespace gmm {
     size_type n = mat_nrows(A), q = 0, p, ite = 0;
     dense_matrix<value_type> T(n,n);
     gmm::copy(A, T);
+
     Householder_tridiagonalization(T, eigvect, compvect);
 
 //     dense_matrix<value_type> aux1(n,n), aux2(n,n);
@@ -491,9 +482,9 @@ namespace gmm {
 //     gmm::mult(aux1, conjugated(eigvect), aux2);
 //     gmm::add(scaled(A, -1), aux2);
 //     cout << "Ca donne : " << mat_norm2(aux2) << endl;
-
+    
     symmetric_stop_criterion(T, p, q, tol);
-
+    
     while (q < n) {
       sub_interval SUBI(p, n-p-q), SUBJ(0,n);
       symmetric_Wilkinson_qr_step(sub_matrix(T, SUBI), 
