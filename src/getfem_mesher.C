@@ -10,7 +10,7 @@
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 2004    Julien Pommier, Yves Renard.                      */
+/* Copyright (C) 2004  Julien Pommier, Yves Renard.                        */
 /*                                                                         */
 /* This file is a part of GETFEM++                                         */
 /*                                                                         */
