@@ -41,12 +41,12 @@ namespace getfem {
   struct abstract_hyperelastic_law {
     size_type nb_params_;
     virtual scalar_type strain_energy(const base_matrix &L,
-				      base_vector &params) const = 0;
+				      const base_vector &params) const = 0;
     virtual void sigma(const base_matrix &L, base_matrix &result,
-		       base_vector &params) const = 0;
+		       const base_vector &params) const = 0;
 	// the result of grad_sigma has to be completely symmetric.
     virtual void grad_sigma(const base_matrix &L, base_tensor &result, 
-			    base_vector &params) const = 0;
+			    const base_vector &params) const = 0;
     size_type nb_params(void) const { return nb_params_; }
     abstract_hyperelastic_law() { nb_params_ = 0; }
     virtual ~abstract_hyperelastic_law() {}
@@ -58,7 +58,7 @@ namespace getfem {
       gmm::scale(L,-0.5);
     }
     void test_derivatives(size_type N, scalar_type h,
-			  base_vector& param) const {
+			  const base_vector& param) const {
       base_matrix L(N,N), L2(N,N), DL(N,N); 
       random_L(L); random_L(DL);
       gmm::scale(DL,h);
@@ -118,19 +118,19 @@ namespace getfem {
     public abstract_hyperelastic_law {
     /* W = lambda*0.5*trace(L)^2 + mu*tr(L^2) */
     virtual scalar_type strain_energy(const base_matrix &L,
-				      base_vector &params) const {
+				      const base_vector &params) const {
       return gmm::sqr(gmm::mat_trace(L)) * params[0] / scalar_type(2)
 	+ gmm::mat_euclidean_norm_sqr(L) * params[1];
     }
     /* sigma = lambda*trace(L) + 2 mu * L */
     virtual void sigma(const base_matrix &L, base_matrix &result,
-		       base_vector &params) const {
+		       const base_vector &params) const {
       gmm::copy(gmm::identity_matrix(), result);
       gmm::scale(result, params[0] * gmm::mat_trace(L));
       gmm::add(gmm::scaled(L, 2 * params[1]), result);
     }
     virtual void grad_sigma(const base_matrix &L, base_tensor &result,
-			    base_vector &params) const {
+			    const base_vector &params) const {
       std::fill(result.begin(), result.end(), scalar_type(0));
       size_type N = gmm::mat_nrows(L);
       for (size_type i = 0; i < N; ++i)
@@ -146,29 +146,30 @@ namespace getfem {
 
   struct Mooney_Rivlin_hyperelastic_law : public abstract_hyperelastic_law {
     virtual scalar_type strain_energy(const base_matrix &L,
-				      base_vector &params) const {
+				      const base_vector &params) const {
       scalar_type C1 = params[0], C2 = params[1];
       return scalar_type(2) *
 	(gmm::mat_trace(L) * (C1 + scalar_type(2)*C2)
 	 + C2*(gmm::sqr(gmm::mat_trace(L)) - gmm::mat_euclidean_norm_sqr(L)));
     }
     virtual void sigma(const base_matrix &L, base_matrix &result,
-		       base_vector &params) const {
-      scalar_type C1 = params[0], C2 = params[1];
+		       const base_vector &params) const {
+      scalar_type C12 = scalar_type(2) * params[0];
+      scalar_type C24 = scalar_type(4) * params[1];
       gmm::copy(gmm::identity_matrix(), result);
-      gmm::scale(result, 4.0*C2*(gmm::mat_trace(L)+1.0) + C1*2.0);
-      gmm::add(gmm::scaled(L, -4.0*C2), result);
+      gmm::scale(result, C24*(gmm::mat_trace(L)+scalar_type(1)) + C12);
+      gmm::add(gmm::scaled(L, -C24), result);
     }
     virtual void grad_sigma(const base_matrix &L, base_tensor &result,
-			    base_vector &params) const {
-      scalar_type C2 = params[1];
+			    const base_vector &params) const {
+      scalar_type C22 = scalar_type(2) * params[1];
       std::fill(result.begin(), result.end(), scalar_type(0));
       size_type N = gmm::mat_nrows(L);
       for (size_type i = 0; i < N; ++i)
 	for (size_type l = 0; l < N; ++l) {
-	  result(i, i, l, l) = 4.0 * C2;
-	  result(i, l, i, l) -= 1.0;
-	  result(i, l, l, i) -= 1.0;
+	  result(i, i, l, l) = scalar_type(2) * C22;
+	  result(i, l, i, l) -= C22;
+	  result(i, l, l, i) -= C22;
 	}
     }
     Mooney_Rivlin_hyperelastic_law(void) { nb_params_ = 2; }
@@ -178,7 +179,7 @@ namespace getfem {
     // parameters are lambda=params[0], mu=params[1], gamma'(1)=params[2]
     // The parameters gamma'(1) has to verify gamma'(1) in ]-lambda/2-mu, -mu[
     virtual scalar_type strain_energy(const base_matrix &L,
-				      base_vector &params) const {
+				      const base_vector &params) const {
       size_type N = gmm::mat_nrows(L);
       scalar_type a = params[1] + params[2] / scalar_type(2);
       scalar_type b = -(params[1] + params[2]) / scalar_type(2);
@@ -196,7 +197,7 @@ namespace getfem {
 	+ c * det - d * log(det) / scalar_type(2) + e;
     }
     virtual void sigma(const base_matrix &L, base_matrix &result,
-		       base_vector &params) const {
+		       const base_vector &params) const {
       size_type N = gmm::mat_nrows(L);
       scalar_type a = params[1] + params[2] / scalar_type(2);
       scalar_type b = -(params[1] + params[2]) / scalar_type(2);
@@ -214,7 +215,7 @@ namespace getfem {
       gmm::add(gmm::scaled(C, scalar_type(2) * c * det - d), result);
     }
     virtual void grad_sigma(const base_matrix &L, base_tensor &result,
-			    base_vector &params) const {
+			    const base_vector &params) const {
       size_type N = gmm::mat_nrows(L);
       scalar_type b2 = -(params[1] + params[2]); // b * 2
       scalar_type c = (params[0]  - 2*b2) / scalar_type(4);

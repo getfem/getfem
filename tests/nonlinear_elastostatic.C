@@ -366,7 +366,10 @@ bool elastostatic_problem::solve(plain_vector &U) {
     }
   }
 
-  //getfem::Mooney_Rivlin_hyperelastic_law l;
+  // getfem::Mooney_Rivlin_hyperelastic_law ll;
+  // base_vector test_params(2); test_params[0] = 1.0; test_params[1] = 1.0;
+  // ll.test_derivatives(3, 1E-6, test_params);
+
   p.resize(pl->nb_params());
   getfem::mdbrick_nonlinear_elasticity<>  ELAS(*pl, mf_u, mf_coef, p);
 
