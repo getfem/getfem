@@ -30,12 +30,6 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-// TODO : - To make the point hull, one could make a convergence on dist = 3h0
-//          fo each point.
-//        - Explicit search of multi-constraints points at the begining
-//          (deactivated)
-
-
 #include <getfem_mesher.h>
 
 namespace getfem {
