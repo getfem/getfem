@@ -71,8 +71,8 @@ namespace getfem
       { ++ii; if (ii == N) { ii = 0; ++it; } return *this; }
     iterator &operator --() 
       { if (ii == 0) { ii = N-1; --it; } else --ii; return *this; }
-    iterator operator ++(int) { iterator tmp = *this; ++(*this) return tmp; }
-    iterator operator --(int) { iterator tmp = *this; --(*this) return tmp; }
+    iterator operator ++(int) { iterator tmp = *this; ++(*this); return tmp; }
+    iterator operator --(int) { iterator tmp = *this; --(*this); return tmp; }
    
     iterator &operator +=(difference_type i)
       { it += (i+ii)/N; ii = (ii + i) % N; return *this; }
@@ -100,7 +100,9 @@ namespace getfem
 
   };
 
-
+  /*
+    structure for iteration over the dofs when Qdim != 1 and target_dim == 1
+  */
   template <class CONT> class tab_scal_to_vect {
   public :
     typedef typename CONT::const_iterator ITER;
@@ -141,7 +143,7 @@ namespace getfem
     tab_scal_to_vect(const CONT &cc, dim_type n) : c(cc), N(n) {}
     
     value_type operator [](size_type ii) const { return *(begin() + ii);}
-  }
+  };
 
 
 
@@ -190,8 +192,8 @@ namespace getfem
   typedef const intfem * pintfem;
   pintfem give_intfem(pfem ppf, const pintegration_method ppi);
   
-  typedef bgeot::ref_mesh_point_ind_ct ref_mesh_dof_ind_ct;
-  
+  typedef tab_scal_to_vect<bgeot::ref_mesh_point_ind_ct> ref_mesh_dof_ind_ct;
+  typedef tab_scal_to_vect<bgeot::ind_ref_mesh_point_ind_ct> ind_ref_mesh_dof_ind_ct;
   /// Describe a finite element method linked to a mesh.
   class mesh_fem : public getfem_mesh_receiver {
   protected :
@@ -205,7 +207,7 @@ namespace getfem
     mutable bool dof_enumeration_made;
     mutable size_type nb_total_dof;
     bool is_valid;
-    dim_type Qdim;
+    dim_type Qdim; /* this is the "global" target_dim */
     
   public :
     
@@ -222,6 +224,10 @@ namespace getfem
     /** Set on the convex of index i the integrable finite element method
      *          with the description pif which is of type pintfem.
      */
+
+    dim_type get_qdim() const { return Qdim; }
+    void     set_qdim(dim_type q) { if (q != Qdim) { Qdim = q; dof_enumeration_made = false; }}
+
     void set_finite_element(size_type cv, pintfem pif);
     /** Set on the convex of index i the finite element method
      *          with the description pf which is of type pfem and ppi of
@@ -244,18 +250,16 @@ namespace getfem
     /** Gives an array of the degrees of freedom of the element
      *           of the convex of index i. 
      */
-    tab_scal_to_vect<ref_mesh_dof_ind_ct>
+    ref_mesh_dof_ind_ct
       ind_dof_of_element(size_type ic) const {
       if (!dof_enumeration_made) enumerate_dof();
-      return tab_scal_to_vect<ref_mesh_dof_ind_ct>
-	(dof_structure.ind_points_of_convex(ic),
-	 Qdim /fem_of_element(ic)->target_dim());
+      return ref_mesh_dof_ind_ct(dof_structure.ind_points_of_convex(ic),
+				 Qdim /fem_of_element(ic)->target_dim());
     }
-    tab_scal_to_vect<bgeot::ind_ref_mesh_point_ind_ct>
+    ind_ref_mesh_dof_ind_ct
     ind_dof_of_face_of_element(size_type cv, short_type f) const {
-      return tab_scal_to_vect<bgeot::ind_ref_mesh_point_ind_ct>
-	(dof_structure.ind_points_of_face_of_convex(cv, f),
-	 Qdim /fem_of_element(ic)->target_dim());
+      return ind_ref_mesh_dof_ind_ct(dof_structure.ind_points_of_face_of_convex(cv, f),
+				     Qdim /fem_of_element(cv)->target_dim());
     }
     /** Gives the number of  degrees of freedom of the element
      *           of the convex of index i. 

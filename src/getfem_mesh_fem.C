@@ -98,8 +98,6 @@ namespace getfem
     return tab->add(intfem(ppf, ppi));
   }
   
-  typedef bgeot::ref_mesh_point_ind_ct ref_mesh_dof_ind_ct;
-  
   const dal::bit_vector &mesh_fem::convex_on_boundary(size_type b) const {
     static dal::bit_vector *without;
     static bool isinit = false;
@@ -150,11 +148,12 @@ namespace getfem
 	      size_type nbb
 		= dof_structure.structure_of_convex(it.index())->
 		nb_points_of_face(itf.index());
-	      for (size_type i = 0; i < nbb; ++i)
-		for (size_type ll = 0; ll < (Qdim / fem_of_element(it.index())->target_dim()); ++ll)
-		  res.add((Qdim / fem_of_element(it.index())->target_dim())
-		     * dof_structure.ind_points_of_face_of_convex(it.index(),
-						       itf.index())[i] + ll);
+	      for (size_type i = 0; i < nbb; ++i) {
+		size_type n = Qdim / fem_of_element(it.index())->target_dim();
+		for (size_type ll = 0; ll < n; ++ll)
+		  res.add(n * dof_structure.ind_points_of_face_of_convex(it.index(),
+									 itf.index())[i] + ll);
+	      }
 	    }
 	}
     }
@@ -202,7 +201,8 @@ namespace getfem
     }
     else {
       if (_linked_mesh->structure_of_convex(cv)->basic_structure() 
-	  != pif->pf->basic_structure())
+	  != pif->pf->basic_structure() || 
+	  (pif->pf->target_dim() != Qdim && pif->pf->target_dim() != 1))
 	DAL_THROW(internal_error,
 		  "Incompatibility between fem and mesh element");
       if (!fe_convex.is_in(cv) || f_elems[cv] != pif) {
@@ -247,7 +247,7 @@ namespace getfem
   
 
   size_type mesh_fem::first_convex_of_dof(size_type d) const {
-    for (size_type i = d; i != d - Qdim + 1 && i != size_type(-1); --i) {
+    for (size_type i = d; i != d - Qdim && i != size_type(-1); --i) {
       size_type j = dof_structure.first_convex_of_point(i);
       if (j != size_type(-1)) return j;
     }
@@ -255,7 +255,7 @@ namespace getfem
   }
 
   size_type mesh_fem::ind_in_first_convex_of_dof(size_type d) const {
-    for (size_type i = d; i != d - Qdim + 1 && i != size_type(-1); --i) {
+    for (size_type i = d; i != d - Qdim && i != size_type(-1); --i) {
       size_type j = dof_structure.first_convex_of_point(i);
       if (j != size_type(-1))
 	return dof_structure.ind_in_first_convex_of_point(i);
@@ -298,7 +298,7 @@ namespace getfem
       for (size_type i = 0; i < nbd; i++) {
 	fd.P = point_of_dof(cv, i); // optimisable ...
 	fd.pnd = pf->dof_types()[i];
-	size_type j, j_old;
+	size_type j = 0, j_old = 0;
 	if (fd.pnd == andof) {
 	  // cout << "detecting a specialdof\n";
 	  j = pf->index_of_already_numerate_dof(cv, i);
@@ -501,6 +501,10 @@ namespace getfem
 	  ftool::get_token(ist, tmp, 1023);
 	  ftool::get_token(ist, tmp, 1023);
 	} else DAL_THROW(failure_error, "Syntax error in file at token" << tmp);
+      } else if (strcmp(tmp, "QDIM")==0) {
+	ftool::get_token(ist, tmp, 1023);
+	int q = atoi(tmp); if (q <= 0 || q > 250) DAL_THROW(failure_error, "invalid qdim: "<<q);
+	set_qdim(q);
       } else {
 	DAL_THROW(failure_error, "Syntax error2 in file at token " << tmp);
       }
@@ -519,6 +523,7 @@ namespace getfem
   void mesh_fem::write_to_file(std::ostream &ost) const
   {
     ost << endl << "BEGIN MESH_FEM" << endl << endl;
+    ost << "QDIM " << get_qdim() << endl;
     dal::bit_vector bv = convex_index();
     size_type cv;
     for (cv << bv; cv != size_type(-1); cv << bv) {
