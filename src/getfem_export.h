@@ -385,19 +385,22 @@ namespace getfem
   }
 
   /** 
-      interpolation of a solution on a set of sparse points filled in the provided 
-      geotrans_inv object
+      interpolation of a solution on a set of sparse points filled in
+      the provided geotrans_inv object.  The gradient is also
+      interpolated of PVGRAD is non-null.
    */
   template<class VECT>
     void interpolation_solution(const mesh_fem &mf_source, bgeot::geotrans_inv &gti,
-				const VECT &U, VECT &V) {
+				const VECT &U, VECT &V, VECT* PVGRAD = 0) {
+    size_type mdim = mf_source.linked_mesh().dim();
+    size_type qdim = mf_source.get_qdim();
+
     base_vector val(1);
+    base_matrix valg(1,mdim);
     dal::dynamic_array<base_node> ptab;
     dal::dynamic_array<size_type> itab;
     base_vector coeff;
     base_matrix G;
-
-    size_type qdim = mf_source.get_qdim();
 
     dal::bit_vector ddl_touched; ddl_touched.add(0, gti.nb_points());
 
@@ -428,6 +431,12 @@ namespace getfem
 	    // cerr << "cv=" << cv << ", ptab[" << i << "]=" << ptab[i] << ", coeff=" << coeff << endl;
 	    pf_s->interpolation(ptab[i], G, pgt, coeff, val);
 	    V[dof_t*qdim + k] = val[0];
+	    
+	    if (PVGRAD) {
+	      pf_s->interpolation_grad(ptab[i], G, pgt, coeff, valg);
+	      dal::copy_n(valg.begin(), mdim,
+			  &(*PVGRAD)[dof_t*qdim*mdim]);
+	    }
 	    ddl_touched.sup(dof_t);
 	  }
 	}
@@ -448,120 +457,7 @@ namespace getfem
     else interpolation_solution(mf,mf_target,U,V);
   }
 
-#if 0 // VIRER TOUT CA DES QUE POSSIBLE
-  /*
-    OLD INTERPOLATION 
-  */
-  template<class VECT>
-    void interpolation_solution_same_mesh(mesh_fem &mf, mesh_fem &mf_target,
-					  const VECT &U, VECT &V, dim_type P)
-  {
-    base_node pt2;
-    base_matrix G;
-    base_vector coeff, val(1);
-
-    if ( &(mf.linked_mesh()) != &(mf_target.linked_mesh()))
-      DAL_THROW(failure_error, "Meshes should be the same in this function.");
-
-    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
-      bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
-      pfem pfe = mf_target.fem_of_element(cv);
-      pfem pf1 = mf.fem_of_element(cv);
-      size_type nbd1 = mf.nb_dof_of_element(cv);
-      size_type nbd2 = pfe->nb_dof();
-      coeff.resize(nbd1);
-
-      if (pf1->need_G()) 
-	bgeot::vectors_to_base_matrix(G, mf.linked_mesh().points_of_convex(cv));
-
-      if (pf1->target_dim() != 1)
-	DAL_THROW(to_be_done_error, "to be done ... ");
-      
-      for (size_type i = 0; i < nbd2; ++i) {
-	size_type dof2 = mf_target.ind_dof_of_element(cv)[i];
-	/* interpolation of the solution.                                  */
-	/* faux dans le cas des éléments vectoriel.                        */
-	pt2 = pfe->node_of_dof(i);
-	for (size_type k = 0; k < P; ++k) {
-	  for (size_type j = 0; j < nbd1; ++j) {
-	    size_type dof1 = mf.ind_dof_of_element(cv)[j];
-	    coeff[j] = U[dof1*P+k];
-	  }
-	  // il faudrait utiliser les fem_precomp pour accelerer.
-	  pf1->interpolation(pt2, G, pgt, coeff, val);
-	  V[dof2*P + k] = val[0];
-	}
-      }
-    }
-  }
-
-  /* A VIRER */
-  template<class VECT>
-    void interpolation_solution(mesh_fem &mf, mesh_fem &mf_target,
-				const VECT &U, VECT &V, dim_type P)
-  {
-    size_type nb;
-    base_node pt3(P);
-    base_vector val(1);
-    bgeot::geotrans_inv gti;
-    dal::dynamic_array<base_node> ptab;
-    dal::dynamic_array<size_type> itab;
-    base_vector coeff;
-    base_matrix G;
-
-    if (&mf.linked_mesh() == &mf_target.linked_mesh()) {
-      interpolation_solution_same_mesh(mf, mf_target, U, V, P);
-      return;
-    }
-    // cout << "entering interpolation ... P = " << int(P) << " \n";
-    
-    nb = mf_target.nb_dof();
-    for (size_type i = 0; i < nb; ++i)
-      gti.add_point(mf_target.point_of_dof(i));
-    // il faudrait controler que tous les ddl de mf_target sont de
-    // type lagrange
-
-    dal::bit_vector ddl_touched; ddl_touched.add(0, nb);
-
-    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
-      bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
-      nb = gti.points_in_convex(mf.linked_mesh().convex(cv),
-				pgt, ptab, itab);
-      pfem pfe = mf.fem_of_element(cv);
-      if (pfe->need_G()) 
-	bgeot::vectors_to_base_matrix(G, mf.linked_mesh().points_of_convex(cv));
-      size_type nbd1 = pfe->nb_dof();
-      coeff.resize(nbd1);
-      for (size_type i = 0; i < nb; ++i)
-      {
-	if (ddl_touched[itab[i]])
-	{ // inverser les deux boucles pour gagner du temps ?
-	  // Il faut verifier que le ddl est bien de Lagrange ...
-	  pt3.fill(0.0);
-	  for (size_type k = 0; k < P; ++k) {
-	    for (size_type j = 0; j < nbd1; ++j) {
-	      size_type dof1 = mf.ind_dof_of_element(cv)[j];
-	      coeff[j] = U[dof1*P+k];
-	    }
-	    pfe->interpolation(ptab[i], G, pgt, coeff, val);
-	    pt3[k] = val[0];
-	  }
-	  for (size_type j = 0; j < P; ++j) V[itab[i]*P+j] = pt3[j];
-	  ddl_touched.sup(itab[i]);
-	}
-      }
-    }
-    // cout << "ddl untouched : " << ddl_touched << endl;
-    if (ddl_touched.card() != 0) {
-      cerr << "WARNING : in interpolation_solution,"
-	   << ddl_touched.card() << " dof of the target mesh_fem have not been touched\n";
-      for (dal::bv_visitor d(ddl_touched); !d.finished(); ++d) {
-        cerr << "ddl_touched[" << d << "]=" << mf_target.point_of_dof(d) << "\n";
-      }
-    }
-  }
-#endif // A VIRER
-
+  /* this function has nothing to do here .. */
   void classical_mesh_fem(mesh_fem& mf, short_type K);
 }  /* end of namespace getfem.                                             */
 
