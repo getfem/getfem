@@ -494,7 +494,7 @@ namespace gmm
     
     reference operator()(const void *o, const iterator &,
 			 const iterator &, size_type i)
-    { return (*(V *)(o))[i]; }
+    { return (*(const_cast<V *>((const V *)(o))))[i]; }
 
     value_type operator()(const void *o, const const_iterator &,
 			 const const_iterator &, size_type i)
@@ -507,7 +507,7 @@ namespace gmm
     typedef typename linalg_traits<V>::iterator iterator;
     
     void operator()(const void *o, const iterator &, const iterator &)
-    { (*(V *)(o)).clear(); }
+    { (*(const_cast<V *>((const V *)(o)))).clear(); }
   };
 
   template <class T> struct linalg_traits<rsvector<T> > {

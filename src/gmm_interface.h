@@ -444,9 +444,11 @@ namespace gmm {
     
   };
 
-  template <class T> struct bgeot_matrix_access {
-    typedef typename linalg_traits<bgeot::vsmatrix<T> >::reference reference;
-    typedef typename linalg_traits<bgeot::vsmatrix<T> >::col_iterator iterator;
+  template <class T, int N> struct bgeot_fsmatrix_access {
+    typedef typename linalg_traits<bgeot::fsmatrix<T, N> >::reference
+            reference;
+    typedef typename linalg_traits<bgeot::fsmatrix<T, N> >::col_iterator
+            iterator;
     
     reference operator()(const iterator &itcol, size_type j)
     { return (*itcol)[j]; }
@@ -477,7 +479,7 @@ namespace gmm {
     typedef plain_compressed_iterator<typename this_type::const_iterator, 
             typename this_type::iterator> const_col_iterator;
     typedef col_and_row sub_orientation;
-    typedef bgeot_matrix_access<T> access_type;
+    typedef bgeot_fsmatrix_access<T, N> access_type;
     size_type nrows(const this_type &m) { return N; }
     size_type ncols(const this_type &m) { return N; } 
     const_sub_row_type row(const const_row_iterator &it)
@@ -513,6 +515,14 @@ namespace gmm {
   template <class T, int N> struct linalg_traits<const bgeot::fsmatrix<T, N> >
     : public linalg_traits<bgeot::fsmatrix<T, N> > {};
 
+  template <class T> struct bgeot_vsmatrix_access {
+    typedef typename linalg_traits<bgeot::vsmatrix<T> >::reference reference;
+    typedef typename linalg_traits<bgeot::vsmatrix<T> >::col_iterator iterator;
+    
+    reference operator()(const iterator &itcol, size_type j)
+    { return (*itcol)[j]; }
+  };
+
   template <class T> struct linalg_traits<bgeot::vsmatrix<T> > {
     typedef bgeot::vsmatrix<T> this_type;
     typedef linalg_false is_reference;
@@ -536,7 +546,7 @@ namespace gmm {
     typedef plain_compressed_iterator<typename this_type::const_iterator,
 	    typename this_type::iterator> const_col_iterator;
     typedef col_and_row sub_orientation;
-    typedef bgeot_matrix_access<T> access_type;
+    typedef bgeot_vsmatrix_access<T> access_type;
     size_type nrows(const this_type &m) { return m.nrows(); }
     size_type ncols(const this_type &m) { return m.ncols(); }
     const_sub_row_type row(const const_row_iterator &it) {

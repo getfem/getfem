@@ -328,9 +328,12 @@ namespace gmm {
     typedef typename linalg_traits<V>::value_type value_type;
     typedef typename linalg_traits<V>::iterator iterator;
     
-    void operator()(const void *, const iterator &_begin, const iterator &_end)
-    { std::fill(_begin, _end, value_type(0)); }
+    void operator()(const void *,const iterator &_begin,const iterator &_end);
   };
+  
+  template <class V> void plain_clear::operator()(const void *,
+			  const iterator &_begin, const iterator &_end)
+  { std::fill(_begin, _end, value_type(0)); }
 
   /* ******************************************************************** */
   /*		sub indexes                               		  */

@@ -66,8 +66,6 @@ namespace gmm {
   /* (preconditionned, with parametrable scalar product)        	  */
   /* ******************************************************************** */
 
-
-
   template <class Matrix, class Vector, class VectorB, class Preconditioner>
   int bicgstab(const Matrix& A, Vector& x, const VectorB& b,
 	   const Preconditioner& M, int itemax, double residu, int noisy = 1) {
@@ -75,7 +73,7 @@ namespace gmm {
     typedef typename linalg_traits<Vector>::value_type T;
     typedef typename temporary_plain_vector<Vector>::vector_type temp_vector;
     
-    T rho_1, rho_2, alpha, beta, omega;
+    T rho_1, rho_2(0), alpha(0), beta, omega(0);
     temp_vector p(vect_size(x)), phat(vect_size(x)), s(vect_size(x)),
       shat(vect_size(x)), 
       t(vect_size(x)), v(vect_size(x)), r(vect_size(x)), rtilde(vect_size(x));
