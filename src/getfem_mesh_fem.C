@@ -332,7 +332,7 @@ namespace getfem
     }
     
     dof_enumeration_made = true;
-    nb_total_dof = dof_sort.card();
+    nb_total_dof = (dof_sort.card() == 0) ? 0 : dof_sort.index().last_true()+1;
     
   }
 

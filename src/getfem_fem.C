@@ -102,6 +102,41 @@ namespace getfem
     }
   }
 
+  void virtual_fem::complete_interpolation_grad(const base_node &x,
+						const base_matrix &G,
+						bgeot::pgeometric_trans pgt,
+						const base_vector coeff,
+						base_matrix &val) const {
+    dim_type N = G.nrows();
+    dim_type P = dim();
+    size_type npt = G.ncols();
+    base_matrix pc(npt , P);
+    base_matrix grad(N, P), TMP1(P,P), B0(P,N), CS(P,P);
+    base_matrix val2(target_dim(), P);
+    base_poly PP;
+
+    for (size_type i = 0; i < npt; ++i)
+      for (dim_type n = 0; n < P; ++n) {
+	PP = pgt->poly_vector()[i];
+	PP.derivative(n);
+	pc(i, n) = PP.eval(x.begin());
+      }
+      
+    bgeot::mat_product(G, pc, grad);
+    if (P != N) {
+      bgeot::mat_product_tn(grad, grad, CS);
+      bgeot::mat_inv_cholesky(CS, TMP1);
+      bgeot::mat_product_tt(CS, grad, B0);
+    }
+    else {
+      bgeot::mat_gauss_inverse(grad, TMP1);
+      B0 = grad;
+    }
+
+    interpolation_grad(x, G, pgt, coeff, val2);
+    bgeot::mat_product(val2, B0, val);
+  }
+
 
   /* ******************************************************************** */
   /*	Class for description of an interpolation dof.                    */

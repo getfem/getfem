@@ -49,7 +49,7 @@ namespace getfem
     size_type N = mf.linked_mesh().dim();
     
     if (&mf.linked_mesh() != &mf_target.linked_mesh())
-      DAL_THROW(std::invalid_argument, "meshes are not the same");
+      DAL_THROW(std::invalid_argument, "meshes are different.");
 
     base_matrix G, val;
     base_vector coeff;
@@ -83,11 +83,11 @@ namespace getfem
 
       size_type P = pgt->structure()->dim(); /* dimension of the convex.*/
       base_matrix a(N, pgt->nb_points());
-      base_matrix pc(pgt->nb_points() , P);
       base_matrix grad(N, P), TMP1(P,P), B0(P,N), B1(1, N), CS(P,P);
       size_type nbpt = 0, i;
       
       /* TODO: prendre des iterateurs pour faire la copie */
+      // utiliser transfert_to_G ?
       for (size_type j = 0; j < pgt->nb_points(); ++j) // à optimiser !!
 	for (size_type i = 0; i < N; ++i)
 	  a(i,j) = mf.linked_mesh().points_of_convex(cv)[j][i];

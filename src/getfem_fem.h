@@ -138,7 +138,7 @@ namespace getfem
     mutable bool pspt_valid;
     bgeot::pconvex_ref cvr; // reference element.
     dim_type ntarget_dim;
-    bool is_equiv, is_lag, is_pol;
+    bool is_equiv, is_lag, is_pol, do_grad;
     short_type es_degree;
     
     void add_node(const pdof_description &d, const base_node &pt) ;
@@ -201,6 +201,11 @@ namespace getfem
 				    bgeot::pgeometric_trans pgt,
 				    const base_vector coeff,
 				    base_matrix &val) const = 0;
+    virtual void complete_interpolation_grad(const base_node &x,
+					     const base_matrix &G,
+					     bgeot::pgeometric_trans pgt,
+					     const base_vector coeff,
+					     base_matrix &val) const;
     virtual void interpolation_grad(pfem_precomp pfp, size_type ii,
 				    const base_matrix &G,
 				    bgeot::pgeometric_trans pgt, 
@@ -222,10 +227,11 @@ namespace getfem
     
     virtual size_type index_of_already_numerate_dof(size_type, size_type) const
       { DAL_THROW(internal_error, "internal error."); return 0; }
+    bool do_grad_reduction(void) const { return do_grad; }
 
     virtual_fem(void) { 
       ntarget_dim = 1; is_equiv = is_pol = is_lag = false;
-      pspt_valid = false;
+      pspt_valid = false; do_grad = true;
     }
   };
   
@@ -411,6 +417,8 @@ namespace getfem
   class pintegration_method;
   pfem virtual_link_fem(const mesh_fem &mf1, const mesh_fem &mf2,
 			pintegration_method pim);
+  pfem virtual_link_fem_with_gradient(const mesh_fem &mf1, const mesh_fem &mf2,
+				      pintegration_method pim);
   
   //@}
   

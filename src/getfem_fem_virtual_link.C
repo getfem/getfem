@@ -72,6 +72,9 @@ namespace getfem
     void compute(void);
 
   public :
+
+    mesh_fem &mf_interpolated(void) { return *pmf1; }
+    mesh_fem &mf_target(void) { return *pmf2; }
     void receipt(const MESH_CLEAR &);
     void receipt(const MESH_SUP_CONVEX &m);
     void receipt(const MESH_SWAP_CONVEX &m);
@@ -91,7 +94,7 @@ namespace getfem
     }
 
     void mat_trans(base_matrix &M, const base_matrix &G,
-		   bgeot::pgeometric_trans pgt);
+		   bgeot::pgeometric_trans pgt, bool wg);
 
     mesh_fem_link_fem(const mesh_fem_link_fem_light &ls);
     ~mesh_fem_link_fem();
@@ -107,32 +110,68 @@ namespace getfem
   }
   
   void mesh_fem_link_fem::mat_trans(base_matrix &M, const base_matrix &G,
-				    bgeot::pgeometric_trans pgt) {
+				    bgeot::pgeometric_trans pgt, bool wg) {
     if (to_be_computed) compute();
     size_type npt = G.ncols(), P = G.nrows();
-    base_node pt(P);
+    base_node pt(P), val(1);
+    base_vector coeff;
     std::vector<size_type> ind(npt);
+    base_matrix G1, val2(1, pmf2->linked_mesh().dim());
     base_matrix::const_iterator itm = G.begin();
     for (size_type k = 0; k < npt; ++k, itm += P) {
       std::copy(itm, itm + P, pt.begin());
-      ind[k] = pmf1->linked_mesh().points().search(P);
+      ind[k] = pmf2->linked_mesh().points().search(P);
       if (ind[k] == size_type(-1))
 	DAL_THROW(internal_error, "internal error.");
     }
-    size_type cv = __search_in_mjktab(convex_with_points(pmf1->linked_mesh(),
-							 npt, ind.begin()),
-				      npt, pmf1->linked_mesh());
+    size_type cv2 = __search_in_mjktab(convex_with_points(pmf2->linked_mesh(),
+							  npt, ind.begin()),
+				       npt, pmf2->linked_mesh());
+    size_type cv1_old = size_type(-1), cv1;
     std::fill(M.begin(), M.end(), 0.0);
-    
-    
-    // 2 - interpoler les fct de base des dof du cv et porter les coeff dans
-    //     la matrice M
-    
-    // ...
-    
-    DAL_THROW(to_be_done_error, "To be finished.");
-  }
 
+    size_type nbgauss = cv_info_tab[cv2].indgausstab.size();
+
+    for (size_type k = 0; k < cv_info_tab[cv2].doftab.size(); ++k) {
+      for (size_type j = 0; j < nbgauss; ++j) {
+	
+	size_type indg = cv_info_tab[cv2].indgausstab[j];
+	cv1 = gauss_ptab[indg].indcv;
+
+	if (cv1 != size_type(-1)) {
+	  size_type ndof = cv_info_tab[cv2].doftab[k], nlocdof;
+	  pfem pf = pmf1->fem_of_element(cv1);
+	  if (pf->target_dim() != 1)
+	    DAL_THROW(internal_error,
+		 "Sorry this method is not defined for vectorial elements.");
+	  size_type nbd = pf->nb_dof();
+	  ref_mesh_dof_ind_ct p = pmf1->ind_dof_of_element(cv1);
+	  for (nlocdof = 0; nlocdof < nbd; ++nlocdof)
+	    if (p[nlocdof] == ndof) break;
+	  if (nlocdof < nbd) {
+	    if (cv1 != cv1_old) {
+	      if (!(pf->is_equivalent())) 
+		transfert_to_G(G1, pmf1->linked_mesh().points_of_convex(cv1));
+	      if (coeff.size() < nbd) { coeff.resize(nbd); coeff.fill(0.0); }
+	    }
+	    coeff[nlocdof] = 1.0;
+	    pf->interpolation(gauss_ptab[indg].localcoords, G1,
+			      pmf1->linked_mesh().trans_of_convex(cv1),
+			      coeff, val);
+	    M(k, j) = val[0];
+	    if (wg) {
+	      pf->complete_interpolation_grad(gauss_ptab[indg].localcoords, G1,
+				      pmf1->linked_mesh().trans_of_convex(cv1),
+				      coeff, val2);
+	      for (dim_type n = 0; n < pmf2->linked_mesh().dim(); ++n)
+		M(k, j + (n+1)*nbgauss) = val2(0, n);
+	    }
+	    coeff[nlocdof] = 0.0; cv1_old = cv1;
+	  }
+	}
+      }
+    }
+  }
 
 
   void mesh_fem_link_fem::add_dof_to_cv(size_type cv, size_type i) {
@@ -276,12 +315,15 @@ namespace getfem
   struct _virtual_link_fem_light {
     pmesh_fem_link_fem pmflf;
     bgeot::papprox_integration pai;
+    bool with_grad;
     bool operator < (const _virtual_link_fem_light &l) const {
       if (pmflf < l.pmflf) return true; if (pmflf > l.pmflf) return false; 
-      if (pai < l.pai) return true; return false;
+      if (pai < l.pai) return true; if (pai > l.pai) return false;
+      if (with_grad < l.with_grad) return true; return false;
     }
-    _virtual_link_fem_light(pmesh_fem_link_fem a,bgeot::papprox_integration b)
-      : pmflf(a), pai(b) {}
+    _virtual_link_fem_light(pmesh_fem_link_fem a,bgeot::papprox_integration b,
+			    bool c)
+      : pmflf(a), pai(b), with_grad(c) {}
     _virtual_link_fem_light(void) {}
   };
 
@@ -292,6 +334,8 @@ namespace getfem
   protected :
     pmesh_fem_link_fem pmflf;
     bgeot::papprox_integration pai;
+    bool with_grad;
+    dim_type di;
     
     void build_dof(size_type nb) {
       init_cvs_node();
@@ -305,17 +349,19 @@ namespace getfem
 
     pmesh_fem_link_fem associated_mf_link_fem(void) { return pmflf; }
     bgeot::papprox_integration associated_integration(void) { return pai; }
-    
+    bool is_with_grad(void) { return with_grad; }
+
     virtual size_type nb_dof(void) const {
       size_type nb = pmflf->nb_max_dof_per_element();
       if (nb != _dof_types.size()) 
 	((_virtual_link_fem *)(this))->build_dof(nb);
       return nb;
     }
-    virtual size_type nb_base(void) const { return pai->nb_points(); }
+    virtual size_type nb_base(void) const
+      { return pai->nb_points() * (1 + (with_grad ? di : 0)); }
     virtual void mat_trans(base_matrix &M, const base_matrix &G,
 			   bgeot::pgeometric_trans pgt) const
-      { (pmesh_fem_link_fem(pmflf))->mat_trans(M, G, pgt); }
+      { (pmesh_fem_link_fem(pmflf))->mat_trans(M, G, pgt, with_grad); }
 
     virtual size_type index_of_already_numerate_dof(size_type cv, size_type i)
       const { return pmflf->ind_of_dof(cv, i); }
@@ -347,8 +393,22 @@ namespace getfem
 	  "You cannot interpolate this element, use the original element.");
     }
     void grad_base_value(const base_node &x, base_tensor &t) const {
-      DAL_THROW(to_be_done_error,
-      "Sorry, for the moment, the gradient is not available on this element.");
+      if (!with_grad) 
+	DAL_THROW(internal_error,
+	  "This element has no gradient defined, use the adapted element");
+      const bgeot::stored_point_tab *p = &(pai->integration_points());
+      for (size_type i = 0; i < p->size(); ++i)
+	if (&((*p)[i]) == &x) {
+	  bgeot::multi_index mi(3);
+	  mi[2] = di; mi[1] = target_dim(); mi[0] = nb_base();
+	  t.adjust_sizes(mi);
+	  std::fill(t.begin(), t.end(), 0.0);
+	  for (dim_type k = 0; k < di; ++k)
+	    t[k * mi[0] + i + pai->nb_points() * (k+1)] = 1.0;
+	  return;
+	}
+      DAL_THROW(internal_error,
+	  "You cannot interpolate this element, use the original element.");
     }
     void hess_base_value(const base_node &x, base_tensor &t) const {
       DAL_THROW(to_be_done_error,
@@ -356,9 +416,11 @@ namespace getfem
     }
     
     _virtual_link_fem(const _virtual_link_fem_light &ls)
-      : pmflf(ls.pmflf), pai(ls.pai) {
+      : pmflf(ls.pmflf), pai(ls.pai), with_grad(ls.with_grad) {
       is_equiv = is_pol = is_lag = false; es_degree = 5;
       cvr = pai->ref_convex();
+      di = ls.pmflf->mf_target().linked_mesh().dim();
+      do_grad = false;
     }
 
   };
@@ -374,7 +436,16 @@ namespace getfem
 	     "This element is only defined on approximated integration.");
     if (__vlf_tab == 0) __vlf_tab = new virtual_link_fem_table();
     return __vlf_tab->add(_virtual_link_fem_light(mf_link_fem(mf1, mf2),
-						  pim.method.pai));
+						  pim.method.pai, false));
+  }
+	
+  pfem virtual_link_fem_with_gradient(mesh_fem &mf1, mesh_fem &mf2,
+			pintegration_method pim) {
+    if (pim.is_ppi) DAL_THROW(std::invalid_argument,
+	     "This element is only defined on approximated integration.");
+    if (__vlf_tab == 0) __vlf_tab = new virtual_link_fem_table();
+    return __vlf_tab->add(_virtual_link_fem_light(mf_link_fem(mf1, mf2),
+						  pim.method.pai, true));
   }
 	
   static void sup_virtual_link_fem(pmesh_fem_link_fem pmflf) {
@@ -384,7 +455,8 @@ namespace getfem
       for (; it != ite; ++it)
 	if (*it != 0 && (*it)->associated_mf_link_fem() == pmflf)
 	  __vlf_tab->sup(_virtual_link_fem_light
-			 (pmflf, (*it)->associated_integration()));
+			 (pmflf, (*it)->associated_integration(),
+			  (*it)->is_with_grad()));
     }
   }
 

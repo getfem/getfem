@@ -116,7 +116,9 @@ namespace getfem
 	}
 	switch ((*it).t) {
 	case GETFEM__BASE    : break;
-	case GETFEM__GRAD    : ++k; grad_reduction.push_back(k); break;
+	case GETFEM__GRAD    : ++k;
+	  if ((*it).pfi->do_grad_reduction()) grad_reduction.push_back(k);
+	  break;
 	case GETFEM__HESSIAN : ++k; hess_reduction.push_back(k);
 	  if (!(pgt->is_linear())) nhess *= 2; break;
 	}
