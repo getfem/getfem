@@ -2,7 +2,7 @@
 
 namespace bgeot {
   struct rtree_elt_base {
-    enum { RECTS_PER_LEAF=4 };
+    enum { RECTS_PER_LEAF=8 };
     bool isleaf_;
     bool isleaf() const { return isleaf_; }
     base_node rmin, rmax;
@@ -172,7 +172,7 @@ namespace bgeot {
 	if (split_test(b, bmin, bmax, split_dir, split_v)) { split_ok = true; break; }
 	split_dir = (split_dir+1)%N;
       }
-      if (!split_ok && b.size() > rtree_elt_base::RECTS_PER_LEAF*2) cout << "FAILED TO SPLIT ...\n";
+      //if (!split_ok && b.size() > rtree_elt_base::RECTS_PER_LEAF*2) cout << "FAILED TO SPLIT ...\n";
     }
     if (split_ok) {
       size_type cnt1=0,cnt2=0;
