@@ -74,6 +74,54 @@ namespace getfem
     }
   }
 
+  scalar_type polynomial_composite::eval(const base_node &pt) const {
+    base_node p0(mp->dim()), p1(mp->dim());
+    std::fill(mp->elt.begin(), mp->elt.end(), true);
+    bgeot::mesh_convex_ind_ct::const_iterator itc, itce;
+    
+    mesh_precomposite::PTAB::const_sorted_iterator
+      it1 = mp->vertexes.sorted_ge(pt), it2 = it1;    
+    size_type i1 = it1.index(), i2;
+
+    --it2; i2 = it2.index();
+    
+
+    while (i1 != size_type(-1) || i2 != size_type(-1)) {
+      if (i1 != size_type(-1)) {
+	bgeot::mesh_convex_ind_ct tc = mp->linked_mesh().convex_to_point(i1);
+	itc = tc.begin(); itce = tc.end();
+	for (; itc != itce; ++itc) {
+	  size_type ii = *itc;
+	  if (mp->elt[ii]) {
+	    mp->elt[ii] = false;
+	    p0 = pt; p0 -= mp->orgs[ii];
+	    bgeot::mat_vect_product_t(mp->gtrans[ii], p0, p1);
+	    if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10)
+	      return  polytab[ii].eval(p1.begin());
+	  }
+	}
+	++it1; i1 = it1.index();
+      }
+      if (i2 != size_type(-1)) {
+	bgeot::mesh_convex_ind_ct tc = mp->linked_mesh().convex_to_point(i2);
+	itc = tc.begin(); itce = tc.end();
+	for (; itc != itce; ++itc) {
+	  size_type ii = *itc;
+	  if (mp->elt[ii]) {
+	    mp->elt[ii] = false;
+	    p0 = pt; p0 -= mp->orgs[ii];
+	    bgeot::mat_vect_product_t(mp->gtrans[ii], p0, p1);
+	    if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10)
+	      return  polytab[ii].eval(p1.begin());
+	  }
+	}
+	--it2; i2 = it2.index();
+      }
+    }
+    DAL_THROW(internal_error, "Element not found in composite polynomial: " << pt);
+  }
+
+
   polynomial_composite::polynomial_composite(const mesh_precomposite &m)
       : mp(&m), polytab(m.nb_convex()) {
     std::fill(polytab.begin(), polytab.end(), base_poly(m.dim(), 0));
