@@ -46,8 +46,7 @@ namespace getfem
     the order: DxUx,DyUx,DzUx,DxUy,DyUy,...
 
     in any case, the size of V should be (mf_target.nbdof/mf_target.qdim) *
-    (mf.qdim)^2 elements (this is not checked by the function!)
-    ?? pas mf.qdim * N ??
+    (mf.qdim)*N elements (this is not checked by the function!)
   */
   template<class VECT>
   void compute_gradient(mesh_fem &mf, mesh_fem &mf_target,
@@ -66,10 +65,6 @@ namespace getfem
       DAL_THROW(std::invalid_argument, "invalid Qdim for gradient mesh_fem");
     }
 
-    for (size_type i = 0; i < mf_target.nb_dof(); ++i)
-      for (size_type j = 0; j < qdim * N; ++j)
-	V[i * qdim * N + j] = 0;  // à vérifier
-
     base_matrix G, val;
     base_vector coeff;
  
@@ -86,8 +81,8 @@ namespace getfem
       if (!(pf_target->is_equivalent()) || !(pf_target->is_lagrange()))
 	DAL_THROW(std::invalid_argument, 
 		  "finite element target not convenient");
-      if (!(pf->is_equivalent())) 
-	transfert_to_G(G, mf.linked_mesh().points_of_convex(cv));
+      
+      transfert_to_G(G, mf.linked_mesh().points_of_convex(cv));
 
       pgt = mf.linked_mesh().trans_of_convex(cv);
       if (pf_targetold != pf_target) {
@@ -101,15 +96,16 @@ namespace getfem
       pf_old = pf;
 
       size_type P = pgt->structure()->dim(); /* dimension of the convex.*/
-      base_matrix a(N, pgt->nb_points());
+      // base_matrix a(N, pgt->nb_points());
       base_matrix grad(N, P), TMP1(P,P), B0(P,N), B1(1, N), CS(P,P);
       base_tensor t;
       
       /* TODO: prendre des iterateurs pour faire la copie */
       // utiliser transfert_to_G ?
-      for (size_type j = 0; j < pgt->nb_points(); ++j) // à optimiser !!
-	for (size_type i = 0; i < N; ++i)
-	  a(i,j) = mf.linked_mesh().points_of_convex(cv)[j][i];
+      
+      // for (size_type j = 0; j < pgt->nb_points(); ++j) // à optimiser !!
+      //  for (size_type i = 0; i < N; ++i)
+      // a(i,j) = mf.linked_mesh().points_of_convex(cv)[j][i];
       
       coeff.resize(pf->nb_dof());
       val.resize(pf->target_dim(), P);
@@ -118,7 +114,7 @@ namespace getfem
       for (size_type j = 0; j < pf_target->nb_dof(); ++j) {
 	if (!pgt->is_linear() || j == 0) {
 	  // computation of the pseudo inverse
-	  bgeot::mat_product(a, pgp->grad(j), grad);
+	  bgeot::mat_product(G, pgp->grad(j), grad);
 	  if (P != N) {
 	    bgeot::mat_product_tn(grad, grad, CS);
 	    bgeot::mat_inv_cholesky(CS, TMP1);
@@ -129,7 +125,7 @@ namespace getfem
 	  }
 	}
 
-	if (pf_target->target_dim() != 1)
+	if (pf_target->target_dim() != 1 || pf->target_dim() != 1)
 	  DAL_THROW(to_be_done_error, "vectorial gradient, to be done ... ");
 
 	pf->real_grad_base_value(pgp, pfp, j, G, B0, t);
@@ -141,10 +137,10 @@ namespace getfem
 	  // bgeot::mat_product(val, B0, B1);
 
 	  base_tensor::const_iterator it = t.begin();
-	  B0.fill(0.0);
+	  B1.fill(0.0);
 	  for (size_type l = 0; l < N; ++l)
 	    for (size_type i = 0; i < pf->nb_base(); ++i, ++it)
-	      B0(0, l) += *it * coeff[i];
+	      B1(0, l) += *it * coeff[i];
 
 	  if (it != t.end()) DAL_THROW(internal_error, "internal_error");
 
