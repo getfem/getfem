@@ -81,6 +81,7 @@ namespace getfem {
       if (nodes.size()) return nodes[0].pt.size(); 
       else DAL_THROW(dal::internal_error,"");
     }
+    void simplex_orientation(slice_simplex& s);
     /**
        build a new mesh_slice given:
        @param m the mesh that is to be sliced
@@ -159,6 +160,16 @@ namespace getfem {
     virtual ~slicer_action() {}
   };
 
+  /** 
+      this slicer does nothing! 
+  */
+  class slicer_none : public slicer_action {
+  public:
+    slicer_none() {}
+    void exec(mesh_slicer &/*ms*/) {}
+    static slicer_none& static_instance();
+  };
+
   /**
      extraction of the boundary of a slice
   */
@@ -167,8 +178,10 @@ namespace getfem {
     std::vector<slice_node::faces_ct> convex_faces;
     bool test_bound(const slice_simplex& s, slice_node::faces_ct& fmask, 
                     const mesh_slicer::cs_nodes_ct& nodes) const;
+    void build_from(const getfem_mesh& m, const convex_face_ct& cvflst);
   public:
     slicer_boundary(const getfem_mesh& m, slicer_action &sA, const convex_face_ct& fbound);
+    slicer_boundary(const getfem_mesh& m, slicer_action &sA = slicer_none::static_instance());
     void exec(mesh_slicer &ms);
   };
 
@@ -443,14 +456,6 @@ namespace getfem {
     void exec(mesh_slicer &ms);
   };
 
-  /** 
-      this slicer does nothing! 
-  */
-  class slicer_none : public slicer_action {
-  public:
-    slicer_none() {}
-    void exec(mesh_slicer &/*ms*/) {}
-  };
 }
 
 #endif /*GETFEM_MESH_SLICERS_H*/

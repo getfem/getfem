@@ -1,3 +1,4 @@
+#include <dal_singleton.h>
 #include <getfem_mesh_slicers.h>
 #include <getfem_mesh_slice.h>
 #include <bgeot_geotrans_inv.h>
@@ -7,9 +8,23 @@ namespace getfem {
 
   /* -------------------------------------- slicers --------------------------------------*/
 
+  slicer_none& slicer_none::static_instance() {
+    return dal::singleton<slicer_none>::instance();
+  }
+
   /* boundary extraction */
   slicer_boundary::slicer_boundary(const getfem_mesh& m, slicer_action &sA, 
 				   const convex_face_ct& cvflst) : A(&sA) {
+    build_from(m,cvflst);
+  }
+
+  slicer_boundary::slicer_boundary(const getfem_mesh& m, slicer_action &sA) : A(&sA) {
+    convex_face_ct cvflist;
+    outer_faces_of_mesh(m, cvflist);
+    build_from(m,cvflist);
+  }
+
+  void slicer_boundary::build_from(const getfem_mesh& m, const convex_face_ct& cvflst) {
     if (m.convex_index().card()==0) return;
     convex_faces.resize(m.convex_index().last()+1, slice_node::faces_ct(0L));
     for (size_type i=0; i < cvflst.size(); ++i) 
@@ -55,7 +70,8 @@ namespace getfem {
           }
         }
       } else if (s.dim() == 3) {
-        ms.sup_simplex(cnt);
+        //ms.simplex_orientation(ms.simplexes[cnt]);
+	ms.sup_simplex(cnt);
         slice_simplex s2(3);
         for (size_type j=0; j < 4; ++j) {
           /* usage of s forbidden in this loop since push_back happens .. */
@@ -443,6 +459,8 @@ namespace getfem {
 	for (size_type j=i+1; j <= s.dim(); ++j) {
 	  const slice_node& A = ms.nodes[s.inodes[i]];
 	  const slice_node& B = ms.nodes[s.inodes[j]];
+	  /* duplicate with stored_mesh_slice which also 
+	     builds a list of edges */
 	  if ((A.faces & B.faces).count() >= unsigned(ms.cv_dim-1)) {
 	    slice_node::faces_ct fmask((1 << ms.cv_nbfaces)-1); fmask.flip();
 	    size_type e = edges_m.add_segment_by_points(A.pt,B.pt);
@@ -546,6 +564,22 @@ namespace getfem {
     }
   }
 
+  void mesh_slicer::simplex_orientation(slice_simplex& s) {
+    size_type N = m.dim();
+    if (s.dim() == N) {
+      base_matrix M(N,N);
+      for (size_type i=1; i < N+1; ++i) {
+	base_small_vector d = nodes[s.inodes[i]].pt - nodes[s.inodes[0]].pt;
+	dal::copy_n(d.const_begin(), N, M.begin() + (i-1)*N);
+      }
+      scalar_type J = lu_det(M);
+      //cout << " lu_det = " << J << "\n";	
+      if (J < 0) {
+	std::swap(s.inodes[1],s.inodes[0]);
+      }
+    }
+  }
+
   void mesh_slicer::exec(size_type nrefine, convex_face_ct& cvlst) {
     bgeot::stored_point_tab cvm_pts;
     const getfem_mesh *cvm = 0;
@@ -555,6 +589,8 @@ namespace getfem {
     std::vector<slice_node::faces_ct> points_on_faces;
 
     for (convex_face_ct::const_iterator it = cvlst.begin(); it != cvlst.end(); ++it) {
+      bool revert_orientation = false;
+
       update_cv_data((*it).cv,(*it).f);      
       /* update structure-dependent data */
       if (prev_cvr != cvr) {
@@ -569,6 +605,20 @@ namespace getfem {
       else
 	cvms = cvm; 
 
+      if (pgt->dim() == m.dim() && m.dim()>=2) { /* no orient check for convexes of lower dim */
+	base_matrix G; bgeot::vectors_to_base_matrix(G,m.points_of_convex(cv));
+	/*base_node g(pgt->dim()); g.fill(.5); 
+	base_matrix pc; pgt->gradient(g,pc);
+	base_matrix K(pgt->dim(),pgt->dim());
+	gmm::mult(G,pc,K);
+	scalar_type J = gmm::lu_det(K);*/
+	bgeot::geotrans_interpolation_context ctx(pgp,0,G);
+	scalar_type J = gmm::lu_det(ctx.B());
+	if (J < 0) revert_orientation = true;
+	//cout << "cv = " << cv << ", J = " << J << "\n";
+      }
+
+
       /* apply the initial geometric transformation */
       std::vector<size_type> ptsid(cvm_pts.size()); std::fill(ptsid.begin(), ptsid.end(), size_type(-1));
       simplexes.resize(cvms->nb_convex());
@@ -577,6 +627,7 @@ namespace getfem {
 	simplexes[snum].inodes.resize(cvms->nb_points_of_convex(snum));
 	std::copy(cvms->ind_points_of_convex(snum).begin(),
 		  cvms->ind_points_of_convex(snum).end(), simplexes[snum].inodes.begin());
+	if (revert_orientation) std::swap(simplexes[snum].inodes[0],simplexes[snum].inodes[1]);
 	/* store indices of points which are really used , and renumbers them */
 	for (std::vector<size_type>::iterator itp = simplexes[snum].inodes.begin();
 	     itp != simplexes[snum].inodes.end(); ++itp) {
@@ -589,6 +640,13 @@ namespace getfem {
 	    pgp->transform(m.points_of_convex(cv), *itp, nodes.back().pt);
 	  }
 	  *itp = ptsid[*itp];
+	}
+	if (0) { 
+	  static int once = 0;
+	  if (once++ < 3) {
+	    cout << "check orient cv " << cv << ", snum=" << snum << "/" << cvms->nb_convex();
+	  }
+	  simplex_orientation(simplexes[snum]);
 	}
       }
       apply_slicers();

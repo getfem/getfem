@@ -203,6 +203,22 @@ namespace dal
     }
   }
 
+  template<typename VEC> struct sorted_indexes_aux {
+    const VEC &v;
+  public:
+    sorted_indexes_aux(const VEC& v_) : v(v_) {}
+    template <typename IDX> bool operator()(const IDX &ia, const IDX &ib) const {
+      return v[ia] < v[ib];
+    }
+  };
+
+  template<typename VEC, typename IVEC> 
+  void sorted_indexes(const VEC &v, IVEC &iv) {
+    iv.clear(); iv.resize(v.size());
+    for (size_t i=0; i < v.size(); ++i) iv[i] = i;
+    std::sort(iv.begin(), iv.end(), sorted_indexes_aux<VEC>(v));
+  }
+
 } /* end of namespace dal.                                                 */
 
 

@@ -424,51 +424,106 @@ namespace getfem {
     write_separ();
   }
 
+
+  /** A (quite large) class for exportation of data to IBM OpenDX
+                     http://www.opendx.org/
+
+      This class is more capable than the VTK export, as it is
+      possible to export many different meshes/slices, with their
+      edges, datasets, and create series of dataset for animations
+      etc, in a single '.dx' file.
+      
+      Moreover, it is able to reopen a '.dx' file and append new data
+      into it.  Hence it is possible, if many time-steps are to be
+      saved, to view intermediate results in OpenDX during the
+      computation.
+   */
   class dx_export {
     std::ostream &os;
     char header[256]; 
     bool ascii;
     const stored_mesh_slice *psl;
+    bool psl_use_merged; /* flag enabled if we merge the points of psl before export */
     std::auto_ptr<mesh_fem> pmf;
     dal::bit_vector pmf_dof_used;
     std::vector<unsigned> pmf_cell_type;
     std::fstream real_os;
     dim_type dim_, connections_dim;
-    std::string series_name;
-    struct log_names {
-      unsigned count;
-      std::list<std::string> names;
-      log_names() : count(0) {}
-      void add(const std::string &s) { ++count; names.push_back(s); }
+    struct dxSeries {
+      std::string name;
+      std::list<std::string> members;
     };
-    enum { MESHES, SCALAR_FIELDS, VECTOR_FIELDS, TENSOR_FIELDS, SERIES_OBJECTS, NB_LOG };
-    std::vector<log_names> log;
-    enum { EMPTY, HEADER_WRITTEN, STRUCTURE_WRITTEN } state;
+    struct dxObject {
+      std::string name;
+      std::string mesh;
+    };
+    struct dxMesh {
+      unsigned flags;
+      typedef enum { NONE=0, WITH_EDGES=1, STRUCTURE_WRITTEN=2 } flags_t;
+      std::string name;
+      dxMesh() : flags(NONE) {}
+    };
+    std::list<dxObject> objects;
+    std::list<dxSeries> series;
+    std::list<dxMesh> meshes;
+    bool header_written;
   public:
     dx_export(const std::string& fname, bool ascii_ = false, bool append_ = false);
     dx_export(std::ostream &os_, bool ascii_ = false);
-    ~dx_export();
-    void exporting(const getfem_mesh& m, const char *name = 0);
-    void exporting(const mesh_fem& mf, const char *name = 0);
-    void exporting(const stored_mesh_slice& sl, const char *name = 0);
+    ~dx_export(); /* the file is not complete until the destructor has been executed */
+    void exporting(const getfem_mesh& m, std::string name = std::string());
+    void exporting(const mesh_fem& mf, std::string name = std::string());
+    void exporting(const stored_mesh_slice& sl, bool merge_points = true, std::string name = std::string());
+    /** append edges information (if you want to draw the mesh and are
+	using a refined slice. Should be called just after exporting(..)  */
+    void exporting_mesh_edges(bool with_slice_edge = true);
 
     /** the header is the second line of text in the exported file,
        you can put whatever you want -- call this before any write_dataset or write_mesh */
     void set_header(const std::string& s);
     void write_mesh();
-    void begin_series(const char *name = 0);
-    void end_series();
-    template<class VECT> void write_point_data(const getfem::mesh_fem &mf, const VECT& U0, const std::string& name);
-    template<class VECT> void write_sliced_point_data(const VECT& Uslice, const std::string& name);
-    template<class VECT> void write_cell_data(const VECT& U, const std::string& name); 
-    void write_mesh_quality(const getfem_mesh &m);
+    /* add an object (typically the name of a data field) to a
+       'series', i.e.  an aggregate of consecutive objects. Using
+       'series' is useful for animations in opendx 
+
+       If 'field_name' corresponds to a data_set whose mesh edges have
+       been exported, a second series called serie_name + '_edges'
+       will be filled, which will allow you to view the mesh edges.
+    */
+    void serie_add_object(const std::string &serie_name, 
+			  const std::string &object_name);
+    void serie_add_object(const std::string &serie_name) 
+    { serie_add_object(serie_name, current_data_name()); }
+    /* name of current mesh (use exporting(...) to change the current mesh) */
+    std::string current_mesh_name() { return current_mesh().name; }
+    /* name of last written data_set */
+    std::string current_data_name() { return current_data().name; }
+    template<class VECT> void 
+    write_point_data(const getfem::mesh_fem &mf, 
+		     const VECT& U0, std::string name = std::string());
+    template<class VECT> void 
+    write_sliced_point_data(const VECT& Uslice, std::string name = std::string());
+    /* TOBEDONE !!!!!!!!!!!
+       template<class VECT> void 
+    write_cell_data(const VECT& U, std::string name = std::string()); 
+    void write_mesh_quality(const getfem_mesh &m);*/
     void write_normals();
     const stored_mesh_slice& get_exported_slice() const;
     const mesh_fem& get_exported_mesh_fem() const;
 
   private:
     void init();
+    void reread_metadata();
+    void update_metadata(std::ios::pos_type);
+    void write_series();
+    void serie_add_object_(const std::string &serie_name, 
+			   const std::string &object_name);
     void write_separ();
+    std::string default_name(std::string s, int count, const char *default_prefix) {
+      if (s.size() == 0) { 
+	std::stringstream ss; ss << default_prefix << count; return ss.str();
+      } else return s;
+    }
     template<class T> void write_val(T v) {
       if (ascii) os << " " << v;
       else os.write((char*)&v, sizeof(T));
@@ -480,25 +535,60 @@ namespace getfem {
       else if (*p == 0x78) return "lsb";
       else return "this is very strange..";
     }
-    std::string name_of_pts_array() { return log[MESHES].names.back() + std::string("_pts"); }
-    std::string name_of_conn_array() { return log[MESHES].names.back() + std::string("_conn"); }
+    bool new_mesh(std::string &name);
+    std::list<dxMesh>::iterator get_mesh(const std::string& name, 
+					 bool raise_error = true);
+    std::list<dxObject>::iterator get_object(const std::string& name, 
+					     bool raise_error = true);
+    dxMesh &current_mesh() { 
+      if (meshes.size()) return meshes.back(); 
+      else DAL_THROW(dal::failure_error, "no mesh!"); 
+    }
+    dxObject &current_data() {
+      if (objects.size()) return objects.back(); 
+      else DAL_THROW(dal::failure_error, "no data!"); 
+    }
+
+    std::string name_of_pts_array(const std::string &meshname) 
+    { return meshname + std::string("_pts"); }
+    std::string name_of_conn_array(const std::string &meshname) 
+    { return meshname + std::string("_conn"); }
+    std::string name_of_edges_array(const std::string &meshname) 
+    { return meshname + std::string("_edges"); }
     void check_header();
     const char *dxname_of_convex_structure(bgeot::pconvex_structure cvs);
     void write_convex_attributes(bgeot::pconvex_structure cvs);
     void write_mesh_structure_from_slice();
     void write_mesh_structure_from_mesh_fem();
-    template<class VECT> void write_dataset_(const VECT& U, const std::string& name, bool cell_data=false);
+    void write_mesh_edges_from_slice(bool with_slice_edge);
+    void write_mesh_edges_from_mesh();
+    template <typename VECT> 
+    void smooth_field(const VECT& U, base_vector &sU);
+    template<class VECT> 
+    void write_dataset_(const VECT& U, std::string name, bool cell_data=false);
   };
 
+  template <typename VECT> 
+  void dx_export::smooth_field(const VECT& U, base_vector &sU) {
+    size_type Q = gmm::vect_size(U) / psl->nb_points();
+    sU.clear(); sU.resize(Q*psl->nb_merged_nodes());
+    for (size_type i=0; i < psl->nb_merged_nodes(); ++i) {
+      for (size_type j=0; j < psl->merged_point_cnt(i); ++j)
+        for (size_type q=0; q < Q; ++q)
+          sU[i*Q+q] += U[psl->merged_point_nodes(i)[j].pos*Q+q];
+      for (size_type q=0; q < Q; ++q)
+        sU[i*Q+q] /= psl->merged_point_cnt(i);
+    }
+  }
 
   template<class VECT>
   void dx_export::write_point_data(const getfem::mesh_fem &mf, const VECT& U,
-                                   const std::string& name) {
+                                   std::string name) {
     size_type Q = (gmm::vect_size(U) / mf.nb_dof())*mf.get_qdim();
     if (psl) {
       std::vector<scalar_type> Uslice(Q*psl->nb_points());
       psl->interpolate(mf, U, Uslice);
-      write_dataset_(Uslice,name);
+      write_sliced_point_data(Uslice,name);
     } else {
       std::vector<scalar_type> V(pmf->nb_dof() * Q);
       if (&mf != &(*pmf)) {
@@ -516,31 +606,40 @@ namespace getfem {
     }
   }
 
-  template<class VECT>
-  void dx_export::write_sliced_point_data(const VECT& U, const std::string& name) {
-    write_dataset_(U, name, false);
+  template<class VECT> void 
+  dx_export::write_sliced_point_data(const VECT& Uslice, std::string name) {
+    if (!psl_use_merged)
+      write_dataset_(Uslice, name, false);
+    else {
+      base_vector Umerged; smooth_field(Uslice,Umerged);
+      write_dataset_(Umerged, name, false);
+    }
   }
 
-  template<class VECT> void dx_export::write_dataset_(const VECT& U, const std::string& name, bool cell_data) {
+  template<class VECT> void 
+  dx_export::write_dataset_(const VECT& U, std::string name, bool cell_data) {
     write_mesh();
+    objects.push_back(dxObject()); 
+    name = default_name(name, objects.size(), "gf_field"); 
+    objects.back().name = name;
+    objects.back().mesh = current_mesh_name();
     size_type nb_val = 0;
-    log[SERIES_OBJECTS].add(name);
     if (cell_data) {
       nb_val = psl ? psl->linked_mesh().convex_index().card() 
         : pmf->linked_mesh().convex_index().card(); 
     } else {
-      nb_val = psl ? psl->nb_points() : pmf_dof_used.card();
+      nb_val = psl ? (psl_use_merged ? psl->nb_merged_nodes() : psl->nb_points()) : pmf_dof_used.card();
     }
     size_type Q = gmm::vect_size(U) / nb_val;
     if (gmm::vect_size(U) != nb_val*Q) 
       DAL_THROW(dal::failure_error, "inconsistency in the size of the dataset: " 
                 << gmm::vect_size(U) << " != " << nb_val << "*" << Q);
 
-    os << "object \"" << name << "_data\" class array type float rank ";
-    if (Q == 1) { os << "0"; log[SCALAR_FIELDS].add(name); } /* scalar data */
-    else if (Q == 4) { os << "2 shape 2 2"; log[TENSOR_FIELDS].add(name); } /* or 2x2 tensor data */
-    else if (Q == 9) { os << "2 shape 3 3"; log[TENSOR_FIELDS].add(name); } /* or 2x2 tensor data */
-    else { os << "1 shape " << Q; log[VECTOR_FIELDS].add(name); } /* fallback: vector data */
+    os << "\nobject \"" << name << "_data\" class array type float rank ";
+    if (Q == 1) { os << "0"; } /* scalar data */
+    else if (Q == 4) { os << "2 shape 2 2"; } /* or 2x2 tensor data */
+    else if (Q == 9) { os << "2 shape 3 3"; } /* or 2x2 tensor data */
+    else { os << "1 shape " << Q; } /* fallback: vector data */
     os << " items " << nb_val;
     if (!ascii) os << " " << endianness() << " binary";
     os << " data follows" << endl;
@@ -551,14 +650,26 @@ namespace getfem {
     write_separ();
 
     if (!cell_data)
-      os << "attribute \"dep\" string \"positions\"\n";
-    else os << "attribute \"dep\" string \"connections\"\n";
+      os << "\n  attribute \"dep\" string \"positions\"\n";
+    else os << "\n  attribute \"dep\" string \"connections\"\n";
     os << "\n";
+
+    if (current_mesh().flags & dxMesh::WITH_EDGES) {
+      os << "\nobject \"" << name << "_edges\" class field\n"
+	 << "  component \"positions\" value \"" 
+	 << name_of_pts_array(current_mesh_name()) << "\"\n"
+	 << "  component \"connections\" value \"" 
+	 << name_of_conn_array(name_of_edges_array(current_mesh_name())) << "\"\n"
+	 << "  component \"data\" value \"" << name << "_data\"\n";      
+    }
+
     /* write footer */
-    os << "object \"" << name << "\" class field\n"
-       << "component \"positions\" value \"" << name_of_pts_array() << "\"\n"
-       << "component \"connections\" value \"" << name_of_conn_array() << "\"\n"
-       << "component \"data\" value \"" << name << "_data\"\n";
+    os << "\nobject \"" << name << "\" class field\n"
+       << "  component \"positions\" value \"" 
+       << name_of_pts_array(current_mesh_name()) << "\"\n"
+       << "  component \"connections\" value \"" 
+       << name_of_conn_array(current_mesh_name()) << "\"\n"
+       << "  component \"data\" value \"" << name << "_data\"\n";
   }
 
 }  /* end of namespace getfem. */

@@ -16,8 +16,21 @@ namespace getfem {
       dim_type fcnt, cv_nbfaces; // number of faces of the convex (fcnt also counts the faces created by the slicing of the convex)
       mesh_slicer::cs_nodes_ct nodes;
       mesh_slicer::cs_simplexes_ct simplexes;
+      size_type global_points_count;
     };
     typedef std::deque<convex_slice> cvlst_ct;
+
+    struct merged_node_t {
+      const slice_node *P;
+      unsigned pos; /* [0..nb_points()-1] */
+    };
+    /* these three arrays allow the association of a global point
+       number to a merged point number, and of a merged point to a
+       list of global points */
+    mutable std::vector<merged_node_t> merged_nodes;     /* size = points_cnt */
+    mutable std::vector<size_type> merged_nodes_idx;     /* size = nb of merged points + 1 */
+    mutable std::vector<size_type> to_merged_index;      /* size = points_cnt */
+    mutable bool merged_nodes_available;
 
     /* keep track of the original mesh (hence it should not be destroyed before the slice) */
     const getfem_mesh *poriginal_mesh;
@@ -33,8 +46,7 @@ namespace getfem {
     stored_mesh_slice(const getfem::getfem_mesh& m, size_type nrefine = 1) 
       : poriginal_mesh(0), points_cnt(0), dim_(size_type(-1)) { 
       this->build(m, slicer_none(), nrefine);
-    }
-      ;
+    };
     virtual ~stored_mesh_slice() {}
     size_type nb_convex() const { return cvlst.size(); }
     size_type convex_num(size_type ic) const { return cvlst[ic].cv_num; }
@@ -49,14 +61,44 @@ namespace getfem {
     const mesh_slicer::cs_simplexes_ct& simplexes(size_type ic) const { return cvlst[ic].simplexes; }
     size_type memsize() const;
     void clear() { poriginal_mesh = 0; cvlst.clear(); points_cnt = 0; 
-      dim_ = size_type(-1); cv2pos.clear(); simplex_cnt.clear(); }
+      dim_ = size_type(-1); cv2pos.clear(); simplex_cnt.clear(); clear_merged_nodes(); }
     /** merges with another mesh slice */
     void merge(const stored_mesh_slice& sl);
+
+    /** build a list of merged nodes, i.e. nodes which have the same
+	geometrical location but were extracted from two different
+	convexes will be considered as one same node. Use for
+	exportation purposes, as VTK and OpenDX do not like
+	'discontinuous' meshes */
+    void merge_nodes() const;
+    size_type nb_merged_nodes() const 
+      { return merged_nodes_idx.size() - 1; }
+    const base_node merged_point(size_type i_merged) const 
+      { return merged_nodes[merged_nodes_idx[i_merged]].P->pt; }
+    size_type merged_index(size_type ic, size_type ipt) const
+      { return to_merged_index[global_index(ic,ipt)]; }
+    size_type global_index(size_type ic, size_type ipt) const 
+      { return cvlst[ic].global_points_count+ipt; }
+    size_type merged_point_cnt(size_type i_merged) const 
+      { return merged_nodes_idx[i_merged+1] - merged_nodes_idx[i_merged]; }
+    std::vector<merged_node_t>::const_iterator 
+    merged_point_nodes(size_type i_merged) const { 
+      return merged_nodes.begin() + merged_nodes_idx[i_merged]; 
+    }
+    void clear_merged_nodes() const;
+
+    /* extract the list of mesh edges into 'edges' (size = 2* number
+       of edges). 'slice_edges' indicates which one were created after
+       slicing.  The from_merged_nodes flag may be used if you want to
+       use (and merge common edges according to) the merged points */
+    void get_edges(std::vector<size_type> &edges,
+		   dal::bit_vector &slice_edges,
+		   bool from_merged_nodes) const;
 
     void set_convex(size_type cv, bgeot::pconvex_ref cvr, 
 	       mesh_slicer::cs_nodes_ct cv_nodes, 
 	       mesh_slicer::cs_simplexes_ct cv_simplexes, 
-	       dim_type fcnt, dal::bit_vector& splx_in);
+		    dim_type fcnt, const dal::bit_vector& splx_in);
 
     void build(const getfem::getfem_mesh& m, const slicer_action &a, 
 	       size_type nrefine = 1) { build(m,&a,0,0,nrefine); }

@@ -361,53 +361,65 @@ namespace getfem
     if (!real_os.good()) DAL_THROW(failure_error, "impossible to write to dx file '"
 			    << fname << "'");
     init();
-    if (append_) {
-      size_type ok_cnt = 3, last_slice_num = 0;
-      char c = 0;
-      do {
-        real_os.seekg(-1, std::ios::cur); c = real_os.peek();
-        cout << "ok_cnt=" << ok_cnt << ", pos = " << real_os.tellg() << ", c=" << int(c) << "=" << c << " =?= " << "end"[ok_cnt-1] << "\n";
-        if (isspace(c)) continue;
-        if (ok_cnt) {
-          if (tolower(c) == "end"[ok_cnt-1]) {
-            if (--ok_cnt == 0) {
-              real_os.seekg(-8, std::ios::cur); real_os >> log[MESHES].count;
-              cout << "last_slice_num <- " << log[MESHES].count << "\n";
-              break;
-            }
-          } else DAL_THROW(dal::failure_error, "cannot append to " << 
-                           fname << " : the file is not terminated by 'end'");
-        } else if (isdigit(c)) {
-          last_slice_num = c - '0';
-        }
-      } while (1);
-      real_os.seekp(real_os.tellg(), std::ios::beg);
-    }
+    if (append_) { reread_metadata(); header_written = true; }
   }
 
   dx_export::~dx_export() { 
-    if (state != EMPTY) {
-      end_series();
-      os << "\n# --end of getfem export, " << std::setw(8) << log[MESHES].count << "\nend\n"; 
-    }
+    std::ios::pos_type p = os.tellp();
+    write_series();
+    os << "\n# --end of getfem export\nend\n"; 
+    update_metadata(p);
   }
 
   void dx_export::init() {    
     strcpy(header, "Exported by getfem++");
-    psl = 0; dim_ = dim_type(-1); connections_dim = dim_type(-1);    
-    log.resize(NB_LOG);
-    state = EMPTY;
+    psl = 0; dim_ = dim_type(-1); connections_dim = dim_type(-1);  psl_use_merged = false;
+    header_written = false;
   }
 
   void dx_export::write_separ()
   { if (ascii) os << "\n"; }
 
-
-  void dx_export::exporting(const stored_mesh_slice& sl, const char *name) {
-    char default_name[100];
-    if (name == 0 || strlen(name) == 0) { 
-      name = default_name; sprintf(default_name, "slice%d", log[MESHES].count); 
+  template<typename T> static typename std::list<T>::iterator
+  get_from_name(std::list<T> &c, 
+		const std::string& name, bool raise_error) {
+    for (typename std::list<T>::iterator it = c.begin(); 
+	 it != c.end(); ++it) {
+      if (it->name == name) return it;
     }
+    if (raise_error) {
+      DAL_THROW(dal::failure_error, 
+		"object not found in dx file: " << name);
+    } else return c.end();
+  }
+
+  std::list<dx_export::dxMesh>::iterator
+  dx_export::get_mesh(const std::string& name, bool raise_error) {
+    return get_from_name(meshes,name,raise_error);
+  }
+  std::list<dx_export::dxObject>::iterator
+  dx_export::get_object(const std::string& name, bool raise_error) {
+    return get_from_name(objects,name,raise_error);
+  }
+
+
+  bool dx_export::new_mesh(std::string &name) {
+    name = default_name(name, meshes.size(), "mesh");
+    std::list<dxMesh>::iterator it = get_mesh(name, false);
+    if (it != meshes.end()) {
+      if (&(*it) != &current_mesh())
+	std::swap(current_mesh(),*it);
+      return false;
+    } else {
+      meshes.push_back(dxMesh()); meshes.back().name = name;
+      return true;
+    }
+  }
+
+  void dx_export::exporting(const stored_mesh_slice& sl, bool merge_points, std::string name) {
+    if (!new_mesh(name)) return;
+    psl_use_merged = merge_points;
+    if (merge_points) sl.merge_nodes();
     psl = &sl; dim_ = sl.dim();
     if (psl->dim() > 3) DAL_THROW(dal::failure_error, "4D slices and more are not supported");
     for (dim_type d = 0; d <= 3; ++d) {
@@ -418,16 +430,13 @@ namespace getfem
     }
     if (connections_dim == dim_type(-1)) 
       DAL_THROW(dal::failure_error, "empty slice!");
-    log[MESHES].add(std::string(name));
-    check_header(); state = HEADER_WRITTEN;
   }
 
-  void dx_export::exporting(const mesh_fem& mf, const char *name) {
+ 
+  void dx_export::exporting(const mesh_fem& mf, std::string name) {
+    name = default_name(name, meshes.size(), "mesh");
+    if (!new_mesh(name)) return;
     const getfem_mesh &m = mf.linked_mesh();
-    char default_name[100];
-    if (name == 0 || strlen(name) == 0) { 
-      name = default_name; sprintf(default_name, "mesh%d", log[MESHES].count);
-    }
     if (mf.linked_mesh().convex_index().card() == 0) 
       DAL_THROW(dal::failure_error, "won't export an empty mesh");
     
@@ -458,10 +467,9 @@ namespace getfem
     }
     pmf_dof_used.add(0, pmf->nb_dof());
     connections_dim = pmf->nb_dof_of_element(m.convex_index().first_true());
-    log[MESHES].add(std::string(name));
   }
 
-  void dx_export::exporting(const getfem_mesh& m, const char *name) {
+  void dx_export::exporting(const getfem_mesh& m, std::string name) {
     dim_ = m.dim();
     if (dim_ > 3) DAL_THROW(dal::failure_error, "4D meshes and more are not supported");
     pmf.reset(new mesh_fem(const_cast<getfem_mesh&>(m),1));
@@ -469,40 +477,121 @@ namespace getfem
     exporting(*pmf, name);
   }
 
-  void dx_export::end_series() {
-    if (series_name.length()) {
-      os << "\nobject  \"" << series_name << "\" class series\n";
+  void dx_export::write_series() {
+    for (std::list<dxSeries>::const_iterator it = series.begin(); 
+	 it != series.end(); ++it) {
+      if (it->members.size() == 0) continue;
       size_type count = 0;
-      for (std::list<std::string>::const_iterator it=log[SERIES_OBJECTS].names.begin();
-	   it != log[SERIES_OBJECTS].names.end(); ++it, ++count)
-	os << "  member  " << count << " \"" << (*it) << "\"\n";
+      os << "\nobject  \"" << it->name << "\" class series\n";
+      for (std::list<std::string>::const_iterator ito = it->members.begin();
+	   ito != it->members.end(); ++ito, ++count) {
+	os << "  member  " << count << " \"" << (*ito) << "\"\n";
+      }
     }
-    series_name.clear();
-    log[SERIES_OBJECTS].count = 0; log[SERIES_OBJECTS].names.clear();
   }
 
-  void dx_export::begin_series(const char *name) {
-    end_series();
-    if (name) series_name = std::string(name);
-    else series_name = std::string("getfemseries");
+  void dx_export::serie_add_object_(const std::string &serie_name, 
+				   const std::string &object_name) {
+    std::list<dxSeries>::iterator it = series.begin();
+    while (it != series.end() && it->name != serie_name) ++it;
+    if (it == series.end()) { 
+      series.push_back(dxSeries()); it = series.end(); --it; 
+      it->name = serie_name;
+    }
+    it->members.push_back(object_name);
+  }
+
+  void dx_export::serie_add_object(const std::string &serie_name, 
+				   const std::string &object_name) {
+    /* create a series for edge data if possible (the cost is null 
+     and it may be useful) */
+    std::list<dxObject>::iterator ito = get_object(object_name, false);
+    if (ito != objects.end()) {
+      std::list<dxMesh>::iterator itm = get_mesh(ito->mesh);
+      if (itm != meshes.end() && (itm->flags & dxMesh::WITH_EDGES)) {
+	serie_add_object_(serie_name + "_edges", 
+			 object_name + "_edges");
+      }
+    }
+    /* fill the real serie */
+    serie_add_object_(serie_name, object_name);
   }
 
   void dx_export::set_header(const std::string& s)
   { strncpy(header, s.c_str(), 256); header[255] = 0; }
 
   void dx_export::check_header() {
-    if (state >= HEADER_WRITTEN) return;
-    os << "# data file for IBM OpenDX, generated by GetFem++ v " << GETFEM_VERSION << "\n";
+    if (header_written) return; header_written = true;
+    os << "# data file for IBM OpenDX, generated by GetFem++ v " 
+       << GETFEM_VERSION << "\n";
     os << "# " << header << "\n";
-    state = HEADER_WRITTEN;
+  }
+
+  void dx_export::update_metadata(std::ios::pos_type pos_series) {
+    os.seekp(0,std::ios::end);
+    os << "# This file contains the following objects\n";
+    std::ios::pos_type pos_end = os.tellp();
+    for (std::list<dxSeries>::const_iterator it = series.begin(); 
+	 it != series.end(); ++it) {
+      os << "#S \"" << it->name << "\" which contains:\n";
+      for (std::list<std::string>::const_iterator its = it->members.begin(); 
+           its != it->members.end(); ++its)
+        os << "#+   \"" << *its << "\"\n";
+    }
+    for (std::list<dxObject>::const_iterator it = objects.begin(); 
+	 it != objects.end(); ++it) {
+      os << "#O \"" << it->name << "\" \"" << it->mesh << "\"\n";
+    }
+    for (std::list<dxMesh>::const_iterator it = meshes.begin(); 
+	 it != meshes.end(); ++it) {
+      os << "#M \"" << it->name << "\" " << it->flags << "\n";
+    }
+    os << "#E \"THE_END\" " << std::setw(20) << pos_series << std::setw(20) << pos_end << "\n";
+  }
+
+  void dx_export::reread_metadata() {
+    char line[512];
+    real_os.seekg(0, std::ios::end);
+    int count=0; char c;
+    unsigned long lu_end, lu_series;
+    do { 
+      real_os.seekg(-1, std::ios::cur); 
+      c = real_os.peek();
+    } while (++count < 512 && c != '#');
+    real_os.getline(line, sizeof line);
+    if (sscanf(line, "#E \"THE_END\" %lu %lu", &lu_series, &lu_end) != 2)
+      DAL_THROW(dal::failure_error, "this file was not generated by getfem, "
+                "cannot append data to it!\n");
+    real_os.seekg(lu_end, std::ios::beg);
+    do {
+      char name[512]; unsigned n;
+      int pos;
+      real_os.getline(line, sizeof line);
+      if (sscanf(line, "#%c \"%512[^\"]\"%n", &c, name, &pos) < 1) 
+        DAL_THROW(dal::failure_error, "corrupted file! your .dx file is broken\n");
+      if (c == 'S') {
+        series.push_back(dxSeries()); series.back().name = name;
+      } else if (c == '+') {
+        series.back().members.push_back(name);
+      } else if (c == 'O') {
+        objects.push_back(dxObject()); objects.back().name = name; 
+        sscanf(line+pos, " \"%512[^\"]\"", name); objects.back().mesh = name;
+      } else if (c == 'M') {
+        meshes.push_back(dxMesh()); meshes.back().name = name;
+        sscanf(line+pos, "%u", &n); meshes.back().flags = n;
+      } else if (c == 'E') {
+        break;
+      } else DAL_THROW(dal::failure_error, "corrupted file! your .dx file is broken\n");
+    } while (1);
+    real_os.seekp(lu_series, std::ios::beg);
   }
   
   void dx_export::write_convex_attributes(bgeot::pconvex_structure cvs) {
     const char *s_elem_type = dxname_of_convex_structure(cvs);
     if (!s_elem_type) 
       DAL_WARNING(1, "OpenDX won't handle this kind of convexes");
-    os << "attribute \"element type\" string \"" << s_elem_type << "\"\n"
-       << "attribute \"ref\" string \"positions\"\n\n";
+    os << "\n  attribute \"element type\" string \"" << s_elem_type << "\"\n"
+       << "  attribute \"ref\" string \"positions\"\n\n";
   }
 
   const char *dx_export::dxname_of_convex_structure(bgeot::pconvex_structure cvs) {
@@ -527,40 +616,61 @@ namespace getfem
   }
 
   void dx_export::write_mesh() {
+    check_header();
+    if (current_mesh().flags & dxMesh::STRUCTURE_WRITTEN) return;
     if (psl) write_mesh_structure_from_slice();
     else write_mesh_structure_from_mesh_fem();
+
+    os << "\nobject \"" << current_mesh_name() << "\" class field\n"
+       << "  component \"positions\" value \"" 
+       << name_of_pts_array(current_mesh_name()) << "\"\n"
+       << "  component \"connections\" value \"" 
+       << name_of_conn_array(current_mesh_name()) << "\"\n";
+    current_mesh().flags |= dxMesh::STRUCTURE_WRITTEN;
   }
+
   /* export the slice data as an unstructured mesh composed of simplexes */
   void dx_export::write_mesh_structure_from_slice() {
-    /* element type code for (linear) simplexes of dimensions 0,1,2,3 in DX */
-    if (state == STRUCTURE_WRITTEN) return;
-    check_header();
-
-    os << "object \"" << name_of_pts_array() << "\" class array type float rank 1 shape " 
+    os << "\nobject \"" << name_of_pts_array(current_mesh_name()) 
+       << "\" class array type float rank 1 shape " 
       << int(psl->dim()) 
-      << " items " << psl->nb_points();
+       << " items " << (psl_use_merged ? psl->nb_merged_nodes() : psl->nb_points());
     if (!ascii) os << " " << endianness() << " binary";
     os << " data follows\n";
-    for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
-      for (size_type i=0; i < psl->nodes(ic).size(); ++i)
-        for (size_type k=0; k < psl->dim(); ++k)
-          write_val(float(psl->nodes(ic)[i].pt[k]));
-      write_separ();
-    }    
+    if (psl_use_merged) {
+      for (size_type i=0; i < psl->nb_merged_nodes(); ++i) {
+	for (size_type k=0; k < psl->dim(); ++k) 
+	  write_val(float(psl->merged_point(i)[k]));
+	write_separ();
+      }
+    } else {
+      for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
+	for (size_type i=0; i < psl->nodes(ic).size(); ++i)
+	  for (size_type k=0; k < psl->dim(); ++k)
+	    write_val(float(psl->nodes(ic)[i].pt[k]));
+	write_separ();
+      }    
+    }
 
-    os << "object \"" << name_of_conn_array() << "\" class array type int rank 1 shape " 
+    os << "\nobject \"" << name_of_conn_array(current_mesh_name()) 
+       << "\" class array type int rank 1 shape " 
        << int(connections_dim+1)
        << " items " << psl->nb_simplexes(connections_dim);
     if (!ascii) os << " " << endianness() << " binary";
     os << " data follows\n";
 
-    size_type nodes_cnt = 0;
+    size_type nodes_cnt = 0; /* <- a virer , global_index le remplace */
     for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
       const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
       for (size_type i=0; i < s.size(); ++i) {
         if (s[i].dim() == connections_dim) {
-          for (size_type j=0; j < s[i].dim()+1; ++j)
-            write_val(int(s[i].inodes[j] + nodes_cnt));
+          for (size_type j=0; j < s[i].dim()+1; ++j) {
+	    size_type k;
+	    if (psl_use_merged)
+	      k = psl->merged_index(ic, s[i].inodes[j]);
+	    else k = psl->global_index(ic, s[i].inodes[j]);
+            write_val(int(k));
+	  }
           write_separ();
         }
       }
@@ -569,15 +679,13 @@ namespace getfem
 
     write_convex_attributes(bgeot::simplex_structure(connections_dim));
     assert(nodes_cnt == psl->nb_points()); // sanity check
-    state = STRUCTURE_WRITTEN;
   }
 
 
 
   void dx_export::write_mesh_structure_from_mesh_fem() {
-    if (state == STRUCTURE_WRITTEN) return;
-    check_header();
-    os << "object \"" << name_of_pts_array() << "\" class array type float rank 1 shape " 
+    os << "\nobject \"" << name_of_pts_array(current_mesh_name()) 
+       << "\" class array type float rank 1 shape " 
        << int(pmf->linked_mesh().dim())
        << " items " << pmf->nb_dof();
     if (!ascii) os << " " << endianness() << " binary";
@@ -587,11 +695,12 @@ namespace getfem
     for (size_type d = 0; d < pmf->nb_dof(); ++d) {
       const base_node P = pmf->point_of_dof(d);
       for (size_type k=0; k < dim_; ++k)
-	write_val(P[k]);
+	write_val(float(P[k]));
       write_separ();
     }
 
-    os << "object \"" << name_of_conn_array() << "\" class array type int rank 1 shape " 
+    os << "\nobject \"" << name_of_conn_array(current_mesh_name()) 
+       << "\" class array type int rank 1 shape " 
        << int(connections_dim)
        << " items " << pmf->convex_index().card();
     if (!ascii) os << " " << endianness() << " binary";
@@ -603,9 +712,56 @@ namespace getfem
       write_separ();
     }
     write_convex_attributes(pmf->linked_mesh().structure_of_convex(pmf->convex_index().first_true())->basic_structure());
-    state = STRUCTURE_WRITTEN;
   }
 
+  void dx_export::exporting_mesh_edges(bool with_slice_edges) {
+    write_mesh();
+    if (current_mesh().flags & dxMesh::WITH_EDGES) return;
+    if (psl) write_mesh_edges_from_slice(with_slice_edges);
+    else write_mesh_edges_from_mesh();
+    current_mesh().flags |= dxMesh::WITH_EDGES;
+    os << "\nobject \"" << name_of_edges_array(current_mesh_name()) << "\" class field\n"
+       << "  component \"positions\" value \"" 
+       << name_of_pts_array(current_mesh_name()) << "\"\n"
+       << "  component \"connections\" value \"" 
+       << name_of_conn_array(name_of_edges_array(current_mesh_name())) << "\"\n";
+  }
+
+  void dx_export::write_mesh_edges_from_slice(bool with_slice_edges) {
+    std::vector<size_type> edges;
+    dal::bit_vector slice_edges;
+    psl->get_edges(edges, slice_edges, psl_use_merged);
+    if (with_slice_edges) slice_edges.clear();
+    os << "\nobject \"" << name_of_conn_array(name_of_edges_array(current_mesh_name())) 
+       << "\" class array type int rank 1 shape 2"
+       << " items " << edges.size()/2 - slice_edges.card();
+    if (!ascii) os << " " << endianness() << " binary";
+    os << " data follows\n";
+    for (size_type i=0; i < edges.size()/2; ++i) {
+      if (!slice_edges.is_in(i)) {
+	write_val(int(edges[2*i]));
+	write_val(int(edges[2*i+1]));
+      }
+      if ((i+1)%10 == 0) write_separ();
+    }
+    write_separ();
+    write_convex_attributes(bgeot::simplex_structure(1));
+  }
+
+  void dx_export::write_mesh_edges_from_mesh() {
+    bgeot::mesh_structure ms(pmf->linked_mesh()); ms.to_edges();
+    os << "\nobject \"" << name_of_conn_array(name_of_edges_array(current_mesh_name())) 
+       << "\" class array type int rank 1 shape 2"
+       << " items " << ms.convex_index().card();
+    if (!ascii) os << " " << endianness() << " binary";
+    os << " data follows\n";
+    for (dal::bv_visitor cv(ms.convex_index()); !cv.finished(); ++cv) {
+      write_val(int(ms.ind_points_of_convex(cv)[0]));
+      write_val(int(ms.ind_points_of_convex(cv)[1]));
+      if ((cv+1)%20 == 0) write_separ();
+    }
+    write_separ();
+    write_convex_attributes(bgeot::simplex_structure(1));
+  }
+  
 }  /* end of namespace getfem.                                             */
-
-

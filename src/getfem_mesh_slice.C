@@ -33,9 +33,10 @@ namespace getfem {
   void stored_mesh_slice::set_convex(size_type cv, bgeot::pconvex_ref cvr, 
 				     mesh_slicer::cs_nodes_ct cv_nodes, 
 				     mesh_slicer::cs_simplexes_ct cv_simplexes, 
-				     dim_type fcnt, dal::bit_vector& splx_in) {
+				     dim_type fcnt, const dal::bit_vector& splx_in) {
     /* push the used nodes and simplexes in the final list */
     if (splx_in.card() == 0) return;
+    merged_nodes_available = false;
     std::vector<size_type> nused(cv_nodes.size(), size_type(-1));
     convex_slice *sc = 0;
     if (cv >= cv2pos.size()) DAL_THROW(dal::internal_error, "");
@@ -47,23 +48,76 @@ namespace getfem {
       sc->cv_dim = cvr->structure()->dim();
       sc->cv_nbfaces = cvr->structure()->nb_faces();
       sc->fcnt = fcnt;
+      sc->global_points_count = points_cnt;
     } else {
       sc = &cvlst[cv2pos[cv]];
       assert(sc->cv_num == cv);
     }
-    for (size_type snum = splx_in.take_first(); snum != size_type(-1); snum << splx_in) {
-      for (size_type i=0; i < cv_simplexes[snum].dim()+1; ++i) {
-        size_type lnum = cv_simplexes[snum].inodes[i];
+    for (dal::bv_visitor snum(splx_in); !snum.finished(); ++snum) {
+      slice_simplex& s = cv_simplexes[snum];
+      for (size_type i=0; i < s.dim()+1; ++i) {
+        size_type lnum = s.inodes[i];
         if (nused[lnum] == size_type(-1)) {
           nused[lnum] = sc->nodes.size(); sc->nodes.push_back(cv_nodes[lnum]);
 	  dim_ = std::max(int(dim_), int(cv_nodes[lnum].pt.size())); // dim_ may be equal to size_type(-1)
           points_cnt++;
         }
-        cv_simplexes[snum].inodes[i] = nused[lnum];
+        s.inodes[i] = nused[lnum];
       }
       simplex_cnt.resize(dim_+1, 0);
       simplex_cnt[cv_simplexes[snum].dim()]++;
       sc->simplexes.push_back(cv_simplexes[snum]);
+    }
+  }
+
+  struct get_edges_aux {
+    size_type iA, iB;
+    mutable bool slice_edge;
+    get_edges_aux(size_type a, size_type b, bool slice_edge_) :
+      iA(std::min(a,b)), iB(std::max(a,b)), slice_edge(slice_edge_) {}
+    bool operator<(const get_edges_aux& other) const {
+      /* ignore the slice_edge on purpose */
+      return (iA < other.iA || (iA == other.iA && iB < other.iB));
+    }
+  };
+
+  void stored_mesh_slice::get_edges(std::vector<size_type> &edges,
+				    dal::bit_vector &slice_edges,
+				    bool from_merged_nodes) const {
+    if (from_merged_nodes && !merged_nodes_available) merge_nodes();
+    std::set<get_edges_aux> e;
+    for (cvlst_ct::const_iterator it = cvlst.begin(); it != cvlst.end(); ++it) {
+      for (size_type is=0; is < it->simplexes.size(); ++is) {
+	const slice_simplex &s = it->simplexes[is];
+	for (size_type i=0; i < s.dim(); ++i) {
+	  for (size_type j=i+1; j <= s.dim(); ++j) {
+	    const slice_node& A = it->nodes[s.inodes[i]];
+	    const slice_node& B = it->nodes[s.inodes[j]];
+	    /* duplicate with slicer_build_edges_mesh which also 
+	       builds a list of edges */
+	    if ((A.faces & B.faces).count() >= unsigned(it->cv_dim-1)) {
+	      slice_node::faces_ct fmask((1 << it->cv_nbfaces)-1); fmask.flip();
+	      size_type iA, iB;
+	      iA = it->global_points_count + s.inodes[i];
+	      iB = it->global_points_count + s.inodes[j];
+	      if (from_merged_nodes) {
+		iA = to_merged_index[iA]; iB = to_merged_index[iB];
+	      }
+	      get_edges_aux a(iA,iB,((A.faces & B.faces) & fmask).any());
+	      std::set<get_edges_aux>::iterator p=e.find(a);
+	      if (p != e.end()) {
+		if (p->slice_edge && !a.slice_edge) p->slice_edge = false;
+	      } else e.insert(a);
+	    }
+	  }
+	}
+      }
+    }
+    slice_edges.clear(); slice_edges.sup(0, e.size());
+    edges.clear(); edges.reserve(2*e.size());
+    for (std::set<get_edges_aux>::const_iterator p=e.begin(); p != e.end(); ++p) {
+      if (p->slice_edge) slice_edges.add(edges.size()/2);
+      edges.push_back(p->iA);edges.push_back(p->iB);
     }
   }
 
@@ -99,6 +153,7 @@ namespace getfem {
 
   void stored_mesh_slice::merge(const stored_mesh_slice& sl) {
     if (dim() != sl.dim()) DAL_THROW(dal::dimension_error, "inconsistent dimensions for slice merging");
+    clear_merged_nodes();
     cv2pos.resize(std::max(cv2pos.size(), sl.cv2pos.size()), size_type(-1));
     for (size_type i=0; i < sl.nb_convex(); ++i) 
       if (cv2pos[sl.convex_num(i)] != size_type(-1) &&
@@ -121,6 +176,48 @@ namespace getfem {
       }
       points_cnt += src->nodes.size();
     }
+    size_type count = 0;
+    for (size_type ic=0; ic < nb_convex(); ++ic) {
+      cvlst[ic].global_points_count = count; count += nodes(ic-1).size();
+    }
+    assert(count == points_cnt);
+  }
+
+  void stored_mesh_slice::clear_merged_nodes() const { 
+    merged_nodes_idx.clear(); merged_nodes.clear(); 
+    to_merged_index.clear();
+    merged_nodes_available = false; 
+  }
+
+  void stored_mesh_slice::merge_nodes() const {
+    size_type count = 0;
+    getfem_mesh mp;
+    clear_merged_nodes();
+    std::vector<size_type> iv;
+    std::vector<const slice_node*> nv(nb_points());
+    to_merged_index.resize(nb_points());
+    for (cvlst_ct::const_iterator it = cvlst.begin(); it != cvlst.end(); ++it) {
+      for (size_type i=0; i < it->nodes.size(); ++i) {
+	nv[count] = &it->nodes[i];
+	to_merged_index[count++] = mp.add_point(it->nodes[i].pt);
+	//cout << "orig[" << count-1 << "] = " << nv[count-1]->pt << ", idx=" << to_merged_index[count-1] << "\n";
+      }
+    }
+    dal::sorted_indexes(to_merged_index,iv);
+    //cout << "to_merged_index = " << iv << "\n";
+    merged_nodes.resize(nb_points());
+    merged_nodes_idx.reserve(nb_points()/8);
+    
+    merged_nodes_idx.push_back(0);
+    for (size_type i=0; i < nb_points(); ++i) {
+      merged_nodes[i].P = nv[iv[i]];
+      merged_nodes[i].pos = iv[i];
+      //cout << "i=" << i << " -> {" << merged_nodes[i].P->pt << "," << merged_nodes[i].pos << "}\n";
+      if (i == nb_points()-1 || to_merged_index[iv[i+1]] != to_merged_index[iv[i]]) 
+	merged_nodes_idx.push_back(i+1);
+    }
+    //cout << "merged_nodes_idx = " << merged_nodes_idx << "\n";
+    merged_nodes_available = true;
   }
 
   size_type stored_mesh_slice::memsize() const {
