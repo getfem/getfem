@@ -1,7 +1,7 @@
 #include <bgeot_geotrans_inv.h>
 #include <getfem_regular_meshes.h>
 
-#ifndef _XOPEN_SOURCE
+#ifndef _POSIX_SOURCE
 zorglub;
 #endif
 

@@ -40,8 +40,8 @@
 /*									   */
 /* *********************************************************************** */
 
-#include <vector>
 #include <dal_std.h>
+#include <vector>
 #include <dal_algobase.h>
 
 namespace dal

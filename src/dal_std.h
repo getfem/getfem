@@ -49,10 +49,11 @@
 /*	C++ Standard Headers.						  */
 /* ********************************************************************** */
 
-#define _XOPEN_SOURCE
-#define _XOPEN_SOURCE_EXTENDED 
-
-#include <stdlib.h>
+#ifdef __PURE_CNAME
+#  undef __PURE_CNAME
+#  include <stdlib.h>
+#  define __PURE_CNAME
+#endif
 #include <stddef.h>
 #include <math.h>
 #include <string.h>
