@@ -165,7 +165,8 @@ namespace gmm {
     typedef this_type * pthis_type;
     typedef PT pV;
     typedef typename std::iterator_traits<PT>::value_type V;
-    typedef typename index_is_sorted<SUBI>::bool_type index_sorted;
+    typedef typename linalg_and<typename index_is_sorted<SUBI>::bool_type,
+	    typename linalg_traits<V>::index_sorted>::bool_type index_sorted;
     typedef typename linalg_traits<V>::is_reference V_reference;
     typedef typename linalg_traits<V>::origin_type origin_type;
     typedef typename select_ref<const origin_type *, origin_type *,
