@@ -1,0 +1,22 @@
+#!/usr/bin/perl
+
+$prefix = $ARGV[0];
+if ($prefix eq "") { $prefix = "_temporary"; }
+$count = int(1000 * rand);
+
+$tmpdir = $ENV{TMPDIR};
+if ($tmpdir eq "") { $tmpdir = "/tmp"; }
+$tmpdir =~ s/$\///;
+if (substr($tmpdir, length($tmpdir)-1, 1) eq "/")
+  { $tmpdir = substr($tmpdir, 0, length($tmpdir)-1); }
+
+$name = $tmpdir."/".$prefix."\_$count";
+$i = 1;
+while (-f $name)
+{
+  $name = $tmpdir."/".$prefix."\_$count";
+  ++$count;
+}
+
+`touch $name`;
+print $name;
