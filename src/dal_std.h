@@ -82,6 +82,7 @@
 using std::endl;
 using std::cout;
 using std::cerr;
+using std::ends;
 // #else
 //   #define STD_NEEDED
 // #endif
@@ -285,11 +286,61 @@ typedef unsigned char uint8_type;
 /*	Getfem++ generic errors.                     			  */
 /* ********************************************************************** */
 
-class internal_error : public std::logic_error {
-public:
-  internal_error (const std::string& what_arg): std::logic_error (what_arg) { }
-};
+  /* errors definitions  */
 
+  class dimension_error : public std::logic_error {
+  public:
+    dimension_error(const std::string& what_arg): std::logic_error (what_arg)
+      { }
+  };
+
+  class internal_error : public std::logic_error {
+  public:
+    internal_error(const std::string& what_arg): std::logic_error (what_arg)
+      { }
+  };
+
+  class failure_error : public std::logic_error {
+  public:
+    failure_error(const std::string& what_arg): std::logic_error (what_arg)
+      { }
+  };
+
+  class not_linear_error : public std::logic_error {
+  public:
+    not_linear_error(const std::string& what_arg): std::logic_error (what_arg)
+      { }
+  };
+
+  class to_be_done_error : public std::logic_error {
+  public:
+    to_be_done_error(const std::string& what_arg): std::logic_error (what_arg)
+      { }
+  };
+
+  #define DAL_STANDARD_CATCH_ERROR   catch(std::logic_error e) \
+  { \
+    cerr << "=============================================================\n";\
+    cerr << "               An error has been detected !!!                \n";\
+    cerr << "=============================================================\n";\
+    cerr << e.what() << endl;\
+    cerr << "=============================================================\n";\
+    exit(1);\
+  }\
+  catch(std::runtime_error e)\
+  {\
+    cerr << "=============================================================\n";\
+    cerr << "               An error has been detected !!!                \n";\
+    cerr << "=============================================================\n";\
+    cerr << e.what() << endl;\
+    cerr << "=============================================================\n";\
+    exit(1);\
+  }\
+  catch(...) {\
+    cerr << "=============================================================\n";\
+    cerr << "           An unknown error has been detected !!!            \n";\
+    cerr << "=============================================================\n";\
+  }
 
 } /* end of namespace dal.                                                */
 

@@ -51,11 +51,11 @@ namespace getfem
   using bgeot::base_poly;
   using bgeot::base_node;
 
-  using bgeot::dimension_error;
-  using bgeot::internal_error;
-  using bgeot::not_linear_error;
-  using bgeot::to_be_done_error;
-  using bgeot::failure_error;
+  using dal::dimension_error;
+  using dal::internal_error;
+  using dal::not_linear_error;
+  using dal::to_be_done_error;
+  using dal::failure_error;
 
 }  /* end of namespace getfem.                                             */
 

@@ -8,7 +8,7 @@ interpole_solution_SOURCES = interpole_solution.C
 CXXFLAGS = @APPSCXXFLAGS@
 
 INCLUDES = -I$(top_srcdir)/src 
-LDADD    = $(top_srcdir)/src/.libs/libgetfem.a -lm
+LDADD    = $(top_srcdir)/src/.libs/libgetfem.so -lm
 
 
 clean-local:
