@@ -174,19 +174,17 @@ namespace gmm {
 
   template <class VECT> void house_vector(const VECT &VV) {
     VECT &V = const_cast<VECT &>(VV);
-    typedef typename linalg_traits<VECT>::value_type value_type;
-    typedef typename number_traits<value_type>::magnitude_type magnitude_type;
+    typedef typename linalg_traits<VECT>::value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
     
-    magnitude_type mu = vect_norm2(V);
-    value_type beta;
-    if (mu != magnitude_type(0)) {
-      if (dal::abs(V[0]) != magnitude_type(0))
-	beta = V[0] + mu * V[0] / dal::abs(V[0]);
-      else
-	beta = mu;
-      gmm::scale(V, value_type(1) / beta);
+    R mu = vect_norm2(V), abs_v0 = dal::abs(V[0]);
+    if (mu != R(0)) {
+      T beta;
+      if (abs_v0 != R(0)) beta = abs_v0 / (V[0] * (abs_v0 + mu));
+      else beta = T(R(1) / mu);
+      gmm::scale(V, beta);
     }
-    V[0] = value_type(1);
+    V[0] = T(1);
   }
   
   /* ********************************************************************* */
@@ -233,6 +231,7 @@ namespace gmm {
       house_vector(v);
       row_house_update(sub_matrix(A, SUBI, SUBJ), v, sub_vector(w, SUBJ));
       col_house_update(sub_matrix(A, SUBK, SUBI), v, w);
+      // is it possible to "unified" the two on the common part of the matrix?
       if (compute_Q) col_house_update(sub_matrix(Q, SUBK, SUBI), v, w);
     }
   }

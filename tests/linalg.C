@@ -111,7 +111,10 @@ template <class MAT>  void test_qr(const MAT &m) {
   gmm::fill_random(cm);
   gmm::copy(cm, cq);
   // cout << "cm = " << cm << endl;
+  double exectime = ftool::uclock_sec();
   gmm::lu_inverse(cq);
+  cout << "time to compute LU inverse : "
+       << ftool::uclock_sec()-exectime;
   // cout << "cm^{-1} = " << cq << endl;
   gmm::mult(cm, cq, ca);
   // cout << "ca = " << ca << endl;
@@ -120,7 +123,7 @@ template <class MAT>  void test_qr(const MAT &m) {
   if (gmm::mat_norm2(ca) > 1E-10) 
     DAL_THROW(dal::failure_error, "Error on LU factorisation.");
 
-  double exectime = ftool::uclock_sec();
+  exectime = ftool::uclock_sec();
   // cout.precision(6);
   // rudimentary_qr_algorithm(cm, eigc, cq);
   // cout << "time to compute rudimentary QR : "<<ftool::uclock_sec()-exectime;
@@ -192,8 +195,11 @@ int main(void)
 
     test_gauss_det();
     
-    test_qr(gmm::dense_matrix<double>(8, 8));
-    test_qr(gmm::row_matrix<std::vector<std::complex<long double> > >(6, 6));
+    test_qr(gmm::dense_matrix<double>(50, 50));
+    test_qr(gmm::row_matrix<std::vector<std::complex<long double> > >(25, 25));
+    test_qr(gmm::col_matrix<std::vector<float> >(50, 50));
+    // faire un test avec QD ?
+    
 
     gmm::dense_matrix<double> m(10, 10);
     std::vector<double> y(10), x(10), b(10);

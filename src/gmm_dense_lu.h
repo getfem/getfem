@@ -163,7 +163,11 @@ namespace gmm {
     std::vector<value_type> tmp(pvector.size(), value_type(0));
     std::vector<value_type> result(pvector.size());
     for(size_type i = 0; i < pvector.size(); ++i) {
-      tmp[i] = value_type(1);
+      tmp[i] = value_type(1); // to be optimized !!
+      // on peut sur le premier tri solve reduire le systeme
+      // et peut etre faire un solve sur une serie de vecteurs au lieu
+      // de vecteur a vecteur (accumulation directe de l'inverse dans la
+      // matrice au fur et a mesure du calcul ... -> evite la copie finale
       lu_solve_transposed(LU, pvector, result, tmp);
       copy(result, mat_row(AInv, i));
       tmp[i] = value_type(0);
