@@ -11,7 +11,7 @@
 /*                                                                         */
 /* Copyright (C) 2003  Yves Renard.                                        */
 /*                                                                         */
-/* This file is a part of GETFEM++                                         */
+/* This file is a part of GMM++                                            */
 /*                                                                         */
 /* This program is free software; you can redistribute it and/or modify    */
 /* it under the terms of the GNU Lesser General Public License as          */
@@ -245,14 +245,11 @@ namespace gmm {
   void Householder_tridiagonalization(const MAT1 &AA, const MAT2 &QQ,
 				     bool compute_q) {
     MAT1 &A = const_cast<MAT1 &>(AA); MAT2 &Q = const_cast<MAT2 &>(QQ);
-    typedef typename linalg_traits<MAT1>::value_type value_type;
-    typedef typename number_traits<value_type>::magnitude_type magnitude_type;
+    typedef typename linalg_traits<MAT1>::value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
 
     size_type n = mat_nrows(A); 
-
-    dense_matrix<value_type> aux3(n,n); gmm::copy(A, aux3);
-
-    std::vector<value_type> v(n), p(n), w(n), ww(n);
+    std::vector<T> v(n), p(n), w(n), ww(n);
     sub_interval SUBK(0,n);
 
     if (compute_q) gmm::copy(identity_matrix(), Q);
@@ -261,16 +258,15 @@ namespace gmm {
       sub_interval SUBI(k, n-k);
       v.resize(n-k); p.resize(n-k); w.resize(n-k); 
       for (size_type l = k; l < n; ++l) 
-	{ v[l-k] = w[l-k] = A(l, k-1); A(l, k-1) = A(k-1, l) = value_type(0); }
+	{ v[l-k] = w[l-k] = A(l, k-1); A(l, k-1) = A(k-1, l) = T(0); }
       house_vector(v);
-      magnitude_type norm = vect_norm2_sqr(v);
-      A(k, k-1) = w[0] - value_type(2) * v[0] * vect_hp(v, w) / norm;
-      A(k-1, k) = dal::conj(A(k, k-1));
+      R norm = vect_norm2_sqr(v);
+      A(k-1, k) = dal::conj(A(k, k-1) = w[0] - T(2)*v[0]*vect_hp(v, w)/norm);
 
-      gmm::mult(sub_matrix(A, SUBI), gmm::scaled(v, value_type(-2) / norm), p);
+      gmm::mult(sub_matrix(A, SUBI), gmm::scaled(v, T(-2) / norm), p);
       gmm::add(p, gmm::scaled(v, -vect_hp(p, v) / norm), w);
       rank_two_update(sub_matrix(A, SUBI), v, w);
-      // it is possible toi compute only the upper or lower part
+      // it is possible to compute only the upper or lower part
 
       if (compute_q) col_house_update(sub_matrix(Q, SUBK, SUBI), v, ww);
     }
@@ -283,7 +279,7 @@ namespace gmm {
   template <class T> void Givens_rotation(T a, T b, T &c, T &s) {
     typedef typename number_traits<T>::magnitude_type R;
     R aa = dal::abs(a), bb = dal::abs(b);
-    if (bb == R(0)) { c = T(1); s = T(0); return; }
+    if (bb == R(0)) { c = T(1); s = T(0);   return; }
     if (aa == R(0)) { c = T(0); s = b / bb; return; }
     if (bb > aa)
       { T t = -a/b; s = T(R(1) / (sqrt(R(1)+dal::abs_sqr(t)))); c = s * t; }

@@ -3,6 +3,7 @@
 /*                                                                         */
 /* Library :  Generic Matrix Methods  (gmm)                                */
 /* File    :  gmm_blas.h : generic basic linear algebra algorithms.        */
+/*                         (and others ...)                                */
 /*     									   */
 /* Date : October 13, 2002.                                                */
 /* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
@@ -11,7 +12,7 @@
 /*                                                                         */
 /* Copyright (C) 2002  Yves Renard.                                        */
 /*                                                                         */
-/* This file is a part of GETFEM++                                         */
+/* This file is a part of GMM++                                            */
 /*                                                                         */
 /* This program is free software; you can redistribute it and/or modify    */
 /* it under the terms of the GNU Lesser General Public License as          */
