@@ -90,8 +90,7 @@ namespace dal
       const_reference back(void) const { return *(--(end())); }
       void pop_front(void) { ++_begin; }
 
-    // à changer en const_reference ?
-      value_type operator [](size_type ii) const { return *(_begin + ii);}
+      const_reference operator [](size_type ii) const { return *(_begin + ii);}
       reference operator [](size_type ii) { return *(_begin + ii); }
 
       tab_ref(void) {}
@@ -334,7 +333,7 @@ namespace dal
       : _begin(b), _index_begin(bi), _index_end(ei) {}
     
     // to be changed in a const_reference ?
-    value_type operator [](size_type ii) const
+    const_reference operator [](size_type ii) const
     { return *(_begin + _index_begin[ii]);}
     reference operator [](size_type ii)
     { return *(_begin + _index_begin[ii]); }
