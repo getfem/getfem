@@ -148,8 +148,8 @@ namespace getfem {
     bool to_be_computed(void) { return to_compute; }
     bool to_be_transferred(void) { return to_transfer; }
     void force_recompute(void) { to_compute = to_transfer = true; }
-    void computed(void) { to_compute = true; }
-    void transferred(void) { to_transfer = true; }
+    void computed(void) { to_compute = false; }
+    void transferred(void) { to_transfer = false; }
     size_type first_index(void) { return MS_i0; }
 
   public :
@@ -386,21 +386,18 @@ namespace getfem {
     void fixing_dimensions(void) {
       size_type q = mf_data.get_qdim();
       size_type qdim = sub_problem.main_mesh_fem().get_qdim();
-      dof_on_bound = sub_problem.main_mesh_fem().dof_on_boundary(boundary);
       if (qdim != q && q != 1)
 	DAL_THROW(dimension_error,"incompatible dimension of mesh_fem"
 		  " structure for source term ");
       size_type qmult = qdim / q;
       gmm::resize(B_, mf_data.nb_dof() * qmult);
-      nb_const = dof_on_bound.card();
     }
 
     void compute_constraints(int version) {
       mesh_fem &mf_u = sub_problem.main_mesh_fem();
       size_type Q = mf_u.get_qdim();
-      size_type nd = mf_u.nb_dof();
-      size_type ndd = mf_data.nb_dof();
-      C_MATRIX M(nd, nd);
+      size_type nd = mf_u.nb_dof(), ndd = mf_data.nb_dof();
+      gmm::row_matrix<gmm::rsvector<value_type> > M(nd, nd);
       VECTOR V(nd);
 
       if (!with_H) {
@@ -408,21 +405,23 @@ namespace getfem {
 	for (size_type i=0; i < ndd; ++i)
 	  for (size_type q=0; q < Q; ++q)  H_[i*Q*Q+q*Q+q] = value_type(1);
       }
-
+      if (!with_multipliers) version |= 4;
       asm_dirichlet_constraints(M, V, sub_problem.main_mesh_fem(),
 				mf_data, H_, B_, boundary, version);
 
       if (!with_H) gmm::resize(H_, 0);
 
-      if (version & 1)
-	gmm::clean(M, gmm::mat_maxnorm(M) * gmm::default_tol(value_type())
-		   * value_type(100));
+      R tol=gmm::mat_maxnorm(M)*gmm::default_tol(value_type())*value_type(100);
+      if (version & 1) gmm::clean(M, tol);
       
       std::vector<size_type> ind(0);
       dof_on_bound = mf_u.dof_on_boundary(boundary);
       dal::bit_vector nn = dof_on_bound;
+      // The following filter is not sufficient for an arbitrary matrix field
+      // H for the multipliers version. To be ameliorated.
       for (size_type i = nn.take_first(); i != size_type(-1); i << nn)
-        ind.push_back(i);
+	if (!with_multipliers || gmm::vect_norm2(gmm::mat_row(M, i)) > tol)
+	  ind.push_back(i);
       nb_const = ind.size();
       if (version & 1) gmm::resize(G, nb_const, nd);
       gmm::sub_index SUBI(ind);
@@ -445,18 +444,17 @@ namespace getfem {
 	  this->force_recompute();
 	  compute_constraints(3);
 	}
-	return sub_problem.nb_dof() + dof_on_bound.card();
+	return sub_problem.nb_dof() + nb_const;
       }
       return sub_problem.nb_dof();
     }
     
     virtual size_type nb_constraints(void) {
-      if (with_multipliers)
-	return sub_problem.nb_constraints();
+      if (with_multipliers) return sub_problem.nb_constraints();
       if (this->context_changed()) {
 	fixing_dimensions();
 	this->force_recompute();
-	compute_constraints(7);
+	compute_constraints(3);
       }
       return sub_problem.nb_constraints() + nb_const;
     }
@@ -465,7 +463,7 @@ namespace getfem {
       sub_problem.compute_tangent_matrix(MS, i0, j0, modified);
       react(MS, i0, modified);
       if (this->to_be_computed())
-	{ fixing_dimensions(); compute_constraints(with_multipliers ? 3 : 7); }
+	{ fixing_dimensions(); compute_constraints(3); }
       if (this->to_be_transferred()) {
 	if (with_multipliers) {
 	  gmm::sub_interval SUBI(i0+sub_problem.nb_dof(), dof_on_bound.card());
@@ -488,6 +486,7 @@ namespace getfem {
     }
     virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0) {
       sub_problem.compute_residu(MS, i0);
+      react(MS, i0, false);
       if (with_multipliers) {
 	if (this->to_be_computed())
 	  { fixing_dimensions(); compute_constraints(3); }
@@ -502,9 +501,10 @@ namespace getfem {
     { return sub_problem.main_mesh_fem(); }
 
     void changing_rhs(const VECTOR &B__) {
-      fixing_dimensions();
-      gmm::copy(B__, B_);
-      compute_constraints(with_multipliers ? 2 : 6);
+      if (this->context_changed())
+	{ fixing_dimensions(); gmm::copy(B__, B_); compute_constraints(3); }
+      else
+	{ gmm::copy(B__, B_); compute_constraints(2); }
     }
 
     // Constructor which does not define the rhs
@@ -513,10 +513,11 @@ namespace getfem {
 		      bool with_mult = false)
       : sub_problem(problem), mf_data(mf_data_), boundary(bound),
 	with_H(false), with_multipliers(with_mult) {
-      fixing_dimensions();
-      gmm::clear(B_);
       this->add_dependency(mf_data);
       this->add_dependency(sub_problem.main_mesh_fem());
+      fixing_dimensions();
+      gmm::clear(B_);
+      compute_constraints(3);
     }
 
     // Constructor defining the rhs
@@ -525,10 +526,11 @@ namespace getfem {
 		      size_type bound, bool with_mult = false)
       : sub_problem(problem), mf_data(mf_data_), boundary(bound),
 	with_H(false), with_multipliers(with_mult) {
-      fixing_dimensions();
-      gmm::copy(B__, B_);
       this->add_dependency(mf_data);
       this->add_dependency(sub_problem.main_mesh_fem());
+      fixing_dimensions();
+      gmm::copy(B__, B_);
+      compute_constraints(3);
     }
     
   };

@@ -141,8 +141,7 @@ namespace getfem
   template<class VECT1, class VECT2>
     void asm_source_term(VECT1 &B, const mesh_fem &mf,
 			 const mesh_fem &mfdata, const VECT2 &F,
-			 size_type boundary=size_type(-1))
-  {
+			 size_type boundary=size_type(-1)) {
     if (mfdata.get_qdim() != 1)
       DAL_THROW(std::invalid_argument,
 		"invalid data mesh fem (Qdim=1 required)");
@@ -150,7 +149,8 @@ namespace getfem
     if (mf.get_qdim() == 1)
       assem.set("F=data(#2); V(#1)+=comp(Base(#1).Base(#2))(:,j).F(j);");
     else
-      assem.set("F=data(qdim(#1),#2); V(#1)+=comp(vBase(#1).Base(#2))(:,i,j).F(i,j);");
+      assem.set("F=data(qdim(#1),#2);"
+		"V(#1)+=comp(vBase(#1).Base(#2))(:,i,j).F(i,j);");
     assem.push_mf(mf);
     assem.push_mf(mfdata);
     assem.push_data(F);
@@ -228,22 +228,24 @@ namespace getfem
     void asm_stiffness_matrix_for_linear_elasticity(const MAT &RM_,
 					   const mesh_fem &mf, 
 					   const mesh_fem &mfdata, 
-					   const VECT &LAMBDA, const VECT &MU)
-  {
+					   const VECT &LAMBDA,const VECT &MU) {
     MAT &RM = const_cast<MAT &>(RM_);
     if (mfdata.get_qdim() != 1)
       DAL_THROW(std::invalid_argument,
 		"invalid data mesh fem (Qdim=1 required)");
-   
-    if (mf.get_qdim() != mf.linked_mesh().dim()) DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
+    
+    if (mf.get_qdim() != mf.linked_mesh().dim())
+      DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
     /* e = strain tensor,
        M = 2*mu*e(u):e(v) + lambda*tr(e(u))*tr(e(v))
     */
     generic_assembly assem("lambda=data$1(#2); mu=data$2(#2);"
 			   "t=comp(vGrad(#1).vGrad(#1).Base(#2));"
-			   //"e=(t{:,2,3,:,5,6,:}+t{:,3,2,:,5,6,:}+t{:,2,3,:,6,5,:}+t{:,3,2,:,6,5,:})/4;"
+			   //"e=(t{:,2,3,:,5,6,:}+t{:,3,2,:,5,6,:}"
+			   //"+t{:,2,3,:,6,5,:}+t{:,3,2,:,6,5,:})/4;"
 			   "e=(t{:,2,3,:,5,6,:}+t{:,3,2,:,5,6,:})*0.5;"
-			   "M(#1,#1)+= sym(2*e(:,i,j,:,i,j,k).mu(k) + e(:,i,i,:,j,j,k).lambda(k))");
+			   "M(#1,#1)+= sym(2*e(:,i,j,:,i,j,k).mu(k)"
+			   " + e(:,i,i,:,j,j,k).lambda(k))");
 
     assem.push_mf(mf);
     assem.push_mf(mfdata);
@@ -263,13 +265,15 @@ namespace getfem
 							  const VECT &H)
   {
     if (mfdata.get_qdim() != 1)
-      DAL_THROW(std::invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+      DAL_THROW(std::invalid_argument,
+		"invalid data mesh fem (Qdim=1 required)");
     /* e = strain tensor,
        M = a_{i,j,k,l}e_{i,j}(u)e_{k,l}(v)
     */
     generic_assembly assem("a=data$1(qdim(#1),qdim(#1),qdim(#1),qdim(#1),#2);"
 			   "t=comp(vGrad(#1).vGrad(#1).Base(#2));"
-			   "e=(t{:,2,3,:,5,6,:}+t{:,3,2,:,5,6,:}+t{:,2,3,:,6,5,:}+t{:,3,2,:,6,5,:})/4;"
+			   "e=(t{:,2,3,:,5,6,:}+t{:,3,2,:,5,6,:}"
+			   "+t{:,2,3,:,6,5,:}+t{:,3,2,:,6,5,:})/4;"
 			   "M(#1,#1)+= sym(e(:,i,j,:,k,l,p).a(i,j,k,l,p))");
     assem.push_mf(mf);
     assem.push_mf(mfdata);
@@ -309,10 +313,11 @@ namespace getfem
   */
   template<class MAT, class VECT>
     void asm_stiffness_matrix_for_laplacian(MAT &M, const mesh_fem &mf,
-					   const mesh_fem &mfdata, const VECT &A)
-  {
+					    const mesh_fem &mfdata,
+					    const VECT &A) {
     if (mfdata.get_qdim() != 1)
-      DAL_THROW(std::invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+      DAL_THROW(std::invalid_argument,
+		"invalid data mesh fem (Qdim=1 required)");
     generic_assembly assem("a=data$1(#2); M$1(#1,#1)+=sym(comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j))");
     //generic_assembly assem("a=data$1(#2); M$1(#1,#1)+=comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j)");
     assem.push_mf(mf);
@@ -323,7 +328,8 @@ namespace getfem
   }
 
   /**
-     assembly of $\int_\Omega A(x)\nabla u.\nabla v$, where $A(x)$ is a NxN matrix.
+     assembly of $\int_\Omega A(x)\nabla u.\nabla v$, where $A(x)$
+     is a NxN matrix.
      Arguments:
       - M  : a sparse matrix of dimensions mf.nb_dof() x mf.nb_dof()
 
@@ -388,31 +394,31 @@ namespace getfem
       gmm::clear(gmm::sub_matrix(M, gmm::sub_index(ind)));
     }
     if (version & 2) asm_source_term(B, mf_u, mf_rh, R, boundary);
+    if (!(version & 4)) return;
 
     /* step 2 : simplification of simple dirichlet conditions */
-    if (version & 4) {
-      dal::bit_vector bv = mf_u.convex_on_boundary(boundary);
-      for (dal::bv_visitor cv(bv); !cv.finished(); ++cv) {
-	nf = mf_u.faces_of_convex_on_boundary(cv, boundary);
-	/* don't try anything with vector elements */
-	if (mf_u.fem_of_element(cv)->target_dim() != 1) continue;
-	if (nf.card() > 0) {
-	  pf_u = mf_u.fem_of_element(cv); 
-	  pf_rh = mf_rh.fem_of_element(cv); 
-	  size_type f;
-	  for (f << nf; f != ST_NIL; f << nf) {
-	    bgeot::pconvex_structure cvs_u = pf_u->structure();
-	    bgeot::pconvex_structure cvs_rh = pf_rh->structure();
-	    for (size_type i = 0; i < cvs_u->nb_points_of_face(f); ++i) {
-	      
-	      size_type Q = mf_u.get_qdim();  // pf_u->target_dim() (==1)
-		
-	      size_type ind_u = cvs_u->ind_points_of_face(f)[i];
-	      pdof_description tdof_u = pf_u->dof_types()[ind_u];
-	      
-	      for (size_type j = 0; j < cvs_rh->nb_points_of_face(f); ++j) {
-		size_type ind_rh = cvs_rh->ind_points_of_face(f)[j];
-		pdof_description tdof_rh = pf_rh->dof_types()[ind_rh];
+    dal::bit_vector bv = mf_u.convex_on_boundary(boundary);
+    for (dal::bv_visitor cv(bv); !cv.finished(); ++cv) {
+      nf = mf_u.faces_of_convex_on_boundary(cv, boundary);
+      /* don't try anything with vector elements */
+      if (mf_u.fem_of_element(cv)->target_dim() != 1) continue;
+      if (nf.card() > 0) {
+	pf_u = mf_u.fem_of_element(cv); 
+	pf_rh = mf_rh.fem_of_element(cv); 
+	size_type f;
+	for (f << nf; f != ST_NIL; f << nf) {
+	  bgeot::pconvex_structure cvs_u = pf_u->structure();
+	  bgeot::pconvex_structure cvs_rh = pf_rh->structure();
+	  for (size_type i = 0; i < cvs_u->nb_points_of_face(f); ++i) {
+	    
+	    size_type Q = mf_u.get_qdim();  // pf_u->target_dim() (==1)
+	    
+	    size_type ind_u = cvs_u->ind_points_of_face(f)[i];
+	    pdof_description tdof_u = pf_u->dof_types()[ind_u];
+	    
+	    for (size_type j = 0; j < cvs_rh->nb_points_of_face(f); ++j) {
+	      size_type ind_rh = cvs_rh->ind_points_of_face(f)[j];
+	      pdof_description tdof_rh = pf_rh->dof_types()[ind_rh];
 	      /*
 		same kind of dof and same location of dof ? 
 		=> then the previous was not useful for this dofs (introducing
@@ -421,35 +427,31 @@ namespace getfem
 		we replace \int{(H_j.psi_j)*phi_i}=\int{R_j.psi_j} (sum over j)
 		with             H_j*phi_i = R_j     
 	      */
-		if (tdof_u == tdof_rh &&
-		    bgeot::vect_dist2_sqr(pf_u->node_convex().points()[ind_u], 
+	      if (tdof_u == tdof_rh &&
+		  bgeot::vect_dist2_sqr(pf_u->node_convex().points()[ind_u], 
 					pf_rh->node_convex().points()[ind_rh])
-		    < 1.0E-14) {
-		  /* the dof might be "duplicated" */
-		  for (size_type q = 0; q < Q; ++q) {
-		    size_type dof_u=mf_u.ind_dof_of_element(cv)[ind_u*Q + q];
-		    
-		    /* "erase" the row */
-		    if (version & 1)
-		      for (size_type k=0; k<mf_u.nb_dof_of_element(cv); ++k) {
-			size_type dof_k = mf_u.ind_dof_of_element(cv)[k];
-			M(dof_u, dof_k) = 0.0;
-		      }
-		    
-		    size_type dof_rh = mf_rh.ind_dof_of_element(cv)[ind_rh];
-		    /* set the "simplified" row */
-		    if (version & 1)
-		      for (unsigned jj=0; jj < Q; jj++) {
-			size_type dof_u2
-			  = mf_u.ind_dof_of_element(cv)[ind_u*Q+jj];
-			M(dof_u, dof_u2) = H[(jj*Q+q) + Q*Q*(dof_rh)];
-		      }
-		    if (version & 2)
-		      B[dof_u] = R[dof_rh*Q+q];
-		  }
+		  < 1.0E-14) {
+		/* the dof might be "duplicated" */
+		for (size_type q = 0; q < Q; ++q) {
+		  size_type dof_u = mf_u.ind_dof_of_element(cv)[ind_u*Q + q];
+		  
+		  /* "erase" the row */
+		  if (version & 1)
+		    for (size_type k=0; k < mf_u.nb_dof_of_element(cv); ++k)
+		      M(dof_u, mf_u.ind_dof_of_element(cv)[k]) = 0.0;
+		  
+		  size_type dof_rh = mf_rh.ind_dof_of_element(cv)[ind_rh];
+		  /* set the "simplified" row */
+		  if (version & 1)
+		    for (unsigned jj=0; jj < Q; jj++) {
+		      size_type dof_u2
+			= mf_u.ind_dof_of_element(cv)[ind_u*Q+jj];
+		      M(dof_u, dof_u2) = H[(jj*Q+q) + Q*Q*(dof_rh)];
+		    }
+		  if (version & 2) B[dof_u] = R[dof_rh*Q+q];
 		}
-	      }      
-	    }
+	      }
+	    }      
 	  }
 	}
       }
