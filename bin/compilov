@@ -11,16 +11,21 @@ print "No compiler, searching one\n";
 }
 
 if (! $CC) { die "No compiler found, aborting\n"; }
+else { print "\n\n Compiler selected : $CC\n\nVersion: \n\n"; } 
 
 if ($CC =~ /CC/) {
 }
 elsif ($CC =~ /cxx/) {
   $rep = `cxx -V`;
-  print "rep = $rep\n";
+  print "$rep\n";
 }
 elsif ($CC =~ /g\+\+/) {
-  `g++ -v \>\& __toto`;
-  $rep = `more  __toto`; # `rm -f  __toto`;
-  print "rep = $rep\n";
+  open(GNF, ">__tmpcv");
+  print GNF "#!/bin/csh\n g++ -v >& __tmpcv2\nmore __tmpcv2\nrm -f __tmpcv2\n";
+  close(GNF);
+  `chmod +x __tmpcv`;
+  $rep = `./__tmpcv`;
+  `rm __tmpcv`;
+  print "$rep\n";
 }
 else { die "Compiler unidentified\n"; }
