@@ -35,14 +35,6 @@
 
 namespace getfem
 {
-
-  static virtual_Xfem_hess no_Xfem_hess_defined;
-  pXfem_hess pno_Xfem_hess_defined = &no_Xfem_hess_defined;
-
-  base_matrix virtual_Xfem_hess::operator()(const base_node &) {
-    DAL_THROW(failure_error, "No hessian defined for this function");
-  }
-
   void Xfem::valid(void) {
     init_cvs_node();
     /* setup nodes of the base fem */
@@ -65,16 +57,12 @@ namespace getfem
     return _dof_types.size();
   }
 
-  void Xfem::add_func(pfem pf, pXfem_func pXf, pXfem_grad pXg, pXfem_hess pXh,
-		      size_type ind) {
+  void Xfem::add_func(pfem pf, pXfem_func pXf, size_type ind) {
     nb_func ++;
     if (ind == size_type(-1)) ind = nb_func;
-    funcs.resize(nb_func); grads.resize(nb_func); hess.resize(nb_func);
+    funcs.resize(nb_func);
     func_indices.resize(nb_func);
     funcs[nb_func-1] = pXf;
-    grads[nb_func-1] = pXg;
-    hess[nb_func-1] = pXh;
-    
     if (cvr != pf->ref_convex() || pfb->target_dim() != pf->target_dim())
       DAL_THROW(failure_error, "Incompatible Xfem fems");
 
@@ -101,7 +89,7 @@ namespace getfem
     pfb->interpolation(x, G, pgt, coeff, val);
     base_vector coeff2;
     for (size_type k = 0, dofcnt = pfb->nb_base(); k < nb_func; ++k) {
-      scalar_type a = (*(funcs[k]))(xreal);
+      scalar_type a = funcs[k]->val(xreal);
       coeff2.resize(pfe(k)->nb_base());
       for (size_type j = 0; j != pfe(k)->nb_base(); ++j, ++dofcnt) {
 	coeff2[j] = coeff[dofcnt] * a;
@@ -131,7 +119,7 @@ namespace getfem
     base_vector coeff2;
     std::vector<pfem_precomp> vpfp; get_fem_precomp_tab(pfp,vpfp);
     for (size_type k = 0, dofcnt = pfb->nb_base(); k < nb_func; ++k) {
-      scalar_type a = (*(funcs[k]))(xreal);
+      scalar_type a = funcs[k]->val(xreal);
       coeff2.resize(pfe(k)->nb_base() * Qmult);
       for (size_type j = 0; j != pfe(k)->nb_base(); ++j, ++dofcnt) {
 	for (dim_type q = 0; q < Qmult; ++q)
@@ -154,7 +142,7 @@ namespace getfem
     base_vector coeff2;
     // func * grad(base)
     for (size_type k = 0, dofcnt = pfb->nb_base(); k < nb_func; ++k) {
-      scalar_type a = (*(funcs[k]))(xreal);
+      scalar_type a = funcs[k]->val(xreal);
       coeff2.resize(pfe(k)->nb_base());
       for (size_type j = 0; j != pfe(k)->nb_base(); ++j, ++dofcnt) {
 	coeff2[j] = coeff[dofcnt] * a;
@@ -164,7 +152,7 @@ namespace getfem
     }
     // grad(func) * base
     for (size_type k = 0, dofcnt = pfb->nb_base(); k < nb_func; ++k) {
-      base_vector v = (*(grads[k]))(xreal);
+      base_vector v = funcs[k]->grad(xreal);
       coeff2.resize(pfe(k)->nb_base());
       for (size_type q = 0; q < G.nrows(); ++q) {
 	for (size_type j = 0; j != pfe(k)->nb_base(); ++j, ++dofcnt) {
@@ -202,7 +190,7 @@ namespace getfem
 
       for (size_type k = 0; k < nb_func; ++k) {
 	const base_tensor& val_e = vpfp[func_pf[k]]->val(ii);
-        a = (*(funcs[k]))(xreal);
+        a = funcs[k]->val(xreal);
 	for (size_type i = 0; i < pfe(k)->nb_base(); ++i, ++it)
 	  *it = val_e[i + q*pfe(k)->nb_base()] * a;
       }
@@ -235,7 +223,7 @@ namespace getfem
     std::vector<scalar_type> vf(nb_func);
     std::vector<base_vector> gvf(nb_func);
     for (size_type f = 0; f < nb_func; ++f)
-      { vf[f] = (*(funcs[f]))(xreal); gvf[f] = (*(grads[f]))(xreal); }
+      { vf[f] = funcs[f]->val(xreal); gvf[f] = funcs[f]->grad(xreal); }
 
     //    cerr << "pfp->val(ii)={"; 
     //    for (size_type i=0; i < pfp->val(ii).size(); ++i) cerr << pfp->val(ii)[i] << " "; cerr << "}\n";
@@ -255,32 +243,6 @@ namespace getfem
 	}
       }
     }
-    
-    /*
-    base_tensor::const_iterator itvf2;
-    base_tensor::const_iterator itf = pfp->val(ii).begin(), itf2;
-    base_tensor::const_iterator itfe = pfp->val(ii).begin(), itfe2;
-    base_tensor tte; tte.mat_transp_reduction(pfp->grad(ii), B, 2);
-    base_tensor::const_iterator itvfe = tte.begin(), itvfe2;
-    for (dim_type k = 0; k < n ; ++k) {
-      itf = pfp->val(ii).begin();
-      itfe = pfp->val(ii).begin();
-      for (dim_type q = 0; q < target_dim(); ++q) {
-        itvf2 = itvf; itf2 = itf;
-        for (size_type i = 0; i < pfb->nb_base(); ++i, ++it)
-            *it = *itvf2++;
-        for (size_type f = 0; f < nb_func; ++f) {
-          a = vf[f];
-          itvfe2 = itvfe; itfe2 = itfe;
-          for (size_type i = 0; i < pfe(f)->nb_base(); ++i, ++it) {
-            *it = *itvfe2++ * a;
-            *it += gvf[f][k] * (*itfe2++);
-          }
-        }
-        itvf = itvf2; itf = itf2; itvfe = itvfe2; itfe = itfe2;
-      }
-    }
-    */
   }
   
   void Xfem::real_hess_base_value(pgeotrans_precomp, pfem_precomp,
@@ -298,7 +260,7 @@ namespace getfem
     cvr = pfb->ref_convex();
     is_equiv = real_element_defined = true;
     is_polycomp = is_pol = is_lag = false;
-    es_degree = 5;
+    es_degree = 5; /* humm ... */
     ntarget_dim = pfb->target_dim();
   }
 

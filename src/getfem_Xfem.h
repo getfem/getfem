@@ -42,6 +42,11 @@
 
   The Xfem is built using the add_func member function, which takes as
   parameters, a global function and a fem.
+
+  example of use: enrichment of the finite elements space with
+  particular functions, which may represent discontinuities of the
+  field in some elements, or singularities in the field (crack tip
+  functions..)
 */
 
 #include <getfem_fem.h>
@@ -55,23 +60,13 @@ namespace getfem
   // Object representing global functions. To be derived.
 
   struct virtual_Xfem_func {
-    virtual scalar_type operator()(const base_node &) = 0;
+    virtual scalar_type val(const base_node &) { DAL_THROW(dal::failure_error,"this Xfem_func has no value"); }
+    virtual base_vector grad(const base_node&) { DAL_THROW(dal::failure_error,"this Xfem_func has no gradient"); }
+    virtual base_matrix hess(const base_node&) { DAL_THROW(dal::failure_error,"this Xfem_func has no hessian"); }
+    virtual ~virtual_Xfem_func() {}
   };
   typedef virtual_Xfem_func *pXfem_func;
-
-  struct virtual_Xfem_grad {
-    virtual base_vector operator()(const base_node &) = 0;
-  };
-  typedef virtual_Xfem_grad *pXfem_grad;
-
-  struct virtual_Xfem_hess {
-    virtual base_matrix operator()(const base_node &);
-  };
-  typedef virtual_Xfem_hess *pXfem_hess;
   
-  extern pXfem_hess pno_Xfem_hess_defined;
-  
-
   // Xfem definition
   
   class Xfem : public virtual_fem {
@@ -83,8 +78,6 @@ namespace getfem
     bool is_valid;
     size_type nb_func;
     std::vector<pXfem_func> funcs; // List of functions to be added
-    std::vector<pXfem_grad> grads; // Gradients of theses functions
-    std::vector<pXfem_hess> hess;  // Hessians of theses functions
     std::vector<size_type> func_indices;
 
     void get_fem_precomp_tab(pfem_precomp pfp, std::vector<pfem_precomp>& vpfp) const;
@@ -96,9 +89,7 @@ namespace getfem
     virtual size_type nb_dof(void) const;
 
     /* ind should be > 0 */
-    void add_func(pfem pf,
-                  pXfem_func pXf, pXfem_grad pXg,
-		  pXfem_hess pXh = pno_Xfem_hess_defined,
+    void add_func(pfem pf, pXfem_func pXf,
 		  size_type ind = size_type(-1));
     
     void interpolation(const base_node &x, const base_matrix &G,
