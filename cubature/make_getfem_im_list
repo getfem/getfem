@@ -53,7 +53,7 @@ while ($lss) {
     if (!($li=~/NAME=/))
       { die "Impossible to read $filename : no NAME found\n"; }
     ($a, $name) = split('=', $li, 2);
-    print "Making $name\n";
+    print "Reading $name\n";
     read_line;
     if (!($li=~/N=/)) { die "Impossible to read $filename : no N found\n"; }
     ($a, $N) = split('=', $li, 2); $N *= 1;
@@ -76,11 +76,11 @@ while ($lss) {
 	if (!($b=~/,/))
 	{ die "Impossible to read $filename : wrong number of coordinates\n"; }
 	($a, $b) = split(',', $b, 2);
-	print TMPF3 "    ", $a, ",\n";
+	print TMPF3 " LONG_SCAL(", $a, "),\n";
       }
       if (!($b))
 	{ die "Impossible to read $filename : wrong number of coordinates\n"; }
-      print TMPF3 "    ", $b, ",\n";
+      print TMPF3 " LONG_SCAL(", $b, "),\n";
     }
     if ($nbpt) { print TMPF5 " // $name\n"; }
     read_line;
@@ -137,3 +137,5 @@ close(TMPF1); close(TMPF2); close(TMPF3); close(TMPF4); close(TMPF5);
 
 `cat $tmp2 $tmp1 $tmp3 $tmp4 $tmp5 > getfem_in_list.h`;
 `rm -f $tmp1 $tmp2 $tmp3 $tmp4 $tmp5`;
+
+print "The result is in getfem_in_list.h\n";
