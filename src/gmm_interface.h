@@ -803,6 +803,7 @@ namespace gmm {
 	     it.ir + *(it.jc) - shift, *(it.jc + 1) - *(it.jc), it.n);
     }
     static const void* origin(const this_type &m) { return m.pr; }
+    typedef abstract_null_type access_type;
     static void do_clear(this_type &m) { m.do_clear(); }
   };
 
@@ -882,6 +883,7 @@ namespace gmm {
 	     it.ir + *(it.jc) - shift, *(it.jc + 1) - *(it.jc), it.n);
     }
     static const void* origin(const this_type &m) { return m.pr; }
+    typedef abstract_null_type access_type;
     static void do_clear(this_type &m) { m.do_clear(); }
   };
 
