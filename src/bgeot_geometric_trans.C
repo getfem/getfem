@@ -63,7 +63,7 @@ namespace bgeot
 	B_.resize(N(), P);
 	base_matrix K(N(),P), CS(P,P);
 	if (have_pgp()) {
-	  const base_matrix& gr = pgp_->grad(ii_);
+	  //const base_matrix& gr = pgp_->grad(ii_);
 	  //gmm::mult(gmm::transposed(pgp_->grad(ii_)), gmm::transposed(G()), K);/*O*/
 	  gmm::mult(G(), pgp_->grad(ii_), K);
 	} else {
