@@ -154,16 +154,19 @@ void test_convex_quality(getfem::scalar_type dx, getfem::scalar_type dy) {
   sc(B)+=0,0;
   sc(C)+=2,0;
   sc(A)+=0,h;
-  cerr << "quality of triangles, and their radius estimates (should decrease): ";
+  cout << "quality of triangles, and their radius estimates "
+       << " (should decrease): ";
   for (size_type i=0; i < 10; ++i) {    
     size_type cv = m.add_triangle_by_points(A,B,C);
-    cerr << "Q=" << m.convex_quality_estimate(cv) << "\t" << "R=" << m.convex_radius_estimate(cv) << endl;
+    cout << "Q=" << m.convex_quality_estimate(cv) << "\t"
+	 << "R=" << m.convex_radius_estimate(cv) << endl;
     A[0] += dx; A[1] += dy;
   }
 }
 
 class myexc : public dal::exception_callback {
-  void callback(const std::string& s) { cerr << "exception launched: " << s << std::endl; }
+  void callback(const std::string& s)
+  { cerr << "exception launched: " << s << std::endl; }
 };
 
 int main(void)
