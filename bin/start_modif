@@ -94,22 +94,24 @@ print MAKEFILE "\n\n", '# Compilation of test programs : ',  "\n";
 $listeC = `ls programs/\*.C`;
 $listeC =~ s/\@//g;
 $listetests = "";
+$listetestsex = "echo \"beginning tests\"";
 while($listeC)
 {
   ($fi, $listeC) = split('\s', $listeC, 2);
-  $fi1 = $fi; $fi1 =~ s/\.C/\.o/;
+  $fi1 = $fi; $fi1 =~ s/\.C//;
   while ($fi1 =~ /\//) { ($fi2, $fi1) = split('\/', $fi1, 2); }
   $listetests = $listetests." ".$fi1;
+  $listetestsex = $listetestsex."; ".$fi1;
   $fi2 = $fi1;
   $fi2 =~ s/\.o/_h/;
 #  $fi2 =~ s/\.o/.h/;
   print MAKEFILE "\n", "programs\/$fi1 : $fi \$(GETFEM_LIB) \n";
-  print MAKEFILE "\t", '$(CPLUS) $(COPT) $(INCLUDES) ', $fi, ' -o $@', "\n";
+  print MAKEFILE "\t", '$(CPLUS) $(COPT) $(INCLUDES) ', $fi, " -o programs\/$fi1", "\n";
 
 }
 
 print MAKEFILE "\n", 'test :', $listetests, "\n";
-
+print MAKEFILE "\t", $listetestsex, "\n";
 
 print MAKEFILE "\n\n\$(GETFEM_LIB) : \$(lib_objects)\n";
 print MAKEFILE "\t ar r \$(GETFEM_LIB) \$(lib_objects) ; ranlib \$(GETFEM_LIB)\n";
