@@ -92,10 +92,10 @@ namespace getfem
     if (!isinit) {
       tab = new dal::FONC_TABLE<intfem, intfem>(); isinit = true;
     }
-    if (ppf->basic_structure() != ppi->structure())
-      DAL_THROW(internal_error, 
-		"Incompatibility between fem and integration method");
-    return tab->add(intfem(ppf, ppi));
+//      if (ppf->basic_structure() != ppi->structure())
+//        DAL_THROW(internal_error, 
+//  		"Incompatibility between fem and integration method");
+      return tab->add(intfem(ppf, ppi));
   }
   
   const dal::bit_vector &mesh_fem::convex_on_boundary(size_type b) const {

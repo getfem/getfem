@@ -36,7 +36,7 @@
 
 namespace getfem
 { 
-  static papprox_integration
+  papprox_integration
   composite_approx_int_method(const mesh_precomposite &mp, const mesh_fem &mf,
 			      bgeot::pconvex_ref cr) {
     dal::bit_vector nn = mf.convex_index();
