@@ -132,21 +132,21 @@ namespace bgeot
 
 
   
-  bool geotrans_inv_convex::invert_lin(const base_node& n, base_node& n_ref) {
+  bool geotrans_inv_convex::invert_lin(const base_node& n, base_node& n_ref, scalar_type IN_EPS) {
     base_node y(n); for (size_type i=0; i < P; ++i) y[i] -= a(i,0);
     gmm::mult(B0, y, n_ref); // n_ref = B0 * y;
-    if (pgt->convex_ref()->is_in(n_ref) < EPS) {
+    if (pgt->convex_ref()->is_in(n_ref) < IN_EPS) {
       if (N == P) return true;
       else {
 	gmm::mult(grad,gmm::scaled(base_vector(n_ref),-1.0),y,y);
 	//        y -= grad * n_ref;
-        if (vect_norm2(y) < EPS) return true;
+        if (vect_norm2(y) < IN_EPS) return true;
       }
     }
     return false;
   }
 
-  bool geotrans_inv_convex::invert_nonlin(const base_node& n, base_node& x) {
+  bool geotrans_inv_convex::invert_nonlin(const base_node& n, base_node& x, scalar_type IN_EPS) {
     base_node xn, y;
     
     /* find an initial guess */
@@ -196,8 +196,8 @@ namespace bgeot
                 "failed (too much iterations)");
     
     // Test un peu sevère peut-être en ce qui concerne rn.
-    if (pgt->convex_ref()->is_in(x) < EPS
-        && (N == P || vect_norm2(rn) < EPS))
+    if (pgt->convex_ref()->is_in(x) < IN_EPS
+        && (N == P || vect_norm2(rn) < IN_EPS))
       return true;
     return false;
   }

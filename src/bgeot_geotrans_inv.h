@@ -288,15 +288,15 @@ namespace bgeot
        @param n node on the real element 
        @param n_ref computed node on the reference convex
     */
-    bool invert(const base_node& n, base_node& n_ref) {
+    bool invert(const base_node& n, base_node& n_ref, scalar_type IN_EPS=1e-12) {
       n_ref.resize(pgt->structure()->dim());
       if (pgt->is_linear()) {
-        return invert_lin(n, n_ref);
-      } else return invert_nonlin(n, n_ref);
+        return invert_lin(n, n_ref,IN_EPS);
+      } else return invert_nonlin(n, n_ref,IN_EPS);
     }
   private:
-    bool invert_lin(const base_node& n, base_node& n_ref);
-    bool invert_nonlin(const base_node& n, base_node& n_ref);
+    bool invert_lin(const base_node& n, base_node& n_ref, scalar_type IN_EPS);
+    bool invert_nonlin(const base_node& n, base_node& n_ref, scalar_type IN_EPS);
   };
 
   template<class TAB> void geotrans_inv_convex::init(const convex<base_node,
