@@ -366,8 +366,8 @@ to be described ...
 
 \begin{center}
 \begin{tabular}{|m{16.109cm}|} \hline 
-{\bf composition of a finite element method on a element with {\tt K} subdivisions}\\
-{\tt "FEM\_STRUCTURED\_COMPOSITE(FEM1, K)"} 
+{\bf composition of a finite element method on a element with {\tt S} subdivisions}\\
+{\tt "FEM\_STRUCTURED\_COMPOSITE(FEM1, S)"} 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
@@ -375,9 +375,45 @@ Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent
 \end{tabular}
 \end{center}
 
+It is important to use a corresponding composite integration method.
+
 \subsubsection{Hierarchical composite elements}
 
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P1comp_hier.eps}
+  \end{center}
+  \caption{ \it hierarchical composite element {\tt "FEM\_PK\_HIERARCHICAL\_COMPOSITE(2,1,3)"}} 
+  \label{fig:triangle_comp}
+\end{figure}
+
+\begin{center}
+\begin{tabular}{|m{16.109cm}|} \hline 
+{\bf hierarchical composition of a $P_K$ finite element method on a simplex with {\tt S} subdivisions}\\
+{\tt "FEM\_PK\_HIERARCHICAL\_COMPOSITE(P,K,S)"} 
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
+\small K & \small P & \mbox{$\Frac{(SK+P)!}{(SK)! P!}$} & variable & No \mbox{($Q = 1$)} & If {\tt FEM1} is  & piecewise\\ \hline
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tabular}{|m{16.109cm}|} \hline 
+{\bf hierarchical composition of a hierarchical $P_K$ finite element method on a simplex with {\tt S} subdivisions}\\
+{\tt "FEM\_PK\_FULL\_HIERARCHICAL\_COMPOSITE(P,K,S)"} 
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
+\small K & \small P & \mbox{$\Frac{(SK+P)!}{(SK)! P!}$} & variable & No \mbox{($Q = 1$)} & If {\tt FEM1} is  & piecewise\\ \hline
+\end{tabular}
+\end{center}
+
 to be described ...
+
+Other constructions are possible thanks to {\tt "FEM\_GEN\_HIERARCHICAL(FEM1, FEM2)"} and {\tt "FEM\_STRUCTURED\_COMPOSITE(FEM1, S)"}
+
+It is important to use a corresponding composite integration method.
 
 \subsection{Specific elements in dimension 1}
 
@@ -1048,6 +1084,13 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{1.7cm}m{1.7cm}m{1.7cm}} x &
 
 \subsection{Direct product of integration methods}
 
+
+to be described ...
+
+\subsection{composite integration methods}
+
+
+use {\tt "IM\_STRUCTURED\_COMPOSITE(IM1, S)"} to copy {\tt IM1} on an element with {\tt S} subdivisions. The resulting integration method has the same order but with more points. This coulb be more stable to use composite method rather than improve the order of the method. Those methods have to be used also with composite elements. Most of the time for composite element, it is preferable to choose the basic method {\tt IM1} with no points on the boundary (because the gradient coulb be not defined on the boundary of sub-elements). 
 
 to be described ...
 
