@@ -164,8 +164,8 @@ AC_ARG_ENABLE(qd,
 if test "x$useQDlib" = "xyes" ; then  
   LIBS="$LIBS $QDLIB -lm"
   CPPFLAGS="$CPPFLAGS $QDINC"
+dnl #define NO_INLINE
   AC_TRY_RUN([
-#define NO_INLINE
 #include <qd.h>
 #include <dd.h>
 #include <x86.h>

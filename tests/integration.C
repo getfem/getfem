@@ -1,6 +1,6 @@
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 2002  Yves Renard.                                        */
+/* Copyright (C) 2002-2004  Yves Renard, Julien Pommier.                   */
 /*                                                                         */
 /* This program is free software; you can redistribute it and/or modify    */
 /* it under the terms of the GNU Lesser General Public License as          */
@@ -255,16 +255,21 @@ static void check_methods() {
 
   for (size_type d=2; d < 5; ++d) {
     for (size_type k=0; k < 7-d; ++k) {
-      cerr << "FIXME: IM_EXACT_PRISM does not work...\n";
-      /*sprintf(s,"IM_EXACT_PRISM(%d)",d); ppi = getfem::int_method_descriptor(s);
-	check_method(s, getfem::int_method_descriptor(s), k, bgeot::prism_geotrans(d,k));*/
-      if (d != 4) {
-	sprintf(s,"IM_NC_PRISM(%d,%d)",d,k); ppi = getfem::int_method_descriptor(s);
-	check_method(s, getfem::int_method_descriptor(s), k, bgeot::prism_geotrans(d,k));
-      } else cerr << "FIXME: IM_NC_PRISM(4,k) does not work...\n";
+      sprintf(s,"IM_EXACT_PRISM(%d)",d);
+      ppi = getfem::int_method_descriptor(s);
+      
+      check_method(s, getfem::int_method_descriptor(s), k,
+		   bgeot::prism_linear_geotrans(d));
+      sprintf(s,"IM_NC_PRISM(%d,%d)",d,k);
+      ppi = getfem::int_method_descriptor(s);
+      check_method(s, getfem::int_method_descriptor(s), k,
+		   bgeot::prism_geotrans(d, std::max(k, size_type(1))));
+    
       if (d == 3) {	
-	sprintf(s,"IM_PRODUCT(IM_TRIANGLE(6),IM_GAUSS1D(6))"); ppi = getfem::int_method_descriptor(s);
-	check_method(s, getfem::int_method_descriptor(s), k, bgeot::prism_geotrans(d,k));
+	sprintf(s,"IM_PRODUCT(IM_TRIANGLE(6),IM_GAUSS1D(6))");
+	ppi = getfem::int_method_descriptor(s);
+	check_method(s, getfem::int_method_descriptor(s), k,
+		     bgeot::prism_geotrans(d,k));
       }
     }
   }

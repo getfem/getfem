@@ -23,6 +23,9 @@ using bgeot::size_type;
 
 int main(void)
 {
+  unsigned short old_cw;
+  x86_fix_start(&old_cw);
+
   try {
     
 
@@ -38,29 +41,27 @@ int main(void)
 	 << bgeot::name_of_geometric_trans(p1) << endl;
 
     cout << "Name of the product of the two : " 
-	 << bgeot::name_of_geometric_trans(bgeot::product_geotrans(p1, p2)) << endl;
+	 << bgeot::name_of_geometric_trans(bgeot::product_geotrans(p1, p2))
+	 << endl;
 
 
     bgeot::pgeometric_trans pai;
 
     char meth[500];
 
-    for (int i = 1; i < 4; ++i)
-      {
-	pai = bgeot::simplex_geotrans(i,i);
-	
-	cout << "Simplexe de dimension " << i << " et de degre " << i << endl;
-	
-	for (size_type k = 0; k < pai->nb_points(); ++k)
-	  {
-	    cout << "Poly " << k << " : " << pai->poly_vector()[k];
-	    cout << " point : " << pai->geometric_nodes()[k] << endl;
-	    
-	  }
-	
-	cout << endl << endl;
-	
+    for (int i = 1; i < 4; ++i) {
+      pai = bgeot::simplex_geotrans(i,i);
+      
+      cout << "Simplex of dimension " << i << " and degree " << i << endl;
+      
+      for (size_type k = 0; k < pai->nb_points(); ++k) {
+	cout << "Poly " << k << " : " << pai->poly_vector()[k];
+	cout << " point : " << pai->geometric_nodes()[k] << endl;
       }
+	
+      cout << endl << endl;
+      
+    }
     
     {
       sprintf(meth, "GT_PRODUCT(GT_PK(1,1), GT_PK(1,1))");
