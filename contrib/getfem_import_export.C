@@ -409,7 +409,7 @@ namespace getfem {
 
   void opendx_export::export_mesh_edges(const getfem::getfem_mesh& m, size_type nrefine) {
     bgeot::edge_list el;
-    bgeot::mesh_edges_list(m, el, false);
+    bgeot::mesh_edge_list(m, el, false);
     std::vector<scalar_type> epts(m.dim() * (nrefine+1) * el.size());
     transform_edge_list(m, nrefine, el, epts.begin());
     size_type edges_pts_object_num = object_cnt++;

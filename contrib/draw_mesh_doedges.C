@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
       DAL_THROW(dal::internal_error,
 	     "Do not draw meshes in dimension lower than 1 or greater than 3");
     bgeot::edge_list el;
-    bgeot::mesh_edges_list(mesh, el);
+    bgeot::mesh_edge_list(mesh, el);
     dal::bit_vector nn = el.index();
     size_type i;
     for (i << nn; i != size_type(-1); i << nn) {
