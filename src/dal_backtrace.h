@@ -3,6 +3,7 @@
 
 #include <getfem_arch_config.h>
 #include <string>
+#include <cstdio>
 
 namespace dal {
   std::string demangle(const char *mangled_name);

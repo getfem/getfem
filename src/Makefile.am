@@ -134,3 +134,4 @@ libgetfem_la_SOURCES = $(SRC)
 libgetfem_la_LDFLAGS = ${LIBTOOL_VERSION_INFO}
 
 CLEANFILES = ii_files/* *.o.d
+DISTCLEANFILES = getfem_arch_config.h

@@ -4,7 +4,7 @@
 
 #include <bgeot_config.h>
 #ifdef DEBUG_SMALL_VECTOR
-# include <assert.h>
+# include <cassert>
 # define SVEC_ASSERT(x) assert(x)
 #else
 # define SVEC_ASSERT(x)

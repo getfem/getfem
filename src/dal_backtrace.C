@@ -11,7 +11,11 @@ namespace dal {
      If you call this function with a non-mangled name (i.e. "main"),
      you will get strange results.
    */
-  std::string demangle(const char *s) {
+  std::string demangle(const char *
+#ifdef GETFEM_HAVE_CXXABI_H
+		       s
+#endif
+		       ) {
 #ifdef GETFEM_HAVE_CXXABI_H
     int status;
     /* documented in http://gcc.gnu.org/onlinedocs/libstdc++/latest-doxygen/namespaceabi.html */

@@ -57,7 +57,7 @@
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
-#include <assert.h>
+#include <cassert>
 #include <iostream>
 //#include <ios> essai
 #include <fstream>
@@ -76,7 +76,7 @@
 #include <deque>
 #include <string>
 #include <complex>
-#include <limits>
+
 
 #if defined(__GNUC__)
 #  if (__GNUC__ < 3)
@@ -98,6 +98,11 @@ namespace std {
 #else
 #  include <sstream>
 #endif
+
+#ifndef USING_BROKEN_GCC295
+#include <limits>
+#endif
+
 
 using std::endl;
 using std::cout;
