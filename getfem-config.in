@@ -9,20 +9,29 @@ datadir="@datadir@"
 mandir="@mandir@"
 sysconfdir="@sysconfdir@"
 sharedstatedir="@sharedstatedir@"
-
+srcdir="@abs_top_srcdir@"
+builddir="@abs_top_builddir@"
 build_CXXFLAGS="@CXXFLAGS@"
 build_LDFLAGS="@LDFLAGS@"
 CXX="@CXX@"
+
 LDFLAGS="-L$libdir -lgetfem++ @LIBS@"
 STATICLDFLAGS="$libdir/libgetfem++.a @LIBS@"
+SRC_LDFLAGS="-L$builddir/src/.libs -lgetfem++ @LIBS@"
+SRC_STATICLDFLAGS="$builddir/src/.libs/libgetfem++.a @LIBS@"
+
 CFLAGS="@CPPFLAGS@ -I$includedir"
+SRC_CFLAGS="@CPPFLAGS@ -I$srcdir -I$builddir/src -I$builddir"
+
 build="@BUILDER@-@BUILDDATE@"
 configure_args="@CONFIGURE_ARGS@"
+from_source=0
 usage()
 {
 	cat <<EOF
 Usage: getfem-config [OPTIONS]
 Options:
+        [--src]
 	[--prefix]
 	[--exec-prefix]
 	[--version]
@@ -43,6 +52,9 @@ while test $# -gt 0; do
   esac
 
   case $1 in
+    --src)
+      from_source=1
+      ;;
     --prefix)
       echo $prefix
       ;;
@@ -53,13 +65,25 @@ while test $# -gt 0; do
       echo @VERSION@
       ;;
     --cflags)
-      echo $CFLAGS
+      if test $from_source -eq 0; then
+        echo $CFLAGS
+      else
+        echo $SRC_CFLAGS
+      fi;
       ;;
     --libs)
-      echo $LDFLAGS
+      if test $from_source -eq 0; then
+        echo $LDFLAGS
+      else
+        echo $SRC_LDFLAGS
+      fi;
       ;;
     --static-libs)
-      echo $STATICLDFLAGS
+      if test $from_source -eq 0; then
+        echo $STATICLDFLAGS
+      else
+        echo $SRC_STATICLDFLAGS
+      fi;
       ;;
     --build)
       echo $build
@@ -71,7 +95,7 @@ while test $# -gt 0; do
       echo $build_LDFLAGS
       ;;
     --cxx)
-      echo $cxx
+      echo $CXX
       ;;
     --configure-args)
       echo $configure_args
