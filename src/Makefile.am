@@ -1,8 +1,8 @@
 include_HEADERS =                      \
-	getfem_arch_config.h	       \
 	bgeot_config.h                 \
 	bgeot_small_vector.h           \
 	bgeot_kdtree.h		       \
+	bgeot_rtree.h		       \
 	bgeot_imbricated_box.h	       \
 	bgeot_permutations.h           \
 	bgeot_convex.h                 \
@@ -101,6 +101,7 @@ SRC =                                  \
 	dal_bit_vector.C               \
 	bgeot_small_vector.C           \
 	bgeot_kdtree.C		       \
+	bgeot_rtree.C		       \
 	bgeot_imbricated_box.C         \
 	bgeot_convex_ref.C             \
 	bgeot_convex_structure.C       \
