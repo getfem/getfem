@@ -380,7 +380,7 @@ namespace getfem {
 						     const VECT &LAMBDA, const VECT &MU)
   { // à verifier
 
-    size_type cv, nbd1, nbd2, N = mf.linked_mesh().dim();
+    size_type cv, nbd2, N = mf.linked_mesh().dim();
     dal::bit_vector nn = mf.convex_index();
     base_tensor t;
     pfem pf1, pf2, pf1prec = NULL, pf2prec = NULL;
@@ -394,7 +394,7 @@ namespace getfem {
   
     for (cv << nn; cv != ST_NIL; cv << nn)
       {
-	pf1 =     mf.fem_of_element(cv); nbd1 = pf1->nb_dof();
+	pf1 =     mf.fem_of_element(cv); 
 	pf2 = mfdata.fem_of_element(cv); nbd2 = pf2->nb_dof();
 	pgt = mf.linked_mesh().trans_of_convex(cv);
 	pim = mf.int_method_of_element(cv);

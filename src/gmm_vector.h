@@ -528,8 +528,8 @@ namespace gmm
 
   template <class V, class T> 
   void copy_rsvector(const V &v1, rsvector<T> &v2, abstract_sparse) {
-     typename linalg_traits<V>::const_iterator it = vect_begin(v1),
-      ite = vect_end(v1);
+     typename linalg_traits<V>::const_iterator it = vect_const_begin(v1),
+      ite = vect_const_end(v1);
     std::vector<size_type> tab(100);
     size_type i = 0;
     for (; it != ite; ++it)

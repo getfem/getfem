@@ -950,7 +950,7 @@ namespace getfem
     // return the dimension of the kernel. The function is based
     // on a Gramm-Schmidt algorithm.
     typedef typename gmm::temporary_vector<MATD>::vector_type TEMP_VECT;
-    size_type nbd = mat_ncols(D), nbase = 0, nbr = mat_nrows(D);
+    size_type nbd = gmm::mat_ncols(D), nbase = 0, nbr = gmm::mat_nrows(D);
     TEMP_VECT aux(nbr), e(nbd), f(nbd);
     dal::dynamic_array<TEMP_VECT> base_img;
     dal::dynamic_array<TEMP_VECT> base_img_inv;

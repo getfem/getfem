@@ -395,9 +395,9 @@ namespace gmm {
     typedef plain_clear<this_type> clear_type;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) { return vect_begin(v); }
-    static const_iterator begin(const this_type &v) { return vect_begin(v); }
+    static const_iterator begin(const this_type &v) { return vect_const_begin(v); }
     static iterator end(this_type &v) { return vect_end(v); }
-    static const_iterator end(const this_type &v) { return vect_end(v); }
+    static const_iterator end(const this_type &v) { return vect_const_end(v); }
     static const void* origin(const this_type &v) { return &v; }
     static void do_clear(this_type &v) { clear_type()(origin(v), begin(v), end(v)); }
   };

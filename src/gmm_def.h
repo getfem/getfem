@@ -85,7 +85,16 @@ namespace gmm {
   template<> struct principal_orientation_type<col_and_row>
   { typedef col_major potype; };
 
-  template <class V> struct linalg_traits {};
+  template <class V> struct linalg_traits {    
+    typedef abstract_null_type this_type;
+    typedef abstract_null_type value_type;
+    typedef abstract_null_type reference;
+    typedef abstract_null_type iterator;
+    typedef abstract_null_type const_iterator;
+    typedef abstract_null_type storage_type;
+    typedef abstract_null_type const_sub_row_type;
+    typedef abstract_null_type const_sub_col_type;
+  };
 
   template <class PT, class V> struct vect_ref_type;
   template <class P, class V> struct vect_ref_type<P *, V> {

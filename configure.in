@@ -57,8 +57,10 @@ dnl 	CXXFLAGS="$CXXFLAGS -ptr `pwd`/cxx_repository -std strict_ansi -O3"
  	cd $here
 	;;
  CC)
-	APPSCXXFLAGS="$CXXFLAGS -LANG:std -Ofast"
- 	CXXFLAGS="$CXXFLAGS -LANG:std -diag_suppress 1682 -O3 -OPT:Olimit=0:roundoff=3:div_split=ON:alias=typed -TARG:platform=ip25 -r12k"
+dnl	always use ./configure CXX=CC CC=cc !
+dnl 	CXXFLAGS="$CXXFLAGS -LANG:std -diag_suppress 1682 -O3 -OPT:Olimit=0:roundoff=3:div_split=ON:alias=typed -TARG:platform=ip25"
+ 	CXXFLAGS="$CXXFLAGS -LANG:std -diag_suppress 1682 -O3"
+	APPSCXXFLAGS="$CXXFLAGS"
 dnl	SUPLDFLAGS="-lCio"
 	MEX_NEEDS_TWOCOMP="#"
 	;;
