@@ -85,11 +85,11 @@ namespace getfem
       
       while (ncs != 0) {
 	ncs--;
-	bgeot::pconvex_structure cvs = cvstab[ncs];
+	cvs = cvstab[ncs];
 	if (cvs->dim() == 1) { // il faudrait étendre aux autres cas classiques.
 	  
-	  for (size_type i = 1; i < cvs->nb_points(); ++i)
-	    el.add(edge_list_elt((indpttab[ncs])[i-1],(indpttab[ncs])[i],ncv));
+	  for (size_type j = 1; j < cvs->nb_points(); ++j)
+	    el.add(edge_list_elt((indpttab[ncs])[j-1],(indpttab[ncs])[j],ncv));
 	}
 	else {
 	  size_type nf = cvs->nb_faces();

@@ -307,7 +307,7 @@ namespace getfem
 	DAL_THROW(to_be_done_error, "to be done ... ");
       
       for (size_type i = 0; i < nbd2; ++i) {
-	size_type dof1 = mf_target.ind_dof_of_element(cv)[i];
+	size_type dof2 = mf_target.ind_dof_of_element(cv)[i];
 	/* interpolation of the solution.                                  */
 	/* faux dans le cas des éléments vectoriel.                        */
 	pt2 = pfe->node_of_dof(i);
@@ -318,7 +318,7 @@ namespace getfem
 	  }
 	  // il faudrait utiliser les fem_precomp pour accelerer.
 	  pf1->interpolation(pt2, G, pgt, coeff, val);
-	  V[dof1*P + k] = val[0];
+	  V[dof2*P + k] = val[0];
 	}
       }
     }
