@@ -262,7 +262,7 @@ namespace gmm
       *pv = const_cast<wsvector<T> *>((const wsvector<T> *)(v2.origin));
     if (vect_size(v1) != vect_size(v2))
 	DAL_THROW(dimension_error,"dimensions mismatch");
-    *pv = v1; srv->_begin = vect_begin(*pv); srv->_end = vect_end(*pv);
+    *pv = v1; svr->_begin = vect_begin(*pv); svr->_end = vect_end(*pv);
   }
   template <class T> inline
   void copy(const simple_vector_ref<const wsvector<T> *> &v1,
@@ -519,7 +519,7 @@ namespace gmm
       *pv = const_cast<rsvector<T> *>((const rsvector<T> *)(v2.origin));
     if (vect_size(v1) != vect_size(v2))
 	DAL_THROW(dimension_error,"dimensions mismatch");
-    *pv = v1; srv->_begin = vect_begin(*pv); srv->_end = vect_end(*pv);
+    *pv = v1; svr->_begin = vect_begin(*pv); svr->_end = vect_end(*pv);
   }
   template <class T> inline
   void copy(const simple_vector_ref<const rsvector<T> *> &v1,
