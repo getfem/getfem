@@ -650,7 +650,7 @@ namespace getfem
 
 		  size_type dof_rh = mf_rh.ind_dof_of_element(cv)[ind_rh];
 		  /* set the "simplified" row */
-		  for (int jj=0; jj < Q; jj++) {
+		  for (unsigned jj=0; jj < Q; jj++) {
 		    size_type dof_u2 = mf_u.ind_dof_of_element(cv)[ind_u*Q + jj];		    
 		    M(dof_u, dof_u2) = H[(jj*Q+q) + Q*Q*(dof_rh)];
 		  }
