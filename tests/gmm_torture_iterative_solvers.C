@@ -38,7 +38,8 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
 
     // Test for bicgstab with no preconditionner
 
-    gmm::iteration iter((double(prec)));
+    gmm::fill_random(v1);
+    gmm::iteration iter((double(prec))*1000.0, 1);
     gmm::bicgstab(m1, v1, v2, P1, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
@@ -47,6 +48,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
 
     // Test for bicgstab with diagonal preconditionner
 
+    iter.init(); gmm::fill_random(v1);
     gmm::bicgstab(m1, v1, v2, P2, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
@@ -55,6 +57,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
 
     // Test for bicgstab with mr preconditionner
 
+    iter.init(); gmm::fill_random(v1);
     gmm::bicgstab(m1, v1, v2, P3, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
@@ -63,6 +66,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
 
     // Test for bicgstab with ilu preconditionner
 
+    iter.init(); gmm::fill_random(v1);
     gmm::bicgstab(m1, v1, v2, P4, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
@@ -71,6 +75,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
 
     // Test for bicgstab with ilut preconditionner
 
+    iter.init(); gmm::fill_random(v1);
     gmm::bicgstab(m1, v1, v2, P5, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
@@ -79,6 +84,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
 
     // Test for gmres with no preconditionner
 
+    iter.init(); gmm::fill_random(v1);
     gmm::gmres(m1, v1, v2, P1, 50, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
@@ -87,6 +93,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
 
     // Test for gmres with diagonal preconditionner
 
+    iter.init(); gmm::fill_random(v1);
     gmm::gmres(m1, v1, v2, P2, 50, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
@@ -95,6 +102,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
 
     // Test for gmres with mr preconditionner
 
+    iter.init(); gmm::fill_random(v1);
     gmm::gmres(m1, v1, v2, P3, 50, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
@@ -103,6 +111,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
 
     // Test for gmres with ilu preconditionner
 
+    iter.init(); gmm::fill_random(v1);
     gmm::gmres(m1, v1, v2, P4, 50, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
@@ -111,6 +120,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
 
     // Test for gmres with ilut preconditionner
 
+    iter.init(); gmm::fill_random(v1);
     gmm::gmres(m1, v1, v2, P5, 50, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
@@ -119,6 +129,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
 
     // Test for qmr with no preconditionner
 
+    iter.init(); gmm::fill_random(v1);
     gmm::qmr(m1, v1, v2, P1, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
@@ -127,6 +138,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
 
     // Test for qmr with diagonal preconditionner
 
+    iter.init(); gmm::fill_random(v1);
     gmm::qmr(m1, v1, v2, P2, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
@@ -135,6 +147,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
 
     // Test for qmr with ilu preconditionner
 
+    iter.init(); gmm::fill_random(v1);
     gmm::qmr(m1, v1, v2, P4, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
@@ -143,6 +156,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
 
     // Test for qmr with ilut preconditionner
 
+    iter.init(); gmm::fill_random(v1);
     gmm::qmr(m1, v1, v2, P5, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
@@ -159,7 +173,17 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
 
     // Test for cg with no preconditionner
 
+    iter.init(); gmm::fill_random(v1);
     gmm::cg(m1, v1, v2, P1, iter);
+    gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
+    error = gmm::vect_norm2(v3);
+    if (error >= prec * R(20000) / det)
+      DAL_THROW(gmm::failure_error, "Error too large: " << error);
+
+    // Test for cg with diagonal preconditionner
+
+    iter.init(); gmm::fill_random(v1);
+    gmm::cg(m1, v1, v2, P2, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
     if (error >= prec * R(20000) / det)
@@ -167,6 +191,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
 
     // Test for cg with ildlt preconditionner
 
+    iter.init(); gmm::fill_random(v1);
     gmm::cg(m1, v1, v2, P6, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
@@ -175,6 +200,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
 
     // Test for cg with ildltt preconditionner
 
+    iter.init(); gmm::fill_random(v1);
     gmm::cg(m1, v1, v2, P7, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
