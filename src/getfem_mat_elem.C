@@ -36,6 +36,9 @@
 #include <getfem_precomp.h>
 #include <bgeot_precomp.h>
 
+extern "C" void daxpy_(const int *n, const double *alpha, const double *x, const int *incx, double *y, const int *incy);
+extern "C" void dger_(const int *m, const int *n, const double *alpha, const double *x, const int *incx, const double *y, const int *incy, double *A, const int *lda);
+
 namespace getfem
 {
   /* ********************************************************************* */
@@ -46,18 +49,24 @@ namespace getfem
     pmat_elem_type pmt;
     pintegration_method ppi;
     bgeot::pgeometric_trans pgt;
+    /* prefer_comp_on_real_element: compute elementary matrices on the real
+       element if possible (i.e. if no exact integration is used); this allow
+       using inline reduction during the integration */
+    bool prefer_comp_on_real_element; 
     bool operator < (const emelem_comp_light_ &ls) const {
       if (pmt < ls.pmt) return true; if (pmt > ls.pmt) return false; 
       if (ppi < ls.ppi) return true; if (ppi > ls.ppi) return false; 
-      if (pgt < ls.pgt) return true; return false;
+      if (pgt < ls.pgt) return true; if (pgt > ls.pgt) return false;
+      if (prefer_comp_on_real_element < ls.prefer_comp_on_real_element) return true;
+      return false;
     }
     emelem_comp_light_(pmat_elem_type pm, pintegration_method pi,
-		       bgeot::pgeometric_trans pg)
-    { pmt = pm; ppi = pi; pgt = pg; }
+		       bgeot::pgeometric_trans pg, bool on_relt)
+    { pmt = pm; ppi = pi; pgt = pg; prefer_comp_on_real_element = on_relt; }
     emelem_comp_light_(void) { }
   };
 
-
+  
   struct emelem_comp_structure_ : public mat_elem_computation
   {
     bgeot::pgeotrans_precomp pgp;
@@ -75,7 +84,6 @@ namespace getfem
     bool volume_computed;
     bool is_linear;
     bool computed_on_real_element;
-
     size_type memsize() const {
       size_type sz = sizeof(emelem_comp_structure_) +
 	mref.capacity()*sizeof(base_tensor) +
@@ -104,13 +112,12 @@ namespace getfem
       }
       faces_computed = volume_computed = false;
       is_linear = pgt->is_linear();
-      computed_on_real_element = !is_linear;
+      computed_on_real_element = !is_linear || (ls.prefer_comp_on_real_element && !is_ppi);
       nbf = pgt->structure()->nb_faces();
       dim = pgt->structure()->dim();
       mat_elem_type::const_iterator it = pme->begin(), ite = pme->end();
       
       for (size_type k = 0; it != ite; ++it, ++k) {
-
 	if ((*it).pfi) {
 	  if ((*it).pfi->is_on_real_element()) computed_on_real_element = true;
 	  if (is_ppi && (!((*it).pfi->is_polynomial()) || !is_linear 
@@ -155,7 +162,8 @@ namespace getfem
     }
 
     void add_elem(base_tensor &t, fem_interpolation_context& ctx,
-		  scalar_type J, bool first, bool trans = true) {
+                  scalar_type J, bool first, bool trans, 
+                  mat_elem_integration_callback *icb) {
       mat_elem_type::const_iterator it = pme->begin(), ite = pme->end();
       bgeot::multi_index mi(pme->mi.size()), sizes = pme->mi;
       bgeot::multi_index::iterator mit = sizes.begin();
@@ -205,34 +213,105 @@ namespace getfem
 	}
       }
       
-      if (first) {
-	t.adjust_sizes(sizes);
-	std::fill(t.begin(), t.end(), 0.0);
-      }
 
+      //expand_product_old(t,J*pai->coeff(ctx.ii()), first);
+      scalar_type c = J*pai->coeff(ctx.ii());
+      if (!icb) {
+	if (first) { t.adjust_sizes(sizes); }
+	expand_product_daxpy(t, c, first);
+      } else {
+        icb->eltm.resize(0);
+	for (unsigned k=0; k != pme->size(); ++k) {
+	  if (icb && !((*pme)[k].t == GETFEM_NONLINEAR_ && (*pme)[k].nl_part != 0))
+	    icb->eltm.push_back(&elmt_stored[k]);
+	}
+	icb->exec(t, first, c);
+      }
+    }
+
+
+    void expand_product_old(base_tensor &t, scalar_type J, bool first) {
       scalar_type V;
       size_type k;
+      if (first) std::fill(t.begin(), t.end(), 0.0);
       base_tensor::iterator pt = t.begin();
       std::vector<base_tensor::const_iterator> pts(pme->size());
       std::vector<scalar_type> Vtab(pme->size());
-      J *= pai->coeff(ctx.ii());
       for (k = 0; k < pme->size(); ++k)
 	pts[k] = elmt_stored[k].begin();
-      base_tensor::const_iterator pts0 = pts[0];
       
-      size_type n0 = elmt_stored[0].size();
+      size_type k0 = 0;
+      unsigned n0 = elmt_stored[0].size();
+      /*while (elmt_stored[k0].size() == 1 && k0+1 < pme->size()) {
+        J *= elmt_stored[k0][0];
+        ++k0; n0 = elmt_stored[k0].size();
+        }*/
+      base_tensor::const_iterator pts0 = pts[k0];
+
+
       k = pme->size()-1; Vtab[k] = J;
       /* very heavy expansion .. takes much time */
       do {
-        for (V = Vtab[k]; k; --k)
+        for (V = Vtab[k]; k!=k0; --k)
           Vtab[k-1] = V = *pts[k] * V;
-        for (; k < n0; ++k)
+        for (k=0; k < n0; ++k)
           *pt++ += V * pts0[k];
-        for (k=1; k != pme->size() && ++pts[k] == elmt_stored[k].end(); ++k)
+        for (k=k0+1; k != pme->size() && ++pts[k] == elmt_stored[k].end(); ++k)
           pts[k] = elmt_stored[k].begin();
       } while (k != pme->size());
       if (pt != t.end()) DAL_THROW(internal_error, "Internal error");
     }
+
+    /* do the tensorial product using the blas function daxpy (much more
+       efficient than a loop).
+
+       efficiency is maximized when the first tensor has a large dimension
+     */
+    void expand_product_daxpy(base_tensor &t, scalar_type J, bool first) {
+      size_type k;
+      base_tensor::iterator pt = t.begin();
+      std::vector<base_tensor::const_iterator> pts(pme->size()), es_beg(pme->size()), es_end(pme->size());
+      std::vector<scalar_type> Vtab(pme->size());
+      size_type nm = 0;
+      if (first) memset(&(*t.begin()), 0, t.size()*sizeof(*t.begin())); //std::fill(t.begin(), t.end(), 0.0);
+      for (k = 0, nm = 0; k < pme->size(); ++k) {
+        if (elmt_stored[k].size() != 1) {
+          es_beg[nm] = elmt_stored[k].begin();
+          es_end[nm] = elmt_stored[k].end();
+          pts[nm] = elmt_stored[k].begin(); 
+          ++nm;
+        } else J *= elmt_stored[k][0];
+      }
+      if (nm == 0) {
+        t[0] += J;
+      } else {
+        int n0 = es_end[0] - es_beg[0];
+        if (t.size() > 1) {
+          static int cnt = 0;
+          if (++cnt < 5) {
+            cout << "n0 = " << n0 << ", nm = " << nm << ", pt = " << &(*pt) << " ";
+            for (size_type i = 0; i < elmt_stored.size(); ++i) cout << elmt_stored[i].size() << " ";
+            cout << " sz=" << t.size() << "\n";
+          }
+        }
+        base_tensor::const_iterator pts0 = pts[0];
+
+        /* very heavy reduction .. takes much time */
+        k = nm-1; Vtab[k] = J;
+        int one = 1;
+        scalar_type V;
+        do {
+          for (V = Vtab[k]; k; --k)
+            Vtab[k-1] = V = *pts[k] * V;
+          daxpy_(&n0, &V, const_cast<double*>(&(pts0[0])), &one, (double*)&(*pt), &one); 
+          pt+=n0;
+          for (k=1; k != nm && ++pts[k] == es_end[k]; ++k)
+            pts[k] = es_beg[k];
+        } while (k != nm);
+        if (pt != t.end()) DAL_THROW(internal_error, "Internal error");
+      }
+    }
+
 
     void pre_tensors_for_linear_trans(bool volumic) {
 
@@ -325,7 +404,7 @@ namespace getfem
 	  while (ip == nb_pt_l && ind_l < nbf)
 	    { nb_pt_l += pai->nb_points_on_face(ind_l); ind_l++; }
 	  ctx.set_ii(ip); 
-	  add_elem(mref[ind_l], ctx, 1.0, first, false);
+	  add_elem(mref[ind_l], ctx, 1.0, first, false, NULL);
 	  first = false;
 	}
       }
@@ -335,7 +414,7 @@ namespace getfem
 
 
     void compute(base_tensor &t, const base_matrix &G, size_type ir,
-		 size_type elt) {
+		 size_type elt, mat_elem_integration_callback *icb = 0) {
       dim_type P = dim, N = G.nrows();
       short_type NP = pgt->nb_points();
       fem_interpolation_context ctx(pgp,0,0,G,elt);
@@ -350,7 +429,6 @@ namespace getfem
       bool flag = false;
 
       if (!computed_on_real_element) {
-	
 	pre_tensors_for_linear_trans(ir == 0);
 	const base_matrix& B = ctx.B(); // compute B and J
 	scalar_type J=ctx.J();
@@ -380,7 +458,6 @@ namespace getfem
 	}
 	
       } else { // non linear transformation and methods defined on real elements
-
 	bool first = true;
 
 	for (size_type ip=(ir == 0) ? 0 : pai->repart()[ir-1];
@@ -392,13 +469,14 @@ namespace getfem
 	    gmm::mult(B, un, up);
 	    J *= bgeot::vect_norm2(up);
 	  }	  
-	  add_elem(t, ctx, J, first);
+	  add_elem(t, ctx, J, first, true, icb);
 	}
       }
 
       /* Applying linear transformation for non tau-equivalent elements.   */
       
       if (trans_reduction.size() > 0) {
+	if (icb) DAL_INTERNAL_ERROR("big bug... FIXME!");
 	std::deque<short_type>::const_iterator it = trans_reduction.begin(),
 	  ite = trans_reduction.end();
 	std::deque<pfem>::const_iterator iti = trans_reduction_pfi.begin();
@@ -412,15 +490,19 @@ namespace getfem
       if (flag) t = taux;
     }
     
-    void compute(base_tensor &t, const base_matrix &G, size_type elt)
-    { compute(t, G, 0, elt); }
+    void compute(base_tensor &t, const base_matrix &G, size_type elt, 
+		 mat_elem_integration_callback *icb)   
+    {
+      compute(t, G, 0, elt, icb); 
+    }
 
     void compute_on_face(base_tensor &t, const base_matrix &G,
-			 short_type f, size_type elt)
-    { compute(t, G, f+1, elt); }
+			 short_type f, size_type elt, 
+			 mat_elem_integration_callback *icb)
+    { compute(t, G, f+1, elt, icb); }
 
-  };
-  
+  };   
+
   struct emelem_comp_light_FUNC_TABLE : 
     public dal::FONC_TABLE<emelem_comp_light_, emelem_comp_structure_> { };
 
@@ -435,9 +517,10 @@ namespace getfem
   }
 
   pmat_elem_computation mat_elem(pmat_elem_type pm, pintegration_method pi,
-				 bgeot::pgeometric_trans pg) { 
+				 bgeot::pgeometric_trans pg, 
+                                 bool prefer_comp_on_real_element) { 
     return dal::singleton<emelem_comp_light_FUNC_TABLE>
-      ::instance().add(emelem_comp_light_(pm, pi, pg));
+      ::instance().add(emelem_comp_light_(pm, pi, pg, prefer_comp_on_real_element));
   }
 
   /* remove all occurences of pm from the emelem_comp_light_FUNC_TABLE */
@@ -448,5 +531,7 @@ namespace getfem
       if (f.light_table()[i].pmt == pm) f.sup(f.light_table()[i]);
     }
   }
+
+
 }  /* end of namespace getfem.                                            */
 

@@ -40,6 +40,7 @@
 #include <dal_bit_vector.h>
 // #include <gmm_kernel.h> // for i/o on vectors it is convenient
 #include <iostream>
+#include <bitset>
 
 namespace bgeot {
   typedef dal::uint32_type index_type;
@@ -237,30 +238,15 @@ namespace bgeot {
       }
       assert(i==card());
     }
-    void unpack_strides(const tensor_strides& packed, tensor_strides& unpacked) const {
-      assert(packed.size()==card());
-      unpacked.assign(size(),INT_MIN);
-      index_type i=0;
-      for (tensor_ranges_loop l(r); !l.finished(); l.next()) {
-	if (m[lpos(l.cnt)]) unpacked[lpos(l.cnt)] = packed[i++];
-      }
-    }
+    void unpack_strides(const tensor_strides& packed, tensor_strides& unpacked) const;
+
     /* c'est mieux que celle ci renvoie un int ..
        ou alors un unsigned mais dim_type c'est dangereux */
     int max_dim() const {
       index_set::const_iterator it = std::max_element(idxs.begin(),idxs.end());
       return (it == idxs.end() ? -1 : *it);
     }
-    void check_assertions() const {
-      if (r.size() != idxs.size()) DAL_INTERNAL_ERROR("");
-      if (s.size() != idxs.size()+1) DAL_INTERNAL_ERROR("");
-      if (m.size() != size()) DAL_INTERNAL_ERROR("");
-      dal::bit_vector bv;
-      for (dim_type i=0; i < idxs.size(); ++i) {
-	if (bv.is_in(i)) DAL_INTERNAL_ERROR(""); 
-	bv.add(i);
-      }
-    }
+    void check_assertions() const;
     void print(std::ostream &o) const;
     void print_() const { print(cerr); }
   };
@@ -617,6 +603,7 @@ namespace bgeot {
   struct packed_range {
     const stride_type *pinc;
     const stride_type *begin, *end;
+    index_type n;
     /*    index_type cnt;*/
   };
   /* additionnal data */
@@ -634,6 +621,7 @@ namespace bgeot {
 				     with inc[range-1] == -sum(inc[0..range-2]) (automatic rewinding!) 
 				     of course, stride_type MUST be signed
 				  */
+    std::bitset<32> have_regular_strides;
   };
 
   /* the big one */
@@ -662,6 +650,9 @@ namespace bgeot {
 			  (hence the index only has 1 value, and ppos == &pos_, and pcnt = &zero */
     };
     std::vector<index_value_data> idxval;
+    std::vector<stride_type> vectorized_strides_; /* if the tensor have regular strides, the mti might be vectorizable */
+    index_type vectorized_size_;                 /* the size of each vectorizable chunk */
+    index_type vectorized_pr_dim;                /* all pr[i], i >= vectorized_pr_dim, can be accessed via vectorized_strides */
   public:
     void clear() { 
       N = 0; pr.clear(); pri.clear(); bloc_rank.clear(); bloc_nelt.clear(); 
@@ -700,11 +691,12 @@ namespace bgeot {
       index_type cnt = (*iv.ppinc - iv.pincbase)/iv.nn;
       return ((iv.pposbase[cnt]) % iv.mod)/ iv.div;
     }
-
-    bool next(dim_type i_stop = dim_type(-1), dim_type i0_ = dim_type(-2)) {//=pr.size()-1) {
-      dim_type i0 = (i0_ == dim_type(-2) ? pr.size()-1 : i0_);
+    index_type vectorized_size() const { return vectorized_size_; }
+    const std::vector<stride_type>& vectorized_strides() const { return vectorized_strides_; }
+    bool next(unsigned i_stop = unsigned(-1), unsigned i0_ = unsigned(-2)) {//=pr.size()-1) {
+      unsigned i0 = (i0_ == unsigned(-2) ? pr.size()-1 : i0_);
       while (i0 != i_stop) {
-	for (dim_type n = pri[i0].n; n < N; ++n) {
+	for (unsigned n = pr[i0].n; n < N; ++n) {
 	  //	  index_type pos = pr[i0].cnt * (N-pri[i0].n) + (n - pri[i0].n);
 	  it[n] += *pr[i0].pinc; pr[i0].pinc++; 
 	}
@@ -716,8 +708,9 @@ namespace bgeot {
       }
       return false;
     }
+    bool vnext() { return next(unsigned(-1), vectorized_pr_dim); }
     bool bnext(dim_type b) { return next(bloc_rank[b]-1, bloc_rank[b+1]-1); }
-
+    bool bnext_useful(dim_type b) { return bloc_rank[b] != bloc_rank[b+1]; }
     /* version speciale pour itérer sur des tenseurs de même dimensions
        (doit être un poil plus rapide) */    
     bool qnext1() {
@@ -787,32 +780,53 @@ namespace bgeot {
       swap(m);
     }
     void init(std::vector<tensor_ref> trtab, bool with_index_values);
+    void print() const;
   };
 
 
-
+  /* handles a tree of reductions
+     The tree is used if more than two tensors are reduced, i.e.
+       z(:,:)=t(:,i).u(i,j).v(j,:) 
+     in that case, the reduction against j can be performed on u(:,j).v(j,:) = w(:,:)
+     and then, z(:,:) = t(:,i).w(i,:) 
+  */
   struct tensor_reduction {
-    tensor_ranges r;
-    std::vector<tensor_ref> trtab;
-    std::vector<std::vector<dim_type> > tr2r_dim;
-    std::string redidx;
+    struct tref_or_reduction {
+      tensor_ref tr_;
+      tensor_reduction *reduction;
+      tensor_ref &tr() { return tr_; }
+      const tensor_ref &tr() const { return tr_; }
+      explicit tref_or_reduction(const tensor_ref &tr__, const std::string& s) 
+	: tr_(tr__), reduction(0), ridx(s) {}
+      explicit tref_or_reduction(tensor_reduction *p, const std::string& s) 
+	: reduction(p), ridx(s) {
+	reduction->result(tr_);
+      }
+      bool is_reduction() const { return reduction != 0; }
+      void swap(tref_or_reduction &other) { tr_.swap(other.tr_); std::swap(reduction, other.reduction); }
+      std::string ridx;      /* reduction indexes, no index can appear
+			      twice in the same tensor */
+      std::vector<dim_type> gdim; /* mapping to the global virtual
+				     tensor whose range is the
+				     union of the ranges of each
+				     reduced tensor */
+      std::vector<dim_type> rdim; /* mapping to the dimensions of the
+				     reduced tensor ( = dim_type(-1) for
+				     dimensions i s.t. ridx[i] != ' ' ) */
+				     
+    };
+    tensor_ranges reduced_range;
+    std::string reduction_chars; /* list of all indexes used for reduction */
+    tensor_ref trres;
+    typedef std::vector<tref_or_reduction>::iterator trtab_iterator;
+    std::vector<tref_or_reduction> trtab;
     multi_tensor_iterator mti;
-    std::vector<scalar_type> out_data;
+    std::vector<scalar_type> out_data; /* optional storage of output */
     TDIter pout_data;
   public:
-    tensor_reduction() {
-      clear();
-    }
-  
-    void clear() {
-      r.resize(0); tr2r_dim.resize(0); redidx.resize(0);
-      out_data.resize(0);
-      pout_data = 0; trtab.reserve(10);
-      /* reserve la place pour le tenseur de sortie */
-      trtab.assign(1,tensor_ref()); tr2r_dim.assign(1,std::vector<dim_type>());
-      mti.clear();
-    }
-
+    tensor_reduction() { clear(); }
+    virtual ~tensor_reduction() { clear(); }
+    void clear();
 
     /* renvoie les formes diagonalisées 
        pour bien faire, il faudrait que cette fonction prenne en argument
@@ -832,11 +846,17 @@ namespace bgeot {
     void prepare(const tensor_ref* tr_out = NULL);
     void do_reduction();
     void result(tensor_ref& res) const {
-      cerr << "RESULTAT DE REDUCTION: NDIM=" << int(trtab[0].ndim()) << endl;
-      res=trtab[0];
+      res=trres;
       res.remove_unused_dimensions();
     }
+  private:
+    void insert(const tref_or_reduction& tr_, const std::string& s);
+    void update_reduction_chars();
+    void pre_prepare();
+    void make_sub_reductions();
+    size_type find_best_sub_reduction(dal::bit_vector &best_lst, std::string &best_idxset);
   };
+
 } /* namespace bgeot */
 
 #endif

@@ -46,3 +46,7 @@ faire la doc pour vtk_export -- permettre le 'merge' des points de slices
 getfem_mesh::clear() ne libere pas la mémoire
 
 mesh_fem::point_of_dof est très lent sur des PGT(2,4) par ex. (appel a geometric_trans::transform)
+
+mat_elem & reduction inline: quid des elts non equivalents
+
+ajouter à la faq de gmm: "Q: est-ce que gmm et getfem resteront deux packages separés"

@@ -38,13 +38,27 @@
 
 namespace getfem {
 
+
+  int check_symmetry(const base_tensor &t) {
+    int flags = 7; size_type N = 3;
+    for (size_type n = 0; n < N; ++n)
+      for (size_type m = 0; m < N; ++m)
+	for (size_type l = 0; l < N; ++l)
+	  for (size_type k = 0; k < N; ++k) {
+	    if (dal::abs(t(n,m,l,k) - t(l,k,n,m))>1e-10) flags &= (~1); 
+	    if (dal::abs(t(n,m,l,k) - t(m,n,l,k))>1e-10) flags &= (~2); 
+	    if (dal::abs(t(n,m,l,k) - t(n,m,k,l))>1e-10) flags &= (~4);
+	  }
+    return flags;
+  }
+
   struct abstract_hyperelastic_law {
     mutable int uvflag;
     size_type nb_params_;
     void reset_unvalid_flag(void) const { uvflag = 0; }
     void inc_unvalid_flag(void) const { uvflag++; }
     int get_unvalid_flag(void) const { return uvflag; }
-
+    
     virtual scalar_type strain_energy(const base_matrix &E,
 				      const base_vector &params) const = 0;
     virtual void sigma(const base_matrix &E, base_matrix &result,
@@ -103,19 +117,6 @@ namespace getfem {
       }
     }
   };
-
-  int check_symmetry(const base_tensor &t) {
-    int flags = 7; size_type N = 3;
-    for (size_type n = 0; n < N; ++n)
-      for (size_type m = 0; m < N; ++m)
-	for (size_type l = 0; l < N; ++l)
-	  for (size_type k = 0; k < N; ++k) {
-	    if (dal::abs(t(n,m,l,k) - t(l,k,n,m))>1e-10) flags &= (~1); 
-	    if (dal::abs(t(n,m,l,k) - t(m,n,l,k))>1e-10) flags &= (~2); 
-	    if (dal::abs(t(n,m,l,k) - t(n,m,k,l))>1e-10) flags &= (~4);
-	  }
-    return flags;
-  }
 
   // TODO : fonctions à mettre dans le .C
 
@@ -261,7 +262,6 @@ namespace getfem {
     base_tensor tt;
     bgeot::multi_index sizes_;
     int version;
-
   public:
     elasticity_nonlinear_term(const mesh_fem &mf_, const VECT1 &U_,
 			      const mesh_fem &mf_data_, const VECT2 &PARAMS_,
@@ -289,38 +289,8 @@ namespace getfem {
 
       AHL.sigma(E, Sigma, params);
 
-      //cout << "nonlinear_elem_term::compute(version=" << version << ", cv = " << cv << ") -> \n" << "   E=" << E << "\n   E=" << gradU << "\n   Sigma=" << Sigma << "\n";
-
       if (version == 0) {	  
-	AHL.grad_sigma(E, tt, params);
-
-
-	/*
-	  for (size_type n = 0; n < N; ++n)
-	    for (size_type m = 0; m <= n; ++m)
-	      for (size_type k = 0; k <= m; ++k)
-	        for (size_type l = 0; l <= k; ++l) {
-		// scalar_type aux = (k == l) ? B(m, l) : scalar_type(0);
-		   scalar_type aux(0);
-
-		   for (size_type j = 0; j < N; ++j)
-		     for (size_type i = 0; i < N; ++i) {
-		     aux += gradU(n ,j) * gradU(k, i) * tt(j, m, i, l);
-		     
-		     }
-		   t(n, m, k, l) = t(m, n, k, l) = t(n, m, l, k) = aux;
-		   t(m, n, l, k) = t(k, l, m, n) = t(l, k, m, n) = aux;
-		   t(k, l, n, m) = t(l, k, n, m) = aux;
-		 }
-		 
-		 for (size_type n = 0; n < N; ++n)
-		 for (size_type m = 0; m < N; ++m)
-		 for (size_type l = 0; l < N; ++l) {
-		 t(n, m, n, l) += B(m, l);
-		 // t(n, m, l, m) += B(n, l) * 0.5;
-	       }
-	*/
-	
+	AHL.grad_sigma(E, tt, params);	
 	for (size_type n = 0; n < N; ++n)
 	  for (size_type m = 0; m < N; ++m)
 	    for (size_type l = 0; l < N; ++l)
@@ -332,9 +302,6 @@ namespace getfem {
 		  }
 		t(n, m, k, l) = aux;
 	      }
-	// cout << "sym = " << check_symmetry(t) << "\n";
-        // if (check_symmetry(t) != 1)
-	//  cout << "sym = " << check_symmetry(t) << "\n"  << "t=" << t << "\n";
       } else {
         if (gmm::lu_det(gradU) < 0) AHL.inc_unvalid_flag();
 
@@ -375,8 +342,10 @@ namespace getfem {
       nterm(mf, U, mf_data, PARAMS, AHL, 0);
 
     getfem::generic_assembly
-      assem("t=comp(NonLin(#1,#2).vGrad(#1).vGrad(#1));"
+      /*assem("t=comp(NonLin(#1,#2).vGrad(#1).vGrad(#1)); "
 	    "M(#1,#1)+= sym(t(i,j,k,l,:,i,j,:,k,l))");
+      */
+      assem("M(#1,#1)+=sym(comp(NonLin(#1,#2)(i,j,k,l).vGrad(#1)(:,i,j).vGrad(#1)(:,k,l)))");
 
     assem.push_mf(mf);
     assem.push_mf(mf_data);
@@ -451,9 +420,11 @@ namespace getfem {
 
       gmm::sub_interval SUBI(i0, nb_dof());
       gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBI));
+      double t0 = ftool::uclock_sec();
       asm_nonlinear_elasticity_tangent_matrix
 	(gmm::sub_matrix(MS.tangent_matrix(), SUBI), mf_u,
 	 gmm::sub_vector(MS.state(), SUBI), mf_data, PARAMS,  AHL);
+      cout << "asm_nonlinear_elasticity_tangent_matrix : t=" << ftool::uclock_sec() - t0 << "\n";
       //cout << "mdbrick_nonlinear_elasticity returns " << MS.tangent_matrix() << "\n";
     }
     virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
@@ -579,14 +550,23 @@ namespace getfem {
 
     incomp_nonlinear_term<VECT1> ntermk(mf_u, U, 0);
     incomp_nonlinear_term<VECT1> ntermb(mf_u, U, 2);
-
+    double t0 = ftool::uclock_sec();
+    cout << "INCOMPREESSSIBLITY ASSEMBLY\n";
     getfem::generic_assembly
       assem("P=data(#2);"
 	    "t=comp(NonLin$1(#1).vGrad(#1).Base(#2));"
 	    "M$2(#1,#2)+= t(i,j,:,i,j,:);"
- 	    "w=comp(NonLin$2(#1).vGrad(#1).NonLin$2(#1).vGrad(#1).Base(#2));"
+ 	    /*"w=comp(NonLin$2(#1).vGrad(#1).NonLin$2(#1).vGrad(#1).Base(#2));"
 	    "M$1(#1,#1)+= w(j,i,:,j,k, m,k,:,m,i,p).P(p)"
-	    "-w(i,j,:,i,j, k,l,:,k,l,p).P(p)"
+	    "-w(i,j,:,i,j, k,l,:,k,l,p).P(p)"*/
+            /*
+            "w=comp(vGrad(#1).NonLin$2(#1).vGrad(#1).NonLin$2(#1).Base(#2));"
+	    "M$1(#1,#1)+= w(:,j,k, j,i, :,m,i, m,k, p).P(p)"
+	                "-w(:,j,i, j,i, :,m,l, m,l, p).P(p)"
+            */
+            "w1=comp(vGrad(#1)(:,j,k).NonLin$2(#1)(j,i).vGrad(#1)(:,m,i).NonLin$2(#1)(m,k).Base(#2)(p).P(p));"
+            "w2=comp(vGrad(#1)(:,j,i).NonLin$2(#1)(j,i).vGrad(#1)(:,m,l).NonLin$2(#1)(m,l).Base(#2)(p).P(p));"
+	    "M$1(#1,#1)+= w1-w2"            
 	    );
 
     assem.push_mf(mf_u);
@@ -597,6 +577,7 @@ namespace getfem {
     assem.push_mat(B);
     assem.push_data(P);
     assem.volumic_assembly();
+    cout << "asm_nonlinear_incomp_tangent_matrix : t=" << ftool::uclock_sec() - t0 << "\n";
   }
 
 

@@ -510,6 +510,7 @@ namespace getfem {
     }
     const mesh_fem& do_mf_arg(std::vector<const mesh_fem*> *multimf = 0);
     void do_dim_spec(vdim_specif_list& lst);
+    std::string do_comp_red_ops();
     ATN_tensor* do_comp();
     ATN_tensor* do_data();
     std::pair<ATN_tensor*, std::string> do_red_ops(ATN_tensor* t);

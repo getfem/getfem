@@ -1,5 +1,8 @@
 #include <getfem_assembling_tensors.h>
 #include <getfem_mat_elem.h>
+
+extern "C" void daxpy_(const int *n, const double *alpha, const double *x, const int *incx, double *y, const int *incy);
+
 namespace getfem {
   size_type vdim_specif_list::nb_mf() const { 
     return std::count_if(begin(),end(),std::mem_fun_ref(&vdim_specif::is_mf_ref));
@@ -99,6 +102,11 @@ namespace getfem {
 	r_.resize(0);
 	for (dim_type i=0; i < nchilds(); ++i) {
 	  std::string s = red_n(i);
+          if (s.size() != child(i).ranges().size()) {
+            ASM_THROW_TENSOR_ERROR("wrong number of indexes for the " << int(i+1) 
+                                   << "th argument of the reduction " << name() 
+                                   << " (ranges=" << child(i).ranges() << ")");
+          }
 	  for (size_type j=0; j < s.length(); ++j) {
 	    if (s[j] == ' ') r_.push_back(child(i).ranges()[j]);
 	  }
@@ -111,10 +119,10 @@ namespace getfem {
       for (dim_type n=0; n < nchilds(); ++n) {
 	tensor_shape ts(child(n).ranges());
 	bgeot::tensor_reduction::diag_shape(ts, red[n].second);
-	/*cerr << "REDUCTION '" << red[n].second << "' -> sending required to child#" << int(n) << ":" << endl;
-	  cerr << ts << endl;*/
+	/*cerr << "REDUCTION '" << red[n].second << "' -> sending required to child#" << int(n) << " " << child(n).name() << ":" << endl;
+          cerr << ts << endl;*/
 	child(n).merge_required_shape(ts);
-	//cerr << "------>required shape is now: " << child(n).required_shape() << endl;
+	/*cerr << "------>required shape is now: " << child(n).required_shape() << endl;*/
       }
     }
 
@@ -140,11 +148,11 @@ namespace getfem {
       for (dim_type i=0; i < red.size(); ++i) {
 	/*	cerr << "ATN_reduced_tensor::reinit : insertion of r(" << red_n(i) 
 		<< "), tr[" << red[i].first->ranges() << "\n" << red[i].first->tensor() << endl;*/
-	if (red[i].first->ranges().size() != red_n(i).length()) {
+	/*if (red[i].first->ranges().size() != red_n(i).length()) {
 	  ASM_THROW_TENSOR_ERROR("wrong number of indexes for the " << int(i+1) 
 				 << "th argument of the reduction " << name() 
 				 << " (ranges=" << red[i].first->ranges() << ")");
-	}
+                                 }*/
 	tred.insert(red[i].first->tensor(), red_n(i));
       }
       /* reserve the memory for the output 
@@ -268,19 +276,59 @@ namespace getfem {
     void exec_(size_type, dim_type) {}
   };
 
+  /* called (if possible, i.e. if not an exact integration) for each integration point
+     during mat_elem->compute() */    
+  struct computed_tensor_integration_callback : public mat_elem_integration_callback {
+    bgeot::tensor_reduction red;
+    bool was_called;
+    std::vector<TDIter> tensor_bases; /* each tref of 'red' has a reference into this vector */
+    virtual void exec(bgeot::base_tensor &t, bool first, scalar_type c) {
+      if (first) { 
+        resize_t(t);
+        std::fill(t.begin(), t.end(), 0.);
+        was_called = true;
+      }      
+      assert(t.size());
+      for (unsigned k=0; k != eltm.size(); ++k) { /* put in the 'if (first)' ? */
+        tensor_bases[k] = const_cast<TDIter>(&(*eltm[k]->begin()));
+      }
+      red.do_reduction();
+      int one = 1, n = red.out_data.size(); assert(n);
+      daxpy_(&n, &c, const_cast<double*>(&(red.out_data[0])), &one, (double*)&(t[0]), &one);
+    }
+    void resize_t(bgeot::base_tensor &t) {
+      bgeot::multi_index r; 
+      if (red.reduced_range.size())
+	r.assign(red.reduced_range.begin(), red.reduced_range.end());
+      else { r.resize(1); r[0]=1; }
+      t.adjust_sizes(r);      
+    }
+  };
+
   /*
-   */
+    ATN_computed_tensor , the largest of all
+
+    This object has become quite complex. It is the glue with the
+    mat_elem_*.  It is able to perform an inline reduction (i.e. a
+    reduction applied during the mat_elem->compute()) when it is
+    allowed (i.e. no exact integration), or do the same reduction
+    after the mat_elem->compute().
+    The reduction may also involve other ATN_tensors.
+  */
+
   struct mf_comp {
     pnonlinear_elem_term nlt;
     const mesh_fem* pmf;
+    ATN_tensor *data;
     std::vector<const mesh_fem*> auxmf; /* used only by nonlinear terms */
-    typedef enum { BASE=1, GRAD=2, HESS=3, NONLIN=4 } op_type;
+    typedef enum { BASE=1, GRAD=2, HESS=3, NONLIN=4, DATA=5 } op_type;
     op_type op; /* the numerical values indicates the number 
 		   of dimensions in the tensor */
     bool vectorize; /* true if vectorization was required (adds
 		       an addiational dimension to the tensor which
 		       represents the component number
 		    */
+    std::string reduction;
     /*
       vectorization of non-vector FEM:
 
@@ -293,9 +341,45 @@ namespace getfem {
       ...
     */
     mf_comp(const mesh_fem* pmf_, op_type op_, bool vect) :
-      nlt(0), pmf(pmf_), op(op_), vectorize(vect) { }
+      nlt(0), pmf(pmf_), data(0), op(op_), vectorize(vect) { }
     mf_comp(const std::vector<const mesh_fem*> vmf, pnonlinear_elem_term nlt_) : 
-      nlt(nlt_), pmf(vmf[0]), auxmf(vmf.begin()+1, vmf.end()), op(NONLIN), vectorize(false) { }
+      nlt(nlt_), pmf(vmf[0]), data(0), auxmf(vmf.begin()+1, vmf.end()), op(NONLIN), vectorize(false) { }
+    mf_comp(ATN_tensor *t) :
+      nlt(0), pmf(0), data(t), op(DATA), vectorize(0) {}
+    void push_back_dimensions(size_type cv, tensor_ranges &rng, bool only_reduced=false) const {
+      switch (op) {
+        case NONLIN:
+	  for (unsigned j=0; j < nlt->sizes().size(); ++j)
+	    if (!only_reduced || !reduced(j)) 
+	      rng.push_back(nlt->sizes()[j]);
+          break;
+        case DATA:
+          for (unsigned i=0; i < data->ranges().size(); ++i) 
+            if (!only_reduced || !reduced(i)) 
+              rng.push_back(data->ranges()[i]);
+          break;
+        default:
+          unsigned d = 0;
+          if (!only_reduced || !reduced(d)) rng.push_back(pmf->nb_dof_of_element(cv));
+          ++d; 
+          if (vectorize) {
+            if (!only_reduced || !reduced(d)) rng.push_back(pmf->get_qdim());
+            ++d;
+          }
+          
+          if (op == GRAD || op == HESS) {
+            if (!only_reduced || !reduced(d)) rng.push_back(pmf->linked_mesh().dim());
+            ++d;
+          }
+          if (op == HESS) {
+            if (!only_reduced || !reduced(d)) rng.push_back(pmf->linked_mesh().dim());
+            ++d;
+          }
+          break;
+      }
+    }
+    bool reduced(unsigned i) const
+    { if (i >= reduction.size()) return false; else return reduction[i] != ' '; }
   };
 
   class ATN_computed_tensor : public ATN_tensor {
@@ -308,30 +392,96 @@ namespace getfem {
     std::vector<scalar_type> data;     
     TDIter data_base;
     stride_type tsize;
+    dal::bit_vector req_bv;  /* bit_vector of values the mat_elem has to compute
+                               (useful when only a subset is required from the 
+                               possibly very large elementary tensor) */
+    bool has_inline_reduction; /* true if used with reductions inside the comp, for example:
+                                  "comp(Grad(#1)(:,i).Grad(#2)(:,i))" */
+    computed_tensor_integration_callback icb; /* callback for inline reductions */
+
+    /* if inline reduction are to be done, but were not possible (i.e. if exact
+       integration was used) then a fallback is used: apply the reduction
+       afterward, on the large expanded tensor */
+    bgeot::tensor_reduction fallback_red; 
+    bool fallback_red_uptodate;
+    TDIter fallback_base;
+
+    size_type cv_shape_update;
+    //mat_elem_inline_reduction inline_red;
   public:
     ATN_computed_tensor(std::vector<mf_comp> mfcomp_) : 
-      mfcomp(mfcomp_), pmec(0), pme(0), pim(0), pgt(0), data_base(0) {    }
-
-  private:
-    stride_type add_dim(dim_type d, stride_type s) {
-      assert(d < r_.size());
-      tensor_strides v;
-      index_type r = r_[d];
-      tensor_mask m; m.set_full(d, r);	    
-      v.resize(r);
-      for (index_type i=0; i < r; ++i) {
-	v[i] = s*i;
+      mfcomp(mfcomp_), pmec(0), pme(0), pim(0), pgt(0), data_base(0) { 
+      has_inline_reduction = false;
+      bool in_data = false;
+      for (size_type i=0; i < mfcomp.size(); ++i) {
+        if (mfcomp[i].reduction.size() || mfcomp[i].op == mf_comp::DATA) {
+          has_inline_reduction = true; 
+          if (mfcomp[i].op == mf_comp::DATA) { add_child(*mfcomp[i].data); in_data = true; }
+        }
+        if (mfcomp[i].op != mf_comp::DATA && in_data) {
+          /* constraint of fallback 'do_post_reduction' */
+          ASM_THROW_ERROR("data tensors inside comp() cannot be intermixed with Grad() and Base() etc., they must appear LAST");
+        }
       }
-      assert(tensor().masks().size() == tensor().strides().size());
-      tensor().set_ndim_noclean(tensor().ndim()+1);
-      tensor().push_mask(m);
-      tensor().strides().push_back(v);
-      return s*r;
     }
 
-    stride_type add_vdim(dim_type d, stride_type s) {
-      assert(d < r_.size()-1);
-      index_type r = r_[d], q=r_[d+1];
+  private:    
+    /* mostly for non-linear terms, such as a 3x3x3x3 tensor which may have
+       many symmetries or many null elements..  in that case, it is preferable
+       for getfem_mat_elem to handle only a sufficient subset of the tensor,
+       and build back the full tensor via adequate strides and masks */
+    /*
+    stride_type add_packed_dims(const bgeot::tensor<unsigned> &packed_idx, stride_type s) {
+      size_type d = r_.size();
+      const bgeot::multi_index sz = packed_idx.sizes();
+      bgeot::index_set dims(sz.size());
+      bgeot::tensor_ranges rngs(sz.size());
+      for (dim_type i=0; i < dims.size(); ++i) {
+        dims[i] = d+i; // new dimension numbers 
+        rngs[i] = sz[i];
+      }
+
+      r_.insert(r_.end(), rngs.begin(), rngs.end());
+      tensor_strides v;
+      tensor_mask m(rngs,dims);
+      for (index_type i=0; i < packed_idx.size(); ++i)
+        if (packed_idx[i] != unsigned(-1)) m.set_mask_val(i,true);
+      v.resize(m.card());
+      stride_type max_stride = 0;
+      for (index_type i=0, p=0; i < packed_idx.size(); ++i) {
+        if (m(i)) {
+          v[p++] = s*packed_idx[i];
+          max_stride = std::max<stride_type>(max_stride, packed_idx[i]*s);
+        }
+      }
+      cout << "add_packed_dims : sz=" << sz << ", r_=" << r_ << ", s=" << s << ", card=" << m.card() << ", max_stride=" << max_stride << "\n";
+      assert(tensor().masks().size() == tensor().strides().size());
+      tensor().set_ndim_noclean(tensor().ndim()+sz.size());
+      tensor().push_mask(m);
+      tensor().strides().push_back(v);
+      return max_stride;
+    }
+    */
+
+    /* append a dimension (full) to tref */
+    stride_type add_dim(const tensor_ranges& rng, dim_type d, stride_type s, tensor_ref &tref) {
+      assert(d < rng.size());
+      tensor_strides v;
+      index_type r = rng[d];
+      tensor_mask m; m.set_full(d, r);	    
+      v.resize(r);
+      for (index_type i=0; i < r; ++i) v[i] = s*i;
+      assert(tref.masks().size() == tref.strides().size());
+      tref.set_ndim_noclean(tref.ndim()+1);
+      tref.push_mask(m);
+      tref.strides().push_back(v);
+      return s*r;
+    }
+    
+    /* append a vectorized dimension to tref */
+    stride_type add_vdim(const tensor_ranges& rng, dim_type d, stride_type s, tensor_ref &tref) {
+      assert(d < rng.size()-1);
+      index_type r = rng[d], q=rng[d+1];
       tensor_strides v;
       tensor_ranges trng(2); trng[0] = q; trng[1] = r;
       index_set ti(2); ti[0] = d+1; ti[1] = d;
@@ -344,13 +494,118 @@ namespace getfem {
 	m.set_mask_val(m.lpos(cnt), true);
 	v[cnt[1]] = s*(cnt[1]/q);
       }
-      assert(tensor().masks().size() == tensor().strides().size());
-      tensor().set_ndim_noclean(tensor().ndim()+2);
-      tensor().push_mask(m);
-      tensor().strides().push_back(v);
+      assert(tref.masks().size() == tref.strides().size());
+      tref.set_ndim_noclean(tref.ndim()+2);
+      tref.push_mask(m);
+      tref.strides().push_back(v);
       return s*(r/q);
     }
+
+    /* called when the FEM has changed */
+    void update_pmat_elem(size_type cv) {
+      pme = NULL;
+      for (size_type i=0; i < mfcomp.size(); ++i) {
+        if (mfcomp[i].op == mf_comp::DATA) continue;
+	pfem fem = mfcomp[i].pmf->fem_of_element(cv);
+	pmat_elem_type pme2 = NULL;
+	switch (mfcomp[i].op) {
+	  case mf_comp::BASE: pme2 = mat_elem_base(fem); break;
+	  case mf_comp::GRAD: pme2 = mat_elem_grad(fem); break;
+	  case mf_comp::HESS: pme2 = mat_elem_hessian(fem); break;
+	  case mf_comp::NONLIN: {
+	      std::vector<pfem> ftab(1+mfcomp[i].auxmf.size()); 
+	      ftab[0] = fem;
+	      for (unsigned k=0; k < mfcomp[i].auxmf.size(); ++k) 
+		ftab[k+1] = mfcomp[i].auxmf[k]->fem_of_element(cv);
+	      pme2 = mat_elem_nonlinear(mfcomp[i].nlt, ftab); 
+	    } break;
+          case mf_comp::DATA: /*ignore*/;
+        } 
+        if (pme == NULL) pme = pme2;
+        else pme = mat_elem_product(pme, pme2);
+      }
+      if (pme == NULL) ASM_THROW_ERROR("no Base() or Grad() or etc!");
+    }
+
+   
+
+    size_type 
+    push_back_mfcomp_dimensions(size_type cv, const mf_comp& mc, 
+				unsigned &d, const bgeot::tensor_ranges &rng,
+				bgeot::tensor_ref &tref, size_type tsz=1) {
+      if (mc.op == mf_comp::NONLIN) {
+	for (size_type j=0; j < mc.nlt->sizes().size(); ++j)
+	  tsz = add_dim(rng, d++, tsz, tref);
+      } else if (mc.op == mf_comp::DATA) {
+        assert(tsz == 1);
+	tref = mc.data->tensor();
+	tsz *= tref.card();
+	d += tref.ndim();
+      } else {
+        size_type target_dim = mc.pmf->fem_of_element(cv)->target_dim();
+        size_type qdim = mc.pmf->get_qdim();
+	if (mc.vectorize) {
+	  if (target_dim == qdim) {
+	    tsz = add_dim(rng, d++, tsz, tref);
+	    tsz = add_dim(rng, d++, tsz, tref);
+	  } else {
+	    tsz = add_vdim(rng, d, tsz, tref);
+	    d += 2;
+	  }
+	} else tsz = add_dim(rng, d++, tsz, tref);
+	if (mc.op == mf_comp::GRAD || mc.op == mf_comp::HESS) {
+	  tsz = add_dim(rng, d++, tsz, tref);
+	}
+	if (mc.op == mf_comp::HESS) {
+	  tsz = add_dim(rng, d++, tsz, tref);
+	}
+      }
+      return tsz;
+    }
+
+    void update_shape_with_inline_reduction(size_type cv) {
+      fallback_red_uptodate = false;
+      icb.tensor_bases.resize(mfcomp.size()); /* todo : resize(nb_mfcomp_not_data) */
+      for (size_type i=0; i < mfcomp.size(); ++i) {
+	tensor_ref tref;
+	tensor_ranges rng;
+	unsigned d = 0;
+	mfcomp[i].push_back_dimensions(cv,rng);
+	push_back_mfcomp_dimensions(cv,mfcomp[i], d, rng, tref); 
+	assert(tref.ndim() == rng.size() && d == rng.size());
+	if (mfcomp[i].reduction.size() == 0) 
+	  mfcomp[i].reduction.insert(0, tref.ndim(), ' ');
+	if (mfcomp[i].op != mf_comp::DATA) /* should already have the correct base */
+          tref.set_base(icb.tensor_bases[i]);
+        tref.update_idx2mask();
+	if (mfcomp[i].reduction.size() != tref.ndim()) {
+	  ASM_THROW_TENSOR_ERROR("wrong number of indexes for the " << int(i+1) 
+				 << "th argument of the reduction " << name() 
+				 << " (expected " << int(tref.ndim()) 
+                                 << " indexes, got " << mfcomp[i].reduction.size());
+	}
+	icb.red.insert(tref, mfcomp[i].reduction);
+      }
+      //cout << "  build inline reduction : " << name() << "\n";
+      icb.red.prepare();
+      //cout << "\n done inline reduction : " << name() << "\n";
+      icb.red.result(tensor());
+      r_.resize(tensor().ndim()); 
+      for (unsigned i=0; i < tensor().ndim(); ++i) r_[i] = tensor().dim(i);
+      tsize = tensor().card();
+      //cerr << "update_shape_with_inline_reduction: tensor=" << tensor() << "\nr_=" << r_ << ", tsize=" << tsize << "\n";
+    }
     
+    void update_shape_with_expanded_tensor(size_type cv) {
+      icb.red.clear();
+      unsigned d = 0;
+      for (size_type i=0; i < mfcomp.size(); ++i) {
+	tsize = push_back_mfcomp_dimensions(cv, mfcomp[i], d, r_, tensor(), tsize);
+      }
+      assert(d == r_.size());
+      tensor().update_idx2mask();
+    }
+
     void check_shape_update(size_type cv, dim_type) {
       const mesh_fem& mf = *mfcomp[0].pmf;
       pintegration_method pim2;
@@ -358,93 +613,105 @@ namespace getfem {
       pgt2 = mf.linked_mesh().trans_of_convex(cv);
       pim2 = mf.int_method_of_element(cv);
       // cerr << "computed tensor cv=" << cv << " f=" << int(face) << "\n";
-      // essai: on commente la ligne du dessous, y'a pas a tout recalculer quand seuls la transfo geo ou
-      // la methode d'integration change
-      // shape_updated_ = (pgt != pgt2 || pim != pim2);
+      /* shape is considered for update only if the FEM changes,
+	 changes of pgt or integration method does not affect shape
+	 (only the mat_elem) */
+      cv_shape_update = cv;
       shape_updated_ = false;
+      for (size_type i=0; i < nchilds(); ++i)
+        shape_updated_ = shape_updated_ || child(i).is_shape_updated();
       for (size_type i=0; shape_updated_ == false && i < mfcomp.size(); ++i) {
-	if  (current_cv == size_type(-1) || mf.fem_of_element(current_cv) != mf.fem_of_element(cv)) 
+	if  (current_cv == size_type(-1) || 
+	     mf.fem_of_element(current_cv) != mf.fem_of_element(cv)) 
 	  shape_updated_ = true;
       }
-      /* build the new mat_elem structure */      
       if (shape_updated_) {
- 	pme = NULL;
-	tensor().clear();
-	r_.resize(0);
-	tsize = 1;
-	for (size_type i=0; i < mfcomp.size(); ++i) {
-	  pmat_elem_type pme2 = NULL;
-	  size_type target_dim = mfcomp[i].pmf->fem_of_element(cv)->target_dim();
-	  size_type qdim = mfcomp[i].pmf->get_qdim();
-	  switch (mfcomp[i].op) {
-	    case mf_comp::BASE: pme2 = mat_elem_base(mfcomp[i].pmf->fem_of_element(cv)); break;
-	    case mf_comp::GRAD: pme2 = mat_elem_grad(mfcomp[i].pmf->fem_of_element(cv)); break;
-	    case mf_comp::HESS: pme2 = mat_elem_hessian(mfcomp[i].pmf->fem_of_element(cv)); break;
-	    case mf_comp::NONLIN: {
-	      std::vector<pfem> ftab(1+mfcomp[i].auxmf.size()); 
-	      ftab[0] = mfcomp[i].pmf->fem_of_element(cv);
-	      for (unsigned k=0; k < mfcomp[i].auxmf.size(); ++k) 
-		ftab[k+1] = mfcomp[i].auxmf[k]->fem_of_element(cv);
-	      pme2 = mat_elem_nonlinear(mfcomp[i].nlt, ftab); 
-	    } break;
-	  } 
-	  if (pme == NULL) pme = pme2;
-	  else pme = mat_elem_product(pme, pme2);
-	  
-	  index_type d = r_.size();
-	  if (mfcomp[i].op == mf_comp::NONLIN) {
-	    for (size_type j=0; j < mfcomp[i].nlt->sizes().size(); ++j) {
-	      r_.push_back(mfcomp[i].nlt->sizes()[j]);
-	      tsize = add_dim(r_.size()-1, tsize);
-	    }
-	  } else {
-	    r_.push_back(mfcomp[i].pmf->nb_dof_of_element(cv));
-	    if (mfcomp[i].vectorize) {
-	      r_.push_back(mfcomp[i].pmf->get_qdim());
-	      if (target_dim == qdim) {
-		tsize = add_dim(d, tsize);
-		tsize = add_dim(d+1, tsize);
-	      } else tsize = add_vdim(d, tsize);
-	    } else tsize = add_dim(d, tsize);
-	    d = r_.size();
-	    if (mfcomp[i].op == mf_comp::GRAD || mfcomp[i].op == mf_comp::HESS) {
-	      r_.push_back(mf.linked_mesh().dim());
-	      tsize = add_dim(d, tsize);
-	    }
-	    d = r_.size();
-	    if (mfcomp[i].op == mf_comp::HESS) {
-	      r_.push_back(mf.linked_mesh().dim());
-	      tsize = add_dim(d, tsize);
-	    }
-	  }
-	}
-
-	tensor().update_idx2mask();
-	data_base = 0;
-	tensor().set_base(data_base);
-	/*  cerr << "ATN_computed_tensor::check_shape_update(" << cv << ")="; 
-	    const bgeot::tensor_shape& t = tensor(); t.print_(); 
-	    tensor().print_(); cerr << endl;
-	*/
+        r_.resize(0);
+        /* get the new ranges */
+        for (unsigned i=0; i < mfcomp.size(); ++i) 
+          mfcomp[i].push_back_dimensions(cv, r_, true);
+        /* build the new mat_elem structure */      
+        update_pmat_elem(cv);
       }
       if (shape_updated_ || pgt != pgt2 || pim != pim2) {
 	pgt = pgt2; pim = pim2;
-	pmec = mat_elem(pme, pim, pgt);
+	pmec = mat_elem(pme, pim, pgt, has_inline_reduction);
       }
     }
-    // virtual void init_required_shape() { req_shape=tensor_shape(ranges()); }
+
     void reinit() {
-      //cerr << "name: " << name() << ", required shape=" << req_shape << endl;
+      if (!shape_updated_) return;
+      tensor().clear();
+      tsize = 1;
+      if (has_inline_reduction) {
+        update_shape_with_inline_reduction(cv_shape_update);
+      } else {
+        update_shape_with_expanded_tensor(cv_shape_update);
+      }
+      data_base = 0;
+      tensor().set_base(data_base);
     }
+    void update_childs_required_shape() {
+    }
+
+    /* fallback when inline reduction is not possible:
+       do the reduction after evaluation of the mat_elem */
+    void do_post_reduction(size_type cv) {
+      if (!fallback_red_uptodate) {
+        fallback_red_uptodate = true;
+        std::string s;
+        size_type sz = 1;
+        tensor_ref tref; tensor_ranges r;
+        unsigned cnt, d=0;
+        /* insert the tensorial product of Grad() etc */
+        for (cnt=0; cnt < mfcomp.size() && mfcomp[cnt].op != mf_comp::DATA; ++cnt) {
+	  mfcomp[cnt].push_back_dimensions(cv,r);
+          sz = push_back_mfcomp_dimensions(cv, mfcomp[cnt], d, r, tref, sz);
+          s += mfcomp[cnt].reduction;
+        }
+        fallback_red.clear();
+        tref.set_base(fallback_base);
+        fallback_red.insert(tref, s);
+        /* insert the optional data tensors */
+        for ( ; cnt < mfcomp.size(); ++cnt) {
+          assert(mfcomp[cnt].op == mf_comp::DATA);
+          fallback_red.insert(mfcomp[cnt].data->tensor(), mfcomp[cnt].reduction);
+        }
+        fallback_red.prepare();
+        fallback_red.result(tensor()); /* this SHOULD NOT, IN ANY CASE change the shape or strides of tensor() .. */
+        assert(icb.red.reduced_range == fallback_red.reduced_range);
+      }
+      icb.resize_t(t);
+      fallback_base = &(*t.begin());
+      fallback_red.do_reduction();
+    }
+    
     void exec_(size_type cv, dim_type face) {
       const mesh_fem& mf = *mfcomp[0].pmf;
-      if (face == dim_type(-1))
-	pmec->gen_compute(t, mf.linked_mesh().points_of_convex(cv), cv);
-      else 
-	pmec->gen_compute_on_face(t, mf.linked_mesh().points_of_convex(cv), face, cv);
+      for (unsigned i=0; i < mfcomp.size(); ++i) {
+        if (mfcomp[i].op == mf_comp::DATA) {
+          size_type fullsz = 1;
+          for (unsigned j=0; j < mfcomp[i].data->ranges().size(); ++j) fullsz *= mfcomp[i].data->ranges()[j];
+          if (fullsz != size_type(mfcomp[i].data->tensor().card())) 
+            ASM_THROW_TENSOR_ERROR("aaarg inline reduction will explode with non-full tensors. "
+                                   "Complain to the author, I was too lazy to do that properly");
+        }
+      }
+      icb.was_called = false;
+      if (face == dim_type(-1)) {
+	  pmec->gen_compute(t, mf.linked_mesh().points_of_convex(cv), cv, 
+			    has_inline_reduction ? &icb : 0);
+      } else {
+	pmec->gen_compute_on_face(t, mf.linked_mesh().points_of_convex(cv), face, cv, 
+				  has_inline_reduction ? &icb : 0);
+      }
+      
+
+      if (has_inline_reduction && icb.was_called == false) {
+        do_post_reduction(cv);
+        data_base = &fallback_red.out_data[0];
+      } else data_base = &(*t.begin());
       if (t.size() != size_type(tsize)) DAL_INTERNAL_ERROR(""); // sinon on est mal
-      data_base = &(*t.begin());
-      //cerr << "ATN_computed_tensor::exec("<<cv<<","<<face<<")=" << tensor() << endl;
     }
   };
 
@@ -659,7 +926,7 @@ namespace getfem {
 
   /* 
      -------------------
-     analyse de la chaine de caractères 
+     analysis of the supplied string
      -----------------
   */
 
@@ -738,9 +1005,30 @@ namespace getfem {
     return mf_;
   }
 
+  /* "inline" reduction operations inside comp(..) */
+  std::string generic_assembly::do_comp_red_ops() {
+    std::string s;
+    if (advance_if(OPEN_PAR)) {
+      size_type j = 0;
+      do {
+	if (tok_type() == COLON) {
+	  s.push_back(' '); advance(); j++;
+	} else if (tok_type() == IDENT) {
+	  if (tok().length()==1 && isalpha(tok()[0]) || islower(tok()[0])) {
+	    s.push_back(tok()[0]); advance(); j++;
+	  } else ASM_THROW_PARSE_ERROR("invalid reduction index '" << tok() << 
+				       "', only lower case characters allowed");
+	}
+      } while (advance_if(COMMA));
+      accept(CLOSE_PAR, "expecting ')'");
+    }
+    return s;
+  }
+
   ATN_tensor* generic_assembly::do_comp() {
     accept(OPEN_PAR, "expecting '('");
     std::vector<mf_comp> what;
+    bool in_data = false;
     do {
       if (tok_type() != IDENT) ASM_THROW_PARSE_ERROR("expecting Base or Grad or Hess..");
       std::string f = tok(); 
@@ -758,10 +1046,19 @@ namespace getfem {
 	if (num >= innonlin.size()) ASM_THROW_PARSE_ERROR("NonLin$" << num << " does not exist");
 	std::vector<const mesh_fem*> allmf;
 	pmf = &do_mf_arg(&allmf); what.push_back(mf_comp(allmf, innonlin[num]));
-      } else ASM_THROW_PARSE_ERROR("expecting Base, Grad, vBase, NonLin ...");
-      if (f[0] != 'v' && pmf->get_qdim() != 1 && f.compare("NonLin")) {
+      } else {
+        if (vars.find(f) != vars.end()) {
+          what.push_back(mf_comp(vars[f]));
+          in_data = true;
+          advance();
+        } else {
+          ASM_THROW_PARSE_ERROR("expecting Base, Grad, vBase, NonLin ...");
+        }
+      }
+      if (!in_data && f[0] != 'v' && pmf->get_qdim() != 1 && f.compare("NonLin")) {
 	ASM_THROW_PARSE_ERROR("Attempt to use a vector mesh_fem as a scalar mesh_fem");
       }
+      what.back().reduction = do_comp_red_ops();
     } while (advance_if(PRODUCT));
     accept(CLOSE_PAR, "expecting ')'");
       
@@ -1123,7 +1420,7 @@ namespace getfem {
     parse_done = true;
   }
 
-  /* attention l'ordre des boucles est très important ! */
+  /* caution: the order of the loops is really important */
   void generic_assembly::exec(size_type cv, dim_type face) {
     bool update_shapes = false;
     for (size_type i=0; i < atn_tensors.size(); ++i) {

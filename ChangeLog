@@ -1,3 +1,11 @@
+2004-08-09  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/getfem_assembling_tensors.C, src/bgeot_sparse_tensors.C,
+	src/getfem_mat_elem.C: Added the ability to perform reductions
+	during the integration of elementary tensors, and daxpy is used
+	when possible: huge speedup for the assembly of nonlinear tangent
+	matrices.
+
 2004-08-03  julien pommier  <pommier@gmm.insa-tlse.fr>
 	* superlu: SuperLU is included into getfem, which does now depend
 	on BLAS.
