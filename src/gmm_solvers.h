@@ -42,7 +42,7 @@ namespace gmm {
   template<typename T> struct _elt_rsvector_value_less {
     inline bool operator()(const _elt_rsvector<T>& a, 
 			   const _elt_rsvector<T>& b) const
-    { return (dal::abs(a.e) > dal::abs(b.e)); }
+    { return (gmm::abs(a.e) > gmm::abs(b.e)); }
   };
 
 

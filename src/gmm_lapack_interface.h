@@ -816,7 +816,7 @@ namespace gmm {
     if (n) {                                                               \
       gmm::copy(LU, A);                                                    \
       lapack_name(&n, &A(0,0), &n, &ipvt[0], &work1, &lwork, &info);       \
-      lwork = int(dal::real(work1));                                       \
+      lwork = int(gmm::real(work1));                                       \
       std::vector<base_type > work(lwork);                                 \
       lapack_name(&n, &A(0,0), &n, &ipvt[0], &work[0], &lwork, &info);     \
     }                                                                      \
@@ -838,7 +838,7 @@ namespace gmm {
     if (m && n) {                                                          \
       std::vector<base_type > tau(n);                                      \
       lapack_name1(&m, &n, &A(0,0), &m, &tau[0], &work1  , &lwork, &info); \
-      lwork = int(dal::real(work1));                                       \
+      lwork = int(gmm::real(work1));                                       \
       std::vector<base_type > work(lwork);                                 \
       lapack_name1(&m, &n, &A(0,0), &m, &tau[0], &work[0], &lwork, &info); \
       if (info) DAL_THROW(failure_error, "QR factorization failed");       \
@@ -858,7 +858,7 @@ namespace gmm {
       gmm::copy(A, Q);                                                     \
       std::vector<base_type > tau(n);                                      \
       lapack_name1(&m, &n, &Q(0,0), &m, &tau[0], &work1  , &lwork, &info); \
-      lwork = int(dal::real(work1));                                       \
+      lwork = int(gmm::real(work1));                                       \
       std::vector<base_type > work(lwork);                                 \
       lapack_name1(&m, &n, &Q(0,0), &m, &tau[0], &work[0], &lwork, &info); \
       if (info) DAL_THROW(failure_error, "QR factorization failed");       \
@@ -893,7 +893,7 @@ namespace gmm {
     std::vector<double> rwork(n), eigv1(n), eigv2(n);                      \
     lapack_name(&jobvs, &sort, p, &n, &H(0,0), &n, &sdim, &eigv1[0],       \
                 &eigv2[0], &Q(0,0), &n, &work1, &lwork, &rwork[0], &info); \
-    lwork = int(dal::real(work1));                                         \
+    lwork = int(gmm::real(work1));                                         \
     std::vector<base_type > work(lwork);                                   \
     lapack_name(&jobvs, &sort, p, &n, &H(0,0), &n, &sdim, &eigv1[0],       \
 		&eigv2[0], &Q(0,0), &n, &work[0], &lwork, &rwork[0],&info);\
@@ -914,7 +914,7 @@ namespace gmm {
     std::vector<double> rwork(n), eigvv(n*2);                              \
     lapack_name(&jobvs, &sort, p, &n, &H(0,0), &n, &sdim, &eigvv[0],       \
                 &Q(0,0), &n, &work1, &lwork, &rwork[0], &rwork[0], &info); \
-    lwork = int(dal::real(work1));                                         \
+    lwork = int(gmm::real(work1));                                         \
     std::vector<base_type > work(lwork);                                   \
     lapack_name(&jobvs, &sort, p, &n, &H(0,0), &n, &sdim, &eigvv[0],       \
                 &Q(0,0), &n, &work[0], &lwork, &rwork[0], &rwork[0],&info);\

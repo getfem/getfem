@@ -46,7 +46,7 @@ namespace gmm {
 //   norm_lin2_est(const MAT& M) {
 //     typedef typename number_traits<typename
 //       linalg_traits<MAT>::value_type>::magnitude_type magnitude_type;
-//     typedef typename linalg_traits<MAT>::value_type value_type;
+//     typedef typename linalg_traits<MAT>::value_type T;
 //     typedef typename temporary_dense_vector<MAT>::vector_type vector_type;
     
 //     int d = mat_nrows(M) - mat_ncols(M);
@@ -54,7 +54,7 @@ namespace gmm {
 //     int vsz2 = std::max(mat_nrows(M), mat_ncols(M));
 //     vector_type v(vsz), tmp(vsz), tmp2(vsz2); fill_random(v);
 //     magnitude_type e = vect_norm2(v), e0 = 0, pert = 1E-1;
-//     while (dal::abs(e-e0) > 1e-6 * e0) {
+//     while (gmm::abs(e-e0) > 1e-6 * e0) {
 //       e0 = e;
 //       if (d == 0)
 // 	mult(B,v,tmp);
@@ -82,11 +82,11 @@ namespace gmm {
 //   typename number_traits<typename
 //   linalg_traits<MAT>::value_type>::magnitude_type
 //   condest(const MAT& M) {
-//     typedef typename linalg_traits<MAT>::value_type value_type;
+//     typedef typename linalg_traits<MAT>::value_type T;
     
 //     int d = mat_nrows(M) - mat_ncols(M);
 //     int vsz = std::min(mat_nrows(M), mat_ncols(M));
-//     dense_matrix<value_type> B(vsz, vsz);
+//     dense_matrix<T> B(vsz, vsz);
 //     if (d == 0)
 //       copy(M, B);
 //     else if (d > 0)
@@ -112,22 +112,23 @@ namespace gmm {
 	  linalg_traits<MAT>::value_type>::magnitude_type& emin,
 	  typename number_traits<typename
 	  linalg_traits<MAT>::value_type>::magnitude_type& emax) {
-    typedef typename linalg_traits<MAT>::value_type value_type;
-    typedef typename number_traits<value_type>::magnitude_type magnitude_type;
+    typedef typename linalg_traits<MAT>::value_type T;
+    typedef typename number_traits<T>::magnitude_type magnitude_type;
 
     int d = mat_nrows(M) - mat_ncols(M);
     int vsz = std::min(mat_nrows(M), mat_ncols(M));
     
-    dense_matrix<value_type> B(vsz, vsz);
+    dense_matrix<T> B(vsz, vsz);
     std::vector<magnitude_type> eig(vsz);
     if (d >= 0) mult(transposed(M), M, B); else mult(M, transposed(M), B);
     
     gmm::symmetric_qr_algorithm(B, eig);
     
-    emin = emax = dal::abs(eig[0]);
-    for (int i = 1; i < vsz; ++i)
-      { emin = std::min(emin, eig[i]); emax = std::max(emax, eig[i]); } 
-    
+    emin = emax = gmm::abs(eig[0]);
+    for (int i = 1; i < vsz; ++i) {
+      emin = std::min(emin, gmm::abs(eig[i]));
+      emax = std::max(emax, gmm::abs(eig[i]));
+    }
     return sqrt(emax / emin);
   }
   
@@ -137,7 +138,7 @@ namespace gmm {
   condest(const MAT& M) { 
     typename number_traits<typename
       linalg_traits<MAT>::value_type>::magnitude_type emax, emin;
-    return condest(M,emax,emin);
+    return condest(M, emax, emin);
   }
 }
 

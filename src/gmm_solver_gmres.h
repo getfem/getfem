@@ -62,7 +62,7 @@ namespace gmm {
     outer.set_rhsnorm(gmm::vect_norm2(b));
     if (outer.get_rhsnorm() == 0.0) { clear(x); return; }
     
-    mult(A, scaled(x, -1.0), b, w);
+    mult(A, scaled(x, -T(1)), b, w);
     mult(M, w, r);
     beta = gmm::vect_norm2(r);
 
@@ -73,7 +73,7 @@ namespace gmm {
     
     while (! outer.finished(beta)) {
       
-      gmm::copy(gmm::scaled(r, 1.0/beta), KS[0]);
+      gmm::copy(gmm::scaled(r, T(1)/beta), KS[0]);
       gmm::clear(s);
       s[0] = beta;
       
@@ -84,7 +84,7 @@ namespace gmm {
 	gmm::mult(M, u, KS[i+1]);
 	orthogonalize(KS, mat_col(H, i), i);
 	H(i+1, i) = a = gmm::vect_norm2(KS[i+1]);
-	gmm::scale(KS[i+1], 1.0 / a);
+	gmm::scale(KS[i+1], T(1) / a);
 	for (size_type k = 0; k < i; ++k)
 	  Apply_Givens_rotation_left(H(k,i), H(k+1,i), c_rot[k], s_rot[k]);
 	
@@ -93,11 +93,11 @@ namespace gmm {
 	Apply_Givens_rotation_left(s[i], s[i+1], c_rot[i], s_rot[i]);
 	
 	++inner, ++outer, ++i;
-      } while (! inner.finished(dal::abs(s[i]))); 
+      } while (! inner.finished(gmm::abs(s[i]))); 
 
       gmm::upper_tri_solve(H, s, i, false);
       gmm::combine(KS, s, x, i);
-      gmm::mult(A, gmm::scaled(x, -1.0), b, w);
+      gmm::mult(A, gmm::scaled(x, -T(1)), b, w);
       gmm::mult(M, w, r);
       beta = gmm::vect_norm2(r);
     }

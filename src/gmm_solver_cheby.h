@@ -91,29 +91,30 @@ void cheby(const Matrix &A, Vector &x, const VectorB &b,
 	   typename Vector::value_type eigmin, 
 	   typename Vector::value_type eigmax)
 {
-  typedef typename linalg_traits<Vector>::value_type Real;
-  Real alpha, beta, c, d;
+  typedef typename linalg_traits<Vector>::value_type T;
+  T alpha, beta, c, d;
+  const T two = T(1) + T(1);
   typedef typename temporary_vector<Vector>::vector_type TmpVec;
   TmpVec p(vect_size(x)), q(vect_size(x)), z(vect_size(x)), r(vect_size(x));
 
   iter.set_rhsnorm(gmm::vect_norm2(b));
   if (iter.get_rhsnorm() == 0.0) { clear(x); return; }
 
-  gmm::mult(A, gmm::scaled(x, -1.0), b, r);
+  gmm::mult(A, gmm::scaled(x, -T(1)), b, r);
 
-  c = (eigmax - eigmin) / 2.0;
-  d = (eigmax + eigmin) / 2.0;
+  c = (eigmax - eigmin) / two;
+  d = (eigmax + eigmin) / two;
 
   while ( ! iter.finished_vect(r) ) {
     gmm::mult(M, r, z);         
 
     if ( iter.first() ) {
       gmm::copy(z, p);          
-      alpha = 2.0 / d;
+      alpha = two / d;
     } else {
-      beta = c * alpha / 2.0;    
+      beta = c * alpha / two;    
       beta = beta * beta;
-      alpha = 1.0 / (d - beta);  
+      alpha = T(1) / (d - beta);  
       gmm::add(z, gmm::scaled(p, beta), p);
     }
 

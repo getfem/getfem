@@ -69,8 +69,8 @@ namespace gmm {
     difference_type operator -(const conjugated_const_iterator &i) const
       { return difference_type(it - i.it); }
     
-    value_type operator  *() const { return dal::conj(*it); }
-    value_type operator [](size_type ii) const { return dal::conj(it[ii]); }
+    value_type operator  *() const { return gmm::conj(*it); }
+    value_type operator [](size_type ii) const { return gmm::conj(it[ii]); }
     
     bool operator ==(const conjugated_const_iterator &i) const
       { return (i.it == it); }
@@ -97,7 +97,7 @@ namespace gmm {
 	_size(vect_size(v)) {}
 
     reference operator[](size_type i) const
-    { return dal::conj(access_type()(origin, _begin, _end, i)); }
+    { return gmm::conj(access_type()(origin, _begin, _end, i)); }
   };
 
   template <typename V> struct conjugated_vector_const_access {
@@ -107,7 +107,7 @@ namespace gmm {
     
     value_type operator()(const void *o, const iterator &_begin,
 			  const iterator &_end, size_type i) {
-      return dal::conj(typename linalg_traits<V>::access_type()(o, _begin.it,
+      return gmm::conj(typename linalg_traits<V>::access_type()(o, _begin.it,
 								_end.it, i));
     }
   };
@@ -198,7 +198,7 @@ namespace gmm {
       _end(mat_row_end(m)), origin(linalg_origin(m)) {}
 
     value_type operator()(size_type i, size_type j) const
-    { return dal::conj(access_type()(_begin+j, i)); }
+    { return gmm::conj(access_type()(_begin+j, i)); }
   };
 
   template <typename M> struct conjugated_row_matrix_access {
@@ -208,7 +208,7 @@ namespace gmm {
     typedef typename linalg_traits<M>::access_type access_type;
     
     value_type operator()(const iterator &itrow, size_type i)
-    { return dal::conj(access_type()(itrow.it, i)); }
+    { return gmm::conj(access_type()(itrow.it, i)); }
   };
 
   template <typename M>
@@ -303,7 +303,7 @@ namespace gmm {
       _end(mat_col_end(m)), origin(linalg_origin(m)) {}
 
     value_type operator()(size_type i, size_type j) const
-    { return dal::conj(access_type()(_begin+i, j)); }
+    { return gmm::conj(access_type()(_begin+i, j)); }
   };
 
   template <typename M> struct conjugated_col_matrix_access {
@@ -313,7 +313,7 @@ namespace gmm {
     typedef typename linalg_traits<M>::access_type access_type;
     
     value_type operator()(const iterator &itcol, size_type i)
-    { return dal::conj(access_type()(itcol.it, i)); }
+    { return gmm::conj(access_type()(itcol.it, i)); }
   };
 
   template <typename M>

@@ -76,7 +76,7 @@ namespace gmm {
       shat(vect_size(x)), 
       t(vect_size(x)), v(vect_size(x)), r(vect_size(x)), rtilde(vect_size(x));
     
-    gmm::mult(A, gmm::scaled(x, -1.0), b, r);	  
+    gmm::mult(A, gmm::scaled(x, -T(1)), b, r);	  
     gmm::copy(r, rtilde);
     T norm_r = gmm::vect_norm2(r);
     iter.set_rhsnorm(gmm::vect_norm2(b));

@@ -70,9 +70,9 @@ namespace gmm {
 	  const Precond &P, iteration &iter) {
 
     typedef typename temporary_dense_vector<Vector1>::vector_type temp_vector;
-    typedef typename linalg_traits<Vector1>::value_type value_type;
+    typedef typename linalg_traits<Vector1>::value_type T;
 
-    value_type rho, rho_1(0), a;
+    T rho, rho_1(0), a;
     temp_vector p(vect_size(x)), q(vect_size(x)), r(vect_size(x)),
       z(vect_size(x));
     iter.set_rhsnorm(sqrt(vect_sp(PS, b, b)));
@@ -80,7 +80,7 @@ namespace gmm {
     if (iter.get_rhsnorm() == 0.0)
       clear(x);
     else {
-      mult(A, scaled(x, -1.0), b, r);
+      mult(A, scaled(x, -T(1)), b, r);
       mult(P, r, z);
       rho = vect_sp(PS, r, z); // faut-il utiliser le produit hermitien en 
       copy(z, p);              //  complexe ?

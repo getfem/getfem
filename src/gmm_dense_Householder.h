@@ -176,7 +176,7 @@ namespace gmm {
     typedef typename linalg_traits<VECT>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
     
-    R mu = vect_norm2(V), abs_v0 = dal::abs(V[0]);
+    R mu = vect_norm2(V), abs_v0 = gmm::abs(V[0]);
     if (mu != R(0)) {
       T beta;
       if (abs_v0 != R(0)) beta = abs_v0 / (V[0] * (abs_v0 + mu));
@@ -193,7 +193,7 @@ namespace gmm {
 
     size_type m = vect_size(V);
     
-    R mu = vect_norm2(V), abs_v0 = dal::abs(V[m-1]);
+    R mu = vect_norm2(V), abs_v0 = gmm::abs(V[m-1]);
     if (mu != R(0)) {
       T beta;
       if (abs_v0 != R(0)) beta = abs_v0 / (V[m-1] * (abs_v0 + mu));
@@ -279,7 +279,7 @@ namespace gmm {
 	{ v[l-k] = w[l-k] = A(l, k-1); A(l, k-1) = A(k-1, l) = T(0); }
       house_vector(v);
       R norm = vect_norm2_sqr(v);
-      A(k-1, k) = dal::conj(A(k, k-1) = w[0] - T(2)*v[0]*vect_hp(v, w)/norm);
+      A(k-1, k) = gmm::conj(A(k, k-1) = w[0] - T(2)*v[0]*vect_hp(v, w)/norm);
 
       gmm::mult(sub_matrix(A, SUBI), gmm::scaled(v, T(-2) / norm), p);
       gmm::add(p, gmm::scaled(v, -vect_hp(p, v) / norm), w);
@@ -296,24 +296,24 @@ namespace gmm {
 
   template <typename T> void Givens_rotation(T a, T b, T &c, T &s) {
     typedef typename number_traits<T>::magnitude_type R;
-    R aa = dal::abs(a), bb = dal::abs(b);
+    R aa = gmm::abs(a), bb = gmm::abs(b);
     if (bb == R(0)) { c = T(1); s = T(0);   return; }
     if (aa == R(0)) { c = T(0); s = b / bb; return; }
     if (bb > aa)
-      { T t = -a/b; s = T(R(1) / (sqrt(R(1)+dal::abs_sqr(t)))); c = s * t; }
+      { T t = -a/b; s = T(R(1) / (sqrt(R(1)+gmm::abs_sqr(t)))); c = s * t; }
     else
-      { T t = -b/a; c = T(R(1) / (sqrt(R(1)+dal::abs_sqr(t)))); s = c * t; }
+      { T t = -b/a; c = T(R(1) / (sqrt(R(1)+gmm::abs_sqr(t)))); s = c * t; }
   }
 
   // Apply Q* v
   template <typename T> inline
   void Apply_Givens_rotation_left(T &x, T &y, T c, T s)
-  { T t1=x, t2=y; x = dal::conj(c)*t1 - dal::conj(s)*t2; y = c*t2 + s*t1; }
+  { T t1=x, t2=y; x = gmm::conj(c)*t1 - gmm::conj(s)*t2; y = c*t2 + s*t1; }
 
   // Apply v^T Q
   template <typename T> inline
   void Apply_Givens_rotation_right(T &x, T &y, T c, T s)
-  { T t1=x, t2=y; x = c*t1 - s*t2; y = dal::conj(c)*t2 + dal::conj(s)*t1; }
+  { T t1=x, t2=y; x = c*t1 - s*t2; y = gmm::conj(c)*t2 + gmm::conj(s)*t1; }
 
   template <typename MAT, typename T>
   void row_rot(const MAT &AA, T c, T s, size_type i, size_type k) {

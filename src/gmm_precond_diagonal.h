@@ -79,7 +79,7 @@ namespace gmm {
       DAL_THROW(dimension_error, "dimensions mismatch");
     copy(v1, v2);
     for (size_type i = 0; i < P.diag.size(); ++i)
-      v2[i] *= sqrt(dal::abs(P.diag[i]));
+      v2[i] *= sqrt(gmm::abs(P.diag[i]));
   }
 
   template <typename Matrix, typename V1, typename V2> inline
@@ -94,9 +94,9 @@ namespace gmm {
     copy(v1, v2);
     for (size_type i = 0; i < P.diag.size(); ++i)
       if (P.diag[i] < 0.0) 
-	v2[i] *= -sqrt(dal::abs(P.diag[i]));
+	v2[i] *= -sqrt(gmm::abs(P.diag[i]));
       else
-	v2[i] *= sqrt(dal::abs(P.diag[i]));
+	v2[i] *= sqrt(gmm::abs(P.diag[i]));
   }
 
   template <typename Matrix, typename V1, typename V2> inline

@@ -56,7 +56,7 @@ namespace gmm {
   template <typename T> compare_vp {
     bool operator()(const std::pair<T, size_type> &a,
 		    const std::pair<T, size_type> &b) const
-    { return (dal::abs(a.first) > dal::abs(b.first)); }
+    { return (gmm::abs(a.first) > gmm::abs(b.first)); }
   }
 
   template < typename Mat, typename Vec, typename VecB, typename Precond, typename Basis >
@@ -123,7 +123,7 @@ namespace gmm {
 	Apply_Givens_rotation_left(s[i], s[i+1], c_rot[i], s_rot[i]);
 	
 	++inner, ++outer, ++i;
-      } while (! inner.finished(dal::abs(s[i])));
+      } while (! inner.finished(gmm::abs(s[i])));
 
       if (inner.converged()) {
 	gmm::copy(s, y);
@@ -137,7 +137,7 @@ namespace gmm {
 
       gmm::clear(gam); gam[m] = s[i];
       for (size_type l = m; l > 0; --l)
-	Apply_Givens_rotation_left(gam[l-1], gam[l], dal::conj(c_rot[l-1]),
+	Apply_Givens_rotation_left(gam[l-1], gam[l], gmm::conj(c_rot[l-1]),
 				   -s_rot[l-1]);
 
       mult(KS.mat(), gam, r);
@@ -150,7 +150,7 @@ namespace gmm {
       // place de ztest.
       if (tb_def < p) {
         T nss = H(m,m-1) / ztest[m];
-	nss /= dal::abs(nss); // ns à calculer plus tard aussi
+	nss /= gmm::abs(nss); // ns à calculer plus tard aussi
 	gmm::copy(KS.mat(), W); gmm::copy(scaled(r, nss /beta), mat_col(W, m));
 	
 	// Computation of the oblique matrix
@@ -179,7 +179,7 @@ namespace gmm {
 			      sub_vector(eval, SUB2), /* evect_lock */);
 
 	for (size_type l = tb_def; l < m; ++l)
-	  ritznew[l] = dal::abs(evect(m-tb_def-1, l-tb_def) * Hobl(m, m-1));
+	  ritznew[l] = gmm::abs(evect(m-tb_def-1, l-tb_def) * Hobl(m, m-1));
 	
 	std::vector< std::pair<T, size_type> > eval_sort(m);
 	for (size_type l = 0; l < m; ++l)
@@ -221,7 +221,7 @@ namespace gmm {
 	  }
 	  else {
 	    if (ritznew[eval_sort[j].second]
-		< tol_vp * dal::abs(eval_sort[j].first)) {
+		< tol_vp * gmm::abs(eval_sort[j].first)) {
 	      
 	      for (size_type l = 0, l < m-tb_def; ++l)
 		YB(l, ind) = std::real(evect(l, eval_sort[j].second));
@@ -255,7 +255,7 @@ namespace gmm {
 	      ++nb_want;
 
 	    if (ritznew[eval_sort[j].second]
-		< tol_vp * dal::abs(eval_sort[j].first)) {
+		< tol_vp * gmm::abs(eval_sort[j].first)) {
 		for (size_type l = 0, l < m-tb_def; ++l)
 		  YB(l, ind) = std::imag(evect(l, eval_sort[j].second));
 		pure[ind] = 2;
@@ -368,7 +368,7 @@ namespace gmm {
 			      sub_vector(eval, SUB2), /* evect_lock */);
 
 	for (size_type l = tb_def; l < m; ++l)
-	  ritznew[l] = dal::abs(evect(m-tb_def-1, l-tb_def) * Hobl(m, m-1));
+	  ritznew[l] = gmm::abs(evect(m-tb_def-1, l-tb_def) * Hobl(m, m-1));
 	
 	std::vector< std::pair<T, size_type> > eval_sort(m);
 	for (size_type l = 0; l < m; ++l)
@@ -410,7 +410,7 @@ namespace gmm {
 	  }
 	  else {
 	    if (ritznew[eval_sort[j].second]
-		< tol_vp * dal::abs(eval_sort[j].first)) {
+		< tol_vp * gmm::abs(eval_sort[j].first)) {
 	      
 	      for (size_type l = 0, l < m-tb_def; ++l)
 		YB(l, ind) = std::real(evect(l, eval_sort[j].second));
@@ -444,7 +444,7 @@ namespace gmm {
 	      ++nb_want;
 
 	    if (ritznew[eval_sort[j].second]
-		< tol_vp * dal::abs(eval_sort[j].first)) {
+		< tol_vp * gmm::abs(eval_sort[j].first)) {
 		for (size_type l = 0, l < m-tb_def; ++l)
 		  YB(l, ind) = std::imag(evect(l, eval_sort[j].second));
 		pure[ind] = 2;
@@ -579,7 +579,7 @@ namespace gmm {
       // be equal to |H(tb_deftot+i+1,tb_deftot+i))|.
       for (size_type j = 0; j+1 < m-tb_deftot; ++j) {
 	T e = H(tb_deftot+j, tb_deftot+j-1);
-	d[j+1] = (e == T(0)) ? T(1) :  d[j] * dal::abs(e) / e;
+	d[j+1] = (e == T(0)) ? T(1) :  d[j] * gmm::abs(e) / e;
 	scale(sub_vector(mat_row(H, tb_deftot+j+1),
 			 sub_interval(tb_deftot, m-tb_deftot)), d[j+1]);
 	scale(mat_col(H, tb_deftot+j+1), T(1) / d[j+1]);
@@ -587,7 +587,7 @@ namespace gmm {
       }
 
       alpha = tab_p(m-tb_deftot-1, m-tb_deftot-1) / d[m-tb_deftot-1];
-      alpha /= dal::abs(alpha);
+      alpha /= gmm::abs(alpha);
       scale(mat_col(W, m), alpha);
 	    
     }
@@ -682,7 +682,7 @@ namespace gmm {
 
 
             x = H(k1,k1) * H(k1,k1) + H(k1,k2) * H(k2,k1)
-	      - 2.0*Lambda[jj].real() * H(k1,k1) + dal::abs_sqr(Lambda[jj]);
+	      - 2.0*Lambda[jj].real() * H(k1,k1) + gmm::abs_sqr(Lambda[jj]);
 	    y = H(k2,k1) * (H(k1,k1) + H(k2,k2) - 2.0*Lambda[jj].real());
 	    z = H(k2+1,k2) * H(k2,k1);
 
@@ -795,7 +795,7 @@ namespace gmm {
 			      sub_vector(eval, SUB2), /* evect_lock */);
 
 	for (size_type l = tb_def; l < m; ++l)
-	  ritznew[l] = dal::abs(evect(m-tb_def-1, l-tb_def) * Hobl(m, m-1));
+	  ritznew[l] = gmm::abs(evect(m-tb_def-1, l-tb_def) * Hobl(m, m-1));
 	
 	std::vector< std::pair<T, size_type> > eval_sort(m);
 	for (size_type l = 0; l < m; ++l)
@@ -837,7 +837,7 @@ namespace gmm {
 	  }
 	  else {
 	    if (ritznew[eval_sort[j].second]
-		< tol_vp * dal::abs(eval_sort[j].first)) {
+		< tol_vp * gmm::abs(eval_sort[j].first)) {
 	      
 	      for (size_type l = 0, l < m-tb_def; ++l)
 		YB(l, ind) = std::real(evect(l, eval_sort[j].second));
@@ -871,7 +871,7 @@ namespace gmm {
 	      ++nb_want;
 
 	    if (ritznew[eval_sort[j].second]
-		< tol_vp * dal::abs(eval_sort[j].first)) {
+		< tol_vp * gmm::abs(eval_sort[j].first)) {
 		for (size_type l = 0, l < m-tb_def; ++l)
 		  YB(l, ind) = std::imag(evect(l, eval_sort[j].second));
 		pure[ind] = 2;

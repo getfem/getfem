@@ -194,7 +194,7 @@ namespace gmm
   template<typename T>  void wsvector<T>::clean(double eps) {
     iterator it = this->begin(), itf = ++it, ite = this->end();
     for ( ; it != ite; ++itf)
-      { if (dal::abs((*it).e) <= eps) { erase(it); it = itf; } else ++it; }
+      { if (gmm::abs((*it).e) <= eps) { erase(it); it = itf; } else ++it; }
   }
 
   template<typename T>  void wsvector<T>::out_of_range_error(void) const
@@ -282,7 +282,7 @@ namespace gmm
   template <typename T> inline void clean(wsvector<T> &v, double eps) {
     typename wsvector<T>::iterator it = v.begin(), ite = v.end(), itc;
     while (it != ite) 
-      if (dal::abs((*it).second) <= eps)
+      if (gmm::abs((*it).second) <= eps)
 	{ itc=it; ++it; v.erase(itc); } else ++it; 
   }
 
@@ -622,12 +622,12 @@ namespace gmm
   
   template <typename T> inline void clean(rsvector<T> &v, double eps) {
     typename rsvector<T>::iterator it = v.begin(), ite = v.end();
-    for (; it != ite; ++it) if (dal::abs((*it).e) <= eps) break;
+    for (; it != ite; ++it) if (gmm::abs((*it).e) <= eps) break;
     if (it != ite) {
       typename rsvector<T>::iterator itc = it;
       size_type erased = 1;
       for (++it; it != ite; ++it)
-	{ *itc = *it; if (dal::abs((*it).e) <= eps) ++erased; else ++itc; }
+	{ *itc = *it; if (gmm::abs((*it).e) <= eps) ++erased; else ++itc; }
       v.base_resize(v.nb_stored() - erased);
     }
   }

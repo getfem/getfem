@@ -278,7 +278,7 @@ namespace gmm {
     //   IOHBTerminate("Insufficient memory for mat_typen");
     
     if ( (in_file = fopen( filename, "r")) == NULL ) {
-      DAL_THROW(dal::failure_error,"Error: Cannot open file: "<<filename);
+      DAL_THROW(gmm::failure_error,"Error: Cannot open file: "<<filename);
     }
     
     readHB_header(in_file, Title, Key, Type/*mat_type*/, &Nrow, &Ncol, &Nnzero, Nrhs,
@@ -331,7 +331,7 @@ namespace gmm {
     char line[BUFSIZ];
     
     if ( (in_file = fopen( filename, "r")) == NULL ) {
-      DAL_THROW(dal::failure_error, "Error: Cannot open file:"  << filename);
+      DAL_THROW(gmm::failure_error, "Error: Cannot open file:"  << filename);
     }
     memset(Type, 0, sizeof Type);
     readHB_header(in_file, Title, Key, Type, &Nrow, &Ncol, &Nnzero, &Nrhs,
@@ -476,7 +476,7 @@ namespace gmm {
     
     if ( filename != NULL ) {
       if ( (out_file = fopen( filename, "w")) == NULL )
-	DAL_THROW(dal::failure_error,"Error: Cannot open file: " << filename);
+	DAL_THROW(gmm::failure_error,"Error: Cannot open file: " << filename);
     } else out_file = stdout;
     
     if ( Ptrfmt == NULL ) Ptrfmt = "(8I10)";
@@ -569,7 +569,7 @@ namespace gmm {
     }
     
     if ( fclose(out_file) != 0) {
-      DAL_THROW(dal::failure_error,"Error closing file in writeHB_mat_double().");
+      DAL_THROW(gmm::failure_error,"Error closing file in writeHB_mat_double().");
     } else return 1;
   }
 

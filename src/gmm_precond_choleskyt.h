@@ -90,16 +90,16 @@ namespace gmm {
 	typename svector::iterator wk = w.begin() + krow;
 	if ((k = wk->c) >= i) break;
 	tmp = (wk->e);
-	if (dal::abs(tmp) < eps * norm_row) { w.sup(k); --krow; } 
+	if (gmm::abs(tmp) < eps * norm_row) { w.sup(k); --krow; } 
 	else { wk->e += tmp; gmm::add(scaled(mat_row(U, k), -tmp), w); }
       }
 
       if ((tmp = w[i]) == value_type(0)) {
 	DAL_WARNING(2, "pivot " << i << " is zero");
 	if (_try > 10)
-	  tmp = 1.0;
+	  tmp = value_type(1);
 	else {
-	  ++K; eps /= value_type(2);
+	  ++K; eps /= 2.0;
 	  DAL_WARNING(2, "trying with " << K
 		      << " additional elements and threshold " << eps);
 	  do_choleskyt(A, row_major(), ++_try);
@@ -107,7 +107,7 @@ namespace gmm {
 	}
       }
 
-      indiag[i] = 1.0 / tmp;
+      indiag[i] = value_type(1) / tmp;
       gmm::clean(w, eps * norm_row);
       gmm::scale(w, indiag[i]);
       std::sort(w.begin(), w.end(), _elt_rsvector_value_less<value_type>());

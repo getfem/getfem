@@ -157,7 +157,7 @@ namespace gmm {
     tol *= 2.0;
     for (size_type i = 0; i < n; ++i) {
       if ((i < n-1) &&
-	  dal::abs(A(i+1,i)) >= (dal::abs(A(i,i))+dal::abs(A(i+1,i+1)))*tol) {
+	  gmm::abs(A(i+1,i)) >= (gmm::abs(A(i,i))+gmm::abs(A(i+1,i+1)))*tol) {
 	TA tr = A(i,i) + A(i+1, i+1);
 	TA det = A(i,i)*A(i+1, i+1) - A(i,i+1)*A(i+1, i);
 	TA delta = tr*tr - TA(4.0) * det;
@@ -166,8 +166,8 @@ namespace gmm {
 	  V[i] = V[i+1] = tr / TA(2.0);
 	}
 	else {
-	  V[i  ] = TA(tr + dal::sqrt(delta))/ TA(2.0);
-	  V[i+1] = TA(tr -  dal::sqrt(delta))/ TA(2.0);
+	  V[i  ] = TA(tr + gmm::sqrt(delta))/ TA(2.0);
+	  V[i+1] = TA(tr -  gmm::sqrt(delta))/ TA(2.0);
 	}
 	++i;
       }
@@ -183,19 +183,19 @@ namespace gmm {
     tol *= 2.0;
     for (size_type i = 0; i < n; ++i)
       if ((i == n-1) ||
-	  dal::abs(A(i+1,i)) < (dal::abs(A(i,i))+dal::abs(A(i+1,i+1)))*tol)
+	  gmm::abs(A(i+1,i)) < (gmm::abs(A(i,i))+gmm::abs(A(i+1,i+1)))*tol)
 	V[i] = std::complex<TV>(A(i,i));
       else {
 	TA tr = A(i,i) + A(i+1, i+1);
 	TA det = A(i,i)*A(i+1, i+1) - A(i,i+1)*A(i+1, i);
 	TA delta = tr*tr - TA(4.0) * det;
 	if (delta < TA(0)) {
-	  V[i] = std::complex<TV>(tr / TA(2.0), dal::sqrt(-delta) / TA(2.0));
-	  V[i+1] = std::complex<TV>(tr / TA(2.0), -dal::sqrt(-delta)/ TA(2.0));
+	  V[i] = std::complex<TV>(tr / TA(2.0), gmm::sqrt(-delta) / TA(2.0));
+	  V[i+1] = std::complex<TV>(tr / TA(2.0), -gmm::sqrt(-delta)/ TA(2.0));
 	}
 	else {
-	  V[i  ] = TA(tr + dal::sqrt(delta)) / TA(2.0);
-	  V[i+1] = TA(tr -  dal::sqrt(delta)) / TA(2.0);
+	  V[i  ] = TA(tr + gmm::sqrt(delta)) / TA(2.0);
+	  V[i+1] = TA(tr -  gmm::sqrt(delta)) / TA(2.0);
 	}
 	++i;
       }
@@ -213,14 +213,14 @@ namespace gmm {
     tol *= 2.0;
     for (size_type i = 0; i < n; ++i)
       if ((i == n-1) ||
-	  dal::abs(A(i+1,i)) < (dal::abs(A(i,i))+dal::abs(A(i+1,i+1)))*tol)
+	  gmm::abs(A(i+1,i)) < (gmm::abs(A(i,i))+gmm::abs(A(i+1,i+1)))*tol)
 	V[i] = std::complex<TV>(A(i,i));
       else {
 	std::complex<TA> tr = A(i,i) + A(i+1, i+1);
 	std::complex<TA> det = A(i,i)*A(i+1, i+1) - A(i,i+1)*A(i+1, i);
 	std::complex<TA> delta = tr*tr - TA(4.0) * det;
-	V[i] = (tr + dal::sqrt(delta)) / TA(2.0);
-	V[i+1] = (tr - dal::sqrt(delta)) / TA(2.0);
+	V[i] = (tr + gmm::sqrt(delta)) / TA(2.0);
+	V[i+1] = (tr - gmm::sqrt(delta)) / TA(2.0);
 	++i;
       }
   }
@@ -241,7 +241,7 @@ namespace gmm {
     typedef typename linalg_traits<MAT>::value_type value_type;
     size_type n = mat_nrows(A);
     for (size_type i = 1; i < n-q; ++i)
-      if (dal::abs(A(i,i-1)) < (dal::abs(A(i,i))+ dal::abs(A(i-1,i-1)))*tol)
+      if (gmm::abs(A(i,i-1)) < (gmm::abs(A(i,i))+ gmm::abs(A(i-1,i-1)))*tol)
 	A(i,i-1) = value_type(0);
 
     while ((q < n-1 && A(n-1-q, n-2-q) == value_type(0)) ||
@@ -258,7 +258,7 @@ namespace gmm {
     MAT& A = const_cast<MAT&>(AA);
     size_type n = mat_nrows(A);
     for (size_type i = 1; i < n-q; ++i)
-      if (dal::abs(A(i,i-1)) < (dal::abs(A(i,i))+ dal::abs(A(i-1,i-1)))*tol)
+      if (gmm::abs(A(i,i-1)) < (gmm::abs(A(i,i))+ gmm::abs(A(i-1,i-1)))*tol)
 	A(i,i-1) = value_type(0);
 
     while (q < n-1 && A(n-1-q, n-2-q) == value_type(0)) ++q;
@@ -373,7 +373,7 @@ namespace gmm {
     T h33, h44, h43h34, v1(0), v2(0), v3(0);
     
     if (exc) {                    /* Exceptional shift.                    */
-      R s = dal::abs(H(n-1, n-2)) + dal::abs(H(n-2, n-3));
+      R s = gmm::abs(H(n-1, n-2)) + gmm::abs(H(n-2, n-3));
       h33 = h44 = dat1 * s;
       h43h34 = dat2*s*s;
     }
@@ -392,13 +392,13 @@ namespace gmm {
       v1 = (h33s*h44s-h43h34) / h21 + h12;
       v2 = h22 - h11 - h33s - h44s;
       v3 = H(m+1, m);
-      R s = dal::abs(v1) + dal::abs(v2) + dal::abs(v3);
+      R s = gmm::abs(v1) + gmm::abs(v2) + gmm::abs(v3);
       v1 /= s; v2 /= s; v3 /= s;
       if (m == 1) break;
       T h00 = H(m-2, m-2);
       T h10 = H(m-1, m-2);
-      R tst1 = dal::abs(v1)*(dal::abs(h00)+dal::abs(h11)+dal::abs(h22));
-      if (dal::abs(h10)*(dal::abs(v2)+dal::abs(v3)) <= tol * tst1) break;
+      R tst1 = gmm::abs(v1)*(gmm::abs(h00)+gmm::abs(h11)+gmm::abs(h22));
+      if (gmm::abs(h10)*(gmm::abs(v2)+gmm::abs(v3)) <= tol * tst1) break;
     }
 
     /* Double shift QR step.                                               */
@@ -493,8 +493,8 @@ namespace gmm {
     
     size_type n = mat_nrows(T);
     value_type d = (T(n-2, n-2) - T(n-1, n-1)) / value_type(2);
-    value_type e = dal::sqr(T(n-1, n-2));
-    value_type mu = T(n-1, n-1) - e / (d + dal::sgn(d) * dal::sqrt(d*d + e));
+    value_type e = gmm::sqr(T(n-1, n-2));
+    value_type mu = T(n-1, n-1) - e / (d + gmm::sgn(d) * gmm::sqrt(d*d + e));
     value_type x = T(0,0) - mu, z = T(1, 0), c, s;
 
     for (size_type k = 1; k < n; ++k) {

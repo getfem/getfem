@@ -291,19 +291,27 @@ namespace gmm {
   /*		Operations on scalars                         		  */
   /* ******************************************************************** */
 
-  template <typename T> struct number_traits
-  { typedef T magnitude_type; };
+  using dal::sqr;  using dal::abs;  using dal::abs_sqr;  using dal::neg;
+  using dal::pos;  using dal::sgn;  using dal::random;   using dal::irandom;
+  using dal::conj; using dal::real; using dal::sqrt;
+
+
+  template <typename T> struct number_traits {
+    typedef T magnitude_type;
+  };
  
-  template <typename T> struct number_traits<std::complex<T> >
-  { typedef T magnitude_type; };
+  template <typename T> struct number_traits<std::complex<T> > {
+    typedef T magnitude_type;
+  };
 
   template <typename T> inline T conj_product(T a, T b) { return a * b; }
-  template <typename T> inline std::complex<T> conj_product(std::complex<T> a,
-							 std::complex<T> b)
+  template <typename T> inline
+  std::complex<T> conj_product(std::complex<T> a, std::complex<T> b)
   { return std::conj(a) * b; } // to be optimized ?
 
   template <typename T> inline bool is_complex(T a) { return false; }
-  template <typename T> inline bool is_complex(std::complex<T> a) { return true; }
+  template <typename T> inline bool is_complex(std::complex<T> a)
+  { return true; }
   
 
   /* ******************************************************************** */
@@ -330,7 +338,8 @@ namespace gmm {
   /* ******************************************************************** */
 
   
-  template <typename R, typename S, typename L, typename V> struct _temporary_vector {
+  template <typename R, typename S, typename L, typename V>
+  struct _temporary_vector {
     typedef abstract_null_type vector_type;
   };
   template <typename V, typename L>

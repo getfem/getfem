@@ -109,7 +109,7 @@ namespace gmm
     
     bool converged(void) { return res <= rhsn * resmax; }
     bool converged(double nr) { 
-      res = dal::abs(nr); resminreach = std::min(resminreach, res);
+      res = gmm::abs(nr); resminreach = std::min(resminreach, res);
       return converged();
     }
     template <typename VECT> bool converged(const VECT &v)
@@ -120,7 +120,7 @@ namespace gmm
 	double a = (rhsn == 0) ? 1.0 : rhsn;
 	converged(nr);
 	cout << name << " iter " << nit << " residu "
-	     << dal::abs(nr) / a;
+	     << gmm::abs(nr) / a;
 	if (nit % 100 == 0 && nit > 0) {
 	  cout << " (residu min " << resminreach / a << " mean val "
 	       << resadd / (100.0 * a) << " )";

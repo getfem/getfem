@@ -81,9 +81,9 @@ namespace gmm {
       
     if (M || N) {
       for (j = 0; j+1 < NN; ++j) {
-	R max = dal::abs(A(j,j)); jp = j;
+	R max = gmm::abs(A(j,j)); jp = j;
 	for (i = j+1; i < M; ++i)		   /* find pivot.          */
-	  if (dal::abs(A(i,j)) > max) { jp = i; max = dal::abs(A(i,j)); }
+	  if (gmm::abs(A(i,j)) > max) { jp = i; max = gmm::abs(A(i,j)); }
 	ipvt[j] = jp + 1;
 	
 	if (max == R(0)) { info = j + 1; break; }

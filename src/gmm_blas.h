@@ -243,13 +243,13 @@ namespace gmm {
 
   template <typename L> inline void fill_random(L& l, abstract_vector) {
     for (size_type i = 0; i < vect_size(l); ++i)
-      l[i] = dal::random(typename linalg_traits<L>::value_type());
+      l[i] = gmm::random(typename linalg_traits<L>::value_type());
   }
 
   template <typename L> inline void fill_random(L& l, abstract_matrix) {
     for (size_type i = 0; i < mat_nrows(l); ++i)
       for (size_type j = 0; j < mat_ncols(l); ++j)
-	l(i,j) = dal::random(typename linalg_traits<L>::value_type());
+	l(i,j) = gmm::random(typename linalg_traits<L>::value_type());
   }
 
   template <typename L> inline void fill_random(L& l, double cfill)
@@ -266,9 +266,9 @@ namespace gmm {
     typedef typename linalg_traits<L>::value_type T;
     size_type ntot = std::min(vect_size(l), size_type(vect_size(l)*cfill) + 1);
     for (size_type nb = 0; nb < ntot;) {
-      size_type i = dal::irandom(vect_size(l));
+      size_type i = gmm::irandom(vect_size(l));
       if (l[i] == T(0)) { 
-	l[i] = dal::random(typename linalg_traits<L>::value_type());
+	l[i] = gmm::random(typename linalg_traits<L>::value_type());
 	++nb;
       }
     }
@@ -637,7 +637,7 @@ namespace gmm {
       it = vect_const_begin(v), ite = vect_const_end(v);
     typename number_traits<typename linalg_traits<V>::value_type>
       ::magnitude_type res(0);
-    for (; it != ite; ++it) res += dal::sqr(dal::abs(*it));
+    for (; it != ite; ++it) res += gmm::sqr(gmm::abs(*it));
     return res;
   }
 
@@ -658,7 +658,7 @@ namespace gmm {
       row_type row = mat_const_row(m, i);
       typename linalg_traits<row_type>::const_iterator
 	it = vect_const_begin(row), ite = vect_const_end(row);
-      for (; it != ite; ++it) res += dal::sqr(dal::abs(*it));
+      for (; it != ite; ++it) res += gmm::sqr(gmm::abs(*it));
     }
     return sqrt(res);
   }
@@ -674,7 +674,7 @@ namespace gmm {
       col_type col = mat_const_col(m, i);
       typename linalg_traits<col_type>::const_iterator
 	it = vect_const_begin(col), ite = vect_const_end(col);
-      for (; it != ite; ++it) res += dal::sqr(dal::abs(*it));
+      for (; it != ite; ++it) res += gmm::sqr(gmm::abs(*it));
     }
     return sqrt(res);
   }
@@ -700,7 +700,7 @@ namespace gmm {
       it = vect_const_begin(v), ite = vect_const_end(v);
       typename number_traits<typename linalg_traits<V>::value_type>
 	::magnitude_type res(0);
-    for (; it != ite; ++it) res = std::max(res, dal::abs(*it));
+    for (; it != ite; ++it) res = std::max(res, gmm::abs(*it));
     return res;
   }
   
@@ -716,7 +716,7 @@ namespace gmm {
       it = vect_const_begin(v), ite = vect_const_end(v);
     typename number_traits<typename linalg_traits<V>::value_type>
 	::magnitude_type res(0);
-    for (; it != ite; ++it) res += dal::abs(*it);
+    for (; it != ite; ++it) res += gmm::abs(*it);
     return res;
   }
 
@@ -739,7 +739,7 @@ namespace gmm {
   void clean(L &l, double seuil, abstract_dense, T) {
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
     for (; it != ite; ++it)
-      if (dal::abs(*it) < seuil) *it = T(0);
+      if (gmm::abs(*it) < seuil) *it = T(0);
   }
 
   template <typename L, typename T>
@@ -750,7 +750,7 @@ namespace gmm {
   void clean(L &l, double seuil, abstract_sparse, T) {
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
     for (; it != ite; ++it) // to be optimized ...
-      if (dal::abs(*it) < seuil) {
+      if (gmm::abs(*it) < seuil) {
 	l[it.index()] = T(0);
 	it = vect_begin(l); ite = vect_end(l);
       }
@@ -760,9 +760,9 @@ namespace gmm {
   void clean(L &l, double seuil, abstract_dense, std::complex<T>) {
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
     for (; it != ite; ++it){
-      if (dal::abs((*it).real()) < seuil)
+      if (gmm::abs((*it).real()) < seuil)
 	*it = std::complex<T>(T(0), (*it).imag());
-      if (dal::abs((*it).imag()) < seuil)
+      if (gmm::abs((*it).imag()) < seuil)
 	*it = std::complex<T>((*it).real(), T(0));
     }
   }
@@ -775,11 +775,11 @@ namespace gmm {
   void clean(L &l, double seuil, abstract_sparse, std::complex<T>) {
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
     for (; it != ite; ++it) { // to be optimized ...
-      if (dal::abs((*it).real()) < seuil) {
+      if (gmm::abs((*it).real()) < seuil) {
 	l[it.index()] = std::complex<T>(T(0), (*it).imag());
 	it = vect_begin(l); ite = vect_end(l); continue;
       }
-      if (dal::abs((*it).imag()) < seuil) {
+      if (gmm::abs((*it).imag()) < seuil) {
 	l[it.index()] = std::complex<T>((*it).real(), T(0));
 	it = vect_begin(l); ite = vect_end(l); continue;
       }
