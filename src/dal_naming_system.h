@@ -69,8 +69,10 @@ namespace dal {
     };
     
     typedef std::deque<parameter> param_list;
-    typedef pmethod (* pfunction)(param_list &);
-    typedef pmethod (* pgenfunction)(std::string);
+    typedef pmethod (* pfunction)(param_list &,
+				  std::vector<pstatic_stored_object> &);
+    typedef pmethod (* pgenfunction)(std::string,
+				     std::vector<pstatic_stored_object> &);
     typedef size_t size_type;
     
   protected :
@@ -251,17 +253,22 @@ namespace dal {
 	pstatic_stored_object o = search_stored_object(nname);
 	if (o) return stored_cast<METHOD>(o);
 	pm = 0;
+	std::vector<pstatic_stored_object> dependencies;
 	for (int k = 0; k < nb_genfunctions && pm == 0; ++k) {
-	  pm = (*(genfunctions[k]))(nname.name);
+	  pm = (*(genfunctions[k]))(nname.name, dependencies);
 	}
 	if (!pm) {
 	  if (ind_suff == size_type(-1))
 	    DAL_THROW(failure_error, "Unknown method : " << nname.name);
-	  pm = (*(functions[ind_suff]))(params);
+	  pm = (*(functions[ind_suff]))(params, dependencies);
 	}
 	
 	pstatic_stored_object_key k = key_of_stored_object(pm);
-	if (!k) add_stored_object(new method_key(nname), pm, 0);
+	if (!k) {
+	  add_stored_object(new method_key(nname), pm, 0);
+	  for (size_type j = 0; j < dependencies.size(); ++j)
+	    add_dependency(pm, dependencies[j]);
+	}
 	else {
 	  std::string normname((dynamic_cast<const method_key *>(k))->name);
 	  aliases[nname.name] = normname;

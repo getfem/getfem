@@ -167,8 +167,10 @@ namespace bgeot {
   (bgeot::pgeotrans_precomp pgp__, size_type ii__, const base_matrix& G__) :
     G_(&G__), pgt_(pgp__->get_trans()), pgp_(pgp__), ii_(ii__), J_(-1) {}
   geotrans_interpolation_context::geotrans_interpolation_context
-  (bgeot::pgeometric_trans pgt__, const base_node& xref__,const base_matrix& G__) :
-    xref_(xref__), G_(&G__), pgt_(pgt__), pgp_(0), ii_(size_type(-1)), J_(-1) {}
+  (bgeot::pgeometric_trans pgt__, const base_node& xref__,
+   const base_matrix& G__) :
+    xref_(xref__), G_(&G__), pgt_(pgt__), pgp_(0),
+    ii_(size_type(-1)), J_(-1) {}
  
 
   typedef dal::naming_system<geometric_trans>::param_list gt_param_list;
@@ -238,7 +240,9 @@ namespace bgeot {
     }
   };
 
-  static pgeometric_trans PK_gt(gt_param_list &params) {
+  static pgeometric_trans
+  PK_gt(gt_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
 	   "Bad number of parameters : " << params.size() << " should be 2.");
@@ -249,6 +253,7 @@ namespace bgeot {
     if (n < 0 || n >= 100 || k < 0 || k > 150 ||
 	double(n) != params[0].num() || double(k) != params[1].num())
       DAL_THROW(failure_error, "Bad parameters");
+    dependencies.push_back(simplex_of_reference(n, k));
     return new simplex_trans_(n, k);
   }
 
@@ -271,7 +276,8 @@ namespace bgeot {
     }
   };
 
-  static pgeometric_trans product_gt(gt_param_list &params) {
+  static pgeometric_trans product_gt(gt_param_list &params,
+		  std::vector<dal::pstatic_stored_object> &dependencies) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
 	  "Bad number of parameters : " << params.size() << " should be 2.");
@@ -279,6 +285,9 @@ namespace bgeot {
       DAL_THROW(failure_error, "Bad type of parameters");
     pgeometric_trans a = params[0].method();
     pgeometric_trans b = params[1].method();
+    dependencies.push_back(a); dependencies.push_back(b);
+    dependencies.push_back(convex_ref_product(a->convex_ref(),
+					      b->convex_ref()));
     return new cv_pr_t_(a, b);
   }
 
@@ -307,7 +316,8 @@ namespace bgeot {
     }
   };
 
-  static pgeometric_trans linear_product_gt(gt_param_list &params) {
+  static pgeometric_trans linear_product_gt(gt_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
 	  "Bad number of parameters : " << params.size() << " should be 2.");
@@ -315,6 +325,9 @@ namespace bgeot {
       DAL_THROW(failure_error, "Bad type of parameters");
     pgeometric_trans a = params[0].method();
     pgeometric_trans b = params[1].method();
+    dependencies.push_back(a); dependencies.push_back(b);
+    dependencies.push_back(convex_ref_product(a->convex_ref(),
+					      b->convex_ref()));    
     return new cv_pr_tl_(a, b);
   }
 
@@ -322,7 +335,8 @@ namespace bgeot {
   /* parallelepiped transformation.                                       */
   /* ******************************************************************** */
 
-  static pgeometric_trans QK_gt(gt_param_list &params) {
+  static pgeometric_trans QK_gt(gt_param_list &params,
+	std::vector<dal::pstatic_stored_object> &) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
 	   "Bad number of parameters : " << params.size() << " should be 2.");
@@ -343,7 +357,8 @@ namespace bgeot {
     return geometric_trans_descriptor(name.str());
   }
 
-  static pgeometric_trans prism_gt(gt_param_list &params) {
+  static pgeometric_trans prism_gt(gt_param_list &params,
+	std::vector<dal::pstatic_stored_object> &) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
 	   "Bad number of parameters : " << params.size() << " should be 2.");
@@ -361,7 +376,8 @@ namespace bgeot {
     return geometric_trans_descriptor(name.str());
   }
 
-  static pgeometric_trans linear_qk(gt_param_list &params) {
+  static pgeometric_trans linear_qk(gt_param_list &params,
+	std::vector<dal::pstatic_stored_object> &) {
     if (params.size() != 1)
       DAL_THROW(failure_error, 
 	  "Bad number of parameters : " << params.size() << " should be 1.");
@@ -393,7 +409,8 @@ namespace bgeot {
   base_matrix 
   compute_local_basis(const geotrans_interpolation_context& c,
 		      size_type face) {
-    if (c.G().ncols() != c.pgt()->nb_points()) DAL_THROW(dimension_error, "dimensions mismatch");
+    if (c.G().ncols() != c.pgt()->nb_points())
+      DAL_THROW(dimension_error, "dimensions mismatch");
     base_small_vector up = c.pgt()->normals()[face];
     base_small_vector un(c.N());
     size_type P = c.pgt()->structure()->dim();
@@ -413,10 +430,12 @@ namespace bgeot {
     for (size_type k=0; k < P; ++k) {
       for (size_type l=0; l < k; ++l) {
 	gmm::add(gmm::scaled(gmm::mat_col(baseN,l), 
-			     -gmm::vect_sp(gmm::mat_col(baseN,l),gmm::mat_col(baseN,k))), 
+			     -gmm::vect_sp(gmm::mat_col(baseN,l),
+					   gmm::mat_col(baseN,k))), 
 		 gmm::mat_col(baseN,k));
       }
-      gmm::scale(gmm::mat_col(baseN,k), 1./gmm::vect_norm2(gmm::mat_col(baseN,k)));
+      gmm::scale(gmm::mat_col(baseN,k),
+		 1./gmm::vect_norm2(gmm::mat_col(baseN,k)));
     }
     /* TODO: for cases where P < N,
        complete the basis */
