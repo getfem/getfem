@@ -77,86 +77,6 @@ struct elastostatic_problem {
   elastostatic_problem(void) : mf_u(mesh), mf_p(mesh), mf_rhs(mesh), mf_coef(mesh) {}
 };
 
-void test(scalar_type a, scalar_type b, scalar_type c) {
-  getfem::SaintVenant_Kirchhoff_hyperelastic_law AHL;
-  base_matrix L(3,3), L2(3,3), gradU(3,3), gradU2(3,3), dgradU(3,3), Sigma(3,3), Sigma2(3,3), NL(3,3), NL2(3,3),A(3,3),B(3,3);
-  getfem::base_tensor dNL(3,3,3,3), tt(3,3,3,3);
-  base_vector params(2);
-
-  params[0] = a; params[1] = b;
-  gmm::fill_random(gradU); gmm::scale(gradU, c); 
-  gmm::fill_random(dgradU); gmm::scale(dgradU,0.000001);
-  
-  //gmm::clear(dgradU); dgradU(0,0) = 0.0001;
-
-  gmm::copy(gradU,gradU2); gmm::add(dgradU,gradU2);
-
-  gmm::mult(gmm::transposed(gradU), gradU, L);
-  gmm::add(gradU, L);
-  gmm::add(gmm::transposed(gradU), L);
-  gmm::scale(L, scalar_type(0.5));
-  gmm::add(gmm::identity_matrix(), gradU);
-
-  gmm::mult(gmm::transposed(gradU2), gradU2, L2);
-  gmm::add(gradU2, L2);
-  gmm::add(gmm::transposed(gradU2), L2);
-  gmm::scale(L2, scalar_type(0.5));
-  gmm::add(gmm::identity_matrix(), gradU2);
-
-  AHL.sigma(L, Sigma, params);
-  AHL.sigma(L2, Sigma2, params);
-
-  AHL.grad_sigma(L, tt, params);
-  size_type N=3;
-  for (size_type i = 0; i < N; ++i)
-    for (size_type j = 0; j < N; ++j) {
-      scalar_type aux(0), aux2(0);
-      for (size_type k = 0; k < N; ++k) {
-	aux += gradU(i, k) * Sigma(k, j);
-	aux2 += gradU2(i, k) * Sigma2(k, j);
-      }
-      NL(i,j) = aux;
-      NL2(i,j) = aux2;
-    }
-
-
-  for (size_type n = 0; n < N; ++n)
-    for (size_type m = 0; m < N; ++m)
-      for (size_type l = 0; l < N; ++l)
-	for (size_type k = 0; k < N; ++k) {
-	  //scalar_type aux = (k == l) ? Sigma(m, l) : 0.0;
-	  //scalar_type aux = (m == l) ? Sigma(k,n) : 0.0;
-	  scalar_type aux = (k == n) ? Sigma(m,l) : 0.0;
-	  for (size_type j = 0; j < N; ++j)
-	    for (size_type i = 0; i < N; ++i) {
-	      aux += gradU(n ,j) * gradU(k, i) * tt(j, m, i, l);
-	    }
-	  dNL(n, m, k, l) = aux;
-	}
-
-  gmm::mult(gmm::transposed(gradU),dgradU,A);
-  for (size_type n = 0; n < N; ++n)
-    for (size_type m = 0; m < N; ++m) {
-      B(n,m)=0;
-      for (size_type j = 0; j < N; ++j)
-	for (size_type i = 0; i < N; ++i) 
-	  B(n,m) += tt(n,m,i,j)*A(i,j);
-    }
-  gmm::clear(A); gmm::mult(gradU,B,A);
-  gmm::clear(B); gmm::mult(dgradU,Sigma,B);
-  gmm::add(B,A);
-
-  for (size_type n = 0; n < N; ++n)
-    for (size_type m = 0; m < N; ++m) {
-      scalar_type aux = 0;
-      for (size_type j = 0; j < N; ++j)
-	for (size_type i = 0; i < N; ++i) {
-	  aux += dNL(i,j,n,m)*dgradU(i,j);
-	}
-      printf("%d,%d: %12.7f %12.7f %12.9f %12.9f %12.9f\n", n,m,NL(n,m),NL2(n,m),NL2(n,m)-NL(n,m),aux,A(n,m));
-    }
-  printf("\n");
-}
 
 namespace getfem {
 template <typename MODEL_STATE> void
@@ -203,10 +123,15 @@ template <typename MODEL_STATE> void
 	MS.compute_reduced_system();
       }
 
+      if (iter.get_noisy())
+       	cout << "tangent matrix is "
+	     << (gmm::is_symmetric(MS.tangent_matrix()) ? "" : "not ")
+	     <<  "symmetric. ";
+
       gmm::ildlt_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
-      gmm::cg(MS.reduced_tangent_matrix(), dr, 
-	      gmm::scaled(MS.reduced_residu(), value_type(-1)),
-	      P, iter_linsolv);
+      gmm::gmres(MS.reduced_tangent_matrix(), dr, 
+		 gmm::scaled(MS.reduced_residu(), value_type(-1)),
+		 P, 300, iter_linsolv);
       if (!iter_linsolv.converged()) DAL_WARNING(2,"cg did not converge!");
       MS.unreduced_solution(dr,d);
 
@@ -502,7 +427,9 @@ bool elastostatic_problem::solve(plain_vector &U) {
     cout << "step " << step << ", number of variables : " << final_model.nb_dof() << endl;
     iter = gmm::iteration(residu, PARAM.int_value("NOISY"), maxit ? maxit : 40000);
     cout << "|U0| = " << gmm::vect_norm2(MS.state()) << "\n";
-    getfem::standard_solve(MS, final_model, iter);
+
+    // getfem::standard_solve(MS, final_model, iter);
+    getfem::nl_solve(MS, final_model, iter);
 
     ELAS.get_solution(MS, U);
     char s[100]; sprintf(s, "step%d", step+1);
@@ -529,12 +456,6 @@ int main(int argc, char *argv[]) {
 
   try {    
     elastostatic_problem p;
-    test(1,0, 0);
-    test(0,1, 0);
-    test(1,0, 1);
-    test(0,1, 1);
-    test(.35,.54, 1.);
-
     p.PARAM.read_command_line(argc, argv);
     p.init();
     p.mesh.write_to_file(p.datafilename + ".mesh");

@@ -345,7 +345,7 @@ namespace getfem
   }
 
   /** 
-     Stiffness matrix for linear elasticity, with a general Hooke  tensor 
+     Stiffness matrix for linear elasticity, with a general Hooke tensor 
   */
   template<typename MAT, typename VECT> void
   asm_stiffness_matrix_for_linear_elasticity_Hooke(MAT &RM,

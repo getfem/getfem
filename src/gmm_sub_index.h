@@ -120,12 +120,14 @@ namespace gmm {
         { comp_extr(); }
     ~sub_index()
       { index_generator::unattach(rind); index_generator::unattach(ind); }
-    sub_index(const sub_index &si) : ind(si.ind), rind(si.rind)
+    sub_index(const sub_index &si) : first_(si.first_), last_(si.last_),
+				     ind(si.ind), rind(si.rind)
       { index_generator::attach(rind); index_generator::attach(ind); }
     sub_index &operator =(const sub_index &si) {
       index_generator::unattach(rind); index_generator::unattach(ind);
       ind = si.ind; rind = si.rind; index_generator::attach(rind);
       index_generator::attach(ind);
+      first_ = si.first_; last_ = si.last_;
       return *this;
     }
   };

@@ -830,6 +830,7 @@ namespace getfem {
     void compute_B() {
       mesh_fem &mf_u = sub_problem.main_mesh_fem();
       size_type nd = mf_u.nb_dof(), ndd = mf_p.nb_dof();
+      gmm::clear(B);
       gmm::resize(B, ndd, nd);
       asm_stokes_B(B, mf_u, mf_p);
       this->computed();
@@ -918,6 +919,8 @@ namespace getfem {
     size_type boundary, nb_const;
     dal::bit_vector dof_on_bound;
     bool with_H, with_multipliers;
+    gmm::sub_index SUB_CT;
+    std::vector<size_type> ind_ct;
 
     void fixing_dimensions(void) {
       size_type q = mf_data.get_qdim();
@@ -930,7 +933,7 @@ namespace getfem {
     }
 
     void compute_constraints(int version) {
-      mesh_fem &mf_u = sub_problem.main_mesh_fem();
+      mesh_fem &mf_u = main_mesh_fem();
       size_type Q = mf_u.get_qdim();
       size_type nd = mf_u.nb_dof(), ndd = mf_data.nb_dof();
       gmm::row_matrix<gmm::rsvector<value_type> > M(nd, nd);
@@ -942,31 +945,30 @@ namespace getfem {
 	  for (size_type q=0; q < Q; ++q)  H_[i*Q*Q+q*Q+q] = value_type(1);
       }
       if (!with_multipliers) version |= ASMDIR_SIMPLIFY;
-      gmm::clear(M); gmm::clear(V);
       asm_dirichlet_constraints(M, V, sub_problem.main_mesh_fem(),
 				mf_data, H_, B_, boundary, version);
 
       if (!with_H) gmm::resize(H_, 0);
 
       R tol=gmm::mat_maxnorm(M)*gmm::default_tol(value_type())*R(100);
-      if (version & ASMDIR_BUILDH) gmm::clean(M, tol);
-      
-      std::vector<size_type> ind(0);
-      dof_on_bound = mf_u.dof_on_boundary(boundary);
-      dal::bit_vector nn = dof_on_bound;
-      // The following filter is not sufficient for an arbitrary matrix field
-      // H for the multipliers version. To be ameliorated.
-      for (size_type i = nn.take_first(); i != size_type(-1); i << nn)
-	if (!with_multipliers || gmm::vect_norm2(gmm::mat_row(M, i)) > tol)
-	  ind.push_back(i);
-      nb_const = ind.size();
-      if (version & ASMDIR_BUILDH) gmm::resize(G, nb_const, nd);
-      gmm::sub_index SUBI(ind);
-      if (version & ASMDIR_BUILDH) 
-	gmm::copy(gmm::sub_matrix(M, SUBI, gmm::sub_interval(0, nd)), G);
+      if (version & ASMDIR_BUILDH) {
+	gmm::clean(M, tol);
+	ind_ct.resize(0);
+	dof_on_bound = mf_u.dof_on_boundary(boundary);
+	dal::bit_vector nn = dof_on_bound;
+	// The following filter is not sufficient for an arbitrary matrix field
+	// H for the multipliers version. To be ameliorated.
+	for (size_type i = nn.take_first(); i != size_type(-1); i << nn)
+	  if (!with_multipliers || gmm::vect_norm2(gmm::mat_row(M, i)) > tol)
+	    ind_ct.push_back(i);
+	nb_const = ind_ct.size();
+	SUB_CT = gmm::sub_index(ind_ct);
+	gmm::resize(G, nb_const, nd);
+	gmm::copy(gmm::sub_matrix(M, SUB_CT, gmm::sub_interval(0, nd)), G);
+      }
 
       gmm::resize(CRHS, nb_const);
-      gmm::copy(gmm::sub_vector(V, SUBI), CRHS);
+      gmm::copy(gmm::sub_vector(V, SUB_CT), CRHS);
       this->computed();
     }
 
@@ -1047,6 +1049,7 @@ namespace getfem {
 
 	gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), dof_on_bound.card());
 	gmm::sub_interval SUBJ(i0, main_mesh_fem().nb_dof());
+	
 	gmm::mult(G, gmm::sub_vector(MS.state(), SUBJ),
 		  gmm::scaled(CRHS, value_type(-1)),
 		  gmm::sub_vector(MS.residu(), SUBI));
@@ -1125,7 +1128,7 @@ namespace getfem {
     size_type ndof = problem.nb_dof();
 
     bool is_linear = problem.is_linear();
-    mtype alpha, alpha_min=mtype(1)/mtype(256), alpha_mult=mtype(3)/mtype(4);
+    mtype alpha, alpha_min=mtype(1)/mtype(100000), alpha_mult=mtype(3)/mtype(4);
     mtype alpha_max_ratio(1);
     dal::bit_vector mixvar;
     gmm::iteration iter_linsolv0 = iter;
@@ -1150,10 +1153,10 @@ namespace getfem {
 	problem.compute_tangent_matrix(MS);
 	MS.compute_reduced_system();
       }
-
-      cout << "tangent matrix is "
-	   << (gmm::is_symmetric(MS.tangent_matrix()) ? "" : "not ")
-	   <<  "symmetric. ";
+//       if (iter.get_noisy())
+// 	cout << "tangent matrix is "
+// 	   << (gmm::is_symmetric(MS.tangent_matrix()) ? "" : "not ")
+// 	   <<  "symmetric. ";
 
 #ifdef GMM_USES_SUPERLU
 	  
@@ -1178,9 +1181,10 @@ namespace getfem {
 		     300, iter_linsolv);
 	}
 	else {
-	  cout << "there is " << mixvar.card() << " mixed variables\n";
-	  //gmm::ilut_precond<T_MATRIX> P(MS.reduced_tangent_matrix(),100,1E-10);
-	  gmm::identity_matrix P;
+	  if (iter.get_noisy())
+	    cout << "there is " << mixvar.card() << " mixed variables\n";
+	  gmm::ilut_precond<T_MATRIX> P(MS.reduced_tangent_matrix(),100,1E-10);
+	  // gmm::identity_matrix P;
 	  gmm::gmres(MS.reduced_tangent_matrix(), dr, 
 		     gmm::scaled(MS.reduced_residu(),  value_type(-1)),
 		     P, 300, iter_linsolv);

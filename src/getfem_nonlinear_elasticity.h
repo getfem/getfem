@@ -57,7 +57,8 @@ namespace getfem {
       gmm::scale(L,-1.); gmm::add(gmm::identity_matrix(),L); 
       gmm::scale(L,-0.5);
     }
-    void test_derivatives(size_type N, scalar_type h, base_vector& param) const {
+    void test_derivatives(size_type N, scalar_type h,
+			  base_vector& param) const {
       base_matrix L(N,N), L2(N,N), DL(N,N); 
       random_L(L); random_L(DL);
       gmm::scale(DL,h);
@@ -75,8 +76,8 @@ namespace getfem {
       for (size_type i=0; i < N; ++i) 
 	for (size_type j=0; j < N; ++j) d2 += sigma1(i,j)*DL(i,j);
       if (dal::abs(d-d2) > h*1e-5) 
-	cout << "wrong derivative of strain_energy, d=" << d << ", d2=" << d2 << "\n";
-
+	cout << "wrong derivative of strain_energy, d=" << d
+	     << ", d2=" << d2 << "\n";
 
       grad_sigma(L,tdsigma,param);
       for (size_type i=0; i < N; ++i) {
@@ -89,7 +90,9 @@ namespace getfem {
 	  }
 	  sigma2(i,j) -= sigma1(i,j);
 	  if (dal::abs(dsigma(i,j) - sigma2(i,j)) > h*1e-5) {
-	    cout << "wrong derivative of sigma, i=" << i << ", j=" << j << ", dsigma=" << dsigma(i,j) << ", var sigma = " << sigma2(i,j) << "\n";
+	    cout << "wrong derivative of sigma, i=" << i << ", j=" 
+		 << j << ", dsigma=" << dsigma(i,j) << ", var sigma = " 
+		 << sigma2(i,j) << "\n";
 	  }
 	}
       }
@@ -230,7 +233,7 @@ namespace getfem {
 	  for (size_type  k = 0; k < N; ++k)
 	    for (size_type  l = 0; l < N; ++l)
 	      result(i, j, k, l) += 
-	      	(C(i, k)*C(l, j) + C(i, l)*C(k, j)) * (d - scalar_type(2)*det*c)
+	      	(C(i, k)*C(l, j) + C(i, l)*C(k, j)) * (d-scalar_type(2)*det*c)
 	      	+ (C(i, j) * C(k, l)) * det*c*scalar_type(4);
 	}
     }
@@ -289,27 +292,27 @@ namespace getfem {
 	/*
 	  for (size_type n = 0; n < N; ++n)
 	    for (size_type m = 0; m <= n; ++m)
-	        for (size_type k = 0; k <= m; ++k)
-		      for (size_type l = 0; l <= k; ++l) {
-		      // scalar_type aux = (k == l) ? B(m, l) : scalar_type(0);
-		      scalar_type aux(0);
+	      for (size_type k = 0; k <= m; ++k)
+	        for (size_type l = 0; l <= k; ++l) {
+		// scalar_type aux = (k == l) ? B(m, l) : scalar_type(0);
+		   scalar_type aux(0);
 
-		      for (size_type j = 0; j < N; ++j)
-		        for (size_type i = 0; i < N; ++i) {
-			    aux += gradU(n ,j) * gradU(k, i) * tt(j, m, i, l);
-
-			      }
-			      t(n, m, k, l) = t(m, n, k, l) = t(n, m, l, k) = aux;
-			      t(m, n, l, k) = t(k, l, m, n) = t(l, k, m, n) = aux;
-			      t(k, l, n, m) = t(l, k, n, m) = aux;
-			            }
-
-				    for (size_type n = 0; n < N; ++n)
-				      for (size_type m = 0; m < N; ++m)
-				          for (size_type l = 0; l < N; ++l) {
-					        t(n, m, n, l) += B(m, l);
-						      // t(n, m, l, m) += B(n, l) * 0.5;
-						          }
+		   for (size_type j = 0; j < N; ++j)
+		     for (size_type i = 0; i < N; ++i) {
+		     aux += gradU(n ,j) * gradU(k, i) * tt(j, m, i, l);
+		     
+		     }
+		   t(n, m, k, l) = t(m, n, k, l) = t(n, m, l, k) = aux;
+		   t(m, n, l, k) = t(k, l, m, n) = t(l, k, m, n) = aux;
+		   t(k, l, n, m) = t(l, k, n, m) = aux;
+		 }
+		 
+		 for (size_type n = 0; n < N; ++n)
+		 for (size_type m = 0; m < N; ++m)
+		 for (size_type l = 0; l < N; ++l) {
+		 t(n, m, n, l) += B(m, l);
+		 // t(n, m, l, m) += B(n, l) * 0.5;
+	       }
 	*/
 	
 	for (size_type n = 0; n < N; ++n)
@@ -350,7 +353,6 @@ namespace getfem {
 	for (size_type k = 0; k < nb; ++k)
 	  coeff[i * nb + k] = PARAMS[mf_data.ind_dof_of_element(cv)[i]*nb+k];
       ctx.pf()->interpolation(ctx, coeff, params, nb);
-      //cout << "nonlinear_elem_term::prepare(cv = " << cv << ") -> params=" << params << "\n";
     } 
     
   };
@@ -468,7 +470,6 @@ namespace getfem {
       asm_nonlinear_elasticity_rhs(gmm::sub_vector(MS.residu(), SUBI), mf_u,
 				   gmm::sub_vector(MS.state(), SUBI), 
 				   mf_data, PARAMS, AHL);
-      //cout << "mdbrick_nonlinear_elasticity::compute_residu -> " << gmm::vect_norm2(MS.residu()) << "\n";
     }
     virtual mesh_fem &main_mesh_fem(void) { return mf_u; }
 
@@ -547,20 +548,18 @@ namespace getfem {
       gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))),
 		coeff);
       ctx.pf()->interpolation_grad(ctx, coeff, gradPhi, mf.get_qdim());
-
       gmm::add(gmm::identity_matrix(), gradPhi);
-
       scalar_type det = gmm::lu_inverse(gradPhi);
 
       if (version != 1) {
-	if (version == 2) det = sqrt(dal::abs(det));
+	if (version == 2) det = sqrt(gmm::abs(det));
 	for (size_type i = 0; i < N; ++i) 
 	  for (size_type j = 0; j < N; ++j) {
 	    t(i,j) = - det * gradPhi(j,i);
 	  }
-      } else if (version == 1) {
-	t[0] = 1 - det;
       }
+      else t[0] = scalar_type(1) - det;
+     
     }
   };
 
@@ -574,17 +573,17 @@ namespace getfem {
     if (mf_u.get_qdim() != mf_u.linked_mesh().dim())
       DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
 
-    incomp_nonlinear_term<VECT1>
-      ntermk(mf_u, U, 0);
-    incomp_nonlinear_term<VECT1>
-      ntermb(mf_u, U, 2);
+    incomp_nonlinear_term<VECT1> ntermk(mf_u, U, 0);
+    incomp_nonlinear_term<VECT1> ntermb(mf_u, U, 2);
 
     getfem::generic_assembly
       assem("P=data(#2);"
 	    "t=comp(NonLin(#1).vGrad(#1).Base(#2));"
 	    "M$2(#1,#2)+= t(i,j,:,i,j,:);"
-	    "w=comp(NonLin$2(#1).vGrad(#1).NonLin$2(#1).vGrad(#1).Base(#2));"
-	    "M$1(#1,#1)+= w(i,j,:,j,i, k,l,:,l,k,p).P(p) + w(i,j,:,k,j, k,m,:,i,m,p).P(p)");
+ 	    "w=comp(NonLin$2(#1).vGrad(#1).NonLin$2(#1).vGrad(#1).Base(#2));"
+ 	    "M$1(#1,#1)+= w(i,j,:,k,j, m,k,:,m,i,p).P(p)"
+ 	    "- w(i,j,:,i,j, k,l,:,k,l,p).P(p)"
+	    );
 
     assem.push_mf(mf_u);
     assem.push_mf(mf_p);
@@ -607,14 +606,13 @@ namespace getfem {
     if (mf_u.get_qdim() != mf_u.linked_mesh().dim())
       DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
 
-    incomp_nonlinear_term<VECT2>
-      nterm_tg(mf_u, U, 0);
-    incomp_nonlinear_term<VECT2>
-      nterm(mf_u, U, 1);
+    incomp_nonlinear_term<VECT2> nterm_tg(mf_u, U, 0);
+    incomp_nonlinear_term<VECT2> nterm(mf_u, U, 1);
 
     getfem::generic_assembly
       assem("P=data(#2); "
-	    "t=comp(NonLin$1(#1).vGrad(#1).Base(#2)); V$1(#1) += t(i,j,:,i,j,k).P(k);"
+	    "t=comp(NonLin$1(#1).vGrad(#1).Base(#2));"
+	    "V$1(#1) += t(i,j,:,i,j,k).P(k);"
 	    "w=comp(NonLin$2(#1).Base(#2)); V$2(#2) += w(1,:)");
 
     assem.push_mf(mf_u);
@@ -661,13 +659,16 @@ namespace getfem {
       gmm::sub_interval SUBI(i0+sub_problem.nb_dof(), mf_p.nb_dof()); /* P */
       gmm::sub_interval SUBJ(i0, main_mesh_fem().nb_dof());           /* U */
 
-      asm_nonlinear_incomp_tangent_matrix(gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBJ),
-					  gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBI),
+      T_MATRIX B(main_mesh_fem().nb_dof(), mf_p.nb_dof());
+
+      asm_nonlinear_incomp_tangent_matrix(gmm::sub_matrix(MS.tangent_matrix(),
+							  SUBJ, SUBJ), B,
 					  main_mesh_fem(), mf_p, 
 					  gmm::sub_vector(MS.state(), SUBJ), 
 					  gmm::sub_vector(MS.state(), SUBI));
-      
-      gmm::copy(gmm::transposed(gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBI)),
+      // cout << "B = " << B << endl;
+      gmm::copy(B, gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBI));
+      gmm::copy(gmm::transposed(B),
 		gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBJ));
       gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBI));
     }
@@ -678,17 +679,20 @@ namespace getfem {
      
       gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), mf_p.nb_dof());
       gmm::sub_interval SUBJ(i0, main_mesh_fem().nb_dof());
+      gmm::clear(gmm::sub_vector(MS.residu(), SUBI));
 
       asm_nonlinear_incomp_rhs(gmm::sub_vector(MS.residu(), SUBJ),
 			       gmm::sub_vector(MS.residu(), SUBI),
 			       main_mesh_fem(), mf_p, 
 			       gmm::sub_vector(MS.state(), SUBJ),
 			       gmm::sub_vector(MS.state(), SUBI));
+
+      // cout << "residu 1 = " << gmm::sub_vector(MS.residu(), SUBJ) << endl;
+      // cout << "residu 2 = " << gmm::sub_vector(MS.residu(), SUBI) << endl;
     }
     virtual mesh_fem &main_mesh_fem(void)
     { return sub_problem.main_mesh_fem(); }
 
-    // Constructor which does not define the rhs
     mdbrick_nonlinear_incomp(mdbrick_abstract<MODEL_STATE> &problem,
 		      mesh_fem &mf_p_)
       : sub_problem(problem), mf_p(mf_p_) {
