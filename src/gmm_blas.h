@@ -282,7 +282,7 @@ namespace gmm {
   template <class L> inline void write(std::ostream &o, const L &l,col_and_row)
   { write(o, l, row_major()); }
 
-  template <class L> void write(std::ostream &o, const L &l,col_major) {
+  template <class L> void write(std::ostream &o, const L &l, col_major) {
     o << "matrix(" << mat_nrows(l) << ", " << mat_ncols(l) << ")" << endl;
     for (size_type i = 0; i < mat_nrows(l); ++i) {
       o << "(";

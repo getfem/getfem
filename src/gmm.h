@@ -40,8 +40,8 @@
 #include <gmm_blas.h>
 #include <gmm_sub_vector.h>
 #include <gmm_sub_matrix.h>
-#include <gmm_matrix.h>
 #include <gmm_vector.h>
+#include <gmm_matrix.h>
 #include <gmm_solvers.h>
 #include <gmm_opt.h>
 

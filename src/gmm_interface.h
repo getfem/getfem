@@ -507,7 +507,7 @@ namespace gmm {
 			  const const_iterator &e, size_type i) {
     if (b.ir == e.ir) return value_type(0);
     PT2 p = std::lower_bound(b.ir, e.ir, i+shift);
-    return (*p == i+shift) ? b.pr[p-b.ir] : value_type(0);
+    return (*p == i+shift && p != e.ir) ? b.pr[p-b.ir] : value_type(0);
   }
 
   template <class PT1, class PT2, int shift>
