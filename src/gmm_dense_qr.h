@@ -53,7 +53,6 @@ namespace gmm {
     typedef typename number_traits<value_type>::magnitude_type magnitude_type;
 
     size_type n = vect_size(X);
-    if (vect_size(V) != n) DAL_THROW(dimension_error, "dimensions mismatch");
     magnitude_type mu = gmm::vect_norm2(X);
     gmm::copy(X, V);
     if (mu != magnitude_type(0)) {
@@ -99,9 +98,9 @@ namespace gmm {
     typedef std::vector<value_type> temp_vector;
 
     size_type m = mat_nrows(A), n = mat_ncols(A);
+    if (m < n) DAL_THROW(dimension_error, "dimensions mismatch");
     gmm::copy(A, R);
     
-    if (m < n) DAL_THROW(dimension_error, "dimensions mismatch");
     std::vector<value_type> W(m);
     dense_matrix<value_type> VV(m, n);
 
@@ -112,7 +111,7 @@ namespace gmm {
       house_vector(sub_vector(W, SUBI), sub_vector(mat_col(VV,j), SUBI));
       row_house_update(sub_matrix(R, SUBI, SUBJ),
 		       sub_vector(mat_col(VV,j), SUBI), sub_vector(W, SUBJ));
-      for (size_type i = j+1; i < m; ++i) R(i, j) = 0.0; // à garder ?
+      // for (size_type i = j+1; i < m; ++i) R(i, j) = 0.0; // usefull ?
     }
 
     gmm::copy(identity_matrix(), Q);
@@ -142,10 +141,9 @@ namespace gmm {
  		       sub_vector(w, SUBJ));
       col_house_update(sub_matrix(A, SUBK, SUBI), sub_vector(v, SUBI),
  		       sub_vector(w, SUBK));
-       if (compute_Q)
+      if (compute_Q)
        col_house_update(sub_matrix(Q, SUBK, SUBI), sub_vector(v, SUBI),
                        sub_vector(w, SUBK));
-       // for (size_type j = k+1; j < n; ++j) A(j, k-1) = v[j];
     }
   }
 
@@ -156,25 +154,14 @@ namespace gmm {
   template <class TA, class TV, class MAT, class VECT>
   void extract_eig(const MAT &A, VECT &V, double tol, TA, TV) {
     tol *= 2.0;
-    for (size_type i = 0; i < mat_nrows(A); ++i)
-      if ((i == n-1) ||
-	  dal::abs(A(i+1,i)) < (dal::abs(A(i,i))+dal::abs(A(i+1,i+1)))*tol)
-	V[i] = TV(A(i,i));
-      else {
-	TA tr = A(i,i) + A(i+1, i+1);
-	TA det = A(i,i)*A(i+1, i+1) - A(i,i+1)*A(i+1, i);
-	TA delta = tr*tr - 4 * det;
-	if (delta < TA(0)) {
-	  DAL_WARNING(2, "A Ccomplex eigenvalue has been detected");
-	  V[i+1] = V[i] =std::abs(std::complex<TV>(tr/2.0, sqrt(-delta)/2.0));
-	  
-	}
-	else {
-	  V[i]   = TV(A(i,i));
-	  V[i+1] = TV(A(i+1, i+1));
-	}
-	++i;
-      }
+    for (size_type i = 0; i < mat_nrows(A); ++i) {
+      if ((i < n-1) &&
+	  dal::abs(A(i+1,i)) >= (dal::abs(A(i,i))+dal::abs(A(i+1,i+1)))*tol &&
+	  dal::sqr(A(i,i) + A(i+1, i+1))
+	  - 4.0 * (A(i,i) * A(i+1, i+1) - A(i,i+1) * A(i+1, i)) < TA(0))
+	DAL_WARNING(2, "A complex eigenvalue has been detected");
+      V[i] = TV(A(i,i));
+    }
   }
 
   template <class TA, class TV, class MAT, class VECT>
@@ -189,7 +176,7 @@ namespace gmm {
       else {
 	TA tr = A(i,i) + A(i+1, i+1);
 	TA det = A(i,i)*A(i+1, i+1) - A(i,i+1)*A(i+1, i);
-	TA delta = tr*tr - 4 * det;
+	TA delta = tr*tr - 4.0 * det;
 	if (delta < TA(0)) {
 	  V[i] = std::complex<TV>(tr / 2.0, sqrt(-delta) / 2.0);
 	  V[i+1] = std::complex<TV>(tr / 2.0, -sqrt(-delta) / 2.0);
@@ -311,12 +298,12 @@ namespace gmm {
     typedef typename linalg_traits<MAT1>::value_type value_type;
     size_type n = mat_nrows(H); 
     
-    std::vector<value_type> v(3), w(n);
+    std::vector<value_type> v(3), w(n), vv(2);
     if (compute_Q) gmm::copy(identity_matrix(), Q);
 
     value_type s = H(n-2, n-2) + H(n-1, n-1);
     value_type t = H(n-2, n-2) * H(n-1, n-1) - H(n-2, n-1) * H(n-1, n-2);
-    value_type x = H(0, 0)*H(0, 0) + H(0,1) * H(1, 0) - s * H(0,0) + t;
+    value_type x = H(0, 0) * H(0, 0) + H(0,1) * H(1, 0) - s * H(0,0) + t;
     value_type y = H(1,0) * (H(0,0) + H(1,1) - s);
     value_type z = H(1, 0) * H(2, 1);
     for (size_type k = 0; k < n - 2; ++k) {
@@ -327,23 +314,18 @@ namespace gmm {
       
       row_house_update(sub_matrix(H, SUBI, SUBK),  v, sub_vector(w, SUBK));
       col_house_update(sub_matrix(H, SUBJ, SUBI),  v, sub_vector(w, SUBJ));
-      
       if (compute_Q)
        	col_house_update(sub_matrix(Q, SUBJ, SUBI),  v, sub_vector(w, SUBJ));
-      x = H(k+1, k);
-      y = H(k+2, k);
+
+      x = H(k+1, k); y = H(k+2, k);
       if (k < n-3) z = H(k+3, k);
     }
-    std::vector<value_type> vv(2);
     w[0] = x; w[1] = y;
+    sub_interval SUBI(n-2,2), SUBJ(0, n), SUBK(n-3,3), SUBL(0, 3);
     house_vector(sub_vector(w, sub_interval(0, 2)), vv);
-    row_house_update(sub_matrix(H,sub_interval(n-2,2), sub_interval(n-3,3)),
-		     vv, sub_vector(w, sub_interval(0, 3)));
-    col_house_update(sub_matrix(H,sub_interval(0,n), sub_interval(n-2,2)),
-		     vv, w);
-    if (compute_Q)
-      col_house_update(sub_matrix(Q,sub_interval(0,n), sub_interval(n-2,2)),
-		       vv, w);
+    row_house_update(sub_matrix(H, SUBI, SUBK), vv, sub_vector(w, SUBL));
+    col_house_update(sub_matrix(H, SUBJ, SUBI), vv, w);
+    if (compute_Q) col_house_update(sub_matrix(Q, SUBJ, SUBI), vv, w);
   }
 
   /* ********************************************************************* */

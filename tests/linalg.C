@@ -83,6 +83,7 @@ void test_qr(void) {
   cout << "mmt = " << mmt << endl;
   
   gmm::qr_factor(mm, q, r);
+  gmm::clean(r, 1E-13);
   cout << "r = " << r << endl;
   cout << "q = " << q << endl;
   gmm::mult(q, r, qr);
