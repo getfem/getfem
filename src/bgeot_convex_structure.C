@@ -278,14 +278,17 @@ namespace bgeot
 	basic_pcvs = this;
       faces_struct = std::vector<pconvex_structure>(nbf);
       faces = std::vector< std::vector<short_type> >(nbf);
-      _dir_points = std::vector<short_type>(Nc + 1);
 
-      for (int i = 0; i <= ls.cv1->dim(); i++)
-	_dir_points[i] = ls.cv1->ind_dir_points()[i]
-	                   + ls.cv2->ind_dir_points()[0] * ls.cv1->nb_points();
-      for (int i = 1; i <= ls.cv2->dim(); i++)
-	_dir_points[ls.cv1->dim()+i] = ls.cv1->ind_dir_points()[0]
-	  + ls.cv2->ind_dir_points()[i] * ls.cv1->nb_points();
+      if (ls.cv1->ind_dir_points().size() && ls.cv2->ind_dir_points().size()) {
+	_dir_points = std::vector<short_type>(Nc + 1);
+
+	for (int i = 0; i <= ls.cv1->dim(); i++)
+	  _dir_points[i] = ls.cv1->ind_dir_points()[i]
+	    + ls.cv2->ind_dir_points()[0] * ls.cv1->nb_points();
+	for (int i = 1; i <= ls.cv2->dim(); i++)
+	  _dir_points[ls.cv1->dim()+i] = ls.cv1->ind_dir_points()[0]
+	    + ls.cv2->ind_dir_points()[i] * ls.cv1->nb_points();
+      }
 
       for (int i = 0; i < ls.cv1->nb_faces(); i++)
       { 
