@@ -35,6 +35,7 @@
 
 #include <gmm_kernel.h>
 #include <gmm_precond_diagonal.h>
+#include <gmm_dense_sylvester.h>
 
 namespace gmm {
 
@@ -229,9 +230,9 @@ namespace gmm {
 
 	  for (size_type j = st.tb_def; j < st.tb_deftot; ++j) {
 	    if ( pure[j-st.tb_def] == 0)
-	      gmm::clear(sub_vector(mat_col(Hobl,j), sub_interval(j+1,m-j+1)));
-	    else if (pure(j-st.tb_def) == 1) {
-	      gmm::clear(sub_matrix(Hobl, sub_interval(j+2,m-j),
+	      gmm::clear(sub_vector(mat_col(Hobl,j), sub_interval(j+1,m-j)));
+	    else if (pure[j-st.tb_def] == 1) {
+	      gmm::clear(sub_matrix(Hobl, sub_interval(j+2,m-j-1),
 				    sub_interval(j, 2))); 
 	      ++j;
 	    }
@@ -275,8 +276,26 @@ namespace gmm {
 	    
 	    T alpha = Lock(W, Hobl, YB, sub_interval(0, st.fin), ok);
 
+	    //       Clean the portions below the diagonal corresponding
+	    //       to the unwanted lock Schur vectors
 	    
+	    for (size_type j = 0; j < st.tb_deftot; ++j) {
+	      if ( pure[j] == 0)
+		gmm::clear(sub_vector(mat_col(Hobl,j), sub_interval(j+1,m-j)));
+	      else if (pure[j] == 1) {
+		gmm::clear(sub_matrix(Hobl, sub_interval(j+2,m-j-1),
+				      sub_interval(j, 2))); 
+		++j;
+	      }
+	      else DAL_THROW(internal_error, "internal error");
+	    }
 
+	    gmm::dense_matrix<T> z(st.nb_un, st.fin - st.nb_un);
+	    sub_interval SUBI(0, st.nb_un), SUBJ(st.nb_un, st.fin - st.nb_un);
+	    sylvester(sub_matrix(Hobl, SUBI),
+		      sub_matrix(Hobl, SUBJ),
+		      sub_matrix(gmm::scaled(Hobl, -T(1)), SUBI, SUBJ), z);
+	    
 	  }
 
 	}

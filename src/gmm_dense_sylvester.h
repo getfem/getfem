@@ -73,7 +73,7 @@ namespace gmm {
     size_type m = mat_nrows(A), n = mat_ncols(A);
     if (m*n != vect_size(v)) DAL_THROW(dimension_error, "dimensions mismatch");
     for (size_type i = 0; i < n; ++i)
-      gmm::copy(sub_vector(v, sub_interval(i*m, m)), mat_col(A, i));
+      gmm::copy(mat_col(A, i), sub_vector(v, sub_interval(i*m, m)));
   }
 
   template <typename MAT, typename VECT>
@@ -89,7 +89,7 @@ namespace gmm {
     size_type m = mat_nrows(mat), n = mat_ncols(A);
     if (m*n != vect_size(v)) DAL_THROW(dimension_error, "dimensions mismatch");
     for (size_type i = 0; i < m; ++i)
-      gmm::copy(sub_vector(v, sub_slice(i, n, m)), mat_row(A, i));
+      gmm::copy(mat_row(A, i), sub_vector(v, sub_slice(i, n, m)));
   }
 
   template <typename MAT, typename VECT> inline
@@ -108,7 +108,7 @@ namespace gmm {
     size_type m = mat_nrows(A), n = mat_ncols(A);
     if (m*n != vect_size(v)) DAL_THROW(dimension_error, "dimensions mismatch");
     for (size_type i = 0; i < n; ++i)
-      gmm::copy(mat_col(A, i), sub_vector(v, sub_interval(i*m, m)));
+      gmm::copy(sub_vector(v, sub_interval(i*m, m)), mat_col(A, i));
   }
 
   template <typename MAT, typename VECT>
@@ -124,7 +124,7 @@ namespace gmm {
     size_type m = mat_nrows(mat), n = mat_ncols(A);
     if (m*n != vect_size(v)) DAL_THROW(dimension_error, "dimensions mismatch");
     for (size_type i = 0; i < m; ++i)
-      gmm::copy(mat_row(A, i), sub_vector(v, sub_slice(i, n, m)));
+      gmm::copy(sub_vector(v, sub_slice(i, n, m)), mat_row(A, i));
   }
 
   template <typename MAT, typename VECT> inline
@@ -163,6 +163,7 @@ namespace gmm {
     colmatrix_to_vector(m3, c);
     lu_solve(akronb, c, x);
     vector_to_colmatrix(x, m4);
+
   }
 }
 
