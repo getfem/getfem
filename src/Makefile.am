@@ -34,6 +34,7 @@ include_HEADERS =                      \
 	getfem_config.h                \
 	getfem_export.h                \
 	getfem_import.h	               \
+	getfem_arch_config.h           \
 	getfem_precomp.h               \
 	getfem_norm.h                  \
 	getfem_derivatives.h           \
