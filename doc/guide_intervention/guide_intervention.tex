@@ -1,4 +1,4 @@
-\documentclass[12pt,a4paper]{../doc}
+\documentclass[11pt,a4paper]{../doc}
 
 \usepackage{fancyheadings}
 \usepackage{amsmath}
@@ -264,10 +264,10 @@ Les diff\'erentes biblioth\`eques :
   \item LINKMSG : tr\`es petite biblioth\`eque de gestion de message entre objets.\\[0.2cm]
   \item BGEOT : (Basic Geometric Tool) diverses description g\'eom\'etriques (points, vecteurs, matrices, tenseurs, convexes, maillages \'el\'ementaires, polyn\^omes de plusieurs variables, d\'efinition d'\'el\'ements finis).\\[0.2cm]
   \item GETFEM : (GEneric Tool for Finite Element Methods) Maillage permettant la gestion \'el\'ement finis, description des m\'ethodes d'\'el\'ements finis, m\'ethodes d'assemblage. \\[0.2cm]
-  \item MISC : Partie du projet recevant les algorithmes r\'ecents et non organis\'es en biblioth\`eques. Les algorithmes de r\'esolutions sont pour le moment ranges ici. Certaines parties de cet ensemble de fichiers sont destin\'es a dispara\^\i tre. \\[0.2cm]
+  \item MISC : Partie du projet recevant les algorithmes r\'ecents et non organis\'es en biblioth\`eques. Les algorithmes de r\'esolutions sont pour le moment rangés ici. Certaines parties de cet ensemble de fichiers sont destin\'es à dispara\^\i tre. \\[0.2cm]
 \end{itemize}
 
-\section{Organigramme simplifi\'e de GETFEMLAB}
+\section{Futur organigramme simplifi\'e de GETFEMLAB}
 GETFEMLAB repr\'esentera une sur-couche de GETFEM++ compos\'ee de sources C - C++ faisant interface \`a des commandes MATLAB et de sources MATLAB.
 
 \begin{center}
@@ -277,11 +277,11 @@ GETFEMLAB repr\'esentera une sur-couche de GETFEM++ compos\'ee de sources C - C+
 \section{Organisation du projet avec CVS}
 
 \subsection{Introduction \`a CVS}
-  CVS (Concurrent Versions System) permet la gestion des r\'evisions, ce qui est vital quand plusieurs programmeurs travaillent sur un m\^eme logiciel (et conseill\'e m\^eme si un seul programmeur intervient).\\[0.4cm]
+  CVS (Concurrent Versions System) permet la gestion des r\'evisions, ce qui est vital quand plusieurs programmeurs travaillent sur un m\^eme logiciel (et conseill\'e m\^eme pour un seul programmeur).\\[0.4cm]
 L'id\'ee de base de CVS est de centraliser sur un unique r\'epertoire, dit d\'epot, soit repository en anglais, tous les codes et documents relatifs au projet (dans le cas pr\'esent, ce r\'epertoire est sur gmmlinux2). Chaque intervenant travaille alors sur une copie des sources de la partie du projet sur laquelle il intervient.\\[0.4cm]
-Des commandes permettent de tester la validit\'e de ses sources, de les mettre \`a jour par rapport aux changement effectu\'ees par d'autre sur le repository, de valider ses propres changements effectu\'es sur sa propre copie, ou d'ajouter et de supprimer des fichiers au projet.\\[0.4cm]
+Des commandes permettent de tester la validit\'e de ces sources, de les mettre \`a jour par rapport aux changement effectu\'ees par d'autre sur le repository, de valider ses propres changements effectu\'es sur sa propre copie, ou d'ajouter et de supprimer des fichiers au projet.\\[0.4cm]
 CVS g\`ere automatiquement l'attribution de num\'eros de r\'evision \`a chaque fichier du projet. Toutes les modifications sont gard\'ees en m\'emoire, de telle mani\`ere \`a ce que l'on puisse demander l'\'etat du projet \`a n'importe quelle date ant\'erieure. \\[0.4cm]
-D'autres fonctionnalit\'es plus \'evolu\'ees existent, toutefois, dans la suit de ce guide, seule les commandes de base seront introduites.\\[0.4cm]
+D'autres fonctionnalit\'es plus \'evolu\'ees existent, toutefois, dans la suite de ce guide, seule les commandes de base seront introduites.\\[0.4cm]
 ATTENTION : Soyez bien s\^ur de vous lorsque vous apportez des modifications au repository, l'ensemble des autres intervenants les chargeront lors de leurs prochaines interventions. Il est imp\'eratif d'\'eviter au maximum d'introduire de nouvelles erreurs dans le projet. 
 
   
@@ -314,7 +314,7 @@ Par exemple la commande
 va cr\'eer dans le r\'epertoire courant la structure de r\'epertoire \begin{alltt} getfem++/dal/test/ \end{alltt} et y mettre les fichier correspondants, c'est \`a dire les programmes de test de la biblioth\`eque dal.
 
 \subsection{Plus pratique, les shells d'installation et de mise \`a jour}
-Les shells d'installation et de mise \`a jour regroupent toutes les instructions permettant de r\'ecup\'erer la partie des sources que vous souhaitez modifier, et installer un environnement de compilation et de test. Pour r\'ecup\'erer l'ensemble des shells d'installation, ex\'ecuter la commande
+Les shells d'installation et de mise \`a jour regroupent toutes les instructions permettant de r\'ecup\'erer la partie des sources que vous souhaitez modifier, et d'installer un environnement de compilation et de test. Pour r\'ecup\'erer l'ensemble des shells d'installation, ex\'ecuter la commande
 \begin{alltt}
   cvs checkout getfem++/bin
 \end{alltt}
@@ -326,15 +326,15 @@ et taper
   bin/startftool, bin/startlinkmsg, bin/startmisc,
   bin/startmatlab_interface, ou bin/startgetfemlab
 \end{alltt}
-ces shells chargent l'int\'egralit\'e des biblioth\`eques consid\'er\'ees et pr\'eparent un makefile pour compiler celles-ci, ainsi que les programmes de test qui lui sont li\'es. Vous pouvez encha\^\i ner plusieurs shells si vous voulez intervenir sur plusieurs biblioth\`eques dans la m\^eme session, ou si vous n'allez tester les modifications apport\'ees que dans des biblioth\`eques autre que celle que vous modifiez.\\[0.4cm]
+ces shells chargent l'int\'egralit\'e des biblioth\`eques consid\'er\'ees et pr\'eparent un makefile pour compiler celles-ci, ainsi que les programmes de test qui lui sont li\'es. Vous pouvez encha\^\i ner plusieurs shells si vous voulez intervenir sur plusieurs biblioth\`eques dans la m\^eme session, ou si vous n'allez tester les modifications apport\'ees dans des biblioth\`eques autre que celle que vous modifiez.\\[0.4cm]
 
-Une fois les modifications apport\'ees, il faut passer \`a une phase de test, i.e. compilation et lancement des programmes de tests. Si la partie que vous avez modifi\'e n'a pas de programme de test correspondant, cr\'eez-en un, en essayant de tester toutes les fonctionnalit\'es.\\[0.4cm]
+Une fois les modifications apport\'ees, il faut passer \`a une phase de test, i.e. compilation et lancement des programmes de tests. Si la partie que vous avez modifi\'ee n'a pas de programme de test correspondant, cr\'eez-en un, en essayant de tester toutes les fonctionnalit\'es.\\[0.4cm]
 
-Une fois la phase de test compl\'et\'ee, quand vous \^etes s\^ur que vous n'introduisez pas de nouveaux bugs dans le projet, validez les changements en se pla\c cant dans le r\'epertoire getfem++ et en ex\'ecutant
+Une fois la phase de test compl\'et\'ee, quand vous \^etes s\^ur que vous n'introduisez pas de nouveaux bugs dans le projet, validez les changements en ex\'ecutant
 \begin{alltt}
   cvs commit -m "commentaire"
 \end{alltt}
-Attention, soyez bien s\^ur de la validit\'e de vos changements avant de taper ces commandes. Les modifications seront imm\'ediatement transf\'er\'ees dans le repository. Les changements dans les sources compilables seront pris en compte dans une recompilation de la biblioth\`eque qui a lieu tous les soir vers minuit.\\ \\
+Attention, soyez bien s\^ur de la validit\'e de vos changements avant de taper ces commandes. Les modifications seront imm\'ediatement transf\'er\'ees dans le repository. Les changements dans les sources compilables seront pris en compte dans une recompilation de la biblioth\`eque qui a lieu toutes les nuits.\\ \\
 
 D'une mani\`ere g\'en\'erale, ne gardez pas trop longtemps ouverte une session. Une fois la commande ``cvs commit'' effectu\'ee, vous pouvez d\'etruire le r\'epertoire. \\ \\
 
@@ -401,9 +401,26 @@ L\`a aussi, il faut valider l'op\'eration par un
    \end{itemize}
    \`a compl\'eter
 \section{charte de documentation}
-  Toutes les documentations sont \`a r\'ealiser en anglais.
-  \subsection{Documentation des sources C++}
-  \`a compl\'eter
+  Les documentations sont \`a r\'ealiser en anglais.
+  \subsection{Documentation des sources C et C++}
+  Le choix s'est porté sur un outils de documentation automatique des sources. Il s'agit du logiciel DOC++ (http::\/\/docpp.sourceforge.net). Son utilisation est simple et consiste à documenter dans les sources C ou C++ (voir aussi la doc dans getfem++/doc/doc++.ps). Pour cela deux types de commentaires peuvent être introduits. Sur une seule ligne par :\\
+{\tt
+ /// comment
+}
+\\ ou sur plusieurs lignes par :
+\begin{alltt}
+/** comment 1 
+ *  comment 2 
+ *  comment 3 
+ */ 
+\end{alltt}
+Ces commentaires doivent préceder directement les éléments à commenter (fonctions, classes, méthodes d'une classe). Se reporter aux modules correctement commenter pour avoir une idée des formats.
+on veillera \`a respecter les points suivants :
+   \begin{itemize}
+     \item Essayer de commenter toutes les classes, fonctions, méthodes, et en priorité les éléments exportables.
+     \item Donner tout les éléments nécessaire à la compréhension du module. En règle générale, on fournira des informations extensive que l'on rattachera à la classe principale du module (méthode de calcul, calcul intérmédiaires, détails d'implémentation ...)
+     \item Donner si possible quelques exemples d'utilisation des classes.
+   \end{itemize}
   \subsection{Documentation des sources Matlab}
   \`a compl\'eter
   \subsection{Documentation des exemples d'application}
