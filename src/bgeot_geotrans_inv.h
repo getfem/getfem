@@ -45,7 +45,8 @@ namespace bgeot {
     size_type N, P;
     base_matrix G, pc, K, B, CS;
     pgeometric_trans pgt;
-    std::vector<base_node> cvpts; /* used only for non-linear geotrans -- we should use the matrix a instead... */
+    std::vector<base_node> cvpts; /* used only for non-linear geotrans
+				  -- we should use the matrix a instead... */
     scalar_type EPS;
   public:
     geotrans_inv_convex(scalar_type e=10e-12) : N(0), P(0), pgt(0), EPS(e) {};
@@ -58,12 +59,13 @@ namespace bgeot {
     
     /**
        given the node on the real element, returns the node
-       on the reference element (even if it is outside of the reference convex)
+       on the reference element (even if it is outside of the ref. convex)
        @return true if the n is inside the convex
        @param n node on the real element 
        @param n_ref computed node on the reference convex
     */
-    bool invert(const base_node& n, base_node& n_ref, scalar_type IN_EPS=1e-12) {
+    bool invert(const base_node& n, base_node& n_ref,
+		scalar_type IN_EPS=1e-12) {
       n_ref.resize(pgt->structure()->dim());
       if (pgt->is_linear()) {
         return invert_lin(n, n_ref,IN_EPS);
@@ -71,15 +73,18 @@ namespace bgeot {
     }
   private:
     bool invert_lin(const base_node& n, base_node& n_ref, scalar_type IN_EPS);
-    bool invert_nonlin(const base_node& n, base_node& n_ref, scalar_type IN_EPS);
+    bool invert_nonlin(const base_node& n, base_node& n_ref,
+		       scalar_type IN_EPS);
     void update_B();
   };
 
-  template<class TAB> void geotrans_inv_convex::init(const convex<base_node,
-						     TAB> &cv, pgeometric_trans pgt_) {
+  template<class TAB>
+  void geotrans_inv_convex::init(const convex<base_node, TAB> &cv,
+				 pgeometric_trans pgt_) {
     bool geotrans_changed = (pgt != pgt_); if (geotrans_changed) pgt = pgt_;
     if (!cv.points().size()) DAL_INTERNAL_ERROR("empty points!");
-    if (N != cv.points()[0].size()) { N = cv.points()[0].size(); geotrans_changed = true; }
+    if (N != cv.points()[0].size())
+      { N = cv.points()[0].size(); geotrans_changed = true; }
     if (geotrans_changed) {
       P = pgt->structure()->dim();
       pc.resize(pgt->nb_points() , P);
@@ -94,7 +99,8 @@ namespace bgeot {
       }
       // computation of the pseudo inverse
       update_B();
-    } else { /* not much to precompute for non-linear geometric transformations .. */
+    } else { /* not much to precompute for non-linear geometric
+		transformations .. */
       cvpts.resize(cv.nb_points());
       for (size_type j = 0; j < pgt->nb_points(); ++j) 
         cvpts[j] = cv.points()[j];
@@ -103,7 +109,8 @@ namespace bgeot {
 
 
   /**
-     handles the geometric inversion for a given (supposedly quite large) set of points
+     handles the geometric inversion for a given (supposedly quite large)
+     set of points
   */
   class geotrans_inv
   {
@@ -124,7 +131,8 @@ namespace bgeot {
     size_type nb_points(void) const { return tree.nb_points(); }
     /// Add point p to the list of points.
     size_type add_point(base_node p) { return tree.add_point(p); }
-    void add_point_with_id(base_node p,size_type id) { tree.add_point_with_id(p,id); }
+    void add_point_with_id(base_node p,size_type id)
+    { tree.add_point_with_id(p,id); }
       
     /// Find all the points present in the box between min and max.
     size_type points_in_box(kdtree_tab_type &ipts,
@@ -157,7 +165,8 @@ namespace bgeot {
     template<class TAB, class CONT1, class CONT2>
     size_type points_in_convex(const convex<base_node, TAB> &cv,
 			       pgeometric_trans pgt,
-			       CONT1 &pftab, CONT2 &itab, bool bruteforce=false);
+			       CONT1 &pftab, CONT2 &itab,
+			       bool bruteforce=false);
       
     geotrans_inv(scalar_type EPS_ = 10E-12) : EPS(EPS_) {}
   };
@@ -167,7 +176,8 @@ namespace bgeot {
   template<class TAB, class CONT1, class CONT2>
   size_type geotrans_inv::points_in_convex(const convex<base_node, TAB> &cv,
 					   pgeometric_trans pgt,
-					   CONT1 &pftab, CONT2 &itab, bool bruteforce) {
+					   CONT1 &pftab, CONT2 &itab,
+					   bool bruteforce) {
     base_node min, max; /* bound of the box enclosing the convex */
     size_type nbpt = 0; /* nb of points in the convex */
     kdtree_tab_type boxpts;

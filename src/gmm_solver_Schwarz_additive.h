@@ -348,7 +348,7 @@ namespace gmm {
     mtype alpha, alpha_min = mtype(1)/mtype(8), alpha_mult = mtype(3)/mtype(4);
     
     while(!iter.finished(std::min(act_res, precond_res))) {
-      for (int SOR_step = 0;  SOR_step >= 0; --SOR_step) {
+      for (int SOR_step = 1;  SOR_step >= 0; --SOR_step) {
 	gmm::clear(rhs);
 	for (size_type isd = 0; isd < NS.get_vB().size(); ++isd) {
 	  const MatrixBi &Bi = (NS.get_vB())[isd];
@@ -360,7 +360,6 @@ namespace gmm {
 	  iternc.set_maxiter(30); // ?
 	  if (iternc.get_noisy())
 	    cout << "Non-linear local problem " << isd << endl;
-	  else cout << isd << " ";
 	  gmm::clear(xi);
 	  gmm::copy(u, x);
 	  NS.compute_sub_F(fi, x, isd); gmm::scale(fi, value_type(-1));
@@ -390,8 +389,6 @@ namespace gmm {
 	if (SOR_step) cout << "SOR step residu = " << precond_res << endl;
 	if (precond_res < residu) break;
       }
-      cout << endl;
-      // cout << "rhs = " << gmm::vect_norm2(rhs) << endl;
 
       iter2.init();
       // solving linear system for the global Newton method
