@@ -498,7 +498,7 @@ namespace gmm {
 
   template <class V1, class V2> inline
     typename linalg_traits<V1>::value_type
-    vect_sp(const V1 &v1, const V2 &v2,abstract_sparse,abstract_plain) {
+  vect_sp(const V1 &v1, const V2 &v2,abstract_sparse,abstract_plain) {
     return _vect_sp_sparse(vect_const_begin(v1), vect_const_end(v1), v2);
   }
 

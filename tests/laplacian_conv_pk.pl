@@ -57,15 +57,16 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
 
 
 
-$NDDLMAX = 10400;
+$NDDLMAX = 41600;
 $PAUSE = 0;
+$SKIP = 2;
 
 ##########################################################################
 print "   TESTS EN DIMENSION 1, ET ELEMENTS PK                         \n";
 ##########################################################################
 $FEM_TYPE = 0;
 $INTE = 0;
-while ($INTE < 3) {
+while ($INTE < 3 && $SKIP < 1) {
 open(RES, ">$tmp_res");
 $K = 1; $N = 1; $FT = 1.0; $NX = 1;
 while ($NX**$N <= $NDDLMAX) {
@@ -115,7 +116,7 @@ print "   TESTS EN DIMENSION 1, ET ELEMENTS PK HIERARCHIQUES           \n";
 ##########################################################################
 $FEM_TYPE = 2;
 $INTE = 0;
-while ($INTE < 3) {
+while ($INTE < 3 && $SKIP < 2) {
 open(RES, ">$tmp_res");
 $K = 1; $N = 1; $FT = 1.0; $NX = 1;
 while ($NX**$N <= $NDDLMAX) {
@@ -164,19 +165,19 @@ print "   TESTS EN DIMENSION 2, ET ELEMENTS PK                         \n";
 ##########################################################################
 $FEM_TYPE = 0;
 $INTE = 0;
-while ($INTE < 2) {
+while ($INTE < 2 && $SKIP < 3) {
 open(RES, ">$tmp_res");
 $K = 1; $N = 2; $FT = 1.0; $NX = 1;
 while ($NX**$N <= $NDDLMAX) {
   $K = 1;
   print "Test for NX = $NX \t"; print RES $NX**$N;
-  while ((($K * $NX)**$N) * $K * $K <= 4*$NDDLMAX && $K <= 12) {
+  while ((($K * $NX)**$N) * $K <= 4*$NDDLMAX && $K <= 9) {
     start_program("-d N=$N -d NX=$NX -d K=$K -d FT=$FT -d INTEGRATION=$INTE -d FEM_TYPE=$FEM_TYPE");
     print RES "$linferror "; print ".";
     ++$K;
   }
   print RES "\n"; print "\n";
-  if ($NX >= 5) { $NX = int($NX * 2); } else { ++$NX; }
+  if ($NX >= 5) { $NX = int($NX * 1.5); } else { ++$NX; }
 }
 close(RES);
 
@@ -214,19 +215,19 @@ print "   TESTS EN DIMENSION 2, ET ELEMENTS PK HIERARCHIQUES           \n";
 ##########################################################################
 $FEM_TYPE = 2;
 $INTE = 0;
-while ($INTE < 2) {
+while ($INTE < 2 && $SKIP < 4) {
 open(RES, ">$tmp_res");
 $K = 1; $N = 2; $FT = 1.0; $NX = 1;
 while ($NX**$N <= $NDDLMAX) {
   $K = 1;
   print "Test for NX = $NX \t"; print RES $NX**$N;
-  while ((($K * $NX)**$N) * $K * $K <= 4*$NDDLMAX && $K <= 12) {
+  while ((($K * $NX)**$N) * $K <= 4*$NDDLMAX && $K <= 9) {
     start_program("-d N=$N -d NX=$NX -d K=$K -d FT=$FT -d INTEGRATION=$INTE -d FEM_TYPE=$FEM_TYPE");
     print RES "$linferror "; print ".";
     ++$K;
   }
   print RES "\n"; print "\n";
-  if ($NX >= 5) { $NX = int($NX * 2); } else { ++$NX; }
+  if ($NX >= 5) { $NX = int($NX * 1.5); } else { ++$NX; }
 }
 close(RES);
 

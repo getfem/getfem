@@ -140,6 +140,10 @@ namespace gmm {
     static const void* origin(const this_type &v) { return v.origin; }
   };
 
+   template<class V> std::ostream &operator <<
+  (std::ostream &o, const scaled_vector_const_ref<V>& m)
+  { gmm::write(o,m); return o; }
+
 #ifdef USING_BROKEN_GCC295
   template <class V> struct linalg_traits<const scaled_vector_const_ref<V> > 
     : public linalg_traits<scaled_vector_const_ref<V> > {};
@@ -245,6 +249,10 @@ namespace gmm {
     static const void* origin(const this_type &m) { return m.origin; }
   };
 
+  template<class M> std::ostream &operator <<
+  (std::ostream &o, const scaled_row_matrix_const_ref<M>& m)
+  { gmm::write(o,m); return o; }
+
 #ifdef USING_BROKEN_GCC295
   template <class M>
   struct linalg_traits<const scaled_row_matrix_const_ref<M> > 
@@ -346,6 +354,11 @@ namespace gmm {
     { return const_col_iterator(m._end, m.r); }
     static const void* origin(const this_type &m) { return m.origin; }
   };
+
+  template<class M> std::ostream &operator <<
+  (std::ostream &o, const scaled_col_matrix_const_ref<M>& m)
+  { gmm::write(o,m); return o; }
+
 
 #ifdef USING_BROKEN_GCC295
   template <class M>
