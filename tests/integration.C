@@ -25,7 +25,7 @@ int main(void)
     cout.precision(16);
     
     for (size_type i = 1; i < 15; ++i) {
-      sprintf(meth, "IM_GAUSS1D(%d)", 2*(i - 1));
+      sprintf(meth, "IM_GAUSS1D(%ld)", 2*(i - 1));
       print_method(getfem::int_method_descriptor(meth));
     }
 
@@ -34,7 +34,7 @@ int main(void)
     
     for (size_type n = 1; n < 6; n++) {
       for (size_type i = 0; i < 3; ++i) {
-	sprintf(meth, "IM_NC(%d,%d)", n, i);
+	sprintf(meth, "IM_NC(%ld,%ld)", n, i);
 	print_method(getfem::int_method_descriptor(meth));
       }
     }

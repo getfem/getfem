@@ -157,8 +157,8 @@ void lap_pb::init(void)
   switch (integration) {
   case 0 :
     switch (mesh_type) { 
-    case 0 : sprintf(meth, "IM_EXACT_SIMPLEX(%d)", N); break;
-    case 1 : sprintf(meth, "IM_EXACT_PARALLELEPIPED(%d)", N); break;
+    case 0 : sprintf(meth, "IM_EXACT_SIMPLEX(%ld)", N); break;
+    case 1 : sprintf(meth, "IM_EXACT_PARALLELEPIPED(%ld)", N); break;
     default : DAL_THROW(dal::internal_error, 
     "Exact integration not allowed in this context");
     }
@@ -166,19 +166,19 @@ void lap_pb::init(void)
   case 1 :
     switch (mesh_type) { 
     case 0 : 
-      sprintf(meth, "IM_NC(%d,%d)", N, 2*K);
+      sprintf(meth, "IM_NC(%ld,%d)", N, 2*K);
       break;
     case 1 : 
-      sprintf(meth, "IM_NC_PARALLELEPIPED(%d,%d)", N, 2*K);
+      sprintf(meth, "IM_NC_PARALLELEPIPED(%ld,%d)", N, 2*K);
       break;
     case 2 :
-      sprintf(meth, "IM_NC_PRISM(%d,%d)", N, 2*K);
+      sprintf(meth, "IM_NC_PRISM(%ld,%d)", N, 2*K);
       break;
     }
     break;
   case 2 :
     if (mesh_type == 1)
-      sprintf(meth, "IM_GAUSS_PARALLELEPIPED(%d,%d)", N, 2*K);
+      sprintf(meth, "IM_GAUSS_PARALLELEPIPED(%ld,%d)", N, 2*K);
     else
       DAL_THROW(dal::internal_error,
 		"Product of 1D Gauss only for parallelepipeds");
@@ -190,7 +190,7 @@ void lap_pb::init(void)
       else if (N == 2)
 	sprintf(meth, "IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(%d), %d)", 2, KI);
       else
-	sprintf(meth, "IM_STRUCTURED_COMPOSITE(IM_NC(%d, %d), %d)",
+	sprintf(meth, "IM_STRUCTURED_COMPOSITE(IM_NC(%ld, %d), %d)",
 		N, 2*K, KI);
     }
     else
@@ -217,29 +217,29 @@ void lap_pb::init(void)
   getfem::pfem pfprinc = 0;
   switch (mesh_type) {
   case 0 :
-    sprintf(meth, "FEM_PK(%d,%d)", N, K);
+    sprintf(meth, "FEM_PK(%ld,%d)", N, K);
     pfprinc = getfem::fem_descriptor(meth);
     mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
     mef_data.set_finite_element(nn, getfem::fem_descriptor(meth),
 				getfem::exact_simplex_im(N));
-    sprintf(meth, "FEM_PK(%d,%d)", N, 0);
+    sprintf(meth, "FEM_PK(%ld,%d)", N, 0);
     mef_data2.set_finite_element(nn, getfem::fem_descriptor(meth),
 				 getfem::exact_simplex_im(N));
     break;
   case 1 :
-    sprintf(meth, "FEM_QK(%d,%d)", N, K);
+    sprintf(meth, "FEM_QK(%ld,%d)", N, K);
     pfprinc = getfem::fem_descriptor(meth);
     mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi); 
     mef_data.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
-    sprintf(meth, "FEM_QK(%d,%d)", N, 0);
+    sprintf(meth, "FEM_QK(%ld,%d)", N, 0);
     mef_data2.set_finite_element(nn, getfem::fem_descriptor(meth),  ppi);
     break;
   case 2 :
-    sprintf(meth, "FEM_PK_PRISM(%d,%d)", N, K);
+    sprintf(meth, "FEM_PK_PRISM(%ld,%d)", N, K);
     pfprinc = getfem::fem_descriptor(meth);
     mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
     mef_data.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
-    sprintf(meth, "FEM_PK_PRISM(%d,%d)", N, 0);
+    sprintf(meth, "FEM_PK_PRISM(%ld,%d)", N, 0);
     mef_data2.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
     break;
   }
@@ -255,13 +255,13 @@ void lap_pb::init(void)
     break;
     
   case 2 :
-    sprintf(meth, "FEM_PK_HIERARCHICAL(%d, %d)", N, K);
+    sprintf(meth, "FEM_PK_HIERARCHICAL(%ld, %d)", N, K);
     pfprinc = getfem::fem_descriptor(meth);
     mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
     break;
 
   case 3 :
-    sprintf(meth, "FEM_PK_HIERARCHICAL_COMPOSITE(%d,%d,%d)", N, 1, K);
+    sprintf(meth, "FEM_PK_HIERARCHICAL_COMPOSITE(%ld,%d,%d)", N, 1, K);
     pfprinc = getfem::fem_descriptor(meth);
     mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
     break;

@@ -309,7 +309,6 @@ namespace bgeot
    */
   template<class T> class vsvector : public std::vector<T>
   {
-   
     public:
 
       typedef typename std::vector<T>::size_type size_type;
@@ -319,14 +318,10 @@ namespace bgeot
       void out_of_range_error(void) const;
 
       #ifdef __GETFEM_VERIFY
-      inline const T& operator [](size_type l) const {
-	if (l >= size()) out_of_range_error();
-	return *(begin()+l);
-      }
-      inline T& operator [](size_type l) { 
-	if (l >= size()) out_of_range_error();
-	return *(begin()+l);
-      }
+      inline const T& operator [](size_type l) const
+      { if (l >= size()) out_of_range_error(); return *(begin()+l); }
+      inline T& operator [](size_type l)
+      { if (l >= size()) out_of_range_error(); return *(begin()+l); }
       #endif
 
       void fill(const T &);
@@ -342,14 +337,11 @@ namespace bgeot
       vsvector<T>& operator /=(const T &x);
     
       /// Constructor. For 2 components initialized with a0 and a1.
-      vsvector(T a0, T a1) : std::vector<T>(size_type(2))
-      { iterator p = begin(); *p++ = a0; *p++ = a1; }
+      vsvector(T a0, T a1);
       /// Constructor. For 3 components initialized with a0, a1 and a2.
-      vsvector(T a0, T a1, T a2) : std::vector<T>(size_type(3)) 
-      { iterator p = begin(); *p++ = a0; *p++ = a1; *p++ = a2;}
+      vsvector(T a0, T a1, T a2);
       /// Constructor. For 4 components initialized with a0, a1, a2 and a3.
-      vsvector(T a0, T a1, T a2, T a3) : std::vector<T>(size_type(4))
-      { iterator p = begin(); *p++ = a0; *p++ = a1; *p++ = a2; *p++ = a3;}
+      vsvector(T a0, T a1, T a2, T a3);
       /// Constructor. A vector with l components.
       vsvector(size_type l) : std::vector<T>(l) {}
       /// Constructor.
@@ -358,6 +350,17 @@ namespace bgeot
     size_type memsize() const
       { return std::vector<T>::capacity()*sizeof(T) + sizeof(vsvector<T>); }
   };
+
+  template<class T> vsvector<T>::vsvector(T a0, T a1)
+    : std::vector<T>(size_type(2))
+  { iterator p = begin(); *p++ = a0; *p++ = a1; }
+  template<class T> vsvector<T>::vsvector(T a0, T a1, T a2)
+    : std::vector<T>(size_type(3)) 
+  { iterator p = begin(); *p++ = a0; *p++ = a1; *p++ = a2;}
+  template<class T> vsvector<T>::vsvector(T a0, T a1, T a2, T a3)
+    : std::vector<T>(size_type(4))
+  { iterator p = begin(); *p++ = a0; *p++ = a1; *p++ = a2; *p++ = a3;}
+  
 
   template<class T>  void vsvector<T>::out_of_range_error(void) const
   { DAL_THROW(std::out_of_range, "out of range"); }

@@ -160,13 +160,13 @@ void pb_data::init(void)
   char meth[500];
   getfem::pintegration_method ppi;
   nn = mesh.convex_index(N);
-  if (integration == 0) sprintf(meth, "IM_EXACT_SIMPLEX(%d)", N);
-  else sprintf(meth, "IM_NC(%d, %d)", N, 2*K);
+  if (integration == 0) sprintf(meth, "IM_EXACT_SIMPLEX(%ld)", N);
+  else sprintf(meth, "IM_NC(%ld, %ld)", N, 2*K);
   ppi = getfem::int_method_descriptor(meth);
-  sprintf(meth, "FEM_PK(%d,%d)", N, K);
+  sprintf(meth, "FEM_PK(%ld,%ld)", N, K);
   mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
   mef_data.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
-  sprintf(meth, "FEM_PK(%d,%d)", N, 0);
+  sprintf(meth, "FEM_PK(%ld,%d)", N, 0);
   mef_data2.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
 
   cout << "Selecting Neumann and Dirichlet boundaries\n";
