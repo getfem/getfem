@@ -89,7 +89,7 @@ namespace getfem
 	/* faux dans le cas des éléments vectoriel.                        */
 	ctx.set_xref(pfe->node_of_dof(i));
 	pf1->interpolation(ctx, 
-	   gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))), pt3,cv);
+			   gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))), pt3, mf.get_qdim());
 	for (size_type j = 0; j < P; ++j) o << pt3[j] << " ";
 	o << endl;
       }
@@ -442,6 +442,8 @@ namespace getfem
   /** 
       export class to VTK ( http://www.kitware.com/vtk.html ) file format 
       (not the XML format, but the old format)
+
+      A vtk_export can store multiple scalar/vector fields.
   */
   class vtk_export {
     std::ostream &os;
@@ -455,18 +457,19 @@ namespace getfem
   public:
     vtk_export(const std::string& fname, bool ascii_ = false);
     vtk_export(std::ostream &os_, bool ascii_ = false);
-    /* choose the mesh that will be exported -- if you are juste calling 
+    /** choose the mesh that will be exported -- if you are juste calling 
        write_dataset(mf), you are not required to call this function */
     void set_mesh(const getfem_mesh &m, unsigned nrefine=1);
-    /* if you do want to export a mesh slice instead of a whole mesh,
+    /** if you do want to export a mesh slice instead of a whole mesh,
        use set_slice instead of set_mesh */
     void set_slice(const stored_mesh_slice& sl);
-    /* the header is the second line of text in the exported file,
+    /** the header is the second line of text in the exported file,
        you can put whatever you want */
     void set_header(const std::string& s);
-    /* write a field described on mf */
+    /** append a new scalar or vector field defined on mf to the .vtk file. */
     template<class VECT> void write_dataset(const getfem::mesh_fem &mf, const VECT& U0, const std::string& name);
-    /* write a field already interpolated on the mesh_slice */
+    /** append a new scalar or vector field to .vtk file. The Uslice
+     vector is the field interpolated on the exported mesh_slice */
     template<class VECT> void write_dataset(const VECT& U, const std::string& name);
 
     const stored_mesh_slice& get_slice() const;
@@ -508,7 +511,7 @@ namespace getfem
     psl->interpolate(mf, U, Uslice);
     write_dataset(Uslice,name);
   }
-
+  
   template<class VECT>
   void vtk_export::write_dataset(const VECT& Uslice, const std::string& name) {
     write_mesh_structure();

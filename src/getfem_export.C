@@ -55,11 +55,11 @@ namespace getfem
   void vtk_export::init() {
     static int test_endian = 0x01234567;
     strcpy(header, "Exported by getfem++");
-    header_done = false; psl = 0;
+    header_done = false; mesh_structure_done = false; psl = 0;
     if (*((char*)&test_endian) == 0x67)
       reverse_endian = true;
     else reverse_endian = false;
-    cout << "reverse_endian = " << reverse_endian << "\n";
+    //cout << "reverse_endian = " << reverse_endian << "\n";
   }
 
   void vtk_export::check_mesh(const getfem_mesh &m) {
