@@ -95,11 +95,13 @@ namespace getfem
     { 
       size_type npt = G.ncols(), P = G.nrows();
       base_node pt(P);
-      std::vector<size_type> ind(nbt);
+      std::vector<size_type> ind(npt);
       base_matrix::const_iterator itm = G.begin();
       for (size_type k = 0; k < npt; ++k, itm += P) {
 	std::copy(itm, itm + P, pt.begin());
-	ind[k] = ...;
+	ind[k] = pmf1->linked_mesh().points().search(P);
+	if (ind[k] == size_type(-1))
+	  DAL_THROW(internal_error, "internal error.");
       }
       // 1 - retrouver le num de convexe
       // 2 - interpoler les fct de base des dof du cv et porter les coeff dans
