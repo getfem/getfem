@@ -192,7 +192,7 @@ namespace bgeot {
     base_node min, max; /* bound of the box enclosing the convex */
     size_type nbpt = 0; /* nb of points in the convex */
     kdtree_tab_type boxpts;
-    pgt->bounding_box(min, max, cv.points());    
+    bounding_box(min, max, cv.points(), pgt);
     gic.init(cv,pgt);
     /* get the points in a box enclosing the convex */
     if (!bruteforce) points_in_box(boxpts, min, max);

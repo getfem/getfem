@@ -123,7 +123,6 @@ namespace bgeot
     template<class CONT> base_node transform(const base_node &pt,
 					     const CONT &PTAB) const;
     base_node transform(const base_node &pt, const base_matrix &G) const;
-    template<class CONT> void bounding_box(base_node& min, base_node& max, const CONT &PTAB) const;
   };
 
   template<class CONT>
@@ -137,13 +136,15 @@ namespace bgeot
     return P;
   }
 
+  typedef const geometric_trans *pgeometric_trans;
+
   template<class CONT>
-  void geometric_trans::bounding_box(base_node& min, base_node& max, 
-				     const CONT &ptab) const {
+  void bounding_box(base_node& min, base_node& max, 
+		    const CONT &ptab, pgeometric_trans pgt = 0) {
     typename CONT::const_iterator it = ptab.begin();
     min = max = *it; size_type P = min.size();
     base_node::iterator itmin = min.begin(), itmax = max.begin();
-    for (;it != ptab.end(); ++it) {
+    for ( ++it; it != ptab.end(); ++it) {
       base_node pt = *it; /* need a temporary storage since cv.points()[j] may not
 			     be a reference to a base_node, but a temporary base_node !! */
       base_node::const_iterator it2 = pt.begin();
@@ -153,7 +154,7 @@ namespace bgeot
       }
     }
     /* enlarge the box for non-linear transformations .. */
-    if (!is_linear()) 
+    if (pgt && !pgt->is_linear()) 
       for (size_type i = 0; i < P; ++i)
 	{ scalar_type e = (itmax[i]-itmin[i]) * 0.2;  itmin[i] -= e; itmax[i] += e; }
   }
@@ -161,8 +162,6 @@ namespace bgeot
   /** @name functions on geometric transformations
    */
   //@{
-
-  typedef const geometric_trans *pgeometric_trans;
 
   pgeometric_trans simplex_geotrans(size_type n, short_type k);
   pgeometric_trans parallelepiped_geotrans(size_type n, short_type k);
