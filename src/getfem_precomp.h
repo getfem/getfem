@@ -77,19 +77,7 @@ namespace getfem
        @result pt_tab transformed points
     */
     template <typename CONT> void transform(const CONT& G,
-					    bgeot::stored_point_tab& pt_tab) {
-      if (c.empty()) init_val();
-      pt_tab.clear(); pt_tab.resize(c.size(), base_node(G[0].size()));
-      for (size_type j = 0; j < c.size(); ++j) {
-	size_type k = 0;
-	for (typename CONT::const_iterator itk = G.begin(); 
-	     itk != G.end(); ++itk, ++k) {
-	  for (size_type i=0; i < (*itk).size(); ++i) {
-	    pt_tab[j][i] += (*itk)[i] * c[j][k];
-	  }
-	}
-      }
-    }
+					    bgeot::stored_point_tab& pt_tab);
 
     base_node transform(size_type i, const base_matrix &G) const;
 
@@ -101,6 +89,21 @@ namespace getfem
     void init_grad() const;
     void init_hess() const;
   };
+
+  template <typename CONT> void _geotrans_precomp::transform(const CONT& G,
+					  bgeot::stored_point_tab& pt_tab) {
+    if (c.empty()) init_val();
+    pt_tab.clear(); pt_tab.resize(c.size(), base_node(G[0].size()));
+    for (size_type j = 0; j < c.size(); ++j) {
+      size_type k = 0;
+      for (typename CONT::const_iterator itk = G.begin(); 
+	   itk != G.end(); ++itk, ++k) {
+	for (size_type i=0; i < (*itk).size(); ++i) {
+	  pt_tab[j][i] += (*itk)[i] * c[j][k];
+	}
+      }
+    }
+  }
   
   typedef const _geotrans_precomp * pgeotrans_precomp;
 

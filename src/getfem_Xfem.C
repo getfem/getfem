@@ -178,12 +178,38 @@ namespace getfem
 				  size_type ii, const base_matrix &G,
 				  const base_matrix &B, base_tensor &t) const {
     
+    bgeot::multi_index mi(3);
+    dim_type n = G.nrows();
+    mi[2] = n; mi[1] = target_dim(); mi[0] = nb_base();
+    t.adjust_sizes(mi);
+    base_vector v(n);
+    scalar_type a;
+    
     base_node xreal = pgp->transform(ii, G);
     base_tensor tt; tt.mat_transp_reduction(pfp->grad(ii), B, 2);
 
-    base_tensor::iterator it = t.begin(), itf = tt.begin(), itf2;
+    base_tensor::iterator it = t.begin();
+    base_tensor::const_iterator itvf = tt.begin(), itvf2;
+    base_tensor::const_iterator itf = pfp->val(ii).begin(), itf2;
+    
+    std::vector<scalar_type> vf(nb_func);
+    std::vector<base_vector> gvf(nb_func);
+    for (size_type f = 0; f <= nb_func; ++f)
+      { vf[f] = (*(funcs[f-1]))(xreal); gvf[f] = (*(grads[f-1]))(xreal); }
 
-    // ...
+    for (dim_type k = 0; k < n ; ++k)
+      for (dim_type q = 0; q < target_dim(); ++q) {
+	for (size_type f = 0; f <= nb_func; ++f) {
+	  if (f == 0) { a = scalar_type(1); v.fill(1); }
+	  else { a = vf[f-1]; v = gvf[f-1]; }
+	  itvf2 = itvf; itf2 = itf;
+	  for (size_type i = 0; i < pfi->nb_base(); ++i, ++it) {
+	    *it = *itvf2 * a;
+	    if (f > 0) *it += v[n] * (*itf2++);
+	  }
+	}
+	itvf = itvf2; itf = itf2; 
+      }
   }
   
   void Xfem::real_hess_base_value(pgeotrans_precomp, pfem_precomp,

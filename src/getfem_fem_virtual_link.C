@@ -403,20 +403,13 @@ namespace getfem
       DAL_THROW(internal_error,
 	  "You cannot interpolate this element, use the original element.");
     }
-//     void interpolation_grad(const base_node &, const base_matrix &,
-// 			    bgeot::pgeometric_trans,
-// 			    const base_vector &, base_matrix &) const {
-//       DAL_THROW(internal_error,
-// 	  "You cannot interpolate this element, use the original element.");
-//     }
-//     virtual void interpolation_grad(pfem_precomp , size_type ,
-// 				    const base_matrix &,
-// 				    bgeot::pgeometric_trans , 
-// 				    const base_vector &,
-// 				    base_matrix &) const {
-//       DAL_THROW(internal_error,
-// 	  "You cannot interpolate this element, use the original element.");
-//     }
+    void interpolation_grad(const base_node &, const base_matrix &,
+			    bgeot::pgeometric_trans,
+			    const base_vector &, base_matrix &) const {
+      DAL_THROW(internal_error,
+	  "You cannot interpolate this element, use the original element.");
+    }
+
 
     void base_value(const base_node &x, base_tensor &t) const {
       const bgeot::stored_point_tab *p = &(pai->integration_points());
