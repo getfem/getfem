@@ -1,0 +1,2 @@
+exec "dynamic_array";
+

@@ -1,0 +1,2 @@
+exec "test_mesh";
+
