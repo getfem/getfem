@@ -241,11 +241,9 @@ void lap_pb::init(void)
     sprintf(meth, "FEM_PK(%d,%d)", int(N), int(K));
     pfprinc = getfem::fem_descriptor(meth);
     mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
-    mef_data.set_finite_element(nn, getfem::fem_descriptor(meth),
-				getfem::exact_simplex_im(N));
+    mef_data.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
     sprintf(meth, "FEM_PK(%d,%d)", int(N), 0);
-    mef_data2.set_finite_element(nn, getfem::fem_descriptor(meth),
-				 getfem::exact_simplex_im(N));
+    mef_data2.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
     break;
   case 1 :
     sprintf(meth, "FEM_QK(%d,%d)", int(N), K);
