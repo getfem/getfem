@@ -1,0 +1,30 @@
+-----------------------
+HOW TO INSTALL GETFEM++
+-----------------------
+
+The installation of Getfem++ needs :
+
+- perl installed in /usr/bin/perl
+
+
+
+Installation process :
+
+type
+
+./configure
+make
+
+
+the library will be compiled in the files 
+
+lib/libgetfem.a
+lib/libgetfem.so
+
+
+If the compiler selected is not the one you wants. You can change it setting
+the variable CC or with the command
+
+./configure -CC=g++
+
+for instance
