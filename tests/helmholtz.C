@@ -75,43 +75,47 @@ struct Helmholtz_problem {
   Helmholtz_problem(void) : mf_u(mesh), mf_rhs(mesh), mf_coef(mesh) {}
 };
 
-scalar_type incoming_field(const base_node &P) {
-  scalar_type s = 0;
+complex_type incoming_field(const base_node &P, scalar_type k) {
+  return complex_type(cos(k*P[1]+.2),sin(k*P[1]+.2));
+  /*scalar_type s = 0;
   for (size_type i=1; i < P.size(); ++i) s += P[i]*(1.-P[i]);
+  s = rand()*3. / RAND_MAX;
   return s;
+  */
 }
 
 /* Read parameters from the .param file, build the mesh, set finite element
  * and integration methods and selects the boundaries.
  */
 void Helmholtz_problem::init(void) {
-  const char *MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
   const char *FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
   const char *INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
-  cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
 
   /* First step : build the mesh */
-  bgeot::pgeometric_trans pgt = 
-    bgeot::geometric_trans_descriptor(MESH_TYPE);
-  size_type N = pgt->dim();
-  std::vector<size_type> nsubdiv(N);
-  std::fill(nsubdiv.begin(),nsubdiv.end(),
-	    PARAM.int_value("NX", "Nomber of space steps "));
-  getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
-			    PARAM.int_value("MESH_NOISED") != 0);
-  
-  bgeot::base_matrix M(N,N);
-  for (size_type i=0; i < N; ++i) {
-    static const char *t[] = {"LX","LY","LZ"};
-    M(i,i) = (i<3) ? PARAM.real_value(t[i],t[i]) : 1.0;
+  size_type Nt = PARAM.int_value("NTHETA", "Nomber of space steps "), 
+    Nr=PARAM.int_value("NR", "Nomber of space steps ");
+  size_type gt_order = PARAM.int_value("GTDEGREE", "polynomial degree of geometric transformation");
+  scalar_type dtheta=2*M_PI*1./Nt;
+  scalar_type R0 = PARAM.real_value("R0","R0");
+  scalar_type R1 = PARAM.real_value("R1","R1");
+  scalar_type dR = (R1-R0)/(Nr-1);
+  bgeot::pgeometric_trans pgt = bgeot::parallelepiped_geotrans(2, gt_order);
+  for (size_type i=0; i < Nt; ++i) {
+    for (size_type j=0; j < Nr-1; ++j) {
+      std::vector<size_type> ipts; ipts.reserve(dal::sqr(gt_order+1));
+      for (size_type ii=0; ii <= gt_order; ++ii) {
+        for (size_type jj=0; jj <= gt_order; ++jj) {
+          scalar_type r = R0 + j*dR + jj*(dR/gt_order);
+          scalar_type t = i*dtheta + ii*dtheta/gt_order;
+          ipts.push_back(mesh.add_point(base_node(r*cos(t),r*sin(t))));
+        }
+      }
+      mesh.add_convex(pgt, ipts.begin());
+    }
   }
-  if (N>1) { M(0,1) = PARAM.real_value("INCLINE") * PARAM.real_value("LY"); }
-
-  /* scale the unit mesh to [LX,LY,..] and incline it */
-  mesh.transformation(M);
 
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residu = PARAM.real_value("RESIDU"); if (residu == 0.) residu = 1e-10;
@@ -149,21 +153,30 @@ void Helmholtz_problem::init(void) {
 			     getfem::classical_fem(pgt,0), ppi);
 
   /* select boundaries */
-  cout << "Selecting Neumann and Dirichlet boundaries\n";
+  cout << "Selecting Robin and Dirichlet boundaries\n";
   getfem::convex_face_ct border_faces;
   getfem::outer_faces_of_mesh(mesh, border_faces);
   for (getfem::convex_face_ct::const_iterator it = border_faces.begin();
        it != border_faces.end(); ++it) {
     assert(it->f != size_type(-1));
+    if (bgeot::vect_norm2(mesh.points_of_face_of_convex(it->cv, it->f)[0]) > 5.) {
+      mf_u.add_boundary_elt(ROBIN_BOUNDARY_NUM, it->cv, it->f);
+    } else mf_u.add_boundary_elt(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
+
+#if 0
     base_node un = mesh.normal_of_face_of_convex(it->cv, it->f);
     un /= gmm::vect_norm2(un);
-    if (dal::abs(un[0]) < 1.0E-7) { // new Neumann face
-      mf_u.add_boundary_elt(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
+    if (dal::abs(un[0]) < 1.0E-7) {
+      //mf_u.add_boundary_elt(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
+      mf_u.add_boundary_elt(ROBIN_BOUNDARY_NUM, it->cv, it->f);
     } else if (dal::abs(un[0] + 1.) < 1e-7) {
+      //mf_u.add_boundary_elt(ROBIN_BOUNDARY_NUM, it->cv, it->f);
       mf_u.add_boundary_elt(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
     } else if (dal::abs(un[0] - 1.) < 1e-7) {
+      //mf_u.add_boundary_elt(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
       mf_u.add_boundary_elt(ROBIN_BOUNDARY_NUM, it->cv, it->f);
     }
+#endif
   }
 }
 
@@ -185,22 +198,29 @@ bool Helmholtz_problem::solve(plain_vector &U) {
   // Defining the Dirichlet condition value.
   plain_vector F(nb_dof_rhs);
   for (size_type i = 0; i < nb_dof_rhs; ++i)
-    F[i] = incoming_field(mf_rhs.point_of_dof(i));
+    F[i] = incoming_field(mf_rhs.point_of_dof(i), wave_number.real());
+
+  cout << "|F| = " << gmm::vect_norm2(F) << "\n";
 
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<getfem::standard_complex_model_state> 
     final_model(ROBIN, mf_rhs,
-		F, DIRICHLET_BOUNDARY_NUM);
+		F, DIRICHLET_BOUNDARY_NUM,true);
 
+  mf_rhs.write_to_file("mf_rhs",true);
+  mf_u.write_to_file("mf_u",true);
+  
+  
   // Generic solve.
   cout << "Number of variables : " << final_model.nb_dof() << endl;
+  cout << "Number of constraints : " << final_model.nb_constraints() << endl;
   getfem::standard_complex_model_state MS;
-  gmm::iteration iter(residu, 1, 40000);
+  gmm::iteration iter(residu, 1, 400000);
   getfem::standard_solve(MS, final_model, iter);
 
   // Solution extraction
   WAVE.get_solution(MS, U);
-  
+
   return (iter.converged());
 }
   
@@ -224,14 +244,17 @@ int main(int argc, char *argv[]) {
     plain_vector U(p.mf_u.nb_dof());
     if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
 
+    cout << "|U| = " << getfem::asm_H1_norm(p.mf_u, U) << "\n";
+
     if (p.PARAM.int_value("VTK_EXPORT")) {
       cout << "export to " << p.datafilename + ".vtk" << "..\n";
       getfem::vtk_export exp(p.datafilename + ".vtk",
 			     p.PARAM.int_value("VTK_EXPORT")==1);
-      exp.write_dataset(p.mf_u, gmm::real_part(U), "helmholtz_field");
+      exp.set_mesh(p.mesh, 8);
+      exp.write_dataset(p.mf_u, gmm::real_part(U), "helmholtz_rfield");
+      exp.write_dataset(p.mf_u, gmm::imag_part(U), "helmholtz_ifield");
       cout << "export done, you can view the data file with (for example)\n"
-	"mayavi -d helmholtz.vtk -f ExtractVectorNorm -f "
-	"WarpVector -m BandedSurfaceMap -m Outline\n";
+	"mayavi -d helmholtz.vtk -f WarpScalar -m BandedSurfaceMap -m Outline\n";
     }
     // getfem::save_solution(p.datafilename + ".dataelt", p.mf_u, p.U, p.K);
   }
