@@ -790,7 +790,7 @@ namespace dal
       if (first_node==i) first_node=j; else if (first_node==j) first_node=i;
       
       std::swap(nodes[i], nodes[j]);
-      dynamic_tas<T>::swap(i,j);
+      dynamic_tas<T,pks>::swap(i,j);
     }
   }
 

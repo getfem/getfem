@@ -197,7 +197,7 @@ namespace gmm {
     typedef typename traits_type::reference         reference;
     typedef typename traits_type::difference_type   difference_type;
     typedef std::random_access_iterator_tag         iterator_category;
-    typedef size_t                                  size_type;
+    //    typedef size_t                                  size_type;
     typedef skyline_sub_vector_iterator<IT, MIT>    iterator;
 
     size_type index(void) const { return id; }
