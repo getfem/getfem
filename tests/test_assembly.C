@@ -42,6 +42,9 @@ void classical_mesh_fem(getfem::mesh_fem& mf, getfem::short_type K) {
 			  getfem::exact_classical_im(pgt));
   }
 }
+#define ASSEMBLY_CHECK
+
+#ifdef ASSEMBLY_CHECK
 
 typedef enum {DO_BOUNDARY_MASS,
       DO_SCAL_VOLUMIC_SOURCE,
@@ -837,6 +840,8 @@ void comp_scal(scalar_type a, scalar_type b) {
   cout << " ---> difference between assemblies: " << d << "\n\n";
 }
 
+#endif /* ASSEMBLY_CHECK */
+
 base_node mknode(double a,double b,double c) {
   base_node n(3); n[0]=a; n[1]=b; n[2]=c; return n;
 }
@@ -964,14 +969,57 @@ void tensor_ref_check() {
   
 }
 
+void tensor_ref_check2() {
+  cout << "more checks with strange strides..\n";
+
+  scalar_type s1_[] = {1.0,2.0,3.0,4.,5.,6., 7.,8.,9., 10.,11.,12.,13.,14.,15.,16.,17.,18.};
+  std::vector<scalar_type> s1(s1_,  s1_+ sizeof s1_/sizeof(scalar_type));
+
+  bgeot::tensor_ref tr1;
+  tr1.set_ndim_noclean(3);
+  bgeot::tensor_mask m0; m0.set_full(0,4);
+  bgeot::tensor_strides strd0(4); std::fill(strd0.begin(),strd0.end(),0); strd0[1] = 1;
+  tr1.push_mask(m0); tr1.strides().push_back(strd0);
+  bgeot::tensor_mask m1; m1.set_full(1,3);
+  bgeot::tensor_strides strd1(3); strd1[0] = 0; strd1[1] = 2; strd1[2] = 4;
+  tr1.push_mask(m1); tr1.strides().push_back(strd1);
+  bgeot::tensor_mask m2; m2.set_full(2,3);
+  bgeot::tensor_strides strd2(3); strd2[0] = 6; strd2[1] = 0; strd2[2] = 6;
+  tr1.push_mask(m2); tr1.strides().push_back(strd2);
+  
+  scalar_type *pbase = &s1[0];
+  tr1.set_base(pbase);
+  
+  cerr << "tr1=" << tr1 << endl;
+
+  scalar_type s2_[] = {1.0,2.0,3.0, 4.,5.,6., 7.,8.,9., 10.,11.,12.,13.,14.,15.,16.};
+  scalar_type *s2 = s2_;
+  bgeot::tensor_ranges r2(3); r2[0]=3; r2[1]=2; r2[2]=2;
+  bgeot::tensor_ref tr2(r2,&s2);
+
+  bgeot::tensor_reduction red; 
+  red.insert(tr1, " ii");
+  //red.insert(tr2, "i  ");
+  red.prepare(NULL); 
+  red.do_reduction();
+  bgeot::tensor_ref tr9; red.result(tr9);
+  
+  cerr << "tr9 = " << tr9 << endl;
+}  
+
 void
 do_general_check() {
   tensor_shape_check();
   tensor_ref_check();  
   cerr << "Basic check OK..\n";
+  //tensor_ref_check2();
+  cerr << "Advanced tensor check OK..\n";
 }
 
+
 double nrand() { return (::rand() % 10000) / 10000. + 0.01; }
+
+#ifdef ASSEMBLY_CHECK
 
 void
 run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
@@ -1267,6 +1315,7 @@ void test_nonlin(const getfem::mesh_fem &mf)
   }
 }
 
+#endif /* ASSEMBLY_CHECK */
 
 int main(int argc, char *argv[])
 {
@@ -1274,14 +1323,15 @@ int main(int argc, char *argv[])
   feenableexcept(FE_DIVBYZERO | FE_INVALID);
 #endif
   try {
-    bool do_old=true, do_new=true;
 
     // getfem::pfem pf = getfem::fem_descriptor("FEM_PK_PRISM_HIERARCHICAL(3,3)");
     
-    param.init(argc,argv);
 
     do_general_check();
 
+#ifdef ASSEMBLY_CHECK
+    bool do_old=true, do_new=true;
+    param.init(argc,argv);
     std::vector<bool> tests(NB_TESTS, true);
     if (param.do_what >=0 && param.do_what < NB_TESTS) {
       std::fill(tests.begin(),tests.end(),false);
@@ -1332,6 +1382,7 @@ int main(int argc, char *argv[])
 
      run_tests(mf,mfq,mfd,mfdq,param.do_new,param.do_old,tests,1,1);
    }
+#endif /* ASSEMBLY_CHECK */
   }
   DAL_STANDARD_CATCH_ERROR;
   

@@ -41,7 +41,7 @@ methodes d'integration + FEM sur les points de Fekete (qui maximisent vandermond
 * http://epubs.siam.org/sam-bin/dbq/article/33724
 
 faire la doc pour les mesh_slice 
-faire la doc pour vtk_export
+faire la doc pour vtk_export -- permettre le 'merge' des points de slices
 
 getfem_mesh::clear() ne libere pas la mémoire
 
