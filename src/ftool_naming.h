@@ -255,7 +255,7 @@ namespace ftool
 	DAL_THROW(dal::failure_error,
 	     "Syntax error on position " << i << " of the string : " << name);
       if (isend) {
-	_STRINGSTREAM norm_name;
+	std::stringstream norm_name;
 	norm_name << suffixes[ind_suff];
 	if (params.size() > 0) {
 	  norm_name << '(';
@@ -269,7 +269,6 @@ namespace ftool
 	  }
 	  norm_name << ')';
 	}
-	norm_name << ends;
 	std::string nname = norm_name.str();
 	size_type j = meth_tab_bn.search(meth_sto_bn(0, nname));
 	if (j == size_type(-1)) {

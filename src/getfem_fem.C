@@ -464,12 +464,12 @@ namespace getfem
     if (n <= 0 || n >= 100 || k < 0 || k > 150 ||
 	double(n) != params[0].num() || double(k) != params[1].num())
       DAL_THROW(failure_error, "Bad parameters");
-    _STRINGSTREAM name;
+    std::stringstream name;
     if (n == 1)
-      name << "FEM_PK(1," << k << ")" << ends;
+      name << "FEM_PK(1," << k << ")";
     else 
       name << "FEM_PRODUCT(FEM_QK(" << n-1 << "," << k << "),FEM_PK(1,"
-	   << k << "))" << ends;
+	   << k << "))";
     return fem_descriptor(name.str());
   }
 
@@ -489,12 +489,12 @@ namespace getfem
     if (n <= 1 || n >= 100 || k < 0 || k > 150 ||
 	double(n) != params[0].num() || double(k) != params[1].num())
       DAL_THROW(failure_error, "Bad parameters");
-    _STRINGSTREAM name;
+    std::stringstream name;
     if (n == 2)
-      name << "FEM_QK(1," << k << ")" << ends;
+      name << "FEM_QK(1," << k << ")";
     else 
       name << "FEM_PRODUCT(FEM_PK(" << n-1 << "," << k << "),FEM_PK(1,"
-	   << k << "))" << ends;
+	   << k << "))";
     return fem_descriptor(name.str());
   }
 
@@ -737,7 +737,7 @@ namespace getfem
 
     size_type n = pgt->structure()->dim();
     size_type nbp = pgt->basic_structure()->nb_points();
-    _STRINGSTREAM name;
+    std::stringstream name;
 
     /* Identifying P1-simplexes.                                          */
 
@@ -760,7 +760,7 @@ namespace getfem
     // To be completed
 
     if (found) {
-      name << int(n) << ',' << int(k) << ')' << ends;
+      name << int(n) << ',' << int(k) << ')';
       fm_last = fem_descriptor(name.str());
       pgt_last = pgt;
       k_last = k;
@@ -813,8 +813,8 @@ namespace getfem
     static size_type d = size_type(-2);
     static short_type r = short_type(-2);
     if (d != n || r != k) {
-      _STRINGSTREAM name;
-      name << "FEM_PK(" << n << "," << k << ")" << ends;
+      std::stringstream name;
+      name << "FEM_PK(" << n << "," << k << ")";
       pf = fem_descriptor(name.str());
       d = n; r = k;
     }
@@ -826,8 +826,8 @@ namespace getfem
     static size_type d = size_type(-2);
     static short_type r = short_type(-2);
     if (d != n || r != k) {
-      _STRINGSTREAM name;
-      name << "FEM_QK(" << n << "," << k << ")" << ends;
+      std::stringstream name;
+      name << "FEM_QK(" << n << "," << k << ")";
       pf = fem_descriptor(name.str());
       d = n; r = k;
     }
@@ -839,8 +839,8 @@ namespace getfem
     static size_type d = size_type(-2);
     static short_type r = short_type(-2);
     if (d != n || r != k) {
-      _STRINGSTREAM name;
-      name << "FEM_PK_PRISM(" << n << "," << k << ")" << ends;
+      std::stringstream name;
+      name << "FEM_PK_PRISM(" << n << "," << k << ")";
       pf = fem_descriptor(name.str());
       d = n; r = k;
     }

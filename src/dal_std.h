@@ -72,8 +72,6 @@
 #include <string>
 #include <sstream>
 
-#define _STRINGSTREAM std::stringstream
-
 using std::endl;
 using std::cout;
 using std::cerr;

@@ -201,12 +201,12 @@ namespace bgeot
     if (n <= 0 || n >= 100 || double(n) != params[0].num())
       DAL_THROW(failure_error, "Bad parameters");
 
-    _STRINGSTREAM name;
+    std::stringstream name;
     if (n == 1)
-      name << "IM_EXACT_SIMPLEX(1)" << ends;
+      name << "IM_EXACT_SIMPLEX(1)";
     else 
       name << "IM_PRODUCT(IM_EXACT_PARALLELEPIPED(" << n-1
-	   << "),IM_EXACT_SIMPLEX(1)))" << ends;
+	   << "),IM_EXACT_SIMPLEX(1)))";
     return int_method_descriptor(name.str());
   }
 
@@ -220,9 +220,9 @@ namespace bgeot
     if (n <= 1 || n >= 100 || double(n) != params[0].num())
       DAL_THROW(failure_error, "Bad parameters");
 
-    _STRINGSTREAM name;
+    std::stringstream name;
     name << "IM_PRODUCT(IM_EXACT_SIMPLEX(" << n-1
-	 << "),IM_EXACT_SIMPLEX(1)" << ends;
+	 << "),IM_EXACT_SIMPLEX(1)";
     return int_method_descriptor(name.str());
   }
 
@@ -328,8 +328,8 @@ namespace bgeot
     if (n < 0 || n >= 32000 || double(n) != params[0].num())
       DAL_THROW(failure_error, "Bad parameters");
     if (n & 1) {
-      _STRINGSTREAM name;
-      name << "IM_GAUSS1D(" << n-1 << ")" << ends;
+      std::stringstream name;
+      name << "IM_GAUSS1D(" << n-1 << ")";
       return int_method_descriptor(name.str());
     }
     else
@@ -372,8 +372,8 @@ namespace bgeot
       size_type R = alpha(nc,k);
       size_type R2 = (nc > 0) ? alpha(nc-1,k) : 0;
       base_poly P;
-      _STRINGSTREAM name;
-      name << "IM_EXACT_SIMPLEX(" << int(nc) << ")" << ends;
+      std::stringstream name;
+      name << "IM_EXACT_SIMPLEX(" << int(nc) << ")";
       ppoly_integration ppi 
 	= int_method_descriptor(name.str())->method.ppi;
       std::vector<size_type> fa(nc+1);
@@ -568,12 +568,12 @@ namespace bgeot
 	double(n) != params[0].num() || double(k) != params[1].num())
       DAL_THROW(failure_error, "Bad parameters");
 
-    _STRINGSTREAM name;
+    std::stringstream name;
     if (n == 1)
-      name << "IM_NC(1," << k << ")" << ends;
+      name << "IM_NC(1," << k << ")";
     else 
       name << "IM_PRODUCT(IM_NC_PARALLELEPIPED(" << n-1 << "," << k
-	   << "),IM_NC(1," << k << "))" << ends;
+	   << "),IM_NC(1," << k << "))";
     return int_method_descriptor(name.str());
   }
 
@@ -589,9 +589,9 @@ namespace bgeot
 	double(n) != params[0].num() || double(k) != params[1].num())
       DAL_THROW(failure_error, "Bad parameters");
 
-    _STRINGSTREAM name;
+    std::stringstream name;
      name << "IM_PRODUCT(IM_NC(" << n-1 << "," << k << "),IM_NC(1,"
-	 << k << "))" << ends;
+	 << k << "))";
     return int_method_descriptor(name.str());
   }
 
@@ -611,12 +611,12 @@ namespace bgeot
 	double(n) != params[0].num() || double(k) != params[1].num())
       DAL_THROW(failure_error, "Bad parameters");
 
-    _STRINGSTREAM name;
+    std::stringstream name;
     if (n == 1)
-      name << "IM_GAUSS1D(" << k << ")" << ends;
+      name << "IM_GAUSS1D(" << k << ")";
     else 
       name << "IM_PRODUCT(IM_GAUSS_PARALLELEPIPED(" << n-1 << "," << k
-	   << "),IM_GAUSS1D(" << k << "))" << ends;
+	   << "),IM_GAUSS1D(" << k << "))";
     return int_method_descriptor(name.str());
   }
 
@@ -1737,8 +1737,8 @@ namespace bgeot
     static pintegration_method pim = 0;
     static size_type d = size_type(-2);
     if (d != n) {
-      _STRINGSTREAM name;
-      name << "IM_EXACT_SIMPLEX(" << n << ")" << ends;
+      std::stringstream name;
+      name << "IM_EXACT_SIMPLEX(" << n << ")";
       pim = int_method_descriptor(name.str());
       d = n;
     }
@@ -1749,8 +1749,8 @@ namespace bgeot
     static pintegration_method pim = 0;
     static size_type d = size_type(-2);
     if (d != n) {
-      _STRINGSTREAM name;
-      name << "IM_EXACT_PARALLELEPIPED(" << n << ")" << ends;
+      std::stringstream name;
+      name << "IM_EXACT_PARALLELEPIPED(" << n << ")";
       pim = int_method_descriptor(name.str());
       d = n;
     }
@@ -1761,8 +1761,8 @@ namespace bgeot
     static pintegration_method pim = 0;
     static size_type d = size_type(-2);
     if (d != n) {
-      _STRINGSTREAM name;
-      name << "IM_EXACT_PRISM(" << n << ")" << ends;
+      std::stringstream name;
+      name << "IM_EXACT_PRISM(" << n << ")";
       pim = int_method_descriptor(name.str());
       d = n;
     }

@@ -143,8 +143,8 @@ namespace bgeot
       trans.resize(a->nb_points() * b->nb_points());
       std::fill(trans.begin(), trans.end(), null_poly(dim()));
 
-      _STRINGSTREAM name;
-      name << "GT_PK(" << int(dim()) << ",1)" << ends;
+      std::stringstream name;
+      name << "GT_PK(" << int(dim()) << ",1)";
       pgeometric_trans pgt = geometric_trans_descriptor(name.str());
 
       for (size_type i = 0; i <= dim(); ++i)
@@ -180,12 +180,12 @@ namespace bgeot
 	double(n) != params[0].num() || double(k) != params[1].num())
       DAL_THROW(failure_error, "Bad parameters");
 
-    _STRINGSTREAM name;
+    std::stringstream name;
     if (n == 1)
-      name << "GT_PK(1," << k << ")" << ends;
+      name << "GT_PK(1," << k << ")";
     else 
       name << "GT_PRODUCT(GT_QK(" << n-1 << "," << k << "),GT_PK(1,"
-	   << k << "))" << ends;
+	   << k << "))";
     return geometric_trans_descriptor(name.str());
   }
 
@@ -201,9 +201,9 @@ namespace bgeot
 	double(n) != params[0].num() || double(k) != params[1].num())
       DAL_THROW(failure_error, "Bad parameters");
 
-    _STRINGSTREAM name;
+    std::stringstream name;
     name << "GT_PRODUCT(GT_PK(" << n-1 << "," << k << "),GT_PK(1,"
-	 << k << "))" << ends;
+	 << k << "))";
     return geometric_trans_descriptor(name.str());
   }
 
@@ -302,8 +302,8 @@ namespace bgeot
     static size_type d = size_type(-2);
     static short_type r = short_type(-2);
     if (d != n || r != k) {
-      _STRINGSTREAM name;
-      name << "GT_PK(" << n << "," << k << ")" << ends;
+      std::stringstream name;
+      name << "GT_PK(" << n << "," << k << ")";
       pgt = geometric_trans_descriptor(name.str());
       d = n; r = k;
     }
@@ -315,8 +315,8 @@ namespace bgeot
     static size_type d = size_type(-2);
     static short_type r = short_type(-2);
     if (d != n || r != k) {
-      _STRINGSTREAM name;
-      name << "GT_QK(" << n << "," << k << ")" << ends;
+      std::stringstream name;
+      name << "GT_QK(" << n << "," << k << ")";
       pgt = geometric_trans_descriptor(name.str());
       d = n; r = k;
     }
@@ -328,8 +328,8 @@ namespace bgeot
     static size_type d = size_type(-2);
     static short_type r = short_type(-2);
     if (d != n || r != k) {
-      _STRINGSTREAM name;
-      name << "GT_PRISM(" << n << "," << k << ")" << ends;
+      std::stringstream name;
+      name << "GT_PRISM(" << n << "," << k << ")";
       pgt = geometric_trans_descriptor(name.str());
       d = n; r = k;
     }
@@ -341,9 +341,9 @@ namespace bgeot
     static pgeometric_trans _pg1 = 0;
     static pgeometric_trans _pg2 = 0;
     if (pg1 != _pg1 || pg2 != _pg2) {
-      _STRINGSTREAM name;
+      std::stringstream name;
       name << "GT_PRODUCT(" << name_of_geometric_trans(pg1) << "," 
-	   << name_of_geometric_trans(pg2) << ")" << ends;
+	   << name_of_geometric_trans(pg2) << ")";
       pgt = geometric_trans_descriptor(name.str());
       _pg1 = pg1; _pg2 = pg2;
     }
