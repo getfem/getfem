@@ -51,11 +51,10 @@ int main(int argc, char *argv[])
     cout << "Reading file " << fi2 << endl;
     getfem::getfem_mesh mesh2;
     getfem::mesh_fem mef2(mesh2);
-    dim_type N2, P2; short_type K2;
+    dim_type N2; short_type K2;
     std::vector<getfem::scalar_type> U2, U3;
     getfem::load_solution(fi2, mesh2, mef2, U2, K2);
     N2 = mesh1.dim();
-    P2 = mef2.get_qdim();
   
     if (N1 != N2) DAL_THROW(std::invalid_argument,
 			    "Dimensions of the two meshes mismatch\n");
