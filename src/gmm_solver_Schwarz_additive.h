@@ -257,6 +257,7 @@ namespace gmm {
     iter.set_rhsnorm(vect_norm2(f));
     if (iter.get_rhsnorm() == 0.0) { gmm::clear(u); return 0; }
     iteration iter2 = iter; iter2.reduce_noisy();
+    iter2.set_maxiter(size_type(-1));
     // iter2.set_resmax(iter.get_resmax() / 100.0);
 
     schwadd_mat<Matrix1, Matrix2, Precond, local_solver>

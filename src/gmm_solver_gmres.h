@@ -73,7 +73,8 @@ namespace gmm {
     inner.reduce_noisy();
     inner.set_maxiter(restart);
     inner.set_name("GMRes inner iter");
-    
+
+    cout << "beta = " << beta << endl;
     while (! outer.finished(beta)) {
       
       gmm::copy(gmm::scaled(r, T(1)/beta), KS[0]);
@@ -99,7 +100,7 @@ namespace gmm {
       } while (! inner.finished(gmm::abs(s[i])));
 
       if (int(inner.get_iteration()) < restart -1)
-	++blocked else blocked = 0;
+	++blocked; else blocked = 0;
 
       gmm::upper_tri_solve(H, s, i, false);
       gmm::combine(KS, s, x, i);
@@ -107,7 +108,7 @@ namespace gmm {
       gmm::mult(M, w, r);
       beta = gmm::vect_norm2(r);
       if (blocked > 10) {
-	if (iter.get_noisy()) cout << "Gmres is blocked, exiting\n";
+	if (outer.get_noisy()) cout << "Gmres is blocked, exiting\n";
 	break;
       }
     }
