@@ -102,7 +102,6 @@ ssp_blas3.c \
 superlu_timer.c \
 sutil.c \
 util.c \
-xerbla.c \
 zcolumn_bmod.c \
 zcolumn_dfs.c \
 zcopy_to_ucol.c \
@@ -128,7 +127,14 @@ zsnode_bmod.c \
 zsnode_dfs.c \
 zsp_blas2.c \
 zsp_blas3.c \
-zutil.c
+zutil.c 
+
+if USEBLASLITE
+SRC += BLAS.c f2c_lite.c
+endif
+
+#vire: xerbla.c 
+
 
 noinst_LTLIBRARIES = libsuperlu.la
 libsuperlu_la_SOURCES = $(SRC)
