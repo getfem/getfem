@@ -139,7 +139,15 @@ $listeB =~ s/\n/ /g;
 $listeB =~ s/matlabcom\//lib\//g;
 print MAKEFILE "\n\n", 'matlabcom : ../lib/libgetfem.so ', $listeB, "\n\n";
 print MAKEFILE '../lib/libgetfem.so : ', " \$(GETFEM_LIB) .\/sources\/*.o \n";
-print MAKEFILE "\t ld", ' -shared sources/dal*.o sources/bgeot*.o sources/ftool*.o sources/getfem*.o sources/matlabint*.o -o ../lib/libgetfem.so', "\n\n";
+if ($systeme =~ /Linux/)
+{
+  print MAKEFILE "\t ld", ' -shared sources/dal*.o sources/bgeot*.o sources/ftool*.o sources/getfem*.o sources/matlabint*.o -o ../lib/libgetfem.so', "\n\n";
+}
+else
+{
+   print MAKEFILE "\t ld", ' -shared sources/dal*.o sources/bgeot*.o sources/ftool*.o sources/getfem*.o sources/matlabint*.o /cxx_repository/*.o -o ../lib/libgetfem.so', "\n\n";
+}
+
 # il faut moduler ça si tout n'est pas chargé ...
 
 # il faudrait faire proprement les dépendences des Mex files.
@@ -151,7 +159,14 @@ while($listeC)
   $fi1 =~ s/matlabcom\//lib\//g;
   print MAKEFILE "\n", "$fi1 : $fi \$(GETFEM_LIB) .\/sources\/*.o \n";
   $fi1 =~ s/lib\///g;
-  print MAKEFILE "\t", 'cd ../lib; $(CPLUS) $(COPT)  -c $(INCLUDES)', "..\/getfem++\/$fi -o $fi1.o", '; mex -O $(INCLUDES) libgetfem.so ', "..\/getfem++\/$fi -o $fi1\n";
+  if ($systeme =~ /Linux/)
+  {
+    print MAKEFILE "\t", 'cd ../lib; mex -O $(INCLUDES) libgetfem.so ', "..\/getfem++\/$fi -o $fi1\n";
+  }
+  else
+  {
+    print MAKEFILE "\t", 'cd ../lib; $(CPLUS) $(COPT)  -c $(INCLUDES)', "..\/getfem++\/$fi -o $fi1.o", '; mex -O $(INCLUDES) libgetfem.so ', "..\/getfem++\/$fi -o $fi1\n";
+  }
 }
 
 
