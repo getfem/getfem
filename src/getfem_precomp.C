@@ -70,7 +70,7 @@ namespace getfem
 	P = pgt->poly_vector()[i];
 	P.derivative(n);
 	for (size_type j = 0; j < pspt->size(); ++j) {
-	  std::cerr << "j=" << j << "pspt=" << (*pspt)[j].size() << " N=" << int(N) << endl;
+	  std::cerr << "i=" << i << " n=" << n << " j=" << j << " pspt[j]=" << ((*pspt)[j]).size() << "=" << ((*pspt)[j]) << " N=" << int(N) << endl;
 	  assert((*pspt)[j].size() == N);
 	  assert(pgt->convex_ref()->is_in((*pspt)[j]) < 1.0E-7);
 	  pc[j](i,n) = P.eval((*pspt)[j].begin());

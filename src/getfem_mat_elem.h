@@ -82,7 +82,7 @@ namespace getfem
 
     const bgeot::stored_point_tab &integration_points(void) const { 
       if (is_ppi)
-	return *(bgeot::org_stored_point_tab(method.pai->structure()->dim()));
+	return *(bgeot::org_stored_point_tab(method.ppi->structure()->dim()));
       else 
 	return method.pai->integration_points();
     }
