@@ -132,7 +132,7 @@ namespace gmm {
 	    gen_row_vector_iterator<PT>, PT>::ref_type row_iterator;
     typedef typename linalg_traits<V>::storage_type storage_type;
     typedef row_major sub_orientation;
-    typedef linalg_true index_sorted;
+    typedef typename linalg_traits<V>::index_sorted index_sorted;
     static size_type nrows(const this_type &) { return 1; }
     static size_type ncols(const this_type &m) { return m.ncols(); }
     static const_sub_row_type row(const const_row_iterator &it) { return *it; }
@@ -256,7 +256,7 @@ namespace gmm {
 	    gen_col_vector_iterator<PT>, PT>::ref_type col_iterator;
     typedef typename linalg_traits<V>::storage_type storage_type;
     typedef col_major sub_orientation;
-    typedef linalg_true index_sorted;
+    typedef typename linalg_traits<V>::index_sorted index_sorted;
     static size_type ncols(const this_type &) { return 1; }
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static const_sub_col_type col(const const_col_iterator &it) { return *it; }

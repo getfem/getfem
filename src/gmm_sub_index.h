@@ -130,8 +130,8 @@ namespace gmm {
       : sub_index(c) {}
     unsorted_sub_index(const unsorted_sub_index &si) : sub_index(si) {}
     unsorted_sub_index &operator =(const unsorted_sub_index &si)
-    { return sub_index::operator =(si); }
-  }
+    { sub_index::operator =(si); return *this; }
+  };
 
   inline std::ostream &operator << (std::ostream &o, const sub_index &si) { 
     o << "sub_index(";

@@ -258,6 +258,7 @@ namespace gmm
     typedef wsvector_iterator<T>  iterator;
     typedef wsvector_const_iterator<T> const_iterator;
     typedef abstract_sparse storage_type;
+    typedef linalg_true index_sorted;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) { return v.begin(); }
     static const_iterator begin(const this_type &v) { return v.begin(); }
@@ -507,6 +508,7 @@ namespace gmm
     typedef rsvector_iterator<T>  iterator;
     typedef rsvector_const_iterator<T> const_iterator;
     typedef abstract_sparse storage_type;
+    typedef linalg_true index_sorted;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) { return iterator(v.begin()); }
     static const_iterator begin(const this_type &v)
@@ -872,6 +874,7 @@ namespace gmm
     typedef slvector_iterator<T>  iterator;
     typedef slvector_const_iterator<T> const_iterator;
     typedef abstract_skyline storage_type;
+    typedef linalg_true index_sorted;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v)
       { return iterator(v.data_begin(), v.first()); }

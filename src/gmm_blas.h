@@ -595,14 +595,13 @@ namespace gmm {
       ite2 = vect_const_end(v2);
     typedef typename linalg_traits<V1>::value_type T;
     T res(0);
-      
-      while (it1 != ite1 && it2 != ite2) {
-	if (it1.index() == it2.index())
-	  { res += (*it1) * T(*it2); ++it1; ++it2; }
-	else if (it1.index() < it2.index()) ++it1; else ++it2;
-      }
-      return res;
+    
+    while (it1 != ite1 && it2 != ite2) {
+      if (it1.index() == it2.index())
+	{ res += (*it1) * T(*it2); ++it1; ++it2; }
+      else if (it1.index() < it2.index()) ++it1; else ++it2;
     }
+    return res;
   }
 
   template <typename V1, typename V2> inline
@@ -615,10 +614,10 @@ namespace gmm {
     typename linalg_traits<V1>::value_type
     vect_sp(const V1 &v1, const V2 &v2,abstract_sparse,abstract_sparse) {
     return vect_sp_sparse_sparse(v1, v2,
-	    typename linalg_and<typename linalg_traits<V1>index_sorted,
-	    typename linalg_traits<V2>index_sorted>::bool_type());
+	    typename linalg_and<typename linalg_traits<V1>::index_sorted,
+	    typename linalg_traits<V2>::index_sorted>::bool_type());
   }
-
+  
   /* ******************************************************************** */
   /*		Hermitian product                             		  */
   /* ******************************************************************** */

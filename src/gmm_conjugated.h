@@ -113,7 +113,7 @@ namespace gmm {
     typedef conjugated_const_iterator<typename
                    linalg_traits<V>::const_iterator> const_iterator;
     typedef typename linalg_traits<V>::storage_type storage_type;
-    typedef linalg_true index_sorted;
+    typedef typename linalg_traits<V>::index_sorted index_sorted;
     static size_type size(const this_type &v) { return v.size_; }
     static iterator begin(this_type &v) { return iterator(v.begin_); }
     static const_iterator begin(const this_type &v)
@@ -208,7 +208,7 @@ namespace gmm {
     typedef abstract_null_type const_row_iterator;
     typedef abstract_null_type row_iterator;
     typedef col_major sub_orientation;
-    typedef linalg_true index_sorted;
+    typedef typename linalg_traits<M>::index_sorted index_sorted;
     static inline size_type ncols(const this_type &m) { return m.nc; }
     static inline size_type nrows(const this_type &m) { return m.nr; }
     static inline const_sub_col_type col(const const_col_iterator &it)
@@ -300,7 +300,7 @@ namespace gmm {
     typedef abstract_null_type const_col_iterator;
     typedef abstract_null_type col_iterator;
     typedef row_major sub_orientation;
-    typedef linalg_true index_sorted;
+    typedef typename linalg_traits<M>::index_sorted index_sorted;
     static inline size_type nrows(const this_type &m) { return m.nr; }
     static inline size_type ncols(const this_type &m) { return m.nc; }
     static inline const_sub_row_type row(const const_row_iterator &it)

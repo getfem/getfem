@@ -148,6 +148,7 @@ namespace gmm {
 	    typename linalg_traits<V>::iterator, PT>::ref_type iterator;
     typedef typename linalg_traits<V>::const_iterator const_iterator;
     typedef typename linalg_traits<V>::storage_type storage_type;
+    typedef linalg_true index_sorted;
     static size_type size(const this_type &v) { return v.size_; }
     static inline iterator begin(this_type &v) {
       iterator it = v.begin_;
@@ -203,6 +204,7 @@ namespace gmm {
     typedef typename this_type::iterator iterator;
     typedef typename this_type::const_iterator const_iterator;
     typedef abstract_dense storage_type;
+    typedef linalg_true index_sorted;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) { return v.begin(); }
     static const_iterator begin(const this_type &v) { return v.begin(); }
@@ -277,6 +279,7 @@ namespace gmm {
     typedef typename this_type::iterator iterator;
     typedef typename this_type::iterator const_iterator;
     typedef abstract_dense storage_type;
+    typedef linalg_true index_sorted;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) { return v.begin(); }
     static const_iterator begin(const this_type &v) { return v.begin(); }
@@ -338,6 +341,7 @@ namespace gmm {
     typedef typename this_type::iterator iterator;
     typedef typename this_type::iterator const_iterator;
     typedef abstract_dense storage_type;
+    typedef linalg_true index_sorted;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) { return v.begin(); }
     static const_iterator begin(const this_type &v) { return v.begin(); }
@@ -399,6 +403,7 @@ namespace gmm {
     typedef typename this_type::iterator iterator;
     typedef typename this_type::iterator const_iterator;
     typedef abstract_dense storage_type;
+    typedef linalg_true index_sorted;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) { return v.begin(); }
     static const_iterator begin(const this_type &v) { return v.begin(); }
@@ -535,6 +540,7 @@ namespace gmm {
 	    typename const_pointer<PT2>::pointer, shift>  const_iterator;
     typedef abstract_null_type iterator;
     typedef abstract_sparse storage_type;
+    typedef linalg_true index_sorted;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) { return v.begin(); }
     static const_iterator begin(const this_type &v) { return v.begin(); }
