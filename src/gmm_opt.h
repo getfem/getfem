@@ -39,9 +39,9 @@ namespace gmm {
   /*    with dense_matrix<T>.                                              */
   /* ********************************************************************* */
 
-  template <class T>  T lu_det(const dense_matrix<T> &M) {
-    T *p = &(M(0,0));
-    switch (mat_nrows(M)) {
+  template <class T>  T lu_det(const dense_matrix<T> &A) {
+    const T *p = &(A(0,0));
+    switch (mat_nrows(A)) {
     case 1 : return (*p);
     case 2 : return (*p) * (*(p+3)) - (*(p+1)) * (*(p+2));
     case 3 : return (*p) * ((*(p+4)) * (*(p+8)) - (*(p+5)) * (*(p+7)))
