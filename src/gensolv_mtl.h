@@ -61,9 +61,9 @@ namespace gensolv
     typedef mtl::dense1D<T> type;
   };
 
-  // template<class T> T dot(const mtl::dense1D<T> &x,
-  //                         const mtl::dense1D<T> &y)
-  // { return mtl::dot(x, y); }
+  template<class T> T dot(const mtl::dense1D<T> &x,
+			  const mtl::dense1D<T> &y)
+    { return mtl::dot(x, y); }
   // template<class T> void copy(const mtl::dense1D<T> &x,
   //                             const mtl::dense1D<T> &y)
   // { mtl::copy(x, y); }

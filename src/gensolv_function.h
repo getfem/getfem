@@ -129,6 +129,7 @@ namespace gensolv
 
       typedef typename vect_function<BVECT>::size_type size_type;
       typedef typename vect_function<BVECT>::base_vector base_vector;
+      typedef typename vect_function<BVECT>::base_scalar base_scalar;
       
 
       // operation à revoir

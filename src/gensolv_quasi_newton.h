@@ -143,7 +143,7 @@ namespace gensolv
     VECT x3(x1.size()), p(x1.size());
     F.value(x1, y1);
     value_type residu = ::sqrt(dot(y1, y1) / y1.size()), a, aa; 
-    if (noisy > 0) cout << "residu initial " << residu << endl;
+    if (noisy > 0) std::cout << "residu initial " << residu << endl;
     size_type iter, reinit = 100, adding = 250, stay = 0;
 
     for (iter = 0; residu > RESIDU; ++iter)
@@ -164,10 +164,10 @@ namespace gensolv
       actu.actualization(x3, y3);            // Actualization of H 
       if (a == aa) { copy(x2, x1); copy(y2, y1); if (aa > 0) stay = 0; };
       residu = ::sqrt(dot(y1, y1) / y1.size());
-      if (noisy > 0) cout << "iter " << iter << " residu " << residu
+      if (noisy > 0) std::cout << "iter " << iter << " residu " << residu
 			  << " coefficient a = " << a << endl;
       if (iter == reinit || stay == 10)
-	{ actu.init(F, x1); reinit=iter + adding; adding += 50; stay=0; cout << "reinit \n"; }
+	{ actu.init(F, x1); reinit=iter + adding; adding += 50; stay=0; std::cout << "reinit \n"; }
       
     }
   }
