@@ -15,7 +15,7 @@ AC_CONFIG_AUX_DIR([config])
 
 PACKAGE="getfem++"
 MAJOR_VERSION="1"
-MINOR_VERSION="3"
+MINOR_VERSION="4"
 VERSION=$MAJOR_VERSION.$MINOR_VERSION
 echo "configuring $PACKAGE $VERSION..."
 
@@ -84,14 +84,14 @@ dnl 	CXXFLAGS="$CXXFLAGS -ptr `pwd`/cxx_repository -std strict_ansi -O3"
 	case $host in
 	*irix*)
 		echo "Using MIPSPRO CC on IRIX                          !!![ always use ./configure CXX=CC CC=cc LD=CC] "
-dnl 		CXXFLAGS="$CXXFLAGS -LANG:std -diag_suppress 1682 -O3 -OPT:Olimit=0:roundoff=3:div_split=ON:alias=typed -TARG:platform=ip25"
- 		CXXFLAGS="$CXXFLAGS -LANG:std -diag_suppress 1682 -O3"
+dnl 		CXXFLAGS="$CXXFLAGS -LANG:std -O3 -OPT:Olimit=0:roundoff=3:div_split=ON:alias=typed -TARG:platform=ip25"
+ 		CXXFLAGS="$CXXFLAGS -LANG:std  -O3"
 		APPSCXXFLAGS="$CXXFLAGS"
-	dnl	SUPLDFLAGS="-lCio"
+		SUPLDFLAGS="-lCio"
 		;;
 	*sun*)
 		echo "Using SUN C++ WorkShop Compiler"
-		CXXFLAGS="$CXXFLAGS +w2"
+		CXXFLAGS="$CXXFLAGS +w2 -O3"
 		APPSCXXFLAGS="$CXXFLAGS"
 		;;
 	esac
@@ -110,6 +110,7 @@ dnl 		CXXFLAGS="$CXXFLAGS -LANG:std -diag_suppress 1682 -O3 -OPT:Olimit=0:roundo
 dnl -tpp6 is for pentiumII and more
 dnl -Xc is for ansi conformance
 	CXXFLAGS="$CXXFLAGS -O3 -tpp6 -KPIC"
+	APPSCXXFLAGS="$CXXFLAGS"
 	;;
  *)
  	APPSCXXFLAGS="$CXXFLAGS -O3"
