@@ -1,0 +1,7 @@
+% Integration formulae on a point, for compatibility only
+NAME=	IM_NC(0,0) % Name of the method
+N=0
+GEOTRANS=GT_PK(0,0)
+NBPT=1
+0, 1.0
+NBF=0
