@@ -193,7 +193,7 @@ if (-d "matlabcom")
 print MAKEFILE "\n\n\$(GETFEM_LIB) : \$(lib_objects)\n";
 print MAKEFILE "\t ar r \$(GETFEM_LIB) \$(lib_objects) ; ranlib \$(GETFEM_LIB)\n";
 print MAKEFILE "\n\nclean :\n";
-print MAKEFILE "\t \/bin\/rm -f sources\/\*.o sources\/\*.a\n";
+print MAKEFILE "\t \/bin\/rm -f sources\/\*.o lib\/\*.a lib\/\*.so lib\/\*.$extmatcom\n";
 
 
 close(MAKEFILE);
