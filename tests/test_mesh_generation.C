@@ -121,7 +121,7 @@ namespace getfem {
     virtual void register_constraints(std::vector<const mesher_signed_distance*>& list) const {
       id = list.size(); list.push_back(this);
     }
-    virtual base_small_vector grad(const base_node &P) const {
+    virtual base_small_vector grad(const base_node &) const {
       return -1.*n;
     }
   };
@@ -252,7 +252,7 @@ namespace getfem {
     /*if (l0 - l > 0) return l0-l; else return REVC*(l0-l);
       return std::max(l0 - l, 0.); */
   }
-  scalar_type dforce(scalar_type l, scalar_type l0) {
+  scalar_type dforce(scalar_type, scalar_type) {
     return -1;
     //return (l < l0) ? -1 : -REVC;
   }
@@ -263,10 +263,13 @@ namespace getfem {
 
   struct pt_attribute {
     bool fixed;
+    bool on_bounding_box;
     dal::bit_vector constraints;
     bool operator<(const pt_attribute &other) const {
       if (fixed && !other.fixed) return true;
       else if (!fixed && other.fixed) return false;
+      else if (on_bounding_box && !other.on_bounding_box) return true;
+      else if (!on_bounding_box && other.on_bounding_box) return false;
       else {
 	if (constraints.last_true() > other.constraints.last_true()) return false;
 	else if (constraints.last_true() < other.constraints.last_true()) return true;
@@ -373,8 +376,11 @@ namespace getfem {
     }
 
     const pt_attribute*
-    get_attr(bool fixed, const dal::bit_vector &bv) {
-      pt_attribute a; a.fixed = fixed; a.constraints = bv;
+    get_attr(bool fixed, const dal::bit_vector &bv, bool on_bbox) {
+      pt_attribute a; 
+      a.fixed = fixed; 
+      a.on_bounding_box = on_bbox;
+      a.constraints = bv; 
       return &(*attributes_set.insert(a).first);
     }
 
@@ -386,9 +392,13 @@ namespace getfem {
       if (new_cts.card() > cts.card()) {
 	cout << "Point #" << ip << " " << oldX << "->" << pts[ip] << " has been upgraded from " 
 	     << cts << " to " << new_cts << ", congratulations to the winner\n";
-	pts_attr[ip] = get_attr(pts_attr[ip]->fixed, new_cts);
+	pts_attr[ip] = get_attr(pts_attr[ip]->fixed, new_cts,pts_attr[ip]->on_bounding_box);
       }
-      assert(new_cts.contains(cts));
+      if (!new_cts.contains(cts)) {
+	cout << "\n\n\nPoint #" << ip << " " << oldX << "->" << pts[ip] << " is doing n'importe quoi: " 
+	     << cts << " to " << new_cts << ", congratulations to the looser\n\n\n";
+	//assert(0);
+      }
     }
 
     void distribute_points_regularly(getfem_mesh &m, const std::vector<base_node> &fixed_points) {
@@ -412,24 +422,27 @@ namespace getfem {
 	if (dist(fixed_points[i]) < geps && m.search_point(fixed_points[i]) == size_type(-1)) {
 	  m.add_point(fixed_points[i]); 
 	  pts.push_back(fixed_points[i]); 
-	  pts_attr.push_back(get_attr(true,dal::bit_vector()));
+	  pts_attr.push_back(get_attr(true,dal::bit_vector(),false));
 	} else cout << "removed duplicate fixed point : " << fixed_points[i] << "\n";
       }
       cout << "gridnx=" << gridnx << "\n";
       for (size_type i=0; i < nbpt; ++i) {
 	base_node P(N);
+	bool is_on_bounding_box = false;
 	for (size_type k=0, r = i; k < N; ++k) {
-	  P[k] = (r % gridnx[k]) * (bounding_box_max[k] - bounding_box_min[k]) / 
+	  unsigned p =  r % gridnx[k];
+	  //if (p == 0 || p == gridnx[k]-1) is_on_bounding_box = true;
+	  P[k] = p * (bounding_box_max[k] - bounding_box_min[k]) / 
 	    (gridnx[k]-1) + bounding_box_min[k];
 	  if (N==2 && k==0 && ((r/gridnx[0])&1)==1) P[k] += h0/2;
 	  r /= gridnx[k];
 	  //P[k] = dal::random() * (bounding_box_max[k] - bounding_box_min[k]) + bounding_box_min[k];
 	}
-	if (dist(P) < geps/*+h0*edge_len(P)/2*/) {
- 	  projection(P);
+	if (is_on_bounding_box || dist(P) < geps/*+h0*edge_len(P)/2*/) {
+ 	  if (!is_on_bounding_box) projection(P);
 	  if (m.search_point(P) == size_type(-1)) {
 	    m.add_point(P); pts.push_back(P);
-	    pts_attr.push_back(get_attr(false,dal::bit_vector()));
+	    pts_attr.push_back(get_attr(false,dal::bit_vector(), is_on_bounding_box));
 	    ++nbpt;
 	  } else cout << "remove duplicate point " << P << "\n";
 	}
@@ -457,12 +470,26 @@ namespace getfem {
     };
     void cleanup_points() {
       std::vector<size_type> idx(pts.size());
-      for (size_type i=0; i < idx.size(); ++i) idx[i] = i;
+      unsigned nb_bb_pts = 0;
+      for (size_type i=0; i < idx.size(); ++i) { 
+	idx[i] = i; 
+	if (pts_attr[i]->on_bounding_box) { 
+	  //cout << "bb:" << nb_bb_pts << " " << pts[i] << "\n"; 
+	  ++nb_bb_pts; 
+	  bool ok = false;
+	  for (unsigned k=0; k < N; ++k)
+	    if (dal::abs(pts[i][k] - bounding_box_min[k]) < 1e-4 ||
+		dal::abs(pts[i][k] - bounding_box_max[k]) < 1e-4) ok = true;
+	  if (!ok) cout << "bb:" << nb_bb_pts << " " << pts[i] << "\n" 
+			<< "bbox=" << bounding_box_min << ", "<< bounding_box_max << "\n";
+	  assert(ok);
+	}
+      }
       std::sort(idx.begin(), idx.end(), cleanup_points_compare(pts,pts_attr));
       bgeot::kdtree tree;
       bgeot::kdtree_tab_type neighbours;
       dal::bit_vector keep_pts; keep_pts.add(0,idx.size());
-      cout << "cleanup points : in the beginning there were " << pts.size() << " points\n";
+      cout << "cleanup points : in the beginning there were " << pts.size() << " points ( " << nb_bb_pts << " on boundary)\n";
       for (size_type i=0, i0=0; i < idx.size(); ++i) {
 	const base_node &P = pts[idx[i]];
 	const pt_attribute *a = pts_attr[idx[i]];
@@ -521,41 +548,57 @@ namespace getfem {
 	  cout << "-----> NEW DELAUNAY\n";
 	  first = false;
 
-	  cleanup_points(); /* and copy pts to pts_prev */
-	  cout << "running delaunay on " << pts.size() << " points\n";
-	  delaunay(pts, t);
-	  cout << "nb splx avant suppr = " << gmm::mat_ncols(t) << "\n";
-	  std::ofstream qf;
-	  { char s[50]; sprintf(s, "delau%02d.q", count);
-	    qf.open(s);
-	  }
-	  for (size_type i=0; i < gmm::mat_ncols(t); ) {
-	    base_node G = pts[t(0,i)];
-	    for (size_type k=1; k < N+1; ++k) G += pts[t(k,i)];
-	    scalar_type q = simplex_quality(N, dal::index_ref_iterator(pts.begin(), gmm::mat_col(t,i).begin()));
-	    
-	    bool boundary_simplex = true;
-	    bool is_bridge_simplex = false;
-	    for (size_type k=0; k < N+1; ++k) 
-	      if (pts_attr[t(k,i)]->constraints.card() == 0) {
-		boundary_simplex = false; break;
-	      }
-	    if (boundary_simplex) {
-	      dal::bit_vector all_cts;
-	      for (size_type k=0; k < N+1; ++k) 
-		all_cts |= pts_attr[t(k,i)]->constraints;
-	      for (size_type k=0; k < N+1; ++k)
-		if (pts_attr[t(k,i)]->constraints.contains(all_cts))
-		  is_bridge_simplex = true;
+	  scalar_type worst_q = 1.; base_node worst_q_P;
+	  for (unsigned repeat=0; repeat < 2; ++repeat) {
+	    cleanup_points(); /* and copy pts to pts_prev */
+	    cout << "running delaunay on " << pts.size() << " points\n";
+	    delaunay(pts, t);
+	    cout << "nb splx avant suppr = " << gmm::mat_ncols(t) << "\n";
+	    /*std::ofstream qf;
+	    { char s[50]; sprintf(s, "delau%02d.q", count);
+	      qf.open(s);
 	    }
-	    qf << q << "\n";
-	    scalar_type dG = dist(G*(1./(N+1)));
-	    if (q < 1e-3 || dG > 0 || (is_bridge_simplex && dG>-geps)) {
-	      if (i != gmm::mat_ncols(t)-1) {
-		for (size_type k=0; k < N+1; ++k) std::swap(t(k,i), t(k,gmm::mat_ncols(t)-1));
+	    */
+	    for (size_type i=0; i < gmm::mat_ncols(t); ) {
+	      base_node G = pts[t(0,i)];
+	      for (size_type k=1; k < N+1; ++k) G += pts[t(k,i)];
+	      scalar_type q = simplex_quality(N, dal::index_ref_iterator(pts.begin(), gmm::mat_col(t,i).begin()));
+	      
+	      bool boundary_simplex = true;
+	      bool is_bridge_simplex = false;
+	      bool is_bounding_box_simplex = false;
+	      for (size_type k=0; k < N+1; ++k) {
+		if (pts_attr[t(k,i)]->constraints.card() == 0) {
+		  boundary_simplex = false;
+		}
+		if (pts_attr[t(k,i)]->on_bounding_box) is_bounding_box_simplex = true;
 	      }
-	      t.resize(N+1,gmm::mat_ncols(t)-1);
-	    } else ++i;
+	      if (boundary_simplex) {
+		dal::bit_vector all_cts;
+		for (size_type k=0; k < N+1; ++k) 
+		  all_cts |= pts_attr[t(k,i)]->constraints;
+		for (size_type k=0; k < N+1; ++k)
+		  if (pts_attr[t(k,i)]->constraints.contains(all_cts))
+		    is_bridge_simplex = true;
+	      }
+	      //qf << q << "\n";
+	      scalar_type dG = dist(G*(1./(N+1)));
+	      if (q < 1e-3 || dG > 0 || (is_bridge_simplex && dG>-geps) || is_bounding_box_simplex) {
+		if (i != gmm::mat_ncols(t)-1) {
+		  for (size_type k=0; k < N+1; ++k) std::swap(t(k,i), t(k,gmm::mat_ncols(t)-1));
+		}
+		t.resize(N+1,gmm::mat_ncols(t)-1);
+	      } else {
+		++i;
+		if (q < worst_q) { worst_q = q; worst_q_P = G*(1./(N+1)); }
+	      }
+	    }
+	    cout << " worst q = " << worst_q << "\n";
+	    if (worst_q < 1e-2) {
+	      cout << "Inserting a new node @" << worst_q_P << "\n";	      
+	      pts.push_back(worst_q_P); pts_attr.push_back(get_attr(false, dal::bit_vector(),false));
+	      pts_prev = pts;
+	    } else break;
 	  }
 	  edges_mesh.clear();
 	  cout << "nb splx = " << gmm::mat_ncols(t) << "\n";
@@ -609,12 +652,13 @@ namespace getfem {
 	    if (F) {
 	      base_node Fbar = (bar)*(F/L[ie]);
 
-	      if (!pts_attr[iA]->fixed) pts[iA] -= deltat*Fbar; 
-	      if (!pts_attr[iB]->fixed) pts[iB] += deltat*Fbar;
+	      if (!pts_attr[iA]->fixed && !pts_attr[iA]->on_bounding_box) pts[iA] -= deltat*Fbar; 
+	      if (!pts_attr[iB]->fixed && !pts_attr[iB]->on_bounding_box) pts[iB] += deltat*Fbar;
 	    }
 	  }
 	  for (size_type ip=0; ip < pts.size(); ++ip) {
-	    project_and_update_constraints(ip);
+	    if (!pts_attr[ip]->on_bounding_box)
+	      project_and_update_constraints(ip);
 	  }
         } else if (ORIGINAL == 2) {
           scalar_type desth = bgeot::equilateral_simplex_of_reference(N)->points()[N][N-1] * L0mult * pow(sL/sL0, 1./N);
@@ -694,8 +738,8 @@ namespace getfem {
 	    if (dist(.5*(pts[iA]+pts[iB])) < 0) {
 	      for (std::vector<size_type>::iterator it = common_pts.begin(); it != ite; ++it) {
 		if (pts_attr[*it]->constraints.contains(bv1)) {
-		  cout << "pt#" << iA << " not projected on " << bv1 << 
-		    " because it is linked to pt#" << *it << " : " << pts_attr[*it]->constraints << "\n";
+		  /*cout << "pt#" << iA << " not projected on " << bv1 << 
+		    " because it is linked to pt#" << *it << " : " << pts_attr[*it]->constraints << "\n";*/
 		  do_projection = false;
 		  break;
 		}
@@ -707,7 +751,7 @@ namespace getfem {
 		std::swap(iA,iB);
 	      cout << bv1 << bv2 << " Promotion !!!!!! pt#" << iA << " " << pts[iA] << " : " 
 		   << pts_attr[iA]->constraints << "->" << bv1 << "\n";
-	      pts_attr[iA] = get_attr(pts_attr[iA]->fixed, bv1);
+	      pts_attr[iA] = get_attr(pts_attr[iA]->fixed, bv1, pts_attr[iA]->on_bounding_box);
 	      project_and_update_constraints(iA);
 	      cout << " ---> new value: " << pts[iA] << "\n";
 	    }
@@ -754,19 +798,19 @@ namespace getfem {
       m.optimize_structure();
     }
 
-    void build_simplex_mesh(getfem_mesh &m, size_type K) {
+    void build_simplex_mesh(getfem_mesh &m, size_type degree) {
       std::vector<base_node> cvpts(N+1), cvpts2;
       size_type cvnum;
       m.clear();
       for (size_type ip=0; ip < pts.size(); ++ip) { size_type z = m.add_point(pts[ip]); assert(z == ip); }
       for (size_type i=0; i < t.size()/(N+1); ++i) {
 	for (size_type k=0; k < N+1; ++k) cvpts[k] = pts[t[i*(N+1)+k]];
-	if (K == 1) {
+	if (degree == 1) {
 	  //cvnum = m.add_convex_by_points(bgeot::simplex_geotrans(N,1), cvpts.begin());
 	  cvnum = m.add_convex(bgeot::simplex_geotrans(N,1), &t[i*(N+1)]);
 	  assert(cvnum == i);
 	} else {
-	  bgeot::pgeometric_trans pgt = bgeot::simplex_geotrans(N,K);
+	  bgeot::pgeometric_trans pgt = bgeot::simplex_geotrans(N,degree);
 	  cvpts2.resize(pgt->nb_points());
 	  for (size_type k=0; k < pgt->nb_points(); ++k) {
 	    cvpts2[k] = bgeot::simplex_geotrans(N,1)->transform(pgt->convex_ref()->points()[k], 
@@ -786,18 +830,18 @@ namespace getfem {
 	  scalar_type q = simplex_quality(N, dal::index_ref_iterator(pts.begin(), &t[it->cv*(N+1)]));
 	  scalar_type dG = dist(dal::mean_value(m.points_of_convex(it->cv).begin(), m.points_of_convex(it->cv).end()));
 	  if (q < .01) {
-	    cout << "removing flat border convex " << it->cv << " (q=" << q << ")\n";
-	    for (size_type i=0; i < N+1; ++i) cout << " " << m.points_of_convex(it->cv)[i]; cout << "\n";
+	    //cout << "removing flat border convex " << it->cv << " (q=" << q << ")\n";
+	    //for (size_type i=0; i < N+1; ++i) cout << " " << m.points_of_convex(it->cv)[i]; cout << "\n";
 	    m.sup_convex(it->cv); nbrm++;
 	  } else if (dG > -0.0) {
-	    cout << "removing convex because of its gravity center is too near" << it->cv << " (dG=" << dG << ")\n";
+	    //cout << "removing convex because of its gravity center is too near" << it->cv << " (dG=" << dG << ")\n";
 	    m.sup_convex(it->cv); nbrm++;  
 	  }
 	}
 	if (nbrm == 0) break;
-	else cout << "\n\n !!!!! ON CONTINUE ENCORE UN COUP..\n\n";
+	//else cout << "\n\n !!!!! ON CONTINUE ENCORE UN COUP..\n\n";
       }
-      if (K>1) {
+      if (degree>1) {
 	//m.optimize_structure();
 	getfem::convex_face_ct border_faces;
 	getfem::outer_faces_of_mesh(m, border_faces);
@@ -844,6 +888,9 @@ namespace getfem {
         exp.write_mesh_quality(m);
       }
     }
+
+
+
     void interpolate_face(getfem_mesh &m, dal::bit_vector& ptdone, 
 			  const std::vector<size_type>& ipts, bgeot::pconvex_structure cvs) {
       if (cvs->dim() == 0) return;
