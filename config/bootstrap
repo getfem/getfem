@@ -5,6 +5,6 @@ cp -f config/install-sh .
 autoheader
 autoconf -I config
 #pas de ./ devant les noms des makefiles !!!
-automake --gnu --verbose `find . -name Makefile.am | sed -e 's@\./\(.*\)\.am@\1@g'`
+automake -a --gnu `find . -name Makefile.am | sed -e 's@\./\(.*\)\.am@\1@g'`
 
 
