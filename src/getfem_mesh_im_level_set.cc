@@ -27,28 +27,36 @@
 //
 //========================================================================
 
-#include <getfem_mesh_adaptable_im.h>
+#include <getfem_mesh_im_level_set.h>
 
 
 namespace getfem {
   
-  void mesh_adaptable_im::receipt(const MESH_CLEAR &) { clear(); }
-  void mesh_adaptable_im::receipt(const MESH_DELETE &) { clear(); }
-  void mesh_adaptable_im::clear(void) { mesh_im::clear(); level_sets.clear(); }
+  void mesh_im_level_set::receipt(const MESH_CLEAR &) { clear(); }
+  void mesh_im_level_set::receipt(const MESH_DELETE &) { clear(); }
+  void mesh_im_level_set::clear(void) { mesh_im::clear(); level_sets.clear(); }
 
-  mesh_adaptable_im::mesh_adaptable_im(getfem_mesh &me,
+  mesh_im_level_set::mesh_im_level_set(getfem_mesh &me,
 				       pintegration_method reg,
 				       pintegration_method sing):mesh_im(me) {
     regular_simplex_pim = reg;
     singular_simplex_pim = (sing == 0) ? reg : sing;
   }
 
-  void mesh_adaptable_im::adapt(void) {
+  pintegration_method 
+  mesh_im_level_set::int_method_of_element(size_type cv) const {
+    if (cut_im.convex_index().is_in(cv)) 
+      return cut_im.int_method_of_element(cv); 
+    else return mesh_im::int_method_of_element(cv);
+  }
+
+  void mesh_im_level_set::adapt(void) {
 
     // compute the elements touched by each level set
     // for each element touched, compute the sub mesh
     //   then compute the adapted integration method
-
+    
+  }
 
 #ifndef GETFEM_HAVE_QHULL_QHULL_H
 
