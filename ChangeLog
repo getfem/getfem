@@ -1,3 +1,23 @@
+2004-02-02  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/getfem_mesh_slice.[Ch] src/getfem_mesh_slicers.[Ch]: the
+	mesh_slices have been splitted in two parts: 
+
+	- the mesh_slicer object, which takes a mesh, simplexifies it and
+	sends thes simplexes to a list of "slicer_action" objects
+
+	- the stored_mesh_slice object, which contains all simplexes that
+	have been constructed by the mesh_slicer. This recording of
+	simplexes is done via the slicer_build_stored_mesh_slice (derived
+	from slicer_action) class.
+
+	src/getfem_export.h: interpolation to a set of sparse points can 
+	now interpolate the gradient of a field.
+	
+2004-01-29  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/getfem_export.h: removed some obsolete interpolation functions. 
+
 2004-01-27  Yves Renard <renard@gmm.insa-tlse.fr>
 	
 	* tests/elastostatic.C: simplification, copied from laplacian.C 

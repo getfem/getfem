@@ -1,7 +1,5 @@
 #include <getfem_export.h>
-#include <getfem_norm.h>
 #include <getfem_assembling.h>
-#include <getfem_norm.h>
 
 using bgeot::size_type;
 using bgeot::dim_type;
