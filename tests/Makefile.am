@@ -39,6 +39,7 @@ test_assembly_SOURCES = test_assembly.C
 laplacian_SOURCES = laplacian.C
 test_interpolation_SOURCES = test_interpolation.C
 elastostatic_SOURCES = elastostatic.C
+nonlinear_elastostatic_SOURCES = nonlinear_elastostatic.C
 helmholtz_SOURCES = helmholtz.C
 integration_SOURCES = integration.C
 poly_SOURCES = poly.C
@@ -111,6 +112,7 @@ EXTRA_DIST = \
 	schwarz_additive.pl               \
 	schwarz_additive.param            \
 	elastostatic.param                \
+	nonlinear_elastostatic.param      \
 	test_link_fem.param               \
 	geo_trans_inv.param               \
 	make_gmm_test.pl                  \
