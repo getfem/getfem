@@ -54,19 +54,19 @@ namespace gmm
 
     operator T() const { return pm->r(l); }
     ref_elt_vector(V *p, size_type ll) : pm(p), l(ll) {}
-    inline ref_elt_vector operator =(T v)
+    inline ref_elt_vector &operator =(T v)
       { (*pm).w(l,v); return *this; }
     inline bool operator ==(T v) const { return ((*pm).r(l) == v); }
     inline bool operator !=(T v) const { return ((*pm).r(l) != v); }
-    inline ref_elt_vector operator +=(T v)
+    inline ref_elt_vector &operator +=(T v)
       { (*pm).w(l,(*pm).r(l) + v); return *this; }
-    inline ref_elt_vector operator -=(T v)
+    inline ref_elt_vector &operator -=(T v)
       { (*pm).w(l,(*pm).r(l) - v); return *this; }
-    inline ref_elt_vector operator /=(T v)
+    inline ref_elt_vector &operator /=(T v)
       { (*pm).w(l,(*pm).r(l) / v); return *this; }
-    inline ref_elt_vector operator *=(T v)
+    inline ref_elt_vector &operator *=(T v)
       { (*pm).w(l,(*pm).r(l) * v); return *this; }
-    inline ref_elt_vector operator =(const ref_elt_vector &re)
+    inline ref_elt_vector &operator =(const ref_elt_vector &re)
       { *this = T(re); return *this; }
     T operator +()    { return  T(*this);   } // necessary for unknow reason
     T operator -()    { return -T(*this);   } // necessary for unknow reason
@@ -76,6 +76,10 @@ namespace gmm
     T operator /(T v) { return T(*this)/ v; } // necessary for unknow reason
   };  
   
+  template<typename T, typename V> inline
+  T &operator +=(T v, const ref_elt_vector<T, V> &re) { v += T(re); return v; }
+  template<typename T, typename V> inline
+  T &operator -=(T v, const ref_elt_vector<T, V> &re) { v -= T(re); return v; }
   template<typename T, typename V> inline
   T operator +(const ref_elt_vector<T, V> &re) { return T(re); }
   template<typename T, typename V> inline
@@ -96,8 +100,20 @@ namespace gmm
   T operator /(const ref_elt_vector<T, V> &re, T v) { return T(re)/ v; }
   template<typename T, typename V> inline
   T operator /(T v, const ref_elt_vector<T, V> &re) { return v/ T(re); }
+  template<typename T, typename V> inline
+  typename number_traits<T>::magnitude_type
+  abs(const ref_elt_vector<T, V> &re) { return abs(T(re)); }
+  template<typename T, typename V> inline
+  T sqr(const ref_elt_vector<T, V> &re) { return sqr(T(re)); }
+  template<typename T, typename V> inline
+  typename number_traits<T>::magnitude_type
+  abs_sqr(const ref_elt_vector<T, V> &re) { return abs_sqr(T(re)); }
+  template<typename T, typename V> inline
+  T conj(const ref_elt_vector<T, V> &re) { return conj(T(re)); }
   template<typename T, typename V> std::ostream &operator <<
   (std::ostream &o, const ref_elt_vector<T, V> &re) { o << T(re); return o; }
+  
+
   
 
   /*************************************************************************/

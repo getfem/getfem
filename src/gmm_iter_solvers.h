@@ -97,7 +97,6 @@ namespace gmm {
 #include <gmm_solver_cg.h>
 #include <gmm_solver_bicgstab.h>
 #include <gmm_solver_qmr.h>
-#include <gmm_solver_cheby.h>
 #include <gmm_solver_constrained_cg.h>
 #include <gmm_solver_Schwarz_additive.h>
 #include <gmm_modified_gram_schmidt.h>

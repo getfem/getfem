@@ -73,44 +73,46 @@ namespace gmm {
   template <typename Matrix, typename Vector, typename VectorB,
 	    typename Precond1>
   void qmr(const Matrix &A, Vector &x, const VectorB &b, const Precond1 &M1,
-	   iteration& iter)
-  {
-    typedef typename linalg_traits<Vector>::value_type value_type;
-    value_type delta(0), ep(0), beta(0), rho_1(0), gamma_1(0), theta_1(0);
+	   iteration& iter) {
+
+    typedef typename linalg_traits<Vector>::value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
+
+    T delta(0), ep(0), beta(0), theta_1(0), gamma_1(0);
+    T theta(0), gamma(1), eta(-1);
+    R rho_1(0), rho, xi;
 
     typedef typename temporary_vector<Vector>::vector_type TmpVec;
-    size_t nn = vect_size(x);
+    size_type nn = vect_size(x);
     TmpVec r(nn), v_tld(nn), y(nn), w_tld(nn), z(nn), v(nn), w(nn);
     TmpVec y_tld(nn), z_tld(nn), p(nn), q(nn), p_tld(nn), d(nn), s(nn);
 
-    iter.set_rhsnorm(gmm::vect_norm2(b));
+    iter.set_rhsnorm(double(gmm::vect_norm2(b)));
     if (iter.get_rhsnorm() == 0.0) { clear(x); return; }
 
-    gmm::mult(A, gmm::scaled(x, -1.0), b, r);
+    gmm::mult(A, gmm::scaled(x, T(-1)), b, r);
     gmm::copy(r, v_tld);
 
     gmm::left_mult(M1, v_tld, y);
-    value_type rho = gmm::vect_norm2(y);
+    rho = gmm::vect_norm2(y);
 
     gmm::copy(r, w_tld);
     gmm::transposed_right_mult(M1, w_tld, z);
-    value_type xi = gmm::vect_norm2(z);
-  
-    value_type gamma = 1.0, eta = -1.0, theta = 0.0;
+    xi = gmm::vect_norm2(z);
   
     while (! iter.finished_vect(r)) {
     
-      if (rho == 0.0 || xi == 0.0)
+      if (rho == R(0) || xi == R(0))
 	DAL_THROW(failure_error, "QMR failed to converge");
 
-      gmm::copy(gmm::scaled(v_tld, 1./rho), v);
-      gmm::scale(y, 1./rho);
+      gmm::copy(gmm::scaled(v_tld, T(R(1)/rho)), v);
+      gmm::scale(y, T(R(1)/rho));
 
-      gmm::copy(gmm::scaled(w_tld, 1./xi), w);
-      gmm::scale(z, 1./xi);
+      gmm::copy(gmm::scaled(w_tld, T(R(1)/xi)), w);
+      gmm::scale(z, T(R(1)/xi));
 
       delta = gmm::vect_sp(z, y);
-      if (delta == 0.0) DAL_THROW(failure_error, "QMR failed to converge");
+      if (delta == T(0)) DAL_THROW(failure_error, "QMR failed to converge");
 
       gmm::right_mult(M1, y, y_tld);		
       gmm::transposed_left_mult(M1, z, z_tld);
@@ -119,17 +121,17 @@ namespace gmm {
 	gmm::copy(y_tld, p);
 	gmm::copy(z_tld, q);
       } else {
-	gmm::add(y_tld, gmm::scaled(p, -(xi  * delta / ep)), p);
-	gmm::add(z_tld, gmm::scaled(q, -(rho * delta / ep)), q);
+	gmm::add(y_tld, gmm::scaled(p, -(T(xi  * delta) / ep)), p);
+	gmm::add(z_tld, gmm::scaled(q, -(T(rho * delta) / ep)), q);
       }
     
       gmm::mult(A, p, p_tld);
 
       ep = gmm::vect_sp(q, p_tld);
-      if (ep == 0.0) DAL_THROW(failure_error, "QMR failed to converge");
+      if (ep == T(0)) DAL_THROW(failure_error, "QMR failed to converge");
 
       beta = ep / delta;
-      if (beta == 0.0) DAL_THROW(failure_error, "QMR failed to converge");
+      if (beta == T(0)) DAL_THROW(failure_error, "QMR failed to converge");
 
       gmm::add(p_tld, gmm::scaled(v, -beta), v_tld);
       gmm::left_mult(M1, v_tld, y);
@@ -147,22 +149,22 @@ namespace gmm {
       theta_1 = theta;
 
       theta = rho / (gamma_1 * beta);
-      gamma = 1.0 / sqrt(1.0 + theta * theta);
+      gamma = T(1) / gmm::sqrt(T(1) + gmm::sqr(theta));
 
-      if (gamma == 0.0) DAL_THROW(failure_error, "QMR failed to converge");
+      if (gamma == T(0)) DAL_THROW(failure_error, "QMR failed to converge");
 
-      eta = -eta * rho_1 * gamma * gamma / (beta * gamma_1 * gamma_1);
+      eta = -eta * T(rho_1) * gmm::sqr(gamma) / (beta * gmm::sqr(gamma_1));
 
       if (iter.first()) {
 	gmm::copy(gmm::scaled(p, eta), d);
 	gmm::copy(gmm::scaled(p_tld, eta), s);
       } else {
-	value_type tmp = (theta_1 * theta_1 * gamma * gamma);
+	T tmp = gmm::sqr(theta_1 * gamma);
 	gmm::add(gmm::scaled(p, eta), gmm::scaled(d, tmp), d);
 	gmm::add(gmm::scaled(p_tld, eta), gmm::scaled(s, tmp), s);
       }
       gmm::add(d, x);
-      gmm::add(gmm::scaled(s, -1.), r);
+      gmm::add(gmm::scaled(s, T(-1)), r);
 
       ++iter;
     }

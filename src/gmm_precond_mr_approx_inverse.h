@@ -65,6 +65,7 @@ namespace gmm {
   struct mr_approx_inverse_precond {
 
     typedef typename linalg_traits<Matrix>::value_type value_type;
+    typedef typename number_traits<value_type>::magnitude_type magnitude_type;
     typedef typename principal_orientation_type<typename
       linalg_traits<Matrix>::sub_orientation>::potype sub_orientation;
     typedef wsvector<value_type> VVector;
@@ -73,7 +74,7 @@ namespace gmm {
     MMatrix M;
 
     mr_approx_inverse_precond(const Matrix& A, size_type nb_it,
-			      value_type threshold);
+			      magnitude_type threshold);
   };
 
   template <typename Matrix, typename V1, typename V2> inline
@@ -86,9 +87,9 @@ namespace gmm {
   { mult(gmm::transposed(P.M), v1, v2); }
 
   template <typename Matrix>
-  mr_approx_inverse_precond<Matrix>::mr_approx_inverse_precond(const Matrix& A,
-							 size_type nb_it,
-							 value_type threshold)
+  mr_approx_inverse_precond<Matrix>::
+  mr_approx_inverse_precond(const Matrix& A, size_type nb_it,
+			    magnitude_type threshold)
     : M(mat_nrows(A), mat_ncols(A)) {
 
     VVector m(mat_ncols(A)),r(mat_ncols(A)),ei(mat_ncols(A)),Ar(mat_ncols(A)); 

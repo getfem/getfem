@@ -75,7 +75,6 @@ include_HEADERS =                      \
 	gmm_solver_gmres.h             \
 	gmm_solver_idgmres.h           \
 	gmm_solver_qmr.h               \
-	gmm_solver_cheby.h             \
 	gmm_solver_bicgstab.h          \
 	gmm_solver_Schwarz_additive.h  \
 	gmm_superlu_interface.h        \

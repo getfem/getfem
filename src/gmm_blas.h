@@ -544,7 +544,8 @@ namespace gmm {
   /*		Hermitian product                             		  */
   /* ******************************************************************** */
 
-  template <typename V1, typename V2> inline typename linalg_traits<V1>::value_type
+  template <typename V1, typename V2>
+  inline typename linalg_traits<V1>::value_type
   vect_hp(const V1 &v1, const V2 &v2)
   { return vect_sp(conjugated(v1), v2); }
 
@@ -555,7 +556,8 @@ namespace gmm {
    template <typename M>
    typename linalg_traits<M>::value_type
    mat_trace(const M &m) {
-     typename linalg_traits<M>::value_type res(0);
+     typedef typename linalg_traits<M>::value_type T;
+     T res(0);
      for (size_type i = 0; i < std::max(mat_nrows(m), mat_ncols(m)); ++i)
        res += m(i,i);
      return res;

@@ -58,6 +58,30 @@ namespace gmm
   template <typename V1, typename V2, typename V3> inline
   void mult(const identity_matrix&, const V1 &v1, const V2 &v2, const V3 &v3)
   { add(v1, v2, v3); }
+  template <typename V1, typename V2> inline
+  void left_mult(const identity_matrix&, const V1 &v1, V2 &v2)
+  { copy(v1, v2); }
+  template <typename V1, typename V2> inline
+  void left_mult(const identity_matrix&, const V1 &v1, const V2 &v2) 
+  { copy(v1, v2); }
+  template <typename V1, typename V2> inline
+  void right_mult(const identity_matrix&, const V1 &v1, V2 &v2)
+  { copy(v1, v2); }
+  template <typename V1, typename V2> inline
+  void right_mult(const identity_matrix&, const V1 &v1, const V2 &v2) 
+  { copy(v1, v2); }
+  template <typename V1, typename V2> inline
+  void transposed_left_mult(const identity_matrix&, const V1 &v1, V2 &v2)
+  { copy(v1, v2); }
+  template <typename V1, typename V2> inline
+  void transposed_left_mult(const identity_matrix&, const V1 &v1,const V2 &v2) 
+  { copy(v1, v2); }
+  template <typename V1, typename V2> inline
+  void transposed_right_mult(const identity_matrix&, const V1 &v1, V2 &v2)
+  { copy(v1, v2); }
+  template <typename V1, typename V2> inline
+  void transposed_right_mult(const identity_matrix&,const V1 &v1,const V2 &v2) 
+  { copy(v1, v2); }
   template <typename M> void copy_ident(const identity_matrix&, M &m) {
     size_type i = 0, n = std::min(mat_nrows(m), mat_ncols(m)); clear(m);
     for (; i < n; ++i) m(i,i) = typename linalg_traits<M>::value_type(1);

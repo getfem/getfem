@@ -36,10 +36,14 @@ namespace gmm {
 
   template<typename Matrix> struct diagonal_precond {
     typedef typename linalg_traits<Matrix>::value_type value_type;
-    std::vector<value_type> diag;
+    typedef typename number_traits<value_type>::magnitude_type magnitude_type;
 
-    diagonal_precond(const Matrix &M) : diag(mat_nrows(M))
-    { for (size_type i = 0; i < mat_nrows(M); ++i) diag[i] = 1.0 / M(i, i); }
+    std::vector<magnitude_type> diag;
+
+    diagonal_precond(const Matrix &M) : diag(mat_nrows(M)) {
+      for (size_type i = 0; i < mat_nrows(M); ++i)
+	diag[i] = magnitude_type(1) / gmm::abs(M(i, i));
+    }
 
     diagonal_precond(void) {}
   };
@@ -78,8 +82,8 @@ namespace gmm {
     if (P.diag.size() != vect_size(v2))
       DAL_THROW(dimension_error, "dimensions mismatch");
     copy(v1, v2);
-    for (size_type i = 0; i < P.diag.size(); ++i)
-      v2[i] *= sqrt(gmm::abs(P.diag[i]));
+    for (size_type i = 0; i < P.diag.size(); ++i) 
+      v2[i] *= gmm::sqrt(P.diag[i]);
   }
 
   template <typename Matrix, typename V1, typename V2> inline
@@ -89,14 +93,13 @@ namespace gmm {
 
   template <typename Matrix, typename V1, typename V2> inline
   void right_mult(const diagonal_precond<Matrix>& P, const V1 &v1, V2 &v2) {
+    typedef typename linalg_traits<Matrix>::value_type T;
+
     if (P.diag.size() != vect_size(v2))
       DAL_THROW(dimension_error, "dimensions mismatch");
     copy(v1, v2);
     for (size_type i = 0; i < P.diag.size(); ++i)
-      if (P.diag[i] < 0.0) 
-	v2[i] *= -sqrt(gmm::abs(P.diag[i]));
-      else
-	v2[i] *= sqrt(gmm::abs(P.diag[i]));
+	v2[i] *= gmm::sqrt(P.diag[i]);
   }
 
   template <typename Matrix, typename V1, typename V2> inline
