@@ -6,7 +6,6 @@
 #######################################
 
 $rootlib = `pwd`; chomp($rootlib);
-$installpath = `cd ..; pwd`; chomp($installpath);
 $machine = `uname -m`; chomp($machine);
 $systeme = `uname -s`; chomp($systeme); $systeme .= `uname -r`;chomp($systeme);
 $getfem_lib = "libgetfem.a";
@@ -35,18 +34,12 @@ else
   $make = "gmake";
 }
 
+$ENV{CVSROOT} = ":pserver:renard\@gmmlinux2.gmm.priv:\/var\/cvs";
+
+#######################################
+#        Mise à jour                  #
+#######################################
 
 print `cd ..; cvs checkout getfem++`; print "\n\n";
-print `touch *`;
-print `touch config/*`;
-print `touch src/Mak*`;
-print `touch tests/Mak*`;
-print `touch matlabint/Mak*`;
-print `touch matlabcom/Mak*`;
+exec "./configure --prefix=$rootlib ; $make; $make install"; print "\n\n";
 
-open F, "./configure --prefix=$installpath |" or die;
-print $_ while (<F>); close F; print "\n\n";
-open F, "$make |" or die;
-print $_ while (<F>); close F; print "\n\n";
-open F, "$make install |" or die;
-print $_ while (<F>); close F; print "\n\n";
