@@ -177,11 +177,6 @@ namespace getfem
 			       bgeot::pgeometric_trans pgt, 
 			       const base_vector &coeff, 
 			       base_node &val, dim_type Qdim=1) const;
-    //     virtual void interpolation_grad(const base_node &x, 
-    //                                     const base_matrix &G,
-    // 				    bgeot::pgeometric_trans pgt,
-    // 				    const base_vector &coeff,
-    // 				    base_matrix &val) const;
     /** Function which interpolates the gradient in a arbitrary point x
      *  given on the reference element. coeff is the vector of coefficient
      *  relatively to the shape functions. G and pgt
@@ -225,7 +220,7 @@ namespace getfem
      */
     virtual void real_base_value(pgeotrans_precomp pgp, pfem_precomp pfp,
 				 size_type ii, const base_matrix &G,
-				 base_tensor &t) const;
+				 base_tensor &t, size_type elt) const;
     /** Gives the value of all gradients on the real element of the components
      *  of the base functions at the point ii of the pgp possibly using
      *  information on pfp, G and B. B is the matrix wich transforms the
@@ -236,7 +231,7 @@ namespace getfem
     virtual void real_grad_base_value(pgeotrans_precomp pgp, pfem_precomp pfp,
 				      size_type ii, const base_matrix &G,
 				      const base_matrix &B,
-				      base_tensor &t) const;
+				      base_tensor &t, size_type elt) const;
     /** Gives the value of all hessians on the real element of the components
      *  of the base functions at the point ii of the pgp possibly using
      *  information on pfp, G, B2 and B32. B2 and B32 are the matrices used
@@ -248,7 +243,7 @@ namespace getfem
 				      size_type ii, const base_matrix &G,
 				      const base_matrix &B3,
 				      const base_matrix &B32,
-				      base_tensor &t) const;
+				      base_tensor &t, size_type elt) const;
 
     
     virtual size_type index_of_already_numerate_dof(size_type, size_type) const

@@ -59,14 +59,17 @@ namespace getfem
 
     public :
 
-      virtual void compute(base_tensor &t, const base_matrix &a) = 0;
+      virtual void compute(base_tensor &t, const base_matrix &a,
+			   size_type elt) = 0;
       virtual void compute_on_face(base_tensor &t, const base_matrix &a,
-				   short_type f) = 0;
-      template <class CONT> void gen_compute(base_tensor &t, const CONT &a)
-      { transfert_to_G(pa, a); compute(t, pa); }
-      template <class CONT> void gen_compute_on_face(base_tensor &t,
-						 const CONT &a, short_type f)
-      { transfert_to_G(pa, a); compute_on_face(t, pa, f); }
+				   short_type f, size_type elt) = 0;
+      template <class CONT>
+	void gen_compute(base_tensor &t, const CONT &a,  size_type elt)
+      { transfert_to_G(pa, a); compute(t, pa,elt); }
+      template <class CONT>
+	void gen_compute_on_face(base_tensor &t,
+				 const CONT &a, short_type f, size_type elt)
+      { transfert_to_G(pa, a); compute_on_face(t, pa, f, elt); }
 
       virtual ~mat_elem_computation() {}
       virtual size_type memsize() const = 0;

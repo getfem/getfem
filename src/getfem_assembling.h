@@ -343,7 +343,7 @@ namespace getfem
 	pmec = mat_elem(pme, pim, pgt);
 	pf1prec = pf1; pf2prec = pf2; pgtprec = pgt; pimprec = pim;
       }
-      pmec->gen_compute(t, mf.linked_mesh().points_of_convex(cv));
+      pmec->gen_compute(t, mf.linked_mesh().points_of_convex(cv), cv);
       // cout << "elem matrix " << t << endl;
       base_tensor::iterator p = t.begin();
       for (size_type r = 0; r < nbd2; r++) {
@@ -416,7 +416,7 @@ namespace getfem
 	pf_p_prec = pf_p;
 	pf_d_prec = pf_d; pgtprec = pgt; pimprec = pim;
       }
-      pmec->gen_compute(t, mf_u.linked_mesh().points_of_convex(cv));
+      pmec->gen_compute(t, mf_u.linked_mesh().points_of_convex(cv), cv);
       
       base_tensor::iterator p = t.begin();
       for (size_type i = 0; i < nbdof_d; i++) {
@@ -486,7 +486,7 @@ namespace getfem
 	pmec = mat_elem(pme, pim, pgt);
 	pf1prec = pf1; pf2prec = pf2; pgtprec = pgt; pimprec = pim;
       }
-      pmec->gen_compute(t, mf.linked_mesh().points_of_convex(cv));
+      pmec->gen_compute(t, mf.linked_mesh().points_of_convex(cv), cv);
       base_tensor::iterator p = t.begin();
       
       size_type nbd = mf.nb_dof_of_element(cv);
@@ -574,7 +574,7 @@ namespace getfem
 	for (f << nf; f != ST_NIL; f << nf)
 	{
 	  pmec->gen_compute_on_face(t,mf_u.linked_mesh().points_of_convex(cv),
-				    f);
+				    f, cv);
 	  base_tensor::iterator p = t.begin();
 	  scalar_type vmax = gmm::vect_norminf(base_vector(t));
 
@@ -817,7 +817,7 @@ namespace getfem
 	pmec = mat_elem(pme, pim, pgt);
 	pf1prec = pf1; pf2prec = pf2; pgtprec = pgt; pimprec = pim;
       }
-      pmec->gen_compute(t, mf1.linked_mesh().points_of_convex(cv));
+      pmec->gen_compute(t, mf1.linked_mesh().points_of_convex(cv), cv);
 
       // cout << "t = " << t << endl;
       
@@ -878,7 +878,7 @@ namespace getfem
 	for (f << nf; f != ST_NIL; f << nf) {
 
 	  pmec->gen_compute_on_face(t, mf1.linked_mesh().points_of_convex(cv),
-				    f);
+				    f, cv);
 	  
 	  base_tensor::iterator p = t.begin();
 	  for (size_type i = 0; i < nbd2; i++) {
@@ -935,7 +935,7 @@ namespace getfem
 	pmec = mat_elem(pme, pim, pgt);
 	pf1prec = pf1; pf2prec = pf2; pgtprec = pgt; pimprec = pim;
       }
-      pmec->gen_compute(t, mf.linked_mesh().points_of_convex(cv));
+      pmec->gen_compute(t, mf.linked_mesh().points_of_convex(cv), cv);
       base_tensor::iterator p = t.begin();
       for (size_type i = 0; i < nbd2; i++)
       {
@@ -1329,7 +1329,8 @@ namespace getfem
 	{
 	  // cout << "cv = " << cv << " f = " << f << endl;
 
-	  pmec->gen_compute_on_face(t,mf.linked_mesh().points_of_convex(cv),f);
+	  pmec->gen_compute_on_face(t,mf.linked_mesh().points_of_convex(cv), 
+				    f, cv);
 	  // cout << "t = " << t << endl;
 	  base_tensor::iterator p = t.begin();
 	  for (size_type i = 0; i < nbd2; i++)

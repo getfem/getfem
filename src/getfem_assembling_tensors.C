@@ -403,22 +403,22 @@ namespace getfem {
 
 	pgt = pgt2; pim = pim2;
 	pmec = mat_elem(pme, pim, pgt);
-	/*	cerr << "ATN_computed_tensor::check_shape_update(" << cv << ")="; 
-		const bgeot::tensor_shape& t = tensor(); t._print(); 
-		tensor()._print(); cerr << endl;
+	/*  cerr << "ATN_computed_tensor::check_shape_update(" << cv << ")="; 
+	    const bgeot::tensor_shape& t = tensor(); t._print(); 
+	    tensor()._print(); cerr << endl;
 	*/
       }
     }
-    //    virtual void init_required_shape() { req_shape = tensor_shape(ranges()); }
+    // virtual void init_required_shape() { req_shape=tensor_shape(ranges()); }
     void reinit() {
       //cerr << "name: " << name() << ", required shape=" << req_shape << endl;
     }
     void _exec(size_type cv, dim_type face) {
       const mesh_fem& mf = *mfcomp[0].pmf;
       if (face == dim_type(-1))
-	pmec->gen_compute(t, mf.linked_mesh().points_of_convex(cv));
+	pmec->gen_compute(t, mf.linked_mesh().points_of_convex(cv), cv);
       else 
-	pmec->gen_compute_on_face(t, mf.linked_mesh().points_of_convex(cv), face);
+	pmec->gen_compute_on_face(t, mf.linked_mesh().points_of_convex(cv), face, cv);
       if (t.size() != size_type(tsize)) DAL_INTERNAL_ERROR(""); // sinon on est mal
       data_base = &(*t.begin());
       //cerr << "ATN_computed_tensor::exec("<<cv<<","<<face<<")=" << tensor() << endl;
@@ -433,7 +433,8 @@ namespace getfem {
     vdim_specif_list vdim;
     multi_tensor_iterator mti;
   public:
-    ATN_tensor_from_dofs_data(const scalar_type *data_begin, const vdim_specif_list& d) :
+    ATN_tensor_from_dofs_data(const scalar_type *data_begin,
+			      const vdim_specif_list& d) :
       global_array(data_begin), vdim(d) {
       /*
 	global_strides.resize(vdim.size()+1);

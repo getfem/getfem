@@ -137,7 +137,8 @@ namespace getfem
     }
 
     void add_elem(base_tensor &t, const base_matrix &G, size_type ip,
-		  scalar_type J, dim_type N, bool first, bool trans = true) {
+		  scalar_type J, dim_type N, size_type elt, 
+		  bool first, bool trans = true) {
       mat_elem_type::const_iterator it = pme->begin(), ite = pme->end();
       bgeot::multi_index mi(pme->mi.size()), sizes = pme->mi;
       bgeot::multi_index::iterator mit = sizes.begin();
@@ -147,12 +148,12 @@ namespace getfem
 	
 	switch ((*it).t) {
 	case GETFEM__BASE    :
-	  (*it).pfi->real_base_value(pgp, pfp[k], ip, G, elmt_stored[k]);
+	  (*it).pfi->real_base_value(pgp, pfp[k], ip, G, elmt_stored[k], elt);
 	  break;
 	case GETFEM__GRAD    :
 	  if (trans) {
 	    (*it).pfi->real_grad_base_value(pgp, pfp[k], ip, G, B, 
-					    elmt_stored[k]);
+					    elmt_stored[k], elt);
 	    *mit++ = N;
 	  }
 	  else
@@ -161,7 +162,7 @@ namespace getfem
 	case GETFEM__HESSIAN :
 	  if (trans) {
 	    (*it).pfi->real_hess_base_value(pgp, pfp[k], ip, G, B3, 
-					    B32, elmt_stored[k]);
+					    B32, elmt_stored[k], elt);
 	    *mit++ = N*N;
 	  }
 	  else {
@@ -294,7 +295,8 @@ namespace getfem
 	for (size_type ip = (volumic ? 0:nb_ptc); ip < nb_pt_tot; ++ip) {
 	  while (ip == nb_pt_l && ind_l < nbf)
 	    { nb_pt_l += pai->nb_points_on_face(ind_l); ind_l++; }
-	  add_elem(mref[ind_l], B, ip, 1.0, 0, first, false); first = false;
+	  add_elem(mref[ind_l], B, ip, 1.0, 0, 0, first, false);
+	  first = false;
 	}
       }
       // cout << "precompute Mat elem computation time : "
@@ -302,7 +304,8 @@ namespace getfem
     }
 
 
-    void compute(base_tensor &t, const base_matrix &G, size_type ir) {
+    void compute(base_tensor &t, const base_matrix &G, size_type ir,
+		 size_type elt) {
       dim_type P = dim, N = G.nrows();
       short_type NP = pgt->nb_points();
       scalar_type J;
@@ -407,7 +410,7 @@ namespace getfem
 	    gmm::mult(B3, B2, B32);
 	  }
 
-	  add_elem(t, G,  ip, J, N, first);
+	  add_elem(t, G,  ip, J, N, elt, first);
 	}
       }
 
@@ -429,11 +432,12 @@ namespace getfem
       if (flag) t = taux;
     }
     
-    void compute(base_tensor &t, const base_matrix &G)
-    { compute(t, G, 0); }
+    void compute(base_tensor &t, const base_matrix &G, size_type elt)
+    { compute(t, G, 0, elt); }
 
-    void compute_on_face(base_tensor &t, const base_matrix &G, short_type f)
-    { compute(t, G, f+1); }
+    void compute_on_face(base_tensor &t, const base_matrix &G,
+			 short_type f, size_type elt)
+    { compute(t, G, f+1, elt); }
 
   };
 

@@ -129,20 +129,20 @@ namespace getfem
 
   void virtual_fem::real_base_value(pgeotrans_precomp, pfem_precomp pfp,
 				    size_type ip, const base_matrix &,
-				    base_tensor &t) const
+				    base_tensor &t, size_type) const
   { t = pfp->val(ip); }
   void virtual_fem::real_grad_base_value(pgeotrans_precomp,
 					 pfem_precomp pfp,
 					 size_type ip, const base_matrix &,
 					 const base_matrix &B,
-					 base_tensor &t) const
+					 base_tensor &t, size_type) const
   { t.mat_transp_reduction(pfp->grad(ip), B, 2); }
   void virtual_fem::real_hess_base_value(pgeotrans_precomp,
 					 pfem_precomp pfp,
 					 size_type ip, const base_matrix &,
 					 const base_matrix &B3,
 					 const base_matrix &B32,
-					 base_tensor &t) const {
+					 base_tensor &t, size_type) const {
     base_tensor tt = pfp->hess(ip);
     bgeot::multi_index mim(3);
     mim[2] = dal::sqr(tt.sizes()[2]); mim[1] = tt.sizes()[1];

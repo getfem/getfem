@@ -169,7 +169,7 @@ namespace getfem
 
   void Xfem::real_base_value(pgeotrans_precomp pgp, pfem_precomp pfp,
 			     size_type ii, const base_matrix &G,
-			     base_tensor &t) const {
+			     base_tensor &t, size_type) const {
     bgeot::multi_index mi(2);
     mi[1] = target_dim(); mi[0] = nb_base();
     t.adjust_sizes(mi);
@@ -191,7 +191,8 @@ namespace getfem
 
   void Xfem::real_grad_base_value(pgeotrans_precomp pgp, pfem_precomp pfp,
 				  size_type ii, const base_matrix &G,
-				  const base_matrix &B, base_tensor &t) const {
+				  const base_matrix &B, base_tensor &t,
+				  size_type) const {
     
     bgeot::multi_index mi(3);
     dim_type n = G.nrows();
@@ -240,7 +241,7 @@ namespace getfem
   void Xfem::real_hess_base_value(pgeotrans_precomp, pfem_precomp,
 				  size_type, const base_matrix &,
 				  const base_matrix &, const base_matrix &,
-				  base_tensor &) const {
+				  base_tensor &, size_type) const {
     DAL_THROW(to_be_done_error,
 	      "Sorry order 2 derivatives for Xfem to be done.");
   }

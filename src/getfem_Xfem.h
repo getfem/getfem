@@ -106,16 +106,17 @@ namespace getfem
 
     void real_base_value(pgeotrans_precomp pgp, pfem_precomp pfp,
 			 size_type ii, const base_matrix &G,
-			 base_tensor &t) const;
+			 base_tensor &t, size_type elt) const;
     
     void real_grad_base_value(pgeotrans_precomp pgp, pfem_precomp pfp,
 			      size_type ii, const base_matrix &G,
-			      const base_matrix &B, base_tensor &t) const;
+			      const base_matrix &B, base_tensor &t,
+			      size_type elt) const;
     
     void real_hess_base_value(pgeotrans_precomp pgp, pfem_precomp pfp,
 			      size_type ii, const base_matrix &G,
 			      const base_matrix &B3, const base_matrix &B32,
-			      base_tensor &t) const;
+			      base_tensor &t, size_type elt) const;
     
     Xfem(pfem pf);
   };

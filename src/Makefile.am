@@ -32,6 +32,7 @@ include_HEADERS =                      \
 	getfem_poly_composite.h        \
 	getfem_assembling.h            \
 	getfem_assembling_tensors.h    \
+	getfem_external_data_fem.h     \
 	getfem_config.h                \
 	getfem_export.h                \
 	getfem_import.h	               \

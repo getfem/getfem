@@ -285,7 +285,7 @@ void test1_mat_elem(const getfem::mesh_fem &mf,
       pmec = getfem::mat_elem(pme, pim, pgt);
       pf1prec = pf1; pf2prec = pf2; pgtprec = pgt; pimprec = pim;
     }
-    pmec->gen_compute(t, mf.linked_mesh().points_of_convex(cv));
+    pmec->gen_compute(t, mf.linked_mesh().points_of_convex(cv), cv);
     // cout << "t = " << t << endl;
   }
 }
@@ -317,7 +317,7 @@ void test2_mat_elem(const getfem::mesh_fem &mf,
       pmec = getfem::mat_elem(pme, pim, pgt);
       pf1prec = pf1; pf2prec = pf2; pgtprec = pgt; pimprec = pim;
     }
-    pmec->gen_compute_on_face(t, mf.linked_mesh().points_of_convex(cv), 0);
+    pmec->gen_compute_on_face(t, mf.linked_mesh().points_of_convex(cv), 0, cv);
   }
 }
 
