@@ -3,9 +3,7 @@
 open(DATAF, $ARGV[0]) or die "Open file impossible : $!\n";
 open(TMPF, ">_tmp") or die "Open file impossible : $!\n";
 
-$li = <DATAF>;
-$li = <DATAF>;
-$li = <DATAF>;
+$li = <DATAF>;$li = <DATAF>;$li = <DATAF>;$li = <DATAF>;$li = <DATAF>;
 
 while ($li = <DATAF>)
 {
