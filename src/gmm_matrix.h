@@ -365,7 +365,7 @@ namespace gmm
       for (size_type i = std::min(nbc, n); i < n; ++i)
 	std::fill(this->begin()+(i*m), this->begin()+(i+1)*m, T(0));
       }
-    else {
+    else if (m > nbl) { /* do nothing when the nb of rows does not change */
       for (size_type i = std::min(nbc, n); i > 1; --i)
 	std::copy(this->begin()+(i-1)*nbl, this->begin()+i*nbl,
 		  this->begin()+(i-1)*m);
