@@ -267,7 +267,7 @@ namespace getfem
      assembly of $\int_\Omega a(x)\nabla u.\nabla v$ , where $a(x)$ is scalar.
   */
   template<class MAT, class VECT>
-    void asm_stiffness_matrix_for_laplacian(MAT &RM, const mesh_fem &mf,
+    void asm_stiffness_matrix_for_laplacian(MAT &M, const mesh_fem &mf,
 					   const mesh_fem &mfdata, VECT &A)
   {
     generic_assembly assem("a=data$1(#2); M$1(#1,#1)+=sym(comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j))");
@@ -275,7 +275,7 @@ namespace getfem
     assem.push_mf(mf);
     assem.push_mf(mfdata);
     assem.push_data(A);
-    assem.push_mat(RM);
+    assem.push_mat(M);
     assem.volumic_assembly();
   }
 
@@ -283,14 +283,14 @@ namespace getfem
      assembly of $\int_\Omega A(x)\nabla u.\nabla v$ , where $A(x)$ is a matrix.
   */
   template<class MAT, class VECT>
-    void asm_stiffness_matrix_for_laplacian_anisotropic(MAT &RM, const mesh_fem &mf,
-							const mesh_fem &mfdata, VECT &A)
+    void asm_stiffness_matrix_for_scalar_elliptic(MAT &M, const mesh_fem &mf,
+						  const mesh_fem &mfdata, VECT &A)
   {
     generic_assembly assem("a=data$1(#2,mdim(#1),mdim(#1)); M$1(#1,#1)+=comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,j,k).a(k,j,i)");
     assem.push_mf(mf);
     assem.push_mf(mfdata);
     assem.push_data(A);
-    assem.push_mat(RM);
+    assem.push_mat(M);
     assem.volumic_assembly();
   }
 
