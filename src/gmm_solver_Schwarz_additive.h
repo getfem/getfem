@@ -56,12 +56,6 @@ namespace gmm {
   struct using_gmres {};
   struct using_bicgstab {};
 
-  template <typename P, typename local_solver, typename Matrix>
-  struct actual_precond {
-    typedef P APrecond;
-    static APrecond &transform(const P &PP) { return PP; }
-  };
-
   template <typename Matrix1, typename Precond, typename Vector> 
   void SA_local_solve(using_cg, const Matrix1 &A, Vector &x, const Vector &b,
 		 const Precond &P, iteration &iter)
@@ -76,6 +70,13 @@ namespace gmm {
   void SA_local_solve(using_bicgstab, const Matrix1 &A, Vector &x,
 		      const Vector &b, const Precond &P, iteration &iter)
   { bicgstab(A, x, b, P, iter); }
+
+  template <typename P, typename local_solver, typename Matrix>
+  struct actual_precond {
+    typedef P APrecond;
+    static APrecond &transform(const P &PP) { return PP; }
+  };
+
 
 #ifdef GMM_USES_SUPERLU
   struct using_superlu {};
@@ -103,9 +104,6 @@ namespace gmm {
 	    typename local_solver>
   struct schwadd_mat{
     typedef typename linalg_traits<Matrix1>::value_type value_type;
-    typedef typename std::vector<value_type> vector_type;
-    typedef typename actual_precond<Precond, local_solver, Matrix1>::APrecond
-            aprecond;
 
     const Matrix1 *A;
     const std::vector<Matrix2> *vB;
@@ -113,8 +111,9 @@ namespace gmm {
     mutable iteration iter;
     double residu;
     mutable size_type itebilan;
-    mutable std::vector<vector_type> gi, fi;
-    std::vector<aprecond> precond1;
+    mutable std::vector<std::vector<value_type> > gi, fi;
+    std::vector<typename actual_precond<Precond, local_solver,
+					Matrix1>::APrecond> precond1;
 
     void init(const Matrix1 &A_, const std::vector<Matrix2> &vB_,
 	      iteration iter_, const Precond &P, double residu_);
@@ -217,17 +216,11 @@ namespace gmm {
       ASM.iter.init();
       SA_local_solve(local_solver(), ASM.vAloc[i], ASM.gi[i], ASM.fi[i],
 		     ASM.precond1[i], ASM.iter);
-      // local_solver::solve(ASM.vAloc[i], ASM.gi[i], ASM.fi[i],
-      //		  ASM.precond1[i], ASM.iter);
       ASM.itebilan = std::max(ASM.itebilan, ASM.iter.get_iteration());
       gmm::mult(gmm::transposed((*(ASM.vB))[i]), ASM.gi[i], g, g);
     }
 
-    double utime = uclock_sec();
     SA_global_solve(global_solver(), ASM, u, g, iter);
-    if (iter.get_noisy() > 0)
-      cout << "Time for global resolution : "
-	   << uclock_sec() - utime << " seconds" << endl;
     return ASM.itebilan;
   }
 
@@ -265,8 +258,6 @@ namespace gmm {
       M.iter.init();
       SA_local_solve(local_solver(), (M.vAloc)[i], (M.gi)[i],
 		     (M.fi)[i],(M.precond1)[i],M.iter);
-      // local_solver::solve((M.vAloc)[i], (M.gi)[i],
-      //		       (M.fi)[i],(M.precond1)[i],M.iter);
       itebilan = std::max(itebilan, M.iter.get_iteration());
     }
     localtoglobal(M.gi, q, *(M.vB));
@@ -295,9 +286,6 @@ namespace gmm {
     for (size_type i = 0; i < fi.size(); ++i)
       gmm::mult(gmm::transposed(vB[i]), fi[i], f, f);
   }
-
-
-
 
   /* ******************************************************************** */
   /*		Sequential Non-Linear Additive Schwarz method             */
@@ -342,10 +330,8 @@ namespace gmm {
     typedef typename linalg_traits<Vector>::value_type value_type;
     typedef typename number_traits<value_type>::magnitude_type m_type;
     typedef typename NewtonAS_struct_::tangent_matrix_type Matrixt;
-    typedef typename actual_precond<Precond, local_solver, Matrix1>::APrecond
-      aprecond;
-
-    aprecond PP;
+    
+    typename actual_precond<Precond, local_solver, Matrix1>::APrecond PP;
     PP = actual_precond<Precond, local_solver, Matrix1>::transform(P);
 
     iter.set_rhsnorm(m_type(1));
@@ -376,9 +362,9 @@ namespace gmm {
 	while(!iter2.finished_vect(r)) {
 	  
 	  NS.compute_sub_tangent_matrix(Mloc, x, isd);
-	  P.init_with(Mloc);
+	  PP.init_with(Mloc);
 	  iter3.init();
-	  SA_local_solve(local_solver(), Mloc, di, fi, P, iter3);
+	  SA_local_solve(local_solver(), Mloc, di, fi, PP, iter3);
 	  // local_solver::solve(Mloc, di, fi, P, iter3);
 	  
 	  for (m_type alpha(1); alpha>=m_type(1)/m_type(8); alpha/=m_type(2)) {
