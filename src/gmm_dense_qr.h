@@ -275,7 +275,7 @@ namespace gmm {
     size_type n = mat_nrows(H); 
     
     std::vector<value_type> v(3), w(n);
-    // if (compute_Q) gmm::copy(identity_matrix(), Q);
+    if (compute_Q) gmm::copy(identity_matrix(), Q);
 
     value_type s = H(n-2, n-2) + H(n-1, n-1);
     value_type t = H(n-2, n-2) * H(n-1, n-1) - H(n-2, n-1) * H(n-1, n-2);
@@ -321,21 +321,21 @@ namespace gmm {
     typedef typename linalg_traits<MAT1>::value_type value_type;
 
     size_type n = mat_nrows(A), q = 0, p;
-    dense_matrix<value_type> /* Z(n,n), B(n,n), */ H(n,n);
+    dense_matrix<value_type> Z(n,n), B(n,n), H(n,n);
     gmm::copy(A, H);
     Hessenberg_reduction(H, eigvect, compvect);
     stop_criterion(H, p, q, tol);
 
     while (q < n) {
-      sub_interval SUBI(p, n-p-q)/*, SUBJ(0,n)*/;
+      sub_interval SUBI(p, n-p-q), SUBJ(0,n);
       Francis_qr_step(sub_matrix(H, SUBI),
-		      sub_matrix(eigvect, SUBI), compvect);
+		      sub_matrix(Z, SUBI), compvect);
 //		      sub_matrix(eigvect, SUBJ, SUBI), compvect);
-//       if (compvect) {
-// 	gmm::mult(sub_matrix(eigvect, SUBJ, SUBI),
-// 		  sub_matrix(Z, SUBI), sub_matrix(B, SUBJ, SUBI));
-// 	gmm::copy(sub_matrix(B, SUBJ, SUBI), sub_matrix(eigvect, SUBJ, SUBI));
-//       }
+       if (compvect) {
+ 	gmm::mult(sub_matrix(eigvect, SUBJ, SUBI),
+ 		  sub_matrix(Z, SUBI), sub_matrix(B, SUBJ, SUBI));
+ 	gmm::copy(sub_matrix(B, SUBJ, SUBI), sub_matrix(eigvect, SUBJ, SUBI));
+       }
       stop_criterion(H, p, q, tol);
     }
     clean(H, 1E-12); cout << "H = " << H << endl;
