@@ -232,6 +232,57 @@ namespace gmm {
     return res;
   }
 
+  template <class L> inline void fill_random(L& l) {
+    fill_random(l, typename linalg_traits<L>::linalg_type());
+  }
+
+  template <class L> inline void fill_random(const L& l) {
+    fill_random(linalg_const_cast(l), typename linalg_traits<L>::linalg_type());
+  }
+
+  template <class L> inline void fill_random(L& l, abstract_vector) {
+    for (size_type i = 0; i < vect_size(l); ++i) l[i] = dal::random();
+  }
+
+  template <class L> inline void fill_random(L& l, abstract_matrix) {
+    for (size_type i = 0; i < mat_nrows(l); ++i)
+      for (size_type j = 0; j < mat_ncols(l); ++j)
+	l(i,j) = dal::random();
+  }
+
+  template <class L> inline void fill_random(L& l, double cfill) {
+    fill_random(l, cfill, typename linalg_traits<L>::linalg_type());
+  }
+
+  template <class L> inline void fill_random(const L& l, double cfill) {
+    fill_random(linalg_const_cast(l), cfill, typename linalg_traits<L>::linalg_type());
+  }
+
+  template <class L> inline void fill_random(L& l, double cfill, abstract_vector) {
+    if (cfill > 0.1) {
+      for (size_type i = 0; i < vect_size(l); ++i) 
+	if (dal::random() < cfill) l[i] = dal::random(); else l[i] = 0;
+    } else {
+      for (size_type i=0; i < size_type(vect_size(l)*cfill)+1; ++i) {
+	l[dal::irandom(vect_size(l))]=dal::random();
+      }
+    }
+  }
+
+  template <class L> inline void fill_random(L& l, double cfill, abstract_matrix) {
+    fill_random(l, cfill, typename principal_orientation_type<typename
+		linalg_traits<L>::sub_orientation>::potype());
+  }
+
+  template <class L> inline void fill_random(L& l, double cfill, row_major) {
+    for (size_type i=0; i < mat_nrows(l); ++i) fill_random(mat_row(l,i), cfill);
+  }
+
+  template <class L> inline void fill_random(L& l, double cfill, col_major) {
+    for (size_type j=0; j < mat_ncols(l); ++j) fill_random(mat_col(l,j), cfill);
+  }
+
+
   /* ******************************************************************** */
   /*		Write                                   		  */
   /* ******************************************************************** */
@@ -1779,7 +1830,7 @@ namespace gmm {
   void mult_spec(const L1& l1, const L2& l2, L3& l3, crmult, abstract_skyline)
   { mult_spec(l1, l2, l3, crmult(), abstract_sparse()); }
 
-
+  
 }
 
 #endif //  __GMM_BLAS_H

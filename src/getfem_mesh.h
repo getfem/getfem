@@ -355,6 +355,9 @@ namespace getfem
       base_vector normal_of_face_of_convex(size_type ic, short_type f,
 					   size_type n) const;
 
+      scalar_type convex_quality_estimate(size_type ic) const;
+      scalar_type convex_radius_estimate(size_type ic) const;
+      scalar_type minimal_convex_radius_estimate() const;
       void translation(base_vector);
       void transformation(base_matrix);
   
@@ -434,6 +437,14 @@ namespace getfem
 
   typedef getfem_mesh *pgetfem_mesh;
 
+  /** rough estimate of the maximum value of the condition 
+   * number of the jacobian of the geometric transformation */
+  scalar_type convex_quality_estimate(bgeot::pgeometric_trans pgt, const base_matrix& pts);
+
+  /** rough estimate of the radius of the convex using the largest eigenvalue
+   * of the jacobian of the geometric transformation */
+  scalar_type convex_radius_estimate(bgeot::pgeometric_trans pgt, const base_matrix& pts);
+  
 }  /* end of namespace getfem.                                             */
 
 
