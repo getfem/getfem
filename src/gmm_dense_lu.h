@@ -129,9 +129,6 @@ namespace gmm {
   void lu_solve_transposed(const DenseMatrix &LU, const Pvector& pvector, 
 			   VectorX &x, const VectorB &b) {
     copy(b, x);
-    /* use the permutation vector to modify the starting vector            */
-    /*  to account for the permutations in LU.                             */
-    /* solve  Ax = b  ->  LUx = b  ->  Ux = L^-1 b.                        */
     lower_tri_solve(transposed(LU), x, false);
     upper_tri_solve(transposed(LU), x, true);
     for(size_type i = pvector.size(); i > 0; --i) {
@@ -184,8 +181,9 @@ namespace gmm {
   template <class DenseMatrix>
   typename linalg_traits<DenseMatrix>::value_type
   lu_inverse(const DenseMatrix& A_) {
+    typedef typename linalg_traits<DenseMatrix>::value_type value_type;
     DenseMatrix& A = const_cast<DenseMatrix&>(A_);
-    DenseMatrix B(mat_nrows(A), mat_ncols(A));
+    dense_matrix<value_type> B(mat_nrows(A), mat_ncols(A));
     std::vector<size_type> ipvt(mat_nrows(A));
     gmm::copy(A, B);
     if (lu_factor(B, ipvt)) DAL_THROW(failure_error, "Non invertible matrix");
@@ -205,7 +203,8 @@ namespace gmm {
   template <class DenseMatrix>
   typename linalg_traits<DenseMatrix>::value_type
   lu_det(const DenseMatrix& A) {
-    DenseMatrix B(mat_nrows(A), mat_ncols(A));
+    typedef typename linalg_traits<DenseMatrix>::value_type value_type;
+    dense_matrix<value_type> B(mat_nrows(A), mat_ncols(A));
     std::vector<size_type> ipvt(mat_nrows(A));
     gmm::copy(A, B);
     lu_factor(B, ipvt);

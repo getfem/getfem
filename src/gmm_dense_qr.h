@@ -227,7 +227,7 @@ namespace gmm {
   /*    Basic qr algorithm.                                                */
   /* ********************************************************************* */
 
-  // QR method for real square matrices based on QR factorisation.
+  // QR method for real or complex square matrices based on QR factorisation.
   // eigval has to be a complex vector if A has complex eigeinvalues.
   // Very slow method. Use implicit_qr_method instead.
   template <class MAT1, class VECT, class MAT2>
@@ -240,7 +240,7 @@ namespace gmm {
     typedef typename linalg_traits<MAT1>::value_type value_type;
 
     size_type n = mat_nrows(A), p, q, ite = 0;
-    MAT1 Q(n, n), R(n,n), A1(n,n); 
+    dense_matrix<value_type> Q(n, n), R(n,n), A1(n,n); 
     gmm::copy(A, A1);
 
     Hessenberg_reduction(A1, eigvect, compvect);
@@ -309,9 +309,10 @@ namespace gmm {
   /*    Implicit QR algorithm.                                             */
   /* ********************************************************************* */
 
-  // implicit QR method for real square matrices based on QR factorisation.
-  // eigval has to be a complex vector if A has complex eigeinvalues.
-  // complexity about 10n^3, 25n^3 if eigenvectors are computed
+  // QR method for real or complex square matrices based on an
+  // implicit QR factorisation. eigval has to be a complex vector
+  // if A has complex eigeinvalues. complexity about 10n^3, 25n^3 if
+  // eigenvectors are computed
   template <class MAT1, class VECT, class MAT2>
     void implicit_qr_algorithm(const MAT1 &A, const VECT &eigval_,
 			       const MAT2 &eigvect_,
@@ -342,7 +343,7 @@ namespace gmm {
       stop_criterion(H, p, q, tol);
       if (++ite > n*1000) DAL_THROW(failure_error, "QR algorithm failed");
     }
-    clean(H, 1E-12); cout << "H = " << H << endl;
+    // clean(H, 1E-12); cout << "H = " << H << endl;
     extract_eig(H, eigval, tol);
   }
 
@@ -357,9 +358,8 @@ namespace gmm {
   /* ********************************************************************* */
   /*    Implicit symmetric QR step with Wilkinson Shift.                   */
   /* ********************************************************************* */
-  /* for a real matrix T.                                                  */
 
-  template <class MAT1, class MAT2>
+  template <class MAT1, class MAT2> 
     void Wilkinson_qr_step(const MAT1& TT, const MAT2 &ZZ, bool compute_z) {
     MAT1& T = const_cast<MAT1&>(TT); MAT2& Z = const_cast<MAT2&>(ZZ);
     typedef typename linalg_traits<MAT1>::value_type value_type;
