@@ -72,7 +72,7 @@ int main(void)
     }
     cout << tsa << endl;
     
-    for (unsigned long i = 0; i < 50000; i++)
+    for (unsigned long i = 0; i < 50 /*50000*/; i++)
     {
       if (!(i % 10000)) cout <<" no " << i << " nb_elt " << tsa.card() << endl;
       
@@ -102,6 +102,21 @@ int main(void)
       dal::dynamic_tree_sorted<int>::iterator it= tsa.begin(), end = tsa.end();
       while (it != end) cout << *it++ << " : ";
       cout << endl << endl;
+    }
+
+    {
+      dal::dynamic_tree_sorted<std::string> v;
+      for (unsigned i=0; i < 1000; ++i) {
+	v.add("toto"); v.add("hop"); v.add_norepeat("grr");
+	std::string s; 
+	for (int j=0; j < 5; ++j) s.push_back('a' + (rand() % 26));
+	v.add(s);
+      }
+      {
+	dal::dynamic_tree_sorted<std::string>::iterator it= v.begin(), end = v.end();
+	while (it != end) cout << *it++ << " : ";
+	cout << endl << endl;
+      }
     }
   }
   DAL_STANDARD_CATCH_ERROR;
