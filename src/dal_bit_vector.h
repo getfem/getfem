@@ -295,7 +295,11 @@ namespace dal
         for (typename ICONT::const_iterator it = c.begin(); it != c.end(); ++it) add(*it);
 	return *this;
       }
-    
+    template <typename IT> dal::bit_vector& merge_from(IT b, IT e) {
+      while (b != e) { add(*b++); }
+      return *this;
+    }
+   
   /* ********************************************************************* */
   /*									   */
   /*	     Adaptation for old structure int_set.                         */
