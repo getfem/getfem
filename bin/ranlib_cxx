@@ -1,2 +1,2 @@
 #!/bin/sh
-(ranlib $* 2>&1 | sed -e '/ignoring second definition/d')
+(ranlib $* 2>&1 | sed -e '/ignoring second definition/d' -e '/weak symbol multiply/d' )
