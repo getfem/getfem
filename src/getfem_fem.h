@@ -153,25 +153,26 @@ namespace getfem
       { DAL_THROW(internal_error, "This function should not be called."); }
     virtual void interpolation(const base_node &x, const base_matrix &G,
 			       bgeot::pgeometric_trans pgt,
-			       const base_vector coeff, 
+			       const base_vector &coeff, 
 			       base_node &val) const = 0;
     virtual void interpolation(pfem_precomp pfp, size_type ii,
 			       const base_matrix &G,
 			       bgeot::pgeometric_trans pgt, 
-			       const base_vector coeff, base_node &val) const;
+			       const base_vector &coeff, 
+			       base_node &val, dim_type Qdim=1) const;
     virtual void interpolation_grad(const base_node &x, const base_matrix &G,
 				    bgeot::pgeometric_trans pgt,
-				    const base_vector coeff,
+				    const base_vector &coeff,
 				    base_matrix &val) const = 0;
     virtual void complete_interpolation_grad(const base_node &x,
 					     const base_matrix &G,
 					     bgeot::pgeometric_trans pgt,
-					     const base_vector coeff,
+					     const base_vector &coeff,
 					     base_matrix &val) const;
     virtual void interpolation_grad(pfem_precomp pfp, size_type ii,
 				    const base_matrix &G,
 				    bgeot::pgeometric_trans pgt, 
-				    const base_vector coeff,
+				    const base_vector &coeff,
 				    base_matrix &val) const;
 
     /** Gives the value of all components of the base functions at the
@@ -242,22 +243,23 @@ namespace getfem
     virtual void interpolation(pfem_precomp pfp, size_type ii,
 			       const base_matrix &G,
 			       bgeot::pgeometric_trans pgt, 
-      const base_vector coeff, base_node &val) const { 
-      virtual_fem::interpolation(pfp,ii,G,pgt,coeff,val); 
+			       const base_vector &coeff, 
+			       base_node &val, dim_type Qdim=1) const { 
+      virtual_fem::interpolation(pfp,ii,G,pgt,coeff,val,Qdim); 
     }
     void interpolation(const base_node &x, const base_matrix &G, 
 		       bgeot::pgeometric_trans pgt,
-		       const base_vector coeff, base_node &val) const;
+		       const base_vector &coeff, base_node &val) const;
     void interpolation_grad(pfem_precomp pfp, size_type ii,
 			    const base_matrix &G,
 			    bgeot::pgeometric_trans pgt, 
-			    const base_vector coeff,
+			    const base_vector &coeff,
 			    base_matrix &val) const { 
       virtual_fem::interpolation_grad(pfp,ii,G,pgt,coeff,val); 
     }
     void interpolation_grad(const base_node &x, const base_matrix &G,
 			    bgeot::pgeometric_trans pgt,
-			    const base_vector coeff, base_matrix &val) const;
+			    const base_vector &coeff, base_matrix &val) const;
     void base_value(const base_node &x, base_tensor &t) const {
       bgeot::multi_index mi(2);
       mi[1] = target_dim(); mi[0] = nb_base();
@@ -306,7 +308,7 @@ namespace getfem
   template <class FUNC>
   void fem<FUNC>::interpolation(const base_node &x, const base_matrix &G,
 				bgeot::pgeometric_trans pgt, 
-				const base_vector coeff,
+				const base_vector &coeff,
 				base_node &val) const { 
     // optimisable.   verifier et faire le vectoriel
     base_matrix M;
@@ -336,7 +338,7 @@ namespace getfem
   void fem<FUNC>::interpolation_grad(const base_node &x,
 				     const base_matrix &G,
 				     bgeot::pgeometric_trans pgt, 
-				     const base_vector coeff,
+				     const base_vector &coeff,
 				     base_matrix &val) const { 
     // optimisable.   verifier
     base_matrix M;
