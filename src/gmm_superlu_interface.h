@@ -83,7 +83,6 @@ namespace gmm {
 				      (SuperLU_Z::doublecomplex *)(a), ir, jc,
 				      SLU_NC, SLU_Z, SLU_GE);
   }
-  
 
   /*  interface for Create_Dense_Matrix */
 
@@ -101,7 +100,6 @@ namespace gmm {
     SuperLU_Z::zCreate_Dense_Matrix(A, m, n, (SuperLU_Z::doublecomplex *)(a),
 				    k, SLU_DN, SLU_Z, SLU_GE);
   }
-
 
   /*  interface for gssv */
 
@@ -136,46 +134,33 @@ namespace gmm {
     typedef typename linalg_traits<MAT>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
 
-    int m = mat_nrows(A), n = mat_ncols(A), nrhs = 1;
+    int m = mat_nrows(A), n = mat_ncols(A), nrhs = 1, info;
 
-    csc_matrix<T> csc_A(m, n);
-    gmm::copy(A, csc_A);
-
-    //cout << "csa_A = " << csc_A << endl;
-
+    csc_matrix<T> csc_A(m, n); gmm::copy(A, csc_A);
     std::vector<T> rhs(m);
     gmm::copy(B, rhs);
 
     int nz = nnz(csc_A);
-
-    cout << " nnz = " << nz << endl;
-
-    assert(sizeof(size_type) == sizeof(int));
+    if ((2 * nz / n) >= m)
+      DAL_WARNING(2, "CAUTION : it seems that SuperLU has a problem"
+		  " for nearly dense sparse matrices");
 
     SuperMatrix SA, SL, SU, SB; // SuperLU format.
-
     Create_CompCol_Matrix(&SA, m, n, nz, csc_A.pr,
 			  (int *)(csc_A.ir), (int *)(csc_A.jc));
     Create_Dense_Matrix(&SB, m, nrhs, &rhs[0], m);
-
-    cout << "n = " << n << " m = " << m << endl;
-    cout << "Ok après Create\n";
     
-    std::vector<int> perm_r(m), perm_c(n+1);
-    SuperLU_S::get_perm_c(permc_spec, &SA, &perm_c[0]);
+    std::vector<int> perm_r(m), perm_c(3*n);
+    SuperLU_S::get_perm_c(permc_spec, &SA, &perm_c[n]);
 
-    cout << "Ok après perm\n";
-
-    int info;
-    SuperLU_gssv(&SA, &perm_c[0], &perm_r[0], &SL, &SU, &SB, &info, T());
+    SuperLU_gssv(&SA, &perm_c[n], &perm_r[0], &SL, &SU, &SB, &info, T());
     if (info != 0) DAL_THROW(failure_error, "SuperLU solve failed");
     gmm::copy(rhs, X);
     SuperLU_S::Destroy_SuperMatrix_Store(&SB);
     SuperLU_S::Destroy_SuperMatrix_Store(&SA);
-    SuperLU_S::Destroy_SuperNode_Matrix(&SL); // fuite de mémoire ... ?
+    SuperLU_S::Destroy_SuperNode_Matrix(&SL);
     SuperLU_S::Destroy_CompCol_Matrix(&SU);
   }
-
 }
 
   

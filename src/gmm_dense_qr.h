@@ -308,8 +308,8 @@ namespace gmm {
 
     size_type n = mat_nrows(H), nq = mat_nrows(Q), m;
     std::vector<T> v(3), w(std::max(n, nq));
-    const R dat1 = 0.75, dat2 = -0.4375;
-    T h33, h44, h43h34, v1 = 0, v2 = 0, v3 = 0;
+    const R dat1(0.75), dat2(-0.4375);
+    T h33, h44, h43h34, v1(0), v2(0), v3(0);
     
     if (exc) {                    /* Exceptional shift.                    */
       R s = dal::abs(H(n-1, n-2)) + dal::abs(H(n-2, n-3));
@@ -379,26 +379,26 @@ namespace gmm {
   // eigenvectors are computed
   template <class MAT1, class VECT, class MAT2>
     void implicit_qr_algorithm(const MAT1 &A, const VECT &eigval_,
-			       const MAT2 &eigvect_,
+			       const MAT2 &Q_,
 			       double tol = gmm::default_tol(typename
 		   linalg_traits<MAT1>::value_type()), bool compvect = true) {
     VECT &eigval = const_cast<VECT &>(eigval_);
-    MAT2 &eigvect = const_cast<MAT2 &>(eigvect_);
+    MAT2 &Q = const_cast<MAT2 &>(Q_);
     typedef typename linalg_traits<MAT1>::value_type value_type;
 
     size_type n = mat_nrows(A), q = 0, q_old, p, ite = 0, its = 0;
     dense_matrix<value_type> H(n,n);
 
     gmm::copy(A, H);
-    Hessenberg_reduction(H, eigvect, compvect);
+    Hessenberg_reduction(H, Q, compvect);
     stop_criterion(H, p, q, tol);
 
     while (q < n) {
       sub_interval SUBI(p, n-p-q), SUBJ(0,n);
 //       Francis_qr_step(sub_matrix(H, SUBI),
-// 		      sub_matrix(eigvect, SUBJ, SUBI), compvect);
+// 		      sub_matrix(Q, SUBJ, SUBI), compvect);
       Wilkinson_double_shift_qr_step(sub_matrix(H, SUBI), 
-				     sub_matrix(eigvect, SUBJ, SUBI),
+				     sub_matrix(Q, SUBJ, SUBI),
 				     tol, (its == 10 || its == 20), compvect);
 
       q_old = q;

@@ -27,8 +27,19 @@
 // options d'optimisations avec g++ :
 //  -funroll-all-loops -ffast-math -fstrict-aliasing -fomit-frame-pointer
 
+// pour qd ou dd :
+// /home/gmmpc15/renard/usr/pc_g++/lib/libqd.a 
+// #define NO_INLINE
+// #include <qd.h> 
+// #include <dd.h>
+// #include <x86.h>
+
+#define NO_INLINE
+#include <dd.h>
+#include <qd.h>
+#include <x86.h>
+
 // #define GMM_USES_LAPACK
-#include <ftool.h>
 #include <gmm.h>
 #include <gmm_inoutput.h>
 
@@ -37,6 +48,7 @@ using gmm::size_type;
 
 template<class MAT> void my_mult(const MAT &A, const MAT &B, MAT &C) {
   gmm::mult(gmm::conjugated(A), gmm::conjugated(B), C);
+  
 }
 
 template <class T> void test_with(T) {
@@ -51,9 +63,11 @@ template <class T> void test_with(T) {
   gmm::fill_random(y);
   
   
-  double exectime = ftool::uclock_sec();
+  double exectime = dal::uclock_sec();
   implicit_qr_algorithm(A, x, C);
-  
+
+  // gmm::mult(A, x, gmm::scaled(y, T(-1)), z);
+  // cout << "z = " << z << endl;
 
   cout << "A = " << A << endl;
   cout << "x = " << x << endl;
@@ -62,7 +76,7 @@ template <class T> void test_with(T) {
 
   gmm::mult(C, conjugated(C), B);
   cout << "B = " << B << endl;
-  cout << "cpu time = " << ftool::uclock_sec() - exectime << endl;
+  cout << "cpu time = " << dal::uclock_sec() - exectime << endl;
   // cout << "col(B,2) = " << gmm::mat_const_col(B,2) << endl;
   // cout << "col(C,2) = " << gmm::mat_const_col(C,2) << endl;
   
@@ -82,11 +96,23 @@ int main(void)
 # endif
 
   try {
+
+    unsigned short old_cw;
+    x86_fix_start(&old_cw);
     
-    test_with(float());
-    test_with(double());
-    test_with(std::complex<float>());
-    test_with(std::complex<double>());
+    // test_with(float());
+    // test_with(double());
+    // test_with(std::complex<float>());
+    // test_with(std::complex<double>());
+
+    dd_real a = "1.23456789012345678901234567890123456789";
+
+    cout << "a dd-real : " << a << endl;
+
+    test_with(dd_real());
+    test_with(std::complex<qd_real>());
+
+    x86_fix_end(&old_cw);
     
   }
   DAL_STANDARD_CATCH_ERROR;

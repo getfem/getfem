@@ -321,42 +321,66 @@ typedef unsigned char uint8_type;
 
 #endif
 
-  /* juste pour forcer l'instanciation dans libgetfem de tous les
-     type qu'on est suceptible afficher. Si il en manque un (c'est le cas pour unsigned et float)
-     dans libgetfem.so qui est utilise dans libgetfemint.so alors on retrouve un warning
-     comme quoi le symbole __T_Q13std8ios_base et __T_Q13std11logic_error sont dupliqués
-     visiblement il reinstancie un peu trop de trucs .. 
+  /* Pour forcer l'instanciation dans libgetfem de tous les
+     type qu'on est suceptible d' afficher. Si il en manque un (c'est
+     le cas pour unsigned et float) dans libgetfem.so qui est utilise
+     dans libgetfemint.so alors on retrouve un warning
+     comme quoi le symbole __T_Q13std8ios_base et __T_Q13std11logic_error
+     sont dupliqués
+     visiblement il reinstancie un peu trop de choses .. 
 
      pour s'assurer que le probleme n'est pas de retour, faire
-     nm libgetfem.so | grep 'td::basic_ostream<char, std::char_traits<char> >::operator <<'
-     et faire de même dans tous les .o de matlabint, et s'assurer que tous ceux de matlabint
-     sont bien inclus dans libgetfem.so
+     nm libgetfem.so | grep 'td::basic_ostream<char,
+                              std::char_traits<char> >::operator <<'
+     et faire de même dans tous les .o de matlabint, et s'assurer que
+     tous ceux de matlabint sont bien inclus dans libgetfem.so
 
-     enfin c'est pas tout a fait ça puisque tous ces trucs sont deja instancies dans libcxxstd.a, et c'est le noeud du probleme j'imagine:
-     nm /usr/lib/cmplrs/cxx/V6.3-008/libcxxstd.a | grep 'td::basic_ostream<char, std::char_traits<char> >::operator <<' 
-     ---> std::basic_ostream<char, std::char_traits<char> >::operator <<(long long) | 0000000000006368 | T | 0000000000000008
-          std::basic_ostream<char, std::char_traits<char> >::operator <<(const void*) | 0000000000006368 | T | 0000000000000008
-	  std::basic_ostream<char, std::char_traits<char> >::operator <<(std::basic_ostream<char, std::char_traits<char> >& (*)(std::basic_ostream<char, std::char_traits<char> >&)) | 0000000000000000 | T | 0000000000000008
-	  std::basic_ostream<char, std::char_traits<char> >::operator <<(unsigned long long) | 0000000000006368 | T | 0000000000000008
-	  std::basic_ostream<char, std::char_traits<char> >::operator <<(unsigned int) | 0000000000006368 | T | 0000000000000008
-	  std::basic_ostream<char, std::char_traits<char> >::operator <<(unsigned long) | 0000000000006368 | T | 0000000000000008
-	  std::basic_ostream<char, std::char_traits<char> >::operator <<(unsigned short) | 0000000000006368 | T | 0000000000000008
-	  std::basic_ostream<char, std::char_traits<char> >::operator <<(double) | 0000000000006368 | T | 0000000000000008
-	  std::basic_ostream<char, std::char_traits<char> >::operator <<(float) | 0000000000006368 | T | 0000000000000008
-	  std::basic_ostream<char, std::char_traits<char> >::operator <<(int) | 0000000000006368 | T | 0000000000000008
-	  std::basic_ostream<char, std::char_traits<char> >::operator <<(bool) | 0000000000006368 | T | 0000000000000008
-	  std::basic_ostream<char, std::char_traits<char> >::operator <<(long double128) | 0000000000006368 | T | 0000000000000008
-	  std::basic_ostream<char, std::char_traits<char> >::operator <<(long) | 0000000000006368 | T | 0000000000000008
-	  std::basic_ostream<char, std::char_traits<char> >::operator <<(short) | 0000000000006368 | T | 0000000000000008
-	  std::basic_ostream<char, std::char_traits<char> >::operator <<(long double64) | 0000000000006368 | T | 0000000000000008
+     enfin c'est pas tout a fait ça puisque tous ces trucs sont deja
+     instancies dans libcxxstd.a, et c'est le noeud du probleme j'imagine:
+     nm /usr/lib/cmplrs/cxx/V6.3-008/libcxxstd.a
+       | grep 'td::basic_ostream<char, std::char_traits<char> >::operator <<' 
+     ---> std::basic_ostream<char, std::char_traits<char> >::operator
+            <<(long long) | 0000000000006368 | T | 0000000000000008
+     std::basic_ostream<char, std::char_traits<char> >::operator
+         <<(const void*) | 0000000000006368 | T | 0000000000000008
+    std::basic_ostream<char, std::char_traits<char> >::operator
+         <<(std::basic_ostream<char, std::char_traits<char> >&
+	 (*)(std::basic_ostream<char, std::char_traits<char> >&))
+	 | 0000000000000000 | T | 0000000000000008
+    std::basic_ostream<char, std::char_traits<char> >::operator
+         <<(unsigned long long) | 0000000000006368 | T | 0000000000000008
+    std::basic_ostream<char, std::char_traits<char> >::operator
+         <<(unsigned int) | 0000000000006368 | T | 0000000000000008
+    std::basic_ostream<char, std::char_traits<char> >::operator
+         <<(unsigned long) | 0000000000006368 | T | 0000000000000008
+    std::basic_ostream<char, std::char_traits<char> >::operator
+         <<(unsigned short) | 0000000000006368 | T | 0000000000000008
+    std::basic_ostream<char, std::char_traits<char> >::operator 
+         <<(double) | 0000000000006368 | T | 0000000000000008
+    std::basic_ostream<char, std::char_traits<char> >::operator
+         <<(float) | 0000000000006368 | T | 0000000000000008
+    std::basic_ostream<char, std::char_traits<char> >::operator
+         <<(int) | 0000000000006368 | T | 0000000000000008
+    std::basic_ostream<char, std::char_traits<char> >::operator
+         <<(bool) | 0000000000006368 | T | 0000000000000008
+    std::basic_ostream<char, std::char_traits<char> >::operator
+         <<(long double128) | 0000000000006368 | T | 0000000000000008
+    std::basic_ostream<char, std::char_traits<char> >::operator
+         <<(long) | 0000000000006368 | T | 0000000000000008
+    std::basic_ostream<char, std::char_traits<char> >::operator
+         <<(short) | 0000000000006368 | T | 0000000000000008
+    std::basic_ostream<char, std::char_traits<char> >::operator
+         <<(long double64) | 0000000000006368 | T | 0000000000000008
   */
   struct just_for_the_fine_cxx {
     static void f() {
       long double z(1.0);
-      std::stringstream s; s << int(1) << double(2.0) 
-			     << "hello" << std::string("hello") << unsigned(1) << float(2) 
-			     << char('a') << (unsigned char)('b') << short(1) << (unsigned short)(2) 
-			     << long(1) << (unsigned long)(2) << (const void*)NULL << bool(1) << z;
+      std::stringstream s;
+      s << int(1) << double(2.0) 
+	<< "hello" << std::string("hello") << unsigned(1) << float(2) 
+	<< char('a') << (unsigned char)('b') << short(1)
+	<< (unsigned short)(2)  << long(1) << (unsigned long)(2)
+	<< (const void*)NULL << bool(1) << z;
     }
   };
   

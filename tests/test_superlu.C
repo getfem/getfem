@@ -38,7 +38,7 @@ template <class T> void test_with(T) {
   std::vector<T> x(n), y(n), z(n);
   
   gmm::copy(gmm::identity_matrix(), A);
-  gmm::fill_random(A, 0.1);
+  gmm::fill_random(A, 1.0);
   gmm::fill_random(B);
   gmm::fill_random(x);
   gmm::fill_random(y);

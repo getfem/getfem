@@ -124,16 +124,20 @@ namespace gmm {
 	++inner, ++outer, ++i;
       } while (! inner.finished(dal::abs(s[i])));
 
-      gmm::copy(s, y);
-      upper_tri_solve(H, y, i, false);
-      combine(KS, y, x, i);
-      mult(A, gmm::scaled(x, T(-1)), b, w);
-      mult(M, w, r);
-      beta = gmm::vect_norm2(r);
+      if (inner.converged()) {
+	gmm::copy(s, y);
+	upper_tri_solve(H, y, i, false);
+	combine(KS, y, x, i);
+	mult(A, gmm::scaled(x, T(-1)), b, w);
+	mult(M, w, r);
+	beta = gmm::vect_norm2(r); // + verif sur beta ... à faire
+	break;
+      }
 
       gmm::clear(gam); gam[m] = s[i];
       for (size_type l = m; l > 0; --l)
-	Apply_Givens_rotation_left(gam[l-1], gam[l], c_rot[l-1], s_rot[l-1]);
+	Apply_Givens_rotation_left(gam[l-1], gam[l], dal::conj(c_rot[l-1]),
+				   -s_rot[l-1]);
 
       mult(KS.mat(), gam, r);
       beta = gmm::vect_norm2(r);

@@ -44,7 +44,7 @@ namespace gmm {
   template <class Matrix, class VecX, class VecY>
   inline void rank_one_update(Matrix &A, const VecX& x,
 			      const VecY& y, row_major) {
-    typedef typename linalg_traits<Matrix>::value_type value_type;
+    typedef typename linalg_traits<Matrix>::value_type T;
     size_type N = mat_nrows(A);
     if (N > vect_size(x) || mat_ncols(A) > vect_size(y))
       DAL_THROW(dimension_error,"dimensions mismatch");
@@ -56,11 +56,10 @@ namespace gmm {
 	it = vect_begin(row), ite = vect_end(row);
       typename linalg_traits<VecY>::const_iterator ity = vect_const_begin(y);
 #   ifdef USING_BROKEN_GCC295
-      typedef typename linalg_traits<Matrix>::value_type T;
       for (; it != ite; ++it, ++ity)
 	const_cast<T &>(*it) += conj_product(*ity, *itx);
 #   else
-      value_type tx = *itx;
+      T tx = *itx;
       for (; it != ite; ++it, ++ity) *it += conj_product(*ity, tx);
 #   endif
     }
@@ -69,7 +68,7 @@ namespace gmm {
   template <class Matrix, class VecX, class VecY>
   inline void rank_one_update(Matrix &A, const VecX& x,
 			      const VecY& y, col_major) {
-    typedef typename linalg_traits<Matrix>::value_type value_type;
+    typedef typename linalg_traits<Matrix>::value_type T;
     size_type M = mat_ncols(A);
     if (mat_nrows(A) > vect_size(x) || M > vect_size(y))
       DAL_THROW(dimension_error,"dimensions mismatch");
@@ -81,11 +80,10 @@ namespace gmm {
 	it = vect_begin(col), ite = vect_end(col);
       typename linalg_traits<VecX>::const_iterator itx = vect_const_begin(x);
 #   ifdef USING_BROKEN_GCC295
-      typedef typename linalg_traits<Matrix>::value_type T;
       for (; it != ite; ++it, ++itx)
 	const_cast<T &>(*it) += conj_product(*ity, *itx);
 #   else
-      value_type ty = *ity;
+      T ty = *ity;
       for (; it != ite; ++it, ++itx) *it += conj_product(ty, *itx); 
 #   endif
     }
