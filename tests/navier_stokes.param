@@ -56,6 +56,6 @@ INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,5)'; % Product of two
 RESIDU = 1E-9;     	% residu for conjugate gradient.
 
 %%%%%   saving parameters                                             %%%%%
-ROOTFILENAME = 'stokes';     % Root of data files.
+ROOTFILENAME = 'navier_stokes';     % Root of data files.
 DX_EXPORT = 1 % export solution to a .vtk file ?
 DT_EXPORT = 0.01;

@@ -100,7 +100,6 @@ TESTS = \
 	$(top_srcdir)/tests/elastostatic.pl       \
 	$(top_srcdir)/tests/stokes.pl             \
 	$(top_srcdir)/tests/navier_stokes.pl      \
-	$(top_srcdir)/tests/navier_stokes.pl      \
 	$(top_srcdir)/tests/nonlinear_elastostatic.pl       \
 	$(top_srcdir)/tests/dynamic_friction.pl   \
 	$(top_srcdir)/tests/plasticity.pl         \
