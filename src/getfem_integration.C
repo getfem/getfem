@@ -74,7 +74,8 @@ namespace getfem
     }
     base_poly::const_iterator it = P.begin(), ite = P.end();
     std::vector<long_scalar_type>::const_iterator itb = hum->begin();
-    for ( ; it != ite; ++it, ++itb) res += long_scalar_type(*it) * long_scalar_type(*itb);
+    for ( ; it != ite; ++it, ++itb) 
+      res += long_scalar_type(*it) * long_scalar_type(*itb);
     return res;
   }
 
@@ -121,7 +122,7 @@ namespace getfem
 	for (int k = 1; k <= *itm; ++k, ++fa)
 	  res *= long_scalar_type(k) / long_scalar_type(fa);
       
-      for (int k = 1; k < cvs->dim(); k++) { res /= long_scalar_type(fa); fa++; }
+      for (int k = 1; k < cvs->dim(); k++) { res/=long_scalar_type(fa); fa++; }
     }
     return res;
   }
@@ -291,7 +292,6 @@ namespace getfem
 	  for (k = 0; k < n; ++k) pt2[k] = pt3[ind[k]];
 	  add_point_norepeat(pt2, w);
 	}
-	// for (k = 0; k < n; ++k) cout << "ind[" << int(k) << "]=" << ind[k] << endl;
 	ind[0]++; k = 0;
 	while(ind[k] == n+1) { ind[k++] = 0; if (k == n) return; ind[k]++; }
       }
@@ -321,18 +321,21 @@ namespace getfem
       DAL_THROW(internal_error, "Impossible with an exact method.");
     
     dim_type N = pai->structure()->dim();
-    std::vector<base_node> pts(N);
+    scalar_type det = 1.0;
     base_node pt(N+1);
-    for (size_type i = 0; i < N; ++i)
-      pts[i] = (cvr->dir_points_of_face(f))[i+1]
-	- (cvr->dir_points_of_face(f))[0];
-
-    base_matrix a(N+1, N), b(N, N), tmp(N, N);
-    for (dim_type i = 0; i < N+1; ++i)
-      for (dim_type j = 0; j < N; ++j)
-	a(i, j) = pts[j][i];
-    bgeot::mat_product_tn(a, a, b);
-    scalar_type det = ::sqrt(dal::abs(bgeot::mat_gauss_det(b, tmp)));
+    std::vector<base_node> pts(N);  
+      for (size_type i = 0; i < N; ++i)
+	pts[i] = (cvr->dir_points_of_face(f))[i+1]
+	  - (cvr->dir_points_of_face(f))[0];
+    if (N) {
+      base_matrix a(N+1, N), b(N, N), tmp(N, N);
+      for (dim_type i = 0; i < N+1; ++i)
+	for (dim_type j = 0; j < N; ++j)
+	  a(i, j) = pts[j][i];
+      
+      gmm::mult(gmm::transposed(a), a, b);
+      det = ::sqrt(dal::abs(bgeot::mat_det(b)));
+    }
     for (size_type i = 0; i < pai->nb_points_on_convex(); ++i) {
       pt = (cvr->dir_points_of_face(f))[0];
       for (dim_type j = 0; j < N; ++j)
@@ -532,7 +535,7 @@ namespace getfem
       c.fill(scalar_type(0.0));
       if (k == 0) c.fill(1.0 / scalar_type(nc+1));
       
-      bgeot::vsmatrix<long_scalar_type> M(R, R);
+      gmm::dense_matrix<long_scalar_type> M(R, R);
       bgeot::vsvector<long_scalar_type> F(R), U(R);
       std::vector<bgeot::power_index> base(R);
       std::vector<base_node> nodes(R);
@@ -582,14 +585,7 @@ namespace getfem
 	}
       }
       
-      // gmm::iteration iter(1E-20, 1, 4000);
-      // gmm::gmres(M, U, F, gmm::identity_matrix(), gmm::mat_nrows(M), iter);
-      bgeot::mat_gauss_solve(M, F, U, LONG_SCALAR_EPS * 100);
-      // bgeot::mat_gauss_solve(M, F, U, 1E-15);
-//       if (nc == 1) {
-// 	U.resize(R);
-// 	for (size_type q = 0; q < R/2; ++q) U[R-q-1] = U[q];
-//       }
+      gmm::lu_solve(M, F, U);
 
       if (nc == 1)
 	for (size_type r = 0; r < R; ++r)

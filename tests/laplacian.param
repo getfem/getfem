@@ -3,32 +3,32 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%% pde parameters :	        				      %%%%%
-N = 1;                  % dimension of the domain.
+N = 2;                  % dimension of the domain.
 LX = 1.0;		% size in X.
 LY = 1.0;	        % size in Y.
 LZ = 1.0;		% size in Z.
-FT = 10.0;              % parameter for the exact solution.
+FT = 0.1;               % parameter for the exact solution.
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 MESH_TYPE = 0;          % 0 = simplexes
 			% 1 = parallelepipeds
 			% 2 = prisms
 INCLINE = 0;            % Incline of the mesh.
-K = 2;                  % Finite element degree.
+K = 4;                  % Finite element degree.
 FEM_TYPE = 0;           % Finite element method
 			% 0 = classical Lagrange element
 			% 1 = Hermite element on the segment
 			% 2 = Hierarchical PK on simplexes (K = 2^i)
 			% 3 = Hierarchical P1 with K divisions
-KI = 4; 		% Parameter for integration method
-INTEGRATION = 1;        % 0 = exact integration.
+KI = 1; 		% Parameter for integration method
+INTEGRATION = 16;       % 0 = exact integration.
 			% 1 = Newton Cotes of degree 2 * K
 			% 2 = Product of 1D Gauss for parallelepipeds.
 			% 3 = Composite Gauss of degree 2 with KI divisions
 			% 11, 12, 13, 14, 15, 16, 17 triangle(n-10)
 			% 21, 22, 23, 25 tetrahedron(n-20)
 			% 32, 33, 35 quadrilateral(n-30)
-NX = 20;            	% space step.
+NX = 4;            	% space step.
 RESIDU = 1E-9;     	% residu for conjugate gradient.
 GENERIC_DIRICHLET = 0;  % Generic Dirichlet condition for non-lagrangian elts.
 

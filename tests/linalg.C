@@ -22,15 +22,15 @@
 
 
 void test_gauss_det() {
-  bgeot::vsmatrix<double> m(5,5), tmp(5,5);
+  gmm::dense_matrix<double> m(5,5);
   // vander(1:5)
   for (unsigned i=0; i < m.nrows(); ++i)
     for (unsigned j=0; j < m.ncols(); ++j) {
       m(i,j) = 1; for (unsigned k=j; k < m.ncols()-1; ++k) m(i,j) *= (i+1);
     }
   cout << "m=" << m << endl;
-  double det = bgeot::mat_gauss_inverse(m,tmp);
-  cout << "det = " << det << "\n m=" << m << "\ntmp=" << tmp << endl;
+  double det = bgeot::mat_inverse(m);
+  cout << "det = " << det << "\n m=" << m << endl;
 }
 
 template <class M1, class M2> 
@@ -55,11 +55,11 @@ int main(void)
 
     test_gauss_det();
     cout << "/***********************************************************/\n";
-    cout << "/*                   Test of fsmatrix                      */\n";
+    cout << "/*                   Test of dense_matrix                  */\n";
     cout << "/***********************************************************/\n";
 
-    bgeot::fsmatrix<double, 10> m;
-    bgeot::fsvector<double, 10> y, x, b;
+    gmm::dense_matrix<double> m(10, 10);
+    bgeot::vsvector<double> y(10), x(10), b(10);
     gmm::copy(gmm::identity_matrix(), m);
     int j = 5, k = 12;
     for (int i = 0; i < 10; ++i) { 
@@ -86,10 +86,10 @@ int main(void)
       DAL_THROW(dal::failure_error, "computation error too large : " << error);
     
     cout << "/***********************************************************/\n";
-    cout << "/*                   Test of vsmatrix                      */\n";
+    cout << "/*                   Test of dense_matrix                  */\n";
     cout << "/***********************************************************/\n";
 
-    bgeot::vsmatrix<double> m2(10,10);
+    gmm::dense_matrix<double> m2(10,10);
     gmm::copy(m, m2);
     cout << "m2 = " << m2 << endl;
     std::vector<double> y2(10), b2(10);
@@ -186,7 +186,7 @@ int main(void)
       DAL_THROW(dal::failure_error, "computation error too large : " << error);
 
     cout << "/***********************************************************/\n";
-    cout << "/*         Test of sub_matrices of fsmatrix                */\n";
+    cout << "/*         Test of sub_matrices of dense_matrix            */\n";
     cout << "/***********************************************************/\n";
 
     gmm::sub_interval sint1(10, 10), sint2(15, 10);
@@ -198,7 +198,7 @@ int main(void)
     ind2[5] = 1; ind2[6] = 3; ind2[7] = 6; ind2[8] = 10; ind2[9] = 12; 
     gmm::sub_index sind1(ind1), sind2(ind2);
 
-    bgeot::fsmatrix<double, 38> m6;
+    gmm::dense_matrix<double> m6(38, 38);
     gmm::clear(m6);
     gmm::copy(m, gmm::sub_matrix(m6, sint1, sint2));
     cout << "m6 = " << m6 << endl;

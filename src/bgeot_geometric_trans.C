@@ -251,7 +251,7 @@ namespace bgeot
 			     pgeometric_trans pgt, const base_node &pt) {
     dim_type P = pgt->structure()->dim(), N = G.nrows();
     short_type NP = pgt->nb_points();
-    base_matrix K(N,P), CS(P,P), B(N,P), Grad(pgt->nb_points(),P), TMP1(P,P);
+    base_matrix K(N,P), CS(P,P), B(N,P), Grad(pgt->nb_points(),P);
     base_vector un, up;
     base_poly Poly;
     
@@ -272,12 +272,11 @@ namespace bgeot
     // on peut simplifier les calculs pour N = P
     // cout << "mat G : " << G << endl;
     // cout << "mat grad : " << Grad << endl;
-    mat_product(G, Grad, K);
-    mat_product_tn(K, K, CS);
-    // cout << "CS = " << CS << endl;
-    mat_inv_cholesky(CS, TMP1);
-    mat_product(K, CS, B);
-    mat_vect_product(B, un, up);
+    gmm::mult(G, Grad, K);
+    gmm::mult(gmm::transposed(K), K, CS);
+    mat_inverse(CS);
+    gmm::mult(K, CS, B);
+    gmm::mult(B, un, up);
     
     return up;
   }

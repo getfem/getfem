@@ -554,18 +554,24 @@ namespace gmm {
   /* ******************************************************************** */
   /*		Euclidian norm                             		  */
   /* ******************************************************************** */
-  
-   template <class V>
-   typename number_traits<typename linalg_traits<V>::value_type>
-   ::magnitude_type
-   vect_norm2(const V &v) {
+
+  template <class V>
+  typename number_traits<typename linalg_traits<V>::value_type>
+  ::magnitude_type
+  vect_norm2_sqr(const V &v) {
     typename linalg_traits<V>::const_iterator
       it = vect_const_begin(v), ite = vect_const_end(v);
     typename number_traits<typename linalg_traits<V>::value_type>
       ::magnitude_type res(0);
     for (; it != ite; ++it) res += dal::sqr(dal::abs(*it));
-    return sqrt(res);
+    return res;
   }
+
+  template <class V> inline
+   typename number_traits<typename linalg_traits<V>::value_type>
+   ::magnitude_type
+   vect_norm2(const V &v)
+  { return sqrt(vect_norm2_sqr(v)); }
 
   template <class M>
    typename number_traits<typename linalg_traits<M>::value_type>

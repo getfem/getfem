@@ -146,7 +146,7 @@ namespace getfem
 	coeff2[j] = coeff[(i+1) * nbb + j] * a;
       }
       pfi->interpolation_grad(x, G, pgt, coeff2, val2);
-      val += val2;
+      gmm::add(val2, val);
     }
     for (size_type i = 0; i < nb_func; ++i) {
       base_vector v = (*(grads[i]))(xreal);
@@ -157,7 +157,7 @@ namespace getfem
 	pfi->interpolation(x, G, pgt, coeff2, val3);
 	for (dim_type r = 0; r < ntarget_dim; ++r) val2(r, q) = val3[r];
       }
-      val += val2;
+      gmm::add(val2, val);
     }
   }
   

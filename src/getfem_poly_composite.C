@@ -55,7 +55,7 @@ namespace getfem
       base_poly PO;
       base_matrix a(P, pgt->nb_points());
       base_matrix pc(pgt->nb_points() , N);
-      base_matrix TMP1(N,N), B0(N, P);
+      base_matrix B0(N, P);
     
       for (size_type j = 0; j < pgt->nb_points(); ++j)
 	for (size_type k = 0; k < P; ++k)
@@ -65,10 +65,8 @@ namespace getfem
 	for (dim_type n = 0; n < N; ++n)
 	  { PO = pgt->poly_vector()[k]; PO.derivative(n); pc(k,n) = PO[0]; }
     
-      bgeot::mat_product(a, pc, B0);
-      B0.transpose();
-      bgeot::mat_gauss_inverse(B0, TMP1);
-      det[cv] = 1.0 / bgeot::mat_gauss_det(B0, TMP1);
+      gmm::mult(gmm::transposed(pc), gmm::transposed(a), B0);
+      det[cv] = bgeot::mat_inverse(B0);
       gtrans[cv] = B0;
       orgs[cv] = m.points_of_convex(cv)[0];
     
@@ -96,7 +94,7 @@ namespace getfem
 	  if (mp->elt[ii]) {
 	    mp->elt[ii] = false;
 	    p0 = pt; p0 -= mp->orgs[ii];
-	    bgeot::mat_vect_product_t(mp->gtrans[ii], p0, p1);
+	    gmm::mult(gmm::transposed(mp->gtrans[ii]), p0, p1);
 	    if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10)
 	      return  polytab[ii].eval(p1.begin());
 	  }
@@ -111,7 +109,7 @@ namespace getfem
 	  if (mp->elt[ii]) {
 	    mp->elt[ii] = false;
 	    p0 = pt; p0 -= mp->orgs[ii];
-	    bgeot::mat_vect_product_t(mp->gtrans[ii], p0, p1);
+	    gmm::mult(gmm::transposed(mp->gtrans[ii]), p0, p1);
 	    if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10)
 	      return  polytab[ii].eval(p1.begin());
 	  }
@@ -134,7 +132,7 @@ namespace getfem
     base_vector e(N), f(N);
     for (size_type ic = 0; ic < mp->nb_convex(); ++ic) {
       e.fill(0.0); e[k] = 1.0;
-      bgeot::mat_vect_product_t(mp->gtrans[ic], e, f);
+      gmm::mult(gmm::transposed(mp->gtrans[ic]), e, f);
       P.clear();
       for (dim_type n = 0; n < N; ++n)
 	{ Q = polytab[ic];

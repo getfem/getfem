@@ -22,17 +22,9 @@
 #include <getfem_regular_meshes.h>
 #include <getfem_poly_composite.h>
 
-typedef bgeot::fsvector<double, 3> fsvect3;
-typedef bgeot::PT<fsvect3> fspoint3;
-typedef bgeot::fsvector<double, 4> fsvect4;
-typedef bgeot::PT<fsvect4> fspoint4;
-typedef bgeot::vsvector<double> vsvect;
-typedef bgeot::PT<vsvect> vspoint;
-
 using getfem::size_type;
 
-template<class MESH> void test_mesh(MESH &m)
-{
+template<class MESH> void test_mesh(MESH &m) {
   
   typedef typename MESH::point_type POINT;
   typedef typename MESH::vector_type VECT;
@@ -74,9 +66,9 @@ template<class MESH> void test_mesh(MESH &m)
   cout << "point 1 of convex " << (cv.points())[1] << endl;
   cout << "point 2 of convex " << (cv.points())[2] << endl;
 
-  size_t ic2 = m.add_convex_by_points(bgeot::simplex_geotrans(2,1), pts.begin());
+  size_t ic2 = m.add_convex_by_points(bgeot::simplex_geotrans(2,1),pts.begin());
 
-  size_t ic3 = m.add_convex_by_points(bgeot::simplex_geotrans(2,1), pts.begin());
+  size_t ic3 = m.add_convex_by_points(bgeot::simplex_geotrans(2,1),pts.begin());
 
   assert(ic2 == ic3);
 

@@ -40,7 +40,7 @@ namespace bgeot
   size_type alpha(short_type n, short_type d)
   {
     #define STORED 150
-    static bgeot::fsmatrix<size_type, STORED> M;
+    static gmm::dense_matrix<size_type> M(STORED, STORED);
     static bool init = false;
     if (!init)
     {

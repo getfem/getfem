@@ -33,11 +33,8 @@
 #define __GMM_INTERFACE_H
 
 namespace bgeot {
-  template <class T, int N> class fsvector;
   template <class T> class vsvector;
   template <class VECT> class PT;
-  template <class T, int N> class fsmatrix;
-  template <class T> class vsmatrix;
 }
 
 namespace gmm {
@@ -345,31 +342,6 @@ namespace gmm {
   /*		                                         		   */
   /* ********************************************************************* */
 
-  template <class T, int N> struct linalg_traits<bgeot::fsvector<T, N> > {
-    typedef bgeot::fsvector<T, N> this_type;
-    typedef linalg_false is_reference;
-    typedef abstract_vector linalg_type;
-    typedef T value_type;
-    typedef T& reference;
-    typedef typename this_type::iterator iterator;
-    typedef typename this_type::const_iterator const_iterator;
-    typedef abstract_plain storage_type;
-    typedef plain_access<iterator,const_iterator> access_type;
-    typedef plain_clear<iterator> clear_type;
-    static size_type size(const this_type &v) { return v.size(); }
-    static iterator begin(this_type &v) { return v.begin(); }
-    static const_iterator begin(const this_type &v) { return v.begin(); }
-    static iterator end(this_type &v) { return v.end(); }
-    static const_iterator end(const this_type &v) { return v.end(); }
-    static const void* origin(const this_type &v) { return &v; }
-    static void do_clear(this_type &v) { clear_type()(origin(v), begin(v), end(v)); }
-  };
-
-#ifdef USING_BROKEN_GCC295
-  template <class T, int N> struct linalg_traits<const bgeot::fsvector<T, N> >
-    : public linalg_traits<bgeot::fsvector<T, N> > {};
-#endif
-
   template <class T> struct linalg_traits<bgeot::vsvector<T> > {
     typedef bgeot::vsvector<T> this_type;
     typedef linalg_false is_reference;
@@ -462,169 +434,6 @@ namespace gmm {
       : it(iter), N(n), nrows(r), ncols(c), origin(o) { }
     
   };
-
-  template <class T, int N> struct bgeot_fsmatrix_access {
-    typedef typename linalg_traits<bgeot::fsmatrix<T, N> >::reference
-            reference;
-    typedef typename linalg_traits<bgeot::fsmatrix<T, N> >::value_type
-            value_type;
-    typedef typename linalg_traits<bgeot::fsmatrix<T, N> >::col_iterator
-            iterator;
-    typedef typename linalg_traits<bgeot::fsmatrix<T, N> >::const_col_iterator
-            const_iterator;
-    
-    reference operator()(const iterator &itcol, size_type j)
-    { return (*itcol)[j]; }
-    value_type operator()(const const_iterator &itcol, size_type j)
-    { return (*itcol)[j]; }
-  };
-
-  // row and col iterators could be more specialized to take into account 
-  // the fixed size.
-  template <class T, int N> struct linalg_traits<bgeot::fsmatrix<T, N> > {
-    typedef bgeot::fsmatrix<T, N> this_type;
-    typedef linalg_false is_reference;
-    typedef abstract_matrix linalg_type;
-    typedef T value_type;
-    typedef T& reference;
-    typedef abstract_plain storage_type;
-    typedef tab_ref_reg_spaced_with_origin<typename this_type::iterator>
-            sub_row_type;
-    typedef tab_ref_reg_spaced_with_origin<typename this_type
-            ::const_iterator> const_sub_row_type;
-    typedef plain_compressed_iterator<typename this_type::iterator,
-            typename this_type::iterator> row_iterator;
-    typedef plain_compressed_iterator<typename this_type::const_iterator, 
-            typename this_type::iterator> const_row_iterator;
-    typedef tab_ref_with_origin<typename this_type::iterator> sub_col_type;
-    typedef tab_ref_with_origin<typename this_type::const_iterator>
-            const_sub_col_type;
-    typedef plain_compressed_iterator<typename this_type::iterator,
-            typename this_type::iterator> col_iterator;
-    typedef plain_compressed_iterator<typename this_type::const_iterator, 
-            typename this_type::iterator> const_col_iterator;
-    typedef col_and_row sub_orientation;
-    typedef bgeot_fsmatrix_access<T, N> access_type;
-    static size_type nrows(const this_type &m) { return N; }
-    static size_type ncols(const this_type &m) { return N; } 
-    static const_sub_row_type row(const const_row_iterator &it)
-    { return const_sub_row_type(it.it, it.it + N * N, N, it.origin);  }
-    static const_sub_col_type col(const const_col_iterator &it)
-    { return const_sub_col_type(it.it, it.it + N, it.origin); }
-    static sub_row_type row(const row_iterator &it) 
-    { return sub_row_type(it.it, it.it + N * N, it.nrows, it.origin); }
-    static sub_col_type col(const col_iterator &it)
-    { return sub_col_type(it.it, it.it + N, it.origin); }
-    static row_iterator row_begin(this_type &m)
-    { return row_iterator(m.begin(), 1, N, N, &m); }
-    static row_iterator row_end(this_type &m)
-    { return row_iterator(m.begin() + N, 1, N, N, &m); }
-    static const_row_iterator row_begin(const this_type &m)
-    { return const_row_iterator(m.begin(), 1, N, N, &m); }
-    static const_row_iterator row_end(const this_type &m)
-    { return const_row_iterator(m.begin() + N, 1, N, N, &m); }
-    static col_iterator col_begin(this_type &m)
-    { return col_iterator(m.begin(), N, N, N, &m); }
-    static col_iterator col_end(this_type &m)
-    { return col_iterator(m.end(), N, N, N, &m); }
-    static const_col_iterator col_begin(const this_type &m)
-    { return const_col_iterator(m.begin(), N, N, N, &m); }
-    static const_col_iterator col_end(const this_type &m)
-    { return const_col_iterator(m.end(), N, N, N, &m); }
-    static const void* origin(const this_type &m) { return &m; }
-    static void do_clear(this_type &m);
-  };
-  template <class T, int N>
-  void linalg_traits<bgeot::fsmatrix<T, N> >::do_clear(this_type &m)
-  { std::fill(m.begin(), m.end(), value_type(0)); }
-
-
-#ifdef USING_BROKEN_GCC295
-  template <class T, int N> struct linalg_traits<const bgeot::fsmatrix<T, N> >
-    : public linalg_traits<bgeot::fsmatrix<T, N> > {};
-#endif
-
-  template <class T> struct bgeot_vsmatrix_access {
-    typedef typename linalg_traits<bgeot::vsmatrix<T> >::reference
-            reference;
-    typedef typename linalg_traits<bgeot::vsmatrix<T> >::value_type
-            value_type;
-    typedef typename linalg_traits<bgeot::vsmatrix<T> >::col_iterator
-            iterator;
-    typedef typename linalg_traits<bgeot::vsmatrix<T> >::const_col_iterator
-            const_iterator;
-    
-    reference operator()(const iterator &itcol, size_type j)
-    { return (*itcol)[j]; }
-    value_type operator()(const const_iterator &itcol, size_type j)
-    { return (*itcol)[j]; }
-  };
-
-  template <class T> struct linalg_traits<bgeot::vsmatrix<T> > {
-    typedef bgeot::vsmatrix<T> this_type;
-    typedef linalg_false is_reference;
-    typedef abstract_matrix linalg_type;
-    typedef T value_type;
-    typedef T& reference;
-    typedef abstract_plain storage_type;
-    typedef tab_ref_reg_spaced_with_origin<typename this_type::iterator>
-            sub_row_type;
-    typedef tab_ref_reg_spaced_with_origin<typename this_type
-            ::const_iterator> const_sub_row_type;
-    typedef plain_compressed_iterator<typename this_type::iterator,
-	    typename this_type::iterator> row_iterator;
-    typedef plain_compressed_iterator<typename this_type::const_iterator,
-	    typename this_type::iterator> const_row_iterator;
-    typedef tab_ref_with_origin<typename this_type::iterator> sub_col_type;
-    typedef tab_ref_with_origin<typename this_type::const_iterator>
-            const_sub_col_type;
-    typedef plain_compressed_iterator<typename this_type::iterator,
-	    typename this_type::iterator> col_iterator;
-    typedef plain_compressed_iterator<typename this_type::const_iterator,
-	    typename this_type::iterator> const_col_iterator;
-    typedef col_and_row sub_orientation;
-    typedef bgeot_vsmatrix_access<T> access_type;
-    static size_type nrows(const this_type &m) { return m.nrows(); }
-    static size_type ncols(const this_type &m) { return m.ncols(); }
-    static const_sub_row_type row(const const_row_iterator &it) {
-      return const_sub_row_type(it.it, it.it + it.ncols * it.nrows,
-				it.nrows, it.origin); 
-    }
-    static const_sub_col_type col(const const_col_iterator &it)
-    { return const_sub_col_type(it.it, it.it + it.nrows, it.origin); }
-    static sub_row_type row(const row_iterator &it) {
-      return sub_row_type(it.it, it.it + it.ncols * it.nrows,
-			  it.nrows, it.origin);
-    }
-    static sub_col_type col(const col_iterator &it)
-    { return sub_col_type(it.it, it.it + it.nrows, it.origin); }
-    static row_iterator row_begin(this_type &m)
-    { return row_iterator(m.begin(), 1, m.nrows(), m.ncols(), &m); }
-    static row_iterator row_end(this_type &m)
-    { return row_iterator(m.begin()+m.nrows(), 1, m.nrows(), m.ncols(), &m); }
-    static const_row_iterator row_begin(const this_type &m)
-    { return const_row_iterator(m.begin(), 1, m.nrows(), m.ncols(), &m); }
-    static const_row_iterator row_end(const this_type &m) {
-      return const_row_iterator(m.begin()+m.nrows(), 1, m.nrows(),
-				m.ncols(), &m);
-    }
-    static col_iterator col_begin(this_type &m)
-    { return col_iterator(m.begin(), m.nrows(), m.nrows(), m.ncols(), &m); }
-    static col_iterator col_end(this_type &m)
-    { return col_iterator(m.end(), m.nrows(), m.nrows(), m.ncols(), &m); }
-    static const_col_iterator col_begin(const this_type &m)
-    { return const_col_iterator(m.begin(),m.nrows(),m.nrows(),m.ncols(),&m); }
-    static const_col_iterator col_end(const this_type &m)
-    { return const_col_iterator(m.end(), m.nrows(),m.nrows(),m.ncols(), &m); }
-    static const void* origin(const this_type &m) { return &m; }
-    static void do_clear(this_type &m) { m.fill(value_type(0)); }
-  };
-
-#ifdef USING_BROKEN_GCC295
-  template <class T> struct linalg_traits<const bgeot::vsmatrix<T> >
-    : public linalg_traits<bgeot::vsmatrix<T> > {};
-#endif
-
 
   /* ******************************************************************** */
   /*	    Read only reference on a compressed sparse vector             */

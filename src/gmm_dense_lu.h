@@ -118,28 +118,28 @@ namespace gmm {
   // so that this is compatible with LAPACK (Fortran).
   //
   template <class DenseMatrix, class Pvector>
-  int lu_factor(DenseMatrix& A, Pvector& ipvt) {
+  size_type lu_factor(DenseMatrix& A, Pvector& ipvt) {
     typedef typename linalg_traits<DenseMatrix>::value_type value_type;
-    int info = 0;
-    size_type i, j, jp, M = A.nrows(), N = A.ncols();
+    size_type info = 0, i, j, jp, M = A.nrows(), N = A.ncols();
     std::vector<value_type> c(M), r(N);
-    
-    for (j = 0; j < std::min(M-1, N-1); ++j) {
-      double max = dal::abs(A(j,j)); jp = j;
-      for (i = j+1; i < M; ++i)		           /* find pivot.          */
-	if (dal::abs(A(i,j)) > max) { jp = i; max = dal::abs(A(i,j)); }
-      ipvt[j] = jp + 1;
       
-      if (A(jp, j) == value_type(0)) { info = j + 1; break; }
-      if (jp != j) for (i = 0; i < N; ++i) std::swap(A(jp, i), A(j, i));
-      
-      for (i = j+1; i < M; ++i) A(i, j) /= A(j,j);
-      for (i = j+1; i < M; ++i) c[i-j-1] = -A(i, j); // avoid the copy ?
-      for (i = j+1; i < N; ++i) r[i-j-1] = A(j, i);  // avoid the copy ?
-      rank_one_update(sub_matrix(A, sub_interval(j+1, M-j-1),
-				 sub_interval(j+1, N-j-1)), c, r);
+    if (M || N) {
+      for (j = 0; j < std::min(M-1, N-1); ++j) {
+	double max = dal::abs(A(j,j)); jp = j;
+	for (i = j+1; i < M; ++i)		   /* find pivot.          */
+	  if (dal::abs(A(i,j)) > max) { jp = i; max = dal::abs(A(i,j)); }
+	ipvt[j] = jp + 1;
+	
+	if (A(jp, j) == value_type(0)) { info = j + 1; break; }
+	if (jp != j) for (i = 0; i < N; ++i) std::swap(A(jp, i), A(j, i));
+	
+	for (i = j+1; i < M; ++i) { A(i, j) /= A(j,j); c[i-j-1] = -A(i, j); }
+	for (i = j+1; i < N; ++i) r[i-j-1] = A(j, i);  // avoid the copy ?
+	rank_one_update(sub_matrix(A, sub_interval(j+1, M-j-1),
+				   sub_interval(j+1, N-j-1)), c, r);
+      }
+      ipvt[j] = j + 1;
     }
-    ipvt[j] = j + 1;
     
     return info;
   }
@@ -161,6 +161,15 @@ namespace gmm {
     lower_tri_solve(LU, x, true);
     upper_tri_solve(LU, x, false);
   }
+
+  template <class DenseMatrix, class VectorB, class VectorX>
+  void lu_solve(const DenseMatrix &A, const VectorB &b, VectorX &x) {
+    DenseMatrix B(mat_nrows(A), mat_ncols(A));
+    std::vector<size_type> ipvt(mat_nrows(A));
+    gmm::copy(A, B);
+    lu_factor(B, ipvt);
+    lu_solve(B, ipvt, b, x);
+  }
   
   template <class DenseMatrix, class VectorB, class VectorX, class Pvector>
   void lu_solve_transposed(const DenseMatrix &LU, const Pvector& pvector, 
@@ -176,7 +185,6 @@ namespace gmm {
     lower_tri_solve(transposed(LU), x, false);
     upper_tri_solve(transposed(LU), x, true);
   }
-
 
 
   // LU Inverse : Given an LU factored matrix, construct the inverse 
@@ -219,20 +227,22 @@ namespace gmm {
   }
 
   template <class DenseMatrix>
-  void lu_inverse(const DenseMatrix& A_) {
+  typename linalg_traits<DenseMatrix>::value_type
+  lu_inverse(const DenseMatrix& A_) {
     DenseMatrix& A = const_cast<DenseMatrix&>(A_);
     DenseMatrix B(mat_nrows(A), mat_ncols(A));
     std::vector<size_type> ipvt(mat_nrows(A));
     gmm::copy(A, B);
-    lu_factor(B, ipvt);
-    return lu_inverse(B, ipvt, A);
+    if (lu_factor(B, ipvt)) DAL_THROW(failure_error, "Non invertible matrix");
+    lu_inverse(B, ipvt, A);
+    return lu_det(B, ipvt);
   }
 
   template <class DenseMatrixLU, class Pvector>
   typename linalg_traits<DenseMatrixLU>::value_type
   lu_det(const DenseMatrixLU& LU, const Pvector&) {
     typename linalg_traits<DenseMatrixLU>::value_type det(1);
-    for (j = 0; j < std::min(mat_nrows(LU), mat_ncols(LU)); ++j)
+    for (size_type j = 0; j < std::min(mat_nrows(LU), mat_ncols(LU)); ++j)
       det *= LU(j,j);
     return det;
   }
@@ -250,5 +260,4 @@ namespace gmm {
 }
 
 #endif
-
 

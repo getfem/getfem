@@ -152,15 +152,15 @@ namespace bgeot
       tensor(const multi_index &c) { init(c); }
       tensor(void) {}
 
-      void mat_transp_reduction(const tensor &t, const vsmatrix<T> &m, int ni);
+      void mat_transp_reduction(const tensor &t, const gmm::dense_matrix<T> &m, int ni);
 
-      void mat_reduction(const tensor &t, const vsmatrix<T> &m, int ni);
+      void mat_reduction(const tensor &t, const gmm::dense_matrix<T> &m, int ni);
     size_type memsize() const { return vsvector<T>::memsize() +
 				  _sizes.memsize() + coeff.memsize(); }
   };
 
   template<class T> void tensor<T>::mat_transp_reduction (const tensor &t,
-					      const vsmatrix<T> &m, int ni) { 
+					      const gmm::dense_matrix<T> &m, int ni) { 
     /* reduction du tenseur t par son indice ni et la matrice          */
     /* transposee de m.                                                */
     
@@ -206,7 +206,7 @@ namespace bgeot
   }
   
   template<class T> void tensor<T>::mat_reduction(const tensor &t,
-					 const vsmatrix<T> &m, int ni) {
+					 const gmm::dense_matrix<T> &m, int ni) {
     /* reduction du tenseur t par son indice ni et la matrice m.       */
     static std::vector<T> *tmp;
     static multi_index *mi;

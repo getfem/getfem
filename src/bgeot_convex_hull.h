@@ -61,7 +61,7 @@ namespace bgeot
     dal::dynamic_array<typename PT::vector_type> vect_list;
     std::vector<size_type> simplex(N+1);
     dal::bit_vector nne, nn;
-    vsmatrix<double> A(N, N);
+    base_matrix A(N, N);
    
     /* ****************************************************************** */
     /*	  1 - Ajout de toutes les aretes.                                 */
@@ -88,8 +88,7 @@ namespace bgeot
 	    A(i,j) = A(j,i) = vect_sp(vect_list[i], vect_list[j]);
 	}
 
-	//double s = mat_gauss_det(A);
-	double s = mat_inv_cholesky(A);
+	double s = mat_inverse(A);
 
 	/* if the simplex is not flat .. */
 	if (dal::abs(s) > EPS)
@@ -117,7 +116,7 @@ namespace bgeot
 		= vector_from(point_list[simplex[0]], point_list[i1]);
 	      typename PT::vector_type DV
 		= vector_from(point_list[i1], point_list[i2]);
-	      vsvector<double> d0(N), dd0(N), dV(N), ddV(N), v11(N);
+	      base_vector d0(N), dd0(N), dV(N), ddV(N), v11(N);
 	      for (j = 0; j < N; j++)
 	      {
 		v11[j] = 1.0;

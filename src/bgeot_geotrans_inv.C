@@ -134,7 +134,7 @@ namespace bgeot
   
   bool geotrans_inv_convex::invert_lin(const base_node& n, base_node& n_ref) {
     base_node y(n); for (size_type i=0; i < P; ++i) y[i] -= a(i,0);
-    mat_vect_product(B0, y, n_ref); // n_ref = B0 * y;
+    gmm::mult(B0, y, n_ref); // n_ref = B0 * y;
     if (pgt->convex_ref()->is_in(n_ref) < EPS) {
       if (N == P) return true;
       else {
@@ -171,16 +171,16 @@ namespace bgeot
       
       // computation of the pseudo inverse (it should be possible not
       //  to compute it at each iteration).
-      bgeot::mat_product(a, pc, grad);
+      gmm::mult(a, pc, grad);
       if (N != P) {
-        bgeot::mat_product_tn(grad, grad, CS);
-        bgeot::mat_inv_cholesky(CS, TMP1);
-        bgeot::mat_product_tt(CS, grad, B0);
+	gmm::mult(gmm::transposed(grad), grad, CS);
+	bgeot::mat_inverse(CS);
+	gmm::mult(gmm::transposed(CS), gmm::transposed(grad), B0);
       } else {
-        bgeot::mat_gauss_inverse(grad, TMP1); B0 = grad;
+        bgeot::mat_inverse(grad); B0 = grad;
       }
       xn = x;
-      mat_vect_product(B0, rn, x); // x = B0 * rn;
+      gmm::mult(B0, rn, x); // x = B0 * rn;
       x += xn;
       y.fill(0.0);
       for (size_type k = 0; k < pgt->nb_points(); ++k)

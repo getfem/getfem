@@ -18,7 +18,7 @@ print TMPF "INTEGRATION = 0;\n";
 print TMPF "NX = 7;\n";
 print TMPF "RESIDU = 1E-9;\n";
 print TMPF "FEM_TYPE = 0;\n"; 
-print TMPF "ROOTFILENAME = 'laplacian';\n";
+print TMPF "ROOTFILENAME = 'test_mat_elem';\n";
 print TMPF "\n\n";
 close(TMPF);
 

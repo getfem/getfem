@@ -139,7 +139,7 @@ namespace bgeot
     base_poly PO;
     base_node x(N), y(P);
     base_matrix pc(pgt->nb_points() , N);
-    base_matrix grad(P, N), TMP1(N,N), B0(N, P), CS(N,N);
+    base_matrix grad(P, N), B0(N, P), CS(N,N);
     size_type nbpt = 0;
     dal::dynamic_array<size_type> pts;
 
@@ -166,22 +166,22 @@ namespace bgeot
 	  { PO = pgt->poly_vector()[i]; PO.derivative(n); pc(i,n) = PO[0]; }
       
       // computation of the pseudo inverse
-      bgeot::mat_product(a, pc, grad);
+      gmm::mult(a, pc, grad);
       if (N != P) {
-	bgeot::mat_product_tn(grad, grad, CS);
-	bgeot::mat_inv_cholesky(CS, TMP1);
-	bgeot::mat_product_tt(CS, grad, B0);
+	gmm::mult(gmm::transposed(grad), grad, CS);
+	bgeot::mat_inverse(CS);
+	gmm::mult(gmm::transposed(CS), gmm::transposed(grad), B0);
       }
       else {
 	// L'inversion peut être optimisée par le non calcul global de B0
 	// et la resolution d'un système linéaire.
-	bgeot::mat_gauss_inverse(grad, TMP1); B0 = grad;
+	bgeot::mat_inverse(grad); B0 = grad;
       }
       
       for (size_type l = 0; l < nbib; ++l) {
 	// cout << "point : " << ptab[i] << endl;
 	y = ptab[pts[l]]; y -= cv.points()[0];
-	mat_vect_product(B0, y, x); // x = B0 * y;
+	gmm::mult(B0, y, x); // x = B0 * y;
 	if (pgt->convex_ref()->is_in(x) < EPS) {
 	  if (N == P) {
 	    // cout << "enregistré en " << nbpt << " : " << x << endl;
@@ -229,18 +229,18 @@ namespace bgeot
 	  
 	  // computation of the pseudo inverse (it should be possible not
 	  //  to compute it at each iteration).
-	  bgeot::mat_product(a, pc, grad);
+	  gmm::mult(a, pc, grad);
 	  if (N != P) {
-	    bgeot::mat_product_tn(grad, grad, CS);
-	    bgeot::mat_inv_cholesky(CS, TMP1);
-	    bgeot::mat_product_tt(CS, grad, B0);
+	    gmm::mult(gmm::transposed(grad), grad, CS);
+	    bgeot::mat_inverse(CS);
+	    gmm::mult(gmm::transposed(CS), gmm::transposed(grad), B0);
 	  }
 	  else {
-	    bgeot::mat_gauss_inverse(grad, TMP1); B0 = grad;
+	    bgeot::mat_inverse(grad); B0 = grad;
 	  }
 	  // cout << "grad = " << grad << endl;
 	  xn = x;
-	  mat_vect_product(B0, rn, x); // x = B0 * rn;
+	  gmm::mult(B0, rn, x); // x = B0 * rn;
 	  x += xn;
 	  y.fill(0.0);
 	  for (size_type k = 0; k < pgt->nb_points(); ++k)
@@ -266,7 +266,7 @@ namespace bgeot
   class geotrans_inv_convex {
     size_type N, P;
     base_poly PO;
-    base_matrix a, pc, grad, TMP1, B0, CS;
+    base_matrix a, pc, grad, B0, CS;
     pgeometric_trans pgt;
     std::vector<base_node> cvpts; /* used only for non-linear geotrans -- we should use the matrix a instead... */
     scalar_type EPS;
@@ -304,7 +304,7 @@ namespace bgeot
     if (!cv.points().size()) DAL_INTERNAL_ERROR("");
     P = cv.points()[0].size();
     pc.resize(pgt->nb_points() , N);
-    grad.resize(P,N); TMP1.resize(N,N); B0.resize(N,P); CS.resize(N,N);
+    grad.resize(P,N); B0.resize(N,P); CS.resize(N,N);
     a.resize(P, pgt->nb_points());
     for (size_type j = 0; j < pgt->nb_points(); ++j) // à optimiser !!
       for (size_type i = 0; i < P; ++i) { 
@@ -320,16 +320,16 @@ namespace bgeot
         }
       }
       // computation of the pseudo inverse
-      bgeot::mat_product(a, pc, grad);
+      gmm::mult(a, pc, grad);
       if (N != P) {
-        bgeot::mat_product_tn(grad, grad, CS);
-        bgeot::mat_inv_cholesky(CS, TMP1);
-        bgeot::mat_product_tt(CS, grad, B0);
-        }
+	gmm::mult(gmm::transposed(grad), grad, CS);
+        bgeot::mat_inverse(CS);
+	gmm::mult(gmm::transposed(CS), gmm::transposed(grad), B0);
+      }
       else {
         // L'inversion peut être optimisée par le non calcul global de B0
         // et la resolution d'un système linéaire.
-        bgeot::mat_gauss_inverse(grad, TMP1); B0 = grad;
+        bgeot::mat_inverse(grad); B0 = grad;
       }
     } else {
       cvpts.resize(cv.nb_points());

@@ -36,7 +36,9 @@ namespace gmm
 {
 
   /* ******************************************************************** */
+  /*		                                            		  */
   /*		Identity matrix                         		  */
+  /*		                                            		  */
   /* ******************************************************************** */
 
   struct identity_matrix {};
@@ -67,7 +69,9 @@ namespace gmm
   inline bool is_identity(const identity_matrix&) { return true; }
 
   /* ******************************************************************** */
+  /*		                                            		  */
   /*		Row matrix                                   		  */
+  /*		                                            		  */
   /* ******************************************************************** */
 
   template<class V> class row_matrix {
@@ -165,7 +169,9 @@ namespace gmm
   (std::ostream &o, const row_matrix<V>& m) { gmm::write(o,m); return o; }
 
   /* ******************************************************************** */
+  /*		                                            		  */
   /*		Column matrix                                		  */
+  /*		                                            		  */
   /* ******************************************************************** */
 
   template<class V> class col_matrix {
@@ -262,7 +268,144 @@ namespace gmm
 #endif
 
   /* ******************************************************************** */
+  /*		                                            		  */
+  /*		Dense matrix                                		  */
+  /*		                                            		  */
+  /* ******************************************************************** */
+
+  template<class T> class dense_matrix : public std::vector<T> {
+  public:
+    
+    typedef typename std::vector<T>::size_type size_type;
+    typedef typename std::vector<T>::iterator iterator;
+    typedef typename std::vector<T>::const_iterator const_iterator;
+    
+  protected:
+    size_type nbc, nbl;
+    
+  public:
+    
+    inline const T& operator ()(size_type l, size_type c) const {
+#     ifdef __GETFEM_VERIFY
+      if (l >= nbl || c >= nbc) this->out_of_range_error();
+#     endif
+      return *(this->begin() + c*nbl+l);
+    }
+    inline T& operator ()(size_type l, size_type c) {
+#     ifdef __GETFEM_VERIFY
+      if (l >= nbl || c >= nbc) this->out_of_range_error();
+#     endif
+      return *(this->begin() + c*nbl+l);
+    }
+
+    void out_of_range_error(void) const;
+    
+    void resize(size_type l, size_type c)
+    { if (c*l != this->size()) std::vector<T>::resize(c*l); nbl = l; nbc = c; }
+    
+    void fill(T a, T b = T(0));
+    inline size_type nrows(void) const { return nbl; }
+    inline size_type ncols(void) const { return nbc; }
+    
+    dense_matrix(size_type l, size_type c)
+      : std::vector<T>(c*l), nbc(c), nbl(l)  {}
+    dense_matrix(void) { nbl = nbc = 0; }
+  };
+  
+  template<class T> void dense_matrix<T>::fill(T a, T b) { 
+    std::fill(begin(), end(), b);
+    iterator p = this->begin(), e = this->end();
+    while (p < e) { *p = a; p += nbl+1; }
+  }
+
+  template<class T>  void dense_matrix<T>::out_of_range_error(void) const
+  { DAL_THROW(std::out_of_range, "out of range"); }
+
+  template <class T> struct dense_matrix_access {
+    typedef typename linalg_traits<dense_matrix<T> >::reference reference;
+    typedef typename linalg_traits<dense_matrix<T> >::value_type value_type;
+    typedef typename linalg_traits<dense_matrix<T> >::col_iterator iterator;
+    typedef typename linalg_traits<dense_matrix<T> >::const_col_iterator
+    const_iterator;
+    
+    reference operator()(const iterator &itcol, size_type j)
+    { return (*itcol)[j]; }
+    value_type operator()(const const_iterator &itcol, size_type j)
+    { return (*itcol)[j]; }
+  };
+
+  template <class T> struct linalg_traits<dense_matrix<T> > {
+    typedef dense_matrix<T> this_type;
+    typedef linalg_false is_reference;
+    typedef abstract_matrix linalg_type;
+    typedef T value_type;
+    typedef T& reference;
+    typedef abstract_plain storage_type;
+    typedef tab_ref_reg_spaced_with_origin<typename this_type::iterator>
+            sub_row_type;
+    typedef tab_ref_reg_spaced_with_origin<typename this_type
+            ::const_iterator> const_sub_row_type;
+    typedef plain_compressed_iterator<typename this_type::iterator,
+	    typename this_type::iterator> row_iterator;
+    typedef plain_compressed_iterator<typename this_type::const_iterator,
+	    typename this_type::iterator> const_row_iterator;
+    typedef tab_ref_with_origin<typename this_type::iterator> sub_col_type;
+    typedef tab_ref_with_origin<typename this_type::const_iterator>
+            const_sub_col_type;
+    typedef plain_compressed_iterator<typename this_type::iterator,
+	    typename this_type::iterator> col_iterator;
+    typedef plain_compressed_iterator<typename this_type::const_iterator,
+	    typename this_type::iterator> const_col_iterator;
+    typedef col_and_row sub_orientation;
+    typedef dense_matrix_access<T> access_type;
+    static size_type nrows(const this_type &m) { return m.nrows(); }
+    static size_type ncols(const this_type &m) { return m.ncols(); }
+    static const_sub_row_type row(const const_row_iterator &it) {
+      return const_sub_row_type(it.it, it.it + it.ncols * it.nrows,
+				it.nrows, it.origin); 
+    }
+    static const_sub_col_type col(const const_col_iterator &it)
+    { return const_sub_col_type(it.it, it.it + it.nrows, it.origin); }
+    static sub_row_type row(const row_iterator &it) {
+      return sub_row_type(it.it, it.it + it.ncols * it.nrows,
+			  it.nrows, it.origin);
+    }
+    static sub_col_type col(const col_iterator &it)
+    { return sub_col_type(it.it, it.it + it.nrows, it.origin); }
+    static row_iterator row_begin(this_type &m)
+    { return row_iterator(m.begin(), 1, m.nrows(), m.ncols(), &m); }
+    static row_iterator row_end(this_type &m)
+    { return row_iterator(m.begin()+m.nrows(), 1, m.nrows(), m.ncols(), &m); }
+    static const_row_iterator row_begin(const this_type &m)
+    { return const_row_iterator(m.begin(), 1, m.nrows(), m.ncols(), &m); }
+    static const_row_iterator row_end(const this_type &m) {
+      return const_row_iterator(m.begin()+m.nrows(), 1, m.nrows(),
+				m.ncols(), &m);
+    }
+    static col_iterator col_begin(this_type &m)
+    { return col_iterator(m.begin(), m.nrows(), m.nrows(), m.ncols(), &m); }
+    static col_iterator col_end(this_type &m)
+    { return col_iterator(m.end(), m.nrows(), m.nrows(), m.ncols(), &m); }
+    static const_col_iterator col_begin(const this_type &m)
+    { return const_col_iterator(m.begin(),m.nrows(),m.nrows(),m.ncols(),&m); }
+    static const_col_iterator col_end(const this_type &m)
+    { return const_col_iterator(m.end(), m.nrows(),m.nrows(),m.ncols(), &m); }
+    static const void* origin(const this_type &m) { return &m; }
+    static void do_clear(this_type &m) { m.fill(value_type(0)); }
+  };
+
+  template<class T> std::ostream &operator <<
+  (std::ostream &o, const dense_matrix<T>& m) { gmm::write(o,m); return o; }
+
+#ifdef USING_BROKEN_GCC295
+  template <class T> struct linalg_traits<const dense_matrix<T> >
+    : public linalg_traits<dense_matrix<T> > {};
+#endif
+
+  /* ******************************************************************** */
+  /*		                                            		  */
   /*		Block matrix                                		  */
+  /*		                                            		  */
   /* ******************************************************************** */
 
   template <class MAT> class block_matrix {

@@ -66,7 +66,7 @@ namespace getfem
     std::vector<pfem_precomp> pfp;
     std::vector<base_tensor> elmt_stored;
     short_type nbf, dim; 
-    base_matrix K, CS, TMP1, B, Htau, M, B2, B3, B32;
+    base_matrix K, CS, B, Htau, M, B2, B3, B32;
     std::deque<short_type> grad_reduction, hess_reduction, trans_reduction;
     std::deque<pfem> trans_reduction_pfi;
     base_vector un, up;
@@ -81,11 +81,7 @@ namespace getfem
 	grad_reduction.size()*sizeof(short_type) +
 	hess_reduction.size()*sizeof(short_type) +
 	trans_reduction.size()*sizeof(short_type) +
-	trans_reduction_pfi.size()*sizeof(pfem) + 
-	K.memsize() + CS.memsize()+ TMP1.memsize()+ 
-	B.memsize()+ Htau.memsize()+ M.memsize()+ 
-	B2.memsize()+ B3.memsize()+ B32.memsize() +
-	un.memsize() + up.memsize();
+	trans_reduction_pfi.size()*sizeof(pfem);
 
       for (size_type i=0; i < mref.size(); ++i) sz += mref[i].memsize();
       return sz;
@@ -312,7 +308,7 @@ namespace getfem
       scalar_type J;
       if (G.ncols() != NP) DAL_THROW(dimension_error, "dimensions mismatch");
       
-      K.resize(N, P); CS.resize(P, P); TMP1.resize(P, P); B.resize(P, N);
+      K.resize(N, P); CS.resize(P, P); B.resize(P, N);
       if (hess_reduction.size() > 0) {
 	B2.resize(P*P, P); B3.resize(N*N, P*P); Htau.resize(N, P*P);
 	B32.resize(N*N, P); B2.fill(0.0);
@@ -329,18 +325,18 @@ namespace getfem
 	pre_tensors_for_linear_trans(ir == 0);
 	
 	// computation of the pseudo inverse
- 	bgeot::mat_product_tt(pgp->grad(0), G, K);
+	gmm::mult(gmm::transposed(pgp->grad(0)), gmm::transposed(G), K);
 	if (P != N) {
-	  bgeot::mat_product_nt(K, K, CS);
-	  J = ::sqrt(bgeot::mat_inv_cholesky(CS, TMP1));
-	  bgeot::mat_product_tn(K, CS, B);
+	  gmm::mult(K, gmm::transposed(K), CS);
+	  J = ::sqrt(bgeot::mat_inverse(CS));
+	  gmm::mult(gmm::transposed(K), CS, B);
 	}
 	else {
-	  J = dal::abs(bgeot::mat_gauss_inverse(K, TMP1)); B = K;
+	  J = dal::abs(bgeot::mat_inverse(K)); B = K;
 	}
 	
 	if (ir > 0) {
-	  bgeot::mat_vect_product(B, un, up);
+	  gmm::mult(B, un, up);
 	  J *= bgeot::vect_norm2(up);
 	}
      
@@ -381,18 +377,18 @@ namespace getfem
 	     ip < pai->repart()[ir]; ++ip, first = false) {
 
 	  // computation of the pseudo inverse
-	  bgeot::mat_product_tt(pgp->grad(ip), G, K);
+	  gmm::mult(gmm::transposed(pgp->grad(ip)), gmm::transposed(G), K);
 	  if (P != N) {
-	    bgeot::mat_product_nt(K, K, CS);
-	    J = ::sqrt(bgeot::mat_inv_cholesky(CS, TMP1));
-	    bgeot::mat_product_tn(K, CS, B);
+	    gmm::mult(K, gmm::transposed(K), CS);
+	    J = ::sqrt(bgeot::mat_inverse(CS));
+	    gmm::mult(gmm::transposed(K), CS, B);
 	  }
 	  else {
-  	    J = dal::abs(bgeot::mat_gauss_inverse(K, TMP1)); B = K;
+  	    J = dal::abs(bgeot::mat_inverse(K)); B = K;
   	  }
 	  
 	  if (ir > 0) {
-	    bgeot::mat_vect_product(B, un, up);
+	    gmm::mult(B, un, up);
 	    J *= bgeot::vect_norm2(up);
 	  }
 
@@ -402,13 +398,13 @@ namespace getfem
 		for (short_type k = 0; k < N; ++k)
 		  for (short_type l = 0; l < N; ++l)
 		    B3(k + N*l, i + P*j) = B(k, i) * B(l, j);
-	    bgeot::mat_product(G, pgp->hessian(ip), Htau);
+	    gmm::mult(G, pgp->hessian(ip), Htau);
 	    for (short_type i = 0; i < P; ++i)
 	      for (short_type j = 0; j < P; ++j)
 		for (short_type k = 0; k < P; ++k)
 		  for (short_type l = 0; l < N; ++l)
 		    B2(i + P*j, k) += Htau(l, i + P*j) * B(l,k);
-	    bgeot::mat_product(B3, B2, B32);
+	    gmm::mult(B3, B2, B32);
 	  }
 
 	  add_elem(t, G,  ip, J, N, first);

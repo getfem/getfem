@@ -78,7 +78,7 @@ namespace getfem
     dim_type P = dim();
     size_type npt = G.ncols();
     base_matrix pc(npt , P);
-    base_matrix grad(N, P), TMP1(P,P), B0(P,N), CS(P,P), M;
+    base_matrix grad(N, P), B0(P,N), CS(P,P), M;
     base_matrix val2(target_dim(), P);
     base_poly PP;
     base_tensor t;
@@ -90,14 +90,14 @@ namespace getfem
 	pc(i, n) = PP.eval(x.begin());
       }
     
-    bgeot::mat_product(G, pc, grad);
+    gmm::mult(G, pc, grad);
     if (P != N) {
-      bgeot::mat_product_tn(grad, grad, CS);
-      bgeot::mat_inv_cholesky(CS, TMP1);
-      bgeot::mat_product_tt(CS, grad, B0);
+      gmm::mult(gmm::transposed(grad), grad, CS);
+      bgeot::mat_inverse(CS);
+      gmm::mult(gmm::transposed(CS), gmm::transposed(grad), B0);
     }
     else {
-      bgeot::mat_gauss_inverse(grad, TMP1);
+      bgeot::mat_inverse(grad);
       B0 = grad;
     }
      
@@ -123,7 +123,7 @@ namespace getfem
  	  val2(r,k) += co * (*it);
  	} 
     
-    bgeot::mat_product(val2, B0, val);
+    gmm::mult(val2, B0, val);
   }
 
 
@@ -868,11 +868,11 @@ namespace getfem
     if (N != 1)
       DAL_THROW(failure_error, "This element cannot be used for Q > 1");
     // gradient au pt 0
-    bgeot::mat_product(G, pgp->grad(0), K);
+    gmm::mult(G, pgp->grad(0), K);
     M(2,2) = K(0,0);
     cout << "K(0,0) = " << K(0,0) << endl;
     // gradient au pt 1
-    if (!(pgt->is_linear())) bgeot::mat_product(G, pgp->grad(1), K);
+    if (!(pgt->is_linear())) gmm::mult(G, pgp->grad(1), K);
     M(3,3) = K(0,0);
   }
 
