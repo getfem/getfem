@@ -31,8 +31,8 @@
 /* *********************************************************************** */
 
 
-#ifndef __GETFEM_MESH_FEM_H
-#define __GETFEM_MESH_FEM_H
+#ifndef GETFEM_MESH_FEM_H__
+#define GETFEM_MESH_FEM_H__
 
 /* *********************************************************************** */
 /*									   */
@@ -201,7 +201,7 @@ namespace getfem
     dal::bit_vector valid_boundaries;
     dal::dynamic_array<pintfem> f_elems;
     dal::bit_vector fe_convex;
-    getfem_mesh *_linked_mesh;
+    getfem_mesh *linked_mesh_;
     mutable bgeot::mesh_structure dof_structure;
     mutable bool dof_enumeration_made;
     mutable size_type nb_total_dof;
@@ -219,7 +219,7 @@ namespace getfem
       { return fe_convex; }
     
     /// Gives a pointer to the linked mesh of type getfem\_mesh.
-    getfem_mesh &linked_mesh(void) const { return *_linked_mesh; }
+    getfem_mesh &linked_mesh(void) const { return *linked_mesh_; }
     /** Set on the convex of index i the integrable finite element method
      *          with the description pif which is of type pintfem.
      */
@@ -361,4 +361,4 @@ namespace getfem
 }  /* end of namespace getfem.                                             */
 
 
-#endif /* __GETFEM_MESH_FEM_H  */
+#endif /* GETFEM_MESH_FEM_H__  */

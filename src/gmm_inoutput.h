@@ -29,8 +29,8 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef __GMM_INOUTPUT_H
-#define __GMM_INOUTPUT_H
+#ifndef GMM_INOUTPUT_H__
+#define GMM_INOUTPUT_H__
 
 #include <stdio.h>
 
@@ -576,14 +576,14 @@ namespace gmm {
 
   // not securized, to be used with "double" or "std::complex<double>"
 
-  inline bool __is_complex_double(std::complex<double>) { return true; }
-  inline bool __is_complex_double(double) { return false; }
+  inline bool is_complex_double__(std::complex<double>) { return true; }
+  inline bool is_complex_double__(double) { return false; }
 
   template <typename T, int shift> void
   Harwell_Boeing_save(const char *filename, const csc_matrix<T, shift>& A) {
     const char *t = 0;
 
-    if (__is_complex_double(T()))
+    if (is_complex_double__(T()))
       if (mat_nrows(A) == mat_ncols(A)) t = "CUA"; else t = "CRA";
     else
       if (mat_nrows(A) == mat_ncols(A)) t = "RUA"; else t = "RRA";
@@ -609,8 +609,8 @@ namespace gmm {
     std::auto_ptr<IND_TYPE> jc(new IND_TYPE[N+1]);
     std::auto_ptr<IND_TYPE> ir(new IND_TYPE[nonzeros]);
     std::auto_ptr<double> pr;
-    if ((__is_complex_double(T()) && (Type[0] == 'R' || Type[0] == 'P')) ||
-	(!__is_complex_double(T()) && (Type[0] == 'C' || Type[0] == 'P')))
+    if ((is_complex_double__(T()) && (Type[0] == 'R' || Type[0] == 'P')) ||
+	(!is_complex_double__(T()) && (Type[0] == 'C' || Type[0] == 'P')))
       DAL_THROW(failure_error, "Bad matrix format");
 
     if (Type[0] == 'C') {
@@ -976,7 +976,7 @@ typedef char MM_typecode[4];
     static MM_typecode t2 = {'M', 'C', 'C', 'G'};
     MM_typecode t;
 
-    if (__is_complex_double(T())) std::copy(&(t2[0]), &(t2[0])+4, &(t[0]));
+    if (is_complex_double__(T())) std::copy(&(t2[0]), &(t2[0])+4, &(t[0]));
     else std::copy(&(t1[0]), &(t1[0])+4, &(t[0]));
 
     size_type nnz = A.jc[mat_ncols(A)];
@@ -1040,8 +1040,8 @@ typedef char MM_typecode[4];
       isHermitian = true;
 
     if (mm_is_complex(matcode)) isComplex = true;
-    if ((__is_complex_double(T()) && !isComplex) || 
-	(!__is_complex_double(T()) && isComplex))
+    if ((is_complex_double__(T()) && !isComplex) || 
+	(!is_complex_double__(T()) && isComplex))
       DAL_THROW(failure_error, "Bad matrix format");
 
     mm_read_mtx_crd_size(fin, &row, &col, &nz);
@@ -1058,4 +1058,4 @@ typedef char MM_typecode[4];
 }
 
 
-#endif //  __GMM_INOUTPUT_H
+#endif //  GMM_INOUTPUT_H__

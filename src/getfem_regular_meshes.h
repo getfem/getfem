@@ -30,8 +30,8 @@
 /* *********************************************************************** */
 
 
-#ifndef __GETFEM_REGULAR_MESHES_H
-#define __GETFEM_REGULAR_MESHES_H
+#ifndef GETFEM_REGULAR_MESHES_H__
+#define GETFEM_REGULAR_MESHES_H__
 
 #include <getfem_mesh.h>
 #include <bgeot_simplexify.h>
@@ -50,7 +50,7 @@ namespace getfem
   /* dimension. Chaque parallelepidede est simplexifie.                   */
   /* ******************************************************************** */
 
-  void _parallelepiped_regular_simplex_mesh(getfem_mesh &me, dim_type N,
+  void parallelepiped_regular_simplex_mesh_(getfem_mesh &me, dim_type N,
     const base_node &org, const base_small_vector *ivect, const size_type *iref);
 
   template<class ITER1, class ITER2>
@@ -62,11 +62,11 @@ namespace getfem
     std::copy(ivect, ivect+N, vect.begin());
     std::vector<size_type> ref(N);
     std::copy(iref, iref+N, ref.begin());
-    _parallelepiped_regular_simplex_mesh(me, N, org, &(vect[0]),
+    parallelepiped_regular_simplex_mesh_(me, N, org, &(vect[0]),
 					 &(ref[0]));
   } 
 
-  void _parallelepiped_regular_prism_mesh(getfem_mesh &me, dim_type N,
+  void parallelepiped_regular_prism_mesh_(getfem_mesh &me, dim_type N,
       const base_node &org, const base_small_vector *ivect, const size_type *iref);
 
   template<class ITER1, class ITER2>
@@ -78,11 +78,11 @@ namespace getfem
     std::copy(ivect, ivect+N, vect.begin());
     std::vector<size_type> ref(N);
     std::copy(iref, iref+N, ref.begin());
-    _parallelepiped_regular_prism_mesh(me, N, org, &(vect[0]),
+    parallelepiped_regular_prism_mesh_(me, N, org, &(vect[0]),
 					 &(ref[0]));
   } 
 
-    void _parallelepiped_regular_mesh(getfem_mesh &me, dim_type N,
+    void parallelepiped_regular_mesh_(getfem_mesh &me, dim_type N,
                                       const base_node &org, const base_small_vector *ivect, const size_type *iref, bool linear_gt);
 
   template<class ITER1, class ITER2>
@@ -94,10 +94,10 @@ namespace getfem
     std::copy(ivect, ivect+N, vect.begin());
     std::vector<size_type> ref(N);
     std::copy(iref, iref+N, ref.begin());
-    _parallelepiped_regular_mesh(me, N, org, &(vect[0]), &(ref[0]), linear_gt);
+    parallelepiped_regular_mesh_(me, N, org, &(vect[0]), &(ref[0]), linear_gt);
   } 
 
 }  /* end of namespace getfem.                                             */
 
 
-#endif /* __GETFEM_REGULAR_MESHES_H  */
+#endif /* GETFEM_REGULAR_MESHES_H__  */

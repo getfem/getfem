@@ -22,6 +22,9 @@
 #include <getfem_regular_meshes.h>
 #include <getfem_poly_composite.h>
 #include <bgeot_comma_init.h>
+#ifdef GETFEM_HAVE_FEENABLEEXCEPT
+#  include <fenv.h>
+#endif
 
 using getfem::size_type;
 
@@ -171,6 +174,9 @@ class myexc : public dal::exception_callback {
 
 int main(void)
 {
+#ifdef GETFEM_HAVE_FEENABLEEXCEPT /* trap SIGFPE */
+  feenableexcept(FE_DIVBYZERO | FE_INVALID);
+#endif
   dal::set_exception_callback(new myexc);
   try {
     cout << "sizeof(size_type)=" << sizeof(size_type) << endl;

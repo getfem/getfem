@@ -187,13 +187,13 @@ namespace getfem
     { linkable = true; coord_index = FIRST; xfem_index = 0; }
   };
 
-  struct __dof_description_comp {
+  struct dof_description_comp__ {
     int operator()(const dof_description &m, const dof_description &n) const;
   };
 
   // ATTENTION : en cas de modif, changer aussi dof_description_compare,
   //             product_dof, et dof_hierarchical_compatibility.
-  int __dof_description_comp::operator()(const dof_description &m,
+  int dof_description_comp__::operator()(const dof_description &m,
 					 const dof_description &n) const { 
     int nn = dal::lexicographical_less<std::vector<ddl_elem> >()
       (m.ddl_desc, n.ddl_desc);
@@ -207,15 +207,15 @@ namespace getfem
     return 0;
   }
 
-  static dal::dynamic_tree_sorted<dof_description, __dof_description_comp>
-                                                            *_dof_d_tab = 0;
+  static dal::dynamic_tree_sorted<dof_description, dof_description_comp__>
+                                                            *dof_d_tab_ = 0;
 
   static void init_tab(void) // because of problem with initialization
   {                          // in dynamic libraries.
     
-    if (!_dof_d_tab)
-      _dof_d_tab = new dal::dynamic_tree_sorted<dof_description,
-	                                        __dof_description_comp>();
+    if (!dof_d_tab_)
+      dof_d_tab_ = new dal::dynamic_tree_sorted<dof_description,
+	                                        dof_description_comp__>();
   }
 
   pdof_description lagrange_dof(dim_type n) {
@@ -226,8 +226,8 @@ namespace getfem
       dof_description l;
       l.ddl_desc.resize(n);
       std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), ddl_elem(LAGRANGE));
-      size_type i = _dof_d_tab->add_norepeat(l);
-      p_old = &((*_dof_d_tab)[i]);
+      size_type i = dof_d_tab_->add_norepeat(l);
+      p_old = &((*dof_d_tab_)[i]);
       n_old = n;
     }
     return p_old;
@@ -238,14 +238,14 @@ namespace getfem
     dof_description l = *p;
     for (size_type i = 0; i < l.ddl_desc.size(); ++i)
       l.ddl_desc[i].hier_degree = deg;
-    size_type i = _dof_d_tab->add_norepeat(l);
-    return &((*_dof_d_tab)[i]);
+    size_type i = dof_d_tab_->add_norepeat(l);
+    return &((*dof_d_tab_)[i]);
   }
 
   pdof_description xfem_dof(pdof_description p, size_type ind) {
     init_tab(); dof_description l = *p; l.xfem_index = ind;
-    size_type i = _dof_d_tab->add_norepeat(l);
-    return &((*_dof_d_tab)[i]);
+    size_type i = dof_d_tab_->add_norepeat(l);
+    return &((*dof_d_tab_)[i]);
   }
 
 
@@ -253,8 +253,8 @@ namespace getfem
     init_tab();
     dof_description l = *p;
     l.coord_index = coord_type(ct);
-    size_type i = _dof_d_tab->add_norepeat(l);
-    return &((*_dof_d_tab)[i]);
+    size_type i = dof_d_tab_->add_norepeat(l);
+    return &((*dof_d_tab_)[i]);
   }
   
   pdof_description raff_hierarchical_dof(pdof_description p, short_type deg) {
@@ -262,8 +262,8 @@ namespace getfem
     dof_description l = *p;
     for (size_type i = 0; i < l.ddl_desc.size(); ++i)
       l.ddl_desc[i].hier_raff = deg;
-    size_type i = _dof_d_tab->add_norepeat(l);
-    return &((*_dof_d_tab)[i]);
+    size_type i = dof_d_tab_->add_norepeat(l);
+    return &((*dof_d_tab_)[i]);
   }
 
   pdof_description lagrange_nonconforming_dof(dim_type n) {
@@ -271,8 +271,8 @@ namespace getfem
     dof_description l; l.linkable = false;
     l.ddl_desc.resize(n);
     std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), ddl_elem(LAGRANGE));
-    size_type i = _dof_d_tab->add_norepeat(l);
-    return &((*_dof_d_tab)[i]);
+    size_type i = dof_d_tab_->add_norepeat(l);
+    return &((*dof_d_tab_)[i]);
   }
 
   pdof_description bubble1_dof(dim_type n) {
@@ -280,8 +280,8 @@ namespace getfem
     dof_description l;
     l.ddl_desc.resize(n);
     std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), ddl_elem(BUBBLE1));
-    size_type i = (*_dof_d_tab).add_norepeat(l);
-    return &((*_dof_d_tab)[i]);
+    size_type i = (*dof_d_tab_).add_norepeat(l);
+    return &((*dof_d_tab_)[i]);
   }
 
   pdof_description derivative_dof(dim_type n, dim_type num_der) {
@@ -290,8 +290,8 @@ namespace getfem
     l.ddl_desc.resize(n);
     std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), ddl_elem(LAGRANGE));
     l.ddl_desc[num_der] = ddl_elem(DERIVATIVE);
-    size_type ii = (*_dof_d_tab).add_norepeat(l);
-    return &((*_dof_d_tab)[ii]);
+    size_type ii = (*dof_d_tab_).add_norepeat(l);
+    return &((*dof_d_tab_)[ii]);
   }
 
   pdof_description norm_derivative_dof(dim_type n) {
@@ -299,8 +299,8 @@ namespace getfem
     dof_description l;
     l.ddl_desc.resize(n);
     std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), ddl_elem(NORM_DERIVATIVE));
-    size_type ii = (*_dof_d_tab).add_norepeat(l);
-    return &((*_dof_d_tab)[ii]);
+    size_type ii = (*dof_d_tab_).add_norepeat(l);
+    return &((*dof_d_tab_)[ii]);
   }
 
   pdof_description mean_value_dof(dim_type n) {
@@ -308,8 +308,8 @@ namespace getfem
     dof_description l;
     l.ddl_desc.resize(n);
     std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), ddl_elem(MEAN_VALUE));
-    size_type ii = (*_dof_d_tab).add_norepeat(l);
-    return &((*_dof_d_tab)[ii]);
+    size_type ii = (*dof_d_tab_).add_norepeat(l);
+    return &((*dof_d_tab_)[ii]);
   }
 
   pdof_description already_numerate_dof(dim_type n) {
@@ -317,8 +317,8 @@ namespace getfem
     dof_description l;
     l.ddl_desc.resize(n);
     std::fill(l.ddl_desc.begin(), l.ddl_desc.end(),ddl_elem(ALREADY_NUMERATE));
-    size_type i = _dof_d_tab->add_norepeat(l);
-    return &((*_dof_d_tab)[i]);
+    size_type i = dof_d_tab_->add_norepeat(l);
+    return &((*dof_d_tab_)[i]);
   }
 
   pdof_description product_dof(pdof_description a, pdof_description b) {
@@ -348,12 +348,12 @@ namespace getfem
       for (size_type i = 0; i < l.ddl_desc.size(); ++i)
 	l.ddl_desc[i].hier_raff = deg;
     }
-    size_type ii = (*_dof_d_tab).add_norepeat(l);
-    return &((*_dof_d_tab)[ii]);
+    size_type ii = (*dof_d_tab_).add_norepeat(l);
+    return &((*dof_d_tab_)[ii]);
   }
 
   // ATTENTION : en cas de modif, changer aussi
-  //             __dof_description_comp::operator,
+  //             dof_description_comp__::operator,
   //             product_dof, et dof_hierarchical_compatibility.
   int dof_description_compare(pdof_description a, pdof_description b) {
     int nn;
@@ -402,8 +402,8 @@ namespace getfem
     short_type nb = cv_node.nb_points();
     cv_node.points().resize(nb+1);
     cv_node.points()[nb] = pt;
-    _dof_types.resize(nb+1);
-    _dof_types[nb] = d;
+    dof_types_.resize(nb+1);
+    dof_types_[nb] = d;
     cvs_node.add_point_adaptative(nb, short_type(-1));
     for (short_type f = 0; f < cvs_node.nb_faces(); ++f)
       if (dal::abs(cvr->is_in_face(f, pt)) < 1.0E-7)
@@ -426,13 +426,13 @@ namespace getfem
   /*	PK class.                                                         */
   /* ******************************************************************** */
 
-  class _PK_fem : public fem<base_poly> {
+  class PK_fem_ : public fem<base_poly> {
   public :
     void calc_base_func(base_poly &p, size_type i, short_type K) const;
-    _PK_fem(dim_type nc, short_type k);
+    PK_fem_(dim_type nc, short_type k);
   };
   
-  void _PK_fem::calc_base_func(base_poly &p, size_type i, short_type K) const {
+  void PK_fem_::calc_base_func(base_poly &p, size_type i, short_type K) const {
     dim_type N = dim();
     base_poly l0(N, 0), l1(N, 0);
     bgeot::power_index w(N+1);
@@ -459,7 +459,7 @@ namespace getfem
     }
   }
   
-  _PK_fem::_PK_fem(dim_type nc, short_type k) {
+  PK_fem_::PK_fem_(dim_type nc, short_type k) {
     cvr = bgeot::simplex_of_reference(nc);
     is_equiv = is_pol = is_lag = true;
     es_degree = k;
@@ -470,8 +470,8 @@ namespace getfem
     for (size_type i = 0; i < R; ++i)
       add_node(lagrange_dof(nc), cvn->points()[i]);
     
-    _base.resize(R);
-    for (size_type r = 0; r < R; r++) calc_base_func(_base[r], r, k);
+    base_.resize(R);
+    for (size_type r = 0; r < R; r++) calc_base_func(base_[r], r, k);
   }
 
   static pfem PK_fem(fem_param_list &params) {
@@ -485,7 +485,7 @@ namespace getfem
     if (n <= 0 || n >= 100 || k < 0 || k > 150 ||
 	double(n) != params[0].num() || double(k) != params[1].num())
       DAL_THROW(failure_error, "Bad parameters");
-    return new _PK_fem(n, k);
+    return new PK_fem_(n, k);
   }
 
 
@@ -516,7 +516,7 @@ namespace getfem
     init_cvs_node();
     
     ntarget_dim = fi2->target_dim();
-    _base.resize(cv.nb_points() * ntarget_dim);
+    base_.resize(cv.nb_points() * ntarget_dim);
     size_type i, j, r;
     for (j = 0, r = 0; j < fi2->nb_dof(); ++j)
       for (i = 0; i < fi1->nb_dof(); ++i, ++r)
@@ -525,8 +525,8 @@ namespace getfem
     
     for (j = 0, r = 0; j < fi2->nb_base_components(); j++)
       for (i = 0; i < fi1->nb_base_components(); i++, ++r) {
-	_base[r] = fi1->base()[i];
-	_base[r].direct_product(fi2->base()[j]); 
+	base_[r] = fi1->base()[i];
+	base_[r].direct_product(fi2->base()[j]); 
       }
   }
 
@@ -579,16 +579,16 @@ namespace getfem
 	add_node(deg_hierarchical_dof(fi2->dof_types()[i], 
 				      fi1->estimated_degree()),
 		 fi2->node_of_dof(i));
-	_base.resize(nb_dof());
-	_base[nb_dof()-1] = (fi2->base())[i];
-	// 	  cout << "adding base : " << _base[nb_dof()-1] << endl;
+	base_.resize(nb_dof());
+	base_[nb_dof()-1] = (fi2->base())[i];
+	// 	  cout << "adding base : " << base_[nb_dof()-1] << endl;
 	// 	  cout << "point : " << node_of_dof(nb_dof()-1) << endl;
 	// 	  cout << "Nb dof cici = " << nb_dof() << endl;
       }
     }
     //        cout << "Nb dof = " << nb_dof() << endl;
     //        for (size_type j = 0; j < nb_dof(); ++j)
-    //  	cout << " base : " << j << " : " << _base[j] << endl;
+    //  	cout << " base : " << j << " : " << base_[j] << endl;
   }
 
   struct thierach_femi_comp : public fem<polynomial_composite>
@@ -623,8 +623,8 @@ namespace getfem
       if (!found) {
 	add_node(raff_hierarchical_dof(fi2->dof_types()[i], hier_raff),
 		 fi2->node_of_dof(i));
-	_base.resize(nb_dof());
-	_base[nb_dof()-1] = (fi2->base())[i];
+	base_.resize(nb_dof());
+	base_[nb_dof()-1] = (fi2->base())[i];
       }
     }
   }
@@ -796,19 +796,19 @@ namespace getfem
    /*	P1 element with a bubble base fonction on a face                   */
    /* ******************************************************************** */
 
-   struct _P1_wabbfoaf : public _PK_fem
+   struct P1_wabbfoaf_ : public PK_fem_
    {
-     _P1_wabbfoaf(dim_type nc);
+     P1_wabbfoaf_(dim_type nc);
    };
 
-  _P1_wabbfoaf::_P1_wabbfoaf(dim_type nc) : _PK_fem(nc, 1) {
+  P1_wabbfoaf_::P1_wabbfoaf_(dim_type nc) : PK_fem_(nc, 1) {
     is_lag = false; es_degree = 2;
     base_node pt(nc); pt.fill(0.5);
     unfreeze_cvs_node();
     add_node(bubble1_dof(nc), pt);
-    _base.resize(nb_dof());
-    _base[nc+1] = _base[1]; _base[nc+1] *= scalar_type(1 << nc);
-    for (int i = 2; i <= nc; ++i) _base[nc+1] *= _base[i];
+    base_.resize(nb_dof());
+    base_[nc+1] = base_[1]; base_[nc+1] *= scalar_type(1 << nc);
+    for (int i = 2; i <= nc; ++i) base_[nc+1] *= base_[i];
     // Le raccord assure la continuite
     // des possibilités de raccord avec du P2 existent mais il faudrait
     // modifier qlq chose (transformer les fct de base P1) 
@@ -823,51 +823,51 @@ namespace getfem
     int n = int(::floor(params[0].num() + 0.01));
     if (n <= 1 || n >= 100 || double(n) != params[0].num())
       DAL_THROW(failure_error, "Bad parameters");
-    return new _P1_wabbfoaf(n);
+    return new P1_wabbfoaf_(n);
   }
 
   /* ******************************************************************** */
   /*	P1 element with a bubble base fonction on a face : type lagrange  */
   /* ******************************************************************** */
 
-  struct _P1_wabbfoafla : public _PK_fem
+  struct P1_wabbfoafla_ : public PK_fem_
   { // idem elt prec mais avec raccord lagrange. A faire en dim. quelconque ..
-    _P1_wabbfoafla(void);
+    P1_wabbfoafla_(void);
   };
 
-  _P1_wabbfoafla::_P1_wabbfoafla(void) : _PK_fem(2, 1) {
+  P1_wabbfoafla_::P1_wabbfoafla_(void) : PK_fem_(2, 1) {
     unfreeze_cvs_node();
     es_degree = 2;
     base_node pt(2); pt.fill(0.5);
     add_node(lagrange_dof(2), pt);
-    _base.resize(nb_dof());
+    base_.resize(nb_dof());
     
     base_poly one(2, 0); one.one();
     base_poly x(2, 1, 0), y(2, 1, 1);
     
-    _base[0] = one - y - x;
-    _base[1] = x * (one - y * 2.0);
-    _base[2] = y * (one - x * 2.0);
-    _base[3] = y * x * 4.0;
+    base_[0] = one - y - x;
+    base_[1] = x * (one - y * 2.0);
+    base_[2] = y * (one - x * 2.0);
+    base_[3] = y * x * 4.0;
   }
   
   static pfem P1_with_bubble_on_a_face_lagrange(fem_param_list &params) {
     if (params.size() != 0)
       DAL_THROW(failure_error, "Bad number of parameters");
-    return new _P1_wabbfoafla;
+    return new P1_wabbfoafla_;
   }
 
   /* ******************************************************************** */
   /*	Hremite element on the segment                                    */
   /* ******************************************************************** */
 
-  struct _hermite_segment_ : public fem<base_poly> {
+  struct hermite_segment__ : public fem<base_poly> {
     virtual void mat_trans(base_matrix &M, const base_matrix &G,
 			   bgeot::pgeometric_trans pgt) const;
-    _hermite_segment_(void);
+    hermite_segment__(void);
   };
 
-  void _hermite_segment_::mat_trans(base_matrix &M,
+  void hermite_segment__::mat_trans(base_matrix &M,
 					    const base_matrix &G,
 					 bgeot::pgeometric_trans pgt) const { 
     dim_type P = 1, N = G.nrows();
@@ -885,7 +885,7 @@ namespace getfem
     M(3,3) = K(0,0);
   }
 
-  _hermite_segment_::_hermite_segment_(void) { 
+  hermite_segment__::hermite_segment__(void) { 
     base_node pt(1);
     base_poly one(1, 0), x(1, 1, 0); one.one();
     cvr = bgeot::simplex_of_reference(1);
@@ -895,32 +895,32 @@ namespace getfem
     is_lag = false;
     // is_equiv = false;
     is_equiv = true;
-    _base.resize(4);
+    base_.resize(4);
     
     pt[0] = 0.0; add_node(lagrange_dof(1), pt);
-    _base[0] = one + x * x * (-one * 3.0  + x * 2.0);
-    // _base[0] = one - x;
-    // _base[0] = (one - x) * (one - x * 2.0);
+    base_[0] = one + x * x * (-one * 3.0  + x * 2.0);
+    // base_[0] = one - x;
+    // base_[0] = (one - x) * (one - x * 2.0);
     pt[0] = 1.0; add_node(lagrange_dof(1), pt);
-    _base[1] = x * x * (one * 3.0 - x * 2.0);
-    // _base[1] = x * (x * 2.0 - one);
+    base_[1] = x * x * (one * 3.0 - x * 2.0);
+    // base_[1] = x * (x * 2.0 - one);
     pt[0] = 0.0; add_node(derivative_dof(1, 0), pt);
     // pt[0] = 0.1; add_node(lagrange_nonconforming_dof(1), pt);
-    _base[2] = x * (one + x * (-one * 2.0 + x));
+    base_[2] = x * (one + x * (-one * 2.0 + x));
     pt[0] = 1.0; add_node(derivative_dof(1, 0), pt);
     // pt[0] = 0.9; add_node(lagrange_nonconforming_dof(1), pt);
-    _base[3] = x * x * (-one + x);
+    base_[3] = x * x * (-one + x);
     
-    cout << "base(0) = " << _base[0] << endl;
-    cout << "base(1) = " << _base[1] << endl;
-    cout << "base(2) = " << _base[2] << endl;
-    cout << "base(3) = " << _base[3] << endl;
+    cout << "base(0) = " << base_[0] << endl;
+    cout << "base(1) = " << base_[1] << endl;
+    cout << "base(2) = " << base_[2] << endl;
+    cout << "base(3) = " << base_[3] << endl;
   }
 
   static pfem segment_Hermite_fem(fem_param_list &params) {
     if (params.size() != 0)
       DAL_THROW(failure_error, "Bad number of parameters");
-    return new _hermite_segment_;
+    return new hermite_segment__;
   }
 
   /* ******************************************************************** */
@@ -928,11 +928,11 @@ namespace getfem
   /* ******************************************************************** */
 
   
-  struct _PK_discont : public _PK_fem {
+  struct PK_discont_ : public PK_fem_ {
   public :
     
-    _PK_discont(dim_type nc, short_type k, scalar_type alpha=0.) : _PK_fem(nc, k) {
-      std::fill(_dof_types.begin(), _dof_types.end(),
+    PK_discont_(dim_type nc, short_type k, scalar_type alpha=0.) : PK_fem_(nc, k) {
+      std::fill(dof_types_.begin(), dof_types_.end(),
 		lagrange_nonconforming_dof(nc));
       base_node G = cv_node.points()[0];
       for (size_type i=0; i < cv_node.nb_points(); ++i) G += cv_node.points()[i];
@@ -945,13 +945,13 @@ namespace getfem
         S[0] = -alpha * G[d] / (1-alpha);
         S[1] = 1. / (1-alpha);
         for (size_type j=0; j < nb_base(); ++j) {
-          _base[j] = bgeot::poly_substitute_var(_base[j],S,d);
+          base_[j] = bgeot::poly_substitute_var(base_[j],S,d);
         }
       }
-      /*for (size_type j=0; j < nb_base(); ++j) cout << " base[" << j << "]=" << _base[j] << "\n";
+      /*for (size_type j=0; j < nb_base(); ++j) cout << " base[" << j << "]=" << base_[j] << "\n";
       for (size_type i=0; i < cv_node.nb_points(); ++i) {
         cout << "node=" << cv_node.points()[i] << ":";
-        for (size_type j=0; j < nb_base(); ++j) cout << _base[j].eval(cv_node.points()[i].begin()) << " ";
+        for (size_type j=0; j < nb_base(); ++j) cout << base_[j].eval(cv_node.points()[i].begin()) << " ";
         cout << "\n";
       }
       */
@@ -971,7 +971,7 @@ namespace getfem
     if (n <= 0 || n >= 100 || k < 0 || k > 150 ||
 	double(n) != params[0].num() || double(k) != params[1].num() || alpha < 0 || alpha >= 1)
       DAL_THROW(failure_error, "Bad parameters");
-    return new _PK_discont(n, k, alpha);
+    return new PK_discont_(n, k, alpha);
   }
 
 
@@ -979,27 +979,27 @@ namespace getfem
   /*	PK element with a bubble base fonction                            */
   /* ******************************************************************** */
   
-  struct _PK_with_cubic_bubble : public _PK_fem {
-    _PK_with_cubic_bubble(dim_type nc, short_type k);
+  struct PK_with_cubic_bubble_ : public PK_fem_ {
+    PK_with_cubic_bubble_(dim_type nc, short_type k);
   };
   
-  _PK_with_cubic_bubble::_PK_with_cubic_bubble(dim_type nc, short_type k)
-    : _PK_fem(nc, k) {
+  PK_with_cubic_bubble_::PK_with_cubic_bubble_(dim_type nc, short_type k)
+    : PK_fem_(nc, k) {
     unfreeze_cvs_node();
     is_lag = false; es_degree = nc+1;
     base_node pt(nc); 
     size_type j;
-    _PK_fem P1(nc, 1);
+    PK_fem_ P1(nc, 1);
     
     pt.fill(1./(nc+1)); /* barycenter of the convex */
     
     add_node(bubble1_dof(nc), pt);
-    _base.resize(nb_dof());
+    base_.resize(nb_dof());
     
     j = nb_dof() - 1;
-    _base[j] = base_poly(nc, 0);
-    _base[j].one();
-    for (size_type i = 0; i < P1.nb_dof(); i++) _base[j] *= P1.base()[i];
+    base_[j] = base_poly(nc, 0);
+    base_[j].one();
+    for (size_type i = 0; i < P1.nb_dof(); i++) base_[j] *= P1.base()[i];
   }
 
   static pfem PK_with_cubic_bubble(fem_param_list &params) {
@@ -1014,7 +1014,7 @@ namespace getfem
     if (n <= 0 || n >= 100 || k < 0 || k > 150 ||
 	double(n) != params[0].num() || double(k) != params[1].num())
       DAL_THROW(failure_error, "Bad parameters");
-    return new _PK_with_cubic_bubble(n, k);
+    return new PK_with_cubic_bubble_(n, k);
   }
 
   /* ******************************************************************** */
@@ -1077,47 +1077,47 @@ namespace getfem
   pfem PK_composite_hierarch_fem(fem_param_list &params);
   pfem PK_composite_full_hierarch_fem(fem_param_list &params);
 
-  static ftool::naming_system<virtual_fem> *_fem_naming_system = 0;
+  static ftool::naming_system<virtual_fem> *fem_naming_system_ = 0;
   
   static void init_fem_naming_system(void) {
-    _fem_naming_system = new ftool::naming_system<virtual_fem>("FEM");
-    _fem_naming_system->add_suffix("HERMITE_SEGMENT", segment_Hermite_fem);
-    _fem_naming_system->add_suffix("PK", PK_fem);
-    _fem_naming_system->add_suffix("QK", QK_fem);
-    _fem_naming_system->add_suffix("QK_DISCONTINUOUS", QK_discontinuous_fem);
-    _fem_naming_system->add_suffix("PK_PRISM", PK_prism_fem);
-    _fem_naming_system->add_suffix("PK_DISCONTINUOUS", PK_discontinuous_fem);
-    _fem_naming_system->add_suffix("PK_WITH_CUBIC_BUBBLE",
+    fem_naming_system_ = new ftool::naming_system<virtual_fem>("FEM");
+    fem_naming_system_->add_suffix("HERMITE_SEGMENT", segment_Hermite_fem);
+    fem_naming_system_->add_suffix("PK", PK_fem);
+    fem_naming_system_->add_suffix("QK", QK_fem);
+    fem_naming_system_->add_suffix("QK_DISCONTINUOUS", QK_discontinuous_fem);
+    fem_naming_system_->add_suffix("PK_PRISM", PK_prism_fem);
+    fem_naming_system_->add_suffix("PK_DISCONTINUOUS", PK_discontinuous_fem);
+    fem_naming_system_->add_suffix("PK_WITH_CUBIC_BUBBLE",
 				   PK_with_cubic_bubble);
-    _fem_naming_system->add_suffix("PRODUCT", product_fem);
-    _fem_naming_system->add_suffix("P1_NONCONFORMING", P1_nonconforming_fem);
-    _fem_naming_system->add_suffix("P1_BUBBLE_FACE", P1_with_bubble_on_a_face);
-    _fem_naming_system->add_suffix("P1_BUBBLE_FACE_LAG",
+    fem_naming_system_->add_suffix("PRODUCT", product_fem);
+    fem_naming_system_->add_suffix("P1_NONCONFORMING", P1_nonconforming_fem);
+    fem_naming_system_->add_suffix("P1_BUBBLE_FACE", P1_with_bubble_on_a_face);
+    fem_naming_system_->add_suffix("P1_BUBBLE_FACE_LAG",
 				   P1_with_bubble_on_a_face_lagrange);
-    _fem_naming_system->add_suffix("GEN_HIERARCHICAL", gen_hierarchical_fem);
-    _fem_naming_system->add_suffix("PK_HIERARCHICAL", PK_hierarch_fem);
-    _fem_naming_system->add_suffix("QK_HIERARCHICAL", QK_hierarch_fem);
-    _fem_naming_system->add_suffix("PK_PRISM_HIERARCHICAL",
+    fem_naming_system_->add_suffix("GEN_HIERARCHICAL", gen_hierarchical_fem);
+    fem_naming_system_->add_suffix("PK_HIERARCHICAL", PK_hierarch_fem);
+    fem_naming_system_->add_suffix("QK_HIERARCHICAL", QK_hierarch_fem);
+    fem_naming_system_->add_suffix("PK_PRISM_HIERARCHICAL",
 				   PK_prism_hierarch_fem);
-    _fem_naming_system->add_suffix("STRUCTURED_COMPOSITE",
+    fem_naming_system_->add_suffix("STRUCTURED_COMPOSITE",
 				   structured_composite_fem_method);
-    _fem_naming_system->add_suffix("PK_HIERARCHICAL_COMPOSITE",
+    fem_naming_system_->add_suffix("PK_HIERARCHICAL_COMPOSITE",
 				   PK_composite_hierarch_fem);
-    _fem_naming_system->add_suffix("PK_FULL_HIERARCHICAL_COMPOSITE",
+    fem_naming_system_->add_suffix("PK_FULL_HIERARCHICAL_COMPOSITE",
 				   PK_composite_full_hierarch_fem);
   }
   
   pfem fem_descriptor(std::string name) {
-    if (_fem_naming_system == 0) init_fem_naming_system();
+    if (fem_naming_system_ == 0) init_fem_naming_system();
     size_type i = 0;
-    pfem res = _fem_naming_system->method(name, i);
+    pfem res = fem_naming_system_->method(name, i);
     return res;
   }
 
   std::string name_of_fem(pfem p) {
-    if (_fem_naming_system == 0) init_fem_naming_system();
+    if (fem_naming_system_ == 0) init_fem_naming_system();
     try {
-      return _fem_naming_system->shorter_name_of_method(p);
+      return fem_naming_system_->shorter_name_of_method(p);
     } 
     catch (dal::failure_error&) {
       return std::string("FEM_UNKNOWN()");

@@ -31,8 +31,8 @@
 /* *********************************************************************** */
 
 
-#ifndef __BGEOT_POLY_H
-#define __BGEOT_POLY_H
+#ifndef BGEOT_POLY_H__
+#define BGEOT_POLY_H__
 
 #include <bgeot_config.h>
 #include <vector>
@@ -57,9 +57,9 @@ namespace bgeot
    */
   class power_index {
     std::vector<short_type> v;
-    mutable short_type _degree;
-    mutable size_type _global_index;
-    void dirty() const { _degree = short_type(-1); _global_index = size_type(-1); }
+    mutable short_type degree_;
+    mutable size_type global_index_;
+    void dirty() const { degree_ = short_type(-1); global_index_ = size_type(-1); }
   public :
     typedef std::vector<short_type>::iterator iterator;
     typedef std::vector<short_type>::const_iterator const_iterator;
@@ -123,7 +123,7 @@ namespace bgeot
    *       If two monomials have the same degree, they are ordered with the
    *       degree of the mononomials without the n firsts variables which
    *       have the same degree. The index of the monomial
-   *       $ x _0^{i_0}x_1^{i_1} ... x_{n-1}^{i_{n-1}} $
+   *       $ x 0_^{i_0}x_1^{i_1} ... x_{n-1}^{i_{n-1}} $
    *       is then
    *       $ \alpha_{d-1}^{n} + \alpha_{d-i_0-1}^{n-1} 
    *          + \alpha_{d-i_0-i_1-1}^{n-2} + ... + \alpha_{i_{n-1}-1}^{1}, $
@@ -477,4 +477,4 @@ namespace bgeot
 }  /* end of namespace bgeot.                                           */
 
 
-#endif  /* __BGEOT_POLY_H */
+#endif  /* BGEOT_POLY_H__ */

@@ -47,7 +47,7 @@ namespace ftool
 
   struct skip {
     const char *s;
-    skip(const char *_s) : s(_s) {}
+    skip(const char *s_) : s(s_) {}
   };
   std::istream& operator>>(std::istream& is, const skip& t);
 

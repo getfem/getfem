@@ -158,7 +158,7 @@ namespace ftool {
   /*************************************************************************/
   
   
-  static int __automat[10][13]=
+  static int automat__[10][13]=
   {  {0,  2,  2,  3,  0,  5,  0,  7,  8,  9,  10,  8,  8},
      {7, -1, -1, -1,  7,  5,  7,  7,  9,  9,  10,  9,  9}, 
      {-1, -1, -1,  5, -1,  6,  5,  7, 10,  9,  12, -1, 10},
@@ -171,7 +171,7 @@ namespace ftool {
      {-1, -1, -1, -1, -1,  5, -1,  7,  0,  9,  10,  0,  0}
   };
   
-  static int __car_type_amp(char c) {
+  static int car_type_amp__(char c) {
     switch (c) {
     case ' ' :  case ';' : case 9 : return 0;
     case 0 : case 13 : case 10 : return 6;
@@ -190,8 +190,8 @@ namespace ftool {
   
   
   int md_param::read_char(char c) {
-    int crt = __car_type_amp(c);
-    int newstate = __automat[crt][state];
+    int crt = car_type_amp__(c);
+    int newstate = automat__[crt][state];
     //  cout << "car : " << c << " type : " << crt << " old state : "
     //     << state << " new state : " << newstate << endl; getchar();
     if (newstate == 1 || newstate == 4 || newstate == 5
@@ -281,14 +281,14 @@ namespace ftool {
     }
   }
   
-  static void __write_value_file(FILE *F, md_param::t_value &v) {
+  static void write_value_file__(FILE *F, md_param::t_value &v) {
     switch(v.type) {
     case 1 : fprintf(F, "%g", v.value.v_real); break;
     case 2 : fprintf(F, "%ld", v.value.v_int); break;
     case 3 : fprintf(F, "'%s'", v.value.v_string); break;
     case 4 : fprintf(F, "[ ");
       for (int j = 0; j < v.value.v_list.nb; j++ ) {
-	__write_value_file(F, (*v.value.v_list.list)[j]);
+	write_value_file__(F, (*v.value.v_list.list)[j]);
 	fprintf(F, " ");
       }
       fprintf(F, "]");
@@ -312,7 +312,7 @@ namespace ftool {
     
     for (int i = 0; i < nb_param; i++) {
       fprintf(F, "%s = ", param_name(i));
-      __write_value_file(F, param_list[i].value);
+      write_value_file__(F, param_list[i].value);
       
       if (param_comment(i) !=NULL)
 	fprintf(F, ";\t\t%% %s\n", param_comment(i));

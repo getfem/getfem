@@ -58,7 +58,7 @@ namespace getfem
 
   pmat_elem_type mat_elem_base(pfem pfi)
   {
-    mat_elem_type f; f.resize(1); f[0].t = GETFEM__BASE; f[0].pfi = pfi;
+    mat_elem_type f; f.resize(1); f[0].t = GETFEM_BASE_; f[0].pfi = pfi;
     if (pfi->target_dim() == 1)
     { f.mi.resize(1); f.mi[0] = pfi->nb_base(); }
     else
@@ -68,7 +68,7 @@ namespace getfem
 
   pmat_elem_type mat_elem_grad(pfem pfi)
   {
-    mat_elem_type f; f.resize(1); f[0].t = GETFEM__GRAD; f[0].pfi = pfi;
+    mat_elem_type f; f.resize(1); f[0].t = GETFEM_GRAD_; f[0].pfi = pfi;
     if (pfi->target_dim() == 1)
     { 
       f.mi.resize(2); f.mi[0] = pfi->nb_base();
@@ -84,7 +84,7 @@ namespace getfem
 
   pmat_elem_type mat_elem_hessian(pfem pfi)
   {
-    mat_elem_type f; f.resize(1);  f[0].t = GETFEM__HESSIAN; f[0].pfi = pfi;
+    mat_elem_type f; f.resize(1);  f[0].t = GETFEM_HESSIAN_; f[0].pfi = pfi;
     if (pfi->target_dim() == 1)
     { 
       f.mi.resize(2); f.mi[0] = pfi->nb_base();
@@ -117,9 +117,9 @@ namespace getfem
       *itf = *it;
       switch ((*it).t)
       { 
-        case GETFEM__BASE    : *itmf++ = *(*itm)++; break;
-        case GETFEM__GRAD    : *itmf++ = *(*itm)++; *itmf++ = *(*itm)++; break;
-        case GETFEM__HESSIAN : *itmf++ = *(*itm)++; *itmf++ = *(*itm)++; break;
+        case GETFEM_BASE_    : *itmf++ = *(*itm)++; break;
+        case GETFEM_GRAD_    : *itmf++ = *(*itm)++; *itmf++ = *(*itm)++; break;
+        case GETFEM_HESSIAN_ : *itmf++ = *(*itm)++; *itmf++ = *(*itm)++; break;
       }
     }
     return add_to_met_tab(f);

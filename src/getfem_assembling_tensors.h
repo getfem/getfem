@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode)                                    */
 
-#ifndef __GETFEM_ASSEMBLING_TENSORS_H
-#define __GETFEM_ASSEMBLING_TENSORS_H
+#ifndef GETFEM_ASSEMBLING_TENSORS_H__
+#define GETFEM_ASSEMBLING_TENSORS_H__
 
 #include <gmm_kernel.h>
 #include <getfem_mesh_fem.h>
@@ -32,33 +32,33 @@ namespace getfem {
   class ATN_tensor;
 
   class ATN {
-    std::deque< ATN_tensor* > _childs;
-    std::string _name;   /* the name is a part of the parsed string */
-    unsigned _number;    /* a unique number, which is used for the ordering of the tree */
+    std::deque< ATN_tensor* > childs_;
+    std::string name_;   /* the name is a part of the parsed string */
+    unsigned number_;    /* a unique number, which is used for the ordering of the tree */
   protected:
     size_type current_cv;
     dim_type current_face;
   public:
     ATN(const std::string& n=std::string("unnamed")) : 
-      _name(n), _number(unsigned(-1)), current_cv(size_type(-1)), current_face(dim_type(-1)) {}
+      name_(n), number_(unsigned(-1)), current_cv(size_type(-1)), current_face(dim_type(-1)) {}
     virtual ~ATN() {}
 
-    void add_child(ATN_tensor& a) { _childs.push_back(&a); }
-    ATN_tensor& child(size_type n) { return *_childs[n]; }
-    size_type nchilds() { return _childs.size(); }
+    void add_child(ATN_tensor& a) { childs_.push_back(&a); }
+    ATN_tensor& child(size_type n) { return *childs_[n]; }
+    size_type nchilds() { return childs_.size(); }
     /* reinit is called each time the object need to reset itself
        (when the shape of one of its childs has changed) */
     virtual void reinit() = 0;   
     /* do the computations for a given convex */
     void exec(size_type cv, dim_type face) {      
       if (cv != current_cv || face != current_face) {
-	_exec(cv,face);
+	exec_(cv,face);
 	current_cv = cv;
 	current_face = face;
       }
     }
-    const std::string& name() { return _name; }
-    void set_name(const std::string& n) { _name = n; }
+    const std::string& name() { return name_; }
+    void set_name(const std::string& n) { name_ = n; }
     /* the "root" nodes expect to get all tensor values 
        others nodes have a more specific behavior
      */
@@ -67,9 +67,9 @@ namespace getfem {
     /* numérotation des tenseurs, telle que si i < j alors le tenseur(j) 
        ne peut pas etre dans le sous-arbre du tenseur(i) */
     void set_number(unsigned &gcnt);
-    unsigned number() const { return _number; }
+    unsigned number() const { return number_; }
   private:
-    virtual void _exec(size_type , dim_type ) {}
+    virtual void exec_(size_type , dim_type ) {}
   };
   
   class ATN_tensors_sum_scaled;
@@ -77,29 +77,29 @@ namespace getfem {
   /* Base class for every node except the "final" ones */
   class ATN_tensor : public ATN {
   protected:
-    tensor_ranges _r;
-    bool _shape_updated;
+    tensor_ranges r_;
+    bool shape_updated_;
     tensor_ref   tr;
     tensor_shape req_shape;
-    bool _frozen; /* pour reconnaitre les resultats intermédiaires de calculs
+    bool frozen_; /* pour reconnaitre les resultats intermédiaires de calculs
 		     stockés dans une variable temporaire: ils ne peuvent pas être
 		     modifiés à posteriori (comme ça pourrait arriver avec un 
 		     ATN_tensors_sum_scaled) */
   public:
-    ATN_tensor() { _shape_updated = false; _frozen = false; }
-    bool is_shape_updated() const { return _shape_updated; }
-    void freeze() { _frozen = true; }
-    bool is_frozen() const { return _frozen; }
-    const tensor_ranges& ranges() const { return _r; }
+    ATN_tensor() { shape_updated_ = false; frozen_ = false; }
+    bool is_shape_updated() const { return shape_updated_; }
+    void freeze() { frozen_ = true; }
+    bool is_frozen() const { return frozen_; }
+    const tensor_ranges& ranges() const { return r_; }
     const tensor_shape& required_shape() const { return req_shape; }
     /* check_shape_update is called for each node of the tree
        if the shape of the tensor has been modified, the flag
-       _shape_updated should be set, and _r should contain the
+       shape_updated_ should be set, and r_ should contain the
        new dimensions. This function is called in such an order
        that the shape updates are automatically propagated in the tree */
     virtual void check_shape_update(size_type , dim_type) {}
     /* if the shape was updated, the node should initialise its req_shape */
-    virtual void init_required_shape() { req_shape.set_empty(_r); }
+    virtual void init_required_shape() { req_shape.set_empty(r_); }
     /* then each node update the req_shape of its childs.
      */
     virtual void update_childs_required_shape() {
@@ -132,7 +132,7 @@ namespace getfem {
     bool is_mf_ref() const { return (pmf != 0); }
     vdim_specif() { dim = size_type(-1); pmf = 0; }
     vdim_specif(size_type i) { dim = i; pmf = 0; }
-    vdim_specif(const mesh_fem *_pmf) { dim = _pmf->nb_dof(); pmf = _pmf; }
+    vdim_specif(const mesh_fem *pmf_) { dim = pmf_->nb_dof(); pmf = pmf_; }
   };
   class vdim_specif_list : public std::deque< vdim_specif > {
   public:
@@ -151,7 +151,7 @@ namespace getfem {
     multi_tensor_iterator mti;
     tensor_strides strides;
   public:
-    ATN_array_output(ATN_tensor& a, VEC& _v, vdim_specif_list &d) : v(_v), vdim(d) {
+    ATN_array_output(ATN_tensor& a, VEC& v_, vdim_specif_list &d) : v(v_), vdim(d) {
       strides.resize(vdim.size()+1);
       add_child(a);
       strides[0] = 1;
@@ -164,7 +164,7 @@ namespace getfem {
     void reinit() {
       mti = multi_tensor_iterator(child(0).tensor(),true);
     }
-    void _exec(size_type cv, dim_type) {
+    void exec_(size_type cv, dim_type) {
       tensor_ranges r;
       std::vector< tensor_strides > str;
       vdim.build_strides_for_cv(cv, r, str);
@@ -187,16 +187,16 @@ namespace getfem {
     MAT& m;
     multi_tensor_iterator mti;
   public:
-    ATN_smatrix_output(ATN_tensor& a, const mesh_fem& _mf_r, 
-		       const mesh_fem& _mf_c, MAT& _m) 
-      : mf_r(_mf_r), mf_c(_mf_c), m(_m) { 
+    ATN_smatrix_output(ATN_tensor& a, const mesh_fem& mf_r_, 
+		       const mesh_fem& mf_c_, MAT& m_) 
+      : mf_r(mf_r_), mf_c(mf_c_), m(m_) { 
       add_child(a); 
     }
   private:
     void reinit() {
       mti = multi_tensor_iterator(child(0).tensor(),true);
     }
-    void _exec(size_type cv, dim_type) {
+    void exec_(size_type cv, dim_type) {
       size_type nb_r = mf_r.nb_dof_of_element(cv);
       size_type nb_c = mf_c.nb_dof_of_element(cv);
       if (child(0).tensor().dim(0) != nb_r ||
@@ -236,7 +236,7 @@ namespace getfem {
   template< typename VEC > class asm_data : public base_asm_data {
     VEC *v;
   public:
-    asm_data(VEC *_v) : v(_v) {}
+    asm_data(VEC *v_) : v(v_) {}
     size_type vect_size() const {
       return gmm::vect_size(*v); 
     }
@@ -253,7 +253,7 @@ namespace getfem {
   template< typename VEC > class asm_vec : public base_asm_vec {
     VEC *v;
   public:
-    asm_vec(VEC *_v) : v(_v) {}
+    asm_vec(VEC *v_) : v(v_) {}
     virtual ATN* build_output_tensor(ATN_tensor &a, 
 				     vdim_specif_list& vdim) {
       ATN *t = new ATN_array_output<VEC>(a, *v, vdim); return t;
@@ -298,7 +298,7 @@ namespace getfem {
   template< typename MAT > class asm_mat : public base_asm_mat {
     MAT *m;
   public:
-    asm_mat(MAT* _m) : m(_m) {}
+    asm_mat(MAT* m_) : m(m_) {}
     ATN*
     build_output_tensor(ATN_tensor& a, const mesh_fem& mf1, const mesh_fem& mf2) {
       return new ATN_smatrix_output<MAT>(a, mf1, mf2, *m);
@@ -330,18 +330,18 @@ namespace getfem {
   public:
     typedef enum { TNCONST, TNTENSOR, TNNONE } node_type;
   private:
-    node_type _type;
+    node_type type_;
     scalar_type x;
     ATN_tensor *t;
   public:
-    tnode() : _type(TNNONE), x(1e300), t(NULL) {}
-    tnode(scalar_type _x) { assign(_x); }
-    tnode(ATN_tensor *_t) { assign(_t); }
-    void assign(scalar_type _x) { _type = TNCONST; t = NULL; x = _x; }
-    void assign(ATN_tensor *_t) { _type = TNTENSOR; t = _t; x = 1e300; }
-    ATN_tensor* tensor() { assert(_type == TNTENSOR); return t; }
-    scalar_type xval() { assert(_type == TNCONST); return x; }
-    node_type type() { return _type; }
+    tnode() : type_(TNNONE), x(1e300), t(NULL) {}
+    tnode(scalar_type x_) { assign(x_); }
+    tnode(ATN_tensor *t_) { assign(t_); }
+    void assign(scalar_type x_) { type_ = TNCONST; t = NULL; x = x_; }
+    void assign(ATN_tensor *t_) { type_ = TNTENSOR; t = t_; x = 1e300; }
+    ATN_tensor* tensor() { assert(type_ == TNTENSOR); return t; }
+    scalar_type xval() { assert(type_ == TNCONST); return x; }
+    node_type type() { return type_; }
     void check0() { if (xval() == 0) ASM_THROW_ERROR("division by zero"); }
   };
 
@@ -364,8 +364,8 @@ namespace getfem {
     std::deque<size_type> marks;
   public:
     asm_tokenizer() {}
-    void set_str(const std::string& _s) {
-      str = _s; tok_pos = 0; tok_len = size_type(-1); curr_tok_type = END;
+    void set_str(const std::string& s_) {
+      str = s_; tok_pos = 0; tok_len = size_type(-1); curr_tok_type = END;
       err_msg_mark = 0; get_tok(); 
     }
     std::string tok() const { return curr_tok; }
@@ -381,11 +381,11 @@ namespace getfem {
 
     /* returns a friendly message indicated the location of the syntax error */
     std::string syntax_err_print();
-    void accept(tok_type_enum t, const char *_msg="syntax error") { 
-      if (tok_type() != t) ASM_THROW_PARSE_ERROR(_msg); advance();
+    void accept(tok_type_enum t, const char *msg_="syntax error") { 
+      if (tok_type() != t) ASM_THROW_PARSE_ERROR(msg_); advance();
     }
-    void accept(tok_type_enum t, tok_type_enum t2, const char *_msg="syntax error") {
-      if (tok_type() != t && tok_type() != t2) ASM_THROW_PARSE_ERROR(_msg); advance();
+    void accept(tok_type_enum t, tok_type_enum t2, const char *msg_="syntax error") {
+      if (tok_type() != t && tok_type() != t2) ASM_THROW_PARSE_ERROR(msg_); advance();
     }
     bool advance_if(tok_type_enum t) { 
       if (tok_type() == t) { advance(); return true; } else return false; 
@@ -434,18 +434,18 @@ namespace getfem {
 
   public:
     generic_assembly() : vec_fact(0), mat_fact(0), parse_done(false) {}
-    generic_assembly(const std::string& _s) :
+    generic_assembly(const std::string& s_) :
       vec_fact(0), mat_fact(0), parse_done(false)
-    { set_str(_s); }
-    generic_assembly(const std::string& _s,
-	       std::deque<const mesh_fem*>& _mftab, 
-	       std::deque<base_asm_data*> _indata,
-	       std::deque<base_asm_mat*> _outmat,
-	       std::deque<base_asm_vec*> _outvec) : 
-      mftab(_mftab), 
-      indata(_indata), outvec(_outvec), outmat(_outmat),
+    { set_str(s_); }
+    generic_assembly(const std::string& s_,
+	       std::deque<const mesh_fem*>& mftab_, 
+	       std::deque<base_asm_data*> indata_,
+	       std::deque<base_asm_mat*> outmat_,
+	       std::deque<base_asm_vec*> outvec_) : 
+      mftab(mftab_), 
+      indata(indata_), outvec(outvec_), outmat(outmat_),
       vec_fact(0), mat_fact(0), parse_done(false)
-    { set_str(_s); }    
+    { set_str(s_); }    
     ~generic_assembly() {
       for (size_type i = 0; i < atn_tensors.size(); ++i) delete atn_tensors[i];
       for (size_type i = 0; i < outvars.size(); ++i) delete outvars[i];
@@ -456,12 +456,12 @@ namespace getfem {
       if (mat_fact==0) for (size_type i = 0; i < outmat.size(); ++i) delete outmat[i];
     }
 
-    void set(const std::string& _s) { set_str(_s); }
+    void set(const std::string& s_) { set_str(s_); }
     const std::deque<const mesh_fem*>& mf() const { return mftab; }
     const std::deque<base_asm_data*>& data() const { return indata; }
     const std::deque<base_asm_vec*>& vec() const { return outvec; }
     const std::deque<base_asm_mat*>& mat() const { return outmat; }
-    void push_mf(const mesh_fem& _mf) { mftab.push_back(&_mf); }
+    void push_mf(const mesh_fem& mf_) { mftab.push_back(&mf_); }
     template< typename VEC > void push_data(VEC& d) { 
       indata.push_back(new asm_data<VEC>(&d)); 
     }
@@ -510,4 +510,4 @@ namespace getfem {
 }  /* end of namespace getfem.                                             */
 
 
-#endif /* __GETFEM_ASSEMBLING_TENSORS_H  */
+#endif /* GETFEM_ASSEMBLING_TENSORS_H__  */

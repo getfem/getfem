@@ -31,8 +31,8 @@
 
 
 
-#ifndef __BGEOT_CONVEX_H
-#define __BGEOT_CONVEX_H
+#ifndef BGEOT_CONVEX_H__
+#define BGEOT_CONVEX_H__
 
 #include <bgeot_convex_structure.h>
 
@@ -65,8 +65,8 @@ namespace bgeot
     }
     
     ref_convex_pt_ct dir_points(void) const { 
-      return ref_convex_pt_ct(pts.begin(), cvs->_dir_points.begin(),
-			      cvs->_dir_points.end() );
+      return ref_convex_pt_ct(pts.begin(), cvs->dir_points_.begin(),
+			      cvs->dir_points_.end() );
     }
     
     dref_convex_pt_ct dir_points_of_face(short_type i) const {
@@ -100,35 +100,35 @@ namespace bgeot
     int N = (points())[0].size();
     pconvex_structure cv = structure();
     int n = cv->dim();
-    dal::dynamic_array<typename PT::vector_type> _vect;
+    dal::dynamic_array<typename PT::vector_type> vect_;
     vsvector<double> A(N), B(N);
     ref_convex_ind_ct dptf = cv->ind_dir_points_of_face(f);
     int can_b = 0;
     
     for (int i = 0; i < n-1; i++) {
-      _vect[i]  = (points())[dptf[i+1]]; _vect[i] -= (points())[dptf[0]];
+      vect_[i]  = (points())[dptf[i+1]]; vect_[i] -= (points())[dptf[0]];
       
       for (j = 0; j < i; j++)
-	A[j] = vect_sp(_vect[i], _vect[j]);
+	A[j] = vect_sp(vect_[i], vect_[j]);
       for (j = 0; j < i; j++)
-	{ B = _vect[j]; B *= A[j]; _vect[i] -= B; }
-      _vect[i] /= vect_norm2(_vect[i]);
+	{ B = vect_[j]; B *= A[j]; vect_[i] -= B; }
+      vect_[i] /= vect_norm2(vect_[i]);
     }
     
     for (int i = n; i < N; i++) {
-      _vect[i] = _vect[0];
-      vect_random(_vect[i]);
+      vect_[i] = vect_[0];
+      vect_random(vect_[i]);
       for (j = 0; j < i; j++)
-	A[j] = vect_sp(_vect[i], _vect[j]);
+	A[j] = vect_sp(vect_[i], vect_[j]);
       for (j = 0; j < i; j++)
-	{ B = _vect[j]; B *= A[j]; _vect[i] -= B; }
+	{ B = vect_[j]; B *= A[j]; vect_[i] -= B; }
       
-      if (vect_norm2(_vect[i]) < 1.0E-4 )
+      if (vect_norm2(vect_[i]) < 1.0E-4 )
 	i--;
       else
-	_vect[i] /= vect_norm2(_vect[i]);
+	vect_[i] /= vect_norm2(vect_[i]);
     }
-    for (int i = n; i < N; i++) tab[i-n] = _vect[i];
+    for (int i = n; i < N; i++) tab[i-n] = vect_[i];
   }
   */
 
@@ -232,4 +232,4 @@ namespace bgeot
 }  /* end of namespace bgeot.                                             */
 
 
-#endif /* __BGEOT_CONVEX_H                                                */
+#endif /* BGEOT_CONVEX_H__                                                */

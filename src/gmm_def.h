@@ -29,8 +29,8 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef __GMM_DEF_H
-#define __GMM_DEF_H
+#ifndef GMM_DEF_H__
+#define GMM_DEF_H__
 
 #include <dal_ref.h>
 
@@ -139,29 +139,29 @@ namespace gmm {
   template <typename P> struct modifiable_pointer<const P *>
   { typedef P* pointer; };
 
-  inline bool _is_sparse(abstract_sparse)   { return true;  }
-  inline bool _is_sparse(abstract_dense)    { return false; }
-  inline bool _is_sparse(abstract_skyline)  { return true;  }
-  inline bool _is_sparse(abstract_indirect) { return false; }
+  inline bool is_sparse_(abstract_sparse)   { return true;  }
+  inline bool is_sparse_(abstract_dense)    { return false; }
+  inline bool is_sparse_(abstract_skyline)  { return true;  }
+  inline bool is_sparse_(abstract_indirect) { return false; }
 
   template <typename L> inline bool is_sparse(const L &) 
-  { return _is_sparse(typename linalg_traits<L>::storage_type()); }
+  { return is_sparse_(typename linalg_traits<L>::storage_type()); }
 
-  inline bool _is_row_matrix(row_major)     { return true;  }
-  inline bool _is_row_matrix(col_major)     { return false; }
-  inline bool _is_row_matrix(row_and_col)   { return true;  }
-  inline bool _is_row_matrix(col_and_row)   { return true;  }
+  inline bool is_row_matrix_(row_major)     { return true;  }
+  inline bool is_row_matrix_(col_major)     { return false; }
+  inline bool is_row_matrix_(row_and_col)   { return true;  }
+  inline bool is_row_matrix_(col_and_row)   { return true;  }
 
   template <typename L> inline bool is_row_matrix(const L &) 
-  { return _is_row_matrix(typename linalg_traits<L>::sub_orientation()); }
+  { return is_row_matrix_(typename linalg_traits<L>::sub_orientation()); }
 
-  inline bool _is_col_matrix(row_major)     { return false; }
-  inline bool _is_col_matrix(col_major)     { return true;  }
-  inline bool _is_col_matrix(row_and_col)   { return true;  }
-  inline bool _is_col_matrix(col_and_row)   { return true;  }
+  inline bool is_col_matrix_(row_major)     { return false; }
+  inline bool is_col_matrix_(col_major)     { return true;  }
+  inline bool is_col_matrix_(row_and_col)   { return true;  }
+  inline bool is_col_matrix_(col_and_row)   { return true;  }
 
   template <typename L> inline bool is_col_matrix(const L &) 
-  { return _is_col_matrix(typename linalg_traits<L>::sub_orientation()); }
+  { return is_col_matrix_(typename linalg_traits<L>::sub_orientation()); }
 
   inline bool is_col_matrix(row_major) { return false; }
   inline bool is_col_matrix(col_major) { return true; }
@@ -175,24 +175,24 @@ namespace gmm {
   /*  types to deal with const object representing a modifiable reference */
   /* ******************************************************************** */
   
-  template <typename PT, typename R> struct _mref_type 
+  template <typename PT, typename R> struct mref_type_ 
   { typedef abstract_null_type return_type; };
-  template <typename L, typename R> struct _mref_type<L *, R>
+  template <typename L, typename R> struct mref_type_<L *, R>
   { typedef L & return_type; };
-  template <typename L, typename R> struct _mref_type<const L *, R>
+  template <typename L, typename R> struct mref_type_<const L *, R>
   { typedef const L & return_type; };
-  template <typename L> struct _mref_type<L *, linalg_const>
+  template <typename L> struct mref_type_<L *, linalg_const>
   { typedef const L & return_type; };
-  template <typename L> struct _mref_type<const L *, linalg_const>
+  template <typename L> struct mref_type_<const L *, linalg_const>
   { typedef const L & return_type; };
-  template <typename L> struct _mref_type<const L *, linalg_modifiable>
+  template <typename L> struct mref_type_<const L *, linalg_modifiable>
   { typedef L & return_type; };
-  template <typename L> struct _mref_type<L *, linalg_modifiable>
+  template <typename L> struct mref_type_<L *, linalg_modifiable>
   { typedef L & return_type; };
 
   template <typename PT> struct mref_type {
     typedef typename std::iterator_traits<PT>::value_type L;
-    typedef typename _mref_type<PT, 
+    typedef typename mref_type_<PT, 
       typename linalg_traits<L>::is_reference>::return_type return_type;
   };
 
@@ -203,12 +203,12 @@ namespace gmm {
   template <typename L> typename mref_type<L *>::return_type linalg_cast(L &l)
   { return const_cast<typename mref_type<L *>::return_type>(l); }
 
-  template <typename L, typename R> struct _cref_type
+  template <typename L, typename R> struct cref_type_
   { typedef abstract_null_type return_type; };
-  template <typename L> struct _cref_type<L, linalg_modifiable>
+  template <typename L> struct cref_type_<L, linalg_modifiable>
   { typedef L & return_type; };
   template <typename L> struct cref_type {
-    typedef typename _cref_type<L, 
+    typedef typename cref_type_<L, 
       typename linalg_traits<L>::is_reference>::return_type return_type;
   };
 
@@ -223,16 +223,16 @@ namespace gmm {
   //                                   C2 otherwise.
   // select_return<C1, C2, const L *> return C2 if L is a modifiable reference
   //                                         C1 otherwise. 
-  template <typename C1, typename C2, typename REF> struct _select_return {
+  template <typename C1, typename C2, typename REF> struct select_return_ {
     typedef abstract_null_type return_type;
   };
   template <typename C1, typename C2, typename L>
-  struct _select_return<C1, C2, const L &> { typedef C1 return_type; };
+  struct select_return_<C1, C2, const L &> { typedef C1 return_type; };
   template <typename C1, typename C2, typename L>
-  struct _select_return<C1, C2, L &> { typedef C2 return_type; };
+  struct select_return_<C1, C2, L &> { typedef C2 return_type; };
   template <typename C1, typename C2, typename PT> struct select_return {
     typedef typename std::iterator_traits<PT>::value_type L;
-    typedef typename _select_return<C1, C2, 
+    typedef typename select_return_<C1, C2, 
       typename mref_type<PT>::return_type>::return_type return_type;
   };
 
@@ -242,15 +242,15 @@ namespace gmm {
   // select_ref<C1, C2, L *> return C1 if L is a const reference,
   //                                C2 otherwise.
   // select_ref<C1, C2, const L *> return C2 in any case. 
-  template <typename C1, typename C2, typename REF> struct _select_ref
+  template <typename C1, typename C2, typename REF> struct select_ref_
   { typedef abstract_null_type ref_type; };
   template <typename C1, typename C2, typename L>
-  struct _select_ref<C1, C2, const L &> { typedef C1 ref_type; };
+  struct select_ref_<C1, C2, const L &> { typedef C1 ref_type; };
   template <typename C1, typename C2, typename L>
-  struct _select_ref<C1, C2, L &> { typedef C2 ref_type; };
+  struct select_ref_<C1, C2, L &> { typedef C2 ref_type; };
   template <typename C1, typename C2, typename PT> struct select_ref {
     typedef typename std::iterator_traits<PT>::value_type L;
-    typedef typename _select_ref<C1, C2, 
+    typedef typename select_ref_<C1, C2, 
       typename mref_type<PT>::return_type>::ref_type ref_type;
   };
   template <typename C1, typename C2, typename L>
@@ -258,13 +258,13 @@ namespace gmm {
   { typedef C1 ref_type; };
 
 
-  template<typename R> struct _is_a_reference
+  template<typename R> struct is_a_reference_
   { typedef linalg_true reference; };
-  template<> struct _is_a_reference<linalg_false>
+  template<> struct is_a_reference_<linalg_false>
   { typedef linalg_false reference; };
 
   template<typename L> struct is_a_reference {
-    typedef typename _is_a_reference<typename linalg_traits<L>::is_reference>
+    typedef typename is_a_reference_<typename linalg_traits<L>::is_reference>
       ::reference reference;
   };
 
@@ -283,16 +283,16 @@ namespace gmm {
   { typedef linalg_const is_reference; };
 
 
-  template <typename C1, typename C2, typename R> struct _select_orientation
+  template <typename C1, typename C2, typename R> struct select_orientation_
   { typedef abstract_null_type return_type; };
   template <typename C1, typename C2>
-  struct _select_orientation<C1, C2, row_major>
+  struct select_orientation_<C1, C2, row_major>
   { typedef C1 return_type; };
   template <typename C1, typename C2>
-  struct _select_orientation<C1, C2, col_major>
+  struct select_orientation_<C1, C2, col_major>
   { typedef C2 return_type; };
   template <typename C1, typename C2, typename L> struct select_orientation {
-    typedef typename _select_orientation<C1, C2,
+    typedef typename select_orientation_<C1, C2,
       typename principal_orientation_type<typename
       linalg_traits<L>::sub_orientation>::potype>::return_type return_type;
   };
@@ -353,30 +353,30 @@ namespace gmm {
 
   
   template <typename R, typename S, typename L, typename V>
-  struct _temporary_vector {
+  struct temporary_vector_ {
     typedef abstract_null_type vector_type;
   };
   template <typename V, typename L>
-  struct _temporary_vector<linalg_true, abstract_sparse, L, V>
+  struct temporary_vector_<linalg_true, abstract_sparse, L, V>
   { typedef wsvector<typename linalg_traits<V>::value_type> vector_type; };
   template <typename V, typename L>
-  struct _temporary_vector<linalg_true, abstract_skyline, L, V>
+  struct temporary_vector_<linalg_true, abstract_skyline, L, V>
   { typedef slvector<typename linalg_traits<V>::value_type> vector_type; };
   template <typename V, typename L>
-  struct _temporary_vector<linalg_true, abstract_dense, L, V>
+  struct temporary_vector_<linalg_true, abstract_dense, L, V>
   { typedef std::vector<typename linalg_traits<V>::value_type> vector_type; };
   template <typename S, typename V>
-  struct _temporary_vector<linalg_false, S, abstract_vector, V>
+  struct temporary_vector_<linalg_false, S, abstract_vector, V>
   { typedef V vector_type; };
   template <typename V>
-  struct _temporary_vector<linalg_false, abstract_dense, abstract_matrix, V>
+  struct temporary_vector_<linalg_false, abstract_dense, abstract_matrix, V>
   { typedef std::vector<typename linalg_traits<V>::value_type> vector_type; };
   template <typename V>
-  struct _temporary_vector<linalg_false, abstract_sparse, abstract_matrix, V>
+  struct temporary_vector_<linalg_false, abstract_sparse, abstract_matrix, V>
   { typedef wsvector<typename linalg_traits<V>::value_type> vector_type; };
 
   template <typename V> struct temporary_vector {
-    typedef typename _temporary_vector<typename is_a_reference<V>::reference,
+    typedef typename temporary_vector_<typename is_a_reference<V>::reference,
 				       typename linalg_traits<V>::storage_type,
 				       typename linalg_traits<V>::linalg_type,
 				       V>::vector_type vector_type;
@@ -391,26 +391,26 @@ namespace gmm {
 
   
   template <typename R, typename S, typename L, typename V>
-  struct _temporary_matrix { typedef abstract_null_type matrix_type; };
+  struct temporary_matrix_ { typedef abstract_null_type matrix_type; };
   template <typename V, typename L>
-  struct _temporary_matrix<linalg_true, abstract_sparse, L, V> {
+  struct temporary_matrix_<linalg_true, abstract_sparse, L, V> {
     typedef typename linalg_traits<V>::value_type T;
     typedef row_matrix<wsvector<T> > matrix_type;
   };
   template <typename V, typename L>
-  struct _temporary_matrix<linalg_true, abstract_skyline, L, V> {
+  struct temporary_matrix_<linalg_true, abstract_skyline, L, V> {
     typedef typename linalg_traits<V>::value_type T;
     typedef row_matrix<slvector<T> > matrix_type;
   };
   template <typename V, typename L>
-  struct _temporary_matrix<linalg_true, abstract_dense, L, V>
+  struct temporary_matrix_<linalg_true, abstract_dense, L, V>
   { typedef dense_matrix<typename linalg_traits<V>::value_type> matrix_type; };
   template <typename S, typename V>
-  struct _temporary_matrix<linalg_false, S, abstract_matrix, V>
+  struct temporary_matrix_<linalg_false, S, abstract_matrix, V>
   { typedef V matrix_type; };
 
   template <typename V> struct temporary_matrix {
-    typedef typename _temporary_matrix<typename is_a_reference<V>::reference,
+    typedef typename temporary_matrix_<typename is_a_reference<V>::reference,
 				       typename linalg_traits<V>::storage_type,
 				       typename linalg_traits<V>::linalg_type,
 				       V>::matrix_type matrix_type;
@@ -423,22 +423,22 @@ namespace gmm {
   /* ******************************************************************** */
 
   template <typename R, typename S, typename V>
-  struct _temporary_dense_vector { typedef abstract_null_type vector_type; };
+  struct temporary_dense_vector_ { typedef abstract_null_type vector_type; };
   template <typename S, typename V>
-  struct _temporary_dense_vector<linalg_true, S, V>
+  struct temporary_dense_vector_<linalg_true, S, V>
   { typedef std::vector<typename linalg_traits<V>::value_type> vector_type; };
   template <typename V>
-  struct _temporary_dense_vector<linalg_false, abstract_sparse, V>
+  struct temporary_dense_vector_<linalg_false, abstract_sparse, V>
   { typedef std::vector<typename linalg_traits<V>::value_type> vector_type; };
   template <typename V>
-  struct _temporary_dense_vector<linalg_false, abstract_skyline, V>
+  struct temporary_dense_vector_<linalg_false, abstract_skyline, V>
   { typedef std::vector<typename linalg_traits<V>::value_type> vector_type; };
   template <typename V>
-  struct _temporary_dense_vector<linalg_false, abstract_dense, V>
+  struct temporary_dense_vector_<linalg_false, abstract_dense, V>
   { typedef V vector_type; };
 
   template <typename V> struct temporary_dense_vector {
-    typedef typename _temporary_dense_vector<typename
+    typedef typename temporary_dense_vector_<typename
     is_a_reference<V>::reference,
     typename linalg_traits<V>::storage_type, V>::vector_type vector_type;
   };
@@ -450,22 +450,22 @@ namespace gmm {
   /* ******************************************************************** */
 
   template <typename R, typename S, typename V>
-  struct _temporary_sparse_vector { typedef abstract_null_type vector_type; };
+  struct temporary_sparse_vector_ { typedef abstract_null_type vector_type; };
   template <typename S, typename V>
-  struct _temporary_sparse_vector<linalg_true, S, V>
+  struct temporary_sparse_vector_<linalg_true, S, V>
   { typedef wsvector<typename linalg_traits<V>::value_type> vector_type; };
   template <typename V>
-  struct _temporary_sparse_vector<linalg_false, abstract_sparse, V>
+  struct temporary_sparse_vector_<linalg_false, abstract_sparse, V>
   { typedef V vector_type; };
   template <typename V>
-  struct _temporary_sparse_vector<linalg_false, abstract_dense, V>
+  struct temporary_sparse_vector_<linalg_false, abstract_dense, V>
   { typedef wsvector<typename linalg_traits<V>::value_type> vector_type; };
   template <typename V>
-  struct _temporary_sparse_vector<linalg_false, abstract_skyline, V>
+  struct temporary_sparse_vector_<linalg_false, abstract_skyline, V>
   { typedef wsvector<typename linalg_traits<V>::value_type> vector_type; };
 
   template <typename V> struct temporary_sparse_vector {
-    typedef typename _temporary_sparse_vector<typename
+    typedef typename temporary_sparse_vector_<typename
     is_a_reference<V>::reference,
     typename linalg_traits<V>::storage_type, V>::vector_type vector_type;
   };
@@ -477,23 +477,23 @@ namespace gmm {
   /* ******************************************************************** */
 
   template <typename R, typename S, typename V>
-  struct _temporary_skyline_vector
+  struct temporary_skyline_vector_
   { typedef abstract_null_type vector_type; };
   template <typename S, typename V>
-  struct _temporary_skyline_vector<linalg_true, S, V>
+  struct temporary_skyline_vector_<linalg_true, S, V>
   { typedef slvector<typename linalg_traits<V>::value_type> vector_type; };
   template <typename V>
-  struct _temporary_skyline_vector<linalg_false, abstract_skyline, V>
+  struct temporary_skyline_vector_<linalg_false, abstract_skyline, V>
   { typedef V vector_type; };
   template <typename V>
-  struct _temporary_skyline_vector<linalg_false, abstract_dense, V>
+  struct temporary_skyline_vector_<linalg_false, abstract_dense, V>
   { typedef slvector<typename linalg_traits<V>::value_type> vector_type; };
   template <typename V>
-  struct _temporary_skyline_vector<linalg_false, abstract_sparse, V>
+  struct temporary_skyline_vector_<linalg_false, abstract_sparse, V>
   { typedef slvector<typename linalg_traits<V>::value_type> vector_type; };
 
   template <typename V> struct temporary_skylines_vector {
-    typedef typename _temporary_skyline_vector<typename
+    typedef typename temporary_skyline_vector_<typename
     is_a_reference<V>::reference,
     typename linalg_traits<V>::storage_type, V>::vector_type vector_type;
   };
@@ -718,4 +718,4 @@ namespace gmm {
   
 }
 
-#endif //  __GMM_DEF_H
+#endif //  GMM_DEF_H__

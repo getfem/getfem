@@ -29,8 +29,8 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef __GETFEM_IMPORT_H
-#define __GETFEM_IMPORT_H
+#ifndef GETFEM_IMPORT_H__
+#define GETFEM_IMPORT_H__
 
 #include <string>
 #include <iostream>
@@ -48,4 +48,4 @@ namespace getfem {
   void import_mesh(const std::string& filename, const std::string& format, getfem_mesh& m);
   void import_mesh(std::ifstream& f, const std::string& format, getfem_mesh& m);
 }
-#endif /* __GETFEM_IMPORT_H  */
+#endif /* GETFEM_IMPORT_H__  */

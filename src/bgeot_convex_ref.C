@@ -57,7 +57,7 @@ namespace bgeot
   }
 
   dal::dynamic_tree_sorted<stored_point_tab, comp_stored_point_tab>
-    *_stored_point_tab_tab;
+    *stored_point_tab_tab_;
   bool isinit_stored_point_tab_tab = false;
 
   pstored_point_tab org_stored_point_tab(size_type n)
@@ -96,26 +96,26 @@ namespace bgeot
 
   /* simplexes.                                                            */
 
-  struct _K_simplex_ref_light
+  struct K_simplex_ref_light_
   {
     dim_type N; short_type K;
-    bool operator < (const _K_simplex_ref_light &l) const
+    bool operator < (const K_simplex_ref_light_ &l) const
     {
       if (N < l.N) return true; if (N > l.N) return false; 
       if (K < l.K) return true; return false;
     }
-    _K_simplex_ref_light(dim_type n, short_type k) { N = n; K = k; }
-    _K_simplex_ref_light(void) { }
+    K_simplex_ref_light_(dim_type n, short_type k) { N = n; K = k; }
+    K_simplex_ref_light_(void) { }
   };
 
-  class _K_simplex_of_ref : public convex_of_reference 
+  class K_simplex_of_ref_ : public convex_of_reference 
   {
     public :
       scalar_type is_in(const base_node &pt) const
       { // return a negative or null number if pt is in the convex
 	if (pt.size() != cvs->dim())
 	  throw dimension_error(
-		    "_K_simplex_of_ref::is_in : Dimension does not match");
+		    "K_simplex_of_ref_::is_in : Dimension does not match");
 	scalar_type e = -1.0, r = 0.0;
 	base_node::const_iterator it = pt.begin(), ite = pt.end();
 	for (; it != ite; e += *it, ++it) r = std::min(r, *it);
@@ -125,26 +125,26 @@ namespace bgeot
       { // return a null number if pt is in the face of the convex
 	if (pt.size() != cvs->dim())
 	  throw dimension_error(
-		  "_K_simplex_of_ref::is_in_face : Dimension does not match");
+		  "K_simplex_of_ref_::is_in_face : Dimension does not match");
 	if (f > 0) return dal::abs(pt[f-1]);
 	scalar_type e = -1.0;
 	base_node::const_iterator it = pt.begin(), ite = pt.end();
 	for (; it != ite; e += *it, ++it);
 	return dal::abs(e);
       }
-      _K_simplex_of_ref(const _K_simplex_ref_light &ls)
+      K_simplex_of_ref_(const K_simplex_ref_light_ &ls)
       {
 	cvs = simplex_structure(ls.N, ls.K);
 	size_type R = cvs->nb_points();
 	points().resize(R);
-	_normals.resize(ls.N+1);
+	normals_.resize(ls.N+1);
 	base_node null(ls.N); null.fill(0.0);
-	std::fill(_normals.begin(), _normals.end(), null);
+	std::fill(normals_.begin(), normals_.end(), null);
 	std::fill(points().begin(), points().end(), null);
 	for (size_type i = 1; i <= ls.N; ++i)
-	  _normals[i][i-1] = -1.0;
+	  normals_[i][i-1] = -1.0;
 	if (ls.N > 0)
-	  std::fill(_normals[0].begin(), _normals[0].end(),
+	  std::fill(normals_[0].begin(), normals_[0].end(),
 		    scalar_type(1.0)/sqrt(scalar_type(ls.N)));
 	base_node c(ls.N);  c.fill(0.0);
 	
@@ -174,14 +174,14 @@ namespace bgeot
 
   pconvex_ref simplex_of_reference(dim_type nc, short_type k)
   {
-    static dal::FONC_TABLE<_K_simplex_ref_light, _K_simplex_of_ref> *tab;
+    static dal::FONC_TABLE<K_simplex_ref_light_, K_simplex_of_ref_> *tab;
     static bool isinit = false;
     if (!isinit) {
-      tab = new dal::FONC_TABLE<_K_simplex_ref_light, _K_simplex_of_ref>();
+      tab = new dal::FONC_TABLE<K_simplex_ref_light_, K_simplex_of_ref_>();
       isinit = true;
     }
-    bgeot::convex_of_reference * p1 = tab->add(_K_simplex_ref_light(nc, 1));
-    bgeot::convex_of_reference * pk = tab->add(_K_simplex_ref_light(nc, k));
+    bgeot::convex_of_reference * p1 = tab->add(K_simplex_ref_light_(nc, 1));
+    bgeot::convex_of_reference * pk = tab->add(K_simplex_ref_light_(nc, k));
     p1->attach_basic_convex_ref(p1);
     pk->attach_basic_convex_ref(p1);
     return pk;
@@ -190,20 +190,20 @@ namespace bgeot
 
   /* products.                                                             */
 
-  struct _product_ref_light
+  struct product_ref_light_
   {
     pconvex_ref cvr1, cvr2;
-    bool operator < (const _product_ref_light &ls) const
+    bool operator < (const product_ref_light_ &ls) const
     {
       if (cvr1 < ls.cvr1) return true; if (cvr1 > ls.cvr1) return false; 
       if (cvr2 < ls.cvr2) return true; return false;
     }
-    _product_ref_light(pconvex_ref a, pconvex_ref b)
+    product_ref_light_(pconvex_ref a, pconvex_ref b)
     { cvr1 = a; cvr2 = b; }
-    _product_ref_light(void) { }
+    product_ref_light_(void) { }
   };
 
-  struct _product_ref : public convex_of_reference 
+  struct product_ref_ : public convex_of_reference 
   {
     pconvex_ref cvr1, cvr2;
  
@@ -211,21 +211,21 @@ namespace bgeot
     scalar_type is_in_face(short_type f, const base_node &pt) const;
 
 
-    _product_ref(const _product_ref_light &ls);
+    product_ref_(const product_ref_light_ &ls);
   };
 
-  scalar_type _product_ref::is_in(const base_node &pt) const {
+  scalar_type product_ref_::is_in(const base_node &pt) const {
     dim_type n1 = cvr1->structure()->dim(), n2 = cvr2->structure()->dim();
     base_node pt1(n1), pt2(n2);
     if (pt.size() != cvs->dim())
       throw dimension_error(
-			    "_product_ref::is_in : Dimension does not match");
+			    "product_ref_::is_in : Dimension does not match");
     std::copy(pt.begin(), pt.begin()+n1, pt1.begin());
     std::copy(pt.begin()+n1,   pt.end(), pt2.begin());
     return std::max(cvr1->is_in(pt1), cvr2->is_in(pt2));
   }
 
-  scalar_type _product_ref::is_in_face(short_type f, const base_node &pt) const
+  scalar_type product_ref_::is_in_face(short_type f, const base_node &pt) const
   { // ne controle pas si le point est dans le convexe mais si un point
     // supposé appartenir au convexe est dans une face donnée
     dim_type n1 = cvr1->structure()->dim(), n2 = cvr2->structure()->dim();
@@ -239,30 +239,30 @@ namespace bgeot
   }
   
   
-  _product_ref::_product_ref(const _product_ref_light &ls) { 
+  product_ref_::product_ref_(const product_ref_light_ &ls) { 
     if (ls.cvr1->structure()->dim() < ls.cvr2->structure()->dim())
       DAL_WARNING(1, "Illegal convex : swap your operands: dim(cv1)=" << int(ls.cvr1->structure()->dim()) << " < dim(cv2)=" << int(ls.cvr2->structure()->dim()));
     cvr1 = ls.cvr1; cvr2 = ls.cvr2;
     *((convex<base_node> *)(this)) 
       = convex_direct_product(*(ls.cvr1), *(ls.cvr2));
-    _normals.resize(cvs->nb_faces());
+    normals_.resize(cvs->nb_faces());
     base_small_vector null(cvs->dim()); null.fill(0.0);
-    std::fill(_normals.begin(), _normals.end(), null);
+    std::fill(normals_.begin(), normals_.end(), null);
     for (size_type r = 0; r < cvr1->structure()->nb_faces(); r++)
       std::copy(cvr1->normals()[r].begin(), cvr1->normals()[r].end(),
-		_normals[r].begin());
+		normals_[r].begin());
     for (size_type r = 0; r < cvr2->structure()->nb_faces(); r++)
       std::copy(cvr2->normals()[r].begin(), cvr2->normals()[r].end(),
-		_normals[r+cvr1->structure()->nb_faces()].begin()
+		normals_[r+cvr1->structure()->nb_faces()].begin()
 		+ cvr1->structure()->dim());
   }
   
 
   pconvex_ref convex_ref_product(pconvex_ref a, pconvex_ref b) { 
-    static dal::FONC_TABLE<_product_ref_light, _product_ref> *tab = 0;
-    if (!tab) tab = new dal::FONC_TABLE<_product_ref_light, _product_ref>();
-    bgeot::convex_of_reference *bprod = tab->add(_product_ref_light(a->basic_convex_ref(), b->basic_convex_ref()));
-    bgeot::convex_of_reference *prod = tab->add(_product_ref_light(a, b));
+    static dal::FONC_TABLE<product_ref_light_, product_ref_> *tab = 0;
+    if (!tab) tab = new dal::FONC_TABLE<product_ref_light_, product_ref_>();
+    bgeot::convex_of_reference *bprod = tab->add(product_ref_light_(a->basic_convex_ref(), b->basic_convex_ref()));
+    bgeot::convex_of_reference *prod = tab->add(product_ref_light_(a, b));
     bprod->attach_basic_convex_ref(bprod);
     prod->attach_basic_convex_ref(bprod);
     return prod;

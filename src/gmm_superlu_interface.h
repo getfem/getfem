@@ -142,7 +142,7 @@ namespace gmm {
   /* ********************************************************************* */
 
   template <typename MAT, typename VECTX, typename VECTB>
-  void SuperLU_solve(const MAT &A, const VECTX &_X, const VECTB &B,
+  void SuperLU_solve(const MAT &A, const VECTX &X_, const VECTB &B,
 		     int permc_spec = 1) {
     /*
      * Get column permutation vector perm_c[], according to permc_spec:
@@ -150,7 +150,7 @@ namespace gmm {
      *   permc_spec = 1: use minimum degree ordering on structure of A'*A
      *   permc_spec = 2: use minimum degree ordering on structure of A'+A
      */
-    VECTX &X = const_cast<VECTX &>(_X);
+    VECTX &X = const_cast<VECTX &>(X_);
     typedef typename linalg_traits<MAT>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
 
@@ -184,8 +184,8 @@ namespace gmm {
   }
 
   template <typename MAT, typename VECTX, typename VECTB>
-  void SuperLU_solve(const MAT &A, const VECTX &_X, const VECTB &B,
-		     double& _rcond, 
+  void SuperLU_solve(const MAT &A, const VECTX &X_, const VECTB &B,
+		     double& rcond_, 
 		     int permc_spec = 1) {
     /*
      * Get column permutation vector perm_c[], according to permc_spec:
@@ -193,7 +193,7 @@ namespace gmm {
      *   permc_spec = 1: use minimum degree ordering on structure of A'*A
      *   permc_spec = 2: use minimum degree ordering on structure of A'+A
      */
-    VECTX &X = const_cast<VECTX &>(_X);
+    VECTX &X = const_cast<VECTX &>(X_);
     typedef typename linalg_traits<MAT>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
 
@@ -242,7 +242,7 @@ namespace gmm {
     if (info != 0)
       DAL_THROW(failure_error, "SuperLU solve failed: info=" << info);
     gmm::copy(sol, X);
-    _rcond = rcond;
+    rcond_ = rcond;
     SuperLU_S::Destroy_SuperMatrix_Store(&SB);
     SuperLU_S::Destroy_SuperMatrix_Store(&SX);
     SuperLU_S::Destroy_SuperMatrix_Store(&SA);

@@ -16,8 +16,8 @@ namespace getfem {
       return ptid < e.ptid;
     }
     template<typename CONT> 
-    mesh_faces_by_pts_list_elt(size_type _cv, size_type _f, const CONT& p) 
-      : ptid(p.size()), cnt(0), cv(_cv), f(_f)  {
+    mesh_faces_by_pts_list_elt(size_type cv_, size_type f_, const CONT& p) 
+      : ptid(p.size()), cnt(0), cv(cv_), f(f_)  {
       if (p.size() == 0) DAL_THROW(dal::internal_error, "internal error");
       std::partial_sort_copy(p.begin(), p.end(), ptid.begin(), ptid.end());
     }
@@ -136,7 +136,7 @@ namespace getfem {
     base_vector coeff;
     base_matrix G;
     pfem pf = mfU->pmf->fem_of_element(cv);
-    _fem_precomp fprecomp;
+    fem_precomp_ fprecomp;
     if (pf->need_G()) bgeot::vectors_to_base_matrix(G, mfU->pmf->linked_mesh().points_of_convex(cv));
     for (size_type i=0; i < nodes.size(); ++i) refpts[i] = nodes[i].pt_ref;
     fem_precomp_not_stored(pf, &refpts, fprecomp);
@@ -401,20 +401,20 @@ namespace getfem {
     mesh_slice_cv_dof_data_base *defdata;
     pfem pf;
     bgeot::pstored_point_tab pspt;
-    _fem_precomp fprecomp;
+    fem_precomp_ fprecomp;
     base_matrix G;
     base_vector coeff;
     size_type cv;
   public:
-    mesh_slice_pre_deform(mesh_slice_cv_dof_data_base *_defdata) 
-      : defdata(_defdata), pf(0), pspt(0), cv(size_type(-1)) {
+    mesh_slice_pre_deform(mesh_slice_cv_dof_data_base *defdata_) 
+      : defdata(defdata_), pf(0), pspt(0), cv(size_type(-1)) {
       if (defdata && defdata->pmf->get_qdim() != defdata->pmf->linked_mesh().dim()) 
         DAL_THROW(dal::dimension_error, "wrong Q(=" << int(defdata->pmf->get_qdim()) 
                   << ") dimension for slice deformation: should be equal to "
                   "the mesh dimension which is " << int(defdata->pmf->linked_mesh().dim()));
     }
-    void prepare(size_type _cv, bgeot::stored_point_tab& refpts, bool force_update) {
-      cv = _cv;
+    void prepare(size_type cv_, bgeot::stored_point_tab& refpts, bool force_update) {
+      cv = cv_;
       if (defdata) {
         if (force_update || defdata->pmf->fem_of_element(cv) != pf) {
           pf = defdata->pmf->fem_of_element(cv);
@@ -427,7 +427,7 @@ namespace getfem {
 
     /* apply the geometric transformation and an optional mesh_fem deformation */
     void apply(const getfem_mesh& m, const bgeot::mesh_structure *cvms, 
-               _geotrans_precomp& gp, 
+               geotrans_precomp_& gp, 
                const bgeot::stored_point_tab &cvm_pts, std::vector<slice_node::faces_ct> &points_on_faces,
                mesh_slice::cs_nodes_ct& cv_nodes, mesh_slice::cs_simplexes_ct& cv_simplexes) const {
       std::vector<size_type> ptsid(cvm_pts.size(), size_type(-1));
@@ -513,7 +513,7 @@ namespace getfem {
   }
 
   mesh_slice::mesh_slice(const getfem_mesh& m_) :
-    m(m_), simplex_cnt(m.dim()+1, size_type(0)), points_cnt(0), _dim(m.dim()) {
+    m(m_), simplex_cnt(m.dim()+1, size_type(0)), points_cnt(0), dim_(m.dim()) {
   }
 
   /* of course, nodes created from edge/slice intersection are almost always duplicated */
@@ -521,7 +521,7 @@ namespace getfem {
 			 convex_face_ct& in_cvlst, mesh_slice_cv_dof_data_base *def_mf_data) 
   {
     if (cvlst.size()) DAL_THROW(dal::failure_error, "non empty slice: should use mesh_slice::merge");
-    _geotrans_precomp gp;
+    geotrans_precomp_ gp;
     bgeot::stored_point_tab cvm_pts;
     bgeot::pconvex_ref prev_cvr = 0;
     const getfem_mesh *cvm = 0;
@@ -603,7 +603,7 @@ namespace getfem {
   }
 
   void mesh_slice::set_dim(size_type newdim) {
-    _dim = newdim;
+    dim_ = newdim;
     for (size_type ic=0; ic < nb_convex(); ++ic) {
       for (cs_nodes_ct::iterator it=nodes(ic).begin(); it != nodes(ic).end(); ++it) {
 	it->pt.resize(newdim);

@@ -29,8 +29,8 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef __GMM_SUB_INDEX_H
-#define __GMM_SUB_INDEX_H
+#ifndef GMM_SUB_INDEX_H__
+#define GMM_SUB_INDEX_H__
 
 #include <gmm_def.h>
 
@@ -175,4 +175,4 @@ namespace gmm {
 
 }
 
-#endif //  __GMM_SUB_INDEX_H
+#endif //  GMM_SUB_INDEX_H__

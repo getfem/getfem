@@ -8,29 +8,32 @@
 #include <valarray>
 #include <bgeot_small_vector.h>
 #include <unistd.h>
+#ifdef GETFEM_HAVE_FEENABLEEXCEPT
+#  include <fenv.h>
+#endif
 
 bool quick = false;
 
 struct chrono {
   struct ::tms t;
   ::clock_t t_elapsed;
-  float _cpu, _elapsed, _system;
+  float cpu_, elapsed_, system_;
   float nbclocktk;
 public:
   chrono() { nbclocktk = ::sysconf(_SC_CLK_TCK); init(); }
-  chrono& init() { _elapsed=0; _cpu=0; _system =0; return *this; }
+  chrono& init() { elapsed_=0; cpu_=0; system_ =0; return *this; }
   void tic() { t_elapsed = ::times(&t); }
   chrono& toc() { 
     struct tms t2; ::clock_t t2_elapsed = ::times(&t2); 
-    _elapsed += (t2_elapsed - t_elapsed) / nbclocktk;
-    _cpu     += (t2.tms_utime - t.tms_utime) / nbclocktk;
-    _system  += (t2.tms_stime - t.tms_stime) / nbclocktk;
+    elapsed_ += (t2_elapsed - t_elapsed) / nbclocktk;
+    cpu_     += (t2.tms_utime - t.tms_utime) / nbclocktk;
+    system_  += (t2.tms_stime - t.tms_stime) / nbclocktk;
     memcpy(&t, &t2, sizeof(struct tms));
     return *this;
   }
-  float cpu() const { return _cpu; }
-  float elapsed() const { return _elapsed; }
-  float system() const { return _system; }
+  float cpu() const { return cpu_; }
+  float elapsed() const { return elapsed_; }
+  float system() const { return system_; }
 };
 
 #define REFCNT
@@ -52,8 +55,8 @@ namespace test {
       dal::uint32_type id() const { return (p*2)/2; } // & 0x7fffffff; }
       dal::uint32_type bid() const { return id()/BLOCKSZ; }
       dal::uint32_type chunkid() const { return id()%BLOCKSZ; }
-      explicit node_id(dal::uint32_type _p) : p(_p) {}
-      node_id(dal::uint32_type b, dal::uint32_type cid, bool _al) : p((b*BLOCKSZ+cid)+(_al?0x80000000:0)) {}
+      explicit node_id(dal::uint32_type p_) : p(p_) {}
+      node_id(dal::uint32_type b, dal::uint32_type cid, bool al_) : p((b*BLOCKSZ+cid)+(al_?0x80000000:0)) {}
       bool null() const { return p == 0; }
       void nullify() { p = 0; }
     };
@@ -73,10 +76,10 @@ namespace test {
       size_type prev_unfilled, next_unfilled; 
       size_type objsz; /* size (in bytes) of the chunks stored in this block */
       block() : data(0) {}
-      block(size_type _objsz) : data(0), 
+      block(size_type objsz_) : data(0), 
 				prev_unfilled(size_type(-1)), 
 				next_unfilled(size_type(-1)), 
-				objsz(_objsz) {}
+				objsz(objsz_) {}
       ~block() {} /* no cleanup of data, no copy constructor : it's on purpose
 		     since the block will be moved a lot when the vector container
 		     will be resized (cleanup done by ~block_allocator) */
@@ -450,7 +453,7 @@ namespace getfem {
     ~micro_vec() { deallocate(); }
     size_type size() const { return (unsigned long)p & 7UL; }
     micro_vec(const micro_vec& va, const micro_vec& vb) : p(alloc(va.size())) { 
-      /*double * __restrict pb = base(), *pe = base()+size(), *pva = va.base(), *pvb = vb.base();
+      /*double * restrict__ pb = base(), *pe = base()+size(), *pva = va.base(), *pvb = vb.base();
 	for (; pb < pe;) *pb++=*pva+++*pvb++;*/
       for (size_type i=0; i < va.size(); ++i) (*this)[i] = va[i]+vb[i];
     }
@@ -748,6 +751,9 @@ namespace getfem {
 }
 
 int main(int argc, char **argv) {
+#ifdef GETFEM_HAVE_FEENABLEEXCEPT /* trap SIGFPE */
+  feenableexcept(FE_DIVBYZERO | FE_INVALID);
+#endif
   if (argc == 2 && strcmp(argv[1],"-quick")==0) quick = true;
   getfem::run();
 }

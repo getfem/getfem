@@ -31,8 +31,8 @@
 
 
 
-#ifndef __BGEOT_SIMPLEXIFY_H
-#define __BGEOT_SIMPLEXIFY_H
+#ifndef BGEOT_SIMPLEXIFY_H__
+#define BGEOT_SIMPLEXIFY_H__
 
 #include <bgeot_convex_hull.h>
 
@@ -194,4 +194,4 @@ namespace bgeot
 }  /* end of namespace bgeot.                                             */
 
 
-#endif /* __BGEOT_SIMPLEXIFY_H                                            */
+#endif /* BGEOT_SIMPLEXIFY_H__                                            */

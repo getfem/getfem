@@ -30,8 +30,8 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef __GETFEM_DERIVATIVES_H
-#define __GETFEM_DERIVATIVES_H
+#ifndef GETFEM_DERIVATIVES_H__
+#define GETFEM_DERIVATIVES_H__
 
 #include <getfem_mesh_fem.h>
 

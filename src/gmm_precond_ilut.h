@@ -76,9 +76,9 @@
 
 namespace gmm {
 
-  template<typename T> struct _elt_rsvector_value_less {
-    inline bool operator()(const _elt_rsvector<T>& a, 
-			   const _elt_rsvector<T>& b) const
+  template<typename T> struct elt_rsvector_value_less_ {
+    inline bool operator()(const elt_rsvector_<T>& a, 
+			   const elt_rsvector_<T>& b) const
     { return (gmm::abs(a.e) > gmm::abs(b.e)); }
   };
 
@@ -151,7 +151,7 @@ namespace gmm {
       max_pivot = std::max(max_pivot, std::min(gmm::abs(tmp) * prec, R(1)));
       indiag[i] = T(1) / tmp;
       U(i,i) = tmp; gmm::clean(w, eps * norm_row); w[i] = T(0);
-      std::sort(w.begin(), w.end(), _elt_rsvector_value_less<T>());
+      std::sort(w.begin(), w.end(), elt_rsvector_value_less_<T>());
       typename svector::const_iterator wit = w.begin(), wite = w.end();
       size_type nnl = 0, nnu = 0;
       for (; wit != wite; ++wit) // copy to be optimized ...

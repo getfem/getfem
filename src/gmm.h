@@ -29,8 +29,8 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef __GMM_H
-#define __GMM_H
+#ifndef GMM_H__
+#define GMM_H__
 
 #include <gmm_kernel.h>
 #include <gmm_dense_lu.h>
@@ -44,4 +44,4 @@
 #include <gmm_superlu_interface.h>
 
 
-#endif //  __GMM_H
+#endif //  GMM_H__

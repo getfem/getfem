@@ -52,8 +52,8 @@
 //
 //===========================================================================
 
-#ifndef __GMM_TRI_SOLVE_H
-#define __GMM_TRI_SOLVE_H
+#ifndef GMM_TRI_SOLVE_H__
+#define GMM_TRI_SOLVE_H__
 
 #include <gmm_interface.h>
 
@@ -237,4 +237,4 @@ namespace gmm {
 }
 
 
-#endif //  __GMM_TRI_SOLVE_H
+#endif //  GMM_TRI_SOLVE_H__

@@ -29,8 +29,8 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef __GMM_KERNEL_H
-#define __GMM_KERNEL_H
+#ifndef GMM_KERNEL_H__
+#define GMM_KERNEL_H__
 
 #include <gmm_def.h>
 #include <gmm_blas.h>
@@ -43,4 +43,4 @@
 #include <gmm_tri_solve.h>
 
 
-#endif //  __GMM_KERNEL_H
+#endif //  GMM_KERNEL_H__

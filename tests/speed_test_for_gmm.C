@@ -27,6 +27,9 @@
 #include <getfem_norm.h>
 #include <getfem_regular_meshes.h>
 #include <gmm.h>
+#ifdef GETFEM_HAVE_FEENABLEEXCEPT
+#  include <fenv.h>
+#endif
 
 using bgeot::base_small_vector;
 using bgeot::base_vector;
@@ -261,6 +264,9 @@ void pb_data::solve(void) {
 }
 
 int main(void) {
+#ifdef GETFEM_HAVE_FEENABLEEXCEPT /* trap SIGFPE */
+  feenableexcept(FE_DIVBYZERO | FE_INVALID);
+#endif
   try {
 
     cout << "***********************************************************\n";

@@ -29,8 +29,8 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef __GMM_CONJUGATED_H
-#define __GMM_CONJUGATED_H
+#ifndef GMM_CONJUGATED_H__
+#define GMM_CONJUGATED_H__
 
 #include <gmm_def.h>
 
@@ -89,17 +89,17 @@ namespace gmm {
     typedef typename linalg_traits<this_type>::reference reference;
     typedef typename linalg_traits<this_type>::origin_type origin_type;
 
-    iterator _begin, _end;
+    iterator begin_, end_;
     const origin_type *origin;
-    size_type _size;
+    size_type size_;
 
     conjugated_vector_const_ref(const V &v)
-      : _begin(vect_const_begin(v)), _end(vect_const_end(v)),
+      : begin_(vect_const_begin(v)), end_(vect_const_end(v)),
 	origin(linalg_origin(v)),
-	_size(vect_size(v)) {}
+	size_(vect_size(v)) {}
 
     reference operator[](size_type i) const
-    { return gmm::conj(linalg_traits<V>::access(origin, _begin, _end, i)); }
+    { return gmm::conj(linalg_traits<V>::access(origin, begin_, end_, i)); }
   };
 
   template <typename V> struct linalg_traits<conjugated_vector_const_ref<V> > {
@@ -113,14 +113,14 @@ namespace gmm {
     typedef conjugated_const_iterator<typename
                    linalg_traits<V>::const_iterator> const_iterator;
     typedef typename linalg_traits<V>::storage_type storage_type;
-    static size_type size(const this_type &v) { return v._size; }
-    static iterator begin(this_type &v) { return iterator(v._begin); }
+    static size_type size(const this_type &v) { return v.size_; }
+    static iterator begin(this_type &v) { return iterator(v.begin_); }
     static const_iterator begin(const this_type &v)
-    { return const_iterator(v._begin); }
+    { return const_iterator(v.begin_); }
     static iterator end(this_type &v)
-    { return iterator(v._end); }
+    { return iterator(v.end_); }
     static const_iterator end(const this_type &v)
-    { return const_iterator(v._end); }
+    { return const_iterator(v.end_); }
     static value_type access(const origin_type *o, const const_iterator &it,
 			     const const_iterator &ite, size_type i)
     { return gmm::conj(linalg_traits<V>::access(o, it.it, ite.it, i)); }
@@ -183,16 +183,16 @@ namespace gmm {
     typedef typename linalg_traits<M>::value_type value_type;
     typedef typename linalg_traits<this_type>::origin_type origin_type;
 
-    iterator _begin, _end;
+    iterator begin_, end_;
     const origin_type *origin;
     size_type nr, nc;
 
     conjugated_row_matrix_const_ref(const M &m)
-      : _begin(mat_row_begin(m)), _end(mat_row_end(m)),
+      : begin_(mat_row_begin(m)), end_(mat_row_end(m)),
 	origin(linalg_origin(m)), nr(mat_ncols(m)), nc(mat_nrows(m)) {}
 
     value_type operator()(size_type i, size_type j) const
-    { return gmm::conj(linalg_traits<M>::access(_begin+j, i)); }
+    { return gmm::conj(linalg_traits<M>::access(begin_+j, i)); }
   };
 
   template <typename M>
@@ -219,9 +219,9 @@ namespace gmm {
     static inline const_sub_col_type col(const const_col_iterator &it)
     { return conjugated(linalg_traits<M>::row(it.it)); }
     static inline const_col_iterator col_begin(const this_type &m)
-    { return const_col_iterator(m._begin); }
+    { return const_col_iterator(m.begin_); }
     static inline const_col_iterator col_end(const this_type &m)
-    { return const_col_iterator(m._end); }
+    { return const_col_iterator(m.end_); }
     static inline const origin_type* origin(const this_type &m)
     { return m.origin; }
     static value_type access(const const_col_iterator &it, size_type i)
@@ -280,16 +280,16 @@ namespace gmm {
     typedef typename linalg_traits<M>::value_type value_type;
     typedef typename linalg_traits<this_type>::origin_type origin_type;
 
-    iterator _begin, _end;
+    iterator begin_, end_;
     const origin_type *origin;
     size_type nr, nc;
 
     conjugated_col_matrix_const_ref(const M &m)
-      : _begin(mat_col_begin(m)), _end(mat_col_end(m)),
+      : begin_(mat_col_begin(m)), end_(mat_col_end(m)),
 	origin(linalg_origin(m)), nr(mat_ncols(m)), nc(mat_nrows(m)) {}
 
     value_type operator()(size_type i, size_type j) const
-    { return gmm::conj(linalg_traits<M>::access(_begin+i, j)); }
+    { return gmm::conj(linalg_traits<M>::access(begin_+i, j)); }
   };
 
   template <typename M>
@@ -316,9 +316,9 @@ namespace gmm {
     static inline const_sub_row_type row(const const_row_iterator &it)
     { return conjugated(linalg_traits<M>::col(it.it)); }
     static inline const_row_iterator row_begin(const this_type &m)
-    { return const_row_iterator(m._begin); }
+    { return const_row_iterator(m.begin_); }
     static inline const_row_iterator row_end(const this_type &m)
-    { return const_row_iterator(m._end); }
+    { return const_row_iterator(m.end_); }
     static inline const origin_type* origin(const this_type &m)
     { return m.origin; }
     static value_type access(const const_row_iterator &it, size_type i)
@@ -337,29 +337,29 @@ namespace gmm {
 #endif
 
 
-  template <typename L, typename SO> struct __conjugated_return {
+  template <typename L, typename SO> struct conjugated_return__ {
     typedef conjugated_row_matrix_const_ref<L> return_type;
   };
-  template <typename L> struct __conjugated_return<L, col_major> {
+  template <typename L> struct conjugated_return__<L, col_major> {
     typedef conjugated_col_matrix_const_ref<L> return_type;
   };
-  template <typename L, typename T, typename LT> struct _conjugated_return {
+  template <typename L, typename T, typename LT> struct conjugated_return_ {
     typedef const L & return_type;
   };
   template <typename L, typename T>
-  struct _conjugated_return<L, std::complex<T>, abstract_vector> {
+  struct conjugated_return_<L, std::complex<T>, abstract_vector> {
     typedef conjugated_vector_const_ref<L> return_type;
   };
   template <typename L, typename T>
-  struct _conjugated_return<L, T, abstract_matrix> {
-    typedef typename __conjugated_return<L,
+  struct conjugated_return_<L, T, abstract_matrix> {
+    typedef typename conjugated_return__<L,
     typename principal_orientation_type<typename
     linalg_traits<L>::sub_orientation>::potype
     >::return_type return_type;
   };
   template <typename L> struct conjugated_return {
     typedef typename
-    _conjugated_return<L, typename linalg_traits<L>::value_type,
+    conjugated_return_<L, typename linalg_traits<L>::value_type,
 		       typename linalg_traits<L>::linalg_type		       
 		       >::return_type return_type;
   };
@@ -380,7 +380,7 @@ namespace gmm {
   { return conjugated_vector_const_ref<L>(v); }
 
   template <typename L, typename T> inline
-  typename __conjugated_return<L,
+  typename conjugated_return__<L,
     typename principal_orientation_type<typename
     linalg_traits<L>::sub_orientation>::potype>::return_type
   conjugated(const L &v, T, abstract_matrix) {
@@ -401,4 +401,4 @@ namespace gmm {
 
 }
 
-#endif //  __GMM_CONJUGATED_H
+#endif //  GMM_CONJUGATED_H__

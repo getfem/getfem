@@ -77,7 +77,7 @@ namespace getfem {
     std::vector<size_type> simplex_cnt; // count simplexes of dimension 0,1,...,dim
     size_type points_cnt;
     cvlst_ct cvlst;
-    size_type _dim;
+    size_type dim_;
     void do_slicing(size_type cv, bgeot::pconvex_ref cvr, slicer *ms, cs_nodes_ct cv_nodes, 
 		    cs_simplexes_ct cv_simplexes, dal::bit_vector& splx_in);
   protected:
@@ -123,7 +123,7 @@ namespace getfem {
     size_type nb_convex() const { return cvlst.size(); }
     size_type convex_num(size_type ic) const { return cvlst[ic].cv_num; }
     void set_dim(size_type newdim);
-    size_type dim() const { return _dim; }
+    size_type dim() const { return dim_; }
     const getfem_mesh& linked_mesh() const { return m; }
     void nb_simplexes(std::vector<size_type>& c) const { c = simplex_cnt; }
     size_type nb_simplexes(size_type sdim) const { return simplex_cnt[sdim]; }
@@ -145,7 +145,7 @@ namespace getfem {
     */
     template<typename V1, typename V2> void 
     interpolate(const getfem::mesh_fem &mf, const V1& U, V2& V) {
-      _fem_precomp fprecomp;
+      fem_precomp_ fprecomp;
       bgeot::stored_point_tab refpts;
       base_vector coeff;
       base_matrix G;

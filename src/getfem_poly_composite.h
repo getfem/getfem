@@ -30,8 +30,8 @@
 /* *********************************************************************** */
 
 
-#ifndef __GETFEM_POLY_COMPOSITE_H
-#define __GETFEM_POLY_COMPOSITE_H
+#ifndef GETFEM_POLY_COMPOSITE_H__
+#define GETFEM_POLY_COMPOSITE_H__
 
 #include <bgeot_poly.h>
 #include <bgeot_imbricated_box.h>

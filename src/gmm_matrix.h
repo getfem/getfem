@@ -29,8 +29,8 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef __GMM_MATRIX_H
-#define __GMM_MATRIX_H
+#ifndef GMM_MATRIX_H__
+#define GMM_MATRIX_H__
 
 #include <gmm_vector.h>
 #include <gmm_sub_vector.h>
@@ -783,39 +783,39 @@ namespace gmm
   template <typename MAT> class block_matrix {
   protected :
     std::vector<MAT> blocks;
-    size_type _nrowblocks;
-    size_type _ncolblocks;
+    size_type nrowblocks_;
+    size_type ncolblocks_;
     std::vector<sub_interval> introw, intcol;
 
   public :
     typedef typename linalg_traits<MAT>::value_type value_type;
     typedef typename linalg_traits<MAT>::reference reference;
 
-    size_type nrows(void) const { return introw[_nrowblocks-1].max; }
-    size_type ncols(void) const { return intcol[_ncolblocks-1].max; }
-    size_type nrowblocks(void) const { return _nrowblocks; }
-    size_type ncolblocks(void) const { return _ncolblocks; }
+    size_type nrows(void) const { return introw[nrowblocks_-1].max; }
+    size_type ncols(void) const { return intcol[ncolblocks_-1].max; }
+    size_type nrowblocks(void) const { return nrowblocks_; }
+    size_type ncolblocks(void) const { return ncolblocks_; }
     const sub_interval &subrowinterval(size_type i) const { return introw[i]; }
     const sub_interval &subcolinterval(size_type i) const { return intcol[i]; }
     const MAT &block(size_type i, size_type j) const 
-    { return blocks[j*_ncolblocks+i]; }
+    { return blocks[j*ncolblocks_+i]; }
     MAT &block(size_type i, size_type j)
-    { return blocks[j*_ncolblocks+i]; }
+    { return blocks[j*ncolblocks_+i]; }
     void do_clear(void);
     // to be done : read and write access to a component
     value_type operator() (size_type i, size_type j) const {
       size_type k, l;
-      for (k = 0; k < _nrowblocks; ++k)
+      for (k = 0; k < nrowblocks_; ++k)
 	if (i >= introw[k].min && i <  introw[k].max) break;
-      for (l = 0; l < _nrowblocks; ++l)
+      for (l = 0; l < nrowblocks_; ++l)
 	if (j >= introw[l].min && j <  introw[l].max) break;
       return (block(k, l))(i - introw[k].min, j - introw[l].min);
     }
     reference operator() (size_type i, size_type j) {
       size_type k, l;
-      for (k = 0; k < _nrowblocks; ++k)
+      for (k = 0; k < nrowblocks_; ++k)
 	if (i >= introw[k].min && i <  introw[k].max) break;
-      for (l = 0; l < _nrowblocks; ++l)
+      for (l = 0; l < nrowblocks_; ++l)
 	if (j >= introw[l].min && j <  introw[l].max) break;
       return (block(k, l))(i - introw[k].min, j - introw[l].min);
     }
@@ -857,20 +857,20 @@ namespace gmm
   };
 
   template <typename MAT> void block_matrix<MAT>::do_clear(void) { 
-    for (size_type j = 0, l = 0; j < _ncolblocks; ++j)
-      for (size_type i = 0, k = 0; i < _nrowblocks; ++i)
+    for (size_type j = 0, l = 0; j < ncolblocks_; ++j)
+      for (size_type i = 0, k = 0; i < nrowblocks_; ++i)
 	clear(block(i,j));
   }
 
   template <typename MAT> template <typename CONT>
   void block_matrix<MAT>::resize(const CONT &c1, const CONT &c2) {
-    _nrowblocks = c1.size(); _ncolblocks = c2.size();
-    blocks.resize(_nrowblocks * _ncolblocks);
-    intcol.resize(_ncolblocks);
-    introw.resize(_nrowblocks);
-    for (size_type j = 0, l = 0; j < _ncolblocks; ++j) {
+    nrowblocks_ = c1.size(); ncolblocks_ = c2.size();
+    blocks.resize(nrowblocks_ * ncolblocks_);
+    intcol.resize(ncolblocks_);
+    introw.resize(nrowblocks_);
+    for (size_type j = 0, l = 0; j < ncolblocks_; ++j) {
       intcol[j] = sub_interval(l, c2[j]); l += c2[j];
-      for (size_type i = 0, k = 0; i < _nrowblocks; ++i) {
+      for (size_type i = 0, k = 0; i < nrowblocks_; ++i) {
 	if (j == 0) { introw[i] = sub_interval(k, c1[i]); k += c1[i]; }
 	block(i, j) = MAT(c1[i], c2[j]);
       }
@@ -940,4 +940,4 @@ namespace std {
 }
 
 
-#endif /* __GMM_MATRIX_H */
+#endif /* GMM_MATRIX_H__ */

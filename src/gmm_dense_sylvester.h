@@ -42,9 +42,9 @@ namespace gmm {
   /*   Kronecker system matrix.                                            */
   /* ********************************************************************* */
   template <typename MAT1, typename MAT2, typename MAT3>
-  void kron(const MAT1 &m1, const MAT2 &m2, const MAT3 &_m3,
+  void kron(const MAT1 &m1, const MAT2 &m2, const MAT3 &m3_,
 	    bool init = true) {
-    MAT3 &m3 = const_cast<MAT3 &>(_m3);
+    MAT3 &m3 = const_cast<MAT3 &>(m3_);
     size_type m = mat_nrows(m1), n = mat_ncols(m1);
     size_type l = mat_nrows(m2), k = mat_ncols(m2);
 
@@ -93,8 +93,8 @@ namespace gmm {
   }
 
   template <typename MAT, typename VECT> inline
-  colmatrix_to_vector(const MAT &A, const VECT &_v) {
-    VECT &v = const_cast<VECT &>(_v);
+  colmatrix_to_vector(const MAT &A, const VECT &v_) {
+    VECT &v = const_cast<VECT &>(v_);
     colmatrix_to_vector(A, v, typename linalg_traits<MAT>::sub_orientation());
   }
 
@@ -128,8 +128,8 @@ namespace gmm {
   }
 
   template <typename MAT, typename VECT> inline
-  vector_to_colmatrix(const VECT &v, const MAT &_A) {
-    MAT &A = const_cast<MAT &>(_A);
+  vector_to_colmatrix(const VECT &v, const MAT &A_) {
+    MAT &A = const_cast<MAT &>(A_);
     vector_to_colmatrix(v, A, typename linalg_traits<MAT>::sub_orientation());
   }
 
@@ -140,10 +140,10 @@ namespace gmm {
   // very prohibitive solver, to be replaced ... 
   template <typename MAT1, typename MAT2, typename MAT3, typename MAT4 >
   void sylvester(const MAT1 &m1, const MAT2 &m2, const MAT3 &m3,
-		 const MAT4 &_m4) {
+		 const MAT4 &m4_) {
     typedef typename linalg_traits<Mat>::value_type T;
     
-    MAT3 &m4 = const_cast<MAT4 &>(_m4);
+    MAT3 &m4 = const_cast<MAT4 &>(m4_);
     size_type m = mat_nrows(m1), n = mat_ncols(m1);
     size_type l = mat_nrows(m2), k = mat_ncols(m2);
     

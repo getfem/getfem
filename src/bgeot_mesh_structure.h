@@ -32,8 +32,8 @@
 
 
 
-#ifndef __BGEOT_MESH_STRUCTURE_H
-#define __BGEOT_MESH_STRUCTURE_H
+#ifndef BGEOT_MESH_STRUCTURE_H__
+#define BGEOT_MESH_STRUCTURE_H__
 
 #include <bgeot_convex_structure.h>
 
@@ -131,23 +131,23 @@ namespace bgeot
     
   protected :
     
-    iterator _begin, _end;
+    iterator begin_, end_;
     
   public :
     
-    bool empty(void) const { return _begin == _end; }
+    bool empty(void) const { return begin_ == end_; }
     
     mesh_convex_ind_ct(const mesh_structure &ms, size_type ip)
-      { _begin = iterator(ms, ip); }
+      { begin_ = iterator(ms, ip); }
     mesh_convex_ind_ct(void) { }
     
-    const iterator &begin() const { return _begin; }
-    const iterator &end() const { return _end; }
-    iterator &begin() { return _begin; }
-    iterator &end() { return _end; }
+    const iterator &begin() const { return begin_; }
+    const iterator &end() const { return end_; }
+    iterator &begin() { return begin_; }
+    iterator &end() { return end_; }
     
-    value_type front(void) const { return *_begin; }
-    void pop_front(void) { ++_begin; }
+    value_type front(void) const { return *begin_; }
+    void pop_front(void) { ++begin_; }
     size_type size() { size_type n=0; for (iterator i = begin(); i != end(); ++i) ++n; return n; }
   };
   
@@ -438,4 +438,4 @@ namespace bgeot
 }  /* end of namespace bgeot.                                              */
 
 
-#endif /* __BGEOT_MESH_STRUCTURE_H                                         */
+#endif /* BGEOT_MESH_STRUCTURE_H__                                         */

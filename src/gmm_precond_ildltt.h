@@ -112,7 +112,7 @@ namespace gmm {
       indiag[i] = R(1) / gmm::real(tmp);
       gmm::clean(w, eps * norm_row);
       gmm::scale(w, T(indiag[i]));
-      std::sort(w.begin(), w.end(), _elt_rsvector_value_less<T>());
+      std::sort(w.begin(), w.end(), elt_rsvector_value_less_<T>());
       typename svector::const_iterator wit = w.begin(), wite = w.end();
       for (size_type nnu = 0; wit != wite; ++wit)  // copy to be optimized ...
 	if (wit->c > i) { if (nnu < nU+K) U(i, wit->c) = wit->e; ++nnu; }

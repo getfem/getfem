@@ -8,9 +8,9 @@ using gmm::size_type;
 bool print_debug = false;
 
 template <typename MAT1, typename VECT1>
-bool test_procedure(const MAT1 &_m1, const VECT1 &_v1) {
-  VECT1 &v1 = const_cast<VECT1 &>(_v1);
-  MAT1  &m1 = const_cast<MAT1  &>(_m1);
+bool test_procedure(const MAT1 &m1_, const VECT1 &v1_) {
+  VECT1 &v1 = const_cast<VECT1 &>(v1_);
+  MAT1  &m1 = const_cast<MAT1  &>(m1_);
   typedef typename gmm::linalg_traits<MAT1>::value_type T;
   typedef typename gmm::number_traits<T>::magnitude_type R;
   R prec = gmm::default_tol(R());

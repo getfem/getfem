@@ -6,21 +6,22 @@ namespace bgeot {
     enum { PTS_PER_LEAF=8 };
     unsigned n; /* 0 => is a tree node, != 0 => tree leaf storing n points */
     bool isleaf() const { return (n != 0); }
-    kdtree_elt_base(unsigned _n) : n(_n) {}
+    kdtree_elt_base(unsigned n_) : n(n_) {}
   };
   
   /* leafs contains a list of points */
   struct kdtree_leaf : public kdtree_elt_base {
     kdtree_tab_type::const_iterator it;
-    template<class IT> kdtree_leaf(IT begin, IT end) : 
+    kdtree_leaf(kdtree_tab_type::const_iterator begin, 
+		kdtree_tab_type::const_iterator end) : 
       kdtree_elt_base(std::distance(begin,end)) { it = begin; }
   };
   
   struct kdtree_node : public kdtree_elt_base {
     scalar_type split_v;
     kdtree_elt_base *left, *right; /* left: <=v, right: >v */
-    kdtree_node(scalar_type v, kdtree_elt_base *_left, kdtree_elt_base *_right) : 
-      kdtree_elt_base(0), split_v(v), left(_left), right(_right) {}
+    kdtree_node(scalar_type v, kdtree_elt_base *left_, kdtree_elt_base *right_) : 
+      kdtree_elt_base(0), split_v(v), left(left_), right(right_) {}
   };
 
   typedef kdtree_tab_type::iterator ITER;
@@ -35,7 +36,7 @@ namespace bgeot {
   /* splitting of kdtree_tab_type with respect to a given value */
   /*struct component_split { 
     unsigned dir; scalar_type v;
-    component_split(unsigned d, scalar_type _v) : dir(d), v(_v) {}
+    component_split(unsigned d, scalar_type v_) : dir(d), v(v_) {}
     bool operator()(const index_node_pair& a) 
     { return (a.n.at(dir) <= v); }
   };
@@ -54,7 +55,7 @@ namespace bgeot {
      build (recursively) a complete tree for points in the interval [begin, end[
      dir is the splitting direction
   */
-  static kdtree_elt_base *_build_tree(ITER begin, ITER end, unsigned dir) {
+  static kdtree_elt_base *build_tree_(ITER begin, ITER end, unsigned dir) {
     if (begin == end) return 0;
     size_type npts = std::distance(begin,end);
     if (npts > kdtree_elt_base::PTS_PER_LEAF) {
@@ -89,24 +90,24 @@ namespace bgeot {
 	if (ndir_tests == N-1) /* tested all N direction ? so all points are strictly the same */
 	  return new kdtree_leaf(begin,end); 
         else return new kdtree_node(median, 
-				    _build_tree(begin, itmedian, (dir+1)%N + (ndir_tests+1)*N), 0);
+				    build_tree_(begin, itmedian, (dir+1)%N + (ndir_tests+1)*N), 0);
       else { /* the general case */
 	assert((*itmedian).n[dir] > median && (*(itmedian-1)).n[dir] <= median);
 	return new kdtree_node(median, 
-			       _build_tree(begin, itmedian, (dir+1)%N), 
-			       _build_tree(itmedian,end, (dir+1)%N));
+			       build_tree_(begin, itmedian, (dir+1)%N), 
+			       build_tree_(itmedian,end, (dir+1)%N));
       }
     } else {
       return new kdtree_leaf(begin,end);
     }
   }
   
-  static void _destroy_tree(kdtree_elt_base *t) {
+  static void destroy_tree_(kdtree_elt_base *t) {
     if (t == 0) return;
     if (!t->isleaf()) {
       kdtree_node *tn = static_cast<kdtree_node*>(t);
-      _destroy_tree(tn->right);
-      _destroy_tree(tn->left);
+      destroy_tree_(tn->right);
+      destroy_tree_(tn->left);
       delete tn; return;
     } else {
       kdtree_leaf *tl = static_cast<kdtree_leaf*>(t);
@@ -114,8 +115,8 @@ namespace bgeot {
     }
   }
 
-  /* avoid pushing too much arguments on the stack for _points_in_box */
-  struct _points_in_box_data {
+  /* avoid pushing too much arguments on the stack for points_in_box_ */
+  struct points_in_box_data_ {
     base_node::const_iterator bmin;
     base_node::const_iterator bmax;
     kdtree_tab_type *ipts;
@@ -123,14 +124,14 @@ namespace bgeot {
   };
 
   /* recursive lookup for points inside a given box */
-  static void _points_in_box(const _points_in_box_data& p,
+  static void points_in_box_(const points_in_box_data_& p,
 			     const kdtree_elt_base *t, unsigned dir) {
     if (!t->isleaf()) {
       const kdtree_node *tn = static_cast<const kdtree_node*>(t);
       if (p.bmin[dir] <= tn->split_v && tn->left)
-        _points_in_box(p, tn->left, (dir+1)%p.N);
+        points_in_box_(p, tn->left, (dir+1)%p.N);
       if (p.bmax[dir] > tn->split_v && tn->right)
-        _points_in_box(p, tn->right, (dir+1)%p.N);
+        points_in_box_(p, tn->right, (dir+1)%p.N);
     } else {
       const kdtree_leaf *tl = static_cast<const kdtree_leaf*>(t);
       kdtree_tab_type::const_iterator itpt = tl->it;
@@ -149,19 +150,19 @@ namespace bgeot {
   }
 
   void kdtree::clear_tree() {
-    _destroy_tree(tree); tree = 0;
+    destroy_tree_(tree); tree = 0;
   }
 
   void kdtree::points_in_box(kdtree_tab_type &ipts,
 			     const base_node &min, 
 			     const base_node &max) {
     ipts.resize(0);
-    if (tree == 0) { tree = _build_tree(pts.begin(), pts.end(), 0); if (!tree) return; }
+    if (tree == 0) { tree = build_tree_(pts.begin(), pts.end(), 0); if (!tree) return; }
     base_node bmin(min), bmax(max);
     for (size_type i=0; i < bmin.size(); ++i) if (bmin[i] > bmax[i]) return;
-    _points_in_box_data p; 
+    points_in_box_data_ p; 
     p.bmin = bmin.const_begin(); p.bmax = bmax.const_begin();
     p.ipts = &ipts; p.N = N; 
-    _points_in_box(p, tree, 0);
+    points_in_box_(p, tree, 0);
   }
 }

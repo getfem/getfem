@@ -47,7 +47,7 @@ namespace bgeot {
     base_node n;
     index_node_pair() {}
     index_node_pair(const index_node_pair& o) : i(o.i), n(o.n) {}
-    index_node_pair(size_type _i, base_node _n) : i(_i), n(_n) {}
+    index_node_pair(size_type i_, base_node n_) : i(i_), n(n_) {}
     void swap(index_node_pair& other) { std::swap(i,other.i); n.swap(other.n);}
   };
 

@@ -56,7 +56,7 @@ namespace bgeot
   /* transformation on simplex.                                           */
   /* ******************************************************************** */
 
-  struct _simplex_trans : public geometric_trans
+  struct simplex_trans_ : public geometric_trans
   {
     void calc_base_func(base_poly &p, size_type i, short_type K) const
     {
@@ -82,7 +82,7 @@ namespace bgeot
 	       - (l1 * (scalar_type(j) / scalar_type(j+1)));
     }
 
-    _simplex_trans(dim_type nc, short_type k)
+    simplex_trans_(dim_type nc, short_type k)
     {
       cvr = simplex_of_reference(nc, k);
       size_type R = cvr->structure()->nb_points();
@@ -103,16 +103,16 @@ namespace bgeot
     if (n < 0 || n >= 100 || k < 0 || k > 150 ||
 	double(n) != params[0].num() || double(k) != params[1].num())
       DAL_THROW(failure_error, "Bad parameters");
-    return new _simplex_trans(n, k);
+    return new simplex_trans_(n, k);
   }
 
   /* ******************************************************************** */
   /* direct product transformation                                        */
   /* ******************************************************************** */
 
-  struct _cv_pr_t : public geometric_trans
+  struct cv_pr_t_ : public geometric_trans
   {
-    _cv_pr_t(pgeometric_trans a, pgeometric_trans b)
+    cv_pr_t_(pgeometric_trans a, pgeometric_trans b)
     {
       cvr = convex_ref_product(a->convex_ref(), b->convex_ref());
       is_lin = false;
@@ -136,16 +136,16 @@ namespace bgeot
       DAL_THROW(failure_error, "Bad type of parameters");
     pgeometric_trans a = params[0].method();
     pgeometric_trans b = params[1].method();
-    return new _cv_pr_t(a, b);
+    return new cv_pr_t_(a, b);
   }
 
   /* ******************************************************************** */
   /* linear direct product transformation.                                */
   /* ******************************************************************** */
 
-  struct _cv_pr_tl : public geometric_trans
+  struct cv_pr_tl_ : public geometric_trans
   {
-    _cv_pr_tl(pgeometric_trans a, pgeometric_trans b)
+    cv_pr_tl_(pgeometric_trans a, pgeometric_trans b)
     {
       if (!(a->is_linear() && b->is_linear()))
 	DAL_THROW(not_linear_error, 
@@ -174,7 +174,7 @@ namespace bgeot
       DAL_THROW(failure_error, "Bad type of parameters");
     pgeometric_trans a = params[0].method();
     pgeometric_trans b = params[1].method();
-    return new _cv_pr_tl(a, b);
+    return new cv_pr_tl_(a, b);
   }
 
   /* ******************************************************************** */
@@ -285,26 +285,26 @@ namespace bgeot
   /*    Naming system                                                     */
   /* ******************************************************************** */
 
-  static ftool::naming_system<geometric_trans> *_gt_naming_system = 0;
+  static ftool::naming_system<geometric_trans> *gt_naming_system_ = 0;
   
   static void init_gt_naming_system(void) {
-    _gt_naming_system = new ftool::naming_system<geometric_trans>("GT");
-    _gt_naming_system->add_suffix("PK", PK_gt);
-    _gt_naming_system->add_suffix("QK", QK_gt);
-    _gt_naming_system->add_suffix("PRISM", prism_gt);
-    _gt_naming_system->add_suffix("PRODUCT", product_gt);
-    _gt_naming_system->add_suffix("LINEAR_PRODUCT", linear_product_gt);
+    gt_naming_system_ = new ftool::naming_system<geometric_trans>("GT");
+    gt_naming_system_->add_suffix("PK", PK_gt);
+    gt_naming_system_->add_suffix("QK", QK_gt);
+    gt_naming_system_->add_suffix("PRISM", prism_gt);
+    gt_naming_system_->add_suffix("PRODUCT", product_gt);
+    gt_naming_system_->add_suffix("LINEAR_PRODUCT", linear_product_gt);
   }
   
   pgeometric_trans geometric_trans_descriptor(std::string name) {
-    if (_gt_naming_system == 0) init_gt_naming_system();
+    if (gt_naming_system_ == 0) init_gt_naming_system();
     size_type i = 0;
-    return _gt_naming_system->method(name, i);
+    return gt_naming_system_->method(name, i);
   }
 
   std::string name_of_geometric_trans(pgeometric_trans p) {
-    if (_gt_naming_system == 0) init_gt_naming_system();
-    return _gt_naming_system->shorter_name_of_method(p);
+    if (gt_naming_system_ == 0) init_gt_naming_system();
+    return gt_naming_system_->shorter_name_of_method(p);
   }
 
   /* Fonctions pour la ref. directe.                                     */
@@ -391,14 +391,14 @@ namespace bgeot
   pgeometric_trans product_geotrans(pgeometric_trans pg1,
 				    pgeometric_trans pg2) {
     static pgeometric_trans pgt = 0;
-    static pgeometric_trans _pg1 = 0;
-    static pgeometric_trans _pg2 = 0;
-    if (pg1 != _pg1 || pg2 != _pg2) {
+    static pgeometric_trans pg1_ = 0;
+    static pgeometric_trans pg2_ = 0;
+    if (pg1 != pg1_ || pg2 != pg2_) {
       std::stringstream name;
       name << "GT_PRODUCT(" << name_of_geometric_trans(pg1) << "," 
 	   << name_of_geometric_trans(pg2) << ")";
       pgt = geometric_trans_descriptor(name.str());
-      _pg1 = pg1; _pg2 = pg2;
+      pg1_ = pg1; pg2_ = pg2;
     }
     return pgt;    
   }

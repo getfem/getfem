@@ -31,8 +31,8 @@
 /* *********************************************************************** */
 
 
-#ifndef __GMM_SOLVERS_SCHWARZ_ADDITIVE_H
-#define __GMM_SOLVERS_SCHWARZ_ADDITIVE_H
+#ifndef GMM_SOLVERS_SCHWARZ_ADDITIVE_H__
+#define GMM_SOLVERS_SCHWARZ_ADDITIVE_H__
 
 #include <gmm_kernel.h>
 #include <gmm_precond_diagonal.h>
@@ -363,4 +363,4 @@ namespace gmm {
 }
 
 
-#endif //  __GMM_SOLVERS_SCHWARZ_ADDITIVE_H
+#endif //  GMM_SOLVERS_SCHWARZ_ADDITIVE_H__

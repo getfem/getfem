@@ -8,10 +8,10 @@
 using gmm::size_type;
 
 template <typename MAT1, typename MAT2, typename MAT3>
-bool test_procedure(const MAT1 &_m1, const MAT2 &_m2, const MAT3 &_m3) {
-  MAT1  &m1 = const_cast<MAT1  &>(_m1);
-  MAT2  &m2 = const_cast<MAT2  &>(_m2);
-  MAT3  &m3 = const_cast<MAT3  &>(_m3);
+bool test_procedure(const MAT1 &m1_, const MAT2 &m2_, const MAT3 &m3_) {
+  MAT1  &m1 = const_cast<MAT1  &>(m1_);
+  MAT2  &m2 = const_cast<MAT2  &>(m2_);
+  MAT3  &m3 = const_cast<MAT3  &>(m3_);
   typedef typename gmm::linalg_traits<MAT1>::value_type T;
   typedef typename gmm::number_traits<T>::magnitude_type R;
   R prec = gmm::default_tol(R());

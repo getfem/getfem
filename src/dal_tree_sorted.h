@@ -31,8 +31,8 @@
 /* *********************************************************************** */
 
 
-#ifndef __DAL_TREE_SORTED_H
-#define __DAL_TREE_SORTED_H
+#ifndef DAL_TREE_SORTED_H__
+#define DAL_TREE_SORTED_H__
 
 #include <dal_tas.h>
 
@@ -46,7 +46,7 @@ namespace dal
   /* d'insertion ou de suppression.                                        */
   /* ********************************************************************* */
 
-  static const size_t _DEPTHMAX_ = size_t(CHAR_BIT*sizeof(size_t)*3) / 2;
+  static const size_t DEPTHMAX__ = size_t(CHAR_BIT*sizeof(size_t)*3) / 2;
   static const size_t ST_NIL = size_t(-1);
 
   template<typename T, typename COMP = dal::less<T>, int pks = 5>
@@ -63,8 +63,8 @@ namespace dal
     typedef int8_type short_type;
 
     dynamic_tree_sorted<T, COMP, pks> *p;
-    size_type path[_DEPTHMAX_];
-    short_type dir[_DEPTHMAX_];
+    size_type path[DEPTHMAX__];
+    short_type dir[DEPTHMAX__];
     size_type depth;
 
     tsa_iterator(void) {}
@@ -79,7 +79,7 @@ namespace dal
     { return (depth==0) ? ST_NIL : path[depth-1];}
     inline size_type father(void) const
     { return (depth<=1) ? ST_NIL : path[depth-2];}
-    inline size_type _index(void) const { return path[depth-1]; }
+    inline size_type index_(void) const { return path[depth-1]; }
     inline short_type direction(void) const
     { return (depth==0) ? 0 : dir[depth-1];}
     inline void up(void) { if (depth > 0) depth--; }
@@ -103,9 +103,9 @@ namespace dal
     pointer operator->() const { return &(operator*()); }
     
     bool operator ==(const tsa_iterator &i) const
-    { return ((i.depth == 0 && depth == 0) || (i._index() == _index())); }
+    { return ((i.depth == 0 && depth == 0) || (i.index_() == index_())); }
     bool operator !=(const tsa_iterator &i) const
-    { return !((i.depth == 0 && depth == 0) || (i._index() == _index())); }
+    { return !((i.depth == 0 && depth == 0) || (i.index_() == index_())); }
 
   };
 
@@ -124,35 +124,35 @@ namespace dal
     void tsa_iterator<T, COMP, pks>::down_left(void)
   {
     #ifdef GETFEM_VERIFY
-      if (depth <= 0 || depth >= _DEPTHMAX_ || index() == ST_NIL)
+      if (depth <= 0 || depth >= DEPTHMAX__ || index() == ST_NIL)
 	DAL_THROW(internal_error, "internal error");
     #endif
-    path[depth] = p->left_elt(_index()); dir[depth++] = -1;
+    path[depth] = p->left_elt(index_()); dir[depth++] = -1;
   }
 
   template<typename T, typename COMP, int pks> 
     void tsa_iterator<T, COMP, pks>::down_right(void)
   { 
     #ifdef GETFEM_VERIFY
-      if (depth <= 0 || depth >= _DEPTHMAX_ || index() == ST_NIL)
+      if (depth <= 0 || depth >= DEPTHMAX__ || index() == ST_NIL)
 	DAL_THROW(internal_error, "internal error");
     #endif
-    path[depth] = p->right_elt(_index()); dir[depth++] = 1;
+    path[depth] = p->right_elt(index_()); dir[depth++] = 1;
   }
 
   template<typename T, typename COMP, int pks> 
     void tsa_iterator<T, COMP, pks>::down_left_all(void)
-  { while (_index() != ST_NIL) down_left(); up(); }
+  { while (index_() != ST_NIL) down_left(); up(); }
 
   template<typename T, typename COMP, int pks> 
     void tsa_iterator<T, COMP, pks>::down_right_all(void)
-  { while (_index() != ST_NIL) down_right(); up();}
+  { while (index_() != ST_NIL) down_right(); up();}
    
   template<typename T, typename COMP, int pks>
     tsa_iterator<T, COMP, pks> &tsa_iterator<T, COMP, pks>::operator ++()
   { 
     if (depth == 0) first();
-    if (p->right_elt(_index()) != ST_NIL) { down_right(); down_left_all(); }
+    if (p->right_elt(index_()) != ST_NIL) { down_right(); down_left_all(); }
     else                { up(); while (dir[depth] == 1) up(); }
     return *this;
   }
@@ -161,7 +161,7 @@ namespace dal
     tsa_iterator<T, COMP, pks> &tsa_iterator<T, COMP, pks>::operator --()
   { 
     if (depth == 0) last();
-    if (p->left_elt(_index()) != ST_NIL) { down_left(); down_right_all(); }
+    if (p->left_elt(index_()) != ST_NIL) { down_left(); down_right_all(); }
     else               { up(); while (dir[depth] == -1) up(); }
     return *this;
   }
@@ -178,8 +178,8 @@ namespace dal
     typedef int8_type short_type;
 
     const dynamic_tree_sorted<T, COMP, pks> *p;
-    size_type path[_DEPTHMAX_];
-    short_type dir[_DEPTHMAX_];
+    size_type path[DEPTHMAX__];
+    short_type dir[DEPTHMAX__];
     size_type depth;
 
     const_tsa_iterator(void) {}
@@ -195,7 +195,7 @@ namespace dal
     { return (depth==0) ? ST_NIL : path[depth-1];}
     inline size_type father(void) const
     { return (depth<=1) ? ST_NIL : path[depth-2];}
-    inline size_type _index(void) const { return path[depth-1]; }
+    inline size_type index_(void) const { return path[depth-1]; }
     inline short_type direction(void) const
     { return (depth==0) ? 0 : dir[depth-1];}
     inline void up(void) { if (depth > 0) depth--; }
@@ -219,9 +219,9 @@ namespace dal
     pointer operator->() const { return &(operator*()); }
     
     bool operator ==(const const_tsa_iterator &i) const
-    { return ((i.depth == 0 && depth == 0) || (i._index() == _index())); }
+    { return ((i.depth == 0 && depth == 0) || (i.index_() == index_())); }
     bool operator !=(const const_tsa_iterator &i) const
-    { return !((i.depth == 0 && depth == 0) || (i._index() == _index())); }
+    { return !((i.depth == 0 && depth == 0) || (i.index_() == index_())); }
 
   };
 
@@ -263,36 +263,36 @@ namespace dal
     void const_tsa_iterator<T, COMP, pks>::down_left(void)
   {
     #ifdef GETFEM_VERIFY
-      if (depth <= 0 || depth >= _DEPTHMAX_ || index() == ST_NIL)
+      if (depth <= 0 || depth >= DEPTHMAX__ || index() == ST_NIL)
 	DAL_THROW(internal_error, "internal error");
     #endif
-    path[depth] = p->left_elt(_index()); dir[depth++] = -1;
+    path[depth] = p->left_elt(index_()); dir[depth++] = -1;
   }
 
   template<typename T, typename COMP, int pks>
     void const_tsa_iterator<T, COMP, pks>::down_right(void)
   { 
     #ifdef GETFEM_VERIFY
-      if (depth <= 0 || depth >= _DEPTHMAX_ || index() == ST_NIL)
+      if (depth <= 0 || depth >= DEPTHMAX__ || index() == ST_NIL)
 	DAL_THROW(internal_error, "internal error");
     #endif
-    path[depth] = p->right_elt(_index()); dir[depth++] = 1;
+    path[depth] = p->right_elt(index_()); dir[depth++] = 1;
   }
 
   template<typename T, typename COMP, int pks>
     void const_tsa_iterator<T, COMP, pks>::down_left_all(void)
-  { while (_index() != ST_NIL) down_left(); up(); }
+  { while (index_() != ST_NIL) down_left(); up(); }
 
   template<typename T, typename COMP, int pks> 
     void const_tsa_iterator<T, COMP, pks>::down_right_all(void) 
-  { while (_index() != ST_NIL) down_right(); up();}
+  { while (index_() != ST_NIL) down_right(); up();}
   
   template<typename T, typename COMP, int pks>
     const_tsa_iterator<T, COMP, pks> &
       const_tsa_iterator<T, COMP, pks>::operator ++()
   {  
     if (depth == 0) last();
-    if (p->right_elt(_index()) != ST_NIL) { down_right(); down_left_all(); }
+    if (p->right_elt(index_()) != ST_NIL) { down_right(); down_left_all(); }
     else                { up(); while (dir[depth] == 1) up(); }
     return *this;
   }
@@ -302,7 +302,7 @@ namespace dal
       const_tsa_iterator<T, COMP, pks>::operator --()
   {  
     if (depth == 0) last();
-    if (p->left_elt(_index()) != ST_NIL) { down_left(); down_right_all(); }
+    if (p->left_elt(index_()) != ST_NIL) { down_left(); down_right_all(); }
     else               { up(); while (dir[depth] == -1) up(); }
     return *this;
   }
@@ -870,4 +870,4 @@ namespace dal
 
 }
 
-#endif /* __DAL_TREE_SORTED_H */
+#endif /* DAL_TREE_SORTED_H__ */

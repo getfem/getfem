@@ -58,7 +58,7 @@ namespace bgeot
     *this = *(cvs->basic_structure());
     std::fill(faces_struct.begin(),faces_struct.end(),pconvex_structure(NULL));
     std::fill(faces.begin(),faces.end(), convex_ind_ct());
-     _dir_points = convex_ind_ct();
+     dir_points_ = convex_ind_ct();
     nbpt = 0;
   }
 
@@ -74,7 +74,7 @@ namespace bgeot
   /* simplex structures                                                   */
   /* ******************************************************************** */
 
-  class _simplex_structure : public convex_structure
+  class simplex_structure_ : public convex_structure
   {
     friend pconvex_structure simplex_structure(dim_type nc);
   };
@@ -85,8 +85,8 @@ namespace bgeot
 
   pconvex_structure simplex_structure(dim_type nc)
   {
-    static dal::dynamic_array<_simplex_structure> *_simplex;
-    static int _nb_simplex = -1;
+    static dal::dynamic_array<simplex_structure_> *simplex_;
+    static int nb_simplex_ = -1;
     static bool isinit = false;
     if (!isinit) {
 #ifdef GETFEM_HAVE_QDLIB
@@ -94,17 +94,17 @@ namespace bgeot
       unsigned short old_cw;
       x86_fix_start(&old_cw);
 #endif
-      _simplex = new dal::dynamic_array<_simplex_structure>();
+      simplex_ = new dal::dynamic_array<simplex_structure_>();
       isinit = true;
     }
 
-    _simplex_structure *p = &(*_simplex)[nc];
-    if (_nb_simplex < nc)
+    simplex_structure_ *p = &(*simplex_)[nc];
+    if (nb_simplex_ < nc)
     {
       p->Nc = nc; p->nbpt = nc+1; p->nbf = nc+1;
       p->faces_struct.resize(p->nbf);
       p->faces.resize(p->nbf);
-      p->_dir_points.resize(p->Nc + 1);
+      p->dir_points_.resize(p->Nc + 1);
       p->basic_pcvs = p;
       if (nc == 0)
       {	
@@ -115,14 +115,14 @@ namespace bgeot
       else
 	for (int i = 0; i < p->nbf; i++)
 	{ 
-	  p->_dir_points[i] = i;
+	  p->dir_points_[i] = i;
 	  p->faces_struct[i] = simplex_structure(nc-1);
 	  p->faces[i].resize(nc);
 	  for (int j = 0; j < nc; j++)
 	    (p->faces[i])[j] = (j >= i) ? (j + 1) : j;
 	}
       
-      _nb_simplex = nc;
+      nb_simplex_ = nc;
     }
     return p;
   }
@@ -131,29 +131,29 @@ namespace bgeot
   /* K-simplex structures                                                 */
   /* ******************************************************************** */
 
-  struct _K_simplex_light
+  struct K_simplex_light_
   {
     dim_type nc; short_type K;
-    bool operator < (const _K_simplex_light &l) const
+    bool operator < (const K_simplex_light_ &l) const
     {
       if (nc < l.nc) return true; if (nc > l.nc) return false; 
       if (K < l.K) return true; return false;
     }
-    _K_simplex_light(dim_type n, short_type k) { nc = n; K = k; }
-    _K_simplex_light(void) { }
+    K_simplex_light_(dim_type n, short_type k) { nc = n; K = k; }
+    K_simplex_light_(void) { }
   };
 
-  class _K_simplex_structure : public convex_structure
+  class K_simplex_structure_ : public convex_structure
   {
     public :
 
-      _K_simplex_structure(const _K_simplex_light &ls)
+      K_simplex_structure_(const K_simplex_light_ &ls)
       {
 	Nc = ls.nc; nbpt = alpha(Nc, ls.K); nbf = Nc+1;
 	basic_pcvs = simplex_structure(ls.nc);
 	faces_struct.resize(nbf);
 	faces.resize(nbf);
-	_dir_points.resize(Nc+1);
+	dir_points_.resize(Nc+1);
 	
 	for (int i = 0; i < nbf; i++)
 	{ 
@@ -173,7 +173,7 @@ namespace bgeot
 	if (ls.K == 0) c.fill(scalar_type(1.0) / scalar_type(Nc+1));
 	else {
 	  for (l = 1; l <= Nc; ++l) (faces[l])[(pf[l])++] = 0;
-	  _dir_points[pd++] = 0;
+	  dir_points_[pd++] = 0;
 	}
 	
 	for (size_type r = 1; r < nbpt; ++r)
@@ -192,7 +192,7 @@ namespace bgeot
 	  {
 	    (faces[0])[(pf[0])++] = r;
 	    if (*(std::max_element(c.begin(), c.end())) == scalar_type(1.0))
-	      _dir_points[pd++] = r;
+	      dir_points_[pd++] = r;
 	  }
 	}
       }
@@ -200,44 +200,44 @@ namespace bgeot
   };
   
   pconvex_structure simplex_structure(dim_type nc, short_type K) {
-    static dal::FONC_TABLE<_K_simplex_light, _K_simplex_structure> *tab = 0;
+    static dal::FONC_TABLE<K_simplex_light_, K_simplex_structure_> *tab = 0;
     if (tab == 0)
-      tab = new dal::FONC_TABLE<_K_simplex_light, _K_simplex_structure>();
+      tab = new dal::FONC_TABLE<K_simplex_light_, K_simplex_structure_>();
     if (nc == 0) return simplex_structure(0);
     if (K == 1) return simplex_structure(nc);
-    return tab->add(_K_simplex_light(nc, K));
+    return tab->add(K_simplex_light_(nc, K));
   }
 
   /* ******************************************************************** */
   /* polygon structures                                                   */
   /* ******************************************************************** */
 
-  class _polygon_structure : public convex_structure {
+  class polygon_structure_ : public convex_structure {
     friend pconvex_structure polygon_structure(short_type nc);
   };
   
-  static dal::bit_vector *_ind_polygon = 0;
+  static dal::bit_vector *ind_polygon_ = 0;
 
   pconvex_structure polygon_structure(short_type nbt)
   {
-    static dal::dynamic_array<_polygon_structure> *_polygon;
+    static dal::dynamic_array<polygon_structure_> *polygon_;
     static bool initialized = false;
 
     if (!initialized) {
-      initialized = true; _ind_polygon = new dal::bit_vector();
-      _polygon = new dal::dynamic_array<_polygon_structure>();
+      initialized = true; ind_polygon_ = new dal::bit_vector();
+      polygon_ = new dal::dynamic_array<polygon_structure_>();
     }
 
-    _polygon_structure *p = &(*_polygon)[nbt];
+    polygon_structure_ *p = &(*polygon_)[nbt];
     if (nbt < 4) return simplex_structure(nbt-1);
 
-    if (!_ind_polygon->is_in(nbt))
+    if (!ind_polygon_->is_in(nbt))
     {
       p->Nc = 2; p->nbpt = nbt; p->nbf = nbt;
       p->basic_pcvs = p;
       p->faces_struct = std::vector<pconvex_structure>(p->nbf);
       p->faces = std::vector< std::vector<short_type> >(p->nbf);
-      p->_dir_points = std::vector<short_type>(p->Nc + 1);
+      p->dir_points_ = std::vector<short_type>(p->Nc + 1);
 
       for (int i = 0; i < p->nbf; i++)
       { 
@@ -247,11 +247,11 @@ namespace bgeot
 	  (p->faces[i])[j] = ((i+j) % nbt);
       }
 
-      p->_dir_points[0] = 0;
-      p->_dir_points[1] = 1;
-      p->_dir_points[2] = nbt - 1;
+      p->dir_points_[0] = 0;
+      p->dir_points_[1] = 1;
+      p->dir_points_[2] = nbt - 1;
 
-      _ind_polygon->add(nbt);
+      ind_polygon_->add(nbt);
     }
     return p;
   }
@@ -260,20 +260,20 @@ namespace bgeot
   /* direct product of convex structures                                  */
   /* ******************************************************************** */
 
-  struct _cv_pr_light {
+  struct cv_pr_light_ {
     pconvex_structure cv1, cv2;
-    bool operator < (const _cv_pr_light &ls) const {
+    bool operator < (const cv_pr_light_ &ls) const {
       if (cv1 < ls.cv1) return true; if (cv1 > ls.cv1) return false; 
       if (cv2 < ls.cv2) return true; return false;
     }
-    _cv_pr_light(pconvex_structure a, pconvex_structure b) { cv1=a; cv2=b; }
-    _cv_pr_light(void) { }
+    cv_pr_light_(pconvex_structure a, pconvex_structure b) { cv1=a; cv2=b; }
+    cv_pr_light_(void) { }
   };
 
 
-  struct _cv_pr_structure : public convex_structure
+  struct cv_pr_structure_ : public convex_structure
   {
-    _cv_pr_structure(const _cv_pr_light &ls)
+    cv_pr_structure_(const cv_pr_light_ &ls)
     {
       Nc = ls.cv1->dim() + ls.cv2->dim();
       nbpt = ls.cv1->nb_points() * ls.cv2->nb_points();
@@ -288,13 +288,13 @@ namespace bgeot
       faces = std::vector< std::vector<short_type> >(nbf);
 
       if (ls.cv1->ind_dir_points().size() && ls.cv2->ind_dir_points().size()) {
-	_dir_points = std::vector<short_type>(Nc + 1);
+	dir_points_ = std::vector<short_type>(Nc + 1);
 
 	for (int i = 0; i <= ls.cv1->dim(); i++)
-	  _dir_points[i] = ls.cv1->ind_dir_points()[i]
+	  dir_points_[i] = ls.cv1->ind_dir_points()[i]
 	    + ls.cv2->ind_dir_points()[0] * ls.cv1->nb_points();
 	for (int i = 1; i <= ls.cv2->dim(); i++)
-	  _dir_points[ls.cv1->dim()+i] = ls.cv1->ind_dir_points()[0]
+	  dir_points_[ls.cv1->dim()+i] = ls.cv1->ind_dir_points()[0]
 	    + ls.cv2->ind_dir_points()[i] * ls.cv1->nb_points();
       }
 
@@ -340,13 +340,13 @@ namespace bgeot
     }
   };
 
-  static dal::FONC_TABLE<_cv_pr_light, _cv_pr_structure> *_cv_pr_tab = 0;
+  static dal::FONC_TABLE<cv_pr_light_, cv_pr_structure_> *cv_pr_tab_ = 0;
   
   pconvex_structure convex_product_structure(pconvex_structure a,
 					     pconvex_structure b) {
-    if (_cv_pr_tab == 0) 
-      _cv_pr_tab = new dal::FONC_TABLE<_cv_pr_light, _cv_pr_structure>();
-    return _cv_pr_tab->add(_cv_pr_light(a, b));
+    if (cv_pr_tab_ == 0) 
+      cv_pr_tab_ = new dal::FONC_TABLE<cv_pr_light_, cv_pr_structure_>();
+    return cv_pr_tab_->add(cv_pr_light_(a, b));
   }
 
   /* ******************************************************************** */
@@ -356,22 +356,22 @@ namespace bgeot
   pconvex_structure parallelepiped_structure(dim_type nc)
   {
      static dal::dynamic_array<pconvex_structure> *tab;
-     static int _nb_parallelepiped = -1;
+     static int nb_parallelepiped_ = -1;
      static bool isinit = false;
      if (!isinit) {
        tab = new dal::dynamic_array<pconvex_structure>();
        isinit = true;
      }
 
-    if (nc > _nb_parallelepiped) {
-      if (_nb_parallelepiped < 0) {
+    if (nc > nb_parallelepiped_) {
+      if (nb_parallelepiped_ < 0) {
 	(*tab)[0] = simplex_structure(0);
 	(*tab)[1] = simplex_structure(1);
       }
       for (int i = 1; i < nc; i++)
 	(*tab)[i+1]
 	  = convex_product_structure((*tab)[i], simplex_structure(1));
-      _nb_parallelepiped = nc;
+      nb_parallelepiped_ = nc;
     }
     return (*tab)[nc];
   }

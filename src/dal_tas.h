@@ -32,8 +32,8 @@
 /* *********************************************************************** */
 
 
-#ifndef __DAL_TAS_H
-#define __DAL_TAS_H
+#ifndef DAL_TAS_H__
+#define DAL_TAS_H__
 
 #include <dal_basic.h>
 #include <dal_bit_vector.h>
@@ -193,4 +193,4 @@ namespace dal
   }
 }
 
-#endif /* __DAL_TAS_H */
+#endif /* DAL_TAS_H__ */

@@ -18,11 +18,17 @@
 /*                                                                         */
 /* *********************************************************************** */
 #include <bgeot_geometric_trans.h>
+#ifdef GETFEM_HAVE_FEENABLEEXCEPT
+#  include <fenv.h>
+#endif
 
 using bgeot::size_type;
 
 int main(void)
 {
+#ifdef GETFEM_HAVE_FEENABLEEXCEPT
+  feenableexcept(FE_DIVBYZERO | FE_INVALID);
+#endif
   try {
     
 

@@ -31,8 +31,8 @@
 /* *********************************************************************** */
 
 
-#ifndef __LINKMSG_H
-#define __LINKMSG_H
+#ifndef LINKMSG_H__
+#define LINKMSG_H__
 
 #include <dal_basic.h>
 #include <dal_tas.h>
@@ -148,7 +148,7 @@ namespace lmsg
     dal::dynamic_tas<virtual_linkmsg_sender *> senders;
     
     template<class ITER>
-    void _sup_sender(virtual_linkmsg_sender *s, ITER b, const ITER &e,
+    void sup_sender_(virtual_linkmsg_sender *s, ITER b, const ITER &e,
 		     bool t = true);
 
   public :
@@ -158,16 +158,16 @@ namespace lmsg
       { senders.add(&s); s.add_receiver(r, m); }
     template <class SENDER>
     void sup_sender(SENDER &s)
-      { _sup_sender(&s, senders.tas_begin(), senders.tas_end()); }
+      { sup_sender_(&s, senders.tas_begin(), senders.tas_end()); }
     template <class SENDER>
     void out_sender(SENDER &s)
-      { _sup_sender(&s, senders.tas_begin(), senders.tas_end(), false); }
+      { sup_sender_(&s, senders.tas_begin(), senders.tas_end(), false); }
     virtual_linkmsg_receiver(void) {}
     template <class SENDER>
     virtual_linkmsg_receiver(SENDER &s, mask m = mask())
       { senders.add(&s); s.add_receiver(*this, m); }
     ~virtual_linkmsg_receiver()
-      { _sup_sender(NULL, senders.tas_begin(), senders.tas_end()); }
+      { sup_sender_(NULL, senders.tas_begin(), senders.tas_end()); }
     const virtual_linkmsg_receiver& operator =(const
 					       virtual_linkmsg_receiver &) {
       DAL_THROW(dal::internal_error, "The copy of this object doesn't work");
@@ -182,7 +182,7 @@ namespace lmsg
   /* ******************************************************************** */
 
   template <class ITER>
-    void virtual_linkmsg_receiver::_sup_sender(virtual_linkmsg_sender *s,
+    void virtual_linkmsg_receiver::sup_sender_(virtual_linkmsg_sender *s,
 					       ITER b, const ITER &e, bool t)
   {
     for ( ; b != e; ++b)
@@ -195,4 +195,4 @@ namespace lmsg
 
 }
 
-#endif /* __LINKMSG_H */
+#endif /* LINKMSG_H__ */

@@ -30,8 +30,8 @@
 /* *********************************************************************** */
 
 
-#ifndef __GETFEM_CONFIG_H
-#define __GETFEM_CONFIG_H
+#ifndef GETFEM_CONFIG_H__
+#define GETFEM_CONFIG_H__
 
 #include <bgeot_tensor.h>
 #include <bgeot_poly.h>
@@ -65,4 +65,4 @@ namespace getfem
 }  /* end of namespace getfem.                                             */
 
 
-#endif /* __GETFEM_CONFIG_H  */
+#endif /* GETFEM_CONFIG_H__  */

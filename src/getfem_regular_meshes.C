@@ -34,7 +34,7 @@
 
 namespace getfem
 {
-  void _parallelepiped_regular_simplex_mesh(getfem_mesh &me, dim_type N,
+  void parallelepiped_regular_simplex_mesh_(getfem_mesh &me, dim_type N,
     const base_node &org, const base_small_vector *ivect, const size_type *iref)
   {
     bgeot::mesh_structure cvt, sl;
@@ -94,11 +94,11 @@ namespace getfem
   }
 
 
-  void _parallelepiped_regular_prism_mesh(getfem_mesh &me, dim_type N,
+  void parallelepiped_regular_prism_mesh_(getfem_mesh &me, dim_type N,
     const base_node &org, const base_small_vector *ivect, const size_type *iref)
   {
     getfem_mesh aux;
-    _parallelepiped_regular_simplex_mesh(aux, N-1, org, ivect, iref);
+    parallelepiped_regular_simplex_mesh_(aux, N-1, org, ivect, iref);
     std::vector<base_node> ptab(2 * N);
     
     for (dal::bv_visitor cv(aux.convex_index()); !cv.finished(); ++cv) {
@@ -117,7 +117,7 @@ namespace getfem
 
 
 
-  void _parallelepiped_regular_mesh(getfem_mesh &me, dim_type N,
+  void parallelepiped_regular_mesh_(getfem_mesh &me, dim_type N,
                                     const base_node &org, const base_small_vector *ivect, const size_type *iref, bool linear_gt)
   {
     bgeot::convex<base_node>

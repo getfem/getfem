@@ -31,8 +31,8 @@
 /* *********************************************************************** */
 
 
-#ifndef __GETFEM_MESH_H
-#define __GETFEM_MESH_H
+#ifndef GETFEM_MESH_H__
+#define GETFEM_MESH_H__
 
 #include <bgeot_mesh.h>
 #include <bgeot_geometric_trans.h>
@@ -443,4 +443,4 @@ namespace getfem
 }  /* end of namespace getfem.                                             */
 
 
-#endif /* __GETFEM_MESH_H  */
+#endif /* GETFEM_MESH_H__  */

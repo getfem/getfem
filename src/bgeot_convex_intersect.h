@@ -31,8 +31,8 @@
 
 
 
-#ifndef __BGEOT_CONVEX_INTERSECTION_H
-#define __BGEOT_CONVEX_INTERSECTION_H
+#ifndef BGEOT_CONVEX_INTERSECTION_H__
+#define BGEOT_CONVEX_INTERSECTION_H__
 
 #include <bgeot_mesh.h>
 
@@ -106,4 +106,4 @@ namespace bgeot
 }  /* end of namespace bgeot.                                             */
 
 
-#endif /* __BGEOT_CONVEX_INTERSECTION_H                                   */
+#endif /* BGEOT_CONVEX_INTERSECTION_H__                                   */

@@ -30,8 +30,8 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef __GMM_CONDITION_NUMBER_H
-#define __GMM_CONDITION_NUMBER_H
+#ifndef GMM_CONDITION_NUMBER_H__
+#define GMM_CONDITION_NUMBER_H__
 
 #include <gmm_dense_qr.h>
 

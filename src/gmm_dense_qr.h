@@ -47,8 +47,8 @@ namespace gmm {
   /* ********************************************************************* */
 
   template <typename MAT1>
-  void qr_factor(const MAT1 &_A) { 
-    MAT1 &A = const_cast<MAT1 &>(_A);
+  void qr_factor(const MAT1 &A_) { 
+    MAT1 &A = const_cast<MAT1 &>(A_);
     typedef typename linalg_traits<MAT1>::value_type value_type;
 
     size_type m = mat_nrows(A), n = mat_ncols(A);
@@ -73,8 +73,8 @@ namespace gmm {
   // and the lower part contains the Householder reflectors.
   // A <- AQ
   template <typename MAT1, typename MAT2>
-  void apply_house_right(const MAT1 &QR, const MAT2 &_A) { 
-    MAT2 &A = const_cast<MAT2 &>(_A);
+  void apply_house_right(const MAT1 &QR, const MAT2 &A_) { 
+    MAT2 &A = const_cast<MAT2 &>(A_);
     typedef typename linalg_traits<MAT1>::value_type T;
     size_type m = mat_nrows(QR), n = mat_ncols(QR);
     if (m != mat_ncols(A)) DAL_THROW(dimension_error, "dimensions mismatch");
@@ -93,8 +93,8 @@ namespace gmm {
   // and the lower part contains the Householder reflectors.
   // A <- Q*A
   template <typename MAT1, typename MAT2>
-  void apply_house_left(const MAT1 &QR, const MAT2 &_A) { 
-    MAT2 &A = const_cast<MAT2 &>(_A);
+  void apply_house_left(const MAT1 &QR, const MAT2 &A_) { 
+    MAT2 &A = const_cast<MAT2 &>(A_);
     typedef typename linalg_traits<MAT1>::value_type T;
     size_type m = mat_nrows(QR), n = mat_ncols(QR);
     if (m != mat_nrows(A)) DAL_THROW(dimension_error, "dimensions mismatch");
@@ -316,12 +316,12 @@ namespace gmm {
   }
 
   template <typename VECT1, typename VECT2, typename Ttol> inline
-  void symmetric_qr_stop_criterion(const VECT1 &diag, const VECT2 &_sdiag,
+  void symmetric_qr_stop_criterion(const VECT1 &diag, const VECT2 &sdiag_,
 				   size_type &p, size_type &q, Ttol tol) {
     typedef typename linalg_traits<VECT2>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
     R rmin = default_min(R()) * R(2);
-    VECT2 &sdiag = const_cast<VECT2 &>(_sdiag);
+    VECT2 &sdiag = const_cast<VECT2 &>(sdiag_);
     size_type n = vect_size(diag);
     if (n <= 1) { q = n; p = 0; return; }
     for (size_type i = 1; i < n-q; ++i)
@@ -597,10 +597,10 @@ namespace gmm {
   }
 
   template <typename VECT1, typename VECT2, typename MAT> 
-  void symmetric_Wilkinson_qr_step(const VECT1& _diag, const VECT2& _sdiag,
+  void symmetric_Wilkinson_qr_step(const VECT1& diag_, const VECT2& sdiag_,
 				   const MAT &ZZ, bool compute_z) {
-    VECT1& diag = const_cast<VECT1&>(_diag);
-    VECT2& sdiag = const_cast<VECT2&>(_sdiag);
+    VECT1& diag = const_cast<VECT1&>(diag_);
+    VECT2& sdiag = const_cast<VECT2&>(sdiag_);
     MAT& Z = const_cast<MAT&>(ZZ);
     typedef typename linalg_traits<VECT2>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;

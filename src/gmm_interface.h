@@ -29,8 +29,8 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef __GMM_INTERFACE_H
-#define __GMM_INTERFACE_H
+#ifndef GMM_INTERFACE_H__
+#define GMM_INTERFACE_H__
 
 #include <gmm_blas.h>
 #include <gmm_sub_index.h>
@@ -85,22 +85,22 @@ namespace gmm {
     typedef typename linalg_traits<this_type>::reference reference;
     typedef typename linalg_traits<this_type>::porigin_type porigin_type;
 
-    iterator _begin, _end;
+    iterator begin_, end_;
     porigin_type origin;
-    size_type _size;
+    size_type size_;
 
-    simple_vector_ref(ref_V v) : _begin(vect_begin(const_cast<V&>(v))), 
-				 _end(vect_end(const_cast<V&>(v))), 
+    simple_vector_ref(ref_V v) : begin_(vect_begin(const_cast<V&>(v))), 
+				 end_(vect_end(const_cast<V&>(v))), 
 				 origin(linalg_origin(const_cast<V&>(v))),
-				 _size(vect_size(v)) {}
+				 size_(vect_size(v)) {}
 
     simple_vector_ref(const simple_vector_ref<CPT> &cr)
-      : _begin(cr._begin),_end(cr._end),origin(cr.origin),_size(cr._size) {}
+      : begin_(cr.begin_),end_(cr.end_),origin(cr.origin),size_(cr.size_) {}
 
     simple_vector_ref(void) {}
 
     reference operator[](size_type i) const
-    { return linalg_traits<V>::access(origin, _begin, _end, i); }
+    { return linalg_traits<V>::access(origin, begin_, end_, i); }
   };
 
   template <typename IT, typename ORG, typename PT> inline
@@ -148,24 +148,24 @@ namespace gmm {
 	    typename linalg_traits<V>::iterator, PT>::ref_type iterator;
     typedef typename linalg_traits<V>::const_iterator const_iterator;
     typedef typename linalg_traits<V>::storage_type storage_type;
-    static size_type size(const this_type &v) { return v._size; }
+    static size_type size(const this_type &v) { return v.size_; }
     static inline iterator begin(this_type &v) {
-      iterator it = v._begin;
+      iterator it = v.begin_;
       set_to_begin(it, v.origin, pthis_type(), is_reference()); 
       return it;
     }
     static inline const_iterator begin(const this_type &v) {
-      const_iterator it = v._begin;
+      const_iterator it = v.begin_;
       set_to_begin(it, v.origin, pthis_type(), is_reference());
       return it;
     }
     static inline iterator end(this_type &v) {
-      iterator it = v._end;
+      iterator it = v.end_;
       set_to_end(it, v.origin, pthis_type(), is_reference());
       return it;
     }
     static inline const_iterator end(const this_type &v) {
-      const_iterator it = v._end;
+      const_iterator it = v.end_;
       set_to_end(it, v.origin, pthis_type(), is_reference());
       return it;
     }
@@ -173,7 +173,7 @@ namespace gmm {
     static const origin_type* origin(const this_type &v) { return v.origin; }
     static void clear(origin_type* o, const iterator &it, const iterator &ite)
     { linalg_traits<V>::clear(o, it, ite); }
-    static void do_clear(this_type &v) { clear(v.origin, v._begin, v._end); }
+    static void do_clear(this_type &v) { clear(v.origin, v.begin_, v.end_); }
     static value_type access(const origin_type *o, const const_iterator &it,
 			     const const_iterator &ite, size_type i)
     { return linalg_traits<V>::access(o, it, ite, i); }
@@ -521,17 +521,17 @@ namespace gmm {
   template <typename PT1, typename PT2, int shift = 0> struct cs_vector_ref {
     PT1 pr;
     PT2 ir;
-    size_type n, _size;
+    size_type n, size_;
 
     typedef cs_vector_ref<PT1, PT2, shift> this_type;
     typedef typename std::iterator_traits<PT1>::value_type value_type;
     typedef typename linalg_traits<this_type>::const_iterator const_iterator;
 
     cs_vector_ref(PT1 pt1, PT2 pt2, size_type nnz, size_type ns)
-      : pr(pt1), ir(pt2), n(nnz), _size(ns) {}
+      : pr(pt1), ir(pt2), n(nnz), size_(ns) {}
     cs_vector_ref(void) {}
 
-    size_type size(void) const { return _size; }
+    size_type size(void) const { return size_; }
     
     const_iterator begin(void) const { return const_iterator(pr, ir); }
     const_iterator end(void) const { return const_iterator(pr+n, ir+n); }
@@ -757,4 +757,4 @@ namespace gmm {
 }
 
 
-#endif //  __GMM_INTERFACE_H
+#endif //  GMM_INTERFACE_H__

@@ -19,8 +19,8 @@
 /* *********************************************************************** */
 
 #include <dal_std.h>
-#ifndef __GETFEM_VERIFY
-  #define __GETFEM_VERIFY
+#ifndef GETFEM_VERIFY__
+  #define GETFEM_VERIFY__
 #endif
 
 #include <dal_tree_sorted.h>

@@ -31,10 +31,10 @@ namespace bgeot {
       size_type prev_unfilled, next_unfilled; 
       size_type objsz; /* size (in bytes) of the chunks stored in this block */
       block() : data(0) {}
-      block(size_type _objsz) : data(0), 
+      block(size_type objsz_) : data(0), 
 				prev_unfilled(size_type(-1)), 
 				next_unfilled(size_type(-1)), 
-				objsz(_objsz) {}
+				objsz(objsz_) {}
       ~block() {} /* no cleanup of data, no copy constructor : it's on purpose
 		     since the block will be moved a lot when the vector container
 		     will be resized (cleanup done by ~block_allocator) */

@@ -31,8 +31,8 @@
 
 
 
-#ifndef __BGEOT_CONVEX_REF_H
-#define __BGEOT_CONVEX_REF_H
+#ifndef BGEOT_CONVEX_REF_H__
+#define BGEOT_CONVEX_REF_H__
 
 #include <bgeot_convex.h>
 
@@ -55,13 +55,13 @@ namespace bgeot
   };
 
   extern dal::dynamic_tree_sorted<stored_point_tab, comp_stored_point_tab>
-    *_stored_point_tab_tab;
+    *stored_point_tab_tab_;
   extern bool isinit_stored_point_tab_tab;
 
   template<class CONT> pstored_point_tab store_point_tab(const CONT &TAB)
   { 
     if (!isinit_stored_point_tab_tab) {
-      _stored_point_tab_tab =
+      stored_point_tab_tab_ =
 	new dal::dynamic_tree_sorted<stored_point_tab,
 	                             comp_stored_point_tab>();
       isinit_stored_point_tab_tab = true;
@@ -72,7 +72,7 @@ namespace bgeot
     stored_point_tab spt; spt.resize(nb);
     it = TAB.begin(); ite = TAB.end();
     for (nb = 0; it != ite; ++it, ++nb) spt[nb] = *it;
-    return &((*_stored_point_tab_tab)[_stored_point_tab_tab->add_norepeat(spt)]);
+    return &((*stored_point_tab_tab_)[stored_point_tab_tab_->add_norepeat(spt)]);
   }
 
   pstored_point_tab org_stored_point_tab(size_type n);
@@ -83,22 +83,22 @@ namespace bgeot
 
   class convex_of_reference : public convex<base_node> {
   protected :     
-    std::vector<base_small_vector> _normals;
+    std::vector<base_small_vector> normals_;
     mutable mesh_structure *psimplexified_convex;
-    convex_of_reference *_basic_convex_ref;
+    convex_of_reference *basic_convex_ref_;
   public :
-    convex_of_reference() : convex<base_node>(), psimplexified_convex(0), _basic_convex_ref(0) {}
+    convex_of_reference() : convex<base_node>(), psimplexified_convex(0), basic_convex_ref_(0) {}
     virtual scalar_type is_in(const base_node &) const = 0;
     virtual scalar_type is_in_face(short_type, const base_node &) const =0;
-    const std::vector<base_small_vector> &normals(void) const { return _normals; }
+    const std::vector<base_small_vector> &normals(void) const { return normals_; }
     virtual ~convex_of_reference() {}
 
     /* returns a mesh structure composed of simplexes whose union
        is the reference convex
     */
     const mesh_structure* simplexified_convex() const;
-    const convex_of_reference* basic_convex_ref() const { return _basic_convex_ref; }
-    void attach_basic_convex_ref(convex_of_reference* cvr) { _basic_convex_ref = cvr; }
+    const convex_of_reference* basic_convex_ref() const { return basic_convex_ref_; }
+    void attach_basic_convex_ref(convex_of_reference* cvr) { basic_convex_ref_ = cvr; }
   };
 
   typedef const convex_of_reference * pconvex_ref;
@@ -115,4 +115,4 @@ namespace bgeot
 }  /* end of namespace bgeot.                                             */
 
 
-#endif /* __BGEOT_CONVEX_REF_H                                            */
+#endif /* BGEOT_CONVEX_REF_H__                                            */

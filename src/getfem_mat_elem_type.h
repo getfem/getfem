@@ -31,8 +31,8 @@
 /* *********************************************************************** */
 
 
-#ifndef __GETFEM_MAT_ELEM_TYPE_H
-#define __GETFEM_MAT_ELEM_TYPE_H
+#ifndef GETFEM_MAT_ELEM_TYPE_H__
+#define GETFEM_MAT_ELEM_TYPE_H__
 
 #include <getfem_config.h>
 #include <getfem_integration.h>
@@ -41,7 +41,7 @@
 namespace getfem
 {
 
-  enum constituant_type { GETFEM__BASE, GETFEM__GRAD, GETFEM__HESSIAN };
+  enum constituant_type { GETFEM_BASE_, GETFEM_GRAD_, GETFEM_HESSIAN_ };
 
   struct constituant
   {
@@ -90,4 +90,4 @@ namespace getfem
 }  /* end of namespace getfem.                                             */
 
 
-#endif /* __GETFEM_PRE_INTERPOLATION_H                                     */
+#endif /* GETFEM_PRE_INTERPOLATION_H__                                     */

@@ -30,8 +30,8 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef __BGEOT_GEOTRANS_INV_H
-#define __BGEOT_GEOTRANS_INV_H
+#ifndef BGEOT_GEOTRANS_INV_H__
+#define BGEOT_GEOTRANS_INV_H__
 
 #include <bgeot_geometric_trans.h>
 #include <bgeot_vector.h>
@@ -76,8 +76,8 @@ namespace bgeot {
   };
 
   template<class TAB> void geotrans_inv_convex::init(const convex<base_node,
-						     TAB> &cv, pgeometric_trans _pgt) {
-    bool geotrans_changed = (pgt != _pgt); if (geotrans_changed) pgt = _pgt;
+						     TAB> &cv, pgeometric_trans pgt_) {
+    bool geotrans_changed = (pgt != pgt_); if (geotrans_changed) pgt = pgt_;
     if (!cv.points().size()) DAL_INTERNAL_ERROR("empty points!");
     if (P != cv.points()[0].size()) { P = cv.points()[0].size(); geotrans_changed = true; }
     if (geotrans_changed) {
@@ -180,7 +180,7 @@ namespace bgeot {
 			       pgeometric_trans pgt,
 			       CONT1 &pftab, CONT2 &itab, bool bruteforce=false);
       
-    geotrans_inv(scalar_type _EPS = 10E-12) : EPS(_EPS) {}
+    geotrans_inv(scalar_type EPS_ = 10E-12) : EPS(EPS_) {}
   };
 
 
@@ -231,4 +231,4 @@ namespace bgeot {
 }  /* end of namespace bgeot.                                             */
 
 
-#endif /* __BGEOT_GEOMETRIC_TRANSFORMATION_H                              */
+#endif /* BGEOT_GEOMETRIC_TRANSFORMATION_H__                              */

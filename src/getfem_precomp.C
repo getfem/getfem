@@ -41,37 +41,37 @@ namespace getfem
   /*       Precomputation on geometric transformations.                    */
   /* ********************************************************************* */
 
-  struct _pre_geot_light
+  struct pre_geot_light_
   {
     bgeot::pgeometric_trans pgt;
     bgeot::pstored_point_tab pspt;
-    bool operator < (const _pre_geot_light &ls) const
+    bool operator < (const pre_geot_light_ &ls) const
     {
       if (pgt < ls.pgt) return true; if (pgt > ls.pgt) return false; 
       if (pspt < ls.pspt) return true; return false;
     }
-    _pre_geot_light(bgeot::pgeometric_trans pg, bgeot::pstored_point_tab ps)
+    pre_geot_light_(bgeot::pgeometric_trans pg, bgeot::pstored_point_tab ps)
     { pgt = pg; pspt = ps; }
-    _pre_geot_light(void) { }
+    pre_geot_light_(void) { }
    
   };  
 
-  _geotrans_precomp::_geotrans_precomp(const _pre_geot_light &ls) {
+  geotrans_precomp_::geotrans_precomp_(const pre_geot_light_ &ls) {
     assign(ls);
   }
 
-  _geotrans_precomp::_geotrans_precomp() {
+  geotrans_precomp_::geotrans_precomp_() {
     pgt = 0; pspt = 0;
   }
 
-  void _geotrans_precomp::assign(const _pre_geot_light &ls) {
+  void geotrans_precomp_::assign(const pre_geot_light_ &ls) {
     c.clear();
     pc.clear();
     hpc.clear();
     pgt = ls.pgt; pspt = ls.pspt;
   }
 
-  void _geotrans_precomp::init_val() const {
+  void geotrans_precomp_::init_val() const {
     c.clear();  
     c.resize(pspt->size(), base_vector(pgt->nb_points()));
     for (size_type i = 0; i < pgt->nb_points(); ++i) {
@@ -81,7 +81,7 @@ namespace getfem
     }
   }
 
-  void _geotrans_precomp::init_grad() const {
+  void geotrans_precomp_::init_grad() const {
     dim_type N = pgt->structure()->dim();
     pc.clear(); 
     pc.resize(pspt->size(), base_matrix(pgt->nb_points() , N)); 
@@ -101,7 +101,7 @@ namespace getfem
     }
   }
 
-  void _geotrans_precomp::init_hess() const {
+  void geotrans_precomp_::init_hess() const {
     base_poly P, Q;
     dim_type N = pgt->structure()->dim();
     hpc.clear();
@@ -120,7 +120,7 @@ namespace getfem
     }
   }
 
-  base_node _geotrans_precomp::transform(size_type i,
+  base_node geotrans_precomp_::transform(size_type i,
 					 const base_matrix &G) const {
     if (c.empty()) init_val();
     size_type N = G.nrows(), k = pgt->nb_points();
@@ -137,41 +137,41 @@ namespace getfem
   pgeotrans_precomp geotrans_precomp(bgeot::pgeometric_trans pg,
 				     bgeot::pstored_point_tab pspt)
   { 
-    static dal::FONC_TABLE<_pre_geot_light, _geotrans_precomp> *tab;
+    static dal::FONC_TABLE<pre_geot_light_, geotrans_precomp_> *tab;
     static bool isinit = false;
     if (!isinit) {
-      tab = new dal::FONC_TABLE<_pre_geot_light, _geotrans_precomp>();
+      tab = new dal::FONC_TABLE<pre_geot_light_, geotrans_precomp_>();
       isinit = true;
     }
-    return tab->add(_pre_geot_light(pg, pspt));
+    return tab->add(pre_geot_light_(pg, pspt));
   }
   
   void geotrans_precomp_not_stored(bgeot::pgeometric_trans pg,
 				   bgeot::pstored_point_tab pspt,
-				   _geotrans_precomp& gp) {
-    gp.assign(_pre_geot_light(pg, pspt));
+				   geotrans_precomp_& gp) {
+    gp.assign(pre_geot_light_(pg, pspt));
   }
 
   /* ********************************************************************* */
   /*       Precomputation on fem.                                          */
   /* ********************************************************************* */
 
-  struct _pre_fem_light
+  struct pre_fem_light_
   {
     pfem pf;
     bgeot::pstored_point_tab pspt;
-    bool operator < (const _pre_fem_light &ls) const
+    bool operator < (const pre_fem_light_ &ls) const
     {
       if (pf < ls.pf) return true; if (pf > ls.pf) return false; 
       if (pspt < ls.pspt) return true; return false;
     }
-    _pre_fem_light(pfem pff, bgeot::pstored_point_tab ps)
+    pre_fem_light_(pfem pff, bgeot::pstored_point_tab ps)
     { pf = pff; pspt = ps; }
-    _pre_fem_light(void) { }
+    pre_fem_light_(void) { }
    
   };
 
-  void _fem_precomp::assign(const _pre_fem_light &ls) {
+  void fem_precomp_::assign(const pre_fem_light_ &ls) {
     c.clear();
     pc.clear();
     hpc.clear();
@@ -181,55 +181,55 @@ namespace getfem
 	DAL_THROW(dimension_error, "dimensions mismatch");
   }
 
-  _fem_precomp::_fem_precomp(const _pre_fem_light &ls) { assign(ls); }
+  fem_precomp_::fem_precomp_(const pre_fem_light_ &ls) { assign(ls); }
 
-  _fem_precomp::_fem_precomp() : pf(0), pspt(0) {}
+  fem_precomp_::fem_precomp_() : pf(0), pspt(0) {}
   
-  void _fem_precomp::init_val() const {
+  void fem_precomp_::init_val() const {
     c.resize(pspt->size());
     for (size_type i = 0; i < pspt->size(); ++i) 
       pf->base_value((*pspt)[i], c[i]);
   }
 
-  void _fem_precomp::init_grad() const {
+  void fem_precomp_::init_grad() const {
     pc.resize(pspt->size());
     for (size_type i = 0; i < pspt->size(); ++i)
       pf->grad_base_value((*pspt)[i], pc[i]);
   }
 
-  void _fem_precomp::init_hess() const {
+  void fem_precomp_::init_hess() const {
     hpc.resize(pspt->size());
     for (size_type i = 0; i < pspt->size(); ++i)
       pf->hess_base_value((*pspt)[i], hpc[i]);
   }
 
-  typedef const _fem_precomp * pfem_precomp;
+  typedef const fem_precomp_ * pfem_precomp;
 
   pfem_precomp fem_precomp(pfem pf, bgeot::pstored_point_tab pspt)
   { 
-    static dal::FONC_TABLE<_pre_fem_light, _fem_precomp> *tab;
+    static dal::FONC_TABLE<pre_fem_light_, fem_precomp_> *tab;
     static bool isinit = false;
     if (!isinit) {
-      tab = new dal::FONC_TABLE<_pre_fem_light, _fem_precomp>();
+      tab = new dal::FONC_TABLE<pre_fem_light_, fem_precomp_>();
       isinit = true;
     }
-    return tab->add(_pre_fem_light(pf, pspt));
+    return tab->add(pre_fem_light_(pf, pspt));
   }
 
   
   void fem_precomp_not_stored(pfem pf, bgeot::pstored_point_tab pspt,
-			      _fem_precomp& fp) {
-    fp.assign(_pre_fem_light(pf,pspt));
+			      fem_precomp_& fp) {
+    fp.assign(pre_fem_light_(pf,pspt));
   }
   
 
   /* fem_precomp_pool */
   class fem_precomp_pool_private : 
-    public dal::FONC_TABLE<_pre_fem_light, _fem_precomp> {};
+    public dal::FONC_TABLE<pre_fem_light_, fem_precomp_> {};
   fem_precomp_pool::fem_precomp_pool() : p(new fem_precomp_pool_private()) {}
   fem_precomp_pool::~fem_precomp_pool() { delete p; }
   pfem_precomp fem_precomp_pool::operator()(pfem pf, bgeot::pstored_point_tab pspt) {
-    return p->add(_pre_fem_light(pf, pspt));
+    return p->add(pre_fem_light_(pf, pspt));
   }  
 }  /* end of namespace getfem.                                            */
 

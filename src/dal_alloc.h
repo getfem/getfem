@@ -31,8 +31,8 @@
 /* *********************************************************************** */
 
 
-#ifndef __DAL_ALLOC_H
-#define __DAL_ALLOC_H
+#ifndef DAL_ALLOC_H__
+#define DAL_ALLOC_H__
 
 #include <dal_tree_sorted.h>
 
@@ -40,13 +40,13 @@
 namespace dal
 {
 
-  struct _fr_sp { size_t ind, size; };
-  struct _less1_fr_sp : public std::binary_function<_fr_sp, _fr_sp, int> {
-    int operator()(const _fr_sp &f1, const _fr_sp &f2) const
+  struct fr_sp_ { size_t ind, size; };
+  struct less1_fr_sp_ : public std::binary_function<fr_sp_, fr_sp_, int> {
+    int operator()(const fr_sp_ &f1, const fr_sp_ &f2) const
       { return (f1.ind < f2.ind) ? -1 : ((f1.ind > f2.ind) ? 1 : 0); }
   };
-  struct _less2_fr_sp : public std::binary_function<_fr_sp, _fr_sp, int> {
-    int operator()(const _fr_sp &f1, const _fr_sp &f2) const
+  struct less2_fr_sp_ : public std::binary_function<fr_sp_, fr_sp_, int> {
+    int operator()(const fr_sp_ &f1, const fr_sp_ &f2) const
       { return (f1.size < f2.size) ? -1 : ((f1.size > f2.size) ? 1 : 0); }
   };
   
@@ -60,13 +60,13 @@ namespace dal
     
   protected :
     
-    typedef dynamic_tree_sorted<_fr_sp, _less1_fr_sp, 6> fsptab_t;
+    typedef dynamic_tree_sorted<fr_sp_, less1_fr_sp_, 6> fsptab_t;
     
     fsptab_t fr_tab;
-    dynamic_tree_sorted_index<_fr_sp, fsptab_t, _less2_fr_sp, 6> ind_fr_tab;
+    dynamic_tree_sorted_index<fr_sp_, fsptab_t, less2_fr_sp_, 6> ind_fr_tab;
     
     void init(void) { 
-      _fr_sp fsp; fsp.size = size_type(-2); fsp.ind = 0;
+      fr_sp_ fsp; fsp.size = size_type(-2); fsp.ind = 0;
       size_type i = fr_tab.add(fsp); ind_fr_tab.add(i);
     }
     
@@ -100,7 +100,7 @@ namespace dal
     size_type res = ST_NIL;
     if (si > 0)
     {
-      _fr_sp fsp; fsp.size = si; 
+      fr_sp_ fsp; fsp.size = si; 
       size_type i = ind_fr_tab.search_ge(fsp);
       if (i != ST_NIL)
       {
@@ -130,7 +130,7 @@ namespace dal
   {
     if (si > 0 && l != ST_NIL)
     {
-      _fr_sp fsp; fsp.size = si; fsp.ind = l;
+      fr_sp_ fsp; fsp.size = si; fsp.ind = l;
       size_type i = fr_tab.add(fsp);
       fsptab_t::const_sorted_iterator it1(fr_tab);
       fr_tab.find_sorted_iterator(i, it1);
@@ -153,4 +153,4 @@ namespace dal
 
 }
 
-#endif  /* __DAL_ALLOC_H */
+#endif  /* DAL_ALLOC_H__ */

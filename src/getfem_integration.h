@@ -30,8 +30,8 @@
 /* *********************************************************************** */
 
 
-#ifndef __GETFEM_INTEGRATION_H
-#define __GETFEM_INTEGRATION_H
+#ifndef GETFEM_INTEGRATION_H__
+#define GETFEM_INTEGRATION_H__
 
 #include <getfem_config.h>
 #include <bgeot_convex_ref.h>
@@ -246,4 +246,4 @@ namespace getfem
 }  /* end of namespace getfem.                                            */
 
 
-#endif /* __BGEOT_INTEGRATION_H                                           */
+#endif /* BGEOT_INTEGRATION_H__                                           */

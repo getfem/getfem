@@ -31,8 +31,8 @@
 /* *********************************************************************** */
 
 
-#ifndef __DAL_ALGOBASE_H
-#define __DAL_ALGOBASE_H
+#ifndef DAL_ALGOBASE_H__
+#define DAL_ALGOBASE_H__
 #include <dal_std.h>
 #include <dal_except.h>
 #include <functional>
@@ -207,4 +207,4 @@ namespace dal
 
 
 
-#endif /* __DAL_ALGOBASE_H */
+#endif /* DAL_ALGOBASE_H__ */

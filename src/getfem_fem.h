@@ -30,8 +30,8 @@
 /* *********************************************************************** */
 
 
-#ifndef __GETFEM_FEM_H
-#define __GETFEM_FEM_H
+#ifndef GETFEM_FEM_H__
+#define GETFEM_FEM_H__
 
 #include <bgeot_geometric_trans.h>
 #include <getfem_integration.h>
@@ -92,7 +92,7 @@ namespace getfem
   {
   protected :
 
-    std::vector<pdof_description> _dof_types;
+    std::vector<pdof_description> dof_types_;
     bgeot::convex_structure cvs_node;
     bgeot::convex<base_node> cv_node;
     mutable bgeot::pstored_point_tab pspt;
@@ -104,7 +104,7 @@ namespace getfem
     
   public :
     /// Number of degrees of freedom.
-    virtual size_type nb_dof(void) const { return _dof_types.size(); }
+    virtual size_type nb_dof(void) const { return dof_types_.size(); }
     virtual size_type nb_base(void) const { return nb_dof(); }
     /// Number of components (nb_dof() * dimension of the target space).
     size_type nb_base_components(void) const
@@ -113,7 +113,7 @@ namespace getfem
       { return nb_dof() * ntarget_dim; }
     /// Gives the array of pointer on dof description.
     const std::vector<pdof_description> &dof_types(void) const 
-      { return _dof_types; }
+      { return dof_types_; }
     short_type hierarchical_raff(void) const { return hier_raff; }
     /// dimension of the reference element.
     dim_type dim(void) const { return cvr->structure()->dim(); }
@@ -262,7 +262,7 @@ namespace getfem
     void unfreeze_cvs_node(void);
 
     virtual_fem &operator =(const virtual_fem &f) {
-      _dof_types = f._dof_types;
+      dof_types_ = f.dof_types_;
       cvs_node = f.cvs_node;
       cv_node = f.cv_node;
       cv_node.structure() = &(cvs_node);
@@ -289,13 +289,13 @@ namespace getfem
   
   template <class FUNC> class fem : public virtual_fem {
   protected :
-    std::vector<FUNC> _base;
+    std::vector<FUNC> base_;
     
   public :
     
     /// Gives the array of basic functions (components).
-    const std::vector<FUNC> &base(void) const { return _base; }
-    std::vector<FUNC> &base(void) { return _base; }
+    const std::vector<FUNC> &base(void) const { return base_; }
+    std::vector<FUNC> &base(void) { return base_; }
     
     /* just to please for HP aCC and SGI CC */
     virtual void interpolation(pfem_precomp pfp, size_type ii,
@@ -316,7 +316,7 @@ namespace getfem
       size_type R = nb_base_components();
       base_tensor::iterator it = t.begin();
       for (size_type  i = 0; i < R; ++i, ++it)
-	*it = _base[i].eval(x.begin());
+	*it = base_[i].eval(x.begin());
     }
     void grad_base_value(const base_node &x, base_tensor &t) const {
       bgeot::multi_index mi(3);
@@ -327,7 +327,7 @@ namespace getfem
       base_tensor::iterator it = t.begin();
       for (dim_type j = 0; j < n; ++j)
 	for (size_type i = 0; i < R; ++i, ++it)
-	  { FUNC f = _base[i]; f.derivative(j); *it = f.eval(x.begin()); }
+	  { FUNC f = base_[i]; f.derivative(j); *it = f.eval(x.begin()); }
     }
     void hess_base_value(const base_node &x, base_tensor &t) const {
       bgeot::multi_index mi(4);
@@ -339,7 +339,7 @@ namespace getfem
       for (dim_type k = 0; k < n; ++k)
 	for (dim_type j = 0; j < n; ++j)
 	  for (size_type i = 0; i < R; ++i, ++it) {
-	    FUNC f = _base[i];
+	    FUNC f = base_[i];
 	    f.derivative(j); f.derivative(k);
 	    *it = f.eval(x.begin());
 	  }

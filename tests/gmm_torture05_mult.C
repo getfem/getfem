@@ -15,14 +15,14 @@ using gmm::size_type;
 
 template <typename MAT1 , typename MAT2, typename VECT1, typename VECT2,
 	  typename VECT3, typename VECT4>
-void test_procedure2(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2, 
-		    const MAT2 &_m2, const VECT3 &_v3, const VECT4 &_v4) {
-  VECT1 &v1 = const_cast<VECT1 &>(_v1);
-  VECT2 &v2 = const_cast<VECT2 &>(_v2);
-  VECT3 &v3 = const_cast<VECT3 &>(_v3);
-  VECT4 &v4 = const_cast<VECT4 &>(_v4);
-  MAT1  &m1 = const_cast<MAT1  &>(_m1);
-  MAT2  &m2 = const_cast<MAT2  &>(_m2);
+void test_procedure2(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_, 
+		    const MAT2 &m2_, const VECT3 &v3_, const VECT4 &v4_) {
+  VECT1 &v1 = const_cast<VECT1 &>(v1_);
+  VECT2 &v2 = const_cast<VECT2 &>(v2_);
+  VECT3 &v3 = const_cast<VECT3 &>(v3_);
+  VECT4 &v4 = const_cast<VECT4 &>(v4_);
+  MAT1  &m1 = const_cast<MAT1  &>(m1_);
+  MAT2  &m2 = const_cast<MAT2  &>(m2_);
   typedef typename gmm::linalg_traits<MAT1>::value_type T;
   typedef typename gmm::number_traits<T>::magnitude_type R;
   R prec = gmm::default_tol(R());
@@ -125,14 +125,14 @@ template<typename VECT> void test_vect_swap(VECT &V, gmm::linalg_false) {
 
 template <typename MAT1 , typename MAT2, typename VECT1, typename VECT2,
 	  typename VECT3, typename VECT4>
-bool test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2, 
-		    const MAT2 &_m2, const VECT3 &_v3, const VECT4 &_v4) {
-  VECT1 &v1 = const_cast<VECT1 &>(_v1);
-  VECT2 &v2 = const_cast<VECT2 &>(_v2);
-  VECT3 &v3 = const_cast<VECT3 &>(_v3);
-  VECT4 &v4 = const_cast<VECT4 &>(_v4);
-  MAT1  &m1 = const_cast<MAT1  &>(_m1);
-  MAT2  &m2 = const_cast<MAT2  &>(_m2);
+bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_, 
+		    const MAT2 &m2_, const VECT3 &v3_, const VECT4 &v4_) {
+  VECT1 &v1 = const_cast<VECT1 &>(v1_);
+  VECT2 &v2 = const_cast<VECT2 &>(v2_);
+  VECT3 &v3 = const_cast<VECT3 &>(v3_);
+  VECT4 &v4 = const_cast<VECT4 &>(v4_);
+  MAT1  &m1 = const_cast<MAT1  &>(m1_);
+  MAT2  &m2 = const_cast<MAT2  &>(m2_);
   typedef typename gmm::linalg_traits<MAT1>::value_type T;
   typedef typename gmm::number_traits<T>::magnitude_type R;
   R prec = gmm::default_tol(R());

@@ -30,8 +30,8 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef __DAL_STD_H
-#define __DAL_STD_H
+#ifndef DAL_STD_H__
+#define DAL_STD_H__
 
 #ifndef NOGETFEM_VERIFY
 #  define GETFEM_VERIFY
@@ -342,7 +342,7 @@ typedef unsigned char uint8_type;
      type qu'on est suceptible d' afficher. Si il en manque un (c'est
      le cas pour unsigned et float) dans libgetfem.so qui est utilise
      dans libgetfemint.so alors on retrouve un warning
-     comme quoi le symbole __T_Q13std8ios_base et __T_Q13std11logic_error
+     comme quoi le symbole T_Q13std8ios_base__ et T_Q13std11logic_error__
      sont dupliqués
      visiblement il reinstancie un peu trop de choses .. 
 
@@ -403,5 +403,5 @@ typedef unsigned char uint8_type;
   
 } /* end of namespace dal.                                                */
 
-#endif /* __DAL_STD_H */
+#endif /* DAL_STD_H__ */
 

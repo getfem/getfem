@@ -20,8 +20,14 @@
 #include <dal_basic.h>
 #include <deque>
 #include <complex>
+#ifdef GETFEM_HAVE_FEENABLEEXCEPT
+#  include <fenv.h>
+#endif
 
 int main(void) {
+#ifdef GETFEM_HAVE_FEENABLEEXCEPT
+  feenableexcept(FE_DIVBYZERO | FE_INVALID);
+#endif
   try {
 
     cout << "size of int           : " << sizeof(int)           << endl;
@@ -47,14 +53,14 @@ int main(void) {
 #   endif
 
 #   if defined(__sgi) && !defined(__GNUC__)
-    cout << "Sgi compiler " << _COMPILER_VERSION << endl;
+    cout << "Sgi compiler " << COMPILER_VERSION_ << endl;
 #   endif
 
 #   if defined(__SUNPRO_CC)
     cout << "Sun pro compiler\n";
 #   endif
 
-#   if defined(__BORLANDC__)
+#   if defined(BORLANDC____)
     cout << "Borland compiler\n";
 #   endif
 

@@ -31,8 +31,8 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef __DAL_EXCEPT_H
-#define __DAL_EXCEPT_H
+#ifndef DAL_EXCEPT_H__
+#define DAL_EXCEPT_H__
 
 #include <dal_std.h>
 
@@ -187,7 +187,7 @@ namespace dal {
 
   struct warning_level {
     static int level(int l = -2)
-    { static int _level = 3; return (l != -2) ? (_level = l) : _level; }
+    { static int level_ = 3; return (l != -2) ? (level_ = l) : level_; }
   };
 
   inline void set_warning_level(int l) { warning_level::level(std::max(0,l)); }
@@ -210,4 +210,4 @@ namespace dal {
 
 
 
-#endif /* __DAL_EXCEPT_H */
+#endif /* DAL_EXCEPT_H__ */

@@ -31,8 +31,8 @@
 /* *********************************************************************** */
 
 
-#ifndef __GMM_ITER_SOLVERS_H
-#define __GMM_ITER_SOLVERS_H
+#ifndef GMM_ITER_SOLVERS_H__
+#define GMM_ITER_SOLVERS_H__
 
 #include <gmm_iter.h>
 
@@ -98,4 +98,4 @@ namespace gmm {
 
 
 
-#endif //  __GMM_ITER_SOLVERS_H
+#endif //  GMM_ITER_SOLVERS_H__

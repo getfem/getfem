@@ -61,9 +61,9 @@ template <typename T> void sort_eval(std::vector<T> &v) {
 
 
 template <typename MAT1, typename MAT2>
-bool test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
-  MAT1  &m1 = const_cast<MAT1  &>(_m1);
-  MAT2  &m2 = const_cast<MAT2  &>(_m2);
+bool test_procedure(const MAT1 &m1_, const MAT2 &m2_) {
+  MAT1  &m1 = const_cast<MAT1  &>(m1_);
+  MAT2  &m2 = const_cast<MAT2  &>(m2_);
   typedef typename gmm::linalg_traits<MAT1>::value_type T;
   typedef typename gmm::number_traits<T>::magnitude_type R;
   R prec = gmm::default_tol(R());

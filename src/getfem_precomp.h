@@ -30,8 +30,8 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef __GETFEM_PRECOMP_H
-#define __GETFEM_PRECOMP_H
+#ifndef GETFEM_PRECOMP_H__
+#define GETFEM_PRECOMP_H__
 
 #include <bgeot_geometric_trans.h>
 
@@ -42,14 +42,14 @@ namespace getfem
   /*       Precomputation on geometric transformations.                    */
   /* ********************************************************************* */
 
-  struct _pre_geot_light;
+  struct pre_geot_light_;
 
   /**
      precomputed geometric transformation operations use this for
      repetitive evaluation of a geometric transformations on a set of
      points "pspt" in the the reference convex which do not change.
   */
-  class _geotrans_precomp {
+  class geotrans_precomp_ {
   protected:      
     bgeot::pgeometric_trans pgt;
     bgeot::pstored_point_tab pspt;  /* a set of points in the reference elt*/
@@ -81,9 +81,9 @@ namespace getfem
 
     base_node transform(size_type i, const base_matrix &G) const;
     bgeot::pgeometric_trans get_trans() const { return pgt; }
-    void assign(const _pre_geot_light &ls);
-    _geotrans_precomp(const _pre_geot_light &ls);
-    _geotrans_precomp();
+    void assign(const pre_geot_light_ &ls);
+    geotrans_precomp_(const pre_geot_light_ &ls);
+    geotrans_precomp_();
   private:
     void init_val() const;
     void init_grad() const;
@@ -92,7 +92,7 @@ namespace getfem
 
 
   template <typename CONT, typename VEC> 
-  void _geotrans_precomp::transform(const CONT& G, size_type j, VEC& pt) {
+  void geotrans_precomp_::transform(const CONT& G, size_type j, VEC& pt) {
     size_type k = 0;
     if (c.empty()) init_val();
     for (typename CONT::const_iterator itk = G.begin(); 
@@ -104,7 +104,7 @@ namespace getfem
   }
 
   template <typename CONT> 
-  void _geotrans_precomp::transform(const CONT& G,
+  void geotrans_precomp_::transform(const CONT& G,
                                     bgeot::stored_point_tab& pt_tab) {
     if (c.empty()) init_val();
     pt_tab.clear(); pt_tab.resize(c.size(), base_node(G[0].size()));
@@ -113,7 +113,7 @@ namespace getfem
     }
   }
   
-  typedef const _geotrans_precomp * pgeotrans_precomp;
+  typedef const geotrans_precomp_ * pgeotrans_precomp;
 
   /**
      precomputes a geometric transformation for a fixed set of 
@@ -135,7 +135,7 @@ namespace getfem
   */
   void geotrans_precomp_not_stored(bgeot::pgeometric_trans pg,
 				   bgeot::pstored_point_tab pspt,
-				   _geotrans_precomp& gp);
+				   geotrans_precomp_& gp);
 
   /**
      Pre-computations on a fem.     
@@ -143,9 +143,9 @@ namespace getfem
   class virtual_fem;
   typedef const virtual_fem * pfem;
 
-  struct _pre_fem_light;
+  struct pre_fem_light_;
   
-  class _fem_precomp {
+  class fem_precomp_ {
   protected:      
     pfem pf;
     bgeot::pstored_point_tab pspt;
@@ -163,9 +163,9 @@ namespace getfem
     inline pfem get_pfem() const { return pf; }
     inline bgeot::pstored_point_tab get_point_tab() const { return pspt; }
 
-    void assign(const _pre_fem_light &ls);
-    _fem_precomp(const _pre_fem_light &ls);
-    _fem_precomp();
+    void assign(const pre_fem_light_ &ls);
+    fem_precomp_(const pre_fem_light_ &ls);
+    fem_precomp_();
 
   private:
     void init_val() const;
@@ -173,7 +173,7 @@ namespace getfem
     void init_hess() const;    
   };
   
-  typedef const _fem_precomp * pfem_precomp;
+  typedef const fem_precomp_ * pfem_precomp;
 
   /**
      statically allocates a fem-precomputation object, and returns a pointer
@@ -197,7 +197,7 @@ namespace getfem
      this array must not be destroyed as long as the fem_precomp is used!!
    */
   void fem_precomp_not_stored(pfem pf, bgeot::pstored_point_tab pspt,
-			      _fem_precomp& fp);
+			      fem_precomp_& fp);
 
   /**
      handles a pool (i.e. a set) of fem_precomp. The difference with

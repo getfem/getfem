@@ -30,8 +30,8 @@
 /* *********************************************************************** */
 
 
-#ifndef __GETFEM_MAT_ELEM_H
-#define __GETFEM_MAT_ELEM_H
+#ifndef GETFEM_MAT_ELEM_H__
+#define GETFEM_MAT_ELEM_H__
 
 #include <getfem_mat_elem_type.h>
 #include <bgeot_geometric_trans.h>
@@ -75,4 +75,4 @@ namespace getfem
 }  /* end of namespace getfem.                                             */
 
 
-#endif /* __GETFEM_MAT_ELEM_H                                              */
+#endif /* GETFEM_MAT_ELEM_H__                                              */

@@ -31,8 +31,8 @@
 
 
 
-#ifndef __BGEOT_CONFIG_H
-#define __BGEOT_CONFIG_H
+#ifndef BGEOT_CONFIG_H__
+#define BGEOT_CONFIG_H__
 
 #include <getfem_arch_config.h>
 #include <dal_except.h>
@@ -83,4 +83,4 @@ namespace bgeot
 }  /* end of namespace bgeot.                                             */
 
 
-#endif /* __BGEOT_CONFIG_H                                                */
+#endif /* BGEOT_CONFIG_H__                                                */

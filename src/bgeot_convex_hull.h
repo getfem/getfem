@@ -32,8 +32,8 @@
 
 
 
-#ifndef __BGEOT_CONVEX_HULL_H
-#define __BGEOT_CONVEX_HULL_H
+#ifndef BGEOT_CONVEX_HULL_H__
+#define BGEOT_CONVEX_HULL_H__
 
 #include <bgeot_mesh_structure.h>
 
@@ -218,4 +218,4 @@ namespace bgeot
 }  /* end of namespace bgeot.                                             */
 
 
-#endif /* __BGEOT_CONVEX_HULL_H                                           */
+#endif /* BGEOT_CONVEX_HULL_H__                                           */

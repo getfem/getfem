@@ -7,6 +7,9 @@
 # include <sys/times.h>
 #endif
 #include <unistd.h>
+#ifdef GETFEM_HAVE_FEENABLEEXCEPT
+#  include <fenv.h>
+#endif
 
 using bgeot::base_vector;
 using bgeot::base_small_vector;
@@ -46,36 +49,36 @@ typedef enum {DO_BOUNDARY_MASS,
 struct chrono {
   struct ::tms t;
   ::clock_t t_elapsed;
-  float _cpu, _elapsed, _system;
+  float cpu_, elapsed_, system_;
   float nbclocktk;
 public:
   chrono() { nbclocktk = ::sysconf(_SC_CLK_TCK); }
-  void init() { _elapsed=0; _cpu=0; _system =0; }
+  void init() { elapsed_=0; cpu_=0; system_ =0; }
   void tic() { t_elapsed = ::times(&t); }
   void toc() { 
     struct tms t2; ::clock_t t2_elapsed = ::times(&t2); 
-    _elapsed += (t2_elapsed - t_elapsed) / nbclocktk;
-    _cpu     += (t2.tms_utime - t.tms_utime) / nbclocktk;
-    _system  += (t2.tms_stime - t.tms_stime) / nbclocktk;
+    elapsed_ += (t2_elapsed - t_elapsed) / nbclocktk;
+    cpu_     += (t2.tms_utime - t.tms_utime) / nbclocktk;
+    system_  += (t2.tms_stime - t.tms_stime) / nbclocktk;
     memcpy(&t, &t2, sizeof(struct tms));
   }
-  float cpu() const { return _cpu; }
-  float elapsed() const { return _elapsed; }
-  float system() const { return _system; }
+  float cpu() const { return cpu_; }
+  float elapsed() const { return elapsed_; }
+  float system() const { return system_; }
 };
 #else
 struct chrono {
-  float t,_cpu;
+  float t,cpu_;
 public:
   chrono() { }
-  void init() { _cpu=0; }
+  void init() { cpu_=0; }
   void tic() { t = ::clock()/float(CLOCKS_PER_SEC); }
   void toc() {
     float t2 = ::clock()/float(CLOCKS_PER_SEC);
-    _cpu += t2 - t; t = t2;
+    cpu_ += t2 - t; t = t2;
   }
-  float cpu() const { return _cpu; }
-  float elapsed() const { return _cpu; }
+  float cpu() const { return cpu_; }
+  float elapsed() const { return cpu_; }
   float system() const { return 0.; }
 };
 #endif
@@ -869,8 +872,8 @@ void tensor_shape_check() {
 }
 
 void tensor_ref_check() {
-  scalar_type _s1[] = {1.0,2.0,3.0, 4.,5.,6., 7.,8.,9., 10.,11.,12.,13.,14.,15.,16.};
-  scalar_type *s1 = _s1;
+  scalar_type s1_[] = {1.0,2.0,3.0, 4.,5.,6., 7.,8.,9., 10.,11.,12.,13.,14.,15.,16.};
+  scalar_type *s1 = s1_;
   bgeot::tensor_ranges r1(3); r1[0]=3; r1[1]=2; r1[2]=2;
   bgeot::tensor_ref tr1(r1,&s1);
   cerr << "tr1=" << tr1 << endl;
@@ -884,9 +887,9 @@ void tensor_ref_check() {
   bgeot::tensor_ref tr4(r2, &s1);
   cerr << "tr4=" << tr4 << endl;
 
-  bgeot::tensor_ref _tr5(bgeot::tensor_ref(tr4, bgeot::tensor_mask::Diagonal(2,3)));
+  bgeot::tensor_ref tr5_(bgeot::tensor_ref(tr4, bgeot::tensor_mask::Diagonal(2,3)));
   
-  bgeot::tensor_ref tr5(bgeot::tensor_ref(_tr5, bgeot::tensor_mask::Diagonal(0,1)));
+  bgeot::tensor_ref tr5(bgeot::tensor_ref(tr5_, bgeot::tensor_mask::Diagonal(0,1)));
 
   cerr << "@@@@@@@@@@@@@-------------------------------------------\n" 
        << "tr5=tr4(i,i,j,j)=" << tr5 << endl;
@@ -1205,6 +1208,9 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
 
 int main(int argc, char *argv[])
 {
+#ifdef GETFEM_HAVE_FEENABLEEXCEPT
+  feenableexcept(FE_DIVBYZERO | FE_INVALID);
+#endif
   try {
     bool do_old=true, do_new=true;
 

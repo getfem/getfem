@@ -38,9 +38,9 @@ namespace getfem {
     }
   }
   void ATN::set_number(unsigned &gcnt) { 
-    if (_number == unsigned(-1)) {
+    if (number_ == unsigned(-1)) {
       for (unsigned i=0; i < nchilds(); ++i) child(i).set_number(gcnt);
-      _number = ++gcnt;
+      number_ = ++gcnt;
     }
   }
 
@@ -89,18 +89,18 @@ namespace getfem {
     bgeot::tensor_reduction tred;    
   public:
     void check_shape_update(size_type , dim_type) {
-      _shape_updated = false;
+      shape_updated_ = false;
       for (dim_type i=0; i < nchilds(); ++i) {
 	if (child(i).is_shape_updated()) {
-	  _shape_updated = true;
+	  shape_updated_ = true;
 	}
       }
-      if (_shape_updated) {
-	_r.resize(0);
+      if (shape_updated_) {
+	r_.resize(0);
 	for (dim_type i=0; i < nchilds(); ++i) {
 	  std::string s = red_n(i);
 	  for (size_type j=0; j < s.length(); ++j) {
-	    if (s[j] == ' ') _r.push_back(child(i).ranges()[j]);
+	    if (s[j] == ' ') r_.push_back(child(i).ranges()[j]);
 	  }
 	}
       }
@@ -157,7 +157,7 @@ namespace getfem {
     }
   private:
     
-    void _exec(size_type , dim_type ) {
+    void exec_(size_type , dim_type ) {
       std::fill(data.begin(), data.end(), 0.); /* do_reduction ne peut pas le faire puisque ce n'est pas lui 
 						  le proprietaire du tenseur de sortie */
       tred.do_reduction();
@@ -173,16 +173,16 @@ namespace getfem {
     dim_type slice_dim;
     size_type slice_idx;
   public:
-    ATN_sliced_tensor(ATN_tensor& a, dim_type _slice_dim, size_type _slice_idx) : 
-      slice_dim(_slice_dim), slice_idx(_slice_idx)  { add_child(a); }
+    ATN_sliced_tensor(ATN_tensor& a, dim_type slice_dim_, size_type slice_idx_) : 
+      slice_dim(slice_dim_), slice_idx(slice_idx_)  { add_child(a); }
     void check_shape_update(size_type , dim_type) {
-      if ((_shape_updated = child(0).is_shape_updated())) {
+      if ((shape_updated_ = child(0).is_shape_updated())) {
 	if (slice_dim >= child(0).ranges().size() ||
 	    slice_idx >= child(0).ranges()[slice_dim]) {
 	  ASM_THROW_TENSOR_ERROR("can't slice tensor " << child(0).ranges() << 
 				 " at index " << int(slice_idx) << " of dimension " << int(slice_dim));
 	}
-	_r = child(0).ranges(); _r.erase(_r.begin()+slice_dim);
+	r_ = child(0).ranges(); r_.erase(r_.begin()+slice_dim);
       }
     }
     void update_childs_required_shape() {
@@ -196,7 +196,7 @@ namespace getfem {
       tensor() = tensor_ref(child(0).tensor(),  tensor_mask::Slice(slice_dim, slice_idx));
     }
   private:
-    void _exec(size_type, dim_type) {}
+    void exec_(size_type, dim_type) {}
   };
 
   /* tensor with reoderer indices:
@@ -207,23 +207,23 @@ namespace getfem {
     std::vector<dim_type> reorder;
   public:
     /* attention on ne s'assure pas que reorder est une permutation */
-    ATN_permuted_tensor(ATN_tensor& a, const std::vector<dim_type>& _reorder) :
-      reorder(_reorder)  { add_child(a); }
+    ATN_permuted_tensor(ATN_tensor& a, const std::vector<dim_type>& reorder_) :
+      reorder(reorder_)  { add_child(a); }
   private:
     void check_shape_update(size_type , dim_type) {
-      if ((_shape_updated = child(0).is_shape_updated())) {
+      if ((shape_updated_ = child(0).is_shape_updated())) {
 	if (reorder.size() != child(0).ranges().size())
 	  ASM_THROW_TENSOR_ERROR("can't reorder tensor '" << name() << "' of dimensions " 
 				 << child(0).ranges() << 
 				 " with this permutation: " << reorder);
-	_r.resize(reorder.size());
-	std::fill(_r.begin(), _r.end(), dim_type(-1));
+	r_.resize(reorder.size());
+	std::fill(r_.begin(), r_.end(), dim_type(-1));
 
 	/*
 	  --- TODO: A VERIFIER !!!!! ---
 	*/
 	for (size_type i=0; i < reorder.size(); ++i)
-	  _r[i] = child(0).ranges()[reorder[i]];
+	  r_[i] = child(0).ranges()[reorder[i]];
       }
     }
     void update_childs_required_shape() {
@@ -235,7 +235,7 @@ namespace getfem {
       tensor() = child(0).tensor();
       tensor().permute(reorder);
     }
-    void _exec(size_type, dim_type) {}
+    void exec_(size_type, dim_type) {}
   };
 
   /* diagonal tensor: take the "diagonal" of a tensor
@@ -246,16 +246,16 @@ namespace getfem {
   class ATN_diagonal_tensor : public ATN_tensor {
     dim_type i1, i2;
   public:
-    ATN_diagonal_tensor(ATN_tensor& a, dim_type _i1, dim_type _i2) : 
-      i1(_i1), i2(_i2) { add_child(a); }
+    ATN_diagonal_tensor(ATN_tensor& a, dim_type i1_, dim_type i2_) : 
+      i1(i1_), i2(i2_) { add_child(a); }
   private:
     void check_shape_update(size_type , dim_type) {
-      if ((_shape_updated = child(0).is_shape_updated())) {
+      if ((shape_updated_ = child(0).is_shape_updated())) {
 	if (i1 >= child(0).ranges().size() || i2 >= child(0).ranges().size() ||
 	    i1 == i2 || child(0).ranges()[i1] != child(0).ranges()[i2])
 	  ASM_THROW_TENSOR_ERROR("can't take the diagonal of a tensor of sizes " << child(0).ranges() << 
 				 " at indexes " << int(i1) << " and " << int(i2));
-	_r = child(0).ranges();
+	r_ = child(0).ranges();
       }
     }
     void update_childs_required_shape() {
@@ -265,7 +265,7 @@ namespace getfem {
     void reinit() {
       tensor() = tensor_ref(child(0).tensor(), tensor_mask::Diagonal(i1,i2));
     }
-    void _exec(size_type, dim_type) {}
+    void exec_(size_type, dim_type) {}
   };
 
   /*
@@ -290,8 +290,8 @@ namespace getfem {
       0     0  phi2
       ...
     */
-    mf_comp(const mesh_fem* _pmf, op_type _op, bool vect) :
-      pmf(_pmf), op(_op), vectorize(vect) {}
+    mf_comp(const mesh_fem* pmf_, op_type op_, bool vect) :
+      pmf(pmf_), op(op_), vectorize(vect) {}
   };
 
   class ATN_computed_tensor : public ATN_tensor {
@@ -305,14 +305,14 @@ namespace getfem {
     TDIter data_base;
     stride_type tsize;
   public:
-    ATN_computed_tensor(std::vector<mf_comp> _mfcomp) : 
-      mfcomp(_mfcomp), pmec(0), pme(0), pim(0), pgt(0), data_base(0) {    }
+    ATN_computed_tensor(std::vector<mf_comp> mfcomp_) : 
+      mfcomp(mfcomp_), pmec(0), pme(0), pim(0), pgt(0), data_base(0) {    }
 
   private:
     stride_type add_dim(dim_type d, stride_type s) {
-      assert(d < _r.size());
+      assert(d < r_.size());
       tensor_strides v;
-      index_type r = _r[d];
+      index_type r = r_[d];
       tensor_mask m; m.set_full(d, r);	    
       v.resize(r);
       for (index_type i=0; i < r; ++i) {
@@ -326,8 +326,8 @@ namespace getfem {
     }
 
     stride_type add_vdim(dim_type d, stride_type s) {
-      assert(d < _r.size()-1);
-      index_type r = _r[d], q=_r[d+1];
+      assert(d < r_.size()-1);
+      index_type r = r_[d], q=r_[d+1];
       tensor_strides v;
       tensor_ranges trng(2); trng[0] = q; trng[1] = r;
       index_set ti(2); ti[0] = d+1; ti[1] = d;
@@ -356,17 +356,17 @@ namespace getfem {
       // cerr << "computed tensor cv=" << cv << " f=" << int(face) << "\n";
       // essai: on commente la ligne du dessous, y'a pas a tout recalculer quand seuls la transfo geo ou
       // la methode d'integration change
-      // _shape_updated = (pgt != pgt2 || pim != pim2);
-      _shape_updated = false;
-      for (size_type i=0; _shape_updated == false && i < mfcomp.size(); ++i) {
+      // shape_updated_ = (pgt != pgt2 || pim != pim2);
+      shape_updated_ = false;
+      for (size_type i=0; shape_updated_ == false && i < mfcomp.size(); ++i) {
 	if  (current_cv == size_type(-1) || mf.fem_of_element(current_cv) != mf.fem_of_element(cv)) 
-	  _shape_updated = true;
+	  shape_updated_ = true;
       }
       /* build the new mat_elem structure */      
-      if (_shape_updated) {
+      if (shape_updated_) {
  	pme = NULL;
 	tensor().clear();
-	_r.resize(0);
+	r_.resize(0);
 	tsize = 1;
 	for (size_type i=0; i < mfcomp.size(); ++i) {
 	  pmat_elem_type pme2 = NULL;
@@ -380,23 +380,23 @@ namespace getfem {
 	  if (pme == NULL) pme = pme2;
 	  else pme = mat_elem_product(pme, pme2);
 	  
-	  index_type d = _r.size();
-	  _r.push_back(mfcomp[i].pmf->nb_dof_of_element(cv));
+	  index_type d = r_.size();
+	  r_.push_back(mfcomp[i].pmf->nb_dof_of_element(cv));
 	  if (mfcomp[i].vectorize) {
-	    _r.push_back(mfcomp[i].pmf->get_qdim());
+	    r_.push_back(mfcomp[i].pmf->get_qdim());
 	    if (target_dim == qdim) {
 	      tsize = add_dim(d, tsize);
 	      tsize = add_dim(d+1, tsize);
 	    } else tsize = add_vdim(d, tsize);
 	  } else tsize = add_dim(d, tsize);
-	  d = _r.size();
+	  d = r_.size();
 	  if (mfcomp[i].op == mf_comp::GRAD || mfcomp[i].op == mf_comp::HESS) {
-	    _r.push_back(mf.linked_mesh().dim());
+	    r_.push_back(mf.linked_mesh().dim());
 	    tsize = add_dim(d, tsize);
 	  }
-	  d = _r.size();
+	  d = r_.size();
 	  if (mfcomp[i].op == mf_comp::HESS) {
-	    _r.push_back(mf.linked_mesh().dim());
+	    r_.push_back(mf.linked_mesh().dim());
 	    tsize = add_dim(d, tsize);
 	  }
 	}
@@ -405,11 +405,11 @@ namespace getfem {
 	data_base = 0;
 	tensor().set_base(data_base);
 	/*  cerr << "ATN_computed_tensor::check_shape_update(" << cv << ")="; 
-	    const bgeot::tensor_shape& t = tensor(); t._print(); 
-	    tensor()._print(); cerr << endl;
+	    const bgeot::tensor_shape& t = tensor(); t.print_(); 
+	    tensor().print_(); cerr << endl;
 	*/
       }
-      if (_shape_updated || pgt != pgt2 || pim != pim2) {
+      if (shape_updated_ || pgt != pgt2 || pim != pim2) {
 	pgt = pgt2; pim = pim2;
 	pmec = mat_elem(pme, pim, pgt);
       }
@@ -418,7 +418,7 @@ namespace getfem {
     void reinit() {
       //cerr << "name: " << name() << ", required shape=" << req_shape << endl;
     }
-    void _exec(size_type cv, dim_type face) {
+    void exec_(size_type cv, dim_type face) {
       const mesh_fem& mf = *mfcomp[0].pmf;
       if (face == dim_type(-1))
 	pmec->gen_compute(t, mf.linked_mesh().points_of_convex(cv), cv);
@@ -449,17 +449,17 @@ namespace getfem {
       */
     }
     void check_shape_update(size_type cv, dim_type) {
-      _shape_updated = false;
-      _r.resize(vdim.size());
+      shape_updated_ = false;
+      r_.resize(vdim.size());
       for (dim_type i=0; i < vdim.size(); ++i) {
 	if (vdim[i].is_mf_ref()) {
 	  if (vdim[i].pmf->nb_dof_of_element(cv) != ranges()[i]) {
-	    _r[i] = vdim[i].pmf->nb_dof_of_element(cv);
-	    _shape_updated = true;
+	    r_[i] = vdim[i].pmf->nb_dof_of_element(cv);
+	    shape_updated_ = true;
 	  }
 	} else if (vdim[i].dim != ranges()[i]) {
-	  _r[i] = vdim[i].dim;
-	  _shape_updated = true;
+	  r_[i] = vdim[i].dim;
+	  shape_updated_ = true;
 	}
       }
     }
@@ -470,7 +470,7 @@ namespace getfem {
     }
 
   private:
-    void _exec(size_type cv, dim_type ) {
+    void exec_(size_type cv, dim_type ) {
       tensor_ranges r;
       std::vector< tensor_strides > str;
       vdim.build_strides_for_cv(cv, r, str);
@@ -492,11 +492,11 @@ namespace getfem {
   public:
     ATN_symmetrized_tensor(ATN_tensor& a) { add_child(a); }
     void check_shape_update(size_type , dim_type) {
-      if ((_shape_updated = child(0).is_shape_updated())) {
+      if ((shape_updated_ = child(0).is_shape_updated())) {
 	if (child(0).ranges().size() != 2 || 
 	    child(0).ranges()[0] != child(0).ranges()[1])
 	  ASM_THROW_TENSOR_ERROR("can't symmetrize a non-square tensor of sizes " << child(0).ranges());
-	_r = child(0).ranges();
+	r_ = child(0).ranges();
       }
     }
     void update_childs_required_shape() {
@@ -516,7 +516,7 @@ namespace getfem {
       mti.assign(child(0).tensor(),true);
     }
   private:
-    void _exec(size_type, dim_type) {
+    void exec_(size_type, dim_type) {
       std::fill(data.begin(), data.end(), 0.);
       mti.rewind();
       index_type n = ranges()[0];
@@ -533,15 +533,15 @@ namespace getfem {
   public:
     ATN_unary_op_tensor(ATN_tensor& a) { add_child(a); }
     void check_shape_update(size_type , dim_type) {
-      if ((_shape_updated = (ranges() != child(0).ranges())))      
-	_r = child(0).ranges();
+      if ((shape_updated_ = (ranges() != child(0).ranges())))      
+	r_ = child(0).ranges();
     }
     void reinit() {
       ATN_tensor_w_data::reinit0();
       mti.assign(tensor(), child(0).tensor(),false);
     }
   private:
-    void _update_cv(size_type, dim_type) {
+    void update_cv_(size_type, dim_type) {
       mti.rewind();
       do {
 	mti.p(0) = UnaryOp()(mti.p(1));
@@ -562,8 +562,8 @@ namespace getfem {
       add_child(t); scales.push_back(s);
     }
     void check_shape_update(size_type , dim_type) {
-      if ((_shape_updated = child(0).is_shape_updated()))
-	_r = child(0).ranges();
+      if ((shape_updated_ = child(0).is_shape_updated()))
+	r_ = child(0).ranges();
       for (size_type i=1; i < nchilds(); ++i)
 	if (ranges() != child(i).ranges()) 
 	  ASM_THROW_TENSOR_ERROR("can't add two tensors of sizes " << 
@@ -580,7 +580,7 @@ namespace getfem {
     }
     ATN_tensors_sum_scaled* is_tensors_sum_scaled() { return this; }
   private:
-    void _exec(size_type, dim_type) {
+    void exec_(size_type, dim_type) {
       //if (cv == 0) {
       //cerr << "ATN_tensors_sum["<< name() << "] req_shape=" << req_shape << endl;
       //}
@@ -603,18 +603,18 @@ namespace getfem {
     multi_tensor_iterator mti;
     int sgn; /* v+t or v-t ? */
   public:
-    ATN_tensor_scalar_add(ATN_tensor& a, scalar_type _v, int _sgn) : 
-      v(_v), sgn(_sgn) { add_child(a); }
+    ATN_tensor_scalar_add(ATN_tensor& a, scalar_type v_, int sgn_) : 
+      v(v_), sgn(sgn_) { add_child(a); }
     void check_shape_update(size_type , dim_type) {
-      if ((_shape_updated = child(0).is_shape_updated()))
-	_r = child(0).ranges();
+      if ((shape_updated_ = child(0).is_shape_updated()))
+	r_ = child(0).ranges();
     }
     void reinit() {
       ATN_tensor_w_data::reinit();
       mti.assign(tensor(), child(0).tensor(),false);
     }
   private:
-    void _exec(size_type, dim_type) {
+    void exec_(size_type, dim_type) {
       std::fill(data.begin(), data.end(), v);
       mti.rewind();
       do {
@@ -628,11 +628,11 @@ namespace getfem {
   class ATN_print_tensor : public ATN {
     std::string name;
   public:
-    ATN_print_tensor(ATN_tensor& a, std::string _n) 
-      : name(_n) { add_child(a); }
+    ATN_print_tensor(ATN_tensor& a, std::string n_) 
+      : name(n_) { add_child(a); }
     void reinit() {}
   private:
-    void _exec(size_type cv, dim_type face) {
+    void exec_(size_type cv, dim_type face) {
       multi_tensor_iterator mti(child(0).tensor(), true);
       cout << "------- > evaluation of " << name << ", at" << endl;
       cout << "convex " << cv; 
@@ -716,9 +716,9 @@ namespace getfem {
     if (tok_type() != MFREF) ASM_THROW_PARSE_ERROR("expecting mesh_fem reference");
     if (tok_mfref_num() >= mftab.size()) 
       ASM_THROW_PARSE_ERROR("reference to a non-existant mesh_fem #" << tok_mfref_num()+1);
-    const mesh_fem& _mf = *mftab[tok_mfref_num()]; advance();
+    const mesh_fem& mf_ = *mftab[tok_mfref_num()]; advance();
     accept(CLOSE_PAR, "expecting ')'");
-    return _mf;
+    return mf_;
   }
 
   ATN_tensor* generic_assembly::do_comp() {
@@ -1136,7 +1136,7 @@ namespace getfem {
 
   struct cv_fem_compare {
     const std::deque<const mesh_fem *>& mf;
-    cv_fem_compare(const std::deque<const mesh_fem *>& _mf) : mf(_mf) {}
+    cv_fem_compare(const std::deque<const mesh_fem *>& mf_) : mf(mf_) {}
     bool operator()(size_type a, size_type b) {
       for (size_type i=0; i < mf.size(); ++i) {
 	if (mf[i]->fem_of_element(a) < mf[i]->fem_of_element(b))

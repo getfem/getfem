@@ -29,8 +29,8 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef __GMM_VECTOR_TO_MATRIX_H
-#define __GMM_VECTOR_TO_MATRIX_H
+#ifndef GMM_VECTOR_TO_MATRIX_H__
+#define GMM_VECTOR_TO_MATRIX_H__
 
 #include <gmm_interface.h>
 
@@ -345,4 +345,4 @@ namespace gmm {
 
 }
 
-#endif //  __GMM_VECTOR_TO_MATRIX_H
+#endif //  GMM_VECTOR_TO_MATRIX_H__

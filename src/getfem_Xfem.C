@@ -54,7 +54,7 @@ namespace getfem
   size_type Xfem::nb_dof(void) const {
     if (!is_valid)
       DAL_THROW(failure_error, "Valid the Xfem element before using it");
-    return _dof_types.size();
+    return dof_types_.size();
   }
 
   void Xfem::add_func(pfem pf, pXfem_func pXf, size_type ind) {

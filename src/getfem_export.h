@@ -30,8 +30,8 @@
 /* *********************************************************************** */
 
 
-#ifndef __GETFEM_EXPORT_H
-#define __GETFEM_EXPORT_H
+#ifndef GETFEM_EXPORT_H__
+#define GETFEM_EXPORT_H__
 
 #include <getfem_mesh_fem.h>
 //#include <getfem_mat_elem.h>
@@ -566,4 +566,4 @@ namespace getfem
 }  /* end of namespace getfem.                                             */
 
 
-#endif /* __GETFEM_EXPORT_H  */
+#endif /* GETFEM_EXPORT_H__  */

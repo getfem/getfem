@@ -31,8 +31,8 @@
 /* *********************************************************************** */
  
 
-#ifndef __GETFEM_NORM_H
-#define __GETFEM_NORM_H
+#ifndef GETFEM_NORM_H__
+#define GETFEM_NORM_H__
 
 #include <getfem_mesh_fem.h>
 #include <getfem_mat_elem.h>

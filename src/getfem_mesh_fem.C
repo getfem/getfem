@@ -150,7 +150,7 @@ namespace getfem
   void mesh_fem::receipt(const MESH_DELETE &) {
     clear(); is_valid = false;
     linked_mesh().lmsg_sender().send(MESH_FEM_DELETE((void *)(this)));
-    sup_sender(_linked_mesh->lmsg_sender());
+    sup_sender(linked_mesh_->lmsg_sender());
   }
   void mesh_fem::receipt(const MESH_SUP_CONVEX &m) { 
     if (fe_convex[m.icv])
@@ -186,12 +186,12 @@ namespace getfem
       }
     }
     else {
-      if (_linked_mesh->structure_of_convex(cv)->basic_structure() 
+      if (linked_mesh_->structure_of_convex(cv)->basic_structure() 
 	  != pif->pf->basic_structure() || 
 	  (pif->pf->target_dim() != Qdim && pif->pf->target_dim() != 1))
 	DAL_THROW(std::logic_error,
 		  "Incompatibility between fem " << name_of_fem(pif->pf) << 
-		  " and mesh element " << name_of_geometric_trans(_linked_mesh->trans_of_convex(cv)));
+		  " and mesh element " << name_of_geometric_trans(linked_mesh_->trans_of_convex(cv)));
       if (!fe_convex.is_in(cv) || f_elems[cv] != pif) {
 	fe_convex.add(cv);
 	f_elems[cv] = pif;
@@ -227,7 +227,7 @@ namespace getfem
     return ind_in_first_convex_of_dof(d) % (Qdim / tdim);
   }
 
-  struct _dof_comp { 
+  struct dof_comp_ { 
     dal::approx_less<scalar_type> comp;
     int operator()(const fem_dof& m, const fem_dof& n) const { 
       int d = dal::lexicographical_compare(m.P.begin(), m.P.end(),
@@ -235,7 +235,7 @@ namespace getfem
       if (d != 0) return d;
       return dof_description_compare(m.pnd, n.pnd);
     }
-    _dof_comp(double e = 1.0E-10) : comp(e) { }
+    dof_comp_(double e = 1.0E-10) : comp(e) { }
   };
   
 
@@ -267,7 +267,7 @@ namespace getfem
   void mesh_fem::enumerate_dof(void) const {
     dal::bit_vector nn = fe_convex;
     std::queue<int> pile;
-    dal::dynamic_tree_sorted<fem_dof, _dof_comp, 10> dof_sort;
+    dal::dynamic_tree_sorted<fem_dof, dof_comp_, 10> dof_sort;
 
     size_type cv;
     std::vector<size_type> tab;
@@ -281,13 +281,13 @@ namespace getfem
     while (cv != ST_NIL) {
       /* ajout des voisins dans la pile.                                  */
 
-      size_type nbp = _linked_mesh->nb_points_of_convex(cv);
+      size_type nbp = linked_mesh_->nb_points_of_convex(cv);
 
       for (size_type i = 0; i < nbp; i++) {
-	size_type ip = _linked_mesh->ind_points_of_convex(cv)[i];
+	size_type ip = linked_mesh_->ind_points_of_convex(cv)[i];
 	bgeot::mesh_convex_ind_ct::const_iterator 
-	  it = _linked_mesh->convex_to_point(ip).begin(),
-	  ite =  _linked_mesh->convex_to_point(ip).end();
+	  it = linked_mesh_->convex_to_point(ip).begin(),
+	  ite =  linked_mesh_->convex_to_point(ip).end();
 	for ( ; it != ite; ++it)
 	  if (nn.is_in(*it)) { nn.sup(*it); pile.push(*it); }
       }
@@ -356,13 +356,13 @@ namespace getfem
      /* on peut deja ne pas stocker les noeuds interieurs.                 */
 /*     dal::int_set nn = fe_convex; */
 /*     std::queue<int> pile; */
-/*     dal::dynamic_tree_sorted<_dof, _dof_comp, 10 > dof_sort; */
+/*     dal::dynamic_tree_sorted<dof_, dof_comp_, 10 > dof_sort; */
 /*     dal::dynamic_array<int> front1, front2; */
 
 /*     int *tab = new int[10000]; */
 /*     int *degree = new int[nn.last_true() + 1]; */
 /*     int cv, nbp, i, ip, ncv, nbd, fd, degree_min, first_cv; */
-/*     _dof P; */
+/*     dof_ P; */
 
      /* 1-) On cherche le convexe de degree minimal (moins de voisins).    */
 
@@ -371,11 +371,11 @@ namespace getfem
 /*     for (cv << nm; cv >= 0; cv << nm)  il faut un iterateur sur nn.     */
 /*     { */
 /*       degree[cv] = 0; */
-/*       nbp = _linked_mesh->nb_points_of_convex(cv); */
+/*       nbp = linked_mesh_->nb_points_of_convex(cv); */
 /*       for (i = 0; i < nbp; i++) */
 /*       { */
-/* 	ip = _linked_mesh->ind_point_of_convex(cv, i); */
-/* 	nbd = _linked_mesh->convex_to_point(ip, tab); */
+/* 	ip = linked_mesh_->ind_point_of_convex(cv, i); */
+/* 	nbd = linked_mesh_->convex_to_point(ip, tab); */
 /* 	ssert(nbd < 10000); */
 /* 	for (i = 0; i < nbd; i++) */
 /* 	{ */
@@ -405,8 +405,8 @@ namespace getfem
 /*       while (front1[i] >= 0) */
 /*       { */
 /* 	cv = front1[i++]; */
-/* 	nbp = _linked_mesh->nb_points_of_convex(cv); */
-/* 	nbd = _linked_mesh->convex_to_point(ip, tab); */
+/* 	nbp = linked_mesh_->nb_points_of_convex(cv); */
+/* 	nbd = linked_mesh_->convex_to_point(ip, tab); */
 /* 	ssert(nbd < 10000); extraire une fonction qui ajoute les ddl d'un cv*/
 /* 	for (i = 0; i < nbd; i++) */
 /* 	{ */
@@ -428,7 +428,7 @@ namespace getfem
   }
 
   mesh_fem::mesh_fem(getfem_mesh &me, dim_type Q) : dof_enumeration_made(false), Qdim(Q) {
-    _linked_mesh = &me;
+    linked_mesh_ = &me;
  
     add_sender(me.lmsg_sender(), *this,
 	   lmsg::mask(MESH_CLEAR()) | lmsg::mask(MESH_SUP_CONVEX()) |

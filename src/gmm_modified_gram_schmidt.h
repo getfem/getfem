@@ -85,8 +85,8 @@ namespace gmm {
   };
 
   template <typename T, typename VecHi> inline
-  void orthogonalize(modified_gram_schmidt<T>& V, const VecHi& _Hi, size_t i) {
-    VecHi& Hi = const_cast<VecHi&>(_Hi);
+  void orthogonalize(modified_gram_schmidt<T>& V, const VecHi& Hi_, size_t i) {
+    VecHi& Hi = const_cast<VecHi&>(Hi_);
     
     for (size_t k = 0; k <= i; k++) {
       Hi[k] = gmm::vect_hp(V[i+1], V[k]);
@@ -96,9 +96,9 @@ namespace gmm {
 
   template <typename T, typename VecHi>
   void orthogonalize_with_refinment(modified_gram_schmidt<T>& V,
-				    const VecHi& _Hi, size_t i) {
-    VecHi& Hi = const_cast<VecHi&>(_Hi);
-    orthogonalize(V, _Hi, i);
+				    const VecHi& Hi_, size_t i) {
+    VecHi& Hi = const_cast<VecHi&>(Hi_);
+    orthogonalize(V, Hi_, i);
     
     sub_interval SUBI(0, V.nrows()), SUBJ(0, i+1);
     std::vector<T> corr(i+1);

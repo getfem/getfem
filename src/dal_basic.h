@@ -31,8 +31,8 @@
 /* *********************************************************************** */
 
 
-#ifndef __DAL_BASIC_H
-#define __DAL_BASIC_H
+#ifndef DAL_BASIC_H__
+#define DAL_BASIC_H__
 
 /* *********************************************************************** */
 /* Remarks for future improvements:                                        */
@@ -58,7 +58,7 @@ namespace dal
     typedef ptrdiff_t     difference_type;
     typedef std::random_access_iterator_tag iterator_category;
     
-#   define _DNAMPKS_ ((size_type(1) << pks) - 1)
+#   define DNAMPKS__ ((size_type(1) << pks) - 1)
     dynamic_array<T,pks> *p;
     size_type in;
     pointer pT;
@@ -71,19 +71,19 @@ namespace dal
     /// next element.
     dna_iterator operator ++(int) {
       dna_iterator tmp = *this;
-      if ((++in)&_DNAMPKS_) pT++; else pT=p->pt_to(in); return tmp;
+      if ((++in)&DNAMPKS__) pT++; else pT=p->pt_to(in); return tmp;
     }
     /// previous element.
     dna_iterator operator --(int) {
       dna_iterator tmp = *this;
-      if ((in--)&_DNAMPKS_) pT--; else pT=p->pt_to(in); return tmp;
+      if ((in--)&DNAMPKS__) pT--; else pT=p->pt_to(in); return tmp;
     }
     /// next element.
     dna_iterator &operator ++()
-      { if ((++in)&_DNAMPKS_) pT++; else pT=p->pt_to(in); return *this; }
+      { if ((++in)&DNAMPKS__) pT++; else pT=p->pt_to(in); return *this; }
     /// previous element.
     dna_iterator &operator --()
-      { if ((in--)&_DNAMPKS_) pT--; else pT=p->pt_to(in); return *this; }
+      { if ((in--)&DNAMPKS__) pT--; else pT=p->pt_to(in); return *this; }
     /// go i elements forward.
     dna_iterator &operator +=(difference_type i)
       { in += i; pT=p->pt_to(in); return *this; }
@@ -118,7 +118,7 @@ namespace dal
     typedef ptrdiff_t          difference_type;
     typedef std::random_access_iterator_tag iterator_category;
     
-#   define _DNAMPKS_ ((size_type(1) << pks) - 1)
+#   define DNAMPKS__ ((size_type(1) << pks) - 1)
     const dynamic_array<T,pks> *p;
     size_type in;
     pointer pT;
@@ -132,16 +132,16 @@ namespace dal
     inline size_type index(void) const { return in; }
     dna_const_iterator operator ++(int) {
       dna_const_iterator tmp = *this;
-      if ((++in)&_DNAMPKS_) pT++; else pT=p->pt_to(in); return tmp;
+      if ((++in)&DNAMPKS__) pT++; else pT=p->pt_to(in); return tmp;
     }
     dna_const_iterator operator --(int) {
       dna_const_iterator tmp = *this;
-      if ((in--)&_DNAMPKS_) pT--; else pT=p->pt_to(in); return tmp;
+      if ((in--)&DNAMPKS__) pT--; else pT=p->pt_to(in); return tmp;
     }
     dna_const_iterator &operator ++()
-      { if ((++in)&_DNAMPKS_) pT++; else pT=p->pt_to(in); return *this; }
+      { if ((++in)&DNAMPKS__) pT++; else pT=p->pt_to(in); return *this; }
     dna_const_iterator &operator --()
-      { if ((in--)&_DNAMPKS_) pT--; else pT=p->pt_to(in); return *this; }
+      { if ((in--)&DNAMPKS__) pT--; else pT=p->pt_to(in); return *this; }
     dna_const_iterator &operator +=(difference_type i)
       { in += i; pT=p->pt_to(in); return *this; }
     dna_const_iterator &operator -=(difference_type i)
@@ -206,7 +206,7 @@ namespace dal
     
   protected :
     
-#   define _DNAMPKS_ ((size_type(1) << pks) - 1)
+#   define DNAMPKS__ ((size_type(1) << pks) - 1)
     pointer_array array;
     pack_size_type ppks;   /* size of pointer packs (2^ppks).            */
     size_type m_ppks;      /* = (2^ppks) - 1.                            */
@@ -259,9 +259,9 @@ namespace dal
     dynamic_array(void) { init(); }
     ~dynamic_array(void) { clear(); }
     inline pointer pt_to(size_type ii) /* used by iterators.             */
-      { return (ii >=last_ind) ? NULL : &((array[ii>>pks])[ii&_DNAMPKS_]); }
+      { return (ii >=last_ind) ? NULL : &((array[ii>>pks])[ii&DNAMPKS__]); }
     inline const_pointer pt_to(size_type ii) const
-      { return (ii >=last_ind) ? NULL : &((array[ii>>pks])[ii&_DNAMPKS_]); }
+      { return (ii >=last_ind) ? NULL : &((array[ii>>pks])[ii&DNAMPKS__]); }
     
     /// Gives a constant reference on element ii.
     const_reference operator [](size_type ii) const;
@@ -295,7 +295,7 @@ namespace dal
   template<class T, unsigned char pks>
   void dynamic_array<T,pks>::clear(void) { 
     typename pointer_array::iterator it  = array.begin();
-    typename pointer_array::iterator ite = it+ ((last_ind + _DNAMPKS_) >> pks);
+    typename pointer_array::iterator ite = it+ ((last_ind + DNAMPKS__) >> pks);
     while (it != ite) delete[] *it++;
     array.clear(); init();
   }
@@ -309,10 +309,10 @@ namespace dal
     ppks = da.ppks; m_ppks = da.m_ppks;
     typename pointer_array::iterator it = array.begin();
     typename pointer_array::const_iterator ita = da.array.begin();
-    typename pointer_array::iterator ite = it+ ((last_ind + _DNAMPKS_) >> pks);
+    typename pointer_array::iterator ite = it+ ((last_ind + DNAMPKS__) >> pks);
     while (it != ite) {
-      register pointer p = *it++ = new T[_DNAMPKS_+1];
-      register pointer pe = p + (_DNAMPKS_+1);
+      register pointer p = *it++ = new T[DNAMPKS__+1];
+      register pointer pe = p + (DNAMPKS__+1);
       register const_pointer pa = *ita++;
       while (p != pe) *p++ = *pa++;
     }
@@ -324,7 +324,7 @@ namespace dal
       dynamic_array<T,pks>::operator [](size_type ii) const { 
     static T *f = NULL;
     if (f == NULL) { f = new T(); }
-    return (ii<last_ind) ? (array[ii>>pks])[ii&_DNAMPKS_] : *f;
+    return (ii<last_ind) ? (array[ii>>pks])[ii&DNAMPKS__] : *f;
   }
 
   template<class T, unsigned char pks> typename dynamic_array<T,pks>::reference
@@ -341,11 +341,11 @@ namespace dal
 	  array.resize(m_ppks = (size_type(1) << ppks)); m_ppks--;
 	}
 	for (size_type jj = (last_ind >> pks); ii >= last_ind;
-	     jj++, last_ind += (_DNAMPKS_ + 1))
-	  { array[jj] = new T[_DNAMPKS_ + 1]; }
+	     jj++, last_ind += (DNAMPKS__ + 1))
+	  { array[jj] = new T[DNAMPKS__ + 1]; }
       }
     }
-    return (array[ii >> pks])[ii & _DNAMPKS_];
+    return (array[ii >> pks])[ii & DNAMPKS__];
   }
 
 
@@ -392,4 +392,4 @@ namespace dal
   };
 
 }
-#endif /* __DAL_BASIC_H  */
+#endif /* DAL_BASIC_H__  */

@@ -31,8 +31,8 @@
 /* *********************************************************************** */
 
 
-#ifndef __DAL_BIT_VECTOR_H
-#define __DAL_BIT_VECTOR_H
+#ifndef DAL_BIT_VECTOR_H__
+#define DAL_BIT_VECTOR_H__
 
 /* *********************************************************************** */
 /* Remarks                                                                 */
@@ -393,4 +393,4 @@ namespace dal
 
 }
 
-#endif /* __DAL_BIT_VECTOR_H */
+#endif /* DAL_BIT_VECTOR_H__ */

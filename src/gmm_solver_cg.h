@@ -52,8 +52,8 @@
 // OR OTHER RIGHTS.
 //=======================================================================
 
-#ifndef __GMM_SOLVER_CG_H
-#define __GMM_SOLVER_CG_H
+#ifndef GMM_SOLVER_CG_H__
+#define GMM_SOLVER_CG_H__
 
 #include <gmm_kernel.h>
 #include <gmm_precond_diagonal.h>
@@ -125,4 +125,4 @@ namespace gmm {
 }
 
 
-#endif //  __GMM_SOLVER_CG_H
+#endif //  GMM_SOLVER_CG_H__

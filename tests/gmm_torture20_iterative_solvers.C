@@ -112,10 +112,10 @@ void do_test(const SOLVER &solver, const MAT &m1, VECT1 &v1,
 }
 
 template <typename MAT1, typename VECT1, typename VECT2>
-bool test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
-  VECT1 &v1 = const_cast<VECT1 &>(_v1);
-  VECT2 &v2 = const_cast<VECT2 &>(_v2);
-  MAT1  &m1 = const_cast<MAT1  &>(_m1);
+bool test_procedure(const MAT1 &m1_, const VECT1 &v1_, const VECT2 &v2_) {
+  VECT1 &v1 = const_cast<VECT1 &>(v1_);
+  VECT2 &v2 = const_cast<VECT2 &>(v2_);
+  MAT1  &m1 = const_cast<MAT1  &>(m1_);
   typedef typename gmm::linalg_traits<MAT1>::value_type T;
   typedef typename gmm::number_traits<T>::magnitude_type R;
   R prec = gmm::default_tol(R());

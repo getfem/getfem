@@ -60,8 +60,8 @@
 //  been reached. The method finished() checks the convergence
 //  The first() method is used to determine the first iteration of the loop.
 
-#ifndef __GMM_ITER_H
-#define __GMM_ITER_H
+#ifndef GMM_ITER_H__
+#define GMM_ITER_H__
 
 #include <gmm_kernel.h>
 
@@ -144,4 +144,4 @@ namespace gmm
 
 }
 
-#endif /* __GMM_ITER_H */
+#endif /* GMM_ITER_H__ */

@@ -30,8 +30,8 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef __DAL_FONC_TABLES_H
-#define __DAL_FONC_TABLES_H
+#ifndef DAL_FONC_TABLES_H__
+#define DAL_FONC_TABLES_H__
 
 #include <dal_tree_sorted.h>
 
@@ -52,33 +52,33 @@ namespace dal
     
   protected :
     
-    dynamic_tree_sorted<LIGHT> _light_table;
+    dynamic_tree_sorted<LIGHT> light_table_;
     desc_table_type desc_table;
     
   public :
     
-    size_type search(const LIGHT &l) const { return _light_table.search(l); }
+    size_type search(const LIGHT &l) const { return light_table_.search(l); }
     
     pDESC add(const LIGHT &l) {
-      size_type i = _light_table.search(l);
+      size_type i = light_table_.search(l);
       if (i == size_type(-1))
-	{ i = _light_table.add(l); desc_table[i] = new DESC(l); }
+	{ i = light_table_.add(l); desc_table[i] = new DESC(l); }
       return desc_table[i];
     }
     void sup(const LIGHT &l) {
-      size_type i = _light_table.search(l);
+      size_type i = light_table_.search(l);
       if (i != size_type(-1))
-	{ _light_table.sup(i); delete desc_table[i]; desc_table[i] = 0;}
+	{ light_table_.sup(i); delete desc_table[i]; desc_table[i] = 0;}
     }
     const desc_table_type &table(void) { return desc_table; }
     const dynamic_tree_sorted<LIGHT> &light_table(void)
-      { return _light_table; }
-    const bit_vector &index(void) { return _light_table.index(); }
+      { return light_table_; }
+    const bit_vector &index(void) { return light_table_.index(); }
     ~FONC_TABLE(void) { 
-      for (dal::bv_visitor i(_light_table.index()); !i.finished(); ++i) delete desc_table[i];
+      for (dal::bv_visitor i(light_table_.index()); !i.finished(); ++i) delete desc_table[i];
     }
   };
   
 }
 
-#endif /* __DAL_FONC_TABLES_H */
+#endif /* DAL_FONC_TABLES_H__ */

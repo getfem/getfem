@@ -86,8 +86,8 @@ namespace getfem
 			      size_type ) const
     { DAL_THROW(failure_error, "Uninstantied function"); }
 
-    external_data_fem(const bgeot::pconvex_ref _cvr, size_type dim = 1) {
-      cvr = _cvr;
+    external_data_fem(const bgeot::pconvex_ref cvr_, size_type dim = 1) {
+      cvr = cvr_;
       is_equiv = real_element_defined = true;
       is_polycomp = is_pol = is_lag = false;
       es_degree = 5;

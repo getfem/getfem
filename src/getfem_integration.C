@@ -84,19 +84,19 @@ namespace getfem
   /* integration on simplex                                               */
   /* ******************************************************************** */
 
-  struct _simplex_poly_integration : public poly_integration
+  struct simplex_poly_integration_ : public poly_integration
   {
     long_scalar_type int_monomial(const bgeot::power_index &power) const;
 
     long_scalar_type int_monomial_on_face(const bgeot::power_index &power, 
 				     short_type f) const;
 
-    _simplex_poly_integration(bgeot::pconvex_structure c)
+    simplex_poly_integration_(bgeot::pconvex_structure c)
       { cvs = c;  int_face_monomials.resize(c->nb_faces()); }
   };
 
 
-  long_scalar_type _simplex_poly_integration::int_monomial
+  long_scalar_type simplex_poly_integration_::int_monomial
   (const bgeot::power_index &power) const {
     long_scalar_type res = LONG_SCAL(1);
     short_type fa = 1;
@@ -110,7 +110,7 @@ namespace getfem
     return res;
   }
   
-  long_scalar_type _simplex_poly_integration::int_monomial_on_face
+  long_scalar_type simplex_poly_integration_::int_monomial_on_face
   (const bgeot::power_index &power, short_type f) const {
     long_scalar_type res = LONG_SCAL(0);
     
@@ -138,14 +138,14 @@ namespace getfem
     if (n <= 0 || n >= 100 || double(n) != params[0].num())
       DAL_THROW(failure_error, "Bad parameters");
     return new integration_method
-      (new _simplex_poly_integration(bgeot::simplex_structure(n)));
+      (new simplex_poly_integration_(bgeot::simplex_structure(n)));
   }
 
   /* ******************************************************************** */
   /* integration on direct product of convex structures                   */
   /* ******************************************************************** */
 
-  struct _plyint_mul_structure : public poly_integration
+  struct plyint_mul_structure_ : public poly_integration
   {
     ppoly_integration cv1, cv2;
 
@@ -154,10 +154,10 @@ namespace getfem
     long_scalar_type int_monomial_on_face(const bgeot::power_index &power, 
 				     short_type f) const;
 
-    _plyint_mul_structure(ppoly_integration a, ppoly_integration b);
+    plyint_mul_structure_(ppoly_integration a, ppoly_integration b);
   };
 
-  long_scalar_type _plyint_mul_structure::int_monomial
+  long_scalar_type plyint_mul_structure_::int_monomial
   (const bgeot::power_index &power) const {
     bgeot::power_index mi1(cv1->dim()), mi2(cv2->dim());
     std::copy(power.begin(), power.begin() + cv1->dim(), mi1.begin());
@@ -165,7 +165,7 @@ namespace getfem
     return cv1->int_monomial(mi1) * cv2->int_monomial(mi2);
   }
   
-  long_scalar_type _plyint_mul_structure::int_monomial_on_face
+  long_scalar_type plyint_mul_structure_::int_monomial_on_face
   (const bgeot::power_index &power, short_type f) const {
     bgeot::power_index mi1(cv1->dim()), mi2(cv2->dim());
     std::copy(power.begin(), power.begin() + cv1->dim(), mi1.begin());
@@ -177,7 +177,7 @@ namespace getfem
       return cv1->int_monomial(mi1) * cv2->int_monomial_on_face(mi2, f-nfx);
   }
   
-  _plyint_mul_structure::_plyint_mul_structure(ppoly_integration a, 
+  plyint_mul_structure_::plyint_mul_structure_(ppoly_integration a, 
 					       ppoly_integration b) {
     cv1 = a; cv2 = b;
     cvs = bgeot::convex_product_structure(cv1->structure(),
@@ -195,7 +195,7 @@ namespace getfem
     pintegration_method b = params[1].method();
     if (!(a->is_ppi && b->is_ppi))
       DAL_THROW(failure_error, "Bad parameters");
-    return new integration_method(new _plyint_mul_structure(a->method.ppi,
+    return new integration_method(new plyint_mul_structure_(a->method.ppi,
 							     b->method.ppi));
   }
 
@@ -463,11 +463,11 @@ namespace getfem
     } 
   }
 
-  struct _gauss_approx_integration : public approx_integration {
-    _gauss_approx_integration(short_type nbpt);
+  struct gauss_approx_integration_ : public approx_integration {
+    gauss_approx_integration_(short_type nbpt);
   };
 
-  _gauss_approx_integration::_gauss_approx_integration(short_type nbpt) {
+  gauss_approx_integration_::gauss_approx_integration_(short_type nbpt) {
     if (nbpt > 32000) DAL_THROW(std::out_of_range, "too much points");
     
     cvr = bgeot::simplex_of_reference(1);
@@ -514,7 +514,7 @@ namespace getfem
       return int_method_descriptor(name.str());
     }
     else
-      return new integration_method(new _gauss_approx_integration(n/2 + 1));
+      return new integration_method(new gauss_approx_integration_(n/2 + 1));
   }
 
 
@@ -523,13 +523,13 @@ namespace getfem
   /* integration on simplexes                                              */
   /* ********************************************************************* */
 
-  struct _Newton_Cotes_approx_integration : public approx_integration
+  struct Newton_Cotes_approx_integration_ : public approx_integration
   {
     // void calc_base_func(base_poly &p, short_type K, base_node &c) const;
-    _Newton_Cotes_approx_integration(dim_type nc, short_type k);
+    Newton_Cotes_approx_integration_(dim_type nc, short_type k);
   };
 
-  _Newton_Cotes_approx_integration::_Newton_Cotes_approx_integration
+  Newton_Cotes_approx_integration_::Newton_Cotes_approx_integration_
   (dim_type nc, short_type k)
     : approx_integration(bgeot::simplex_of_reference(nc)) {
     size_type R = bgeot::alpha(nc,k);
@@ -631,7 +631,7 @@ namespace getfem
     if (n < 0 || n >= 100 || k < 0 || k > 150 ||
 	double(n) != params[0].num() || double(k) != params[1].num())
       DAL_THROW(failure_error, "Bad parameters");
-    return new integration_method(new _Newton_Cotes_approx_integration(n, k));
+    return new integration_method(new Newton_Cotes_approx_integration_(n, k));
   }
 
   /* ********************************************************************* */
@@ -1141,36 +1141,36 @@ namespace getfem
   
   pintegration_method structured_composite_int_method(im_param_list &);
 
-  static ftool::naming_system<integration_method> *_im_naming_system = 0;
+  static ftool::naming_system<integration_method> *im_naming_system_ = 0;
   
   static void init_im_naming_system(void) {
-    _im_naming_system = new ftool::naming_system<integration_method>("IM");
-    _im_naming_system->add_suffix("EXACT_SIMPLEX", exact_simplex);
-    _im_naming_system->add_suffix("PRODUCT", product_which);
-    _im_naming_system->add_suffix("EXACT_PARALLELEPIPED",exact_parallelepiped);
-    _im_naming_system->add_suffix("EXACT_PRISM", exact_prism);
-    _im_naming_system->add_suffix("GAUSS1D", gauss1d);
-    _im_naming_system->add_suffix("NC", Newton_Cotes);
-    _im_naming_system->add_suffix("NC_PARALLELEPIPED", Newton_Cotes_para);
-    _im_naming_system->add_suffix("NC_PRISM", Newton_Cotes_prism);
-    _im_naming_system->add_suffix("GAUSS_PARALLELEPIPED", Gauss_paramul);
-    // _im_naming_system->add_suffix("TRIANGLE", approx_triangle);
-    // _im_naming_system->add_suffix("QUAD", approx_quad);
-    // _im_naming_system->add_suffix("TETRAHEDRON", approx_tetra);
-    _im_naming_system->add_suffix("STRUCTURED_COMPOSITE",
+    im_naming_system_ = new ftool::naming_system<integration_method>("IM");
+    im_naming_system_->add_suffix("EXACT_SIMPLEX", exact_simplex);
+    im_naming_system_->add_suffix("PRODUCT", product_which);
+    im_naming_system_->add_suffix("EXACT_PARALLELEPIPED",exact_parallelepiped);
+    im_naming_system_->add_suffix("EXACT_PRISM", exact_prism);
+    im_naming_system_->add_suffix("GAUSS1D", gauss1d);
+    im_naming_system_->add_suffix("NC", Newton_Cotes);
+    im_naming_system_->add_suffix("NC_PARALLELEPIPED", Newton_Cotes_para);
+    im_naming_system_->add_suffix("NC_PRISM", Newton_Cotes_prism);
+    im_naming_system_->add_suffix("GAUSS_PARALLELEPIPED", Gauss_paramul);
+    // im_naming_system_->add_suffix("TRIANGLE", approx_triangle);
+    // im_naming_system_->add_suffix("QUAD", approx_quad);
+    // im_naming_system_->add_suffix("TETRAHEDRON", approx_tetra);
+    im_naming_system_->add_suffix("STRUCTURED_COMPOSITE",
 				  structured_composite_int_method);
-    _im_naming_system->add_generic_function(im_list_integration);
+    im_naming_system_->add_generic_function(im_list_integration);
   }
   
   pintegration_method int_method_descriptor(std::string name) {
-    if (_im_naming_system == 0) init_im_naming_system();
+    if (im_naming_system_ == 0) init_im_naming_system();
     size_type i = 0;
-    return _im_naming_system->method(name, i);
+    return im_naming_system_->method(name, i);
   }
 
   std::string name_of_int_method(pintegration_method p) {
-    if (_im_naming_system == 0) init_im_naming_system();
-    return _im_naming_system->shorter_name_of_method(p);
+    if (im_naming_system_ == 0) init_im_naming_system();
+    return im_naming_system_->shorter_name_of_method(p);
   }
 
   /* Fonctions pour la ref. directe.                                     */

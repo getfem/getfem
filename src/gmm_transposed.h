@@ -29,8 +29,8 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef __GMM_TRANSPOSED_H
-#define __GMM_TRANSPOSED_H
+#ifndef GMM_TRANSPOSED_H__
+#define GMM_TRANSPOSED_H__
 
 #include <gmm_def.h>
 
@@ -52,19 +52,19 @@ namespace gmm {
     typedef typename linalg_traits<this_type>::reference reference;
     typedef typename linalg_traits<this_type>::porigin_type porigin_type;
 
-    iterator _begin, _end;
+    iterator begin_, end_;
     porigin_type origin;
     size_type nr, nc;
 
     transposed_row_ref(ref_M m)
-      : _begin(mat_row_begin(m)), _end(mat_row_end(m)),
+      : begin_(mat_row_begin(m)), end_(mat_row_end(m)),
 	origin(linalg_origin(m)), nr(mat_ncols(m)), nc(mat_nrows(m)) {}
 
     transposed_row_ref(const transposed_row_ref<CPT> &cr) :
-      _begin(cr._begin),_end(cr._end), origin(cr.origin),nr(cr.nr),nc(cr.nc) {}
+      begin_(cr.begin_),end_(cr.end_), origin(cr.origin),nr(cr.nr),nc(cr.nc) {}
 
     reference operator()(size_type i, size_type j) const
-    { return linalg_traits<M>::access(_begin+j, i); }
+    { return linalg_traits<M>::access(begin_+j, i); }
   };
 
   template <typename PT> struct linalg_traits<transposed_row_ref<PT> > {
@@ -96,11 +96,11 @@ namespace gmm {
     { return linalg_traits<M>::row(it); }
     static sub_col_type col(const col_iterator &it)
     { return linalg_traits<M>::row(it); }
-    static col_iterator col_begin(this_type &m) { return m._begin; }
-    static col_iterator col_end(this_type &m) { return m._end; }
+    static col_iterator col_begin(this_type &m) { return m.begin_; }
+    static col_iterator col_end(this_type &m) { return m.end_; }
     static const_col_iterator col_begin(const this_type &m)
-    { return m._begin; }
-    static const_col_iterator col_end(const this_type &m) { return m._end; }
+    { return m.begin_; }
+    static const_col_iterator col_end(const this_type &m) { return m.end_; }
     static origin_type* origin(this_type &v) { return v.origin; }
     static const origin_type* origin(const this_type &v) { return v.origin; }
     static void do_clear(this_type &v);
@@ -138,19 +138,19 @@ namespace gmm {
     typedef typename linalg_traits<this_type>::reference reference;
     typedef typename linalg_traits<this_type>::porigin_type porigin_type;
     
-    iterator _begin, _end;
+    iterator begin_, end_;
     porigin_type origin;
     size_type nr, nc;
 
     transposed_col_ref(ref_M m)
-      : _begin(mat_col_begin(m)), _end(mat_col_end(m)),
+      : begin_(mat_col_begin(m)), end_(mat_col_end(m)),
 	origin(linalg_origin(m)), nr(mat_ncols(m)), nc(mat_nrows(m)) {}
 
     transposed_col_ref(const transposed_col_ref<CPT> &cr) :
-      _begin(cr._begin),_end(cr._end), origin(cr.origin),nr(cr.nr),nc(cr.nc) {}
+      begin_(cr.begin_),end_(cr.end_), origin(cr.origin),nr(cr.nr),nc(cr.nc) {}
 
     reference operator()(size_type i, size_type j) const
-    { return linalg_traits<M>::access(_begin+i, j); }
+    { return linalg_traits<M>::access(begin_+i, j); }
   };
 
   template <typename PT> struct linalg_traits<transposed_col_ref<PT> > {
@@ -184,11 +184,11 @@ namespace gmm {
     { return linalg_traits<M>::col(it); }
     static sub_row_type row(const row_iterator &it)
     { return linalg_traits<M>::col(it); }
-    static row_iterator row_begin(this_type &m) { return m._begin; }
-    static row_iterator row_end(this_type &m) { return m._end; }
+    static row_iterator row_begin(this_type &m) { return m.begin_; }
+    static row_iterator row_end(this_type &m) { return m.end_; }
     static const_row_iterator row_begin(const this_type &m)
-    { return m._begin; }
-    static const_row_iterator row_end(const this_type &m) { return m._end; }
+    { return m.begin_; }
+    static const_row_iterator row_end(const this_type &m) { return m.end_; }
     static origin_type* origin(this_type &v) { return v.origin; }
     static const origin_type* origin(const this_type &v) { return v.origin; }
     static void do_clear(this_type &m);
@@ -214,22 +214,22 @@ namespace gmm {
   (std::ostream &o, const transposed_col_ref<PT>& m)
   { gmm::write(o,m); return o; }
 
-  template <typename TYPE, typename PT> struct _transposed_return {
+  template <typename TYPE, typename PT> struct transposed_return_ {
     typedef abstract_null_type return_type;
   };
-  template <typename PT> struct _transposed_return<row_major, PT> {
+  template <typename PT> struct transposed_return_<row_major, PT> {
     typedef typename std::iterator_traits<PT>::value_type L;
     typedef typename select_return<transposed_row_ref<const L *>,
             transposed_row_ref< L *>, PT>::return_type return_type;
   };
-  template <typename PT> struct _transposed_return<col_major, PT> {
+  template <typename PT> struct transposed_return_<col_major, PT> {
     typedef typename std::iterator_traits<PT>::value_type L;
     typedef typename select_return<transposed_col_ref<const L *>,
             transposed_col_ref< L *>, PT>::return_type return_type;
   };
   template <typename PT> struct transposed_return {
     typedef typename std::iterator_traits<PT>::value_type L;
-    typedef typename _transposed_return<typename principal_orientation_type<
+    typedef typename transposed_return_<typename principal_orientation_type<
             typename linalg_traits<L>::sub_orientation>::potype,
 	    PT>::return_type return_type;
   };
@@ -246,4 +246,4 @@ namespace gmm {
 
 }
 
-#endif //  __GMM_TRANSPOSED_H
+#endif //  GMM_TRANSPOSED_H__

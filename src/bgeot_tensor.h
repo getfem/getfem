@@ -31,8 +31,8 @@
 /* *********************************************************************** */
 
 
-#ifndef __BGEOT_TENSOR_H
-#define __BGEOT_TENSOR_H
+#ifndef BGEOT_TENSOR_H__
+#define BGEOT_TENSOR_H__
 
 #include <bgeot_vector.h>
 
@@ -89,7 +89,7 @@ namespace bgeot
   {
     protected:
 
-      multi_index _sizes, coeff;
+      multi_index sizes_, coeff;
       
     public:
 
@@ -102,7 +102,7 @@ namespace bgeot
 	typename CONT::const_iterator it = c.begin();
 	multi_index::const_iterator q = coeff.begin(), e = coeff.end();
 	#ifdef GETFEM_VERIFY
-	  multi_index::const_iterator qv = _sizes.begin();
+	  multi_index::const_iterator qv = sizes_.begin();
 	#endif
 	size_type d = 0;
 	for ( ; q != e; ++q, ++it)
@@ -128,15 +128,15 @@ namespace bgeot
       }
 
       inline size_type size(void) const { return vsvector<T>::size(); }
-      inline size_type size(int i) const { return _sizes[i]; }
-      inline const multi_index &sizes(void) const { return _sizes; }
-      inline size_type order(void) const { return _sizes.size(); }
+      inline size_type size(int i) const { return sizes_[i]; }
+      inline const multi_index &sizes(void) const { return sizes_; }
+      inline size_type order(void) const { return sizes_.size(); }
 
       void init(const multi_index &c)
       {
 	multi_index::const_iterator it = c.begin();
 	size_type d = 1;
-	_sizes = c; coeff.resize(c.size());
+	sizes_ = c; coeff.resize(c.size());
 	multi_index::iterator p = coeff.begin(), pe = coeff.end();
 	for ( ; p != pe; ++p, ++it) { *p = d; d *= *it; }
 	resize(d);
@@ -156,7 +156,7 @@ namespace bgeot
 
       void mat_reduction(const tensor &t, const gmm::dense_matrix<T> &m, int ni);
     size_type memsize() const { return vsvector<T>::memsize() +
-				  _sizes.memsize() + coeff.memsize(); }
+				  sizes_.memsize() + coeff.memsize(); }
   };
 
   template<class T> void tensor<T>::mat_transp_reduction (const tensor &t,
@@ -263,4 +263,4 @@ namespace bgeot
 }  /* end of namespace bgeot.                                              */
 
 
-#endif  /* __BGEOT_TENSOR_H */
+#endif  /* BGEOT_TENSOR_H__ */

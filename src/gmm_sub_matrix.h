@@ -29,8 +29,8 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef __GMM_SUB_MATRIX_H
-#define __GMM_SUB_MATRIX_H
+#ifndef GMM_SUB_MATRIX_H__
+#define GMM_SUB_MATRIX_H__
 
 #include <gmm_sub_vector.h>
 
@@ -54,21 +54,21 @@ namespace gmm {
 
     SUBI1 si1;
     SUBI2 si2;
-    iterator _begin;
+    iterator begin_;
     porigin_type origin;
     
     reference operator()(size_type i, size_type j) const 
-    { return linalg_traits<M>::access(_begin + si1.index(i), si2.index(j)); }
+    { return linalg_traits<M>::access(begin_ + si1.index(i), si2.index(j)); }
    
     size_type nrows(void) const { return si1.size(); }
     size_type ncols(void) const { return si2.size(); }
     
     gen_sub_row_matrix(ref_M m, const SUBI1 &s1, const SUBI2 &s2)
-      : si1(s1), si2(s2), _begin(mat_row_begin(m)),
+      : si1(s1), si2(s2), begin_(mat_row_begin(m)),
 	origin(linalg_origin(m)) {}
     gen_sub_row_matrix() {}
     gen_sub_row_matrix(const gen_sub_row_matrix<CPT, SUBI1, SUBI2> &cr) :
-      si1(cr.si1), si2(cr.si2), _begin(cr._begin),origin(cr.origin) {}
+      si1(cr.si1), si2(cr.si2), begin_(cr.begin_),origin(cr.origin) {}
   };
 
   template <typename PT, typename SUBI1, typename SUBI2>
@@ -158,13 +158,13 @@ namespace gmm {
     static sub_row_type row(const row_iterator &it)
     { return sub_row_type(linalg_traits<M>::row(*it), it.si2); }
     static const_row_iterator row_begin(const this_type &m)
-    { return const_row_iterator(m._begin, m.si1, m.si2, 0); }
+    { return const_row_iterator(m.begin_, m.si1, m.si2, 0); }
     static row_iterator row_begin(this_type &m)
-    { return row_iterator(m._begin, m.si1, m.si2, 0); }
+    { return row_iterator(m.begin_, m.si1, m.si2, 0); }
     static const_row_iterator row_end(const this_type &m)
-    { return const_row_iterator(m._begin, m.si1, m.si2,  m.nrows()); }
+    { return const_row_iterator(m.begin_, m.si1, m.si2,  m.nrows()); }
     static row_iterator row_end(this_type &m)
-    { return row_iterator(m._begin, m.si1, m.si2, m.nrows()); }
+    { return row_iterator(m.begin_, m.si1, m.si2, m.nrows()); }
     static origin_type* origin(this_type &v) { return v.origin; }
     static const origin_type* origin(const this_type &v) { return v.origin; }
     static void do_clear(this_type &m) {
@@ -206,21 +206,21 @@ namespace gmm {
 
     SUBI1 si1;
     SUBI2 si2;
-    iterator _begin;
+    iterator begin_;
     porigin_type origin;
     
     reference operator()(size_type i, size_type j) const
-    { return linalg_traits<M>::access(_begin + si2.index(j), si1.index(i)); }
+    { return linalg_traits<M>::access(begin_ + si2.index(j), si1.index(i)); }
 
     size_type nrows(void) const { return si1.size(); }
     size_type ncols(void) const { return si2.size(); }
     
     gen_sub_col_matrix(ref_M m, const SUBI1 &s1, const SUBI2 &s2)
-      : si1(s1), si2(s2), _begin(mat_col_begin(m)),
+      : si1(s1), si2(s2), begin_(mat_col_begin(m)),
         origin(linalg_origin(m)) {}
     gen_sub_col_matrix() {}
     gen_sub_col_matrix(const gen_sub_col_matrix<CPT, SUBI1, SUBI2> &cr) :
-      si1(cr.si1), si2(cr.si2), _begin(cr._begin),origin(cr.origin) {}
+      si1(cr.si1), si2(cr.si2), begin_(cr.begin_),origin(cr.origin) {}
   };
 
   template <typename PT, typename SUBI1, typename SUBI2>
@@ -309,13 +309,13 @@ namespace gmm {
     static sub_col_type col(const col_iterator &it)
     { return sub_col_type(linalg_traits<M>::col(*it), it.si1); }
     static const_col_iterator col_begin(const this_type &m)
-    { return const_col_iterator(m._begin, m.si1, m.si2, 0); }
+    { return const_col_iterator(m.begin_, m.si1, m.si2, 0); }
     static col_iterator col_begin(this_type &m)
-    { return col_iterator(m._begin, m.si1, m.si2, 0); }
+    { return col_iterator(m.begin_, m.si1, m.si2, 0); }
     static const_col_iterator col_end(const this_type &m)
-    { return const_col_iterator(m._begin, m.si1, m.si2,  m.ncols()); }
+    { return const_col_iterator(m.begin_, m.si1, m.si2,  m.ncols()); }
     static col_iterator col_end(this_type &m)
-    { return col_iterator(m._begin, m.si1, m.si2, m.ncols()); } 
+    { return col_iterator(m.begin_, m.si1, m.si2, m.ncols()); } 
     static origin_type* origin(this_type &v) { return v.origin; }
     static const origin_type* origin(const this_type &v) { return v.origin; }
     static void do_clear(this_type &m) {
@@ -343,19 +343,19 @@ namespace gmm {
   /* ******************************************************************** */
   
   template <typename PT, typename SUBI1, typename SUBI2, typename ST>
-  struct _sub_matrix_type {
+  struct sub_matrix_type_ {
     typedef abstract_null_type return_type;
   };
   template <typename PT, typename SUBI1, typename SUBI2>
-  struct _sub_matrix_type<PT, SUBI1, SUBI2, col_major>
+  struct sub_matrix_type_<PT, SUBI1, SUBI2, col_major>
   { typedef gen_sub_col_matrix<PT, SUBI1, SUBI2> matrix_type; };
   template <typename PT, typename SUBI1, typename SUBI2>
-  struct _sub_matrix_type<PT, SUBI1, SUBI2, row_major>
+  struct sub_matrix_type_<PT, SUBI1, SUBI2, row_major>
   { typedef gen_sub_row_matrix<PT, SUBI1, SUBI2> matrix_type; };
   template <typename PT, typename SUBI1, typename SUBI2>
   struct sub_matrix_type {
     typedef typename std::iterator_traits<PT>::value_type M;
-    typedef typename _sub_matrix_type<PT, SUBI1, SUBI2,
+    typedef typename sub_matrix_type_<PT, SUBI1, SUBI2,
         typename principal_orientation_type<typename
         linalg_traits<M>::sub_orientation>::potype>::matrix_type matrix_type;
   };
@@ -420,4 +420,4 @@ namespace gmm {
 
 }
 
-#endif //  __GMM_SUB_MATRIX_H
+#endif //  GMM_SUB_MATRIX_H__

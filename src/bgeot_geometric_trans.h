@@ -32,8 +32,8 @@
 
 
 
-#ifndef __BGEOT_GEOMETRIC_TRANSFORMATION_H
-#define __BGEOT_GEOMETRIC_TRANSFORMATION_H
+#ifndef BGEOT_GEOMETRIC_TRANSFORMATION_H__
+#define BGEOT_GEOMETRIC_TRANSFORMATION_H__
 
 #include <bgeot_config.h>
 #include <bgeot_convex_ref.h>
@@ -63,10 +63,10 @@ namespace bgeot
    *     which should be a diffeomorphism between $\overline{T}$ and $T$. It
    *     is assumed that there exists a polynomial vector \\
    *     $ \underline{\cal N}(\overline{x})
-   *        = \left({\cal N}_i(\overline{x})\right)_i, \ \ i = 0 .. n_g-1, $ \\
+   *        = \left({\cal N}i_(\overline{x})\right)i_, \ \ i = 0 .. n_g-1, $ \\
    *     defined on $\overline{T}$ of size $n_g$, such that the transformation
    *     $\tau$ can be written \\
-   *     $ \tau(\overline{x}) = \sum_{i = 0}^{n_g-1} {\cal N}_i(\overline{x})
+   *     $ \tau(\overline{x}) = \sum_{i = 0}^{n_g-1} {\cal N}i_(\overline{x})
    *     g^i. $ \\
    *     Denoting by \\
    *     $ \underline{\underline{G}} = (g^0; g^1; ...;g^{n_g-1}), $ \\
@@ -77,9 +77,9 @@ namespace bgeot
    *   \subsubsection*{Gradient of the transformation}
    *     The gradient of the transformation is \\
    *     $ \nabla \tau(\overline{x}) = 
-   *     \left( \frac{\partial \tau_i}{\partial \overline{x}_j} \right)_{ij}
+   *     \left( \frac{\partial \tau_i}{\partial \overline{x}j_} \right)_{ij}
    *     = \left( \sum_{l = 0}^{n_g-1}g^l_i
-   *     \frac{\partial {\cal N}_l(\overline{x})}{\partial \overline{x}_j}
+   *     \frac{\partial {\cal N}l_(\overline{x})}{\partial \overline{x}j_}
    *     \right)_{ij} = \underline{\underline{G}}\ \nabla
    *     \underline{\cal N}(\overline{x}), $ \\
    *     Remark : $\underline{\underline{G}}$ is a $N \times n_g$ matrix,
@@ -175,4 +175,4 @@ namespace bgeot
 }  /* end of namespace bgeot.                                             */
 
 
-#endif /* __BGEOT_GEOMETRIC_TRANSFORMATION_H                              */
+#endif /* BGEOT_GEOMETRIC_TRANSFORMATION_H__                              */

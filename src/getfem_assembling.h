@@ -31,14 +31,14 @@
 /* *********************************************************************** */
 
 
-#ifndef __GETFEM_ASSEMBLING_H
-#define __GETFEM_ASSEMBLING_H
+#ifndef GETFEM_ASSEMBLING_H__
+#define GETFEM_ASSEMBLING_H__
 
 #include <getfem_assembling_tensors.h>
 namespace getfem
 {
   /**
-     compute $\|U\|_2$
+     compute $\|U\|2_$
   */
   template<class VEC>
   scalar_type asm_L2_norm(const mesh_fem &mf, const VEC &U) {
@@ -61,7 +61,7 @@ namespace getfem
   }
 
   /**
-     compute $\|\nabla U\|_2$
+     compute $\|\nabla U\|2_$
    */
   template<class VEC>
   scalar_type asm_H1_semi_norm(const mesh_fem &mf, const VEC &U) {
@@ -310,10 +310,10 @@ namespace getfem
       - mfdata : the mesh_fem that describes the coefficients of A
       (mfdata.get_qdim() == 1).
 
-      - _A_ : a (very large) vector, which is a flattened (n x n x
+      - A__ : a (very large) vector, which is a flattened (n x n x
       mfdata.nb_dof()) 3D array. For each dof of mfdata, it contains
       the n x n coefficients of A. As usual, the order is the
-      "fortran-order", i.e. _A_ = [A_11(dof1) A_21(dof1) A_31(dof1)
+      "fortran-order", i.e. A__ = [A_11(dof1) A_21(dof1) A_31(dof1)
       A_12(dof1) A_22(dof1) ... A_33(dof) A_11(dof2)
       .... A_33(lastdof)]
   */
@@ -1274,4 +1274,4 @@ namespace getfem
 }  /* end of namespace getfem.                                             */
 
 
-#endif /* __GETFEM_ASSEMBLING_H  */
+#endif /* GETFEM_ASSEMBLING_H__  */

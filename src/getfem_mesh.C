@@ -320,11 +320,11 @@ namespace getfem
   }
 
   template<class ITER>
-    static void _write_tab_to_file(std::ostream &ost, ITER b, ITER e)
+    static void write_tab_to_file_(std::ostream &ost, ITER b, ITER e)
   { for ( ; b != e; ++b) ost << "  " << *b; }
 
   template<class ITER>
-    static void _write_convex_to_file(const getfem_mesh &ms,
+    static void write_convex_to_file_(const getfem_mesh &ms,
 				      std::ostream &ost,
 				      ITER b, ITER e) {
     for ( ; b != e; ++b) {
@@ -332,13 +332,13 @@ namespace getfem
       ost << "CONVEX " << i << "    "
 	  << bgeot::name_of_geometric_trans(ms.trans_of_convex(i)).c_str()
 	  << "    ";
-      _write_tab_to_file(ost, ms.ind_points_of_convex(i).begin(),
+      write_tab_to_file_(ost, ms.ind_points_of_convex(i).begin(),
 			 ms.ind_points_of_convex(i).end()  );
       ost << '\n';
     }
   }
 
-  template<class ITER> static void _write_point_to_file(std::ostream &ost,
+  template<class ITER> static void write_point_to_file_(std::ostream &ost,
 						  ITER b, ITER e)
   { for ( ; b != e; ++b) ost << "  " << *b; ost << '\n'; }
 
@@ -350,12 +350,12 @@ namespace getfem
     for (size_type i = 0; b != e; ++b, ++i)
       if ( (*b).is_valid() ) {
 	ost << "  POINT  " << i;
-	_write_point_to_file(ost, points()[i].begin(), points()[i].end());
+	write_point_to_file_(ost, points()[i].begin(), points()[i].end());
       }
     ost << '\n' << "END POINTS LIST" << '\n' << '\n' << '\n';
     
     ost << '\n' << "BEGIN MESH STRUCTURE DESCRIPTION" << '\n' << '\n';
-    _write_convex_to_file(*this, ost, convex_tab.tas_begin(),
+    write_convex_to_file_(*this, ost, convex_tab.tas_begin(),
 			              convex_tab.tas_end());
     ost << '\n' << "END MESH STRUCTURE DESCRIPTION" << '\n';
     lmsg_sender().send(MESH_WRITE_TO_FILE(ost));

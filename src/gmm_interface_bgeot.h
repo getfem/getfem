@@ -29,8 +29,8 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef __GMM_INTERFACE_BGEOT_H
-#define __GMM_INTERFACE_BGEOT_H
+#ifndef GMM_INTERFACE_BGEOT_H__
+#define GMM_INTERFACE_BGEOT_H__
 
 
 namespace gmm {
@@ -144,4 +144,4 @@ namespace gmm {
 }
 
 
-#endif //  __GMM_INTERFACE_BGEOT_H
+#endif //  GMM_INTERFACE_BGEOT_H__

@@ -29,8 +29,8 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef __GMM_OPT_H
-#define __GMM_OPT_H
+#ifndef GMM_OPT_H__
+#define GMM_OPT_H__
 
 namespace gmm {
 
@@ -108,4 +108,4 @@ namespace gmm {
   
 }
 
-#endif //  __GMM_OPT_H
+#endif //  GMM_OPT_H__

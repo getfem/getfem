@@ -175,16 +175,16 @@ namespace gmm {
 # define gem_p1_n(base_type)  const dense_matrix<base_type > &A
 # define gem_trans1_n(base_type) const char t = 'N'
 # define gem_p1_t(base_type)                                               \
-         const transposed_col_ref<dense_matrix<base_type > *> &_A
+         const transposed_col_ref<dense_matrix<base_type > *> &A_
 # define gem_trans1_t(base_type) dense_matrix<base_type > &A =             \
-         const_cast<dense_matrix<base_type > &>(*(linalg_origin(_A)));     \
+         const_cast<dense_matrix<base_type > &>(*(linalg_origin(A_)));     \
          const char t = 'T'
 # define gem_p1_tc(base_type)                                              \
-         const transposed_col_ref<const dense_matrix<base_type > *> &_A
+         const transposed_col_ref<const dense_matrix<base_type > *> &A_
 # define gem_p1_c(base_type)                                               \
-         const conjugated_col_matrix_const_ref<dense_matrix<base_type > > &_A
+         const conjugated_col_matrix_const_ref<dense_matrix<base_type > > &A_
 # define gem_trans1_c(base_type) dense_matrix<base_type > &A =             \
-         const_cast<dense_matrix<base_type > &>(*(linalg_origin(_A)));     \
+         const_cast<dense_matrix<base_type > &>(*(linalg_origin(A_)));     \
          const char t = 'C'
 
 
@@ -192,19 +192,19 @@ namespace gmm {
 # define gemv_p2_n(base_type)  const std::vector<base_type > &x
 # define gemv_trans2_n(base_type) base_type alpha(1)
 # define gemv_p2_s(base_type)                                              \
-         const scaled_vector_const_ref<std::vector<base_type > > &_x
+         const scaled_vector_const_ref<std::vector<base_type > > &x_
 # define gemv_trans2_s(base_type) std::vector<base_type > &x =             \
-         const_cast<std::vector<base_type > &>(*(linalg_origin(_x)));      \
-         base_type alpha(_x.r)
+         const_cast<std::vector<base_type > &>(*(linalg_origin(x_)));      \
+         base_type alpha(x_.r)
 
   // third parameter
 # define gemv_p3_n(base_type)  const std::vector<base_type > &y
 # define gemv_trans3_n(base_type) base_type beta(1)
 # define gemv_p3_s(base_type)                                              \
-         const scaled_vector_const_ref<std::vector<base_type > > &_y
+         const scaled_vector_const_ref<std::vector<base_type > > &y_
 # define gemv_trans3_s(base_type) std::vector<base_type > &y =             \
-         const_cast<std::vector<base_type > &>(*(linalg_origin(_y)));      \
-         base_type beta(_y.r)  
+         const_cast<std::vector<base_type > &>(*(linalg_origin(y_)));      \
+         base_type beta(y_.r)  
 
 
   // Z <- AX + Y.
@@ -494,12 +494,12 @@ namespace gmm {
 
 # define gemm_interface_tn(blas_name, base_type, is_const)                 \
   inline void mult_spec(                                                   \
-         const transposed_col_ref<is_const dense_matrix<base_type > *> &_A,\
+         const transposed_col_ref<is_const dense_matrix<base_type > *> &A_,\
          const dense_matrix<base_type > &B,                                \
          dense_matrix<base_type > &C, rcmult) {                            \
     GMMLAPACK_TRACE("gemm_interface_tn");                                  \
     dense_matrix<base_type > &A                                            \
-         = const_cast<dense_matrix<base_type > &>(*(linalg_origin(_A)));   \
+         = const_cast<dense_matrix<base_type > &>(*(linalg_origin(A_)));   \
     const char t = 'T', u = 'N';                                           \
     int m = mat_ncols(A), k = mat_nrows(A), n = mat_ncols(B), lda = k;     \
     int ldb = k, ldc = m;                                                  \
@@ -525,11 +525,11 @@ namespace gmm {
 
 # define gemm_interface_nt(blas_name, base_type, is_const)                 \
   inline void mult_spec(const dense_matrix<base_type > &A,                 \
-         const transposed_col_ref<is_const dense_matrix<base_type > *> &_B,\
+         const transposed_col_ref<is_const dense_matrix<base_type > *> &B_,\
          dense_matrix<base_type > &C, c_mult, row_major) {                 \
     GMMLAPACK_TRACE("gemm_interface_nt");                                  \
     dense_matrix<base_type > &B                                            \
-        = const_cast<dense_matrix<base_type > &>(*(linalg_origin(_B)));    \
+        = const_cast<dense_matrix<base_type > &>(*(linalg_origin(B_)));    \
     const char t = 'N', u = 'T';                                           \
     int m = mat_nrows(A), lda = m, k = mat_ncols(A), n = mat_nrows(B);     \
     int ldb = n, ldc = m;                                                  \
@@ -555,14 +555,14 @@ namespace gmm {
 
 # define gemm_interface_tt(blas_name, base_type, isA_const, isB_const)     \
   inline void mult_spec(                                                   \
-        const transposed_col_ref<isA_const dense_matrix<base_type > *> &_A,\
-        const transposed_col_ref<isB_const dense_matrix<base_type > *> &_B,\
+        const transposed_col_ref<isA_const dense_matrix<base_type > *> &A_,\
+        const transposed_col_ref<isB_const dense_matrix<base_type > *> &B_,\
         dense_matrix<base_type > &C, r_mult) {                             \
     GMMLAPACK_TRACE("gemm_interface_tt");                                  \
     dense_matrix<base_type > &A                                            \
-        = const_cast<dense_matrix<base_type > &>(*(linalg_origin(_A)));    \
+        = const_cast<dense_matrix<base_type > &>(*(linalg_origin(A_)));    \
     dense_matrix<base_type > &B                                            \
-        = const_cast<dense_matrix<base_type > &>(*(linalg_origin(_B)));    \
+        = const_cast<dense_matrix<base_type > &>(*(linalg_origin(B_)));    \
     const char t = 'T', u = 'T';                                           \
     int m = mat_ncols(A), k = mat_nrows(A), n = mat_nrows(B), lda = k;     \
     int ldb = n, ldc = m;                                                  \
@@ -597,12 +597,12 @@ namespace gmm {
 
 # define gemm_interface_cn(blas_name, base_type)                           \
   inline void mult_spec(                                                   \
-      const conjugated_col_matrix_const_ref<dense_matrix<base_type > > &_A,\
+      const conjugated_col_matrix_const_ref<dense_matrix<base_type > > &A_,\
       const dense_matrix<base_type > &B,                                   \
       dense_matrix<base_type > &C, rcmult) {                               \
     GMMLAPACK_TRACE("gemm_interface_cn");                                  \
     dense_matrix<base_type > &A                                            \
-          = const_cast<dense_matrix<base_type > &>(*(linalg_origin(_A)));  \
+          = const_cast<dense_matrix<base_type > &>(*(linalg_origin(A_)));  \
     const char t = 'C', u = 'N';                                           \
     int m = mat_ncols(A), k = mat_nrows(A), n = mat_ncols(B), lda = k;     \
     int ldb = k, ldc = m;                                                  \
@@ -624,11 +624,11 @@ namespace gmm {
 
 # define gemm_interface_nc(blas_name, base_type)                           \
   inline void mult_spec(const dense_matrix<base_type > &A,                 \
-      const conjugated_col_matrix_const_ref<dense_matrix<base_type > > &_B,\
+      const conjugated_col_matrix_const_ref<dense_matrix<base_type > > &B_,\
       dense_matrix<base_type > &C, c_mult, row_major) {                    \
     GMMLAPACK_TRACE("gemm_interface_nc");                                  \
     dense_matrix<base_type > &B                                            \
-         = const_cast<dense_matrix<base_type > &>(*(linalg_origin(_B)));   \
+         = const_cast<dense_matrix<base_type > &>(*(linalg_origin(B_)));   \
     const char t = 'N', u = 'C';                                           \
     int m = mat_nrows(A), lda = m, k = mat_ncols(A), n = mat_nrows(B);     \
     int ldb = n, ldc = m;                                                  \
@@ -650,14 +650,14 @@ namespace gmm {
 
 # define gemm_interface_cc(blas_name, base_type)                           \
   inline void mult_spec(                                                   \
-      const conjugated_col_matrix_const_ref<dense_matrix<base_type > > &_A,\
-      const conjugated_col_matrix_const_ref<dense_matrix<base_type > > &_B,\
+      const conjugated_col_matrix_const_ref<dense_matrix<base_type > > &A_,\
+      const conjugated_col_matrix_const_ref<dense_matrix<base_type > > &B_,\
       dense_matrix<base_type > &C, r_mult) {                               \
     GMMLAPACK_TRACE("gemm_interface_cc");                                  \
     dense_matrix<base_type > &A                                            \
-        = const_cast<dense_matrix<base_type > &>(*(linalg_origin(_A)));    \
+        = const_cast<dense_matrix<base_type > &>(*(linalg_origin(A_)));    \
     dense_matrix<base_type > &B                                            \
-        = const_cast<dense_matrix<base_type > &>(*(linalg_origin(_B)));    \
+        = const_cast<dense_matrix<base_type > &>(*(linalg_origin(B_)));    \
     const char t = 'C', u = 'C';                                           \
     int m = mat_ncols(A), k = mat_nrows(A), lda = k, n = mat_nrows(B);     \
     int ldb = n, ldc = m;                                                  \

@@ -58,15 +58,15 @@ namespace ftool
     typedef const METHOD *pmethod;
     
     struct parameter {
-      int _type; // 0 = numerique, 1 = pointeur sur autre methode.
-      double _num;
-      pmethod _pm;
+      int type_; // 0 = numerique, 1 = pointeur sur autre methode.
+      double num_;
+      pmethod pm_;
       
-      pmethod method(void) const { return _pm; }
-      double num(void) const { return _num; }
-      int type(void) const { return _type; }
-      parameter(double e) : _type(0), _num(e) {}
-      parameter(pmethod p) : _type(1), _pm(p) {}
+      pmethod method(void) const { return pm_; }
+      double num(void) const { return num_; }
+      int type(void) const { return type_; }
+      parameter(double e) : type_(0), num_(e) {}
+      parameter(pmethod p) : type_(1), pm_(p) {}
     };
     
     

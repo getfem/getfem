@@ -4,6 +4,9 @@
 #include <sys/times.h>
 #include <unistd.h>
 #include <iomanip>
+#ifdef GETFEM_HAVE_FEENABLEEXCEPT
+#  include <fenv.h>
+#endif
 
 using getfem::scalar_type;
 using getfem::size_type;
@@ -20,23 +23,23 @@ bool quick = false;
 struct chrono {
   struct ::tms t;
   ::clock_t t_elapsed;
-  float _cpu, _elapsed, _system;
+  float cpu_, elapsed_, system_;
   float nbclocktk;
 public:
   chrono() { nbclocktk = ::sysconf(_SC_CLK_TCK); init(); }
-  chrono& init() { _elapsed=0; _cpu=0; _system =0; return *this; }
+  chrono& init() { elapsed_=0; cpu_=0; system_ =0; return *this; }
   void tic() { t_elapsed = ::times(&t); }
   chrono& toc() { 
     struct tms t2; ::clock_t t2_elapsed = ::times(&t2); 
-    _elapsed += (t2_elapsed - t_elapsed) / nbclocktk;
-    _cpu     += (t2.tms_utime - t.tms_utime) / nbclocktk;
-    _system  += (t2.tms_stime - t.tms_stime) / nbclocktk;
+    elapsed_ += (t2_elapsed - t_elapsed) / nbclocktk;
+    cpu_     += (t2.tms_utime - t.tms_utime) / nbclocktk;
+    system_  += (t2.tms_stime - t.tms_stime) / nbclocktk;
     memcpy(&t, &t2, sizeof(struct tms));
     return *this;
   }
-  float cpu() const { return _cpu; }
-  float elapsed() const { return _elapsed; }
-  float system() const { return _system; }
+  float cpu() const { return cpu_; }
+  float elapsed() const { return elapsed_; }
+  float system() const { return system_; }
 };
 
 scalar_type func(const base_node& x) {
@@ -174,6 +177,9 @@ void test_different_mesh(size_type N, size_type NX, size_type K) {
 }
 
 int main(int argc, char *argv[]) {
+#ifdef GETFEM_HAVE_FEENABLEEXCEPT /* trap SIGFPE */
+  feenableexcept(FE_DIVBYZERO | FE_INVALID);
+#endif
   if (argc == 2 && strcmp(argv[1],"-quick")==0) quick = true;
   cout << "Testing interpolation..\n";
   test_same_mesh(2,quick ? 20 : 80,1);

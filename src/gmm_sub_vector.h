@@ -29,8 +29,8 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef __GMM_SUB_VECTOR_H
-#define __GMM_SUB_VECTOR_H
+#ifndef GMM_SUB_VECTOR_H__
+#define GMM_SUB_VECTOR_H__
 
 #include <gmm_interface.h>
 #include <gmm_sub_index.h>
@@ -94,24 +94,24 @@ namespace gmm {
     typedef typename linalg_traits<this_type>::reference reference;
     typedef typename linalg_traits<this_type>::porigin_type porigin_type;
 
-    iterator _begin, _end;
+    iterator begin_, end_;
     porigin_type origin;
     SUBI si;
 
     size_type size(void) const { return si.size(); }
    
     reference operator[](size_type i) const
-    { return linalg_traits<V>::access(origin, _begin, _end, si.index(i)); }
+    { return linalg_traits<V>::access(origin, begin_, end_, si.index(i)); }
 
-    sparse_sub_vector(V &v, const SUBI &s) : _begin(vect_begin(v)),
-       _end(vect_end(v)), origin(linalg_origin(v)), si(s) {}
+    sparse_sub_vector(V &v, const SUBI &s) : begin_(vect_begin(v)),
+       end_(vect_end(v)), origin(linalg_origin(v)), si(s) {}
     sparse_sub_vector(const V &v, const SUBI &s) 
-      : _begin(vect_begin(const_cast<V &>(v))),
-       _end(vect_end(const_cast<V &>(v))),
+      : begin_(vect_begin(const_cast<V &>(v))),
+       end_(vect_end(const_cast<V &>(v))),
 	origin(linalg_origin(const_cast<V &>(v))), si(s) {}
     sparse_sub_vector() {}
     sparse_sub_vector(const sparse_sub_vector<CPT, SUBI> &cr)
-      : _begin(cr._begin),_end(cr._end),origin(cr.origin), si(cr.si) {} 
+      : begin_(cr.begin_),end_(cr.end_),origin(cr.origin), si(cr.si) {} 
   };
 
   template <typename IT, typename MIT, typename SUBI, typename ORG,
@@ -185,14 +185,14 @@ namespace gmm {
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) {
       iterator it;
-      it.itb = v._begin; it.itbe = v._end; it.si = v.si;
+      it.itb = v.begin_; it.itbe = v.end_; it.si = v.si;
       if (!is_const_reference(is_reference()))
 	set_to_begin(it, v.origin, pthis_type(), is_reference());
       else it.forward();
       return it;
     }
     static const_iterator begin(const this_type &v) {
-      const_iterator it; it.itb = v._begin; it.itbe = v._end; it.si = v.si;
+      const_iterator it; it.itb = v.begin_; it.itbe = v.end_; it.si = v.si;
       if (!is_const_reference(is_reference()))
 	{ set_to_begin(it, v.origin, pthis_type(), is_reference()); }
       else it.forward();
@@ -200,14 +200,14 @@ namespace gmm {
     }
     static iterator end(this_type &v) {
       iterator it;
-      it.itb = v._end; it.itbe = v._end; it.si = v.si;
+      it.itb = v.end_; it.itbe = v.end_; it.si = v.si;
       if (!is_const_reference(is_reference()))
 	set_to_end(it, v.origin, pthis_type(), is_reference());
       else it.forward();
       return it;
     }
     static const_iterator end(const this_type &v) {
-      const_iterator it; it.itb = v._end; it.itbe = v._end; it.si = v.si;
+      const_iterator it; it.itb = v.end_; it.itbe = v.end_; it.si = v.si;
       if (!is_const_reference(is_reference()))
 	set_to_end(it, v.origin, pthis_type(), is_reference());
       else it.forward();
@@ -215,13 +215,13 @@ namespace gmm {
     }
     static origin_type* origin(this_type &v) { return v.origin; }
     static const origin_type* origin(const this_type &v) { return v.origin; }
-    static void clear(origin_type* o, const iterator &_begin,
-		      const iterator &_end) {
+    static void clear(origin_type* o, const iterator &begin_,
+		      const iterator &end_) {
       std::deque<size_type> ind;
-      iterator it = _begin;
-      for (; it != _end; ++it) ind.push_front(it.index());
+      iterator it = begin_;
+      for (; it != end_; ++it) ind.push_front(it.index());
       for (; !(ind.empty()); ind.pop_back())
-	access(o, _begin, _end, ind.back()) = value_type(0);
+	access(o, begin_, end_, ind.back()) = value_type(0);
     }
     static void do_clear(this_type &v) { clear(v.origin, begin(v), end(v)); }
     static value_type access(const origin_type *o, const const_iterator &it,
@@ -313,28 +313,28 @@ namespace gmm {
     typedef typename linalg_traits<this_type>::reference reference;
     typedef typename linalg_traits<this_type>::porigin_type porigin_type;
 
-    iterator _begin, _end;
+    iterator begin_, end_;
     porigin_type origin;
     SUBI si;
 
     size_type size(void) const { return si.size(); }
    
     reference operator[](size_type i) const
-    { return linalg_traits<V>::access(origin, _begin, _end, si.index(i)); }
+    { return linalg_traits<V>::access(origin, begin_, end_, si.index(i)); }
 
-    skyline_sub_vector(V &v, const SUBI &s) : _begin(vect_begin(v)),
-       _end(vect_end(v)), origin(linalg_origin(v)), si(s) {
-      update_for_sub_skyline(_begin, _end, si);
+    skyline_sub_vector(V &v, const SUBI &s) : begin_(vect_begin(v)),
+       end_(vect_end(v)), origin(linalg_origin(v)), si(s) {
+      update_for_sub_skyline(begin_, end_, si);
     }
     skyline_sub_vector(const V &v, const SUBI &s)
-      : _begin(vect_begin(const_cast<V &>(v))),
-	_end(vect_end(const_cast<V &>(v))),
+      : begin_(vect_begin(const_cast<V &>(v))),
+	end_(vect_end(const_cast<V &>(v))),
 	origin(linalg_origin(const_cast<V &>(v))), si(s) {
-      update_for_sub_skyline(_begin, _end, si);
+      update_for_sub_skyline(begin_, end_, si);
     }
     skyline_sub_vector() {}
     skyline_sub_vector(const skyline_sub_vector<pV, SUBI> &cr)
-      : _begin(cr._begin),_end(cr._end),origin(cr.origin), si(cr.si) {}
+      : begin_(cr.begin_),end_(cr.end_),origin(cr.origin), si(cr.si) {}
   };
 
   template <typename IT, typename MIT, typename SUBI, typename ORG,
@@ -416,26 +416,26 @@ namespace gmm {
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) {
       iterator it;
-      it.itb = v._begin; it.si = v.si;
+      it.itb = v.begin_; it.si = v.si;
       if (!is_const_reference(is_reference()))
 	set_to_begin(it, v.origin, pthis_type(), is_reference());
       return it;
     }
     static const_iterator begin(const this_type &v) {
-      const_iterator it; it.itb = v._begin; it.si = v.si;
+      const_iterator it; it.itb = v.begin_; it.si = v.si;
       if (!is_const_reference(is_reference()))
 	{ set_to_begin(it, v.origin, pthis_type(), is_reference()); }
       return it;
     }
     static iterator end(this_type &v) {
       iterator it;
-      it.itb = v._end; it.si = v.si;
+      it.itb = v.end_; it.si = v.si;
       if (!is_const_reference(is_reference()))
 	set_to_end(it, v.origin, pthis_type(), is_reference());
       return it;
     }
     static const_iterator end(const this_type &v) {
-      const_iterator it; it.itb = v._end; it.si = v.si;
+      const_iterator it; it.itb = v.end_; it.si = v.si;
       if (!is_const_reference(is_reference()))
 	set_to_end(it, v.origin, pthis_type(), is_reference());
       return it;
@@ -551,4 +551,4 @@ namespace gmm {
 
 }
 
-#endif //  __GMM_SUB_VECTOR_H
+#endif //  GMM_SUB_VECTOR_H__

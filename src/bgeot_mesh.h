@@ -30,8 +30,8 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef __BGEOT_MESH_H
-#define __BGEOT_MESH_H
+#ifndef BGEOT_MESH_H__
+#define BGEOT_MESH_H__
 
 #include <bgeot_mesh_structure.h>
 #include <bgeot_convex.h>
@@ -109,4 +109,4 @@ namespace bgeot
 }  /* end of namespace bgeot.                                              */
 
 
-#endif /* __BGEOT_MESH_H                                                   */
+#endif /* BGEOT_MESH_H__                                                   */

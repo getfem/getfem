@@ -29,8 +29,8 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef __GMM_VECTOR_H
-#define __GMM_VECTOR_H
+#ifndef GMM_VECTOR_H__
+#define GMM_VECTOR_H__
 
 #include <map>
 #include <gmm_interface.h>
@@ -300,7 +300,7 @@ namespace gmm
       *pv = const_cast<wsvector<T> *>(v2.origin);
     if (vect_size(v1) != vect_size(v2))
 	DAL_THROW(dimension_error,"dimensions mismatch");
-    *pv = v1; svr->_begin = vect_begin(*pv); svr->_end = vect_end(*pv);
+    *pv = v1; svr->begin_ = vect_begin(*pv); svr->end_ = vect_end(*pv);
   }
   template <typename T> inline
   void copy(const simple_vector_ref<const wsvector<T> *> &v1,
@@ -325,7 +325,7 @@ namespace gmm
     wsvector<T>
       *pv = const_cast<wsvector<T> *>((l.origin));
     clean(*pv, eps);
-    svr->_begin = vect_begin(*pv); svr->_end = vect_end(*pv);
+    svr->begin_ = vect_begin(*pv); svr->end_ = vect_end(*pv);
   }
 
   template <typename T>
@@ -337,18 +337,18 @@ namespace gmm
   /*                                                                       */
   /*************************************************************************/
 
-  template<typename T> struct _elt_rsvector {
+  template<typename T> struct elt_rsvector_ {
     size_type c; T e;
-    _elt_rsvector(void) {  }
-    _elt_rsvector(size_type cc) { c = cc; }
-    _elt_rsvector(size_type cc, const T &ee) { c = cc; e = ee; }
-    bool operator < (const _elt_rsvector &a) const { return c < a.c; }
-    bool operator == (const _elt_rsvector &a) const { return c == a.c; }
-    bool operator != (const _elt_rsvector &a) const { return c != a.c; }
+    elt_rsvector_(void) {  }
+    elt_rsvector_(size_type cc) { c = cc; }
+    elt_rsvector_(size_type cc, const T &ee) { c = cc; e = ee; }
+    bool operator < (const elt_rsvector_ &a) const { return c < a.c; }
+    bool operator == (const elt_rsvector_ &a) const { return c == a.c; }
+    bool operator != (const elt_rsvector_ &a) const { return c != a.c; }
   };
 
   template<typename T> struct rsvector_iterator {
-    typedef typename std::vector<_elt_rsvector<T> >::iterator IT;
+    typedef typename std::vector<elt_rsvector_<T> >::iterator IT;
     typedef T                   value_type;
     typedef value_type*         pointer;
     typedef value_type&         reference;
@@ -376,7 +376,7 @@ namespace gmm
   };
 
   template<typename T> struct rsvector_const_iterator {
-    typedef typename std::vector<_elt_rsvector<T> >::const_iterator IT;
+    typedef typename std::vector<elt_rsvector_<T> >::const_iterator IT;
     typedef T                   value_type;
     typedef const value_type*   pointer;
     typedef const value_type&   reference;
@@ -404,13 +404,13 @@ namespace gmm
     rsvector_const_iterator(const IT &i) : it(i) {}
   };
 
-  template<typename T> class rsvector : public std::vector<_elt_rsvector<T> > {
+  template<typename T> class rsvector : public std::vector<elt_rsvector_<T> > {
   public:
     
-    typedef std::vector<_elt_rsvector<T> > _base_type;
-    typedef typename _base_type::iterator iterator;
-    typedef typename _base_type::const_iterator const_iterator;
-    typedef typename _base_type::size_type size_type;
+    typedef std::vector<elt_rsvector_<T> > base_type_;
+    typedef typename base_type_::iterator iterator;
+    typedef typename base_type_::const_iterator const_iterator;
+    typedef typename base_type_::size_type size_type;
     typedef T value_type;
 
   protected:
@@ -420,7 +420,7 @@ namespace gmm
 
     void sup(size_type j);
     void out_of_range_error(void) const;
-    void base_resize(size_type n) { _base_type::resize(n); }
+    void base_resize(size_type n) { base_type_::resize(n); }
     void resize(size_type);
     
     ref_elt_vector<T, rsvector<T> > operator [](size_type c)
@@ -431,11 +431,11 @@ namespace gmm
 
     inline T operator [](size_type c) const { return r(c); }
     
-    size_type nb_stored(void) const { return _base_type::size(); }
+    size_type nb_stored(void) const { return base_type_::size(); }
     size_type size(void) const { return nbl; }
-    void clear(void) { _base_type::resize(0); }
+    void clear(void) { base_type_::resize(0); }
     void swap(rsvector<T> &v)
-    { std::swap(nbl, v.nbl); std::vector<_elt_rsvector<T> >::swap(v); }
+    { std::swap(nbl, v.nbl); std::vector<elt_rsvector_<T> >::swap(v); }
 
     /* Constructeurs */
     explicit rsvector(size_type l) : nbl(l) { }
@@ -444,11 +444,11 @@ namespace gmm
 
   template <typename T> void rsvector<T>::sup(size_type j) {
     if (nb_stored() != 0) {
-      _elt_rsvector<T> ev(j);
+      elt_rsvector_<T> ev(j);
       iterator it = std::lower_bound(this->begin(), this->end(), ev);
       if (it != this->end() && it->c == j) {
 	for (iterator ite = this->end() - 1; it != ite; ++it) *it = *(it+1);
-	_base_type::resize(nb_stored()-1);
+	base_type_::resize(nb_stored()-1);
       }
     }
   }
@@ -456,7 +456,7 @@ namespace gmm
   template<typename T>  void rsvector<T>::resize(size_type n) {
     if (n < nbl) {
       for (size_type i = 0; i < nb_stored(); ++i)
-	if (_base_type::operator[](i).c >= n) { base_resize(i); break; }
+	if (base_type_::operator[](i).c >= n) { base_resize(i); break; }
     }
     nbl = n;
   }
@@ -467,9 +467,9 @@ namespace gmm
 #   endif
     if (e == T(0)) sup(c);
     else {
-      _elt_rsvector<T> ev(c, e);
+      elt_rsvector_<T> ev(c, e);
       if (nb_stored() == 0) {
-	_base_type::resize(1);
+	base_type_::resize(1);
 	*(this->begin()) = ev;
       }
       else {
@@ -477,7 +477,7 @@ namespace gmm
 	if (it != this->end() && it->c == c) it->e = e;
 	else {
 	  size_type ind = it - this->begin();
-	  _base_type::resize(nb_stored()+1);
+	  base_type_::resize(nb_stored()+1);
 	  it = this->begin() + ind;
 	  for (iterator ite = this->end() - 1; ite != it; --ite)
 	    *ite = *(ite-1);
@@ -492,7 +492,7 @@ namespace gmm
     if (c >= nbl) out_of_range_error();
 #   endif
     if (nb_stored() != 0) {
-      _elt_rsvector<T> ev(c);
+      elt_rsvector_<T> ev(c);
       const_iterator it = std::lower_bound(this->begin(), this->end(), ev);
       if (it != this->end() && it->c == c) return it->e;
     }
@@ -556,7 +556,7 @@ namespace gmm
       *pv = const_cast<rsvector<T> *>((v2.origin));
     if (vect_size(v1) != vect_size(v2))
 	DAL_THROW(dimension_error,"dimensions mismatch");
-    *pv = v1; svr->_begin = vect_begin(*pv); svr->_end = vect_end(*pv);
+    *pv = v1; svr->begin_ = vect_begin(*pv); svr->end_ = vect_end(*pv);
   }
   template <typename T> inline
   void copy(const simple_vector_ref<const rsvector<T> *> &v1,
@@ -666,7 +666,7 @@ namespace gmm
     rsvector<T>
       *pv = const_cast<rsvector<T> *>((l.origin));
     clean(*pv, eps);
-    svr->_begin = vect_begin(*pv); svr->_end = vect_end(*pv);
+    svr->begin_ = vect_begin(*pv); svr->end_ = vect_end(*pv);
   }
   
   template <typename T>
@@ -796,13 +796,13 @@ namespace gmm
   protected :
     std::vector<T> data;
     size_type shift;
-    size_type _size;
+    size_type size_;
 
 
   public :
 
     void out_of_range_error(void) const;
-    size_type size(void) const { return _size; }
+    size_type size(void) const { return size_; }
     size_type first(void) const { return shift; }
     size_type last(void) const { return shift + data.size(); }
     ref_elt_vector<T, slvector<T> > operator [](size_type c)
@@ -818,7 +818,7 @@ namespace gmm
     void w(size_type c, const T &e);
     T r(size_type c) const {
 #   ifdef GMM_VERIFY
-      if (c >= _size) out_of_range_error();
+      if (c >= size_) out_of_range_error();
 #   endif
       if (c < shift || c >= shift + data.size()) return T(0);
       return data[c - shift];
@@ -830,14 +830,14 @@ namespace gmm
     void swap(slvector<T> &v) {
       std::swap(data, v.data);
       std::swap(shift, v.shift);
-      std::swap(_size, v._size);
+      std::swap(size_, v.size_);
     }
 
 
-    slvector(void) : data(0), shift(0), _size(0) {}
-    explicit slvector(size_type l) : data(0), shift(0), _size(l) {}
+    slvector(void) : data(0), shift(0), size_(0) {}
+    explicit slvector(size_type l) : data(0), shift(0), size_(l) {}
     slvector(size_type l, size_type d, size_type s)
-      : data(d), shift(d), _size(l) {}
+      : data(d), shift(d), size_(l) {}
 
   };
 
@@ -845,12 +845,12 @@ namespace gmm
     if (n < last()) {
       if (shift >= n) clear(); else { data.resize(n-shift); }
     }
-    _size = n;
+    size_ = n;
   }
 
   template<typename T>  void slvector<T>::w(size_type c, const T &e) {
 #   ifdef GMM_VERIFY
-      if (c >= _size) out_of_range_error();
+      if (c >= size_) out_of_range_error();
 #   endif
       size_type s = data.size();
       if (!s) { data.resize(1); shift = c; }
@@ -949,4 +949,4 @@ namespace std {
 
 
 
-#endif /* __GMM_VECTOR_H */
+#endif /* GMM_VECTOR_H__ */

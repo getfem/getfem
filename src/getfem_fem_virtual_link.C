@@ -119,7 +119,7 @@ namespace getfem
 
   };
 
-  template<class T> size_type __search_in_mjktab(const T &tab, size_type nbpt,
+  template<class T> size_type search_in_mjktab__(const T &tab, size_type nbpt,
 				    const getfem_mesh &m) {
     typename T::const_iterator it = tab.begin(), ite = tab.end();
     for (; it != ite; ++it)
@@ -142,7 +142,7 @@ namespace getfem
       if (ind[k] == size_type(-1))
 	DAL_THROW(internal_error, "internal error.");
     }
-    size_type cv2 = __search_in_mjktab(bgeot::convex_with_points
+    size_type cv2 = search_in_mjktab__(bgeot::convex_with_points
 				       (pmf2->linked_mesh(), npt, ind.begin()),
 				       npt, pmf2->linked_mesh());
     size_type cv1_old = size_type(-1), cv1;
@@ -338,23 +338,23 @@ namespace getfem
     sup_mf_link_fem(*pmf1, *pmf2);
   }
 
-  struct _virtual_link_fem_light {
+  struct virtual_link_fem_light_ {
     pmesh_fem_link_fem pmflf;
     papprox_integration pai;
     bool with_grad;
-    bool operator < (const _virtual_link_fem_light &l) const {
+    bool operator < (const virtual_link_fem_light_ &l) const {
       if (pmflf < l.pmflf) return true; if (pmflf > l.pmflf) return false; 
       if (pai < l.pai) return true; if (pai > l.pai) return false;
       if (with_grad < l.with_grad) return true; return false;
     }
-    _virtual_link_fem_light(pmesh_fem_link_fem a, papprox_integration b,
+    virtual_link_fem_light_(pmesh_fem_link_fem a, papprox_integration b,
 			    bool c)
       : pmflf(a), pai(b), with_grad(c) {}
-    _virtual_link_fem_light(void) {}
+    virtual_link_fem_light_(void) {}
   };
 
 
-  class _virtual_link_fem : public virtual_fem
+  class virtual_link_fem_ : public virtual_fem
   {
 
   protected :
@@ -379,8 +379,8 @@ namespace getfem
 
     virtual size_type nb_dof(void) const {
       size_type nb = pmflf->nb_max_dof_per_element();
-      if (nb != _dof_types.size()) 
-	(const_cast<_virtual_link_fem *>(this))->build_dof(nb);
+      if (nb != dof_types_.size()) 
+	(const_cast<virtual_link_fem_ *>(this))->build_dof(nb);
       return nb;
     }
     virtual size_type nb_base(void) const
@@ -460,7 +460,7 @@ namespace getfem
 	  "You cannot interpolate this element, use the original element.");
     }
     
-    _virtual_link_fem(const _virtual_link_fem_light &ls)
+    virtual_link_fem_(const virtual_link_fem_light_ &ls)
       : pmflf(ls.pmflf), pai(ls.pai), with_grad(ls.with_grad) {
       is_equiv = is_pol = is_lag = false; es_degree = 5;
       cvr = pai->ref_convex();
@@ -471,16 +471,16 @@ namespace getfem
   };
 
 
-  typedef dal::FONC_TABLE<_virtual_link_fem_light, _virtual_link_fem>
+  typedef dal::FONC_TABLE<virtual_link_fem_light_, virtual_link_fem_>
     virtual_link_fem_table;
-  static virtual_link_fem_table *__vlf_tab = 0;
+  static virtual_link_fem_table *vlf_tab__ = 0;
 
   pfem virtual_link_fem(mesh_fem &mf1, mesh_fem &mf2,
 			pintegration_method pim) {
     if (pim->is_ppi) DAL_THROW(std::invalid_argument,
 	     "This element is only defined on approximated integration.");
-    if (__vlf_tab == 0) __vlf_tab = new virtual_link_fem_table();
-    return __vlf_tab->add(_virtual_link_fem_light(mf_link_fem(mf1, mf2),
+    if (vlf_tab__ == 0) vlf_tab__ = new virtual_link_fem_table();
+    return vlf_tab__->add(virtual_link_fem_light_(mf_link_fem(mf1, mf2),
 						  pim->method.pai, false));
   }
 	
@@ -488,18 +488,18 @@ namespace getfem
 			pintegration_method pim) {
     if (pim->is_ppi) DAL_THROW(std::invalid_argument,
 	     "This element is only defined on approximated integration.");
-    if (__vlf_tab == 0) __vlf_tab = new virtual_link_fem_table();
-    return __vlf_tab->add(_virtual_link_fem_light(mf_link_fem(mf1, mf2),
+    if (vlf_tab__ == 0) vlf_tab__ = new virtual_link_fem_table();
+    return vlf_tab__->add(virtual_link_fem_light_(mf_link_fem(mf1, mf2),
 						  pim->method.pai, true));
   }
 	
   static void sup_virtual_link_fem(pmesh_fem_link_fem pmflf) {
     if (mflf_tab != 0) {
       virtual_link_fem_table::desc_table_type::const_iterator
-	it = __vlf_tab->table().begin(), ite = __vlf_tab->table().end();
+	it = vlf_tab__->table().begin(), ite = vlf_tab__->table().end();
       for (; it != ite; ++it)
 	if (*it != 0 && (*it)->associated_mf_link_fem() == pmflf)
-	  __vlf_tab->sup(_virtual_link_fem_light
+	  vlf_tab__->sup(virtual_link_fem_light_
 			 (pmflf, (*it)->associated_integration(),
 			  (*it)->is_with_grad()));
     }

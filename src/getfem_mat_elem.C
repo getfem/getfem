@@ -40,23 +40,23 @@ namespace getfem
   /*       Elementary matrices computation.                                */
   /* ********************************************************************* */
 
-  struct _emelem_comp_light {
+  struct emelem_comp_light_ {
     pmat_elem_type pmt;
     pintegration_method ppi;
     bgeot::pgeometric_trans pgt;
-    bool operator < (const _emelem_comp_light &ls) const {
+    bool operator < (const emelem_comp_light_ &ls) const {
       if (pmt < ls.pmt) return true; if (pmt > ls.pmt) return false; 
       if (ppi < ls.ppi) return true; if (ppi > ls.ppi) return false; 
       if (pgt < ls.pgt) return true; return false;
     }
-    _emelem_comp_light(pmat_elem_type pm, pintegration_method pi,
+    emelem_comp_light_(pmat_elem_type pm, pintegration_method pi,
 		       bgeot::pgeometric_trans pg)
     { pmt = pm; ppi = pi; pgt = pg; }
-    _emelem_comp_light(void) { }
+    emelem_comp_light_(void) { }
   };
 
 
-  struct _emelem_comp_structure : public mat_elem_computation
+  struct emelem_comp_structure_ : public mat_elem_computation
   {
     pgeotrans_precomp pgp;
     ppoly_integration ppi;
@@ -76,7 +76,7 @@ namespace getfem
     bool computed_on_real_element;
 
     size_type memsize() const {
-      size_type sz = sizeof(_emelem_comp_structure) +
+      size_type sz = sizeof(emelem_comp_structure_) +
 	mref.capacity()*sizeof(base_tensor) +
 	grad_reduction.size()*sizeof(short_type) +
 	hess_reduction.size()*sizeof(short_type) +
@@ -87,7 +87,7 @@ namespace getfem
       return sz;
     }
 
-    _emelem_comp_structure(const _emelem_comp_light &ls) {
+    emelem_comp_structure_(const emelem_comp_light_ &ls) {
       
       pgt = ls.pgt;
       pgp = geotrans_precomp(ls.pgt, &(ls.ppi->integration_points()));
@@ -117,11 +117,11 @@ namespace getfem
 	  trans_reduction_pfi.push_back((*it).pfi);
 	}
 	switch ((*it).t) {
-	case GETFEM__BASE    : break;
-	case GETFEM__GRAD    : ++k;
+	case GETFEM_BASE_    : break;
+	case GETFEM_GRAD_    : ++k;
 	  if (!((*it).pfi->is_on_real_element())) grad_reduction.push_back(k);
 	  break;
-	case GETFEM__HESSIAN : ++k; hess_reduction.push_back(k); break;
+	case GETFEM_HESSIAN_ : ++k; hess_reduction.push_back(k); break;
 	}
       }
 
@@ -147,10 +147,10 @@ namespace getfem
 	++mit; if ((*it).pfi->target_dim() > 1) ++mit;
 	
 	switch ((*it).t) {
-	case GETFEM__BASE    :
+	case GETFEM_BASE_    :
 	  (*it).pfi->real_base_value(pgp, pfp[k], ip, G, elmt_stored[k], elt);
 	  break;
-	case GETFEM__GRAD    :
+	case GETFEM_GRAD_    :
 	  if (trans) {
 	    (*it).pfi->real_grad_base_value(pgp, pfp[k], ip, G, B, 
 					    elmt_stored[k], elt);
@@ -159,7 +159,7 @@ namespace getfem
 	  else
 	    elmt_stored[k] = pfp[k]->grad(ip);
 	  break;
-	case GETFEM__HESSIAN :
+	case GETFEM_HESSIAN_ :
 	  if (trans) {
 	    (*it).pfi->real_hess_base_value(pgp, pfp[k], ip, G, B3, 
 					    B32, elmt_stored[k], elt);
@@ -248,11 +248,11 @@ namespace getfem
 	  Q = ((ppolyfem)((*it).pfi))->base()[ind];
 
 	  switch ((*it).t) {
-	  case GETFEM__GRAD    : Q.derivative(*mit); ++mit; break;
-	  case GETFEM__HESSIAN :
+	  case GETFEM_GRAD_    : Q.derivative(*mit); ++mit; break;
+	  case GETFEM_HESSIAN_ :
 	    Q.derivative(*mit % dim); Q.derivative(*mit / dim);
 	    ++mit; break;
-	  case GETFEM__BASE : break;
+	  case GETFEM_BASE_ : break;
 	  }
 	  ++it;
 
@@ -267,11 +267,11 @@ namespace getfem
 	      R = ((ppolyfem)((*it).pfi))->base()[ind];
 	      
 	      switch ((*it).t) {
-	      case GETFEM__GRAD    : R.derivative(*mit); ++mit; break;
-	      case GETFEM__HESSIAN :
+	      case GETFEM_GRAD_    : R.derivative(*mit); ++mit; break;
+	      case GETFEM_HESSIAN_ :
 		R.derivative(*mit % dim); R.derivative(*mit / dim);
 		++mit; break;
-	      case GETFEM__BASE : break;
+	      case GETFEM_BASE_ : break;
 	      }
 	      P *= R;   
 	    }
@@ -436,16 +436,16 @@ namespace getfem
 
   };
 
-  static dal::FONC_TABLE<_emelem_comp_light, _emelem_comp_structure>
-    *_tab__mat_elet = 0;
+  static dal::FONC_TABLE<emelem_comp_light_, emelem_comp_structure_>
+    *tab__mat_elet_ = 0;
   
   pmat_elem_computation mat_elem(pmat_elem_type pm, pintegration_method pi,
 				 bgeot::pgeometric_trans pg)
   { 
-    if (_tab__mat_elet == 0)
-      _tab__mat_elet = 
-	new dal::FONC_TABLE<_emelem_comp_light, _emelem_comp_structure>();
-    return _tab__mat_elet->add(_emelem_comp_light(pm, pi, pg));
+    if (tab__mat_elet_ == 0)
+      tab__mat_elet_ = 
+	new dal::FONC_TABLE<emelem_comp_light_, emelem_comp_structure_>();
+    return tab__mat_elet_->add(emelem_comp_light_(pm, pi, pg));
   }
 
 

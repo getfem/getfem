@@ -32,8 +32,8 @@
 
 
 
-#ifndef __BGEOT_CONVEX_STRUCTURE_H
-#define __BGEOT_CONVEX_STRUCTURE_H
+#ifndef BGEOT_CONVEX_STRUCTURE_H__
+#define BGEOT_CONVEX_STRUCTURE_H__
 
 #include <dal_ref.h>
 #include <dal_alloc.h>
@@ -70,7 +70,7 @@ namespace bgeot
       short_type nbpt, nbf;
       convex_structure_faces_ct  faces_struct;
       std::vector<convex_ind_ct> faces;
-      convex_ind_ct              _dir_points;
+      convex_ind_ct              dir_points_;
       pconvex_structure basic_pcvs;
 
     public :
@@ -95,7 +95,7 @@ namespace bgeot
       { return faces[i]; }
 
       inline const convex_ind_ct &ind_dir_points() const
-      { return _dir_points; }
+      { return dir_points_; }
       /** Gives a pointer array on the structures of the faces.
        *   faces\_structure()[i] is a pointer on the structure of the face i.
        */
@@ -152,4 +152,4 @@ namespace bgeot
 }  /* end of namespace bgeot.                                             */
 
 
-#endif /* __BGEOT_CONVEX_STRUCTURE_H                                      */
+#endif /* BGEOT_CONVEX_STRUCTURE_H__                                      */

@@ -30,8 +30,8 @@
 /* *********************************************************************** */
 
 
-#ifndef __BGEOT_VECTOR_H
-#define __BGEOT_VECTOR_H
+#ifndef BGEOT_VECTOR_H__
+#define BGEOT_VECTOR_H__
 
 #include <bgeot_config.h>
 #include <gmm_kernel.h>
@@ -265,4 +265,4 @@ namespace std {
 
 #include <gmm_interface_bgeot.h>
 
-#endif  /* __BGEOT_VECTOR_H */
+#endif  /* BGEOT_VECTOR_H__ */
