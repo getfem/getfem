@@ -131,7 +131,6 @@ else
   while ($ligne = <F1>)
   {
     $ligne =~ s/HREF\=\"/HREF\=\"..\/getfem++\/doc\/html\//g;
-    print $ligne;
     print F2 $ligne;
   }
   close F1; close F2; 
