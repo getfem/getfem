@@ -66,10 +66,9 @@ namespace getfem
 	  { PO = pgt->poly_vector()[k]; PO.derivative(n); pc(k,n) = PO[0]; }
     
       gmm::mult(gmm::transposed(pc), gmm::transposed(a), B0);
-      det[cv] = bgeot::mat_inverse(B0);
+      det[cv] = gmm::lu_inverse(B0);
       gtrans[cv] = B0;
       orgs[cv] = m.points_of_convex(cv)[0];
-    
     }
   }
 

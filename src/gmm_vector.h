@@ -9,7 +9,7 @@
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 2002 Yves Renard.                                         */
+/* Copyright (C) 2002-2003 Yves Renard.                                    */
 /*                                                                         */
 /* This file is a part of GETFEM++                                         */
 /*                                                                         */
@@ -426,7 +426,8 @@ namespace gmm
 	  size_type ind = it - this->begin();
 	  _base_type::resize(nb_stored()+1);
 	  it = this->begin() + ind;
-	  for (iterator ite = this->end() - 1; ite != it; --ite) *ite = *(ite-1);
+	  for (iterator ite = this->end() - 1; ite != it; --ite)
+	    *ite = *(ite-1);
 	  *it = ev;  // à verifier
 	}
       }

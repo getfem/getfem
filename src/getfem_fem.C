@@ -93,11 +93,11 @@ namespace getfem
     gmm::mult(G, pc, grad);
     if (P != N) {
       gmm::mult(gmm::transposed(grad), grad, CS);
-      bgeot::mat_inverse(CS);
+      gmm::lu_inverse(CS);
       gmm::mult(gmm::transposed(CS), gmm::transposed(grad), B0);
     }
     else {
-      bgeot::mat_inverse(grad);
+      gmm::lu_inverse(grad);
       B0 = grad;
     }
      

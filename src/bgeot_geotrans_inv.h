@@ -169,13 +169,13 @@ namespace bgeot
       gmm::mult(a, pc, grad);
       if (N != P) {
 	gmm::mult(gmm::transposed(grad), grad, CS);
-	bgeot::mat_inverse(CS);
+	gmm::lu_inverse(CS);
 	gmm::mult(gmm::transposed(CS), gmm::transposed(grad), B0);
       }
       else {
 	// L'inversion peut être optimisée par le non calcul global de B0
 	// et la resolution d'un système linéaire.
-	bgeot::mat_inverse(grad); B0 = grad;
+	gmm::lu_inverse(grad); B0 = grad;
       }
       
       for (size_type l = 0; l < nbib; ++l) {
@@ -232,11 +232,11 @@ namespace bgeot
 	  gmm::mult(a, pc, grad);
 	  if (N != P) {
 	    gmm::mult(gmm::transposed(grad), grad, CS);
-	    bgeot::mat_inverse(CS);
+	    gmm::lu_inverse(CS);
 	    gmm::mult(gmm::transposed(CS), gmm::transposed(grad), B0);
 	  }
 	  else {
-	    bgeot::mat_inverse(grad); B0 = grad;
+	    gmm::lu_inverse(grad); B0 = grad;
 	  }
 	  // cout << "grad = " << grad << endl;
 	  xn = x;
@@ -323,13 +323,13 @@ namespace bgeot
       gmm::mult(a, pc, grad);
       if (N != P) {
 	gmm::mult(gmm::transposed(grad), grad, CS);
-        bgeot::mat_inverse(CS);
+        gmm::lu_inverse(CS);
 	gmm::mult(gmm::transposed(CS), gmm::transposed(grad), B0);
       }
       else {
         // L'inversion peut être optimisée par le non calcul global de B0
         // et la resolution d'un système linéaire.
-        bgeot::mat_inverse(grad); B0 = grad;
+        gmm::lu_inverse(grad); B0 = grad;
       }
     } else {
       cvpts.resize(cv.nb_points());

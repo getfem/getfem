@@ -6,7 +6,8 @@
    As an example, let say that we have a tensor t(i,j,k,l) of
    dimensions 4x2x3x3, with t(i,j,k,l!=k) == 0. 
    
-   Then the tensor shape will be represented by a set of 3 objects of type 'tensor_mask':
+   Then the tensor shape will be represented by a set of 3 objects of type
+     'tensor_mask':
    mask1: {i}, "1111"
    mask2: {j}, "11"
    mask3: {k,l}, "100"
@@ -14,14 +15,16 @@
                  "001"
    They contain a binary tensor indicating the non-null elements.
    
-   The set of these three masks define the shape of the tensor (class tensor_shape)
+   The set of these three masks define the shape of the tensor
+   (class tensor_shape)
 
-   If we add information about the location of the non-null elements (by mean of strides),
-   then we have an object of type 'tensor_ref'
+   If we add information about the location of the non-null elements
+   (by mean of strides), then we have an object of type 'tensor_ref'
 
    
-   Iteration on the data of one or more tensor should be done via the 'multi_tensor_iterator',
-   which can iterate over common non-null elements of a set of tensors.
+   Iteration on the data of one or more tensor should be done via the
+   'multi_tensor_iterator', which can iterate over common non-null
+   elements of a set of tensors.
 
 
    maximum (virtual) number of elements in a tensor : 2^31
