@@ -1,16 +1,23 @@
+2004-12-02  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/bgeot_geotrans_inv.C (bgeot): Made inversion geometric
+	transformations more robust (linear search in the Newton
+	algorithm).
+
 2004-11-25  Yves Renard  <Yves.Renard@insa-toulouse.fr>
 
 	* src/getfem_linearized_plate.h linearized plate brick
 
 2004-11-03  Yves Renard  <Yves.Renard@insa-toulouse.fr>
 
-	* src/getfem_fem_sum.h introduction of a fem wich make the direct sum
-	  of two fems..
+	* src/getfem_fem_sum.h introduction of a fem which is the direct
+	sum of two fems..
 
 2004-11-03  Yves Renard  <Yves.Renard@insa-toulouse.fr>
 
-	* src/getfem_fem_virtual_link.h replaced by getfem_interpolated_fem.h
-	  redefinition of the interpolation of a fem with real element fems.
+	* src/getfem_fem_virtual_link.h replaced by
+	getfem_interpolated_fem.h redefinition of the interpolation of a
+	fem with real element fems.
 
 2004-10-19  Yves Renard  <Yves.Renard@insa-toulouse.fr>
 

@@ -50,3 +50,5 @@ mesh_fem::point_of_dof est très lent sur des PGT(2,4) par ex. (appel a geometric
 mat_elem & reduction inline: quid des elts non equivalents
 
 ajouter à la faq de gmm: "Q: est-ce que gmm et getfem resteront deux packages separés"
+
+tester les geotransinv de R^N dans R^P... 

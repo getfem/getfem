@@ -240,22 +240,70 @@ void test_different_mesh(int mat_version, size_type N, size_type NX, size_type K
   //mf1.write_to_file("toto.mf",true);
 }
 
+void test0() {
+  getfem_mesh m1, m2;
+  std::stringstream ss1("BEGIN POINTS LIST\n"
+		       "  POINT  0  2.5  0.6\n"
+		       "  POINT  1  5  0\n"
+		       "  POINT  2  2.5  1.8\n"
+		       "  POINT  3  3.2  1.5\n"
+		       "  POINT  4  2.1  1.8\n"
+		       "  POINT  5  2.1  3\n"
+		       "  POINT  6  2.7  2.4\n"
+		       "END POINTS LIST\n\n"
+		       "BEGIN MESH STRUCTURE DESCRIPTION\n"
+		       "CONVEX 0    GT_QK(2,1)      0  1  2  3\n"
+		       "CONVEX 1    GT_QK(2,1)      4  2  5  6\n"
+		       "END MESH STRUCTURE DESCRIPTION");
+  m1.read_from_file(ss1);
+  std::stringstream ss2("BEGIN POINTS LIST\n"
+			"  POINT  0  3.809523809523809  0.2857142857142857\n"
+			"  POINT  1  5  0\n"
+			"  POINT  2  3.2  1.5\n"
+			"  POINT  3  3.092307692307692  1.361538461538462\n"
+			"  POINT  4  2.92  1.62\n"
+			"  POINT  5  2.52  2.22\n"
+			"  POINT  6  2.6  2.1\n"
+			"  POINT  7  2.7  2.4\n"
+			"  POINT  8  2.1  2.85\n"
+			"  POINT  9  2.1  3\n"
+			"END POINTS LIST\n"
+			"BEGIN MESH STRUCTURE DESCRIPTION\n"
+			"CONVEX 0    GT_PK(2,1)      0  1  2\n"
+			"CONVEX 1    GT_PK(2,1)      3  0  2\n"
+			"CONVEX 2    GT_PK(2,1)      4  3  2\n"
+			"CONVEX 3    GT_PK(2,1)      5  6  7\n"
+			"CONVEX 4    GT_PK(2,1)      8  5  7\n"
+			"CONVEX 5    GT_PK(2,1)      9  8  7\n"
+			"END MESH STRUCTURE DESCRIPTION\n");
+  m2.read_from_file(ss2);
+  mesh_fem mf1(m1,1), mf2(m2,1);
+  mf1.set_finite_element(getfem::fem_descriptor("FEM_QK(2,1)"));
+  mf2.set_finite_element(getfem::fem_descriptor("FEM_PK(2,1)"));
+  rsc_matrix M(mf2.nb_dof(), mf1.nb_dof());
+  getfem::interpolation(mf1, mf2, M);
+}
+
 int main(int argc, char *argv[]) {
 #ifdef GETFEM_HAVE_FEENABLEEXCEPT /* trap SIGFPE */
   feenableexcept(FE_DIVBYZERO | FE_INVALID);
 #endif
   if (argc == 2 && strcmp(argv[1],"-quick")==0) quick = true;
-  for (int mat_version = 0; mat_version < 5; ++mat_version) {
-    const char *msg[] = {"Testing interpolation", 
-                   "Testing stored interpolator in rsc matrix",
-                   "Testing stored interpolator in rsr matrix",
-                   "Testing stored interpolator in wsc matrix",
-                   "Testing stored interpolator in wsr matrix"};
-    cout << msg[mat_version] << "..\n";
-    test_same_mesh(mat_version, 2,quick ? 17 : 80,1);
-    test_same_mesh(mat_version, 2,quick ? 8 : 20,4);
-    test_same_mesh(mat_version, 3,quick ? 5 : 15,1);
-    test_different_mesh(mat_version, 2,quick ? 17 : 80,1);
-    test_different_mesh(mat_version, 3,quick ? 6 : 15,1);
-  }
+  try {
+    test0();
+    for (int mat_version = 0; mat_version < 5; ++mat_version) {
+      const char *msg[] = {"Testing interpolation", 
+			   "Testing stored interpolator in rsc matrix",
+			   "Testing stored interpolator in rsr matrix",
+			   "Testing stored interpolator in wsc matrix",
+			   "Testing stored interpolator in wsr matrix"};
+      cout << msg[mat_version] << "..\n";
+      test_same_mesh(mat_version, 2,quick ? 17 : 80,1);
+      test_same_mesh(mat_version, 2,quick ? 8 : 20,4);
+      test_same_mesh(mat_version, 3,quick ? 5 : 15,1);
+      test_different_mesh(mat_version, 2,quick ? 17 : 80,1);
+      test_different_mesh(mat_version, 3,quick ? 6 : 15,1);
+    }
+  }  
+  DAL_STANDARD_CATCH_ERROR;
 }

@@ -88,7 +88,7 @@ namespace bgeot {
     if (geotrans_changed) {
       P = pgt->structure()->dim();
       pc.resize(pgt->nb_points() , P);
-      K.resize(N,P); B.resize(N,P); CS.resize(P,P);
+      K.resize(P,N); B.resize(N,P); CS.resize(P,P);
       G.resize(N, pgt->nb_points());
     }
     vectors_to_base_matrix(G, cv.points());

@@ -65,10 +65,11 @@ namespace bgeot
     }
   }
 
-  /* inversion for non-linear geometric transformations */
+  /* inversion for non-linear geometric transformations 
+     (Newton on Grad(pgt)(y - pgt(x)) = 0 )
+  */
   bool geotrans_inv_convex::invert_nonlin(const base_node& n, base_node& x, scalar_type IN_EPS) {
-    base_node xn, y;
-    //cout << "invert_nonlin(" << n << "," << x << "," << IN_EPS << ")\n";
+    base_node xn(P), y, z;
     /* find an initial guess */
     x = pgt->geometric_nodes()[0]; y = cvpts[0];  
     scalar_type d = vect_dist2_sqr(y, n);
@@ -77,23 +78,37 @@ namespace bgeot
       if (d2 < d)
         { d = d2; x = pgt->geometric_nodes()[j]; y = cvpts[j]; }
     }
+    base_node vres(N);
     base_node rn(n); rn -= y; 
-    scalar_type res = vect_norm2(rn);
+
+    pgt->gradient(x, pc);
+    update_B();
+    gmm::mult(gmm::transposed(K), rn, vres);
+    scalar_type res = vect_norm2(vres);
+
     unsigned cnt = 1000;
-    while (res > EPS && --cnt) {
-      pgt->gradient(x, pc);
-      update_B();
-      xn = x;
-      gmm::mult(gmm::transposed(B), rn, x);
-      x += xn;
-      y.fill(0.0);
-      for (size_type k = 0; k < pgt->nb_points(); ++k) {
-	gmm::add(gmm::scaled(cvpts[k],
-		      scalar_type(pgt->poly_vector()[k].eval(x.begin()))),y);
-      /*y.addmul(pgt->poly_vector()[k].eval(x.begin()), cvpts[k]);*/
+    while (res > EPS/10 && --cnt) {
+      gmm::mult(gmm::transposed(B), rn, xn);
+      scalar_type newres;
+      for (unsigned i=1; i<=16; i*=2) {
+	z = x + xn / scalar_type(i);
+	y.fill(0.0);
+	for (size_type k = 0; k < pgt->nb_points(); ++k) {
+	  gmm::add(gmm::scaled(cvpts[k],
+			       scalar_type(pgt->poly_vector()[k].eval(z.begin()))),y);
+	}
+	// cout << "Point : " << x << " : " << y << " ptab : " << ptab[i] << endl; getchar();
+	
+	rn = n - y; 
+	
+	pgt->gradient(z, pc);
+	update_B();
+	
+	gmm::mult(gmm::transposed(K), rn, vres);
+	newres = vect_norm2(vres); 
+	if (newres < 2*res) break;
       }
-      // cout << "Point : " << x << " : " << y << " ptab : " << ptab[i] << endl; getchar();
-      rn = n; rn -= y; res = vect_dist2(x, xn);
+      x = z; res = newres;
     }
     //cout << " invert_nonlin done\n";
     if (cnt == 0) 
