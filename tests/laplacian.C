@@ -430,7 +430,7 @@ void lap_pb::assemble(void)
 
 void lap_pb::solve(void) {
   gmm::iteration iter(residu, 1, 40000);
-  gmm::cg(SM, U, B, gmm::identity_matrix(), gmm::identity_matrix(), iter);
+  gmm::cg(SM, U, B, gmm::cholesky_precond<sparse_matrix_type>(SM), iter);
 
   if (gen_dirichlet) {
     linalg_vector Uaux(nb_dof);

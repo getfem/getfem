@@ -45,5 +45,8 @@
 #include <gmm_tri_solve.h>
 #include <gmm_solver_gmres.h>
 
+#include <gmm_precond_diagonal.h>
+#include <gmm_precond_cholesky.h>
+
 
 #endif //  __GMM_SOLVERS_H

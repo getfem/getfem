@@ -74,7 +74,7 @@ namespace gmm {
     typedef typename temporary_plain_vector<Vector1>::vector_type temp_vector;
     typedef typename linalg_traits<Vector1>::value_type value_type;
 
-    value_type rho(0), rho_1(0), a(0), beta(0);
+    value_type rho, rho_1(0), a;
     temp_vector p(vect_size(x)), q(vect_size(x)), r(vect_size(x)),
       z(vect_size(x));
     iter.set_rhsnorm(sqrt(vect_sp(PS, b, b)));
@@ -85,22 +85,21 @@ namespace gmm {
       mult(A, scaled(x, -1.0), b, r);
       mult(P, r, z);
       rho = vect_sp(PS, r, z);
-      
-      while (!iter.finished(rho)) {
-	
-	if (iter.first()) copy(r, p);		  
-	else { beta = rho / rho_1; add(r, scaled(p, beta), p); }
+      copy(z, p);
+
+      while (!iter.finished_vect(r)) {
+
+	if (!iter.first()) { 
+	  mult(P, r, z);
+	  rho = vect_sp(PS, r, z);
+	  add(z, scaled(p, rho / rho_1), p);
+	}
 	
 	mult(A, p, q);
-	a = rho / vect_sp(PS, p, q);
-	
+	a = rho / vect_sp(PS, p, q);	
 	add(scaled(p, a), x);
 	add(scaled(q, -a), r);
-	
-	mult(P, r, z);
 	rho_1 = rho;
-	rho = vect_sp(PS, r, z);
-
 	++iter;
       }
     }

@@ -34,28 +34,43 @@
 
 namespace gmm {
 
-  template<class T> struct diagonal_precond {
-    std::vector<T> diag;
+  template<class Matrix> struct diagonal_precond {
+    typedef typename linalg_traits<Matrix>::value_type value_type;
+    std::vector<value_type> diag;
 
-    template<class Matrix> diagonal_precond(const Matrix &M)
-      : diag(mat_nrows(M)) {
-      for (size_type i = 0; i < mat_nrows(M); ++i)
-	diag[i] = 1.0 / A(i, i);
-    }
+    diagonal_precond(const Matrix &M) : diag(mat_nrows(M))
+    { for (size_type i = 0; i < mat_nrows(M); ++i) diag[i] = 1.0 / M(i, i); }
   };
 
-  template<class T>
-  const &diagonal_precond<T> &gmm::transposed(const &diagonal_precond<T> &P)
-  { return P; }
+  template <class Matrix, class V2> inline
+  void mult_diag_p(const diagonal_precond<Matrix>& P, V2 &v2, abstract_sparse){
+    typename linalg_traits<V2>::iterator it = vect_begin(v2),
+      ite = vect_end(v2);
+    for (; it != ite; ++it) *it *= P.diag[it.index()];
+  }
 
-  template <class T, class V1, class V2> inline
-  void mult(const diagonal_precond<T>& P, const V1 &v1, V2 &v2) {
+  template <class Matrix, class V2> inline
+  void mult_diag_p(const diagonal_precond<Matrix>& P,V2 &v2, abstract_skyline)
+    { mult_diag_p(P, v2, abstract_sparse()); }
+
+  template <class Matrix, class V2> inline
+  void mult_diag_p(const diagonal_precond<Matrix>& P, V2 &v2, abstract_plain){
+    for (size_type i = 0; i < P.diag.size(); ++i) v2[i] *= P.diag[i];
+  }
+
+  template <class Matrix, class V1, class V2> inline
+  void mult(const diagonal_precond<Matrix>& P, const V1 &v1, V2 &v2) {
     if (P.diag.size() != vect_size(v2))
       DAL_THROW(dimension_error, "dimensions mismatch");
-    copy(v1, v2); 
-    for (size_type i = 0; i < P.diag.size(); ++i)
-      v2[i] *= p.diag[i];
+    copy(v1, v2);
+    mult_diag_p(P, v2, typename linalg_traits<V2>::storage_type());
   }
+
+  template <class Matrix, class V1, class V2> inline
+  void transposed_mult(const diagonal_precond<Matrix>& P,const V1 &v1,V2 &v2) {
+    mult(P, v1, v2);
+  }
+
 }
 
 #endif 

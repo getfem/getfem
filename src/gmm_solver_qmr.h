@@ -59,38 +59,18 @@
 
 #include <gmm_solvers.h>
 
-
 namespace gmm {
 
   //: Quasi-Minimal Residual
   //
   //  This routine solves the unsymmetric linear system Ax = b using the
   //  Quasi-Minimal Residual method.
-  //<table align=center border=1>
-  // <tr><td> return value </td>   <td>   meaning </td> </tr>
-  // <tr><td>      0   </td><td>   convergence within maximum iterations </td> </tr>
-  // <tr><td>      1   </td><td>     no convergence after maximum iterations</td> </tr>
-  //  <tr><td>     2  </td><td>      breakdown in       rho </td> </tr>
-  //  <tr><td>     3  </td><td>      breakdown in       beta </td> </tr>
-  //  <tr><td>     4  </td><td>      breakdown in       gamma</td> </tr>
-  //  <tr><td>     5  </td><td>      breakdown in       delta</td> </tr>
-  //  <tr><td>     6  </td><td>      breakdown in       ep</td> </tr>
-  //  <tr><td>     7  </td><td>      breakdown in       xi</td> </tr>
-  // </table>
+  // 
   //See: R. W. Freund and N. M. Nachtigal, A quasi-minimal residual method for 
   //non-Hermitian linear systems, Numerical Math., 60(1991), pp. 315-339
   //
-  //!category: itl,algorithms
-  //!component: function
-  //!definition: qmr.h
-  //!example: qmr.cc
-  //!tparam: Matrix  - Matrix or multiplier for matrix free methods
-  //!tparam: Vector - Vector 
-  //!tparam: VectorB - Vector
-  //!tparam: Preconditioner -  Incomplete LU, Incomplete LU with threshold, SSOR or identity_preconditioner.
-  //!tparam: Iteration - Controls the stopping criteria
-  //
-  /* required operations: mult,copy,dot,add,scaled,two_norm,trans_mult,scale */
+  // Preconditioner -  Incomplete LU, Incomplete LU with threshold,
+  //                   SSOR or identity_preconditioner.
 
   template <class Matrix, class Vector, class VectorB, class Precond1,
 	    class Precond2>
@@ -161,7 +141,7 @@ namespace gmm {
 
       gmm::mult(gmm::transposed(A), q, w_tld);
       gmm::add(w_tld, gmm::scaled(w, -beta), w_tld);
-      gmm::mult(gmm::transposed(M2), w_tld, z);
+      gmm::mult_transposed(M2, w_tld, z);
 
       xi = gmm::vect_norm2(z);
 

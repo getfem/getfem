@@ -72,7 +72,7 @@ namespace gmm {
 	it = vect_const_begin(c), ite = vect_const_end(c);
       x[j] /= c[j];
       for (x_j = x[j]; it != ite ; ++it)
-	if (it.index() < j) x[it.index()] -= x_j * (*it);
+	if (int(it.index()) < j) x[it.index()] -= x_j * (*it);
     }    
   }
 
@@ -95,14 +95,16 @@ namespace gmm {
   inline void lower_tri_solve__(const TriMatrix& T, VecX& x, size_t k,
 				col_major, abstract_sparse) {
     typename linalg_traits<TriMatrix>::value_type x_j;
-    for (int j = 0; j < k; ++j) {
+    // cout << "(lower col)The Tri Matrix = " << T << endl;
+    // cout << "k = " << endl;
+    for (int j = 0; j < int(k); ++j) {
       typedef typename linalg_traits<TriMatrix>::const_sub_col_type COL;
       COL c = mat_const_col(T, j);
       typename linalg_traits<COL>::const_iterator 
 	it = vect_const_begin(c), ite = vect_const_end(c);
       x[j] /= c[j];
       for (x_j = x[j]; it != ite ; ++it)
-	if (it.index() > j && it.index() < k) x[it.index()] -= x_j * (*it);
+	if (int(it.index()) > j && it.index() < k) x[it.index()] -= x_j*(*it);
     }    
   }
   
@@ -110,7 +112,7 @@ namespace gmm {
   inline void lower_tri_solve__(const TriMatrix& T, VecX& x, size_t k,
 				col_major, abstract_plain) {
     typename linalg_traits<TriMatrix>::value_type x_j;
-    for (int j = 0; j < k; ++j) {
+    for (int j = 0; j < int(k); ++j) {
       typedef typename linalg_traits<TriMatrix>::const_sub_col_type COL;
       COL c = mat_const_col(T, j);
       typename linalg_traits<COL>::const_iterator 
@@ -126,7 +128,8 @@ namespace gmm {
   inline void upper_tri_solve__(const TriMatrix& T, VecX& x, size_t k,
 				row_major, abstract_sparse) {
     typename linalg_traits<TriMatrix>::value_type t;
-   
+    // cout << "(upper row)The Tri Matrix = " << T << endl;
+    // cout << "k = " << endl;
     for (int i = k - 1; i >= 0; --i) {
       typedef typename linalg_traits<TriMatrix>::const_sub_row_type ROW;
       ROW c = mat_const_row(T, i);
@@ -134,7 +137,7 @@ namespace gmm {
 	it = vect_const_begin(c), ite = vect_const_end(c);
 
       for (t = x[i]; it != ite; ++it)
-	if (it.index() > i && it.index() < k) t -= (*it) * x[it.index()];
+	if (int(it.index()) > i && it.index() < k) t -= (*it) * x[it.index()];
       x[i] = t / c[i];      
     }    
   }
@@ -161,14 +164,14 @@ namespace gmm {
 				row_major, abstract_sparse) {
     typename linalg_traits<TriMatrix>::value_type t;
    
-    for (int i = 0; i < k; ++i) {
+    for (int i = 0; i < int(k); ++i) {
       typedef typename linalg_traits<TriMatrix>::const_sub_row_type ROW;
       ROW c = mat_const_row(T, i);
       typename linalg_traits<ROW>::const_iterator 
 	it = vect_const_begin(c), ite = vect_const_end(c);
 
       for (t = x[i]; it != ite; ++it)
-	if (it.index() < i) t -= (*it) * x[it.index()];
+	if (int(it.index()) < i) t -= (*it) * x[it.index()];
       x[i] = t / c[i];  
     }    
   }
@@ -191,13 +194,7 @@ namespace gmm {
   }
 
 
-//: Triangular Solve:  <tt>x <- T^{-1} * x</tt>
-//
-//  To use with a sparse matrix, the sparse matrix must be wrapped with
-//  a triangle adaptor. You must specify "packed" in the triangle
-//  adaptor. The sparse matrix must only have elements in the correct
-//  side.
-//
+// Triangular Solve:  x <-- T^{-1} * x
 
   template <class TriMatrix, class VecX>
   void upper_tri_solve(const TriMatrix& T, VecX &x_) {

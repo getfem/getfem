@@ -254,7 +254,8 @@ namespace gmm {
 				       abstract_skyline) {
     typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
       ite = vect_const_end(l);
-    o << "<r+" << it.index() << ">(" << it.index() << ", " << ite.index() - it.index() << ") ";
+    o << "<r+" << it.index() << ">(" << it.index() << ", "
+      << ite.index() - it.index() << ") ";
     if (it != ite) o << " " << cast_char(*it++);
     for (; it != ite; ++it) o << ", " << cast_char(*it);
   }
@@ -288,13 +289,12 @@ namespace gmm {
       if (is_sparse(l)) { // not optimized ...
 	for (size_type j = 0; j < mat_ncols(l); ++j)
 	  if (l(i,j) != typename linalg_traits<L>::value_type(0)) 
-	    o << " (r" << j << "," << l(i,j) << ")";
+	    o << " (r" << j << ", " << l(i,j) << ")";
       }
       else {
 	if (mat_ncols(l) != 0) o << ' ' << l(i, 0);
-	for (size_type j = 1; j < mat_ncols(l); ++j) o << " ," << l(i, j); 
+	for (size_type j = 1; j < mat_ncols(l); ++j) o << ", " << l(i, j); 
       }
-	
       o << " )\n";
     }
   }
@@ -1435,6 +1435,10 @@ namespace gmm {
     DAL_THROW(failure_error,
 	  "You have to define gmm::mult(m, v1, v2) for this kind of matrix");
   }
+
+  template <class L1, class L2, class L3>
+  void transposed_mult(const L1& l1, const L2& l2, const L3& l3)
+  { mult(gmm::transposed(l1), l2, l3); }
 
 
   /* ******************************************************************** */

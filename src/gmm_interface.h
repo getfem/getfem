@@ -674,7 +674,7 @@ namespace gmm {
     const_iterator end(void) const { return const_iterator(pr+n, ir+n); }
     
     value_type operator[](size_type i) const
-    { typename linalg_traits<this_type>::access_type()(pr, begin(), end(),i); }
+    { return typename linalg_traits<this_type>::access_type()(pr, begin(), end(),i); }
   };
 
   template <class PT1, class PT2, int shift> struct cs_vector_access {
@@ -693,7 +693,7 @@ namespace gmm {
 			  const const_iterator &e, size_type i) {
     if (b.ir == e.ir) return value_type(0);
     PT2 p = std::lower_bound(b.ir, e.ir, i+shift);
-    return (p != b.ir && *p == i+shift) ? b.pr[p-b.ir] : value_type(0);
+    return (*p == i+shift) ? b.pr[p-b.ir] : value_type(0);
   }
 
   template <class PT1, class PT2, int shift>
@@ -769,9 +769,9 @@ namespace gmm {
 
   template <class PT1, class PT2, class PT3, int shift = 0>
   struct csc_matrix_ref {
-    PT1 pr;
-    PT2 ir;
-    PT3 jc;
+    PT1 pr; // values.
+    PT2 ir; // row indexes.
+    PT3 jc; // column repartition on pr and ir.
     size_type nc, nr;
     
     typedef typename std::iterator_traits<PT1>::value_type value_type;
@@ -850,9 +850,9 @@ namespace gmm {
 
   template <class PT1, class PT2, class PT3, int shift = 0>
   struct csr_matrix_ref {
-    PT1 pr;
-    PT2 ir;
-    PT3 jc;
+    PT1 pr; // values.
+    PT2 ir; // column indexes.
+    PT3 jc; // row repartition on pr and ir.
     size_type nc, nr;
     
     typedef typename std::iterator_traits<PT1>::value_type value_type;
