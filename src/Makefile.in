@@ -117,12 +117,6 @@ include_HEADERS = \
 	dal_tas.h \
 	dal_tree_sorted.h \
 	ftool.h \
-	gensolv_function.h \
-	gensolv_gauss_seidel.h \
-	gensolv_line_search.h \
-	gensolv_mtl.h \
-	gensolv_quasi_newton.h \
-	gensolv_secant.h \
 	getfem_assembling.h \
 	getfem_config.h \
 	getfem_export.h \
