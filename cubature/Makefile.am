@@ -2,6 +2,7 @@
 IM_METHODS=$(shell ls $(top_srcdir)/cubature/*.IM)
 
 all : getfem_im_list.h
+check : getfem_im_list.h
 
 EXTRA_DIST = $(IM_METHODS) getfem_im_list.h make_getfem_im_list
 getfem_im_list.h :  $(IM_METHODS)
