@@ -28,6 +28,8 @@ print "lib/libgetfem.so\n";
 
 # + commandes Matlab en options
 
-print `bin/install`;
+# open F, "bin/install |" or die; while (<F>) { print $_; }
+
+exec "bin/install";
 
 

@@ -2,9 +2,12 @@
 HOW TO INSTALL GETFEM++
 -----------------------
 
+(à finir ...)
+
 The installation of Getfem++ needs :
 
 - perl installed in /usr/bin/perl
+- MATLAB at least version 6 and mex for compiling MATLAB interface
 
 
 
@@ -14,6 +17,7 @@ type
 
 ./configure
 make
+make matlabcom    # if MATLAB commands are present
 
 
 the library will be compiled in the files 
@@ -22,9 +26,8 @@ lib/libgetfem.a
 lib/libgetfem.so
 
 
-If the compiler selected is not the one you wants. You can change it setting
+If the compiler selected is not the one you want. You can change it setting
 the variable CC or with the command
 
 ./configure -CC=g++
 
-for instance

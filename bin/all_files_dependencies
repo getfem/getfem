@@ -58,6 +58,8 @@ $fis = `cd sources; ls *.C`;
 while($fis)
 { ($fi, $fis) = split('\s', $fis, 2); file_dep($fi, "sources\/$fi"); }
 
-$fis = `cd matlabcom; ls *.C`;
-while($fis)
-{ ($fi, $fis) = split('\s', $fis, 2); file_dep($fi, "matlabcom\/$fi"); }
+if (-d "matlabcom") {
+  $fis = `cd matlabcom; ls *.C`;
+  while($fis)
+    { ($fi, $fis) = split('\s', $fis, 2); file_dep($fi, "matlabcom\/$fi"); }
+}

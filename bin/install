@@ -6,7 +6,8 @@
 
 $rootlib = `pwd`; chomp($rootlib);
 $machine = `uname -m`; chomp($machine);
-$systeme = `uname -s`; chomp($systeme); $systeme .= " ".`uname -r`;chomp($systeme);
+$systeme = `uname -s`; chomp($systeme);
+$systeme .= " ".`uname -r`; chomp($systeme);
 $getfem_lib = "libgetfem.a";
 
 print "\n\nInstalling Getfem++ on system $systeme\n\n";
@@ -18,20 +19,62 @@ print "\n\nInstalling Getfem++ on system $systeme\n\n";
 
 print "Making links\n";
 `mkdir -p include`;
-`cd include; ln -sf ../dal/*.h .; ln -sf ../bgeot/*.h .;  ln -sf ../linkmsg/*.h .;  ln -sf ../ftool/*.h .; ln -sf ../getfemlib/*.h .; ln -sf ../misc/*.h .; ln -sf ../misc/LEDAWIN/*.h .; ln -sf ../matlabint/*.h .; ln -sf ../gensolv/*.h .`;
+`mkdir -p sources`;
+`mkdir -p lib`;
+
+if (-d "dal") {
+  `cd include; ln -sf ../dal/*.h .`;
+  `cd sources; ln -sf ../dal/*.C .`;
+}
+
+if (-d "bgeot") {
+  `cd include; ln -sf ../bgeot/*.h .`;
+  `cd sources; ln -sf ../bgeot/*.C .`;
+}
+
+if (-d "linkmsg") {
+  `cd include; ln -sf ../linkmsg/*.h .`;
+}
+
+if (-d "ftool") {
+  `cd include; ln -sf ../ftool/*.h .`;
+  `cd sources; ln -sf ../ftool/*.C .`;
+}
+
+if (-d "getfemlib") {
+  `cd include; ln -sf ../getfemlib/*.h .`;
+  `cd sources; ln -sf ../getfemlib/*.C .`;
+}
+
+if (-d "misc") {
+  `cd include; ln -sf ../misc/*.h .`;
+  `cd sources; ln -sf ../misc/*.C .`;
+}
+
+if (-d "misc/LEDAWIN") {
+  `cd include; ln -sf ../misc/LEDAWIN/*.h .`;
+  `cd sources; ln -sf ../misc/LEDAWIN/*.C .`;
+}
+
+if (-d "matlabint") {
+  `cd include; ln -sf ../matlabint/*.h .`;
+  `cd sources; ln -sf ../matlabint/*.C .`;
+}
+
+if (-d "gensolv") {
+  `cd include; ln -sf ../gensolv/*.h .`;
+}
+
 $liste = `ls include`; $liste =~ s/\@//g;
 while($liste) {
   ($fi, $liste) = split('\s', $liste, 2);
   if (!(-s "include/".$fi)) { `rm -f include/$fi`; }
 }
-`mkdir -p sources`;
-`cd sources; ln -sf ../dal/*.C .; ln -sf ../bgeot/*.C .;  ln -sf ../ftool/*.C .; ln -sf ../getfemlib/*.C .; ln -sf ../misc/*.C .; ln -sf ../misc/LEDAWIN/*.C .; ln -sf ../matlabint/*.C .`;
 $liste = `ls sources`; $liste =~ s/\@//g;
 while($liste) {
   ($fi, $liste) = split('\s', $liste, 2);
   if (!(-s "sources/".$fi)) { `rm -f sources/$fi`; }
 }
-`mkdir -p lib`;
 
 
 #######################################
@@ -73,7 +116,9 @@ else {
       print "Matlab found in path $MATLABREP\n";
     }
   }
-}
+} 
+
+$MATLABREP =~ s/\s//g;
 
 # il faudrait verifier que c'est au moins la version 6 ...
 
@@ -131,6 +176,7 @@ else {
 
 }
 
+
 if ($MEX == 0) {
   print MAKEFILE "INCLUDES_STANDARD = \n";
 }
@@ -173,10 +219,10 @@ while($listeo)
   print MAKEFILE " sources\/", $fi;
 }
 
-print MAKEFILE "\n\n\n", "all : \$(GETFEM_LIB)\n\n";
+print MAKEFILE "\n\n\n", "all : \$(GETFEM_LIB) lib/libgetfem.so\n\n";
 
 print MAKEFILE "\n\n", '# Dependencies : ', "\n";
-print MAKEFILE `bin/include_dependencies include`;
+print MAKEFILE `bin/all_files_dependencies`;
 
 
 print MAKEFILE "\n\n", '# Compilation lines : ',  "\n";
@@ -187,41 +233,36 @@ while($listeC)
   $fi1 = $fi; $fi1 =~ s/\.C/\.o/;
   while ($fi1 =~ /\//) { ($fi2, $fi1) = split('\/', $fi1, 2); }
   $fi2 = $fi1;
-  $fi2 =~ s/\.o/_h/;
+  $fi2 =~ s/\.o/_C/;
 #  $fi2 =~ s/\.o/.h/;
-  print MAKEFILE "\n", "sources\/$fi1 : $fi \$($fi2)\n";
-  if ($fi1 =~ /linear\_systems/) {
-    print MAKEFILE "\t", '$(CPLUS) $(COPT) -c $(INCLUDES) ', $fi, ' -o $@', "\n"; }
-  else {
-    print MAKEFILE "\t", '$(CPLUS) $(COPT) $(OPTIONS_STRICT) -c $(INCLUDES) ', $fi, ' -o $@', "\n"; }
+  print MAKEFILE "\n", "sources\/$fi1 : \$($fi2)\n";
+  print MAKEFILE "\t", '$(CPLUS) $(COPT) $(OPTIONS_STRICT) -c $(INCLUDES) ', $fi, ' -o $@', "\n";
 }
-
-print MAKEFILE "\n\n", '# Compilation of test programs : ',  "\n";
-$listeC = `ls tests/\*.C`;
-$listeC =~ s/\@//g;
-$listetests = "";
-while($listeC)
-{
-  ($fi, $listeC) = split('\s', $listeC, 2);
-  $fi1 = $fi; $fi1 =~ s/\.C//;
-  while ($fi1 =~ /\//) { ($fi2, $fi1) = split('\/', $fi1, 2); }
-  $listetests = $listetests." "."tests\/$fi1";
-  $fi2 = $fi1;
-  $fi2 =~ s/\.o/_h/;
-#  $fi2 =~ s/\.o/.h/;
-  print MAKEFILE "\n", "tests\/$fi1 : $fi \$(GETFEM_LIB) .\/sources\/*.o \n";
-  print MAKEFILE "\t", '$(CPLUS) $(COPT) $(INCLUDES) ./sources/*.o ', $fi, " -o tests\/$fi1", ' $(LIB) ', "\n";
-
+if (-d "tests") {
+  print MAKEFILE "\n\n", '# Compilation of test programs : ',  "\n";
+  $listeC = `ls tests/\*.C`;
+  $listeC =~ s/\@//g;
+  $listetests = "";
+  while($listeC) {
+    ($fi, $listeC) = split('\s', $listeC, 2);
+    $fi1 = $fi; $fi1 =~ s/\.C//;
+    while ($fi1 =~ /\//) { ($fi2, $fi1) = split('\/', $fi1, 2); }
+    $listetests = $listetests." "."tests\/$fi1";
+    $fi2 = $fi1;
+    $fi2 =~ s/\.o/_h/;
+    #  $fi2 =~ s/\.o/.h/;
+    print MAKEFILE "\n", "tests\/$fi1 : $fi \$(GETFEM_LIB) .\/sources\/*.o \n";
+    print MAKEFILE "\t", '$(CPLUS) $(COPT) $(INCLUDES) ./sources/*.o ', $fi, " -o tests\/$fi1", ' $(LIB) ', "\n";
+    
+  }
+  
+  $listedotest = "echo \"beginning tests\" ; cd tests ; " . `cd tests ; ls *.dotest`. "echo \"tests finished\"";
+  $listedotest =~ s/\n/ ; /g;
+  
+  print MAKEFILE "\n", 'test : ',  "\$(lib_objects) ", $listetests, "\n\n";
+  print MAKEFILE "\n", 'dotest : ',  "test \n";
+  print MAKEFILE "\t", $listedotest, "\n";
 }
-
-$listedotest = "echo \"beginning tests\" ; cd tests ; " . `cd tests ; ls *.dotest`
-                                             . "echo \"tests finished\"";
-$listedotest =~ s/\n/ ; /g;
-
-
-print MAKEFILE "\n", 'test : ',  "\$(lib_objects) ", $listetests, "\n\n";
-print MAKEFILE "\n", 'dotest : ',  "test \n";
-print MAKEFILE "\t", $listedotest, "\n";
 
 if ((-d "matlabcom") && ($MEX != 0))
 {
@@ -231,31 +272,23 @@ if ((-d "matlabcom") && ($MEX != 0))
   $listeB =~ s/\.C/.$extmatcom/g;
   $listeB =~ s/\n/ /g;
   $listeB =~ s/matlabcom\//lib\//g;
-  print MAKEFILE "\n\n", 'matlabcom : lib/libgetfem.so ', $listeB, "\n\n";
+  print MAKEFILE "\n\n", 'matlabcom : ', $listeB, "\n\n";
   print MAKEFILE 'lib/libgetfem.so : ', " \$(GETFEM_LIB) .\/sources\/*.o \n";
-  if ($systeme =~ /Linux/) {
-    print MAKEFILE "\t ld", ' -shared sources/dal*.o sources/bgeot*.o sources/ftool*.o sources/getfem*.o sources/matlabint*.o -o lib/libgetfem.so', "\n\n";
-  }
-  else {
-    print MAKEFILE "\t rm -f lib/libgetfem.so; ", 'cxx -shared sources/dal*.o sources/bgeot*.o sources/ftool*.o sources/getfem*.o sources/matlabint*.o -o lib/libgetfem.so -lm', "\n\n";
-  }
-# il faut moduler ça si tout n'est pas chargé ...
+  print MAKEFILE "\t rm -f lib/libgetfem.so; ", '$(CPLUS) -shared sources/dal*.o sources/bgeot*.o sources/ftool*.o sources/getfem*.o sources/matlabint*.o -o lib/libgetfem.so -lm', "\n\n";
 
-# il faudrait faire proprement les dépendences des Mex files.
   while($listeC)
   {
     ($fi, $listeC) = split('\s', $listeC, 2);
     $fi1 = $fi;
+    $fi2 = $fi1;
+    $fi2 =~ s/\.C/_C/;
+    $fi2 =~ s/matlabcom\///g;
     $fi1 =~ s/\.C//g;
     $fi1 =~ s/matlabcom\//lib\//g;
-    print MAKEFILE "\n", "$fi1.$extmatcom : $fi lib/libgetfem.so .\/sources\/*.o \n";
+    print MAKEFILE "\n", "$fi1.$extmatcom :  \$($fi2) \n";
     $fi1 =~ s/lib\///g;
-    if ($systeme =~ /Linux/) {
-      print MAKEFILE "\t", 'cd lib; mex -O $(INCLUDES) libgetfem.so ', "..\/$fi -o $fi1\n";
-    }
-    else {
-      print MAKEFILE "\t", 'cd lib; $(CPLUS) $(COPT)  -c $(INCLUDES)', "..\/$fi -o $fi1.o; rm -f $fi1.$extmatcom", '; mex -O $(INCLUDES) libgetfem.so ', "..\/$fi -o $fi1\n";
-    }
+    print MAKEFILE "\t", 'cd lib; $(CPLUS) $(COPT)  -c $(INCLUDES)', "..\/$fi -o $fi1.o; rm -f $fi1.$extmatcom", '; mex -O $(INCLUDES) libgetfem.so ', "..\/$fi -o $fi1\n";
+  
   }
 }
 

@@ -36,5 +36,5 @@ print `cd ..; cvs checkout getfem++/matlabcom`; print "\n\n";
 print `cd ..; cvs checkout getfem++/matlabint`; print "\n\n";
 print `cd ..; cvs checkout getfem++/doc`; print "\n\n";
 
-print `bin/install`;
+exec "bin/install";
 

@@ -14,7 +14,7 @@ while ($line = <FICHIER>)
 
 
     if (($f2 =~ /^getfem\_/) or ($f2 =~ /^dal\_/) or ($f2 =~ /^bgeot\_/)
-	or ($f2 =~ /^linkmsg\_/) or ($f2 =~ /^ftool/) or ($f2 =~ /^matlabint\_/))
+	or ($f2 =~ /^linkmsg\_/) or ($f2 =~ /^ftool/) or ($f2 =~ /^matlabint\_/) or ($f2 =~ /^gensolv\_/))
     {
       while ($f2 =~ /\//) { ($f1, $f2) = split('\/', $f2, 2); }
       print $f2, "\n";
