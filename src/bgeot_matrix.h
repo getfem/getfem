@@ -955,6 +955,7 @@ namespace bgeot
     }
   }
 
+  /// returns also the determinant
   template<class MAT>
     typename MAT::value_type mat_inv_cholesky(MAT &m, MAT &tmp)
   {
