@@ -454,15 +454,18 @@ namespace getfem
   template<typename MAT, typename VECT>
   void asm_Helmholtz(MAT &M, const mesh_fem &mf_u, const mesh_fem &mf_data,
 		     const VECT &K_squared) {
-    asm_Helmholtz(gmm::real_part(M), gmm::imag_part(M), mf_u, mf_data, gmm::real_part(K_squared), gmm::imag_part(K_squared));
+    asm_Helmholtz(gmm::real_part(M), gmm::imag_part(M), mf_u, mf_data,
+		  gmm::real_part(K_squared), gmm::imag_part(K_squared));
   }
 
   template<typename MATr, typename MATi, typename VECTr, typename VECTi>  
-  void asm_Helmholtz(const MATr &Mr, const MATi &Mi, const mesh_fem &mf_u, const mesh_fem &mf_data,
+  void asm_Helmholtz(const MATr &Mr, const MATi &Mi, const mesh_fem &mf_u,
+		     const mesh_fem &mf_data,
 		     const VECTr &K_squaredr, const VECTi &K_squaredi) {
     generic_assembly assem("Kr=data$1(#2); Ki=data$2(#2);"
 			   "m = comp(Base(#1).Base(#1).Base(#2)); "
-			   "M$1(#1,#1)+=sym(m(:,:,i).Kr(i) - comp(Grad(#1).Grad(#1))(:,i,:,i));"
+			   "M$1(#1,#1)+=sym(m(:,:,i).Kr(i) - "
+			   "comp(Grad(#1).Grad(#1))(:,i,:,i));"
 			   "M$2(#1,#1)+=sym(m(:,:,i).Ki(i));");
     assem.push_mf(mf_u);
     assem.push_mf(mf_data);
@@ -691,8 +694,7 @@ namespace getfem
     size_type nb_bimg = 0;
 
     if (!(gmm::is_col_matrix(D)))
-      DAL_WARNING(2,
-		  "Dirichlet_nullspace is inefficient when D is a row matrix");
+      DAL_WARNING(2, "Dirichlet_nullspace inefficient for a row matrix D");
     // First, detection of null columns of D, and already orthogonals 
     // vectors of the image of D.
     dal::bit_vector nn;

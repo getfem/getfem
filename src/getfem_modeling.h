@@ -90,7 +90,8 @@ namespace getfem {
     typedef C_MATRIX constraints_matrix_type;
     typedef VECTOR vector_type;
     typedef typename gmm::linalg_traits<VECTOR>::value_type value_type;
-    typedef typename gmm::number_traits<value_type>::magnitude_type magnitude_type;
+    typedef typename gmm::number_traits<value_type>::magnitude_type
+      magnitude_type;
 
   protected :
     T_MATRIX tangent_matrix_;
@@ -208,6 +209,7 @@ namespace getfem {
     virtual mesh_fem &main_mesh_fem(void) = 0;
     virtual bool is_linear(void) = 0;
     virtual bool is_coercive(void) = 0;
+    virtual void mixed_variables(dal::bit_vector &) = 0;
     mdbrick_abstract(void) :  to_compute(true), to_transfer(true),
 			      MS_i0(0), ident_ms(-1) { }
     virtual ~mdbrick_abstract() {}
@@ -229,7 +231,8 @@ namespace getfem {
 
   typedef model_state<modeling_standard_complex_sparse_matrix,
 		      modeling_standard_complex_sparse_matrix,
-		      modeling_standard_complex_plain_vector > standard_complex_model_state;
+		      modeling_standard_complex_plain_vector >
+    standard_complex_model_state;
 
 
   /* ******************************************************************** */
@@ -267,6 +270,7 @@ namespace getfem {
 
     virtual bool is_linear(void) { return true; }
     virtual bool is_coercive(void) { return true; }
+    virtual void mixed_variables(dal::bit_vector &) {}
     virtual size_type nb_dof(void) { return mf_u.nb_dof(); }
     virtual size_type nb_constraints(void) { return 0; }
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
@@ -368,13 +372,12 @@ namespace getfem {
       gmm::clear(K);
       gmm::resize(K, nb_dof(), nb_dof());
       VECTOR wave_number2(mf_data.nb_dof());
-      if (homogeneous) {
-	std::fill(wave_number2.begin(), wave_number2.end(), value_type(dal::sqr(wave_number[0])));
-      }
-      else { 
+      if (homogeneous)
+	std::fill(wave_number2.begin(), wave_number2.end(),
+		  value_type(dal::sqr(wave_number[0])));
+      else
 	for (size_type i=0; i < nb_dof(); ++i)
 	  wave_number2[i] = dal::sqr(wave_number[i]);
-      }
       
       asm_Helmholtz(K, mf_u, mf_data, wave_number2);
       this->computed();
@@ -384,6 +387,7 @@ namespace getfem {
 
     virtual bool is_linear(void) { return true; }
     virtual bool is_coercive(void) { return false; }
+    virtual void mixed_variables(dal::bit_vector &) {}
     virtual size_type nb_dof(void) { return mf_u.nb_dof(); }
     virtual size_type nb_constraints(void) { return 0; }
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
@@ -500,6 +504,8 @@ namespace getfem {
     
     virtual bool is_linear(void) { return sub_problem.is_linear(); }
     virtual bool is_coercive(void) { return sub_problem.is_coercive(); }
+    virtual void mixed_variables(dal::bit_vector &b)
+    { sub_problem.mixed_variables(b); }
     virtual size_type nb_dof(void) { return sub_problem.nb_dof(); }
     virtual size_type nb_constraints(void)
     { return sub_problem.nb_constraints(); }
@@ -571,8 +577,11 @@ namespace getfem {
 
     virtual bool is_linear(void) { return sub_problem.is_linear(); }
     virtual bool is_coercive(void) { return false; }
+    virtual void mixed_variables(dal::bit_vector &b)
+    { sub_problem.mixed_variables(b); }
     virtual size_type nb_dof(void) { return sub_problem.nb_dof(); }    
-    virtual size_type nb_constraints(void) { return sub_problem.nb_constraints(); }
+    virtual size_type nb_constraints(void)
+    { return sub_problem.nb_constraints(); }
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
 					size_type j0 = 0, bool = false) {
       sub_problem.compute_tangent_matrix(MS, i0, j0, true);
@@ -590,11 +599,12 @@ namespace getfem {
       if (this->to_be_computed()) { 
 	compute_K();
       }
-      gmm::mult(K, gmm::sub_vector(MS.state(), SUBI),
-		gmm::sub_vector(MS.residu(), SUBI),
-		gmm::sub_vector(MS.residu(), SUBI));
+      typename gmm::sub_vector_type<VECTOR *, gmm::sub_interval>::vector_type
+	SUBV = gmm::sub_vector(MS.residu(), SUBI);
+      gmm::mult(K, gmm::sub_vector(MS.state(), SUBI), SUBV, SUBV);
     }
-    virtual mesh_fem &main_mesh_fem(void) { return sub_problem.main_mesh_fem(); }
+    virtual mesh_fem &main_mesh_fem(void)
+    { return sub_problem.main_mesh_fem(); }
 
     void set_Q(value_type q) {
       homogeneous = true;
@@ -610,7 +620,8 @@ namespace getfem {
     }
     // Constructor which does not define the rhs
     mdbrick_QU_term(mdbrick_abstract<MODEL_STATE> &problem,
-		    mesh_fem &mf_data_, value_type q=value_type(1), size_type bound = size_type(-1)) 
+		    mesh_fem &mf_data_, value_type q=value_type(1),
+		    size_type bound = size_type(-1)) 
       : sub_problem(problem), mf_data(mf_data_), boundary(bound) {
       this->add_dependency(mf_data);
       this->add_dependency(sub_problem.main_mesh_fem());
@@ -706,6 +717,17 @@ namespace getfem {
     virtual bool is_linear(void)   { return sub_problem.is_linear(); }
     virtual bool is_coercive(void) 
     { return (!with_multipliers && sub_problem.is_coercive()); }
+    virtual void mixed_variables(dal::bit_vector &b) {
+      sub_problem.mixed_variables(b);
+      if (with_multipliers) {
+	if (this->context_changed()) {
+	  fixing_dimensions();
+	  this->force_recompute();
+	  compute_constraints(ASMDIR_BUILDH + ASMDIR_BUILDR);
+	}
+	b.add(sub_problem.nb_dof(), nb_const);
+      }
+    }
     virtual size_type nb_dof(void) {
       if (with_multipliers) {
 	if (this->context_changed()) {
@@ -837,9 +859,10 @@ namespace getfem {
     //        detect the presence of multipliers before using a preconditioner
 
     size_type ndof = problem.nb_dof();
-    bool is_linear = problem.is_linear();
+    bool is_linear = problem.is_linear(), first = true;
     mtype alpha, alpha_min=mtype(1)/mtype(16), alpha_mult=mtype(3)/mtype(4);
     mtype alpha_max_ratio(2);
+    dal::bit_vector mixvar;
 
     MS.adapt_sizes(problem);
     if (!is_linear) gmm::fill_random(MS.state()); 
@@ -852,15 +875,26 @@ namespace getfem {
       
       VECTOR d(ndof), dr(gmm::vect_size(MS.reduced_residu()));
 
-      if (!(iter.first())) problem.compute_tangent_matrix(MS);
+      if (!first) problem.compute_tangent_matrix(MS);
+      first = false;
       if (problem.is_coercive()) {
 	gmm::ildlt_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
 	gmm::cg(MS.reduced_tangent_matrix(), dr, 
 		gmm::scaled(MS.reduced_residu(), value_type(-1)), P, iter);
       } else {
-	gmm::ilu_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
-	gmm::gmres(MS.reduced_tangent_matrix(), dr, 
-		   gmm::scaled(MS.reduced_residu(),  value_type(-1)), P, 300, iter);
+	problem.mixed_variables(mixvar);
+	if (mixvar.card() == 0) {
+	  gmm::ilu_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
+	  gmm::gmres(MS.reduced_tangent_matrix(), dr, 
+		     gmm::scaled(MS.reduced_residu(),  value_type(-1)), P,
+		     300, iter);
+	}
+	else {
+	  cout << "there is " << mixvar.card() << " mixed variables\n";
+	  gmm::gmres(MS.reduced_tangent_matrix(), dr, 
+		     gmm::scaled(MS.reduced_residu(),  value_type(-1)),
+		     gmm::identity_matrix(), 300, iter);
+	}
       }
       MS.unreduced_solution(dr,d);
       
@@ -875,13 +909,15 @@ namespace getfem {
 	for (alpha = mtype(1); alpha >= alpha_min; alpha *= alpha_mult) {
 	  gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
 	  problem.compute_residu(MS);
-	  MS.compute_reduced_system();
+	  MS.compute_reduced_system(); // The whole reduced system do not
+	  // have to be computed, only the RHS. To be adapted.
 	  act_res_new = MS.reduced_residu_norm();
 	  if (act_res_new <= act_res * alpha_max_ratio) break;
 	}
       }
       act_res = act_res_new;
     }
+
   }
 
 
