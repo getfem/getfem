@@ -35,7 +35,6 @@ print "BEGIN CONVEX STRUCTURE DESCRIPTION\n\n";
 print "CONVEX 0	= SIMPLEX 0\n";
 print "CONVEX 1	= SIMPLEX 1\n";
 print "CONVEX 3	= SIMPLEX 2\n";
-print "CONVEX 2	= PRODUCT 1 \n";
 print "\nEND CONVEX STRUCTURE DESCRIPTION\n\n";
 
 
