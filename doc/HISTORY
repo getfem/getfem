@@ -168,35 +168,18 @@ Historique :
 	et des exemples sont fournis.
 	Une interface avec MATLAB a été developpée.
 
-
-
-
-
-. Vers la version 1.5 :
-	. 8 x précision (ou 4 x) pour certains calculs élémentaires
-	. methode de quadratures sur des fichiers
-	. méthodes composites et hierarchiques composites en 3D
-	. Support pour Xfem
+	Cette  librairie  peut  s'intégrer  facilement  dans  un  code 
+	élément fini ...
+	Toute collaboration sera la bienvenue.
+	GETFEM++ est un package libre de droit distribué sous LGPL.
 
 
 ------------------------------------------
 
-Autres packages à regarder : 
+utilisation des formules de quadrature de 
 
-. MEFISTO, A. Peronnet
-http://www.ann.jussieu.fr/~perronne
-(maillage 2D ou 3D, elasticité 2D ou 3D, interface graphique)
+http://www.cs.kuleuven.ac.be/~nines/research/ecf/ecf.html
 
-. OPT++
-
-. CALFEM
-http://www.byggmek.lth.se/Calfem/
-
-Cette librairie peut s'intégrer facilement dans un code élément fini ...
- Toute collaboration sera la bienvenue. GETFEM++ est un package libre de droit distribué sous GPL (Gnu Public License).
-
-
-----------------utilisation des formules de quadrature de http://www.cs.kuleuven.ac.be/~nines/research/ecf/ecf.html
 On Wed, Mar 05, 2003 at 01:30:09PM +0100, julien pommier wrote:
 > On Wed, 5 Mar 2003 10:02:42 +0100
 > Ronald Cools <Ronald.Cools@cs.kuleuven.ac.be> wrote:
@@ -228,4 +211,16 @@ On Wed, Mar 05, 2003 at 01:30:09PM +0100, julien pommier wrote:
 That's fine with me.
 Kind regards,
 R o n a l d
+
 ------------------------------------------------------------------------------
+
+
+. Vers la version 1.5 :
+	. 8 x précision (ou 4 x) pour certains calculs élémentaires
+	. methode de quadratures sur des fichiers
+	. méthodes composites et hierarchiques composites en 3D
+	. Support pour Xfem
+	. Preconditionnneurs dans GMM -> future version indép.
+	. Nouvelle interfaçage de l'interface MATLAB
+	. Graphiques nettement améliorés avec l'interface MATLAB,
+	  coupes, isosurfaces, ... voir les exemples dans "Screenshots"
