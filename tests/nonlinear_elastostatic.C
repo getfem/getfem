@@ -158,7 +158,7 @@ void elastostatic_problem::init(void) {
     un /= gmm::vect_norm2(un);
     if (dal::abs(un[N-1] - 1.0) < 1.0E-7) { // new Neumann face
       mf_u.add_boundary_elt(NEUMANN_BOUNDARY_NUM, it->cv, it->f);
-    } else {
+    } else if (dal::abs(un[N-1] + 1.0) < 1.0E-7) {
       mf_u.add_boundary_elt(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
     }
   }
@@ -173,8 +173,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
   size_type N = mesh.dim();
 
   // Linearized elasticity brick.
-  getfem::mdbrick_nonlinear_elasticity<>
-    ELAS(getfem::Hooke_hyperelastic_law(), mf_u, mf_coef, p1, p2);
+  getfem::Hooke_hyperelastic_law l;
+  getfem::mdbrick_nonlinear_elasticity<>  ELAS(l, mf_u, mf_coef, p1, p2);
 
   // Defining the volumic source term.
   base_vector f(N); f[N-1] = -10.0;
@@ -193,7 +193,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
   // Generic solve.
   cout << "Number of variables : " << final_model.nb_dof() << endl;
   getfem::standard_model_state MS;
-  gmm::iteration iter(residu, 1, 40000);
+  size_type maxit = PARAM.int_value("MAXITER"); 
+  gmm::iteration iter(residu, 1, maxit ? maxit : 40000);
   getfem::standard_solve(MS, final_model, iter);
 
   // Solution extraction
@@ -220,14 +221,17 @@ int main(int argc, char *argv[]) {
     p.init();
     p.mesh.write_to_file(p.datafilename + ".mesh");
     plain_vector U(p.mf_u.nb_dof());
-    if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
     if (p.PARAM.int_value("VTK_EXPORT")) {
+      if (!p.solve(U)) 
+	//DAL_THROW(dal::failure_error,"Solve has failed");
+	cerr << "Solve has failed\n";
       cout << "export to " << p.datafilename + ".vtk" << "..\n";
       getfem::vtk_export exp(p.datafilename + ".vtk",
 			     p.PARAM.int_value("VTK_EXPORT")==1);
-      exp.write_dataset(p.mf_u, U, "elastostatic_displacement");
+      exp.exporting(p.mf_u); 
+      exp.write_point_data(p.mf_u, U, "elastostatic_displacement");
       cout << "export done, you can view the data file with (for example)\n"
-	"mayavi -d elastostatic.vtk -f ExtractVectorNorm -f "
+	"mayavi -d " << p.datafilename << ".vtk -f ExtractVectorNorm -f "
 	"WarpVector -m BandedSurfaceMap -m Outline\n";
     }
   }
