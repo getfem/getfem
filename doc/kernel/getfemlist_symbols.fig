@@ -124,4 +124,4 @@ Single
 4 0 0 50 0 0 18 0.0000 4 255 5340 3600 1980 Value of the gradient along the second cordinate\001
 4 0 0 50 0 0 18 0.0000 4 255 5175 3645 1395 Value of the gradient along the first coordinate\001
 4 0 0 50 0 0 18 0.0000 4 195 3645 3645 945 Value of the function at the node\001
-4 0 0 50 0 0 18 0.0000 4 255 3540 3360 10695 Bubble function, to be specified.\001
+4 0 0 50 0 0 18 0.0000 4 255 6105 3360 10695 Bubble functionon an element or a face, to be specified.\001
