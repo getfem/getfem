@@ -440,6 +440,10 @@ namespace getfem
    *  of degree k on a geometric convex cvs (coming from the geometric trans).
    */
   pfem classical_fem(bgeot::pgeometric_trans pg, short_type k);
+  /** Gives a pointer on the structures describing the more classical discontinuous fem
+   *  of degree k on a geometric convex cvs (coming from the geometric trans).
+   */
+  pfem classical_discontinuous_fem(bgeot::pgeometric_trans pg, short_type k);
 
   pfem fem_descriptor(std::string name);
   /*  List of elements :

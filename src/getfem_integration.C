@@ -41,6 +41,16 @@ namespace getfem
 
   typedef ftool::naming_system<integration_method>::param_list im_param_list;
 
+  /*
+    dummy integration method 
+  */
+  static pintegration_method im_none(im_param_list &params) {
+    if (params.size())
+      DAL_THROW(dal::failure_error,
+		"IM_NONE does not accept any parameter");
+    return new integration_method(); 
+  }
+
   long_scalar_type poly_integration::int_poly(const base_poly &P) const {
     long_scalar_type res = 0.0;
     if (P.size() > int_monomials.size()) {
@@ -190,10 +200,10 @@ namespace getfem
       DAL_THROW(failure_error, "Bad type of parameters");
     pintegration_method a = params[0].method();
     pintegration_method b = params[1].method();
-    if (!(a->is_ppi && b->is_ppi))
+    if (!(a->type() == IM_EXACT && b->type() == IM_EXACT))
       DAL_THROW(failure_error, "Bad parameters");
-    return new integration_method(new plyint_mul_structure_(a->method.ppi,
-							     b->method.ppi));
+    return new integration_method(new plyint_mul_structure_(a->exact_method(),
+							    b->exact_method()));
   }
 
   /* ******************************************************************** */
@@ -315,7 +325,7 @@ namespace getfem
 			 "Impossible to modify a valid integration method.");
     if (pai->structure() != structure()->faces_structure()[f])
       DAL_THROW(internal_error, "structures missmatch");
-    if (ppi->is_exact())
+    if (ppi->type() != IM_APPROX)
       DAL_THROW(internal_error, "Impossible with an exact method.");
     
     dim_type N = pai->structure()->dim();
@@ -551,7 +561,7 @@ namespace getfem
       
       std::stringstream name;
       name << "IM_EXACT_SIMPLEX(" << int(nc) << ")";
-      ppoly_integration ppi = int_method_descriptor(name.str())->method.ppi;
+      ppoly_integration ppi = int_method_descriptor(name.str())->exact_method();
       
       size_type sum = 0, l;
       c.fill(scalar_type(0.0));
@@ -714,10 +724,10 @@ namespace getfem
       DAL_THROW(failure_error, "Bad type of parameters");
     pintegration_method a = params[0].method();
     pintegration_method b = params[1].method();
-    if (a->is_ppi || b->is_ppi)
+    if (a->type() != IM_APPROX || b->type() != IM_APPROX)
       DAL_THROW(failure_error, "Bad parameters");
-    return new integration_method(new a_int_pro_integration(a->method.pai,
-							    b->method.pai));
+    return new integration_method(new a_int_pro_integration(a->approx_method(),
+							    b->approx_method()));
   }
 
   static pintegration_method product_which(im_param_list &params) {
@@ -728,7 +738,7 @@ namespace getfem
       DAL_THROW(failure_error, "Bad type of parameters");
     pintegration_method a = params[0].method();
     pintegration_method b = params[1].method();
-    if (a->is_ppi || b->is_ppi) return product_exact(params);
+    if (a->type() == IM_EXACT || b->type() == IM_EXACT) return product_exact(params);
     else return product_approx(params);
   }
 
@@ -811,6 +821,7 @@ namespace getfem
   
   static void init_im_naming_system(void) {
     im_naming_system_ = new ftool::naming_system<integration_method>("IM");
+    im_naming_system_->add_suffix("NONE",im_none);
     im_naming_system_->add_suffix("EXACT_SIMPLEX", exact_simplex);
     im_naming_system_->add_suffix("PRODUCT", product_which);
     im_naming_system_->add_suffix("EXACT_PARALLELEPIPED",exact_parallelepiped);
@@ -877,8 +888,11 @@ namespace getfem
     return pim;
   }
 
+  pintegration_method exact_classical_im(bgeot::pgeometric_trans pgt) {
+    return classical_exact_im(pgt);
+  }
 
-  pintegration_method exact_classical_im(bgeot::pgeometric_trans pgt)
+  pintegration_method classical_exact_im(bgeot::pgeometric_trans pgt)
   {
     static bgeot::pgeometric_trans pgt_last = 0;
     static pintegration_method im_last = 0;
@@ -923,5 +937,53 @@ namespace getfem
 	      "This element is not taken into account. Contact us");
   }
 
+  static pintegration_method classical_approx_im_(bgeot::pconvex_structure cvs, dim_type degree)
+  {
+    size_type n = cvs->dim();
+    std::stringstream name;
+
+    degree = std::max<dim_type>(degree, 1);
+    bgeot::pconvex_structure a, b;
+    if (cvs->basic_structure() == bgeot::simplex_structure(n)) {
+      /* Identifying P1-simplexes. */
+      switch (n) {
+      case 0: return int_method_descriptor("IM_NC(0,0)");
+      case 1: name << "IM_GAUSS1D"; break;
+      case 2: name << "IM_TRIANGLE"; break;
+      case 3: name << "IM_TETRAHEDRON"; break;
+      case 4: name << "IM_SIMPLEX4D"; break;
+      default: DAL_THROW(dal::failure_error, "no approximate integration method for simplexes of dimension " << n);
+      }
+      for (size_type k = degree; k < degree+10; ++k) {
+	pintegration_method im = 0;
+	std::stringstream name2; name2 << name.str() << "(" << k << ")";
+	try {
+	  cerr << "testing " << name2.str() << "\n";
+	  im = int_method_descriptor(name2.str());
+	}
+	catch (dal::failure_error) { im = 0; }
+	if (im) return im;
+      }
+      DAL_THROW(dal::failure_error, "could not find an " << name.str() << " of degree >= " << int(degree));
+    } else if (cvs->is_product(&a,&b)) {
+      name << "IM_PRODUCT(" 
+	   << name_of_int_method(classical_approx_im_(a,degree)) << ","
+	   << name_of_int_method(classical_approx_im_(b,degree)) << ")";
+    } else DAL_THROW(dal::failure_error, "unknown convex structure!");
+    return int_method_descriptor(name.str());
+  }
+
+  pintegration_method classical_approx_im(bgeot::pgeometric_trans pgt, dim_type degree)
+  {
+    static bgeot::pgeometric_trans pgt_last = 0;
+    static dim_type degree_last;
+    static pintegration_method im_last = 0;
+    if (pgt_last == pgt && degree == degree_last)
+      return im_last;
+    im_last = classical_approx_im_(pgt->structure(),degree);
+    degree_last = degree;
+    pgt_last = pgt;
+    return im_last;
+  }
 }  /* end of namespace getfem.                                           */
 

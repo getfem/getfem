@@ -92,9 +92,15 @@ namespace getfem
       pgt = ls.pgt;
       pgp = bgeot::geotrans_precomp(ls.pgt, &(ls.ppi->integration_points()));
       pme = ls.pmt;
-      ppi = ls.ppi->method.ppi;
-      pai = ls.ppi->method.pai;
-      is_ppi = ls.ppi->is_ppi;
+      switch (ls.ppi->type()) {
+      case IM_EXACT: 
+	ppi = ls.ppi->exact_method(); pai = 0;  is_ppi = true; break;
+      case IM_APPROX: 
+	ppi = 0; pai = ls.ppi->approx_method(); is_ppi = false; break;
+      case IM_NONE: 
+	DAL_THROW(dal::failure_error, 
+		  "Attempt to use IM_NONE integration method in assembly!\n");
+      }
       faces_computed = volume_computed = false;
       is_linear = pgt->is_linear();
       computed_on_real_element = !is_linear;

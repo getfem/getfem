@@ -159,52 +159,57 @@ namespace getfem
 
   typedef const approx_integration * papprox_integration;
 
-  struct integration_method
-  {
-    union
-    {
-      ppoly_integration ppi;
-      papprox_integration pai;
-    } method;
-    bool is_ppi;
+  /**
+     the list of main integration method types 
+  */
+  typedef enum { IM_APPROX, IM_EXACT, IM_NONE } integration_method_type;
 
+  /**
+     this structure is not intended to be used directly. It is built via
+     the int_method_descriptor() function
+  */
+  class integration_method {    
+    union {
+      ppoly_integration ppi; /* for exact integrations */
+      papprox_integration pai; /* for approximate integrations (i.e. cubatures) */
+    } method;
+    integration_method_type im_type;
+
+  public:
+    integration_method_type type(void) const { return im_type; }
     papprox_integration approx_method(void) const { return method.pai; }
     ppoly_integration exact_method(void) const { return method.ppi; }
-    bool is_exact(void) const { return is_ppi; }
 
     const bgeot::stored_point_tab &integration_points(void) const { 
-      if (is_ppi)
+      if (type() == IM_EXACT)
 	return *(bgeot::org_stored_point_tab(method.ppi->structure()->dim()));
-      else 
+      else if (type() == IM_APPROX)
 	return method.pai->integration_points();
+      else DAL_THROW(dal::failure_error, "IM_NONE has no points");
     }
 
     bgeot::pconvex_structure structure(void) const { 
-      if (is_ppi) return method.ppi->structure();
-      else return method.pai->structure();
+      switch (type()) {
+      case IM_EXACT: return method.ppi->structure();
+      case IM_APPROX: return method.pai->structure();
+      case IM_NONE: DAL_THROW(dal::failure_error, "IM_NONE has no structure");
+      }
     }
 
     integration_method(ppoly_integration p)
-    { method.ppi = p; is_ppi = true; }
+    { method.ppi = p; im_type = IM_EXACT; }
 
     integration_method(papprox_integration p)
-    { method.pai = p; is_ppi = false; }
+    { method.pai = p; im_type = IM_APPROX; }
 
-    bool operator >(const integration_method& p) const
-    { return method.ppi > p.method.ppi; } 
-    bool operator <(const integration_method& p) const
-    { return method.ppi < p.method.ppi; } 
-    bool operator !=(const integration_method& p) const
-    { return method.ppi != p.method.ppi; } 
-    bool operator ==(const integration_method& p) const
-    { return method.ppi == p.method.ppi; } 
-
-    integration_method(void) { method.pai = 0; }
+    integration_method(void) { im_type = IM_NONE; method.pai = 0; }
     ~integration_method(void) {
-      if (method.pai != 0)
-	if (is_ppi) delete method.ppi; else delete method.pai;
+      switch (type()) {
+      case IM_EXACT: if (method.ppi) delete method.ppi; break;
+      case IM_APPROX: if (method.pai) delete method.pai; break;
+      case IM_NONE: break;
+      }
     }
-
   };
 
 
@@ -232,11 +237,20 @@ namespace getfem
    *                                     K divisions
    */
   
+  pintegration_method classical_exact_im(bgeot::pgeometric_trans pgt);
+  /**
+     try to find an approximate integration method for the geometric
+     transformation pgt which is able to integrate exactly polynomials
+     of degree <= "degree". It may return a higher order integration
+     method if no method match the exact degree.
+  */
+  pintegration_method classical_approx_im(bgeot::pgeometric_trans pgt, dim_type degree);
+
   pintegration_method exact_simplex_im(size_type n);
   pintegration_method exact_parallelepiped_im(size_type n);
   pintegration_method exact_prism_im(size_type n);
-  pintegration_method exact_classical_im(bgeot::pgeometric_trans pgt);
-  
+  pintegration_method exact_classical_im(bgeot::pgeometric_trans pgt) IS_DEPRECATED;
+
   std::string name_of_int_method(pintegration_method p);
   class mesh_precomposite;
   class mesh_fem;

@@ -219,7 +219,7 @@ namespace getfem
     std::fill(cv_info_tab.begin(), cv_info_tab.end(), cv_info());
     for (dal::bv_visitor cv(pmf2->convex_index()); !cv.finished(); ++cv) {
       pim = pmf2->int_method_of_element(cv);
-      if (pim->is_ppi) 
+      if (pim->type() != IM_APPROX) 
 	DAL_THROW(internal_error,
 		  "Method only defined for approximate integration.");
       nbpt = pim->integration_points().size();
@@ -454,20 +454,22 @@ namespace getfem
 
   pfem virtual_link_fem(mesh_fem &mf1, mesh_fem &mf2,
 			pintegration_method pim) {
-    if (pim->is_ppi) DAL_THROW(std::invalid_argument,
-	     "This element is only defined on approximated integration.");
+    if (pim->type() != IM_APPROX) 
+      DAL_THROW(std::invalid_argument,
+		"This element is only defined on approximated integration.");
     if (vlf_tab__ == 0) vlf_tab__ = new virtual_link_fem_table();
     return vlf_tab__->add(virtual_link_fem_light_(mf_link_fem(mf1, mf2),
-						  pim->method.pai, false));
+						  pim->approx_method(), false));
   }
 	
   pfem virtual_link_fem_with_gradient(mesh_fem &mf1, mesh_fem &mf2,
 			pintegration_method pim) {
-    if (pim->is_ppi) DAL_THROW(std::invalid_argument,
-	     "This element is only defined on approximated integration.");
+    if (pim->type() != IM_APPROX) 
+      DAL_THROW(std::invalid_argument,
+		"This element is only defined on approximated integration.");
     if (vlf_tab__ == 0) vlf_tab__ = new virtual_link_fem_table();
     return vlf_tab__->add(virtual_link_fem_light_(mf_link_fem(mf1, mf2),
-						  pim->method.pai, true));
+						  pim->approx_method(), true));
   }
 	
   static void sup_virtual_link_fem(pmesh_fem_link_fem pmflf) {

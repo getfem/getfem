@@ -239,10 +239,12 @@ namespace getfem
     /** Set on all the convexes of indexes in bv, which is of type
      *          dal::bit\_vector, the finite element method
      *          with the description pf which is of type pfem and ppi of
-     *          type pintegration_method.
+     *          type pintegration_method. 
+     *  The argument ppi is optional. If omitted, the dummy integration
+     * method IM_NONE() will be used.
      */
     void set_finite_element(const dal::bit_vector &cvs, pfem ppf,
-			    const pintegration_method ppi);
+			    const pintegration_method ppi = 0);
     pfem fem_of_element(size_type cv) const
       { return  f_elems[cv]->pf; }
     const pintegration_method &int_method_of_element(size_type cv) const
@@ -309,10 +311,11 @@ namespace getfem
     /// Says whether or not element i is on the boundary b. 
     bool is_convex_on_boundary(size_type c, size_type b) const
       { return (valid_boundaries[b] && boundaries[b].cvindex[c]); }
+    /** returns the list of convexes on the boundary b */
     const dal::bit_vector &convex_on_boundary(size_type b) const;
     const dal::bit_vector &faces_of_convex_on_boundary(size_type c,
 						       size_type b) const;
-    /* returns the list of boundary numbers  [JP] */
+    /** returns the list of boundary numbers */
     const dal::bit_vector &get_valid_boundaries() const 
       { return valid_boundaries; }
     

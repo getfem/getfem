@@ -88,14 +88,16 @@ namespace getfem
   
   pintfem give_intfem(pfem ppf, const pintegration_method ppi) {
     static dal::FONC_TABLE<intfem, intfem> *tab;
+    static pintegration_method im_none = 0; // the dummy integration method
     static bool isinit = false;
     if (!isinit) {
       tab = new dal::FONC_TABLE<intfem, intfem>(); isinit = true;
+      im_none = getfem::int_method_descriptor("IM_NONE()");
     }
 //      if (ppf->basic_structure() != ppi->structure())
 //        DAL_THROW(internal_error, 
 //  		"Incompatibility between fem and integration method");
-      return tab->add(intfem(ppf, ppi));
+    return tab->add(intfem(ppf, ppi ? ppi : im_none));
   }
   
   const dal::bit_vector &mesh_fem::convex_on_boundary(size_type b) const {

@@ -44,10 +44,10 @@ namespace getfem
     for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       pintegration_method pim = mf.int_method_of_element(cv);
       bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
-      if (pim->is_exact() || !(pgt->is_linear())) {
+      if (pim->type() != IM_APPROX || !(pgt->is_linear())) {
 	delete p;
 	DAL_THROW(failure_error,
-		  "Approx integration and linear transformation only.");
+		  "Approx integration and linear transformation are required.");
       }
       papprox_integration pai = pim->approx_method();
       
@@ -94,7 +94,7 @@ namespace getfem
       DAL_THROW(failure_error, "Bad type of parameters");
     pintegration_method pim = params[0].method();
     int k = int(::floor(params[1].num() + 0.01));
-    if (pim->is_exact() || k <= 0 || k > 150 || double(k) != params[1].num())
+    if (pim->type() != IM_APPROX || k <= 0 || k > 150 || double(k) != params[1].num())
       DAL_THROW(failure_error, "Bad parameters");
 
     pgetfem_mesh pm;

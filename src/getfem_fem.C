@@ -1053,7 +1053,7 @@ namespace getfem
   /*	classical fem                                                     */
   /* ******************************************************************** */
 
-  pfem classical_fem(bgeot::pgeometric_trans pgt, short_type k)
+  static pfem classical_fem_(const char *suffix, bgeot::pgeometric_trans pgt, short_type k)
   {
     static bgeot::pgeometric_trans pgt_last = 0;
     static short_type k_last = short_type(-1);
@@ -1072,19 +1072,19 @@ namespace getfem
 
     if (nbp == n+1)
       if (pgt->basic_structure() == bgeot::simplex_structure(n))
-    	{ name << "FEM_PK("; found = true; }
+    	{ name << "FEM_PK" << suffix << "("; found = true; }
     
     /* Identifying Q1-parallelepiped.                                     */
 
     if (!found && nbp == (size_type(1) << n))
       if (pgt->basic_structure() == bgeot::parallelepiped_structure(n))
-    	{ name << "FEM_QK("; found = true; }
+    	{ name << "FEM_QK" << suffix << "("; found = true; }
 
     /* Identifying Q1-prisms.                                             */
  
     if (!found && nbp == 2 * n)
       if (pgt->basic_structure() == bgeot::prism_structure(n))
-     	{ name << "FEM_PK_PRISM("; found = true; }
+     	{ name << "FEM_PK_PRISM" << suffix << "("; found = true; }
      
     // To be completed
 
@@ -1100,6 +1100,13 @@ namespace getfem
 	      "This element is not taken into account. Contact us");
   }
 
+  pfem classical_fem(bgeot::pgeometric_trans pgt, short_type k) {
+    return classical_fem_("", pgt, k);
+  }
+  
+  pfem classical_discontinuous_fem(bgeot::pgeometric_trans pgt, short_type k) {
+    return classical_fem_("_DISCONTINUOUS", pgt, k);
+  }
   
   /* ******************************************************************** */
   /*    Naming system                                                     */
