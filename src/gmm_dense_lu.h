@@ -73,14 +73,14 @@ namespace gmm {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
     size_type info = 0, i, j, jp, M = A.nrows(), N = A.ncols();
-    size_type NN = std::min(M-1, N-1);
+    size_type NN = std::min(M, N);
     std::vector<T> c(M), r(N);
     
-    if (ipvt.size() < NN) DAL_THROW(failure_error, "IPVT too small");
-    for (i = 0; i < NN; ++i) ipvt[i] = i;
+    if (ipvt.size()+1 < NN) DAL_THROW(failure_error, "IPVT too small");
+    for (i = 0; i+1 < NN; ++i) ipvt[i] = i;
       
     if (M || N) {
-      for (j = 0; j < NN; ++j) {
+      for (j = 0; j+1 < NN; ++j) {
 	R max = dal::abs(A(j,j)); jp = j;
 	for (i = j+1; i < M; ++i)		   /* find pivot.          */
 	  if (dal::abs(A(i,j)) > max) { jp = i; max = dal::abs(A(i,j)); }

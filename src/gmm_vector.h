@@ -160,7 +160,7 @@ namespace gmm
 #   ifdef __GETFEM_VERIFY
       if (c >= nbl) out_of_range_error();
 #   endif
-      if (e == T(0)) erase(c);
+      if (e == T(0)) { base_type::erase(c); }
       else base_type::operator [](c) = e;
     }
 

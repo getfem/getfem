@@ -230,16 +230,17 @@ namespace gmm {
     typedef abstract_null_type row_iterator;
     typedef col_major sub_orientation;
     typedef conjugated_row_matrix_access<M> access_type;
-    static size_type ncols(const this_type &m) { return m._end - m._begin; }
-    static size_type nrows(const this_type &m)
-    { return (ncols(m) == 0) ? 0 : vect_size(mat_col(m, 0)); }
-    static const_sub_col_type col(const const_col_iterator &it)
+    static inline size_type ncols(const this_type &m)
+    { return (m._end == m._begin) ? 0 : m._end - m._begin; }
+    static inline size_type nrows(const this_type &m)
+    { return (m._end == m._begin) ? 0 : vect_size(mat_col(m, 0)); }
+    static inline const_sub_col_type col(const const_col_iterator &it)
     { return conjugated(linalg_traits<M>::row(it.it)); }
-    static const_col_iterator col_begin(const this_type &m)
+    static inline const_col_iterator col_begin(const this_type &m)
     { return const_col_iterator(m._begin); }
-    static const_col_iterator col_end(const this_type &m)
+    static inline const_col_iterator col_end(const this_type &m)
     { return const_col_iterator(m._end); }
-    static const void* origin(const this_type &m) { return m.origin; }
+    static inline const void* origin(const this_type &m) { return m.origin; }
   };
 
   template<class M> std::ostream &operator <<
@@ -334,16 +335,17 @@ namespace gmm {
     typedef abstract_null_type col_iterator;
     typedef row_major sub_orientation;
     typedef conjugated_col_matrix_access<M> access_type;
-    static size_type nrows(const this_type &m) { return m._end - m._begin; }
-    static size_type ncols(const this_type &m)
-    { return (nrows(m) == 0) ? 0 : vect_size(mat_row(m, 0)); }
-    static const_sub_row_type row(const const_row_iterator &it)
+    static inline size_type nrows(const this_type &m) 
+    { return (m._end == m._begin) ? 0 : m._end - m._begin; }
+    static inline size_type ncols(const this_type &m)
+    {  return (m._end == m._begin) ? 0 : vect_size(mat_row(m, 0)); }
+    static inline const_sub_row_type row(const const_row_iterator &it)
     { return conjugated(linalg_traits<M>::col(it.it)); }
-    static const_row_iterator row_begin(const this_type &m)
+    static inline const_row_iterator row_begin(const this_type &m)
     { return const_row_iterator(m._begin); }
-    static const_row_iterator row_end(const this_type &m)
+    static inline const_row_iterator row_end(const this_type &m)
     { return const_row_iterator(m._end); }
-    static const void* origin(const this_type &m) { return m.origin; }
+    static inline const void* origin(const this_type &m) { return m.origin; }
   };
 
   template<class M> std::ostream &operator <<

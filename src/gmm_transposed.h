@@ -102,9 +102,10 @@ namespace gmm {
             linalg_traits<M>::row_iterator, PT>::return_type col_iterator;
     typedef col_major sub_orientation;
     typedef transposed_row_matrix_access<PT> access_type;
-    static size_type ncols(const this_type &v) { return v._end - v._begin; }
+    static size_type ncols(const this_type &v)
+    { return (v._end == v._begin) ? 0 : v._end - v._begin; }
     static size_type nrows(const this_type &v)
-    { return (ncols(v) == 0) ? 0 : vect_size(mat_const_col(v, 0)); }
+    { return (v._end == v._begin) ? 0 : vect_size(mat_const_col(v, 0)); }
     static const_sub_col_type col(const const_col_iterator &it)
     { return linalg_traits<M>::row(it); }
     static sub_col_type col(col_iterator &it)
@@ -198,9 +199,10 @@ namespace gmm {
             linalg_traits<M>::col_iterator, PT>::return_type row_iterator;
     typedef row_major sub_orientation;
     typedef transposed_col_matrix_access<PT> access_type;
-    static size_type nrows(const this_type &v) { return v._end - v._begin; }
+    static size_type nrows(const this_type &v)
+    { return (v._end == v._begin) ? 0 : v._end - v._begin; }
     static size_type ncols(const this_type &v)
-    { return (nrows(v) == 0) ? 0 : vect_size(mat_const_row(v, 0)); }
+    { return (v._end == v._begin) ? 0 : vect_size(mat_const_row(v, 0)); }
     static const_sub_row_type row(const const_row_iterator &it)
     { return linalg_traits<M>::col(it); }
     static sub_row_type row(row_iterator &it)

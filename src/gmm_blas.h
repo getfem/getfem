@@ -592,7 +592,6 @@ namespace gmm {
   template <class V1, class V2> inline
     typename linalg_traits<V1>::value_type
     vect_sp(const V1 &v1, const V2 &v2,abstract_sparse,abstract_sparse) {
-
     typename linalg_traits<V1>::const_iterator it1 = vect_const_begin(v1),
       ite1 = vect_const_end(v1);
     typename linalg_traits<V2>::const_iterator it2 = vect_const_begin(v2),
@@ -833,8 +832,10 @@ namespace gmm {
 
   template <class L1, class L2> inline
   void copy(const L1& l1, L2& l2, abstract_matrix, abstract_matrix) {
-    if (mat_ncols(l1) != mat_ncols(l2) || mat_nrows(l1) != mat_nrows(l2))
-      DAL_THROW(dimension_error, "dimensions mismatch");
+    size_type m = mat_nrows(l1), n = mat_ncols(l1);
+    if (!m || !n) return;
+    if (n != mat_ncols(l2) || m != mat_nrows(l2))
+	DAL_THROW(dimension_error, "dimensions mismatch");
     copy_mat(l1, l2, typename linalg_traits<L1>::sub_orientation(),
 	     typename linalg_traits<L2>::sub_orientation());
   }
@@ -1422,7 +1423,9 @@ namespace gmm {
 
   template <class L1, class L2, class L3> inline
   void mult_dispatch(const L1& l1, const L2& l2, L3& l3, abstract_vector) {
-    if (mat_ncols(l1) != vect_size(l2) || mat_nrows(l1) != vect_size(l3))
+    size_type m = mat_nrows(l1), n = mat_ncols(l1);
+    if (!m || !n) { gmm::clear(l3); return; }
+    if (n != vect_size(l2) || m != vect_size(l3))
       DAL_THROW(dimension_error,"dimensions mismatch");
     if (linalg_origin(l2) != linalg_origin(l3))
       mult_spec(l1, l2, l3, typename principal_orientation_type<typename
@@ -1517,8 +1520,9 @@ namespace gmm {
 
   template <class L1, class L2, class L3, class L4> inline
   void mult(const L1& l1, const L2& l2, const L3& l3, L4& l4) {
-    if (mat_ncols(l1) != vect_size(l2) || mat_nrows(l1) != vect_size(l3)
-	|| mat_nrows(l1) != vect_size(l4))
+    size_type m = mat_nrows(l1), n = mat_ncols(l1);
+    if (!m || !n) { gmm::copy(l3, l4); return; }
+    if (n != vect_size(l2) || m != vect_size(l3) || m != vect_size(l4))
       DAL_THROW(dimension_error,"dimensions mismatch");
     if (linalg_origin(l2) != linalg_origin(l4))
       mult_spec(l1, l2, l3, l4, typename principal_orientation_type<typename

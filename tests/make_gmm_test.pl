@@ -21,7 +21,7 @@ $inc_dir = "$srcdir/../src";
 
 print "Gmm tests : Making $nb_iter execution(s) of each test\n";
 
-for ($iter = 0; $iter < $nb_iter; ++$iter) {
+for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 
   if ($ARGV[1] eq "") {  $tests_to_be_done = `ls $srcdir/gmm_test*.C`; }
   else {  $tests_to_be_done = $ARGV[1]; }
@@ -29,7 +29,7 @@ for ($iter = 0; $iter < $nb_iter; ++$iter) {
   while ($tests_to_be_done) {
     ($org_name, $tests_to_be_done) = split('\s', $tests_to_be_done, 2);
 
-    print "\nTesting $org_name\n";
+    print "\nTest $iter for $org_name\n";
     $d = $org_name;
     do { ($b, $d) = split('/', $d, 2); } while ($d);
     $dest_name = "auto_$b";

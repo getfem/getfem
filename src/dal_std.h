@@ -71,6 +71,7 @@
 #include <iterator>
 #include <algorithm>
 #include <vector>
+#include <deque>
 #include <string>
 #include <complex>
 
