@@ -58,28 +58,28 @@ namespace bgeot
 
   template<class T> struct svector_iterator
     : public dal::dynamic_tree_sorted<_elt_svector<T>,
-      comp_elt_svector<T>,3>::tas_iterator {
+      comp_elt_svector<T>,3>::iterator {
     typedef typename dal::dynamic_tree_sorted<_elt_svector<T>,
-      comp_elt_svector<T>,3>::tas_iterator base_it_type;
+      comp_elt_svector<T>,3>::iterator base_it_type;
     typedef T                   value_type;
-    typedef value_type*   pointer;
-    typedef value_type&   reference;
+    typedef value_type*         pointer;
+    typedef value_type&         reference;
     typedef size_t              size_type;
     typedef ptrdiff_t           difference_type;
     typedef std::bidirectional_iterator_tag iterator_category;
 
-    reference operator *() const { return id->e; }
+    reference operator *() const { return (base_it_type::operator*()).e; }
     pointer operator->() const { return &(operator*()); }
-    size_type index(void) const { return id->c; }
+    size_type index(void) const { return (base_it_type::operator*()).c; }
     svector_iterator(void) {}
     svector_iterator(const base_it_type &it) : base_it_type(it) {}
   };
 
   template<class T> struct svector_const_iterator
     : public dal::dynamic_tree_sorted<_elt_svector<T>,
-      comp_elt_svector<T>,3>::const_tas_iterator {
+      comp_elt_svector<T>,3>::const_iterator {
     typedef typename dal::dynamic_tree_sorted<_elt_svector<T>,
-      comp_elt_svector<T>,3>::const_tas_iterator base_it_type;
+      comp_elt_svector<T>,3>::const_iterator base_it_type;
     typedef T                   value_type;
     typedef const value_type*   pointer;
     typedef const value_type&   reference;
@@ -87,9 +87,9 @@ namespace bgeot
     typedef ptrdiff_t           difference_type;
     typedef std::bidirectional_iterator_tag iterator_category;
     
-    reference operator *() const { return id->e; }
+    reference operator *() const { return (base_it_type::operator*()).e; }
     pointer operator->() const { return &(operator*()); }
-    size_type index(void) const { return id->c; }
+    size_type index(void) const { return (base_it_type::operator*()).c; }
     svector_const_iterator(void) {}
     svector_const_iterator(const svector_iterator<T> &it) : base_it_type(it) {}
     svector_const_iterator(const base_it_type &it) : base_it_type(it) {}
@@ -119,7 +119,8 @@ namespace bgeot
     void clean(double eps) {
       tas_iterator it = tas_begin(), ite = tas_end();
       for ( ; it != ite; ++it)
-	if (dal::abs((*it).e) <= eps) sup(it.index());
+	if (dal::abs((*it).e) <= eps)
+	  { it->e = T(0); sup(it.index()); it->c = size_type(-1); }
     }
     
     void resize(size_type l) { nbl = l; }
@@ -133,7 +134,8 @@ namespace bgeot
       if (c >= nbl) out_of_range_error();
 #endif
       size_type i = add_norepeat(ev);
-      if (e == T(0)) sup(i); else _base_type::operator[](i).e = e;
+      _base_type::operator[](i).e = e;
+      if (e == T(0)) { sup(i); _base_type::operator[](i).c = size_type(-1); } 
     }
 
     inline T r(size_type c) const {  

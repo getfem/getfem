@@ -34,7 +34,7 @@
 #define __GETFEM_ASSEMBLING_H
 
 #include <getfem_mesh_fem.h>
-#include <bgeot_svector.h>
+#include <bgeot_abstract_linalg.h>
 namespace getfem
 {
 
@@ -573,6 +573,105 @@ namespace getfem
       }
     }
   }
+
+//   template<class MATD, class MATG, class VECT>
+//     size_type treat_Dirichlet_condition_new(const MATD &D, MATG &G,
+// 					    const VECT &UD, VECT &UDD) {
+//     typedef typename bgeot::VECT_TO_BE_USED<bgeot::linalg_traits<MATD>::storage_type
+//       TEMP_VECT;
+//     size_type nbd = D.ncols(), nbase = 0, nbr = D.nrows();
+//     TEMP_VECT aux(nbr), e(nbd), f(nbd);
+//     dal::dynamic_array<TEMP_VECT> base_img;
+//     dal::dynamic_array<TEMP_VECT> base_img_inv;
+//     size_type nb_bimg = 0;
+
+//     // to be continued
+
+//     // First, detection of null columns of D, and already orthogonals 
+//     // vectors of the image of D.
+//     dal::bit_vector nn;
+//     for (size_type i = 0; i < nbd; ++i) {
+//       bgeot::clear(e); e[i] = 1.0; bgeot::copy(e, f);
+//       bgeot::mult(D, e, aux);
+//       if (bgeot::norm2(aux) < 1.0E-8) { //à scaler sur l'ensemble de D ...
+// 	G(nbase++, i) = 1.0; nn[i] = true;
+//       }
+//       else {
+// 	bool good = true;
+// 	for (size_type j = 0; j < nb_bimg; ++j)
+// 	  if (dal::abs(bgeot::vect_sp(aux, base_img[j])) > 1.0E-16)
+// 	    { good = false; break; }
+// 	if (good) {
+// 	  scalar_type n = bgeot::norm2(aux);
+// 	  f /= n; aux /= n;
+// 	  base_img_inv[nb_bimg] = TEMP_VECT();
+// 	  base_img_inv[nb_bimg] = f;
+// 	  //	  cerr << "ajout de " << aux << "\n";
+// 	  aux.clean(1.0E-18);
+// 	  base_img[nb_bimg++] = aux; nn[i] = true;
+// 	}
+//       }
+//     }
+//     size_type nb_triv_base = nbase;
+
+//     for (size_type i = 0; i < nbd; ++i)
+//       if (!(nn[i])) {
+// 	e.clear(); e[i] = 1.0; f.clear(); f[i] = 1.0;
+// 	aux = D*e;
+// 	for (size_type j = 0; j < nb_bimg; ++j) { 
+// 	  scalar_type c = bgeot::vect_sp(aux, base_img[j]);
+// 	  //	  if (dal::abs(c > 1.0E-6) { // à scaler sur l'ensemble de D ...
+// 	  if (c != 0.) {
+// 	    aux -= base_img[j] * c;
+// 	    f -= base_img_inv[j] * c;
+// 	  }
+// 	}
+// 	//	cerr << "norm2(aux)= " << bgeot::vect_norm2(aux) << "\n";
+// 	if (bgeot::vect_norm2(aux) < 1.0E-8) { // à scaler sur l'ensemble de D ...
+// 	  G.row(nbase++) = f;
+// 	}
+// 	else {
+// 	  scalar_type n = bgeot::vect_norm2(aux);
+// 	  f /= n; aux /= n;
+// 	  base_img_inv[nb_bimg] = f;
+// 	  base_img[nb_bimg++] = aux;
+// 	  f.clean(1.0E-18); aux.clean(1.0E-18);
+// 	  //	  cerr << "ajout de " << aux << "\n";
+// 	}
+// 	e[i] = 0.0;
+//       }
+
+//     // Compute a solution in UDD
+//     UDD.fill(0.0);
+//     for (size_type i = 0; i < nb_bimg; ++i) {
+//       scalar_type c = bgeot::vect_sp(base_img[i], UD);
+//       UDD += base_img_inv[i].full() * c;
+//     }
+
+//     // Orthogonalisation of the basis of the kernel of D.
+//     for (size_type i = nb_triv_base + 1; i < nbase; ++i) {
+//       for (size_type j = nb_triv_base; j < i; ++j) {
+// 	scalar_type c = bgeot::vect_sp(G.row(i), G.row(j));
+// 	if (c != 0.)
+// 	  G.row(i) -= G.row(j) * c;
+//       }
+//     }
+
+//     // projection of UDD on the orthogonal to the kernel.
+//     for (size_type j = nb_triv_base; j < nbase; ++j) {
+//       scalar_type c = bgeot::vect_sp(G.row(j), UDD);
+//       if (c != 0.)
+// 	UDD -= G.row(j).full() * c;
+//     }
+
+//     // Test ...
+//     if (bgeot::vect_norm2(D * UDD - UD) > 1.0E-12)
+//       cerr << "Dirichlet condition not well inverted\n";
+
+//     return nbase;
+
+//   }
+  
 
   template<class MATD, class VECT>
     size_type treat_Dirichlet_condition(const MATD &D, MATD &G,

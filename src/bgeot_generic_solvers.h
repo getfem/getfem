@@ -38,38 +38,141 @@
 namespace bgeot {
 
   /* ******************************************************************** */
-  /*		conjugate gradient  (unpreconditionned)        		  */
+  /*		conjugate gradient                           		  */
+  /* (unpreconditionned, with parametrable scalar product)        	  */
   /* ******************************************************************** */
   // Inspired from I.T.L. (http://www.osl.iu.edu/research/itl)
 
-  template < class Matrix, class Vector>
-  int cg(const Matrix& A, Vector& x, const Vector& b, int itemax, 
-	 double residu, bool noisy = true) {
-    typename linalg_traits<Vector>::base_type rho(0), rho_1(0), a(0), beta(0);
-    Vector p(x.size()), q(x.size()), r(x.size());
+  template <class Matrix, class Matps,  class Vector>
+  int cg(const Matrix& A, Vector& x, const Vector& b, const Matps& PS,
+	 int itemax, double residu, int noisy = 1) {
+    typedef typename temporary_plain_vector<Vector>::vector_type temp_vector;
+    typename linalg_traits<Vector>::value_type rho(0), rho_1(0), a(0), beta(0);
+    temp_vector p(vect_size(x)), q(vect_size(x)), r(vect_size(x));
     int iter = 0;
+    cout << "0\n";
+    cout << "nrows = " << mat_nrows(A) << "ncols = " << mat_ncols(A)
+	 << "sx = " << vect_size(x) << "sb = " << vect_size(b) << "sr = " << vect_size(r) << "sscal(x) = " << vect_size(scaled(x, -1.0)) << endl;
     mult(A, scaled(x, -1.0), b, r);
+    cout << "01\n";
 
-    rho = vect_sp(r,r);
+    rho = vect_sp(PS, r, r);
     
     while (sqrt(rho) > residu) {
 
+      cout << "1\n";
       if (iter == 0) copy(r, p);		  
       else { beta = rho / rho_1; add(r, scaled(p, beta), p); }
-
+cout << "2\n";
       mult(A, p, q);
-
-      a = rho / vect_sp(p, q);
-      
+cout << "3\n";
+      a = rho / vect_sp(PS, p, q);
+cout << "4\n";
       add(scaled(p, a), x);
       add(scaled(q, -a), r);
-
-      rho_1 = rho; rho = vect_sp(r, r);
-
+cout << "5\n";
+      rho_1 = rho; rho = vect_sp(PS, r, r);
+cout << "6\n";
       if (++iter >= itemax) return 1;
-      if (noisy) cout << "iter " << iter << " residu " << sqrt(rho) << endl;
+      if (noisy > 0) cout << "iter " << iter << " residu " << sqrt(rho)<< endl;
     }
     return 0;
+  }
+
+  template <class Matrix,  class Vector> inline
+  int cg(const Matrix& A, Vector& x, const Vector& b,
+	 int itemax, double residu, int noisy = 1)
+  { return cg(A, x, b, identity_matrix(), itemax, residu, noisy); } 
+      
+  /* ******************************************************************** */
+  /*		Additive schwartz method                                  */
+  /* ******************************************************************** */
+
+  template <class Matrix1, class Matrix2, class Matrix3, class Vector1>
+  struct schwarz_additif_matrix {
+    typedef typename linalg_traits<Matrix2>::value_type value_type;
+    const Matrix1 *A;
+    const std::vector<Matrix2> *ml1;
+    const std::vector<Matrix3> *ml2;
+    const std::vector<Vector1> *cor;
+    int itemax, noisy;
+    double residu;
+    std::vector< vsvector<value_type> > *gi;
+    std::vector< vsvector<value_type> > *fi;
+  };
+
+  template <class Matrix1, class Matrix2, class Matrix3,
+    class Vector1, class Vector2, class Vector3>
+  void schwarz_additif(const Matrix1 &A,
+		       const Vector3 &u,
+		       const std::vector<Matrix2> &ml1,
+		       const std::vector<Matrix3> &ml2,
+		       const std::vector<Vector1> &cor,
+		       const Vector2 &f,
+		       int itemax,  double residu, int noisy = 1) {
+    typedef typename linalg_traits<Matrix2>::value_type value_type;
+    
+    size_type nb_sub = ml1.size() + ml2.size();
+    std::vector<vsvector<value_type> > gi(nb_sub);
+    std::vector<vsvector<value_type> > fi(nb_sub);
+
+    size_type ms = ml1.size();
+
+    for (int i = 0; i < nb_sub; ++i) {
+      size_type k = i < ms ? mat_nrows(ml1[i]) : mat_nrows(ml2[i-ms]);
+      fi[i] = gi[i] = vsvector<value_type>(k);
+    }
+
+    size_type nb_dof = f.size();
+    global_to_local(f, fi, cor);
+
+    for (int i = 0; i < nb_sub; ++i)
+      cg(i < ms ? ml1[i] : ml2[i-ms], gi[i], fi[i], itemax, residu, noisy - 1);
+
+    vsvector<value_type> g(nb_dof);
+    local_to_global(g, gi, cor);
+    schwarz_additif_matrix<Matrix1, Matrix2, Matrix3, Vector1> SAM;
+    SAM.A = &A; SAM.ml1 = &ml1; SAM.ml2 = &ml2; SAM.cor = &cor;
+    SAM.itemax = itemax; SAM.residu = residu; SAM.noisy = noisy;
+    SAM.gi = &gi; SAM.fi = &fi;
+    cg(SAM,  u, g,  itemax, residu, noisy - 1);
+  }
+
+  template <class Matrix1, class Matrix2, class Matrix3, class Vector1>
+  void mult(const schwarz_additif_matrix<Matrix1, Matrix2, Matrix3,Vector1> &M,
+	    const vsvector<typename linalg_traits<Matrix1>::value_type> &p,
+	    vsvector<typename linalg_traits<Matrix1>::value_type> &q) {
+    
+    mult(*(M.A), p, q);
+    global_to_local(q, *(M.fi), *(M.cor));
+    for (int i = 0; i < *(M.ml1).size(); ++i)
+      cg(*(M.ml1)[i], *(M.gi)[i], *(M.fi)[i], M.itemax, M.residu, M.noisy-1);
+
+    for (int i = 0; i < ml2.size(); ++i)
+      cg(*(M.ml2)[i],*(M.gi)[i+ms],*(M.fi)[i+ms],M.itemax,M.residu,M.noisy-1);
+
+    local_to_global(q, *gi, *cor);
+  }
+
+  template <class Vector1, class Vector2, class T>
+  void global_to_local(const Vector2 &f, std::vector<vsvector<T> > &fi,
+		  const std::vector<Vector1> &cor) {
+    for (int i = 0; i < fi.size(); ++i) {
+      typename Vector1::const_iterator it = cor[i].begin(), ite = cor[i].end();
+      typename vsvector<T>::iterator it2 = fi[i].begin(), ite2 = fi[i].end();
+      for (; it != ite; ++it, ++it2) *it2 = f[*it]; 
+    }
+  }
+
+  template <class Vector1, class Vector2, class T>
+  void local_to_global(Vector2 &f, const std::vector<vsvector<T> > &fi,
+		  const std::vector<Vector1> &cor) {
+    clear(f);
+    for (int i = 0; i < fi.size(); ++i) {
+      typename Vector1::const_iterator it = cor[i].begin(), ite = cor[i].end();
+      typename vsvector<T>::const_iterator it2=fi[i].begin(), ite2=fi[i].end();
+      for (; it != ite; ++it, ++it2) f[*it] += *it2; 
+    }
   }
   
 }

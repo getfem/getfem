@@ -359,8 +359,7 @@ void lap_pb::assemble(void)
   getfem::assembling_Dirichlet_condition(RM, B, mef, 0, ST, 1);
 }
 
-void lap_pb::solve(void)
-{
+void lap_pb::solve(void) {
   bgeot::cg(RM, U, B, 20000, residu, false);
 }
 
@@ -368,8 +367,17 @@ void lap_pb::solve(void)
 /*  main program.                                                         */
 /**************************************************************************/
 
+class exception_cb : public dal::exception_callback  {
+  public:
+  virtual void callback(const std::string& msg)
+  { cerr << msg << "endl"; *(int *)(0) = 0; }
+};
+
 int main(int argc, char *argv[])
 {
+  exception_cb cb;
+  dal::set_exception_callback(&cb);
+
   try
     {
     

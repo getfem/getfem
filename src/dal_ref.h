@@ -50,6 +50,10 @@ namespace dal
 
   template<class ITER> class tab_ref
   {
+    protected :
+
+      ITER _begin, _end;
+
     public :
 
       typedef typename std::iterator_traits<ITER>::value_type  value_type;
@@ -65,14 +69,8 @@ namespace dal
       typedef dal::reverse_iter<iterator> reverse_iterator;
       typedef size_t size_type;
     
-    protected :
-
-      ITER _begin, _end;
-
-    public :
-
       bool empty(void) const { return _begin == _end; }
-      
+      size_type size(void) const { return _end - _begin; }
 
       const iterator &begin(void) { return _begin; }
       const const_iterator &begin(void) const { return _begin; }
@@ -95,7 +93,7 @@ namespace dal
       reference operator [](size_type ii) { return *(_begin + ii); }
 
       tab_ref(void) {}
-      tab_ref(const ITER &b, const ITER &e) { _begin = b; _end = e; }
+      tab_ref(const ITER &b, const ITER &e) : _begin(b), _end(e) {}
 
   };
 
@@ -188,7 +186,8 @@ namespace dal
     public :
 
       bool empty(void) const { return _index.empty(); }
-      
+      size_type size(void) const { return _index.size(); }
+
 
       iterator begin(void) { return iterator(_begin, _index.begin()); }
       const_iterator begin(void) const
@@ -300,6 +299,7 @@ namespace dal
     public :
 
       bool empty(void) const { return _index_begin == _index_end; }
+      size_type size(void) const { return _index_end - _index_begin; }
 
       iterator begin(void) { return iterator(_begin, _index_begin); }
       const_iterator begin(void) const
@@ -322,7 +322,7 @@ namespace dal
       tab_ref_index_ref(void) {}
       tab_ref_index_ref(const ITER &b, const ITER_INDEX &bi,
 			               const ITER_INDEX &ei)
-      { _begin = b; _index_begin = bi; _index_end = ei; }
+	: _begin(b), _index_begin(bi), _index_end(ei) {}
 
       const_reference operator [](size_type ii) const
       { return *(_begin + _index_begin[ii]);}
@@ -336,41 +336,44 @@ namespace dal
   /* Reference on regularly spaced elements.                               */
   /* ********************************************************************* */
 
-  template<class ITER> struct _tab_ref_reg_spaced_iterator : public ITER
+  template<class ITER> struct _tab_ref_reg_spaced_iterator
   {
     typedef typename std::iterator_traits<ITER>::value_type value_type;
     typedef typename std::iterator_traits<ITER>::pointer    pointer;
     typedef typename std::iterator_traits<ITER>::reference  reference;
     typedef typename std::iterator_traits<ITER>::difference_type
                                                             difference_type;
+    typedef typename std::iterator_traits<ITER>::iterator_category
+                                                            iterator_category;
     typedef size_t size_type;
     typedef _tab_ref_reg_spaced_iterator<ITER> iterator;
+
+    ITER it;
     size_type N;
     
-    iterator operator ++(int)
-    { iterator tmp = *this; (*((ITER *)(this))) += N; return tmp; }
-    iterator operator --(int)
-    { iterator tmp = *this; (*((ITER *)(this))) -= N; return tmp; }
-    iterator &operator ++()
-    { (*((ITER *)(this))) += N; return *this; }
-    iterator &operator --()
-    { (*((ITER *)(this))) -= N; return *this; }
-    iterator &operator +=(difference_type i)
-    { (*((ITER *)(this))) += i * N; return *this; }
-    iterator &operator -=(difference_type i)
-    { (*((ITER *)(this))) -= i * N; return *this; }
-    iterator operator +(difference_type i) const
-    { iterator it = *this; return (it += i * N); }
+    iterator operator ++(int) { iterator tmp = *this; it += N; return tmp; }
+    iterator operator --(int) { iterator tmp = *this; it -= N; return tmp; }
+    iterator &operator ++()   { it += N; return *this; }
+    iterator &operator --()   { it -= N; return *this; }
+    iterator &operator +=(difference_type i) { it += i * N; return *this; }
+    iterator &operator -=(difference_type i) { it -= i * N; return *this; }
+    iterator operator +(difference_type i) const 
+    { iterator itt = *this; return (itt += i); }
     iterator operator -(difference_type i) const
-    { iterator it = *this; return (it -= i * N); }
+    { iterator itt = *this; return (itt -= i); }
     difference_type operator -(const iterator &i) const
-    { return (*((ITER *)(this)) - *((ITER *)(&i))) / N; }
-    
-    reference operator [](int ii) { return *(this+ii); }
-    
+    { return (it - i.it) / N; }
+
+    reference operator *() const { return *it; }
+    reference operator [](int ii) { return *(it + ii * N); }
+
+    bool operator ==(const iterator &i) const { return (it == i.it); }
+    bool operator !=(const iterator &i) const { return !(i == *this); }
+    bool operator < (const iterator &i) const { return (it < i.it); }
+
     _tab_ref_reg_spaced_iterator(void) {}
     _tab_ref_reg_spaced_iterator(const ITER &iter, size_type n)
-      : ITER(iter) { N = n; }
+      : it(iter), N(n) { }
     
   };
 
@@ -399,6 +402,7 @@ namespace dal
     public :
 
       bool empty(void) const { return _begin == _end; }
+      size_type size(void) const { return (_end - _begin) / N; }
 
       iterator begin(void) { return iterator(_begin, N); }
       const_iterator begin(void) const { return iterator(_begin, N); }
@@ -419,7 +423,7 @@ namespace dal
 
       tab_ref_reg_spaced(void) {}
       tab_ref_reg_spaced(const ITER &b, const ITER &e, size_type n)
-      { _begin = b; _index_begin = bi; _index_end = ei; N = n; }
+	: _begin(b), _end(e), N(n) {}
 
 
       const_reference operator [](size_type ii) const

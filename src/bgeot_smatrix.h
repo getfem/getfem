@@ -124,7 +124,7 @@ namespace bgeot
       mat_out(o,m);
       size_type i,j;
       for (i = 0,  j = 0 ; i < m.nrows(); i++) j += m.li[i].card();
-      cout << "total : " << j << " elements\n";
+      o << "total : " << j << " elements\n";
       return o;
     }
   };
