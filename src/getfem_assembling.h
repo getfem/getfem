@@ -491,21 +491,19 @@ namespace getfem
     assem.volumic_assembly();
   }
 
-  /**
-   * assembly of $\int_\Omega a(x)\nabla u_i.\nabla v_i$,
-   * where $a(x)$ is scalar.
+  /** The same but on each component of mf when mf has a qdim > 1 
    */
   template<typename MAT, typename VECT>
-  void asm_stiffness_matrix_for_vectorial_laplacian(MAT &M, 
-						    const mesh_im &mim,
-						    const mesh_fem &mf,
-						    const mesh_fem &mfdata,
-						    const VECT &A) {
+  void asm_stiffness_matrix_for_laplacian_componentwise(MAT &M, 
+						 const mesh_im &mim,
+						 const mesh_fem &mf,
+						 const mesh_fem &mfdata,
+						 const VECT &A) {
     if (mfdata.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     generic_assembly
       assem("a=data$1(#2); M$1(#1,#1)+="
-	    "sym(comp(vGrad(#1).vGrad(#1).Base(#2))(:,:,i,:,:,i,j).a(j))");
+	    "sym(comp(vGrad(#1).vGrad(#1).Base(#2))(:,k,i,:,k,i,j).a(j))");
     //generic_assembly assem("a=data$1(#2); M$1(#1,#1)"
     //        "+=comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j)");
     assem.push_mi(mim);
@@ -544,7 +542,29 @@ namespace getfem
   {
     if (mfdata.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
-    generic_assembly assem("a=data$1(mdim(#1),mdim(#1),#2); M$1(#1,#1)+=comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,j,k).a(j,i,k)");
+    generic_assembly assem("a=data$1(mdim(#1),mdim(#1),#2);"
+			   "M$1(#1,#1)+=comp(Grad(#1).Grad(#1).Base(#2))"
+			   "(:,i,:,j,k).a(j,i,k)");
+    assem.push_mi(mim);
+    assem.push_mf(mf);
+    assem.push_mf(mfdata);
+    assem.push_data(A);
+    assem.push_mat(M);
+    assem.volumic_assembly();
+  }
+
+  /** The same but on each component of mf when mf has a qdim > 1 
+   */
+  template<typename MAT, typename VECT>
+  void asm_stiffness_matrix_for_scalar_elliptic_componentwise
+  (MAT &M, const mesh_im &mim, const mesh_fem &mf,
+   const mesh_fem &mfdata, const VECT &A)
+  {
+    if (mfdata.get_qdim() != 1)
+      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    generic_assembly assem("a=data$1(mdim(#1),mdim(#1),#2);"
+			   "M$1(#1,#1)+=comp(vGrad(#1).vGrad(#1).Base(#2))"
+			   "(:,l,i,:,l,j,k).a(j,i,k)");
     assem.push_mi(mim);
     assem.push_mf(mf);
     assem.push_mf(mfdata);

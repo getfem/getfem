@@ -494,10 +494,20 @@ namespace getfem {
 	gmm::copy(coeffs_, gmm::sub_vector(coeffs, gmm::sub_interval(i*n, n)));
     }
     else { gmm::copy(coeffs_, coeffs); }
-    if (laplacian)
-      asm_stiffness_matrix_for_laplacian(K, mim, mf_u, mf_data, coeffs);
-    else
-      asm_stiffness_matrix_for_scalar_elliptic(K, mim, mf_u, mf_data, coeffs);
+    if (laplacian) {
+      if (mf_u.get_qdim() > 1)
+	asm_stiffness_matrix_for_laplacian_componentwise(K, mim, mf_u, mf_data,
+							 coeffs);
+      else
+	asm_stiffness_matrix_for_laplacian(K, mim, mf_u, mf_data, coeffs);
+    }
+    else {
+      if (mf_u.get_qdim() > 1) 
+	asm_stiffness_matrix_for_scalar_elliptic_componentwise(K, mim, mf_u,
+							       mf_data,coeffs);
+      else
+	asm_stiffness_matrix_for_scalar_elliptic(K, mim, mf_u, mf_data,coeffs);
+    }
     this->computed();
   }
 
@@ -1145,7 +1155,10 @@ namespace getfem {
     typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
     typedef typename MODEL_STATE::value_type value_type;
     typedef typename gmm::number_traits<value_type>::magnitude_type R;
+    typedef typename gmm::sub_vector_type<VECTOR *,
+				 gmm::sub_interval>::vector_type SUBVECTOR;
 
+    gmm::sub_interval SUBU;
     mdbrick_abstract<MODEL_STATE> &sub_problem;
     mesh_fem &mf_p, &mf_data;
     T_MATRIX B, M;
@@ -1225,6 +1238,12 @@ namespace getfem {
 		gmm::sub_vector(MS.residu(), SUBI));
       gmm::mult_add(gmm::transposed(B), gmm::sub_vector(MS.state(), SUBI),
 		    gmm::sub_vector(MS.residu(), SUBJ));
+    }
+
+    SUBVECTOR get_pressure(MODEL_STATE &MS) {
+      SUBU = gmm::sub_interval (this->first_index() + sub_problem.nb_dof(),
+				mf_p.nb_dof());
+      return gmm::sub_vector(MS.state(), SUBU);
     }
 
      void set_coeff(value_type epsiloni) {
@@ -1766,7 +1785,7 @@ namespace getfem {
 //             1E-6 * gmm::mat_maxnorm(MS.tangent_matrix())) ? "" : "not ")
 // 	   <<  "symmetric. ";
 
-      // cout << "MM = " << MS.reduced_tangent_matrix() << endl;
+//      cout << "MM = " << MS.reduced_tangent_matrix() << endl;
 
 //       gmm::dense_matrix<value_type> MM(nreddof,nreddof), Q(nreddof,nreddof);
 //       std::vector<value_type> eigval(nreddof);

@@ -1,3 +1,4 @@
+// -*- c++ -*- (enables emacs c++ mode)
 /* *********************************************************************** */
 /*                                                                         */
 /* Copyright (C) 2002-2005 Yves Renard, Michel Fournié.                    */
@@ -175,15 +176,22 @@ void navier_stokes_problem::init(void) {
 /*  Model.                                                                */
 /**************************************************************************/
 
-base_small_vector sol_f(const base_small_vector &P) {
+scalar_type nu_;
+
+base_small_vector sol_f(const base_small_vector &P, scalar_type t) {
   base_small_vector res(P.size());
-  res[P.size()-1] = -0.01;
+  scalar_type x = P[0], y = P[1];
+  res[0] = -16.*y*x*x+16.*y*x+8.*x*x-8.*x+32.*nu_*t*y-16.*nu_*t+8.*t*x*x-8.*t*x;
+  res[1] =  16.*x*y*y-16.*y*x-8.*y*y+8.*y-32.*nu_*t*x+16.*nu_*t+8.*t*y*y-8.*t*y;
+
   return res;
 }
 
-base_small_vector Dir_cond(const base_small_vector &P) {
+base_small_vector Dir_cond(const base_small_vector &P, scalar_type t) {
   base_small_vector res(P.size());
-  // res[P.size()-1] = 0.0;
+  scalar_type x = P[0], y = P[1];
+  res[0] =  2.*(2.*y-1.)*(1.-1.*gmm::sqr(2.*x-1.))*t;
+  res[1] = -2.*(2.*x-1.)*(1.-1.*gmm::sqr(2.*y-1.))*t;
   return res;
 }
 
@@ -193,27 +201,27 @@ bool navier_stokes_problem::solve() {
 
   cout << "Number of dof for u : " << mf_u.nb_dof() << endl;
   cout << "Number of dof for p : " << mf_p.nb_dof() << endl;
-
+  nu_ = nu;
   // 
   // definition of the Laplacian problem
   //
 
   // Laplacian brick.
-  // getfem::mdbrick_scalar_elliptic<> laplacian(mf_u, mf_coef, nu, true);
-  getfem::mdbrick_isotropic_linearized_elasticity<>
-    laplacian(mim, mf_u, mf_coef, -nu, nu, true);
+  getfem::mdbrick_scalar_elliptic<> laplacian(mim, mf_u, mf_coef, nu, true);
+  // getfem::mdbrick_isotropic_linearized_elasticity<>
+  //  laplacian(mim, mf_u, mf_coef, 0.0, nu, true);
 
   // Volumic source term
   plain_vector F(nb_dof_rhs * N);
   for (size_type i = 0; i < nb_dof_rhs; ++i)
-    gmm::copy(sol_f(mf_rhs.point_of_dof(i)),
+    gmm::copy(sol_f(mf_rhs.point_of_dof(i), 0.),
 	      gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
   getfem::mdbrick_source_term<> laplacian_f(laplacian, mf_rhs, F);
 
 
   // Dirichlet condition brick.
   for (size_type i = 0; i < nb_dof_rhs; ++i)
-    gmm::copy(Dir_cond(mf_rhs.point_of_dof(i)),
+    gmm::copy(Dir_cond(mf_rhs.point_of_dof(i), 0.),
 	      gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
   getfem::mdbrick_Dirichlet<> laplacian_dir(laplacian_f, mf_rhs,
 					  F, DIRICHLET_BOUNDARY_NUM);
@@ -230,28 +238,33 @@ bool navier_stokes_problem::solve() {
   
   // Pressure term
   getfem::mdbrick_linear_incomp<> mixed_p(mixed, mf_p);
+
+  // Condition on the pressure
+  sparse_matrix G(1, mf_p.nb_dof());
+  G(0,0) = 1.;
+  plain_vector gr(1);
+  getfem::mdbrick_constraint<> set_pressure(mixed_p, G, gr, 1);
   
   // Dirichlet condition brick.
   for (size_type i = 0; i < nb_dof_rhs; ++i)
-    gmm::copy(Dir_cond(mf_rhs.point_of_dof(i)),
+    gmm::copy(Dir_cond(mf_rhs.point_of_dof(i), 0.),
 	      gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
-  getfem::mdbrick_Dirichlet<> mixed_dir(mixed_p, mf_rhs,
+  getfem::mdbrick_Dirichlet<> mixed_dir(set_pressure, mf_rhs,
 					F, DIRICHLET_BOUNDARY_NUM);
 
   // Dynamic brick.
   getfem::mdbrick_dynamic<> mixed_dyn(mixed_dir, mf_coef, 1.);
-  laplacian_dyn.set_dynamic_coeff(0.0, 1.0);
-
+  mixed_dyn.set_dynamic_coeff(0.0, 1.0);
 
   // 
   // dynamic problem
   //
 
-  plain_vector U0(mf_u.nb_dof()), USTAR(mf_u.nb_dof());
+  plain_vector DF(mf_u.nb_dof()), U0(mf_u.nb_dof()), USTAR(mf_u.nb_dof()), USTARbis(mf_u.nb_dof());
   
   gmm::iteration iter(residu, noisy);
-  getfem::standard_model_state MSL(laplacian_dir);
-  getfem::standard_model_state MSM(mixed_dir);
+  getfem::standard_model_state MSL(laplacian_dyn);
+  getfem::standard_model_state MSM(mixed_dyn);
   
   std::auto_ptr<getfem::dx_export> exp;
   getfem::stored_mesh_slice sl;
@@ -268,21 +281,50 @@ bool navier_stokes_problem::solve() {
   }
 
   scalar_type t_export(dtexport);
-  for (scalar_type t = 0; t <= T; t += dt) {
+  for (scalar_type t = dt; t <= T; t += dt) {
 
     iter.init();
-    laplacian_dyn.set_DF(gmm::scaled(U0, 1./dt));
+    for (size_type i = 0; i < nb_dof_rhs; ++i)
+      gmm::copy(sol_f(mf_rhs.point_of_dof(i), t),
+		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
+    laplacian_f.set_rhs(F);
+    for (size_type i = 0; i < nb_dof_rhs; ++i)
+      gmm::copy(Dir_cond(mf_rhs.point_of_dof(i), t),
+		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
+    laplacian_dir.set_rhs(F);
+
+    
+    gmm::mult(laplacian_dyn.mass_matrix(), gmm::scaled(U0, 1./dt), DF);
+    laplacian_dyn.set_DF(DF);
     getfem::standard_solve(MSL, laplacian_dyn, iter);
     gmm::copy(laplacian.get_solution(MSL), USTAR);
-    
-    cout << "norm de USTAR : " << gmm::vect_norm2(USTAR) << endl;
-    
+
+
+
     iter.init();
-    mixed_dyn.set_DF(gmm::scaled(USTAR, 1./dt));
+    gmm::mult(laplacian_dyn.mass_matrix(), gmm::scaled(USTAR, 1./dt), DF);
+    mixed_dyn.set_DF(DF);
+    for (size_type i = 0; i < nb_dof_rhs; ++i)
+      gmm::copy(Dir_cond(mf_rhs.point_of_dof(i), t),
+		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
+    mixed_dir.set_rhs(F);
     getfem::standard_solve(MSM, mixed_dyn, iter);
     gmm::copy(mixed.get_solution(MSM), U0);
     
-    cout << "norm de U0 : " << gmm::vect_norm2(U0) << endl;
+    cout << "norm de U0 : " << getfem::asm_L2_norm(mim, mf_u, U0) << endl;
+    
+    cout << "error = " << gmm::vect_dist2(U0, F) << endl;
+
+//     {
+//       getfem::vtk_export exp_vtk1(datafilename + "_v.vtk", 0);
+//       exp_vtk1.exporting(mf_u); 
+//       exp_vtk1.write_point_data(mf_u, U0, "velocity");
+//       getfem::vtk_export exp_vtk2(datafilename + "_p.vtk", 0);
+//       exp_vtk2.exporting(mf_p); 
+//       exp_vtk2.write_point_data(mf_p, mixed_p.get_pressure(MSM), "pressure");
+//       // mayavi -d navier_stokes_p.vtk -f WarpScalar -m BandedSurfaceMap -m Outline
+//     }
+//     getchar();
 
     if (dxexport && t >= t_export-dt/20.0) {
       exp->write_point_data(mf_u, U0);

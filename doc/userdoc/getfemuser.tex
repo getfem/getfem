@@ -1125,6 +1125,9 @@ The following additional methods are available on this brick:
   \cpp{brick.get_solution(MS, V)} & After a solve, extract the solution of the
   model state variable MS and put it in the vector V. \hline
 \end{ctableau}
+~\\
+
+Note : if \cpp{mf_u} has a \cpp{qdim} greater than one (i.e. represent a vector field), the scalar elliptic equation is assumed to be defined componentwise. 
 
 \subsection{Source term brick}
 This brick represent either a volumic source term or a Neumann condition, i.e. a term $\int_{\Omega} f.v dx$ or $\int_{\Gamma} f.v dx$ in the weak formulation , with $\Gamma$ a part of$\partial \Omega$. This brick works for both real or complex terms in scalar or vectorial problems. The constructor of this brick is:

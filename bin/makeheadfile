@@ -100,9 +100,7 @@ while ($name = $ARGV[0]) {
     { $authors = "Authors : $author1\n//           $author2"; }
   else { $authors = "Author  : $author1"; }
 
-  if ($name =~ /.h/)
-    { $enablecpp = "// -*- c++ -*- (enables emacs c++ mode)\n"; }
-  else { $enablecpp = ""; }
+  $enablecpp = "// -*- c++ -*- (enables emacs c++ mode)\n";
 
   $year2=$year;
   $filename = $name;
