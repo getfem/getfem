@@ -18,7 +18,7 @@
 /*                                                                         */
 /* *********************************************************************** */
 #include <gmm.h>
-
+#include <gmm_inoutput.h>
 
 void test_gauss_det() {
   gmm::dense_matrix<double> m(5,5);
@@ -116,6 +116,14 @@ int main(void)
     cout << "/***********************************************************/\n";
     cout << "/*             Test of row_matrix<wsvector>                */\n";
     cout << "/***********************************************************/\n";
+
+    gmm::csc_matrix<double> cscm(10,10), cscm2;
+    gmm::copy(m, cscm);
+    gmm::Harwell_Boeing_save("toto.mat", cscm);
+    gmm::Harwell_Boeing_load("toto.mat", cscm2);
+
+    
+
 
     gmm::row_matrix<gmm::wsvector<double> > m3(10, 10);
     gmm::copy(m, m3);
