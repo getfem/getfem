@@ -4,8 +4,6 @@
 // Authors: Andrew Lumsdaine <lums@osl.iu.edu> 
 //          Lie-Quan Lee     <llee@osl.iu.edu>
 //
-// This file is part of the Iterative Template Library
-//
 // You should have received a copy of the License Agreement for the
 // Iterative Template Library along with the software;  see the
 // file LICENSE.  
@@ -101,30 +99,6 @@ namespace gmm {
       do_cholesky(A, sub_orientation());
     }
   };
-
-  template <class Matrix, class V2> inline
-  void mult_cholesky_p(const cholesky_precond<Matrix>& P, V2 &v2, row_major) {
-    gmm::lower_tri_solve(gmm::transposed(P.row_trimatrix), v2);
-    gmm::upper_tri_solve(P.row_trimatrix, v2);
-  }
-
-  template <class Matrix, class V2> inline
-  void mult_cholesky_p(const cholesky_precond<Matrix>& P, V2 &v2, col_major) {
-    gmm::lower_tri_solve(P.col_trimatrix, v2);
-    gmm::upper_tri_solve(gmm::transposed(P.col_trimatrix), v2);
-  }
-
-  template <class Matrix, class V1, class V2> inline
-  void mult(const cholesky_precond<Matrix>& P, const V1 &v1, V2 &v2) {
-    gmm::copy(v1, v2);
-    mult_cholesky_p(P, v2,
-		    typename cholesky_precond<Matrix>::sub_orientation());
-  }
-
-  template <class Matrix, class V1, class V2> inline
-  void transposed_mult(const cholesky_precond<Matrix>& P,const V1 &v1,V2 &v2) {
-    mult(P, v1, v2);
-  }
 
   template <class Matrix>
   void cholesky_precond<Matrix>::do_cholesky(const Matrix& A, row_major) {
@@ -225,6 +199,101 @@ namespace gmm {
     
     col_trimatrix = csc_matrix_ref<value_type *, size_type *, size_type *, 0>
       (&(Tri_val[0]), &(Tri_ind[0]), &(Tri_ptr[0]), mat_nrows(A),mat_ncols(A));
+  }
+
+
+  template <class Matrix, class V2> inline
+  void mult_cholesky_p(const cholesky_precond<Matrix>& P, V2 &v2, row_major) {
+    gmm::lower_tri_solve(gmm::transposed(P.row_trimatrix), v2);
+    gmm::upper_tri_solve(P.row_trimatrix, v2);
+  }
+
+  template <class Matrix, class V2> inline
+  void mult_cholesky_p(const cholesky_precond<Matrix>& P, V2 &v2, col_major) {
+    gmm::lower_tri_solve(P.col_trimatrix, v2);
+    gmm::upper_tri_solve(gmm::transposed(P.col_trimatrix), v2);
+  }
+
+  template <class Matrix, class V1, class V2> inline
+  void mult(const cholesky_precond<Matrix>& P, const V1 &v1, V2 &v2) {
+    gmm::copy(v1, v2);
+    mult_cholesky_p(P, v2,
+		    typename cholesky_precond<Matrix>::sub_orientation());
+  }
+
+  template <class Matrix, class V1, class V2> inline
+  void transposed_mult(const cholesky_precond<Matrix>& P,const V1 &v1,V2 &v2) {
+    mult(P, v1, v2);
+  }
+
+  template <class Matrix, class V2> inline
+  void left_mult_cholesky_p(const cholesky_precond<Matrix>& P, V2 &v2,
+			    row_major)
+  { gmm::lower_tri_solve(gmm::transposed(P.row_trimatrix), v2); }
+
+  template <class Matrix, class V2> inline
+  void left_mult_cholesky_p(const cholesky_precond<Matrix>& P, V2 &v2,
+			    col_major)
+  { gmm::lower_tri_solve(P.col_trimatrix, v2); }
+
+  template <class Matrix, class V1, class V2> inline
+  void left_mult(const cholesky_precond<Matrix>& P, const V1 &v1, V2 &v2) {
+    copy(v1, v2);
+    left_mult_cholesky_p(P, v2,
+			 typename cholesky_precond<Matrix>::sub_orientation());
+  }
+
+  template <class Matrix, class V2> inline
+  void right_mult_cholesky_p(const cholesky_precond<Matrix>& P, V2 &v2,
+			     row_major)
+  { gmm::upper_tri_solve(P.row_trimatrix, v2); }
+
+  template <class Matrix, class V2> inline
+  void right_mult_cholesky_p(const cholesky_precond<Matrix>& P, V2 &v2,
+			     col_major)
+  { gmm::upper_tri_solve(gmm::transposed(P.col_trimatrix), v2); }
+
+  template <class Matrix, class V1, class V2> inline
+  void right_mult(const cholesky_precond<Matrix>& P, const V1 &v1, V2 &v2) {
+    copy(v1, v2);
+    left_mult_cholesky_p(P, v2,
+			 typename cholesky_precond<Matrix>::sub_orientation());
+  }
+
+    template <class Matrix, class V2> inline
+  void transposed_left_mult_cholesky_p(const cholesky_precond<Matrix>& P,
+				       V2 &v2, row_major)
+  { gmm::upper_tri_solve(P.row_trimatrix, v2); }
+
+  template <class Matrix, class V2> inline
+  void transposed_left_mult_cholesky_p(const cholesky_precond<Matrix>& P,
+				       V2 &v2, col_major)
+  { gmm::upper_tri_solve(gmm::transposed(P.col_trimatrix), v2); }
+
+  template <class Matrix, class V1, class V2> inline
+  void transposed_left_mult(const cholesky_precond<Matrix>& P, const V1 &v1,
+			    V2 &v2) {
+    copy(v1, v2);
+    transposed_left_mult_cholesky_p(P, v2,
+			 typename cholesky_precond<Matrix>::sub_orientation());
+  }
+
+  template <class Matrix, class V2> inline
+  void transposed_right_mult_cholesky_p(const cholesky_precond<Matrix>& P,
+					V2 &v2, row_major)
+  { gmm::lower_tri_solve(gmm::transposed(P.row_trimatrix), v2); }
+
+  template <class Matrix, class V2> inline
+  void transposed_right_mult_cholesky_p(const cholesky_precond<Matrix>& P,
+					V2 &v2, col_major)
+  { gmm::lower_tri_solve(P.col_trimatrix, v2); }
+
+  template <class Matrix, class V1, class V2> inline
+  void transposed_right_mult(const cholesky_precond<Matrix>& P, const V1 &v1,
+			     V2 &v2) {
+    copy(v1, v2);
+    transposed_left_mult_cholesky_p(P, v2,
+			 typename cholesky_precond<Matrix>::sub_orientation());
   }
 
 }

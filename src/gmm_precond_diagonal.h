@@ -70,6 +70,38 @@ namespace gmm {
   void transposed_mult(const diagonal_precond<Matrix>& P,const V1 &v1,V2 &v2) {
     mult(P, v1, v2);
   }
+  
+  template <class Matrix, class V1, class V2> inline
+  void left_mult(const diagonal_precond<Matrix>& P, const V1 &v1, V2 &v2) {
+    if (P.diag.size() != vect_size(v2))
+      DAL_THROW(dimension_error, "dimensions mismatch");
+    copy(v1, v2);
+    for (size_type i = 0; i < P.diag.size(); ++i)
+      v2[i] *= sqrt(dal::abs(P.diag[i]));
+  }
+
+  template <class Matrix, class V1, class V2> inline
+  void transposed_left_mult(const diagonal_precond<Matrix>& P,
+			    const V1 &v1, V2 &v2)
+    { left_mult(P, v1, v2); }
+
+  template <class Matrix, class V1, class V2> inline
+  void right_mult(const diagonal_precond<Matrix>& P, const V1 &v1, V2 &v2) {
+    if (P.diag.size() != vect_size(v2))
+      DAL_THROW(dimension_error, "dimensions mismatch");
+    copy(v1, v2);
+    for (size_type i = 0; i < P.diag.size(); ++i)
+      if (P.diag[i] < 0.0) 
+	v2[i] *= -sqrt(dal::abs(P.diag[i]));
+      else
+	v2[i] *= sqrt(dal::abs(P.diag[i]));
+  }
+
+  template <class Matrix, class V1, class V2> inline
+  void transposed_right_mult(const diagonal_precond<Matrix>& P,
+			    const V1 &v1, V2 &v2)
+    { right_mult(P, v1, v2); }
+
 
 }
 

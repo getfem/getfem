@@ -4,8 +4,6 @@
 // Authors: Andrew Lumsdaine <lums@osl.iu.edu> 
 //          Lie-Quan Lee     <llee@osl.iu.edu>
 //
-// This file is part of the Iterative Template Library
-//
 // You should have received a copy of the License Agreement for the
 // Iterative Template Library along with the software;  see the
 // file LICENSE.  

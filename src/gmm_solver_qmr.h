@@ -72,10 +72,9 @@ namespace gmm {
   // Preconditioner -  Incomplete LU, Incomplete LU with threshold,
   //                   SSOR or identity_preconditioner.
 
-  template <class Matrix, class Vector, class VectorB, class Precond1,
-	    class Precond2>
+  template <class Matrix, class Vector, class VectorB, class Precond1>
   void qmr(const Matrix &A, Vector &x, const VectorB &b, const Precond1 &M1,
-	   const Precond2 &M2, iteration& iter)
+	   iteration& iter)
   {
     typedef typename linalg_traits<Vector>::value_type value_type;
     value_type delta(0), ep(0), beta(0), rho_1(0), gamma_1(0), theta_1(0);
@@ -91,11 +90,11 @@ namespace gmm {
     gmm::mult(A, gmm::scaled(x, -1.0), b, r);
     gmm::copy(r, v_tld);
 
-    gmm::mult(M1, v_tld, y);
+    gmm::mult_left(M1, v_tld, y);
     value_type rho = gmm::vect_norm2(y);
 
     gmm::copy(r, w_tld);
-    gmm::mult(gmm::transposed(M2), w_tld, z);
+    gmm::transposed_mult_right(M1, w_tld, z);
     value_type xi = gmm::vect_norm2(z);
   
     value_type gamma = 1.0, eta = -1.0, theta = 0.0;
@@ -114,8 +113,8 @@ namespace gmm {
       delta = gmm::vect_sp(z, y);
       if (delta == 0.0) DAL_THROW(failure_error, "QMR failed to converge");
 
-      gmm::mult(M2, y, y_tld);		
-      gmm::mult(gmm::transposed(M1), z, z_tld);
+      gmm::mult_right(M1, y, y_tld);		
+      gmm::transposed_mult_left(M1, z, z_tld);
 
       if (iter.first()) {
 	gmm::copy(y_tld, p);
@@ -134,14 +133,14 @@ namespace gmm {
       if (beta == 0.0) DAL_THROW(failure_error, "QMR failed to converge");
 
       gmm::add(p_tld, gmm::scaled(v, -beta), v_tld);
-      gmm::mult(M1, v_tld, y);
+      gmm::mult_left(M1, v_tld, y);
 
       rho_1 = rho;
       rho = gmm::vect_norm2(y);
 
       gmm::mult(gmm::transposed(A), q, w_tld);
       gmm::add(w_tld, gmm::scaled(w, -beta), w_tld);
-      gmm::mult_transposed(M2, w_tld, z);
+      gmm::transposed_mult_right(M1, w_tld, z);
 
       xi = gmm::vect_norm2(z);
 
@@ -151,7 +150,7 @@ namespace gmm {
       theta = rho / (gamma_1 * beta);
       gamma = 1.0 / sqrt(1.0 + theta * theta);
 
-      if (gamma == 0.0)DAL_THROW(failure_error, "QMR failed to converge");
+      if (gamma == 0.0) DAL_THROW(failure_error, "QMR failed to converge");
 
       eta = -eta * rho_1 * gamma * gamma / (beta * gamma_1 * gamma_1);
 
