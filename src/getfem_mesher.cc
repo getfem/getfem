@@ -47,6 +47,13 @@ namespace getfem {
     for (unsigned d=0; d < base.dim(); ++d) {
       gradient[d] = base; gradient[d].derivative(d);
     }
+    hessian.resize(base.dim()*base.dim());
+    for (unsigned d=0; d < base.dim(); ++d) {
+      for (unsigned e=0; e < base.dim(); ++e) {
+	hessian[d*base.dim()+e] = gradient[d];
+	hessian[d*base.dim()+e].derivative(e);
+      }
+    }
   }
 
   scalar_type mesher_level_set::operator()(const base_node &P) const { 
@@ -62,16 +69,11 @@ namespace getfem {
   }
 
   void mesher_level_set::hess(const base_node &P, base_matrix &H) const {
-    gmm::resize(H, P.size(), P.size()); gmm::clear(H);
-    
-
-
-    pf->hess_base_value(P, t);
-    base_tensor::iterator it = t.begin();
-    for (size_type i = 0; i < P.size(); ++i)
-      for (size_type j = 0; j < P.size(); ++j)
-	for (size_type k = 0; k < coeff.size(); ++k)
-	  H(i,j) += coeff[k] * (*it++);
+    gmm::resize(H, P.size(), P.size()); 
+    for (size_type i = 0; i < base.dim(); ++i)
+      for (size_type j = 0; j < base.dim(); ++j) {
+	H(i,j) = hessian[i*P.size()+j].eval(P.begin());
+      }
   }
 
 

@@ -110,8 +110,8 @@ namespace getfem {
   class mesher_level_set : public mesher_signed_distance {
     bgeot::base_poly base;
     std::vector<base_poly> gradient;
+    std::vector<base_poly> hessian;
     const fem<base_poly> *pf;
-    mutable base_tensor t;
     std::vector<scalar_type> coeff;
   public:
     template <class VECT>

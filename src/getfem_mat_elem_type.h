@@ -41,6 +41,9 @@ namespace getfem {
     { GETFEM_BASE_, GETFEM_GRAD_, GETFEM_HESSIAN_, GETFEM_NONLINEAR_,
       GETFEM_UNIT_NORMAL_ };
 
+  class mat_elem_type;
+  typedef boost::intrusive_ptr<const mat_elem_type> pmat_elem_type;
+
   /**
      abstract class for integration of non-linear terms into the mat_elem
      computations
@@ -56,6 +59,7 @@ namespace getfem {
      the main fem context.
   */
   class nonlinear_elem_term {
+    mutable std::set<pmat_elem_type> melt_list; /* list of melt that will be destroyed by ~nonlinear_elem_term */
   public :
     virtual const bgeot::multi_index &sizes() const = 0;
     virtual void compute(fem_interpolation_context& /*ctx*/,
@@ -63,9 +67,10 @@ namespace getfem {
     virtual void prepare(fem_interpolation_context& /*ctx*/,
                          size_type /*nl_part*/) {}
     virtual ~nonlinear_elem_term();
+    void register_mat_elem(pmat_elem_type p) { melt_list.insert(p); } /* internal use */
   };
 
-  typedef nonlinear_elem_term *pnonlinear_elem_term;
+  typedef nonlinear_elem_term* pnonlinear_elem_term;
 
   struct constituant {
     constituant_type t;
@@ -99,7 +104,6 @@ namespace getfem {
    */
   //@{
   
-  typedef boost::intrusive_ptr<const mat_elem_type> pmat_elem_type;
   
   /** Gives a pointer to the structure describing the elementary matrix
    *   which compute the integral of the basic functions described by pfi.

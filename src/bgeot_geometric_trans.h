@@ -32,6 +32,7 @@
 #ifndef BGEOT_GEOMETRIC_TRANSFORMATION_H__
 #define BGEOT_GEOMETRIC_TRANSFORMATION_H__
 
+#include <set>
 #include <bgeot_config.h>
 #include <bgeot_convex_ref.h>
 
@@ -139,6 +140,7 @@ namespace bgeot
   }
 
   typedef boost::intrusive_ptr<const geometric_trans> pgeometric_trans;
+  class geotrans_interpolation_context;
 
   template<class CONT>
   void bounding_box(base_node& min, base_node& max, 
@@ -163,62 +165,6 @@ namespace bgeot
 	itmin[i] -= e; itmax[i] += e;
       }
   }
-
-  class geotrans_precomp_;
-  typedef boost::intrusive_ptr<const geotrans_precomp_> pgeotrans_precomp;
-
-
-  /* the geotrans_interpolation_context structure is passed as the
-     argument of geometric transformation interpolation
-     functions. This structure can be partially filled (for example
-     the xreal will be computed if needed as long as pgp+ii is known).
-     See also fem_interpolation_context in getfem_fem.h.
-     The name of member data, and the computations done by this structure
-     are heavily described in the Getfem++ Kernel Documentation.
-  */
-  class geotrans_interpolation_context {
-    mutable base_node xref_; /* reference point */
-    mutable base_node xreal_; /* transformed point */
-    const base_matrix *G_; /* pointer to the matrix of real nodes of the convex */
-    mutable base_matrix B_, B3_, B32_; /* see documentation for more details */
-    pgeometric_trans pgt_;
-    pgeotrans_precomp pgp_;
-    size_type ii_; /* index of current point in the pgp */
-    mutable scalar_type J_; /* Jacobian */
-    void compute_J(void) const;
-  public:
-    bool have_xref() const { return !xref_.empty(); }
-    bool have_xreal() const { return !xreal_.empty(); }
-    bool have_G() const { return G_ != 0; }
-    bool have_B() const { return !B_.empty(); }
-    bool have_B3() const { return !B3_.empty(); }
-    bool have_B32() const { return !B32_.empty(); }
-    bool have_pgt() const { return pgt_ != 0; }
-    bool have_pgp() const { return pgp_ != 0; }
-    const base_node& xref() const;
-    const base_node& xreal() const;
-    const base_matrix& B() const;
-    const base_matrix& B3() const;
-    const base_matrix& B32() const;
-    bgeot::pgeometric_trans pgt() const { return pgt_; }
-    const base_matrix& G() const { return *G_; }
-    scalar_type J() const { if (J_ < scalar_type(0)) compute_J(); return J_; }
-    size_type N() const { if (have_G()) return G().nrows(); 
-      else if (have_xreal()) return xreal_.size(); 
-      else DAL_THROW(dal::failure_error, "cannot get N"); }
-    size_type ii() const { return ii_; }
-    bgeot::pgeotrans_precomp pgp() const { return pgp_; }
-    void set_ii(size_type ii__);
-    void set_xref(const base_node& P);
-
-    geotrans_interpolation_context();
-    geotrans_interpolation_context(bgeot::pgeotrans_precomp pgp__, 
-				   size_type ii__, 
-				   const base_matrix& G__); 
-    geotrans_interpolation_context(bgeot::pgeometric_trans pgt__,
-				   const base_node& xref__,
-			 	   const base_matrix& G__);
-  };
 
   /** @name functions on geometric transformations
    */
@@ -357,20 +303,74 @@ namespace bgeot
    *  deleted itself.
    */
   class geotrans_precomp_pool {
-    std::map<pgeotrans_precomp, bool> precomps;
+    std::set<pgeotrans_precomp> precomps;
 
   public :
     
     pgeotrans_precomp operator()(pgeometric_trans pg, pstored_point_tab pspt) {
       pgeotrans_precomp p = geotrans_precomp(pg, pspt);
-      precomps[p] = true;
+      precomps.insert(p);
       return p;
     }
     ~geotrans_precomp_pool() {
-      for (std::map<pgeotrans_precomp, bool>::iterator it = precomps.begin();
+      for (std::set<pgeotrans_precomp>::iterator it = precomps.begin();
 	   it != precomps.end(); ++it)
-	delete_geotrans_precomp(it->first);
+	delete_geotrans_precomp(*it);
     }
+  };
+
+
+
+  /* the geotrans_interpolation_context structure is passed as the
+     argument of geometric transformation interpolation
+     functions. This structure can be partially filled (for example
+     the xreal will be computed if needed as long as pgp+ii is known).
+     See also fem_interpolation_context in getfem_fem.h.
+     The name of member data, and the computations done by this structure
+     are heavily described in the Getfem++ Kernel Documentation.
+  */
+  class geotrans_interpolation_context {
+    mutable base_node xref_; /* reference point */
+    mutable base_node xreal_; /* transformed point */
+    const base_matrix *G_; /* pointer to the matrix of real nodes of the convex */
+    mutable base_matrix B_, B3_, B32_; /* see documentation for more details */
+    pgeometric_trans pgt_;
+    pgeotrans_precomp pgp_;
+    size_type ii_; /* index of current point in the pgp */
+    mutable scalar_type J_; /* Jacobian */
+    void compute_J(void) const;
+  public:
+    bool have_xref() const { return !xref_.empty(); }
+    bool have_xreal() const { return !xreal_.empty(); }
+    bool have_G() const { return G_ != 0; }
+    bool have_B() const { return !B_.empty(); }
+    bool have_B3() const { return !B3_.empty(); }
+    bool have_B32() const { return !B32_.empty(); }
+    bool have_pgt() const { return pgt_ != 0; }
+    bool have_pgp() const { return pgp_ != 0; }
+    const base_node& xref() const;
+    const base_node& xreal() const;
+    const base_matrix& B() const;
+    const base_matrix& B3() const;
+    const base_matrix& B32() const;
+    bgeot::pgeometric_trans pgt() const { return pgt_; }
+    const base_matrix& G() const { return *G_; }
+    scalar_type J() const { if (J_ < scalar_type(0)) compute_J(); return J_; }
+    size_type N() const { if (have_G()) return G().nrows(); 
+      else if (have_xreal()) return xreal_.size(); 
+      else DAL_THROW(dal::failure_error, "cannot get N"); }
+    size_type ii() const { return ii_; }
+    bgeot::pgeotrans_precomp pgp() const { return pgp_; }
+    void set_ii(size_type ii__);
+    void set_xref(const base_node& P);
+
+    geotrans_interpolation_context();
+    geotrans_interpolation_context(bgeot::pgeotrans_precomp pgp__, 
+				   size_type ii__, 
+				   const base_matrix& G__); 
+    geotrans_interpolation_context(bgeot::pgeometric_trans pgt__,
+				   const base_node& xref__,
+			 	   const base_matrix& G__);
   };
 
 }  /* end of namespace bgeot.                                             */

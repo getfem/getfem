@@ -286,46 +286,6 @@ namespace getfem {
 
     virtual ~virtual_fem() {}
   };
-  
-  /* the fem_interpolation_context structure is passed as the argument
-     of fem interpolation functions. This structure can be partially
-     filled (for example the xreal will be computed if needed as long
-     as pgp+ii is known)
-  */
-  class fem_interpolation_context :
-    public bgeot::geotrans_interpolation_context {
-
-    mutable base_matrix M_;
-    pfem pf_;
-    pfem_precomp pfp_;
-    size_type convex_num_;
-  public:
-    bool have_pfp() const { return pfp_ != 0; }
-    bool have_pf() const { return pf_ != 0; }
-    const base_matrix& M() const;
-    void base_value(base_tensor& t) const;
-    void grad_base_value(base_tensor& t) const;
-    void hess_base_value(base_tensor& t) const;
-    const pfem pf() const { return pf_; }
-    size_type convex_num() const;
-    pfem_precomp pfp() const { return pfp_; }
-    void set_pfp(pfem_precomp newpfp);
-    void set_pf(pfem newpf);
-    fem_interpolation_context();
-    fem_interpolation_context(bgeot::pgeotrans_precomp pgp__, 
-			      pfem_precomp pfp__, size_type ii__, 
-			      const base_matrix& G__, 
-			      size_type convex_num__);
-    fem_interpolation_context(bgeot::pgeometric_trans pgt__, 
-			      pfem_precomp pfp__, size_type ii__, 
-			      const base_matrix& G__, 
-			      size_type convex_num__);
-    fem_interpolation_context(bgeot::pgeometric_trans pgt__,
-			      pfem pf__,
-			      const base_node& xref__,
-			      const base_matrix& G__,
-			      size_type convex_num__);
-  };
 
   template <typename CVEC, typename VVEC>
   void virtual_fem::interpolation(const fem_interpolation_context& c, 
@@ -616,24 +576,64 @@ namespace getfem {
 
 
   class fem_precomp_pool {
-    std::map<pfem_precomp, bool> precomps;
+    std::set<pfem_precomp> precomps;
     
   public :
     
     pfem_precomp operator()(pfem pf, bgeot::pstored_point_tab pspt) {
       pfem_precomp p = fem_precomp(pf, pspt);
-      precomps[p] = true;
+      precomps.insert(p);
       return p;
     }
     void clear(void) {
-      for (std::map<pfem_precomp, bool>::iterator it = precomps.begin();
+      for (std::set<pfem_precomp>::iterator it = precomps.begin();
 	   it != precomps.end(); ++it)
-	delete_fem_precomp(it->first);
+	delete_fem_precomp(*it);
     }
     ~fem_precomp_pool() { clear(); }
   };
   
-  
+    
+  /* the fem_interpolation_context structure is passed as the argument
+     of fem interpolation functions. This structure can be partially
+     filled (for example the xreal will be computed if needed as long
+     as pgp+ii is known)
+  */
+  class fem_interpolation_context :
+    public bgeot::geotrans_interpolation_context {
+
+    mutable base_matrix M_;
+    pfem pf_;
+    pfem_precomp pfp_;
+    size_type convex_num_;
+  public:
+    bool have_pfp() const { return pfp_ != 0; }
+    bool have_pf() const { return pf_ != 0; }
+    const base_matrix& M() const;
+    void base_value(base_tensor& t) const;
+    void grad_base_value(base_tensor& t) const;
+    void hess_base_value(base_tensor& t) const;
+    const pfem pf() const { return pf_; }
+    size_type convex_num() const;
+    pfem_precomp pfp() const { return pfp_; }
+    void set_pfp(pfem_precomp newpfp);
+    void set_pf(pfem newpf);
+    fem_interpolation_context();
+    fem_interpolation_context(bgeot::pgeotrans_precomp pgp__, 
+			      pfem_precomp pfp__, size_type ii__, 
+			      const base_matrix& G__, 
+			      size_type convex_num__);
+    fem_interpolation_context(bgeot::pgeometric_trans pgt__, 
+			      pfem_precomp pfp__, size_type ii__, 
+			      const base_matrix& G__, 
+			      size_type convex_num__);
+    fem_interpolation_context(bgeot::pgeometric_trans pgt__,
+			      pfem pf__,
+			      const base_node& xref__,
+			      const base_matrix& G__,
+			      size_type convex_num__);
+  };
+
 }  /* end of namespace getfem.                                            */
 
 

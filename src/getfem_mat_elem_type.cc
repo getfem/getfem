@@ -46,7 +46,7 @@ namespace getfem {
     virtual bool compare(const static_stored_object_key &oo) const {
       const mat_elem_type_key &o
 	= dynamic_cast<const mat_elem_type_key &>(oo);
-      if (dal::lexicographical_less<mat_elem_type>(*pmet, *(o->pmet)))
+      if (dal::lexicographical_less<mat_elem_type>()(*pmet, *(o.pmet)))
 	return true;
       return false;
     }
@@ -60,32 +60,20 @@ namespace getfem {
     pmat_elem_type p = new mat_elem_type(f);
     dal::add_stored_object(new mat_elem_type_key(p.get()), p,
 			   dal::AUTODELETE_STATIC_OBJECT);
+    for (size_type i=0; i < f.size(); ++i) {
+      if (f[i].pfi) dal::add_dependency(p, f[i].pfi);
+      if (f[i].t == GETFEM_NONLINEAR_ && f[i].nl_part==0)
+	f[i].nlt->register_mat_elem(p);
+    }
     return p;
   }
 
   /* on destruction, all occurences of the nonlinear term are removed
      from the mat_elem_type cache; */
   nonlinear_elem_term::~nonlinear_elem_term() {
-    mat_elem_type_tab &tab = dal::singleton<mat_elem_type_tab>::instance();
-    for (dal::bv_visitor_c i(tab.index()); !i.finished(); ++i) {
-      for (size_type j=0; j < tab[i].size(); ++j) {
-	if (tab[i][j].t == GETFEM_NONLINEAR_ && tab[i][j].nlt == this) {
-	  /* remove all mat_elem structures pointing to the mat_elem_type */
-	  mat_elem_forget_mat_elem_type(&tab[i]); 
-	  tab.sup(i);
-	  break;
-	}
-      }
-    }
-    /*
-    for (mat_elem_type_tab::sorted_iterator it = tab.begin(); it != tab.end();) {
-      mat_elem_type_tab::sorted_iterator itnext = it+1;
-      if ((*it).t = GETFEM_NONLINEAR_ && ((*it).nlt == this)) {
-	mat_elem_forget_mat_elem_type(&(*it)); 
-	tab.sup((*it).index());
-      }
-      it = itnext;
-    }*/
+    for (std::set<pmat_elem_type>::iterator it=melt_list.begin();
+	 it != melt_list.end(); ++it)
+      dal::del_stored_object(*it);
   }
 
   pmat_elem_type mat_elem_base(pfem pfi) {

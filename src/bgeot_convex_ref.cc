@@ -90,7 +90,7 @@ namespace bgeot {
       ms.add_convex(structure(), ipts.begin());
       ms.to_edges();
       bgeot::simplexify(ms,*psimplexified_convex,
-			(convex<base_node>::points)(), 
+			convex<base_node>::points(), 
 			std::max(structure()->dim(),dim_type(1)), 1e-12);
     }
     return psimplexified_convex;
@@ -317,7 +317,7 @@ namespace bgeot {
       normals_.resize(N+1);
       base_node G(N); G.fill(0.);
       for (size_type i=0; i < N+1; ++i) {
-        (convex<base_node>::points)()[i].resize(N);
+        convex<base_node>::points()[i].resize(N);
         if (i != N) {
           std::copy(prev->convex<base_node>::points()[i].begin(),
 		    prev->convex<base_node>::points()[i].end(),

@@ -32,6 +32,7 @@
 #include <dal_singleton.h>
 #include <map>
 #include <list>
+#include <set>
 
 namespace dal {
 
@@ -40,8 +41,8 @@ namespace dal {
     pstatic_stored_object p;
     bool valid;
     permanence perm;
-    std::map<pstatic_stored_object, bool> dependent_object;
-    std::map<pstatic_stored_object, bool> dependencies;
+    std::set<pstatic_stored_object> dependent_object;
+    std::set<pstatic_stored_object> dependencies;
     enr_static_stored_object(pstatic_stored_object o, permanence perma)
       : p(o), valid(true), perm(perma) {}
     enr_static_stored_object(void)
@@ -100,8 +101,8 @@ namespace dal {
     stored_object_tab::iterator it1 = iterator_of_object(o1);
     stored_object_tab::iterator it2 = iterator_of_object(o2);
     if (it1 != stored_objects.end() && it2 != stored_objects.end()) {
-      it2->second.dependent_object[o1] = true;
-      it1->second.dependencies[o2] = true;
+      it2->second.dependent_object.insert(o1);
+      it1->second.dependencies.insert(o2);
     }
   }
 
@@ -157,25 +158,25 @@ namespace dal {
     std::list<pstatic_stored_object>::iterator it;
     for (it = to_delete.begin(); it != to_delete.end(); ++it)
       iterator_of_object(*it)->second.valid = false;
-    std::map<pstatic_stored_object, bool>::iterator itd;
+    std::set<pstatic_stored_object>::iterator itd;
     for (it = to_delete.begin(); it != to_delete.end(); ++it) {
       if (*it) {
 	stored_object_tab::iterator ito = iterator_of_object(*it);
 	ito->second.valid = false;
 	for (itd = ito->second.dependencies.begin();
 	     itd != ito->second.dependencies.end(); ++itd) {
-	  if (del_dependency(*it, itd->first)) {
-	    stored_object_tab::iterator itod=iterator_of_object(itd->first);
+	  if (del_dependency(*it, *itd)) {
+	    stored_object_tab::iterator itod=iterator_of_object(*itd);
 	    if (itod->second.perm == AUTODELETE_STATIC_OBJECT
 		&& itod->second.valid) {
 	      itod->second.valid = false;
-	      to_delete.push_back(itd->first);
+	      to_delete.push_back(*itd);
 	    }
 	  }
 	}
 	for (itd = ito->second.dependent_object.begin();
 	     itd != ito->second.dependent_object.end(); ++itd) {
-	  stored_object_tab::iterator itod=iterator_of_object(itd->first);
+	  stored_object_tab::iterator itod=iterator_of_object(*itd);
 	  if (itod != stored_objects.end()) {
 	    if (itod->second.perm == PERMANENT_STATIC_OBJECT)
 	      DAL_THROW(failure_error,"Trying to delete a permanent object");
