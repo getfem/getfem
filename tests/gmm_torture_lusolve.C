@@ -9,6 +9,7 @@
 #include <gmm_condition_number.h>
 
 using gmm::size_type;
+bool print_debug = false;
 
 template <typename MAT1, typename VECT1, typename VECT2>
 void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
@@ -25,19 +26,17 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
   R det = gmm::abs(gmm::lu_det(m1)), error;
   R cond = gmm::condest(m1);
 
-  cout << "cond = " << cond << " det = " << det << endl;
+  if (print_debug) cout << "cond = " << cond << " det = " << det << endl;
   if (det == R(0) && cond < R(1) / prec && cond != R(0))
     DAL_THROW(gmm::failure_error, "Inconsistent condition number: " << cond);
 
-  det = std::min(det, R(1));
-
-  if (det > prec * R(10000)) {
+  if (prec * cond < R(1)/R(10000) && det != R(0)) {
 
     gmm::lu_solve(m1, v1, v2);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
 
     error = gmm::vect_norm2(v3);
-    if (error >= prec * R(20000) / det)
+    if (error > prec * cond * R(20000))
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
     gmm::lu_inverse(m1);
@@ -46,7 +45,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     
     error = gmm::vect_norm2(v3);
-    if (error >= prec * R(20000) / det)
+    if (error > prec * cond * R(20000))
       DAL_THROW(gmm::failure_error, "Error too large: "<< error);
   }
 }

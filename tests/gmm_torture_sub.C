@@ -30,7 +30,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
 	      gmm::sub_vector(v1, gmm::sub_interval(0,n)));
     gmm::add(gmm::scaled(gmm::sub_vector(v1, gmm::sub_interval(0,n)), T(-1)),
 	     gmm::sub_vector(v2, gmm::sub_interval(0,n)), v3);
-    if ((error = gmm::vect_norm2(v3)) >= prec * R(20000) / det))
+    if ((error = gmm::vect_norm2(v3)) > prec * R(20000) / det))
       DAL_THROW(gmm::failure_error, "Error too large: "<< error);
   }
 
@@ -43,7 +43,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
 	      gmm::sub_vector(v1, gmm::sub_slice(0,n,1)));
     gmm::add(gmm::scaled(gmm::sub_vector(v1, gmm::sub_slice(0,n,1)), T(-1)),
 	     gmm::sub_vector(v2, gmm::sub_slice(0,n,1)), v3);
-    if ((error = gmm::vect_norm2(v3)) >= prec * R(20000) / det))
+    if ((error = gmm::vect_norm2(v3)) > prec * R(20000) / det))
       DAL_THROW(gmm::failure_error, "Error too large: "<< error);
   }
   
@@ -57,7 +57,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
 			    gmm::sub_interval(0,n)),
 	    gmm::sub_vector(v2, gmm::sub_interval(0,n)),
 	    gmm::scaled(v2, T(-1)), v1);
-  if ((error = gmm::vect_norm2(v1)) >= prec * R(2000))
+  if ((error = gmm::vect_norm2(v1)) > prec * R(2000))
     DAL_THROW(gmm::failure_error, "Error too large: " << error);
   
   

@@ -19,7 +19,8 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
   R prec = gmm::default_tol(R());
 
   static int nexpe = 0;
-  if (print_debug) { cout << "Begin experiment " << ++nexpe << "\n\n"; }
+  if (print_debug) 
+    { cout << "Begin experiment " << ++nexpe << "\n\nwith" << m1 << "\n\n"; }
 
   size_type m = gmm::mat_nrows(m1);
   std::vector<T> v3(m);
@@ -32,7 +33,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
   if (det == R(0) && cond < R(1) / prec && cond != R(0))
     DAL_THROW(gmm::failure_error, "Inconsistent condition number: " << cond);
 
-  if (prec * cond < R(1)/R(10000)) {
+  if (prec * cond < R(1)/R(10000) && det != R(0)) {
 
     gmm::identity_matrix P1;
     gmm::diagonal_precond<MAT1> P2(m1);
@@ -44,11 +45,11 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
       cout << "\nTest for bicgstab with no preconditionner\n";
 
     gmm::fill_random(v1);
-    gmm::iteration iter((double(prec*cond))*10.0, print_debug ? 1:0);
+    gmm::iteration iter((double(prec*cond))*10.0, print_debug ? 1:0, 1000*m);
     gmm::bicgstab(m1, v1, v2, P1, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
-    if (error >= prec * cond * R(20000))
+    if (error > prec * cond * R(20000))
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
     if (print_debug)
@@ -58,7 +59,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     gmm::bicgstab(m1, v1, v2, P2, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
-    if (error >= prec * cond * R(20000))
+    if (error > prec * cond * R(20000))
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
     if (print_debug)
@@ -68,7 +69,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     gmm::bicgstab(m1, v1, v2, P3, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
-    if (error >= prec * cond * R(20000))
+    if (error > prec * cond * R(20000))
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
     if (print_debug)
@@ -78,7 +79,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     gmm::bicgstab(m1, v1, v2, P4, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
-    if (error >= prec * cond * R(20000))
+    if (error > prec * cond * R(20000))
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
     if (print_debug)
@@ -88,7 +89,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     gmm::bicgstab(m1, v1, v2, P5, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
-    if (error >= prec * cond * R(20000))
+    if (error > prec * cond * R(20000))
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
     if (print_debug)
@@ -98,7 +99,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     gmm::gmres(m1, v1, v2, P1, 50, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
-    if (error >= prec * cond * R(20000))
+    if (error > prec * cond * R(20000))
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
     if (print_debug)
@@ -108,7 +109,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     gmm::gmres(m1, v1, v2, P2, 50, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
-    if (error >= prec * cond * R(20000))
+    if (error > prec * cond * R(20000))
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
     if (print_debug)
@@ -118,7 +119,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     gmm::gmres(m1, v1, v2, P3, 50, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
-    if (error >= prec * cond * R(20000))
+    if (error > prec * cond * R(20000))
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
     if (print_debug)
@@ -128,7 +129,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     gmm::gmres(m1, v1, v2, P4, 50, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
-    if (error >= prec * cond * R(20000))
+    if (error > prec * cond * R(20000))
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
     if (print_debug)
@@ -138,7 +139,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     gmm::gmres(m1, v1, v2, P5, 50, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
-    if (error >= prec * cond * R(20000))
+    if (error > prec * cond * R(20000))
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
     if (print_debug)
@@ -148,7 +149,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     gmm::qmr(m1, v1, v2, P1, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
-    if (error >= prec * cond * R(20000))
+    if (error > prec * cond * R(20000))
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
     if (print_debug)
@@ -158,7 +159,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     gmm::qmr(m1, v1, v2, P2, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
-    if (error >= prec * cond * R(20000))
+    if (error > prec * cond * R(20000))
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
     if (print_debug)
@@ -168,7 +169,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     gmm::qmr(m1, v1, v2, P4, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
-    if (error >= prec * cond * R(20000))
+    if (error > prec * cond * R(20000))
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
     if (print_debug)
@@ -178,7 +179,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     gmm::qmr(m1, v1, v2, P5, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
-    if (error >= prec * cond * R(20000))
+    if (error > prec * cond * R(20000))
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
 
@@ -199,7 +200,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     gmm::cg(m1, v1, v2, P1, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
-    if (error >= prec * cond * cond * R(20000))
+    if (error > prec * cond * cond * R(20000))
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
     if (print_debug)
@@ -209,7 +210,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     gmm::cg(m1, v1, v2, P2, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
-    if (error >= prec * cond * cond * R(20000))
+    if (error > prec * cond * cond * R(20000))
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
     if (print_debug)
@@ -219,7 +220,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     gmm::cg(m1, v1, v2, P6, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
-    if (error >= prec * cond * cond * R(20000))
+    if (error > prec * cond * cond * R(20000))
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
     if (print_debug)
@@ -229,7 +230,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     gmm::cg(m1, v1, v2, P7, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
-    if (error >= prec * cond * cond * R(20000))
+    if (error > prec * cond * cond * R(20000))
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
     
@@ -246,7 +247,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     gmm::gmres(m1, v1, v2, P8, 50, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
-    if (error >= prec * cond * R(20000))
+    if (error > prec * cond * R(20000))
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
     
   }

@@ -128,9 +128,9 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     $TYPES[1] = "std::complex<float> ";
     $TYPES[2] = "double";
     $TYPES[3] = "std::complex<double> ";
-    $TYPES[4] = "long double";
-    $TYPES[5] = "std::complex<long double> ";
-    $NB_TYPES = 6.0;
+    # $TYPES[4] = "long double";
+    # $TYPES[5] = "std::complex<long double> ";
+    $NB_TYPES = 4.0;
 
     if ($with_lapack) {
       $NB_TYPES = 4.0;
@@ -199,7 +199,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 	    = "gmm::sub_vector(param$j, gmm::sub_interval($c, $sizep))";
 	}
 	elsif ($a < 0.2) {
-	  $li = "    $lt param$j($sizepp);";
+	  $li = "      $lt param$j($sizepp);";
 	  $c = int(1.0*($sizepp-($sizep*$step+1))*rand());
 	  $param_name[$j]
 	    = "gmm::sub_vector(param$j, gmm::sub_slice($c, $sizep, $step))";

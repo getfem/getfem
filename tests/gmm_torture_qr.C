@@ -78,7 +78,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
     gmm::mult(q, dm1, dm1aux);
     gmm::add(gmm::scaled(m1aux, T(-1)), dm1aux);
     error = gmm::mat_norm2(dm1aux);
-    if (error >= prec * R(10000)) 
+    if (error > prec * R(10000)) 
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
     gmm::copy(gmm::identity_matrix(), q);
@@ -89,7 +89,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
     if (k > m) gmm::mult(gmm::conjugated(q), q, a);
     else gmm::mult(q, gmm::conjugated(q), a);
     error = gmm::mat_norm2(a);
-    if (error >= prec * R(10000)) 
+    if (error > prec * R(10000)) 
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
       
     gmm::copy(gmm::conjugated(qaux), q2);
@@ -97,7 +97,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
     gmm::mult(gmm::conjugated(q2), dm1, dm1aux);
     gmm::add(gmm::scaled(m1aux, T(-1)), dm1aux);
     error = gmm::mat_norm2(dm1aux);
-    if (error >= prec * R(10000)) 
+    if (error > prec * R(10000)) 
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
   }
@@ -116,7 +116,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
     gmm::mult(q, gmm::transposed(dm1), dm1aux);
     gmm::add(gmm::scaled(m1aux, T(-1)), dm1aux);
     error = gmm::mat_norm2(dm1aux);
-    if (error >= prec * R(10000)) 
+    if (error > prec * R(10000)) 
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
     gmm::copy(gmm::identity_matrix(), q);
@@ -127,7 +127,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
     if (k > n) gmm::mult(gmm::conjugated(q), q, a);
     else gmm::mult(q, gmm::conjugated(q), a);
     error = gmm::mat_norm2(a);
-    if (error >= prec * R(10000)) 
+    if (error > prec * R(10000)) 
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
       
     gmm::copy(gmm::conjugated(qaux), q2);
@@ -135,7 +135,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
     gmm::mult(gmm::conjugated(q2), gmm::transposed(dm1), dm1aux);
     gmm::add(gmm::scaled(m1aux, T(-1)), dm1aux);
     error = gmm::mat_norm2(dm1aux);
-    if (error >= prec * R(10000)) 
+    if (error > prec * R(10000)) 
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
   }
@@ -190,7 +190,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
      gmm::mult(ca, gmm::mat_col(cq, l),
 	       gmm::scaled(gmm::mat_col(cq, l), -eigc[l]), vy);
      error = gmm::vect_norm2(vy);
-     if (error >= prec * R(10000)) 
+     if (error > prec * R(10000)) 
        DAL_THROW(gmm::failure_error, "Error too large: " << error);
   }
 
@@ -246,7 +246,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
      gmm::mult(ca, gmm::mat_col(cq, l),
 	       gmm::scaled(gmm::mat_col(cq, l), -eigcr[l]), vy);
      error = gmm::vect_norm2(vy);
-     if (error >= prec * R(10000)) 
+     if (error > prec * R(10000)) 
        DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
   }
