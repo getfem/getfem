@@ -58,7 +58,7 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
 # $NDDLMAX = 20800;
 $NDDLMAX = 4800;
 $PAUSE = 0;
-$SKIP = 2;
+$SKIP = 3;
 $FT = 30.0;
 
 @Ks=(1, 2, 3, 4, 6, 9, 12, 15, 18, 24);
@@ -207,7 +207,7 @@ print "   TESTS EN DIMENSION 3, ET ELEMENTS PK                        \n";
 ##########################################################################
 $NDDLMAX = 150000; $FT = 2.0;
 $FEM_TYPE = 0;
-$INTE = 0;
+$INTE = 1;
 while ($INTE < 2 && $SKIP < 4) {
 open(RES, ">laplacian_3D_$INTE.res");
 $K = 1; $N = 3; $NX = 1;
@@ -253,7 +253,7 @@ $INTE += 1;
 print "   TESTS EN DIMENSION 4, ET ELEMENTS PK                        \n";
 ##########################################################################
 $FEM_TYPE = 0;
-$INTE = 0;
+$INTE = 1;
 while ($INTE < 2 && $SKIP < 4) {
 open(RES, ">laplacian_4D_$INTE.res");
 $K = 1; $N = 4; $NX = 1;
