@@ -36,7 +36,7 @@
 // of non-zero elements on the line of the original matrix plus K, except if
 // the matrix is dense. In this case the fill-in is K on each line.
 
-#include <gmm_kernel.h>
+#include <gmm_precond_ilut.h>
 
 namespace gmm {
 
@@ -93,16 +93,15 @@ namespace gmm {
       for (size_type krow = 0, k; krow < w.nb_stored(); ++krow) {
 	typename svector::iterator wk = w.begin() + krow;
 	if ((k = wk->c) >= i) break;
-
-	// tmp = wk->e;
-	// if (gmm::abs(tmp) < eps * norm_row) { w.sup(k); --krow; } 
-	// else
-	//  {  /* wk->e += tmp; */  gmm::add(scaled(mat_row(U, k), -tmp), w); }
-	
-	tmp = gmm::conj(U(k, i)) / indiag[k]; // not completely satisfactory ...
-	// il faudrait construire L aussi pour iterer sur les éléments
-	//  non nuls  ... le threshold ne sert plus à rien ...
-	gmm::add(scaled(mat_row(U, k), -tmp), w);
+	if (is_complex(A)) {
+	  tmp = gmm::conj(U(k, i)) / indiag[k]; // not completely satisfactory ..
+	  gmm::add(scaled(mat_row(U, k), -tmp), w);
+	}
+	else {
+	  tmp = wk->e;
+	  if (gmm::abs(tmp) < eps * norm_row) { w.sup(k); --krow; } 
+	  else { /* wk->e += tmp; */ gmm::add(scaled(mat_row(U, k), -tmp), w); }
+	}
       }
       tmp = w[i];
 

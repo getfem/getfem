@@ -39,14 +39,6 @@
 
 namespace gmm {
 
-  // Needed by ilut and choleskyt
-  template<typename T> struct _elt_rsvector_value_less {
-    inline bool operator()(const _elt_rsvector<T>& a, 
-			   const _elt_rsvector<T>& b) const
-    { return (gmm::abs(a.e) > gmm::abs(b.e)); }
-  };
-
-
   /** mixed method to find a zero of a real function G, a priori 
    * between a and b. If the zero is not between a and b, iterations
    * of secant are applied. When a convenient interval is found,

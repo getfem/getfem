@@ -76,6 +76,12 @@
 
 namespace gmm {
 
+  template<typename T> struct _elt_rsvector_value_less {
+    inline bool operator()(const _elt_rsvector<T>& a, 
+			   const _elt_rsvector<T>& b) const
+    { return (gmm::abs(a.e) > gmm::abs(b.e)); }
+  };
+
   template <typename Matrix>
   class ilut_precond  {
   public :

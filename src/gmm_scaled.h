@@ -194,7 +194,7 @@ namespace gmm {
 
     scaled_row_matrix_const_ref(const M &m, value_type rr)
       : _begin(mat_row_begin(m)), _end(mat_row_end(m)),
-	origin(linalg_origin(m)), r(rr), nr(mat_ncols(m)), nc(mat_nrows(m)) {}
+	origin(linalg_origin(m)), r(rr), nr(mat_nrows(m)), nc(mat_ncols(m)) {}
 
     value_type operator()(size_type i, size_type j) const
     { return r * linalg_traits<M>::access(_begin+i, j); }
