@@ -367,7 +367,7 @@ namespace getfem
   pintegration_method im_list_integration(std::string name) {
     // cerr << "searching " << name << endl;
     for (int i = 0; i < NB_IM; ++i)
-      if (!strcmp(name.data(), im_desc_tab[i].method_name)) {
+      if (!name.compare(im_desc_tab[i].method_name)) {
 	bgeot::pgeometric_trans pgt
 	  = bgeot::geometric_trans_descriptor(im_desc_tab[i].geotrans_name);
 	dim_type N = pgt->structure()->dim();
