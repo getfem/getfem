@@ -55,15 +55,11 @@ namespace gmm {
     std::vector<vector_type> *fi;
   };
 
-  template <class Matrix1, class Matrix2, class Matrix3, class Matrix4,
-	    class Matrix5, class Matrix6, class SUBI, class Vector2,
-	    class Vector3>
+  template <class Matrix1, class Matrix2, class Matrix3, class SUBI,
+	    class Vector2, class Vector3>
   int schwarz_additif(const Matrix1 &A,
-		      Vector3 &u, const Matrix4 &CO,
 		      const std::vector<Matrix2> &ml1,
-		      const std::vector<Matrix6> &mco1, 
 		      const std::vector<Matrix3> &ml2,
-		      const std::vector<Matrix5> &mco2, 
 		      const std::vector<SUBI> &cor,
 		      const Vector2 &f,
 		      iteration &iter) {
@@ -92,14 +88,13 @@ namespace gmm {
 
     for (size_type i = 0; i < ms; ++i) {
       iter2.init();
-      constrained_cg(ml1[i], mco1[i], gi[i], fi[i],
-		     identity_matrix(), identity_matrix(), iter2);
+      cg(ml1[i], gi[i], fi[i], identity_matrix(), identity_matrix(), iter2);
       itebilan = std::max(itebilan, iter2.get_iteration());
     }
     for (size_type i = 0; i < ml2.size(); ++i) {
       iter2.init();
-      constrained_cg(ml2[i], mco2[i], gi[i+ms], fi[i+ms],
-		     identity_matrix(), identity_matrix(), iter2);
+      cg(ml2[i], gi[i+ms], fi[i+ms],
+	 identity_matrix(), identity_matrix(), iter2);
       itebilan = std::max(itebilan, iter2.get_iteration());
     }
 
@@ -114,7 +109,7 @@ namespace gmm {
     // SAM.residu_act = 1E-2;
     SAM.gi = &gi; SAM.fi = &fi; SAM.itebilan = itebilan;
    
-    constrained_cg(SAM, CO, u, g, A, identity_matrix(), iter);
+    cg(SAM, u, g, A, identity_matrix(), iter);
 
     return SAM.itebilan;
   }
