@@ -31,12 +31,13 @@
 #include <getfem_poly_composite.h>
 #include <getfem_integration.h>
 #include <getfem_mesh_fem.h>
+#include <ftool_naming.h>
 
 namespace getfem
 { 
   typedef const fem<polynomial_composite> * ppolycompfem;
 
-  ppolycompfem composite_fe_method(const mesh_precomposite &mp, 
+  static ppolycompfem composite_fe_method(const mesh_precomposite &mp, 
 				   const mesh_fem &mf, bgeot::pconvex_ref cr) {
     
     if (&(mf.linked_mesh()) != &(mp.linked_mesh()))
@@ -77,5 +78,32 @@ namespace getfem
     }
     return p;
   }
+
+  typedef ftool::naming_system<virtual_fem>::param_list fem_param_list;
+
+  pfem structured_composite_fem_method(fem_param_list &params) {
+    if (params.size() != 2)
+      DAL_THROW(failure_error, 
+	  "Bad number of parameters : " << params.size() << " should be 2.");
+    if (params[0].type() != 1 || params[1].type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    pfem pf = params[0].method();
+    int k = int(::floor(params[1].num() + 0.01));
+    if (!(pf->is_polynomial()) || !(pf->is_equivalent()) || k <= 0
+	|| k > 150 || double(k) != params[1].num())
+      DAL_THROW(failure_error, "Bad parameters");
+
+    pgetfem_mesh pm;
+    pmesh_precomposite pmp;
+
+    structured_mesh_for_convex(pf->ref_convex(), k, pm, pmp);
+
+    mesh_fem mf(*pm);
+    mf.set_finite_element(pm->convex_index(), pf, 
+			  exact_classical_im(pm->trans_of_convex(0)));
+
+    return composite_fe_method(*pmp, mf, pf->ref_convex());
+  }
+
   
 }  /* end of namespace getfem.                                            */

@@ -950,6 +950,8 @@ namespace getfem
   /*    Naming system                                                     */
   /* ******************************************************************** */
 
+  pfem structured_composite_fem_method(fem_param_list &params);
+
   static ftool::naming_system<virtual_fem> *_fem_naming_system = 0;
   
   static void init_fem_naming_system(void) {
@@ -971,6 +973,8 @@ namespace getfem
     _fem_naming_system->add_suffix("Q2K_HIERARCHICAL", Q2K_hierarch_fem);
     _fem_naming_system->add_suffix("P2K_PRISM_HIERARCHICAL",
 				   P2K_prism_hierarch_fem);
+    _fem_naming_system->add_suffix("STRUCTURED_COMPOSITE",
+				   structured_composite_fem_method);
   }
   
   pfem fem_descriptor(std::string name) {
