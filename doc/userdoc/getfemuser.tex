@@ -65,7 +65,7 @@ Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 \newpage
 
 \section{Build a mesh}
-GETFEM++ has it own structure to store meshes. This structure is mainly defined in the files {\tt bgeot\_mesh\_structure.h}, {\tt bgeot\_mesh.h} and {\tt getfem\_mesh.h}. The main structure is defined in {\tt getfem\_mesh.h} by the object\\[0.5cm]
+GETFEM++ has it own structure to store meshes defined in the files {\tt bgeot\_mesh\_structure.h}, $\;$ ${\tt bgeot\_mesh.h}$ and {\tt getfem\_mesh.h}. The main structure is defined in {\tt getfem\_mesh.h} by the object\\[0.5cm]
 {\tt getfem::getfem\_mesh }\\[0.5cm]
 This object is able to store any element in any dimension even if you mix elements with different dimensions.\\[0.5cm]
 
@@ -106,7 +106,7 @@ where this time {\tt itp} is an iterator on an array of points. For example\\[0.
 It is possible to use also \\[0.5cm]
 {\tt mesh.add\_simplex\_by\_points(2, pts.begin()); } \\[0.5cm]
 
-For other elements than simplexes, it is still possible to use {\tt mesh.add\_convex\_by\_points} or {\tt mesh.add\_convex} with the appropriate geometric transformation. \\[0.5cm]
+For other elements than simplexes, it is still possible to use {\tt mesh.add\_convex\_by\_points} or $\ $$\ $ {\tt mesh.add\_convex} with the appropriate geometric transformation. \\[0.5cm]
 {\tt bgeot::parallelepiped\_trans(N, 1) }
 describes the usual transformation for parallelepipeds of dimension {\tt N} (quadrilateron for {\tt N=2}, hexahedron for {\tt N=3}, ...) \\[0.5cm]
 {\tt bgeot::prism\_trans(N, 1) } 
@@ -338,19 +338,35 @@ Once a finite element method is defined on a mesh, it is possible to obtain info
 
 \section{Use standard assembling procedures}
 
-Procedures defined in the file {\tt getfem\_assembling.h} allows to assemble rigidity atrices, mass matrices and boundary conditions for a few amount of classical partial differential equation problems. All the procedures have vectors and matrices template parameters in order to be used with any matrix library (Dense an sparse matrix are defined in {\tt bgeot\_matrix.h} and {\tt bgeot\_smatrix.h} but it is preferable to use a matrix library such as MTL / ITL.).
+Procedures defined in the file {\tt getfem\_assembling.h} allow to assemble rigidity matrices, mass matrices and boundary conditions for a few amount of classical partial differential equation problems. All the procedures have vectors and matrices template parameters in order to be used with any matrix library (Dense an sparse matrix are defined in {\tt bgeot\_matrix.h} and {\tt bgeot\_smatrix.h} but it is preferable to use a matrix library such as MTL / ITL.).
 
-\subsection{Laplacian problem in arbitrary dimension}
+\subsection{Laplacian (Poisson) problem}
 
+An assembling procedure is defined to solve the problem
+\begin{eqnarray*}
+  \mbox{div}(a(x)\ \mbox{grad }u(x)) = f(x), \ \ \mbox{ in } \Omega, \\
+  u(x) = U(x),  \ \ \mbox{ on } \Gamma_{_D}, \\
+  \Frac{\partial u}{\partial \bf n} = F(x),  \ \ \mbox{ on } \Gamma_{_N},   
+\end{eqnarray*}
+where $\Omega$ is an open domain of arbitrary dimension, $\Gamma_{_D}$ and $\Gamma_{_N}$ are parts of the boundary of $\Omega$, $u(x)$ is the unknown, $a(x)$ is a given coefficient, $f(x)$ is a given source term, $U(x)$ the prescribed value of $u(x)$ on $\Gamma_{_D}$ and $F(x)$ is the prescribed normal derivative of $u(x)$ on $\Gamma_{_N}$.
+The function to be called to assemble the rigidity matrix is\\[0.5cm]
+{\tt getfem::assembling\_rigidity\_matrix\_for\_laplacian(RM, mef1, mef2, A);} \\[0.5cm]
+where {\tt RM} is a matrix of any type having the right dimension (i.e. {\tt me1.nb\_dof()}), {\tt mef1} is a variable of type {\tt getfem::mesh\_fem} and should define the finite element method for the solution, {\tt mef2}  is a variable of type {\tt getfem::mesh\_fem} (possibly equal to {\tt mef1}) describing the finite element method on which the coefficient $a(x)$ is defined, and {\tt A} is the vector of the values of this coefficient on each degree of freedom of {\tt mef2}. It is important to pay attention to the fact that the integration methods used to compute the elementary matrices is the ones declared in {\tt mef1}. This integration methods have to be chosen of sufficient order. The order has to be determined considering the degrees of element in {\tt mef1}, in {\tt mef2} and the geometric transformations for non-linear cases. Integration methods defined in {\tt mef2} are ignored.\\[0.5cm]
+To assemble the source term, the  function to be called is\\[0.5cm]
+{\tt getfem::assembling\_volumic\_source\_term(B, mef1, mef2, V, N);} \\[0.5cm]
+where {\tt B} is a vector of any type having the right dimension (still {\tt me1.nb\_dof()}), {\tt mef2}  is a variable of type {\tt getfem::mesh\_fem} (possibly equal to {\tt mef1}) describing the finite element method on which $f(x)$ is defined, {\tt V} is the vector of the values of $f(x)$ on each degree of freedom of {\tt mef2}, and {\tt N} should be {\tt 1} here because it is a scalar problem.\\[0.5cm]
+For the Neumann condition on $\Gamma_{_N}$, it is possible to call\\[0.5cm]
+{\tt getfem::assembling\_Neumann\_condition(B, mef1, nbound, mef2, V, N);} \\[0.5cm]
+where {\tt nbound} is the index of the boundary in {\tt mef1} (see previous section or how to describe a boundary) where the Neumann condition is applied, {\tt mef2}  is a variable of type {\tt getfem::mesh\_fem} describing the finite element method on which $F(x)$ is defined, {\tt V} is the vector of the values of $F(x)$ on each degree of freedom of {\tt mef2}, and {\tt N} should still be {\tt 1}.\\[0.5cm]
+there is two manner to take into account the Dirichlet condition on $\Gamma_{_D}$, changing the linear system or explicitely reduce to the kernel of the Dirichlet condition. For the first manner, the following function is defined \\[0.5cm]
+{\tt getfem::assembling\_Dirichlet\_condition(RM, B, mef1, nbound, V, N);} \\[0.5cm]
+where {\tt nbound} is the index of the boundary in {\tt mef1} where the Dirichlet condition is applied, {\tt V} is the vector of the values of $U(x)$ on each degree of freedom of {\tt mef1} and {\tt N} should be {\tt 1}. This operation should be the last one because it transform the rigidity matrix {\tt RM}. It works only for lagrange elements. For the second manner ... to be completed ...
 
+At the end, one obtain the discrete system
+$$ [RM] U = B, $$
+where $U$ is the discrete unknown.\\[0.5cm]
+For instance, assume {\tt mesh} is a given variable of type {\tt getfem::mesh} describing a regular mesh. The following set of instruction assembles ...
 
-\begin{center} \begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline
-
-  {\tt getfem::assembling\_rigidity\_matrix\_for\_laplacian(RM, mef1, mef2, A)} & blabla.  \\ \hline
-
-\end{tabular} \end{center}
-
-+ example ... (de laplacian et elastostatique .. )
 
 \section{Compute arbitrary elementary matrices}
 
@@ -367,6 +383,10 @@ Procedures defined in the file {\tt getfem\_assembling.h} allows to assemble rig
 \section{Catch errors}
 
 \section{Example : Laplacian program} (or own documentation ? )
+
+\section{Compare solutions program} (or own documentation ? )
+
+\section{Interpolation program} (or own documentation ? )
 
 
 \begin{thebibliography}{99}
