@@ -146,6 +146,16 @@ namespace getfem {
 	 tensor_reduction::required_shape */
       for (dim_type n=0; n < nchilds(); ++n) {
 	tensor_shape ts(child(n).ranges());
+	tensor_ranges rn(child(n).ranges());
+	const std::string &s = red[n].second;
+	bool ok = true; assert(rn.size() == s.size());
+	for (unsigned i=0; i < rn.size(); ++i)
+	  if (s[i] != ' ') {
+	    size_type p = s.find(s[i]);
+	    if (p != size_type(-1) && p < i && rn[p] != rn[i]) 
+	      ASM_THROW_TENSOR_ERROR("can't reduce the diagonal of a tensor of size " << rn << " with '" << s << "'");
+	  }
+	//cerr << "ts = " << child(n).ranges() << ", red=" << red[n].second << "\n";
 	bgeot::tensor_reduction::diag_shape(ts, red[n].second);
 	/*cerr << "REDUCTION '" << red[n].second << "' -> sending required to child#" << int(n) << " " << child(n).name() << ":" << endl;
           cerr << ts << endl;*/

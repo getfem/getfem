@@ -1563,7 +1563,7 @@ int main(int argc, char *argv[])
      getfem::mesh_fem mfqne(m);
      init_mesh_fem(mfqne,false);
   
-     test_nonlin(mim,mfqne);
+     test_nonlin(mim,mfq);
 
      getfem::mesh_fem mfd(m); 
      init_mesh_fem(mfd,true);
