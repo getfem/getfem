@@ -41,6 +41,23 @@
 
 namespace gmm {
 
+
+  /* ********************************************************************* */
+  /* Default tolerance.                                                    */
+  /* ********************************************************************* */
+  
+  template<class T> double default_tol(T) { return 2E-16; }
+  template<> double default_tol(float) { return 2E-8; }
+  template<> double default_tol(long double) {
+    return (sizeof(long double) == sizeof(double)) ? default_tol(double())
+      : 2E-24;
+  }
+  template<> double default_tol(std::complex<float>)
+  { return default_tol(float()); }
+  template<> double default_tol(std::complex<long double>)
+  { return default_tol((long double)(0)); }  
+
+
   /* ********************************************************************* */
   /* QR factorization using Householder method (complex and real version). */
   /* ********************************************************************* */
@@ -232,7 +249,7 @@ namespace gmm {
   // Very slow method. Use implicit_qr_method instead.
   template <class MAT1, class VECT, class MAT2>
     void rudimentary_qr_algorithm(const MAT1 &A, const VECT &eigval_,
-				  const MAT2 &eigvect_, double tol = 1E-12,
+				  const MAT2 &eigvect_, double tol = gmm::default_tol(typename linalg_traits<MAT1>::value_type()),
 				  bool compvect = true) {
     VECT &eigval = const_cast<VECT &>(eigval_);
     MAT2 &eigvect = const_cast<MAT2 &>(eigvect_);
@@ -259,7 +276,7 @@ namespace gmm {
 
   template <class MAT1, class VECT>
     void rudimentary_qr_algorithm(const MAT1 &a, VECT &eigval,
-				  double tol = 1E-12) {
+				  double tol = gmm::default_tol(typename linalg_traits<MAT1>::value_type())) {
     dense_matrix<typename linalg_traits<MAT1>::value_type> m(0,0);
     rudimentary_qr_algorithm(a, eigval, m, tol, false); 
   }
@@ -316,7 +333,7 @@ namespace gmm {
   template <class MAT1, class VECT, class MAT2>
     void implicit_qr_algorithm(const MAT1 &A, const VECT &eigval_,
 			       const MAT2 &eigvect_,
-			       double tol = 1E-12, bool compvect = true) {
+			       double tol = gmm::default_tol(typename linalg_traits<MAT1>::value_type()), bool compvect = true) {
     VECT &eigval = const_cast<VECT &>(eigval_);
     MAT2 &eigvect = const_cast<MAT2 &>(eigvect_);
     typedef typename linalg_traits<MAT1>::value_type value_type;
@@ -350,7 +367,7 @@ namespace gmm {
 
   template <class MAT1, class VECT>
     void implicit_qr_algorithm(const MAT1 &a, VECT &eigval, 
-			       double tol = 1E-12) {
+			       double tol = default_tol(typename linalg_traits<MAT1>::value_type())) {
     dense_matrix<typename linalg_traits<MAT1>::value_type> m(0,0);
     implicit_qr_algorithm(a, eigval, m, tol, false); 
   }
@@ -414,7 +431,7 @@ namespace gmm {
   // complexity about 4n^3/3, 9n^3 if eigenvectors are computed
   template <class MAT1, class VECT, class MAT2>
   void symmetric_qr_algorithm(const MAT1 &A, const VECT &eigval_,
-			      const MAT2 &eigvect_, double tol = 1E-12,
+			      const MAT2 &eigvect_, double tol = gmm::default_tol(typename linalg_traits<MAT1>::value_type()),
 			      bool compvect = true) {
     VECT &eigval = const_cast<VECT &>(eigval_);
     MAT2 &eigvect = const_cast<MAT2 &>(eigvect_);
@@ -440,7 +457,7 @@ namespace gmm {
 
   template <class MAT1, class VECT>
     void symmetric_qr_algorithm(const MAT1 &a, VECT &eigval, 
-			       double tol = 1E-12) {
+			       double tol = gmm::default_tol(typename linalg_traits<MAT1>::value_type())) {
     dense_matrix<typename linalg_traits<MAT1>::value_type> m(0,0);
     symmetric_qr_algorithm(a, eigval, m, tol, false);
   }

@@ -48,24 +48,24 @@ void const_ref_test(const M1 &m1, const M2 &m2) {
 
 template <class MAT, class T> void print_for_matlab(const MAT &m, T) { 
   cout.precision(16);
-  cout << "[" << endl;
+  cout << "[ ";
   for (int i = 0; i < gmm::mat_nrows(m); ++i) {
     for (int j = 0; j < gmm::mat_ncols(m); ++j) cout << " " << m(i,j);
     if (i != gmm::mat_nrows(m)-1) cout << " ; \n";
   }
-  cout << "]" << endl;
+  cout << " ]" << endl;
 }
 
 template <class MAT, class T> void print_for_matlab(const MAT &m,
 						    std::complex<T>) { 
   cout.precision(16);
-  cout << "[" << endl;
+  cout << "[ ";
   for (int i = 0; i < gmm::mat_nrows(m); ++i) {
     for (int j = 0; j < gmm::mat_ncols(m); ++j)
       cout << " (" << m(i,j).real() << "+" << m(i,j).imag() << "*i)" ;
     if (i != gmm::mat_nrows(m)-1) cout << " ; \n";
   }
-  cout << "]" << endl;
+  cout << " ]" << endl;
 }
 
 template <class MAT> inline void print_for_matlab(const MAT &m)
@@ -137,27 +137,36 @@ template <class MAT>  void test_qr(const MAT &m) {
   gmm::lu_inverse(cr);
   gmm::copy(gmm::identity_matrix(), cm);
   std::fill(cv.begin(), cv.end(), 1.0);
-  if (nn > 0) cv[0] = cm(0,0) = real_or_complex(   0.0,  0.0, value_type());
-  if (nn > 1) cv[1] = cm(1,1) = real_or_complex(   0.0,  0.0, value_type());
-  if (nn > 2) cv[2] = cm(2,2) = real_or_complex(   0.0, -0.1, value_type());
-  if (nn > 3) cv[3] = cm(3,3) = real_or_complex(   0.0,  0.1, value_type());
-  if (nn > 4) cv[4] = cm(4,4) = real_or_complex(  -2.0,  3.0, value_type());
-  if (nn > 5) cv[5] = cm(5,5) = real_or_complex(  -2.0,  3.0, value_type());
-  if (nn > 6) cv[6] = cm(6,6) = real_or_complex(  -2.0,  3.0, value_type());
-  if (nn > 7) cv[7] = cm(7,7) = real_or_complex(1000.0,  1.0, value_type());
+  if (nn >  0) cv[ 0] = cm( 0, 0) = real_or_complex(     0.0,  0.0, cv[0]);
+  if (nn >  1) cv[ 1] = cm( 1, 1) = real_or_complex(     0.0,  0.0, cv[0]);
+  if (nn >  2) cv[ 2] = cm( 2, 2) = real_or_complex(     0.01,-0.1, cv[0]);
+  if (nn >  3) cv[ 3] = cm( 3, 3) = real_or_complex(     0.01, 0.1, cv[0]);
+  if (nn >  4) cv[ 4] = cm( 4, 4) = real_or_complex(    -2.0,  3.0, cv[0]);
+  if (nn >  5) cv[ 5] = cm( 5, 5) = real_or_complex(    -2.0,  3.0, cv[0]);
+  if (nn >  6) cv[ 6] = cm( 6, 6) = real_or_complex(   -50.0,  3.0, cv[0]);
+  if (nn >  7) cv[ 7] = cm( 7, 7) = real_or_complex(   100.0,  1.0, cv[0]);
+  if (nn >  8) cv[ 8] = cm( 8, 8) = real_or_complex(   300.0,  1.0, cv[0]);
+  if (nn >  9) cv[ 9] = cm( 9, 9) = real_or_complex(   500.0,  1.0, cv[0]);
+  if (nn > 10) cv[10] = cm(10,10) = real_or_complex(  1000.0,  1.0, cv[0]);
+  if (nn > 11) cv[11] = cm(11,11) = real_or_complex(  4000.0,  1.0, cv[0]);
+  if (nn > 12) cv[12] = cm(12,12) = real_or_complex(  5000.0,  1.0, cv[0]);
+  if (nn > 13) cv[13] = cm(13,13) = real_or_complex( 10000.0,  1.0, cv[0]);
+  if (nn > 14) cv[14] = cm(14,14) = real_or_complex( 80000.0,  1.0, cv[0]);
+  if (nn > 15) cv[15] = cm(15,15) = real_or_complex(100000.0,  1.0, cv[0]);
   gmm::mult(cq, cm, ca); 
   gmm::mult(ca, cr, cm);
+  print_for_matlab(cm);
   cout << "\neigenvalues to be computed : " << cv << endl;
   exectime = ftool::uclock_sec();
   implicit_qr_algorithm(cm, eigc, cq);
   cout << "time to compute implicit QR : "
        << ftool::uclock_sec()-exectime;
-  gmm::clean(eigc, 1E-10); cout << "\neigenvalues found : " << eigc << endl;
+  /* gmm::clean(eigc, 1E-10); */ cout << "\neigenvalues found : " << eigc << endl;
   // gmm::clean(cq, 1E-10); cout << "eigenvectors : " << cq << endl;
   for (int l = 0; l < nn; ++l) {
     bool found = false;
      for (int k = 0; k < nn; ++k)
-       if (dal::abs(eigc[l] - cv[k]) < 1E-8)
+       if (dal::abs(eigc[l] - cv[k]) < 1E-8 * (dal::abs(eigc[l])+1.0))
 	 { cv[k] = -1.123236; found = true; break; }
      if (found == false)
        DAL_THROW(dal::failure_error, "Error on QR algorithm.");
@@ -176,8 +185,8 @@ int main(void)
 
     test_gauss_det();
     
-    test_qr(gmm::dense_matrix<double>(8,8));
-    test_qr(gmm::row_matrix<std::vector<std::complex<long double> > >(8,8));
+    test_qr(gmm::dense_matrix<double>(10,10));
+    test_qr(gmm::row_matrix<std::vector<std::complex<long double> > >(10,10));
 
     gmm::dense_matrix<double> m(10, 10);
     std::vector<double> y(10), x(10), b(10);
