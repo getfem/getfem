@@ -40,8 +40,7 @@ namespace getfem
     // optimisable.   verifier et faire le vectoriel
     base_matrix M;
     if (val.size() != target_dim())
-      throw dimension_error
-	("virtual_fem::interpolation : dimensions mismatch");
+      DAL_THROW(dimension_error, "dimensions mismatch");
     
     size_type R = nb_dof();
 
@@ -78,12 +77,11 @@ namespace getfem
 	val.ncols() != P ||
 	ii >= pfp->get_point_tab()->size() ||
 	coeff.size() != R)
-      throw dimension_error
-	("virtual_fem::interpolation_grad: dimension mismatch");
+      DAL_THROW(dimension_error, "dimension mismatch");
 
-    if (pfp->get_pfem() != this) {
-      throw internal_error("virtual_fem::interpolation_grad: internal error");
-    }
+    if (pfp->get_pfem() != this)
+      DAL_THROW(internal_error, "internal error");
+   
 
     base_tensor::const_iterator it = pfp->grad(ii).begin();
 
@@ -528,8 +526,7 @@ namespace getfem
       isinit = true;
     }
     if (nc <= 1)
-      throw dimension_error
-	("P1_with_bubble_on_a_face : dimensions mismatch");
+      DAL_THROW(dimension_error, "dimensions mismatch");
     if (!(*exists)[nc])
       { (*exists)[nc] = true; (*tab)[nc]= new _P1_wabbfoaf(nc); }
     return (*tab)[nc];
@@ -639,8 +636,7 @@ namespace getfem
     static bool isinit = false;
 
     if (k >= n+1)
-      throw dimension_error
-	("PK_with_cubic_bubble_fem : dimensions mismatch");
+      DAL_THROW(dimension_error, "dimensions mismatch");
     
     if (!isinit) {
       tab = new dal::FONC_TABLE<_PK_femi_light, _PK_with_cubic_bubble>();
@@ -679,10 +675,9 @@ namespace getfem
      	return PK_prism_fem(n, k);
      
     // To be completed
-
  
-    throw to_be_done_error
-      ("classical_fem : This element is not taken into account. Contact us");
+    DAL_THROW(to_be_done_error,
+	      "This element is not taken into account. Contact us");
     return NULL;
   }
 

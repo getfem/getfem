@@ -324,7 +324,6 @@ namespace getfem
       void optimize_structure(void);
       void clear(void);
       
-  
       int write_to_file(const std::string &name) const;
       int write_to_file(STD_NEEDED ostream &ost) const;
       int read_from_file(const std::string &name);
