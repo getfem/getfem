@@ -68,7 +68,7 @@ namespace gmm {
 	       const Preconditioner& M, iteration &iter) {
 
     typedef typename linalg_traits<Vector>::value_type T;
-    typedef typename temporary_plain_vector<Vector>::vector_type temp_vector;
+    typedef typename temporary_dense_vector<Vector>::vector_type temp_vector;
     
     T rho_1, rho_2(0), alpha(0), beta, omega(0);
     temp_vector p(vect_size(x)), phat(vect_size(x)), s(vect_size(x)),

@@ -542,8 +542,8 @@ namespace gmm
   }
 
   template <class V, class T> 
-  inline void add_rsvector(const V &v1, rsvector<T> &v2, abstract_plain)
-  { add(v1, v2, abstract_plain(), abstract_sparse()); }
+  inline void add_rsvector(const V &v1, rsvector<T> &v2, abstract_dense)
+  { add(v1, v2, abstract_dense(), abstract_sparse()); }
 
   template <class V, class T> 
   inline void add_rsvector(const V &v1, rsvector<T> &v2, abstract_skyline)
@@ -587,8 +587,8 @@ namespace gmm
   }
 
   template <class V, class T> 
-  void copy_rsvector(const V &v1, rsvector<T> &v2, abstract_plain)
-  { copy_vect(v1, v2, abstract_plain(), abstract_sparse()); }
+  void copy_rsvector(const V &v1, rsvector<T> &v2, abstract_dense)
+  { copy_vect(v1, v2, abstract_dense(), abstract_sparse()); }
 
   template <class V, class T> 
   void copy_rsvector(const V &v1, rsvector<T> &v2, abstract_skyline)
@@ -885,6 +885,8 @@ namespace gmm
     : public linalg_traits<slvector<T> > {};
 #endif
 
+  template <class T>
+  inline size_type nnz(const slvector<T>& l) { return l.last() - l.first(); }
 
 }
 

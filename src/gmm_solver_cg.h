@@ -69,7 +69,7 @@ namespace gmm {
   void cg(const Matrix& A, Vector1& x, const Vector2& b, const Matps& PS,
 	  const Precond &P, iteration &iter) {
 
-    typedef typename temporary_plain_vector<Vector1>::vector_type temp_vector;
+    typedef typename temporary_dense_vector<Vector1>::vector_type temp_vector;
     typedef typename linalg_traits<Vector1>::value_type value_type;
 
     value_type rho, rho_1(0), a;

@@ -386,7 +386,7 @@ namespace gmm {
   };
 
   template <class PT>
-  struct svrt_ir<PT, sub_index, abstract_plain> {
+  struct svrt_ir<PT, sub_index, abstract_dense> {
     typedef typename std::iterator_traits<PT>::value_type V;
     typedef typename vect_ref_type<PT,  V>::iterator iterator;
     typedef tab_ref_index_ref_with_origin<iterator,
@@ -394,14 +394,14 @@ namespace gmm {
   }; 
 
   template <class PT>
-  struct svrt_ir<PT, sub_interval, abstract_plain> {
+  struct svrt_ir<PT, sub_interval, abstract_dense> {
     typedef typename std::iterator_traits<PT>::value_type V;
     typedef typename vect_ref_type<PT,  V>::iterator iterator;
     typedef tab_ref_with_origin<iterator> vector_type;
   }; 
 
   template <class PT>
-  struct svrt_ir<PT, sub_slice, abstract_plain> {
+  struct svrt_ir<PT, sub_slice, abstract_dense> {
     typedef typename std::iterator_traits<PT>::value_type V;
     typedef typename vect_ref_type<PT,  V>::iterator iterator;
     typedef tab_ref_reg_spaced_with_origin<iterator> vector_type;

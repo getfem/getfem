@@ -43,7 +43,7 @@ namespace gmm {
   template <class Matrix1, class Matrix2, class Matrix3, class SUBI>
   struct schwarz_additif_matrix {
     typedef typename linalg_traits<Matrix2>::value_type value_type;
-    typedef typename plain_vector_type<value_type>::vector_type vector_type; 
+    typedef typename dense_vector_type<value_type>::vector_type vector_type; 
     const Matrix1 *A;
     const std::vector<Matrix2> *ml1;
     const std::vector<Matrix3> *ml2;
@@ -65,7 +65,7 @@ namespace gmm {
 		      iteration &iter) {
 
     typedef typename linalg_traits<Matrix2>::value_type value_type;
-    typedef typename plain_vector_type<value_type>::vector_type vector_type;
+    typedef typename dense_vector_type<value_type>::vector_type vector_type;
 
     size_type nb_sub = ml1.size() + ml2.size();
     size_t itebilan = 0;
@@ -202,7 +202,7 @@ namespace gmm {
 			       iteration &iter) {
 
     typedef typename linalg_traits<Matrix2>::value_type value_type;
-    typedef typename plain_vector_type<value_type>::vector_type vector_type;
+    typedef typename dense_vector_type<value_type>::vector_type vector_type;
     
     size_type nb_sub = ml1.size() + ml2.size();
     size_t itebilan = 0;

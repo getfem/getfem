@@ -116,7 +116,7 @@ namespace gmm {
   void constrained_cg(const Matrix& A, const CMatrix& C, VectorX& x,
 		      const VectorB& b, const VectorF& f,const Matps& PS,
 		      const Preconditioner& M, iteration &iter) {
-    typedef typename temporary_plain_vector<VectorX>::vector_type TmpVec;
+    typedef typename temporary_dense_vector<VectorX>::vector_type TmpVec;
     typedef typename temporary_vector<CMatrix>::vector_type TmpCVec;
     typedef row_matrix<TmpCVec> TmpCmat;
     

@@ -46,7 +46,7 @@ namespace gmm {
   /*   v[i] allows to access to the ith component of v.                    */
   /*   linalg_traits<Vector> should be filled with appropriate definitions */
   /*                                                                       */
-  /*   for a plain vector : the minimum is two random iterators (begin and */
+  /*   for a dense vector : the minimum is two random iterators (begin and */
   /*                        end) and a const void * pointer to a valid     */
   /*                        origin.                                        */
   /*   for a sparse vector : the minimum is two forward iterators, with    */
@@ -61,7 +61,7 @@ namespace gmm {
   /*   m(i, j) allows to access to the element at row i and column j.      */
   /*   linalg_traits<Matrix> should be filled with appropriate definitions */
   /*                                                                       */
-  /* What is needed for an iterator on plain vector                        */
+  /* What is needed for an iterator on dense vector                        */
   /*    to be standard random access iterator                              */
   /*                                                                       */
   /* What is needed for an iterator on a sparse vector                     */
@@ -153,9 +153,9 @@ namespace gmm {
     typedef T& reference;
     typedef typename this_type::iterator iterator;
     typedef typename this_type::const_iterator const_iterator;
-    typedef abstract_plain storage_type;
-    typedef plain_access<iterator,const_iterator> access_type;
-    typedef plain_clear<iterator> clear_type;
+    typedef abstract_dense storage_type;
+    typedef dense_access<iterator,const_iterator> access_type;
+    typedef dense_clear<iterator> clear_type;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) { return v.begin(); }
     static const_iterator begin(const this_type &v) { return v.begin(); }
@@ -175,6 +175,10 @@ namespace gmm {
   template <class T> struct linalg_traits<const std::vector<T> > 
     : public linalg_traits<std::vector<T> > {};
 #endif
+
+  template <class T>
+  inline size_type nnz(const std::vector<T>& l) { return l.size(); }
+
   // to be done :  std::valarray<T> ...
 
   /* ********************************************************************* */
@@ -207,9 +211,9 @@ namespace gmm {
     typedef typename std::iterator_traits<IT>::reference reference;
     typedef typename this_type::iterator iterator;
     typedef typename this_type::iterator const_iterator;
-    typedef abstract_plain storage_type;
-    typedef plain_access<iterator,const_iterator> access_type;
-    typedef plain_clear<iterator> clear_type;
+    typedef abstract_dense storage_type;
+    typedef dense_access<iterator,const_iterator> access_type;
+    typedef dense_clear<iterator> clear_type;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) { return v.begin(); }
     static const_iterator begin(const this_type &v) { return v.begin(); }
@@ -260,9 +264,9 @@ namespace gmm {
     typedef typename std::iterator_traits<IT>::reference reference;
     typedef typename this_type::iterator iterator;
     typedef typename this_type::iterator const_iterator;
-    typedef abstract_plain storage_type;
-    typedef plain_access<iterator,const_iterator> access_type;
-    typedef plain_clear<iterator> clear_type;
+    typedef abstract_dense storage_type;
+    typedef dense_access<iterator,const_iterator> access_type;
+    typedef dense_clear<iterator> clear_type;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) { return v.begin(); }
     static const_iterator begin(const this_type &v) { return v.begin(); }
@@ -315,9 +319,9 @@ namespace gmm {
     typedef typename std::iterator_traits<IT>::reference reference;
     typedef typename this_type::iterator iterator;
     typedef typename this_type::iterator const_iterator;
-    typedef abstract_plain storage_type;
-    typedef plain_access<iterator,const_iterator> access_type;
-    typedef plain_clear<iterator> clear_type;
+    typedef abstract_dense storage_type;
+    typedef dense_access<iterator,const_iterator> access_type;
+    typedef dense_clear<iterator> clear_type;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) { return v.begin(); }
     static const_iterator begin(const this_type &v) { return v.begin(); }
@@ -351,9 +355,9 @@ namespace gmm {
     typedef T& reference;
     typedef typename this_type::iterator iterator;
     typedef typename this_type::const_iterator const_iterator;
-    typedef abstract_plain storage_type;
-    typedef plain_access<iterator,const_iterator> access_type;
-    typedef plain_clear<iterator> clear_type;
+    typedef abstract_dense storage_type;
+    typedef dense_access<iterator,const_iterator> access_type;
+    typedef dense_clear<iterator> clear_type;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) { return v.begin(); }
     static const_iterator begin(const this_type &v) { return v.begin(); }
@@ -377,8 +381,8 @@ namespace gmm {
     typedef typename linalg_traits<VECT>::iterator  iterator;
     typedef typename linalg_traits<VECT>::const_iterator const_iterator;
     typedef typename linalg_traits<VECT>::storage_type storage_type;
-    typedef plain_access<iterator,const_iterator> access_type;
-    typedef plain_clear<iterator> clear_type;
+    typedef dense_access<iterator,const_iterator> access_type;
+    typedef dense_clear<iterator> clear_type;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) { return v.begin(); }
     static const_iterator begin(const this_type &v) { return v.begin(); }
@@ -393,7 +397,7 @@ namespace gmm {
   : public linalg_traits<bgeot::PT<VECT> > {};
 #endif
 
-  template<class ITER, class MIT> struct plain_compressed_iterator
+  template<class ITER, class MIT> struct dense_compressed_iterator
   {
     typedef ITER value_type;
     typedef ITER *pointer;
@@ -401,7 +405,7 @@ namespace gmm {
     typedef ptrdiff_t difference_type;
     typedef std::random_access_iterator_tag iterator_category;
     typedef size_t size_type;
-    typedef plain_compressed_iterator<ITER, MIT> iterator;
+    typedef dense_compressed_iterator<ITER, MIT> iterator;
 
     ITER it;
     size_type N, nrows, ncols;
@@ -427,10 +431,10 @@ namespace gmm {
     bool operator !=(const iterator &i) const { return !(i == *this); }
     bool operator < (const iterator &i) const { return (it < i.it); }
 
-    plain_compressed_iterator(void) {}
-    plain_compressed_iterator(const plain_compressed_iterator<MIT, MIT> &ii)
+    dense_compressed_iterator(void) {}
+    dense_compressed_iterator(const dense_compressed_iterator<MIT, MIT> &ii)
     : it(ii.it), N(ii.N), nrows(ii.nrows),ncols(ii.ncols),origin(ii.origin) {}
-    plain_compressed_iterator(const ITER &iter, size_type n, size_type r,
+    dense_compressed_iterator(const ITER &iter, size_type n, size_type r,
 			      size_type c, const void *o)
       : it(iter), N(n), nrows(r), ncols(c), origin(o) { }
     

@@ -64,7 +64,7 @@ namespace gmm {
   
   struct abstract_sparse {};    // sparse matrix or vector
   struct abstract_skyline {};   // 'sky-line' matrix or vector
-  struct abstract_plain {};     // plain matrix or vector
+  struct abstract_dense {};     // dense matrix or vector
   struct abstract_indirect {};  // matrix given by the product with a vector
 
   struct row_major {};          // matrix with a row access.
@@ -135,7 +135,7 @@ namespace gmm {
   { typedef P* pointer; };
 
   inline bool _is_sparse(abstract_sparse)   { return true;  }
-  inline bool _is_sparse(abstract_plain)    { return false; }
+  inline bool _is_sparse(abstract_dense)    { return false; }
   inline bool _is_sparse(abstract_skyline)  { return true;  }
   inline bool _is_sparse(abstract_indirect) { return false; }
 
@@ -275,7 +275,7 @@ namespace gmm {
   /*		Basic vectors used                         		  */
   /* ******************************************************************** */
   
-  template<class T> struct plain_vector_type 
+  template<class T> struct dense_vector_type 
   { typedef std::vector<T> vector_type; };
 
   template <class T> class wsvector;
@@ -288,7 +288,7 @@ namespace gmm {
   /*   Selects a temporary vector type                                    */
   /*   V if V is a valid vector type,                                     */
   /*   wsvector if V is a reference on a sparse vector,                   */
-  /*   std::vector if V is a reference on a plain vector.                 */
+  /*   std::vector if V is a reference on a dense vector.                 */
   /* ******************************************************************** */
 
   
@@ -302,13 +302,13 @@ namespace gmm {
   struct _temporary_vector<linalg_true, abstract_skyline, L, V>
   { typedef slvector<typename linalg_traits<V>::value_type> vector_type; };
   template <class V, class L>
-  struct _temporary_vector<linalg_true, abstract_plain, L, V>
+  struct _temporary_vector<linalg_true, abstract_dense, L, V>
   { typedef std::vector<typename linalg_traits<V>::value_type> vector_type; };
   template <class S, class V>
   struct _temporary_vector<linalg_false, S, abstract_vector, V>
   { typedef V vector_type; };
   template <class V>
-  struct _temporary_vector<linalg_false, abstract_plain, abstract_matrix, V>
+  struct _temporary_vector<linalg_false, abstract_dense, abstract_matrix, V>
   { typedef std::vector<typename linalg_traits<V>::value_type> vector_type; };
   template <class V>
   struct _temporary_vector<linalg_false, abstract_sparse, abstract_matrix, V>
@@ -322,28 +322,28 @@ namespace gmm {
   };
 
   /* ******************************************************************** */
-  /*   Selects a temporary plain vector type                              */
-  /*   V if V is a valid plain vector type,                               */
+  /*   Selects a temporary dense vector type                              */
+  /*   V if V is a valid dense vector type,                               */
   /*   std::vector if V is a reference or another type of vector          */
   /* ******************************************************************** */
 
-  template <class R, class S, class V> struct _temporary_plain_vector {
+  template <class R, class S, class V> struct _temporary_dense_vector {
     typedef abstract_null_type vector_type;
   };
-  template <class S, class V> struct _temporary_plain_vector<linalg_true, S, V>
+  template <class S, class V> struct _temporary_dense_vector<linalg_true, S, V>
   { typedef std::vector<typename linalg_traits<V>::value_type> vector_type; };
   template <class V>
-  struct _temporary_plain_vector<linalg_false, abstract_sparse, V>
+  struct _temporary_dense_vector<linalg_false, abstract_sparse, V>
   { typedef std::vector<typename linalg_traits<V>::value_type> vector_type; };
   template <class V>
-  struct _temporary_plain_vector<linalg_false, abstract_skyline, V>
+  struct _temporary_dense_vector<linalg_false, abstract_skyline, V>
   { typedef std::vector<typename linalg_traits<V>::value_type> vector_type; };
   template <class V>
-  struct _temporary_plain_vector<linalg_false, abstract_plain, V>
+  struct _temporary_dense_vector<linalg_false, abstract_dense, V>
   { typedef V vector_type; };
 
-  template <class V> struct temporary_plain_vector {
-    typedef typename _temporary_plain_vector<typename
+  template <class V> struct temporary_dense_vector {
+    typedef typename _temporary_dense_vector<typename
     is_a_reference<V>::reference,
     typename linalg_traits<V>::storage_type, V>::vector_type vector_type;
   };
@@ -364,7 +364,7 @@ namespace gmm {
   struct _temporary_sparse_vector<linalg_false, abstract_sparse, V>
   { typedef V vector_type; };
   template <class V>
-  struct _temporary_sparse_vector<linalg_false, abstract_plain, V>
+  struct _temporary_sparse_vector<linalg_false, abstract_dense, V>
   { typedef wsvector<typename linalg_traits<V>::value_type> vector_type; };
   template <class V>
   struct _temporary_sparse_vector<linalg_false, abstract_skyline, V>
@@ -392,7 +392,7 @@ namespace gmm {
   struct _temporary_skyline_vector<linalg_false, abstract_skyline, V>
   { typedef V vector_type; };
   template <class V>
-  struct _temporary_skyline_vector<linalg_false, abstract_plain, V>
+  struct _temporary_skyline_vector<linalg_false, abstract_dense, V>
   { typedef slvector<typename linalg_traits<V>::value_type> vector_type; };
   template <class V>
   struct _temporary_skyline_vector<linalg_false, abstract_sparse, V>
@@ -409,7 +409,7 @@ namespace gmm {
   /*		Standard access and clear objects             		   */
   /* ********************************************************************* */
 
-  template <class IT, class CIT> struct plain_access {
+  template <class IT, class CIT> struct dense_access {
 
     typedef typename std::iterator_traits<IT>::value_type value_type;
     typedef value_type &reference;
@@ -422,12 +422,12 @@ namespace gmm {
     { return _begin[i]; }
   };
 
-  template <class IT> struct plain_clear {
+  template <class IT> struct dense_clear {
     typedef typename std::iterator_traits<IT>::value_type value_type;
     void operator()(const void *,const IT &_begin,const IT &_end);
   };
   
-  template <class IT> void plain_clear<IT>::operator()(const void *,
+  template <class IT> void dense_clear<IT>::operator()(const void *,
 			  const IT &_begin, const IT &_end)
   { std::fill(_begin, _end, value_type(0)); }
 

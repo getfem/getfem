@@ -339,21 +339,21 @@ namespace gmm
     typedef abstract_matrix linalg_type;
     typedef T value_type;
     typedef T& reference;
-    typedef abstract_plain storage_type;
+    typedef abstract_dense storage_type;
     typedef tab_ref_reg_spaced_with_origin<typename this_type::iterator>
     sub_row_type;
     typedef tab_ref_reg_spaced_with_origin<typename this_type
     ::const_iterator> const_sub_row_type;
-    typedef plain_compressed_iterator<typename this_type::iterator,
+    typedef dense_compressed_iterator<typename this_type::iterator,
 				      typename this_type::iterator> row_iterator;
-    typedef plain_compressed_iterator<typename this_type::const_iterator,
+    typedef dense_compressed_iterator<typename this_type::const_iterator,
 				      typename this_type::iterator> const_row_iterator;
     typedef tab_ref_with_origin<typename this_type::iterator> sub_col_type;
     typedef tab_ref_with_origin<typename this_type::const_iterator>
     const_sub_col_type;
-    typedef plain_compressed_iterator<typename this_type::iterator,
+    typedef dense_compressed_iterator<typename this_type::iterator,
 				      typename this_type::iterator> col_iterator;
-    typedef plain_compressed_iterator<typename this_type::const_iterator,
+    typedef dense_compressed_iterator<typename this_type::const_iterator,
 				      typename this_type::iterator> const_col_iterator;
     typedef col_and_row sub_orientation;
     typedef dense_matrix_access<T> access_type;

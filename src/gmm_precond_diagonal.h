@@ -54,7 +54,7 @@ namespace gmm {
     { mult_diag_p(P, v2, abstract_sparse()); }
 
   template <class Matrix, class V2> inline
-  void mult_diag_p(const diagonal_precond<Matrix>& P, V2 &v2, abstract_plain){
+  void mult_diag_p(const diagonal_precond<Matrix>& P, V2 &v2, abstract_dense){
     for (size_type i = 0; i < P.diag.size(); ++i) v2[i] *= P.diag[i];
   }
 

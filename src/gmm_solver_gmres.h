@@ -140,7 +140,7 @@ namespace gmm {
   void gmres(const Matrix &A, Vector &x, const VectorB &b,
 	     const Preconditioner &M, int restart, iteration& outer) {
     modified_gram_schmidt<typename 
-      temporary_plain_vector<Vector>::vector_type> orth(restart, vect_size(x));
+      temporary_dense_vector<Vector>::vector_type> orth(restart, vect_size(x));
     gmres(A, x, b, M, restart, outer, orth); 
   }
 
