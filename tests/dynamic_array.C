@@ -1,7 +1,6 @@
 #include <dal_basic.h>
-// #include <deque>
+#include <deque>
 
-// using namespace std;
 
 int main(void)
 {
