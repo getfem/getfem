@@ -214,7 +214,8 @@ namespace getfem {
     size_type N;
     const getfem::mesh_fem &mf;
     const std::vector<scalar_type> &U;
-    const scalar_type stress_threshold, TOL;
+    std::vector<scalar_type> stress_threshold;
+    const scalar_type TOL;
     std::vector<scalar_type> lambda, mu;  
     bgeot::multi_index sizes_;
     const type_proj *t_proj; 
@@ -236,26 +237,18 @@ namespace getfem {
 
     // constructor
     plasticity_projection_base(const getfem::mesh_fem &mf_, const std::vector<scalar_type> &U_, 
-			       const scalar_type stress_threshold_, const scalar_type TOL_, 
+			       const std::vector<scalar_type> stress_threshold_, const scalar_type TOL_, 
 			       const std::vector<scalar_type> lambda_, const std::vector<scalar_type> mu_, 
 			       const type_proj *t_proj_, std::vector<std::vector<scalar_type> > &sigma_bar__, 
 			       std::vector<std::vector<scalar_type> > &saved_proj__,
 			       const size_type flag_proj_, const size_type flag_hyp_, const bool fill_sigma) :
-      mf(mf_), U(U_), stress_threshold(stress_threshold_), TOL(TOL_), lambda(lambda_), mu(mu_),t_proj(t_proj_),
+      mf(mf_), U(U_),  stress_threshold(stress_threshold_), TOL(TOL_), lambda(lambda_), mu(mu_),t_proj(t_proj_),
       sigma_bar_( sigma_bar__),saved_proj_(saved_proj__), flag_proj(flag_proj_), flag_hyp(flag_hyp_)  {
         
       fill_sigma_bar = fill_sigma;   /* always false during resolution, true when called from compute_constraints */
     
       N = mf.linked_mesh().dim(); 
 
-      /* non-homogeneous case */
-      if (gmm::vect_size(lambda_)==1) {
-	lambda.resize(mf.linked_mesh().convex_index().last_true()+1);
-	mu.resize(mf.linked_mesh().convex_index().last_true()+1);
-	std::fill(lambda.begin(), lambda.end(), lambda_[0]);
-	std::fill(mu.begin(), mu.end(), mu_[0]);
-      }
-      
       if (mf.get_qdim() != N) DAL_THROW(dal::failure_error, "wrong qdim for the mesh_fem");      
     
       // calculate the projection : N*N tensor
@@ -289,8 +282,13 @@ namespace getfem {
       base_matrix gradU(N, N), sigma(N,N);
       gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))), coeff);
       pf->interpolation_grad(ctx, coeff, gradU, mf.get_qdim());
-      scalar_type ltrace_eps = lambda[cv]*gmm::mat_trace(gradU);
-    
+      
+      scalar_type ltrace_eps;
+      if (gmm::vect_size(lambda)==1) 
+	ltrace_eps = lambda[0]*gmm::mat_trace(gradU);
+      else 
+	ltrace_eps = lambda[cv]*gmm::mat_trace(gradU);
+
       //if needed, we give sigma_bar[cv] and saved_proj[cv] a size equal to the number of integration points on the convexe. Seems that this is rarely needed. 
       if (sigma_bar_[cv].size() == 0){
 	size_type nbgausspt = mf.int_method_of_element(cv)->approx_method()->nb_points_on_convex();
@@ -305,15 +303,24 @@ namespace getfem {
       for (size_type i=0; i < N; ++i) {
 	for (size_type j=0; j < N; ++j) {
 	  if(i==j)
-	    sigma(i,j) = 2*mu[cv]*(gradU(i,j)+gradU(j,i))/2. + ltrace_eps + sigma_bar(cv,ii,i,j);
+	    if (gmm::vect_size(mu)==1) 
+	      sigma(i,j) = 2*mu[0]*(gradU(i,j)+gradU(j,i))/2. + ltrace_eps + sigma_bar(cv,ii,i,j);
+	    else
+	      sigma(i,j) = 2*mu[cv]*(gradU(i,j)+gradU(j,i))/2. + ltrace_eps + sigma_bar(cv,ii,i,j);
 	  else
-	    sigma(i,j) = 2*mu[cv]*(gradU(i,j)+gradU(j,i))/2. + sigma_bar(cv,ii,i,j);
+	    if (gmm::vect_size(mu)==1) 
+	      sigma(i,j) = 2*mu[0]*(gradU(i,j)+gradU(j,i))/2. + sigma_bar(cv,ii,i,j);
+	    else
+	      sigma(i,j) = 2*mu[cv]*(gradU(i,j)+gradU(j,i))/2. + sigma_bar(cv,ii,i,j);
 	}
       }
     
       base_matrix tau_star(N,N), gradproj(N,N), proj;
  
-      t_proj->compute_type_proj(sigma, stress_threshold, TOL, proj, flag_proj, flag_hyp);
+      if (gmm::vect_size(stress_threshold)==1) 
+	t_proj->compute_type_proj(sigma, stress_threshold[0], TOL, proj, flag_proj, flag_hyp);
+      else
+	t_proj->compute_type_proj(sigma, stress_threshold[cv], TOL, proj, flag_proj, flag_hyp);
 
       // we fill sigma_bar only when called from compute_constraints (ie, when fill_sigma_bar is set)
       if (fill_sigma_bar && flag_proj==0) {
@@ -322,8 +329,13 @@ namespace getfem {
 	  for (size_type j=0; j < N; ++j)
 	    saved_proj(cv,ii,i,j) = proj(i,j);
 
-	gmm::add(gmm::scaled(gradU, -mu[cv]), proj);
-	gmm::add(gmm::scaled(gmm::transposed(gradU), -mu[cv]), proj);
+	if (gmm::vect_size(mu)==1) {
+	  gmm::add(gmm::scaled(gradU, -mu[0]), proj);
+	  gmm::add(gmm::scaled(gmm::transposed(gradU), -mu[0]), proj);
+	} else {
+	  gmm::add(gmm::scaled(gradU, -mu[cv]), proj);
+	  gmm::add(gmm::scaled(gmm::transposed(gradU), -mu[cv]), proj);
+	}
 
 	for (size_type i=0; i < N; ++i) proj(i,i) += ltrace_eps;    
 	for (size_type i=0; i < N; ++i) {
@@ -364,7 +376,8 @@ namespace getfem {
       mesh_fem &mf_data;
       VECTOR lambda_, mu_;
       bool homogeneous;
-      value_type stress_threshold, TOL;
+      VECTOR stress_threshold_;
+      value_type TOL;
 
       // flag_hyp=0 : 3D case, or '2D plane'
       // other cases : to implement
@@ -405,7 +418,7 @@ namespace getfem {
 	VECTOR lambda(mf_data.nb_dof()), mu(mf_data.nb_dof());
 	
 	
-	plasticity_projection_base gradproj_base(mf_u, MS.state(), stress_threshold,
+	plasticity_projection_base gradproj_base(mf_u, MS.state(), stress_threshold_,
 						 TOL, lambda_, mu_, &VM_1,
 						 sigma_bar, saved_proj,1,flag_hyp, false);
 	plasticity_projection gradproj(&gradproj_base);
@@ -427,7 +440,7 @@ namespace getfem {
 	/* Initialise K correctly */
 	gmm::clear(K);
 	gmm::resize(K, nb_dof());
-	plasticity_projection_base proj_base(mf_u, MS.state(), stress_threshold,
+	plasticity_projection_base proj_base(mf_u, MS.state(), stress_threshold_,
 					     TOL, lambda_, mu_, &VM_1, sigma_bar,
 					     saved_proj,0,flag_hyp, false);
 	plasticity_projection proj(&proj_base);
@@ -444,7 +457,7 @@ namespace getfem {
 	/* Initialise K correctly */
 	gmm::clear(K);
 	gmm::resize(K, nb_dof());
-	plasticity_projection_base proj_base(mf_u, MS.state(), stress_threshold,
+	plasticity_projection_base proj_base(mf_u, MS.state(), stress_threshold_,
 					     TOL, lambda_, mu_, &VM_1, sigma_bar,
 					     saved_proj,0,flag_hyp, true);
 	plasticity_projection proj(&proj_base);
@@ -466,33 +479,67 @@ namespace getfem {
 	homogeneous = false;
 	gmm::resize(lambda_, mf_data.nb_dof()); gmm::copy(lambdai, lambda_);
 	gmm::resize(mu_, mf_data.nb_dof()); gmm::copy(mui, mu_);
+      }      
+
+      void set_stress_threshold(value_type stress_threshold) {
+	homogeneous = true;
+	gmm::resize(stress_threshold_, 1); stress_threshold_[0] = stress_threshold;
       }
-      
-      // constructor for a homogeneous material (constant lambda and mu)
+
+      void set_stress_threshold(const VECTOR &stress_threshold) {
+	homogeneous = false;
+	gmm::resize(stress_threshold_, mf_data.nb_dof()); gmm::copy(stress_threshold, stress_threshold_);
+      }
+
+      // constructor for a homogeneous material (constant lambda and mu)(constant stress_threshold)
       mdbrick_plasticity(mesh_fem &mf_u_, mesh_fem &mf_data_,
-			 value_type lambdai, value_type mui, value_type stress_threshold_,
+			 value_type lambdai, value_type mui, value_type stress_threshold,
 			 value_type TOL_, size_type flag_hyp_) 
       : mf_u(mf_u_), mf_data(mf_data_) {
 	set_Lame_coeff(lambdai, mui);
+	set_stress_threshold(stress_threshold);
 	N = mf_data.linked_mesh().dim();
-	stress_threshold = stress_threshold_;
 	TOL = TOL_;
 	flag_hyp = flag_hyp_;
 	this->add_dependency(mf_u); this->add_dependency(mf_data);
       }
-    
-      // constructor for a non-homogeneous material
+      // constructor for a non-homogeneous material(constant stress_threshold)
       mdbrick_plasticity(mesh_fem &mf_u_, mesh_fem &mf_data_,
-			 const VECTOR &lambdai, const VECTOR &mui, value_type stress_treshhold_,
+			 const VECTOR &lambdai, const VECTOR &mui, value_type stress_treshhold,
 			 value_type TOL_, size_type flag_hyp_)
       : mf_u(mf_u_), mf_data(mf_data_) {
 	set_Lame_coeff(lambdai, mui);
+	set_stress_threshold(stress_threshold);
 	N = mf_data.linked_mesh().dim();
-	stress_treshold = stress_treshold_;
 	TOL = TOL_;
 	flag_hyp = flag_hyp_;
 	this->add_dependency(mf_u); this->add_dependency(mf_data);
       }
+      // constructor for a non-homogeneous material(constant lambda and mu)
+      mdbrick_plasticity(mesh_fem &mf_u_, mesh_fem &mf_data_,
+			 value_type lambdai, value_type mui, const VECTOR &stress_treshhold,
+			 value_type TOL_, size_type flag_hyp_)
+      : mf_u(mf_u_), mf_data(mf_data_) {
+	set_Lame_coeff(lambdai, mui);
+	set_stress_threshold(stress_threshold);
+	N = mf_data.linked_mesh().dim();
+	TOL = TOL_;
+	flag_hyp = flag_hyp_;
+	this->add_dependency(mf_u); this->add_dependency(mf_data);
+      }
+      // constructor for a non-homogeneous material(constant lambda and mu)
+      mdbrick_plasticity(mesh_fem &mf_u_, mesh_fem &mf_data_,
+			 const VECTOR &lambdai, const VECTOR &mui, const VECTOR &stress_treshhold,
+			 value_type TOL_, size_type flag_hyp_)
+      : mf_u(mf_u_), mf_data(mf_data_) {
+	set_Lame_coeff(lambdai, mui);
+	set_stress_threshold(stress_threshold);
+	N = mf_data.linked_mesh().dim();
+	TOL = TOL_;
+	flag_hyp = flag_hyp_;
+	this->add_dependency(mf_u); this->add_dependency(mf_data);
+      }
+
     };
 
 } /* namespace getfem */
