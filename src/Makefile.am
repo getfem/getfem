@@ -1,4 +1,5 @@
 include_HEADERS =                      \
+	getfem_arch_config.h	       \
 	bgeot_config.h                 \
 	bgeot_convex.h                 \
 	bgeot_convex_hull.h            \
