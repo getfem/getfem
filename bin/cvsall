@@ -13,26 +13,12 @@ if ($home =~ /pommier/) {
 foreach $dire ("getfem++", "getfem_matlab", "getfem_apps", "getfem_html") {
   if (-d "$home/$root/$dire") {
     print "Check all modifications in $dire\n";
-    print `cd ~/$root/$dire; cvsstat`;
+    print `cd $home/$root/$dire; cvsstat`;
   }
   else {
     print "Directory $dire not found\n";
   } 
 }
-
-
-#if (-d "$home/$root/getfem_matlab") {
-#  print "Check all modifications in getfem_matlab\n";
-#  print `cd ~/$root/getfem_matlab; cvsstat`;
-#}
-#if (-d "$home/$root/getfem++") {
-#  print "Check all modifications in getfem_apps\n";
-#  print `cd ~/$root/getfem_apps; cvsstat`;
-#}
-#if (-d "$home/$root/getfem++") {
-#  print "Check all modifications in getfem_html\n";
-#  print `cd ~/$root/getfem_html; cvsstat`;
-#}
 
 
 

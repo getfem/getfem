@@ -222,16 +222,16 @@ namespace getfem
       if (!found && nbp == (size_type(1) << n))
 	if (cvr->structure()->basic_structure()
 	    == bgeot::parallelepiped_structure(n)) {
-	  DAL_THROW(to_be_done_error, "Sorry, not implemented.");
 	  found = true;
+	  DAL_THROW(to_be_done_error, "Sorry, not implemented.");
 	}
       
       /* Identifying prisms.                                              */
       
       if (!found && nbp == 2 * n)
 	if (cvr->structure()->basic_structure() == bgeot::prism_structure(n)) {
-	  DAL_THROW(to_be_done_error, "Sorry, not implemented.");
 	  found = true;
+	  DAL_THROW(to_be_done_error, "Sorry, not implemented.");
 	}
     }
 
