@@ -688,7 +688,7 @@ something that will be executed for each convex \cpp{cv} of the mesh. The terms
 \cpp{\#1} and \cpp{\#2} refer to the first \cpp{mesh\_fem} and the second one
 (i.e. \cpp{mf} and \cpp{mfdata}).  The instruction \cpp{Z=data(\#2);}
 means that for each convex, the ``tensor'' \cpp{Z} will receive the values of the first data argument provided with \cpp{push\_data},
-at indexes corresponding to the degrees of freedom attached to the convex of the second (\cpp{\#2}) \cpp{mesh_fem} (here, \cpp{Z$\gets$F[mfdata.ind_dof_of_element(cv)]}. The
+at indexes corresponding to the degrees of freedom attached to the convex of the second (\cpp{\#2}) \cpp{mesh_fem} (here, \cpp{Z $\leftarrow$ F[mfdata.ind_dof_of_element(cv)]}. The
 part \cpp{V(\#1)+=\ldots} means that the result of the next expression will be
 accumulated into the output vector (provided with \cpp{push\_vec}). Here
 again, \cpp{\#1} means that we will write the result at indexes
@@ -892,15 +892,6 @@ where \cpp{mef1} is a variable of type \cpp{getfem::mesh\_fem} and describes the
 
 (outdated section, use vtk format and mayavi to see the result, see examples in tests directory)
 
-The file \filename{getfem\_export.h} defines the following function to save a solution in a file\\[0.5cm]
-\index{GETFEM!getfem::save\_solution}
-\cpp{getfem::save\_solution(filename, mef, U, K); }\\[0.5cm]
-where \cpp{filename} is of type \cpp{std::string}, \cpp{mef}  is a variable of type \cpp{getfem::mesh\_fem} and describes the finite element method on which the solution is defined, \cpp{U} is a vector representing the solution and should be of size \cpp{mef.nb\_dof()} and \cpp{K} is the degree of the standard Lagrange element used to save the solution. The solution is interpolated on each element on the more classical Lagrange element of degree \cpp{K} defined on this element.\\[0.5cm]
-To view a solution, two perl scripts are provided (in the directory \filename{bin/} of \gf  distribution) but work only for 2D domains and are very basic.\\[0.5cm]
-{\tt sc2dgnuplot filename}\\[0.5cm]
-{\tt dr2dgnuplot filename S}\\[0.5cm]
-Both scripts use Gnuplot to draw the solution and thus you need to have a working distribution of Gnuplot installed on your system. \cpp{S} is a coefficient to zoom the solution. {\tt sc2dgnuplot} draw a scalar solution and {\tt dr2dgnuplot} a vectorial solution.\\You might want to check the Matlab interface for much more elaborated plotting functions.
-
 \subsection{Mesh slices}
 Getfem++ provides a \cpp{getfem::mesh_slice} class,
 with support general slicing operations on a mesh (slicing with a
@@ -1009,14 +1000,13 @@ The following additional methods are available on this brick:
 \end{ctableau}
 
 \subsection{Source term brick}
-(version 1.7) (ajouter le numero de fem en parametre ...)
 This brick represent either a volumic source term or a Neumann condition, i.e. a term $\int_{\Omega} f.v dx$ or $\int_{\Gamma} f.v dx$ in the weak formulation , with $\Gamma$ a part of$\partial \Omega$. This brick works for both real or complex terms in scalar or vectorial problems. The constructor of this brick is:
 
 \begin{alltt}
-  getfem::mdbrick_source_term<MODEL_STATE> brick(problem, mf_data, F, bound);
+  getfem::mdbrick_source_term<MODEL_STATE> brick(problem, mf_data, F, bound, num_fem);
 \end{alltt}
 
-where \cpp{problem} is the problem on which the source term will be added (a scalar elliptic brick for instance), \cpp{mf_data} is the finite element description for the source term $f$, F is a vector of type \cpp{MODEL_STATE::vector_type} which contains the values of the source term on each degree of freedom of \cpp{mf_data} and \cpp{bound} is an optional parameter specifying on which boundary of the main mesh fem of \cpp{problem} the Neumann condition is applied. If this parameter is omitted, a volumic source term will be taken into account.
+where \cpp{problem} is the problem on which the source term will be added (a scalar elliptic brick for instance), \cpp{mf_data} is the finite element description for the source term $f$, F is a vector of type \cpp{MODEL_STATE::vector_type} which contains the values of the source term on each degree of freedom of \cpp{mf_data}, \cpp{bound} is an optional parameter specifying on which boundary of the main mesh fem of \cpp{problem} the Neumann condition is applied. If this parameter is omitted, a volumic source term will be taken into account. \cpp{num_fem} is an optional parameter allowing to choose a fem is the problem has several fems.
 
 The following additional methods are available on this brick:
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
@@ -1030,10 +1020,10 @@ The following additional methods are available on this brick:
 This brick allows to define a Dirichlet condition on a boundary of the domain (i.e. set the value of the unknown on this boundary $u = F$). Two means are available to take into account a Dirichlet condition : with Lagrange multipliers or with a reduction of the linear system. This brick works for both real or complex terms in scalar or vectorial problems. The constructor of this brick is:
 
 \begin{alltt}
-  getfem::mdbrick_Dirichlet<MODEL_STATE> brick(problem, mf_data, F, bound, with_multipliers);
+  getfem::mdbrick_Dirichlet<MODEL_STATE> brick(problem, mf_data, F, bound, num_fem, with_multipliers);
 \end{alltt}
 
-where  \cpp{problem} is the problem on which the Dirichlet condition will be added (a scalar elliptic brick for instance), \cpp{mf_data} is the finite element description for the data, \cpp{F} is a vector of type \cpp{MODEL_STATE::vector_type} which contains the values of the data on each degree of freedom of \cpp{mf_data}, \cpp{bound} specifies on which boundary of the main mesh fem of \cpp{problem} the Dirichlet condition is applied and \cpp{with_multipliers} is a boolean specifying if the Dirichlet condition is applied reducing the system (the default value of this parameter) or with Lagrange multipliers. The parameter \cpp{F} can be omitted, the default value is zero.
+where  \cpp{problem} is the problem on which the Dirichlet condition will be added (a scalar elliptic brick for instance), \cpp{mf_data} is the finite element description for the data, \cpp{F} is a vector of type \cpp{MODEL_STATE::vector_type} which contains the values of the data on each degree of freedom of \cpp{mf_data}, \cpp{bound} specifies on which boundary of the main mesh fem of \cpp{problem} the Dirichlet condition is applied, \cpp{num_fem} is an optional parameter allowing to choose a fem is the problem has several fems (0 is the default) and \cpp{with_multipliers} is a boolean specifying if the Dirichlet condition is applied reducing the system (the default value of this parameter) or with Lagrange multipliers. The parameter \cpp{F} can be omitted, the default value is zero.
 
 The following additional methods are available on this brick:
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
@@ -1126,9 +1116,9 @@ for linearized elasticity problems. \cpp{Q} is a scalar field in the scalar case
 
 The constructor is the following :
 \begin{alltt}
-  getfem::mdbrick_QU_term<MODEL_STATE> brick(problem, mf_data, Q, bound);
+  getfem::mdbrick_QU_term<MODEL_STATE> brick(problem, mf_data, Q, bound, numfem);
 \end{alltt}
-where \cpp{problem} is the problem on which the condition will be added, \cpp{mf_data} is a valid fem descriptor for \cpp{Q}. \cpp{Q} is either a real for the homogeneous and diagonal case, or a vector of type \cpp{MODEL_STATE::vector_type} defining \cpp{Q} on \cpp{mf_data}. \cpp{bound} is the number of the boundary of \cpp{main_mesh_fem()} on which the condition will be applied.
+where \cpp{problem} is the problem on which the condition will be added, \cpp{mf_data} is a valid fem descriptor for \cpp{Q}. \cpp{Q} is either a real for the homogeneous and diagonal case, or a vector of type \cpp{MODEL_STATE::vector_type} defining \cpp{Q} on \cpp{mf_data}. \cpp{bound} is the number of the boundary of \cpp{main_mesh_fem()} on which the condition will be applied. \cpp{num_fem} is an optional parameter allowing to choose a fem is the problem has several fems.
 
 The following additional methods are available on this brick:
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
@@ -1166,14 +1156,14 @@ For this, multipliers representing the pressure are introduced in a mixed formul
 
 The constructor for the incompessibility condition is:
 \begin{alltt}
-  getfem::mdbrick_linear_incomp<MODEL_STATE> brick(problem, mf_p);
+  getfem::mdbrick_linear_incomp<MODEL_STATE> brick(problem, mf_p, numfem);
 \end{alltt}
 
-where  \cpp{problem} is the problem on which the incompressibility condition is applied, \cpp{mf_p} is the finite element description for the pressure (be aware that the LBB inf-sup condition has to be satisfied between the \cpp{main_mesh_fem()} and \cpp{mf_p}.
+where  \cpp{problem} is the problem on which the incompressibility condition is applied, \cpp{mf_p} is the finite element description for the pressure (be aware that the LBB inf-sup condition has to be satisfied between the \cpp{main_mesh_fem()} and \cpp{mf_p}. \cpp{num_fem} is an optional parameter allowing to choose a fem is the problem has several fems.
 
 For the nearly incompressibility condition, the constructor is:
 \begin{alltt}
-  getfem::mdbrick_linear_incomp<MODEL_STATE> brick(problem, mf_p, mf_data, epsilon);
+  getfem::mdbrick_linear_incomp<MODEL_STATE> brick(problem, mf_p, mf_data, epsilon, numfem);
 \end{alltt}
 where \cpp{mf_data} is the finite element description on which the penalization parameter is descibed and \cpp{epsilon} is either a (small) real or a vector of type \cpp{gmm::vector<scalar_type>}. In nearly incompressible homogeneous linearized elasticity, one has $\varepsilon = 1 / \lambda$ where $\lambda$ is one of the Lamé coefficient.\\
 
@@ -1242,7 +1232,9 @@ You can know the displacement using \cpp{brick.get_solution(MS, U);} where MS is
 To get the constraints, you can use \cpp{brick.compute_constraints(MS);} followed by \cpp{brick.get_proj(proj);}, where proj is a \cpp{std::vector<std::vector<scalar_type> >}.
 
 \subsection{Contact and friction conditions brick}
-(to be documented)
+(to be documented, see the test program dynamic_friction.C)
+\subsection{Linearized plate brick}
+(to be documented, see the test program plate.C)
 \subsection{Large strain elasticity brick}
 This brick represent a large strain elasticity problem. It is defined in \cpp{getfem_nonlinear_elasticity.h}
 
@@ -1270,10 +1262,10 @@ For this, multipliers representing the pressure are introduced in a mixed formul
 
 The constructor is:
 \begin{alltt}
-  getfem::mdbrick_nonlinear_incomp<MODEL_STATE> brick(problem, mf_p);
+  getfem::mdbrick_nonlinear_incomp<MODEL_STATE> brick(problem, mf_p, numfem);
 \end{alltt}
 
-where  \cpp{problem} is the problem on which the incompressibility condition is applied, \cpp{mf_p} is the finite element description for the pressure (be aware that the LBB inf-sup condition has to be satisfied between the \cpp{main_mesh_fem()} and \cpp{mf_p}.
+where  \cpp{problem} is the problem on which the incompressibility condition is applied, \cpp{mf_p} is the finite element description for the pressure (be aware that the LBB inf-sup condition has to be satisfied between the \cpp{main_mesh_fem()} and \cpp{mf_p}. \cpp{num_fem} is an optional parameter allowing to choose a fem is the problem has several fems.
 
 The program \cpp{nonlinear_elastostatic.C} in tests directory is an example of use of this brick.
 
@@ -1294,27 +1286,11 @@ A standard procedure, \cpp{DAL\_STANDARD\_CATCH\_ERROR}, is defined in \cpp{dal\
 \section{Example : Laplacian program}
 \index{laplacian}
 \index{Poisson problem}
-Caution: \filename{laplacian.C} from release 1.6 really had to be rewritten from scratch -- a cleaned up version of laplacian.C is available in the unstable 1.7-cvs getfem++ tarballs.\\
 
 The program \filename{laplacian} is provided in the directory \filename{tests} of \gf  distribution. This program compute the solution of the Poisson problem in a parellepiped domain in any dimension with various finite element methods and elements. This program can be used as a model to build application programs. To compile it execute a {\tt gmake check} on the root directory of \gf . Once the program is compiled you can test it executing the command\\[0.5cm]
 {\tt laplacian laplacian.param}\\[0.5cm]
 The file \filename{laplacian.param} is the parameter file. You can edit it and test various situation. The following parameter can be changed\\[0.5cm]
 
-\begin{tabular}{|m{0.2\linewidth}|l|} \hline
-  {\tt N} & Dimension of the domain, $1 \leq {\tt N} \leq 255$ for parellepipedic elements, mesh generation limited to ${\tt N} \leq 4$ for simplices and ${\tt N} \leq 5$ for prisms.  \\ \hline
-  {\tt LX, LY} and {\tt LZ} &  Dimensions of the domain. \\ \hline
-  {\tt FT} &  parameter for the exact solution. \\ \hline
-  {\tt MESH\_TYPE} &  {\tt MESH\_TYPE = 0} for a mesh with simplices,   {\tt MESH\_TYPE = 1} for a mesh with parallelepipeds elements or {\tt MESH\_TYPE = 2} for a mesh with prisms. \\ \hline
-  {\tt INCLINE} &  Incline of the mesh.\\ \hline
-  {\tt K} &  Degree of the finite element method. \\ \hline
-  {\tt FEM\_TYPE} &  finite element method.  {\tt FEM\_TYPE = 0} for classical lagrange element\\ \hline
-  {\tt INTEGRATION} & Selects the integration method.  \\ \hline
-  {\tt NX} &  Number of element in each dimension. \\ \hline
-  {\tt RESIDU} & Residu for conjugate gradient. \\ \hline
-  {\tt ROOTFILENAME} & Root name for data files. \\ \hline
-\end{tabular}
-
-As a consequence of the rewrite of laplacian.C, the format of the parameter file will change in Getfem++-1.7:
 \begin{tabular}{|m{0.2\linewidth}|l|} \hline
   {\tt LX, LY} and {\tt LZ} &  Dimensions of the domain. \\ \hline
   {\tt FT} &  parameter for the exact solution. \\ \hline
