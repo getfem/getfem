@@ -47,7 +47,7 @@ typedef std::vector<scalar_type> linalg_vector;
 
 struct lap_pb {
   getfem::getfem_mesh mesh1, mesh2;
-  getfem::mesh_im      mim;
+  getfem::mesh_im      mim1, mim2;
   getfem::mesh_fem     mef1,  mef2, mefinterpolated;
   getfem::interpolated_fem ifem;
 
@@ -58,8 +58,8 @@ struct lap_pb {
 
   void assemble(void);
   void init(void);
-  lap_pb(void) : mim(mesh1), mef1(mesh1), mef2(mesh2), mefinterpolated(mesh1),
-		 ifem(mef2, mim) {}
+  lap_pb(void) : mim1(mesh1), mim2(mesh2), mef1(mesh1), mef2(mesh2),
+		 mefinterpolated(mesh1), ifem(mef2, mim1) {}
 };
 
 void lap_pb::init(void) {
@@ -133,9 +133,10 @@ void lap_pb::init(void) {
   
   sprintf(meth, "FEM_PK(%d,%d)", int(N), int(K));
   nn = mesh1.convex_index(N);
-  mim.set_integration_method(nn, ppi);
+  mim1.set_integration_method(nn, ppi);
   mef1.set_finite_element(nn, getfem::fem_descriptor(meth));
   nn = mesh2.convex_index(N);
+  mim2.set_integration_method(nn, ppi);
   mef2.set_finite_element(nn, getfem::fem_descriptor(meth));
   nn = mesh1.convex_index(N);
   mefinterpolated.set_finite_element(nn, &ifem);
@@ -152,7 +153,7 @@ void lap_pb::assemble(void) {
        << mefinterpolated.nb_dof() << endl;
  
   cout << "Assembling interpolated mass matrix" << endl;
-  getfem::asm_mass_matrix(RM1, mim, mefinterpolated, mefinterpolated);
+  getfem::asm_mass_matrix(RM1, mim1, mefinterpolated, mefinterpolated);
 
   cout << "Matrice de masse\n";
   sum = 0.0;
@@ -171,7 +172,7 @@ void lap_pb::assemble(void) {
 
   sparse_matrix_type RM2 = sparse_matrix_type(nb_dof2, nb_dof2);
   cout << "Assembling normal mass matrix" << endl;
-  getfem::asm_mass_matrix(RM2, mim, mef2);
+  getfem::asm_mass_matrix(RM2, mim2, mef2);
   
   cout << "Matrice de masse\n";
   sum = 0.0; diff = 0.0;
