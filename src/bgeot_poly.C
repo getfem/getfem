@@ -33,42 +33,49 @@
 
 #include <bgeot_poly.h>
 #include <bgeot_vector.h>
-
+#include <numeric>
 namespace bgeot
 {
-
-  size_type alpha(short_type n, short_type d)
-  {
     #define STORED 150
-    static gmm::dense_matrix<size_type> M(STORED, STORED);
+  static gmm::dense_matrix<size_type> _alpha_M(STORED, STORED);
+  static void _alpha_init() {
     static bool init = false;
     if (!init)
     {
       for (short_type i = 0; i < STORED; ++i)
       { 
-	M(i, 0) = M(0, i) = 1;
+	_alpha_M(i, 0) = _alpha_M(0, i) = 1;
 	for (short_type j = 1; j <= i; ++j)
-	  M(i,j) = M(j,i) = (M(i, j-1) * (i+j)) / j;
+	  _alpha_M(i,j) = _alpha_M(j,i) = (_alpha_M(i, j-1) * (i+j)) / j;
       }
       init = true;
     }
+  }
+  static inline size_type _alpha(short_type n, short_type d) { return _alpha_M(d,n); }
+
+  size_type alpha(short_type n, short_type d)
+  {
+    _alpha_init();
     if (n >= STORED || d >= STORED)
       DAL_THROW(internal_error,
 		"alpha called with n = " << n << " and d = " << d);
-
-    return M(d, n);
+    return _alpha(n,d);
   }
 
   const power_index &power_index::operator ++()
   { 
     short_type n = size(), l;
     if (n > 0) {
+      size_type g_idx = _global_index; short_type deg = _degree;
       iterator it = begin() + (n-2);
       for (l = n-2; l != short_type(-1); --l, --it)
 	if (*it != 0) break;
       short_type a = (*this)[n-1]; (*this)[n-1] = 0;
       (*this)[short_type(l+1)] = a + 1;
       if (l != short_type(-1)) ((*this)[l])--;
+      else if (deg+1) _degree = deg+1;
+      if (g_idx+1) _global_index = g_idx+1;
+      //_degree = short_type(-1);
     }
     return *this;
   }
@@ -77,35 +84,49 @@ namespace bgeot
   {
     short_type n = size(), l;
     if (n > 0) {
+      size_type g_idx = _global_index; short_type deg = _degree;
       iterator it = begin() + (n-1);
       for (l = n-1; l != short_type(-1); --l, --it)
 	if (*it != 0) break;
       if (l != short_type(-1)) {
 	short_type a = (*this)[l]; (*this)[l] = 0; (*this)[n-1] = a - 1;
-	if (l > 0) ((*this)[l-1])++;
+	if (l > 0) ((*this)[l-1])++; 
+        else if (deg+1) _degree = deg-1;
       }
+      if (g_idx+1) _global_index = g_idx-1;
     }
     return *this;
   }
   
-  short_type power_index::degree(void) const
-  {
-    short_type d = 0; const_iterator it = begin(), ite = end();
-    for ( ; it != ite; ++it) d += *it;
-    return d;
+  short_type power_index::degree() const
+  { 
+    if (_degree != short_type(-1)) return _degree;
+    _degree = std::accumulate(begin(), end(), 0); 
+    return _degree;
   }
 
   size_type power_index::global_index(void) const
   {
+    if (_global_index != size_type(-1)) return _global_index;
     short_type d = degree(), n = size();
-    size_type l = 0;
+    _global_index = 0;
     const_iterator it = begin(), ite = end();
     for ( ; it != ite && d > 0; ++it)
-    { l += alpha(n, d-1); d -= *it; --n; }
-    return l;
+    { _global_index += _alpha(n, d-1); d -= *it; --n; }
+    return _global_index;
+  }
+  /*
+  size_type power_index::global_index_shift(size_type idx, short_type k) {
+    _degree = degree() + k - v[idx];
+    
   }
 
-  power_index::power_index(short_type nn) : std::vector<short_type>(nn)
-  { std::fill(begin(), end(), short_type(0)); }
+  size_type power_index::set(size_type idx, short_type v) {
+    short_type deg = degree(); size_type pi = power_index();
+    
+  }
+  */
+  power_index::power_index(short_type nn) : v(nn), _degree(0), _global_index(0)
+  { std::fill(begin(), end(), short_type(0)); _alpha_init(); }
 
 }  /* end of namespace bgeot.                                             */

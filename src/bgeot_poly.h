@@ -55,9 +55,21 @@ namespace bgeot
   /** Vector of integer (16 bits type) which represent the powers
    *  of a monomial
    */
-  class power_index : public std::vector<short_type> {
+  class power_index {
+    std::vector<short_type> v;
+    mutable short_type _degree;
+    mutable size_type _global_index;
+    void dirty() const { _degree = short_type(-1); _global_index = size_type(-1); }
   public :
-    
+    typedef std::vector<short_type>::iterator iterator;
+    typedef std::vector<short_type>::const_iterator const_iterator;
+    short_type operator[](size_type idx) const { return v[idx]; }
+    short_type& operator[](size_type idx) { dirty(); return v[idx]; }
+    iterator begin() { dirty(); return v.begin(); }
+    const_iterator begin() const { return v.begin(); }
+    iterator end() { dirty(); return v.end(); }
+    const_iterator end() const { return v.end(); }
+    size_type size() const { return v.size(); }
     /// Gives the next power index 
     const power_index &operator ++();
     /// Gives the next power index 
@@ -77,7 +89,7 @@ namespace bgeot
     /// Constructor
     power_index(short_type nn);
     /// Constructor
-    power_index(void) {}
+    power_index(void) { dirty(); }
   };
   
   /**
@@ -354,10 +366,10 @@ namespace bgeot
       DAL_THROW(std::out_of_range, "index out of range");
     
      iterator it = this->begin(), ite = this->end();
-     power_index mi(dim());
+     power_index mi(dim()); 
      for ( ; it != ite; ++it, ++mi) {
        if ((*it) != T(0) && mi[k] > 0)
-       { mi[k]--; (*this)[mi.global_index()] = (*it) * T(mi[k] + 1); mi[k]++; }
+         { mi[k]--; (*this)[mi.global_index()] = (*it) * T(mi[k] + 1); mi[k]++; }
        *it = T(0);
      }
      if (d > 0) change_degree(d-1);
@@ -370,10 +382,9 @@ namespace bgeot
       return (*this)[mi.global_index()];
     else {
       T v = (*(it+k-1)), res = T(0);
-      short_type *p = &(mi[k-1]);
-      for (*p = degree() - de; *p != short_type(-1); (*p)--)
-	res = horner(mi, k-1, de + *p, it) + v * res;
-      *p = 0;
+      for (mi[k-1] = degree() - de; mi[k-1] != short_type(-1); (mi[k-1])--)
+	res = horner(mi, k-1, de + mi[k-1], it) + v * res;
+      mi[k-1] = 0;
       return res;
     }
   }
@@ -414,7 +425,8 @@ namespace bgeot
 	if (dal::abs(*it)!=T(1)) o << dal::abs(*it);
 	for (short_type j = 0; j < P.dim(); ++j)
 	  if (mi[j] != 0) {
-	    o << "x"; if (P.dim() > 1) o << "_" << j; 
+            if (P.dim() <= 3) o << "xyz"[j];
+            else o << "x_" << j; 
 	    if (mi[j]>1) o << "^" << mi[j];
 	  }
 	first = false; ++n;
@@ -422,6 +434,33 @@ namespace bgeot
     }
     if (n == 0) o << "0";
     return o;
+  }
+
+  /**
+     polynomial variable substitution
+     @param P the original polynomial
+     @param S the substitution poly (not a multivariate one)
+     @param subs_dim : which variable is substituted
+     example: poly_subs(x+y*x^2, x+1, 0) = x+1 + y*(x+1)^2
+  */
+  template<typename T>    
+  polynomial<T> poly_substitute_var(const polynomial<T>& P, const polynomial<T>& S, size_type subs_dim) {
+    if (S.dim()!=1 || subs_dim >= P.dim()) DAL_THROW(failure_error, "wrong arguments for polynomial substitution");
+    polynomial<T> res(P.dim(),0);
+    bgeot::power_index pi(P.dim());
+    std::vector< polynomial<T> > Spow(1); Spow[0] = one_poly(1); // Spow stores powers of S
+    for (size_type k=0; k < P.size(); ++k, ++pi) {
+      if (P[k] == T(0)) continue;
+      while (pi[subs_dim] >= Spow.size()) 
+	Spow.push_back(S*Spow.back());
+      const polynomial<T>& p = Spow[pi[subs_dim]];
+      bgeot::power_index pi2(pi);
+      for (size_type i=0; i < p.size(); ++i) {
+	pi2[subs_dim] = i;
+	res.add_monomial(p[i]*P[k],pi2);
+      }
+    }
+    return res;
   }
   
   typedef polynomial<opt_long_scalar_type> base_poly;
