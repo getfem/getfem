@@ -504,9 +504,15 @@ echo "the --with-blas=<lib> option, or the BLAS_LIBS environment variable"
 echo 'for example: ./configure BLAS_LIBS="-L/usr/lib/atlas/sse2 -lblas"'
 echo
 
+if test -z $(echo $srcdir | grep "^/"); then
+  addpathm="../../"
+else
+  addpathm=""
+fi
+
 for i in $(ls $srcdir/tests/meshes/*.mesh); do
 	j="tests/meshes/"$(basename $i)
 	if test ! -L $j && test ! -f $j; then
-		ln -s $(pwd)/$i $j
+		ln -s $addpathm$i $j
 	fi
 done

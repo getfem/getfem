@@ -37,8 +37,12 @@ check_PROGRAMS = \
 
 CLEANFILES = \
 	laplacian.res laplacian.mesh laplacian.dataelt \
-	elasto_static.mesh test_mesh.mesh toto.mat test_mat_elem.mesh helmholtz.vtk \
-	ii_files/* auto_gmm*
+	elasto_static.mesh test_mesh.mesh toto.mat test_mat_elem.mesh \
+	helmholtz.vtk plate.mesh plate.vtk nonlinear_elastostatic.mesh \
+	nonlinear_elastostatic.mf nonlinear_elastostatic.mfd \
+	nonlinear_elastostatic.dx nonlinear_elastostatic.vtk \
+	plasticity.mesh plasticity.U plasticity.sigmabar \
+	plasticity.meshfem plasticity.coef ii_files/* auto_gmm*
 
 
 dynamic_array_SOURCES = dynamic_array.C 
