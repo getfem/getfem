@@ -275,6 +275,7 @@ namespace dal
       size_type first_false(void) const;
       size_type last_true(void) const;
       size_type last_false(void) const;
+      bit_vector &setminus(const bit_vector &bv);
       bit_vector &operator |=(const bit_vector &bv);
       bit_vector &operator &=(const bit_vector &bv);
 
@@ -288,6 +289,13 @@ namespace dal
      
       bit_vector(void) { clear(); }
 
+    /** ICONT is any container of integer values, which are inserted into the bit_vector
+     */
+      template <typename ICONT> dal::bit_vector& merge_from(const ICONT& c) {
+        for (typename ICONT::const_iterator it = c.begin(); it != c.end(); ++it) add(*it);
+	return *this;
+      }
+    
   /* ********************************************************************* */
   /*									   */
   /*	     Adaptation for old structure int_set.                         */
@@ -309,6 +317,56 @@ namespace dal
       { int res = first(); if (res >= 0) sup(res); return res; }
       inline int take_last(void)
       { int res = last(); if (res >= 0) sup(res); return res; }
+  };
+
+  /**
+     if you are only interested in indexes of true values of a bit_vector
+     (i.e. if you use it as an int set), use bv_visitor instead of
+     bit_vector::const_iterator (much faster)
+
+     example:
+     for (bv_visitor i(v); !i.finished(); ++i) {
+       .... (use i as an unsigned int)
+     }
+  */
+  class bv_visitor {
+    typedef dal::bit_vector::size_type size_type;
+    bit_container::const_iterator it;
+    size_type ilast,ind;
+    bit_support v;
+  public:
+    bv_visitor(const dal::bit_vector& b) : 
+      it(((const bit_container&)b).begin()+b.first()/WD_BIT),
+      ilast(b.last()+1), ind(b.first()) {
+      if (ind < ilast) {
+	v = *it; v >>= (ind&WD_MASK);
+      }
+    }
+    bool finished() const { return ind >= ilast; }
+    bool operator++() {
+      while (1) {
+	size_type ind_b = (ind&(~WD_MASK));
+	while (v) {
+	  ++ind; v >>= 1;
+	  if (v&1) return true;
+	}
+	ind = ind_b + WD_BIT;
+	if (ind >= ilast) return false; 
+	v = *(++it);
+	if (v&1) return true;
+      }
+    }
+    operator size_type() const { return ind; }
+  };
+
+  class bv_visitor_c {
+    bit_vector bv;
+    bv_visitor v; // no inheritance since v must be init after bv
+  public:
+    bv_visitor_c(const dal::bit_vector& b) : bv(b), v(bv) {}
+    bool finished() const { return v.finished(); }
+    bool operator++() { return ++v; }
+    operator dal::bit_vector::size_type() const { return dal::bit_vector::size_type(v); }
   };
 
   inline int &operator << (int &i, bit_vector &s)

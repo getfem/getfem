@@ -95,6 +95,11 @@ namespace dal
     return ilast_false;
   }
   
+  bit_vector &bit_vector::setminus(const bit_vector& b) {
+    for (bv_visitor i(b); !i.finished(); ++i) sup(i); 
+    return *this;
+  }
+
   bit_vector &bit_vector::operator |=(const bit_vector &bv) {
     bit_container::iterator it1b = bit_container::begin();
     bit_container::iterator it1e = bit_container::end();
