@@ -1,0 +1,23 @@
+
+# -*- perl -*-
+eval 'exec perl -S $0 "$@"'
+  if 0;
+
+$fis = `ls *.C`;
+while($fis)
+{
+  ($fi, $fis) = split('\s', $fis, 2);
+  open (F, $fi) or die "Open file impossible : $!\n";
+  $fi =~ s/\.C$/\.m/
+  open (G, ">$fi") or die "Open file impossible : $!\n";
+  while (<F>) {
+    chomp($_);
+    if ($_ =~ /\/\* *MLABCOM/)
+    while(<F>) {
+      if ($_ =~ /MLABCOM *\*\//) last;
+      print G $_;
+    }
+  }
+  close(F); close(G);
+}
+
