@@ -1,5 +1,4 @@
 #include <dal_basic.h>
-#include <strstream>
 #include <deque>
 
 
