@@ -1,5 +1,6 @@
 SUBDIRS = config src tests contrib bin
 
 EXTRA_DIST = \
-	BUGS_AND_REMARKS
+	BUGS_AND_REMARKS \
+	MTL-ITL-LICENSE
 
