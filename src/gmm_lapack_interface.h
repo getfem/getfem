@@ -69,6 +69,15 @@ namespace gmm {
   /* mult(conjugated(dense_matrix<T>), scaled(std::vector<T>),             */
   /*      std::vector<T>)                                                  */
   /*                                                                       */
+  /* mult_add(dense_matrix<T>, std::vector<T>, std::vector<T>)             */
+  /* mult_add(transposed(dense_matrix<T>), std::vector<T>, std::vector<T>) */
+  /* mult_add(conjugated(dense_matrix<T>), std::vector<T>, std::vector<T>) */
+  /* mult_add(dense_matrix<T>, scaled(std::vector<T>), std::vector<T>)     */
+  /* mult_add(transposed(dense_matrix<T>), scaled(std::vector<T>),         */
+  /*          std::vector<T>)                                              */
+  /* mult_add(conjugated(dense_matrix<T>), scaled(std::vector<T>),         */
+  /*          std::vector<T>)                                              */
+  /*                                                                       */
   /* mult(dense_matrix<T>, std::vector<T>, std::vector<T>, std::vector<T>) */
   /* mult(transposed(dense_matrix<T>), std::vector<T>, std::vector<T>,     */
   /*      std::vector<T>)                                                  */

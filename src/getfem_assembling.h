@@ -466,14 +466,28 @@ namespace getfem
   template<typename MAT, typename VECT>
   void asm_Helmholtz(MAT &M, const mesh_fem &mf_u, const mesh_fem &mf_data,
 		     const VECT &K_squared) {
-    asm_Helmholtz(gmm::real_part(M), gmm::imag_part(M), mf_u, mf_data,
-		  gmm::real_part(K_squared), gmm::imag_part(K_squared));
+    asm_Helmholtz(M, mf_u, mf_data, K_squared,
+		  typename gmm::linalg_triats<VECT>::value_type());
   }
 
+  template<typename MAT, typename VECT, typename T>
+  void asm_Helmholtz(MAT &M, const mesh_fem &mf_u, const mesh_fem &mf_data,
+		     const VECT &K_squared, T) {
+    asm_Helmholtz_real(M, mf_u, mf_data, K_squared);
+  }
+
+  template<typename MAT, typename VECT, typename T>
+  void asm_Helmholtz(MAT &M, const mesh_fem &mf_u, const mesh_fem &mf_data,
+		     const VECT &K_squared, std::complex<T>) {
+    asm_Helmholtz_cplx(gmm::real_part(M), gmm::imag_part(M), mf_u, mf_data,
+		       gmm::real_part(K_squared), gmm::imag_part(K_squared));
+  }
+
+
   template<typename MATr, typename MATi, typename VECTr, typename VECTi>  
-  void asm_Helmholtz(const MATr &Mr, const MATi &Mi, const mesh_fem &mf_u,
-		     const mesh_fem &mf_data,
-		     const VECTr &K_squaredr, const VECTi &K_squaredi) {
+  void asm_Helmholtz_cplx(const MATr &Mr, const MATi &Mi, const mesh_fem &mf_u,
+			  const mesh_fem &mf_data,
+			  const VECTr &K_squaredr, const VECTi &K_squaredi) {
     generic_assembly assem("Kr=data$1(#2); Ki=data$2(#2);"
 			   "m = comp(Base(#1).Base(#1).Base(#2)); "
 			   "M$1(#1,#1)+=sym(m(:,:,i).Kr(i) - "
@@ -485,6 +499,20 @@ namespace getfem
     assem.push_data(K_squaredi); //gmm::imag_part(K_squared));
     assem.push_mat(const_cast<MATr&>(Mr));
     assem.push_mat(const_cast<MATi&>(Mi));
+    assem.volumic_assembly();
+  }
+
+  template<typename MATr, typename MATi, typename VECTr, typename VECTi>  
+  void asm_Helmholtz_real(const MAT &M, const mesh_fem &mf_u,
+			  const mesh_fem &mf_data, const VECTr &K_squared) {
+    generic_assembly assem("K=data$1(#2);"
+			   "m = comp(Base(#1).Base(#1).Base(#2)); "
+			   "M$1(#1,#1)+=sym(m(:,:,i).K(i) - "
+			   "comp(Grad(#1).Grad(#1))(:,i,:,i));");
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_data);
+    assem.push_data(K_squared);
+    assem.push_mat(const_cast<MATr&>(M));
     assem.volumic_assembly();
   }
 

@@ -236,7 +236,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
   size_type N = mesh.dim();
 
   // Linearized elasticity brick.
-  getfem::mdbrick_Hooke_linearized_elasticity<> ELAS(mf_u, mf_coef, lambda,mu);
+  getfem::mdbrick_isotropic_linearized_elasticity<>
+    ELAS(mf_u, mf_coef, lambda, mu);
   
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs * N);

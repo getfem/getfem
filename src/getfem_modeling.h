@@ -40,8 +40,10 @@
 /*        sub-problem(s) if any.                                           */
 /*  - nb_constraints() : number of linear constraints on the system        */
 /*        including the constraints defined in the sub-problem(s) if any.  */
-/*  - is_linear()   : true if the problem is linear.                       */
-/*  - is_coercive() : true if the problem is symmetric coercive.           */
+/*  - is_linear()    : true if the problem is linear.                      */
+/*  - is_symmetric() : true if the problem is symmetric (or hermitian).    */
+/*  - is_coercive()  : true if the problem is symmetric (or hermitian)     */
+/*                     coercive.                                           */
 /*  - compute_tangent_matrix(MS, i0, j0, modified) : the brick has to call */
 /*        the compute_tangent_matrix(MS, i0,modified) of sub-problem(s) if */
 /*        any and to compute  its own part of the tangentand constraint    */
@@ -101,7 +103,7 @@ namespace getfem {
     ctx_ident_type ident_;
     
     T_MATRIX SM;
-    gmm::col_matrix< gmm::rsvector<value_type> > NS; /* constraints nullspace */
+    gmm::col_matrix<gmm::rsvector<value_type> > NS; /* constraints nullspace */
     VECTOR reduced_residu_, Ud;
   public :
 
@@ -397,7 +399,7 @@ namespace getfem {
   /* ******************************************************************** */
 
   template<typename MODEL_STATE = standard_model_state>
-  class mdbrick_Hooke_linearized_elasticity
+  class mdbrick_isotropic_linearized_elasticity
     : public mdbrick_abstract<MODEL_STATE> {
 
     typedef typename MODEL_STATE::vector_type VECTOR;
@@ -446,7 +448,7 @@ namespace getfem {
     }
 
     // constructor for a homogeneous material (constant lambda and mu)
-    mdbrick_Hooke_linearized_elasticity(mesh_fem &mf_u_, mesh_fem &mf_data_,
+    mdbrick_isotropic_linearized_elasticity(mesh_fem &mf_u_, mesh_fem &mf_data_,
        value_type lambdai, value_type mui, bool mat_stored = false)
       : mf_u(mf_u_), mf_data(mf_data_), matrix_stored(mat_stored) {
       set_Lame_coeff(lambdai, mui);
@@ -454,7 +456,7 @@ namespace getfem {
     }
 
     // constructor for a non-homogeneous material
-    mdbrick_Hooke_linearized_elasticity(mesh_fem &mf_u_, mesh_fem &mf_data_,
+    mdbrick_isotropic_linearized_elasticity(mesh_fem &mf_u_, mesh_fem &mf_data_,
        const VECTOR &lambdai, const VECTOR &mui, bool mat_stored = false)
       : mf_u(mf_u_), mf_data(mf_data_),	matrix_stored(mat_stored) {
       set_Lame_coeff(lambdai, mui);
@@ -465,7 +467,7 @@ namespace getfem {
 
 
   template<typename MODEL_STATE>
-   void mdbrick_Hooke_linearized_elasticity<MODEL_STATE>::compute_K(void) {
+   void mdbrick_isotropic_linearized_elasticity<MODEL_STATE>::compute_K(void) {
     gmm::clear(K);
     gmm::resize(K, nb_dof(), nb_dof());
     VECTOR lambda(mf_data.nb_dof()), mu(mf_data.nb_dof());
@@ -479,7 +481,7 @@ namespace getfem {
   }
 
   template<typename MODEL_STATE>
-  void mdbrick_Hooke_linearized_elasticity<MODEL_STATE>::
+  void mdbrick_isotropic_linearized_elasticity<MODEL_STATE>::
   compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
 			 size_type, bool modified) {
     if (modified && !matrix_stored) 
@@ -498,7 +500,7 @@ namespace getfem {
   }
   
   template<typename MODEL_STATE>
-  void mdbrick_Hooke_linearized_elasticity<MODEL_STATE>::
+  void mdbrick_isotropic_linearized_elasticity<MODEL_STATE>::
   compute_residu(MODEL_STATE &MS, size_type i0, size_type) {
     react(MS, i0, false);
     gmm::sub_interval SUBI(i0, nb_dof());
@@ -526,7 +528,7 @@ namespace getfem {
   /* ******************************************************************** */
   /*		Helmholtz brick.                                          */
   /* ******************************************************************** */
- template<typename MODEL_STATE = standard_complex_model_state>
+ template<typename MODEL_STATE = standard_model_state>
   class mdbrick_Helmholtz
     : public mdbrick_abstract<MODEL_STATE> {
 
@@ -601,7 +603,7 @@ namespace getfem {
     }
     virtual mesh_fem &main_mesh_fem(void) { return mf_u; }
 
-    void set_wave_number(complex_type k) {
+    void set_wave_number(value_type k) {
       homogeneous = true;
       gmm::resize(wave_number, 1); wave_number[0] = k;
       this->force_recompute();
@@ -620,7 +622,7 @@ namespace getfem {
 
     // constructor for a homogeneous wave number
     mdbrick_Helmholtz(mesh_fem &mf_u_, mesh_fem &mf_data_,
-       complex_type k, bool mat_stored = true)
+       value_type k, bool mat_stored = true)
       : mf_u(mf_u_), mf_data(mf_data_), matrix_stored(mat_stored) {
       set_wave_number(k);
       this->add_dependency(mf_u); this->add_dependency(mf_data);
@@ -795,17 +797,17 @@ namespace getfem {
       gmm::copy(q, Q);
       this->force_recompute();
     }
-    // Constructor which does not define the rhs
+    // Constructor which homogeneous diagonal Q
     mdbrick_QU_term(mdbrick_abstract<MODEL_STATE> &problem,
 		    mesh_fem &mf_data_, value_type q=value_type(1),
 		    size_type bound = size_type(-1)) 
       : sub_problem(problem), mf_data(mf_data_), boundary(bound) {
       this->add_dependency(mf_data);
       this->add_dependency(sub_problem.main_mesh_fem());
-      set_Q(value_type(q));
+      set_Q(q);
     }
 
-    // Constructor defining the rhs
+    // Constructor defining an arbitrary Q
     mdbrick_QU_term(mdbrick_abstract<MODEL_STATE> &problem,
 		    mesh_fem &mf_data_, const VECTOR &q,
 		    size_type bound = size_type(-1))
@@ -1087,7 +1089,7 @@ namespace getfem {
 	{ gmm::copy(B__, B_); compute_constraints(ASMDIR_BUILDR); }
     }
 
-    // Constructor which does not define the rhs
+    // Constructor which does not define the rhs (0 rhs in fact)
     mdbrick_Dirichlet(mdbrick_abstract<MODEL_STATE> &problem,
 		      mesh_fem &mf_data_, size_type bound,
 		      bool with_mult = false)
