@@ -1750,12 +1750,14 @@ namespace gmm {
 
   template <typename L1, typename L2, typename L3>
   void mult_spec(const L1& l1, const L2& l2, L3& l3, g_mult) {
+    typedef typename linalg_traits<L3>::value_type T;
     DAL_WARNING(2, "Inefficient generic matrix-matrix mult is used");
-    clear(l3);
     for (size_type i = 0; i < mat_nrows(l3) ; ++i)
-      for (size_type j = 0; j < mat_nrows(l3) ; ++j)
-	for (size_type k = 0; k < mat_nrows(l3) ; ++k)
-	  l3(i, j) += l1(i, k) * l2(k, j);
+      for (size_type j = 0; j < mat_nrows(l3) ; ++j) {
+	T a(0);
+	for (size_type k = 0; k < mat_nrows(l2) ; ++k) a += l1(i, k)*l2(k, j);
+	l3(i, j) = a;
+      }
   }
 
   // row x col matrix-matrix mult
