@@ -130,7 +130,7 @@ namespace getfem
   void virtual_fem::real_base_value(pgeotrans_precomp, pfem_precomp pfp,
 				    size_type ip, const base_matrix &,
 				    base_tensor &t) const
-  { t =  pfp->val(ip); }
+  { t = pfp->val(ip); }
   void virtual_fem::real_grad_base_value(pgeotrans_precomp,
 					 pfem_precomp pfp,
 					 size_type ip, const base_matrix &,

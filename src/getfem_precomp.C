@@ -120,6 +120,20 @@ namespace getfem
     }
   }
 
+  base_node _geotrans_precomp::transform(size_type i,
+					 const base_matrix &G) const {
+    if (c.empty()) init_val();
+    size_type N = G.nrows(), k = pgt->nb_points();
+    base_node P(N); P.fill(0.0);
+    base_matrix::const_iterator git = G.begin();
+    for (size_type l = 0; l < k; ++l) {
+      scalar_type a = c[i][l];
+      base_node::iterator pit = P.begin(), pite = P.end();
+      for (; pit != pite; ++git, ++pit) *pit += a * (*git);
+    }
+    return P;
+  }
+
   pgeotrans_precomp geotrans_precomp(bgeot::pgeometric_trans pg,
 				     bgeot::pstored_point_tab pspt)
   { 
@@ -202,7 +216,8 @@ namespace getfem
     return tab->add(_pre_fem_light(pf, pspt));
   }
 
-  void fem_precomp_not_stored(pfem pf, bgeot::pstored_point_tab pspt, _fem_precomp& fp) {
+  void fem_precomp_not_stored(pfem pf, bgeot::pstored_point_tab pspt,
+			      _fem_precomp& fp) {
     fp.assign(_pre_fem_light(pf,pspt));
   }
 

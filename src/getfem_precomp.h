@@ -53,23 +53,31 @@ namespace getfem
   class _geotrans_precomp {
   protected:      
     bgeot::pgeometric_trans pgt;
-    bgeot::pstored_point_tab pspt; /* a set of points in the reference convex */
-    mutable std::vector<base_vector> c;    /* precomputed values for the transformation */
-    mutable std::vector<base_matrix> pc;   /* precomputed values for gradient of the transformation */
-    mutable std::vector<base_matrix> hpc;  /* precomputed values for hessian of the transformation */
+    bgeot::pstored_point_tab pspt;  /* a set of points in the reference elt*/
+    mutable std::vector<base_vector> c;  /* precomputed values for the     */
+                                         /* transformation                 */
+    mutable std::vector<base_matrix> pc; /* precomputed values for gradient*/
+                                         /* of the transformation.         */
+    mutable std::vector<base_matrix> hpc; /* precomputed values for hessian*/
+                                          /*  of the transformation.       */
     
   public:
-    inline const base_vector &val(size_type i) const { if (c.empty()) init_val(); return c[i]; }
-    inline const base_matrix &grad(size_type i) const { if (pc.empty()) init_grad(); return pc[i]; }
-    inline const base_matrix &hessian(size_type i) const { if (hpc.empty()) init_hess(); return hpc[i]; }
+    inline const base_vector &val(size_type i) const 
+    { if (c.empty()) init_val(); return c[i]; }
+    inline const base_matrix &grad(size_type i) const
+    { if (pc.empty()) init_grad(); return pc[i]; }
+    inline const base_matrix &hessian(size_type i) const
+    { if (hpc.empty()) init_hess(); return hpc[i]; }
     
     /**
        Apply the geometric transformation from the reference convex to
        the convex whose vertices are stored in G, to the set of points
-       listed in pspt. @param G any container of vertices of the transformed convex
+       listed in pspt. @param G any container of vertices of the transformed
+       convex
        @result pt_tab transformed points
     */
-    template <typename CONT> void transform(const CONT& G, bgeot::stored_point_tab& pt_tab) {
+    template <typename CONT> void transform(const CONT& G,
+					    bgeot::stored_point_tab& pt_tab) {
       if (c.empty()) init_val();
       pt_tab.clear(); pt_tab.resize(c.size(), base_node(G[0].size()));
       for (size_type j = 0; j < c.size(); ++j) {
@@ -82,6 +90,9 @@ namespace getfem
 	}
       }
     }
+
+    base_node transform(size_type i, const base_matrix &G) const;
+
     void assign(const _pre_geot_light &ls);
     _geotrans_precomp(const _pre_geot_light &ls);
     _geotrans_precomp();
@@ -98,7 +109,7 @@ namespace getfem
      points in the reference convex. The result is stored in a static
      "cache": do not delete it!
      @param pg the geometric transformation
-     @param pspt a pointer to a list of points in the reference convex. CAUTION:
+     @param pspt a pointer to a list of points in the reference convex.CAUTION:
      this array must not be destroyed as long as the fem_precomp is used!!
   */
   pgeotrans_precomp geotrans_precomp(bgeot::pgeometric_trans pg,
@@ -108,7 +119,7 @@ namespace getfem
      precomputes a geometric transformation for a fixed set of 
      points in the reference convex. 
      @param pg the geometric transformation
-     @param pspt a pointer to a list of points in the reference convex. CAUTION:
+     @param pspt a pointer to a list of points in the reference convex.CAUTION:
      this array must not be destroyed as long as the fem_precomp is used!!
   */
   void geotrans_precomp_not_stored(bgeot::pgeometric_trans pg,
@@ -132,9 +143,12 @@ namespace getfem
     mutable std::vector<base_tensor> hpc;
 
   public:    
-    inline const base_tensor &val(size_type i) const { if (c.empty()) init_val(); return c[i]; }
-    inline const base_tensor &grad(size_type i) const { if (pc.empty()) init_grad(); return pc[i]; }
-    inline const base_tensor &hess(size_type i) const { if (hpc.empty()) init_hess(); return hpc[i]; }
+    inline const base_tensor &val(size_type i) const
+    { if (c.empty()) init_val(); return c[i]; }
+    inline const base_tensor &grad(size_type i) const
+    { if (pc.empty()) init_grad(); return pc[i]; }
+    inline const base_tensor &hess(size_type i) const
+    { if (hpc.empty()) init_hess(); return hpc[i]; }
     inline pfem get_pfem() const { return pf; }
     inline bgeot::pstored_point_tab get_point_tab() const { return pspt; }
 
@@ -151,11 +165,12 @@ namespace getfem
   typedef const _fem_precomp * pfem_precomp;
 
   /**
-     statically allocates a fem-precomputation object, and returns a pointer to 
-     it. The precomputations are "cached", i.e. if this function is called two
-     times with the same arguments, a pointer to the same object will be returned.
+     statically allocates a fem-precomputation object, and returns a pointer
+     to it. The precomputations are "cached", i.e. if this function is called
+     two times with the same arguments, a pointer to the same object will be
+     returned.
      @param pf a pointer to the fem object.
-     @param pspt a pointer to a list of points in the reference convex. CAUTION:
+     @param pspt a pointer to a list of points in the reference convex.CAUTION:
      this array must not be destroyed as long as the fem_precomp is used!!
   */
   pfem_precomp fem_precomp(pfem pf, bgeot::pstored_point_tab pspt);
@@ -163,10 +178,11 @@ namespace getfem
   /**
      fills a _fem_precomp object.
      @param pf a pointer to the fem object.
-     @param pspt a pointer to a list of points in the reference convex. CAUTION:
+     @param pspt a pointer to a list of points in the reference convex.CAUTION:
      this array must not be destroyed as long as the fem_precomp is used!!
    */
-  void fem_precomp_not_stored(pfem pf, bgeot::pstored_point_tab pspt, _fem_precomp& fp);
+  void fem_precomp_not_stored(pfem pf, bgeot::pstored_point_tab pspt,
+			      _fem_precomp& fp);
 }  /* end of namespace getfem.                                            */
 
 #endif

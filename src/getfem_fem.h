@@ -254,7 +254,8 @@ namespace getfem
 
     virtual_fem(void) { 
       ntarget_dim = 1; is_equiv = is_pol = is_polycomp = is_lag = false;
-      pspt_valid = false; hier_raff = 0; real_element_defined = false; 
+      pspt_valid = false; hier_raff = 0; real_element_defined = false;
+      es_degree = 5;
     }
 
     void add_node(const pdof_description &d, const base_node &pt) ;
@@ -308,27 +309,15 @@ namespace getfem
     void interpolation(const base_node &x, const base_matrix &G, 
 		       bgeot::pgeometric_trans pgt,
 		       const base_vector &coeff, base_node &val) const;
-//     void interpolation_grad(pfem_precomp pfp, size_type ii,
-// 			    const base_matrix &G,
-// 			    bgeot::pgeometric_trans pgt, 
-// 			    const base_vector &coeff,
-// 			    base_matrix &val) const { 
-//       virtual_fem::interpolation_grad(pfp,ii,G,pgt,coeff,val); 
-//     }
-//     void interpolation_grad(const base_node &x, const base_matrix &G,
-// 			    bgeot::pgeometric_trans pgt,
-// 			    const base_vector &coeff, base_matrix &val) const;
+
     void base_value(const base_node &x, base_tensor &t) const {
       bgeot::multi_index mi(2);
       mi[1] = target_dim(); mi[0] = nb_base();
-      // cout << "mi = " << mi << endl;
       t.adjust_sizes(mi);
       size_type R = nb_base_components();
       base_tensor::iterator it = t.begin();
-      for (size_type  i = 0; i < R; ++i, ++it) {
-	// cout << "base " << i <<  _base[i] << endl;
+      for (size_type  i = 0; i < R; ++i, ++it)
 	*it = _base[i].eval(x.begin());
-      }
     }
     void grad_base_value(const base_node &x, base_tensor &t) const {
       bgeot::multi_index mi(3);
@@ -390,43 +379,6 @@ namespace getfem
 	val[r] += co * double(base()[j + r*R].eval(x.begin()));
     } 
   }
-  
-  
-//   template <class FUNC>
-//   void fem<FUNC>::interpolation_grad(const base_node &x,
-// 				     const base_matrix &G,
-// 				     bgeot::pgeometric_trans pgt, 
-// 				     const base_vector &coeff,
-// 				     base_matrix &val) const { 
-//     // optimisable.   verifier
-//     base_matrix M;
-//     base_tensor t;
-    
-//     if (val.nrows() != target_dim() || val.ncols() != x.size())
-//       DAL_THROW(dimension_error, "dimensions mismatch");
-    
-//     grad_base_value(x, t);
-//     base_tensor::iterator it = t.begin();
-    
-//     size_type R = nb_dof(), RR = nb_base();
-    
-//     if (!is_equivalent()) { M.resize(RR, R); mat_trans(M, G, pgt); }
-    
-//     val.fill(0.0);
-    
-//     for (size_type k = 0; k < x.size(); ++k)
-//       for (size_type r = 0; r < target_dim(); ++r)
-// 	for (size_type j = 0; j < RR; ++j, ++it) {
-// 	  scalar_type co = 0.0;
-// 	  if (is_equivalent())
-// 	    co = coeff[j];
-// 	  else
-// 	    for (size_type i = 0; i < R; ++i)
-// 	      co += coeff[i] * M(i, j);
-	  
-// 	  val(r,k) += co * (*it);
-// 	} 
-//   }
   
   /** Gives a pointer on the structures describing the more classical fem
    *  of degree k on a geometric convex cvs (coming from the geometric trans).

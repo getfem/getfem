@@ -39,6 +39,7 @@ include_HEADERS =                      \
 	getfem_norm.h                  \
 	getfem_derivatives.h           \
 	getfem_fem.h                   \
+	getfem_Xfem.h                  \
 	getfem_im_list.h               \
 	getfem_mat_elem.h              \
 	getfem_mat_elem_type.h         \
@@ -85,6 +86,7 @@ SRC =                                  \
 	getfem_poly_composite.C        \
 	getfem_integration_composite.C \
 	getfem_fem.C                   \
+	getfem_Xfem.C                  \
 	getfem_fem_virtual_link.C      \
 	getfem_fem_composite.C         \
 	getfem_mat_elem.C              \
