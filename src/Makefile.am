@@ -140,6 +140,7 @@ SRC =                                    \
 	getfem_superlu.cc		 \
 	getfem_context.cc                \
 	getfem_mesh_fem.cc               \
+	getfem_mesh_im.cc                \
 	getfem_integration.cc            \
 	getfem_poly_composite.cc         \
 	getfem_integration_composite.cc  \

@@ -1,64 +1,127 @@
 #!/usr/bin/perl
 
-# extract information
+
+sub clean_line {
+  $_[0] =~ s/\/\*//g;
+  $_[0] =~ s/\/\///g;
+  chomp $_[0];
+  $_[0] =~ s/\*\///g;
+  $_[0] =~ s/^\s*//g;
+  $_[0] =~ s/\s*$//g;
+}
 
 
-
-while ($name = $ARGV[0])
-{
+while ($name = $ARGV[0]) {
   shift;
   open(FILE, "$name");
 
-  while ($li = <FILE>)
-  {
-    $li =~ s/atofem/getfem/g;
-    $li =~ s/ATOFEM/GETFEM/g;
-    $li =~ s/A TOol for Finite Elements Methods \(getfem\) version 1\.0      /GEneric Tool for Finite Elements Methods \(getfem\) version 1\.0/g;
-    if ($li =~ /Library :/) { $l1 = $li; }
-    if ($li =~ /File    :/) { $l2 = $li; $l3 = <FILE>; }
-    if ($li =~ /Date :/) { $l4 = $li; }
-    if ($li =~ /Last modification :/) { $l5 = $li; }
-    if ($li =~ /Author :/) { $l6 = $li; }
+
+# extract information
+  $libname = 0; $filename = 0; $date = 0; $author1 = 0; $year1 = 0;
+
+  while ($li = <FILE>) {
+
+    if ($li =~ /Library/ && !$libname) {
+      ($li, $l1) = split(':', $li, 2);
+      clean_line($l1);
+      $libname = $l1;
+    }
+    if ($li =~ /File/ && !$filename) {
+      ($li, $l1) = split(':', $li, 2);
+      ($l1, $l2) = split(':', $l1, 2);
+      clean_line($l1);
+      $filename=$l1; # a comparer avec $name
+      $l1=$l2;
+      clean_line($l1);
+      $comment1=$l1;
+      $l1=<FILE>;
+      if (!($li =~ /Date/)) {
+	clean_line($l1);
+	$comment2=$l1;
+	$filename = $name;
+      }
+    }
+    if ($li =~ /Date/ && !$date) {
+      ($li, $l1) = split(':', $li, 2);
+      clean_line($l1);
+      $date=$l1;
+    }
+    if ($li =~ /Author/ && !$author1) {
+      ($li, $l1) = split(':', $li, 2);
+      clean_line($l1);
+      $author1 = $l1;
+      $l1=<FILE>;
+      clean_line($l1);
+      $author2 = $l1;
+
+      if ($author1 =~ /ulien/)
+	{ $author1 = "Julien Pommier <Julien.Pommier\@insa-toulouse.fr>"; }
+      if ($author1 =~ /enard/)
+	{ $author1 = "Yves Renard <Yves.Renard\@insa-toulouse.fr>"; }
+      if ($author2 =~ /ulien/)
+	{ $author2 = "Julien Pommier <Julien.Pommier\@insa-toulouse.fr>"; }
+      if ($author2 =~ /enard/)
+	{ $author2 = "Yves Renard <Yves.Renard\@insa-toulouse.fr>"; }
+    }
+    if ($li =~ /Copyright/ && !$year1) {
+      ($li, $l1) = split('\)', $li, 2);
+      clean_line($l1);
+      $year1=int($l1);
+      ($li, $l2) = split('\-', $l1, 2);
+      $year2=int($l2);
+      $year2=2005;
+      if ($author1 =~ /ulien/) { $copyauth = "Julien Pommier"; }
+      else { $copyauth = "Yves Renard"; }
+    }
+    if ($li =~ /USA./) { $li = <FILE>; $li = <FILE>; $li = <FILE>; last; }
     if ($li =~ /^#/) { last; }
   }
 
-
 # do the head
 
+  if (!($libname)) {
+    print "It seems that no head is present for $name ...\n";
+    exit(1);
+  }
+
+  if ($author2) { $authors = "Authors : $author1\n//           $author2"; }
+  else { $authors = "Author  : $author1"; }
+
+  if ($name =~ /.h/)
+    { $enablecpp = "// -*- c++ -*- (enables emacs c++ mode)\n"; }
+  else { $enablecpp = ""; }
   open(RES, ">$name".".newhead");
 
-  print RES "/***************************************************************************/\n";
-  print RES "/*                                                                         */\n";
-  print RES $l1;
-  print RES $l2;
-  print RES $l3;
-  print RES "/*                                                                         */\n";
-  print RES $l4;
-  print RES $l5;
-  print RES $l6;
-  print RES "/*                                                                         */\n";
-  print RES "/***************************************************************************/\n";
-  print RES "/*                                                                         */\n";
-  print RES "/* Copyright (C) 2001  Yves Renard.                                        */\n";
-  print RES "/*                                                                         */\n";
-  print RES "/* This file is a part of GETFEM++                                         */\n";
-  print RES "/*                                                                         */\n";
-  print RES "/* This program is free software; you can redistribute it and/or modify    */\n";
-  print RES "/* it under the terms of the GNU General Public License as published by    */\n";
-  print RES "/* the Free Software Foundation; version 2 of the License.                 */\n";
-  print RES "/*                                                                         */\n";
-  print RES "/* This program is distributed in the hope that it will be useful,         */\n";
-  print RES "/* but WITHOUT ANY WARRANTY; without even the implied warranty of          */\n";
-  print RES "/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           */\n";
-  print RES "/* GNU General Public License for more details.                            */\n";
-  print RES "/*                                                                         */\n";
-  print RES "/* You should have received a copy of the GNU General Public License       */\n";
-  print RES "/* along with this program; if not, write to the Free Software Foundation, */\n";
-  print RES "/* Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.         */\n";
-  print RES "/*                                                                         */\n";
-  print RES "/***************************************************************************/\n";
-  print RES "\n\n";
+  print RES <<
+$enablecpp//========================================================================
+//
+// Library : $libname
+// File    : $filename : $comment1
+//           $comment2
+// Date    : $date
+// $authors
+//
+//========================================================================
+//
+// Copyright (C) $year1-$year2 $copyauth
+//
+// This file is a part of GETFEM++
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; version 2 of the License.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software Foundation,
+// Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+//
+//========================================================================
 
+;
   print RES "$li";
   while ($li = <FILE>)
   { 
@@ -70,5 +133,6 @@ while ($name = $ARGV[0])
   close(FILE);
 
   `mv -f $name.newhead $name`;
+
 
 }

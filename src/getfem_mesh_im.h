@@ -1,34 +1,31 @@
-/* -*- c++ -*- (enables emacs c++ mode)                                    */
-/* *********************************************************************** */
-/*                                                                         */
-/* Library :  GEneric Tool for Finite Element Methods (getfem)             */
-/* File    :  getfem_mesh_im.h : Integration methods on convex meshes.     */
-/*     									   */
-/*                                                                         */
-/* Date : January 26, 2005.                                                */
-/* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
-/*                                                                         */
-/* *********************************************************************** */
-/*                                                                         */
-/* Copyright (C) 2005  Yves Renard.                                        */
-/*                                                                         */
-/* This file is a part of GETFEM++                                         */
-/*                                                                         */
-/* This program is free software; you can redistribute it and/or modify    */
-/* it under the terms of the GNU Lesser General Public License as          */
-/* published by the Free Software Foundation; version 2.1 of the License.  */
-/*                                                                         */
-/* This program is distributed in the hope that it will be useful,         */
-/* but WITHOUT ANY WARRANTY; without even the implied warranty of          */
-/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           */
-/* GNU Lesser General Public License for more details.                     */
-/*                                                                         */
-/* You should have received a copy of the GNU Lesser General Public        */
-/* License along with this program; if not, write to the Free Software     */
-/* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,  */
-/* USA.                                                                    */
-/*                                                                         */
-/* *********************************************************************** */
+// -*- c++ -*- (enables emacs c++ mode)
+//========================================================================
+//
+// Library : GEneric Tool for Finite Element Methods (getfem)
+// File    : getfem_mesh_im.h : Integration methods on convex meshes.
+//           
+// Date    : January 26, 2005.
+// Author  : Yves Renard <Yves.Renard@insa-toulouse.fr>
+//
+//========================================================================
+//
+// Copyright (C) 2005-2005 Yves Renard
+//
+// This file is a part of GETFEM++
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; version 2 of the License.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software Foundation,
+// Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+//
+//========================================================================
 
 
 #ifndef GETFEM_MESH_IM_H__
@@ -58,30 +55,33 @@ namespace getfem {
      */
     inline const dal::bit_vector &convex_index(void) const
     { return im_convexes; }
-
-    // ------- continuer ici
     
     /// Gives a reference to the linked mesh of type getfem\_mesh.
     getfem_mesh &linked_mesh(void) const { return *linked_mesh_; }
     /** Set the integration method on the convex of index i
      */
-    void set_integration_method(size_type cv, pintegration_method pim);
-    /** Set on the convex of index i the finite element method
-     *          with the description pf which is of type pfem and ppi of
-     *          type pintegration_method.
+    void set_integration_method(size_type cv, pintegration_method pim) {
+      if (pim == NULL)
+	{ if (im_convexes.is_in(cv)) { im_convexes.sup(cv); touch(); } }
+      else if (!im_convexes.is_in(cv) || ims[cv] != pim) {
+	if (linked_mesh_->structure_of_convex(cv)->basic_structure() 
+	    != pim->structure(cv))
+	  DAL_THROW(std::logic_error,
+		    "Incompatibility between integration method " 
+		    " and mesh element ");
+	im_convexes.add(cv);
+	ims[cv] = pim;
+	touch();
+      }
+    }
+    /** Set the integration method on all the convexes of indexes in bv,
+     *  which is of type dal::bit\_vector.
      */
-    void set_finite_element(size_type cv, pfem ppf,
-			    pintegration_method ppi=0)
-      { set_finite_element(cv, give_intfem(ppf, ppi)); }	
-    /** Set on all the convexes of indexes in bv, which is of type
-     *          dal::bit\_vector, the finite element method
-     *          with the description pf which is of type pfem and ppi of
-     *          type pintegration_method. 
-     *  The argument ppi is optional. If omitted, the dummy integration
-     * method IM_NONE() will be used.
-     */
-    void set_finite_element(const dal::bit_vector &cvs, pfem ppf,
-			    pintegration_method ppi = 0);
+    void set_integration_method(const dal::bit_vector &cvs, pfem ppf,
+				pintegration_method ppi = 0) {
+      for (dal::bv_visitor cv(cvs); !cv.finished(); ++cv)
+	set_integration_method(cv, pif);
+    }
     /** shortcut for set_finite_element(linked_mesh().convex_index(),pf,ppf); */
     void set_finite_element(pfem pf, pintegration_method ppi = 0);
     /** Set a classical (i.e. lagrange polynomial) finite element on

@@ -1,34 +1,32 @@
-/* -*- c++ -*- (enables emacs c++ mode)                                    */
-/* *********************************************************************** */
-/*                                                                         */
-/* Library :  Dynamic Array Library (dal)                                  */
-/* File    :  dal_std.h : Compatibility Header.                            */
-/*                                                                         */
-/* Date : June 01, 1995.                                                   */
-/* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr,                     */
-/*          Julien Pommier, Julien.Pommier@gmm.insa-tlse.fr.               */
-/*                                                                         */
-/* *********************************************************************** */
-/*                                                                         */
-/* Copyright (C) 1995-2005  Yves Renard.                                   */
-/*                                                                         */
-/* This file is a part of GETFEM++                                         */
-/*                                                                         */
-/* This program is free software; you can redistribute it and/or modify    */
-/* it under the terms of the GNU Lesser General Public License as          */
-/* published by the Free Software Foundation; version 2.1 of the License.  */
-/*                                                                         */
-/* This program is distributed in the hope that it will be useful,         */
-/* but WITHOUT ANY WARRANTY; without even the implied warranty of          */
-/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           */
-/* GNU Lesser General Public License for more details.                     */
-/*                                                                         */
-/* You should have received a copy of the GNU Lesser General Public        */
-/* License along with this program; if not, write to the Free Software     */
-/* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,  */
-/* USA.                                                                    */
-/*                                                                         */
-/* *********************************************************************** */
+// -*- c++ -*- (enables emacs c++ mode)
+//========================================================================
+//
+// Library : Dynamic Array Library (dal)
+// File    : dal_std.h : Compatibility Header.
+//           
+// Date    : June 01, 1995.
+// Authors : Yves Renard <Yves.Renard@insa-toulouse.fr>
+//           Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+//
+//========================================================================
+//
+// Copyright (C) 1995-2005 Yves Renard
+//
+// This file is a part of GETFEM++
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; version 2 of the License.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software Foundation,
+// Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+//
+//========================================================================
 
 #ifndef DAL_STD_H__
 #define DAL_STD_H__

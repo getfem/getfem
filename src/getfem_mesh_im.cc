@@ -2,14 +2,14 @@
 //========================================================================
 //
 // Library : GEneric Tool for Finite Elements Methods (getfem)
-// File    : getfem_mesh_fem.cc : finite element methods on convex meshes.
+// File    : getfem_mesh_im.cc : integration methods on convex meshes.
 //           
-// Date    : December 21, 1999.
+// Date    : January 26, 2005.
 // Author  : Yves Renard <Yves.Renard@insa-toulouse.fr>
 //
 //========================================================================
 //
-// Copyright (C) 1999-2005 Yves Renard
+// Copyright (C) 2005-2005 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -27,10 +27,10 @@
 //
 //========================================================================
 
+#if 0
 
-#include <queue>
-#include <dal_singleton.h>
-#include <getfem_mesh_fem.h>
+#include <getfem_mesh_im.h>
+
 
 namespace getfem {
   
@@ -538,3 +538,4 @@ namespace getfem {
 }  /* end of namespace getfem.                                             */
 
 
+#endif

@@ -1,3 +1,32 @@
+// -*- c++ -*- (enables emacs c++ mode)
+//========================================================================
+//
+// Library : GEneric Tool for Finite Element Methods (getfem)
+// File    : getfem_gauss_lobatto_fem_coef.h : 
+//           
+// Date    : February 2004.
+// Author  : Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+//
+//========================================================================
+//
+// Copyright (C) 2004-2005 Julien Pommier
+//
+// This file is a part of GETFEM++
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; version 2 of the License.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software Foundation,
+// Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+//
+//========================================================================
+
 static const double fem_coef_gausslob_1[4]={1.000000000000000e+00,-1.000000000000000e+00,0.000000000000000e-01,1.000000000000000e+00,};
 
 static const double fem_coef_gausslob_2[9]={1.000000000000000e+00,-3.000000000000000e+00,2.000000000000000e+00,0.000000000000000e-01,4.000000000000000e+00,-4.000000000000000e+00,0.000000000000000e-01,-1.000000000000000e+00,2.000000000000000e+00,};

@@ -1,56 +1,31 @@
-// -*- c++ -*-
+// -*- c++ -*- (enables emacs c++ mode)
+//========================================================================
 //
-// Copyright 1997, 1998, 1999 University of Notre Dame.
-// Authors: Andrew Lumsdaine, Jeremy G. Siek, Lie-Quan Lee
+// Library : Generic Matrix Methods  (gmm)
+// File    : gmm_dense_lu.h : modified version from M.T.L.
+//           
+// Date    : June 5, 2003.
+// Author  : Andrew Lumsdaine, Jeremy G. Siek, Lie-Quan Lee
 //
-// You should have received a copy of the License Agreement for the
-// Matrix Template Library along with the software;  see the
-// file LICENSE.  If not, contact Office of Research, University of Notre
-// Dame, Notre Dame, IN  46556.
+//========================================================================
 //
-// Permission to modify the code and to distribute modified code is
-// granted, provided the text of this NOTICE is retained, a notice that
-// the code was modified is included with the above COPYRIGHT NOTICE and
-// with the COPYRIGHT NOTICE in the LICENSE file, and that the LICENSE
-// file is distributed with the modified code.
+// Copyright (C) 2003-2005 Yves Renard
 //
-// LICENSOR MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR IMPLIED.
-// By way of example, but not limitation, Licensor MAKES NO
-// REPRESENTATIONS OR WARRANTIES OF MERCHANTABILITY OR FITNESS FOR ANY
-// PARTICULAR PURPOSE OR THAT THE USE OF THE LICENSED SOFTWARE COMPONENTS
-// OR DOCUMENTATION WILL NOT INFRINGE ANY PATENTS, COPYRIGHTS, TRADEMARKS
-// OR OTHER RIGHTS.
+// This file is a part of GETFEM++
 //
-//===========================================================================
-/* *********************************************************************** */
-/*                                                                         */
-/* Library :  Generic Matrix Methods  (gmm)                                */
-/* File    :  gmm_dense_lu.h : modified version from M.T.L.                */
-/*     									   */
-/* Date : June 5, 2003.                                                    */
-/* Author : Yves Renard, Yves.Renard@insa-toulouse.fr                      */
-/*                                                                         */
-/* *********************************************************************** */
-/*                                                                         */
-/* Copyright (C) 2003-2004  Yves Renard.                                   */
-/*                                                                         */
-/* This file is a part of GMM++                                            */
-/*                                                                         */
-/* This program is free software; you can redistribute it and/or modify    */
-/* it under the terms of the GNU Lesser General Public License as          */
-/* published by the Free Software Foundation; version 2.1 of the License.  */
-/*                                                                         */
-/* This program is distributed in the hope that it will be useful,         */
-/* but WITHOUT ANY WARRANTY; without even the implied warranty of          */
-/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           */
-/* GNU Lesser General Public License for more details.                     */
-/*                                                                         */
-/* You should have received a copy of the GNU Lesser General Public        */
-/* License along with this program; if not, write to the Free Software     */
-/* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,  */
-/* USA.                                                                    */
-/*                                                                         */
-/* *********************************************************************** */
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; version 2 of the License.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software Foundation,
+// Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+//
+//========================================================================
 
 #ifndef GMM_DENSE_LU_H
 #define GMM_DENSE_LU_H
