@@ -82,9 +82,17 @@ namespace gmm
   template<typename T, typename V> inline
   bool operator !=(T v, const ref_elt_vector<T, V> &re) { return (v!=T(re)); }
   template<typename T, typename V> inline
-  T &operator +=(T v, const ref_elt_vector<T, V> &re) { v += T(re); return v; }
+  T &operator +=(T &v, const ref_elt_vector<T, V> &re) 
+  { v += T(re); return v; }
   template<typename T, typename V> inline
-  T &operator -=(T v, const ref_elt_vector<T, V> &re) { v -= T(re); return v; }
+  T &operator -=(T &v, const ref_elt_vector<T, V> &re)
+  { v -= T(re); return v; }
+  template<typename T, typename V> inline
+  T &operator *=(T &v, const ref_elt_vector<T, V> &re) 
+  { v *= T(re); return v; }
+  template<typename T, typename V> inline
+  T &operator /=(T &v, const ref_elt_vector<T, V> &re)
+  { v /= T(re); return v; }
   template<typename T, typename V> inline
   T operator +(const ref_elt_vector<T, V> &re) { return T(re); }
   template<typename T, typename V> inline
