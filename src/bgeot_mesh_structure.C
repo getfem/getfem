@@ -100,6 +100,7 @@ namespace bgeot
 
   void mesh_structure::swap_points(size_type i, size_type j)
   {
+    cerr << "swapping points " << i << " and " << j << endl;
     if (i != j)
     {
       mesh_convex_ind_ct ct = convex_to_point(i);
@@ -259,13 +260,13 @@ namespace bgeot
     for (i = 0; i < j; i++)
       if (!convex_tab.index_valid(i))
 	swap_convex(i, convex_tab.ind_last());
-
-    for (i = 0, j = (points_tab.end()-points_tab.begin())-1; i < j; ++i, --j)
-    {
-      while (i < j && points_tab[i].first != ST_NIL) ++i;
-      while (i < j && points_tab[j].first == ST_NIL) --j;
-      if (i < j) swap_points(i, j);
-    }
+    if (points_tab.size())
+      for (i = 0, j = (points_tab.end()-points_tab.begin())-1; i < j; ++i, --j)
+	{
+	  while (i < j && points_tab[i].first != ST_NIL) ++i;
+	  while (i < j && points_tab[j].first == ST_NIL) --j;
+	  if (i < j) swap_points(i, j);
+	}
   }
 
   void mesh_structure::stat(void)
