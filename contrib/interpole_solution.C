@@ -1,10 +1,9 @@
 #include <getfem_export.h>
 #include <getfem_assembling.h>
 
-using std::cout;
-using std::cerr;
-
-typedef getfem::size_type size_type;
+using bgeot::size_type;
+using bgeot::dim_type;
+using bgeot::short_type;
 
 void err_msg(void)
 {
@@ -21,57 +20,51 @@ void err_msg(void)
 int main(int argc, char *argv[])
 {
   try {
-  int found = 0;
-  std::string fi1, fi2, fi3;
-
-  for (int aa = 1; aa < argc; aa++)
-  {
-    if (argv[aa][0] != '-')
-    {
-      switch(found)
-      {
+    int found = 0;
+    std::string fi1, fi2, fi3;
+    
+    for (int aa = 1; aa < argc; aa++) {
+      if (argv[aa][0] != '-') {
+	switch(found) {
         case 0  : fi1 = std::string(argv[aa]); found++; break;
         case 1  : fi2 = std::string(argv[aa]); found++; break;
         case 2  : fi3 = std::string(argv[aa]); found++; break;
         default : err_msg();
+	}
       }
+      else
+	err_msg();
     }
-    else
-      err_msg();
-  }
-  if (found != 3) err_msg();
-
-  cout.precision(14);
-
-  cout << "Reading file " << fi1 << endl;
-  getfem::getfem_mesh mesh1;
-  getfem::mesh_fem mef1(mesh1);
-  dim_type N1, P1; short_type K1;
-  std::vector<getfem::scalar_type> U1;
-  getfem::load_solution(fi1, mesh1, mef1, U1, P1, K1);
-  N1 = mesh1.dim();
+    if (found != 3) err_msg();
+    
+    cout.precision(14);
+    
+    cout << "Reading file " << fi1 << endl;
+    getfem::getfem_mesh mesh1;
+    getfem::mesh_fem mef1(mesh1);
+    dim_type N1, P1; short_type K1;
+    std::vector<getfem::scalar_type> U1;
+    getfem::load_solution(fi1, mesh1, mef1, U1, P1, K1);
+    N1 = mesh1.dim();
+    
+    cout << "Reading file " << fi2 << endl;
+    getfem::getfem_mesh mesh2;
+    getfem::mesh_fem mef2(mesh2);
+    dim_type N2, P2; short_type K2;
+    std::vector<getfem::scalar_type> U2, U3;
+    getfem::load_solution(fi2, mesh2, mef2, U2, P2, K2);
+    N2 = mesh1.dim();
   
-  cout << "Reading file " << fi2 << endl;
-  getfem::getfem_mesh mesh2;
-  getfem::mesh_fem mef2(mesh2);
-  dim_type N2, P2; short_type K2;
-  std::vector<getfem::scalar_type> U2, U3;
-  getfem::load_solution(fi2, mesh2, mef2, U2, P2, K2);
-  N2 = mesh1.dim();
+    if (N1 != N2) DAL_THROW(std::invalid_argument,
+			    "Dimensions of the two meshes mismatch\n");
+    
 
-  if (N1 != N2)
-  { cerr << "Dimensions of the two meshes mismatch\n"; exit(1); }
-
-  if (P1 != P2)
-  { cerr << "Dimensions of the two solutions mismatch\n"; exit(1); }
-
-
-  cout << "interpolation of the solution in " << fi1
-       << " on the mesh of " << fi2 << endl;
-  U3.resize(mef2.nb_dof() * P1);
-  getfem::scalar_type errin = 0.0;
-  getfem::interpolation_solution(mef1, mef2, U1, U3, P1);
-  save_solution(fi3, mef2, U3, P1, K2);
+    cout << "interpolation of the solution in " << fi1
+	 << " on the mesh of " << fi2 << endl;
+    U3.resize(mef2.nb_dof() * P1);
+    getfem::scalar_type errin = 0.0;
+    getfem::interpolation_solution(mef1, mef2, U1, U3, P1);
+    save_solution(fi3, mef2, U3, P1, K2);
   }
   DAL_STANDARD_CATCH_ERROR;
   return 0; 

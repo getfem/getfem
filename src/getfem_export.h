@@ -115,14 +115,14 @@ namespace getfem
     void load_solution(const std::string &fi, getfem_mesh &mesh,
 		       mesh_fem &mef, VECT &U, dim_type &P, short_type &K) {
     std::ifstream ist((fi + char(0)).data());
-    size_type i, token, DIM, Np, N;
+    size_type token, DIM, Np, N;
     char tmp[100], c;
     bool error = false, began = false;
-    dal::dynamic_array<getfem::base_node> ptab;
-    dal::dynamic_array<getfem::scalar_type> vtab;
+    dal::dynamic_array<base_node> ptab;
+    dal::dynamic_array<scalar_type> vtab;
     size_type nbvtab = 0;
     
-    if (!ist) DAL_THROW(file_not_found_error, "File " << fi " not found");
+    if (!ist) DAL_THROW(file_not_found_error, "File " << fi << " not found");
 
     N = 1; P = 1; K = 1; DIM = 1; // Default parameters
     
@@ -144,22 +144,28 @@ namespace getfem
 	  if (strcmp(tmp, "=")) error = true;
 	  ftool::get_token(ist, tmp, 99);
 	  int k = atoi(tmp); if (k < 0 || k > 254) error = true;
-	  swhitch (token) {
-	  case 1 : DIM = N = i; if (k == 0) error = true; break;
-	  case 2 : P = i; if (k == 0) error = true; break;
-	  case 3 : K = i; break;
-	  case 4 : DIM = i; break;
+	  // cout << "token " << token << " val = " << k << endl;
+	  switch (token) {
+	  case 1 : DIM = N = k; if (k == 0) error = true; break;
+	  case 2 : P = k; if (k == 0) error = true; break;
+	  case 3 : K = k; break;
+	  case 4 : DIM = k; break;
 	  }
 	}
       }
       else {
 	began = true;
+	// cout << "tmp =" << tmp << endl;
+	ist.putback(' ');
 	for(int k = strlen(tmp)-1; k >= 0; --k) ist.putback(tmp[k]);
 	size_type nbpt = 0;
+	// cout << "N = " << N << " P = " << int(P) << " K = "
+	//      << K << " DIM = " << DIM << endl;
 	while(nbpt < 1000) {
 	  if (ptab[nbpt].size() != N) ptab[nbpt].resize(N);
-	  for (i = 0; i < N; ++i) ist >> (ptab[nbpt])[i];
-	  for (i = 0; i < P; ++i) ist >> vtab[nbvtab * P + i];
+	  for (int i = 0; i < N; ++i) ist >> (ptab[nbpt])[i];
+	  // cout << "Ptab[" << nbpt << "] = " << ptab[nbpt] << endl;
+	  for (int i = 0; i < P; ++i) ist >> vtab[nbvtab * P + i];
 	  nbpt++; nbvtab++;
 	  while(ist.get(c))
 	    { if (!(isspace(c)) || c == 10) { ist.putback(c); break; } }
@@ -168,38 +174,39 @@ namespace getfem
 	    { if (!(isspace(c)) || c == 10) { ist.putback(c); break; } }
 	  ist.get(c); if (c == 10 || ist.eof()) break; else ist.putback(c);
 	}
-	if (nbpt == 100) { error = true; break; }
+	if (nbpt >= 1000) { error = true; break; }
 	if (nbpt == 0) break;
 
-	Np = 1; for (i = 0; i < DIM; ++i) Np *= K + 1;
+	Np = 1; for (int i = 0; i < DIM; ++i) Np *= K + 1;
 	
 	if (nbpt == bgeot::alpha(DIM, K)) {
 	  std::vector<getfem::base_node> pnode(DIM+1);
-	  for (i = 0; i <= DIM; ++i) pnode[i] = ptab[bgeot::alpha(i, K) - 1];
-	  i = mesh.add_simplex_by_points(DIM, pnode.begin());
+	  for (int i = 0; i <= DIM; ++i) 
+	    pnode[i] = ptab[bgeot::alpha(i, K) - 1];
+	  int i = mesh.add_simplex_by_points(DIM, pnode.begin());
 	  mef.set_finite_element(i, getfem::PK_fem(DIM, K),
 				 bgeot::simplex_poly_integration(DIM));
 	}
 	else if (nbpt == Np) {
 	  std::vector<getfem::base_node> pnode(1 << DIM);
 	  size_type j;
-	  for (i = 0, j = 0; i <= (1 << DIM); ++i) {
+	  for (int i = 0, j = 0; i <= (1 << DIM); ++i) {
 	    pnode[i] = ptab[j];
 	    size_type k = i + 1, l = K-1;
 	    while (!(k & 1)) { l *= K+1; k >>= 1; }
 	    j += l + 1;
 	  }
-	  i = mesh.add_parallelepiped_by_points(DIM, pnode.begin());
+	  int i = mesh.add_parallelepiped_by_points(DIM, pnode.begin());
 	  mef.set_finite_element(i, getfem::QK_fem(DIM, K),
 				 bgeot::parallelepiped_poly_integration(DIM));
 	}
 	else if (nbpt == bgeot::alpha(DIM - 1, K) * bgeot::alpha(1, K)) {
 	  std::vector<getfem::base_node> pnode(2*DIM);
-	  for (i = 0; i < DIM; ++i)
+	  for (int i = 0; i < DIM; ++i)
 	    pnode[i] = ptab[bgeot::alpha(i, K) - 1];
-	  for (i = 0; i < DIM; ++i)
+	  for (int i = 0; i < DIM; ++i)
 	    pnode[i+DIM] = ptab[bgeot::alpha(i, K)-1 + bgeot::alpha(DIM-1, K)];
-	  i = mesh.add_prism_by_points(DIM, pnode.begin());
+	  int i = mesh.add_prism_by_points(DIM, pnode.begin());
 	  mef.set_finite_element(i, getfem::PK_prism_fem(DIM, K),
 				 bgeot::prism_poly_integration(DIM));
 	}
@@ -218,7 +225,7 @@ namespace getfem
     std::fill(U.begin(), U.end(), 0.0);
     std::vector<int> cp(mef.nb_dof());
     std::fill(cp.begin(), cp.end(), 0);
-    size_type l = 0;
+    size_type l = 0, i;
     for (i << nn; i != size_type(-1); i << nn) {
       size_type nbd = mef.nb_dof_of_element(i);
       for (int j = 0; j < nbd; ++j, ++l) {

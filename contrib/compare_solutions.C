@@ -3,11 +3,9 @@
 #include <getfem_assembling.h>
 #include <getfem_norm.h>
 
-using std::cout;
-using std::cerr;
-
-typedef getfem::size_type size_type;
-
+using bgeot::size_type;
+using bgeot::dim_type;
+using bgeot::short_type;
 void err_msg(void)
 {
   cerr << "Bad format for arguments of command compare_solutions\n";
@@ -39,14 +37,16 @@ int main(int argc, char *argv[])
     if (found != 2) err_msg();
 
     cout.precision(16);
-    
+
+    cout << "Reading file " << fi1 << endl;
     getfem::getfem_mesh mesh1;
     getfem::mesh_fem mef1(mesh1);
     dim_type N1, P1; short_type K1;
     std::vector<getfem::scalar_type> U1;
     getfem::load_solution(fi1, mesh1, mef1, U1, P1, K1);
     N1 = mesh1.dim();
-    
+
+    cout << "Reading file " << fi2 << endl;
     getfem::getfem_mesh mesh2;
     getfem::mesh_fem mef2(mesh2);
     dim_type N2, P2; short_type K2;
@@ -54,11 +54,11 @@ int main(int argc, char *argv[])
     getfem::load_solution(fi2, mesh2, mef2, U2, P2, K2);
     N2 = mesh1.dim();
     
-    if (N1 != N2) DAL_THROW(dal::invalid_argument,
-			    "Dimensions of the two meshes mismatch\n"; }
+    if (N1 != N2) DAL_THROW(std::invalid_argument,
+			    "Dimensions of the two meshes mismatch\n");
     
-    if (P1 != P2) DAL_THROW(dal::invalid_argument,
-			    "Dimensions of the two solutions mismatch\n"; }
+    if (P1 != P2) DAL_THROW(std::invalid_argument,
+			    "Dimensions of the two solutions mismatch\n");
     
     // test d'égalité des maillages
     
