@@ -37,8 +37,6 @@
 #include <gmm_tri_solve.h>
 #include <gmm_interface.h>
 
-
-
 namespace gmm {
 
 #define ildltt_precond choleskyt_precond
@@ -108,10 +106,6 @@ namespace gmm {
 	  return;
 	}
       }
-
-
-      if ((tmp = w[i]) == value_type(0))
-      { DAL_WARNING(2, "pivot " << i << " is zero"); tmp = 1.0; }
 
       indiag[i] = 1.0 / tmp;
       gmm::clean(w, eps * norm_row);
