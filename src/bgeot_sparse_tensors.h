@@ -596,40 +596,7 @@ namespace bgeot {
     /* slices a tensor_ref, at dimension 'dim', position 'islice'
        ... not straightforward for sparse tensors !
     */
-    explicit tensor_ref(const tensor_ref& tr, tensor_mask::Slice slice) {
-      set_sub_tensor(tr, tr.slice_shape(slice));
-
-      /* shift the base according to the old stride */
-      ensure_0_stride();
-
-      /* create a mask m2 with one less dimension than m1 */
-      const tensor_mask& m1(index_to_mask(slice.dim));
-      dim_type mdim = index_to_mask_dim(slice.dim);
-      if (m1.ndim() > 1) { 
-	tensor_ranges r(m1.ranges()); r.erase(r.begin()+mdim);
-	index_set idx(m1.indexes()); r.erase(r.begin()+mdim);
-	tensor_mask m2(r,idx);
-	index_type pos1 = 0, pos2 = 0;
-	for (tensor_ranges_loop l(m1.ranges()); !l.finished(); l.next()) {
-	  if (l.index(mdim) == slice.i0) {
-	    m2.set_mask_val(pos2++, m1(pos1));
-	  } else assert(m1(pos1) == 0);
-	  pos1++;
-	}
-
-      
-	/* replace the old mask by the new one */
-	assert(index_to_mask_num(slice.dim) < masks().size());
-	masks()[index_to_mask_num(slice.dim)] = m2;
-      } else {
-	/* simply remove the mask since it only contained the dimension 'dim' */
-	remove_mask(index_to_mask_num(slice.dim));
-      }
-      /* shift all indexes greater than dim */
-      shift_dim_num_ge(slice.dim,-1);
-      set_ndim_noclean(ndim()-1);
-      update_idx2mask();
-    }
+    explicit tensor_ref(const tensor_ref& tr, tensor_mask::Slice slice);
 
     /* create a diagonal of another tensor */
     explicit tensor_ref(const tensor_ref& tr, tensor_mask::Diagonal diag) {
