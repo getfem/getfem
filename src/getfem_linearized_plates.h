@@ -83,6 +83,58 @@ namespace getfem {
     assem.push_mat(const_cast<MAT &>(RM4));
     assem.volumic_assembly();
   }
+  
+  template<class MAT, class VECT>
+  void asm_stiffness_matrix_for_plate_transverse_shear_mitc
+  (const MAT &RM, const mesh_im &mim, const mesh_fem &mf_u3,
+   const mesh_fem &mf_theta, const mesh_fem &mfdata, const VECT &MU) {
+    gmm::sub_interval I1(0, mf_u3.nb_dof());
+    gmm::sub_interval I2(mf_u3.nb_dof(), mf_theta.nb_dof());
+    
+    asm_stiffness_matrix_for_plate_transverse_shear_mitc
+      (gmm::sub_matrix(RM, I1), gmm::sub_matrix(RM, I1, I2),
+       gmm::transposed(gmm::sub_matrix(RM, I2, I1)),
+       gmm::sub_matrix(RM, I2), mim, mf_u3, mf_theta, mfdata, MU);
+  }
+
+  template<class MAT, class MAT3, class VECT>
+  void asm_stiffness_matrix_for_plate_transverse_shear_mitc
+  (const MAT &RM1, const MAT &RM2, const MAT3 &RM3, const MAT &RM4,
+   const mesh_im &mim, const mesh_fem &mf_u3, const mesh_fem &mf_theta,
+   const mesh_fem &mfdata, const VECT &MU) {
+    typedef typename gmm::linalg_traits<MAT>::value_type value_type;
+
+    if (mfdata.get_qdim() != 1)
+      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    
+    if (mf_u3.get_qdim() != 1 || mf_theta.get_qdim() != 2)
+      DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
+    generic_assembly assem("mu=data$1(#3);"
+			   "A=data$2(8,8);"
+			   "t1=comp(Grad(#1).Grad(#1).Base(#3));"
+			   "M$1(#1,#1)+=sym(t1(:,i,:,i,j).mu(j));"
+			   "t2=comp(vBase(#2).vBase(#2).Base(#3));"
+			   "M$4(#2,#2)+=sym(A(k,:).t2(k,i,l,i,j).mu(j).A(l,:));"
+			   "t3=comp(Grad(#1).vBase(#2).Base(#3));"
+			   "M$2(#1,#2)+=t3(:,i,:,i,j).mu(j);"
+			   "M$3(#1,#2)+=t3(:,i,:,i,j).mu(j);"
+			   );
+
+    gmm::dense_matrix<value_type> A(8,8);
+    // remplir A;
+
+    assem.push_mi(mim);
+    assem.push_mf(mf_u3);
+    assem.push_mf(mf_theta);
+    assem.push_mf(mfdata);
+    assem.push_data(MU);
+    // assem.push_data(A);
+    assem.push_mat(const_cast<MAT &>(RM1));
+    assem.push_mat(const_cast<MAT &>(RM2));
+    assem.push_mat(const_cast<MAT3 &>(RM3));
+    assem.push_mat(const_cast<MAT &>(RM4));
+    assem.volumic_assembly();
+  }
 
 
   /* ******************************************************************** */
@@ -111,6 +163,7 @@ namespace getfem {
     VECTOR lambda_, mu_;
     bool homogeneous;
     bool matrix_stored;
+    bool mitc;
     T_MATRIX K;
 
     void compute_K(void) {
@@ -130,8 +183,12 @@ namespace getfem {
       asm_stiffness_matrix_for_linear_elasticity
 	(gmm::sub_matrix(K, I1), mim, mf_ut, mf_data, lambda, mu);
       gmm::scale(mu, value_type(1) / value_type(2));
-      asm_stiffness_matrix_for_plate_transverse_shear
-	(gmm::sub_matrix(K, I2), mim_subint, mf_u3, mf_theta, mf_data, mu);
+      if (mitc) 
+	asm_stiffness_matrix_for_plate_transverse_shear_mitc
+	  (gmm::sub_matrix(K, I2), mim_subint, mf_u3, mf_theta, mf_data, mu);
+      else
+	asm_stiffness_matrix_for_plate_transverse_shear
+	  (gmm::sub_matrix(K, I2), mim_subint, mf_u3, mf_theta, mf_data, mu);
       gmm::scale(lambda, epsilon * epsilon / value_type(3));
       gmm::scale(mu, value_type(2) * epsilon * epsilon / value_type(3));
       asm_stiffness_matrix_for_linear_elasticity
@@ -200,6 +257,8 @@ namespace getfem {
 		     E/(value_type(2)*(value_type(1)+nu)));
     }
 
+    void set_mitc(void) { mitc = true; }
+
     SUBVECTOR get_solution(MODEL_STATE &MS) {
       SUBU = gmm::sub_interval(this->first_index(), this->nb_dof());
       return gmm::sub_vector(MS.state(), SUBU);
@@ -226,6 +285,7 @@ namespace getfem {
 	DAL_THROW(failure_error, "Qdim of mf_ut should be 1.");
       if (mf_theta.get_qdim() != 2)
 	DAL_THROW(failure_error, "Qdim of mf_theta should be 2.");
+      mitc = false;
       this->add_proper_mesh_im(mim);
       this->add_proper_mesh_im(mim_subint);      
       this->add_proper_mesh_fem(mf_ut, MDBRICK_LINEAR_PLATE, 1);
