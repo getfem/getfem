@@ -66,11 +66,13 @@ namespace getfem
       psl = owned_psl.get();
       owned_psl.get()->build(m, slicer_none(), nrefine);
     } else check_mesh(m);
+    if (m.dim() > 3) DAL_THROW(dal::failure_error, "4D meshes and more are not supported");
   }
   
   void vtk_export::set_slice(const stored_mesh_slice& sl) {
     if (psl) { DAL_THROW(dal::failure_error, "a slice was already set."); }
     else psl = &sl;
+    if (psl->dim() > 3) DAL_THROW(dal::failure_error, "4D meshes and more are not supported");
   }
 
   const stored_mesh_slice& vtk_export::get_slice() const { 
@@ -143,6 +145,54 @@ namespace getfem
     assert(splx_cnt == 0); // sanity check
     write_separ(); os << "POINT_DATA " << psl->nb_points() << "\n";
     mesh_structure_done = true;
+  }
+
+  void vtk_export::write_normals() {
+    return;
+#if 0
+    check_header();
+    if (psl == 0) 
+      DAL_THROW(dal::failure_error,
+		"cannot export the mesh data: you did not give a mesh!\n");
+    write_separ();
+    
+    os << "CELL_DATA " << psl->nb_simplexes(0) + psl->nb_simplexes(1) + psl->nb_simplexes(2) + psl->nb_simplexes(3) << "\n";
+    write_separ();
+    os << "NORMALS " << "getfem_normals" << " float\n";
+    const getfem_mesh &m = psl->linked_mesh();
+    for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
+      size_type cv = psl->convex_num(ic);
+      const mesh_slicer::cs_nodes_ct p = psl->nodes(ic);
+      const getfem::mesh_slicer::cs_simplexes_ct& s = psl->simplexes(ic);
+      if (p.size() == 0) continue;
+      base_matrix G; vectors_to_base_matrix(G, m.points_of_convex(cv));
+      bgeot::geotrans_interpolation_context gic(m.trans_of_convex(cv), p[0].pt_ref, G);
+      /*for (size_type i=0; i < s.size(); ++i) {
+        for (size_type j=0; j < s[i].dim()+1; ++j)
+      }
+      */
+        /*      for (size_type i=0; i < p.size(); ++i) {
+        unsigned nnorm = 0;
+        base_node N(m.dim());
+        if (p[i].faces.any()) {
+          for (size_type f=0; f < m.structure_of_convex(cv)->nb_faces(); ++f) {
+            if (p[i].faces[f]) {
+              nnorm++;
+              gic.set_xref(p[i].pt_ref);
+              N += bgeot::compute_normal(gic, f);
+            }
+          }
+        }
+        if (nnorm) {
+          N *= 1./scalar_type(nnorm); 
+          scalar_type n = bgeot::vect_norm2(N); if (n > 1e-10) N/=n;
+        }
+        write_vec(N.begin());
+        }*/
+
+    }
+    write_separ();
+#endif
   }
 
   void vtk_export::write_mesh_quality(const getfem_mesh &m, unsigned nrefine) {

@@ -269,6 +269,7 @@ namespace getfem {
     /** export a data_set correspounding to measures of quality for each convex
         of the mesh */
     void write_mesh_quality(const getfem_mesh &m, unsigned nrefine=1);
+    void write_normals();
     const stored_mesh_slice& get_slice() const;
   private:
     void init();
@@ -277,6 +278,7 @@ namespace getfem {
     void check_mesh(const getfem_mesh &m);
     template<class T> void write_val(T v);
     template<class V> void write_vec(V p);
+    template<class IT> void write_3x3tensor(IT p);
     void write_separ();
   };
 
@@ -298,6 +300,21 @@ namespace getfem {
     }
     for (size_type i=psl->dim(); i < 3; ++i) v[i] = 0.0f;
     write_val(v[0]);write_val(v[1]);write_val(v[2]);
+  }
+
+  template<class IT> void vtk_export::write_3x3tensor(IT p) {
+    float v[3][3];
+    memset(v, 0, sizeof v);
+    for (size_type i=0; i < psl->dim(); ++i) {
+      for (size_type j=0; j < psl->dim(); ++j)
+        v[i][j] = p[i + j*psl->dim()];
+    }
+    for (size_type i=0; i < 3; ++i) {
+      for (size_type j=0; j < 3; ++j) {
+        write_val(v[i][j]);
+      }
+      if (ascii) os << "\n";
+    }
   }
 
   template<class VECT>
@@ -325,6 +342,14 @@ namespace getfem {
       os << "VECTORS " << name << " float\n";
       for (size_type i=0; i < psl->nb_points(); ++i) {
 	write_vec(Uslice.begin() + i*Q);
+      }
+    } else if (Q == dal::sqr(psl->dim())) {
+      /* tensors : coef are supposed to be stored in FORTRAN order 
+         in the VTK file, they are written with C (row major) order
+       */
+      os << "TENSORS " << name << " float\n";
+      for (size_type i=0; i < psl->nb_points(); ++i) {
+        write_3x3tensor(Uslice.begin() + i*Q);
       }
     } else DAL_THROW(dal::dimension_error,
 		     "vtk does not accept vectors of dimension > 3");
