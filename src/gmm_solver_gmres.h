@@ -91,7 +91,7 @@ namespace gmm {
     TmpVec s(restart+1);
     outer.set_rhsnorm(gmm::vect_norm2(b));
 
-    if (outerter.get_rhsnorm() == 0.0) { clear(x); return; }
+    if (outer.get_rhsnorm() == 0.0) { clear(x); return; }
     
     std::vector< gmm::givens_rotation<T> > rotations(restart+1);
     
