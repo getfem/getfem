@@ -4,7 +4,7 @@
 /* Library :  GEneric Tool for Finite Element Methods (getfem)             */
 /* File    :  getfem_assembling.h : assemble linear system for fem.        */
 /*     									   */
-/* Date : November 17, 2000.                                               */
+/* Date : June 17, 2000.                                                   */
 /* Authors : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                     */
 /*           Julien Pommier, pommier@gmm.insa-tlse.fr                      */
 /*                                                                         */

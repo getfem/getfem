@@ -314,7 +314,7 @@ namespace getfem
 	    mref[indcomp(f+1, 0, 0)](mi) = ppi->int_poly_on_face(P, f);
 	}
 	// cout << "mref[0] = " << mref[0] << endl;
-	// cout << "mref[indcomp(1, 0, 0)] = " << mref[indcomp(1, 0, 0)] << endl;
+	// cout << "mref[indcomp(1, 0, 0)] = " << mref[indcomp(1, 0, 0)]<< endl;
       }
       else
       { // very inefficient ...

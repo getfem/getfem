@@ -208,7 +208,7 @@ namespace getfem
       void interpolation(const base_node &x, const base_matrix &G,
 			 const base_vector coeff, base_node &val) const;
       void interpolation_grad(const base_node &x, const base_matrix &G,
-			      const base_vector coeff, base_node &val) const;
+			      const base_vector coeff, base_matrix &val) const;
       void base_value(const base_node &x, base_tensor &t) const
       {
 	bgeot::multi_index mi(2);
