@@ -56,7 +56,7 @@ namespace gmm {
   struct using_gmres {};
   struct using_bicgstab {};
   
-  template <class Matrix1, class Precond> struct sa_local_cg {
+  template <typename Matrix1, typename Precond> struct sa_local_cg {
     typedef typename linalg_traits<Matrix1>::value_type value_type;
     typedef std::vector<value_type> vector_type;
 
@@ -65,7 +65,7 @@ namespace gmm {
       { cg(A, x, b, P, iter); }
   };
 
-  template <class Matrix1, class Precond> struct sa_local_gmres {
+  template <typename Matrix1, typename Precond> struct sa_local_gmres {
     typedef typename linalg_traits<Matrix1>::value_type value_type;
     typedef std::vector<value_type> vector_type;
 
@@ -74,7 +74,7 @@ namespace gmm {
       { gmres(A, x, b, P, 50, iter); }
   };
 
-  template <class Matrix1, class Precond> struct sa_local_bicgstab {
+  template <typename Matrix1, typename Precond> struct sa_local_bicgstab {
     typedef typename linalg_traits<Matrix1>::value_type value_type;
     typedef std::vector<value_type> vector_type;
 
@@ -92,7 +92,7 @@ namespace gmm {
    * class in the schwarz additive algorithm.
    */
   
-  template <class Matrix1, class Precond> struct sa_local_superlu {
+  template <typename Matrix1, typename Precond> struct sa_local_superlu {
     typedef typename linalg_traits<Matrix1>::value_type value_type;
     typedef std::vector<value_type> vector_type;
 
@@ -114,23 +114,53 @@ namespace gmm {
     typedef typename std::vector<value_type> vector_type;
 
     const Matrix1 *A;
-    const std::vector<Matrix2> *vB, *vAloc;
+    const std::vector<Matrix2> *vB;
+    std::vector<Matrix2> vAloc;
     mutable iteration iter;
     double residu;
     mutable size_type itebilan;
-    std::vector<vector_type> *gi, *fi;
-    const std::vector<Precond> *precond1;
-    bool superlu;
+    mutable std::vector<vector_type> gi, fi;
+    std::vector<Precond> precond1;
 
+    void init(const Matrix1 &A_, const std::vector<Matrix2> &vB_,
+	      iteration iter_, const Precond &P, double residu_);
+
+    schwadd_mat(void) {}
     schwadd_mat(const Matrix1 &A_, const std::vector<Matrix2> &vB_,
-		const std::vector<Matrix2> &vA_, iteration iter_,
-		double residu_, size_type itebilan_, 
-		std::vector<vector_type> &gi_, std::vector<vector_type> &fi_,
-		const std::vector<Precond> &precond_)
-      : A(&A_), vB(&vB_),  vAloc(&vA_), iter(iter_),
-	residu(residu_), itebilan(itebilan_), gi(&gi_), fi(&fi_),
-	precond1(&precond_) {}
+		iteration iter_, const Precond &P, double residu_)
+    { init(A_, vB_, iter_, P, residu_); }
   };
+
+  template <typename Matrix1, typename Matrix2, typename Precond,
+	    typename local_solver>
+  void schwadd_mat<Matrix1, Matrix2, Precond, local_solver>::init(
+       const Matrix1 &A_, const std::vector<Matrix2> &vB_,
+       iteration iter_, const Precond &P, double residu_) {
+
+    vB = &vB_; A = &A_; iter = iter_;
+    residu = residu_;
+    
+    size_type nb_sub = vB->size();
+    vAloc.resize(nb_sub);
+    gi.resize(nb_sub); fi.resize(nb_sub);
+    precond1.resize(nb_sub);
+    std::fill(precond1.begin(), precond1.end(), P);
+    itebilan = 0;
+    
+    for (size_type i = 0; i < nb_sub; ++i) {
+      Matrix2 Maux(mat_nrows((*vB)[i]), mat_ncols((*vB)[i])),
+	BT(mat_ncols((*vB)[i]), mat_nrows((*vB)[i]));
+      
+      gmm::copy(gmm::transposed((*vB)[i]), BT);
+      gmm::resize(vAloc[i], mat_nrows((*vB)[i]), mat_nrows((*vB)[i]));      
+      gmm::mult((*vB)[i], *A, Maux);
+      gmm::mult(Maux, BT, vAloc[i]);
+      precond1[i].build_with(vAloc[i]);
+      gmm::resize(fi[i], mat_nrows((*vB)[i]));
+      gmm::resize(gi[i], mat_nrows((*vB)[i]));
+    }
+  }
+  
 
   /* ******************************************************************** */
   /*		Additive Schwarz interfaced global solvers                */
@@ -194,34 +224,25 @@ namespace gmm {
     iter.set_rhsnorm(vect_norm2(f));
     if (iter.get_rhsnorm() == 0.0) { clear(uu); return 0; }
     iteration iter2 = iter; iter2.reduce_noisy();
+    // iter2.set_resmax(iter.get_resmax() / 100.0);
 
-    size_type nb_sub = vB.size(), nb_dof = f.size(), itebilan = 0;
-    std::vector<Matrix2> vAloc(nb_sub);
-    std::vector<vector_type> gi(nb_sub), fi(nb_sub);
-    std::vector<Precond> precond1(nb_sub, P);
+    schwadd_mat<Matrix1, Matrix2, Precond, local_solver>
+      SAM(A, vB, iter2, P, iter.get_resmax());
+
+    size_type nb_sub = vB.size(), nb_dof = f.size();
+    SAM.itebilan = 0;
     vector_type g(nb_dof), u(nb_dof);
     gmm::copy(uu, u);
 
     for (size_type i = 0; i < nb_sub; ++i) {
-      Matrix2 Maux(mat_nrows(vB[i]), mat_ncols(vB[i])),
-	BT(mat_ncols(vB[i]), mat_nrows(vB[i]));
-      
-      gmm::copy(gmm::transposed(vB[i]), BT);
-      gmm::resize(vAloc[i], mat_nrows(vB[i]), mat_nrows(vB[i]));      
-      gmm::mult(vB[i], A, Maux);
-      gmm::mult(Maux, BT, vAloc[i]);
-      precond1[i].build_with(vAloc[i]);
-      gmm::resize(fi[i], mat_nrows(vB[i]));
-      gmm::resize(gi[i], mat_nrows(vB[i]));
-      gmm::mult(vB[i], f, fi[i]);
+      gmm::mult(vB[i], f, SAM.fi[i]);
       iter2.init();
-      local_solver::solve(vAloc[i], gi[i], fi[i], precond1[i], iter2);
-      itebilan = std::max(itebilan, iter2.get_iteration());
-      gmm::mult(gmm::transposed(vB[i]), gi[i], g, g);
+      local_solver::solve(SAM.vAloc[i], SAM.gi[i], SAM.fi[i],
+			  SAM.precond1[i], iter2);
+      SAM.itebilan = std::max(SAM.itebilan, iter2.get_iteration());
+      gmm::mult(gmm::transposed(vB[i]), SAM.gi[i], g, g);
     }
 
-    schwadd_mat<Matrix1, Matrix2, Precond, local_solver>
-      SAM(A, vB, vAloc, iter2, iter.get_resmax(), itebilan, gi, fi, precond1);
     global_solver::solve(SAM, u, g, iter);
     gmm::copy(u, uu);
     return SAM.itebilan;
@@ -231,17 +252,16 @@ namespace gmm {
 	    typename Vector2, typename Vector3, typename local_solver>
   void mult(const schwadd_mat<Matrix1, Matrix2, Precond, local_solver> &M,
 	    const Vector2 &p, Vector3 &q) {
-
-    size_type itebilan = 0, nb_sub = M.fi->size();
+    size_type itebilan = 0;
     mult(*(M.A), p, q);
-    globaltolocal(q, *(M.fi), *(M.vB));
-    for (size_type i = 0; i < nb_sub; ++i) {
+    globaltolocal(q, M.fi, *(M.vB));
+    for (size_type i = 0; i < M.fi.size(); ++i) {
       M.iter.init();
-      local_solver::solve((*(M.vAloc))[i], (*(M.gi))[i],
-			  (*(M.fi))[i],(*(M.precond1))[i],M.iter);
+      local_solver::solve((M.vAloc)[i], (M.gi)[i],
+			  (M.fi)[i],(M.precond1)[i],M.iter);
       itebilan = std::max(itebilan, M.iter.get_iteration());
     }
-    localtoglobal(*(M.gi), q, *(M.vB));
+    localtoglobal(M.gi, q, *(M.vB));
     cout << "itebloc = " << itebilan << endl;
     M.itebilan += itebilan;
     M.iter.set_resmax((M.iter.get_resmax() + M.residu) * 0.5);
