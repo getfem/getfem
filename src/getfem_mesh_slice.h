@@ -187,6 +187,7 @@ namespace getfem {
     virtual void copy(size_type cv, base_vector& coeff) const = 0;
     virtual scalar_type maxval() const = 0;
     virtual ~mesh_slice_cv_dof_data_base() {}
+    virtual mesh_slice_cv_dof_data_base* clone() const = 0;
   };
 
   /**
@@ -195,7 +196,7 @@ namespace getfem {
      before the slicing 
   */
   template<typename VEC> class mesh_slice_cv_dof_data : public mesh_slice_cv_dof_data_base {
-    const VEC &u;
+    const VEC u;
   public:
     mesh_slice_cv_dof_data(const mesh_fem &mf_, VEC &u_) : u(u_) { pmf = &mf_; }
     virtual void copy(size_type cv, base_vector& coeff) const {
@@ -206,6 +207,9 @@ namespace getfem {
         *out = u[*it];
     }
     scalar_type maxval() const { return bgeot::vect_norminf(u); }
+    virtual mesh_slice_cv_dof_data_base* clone() const {
+      return new mesh_slice_cv_dof_data<VEC>(*this);
+    }
   };
   
   /**
@@ -365,7 +369,7 @@ namespace getfem {
      extract an isosurface
   */
   class slicer_isovalues : public slicer_volume {
-    const mesh_slice_cv_dof_data_base& mfU;
+    std::auto_ptr<const mesh_slice_cv_dof_data_base> mfU;
     scalar_type val;
     scalar_type val_scaling; /* = max(abs(U)) */
     std::vector<scalar_type> Uval;
@@ -380,9 +384,9 @@ namespace getfem {
   public:
     /* orient = -1: u(x) <= val, 0: u(x) == val, +1: u(x) >= val */
     slicer_isovalues(const mesh_slice_cv_dof_data_base& mfU_, scalar_type val_, int orient_) : 
-      slicer_volume(orient_), mfU(mfU_), val(val_) {
-      if (mfU.pmf->get_qdim() != 1) DAL_THROW(dal::failure_error, "can't compute isovalues of a vector field !");
-      val_scaling = mfU.maxval();
+      slicer_volume(orient_), mfU(mfU_.clone()), val(val_) {
+      if (mfU->pmf->get_qdim() != 1) DAL_THROW(dal::failure_error, "can't compute isovalues of a vector field !");
+      val_scaling = mfU->maxval();
     }
   };
 

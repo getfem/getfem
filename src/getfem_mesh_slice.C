@@ -128,21 +128,24 @@ namespace getfem {
     Uval.resize(nodes.size());
     base_vector coeff;
     base_matrix G;
-    pfem pf = mfU.pmf->fem_of_element(cv);
+    pfem pf = mfU->pmf->fem_of_element(cv);
     _fem_precomp fprecomp;
-    if (pf->need_G())transfert_to_G(G, mfU.pmf->linked_mesh().points_of_convex(cv));
+    if (pf->need_G())transfert_to_G(G, mfU->pmf->linked_mesh().points_of_convex(cv));
     for (size_type i=0; i < nodes.size(); ++i) refpts[i] = nodes[i].pt_ref;
     fem_precomp_not_stored(pf, &refpts, fprecomp);
-    mfU.copy(cv, coeff);
+    mfU->copy(cv, coeff);
+    //cerr << "cv=" << cv << ", val=" << val << ", coeff=" << coeff << endl;
     base_node v(1); 
     for (size_type i=0; i < nodes.size(); ++i) {
       v[0] = 0;
       pf->interpolation(&fprecomp, i,
-			G, mfU.pmf->linked_mesh().trans_of_convex(cv),
-			coeff, v, mfU.pmf->get_qdim());
+			G, mfU->pmf->linked_mesh().trans_of_convex(cv),
+			coeff, v, mfU->pmf->get_qdim());
       Uval[i] = v[0];
       pt_bin[i] = (dal::abs(Uval[i] - val) < EPS * val_scaling);
-      pt_in[i] = (Uval[i] - val < 0); if (orient>0) pt_in[i] = !pt_in[i];
+      pt_in[i] = (Uval[i] - val < 0); if (orient>0) pt_in[i] = !pt_in[i]; 
+      pt_in[i] = pt_in[i] || pt_bin[i];
+      //cerr << "cv=" << cv << ", node["<< i << "]=" << nodes[i].pt << ", Uval[i]=" << Uval[i] << ", pt_in[i]=" << pt_in[i] << ", pt_bin[i]=" << pt_bin[i] << endl;
     }
   }
 
@@ -655,6 +658,7 @@ namespace getfem {
       size_type nb = gti.points_in_convex(m.convex(cv), pgt, ptab, itab);
       if (nb) {
 	for (size_type i=0; i < nb; ++i) {
+	  cerr << "point " << itab[i] << "(" << pts[itab[i]] << ") trouve dans le convex " << cv << " [pt_ref=" << ptab[i] << "]\n";
 	  cv_nodes.push_back(slice_node(pts[itab[i]],ptab[i])); cv_nodes.back().faces=0;
 	  cv_simplexes.push_back(slice_simplex(1)); cv_simplexes.back().inodes[0] = cv_nodes.size()-1;
 	}
