@@ -292,12 +292,13 @@ void lap_pb::init(void)
        << getfem::name_of_fem(pfprinc) << endl;
   cout << "Name of principal integration method : "
        << getfem::name_of_int_method(ppi) << endl;
-  if (pfprinc->is_polynomial()) {
-    cout << "basis of the principal finite element method : " << endl;
-    for (size_type l = 0; l < pfprinc->nb_dof(); ++l) {
-      cout << "base " << l << " : " << (((getfem::ppolyfem)(pfprinc))->base())[l] << endl;
-    }
-  }
+//   if (pfprinc->is_polynomial()) {
+//     cout << "basis of the principal finite element method : " << endl;
+//     for (size_type l = 0; l < pfprinc->nb_dof(); ++l) {
+//       cout << "base " << l << " : " 
+//            << (((getfem::ppolyfem)(pfprinc))->base())[l] << endl;
+//     }
+//   }
   cout << "Selecting Neumann and Dirichlet boundaries\n";
   nn = mesh.convex_index(N);
   base_vector un;
@@ -381,10 +382,14 @@ void lap_pb::assemble(void)
   // nn = mef.dof_on_boundary(0);
   // cout << "Number of Dirichlet nodes : " << nn.card() << endl;
   // cout << "Dirichlet nodes : " << nn << endl;
+  cout << "nbdof = " << nb_dof << endl;
   ST = linalg_vector(nb_dof);
+  cout << "Here0\n";
   for (size_type i = 0; i < nb_dof; ++i)
     ST[i] = sol_u(mef.point_of_dof(i));
+  cout << "Here1\n";
   getfem::assembling_Dirichlet_condition(SM, B, mef, 0, ST);
+  cout << "Here2\n";
 
 //   getfem::add_Dirichlet_dof(SM, B, mef, 0, sol_u(mef.point_of_dof(0)));
 //   cout << "Adding Dirichlet condition on dof 0 : " << mef.point_of_dof(0) << endl;
