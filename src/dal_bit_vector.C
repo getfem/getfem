@@ -63,10 +63,17 @@ namespace dal
 
   bit_vector::size_type bit_vector::card(void) const {
     if (!icard_valid) {
-      const_iterator itb = begin(), ite = end();
+      bit_container::const_iterator itb = bit_container::begin() + ifirst_true/WD_BIT, ite = bit_container::end();
+      bit_support x;
+      icard = 0;
+      for (; itb != ite; ++itb) { 
+        if ((x = *itb)) /* fast count of the nb of bits of a integer (faster than shifts) */  
+          do icard++; while ((x &= x-1));
+      }
+      /*      const_iterator itb = begin(), ite = end();
       icard = 0;
       while (itb != ite) { if (*itb) ++icard; ++itb; }
-      icard_valid = true;
+      icard_valid = true;*/
     }
     return icard;
   }
