@@ -779,6 +779,21 @@ To solve linear systems.
 
 The solver \cpp{gmm::constrained_cg(A, C, X, B, PS, PR, iter);} solve a system with linear constaints, \cpp{C} is a matrix which represents the constraints.
 
+\subsubsection{various preconditioners}
+
+\index{GMM!gmm::diagonal_precond}
+\index{GMM!gmm::cholesky_precond}
+\index{GMM!gmm::mr_approx_inverse_precond}
+\begin{cppcode}
+  gmm::identity_matrix P;   // No preconditioner 
+  gmm::diagonal_precond<sparse_matrix_type> P(SM); // diagonal preconditioner 
+  gmm::cholesky_precond<sparse_matrix_type> P(SM); // incomplete (level 0) cholesky 
+                                                      preconditioner 
+  gmm::mr_approx_inverse_precond<sparse_matrix_type> P(SM, 10, 10E-17);
+                                                   // preconditioner based on MR
+                                                   // iterations
+\end{cppcode}
+
 \subsection{deeper inside GMM}
 
 \subsubsection{iterators on vectors and matrices}
