@@ -35,19 +35,22 @@
 #include <limits.h>
 #include <unistd.h>
 #include <time.h>
+#ifdef HAVE_SYS_TIMES
 #include <sys/times.h>
+#endif
 
 namespace ftool
 {
 
-#ifndef CLK_TCK
-#define TTCLK (double(CLOCKS_PER_SEC) / 10000.0)
-#else
-#define TTCLK double(CLK_TCK)
-#endif
-
+#ifdef HAVE_SYS_TIMES
   double uclock_sec(void)
-  { tms t; times(&t); return double(t.tms_utime) / TTCLK; }
+  { static double ttclk = 0.;
+    if (ttclk == 0.) ttclk = sysconf(_SC_CLK_TCK);
+    tms t; times(&t); return double(t.tms_utime) / ttclk; }
+#else
+  double uclock_sec(void)
+  { return clock()/CLOCKS_PER_SEC; }
+#endif
 
   bool read_untill(std::istream &ist, const char *st)
   {

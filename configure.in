@@ -194,6 +194,8 @@ int main() {
 fi;
 dnl -----------------------------END QD TESTS--------------------------------
 
+AC_CHECK_HEADERS(sys/times.h)
+
 BUILDER=`whoami`
 AC_SUBST(BUILDER)
 BUILDDATE=`date +%D,%H:%M:%S`
