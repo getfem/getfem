@@ -55,65 +55,66 @@
 //=======================================================================
 
 
-// to be unified with cg, preconditionning does not work
+//  preconditionning does not work
 
 #ifndef __GMM_SOLVER_CCG_H
 #define __GMM_SOLVER_CCG_H
 
 namespace gmm {
 
-template <class CMatrix, class CINVMatrix, class Matps, class VectorX>
-void pseudo_inverse(const CMatrix &C, CINVMatrix &CINV, const Matps& PS,
-		    VectorX&)
-{
-  // compute the pseudo inverse of the non-square matrix C such
-  // CINV = inv(C * trans(C)) * C.
-  // based on a conjugate gradient method.
-
-  // optimisable : copie de la ligne, precalcul de C * trans(C).
-
-  typedef VectorX TmpVec;
-  typedef size_t size_type;
-  typedef typename linalg_traits<VectorX>::value_type value_type;
-
-  size_type nr = mat_nrows(C), nc = mat_ncols(C);
-
-  TmpVec d(nr), e(nr), l(nc), p(nr), q(nr), r(nr);
-  value_type rho, rho_1, alpha;
-  clear(d);
-  clear(CINV);
-
-  for (size_type i = 0; i < nr; ++i) {
-    d[i] = 1.0; rho = 1.0;
-    clear(e);
-    copy(d, r);
-    copy(d, p);
+  template <class CMatrix, class CINVMatrix, class Matps, class VectorX>
+  void pseudo_inverse(const CMatrix &C, CINVMatrix &CINV, const Matps& PS,
+		      VectorX&) {
+    // compute the pseudo inverse of the non-square matrix C such
+    // CINV = inv(C * trans(C)) * C.
+    // based on a conjugate gradient method.
     
-    while (rho >= 1E-38) /* conjugate gradient to compute e               */
-    {                    /* which is the i nd row of inv(C * trans(C))    */
-      mult(gmm::transposed(C), p, l);
-      mult(C, l, q);	  
-      alpha = rho / vect_sp(p, q);
-      add(scaled(p, alpha), e);  
-      add(scaled(q, -alpha), r); 
-      rho_1 = rho;
-      rho = vect_sp(r, r);
-      add(r, scaled(p, rho / rho_1), p);
+    // optimisable : copie de la ligne, precalcul de C * trans(C).
+    
+    typedef VectorX TmpVec;
+    typedef size_t size_type;
+    typedef typename linalg_traits<VectorX>::value_type value_type;
+    
+    size_type nr = mat_nrows(C), nc = mat_ncols(C);
+    
+    TmpVec d(nr), e(nr), l(nc), p(nr), q(nr), r(nr);
+    value_type rho, rho_1, alpha;
+    clear(d);
+    clear(CINV);
+    
+    for (size_type i = 0; i < nr; ++i) {
+      d[i] = 1.0; rho = 1.0;
+      clear(e);
+      copy(d, r);
+      copy(d, p);
+      
+      while (rho >= 1E-38) { /* conjugate gradient to compute e             */
+	                     /* which is the i nd row of inv(C * trans(C))  */
+	mult(gmm::transposed(C), p, l);
+	mult(C, l, q);	  
+	alpha = rho / vect_sp(p, q);
+	add(scaled(p, alpha), e);  
+	add(scaled(q, -alpha), r); 
+	rho_1 = rho;
+	rho = vect_sp(r, r);
+	add(r, scaled(p, rho / rho_1), p);
+      }
+      
+      mult(transposed(C), e, l); /* l is the i nd row of CINV     */
+      cout << "l = " << l << endl;
+      clean(l, 1E-15);
+      copy(l, mat_row(CINV, i));
+      
+      d[i] = 0.0;
     }
-    
-    mult(transposed(C), e, l); /* l is the i nd row of CINV     */
-    cout << "l = " << l << endl;
-    clean(l, 1E-15);
-    copy(l, mat_row(CINV, i));
-
-   d[i] = 0.0;
   }
-}
+  
+  // Compute the minimum of 1/2((Ax).x) - bx under the contraint Cx <= f
 
   template < class Matrix, class CMatrix, class Matps, class VectorX,
-	     class VectorB, class Preconditioner >
+	     class VectorB, class VectorF, class Preconditioner >
   void constrained_cg(const Matrix& A, const CMatrix& C, VectorX& x,
-		      const VectorB& b, const Matps& PS,
+		      const VectorB& b, const VectorF& f,const Matps& PS,
 		      const Preconditioner& M, iteration &iter) {
     typedef typename temporary_plain_vector<VectorX>::vector_type TmpVec;
     typedef typename temporary_vector<typename
@@ -143,7 +144,7 @@ void pseudo_inverse(const CMatrix &C, CINVMatrix &CINV, const Matps& PS,
       mult(M, r, z); // ...
       bool transition = false;
       for (size_type i = 0; i < mat_nrows(C); ++i) {
-	value_type al = vect_sp(mat_row(C, i), x);
+	value_type al = vect_sp(mat_row(C, i), x) - f[i];
 	if (al >= -1.0E-15) {
 	  if (!satured[i]) { satured[i] = true; transition = true; }
 	  value_type bb = vect_sp(mat_row(CINV, i), z);
@@ -183,9 +184,9 @@ void pseudo_inverse(const CMatrix &C, CINVMatrix &CINV, const Matps& PS,
       lambda = rho / vect_sp(PS, q, p);
       for (size_type i = 0; i < mat_nrows(C); ++i)
 	if (!satured[i]) {
-	  value_type bb = vect_sp(mat_row(C, i), p);
+	  value_type bb = vect_sp(mat_row(C, i), p) - f[i];
 	  if (bb > 0.0)
-	    lambda = std::min(lambda, -vect_sp(mat_row(C, i), x) / bb);
+	    lambda = std::min(lambda, (f[i]-vect_sp(mat_row(C, i), x)) / bb);
 	}
       add(x, scaled(p, lambda), x);
       add(memox, scaled(x, -1.0), memox);

@@ -72,6 +72,9 @@ namespace gmm {
     std::vector<vector_type> gi(nb_sub);
     std::vector<vector_type> fi(nb_sub);
 
+    iter.set_rhsnorm(vect_norm2(f));
+    if (iter.get_rhsnorm() == 0.0) { clear(x); return 0; }
+
     size_type ms = ml1.size();
 
     for (size_type i = 0; i < nb_sub; ++i) {
@@ -169,6 +172,82 @@ namespace gmm {
       }
     }
   }
+
+  template <class Matrix1, class Matrix2, class Matrix3, class Matrix4,
+	    class Matrix5, class Matrix6, class SUBI, class Vector2,
+	    class Vector3, class Vector4>
+  int schwarz_with_constraints(const Matrix1 &A,
+			       Vector3 &u, const Matrix4 &CO,
+			       const std::vector<Matrix2> &ml1,
+			       const std::vector<Matrix6> &mco1, 
+			       const std::vector<Matrix3> &ml2,
+			       const std::vector<Matrix5> &mco2, 
+			       const std::vector<SUBI> &cor,
+			       const Vector2 &f,
+			       const Vector4 &cof,
+			       iteration &iter) {
+    
+    typedef typename linalg_traits<Matrix2>::value_type value_type;
+    typedef typename plain_vector_type<value_type>::vector_type vector_type;
+    
+    size_type nb_sub = ml1.size() + ml2.size();
+    size_t itebilan = 0;
+    std::vector<vector_type> gi(nb_sub);
+    std::vector<vector_type> fi(nb_sub);
+    std::vector<vector_type> cofi(nb_sub);
+    std::vector<vector_type> wi(nb_sub);
+    iter.set_rhsnorm(vect_norm2(f));
+
+    for (size_type i = 0; i < nb_sub; ++i) {
+      size_type k = i < ms ? mat_nrows(ml1[i]) : mat_nrows(ml2[i-ms]);
+      cofi[i] = vector_type(k); fi[i] = vector_type(k);
+      gi[i] = vector_type(k);   wi[i] = vector_type(k);
+    }
+
+    vector_type w(vect_size(u));
+    global_to_local(f, fi, cor);
+    global_to_local(cof, cofi, cor); // pas bon
+
+    for (;;) {
+
+      gmm::mult(A, u, w);
+      global_to_local(w, wi, cor);
+      
+      for (size_type i = 0; i < nb_sub; ++i) {
+	gmm::add(fi[i], gmm::scaled(wi[i], -1.0), wi[i]);
+	clear(gi[i]);
+      }
+      
+      iteration iter2 = iter;
+      iter2.reduce_noisy();
+      
+      for (size_type i = 0; i < ms; ++i) {
+	iter2.init();
+	constrained_cg(ml1[i], mco1[i], gi[i], fi[i], cofi[i],
+		       identity_matrix(), identity_matrix(), iter2);
+	itebilan = std::max(itebilan, iter2.get_iteration());
+      }
+      
+      for (size_type i = 0; i < ml2.size(); ++i) {
+	iter2.init();
+	constrained_cg(ml2[i], mco2[i], gi[i+ms], fi[i+ms], cofi[i+ms],
+		       identity_matrix(), identity_matrix(), iter2);
+	itebilan = std::max(itebilan, iter2.get_iteration());
+      }
+      
+      
+    }
+
+    return itebilan;
+  }
+
+
+
+
+
+
+
+
   
 }
 
