@@ -214,7 +214,7 @@ namespace getfem
     void pre_tensors_for_linear_trans(bool volumic) {
 
       if ((volumic && volume_computed) || (!volumic && faces_computed)) return;
-      scalar_type exectime = ftool::uclock_sec();
+      // scalar_type exectime = ftool::uclock_sec();
 
       bgeot::multi_index mi(pme->mi.size()), sizes = pme->mi;
       bgeot::multi_index::iterator mit = sizes.begin(), mite = sizes.end();
@@ -236,36 +236,54 @@ namespace getfem
 	std::fill(mref.begin()+1, mref.end(), aux);
       }
 
-      if (volumic) cout << "precompute volumic\n"; else cout << "precompute faces\n";
-
       if (is_ppi)
       {
-	base_poly P(dim, 0), Q;
+	base_poly P(dim, 0), Q(dim, 0), R(dim, 0);
+	size_type old_ind = size_type(-1), ind; 
 	for ( ; !mi.finished(sizes); mi.incrementation(sizes)) {
-	  P.one();
+	  
 	  mat_elem_type::const_iterator it = pme->begin(), ite = pme->end(); 
 	  mit = mi.begin();
-	  
-	  for (; it != ite; ++it) {
-	    size_type ind = *mit; ++mit;
 
-	    if ((*it).pfi->target_dim() > 1)
-	      { ind += (*it).pfi->nb_base() * (*mit); ++mit; }
-	    Q = ((ppolyfem)((*it).pfi))->base()[ind];
+	  ind = *mit; ++mit;
 
-	    switch ((*it).t) {
-	    case GETFEM__GRAD    : Q.derivative(*mit); ++mit; break;
-	    case GETFEM__HESSIAN :
-	      Q.derivative(*mit % dim); Q.derivative(*mit / dim);
-	      ++mit; break;
-	    case GETFEM__BASE : break;
-	    }
-	    P *= Q;
+	  if ((*it).pfi->target_dim() > 1)
+	    { ind += (*it).pfi->nb_base() * (*mit); ++mit; }
+	  Q = ((ppolyfem)((*it).pfi))->base()[ind];
 
+	  switch ((*it).t) {
+	  case GETFEM__GRAD    : Q.derivative(*mit); ++mit; break;
+	  case GETFEM__HESSIAN :
+	    Q.derivative(*mit % dim); Q.derivative(*mit / dim);
+	    ++mit; break;
+	  case GETFEM__BASE : break;
 	  }
-	  if (volumic) mref[0](mi) = ppi->int_poly(P);
+	  ++it;
+
+	  if (it != ite && *mit != old_ind) {
+	    old_ind = *mit; 
+	    P.one();
+	    for (; it != ite; ++it) {
+	      ind = *mit; ++mit;
+	      
+	      if ((*it).pfi->target_dim() > 1)
+		{ ind += (*it).pfi->nb_base() * (*mit); ++mit; }
+	      R = ((ppolyfem)((*it).pfi))->base()[ind];
+	      
+	      switch ((*it).t) {
+	      case GETFEM__GRAD    : R.derivative(*mit); ++mit; break;
+	      case GETFEM__HESSIAN :
+		R.derivative(*mit % dim); R.derivative(*mit / dim);
+		++mit; break;
+	      case GETFEM__BASE : break;
+	      }
+	      P *= R;   
+	    }
+	  }
+	  R = P * Q;
+	  if (volumic) mref[0](mi) = ppi->int_poly(R);
 	  for (f = 0; f < nbf && !volumic; ++f)
-	    mref[f+1](mi) = ppi->int_poly_on_face(P, f);
+	    mref[f+1](mi) = ppi->int_poly_on_face(R, f);
 	}
       }
       else { 
@@ -279,8 +297,8 @@ namespace getfem
 	  add_elem(mref[ind_l], ip, 1.0, 0, first, false); first = false;
 	}
       }
-      cout << "precompute Mat elem computation time : "
-	   << ftool::uclock_sec() - exectime << endl;
+      // cout << "precompute Mat elem computation time : "
+      //   << ftool::uclock_sec() - exectime << endl;
     }
 
 
