@@ -434,14 +434,14 @@ namespace getfem {
     std::vector<unsigned> pmf_cell_type;
     std::fstream real_os;
     dim_type dim_, connections_dim;
-    
+    std::string series_name;
     struct log_names {
       unsigned count;
       std::list<std::string> names;
       log_names() : count(0) {}
       void add(const std::string &s) { ++count; names.push_back(s); }
     };
-    enum { MESHES, SCALAR_FIELDS, VECTOR_FIELDS, TENSOR_FIELDS, NB_LOG };
+    enum { MESHES, SCALAR_FIELDS, VECTOR_FIELDS, TENSOR_FIELDS, SERIES_OBJECTS, NB_LOG };
     std::vector<log_names> log;
     enum { EMPTY, HEADER_WRITTEN, STRUCTURE_WRITTEN } state;
   public:
@@ -456,6 +456,8 @@ namespace getfem {
        you can put whatever you want -- call this before any write_dataset or write_mesh */
     void set_header(const std::string& s);
     void write_mesh();
+    void begin_series(const char *name = 0);
+    void end_series();
     template<class VECT> void write_point_data(const getfem::mesh_fem &mf, const VECT& U0, const std::string& name);
     template<class VECT> void write_sliced_point_data(const VECT& Uslice, const std::string& name);
     template<class VECT> void write_cell_data(const VECT& U, const std::string& name); 
@@ -522,6 +524,7 @@ namespace getfem {
   template<class VECT> void dx_export::write_dataset_(const VECT& U, const std::string& name, bool cell_data) {
     write_mesh();
     size_type nb_val = 0;
+    log[SERIES_OBJECTS].add(name);
     if (cell_data) {
       nb_val = psl ? psl->linked_mesh().convex_index().card() 
         : pmf->linked_mesh().convex_index().card(); 

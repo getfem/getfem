@@ -386,8 +386,10 @@ namespace getfem
   }
 
   dx_export::~dx_export() { 
-    if (state != EMPTY) 
+    if (state != EMPTY) {
+      end_series();
       os << "\n# --end of getfem export, " << std::setw(8) << log[MESHES].count << "\nend\n"; 
+    }
   }
 
   void dx_export::init() {    
@@ -454,6 +456,8 @@ namespace getfem
       pfem classical_pf1 = discontinuous ? classical_discontinuous_fem(pgt, 1) : classical_fem(pgt, 1);
       pmf->set_finite_element(cv, classical_pf1);
     }
+    pmf_dof_used.add(0, pmf->nb_dof());
+    connections_dim = pmf->nb_dof_of_element(m.convex_index().first_true());
     log[MESHES].add(std::string(name));
   }
 
@@ -463,6 +467,24 @@ namespace getfem
     pmf.reset(new mesh_fem(const_cast<getfem_mesh&>(m),1));
     pmf->set_classical_finite_element(1, dim_type(-1));
     exporting(*pmf, name);
+  }
+
+  void dx_export::end_series() {
+    if (series_name.length()) {
+      os << "\nobject  \"" << series_name << "\" class series\n";
+      size_type count = 0;
+      for (std::list<std::string>::const_iterator it=log[SERIES_OBJECTS].names.begin();
+	   it != log[SERIES_OBJECTS].names.end(); ++it, ++count)
+	os << "  member  " << count << " \"" << (*it) << "\"\n";
+    }
+    series_name.clear();
+    log[SERIES_OBJECTS].count = 0; log[SERIES_OBJECTS].names.clear();
+  }
+
+  void dx_export::begin_series(const char *name) {
+    end_series();
+    if (name) series_name = std::string(name);
+    else series_name = std::string("getfemseries");
   }
 
   void dx_export::set_header(const std::string& s)
@@ -506,7 +528,7 @@ namespace getfem
 
   void dx_export::write_mesh() {
     if (psl) write_mesh_structure_from_slice();
-    /*else write_mesh_structure_from_mesh_fem();*/
+    else write_mesh_structure_from_mesh_fem();
   }
   /* export the slice data as an unstructured mesh composed of simplexes */
   void dx_export::write_mesh_structure_from_slice() {
@@ -570,13 +592,13 @@ namespace getfem
     }
 
     os << "object \"" << name_of_conn_array() << "\" class array type int rank 1 shape " 
-       << int(connections_dim+1)
+       << int(connections_dim)
        << " items " << pmf->convex_index().card();
     if (!ascii) os << " " << endianness() << " binary";
     os << " data follows\n";
 
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
-      for (size_type i=0; i < connections_dim+1; ++i)
+      for (size_type i=0; i < connections_dim; ++i)
         write_val(int(pmf->ind_dof_of_element(cv)[i]));
       write_separ();
     }
