@@ -72,7 +72,7 @@ else
   $extmatcom = '.mexaxp ';
 }
 
-print MAKEFILE "CPLUS = \$(COMP) \$(OPTIONS_STANDARD) \$(OPTIONS_OPTIMIZE) \n";
+ print MAKEFILE "CPLUS = \$(COMP) \$(OPTIONS_STANDARD) \$(OPTIONS_OPTIMIZE) \n";
 print MAKEFILE "CPLUSDEBUG = \$(COMP) \$(OPTIONS_STANDARD)";
 print MAKEFILE " \$(OPTIONS_DEBUG) \n";
 print MAKEFILE "CPLUSOPTDEBUG = \$(COMP) \$(OPTIONS_STANDARD)";
@@ -95,7 +95,7 @@ while($listeo)
   print MAKEFILE " sources\/", $fi;
 }
 
-print MAKEFILE "\n\n\n", "all : \$(lib_objects)\n\n";
+print MAKEFILE "\n\n\n", "all : \$(GETFEM_LIB)\n\n";
 
 print MAKEFILE "\n\n", '# Dependencies : ', "\n";
 print MAKEFILE `bin/include_dependencies include`;
