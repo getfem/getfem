@@ -14,8 +14,8 @@ FRICTION_COEF = 0.0;    % Friction coefficient.
 PG = 9810; 		% gravitation constante (on earth) (mm/s^2).
 %PG = 1000000; 		% gravitation constante (on jupiter !) (mm/s^2).
 RHO = 6e-6;     	% "realistic" density for steel
-T = 0.1;
-DT = 0.00005;            % Time step
+T = 0.2;
+DT = 0.0003;            % Time step
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
@@ -37,7 +37,7 @@ THETA = 1.0;
 BETA = 1.0;
 GAMMA=0.5;
 RESTIT = 1.0;           % Restitution coefficient for Paoli-Schatzman scheme
-NOCONTACT_MASS = 1;     % Suppress or not the mass of contact nodes
+NOCONTACT_MASS = 0;     % Suppress or not the mass of contact nodes
 PERIODICITY=0;          % Periodic condition
 DT_ADAPT = 0;           % Time step adaptation regarding the energy
 R = 100.0;              % Augmentation parameter

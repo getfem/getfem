@@ -582,8 +582,8 @@ void friction_problem::solve(void) {
       gmm::add(gmm::scaled(V0, -1), V1);
 
       if (scheme == 7) {
-	gmm::mult(BN, V0, UN);
-	gmm::mult_add(BN, V1, UN);
+	gmm::mult(BN, V1, UN);
+	gmm::mult_add(BN, V0, UN);
 	for (size_type i = 0; i < gmm::mat_nrows(BN); ++i)
 	  if (LN1[i] < -1E-13) UN[i] = -UN[i] / BBT(i,i);
 	  else UN[i] = 0.;
