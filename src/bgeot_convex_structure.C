@@ -87,7 +87,7 @@ namespace bgeot
   size_t number_of_convex_structure(pconvex_structure cvs)
   { init_tab(); return _numeration->search(cvs); }
 
-  STD_NEEDED ostream &operator <<(STD_NEEDED ostream &o, const convex_structure &cv)
+  std::ostream &operator <<(std::ostream &o, const convex_structure &cv)
   {
     o << "convex structure of dimension " << int(cv.dim()) << " with "
       << cv.nb_points() << " points and " << cv.nb_faces() << " faces " << endl;
@@ -416,7 +416,7 @@ namespace bgeot
   /* read-write convex structures to files.                               */
   /* ******************************************************************** */
 
-  void write_convex_structures_to_file(STD_NEEDED ostream &ost)
+  void write_convex_structures_to_file(std::ostream &ost)
   {
     int i;
 
@@ -450,7 +450,7 @@ namespace bgeot
 
   }
 
-  int read_convex_structures_from_file(STD_NEEDED istream &ist,
+  int read_convex_structures_from_file(std::istream &ist,
 			dal::dynamic_array<pconvex_structure> &tab)
   {
     bool te = false, please_get = true; bool error = false;
@@ -512,7 +512,7 @@ namespace bgeot
 
     if (error)
     {
-      STD_NEEDED cerr << "BGEOT_CONVEX : Warning, file not valid." << endl;
+      cerr << "BGEOT_CONVEX : Warning, file not valid." << endl;
       return -1;
     }
     return 0;

@@ -332,14 +332,15 @@ namespace dal
     return *this;
   }
 
-  template<class T, unsigned char pks> dynamic_array<T,pks>::const_reference
-    dynamic_array<T,pks>::operator [](size_type ii) const { 
+  template<class T, unsigned char pks> 
+    typename dynamic_array<T,pks>::const_reference
+      dynamic_array<T,pks>::operator [](size_type ii) const { 
     static T *f = NULL;
     if (f == NULL) { f = new T(); }
     return (ii<last_ind) ? (array[ii>>pks])[ii&_DNAMPKS_] : *f;
   }
 
-  template<class T, unsigned char pks> dynamic_array<T,pks>::reference
+  template<class T, unsigned char pks> typename dynamic_array<T,pks>::reference
     dynamic_array<T,pks>::operator [](size_type ii)
   {
     if (ii >= last_accessed)

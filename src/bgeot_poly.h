@@ -391,7 +391,7 @@ namespace bgeot
 
 
   /// Print P to the output stream o. for instance cout $<<$ P;
-  template<class T>  STD_NEEDED ostream &operator <<(STD_NEEDED ostream &o,
+  template<class T>  std::ostream &operator <<(std::ostream &o,
 						     const polynomial<T>& P)
   { 
     bool first = true; size_type n = 0;

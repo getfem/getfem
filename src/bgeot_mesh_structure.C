@@ -98,7 +98,7 @@ namespace bgeot
 
   void mesh_structure::sup_convex(size_type ic)
   {
-    // STD_NEEDED cout << "sup convex" << ic << " !! " << endl;
+    // cout << "sup convex" << ic << " !! " << endl;
     mesh_convex_structure *p = &(convex_tab[ic]);
     short_type nb = p->cstruct->nb_points();
     mesh_link_ct::iterator ipl = point_links.begin(); ipl += p->pts;
@@ -145,26 +145,26 @@ namespace bgeot
 
   void mesh_structure::add_faces_of_convex(size_type ic)
   {
-    // STD_NEEDED cout << "debut de add_faces(" << ic << ")" << endl;
-    // write_to_file(STD_NEEDED cout); 
+    // cout << "debut de add_faces(" << ic << ")" << endl;
+    // write_to_file(cout); 
     pconvex_structure ps = structure_of_convex(ic);
     for (short_type iff = 0; iff < ps->nb_faces(); ++iff)
       add_convex( (ps->faces_structure())[iff],
 		  ind_points_of_face_of_convex(ic, iff).begin());
-    // STD_NEEDED cout << "fin de add_faces " << endl;
-    // write_to_file(STD_NEEDED cout); getchar();
+    // cout << "fin de add_faces " << endl;
+    // write_to_file(cout); getchar();
   }
     
   void mesh_structure::to_faces(dim_type n)
   {
-    // STD_NEEDED cout << "debut de to_faces(" << int(n) << ")" << endl;
+    // cout << "debut de to_faces(" << int(n) << ")" << endl;
     mesh_convex_ct::tas_iterator b = convex_tab.tas_begin(),
                                  e = convex_tab.tas_end();
     for ( ; b != e; ++b)
       if ((*b).cstruct->dim() == n)
 	{ add_faces_of_convex(b.index()); sup_convex(b.index()); }
-    // STD_NEEDED cout << "fin de to_faces " << endl;
-    // write_to_file(STD_NEEDED cout); getchar();
+    // cout << "fin de to_faces " << endl;
+    // write_to_file(cout); getchar();
   }
 
   void mesh_structure::to_edges(void)
@@ -252,11 +252,11 @@ namespace bgeot
 
   void mesh_structure::stat(void)
   {
-    STD_NEEDED cout << "mesh structure with " << nb_convex() << " valid convex, "
+    cout << "mesh structure with " << nb_convex() << " valid convex, "
 	 << "for a total memory size of " << memsize() << " bytes.\n";
   }
 
-  int mesh_structure::read_from_file(STD_NEEDED istream &ist)
+  int mesh_structure::read_from_file(std::istream &ist)
   {
     char tmp[100]; 
     bool tend = false;
@@ -283,7 +283,7 @@ namespace bgeot
         ic = atoi(tmp);
 	if (ncv.is_in(ic))
 	{
-	  STD_NEEDED cerr << "CVMH : Fatal Error, negativ index or two convex with"
+	  cerr << "CVMH : Fatal Error, negativ index or two convex with"
 	       << "the same index. loading aborted" << endl;
 	  return -1;
 	}
@@ -301,7 +301,7 @@ namespace bgeot
 	}
       }
       else
-      { STD_NEEDED cerr << "CVMH : Syntax error reading mesh file" << endl; return -1; }
+      { cerr << "CVMH : Syntax error reading mesh file" << endl; return -1; }
     }
 
     for (ic << ncv; ic >= 0; ic << ncv)
@@ -314,11 +314,11 @@ namespace bgeot
   }
 
   template<class ITER>
-    static void _write_tab_to_file(STD_NEEDED ostream &ost, ITER b, ITER e)
+    static void _write_tab_to_file(std::ostream &ost, ITER b, ITER e)
   { for ( ; b != e; ++b) ost << "  " << *b; }
 
   template<class ITER>
-    static void _write_convex_to_file(const mesh_structure &ms, STD_NEEDED ostream &ost,
+    static void _write_convex_to_file(const mesh_structure &ms, std::ostream &ost,
 				      ITER b, ITER e)
   {
     for ( ; b != e; ++b)
@@ -332,7 +332,7 @@ namespace bgeot
     }
   }
 
-  int mesh_structure::write_to_file(STD_NEEDED ostream &ost) const
+  int mesh_structure::write_to_file(std::ostream &ost) const
   {
     write_convex_structures_to_file(ost);
     ost << endl << "BEGIN MESH STRUCTURE DESCRIPTION" << endl << endl;

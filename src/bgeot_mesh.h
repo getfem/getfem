@@ -89,13 +89,13 @@ namespace bgeot
 
       mesh(void) { dimension = dim_type(-1); }
 
-      int write_to_file(STD_NEEDED ostream &ost) const;
-      int read_from_file(STD_NEEDED istream &ist);
+      int write_to_file(std::ostream &ost) const;
+      int read_from_file(std::istream &ist);
  
   };
 
   template<class PT, class PT_TAB>
-    int mesh<PT, PT_TAB>::read_from_file(STD_NEEDED istream &ist)
+    int mesh<PT, PT_TAB>::read_from_file(std::istream &ist)
   {
     dal::bit_vector npt;
     dal::dynamic_array<double> tmpv;
@@ -119,7 +119,7 @@ namespace bgeot
         dim_type d = 0;
 	if (npt.is_in(ip))
 	{
-	  STD_NEEDED cerr << "BGEOT : Fatal Error, two points with"
+	  cerr << "BGEOT : Fatal Error, two points with"
 	       << "the same index. loading aborted" << endl; return -1;
 	}
 	npt.add(ip);
@@ -129,23 +129,23 @@ namespace bgeot
 	{ tmpv[d++] = atof(tmp); ftool::get_token(ist, tmp, 99); }
 	please_get = false;
 	if (dimension == dim_type(-1)) dimension = d; else if (dimension != d)
-	{ STD_NEEDED cerr << "BGEOT : Points of different dimensions\n"; return -1; }
+	{ cerr << "BGEOT : Points of different dimensions\n"; return -1; }
 	
 	PT v(d);
 	for (size_type i = 0; i < d; i++) v[i] = tmpv[i];
 	points()[ip] = v;
       }
       else
-      { STD_NEEDED cerr << "BGEOT : Syntax error in file\n"; return -1; }
+      { cerr << "BGEOT : Syntax error in file\n"; return -1; }
     }
     return mesh_structure::read_from_file(ist);
   }
 
-  template<class ITER> void _write_point_to_file(STD_NEEDED ostream &ost, ITER b, ITER e)
+  template<class ITER> void _write_point_to_file(std::ostream &ost, ITER b, ITER e)
   { for ( ; b != e; ++b) ost << "  " << *b; ost << endl; }
 
   template<class PT, class PT_TAB>
-    int mesh<PT, PT_TAB>::write_to_file(STD_NEEDED ostream &ost) const
+    int mesh<PT, PT_TAB>::write_to_file(std::ostream &ost) const
   {
     ost << endl << "BEGIN POINTS LIST" << endl << endl;
     mesh_point_st_ct::const_iterator b = point_structures().begin();

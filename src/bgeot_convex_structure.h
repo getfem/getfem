@@ -118,7 +118,7 @@ namespace bgeot
   /** Print the details of the convex structure cvs to the output stream o.
    *   For debuging purpose.
    */
-  STD_NEEDED ostream &operator << (STD_NEEDED ostream &o,
+  std::ostream &operator << (std::ostream &o,
 				   const convex_structure &cv);
 
   /// Gives a pointer on the structures of a simplex of dimension d.
@@ -145,8 +145,8 @@ namespace bgeot
   pconvex_structure convex_structure_with_number(size_type i);
   size_t number_of_convex_structure(pconvex_structure cvs);
   
-  void write_convex_structures_to_file(STD_NEEDED ostream &ost);
-  int read_convex_structures_from_file(STD_NEEDED istream &ist,
+  void write_convex_structures_to_file(std::ostream &ost);
+  int read_convex_structures_from_file(std::istream &ist,
 		       	dal::dynamic_array<pconvex_structure> &tab);
 
   /// Simplex structure with the Lagrange grid of degree k.

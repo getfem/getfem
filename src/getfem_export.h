@@ -50,7 +50,7 @@ namespace getfem
 		       const VECT &U, dim_type P, short_type K)
   { 
     dim_type N = mf.linked_mesh().dim();
-    STD_NEEDED ofstream o((filename + char(0)).data());
+    std::ofstream o((filename + char(0)).data());
     if (o == NULL)
       throw internal_error("save_solution : impossible to open file");
     dal::bit_vector nn = mf.convex_index();

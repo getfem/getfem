@@ -39,8 +39,8 @@ namespace ftool
   /* ********************************************************************* */
 
 
-  bool read_untill(STD_NEEDED istream &ist, const char *st);
-  bool get_token(STD_NEEDED istream &ist, char *st, int nb);
+  bool read_untill(std::istream &ist, const char *st);
+  bool get_token(std::istream &ist, char *st, int nb);
 
   /* ********************************************************************* */
   /*       Clock functions.                                                */

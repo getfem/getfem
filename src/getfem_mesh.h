@@ -113,16 +113,16 @@ namespace getfem
   };
   struct MESH_WRITE_TO_FILE
   { 
-    STD_NEEDED ostream *ost;
+    std::ostream *ost;
     operator int(void) const { return 9; }
-    MESH_WRITE_TO_FILE(STD_NEEDED ostream &o) { ost = &o; }
+    MESH_WRITE_TO_FILE(std::ostream &o) { ost = &o; }
     MESH_WRITE_TO_FILE(void) {}
   };
   struct MESH_READ_FROM_FILE
   { 
-    STD_NEEDED istream *ist;
+    std::istream *ist;
     operator int(void)  const { return 10; }
-    MESH_READ_FROM_FILE(STD_NEEDED istream &i) { ist = &i; }
+    MESH_READ_FROM_FILE(std::istream &i) { ist = &i; }
     MESH_READ_FROM_FILE(void) {}
   };
 
@@ -325,9 +325,9 @@ namespace getfem
       void clear(void);
       
       int write_to_file(const std::string &name) const;
-      int write_to_file(STD_NEEDED ostream &ost) const;
+      int write_to_file(std::ostream &ost) const;
       int read_from_file(const std::string &name);
-      int read_from_file(STD_NEEDED istream &ist);
+      int read_from_file(std::istream &ist);
      
   };
 

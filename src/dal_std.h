@@ -70,28 +70,15 @@
 #include <string>
 #include <strstream>
 
-/* ********************************************************************** */
-/*	STD Needed.                     			          */
-/* ********************************************************************** */
-/* Macro for the supplementary std needed by g++ v3.00 and not wanted by  */
-/* cxx for instance.                                                      */ 
-/* ********************************************************************** */
-
-// #if defined(__GNUC__) || (defined(__sgi) && defined(_STANDARD_C_PLUS_PLUS))
-#define STD_NEEDED std::
 using std::endl;
 using std::cout;
 using std::cerr;
 using std::ends;
-// #else
-//   #define STD_NEEDED
-// #endif
-
+using std::cin;
 
 /* ********************************************************************** */
 /*	S.T.L. Reverse iterator definition.				  */
 /* ********************************************************************** */
-
 
 #if defined(_MSC_VER) && !defined(__MWERKS__)
 #define _GETFEM_MSVCPP_ _MSC_VER

@@ -133,7 +133,7 @@ namespace bgeot
   }
 
   template<class PT, class PT_TAB>
-    STD_NEEDED ostream &operator <<(STD_NEEDED ostream &o, const convex<PT, PT_TAB> &cv)
+    std::ostream &operator <<(std::ostream &o, const convex<PT, PT_TAB> &cv)
   {
     o << *(cv.structure());
     o << " points : ";

@@ -232,8 +232,8 @@ namespace bgeot
       void optimize_structure(void);
       void clear(void);
       void stat(void);
-      int write_to_file(STD_NEEDED ostream &ost) const;
-      int read_from_file(STD_NEEDED istream &ist);
+      int write_to_file(std::ostream &ost) const;
+      int read_from_file(std::istream &ist);
      
   };
 

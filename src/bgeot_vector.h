@@ -465,7 +465,7 @@ namespace bgeot
    */
   //@{
   
-  template<class VECT> void vect_out(STD_NEEDED ostream &o, const VECT &v)
+  template<class VECT> void vect_out(std::ostream &o, const VECT &v)
   {
     o << '[';
     for (typename VECT::size_type l=1; l < v.size(); l++ ) o << v[l-1] << ' ';
@@ -474,12 +474,12 @@ namespace bgeot
 
   /// Print v on the output stream o. For instance, cout $<<$ v;
   template<class T>
-    inline STD_NEEDED ostream &operator <<(STD_NEEDED ostream &o, const vsvector<T>& v)
+    inline std::ostream &operator <<(std::ostream &o, const vsvector<T>& v)
   { vect_out(o,v); return o; }
 
   /// Print v on the output stream o. For instance, cout $<<$ v;
   template<class T, int N>
-    inline STD_NEEDED ostream &operator <<(STD_NEEDED ostream &o, const fsvector<T,N>& v)
+    inline std::ostream &operator <<(std::ostream &o, const fsvector<T,N>& v)
   { vect_out(o,v); return o; }
 
   /// Gives $\displaystyle \sum_{i=0..(n-1)} |v_i|$.

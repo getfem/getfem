@@ -209,7 +209,7 @@ namespace dal
     std::fill(this->begin()+i, this->begin()+j+1, false);
   }
 
-  STD_NEEDED ostream &operator <<(STD_NEEDED ostream &o, const bit_vector &s)
+  std::ostream &operator <<(std::ostream &o, const bit_vector &s)
   {
     bit_vector u = s; int i;
     o << "ensemble d'entier";

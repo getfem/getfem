@@ -179,7 +179,7 @@ namespace getfem
     return normal_of_face_of_convex(ic, f, pt);
   }
 
-  int getfem_mesh::read_from_file(STD_NEEDED istream &ist) {
+  int getfem_mesh::read_from_file(std::istream &ist) {
    
     int r = bgeot::mesh<base_node>::read_from_file(ist);
     dal::bit_vector nn = convex_index();
@@ -196,12 +196,12 @@ namespace getfem
 
   int getfem_mesh::read_from_file(const std::string &name)
   { 
-    STD_NEEDED ifstream o(name.data());
+    std::ifstream o(name.data());
     if (!o) DAL_THROW(std::invalid_argument, "Mesh file does not exist");
     return read_from_file(o);
   }
 
-  int getfem_mesh::write_to_file(STD_NEEDED ostream &ost) const
+  int getfem_mesh::write_to_file(std::ostream &ost) const
   {
     bgeot::mesh<base_node>::write_to_file(ost);
     lmsg_sender().send(MESH_WRITE_TO_FILE(ost));
@@ -210,7 +210,7 @@ namespace getfem
 
   int getfem_mesh::write_to_file(const std::string &name) const
   {
-    STD_NEEDED ofstream o(name.data());
+    std::ofstream o(name.data());
     if (o)
     {
       o << "% GETFEM MESH FILE " << endl;

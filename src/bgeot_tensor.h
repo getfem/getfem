@@ -70,7 +70,7 @@ namespace bgeot
 
   };
 
-  inline STD_NEEDED ostream &operator <<(STD_NEEDED ostream &o,
+  inline std::ostream &operator <<(std::ostream &o,
 					 const multi_index& mi)
   {  /* a compiler ... */
     multi_index::const_iterator it = mi.begin(), ite = mi.end();
@@ -249,8 +249,8 @@ namespace bgeot
   }
   
 
-  template<class T> STD_NEEDED ostream &operator <<(STD_NEEDED ostream &o,
-						    const tensor<T>& t)
+  template<class T> std::ostream &operator <<(std::ostream &o,
+					      const tensor<T>& t)
   { // a ameliorer ...
     o << "sizes " << t.sizes() << endl;
     o << *((const vsvector<T> *)(&t));

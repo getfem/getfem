@@ -95,7 +95,7 @@ namespace bgeot
 	
 	if (nbi0 < N)
 	{
-	  STD_NEEDED cout << "WARNING : All points with less than " << N
+	  cout << "WARNING : All points with less than " << N
 	       << " neighbours\n          Verify the computation" << endl;
 	  nc--;
 	}
@@ -137,7 +137,7 @@ namespace bgeot
 	  /* voisins.                                                     */
 	  /* ************************************************************ */
 	  
-	  // STD_NEEDED cout << "decoupage d'un convexe de " << nbi0 + 1 << " points\n";
+	  // cout << "decoupage d'un convexe de " << nbi0 + 1 << " points\n";
 
 	  convex_list[nc+1].clear(); nn.clear(); 
 	  for (size_type i = 0; i < nbi0; i++)
@@ -184,7 +184,7 @@ namespace bgeot
 
 	  if ( cv->nb_convex() == 0 )
 	  {
-	    STD_NEEDED cout << "WARNING : convex of null volume." << endl
+	    cout << "WARNING : convex of null volume." << endl
 		 << "          Verify the computation ... " << endl;
 	  }
 	  else

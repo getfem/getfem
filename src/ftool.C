@@ -47,7 +47,7 @@ namespace ftool
   double uclock_sec(void)
   { tms t; times(&t); return double(t.tms_utime) / TTCLK; }
 
-  bool read_untill(STD_NEEDED istream &ist, const char *st)
+  bool read_untill(std::istream &ist, const char *st)
   {
     int i = 0, l = strlen(st); char c;
     while (!ist.eof() && i < l)
@@ -55,7 +55,7 @@ namespace ftool
     if (ist.eof()) return false; else return true;
   }
 
-  bool get_token(STD_NEEDED istream &ist, char *st, int nb)
+  bool get_token(std::istream &ist, char *st, int nb)
   {
     char c;
     int i = 0;
@@ -176,11 +176,11 @@ namespace ftool
   int md_param::read_char(char c) {
     int crt = __car_type_amp(c);
     int newstate = __automat[crt][state];
-    // STD_NEEDED cout << "car : " << c << " type : " << crt << " old state : "
+    //  cout << "car : " << c << " type : " << crt << " old state : "
     //     << state << " new state : " << newstate << endl; getchar();
     if (newstate == 1 || newstate == 4 || newstate == 5
 	|| newstate == 10 || newstate == 11 ) { 
-      if (nbcharread >= 254) STD_NEEDED cerr << "String too long\n";
+      if (nbcharread >= 254)  cerr << "String too long\n";
       else string_read[nbcharread++] = c;
     }
     
@@ -221,14 +221,17 @@ namespace ftool
   
   void md_param::read_param_file(char *fn) {
     FILE *F = fopen(fn, "r");
-    if (F == NULL) { STD_NEEDED cout << "MODEL_PARAM : file not found.\n"; exit(1); }
+    if (F == NULL)
+      DAL_THROW(dal::internal_error, "file " << fn << " not found");
     for(;;) {
       char c = getc(F); if (feof(F)) break;
       if (read_char(c) == -1)
-	{ STD_NEEDED cout << "MODEL_PARAM : syntax error in file " << fn << endl; exit(1);}
+	DAL_THROW(dal::internal_error, "syntax error in file " << fn);
     }
-    if (read_char(13) == -1) { STD_NEEDED cout << "MODEL_PARAM : syntax error"; exit(1); }
-    if (state != 0) { STD_NEEDED cout << "MODEL_PARAM : incorrect end of file"; exit(1); }
+    if (read_char(13) == -1) 
+      DAL_THROW(dal::internal_error, "syntax error in file " << fn);
+    if (state != 0) 
+      DAL_THROW(dal::internal_error, "incorrect end of file " << fn);
     fclose(F);
   }
   
@@ -330,8 +333,8 @@ namespace ftool
     int i = search_param(name);
     if (i == -1) {
       double f;
-      STD_NEEDED cout << "No parameter " << name << " found, please enter its value\n";
-      STD_NEEDED cout << comment << " : "; STD_NEEDED cin >> f; sprintf(string_read, "%g", f);
+      cout << "No parameter " << name << " found, please enter its value\n";
+      cout << comment << " : "; cin >> f; sprintf(string_read, "%g", f);
       i = add_real_param(name, atof(string_read));
     }
     if (param_comment(i) != NULL) delete param_comment(i);
@@ -360,8 +363,8 @@ namespace ftool
     int i = search_param(name);
     if (i == -1) {
       long f;
-      STD_NEEDED cout << "\nNo parameter " << name << " found, please enter its value\n";
-      STD_NEEDED cout << comment << " : "; STD_NEEDED cin >> f; sprintf(string_read, "%ld", f);
+      cout << "\nNo parameter " << name << " found, please enter its value\n";
+      cout << comment << " : "; cin >> f; sprintf(string_read, "%ld", f);
       i = add_int_param(name, atol(string_read));
     }
     if (param_comment(i) != NULL) delete param_comment(i);
@@ -377,8 +380,8 @@ namespace ftool
   char *md_param::string_value(char *name, char *comment) {
     int i = search_param(name);
     if (i == -1) {
-      STD_NEEDED cout << "No parameter " << name << " found, please enter its value\n";
-      STD_NEEDED cout << comment << " : "; STD_NEEDED cin >> string_read;
+      cout << "No parameter " << name << " found, please enter its value\n";
+      cout << comment << " : "; cin >> string_read;
       i = add_string_param(name, string_read);
     }
     if (param_comment(i) != NULL) delete param_comment(i);
@@ -410,14 +413,13 @@ namespace ftool
 	clear_value(i);  param_type(i) = 4;  nb_sub_param(i) = 0;
 	sub_param(i) = new dal::dynamic_array<t_value>;
       }
-      STD_NEEDED cout << "No list parameter "<< name << " found, please enter its value\n"; 
-      STD_NEEDED cout << comment << " : \n";
-      STD_NEEDED cout << "Number of sub parameters : "; STD_NEEDED cin >> nb;
-      for (int k = 0; k < nb; k++)
-	{
-	  STD_NEEDED cout << "Value " << k << " : "; STD_NEEDED cin >> string_read;
-	  add_string_param_to_param(name, string_read);
-	}
+      cout << "No list parameter "<< name << " found, please enter its value\n"; 
+      cout << comment << " : \n";
+      cout << "Number of sub parameters : "; cin >> nb;
+      for (int k = 0; k < nb; k++) {
+	cout << "Value " << k << " : "; cin >> string_read;
+	add_string_param_to_param(name, string_read);
+      }
     }
     if (param_comment(i) != NULL) delete param_comment(i);
     param_comment(i) = new char[strlen(comment)+1];

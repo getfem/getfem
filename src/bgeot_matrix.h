@@ -620,7 +620,7 @@ namespace bgeot
 	mr(i,j) += cc_product(m1, i, m2, j);
   }
 
-  template<class MAT> inline void mat_out(STD_NEEDED ostream &o, const MAT &m)
+  template<class MAT> inline void mat_out(std::ostream &o, const MAT &m)
   {
     for (typename MAT::size_type l = 0; l < m.nrows(); l++ )
     {
@@ -630,11 +630,11 @@ namespace bgeot
     }
   }
 
-  template<class T>  STD_NEEDED ostream &operator <<(STD_NEEDED ostream &o, const vsmatrix<T>& m)
+  template<class T>  std::ostream &operator <<(std::ostream &o, const vsmatrix<T>& m)
   { mat_out(o,m); return o; }
 
   template<class T, int N>
-    STD_NEEDED ostream &operator <<(STD_NEEDED ostream &o, const fsmatrix<T,N>& m)
+    std::ostream &operator <<(std::ostream &o, const fsmatrix<T,N>& m)
   { mat_out(o,m); return o; }
 
 

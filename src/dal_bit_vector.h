@@ -288,7 +288,7 @@ namespace dal
   inline const size_t &operator >> (const size_t &i, bit_vector &s)
   { s.add(i); return i; }
 
-  STD_NEEDED ostream &operator <<(STD_NEEDED ostream &o, const bit_vector &s);
+  std::ostream &operator <<(std::ostream &o, const bit_vector &s);
 
 }
 

@@ -414,8 +414,8 @@ namespace dal
   }; 
 
   template<class T, class COMP, int pks>
-    STD_NEEDED ostream& operator <<(STD_NEEDED ostream& o,
-				    dynamic_tree_sorted<T, COMP, pks> &m)
+    std::ostream& operator <<(std::ostream& o,
+			      dynamic_tree_sorted<T, COMP, pks> &m)
   {
     o << "Nomber of elt :" << m.card() << '\n';
     o << "Index du noeud racine :" << m.root_elt() << '\n';
@@ -426,7 +426,7 @@ namespace dal
   }
 
   template<class T, class COMP, int pks>
-    dynamic_tree_sorted<T, COMP, pks>::size_type
+    typename dynamic_tree_sorted<T, COMP, pks>::size_type
       dynamic_tree_sorted<T, COMP, pks>::rotate_right(size_type i)
   {
     tree_elt *pni = &(nodes[i]);
@@ -437,7 +437,7 @@ namespace dal
   }
 
   template<class T, class COMP, int pks>
-    dynamic_tree_sorted<T, COMP, pks>::size_type
+    typename dynamic_tree_sorted<T, COMP, pks>::size_type
       dynamic_tree_sorted<T, COMP, pks>::rotate_left(size_type i)
   {
     tree_elt *pni = &(nodes[i]);
@@ -448,7 +448,7 @@ namespace dal
   }
 
   template<class T, class COMP, int pks>
-    dynamic_tree_sorted<T, COMP, pks>::size_type
+    typename dynamic_tree_sorted<T, COMP, pks>::size_type
       dynamic_tree_sorted<T, COMP, pks>::rotate_left_right(size_type i)
   {
     tree_elt *pni = &(nodes[i]);
@@ -470,7 +470,7 @@ namespace dal
   }
 
   template<class T, class COMP, int pks>
-    dynamic_tree_sorted<T, COMP, pks>::size_type
+    typename dynamic_tree_sorted<T, COMP, pks>::size_type
       dynamic_tree_sorted<T, COMP, pks>::rotate_right_left(size_type i)
   { 
     size_type f = nodes[i].r;
@@ -489,7 +489,7 @@ namespace dal
   }
 
   template<class T, class COMP, int pks>
-    dynamic_tree_sorted<T, COMP, pks>::size_type
+    typename dynamic_tree_sorted<T, COMP, pks>::size_type
       dynamic_tree_sorted<T, COMP, pks>::balance_again(size_type i)
   {
     tree_elt *pn = &(nodes[i]);
