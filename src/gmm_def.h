@@ -147,17 +147,7 @@ namespace gmm {
   /*  types to deal with const object representing a modifiable reference */
   /* ******************************************************************** */
   
-  template <class T> struct unconst_type 
-  { typedef T return_type; };
-  template <class T> struct unconst_type <const T &>
-  { typedef T return_type; };
-  template <class T> struct unconst_type <const T>
-  { typedef T return_type; };
-  template <class T> struct unconst_type <T &>
-  { typedef T return_type; };
-  
-
-  template <class PT, class R> struct _mref_type
+  template <class PT, class R> struct _mref_type 
   { typedef abstract_null_type return_type; };
   template <class L, class R> struct _mref_type<L *, R>
   { typedef L & return_type; };
@@ -178,11 +168,15 @@ namespace gmm {
       typename linalg_traits<L>::is_reference>::return_type return_type;
   };
 
+  template <class L> typename mref_type<const L *>::return_type 
+  linalg_cast(const L &l)
+  { return const_cast<typename mref_type<const L *>::return_type>(l); }
+
   template <class L> typename mref_type<L *>::return_type linalg_cast(L &l)
   { return const_cast<typename mref_type<L *>::return_type>(l); }
 
   template <class L, class R> struct _cref_type
-  {  typedef abstract_null_type return_type; };
+  { typedef abstract_null_type return_type; };
   template <class L> struct _cref_type<L, linalg_modifiable>
   { typedef L & return_type; };
   template <class L> struct cref_type {
@@ -193,6 +187,7 @@ namespace gmm {
   template <class L> typename cref_type<L>::return_type 
   linalg_const_cast(const L &l)
   { return const_cast<typename cref_type<L>::return_type>(l); }
+
 
 
   template <class C1, class C2, class REF> struct _select_return {
@@ -218,20 +213,22 @@ namespace gmm {
       ::reference reference;
   };
 
-  template <class PT> struct which_reference
-  { typedef abstract_null_type is_reference; };
+  template <class PT> struct which_reference {
+    typedef abstract_null_type is_reference;
+  };
   template <class PT> struct which_reference<PT *>
-  { typedef linalg_modifiable is_reference;  };
+  { typedef linalg_modifiable is_reference; };
   template <class PT> struct which_reference<const PT *>
-  { typedef linalg_const is_reference;       };
+  { typedef linalg_const is_reference; };
 
 
-  template <class C1, class C2, class R> struct _select_orientation
-  { typedef abstract_null_type return_type; };
+  template <class C1, class C2, class R> struct _select_orientation {
+    typedef abstract_null_type return_type;
+  };
   template <class C1, class C2> struct _select_orientation<C1, C2, row_major>
   { typedef C1 return_type; };
-  template <class C1, class C2> struct _select_orientation<C1, C2, col_major>
-  { typedef C2 return_type; };
+   template <class C1, class C2> struct _select_orientation<C1, C2, col_major>
+   { typedef C2 return_type; };
   template <class C1, class C2, class L> struct select_orientation {
     typedef typename _select_orientation<C1, C2,
       typename principal_orientation_type<typename

@@ -68,14 +68,10 @@ namespace gmm {
   { return linalg_traits<L>::origin(l); }
 
   template <class V> inline
-  typename select_return<typename linalg_traits<
-    typename unconst_type<V>::return_type>::const_iterator,
-    typename linalg_traits<typename unconst_type<V>::return_type>::iterator,
-    V *>::return_type
-  vect_begin(V &v) {
-    return linalg_traits<
-      typename unconst_type<V>::return_type>::begin(linalg_cast(v));
-  }
+  typename select_return<typename linalg_traits<V>::const_iterator,
+    typename linalg_traits<V>::iterator, V *>::return_type
+  vect_begin(V &v)
+  { return linalg_traits<V>::begin(linalg_cast(v)); }
 
   template <class V> inline
   typename linalg_traits<V>::const_iterator
@@ -83,14 +79,16 @@ namespace gmm {
   { return linalg_traits<V>::begin(v); }
 
   template <class V> inline
-  typename select_return<typename linalg_traits<
-    typename unconst_type<V>::return_type>::const_iterator,
-    typename linalg_traits<typename unconst_type<V>::return_type>::iterator,
-    V *>::return_type
-  vect_end(V &v) {
-    return linalg_traits<
-      typename unconst_type<V>::return_type>::end(linalg_cast(v));
-  }
+  typename select_return<typename linalg_traits<V>::const_iterator,
+    typename linalg_traits<V>::iterator, V *>::return_type
+  vect_end(V &v)
+  { return linalg_traits<V>::end(linalg_cast(v)); }
+
+  template <class V> inline
+  typename select_return<typename linalg_traits<V>::const_iterator,
+    typename linalg_traits<V>::iterator, const V *>::return_type
+  vect_end(const V &v)
+  { return linalg_traits<V>::end(linalg_cast(v)); }
 
   template <class V> inline
   typename linalg_traits<V>::const_iterator
@@ -98,27 +96,32 @@ namespace gmm {
   { return linalg_traits<V>::end(v); }
 
   template <class M> inline
-  typename select_return<typename linalg_traits<
-    typename unconst_type<M>::return_type>::const_row_iterator,
-    typename linalg_traits<
-    typename unconst_type<M>::return_type>::row_iterator, M *>::return_type
-  mat_row_begin(M &m) {
-    return linalg_traits<
-      typename unconst_type<M>::return_type>::row_begin(linalg_cast(m));
-  }
+  typename select_return<typename linalg_traits<M>::const_row_iterator,
+    typename linalg_traits<M>::row_iterator, M *>::return_type
+  mat_row_begin(M &m) { return linalg_traits<M>::row_begin(linalg_cast(m)); }
+  
+  template <class M> inline
+  typename select_return<typename linalg_traits<M>::const_row_iterator,
+    typename linalg_traits<M>::row_iterator, const M *>::return_type
+  mat_row_begin(const M &m)
+  { return linalg_traits<M>::row_begin(linalg_cast(m)); }
   
   template <class M> inline typename linalg_traits<M>::const_row_iterator
   mat_row_const_begin(const M &m)
   { return linalg_traits<M>::row_begin(m); }
 
   template <class M> inline
-  typename select_return<typename linalg_traits<
-    typename unconst_type<M>::return_type>::const_row_iterator,
-    typename linalg_traits<
-    typename unconst_type<M>::return_type>::row_iterator, M *>::return_type
+  typename select_return<typename linalg_traits<M>::const_row_iterator,
+    typename linalg_traits<M>::row_iterator, M *>::return_type
   mat_row_end(M &v) {
-    return linalg_traits<
-      typename unconst_type<M>::return_type>::row_end(linalg_cast(v));
+    return linalg_traits<M>::row_end(linalg_cast(v));
+  }
+
+  template <class M> inline
+  typename select_return<typename linalg_traits<M>::const_row_iterator,
+    typename linalg_traits<M>::row_iterator, const M *>::return_type
+  mat_row_end(const M &v) {
+    return linalg_traits<M>::row_end(linalg_cast(v));
   }
 
   template <class M> inline
@@ -127,13 +130,17 @@ namespace gmm {
   { return linalg_traits<M>::row_end(v); }
 
   template <class M> inline
-  typename select_return<typename linalg_traits<
-    typename unconst_type<M>::return_type>::const_col_iterator,
-    typename linalg_traits<
-    typename unconst_type<M>::return_type>::col_iterator, M *>::return_type
+  typename select_return<typename linalg_traits<M>::const_col_iterator,
+    typename linalg_traits<M>::col_iterator, M *>::return_type
   mat_col_begin(M &v) {
-    return linalg_traits<
-      typename unconst_type<M>::return_type>::col_begin(linalg_cast(v));
+    return linalg_traits<M>::col_begin(linalg_cast(v));
+  }
+
+  template <class M> inline
+  typename select_return<typename linalg_traits<M>::const_col_iterator,
+    typename linalg_traits<M>::col_iterator, const M *>::return_type
+  mat_col_begin(const M &v) {
+    return linalg_traits<M>::col_begin(linalg_cast(v));
   }
 
   template <class M> inline
@@ -147,25 +154,25 @@ namespace gmm {
   { return linalg_traits<M>::col_end(v); }
 
   template <class M> inline
-  typename select_return<typename linalg_traits<
-    typename unconst_type<M>::return_type>::const_col_iterator,
-    typename linalg_traits<
-    typename unconst_type<M>::return_type>::col_iterator, M *>::return_type
-  mat_col_end(M &v) {
-    return linalg_traits<
-      typename unconst_type<M>::return_type>::col_end(linalg_cast(v));
-  }
+  typename select_return<typename linalg_traits<M>::const_col_iterator,
+                         typename linalg_traits<M>::col_iterator,
+                         M *>::return_type
+  mat_col_end(M &v)
+  { return linalg_traits<M>::col_end(linalg_cast(v)); }
 
   template <class MAT> inline
-  typename select_return<typename linalg_traits<
-    typename unconst_type<MAT>::return_type>::const_sub_row_type,
-    typename linalg_traits<
-    typename unconst_type<MAT>::return_type>::sub_row_type,
-    MAT *>::return_type
-  mat_row(MAT &m, size_type i) {
-    return linalg_traits<
-      typename unconst_type<MAT>::return_type>::row(mat_row_begin(m) + i);
-  }
+  typename select_return<typename linalg_traits<MAT>::const_sub_row_type,
+                         typename linalg_traits<MAT>::sub_row_type,
+                         const MAT *>::return_type
+  mat_row(const MAT &m, size_type i)
+  { return linalg_traits<MAT>::row(mat_row_begin(m) + i); }
+
+  template <class MAT> inline
+  typename select_return<typename linalg_traits<MAT>::const_sub_row_type,
+                         typename linalg_traits<MAT>::sub_row_type,
+                         MAT *>::return_type
+  mat_row(MAT &m, size_type i)
+  { return linalg_traits<MAT>::row(mat_row_begin(m) + i); }
 
   template <class MAT> inline
   typename linalg_traits<MAT>::const_sub_row_type
@@ -173,14 +180,19 @@ namespace gmm {
   { return linalg_traits<MAT>::row(mat_row_const_begin(m) + i); }
 
   template <class MAT> inline
-  typename select_return<typename linalg_traits<
-    typename unconst_type<MAT>::return_type>::const_sub_col_type,
-    typename linalg_traits<
-    typename unconst_type<MAT>::return_type>::sub_col_type, MAT *>::return_type
-  mat_col(MAT &m, size_type i) { 
-    return linalg_traits<
-      typename unconst_type<MAT>::return_type>::col(mat_col_begin(m) + i);
-  }
+  typename select_return<typename linalg_traits<MAT>::const_sub_col_type,
+                         typename linalg_traits<MAT>::sub_col_type,
+                         const MAT *>::return_type
+  mat_col(const MAT &m, size_type i)
+  { return linalg_traits<MAT>::col(mat_col_begin(m) + i); }
+
+
+  template <class MAT> inline
+  typename select_return<typename linalg_traits<MAT>::const_sub_col_type,
+                         typename linalg_traits<MAT>::sub_col_type,
+                         MAT *>::return_type
+  mat_col(MAT &m, size_type i)
+  { return linalg_traits<MAT>::col(mat_col_begin(m) + i); }
 
   template <class MAT> inline
   typename linalg_traits<MAT>::const_sub_col_type
@@ -188,9 +200,10 @@ namespace gmm {
   { return linalg_traits<MAT>::col(mat_col_const_begin(m) + i); }
 
   template <class L> inline void clear(L &l)
-  { linalg_traits<typename unconst_type<L>::return_type>::do_clear(linalg_cast(l)); }
+  { linalg_traits<L>::do_clear(l); }
 
-  
+  template <class L> inline void clear(const L &l)
+  { linalg_traits<L>::do_clear(linalg_const_cast(l)); }
 
   /* ******************************************************************** */
   /*		Write                                   		  */
