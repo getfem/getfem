@@ -213,9 +213,15 @@ namespace getfem
 	base_node v(d);
 	for (size_type i = 0; i < d; i++) v[i] = tmpv[i];
 	size_type ipl = add_point(v);
-	if (ip != ipl) swap_points(ip, ipl);
+	if (ip != ipl) {
+	  if (npt.is_in(ipl))
+	    DAL_THROW(failure_error, 
+		    "Two points with the same coords. loading aborted.");
+	  swap_points(ip, ipl);
+	}
       } else if (strlen(tmp)) {
-	DAL_THROW(failure_error, "Syntax error in file, at token '" << tmp << "', pos=" << ist.tellg());
+	DAL_THROW(failure_error, "Syntax error in file, at token '" << tmp
+		  << "', pos=" << ist.tellg());
       } else if (ist.eof()) {
 	DAL_THROW(failure_error, "Unexpected end of stream");	
       }
@@ -307,6 +313,7 @@ namespace getfem
   { for ( ; b != e; ++b) ost << "  " << *b; ost << endl; }
 
   void getfem_mesh::write_to_file(std::ostream &ost) const {
+    ost.precision(40);
     ost << endl << "BEGIN POINTS LIST" << endl << endl;
     bgeot::mesh_point_st_ct::const_iterator b = point_structures().begin();
     bgeot::mesh_point_st_ct::const_iterator e = point_structures().end();

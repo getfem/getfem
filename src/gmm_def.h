@@ -134,26 +134,26 @@ namespace gmm {
   template <class P> struct modifiable_pointer<const P *>
   { typedef P* pointer; };
 
-  inline bool _is_sparse(abstract_sparse)  { return true;  }
-  inline bool _is_sparse(abstract_plain)   { return false; }
-  inline bool _is_sparse(abstract_skyline)   { return true; }
-  inline bool _is_sparse(abstract_indirect)  { return false; }
+  inline bool _is_sparse(abstract_sparse)   { return true;  }
+  inline bool _is_sparse(abstract_plain)    { return false; }
+  inline bool _is_sparse(abstract_skyline)  { return true;  }
+  inline bool _is_sparse(abstract_indirect) { return false; }
 
   template <class L> inline bool is_sparse(const L &) 
   { return _is_sparse(typename linalg_traits<L>::storage_type()); }
 
-  inline bool _is_row_matrix(row_major)   { return true;  }
-  inline bool _is_row_matrix(col_major)   { return false; }
-  inline bool _is_row_matrix(row_and_col) { return true; }
-  inline bool _is_row_matrix(col_and_row) { return true; }
+  inline bool _is_row_matrix(row_major)     { return true;  }
+  inline bool _is_row_matrix(col_major)     { return false; }
+  inline bool _is_row_matrix(row_and_col)   { return true;  }
+  inline bool _is_row_matrix(col_and_row)   { return true;  }
 
   template <class L> inline bool is_row_matrix(const L &) 
   { return _is_row_matrix(typename linalg_traits<L>::sub_orientation()); }
 
-  inline bool _is_col_matrix(row_major)   { return false;  }
-  inline bool _is_col_matrix(col_major)   { return true; }
-  inline bool _is_col_matrix(row_and_col) { return true; }
-  inline bool _is_col_matrix(col_and_row) { return true; }
+  inline bool _is_col_matrix(row_major)     { return false; }
+  inline bool _is_col_matrix(col_major)     { return true;  }
+  inline bool _is_col_matrix(row_and_col)   { return true;  }
+  inline bool _is_col_matrix(col_and_row)   { return true;  }
 
   template <class L> inline bool is_col_matrix(const L &) 
   { return _is_col_matrix(typename linalg_traits<L>::sub_orientation()); }
