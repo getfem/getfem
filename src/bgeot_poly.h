@@ -448,7 +448,8 @@ namespace bgeot
     if (S.dim()!=1 || subs_dim >= P.dim()) DAL_THROW(failure_error, "wrong arguments for polynomial substitution");
     polynomial<T> res(P.dim(),0);
     bgeot::power_index pi(P.dim());
-    std::vector< polynomial<T> > Spow(1); Spow[0] = one_poly(1); // Spow stores powers of S
+    std::vector< polynomial<T> > Spow(1);
+    Spow[0] = polynomial<T>(1, 0); Spow[0].one(); // Spow stores powers of S
     for (size_type k=0; k < P.size(); ++k, ++pi) {
       if (P[k] == T(0)) continue;
       while (pi[subs_dim] >= Spow.size()) 
