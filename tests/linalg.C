@@ -12,7 +12,25 @@ int main(void)
     
     cout << "w = " << w << endl;
 
+    bgeot::fsvector<double, 10> x;
+
+    bgeot::copy(v, x);
+
+    cout << "x = " << x << endl;
+
+    bgeot::add(v, w, x);
+
+    cout << "x = " << x << endl;
+
     // cout << "sp = " << bgeot::vect_sp(v, w) << endl;
+
+    bgeot::svector<double> z(10);
+    z[4] = 1;z[5] = 1;
+
+    bgeot::add(v, z, x);
+
+    cout << "x = " << x << endl;
+    
     
   }
   DAL_STANDARD_CATCH_ERROR;

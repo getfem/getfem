@@ -79,9 +79,9 @@ namespace bgeot {
     size_type nrows(const linalg_type &) { return 0; }
     size_type ncols(const linalg_type &) { return 0; }
     iterator begin(linalg_type &) { return 0; }
-    iterator const_begin(const linalg_type &) { return 0; }
+    const_iterator const_begin(const linalg_type &) { return 0; }
     iterator end(linalg_type &) { return 0; }
-    iterator const_end(const linalg_type &) { return 0; }
+    const_iterator const_end(const linalg_type &) { return 0; }
     const_sub_row_type row(const linalg_type &, size_type)
       { DAL_THROW(failure_error,"Rows inaccessible for this object"); }
     const_sub_col_type col(const linalg_type &, size_type)
@@ -139,11 +139,11 @@ namespace bgeot {
     { return linalg_traits<V>().ncols(v.deref()); }
     iterator begin(linalg_type &v)
     { return linalg_traits<V>().begin(v.deref()); }
-    iterator const_begin(const linalg_type &v)
+    const_iterator const_begin(const linalg_type &v)
     { return linalg_traits<V>().const_begin(v.deref()); }
     iterator end(linalg_type &v)
     { return linalg_traits<V>().end(v.deref()); }
-    iterator const_end(const linalg_type &v)
+    const_iterator const_end(const linalg_type &v)
     { return linalg_traits<V>().const_end(v.deref()); }
     const_sub_row_type row(const linalg_type &v, size_type i)
     { return linalg_traits<V>().row(v.deref(), i); }
@@ -187,11 +187,11 @@ namespace bgeot {
     { return linalg_traits<V>().ncols(v.deref()); }
     iterator begin(linalg_type &v)
     { return linalg_traits<V>().const_begin(v.deref()); }
-    iterator const_begin(const linalg_type &v)
+    const_iterator const_begin(const linalg_type &v)
     { return linalg_traits<V>().const_begin(v.deref()); }
     iterator end(linalg_type &v)
     { return linalg_traits<V>().const_end(v.deref()); }
-    iterator const_end(const linalg_type &v)
+    const_iterator const_end(const linalg_type &v)
     { return linalg_traits<V>().const_end(v.deref()); }
     const_sub_row_type row(const linalg_type &v, size_type i)
     { return linalg_traits<V>().row(v.deref(), i); }
@@ -247,9 +247,9 @@ namespace bgeot {
       size_type nrows(const linalg_type &v) { return v.size(); }
       size_type ncols(const linalg_type &v) { return 1; }
       iterator begin(linalg_type &v) { return v.begin(); }
-      iterator const_begin(const linalg_type &v) { return v.begin(); }
+      const_iterator const_begin(const linalg_type &v) { return v.begin(); }
       iterator end(linalg_type &v) { return v.end(); }
-      iterator const_end(const linalg_type &v) { return v.end(); }
+      const_iterator const_end(const linalg_type &v) { return v.end(); }
       const_sub_row_type row(const linalg_type &v, size_type i)
       { DAL_THROW(failure_error,"Rows inaccessible for this object"); }
       const_sub_col_type col(const linalg_type &v, size_type i)
@@ -277,9 +277,9 @@ namespace bgeot {
       size_type nrows(const linalg_type &v) { return v.size(); }
       size_type ncols(const linalg_type &v) { return 1; }
       iterator begin(linalg_type &v) { return v.begin(); }
-      iterator const_begin(const linalg_type &v) { return v.begin(); }
+      const_iterator const_begin(const linalg_type &v) { return v.begin(); }
       iterator end(linalg_type &v) { return v.end(); }
-      iterator const_end(const linalg_type &v) { return v.end(); }
+      const_iterator const_end(const linalg_type &v) { return v.end(); }
       const_sub_col_type col(const linalg_type &v, size_type i)
 	{ return v; }
       const_sub_row_type row(const linalg_type &, size_type)
@@ -336,9 +336,9 @@ namespace bgeot {
       size_type nrows(const linalg_type &v) { return v.size(); }
       size_type ncols(const linalg_type &v) { return 1; }
       iterator begin(linalg_type &v) { return v.begin(); }
-      iterator const_begin(const linalg_type &v) { return v.begin(); }
+      const_iterator const_begin(const linalg_type &v) { return v.begin(); }
       iterator end(linalg_type &v) { return v.end(); }
-      iterator const_end(const linalg_type &v) { return v.end(); }
+      const_iterator const_end(const linalg_type &v) { return v.end(); }
       const_sub_row_type row(const linalg_type &v, size_type i)
       { DAL_THROW(failure_error,"Rows inaccessible for this object"); }
       const_sub_col_type col(const linalg_type &v, size_type i)
@@ -365,9 +365,9 @@ namespace bgeot {
       size_type nrows(const linalg_type &v) { return v.size(); }
       size_type ncols(const linalg_type &v) { return 1; }
       iterator begin(linalg_type &v) { return v.begin(); }
-      iterator const_begin(const linalg_type &v) { return v.begin(); }
+      const_iterator const_begin(const linalg_type &v) { return v.begin(); }
       iterator end(linalg_type &v) { return v.end(); }
-      iterator const_end(const linalg_type &v) { return v.end(); }
+      const_iterator const_end(const linalg_type &v) { return v.end(); }
       const_sub_row_type row(const linalg_type &v, size_type i)
       { DAL_THROW(failure_error,"Rows inaccessible for this object"); }
       const_sub_col_type col(const linalg_type &v, size_type i) { return v; }
@@ -408,9 +408,9 @@ namespace bgeot {
     size_type nrows(const linalg_type &v) { return N; }
     size_type ncols(const linalg_type &v) { return 1; }
     iterator begin(linalg_type &v) { return v.begin(); }
-    iterator const_begin(const linalg_type &v) { return v.begin(); }
+    const_iterator const_begin(const linalg_type &v) { return v.begin(); }
     iterator end(linalg_type &v) { return v.end(); }
-    iterator const_end(const linalg_type &v) { return v.end(); }
+    const_iterator const_end(const linalg_type &v) { return v.end(); }
     const_sub_row_type row(const linalg_type &v, size_type i)
     { DAL_THROW(failure_error,"Rows inaccessible for this object"); }
     const_sub_col_type col(const linalg_type &v, size_type i)
@@ -437,9 +437,9 @@ namespace bgeot {
     size_type nrows(const linalg_type &v) { return v.size(); }
     size_type ncols(const linalg_type &v) { return 1; }
     iterator begin(linalg_type &v) { return v.begin(); }
-    iterator const_begin(const linalg_type &v) { return v.begin(); }
+    const_iterator const_begin(const linalg_type &v) { return v.begin(); }
     iterator end(linalg_type &v) { return v.end(); }
-    iterator const_end(const linalg_type &v) { return v.end(); }
+    const_iterator const_end(const linalg_type &v) { return v.end(); }
     const_sub_row_type row(const linalg_type &v, size_type i)
     { DAL_THROW(failure_error,"Rows inaccessible for this object"); }
     const_sub_col_type col(const linalg_type &v, size_type i)
@@ -453,8 +453,8 @@ namespace bgeot {
   template <class T> struct linalg_traits<svector<T> > {
     typedef svector<T> linalg_type;
     typedef T base_type;
-    typedef typename linalg_type::iterator  iterator;
-    typedef typename linalg_type::const_iterator const_iterator;
+    typedef svector_iterator<T>  iterator;
+    typedef svector_const_iterator<T> const_iterator;
     typedef abstract_sparse storage_type;
     typedef abstract_null_type sub_row_type;
     typedef abstract_null_type const_sub_row_type;
@@ -464,10 +464,10 @@ namespace bgeot {
     size_type size(const linalg_type &v) { return v.size(); }
     size_type nrows(const linalg_type &v) { return v.size(); }
     size_type ncols(const linalg_type &v) { return 1; }
-    iterator begin(linalg_type &v) { return v.begin(); }
-    iterator const_begin(const linalg_type &v) { return v.begin(); }
-    iterator end(linalg_type &v) { return v.end(); }
-    iterator const_end(const linalg_type &v) { return v.end(); }
+    iterator begin(linalg_type &v) { return v.tas_begin(); }
+    const_iterator const_begin(const linalg_type &v) { return v.tas_begin(); }
+    iterator end(linalg_type &v) { return v.tas_end(); }
+    const_iterator const_end(const linalg_type &v) { return v.tas_end(); }
     const_sub_row_type row(const linalg_type &v, size_type i)
     { DAL_THROW(failure_error,"Sorry, to be done"); }
     const_sub_col_type col(const linalg_type &v, size_type i)
@@ -494,9 +494,9 @@ namespace bgeot {
     size_type nrows(const linalg_type &m) { return m.nrows(); }
     size_type ncols(const linalg_type &m) { return m.ncols(); }
     iterator begin(linalg_type &m) { return m.begin(); }
-    iterator const_begin(const linalg_type &m) { return m.begin(); }
+    const_iterator const_begin(const linalg_type &m) { return m.begin(); }
     iterator end(linalg_type &m) { return m.end(); }
-    iterator const_end(const linalg_type &m) { return m.end(); }
+    const_iterator const_end(const linalg_type &m) { return m.end(); }
     const_sub_row_type row(const linalg_type &m, size_type i)
     { DAL_THROW(failure_error,"Rows inaccessible for this object"); }
     const_sub_col_type col(const linalg_type &m, size_type i)
@@ -523,9 +523,9 @@ namespace bgeot {
     size_type nrows(const linalg_type &m) { return m.nrows(); }
     size_type ncols(const linalg_type &m) { return m.ncols(); }
     iterator begin(linalg_type &m) { return m.begin(); }
-    iterator const_begin(const linalg_type &m) { return m.begin(); }
+    const_iterator const_begin(const linalg_type &m) { return m.begin(); }
     iterator end(linalg_type &m) { return m.end(); }
-    iterator const_end(const linalg_type &m) { return m.end(); }
+    const_iterator const_end(const linalg_type &m) { return m.end(); }
     const_sub_row_type row(const linalg_type &, size_type)
     { DAL_THROW(failure_error,"Rows inaccessible for this object"); }
     const_sub_col_type col(const linalg_type &m, size_type i)
@@ -582,7 +582,7 @@ namespace bgeot {
 
   template <class IT1, class IT2>
     typename std::iterator_traits<IT1>::value_type
-    _vect_sp_plain(IT1 &it, IT1 &ite, IT2 &it2) {
+    _vect_sp_plain(IT1 it, IT1 ite, IT2 it2) {
     typename std::iterator_traits<IT1>::value_type res(0);
     for (; it != ite; ++it, ++it2) res += conj_product(*it, *it2);
     return res;
@@ -590,9 +590,9 @@ namespace bgeot {
 
   template <class IT1, class V>
     typename std::iterator_traits<IT1>::value_type
-    _vect_sp_sparse(IT1 &it, IT1 &ite, const V &v) {
+    _vect_sp_sparse(IT1 it, IT1 ite, const V &v) {
     typename std::iterator_traits<IT1>::value_type res(0);
-    for (; it != ite; ++it) res += conj_product(*it, v[it->index()]);
+    for (; it != ite; ++it) res += conj_product(*it, v[it.index()]);
     return res;
   }
 
@@ -698,25 +698,28 @@ namespace bgeot {
   void copy_mat_by_row(const L1& l1, L2& l2)
   {
     size_type nbr = mat_nrows(l1);
-    for (size_type i = 0; i < nbr; ++i)
-      copy_vect(mat_row(l1, i), mat_row(l2, i),
+    for (size_type i = 0; i < nbr; ++i) {
+      typename linalg_traits<L2>::sub_row_type r = mat_row(l2, i);
+      copy_vect(mat_row(l1, i), r,
 		typename linalg_traits<typename linalg_traits<L1>
 		 ::const_sub_row_type>::storage_type(),
 		typename linalg_traits<typename linalg_traits<L2>
 		 ::sub_row_type>::storage_type());
+    }
   }
 
   template <class L1, class L2>
   void copy_mat_by_col(const L1 &l1, L2 &l2) {
     size_type nbc = mat_ncols(l1);
-    for (size_type i = 0; i < nbc; ++i)
-      copy_vect(mat_col(l1, i), mat_col(l2, i),
+    for (size_type i = 0; i < nbc; ++i) {
+      typename linalg_traits<L2>::sub_col_type c = mat_col(l2, i);
+      copy_vect(mat_col(l1, i), c,
 		typename linalg_traits<typename linalg_traits<L1>
 		::const_sub_col_type>::storage_type(),
 		typename linalg_traits<typename linalg_traits<L2>
 		::sub_col_type>::storage_type());
+    }
   }
-  
 
   template <class L1, class L2> inline
   void copy_mat(const L1& l1, L2& l2, row_major, row_major)
@@ -784,7 +787,7 @@ namespace bgeot {
     typename linalg_traits<L1>::const_iterator
       it  = linalg_traits<L1>().const_begin(l1),
       ite = linalg_traits<L1>().const_end(l1);
-    for (; it != ite; ++it) l2(i, it->index()) = *it;
+    for (; it != ite; ++it) l2(i, it.index()) = *it;
   }
 
   template <class L1, class L2>
@@ -805,7 +808,7 @@ namespace bgeot {
     typename linalg_traits<L1>::const_iterator
       it  = linalg_traits<L1>().const_begin(l1),
       ite = linalg_traits<L1>().const_end(l1);
-    for (; it != ite; ++it) l2(it->index(), i) = *it;
+    for (; it != ite; ++it) l2(it.index(), i) = *it;
   }
 
   template <class L1, class L2>
@@ -847,7 +850,7 @@ namespace bgeot {
     typename linalg_traits<L1>::const_iterator
       it  = linalg_traits<L1>().const_begin(l1),
       ite = linalg_traits<L1>().const_end(l1);
-    for (; it != ite; ++it) l2[it->index()] = *it;
+    for (; it != ite; ++it) l2[it.index()] = *it;
   }
   
   template <class L1, class L2> inline
@@ -857,7 +860,7 @@ namespace bgeot {
     typename linalg_traits<L1>::const_iterator
       it  = linalg_traits<L1>().const_begin(l1),
       ite = linalg_traits<L1>().const_end(l1);
-    for (; it != ite; ++it) l2[it->index()] = *it;
+    for (; it != ite; ++it) l2[it.index()] = *it;
   }
   
   template <class L1, class L2> inline
@@ -881,7 +884,7 @@ namespace bgeot {
 
   template <class L1, class L2>
     void add(const L1& l1, L2& l2) {
-    if (vect_size(v1) != vect_size(v2))
+    if (vect_size(l1) != vect_size(l2))
       DAL_THROW(dimension_error,"dimensions mismatch");
     if (mat_ncols(l1) != 1 || mat_ncols(l2) != 1)
       DAL_THROW(to_be_done_error,"to be done.");
@@ -891,7 +894,7 @@ namespace bgeot {
 
   template <class L1, class L2, class L3>
     void add(const L1& l1, const L2& l2, L3& l3) {
-    if (vect_size(v1) != vect_size(v2) || vect_size(v1) != vect_size(v3))
+    if (vect_size(l1) != vect_size(l2) || vect_size(l1) != vect_size(l3))
       DAL_THROW(dimension_error,"dimensions mismatch"); 
     if (mat_ncols(l1) != 1 || mat_ncols(l2) != 1 || mat_ncols(l3) != 1)
       DAL_THROW(to_be_done_error,"to be done.");
@@ -906,24 +909,24 @@ namespace bgeot {
   }
 
   template <class IT1, class IT2, class IT3>
-    void _add_full(IT1 &it1, IT2 &it2, IT3 &it3, IT3 &ite) {
+    void _add_full(IT1 it1, IT2 it2, IT3 it3, IT3 ite) {
     for (; it3 != ite; ++it3, ++it2, ++it1) *it3 = *it1 + *it2;
   }
 
   template <class IT1, class IT2, class IT3>
-    void _add_almost_full(IT1 &it1, IT1 &ite1, IT2 &it2, IT3 &it3, IT3 &ite3) {
+    void _add_almost_full(IT1 it1, IT1 ite1, IT2 it2, IT3 it3, IT3 ite3) {
     IT3 it = it3;
     for (; it != ite3; ++it, ++it2) *it = *it2;
-    for (; it1 != ite1; ++it1) *(it3 + it1->index()) += *it1;
+    for (; it1 != ite1; ++it1) *(it3 + it1.index()) += *it1;
   }
 
   template <class IT1, class IT2, class IT3>
-  void _add_to_full(IT1 &it1, IT1 &ite1, IT2 &it2, IT2 &ite2,
-		    IT3 &it3, IT3 &ite3) {
+  void _add_to_full(IT1 it1, IT1 ite1, IT2 it2, IT2 ite2,
+		    IT3 it3, IT3 ite3) {
     IT3 it = it3;
     for (; it != ite3; ++it) *it = 0;
-    for (; it1 != ite1; ++it1) *(it3 + it1->index()) = *it1;
-    for (; it2 != ite2; ++it2) *(it3 + it2->index()) += *it2;    
+    for (; it1 != ite1; ++it1) *(it3 + it1.index()) = *it1;
+    for (; it2 != ite2; ++it2) *(it3 + it2.index()) += *it2;    
   }
   
   template <class L1, class L2, class L3> inline
@@ -977,16 +980,16 @@ namespace bgeot {
       ite2 = linalg_traits<L2>().const_end(l2);
     clear(l3);
     while (it1 != ite1 && it2 != ite2) {
-      ptrdiff_t d = it1->index() - it2->index();
+      ptrdiff_t d = it1.index() - it2.index();
       if (d < 0)
-	{ l3[it1->index()] += *it1; ++it1; }
+	{ l3[it1.index()] += *it1; ++it1; }
       else if (d > 0)
-	{ l3[it2->index()] += *it2; ++it2; }
+	{ l3[it2.index()] += *it2; ++it2; }
       else
-	{ l3[it1->index()] = *it1 + *it2; ++it1; ++it2; }
+	{ l3[it1.index()] = *it1 + *it2; ++it1; ++it2; }
     }
-    for (; it1 != ite1; ++it1) l3[it1->index()] += *it1;
-    for (; it2 != ite2; ++it2) l3[it2->index()] += *it2;   
+    for (; it1 != ite1; ++it1) l3[it1.index()] += *it1;
+    for (; it2 != ite2; ++it2) l3[it2.index()] += *it2;   
   }
   
   template <class L1, class L2, class L3> inline
@@ -1019,7 +1022,7 @@ namespace bgeot {
     typename linalg_traits<L1>::const_iterator
       it1 = linalg_traits<L1>().const_begin(l1), 
       ite1 = linalg_traits<L1>().const_end(l1);
-    for (; it1 != ite1; ++it1) l2[it1->index()] += *it1;
+    for (; it1 != ite1; ++it1) l2[it1.index()] = *it1;
   }
   
   template <class L1, class L2>
@@ -1028,7 +1031,7 @@ namespace bgeot {
     typename linalg_traits<L1>::const_iterator
       it1 = linalg_traits<L1>().const_begin(l1), 
       ite1 = linalg_traits<L1>().const_end(l1);
-    for (; it1 != ite1; ++it1) l2[it1->index()] += *it1;
+    for (; it1 != ite1; ++it1) l2[it1.index()] += *it1;
   }
   
   template <class L1, class L2> inline

@@ -56,6 +56,46 @@ namespace bgeot
   
   template<class T> class ref_elt_svector;
 
+  template<class T> struct svector_iterator
+    : public dal::dynamic_tree_sorted<_elt_svector<T>,
+      comp_elt_svector<T>,3>::tas_iterator {
+    typedef typename dal::dynamic_tree_sorted<_elt_svector<T>,
+      comp_elt_svector<T>,3>::tas_iterator base_it_type;
+    typedef T                   value_type;
+    typedef value_type*   pointer;
+    typedef value_type&   reference;
+    typedef size_t              size_type;
+    typedef ptrdiff_t           difference_type;
+    typedef std::bidirectional_iterator_tag iterator_category;
+
+    reference operator *() const { return id->e; }
+    pointer operator->() const { return &(operator*()); }
+    size_type index(void) { return id->c; }
+    svector_iterator(void) {}
+    svector_iterator(const base_it_type &it) : base_it_type(it) {}
+  };
+
+  template<class T> struct svector_const_iterator
+    : public dal::dynamic_tree_sorted<_elt_svector<T>,
+      comp_elt_svector<T>,3>::const_tas_iterator {
+    typedef typename dal::dynamic_tree_sorted<_elt_svector<T>,
+      comp_elt_svector<T>,3>::const_tas_iterator base_it_type;
+    typedef T                   value_type;
+    typedef const value_type*   pointer;
+    typedef const value_type&   reference;
+    typedef size_t              size_type;
+    typedef ptrdiff_t           difference_type;
+    typedef std::bidirectional_iterator_tag iterator_category;
+    
+    reference operator *() const { return id->e; }
+    pointer operator->() const { return &(operator*()); }
+    size_type index(void) { return id->c; }
+    svector_const_iterator(void) {}
+    svector_const_iterator(const svector_iterator<T> &it) : base_it_type(it) {}
+    svector_const_iterator(const base_it_type &it) : base_it_type(it) {}
+  };
+
+
   template<class T> class svector
     : public dal::dynamic_tree_sorted<_elt_svector<T>, comp_elt_svector<T>,3>
   {
