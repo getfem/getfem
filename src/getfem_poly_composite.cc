@@ -343,23 +343,7 @@ namespace getfem
     }
   }
 
-  class str_mesh_key : virtual public dal::static_stored_object_key {
-    bgeot::pconvex_structure cvs;
-    short_type n;
-    bool simplex_mesh;
-  public :
-    virtual bool compare(const static_stored_object_key &oo) const {
-      const str_mesh_key &o = dynamic_cast<const str_mesh_key &>(oo);
-      if (cvs < o.cvs) return true;
-      if (o.cvs < cvs) return false;
-      if (n < o.n) return true;
-      if (o.n < n) return false;
-      if (simplex_mesh < o.simplex_mesh) return true;
-      return false;
-    }
-    str_mesh_key(bgeot::pconvex_structure cv, short_type nn, bool b)
-      : cvs(cv), n(nn), simplex_mesh(b) {}
-  };
+  DAL_TRIPLE_KEY(str_mesh_key, bgeot::pconvex_structure, short_type, bool);
 
   struct str_mesh_cv__  : virtual public dal::static_stored_object {
     bgeot::pconvex_structure cvs;

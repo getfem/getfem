@@ -973,23 +973,25 @@ Most of the time, one only needs an enrichment on a subset of node of the origin
 
 \section{Interpolation of a finite element method on non-matching meshes}
 
+
 (evolution of \cpp{virtual\_link\_fem}) A special finite element method is defined in \filename{getfem\_interpolated\_fem.h} which is not a real finite element method but allows to interpolate a finite element method defined on another mesh. When an assembling procedure has different finite element methods as arguments, the mesh on which those methods are defined should be the same. If you need to assemble a matrix with finite element methods defined on different meshes, you may use the finite element methods\\[0.5cm]
 \index{GETFEM!getfem::interpolated\_fem}
-\cpp{getfem::interpolated\_fem(getfem::mesh\_fem mf, getfem::mesh\_um mim) }\\[0.2cm]
+\cpp{getfem::new_interpolated\_fem(getfem::mesh\_fem mf, getfem::mesh\_im mim) }\\[0.2cm]
 Because each base function of the finite element method has to be interpolated, such a computation can be a heavy procedure. By default, the interpolated fem object store the interpolation. \\[0.5cm]
 
 The interpolation is made on each Gauss point of the integration methods of  \cpp{mim}, so that you have to use these integration methods in the assembling procedures.\\[0.5cm]
 
-For instance if you need to compute the mass matrix between to different finite element methods defined on two different meshes, this is an example of code which interpolate the second f.e.m. on the mesh of the first f.e.m., assuming that \cpp{mf1} and \cpp{mf2} describe the two finite element methods and \cpp{pim} is the chosen integration method.\\[0.5cm]
+For instance if you need to compute the mass matrix between to different finite element methods defined on two different meshes, this is an example of code which interpolate the second f.e.m. on the mesh of the first f.e.m., assuming that \cpp{mf} describes the finite element method and \cpp{mim} is the chosen integration method.\\[0.5cm]
 \begin{cppcode}
-  getfem::mesh\_fem mf\_interpole(mf1.linked\_mesh());
-  getfem::interpolated\_fem feminterpolated(mf2, mim);
-  dal::bit\_vector nn = mf1.convex\_index();
-  mf\_interpole.set\_finite\_element(nn, &feminterpolated);
+  getfem::mesh\_fem mf\_interpole(mf.linked\_mesh());
+  pfem ifem = getfem::new_interpolated\_fem(mf, mim);
+  dal::bit\_vector nn = mf.convex\_index();
+  mf\_interpole.set\_finite\_element(nn, ifem);
   getfem::asm\_mass\_matrix(SM1, mim, mf1, mf\_interpole);
+  del_interpolated_fem(ifem);
 \end{cppcode}
 
-The object \cpp{feminterpolated} contains all the information concerning the interpolation. It could use a lot of memory. You have to care that it is not destroyed while you use it in a \cpp{mesh\_fem} structure. To obtain a better accuracy, it is better to refine the integration method (with \cpp{IM_STRUCTURED_COMPOSITE} for instance) rather than improve its order. 
+The object pointed by \cpp{ifem} contains all the information concerning the interpolation. It could use a lot of memory. As pfem is a smart pointer (a boost instrusive pointer, see http://www.boost.org/), the interpolated fem will be automatically be destroyed when the last pointer on it will be destroyed. To obtain a better accuracy, it is better to refine the integration method (with \cpp{IM_STRUCTURED_COMPOSITE} for instance) rather than improve its order.
 
 \subsection{mixed methods with different meshes}
   to be described ...

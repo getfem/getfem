@@ -200,19 +200,26 @@ namespace getfem {
   
   fem_sum::fem_sum(const std::vector<const mesh_fem *> &mfs_)
   { init(mfs_); }
-  
-  fem_sum::fem_sum(const mesh_fem &mef1, const mesh_fem &mef2) {
-    std::vector<const mesh_fem *> mfs_(2);
-    mfs_[0] = &mef1; mfs_[1] = &mef2;
-    
-    init (mfs_);
+
+  DAL_SIMPLE_KEY(special_femsum_key, pfem);
+
+  pfem new_fem_sum(const std::vector<const mesh_fem *> &mfs_) {
+    pfem pf = new fem_sum(mfs_);
+    dal::add_stored_object(new special_femsum_key(pf), pf);
+    return pf;
   }
   
-  fem_sum::fem_sum(const mesh_fem &mef1, const mesh_fem &mef2,
+  pfem new_fem_sum(const mesh_fem &mef1, const mesh_fem &mef2) {
+    std::vector<const mesh_fem *> mfs_(2);
+    mfs_[0] = &mef1; mfs_[1] = &mef2;
+    return new_fem_sum(mfs_);
+  }
+  
+  pfem new_fem_sum(const mesh_fem &mef1, const mesh_fem &mef2,
 		   const mesh_fem &mef3) {
     std::vector<const mesh_fem *> mfs_(3);
     mfs_[0] = &mef1; mfs_[1] = &mef2; mfs_[2] = &mef3;
-    init (mfs_);
+    return new_fem_sum(mfs_);
   }
   
 }  /* end of namespace getfem.                                            */

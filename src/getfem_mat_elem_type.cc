@@ -64,8 +64,7 @@ namespace getfem {
     dal::add_stored_object(new mat_elem_type_key(p.get()), p,
 			   dal::AUTODELETE_STATIC_OBJECT);
     for (size_type i=0; i < f.size(); ++i) {
-      if (f[i].pfi && dal::exists_stored_object(f[i].pfi))
-	dal::add_dependency(p, f[i].pfi);
+      if (f[i].pfi) dal::add_dependency(p, f[i].pfi);
       if (f[i].t == GETFEM_NONLINEAR_ && f[i].nl_part==0)
 	f[i].nlt->register_mat_elem(p);
     }

@@ -41,20 +41,11 @@ namespace getfem {
 
   
   class level_set {
-    
-  public :
-    struct mf_key {
-      getfem_mesh *pmesh;
-      dim_type order;
-      mf_key(getfem_mesh &mesh, dim_type o) : pmesh(&mesh),order(o) {}
-      bool operator <(const mf_key &a) const;
-    };
 
   protected :
     typedef dal::shared_ptr<mesh_fem> pmesh_fem;
     pmesh_fem add_mesh_fem(getfem_mesh &mesh, dim_type o);
     void sup_mesh_fem(getfem_mesh &mesh, dim_type o);
-    static std::map<mf_key, pmesh_fem> mesh_fems;
     getfem_mesh *pmesh;
     dim_type degree_;
     pmesh_fem mf;

@@ -71,7 +71,7 @@ namespace getfem {
   
   void mesh_fem::receipt(const MESH_CLEAR &) { clear(); }
   void mesh_fem::receipt(const MESH_DELETE &) {
-    clear(); is_valid = false;
+    clear(); is_valid_ = false;
     sup_sender(linked_mesh_->lmsg_sender());
   }
   void mesh_fem::receipt(const MESH_SUP_CONVEX &m) { 
@@ -376,7 +376,7 @@ namespace getfem {
     add_sender(me.lmsg_sender(), *this,
 	   lmsg::mask(MESH_CLEAR()) | lmsg::mask(MESH_SUP_CONVEX()) |
 	   lmsg::mask(MESH_SWAP_CONVEX()) | lmsg::mask(MESH_DELETE()));
-    is_valid = true;
+    is_valid_ = true;
   }
 
   mesh_fem::~mesh_fem() {}

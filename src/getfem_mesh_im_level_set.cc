@@ -290,18 +290,7 @@ namespace getfem {
 //     }
   }
 
-  // Key type for static storing
-  class special_imls_key : virtual public dal::static_stored_object_key {
-    papprox_integration p;
-  public :
-    virtual bool compare(const static_stored_object_key &oo) const {
-      const special_imls_key &o
-	= dynamic_cast<const special_imls_key &>(oo);
-      if (p < o.p) return true; return false; 
-    }
-    special_imls_key(papprox_integration pp) : p(pp) {}
-  };
-
+  DAL_SIMPLE_KEY(special_imls_key, papprox_integration);
 
   void mesh_im_level_set::cut_element(size_type cv,
 				      const dal::bit_vector &primary,

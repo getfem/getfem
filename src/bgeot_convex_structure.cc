@@ -254,17 +254,7 @@ namespace bgeot {
   /* direct product of convex structures                                  */
   /* ******************************************************************** */
 
-  struct cv_pr_key_ : virtual public dal::static_stored_object_key {
-    pconvex_structure cv1, cv2;
-    virtual bool compare(const static_stored_object_key &oo) const {
-      const cv_pr_key_ &o = dynamic_cast<const cv_pr_key_ &>(oo);
-      if (cv1 < o.cv1) return true;
-      if (o.cv1 < cv1) return false; 
-      if (cv2 < o.cv2) return true;
-      return false;
-    }
-    cv_pr_key_(pconvex_structure a, pconvex_structure b) { cv1=a; cv2=b; }
-  };
+  DAL_DOUBLE_KEY(cv_pr_key_, pconvex_structure, pconvex_structure);
 
   struct cv_pr_structure_ : public convex_structure {
     cv_pr_structure_(pconvex_structure cv1, pconvex_structure cv2) {
@@ -352,16 +342,7 @@ namespace bgeot {
     pconvex_structure p;
   };
 
-  struct parallelepiped_key_ : virtual public dal::static_stored_object_key {
-    dim_type n;
-    virtual bool compare(const static_stored_object_key &oo) const {
-      const parallelepiped_key_ &o
-	= dynamic_cast<const parallelepiped_key_ &>(oo);
-      if (n < o.n) return true;
-      return false;
-    }
-    parallelepiped_key_(dim_type nn) : n(nn) { }
-  };
+  DAL_SIMPLE_KEY(parallelepiped_key_, dim_type);
 
   pconvex_structure parallelepiped_structure(dim_type nc) {
     if (nc <= 1) return simplex_structure(nc);

@@ -80,10 +80,13 @@ namespace getfem {
 			      base_tensor &) const;
     
     fem_sum(const std::vector<const mesh_fem *> &mfs_);
-    fem_sum(const mesh_fem &mef1, const mesh_fem &mef2);
-    fem_sum(const mesh_fem &mef1, const mesh_fem &mef2, const mesh_fem &mef3);
-    
   };
+
+  pfem new_fem_sum(const std::vector<const mesh_fem *> &mfs_);
+  pfem new_fem_sum(const mesh_fem &mef1, const mesh_fem &mef2);
+  pfem new_fem_sum(const mesh_fem &mef1, const mesh_fem &mef2,
+		   const mesh_fem &mef3);
+  inline void del_fem_sum(pfem pf) { dal::del_stored_object(pf); }
 
 
 }  /* end of namespace getfem.                                            */

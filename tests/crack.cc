@@ -99,8 +99,8 @@ base_matrix sol_sigma(const base_node &x) {
 }
 
 /*
-  structure for the elastostatic problem
-*/
+ * structure for the crack problem
+ */
 struct crack_problem {
 
   enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
@@ -114,7 +114,7 @@ struct crack_problem {
 
   getfem::level_set ls;      /* The two level sets defining the crack.       */
   
-  scalar_type residue;        /* max residue for the iterative solvers         */
+  scalar_type residue;       /* max residue for the iterative solvers        */
   bool mixed_pressure;
 
   std::string datafilename;

@@ -302,7 +302,8 @@ namespace getfem {
     : mf(mef), mim(meim), pif(pif_), store_values(store_val),
       blocked_dof(blocked_dof_), mi2(2), mi3(3) {
     if (mef.get_qdim() != 1) 
-      DAL_THROW(dal::to_be_done_error, "interpolated_fem do not handle qdim != 1");
+      DAL_THROW(dal::to_be_done_error,
+		"interpolated_fem do not handle qdim != 1");
     this->add_dependency(mf);
     this->add_dependency(mim);
     is_pol = is_lag = false; es_degree = 5;
@@ -312,6 +313,16 @@ namespace getfem {
     // The detection should be done and the multilication of components
     // for scalar elements interpolated.
     update_from_context();
+  }
+
+  DAL_SIMPLE_KEY(special_intfem_key, pfem);
+
+  pfem new_interpolated_fem(const mesh_fem &mef, const mesh_im &mim,
+			    pinterpolated_func pif,
+			    dal::bit_vector blocked_dof, bool store_val) {
+    pfem pf = new interpolated_fem(mef, mim, pif, blocked_dof, store_val);
+    dal::add_stored_object(new special_intfem_key(pf), pf);
+    return pf;
   }
 
 }  /* end of namespace getfem.                                            */

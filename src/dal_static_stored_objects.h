@@ -84,10 +84,46 @@ namespace dal {
       return compare(o);
     }
     
-    
     virtual ~static_stored_object_key() {}
     
   };
+
+#define DAL_SIMPLE_KEY(class_name, var_type)                         \
+  class class_name : virtual public dal::static_stored_object_key {  \
+    var_type a;                                                      \
+  public :                                                           \
+    virtual bool compare(const static_stored_object_key &oo) const { \
+      const class_name &o = dynamic_cast<const class_name &>(oo);    \
+      if (a < o.a) return true; return false;                        \
+    }                                                                \
+    class_name(var_type aa) : a(aa) {}                               \
+  }
+
+#define DAL_DOUBLE_KEY(class_name, var_type1, var_type2)	     \
+  class class_name : virtual public dal::static_stored_object_key {  \
+    var_type1 a1; var_type2 a2;                                      \
+  public :                                                           \
+    virtual bool compare(const static_stored_object_key &oo) const { \
+      const class_name &o = dynamic_cast<const class_name &>(oo);    \
+      if (a1 < o.a1) return true; if (o.a1 < a1) return false;       \
+      if (a2 < o.a2) return true; return false;			     \
+    }                                                                \
+  class_name(var_type1 aa1, var_type2 aa2) : a1(aa1), a2(aa2) {}     \
+  }
+
+#define DAL_TRIPLE_KEY(class_name, var_type1, var_type2, var_type3)  \
+  class class_name : virtual public dal::static_stored_object_key {  \
+    var_type1 a1; var_type2 a2; var_type3 a3;                        \
+  public :                                                           \
+    virtual bool compare(const static_stored_object_key &oo) const { \
+      const class_name &o = dynamic_cast<const class_name &>(oo);    \
+      if (a1 < o.a1) return true; if (o.a1 < a1) return false;       \
+      if (a2 < o.a2) return true; if (o.a2 < a2) return false;       \
+      if (a3 < o.a3) return true; return false;			     \
+    }                                                                \
+  class_name(var_type1 aa1, var_type2 aa2, var_type3 aa3)            \
+    : a1(aa1), a2(aa2), a3(aa3)  {}                                  \
+  }
 
   typedef const static_stored_object_key *pstatic_stored_object_key;
   

@@ -159,13 +159,15 @@ namespace getfem
     mutable bgeot::mesh_structure dof_structure;
     mutable bool dof_enumeration_made;
     mutable size_type nb_total_dof;
-    bool is_valid;
+    bool is_valid_;
     dim_type Qdim; /* this is the "global" target_dim */
     
   public :
     
     typedef base_node point_type;
     void update_from_context(void) const {}
+
+    bool is_valid(void) { return is_valid_; }
 
     /** Gives in a structure dal::bit\_vector all convexes of the
      *          mesh where a finite element is defined.

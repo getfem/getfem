@@ -64,7 +64,8 @@ namespace dal {
 					  pstatic_stored_object_key> {
     ~stored_key_tab() {
       for (iterator it = begin(); it != end(); ++it) {
-	// cout << "it->second = " << it->second << " of type " << typeid(*(it->second)).name() << endl;
+	// cout << "it->second = " << it->second << " of type "
+	//      << typeid(*(it->second)).name() << endl;
 	delete it->second;
       }
     }
@@ -171,7 +172,8 @@ namespace dal {
     stored_keys[o] = k;
     stored_objects[enr_static_stored_object_key(k)]
       = enr_static_stored_object(o, perm);
-    // cout << "add object " << o.get() << " of type " << typeid(*o).name() << endl;
+    // cout << "add object " << o.get() << " of type "
+    //      << typeid(*o).name() << endl;
   }
 
   // Only delete the object but not the dependencies
@@ -181,7 +183,8 @@ namespace dal {
     stored_key_tab& stored_keys = dal::singleton<stored_key_tab>::instance();
     std::list<pstatic_stored_object>::iterator it;
     for (it = to_delete.begin(); it != to_delete.end(); ++it) {
-      // cout << "delete object " << (*it).get() << " of type " << typeid(*(*it)).name() << endl;
+      // cout << "delete object " << (*it).get() << " of type "
+      //      << typeid(*(*it)).name() << endl;
       pstatic_stored_object_key k = key_of_stored_object(*it);
       stored_object_tab::iterator ito = stored_objects.find(k);
       if (k) stored_keys.erase(*it);

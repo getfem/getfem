@@ -1228,17 +1228,7 @@ namespace getfem
   /*       Precomputation on fem.                                          */
   /* ********************************************************************* */
 
-  struct pre_fem_key_ : virtual public dal::static_stored_object_key {
-    pfem pf;
-    bgeot::pstored_point_tab pspt;
-    virtual bool compare(const static_stored_object_key &oo) const {
-      const pre_fem_key_ &o = dynamic_cast<const pre_fem_key_ &>(oo);
-      if (pf < o.pf) return true; if (o.pf < pf) return false; 
-      if (pspt < o.pspt) return true; return false;
-    }
-    pre_fem_key_(pfem pff, bgeot::pstored_point_tab ps) : pf(pff), pspt(ps) {}
-    pre_fem_key_(void) { }   
-  };
+  DAL_DOUBLE_KEY(pre_fem_key_, pfem, bgeot::pstored_point_tab);
 
   fem_precomp_::fem_precomp_(pfem pff, bgeot::pstored_point_tab ps) :
     pf(pff), pspt(ps) {

@@ -200,17 +200,7 @@ namespace bgeot {
 
   /* products.                                                             */
 
-  struct product_ref_key_ : virtual public dal::static_stored_object_key {
-    pconvex_ref cvr1, cvr2;
-    virtual bool compare(const static_stored_object_key &oo) const {
-      const product_ref_key_ &o = dynamic_cast<const product_ref_key_ &>(oo);
-      if (cvr1 < o.cvr1) return true;
-      if (o.cvr1 < cvr1) return false; 
-      if (cvr2 < o.cvr2) return true;
-      return false;
-    }
-    product_ref_key_(pconvex_ref a, pconvex_ref b) { cvr1 = a; cvr2 = b; }
-  };
+  DAL_DOUBLE_KEY(product_ref_key_, pconvex_ref, pconvex_ref);
 
   struct product_ref_ : public convex_of_reference {
     pconvex_ref cvr1, cvr2;

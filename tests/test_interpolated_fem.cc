@@ -139,7 +139,7 @@ void lap_pb::init(void) {
   mef2.set_finite_element(nn, getfem::fem_descriptor(meth));
   nn = mesh1.convex_index(N);
   mefinterpolated.set_finite_element(nn,
-				     new getfem::interpolated_fem(mef2, mim1));
+				     getfem::new_interpolated_fem(mef2, mim1));
 }
 
 void lap_pb::assemble(void) {
@@ -228,7 +228,7 @@ void test2() {
   getfem::mesh_fem mflnk(m2);
   getfem::interpolated_fem ifem(mf1, mim);
   mflnk.set_finite_element(m2.convex_index(),
-			   new getfem::interpolated_fem(mf1, mim));
+			   getfem::new_interpolated_fem(mf1, mim));
   sparse_matrix_type MM = sparse_matrix_type(mf2.nb_dof(), mflnk.nb_dof());
   getfem::asm_mass_matrix(MM, mim, mf2, mflnk);
   cout << "MM=" << MM << "\n";

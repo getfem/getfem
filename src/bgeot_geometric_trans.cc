@@ -578,17 +578,7 @@ namespace bgeot {
   /*       Precomputation on geometric transformations.                    */
   /* ********************************************************************* */
 
-  struct pre_geot_key_ : virtual public dal::static_stored_object_key  {
-    pgeometric_trans pgt;
-    pstored_point_tab pspt;
-    virtual bool compare(const static_stored_object_key &oo) const {
-      const pre_geot_key_ &o = dynamic_cast<const pre_geot_key_ &>(oo);
-      if (pgt < o.pgt) return true; if (o.pgt < pgt) return false; 
-      if (pspt < o.pspt) return true; return false;
-    }
-    pre_geot_key_(pgeometric_trans pg, pstored_point_tab ps) 
-      : pgt(pg), pspt(ps) {}   
-  };  
+  DAL_DOUBLE_KEY(pre_geot_key_, pgeometric_trans, pstored_point_tab);
 
   geotrans_precomp_::geotrans_precomp_(pgeometric_trans pg,
 				       pstored_point_tab ps) 
