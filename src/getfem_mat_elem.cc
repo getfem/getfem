@@ -32,7 +32,6 @@
 #include <dal_singleton.h>
 #include <getfem_mat_elem.h>
 #include <getfem_precomp.h>
-#include <bgeot_precomp.h>
 
 extern "C" void daxpy_(const int *n, const double *alpha, const double *x,
 		       const int *incx, double *y, const int *incy);

@@ -37,41 +37,41 @@ namespace bgeot {
   /*       Point tab storage.                                              */
   /* ********************************************************************* */
 
-  int compare_stored_point_tab::operator()(const stored_point_tab &x,
-					const stored_point_tab &y) const {
-    std::vector<base_node>::const_iterator it1 = x.begin(), it2 = y.begin();
-    base_node::const_iterator itn1, itn2, itne;
-    for ( ; it1 != x.end() && it2 != y.end() ; ++it1, ++it2) {
-      if ((*it1).size() < (*it2).size()) return -1;
-      if ((*it1).size() > (*it2).size()) return 1;
-      itn1 = (*it1).begin(); itne = (*it1).end(); itn2 = (*it2).begin();
-      for ( ; itn1 != itne ; ++itn1, ++itn2)
-	if (*itn1 < *itn2) return -1;
-	else if (*itn1 > *itn2) return 1;
+  struct stored_point_tab_key : public dal::static_stored_object_key  {
+    const stored_point_tab * pspt;
+    virtual bool compare(const static_stored_object_key &oo) const {
+      const stored_point_tab_key &o
+	= dynamic_cast<const stored_point_tab_key &>(oo);
+      const stored_point_tab &x = *pspt;
+      const stored_point_tab &y = *(o.pspt);
+      std::vector<base_node>::const_iterator it1 = x.begin(), it2 = y.begin();
+      base_node::const_iterator itn1, itn2, itne;
+      for ( ; it1 != x.end() && it2 != y.end() ; ++it1, ++it2) {
+	if ((*it1).size() < (*it2).size()) return true;
+	if ((*it1).size() > (*it2).size()) return false;
+	itn1 = (*it1).begin(); itne = (*it1).end(); itn2 = (*it2).begin();
+	for ( ; itn1 != itne ; ++itn1, ++itn2)
+	  if (*itn1 < *itn2) return true;
+	  else if (*itn1 > *itn2) return false;
+      }
+      if (it2 != y.end()) return true;
+      return false;
     }
-    if (it2 != y.end()) return -1;
-    if (it1 != x.end()) return 1;
-    return 0;
+    stored_point_tab_key(const stored_point_tab *p) : pspt(p) {}
+  };
+  
+  
+  pstored_point_tab store_point_tab(const stored_point_tab& spt) {
+    dal::pstatic_stored_object o
+      = dal::search_stored_object(stored_point_tab_key(&spt));
+    if (o) return dal::stored_cast<stored_point_tab>(o);
+    pstored_point_tab p = new stored_point_tab(spt);
+    dal::add_stored_object(new stored_point_tab_key(p.get()), p, 4);
+    return p;
   }
 
-  stored_point_tab_tab &stored_point_tab_tab::instance() {
-    return dal::singleton<stored_point_tab_tab>::instance();
-  }
-
-  struct org_stored_point_tab_data : public std::vector<pstored_point_tab> { };
-
-  pstored_point_tab org_stored_point_tab(size_type n) {
-    std::vector<pstored_point_tab> &tab = 
-      dal::singleton<org_stored_point_tab_data>::instance();
-    while (n >= tab.size()) {
-      stored_point_tab spt(1);
-      spt[0].resize(tab.size()); spt[0].fill(0.0); 
-      tab.push_back(store_point_tab(spt));
-    }
-    return tab[n];
-  }
-
-  struct cleanup_simplexified_convexes : public dal::ptr_collection<mesh_structure> {};
+  struct cleanup_simplexified_convexes
+    : public dal::ptr_collection<mesh_structure> {};
 
   /* should be called on the basic_convex_ref */
   const mesh_structure*
@@ -88,7 +88,8 @@ namespace bgeot {
       for (size_type i=0; i < ipts.size(); ++i) ipts[i] = i;
       ms.add_convex(structure(), ipts.begin());
       ms.to_edges();
-      bgeot::simplexify(ms,*psimplexified_convex, points(), 
+      bgeot::simplexify(ms,*psimplexified_convex,
+			(convex<base_node>::points)(), 
 			std::max(structure()->dim(),dim_type(1)), 1e-12);
     }
     return psimplexified_convex;
@@ -147,11 +148,12 @@ namespace bgeot {
     K_simplex_of_ref_(dim_type NN, short_type KK) {
       cvs = simplex_structure(NN, KK);
       size_type R = cvs->nb_points();
-      points().resize(R);
+      convex<base_node>::points().resize(R);
       normals_.resize(NN+1);
       base_node null(NN); null.fill(0.0);
       std::fill(normals_.begin(), normals_.end(), null);
-      std::fill(points().begin(), points().end(), null);
+      std::fill(convex<base_node>::points().begin(),
+		convex<base_node>::points().end(), null);
       for (size_type i = 1; i <= NN; ++i)
 	normals_[i][i-1] = -1.0;
       if (NN > 0)
@@ -161,12 +163,12 @@ namespace bgeot {
       
       if (KK == 0) {
 	c.fill(1.0/(NN+1));
-	points()[0] = c;
+	convex<base_node>::points()[0] = c;
       }
       else {
 	size_type sum = 0, l;
 	for (size_type r = 0; r < R; ++r) {
-	  points()[r] = c;
+	  convex<base_node>::points()[r] = c;
 	  if (KK != 0 && NN > 0) {
 	    l = 0; c[l] += 1.0 / scalar_type(KK); sum++;
 	    while (sum > KK) {
@@ -290,38 +292,42 @@ namespace bgeot {
     scalar_type is_in(const base_node &pt) const {
       scalar_type d;
       for (size_type f = 0; f < normals().size(); ++f) {
-        const base_node &x0 = (f ? points()[f-1] : points().back());
+        const base_node &x0 = (f ? convex<base_node>::points()[f-1]
+			       : convex<base_node>::points().back());
         scalar_type v = gmm::vect_sp(pt-x0, normals()[f]);
         if (f == 0) d = v; else d = std::max(d,v);
       }
       return d;
     }
     scalar_type is_in_face(short_type f, const base_node &pt) const {
-      const base_node &x0 = (f ? points()[f-1] : points().back());
+      const base_node &x0 = (f ? convex<base_node>::points()[f-1]
+			     : convex<base_node>::points().back());
       return gmm::abs(gmm::vect_sp(pt-x0, normals()[f])); 
     }
     equilateral_simplex_of_ref_(size_type N) {
       pconvex_ref prev = equilateral_simplex_of_reference(N-1);
       basic_convex_ref_ = this;
       cvs = simplex_structure(N, 1);
-      points().resize(N+1);
+      convex<base_node>::points().resize(N+1);
       normals_.resize(N+1);
       base_node G(N); G.fill(0.);
       for (size_type i=0; i < N+1; ++i) {
-        points()[i].resize(N);
+        (convex<base_node>::points)()[i].resize(N);
         if (i != N) {
-          std::copy(prev->points()[i].begin(), prev->points()[i].end(),
-		    points()[i].begin());
-          points()[i][N-1] = 0.;
+          std::copy(prev->convex<base_node>::points()[i].begin(),
+		    prev->convex<base_node>::points()[i].end(),
+		    convex<base_node>::points()[i].begin());
+          convex<base_node>::points()[i][N-1] = 0.;
         } else {
-          points()[i] = 1./N * G;
-          points()[i][N-1] = sqrt(1. - gmm::vect_norm2_sqr(points()[i]));
+          convex<base_node>::points()[i] = 1./N * G;
+          convex<base_node>::points()[i][N-1]
+	    = sqrt(1. - gmm::vect_norm2_sqr(convex<base_node>::points()[i]));
         }
-        G += points()[i];
+        G += convex<base_node>::points()[i];
       }
       gmm::scale(G, 1./(N+1));
       for (size_type f=0; f < N+1; ++f) {
-        normals_[f] = G - points()[f]; 
+        normals_[f] = G - convex<base_node>::points()[f]; 
         gmm::scale(normals_[f], 1/gmm::vect_norm2(normals_[f]));
       }
     }
@@ -350,11 +356,11 @@ namespace bgeot {
   
     generic_dummy_(dim_type d, size_type n, size_type nf) {
       cvs = generic_dummy_structure(d, n, nf);
-      points().resize(n);
+      convex<base_node>::points().resize(n);
       normals_.resize(0);
       base_node P(d);
       std::fill(P.begin(), P.end(), scalar_type(1)/scalar_type(20));
-      std::fill(points().begin(), points().end(), P);
+      std::fill(convex<base_node>::points().begin(), convex<base_node>::points().end(), P);
     }
   };
 

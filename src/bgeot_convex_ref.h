@@ -28,7 +28,6 @@
 //========================================================================
 
 
-
 #ifndef BGEOT_CONVEX_REF_H__
 #define BGEOT_CONVEX_REF_H__
 
@@ -37,30 +36,21 @@
 namespace bgeot {
 
   /** Point tab storage. */
-  typedef std::vector<base_node> stored_point_tab;
-  typedef const stored_point_tab * pstored_point_tab;
-
-  /* comparison of two arrays of points */
-  struct compare_stored_point_tab
-    : public std::binary_function<stored_point_tab, stored_point_tab, int> {
-    int operator()(const stored_point_tab &x,
-		   const stored_point_tab &y) const;
+  struct stored_point_tab : public dal::static_stored_object,
+			    public std::vector<base_node> {
+    const base_node &operator[](size_type i) const
+    { return std::vector<base_node>::operator [](i); }
+    template <class IT> stored_point_tab(IT it, IT ite)
+      : std::vector<base_node>(it, ite) { }
   };
 
-  /* holds all the stored_point_tab (singleton) */
-  struct stored_point_tab_tab : public 
-  dal::dynamic_tree_sorted<stored_point_tab, compare_stored_point_tab> 
-  { static stored_point_tab_tab &instance(); };
+  typedef boost::intrusive_ptr<const stored_point_tab> pstored_point_tab;
+
+  pstored_point_tab store_point_tab(const stored_point_tab& spt);
 
   /* store a new (read-only) array of points in stored_point_tab_tab */
-  template<class CONT> pstored_point_tab store_point_tab(const CONT &TAB) { 
-    stored_point_tab spt(TAB.begin(), TAB.end());
-    return &(stored_point_tab_tab::instance()
-	     [stored_point_tab_tab::instance().add_norepeat(spt)]);
-  }
-
-  /* returns the (read-only) origin for points of dimension n */
-  pstored_point_tab org_stored_point_tab(size_type n);
+  template<class CONT> pstored_point_tab store_point_tab(const CONT &TAB)
+  { return store_point_tab(stored_point_tab(TAB.begin(), TAB.end())); }
 
   class mesh_structure;
 
@@ -92,6 +82,7 @@ namespace bgeot {
     std::vector<base_small_vector> normals_;
     mutable mesh_structure *psimplexified_convex;
     mutable const convex_of_reference *basic_convex_ref_;
+    mutable pstored_point_tab ppoints;
   public :
     convex_of_reference() : convex<base_node>(), psimplexified_convex(0),
 			    basic_convex_ref_(0) {}
@@ -100,13 +91,21 @@ namespace bgeot {
     const std::vector<base_small_vector> &normals(void) const
     { return normals_; }
 
+    const stored_point_tab &points(void) const {
+      if (ppoints == 0) ppoints = store_point_tab(convex<base_node>::points());
+      return *ppoints;
+    }
+    const stored_point_tab &points(void) {
+      if (ppoints == 0) ppoints = store_point_tab(convex<base_node>::points());
+      return *ppoints;
+    }
+    
     /* returns a mesh structure composed of simplexes whose union
        is the reference convex. All simplexes have the same (direct)
        orientation.
     */
     const mesh_structure* simplexified_convex() const;
-    pconvex_ref basic_convex_ref() const
-    { return basic_convex_ref_; }
+    pconvex_ref basic_convex_ref() const { return basic_convex_ref_; }
     void attach_basic_convex_ref(pconvex_ref cvr) const
     { basic_convex_ref_ = cvr.get(); }
   };

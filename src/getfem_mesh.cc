@@ -30,7 +30,6 @@
 #include <dal_singleton.h>
 #include <gmm_condition_number.h>
 #include <getfem_mesh.h>
-#include <bgeot_precomp.h>
 
 namespace getfem {
  bool mesh_cvf_set::is_elt(size_type c, short_type f) const {
@@ -238,7 +237,8 @@ namespace getfem {
   base_small_vector getfem_mesh::normal_of_face_of_convex(size_type ic, short_type f,
 							  size_type n) const {
     bgeot::pgeometric_trans pgt = trans_of_convex(ic);
-    bgeot::pgeotrans_precomp pgp = bgeot::geotrans_precomp(pgt, &pgt->geometric_nodes());
+    bgeot::pgeotrans_precomp pgp
+      = bgeot::geotrans_precomp(pgt, &(pgt->geometric_nodes()));
     base_matrix G(dim(),pgt->nb_points());
     vectors_to_base_matrix(G,points_of_convex(ic));
     bgeot::geotrans_interpolation_context c(pgp,pgt->structure()->ind_points_of_face(f)[n], G);

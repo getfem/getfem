@@ -38,37 +38,43 @@
 
 namespace getfem {
   /**
-     node data in a slice: contains both real position, and position in the reference convex
+   * node data in a slice: contains both real position,
+   * and position in the reference convex
    */
   
   struct slice_node {
-    typedef std::bitset<32> faces_ct; /// broken for convexes with more than 32 faces
+    typedef std::bitset<32> faces_ct; /** broken for convexes with more
+                                       * than 32 faces. */
     base_node pt, pt_ref;
     faces_ct faces; 
     slice_node() {}
-    slice_node(const base_node& pt_, const base_node& pt_ref_) : pt(pt_), pt_ref(pt_ref_) {}
+    slice_node(const base_node& pt_, const base_node& pt_ref_)
+      : pt(pt_), pt_ref(pt_ref_) {}
     void swap(slice_node &other) { 
-      std::swap(faces,other.faces); pt.swap(other.pt); pt_ref.swap(other.pt_ref);
+      std::swap(faces,other.faces); pt.swap(other.pt);
+      pt_ref.swap(other.pt_ref);
     }
   };
   
 
   /**
-     simplex data in a slice: just a list of slice_node ids.
+   * simplex data in a slice: just a list of slice_node ids.
    */
   struct slice_simplex {
     std::vector<size_type> inodes;
     size_type dim() const { return inodes.size()-1; }
     slice_simplex(size_type n) : inodes(n) {} 
     slice_simplex() : inodes(4) {}
-    bool operator==(const slice_simplex& o) const { return inodes == o.inodes; }
-    bool operator!=(const slice_simplex& o) const { return inodes != o.inodes; }
+    bool operator==(const slice_simplex& o) const
+    { return inodes == o.inodes; }
+    bool operator!=(const slice_simplex& o) const
+    { return inodes != o.inodes; }
   };
 
   /**
-     mesh slice: a list of nodes/simplexes, which can be seen as a P1 discontinuous
-     mesh_fem on which the interpolation is very fast
-  */
+   * mesh slice: a list of nodes/simplexes, which can be seen as
+   *  a P1 discontinuous mesh_fem on which the interpolation is very fast
+   */
   class slicer_action;
   class stored_mesh_slice;
 
@@ -218,7 +224,7 @@ namespace getfem {
     mesh_slice_cv_dof_data_base *defdata;
     pfem pf;
     fem_precomp_pool fprecomp;
-    bgeot::stored_point_tab ref_pts;
+    std::vector<base_node> ref_pts;
  public:
     slicer_apply_deformation(mesh_slice_cv_dof_data_base &defdata_) 
       : defdata(&defdata_), pf(0) {

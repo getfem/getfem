@@ -192,8 +192,11 @@ namespace getfem
     { remove(); method.ppi = ppii; im_type = IM_EXACT; }
 
     const bgeot::stored_point_tab &integration_points(void) const { 
-      if (type() == IM_EXACT)
-	return *(bgeot::org_stored_point_tab(method.ppi->structure()->dim()));
+      if (type() == IM_EXACT) {
+	size_type n = method.ppi->structure()->dim();
+	std::vector<base_node> spt(1); spt[0] = base_node(n);
+	return (*store_point_tab(spt));
+      }
       else if (type() == IM_APPROX)
 	return method.pai->integration_points();
       else DAL_THROW(dal::failure_error, "IM_NONE has no points");

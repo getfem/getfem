@@ -89,7 +89,7 @@ namespace bgeot
   bool geotrans_inv_convex::invert_nonlin(const base_node& xreal, base_node& x, scalar_type IN_EPS) {
     base_node xn(P), y, z,x0;
     /* find an initial guess */
-    x0 = pgt->geometric_nodes()[0]; y = cvpts[0];  
+    x0 = (pgt->geometric_nodes())[0]; y = cvpts[0];  
     scalar_type d = vect_dist2_sqr(y, xreal);
     for (size_type j = 1; j < pgt->nb_points(); ++j) { 
       scalar_type d2 = vect_dist2_sqr(cvpts[j], xreal);

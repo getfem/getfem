@@ -110,7 +110,7 @@ namespace bgeot
     /// Gives the vector of polynomials representing the transformation.
     const std::vector<base_poly> &poly_vector(void) const { return trans; }
     /// Gives the array of geometric nodes (on reference convex)
-    const std::vector<base_node> &geometric_nodes(void) const
+    const stored_point_tab &geometric_nodes(void) const
     { return cvr->points(); }
     /// Gives the array of the normals to faces (on reference convex)
     const std::vector<base_small_vector> &normals(void) const
@@ -165,7 +165,8 @@ namespace bgeot
   }
 
   class geotrans_precomp_;
-  typedef const geotrans_precomp_ *pgeotrans_precomp;
+  typedef boost::intrusive_ptr<const geotrans_precomp_> pgeotrans_precomp;
+
 
   /* the geotrans_interpolation_context structure is passed as the
      argument of geometric transformation interpolation
@@ -262,6 +263,115 @@ namespace bgeot
   compute_local_basis(const geotrans_interpolation_context& c,
 		      size_type face);
     //@}
+
+  /* ********************************************************************* */
+  /*       Precomputation on geometric transformations.                    */
+  /* ********************************************************************* */
+  
+  /**
+   *  precomputed geometric transformation operations use this for
+   *  repetitive evaluation of a geometric transformations on a set of
+   *  points "pspt" in the the reference convex which do not change.
+   */
+  class geotrans_precomp_ : public dal::static_stored_object {
+  protected:      
+    pgeometric_trans pgt;
+    pstored_point_tab pspt;  /* a set of points in the reference elt*/
+    mutable std::vector<base_vector> c;  /* precomputed values for the     */
+                                         /* transformation                 */
+    mutable std::vector<base_matrix> pc; /* precomputed values for gradient*/
+                                         /* of the transformation.         */
+    mutable std::vector<base_matrix> hpc; /* precomputed values for hessian*/
+                                          /*  of the transformation.       */
+  public:
+    inline const base_vector &val(size_type i) const 
+    { if (c.empty()) init_val(); return c[i]; }
+    inline const base_matrix &grad(size_type i) const
+    { if (pc.empty()) init_grad(); return pc[i]; }
+    inline const base_matrix &hessian(size_type i) const
+    { if (hpc.empty()) init_hess(); return hpc[i]; }
+    
+    /**
+     *  Apply the geometric transformation from the reference convex to
+     *  the convex whose vertices are stored in G, to the set of points
+     *  listed in pspt. @param G any container of vertices of the transformed
+     *  convex
+     *  @result pt_tab transformed points
+     */
+    template <typename CONT> 
+    void transform(const CONT& G,
+		   stored_point_tab& pt_tab) const;
+    template <typename CONT, typename VEC> 
+    void transform(const CONT& G, size_type ii, VEC& pt) const;
+
+    base_node transform(size_type i, const base_matrix &G) const;
+    pgeometric_trans get_trans() const { return pgt; }
+    inline const stored_point_tab& get_point_tab() const { return *pspt; }
+    geotrans_precomp_(pgeometric_trans pg, pstored_point_tab ps);
+  private:
+    void init_val() const;
+    void init_grad() const;
+    void init_hess() const;
+  };
+
+
+  template <typename CONT, typename VEC> 
+  void geotrans_precomp_::transform(const CONT& G, size_type j,
+				    VEC& pt) const {
+    size_type k = 0;
+    if (c.empty()) init_val();
+    for (typename CONT::const_iterator itk = G.begin(); 
+         itk != G.end(); ++itk, ++k) {
+      typename CONT::value_type::const_iterator Gk = (*itk).begin();
+      typename VEC::iterator ipt = pt.begin();
+      for (size_type i=0; i < (*itk).size(); ++i) {
+        ipt[i] += Gk[i] * c[j][k];
+      }
+    }
+  }
+
+  template <typename CONT> 
+  void geotrans_precomp_::transform(const CONT& G,
+                                    stored_point_tab& pt_tab) const {
+    if (c.empty()) init_val();
+    pt_tab.clear(); pt_tab.resize(c.size(), base_node(G[0].size()));
+    for (size_type j = 0; j < c.size(); ++j) {
+      transform(G, j, pt_tab[j]);
+    }
+  }
+  
+  typedef boost::intrusive_ptr<const geotrans_precomp_> pgeotrans_precomp;
+  
+  /**
+   *  precomputes a geometric transformation for a fixed set of 
+   *  points in the reference convex. 
+   */
+  pgeotrans_precomp geotrans_precomp(pgeometric_trans pg,
+				     pstored_point_tab pspt);
+
+  void delete_geotrans_precomp(pgeotrans_precomp pgp);
+
+  /**
+   *  The object geotrans_precomp_pool Allow to allocate a certain number
+   *  of geotrans_precomp and automatically delete them when it is 
+   *  deleted itself.
+   */
+  class geotrans_precomp_pool {
+    std::map<pgeotrans_precomp, bool> precomps;
+
+  public :
+    
+    pgeotrans_precomp operator()(pgeometric_trans pg, pstored_point_tab pspt) {
+      pgeotrans_precomp p = geotrans_precomp(pg, pspt);
+      precomps[p] = true;
+      return p;
+    }
+    ~geotrans_precomp_pool() {
+      for (std::map<pgeotrans_precomp, bool>::iterator it = precomps.begin();
+	   it != precomps.end(); ++it)
+	delete_geotrans_precomp(it->first);
+    }
+  };
 
 }  /* end of namespace bgeot.                                             */
 

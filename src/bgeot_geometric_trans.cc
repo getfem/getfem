@@ -32,7 +32,6 @@
 #include <dal_tree_sorted.h>
 #include <dal_naming_system.h>
 #include <bgeot_geometric_trans.h>
-#include <bgeot_precomp.h>
 
 namespace bgeot {
 
@@ -217,7 +216,7 @@ namespace bgeot {
       
       w[0] = K;
       for (int nn = 1; nn <= N; ++nn) {
-	w[nn]=int(floor(0.5+((cvr->points()[i])[nn-1]*double(K))));
+	w[nn]=int(floor(0.5+(((cvr->points())[i])[nn-1]*double(K))));
 	w[0]-=w[nn];
       }
       
@@ -567,6 +566,103 @@ namespace bgeot {
       pg1_ = pg1; pg2_ = pg2;
     }
     return pgt;    
+  }
+
+  /* ********************************************************************* */
+  /*       Precomputation on geometric transformations.                    */
+  /* ********************************************************************* */
+
+  struct pre_geot_key_ : public dal::static_stored_object_key  {
+    pgeometric_trans pgt;
+    pstored_point_tab pspt;
+    virtual bool compare(const static_stored_object_key &oo) const {
+      const pre_geot_key_ &o = dynamic_cast<const pre_geot_key_ &>(oo);
+      if (pgt < o.pgt) return true; if (o.pgt < pgt) return false; 
+      if (pspt < o.pspt) return true; return false;
+    }
+    pre_geot_key_(pgeometric_trans pg, pstored_point_tab ps) 
+      : pgt(pg), pspt(ps) {}   
+  };  
+
+  geotrans_precomp_::geotrans_precomp_(pgeometric_trans pg,
+				       pstored_point_tab ps) 
+    : pgt(pg), pspt(ps) {}
+
+  void geotrans_precomp_::init_val() const {
+    c.clear();  
+    c.resize(pspt->size(), base_vector(pgt->nb_points()));
+    for (size_type i = 0; i < pgt->nb_points(); ++i) {
+      for (size_type j = 0; j < pspt->size(); ++j) {
+	c[j][i] = pgt->poly_vector()[i].eval((*pspt)[j].begin());
+      }
+    }
+  }
+
+  void geotrans_precomp_::init_grad() const {
+    dim_type N = pgt->structure()->dim();
+    pc.clear(); 
+    pc.resize(pspt->size(), base_matrix(pgt->nb_points() , N)); 
+    for (size_type i = 0; i < pgt->nb_points(); ++i) {
+      for (dim_type n = 0; n < N; ++n) {
+	base_poly P = pgt->poly_vector()[i];
+	P.derivative(n);
+	for (size_type j = 0; j < pspt->size(); ++j) {
+	  if ((*pspt)[j].size() != N)
+	    DAL_THROW(dimension_error, "dimensions mismatch");
+	  if(pgt->convex_ref()->is_in((*pspt)[j]) > 1.0E-7)
+	    DAL_THROW(internal_error, "point " << j
+		      << " mismatch the element");
+	  pc[j](i,n) = P.eval((*pspt)[j].begin());
+	}
+      }
+    }
+  }
+
+  void geotrans_precomp_::init_hess() const {
+    base_poly P, Q;
+    dim_type N = pgt->structure()->dim();
+    hpc.clear();
+    hpc.resize(pspt->size(), base_matrix(gmm::sqr(N), pgt->nb_points()));
+    for (size_type i = 0; i < pgt->nb_points(); ++i) {
+      for (dim_type n = 0; n < N; ++n) {
+	P = pgt->poly_vector()[i];
+	P.derivative(n);
+	for (dim_type m = 0; m <= n; ++m) {
+	  Q = P; Q.derivative(m);
+	  for (size_type j = 0; j < pspt->size(); ++j)
+	    hpc[j](m * N + n, i) = hpc[j](n * N + m, i)
+	      = P.eval((*pspt)[j].begin());
+	}
+      }
+    }
+  }
+
+  base_node geotrans_precomp_::transform(size_type i,
+					 const base_matrix &G) const {
+    if (c.empty()) init_val();
+    size_type N = G.nrows(), k = pgt->nb_points();
+    base_node P(N); P.fill(0.0);
+    base_matrix::const_iterator git = G.begin();
+    for (size_type l = 0; l < k; ++l) {
+      scalar_type a = c[i][l]; 
+      base_node::iterator pit = P.begin(), pite = P.end();
+      for (; pit != pite; ++git, ++pit) *pit += a * (*git);
+    }
+    return P;
+  }
+
+  pgeotrans_precomp geotrans_precomp(pgeometric_trans pg,
+				     pstored_point_tab pspt) {
+    dal::pstatic_stored_object o
+      = dal::search_stored_object(pre_geot_key_(pg, pspt));
+    if (o) return dal::stored_cast<geotrans_precomp_>(o);
+    pgeotrans_precomp p = new geotrans_precomp_(pg, pspt);
+    dal::add_stored_object(new pre_geot_key_(pg, pspt), p, 0, pg, pspt);
+    return p;
+  }
+
+  void delete_geotrans_precomp(pgeotrans_precomp pgp) {
+    del_stored_object(pgp);
   }
 
 }  /* end of namespace bgeot.                                            */

@@ -30,7 +30,6 @@ include_HEADERS =                        \
 	bgeot_mesh.h                     \
 	bgeot_mesh_structure.h           \
 	bgeot_poly.h                     \
-	bgeot_precomp.h		         \
 	bgeot_rtree.h		         \
 	bgeot_simplexify.h               \
 	bgeot_small_vector.h             \
@@ -139,7 +138,6 @@ SRC =                                    \
 	bgeot_imbricated_box.cc          \
 	bgeot_kdtree.cc		         \
 	bgeot_mesh_structure.cc          \
-	bgeot_precomp.cc                 \
 	bgeot_rtree.cc		         \
 	bgeot_small_vector.cc            \
 	bgeot_sparse_tensors.cc          \

@@ -39,10 +39,7 @@ namespace dal {
   struct enr_static_stored_object {
     pstatic_stored_object p;
     bool valid;
-    int permanence; // 0 = not deletable object
-                    // 1 = preferable not to delete it
-                    // 2 = standard
-                    // 3 = delete it if memory is necessary
+    int permanence;
     std::map<pstatic_stored_object, bool> dependent_object;
     std::map<pstatic_stored_object, bool> dependencies;
     enr_static_stored_object(pstatic_stored_object o, int perma)
@@ -104,8 +101,8 @@ namespace dal {
     }
   }
 
-  // remove a dependency
-  void del_dependency(pstatic_stored_object o1, pstatic_stored_object o2) {
+  // remove a dependency. Return true if o2 has no more dependent object.
+  bool del_dependency(pstatic_stored_object o1, pstatic_stored_object o2) {
     stored_object_tab& stored_objects
       = dal::singleton<stored_object_tab>::instance();
     stored_object_tab::iterator it1 = iterator_of_object(o1);
@@ -113,7 +110,9 @@ namespace dal {
     if (it1 != stored_objects.end() && it2 != stored_objects.end()) {
       it2->second.dependent_object.erase(o1);
       it1->second.dependencies.erase(o2);
+      return it2->second.dependent_object.empty();
     }
+    return true;
   }
 
   // Add an object with two optional dependencies
@@ -158,22 +157,32 @@ namespace dal {
     stored_object_tab& stored_objects
       = dal::singleton<stored_object_tab>::instance();
     std::list<pstatic_stored_object>::iterator it;
+    for (it = to_delete.begin(); it != to_delete.end(); ++it)
+      iterator_of_object(*it)->second.valid = false;
     std::map<pstatic_stored_object, bool>::iterator itd;
     for (it = to_delete.begin(); it != to_delete.end(); ++it) {
       if (*it) {
 	stored_object_tab::iterator ito = iterator_of_object(*it);
-	if (ito != stored_objects.end()) {
-	  ito->second.valid = false;
-	  for (itd = ito->second.dependencies.begin();
-	       itd != ito->second.dependencies.end(); ++itd)
-	    del_dependency(*it, itd->first);
-	  for (itd = ito->second.dependent_object.begin();
-	       itd != ito->second.dependent_object.end(); ++itd) {
+	ito->second.valid = false;
+	for (itd = ito->second.dependencies.begin();
+	     itd != ito->second.dependencies.end(); ++itd) {
+	  if (del_dependency(*it, itd->first)) {
 	    stored_object_tab::iterator itod=iterator_of_object(itd->first);
-	    if (itod != stored_objects.end()) {
-	      if (itod->second.permanence == 0)
-		DAL_THROW(failure_error,"Trying to delete a permanent object");
-	      if (itod->second.valid) to_delete.push_back(itod->second.p);
+	    if (itod->second.permanence == 4 && itod->second.valid) {
+	      itod->second.valid = false;
+	      to_delete.push_back(itd->first);
+	    }
+	  }
+	}
+	for (itd = ito->second.dependent_object.begin();
+	     itd != ito->second.dependent_object.end(); ++itd) {
+	  stored_object_tab::iterator itod=iterator_of_object(itd->first);
+	  if (itod != stored_objects.end()) {
+	    if (itod->second.permanence == 0)
+	      DAL_THROW(failure_error,"Trying to delete a permanent object");
+	    if (itod->second.valid) {
+	      itod->second.valid = false;
+	      to_delete.push_back(itod->second.p);
 	    }
 	  }
 	}
@@ -200,6 +209,8 @@ namespace dal {
       if (it->second.permanence >= perm)
 	to_delete.push_back(it->second.p);
     del_stored_objects(to_delete);
+    // + gestion des objets ayant l'option de permanence 4 : à détruire
+    //  si plus aucun objet ne dépend d'eux.
   }
 
 

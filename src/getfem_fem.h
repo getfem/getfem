@@ -32,7 +32,6 @@
 #define GETFEM_FEM_H__
 
 #include <bgeot_geometric_trans.h>
-#include <bgeot_precomp.h>
 #include <getfem_integration.h>
 #include <getfem_poly_composite.h>
 #include <getfem_precomp.h>

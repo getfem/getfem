@@ -52,7 +52,7 @@ namespace dal {
   // You can add a dependency of your new object with
   // add_dependency(pointer_on_your_object,
   //                pointer_on_the_object_object_from_which_it_depends,
-  //                perm)
+  //                permanence)
   // your object will be automatically deleted if the second object is
   // deleted.
   // The dependency can be added when the addition is done by
@@ -60,8 +60,14 @@ namespace dal {
   //                   new your_object(parameters),
   //                   dependence)
   // Boost intrusive pointer are used
-
-
+  // 
+  // The options of permancence are the following :
+  //   0 = not deletable object, always kept
+  //   1 = preferable not to delete it
+  //   2 = standard
+  //   3 = delete it if memory is necessary
+  //   4 = automatically deleted when the last dependent object
+  //       is deleted
 
   class static_stored_object_key {
   protected :
@@ -121,8 +127,8 @@ namespace dal {
   /** Add a dependency, object o1 will depend on object o2. */
   void add_dependency(pstatic_stored_object o1, pstatic_stored_object o2);
 
-  /** remove a dependency. */
-  void del_dependency(pstatic_stored_object o1, pstatic_stored_object o2);
+  /** remove a dependency. Return true if o2 has no more dependent object. */
+  bool del_dependency(pstatic_stored_object o1, pstatic_stored_object o2);
 
   /** Add an object with two optional dependencies. */
   void add_stored_object(pstatic_stored_object_key k, pstatic_stored_object o,

@@ -151,7 +151,7 @@ namespace getfem {
     template<typename V1, typename V2> void 
     interpolate(const getfem::mesh_fem &mf, const V1& U, V2& V) const {
       typedef typename gmm::linalg_traits<V2>::value_type T;
-      bgeot::stored_point_tab refpts;
+      std::vector<base_node> refpts;
       std::vector<std::vector<T> > coeff;
       base_matrix G;
       size_type qdim = mf.get_qdim();
@@ -161,25 +161,30 @@ namespace getfem {
       for (size_type i=0; i < nb_convex(); ++i) {
         size_type cv = convex_num(i);
         refpts.resize(nodes(i).size());
-        for (size_type j=0; j < refpts.size(); ++j) refpts[j] = nodes(i)[j].pt_ref;
+        for (size_type j=0; j < refpts.size(); ++j)
+	  refpts[j] = nodes(i)[j].pt_ref;
         pfem pf = mf.fem_of_element(cv);
 	if (pf->need_G()) 
-	  bgeot::vectors_to_base_matrix(G, mf.linked_mesh().points_of_convex(cv));
+	  bgeot::vectors_to_base_matrix(G,
+					mf.linked_mesh().points_of_convex(cv));
 	fem_precomp_pool fppool;
-        pfem_precomp pfp = fppool(pf, &refpts);
+        pfem_precomp pfp = fppool(pf, store_point_tab(refpts));
         
         ref_mesh_dof_ind_ct dof = mf.ind_dof_of_element(cv);
         for (size_type qq=0; qq < qqdim; ++qq) {
           coeff[qq].resize(mf.nb_dof_of_element(cv));
           typename std::vector<T>::iterator cit = coeff[qq].begin();
-          for (ref_mesh_dof_ind_ct::iterator it=dof.begin(); it != dof.end(); ++it, ++cit)
+          for (ref_mesh_dof_ind_ct::iterator it=dof.begin();
+	       it != dof.end(); ++it, ++cit)
             *cit = U[(*it)*qqdim+qq];
         }
-	fem_interpolation_context ctx(mf.linked_mesh().trans_of_convex(cv),pfp,0,G,cv);
+	fem_interpolation_context ctx(mf.linked_mesh().trans_of_convex(cv),
+				      pfp,0,G,cv);
         for (size_type j=0; j < refpts.size(); ++j) {
 	  ctx.set_ii(j);
           for (size_type qq = 0; qq < qqdim; ++qq) {
-            typename gmm::sub_vector_type<V2*, gmm::sub_interval>::vector_type dest = 
+            typename gmm::sub_vector_type<V2*,
+	      gmm::sub_interval>::vector_type dest = 
               gmm::sub_vector(V,gmm::sub_interval(pos,qdim));
             pf->interpolation(ctx,coeff[qq],dest,qdim);
             pos += qdim;

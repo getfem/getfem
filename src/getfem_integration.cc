@@ -365,7 +365,7 @@ namespace getfem
   }
 
   void approx_integration::valid_method(void) {
-    bgeot::stored_point_tab ptab(int_coeffs.size());
+    std::vector<base_node> ptab(int_coeffs.size());
     std::vector<scalar_type> int_coeffs2(int_coeffs);
     size_type i = 0;
     for (short_type f = 0; f <= cvr->structure()->nb_faces(); ++f) {
@@ -375,8 +375,6 @@ namespace getfem
 	int_coeffs[i] = int_coeffs2[j+it.index()];
 	ptab[i++] = *it;
       }
-      //for (size_type j = 0; j < pt_to_store[f].size(); ++j)
-      //{ ptab[i++] = pt_to_store[f][j]; }
     }
     if (i != int_coeffs.size()) DAL_THROW(internal_error, "internal error.");
     pint_points = bgeot::store_point_tab(ptab);
@@ -503,7 +501,7 @@ namespace getfem
     if (nbpt > 32000) DAL_THROW(std::out_of_range, "too much points");
     
     cvr = bgeot::simplex_of_reference(1);
-    bgeot::stored_point_tab int_points(nbpt+2);
+    std::vector<base_node> int_points(nbpt+2);
     int_coeffs.resize(nbpt+2);
     repartition.resize(3);
     repartition[0] = nbpt; 
@@ -671,7 +669,7 @@ namespace getfem
     cvr = bgeot::convex_ref_product(a->ref_convex(), b->ref_convex());
     size_type n1 = a->nb_points_on_convex();
     size_type n2 = b->nb_points_on_convex();
-    bgeot::stored_point_tab int_points;
+    std::vector<base_node> int_points;
     int_points.resize(n1 * n2);
     int_coeffs.resize(n1 * n2);
     repartition.resize(cvr->structure()->nb_faces()+1);

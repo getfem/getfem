@@ -127,7 +127,7 @@ namespace getfem {
       if (pf->need_G()) bgeot::vectors_to_base_matrix(G, defdata->pmf->linked_mesh().points_of_convex(ms.cv));
     }
     /* check that the points are still the same -- or recompute the fem_precomp */
-    bgeot::stored_point_tab ref_pts2; ref_pts2.reserve(ms.nodes_index.card());
+    std::vector<base_node> ref_pts2; ref_pts2.reserve(ms.nodes_index.card());
     for (dal::bv_visitor i(ms.nodes_index); !i.finished(); ++i) {
       ref_pts2.push_back(ms.nodes[i].pt_ref);
       if (ref_pts2.size() > ref_pts.size() || gmm::vect_dist2_sqr(ref_pts2[i],ref_pts[i])>1e-20) 
@@ -138,7 +138,7 @@ namespace getfem {
       ref_pts.swap(ref_pts2);
       fprecomp.clear();
     }
-    pfem_precomp pfp = fprecomp(pf, &ref_pts);
+    pfem_precomp pfp = fprecomp(pf, store_point_tab(ref_pts));
     
     defdata->copy(ms.cv, coeff);
     
@@ -375,7 +375,7 @@ namespace getfem {
   void slicer_isovalues::prepare(size_type cv, const mesh_slicer::cs_nodes_ct& nodes, 
 				 const dal::bit_vector& nodes_index) {
     pt_in.clear(); pt_bin.clear();
-    bgeot::stored_point_tab refpts(nodes.size());
+    std::vector<base_node> refpts(nodes.size());
     Uval.resize(nodes.size());
     base_vector coeff;
     base_matrix G;
@@ -384,7 +384,7 @@ namespace getfem {
     if (pf->need_G()) 
       bgeot::vectors_to_base_matrix(G, mfU->pmf->linked_mesh().points_of_convex(cv));
     for (size_type i=0; i < nodes.size(); ++i) refpts[i] = nodes[i].pt_ref;
-    pfem_precomp pfp = fprecomp(pf, &refpts);
+    pfem_precomp pfp = fprecomp(pf, store_point_tab(refpts));
     mfU->copy(cv, coeff);
     //cerr << "cv=" << cv << ", val=" << val << ", coeff=" << coeff << endl;
     base_vector v(1); 
@@ -561,7 +561,7 @@ namespace getfem {
   }
 
   static void flag_points_on_faces(const bgeot::pconvex_ref& cvr, 
-                                   const bgeot::stored_point_tab& pts, 
+                                   const std::vector<base_node>& pts, 
                                    std::vector<slice_node::faces_ct>& faces) {
     if (cvr->structure()->nb_faces() > 32) DAL_THROW(std::out_of_range, "won't work for convexes with more than 32 faces (hardcoded limit)");
     faces.resize(pts.size());
@@ -610,7 +610,7 @@ namespace getfem {
   }
 
   void mesh_slicer::exec(size_type nrefine, convex_face_ct& cvlst) {
-    bgeot::stored_point_tab cvm_pts;
+    std::vector<base_node> cvm_pts;
     const getfem_mesh *cvm = 0;
     const bgeot::mesh_structure *cvms = 0;
     bgeot::geotrans_precomp_pool gppool;
@@ -626,7 +626,7 @@ namespace getfem {
 	cvm = getfem::refined_simplex_mesh_for_convex(cvr, nrefine);
 	cvm_pts.resize(cvm->nb_points());
 	std::copy(cvm->points().begin(), cvm->points().end(), cvm_pts.begin());
-	pgp = gppool(pgt,&cvm_pts);
+	pgp = gppool(pgt, store_point_tab(cvm_pts));
 	flag_points_on_faces(cvr, cvm_pts, points_on_faces);
       }
       if (face < dim_type(-1))
