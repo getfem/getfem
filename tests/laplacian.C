@@ -390,7 +390,7 @@ void lap_pb::solve(void) {
 class exception_cb : public dal::exception_callback  {
   public:
   virtual void callback(const std::string& msg)
-  { cerr << msg << "endl"; *(int *)(0) = 0; }
+  { cerr << msg << endl; *(int *)(0) = 0; }
 };
 
 int main(int argc, char *argv[])

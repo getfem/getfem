@@ -61,8 +61,8 @@ int main(void) {
     std::complex<float> x(1.0,0.0);
     cout << "A complex : " << x << endl;
     
-    std::size_t ee = 1, f = 2;
-    std::ptrdiff_t g = ee - f;
+    size_t ee = 1, f = 2;
+    ptrdiff_t g = ee - f;
     cout << "1 - 2 = " << g << endl;
     if (g != -1) DAL_THROW(dal::internal_error, "Basic operation error");
 
