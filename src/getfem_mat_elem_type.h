@@ -110,10 +110,17 @@ namespace getfem
    *    described by pfi. pfi is of type bgeot::pfem\_interpolation. 
    */
   pmat_elem_type mat_elem_hessian(pfem pfi);
-  /** Gives a pointer to the structure describing the elementary matrix
-   *   which compute the integral of a nonlinear term.
-   * The pnonlinear_elem_term must not be destroyed, at any time!
-   * vector pfi can not be empty
+  /** Gives a pointer to the structure describing the elementary
+    matrix which compute the integral of a nonlinear term.  
+    
+    The pnonlinear_elem_term must not be destroyed, at any time!
+    vector pfi can not be empty pfi[0] is the main fem for the
+    pnonlinear_term.
+
+    During computations of elementary tensors in getfem_mat_elem.C, 
+      pnonlinear_elem_term->prepare() will be called for each pfi[i>=1],
+    and then
+      pnonlinear_elem_term->compute() will be called for pfi[0]
    */
   pmat_elem_type mat_elem_nonlinear(pnonlinear_elem_term, std::vector<pfem> pfi);
 

@@ -195,7 +195,7 @@ namespace getfem
 	    /* the dummy assistant multiplies everybody by 1
 	       -> not efficient ! */
 	    bgeot::multi_index sz(1); sz[0] = 1;
-	    elmt_stored[k].adjust_sizes(sz); t[0] = 1.;
+	    elmt_stored[k].adjust_sizes(sz); elmt_stored[k][0] = 1.;
 	  } else {
 	    elmt_stored[k].adjust_sizes((*it).nlt->sizes());
 	    (*it).nlt->compute(ctx, elmt_stored[k]);

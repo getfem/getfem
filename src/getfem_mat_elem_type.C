@@ -55,7 +55,7 @@ namespace getfem {
   nonlinear_elem_term::~nonlinear_elem_term() {
     mat_elem_type_tab &tab = dal::singleton<mat_elem_type_tab>::instance();
     for (dal::bv_visitor_c i(tab.index()); !i.finished(); ++i) {
-      for (size_type j=0; i < tab[i].size(); ++j) {
+      for (size_type j=0; j < tab[i].size(); ++j) {
 	if (tab[i][j].t == GETFEM_NONLINEAR_ && tab[i][j].nlt == this) {
 	  /* remove all mat_elem structures pointing to the mat_elem_type */
 	  mat_elem_forget_mat_elem_type(&tab[i]); 
@@ -119,7 +119,9 @@ namespace getfem {
     f[0].t = GETFEM_NONLINEAR_; f[0].nl_part = nl_part;
     f[0].pfi = pfi;
     f[0].nlt = nlt;
-    f.mi = nlt->sizes();
+    if (nl_part) {
+      f.mi.resize(1); f.mi[0] = 1;
+    } else f.mi = nlt->sizes();
     return add_to_met_tab(f);
   }
 
@@ -131,8 +133,15 @@ namespace getfem {
   }
 
   pmat_elem_type mat_elem_product(pmat_elem_type a, pmat_elem_type b) {
-    mat_elem_type f; f.resize(a->size() + b->size());
-    f.mi.resize(a->mi.size() + b->mi.size());
+    mat_elem_type f; f.reserve(a->size() + b->size());
+    f.mi.reserve(a->mi.size() + b->mi.size());
+    f.insert(f.end(), (*a).begin(), (*a).end());
+    f.insert(f.end(), (*b).begin(), (*b).end());
+    f.mi.insert(f.mi.end(), (*a).mi.begin(), (*a).mi.end());
+    f.mi.insert(f.mi.end(), (*b).mi.begin(), (*b).mi.end());
+
+    /*    mat_elem_type f; f.resize(a->size() + b->size());
+	  f.mi.resize(a->mi.size() + b->mi.size());
     mat_elem_type::const_iterator ita = a->begin(), itae = a->end();
     mat_elem_type::const_iterator itb = b->begin(), itbe = b->end(), it;
     mat_elem_type::iterator itf = f.begin();
@@ -153,6 +162,7 @@ namespace getfem {
 	break;
       }
     }
+    */
     return add_to_met_tab(f);
   }
 
