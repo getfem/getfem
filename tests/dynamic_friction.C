@@ -558,7 +558,7 @@ void friction_problem::solve(void) {
       cout << "t = " << t << " energy : " << J1
 	   << " friction energy : " << J_friction1
 	   << " app. fric. coef : " << Friction_coef_ap
-	   << " (" << nbst << ", " << nbsl << ")" << endl;
+	   << " (st " << nbst << ", sl " << nbsl << ")" << endl;
       dt = std::min(2.*dt, dt0);
 
       gmm::copy(U1, U0); gmm::copy(V1, V0); gmm::copy(A1, A0); J0 = J1;
