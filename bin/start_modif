@@ -98,7 +98,7 @@ while($listeC)
   $fi1 = $fi; $fi1 =~ s/\.C//;
   while ($fi1 =~ /\//) { ($fi2, $fi1) = split('\/', $fi1, 2); }
   $listetests = $listetests." ".$fi1;
-  $listetestsex = $listetestsex."; ".$fi1;
+  $listetestsex = $listetestsex."; "."programs\/$fi1$fi1";
   $fi2 = $fi1;
   $fi2 =~ s/\.o/_h/;
 #  $fi2 =~ s/\.o/.h/;
