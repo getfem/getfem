@@ -251,7 +251,8 @@ namespace getfem
   /* ********************************************************************* */
 
   template<class VECT>
-    void interpolation_solution_same_mesh(mesh_fem &mf_source, mesh_fem &mf_target,
+    void interpolation_solution_same_mesh(mesh_fem &mf_source,
+					  mesh_fem &mf_target,
 					  const VECT &U, VECT &V)
   {
     dal::bit_vector nn = mf_source.convex_index();

@@ -129,8 +129,8 @@ string)));\n  rp := GaussLobattoLegendre0to1(n,d);\n  racinesSt := [se
 q(convert(rp[1,i],string),i=1..dim)];\n  poidsSt := [seq(convert(rp[2,
 i],string),i=1..dim)];\n  virg := \", \";\n  for i from 1 to dim do\n \+
     writeline(file, cat(\"1\",virg,racinesSt[i],virg,poidsSt[i]));\n  \+
-end do;\n  writeline(file,\"NBF=2\"); \n  writeline(file,\"NC(0,0)\");
-\n  writeline(file,\"NC(0,0)\");\n  close(file);\nend:" }}}{EXCHG 
+end do;\n  writeline(file,\"NBF=2\"); \n  writeline(file,\"IM_NC(0,0)\");
+\n  writeline(file,\"IM_NC(0,0)\");\n  close(file);\nend:" }}}{EXCHG 
 {PARA 0 "> " 0 "" {MPLTEXT 1 0 80 "for i from 1 to 50 do\n  print(i);
 \n  mkFileGetFem(i,60,\"GAUSSLOBATTO1D\");\nend do;" }}{PARA 11 "" 1 "
 " {XPPMATH 20 "6#\"\"\"" }}{PARA 11 "" 1 "" {XPPMATH 20 "6#\"\"#" }}
