@@ -422,7 +422,7 @@ namespace getfem
     if (merge_points) sl.merge_nodes();
     psl = &sl; dim_ = sl.dim();
     if (psl->dim() > 3) DAL_THROW(dal::failure_error, "4D slices and more are not supported");
-    for (dim_type d = 0; d <= 3; ++d) {
+    for (dim_type d = 0; d <= psl->dim(); ++d) {
       if (psl->nb_simplexes(d)) {
         if (connections_dim == dim_type(-1)) connections_dim = d;
         else DAL_THROW(dal::failure_error, "Cannot export a slice containing simplexes of different dimensions");
