@@ -7,6 +7,7 @@ check_PROGRAMS = \
 	poly \
 	test_mesh \
 	geo_trans \
+	geo_trans_inv \
 	test_int_set \
 	test_link_fem \
 	test_tree_sorted
@@ -19,6 +20,7 @@ integration_SOURCES = integration.C
 poly_SOURCES = poly.C
 test_mesh_SOURCES = test_mesh.C
 geo_trans_SOURCES = geo_trans.C
+geo_trans_inv_SOURCES = geo_trans_inv.C
 test_int_set_SOURCES = test_int_set.C
 test_link_fem_SOURCES = test_link_fem.C
 test_tree_sorted_SOURCES = test_tree_sorted.C
@@ -36,6 +38,7 @@ TESTS = \
 	poly.pl \
 	test_mesh.pl \
 	geo_trans.pl \
+	geo_trans_inv.pl \
 	test_int_set.pl \
 	test_link_fem.pl \
 	test_tree_sorted.pl
