@@ -156,7 +156,7 @@ namespace gmm {
   inline std::ostream &operator << (std::ostream &o, const sub_index &si) { 
     o << "sub_index(";
     if (si.size() != 0) o << si.index(0);
-    for (size_type i = 0; i < si.size(); ++i) o << ", " << si.index(i);
+    for (size_type i = 1; i < si.size(); ++i) o << ", " << si.index(i);
     o << ")";
     return o;
   }

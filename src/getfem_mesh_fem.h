@@ -157,6 +157,7 @@ namespace getfem
     dal::dynamic_tree_sorted<size_type> cv_in;
     dal::dynamic_array<dal::bit_vector> faces;
     
+    bool is_elt(size_type c, short_type f) const;
     /** Add a boudary element from the face f of the convex of index
      *          i of the mesh.
      */
@@ -338,6 +339,8 @@ namespace getfem
     /// Says whether or not element i is on the boundary b. 
     bool is_convex_on_boundary(size_type c, size_type b) const
       { return (valid_boundaries[b] && boundaries[b].cvindex[c]); }
+    bool is_face_on_boundary(size_type b, size_type c, short_type f) const
+    { return (valid_boundaries[b] && boundaries[b].is_elt(c, f)); }
     /** returns the list of convexes on the boundary b */
     const dal::bit_vector &convex_on_boundary(size_type b) const;
     const dal::bit_vector &faces_of_convex_on_boundary(size_type c,

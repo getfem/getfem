@@ -84,7 +84,7 @@ namespace gmm {
   condition_number(const MAT& M) { 
     typename number_traits<typename
       linalg_traits<MAT>::value_type>::magnitude_type emax, emin;
-    return condition_number(M, emax, emin);
+    return condition_number(M, emin, emax);
   }
 
   template <typename MAT> 
@@ -120,7 +120,7 @@ namespace gmm {
 	  linalg_traits<MAT>::value_type>::magnitude_type& emin,
 	  typename number_traits<typename
 	  linalg_traits<MAT>::value_type>::magnitude_type& emax) {
-    return condition_number(M, emax, emin);
+    return condition_number(M, emin, emax);
   }
   
   template <typename MAT> 
@@ -129,7 +129,7 @@ namespace gmm {
   condest(const MAT& M) { 
     typename number_traits<typename
       linalg_traits<MAT>::value_type>::magnitude_type emax, emin;
-    return condest(M, emax, emin);
+    return condest(M, emin, emax);
   }
 }
 

@@ -200,7 +200,7 @@ base_small_vector plate_problem::theta_exact(base_node P) {
 scalar_type plate_problem::u3_exact(base_node P) {
   return (pressure / (32. * mu * epsilon * epsilon * epsilon))
     * P[0] * (P[0] - LX)
-    * (dal::sqr(P[0] - LX * .5) -1.25*LX*LX-8.*epsilon*epsilon);
+    * (dal::sqr(P[0] - LX * .5) -1.25*LX*LX-(mixed ? 0 : 8.*epsilon*epsilon));
 }
 
 
@@ -284,9 +284,11 @@ bool plate_problem::solve(plain_vector &U) {
   for (size_type i = 0; i < nb_dof_rhs; ++i) F[3*i+2] = pressure;
   getfem::mdbrick_plate_source_term<> VOL_F(*ELAS, mf_rhs, F);
   
-
-  getfem::mdbrick_plate_simple_support<> final_model
+  getfem::mdbrick_plate_simple_support<> SIMPLE
     (VOL_F, mf_rhs, SIMPLY_FIXED_BOUNDARY_NUM);
+
+  getfem::mdbrick_plate_closing<> final_model(SIMPLE);
+  
 
   // Generic solve.
   cout << "Total number of variables : " << final_model.nb_dof() << endl;

@@ -223,24 +223,42 @@ namespace getfem {
 		      modeling_standard_complex_plain_vector >
     standard_complex_model_state;
 
+  enum bound_cond_type { MDBRICK_UNDEFINED, MDBRICK_DIRICHLET, MDBRICK_NEUMANN,
+			 MDBRICK_SIMPLE_SUPPORT, MDBRICK_CLAMPED_SUPPORT,
+			 MDBRICK_FOURIER_ROBIN };
 
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_abstract : public context_dependencies {
 
   public :
+
     struct mesh_fem_info_ {
-      size_type brick_ident;
-      size_type info;
+      size_type brick_ident; // basic model brick using the mesh_fem
+      size_type info;        // flags
+      // type of boundary conditions
+      std::map<size_type, bound_cond_type> boundaries;
       mesh_fem_info_(size_type id, size_type in) : brick_ident(id), info(in) {}
+      void add_boundary(size_type b, bound_cond_type bc)
+      { boundaries[b] = bc; }
+      bound_cond_type boundary_type(size_type b) {
+	typename std::map<size_type, bound_cond_type>::const_iterator it;
+	it = boundaries.find(b);
+	return it != boundaries.end() ? it->second : MDBRICK_UNDEFINED;
+      }
     };
 
   protected :
 
+    struct boundary_cond_info_ {
+      size_type num_fem, num_bound;
+      bound_cond_type bc;
+      boundary_cond_info_(size_type a, size_type b, bound_cond_type d)
+	: num_fem(a), num_bound(b), bc(d) {}
+    };
+
     mutable bool to_compute, to_transfer;
     size_type MS_i0;
     long ident_ms;
-
-    
 
     std::vector<mdbrick_abstract *> sub_bricks;
     mutable std::vector<mesh_fem *> mesh_fems;
@@ -248,6 +266,8 @@ namespace getfem {
     mutable std::vector<size_type> mesh_fem_positions;
     std::vector<mesh_fem *> proper_mesh_fems;
     std::vector<mesh_fem_info_> proper_mesh_fems_info;
+    std::vector<boundary_cond_info_> proper_boundary_cond_info;
+
 
     bool proper_is_linear_, proper_is_symmetric_, proper_is_coercive_;
     mutable bool is_linear_, is_symmetric_, is_coercive_;
@@ -278,6 +298,11 @@ namespace getfem {
 	mesh_fem_positions.push_back(nb_total_dof);
 	nb_total_dof += proper_mesh_fems[j]->nb_dof();
       }
+      for (size_type j = 0; j < proper_boundary_cond_info.size(); ++j) {
+	mesh_fems_info[proper_boundary_cond_info[j].num_fem]
+	  .add_boundary(proper_boundary_cond_info[j].num_bound,
+			proper_boundary_cond_info[j].bc);
+      }
     }
 
     void add_sub_brick(mdbrick_abstract &mdb) {
@@ -292,6 +317,15 @@ namespace getfem {
       proper_mesh_fems_info.push_back(mfi);
       add_dependency(mf);
     }
+
+    void add_proper_boundary_info(size_type num_fem, size_type num_bound,
+				  bound_cond_type bc) {
+      boundary_cond_info_ bci(num_fem, num_bound, bc);
+      proper_boundary_cond_info.push_back(bci);
+    }
+
+    bound_cond_type boundary_type(size_type num_fem, size_type num_bound)
+    { return mesh_fems_info[num_fem].boundary_type(num_bound); }
 
     // to_be_computed : the context has changed (or it is the first call).
     // to_be_transferred : the structure MODEL_STATE has changed, the 
@@ -463,6 +497,7 @@ namespace getfem {
       if (!matrix_stored) {
 	gmm::copy(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI)); 
 	gmm::clear(K);
+	this->transferred();
       }
     }
     if (matrix_stored) {
@@ -591,6 +626,7 @@ namespace getfem {
       if (!matrix_stored) {
 	gmm::copy(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI)); 
 	gmm::clear(K);
+	this->transferred();
       }
     }
     if (matrix_stored) {
@@ -671,6 +707,7 @@ namespace getfem {
 	if (!matrix_stored) {
 	  gmm::copy(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI)); 
 	  gmm::clear(K);
+	  this->transferred();
 	}
       }
       if (matrix_stored) {
@@ -794,6 +831,8 @@ namespace getfem {
 	num_fem(num_fem_) {
       this->add_dependency(mf_data);
       this->add_sub_brick(problem);
+      if (bound != size_type(-1))
+	this->add_proper_boundary_info(num_fem, bound, MDBRICK_NEUMANN);
       this->update_from_context();
       fixing_dimensions();
        gmm::copy(B__, B_);
@@ -879,6 +918,8 @@ namespace getfem {
       this->add_dependency(mf_data);
       this->add_sub_brick(sub_problem);
       this->proper_is_coercive_ = false;
+      if (boundary != size_type(-1))
+	this->add_proper_boundary_info(num_fem, boundary,MDBRICK_FOURIER_ROBIN);
       this->update_from_context();
     }
 
@@ -1222,6 +1263,7 @@ namespace getfem {
       this->add_dependency(mf_data);
       this->add_sub_brick(sub_problem);
       this->proper_is_coercive_ = !with_multipliers;
+      this->add_proper_boundary_info(num_fem, boundary, MDBRICK_DIRICHLET);
       this->update_from_context();
       fixing_dimensions();
     }
@@ -1309,12 +1351,21 @@ namespace getfem {
 //             1E-6 * gmm::mat_maxnorm(MS.tangent_matrix())) ? "" : "not ")
 // 	   <<  "symmetric. ";
 
-//       gmm::dense_matrix<value_type> MM(nreddof, nreddof);
+      // cout << "MM = " << MS.reduced_tangent_matrix() << endl;
+
+//       gmm::dense_matrix<value_type> MM(nreddof, nreddof), Q(nreddof, nreddof);
 //       std::vector<value_type> eigval(nreddof);
 //       gmm::copy(MS.reduced_tangent_matrix(), MM);
-//       gmm::symmetric_qr_algorithm(MM, eigval);
-//       std::sort(eigval.begin(), eigval.end(), Esort);
+//       gmm::symmetric_qr_algorithm(MM, eigval, Q);
+//       //     std::sort(eigval.begin(), eigval.end(), Esort);
 //       cout << "eival = " << eigval << endl;
+//       cout << "vectp : " << gmm::mat_col(Q, nreddof-1) << endl;
+//       cout << "vectp : " << gmm::mat_col(Q, nreddof-2) << endl;
+
+//       double emax, emin;
+//       cout << "condition number" << condition_number(MM, emax, emin) << endl;
+//       cout << "emin = " << emin << endl;
+//       cout << "emax = " << emax << endl;
 
       if (iter.get_noisy()) {
 	problem.mixed_variables(mixvar);

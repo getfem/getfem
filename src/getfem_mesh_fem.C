@@ -37,6 +37,10 @@
 namespace getfem
 {
 
+  bool boundary_description::is_elt(size_type c, short_type f) const {
+    return (cvindex[c]) ? ((faces[cv_in.search(c)])[f]) : false;
+  }
+
   void boundary_description::add_elt(size_type c, short_type f) { 
     faces[  (cvindex[c]) ? cv_in.search(c) : cv_in.add(c)  ].add(f); 
     cvindex.add(c);
