@@ -517,15 +517,15 @@ Procedures defined in the file \filename{getfem\_assembling.h} allow to assemble
 An assembling procedure is defined to solve the problem
 \texonly{\begin{eqnarray*}
   \Div (a(x)\ \Grad u(x)) = f(x), \ \ \text{in $\Omega$}, \\
-  u(x) = U(x),  \ \ \text{on $\Gamma_{_D}$}, \\
-  \Frac{\partial u}{\partial \bf n} = F(x),  \ \ \text{ on $\Gamma_{_N}$}, 
+  u(x) = U(x),  \ \ \text{on $\Gamma_{D}$}, \\
+  \Frac{\partial u}{\partial \bf n} = F(x),  \ \ \text{ on $\Gamma_{N}$}, 
 \end{eqnarray*}
 }\htmlonly{
   \begin{equation*}
     \Div (a(x)\ \Grad u(x)) = f(x), \ \ \text{in $\Omega$},
   \end{equation*}
 }
-where $\Omega$ is an open domain of arbitrary dimension, $\Gamma_{_D}$ and $\Gamma_{_N}$ are parts of the boundary of $\Omega$, $u(x)$ is the unknown, $a(x)$ is a given coefficient, $f(x)$ is a given source term, $U(x)$ the prescribed value of $u(x)$ on $\Gamma_{_D}$ and $F(x)$ is the prescribed normal derivative of $u(x)$ on $\Gamma_{_N}$.
+where $\Omega$ is an open domain of arbitrary dimension, $\Gamma_{D}$ and $\Gamma_{N}$ are parts of the boundary of $\Omega$, $u(x)$ is the unknown, $a(x)$ is a given coefficient, $f(x)$ is a given source term, $U(x)$ the prescribed value of $u(x)$ on $\Gamma_{D}$ and $F(x)$ is the prescribed normal derivative of $u(x)$ on $\Gamma_{N}$.
 The function to be called to assemble the stiffness matrix is\\[0.5cm]
 \index{GETFEM!getfem::asm\_stiffness\_matrix\_for\_laplacian}
 \cpp{getfem::asm\_stiffness\_matrix\_for\_laplacian(SM, mef1, mef2, A);} \\[0.5cm]
@@ -534,10 +534,10 @@ To assemble the source term, the  function to be called is\\[0.5cm]
 \index{GETFEM!getfem::asm\_source\_term}
 \cpp{getfem::asm\_source\_term(B, mef1, mef2, V);} \\[0.5cm]
 where \cpp{B} is a vector of any type having the right dimension (still \cpp{me1.nb\_dof()}), \cpp{mef2}  is a variable of type \cpp{getfem::mesh\_fem} (possibly equal to \cpp{mef1}) describing the finite element method on which $f(x)$ is defined, \cpp{V} is the vector of the values of $f(x)$ on each degree of freedom of \cpp{mef2}.\\[0.5cm]
-For the Neumann condition on $\Gamma_{_N}$, the same function\\[0.5cm]
+For the Neumann condition on $\Gamma_{N}$, the same function\\[0.5cm]
 \cpp{getfem::asm\_source\_term(B, mef1, mef2, V, nbound);} \\[0.5cm]
 is used again, but an additionnal argument has been added: \cpp{nbound} is the index of the boundary in \cpp{mef1} (see previous section on how to describe a boundary) where the Neumann condition is applied. Hence the assembly is done on the indicated boundary, and no more on the whole domain. \cpp{mef2}  is a variable of type \cpp{getfem::mesh\_fem} describing the finite element method on which $F(x)$ is defined, \cpp{V} is the vector of the values of $F(x)$ on each degree of freedom of \cpp{mef2}.\\[0.5cm]
-there is two manner to take into account the Dirichlet condition on $\Gamma_{_D}$, changing the linear system or explicitly reduce to the kernel of the Dirichlet condition. For the first manner, the following function is defined \\[0.5cm]
+there is two manner to take into account the Dirichlet condition on $\Gamma_{D}$, changing the linear system or explicitly reduce to the kernel of the Dirichlet condition. For the first manner, the following function is defined \\[0.5cm]
 \index{GETFEM!getfem::assembling\_Dirichlet\_condition}
 \cpp{getfem::assembling\_Dirichlet\_condition(SM, B, mef1, nbound, V, N);} \\[0.5cm]
 where \cpp{nbound} is the index of the boundary in \cpp{mef1} where the Dirichlet condition is applied, \cpp{V} is the vector of the values of $U(x)$ on each degree of freedom of \cpp{mef1} and \cpp{N} is the dimension for vectorial problems (should be \cpp{1} for scalar problems). This operation should be the last one because it transform the stiffness matrix \cpp{SM}. It works only for Lagrange elements. At the end, one obtains the discrete system
