@@ -129,7 +129,9 @@ namespace gmm {
     std::vector<bool> satured(mat_nrows(C));
     clear(p);
     iter.set_rhsnorm(sqrt(vect_sp(PS, b, b)));
-    
+    if (iter.get_rhsnorm() == 0.0) iter.set_rhsnorm(1.0);
+   
+
     TmpCmat CINV(mat_nrows(C), mat_ncols(C));
     pseudo_inverse(C, CINV, PS, x);
     
