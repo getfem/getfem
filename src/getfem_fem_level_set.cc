@@ -38,9 +38,25 @@ namespace getfem {
     adapt(); // mettre un is_adapted ...
   }
 
+  typedef std::vector<const std::string *> enrichment;
+
+  struct lt_enr {
+    bool operator()(const enrichment &s1, const enrichment &s2) const {
+      if (s1.size() < s2.size()) return true;
+      if (s2.size() < s1.size()) return false;
+      for (size_type i = 0; i < s1.size(); ++i) {
+	if (*(s1[i]) < *(s2[i])) return true;
+	if (*(s2[i]) < *(s1[i])) return false;
+      }
+      return false;
+    }
+  };
+
   void adapt(void) {
 
     dal::bit_vector enriched_dofs, enriched_elements;
+    std::set< enrichment,  lt_enr> enrichments;
+    std::vector< enrichment *> dof_enrichments(mf.nb_dof());
     
     for (size_type i = 0; i < mf.nb_dof(); ++i) {
       bgeot::mesh_convex_ind_ct ct = mf.convex_to_dof(i);
@@ -63,7 +79,8 @@ namespace getfem {
 	}
 	
 	
-	if (zoneset.size() != 1) { // stockage dans un map + bitset
+	if (zoneset.size() != 1) { // stockage dans un set et map
+	  dof_enrichments[i] = &(*(enrichments.insert(zoneset).first));
 	  cout << "number of zones for dof " << i << " : "
 	       << zoneset.size() << endl;
 	  enriched_dofs.add(i);
