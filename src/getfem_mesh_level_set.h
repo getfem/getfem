@@ -110,6 +110,8 @@ namespace getfem {
     void cut_element(size_type cv, const dal::bit_vector &primary,
 		     const dal::bit_vector &secondary);    
     int is_not_crossed_by(size_type c, plevel_set ls, unsigned lsnum);
+    int sub_simplex_is_not_crossed_by(size_type cv, plevel_set ls,
+				      size_type sub_cv);
     void find_crossing_level_set(size_type cv, 
 				 dal::bit_vector &prim, 
 				 dal::bit_vector &sec);

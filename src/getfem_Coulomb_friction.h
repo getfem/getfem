@@ -276,8 +276,8 @@ namespace getfem {
     }
 
     void set_stationary(bool b) { stationary = b; }
-    void set_beta(value_type al) { beta = al; }
-    void set_alpha(value_type al) { alpha = al; }
+    void set_beta(value_type a) { beta = a; }
+    void set_alpha(value_type a) { alpha = a; }
 
     void set_r(value_type r_) { r = r_; }
     value_type get_r(void) const { return r; }

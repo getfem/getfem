@@ -105,6 +105,7 @@ struct crack_problem {
 
   enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
   getfem::getfem_mesh mesh;  /* the mesh */
+  getfem::mesh_level_set mls;       /* the integration methods.              */
   getfem::mesh_im_level_set mim;    /* the integration methods.              */
   getfem::mesh_fem mf_u;     /* main mesh_fem, for the elastostatic solution */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
@@ -123,8 +124,8 @@ struct crack_problem {
   bool solve(plain_vector &U);
   void init(void);
   void compute_error(plain_vector &U);
-  crack_problem(void) : mim(mesh), mf_u(mesh), mf_rhs(mesh), mf_p(mesh),
-			mf_coef(mesh), ls(mesh, 1, true) {}
+  crack_problem(void) : mls(mesh), mim(mls), mf_u(mesh), mf_rhs(mesh),
+			mf_p(mesh), mf_coef(mesh), ls(mesh, 1, true) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
@@ -184,7 +185,7 @@ void crack_problem::init(void) {
     getfem::int_method_descriptor(SIMPLEX_INTEGRATION);
 
   mim.set_integration_method(mesh.convex_index(), ppi);
-  mim.add_level_set(ls);
+  mls.add_level_set(ls);
   mim.set_simplex_im(sppi);
   mf_u.set_finite_element(mesh.convex_index(), pf_u);
   
@@ -263,6 +264,7 @@ bool crack_problem::solve(plain_vector &U) {
   
   gmm::fill_random(ls.values(0));
   gmm::fill_random(ls.values(1)); // à remplacer !!
+  mls.adapt();
   mim.adapt();
 
 

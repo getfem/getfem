@@ -578,50 +578,50 @@ struct Chrono {
 		         gmm::vect_const_begin(gmm::mat_col(simplexes, i)));
 // 	if (mesh.convex_quality_estimate(j) < 1E-18) mesh.sup_convex(j);
 // 	else {
-	  std::vector<scalar_type> signs(list_constraints.size());
-	  std::vector<size_type> prev_point(list_constraints.size());
-	  for (size_type ii = 0; ii <= n; ++ii) {
-	    for (size_type jj = 0; jj < list_constraints.size(); ++jj) {
-	      scalar_type dd =
-		(*(list_constraints[jj]))(mesh.points_of_convex(j)[ii]);
-	      if (gmm::abs(dd) > 1E-7) {
-		if (dd * signs[jj] < 0.0) {
-		  if (noisy) cout << "Intersection trouvee ... \n";
-		  // calcul d'intersection
-		  base_node X = mesh.points_of_convex(j)[ii], G;
-		  base_node VV = mesh.points_of_convex(j)[prev_point[jj]] - X;
-		  if (dd > 0.) gmm::scale(VV, -1.);
+	std::vector<scalar_type> signs(list_constraints.size());
+	std::vector<size_type> prev_point(list_constraints.size());
+	for (size_type ii = 0; ii <= n; ++ii) {
+	  for (size_type jj = 0; jj < list_constraints.size(); ++jj) {
+	    scalar_type dd =
+	      (*(list_constraints[jj]))(mesh.points_of_convex(j)[ii]);
+	    if (gmm::abs(dd) > 1E-7) {
+	      if (dd * signs[jj] < 0.0) {
+		if (noisy) cout << "Intersection trouvee ... \n";
+		// calcul d'intersection
+		base_node X = mesh.points_of_convex(j)[ii], G;
+		base_node VV = mesh.points_of_convex(j)[prev_point[jj]] - X;
+		if (dd > 0.) gmm::scale(VV, -1.);
+		dd = (*(list_constraints[jj])).grad(X, G);
+		size_type nbit = 0;
+		while (gmm::abs(dd) > 1e-15) {
+		  if (++nbit > 1000) {
+		    if (noisy) cout << "Intersection not found";
+		    assert(false);
+		  }
+		  scalar_type nG = std::max(1E-8, gmm::vect_sp(G, VV));
+		  gmm::add(gmm::scaled(VV, -dd / nG), X);
 		  dd = (*(list_constraints[jj])).grad(X, G);
-		  size_type nbit = 0;
-		  while (gmm::abs(dd) > 1e-15) {
-		    if (++nbit > 1000) {
-		      if (noisy) cout << "Intersection not found";
-		      assert(false);
-		    }
-		    scalar_type nG = std::max(1E-8, gmm::vect_sp(G, VV));
-		    gmm::add(gmm::scaled(VV, -dd / nG), X);
-		    dd = (*(list_constraints[jj])).grad(X, G);
-		  }
-		  size_type kk = mesh_points.add(X);
-		  if (!(retained_points[kk])) {
-		    retained_points.add(kk);
-		    goto delaunay_again;
-		  }
 		}
-		if (signs[jj] == 0.0) { signs[jj] = dd; prev_point[jj] = ii; }
+		size_type kk = mesh_points.add(X);
+		if (!(retained_points[kk])) {
+		  retained_points.add(kk);
+		  goto delaunay_again;
+		}
 	      }
+	      if (signs[jj] == 0.0) { signs[jj] = dd; prev_point[jj] = ii; }
 	    }
 	  }
-	  if (K > 1) {
-	    bgeot::pgeometric_trans pgt2 = bgeot::simplex_geotrans(n, K);
-	    cvpts.resize(pgt2->nb_points());
-	    for (size_type k=0; k < pgt2->nb_points(); ++k) {
-	      cvpts[k] = bgeot::simplex_geotrans(n,1)->transform
-		(pgt2->convex_ref()->points()[k], mesh.points_of_convex(j));
-	    }
-	    mesh.sup_convex(j);
-	    mesh.add_convex_by_points(pgt2, cvpts.begin());
+	}
+	if (K > 1) {
+	  bgeot::pgeometric_trans pgt2 = bgeot::simplex_geotrans(n, K);
+	  cvpts.resize(pgt2->nb_points());
+	  for (size_type k=0; k < pgt2->nb_points(); ++k) {
+	    cvpts[k] = bgeot::simplex_geotrans(n,1)->transform
+	      (pgt2->convex_ref()->points()[k], mesh.points_of_convex(j));
 	  }
+	  mesh.sup_convex(j);
+	  mesh.add_convex_by_points(pgt2, cvpts.begin());
+	}
 //	}
       }
       
@@ -646,7 +646,7 @@ struct Chrono {
 #ifdef DEBUG_LS
 	    interpolate_face_chrono.tic();
 #endif
-
+	    
 	    interpolate_face(mesh, ptdone, ipts,
 			     mesh.trans_of_convex(i)->structure()
 			     ->faces_structure()[f], fixed_points.size(),
@@ -673,7 +673,7 @@ struct Chrono {
        */
       base_matrix G;
       bgeot::pgeometric_trans pgt2 = bgeot::simplex_geotrans(n, K);
-      papprox_integration pai = classical_approx_im(pgt2, 2*K)->approx_method();
+      papprox_integration pai = classical_approx_im(pgt2,2*K)->approx_method();
       approx_integration new_approx(pgt->convex_ref());
       base_matrix KK(n,n), CS(n,n);
       base_matrix pc(pgt2->nb_points(), n); 
@@ -745,7 +745,8 @@ struct Chrono {
     } while (!h0_is_ok);
 
 #ifdef DEBUG_LS
-    cout << "Interpolate face: " << interpolate_face_chrono.total() << " moyenne: " << interpolate_face_chrono.mean() << "\n";
+    cout << "Interpolate face: " << interpolate_face_chrono.total()
+	 << " moyenne: " << interpolate_face_chrono.mean() << "\n";
 #endif
   }
 
@@ -777,6 +778,26 @@ struct Chrono {
     }
     is_adapted_ = true;
   }
+  
+  int mesh_level_set::sub_simplex_is_not_crossed_by(size_type cv,
+						    plevel_set ls,
+						    size_type sub_cv) {
+    scalar_type EPS = 1e-8;
+    bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
+    convex_info &cvi = cut_cv[cv];
+    bgeot::pgeometric_trans pgt2 = cvi.pmesh->trans_of_convex(sub_cv);
+
+    mesher_level_set mls = ls->mls_of_convex(cv);
+    int p = -2;
+    for (size_type i = 0; i < pgt2->nb_points(); ++i) {
+      scalar_type d = mls(cvi.pmesh->points_of_convex(sub_cv)[i]);
+      int p2 = ( (d < -EPS) ? -1 : ((d > EPS) ? +1 : 0));
+      if (p == -2) p=p2;
+      if (!p2 || p*p2 < 0) return 0;
+    }
+    return p;
+  }
+
 
   int mesh_level_set::is_not_crossed_by(size_type cv, plevel_set ls,
 					unsigned lsnum) {
@@ -824,8 +845,8 @@ struct Chrono {
   }
 
   void mesh_level_set::find_crossing_level_set(size_type cv,
-						  dal::bit_vector &prim,
-						  dal::bit_vector &sec) {
+					       dal::bit_vector &prim,
+					       dal::bit_vector &sec) {
     prim.clear(); sec.clear();
     unsigned lsnum = 0, k = 0;
     for (std::set<plevel_set>::const_iterator it = level_sets.begin(); 

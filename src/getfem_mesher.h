@@ -109,19 +109,21 @@ namespace getfem {
 
   class mesher_level_set : public mesher_signed_distance {
     bgeot::base_poly base;
-    std::vector<base_poly> gradient;
-    std::vector<base_poly> hessian;
+    mutable std::vector<base_poly> gradient;
+    mutable std::vector<base_poly> hessian;
     const fem<base_poly> *pf;
-    std::vector<scalar_type> coeff;
+    mutable int initialized;
   public:
-    template <class VECT>
-    mesher_level_set(pfem pf_, const VECT &coeff_) : 
-      coeff(coeff_.begin(), coeff_.end()) { init(pf_); }
-    void init(pfem pf_);
+    template <typename VECT>
+    mesher_level_set(pfem pf_, const VECT &coeff_) { init_base(pf_, coeff_); }
+    template <typename VECT> void init_base(pfem pf_, const VECT &coeff_);
+    void init_grad(void) const;
+    void init_hess(void) const;
 
     bool bounding_box(base_node &, base_node &) const
     { return false; }
-    virtual scalar_type operator()(const base_node &P) const;
+    virtual scalar_type operator()(const base_node &P) const
+    {  return base.eval(P.begin()); }
     virtual scalar_type operator()(const base_node &P,
 				   dal::bit_vector &bv) const
     { scalar_type d = (*this)(P); bv[id] = (gmm::abs(d) < SEPS); return d; }
@@ -132,6 +134,22 @@ namespace getfem {
     scalar_type grad(const base_node &P, base_small_vector &G) const;
     void hess(const base_node &P, base_matrix &H) const;
   };
+
+  template <typename VECT> 
+  void mesher_level_set::init_base(pfem pf_, const VECT &coeff_) {
+    std::vector<scalar_type> coeff(coeff_.begin(), coeff_.end());
+    if (gmm::vect_norm2(coeff) == 0)
+      DAL_THROW(dal::failure_error, "level is zero!");
+    pf = dynamic_cast<const fem<base_poly>* > (pf_.get());
+    if (!pf) DAL_THROW(dal::failure_error,
+		       "PK fem are required for level set (got "
+		       << typeid(pf_).name() << ")");
+    base = base_poly(pf->base()[0].dim(), pf->base()[0].degree());
+    for (unsigned i=0; i < pf->nb_base(0); ++i) {
+      base += pf->base()[i] * coeff[i];
+    }
+    initialized = 0; 
+  }
 
 
   class mesher_tube : public mesher_signed_distance {
