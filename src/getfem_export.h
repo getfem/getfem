@@ -37,6 +37,7 @@
 //#include <getfem_mat_elem.h>
 #include <bgeot_geotrans_inv.h>
 #include <dal_tree_sorted.h>
+#include <getfem_mesh_slice.h>
 
 namespace getfem
 {
@@ -437,6 +438,96 @@ namespace getfem
 
   /* this function has nothing to do here .. */
   void classical_mesh_fem(mesh_fem& mf, short_type K);
+
+  /** 
+      export class to VTK ( http://www.kitware.com/vtk.html ) file format 
+      (not the XML format, but the old format)
+  */
+  class vtk_export {
+    std::ostream &os;
+    char header[256]; // hard limit in vtk
+    bool ascii;
+    bool header_done, mesh_structure_done;
+    const stored_mesh_slice *psl;
+    std::auto_ptr<stored_mesh_slice> owned_psl;
+    std::ofstream real_os;
+    bool reverse_endian;
+  public:
+    vtk_export(const std::string& fname, bool ascii_ = false);
+    vtk_export(std::ostream &os_, bool ascii_ = false);
+    /* choose the mesh that will be exported -- if you are juste calling 
+       write_dataset(mf), you are not required to call this function */
+    void set_mesh(const getfem_mesh &m, unsigned nrefine=1);
+    /* if you do want to export a mesh slice instead of a whole mesh,
+       use set_slice instead of set_mesh */
+    void set_slice(const stored_mesh_slice& sl);
+    /* the header is the second line of text in the exported file,
+       you can put whatever you want */
+    void set_header(const std::string& s);
+    /* write a field described on mf */
+    template<class VECT> void write_dataset(const getfem::mesh_fem &mf, const VECT& U0, const std::string& name);
+    /* write a field already interpolated on the mesh_slice */
+    template<class VECT> void write_dataset(const VECT& U, const std::string& name);
+
+    const stored_mesh_slice& get_slice() const;
+  private:
+    void init();
+    void check_header();
+    void write_mesh_structure();
+    void check_mesh(const getfem_mesh &m);
+    template<class T> void write_val(T v);
+    template<class V> void write_vec(V p);
+    void write_separ();
+  };
+
+  template<class T> void vtk_export::write_val(T v) {
+    if (ascii) os << " " << v;
+    else {
+      char *p = (char*)&v; 
+      if (reverse_endian)
+	for (size_type i=0; i < sizeof(v)/2; ++i)
+	  std::swap(p[i], p[sizeof(v)-i-1]); 
+      os.write(p, sizeof(T));
+    }
+  }
+
+  template<class IT> void vtk_export::write_vec(IT p) {
+    float v[3];
+    for (size_type i=0; i < psl->dim(); ++i) {
+      v[i] = p[i];
+    }
+    for (size_type i=psl->dim(); i < 3; ++i) v[i] = 0.0f;
+    write_val(v[0]);write_val(v[1]);write_val(v[2]);
+  }
+
+  template<class VECT>
+  void vtk_export::write_dataset(const getfem::mesh_fem &mf, const VECT& U, const std::string& name) {
+    set_mesh(mf.linked_mesh());
+    size_type Q = (U.size() / mf.nb_dof())*mf.get_qdim();
+    std::vector<scalar_type> Uslice(Q*psl->nb_points());
+    psl->interpolate(mf, U, Uslice);
+    write_dataset(Uslice,name);
+  }
+
+  template<class VECT>
+  void vtk_export::write_dataset(const VECT& Uslice, const std::string& name) {
+    write_mesh_structure();
+    size_type Q = Uslice.size() / psl->nb_points();
+    write_separ();
+    if (Q == 1) {
+      os << "SCALARS " << name << " float\n";
+      os << "LOOKUP_TABLE default\n";
+      for (size_type i=0; i < psl->nb_points(); ++i) {
+	write_val(float(Uslice[i]));
+      }
+    } else if (Q <= 3) {
+      os << "VECTORS " << name << " float\n";
+      for (size_type i=0; i < psl->nb_points(); ++i) {
+	write_vec(Uslice.begin() + i*Q);
+      }
+    } else DAL_THROW(dal::dimension_error, "vtk does not accept vectors of dimension > 3");
+    write_separ();
+  }
 }  /* end of namespace getfem.                                             */
 
 
