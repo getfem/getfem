@@ -37,7 +37,7 @@ print TMPF3 "  static long_scalar_type im_desc_real[NB_IMR] = {\n";
 print TMPF4 "  static char * im_desc_face_meth[NB_IMF] = {\n";
 print TMPF5 "  static char * im_desc_node_type[NB_IMN] = {\n";
 
-$lss = `ls IM*`;
+$lss = `ls $ARGV[0]/IM*`;
 $nb_methods = 0;
 $nb_faces = 0;
 $nb_real = 0;
@@ -76,11 +76,12 @@ while ($lss) {
 	if (!($b=~/,/))
 	{ die "Impossible to read $filename : wrong number of coordinates\n"; }
 	($a, $b) = split(',', $b, 2);
-	print TMPF3 " LONG_SCAL(", $a, "),\n";
+	# print TMPF3 " LONG_SCAL(", $a, "),\n";
+	print TMPF3 "  ", $a, ",\n";
       }
       if (!($b))
 	{ die "Impossible to read $filename : wrong number of coordinates\n"; }
-      print TMPF3 " LONG_SCAL(", $b, "),\n";
+      print TMPF3 "  ", $b, ",\n";
     }
     if ($nbpt) { print TMPF5 " // $name\n"; }
     read_line;
@@ -135,7 +136,7 @@ print TMPF5 "  };\n\n}\n\n";
 
 close(TMPF1); close(TMPF2); close(TMPF3); close(TMPF4); close(TMPF5);
 
-`cat $tmp2 $tmp1 $tmp3 $tmp4 $tmp5 > getfem_in_list.h`;
+`cat $tmp2 $tmp1 $tmp3 $tmp4 $tmp5 > getfem_im_list.h`;
 `rm -f $tmp1 $tmp2 $tmp3 $tmp4 $tmp5`;
 
-print "The result is in getfem_in_list.h\n";
+print "The result is in getfem_im_list.h\n";
