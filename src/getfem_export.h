@@ -427,8 +427,11 @@ namespace getfem
       size_type nb = gti.points_in_convex(mf_source.linked_mesh().convex(cv),
 					  pgt, ptab, itab);
       pfem pf_s = mf_source.fem_of_element(cv);
-      if (!(pf_s->is_equivalent())) 
+
+      // MAIS POURQUOI ????
+      //if (!(pf_s->is_equivalent())) 
 	transfert_to_G(G, mf_source.linked_mesh().points_of_convex(cv));
+      cerr << "is_equiv:" << pf_s->is_equivalent() << ",inerp: G=" << G << ",nrow=" << G.nrows() << ", ncols=" << G.ncols() << endl;
       size_type nbd_s = pf_s->nb_dof();
       coeff.resize(nbd_s);
       for (size_type i = 0; i < nb; ++i)
@@ -443,6 +446,7 @@ namespace getfem
 	      size_type dof_s = mf_source.ind_dof_of_element(cv)[j*nrep+k];
 	      coeff[j] = U[dof_s];
 	    }
+	    cerr << "cv=" << cv << ", ptab[" << i << "]=" << ptab[i] << ", coeff=" << coeff << endl;
 	    pf_s->interpolation(ptab[i], G, pgt, coeff, val);
 	    V[dof_t + k] = val[0];
 	    ddl_touched.sup(dof_t+k);

@@ -82,6 +82,8 @@ namespace bgeot
       /// Number of points.
       size_type nb_points(void) const { return ptab.card(); }
 
+    const TAB_TYPE& points() const { return ptab; }
+
       /// Add point p to the list of points.
       size_type add_point(base_node p) { return ptab.add(p); }
       

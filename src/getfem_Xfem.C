@@ -84,6 +84,7 @@ namespace getfem
 			   bgeot::pgeometric_trans pgt,
 			   const base_vector &coeff, base_node &val) const {
     base_node val2(val.size());
+    cerr << "coucou Xfem::interpolation(x=" << x << ", G=" << G << endl;
     base_node xreal = pgt->transform(x, G);
     size_type nbb = pfi->nb_base();
     pfi->interpolation(x, G, pgt, coeff, val);
@@ -201,8 +202,8 @@ namespace getfem
     base_tensor::const_iterator itvf = tt.begin(), itvf2;
     base_tensor::const_iterator itf = pfp->val(ii).begin(), itf2;
     
-    cerr << "pfp->val(ii)={"; 
-    for (size_type i=0; i < pfp->val(ii).size(); ++i) cerr << pfp->val(ii)[i] << " "; cerr << "}\n";
+    //    cerr << "pfp->val(ii)={"; 
+    //    for (size_type i=0; i < pfp->val(ii).size(); ++i) cerr << pfp->val(ii)[i] << " "; cerr << "}\n";
 
     std::vector<scalar_type> vf(nb_func);
     std::vector<base_vector> gvf(nb_func);

@@ -127,7 +127,7 @@ namespace getfem
     base_node P(N); P.fill(0.0);
     base_matrix::const_iterator git = G.begin();
     for (size_type l = 0; l < k; ++l) {
-      scalar_type a = c[i][l];
+      scalar_type a = c[i][l]; 
       base_node::iterator pit = P.begin(), pite = P.end();
       for (; pit != pite; ++git, ++pit) *pit += a * (*git);
     }
