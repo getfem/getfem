@@ -1,3 +1,13 @@
+2004-10-19  Yves Renard  <Yves.Renard@insa-toulouse.fr>
+
+	* src/gmm_precond_ilutp.h: New preconditionner, incomplete LU with
+	  fill-in, threshold and column pivoting.
+
+2004-10-15  Yves Renard  <Yves.Renard@insa-toulouse.fr>
+
+	* src/gmm_vector.h: bug fixed and optimization of the copy toward
+	a rsvector<T> : the unsorted indices were not taken into account.
+
 2004-09-15  Yves Renard  <Yves.Renard@insa-toulouse.fr>
 
 	* src/gmm_solver_bfgs.h: A BFGS and a DFP algorithm for

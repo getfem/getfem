@@ -50,8 +50,6 @@ namespace gmm {
 
     bool invert;
     LU_Matrix L, U;
-    std::vector<size_type> ipvt;
-    std::vector<size_type> ipvtinv;
     gmm::unsorted_sub_index indperm;
     gmm::unsorted_sub_index indperminv;    
     mutable std::vector<value_type> temporary;
@@ -91,7 +89,8 @@ namespace gmm {
     CLU_Matrix CU(n,n);
     if (n == 0) return;
     std::vector<T> indiag(n);
-    ipvt.resize(n); ipvtinv.resize(n); temporary.resize(n);
+    temporary.resize(n);
+    std::vector<size_type> ipvt(n), ipvtinv(n);
     for (size_type i = 0; i < n; ++i) ipvt[i] = ipvtinv[i] = i;
     indperm = unsorted_sub_index(ipvt);
     indperminv = unsorted_sub_index(ipvtinv);
