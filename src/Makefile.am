@@ -43,7 +43,6 @@ include_HEADERS =                      \
 	getfem_export.h                \
 	getfem_import.h	               \
 	getfem_precomp.h               \
-	getfem_norm.h                  \
 	getfem_derivatives.h           \
 	getfem_fem.h                   \
 	getfem_Xfem.h                  \

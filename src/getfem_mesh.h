@@ -351,10 +351,14 @@ namespace getfem
 
       /* returns the normal of face 'f' evaluated at the point 'pt'       */
       /* (pt is a position in the reference convex)                       */
+      /* pt should of course by on the face, except if the geometric
+         transformation is linear */
       base_small_vector normal_of_face_of_convex(size_type ic, short_type f,
 						 const base_node &pt) const;
+    /* same as above, but n is the index of a point of the reference convex 
+       (on the face..) */
       base_small_vector normal_of_face_of_convex(size_type ic, short_type f,
-						 size_type n) const;
+						 size_type n=0) const;
 
       scalar_type convex_quality_estimate(size_type ic) const;
       scalar_type convex_radius_estimate(size_type ic) const;
@@ -439,7 +443,39 @@ namespace getfem
   /** rough estimate of the radius of the convex using the largest eigenvalue
    * of the jacobian of the geometric transformation */
   scalar_type convex_radius_estimate(bgeot::pgeometric_trans pgt, const base_matrix& pts);
-  
+
+  /* 
+     stores a convex face. if f == -1, it is the whole convex
+  */
+  struct convex_face  {
+    size_type cv;
+    size_type f;
+    /*
+    inline bool operator < (const convex_face &e) const
+    {
+      if (cv < e.cv) return true; if (cv > e.cv) return false; 
+      if (f < e.f) return true; else if (f > e.f) return false;
+      return false;
+    }
+    */
+    bool is_face() const { return f != size_type(-1); }
+    convex_face(size_type cv_, size_type f_ = size_type(-1)) : cv(cv_), f(f_) {}
+    convex_face() : cv(size_type(-1)), f(size_type(-1)) {}
+  };
+  typedef std::vector<convex_face> convex_face_ct;
+
+
+  /**
+     returns a list of "exterior" faces of a mesh (i.e. faces which are not shared by two convexes)
+      + convexes whose dimension is smaller that m.dim()
+  */
+  void  outer_faces_of_mesh(const getfem::getfem_mesh &m, 
+			    const dal::bit_vector& cvlst, convex_face_ct& flist);
+  inline void  outer_faces_of_mesh(const getfem::getfem_mesh &m, 
+				   convex_face_ct& flist) {
+    outer_faces_of_mesh(m,m.convex_index(),flist);
+  }
+
 }  /* end of namespace getfem.                                             */
 
 

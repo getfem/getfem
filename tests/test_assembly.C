@@ -1,7 +1,7 @@
 #include <getfem_assembling.h>
 #include <getfem_export.h>
-#include <getfem_norm.h>
 #include <getfem_regular_meshes.h>
+#include <getfem_mat_elem.h>
 #include <gmm.h>
 #ifdef HAVE_SYS_TIMES
 # include <sys/times.h>

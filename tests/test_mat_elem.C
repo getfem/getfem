@@ -25,8 +25,8 @@
 
 #include <getfem_assembling.h>
 #include <getfem_export.h>
-#include <getfem_norm.h>
 #include <getfem_regular_meshes.h>
+#include <getfem_mat_elem.h>
 
 using bgeot::base_vector;
 using bgeot::base_small_vector;

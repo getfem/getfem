@@ -189,8 +189,6 @@ namespace bgeot {
   size_type geotrans_inv::points_in_convex(const convex<base_node, TAB> &cv,
 					   pgeometric_trans pgt,
 					   CONT1 &pftab, CONT2 &itab, bool bruteforce) {
-    size_type N = pgt->structure()->dim(); /* dimension of the convex.*/
-    size_type P = cv.points()[0].size(); /* dimension of the image.     */
     base_node min, max; /* bound of the box enclosing the convex */
     size_type nbpt = 0; /* nb of points in the convex */
     kdtree_tab_type boxpts;

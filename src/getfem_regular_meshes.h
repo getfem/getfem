@@ -82,8 +82,8 @@ namespace getfem
 					 &(ref[0]));
   } 
 
-    void parallelepiped_regular_mesh_(getfem_mesh &me, dim_type N,
-                                      const base_node &org, const base_small_vector *ivect, const size_type *iref, bool linear_gt);
+  void parallelepiped_regular_mesh_(getfem_mesh &me, dim_type N,
+    const base_node &org, const base_small_vector *ivect, const size_type *iref, bool linear_gt);
 
   template<class ITER1, class ITER2>
     void parallelepiped_regular_mesh(getfem_mesh &me,
@@ -97,6 +97,14 @@ namespace getfem
     parallelepiped_regular_mesh_(me, N, org, &(vect[0]), &(ref[0]), linear_gt);
   } 
 
+  /**
+     build a regular mesh of the unit square/cube/.... All elements
+     are created using the specified geometric_trans. nsubdiv is the
+     number of cells in each direction.  The interior of the mesh is
+     optionally noised.
+   */
+  void regular_unit_mesh(getfem_mesh& m, std::vector<size_type> nsubdiv, 
+			 bgeot::pgeometric_trans pgt, bool noised = false);
 }  /* end of namespace getfem.                                             */
 
 

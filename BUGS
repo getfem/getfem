@@ -1,41 +1,9 @@
 			BUGS AND REMARKS
 
-Kutill Mc Kee algorithm to numerate degrees of freedom is not completely correct and should be corrected.
-Bad accuracy of loads in Newton-Cotes integration formulaes for hight degrees.
-___________________________________________________________________________
+Kutill Mc Kee algorithm to numerate degrees of freedom is not
+completely correct and should be corrected.  Bad accuracy of loads in
+Newton-Cotes integration formulaes for hight degrees.
 
-g++ has a bug concerning dynamic libraries. No object with a non
-trivial constructor or destructor can be used.
-___________________________________________________________________________
+getfem_slices have some missing triangles with complex slices.
 
-with cxx (dec compiler) the difficulty to build dynamic libraries is to be
-sure that all the template implementations are linked. the problem is here
-also for static library, the cxx_repository is needed to link application
-programs ...
-
-
-Using -tweak fix the problem. It needs version 6.3 or later.
-___________________________________________________________________________
-
-MTL and ITL don't support the -pedantic option from g++
-___________________________________________________________________________
-
-cxx need the following definition
-#define __USE_STD_IOSTREAM
-which is present in dal_std.h. This means that dal_std.h should be include
-first in any application which uses GETFEM (or __USE_STD_IOSTREAM should be
-defined before any standard include file)
-___________________________________________________________________________
-
-On SGI, problem with dynamic libraries 
-the use of 
-  -update_registry .libs/so_locations
-doesn't work and should be replace with
-  -check_registry /usr/lib/so_locations 
-(dans libtool)
-
-problem also to make executables. Prefer something like
-
-CC -o dynamic_array dynamic_array.C -I../src ../src/.libs/libgetfm.a -lm -LANG:std 
-
-instead of making first dynamic_array.o ...
+Hermite element is still not working.

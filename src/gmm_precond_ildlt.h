@@ -225,7 +225,7 @@ namespace gmm {
   struct cholesky_precond : public ildlt_precond<Matrix> {
     cholesky_precond(const Matrix& A) : ildlt_precond<Matrix>(A) {}
     cholesky_precond(void) {}
-  };
+  } IS_DEPRECATED;
 
   template <typename Matrix, typename V1, typename V2> inline
   void mult(const cholesky_precond<Matrix>& P, const V1 &v1, V2 &v2) {

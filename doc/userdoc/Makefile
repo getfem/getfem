@@ -1,7 +1,7 @@
 all : getfemuser.pdf
 
 FIGS=getfemuserelemf.fig getfemuserelem.fig
-PDFFIGS=$(FIGS:.fig=.pdf) getfemlogo.pdf
+PDFFIGS=$(FIGS:.fig=.pdf)
 PNGFIGS=$(PDFFIGS:.pdf=.png)
 
 .SUFFIXES: .tex .dvi .ps .pdf .eps .fig .png
@@ -11,9 +11,6 @@ PNGFIGS=$(PDFFIGS:.pdf=.png)
 
 .eps.pdf:
 	epstopdf $(@:.pdf=.eps) --outfile=$@
-
-getfemlogo.png: getfemlogo.pdf
-	convert -resize 500x500 $(@:.png=.pdf) $@
 
 getfemuserelemf.png: getfemuserelemf.pdf
 	convert -resize 500x500 $(@:.png=.pdf) $@
@@ -36,7 +33,9 @@ getfemuser.pdf: getfemuser.tex $(PDFFIGS)
 #	cp getfemuser.ps getfemuser.pdf ../../../getfem_html/;
 
 html:	getfemuser.tex getfemuser.idx $(PNGFIGS)
+	-rm -rf getfemuser/
 	hyperlatex getfemuser.tex
+	(cd getfemuser && ../cleanup_html_doc.pl)
 
 pdf: getfemuser.pdf
 	if [ -d ../../../getfem_html ]; then \
@@ -45,7 +44,8 @@ pdf: getfemuser.pdf
 
 htmltar: html
 	cp $(PNGFIGS) getfemuser/
-	cp getfemuser.css getfemuser/
+	cp docstyle.css getfemuser/
+	cp logogetfem.png logo_getfem_small.png getfemuser/
 	cp next.gif up.gif previous.gif getfemuser/
 	tar czvf html_getfemuser.tar.gz getfemuser
 	if [ -d ../../../getfem_html ]; then \

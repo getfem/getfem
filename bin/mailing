@@ -26,10 +26,8 @@ sub read_line {
       print "Please suppress character \" from mail list file\n";
       $li =~ s/\"//g;
     }
-    $lp = $li;
-    $lp =~ s/\s//g;
-    $li =~ s/\"//g; # l'ideal serait de ne supprimer que les espaces à la fin
-    if ($lp) { return; }
+    $li =~ s/\s+$//g; 
+    if ($li) { return; }
   }
 }
 

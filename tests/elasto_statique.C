@@ -24,7 +24,6 @@
 /* *********************************************************************** */
 
 #include <getfem_assembling.h>
-#include <getfem_norm.h>
 #include <getfem_regular_meshes.h>
 #include <gmm.h>
 #ifdef GETFEM_HAVE_FEENABLEEXCEPT

@@ -9,24 +9,6 @@
 #include <memory> // auto_ptr for g++ 2.95
 
 namespace getfem {
-
-  /* this should not stay here .. */
-  struct convex_face  {
-    size_type cv;
-    size_type f;
-    inline bool operator < (const convex_face &e) const
-    {
-      if (cv < e.cv) return true; if (cv > e.cv) return false; 
-      if (f < e.f) return true; else if (f > e.f) return false;
-      return false;
-    }
-    bool is_face() const { return f != size_type(-1); }
-    convex_face(size_type cv_, size_type f_ = size_type(-1)) : cv(cv_), f(f_) {}
-    convex_face() : cv(size_type(-1)), f(size_type(-1)) {}
-  };
-  typedef std::vector<convex_face> convex_face_ct;
-
-
   /**
      node data in a slice: contains both real position, and position in the reference convex
    */
@@ -176,13 +158,6 @@ namespace getfem {
       }
     }
   };
-
-
-  /**
-     returns a list of "exterior" faces of a mesh (i.e. faces which are not shared by two convexes)
-  */
-  void  outer_faces_of_mesh(const getfem::getfem_mesh &m, const dal::bit_vector& cvlst, convex_face_ct& flist);
-
 
 
   /* stupid class in order to use any vector type for field data associated to mesh_fems

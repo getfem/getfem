@@ -6,7 +6,7 @@ namespace getfem {
   const float slicer::EPS = 1e-13;
 
   /* ---------------------------- extraction of  outer faces of a mesh --------------------- */
-
+#if 0
   /* identify convex faces by their mesh point ids */
   struct mesh_faces_by_pts_list_elt  {
     std::vector<size_type> ptid; // point numbers of faces
@@ -51,7 +51,7 @@ namespace getfem {
       flist[fcnt].cv = lst[i].cv; flist[fcnt].f = lst[i].f; ++fcnt; 
     }
   }
-
+#endif
 
 
   /* -------------------------------------- slicers --------------------------------------*/

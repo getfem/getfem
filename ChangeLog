@@ -1,3 +1,13 @@
-2003-01-20 pommier
+2004-01-27  julien pommier  <pommier@gmm.insa-tlse.fr>
 
-	* The ChangeLog is started!
+	* tests/laplacian.C: huge simplification of the sources..
+
+	* removed obsolete getfem_norm.h
+
+	* src/getfem_mesh_slice.C: fixed the problem (missing simplexes)
+	with 'union' operation on slice. Moreover, the slice boundary
+	flagging is now better than ever. Added a bounding_box member
+	function in geometric_trans.
+
+2004-01-23
+	* Getfem-1.6 released. The ChangeLog is started!

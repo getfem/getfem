@@ -160,4 +160,69 @@ namespace getfem
     }
   }
 
+  /* deformation inside a unit square  -- ugly */
+  static base_node shake_func(const base_node& x) {
+    base_node z(x.size());
+    scalar_type c1 = 1., c2 = 1.;
+    for (size_type i=0; i < x.size(); ++i) {
+      c1*=(x[i]*(1.-x[i]));
+      c2*=(.5 - dal::abs(x[i]-.5));
+    }
+    z[0] = x[0] + c1;
+    for (size_type i=1; i < x.size(); ++i) {
+      z[i] = x[i] + c2/10.;
+    }
+    return z;
+  }
+
+  void regular_unit_mesh(getfem_mesh& m, std::vector<size_type> nsubdiv, 
+			 bgeot::pgeometric_trans pgt, bool noised) {
+    getfem_mesh mesh;
+    size_type N = nsubdiv.size();
+    base_node org(N); org.fill(0.0);
+    std::vector<base_small_vector> vtab(N);
+    for (dim_type i = 0; i < N; i++) { 
+      vtab[i] = base_small_vector(N); vtab[i].fill(0.0);
+      (vtab[i])[i] = 1. / scalar_type(nsubdiv[i]) * 1.;
+    }
+    if (pgt->basic_structure() == bgeot::simplex_structure(N)) {
+      getfem::parallelepiped_regular_simplex_mesh
+	(mesh, N, org, vtab.begin(), nsubdiv.begin());
+    } else if (pgt->basic_structure() == bgeot::parallelepiped_structure(N)) {
+      getfem::parallelepiped_regular_mesh
+	(mesh, N, org, vtab.begin(), nsubdiv.begin());
+    } else if (pgt->basic_structure() == bgeot::prism_structure(N)) {
+      getfem::parallelepiped_regular_prism_mesh
+	(mesh, N, org, vtab.begin(), nsubdiv.begin());
+    } else {
+      DAL_THROW(dal::failure_error, "cannot build a regular mesh for " << bgeot::name_of_geometric_trans(pgt));
+    }
+    m.clear();
+    /* build a mesh with a geotrans of degree K */
+    for (dal::bv_visitor cv(mesh.convex_index()); !cv.finished(); ++cv) {
+      if (pgt == mesh.trans_of_convex(cv)) {
+	m.add_convex_by_points(mesh.trans_of_convex(cv), mesh.points_of_convex(cv).begin()); 
+      } else {
+	std::vector<base_node> pts(pgt->nb_points());
+	for (size_type i=0; i < pgt->nb_points(); ++i) {
+	  pts[i] = mesh.trans_of_convex(cv)->transform(pgt->convex_ref()->points()[i], 
+						       mesh.points_of_convex(cv));
+	}
+	m.add_convex_by_points(pgt, pts.begin());
+      }
+    }
+    m.optimize_structure();
+    /* apply a continuous deformation + some noise */
+    if (noised) {
+      for (dal::bv_visitor ip(m.points().index()); !ip.finished(); ++ip) {
+	bool is_border = false;
+	base_node& P = m.points()[ip];
+	for (size_type i=0; i < N; ++i) { if (dal::abs(P[i]) < 1e-10 || dal::abs(P[i]-1.) < 1e-10) is_border = true; }
+	if (!is_border) { 
+	  P = shake_func(P); 
+	  for (size_type i=0; i < N; ++i) P[i] += 0.05*(1./nsubdiv[i])*dal::random(double());
+	}
+      }
+    }
+  }
 }  /* end of namespace getfem.                                             */

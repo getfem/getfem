@@ -418,4 +418,22 @@ namespace getfem
     return q * sqrt(scalar_type(N)) / scalar_type(N);
   }
 
+  /* extract faces of convexes which are not shared
+      + convexes whose dimension is smaller that m.dim()
+  */
+  void
+  outer_faces_of_mesh(const getfem::getfem_mesh &m, const dal::bit_vector& cvlst, convex_face_ct& flist) {
+    for (dal::bv_visitor ic(cvlst); !ic.finished(); ++ic) {
+      if (m.structure_of_convex(ic)->dim() == m.dim()) {
+	for (size_type f = 0; f < m.structure_of_convex(ic)->nb_faces(); f++) {
+	  if (bgeot::neighbour_of_convex(m,ic,f).empty()) {
+	    flist.push_back(convex_face(ic,f));
+	  }
+	}
+      } else {
+	flist.push_back(convex_face(ic,size_type(-1)));
+      }
+    }
+  }
+
 }  /* end of namespace getfem.                                             */

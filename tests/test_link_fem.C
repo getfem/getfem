@@ -25,7 +25,6 @@
 
 #include <getfem_assembling.h>
 #include <getfem_export.h>
-#include <getfem_norm.h>
 #include <getfem_regular_meshes.h>
 #include <gmm.h>
 

@@ -35,7 +35,7 @@
 
 % \W .. is equivalent to \htmlonly{..}
 \W \newcommand{\HlxIcons}{./}
-\W \usepackage{frames} % navigation panel
+%\W \usepackage{frames} % navigation panel
 \W \htmldirectory{getfemuser}
 \W \htmlname{getfemuser}
 \W \setcounter{htmldepth}{2}
@@ -43,7 +43,7 @@
 \W \renewcommand{\HlxMeta}{\xml{META description="getfem++ user manual"}}
 \htmlonly{
   \htmlpanelfield{Index}{getfemuser}
-  \htmlcss{getfemuser.css}
+  \htmlcss{docstyle.css}
   \newcommand{\text}[1]{\mathrm{#1}}
   \newcommand{\WEB}[2]{\xmlattributes*{a}{target="_top"}\xlink{#2}{#1}}
   \newcommand{\nabla}{\htmlsym{nabla}}%renamed \xmlent by lastest version of hyperlatex
@@ -91,10 +91,12 @@
 \T \newenvironment{ctableau}[2]{\begin{center}\begin{supertabular}{#1}}{\end{supertabular}\end{center}}
 \W \newenvironment{ctableau}[2]{\xmlattributes*{table}{border=1 align="center"}\begin{tabular}{#2}}{\end{tabular}}
 \begin{document}
+\htmltitle{Getfem User Guide}
+\htmlpanel{0}%disable navigation panel
 
 \begin{center}
 \texonly{
-  \includegraphics[width=10cm,angle=0]{getfemlogo}\\[0.2cm]
+  \includegraphics[width=10cm,angle=0]{logogetfemwhitebg}\\[0.2cm]
   a Generic Finite Element library in C++ \\[0.5cm]
   {\LARGE Documentation, part \Huge 2} \\[0.5cm]
   \fbox{\Huge \sc Short User Documentation} \\[0.5cm]
@@ -102,7 +104,7 @@
   \today \\[1.0cm]
 }
 \htmlonly{
-  \xmlattributes*{a}{target="_top"}\xlink{\htmlimg{getfemlogo.png}{the getfem logo}}{http://www.gmm.insa-tlse.fr/getfem}\\[2cm]
+  \xlink{\htmlimg{logogetfem.png}{The Getfem++ logo}}{http://www.gmm.insa-tlse.fr/getfem}\\[2cm]
   a Generic Finite Element library in C++ \par\par
   {\LARGE Documentation, part \Huge 2} \par\par
   {\Huge Short User Documentation } \par
@@ -127,7 +129,9 @@ The \gf project focuses on the development of a generic and efficient elementary
 
  Moreover, the library includes other tools for computation with finite element such as assembling methods for classical PDEs, interpolation methods, computation of norms, mesh operations, boundary conditions ... This library allows to build finite elements codes which are completely independent of the dimension, the particular method or element. Examples are provided.\\[2cm]
 \htmlonly{\\\\\\}
+\begin{quote}
 \input{../license.tex}
+\end{quote}
 
 \newpage
 \tableofcontents
@@ -631,23 +635,22 @@ the assembly of a volumic source term for a scalar FEM is done with the followin
 The first instructions declare the object, and set the data that it will use: the two \cpp{mesh\_fem} objects, the input data \cpp{F}, and the destination vector \cpp{B}.
 
 The input data is the vector $F$, defined on \cpp{mfdata}. One wants to
-evaluate $\sum_{j}f_j(\int_\Omega\phi^i\psi^j)$. The instruction must be seen as
-something that will be executed for each convex of the mesh. The terms
+evaluate $\sum_{j} f_j (\int_\Omega \phi^i \psi^j)$. The instruction must be seen as
+something that will be executed for each convex \cpp{cv} of the mesh. The terms
 \cpp{\#1} and \cpp{\#2} refer to the first \cpp{mesh\_fem} and the second one
 (i.e. \cpp{mf} and \cpp{mfdata}).  The instruction \cpp{Z=data(\#2);}
-which means that for each convex, the ``tensor'' \cpp{Z} will extract
-the values of the first data argument provided with \cpp{push\_data},
-at indexes corresponding to the degrees of freedom of the convex. The
+means that for each convex, the ``tensor'' \cpp{Z} will receive the values of the first data argument provided with \cpp{push\_data},
+at indexes corresponding to the degrees of freedom attached to the convex of the second (\cpp{\#2}) \cpp{mesh_fem} (here, \cpp{Z$\leftarrow$F[mfdata.ind_dof_of_element(cv)]}. The
 part \cpp{V(\#1)+=\ldots} means that the result of the next expression will be
-stored in the output vector (provided with \cpp{push\_vec}). Here
+accumulated into the output vector (provided with \cpp{push\_vec}). Here
 again, \cpp{\#1} means that we will write the result at indexes
-corresponding to the degrees of freedom of the current convex. The
+corresponding to the degrees of freedom of the current convex with respect to the first (\cpp{\#1}) \cpp{mesh_fem}. The
 left hand side \cpp{comp(Base(\#1).Base(\#2))(:,j).Z(j)} contains
 two operations. The first one is a computation of a tensor on the
 convex: \cpp{comp(Base(\#1).Base(\#2))} is evaluated as a
-2-dimensions tensor, $\int\phi^i\psi^j$, for all degrees of freedom $i$ of \cpp{mf} and $j$ of \cpp{mfdata} attached to the current convex. The next
+2-dimensions tensor, $\int\phi^i \psi^j$, for all degrees of freedom $i$ of \cpp{mf} and $j$ of \cpp{mfdata} attached to the current convex. The next
 part is a reduction operation, \cpp{C(:,j).Z(j)}: each named index
-(here $j$) is summed, i.e. the result is $\sum_jc_{i,j}z_j$.
+(here $j$) is summed, i.e. the result is $\sum_j c_{i,j} z_j$.
 
 An other example is the assembly of the stiffness matrix for a vector Laplacian:
 \begin{cppcode}
@@ -660,12 +663,12 @@ An other example is the assembly of the stiffness matrix for a vector Laplacian:
             "M$1(#1,#1)+=sym(comp(vGrad(#1).vGrad(#1).Base(#2))(:,j,k,:,j,k,p).a(p))");
   assem.volumic_assembly();
 \end{cppcode}
-Now the output is written in a sparse matrix, inserted with \cpp{assem.push_mat(SM)}. The \cpp{\$1} in \cpp{M\$1(\#1,\#1)} just indicates that we refer to the first matrix ``pushed'' (it is optional, but if the assembly requires two matrices, the second one must be referred this way). The \cpp{sym} function ensure that the result is symmetric (if this is not done, some round-off errors may cancel the symmetricity). Next, the \cpp{comp} part evaluates a 7-dimensions tensor, 
+Now the output is written in a sparse matrix, inserted with \cpp{assem.push_mat(SM)}. The \cpp{\$1} in \cpp{M\$1(\#1,\#1)} just indicates that we refer to the first matrix ``pushed'' (it is optional, but if the assembly requires two matrices, the second one must be referred this way). The \cpp{sym} function ensure that the result is symmetric (if this is not done, some round-off errors may cancel the symmetricity). Next, the \cpp{comp} part evaluates a 7D tensor, 
 \begin{equation*}\int\partial_k \varphi^{i}_{j} \partial_l \varphi^m_n \psi^p,\end{equation*}
 where $\varphi^i_j$ is a $jth$ component of the $ith$ base function of \cpp{mf} and $\psi^p$ is a (scalar) base function of the second \cpp{mesh_fem}. Since we want to assemble
-\begin{equation*}\int a(x).\nabla\phi^i.\nabla\phi^j,\quad\text{with}\quad a(x)=\sum_pa^p\psi^p(x),\end{equation*}
+\begin{equation*}\int a(x).\nabla\phi^i.\nabla\phi^j,\quad\text{with}\quad a(x)=\sum_p a^p \psi^p(x),\end{equation*}
 the reduction is:
-\begin{equation*}\sum_{j,k,p}\left(\int\partial_k\varphi^{i}_{j}\partial_k\varphi^m_j\psi^p\right)a^p\end{equation*}
+\begin{equation*}\sum_{j,k,p}\left(\int \partial_k\varphi^{i}_{j} \partial_k\varphi^m_j \psi^p\right)a^p\end{equation*}
 In the \cpp{comp} function, \cpp{vGrad} was used instead of \cpp{Grad} since we
 said that we were assembling a {\em vector} Laplacian: that is why
 each \cpp{vGrad} part has three dimensions (dof number, component
@@ -673,11 +676,25 @@ number, and derivative number). For a scalar Laplacian, we could have
 used \cpp{comp(Grad(\#1).Grad(\#1).Base(\#2))(:,k,:,k,p).a(p)}. But the
 vector form has the advantage to work in both vector and scalar case.
 
-The last instruction, \cpp{assem.volumic_assembly()}, does evaluates
+The last instruction, \cpp{assem.volumic_assembly()}, does evaluate
 the expression on each convex. For an assembly over a boundary just
 call \cpp{assem.boundary_assembly(boundary_num)}.
 
-The third and last example shows assembly of a linear elasticity with a complete Hooke tensor:
+
+The third example shows how to compute the $L^2$ norm of a scalar or vector field on a mesh boundary:
+\begin{cppcode}
+    assem.push_mf(mf);
+    assem.push_data(U);
+    std::vector<scalar_type> v(1);
+    assem.push_vec(v);
+    assem.set("u=data(#1); V()+=u(i).u(j).comp(vBase(#1).vBase(#1))(i,k,j,k)");
+    assem.boundary_assembly(boundary_number);
+\end{cppcode}
+This one is easy to read. When \cpp{boundary_assembly} returns, \cpp{v[0]} will contain 
+\begin{equation*}\sum_{i,j,k}\left(\int_{boundary} u_i \varphi^{i}_{k} u_j \varphi^j_k \right)\end{equation*}
+
+
+The fourth and last example shows assembly of the linear elasticity problem with a complete Hooke tensor:
 \begin{cppcode}
  assem.set("h=data\$1(qdim(\#1),qdim(\#1),qdim(\#1),qdim(\#1),\#2);"
            "t=comp(vGrad(\#1).vGrad(\#1).Base(\#2));"
@@ -686,14 +703,14 @@ The third and last example shows assembly of a linear elasticity with a complete
 \end{cppcode}
 The original equations are:
 \begin{equation*}\int\varepsilon(\varphi^i):\sigma(\phi^j),\quad\text{with}\quad
-\sigma(u)_{ij}=\sum_{kl}h_{ijkl}(x)\varepsilon_{kl}(u)\end{equation*}
-where $h$ is the Hooke tensor.
-Since we assume it is not constant, $h$ is given on the second \cpp{mesh_fem}: $h_{ijkl}(x)=\sum_ph_{ijkl}^p\psi^p$.  Hence the first line
+\sigma(u)_{ij}=\sum_{kl} h_{ijkl}(x) \varepsilon_{kl}(u)\end{equation*}
+where $h$ is the Hooke tensor, and ':' means the scalar product between matrices.
+Since we assume it is not constant, $h$ is given on the second \cpp{mesh_fem}: $h_{ijkl}(x)=\sum_p h_{ijkl}^p \psi^p$.  Hence the first line
 declares that the first data ``pushed'' is indeed a five-dimensions
 tensor, the first fourth ones being all equal to the target dimension
 of the first \cpp{mesh_fem}, and the last one being equal to the
-number of degrees of freedom of the second \cpp{mesh_fem}.  The \cpp{comp} part still compute the same 7-dimensions tensor than for the
-vector Laplacian case.  From this tensor, one evaluate
+number of degrees of freedom of the second \cpp{mesh_fem}.  The \cpp{comp} part still computes the same 7D tensor than for the
+vector Laplacian case.  From this tensor, one evaluates
 $\varepsilon(\varphi^i)_{jk}\varepsilon(\phi^l)_{mn}\psi^p$ via permutations, and finally the
 expression is reduced against the hook tensor.
 
@@ -711,7 +728,7 @@ If there is more than one data array, output array  or output sparse matrix, one
 
 \section{Incorporate new finite element methods in \gf }
 
-Basically, It is sufficient to describe an element on the reference element, i.e. to describe each base function of each degree of freedom. Vectorial elements and non-equivalent elements are partially supported ... (supported by the finite element kernel but not by assembling procedures).\\[0.5cm]
+Basically, It is sufficient to describe an element on the reference element, i.e. to describe each base function of each degree of freedom. Vectorial elements and non-equivalent elements are partially supported ... (supported by the finite element kernel but none vector element is implemented for now).\\[0.5cm]
 To be done ... please read \cite{BASCOMP} for more details and see the file \filename{getfem\_fem.C} for practical implementation.
 
 \section{Incorporate new approximated integration methods in \gf }
@@ -794,7 +811,7 @@ The object defined to build the interpolation will be destroyed when the object 
 
 \section{Compute $L^2$ and $H^1$ norms}
 
-The file \filename{getfem\_norm.h} defines the functions to compute $L^2$ and $H^1$ norms of a solution. The following functions compute the different norms\\[0.5cm]
+The file \filename{getfem\_assembling.h} defines the functions to compute $L^2$ and $H^1$ norms of a solution. The following functions compute the different norms\\[0.5cm]
 \index{GETFEM!asm_L2\_norm(mef, U)}
 \index{GETFEM!asm_H1\_norm(mef, U)}
 \cpp{getfem::asm_L2\_norm(mef, U); } \\[0.5cm]
@@ -819,7 +836,17 @@ where \cpp{filename} is of type \cpp{std::string}, \cpp{mef}  is a variable of t
 To view a solution, two perl scripts are provided (in the directory \filename{bin/} of \gf  distribution) but work only for 2D domains and are very basic.\\[0.5cm]
 {\tt sc2dgnuplot filename}\\[0.5cm]
 {\tt dr2dgnuplot filename S}\\[0.5cm]
-Both scripts use Gnuplot to draw the solution and thus you need to have a working distribution of Gnuplot installed on your system. \cpp{S} is a coefficient to zoom the solution. {\tt sc2dgnuplot} draw a scalar solution and {\tt dr2dgnuplot} a vectorial solution. See also the Matlab interface for more elaborated draw procedures.
+Both scripts use Gnuplot to draw the solution and thus you need to have a working distribution of Gnuplot installed on your system. \cpp{S} is a coefficient to zoom the solution. {\tt sc2dgnuplot} draw a scalar solution and {\tt dr2dgnuplot} a vectorial solution.\\You might want to check the Matlab interface for much more elaborated plotting functions.
+
+\subsection{Mesh slices}
+As of release 1.5, Getfem++ provides a \cpp{getfem::mesh_slice} class,
+with support general slicing operations on a mesh (slicing with a
+plane, half-space, cylinder, sphere, isosurfaces, union or
+intersection of slices, etc..). A slice object may be considered as a
+P1 discontinuous \cpp{mesh_fem} with fast interpolation ability.  See
+\filename{getfem_mesh_slices.h} for more information, and the
+\filename{gf_slice.C} file of the getfem-matlab interface for an
+example of use.
 
 \section{Interpolation on different meshes}
 
@@ -831,7 +858,7 @@ where \cpp{mef1}  is a variable of type \cpp{getfem::mesh\_fem} and describes th
 \section{Catch errors}
 \index{errors}
 
-Errors used in getfem++ are defined in the file \filename{dal\_except.h}. In order to make easier  the error catching all errors derive from the type \cpp{std::logic\_error} defined in the file \cpp{ stdexcept} of the S.T.L.\\[0.5cm]
+Errors used in Getfem++ are defined in the file \filename{dal\_except.h}. In order to make easier  the error catching all errors derive from the type \cpp{std::logic\_error} defined in the file \cpp{ stdexcept} of the S.T.L.\\[0.5cm]
 A standard procedure, \cpp{DAL\_STANDARD\_CATCH\_ERROR}, is defined in \cpp{dal\_except.h}. This procedure catches all errors and print the error message when an error occurs. It can be used in the main procedure of the program as follows\\[0.5cm]
 \begin{cppcode}
   int main(void) \{ 
@@ -845,6 +872,7 @@ A standard procedure, \cpp{DAL\_STANDARD\_CATCH\_ERROR}, is defined in \cpp{dal\
 \section{Example : Laplacian program}
 \index{laplacian}
 \index{Poisson problem}
+Caution: \filename{laplacian.C} should really be rewritten from scratch.\\
 
 The program \filename{laplacian} is provided in the directory \filename{tests} of \gf  distribution. This program compute the solution of the Poisson problem in a parellepiped domain in any dimension with various finite element methods and elements. This program can be used as a model to build application programs. To compile it execute a {\tt gmake check} on the root directory of \gf . Once the program is compiled you can test it executing the command\\[0.5cm]
 {\tt laplacian laplacian.param}\\[0.5cm]
@@ -885,7 +913,7 @@ The program \filename{elastostatic} is built in a same way and compute the solut
 
 \bibitem{EncyclopCubature}
   R. {\texonly{\sc} Cools}
-  {\it An Encyclopaedia of Cubature Formulas}, J. Complexity, {\tt http://www.cs.kuleuven.ac.be/\verb\~\ines/research/ecf/ecf.html}
+  {\it An Encyclopaedia of Cubature Formulas}, J. Complexity, {\tt http://www.cs.kuleuven.ac.be/\verb+~+ines/research/ecf/ecf.html}
 
 \bibitem{Xfem}
   N. {\texonly{\sc} Moës, J. Dolbow and T. Belytschko}
