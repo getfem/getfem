@@ -196,7 +196,7 @@ void lap_pb::init(void)
     }
     break;
   case 2 :
-    if (mesh_type == 1)
+    if (mesh_type == 1 || N == 1)
       sprintf(meth, "IM_GAUSS_PARALLELEPIPED(%d,%d)", int(N), int(2*K));
     else
       DAL_THROW(dal::internal_error,
@@ -292,7 +292,12 @@ void lap_pb::init(void)
        << getfem::name_of_fem(pfprinc) << endl;
   cout << "Name of principal integration method : "
        << getfem::name_of_int_method(ppi) << endl;
-
+  if (pfprinc->is_polynomial()) {
+    cout << "basis of the principal finite element method : " << endl;
+    for (size_type l = 0; l < pfprinc->nb_dof(); ++l) {
+      cout << "base " << l << " : " << (((const getfem::ppolyfem)(pfprinc))->base())[l] << endl;
+    }
+  }
   cout << "Selecting Neumann and Dirichlet boundaries\n";
   nn = mesh.convex_index(N);
   base_vector un;

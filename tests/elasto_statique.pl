@@ -1,7 +1,7 @@
 $bin_dir = "$ENV{srcdir}/../bin";
 $tmp = `$bin_dir/createmp elas.param`;
 
-sub catch { `rm -f $tmp`; }
+sub catch { `rm -f $tmp`; exit(1); }
 $SIG{INT} = 'catch';
 
 open(TMPF, ">$tmp") or die "Open file impossible : $!\n";

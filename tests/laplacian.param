@@ -3,7 +3,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%% pde parameters :	        				      %%%%%
-N = 2;                  % dimension of the domain.
+N = 1;                  % dimension of the domain.
 LX = 1.0;		% size in X.
 LY = 1.0;	        % size in Y.
 LZ = 1.0;		% size in Z.
@@ -14,7 +14,7 @@ MESH_TYPE = 0;          % 0 = simplexes
 			% 1 = parallelepipeds
 			% 2 = prisms
 INCLINE = 0;            % Incline of the mesh.
-K = 3;                  % Finite element degree.
+K = 8;                  % Finite element degree.
 FEM_TYPE = 0;           % Finite element method
 			% 0 = classical Lagrange element
 			% 1 = Hermite element on the segment
