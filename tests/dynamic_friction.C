@@ -78,7 +78,7 @@ struct friction_problem {
   plain_vector Dirichlet_displacement;
   scalar_type T, dt, r;
   scalar_type init_vert_pos, init_vert_speed, hspeed;
-  bool dt_adapt, periodic, dbx_export;
+  bool dt_adapt, periodic, dx_export;
 
   std::string datafilename;
   ftool::md_param PARAM;
@@ -147,7 +147,7 @@ void friction_problem::init(void) {
   dt_adapt = (PARAM.int_value("DT_ADAPT", "time step adaptation") != 0);
   periodic = (PARAM.int_value("PERIODICITY", "peridiodic condition or not")
 	      != 0);
-  dbx_export = (PARAM.int_value("DBX_EXPORT", "Exporting on DBX format")
+  dx_export = (PARAM.int_value("DX_EXPORT", "Exporting on OpenDX format")
 	      != 0);
   nocontact_mass = PARAM.int_value("NOCONTACT_MASS", "Suppress the mass "
 				   "of contact nodes");
