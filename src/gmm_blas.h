@@ -847,7 +847,6 @@ namespace gmm {
   template <class L1, class L2>
   void copy_vect(const L1& l1, L2& l2,
 		 abstract_sparse, abstract_sparse) {
-    clear(l2);
     typename linalg_traits<L1>::const_iterator
       it  = vect_begin(l1), ite = vect_end(l1);
     for (; it != ite; ++it)
@@ -1205,8 +1204,17 @@ namespace gmm {
   /*		Matrix-vector mult                                    	  */
   /* ******************************************************************** */
 
+//   template <class L1, class L2, class L3> inline
+//   void mult(const L1& l1, const L2& l2, L3& l3) {
+//     mult_dispatch(l1, l2, l3, linalg_traits<L2>::linalg_type());
+//   }
+
   template <class L1, class L2, class L3> inline
-  void mult(const L1& l1, const L2& l2, L3& l3) {
+  void mult(const L1& l1, const L2& l2, const L3& l3)
+  { mult(l1, l2, linalg_const_cast(l3)); }
+
+  template <class L1, class L2, class L3> inline
+  void mult(const L1& l1, const L2& l2, L3& l3 /* , abstract_vector */) {
     if (mat_ncols(l1) != vect_size(l2) || mat_nrows(l1) != vect_size(l3))
       DAL_THROW(dimension_error,"dimensions mismatch");
     if (linalg_origin(l2) != linalg_origin(l3))
@@ -1222,10 +1230,6 @@ namespace gmm {
       copy(temp, l3);
     }
   }
-
-  template <class L1, class L2, class L3> inline
-  void mult(const L1& l1, const L2& l2, const L3& l3)
-  { mult_const(l1, l2, linalg_const_cast(l3)); }
 
   template <class L1, class L2, class L3>
   void mult_by_row(const L1& l1, const L2& l2, L3& l3, abstract_sparse) {
@@ -1408,6 +1412,85 @@ namespace gmm {
     DAL_THROW(failure_error,
 	  "You have to define gmm::mult(m, v1, v2) for this kind of matrix");
   }
+
+
+  /* ******************************************************************** */
+  /*		Matrix-matrix mult                                    	  */
+  /* ******************************************************************** */
+  
+//   template <class L1, class L2, class L3>
+//   void mult(const L1& l1, const L2& l2, L3& l3, abstract_matrix) {
+//     if (mat_ncols(l1) != mat_nrows(l2) || mat_nrows(l1) != mat_nrows(l3)
+// 	|| mat_ncols(l2) != mat_ncols(l3))
+//       DAL_THROW(dimension_error,"dimensions mismatch");
+//     if (linalg_origin(l2) != linalg_origin(l3))
+//       mult_spec(l1, l2, l3, typename linalg_traits<L1>::sub_orientation(),
+// 		typename linalg_traits<L2>::sub_orientation(),
+// 		typename linalg_traits<L3>::sub_orientation());
+//     else {
+//       #ifdef __GETFEM_VERIFY
+//         cerr << "Warning, A temporary is used for mult\n";
+//       #endif
+//       L3 temp(mat_nrows(l3), mat_ncols(l3));
+//       mult_spec(l1, l2, temp, typename linalg_traits<L1>::sub_orientation(),
+// 		typename linalg_traits<L2>::sub_orientation(),
+// 		typename linalg_traits<L3>::sub_orientation());
+//       copy(temp, l3);
+//     }
+//   }
+
+//   // Completely generic but inefficient
+
+//   template <class L1, class L2, class L3, class SO1, class SO2, class SO3>
+//   void mult(const L1& l1, const L2& l2, L3& l3, SO1, SO2, SO3) {
+//     clear(l3);
+//     for (size_type i = 0; i < mat_nrows(l3) ; ++i)
+//       for (size_type j = 0; j < mat_nrows(l3) ; ++j)
+// 	for (size_type k = 0; k < mat_nrows(l3) ; ++k)
+// 	  l3(i, j) += l1(i, k) * l2(k, j);
+//   }
+
+//   // Generic but not optimized for sparse matrices
+
+//   template <class L1, class L2, class L3, class SO3>
+//   void mult(const L1& l1, const L2& l2, L3& l3, row_major, col_major, SO3) {
+//     typename linalg_traits<L2>::const_col_iterator
+//       it2b = linalg_traits<L2>::col_begin(l2), it2,
+//       ite = linalg_traits<L2>::col_end(l2);
+//     size_type i,j, k = mat_nrows(l1);
+
+//     for (i = 0; i < k; ++i) {
+//       typename linalg_traits<L1>::const_sub_row_type r1 = mat_row(l1, i);
+//       for (it2 = it2b, j = 0; it2 != ite2; ++it2, ++j)
+// 	l3(i,j) = vect_sp(r1, linalg_traits<L2>::col(it2));
+//     }
+//   }
+
+//   template <class L1, class L2, class L3>
+//   void mult(const L1& l1, const L2& l2, L3& l3, row_major,
+// 	    row_major, row_major) { // optimizable
+//     clear(l3);
+//     size_type nn = mat_nrows(l3), mm = mat_nrows(l2);
+//     for (size_type i = 0; i < nn; ++i) {
+//       for (size_type j = 0; j < mm; ++j)
+//       add(scaled(mat_row(l2, j), l1(i, j)), mat_row(l3, i));
+//     }
+//   }
+
+//   template <class L1, class L2, class L3>
+//   void mult(const L1& l1, const L2& l2, L3& l3, col_major,
+// 	    col_major, col_major) { // optimizable
+//     clear(l3);
+//     size_type nn = mat_ncols(l3), mm = mat_ncols(l1);
+//     for (size_type i = 0; i < nn; ++i) {
+//       for (size_type j = 0; j < mm; ++j)
+//       add(scaled(mat_col(l1, j), l2(j, i)), mat_col(l3, i));
+//     }
+//   }
+
+
+
+
 
 }
 

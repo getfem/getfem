@@ -53,7 +53,7 @@ namespace gmm {
     basic_index(size_type j) : std::vector<size_t>(j), nb_ref(1) {}
     template <class IT> basic_index(IT b, IT e)
       : std::vector<size_t>(e-b), nb_ref(1) { std::copy(b, e, begin()); }
-    basic_index(const basic_index *pbi) {
+    basic_index(const basic_index *pbi) : nb_ref(1) {
       const_iterator it = pbi->begin(), ite = pbi->end();
       size_type i = 0;
       for ( ; it != ite; ++it) i = std::max(i, *it);
@@ -74,7 +74,7 @@ namespace gmm {
     { return new basic_index(pbi); }
     static void attach(pbasic_index pbi) { if (pbi) pbi->nb_ref++; }
     static void unattach(pbasic_index pbi)
-    { if (pbi && --(pbi->nb_ref) == 0) delete pbi; }
+      { if (pbi && --(pbi->nb_ref) == 0) delete pbi; }
 
   };
 
@@ -91,7 +91,10 @@ namespace gmm {
       { if (!rind) rind = index_generator::create_rindex(ind); }
     size_type size(void) const { return ind->size(); }
     size_type index(size_type i) const { return (*ind)[i]; }
-    size_type rindex(size_type i) const { test_rind(); return (*rind)[i]; }
+    size_type rindex(size_type i) const {
+      test_rind();
+      if (i < rind->size()) return (*rind)[i]; else return size_type(-1);
+    }
    
     const_iterator  begin(void) const { return  ind->begin(); }
     const_iterator    end(void) const { return  ind->end();   }
