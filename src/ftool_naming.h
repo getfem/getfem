@@ -201,7 +201,7 @@ namespace ftool
     bool error = false;
     bool isend = false;
     pmethod pm = 0;
-    size_type ind_suff(-1);
+    size_type ind_suff = size_type(-1);
     size_type l;
     param_list params;
     
