@@ -180,7 +180,7 @@ namespace getfem
 	else if (nbpt == Np) {
 	  std::vector<getfem::base_node> pnode(1 << DIM);
 	  size_type j = 0;
-	  for (size_type i = 0; i <= (size_type(1) << DIM); ++i) {
+	  for (size_type i = 0; i < (size_type(1) << DIM); ++i) {
 	    pnode[i] = ptab[j];
 	    size_type k = i + 1, l = K-1;
 	    while (!(k & 1)) { l *= K+1; k >>= 1; }
