@@ -1084,7 +1084,7 @@ namespace getfem {
     virtual size_type nb_constraints(void) {
       if (with_multipliers) return sub_problem.nb_constraints();
       this->context_check();
-      if (this->to_be_conputed()) {
+      if (this->to_be_computed()) {
 	fixing_dimensions();
 	this->force_recompute();
 	compute_constraints(ASMDIR_BUILDH + ASMDIR_BUILDR);
