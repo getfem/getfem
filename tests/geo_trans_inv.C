@@ -7,6 +7,8 @@ using bgeot::scalar_type;
 using bgeot::base_node;
 using bgeot::base_vector;
 
+extern "C" double drand48(void);
+
 dim_type N, MESH_TYPE, BASE;
 scalar_type LX, LY, LZ;
 size_type NX, NB_POINTS;

@@ -21,5 +21,5 @@ EXTRA_DIST = \
 CXXFLAGS = @APPSCXXFLAGS@
 
 INCLUDES = -I$(top_srcdir)/src 
-LDADD    = $(top_srcdir)/src/.libs/libgetfem.a -lm @SUPLDFLAGS@
+LDADD    = ../src/.libs/libgetfem.a -lm @SUPLDFLAGS@
 
