@@ -9,6 +9,8 @@
 
 using gmm::size_type;
 
+bool print_debug = false;
+
 template <typename MAT1, typename VECT1, typename VECT2>
 void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
   VECT1 &v1 = const_cast<VECT1 &>(_v1);
@@ -51,8 +53,11 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
   gmm::copy(gmm::identity_matrix(), gmm::sub_matrix(gmm::transposed(m1),
 		        gmm::sub_interval(0,n), gmm::sub_interval(0,m)));
   gmm::clear(gmm::sub_vector(v2, gmm::sub_interval(n, m-n)));
-  cout << "sub matrix of m1 : "
-       << gmm::sub_matrix(gmm::transposed(m1), gmm::sub_interval(0,n)) << endl;
+  if (print_debug) {
+    cout << "sub matrix of m1 : "
+	 << gmm::sub_matrix(gmm::transposed(m1), gmm::sub_interval(0,n))
+	 << endl;
+  }
 
   gmm::mult(gmm::sub_matrix(m1, gmm::sub_interval(0,m), 
 			    gmm::sub_interval(0,n)),
