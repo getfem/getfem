@@ -5,6 +5,7 @@ $CC = $ENV{CC};
 if (! $CC) {
 print "No compiler, searching one\n";
 
+`CC -version`;  if ($? == 0) { print "CC  detected\n"; $CC = "CC";  }
 `CC -v`;  if ($? == 0) { print "CC  detected\n"; $CC = "CC";  }
 `g++ -v`; if ($? == 0) { print "g++ detected\n"; $CC = "g++"; }
 `cxx -V`; if ($? == 0) { print "cxx detected\n"; $CC = "cxx"; }
