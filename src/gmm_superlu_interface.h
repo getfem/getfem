@@ -173,6 +173,7 @@ namespace gmm {
     set_default_options(&options);
     options.ColPerm = NATURAL;
     options.PrintStat = NO;
+    options.ConditionNumber = YES;
     switch (permc_spec) {
     case 1 : options.ColPerm = MMD_ATA; break;
     case 2 : options.ColPerm = MMD_AT_PLUS_A; break;
