@@ -10,9 +10,10 @@ Liste des items a passer en revue pour fabriquer une nouvelle version
 
   . sur PC avec G++ version 2.95, et 3.2 et Intel compiler 7.0
   . sur dec avec cxx et g++
-  . sur silicon avec CC et g++ (sur callmip)
+  . sur silicon avec CC et g++ (sur ondine)
   . sur HP avec aCC  (sur telline)
   . sur SUN avec CC (sur aurore ?)
+  . Tester GMM avec lapack et qd.
 
   gmake check    doit fonctionner.
 

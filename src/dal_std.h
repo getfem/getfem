@@ -58,7 +58,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
-#include <limits.h>
 #include <iostream>
 //#include <ios> essai
 #include <fstream>
@@ -77,6 +76,7 @@
 #include <deque>
 #include <string>
 #include <complex>
+#include <limits>
 
 #if defined(__GNUC__)
 #  if (__GNUC__ < 3)

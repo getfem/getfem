@@ -702,7 +702,7 @@ namespace gmm {
     static T mi(10);
     if (mi == T(10)) {
       if (numeric_limits<T>::is_specialized)
-	mi = numeric_limits<T>::min();
+	mi = std::numeric_limits<T>::min();
       else {
 	mi = T(0);
 	DAL_WARNING(1, "The numeric type " << typeid(T).name()
