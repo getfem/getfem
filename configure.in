@@ -18,8 +18,12 @@ AC_CONFIG_AUX_DIR([config])
 PACKAGE="getfem++"
 MAJOR_VERSION="1"
 MINOR_VERSION="6"
+PATCH_VERSION="0"
 VERSION=$MAJOR_VERSION.$MINOR_VERSION
-echo "configuring $PACKAGE $VERSION..."
+AC_DEFINE_UNQUOTED([MAJOR_VERSION],$MAJOR_VERSION,[getfem major version number])
+AC_DEFINE_UNQUOTED([MINOR_VERSION],$MINOR_VERSION,[getfem minor version number])
+AC_DEFINE_UNQUOTED([PATCH_VERSION],$PATCH_VERSION,[getfem patch number (sub minor version)])
+echo "configuring $PACKAGE $VERSION (patch level $PATCH_VERSION)..."
 
 
 dnl ------------------------------------------------------------------------

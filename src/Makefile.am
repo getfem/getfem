@@ -80,6 +80,7 @@ include_HEADERS =                      \
 	gmm_precond_ilut.h             \
 	gmm_given_rotation.h           \
 	gmm_blas.h                     \
+	gmm_condest.h                  \
 	gmm_opt.h                      \
 	linkmsg.h
 

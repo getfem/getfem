@@ -82,11 +82,7 @@ int main(int argc, char *argv[])
 
     for (size_type i = 0; i < NB_POINTS; ++i) {
       for (dim_type k = 0; k < N; ++k) 
-#ifndef WIN32
-	pt[k] = drand48();
-#else
-      pt[k] = double(rand())/RAND_MAX;
-#endif
+	pt[k] = dal::random();
       gti.add_point(pt);
     }
 
