@@ -250,9 +250,8 @@ namespace getfem
 	ftool::get_token(ist, tmp, 1023);
         ic = dal::abs(atoi(tmp));
 	if (ncv.is_in(ic)) 
-	  DAL_THROW(failure_error, 
-		    "Fatal Error, negativ index or two convex with" 
-		    << "the same index. loading aborted");
+	  DAL_THROW(failure_error,
+		    "Negativ or repeated index, loading aborted.");
 	ncv.add(ic);
 	ftool::get_token(ist, tmp, 1023);
 	
