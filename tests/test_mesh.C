@@ -20,7 +20,7 @@
 #include <dal_std.h>
 #include <stdio.h>
 #include <getfem_regular_meshes.h>
-
+#include <getfem_poly_composite.h>
 
 typedef bgeot::fsvector<double, 3> fsvect3;
 typedef bgeot::PT<fsvect3> fspoint3;
@@ -29,6 +29,7 @@ typedef bgeot::PT<fsvect4> fspoint4;
 typedef bgeot::vsvector<double> vsvect;
 typedef bgeot::PT<vsvect> vspoint;
 
+using getfem::size_type;
 
 template<class MESH> void test_mesh(MESH &m)
 {
@@ -100,14 +101,66 @@ template<class MESH> void test_mesh(MESH &m)
 
 }
 
+void
+print_mesh_structure(const bgeot::mesh_structure *ms) {
+  cout << "nb_pts=" <<ms->point_structures().size() << ", nb_cvs=" << ms->nb_convex() << endl;
+  dal::bit_vector bv = ms->convex_index();
+  size_type cv;
+  for (cv << bv; cv != size_type(-1); cv << bv) {
+    cout << "cv " << cv << " : dim=" << ms->structure_of_convex(cv)->dim() << ", nfaces=" << ms->structure_of_convex(cv)->nb_faces() << ", pts = {";
+    for (size_type i=0; i < ms->nb_points_of_convex(cv); ++i) {
+      if (i != 0) cout << ",";
+      cout << ms->ind_points_of_convex(cv)[i];
+    }
+    cout << "}\n";
+  }
+}
 
+void 
+test_convex_simplif(void) {
+  bgeot::pconvex_ref sr2 = bgeot::simplex_of_reference(2,1);
+  bgeot::pconvex_ref sr3 = bgeot::simplex_of_reference(3,2);
+  bgeot::pconvex_ref pr = bgeot::parallelepiped_of_reference(3);
+  
+  cout << "sr2->points() = faces:" << sr2->structure()->nb_faces() << " ; ";
+  for (size_type i=0; i < sr2->points().size(); ++i) { if (i) cout << ","; cout << sr2->points()[i]; }
+  cout << endl;
+
+  cout << "sr3->points() = faces:" << sr3->structure()->nb_faces() << " ; ";
+  for (size_type i=0; i < sr3->points().size(); ++i) { if (i) cout << ","; cout << sr3->points()[i]; }
+  cout << endl;
+
+  cout << "sr3=" << sr3 << endl;
+  bgeot::pconvex_ref t=sr3->basic_convex_ref();
+  cout << "sr3->basic_convex_ref()=" << t << endl;
+
+  cout << "sr3->basic_convex_ref() = faces:" << sr3->structure()->nb_faces() << " ; ";
+  for (size_type i=0; i < sr3->basic_convex_ref()->points().size(); ++i) { if (i) cout << ","; cout << sr3->basic_convex_ref()->points()[i]; }
+  cout << endl;
+
+  const bgeot::mesh_structure *msr2 = sr2->basic_convex_ref()->simplexified_convex();
+  print_mesh_structure(msr2);
+  const bgeot::mesh_structure *msr3 = sr3->basic_convex_ref()->simplexified_convex();
+  print_mesh_structure(msr3);
+  const bgeot::mesh_structure *psr = pr->basic_convex_ref()->simplexified_convex();
+  print_mesh_structure(psr);
+  const getfem::getfem_mesh *msrr2 = getfem::refined_simplex_mesh_for_convex(sr2,2);
+  msrr2->write_to_file(cout);
+  const getfem::getfem_mesh *msrr3 = getfem::refined_simplex_mesh_for_convex(sr3,3);
+  msrr3->write_to_file(cout);
+  const getfem::getfem_mesh *mprr = getfem::refined_simplex_mesh_for_convex(pr,2);
+  mprr->write_to_file(cout);
+}
 
 int main(void)
 {
   try {
+    cout << "sizeof(size_type)=" << sizeof(size_type) << endl;
   getfem::getfem_mesh m1;
 
+  test_convex_simplif();
   test_mesh(m1);
+  test_convex_simplif();
   }
   DAL_STANDARD_CATCH_ERROR;
   return 0;
