@@ -16,7 +16,8 @@ Basically, to install GETFEM++ you need to:
 
 ./configure [options]
 
-3. Make the compilation
+3. Make the compilation (assuming gmake is the name of GNU make. Other 
+"make" flavors may not work)
 
 gmake
 
@@ -24,7 +25,7 @@ gmake
 
 gmake check
 
-4. Make the instalation
+4. Install the package
 
 gmake install
 
