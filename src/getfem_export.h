@@ -119,7 +119,7 @@ namespace getfem
     dal::dynamic_array<base_node> ptab;
     dal::dynamic_array<scalar_type> vtab;
     size_type nbvtab = 0;
-    dim_type &P;
+    dim_type P;
     
     if (!ist) DAL_THROW(file_not_found_error, "File " << fi << " not found");
 

@@ -44,16 +44,18 @@ int main(int argc, char *argv[])
     getfem::mesh_fem mef1(mesh1);
     dim_type N1, P1; short_type K1;
     std::vector<getfem::scalar_type> U1;
-    getfem::load_solution(fi1, mesh1, mef1, U1, P1, K1);
+    getfem::load_solution(fi1, mesh1, mef1, U1, K1);
     N1 = mesh1.dim();
+    P1 = mef1.get_qdim();
     
     cout << "Reading file " << fi2 << endl;
     getfem::getfem_mesh mesh2;
     getfem::mesh_fem mef2(mesh2);
     dim_type N2, P2; short_type K2;
     std::vector<getfem::scalar_type> U2, U3;
-    getfem::load_solution(fi2, mesh2, mef2, U2, P2, K2);
+    getfem::load_solution(fi2, mesh2, mef2, U2, K2);
     N2 = mesh1.dim();
+    P2 = mef2.get_qdim();
   
     if (N1 != N2) DAL_THROW(std::invalid_argument,
 			    "Dimensions of the two meshes mismatch\n");
@@ -63,7 +65,7 @@ int main(int argc, char *argv[])
 	 << " on the mesh of " << fi2 << endl;
     U3.resize(mef2.nb_dof() * P1);
     getfem::interpolation_solution(mef1, mef2, U1, U3, P1);
-    getfem::save_solution(fi3, mef2, U3, P1, K2);
+    getfem::save_solution(fi3, mef2, U3, K2);
   }
   DAL_STANDARD_CATCH_ERROR;
   return 0; 
