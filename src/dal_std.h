@@ -243,12 +243,27 @@ namespace dal
 # define M_2_SQRTPIl 1.1283791670955125738961589031215452L  /* 2/sqrt(pi) */
 #endif
 
-/* ********************************************************************** */
-/*	Fixed size integer types.                     			  */
-/* ********************************************************************** */
+namespace dal {
 
-namespace dal
-{
+  /* ******************************************************************* */
+  /*       Clock functions.                                              */
+  /* ******************************************************************* */
+  
+# ifdef HAVE_SYS_TIMES
+  inline double uclock_sec(void) {
+    static double ttclk = 0.;
+    if (ttclk == 0.) ttclk = sysconf(_SC_CLK_TCK);
+    tms t; times(&t); return double(t.tms_utime) / ttclk;
+  }
+# else
+  inline double uclock_sec(void)
+  { return double(clock())/double(CLOCKS_PER_SEC); }
+# endif
+  
+  /* ******************************************************************** */
+  /*	Fixed size integer types.                     			  */
+  /* ******************************************************************** */
+
 
 typedef signed char    int8_type;
 typedef unsigned char uint8_type;
