@@ -217,6 +217,19 @@ namespace dal
   { return std::conj(a); }
   template <class T> inline T real(T a) { return a; }
   template <class T> inline T real(std::complex<T> a) { return a.real(); }
+  template <class T> inline T sqrt(T a) { return ::sqrt(a); }
+  template <class T> inline std::complex<T> sqrt(std::complex<T> a) {
+    T x = a.real(), y = a.imag();
+    if (x == T(0)) {
+      T t = ::sqrt(dal::abs(y) / T(2));
+      return std::complex<T>(t, y < T(0) ? -t : t);
+    }
+    T t = ::sqrt(T(2) * (dal::abs(a) + dal::abs(x))), u = t / T(2);
+    return x > T(0) ? std::complex<T>(u, y / t)
+      : std::complex<T>(dal::abs(y) / t, y < T(0) ? -u : u);
+  }
+
+
 }
 
 

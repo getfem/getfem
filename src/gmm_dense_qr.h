@@ -52,12 +52,52 @@ namespace gmm {
   /* ********************************************************************* */
   /* QR factorization using Householder method (complex and real version). */
   /* ********************************************************************* */
+
+  template <class MAT1>
+  void qr_factor(const MAT1 &_A) { 
+    MAT1 &A = const_cast<MAT1 &>(_A);
+    typedef typename linalg_traits<MAT1>::value_type value_type;
+
+    size_type m = mat_nrows(A), n = mat_ncols(A);
+    if (m < n) DAL_THROW(dimension_error, "dimensions mismatch");
+    
+    std::vector<value_type> W(m), V(m);
+
+    for (size_type j = 0; j < n; ++j) {
+      sub_interval SUBI(j, m-j), SUBJ(j, n-j);
+      V.resize(m-j); W.resize(n-j);
+
+      for (size_type i = j; i < m; ++i) V(i-j) = A(i, j);
+      house_vector(V);
+
+      row_house_update(sub_matrix(A, SUBI, SUBJ), V, W);
+      for (size_type i = j+1; i < m; ++i) A(i, j) = V(i-j);
+    }
+  }
+
+  template <class MAT1, class MAT2>
+  void qr_factor(const MAT1 &_A, const MAT1 &_Q) { 
+    MAT1 &A = const_cast<MAT1 &>(_A); MAT2 &Q = const_cast<MAT2 &>(_Q);
+    typedef typename linalg_traits<MAT1>::value_type T;
+    qr_factor(A);
+    size_type m = mat_nrows(Q), n = mat_ncols(Q);
+    if (m != mat_nrows(A)) DAL_THROW(dimension_error, "dimensions mismatch");
+    std::vector<T> V(m), W(n);
+    V[0] = T(1);
+    gmm::copy(identity_matrix(), Q);
+    for (size_type j = n-1; j != size_type(-1); --j) {
+      V.resize(m-j); W.resize(n-j);
+      for (size_type i = j+1; i < m; ++i) V(i-j) = A(i, j);
+      row_house_update(sub_matrix(Q, sub_interval(j, m-j),
+				  sub_interval(j, n-j)), V, W);
+    }
+  }
+
   
   template <class MAT1, class MAT2, class MAT3>
     void qr_factor(const MAT1 &A, const MAT2 &QQ, const MAT3 &RR) { 
     MAT2 &Q = const_cast<MAT2 &>(QQ); MAT3 &R = const_cast<MAT3 &>(RR); 
     typedef typename linalg_traits<MAT1>::value_type value_type;
-    typedef std::vector<value_type> temp_vector;
 
     size_type m = mat_nrows(A), n = mat_ncols(A);
     if (m < n) DAL_THROW(dimension_error, "dimensions mismatch");
@@ -105,8 +145,8 @@ namespace gmm {
 	  V[i] = V[i+1] = tr / TA(2.0);
 	}
 	else {
-	  V[i  ] = TA(tr + sqrt(delta))/ TA(2.0);
-	  V[i+1] = TA(tr -  sqrt(delta))/ TA(2.0);
+	  V[i  ] = TA(tr + dal::sqrt(delta))/ TA(2.0);
+	  V[i+1] = TA(tr -  dal::sqrt(delta))/ TA(2.0);
 	}
 	++i;
       }
@@ -129,12 +169,12 @@ namespace gmm {
 	TA det = A(i,i)*A(i+1, i+1) - A(i,i+1)*A(i+1, i);
 	TA delta = tr*tr - TA(4.0) * det;
 	if (delta < TA(0)) {
-	  V[i] = std::complex<TV>(tr / TA(2.0), sqrt(-delta) / TA(2.0));
-	  V[i+1] = std::complex<TV>(tr / TA(2.0), -sqrt(-delta) / TA(2.0));
+	  V[i] = std::complex<TV>(tr / TA(2.0), dal::sqrt(-delta) / TA(2.0));
+	  V[i+1] = std::complex<TV>(tr / TA(2.0), -dal::sqrt(-delta)/ TA(2.0));
 	}
 	else {
-	  V[i  ] = TA(tr + sqrt(delta)) / TA(2.0);
-	  V[i+1] = TA(tr -  sqrt(delta)) / TA(2.0);
+	  V[i  ] = TA(tr + dal::sqrt(delta)) / TA(2.0);
+	  V[i+1] = TA(tr -  dal::sqrt(delta)) / TA(2.0);
 	}
 	++i;
       }
@@ -158,8 +198,8 @@ namespace gmm {
 	std::complex<TA> tr = A(i,i) + A(i+1, i+1);
 	std::complex<TA> det = A(i,i)*A(i+1, i+1) - A(i,i+1)*A(i+1, i);
 	std::complex<TA> delta = tr*tr - TA(4.0) * det;
-	V[i] = (tr + sqrt(delta)) / TA(2.0);
-	V[i+1] = (tr - sqrt(delta)) / TA(2.0);
+	V[i] = (tr + dal::sqrt(delta)) / TA(2.0);
+	V[i+1] = (tr - dal::sqrt(delta)) / TA(2.0);
 	++i;
       }
   }
@@ -433,7 +473,7 @@ namespace gmm {
     size_type n = mat_nrows(T);
     value_type d = (T(n-2, n-2) - T(n-1, n-1)) / value_type(2);
     value_type e = dal::sqr(T(n-1, n-2));
-    value_type mu = T(n-1, n-1) - e / (d + dal::sgn(d) * sqrt(d*d + e));
+    value_type mu = T(n-1, n-1) - e / (d + dal::sgn(d) * dal::sqrt(d*d + e));
     value_type x = T(0,0) - mu, z = T(1, 0), c, s;
 
     for (size_type k = 1; k < n; ++k) {

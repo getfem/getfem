@@ -52,7 +52,7 @@ template<class MAT> void my_mult(const MAT &A, const MAT &B, MAT &C) {
 }
 
 template <class T> void test_with(T) {
-  size_type n = 5;
+  size_type n = 7;
 
   gmm::dense_matrix<T> A(n, n), B(n, n), C(n, n);
   std::vector<T> x(n), y(n), z(n);
@@ -61,10 +61,14 @@ template <class T> void test_with(T) {
   gmm::fill_random(B);
   gmm::fill_random(x);
   gmm::fill_random(y);
+
+  gmm::lu_solve(A, x, y);
+  gmm::mult(A, x, gmm::scaled(y, T(-1)), z);
+  cout << "z = " << z << endl;
   
   
   double exectime = dal::uclock_sec();
-  implicit_qr_algorithm(A, x, C);
+  implicit_qr_algorithm(A, x, C, 1E-10);
 
   // gmm::mult(A, x, gmm::scaled(y, T(-1)), z);
   // cout << "z = " << z << endl;
@@ -109,7 +113,8 @@ int main(void)
 
     cout << "a dd-real : " << a << endl;
 
-    test_with(dd_real());
+    test_with(qd_real());
+    test_with(std::complex<double>());
     test_with(std::complex<qd_real>());
 
     x86_fix_end(&old_cw);

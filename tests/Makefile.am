@@ -19,7 +19,7 @@ check_PROGRAMS = \
 CLEANFILES = \
 	laplacian.res laplacian.mesh laplacian.dataelt \
 	elasto_statique.mesh test_mesh.mesh toto.mat test_mat_elem.mesh \
-	ii_files/*
+	ii_files/* auto_gmm*
 
 
 dynamic_array_SOURCES = dynamic_array.C 
@@ -58,6 +58,7 @@ TESTS = \
 	$(top_srcdir)/tests/speed_test_for_gmm.pl \
 	$(top_srcdir)/tests/test_int_set.pl \
 	$(top_srcdir)/tests/test_link_fem.pl \
+	$(top_srcdir)/tests/make_gmm_test.pl \
 	$(top_srcdir)/tests/test_tree_sorted.pl
 
 EXTRA_DIST = \

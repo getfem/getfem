@@ -74,7 +74,7 @@ namespace gmm {
     std::vector<T> y(m+1), ztest(m+1), gam(m+1);
     std::vector<T> gamma(m+1);
     gmm::dense_matrix<T> H(m+1, m), Hess(m+1, m),
-      Hess1(m+1, m), W(vect_size(x), m+1);
+      Hobl(m+1, m), W(vect_size(x), m+1);
 
     gmm::clear(H);
    
@@ -110,7 +110,7 @@ namespace gmm {
 	gmm::scale(KS[i+1], R(1) / a);
 
 	gmm::copy(mat_col(H, i), mat_col(Hess, i));
-	gmm::copy(mat_col(H, i), mat_col(Hess1, i));
+	gmm::copy(mat_col(H, i), mat_col(Hobl, i));
 	
 
 	for (size_type l = 0; l < i; ++l)
@@ -145,16 +145,17 @@ namespace gmm {
       mult(Hess, scaled(y, T(-1)), gamma, ztest);
       // En fait, d'après Caroline qui s'y connait ztest et gam devrait
       // être confondus
-
+      // Quand on aura vérifié que ça marche, il faudra utiliser gam à la 
+      // place de ztest.
       if (tb_def < p) {
 	ns = dal::sgn(ztest[m]);
-	gmm::copy(V, W); gmm::copy(scaled(r, ns / beta), mat_col(W, m));
+	gmm::copy(KS.mat(), W); gmm::copy(scaled(r, ns / beta), mat_col(W, m));
 	
 	// Computation of the oblique matrix
 	sub_interval SUBI(0, m);
-	add(scaled(sub_vector(ztest, SUBI), -Hess1(m, m-1) / ztest[m]),
-	    sub_vector(mat_col(Hess1, m-1), SUBI));
-	Hess1(m, m-1) *= ns * beta / ztest[m]; 
+	add(scaled(sub_vector(ztest, SUBI), -Hobl(m, m-1) / ztest[m]),
+	    sub_vector(mat_col(Hobl, m-1), SUBI));
+	Hobl(m, m-1) *= ns * beta / ztest[m]; 
 
 	/* **************************************************************** */
 	/*  Locking                                                         */
@@ -167,17 +168,16 @@ namespace gmm {
 	std::vector<R> ritznew(m, T(-1));
 	
 	// dense_matrix<T> evect_lock(tb_def, tb_def);
-	
 
 	sub_interval SUB1(tb_def, m-tb_def);
-	implicit_qr_algorithm(sub_matrix(Hess1, SUB1, SUB1),
+	implicit_qr_algorithm(sub_matrix(Hobl, SUB1, SUB1),
 			      sub_vector(eval, SUB1), evect);
 	sub_interval SUB2(0, tb_def);
-	implicit_qr_algorithm(sub_matrix(Hess1, SUB2, SUB2),
+	implicit_qr_algorithm(sub_matrix(Hobl, SUB2, SUB2),
 			      sub_vector(eval, SUB2), /* evect_lock */);
 
 	for (size_type l = tb_def; l < m; ++l)
-	  ritznew[l] = dal::abs(evect(m-tb_def-1, l-tb_def) * Hess1(m, m-1));
+	  ritznew[l] = dal::abs(evect(m-tb_def-1, l-tb_def) * Hobl(m, m-1));
 	
 	std::vector< std::pair<T, size_type> > eval_sort(m);
 	for (size_type l = 0; l < m; ++l)
@@ -213,7 +213,7 @@ namespace gmm {
 	for (j = 0, ind = 0; j < m-p; ++j) {
 	  if (ritznew[eval_sort[j].second] == R(-1)) {
 	    if (std::imag(eval_sort[j].first) != R(0)) {
-	      nb_nolong += 2; ++j;
+	      nb_nolong += 2; ++j; //  à adapter dans le cas complexe ...
 	    } 
 	    else nb_nolong++;
 	  }
@@ -267,8 +267,137 @@ namespace gmm {
 	  }
 	}
       
+	std::vector<T> shift(m - tb_def - nb_want - nb_unwant);
+	for (size_type j = 0, i = 0; j < m; ++j)
+	  if (!kept[j]) shift[i++] = eval[j];
+
+	// conv is the number of eigenpairs that have just converged.
+	// tb_deftot is the total number of eigenpairs that have converged.
+
+	int conv = ind;
+	int tb_deftot = tb_def + conv;
+	int tb_defwant = tb_def + nb_want - nb_nolong;
+
+	sub_interval SUBYB(0, conv);
+
+	if ( tb_defwant >= p ) { // trop gros, on diminue ...
+
+	  nb_unwant = 0;
+	  nb_want = p + nb_nolong - tb_def;
+	  tb_defwant = p;
+
+	  if ( pure(conv - nb_want + 1) == 2 ) {
+	    ++nb_want; tb_defwant = ++p;
+	  }
+	  
+	  SUBYB = sub_interval(conv - nb_want, nb_want);
+	  // YB = YB(:, conv - nb_want + 1 : conv); // On laisse en suspend ..
+	  // pure = pure( conv - nb_want + 1 : conv,1); // On laisse suspend ..
+	  conv = nb_want;
+	  tb_deftot = tb_def + conv;
+	  ok = 1;
+	}
+	if (conv != 0) {
+
+	  // DEFLATION using the QR Factorization of YB
+	  
+	  dense_matrix<T> Q(m-tb_def, m-tb_def), R(m-tb_def, SUBYB.size());
+	  gmmm::copy(sub_matrix(YB, sub_interval(0, m-tb_def), SUBYB), R);
+	  qr_factorization(R, Q);
+
+	  // ça va raler dans la suite, il faut faire la fonction qui applique
+	  // les reflecteurs à une matrice.
+	  gmm::mult(conjugated(Q), sub_matrix(Hobl, SUB1), 
+		    sub_matrix(Hobl, SUB1));
+
+	  gmm::mult(sub_matrix(Hobl, SUBI, SUB1), Q,
+		    sub_matrix(Hobl, SUBI, SUB1));
+
+	  gmm::mult(sub_matrix(W, sub_interval(0, n), SUB1), Q,
+		    sub_matrix(W, sub_interval(0, n), SUB1));
+
+	  //       Restore to the initial block hessenberg form
+
+	  if ( tb_defwant < p ) {
+
+	    gmm::dense_matrix tab_p(m - tb_deftot, m - tb_deftot);
+	    gmm::copy(identity_matrix(), tab_p);
+
+	    for (size_type j = m-1; j >= tb_deftot+2; --j) {
+
+	      size_type jm = j-1;
+	      std::vector<T> v(jm - tb_deftot);
+	      sub_interval SUBtot(tb_deftot, jm - tb_deftot);
+	      sub_interval SUBtot2(tb_deftot, m - tb_deftot);
+	      gmm::copy(sub_vector(mat_col(Hobl, j), SUBtot, v));
+	      house_vector_last(v);
+	      w.resize(m);
+	      col_house_update(sub_matrix(Hobl, SUBI, SUBtot), v, w);
+	      w.resize(m - tb_deftot);
+	      row_house_update(sub_matrix(Hobl, SUBtot, SUBtot2), v, w);
+	      gmm::clear(sub_vector(mat_col(Hobl, j),
+			 sub_interval(tb_deftot+1, j - 2 - tb_deftot)));
+	      w.resize(m - tb_deftot);
+	      col_house_update(sub_matrix(tab_p, sub_interval(0, m-tb_deftot),
+			       sub_interval(0, jm-tb_deftot)), v, w);
+	      w.resize(n);
+	      col_house_update(sub_matrix(W, sub_interval(0, n), SUBtot), v,w);
+
+	    }
+
+	    //       restore positive subdiagonal elements
+
+	    std::vector<T> d(m-tb_deftot); d[0] = T(1);
+	    
+	    for (size_type j = 0; j < m-tb_deftot; ++j) {
+	      T e = Hobl(tb_deftot+j, tb_deftot+j-1);
+	      d[j+1] = (e == T(0)) ? T(1) :  d[j] * dal::abs(e) / e;
+	      scale(sub_vector(mat_row(Hobl, tb_deftot+j),
+			       sub_interval(tb_deftot, m-tb_deftot), d[j]));
+	      scale(mat_col(Hobl, tb_deftot+j), T(1) / d[j]);
+	      scale(mat_col(W, tb_deftot+j), T(1) / d[j]);
+	    }
+
+	    ........
+	    
+	    if (tab_p(m-tb_deftot, m-tb_deftot) ...
+		* d(m-tb_deftot) == - 1),
+					  W(:,m+1) = - W(:, m+1);
+	    V(:,m+1) = - V(:, m+1);
+	    ns = ns * -1;
+	    end;
+	    
+	  }
+	  
+	  //       Clean the portions below the diagonal corresponding
+	  //       to the lock Schur vectors
+
+	  j = tb_def + 1;
+	  while ( j <= tb_deftot ){
+	    if ( pure(j-tb_def) == 0) {
+	      Hess1(j+1:m+1,j) = zeros(m-j+1,1);
+	      j = j + 1;
+	      elseif ( pure(j-tb_def) == 1 ) {
+		Hess1(j+2:m+1,j:j+1) = zeros(m-j,2);
+		j = j + 2;
+	      }
+	    }
+	    
+	  }
+	  
+
+
+
 
       }
+
+
+      
+
+
+
+
+
       
     }
   }

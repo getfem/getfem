@@ -185,6 +185,23 @@ namespace gmm {
     }
     V[0] = T(1);
   }
+
+  template <class VECT> void house_vector_last(const VECT &VV) {
+    VECT &V = const_cast<VECT &>(VV);
+    typedef typename linalg_traits<VECT>::value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
+
+    size_type m = vect_size(V);
+    
+    R mu = vect_norm2(V), abs_v0 = dal::abs(V[m-1]);
+    if (mu != R(0)) {
+      T beta;
+      if (abs_v0 != R(0)) beta = abs_v0 / (V[m-1] * (abs_v0 + mu));
+      else beta = T(R(1) / mu);
+      gmm::scale(V, beta);
+    }
+    V[m-1] = T(1);
+  }
   
   /* ********************************************************************* */
   /*    Householder updates  (complex and real version)                    */
