@@ -191,8 +191,8 @@ namespace getfem {
    *      mesh is able to be link with classes which define computation
    *      methods. 
    */
-  class getfem_mesh : public bgeot::mesh<base_node>
-  {
+  class getfem_mesh : public bgeot::mesh<base_node>,
+		      public context_dependencies {
     public :
 
       typedef lmsg::linkmsg_sender<getfem_mesh_receiver> msg_sender;

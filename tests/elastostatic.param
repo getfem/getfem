@@ -50,7 +50,6 @@ INTEGRATION = 'IM_TRIANGLE(6)'; % quadrature rule for polynomials up
 %INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(7), 3)';
 
 RESIDU = 1E-9;     	% residu for conjugate gradient.
-GENERIC_DIRICHLET = 0;  % Generic Dirichlet condition for non-lagrangian elts.
 
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'elastostatic';     % Root of data files.

@@ -25,30 +25,31 @@
  * a good example of use of Getfem++.
 */
 
-#include <getfem_assembling.h> /* import assembly methods (and comp. of norms) */
-#include <getfem_export.h>   /* export functions (save the solution in a file) */
+#include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
+#include <getfem_export.h>   /* export functions (save solution in a file)  */
 #include <getfem_regular_meshes.h>
+#include <getfem_modeling.h>
 #include <gmm.h>
 
-/* try to enable the SIGFPE if something evaluates to a Not-a-number of infinity
- * during computations
+/* try to enable the SIGFPE if something evaluates to a Not-a-number
+ * of infinity during computations
  */
 #ifdef GETFEM_HAVE_FEENABLEEXCEPT
 #  include <fenv.h>
 #endif
 
 /* some Getfem++ types that we will be using */
-using bgeot::base_small_vector;  /* special class for small (dim < 16) vectors */
-using bgeot::base_node;   /* geometrical nodes (derived from base_small_vector)*/
+using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
+using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
 using bgeot::base_matrix; /* small dense matrix. */
 
 /* definition of some matrix/vector types. These ones are built
    using the predefined types in Gmm++ */
-typedef gmm::rsvector<scalar_type> sparse_vector_type;
-typedef gmm::row_matrix<sparse_vector_type> sparse_matrix_type;
-typedef gmm::col_matrix<sparse_vector_type> col_sparse_matrix_type;
+typedef getfem::modeling_standard_sparse_vector sparse_vector;
+typedef getfem::modeling_standard_sparse_matrix sparse_matrix;
+typedef getfem::modeling_standard_plain_vector plain_vector;
 
 /**************************************************************************/
 /*  Exact solution.                                                       */
@@ -106,30 +107,20 @@ struct elastostatic_problem {
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
 
   scalar_type residu;        /* max residu for the iterative solvers         */
-  bool gen_dirichlet;
 
-  sparse_matrix_type SM;     /* stiffness matrix.                            */
-  std::vector<scalar_type> U, B;      /* main unknown, and right hand side   */
-
-  std::vector<scalar_type> Ud; /* reduced solution                           */
-  col_sparse_matrix_type NS;   /* and  Dirichlet NullSpace
-				* (used if gen_dirichlet is true)
-				*/
   std::string datafilename;
   ftool::md_param PARAM;
 
-  void assembly(void);
-  bool solve(void);
+  bool solve(plain_vector &U);
   void init(void);
-  void compute_error();
+  void compute_error(plain_vector &U);
   elastostatic_problem(void) : mf_u(mesh), mf_rhs(mesh), mf_coef(mesh) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
  * and integration methods and selects the boundaries.
  */
-void elastostatic_problem::init(void)
-{
+void elastostatic_problem::init(void) {
   const char *MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
   const char *FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
   const char *INTEGRATION = PARAM.string_value("INTEGRATION",
@@ -202,7 +193,6 @@ void elastostatic_problem::init(void)
 
   /* set boundary conditions
    * (Neuman on the upper face, Dirichlet elsewhere) */
-  gen_dirichlet = PARAM.int_value("GENERIC_DIRICHLET");
   cout << "Selecting Neumann and Dirichlet boundaries\n";
   getfem::convex_face_ct border_faces;
   getfem::outer_faces_of_mesh(mesh, border_faces);
@@ -219,121 +209,8 @@ void elastostatic_problem::init(void)
   }
 }
 
-void elastostatic_problem::assembly(void)
-{
-  size_type nb_dof = mf_u.nb_dof();
-  size_type nb_dof_rhs = mf_rhs.nb_dof();
-  size_type N = mesh.dim();
-
-  gmm::resize(B, nb_dof); gmm::clear(B);
-  gmm::resize(U, nb_dof); gmm::clear(U); 
-  gmm::resize(SM, nb_dof, nb_dof); gmm::clear(SM);
-  
-  cout << "Number of dof : " << nb_dof << endl;
-  cout << "Assembling stiffness matrix" << endl;
-  getfem::asm_stiffness_matrix_for_linear_elasticity(SM, mf_u, mf_coef,
-		      std::vector<scalar_type>(mf_coef.nb_dof(), lambda),
-		      std::vector<scalar_type>(mf_coef.nb_dof(), mu));
-  
-  cout << "Assembling source term" << endl;
-  std::vector<scalar_type> F(nb_dof_rhs * N);
-  for (size_type i = 0; i < nb_dof_rhs; ++i)
-    gmm::copy(sol_f(mf_rhs.point_of_dof(i)),
-	      gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
-  getfem::asm_source_term(B, mf_u, mf_rhs, F);
-  
-  cout << "Assembling Neumann condition" << endl;
-  /* Fill F with Grad(sol_u).n .. a bit complicated */
-  base_small_vector un(N), v(N);
-  for (dal::bv_visitor cv(mf_u.convex_on_boundary(NEUMANN_BOUNDARY_NUM));
-       !cv.finished(); ++cv) {
-    getfem::pfem pf = mf_rhs.fem_of_element(cv);
-    for (dal::bv_visitor f(mf_u.faces_of_convex_on_boundary(cv,
-							NEUMANN_BOUNDARY_NUM));
-	 !f.finished(); ++f) {
-      for (size_type l = 0; l< pf->structure()->nb_points_of_face(f); ++l) {
-	size_type n = pf->structure()->ind_points_of_face(f)[l];
-	un = mesh.normal_of_face_of_convex(cv, f, pf->node_of_dof(n));
-	un /= gmm::vect_norm2(un);
-	size_type dof = mf_rhs.ind_dof_of_element(cv)[n];
-	gmm::mult(sol_sigma(mf_rhs.point_of_dof(dof)), un, v);
-	gmm::copy(v, gmm::sub_vector(F, gmm::sub_interval(dof*N, N)));
-      }
-    }
-  }
-  getfem::asm_source_term(B, mf_u, mf_rhs, F, NEUMANN_BOUNDARY_NUM);
-
-  cout << "take Dirichlet condition into account" << endl;  
-  if (!gen_dirichlet) {    
-    std::vector<scalar_type> D(nb_dof);
-    for (size_type i = 0; i < nb_dof; i+=N)
-      gmm::copy(sol_u(mf_u.point_of_dof(i)),
-		gmm::sub_vector(D, gmm::sub_interval(i, N)));
-
-    getfem::assembling_Dirichlet_condition(SM, B, mf_u,
-					   DIRICHLET_BOUNDARY_NUM, D);
-  } else {
-    for (size_type i = 0; i < nb_dof_rhs; ++i)
-      gmm::copy(sol_u(mf_rhs.point_of_dof(i)), 
-		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
-    
-    gmm::resize(Ud, nb_dof);
-    gmm::resize(NS, nb_dof, nb_dof);
-    col_sparse_matrix_type H(nb_dof, nb_dof);
-    std::vector<scalar_type> R(nb_dof), RHaux(nb_dof);
-
-    /* build H and R such that U mush satisfy H*U = R */
-    getfem::asm_dirichlet_constraints(H, R, mf_u,
-				      mf_rhs, F, DIRICHLET_BOUNDARY_NUM);    
-    gmm::clean(H, 1e-15);
-    int nbcols = getfem::Dirichlet_nullspace(H, NS, R, Ud);
-    // cout << "Number of irreductible unknowns : " << nbcols << endl;
-    gmm::resize(NS,gmm::mat_ncols(H),nbcols);
-
-    gmm::mult(SM, Ud, gmm::scaled(B, -1.0), RHaux);
-    gmm::resize(B, nbcols);
-    gmm::resize(U, nbcols);
-    gmm::mult(gmm::transposed(NS), gmm::scaled(RHaux, -1.0), B);
-    sparse_matrix_type SMaux(nbcols, nb_dof);
-    gmm::mult(gmm::transposed(NS), SM, SMaux);
-    gmm::resize(SM, nbcols, nbcols);
-    /* NSaux = NS, but is stored by rows instead of by columns */
-    sparse_matrix_type NSaux(nb_dof, nbcols); gmm::copy(NS, NSaux);
-    gmm::mult(SMaux, NSaux, SM);
-  }
-}
-
-bool elastostatic_problem::solve(void) {
-  cout << "Compute preconditionner\n";
-  double time = ftool::uclock_sec();
-  gmm::iteration iter(residu, 1, 40000);
-  // gmm::identity_matrix P;
-  // gmm::diagonal_precond<sparse_matrix_type> P(SM);
-  // gmm::mr_approx_inverse_precond<sparse_matrix_type> P(SM, 10, 10E-17);
-  gmm::ildlt_precond<sparse_matrix_type> P(SM);
-  // gmm::ildltt_precond<sparse_matrix_type> P(SM, 50, 1E-9);
-  // gmm::ilu_precond<sparse_matrix_type> P(SM);
-  cout << "Time to compute preconditionner : "
-       << ftool::uclock_sec() - time << " seconds\n";
-
-  gmm::cg(SM, U, B, P, iter);
-  // gmm::gmres(SM, U, B, P, 50, iter);
-  
-  cout << "Total time to solve : "
-       << ftool::uclock_sec() - time << " seconds\n";
-
-  if (gen_dirichlet) {
-    std::vector<scalar_type> Uaux(mf_u.nb_dof());
-    gmm::mult(NS, U, Ud, Uaux);
-    gmm::resize(U, mf_u.nb_dof());
-    gmm::copy(Uaux, U);
-  }
-
-  return (iter.converged());
-}
-
 /* compute the error with respect to the exact solution */
-void elastostatic_problem::compute_error() {
+void elastostatic_problem::compute_error(plain_vector &U) {
   size_type N = mesh.dim();
   std::vector<scalar_type> V(mf_rhs.nb_dof()*N);
   getfem::interpolation(mf_u, mf_rhs, U, V);
@@ -350,12 +227,75 @@ void elastostatic_problem::compute_error() {
 }
 
 /**************************************************************************/
+/*  Model.                                                                */
+/**************************************************************************/
+
+bool elastostatic_problem::solve(plain_vector &U) {
+  size_type nb_dof = mf_u.nb_dof();
+  size_type nb_dof_rhs = mf_rhs.nb_dof();
+  size_type N = mesh.dim();
+
+  // Linearized elasticity brick.
+  getfem::mdbrick_Hooke_linearized_elasticity<> ELAS(mf_u, mf_coef, lambda,mu);
+  
+  // Defining the volumic source term.
+  plain_vector F(nb_dof_rhs * N);
+  for (size_type i = 0; i < nb_dof_rhs; ++i)
+      gmm::copy(sol_f(mf_rhs.point_of_dof(i)),
+		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
+  
+  // Volumic source term brick.
+  getfem::mdbrick_source_term<> VOL_F(ELAS, mf_rhs, F);
+
+  // Defining the Neumann condition right hand side.
+  base_small_vector un(N), v(N);
+  for (dal::bv_visitor cv(mf_u.convex_on_boundary(NEUMANN_BOUNDARY_NUM));
+       !cv.finished(); ++cv) {
+    getfem::pfem pf = mf_rhs.fem_of_element(cv);
+    for (dal::bv_visitor f(mf_u.faces_of_convex_on_boundary(cv,
+						   NEUMANN_BOUNDARY_NUM));
+	 !f.finished(); ++f) {
+      for (size_type l = 0; l< pf->structure()->nb_points_of_face(f); ++l) {
+	size_type n = pf->structure()->ind_points_of_face(f)[l];
+	un = mesh.normal_of_face_of_convex(cv, f, pf->node_of_dof(n));
+	un /= gmm::vect_norm2(un);
+	size_type dof = mf_rhs.ind_dof_of_element(cv)[n];
+	gmm::mult(sol_sigma(mf_rhs.point_of_dof(dof)), un, v);
+	gmm::copy(v, gmm::sub_vector(F, gmm::sub_interval(dof*N, N)));
+      }
+    }
+  }
+
+  // Neumann condition brick.
+  getfem::mdbrick_source_term<> NEUMANN(VOL_F, mf_rhs, F,NEUMANN_BOUNDARY_NUM);
+  
+  // Defining the Dirichlet condition value.
+  for (size_type i = 0; i < nb_dof_rhs; ++i)
+      gmm::copy(sol_u(mf_rhs.point_of_dof(i)), 
+		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
+
+  // Dirichlet condition brick.
+  getfem::mdbrick_Dirichlet<> final_model(NEUMANN, mf_rhs,
+					  F, DIRICHLET_BOUNDARY_NUM);
+
+  // Generic solve.
+  getfem::standard_model_state MS;
+  gmm::iteration iter(residu, 1, 40000);
+  getfem::standard_solve(MS, final_model, iter);
+
+  // Solution extraction
+  ELAS.get_displacement(MS, U);
+  
+  return (iter.converged());
+}
+  
+/**************************************************************************/
 /*  main program.                                                         */
 /**************************************************************************/
 
 int main(int argc, char *argv[]) {
   dal::exception_callback_debug cb;
-  dal::exception_callback::set_exception_callback(&cb); // In order to debug ...
+  dal::exception_callback::set_exception_callback(&cb); // to debug ...
 
 #ifdef GETFEM_HAVE_FEENABLEEXCEPT /* trap SIGFPE */
   feenableexcept(FE_DIVBYZERO | FE_INVALID);
@@ -366,15 +306,17 @@ int main(int argc, char *argv[]) {
     p.PARAM.read_command_line(argc, argv);
     p.init();
     p.mesh.write_to_file(p.datafilename + ".mesh");
-    p.assembly();
-    if (!p.solve()) DAL_THROW(dal::failure_error, "Solve procedure has failed");
-    p.compute_error();
+    plain_vector U(p.mf_u.nb_dof());
+    if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
+    p.compute_error(U);
     if (p.PARAM.int_value("VTK_EXPORT")) {
       cout << "export to " << p.datafilename + ".vtk" << "..\n";
-      getfem::vtk_export exp(p.datafilename + ".vtk", p.PARAM.int_value("VTK_EXPORT")==1);
-      exp.write_dataset(p.mf_u, p.U, "elastostatic_displacement");
+      getfem::vtk_export exp(p.datafilename + ".vtk",
+			     p.PARAM.int_value("VTK_EXPORT")==1);
+      exp.write_dataset(p.mf_u, U, "elastostatic_displacement");
       cout << "export done, you can view the data file with (for example)\n"
-	"mayavi -d elastostatic.vtk -f ExtractVectorNorm -f WarpVector -m BandedSurfaceMap -m Outline\n";
+	"mayavi -d elastostatic.vtk -f ExtractVectorNorm -f "
+	"WarpVector -m BandedSurfaceMap -m Outline\n";
     }
     // getfem::save_solution(p.datafilename + ".dataelt", p.mf_u, p.U, p.K);
   }

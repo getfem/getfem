@@ -194,7 +194,7 @@ namespace getfem
   typedef tab_scal_to_vect<bgeot::ind_ref_mesh_point_ind_ct> 
     ind_ref_mesh_dof_ind_ct;
   /// Describe a finite element method linked to a mesh.
-  class mesh_fem : public getfem_mesh_receiver {
+  class mesh_fem : public getfem_mesh_receiver, public context_dependencies {
   protected :
     
     dal::dynamic_array<boundary_description> boundaries;
