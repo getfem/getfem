@@ -33,7 +33,7 @@
 
 
 #include <bgeot_geotrans_inv.h>
-
+#include <gmm_solver_bfgs.h>
 namespace bgeot
 { 
   /* inversion for linear geometric transformations */
@@ -52,8 +52,8 @@ namespace bgeot
   }
   
   void geotrans_inv_convex::update_B() {
-    gmm::mult(gmm::transposed(pc), gmm::transposed(G), K);
     if (P != N) {
+      gmm::mult(G,pc,K);
       gmm::mult(gmm::transposed(K), K, CS);
       gmm::lu_inverse(CS);
       gmm::mult(K, CS, B);
@@ -61,61 +61,101 @@ namespace bgeot
     else {
       // L'inversion peut être optimisée par le non calcul global de B
       // et la resolution d'un système linéaire.
-      gmm::lu_inverse(K); B.swap(K);
+      gmm::mult(gmm::transposed(pc), gmm::transposed(G), K);
+      gmm::copy(K,B);
+      gmm::lu_inverse(K); B.swap(K); 
     }
   }
+
+  class geotrans_inv_convex_bfgs {
+    geotrans_inv_convex &gic;
+    base_node xreal;
+  public:
+    geotrans_inv_convex_bfgs(geotrans_inv_convex &gic_, 
+			     const base_node &xr) : gic(gic_), xreal(xr) {}
+    scalar_type operator()(const base_node& x) const {
+      base_node r = gic.pgt->transform(x, gic.cvpts) - xreal;
+      return gmm::vect_norm2_sqr(r)/2.;
+    }
+    void operator()(const base_node& x, base_small_vector& gr) const {
+      gic.pgt->gradient(x, gic.pc);
+      gic.update_B();
+      base_node r = gic.pgt->transform(x, gic.cvpts) - xreal;
+      gr.resize(x.size());
+      gmm::mult(gmm::transposed(gic.K), r, gr); 
+    }
+  };
 
   /* inversion for non-linear geometric transformations 
      (Newton on Grad(pgt)(y - pgt(x)) = 0 )
   */
-  bool geotrans_inv_convex::invert_nonlin(const base_node& n, base_node& x, scalar_type IN_EPS) {
-    base_node xn(P), y, z;
+  bool geotrans_inv_convex::invert_nonlin(const base_node& xreal, base_node& x, scalar_type IN_EPS) {
+    base_node xn(P), y, z,x0;
     /* find an initial guess */
-    x = pgt->geometric_nodes()[0]; y = cvpts[0];  
-    scalar_type d = vect_dist2_sqr(y, n);
+    x0 = pgt->geometric_nodes()[0]; y = cvpts[0];  
+    scalar_type d = vect_dist2_sqr(y, xreal);
     for (size_type j = 1; j < pgt->nb_points(); ++j) { 
-      scalar_type d2 = vect_dist2_sqr(cvpts[j], n);
+      scalar_type d2 = vect_dist2_sqr(cvpts[j], xreal);
       if (d2 < d)
-        { d = d2; x = pgt->geometric_nodes()[j]; y = cvpts[j]; }
+        { d = d2; x0 = pgt->geometric_nodes()[j]; y = cvpts[j]; }
     }
+    x = x0;
     base_node vres(N);
-    base_node rn(n); rn -= y; 
+    base_node rn(xreal); rn -= y; 
 
     pgt->gradient(x, pc);
     update_B();
     gmm::mult(gmm::transposed(K), rn, vres);
     scalar_type res = vect_norm2(vres);
 
-    unsigned cnt = 1000;
+    //cerr << "DEBUT: res0=" << res << ", X=" << xreal << "\nB=" << B << ", K=" << K << "\n" << ", pc=" << pc << "\n";
+    unsigned cnt = 50;
     while (res > EPS/10 && --cnt) {
       gmm::mult(gmm::transposed(B), rn, xn);
       scalar_type newres;
-      for (unsigned i=1; i<=16; i*=2) {
+      for (unsigned i=1; i<=256; i*=2) {
 	z = x + xn / scalar_type(i);
-	y.fill(0.0);
+	y = pgt->transform(z, cvpts);
+	/*y.fill(0.0);
 	for (size_type k = 0; k < pgt->nb_points(); ++k) {
 	  gmm::add(gmm::scaled(cvpts[k],
 			       scalar_type(pgt->poly_vector()[k].eval(z.begin()))),y);
 	}
+	*/
 	// cout << "Point : " << x << " : " << y << " ptab : " << ptab[i] << endl; getchar();
 	
-	rn = n - y; 
+	rn = xreal - y; 
 	
 	pgt->gradient(z, pc);
 	update_B();
 	
-	gmm::mult(gmm::transposed(K), rn, vres);
-	newres = vect_norm2(vres); 
-	if (newres < 2*res) break;
+	if (P != N) {
+	  gmm::mult(gmm::transposed(K), rn, vres);
+	  newres = vect_norm2(vres); 
+	} else {
+	  newres = vect_norm2(rn); // "better" residu
+	}
+	if (newres < 1.5*res) break;
       }
       x = z; res = newres;
+      //cout << "cnt=" << cnt << ", x=" << x << ", res=" << res << "\n";
     }
     //cout << " invert_nonlin done\n";
-    if (cnt == 0) 
-      DAL_THROW(dal::failure_error, 
-                "inversion of non-linear geometric transformation "
-                "failed (too much iterations)");
-    
+    //cerr << "cnt=" << cnt << ", P=" << P << ", N=" << N << ", G=" << G << "\nX=" << xreal << " Xref=" << x << "\nresidu=" << res << "\nB=" << B << ", K=" << K << "\n" << ", pc=" << pc << "\n-------------------^^^^^^^^\n";
+    if (cnt == 0) {
+      cout << "BFGS in geotrans_inv_convex!\n";
+      geotrans_inv_convex_bfgs b(*this, xreal);
+      gmm::iteration iter(EPS,1);
+      x = x0;
+      gmm::bfgs(b,b,x,10,iter);
+      rn = pgt->transform(x,cvpts) - xreal; 
+      
+      if (pgt->convex_ref()->is_in(x) < IN_EPS &&
+	  N==P && vect_norm2(rn) > IN_EPS)
+	DAL_THROW(dal::failure_error, 
+		  "inversion of non-linear geometric transformation "
+		  "failed ! (too much iterations)");
+    }
     // Test un peu sevère peut-être en ce qui concerne rn.
     if (pgt->convex_ref()->is_in(x) < IN_EPS
         && (P == N || vect_norm2(rn) < IN_EPS)) {

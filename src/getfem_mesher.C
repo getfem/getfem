@@ -289,6 +289,8 @@ namespace getfem {
 		ipt = m.ind_points_of_face_of_convex(ic, f)[i];
 		if (pts_attr[ipt]->constraints.card() == 0)
 		  points_to_project.add(ipt);
+		else if (dist(pts[ipt]) < -1e-2) 
+		  cout << "WARNING, point " << ipt << " incoherent !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
 	      }
 	    }
 	  }
@@ -1034,6 +1036,13 @@ namespace getfem {
 
 	if (iter_wtcc == 100) control_mesh_surface();
 
+	// m.clear();
+	// for (size_type i=0; i < t.size()/(N+1); ++i)
+	//  m.add_convex_by_points(bgeot::simplex_geotrans(N,1),
+	//		 dal::index_ref_iterator(pts.begin(), &t[i*(N+1)]));
+	// char s[50]; sprintf(s, "toto%02d.mesh", count);
+	// m.write_to_file(s);
+
 	if ( (count > 40 && sqrt(maxdp)*deltat < ptol * h0)
 	     || iter_wtcc>iter_max || count > 10000) {
 
@@ -1108,9 +1117,42 @@ namespace getfem {
       m.write_to_file("toto.mesh");
       
       m.optimize_structure();
+
+
       getfem::vtk_export exp("toto4.vtk");
       exp.exporting(m);
       exp.write_mesh_quality(m);
+
+      getfem::stored_mesh_slice sl;
+      sl.build(m, getfem::slicer_explode(0.8), 3);
+      getfem::vtk_export exp2("totoq.vtk");
+      exp2.exporting(sl);
+      exp2.write_mesh();
+      exp2.write_mesh_quality(m);
+
+
+//       getfem::stored_mesh_slice slb; slb.build(m, getfem::slicer_boundary(m), 4);
+//       getfem::stored_mesh_slice sl2;
+//       getfem::mesh_slicer ms(m); 
+
+
+//       getfem::slicer_build_stored_mesh_slice bb(sl2);
+//       ms.push_back_action(bb);
+//       getfem::convex_face_ct cvlst;
+//       for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
+// 	scalar_type q = m.convex_quality_estimate(cv);
+// 	if (q< 0.2) 
+// 	  cvlst.push_back(getfem::convex_face(cv));
+// 	//cout << "cv " << cv << ": q=" << q << "\n";
+//       }
+//       //ms.exec(3, cvlst);
+//       sl2.merge(slb);
+      
+
+//       getfem::vtk_export exp3("totoq2.vtk");
+//       exp3.exporting(sl2);
+//       exp3.write_mesh();
+//       exp3.write_mesh_quality(m);
     }
     
 

@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
     getfem::scalar_type h = .3;
     int K=1;
     int opt = 0;
-    int max_iter = 400;
+    int max_iter = 200;
     int prefind = 1;
     if (argc > 1) { opt = atoi(argv[1]); }
     if (argc > 2) { h = atof(argv[2]); cout << "h = " << h << "\n"; }
@@ -110,6 +110,7 @@ int main(int argc, char **argv) {
     
     getfem::mesher_union U1(B15, B16, B17, B18, B19, C3, C4, C5, C6, C7, C8);
     getfem::mesher_setminus D17(U1, C9);
+    getfem::mesher_rectangle D18(base_node(0.,0.,0.), base_node(.1,.3,1.));
 
     getfem::mesher_signed_distance *dist = &D0;
     switch (opt) {
@@ -142,6 +143,7 @@ int main(int argc, char **argv) {
     case 15: dist = &D15; break; /* torus */
     case 16: dist = &D16; break; /* cube with a hole */
     case 17: dist = &D17; break; /* space station */
+      case 18: dist = &D18; break;
     }
     getfem::build_mesh(m, *dist, h, fixed, K, 2, max_iter, prefind);
   }

@@ -107,6 +107,21 @@ void test_inversion(bgeot::pgeometric_trans pgt, bool verbose) {
   }
 }
 
+/* problematic test-cases .. */
+void test0() {
+  bgeot::geotrans_inv_convex gic;
+  std::vector<base_node> cvpts(4);
+  cvpts[0] = base_node(2.5, 0.6);
+  cvpts[1] = base_node(5., 0.);
+  cvpts[2] = base_node(2.5, 1.8);
+  cvpts[3] = base_node(3.2, 1.5);
+  bgeot::pgeometric_trans pgt = bgeot::geometric_trans_descriptor("GT_QK(2,1)");
+  gic.init(bgeot::convex<base_node>(pgt->structure(),cvpts),pgt);
+  base_node X(3.132, 1.617), Xref;
+  gic.invert(X, Xref);
+  cout << "Xref=" << Xref << "\n";
+}
+
 void test_inversion(bool verbose) {
   for (size_type N=1; N <= 4; ++N) {
     for (size_type K=1; K < ((N<4) ? 3 : 2); ++K) {
@@ -139,6 +154,7 @@ int main(int argc, char *argv[])
   feenableexcept(FE_DIVBYZERO | FE_INVALID);
 #endif
   try {
+    test0();
     test_inversion(true);
     PARAM.read_command_line(argc, argv);
     N = PARAM.int_value("N", "Domaine dimension");

@@ -274,7 +274,7 @@ namespace getfem {
     }
     
     bool bounding_box(base_node &bmin, base_node &bmax) const {
-      base_node bmin2(bmin.size()), bmax2(bmin.size());
+      base_node bmin2, bmax2;
       bool b = dists[0]->bounding_box(bmin, bmax);
       if (!b) return false;
       for (size_type k = 1; k < dists.size(); ++k) {
@@ -372,13 +372,16 @@ namespace getfem {
     }
     bool bounding_box(base_node &bmin, base_node &bmax) const {
       base_node bmin2, bmax2;
-      bool b = dists[0]->bounding_box(bmin, bmax);
+      bool first;
+      bool b = dists[0]->bounding_box(bmin, bmax); first = !b;
       for (size_type k = 1; k < dists.size(); ++k) {
-	b = dists[k]->bounding_box(bmin2, bmax2) || b;
-	for (unsigned i=0; i < bmin.size(); ++i) { 
+	bool bb = dists[k]->bounding_box(bmin2, bmax2);
+	for (unsigned i=0; i < bmin.size() && bb && !first; ++i) { 
 	  bmin[i] = std::max(bmin[i],bmin2[i]);
 	  bmax[i] = std::max(std::min(bmax[i],bmax2[i]), bmin[i]);
 	}
+	if (first && bb) { bmin = bmin2; bmax = bmax2; first = false; }
+	b = b || bb;
       }
       return b;
     }

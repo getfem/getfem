@@ -80,7 +80,7 @@ base_node shake_func(const base_node& x) {
   return z;
 }
 
-void build_mesh(getfem_mesh& m, int MESH_TYPE, size_type N, size_type NX, size_type K, bool noised) {
+void build_mesh(getfem_mesh& m, int MESH_TYPE, size_type dim, size_type N, size_type NX, size_type K, bool noised) {
   getfem_mesh mesh;
   base_node org(N); org.fill(0.0);
   std::vector<base_small_vector> vtab(N);
@@ -134,6 +134,15 @@ void build_mesh(getfem_mesh& m, int MESH_TYPE, size_type N, size_type NX, size_t
 	for (size_type i=0; i < N; ++i) P[i] += 0.05*(1./NX)*dal::random(double());
       }
     }
+  }
+  /* add other dimensions to the points */
+  assert(dim >= N);
+  if (dim > N) {
+    getfem::base_matrix T(dim,N);
+    for (unsigned i=0; i < N; ++i) T(i,i) = 1;
+    for (unsigned i=N; i < dim; ++i) T(i, i%N) = -.5;
+    m.transformation(T);
+    assert(m.dim() == dim);
   }
 }
 
@@ -194,7 +203,7 @@ void test_same_mesh(int mat_version, size_type N, size_type NX, size_type K, siz
   cout << "  Same simplex mesh,  N=" << N << ", NX=" << setw(3) << NX 
        << ", P" << K << "<->P" << K+1 << ":"; cout.flush();
   getfem_mesh m;
-  build_mesh(m, 0, N, NX, K, false);
+  build_mesh(m, 0, N, N, NX, K, false);
   mesh_fem mf1(m,Qdim1); mf1.set_finite_element(m.convex_index(), getfem::PK_fem(N,K), getfem::exact_simplex_im(N));
   mesh_fem mf2(m,Qdim2); mf2.set_finite_element(m.convex_index(), getfem::PK_fem(N,K+1), getfem::exact_simplex_im(N));
   /* force evaluation of a number of things which are not part of interpolation */
@@ -214,14 +223,14 @@ void test_same_mesh(int mat_version, size_type N, size_type NX, size_type K, siz
 }
 
 
-void test_different_mesh(int mat_version, size_type N, size_type NX, size_type K) {
+void test_different_mesh(int mat_version, size_type dim, size_type N, size_type NX, size_type K) {
   chrono c; c.init();
-  cout << "  Different linear meshes, N=" << N << ", NX=" << setw(3) << NX 
+  cout << "  Different meshes, dim=" << dim << " N=" << N << ", NX=" << setw(3) << NX 
        << ", P" << K << ":"; cout.flush();
   getfem_mesh m1, m2;
   size_type gK=1;
-  build_mesh(m1, 0, N, NX, gK, true);
-  build_mesh(m2, 0, N, NX, gK, true);
+  build_mesh(m1, 0, dim, N, NX, gK, true);
+  build_mesh(m2, 0, dim, N, NX, gK, true);
   mesh_fem mf1(m1); mf1.set_finite_element(m1.convex_index(), getfem::PK_fem(N,K), getfem::exact_simplex_im(N));
   mesh_fem mf2(m2); mf2.set_finite_element(m2.convex_index(), getfem::PK_fem(N,K), getfem::exact_simplex_im(N));    
   /* force evaluation of a number of things which are not part of interpolation */
@@ -301,8 +310,13 @@ int main(int argc, char *argv[]) {
       test_same_mesh(mat_version, 2,quick ? 17 : 80,1);
       test_same_mesh(mat_version, 2,quick ? 8 : 20,4);
       test_same_mesh(mat_version, 3,quick ? 5 : 15,1);
-      test_different_mesh(mat_version, 2,quick ? 17 : 80,1);
-      test_different_mesh(mat_version, 3,quick ? 6 : 15,1);
+      test_different_mesh(mat_version, 2, 2, quick ? 17 : 80,1);
+      test_different_mesh(mat_version, 3, 3, quick ? 6 : 15,1);
+      if (mat_version == 0) {
+	test_different_mesh(0, 2, 1, 100, 2);
+	test_different_mesh(0, 3, 1, 500, 1);
+	test_different_mesh(0, 3, 2, quick ? 8 : 50, 2);
+      }
     }
   }  
   DAL_STANDARD_CATCH_ERROR;

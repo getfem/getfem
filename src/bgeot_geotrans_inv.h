@@ -76,6 +76,7 @@ namespace bgeot {
     bool invert_nonlin(const base_node& n, base_node& n_ref,
 		       scalar_type IN_EPS);
     void update_B();
+    friend class geotrans_inv_convex_bfgs;
   };
 
   template<class TAB>
@@ -88,7 +89,7 @@ namespace bgeot {
     if (geotrans_changed) {
       P = pgt->structure()->dim();
       pc.resize(pgt->nb_points() , P);
-      K.resize(P,N); B.resize(N,P); CS.resize(P,P);
+      K.resize(N,P); B.resize(N,P); CS.resize(P,P);
       G.resize(N, pgt->nb_points());
     }
     vectors_to_base_matrix(G, cv.points());
