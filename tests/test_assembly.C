@@ -763,10 +763,10 @@ void init_mesh_fem(getfem::mesh_fem &mf, bool datamf) {
     for (cv << cvlst; cv != size_type(-1); cv << cvlst) {
       if ((cv+1) % 100) {
 	bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
-	mf.set_finite_element(cv, getfem::classical_fem(pgt,param.K), getfem::exact_classical_im(pgt));
+	mf.set_finite_element(cv, getfem::classical_fem(pgt,param.K), getfem::classical_exact_im(pgt));
       } else {
 	bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
-	mf.set_finite_element(cv, getfem::classical_fem(pgt,param.K2), getfem::exact_classical_im(pgt));
+	mf.set_finite_element(cv, getfem::classical_fem(pgt,param.K2), getfem::classical_exact_im(pgt));
       }
     }
   }
