@@ -77,6 +77,7 @@
 #include <gmm_precond_ilu.h>
 #include <gmm_precond_ilut.h>
 #include <gmm_superlu_interface.h>
+
 namespace getfem {
 
   /* ******************************************************************** */
@@ -826,8 +827,7 @@ namespace getfem {
 
     void compute_B() {
       mesh_fem &mf_u = sub_problem.main_mesh_fem();
-      size_type Q = mf_u.get_qdim();
-      size_type nd = mf_u.nb_dof(), ndd = mf_p.nb_dof(), ndv = mf_data.nb_dof();
+      size_type nd = mf_u.nb_dof(), ndd = mf_p.nb_dof();
       gmm::resize(B, ndd, nd);
       asm_stokes_B(B, mf_u, mf_p);
       this->computed();
@@ -874,7 +874,7 @@ namespace getfem {
       react(MS, i0, false);
       if (this->to_be_computed()) compute_B();
      
-      gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), dof_on_bound.card());
+      gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), mf_p.nb_dof());
       gmm::sub_interval SUBJ(i0, sub_problem.nb_dof());
       gmm::mult(B, gmm::sub_vector(MS.state(), SUBJ),
 		gmm::sub_vector(MS.residu(), SUBI));
@@ -965,6 +965,7 @@ namespace getfem {
       gmm::resize(CRHS, nb_const);
       gmm::copy(gmm::sub_vector(V, SUBI), CRHS);
       this->computed();
+      cout << "G = " << G << endl;
     }
 
   public :
@@ -1160,6 +1161,13 @@ namespace getfem {
 	else {
 	  cout << "there is " << mixvar.card() << " mixed variables\n";
 	  // gmm::ilut_precond<T_MATRIX> P(MS.reduced_tangent_matrix(),100,1E-10);
+// 	  size_type nn = gmm::mat_nrows(MS.reduced_tangent_matrix());
+// 	  gmm::dense_matrix<double> MM(nn,nn);
+// 	  std::vector<double> VV(nn);	  
+// 	  gmm::copy(MS.reduced_tangent_matrix(), MM);
+// 	  cout << "det = " << gmm::lu_det(MM) << endl;
+// 	  symmetric_qr_algorithm(MM, VV);
+// 	  cout << "VV =  " << VV;
 	  gmm::identity_matrix P;
 	  gmm::gmres(MS.reduced_tangent_matrix(), dr, 
 		     gmm::scaled(MS.reduced_residu(),  value_type(-1)),
