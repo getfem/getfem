@@ -624,7 +624,7 @@ namespace gmm {
     typedef size_t        size_type;
     typedef ptrdiff_t     difference_type;
     typedef std::forward_iterator_tag iterator_category;
-    typedef cs_vector_ref_iterator<PT1, PT2> iterator;
+    typedef cs_vector_ref_iterator<PT1, PT2, shift> iterator;
     
     cs_vector_ref_iterator(void) {}
     cs_vector_ref_iterator(PT1 p1, PT2 p2) : pr(p1), ir(p2) {}
