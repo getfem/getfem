@@ -1,0 +1,1071 @@
+#include <getfem_mesh.h>
+#ifdef GETFEM_HAVE_FEENABLEEXCEPT
+#  include <fenv.h>
+#endif
+#include <gmm_condition_number.h>
+extern "C"
+{
+#include <qhull/qhull.h>
+#include <qhull/mem.h>
+#include <qhull/qset.h>
+#include <qhull/geom.h>
+#include <qhull/merge.h>
+#include <qhull/poly.h>
+#include <qhull/io.h>
+#include <qhull/stat.h>
+}
+
+#include <getfem_export.h>
+#include <bgeot_kdtree.h>
+#include <typeinfo>
+
+int ORIGINAL = 1;
+
+namespace getfem {
+
+  void delaunay(const std::vector<base_node> &pts, gmm::dense_matrix<size_type>& simplexes)
+  {
+    if (pts.size() == 0) return;
+
+    int dim = pts[0].size();   /* dimension of points */
+    std::vector<coordT> Pts(dim * pts.size());
+    for (size_type i=0; i < pts.size(); ++i) 
+      std::copy(pts[i].const_begin(), pts[i].const_end(), Pts.begin()+i*dim);
+    boolT ismalloc=0;           /* True if qhull should free points in qh_freeqhull() or reallocation */ 
+    /* ATTENTION A L'OPTION QJ QUI A tendance a tout destabiliser -- ça peut tout casser .. */
+    /* option Qbb -> QbB (????) */
+    char flags[]= "qhull QJ d Qbb Pp T0"; //QJ s i TO";//"qhull Tv"; /* option flags for qhull, see qh_opt.htm */
+    FILE *outfile= 0;    /* output from qh_produce_output()			
+                            use NULL to skip qh_produce_output() */ 
+    FILE *errfile= stderr;    /* error messages from qhull code */ 
+    int exitcode;             /* 0 if no error from qhull */
+    facetT *facet;	          /* set by FORALLfacets */
+    int curlong, totlong;	  /* memory remaining after qh_memfreeshort */
+    vertexT *vertex, **vertexp;
+    exitcode = qh_new_qhull (dim, pts.size(), &Pts[0], ismalloc,
+                             flags, outfile, errfile);
+    if (!exitcode) { /* if no error */ 
+      size_type nbf=0;
+      FORALLfacets { if (!facet->upperdelaunay) nbf++; }
+      gmm::resize(simplexes, dim+1, nbf);
+	/* 'qh facet_list' contains the convex hull */
+      nbf=0;
+      FORALLfacets {
+        if (!facet->upperdelaunay) {
+	  size_type s=0;
+          FOREACHvertex_(facet->vertices) {
+	    assert(s < (unsigned)(dim+1));
+            simplexes(s++,nbf) = qh_pointid(vertex->point);
+	  }
+	  nbf++;
+        }
+      }
+    }
+    qh_freeqhull(!qh_ALL);
+    qh_memfreeshort (&curlong, &totlong);
+    if (curlong || totlong)
+      cerr << "qhull internal warning (main): did not free " << totlong << 
+        " bytes of long memory (" << curlong << " pieces)\n";
+  }
+
+  template<class TAB> scalar_type simplex_quality(size_type N, const TAB &pts) {
+    base_matrix G(N,N);
+    base_matrix::iterator it = G.begin();
+    for (size_type i=0; i < N; ++i) {
+      base_node P = pts[i+1] - pts[0];
+      std::copy(P.const_begin(), P.const_begin()+N, G.begin()+i*N);
+    }
+    return dal::abs(1./gmm::condition_number(G));
+  }
+
+  class mesher_virtual_function {
+  public:
+    virtual scalar_type operator()(const base_node &P) const = 0;
+    virtual ~mesher_virtual_function() {}
+  };
+
+  class mvf_constant : public mesher_virtual_function {
+    scalar_type c;
+  public: 
+    mvf_constant(scalar_type c_) : c(c_) {}
+    scalar_type operator()(const base_node &) const { return c; }
+  };
+#define SEPS 1e-5
+  class mesher_signed_distance : public mesher_virtual_function {
+  protected:
+    mutable size_type id;
+  public:
+    mesher_signed_distance() : id(size_type(-1)) {}
+    virtual void bounding_box(base_node &bmin, base_node &bmax) const = 0;
+    virtual scalar_type operator()(const base_node &P, dal::bit_vector &bv) const = 0;
+    virtual base_small_vector grad(const base_node &P) const = 0;
+    virtual void register_constraints(std::vector<const mesher_signed_distance*>& list) const = 0;
+    scalar_type operator()(const base_node &P) const {
+      dal::bit_vector bv;
+      return (*this)(P,bv);
+    }
+  };
+
+  class mesher_half_space : public mesher_signed_distance {
+    base_node x0; base_node n;
+  public:
+    mesher_half_space(base_node x0_, base_node n_) : x0(x0_), n(n_) { n /= gmm::vect_norm2(n); }
+    void bounding_box(base_node &, base_node &) const { 
+      /* to be done ... */
+    }
+    virtual scalar_type operator()(const base_node &P, dal::bit_vector &bv) const {
+      scalar_type d = bgeot::vect_sp(x0-P,n);
+      bv[id] = (dal::abs(d) < SEPS);
+      return d;
+    }
+    virtual void register_constraints(std::vector<const mesher_signed_distance*>& list) const {
+      id = list.size(); list.push_back(this);
+    }
+    virtual base_small_vector grad(const base_node &P) const {
+      return -1.*n;
+    }
+  };
+
+
+  class mesher_sphere : public mesher_signed_distance {
+    base_node x0; scalar_type R;
+  public:
+    mesher_sphere(base_node x0_, scalar_type R_) : x0(x0_), R(R_) {}
+    void bounding_box(base_node &bmin, base_node &bmax) const { 
+      bmin = bmax = x0; 
+      for (size_type i=0; i < x0.size(); ++i) { bmin[i] -= R; bmax[i] += R; }
+    }
+    virtual scalar_type operator()(const base_node &P, dal::bit_vector &bv) const {
+      scalar_type d = bgeot::vect_dist2(P,x0)-R;
+      bv[id] = (dal::abs(d) < SEPS);
+      return d;
+    }
+    virtual void register_constraints(std::vector<const mesher_signed_distance*>& list) const {
+      id = list.size(); list.push_back(this);
+    }
+    virtual base_small_vector grad(const base_node &P) const {
+      base_small_vector g(P - x0);
+      return g/gmm::vect_norm2(g);
+    }
+  };
+
+  class mesher_rectangle : public mesher_signed_distance {
+    base_node rmin, rmax;
+  public:
+    mesher_rectangle(base_node rmin_, base_node rmax_) : rmin(rmin_), rmax(rmax_) {}
+    void bounding_box(base_node &bmin, base_node &bmax) const {
+      bmin = rmin; bmax = rmax; 
+    }
+    virtual scalar_type operator()(const base_node &P, dal::bit_vector &) const {
+      size_type N = rmin.size();
+      scalar_type d = -1000000000000.;
+      for (size_type i=0; i < N; ++i) {
+	d = std::max(d, rmin[i] - P[i]);
+	d = std::max(d, P[i] - rmax[i]);
+      }
+      return d;
+      if (d > 0) { /* handle distance to the vertices */
+	for (size_type i=1; i < pow(3,N); ++i) {
+	  base_node Q(rmin);
+	  for (size_type m=i,k=0; m; ++k,m/=3) { 
+	    if (m % 3 == 0) Q[k] = P[k];
+	    else if (m % 3 == 1) Q[k] = rmax[k]; 
+	  }
+	  d = std::min(d, bgeot::vect_dist2(P,Q));
+	}
+      }
+      return d;
+    }
+    virtual base_small_vector grad(const base_node &) const { assert(0); }
+    virtual void register_constraints(std::vector<const mesher_signed_distance*>&) const { cout << "to be done\n"; assert(0); }
+  };
+
+  class mesher_union : public mesher_signed_distance {
+    const mesher_signed_distance &a, &b;
+  public:
+    mesher_union(const mesher_signed_distance& a_, const mesher_signed_distance &b_) : a(a_), b(b_) {}
+    void bounding_box(base_node &bmin, base_node &bmax) const {
+      base_node bmin2, bmax2;
+      a.bounding_box(bmin,bmax);b.bounding_box(bmin2,bmax2);
+      for (size_type i=0; i < bmin.size(); ++i) { 
+        bmin[i] = std::min(bmin[i],bmin2[i]);bmax[i] = std::max(bmax[i],bmax2[i]);
+      }
+    }
+    scalar_type operator()(const base_node &P, dal::bit_vector &bv) const {
+      return std::min(a(P,bv),b(P,bv));
+    }
+    virtual void register_constraints(std::vector<const mesher_signed_distance*>& list) const {
+      a.register_constraints(list); b.register_constraints(list);
+    }
+    virtual base_small_vector grad(const base_node &P) const {
+      if (a(P) < b(P)) return a.grad(P);
+      else return b.grad(P);
+    }
+  };
+
+  class mesher_intersection : public mesher_signed_distance {
+    const mesher_signed_distance &a, &b;
+  public:
+    mesher_intersection(const mesher_signed_distance& a_, const mesher_signed_distance &b_) : a(a_), b(b_) {}
+    void bounding_box(base_node &bmin, base_node &bmax) const {
+      a.bounding_box(bmin,bmax);b.bounding_box(bmin,bmax);
+      /* TODO */
+    }
+    scalar_type operator()(const base_node &P, dal::bit_vector &bv) const {
+      return std::max(a(P,bv),b(P,bv));
+    }
+    virtual void register_constraints(std::vector<const mesher_signed_distance*>& list) const {
+      a.register_constraints(list); b.register_constraints(list);
+    }
+    virtual base_small_vector grad(const base_node &P) const {
+      scalar_type da = a(P), db = b(P);
+      if (da > db) return a.grad(P);
+      else return b.grad(P);
+    }
+  };
+  
+  class mesher_cylinder : public mesher_signed_distance {
+  public:
+    mesher_cylinder() {}
+    void bounding_box(base_node &bmin, base_node &bmax) const {
+      bmin = base_node(3); bmax = base_node(3); 
+      for (size_type i=0; i < 3; ++i) { bmin[i] = -1.; bmax[i] = 1.; }
+    }
+    virtual scalar_type operator()(const base_node &P, dal::bit_vector& ) const {
+      scalar_type d1 = sqrt(dal::sqr(P[0])+dal::sqr(P[1])) - 1;
+      scalar_type d2 = -1 - P[2];
+      scalar_type d3 = P[2] - 1;
+      scalar_type d = std::max(std::max(d1,d2),d3);
+      if (d1 > 0 && d2 > 0) d = sqrt(dal::sqr(d1)+dal::sqr(d2));
+      else if (d1 > 0 && d3 > 0) d = sqrt(dal::sqr(d1)+dal::sqr(d3));
+      return d;
+    }
+    virtual base_small_vector grad(const base_node &) const { assert(0); }
+    virtual void register_constraints(std::vector<const mesher_signed_distance*>&) const { assert(0); }
+  };
+
+
+#define REVC 0.
+  scalar_type force(scalar_type l, scalar_type l0) { 
+    //return 1./l - 1./l0;
+    return l0 - l;
+    /*if (l0 - l > 0) return l0-l; else return REVC*(l0-l);
+      return std::max(l0 - l, 0.); */
+  }
+  scalar_type dforce(scalar_type l, scalar_type l0) {
+    return -1;
+    //return (l < l0) ? -1 : -REVC;
+  }
+  scalar_type hforce(scalar_type, scalar_type) {
+    return 0;
+  }
+
+
+  struct pt_attribute {
+    bool fixed;
+    dal::bit_vector constraints;
+    bool operator<(const pt_attribute &other) const {
+      if (fixed && !other.fixed) return true;
+      else if (!fixed && other.fixed) return false;
+      else {
+	if (constraints.last_true() > other.constraints.last_true()) return false;
+	else if (constraints.last_true() < other.constraints.last_true()) return true;
+	else if (constraints.card() > other.constraints.card()) return true;
+	else if (constraints.card() < other.constraints.card()) return false;
+	else for (dal::bv_visitor i1(constraints), i2(other.constraints); !i1.finished(); ++i1, ++i2) {
+	  if (i1 < i2) return true;
+	  else if (i2 > i1) return false;
+	}
+      }
+      return false;
+    }
+  };
+
+  struct mesher {
+    const mesher_signed_distance& dist;
+    const mesher_virtual_function& edge_len;
+    scalar_type h0;
+    size_type N,K;
+    base_node bounding_box_min, bounding_box_max;
+
+    std::vector<base_node> pts, pts_prev;
+    std::vector<const pt_attribute*> pts_attr;
+    std::set<pt_attribute> attributes_set;
+    gmm::dense_matrix<size_type> t;    
+    
+    scalar_type ptol, ttol, L0mult, deltat, geps, deps;
+
+    std::vector<const mesher_signed_distance*> constraints;
+
+    mesher(size_type K_,
+	   const mesher_signed_distance& dist_, 
+	   const mesher_virtual_function& edge_len_, 
+	   scalar_type h0_,
+	   getfem_mesh &m, const std::vector<base_node> &fixed_points) : dist(dist_), edge_len(edge_len_) 
+    {
+      K=K_; h0=h0_;
+      ptol = 0.001;
+      ttol = .1;
+      dist.bounding_box(bounding_box_min,bounding_box_max);
+      N = bounding_box_min.size();
+      if (N == 2) { 
+	L0mult = 1.2; deltat = .2; geps = .001*h0; 
+      } else {
+	L0mult=1+.4/pow(2,(N-1));
+	deltat=.1;
+	geps=1e-1*h0;
+      }
+      deps=sqrt(1e-8)*h0;
+      dist.register_constraints(this->constraints);
+      run(m,fixed_points);
+    }
+
+    void projection(base_node &X, dal::bit_vector& bv) {
+      bv.clear();
+      scalar_type d = dist(X,bv);
+      if (d > 0) { 
+	while (dal::abs(d) > 1e-10) {
+	  X -= d*dist.grad(X); 
+	  bv.clear();
+	  d=dist(X,bv);
+	}
+      }
+    }
+
+    void projection(base_node &X) { dal::bit_vector bv; projection(X,bv); }
+
+    void constraint_projection(base_node &X, size_type cnum) {
+      scalar_type d = (*constraints[cnum])(X);
+      while (dal::abs(d) > 1e-10) {
+	X -= d*(*constraints[cnum]).grad(X); 
+	d=(*constraints[cnum])(X);
+      }
+    }
+
+    void multi_constraint_projection(base_node &X, const dal::bit_vector &cts, dal::bit_vector &new_cts) {
+      base_node oldX;
+      size_type cnt = 0;
+      do {     
+	oldX = X;
+	for (dal::bv_visitor ic(cts); !ic.finished(); ++ic)
+	  constraint_projection(X,ic);
+	projection(X,new_cts);
+	++cnt;
+      } while (cts.card() && gmm::vect_dist2(oldX,X) > 1e-16 && cnt < 1000000);
+      if (cnt > 100000) { cout << "c'est dur : X=" << X << ", cts=" << cts << "\n"; }
+    }
+
+    void tangential_displacement(base_small_vector &X, const dal::bit_vector &cts) {
+      base_matrix normals(N, cts.card());
+      size_type cnt = 0;
+      for (dal::bv_visitor ic(cts); !ic.finished(); ++ic) {
+	gmm::copy(constraints[ic]->grad(X), gmm::mat_col(normals, cnt));
+	for (size_type k=0; k < cnt; ++k) {
+	  gmm::add(gmm::scaled(gmm::mat_col(normals, k), -gmm::vect_sp(gmm::mat_col(normals,k),gmm::mat_col(normals,cnt))),
+		   gmm::mat_col(normals,cnt));
+	  scalar_type n = gmm::vect_norm2(gmm::mat_col(normals, cnt));
+	  if (n < 1e-8) continue;
+	  gmm::scale(gmm::mat_col(normals, cnt), 1./n);
+	  gmm::add(gmm::scaled(gmm::mat_col(normals, cnt), -gmm::vect_sp(X, gmm::mat_col(normals, cnt))), X);
+	  ++cnt;
+	}
+      }
+    }
+
+    const pt_attribute*
+    get_attr(bool fixed, const dal::bit_vector &bv) {
+      pt_attribute a; a.fixed = fixed; a.constraints = bv;
+      return &(*attributes_set.insert(a).first);
+    }
+
+    void project_and_update_constraints(size_type ip) {
+      const dal::bit_vector& cts = pts_attr[ip]->constraints;
+      dal::bit_vector new_cts;
+      base_node oldX = pts[ip];
+      multi_constraint_projection(pts[ip], cts, new_cts);
+      if (new_cts.card() > cts.card()) {
+	cout << "Point #" << ip << " " << oldX << "->" << pts[ip] << " has been upgraded from " 
+	     << cts << " to " << new_cts << ", congratulations to the winner\n";
+	pts_attr[ip] = get_attr(pts_attr[ip]->fixed, new_cts);
+      }
+      assert(new_cts.contains(cts));
+    }
+
+    void distribute_points_regularly(getfem_mesh &m, const std::vector<base_node> &fixed_points) {
+      size_type nbpt = 1;
+      std::vector<size_type> gridnx(N);
+      cout << "N = " << N << ", bounding box = " << bounding_box_min << "," << bounding_box_max << "\n";
+      for (size_type i=0; i < N; ++i) 
+	h0 = std::min(h0, bounding_box_max[i] - bounding_box_min[i]);
+      for (size_type i=0; i < N; ++i) {
+	scalar_type h = h0;
+	if (N == 2 && i == 1) h = sqrt(3.)/2. * h0;
+	gridnx[i] = 1+(size_type)((bounding_box_max[i] - bounding_box_min[i])/h);	
+	nbpt *= gridnx[i];
+      }
+      m.clear();
+      pts.reserve(fixed_points.size() + nbpt);
+      std::copy(fixed_points.begin(), fixed_points.end(), pts.begin());
+
+      /* build the regular grid an filter points outside */
+      for (size_type i=0; i < fixed_points.size(); ++i) {
+	if (dist(fixed_points[i]) < geps && m.search_point(fixed_points[i]) == size_type(-1)) {
+	  m.add_point(fixed_points[i]); 
+	  pts.push_back(fixed_points[i]); 
+	  pts_attr.push_back(get_attr(true,dal::bit_vector()));
+	} else cout << "removed duplicate fixed point : " << fixed_points[i] << "\n";
+      }
+      cout << "gridnx=" << gridnx << "\n";
+      for (size_type i=0; i < nbpt; ++i) {
+	base_node P(N);
+	for (size_type k=0, r = i; k < N; ++k) {
+	  P[k] = (r % gridnx[k]) * (bounding_box_max[k] - bounding_box_min[k]) / 
+	    (gridnx[k]-1) + bounding_box_min[k];
+	  if (N==2 && k==0 && ((r/gridnx[0])&1)==1) P[k] += h0/2;
+	  r /= gridnx[k];
+	  //P[k] = dal::random() * (bounding_box_max[k] - bounding_box_min[k]) + bounding_box_min[k];
+	}
+	if (dist(P) < geps/*+h0*edge_len(P)/2*/) {
+ 	  projection(P);
+	  if (m.search_point(P) == size_type(-1)) {
+	    m.add_point(P); pts.push_back(P);
+	    pts_attr.push_back(get_attr(false,dal::bit_vector()));
+	    ++nbpt;
+	  } else cout << "remove duplicate point " << P << "\n";
+	}
+      }
+    }
+
+    scalar_type pts_dist_max(const std::vector<base_node> &A, 
+		      const std::vector<base_node> &B) {
+      scalar_type dist_max = 0;
+      for (size_type i=0; i < pts.size(); ++i) 
+	dist_max = std::max(dist_max, bgeot::vect_dist2_sqr(A[i],B[i]));
+      return sqrt(dist_max);
+    }
+
+    struct cleanup_points_compare {
+      const std::vector<base_node> &pts;
+      const std::vector<const pt_attribute*> &attr;
+      cleanup_points_compare(const std::vector<base_node> &pts_, 
+			     const std::vector<const pt_attribute*> &attr_)
+	: pts(pts_), attr(attr_) {}
+      bool operator()(size_type a, size_type b) {
+	if (attr[a] != attr[b]) return attr[a] < attr[b];
+	return pts[a] < pts[b];
+      }
+    };
+    void cleanup_points() {
+      std::vector<size_type> idx(pts.size());
+      for (size_type i=0; i < idx.size(); ++i) idx[i] = i;
+      std::sort(idx.begin(), idx.end(), cleanup_points_compare(pts,pts_attr));
+      bgeot::kdtree tree;
+      bgeot::kdtree_tab_type neighbours;
+      dal::bit_vector keep_pts; keep_pts.add(0,idx.size());
+      cout << "cleanup points : in the beginning there were " << pts.size() << " points\n";
+      for (size_type i=0, i0=0; i < idx.size(); ++i) {
+	const base_node &P = pts[idx[i]];
+	const pt_attribute *a = pts_attr[idx[i]];
+	tree.add_point_with_id(P,i);
+	if (i == idx.size()-1 || a != pts_attr[idx[i+1]]) {
+	  for (size_type j=i0; j < i+1; ++j) {
+	    base_node bmin = P, bmax = P;
+	    scalar_type h = h0*edge_len(P);
+	    for (size_type k = 0; k < N; ++k) { bmin[k] -= h/10.; bmax[k] += h/10.; }
+	    
+	    tree.points_in_box(neighbours, bmin, bmax);
+	    for (size_type k=0; k < neighbours.size(); ++k) {
+	      if (neighbours[k].i != i && keep_pts.is_in(neighbours[k].i)) {
+		cout << "point #" << i << " " << P << " is too near of point #" 
+		     << neighbours[k].i << pts[idx[neighbours[k].i]] << " : will be removed\n";
+               keep_pts.sup(i);
+	      }
+	    }
+	  }
+	  tree.clear();
+	  i0 = i+1;
+	}
+      }
+      cout << "cleanup points : at the end, only " << keep_pts.card() << " remain\n";      
+      pts_prev.resize(keep_pts.card());
+      size_type cnt = 0;
+      std::vector<const pt_attribute*> pts_attr2(keep_pts.card());
+      for (dal::bv_visitor i(keep_pts); !i.finished(); ++i, ++cnt) {
+	pts_prev[cnt].swap(pts[idx[i]]);
+	pts_attr2[cnt] = pts_attr[idx[i]];
+      }
+      pts_attr.swap(pts_attr2);
+      pts.resize(pts_prev.size()); 
+      std::copy(pts_prev.begin(), pts_prev.end(), pts.begin());
+      /*pts_prev.resize(pts.size());
+	std::copy(pts.begin(), pts.end(), pts_prev.begin());*/
+    }
+
+    void run(getfem_mesh &m,
+	     const std::vector<base_node> &fixed_points) {
+      /* Create initial distribution in bounding box */
+
+      distribute_points_regularly(m, fixed_points);
+      
+      std::vector<base_node> pts2(pts.size(),base_node(N));    
+      bool first = true;
+      bgeot::mesh_structure edges_mesh;
+      base_vector L, L0;
+      scalar_type maxdp;
+      size_type count = 0;
+      do {
+	scalar_type dist_max = first ? 0 : pts_dist_max(pts, pts_prev);
+	cout << "****** Iter " << count << ", dist_max since last delaunay =" << 
+	  dist_max << ", tol=" << ttol*h0 << "\n";
+	if (dist_max > ttol*h0 || first) {
+	  cout << "-----> NEW DELAUNAY\n";
+	  first = false;
+
+	  cleanup_points(); /* and copy pts to pts_prev */
+	  cout << "running delaunay on " << pts.size() << " points\n";
+	  delaunay(pts, t);
+	  cout << "nb splx avant suppr = " << gmm::mat_ncols(t) << "\n";
+	  std::ofstream qf;
+	  { char s[50]; sprintf(s, "delau%02d.q", count);
+	    qf.open(s);
+	  }
+	  for (size_type i=0; i < gmm::mat_ncols(t); ) {
+	    base_node G = pts[t(0,i)];
+	    for (size_type k=1; k < N+1; ++k) G += pts[t(k,i)];
+	    scalar_type q = simplex_quality(N, dal::index_ref_iterator(pts.begin(), gmm::mat_col(t,i).begin()));
+	    
+	    bool boundary_simplex = true;
+	    bool is_bridge_simplex = false;
+	    for (size_type k=0; k < N+1; ++k) 
+	      if (pts_attr[t(k,i)]->constraints.card() == 0) {
+		boundary_simplex = false; break;
+	      }
+	    if (boundary_simplex) {
+	      dal::bit_vector all_cts;
+	      for (size_type k=0; k < N+1; ++k) 
+		all_cts |= pts_attr[t(k,i)]->constraints;
+	      for (size_type k=0; k < N+1; ++k)
+		if (pts_attr[t(k,i)]->constraints.contains(all_cts))
+		  is_bridge_simplex = true;
+	    }
+	    qf << q << "\n";
+	    scalar_type dG = dist(G*(1./(N+1)));
+	    if (q < 1e-3 || dG > 0 || (is_bridge_simplex && dG>-geps)) {
+	      if (i != gmm::mat_ncols(t)-1) {
+		for (size_type k=0; k < N+1; ++k) std::swap(t(k,i), t(k,gmm::mat_ncols(t)-1));
+	      }
+	      t.resize(N+1,gmm::mat_ncols(t)-1);
+	    } else ++i;
+	  }
+	  edges_mesh.clear();
+	  cout << "nb splx = " << gmm::mat_ncols(t) << "\n";
+	  for (size_type i=0; i < gmm::mat_ncols(t); ++i)
+	    for (size_type j=0; j < N+1; ++j)
+	      for (size_type k=j+1; k < N+1; ++k)
+		edges_mesh.add_segment(t(j,i), t(k,i));
+	  //edges_mesh.optimize_structure()	
+	}
+
+	size_type nbcv = edges_mesh.convex_index().card();
+	if (nbcv == 0) DAL_THROW(dal::failure_error, "no more edges!");
+	L.resize(nbcv); L0.resize(nbcv);
+	scalar_type sL = 0, sL0 = 0;
+	size_type nbBoundary = 0; scalar_type sLboundary = 0.;
+	dal::bit_vector boundary_edges; boundary_edges.sup(0,edges_mesh.convex_index().last_true());
+	for (dal::bv_visitor ie(edges_mesh.convex_index()); !ie.finished(); ++ie) {
+	  const base_node &A = pts[edges_mesh.ind_points_of_convex(ie)[0]];
+	  const base_node &B = pts[edges_mesh.ind_points_of_convex(ie)[1]];
+	  L[ie] = gmm::vect_norm2(B-A);
+	  L0[ie] = edge_len(.5*(A+B)); //cout << "L=" << L[ie] << ", L0=" << L0[ie] << "\n";
+	  sL += pow(L[ie],N);
+	  sL0 += pow(L0[ie],N);
+                
+	  if (dist(A) >= -geps && dist(B) >= -geps) { nbBoundary++; sLboundary += L[ie]; boundary_edges.add(ie); }
+	}
+	if (nbBoundary) sLboundary /= nbBoundary; 
+	cout << "L diff = " << pow(sL/sL0, 1./N) << " Lboundary=" << sLboundary/h0 << "\n";
+	/*if (boundary_edges.card() && sLboundary > h0/1.1) {
+	  base_node A = pts[edges_mesh.ind_points_of_convex(boundary_edges.first_true())[0]];
+	  base_node B = pts[edges_mesh.ind_points_of_convex(boundary_edges.first_true())[1]];
+	  pts.push_back((A+B)/2.);
+	  pts2.push_back((A+B)/2.);
+	  pts_prev.push_back((A+B)/2.);
+	  cout << "insertion du point " << pts.back() << "\n";
+	  }*/
+
+	gmm::scale(L0, L0mult * pow(sL/sL0, 1./N));
+	//cout << "L0 = " << L0 << "\n";
+	pts2.resize(pts.size());
+	std::copy(pts.begin(),pts.end(),pts2.begin());
+	if (ORIGINAL == 1) {
+	  for (dal::bv_visitor ie(edges_mesh.convex_index()); !ie.finished(); ++ie) {
+	    size_type iA = edges_mesh.ind_points_of_convex(ie)[0];
+	    size_type iB = edges_mesh.ind_points_of_convex(ie)[1];
+	    base_node bar = pts2[iB]-pts2[iA];
+	    //scalar_type F = L0[ie] - L[ie];
+	    scalar_type F = std::max(L0[ie]-L[ie], 0.);
+	    //scalar_type F = (L0[ie] > L[ie]) ? L0[ie] - L[ie] : 1./L[ie] - 1/L0[ie];
+	    //if (dal::abs(F) > 1) F = F / dal::abs(F);
+	    if (F) {
+	      base_node Fbar = (bar)*(F/L[ie]);
+
+	      if (!pts_attr[iA]->fixed) pts[iA] -= deltat*Fbar; 
+	      if (!pts_attr[iB]->fixed) pts[iB] += deltat*Fbar;
+	    }
+	  }
+	  for (size_type ip=0; ip < pts.size(); ++ip) {
+	    project_and_update_constraints(ip);
+	  }
+        } else if (ORIGINAL == 2) {
+          scalar_type desth = bgeot::equilateral_simplex_of_reference(N)->points()[N][N-1] * L0mult * pow(sL/sL0, 1./N);
+          for (size_type it=0; it < gmm::mat_ncols(t); ++it) {
+            base_node sG(N); sG.fill(0);
+            for (size_type ip=0; ip < N+1; ++ip) { 
+              sG += pts[t(ip,it)];
+              cout << "t#" << it << "/pt#" << t(ip,it) << " = " << pts[t(ip,it)] << "\n";
+            }
+            
+            cout << "t#" << it << " G=" << (1./(N+1))*sG << "\n";
+            for (size_type face=0; face < N+1; ++face) {
+              cout << "t#" << it << "/f#" << face << "\n";
+              std::vector<size_type> fpts(N+1);              
+              dal::bit_vector cts;
+              for (size_type ip=(face+1)%(N+1), cnt = 0; cnt < N+1; ++cnt, ip = (ip+1)%(N+1)) {
+                fpts[cnt] = t(ip,it);
+                cout << "fpts[" << cnt << "] = " << fpts[cnt] << " = " << pts[fpts[cnt]] << "\n";
+                if (cnt == 0) cts = pts_attr[fpts[cnt]]->constraints;
+                else cts &= pts_attr[fpts[cnt]]->constraints;
+              }
+              if (cts.card()) continue;
+              std::vector<base_small_vector> base(N);
+              for (size_type i=0; i < N; ++i) { 
+                base_node v = pts[fpts[i+1]] - pts[fpts[0]];
+                for (size_type j=0; j < i; ++j) 
+                  v -= gmm::vect_sp(v,base[j])*base[j];
+                scalar_type n = gmm::vect_norm2(v);
+                if (n > 1e-8) v *= 1./n;
+                base[i] = v;
+                cout << "base[" << i << "]=" << base[i] << "\n";
+              }
+              
+              base_node faceG = (1./N)*(sG - pts[fpts[0]]);
+              base_node target = faceG + desth * edge_len(faceG) * base[N-1];
+              base_node Fbar = target - pts[fpts[N]];
+              cout << "faceG=" << faceG << ", target = " << target << ", Fbar = " << Fbar << "\n";
+              scalar_type d = gmm::vect_norm2(Fbar);
+              if (d > 1e-8) 
+                pts[fpts[N]] += 0.1*deltat * Fbar;
+            }
+          }
+          for (size_type ip=0; ip < pts.size(); ++ip) {
+	    project_and_update_constraints(ip);
+	  }
+	} else {
+	  //for (size_type ip=0; ip < pts.size(); ++ip) {
+	  for (size_type ip=pts.size()-1; ip != size_type(-1); --ip) {
+	    if (pts_attr[ip]->fixed) continue;
+	    point_newton(L0,ip, edges_mesh);
+	    project_and_update_constraints(ip);
+	  }
+	}
+	for (dal::bv_visitor ie(edges_mesh.convex_index()); !ie.finished(); ++ie) {
+	  size_type iA = edges_mesh.ind_points_of_convex(ie)[0];
+	  size_type iB = edges_mesh.ind_points_of_convex(ie)[1];
+	  if (L[ie] > L0[ie]) continue;
+	  if (pts_attr[iA] == pts_attr[iB] ||
+	      pts_attr[iA]->constraints.card() == 0 ||
+	      pts_attr[iB]->constraints.card() == 0) continue;
+	  if (pts_attr[iA]->constraints == pts_attr[iB]->constraints) continue;
+	  dal::bit_vector bv1(pts_attr[iA]->constraints); bv1.setminus(pts_attr[iB]->constraints);
+	  dal::bit_vector bv2(pts_attr[iB]->constraints); bv2.setminus(pts_attr[iA]->constraints);
+	  if (bv1.card() && bv2.card()) {
+	    bv1 |= bv2;
+	    bgeot::mesh_point_search_ind_ct iAneighbours = edges_mesh.ind_points_to_point(iA);
+	    bgeot::mesh_point_search_ind_ct iBneighbours = edges_mesh.ind_points_to_point(iB);
+	    std::vector<size_type> common_pts(iAneighbours.size()+iBneighbours.size());
+	    std::sort(iAneighbours.begin(),iAneighbours.end());
+	    std::sort(iBneighbours.begin(),iBneighbours.end());
+	    std::vector<size_type>::iterator ite = 
+	      std::set_intersection(iAneighbours.begin(), iAneighbours.end(),
+				    iBneighbours.begin(), iBneighbours.end(),
+				    common_pts.begin());
+	    common_pts.resize(ite-common_pts.begin());
+	    bool do_projection = true;
+	    if (dist(.5*(pts[iA]+pts[iB])) < 0) {
+	      for (std::vector<size_type>::iterator it = common_pts.begin(); it != ite; ++it) {
+		if (pts_attr[*it]->constraints.contains(bv1)) {
+		  cout << "pt#" << iA << " not projected on " << bv1 << 
+		    " because it is linked to pt#" << *it << " : " << pts_attr[*it]->constraints << "\n";
+		  do_projection = false;
+		  break;
+		}
+	      }
+	    }
+	    if (do_projection) {
+	      cout << "cts_A = " << pts_attr[iA]->constraints << ", cts_B = " << pts_attr[iB]->constraints << ", L[ie]=" << L[ie] << "\n";
+	      if (pts_attr[iA]->constraints.card() < pts_attr[iB]->constraints.card())
+		std::swap(iA,iB);
+	      cout << bv1 << bv2 << " Promotion !!!!!! pt#" << iA << " " << pts[iA] << " : " 
+		   << pts_attr[iA]->constraints << "->" << bv1 << "\n";
+	      pts_attr[iA] = get_attr(pts_attr[iA]->fixed, bv1);
+	      project_and_update_constraints(iA);
+	      cout << " ---> new value: " << pts[iA] << "\n";
+	    }
+	  }
+	}
+
+	/* 7. Bring outside points back to the boundary && eval term criterion */
+	maxdp = pts_dist_max(pts,pts2);
+	cout << "count = " << count << ", maxdp = " << maxdp << ", ptol = " << ptol << 
+	  " CV=" << sqrt(maxdp)*deltat/(ptol * h0) << "\n";
+	//cout << sqrt(maxdp)*deltat <<   " >? " << ptol * h0 <<  " " << (sqrt(maxdp)*deltat > ptol * h0)<< "\n";
+	++count;
+	{ m.clear();
+	  for (size_type i=0; i < t.size()/(N+1); ++i) { 
+	    m.add_convex_by_points(bgeot::simplex_geotrans(N,1), dal::index_ref_iterator(pts.begin(), &t[i*(N+1)]));
+	  }
+	  char s[50]; sprintf(s, "toto%02d.mesh", count);
+	  m.write_to_file(s);
+	}
+	//getchar();
+      } while ((count < 40 || sqrt(maxdp)*deltat > ptol * h0) && count < 500);
+      delaunay(pts, t);
+      { m.clear();
+	build_simplex_mesh(m,K);
+	m.write_to_file("toto.mesh");
+      }
+      cout << "mesh done! (" << count << " iter, method = " << (ORIGINAL ? "ORIGINAL" : "NEWTON") << ")\n";
+      base_vector simplex_q; simplex_q.reserve(m.convex_index().card());
+      for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
+	simplex_q.push_back(simplex_quality(N, dal::index_ref_iterator(pts.begin(), t.begin()+cv*(N+1))));
+      }
+      scalar_type mean_q = dal::mean_value(simplex_q.begin(), simplex_q.end());
+      scalar_type std_dev_q = 0, max_q = 0., min_q = 1.;
+      for (size_type i=0; i < simplex_q.size(); ++i) {
+	std_dev_q += dal::sqr(simplex_q[i]-mean_q); 
+	max_q = std::max(max_q,simplex_q[i]); 
+	min_q = std::min(min_q, simplex_q[i]);
+      }
+      std_dev_q = sqrt(std_dev_q/simplex_q.size());
+      cout << "number of simplexes : " << simplex_q.size() << "\n";
+      cout << "best quality : " << max_q << "\n";
+      cout << "worst quality : " << min_q << "\n";
+      cout << "mean quality : " << mean_q << ", std_dev = " << std_dev_q << "\n";
+      m.optimize_structure();
+    }
+
+    void build_simplex_mesh(getfem_mesh &m, size_type K) {
+      std::vector<base_node> cvpts(N+1), cvpts2;
+      size_type cvnum;
+      m.clear();
+      for (size_type ip=0; ip < pts.size(); ++ip) { size_type z = m.add_point(pts[ip]); assert(z == ip); }
+      for (size_type i=0; i < t.size()/(N+1); ++i) {
+	for (size_type k=0; k < N+1; ++k) cvpts[k] = pts[t[i*(N+1)+k]];
+	if (K == 1) {
+	  //cvnum = m.add_convex_by_points(bgeot::simplex_geotrans(N,1), cvpts.begin());
+	  cvnum = m.add_convex(bgeot::simplex_geotrans(N,1), &t[i*(N+1)]);
+	  assert(cvnum == i);
+	} else {
+	  bgeot::pgeometric_trans pgt = bgeot::simplex_geotrans(N,K);
+	  cvpts2.resize(pgt->nb_points());
+	  for (size_type k=0; k < pgt->nb_points(); ++k) {
+	    cvpts2[k] = bgeot::simplex_geotrans(N,1)->transform(pgt->convex_ref()->points()[k], 
+								cvpts);
+	  }
+	  cvnum = m.add_convex_by_points(pgt, cvpts2.begin());
+	  assert(cvnum == i);
+	}
+      }
+      while (1) {
+	getfem::convex_face_ct border_faces;
+	getfem::outer_faces_of_mesh(m, border_faces);
+	size_type nbrm = 0;
+	for (getfem::convex_face_ct::const_iterator it = border_faces.begin();
+	     it != border_faces.end(); ++it) {
+	  if (!m.convex_index()[it->cv]) continue;
+	  scalar_type q = simplex_quality(N, dal::index_ref_iterator(pts.begin(), &t[it->cv*(N+1)]));
+	  scalar_type dG = dist(dal::mean_value(m.points_of_convex(it->cv).begin(), m.points_of_convex(it->cv).end()));
+	  if (q < .01) {
+	    cout << "removing flat border convex " << it->cv << " (q=" << q << ")\n";
+	    for (size_type i=0; i < N+1; ++i) cout << " " << m.points_of_convex(it->cv)[i]; cout << "\n";
+	    m.sup_convex(it->cv); nbrm++;
+	  } else if (dG > -0.0) {
+	    cout << "removing convex because of its gravity center is too near" << it->cv << " (dG=" << dG << ")\n";
+	    m.sup_convex(it->cv); nbrm++;  
+	  }
+	}
+	if (nbrm == 0) break;
+	else cout << "\n\n !!!!! ON CONTINUE ENCORE UN COUP..\n\n";
+      }
+      if (K>1) {
+	//m.optimize_structure();
+	getfem::convex_face_ct border_faces;
+	getfem::outer_faces_of_mesh(m, border_faces);
+	dal::bit_vector ptdone; ptdone.sup(0,m.points_index().last_true());
+	for (getfem::convex_face_ct::const_iterator it = border_faces.begin();
+	     it != border_faces.end(); ++it) {
+	  bgeot::ind_ref_mesh_point_ind_ct fpts_ = m.ind_points_of_face_of_convex(it->cv, it->f);
+	  std::vector<size_type> fpts(fpts_.size());
+	  std::copy(fpts_.begin(), fpts_.end(), fpts.begin());
+	  interpolate_face(m, ptdone, fpts, 
+			   m.trans_of_convex(it->cv)->structure()->faces_structure()[it->f]);
+	  /*
+	  std::copy(fpts_.begin(), fpts_.end(), fpts.begin());
+	  cout << "\nBOUNDARY FACE (cv#" << it->cv << ", face#" << it->f << ") : pts = ";
+	  for (size_type i=0; i < m.points_of_face_of_convex(it->cv,it->f).size(); ++i) 
+	    cout << " [pt#" << fpts[i] << "]:" << m.points_of_face_of_convex(it->cv,it->f)[i];
+	  cout << "\n";
+	  
+	  
+
+	  for (size_type iface=0; iface < fpts.size(); ++iface) {
+	    size_type ip = fpts[iface];
+	    if (ptdone[ip]) continue;
+	    scalar_type d = dist(m.points()[ip]);
+	    base_node old = m.points()[ip]; scalar_type oldd = d;
+	    while (dal::abs(d) > 1e-3) {
+	      m.points()[ip] -= d*dist.grad(m.points()[ip]);
+	      d=dist(m.points()[ip]);
+	    }
+	    if (bgeot::vect_dist2(m.points()[ip],old) > 1e-12) {
+	      cout << "projected point " << old << ", d=" << oldd << " (cv#" << it->cv 
+		   << ", face#" << it->f << ", face pt #" << iface << ") :";
+	      cout << " -> " << m.points()[ip] << ", d=" << d << " -> distance = "<< bgeot::vect_dist2(m.points()[ip],old) << "\n";
+	    }
+	    ptdone.add(ip);
+	  }
+	  */
+	}
+      }
+      m.optimize_structure();
+      {
+        getfem::vtk_export exp("toto.vtk");
+	exp.exporting(m);
+        exp.write_mesh_quality(m);
+      }
+    }
+    void interpolate_face(getfem_mesh &m, dal::bit_vector& ptdone, 
+			  const std::vector<size_type>& ipts, bgeot::pconvex_structure cvs) {
+      if (cvs->dim() == 0) return;
+      else if (cvs->dim() > 1) {
+	std::vector<size_type> fpts;
+	for (size_type f=0; f < cvs->nb_faces(); ++f) {
+	  fpts.resize(cvs->nb_points_of_face(f));
+	  for (size_type k=0; k < fpts.size(); ++k)
+	    fpts[k] = ipts[cvs->ind_points_of_face(f)[k]];
+	  interpolate_face(m,ptdone,fpts,cvs->faces_structure()[f]);
+	}
+      }
+      dal::bit_vector cts; size_type cnt = 0;
+      for (size_type i=0; i < ipts.size(); ++i) {
+	if (ipts[i] < pts.size()) { 
+	  if (cnt == 0) cts = pts_attr[ipts[i]]->constraints;
+	  else cts &= pts_attr[ipts[i]]->constraints;
+	  ++cnt;
+	}
+      }
+      cout << "interpolate face! cts = " << cts << "\n";
+      if (cts.card()) {
+	dal::bit_vector new_cts;
+	for (size_type i=0; i < ipts.size(); ++i) {
+	  if (ipts[i] >= pts.size() && !ptdone[ipts[i]]) { 
+	    base_node &P = m.points()[ipts[i]];
+	    cout << "interpolation of #"<< ipts[i] << "=" << P << " on " << cts;
+	    multi_constraint_projection(P, cts, new_cts);	
+	    cout << " -> new_cts=" << new_cts << ", P=" << P << "=" << m.points()[ipts[i]] << "\n";
+	  }
+	}
+      }
+    }
+
+    void point_newton(const base_vector &L0, size_type ip, 
+		      const bgeot::mesh_structure &edges_mesh) {
+      const bgeot::mesh_convex_ind_ct edges = edges_mesh.convex_to_point(ip);
+      if (edges.empty()) return;
+      size_type N = pts[0].size();
+      base_matrix H(N,N);
+      base_node B(N); gmm::clear(B);
+      scalar_type J = 0;
+      scalar_type mL0 = 0;
+      size_type nedges = 0;
+      dal::bit_vector bv_edges;
+      scalar_type maxdl = 100;
+      for (bgeot::mesh_convex_ind_ct::const_iterator ie = edges.begin();
+	   ie != edges.end(); ++ie, ++nedges) {
+	size_type i1 = edges_mesh.ind_points_of_convex(*ie)[0];
+	size_type i2 = edges_mesh.ind_points_of_convex(*ie)[1]; 
+	if (i1 != ip) std::swap(i1,i2);
+	assert(i1 == ip);
+	scalar_type l0 = L0[*ie]; maxdl = std::min(maxdl,l0/20);
+	bv_edges.add(nedges);
+	base_node X(pts[i1]-pts[i2]);
+	scalar_type n = gmm::vect_norm2(X), n3 = n*dal::sqr(n);
+	scalar_type F = force(n,l0), DF=dforce(n,l0), HF=hforce(n,l0);
+	mL0 += l0;
+	J += .5 * dal::sqr(F);
+	maxdl = std::min(maxdl, dal::abs(n-l0));
+	//cout << "ie = " << *ie << ", n = " << n << ", L0=" << l0 << "\n";
+	if (n > 1e-10) {
+	  /*for (size_type i=0; i < N; ++i) {
+	    H(i,i) += -F/n;
+	    for (size_type j=0; j < N; ++j) {
+	    H(i,j) += (l0/n3)*(X[i]*X[j]);
+	    }
+	    }*/
+	  for (size_type i=0; i < N; ++i) {
+	    H(i,i) += F*DF/n;
+	    for (size_type j=0; j < N; ++j) {
+	      H(i,j) += (((DF*DF+F*HF)*n - F*DF)/n3)*(X[i]*X[j]);
+	    }
+	  }
+	  B += (-F*DF*1./n)*X;
+	}	    
+      }
+      if (bv_edges.card() == 0) return;
+      mL0 /= nedges;
+      base_node V(N), X(N);
+      //gmm::copy(B,V);
+      tangential_displacement(B, pts_attr[ip]->constraints);
+      gmm::scale(B,100*deltat);
+
+      if (gmm::vect_norm2(B) > h0/10)
+	gmm::scale(B, h0/(10));
+      pts[ip] += B; return;
+
+      gmm::lu_solve(H,V,B);
+
+      /*cout << "|V|=" << gmm::vect_norm2(V) << ", .2*|B|=" << gmm::vect_norm2(gmm::scaled(B,.2)) 
+	<< ", maxdl=" << maxdl << "\n";*/
+
+      if (gmm::vect_norm2(V) > maxdl) { gmm::scale(V, maxdl/gmm::vect_norm2(V)); }
+
+      //cout << "H=" << H << ", B=" << B << ", -> X=" << V << "\n";
+
+      scalar_type step = 1., Jf;
+      do {
+	X =  pts[ip] + step * V;
+	//cout << "J initial : " << J << "\n";
+	Jf = 0;
+	size_type ecnt = 0;
+	for (bgeot::mesh_convex_ind_ct::const_iterator ie = edges.begin();
+	     ie != edges.end(); ++ie, ++ecnt) {
+	  if (!bv_edges[ecnt]) { /*cout << "SKIP " << ecnt << "\n";*/ continue; }
+	  size_type i1 = edges_mesh.ind_points_of_convex(*ie)[0];
+	  size_type i2 = edges_mesh.ind_points_of_convex(*ie)[1];
+	  if (i1 != ip) std::swap(i1,i2);
+	  scalar_type n = gmm::vect_norm2(X-pts[i2]);
+	  scalar_type l0 = L0[*ie];
+	  scalar_type F = force(n,l0);
+	  Jf += .5 * dal::sqr(F);
+	}
+	step /= 2.0;
+      } while (Jf > J && step > 0.0001);
+      pts[ip] = X;
+    }
+
+  };
+}
+
+int main(int argc, char **argv) {
+#ifdef GETFEM_HAVE_FEENABLEEXCEPT /* trap SIGFPE */
+  feenableexcept(FE_DIVBYZERO | FE_INVALID);
+#endif
+  try {
+    getfem::getfem_mesh m;
+    getfem::scalar_type h = .3;
+    int K=1;
+    int opt = 0;
+    if (argc > 1) { opt = atoi(argv[1]); }
+    if (argc > 2) { h = atof(argv[2]); cout << "h = " << h << "\n"; }
+    if (argc > 3) { K = atoi(argv[3]); }
+    if (argc > 4) { ORIGINAL = atoi(argv[4]); }
+    assert(K>0); assert(h>0.); 
+    std::vector<getfem::base_node> fixed;
+    switch (opt) {
+    case 0: {
+      getfem::mesher mg(K, getfem::mesher_sphere(getfem::base_node(0.,0.),1.), 
+			getfem::mvf_constant(1), h, m, fixed);
+    } break;
+    case 1: {
+      getfem::scalar_type z = sqrt(4 - 1.5*1.5);
+      fixed.push_back(getfem::base_node(0,z));
+      fixed.push_back(getfem::base_node(0,-z));
+    }
+    case 2: {
+      getfem::mesher mg(K, getfem::mesher_union(getfem::mesher_sphere(getfem::base_node(1.5,0.),2.),
+						getfem::mesher_sphere(getfem::base_node(-1.5,0.),2.)),
+			getfem::mvf_constant(1), h, m, fixed);
+    } break;
+    case 3: {
+      getfem::mesher mg(K, getfem::mesher_rectangle(getfem::base_node(0.,0.,0.),getfem::base_node(1.,1.,1.)),
+			getfem::mvf_constant(1), h, m, fixed);
+    } break;
+    case 4: {
+      getfem::mesher mg(K, getfem::mesher_cylinder(), 
+			getfem::mvf_constant(1), h, m, fixed);
+    } break;
+    case 5: {
+      getfem::mesher mg(K, getfem::mesher_sphere(getfem::base_node(0.,0.,0.),1.), 
+			getfem::mvf_constant(1), h, m, fixed);
+    } break;
+    case 6: {
+      getfem::mesher mg(K,  getfem::mesher_union(getfem::mesher_sphere(getfem::base_node(1.5,0.,0.),2.),
+						 getfem::mesher_sphere(getfem::base_node(-1.5,0.,0.),2.)),
+			getfem::mvf_constant(1), h, m, fixed);
+    } break;
+    case 7: { /* union 2 spheres */
+      getfem::mesher mg(K,  getfem::mesher_union(
+						 getfem::mesher_union(getfem::mesher_sphere(getfem::base_node(1.5,0.,0.),2.),
+								      getfem::mesher_sphere(getfem::base_node(-1.5,0.,0.),2.)),
+						 getfem::mesher_sphere(getfem::base_node(0,1.,0.),2.)),
+			getfem::mvf_constant(1), h, m, fixed);
+    } break;
+    case 8: { /* union 2 disques */
+      getfem::mesher mg(K,  getfem::mesher_union(
+						 getfem::mesher_union(getfem::mesher_sphere(getfem::base_node(1.5,0.),2.),
+								      getfem::mesher_sphere(getfem::base_node(-1.5,0.),2.)),
+						 getfem::mesher_sphere(getfem::base_node(0,1.),2.)),
+			getfem::mvf_constant(1), h, m, fixed);
+    } break;
+    case 9: { /* tri-spheres + demi-plan */
+      getfem::mesher mg(K,  
+			getfem::mesher_intersection(
+						    getfem::mesher_union(
+									 getfem::mesher_union(getfem::mesher_sphere(getfem::base_node(1.5,0.,0.),2.),
+											      getfem::mesher_sphere(getfem::base_node(-1.5,0.,0.),2.)),
+									 getfem::mesher_sphere(getfem::base_node(0,1.,0.),2.)),
+						    getfem::mesher_half_space(getfem::base_node(0,.1,.1), getfem::base_node(.1,-.03,1.))),
+			getfem::mvf_constant(1), h, m, fixed);
+    } break;
+
+    case 10: { /* disque r=20 */
+      fixed.push_back(getfem::base_node(0.,0.));
+      fixed.push_back(getfem::base_node(0.,20.));
+      fixed.push_back(getfem::base_node(-20.,20.));
+      fixed.push_back(getfem::base_node(20.,20.));
+      fixed.push_back(getfem::base_node(0.,40.));
+      getfem::mesher mg(K, getfem::mesher_sphere(getfem::base_node(0.,20.),20.), 
+			getfem::mvf_constant(1), h, m, fixed);
+    } break;
+    case 11: { /* demi-sphere */
+      getfem::mesher mg(K,  
+			getfem::mesher_intersection(
+						    getfem::mesher_sphere(getfem::base_node(0.,0.,0.),1.),
+						    getfem::mesher_half_space(getfem::base_node(0,.1,.1), 
+									      getfem::base_node(.1,-.03,.5))),
+			getfem::mvf_constant(1), h, m, fixed);
+    } break;
+    case 12: { /* "etoile" */
+      getfem::mesher mg(K,  
+			getfem::mesher_union(
+					     getfem::mesher_intersection(getfem::mesher_sphere(getfem::base_node(-1.,0.,0.),1.5),
+									 getfem::mesher_sphere(getfem::base_node(1.,0.,0.),1.5)),
+					     getfem::mesher_intersection(getfem::mesher_sphere(getfem::base_node(0,-1.,.5),1.5),
+									 getfem::mesher_sphere(getfem::base_node(0.,1.,.5),1.5))),
+			getfem::mvf_constant(1), h, m, fixed);
+    } break;
+    }
+  }
+  DAL_STANDARD_CATCH_ERROR;
+  return 0;
+}
