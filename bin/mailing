@@ -3,15 +3,16 @@
 eval 'exec perl -S $0 "$@"'
   if 0;
 
-$nb_param = 0;
+$nb_param = 0; $domail = 1;
 
 if (@ARGV) { $list_name = $ARGV[0]; ++$nb_param; shift @ARGV; }
 if (@ARGV) { $mail_name = $ARGV[0]; ++$nb_param; shift @ARGV; }
-if (@ARGV) { ++$nb_param; }
+if (@ARGV) { $subject = $ARGV[0]; ++$nb_param; shift @ARGV; }
+if (@ARGV) { if ($ARGV[0] eq "nomail") { $domail = 0; } else { ++$nb_param; } }
 
-if ($nb_param != 2) {
+if ($nb_param != 3) {
   print "Usage :\n";
-  print "mailing list_name mail_name\n";
+  print "mailing list_name mail_name subject [nomail]\n";
   exit(1);
 }
 
@@ -21,21 +22,30 @@ sub read_line {
   while(1) {
     $li = <F>; if (!($li)) { return; }
     chomp($li); ($li, $a) = split('\%', $li, 2);
+    if ($li =~ /\"/) {
+      print "Please suppress character \" from mail list file\n";
+      $li =~ s/\"//g;
+    }
     $lp = $li;
-    $lp =~s/\s//g;
+    $lp =~ s/\s//g;
+    $li =~ s/\"//g; # l'ideal serait de ne supprimer que les espaces à la fin
     if ($lp) { return; }
   }
 }
 
 $nb_mail = 0;
+$stop = 1;
 
-while(1) {
+while($stop) {
   read_line;
   if ($li) {
-    ++$nb_mail;
-    print `mail \"$li\" < $mail_name`;
+    print "mail \"$li\" -s \"$subject\" < $mail_name\n";
+    if ($domail) {
+      print `mail \"$li\" -s \"$subject\" < $mail_name`;
+      ++$nb_mail;
+    }
   }
-  else { print "nb mails sent : $nb_mail\n"; exit(0); }
+  else { print "nb mails sent : $nb_mail\n"; $stop=0; }
 }
 
-
+close(F);

@@ -320,10 +320,38 @@ Annonce faite à NaNet :
   A short user documentation exists. 
 
 
-Future version 1.6, avancées :
-------------------------------
-. GMM : Estimation du conditionnement, factorisation qr et méthode qr,
-        conjugated, Tests dans les complexes. interface LAPACK.
-. GETFEM : estimation du rayon et de la qualité de éléments, bugs fixés dans
-        les methodes d'integrations, + de méthodes. Xfem élargi. suport pour
-        les domaines 2D fracturés avec xfem. geotrans inverse optimisé.
+
+. Vendredi 23 janvier : (texte envoyé à la mailing list)
+-----------------------
+
+  Getfem++ 1.6 and Gmm++ 1.6 new release
+  
+  visit our revised site: http://www.gmm.insa-tlse.fr/getfem
+
+    The Gmm++ library has been improved from version 1.6 and version 1.5.
+    We have especially focused on its robustness.
+  
+      - Many bugs were fixed, especially for complex matrices.
+      - QR algorithms were introduced for dense matrices.
+      - A LAPACK/ATLAS interface is available.
+      - SuperLU 2.0 interface.
+      - Small simplification in linalg_traits structure.
+      - Generic resize procedures for vector and matrices were introduced.
+      - It is possible to use a column or row matrix view of a vector with 
+        gmm::row_vector and gmm::col_vector.
+      - Generic gmm::reshape and gmm::conjugated functions.
+      - Intensive tests with random type of matrices and vectors.
+ 
+
+    Getfem++ 1.6 is mostly a bugfix and performance improvements
+    release.
+ 
+      Some new integration methods were added (high order methods for
+      triangles such as IM_TRIANGLE(19) from "P. Solin, K. Segeth
+      and I. Dolezel: Higher-Order Finite Element Methods Chapman
+      Hall/CRC Press"
+  
+      Performance of interpolation and geometric transformation
+      inversion was much improved.
+  
+      Support for emc2 meshes
