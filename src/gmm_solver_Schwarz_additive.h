@@ -40,14 +40,14 @@ namespace gmm {
   /*		Schwartz Additive method                                  */
   /* ******************************************************************** */
 
-  template <class Matrix1, class Matrix2, class Matrix3, class Vector1>
+  template <class Matrix1, class Matrix2, class Matrix3, class SUBI>
   struct schwarz_additif_matrix {
     typedef typename linalg_traits<Matrix2>::value_type value_type;
     typedef typename plain_vector_type<value_type>::vector_type vector_type; 
     const Matrix1 *A;
     const std::vector<Matrix2> *ml1;
     const std::vector<Matrix3> *ml2;
-    const std::vector<Vector1> *cor;
+    const std::vector<SUBI> *cor;
     int itemax, noisy;
     double residu;
     std::vector<vector_type> *gi;
@@ -55,12 +55,12 @@ namespace gmm {
   };
 
   template <class Matrix1, class Matrix2, class Matrix3,
-    class Vector1, class Vector2, class Vector3>
+    class SUBI, class Vector2, class Vector3>
   void schwarz_additif(const Matrix1 &A,
 		       Vector3 &u,
 		       const std::vector<Matrix2> &ml1,
 		       const std::vector<Matrix3> &ml2,
-		       const std::vector<Vector1> &cor,
+		       const std::vector<SUBI> &cor,
 		       const Vector2 &f,
 		       int itemax,  double residu, int noisy = 1) {
 
@@ -70,6 +70,8 @@ namespace gmm {
     size_type nb_sub = ml1.size() + ml2.size();
     std::vector<vector_type> gi(nb_sub);
     std::vector<vector_type> fi(nb_sub);
+
+    residu /= nb_sub; // utile ?
 
     size_type ms = ml1.size();
 
@@ -82,23 +84,46 @@ namespace gmm {
     size_type nb_dof = f.size();
     global_to_local(f, fi, cor);
 
-    for (int i = 0; i < nb_sub; ++i) {
-      cg(i < ms ? ml1[i] : ml2[i-ms], gi[i], fi[i], identity_matrix(),
+    for (int i = 0; i < ms; ++i) {
+      cg(ml1[i], gi[i], fi[i], identity_matrix(),
+	 identity_matrix(), itemax, residu, noisy - 1);
+    }
+    for (int i = 0; i < ml2.size(); ++i) {
+      cg(ml2[i], gi[i+ms], fi[i+ms], identity_matrix(),
 	 identity_matrix(), itemax, residu, noisy - 1);
     }
 
     vector_type g(nb_dof);
-    local_to_global(g, gi, cor);
-    schwarz_additif_matrix<Matrix1, Matrix2, Matrix3, Vector1> SAM;
+    local_to_global(gi, g, cor);
+    // copy(g, u);
+    
+    // cout << " g = " << g << " g0 = " << gi[0] << endl;
+    
+    schwarz_additif_matrix<Matrix1, Matrix2, Matrix3, SUBI> SAM;
     SAM.A = &A; SAM.ml1 = &ml1; SAM.ml2 = &ml2; SAM.cor = &cor;
     SAM.itemax = itemax; SAM.residu = residu; SAM.noisy = noisy;
     SAM.gi = &gi; SAM.fi = &fi;
-    cg(SAM, u, g, A, identity_matrix(), itemax, residu, noisy);
+    // cg(SAM, u, g, identity_matrix(), identity_matrix(), itemax, residu * 1000, noisy);
+
+//    for (size_type i = 0; i < mat_nrows(A); ++i) {
+//       Vector3 ff(mat_nrows(A)), gg(mat_nrows(A));
+//       clear(ff);
+//       ff[i] = 1.0;
+//       mult(SAM, ff, gg);
+//       cout << "SAM[" << i << "] = " << gg << endl;
+//     }
+
+
+    cg(SAM, u, g, A, identity_matrix(), 100, residu * 1000, noisy);
+   // bicgstab(SAM, u, g, identity_matrix(), 100, residu * 1000, noisy);
+
+    // il faudrait tester le residu final ...
+
   }
   
-  template <class Matrix1, class Matrix2, class Matrix3, class Vector1,
+  template <class Matrix1, class Matrix2, class Matrix3, class SUBI,
     class Vector2, class Vector3>
-  void mult(const schwarz_additif_matrix<Matrix1, Matrix2, Matrix3,Vector1> &M,
+  void mult(const schwarz_additif_matrix<Matrix1, Matrix2, Matrix3, SUBI> &M,
 	    const Vector2 &p, Vector3 &q) {
 
     size_type ms = (M.ml1)->size();
@@ -106,20 +131,21 @@ namespace gmm {
     global_to_local(q, *(M.fi), *(M.cor));
     for (int i = 0; i < (M.ml1)->size(); ++i)
       cg((*(M.ml1))[i], (*(M.gi))[i], (*(M.fi))[i], identity_matrix(),
-	 identity_matrix(), M.itemax, M.residu,
-	 M.noisy-1);
+	 identity_matrix(), M.itemax, M.residu, M.noisy-1);
 
     for (int i = 0; i < (M.ml2)->size(); ++i)
       cg((*(M.ml2))[i],(*(M.gi))[i+ms],(*(M.fi))[i+ms], identity_matrix(),
-	 identity_matrix(), M.itemax, M.residu,
-	 M.noisy-1);
+	 identity_matrix(), M.itemax, M.residu, M.noisy-1);
 
-    local_to_global(q, *(M.gi), *(M.cor));
+    local_to_global(*(M.gi), q, *(M.cor));
+
+    // Vector3 zz = q; add(scaled((*(M.gi))[0], -1.0), zz);
+    // cout << "difference = " << vect_norm2(zz) << endl;
   }
 
-  template <class Matrix1, class Matrix2, class Matrix3, class Vector1,
+  template <class Matrix1, class Matrix2, class Matrix3, class SUBI,
     class Vector2, class Vector3, class Vector4>
-  void mult(const schwarz_additif_matrix<Matrix1, Matrix2, Matrix3,Vector1> &M,
+  void mult(const schwarz_additif_matrix<Matrix1, Matrix2, Matrix3, SUBI> &M,
 	    const Vector2 &p, const Vector3 &p2, Vector4 &q) {
     
     size_type ms = (M.ml1)->size();
@@ -127,37 +153,42 @@ namespace gmm {
     global_to_local(q, *(M.fi), *(M.cor));
     for (int i = 0; i < (M.ml1)->size(); ++i)
       cg((*(M.ml1))[i], (*(M.gi))[i], (*(M.fi))[i], identity_matrix(),
-	 identity_matrix(), M.itemax, M.residu,
-	 M.noisy-1);
+	 identity_matrix(), M.itemax, M.residu, M.noisy-1);
 
     for (int i = 0; i < (M.ml2)->size(); ++i)
       cg((*(M.ml2))[i],(*(M.gi))[i+ms],(*(M.fi))[i+ms], identity_matrix(),
-	 identity_matrix(), M.itemax,M.residu,
-	 M.noisy-1);
+	 identity_matrix(), M.itemax,M.residu, M.noisy-1);
 
-    local_to_global(q, *(M.gi), *(M.cor));
+    local_to_global(*(M.gi), q, *(M.cor));
     add(p2, q);
   }
 
   template <class SUBI, class Vector2, class Vector3>
   void global_to_local(const Vector2 &f, std::vector<Vector3> &fi,
 		       const std::vector<SUBI> &cor) {
+    // cout << " f = " << f << endl;
     for (int i = 0; i < fi.size(); ++i) {
-      typename linalg_traits<Vector3>::iterator it2 = fi[i].begin();
-      for (size_type j = 0, l = cor[i].size(); j < l; ++j, ++it2)
-	*it2 = f[cor[i].index(j)]; 
+      // typename linalg_traits<Vector3>::iterator it2 = fi[i].begin();
+      for (size_type j = 0, l = cor[i].size(); j < l; ++j/* , ++it2 */)
+	fi[i][j] /* *it2 */ = f[cor[i].index(j)];
+      // cout << "res fi[" << i << "] = " << fi[i] << endl;
     }
   }
 
   template <class SUBI, class Vector2, class Vector3>
-  void local_to_global(Vector2 &f, const std::vector<Vector3> &fi,
+  void local_to_global(const std::vector<Vector3> &fi, Vector2 &f, 
 		       const std::vector<SUBI> &cor) {
     clear(f);
+    // cout << " f = " << f << endl;
     for (size_type i = 0; i < fi.size(); ++i) {
-      typename linalg_traits<Vector3>::const_iterator it2=fi[i].begin();
-      for (size_type j = 0, l = cor[i].size(); j < l; ++j, ++it2)
-	f[cor[i].index(j)] += *it2;
+      // cout << "fi[" << i << "] = " << fi[i] << endl;
+      // typename linalg_traits<Vector3>::const_iterator it2=fi[i].begin();
+      for (size_type j = 0, l = cor[i].size(); j < l; ++j /*, ++it2 */) {
+	f[cor[i].index(j)] += fi[i][j]; // *it2
+	//	if (cor[i].index(j) == 4) cout << "i = " << i << " j = " << j << " *it2 = " << *it2 << " total = " << f[cor[i].index(j)] << endl;
+      }
     }
+    // cout << " f = " << f << endl;
   }
   
 }

@@ -191,6 +191,14 @@ namespace gmm {
   /*		Write                                   		  */
   /* ******************************************************************** */
 
+  template <class T> struct cast_char_type { typedef T return_type; };
+  template <> struct cast_char_type<signed char> { typedef int return_type; };
+  template <> struct cast_char_type<unsigned char>
+  { typedef unsigned int return_type; };
+  template <class T> inline typename cast_char_type<T>::return_type
+  cast_char(const T &c) { return typename cast_char_type<T>::return_type(c); }
+
+
   template <class L> inline void write(std::ostream &o, const L &l)
   { write(o, l, typename linalg_traits<L>::linalg_type()); }
 
@@ -205,15 +213,16 @@ namespace gmm {
 				       abstract_sparse) {
     typename linalg_traits<L>::const_iterator it = vect_begin(l),
       ite = vect_end(l);
-    for (; it != ite; ++it) o << " (r" << it.index() << "," << (*it) << ")";
+    for (; it != ite; ++it) 
+      o << " (r" << it.index() << "," << cast_char(*it) << ")";
   }
 
   template <class L> void write(std::ostream &o, const L &l,
 				       abstract_plain) {
     typename linalg_traits<L>::const_iterator it = vect_begin(l),
       ite = vect_end(l);
-    if (it != ite) o << " " << (*it++);
-    for (; it != ite; ++it) o << ", " << (*it);
+    if (it != ite) o << " " << cast_char(*it++);
+    for (; it != ite; ++it) o << ", " << cast_char(*it);
   }
 
   template <class L> inline void write(std::ostream &o, const L &l,
