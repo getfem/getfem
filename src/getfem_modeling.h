@@ -1544,7 +1544,12 @@ namespace getfem {
   /*		Generic solvers.                                          */
   /* ******************************************************************** */
 
-  // faire une version avec using_cg, using_gmres ... (appelée par celle-ci)
+  // standard_solve represent a default solver for the model brick system.
+  // Of course it could be not adapted for a particular problem, so it could
+  // be copied and adapted to change solvers, add a special traitement on the
+  // problem, etc ...
+  // This is in fact a model for your own solver.
+
   template <typename MODEL_STATE> void
   standard_solve(MODEL_STATE &MS, mdbrick_abstract<MODEL_STATE> &problem,
 	gmm::iteration &iter) {

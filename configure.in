@@ -447,6 +447,16 @@ AC_SUBST(LIBTOOL_VERSION_INFO)
 
 dnl AC_CHECK_PROGS(RANLIB, ranlib)
 
+
+dnl ------------ for distclean of meshes ---------------------
+j="tests/meshes/disc_P2_h4.mesh"
+if test -L $j || ! -f $j; then
+  DISTCLEANMESHES=""
+else
+  DISTCLEANMESHES="#"
+fi
+AC_SUBST(DISTCLEANMESHES)
+
 dnl -----------------------------------------------
 dnl sorties
 dnl -----------------------------------------------
@@ -497,6 +507,6 @@ echo
 for i in $(ls $srcdir/tests/meshes/*.mesh); do
 	j="tests/meshes/"$(basename $i)
 	if test ! -L $j && test ! -f $j; then
-		ln -s ../../$i $j
+		ln -s $(pwd)/$i $j
 	fi
 done
