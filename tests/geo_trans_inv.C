@@ -1,6 +1,10 @@
 #include <bgeot_geotrans_inv.h>
 #include <getfem_regular_meshes.h>
 
+#ifndef _XOPEN_SOURCE
+zorglub;
+#endif
+
 using bgeot::size_type;
 using bgeot::dim_type;
 using bgeot::scalar_type;

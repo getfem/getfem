@@ -49,9 +49,12 @@
 /*	C++ Standard Headers.						  */
 /* ********************************************************************** */
 
+#define _XOPEN_SOURCE
+#define _XOPEN_SOURCE_EXTENDED 
+
+#include <stdlib.h>
 #include <stddef.h>
 #include <math.h>
-#include <stdlib.h>
 #include <string.h>
 #include <iostream>
 #include <ios>
