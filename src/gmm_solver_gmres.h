@@ -70,7 +70,7 @@ namespace gmm {
     iteration inner = outer;
     inner.reduce_noisy();
     inner.set_maxiter(restart);
-    inner.set_name("GMRes inner iter");
+    inner.set_name("GMRes inner");
 
     while (! outer.finished(beta)) {
       

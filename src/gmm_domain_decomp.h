@@ -146,10 +146,10 @@ namespace gmm {
     subs.resize(effnb);
     vB.resize(effnb);
     for (size_type i = 0; i < effnb; ++i) {
-      clear(vB[i]); resize(vB[i], subs[i].size(), nbpts);
+      clear(vB[i]); resize(vB[i], nbpts, subs[i].size());
       size_type j = 0;
       for (map_type::iterator it=subs[i].begin(); it!=subs[i].end(); ++it, ++j)
-	vB[i](j, it->first) = value_type(1);
+	vB[i](it->first, j) = value_type(1);
     }
   }
   

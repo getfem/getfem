@@ -123,11 +123,11 @@ namespace gmm
 	converged(nr);
 	cout << name << " iter " << nit << " residu "
 	     << gmm::abs(nr) / a;
-	if (nit % 100 == 0 && nit > 0) {
-	  cout << " (residu min " << resminreach / a << " mean val "
-	       << resadd / (100.0 * a) << " )";
-	  resadd = 0.0;
-	}
+// 	if (nit % 100 == 0 && nit > 0) {
+// 	  cout << " (residu min " << resminreach / a << " mean val "
+// 	       << resadd / (100.0 * a) << " )";
+// 	  resadd = 0.0;
+// 	}
 	cout <<  endl;
 	written = true;
       }
