@@ -34,18 +34,20 @@ else
 
 
 `mkdir -p temp`;
+`rm -f getfem++-1.0.tar.gz`;
 
 print "loading getfem++ from cvs\n\n";
 
-print `cd temp; cvs checkout getfem++/bin`; print "\n\n";
-print `cd temp; cvs checkout getfem++/dal`; print "\n\n";
-print `cd temp; cvs checkout getfem++/bgeot`; print "\n\n";
-print `cd temp; cvs checkout getfem++/linkmsg`; print "\n\n";
-print `cd temp; cvs checkout getfem++/ftool`; print "\n\n";
-print `cd temp; cvs checkout getfem++/getfemlib`; print "\n\n";
-print `cd temp; cvs checkout getfem++/doc`; print "\n\n";
+print `cd temp; cvs checkout getfem++`; print "\n\n";
+`rm -fr temp/getfem++/misc`;
+`rm -fr temp/getfem++/gensolv`;
+`rm -fr temp/getfem++/matlabcom`;
+`rm -fr temp/getfem++/matlabint`;
 
-`rm -f getfem++-1.0.tar.gz`;
+# + faire la transformation --> mise dans include/ et sources/
+
+
 `mv temp/getfem++ temp/getfem++-1.0`;
 `cd temp; tar cvf ../getfem++-1.0.tar getfem++-1.0`;
 `gzip getfem++-1.0.tar`;
+`rm -fr temp`;

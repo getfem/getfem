@@ -85,8 +85,8 @@ $CC = $ENV{CC};
 if (! $CC) {
 print "No compiler in CC variable, searching one\n";
 `c++ -v`;     if ($? == 0) { print "a c++ is  detected\n"; $CC = "c++"; }
-`bin/compilo_CCv`;  if ($? == 0) { print "CC  detected\n"; $CC = "CC";  }
 `bin/compilo_g++v`; if ($? == 0) { print "g++ detected\n"; $CC = "g++"; }
+`bin/compilo_CCv`;  if ($? == 0) { print "CC  detected\n"; $CC = "CC";  }
 `cxx -V`;           if ($? == 0) { print "cxx detected\n"; $CC = "cxx"; }
 }
 
