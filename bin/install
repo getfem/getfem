@@ -46,11 +46,11 @@ if (! $CC) {
 print "No compiler in CC variable, searching one\n";
 `bin/compilo_CCv`;  if ($? == 0) { print "CC  detected\n"; $CC = "CC";  }
 `bin/compilo_g++v`; if ($? == 0) { print "g++ detected\n"; $CC = "g++"; }
-`cxx -V`; if ($? == 0) { print "cxx detected\n"; $CC = "cxx"; }
+`cxx -V`;           if ($? == 0) { print "cxx detected\n"; $CC = "cxx"; }
 }
 
 if (! $CC) { die "No compiler found, aborting\n"; }
-else { print "$CC is selected.\n\n"; }
+else { print "$CC is selected.\nTo select another compiler set the variable CC\n\n"; }
 
 #######################################
 #        Building Makefile            #
