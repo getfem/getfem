@@ -97,6 +97,8 @@ namespace gmm {
     simple_vector_ref(const simple_vector_ref<CPT> &cr)
       : _begin(cr._begin),_end(cr._end),origin(cr.origin),_size(cr._size) {}
 
+    simple_vector_ref(void) {}
+
     reference operator[](size_type i) const
     { return linalg_traits<V>::access(origin, _begin, _end, i); }
   };

@@ -49,7 +49,7 @@ namespace gmm {
 
     simple_vector_ref<PT> vec;
     
-    reference operator()(size_type i, size_type j) const { return vec[j]; }
+    reference operator()(size_type, size_type j) const { return vec[j]; }
    
     size_type nrows(void) const { return 1; }
     size_type ncols(void) const { return vect_size(vec); }
@@ -132,7 +132,7 @@ namespace gmm {
 	    gen_row_vector_iterator<PT>, PT>::ref_type row_iterator;
     typedef typename linalg_traits<V>::storage_type storage_type;
     typedef row_major sub_orientation;
-    static size_type nrows(const this_type &m) { return 1; }
+    static size_type nrows(const this_type &) { return 1; }
     static size_type ncols(const this_type &m) { return m.ncols(); }
     static const_sub_row_type row(const const_row_iterator &it) { return *it; }
     static sub_row_type row(const row_iterator &it) { return *it; }
@@ -178,7 +178,7 @@ namespace gmm {
 
     simple_vector_ref<PT> vec;
     
-    reference operator()(size_type i, size_type j) const { return vec[i]; }
+    reference operator()(size_type i, size_type) const { return vec[i]; }
    
     size_type ncols(void) const { return 1; }
     size_type nrows(void) const { return vect_size(vec); }
@@ -261,7 +261,7 @@ namespace gmm {
 	    gen_col_vector_iterator<PT>, PT>::ref_type col_iterator;
     typedef typename linalg_traits<V>::storage_type storage_type;
     typedef col_major sub_orientation;
-    static size_type ncols(const this_type &m) { return 1; }
+    static size_type ncols(const this_type &) { return 1; }
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static const_sub_col_type col(const const_col_iterator &it) { return *it; }
     static sub_col_type col(const col_iterator &it) { return *it; }

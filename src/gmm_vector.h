@@ -207,6 +207,10 @@ namespace gmm
     size_type nb_stored(void) const { return base_type::size(); }
     size_type size(void) const { return nbl; }
 
+    void swap(wsvector<T> &v)
+    { std::swap(nbl, v.nbl); std::map<size_type, T>::swap(v); }
+				       
+
     /* Constructeurs */
     void init(size_type l) { nbl = l; this->clear(); }
     explicit wsvector(size_type l){ init(l); }
@@ -417,6 +421,9 @@ namespace gmm
     size_type nb_stored(void) const { return _base_type::size(); }
     size_type size(void) const { return nbl; }
     void clear(void) { _base_type::resize(0); }
+    void swap(rsvector<T> &v)
+    { std::swap(nbl, v.nbl); std::vector<_elt_rsvector<T> >::swap(v); }
+
     /* Constructeurs */
     explicit rsvector(size_type l) : nbl(l) { }
     rsvector(void) : nbl(0) { }
@@ -807,6 +814,12 @@ namespace gmm
     inline T operator [](size_type c) const { return r(c); }
     void resize(size_type);
     void clear(void) { data.resize(0); shift = 0; }
+    void swap(slvector<T> &v) {
+      std::swap(data, v.data);
+      std::swap(shift, v.shift);
+      std::swap(_size, v._size);
+    }
+
 
     slvector(void) : data(0), shift(0), _size(0) {}
     explicit slvector(size_type l) : data(0), shift(0), _size(l) {}
@@ -910,6 +923,15 @@ namespace dal {
   template <typename T, typename V> inline
   T conj(const gmm::ref_elt_vector<T, V> &a)
   { return dal::conj(T(a)); }
+}
+
+namespace std {
+  template <typename T> void swap(gmm::wsvector<T> &v, gmm::wsvector<T> &w)
+  { v.swap(w);}
+  template <typename T> void swap(gmm::rsvector<T> &v, gmm::rsvector<T> &w)
+  { v.swap(w);}
+  template <typename T> void swap(gmm::slvector<T> &v, gmm::slvector<T> &w)
+  { v.swap(w);}
 }
 
 

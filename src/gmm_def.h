@@ -304,6 +304,7 @@ namespace gmm {
   using dal::sqr;  using dal::abs;  using dal::abs_sqr;  using dal::neg;
   using dal::pos;  using dal::sgn;  using dal::random;   using dal::irandom;
   using dal::conj; using dal::real; using dal::imag;     using dal::sqrt;
+  using std::swap;
 
 
   template <typename T> struct number_traits {

@@ -86,6 +86,36 @@ void test_procedure2(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2,
   
 }
 
+template<class MAT> void test_mat_swap(MAT &, gmm::linalg_modifiable) {}
+template<class MAT> void test_mat_swap(MAT &, gmm::linalg_const) {}
+template<class MAT> void test_mat_swap(MAT &M, gmm::linalg_false) {
+  typedef typename gmm::linalg_traits<MAT>::value_type T;
+  typedef typename gmm::number_traits<T>::magnitude_type R;
+  size_type m = gmm::mat_nrows(M), n = gmm::mat_ncols(M);
+  MAT M2(m, n);
+  gmm::dense_matrix<T> M3(m, n);
+  gmm::copy(M, M3);
+  std::swap(M, M2);
+  gmm::add(gmm::scaled(M2, T(-1)), M3);
+  if (gmm::mat_euclidean_norm(M3) > R(0) || gmm::mat_euclidean_norm(M) > R(0))
+    DAL_THROW(gmm::failure_error, "Error in swap");
+}
+
+template<class VECT> void test_vect_swap(VECT &, gmm::linalg_modifiable) {}
+template<class VECT> void test_vect_swap(VECT &, gmm::linalg_const) {}
+template<class VECT> void test_vect_swap(VECT &V, gmm::linalg_false) {
+  typedef typename gmm::linalg_traits<VECT>::value_type T;
+  typedef typename gmm::number_traits<T>::magnitude_type R;
+  size_type n = gmm::vect_size(V);
+  VECT V2(n);
+  std::vector<T> V3(n);
+  gmm::copy(V, V3);
+  std::swap(V, V2);
+  gmm::add(gmm::scaled(V2, T(-1)), V3);
+  if (gmm::vect_norm2(V3) > R(0) || gmm::vect_norm2(V) > R(0))
+    DAL_THROW(gmm::failure_error, "Error in swap");
+}
+
 
 template <typename MAT1 , typename MAT2, typename VECT1, typename VECT2,
 	  typename VECT3, typename VECT4>
@@ -150,7 +180,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2,
     gmm::copy(m1, m3);
     gmm::resize(m1, a+a2, b+b2);
     for (size_type i = 0; i < a+a2; ++i)
-      for (size_type j = 0; i < b+b2; ++j) {
+      for (size_type j = 0; j < b+b2; ++j) {
 	if (i < a && j < b) {
 	  if (m3(i, j) != m1(i, j))
 	    DAL_THROW(gmm::failure_error, "Error in resize");
@@ -161,7 +191,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2,
       }
     gmm::resize(m1, a2, b2);
     for (size_type i = 0; i < a2; ++i)
-      for (size_type j = 0; i < b2; ++j)
+      for (size_type j = 0; j < b2; ++j)
 	if (m3(i, j) != m1(i, j))
 	    DAL_THROW(gmm::failure_error, "Error in resize");
   }
@@ -186,6 +216,9 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2,
       if (v1[i] != v6[i])
 	DAL_THROW(gmm::failure_error, "Error in resize");
   }
+
+  test_mat_swap(m1, typename gmm::linalg_traits<MAT1>::is_reference());
+  test_vect_swap(v1, typename gmm::linalg_traits<VECT1>::is_reference());
 
 }
 

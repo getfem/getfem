@@ -284,7 +284,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 	      { push (@sub_index, splice(@sortind , rand @sortind, 1)); }
 	    @sub_index = @sub_index[0..$s-1];
 	    @sub_index = sort numerique @sub_index;
-	    if ($sizep == 0)
+	    if ($s == 0)
 	      { $li = "$li\n      gmm::size_type param_u$j [1] = {0};"; }
 	    else {
 	      $li="$li\n      gmm::size_type param_u$j [$s] = {$sub_index[0]";

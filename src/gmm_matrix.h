@@ -146,6 +146,8 @@ namespace gmm
     inline size_type nrows(void) const { return li.size(); }
     inline size_type ncols(void) const
     { return (nrows() == 0) ? 0 : vect_size(li[0]); }
+
+    void swap(row_matrix<V> &m) { std::swap(li, m.li); }
   };
 
   template<typename V> void row_matrix<V>::resize(size_type m, size_type n) {
@@ -251,6 +253,8 @@ namespace gmm
     inline size_type ncols(void) const { return li.size(); }
     inline size_type nrows(void) const
     { return (ncols() == 0) ? 0 : vect_size(li[0]); }
+
+    void swap(col_matrix<V> &m) { std::swap(li, m.li); }
   };
 
   template<typename V> void col_matrix<V>::resize(size_type m, size_type n) {
@@ -349,6 +353,8 @@ namespace gmm
     void fill(T a, T b = T(0));
     inline size_type nrows(void) const { return nbl; }
     inline size_type ncols(void) const { return nbc; }
+    void swap(dense_matrix<T> &m)
+    { std::vector<T>::swap(m); std::swap(nbc, m.nbc); std::swap(nbl, m.nbl); }
     
     dense_matrix(size_type l, size_type c)
       : std::vector<T>(c*l), nbc(c), nbl(l)  {}
@@ -376,8 +382,7 @@ namespace gmm
       for (size_type i = 0; i < std::min(nbc, n); ++i)
 	std::fill(this->begin()+(i*m+nbl), this->begin()+(i+1)*m, T(0));
     }
-    if (n*m < nbc*nbl)
-      std::vector<T>::resize(n*m);
+    if (n*m < nbc*nbl) std::vector<T>::resize(n*m);
     nbl = m; nbc = n;
   }
   
@@ -507,6 +512,7 @@ namespace gmm
 
     size_type nrows(void) const { return nr; }
     size_type ncols(void) const { return nc; }
+    void swap(csc_matrix<T, shift> &m) { std::swap(*this, m); }
    
     value_type operator()(size_type i, size_type j) const
     { return mat_col(*this, j)[i]; }
@@ -657,6 +663,7 @@ namespace gmm
 
     size_type nrows(void) const { return nr; }
     size_type ncols(void) const { return nc; }
+    void swap(csr_matrix<T, shift> &m) { std::swap(*this, m); }
    
     value_type operator()(size_type i, size_type j) const
     { return mat_col(*this, j)[i]; }
@@ -925,5 +932,15 @@ namespace gmm
   { mult_const(m, v1, v2, linalg_const_cast(v3)); }
 
 }
+
+namespace std {
+  template <typename V> void swap(gmm::row_matrix<V> &m1, gmm::row_matrix<V> &m2)
+  { m1.swap(m2); }
+  template <typename V> void swap(gmm::col_matrix<V> &m1, gmm::col_matrix<V> &m2)
+  { m1.swap(m2); }
+  template <typename T> void swap(gmm::dense_matrix<T> &m1, gmm::dense_matrix<T> &m2)
+  { m1.swap(m2); }
+}
+
 
 #endif /* __GMM_MATRIX_H */
