@@ -326,7 +326,7 @@ et taper
   bin/startftool, bin/startlinkmsg, bin/startmisc,
   bin/startmatlab_interface, ou bin/startgetfemlab
 \end{alltt}
-ces shells chargent l'int\'egralit\'e des biblioth\`eques consid\'er\'ees et pr\'eparent un makefile pour compiler celles-ci, ainsi que les programmes de test qui lui sont li\'es. Vous pouvez encha\^\i ner plusieurs shells si vous voulez intervenir sur plusieurs biblioth\`eques dans la m\^eme session, ou si vous n'allez tester les modifications apport\'ees dans des biblioth\`eques autre que celle que vous modifiez.\\[0.4cm]
+ces shells chargent l'int\'egralit\'e des biblioth\`eques consid\'er\'ees et pr\'eparent un makefile pour compiler celles-ci, ainsi que les programmes de test qui lui sont li\'es. Vous pouvez encha\^\i ner plusieurs shells si vous voulez intervenir sur plusieurs biblioth\`eques dans la m\^eme session, ou si vous voulez tester les modifications apport\'ees dans des biblioth\`eques autre que celle que vous modifiez.\\[0.4cm]
 
 Une fois les modifications apport\'ees, il faut passer \`a une phase de test, i.e. compilation et lancement des programmes de tests. Si la partie que vous avez modifi\'ee n'a pas de programme de test correspondant, cr\'eez-en un, en essayant de tester toutes les fonctionnalit\'es.\\[0.4cm]
 
@@ -391,7 +391,7 @@ L\`a aussi, il faut valider l'op\'eration par un
      \item Ne pas oublier de commenter les sources, et de les documenter (voir section suivante)
      \item Dans les biblioth\`eques, \`a tout fichier .C doit correspondre un fichier .h m\^eme succinct.
      \item respecter la mise en forme des fichiers sources telle qu'elle existe actuellement.
-     \item pour toute modification, ou nouveau module, un programme de test est souhaitable. Ce programme doit tester les fonctionnalités des la librairie et est a mettre dans les répertoire test/ de la librairie concernée. Il faut rédiger un shell avec extension .dotest qui sera automatiquement exécuté.
+     \item pour toute modification, ou nouveau module, un programme de test est souhaitable. Ce programme doit tester les fonctionnalités de la librairie et est à mettre dans le répertoire test/ de la librairie concernée. Il faut alors rédiger un shell avec extension .dotest qui sera automatiquement exécuté.
    \end{itemize}
    \`a compl\'eter
 
