@@ -269,6 +269,14 @@ namespace getfem
     return size_type(-1);
   }
 
+  bgeot::mesh_convex_ind_ct mesh_fem::convex_to_dof(size_type d) const {
+    for (size_type i = d; i != d - Qdim && i != size_type(-1); --i) {
+      size_type j = dof_structure.first_convex_of_point(i);
+      if (j != size_type(-1)) return dof_structure.convex_to_point(i);
+    }
+    return bgeot::mesh_convex_ind_ct();
+  }
+
   void mesh_fem::enumerate_dof(void) const {
     dal::bit_vector nn = fe_convex;
     std::queue<int> pile;

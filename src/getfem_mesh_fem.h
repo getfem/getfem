@@ -193,7 +193,8 @@ namespace getfem
   pintfem give_intfem(pfem ppf, const pintegration_method ppi);
   
   typedef tab_scal_to_vect<bgeot::ref_mesh_point_ind_ct> ref_mesh_dof_ind_ct;
-  typedef tab_scal_to_vect<bgeot::ind_ref_mesh_point_ind_ct> ind_ref_mesh_dof_ind_ct;
+  typedef tab_scal_to_vect<bgeot::ind_ref_mesh_point_ind_ct> 
+    ind_ref_mesh_dof_ind_ct;
   /// Describe a finite element method linked to a mesh.
   class mesh_fem : public getfem_mesh_receiver {
   protected :
@@ -226,7 +227,8 @@ namespace getfem
      */
 
     dim_type get_qdim() const { return Qdim; }
-    void     set_qdim(dim_type q) { if (q != Qdim) { Qdim = q; dof_enumeration_made = false; }}
+    void     set_qdim(dim_type q) { if (q != Qdim) 
+      { Qdim = q; dof_enumeration_made = false; }}
 
     void set_finite_element(size_type cv, pintfem pif);
     /** Set on the convex of index i the finite element method
@@ -258,8 +260,9 @@ namespace getfem
     }
     ind_ref_mesh_dof_ind_ct
     ind_dof_of_face_of_element(size_type cv, short_type f) const {
-      return ind_ref_mesh_dof_ind_ct(dof_structure.ind_points_of_face_of_convex(cv, f),
-				     Qdim /fem_of_element(cv)->target_dim());
+      return ind_ref_mesh_dof_ind_ct
+	(dof_structure.ind_points_of_face_of_convex(cv, f),
+	 Qdim /fem_of_element(cv)->target_dim());
     }
 
     bgeot::ref_mesh_point_ind_ct
@@ -294,6 +297,8 @@ namespace getfem
     dim_type dof_qdim(size_type d) const;
     size_type first_convex_of_dof(size_type d) const;
     size_type ind_in_first_convex_of_dof(size_type d) const;
+    bgeot::mesh_convex_ind_ct convex_to_dof(size_type ip) const;
+    
     void enumerate_dof(void) const;
     /// Gives the total number of degrees of freedom.
     size_type nb_dof(void) const

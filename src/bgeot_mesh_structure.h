@@ -139,6 +139,7 @@ namespace bgeot
     
     mesh_convex_ind_ct(const mesh_structure &ms, size_type ip)
       { _begin = iterator(ms, ip); }
+    mesh_convex_ind_ct(void) { }
     
     const iterator &begin() const { return _begin; }
     const iterator &end() const { return _end; }
