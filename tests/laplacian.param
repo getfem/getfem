@@ -15,7 +15,7 @@ MESH_TYPE = 0;          % 0 = simplexes
 			% 2 = prisms
 INCLINE = 0;            % Incline of the mesh.
 K = 2;                  % Finite element degree.
-FEM_TYPE = 0;           % Finite element method
+FEM_TYPE = 2;           % Finite element method
 			% 0 = classical Lagrange element
 			% 1 = Hermite element on the segment
 			% 2 = Hierarchical PK on simplexes (K = 2^i)
@@ -30,7 +30,7 @@ INTEGRATION = 0;        % 0 = exact integration.
 			% 32, 33, 35 quadrilateral(n-30)
 NX = 40;            	% space step.
 RESIDU = 1E-9;     	% residu for conjugate gradient.
-GENERIC_DIRICHLET = 0;  % Generic Dirichlet condition for nono-lagrangian elts.
+GENERIC_DIRICHLET = 1;  % Generic Dirichlet condition for non-lagrangian elts.
 
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'laplacian';     % Root of data files.

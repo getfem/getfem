@@ -402,31 +402,26 @@ void lap_pb::assemble(void)
     
     Ud = linalg_vector(nb_dof);
     NN = col_sparse_matrix_type(nb_dof, nb_dof);
-    sparse_matrix_type HH(nb_dof, nb_dof);
+    col_sparse_matrix_type HH(nb_dof, nb_dof);
     linalg_vector RR(nb_dof), RHaux(nb_dof);
 
     getfem::asm_dirichlet_constraints(HH, RR, mef, mef_data, ST, 0);
-    cerr << "1\n";
+    // gmm::clean(HH, 1e-15);
+
     int nbcols = getfem::Dirichlet_nullspace(HH, NN, RR, Ud);
     cerr << "Number of unknowns : " << nbcols << endl;
     NN.resize(nbcols);
 
-    cerr << "2\n";
     gmm::mult(SM, Ud, gmm::scaled(B, -1.0), RHaux);
     B = linalg_vector(nbcols);
     U = linalg_vector(nbcols);
     gmm::mult(gmm::transposed(NN), gmm::scaled(RHaux, -1.0), B);
-
-    cerr << "3\n";
     sparse_matrix_type SMaux(nbcols, nb_dof);
     gmm::mult(gmm::transposed(NN), SM, SMaux);
     SM = sparse_matrix_type(nbcols, nbcols);
-    cerr << "4\n";
-
     sparse_matrix_type NNaux(nb_dof, nbcols);
     gmm::copy(NN, NNaux);
     gmm::mult(SMaux, NNaux, SM);
-    cerr << "5\n";
 
   }
 }

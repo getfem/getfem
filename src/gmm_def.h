@@ -142,6 +142,22 @@ namespace gmm {
   template <class L> inline bool is_sparse(const L &) 
   { return _is_sparse(typename linalg_traits<L>::storage_type()); }
 
+  inline bool _is_row_matrix(row_major)   { return true;  }
+  inline bool _is_row_matrix(col_major)   { return false; }
+  inline bool _is_row_matrix(row_and_col) { return true; }
+  inline bool _is_row_matrix(col_and_row) { return true; }
+
+  template <class L> inline bool is_row_matrix(const L &) 
+  { return _is_row_matrix(typename linalg_traits<L>::sub_orientation()); }
+
+  inline bool _is_col_matrix(row_major)   { return false;  }
+  inline bool _is_col_matrix(col_major)   { return true; }
+  inline bool _is_col_matrix(row_and_col) { return true; }
+  inline bool _is_col_matrix(col_and_row) { return true; }
+
+  template <class L> inline bool is_col_matrix(const L &) 
+  { return _is_col_matrix(typename linalg_traits<L>::sub_orientation()); }
+
 
   /* ******************************************************************** */
   /*  types to deal with const object representing a modifiable reference */

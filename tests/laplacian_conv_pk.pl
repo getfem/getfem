@@ -27,6 +27,7 @@ print TMPF "NX = 7;\n";
 print TMPF "RESIDU = 1E-17;\n";
 print TMPF "FEM_TYPE = 0;\n"; 
 print TMPF "ROOTFILENAME = 'laplacian';\n";
+print TMPF "GENERIC_DIRICHLET = 0;\n";
 print TMPF "\n\n";
 close(TMPF);
 
@@ -205,7 +206,7 @@ $INTE += 1;
 ##########################################################################
 print "   TESTS EN DIMENSION 3, ET ELEMENTS PK                        \n";
 ##########################################################################
-$NDDLMAX = 150000; $FT = 2.0;
+$NDDLMAX = 100000; $FT = 2.0;
 $FEM_TYPE = 0;
 $INTE = 1;
 while ($INTE < 2 && $SKIP < 4) {

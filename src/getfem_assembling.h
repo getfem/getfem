@@ -598,7 +598,8 @@ namespace getfem
     dal::bit_vector nn = mf_u.convex_index(), nf;
     pfem pf_u, pf_rh;
     
-    if (mf_rh.get_qdim() != 1) DAL_THROW(std::invalid_argument, "invalid data mesh fem for dirichlet");
+    if (mf_rh.get_qdim() != 1)
+      DAL_THROW(std::invalid_argument, "invalid data mesh fem for dirichlet");
     asm_qu_term(M, mf_u, mf_rh, H, boundary);
     asm_source_term(B, mf_u, mf_rh, R, boundary);
 
@@ -663,11 +664,14 @@ namespace getfem
       }
     }
   }
+
   template<class MAT, class VECT>
   void asm_dirichlet_constraints(MAT &M, VECT &B, const mesh_fem &mf_u,
 				 const mesh_fem &mf_rh,
 				 const VECT &R, size_type boundary) {
-    if (mf_rh.get_qdim() != 1) DAL_THROW(std::invalid_argument, "mf_rh should be a scalar (qdim=1) mesh_fem");
+    if (mf_rh.get_qdim() != 1) 
+      DAL_THROW(std::invalid_argument,
+		"mf_rh should be a scalar (qdim=1) mesh_fem");
     size_type N = mf_rh.nb_dof(), Q=mf_u.get_qdim();
     VECT H(dal::sqr(mf_u.get_qdim())*N); gmm::clear(H);
     
@@ -742,7 +746,8 @@ namespace getfem
   /* ********************************************************************* */
 
   template<class MATRM, class MESH_FEM>
-    void mass_matrix(MATRM &M, const MESH_FEM &mf1, const MESH_FEM &mf2, dim_type N)
+    void mass_matrix(MATRM &M, const MESH_FEM &mf1,
+		     const MESH_FEM &mf2, dim_type N)
   {
     DAL_WARNING(3, "obsolete function - use asm_mass_matrix");
     size_type cv, nbd1, nbd2;
@@ -1049,16 +1054,19 @@ namespace getfem
     dal::dynamic_array<TEMP_VECT> base_img_inv;
     size_type nb_bimg = 0;
     
+    if (!(gmm::is_col_matrix(D)))
+      DAL_WARNING(3,
+		  "Dirichlet_nullspace is inefficient when D is a row matrix");
     // First, detection of null columns of D, and already orthogonals 
     // vectors of the image of D.
     dal::bit_vector nn;
     for (size_type i = 0; i < nbd; ++i) {
-      gmm::clear(e); e[i] = 1.0; gmm::copy(e, f);
+      gmm::clear(e); e[i] = 1.0;
       gmm::mult(D, e, aux);
-      if (gmm::vect_norm2(aux) < 1.0E-8) { //à scaler sur l'ensemble de D ...
-	//	cerr << "nbase=" << nbase << " i =" << i;
+      scalar_type n = gmm::vect_norm2(aux);
+
+      if (n < 1.0E-8) { //à scaler sur l'ensemble de D ...
 	G(i, nbase++) = 1.0; nn[i] = true;
-	//	cerr << "-> G=" << G(i,nbase-1) << "\n";
       }
       else {
 	bool good = true;
@@ -1066,7 +1074,7 @@ namespace getfem
 	  if (dal::abs(gmm::vect_sp(aux, base_img[j])) > 1.0E-16)
 	    { good = false; break; }
 	if (good) {
-	  scalar_type n = gmm::vect_norm2(aux);
+	  gmm::copy(e, f);
 	  gmm::scale(f, 1.0 / n); gmm::scale(aux, 1.0 / n);
 	  base_img_inv[nb_bimg] = TEMP_VECT(nbd);
 	  gmm::copy(f, base_img_inv[nb_bimg]);
@@ -1110,7 +1118,6 @@ namespace getfem
       scalar_type c = gmm::vect_sp(base_img[i], UD);
       gmm::add(gmm::scaled(base_img_inv[i], c), UDD);
     }
-
     // Orthogonalisation of the basis of the kernel of D.
     for (size_type i = nb_triv_base + 1; i < nbase; ++i) {
       for (size_type j = nb_triv_base; j < i; ++j) {
@@ -1128,7 +1135,8 @@ namespace getfem
     // Test ...
     gmm::mult(D, UDD, gmm::scaled(UD, -1.0), aux);
     if (gmm::vect_norm2(aux) > 1.0E-12)
-      cerr << "Dirichlet condition not well inverted: residu=" << gmm::vect_norm2(aux) << "\n";
+      DAL_WARNING(2, "Dirichlet condition not well inverted: residu="
+		  << gmm::vect_norm2(aux));
 
     return nbase;
   }
