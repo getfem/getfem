@@ -1,0 +1,111 @@
+% GETFEM MESH FILE 
+% GETFEM VERSION 1.0
+% Yves.Renard@gmm.insa-tlse.fr 
+
+
+
+BEGIN POINTS LIST
+
+  POINT  0  0  0
+  POINT  1  0  0.2
+  POINT  2  0.2  0
+  POINT  3  0.2  0.2
+  POINT  4  0.4  0
+  POINT  5  0.4  0.2
+  POINT  6  0.6  0
+  POINT  7  0.6  0.2
+  POINT  8  0.8  0
+  POINT  9  0.8  0.2
+  POINT  10  1  0
+  POINT  11  1  0.2
+  POINT  12  0  0.4
+  POINT  13  0.2  0.4
+  POINT  14  0.4  0.4
+  POINT  15  0.6  0.4
+  POINT  16  0.8  0.4
+  POINT  17  1  0.4
+  POINT  18  0  0.6
+  POINT  19  0.2  0.6
+  POINT  20  0.4  0.6
+  POINT  21  0.6  0.6
+  POINT  22  0.8  0.6
+  POINT  23  1  0.6
+  POINT  24  0  0.8
+  POINT  25  0.2  0.8
+  POINT  26  0.4  0.8
+  POINT  27  0.6  0.8
+  POINT  28  0.8  0.8
+  POINT  29  1  0.8
+  POINT  30  0  1
+  POINT  31  0.2  1
+  POINT  32  0.4  1
+  POINT  33  0.6  1
+  POINT  34  0.8  1
+  POINT  35  1  1
+
+END POINTS LIST
+
+
+BEGIN CONVEX STRUCTURE DESCRIPTION
+
+CONVEX 0	= SIMPLEX 0
+CONVEX 1	= SIMPLEX 1
+CONVEX 3	= SIMPLEX 2
+CONVEX 2	= PRODUCT 1 	1
+
+END CONVEX STRUCTURE DESCRIPTION
+
+BEGIN MESH STRUCTURE DESCRIPTION
+
+CONVEX 0    3      1  0  3
+CONVEX 1    3      0  2  3
+CONVEX 2    3      5  4  3
+CONVEX 3    3      4  2  3
+CONVEX 4    3      5  4  7
+CONVEX 5    3      4  6  7
+CONVEX 6    3      9  8  7
+CONVEX 7    3      8  6  7
+CONVEX 8    3      9  8  11
+CONVEX 9    3      8  10  11
+CONVEX 10    3      13  3  12
+CONVEX 11    3      3  1  12
+CONVEX 12    3      13  3  14
+CONVEX 13    3      3  5  14
+CONVEX 14    3      15  7  14
+CONVEX 15    3      7  5  14
+CONVEX 16    3      15  7  16
+CONVEX 17    3      7  9  16
+CONVEX 18    3      17  11  16
+CONVEX 19    3      11  9  16
+CONVEX 20    3      18  12  19
+CONVEX 21    3      12  13  19
+CONVEX 22    3      20  14  19
+CONVEX 23    3      14  13  19
+CONVEX 24    3      20  14  21
+CONVEX 25    3      14  15  21
+CONVEX 26    3      22  16  21
+CONVEX 27    3      16  15  21
+CONVEX 28    3      22  16  23
+CONVEX 29    3      16  17  23
+CONVEX 30    3      25  19  24
+CONVEX 31    3      19  18  24
+CONVEX 32    3      25  19  26
+CONVEX 33    3      19  20  26
+CONVEX 34    3      27  21  26
+CONVEX 35    3      21  20  26
+CONVEX 36    3      27  21  28
+CONVEX 37    3      21  22  28
+CONVEX 38    3      29  23  28
+CONVEX 39    3      23  22  28
+CONVEX 40    3      30  24  31
+CONVEX 41    3      24  25  31
+CONVEX 42    3      32  26  31
+CONVEX 43    3      26  25  31
+CONVEX 44    3      32  26  33
+CONVEX 45    3      26  27  33
+CONVEX 46    3      34  28  33
+CONVEX 47    3      28  27  33
+CONVEX 48    3      34  28  35
+CONVEX 49    3      28  29  35
+
+END MESH STRUCTURE DESCRIPTION
