@@ -46,7 +46,7 @@ include_HEADERS =                      \
 	gmm.h                          \
 	gmm_matrix.h                   \
 	gmm_solvers.h                  \
-	gmm_iter.h                  \
+	gmm_iter.h                     \
 	gmm_vector.h                   \
 	gmm_transposed.h               \
 	gmm_scaled.h                   \
@@ -57,8 +57,10 @@ include_HEADERS =                      \
 	gmm_interface.h                \
 	gmm_solver_cg.h                \
 	gmm_solver_constrained_cg.h    \
+	gmm_modified_gram_schmidt.h    \
 	gmm_solver_bicgstab.h          \
 	gmm_solver_Schwarz_additive.h  \
+	gmm_given_rotation.h           \
 	gmm_blas.h                     \
 	linkmsg.h
 

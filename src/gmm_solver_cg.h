@@ -54,10 +54,10 @@
 // OR OTHER RIGHTS.
 //=======================================================================
 
-#include <gmm_solvers.h>
-
 #ifndef __GMM_SOLVER_CG_H
 #define __GMM_SOLVER_CG_H
+
+#include <gmm_solvers.h>
 
 namespace gmm {
 

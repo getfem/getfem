@@ -38,6 +38,9 @@
 #include <gmm_solver_bicgstab.h>
 #include <gmm_solver_constrained_cg.h>
 #include <gmm_solver_Schwarz_additive.h>
+#include <gmm_given_rotation.h>
+#include <gmm_modified_gram_schmidt.h>
+
 
 
 #endif //  __GMM_SOLVERS_H
