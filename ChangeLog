@@ -1,3 +1,10 @@
+2005-03-11 Julien pommier, Yves Renard
+
+	* getfem_fem_level_set.h,  getfem_fem_level_set.cc,
+	  getfem_mesh_fem_level_set.h and getfem_mesh_fem_level_set.cc
+	deals with the fem representation of discontinuities across some
+	level sets.
+
 2005-02-25 Yves Renard,  <Yves.Renard@insa-toulouse.fr> 
 
 	* dal_static_stored_object.h and dal_static_stored_object.cc

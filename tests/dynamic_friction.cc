@@ -401,7 +401,7 @@ void friction_problem::solve(void) {
   std::fill(one.begin(), one.end(), 1.0);
 
   sparse_matrix BBT(gmm::mat_nrows(BN), gmm::mat_nrows(BN));
-  if (scheme == 4) gmm::mult(BN, gmm::transposed(BN), BBT);
+  if (scheme == 4 || scheme == 7) gmm::mult(BN, gmm::transposed(BN), BBT);
 
 
   // Initial conditions (U0, V0, M A0 = F)
@@ -477,7 +477,7 @@ void friction_problem::solve(void) {
       gmm::add(gmm::scaled(A0, dt*dt*0.5*(beta-gamma)/gamma), WT);
       gmm::clear(WN);
       break;
-    case 2 :
+    case 2 : case 7 :
       a = 4./(dt*dt); b = 1.; beta_ = 2./dt; alpha_ = 1.;
       gmm::add(gmm::scaled(U0, a), gmm::scaled(V0, 2./dt), U1);
       gmm::mult(DYNAMIC.mass_matrix(), U1, DF);
@@ -538,12 +538,9 @@ void friction_problem::solve(void) {
       
       if (scheme == 6) {
 	gmm::mult(BN, U1, gmm::scaled(gap, -1.), UN);
-	for (size_type i = 0; i < gmm::mat_nrows(BN); ++i) {
-	  if (UN[i] < 0)
-	    FRICTION.get_gap()[i] = 1.E13;
-	  else
-	    FRICTION.get_gap()[i] = 0.0;
-	}
+	gmm::clear(FRICTION.get_gap());
+	for (size_type i = 0; i < gmm::mat_nrows(BN); ++i)
+	  if (UN[i] < -1E-13) FRICTION.get_gap()[i] = 1.E13;
       }
 
       getfem::standard_solve(MS, PERIODIC, iter);
@@ -575,14 +572,23 @@ void friction_problem::solve(void) {
       gmm::add(gmm::scaled(V0, -2./(beta*dt)), A1);
       gmm::add(gmm::scaled(A0, -(1. - beta)/beta), A1);
       gmm::add(gmm::scaled(A0, (1.-gamma)*dt), gmm::scaled(A1, gamma*dt), V1);
-      gmm::add(V0, V1);
+      gmm::add(V0, V1);      
       break;
-    case 2 :
+    case 2 : case 7 :
       gmm::copy(U1, V1);
       gmm::add(gmm::scaled(V1, 2.), gmm::scaled(U0, -1.), U1);
       gmm::add(gmm::scaled(U1, 2./dt), gmm::scaled(U0, -2./dt), V1);
       J_friction1 = J_friction0 + dt * 0.5 * gmm::vect_sp(BT, V1, LT1);
       gmm::add(gmm::scaled(V0, -1), V1);
+
+      if (scheme == 7) {
+	gmm::mult(BN, V0, UN);
+	gmm::mult_add(BN, V1, UN);
+	for (size_type i = 0; i < gmm::mat_nrows(BN); ++i)
+	  if (LN1[i] < -1E-13) UN[i] = -UN[i] / BBT(i,i);
+	  else UN[i] = 0.;
+	gmm::mult_add(gmm::transposed(BN), UN, V1);
+      }
       break;
     case 3 :
       gmm::scale(LN1, 1./theta);
