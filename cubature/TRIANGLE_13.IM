@@ -1,6 +1,7 @@
 % Integration formulae of order 13 on a triangle with 37 points
 % taken from the  Encyclopaedia of Cubature Formulas
 % http://www.cs.kuleuven.ac.be/~nines/research/ecf/ecf.html
+% this quadrature is not very good (some points on the boundary)
 NAME = IM_TRIANGLE(13)
 N = 2
 GEOTRANS = GT_PK(2,1)
