@@ -42,7 +42,7 @@
 
 #include <dal_basic.h>
 #include <limits.h>
-
+#include <bitset>
 
 namespace dal
 {
@@ -285,6 +285,9 @@ namespace dal
       { return !((*this) == bv); }
      
       bit_vector(void) { clear(); }
+      template <size_t N> bit_vector(const std::bitset<N> &bs) {
+        for (size_type i=0; i < bs.size(); ++i) { if (bs[i]) add(i); }
+      }
 
     /** ICONT is any container of integer values, which are inserted into the bit_vector
      */

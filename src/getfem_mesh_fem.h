@@ -41,8 +41,6 @@
 #include <getfem_mesh.h>
 #include <getfem_fem.h>
 
-#undef IS_DEPRECATED
-#define IS_DEPRECATED
 
 namespace getfem
 {
@@ -298,36 +296,24 @@ namespace getfem
     size_type nb_dof(void) const
       { if (!dof_enumeration_made) enumerate_dof(); return nb_total_dof; }
     dal::bit_vector dof_on_set(size_type b) const;
-    dal::bit_vector dof_on_boundary(size_type b) const IS_DEPRECATED
-    { return  dof_on_set(b); }
-    void clear(void);
-    
+    dal::bit_vector dof_on_boundary(size_type b) const IS_DEPRECATED;
     /// Add to the boundary b the face f of the element i.
-    void add_boundary_elt(size_type b, size_type c, short_type f) IS_DEPRECATED
-    { linked_mesh().add_face_to_set(b, c, f); }
+    void add_boundary_elt(size_type b, size_type c, short_type f) IS_DEPRECATED;
     /// Says whether or not element i is on the boundary b. 
-    bool is_convex_on_boundary(size_type c, size_type b) const IS_DEPRECATED
-    { return linked_mesh().is_convex_in_set(b, c); }
-    bool is_face_on_boundary(size_type b, size_type c, short_type f)
-      const IS_DEPRECATED { return linked_mesh().is_face_in_set(b,c,f); }
+    bool is_convex_on_boundary(size_type c, size_type b) const IS_DEPRECATED;
+    bool is_face_on_boundary(size_type b, size_type c, short_type f) const IS_DEPRECATED;
     /** returns the list of convexes on the boundary b */
-    const dal::bit_vector &convex_on_boundary(size_type b) const IS_DEPRECATED
-    { return linked_mesh().convexes_in_set(b); }
+    const dal::bit_vector &convex_on_boundary(size_type b) const IS_DEPRECATED;
     const mesh_cvf_set::face_bitset
       &faces_of_convex_on_boundary(size_type c, size_type b) const 
-      IS_DEPRECATED { return linked_mesh().faces_of_convex_in_set(c,b); }
+      IS_DEPRECATED;
     /** returns the list of boundary numbers */
-    const dal::bit_vector &get_valid_boundaries() const IS_DEPRECATED
-    { return linked_mesh().get_valid_sets(); }
+    const dal::bit_vector &get_valid_boundaries() const IS_DEPRECATED;
     
-    void sup_boundaries_of_convex(size_type c) IS_DEPRECATED 
-    { linked_mesh().sup_convex_from_sets(c); }
-    void sup_boundary_elt(size_type b, size_type c, short_type f)
-      IS_DEPRECATED { linked_mesh().sup_face_from_set(b,c,f); }
-    void sup_boundary(size_type b) IS_DEPRECATED
-    { linked_mesh().sup_set(b); }
-    void swap_boundaries_convex(size_type c1, size_type c2) IS_DEPRECATED
-    { linked_mesh().swap_convex_in_sets(c1, c2); }
+    void sup_boundaries_of_convex(size_type c) IS_DEPRECATED;
+    void sup_boundary_elt(size_type b, size_type c, short_type f) IS_DEPRECATED;
+    void sup_boundary(size_type b) IS_DEPRECATED;
+    void swap_boundaries_convex(size_type c1, size_type c2) IS_DEPRECATED;
 
     /* explicit calls to parent class 
        for HP aCC and mipspro CC who complain about hidden functions 
@@ -347,12 +333,48 @@ namespace getfem
     
     mesh_fem(getfem_mesh &me, dim_type Q = 1);
     virtual ~mesh_fem();
+    void clear(void);
     void read_from_file(std::istream &ist);
     void read_from_file(const std::string &name);
     void write_to_file(std::ostream &ost) const;
     void write_to_file(const std::string &name, bool with_mesh=false) const;
   };
-  
+
+  inline dal::bit_vector 
+  mesh_fem::dof_on_boundary(size_type b) const
+  { return  dof_on_set(b); }
+
+  inline void 
+  mesh_fem::add_boundary_elt(size_type b, size_type c, short_type f) 
+  { linked_mesh().add_face_to_set(b, c, f); }
+  inline bool 
+  mesh_fem::is_convex_on_boundary(size_type c, size_type b) const 
+  { return linked_mesh().is_convex_in_set(b, c); }
+  inline bool 
+  mesh_fem::is_face_on_boundary(size_type b, size_type c, short_type f)
+    const  { return linked_mesh().is_face_in_set(b,c,f); }
+  inline const dal::bit_vector &
+  mesh_fem::convex_on_boundary(size_type b) const 
+  { return linked_mesh().convexes_in_set(b); }
+  inline const mesh_cvf_set::face_bitset &
+  mesh_fem::faces_of_convex_on_boundary(size_type c, size_type b) const 
+  { return linked_mesh().faces_of_convex_in_set(c,b); }
+  inline const dal::bit_vector &
+  mesh_fem::get_valid_boundaries() const 
+  { return linked_mesh().get_valid_sets(); }
+  inline void 
+  mesh_fem::sup_boundaries_of_convex(size_type c)  
+  { linked_mesh().sup_convex_from_sets(c); }
+  inline void 
+  mesh_fem::sup_boundary_elt(size_type b, size_type c, short_type f)
+  { linked_mesh().sup_face_from_set(b,c,f); }
+  inline void 
+  mesh_fem::sup_boundary(size_type b) 
+  { linked_mesh().sup_set(b); }
+  inline void 
+  mesh_fem::swap_boundaries_convex(size_type c1, size_type c2) 
+  { linked_mesh().swap_convex_in_sets(c1, c2); }
+
 }  /* end of namespace getfem.                                             */
 
 
