@@ -1,5 +1,9 @@
 #!/usr/bin/perl
 
+## A faire : separer en deux : un qui fait les liens et l'autre qui fait
+## le makefile.
+## Pour le make file, gerer mieux les dependences avec les shell existants
+
 #######################################
 #       System identification         #
 #######################################
