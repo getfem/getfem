@@ -36,7 +36,7 @@
 #include <bgeot_integration.h>
 #include <getfem_config.h>
 #include <getfem_precomp.h>
-#include <getfem_mesh.h>
+//#include <getfem_mesh.h>
 #include <deque>
 
 namespace getfem

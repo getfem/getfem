@@ -65,9 +65,11 @@ namespace lmsg
   /*	SENDER CLASS.                                		          */
   /* ******************************************************************** */
 
+  class virtual_linkmsg_receiver;
+
   class virtual_linkmsg_sender {
   public : 
-    virtual void sup_receiver(void *) = 0;
+    virtual void sup_receiver(virtual_linkmsg_receiver *) = 0;
     virtual ~virtual_linkmsg_sender() {}
   };
 
@@ -84,24 +86,28 @@ namespace lmsg
     typedef dal::dynamic_tas<RECEIVER *, 3> RECEIVERTAB;
     RECEIVERTAB receivers;
     dal::dynamic_array<mask, 3> masks;
-
-    public :
-
-      void add_receiver(RECEIVER &re, mask m = mask())
-      { masks[receivers.add(&re)] = m; }
-      void sup_receiver(void *);
-      template<class T> void send(const T &) const;
-      linkmsg_sender(void) {};
-      virtual ~linkmsg_sender();
+    
+  public :
+    
+    void add_receiver(RECEIVER &re, mask m = mask())
+    { masks[receivers.add(&re)] = m; }
+    void sup_receiver(virtual_linkmsg_receiver *);
+    template<class T> void send(const T &) const;
+    linkmsg_sender(void) {};
+    virtual ~linkmsg_sender();
   };
 
   template<class RECEIVER>
-    void linkmsg_sender<RECEIVER>::sup_receiver(void *p)
+    void linkmsg_sender<RECEIVER>::sup_receiver(virtual_linkmsg_receiver *p)
   {
     typename RECEIVERTAB::tas_iterator it = receivers.tas_begin(),
       ite = receivers.tas_end();
+    cerr << "sup_receiver " << p << " " << receivers.card() << endl;
     for (; it != ite; ++it)
-      if (*it == p) receivers.sup(it.index());
+      if (*it == p) {
+	receivers.sup(it.index());
+	cerr << " sup " << it.index() << endl;
+      }
   }
 
   template<class RECEIVER> template<class T> 

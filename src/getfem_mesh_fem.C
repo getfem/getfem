@@ -429,7 +429,6 @@ namespace getfem
   {
     if (is_valid) {
       linked_mesh().lmsg_sender().send(MESH_FEM_DELETE((void *)(this)));
-      sup_sender(_linked_mesh->lmsg_sender());
     }
   }
 

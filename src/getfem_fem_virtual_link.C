@@ -292,9 +292,6 @@ namespace getfem
   static void sup_virtual_link_fem(pmesh_fem_link_fem pmflf);
 
   mesh_fem_link_fem::~mesh_fem_link_fem() {
-      sup_sender(pmf1->linked_mesh().lmsg_sender());
-      if (&(pmf1->linked_mesh()) != &(pmf2->linked_mesh()))
-	sup_sender(pmf2->linked_mesh().lmsg_sender());
       sup_virtual_link_fem(this);
   }
   
