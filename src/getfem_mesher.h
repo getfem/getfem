@@ -108,22 +108,20 @@ namespace getfem {
   };
 
   class mesher_level_set : public mesher_signed_distance {
-    pfem pf;
+    bgeot::base_poly base;
+    std::vector<base_poly> gradient;
+    const fem<base_poly> *pf;
     mutable base_tensor t;
     std::vector<scalar_type> coeff;
   public:
     template <class VECT>
-    mesher_level_set(pfem pf_, const VECT &coeff_) : pf(pf_) {
-      assert(gmm::vect_norm2(coeff_) != 0);
-      coeff.resize(gmm::vect_size(coeff_));
-      gmm::copy(coeff_, coeff);
-    }
+    mesher_level_set(pfem pf_, const VECT &coeff_) : 
+      coeff(coeff_.begin(), coeff_.end()) { init(pf_); }
+    void init(pfem pf_);
+
     bool bounding_box(base_node &, base_node &) const
     { return false; }
-    virtual scalar_type operator()(const base_node &P) const
-    { pf->base_value(P, t); scalar_type s=0;
-      for (size_type i=0; i < t.size(); ++i) s+=coeff[i]*t[i];
-      return s; }
+    virtual scalar_type operator()(const base_node &P) const;
     virtual scalar_type operator()(const base_node &P,
 				   dal::bit_vector &bv) const
     { scalar_type d = (*this)(P); bv[id] = (gmm::abs(d) < SEPS); return d; }
@@ -131,25 +129,8 @@ namespace getfem {
 				      mesher_signed_distance*>& list) const {
       id = list.size(); list.push_back(this);
     }
-    scalar_type grad(const base_node &P, base_small_vector &G) const {
-      gmm::resize(G, P.size()); gmm::clear(G);
-      pf->grad_base_value(P, t);
-      base_tensor::iterator it = t.begin();
-      for (size_type i = 0; i < P.size(); ++i)
-	for (size_type j = 0; j < coeff.size(); ++j)
-	  G[i] += coeff[j] * (*it++);
-      return (*this)(P);
-    }
-    void hess(const base_node &P, base_matrix &H) const {
-      gmm::resize(H, P.size(), P.size()); gmm::clear(H);
-      pf->hess_base_value(P, t);
-      base_tensor::iterator it = t.begin();
-      for (size_type i = 0; i < P.size(); ++i)
-	for (size_type j = 0; j < P.size(); ++j)
-	  for (size_type k = 0; k < coeff.size(); ++k)
-	    H(i,j) += coeff[k] * (*it++);
-    }
-
+    scalar_type grad(const base_node &P, base_small_vector &G) const;
+    void hess(const base_node &P, base_matrix &H) const;
   };
 
 

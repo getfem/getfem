@@ -32,6 +32,42 @@
 
 namespace getfem {
 
+  void mesher_level_set::init(pfem pf_) {
+    if (gmm::vect_norm2(coeff) == 0) DAL_THROW(dal::failure_error, "level is zero!");
+    pf = dynamic_cast<const fem<base_poly>* > (pf_);
+    if (!pf) DAL_THROW(dal::failure_error, "PK fem are required for level set (got " << typeid(pf_).name() << ")");
+    base = base_poly(pf->base()[0].dim(), pf->base()[0].degree());
+    for (unsigned i=0; i < pf->nb_base(0); ++i) {
+      base += pf->base()[i] * coeff[i];
+    }
+    gradient.resize(base.dim());
+    for (unsigned d=0; d < base.dim(); ++d) {
+      gradient[d] = base; gradient[d].derivative(d);
+    }
+  }
+
+  scalar_type mesher_level_set::operator()(const base_node &P) const { 
+    return base.eval(P.begin());
+  }
+
+  scalar_type mesher_level_set::grad(const base_node &P, base_small_vector &G) const {
+    gmm::resize(G, P.size());
+    for (size_type i = 0; i < P.size(); ++i)
+      G[i] = gradient[i].eval(P.begin());
+    return (*this)(P);
+  }
+
+  void mesher_level_set::hess(const base_node &P, base_matrix &H) const {
+    gmm::resize(H, P.size(), P.size()); gmm::clear(H);
+    pf->hess_base_value(P, t);
+    base_tensor::iterator it = t.begin();
+    for (size_type i = 0; i < P.size(); ++i)
+      for (size_type j = 0; j < P.size(); ++j)
+	for (size_type k = 0; k < coeff.size(); ++k)
+	  H(i,j) += coeff[k] * (*it++);
+  }
+
+
   //
   // Exported functions
   //
@@ -82,7 +118,7 @@ namespace getfem {
       { ls[i] = list_constraints[ic]; d[i] = -(ls[i]->grad(X, G[i])); }
     base_node oldX;
     size_type iter = 0;
-    scalar_type residu, alpha;
+    scalar_type residu=0, alpha;
     do {
       oldX = X;
       gmm::mult(gmm::transposed(G), G, H);

@@ -85,6 +85,9 @@ namespace getfem {
 		const dal::bit_vector &secondary);    
     bool is_crossed_by(size_type c, plevel_set ls, unsigned lsnum);
     void find_crossing_level_set(size_type cv, dal::bit_vector &prim, dal::bit_vector &sec);
+    void run_delaunay(std::vector<base_node> &fixed_points,
+		      gmm::dense_matrix<size_type> &simplexes,
+		      std::vector<dal::bit_vector> &fixed_points_constraints);
 
   };
 

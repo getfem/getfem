@@ -225,6 +225,43 @@ namespace getfem {
 
   static getfem_mesh global_mesh; // to visualize the result with Open dx
 
+  void mesh_im_level_set::run_delaunay(std::vector<base_node> &fixed_points,
+				       gmm::dense_matrix<size_type> &simplexes,
+				       std::vector<dal::bit_vector> &fixed_points_constraints) {
+    delaunay(fixed_points, simplexes);
+    if (noisy) cout << "Nb simplexes = " << gmm::mat_ncols(simplexes)<< endl;
+    size_type nt = gmm::mat_ncols(simplexes);
+    size_type N = gmm::mat_nrows(simplexes)-1;
+    dal::bit_vector undecimable_pts; undecimable_pts.sup(0,fixed_points.size());
+    for (size_type i=0; i < nt; ++i) {
+      bool undecimable = false;
+      for (unsigned j=0; j < N+1; ++j) {
+	const dal::bit_vector &bv = fixed_points_constraints[simplexes(j,i)];
+	if (bv.card() > 1 || (bv.card() == 1 && bv.first_true() > N)) { 
+	  undecimable = true; break; 
+	}
+      }
+      if (undecimable) {
+	for (unsigned j=0; j < N+1; ++j) 
+	  undecimable_pts.add(simplexes(j,i));
+      }
+    }
+    if (noisy) cout << "Decimation possible de " << fixed_points.size()-undecimable_pts.card() << "/" << fixed_points.size() << " points\n";
+    if (undecimable_pts.card() < fixed_points.size()) {
+      std::vector<base_node> fp2; fp2.reserve(undecimable_pts.card());
+      std::vector<dal::bit_vector> fp_cts2; fp_cts2.reserve(undecimable_pts.card());
+      for (dal::bv_visitor ip(undecimable_pts); !ip.finished(); ++ip) {
+	fp2.push_back(fixed_points[ip]);
+	fp_cts2.push_back(fixed_points_constraints[ip]);
+      }
+      fixed_points.swap(fp2);
+      fixed_points_constraints.swap(fp_cts2);
+      delaunay(fixed_points, simplexes);
+      if (noisy) cout << "Nb simplexes post-decimation = " << gmm::mat_ncols(simplexes)<< endl;
+    }
+  }
+
+
   void mesh_im_level_set::cut_element(size_type cv,
 				      const dal::bit_vector &primary,
 				      const dal::bit_vector &secondary) {
@@ -358,14 +395,16 @@ namespace getfem {
 	fixed_points.push_back(mesh_points[i]);
 	fixed_points_constraints.push_back(mesh_points.constraints(i));
       }
+
       gmm::dense_matrix<size_type> simplexes;
-      delaunay(fixed_points, simplexes);
-      if (noisy) cout << "Nb simplexes = " << gmm::mat_ncols(simplexes)<< endl;
+      run_delaunay(fixed_points, simplexes, fixed_points_constraints);
+
       getfem_mesh mesh;
       for (size_type i = 0; i <  fixed_points.size(); ++i) {
 	size_type j = mesh.add_point(fixed_points[i], false);
 	assert(j == i);
-      }
+      }      
+
       std::vector<base_node> cvpts;
       for (size_type i = 0; i < gmm::mat_ncols(simplexes); ++i) {
 	size_type j = mesh.add_convex(bgeot::simplex_geotrans(n,1),
@@ -519,12 +558,14 @@ namespace getfem {
 		      << prim << endl;
       if (prim.card()) cut_element(cv, prim, sec);
     }
-    getfem::stored_mesh_slice sl;
-    sl.build(global_mesh, getfem::slicer_none(), 6);
-    getfem::dx_export exp("totoglob.dx");
-    exp.exporting(sl);
-    exp.exporting_mesh_edges();
-    exp.write_mesh();
+    if (noisy) {
+      getfem::stored_mesh_slice sl;
+      sl.build(global_mesh, getfem::slicer_none(), 6);
+      getfem::dx_export exp("totoglob.dx");
+      exp.exporting(sl);
+      exp.exporting_mesh_edges();
+      exp.write_mesh();
+    }
 
   }
 
