@@ -2,8 +2,8 @@
 /* *********************************************************************** */
 /*                                                                         */
 /* Library : GEneric Tool for Finite Element Methods (getfem)              */
-/* File    : getfem_fem_gauss_points.h : definition a "fem" allowing to    */
-/*           define a function only on gauss points.                       */
+/* File    : getfem_external_data_fem.h : definition a "fem" allowing to   */
+/*           define any function.                                          */
 /*                                                                         */
 /* Date : June 28, 2003.                                                   */
 /* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
@@ -37,6 +37,9 @@
 namespace getfem
 {
 
+  // Element to be derived. Overload at least real_base_value.
+  // always 1 ddl
+
   class external_data_fem : public virtual_fem {
     
   public :
@@ -67,38 +70,33 @@ namespace getfem
 
     void real_base_value(pgeotrans_precomp pgp, pfem_precomp pfp,
 			 size_type ii, const base_matrix &G,
-			 base_tensor &t) const
+			 base_tensor &t, size_type elt) const
     { DAL_THROW(failure_error, "Uninstantied function"); } 
     
     void real_grad_base_value(pgeotrans_precomp pgp, pfem_precomp pfp,
 			      size_type ii, const base_matrix &G,
-			      const base_matrix &B, base_tensor &t) const
+			      const base_matrix &B, base_tensor &t,
+			      size_type elt) const
     { DAL_THROW(failure_error, "Uninstantied function"); }
     
     void real_hess_base_value(pgeotrans_precomp pgp, pfem_precomp pfp,
 			      size_type ii, const base_matrix &G,
 			      const base_matrix &B3, const base_matrix &B32,
-			      base_tensor &t) const
+			      base_tensor &t,
+			      size_type elt) const
     { DAL_THROW(failure_error, "Uninstantied function"); }
 
-    gauss_points_fem(const bgeot::pconvex_ref _cvr, size_type dim = 1);
+    gauss_points_fem(const bgeot::pconvex_ref _cvr, size_type dim = 1) {
+      cvr = _cvr;
+      is_equiv = real_element_defined = true;
+      is_polycomp = is_pol = is_lag = false;
+      es_degree = 5;
+      ntarget_dim = dim;
+      init_cvs_node();
+      base_node pt(cvr->dim()); pt.fill(0.001);
+      add_node(lagrange_dof(cvr->dim()), pt);
+    }
   };
-
-
-  // à mettre dans un .C
-
-  external_data_fem::gauss_points_fem(const bgeot::pconvex_ref _cvr,
-				      size_type dim) {
-    cvr = _cvr;
-    is_equiv = real_element_defined = true;
-    is_polycomp = is_pol = is_lag = false;
-    es_degree = 5;
-    ntarget_dim = dim;
-    init_cvs_node();
-    base_node pt(cvr->dim()); pt.fill(0.001);
-    add_node(lagrange_dof(cvr->dim()), pt);
-  }
-
 
 
 }  /* end of namespace getfem.                                            */
