@@ -73,7 +73,7 @@ close(TMPF);
 $er = 0;
 open F, "./dynamic_friction $tmp 2>&1 |" or die;
 while (<F>) {
-  print $_;
+#  print $_;
   if ($_ =~ /error has been detected/)
   {
     $er = 1;

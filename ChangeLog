@@ -1,3 +1,8 @@
+2005-01-24 Yves Renard  <Yves.Renard@insa-toulouse.fr> 
+
+	* Changing the extension from .C to .cc for compatibility with
+	Windows.
+
 2005-01-06  julien pommier  <pommier@gmm.insa-tlse.fr>
 
 	* minor changes for MinGW (getfem-1.7.1)
