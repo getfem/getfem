@@ -320,7 +320,7 @@ namespace getfem {
 
   struct mf_comp {
     pnonlinear_elem_term nlt;
-    const mesh_fem* pmf; /* always defined except when op_type == NORMAL */
+    const mesh_fem* pmf; /* always defined. When op_type == NORMAL, it is set to the main_pmf pointer of the mf_comp_vect */
     mf_comp_vect *owner;
 				     
     ATN_tensor *data;
@@ -1065,7 +1065,7 @@ namespace getfem {
       got_main_mf = true;
     }
     do {
-      if (tok_type() != IDENT) ASM_THROW_PARSE_ERROR("expecting Base or Grad or Hess..");
+      if (tok_type() != IDENT) ASM_THROW_PARSE_ERROR("expecting Base or Grad or Hess, Normal, etc..");
       std::string f = tok(); 
       const mesh_fem *pmf = 0;
       if (f.compare("Base")==0 || f.compare("vBase")==0) {
@@ -1082,6 +1082,7 @@ namespace getfem {
 	std::vector<const mesh_fem*> allmf;
 	pmf = &do_mf_arg(&allmf); what.push_back(mf_comp(allmf, innonlin[num]));
       } else if (f.compare("Normal") == 0) {
+	advance();
 	accept(OPEN_PAR,"expecting '('"); accept(CLOSE_PAR,"expecting ')'");
 	pmf = 0; what.push_back(mf_comp(pmf, mf_comp::NORMAL, false));
       } else {
@@ -1097,13 +1098,16 @@ namespace getfem {
       if (!got_main_mf && pmf) {
 	what.set_main_mf(*pmf); got_main_mf = true;
       }
-      if (!in_data && f[0] != 'v' && pmf->get_qdim() != 1 && f.compare("NonLin")) {
+      if (!in_data && f[0] != 'v' && pmf && pmf->get_qdim() != 1 && f.compare("NonLin")) {
 	ASM_THROW_PARSE_ERROR("Attempt to use a vector mesh_fem as a scalar mesh_fem");
       }
       what.back().reduction = do_comp_red_ops();
     } while (advance_if(PRODUCT));
     accept(CLOSE_PAR, "expecting ')'");
-      
+
+    for (unsigned i=0; i < what.size(); ++i) 
+      if (what[i].op == mf_comp::NORMAL) what[i].pmf = what.main_pmf;
+
     return record(new ATN_computed_tensor(what));
   }
 
