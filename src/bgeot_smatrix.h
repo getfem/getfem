@@ -196,7 +196,7 @@ namespace bgeot
   
   template<class T> T lc_product(const smatrix<T>& m1, size_type i,
 				 const smatrix<T>& m2, size_type j) {
-    smatrix<T>::_line_m *t = &(m1.li[i]); smatrix<T>::elt_m *e;
+    typename smatrix<T>::_line_m *t = &(m1.li[i]); typename smatrix<T>::elt_m *e;
     T res = T(0);  
     for (size_type k = t->card()-1; k != size_type(-1); k--)
       { e = &((*t)[k]); res += e->val*m2.r(e->rang, j); }
@@ -206,7 +206,7 @@ namespace bgeot
   template<class T> T partial_lc_product(const smatrix<T>& m1, size_type i,
 					 const smatrix<T>& m2, size_type j, size_type k)
   { /* Somme pour l <= k de m1(i,l) * m2(l,j).		*/
-    smatrix<T>::_line_m *t = &(m1.li[i]); smatrix<T>::elt_m *e;
+    typename smatrix<T>::_line_m *t = &(m1.li[i]); typename smatrix<T>::elt_m *e;
     T res = 0;
     for (size_type l = t->card()-1; l != size_type(-1); l--)
       { e =&((*t)[l]); if (e->rang <= k) res += e->val * m2.r(e->rang, j);}
@@ -216,7 +216,7 @@ namespace bgeot
   template<class T> T ll_product(const smatrix<T>& m1, size_type i,
 				 const smatrix<T>& m2, size_type j)
   { /* Produit de la ligne i de m1 par la ligne j de m2.	*/
-    smatrix<T>::_line_m *t = &(m1.li[i]); smatrix<T>::elt_m *e;
+    typename smatrix<T>::_line_m *t = &(m1.li[i]); typename smatrix<T>::elt_m *e;
     T res = 0;
     for (size_type k = t->card()-1; k != size_type(-1); k--)
       {  e = &((*t)[k]); res += e->val * m2.r(j, e->rang); }
