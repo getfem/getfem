@@ -612,6 +612,20 @@ namespace bgeot
   }
 
   template<class MAT1, class MAT2, class MATR>
+    void mat_product_nt(const MAT1 &m1, const MAT2 &m2, MATR &mr) 
+  { // mr = trans(m1) * m2; optimisable.
+    if (m1.ncols() != m2.ncols() || mr.ncols() != m1.nrows()
+	  || mr.nrows() != m2.nrows()
+	  || ((const void *)(&mr) == (const void *)(&m1))
+	  || ((const void *)(&mr) == (const void *)(&m2)))
+      DAL_THROW(dimension_error, "dimensions mismatch");
+    
+    for (size_t i = 0; i < mr.ncols(); ++i)
+      for (size_t j = 0; j < mr.nrows(); ++j)
+	mr(i,j) = ll_product(m1, i, m2, j);
+  }
+
+  template<class MAT1, class MAT2, class MATR>
     void mat_add_product_tn(const MAT1 &m1, const MAT2 &m2, MATR &mr) 
   { // mr += trans(m1) * m2; optimisable.
     if (m1.nrows() != m2.nrows() || mr.nrows() != m1.nrows()
@@ -700,13 +714,14 @@ namespace bgeot
   /* ******************************************************************** */
 
   template<class MAT>
-    void mat_gauss_inverse(MAT &m, MAT &tmp, double EPS = 1E-12)
+    typename MAT::value_type mat_gauss_inverse(MAT &m, MAT &tmp, double EPS = 1E-12)
   {
     if (m.nrows() != m.ncols())
       DAL_THROW(dimension_error, "dimensions mismatch");
       
-    typename MAT::value_type vlp;
+    typename MAT::value_type vlp, res=1.;
     typename MAT::size_type l, c, pc, l2, nbl = m.nrows();
+    
     tmp = m;
     m.fill(typename MAT::value_type(1), typename MAT::value_type(0));
    
@@ -721,7 +736,7 @@ namespace bgeot
       if (l != pc) { tmp.line_exchange(l, pc); m.line_exchange(l, pc); }
       
       /* triangulation.                                   */
-      vlp = tmp(l,l); tmp(l,l) = 1;
+      vlp = tmp(l,l); tmp(l,l) = 1; res *= vlp;
       if (dal::abs(vlp) < EPS)
 	DAL_THROW(failure_error, "Non invertible matrix : " << dal::abs(vlp));
 	
@@ -740,7 +755,7 @@ namespace bgeot
     for (l = nbl - 1; l  != typename MAT::size_type(-1); l--)
       for (l2 = l - 1; l2  != typename MAT::size_type(-1); l2--)
       { vlp = tmp(l2,l); for (c = 0; c < nbl; c++) m(l2, c) -=  m(l,c)*vlp; }
-
+    return res;
   }
 
   template<class MAT> inline void mat_gauss_inverse(MAT &m, double EPS = 1E-12)
