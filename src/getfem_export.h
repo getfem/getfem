@@ -448,8 +448,8 @@ namespace getfem
 	    }
 	    // cerr << "cv=" << cv << ", ptab[" << i << "]=" << ptab[i] << ", coeff=" << coeff << endl;
 	    pf_s->interpolation(ptab[i], G, pgt, coeff, val);
-	    V[dof_t + k] = val[0];
-	    ddl_touched.sup(dof_t+k);
+	    V[dof_t*qdim + k] = val[0];
+	    ddl_touched.sup(dof_t);
 	  }
 	}
       }
