@@ -59,13 +59,17 @@ namespace gmm {
     void do_ildltt(const Matrix&, col_major);
 
   public:
-    ildltt_precond(const Matrix& A, int k_, double eps_) 
-      : U(mat_nrows(A),mat_ncols(A)),
-	indiag(std::min(mat_nrows(A), mat_ncols(A))), K(k_), eps(eps_) {
+    void build_with(const Matrix& A) {
+      gmm::resize(U, mat_nrows(A), mat_ncols(A));
+      indiag.resize(std::min(mat_nrows(A), mat_ncols(A)));
       do_ildltt(A, typename principal_orientation_type<typename
-	      linalg_traits<Matrix>::sub_orientation>::potype());
+		linalg_traits<Matrix>::sub_orientation>::potype());
     }
-    ildltt_precond(void) {}
+    ildltt_precond(const Matrix& A, int k_, double eps_) 
+      : U(mat_nrows(A),mat_ncols(A)), K(k_), eps(eps_) { build_with(A); }
+    ildltt_precond(void) { K=10; eps = 1E-7; }
+    ildltt_precond(int k_, double eps_) :  K(k_), eps(eps_) {}
+    
   };
 
   template<typename Matrix> template<typename M> 

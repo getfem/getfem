@@ -40,17 +40,15 @@
 namespace gmm {
       
   /* ******************************************************************** */
-  /*		Schwartz Additive method                                  */
+  /*		Schwarz Additive method                                  */
   /* ******************************************************************** */
   /* ref : Domain decomposition algorithms for the p-version finite       */
   /*       element method for elliptic problems, Luca F. Pavarino,        */
   /*       PhD thesis, Courant Institute of Mathematical Sciences, 1992.  */
   /* ******************************************************************** */
 
-  #define PRECOND ildltt_precond
-
-  template <typename Matrix1, typename Matrix2>
-  struct schwarz_additif_mat {
+  template <typename Matrix1, typename Matrix2, typename Precond>
+  struct schwadd_mat{
     typedef typename linalg_traits<Matrix2>::value_type value_type;
     typedef typename dense_vector_type<value_type>::vector_type vector_type; 
     const Matrix1 *A;
@@ -63,24 +61,23 @@ namespace gmm {
     std::vector<vector_type> *gi;
     std::vector<vector_type> *fi;
     
-    std::vector<PRECOND<Matrix2> > *precond1;
+    std::vector<Precond> *precond1;
 
-    schwarz_additif_mat(const Matrix1 &A_, const std::vector<Matrix2> &vB_,
-			const std::vector<Matrix2> &vA_, iteration iter_,
-			double residu_, size_t itebilan_, 
-			std::vector<vector_type> &gi_,
-			std::vector<vector_type> &fi_,
-			std::vector<PRECOND<Matrix2> > &precond_)
+    schwadd_mat(const Matrix1 &A_, const std::vector<Matrix2> &vB_,
+		const std::vector<Matrix2> &vA_, iteration iter_,
+		double residu_, size_t itebilan_, 
+		std::vector<vector_type> &gi_, std::vector<vector_type> &fi_,
+		std::vector<Precond> &precond_)
       : A(&A_), vB(&vB_),  vAloc(&vA_), iter(iter_),
 	residu(residu_), itebilan(itebilan_), gi(&gi_), fi(&fi_),
 	precond1(&precond_) {}
   };
 
   template <typename Matrix1, typename Matrix2,
-	    typename Vector2, typename Vector3>
-  int generic_schwarz_additif(const Matrix1 &A, Vector3 &u,
-			      const std::vector<Matrix2> &vB,
-			      const Vector2 &f, iteration &iter) {
+	    typename Vector2, typename Vector3, typename Precond>
+  int generic_schwarz_additif(const Matrix1 &A, Vector3 &u, const Vector2 &f, 
+			      const Precond &P, const std::vector<Matrix2> &vB,
+			      iteration &iter) {
 
     typedef typename linalg_traits<Matrix2>::value_type value_type;
     typedef typename dense_vector_type<value_type>::vector_type vector_type;
@@ -93,7 +90,7 @@ namespace gmm {
     std::vector<Matrix2> vAloc(nb_sub);
     std::vector<vector_type> gi(nb_sub);
     std::vector<vector_type> fi(nb_sub);
-    std::vector<PRECOND<Matrix2> > precond1(nb_sub);
+    std::vector<Precond> precond1(nb_sub, P);
     vector_type g(nb_dof);
 
     for (size_type i = 0; i < nb_sub; ++i) {
@@ -105,27 +102,27 @@ namespace gmm {
       gmm::mult(vB[i], A, Maux);
       gmm::mult(Maux, BT, vAloc[i]);
 
-      precond1[i] = PRECOND<Matrix2>(vAloc[i], 10, 1E-7);
+      P.init_with(vAloc[i]);
       gmm::resize(fi[i], mat_nrows(vB[i]));
       gmm::resize(gi[i], mat_nrows(vB[i]));
       gmm::mult(vB[i], f, fi[i]);
       iter2.init();
       cg(vAloc[i], gi[i], fi[i], identity_matrix(), precond1[i], iter2);
       itebilan = std::max(itebilan, iter2.get_iteration());
+      gmm::mult(gmm::transposed(vB[i]), gi[i], g, g);
     }
-    localtoglobal(gi, g, vB);
 
     iter2.init();
-    schwarz_additif_mat<Matrix1, Matrix2>
+    schwadd_mat<Matrix1, Matrix2, Precond>
       SAM(A, vB, vAloc, iter2, iter.get_resmax(), itebilan, gi, fi, precond1);
     cg(SAM, u, g, A, identity_matrix(), iter);
 
     return SAM.itebilan;
   }
   
-  template <typename Matrix1, typename Matrix2,
+  template <typename Matrix1, typename Matrix2, typename Precond,
 	    typename Vector2, typename Vector3>
-  void mult(const schwarz_additif_mat<Matrix1, Matrix2> &M,
+  void mult(const schwadd_mat<Matrix1, Matrix2, Precond> &M,
 	    const Vector2 &p, Vector3 &q) {
 
     size_type itebilan = 0, nb_sub = M.fi->size();
@@ -142,9 +139,9 @@ namespace gmm {
     M.iter.set_resmax((M.iter.get_resmax() + M.residu) * 0.5);
   }
 
-  template <typename Matrix1, typename Matrix2, typename Vector2,
-	    typename Vector3, typename Vector4>
-  void mult(const schwarz_additif_mat<Matrix1, Matrix2> &M,
+  template <typename Matrix1, typename Matrix2, typename Precond,
+	    typename Vector2, typename Vector3, typename Vector4>
+  void mult(const schwadd_mat<Matrix1, Matrix2, Precond> &M,
 	    const Vector2 &p, const Vector3 &p2, Vector4 &q)
   { mult(M, p, q); add(p2, q); }
 
@@ -190,6 +187,8 @@ namespace gmm {
   /* ******************************************************************** */
   /*		Old version, obsolete.                                    */
   /* ******************************************************************** */
+
+  #define PRECOND ildltt_precond
 
   template <typename Matrix1, typename Matrix2, typename Matrix3,
 	    typename SUBI>

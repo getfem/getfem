@@ -85,12 +85,14 @@ namespace gmm {
     size_type nrows(void) const { return mat_nrows(L); }
     size_type ncols(void) const { return mat_ncols(U); }
     
-    ilu_precond(const Matrix& A) :
-      invert(false), L_ptr(mat_nrows(A)+1), U_ptr(mat_nrows(A)+1) { 
-      do_ilu(A, typename principal_orientation_type<typename
-	     linalg_traits<Matrix>::sub_orientation>::potype());
+    void build_with(const Matrix& A) {
+      invert = false;
+       L_ptr.resize(mat_nrows(A)+1);
+       U_ptr.resize(mat_nrows(A)+1);
+       do_ilu(A, typename principal_orientation_type<typename
+	      linalg_traits<Matrix>::sub_orientation>::potype());
     }
-
+    ilu_precond(const Matrix& A) { build_with(A); }
     ilu_precond(void) {}
   };
 

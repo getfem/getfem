@@ -72,10 +72,18 @@ namespace gmm {
     typedef col_matrix<VVector> MMatrix;
 
     MMatrix M;
+    size_type nb_it;
+    magnitude_type threshold;
 
-    mr_approx_inverse_precond(const Matrix& A, size_type nb_it,
-			      magnitude_type threshold);
-
+    void build_with(const Matrix& A);
+    mr_approx_inverse_precond(const Matrix& A, size_type nb_it_,
+			      magnitude_type threshold_)
+      : M(mat_nrows(A), mat_ncols(A))
+    { threshold = threshold_; nb_it = nb_it_; build_with(A); }
+    mr_approx_inverse_precond(void)
+    { threshold = magnitude_type(1E-7); nb_it = 5; }
+    mr_approx_inverse_precond(size_type nb_it_, magnitude_type threshold_)
+    { threshold = threshold_; nb_it = nb_it_; } 
     const MMatrix &approx_inverse(void) const { return M; }
   };
 
@@ -89,10 +97,8 @@ namespace gmm {
   { mult(gmm::conjugated(P.M), v1, v2); }
 
   template <typename Matrix>
-  mr_approx_inverse_precond<Matrix>::
-  mr_approx_inverse_precond(const Matrix& A, size_type nb_it,
-			    magnitude_type threshold)
-    : M(mat_nrows(A), mat_ncols(A)) {
+  void mr_approx_inverse_precond<Matrix>::build_with(const Matrix& A) {
+    gmm::resize(M, mat_nrows(A), mat_ncols(A));
     typedef value_type T;
     typedef magnitude_type R;
     VVector m(mat_ncols(A)),r(mat_ncols(A)),ei(mat_ncols(A)),Ar(mat_ncols(A)); 

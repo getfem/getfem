@@ -1,7 +1,7 @@
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Generic Matrix Methods  (gmm)                                */
-/* File    :  gmm_precond.h : def of what is a preconditionner.            */
+/* File    :  gmm_precond.h : def of what is a preconditioner.             */
 /*     									   */
 /* Date : March 29, 2004.                                                  */
 /* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
@@ -31,6 +31,28 @@
 #define GMM_PRECOND_H
 
 #include <gmm_kernel.h>
+
+/* *********************************************************************** */
+/* Preconditioner concept :                                                */
+/*                                                                         */
+/* A the matrix, P the preconditioner PA well conditioned.                 */
+/* PRECOND precontioner type.                                              */
+/* mult(P, v, w) :  w <- P v                                               */
+/* transposed_mult(P, v, w)       : w <- transposed(P) v                   */
+/* left_mult(P, v, w)             : see qmr solver                         */
+/* right_mult(P, v, w)            : see qmr solver                         */
+/* transposed_left_mult(P, v, w)  : see qmr solver                         */
+/* transposed_right_mult(P, v, w) : see qmr solver                         */
+/*                                                                         */
+/* PRECOND P() : empty preconditioner.                                     */
+/* PRECOND P(A, ...) : preconditioner for the matrix A, with optional      */
+/*                     parameters                                          */
+/* PRECOND(...)  : empty precondtioner with parameters set.                */
+/* P.build_with(A) : build a precondtioner for A.                          */
+/*                                                                         */
+/* *********************************************************************** */
+
+
 
 
 #endif 

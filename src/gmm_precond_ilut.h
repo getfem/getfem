@@ -100,14 +100,18 @@ namespace gmm {
     void do_ilut(const Matrix&, col_major);
 
   public:
-    ilut_precond(const Matrix& A, int k_, double eps_) 
-      : invert(false), L(mat_nrows(A), mat_ncols(A)),
-	U(mat_nrows(A), mat_ncols(A)), K(k_), eps(eps_) {
+    void build_with(const Matrix& A) {
+      invert = false;
+      gmm::resize(L, mat_nrows(A), mat_ncols(A));
+      gmm::resize(U, mat_nrows(A), mat_ncols(A));
       do_ilut(A, typename principal_orientation_type<typename
 	      linalg_traits<Matrix>::sub_orientation>::potype());
     }
-    
-    ilut_precond(void) {}
+    ilut_precond(const Matrix& A, int k_, double eps_) 
+      : L(mat_nrows(A), mat_ncols(A)), U(mat_nrows(A), mat_ncols(A)),
+	K(k_), eps(eps_) { build_with(A); }
+    ilut_precond(int k_, double eps_) :  K(k_), eps(eps_) {}
+    ilut_precond(void) { K = 10; eps = 1E-7; }
 
   };
 

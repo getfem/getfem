@@ -40,7 +40,8 @@ namespace gmm {
 
     std::vector<magnitude_type> diag;
 
-    diagonal_precond(const Matrix &M) : diag(mat_nrows(M)) {
+    void build_with(const Matrix &M) {
+      diag.resize(mat_nrows(M));
       for (size_type i = 0; i < mat_nrows(M); ++i) {
 	magnitude_type x = gmm::abs(M(i, i));
 	if (x == magnitude_type(0)) {
@@ -51,6 +52,7 @@ namespace gmm {
       }
     }
 
+    diagonal_precond(const Matrix &M) { build_with(M); }
     diagonal_precond(void) {}
   };
 

@@ -91,12 +91,13 @@ namespace gmm {
     size_type ncols(void) const { return mat_ncols(U); }
     value_type &D(size_type i) { return Tri_val[Tri_ptr[i]]; }
     const value_type &D(size_type i) const { return Tri_val[Tri_ptr[i]]; }
-    
-    ildlt_precond(const Matrix& A) : Tri_ptr(mat_nrows(A)+1) {
+    ildlt_precond(void) {}
+    void build_with(const Matrix& A) {
+      Tri_ptr.resize(mat_nrows(A)+1);
       do_ildlt(A, typename principal_orientation_type<typename
 		  linalg_traits<Matrix>::sub_orientation>::potype());
     }
-    ildlt_precond(void) {}
+    ildlt_precond(const Matrix& A)  { build_with(A); }
   };
 
   template <typename Matrix> template<typename M>

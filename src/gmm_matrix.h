@@ -44,7 +44,9 @@ namespace gmm
   /*		                                            		  */
   /* ******************************************************************** */
 
-  struct identity_matrix {};
+  struct identity_matrix {
+    template <class MAT> void build_with(const MAT &) {}
+  };
 
   template <typename V1, typename V2> inline
   void mult(const identity_matrix&, const V1 &v1, V2 &v2)
