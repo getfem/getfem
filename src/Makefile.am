@@ -43,6 +43,7 @@ include_HEADERS = \
 	linkmsg.h
 
 SRC = \
+        dal_std.C \
 	bgeot_convex_ref.C \
 	bgeot_convex_structure.C \
 	bgeot_geometric_trans.C \

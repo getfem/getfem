@@ -56,8 +56,8 @@ namespace getfem
  
     dal::bit_vector nn = mf.convex_index();
       
-    pgeotrans_precomp pgp;
-    pfem_precomp pfp;
+    pgeotrans_precomp pgp = NULL;
+    pfem_precomp pfp = NULL;
     pfem pf, pf_target, pf_old = NULL, pf_targetold = NULL;
     bgeot::pgeometric_trans pgt;
 

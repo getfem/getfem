@@ -367,12 +367,21 @@ typedef unsigned char uint8_type;
 //     exit(1);
 //   } 
 
+  class exception_callback {
+  public:
+    virtual void callback(const std::string& msg) {};
+  };
+  
+  void do_exception_callback(const std::string &msg);
+  void set_exception_callback(exception_callback *e);
+
 #define DAL_THROW(type, thestr) { \
     std::stringstream msg; \
     msg << "in "__FILE__ << ", line " << __LINE__ << ": \n" << thestr << ends;\
+    dal::do_exception_callback(msg.str()); \
     throw (type)(msg.str()); \
   }
-
+  
 } /* end of namespace dal.                                                */
 
 

@@ -38,12 +38,14 @@
 namespace getfem
 {
 
+
+
   template<class MESH_FEM, class VECT>
-    scalar_type L2_norm(MESH_FEM &mf, const VECT &U, size_type N)
+  scalar_type L2_norm(MESH_FEM &mf, const VECT &U, size_type N, const dal::bit_vector &cvlst)
   { /* optimisable */
     size_type cv;
     scalar_type no = 0.0;
-    dal::bit_vector nn = mf.convex_index();
+    dal::bit_vector nn = cvlst;
     dal::dynamic_array<base_vector, 2> vval;
     base_tensor t;
     pfem pf1, pf1prec = NULL;
@@ -53,41 +55,47 @@ namespace getfem
     pmat_elem_type pme; pmat_elem_computation pmec = 0;
     
     for (cv << nn; cv != ST_NIL; cv << nn)
-    {
-      pf1 =     mf.fem_of_element(cv);
-      pgt = mf.linked_mesh().trans_of_convex(cv);
-      pim = mf.int_method_of_element(cv);
-      size_type nbd = mf.nb_dof_of_element(cv);
-      if (pf1prec != pf1 || pgtprec != pgt || pimprec != pim)
       {
-	pme = mat_elem_product(mat_elem_base(pf1), mat_elem_base(pf1));
-	pmec = mat_elem(pme, pim, pgt);
-	pf1prec = pf1; pgtprec = pgt; pimprec = pim;
-      }
-      pmec->gen_compute(t, mf.linked_mesh().points_of_convex(cv));
-      base_tensor::iterator p = t.begin();
+	pf1 =     mf.fem_of_element(cv);
+	pgt = mf.linked_mesh().trans_of_convex(cv);
+	pim = mf.int_method_of_element(cv);
+	size_type nbd = mf.nb_dof_of_element(cv);
+	if (pf1prec != pf1 || pgtprec != pgt || pimprec != pim)
+	  {
+	    pme = mat_elem_product(mat_elem_base(pf1), mat_elem_base(pf1));
+	    pmec = mat_elem(pme, pim, pgt);
+	    pf1prec = pf1; pgtprec = pgt; pimprec = pim;
+	  }
+	pmec->gen_compute(t, mf.linked_mesh().points_of_convex(cv));
+	base_tensor::iterator p = t.begin();
 
-      for (size_type i = 0; i < nbd; i++)
-      { 
-	size_type dof1 = mf.ind_dof_of_element(cv)[i];
-	if (vval[i].size() != N) vval[i] = base_vector(N); 
-	for (size_type k = 0; k < N; k++) (vval[i])[k] = U[dof1*N+k];
-      }
+	for (size_type i = 0; i < nbd; i++)
+	  { 
+	    size_type dof1 = mf.ind_dof_of_element(cv)[i];
+	    if (vval[i].size() != N) vval[i] = base_vector(N); 
+	    for (size_type k = 0; k < N; k++) (vval[i])[k] = U[dof1*N+k];
+	  }
 
-      for (size_type i = 0; i < nbd; i++)
-	for (size_type j = 0; j < nbd; j++, ++p)
-	  no += bgeot::vect_sp(vval[i], vval[j]) * (*p);
+	for (size_type i = 0; i < nbd; i++)
+	  for (size_type j = 0; j < nbd; j++, ++p)
+	    no += bgeot::vect_sp(vval[i], vval[j]) * (*p);
       
-    }
+      }
     return sqrt(no);
   }
 
   template<class MESH_FEM, class VECT>
-    scalar_type H1_semi_norm(MESH_FEM &mf, const VECT &U, size_type N)
+  scalar_type L2_norm(MESH_FEM &mf, const VECT &U, size_type N)
+  {
+    return L2_norm<MESH_FEM,VECT>(mf, U, N, mf.convex_index());
+  }
+
+  template<class MESH_FEM, class VECT>
+  scalar_type H1_semi_norm(MESH_FEM &mf, const VECT &U, size_type N, const dal::bit_vector& cvlst)
   { /* optimisable */
     size_type cv, NN = mf.linked_mesh().dim();
     scalar_type no = 0.0;
-    dal::bit_vector nn = mf.convex_index();
+    dal::bit_vector nn = cvlst;
     dal::dynamic_array<base_vector, 2> vval;
     base_tensor t;
     pfem pf1, pf1prec = NULL;
@@ -96,39 +104,51 @@ namespace getfem
     pmat_elem_type pme; pmat_elem_computation pmec = 0;
 
     for (cv << nn; cv != ST_NIL; cv << nn)
-    {
-      pf1 =     mf.fem_of_element(cv);
-      pgt = mf.linked_mesh().trans_of_convex(cv);
-      pim = mf.int_method_of_element(cv);
-      size_type nbd = mf.nb_dof_of_element(cv);
-      if (pf1prec != pf1 || pgtprec != pgt || pimprec != pim)
       {
-	pme = mat_elem_product(mat_elem_grad(pf1), mat_elem_grad(pf1));
-	pmec = mat_elem(pme, pim, pgt);
-	pf1prec = pf1; pgtprec = pgt; pimprec = pim;
-      }
-      pmec->gen_compute(t, mf.linked_mesh().points_of_convex(cv));
-      base_tensor::iterator p = t.begin();
-      for (size_type i = 0; i < nbd; i++)
-      { 
-	size_type dof1 = mf.ind_dof_of_element(cv)[i];
-	if (vval[i].size() != N) vval[i] = base_vector(N); 
-	for (size_type k = 0; k < N; k++) (vval[i])[k] = U[dof1*N+k];
-      }
-      for (size_type l = 0; l < NN; l++)
+	pf1 =     mf.fem_of_element(cv);
+	pgt = mf.linked_mesh().trans_of_convex(cv);
+	pim = mf.int_method_of_element(cv);
+	size_type nbd = mf.nb_dof_of_element(cv);
+	if (pf1prec != pf1 || pgtprec != pgt || pimprec != pim)
+	  {
+	    pme = mat_elem_product(mat_elem_grad(pf1), mat_elem_grad(pf1));
+	    pmec = mat_elem(pme, pim, pgt);
+	    pf1prec = pf1; pgtprec = pgt; pimprec = pim;
+	  }
+	pmec->gen_compute(t, mf.linked_mesh().points_of_convex(cv));
+	base_tensor::iterator p = t.begin();
 	for (size_type i = 0; i < nbd; i++)
-	  for (size_type k = 0; k < NN; k++)
-	    for (size_type j = 0; j < nbd; j++, ++p)
-	      if (k == l)
-		no += (*p) * bgeot::vect_sp(vval[i], vval[j]);
-    }
+	  { 
+	    size_type dof1 = mf.ind_dof_of_element(cv)[i];
+	    if (vval[i].size() != N) vval[i] = base_vector(N); 
+	    for (size_type k = 0; k < N; k++) (vval[i])[k] = U[dof1*N+k];
+	  }
+	for (size_type l = 0; l < NN; l++)
+	  for (size_type i = 0; i < nbd; i++)
+	    for (size_type k = 0; k < NN; k++)
+	      for (size_type j = 0; j < nbd; j++, ++p)
+		if (k == l)
+		  no += (*p) * bgeot::vect_sp(vval[i], vval[j]);
+      }
     return sqrt(no);
   }
 
   template<class MESH_FEM, class VECT>
-    scalar_type H1_norm(MESH_FEM &mf, const VECT &U, size_type N) {
-      return sqrt( dal::sqr(L2_norm(mf, U, N)) 
-		   + dal::sqr(H1_semi_norm(mf, U, N)));
-    }
+  scalar_type H1_semi_norm(MESH_FEM &mf, const VECT &U, size_type N)
+  {
+    return H1_semi_norm<MESH_FEM,VECT>(mf,U,N,mf.convex_index());
+  }
+
+  template<class MESH_FEM, class VECT>
+  scalar_type H1_norm(MESH_FEM &mf, const VECT &U, size_type N, const dal::bit_vector& cvlst) {
+    return sqrt( dal::sqr(L2_norm(mf, U, N, cvlst)) 
+		 + dal::sqr(H1_semi_norm(mf, U, N, cvlst)));
+  }
+
+  template<class MESH_FEM, class VECT>
+  scalar_type H1_norm(MESH_FEM &mf, const VECT &U, size_type N) {
+    return sqrt( dal::sqr(L2_norm(mf, U, N)) 
+		 + dal::sqr(H1_semi_norm(mf, U, N)));
+  }
 }
 #endif 
