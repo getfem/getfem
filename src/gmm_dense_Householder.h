@@ -41,7 +41,7 @@ namespace gmm {
   /*    Rank one update  (complex and real version)                        */
   /* ********************************************************************* */
 
-  template <class Matrix, class VecX, class VecY>
+  template <typename Matrix, typename VecX, typename VecY>
   inline void rank_one_update(Matrix &A, const VecX& x,
 			      const VecY& y, row_major) {
     typedef typename linalg_traits<Matrix>::value_type T;
@@ -65,7 +65,7 @@ namespace gmm {
     }
   }
 
-  template <class Matrix, class VecX, class VecY>
+  template <typename Matrix, typename VecX, typename VecY>
   inline void rank_one_update(Matrix &A, const VecX& x,
 			      const VecY& y, col_major) {
     typedef typename linalg_traits<Matrix>::value_type T;
@@ -89,7 +89,7 @@ namespace gmm {
     }
   }
   
-  template <class Matrix, class VecX, class VecY>
+  template <typename Matrix, typename VecX, typename VecY>
   inline void rank_one_update(const Matrix &AA, const VecX& x,
 			      const VecY& y) {
     Matrix& A = const_cast<Matrix&>(AA);
@@ -101,7 +101,7 @@ namespace gmm {
   /*    Rank two update  (complex and real version)                        */
   /* ********************************************************************* */
 
-  template <class Matrix, class VecX, class VecY>
+  template <typename Matrix, typename VecX, typename VecY>
   inline void rank_two_update(Matrix &A, const VecX& x,
 			      const VecY& y, row_major) {
     typedef typename linalg_traits<Matrix>::value_type value_type;
@@ -130,7 +130,7 @@ namespace gmm {
     }
   }
 
-  template <class Matrix, class VecX, class VecY>
+  template <typename Matrix, typename VecX, typename VecY>
   inline void rank_two_update(Matrix &A, const VecX& x,
 			      const VecY& y, col_major) {
     typedef typename linalg_traits<Matrix>::value_type value_type;
@@ -159,7 +159,7 @@ namespace gmm {
     }
   }
   
-  template <class Matrix, class VecX, class VecY>
+  template <typename Matrix, typename VecX, typename VecY>
   inline void rank_two_update(const Matrix &AA, const VecX& x,
 			      const VecY& y) {
     Matrix& A = const_cast<Matrix&>(AA);
@@ -171,7 +171,7 @@ namespace gmm {
   /*    Householder vector computation (complex and real version)          */
   /* ********************************************************************* */
 
-  template <class VECT> void house_vector(const VECT &VV) {
+  template <typename VECT> void house_vector(const VECT &VV) {
     VECT &V = const_cast<VECT &>(VV);
     typedef typename linalg_traits<VECT>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
@@ -186,7 +186,7 @@ namespace gmm {
     V[0] = T(1);
   }
 
-  template <class VECT> void house_vector_last(const VECT &VV) {
+  template <typename VECT> void house_vector_last(const VECT &VV) {
     VECT &V = const_cast<VECT &>(VV);
     typedef typename linalg_traits<VECT>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
@@ -208,7 +208,7 @@ namespace gmm {
   /* ********************************************************************* */
 
   // multiply A to the left by the reflector stored in V. W is a temporary.
-  template <class MAT, class VECT1, class VECT2> inline
+  template <typename MAT, typename VECT1, typename VECT2> inline
     void row_house_update(const MAT &AA, const VECT1 &V, const VECT2 &WW) {
     VECT2 &W = const_cast<VECT2 &>(WW); MAT &A = const_cast<MAT &>(AA);
     typedef typename linalg_traits<MAT>::value_type value_type;
@@ -220,7 +220,7 @@ namespace gmm {
   }
 
   // multiply A to the right by the reflector stored in V. W is a temporary.
-  template <class MAT, class VECT1, class VECT2> inline
+  template <typename MAT, typename VECT1, typename VECT2> inline
     void col_house_update(const MAT &AA, const VECT1 &V, const VECT2 &WW) {
     VECT2 &W = const_cast<VECT2 &>(WW); MAT &A = const_cast<MAT &>(AA);
     typedef typename linalg_traits<MAT>::value_type value_type;
@@ -234,7 +234,7 @@ namespace gmm {
   /*    Hessemberg reduction with Householder.                             */
   /* ********************************************************************* */
 
-  template <class MAT1, class MAT2>
+  template <typename MAT1, typename MAT2>
     void Hessenberg_reduction(const MAT1& AA, const MAT2 &QQ, bool compute_Q){
     MAT1& A = const_cast<MAT1&>(AA); MAT2& Q = const_cast<MAT2&>(QQ);
     typedef typename linalg_traits<MAT1>::value_type value_type;
@@ -258,7 +258,7 @@ namespace gmm {
   /*    Householder tridiagonalization for symmetric matrices              */
   /* ********************************************************************* */
 
-  template <class MAT1, class MAT2> 
+  template <typename MAT1, typename MAT2> 
   void Householder_tridiagonalization(const MAT1 &AA, const MAT2 &QQ,
 				     bool compute_q) {
     MAT1 &A = const_cast<MAT1 &>(AA); MAT2 &Q = const_cast<MAT2 &>(QQ);
@@ -294,7 +294,7 @@ namespace gmm {
   /*    Real and complex Givens rotations                                  */
   /* ********************************************************************* */
 
-  template <class T> void Givens_rotation(T a, T b, T &c, T &s) {
+  template <typename T> void Givens_rotation(T a, T b, T &c, T &s) {
     typedef typename number_traits<T>::magnitude_type R;
     R aa = dal::abs(a), bb = dal::abs(b);
     if (bb == R(0)) { c = T(1); s = T(0);   return; }
@@ -306,23 +306,23 @@ namespace gmm {
   }
 
   // Apply Q* v
-  template <class T> inline
+  template <typename T> inline
   void Apply_Givens_rotation_left(T &x, T &y, T c, T s)
   { T t1=x, t2=y; x = dal::conj(c)*t1 - dal::conj(s)*t2; y = c*t2 + s*t1; }
 
   // Apply v^T Q
-  template <class T> inline
+  template <typename T> inline
   void Apply_Givens_rotation_right(T &x, T &y, T c, T s)
   { T t1=x, t2=y; x = c*t1 - s*t2; y = dal::conj(c)*t2 + dal::conj(s)*t1; }
 
-  template <class MAT, class T>
+  template <typename MAT, typename T>
   void row_rot(const MAT &AA, T c, T s, size_type i, size_type k) {
     MAT &A = const_cast<MAT &>(AA); // can be specialized for row matrices
     for (size_type j = 0; j < mat_ncols(A); ++j)
       Apply_Givens_rotation_left(A(i,j), A(k,j), c, s);
   }
 
-  template <class MAT, class T>
+  template <typename MAT, typename T>
   void col_rot(const MAT &AA, T c, T s, size_type i, size_type k) {
     MAT &A = const_cast<MAT &>(AA); // can be specialized for column matrices
     for (size_type j = 0; j < mat_nrows(A); ++j)

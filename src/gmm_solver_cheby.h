@@ -84,7 +84,8 @@ namespace gmm {
   //!SSOR or identity_preconditioner. 
   //!tparam: Iteration - Controls the stopping criteria 
 
-template < class Matrix, class Vector, class VectorB, class Preconditioner>
+template < typename Matrix, typename Vector, typename VectorB,
+	   typename Preconditioner>
 void cheby(const Matrix &A, Vector &x, const VectorB &b,
 	   const Preconditioner &M, iteration& iter,
 	   typename Vector::value_type eigmin, 

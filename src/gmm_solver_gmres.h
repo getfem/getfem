@@ -1,3 +1,4 @@
+/* -*- c++ -*- (enables emacs c++ mode)                                    */
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Generic Matrix Methods  (gmm)                                */
@@ -44,7 +45,8 @@ namespace gmm {
   //   J. Sci. Statist. Comp.  7(1986), pp, 856-869
   //
 
-  template < class Mat, class Vec, class VecB, class Precond, class Basis >
+  template <typename Mat, typename Vec, typename VecB, typename Precond,
+	    typename Basis >
   void gmres(const Mat &A, Vec &x, const VecB &b, const Precond &M,
 	     int restart, iteration &outer, Basis& KS) {
 
@@ -102,7 +104,7 @@ namespace gmm {
   }
 
 
-  template < class Mat, class Vec, class VecB, class Precond >
+  template <typename Mat, typename Vec, typename VecB, typename Precond >
   void gmres(const Mat &A, Vec &x, const VecB &b,
 	     const Precond &M, int restart, iteration& outer) {
     typedef typename linalg_traits<Mat>::value_type T;

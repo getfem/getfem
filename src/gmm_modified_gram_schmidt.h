@@ -61,7 +61,7 @@
 
 namespace gmm {
 
-  template <class T>
+  template <typename T>
   class modified_gram_schmidt {
   protected:
     typedef dense_matrix<T> MAT;
@@ -84,7 +84,7 @@ namespace gmm {
     
   };
 
-  template <class T, class VecHi> inline
+  template <typename T, typename VecHi> inline
   void orthogonalize(modified_gram_schmidt<T>& V, const VecHi& _Hi, size_t i) {
     VecHi& Hi = const_cast<VecHi&>(_Hi);
     
@@ -94,7 +94,7 @@ namespace gmm {
     }
   }
 
-  template <class T, class VecHi>
+  template <typename T, typename VecHi>
   void orthogonalize_with_refinment(modified_gram_schmidt<T>& V,
 				    const VecHi& _Hi, size_t i) {
     VecHi& Hi = const_cast<VecHi&>(_Hi);
@@ -109,7 +109,7 @@ namespace gmm {
     gmm::add(corr, sub_vector(Hi, SUBJ));
   }
   
-  template <class T, class VecS, class VecX>
+  template <typename T, typename VecS, typename VecX>
   void combine(modified_gram_schmidt<T>& V, const VecS& s, VecX& x, size_t i)
   { for (size_t j = 0; j < i; ++j) gmm::add(gmm::scaled(V[j], s[j]), x); }
 }

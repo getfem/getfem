@@ -112,7 +112,7 @@ namespace gmm
       res = dal::abs(nr); resminreach = std::min(resminreach, res);
       return converged();
     }
-    template <class VECT> bool converged(const VECT &v)
+    template <typename VECT> bool converged(const VECT &v)
     { return converged(gmm::vect_norm2(v)); }
 
     bool finished(double nr) {
@@ -131,7 +131,7 @@ namespace gmm
       }
       return (nit >= maxiter || converged(nr));
     }
-    template <class VECT> bool finished_vect(const VECT &v)
+    template <typename VECT> bool finished_vect(const VECT &v)
     { return finished(gmm::vect_norm2(v)); }
 
 

@@ -43,7 +43,8 @@ namespace gmm {
 
   #define PRECOND choleskyt_precond
 
-  template <class Matrix1, class Matrix2, class Matrix3, class SUBI>
+  template <typename Matrix1, typename Matrix2, typename Matrix3,
+	    typename SUBI>
   struct schwarz_additif_matrix {
     typedef typename linalg_traits<Matrix2>::value_type value_type;
     typedef typename dense_vector_type<value_type>::vector_type vector_type; 
@@ -62,8 +63,8 @@ namespace gmm {
 
   };
 
-  template <class Matrix1, class Matrix2, class Matrix3, class SUBI,
-	    class Vector2, class Vector3>
+  template <typename Matrix1, typename Matrix2, typename Matrix3,
+	    typename SUBI,    typename Vector2, typename Vector3>
   int schwarz_additif(const Matrix1 &A, Vector3 &u,
 		      const std::vector<Matrix2> &ml1,
 		      const std::vector<Matrix3> &ml2,
@@ -133,8 +134,8 @@ namespace gmm {
     return SAM.itebilan;
   }
   
-  template <class Matrix1, class Matrix2, class Matrix3, class SUBI,
-    class Vector2, class Vector3>
+  template <typename Matrix1, typename Matrix2, typename Matrix3,
+	    typename SUBI,    typename Vector2, typename Vector3>
   void mult(const schwarz_additif_matrix<Matrix1, Matrix2, Matrix3, SUBI> &M,
 	    const Vector2 &p, Vector3 &q) {
 
@@ -161,13 +162,14 @@ namespace gmm {
     M.iter.set_resmax((M.iter.get_resmax() + M.residu) * 0.5);
   }
 
-  template <class Matrix1, class Matrix2, class Matrix3, class SUBI,
-    class Vector2, class Vector3, class Vector4>
+  template <typename Matrix1, typename Matrix2, typename Matrix3,
+	    typename SUBI,    typename Vector2, typename Vector3,
+	    typename Vector4>
   void mult(const schwarz_additif_matrix<Matrix1, Matrix2, Matrix3, SUBI> &M,
 	    const Vector2 &p, const Vector3 &p2, Vector4 &q)
   { mult(M, p, q); add(p2, q); }
 
-  template <class SUBI, class Vector2, class Vector3>
+  template <typename SUBI, typename Vector2, typename Vector3>
   void global_to_local(const Vector2 &f, std::vector<Vector3> &fi,
 		       const std::vector<SUBI> &cor) {
     for (size_type i = 0; i < fi.size(); ++i) {
@@ -177,7 +179,7 @@ namespace gmm {
     }
   }
 
-  template <class SUBI, class Vector2, class Vector3>
+  template <typename SUBI, typename Vector2, typename Vector3>
   void local_to_global(const std::vector<Vector3> &fi, Vector2 &f, 
 		       const std::vector<SUBI> &cor) {
     clear(f);
@@ -189,7 +191,7 @@ namespace gmm {
     }
   }
 
-  template <class SUBI, class Vector2, class Vector3>
+  template <typename SUBI, typename Vector2, typename Vector3>
   void small_local_to_global(const std::vector<Vector3> &fi, Vector2 &f, 
 		       const std::vector<SUBI> &cor, size_type i) {
     clear(f);
@@ -202,9 +204,10 @@ namespace gmm {
   // CO global constraint matrix (CO * U <= cof)
   // f  RHS
 
-  template <class Matrix1, class Matrix2, class Matrix3, class Matrix4,
-	    class Matrix5, class Matrix6, class SUBI, class Vector2,
-	    class Vector3, class Vector4, class Vector5>
+  template <typename Matrix1, typename Matrix2, typename Matrix3,
+	    typename Matrix4, typename Matrix5, typename Matrix6,
+	    typename SUBI,    typename Vector2, typename Vector3,
+	    typename Vector4, typename Vector5>
   int schwarz_with_constraints(const Matrix1 &A,
 			       Vector3 &u, const Matrix4 &CO,
 			       const std::vector<Matrix2> &ml1,
@@ -352,13 +355,6 @@ namespace gmm {
 
     return itebilan;
   }
-
-
-
-
-
-
-
 
   
 }

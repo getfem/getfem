@@ -44,7 +44,7 @@ namespace gmm
   /*************************************************************************/
 
 
-  template<class T, class V> class ref_elt_vector {
+  template<typename T, typename V> class ref_elt_vector {
 
     V *pm;
     size_type l;
@@ -75,27 +75,27 @@ namespace gmm
     T operator /(T v) { return T(*this)/ v; } // necessary for unknow reason
   };  
   
-  template<class T, class V> T operator +(const ref_elt_vector<T, V> &re)
+  template<typename T, typename V> T operator +(const ref_elt_vector<T, V> &re)
     { return T(re); }
-  template<class T, class V> T operator -(const ref_elt_vector<T, V> &re)
+  template<typename T, typename V> T operator -(const ref_elt_vector<T, V> &re)
     { return -T(re); }
-  template<class T, class V> T operator +(const ref_elt_vector<T, V> &re, T v)
+  template<typename T, typename V> T operator +(const ref_elt_vector<T, V> &re, T v)
     { return T(re)+ v; }
-  template<class T, class V> T operator +(T v, const ref_elt_vector<T, V> &re)
+  template<typename T, typename V> T operator +(T v, const ref_elt_vector<T, V> &re)
     { return v+ T(re); }
-  template<class T, class V> T operator -(const ref_elt_vector<T, V> &re, T v)
+  template<typename T, typename V> T operator -(const ref_elt_vector<T, V> &re, T v)
     { return T(re)- v; }
-  template<class T, class V> T operator -(T v, const ref_elt_vector<T, V> &re)
+  template<typename T, typename V> T operator -(T v, const ref_elt_vector<T, V> &re)
     { return v- T(re); }
-  template<class T, class V> T operator *(const ref_elt_vector<T, V> &re, T v)
+  template<typename T, typename V> T operator *(const ref_elt_vector<T, V> &re, T v)
     { return T(re)* v; }
-  template<class T, class V> T operator *(T v, const ref_elt_vector<T, V> &re)
+  template<typename T, typename V> T operator *(T v, const ref_elt_vector<T, V> &re)
     { return v* T(re); }
-  template<class T, class V> T operator /(const ref_elt_vector<T, V> &re, T v)
+  template<typename T, typename V> T operator /(const ref_elt_vector<T, V> &re, T v)
     { return T(re)/ v; }
-  template<class T, class V> T operator /(T v, const ref_elt_vector<T, V> &re)
+  template<typename T, typename V> T operator /(T v, const ref_elt_vector<T, V> &re)
     { return v/ T(re); }
-  template<class T, class V> std::ostream &operator <<
+  template<typename T, typename V> std::ostream &operator <<
   (std::ostream &o, const ref_elt_vector<T, V> &re) { o << T(re); return o; }
   
 
@@ -105,7 +105,7 @@ namespace gmm
   /*                                                                       */
   /*************************************************************************/
   
-  template<class T> struct wsvector_iterator
+  template<typename T> struct wsvector_iterator
     : public std::map<size_type, T>::iterator {
     typedef typename std::map<size_type, T>::iterator base_it_type;
     typedef T                   value_type;
@@ -123,7 +123,7 @@ namespace gmm
     wsvector_iterator(const base_it_type &it) : base_it_type(it) {}
   };
 
-  template<class T> struct wsvector_const_iterator
+  template<typename T> struct wsvector_const_iterator
     : public std::map<size_type, T>::const_iterator {
     typedef typename std::map<size_type, T>::const_iterator base_it_type;
     typedef T                   value_type;
@@ -144,7 +144,7 @@ namespace gmm
   };
 
 
-  template<class T> class wsvector : public std::map<size_type, T> {
+  template<typename T> class wsvector : public std::map<size_type, T> {
   public:
     
     typedef typename std::map<int, T>::size_type size_type;
@@ -191,16 +191,16 @@ namespace gmm
     wsvector(void) { init(0); }
   };
 
-  template<class T>  void wsvector<T>::clean(double eps) {
+  template<typename T>  void wsvector<T>::clean(double eps) {
     iterator it = this->begin(), itf = ++it, ite = this->end();
     for ( ; it != ite; ++itf)
       { if (dal::abs((*it).e) <= eps) { erase(it); it = itf; } else ++it; }
   }
 
-  template<class T>  void wsvector<T>::out_of_range_error(void) const
+  template<typename T>  void wsvector<T>::out_of_range_error(void) const
   { DAL_THROW(std::out_of_range, "out of range"); }
 
-  template <class T> struct wsvector_access {
+  template <typename T> struct wsvector_access {
     typedef wsvector<T> V;
     typedef typename linalg_traits<V>::value_type value_type;
     typedef typename linalg_traits<V>::reference reference;
@@ -217,7 +217,7 @@ namespace gmm
 
   };
 
-  template <class T> struct wsvector_clear {
+  template <typename T> struct wsvector_clear {
     typedef wsvector<T> V;
     typedef typename linalg_traits<V>::iterator iterator;
     
@@ -225,7 +225,7 @@ namespace gmm
     { (const_cast<V *>((const V *)(o)))->clear(); }
   };
 
-  template <class T> struct linalg_traits<wsvector<T> > {
+  template <typename T> struct linalg_traits<wsvector<T> > {
     typedef wsvector<T> this_type;
     typedef linalg_false is_reference;
     typedef abstract_vector linalg_type;
@@ -246,22 +246,22 @@ namespace gmm
     { clear_type()(origin(v), begin(v), end(v)); }
   };
 
-  template<class T> std::ostream &operator <<
+  template<typename T> std::ostream &operator <<
   (std::ostream &o, const wsvector<T>& v) { gmm::write(o,v); return o; }
 
 #ifdef USING_BROKEN_GCC295
-  template <class T> struct linalg_traits<const wsvector<T> >
+  template <typename T> struct linalg_traits<const wsvector<T> >
     : public linalg_traits<wsvector<T> > {};
 #endif
 
   /******* Optimized BLAS for wsvector<T> **********************************/
 
-  template <class T> inline void copy(const wsvector<T> &v1, wsvector<T> &v2) {
+  template <typename T> inline void copy(const wsvector<T> &v1, wsvector<T> &v2) {
     if (vect_size(v1) != vect_size(v2))
       DAL_THROW(dimension_error,"dimensions mismatch");
     v2 = v1;
   }
-  template <class T> inline
+  template <typename T> inline
   void copy(const wsvector<T> &v1, const simple_vector_ref<wsvector<T> *> &v2){
     simple_vector_ref<wsvector<T> *>
       *svr = const_cast<simple_vector_ref<wsvector<T> *> *>(&v2);
@@ -271,22 +271,22 @@ namespace gmm
 	DAL_THROW(dimension_error,"dimensions mismatch");
     *pv = v1; svr->_begin = vect_begin(*pv); svr->_end = vect_end(*pv);
   }
-  template <class T> inline
+  template <typename T> inline
   void copy(const simple_vector_ref<const wsvector<T> *> &v1,
 	    wsvector<T> &v2)
   { copy(*(const wsvector<T> *)(v1.origin), v2); }
-  template <class T> inline
+  template <typename T> inline
   void copy(const simple_vector_ref<wsvector<T> *> &v1, wsvector<T> &v2)
   { copy(*(const wsvector<T> *)(v1.origin), v2); }
 
-  template <class T> inline void clean(wsvector<T> &v, double eps) {
+  template <typename T> inline void clean(wsvector<T> &v, double eps) {
     typename wsvector<T>::iterator it = v.begin(), ite = v.end(), itc;
     while (it != ite) 
       if (dal::abs((*it).second) <= eps)
 	{ itc=it; ++it; v.erase(itc); } else ++it; 
   }
 
-  template <class T>
+  template <typename T>
   inline void clean(const simple_vector_ref<wsvector<T> *> &l, double eps) {
     simple_vector_ref<wsvector<T> *>
       *svr = const_cast<simple_vector_ref<wsvector<T> *> *>(&l);
@@ -296,7 +296,7 @@ namespace gmm
     svr->_begin = vect_begin(*pv); svr->_end = vect_end(*pv);
   }
 
-  template <class T>
+  template <typename T>
   inline size_type nnz(const wsvector<T>& l) { return l.nb_stored(); }
 
   /*************************************************************************/
@@ -305,7 +305,7 @@ namespace gmm
   /*                                                                       */
   /*************************************************************************/
 
-  template<class T> struct _elt_rsvector {
+  template<typename T> struct _elt_rsvector {
     size_type c; T e;
     _elt_rsvector(void) {  }
     _elt_rsvector(size_type cc) { c = cc; }
@@ -315,7 +315,7 @@ namespace gmm
     bool operator != (const _elt_rsvector &a) const { return c != a.c; }
   };
 
-  template<class T> struct rsvector_iterator {
+  template<typename T> struct rsvector_iterator {
     typedef typename std::vector<_elt_rsvector<T> >::iterator IT;
     typedef T                   value_type;
     typedef value_type*         pointer;
@@ -343,7 +343,7 @@ namespace gmm
     rsvector_iterator(const IT &i) : it(i) {}
   };
 
-  template<class T> struct rsvector_const_iterator {
+  template<typename T> struct rsvector_const_iterator {
     typedef typename std::vector<_elt_rsvector<T> >::const_iterator IT;
     typedef T                   value_type;
     typedef const value_type*   pointer;
@@ -372,7 +372,7 @@ namespace gmm
     rsvector_const_iterator(const IT &i) : it(i) {}
   };
 
-  template<class T> class rsvector : public std::vector<_elt_rsvector<T> > {
+  template<typename T> class rsvector : public std::vector<_elt_rsvector<T> > {
   public:
     
     typedef std::vector<_elt_rsvector<T> > _base_type;
@@ -407,7 +407,7 @@ namespace gmm
     rsvector(void) : nbl(0) { }
   };
 
-  template <class T> void rsvector<T>::sup(size_type j) {
+  template <typename T> void rsvector<T>::sup(size_type j) {
     if (nb_stored() != 0) {
       _elt_rsvector<T> ev(j);
       iterator it = std::lower_bound(this->begin(), this->end(), ev);
@@ -418,7 +418,7 @@ namespace gmm
     }
   }
 
-  template <class T> void rsvector<T>::w(size_type c, const T &e) {
+  template <typename T> void rsvector<T>::w(size_type c, const T &e) {
 #   ifdef GMM_VERIFY
     if (c >= nbl) out_of_range_error();
 #   endif
@@ -444,7 +444,7 @@ namespace gmm
     }
   }
   
-  template <class T> T rsvector<T>::r(size_type c) const {
+  template <typename T> T rsvector<T>::r(size_type c) const {
 #   ifdef GMM_VERIFY
     if (c >= nbl) out_of_range_error();
 #   endif
@@ -456,10 +456,10 @@ namespace gmm
     return T(0);
   }
 
-  template<class T>  void rsvector<T>::out_of_range_error(void) const
+  template<typename T>  void rsvector<T>::out_of_range_error(void) const
   { DAL_THROW(std::out_of_range, "out of range"); }
 
-  template <class T> struct rsvector_access {
+  template <typename T> struct rsvector_access {
     typedef rsvector<T> V;
     typedef typename linalg_traits<V>::value_type value_type;
     typedef typename linalg_traits<V>::reference reference;
@@ -476,7 +476,7 @@ namespace gmm
 
   };
 
-  template <class T> struct rsvector_clear {
+  template <typename T> struct rsvector_clear {
     typedef rsvector<T> V;
     typedef typename linalg_traits<V>::iterator iterator;
     
@@ -484,7 +484,7 @@ namespace gmm
     { (*(const_cast<V *>((const V *)(o)))).clear(); }
   };
 
-  template <class T> struct linalg_traits<rsvector<T> > {
+  template <typename T> struct linalg_traits<rsvector<T> > {
     typedef rsvector<T> this_type;
     typedef linalg_false is_reference;
     typedef abstract_vector linalg_type;
@@ -507,22 +507,22 @@ namespace gmm
       { clear_type()(origin(v), begin(v), end(v)); }
   };
 
-  template<class T> std::ostream &operator <<
+  template<typename T> std::ostream &operator <<
   (std::ostream &o, const rsvector<T>& v) { gmm::write(o,v); return o; }
 
 #ifdef USING_BROKEN_GCC295
-  template <class T> struct linalg_traits<const rsvector<T> >
+  template <typename T> struct linalg_traits<const rsvector<T> >
     : public linalg_traits<rsvector<T> > {};
 #endif
 
   /******* Optimized operations for rsvector<T> ****************************/
 
-  template <class T> inline void copy(const rsvector<T> &v1, rsvector<T> &v2) {
+  template <typename T> inline void copy(const rsvector<T> &v1, rsvector<T> &v2) {
     if (vect_size(v1) != vect_size(v2))
       DAL_THROW(dimension_error,"dimensions mismatch");
     v2 = v1;
   }
-  template <class T> inline
+  template <typename T> inline
   void copy(const rsvector<T> &v1, const simple_vector_ref<rsvector<T> *> &v2){
     simple_vector_ref<rsvector<T> *>
       *svr = const_cast<simple_vector_ref<rsvector<T> *> *>(&v2);
@@ -532,15 +532,15 @@ namespace gmm
 	DAL_THROW(dimension_error,"dimensions mismatch");
     *pv = v1; svr->_begin = vect_begin(*pv); svr->_end = vect_end(*pv);
   }
-  template <class T> inline
+  template <typename T> inline
   void copy(const simple_vector_ref<const rsvector<T> *> &v1,
 	    rsvector<T> &v2)
   { copy(*(const rsvector<T> *)(v1.origin), v2); }
-  template <class T> inline
+  template <typename T> inline
   void copy(const simple_vector_ref<rsvector<T> *> &v1, rsvector<T> &v2)
   { copy(*(const rsvector<T> *)(v1.origin), v2); }
 
-  template <class V, class T> inline void add(const V &v1, rsvector<T> &v2) {
+  template <typename V, typename T> inline void add(const V &v1, rsvector<T> &v2) {
     if ((const void *)(&v1) != (const void *)(&v2)) {
       if (vect_size(v1) != vect_size(v2))
 	DAL_THROW(dimension_error,"dimensions mismatch");
@@ -548,15 +548,15 @@ namespace gmm
     }
   }
 
-  template <class V, class T> 
+  template <typename V, typename T> 
   inline void add_rsvector(const V &v1, rsvector<T> &v2, abstract_dense)
   { add(v1, v2, abstract_dense(), abstract_sparse()); }
 
-  template <class V, class T> 
+  template <typename V, typename T> 
   inline void add_rsvector(const V &v1, rsvector<T> &v2, abstract_skyline)
   { add(v1, v2, abstract_skyline(), abstract_sparse()); }
 
-  template <class V, class T> 
+  template <typename V, typename T> 
   void add_rsvector(const V &v1, rsvector<T> &v2, abstract_sparse) {
     typename linalg_traits<V>::const_iterator it1 = vect_const_begin(v1),
       ite1 = vect_const_end(v1);
@@ -581,7 +581,7 @@ namespace gmm
     while (it1 != ite1) { --it1; --it2; it2->c = it1.index(); it2->e = *it1; }
   }
 
-  template <class V, class T> void copy(const V &v1, rsvector<T> &v2) {
+  template <typename V, typename T> void copy(const V &v1, rsvector<T> &v2) {
     if ((const void *)(&v1) != (const void *)(&v2)) {
       if (vect_size(v1) != vect_size(v2))
 	DAL_THROW(dimension_error,"dimensions mismatch");
@@ -593,15 +593,15 @@ namespace gmm
     }
   }
 
-  template <class V, class T> 
+  template <typename V, typename T> 
   void copy_rsvector(const V &v1, rsvector<T> &v2, abstract_dense)
   { copy_vect(v1, v2, abstract_dense(), abstract_sparse()); }
 
-  template <class V, class T> 
+  template <typename V, typename T> 
   void copy_rsvector(const V &v1, rsvector<T> &v2, abstract_skyline)
   { copy_vect(v1, v2, abstract_skyline(), abstract_sparse()); }
 
-  template <class V, class T> // à refaire
+  template <typename V, typename T> // à refaire
   void copy_rsvector(const V &v1, rsvector<T> &v2, abstract_sparse) {
      typename linalg_traits<V>::const_iterator it = vect_const_begin(v1),
       ite = vect_const_end(v1);
@@ -620,7 +620,7 @@ namespace gmm
     }
   }
   
-  template <class T> inline void clean(rsvector<T> &v, double eps) {
+  template <typename T> inline void clean(rsvector<T> &v, double eps) {
     typename rsvector<T>::iterator it = v.begin(), ite = v.end();
     for (; it != ite; ++it) if (dal::abs((*it).e) <= eps) break;
     if (it != ite) {
@@ -632,7 +632,7 @@ namespace gmm
     }
   }
 
-  template <class T>
+  template <typename T>
   inline void clean(const simple_vector_ref<rsvector<T> *> &l, double eps) {
     simple_vector_ref<rsvector<T> *>
       *svr = const_cast<simple_vector_ref<rsvector<T> *> *>(&l);
@@ -642,7 +642,7 @@ namespace gmm
     svr->_begin = vect_begin(*pv); svr->_end = vect_end(*pv);
   }
   
-  template <class T>
+  template <typename T>
   inline size_type nnz(const rsvector<T>& l) { return l.nb_stored(); }
 
   /*************************************************************************/
@@ -651,7 +651,7 @@ namespace gmm
   /*                                                                       */
   /*************************************************************************/
 
-  template<class T> struct slvector_iterator
+  template<typename T> struct slvector_iterator
   {
     typedef T value_type;
     typedef T *pointer;
@@ -703,7 +703,7 @@ namespace gmm
       : it(iter), shift(s) {}
   };
 
-  template<class T> struct slvector_const_iterator
+  template<typename T> struct slvector_const_iterator
   {
     typedef T value_type;
     typedef const T *pointer;
@@ -758,7 +758,7 @@ namespace gmm
   };
 
 
-  template <class T> class slvector {
+  template <typename T> class slvector {
     
   public :
     typedef slvector_iterator<T> iterators;
@@ -808,7 +808,7 @@ namespace gmm
 
   };
 
-  template<class T>  void slvector<T>::w(size_type c, const T &e) {
+  template<typename T>  void slvector<T>::w(size_type c, const T &e) {
     // cout << "vecteur avant : " << *this << " ajout à l'indice " << c << " de " << e << endl;
 #   ifdef GMM_VERIFY
       if (c >= _size) out_of_range_error();
@@ -831,10 +831,10 @@ namespace gmm
       // cout << "résultat : " << *this << endl;
     }
 
-  template<class T>  void slvector<T>::out_of_range_error(void) const
+  template<typename T>  void slvector<T>::out_of_range_error(void) const
   { DAL_THROW(std::out_of_range, "out of range"); }
 
-  template <class T> struct slvector_access {
+  template <typename T> struct slvector_access {
     typedef slvector<T> V;
     typedef typename linalg_traits<V>::value_type value_type;
     typedef typename linalg_traits<V>::reference reference;
@@ -851,7 +851,7 @@ namespace gmm
 
   };
 
-  template <class T> struct slvector_clear {
+  template <typename T> struct slvector_clear {
     typedef slvector<T> V;
     typedef typename linalg_traits<V>::iterator iterator;
     
@@ -859,7 +859,7 @@ namespace gmm
     { (*(const_cast<V *>((const V *)(o)))).clear(); }
   };
 
-  template <class T> struct linalg_traits<slvector<T> > {
+  template <typename T> struct linalg_traits<slvector<T> > {
     typedef slvector<T> this_type;
     typedef linalg_false is_reference;
     typedef abstract_vector linalg_type;
@@ -884,35 +884,35 @@ namespace gmm
       { clear_type()(origin(v), begin(v), end(v)); }
   };
 
-  template<class T> std::ostream &operator <<
+  template<typename T> std::ostream &operator <<
   (std::ostream &o, const slvector<T>& v) { gmm::write(o,v); return o; }
 
 #ifdef USING_BROKEN_GCC295
-  template <class T> struct linalg_traits<const slvector<T> >
+  template <typename T> struct linalg_traits<const slvector<T> >
     : public linalg_traits<slvector<T> > {};
 #endif
 
-  template <class T>
+  template <typename T>
   inline size_type nnz(const slvector<T>& l) { return l.last() - l.first(); }
 
 }
 
 namespace dal {
 
-  template <class T, class V> inline
+  template <typename T, typename V> inline
   T sqr(const gmm::ref_elt_vector<T, V> &a)
   { return T(a) * T(a); }
 
-  template <class T, class V> inline
+  template <typename T, typename V> inline
   typename gmm::number_traits<T>::magnitude_type
   abs(const gmm::ref_elt_vector<T, V> &a)
   { return dal::abs(T(a)); }
 
-  template <class T, class V> inline
+  template <typename T, typename V> inline
   typename gmm::number_traits<T>::magnitude_type
   abs_sqr(const gmm::ref_elt_vector<T, V> &a)
   { return dal::abs_sqr(T(a)); }
-  template <class T, class V> inline
+  template <typename T, typename V> inline
   T conj(const gmm::ref_elt_vector<T, V> &a)
   { return dal::conj(T(a)); }
 }

@@ -38,7 +38,7 @@ namespace gmm {
   /*		transposed reference                    		   */
   /* ********************************************************************* */
   
-  template <class PT> struct  transposed_row_ref {
+  template <typename PT> struct  transposed_row_ref {
     
     typedef transposed_row_ref<PT> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
@@ -64,7 +64,7 @@ namespace gmm {
     { return access_type()(_begin+j, i); }
   };
 
-  template <class PT> struct transposed_row_matrix_access {
+  template <typename PT> struct transposed_row_matrix_access {
     typedef transposed_row_ref<PT> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
     typedef typename linalg_traits<this_type>::reference reference;
@@ -81,7 +81,7 @@ namespace gmm {
 
   };
 
-  template <class PT> struct linalg_traits<transposed_row_ref<PT> > {
+  template <typename PT> struct linalg_traits<transposed_row_ref<PT> > {
     typedef transposed_row_ref<PT> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
     typedef typename which_reference<PT>::is_reference is_reference;
@@ -119,7 +119,7 @@ namespace gmm {
     static void do_clear(this_type &v);
   };
   
-  template <class PT> 
+  template <typename PT> 
   void linalg_traits<transposed_row_ref<PT> >::do_clear(this_type &v) { 
     col_iterator it = mat_col_begin(v), ite = mat_col_end(v);
     for (; it != ite; ++it) clear(col(it));
@@ -127,15 +127,15 @@ namespace gmm {
   
 
 #ifdef USING_BROKEN_GCC295
-  template <class PT> struct linalg_traits<const transposed_row_ref<PT> > 
+  template <typename PT> struct linalg_traits<const transposed_row_ref<PT> > 
   : public linalg_traits<transposed_row_ref<PT> > {}; 
 #endif
 
-  template<class PT> std::ostream &operator <<
+  template<typename PT> std::ostream &operator <<
   (std::ostream &o, const transposed_row_ref<PT>& m)
   { gmm::write(o,m); return o; }
 
-  template <class PT> struct  transposed_col_ref {
+  template <typename PT> struct  transposed_col_ref {
     
     typedef transposed_col_ref<PT> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
@@ -161,7 +161,7 @@ namespace gmm {
     { return access_type()(_begin+i, j); }
   };
 
-  template <class PT> struct transposed_col_matrix_access {
+  template <typename PT> struct transposed_col_matrix_access {
     typedef transposed_col_ref<PT> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
     typedef typename linalg_traits<this_type>::reference reference;
@@ -178,7 +178,7 @@ namespace gmm {
     
   };
 
-  template <class PT> struct linalg_traits<transposed_col_ref<PT> > {
+  template <typename PT> struct linalg_traits<transposed_col_ref<PT> > {
     typedef transposed_col_ref<PT> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
     typedef typename which_reference<PT>::is_reference is_reference;
@@ -215,7 +215,7 @@ namespace gmm {
     static void do_clear(this_type &m);
   };
 
-  template <class PT> 
+  template <typename PT> 
   void linalg_traits<transposed_col_ref<PT> >::do_clear(this_type &v) { 
     row_iterator it = mat_row_begin(v), ite = mat_row_end(v);
     for (; it != ite; ++it) clear(row(it));
@@ -223,41 +223,41 @@ namespace gmm {
 
 
 #ifdef USING_BROKEN_GCC295
-  template <class PT> struct linalg_traits<const transposed_col_ref<PT> > 
+  template <typename PT> struct linalg_traits<const transposed_col_ref<PT> > 
   : public linalg_traits<transposed_col_ref<PT> > {}; 
 #endif
 
-  template<class PT> std::ostream &operator <<
+  template<typename PT> std::ostream &operator <<
   (std::ostream &o, const transposed_col_ref<PT>& m)
   { gmm::write(o,m); return o; }
 
-  template <class TYPE, class PT> struct _transposed_return {
+  template <typename TYPE, typename PT> struct _transposed_return {
     typedef abstract_null_type return_type;
   };
-  template <class PT> struct _transposed_return<row_major, PT> {
+  template <typename PT> struct _transposed_return<row_major, PT> {
     typedef typename std::iterator_traits<PT>::value_type L;
     typedef typename select_return<transposed_row_ref<const L *>,
             transposed_row_ref< L *>, PT>::return_type return_type;
   };
-  template <class PT> struct _transposed_return<col_major, PT> {
+  template <typename PT> struct _transposed_return<col_major, PT> {
     typedef typename std::iterator_traits<PT>::value_type L;
     typedef typename select_return<transposed_col_ref<const L *>,
             transposed_col_ref< L *>, PT>::return_type return_type;
   };
-  template <class PT> struct transposed_return {
+  template <typename PT> struct transposed_return {
     typedef typename std::iterator_traits<PT>::value_type L;
     typedef typename _transposed_return<typename principal_orientation_type<
             typename linalg_traits<L>::sub_orientation>::potype,
 	    PT>::return_type return_type;
   };
 
-  template <class L> inline 
+  template <typename L> inline 
   typename transposed_return<const L *>::return_type transposed(const L &l) {
     return typename transposed_return<const L *>::return_type
       (linalg_cast(const_cast<L &>(l)));
   }
 
-  template <class L> inline 
+  template <typename L> inline 
   typename transposed_return<L *>::return_type transposed(L &l)
   { return typename transposed_return<L *>::return_type(linalg_cast(l)); }
 

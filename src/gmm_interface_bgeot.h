@@ -41,7 +41,7 @@ namespace gmm {
   /*		                                         		   */
   /* ********************************************************************* */
 
-  template <class T> struct linalg_traits<bgeot::vsvector<T> > {
+  template <typename T> struct linalg_traits<bgeot::vsvector<T> > {
     typedef bgeot::vsvector<T> this_type;
     typedef linalg_false is_reference;
     typedef abstract_vector linalg_type;
@@ -62,11 +62,11 @@ namespace gmm {
   };
 
 #ifdef USING_BROKEN_GCC295
-  template <class T> struct linalg_traits<const bgeot::vsvector<T> > 
+  template <typename T> struct linalg_traits<const bgeot::vsvector<T> > 
     : public linalg_traits<bgeot::vsvector<T> > {};
 #endif
 
-  template <class VECT> struct linalg_traits<bgeot::PT<VECT> > {
+  template <typename VECT> struct linalg_traits<bgeot::PT<VECT> > {
     typedef bgeot::PT<VECT> this_type;
     typedef linalg_false is_reference;
     typedef typename linalg_traits<VECT>::value_type value_type;
@@ -87,7 +87,7 @@ namespace gmm {
   };
 
 #ifdef USING_BROKEN_GCC295
-  template <class VECT> struct linalg_traits<const bgeot::PT<VECT> >
+  template <typename VECT> struct linalg_traits<const bgeot::PT<VECT> >
   : public linalg_traits<bgeot::PT<VECT> > {};
 #endif
 

@@ -38,7 +38,7 @@ namespace gmm {
   /*		sub row matrices type                                      */
   /* ********************************************************************* */
 
-  template <class PT, class SUBI1, class SUBI2> struct gen_sub_row_matrix {
+  template <typename PT, typename SUBI1, typename SUBI2> struct gen_sub_row_matrix {
     typedef gen_sub_row_matrix<PT, SUBI1, SUBI2> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
     typedef M * CPT;
@@ -68,7 +68,7 @@ namespace gmm {
       si1(cr.si1), si2(cr.si2), _begin(cr._begin),origin(cr.origin) {}
   };
 
-  template <class PT, class SUBI1, class SUBI2> 
+  template <typename PT, typename SUBI1, typename SUBI2> 
   struct gen_sub_row_matrix_access {
     typedef gen_sub_row_matrix<PT, SUBI1, SUBI2> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
@@ -86,7 +86,7 @@ namespace gmm {
     
   };
 
-  template <class PT, class SUBI1, class SUBI2>
+  template <typename PT, typename SUBI1, typename SUBI2>
   struct gen_sub_row_matrix_iterator {
     typedef gen_sub_row_matrix<PT, SUBI1, SUBI2> this_type;
     typedef typename modifiable_pointer<PT>::pointer MPT;
@@ -137,7 +137,7 @@ namespace gmm {
     
   };
 
-  template <class PT, class SUBI1, class SUBI2>
+  template <typename PT, typename SUBI1, typename SUBI2>
   struct linalg_traits<gen_sub_row_matrix<PT, SUBI1, SUBI2> > {
     typedef gen_sub_row_matrix<PT, SUBI1, SUBI2> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
@@ -186,12 +186,12 @@ namespace gmm {
     }
   };
   
-  template <class PT, class SUBI1, class SUBI2> std::ostream &operator <<
+  template <typename PT, typename SUBI1, typename SUBI2> std::ostream &operator <<
   (std::ostream &o, const gen_sub_row_matrix<PT, SUBI1, SUBI2>& m)
   { gmm::write(o,m); return o; }
 
 #ifdef USING_BROKEN_GCC295
-  template <class PT, class SUBI1, class SUBI2>
+  template <typename PT, typename SUBI1, typename SUBI2>
   struct linalg_traits<const gen_sub_row_matrix<PT, SUBI1, SUBI2> >
     : public linalg_traits<gen_sub_row_matrix<PT, SUBI1, SUBI2> > {};
 #endif
@@ -200,7 +200,7 @@ namespace gmm {
   /*		sub column matrices type                                   */
   /* ********************************************************************* */
 
-  template <class PT, class SUBI1, class SUBI2> struct gen_sub_col_matrix {
+  template <typename PT, typename SUBI1, typename SUBI2> struct gen_sub_col_matrix {
     typedef gen_sub_col_matrix<PT, SUBI1, SUBI2> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
     typedef M * CPT;
@@ -231,7 +231,7 @@ namespace gmm {
       si1(cr.si1), si2(cr.si2), _begin(cr._begin),origin(cr.origin) {}
   };
 
-  template <class PT, class SUBI1, class SUBI2> 
+  template <typename PT, typename SUBI1, typename SUBI2> 
   struct gen_sub_col_matrix_access {
     typedef gen_sub_col_matrix<PT, SUBI1, SUBI2> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
@@ -248,7 +248,7 @@ namespace gmm {
     { return access_type()(*itcol, itcol.si1.index(i)); }
   };
 
-  template <class PT, class SUBI1, class SUBI2>
+  template <typename PT, typename SUBI1, typename SUBI2>
   struct gen_sub_col_matrix_iterator {
     typedef gen_sub_col_matrix<PT, SUBI1, SUBI2> this_type;
     typedef typename modifiable_pointer<PT>::pointer MPT;
@@ -298,7 +298,7 @@ namespace gmm {
       : it(iter), si1(s1), si2(s2), ii(i) { }
   };
 
-  template <class PT, class SUBI1, class SUBI2>
+  template <typename PT, typename SUBI1, typename SUBI2>
   struct linalg_traits<gen_sub_col_matrix<PT, SUBI1, SUBI2> > {
     typedef gen_sub_col_matrix<PT, SUBI1, SUBI2> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
@@ -346,12 +346,12 @@ namespace gmm {
     }
   };
 
-  template <class PT, class SUBI1, class SUBI2> std::ostream &operator <<
+  template <typename PT, typename SUBI1, typename SUBI2> std::ostream &operator <<
   (std::ostream &o, const gen_sub_col_matrix<PT, SUBI1, SUBI2>& m)
   { gmm::write(o,m); return o; }
 
 #ifdef USING_BROKEN_GCC295
-  template <class PT, class SUBI1, class SUBI2>
+  template <typename PT, typename SUBI1, typename SUBI2>
   struct linalg_traits<const gen_sub_col_matrix<PT, SUBI1, SUBI2> >
     : public linalg_traits<gen_sub_col_matrix<PT, SUBI1, SUBI2> > {};
 #endif
@@ -362,17 +362,17 @@ namespace gmm {
   /* ******************************************************************** */
 
   
-  template <class PT, class SUBI1, class SUBI2, class ST>
+  template <typename PT, typename SUBI1, typename SUBI2, typename ST>
   struct _sub_matrix_type {
     typedef abstract_null_type return_type;
   };
-  template <class PT, class SUBI1, class SUBI2>
+  template <typename PT, typename SUBI1, typename SUBI2>
   struct _sub_matrix_type<PT, SUBI1, SUBI2, col_major>
   { typedef gen_sub_col_matrix<PT, SUBI1, SUBI2> matrix_type; };
-  template <class PT, class SUBI1, class SUBI2>
+  template <typename PT, typename SUBI1, typename SUBI2>
   struct _sub_matrix_type<PT, SUBI1, SUBI2, row_major>
   { typedef gen_sub_row_matrix<PT, SUBI1, SUBI2> matrix_type; };
-  template <class PT, class SUBI1, class SUBI2>
+  template <typename PT, typename SUBI1, typename SUBI2>
   struct sub_matrix_type {
     typedef typename std::iterator_traits<PT>::value_type M;
     typedef typename _sub_matrix_type<PT, SUBI1, SUBI2,
@@ -380,7 +380,7 @@ namespace gmm {
         linalg_traits<M>::sub_orientation>::potype>::matrix_type matrix_type;
   };
 
-  template <class M, class SUBI1, class SUBI2>  inline
+  template <typename M, typename SUBI1, typename SUBI2>  inline
     typename select_return<typename sub_matrix_type<const M *, SUBI1, SUBI2>
     ::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI2>::matrix_type,
     M *>::return_type
@@ -390,7 +390,7 @@ namespace gmm {
       ::matrix_type, M *>::return_type(linalg_cast(m), si1, si2);
   }
 
-  template <class M, class SUBI1, class SUBI2>  inline
+  template <typename M, typename SUBI1, typename SUBI2>  inline
     typename select_return<typename sub_matrix_type<const M *, SUBI1, SUBI2>
     ::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI2>::matrix_type,
     const M *>::return_type
@@ -400,7 +400,7 @@ namespace gmm {
       ::matrix_type, const M *>::return_type(linalg_cast(m), si1, si2);
   }
 
-  template <class M, class SUBI1>  inline
+  template <typename M, typename SUBI1>  inline
     typename select_return<typename sub_matrix_type<const M *, SUBI1, SUBI1>
     ::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI1>::matrix_type,
     M *>::return_type
@@ -410,7 +410,7 @@ namespace gmm {
       ::matrix_type, M *>::return_type(linalg_cast(m), si1, si1);
   }
 
-  template <class M, class SUBI1>  inline
+  template <typename M, typename SUBI1>  inline
     typename select_return<typename sub_matrix_type<const M *, SUBI1, SUBI1>
     ::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI1>::matrix_type,
     const M *>::return_type

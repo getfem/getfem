@@ -32,6 +32,8 @@
 #ifndef __GMM_H
 #define __GMM_H
 
+#include <dal_std.h>
+
 #if !defined(NOGMM_VERIFY) && defined(GETFEM_VERIFY)
 #   define GMM_VERIFY
 #endif

@@ -38,7 +38,7 @@ namespace gmm {
   /*		Scaled references on vectors            		   */
   /* ********************************************************************* */
 
-  template <class IT> struct scaled_const_iterator {
+  template <typename IT> struct scaled_const_iterator {
     typedef typename std::iterator_traits<IT>::value_type      value_type;
     typedef typename std::iterator_traits<IT>::pointer         pointer;
     typedef typename std::iterator_traits<IT>::reference       reference;
@@ -81,7 +81,7 @@ namespace gmm {
       { return (it < i.it); }
   };
 
-  template <class V> struct scaled_vector_const_ref {
+  template <typename V> struct scaled_vector_const_ref {
     typedef scaled_vector_const_ref<V> this_type;
     typedef typename linalg_traits<V>::value_type value_type;
     typedef typename linalg_traits<V>::const_iterator iterator;
@@ -101,7 +101,7 @@ namespace gmm {
     { return r * access_type()(origin, _begin, _end, i); }
   };
 
-  template <class V> struct scaled_vector_const_access {
+  template <typename V> struct scaled_vector_const_access {
     typedef scaled_vector_const_ref<V> this_type;
     typedef typename linalg_traits<V>::value_type value_type;
     typedef typename linalg_traits<this_type>::const_iterator iterator;
@@ -113,7 +113,7 @@ namespace gmm {
     }
   };
 
-  template <class V> struct linalg_traits<scaled_vector_const_ref<V> > {
+  template <typename V> struct linalg_traits<scaled_vector_const_ref<V> > {
     typedef scaled_vector_const_ref<V> this_type;
     typedef linalg_const is_reference;
     typedef abstract_vector linalg_type;
@@ -137,12 +137,12 @@ namespace gmm {
     static const void* origin(const this_type &v) { return v.origin; }
   };
 
-   template<class V> std::ostream &operator <<
+   template<typename V> std::ostream &operator <<
   (std::ostream &o, const scaled_vector_const_ref<V>& m)
   { gmm::write(o,m); return o; }
 
 #ifdef USING_BROKEN_GCC295
-  template <class V> struct linalg_traits<const scaled_vector_const_ref<V> > 
+  template <typename V> struct linalg_traits<const scaled_vector_const_ref<V> > 
     : public linalg_traits<scaled_vector_const_ref<V> > {};
 #endif
 
@@ -151,7 +151,7 @@ namespace gmm {
   /*		Scaled references on matrices            		   */
   /* ********************************************************************* */
 
-  template <class M> struct scaled_row_const_iterator {
+  template <typename M> struct scaled_row_const_iterator {
     typedef scaled_row_const_iterator<M> iterator;
     typedef typename linalg_traits<M>::const_row_iterator ITER;
     typedef typename linalg_traits<M>::value_type value_type;
@@ -187,7 +187,7 @@ namespace gmm {
 
   };
 
-  template <class M> struct  scaled_row_matrix_const_ref {
+  template <typename M> struct  scaled_row_matrix_const_ref {
     
     typedef scaled_row_matrix_const_ref<M> this_type;
     typedef typename linalg_traits<M>::const_row_iterator iterator;
@@ -206,7 +206,7 @@ namespace gmm {
     { return r * access_type()(_begin+i, j); }
   };
 
-  template <class M> struct scaled_row_matrix_access {
+  template <typename M> struct scaled_row_matrix_access {
     typedef scaled_row_matrix_const_ref<M> this_type;
     typedef typename linalg_traits<this_type>::row_iterator iterator;
     typedef typename linalg_traits<M>::value_type value_type;
@@ -216,7 +216,7 @@ namespace gmm {
     { return itrow.r * access_type()(itrow.it, i); }
   };
 
-  template <class M> struct linalg_traits<scaled_row_matrix_const_ref<M> > {
+  template <typename M> struct linalg_traits<scaled_row_matrix_const_ref<M> > {
     typedef scaled_row_matrix_const_ref<M> this_type;
     typedef linalg_const is_reference;
     typedef abstract_matrix linalg_type;
@@ -247,18 +247,18 @@ namespace gmm {
     static const void* origin(const this_type &m) { return m.origin; }
   };
 
-  template<class M> std::ostream &operator <<
+  template<typename M> std::ostream &operator <<
   (std::ostream &o, const scaled_row_matrix_const_ref<M>& m)
   { gmm::write(o,m); return o; }
 
 #ifdef USING_BROKEN_GCC295
-  template <class M>
+  template <typename M>
   struct linalg_traits<const scaled_row_matrix_const_ref<M> > 
     : public linalg_traits<scaled_row_matrix_const_ref<M> > {};
 #endif
 
 
-  template <class M> struct scaled_col_const_iterator {
+  template <typename M> struct scaled_col_const_iterator {
     typedef scaled_col_const_iterator<M> iterator;
     typedef typename linalg_traits<M>::const_col_iterator ITER;
     typedef typename linalg_traits<M>::value_type value_type;
@@ -294,7 +294,7 @@ namespace gmm {
 
   };
 
-  template <class M> struct  scaled_col_matrix_const_ref {
+  template <typename M> struct  scaled_col_matrix_const_ref {
     
     typedef scaled_col_matrix_const_ref<M> this_type;
     typedef typename linalg_traits<M>::const_col_iterator iterator;
@@ -313,7 +313,7 @@ namespace gmm {
     { return r * access_type()(_begin+j, i); }
   };
 
-  template <class M> struct scaled_col_matrix_access {
+  template <typename M> struct scaled_col_matrix_access {
     typedef scaled_col_matrix_const_ref<M> this_type;
     typedef typename linalg_traits<this_type>::const_col_iterator iterator;
     typedef typename linalg_traits<M>::value_type value_type;
@@ -323,7 +323,7 @@ namespace gmm {
     { return itcol.r * access_type(itcol.it, i); }
   };
 
-  template <class M> struct linalg_traits<scaled_col_matrix_const_ref<M> > {
+  template <typename M> struct linalg_traits<scaled_col_matrix_const_ref<M> > {
     typedef scaled_col_matrix_const_ref<M> this_type;
     typedef linalg_const is_reference;
     typedef abstract_matrix linalg_type;
@@ -354,66 +354,66 @@ namespace gmm {
     static const void* origin(const this_type &m) { return m.origin; }
   };
 
-  template<class M> std::ostream &operator <<
+  template<typename M> std::ostream &operator <<
   (std::ostream &o, const scaled_col_matrix_const_ref<M>& m)
   { gmm::write(o,m); return o; }
 
 
 #ifdef USING_BROKEN_GCC295
-  template <class M>
+  template <typename M>
   struct linalg_traits<const scaled_col_matrix_const_ref<M> > 
     : public linalg_traits<scaled_col_matrix_const_ref<M> > {};
 #endif
 
-  template <class L, class R> struct __scaled_return {
+  template <typename L, typename R> struct __scaled_return {
     typedef abstract_null_type return_type;
   };
-  template <class L> struct __scaled_return<L, row_major> 
+  template <typename L> struct __scaled_return<L, row_major> 
   { typedef scaled_row_matrix_const_ref<L> return_type; };
-  template <class L> struct __scaled_return<L, col_major> 
+  template <typename L> struct __scaled_return<L, col_major> 
   { typedef scaled_col_matrix_const_ref<L> return_type; };
   
 
-  template <class L, class LT> struct _scaled_return {
+  template <typename L, typename LT> struct _scaled_return {
     typedef abstract_null_type return_type;
   };
-  template <class L> struct _scaled_return<L, abstract_vector> 
+  template <typename L> struct _scaled_return<L, abstract_vector> 
   { typedef scaled_vector_const_ref<L> return_type; };
-  template <class L> struct _scaled_return<L, abstract_matrix> {
+  template <typename L> struct _scaled_return<L, abstract_matrix> {
     typedef typename __scaled_return<L, 
       typename principal_orientation_type<typename
       linalg_traits<L>::sub_orientation>::potype>::return_type return_type;
   };
 
-  template <class L> struct scaled_return {
+  template <typename L> struct scaled_return {
     typedef typename _scaled_return<L, typename
       linalg_traits<L>::linalg_type>::return_type return_type;
   };
 
-  template <class L> inline
+  template <typename L> inline
   typename scaled_return<L>::return_type
   scaled(const L &v, typename linalg_traits<L>::value_type x)
   { return scaled(v, x, typename linalg_traits<L>::linalg_type()); }
 
-  template <class V> inline
+  template <typename V> inline
   typename scaled_return<V>::return_type
   scaled(const V &v, typename linalg_traits<V>::value_type x, abstract_vector)
   { return scaled_vector_const_ref<V>(v, x); }
 
-  template <class M> inline
+  template <typename M> inline
   typename scaled_return<M>::return_type
   scaled(const M &m, typename linalg_traits<M>::value_type x,abstract_matrix) {
     return scaled(m, x,  typename principal_orientation_type<typename
 		  linalg_traits<M>::sub_orientation>::potype());
   }
 
-  template <class M> inline
+  template <typename M> inline
   typename scaled_return<M>::return_type
   scaled(const M &m, typename linalg_traits<M>::value_type x, row_major) {
     return scaled_row_matrix_const_ref<M>(m, x);
   }
 
-  template <class M> inline
+  template <typename M> inline
   typename scaled_return<M>::return_type
   scaled(const M &m, typename linalg_traits<M>::value_type x, col_major) {
     return scaled_col_matrix_const_ref<M>(m, x);
@@ -424,34 +424,34 @@ namespace gmm {
   /*	matrix or vector scale                                	          */
   /* ******************************************************************** */
 
-  template <class L> inline
+  template <typename L> inline
   void scale(L& l, typename linalg_traits<L>::value_type a)
   { scale(l, a, typename linalg_traits<L>::linalg_type()); }
 
-  template <class L> inline
+  template <typename L> inline
   void scale(const L& l, typename linalg_traits<L>::value_type a)
   { scale(linalg_const_cast(l), a); }
 
-  template <class L> inline
+  template <typename L> inline
   void scale(L& l, typename linalg_traits<L>::value_type a, abstract_vector) {
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
     for ( ; it != ite; ++it) *it *= a;
   }
 
-  template <class L> 
+  template <typename L> 
   void scale(L& l, typename linalg_traits<L>::value_type a, abstract_matrix) {
     scale(l, a, typename principal_orientation_type<typename
 	  linalg_traits<L>::sub_orientation>::potype());
   }
 
-  template <class L> 
+  template <typename L> 
   void scale(L& l, typename linalg_traits<L>::value_type a, row_major) {
     typename linalg_traits<L>::row_iterator it = mat_row_begin(l),
       ite = mat_row_end(l);
     for ( ; it != ite; ++it) scale(linalg_traits<L>::row(*it), a);
   }
 
-  template <class L> 
+  template <typename L> 
   void scale(L& l, typename linalg_traits<L>::value_type a, col_major) {
     typename linalg_traits<L>::col_iterator it = mat_col_begin(l),
       ite = mat_col_end(l);

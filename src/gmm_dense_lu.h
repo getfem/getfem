@@ -68,11 +68,11 @@ namespace gmm {
   // The pivot indices in ipvt are indexed starting from 1
   // so that this is compatible with LAPACK (Fortran).
   //
-  template <class DenseMatrix, class Pvector>
+  template <typename DenseMatrix, typename Pvector>
   size_type lu_factor(DenseMatrix& A, Pvector& ipvt) {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
-    size_type info = 0, i, j, jp, M = A.nrows(), N = A.ncols();
+    size_type info(0), i, j, jp, M(mat_nrows(A)), N(mat_ncols(A));
     size_type NN = std::min(M, N);
     std::vector<T> c(M), r(N);
     
@@ -103,7 +103,8 @@ namespace gmm {
   //  LU Solve : Solve equation Ax=b, given an LU factored matrix.
   //  Thanks to Valient Gough for this routine!
   //
-  template <class DenseMatrix, class VectorB, class VectorX, class Pvector>
+  template <typename DenseMatrix, typename VectorB, typename VectorX,
+	    typename Pvector>
   void lu_solve(const DenseMatrix &LU, const Pvector& pvector, 
 		VectorX &x, const VectorB &b) {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
@@ -117,7 +118,7 @@ namespace gmm {
     upper_tri_solve(LU, x, false);
   }
 
-  template <class DenseMatrix, class VectorB, class VectorX>
+  template <typename DenseMatrix, typename VectorB, typename VectorX>
   void lu_solve(const DenseMatrix &A, VectorX &x, const VectorB &b) {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
     dense_matrix<T> B(mat_nrows(A), mat_ncols(A));
@@ -127,7 +128,8 @@ namespace gmm {
     lu_solve(B, ipvt, x, b);
   }
   
-  template <class DenseMatrix, class VectorB, class VectorX, class Pvector>
+  template <typename DenseMatrix, typename VectorB, typename VectorX,
+	    typename Pvector>
   void lu_solve_transposed(const DenseMatrix &LU, const Pvector& pvector, 
 			   VectorX &x, const VectorB &b) {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
@@ -144,7 +146,7 @@ namespace gmm {
 
   // LU Inverse : Given an LU factored matrix, construct the inverse 
   //              of the matrix.
-  template <class DenseMatrixLU, class DenseMatrix, class Pvector>
+  template <typename DenseMatrixLU, typename DenseMatrix, typename Pvector>
   void lu_inverse(const DenseMatrixLU& LU, const Pvector& pvector,
 		  DenseMatrix& AInv, col_major) {
     typedef typename linalg_traits<DenseMatrixLU>::value_type T;
@@ -158,7 +160,7 @@ namespace gmm {
     }
   }
 
-  template <class DenseMatrixLU, class DenseMatrix, class Pvector>
+  template <typename DenseMatrixLU, typename DenseMatrix, typename Pvector>
   void lu_inverse(const DenseMatrixLU& LU, const Pvector& pvector,
 		  DenseMatrix& AInv, row_major) {
     typedef typename linalg_traits<DenseMatrixLU>::value_type T;
@@ -176,7 +178,7 @@ namespace gmm {
     }
   }
   
-  template <class DenseMatrixLU, class DenseMatrix, class Pvector>
+  template <typename DenseMatrixLU, typename DenseMatrix, typename Pvector>
   void lu_inverse(const DenseMatrixLU& LU, const Pvector& pvector,
 		  const DenseMatrix& AInv_) {
     DenseMatrix& AInv = const_cast<DenseMatrix&>(AInv_);
@@ -184,7 +186,7 @@ namespace gmm {
 	       linalg_traits<DenseMatrix>::sub_orientation>::potype());
   }
 
-  template <class DenseMatrix>
+  template <typename DenseMatrix>
   typename linalg_traits<DenseMatrix>::value_type
   lu_inverse(const DenseMatrix& A_) {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
@@ -197,7 +199,7 @@ namespace gmm {
     return lu_det(B, ipvt);
   }
 
-  template <class DenseMatrixLU, class Pvector>
+  template <typename DenseMatrixLU, typename Pvector>
   typename linalg_traits<DenseMatrixLU>::value_type
   lu_det(const DenseMatrixLU& LU, const Pvector&) {
     typename linalg_traits<DenseMatrixLU>::value_type det(1);
@@ -206,7 +208,7 @@ namespace gmm {
     return det;
   }
 
-  template <class DenseMatrix>
+  template <typename DenseMatrix>
   typename linalg_traits<DenseMatrix>::value_type
   lu_det(const DenseMatrix& A) {
     typedef typename linalg_traits<DenseMatrix>::value_type T;

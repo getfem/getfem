@@ -139,7 +139,7 @@ namespace gmm {
   /*   SuperLU solve                                                       */
   /* ********************************************************************* */
 
-  template <class MAT, class VECTX, class VECTB>
+  template <typename MAT, typename VECTX, typename VECTB>
   void SuperLU_solve(const MAT &A, const VECTX &_X, const VECTB &B,
 		     int permc_spec = 1) {
     /*
@@ -180,7 +180,7 @@ namespace gmm {
     SuperLU_S::Destroy_CompCol_Matrix(&SU);
   }
 
-  template <class MAT, class VECTX, class VECTB>
+  template <typename MAT, typename VECTX, typename VECTB>
   void SuperLU_solve(const MAT &A, const VECTX &_X, const VECTB &B,
 		     double& _rcond, 
 		     int permc_spec = 1) {

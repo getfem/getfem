@@ -51,7 +51,7 @@ namespace gmm {
     
     basic_index() : nb_ref(1) {}
     basic_index(size_type j) : std::vector<size_t>(j), nb_ref(1) {}
-    template <class IT> basic_index(IT b, IT e)
+    template <typename IT> basic_index(IT b, IT e)
       : std::vector<size_t>(e-b), nb_ref(1) { std::copy(b, e, begin()); }
     basic_index(const basic_index *pbi) : nb_ref(1) {
       const_iterator it = pbi->begin(), ite = pbi->end();
@@ -68,7 +68,7 @@ namespace gmm {
 
   struct index_generator {
 
-    template <class IT> static pbasic_index create_index(IT begin, IT end)
+    template <typename IT> static pbasic_index create_index(IT begin, IT end)
     { return new basic_index(begin, end); }
     static pbasic_index create_rindex(pbasic_index pbi)
     { return new basic_index(pbi); }
@@ -102,9 +102,9 @@ namespace gmm {
     const_iterator   rend(void) const { test_rind(); return rind->end();   }
 
     sub_index() : ind(0), rind(0) {}
-    template <class IT> sub_index(IT it, IT ite)
+    template <typename IT> sub_index(IT it, IT ite)
       : ind(index_generator::create_index(it, ite)), rind(0) {}
-    template <class CONT> sub_index(const CONT &c)
+    template <typename CONT> sub_index(const CONT &c)
       : ind(index_generator::create_index(c.begin(), c.end())), rind(0) {}
     ~sub_index()
       { index_generator::unattach(rind); index_generator::unattach(ind); }

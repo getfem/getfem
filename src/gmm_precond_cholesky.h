@@ -67,7 +67,7 @@
 
 namespace gmm {
 
-  template <class Matrix>
+  template <typename Matrix>
   class cholesky_precond {
 
   public :
@@ -79,7 +79,7 @@ namespace gmm {
     std::vector<value_type> Tri_val;
     std::vector<size_type> Tri_ind, Tri_ptr;
  
-    template<class M> void do_cholesky(const M& A, row_major);
+    template<typename M> void do_cholesky(const M& A, row_major);
     void do_cholesky(const Matrix& A, col_major);
 
   public:
@@ -97,7 +97,7 @@ namespace gmm {
     cholesky_precond(void) {}
   };
 
-  template <class Matrix> template<class M>
+  template <typename Matrix> template<typename M>
   void cholesky_precond<Matrix>::do_cholesky(const M& A, row_major) {
     size_type Tri_loc = 0, n = mat_nrows(A), d, g, h, i, j, k;
     value_type z;
@@ -144,35 +144,35 @@ namespace gmm {
 			n, mat_ncols(A));
   }
   
-  template <class Matrix>
+  template <typename Matrix>
   void cholesky_precond<Matrix>::do_cholesky(const Matrix& A, col_major)
   { do_cholesky(gmm::transposed(A), row_major()); }
 
-  template <class Matrix, class V1, class V2> inline
+  template <typename Matrix, typename V1, typename V2> inline
   void mult(const cholesky_precond<Matrix>& P, const V1 &v1, V2 &v2) {
     gmm::copy(v1, v2);
     gmm::lower_tri_solve(gmm::transposed(P.trimatrix), v2);
     gmm::upper_tri_solve(P.trimatrix, v2);
   }
 
-  template <class Matrix, class V1, class V2> inline
+  template <typename Matrix, typename V1, typename V2> inline
   void transposed_mult(const cholesky_precond<Matrix>& P,const V1 &v1,V2 &v2)
   { mult(P, v1, v2); }
 
-  template <class Matrix, class V1, class V2> inline
+  template <typename Matrix, typename V1, typename V2> inline
   void left_mult(const cholesky_precond<Matrix>& P, const V1 &v1, V2 &v2)
   { copy(v1, v2); gmm::lower_tri_solve(gmm::transposed(P.trimatrix), v2); }
 
-  template <class Matrix, class V1, class V2> inline
+  template <typename Matrix, typename V1, typename V2> inline
   void right_mult(const cholesky_precond<Matrix>& P, const V1 &v1, V2 &v2)
   { copy(v1, v2); gmm::upper_tri_solve(P.trimatrix, v2);  }
 
-  template <class Matrix, class V1, class V2> inline
+  template <typename Matrix, typename V1, typename V2> inline
   void transposed_left_mult(const cholesky_precond<Matrix>& P, const V1 &v1,
 			    V2 &v2)
   { copy(v1, v2); gmm::upper_tri_solve(P.trimatrix, v2); }
 
-  template <class Matrix, class V1, class V2> inline
+  template <typename Matrix, typename V1, typename V2> inline
   void transposed_right_mult(const cholesky_precond<Matrix>& P, const V1 &v1,
 			     V2 &v2)
   { copy(v1, v2); gmm::lower_tri_solve(gmm::transposed(P.trimatrix), v2); }

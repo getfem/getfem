@@ -578,7 +578,7 @@ namespace gmm {
   inline bool __is_complex_double(std::complex<double>) { return true; }
   inline bool __is_complex_double(double) { return false; }
 
-  template <class T, int shift> void
+  template <typename T, int shift> void
   Harwell_Boeing_save(const char *filename, const csc_matrix<T, shift>& A) {
     const char *t = 0;
 
@@ -594,7 +594,7 @@ namespace gmm {
 		       t, 0, 0, 0, 0, "F", shift);
   }
 
-  template <class T, int shift> void
+  template <typename T, int shift> void
   Harwell_Boeing_load(const char *filename, csc_matrix<T, shift>& A) {
     int M, N, nonzeros, i;
     int Nrhs;
@@ -967,7 +967,7 @@ typedef char MM_typecode[4];
     return 0;
   }
   
-  template <class T, int shift> void
+  template <typename T, int shift> void
   MatrixMarket_save(const char *filename, const csc_matrix<T, shift>& A) {
     static MM_typecode t1 = {'M', 'C', 'R', 'G'};
     static MM_typecode t2 = {'M', 'C', 'C', 'G'};
@@ -992,7 +992,7 @@ typedef char MM_typecode[4];
   }
   
 
-  template <class Matrix> void
+  template <typename Matrix> void
   MatrixMarket_load(const char *filename, Matrix& A) {
     FILE *fin;
     MM_typecode matcode;

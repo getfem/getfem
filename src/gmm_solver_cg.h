@@ -64,8 +64,8 @@ namespace gmm {
   /* (preconditionned, with parametrable additional scalar product)       */
   /* ******************************************************************** */
 
-  template <class Matrix, class Matps, class Precond, 
-            class Vector1, class Vector2>
+  template <typename Matrix, typename Matps, typename Precond, 
+            typename Vector1, typename Vector2>
   void cg(const Matrix& A, Vector1& x, const Vector2& b, const Matps& PS,
 	  const Precond &P, iteration &iter) {
 
@@ -103,20 +103,20 @@ namespace gmm {
     }
   }
 
-  template <class Matrix, class Matps, class Precond, 
-            class Vector1, class Vector2> inline 
+  template <typename Matrix, typename Matps, typename Precond, 
+            typename Vector1, typename Vector2> inline 
   void cg(const Matrix& A, const Vector1& x, const Vector2& b, const Matps& PS,
 	 const Precond &P, iteration &iter)
   { cg(A, linalg_const_cast(x), b, PS, P, iter); }
 
-  template <class Matrix, class Precond, 
-            class Vector1, class Vector2> inline
+  template <typename Matrix, typename Precond, 
+            typename Vector1, typename Vector2> inline
   void cg(const Matrix& A, Vector1& x, const Vector2& b,
 	 const Precond &P, iteration &iter)
   { cg(A, x , b, identity_matrix(), P, iter); }
 
-  template <class Matrix, class Precond, 
-            class Vector1, class Vector2> inline
+  template <typename Matrix, typename Precond, 
+            typename Vector1, typename Vector2> inline
   void cg(const Matrix& A, const Vector1& x, const Vector2& b,
 	 const Precond &P, iteration &iter)
   { cg(A, x , b , identity_matrix(), P , iter); }

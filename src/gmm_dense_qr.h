@@ -44,16 +44,16 @@ namespace gmm {
   /* Default tolerance.                                                    */
   /* ********************************************************************* */
   
-  template<class T> inline double default_tol(T)
+  template<typename T> inline double default_tol(T)
   { int i=sizeof(T)/4; double tol(2); while(i-- > 0) tol*=1E-8; return tol; }
-  template<class T> inline double default_tol(std::complex<T>)
+  template<typename T> inline double default_tol(std::complex<T>)
   { return default_tol(T()); }
 
   /* ********************************************************************* */
   /* QR factorization using Householder method (complex and real version). */
   /* ********************************************************************* */
 
-  template <class MAT1>
+  template <typename MAT1>
   void qr_factor(const MAT1 &_A) { 
     MAT1 &A = const_cast<MAT1 &>(_A);
     typedef typename linalg_traits<MAT1>::value_type value_type;
@@ -79,7 +79,7 @@ namespace gmm {
   // QR comes from QR_factor(QR) where the upper triangular part stands for R
   // and the lower part contains the Householder reflectors.
   // A <- AQ
-  template <class MAT1, class MAT2>
+  template <typename MAT1, typename MAT2>
   void apply_house_right(const MAT1 &QR, const MAT1 &_A) { 
     MAT2 &A = const_cast<MAT2 &>(_A);
     typedef typename linalg_traits<MAT1>::value_type T;
@@ -98,7 +98,7 @@ namespace gmm {
   // QR comes from QR_factor(QR) where the upper triangular part stands for R
   // and the lower part contains the Householder reflectors.
   // A <- Q*A
-  template <class MAT1, class MAT2>
+  template <typename MAT1, typename MAT2>
   void apply_house_left(const MAT1 &QR, const MAT1 &_A) { 
     MAT2 &A = const_cast<MAT2 &>(_A);
     typedef typename linalg_traits<MAT1>::value_type T;
@@ -115,7 +115,7 @@ namespace gmm {
   }  
 
   // Compute the QR factorization, where Q is assembled.
-  template <class MAT1, class MAT2, class MAT3>
+  template <typename MAT1, typename MAT2, typename MAT3>
     void qr_factor(const MAT1 &A, const MAT2 &QQ, const MAT3 &RR) { 
     MAT2 &Q = const_cast<MAT2 &>(QQ); MAT3 &R = const_cast<MAT3 &>(RR); 
     typedef typename linalg_traits<MAT1>::value_type value_type;
@@ -151,7 +151,7 @@ namespace gmm {
   /*    Compute eigenvalue vector.                                         */
   /* ********************************************************************* */
 
-  template <class TA, class TV, class MAT, class VECT>
+  template <typename TA, typename TV, typename MAT, typename VECT>
   void extract_eig(const MAT &A, VECT &V, double tol, TA, TV) {
     size_type n = mat_nrows(A);
     tol *= 2.0;
@@ -176,7 +176,7 @@ namespace gmm {
     }
   }
 
-  template <class TA, class TV, class MAT, class VECT>
+  template <typename TA, typename TV, typename MAT, typename VECT>
   void extract_eig(const MAT &A, VECT &V, double tol,
 		   TA, std::complex<TV>) {
     size_type n = mat_nrows(A);
@@ -201,12 +201,12 @@ namespace gmm {
       }
   }
 
-  template <class TA, class TV, class MAT, class VECT>
+  template <typename TA, typename TV, typename MAT, typename VECT>
   void extract_eig(const MAT &A, const VECT &VV, double tol,
 		   std::complex<TA>, TV)
   { DAL_THROW(failure_error, "Sorry, not allowed"); }
 
-  template <class TA, class TV, class MAT, class VECT>
+  template <typename TA, typename TV, typename MAT, typename VECT>
   void extract_eig(const MAT &A, VECT &V, double tol,
 		   std::complex<TA>, std::complex<TV>) {
     size_type n = mat_nrows(A);
@@ -225,7 +225,7 @@ namespace gmm {
       }
   }
 
-  template <class MAT, class VECT> inline
+  template <typename MAT, typename VECT> inline
   void extract_eig(const MAT &A, const VECT &V, double tol) {
     extract_eig(A, const_cast<VECT&>(V), tol,
 		typename linalg_traits<MAT>::value_type(),
@@ -236,7 +236,7 @@ namespace gmm {
   /*    Stop criterion for QR algorithms                                   */
   /* ********************************************************************* */
 
-  template <class MAT>
+  template <typename MAT>
   void stop_criterion(MAT &A, size_type &p, size_type &q, double tol) {
     typedef typename linalg_traits<MAT>::value_type value_type;
     size_type n = mat_nrows(A);
@@ -251,7 +251,7 @@ namespace gmm {
     while (p > 0 && A(p,p-1) != value_type(0)) --p;
   }
   
-  template <class MAT> inline
+  template <typename MAT> inline
   void symmetric_stop_criterion(const MAT &AA, size_type &p, size_type &q,
 				double tol) {
     typedef typename linalg_traits<MAT>::value_type value_type;
@@ -275,7 +275,7 @@ namespace gmm {
   // QR method for real or complex square matrices based on QR factorisation.
   // eigval has to be a complex vector if A has complex eigeinvalues.
   // Very slow method. Use implicit_qr_method instead.
-  template <class MAT1, class VECT, class MAT2>
+  template <typename MAT1, typename VECT, typename MAT2>
     void rudimentary_qr_algorithm(const MAT1 &A, const VECT &eigval_,
 				  const MAT2 &eigvect_, double tol =
 		 gmm::default_tol(typename linalg_traits<MAT1>::value_type()),
@@ -303,7 +303,7 @@ namespace gmm {
     extract_eig(A1, eigval, tol); 
   }
 
-  template <class MAT1, class VECT>
+  template <typename MAT1, typename VECT>
     void rudimentary_qr_algorithm(const MAT1 &a, VECT &eigval,
 				  double tol = gmm::default_tol(typename
 				  linalg_traits<MAT1>::value_type())) {
@@ -315,7 +315,7 @@ namespace gmm {
   /*    Francis QR step.                                                   */
   /* ********************************************************************* */
 
-  template <class MAT1, class MAT2>
+  template <typename MAT1, typename MAT2>
     void Francis_qr_step(const MAT1& HH, const MAT2 &QQ, bool compute_Q) {
     MAT1& H = const_cast<MAT1&>(HH); MAT2& Q = const_cast<MAT2&>(QQ);
     typedef typename linalg_traits<MAT1>::value_type value_type;
@@ -360,7 +360,7 @@ namespace gmm {
   /*    Wilkinson Double shift QR step (from Lapack).                      */
   /* ********************************************************************* */
 
-  template <class MAT1, class MAT2>
+  template <typename MAT1, typename MAT2>
   void Wilkinson_double_shift_qr_step(const MAT1& HH, const MAT2 &QQ,
 				      double tol, bool exc, bool compute_Q) {
     MAT1& H = const_cast<MAT1&>(HH); MAT2& Q = const_cast<MAT2&>(QQ);
@@ -438,7 +438,7 @@ namespace gmm {
   // implicit QR factorisation. eigval has to be a complex vector
   // if A has complex eigeinvalues. complexity about 10n^3, 25n^3 if
   // eigenvectors are computed
-  template <class MAT1, class VECT, class MAT2>
+  template <typename MAT1, typename VECT, typename MAT2>
     void implicit_qr_algorithm(const MAT1 &A, const VECT &eigval_,
 			       const MAT2 &Q_,
 			       double tol = gmm::default_tol(typename
@@ -472,7 +472,7 @@ namespace gmm {
   }
 
 
-  template <class MAT1, class VECT>
+  template <typename MAT1, typename VECT>
     void implicit_qr_algorithm(const MAT1 &a, VECT &eigval, 
 			       double tol = gmm::default_tol(typename 
 			       linalg_traits<MAT1>::value_type())) {
@@ -484,7 +484,7 @@ namespace gmm {
   /*    Implicit symmetric QR step with Wilkinson Shift.                   */
   /* ********************************************************************* */
 
-  template <class MAT1, class MAT2> 
+  template <typename MAT1, typename MAT2> 
     void symmetric_Wilkinson_qr_step(const MAT1& TT, const MAT2 &ZZ,
 				     bool compute_z) {
     MAT1& T = const_cast<MAT1&>(TT); MAT2& Z = const_cast<MAT2&>(ZZ);
@@ -523,7 +523,7 @@ namespace gmm {
   // implicit QR method for real square symmetric matrices.
   // eigval has to be a complex vector if A has complex eigeinvalues.
   // complexity about 4n^3/3, 9n^3 if eigenvectors are computed
-  template <class MAT1, class VECT, class MAT2>
+  template <typename MAT1, typename VECT, typename MAT2>
   void symmetric_qr_algorithm(const MAT1 &A, const VECT &eigval_,
 			      const MAT2 &eigvect_, double tol =
 		 gmm::default_tol(typename linalg_traits<MAT1>::value_type()),
@@ -557,7 +557,7 @@ namespace gmm {
   }
 
 
-  template <class MAT1, class VECT>
+  template <typename MAT1, typename VECT>
     void symmetric_qr_algorithm(const MAT1 &a, VECT &eigval, 
 				double tol = gmm::default_tol(typename
 				linalg_traits<MAT1>::value_type())) {

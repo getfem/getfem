@@ -39,7 +39,7 @@
 namespace gmm {
 
   // Needed by ilut and choleskyt
-  template<class T> struct _elt_rsvector_value_less {
+  template<typename T> struct _elt_rsvector_value_less {
     inline bool operator()(const _elt_rsvector<T>& a, 
 			   const _elt_rsvector<T>& b) const
     { return (dal::abs(a.e) > dal::abs(b.e)); }
@@ -51,7 +51,7 @@ namespace gmm {
    * of secant are applied. When a convenient interval is found,
    * iterations of dichotomie and regula falsi are applied.
    */
-  template <class FUNC, class T>
+  template <typename FUNC, typename T>
   T find_root(const FUNC &G, T a = 0.0, T b = a+1.0,
 	      double tol = gmm::default_tol(T())) {
     

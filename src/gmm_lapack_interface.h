@@ -157,8 +157,10 @@ namespace gmm {
               param3(base_type), std::vector<base_type > &z, orien) {      \
     trans1(base_type); trans2(base_type); trans3(base_type);               \
     int m(mat_nrows(A)), lda(m), n(mat_ncols(A)), inc(1); gmm::copy(y, z); \
-    blas_name(&t, &m, &n, &alpha, &A(0,0), &lda, &x[0], &inc, &beta,       \
-              &z[0], &inc);                                                \
+    if (m && n)                                                            \
+      blas_name(&t, &m, &n, &alpha, &A(0,0), &lda, &x[0], &inc, &beta,     \
+                &z[0], &inc);                                              \
+    else gmm::clear(z);                                                    \
   }
 
   // First parameter
@@ -367,8 +369,10 @@ namespace gmm {
               std::vector<base_type > &z, orien) {                         \
     trans1(base_type); trans2(base_type); base_type beta(0);               \
     int m(mat_nrows(A)), lda(m), n(mat_ncols(A)), inc(1);                  \
-    blas_name(&t, &m, &n, &alpha, &A(0,0), &lda, &x[0], &inc, &beta,       \
-              &z[0], &inc);                                                \
+    if (m && n)                                                            \
+      blas_name(&t, &m, &n, &alpha, &A(0,0), &lda, &x[0], &inc, &beta,     \
+                &z[0], &inc);                                              \
+    else gmm::clear(z);                                                    \
   }
 
   // Y <- AX.
@@ -463,8 +467,10 @@ namespace gmm {
     int m = mat_nrows(A), lda = m, k = mat_ncols(A), n = mat_ncols(B);     \
     int ldb = k, ldc = m;                                                  \
     base_type alpha(1), beta(0);                                           \
-    blas_name(&t, &t, &m, &n, &k, &alpha,                                  \
-	        &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);       \
+    if (m && k && n)                                                       \
+      blas_name(&t, &t, &m, &n, &k, &alpha,                                \
+	          &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);     \
+    else gmm::clear(C);                                                    \
   }
 
   gemm_interface_nn(sgemm_, BLAS_S);
@@ -488,8 +494,10 @@ namespace gmm {
     int m = mat_ncols(A), k = mat_nrows(A), n = mat_ncols(B), lda = k;     \
     int ldb = k, ldc = m;                                                  \
     base_type alpha(1), beta(0);                                           \
-    blas_name(&t, &u, &m, &n, &k, &alpha,                                  \
-	        &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);       \
+    if (m && k && n)                                                       \
+      blas_name(&t, &u, &m, &n, &k, &alpha,                                \
+	          &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);     \
+    else gmm::clear(C);                                                    \
   }
 
   gemm_interface_tn(sgemm_, BLAS_S,);
@@ -516,8 +524,10 @@ namespace gmm {
     int m = mat_nrows(A), lda = m, k = mat_ncols(A), n = mat_nrows(B);     \
     int ldb = n, ldc = m;                                                  \
     base_type alpha(1), beta(0);                                           \
-    blas_name(&t, &u, &m, &n, &k, &alpha,                                  \
+    if (m && k && n)                                                       \
+      blas_name(&t, &u, &m, &n, &k, &alpha,                                \
 	        &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);       \
+    else gmm::clear(C);                                                    \
   }
 
   gemm_interface_nt(sgemm_, BLAS_S,);
@@ -548,8 +558,10 @@ namespace gmm {
     int m = mat_ncols(A), k = mat_nrows(A), n = mat_nrows(B), lda = k;     \
     int ldb = n, ldc = m;                                                  \
     base_type alpha(1), beta(0);                                           \
-    blas_name(&t, &u, &m, &n, &k, &alpha,                                  \
+    if (m && k && n)                                                       \
+      blas_name(&t, &u, &m, &n, &k, &alpha,                                \
 	        &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);       \
+    else gmm::clear(C);                                                    \
   }
 
   gemm_interface_tt(sgemm_, BLAS_S,,);
@@ -586,8 +598,10 @@ namespace gmm {
     int m = mat_ncols(A), k = mat_nrows(A), n = mat_ncols(B), lda = k;     \
     int ldb = k, ldc = m;                                                  \
     base_type alpha(1), beta(0);                                           \
-    blas_name(&t, &u, &m, &n, &k, &alpha,                                  \
+    if (m && k && n)                                                       \
+      blas_name(&t, &u, &m, &n, &k, &alpha,                                \
 	        &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);       \
+    else gmm::clear(C);                                                    \
   }
 
   gemm_interface_cn(sgemm_, BLAS_S);
@@ -610,8 +624,10 @@ namespace gmm {
     int m = mat_nrows(A), lda = m, k = mat_ncols(A), n = mat_nrows(B);     \
     int ldb = n, ldc = m;                                                  \
     base_type alpha(1), beta(0);                                           \
-    blas_name(&t, &u, &m, &n, &k, &alpha,                                  \
+    if (m && k && n)                                                       \
+      blas_name(&t, &u, &m, &n, &k, &alpha,                                \
 	        &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);       \
+    else gmm::clear(C);                                                    \
   }
 
   gemm_interface_nc(sgemm_, BLAS_S);
@@ -638,8 +654,10 @@ namespace gmm {
     int m = mat_ncols(A), k = mat_nrows(A), lda = k, n = mat_nrows(B);     \
     int ldb = n, ldc = m;                                                  \
     base_type alpha(1), beta(0);                                           \
-    blas_name(&t, &u, &m, &n, &k, &alpha,                                  \
+    if (m && k && n)                                                       \
+      blas_name(&t, &u, &m, &n, &k, &alpha,                                \
 	        &A(0,0), &lda, &B(0,0), &ldb, &beta, &C(0,0), &ldc);       \
+    else gmm::clear(C);                                                    \
   }
 
   gemm_interface_cc(sgemm_, BLAS_S);
@@ -656,7 +674,7 @@ namespace gmm {
                               size_type k, bool is_unit) {                 \
     loru; trans1(base_type); char d = is_unit ? 'U' : 'N';                 \
     int lda(mat_nrows(A)), inc(1), n(k);                                   \
-    blas_name(&l, &t, &d, &n, &A(0,0), &lda, &x[0], &inc);                 \
+    if (lda) blas_name(&l, &t, &d, &n, &A(0,0), &lda, &x[0], &inc);        \
   }
 
 # define trsv_upper const char l = 'U'
@@ -749,8 +767,8 @@ namespace gmm {
 
 # define getrf_interface(lapack_name, base_type) inline                    \
   size_type lu_factor(dense_matrix<base_type > &A, std::vector<int> &ipvt){\
-    int m(mat_nrows(A)), n(mat_ncols(A)), lda(m), info;                    \
-    lapack_name(&m, &n, &A(0,0), &lda, &ipvt[0], &info);                   \
+    int m(mat_nrows(A)), n(mat_ncols(A)), lda(m), info(0);                 \
+    if (m && n) lapack_name(&m, &n, &A(0,0), &lda, &ipvt[0], &info);       \
     return size_type(info);                                                \
   }
 
@@ -769,7 +787,8 @@ namespace gmm {
 	      const std::vector<base_type > &b) {                          \
     int n(mat_nrows(A)), info, nrhs(1);                                    \
     gmm::copy(b, x); trans1;                                               \
-    lapack_name(&t, &n, &nrhs, &(A(0,0)), &n, &ipvt[0], &x[0], &n, &info); \
+    if (n)                                                                 \
+      lapack_name(&t, &n, &nrhs, &(A(0,0)),&n,&ipvt[0], &x[0], &n, &info); \
   }
   
 # define getrs_trans_n const char t = 'N'
@@ -794,11 +813,13 @@ namespace gmm {
     dense_matrix<base_type >&                                              \
     A = const_cast<dense_matrix<base_type > &>(A_);                        \
     int n(mat_nrows(A)), info, lwork(-1); base_type work1;                 \
-    gmm::copy(LU, A);                                                      \
-    lapack_name(&n, &A(0,0), &n, &ipvt[0], &work1, &lwork, &info);         \
-    lwork = int(dal::real(work1));                                         \
-    std::vector<base_type > work(lwork);                                   \
-    lapack_name(&n, &A(0,0), &n, &ipvt[0], &work[0], &lwork, &info);       \
+    if (n) {                                                               \
+      gmm::copy(LU, A);                                                    \
+      lapack_name(&n, &A(0,0), &n, &ipvt[0], &work1, &lwork, &info);       \
+      lwork = int(dal::real(work1));                                       \
+      std::vector<base_type > work(lwork);                                 \
+      lapack_name(&n, &A(0,0), &n, &ipvt[0], &work[0], &lwork, &info);     \
+    }                                                                      \
   }
 
   getri_interface(sgetri_, BLAS_S);
@@ -814,12 +835,14 @@ namespace gmm {
 # define geqrf_interface(lapack_name1, base_type) inline                   \
   void qr_factor(dense_matrix<base_type > &A){                             \
     int m(mat_nrows(A)), n(mat_ncols(A)), info, lwork(-1); base_type work1;\
-    std::vector<base_type > tau(n);                                        \
-    lapack_name1(&m, &n, &A(0,0), &m, &tau[0], &work1  , &lwork, &info);   \
-    lwork = int(dal::real(work1));                                         \
-    std::vector<base_type > work(lwork);                                   \
-    lapack_name1(&m, &n, &A(0,0), &m, &tau[0], &work[0], &lwork, &info);   \
-    if (info) DAL_THROW(failure_error, "QR factorization failed");         \
+    if (m && n) {                                                          \
+      std::vector<base_type > tau(n);                                      \
+      lapack_name1(&m, &n, &A(0,0), &m, &tau[0], &work1  , &lwork, &info); \
+      lwork = int(dal::real(work1));                                       \
+      std::vector<base_type > work(lwork);                                 \
+      lapack_name1(&m, &n, &A(0,0), &m, &tau[0], &work[0], &lwork, &info); \
+      if (info) DAL_THROW(failure_error, "QR factorization failed");       \
+    }                                                                      \
   }
 
   geqrf_interface(sgeqrf_, BLAS_S);
@@ -831,54 +854,40 @@ namespace gmm {
   void qr_factor(const dense_matrix<base_type > &A,                        \
        dense_matrix<base_type > &Q, dense_matrix<base_type > &R) {         \
     int m(mat_nrows(A)), n(mat_ncols(A)), info, lwork(-1); base_type work1;\
-    gmm::copy(A, Q);                                                       \
-    std::vector<base_type > tau(n);                                        \
-    lapack_name1(&m, &n, &Q(0,0), &m, &tau[0], &work1  , &lwork, &info);   \
-    lwork = int(dal::real(work1));                                         \
-    std::vector<base_type > work(lwork);                                   \
-    lapack_name1(&m, &n, &Q(0,0), &m, &tau[0], &work[0], &lwork, &info);   \
-    if (info) DAL_THROW(failure_error, "QR factorization failed");         \
-    base_type *p = &R(0,0), *q = &Q(0,0);                                  \
-    for (int j = 0; j < n; ++j, q += m-n)                                  \
-      for (int i = 0; i < n; ++i, ++p, ++q)                                \
-        *p = (j < i) ? base_type(0) : *q;                                  \
-    lapack_name2(&m, &n, &n, &Q(0,0), &m, &tau[0], &work[0],&lwork,&info); \
+    if (m && n) {                                                          \
+      gmm::copy(A, Q);                                                     \
+      std::vector<base_type > tau(n);                                      \
+      lapack_name1(&m, &n, &Q(0,0), &m, &tau[0], &work1  , &lwork, &info); \
+      lwork = int(dal::real(work1));                                       \
+      std::vector<base_type > work(lwork);                                 \
+      lapack_name1(&m, &n, &Q(0,0), &m, &tau[0], &work[0], &lwork, &info); \
+      if (info) DAL_THROW(failure_error, "QR factorization failed");       \
+      base_type *p = &R(0,0), *q = &Q(0,0);                                \
+      for (int j = 0; j < n; ++j, q += m-n)                                \
+        for (int i = 0; i < n; ++i, ++p, ++q)                              \
+          *p = (j < i) ? base_type(0) : *q;                                \
+      lapack_name2(&m, &n, &n, &Q(0,0), &m,&tau[0],&work[0],&lwork,&info); \
+    }                                                                      \
+    else gmm::clean(Q);                                                    \
   }
 
   geqrf_interface2(sgeqrf_, sorgqr_, BLAS_S);
   geqrf_interface2(dgeqrf_, dorgqr_, BLAS_D);
   geqrf_interface2(cgeqrf_, cungqr_, BLAS_C);
   geqrf_interface2(zgeqrf_, zungqr_, BLAS_Z);
-
-
-  // To be done, tau is to be computed ...
-  // # define ormqr_interface(lapack_name, base_type) inline      
-  //   void apply_house_right(const dense_matrix<base_type > &QR, 
-  // 			 dense_matrix<base_type > &A){          
-  
-  //     int m(mat_nrows(A)), n(mat_ncols(A)), k(mat_ncols(QR));
-  //     int lda = (mat_nrows(QR)), info;
-  //     char side = 'R', trans = 'N';
-  
-  //     lapack_name(&side, &trans, &m, &n, &k, &QR(0,0), &lda, 
-  //   }
-  
-  //   ormqr_interface(sormqr_, BLAS_S);
-  //   ormqr_interface(dormqr_, BLAS_D);
-  //   ormqr_interface(cunmqr_, BLAS_C);
-  //   ormqr_interface(zunmqr_, BLAS_Z);
   
   /* ********************************************************************* */
   /* QR algorithm for eigenvalues search.                                  */
   /* ********************************************************************* */
 
 # define gees_interface(lapack_name, base_type)                            \
-  template <class VECT> inline void implicit_qr_algorithm(                 \
+  template <typename VECT> inline void implicit_qr_algorithm(              \
          const dense_matrix<base_type > &A,  const VECT &eigval_,          \
          dense_matrix<base_type > &Q,                                      \
          double tol=gmm::default_tol(base_type()), bool compvect = true) { \
     typedef bool (*L_fp)(...);  L_fp p = 0;                                \
     int n(mat_nrows(A)), info, lwork(-1), sdim; base_type work1;           \
+    if (!n) return;                                                        \
     dense_matrix<base_type > H(n,n); gmm::copy(A, H);                      \
     char jobvs = (compvect ? 'V' : 'N'), sort = 'N';                       \
     std::vector<double> rwork(n), eigv1(n), eigv2(n);                      \
@@ -893,12 +902,13 @@ namespace gmm {
   }
 
 # define gees_interface2(lapack_name, base_type)                           \
-  template <class VECT> inline void implicit_qr_algorithm(                 \
+  template <typename VECT> inline void implicit_qr_algorithm(              \
          const dense_matrix<base_type > &A,  const VECT &eigval_,          \
          dense_matrix<base_type > &Q,                                      \
          double tol=gmm::default_tol(base_type()), bool compvect = true) { \
     typedef bool (*L_fp)(...);  L_fp p = 0;                                \
     int n(mat_nrows(A)), info, lwork(-1), sdim; base_type work1;           \
+    if (!n) return;                                                        \
     dense_matrix<base_type > H(n,n); gmm::copy(A, H);                      \
     char jobvs = (compvect ? 'V' : 'N'), sort = 'N';                       \
     std::vector<double> rwork(n), eigvv(n*2);                              \

@@ -1,5 +1,4 @@
 // -*- c++ -*-
-//
 //=======================================================================
 // Copyright (C) 1997-2001
 // Authors: Andrew Lumsdaine <lums@osl.iu.edu> 
@@ -70,7 +69,8 @@ namespace gmm {
   // Preconditioner -  Incomplete LU, Incomplete LU with threshold,
   //                   SSOR or identity_preconditioner.
 
-  template <class Matrix, class Vector, class VectorB, class Precond1>
+  template <typename Matrix, typename Vector, typename VectorB,
+	    typename Precond1>
   void qmr(const Matrix &A, Vector &x, const VectorB &b, const Precond1 &M1,
 	   iteration& iter)
   {

@@ -78,7 +78,7 @@
 
 namespace gmm {
 
-  template <class Matrix>
+  template <typename Matrix>
   class ilut_precond  {
   public :
     typedef typename linalg_traits<Matrix>::value_type value_type;
@@ -92,7 +92,7 @@ namespace gmm {
     int K;
     double eps;    
 
-    template<class M> void do_ilut(const M&, row_major, int = 0);
+    template<typename M> void do_ilut(const M&, row_major, int = 0);
     void do_ilut(const Matrix&, col_major);
 
   public:
@@ -111,7 +111,7 @@ namespace gmm {
 
   };
 
-  template<class Matrix> template<class M> 
+  template<typename Matrix> template<typename M> 
   void ilut_precond<Matrix>::do_ilut(const M& A, row_major, int _try) {
     std::vector<value_type> indiag(mat_nrows(A));
     svector w(mat_ncols(A));
@@ -159,13 +159,13 @@ namespace gmm {
     }
   }
 
-  template<class Matrix> 
+  template<typename Matrix> 
   void ilut_precond<Matrix>::do_ilut(const Matrix& A, col_major) {
     do_ilut(gmm::transposed(A), row_major());
     invert = true;
   }
 
-  template <class Matrix, class V1, class V2> inline
+  template <typename Matrix, typename V1, typename V2> inline
   void mult(const ilut_precond<Matrix>& P, const V1 &v1, V2 &v2) {
     gmm::copy(v1, v2);
     if (P.invert) {
@@ -178,7 +178,7 @@ namespace gmm {
     }
   }
 
-  template <class Matrix, class V1, class V2> inline
+  template <typename Matrix, typename V1, typename V2> inline
   void transposed_mult(const ilut_precond<Matrix>& P,const V1 &v1,V2 &v2) {
     gmm::copy(v1, v2);
     if (P.invert) {
@@ -191,21 +191,21 @@ namespace gmm {
     }
   }
 
-  template <class Matrix, class V1, class V2> inline
+  template <typename Matrix, typename V1, typename V2> inline
   void left_mult(const ilut_precond<Matrix>& P, const V1 &v1, V2 &v2) {
     copy(v1, v2);
     if (P.invert) gmm::lower_tri_solve(gmm::transposed(P.U), v2, false);
     else gmm::lower_tri_solve(P.L, v2, true);
   }
 
-  template <class Matrix, class V1, class V2> inline
+  template <typename Matrix, typename V1, typename V2> inline
   void right_mult(const ilut_precond<Matrix>& P, const V1 &v1, V2 &v2) {
     copy(v1, v2);
     if (P.invert) gmm::upper_tri_solve(gmm::transposed(P.L), v2, true);
     else gmm::upper_tri_solve(P.U, v2, false);
   }
 
-  template <class Matrix, class V1, class V2> inline
+  template <typename Matrix, typename V1, typename V2> inline
   void transposed_left_mult(const ilut_precond<Matrix>& P, const V1 &v1,
 			    V2 &v2) {
     copy(v1, v2);
@@ -213,7 +213,7 @@ namespace gmm {
     else gmm::upper_tri_solve(gmm::transposed(P.L), v2, true);
   }
 
-  template <class Matrix, class V1, class V2> inline
+  template <typename Matrix, typename V1, typename V2> inline
   void transposed_right_mult(const ilut_precond<Matrix>& P, const V1 &v1,
 			     V2 &v2) {
     copy(v1, v2);

@@ -62,7 +62,8 @@
 
 namespace gmm {
 
-  template <class CMatrix, class CINVMatrix, class Matps, class VectorX>
+  template <typename CMatrix, typename CINVMatrix, typename Matps,
+	    typename VectorX>
   void pseudo_inverse(const CMatrix &C, CINVMatrix &CINV,
 		      const Matps& /* PS */, VectorX&) {
     // compute the pseudo inverse of the non-square matrix C such
@@ -111,8 +112,9 @@ namespace gmm {
   
   // Compute the minimum of 1/2((Ax).x) - bx under the contraint Cx <= f
 
-  template < class Matrix, class CMatrix, class Matps, class VectorX,
-	     class VectorB, class VectorF, class Preconditioner >
+  template < typename Matrix,  typename CMatrix, typename Matps,
+	     typename VectorX, typename VectorB, typename VectorF,
+	     typename Preconditioner >
   void constrained_cg(const Matrix& A, const CMatrix& C, VectorX& x,
 		      const VectorB& b, const VectorF& f,const Matps& PS,
 		      const Preconditioner& M, iteration &iter) {

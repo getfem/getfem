@@ -34,7 +34,7 @@
 
 namespace gmm {
 
-  template<class Matrix> struct diagonal_precond {
+  template<typename Matrix> struct diagonal_precond {
     typedef typename linalg_traits<Matrix>::value_type value_type;
     std::vector<value_type> diag;
 
@@ -44,23 +44,23 @@ namespace gmm {
     diagonal_precond(void) {}
   };
 
-  template <class Matrix, class V2> inline
+  template <typename Matrix, typename V2> inline
   void mult_diag_p(const diagonal_precond<Matrix>& P, V2 &v2, abstract_sparse){
     typename linalg_traits<V2>::iterator it = vect_begin(v2),
       ite = vect_end(v2);
     for (; it != ite; ++it) *it *= P.diag[it.index()];
   }
 
-  template <class Matrix, class V2> inline
+  template <typename Matrix, typename V2> inline
   void mult_diag_p(const diagonal_precond<Matrix>& P,V2 &v2, abstract_skyline)
     { mult_diag_p(P, v2, abstract_sparse()); }
 
-  template <class Matrix, class V2> inline
+  template <typename Matrix, typename V2> inline
   void mult_diag_p(const diagonal_precond<Matrix>& P, V2 &v2, abstract_dense){
     for (size_type i = 0; i < P.diag.size(); ++i) v2[i] *= P.diag[i];
   }
 
-  template <class Matrix, class V1, class V2> inline
+  template <typename Matrix, typename V1, typename V2> inline
   void mult(const diagonal_precond<Matrix>& P, const V1 &v1, V2 &v2) {
     if (P.diag.size() != vect_size(v2))
       DAL_THROW(dimension_error, "dimensions mismatch");
@@ -68,12 +68,12 @@ namespace gmm {
     mult_diag_p(P, v2, typename linalg_traits<V2>::storage_type());
   }
 
-  template <class Matrix, class V1, class V2> inline
+  template <typename Matrix, typename V1, typename V2> inline
   void transposed_mult(const diagonal_precond<Matrix>& P,const V1 &v1,V2 &v2) {
     mult(P, v1, v2);
   }
   
-  template <class Matrix, class V1, class V2> inline
+  template <typename Matrix, typename V1, typename V2> inline
   void left_mult(const diagonal_precond<Matrix>& P, const V1 &v1, V2 &v2) {
     if (P.diag.size() != vect_size(v2))
       DAL_THROW(dimension_error, "dimensions mismatch");
@@ -82,12 +82,12 @@ namespace gmm {
       v2[i] *= sqrt(dal::abs(P.diag[i]));
   }
 
-  template <class Matrix, class V1, class V2> inline
+  template <typename Matrix, typename V1, typename V2> inline
   void transposed_left_mult(const diagonal_precond<Matrix>& P,
 			    const V1 &v1, V2 &v2)
     { left_mult(P, v1, v2); }
 
-  template <class Matrix, class V1, class V2> inline
+  template <typename Matrix, typename V1, typename V2> inline
   void right_mult(const diagonal_precond<Matrix>& P, const V1 &v1, V2 &v2) {
     if (P.diag.size() != vect_size(v2))
       DAL_THROW(dimension_error, "dimensions mismatch");
@@ -99,7 +99,7 @@ namespace gmm {
 	v2[i] *= sqrt(dal::abs(P.diag[i]));
   }
 
-  template <class Matrix, class V1, class V2> inline
+  template <typename Matrix, typename V1, typename V2> inline
   void transposed_right_mult(const diagonal_precond<Matrix>& P,
 			    const V1 &v1, V2 &v2)
     { right_mult(P, v1, v2); }

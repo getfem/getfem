@@ -74,7 +74,7 @@ namespace gmm {
   /*		Simple references on vectors            		   */
   /* ********************************************************************* */
 
-  template <class PT> struct simple_vector_ref {
+  template <typename PT> struct simple_vector_ref {
     typedef simple_vector_ref<PT> this_type;
     typedef typename std::iterator_traits<PT>::value_type V;
     typedef V * CPT;
@@ -101,24 +101,24 @@ namespace gmm {
     { return access_type()(origin, _begin, _end, i); }
   };
 
-  template <class IT, class PT> inline
+  template <typename IT, typename PT> inline
   void set_to_begin(IT it, const void *o, simple_vector_ref<PT> *)
   { set_to_begin(it, o, PT()); }
 
-  template <class IT, class PT> inline
+  template <typename IT, typename PT> inline
   void set_to_begin(IT it, const void *o, const simple_vector_ref<PT> *)
   { set_to_begin(it, o, PT()); }
 
-  template <class IT, class PT> inline
+  template <typename IT, typename PT> inline
   void set_to_end(IT it, const void *o, simple_vector_ref<PT> *)
   { set_to_end(it, o, PT()); }
 
-  template <class IT, class PT> inline
+  template <typename IT, typename PT> inline
   void set_to_end(IT it, const void *o, const simple_vector_ref<PT> *)
   { set_to_end(it, o, PT()); }
 
 
-  template <class PT> struct linalg_traits<simple_vector_ref<PT> > {
+  template <typename PT> struct linalg_traits<simple_vector_ref<PT> > {
     typedef simple_vector_ref<PT> this_type;
     typedef typename std::iterator_traits<PT>::value_type V;
     typedef V *pV;
@@ -159,12 +159,12 @@ namespace gmm {
     { clear_type()(v.origin, v._begin, v._end); }
   };
 
-  template <class PT>
+  template <typename PT>
   std::ostream &operator << (std::ostream &o, const simple_vector_ref<PT>& v)
   { gmm::write(o,v); return o; }
 
 #ifdef USING_BROKEN_GCC295
-  template <class PT> struct linalg_traits<const simple_vector_ref<PT> >
+  template <typename PT> struct linalg_traits<const simple_vector_ref<PT> >
   : public linalg_traits<simple_vector_ref<PT> > {};
 #endif
 
@@ -174,7 +174,7 @@ namespace gmm {
   /*		                                         		   */
   /* ********************************************************************* */
 
-  template <class T, class alloc> struct linalg_traits<std::vector<T,alloc> > {
+  template <typename T, typename alloc> struct linalg_traits<std::vector<T,alloc> > {
     typedef std::vector<T, alloc> this_type;
     typedef linalg_false is_reference;
     typedef abstract_vector linalg_type;
@@ -195,20 +195,18 @@ namespace gmm {
   };
 }
 namespace std {
-  template <class T> ostream &operator <<
+  template <typename T> ostream &operator <<
   (std::ostream &o, const vector<T>& m)
   { gmm::write(o,m); return o; }
 }
 namespace gmm {
 #ifdef USING_BROKEN_GCC295
-  template <class T> struct linalg_traits<const std::vector<T> > 
+  template <typename T> struct linalg_traits<const std::vector<T> > 
     : public linalg_traits<std::vector<T> > {};
 #endif
 
-  template <class T>
+  template <typename T>
   inline size_type nnz(const std::vector<T>& l) { return l.size(); }
-
-  // to be done :  std::valarray<T> ...
 
   /* ********************************************************************* */
   /*		                                         		   */
@@ -216,23 +214,23 @@ namespace gmm {
   /*		                                         		   */
   /* ********************************************************************* */
 
-  template <class IT> struct tab_ref_with_origin : public dal::tab_ref<IT> {
+  template <typename IT> struct tab_ref_with_origin : public dal::tab_ref<IT> {
 
     const void *origin;
    
     tab_ref_with_origin(void) {}
     tab_ref_with_origin(const IT &b, const IT &e, const void *p)
       : dal::tab_ref<IT>(b,e), origin(p) {}
-    template <class V> tab_ref_with_origin(const V &v, const sub_interval &si)
+    template <typename V> tab_ref_with_origin(const V &v, const sub_interval &si)
       : dal::tab_ref<IT>(vect_begin(const_cast<V&>(v))+si.min,
 			 vect_begin(const_cast<V&>(v))+si.max),
         origin(linalg_origin(const_cast<V&>(v))) {}
-    template <class V> tab_ref_with_origin(V &v, const sub_interval &si)
+    template <typename V> tab_ref_with_origin(V &v, const sub_interval &si)
       : dal::tab_ref<IT>(vect_begin(const_cast<V&>(v))+si.min, vect_begin(const_cast<V&>(v))+si.max),
         origin(linalg_origin(const_cast<V&>(v))) {}
   };
 
-  template <class IT> struct linalg_traits<tab_ref_with_origin<IT> > {
+  template <typename IT> struct linalg_traits<tab_ref_with_origin<IT> > {
     typedef typename std::iterator_traits<IT>::pointer PT;
     typedef tab_ref_with_origin<IT> this_type;
     typedef typename which_reference<PT>::is_reference is_reference;
@@ -253,16 +251,16 @@ namespace gmm {
     static inline void do_clear(this_type &v) { clear_type()(v.origin, v.begin(), v.end()); }
   };
 
-  template <class IT> std::ostream &operator <<
+  template <typename IT> std::ostream &operator <<
   (std::ostream &o, const tab_ref_with_origin<IT>& m)
   { gmm::write(o,m); return o; }
 
 #ifdef USING_BROKEN_GCC295
-  template <class IT> struct linalg_traits<const tab_ref_with_origin<IT> >
+  template <typename IT> struct linalg_traits<const tab_ref_with_origin<IT> >
     : public linalg_traits<tab_ref_with_origin<IT> >{};
 #endif
 
-  template <class IT>
+  template <typename IT>
   struct tab_ref_reg_spaced_with_origin : public dal::tab_ref_reg_spaced<IT> {
 
     const void *origin;
@@ -271,12 +269,12 @@ namespace gmm {
     tab_ref_reg_spaced_with_origin(const IT &b, const IT &e, size_type n,
 				   const void *p) 
       : dal::tab_ref_reg_spaced<IT>(b,e,n), origin(p) {}
-    template <class V> tab_ref_reg_spaced_with_origin(const V &v,
+    template <typename V> tab_ref_reg_spaced_with_origin(const V &v,
 						      const sub_slice &si) :
        dal::tab_ref_reg_spaced<IT>(vect_begin(const_cast<V&>(v)) + si.min,
 				   vect_begin(const_cast<V&>(v)) + si.max,
 				   si.N), origin(linalg_origin(const_cast<V&>(v))) {}
-    template <class V> tab_ref_reg_spaced_with_origin(V &v,
+    template <typename V> tab_ref_reg_spaced_with_origin(V &v,
 						      const sub_slice &si) :
        dal::tab_ref_reg_spaced<IT>(vect_begin(const_cast<V&>(v)) + si.min,
 				   vect_begin(const_cast<V&>(v)) + si.max,
@@ -284,7 +282,7 @@ namespace gmm {
 
   };
 
-  template <class IT> 
+  template <typename IT> 
     struct linalg_traits<tab_ref_reg_spaced_with_origin<IT> > {
     typedef typename std::iterator_traits<IT>::pointer PT;
     typedef tab_ref_reg_spaced_with_origin<IT> this_type;
@@ -306,17 +304,17 @@ namespace gmm {
     static void do_clear(this_type &v) { clear_type()(v.origin, v.begin(), v.end()); }
   };
   
-  template <class IT> std::ostream &operator <<
+  template <typename IT> std::ostream &operator <<
   (std::ostream &o, const tab_ref_reg_spaced_with_origin<IT>& m)
   { gmm::write(o,m); return o; }
 
 #ifdef USING_BROKEN_GCC295
-  template <class IT> 
+  template <typename IT> 
   struct linalg_traits<const tab_ref_reg_spaced_with_origin<IT> >
     : public linalg_traits<tab_ref_reg_spaced_with_origin<IT> > {};
 #endif
 
-  template <class IT, class ITINDEX>
+  template <typename IT, typename ITINDEX>
   struct tab_ref_index_ref_with_origin 
     : public dal::tab_ref_index_ref<IT, ITINDEX> {
 
@@ -327,19 +325,19 @@ namespace gmm {
 				  const ITINDEX &ei, const void *p)
       : dal::tab_ref_index_ref<IT, ITINDEX>(b, bi, ei), origin(p) {}
 
-    template <class V> tab_ref_index_ref_with_origin(const V &v,
+    template <typename V> tab_ref_index_ref_with_origin(const V &v,
 						     const sub_index &si) :
       dal::tab_ref_index_ref<IT, ITINDEX>(vect_begin(const_cast<V&>(v)),
 				   si.begin(), si.end()),
                                    origin(linalg_origin(const_cast<V&>(v))) {}
-    template <class V> tab_ref_index_ref_with_origin(V &v,
+    template <typename V> tab_ref_index_ref_with_origin(V &v,
 						     const sub_index &si) :
       dal::tab_ref_index_ref<IT, ITINDEX>(vect_begin(const_cast<V&>(v)),
 				   si.begin(), si.end()),
                                    origin(linalg_origin(const_cast<V&>(v))) {}
   };
 
-  template <class IT, class ITINDEX>
+  template <typename IT, typename ITINDEX>
   struct linalg_traits<tab_ref_index_ref_with_origin<IT, ITINDEX> > {
     typedef typename std::iterator_traits<IT>::pointer PT;
     typedef tab_ref_index_ref_with_origin<IT, ITINDEX> this_type;
@@ -362,17 +360,17 @@ namespace gmm {
     { clear_type()(v.origin, v.begin(), v.end()); }
   };
 
-  template <class IT, class ITINDEX> std::ostream &operator <<
+  template <typename IT, typename ITINDEX> std::ostream &operator <<
   (std::ostream &o, const tab_ref_index_ref_with_origin<IT, ITINDEX>& m)
   { gmm::write(o,m); return o; }
 
 #ifdef USING_BROKEN_GCC295
-  template <class IT, class ITINDEX>
+  template <typename IT, typename ITINDEX>
   struct linalg_traits<const tab_ref_index_ref_with_origin<IT, ITINDEX> >
     : public  linalg_traits<tab_ref_index_ref_with_origin<IT, ITINDEX> > {};
 #endif
 
-  template<class ITER, class MIT> struct dense_compressed_iterator {
+  template<typename ITER, typename MIT> struct dense_compressed_iterator {
     typedef ITER value_type;
     typedef ITER *pointer;
     typedef ITER &reference;
@@ -418,7 +416,7 @@ namespace gmm {
   /*	    Read only reference on a compressed sparse vector             */
   /* ******************************************************************** */
 
-  template <class PT1, class PT2, int shift = 0>
+  template <typename PT1, typename PT2, int shift = 0>
   struct cs_vector_ref_iterator {
     PT1 pr;
     PT2 ir;
@@ -445,7 +443,7 @@ namespace gmm {
     bool operator !=(const iterator &i) const { return (i.pr!=pr);}
   };
     
-  template <class PT1, class PT2, int shift = 0> struct cs_vector_ref {
+  template <typename PT1, typename PT2, int shift = 0> struct cs_vector_ref {
     PT1 pr;
     PT2 ir;
     size_type n, _size;
@@ -469,7 +467,7 @@ namespace gmm {
     }
   };
 
-  template <class PT1, class PT2, int shift> struct cs_vector_access {
+  template <typename PT1, typename PT2, int shift> struct cs_vector_access {
     typedef cs_vector_ref<PT1, PT2, shift> V;
     typedef typename linalg_traits<V>::value_type value_type;
     typedef typename linalg_traits<V>::const_iterator const_iterator;
@@ -478,7 +476,7 @@ namespace gmm {
 			  const const_iterator &e, size_type i);
   };
 
-  template <class PT1, class PT2, int shift>
+  template <typename PT1, typename PT2, int shift>
   typename linalg_traits<cs_vector_ref<PT1, PT2, shift> >::value_type
   cs_vector_access<PT1, PT2, shift>::operator()(const void *,
                           const const_iterator &b,
@@ -488,7 +486,7 @@ namespace gmm {
     return (*p == i+shift && p != e.ir) ? b.pr[p-b.ir] : value_type(0);
   }
 
-  template <class PT1, class PT2, int shift>
+  template <typename PT1, typename PT2, int shift>
   struct linalg_traits<cs_vector_ref<PT1, PT2, shift> > {
     typedef cs_vector_ref<PT1, PT2, shift> this_type;
     typedef linalg_const is_reference;
@@ -509,19 +507,19 @@ namespace gmm {
     static const void* origin(const this_type &v) { return v.pr; }
   };
 
-  template <class PT1, class PT2, int shift>
+  template <typename PT1, typename PT2, int shift>
   std::ostream &operator <<
   (std::ostream &o, const cs_vector_ref<PT1, PT2, shift>& m)
   { gmm::write(o,m); return o; }
 
-  template <class PT1, class PT2, int shift>
+  template <typename PT1, typename PT2, int shift>
   inline size_type nnz(const cs_vector_ref<PT1, PT2, shift>& l) { return l.n; }
 
   /* ******************************************************************** */
   /*	    Read only reference on a compressed sparse column matrix      */
   /* ******************************************************************** */
 
-    template <class PT1, class PT2, class PT3, int shift = 0>
+    template <typename PT1, typename PT2, typename PT3, int shift = 0>
   struct sparse_compressed_iterator {
     typedef PT1 value_type;
     typedef PT1 *pointer;
@@ -562,7 +560,7 @@ namespace gmm {
     
   };
 
-  template <class PT1, class PT2, class PT3, int shift = 0>
+  template <typename PT1, typename PT2, typename PT3, int shift = 0>
   struct csc_matrix_ref {
     PT1 pr; // values.
     PT2 ir; // row indexes.
@@ -582,7 +580,7 @@ namespace gmm {
       { return mat_col(*this, j)[i]; }
   };
 
-  template <class PT1, class PT2, class PT3, int shift>
+  template <typename PT1, typename PT2, typename PT3, int shift>
   struct csc_matrix_access {
     typedef csc_matrix_ref<PT1, PT2, PT3, shift> this_type;
     typedef typename linalg_traits<this_type>::reference reference;
@@ -592,7 +590,7 @@ namespace gmm {
     { return linalg_traits<this_type>().col(itcol)[j]; }
   };
 
-  template <class PT1, class PT2, class PT3, int shift>
+  template <typename PT1, typename PT2, typename PT3, int shift>
   struct linalg_traits<csc_matrix_ref<PT1, PT2, PT3, shift> > {
     typedef csc_matrix_ref<PT1, PT2, PT3, shift> this_type;
     typedef linalg_const is_reference;
@@ -629,12 +627,12 @@ namespace gmm {
   };
 
 #ifdef USING_BROKEN_GCC295
-  template <class PT1, class PT2, class PT3, int shift>
+  template <typename PT1, typename PT2, typename PT3, int shift>
   struct linalg_traits<const csc_matrix_ref<PT1, PT2, PT3, shift> >
     : public linalg_traits<csc_matrix_ref<PT1, PT2, PT3, shift> > {};
 #endif
 
-  template <class PT1, class PT2, class PT3, int shift>
+  template <typename PT1, typename PT2, typename PT3, int shift>
   std::ostream &operator <<
   (std::ostream &o, const csc_matrix_ref<PT1, PT2, PT3, shift>& m)
   { gmm::write(o,m); return o; }
@@ -643,7 +641,7 @@ namespace gmm {
   /*	   Read only reference on a compressed sparse row matrix          */
   /* ******************************************************************** */
 
-  template <class PT1, class PT2, class PT3, int shift = 0>
+  template <typename PT1, typename PT2, typename PT3, int shift = 0>
   struct csr_matrix_ref {
     PT1 pr; // values.
     PT2 ir; // column indexes.
@@ -663,7 +661,7 @@ namespace gmm {
       { return mat_col(*this, i)[j]; }
   };
 
-  template <class PT1, class PT2, class PT3, int shift>
+  template <typename PT1, typename PT2, typename PT3, int shift>
   struct csr_matrix_access {
     typedef csr_matrix_ref<PT1, PT2, PT3, shift> this_type;
     typedef typename linalg_traits<this_type>::reference reference;
@@ -673,7 +671,7 @@ namespace gmm {
     { return linalg_traits<this_type>::row(itrow)[i]; }
   };
   
-  template <class PT1, class PT2, class PT3, int shift>
+  template <typename PT1, typename PT2, typename PT3, int shift>
   struct linalg_traits<csr_matrix_ref<PT1, PT2, PT3, shift> > {
     typedef csr_matrix_ref<PT1, PT2, PT3, shift> this_type;
     typedef linalg_const is_reference;
@@ -710,7 +708,7 @@ namespace gmm {
     static void do_clear(this_type &m) { m.do_clear(); }
   };
 
-  template <class PT1, class PT2, class PT3, int shift>
+  template <typename PT1, typename PT2, typename PT3, int shift>
   std::ostream &operator <<
   (std::ostream &o, const csr_matrix_ref<PT1, PT2, PT3, shift>& m)
   { gmm::write(o,m); return o; }

@@ -64,7 +64,7 @@
 
 namespace gmm {
 
-  template <class Matrix>
+  template <typename Matrix>
   struct mr_approx_inverse_precond {
 
     typedef typename linalg_traits<Matrix>::value_type value_type;
@@ -79,16 +79,16 @@ namespace gmm {
 			      value_type threshold);
   };
 
-  template <class Matrix, class V1, class V2> inline
+  template <typename Matrix, typename V1, typename V2> inline
   void mult(const mr_approx_inverse_precond<Matrix>& P, const V1 &v1, V2 &v2)
   { mult(P.M, v1, v2); }
 
-  template <class Matrix, class V1, class V2> inline
+  template <typename Matrix, typename V1, typename V2> inline
   void transposed_mult(const mr_approx_inverse_precond<Matrix>& P,
 		       const V1 &v1,V2 &v2)
   { mult(gmm::transposed(P.M), v1, v2); }
 
-  template <class Matrix>
+  template <typename Matrix>
   mr_approx_inverse_precond<Matrix>::mr_approx_inverse_precond(const Matrix& A,
 							 size_type nb_it,
 							 value_type threshold)

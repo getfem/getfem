@@ -38,7 +38,7 @@ namespace gmm {
   /*		sparse sub-vectors                                         */
   /* ********************************************************************* */
 
-  template <class IT, class MIT, class SUBI>
+  template <typename IT, typename MIT, typename SUBI>
   struct sparse_sub_vector_iterator {
 
     IT itb, itbe;
@@ -74,23 +74,23 @@ namespace gmm {
 	 SUBI> &it) : itb(it.itb), itbe(it.itbe), si(it.si) {}
   };
 
-  template <class IT, class MIT, class SUBI>
+  template <typename IT, typename MIT, typename SUBI>
   void  sparse_sub_vector_iterator<IT, MIT, SUBI>::forward(void)
   { while(itb!=itbe && index()==size_type(-1)) { ++itb; } }
 
-  template <class IT, class MIT, class SUBI>
+  template <typename IT, typename MIT, typename SUBI>
   void  sparse_sub_vector_iterator<IT, MIT, SUBI>::backward(void)
   { while(itb!=itbe && index()==size_type(-1)) --itb; }
 
 
-  template <class IT, class MIT, class SUBI, class VECT> inline
+  template <typename IT, typename MIT, typename SUBI, typename VECT> inline
   void set_to_begin(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
 		    const void *o, VECT *) {
     set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV());
     set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV());
     it.forward();
   }
-  template <class IT, class MIT, class SUBI, class VECT> inline
+  template <typename IT, typename MIT, typename SUBI, typename VECT> inline
   void set_to_begin(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
 		    const void *o, const VECT *) {
     set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV());
@@ -98,14 +98,14 @@ namespace gmm {
     it.forward();
   }
   
-  template <class IT, class MIT, class SUBI, class VECT> inline
+  template <typename IT, typename MIT, typename SUBI, typename VECT> inline
   void set_to_end(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
 		    const void *o, VECT *) {
     set_to_end(it.itb, o, typename linalg_traits<VECT>::pV());
     set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV());
     it.forward();
   }
-  template <class IT, class MIT, class SUBI, class VECT> inline
+  template <typename IT, typename MIT, typename SUBI, typename VECT> inline
   void set_to_end(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
 		    const void *o, const VECT *) {
     set_to_end(it.itb, o, typename linalg_traits<VECT>::pV());
@@ -113,7 +113,7 @@ namespace gmm {
     it.forward();
   }
   
-  template <class PT, class SUBI> struct sparse_sub_vector {
+  template <typename PT, typename SUBI> struct sparse_sub_vector {
     typedef sparse_sub_vector<PT, SUBI> this_type;
     typedef typename std::iterator_traits<PT>::value_type V;
     typedef V * CPT;
@@ -142,7 +142,7 @@ namespace gmm {
       : _begin(cr._begin),_end(cr._end),origin(cr.origin), si(cr.si) {} 
   };
 
-  template <class PT, class SUBI> struct sparse_sub_vector_access {
+  template <typename PT, typename SUBI> struct sparse_sub_vector_access {
     typedef sparse_sub_vector<PT, SUBI> this_type;
     typedef typename std::iterator_traits<PT>::value_type V;
     typedef typename linalg_traits<this_type>::value_type value_type;
@@ -160,7 +160,7 @@ namespace gmm {
     { return access_type()(o, it.itb, ite.itb, it.si.index(i)); }
   };
 
-  template <class PT, class SUBI> struct sparse_sub_vector_clear {
+  template <typename PT, typename SUBI> struct sparse_sub_vector_clear {
     typedef sparse_sub_vector<PT, SUBI> this_type;
     typedef typename linalg_traits<this_type>::iterator iterator;
     typedef typename linalg_traits<this_type>::value_type value_type;
@@ -169,7 +169,7 @@ namespace gmm {
     void operator()(const void *o,const iterator &_begin,const iterator &_end);
   };
 
-  template <class PT, class SUBI> void
+  template <typename PT, typename SUBI> void
   sparse_sub_vector_clear<PT, SUBI>::operator()(const void *o,
 		      const iterator &_begin,const iterator &_end) {
     std::deque<size_type> ind;
@@ -179,7 +179,7 @@ namespace gmm {
       access_type()(o, _begin, _end, ind.back()) = value_type(0);
   }
 
-  template <class PT, class SUBI>
+  template <typename PT, typename SUBI>
   struct linalg_traits<sparse_sub_vector<PT, SUBI> > {
     typedef sparse_sub_vector<PT, SUBI> this_type;
     typedef this_type * pthis_type;
@@ -236,12 +236,12 @@ namespace gmm {
       { clear_type()(v.origin, begin(v), end(v)); }
   };
 
-  template <class PT, class SUBI> std::ostream &operator <<
+  template <typename PT, typename SUBI> std::ostream &operator <<
   (std::ostream &o, const sparse_sub_vector<PT, SUBI>& m)
   { gmm::write(o,m); return o; }
 
 #ifdef USING_BROKEN_GCC295
-  template <class PT, class SUBI>
+  template <typename PT, typename SUBI>
   struct linalg_traits<const sparse_sub_vector<PT, SUBI> >
     : public linalg_traits<sparse_sub_vector<PT, SUBI> > {};
 #endif
@@ -250,7 +250,7 @@ namespace gmm {
   /*		skyline sub-vectors                                        */
   /* ********************************************************************* */
 
-    template <class IT, class MIT, class SUBI>
+    template <typename IT, typename MIT, typename SUBI>
   struct skyline_sub_vector_iterator {
 
     IT itb, itbe;
@@ -270,10 +270,10 @@ namespace gmm {
     void forward(void);
     void backward(void);
     iterator &operator ++()
-    { ++itb; return *this; }
+    { itb += si.step(); return *this; }
     iterator operator ++(int) { iterator tmp = *this; ++(*this); return tmp; }
     iterator &operator --()
-    { --itb; return *this; }
+    { itb -= si.step(); return *this; }
     iterator operator --(int) { iterator tmp = *this; --(*this); return tmp; }
 
     iterator &operator +=(difference_type i)
@@ -288,7 +288,7 @@ namespace gmm {
     { return (itb - i.itb) / si.step(); }
 
     reference operator *() const  { return *itb; }
-    reference operator [](int ii) { return *(itb + ii * itb.step());  }
+    reference operator [](int ii) { return *(itb + ii * si.step());  }
 
     bool operator ==(const iterator &i) const { return itb == i.itb;  }
     bool operator !=(const iterator &i) const { return !(i == *this); }
@@ -301,7 +301,7 @@ namespace gmm {
 	 SUBI> &it) : itb(it.itb), itbe(it.itbe), si(it.si) {}
   };
 
-  template <class IT, class MIT, class SUBI>
+  template <typename IT, typename MIT, typename SUBI>
   void  skyline_sub_vector_iterator<IT, MIT, SUBI>::forward(void) { 
     if (itb.index() < si.min) itb += si.min - itb.index();
     if (itbe.index() > si.max) itbe -= itbe.index() - si.max;
@@ -309,14 +309,14 @@ namespace gmm {
   }
 
 
-  template <class IT, class MIT, class SUBI, class VECT> inline
+  template <typename IT, typename MIT, typename SUBI, typename VECT> inline
   void set_to_begin(skyline_sub_vector_iterator<IT, MIT, SUBI> &it,
 		    const void *o, VECT *) {
     set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV());
     set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV());
     it.forward();
   }
-  template <class IT, class MIT, class SUBI, class VECT> inline
+  template <typename IT, typename MIT, typename SUBI, typename VECT> inline
   void set_to_begin(skyline_sub_vector_iterator<IT, MIT, SUBI> &it,
 		    const void *o, const VECT *) {
     set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV());
@@ -324,14 +324,14 @@ namespace gmm {
     it.forward();
   }
   
-  template <class IT, class MIT, class SUBI, class VECT> inline
+  template <typename IT, typename MIT, typename SUBI, typename VECT> inline
   void set_to_end(skyline_sub_vector_iterator<IT, MIT, SUBI> &it,
 		    const void *o, VECT *) {
     set_to_end(it.itb, o, typename linalg_traits<VECT>::pV());
     set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV());
     it.forward();
   }
-  template <class IT, class MIT, class SUBI, class VECT> inline
+  template <typename IT, typename MIT, typename SUBI, typename VECT> inline
   void set_to_end(skyline_sub_vector_iterator<IT, MIT, SUBI> &it,
 		    const void *o, const VECT *) {
     set_to_end(it.itb, o, typename linalg_traits<VECT>::pV());
@@ -340,7 +340,7 @@ namespace gmm {
   }
 
 
-  template <class PT, class SUBI> struct skyline_sub_vector {
+  template <typename PT, typename SUBI> struct skyline_sub_vector {
     typedef skyline_sub_vector<PT, SUBI> this_type;
     typedef typename std::iterator_traits<PT>::value_type V;
     typedef V * pV;
@@ -369,7 +369,7 @@ namespace gmm {
       : _begin(cr._begin),_end(cr._end),origin(cr.origin), si(cr.si) {}
   };
 
-  template <class PT, class SUBI> struct skyline_sub_vector_access {
+  template <typename PT, typename SUBI> struct skyline_sub_vector_access {
     typedef skyline_sub_vector<PT, SUBI> this_type;
     typedef typename std::iterator_traits<PT>::value_type V;
     typedef typename linalg_traits<this_type>::value_type value_type;
@@ -387,7 +387,7 @@ namespace gmm {
     { return access_type()(o, it.it, ite.it, it.si.index(i)); }
   };
 
-  template <class PT, class SUBI> struct skyline_sub_vector_clear {
+  template <typename PT, typename SUBI> struct skyline_sub_vector_clear {
     typedef skyline_sub_vector<PT, SUBI> this_type;
     typedef typename linalg_traits<this_type>::iterator iterator;
     typedef typename linalg_traits<this_type>::value_type value_type;
@@ -397,7 +397,7 @@ namespace gmm {
       { std::fill(_begin, _end, value_type(0)); }
   };
 
-  template <class PT, class SUBI>
+  template <typename PT, typename SUBI>
   struct linalg_traits<skyline_sub_vector<PT, SUBI> > {
     typedef skyline_sub_vector<PT, SUBI> this_type;
     typedef this_type *pthis_type;
@@ -456,12 +456,12 @@ namespace gmm {
       { clear_type()(v.origin, begin(v), end(v)); }
   };
 
-  template <class PT, class SUBI> std::ostream &operator <<
+  template <typename PT, typename SUBI> std::ostream &operator <<
   (std::ostream &o, const skyline_sub_vector<PT, SUBI>& m)
   { gmm::write(o,m); return o; }
 
 #ifdef USING_BROKEN_GCC295
-  template <class PT, class SUBI>
+  template <typename PT, typename SUBI>
   struct linalg_traits<const skyline_sub_vector<PT, SUBI> >
     : public linalg_traits<skyline_sub_vector<PT, SUBI> > {};
 #endif
@@ -473,11 +473,11 @@ namespace gmm {
   /* returned by sub_vector(v, sub_index)                                 */
   /************************************************************************/
 
-  template <class PT, class SUBI, class st_type> struct svrt_ir {
+  template <typename PT, typename SUBI, typename st_type> struct svrt_ir {
     typedef abstract_null_type vector_type;
   };
 
-  template <class PT>
+  template <typename PT>
   struct svrt_ir<PT, sub_index, abstract_dense> {
     typedef typename std::iterator_traits<PT>::value_type V;
     typedef typename vect_ref_type<PT,  V>::iterator iterator;
@@ -485,44 +485,44 @@ namespace gmm {
       sub_index::const_iterator> vector_type;
   }; 
 
-  template <class PT>
+  template <typename PT>
   struct svrt_ir<PT, sub_interval, abstract_dense> {
     typedef typename std::iterator_traits<PT>::value_type V;
     typedef typename vect_ref_type<PT,  V>::iterator iterator;
     typedef tab_ref_with_origin<iterator> vector_type;
   }; 
 
-  template <class PT>
+  template <typename PT>
   struct svrt_ir<PT, sub_slice, abstract_dense> {
     typedef typename std::iterator_traits<PT>::value_type V;
     typedef typename vect_ref_type<PT,  V>::iterator iterator;
     typedef tab_ref_reg_spaced_with_origin<iterator> vector_type;
   };
 
-  template <class PT, class SUBI>
+  template <typename PT, typename SUBI>
   struct svrt_ir<PT, SUBI, abstract_skyline> {
     typedef skyline_sub_vector<PT, SUBI> vector_type;
   };
 
-  template <class PT>
+  template <typename PT>
   struct svrt_ir<PT, sub_index, abstract_skyline> {
     typedef sparse_sub_vector<PT, sub_index> vector_type;
   };
 
 
-  template <class PT, class SUBI>
+  template <typename PT, typename SUBI>
   struct svrt_ir<PT, SUBI, abstract_sparse> {
     typedef sparse_sub_vector<PT, SUBI> vector_type;
   };
 
-  template <class PT, class SUBI>
+  template <typename PT, typename SUBI>
   struct sub_vector_type {
     typedef typename std::iterator_traits<PT>::value_type V;
     typedef typename svrt_ir<PT, SUBI,
       typename linalg_traits<V>::storage_type>::vector_type vector_type;
   };
 
-  template <class V, class SUBI>
+  template <typename V, typename SUBI>
   typename select_return<
     typename sub_vector_type<const V *, SUBI>::vector_type,
     typename sub_vector_type<V *, SUBI>::vector_type, const V *>::return_type
@@ -533,7 +533,7 @@ namespace gmm {
       (linalg_cast(v), si);
   }
 
-  template <class V, class SUBI>
+  template <typename V, typename SUBI>
   typename select_return<
     typename sub_vector_type<const V *, SUBI>::vector_type,
     typename sub_vector_type<V *, SUBI>::vector_type, V *>::return_type

@@ -66,7 +66,7 @@
 
 namespace gmm {
 
-  template <class Matrix>
+  template <typename Matrix>
   class ilu_precond {
 
   public :
@@ -79,7 +79,7 @@ namespace gmm {
     std::vector<value_type> L_val, U_val;
     std::vector<size_type> L_ind, U_ind, L_ptr, U_ptr;
  
-    template<class M> void do_ilu(const M& A, row_major);
+    template<typename M> void do_ilu(const M& A, row_major);
     void do_ilu(const Matrix& A, col_major);
 
   public:
@@ -99,7 +99,7 @@ namespace gmm {
     ilu_precond(void) {}
   };
 
-  template <class Matrix> template <class M>
+  template <typename Matrix> template <typename M>
   void ilu_precond<Matrix>::do_ilu(const M& A, row_major) {
     size_type L_loc = 0, U_loc = 0, n = mat_nrows(A), i, j;
     L_ptr[0] = 0; U_ptr[0] = 0;
@@ -158,13 +158,13 @@ namespace gmm {
     U = tm_type(&(U_val[0]), &(U_ind[0]), &(U_ptr[0]), n, mat_ncols(A));
   }
   
-  template <class Matrix>
+  template <typename Matrix>
   void ilu_precond<Matrix>::do_ilu(const Matrix& A, col_major) {
     do_ilu(gmm::transposed(A), row_major());
     invert = true;
   }
 
-  template <class Matrix, class V1, class V2> inline
+  template <typename Matrix, typename V1, typename V2> inline
   void mult(const ilu_precond<Matrix>& P, const V1 &v1, V2 &v2) {
     gmm::copy(v1, v2);
     if (P.invert) {
@@ -177,7 +177,7 @@ namespace gmm {
     }
   }
 
-  template <class Matrix, class V1, class V2> inline
+  template <typename Matrix, typename V1, typename V2> inline
   void transposed_mult(const ilu_precond<Matrix>& P,const V1 &v1,V2 &v2) {
     gmm::copy(v1, v2);
     if (P.invert) {
@@ -190,21 +190,21 @@ namespace gmm {
     }
   }
 
-  template <class Matrix, class V1, class V2> inline
+  template <typename Matrix, typename V1, typename V2> inline
   void left_mult(const ilu_precond<Matrix>& P, const V1 &v1, V2 &v2) {
     copy(v1, v2);
     if (P.invert) gmm::lower_tri_solve(gmm::transposed(P.U), v2, false);
     else gmm::lower_tri_solve(P.L, v2, true);
   }
 
-  template <class Matrix, class V1, class V2> inline
+  template <typename Matrix, typename V1, typename V2> inline
   void right_mult(const ilu_precond<Matrix>& P, const V1 &v1, V2 &v2) {
     copy(v1, v2);
     if (P.invert) gmm::upper_tri_solve(gmm::transposed(P.L), v2, true);
     else gmm::upper_tri_solve(P.U, v2, false);
   }
 
-  template <class Matrix, class V1, class V2> inline
+  template <typename Matrix, typename V1, typename V2> inline
   void transposed_left_mult(const ilu_precond<Matrix>& P, const V1 &v1,
 			    V2 &v2) {
     copy(v1, v2);
@@ -212,7 +212,7 @@ namespace gmm {
     else gmm::upper_tri_solve(gmm::transposed(P.L), v2, true);
   }
 
-  template <class Matrix, class V1, class V2> inline
+  template <typename Matrix, typename V1, typename V2> inline
   void transposed_right_mult(const ilu_precond<Matrix>& P, const V1 &v1,
 			     V2 &v2) {
     copy(v1, v2);

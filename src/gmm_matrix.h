@@ -43,31 +43,31 @@ namespace gmm
 
   struct identity_matrix {};
 
-  template <class V1, class V2> inline
+  template <typename V1, typename V2> inline
   void mult(const identity_matrix&, const V1 &v1, V2 &v2)
   { copy(v1, v2); }
-  template <class V1, class V2> inline
+  template <typename V1, typename V2> inline
   void mult(const identity_matrix&, const V1 &v1, const V2 &v2) 
   { copy(v1, v2); }
-  template <class V1, class V2, class V3> inline
+  template <typename V1, typename V2, typename V3> inline
   void mult(const identity_matrix&, const V1 &v1, const V2 &v2, V3 &v3)
   { add(v1, v2, v3); }
-  template <class V1, class V2, class V3> inline
+  template <typename V1, typename V2, typename V3> inline
   void mult(const identity_matrix&, const V1 &v1, const V2 &v2, const V3 &v3)
   { add(v1, v2, v3); }
-  template <class M> void copy_ident(const identity_matrix&, M &m) {
+  template <typename M> void copy_ident(const identity_matrix&, M &m) {
     size_type i = 0, n = std::min(mat_nrows(m), mat_ncols(m)); clear(m);
     for (; i < n; ++i) m(i,i) = typename linalg_traits<M>::value_type(1);
   }
-  template <class M> inline void copy(const identity_matrix&, M &m)
+  template <typename M> inline void copy(const identity_matrix&, M &m)
   { copy_ident(identity_matrix(), m); } 
-  template <class M> inline void copy(const identity_matrix &, const M &m)
+  template <typename M> inline void copy(const identity_matrix &, const M &m)
   { copy_ident(identity_matrix(), linalg_const_cast(m)); }
-  template <class V1, class V2> inline
+  template <typename V1, typename V2> inline
   typename linalg_traits<V1>::value_type
   vect_sp(const identity_matrix &, const V1 &v1, const V2 &v2)
   { return vect_sp(v1, v2); }
-  template<class M> inline bool is_identity(const M&) { return false; }
+  template<typename M> inline bool is_identity(const M&) { return false; }
   inline bool is_identity(const identity_matrix&) { return true; }
 
   /* ******************************************************************** */
@@ -76,7 +76,7 @@ namespace gmm
   /*		                                            		  */
   /* ******************************************************************** */
 
-  template<class V> class row_matrix {
+  template<typename V> class row_matrix {
   protected :
     std::vector<V> li; /* array of rows.                                   */
     
@@ -115,10 +115,10 @@ namespace gmm
     { return (nrows() == 0) ? 0 : vect_size(li[0]); }
   };
 
-  template<class V> void row_matrix<V>::clear_mat()
+  template<typename V> void row_matrix<V>::clear_mat()
   { for (size_type i=0; i < nrows(); ++i) clear_row(i); }
 
-  template <class V> struct row_matrix_access {
+  template <typename V> struct row_matrix_access {
     typedef typename linalg_traits<row_matrix<V> >::reference reference;
     typedef typename linalg_traits<row_matrix<V> >::row_iterator iterator;
     typedef typename linalg_traits<row_matrix<V> >::value_type value_type;
@@ -131,7 +131,7 @@ namespace gmm
     { return (*itrow)[j]; }
   };
 
-  template <class V> struct linalg_traits<row_matrix<V> > {
+  template <typename V> struct linalg_traits<row_matrix<V> > {
     typedef row_matrix<V> this_type;
     typedef linalg_false is_reference;
     typedef abstract_matrix linalg_type;
@@ -163,11 +163,11 @@ namespace gmm
   };
 
 #ifdef USING_BROKEN_GCC295
-  template <class V> struct linalg_traits<const row_matrix<V> >
+  template <typename V> struct linalg_traits<const row_matrix<V> >
     : public linalg_traits<row_matrix<V> > {};
 #endif
 
-  template<class V> std::ostream &operator <<
+  template<typename V> std::ostream &operator <<
     (std::ostream &o, const row_matrix<V>& m) { gmm::write(o,m); return o; }
 
   /* ******************************************************************** */
@@ -176,7 +176,7 @@ namespace gmm
   /*		                                            		  */
   /* ******************************************************************** */
 
-  template<class V> class col_matrix {
+  template<typename V> class col_matrix {
   protected :
     std::vector<V> li; /* array of columns.                               */
     
@@ -214,10 +214,10 @@ namespace gmm
     { return (ncols() == 0) ? 0 : vect_size(li[0]); }
   };
 
-  template<class V> void col_matrix<V>::clear_mat()
+  template<typename V> void col_matrix<V>::clear_mat()
   { for (size_type i=0; i < ncols(); ++i) clear_col(i); }
 
-  template <class V> struct col_matrix_access {
+  template <typename V> struct col_matrix_access {
     typedef typename linalg_traits<col_matrix<V> >::reference reference;
     typedef typename linalg_traits<col_matrix<V> >::col_iterator iterator;
     typedef typename linalg_traits<col_matrix<V> >::value_type value_type;
@@ -230,7 +230,7 @@ namespace gmm
     { return (*itcol)[j]; }
   };
 
-  template <class V> struct linalg_traits<col_matrix<V> > {
+  template <typename V> struct linalg_traits<col_matrix<V> > {
     typedef col_matrix<V> this_type;
     typedef linalg_false is_reference;
     typedef abstract_matrix linalg_type;
@@ -261,11 +261,11 @@ namespace gmm
     static void do_clear(this_type &m) { m.clear_mat(); }
   };
 
-  template<class V> std::ostream &operator <<
+  template<typename V> std::ostream &operator <<
     (std::ostream &o, const col_matrix<V>& m) { gmm::write(o,m); return o; }
 
 #ifdef USING_BROKEN_GCC295
-  template <class V> struct linalg_traits<const col_matrix<V> >
+  template <typename V> struct linalg_traits<const col_matrix<V> >
     : public linalg_traits<col_matrix<V> > {};
 #endif
 
@@ -275,7 +275,7 @@ namespace gmm
   /*		                                            		  */
   /* ******************************************************************** */
 
-  template<class T> class dense_matrix : public std::vector<T> {
+  template<typename T> class dense_matrix : public std::vector<T> {
   public:
     typedef typename std::vector<T>::size_type size_type;
     typedef typename std::vector<T>::iterator iterator;
@@ -313,16 +313,16 @@ namespace gmm
     dense_matrix(void) { nbl = nbc = 0; }
   };
   
-  template<class T> void dense_matrix<T>::fill(T a, T b) { 
+  template<typename T> void dense_matrix<T>::fill(T a, T b) { 
     std::fill(this->begin(), this->end(), b);
     iterator p = this->begin(), e = this->end();
     while (p < e) { *p = a; p += nbl+1; }
   }
 
-  template<class T>  void dense_matrix<T>::out_of_range_error(void) const
+  template<typename T>  void dense_matrix<T>::out_of_range_error(void) const
   { DAL_THROW(std::out_of_range, "out of range"); }
 
-  template <class T> struct dense_matrix_access {
+  template <typename T> struct dense_matrix_access {
     typedef typename linalg_traits<dense_matrix<T> >::reference reference;
     typedef typename linalg_traits<dense_matrix<T> >::value_type value_type;
     typedef typename linalg_traits<dense_matrix<T> >::col_iterator iterator;
@@ -335,7 +335,7 @@ namespace gmm
     { return (*itcol)[j]; }
   };
 
-  template <class T> struct linalg_traits<dense_matrix<T> > {
+  template <typename T> struct linalg_traits<dense_matrix<T> > {
     typedef dense_matrix<T> this_type;
     typedef linalg_false is_reference;
     typedef abstract_matrix linalg_type;
@@ -395,11 +395,11 @@ namespace gmm
     static void do_clear(this_type &m) { m.fill(value_type(0)); }
   };
 
-  template<class T> std::ostream &operator <<
+  template<typename T> std::ostream &operator <<
     (std::ostream &o, const dense_matrix<T>& m) { gmm::write(o,m); return o; }
 
 #ifdef USING_BROKEN_GCC295
-  template <class T> struct linalg_traits<const dense_matrix<T> >
+  template <typename T> struct linalg_traits<const dense_matrix<T> >
     : public linalg_traits<dense_matrix<T> > {};
 #endif
 
@@ -409,7 +409,7 @@ namespace gmm
   /*                                                                      */
   /* ******************************************************************** */
 
-  template <class T, int shift = 0>
+  template <typename T, int shift = 0>
   struct csc_matrix {
     typedef unsigned int IND_TYPE;
 
@@ -421,13 +421,13 @@ namespace gmm
     typedef T value_type;
     typedef T& access_type;
 
-    template <class Matrix> void init_with_good_format(const Matrix &B);
-    template <class Matrix> void init_with(const Matrix &A);
+    template <typename Matrix> void init_with_good_format(const Matrix &B);
+    template <typename Matrix> void init_with(const Matrix &A);
     void init_with(const col_matrix<gmm::rsvector<T> > &B)
     { init_with_good_format(B); }
     void init_with(const col_matrix<wsvector<T> > &B)
     { init_with_good_format(B); }
-    template <class PT1, class PT2, class PT3, int cshift> void init_with(const csc_matrix_ref<PT1,PT2,PT3,cshift>& B)
+    template <typename PT1, typename PT2, typename PT3, int cshift> void init_with(const csc_matrix_ref<PT1,PT2,PT3,cshift>& B)
     { init_with_good_format(B); }
     void init_with_identity(size_type n);
 
@@ -442,7 +442,7 @@ namespace gmm
     { return mat_col(*this, j)[i]; }
   };
 
-  template <class T, int shift> template<class Matrix>
+  template <typename T, int shift> template<typename Matrix>
   void csc_matrix<T, shift>::init_with_good_format(const Matrix &B) {
     typedef typename linalg_traits<Matrix>::const_sub_col_type col_type;
     if (pr) { delete[] pr; delete[] ir; delete[] jc; }
@@ -463,14 +463,14 @@ namespace gmm
     }
   }
   
-  template <class T, int shift> template <class Matrix>
+  template <typename T, int shift> template <typename Matrix>
   void csc_matrix<T, shift>::init_with(const Matrix &A) {
     col_matrix<wsvector<T> > B(mat_nrows(A), mat_ncols(A));
     copy(A, B);
     init_with_good_format(B);
   }
   
-  template <class T, int shift>
+  template <typename T, int shift>
   void csc_matrix<T, shift>::init_with_identity(size_type n) {
     if (pr) { delete[] pr; delete[] ir; delete[] jc; }
     nc = nr = n; 
@@ -482,7 +482,7 @@ namespace gmm
     jc[nc] = shift + nc;
   }
   
-  template <class T, int shift>
+  template <typename T, int shift>
   csc_matrix<T, shift>::csc_matrix(size_type nnr, size_type nnc)
     : nc(nnc), nr(nnr) {
     pr = new T[1];  ir = new IND_TYPE[1];
@@ -491,7 +491,7 @@ namespace gmm
     jc[nc] = shift;
   }
 
-  template <class T, int shift>
+  template <typename T, int shift>
   struct linalg_traits<csc_matrix<T, shift> > {
     typedef csc_matrix<T, shift> this_type;
     typedef typename this_type::IND_TYPE IND_TYPE;
@@ -529,21 +529,21 @@ namespace gmm
   };
 
 #ifdef USING_BROKEN_GCC295
-  template <class T, int shift>
+  template <typename T, int shift>
   struct linalg_traits<const csc_matrix<T, shift> >
     : public linalg_traits<csc_matrix<T, shift> > {};
 #endif
 
-  template <class T, int shift>
+  template <typename T, int shift>
   std::ostream &operator <<
     (std::ostream &o, const csc_matrix<T, shift>& m)
   { gmm::write(o,m); return o; }
   
-  template <class T, int shift>
+  template <typename T, int shift>
   inline void copy(const identity_matrix &, csc_matrix<T, shift>& M)
   { M.init_with_identity(mat_nrows(M)); }
 
-  template <class Matrix, class T, int shift>
+  template <typename Matrix, typename T, int shift>
   inline void copy(const Matrix &A, csc_matrix<T, shift>& M)
   { M.init_with(A); }
 
@@ -553,7 +553,7 @@ namespace gmm
   /*                                                                      */
   /* ******************************************************************** */
 
-  template <class T, int shift = 0>
+  template <typename T, int shift = 0>
   struct csr_matrix {
 
     typedef unsigned int IND_TYPE;
@@ -567,15 +567,15 @@ namespace gmm
     typedef T& access_type;
 
 
-    template <class Matrix> void init_with_good_format(const Matrix &B);
+    template <typename Matrix> void init_with_good_format(const Matrix &B);
     void init_with(const row_matrix<wsvector<T> > &B)
     { init_with_good_format(B); }
     void init_with(const row_matrix<rsvector<T> > &B)
     { init_with_good_format(B); }
-    template <class PT1, class PT2, class PT3, int cshift> void init_with(const csr_matrix_ref<PT1,PT2,PT3,cshift>& B)
+    template <typename PT1, typename PT2, typename PT3, int cshift> void init_with(const csr_matrix_ref<PT1,PT2,PT3,cshift>& B)
     { init_with_good_format(B); }
 
-    template <class Matrix> void init_with(const Matrix &A);
+    template <typename Matrix> void init_with(const Matrix &A);
     void init_with_identity(size_type n);
 
     csr_matrix(void) : pr(0), ir(0), jc(0), nc(0), nr(0) {}
@@ -589,7 +589,7 @@ namespace gmm
     { return mat_col(*this, j)[i]; }
   };
   
-  template <class T, int shift> template <class Matrix>
+  template <typename T, int shift> template <typename Matrix>
   void csr_matrix<T, shift>::init_with_good_format(const Matrix &B) {
     typedef typename linalg_traits<Matrix>::const_sub_row_type row_type;
     if (pr) { delete[] pr; delete[] ir; delete[] jc; }
@@ -610,14 +610,14 @@ namespace gmm
     }
   }
 
-  template <class T, int shift> template <class Matrix> 
+  template <typename T, int shift> template <typename Matrix> 
   void csr_matrix<T, shift>::init_with(const Matrix &A) { 
     row_matrix<wsvector<T> > B(mat_nrows(A), mat_ncols(A)); 
     copy(A, B); 
     init_with_good_format(B);
   }
 
-  template <class T, int shift> 
+  template <typename T, int shift> 
   void csr_matrix<T, shift>::init_with_identity(size_type n) {
     if (pr) { delete[] pr; delete[] ir; delete[] jc; }
     nc = nr = n; 
@@ -629,7 +629,7 @@ namespace gmm
     jc[nr] = shift + nr;
   }
 
-  template <class T, int shift>
+  template <typename T, int shift>
   csr_matrix<T, shift>::csr_matrix(size_type nnr, size_type nnc)
     : nc(nnc), nr(nnr) {
     pr = new T[1];  ir = new IND_TYPE[1];
@@ -639,7 +639,7 @@ namespace gmm
   }
 
 
-  template <class T, int shift>
+  template <typename T, int shift>
   struct linalg_traits<csr_matrix<T, shift> > {
     typedef csr_matrix<T, shift> this_type;
     typedef typename this_type::IND_TYPE IND_TYPE;
@@ -677,21 +677,21 @@ namespace gmm
   };
 
 #ifdef USING_BROKEN_GCC295
-  template <class T, int shift>
+  template <typename T, int shift>
   struct linalg_traits<const csr_matrix<T, shift> >
     : public linalg_traits<csr_matrix<T, shift> > {};
 #endif
 
-  template <class T, int shift>
+  template <typename T, int shift>
   std::ostream &operator <<
     (std::ostream &o, const csr_matrix<T, shift>& m)
   { gmm::write(o,m); return o; }
   
-  template <class T, int shift>
+  template <typename T, int shift>
   inline void copy(const identity_matrix &, csr_matrix<T, shift>& M)
   { M.init_with_identity(mat_nrows(M)); }
 
-  template <class Matrix, class T, int shift>
+  template <typename Matrix, typename T, int shift>
   inline void copy(const Matrix &A, csr_matrix<T, shift>& M)
   { M.init_with(A); }
 
@@ -701,7 +701,7 @@ namespace gmm
   /*		                                            		  */
   /* ******************************************************************** */
 
-  template <class MAT> class block_matrix {
+  template <typename MAT> class block_matrix {
   protected :
     std::vector<MAT> blocks;
     size_type _nrowblocks;
@@ -741,14 +741,14 @@ namespace gmm
       return (block(k, l))(i - introw[k].min, j - introw[l].min);
     }
     
-    template <class CONT> void resize(const CONT &c1, const CONT &c2);
-    template <class CONT> block_matrix(const CONT &c1, const CONT &c2)
+    template <typename CONT> void resize(const CONT &c1, const CONT &c2);
+    template <typename CONT> block_matrix(const CONT &c1, const CONT &c2)
     { resize(c1, c2); }
     block_matrix(void) {}
 
   };
 
-  template <class MAT> struct linalg_traits<block_matrix<MAT> > {
+  template <typename MAT> struct linalg_traits<block_matrix<MAT> > {
     typedef block_matrix<MAT> this_type;
     typedef linalg_false is_reference;
     typedef abstract_matrix linalg_type;
@@ -771,13 +771,13 @@ namespace gmm
     static void do_clear(this_type &m) { m.do_clear(); }
   };
 
-  template <class MAT> void block_matrix<MAT>::do_clear(void) { 
+  template <typename MAT> void block_matrix<MAT>::do_clear(void) { 
     for (size_type j = 0, l = 0; j < _ncolblocks; ++j)
       for (size_type i = 0, k = 0; i < _nrowblocks; ++i)
 	clear(block(i,j));
   }
 
-  template <class MAT> template <class CONT>
+  template <typename MAT> template <typename CONT>
   void block_matrix<MAT>::resize(const CONT &c1, const CONT &c2) {
     _nrowblocks = c1.size(); _ncolblocks = c2.size();
     blocks.resize(_nrowblocks * _ncolblocks);
@@ -792,7 +792,7 @@ namespace gmm
     }
   }
 
-  template <class M1, class M2>
+  template <typename M1, typename M2>
   void copy(const block_matrix<M1> &m1, M2 &m2) {
     for (size_type j = 0; j < m1.ncolblocks(); ++j)
       for (size_type i = 0; i < m1.nrowblocks(); ++i)
@@ -800,12 +800,12 @@ namespace gmm
 				       m1.subcolinterval(j)));
   }
 
-  template <class M1, class M2>
+  template <typename M1, typename M2>
   void copy(const block_matrix<M1> &m1, const M2 &m2)
   { copy(m1, linalg_const_cast(m2)); }
   
 
-  template <class MAT, class V1, class V2>
+  template <typename MAT, typename V1, typename V2>
   void mult(const block_matrix<MAT> &m, const V1 &v1, V2 &v2) {
     clear(v2);
     typename sub_vector_type<V2 *, sub_interval>::vector_type sv;
@@ -817,7 +817,7 @@ namespace gmm
       }
   }
 
-  template <class MAT, class V1, class V2, class V3>
+  template <typename MAT, typename V1, typename V2, typename V3>
   void mult(const block_matrix<MAT> &m, const V1 &v1, const V2 &v2, V3 &v3) {
     typename sub_vector_type<V3 *, sub_interval>::vector_type sv;
     for (size_type i = 0; i < m.nrowblocks() ; ++i)
@@ -834,11 +834,11 @@ namespace gmm
     
   }
 
-  template <class MAT, class V1, class V2>
+  template <typename MAT, typename V1, typename V2>
   void mult(const block_matrix<MAT> &m, const V1 &v1, const V2 &v2)
   { mult(m, v1, linalg_const_cast(v2)); }
 
-  template <class MAT, class V1, class V2, class V3>
+  template <typename MAT, typename V1, typename V2, typename V3>
   void mult(const block_matrix<MAT> &m, const V1 &v1, const V2 &v2, 
 	    const V3 &v3)
   { mult_const(m, v1, v2, linalg_const_cast(v3)); }

@@ -63,7 +63,8 @@ namespace gmm {
   /* (preconditionned, with parametrable scalar product)        	  */
   /* ******************************************************************** */
 
-  template <class Matrix, class Vector, class VectorB, class Preconditioner>
+  template <typename Matrix, typename Vector, typename VectorB,
+	    typename Preconditioner>
   void bicgstab(const Matrix& A, Vector& x, const VectorB& b,
 	       const Preconditioner& M, iteration &iter) {
 
@@ -125,7 +126,8 @@ namespace gmm {
     }
   }
 
-  template <class Matrix, class Vector, class VectorB, class Preconditioner>
+  template <typename Matrix, typename Vector, typename VectorB,
+	    typename Preconditioner>
   int bicgstab(const Matrix& A, const Vector& x, const VectorB& b,
 	       const Preconditioner& M, iteration &iter)
   { bicgstab(A, linalg_const_cast(x), b, M, iter); }

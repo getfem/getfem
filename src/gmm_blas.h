@@ -46,138 +46,138 @@ namespace gmm {
   /*		Miscellaneous                           		  */
   /* ******************************************************************** */
 
-  template <class V> inline size_type vect_size(const V &v)
+  template <typename V> inline size_type vect_size(const V &v)
   { return linalg_traits<V>::size(v); }
 
-  template <class MAT> inline size_type mat_nrows(const MAT &m)
+  template <typename MAT> inline size_type mat_nrows(const MAT &m)
   { return linalg_traits<MAT>::nrows(m); }
 
-  template <class MAT> inline size_type mat_ncols(const MAT &m)
+  template <typename MAT> inline size_type mat_ncols(const MAT &m)
   { return linalg_traits<MAT>::ncols(m); }
 
-  template <class L> inline const void *linalg_origin(const L &l)
+  template <typename L> inline const void *linalg_origin(const L &l)
   { return linalg_traits<L>::origin(l); }
 
-  template <class V> inline
+  template <typename V> inline
   typename select_return<typename linalg_traits<V>::const_iterator,
     typename linalg_traits<V>::iterator, V *>::return_type
   vect_begin(V &v)
   { return linalg_traits<V>::begin(linalg_cast(v)); }
 
-  template <class V> inline
+  template <typename V> inline
   typename linalg_traits<V>::const_iterator
   vect_const_begin(const V &v)
   { return linalg_traits<V>::begin(v); }
 
-  template <class V> inline
+  template <typename V> inline
   typename select_return<typename linalg_traits<V>::const_iterator,
     typename linalg_traits<V>::iterator, V *>::return_type
   vect_end(V &v)
   { return linalg_traits<V>::end(linalg_cast(v)); }
 
-  template <class V> inline
+  template <typename V> inline
   typename select_return<typename linalg_traits<V>::const_iterator,
     typename linalg_traits<V>::iterator, const V *>::return_type
   vect_end(const V &v)
   { return linalg_traits<V>::end(linalg_cast(v)); }
 
-  template <class V> inline
+  template <typename V> inline
   typename linalg_traits<V>::const_iterator
   vect_const_end(const V &v)
   { return linalg_traits<V>::end(v); }
 
-  template <class M> inline
+  template <typename M> inline
   typename select_return<typename linalg_traits<M>::const_row_iterator,
     typename linalg_traits<M>::row_iterator, M *>::return_type
   mat_row_begin(M &m) { return linalg_traits<M>::row_begin(linalg_cast(m)); }
   
-  template <class M> inline
+  template <typename M> inline
   typename select_return<typename linalg_traits<M>::const_row_iterator,
     typename linalg_traits<M>::row_iterator, const M *>::return_type
   mat_row_begin(const M &m)
   { return linalg_traits<M>::row_begin(linalg_cast(m)); }
   
-  template <class M> inline typename linalg_traits<M>::const_row_iterator
+  template <typename M> inline typename linalg_traits<M>::const_row_iterator
   mat_row_const_begin(const M &m)
   { return linalg_traits<M>::row_begin(m); }
 
-  template <class M> inline
+  template <typename M> inline
   typename select_return<typename linalg_traits<M>::const_row_iterator,
     typename linalg_traits<M>::row_iterator, M *>::return_type
   mat_row_end(M &v) {
     return linalg_traits<M>::row_end(linalg_cast(v));
   }
 
-  template <class M> inline
+  template <typename M> inline
   typename select_return<typename linalg_traits<M>::const_row_iterator,
     typename linalg_traits<M>::row_iterator, const M *>::return_type
   mat_row_end(const M &v) {
     return linalg_traits<M>::row_end(linalg_cast(v));
   }
 
-  template <class M> inline
+  template <typename M> inline
   typename linalg_traits<M>::const_row_iterator
   mat_row_const_end(const M &v)
   { return linalg_traits<M>::row_end(v); }
 
-  template <class M> inline
+  template <typename M> inline
   typename select_return<typename linalg_traits<M>::const_col_iterator,
     typename linalg_traits<M>::col_iterator, M *>::return_type
   mat_col_begin(M &v) {
     return linalg_traits<M>::col_begin(linalg_cast(v));
   }
 
-  template <class M> inline
+  template <typename M> inline
   typename select_return<typename linalg_traits<M>::const_col_iterator,
     typename linalg_traits<M>::col_iterator, const M *>::return_type
   mat_col_begin(const M &v) {
     return linalg_traits<M>::col_begin(linalg_cast(v));
   }
 
-  template <class M> inline
+  template <typename M> inline
   typename linalg_traits<M>::const_col_iterator
   mat_col_const_begin(const M &v)
   { return linalg_traits<M>::col_begin(v); }
 
-  template <class M> inline
+  template <typename M> inline
   typename linalg_traits<M>::const_col_iterator
   mat_col_const_end(const M &v)
   { return linalg_traits<M>::col_end(v); }
 
-  template <class M> inline
+  template <typename M> inline
   typename select_return<typename linalg_traits<M>::const_col_iterator,
                          typename linalg_traits<M>::col_iterator,
                          M *>::return_type
   mat_col_end(M &m)
   { return linalg_traits<M>::col_end(linalg_cast(m)); }
 
-  template <class M> inline
+  template <typename M> inline
   typename select_return<typename linalg_traits<M>::const_col_iterator,
                          typename linalg_traits<M>::col_iterator,
                          const M *>::return_type
   mat_col_end(const M &m)
   { return linalg_traits<M>::col_end(linalg_cast(m)); }
 
-  template <class MAT> inline
+  template <typename MAT> inline
   typename select_return<typename linalg_traits<MAT>::const_sub_row_type,
                          typename linalg_traits<MAT>::sub_row_type,
                          const MAT *>::return_type
   mat_row(const MAT &m, size_type i)
   { return linalg_traits<MAT>::row(mat_row_begin(m) + i); }
 
-  template <class MAT> inline
+  template <typename MAT> inline
   typename select_return<typename linalg_traits<MAT>::const_sub_row_type,
                          typename linalg_traits<MAT>::sub_row_type,
                          MAT *>::return_type
   mat_row(MAT &m, size_type i)
   { return linalg_traits<MAT>::row(mat_row_begin(m) + i); }
 
-  template <class MAT> inline
+  template <typename MAT> inline
   typename linalg_traits<MAT>::const_sub_row_type
   mat_const_row(const MAT &m, size_type i)
   { return linalg_traits<MAT>::row(mat_row_const_begin(m) + i); }
 
-  template <class MAT> inline
+  template <typename MAT> inline
   typename select_return<typename linalg_traits<MAT>::const_sub_col_type,
                          typename linalg_traits<MAT>::sub_col_type,
                          const MAT *>::return_type
@@ -185,28 +185,28 @@ namespace gmm {
   { return linalg_traits<MAT>::col(mat_col_begin(m) + i); }
 
 
-  template <class MAT> inline
+  template <typename MAT> inline
   typename select_return<typename linalg_traits<MAT>::const_sub_col_type,
                          typename linalg_traits<MAT>::sub_col_type,
                          MAT *>::return_type
   mat_col(MAT &m, size_type i)
   { return linalg_traits<MAT>::col(mat_col_begin(m) + i); }
   
-  template <class MAT> inline
+  template <typename MAT> inline
   typename linalg_traits<MAT>::const_sub_col_type
   mat_const_col(const MAT &m, size_type i)
   { return linalg_traits<MAT>::col(mat_col_const_begin(m) + i); }
 
-  template <class L> inline void clear(L &l)
+  template <typename L> inline void clear(L &l)
   { linalg_traits<L>::do_clear(l); }
 
-  template <class L> inline void clear(const L &l)
+  template <typename L> inline void clear(const L &l)
   { linalg_traits<L>::do_clear(linalg_const_cast(l)); }
 
-  template <class L> inline size_type nnz(const L& l)
+  template <typename L> inline size_type nnz(const L& l)
   { return nnz(l, typename linalg_traits<L>::linalg_type()); }
 
-  template <class L> inline size_type nnz(const L& l, abstract_vector) { 
+  template <typename L> inline size_type nnz(const L& l, abstract_vector) { 
     typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
       ite = vect_const_end(l);
     size_type res(0);
@@ -214,78 +214,77 @@ namespace gmm {
     return res;
   }
 
-  template <class L> inline size_type nnz(const L& l, abstract_matrix) {
+  template <typename L> inline size_type nnz(const L& l, abstract_matrix) {
     return nnz(l,  typename principal_orientation_type<typename
 	       linalg_traits<L>::sub_orientation>::potype());
   }
 
-  template <class L> inline size_type nnz(const L& l, row_major) {
+  template <typename L> inline size_type nnz(const L& l, row_major) {
     size_type res(0);
     for (size_type i = 0; i < mat_nrows(l); ++i)
       res += nnz(mat_const_row(l, i));
     return res;
   } 
 
-  template <class L> inline size_type nnz(const L& l, col_major) {
+  template <typename L> inline size_type nnz(const L& l, col_major) {
     size_type res(0);
     for (size_type i = 0; i < mat_ncols(l); ++i)
       res += nnz(mat_const_col(l, i));
     return res;
   }
 
-  template <class L> inline void fill_random(L& l)
+  template <typename L> inline void fill_random(L& l)
   { fill_random(l, typename linalg_traits<L>::linalg_type()); }
 
-  template <class L> inline void fill_random(const L& l) {
+  template <typename L> inline void fill_random(const L& l) {
     fill_random(linalg_const_cast(l),
 		typename linalg_traits<L>::linalg_type());
   }
 
-  template <class L> inline void fill_random(L& l, abstract_vector) {
+  template <typename L> inline void fill_random(L& l, abstract_vector) {
     for (size_type i = 0; i < vect_size(l); ++i)
       l[i] = dal::random(typename linalg_traits<L>::value_type());
   }
 
-  template <class L> inline void fill_random(L& l, abstract_matrix) {
+  template <typename L> inline void fill_random(L& l, abstract_matrix) {
     for (size_type i = 0; i < mat_nrows(l); ++i)
       for (size_type j = 0; j < mat_ncols(l); ++j)
 	l(i,j) = dal::random(typename linalg_traits<L>::value_type());
   }
 
-  template <class L> inline void fill_random(L& l, double cfill)
+  template <typename L> inline void fill_random(L& l, double cfill)
   { fill_random(l, cfill, typename linalg_traits<L>::linalg_type()); }
 
-  template <class L> inline void fill_random(const L& l, double cfill) {
+  template <typename L> inline void fill_random(const L& l, double cfill) {
     fill_random(linalg_const_cast(l), cfill,
 		typename linalg_traits<L>::linalg_type());
   }
 
-  template <class L> inline void fill_random(L& l, double cfill,
+  template <typename L> inline void fill_random(L& l, double cfill,
 					     abstract_vector) {
-    if (cfill > 0.1) {
-      for (size_type i = 0; i < vect_size(l); ++i) 
-	if (dal::random() < cfill)
-	  l[i] = dal::random(typename linalg_traits<L>::value_type());
-	else l[i] = 0;
-    } else {
-      for (size_type i=0; i < size_type(vect_size(l)*cfill)+1; ++i) {
-	l[dal::irandom(vect_size(l))]
-	  = dal::random(typename linalg_traits<L>::value_type());
+    gmm::clear(l);
+    typedef typename linalg_traits<L>::value_type T;
+    size_type ntot = std::min(vect_size(l), size_type(vect_size(l)*cfill) + 1);
+    for (size_type nb = 0; nb < ntot;) {
+      size_type i = dal::irandom(vect_size(l));
+      if (l[i] == T(0)) { 
+	l[i] = dal::random(typename linalg_traits<L>::value_type());
+	++nb;
       }
     }
   }
 
-  template <class L> inline void fill_random(L& l, double cfill,
+  template <typename L> inline void fill_random(L& l, double cfill,
 					     abstract_matrix) {
     fill_random(l, cfill, typename principal_orientation_type<typename
 		linalg_traits<L>::sub_orientation>::potype());
   }
 
-  template <class L> inline void fill_random(L& l, double cfill, row_major) {
+  template <typename L> inline void fill_random(L& l, double cfill, row_major) {
     for (size_type i=0; i < mat_nrows(l); ++i) fill_random(mat_row(l,i),cfill);
   }
 
-  template <class L> inline void fill_random(L& l, double cfill, col_major) {
+  template <typename L> inline void fill_random(L& l, double cfill, col_major) {
     for (size_type j=0; j < mat_ncols(l); ++j) fill_random(mat_col(l,j),cfill);
   }
 
@@ -294,25 +293,25 @@ namespace gmm {
   /*		Write                                   		  */
   /* ******************************************************************** */
 
-  template <class T> struct cast_char_type { typedef T return_type; };
+  template <typename T> struct cast_char_type { typedef T return_type; };
   template <> struct cast_char_type<signed char> { typedef int return_type; };
   template <> struct cast_char_type<unsigned char>
   { typedef unsigned int return_type; };
-  template <class T> inline typename cast_char_type<T>::return_type
+  template <typename T> inline typename cast_char_type<T>::return_type
   cast_char(const T &c) { return typename cast_char_type<T>::return_type(c); }
 
 
-  template <class L> inline void write(std::ostream &o, const L &l)
+  template <typename L> inline void write(std::ostream &o, const L &l)
   { write(o, l, typename linalg_traits<L>::linalg_type()); }
 
-  template <class L> void write(std::ostream &o, const L &l,
+  template <typename L> void write(std::ostream &o, const L &l,
 				       abstract_vector) {
     o << "vector(" << vect_size(l) << ") [";
     write(o, l, typename linalg_traits<L>::storage_type());
     o << " ]";
   }
 
-  template <class L> void write(std::ostream &o, const L &l,
+  template <typename L> void write(std::ostream &o, const L &l,
 				       abstract_sparse) {
     typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
       ite = vect_const_end(l);
@@ -320,7 +319,7 @@ namespace gmm {
       o << " (r" << it.index() << "," << cast_char(*it) << ")";
   }
 
-  template <class L> void write(std::ostream &o, const L &l,
+  template <typename L> void write(std::ostream &o, const L &l,
 				       abstract_dense) {
     typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
       ite = vect_const_end(l);
@@ -328,7 +327,7 @@ namespace gmm {
     for (; it != ite; ++it) o << ", " << cast_char(*it);
   }
 
-  template <class L> void write(std::ostream &o, const L &l,
+  template <typename L> void write(std::ostream &o, const L &l,
 				       abstract_skyline) {
     typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
       ite = vect_const_end(l);
@@ -338,13 +337,13 @@ namespace gmm {
     for (; it != ite; ++it) o << ", " << cast_char(*it);
   }
 
-  template <class L> inline void write(std::ostream &o, const L &l,
+  template <typename L> inline void write(std::ostream &o, const L &l,
 				       abstract_matrix) {
     write(o, l, typename linalg_traits<L>::sub_orientation());
   }
 
 
-  template <class L> void write(std::ostream &o, const L &l,
+  template <typename L> void write(std::ostream &o, const L &l,
 				       row_major) {
     o << "matrix(" << mat_nrows(l) << ", " << mat_ncols(l) << ")" << endl;
     for (size_type i = 0; i < mat_nrows(l); ++i) {
@@ -354,13 +353,13 @@ namespace gmm {
     }
   }
 
-  template <class L> inline void write(std::ostream &o, const L &l,row_and_col)
+  template <typename L> inline void write(std::ostream &o, const L &l,row_and_col)
   { write(o, l, row_major()); }
 
-  template <class L> inline void write(std::ostream &o, const L &l,col_and_row)
+  template <typename L> inline void write(std::ostream &o, const L &l,col_and_row)
   { write(o, l, row_major()); }
 
-  template <class L> void write(std::ostream &o, const L &l, col_major) {
+  template <typename L> void write(std::ostream &o, const L &l, col_major) {
     o << "matrix(" << mat_nrows(l) << ", " << mat_ncols(l) << ")" << endl;
     for (size_type i = 0; i < mat_nrows(l); ++i) {
       o << "(";
@@ -381,7 +380,7 @@ namespace gmm {
   /*		Scalar product                             		  */
   /* ******************************************************************** */
 
-  template <class V1, class V2> inline
+  template <typename V1, typename V2> inline
     typename linalg_traits<V1>::value_type
     vect_sp(const V1 &v1, const V2 &v2) {
     if (vect_size(v1) != vect_size(v2))
@@ -392,21 +391,21 @@ namespace gmm {
 		   typename linalg_traits<V2>::storage_type());
   }
 
-  template <class MATSP, class V1, class V2> inline
+  template <typename MATSP, typename V1, typename V2> inline
     typename linalg_traits<V1>::value_type
     vect_sp(const MATSP &ps, const V1 &v1, const V2 &v2) {
     return vect_sp_with_mat(ps, v1, v2,
 			    typename linalg_traits<MATSP>::sub_orientation());
   }
 
-  template <class MATSP, class V1, class V2> inline
+  template <typename MATSP, typename V1, typename V2> inline
     typename linalg_traits<V1>::value_type
     vect_sp_with_mat(const MATSP &ps, const V1 &v1, const V2 &v2, row_major) {
     return vect_sp_with_matr(ps, v1, v2, 
 			     typename linalg_traits<V2>::storage_type());
   }
 
-  template <class MATSP, class V1, class V2> inline 
+  template <typename MATSP, typename V1, typename V2> inline 
     typename linalg_traits<V1>::value_type
     vect_sp_with_matr(const MATSP &ps, const V1 &v1, const V2 &v2,
 		      abstract_sparse) {
@@ -421,13 +420,13 @@ namespace gmm {
     return res;
   }
 
-  template <class MATSP, class V1, class V2> inline
+  template <typename MATSP, typename V1, typename V2> inline
     typename linalg_traits<V1>::value_type
     vect_sp_with_matr(const MATSP &ps, const V1 &v1, const V2 &v2,
 		      abstract_skyline)
   { return vect_sp_with_matr(ps, v1, v2, abstract_sparse()); }
 
-  template <class MATSP, class V1, class V2> inline
+  template <typename MATSP, typename V1, typename V2> inline
     typename linalg_traits<V1>::value_type
     vect_sp_with_matr(const MATSP &ps, const V1 &v1, const V2 &v2,
 		      abstract_dense) {
@@ -441,19 +440,19 @@ namespace gmm {
     return res;
   }
 
-  template <class MATSP, class V1, class V2> inline
+  template <typename MATSP, typename V1, typename V2> inline
   typename linalg_traits<V1>::value_type
   vect_sp_with_mat(const MATSP &ps, const V1 &v1,const V2 &v2,row_and_col)
   { return vect_sp_with_mat(ps, v1, v2, row_major()); }
 
-  template <class MATSP, class V1, class V2> inline
+  template <typename MATSP, typename V1, typename V2> inline
   typename linalg_traits<V1>::value_type
   vect_sp_with_mat(const MATSP &ps, const V1 &v1, const V2 &v2,col_major){
     return vect_sp_with_matc(ps, v1, v2,
 			     typename linalg_traits<V1>::storage_type());
   }
 
-  template <class MATSP, class V1, class V2> inline
+  template <typename MATSP, typename V1, typename V2> inline
     typename linalg_traits<V1>::value_type
     vect_sp_with_matc(const MATSP &ps, const V1 &v1, const V2 &v2,
 		      abstract_sparse) {
@@ -467,13 +466,13 @@ namespace gmm {
     return res;
   }
 
-  template <class MATSP, class V1, class V2> inline
+  template <typename MATSP, typename V1, typename V2> inline
     typename linalg_traits<V1>::value_type
     vect_sp_with_matc(const MATSP &ps, const V1 &v1, const V2 &v2,
 		      abstract_skyline)
   { return vect_sp_with_matc(ps, v1, v2, abstract_sparse()); }
 
-  template <class MATSP, class V1, class V2> inline
+  template <typename MATSP, typename V1, typename V2> inline
     typename linalg_traits<V1>::value_type
     vect_sp_with_matc(const MATSP &ps, const V1 &v1, const V2 &v2,
 		      abstract_dense) {
@@ -487,12 +486,12 @@ namespace gmm {
     return res;
   }
 
-  template <class MATSP, class V1, class V2> inline
+  template <typename MATSP, typename V1, typename V2> inline
   typename linalg_traits<V1>::value_type
   vect_sp_with_mat(const MATSP &ps, const V1 &v1,const V2 &v2,col_and_row)
   { return vect_sp_with_mat(ps, v1, v2, col_major()); }
 
-  template <class MATSP, class V1, class V2> inline
+  template <typename MATSP, typename V1, typename V2> inline
   typename linalg_traits<V1>::value_type
   vect_sp_with_mat(const MATSP &ps, const V1 &v1, const V2 &v2,
 		   abstract_null_type) {
@@ -502,7 +501,7 @@ namespace gmm {
     return vect_sp(w, v2);
   }
 
-  template <class IT1, class IT2> inline
+  template <typename IT1, typename IT2> inline
     typename std::iterator_traits<IT1>::value_type
     _vect_sp_dense(IT1 it, IT1 ite, IT2 it2) {
     typename std::iterator_traits<IT1>::value_type res(0);
@@ -512,23 +511,23 @@ namespace gmm {
     return res;
   }
   
-  template <class IT1, class V> inline
+  template <typename IT1, typename V> inline
     typename std::iterator_traits<IT1>::value_type
     _vect_sp_sparse(IT1 it, IT1 ite, const V &v) {
-    typedef typename std::iterator_traits<IT1>::value_type value_type;
-    value_type res(0);
+    typedef typename std::iterator_traits<IT1>::value_type T;
+    T res(0);
     for (; it != ite; ++it) 
-      res += (*it) * (value_type(v[it.index()]));
+      res += (*it) * (T(v[it.index()]));
     return res;
   }
 
-  template <class V1, class V2> inline
+  template <typename V1, typename V2> inline
     typename linalg_traits<V1>::value_type
     vect_sp(const V1 &v1, const V2 &v2, abstract_dense, abstract_dense) {
     return _vect_sp_dense(vect_const_begin(v1), vect_const_end(v1), vect_const_begin(v2));
   }
 
-  template <class V1, class V2> inline
+  template <typename V1, typename V2> inline
     typename linalg_traits<V1>::value_type
     vect_sp(const V1 &v1, const V2 &v2, abstract_skyline, abstract_dense) {
     typename linalg_traits<V1>::const_iterator it1 = vect_const_begin(v1),
@@ -537,7 +536,7 @@ namespace gmm {
     return _vect_sp_dense(it1, ite, it2 + it1.index());
   }
 
-  template <class V1, class V2> inline
+  template <typename V1, typename V2> inline
     typename linalg_traits<V1>::value_type
     vect_sp(const V1 &v1, const V2 &v2, abstract_dense, abstract_skyline) {
     typename linalg_traits<V2>::const_iterator it1 = vect_const_begin(v2),
@@ -546,7 +545,7 @@ namespace gmm {
     return _vect_sp_dense(it1, ite, it2 + it1.index());
   }
 
-  template <class V1, class V2> inline
+  template <typename V1, typename V2> inline
     typename linalg_traits<V1>::value_type
     vect_sp(const V1 &v1, const V2 &v2, abstract_skyline, abstract_skyline) {
     typedef typename linalg_traits<V1>::value_type T;
@@ -564,42 +563,42 @@ namespace gmm {
     return T(0);
   }
 
-  template <class V1, class V2> inline
+  template <typename V1, typename V2> inline
     typename linalg_traits<V1>::value_type
   vect_sp(const V1 &v1, const V2 &v2,abstract_sparse,abstract_dense) {
     return _vect_sp_sparse(vect_const_begin(v1), vect_const_end(v1), v2);
   }
 
-  template <class V1, class V2> inline
+  template <typename V1, typename V2> inline
     typename linalg_traits<V1>::value_type
     vect_sp(const V1 &v1, const V2 &v2, abstract_sparse, abstract_skyline) {
     return _vect_sp_sparse(vect_const_begin(v1), vect_const_end(v1), v2);
   }
 
-  template <class V1, class V2> inline
+  template <typename V1, typename V2> inline
     typename linalg_traits<V1>::value_type
     vect_sp(const V1 &v1, const V2 &v2, abstract_skyline, abstract_sparse) {
     return _vect_sp_sparse(vect_const_begin(v2), vect_const_end(v2), v1);
   }
 
-  template <class V1, class V2> inline
+  template <typename V1, typename V2> inline
     typename linalg_traits<V1>::value_type
     vect_sp(const V1 &v1, const V2 &v2, abstract_dense,abstract_sparse) {
     return _vect_sp_sparse(vect_const_begin(v2), vect_const_end(v2), v1);
   }
 
-  template <class V1, class V2> inline
+  template <typename V1, typename V2> inline
     typename linalg_traits<V1>::value_type
     vect_sp(const V1 &v1, const V2 &v2,abstract_sparse,abstract_sparse) {
     typename linalg_traits<V1>::const_iterator it1 = vect_const_begin(v1),
       ite1 = vect_const_end(v1);
     typename linalg_traits<V2>::const_iterator it2 = vect_const_begin(v2),
       ite2 = vect_const_end(v2);
-    typedef typename linalg_traits<V1>::value_type value_type;
-    value_type res(0);
+    typedef typename linalg_traits<V1>::value_type T;
+    T res(0);
     while (it1 != ite1 && it2 != ite2) {
       if (it1.index() == it2.index())
-	{ res += (*it1) * value_type(*it2); ++it1; ++it2; }
+	{ res += (*it1) * T(*it2); ++it1; ++it2; }
       else if (it1.index() < it2.index()) ++it1; else ++it2;
     }
     return res;
@@ -609,7 +608,7 @@ namespace gmm {
   /*		Hermitian product                             		  */
   /* ******************************************************************** */
 
-  template <class V1, class V2> inline typename linalg_traits<V1>::value_type
+  template <typename V1, typename V2> inline typename linalg_traits<V1>::value_type
   vect_hp(const V1 &v1, const V2 &v2)
   { return vect_sp(conjugated(v1), v2); }
 
@@ -617,7 +616,7 @@ namespace gmm {
   /*		Trace of a matrix                             		  */
   /* ******************************************************************** */
   
-   template <class M>
+   template <typename M>
    typename linalg_traits<M>::value_type
    mat_trace(const M &m) {
      typename linalg_traits<M>::value_type res(0);
@@ -630,7 +629,7 @@ namespace gmm {
   /*		Euclidian norm                             		  */
   /* ******************************************************************** */
 
-  template <class V>
+  template <typename V>
   typename number_traits<typename linalg_traits<V>::value_type>
   ::magnitude_type
   vect_norm2_sqr(const V &v) {
@@ -642,13 +641,13 @@ namespace gmm {
     return res;
   }
 
-  template <class V> inline
+  template <typename V> inline
    typename number_traits<typename linalg_traits<V>::value_type>
    ::magnitude_type
    vect_norm2(const V &v)
   { return sqrt(vect_norm2_sqr(v)); }
 
-  template <class M>
+  template <typename M>
    typename number_traits<typename linalg_traits<M>::value_type>
    ::magnitude_type
    mat_norm2(const M &m, row_major) {
@@ -664,7 +663,7 @@ namespace gmm {
     return sqrt(res);
   }
 
-  template <class M>
+  template <typename M>
    typename number_traits<typename linalg_traits<M>::value_type>
    ::magnitude_type
    mat_norm2(const M &m, col_major) {
@@ -680,7 +679,7 @@ namespace gmm {
     return sqrt(res);
   }
 
-  template <class M>
+  template <typename M>
    typename number_traits<typename linalg_traits<M>::value_type>
    ::magnitude_type
    mat_norm2(const M &m) {
@@ -693,7 +692,7 @@ namespace gmm {
   /*		Inifity norm                              		  */
   /* ******************************************************************** */
 
-  template <class V>
+  template <typename V>
   typename number_traits<typename linalg_traits<V>::value_type>
   ::magnitude_type 
   vect_norminf(const V &v) {
@@ -709,7 +708,7 @@ namespace gmm {
   /*		norm1                                    		  */
   /* ******************************************************************** */
 
-  template <class V>
+  template <typename V>
   typename number_traits<typename linalg_traits<V>::value_type>
   ::magnitude_type
   vect_norm1(const V &v) {
@@ -725,29 +724,29 @@ namespace gmm {
   /*		Clean                                    		  */
   /* ******************************************************************** */
 
-  template <class L> inline void clean(L &l, double seuil)
+  template <typename L> inline void clean(L &l, double seuil)
   { clean(l, seuil, typename linalg_traits<L>::linalg_type()); }
 
-  template <class L> inline void clean(const L &l, double seuil)
+  template <typename L> inline void clean(const L &l, double seuil)
   { clean(linalg_const_cast(l), seuil);}
 
-  template <class L> inline void clean(L &l, double seuil, abstract_vector) {
+  template <typename L> inline void clean(L &l, double seuil, abstract_vector) {
     clean(l, seuil, typename linalg_traits<L>::storage_type(),
 	  typename linalg_traits<L>::value_type());
   }
 
-  template <class L, class T>
+  template <typename L, typename T>
   void clean(L &l, double seuil, abstract_dense, T) {
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
     for (; it != ite; ++it)
       if (dal::abs(*it) < seuil) *it = T(0);
   }
 
-  template <class L, class T>
+  template <typename L, typename T>
   void clean(L &l, double seuil, abstract_skyline, T)
   { clean(l, seuil, abstract_dense(), T()); }
 
-  template <class L, class T>
+  template <typename L, typename T>
   void clean(L &l, double seuil, abstract_sparse, T) {
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
     for (; it != ite; ++it) // to be optimized ...
@@ -757,7 +756,7 @@ namespace gmm {
       }
   }
 
-  template <class L, class T>
+  template <typename L, typename T>
   void clean(L &l, double seuil, abstract_dense, std::complex<T>) {
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
     for (; it != ite; ++it){
@@ -768,11 +767,11 @@ namespace gmm {
     }
   }
 
-  template <class L, class T>
+  template <typename L, typename T>
   void clean(L &l, double seuil, abstract_skyline, std::complex<T>)
   { clean(l, seuil, abstract_dense(), std::complex<T>()); }
 
-  template <class L, class T>
+  template <typename L, typename T>
   void clean(L &l, double seuil, abstract_sparse, std::complex<T>) {
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
     for (; it != ite; ++it) { // to be optimized ...
@@ -787,17 +786,17 @@ namespace gmm {
     }
   }
 
-  template <class L> inline void clean(L &l, double seuil, abstract_matrix) {
+  template <typename L> inline void clean(L &l, double seuil, abstract_matrix) {
     clean(l, seuil, typename principal_orientation_type<typename
 	  linalg_traits<L>::sub_orientation>::potype());
   }
   
-  template <class L> void clean(L &l, double seuil, row_major) {
+  template <typename L> void clean(L &l, double seuil, row_major) {
     for (size_type i = 0; i < mat_nrows(l); ++i)
       clean(mat_row(l, i), seuil);
   }
 
-  template <class L> void clean(L &l, double seuil, col_major) {
+  template <typename L> void clean(L &l, double seuil, col_major) {
     for (size_type i = 0; i < mat_ncols(l); ++i)
       clean(mat_col(l, i), seuil);
   }
@@ -806,7 +805,7 @@ namespace gmm {
   /*		Copy                                    		  */
   /* ******************************************************************** */
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void copy(const L1& l1, L2& l2) { 
     if ((const void *)(&l1) != (const void *)(&l2)) {
       #ifdef GMM_VERIFY
@@ -818,10 +817,10 @@ namespace gmm {
     }
   }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void copy(const L1& l1, const L2& l2) { copy(l1, linalg_const_cast(l2)); }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void copy(const L1& l1, L2& l2, abstract_vector, abstract_vector) {
     if (vect_size(l1) != vect_size(l2))
       DAL_THROW(dimension_error, "dimensions mismatch");
@@ -829,7 +828,7 @@ namespace gmm {
 	      typename linalg_traits<L2>::storage_type());
   }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void copy(const L1& l1, L2& l2, abstract_matrix, abstract_matrix) {
     size_type m = mat_nrows(l1), n = mat_ncols(l1);
     if (!m || !n) return;
@@ -839,12 +838,12 @@ namespace gmm {
 	     typename linalg_traits<L2>::sub_orientation());
   }
 
-  template <class V1, class V2, class C1, class C2> inline 
+  template <typename V1, typename V2, typename C1, typename C2> inline 
   void copy_vect(const V1 &v1, const V2 &v2, C1, C2)
   { copy_vect(v1, const_cast<V2 &>(v2), C1(), C2()); }
   
 
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void copy_mat_by_row(const L1& l1, L2& l2) {
     size_type nbr = mat_nrows(l1);
     for (size_type i = 0; i < nbr; ++i)
@@ -853,7 +852,7 @@ namespace gmm {
 		typename linalg_traits<L2>::storage_type());
   }
 
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void copy_mat_by_col(const L1 &l1, L2 &l2) {
     size_type nbc = mat_ncols(l1);
     for (size_type i = 0; i < nbc; ++i) {
@@ -863,68 +862,68 @@ namespace gmm {
     }
   }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void copy_mat(const L1& l1, L2& l2, row_major, row_major)
   { copy_mat_by_row(l1, l2); }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void copy_mat(const L1& l1, L2& l2, row_major, row_and_col)
   { copy_mat_by_row(l1, l2); }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void copy_mat(const L1& l1, L2& l2, row_and_col, row_and_col)
   { copy_mat_by_row(l1, l2); }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void copy_mat(const L1& l1, L2& l2, row_and_col, row_major)
   { copy_mat_by_row(l1, l2); }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void copy_mat(const L1& l1, L2& l2, col_and_row, row_major)
   { copy_mat_by_row(l1, l2); }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void copy_mat(const L1& l1, L2& l2, row_major, col_and_row)
   { copy_mat_by_row(l1, l2); }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void copy_mat(const L1& l1, L2& l2, col_and_row, row_and_col)
   { copy_mat_by_row(l1, l2); }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void copy_mat(const L1& l1, L2& l2, row_and_col, col_and_row)
   { copy_mat_by_row(l1, l2); }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void copy_mat(const L1& l1, L2& l2, col_major, col_major)
   { copy_mat_by_col(l1, l2); }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void copy_mat(const L1& l1, L2& l2, col_major, col_and_row)
   { copy_mat_by_col(l1, l2); }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void copy_mat(const L1& l1, L2& l2, col_major, row_and_col)
   { copy_mat_by_col(l1, l2); }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void copy_mat(const L1& l1, L2& l2, row_and_col, col_major)
   { copy_mat_by_col(l1, l2); }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void copy_mat(const L1& l1, L2& l2, col_and_row, col_major)
   { copy_mat_by_col(l1, l2); }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void copy_mat(const L1& l1, L2& l2, col_and_row, col_and_row)
   { copy_mat_by_col(l1, l2); }
   
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void copy_mat_mixed_rc(const L1& l1, L2& l2, size_type i) {
     copy_mat_mixed_rc(l1, l2, i, typename linalg_traits<L1>::storage_type());
   }
 
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void copy_mat_mixed_rc(const L1& l1, L2& l2, size_type i, abstract_sparse) {
     typename linalg_traits<L1>::const_iterator
       it  = vect_const_begin(l1), ite = vect_const_end(l1);
@@ -932,7 +931,7 @@ namespace gmm {
       l2(i, it.index()) = *it;
   }
 
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void copy_mat_mixed_rc(const L1& l1, L2& l2, size_type i, abstract_skyline) {
     typename linalg_traits<L1>::const_iterator
       it  = vect_const_begin(l1), ite = vect_const_end(l1);
@@ -940,40 +939,40 @@ namespace gmm {
       l2(i, it.index()) = *it;
   }
 
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void copy_mat_mixed_rc(const L1& l1, L2& l2, size_type i, abstract_dense) {
     typename linalg_traits<L1>::const_iterator
       it  = vect_const_begin(l1), ite = vect_const_end(l1);
     for (size_type j = 0; it != ite; ++it, ++j) l2(i, j) = *it;
   }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void copy_mat_mixed_cr(const L1& l1, L2& l2, size_type i) {
     copy_mat_mixed_cr(l1, l2, i, typename linalg_traits<L1>::storage_type());
   }
 
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void copy_mat_mixed_cr(const L1& l1, L2& l2, size_type i, abstract_sparse) {
     typename linalg_traits<L1>::const_iterator
       it  = vect_const_begin(l1), ite = vect_const_end(l1);
     for (; it != ite; ++it) l2(it.index(), i) = *it;
   }
 
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void copy_mat_mixed_cr(const L1& l1, L2& l2, size_type i, abstract_skyline) {
     typename linalg_traits<L1>::const_iterator
       it  = vect_const_begin(l1), ite = vect_const_end(l1);
     for (; it != ite; ++it) l2(it.index(), i) = *it;
   }
 
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void copy_mat_mixed_cr(const L1& l1, L2& l2, size_type i, abstract_dense) {
     typename linalg_traits<L1>::const_iterator
       it  = vect_const_begin(l1), ite = vect_const_end(l1);
     for (size_type j = 0; it != ite; ++it, ++j) l2(j, i) = *it;
   }
 
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void copy_mat(const L1& l1, L2& l2, row_major, col_major) {
     clear(l2);
     size_type nbr = mat_nrows(l1);
@@ -981,7 +980,7 @@ namespace gmm {
       copy_mat_mixed_rc(mat_const_row(l1, i), l2, i);
   }
   
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void copy_mat(const L1& l1, L2& l2, col_major, row_major) {
     clear(l2);
     size_type nbc = mat_ncols(l1);
@@ -989,12 +988,12 @@ namespace gmm {
       copy_mat_mixed_cr(mat_const_col(l1, i), l2, i);
   }
   
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void copy_vect(const L1 &l1, L2 &l2, abstract_dense, abstract_dense) {
     std::copy(vect_const_begin(l1), vect_const_end(l1), vect_begin(l2));
   }
 
-  template <class L1, class L2> inline // à optimiser ?
+  template <typename L1, typename L2> inline // à optimiser ?
   void copy_vect(const L1 &l1, L2 &l2, abstract_skyline, abstract_skyline) {
     typename linalg_traits<L1>::const_iterator it1 = vect_const_begin(l1),
       ite1 = vect_const_end(l1);
@@ -1020,41 +1019,39 @@ namespace gmm {
     }
   }
   
-  template <class L1, class L2>
-  void copy_vect(const L1& l1, L2& l2,
-		 abstract_sparse, abstract_dense) {
+  template <typename L1, typename L2>
+  void copy_vect(const L1& l1, L2& l2, abstract_sparse, abstract_dense) {
     clear(l2);
     typename linalg_traits<L1>::const_iterator
       it  = vect_const_begin(l1), ite = vect_const_end(l1);
     for (; it != ite; ++it) { l2[it.index()] = *it; }
   }
 
-  template <class L1, class L2>
-  void copy_vect(const L1& l1, L2& l2,
-		 abstract_sparse, abstract_skyline) {
+  template <typename L1, typename L2>
+  void copy_vect(const L1& l1, L2& l2, abstract_sparse, abstract_skyline) {
     clear(l2);
     typename linalg_traits<L1>::const_iterator
       it  = vect_const_begin(l1), ite = vect_const_end(l1);
     for (; it != ite; ++it) l2[it.index()] = *it;
   }
 
-  template <class L1, class L2>
-  void copy_vect(const L1& l1, L2& l2,
-		 abstract_skyline, abstract_dense) {
-    typedef typename linalg_traits<L1>::value_type value_type;
-    typename linalg_traits<L1>::const_iterator it = vect_const_begin(l1),
-      ite = vect_const_end(l1);
-    typename linalg_traits<L2>::iterator it2  = vect_begin(l2),
-      ite2 = vect_end(l2);
+  template <typename L1, typename L2>
+  void copy_vect(const L1& l1, L2& l2, abstract_skyline, abstract_dense) {
+    typedef typename linalg_traits<L1>::value_type T;
+    typedef typename linalg_traits<L1>::const_iterator l1_const_iterator;
+    typedef typename linalg_traits<L2>::iterator l2_iterator;
+
+    l1_const_iterator it = vect_const_begin(l1), ite = vect_const_end(l1);
+    l2_iterator it2 = vect_begin(l2), ite2 = vect_end(l2);
+
     size_type i = it.index(), j;
-    for (j = 0; j < i; ++j, ++it2) *it2 = value_type(0);
+    for (j = 0; j < i; ++j, ++it2) *it2 = T(0);
     for (; it != ite; ++it, ++it2) *it2 = *it;
-    for (; it2 != ite2; ++it2) *it2 = value_type(0);
+    for (; it2 != ite2; ++it2) *it2 = T(0);
   }
 
-  template <class L1, class L2>
-  void copy_vect(const L1& l1, L2& l2,
-		 abstract_sparse, abstract_sparse) {
+  template <typename L1, typename L2>
+  void copy_vect(const L1& l1, L2& l2, abstract_sparse, abstract_sparse) {
     typename linalg_traits<L1>::const_iterator
       it  = vect_const_begin(l1), ite = vect_const_end(l1);
     clear(l2);
@@ -1063,9 +1060,8 @@ namespace gmm {
 	l2[it.index()] = *it;
   }
   
-  template <class L1, class L2>
-  void copy_vect(const L1& l1, L2& l2,
-		 abstract_dense, abstract_sparse) {
+  template <typename L1, typename L2>
+  void copy_vect(const L1& l1, L2& l2, abstract_dense, abstract_sparse) {
     clear(l2);
     typename linalg_traits<L1>::const_iterator
       it  = vect_const_begin(l1), ite = vect_const_end(l1);
@@ -1074,9 +1070,8 @@ namespace gmm {
 	l2[i] = *it;
   }
 
-  template <class L1, class L2> // à optimiser ...
-  void copy_vect(const L1& l1, L2& l2,
-		 abstract_dense, abstract_skyline) {
+  template <typename L1, typename L2> // to be optimised ...
+  void copy_vect(const L1& l1, L2& l2, abstract_dense, abstract_skyline) {
     clear(l2);
     typename linalg_traits<L1>::const_iterator
       it  = vect_const_begin(l1), ite = vect_const_end(l1);
@@ -1086,9 +1081,8 @@ namespace gmm {
   }
 
   
-  template <class L1, class L2>
-  void copy_vect(const L1& l1, L2& l2,
-		 abstract_skyline, abstract_sparse) {
+  template <typename L1, typename L2>
+  void copy_vect(const L1& l1, L2& l2, abstract_skyline, abstract_sparse) {
     clear(l2);
     typename linalg_traits<L1>::const_iterator
       it  = vect_const_begin(l1), ite = vect_const_end(l1);
@@ -1104,15 +1098,15 @@ namespace gmm {
   /*   In the latter case, conflicts are still possible.                  */
   /* ******************************************************************** */
   
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
     void add(const L1& l1, L2& l2) {
       add_spec(l1, l2, typename linalg_traits<L2>::linalg_type());
   }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void add(const L1& l1, const L2& l2) { add(l1, linalg_const_cast(l2)); }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
     void add_spec(const L1& l1, L2& l2, abstract_vector) {
     if (vect_size(l1) != vect_size(l2))
       DAL_THROW(dimension_error, "dimensions mismatch");
@@ -1120,7 +1114,7 @@ namespace gmm {
 	typename linalg_traits<L2>::storage_type());
   }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
     void add_spec(const L1& l1, L2& l2, abstract_matrix) {
     if (mat_nrows(l1) != mat_nrows(l2) || mat_ncols(l1) != mat_ncols(l2))
       DAL_THROW(dimension_error, "dimensions mismatch");
@@ -1128,7 +1122,7 @@ namespace gmm {
 	typename linalg_traits<L2>::sub_orientation());
   }
 
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void add(const L1& l1, L2& l2, row_major, row_major) {
     typename linalg_traits<L1>::const_row_iterator it1 = mat_row_begin(l1),
       ite = mat_row_end(l1);
@@ -1137,7 +1131,7 @@ namespace gmm {
       add(linalg_traits<L1>::row(it1), linalg_traits<L2>::row(it2));
   }
 
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void add(const L1& l1, L2& l2, col_major, col_major) {
     typename linalg_traits<L1>::const_col_iterator
       it1 = mat_col_const_begin(l1),
@@ -1147,121 +1141,121 @@ namespace gmm {
       add(linalg_traits<L1>::col(it1),  linalg_traits<L2>::col(it2));
   }
   
-    template <class L1, class L2> inline
+    template <typename L1, typename L2> inline
   void add_mat_mixed_rc(const L1& l1, L2& l2, size_type i) {
     add_mat_mixed_rc(l1, l2, i, typename linalg_traits<L1>::storage_type());
   }
 
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void add_mat_mixed_rc(const L1& l1, L2& l2, size_type i, abstract_sparse) {
     typename linalg_traits<L1>::const_iterator
       it  = vect_const_begin(l1), ite = vect_const_end(l1);
     for (; it != ite; ++it) l2(i, it.index()) += *it;
   }
 
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void add_mat_mixed_rc(const L1& l1, L2& l2, size_type i, abstract_skyline) {
     typename linalg_traits<L1>::const_iterator
       it  = vect_const_begin(l1), ite = vect_const_end(l1);
     for (; it != ite; ++it) l2(i, it.index()) += *it;
   }
 
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void add_mat_mixed_rc(const L1& l1, L2& l2, size_type i, abstract_dense) {
     typename linalg_traits<L1>::const_iterator
       it  = vect_const_begin(l1), ite = vect_const_end(l1);
     for (size_type j = 0; it != ite; ++it, ++j) l2(i, j) += *it;
   }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void add_mat_mixed_cr(const L1& l1, L2& l2, size_type i) {
     add_mat_mixed_cr(l1, l2, i, typename linalg_traits<L1>::storage_type());
   }
 
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void add_mat_mixed_cr(const L1& l1, L2& l2, size_type i, abstract_sparse) {
     typename linalg_traits<L1>::const_iterator
       it  = vect_const_begin(l1), ite = vect_const_end(l1);
     for (; it != ite; ++it) l2(it.index(), i) += *it;
   }
 
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void add_mat_mixed_cr(const L1& l1, L2& l2, size_type i, abstract_skyline) {
     typename linalg_traits<L1>::const_iterator
       it  = vect_const_begin(l1), ite = vect_const_end(l1);
     for (; it != ite; ++it) l2(it.index(), i) += *it;
   }
 
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void add_mat_mixed_cr(const L1& l1, L2& l2, size_type i, abstract_dense) {
     typename linalg_traits<L1>::const_iterator
       it  = vect_const_begin(l1), ite = vect_const_end(l1);
     for (size_type j = 0; it != ite; ++it, ++j) l2(j, i) += *it;
   }
 
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void add(const L1& l1, L2& l2, row_major, col_major) {
     size_type nbr = mat_nrows(l1);
     for (size_type i = 0; i < nbr; ++i)
       add_mat_mixed_rc(mat_const_row(l1, i), l2, i);
   }
   
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void add(const L1& l1, L2& l2, col_major, row_major) {
     size_type nbc = mat_ncols(l1);
     for (size_type i = 0; i < nbc; ++i)
       add_mat_mixed_cr(mat_const_col(l1, i), l2, i);
   }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void add(const L1& l1, L2& l2, row_and_col, row_major)
   { add(l1, l2, row_major(), row_major()); }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void add(const L1& l1, L2& l2, row_and_col, row_and_col)
   { add(l1, l2, row_major(), row_major()); }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void add(const L1& l1, L2& l2, row_and_col, col_and_row)
   { add(l1, l2, row_major(), row_major()); }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void add(const L1& l1, L2& l2, col_and_row, row_and_col)
   { add(l1, l2, row_major(), row_major()); }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void add(const L1& l1, L2& l2, row_major, row_and_col)
   { add(l1, l2, row_major(), row_major()); }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void add(const L1& l1, L2& l2, col_and_row, row_major)
   { add(l1, l2, row_major(), row_major()); }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void add(const L1& l1, L2& l2, row_major, col_and_row)
   { add(l1, l2, row_major(), row_major()); }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void add(const L1& l1, L2& l2, row_and_col, col_major)
   { add(l1, l2, col_major(), col_major()); }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void add(const L1& l1, L2& l2, col_major, row_and_col)
   { add(l1, l2, col_major(), col_major()); }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void add(const L1& l1, L2& l2, col_and_row, col_major)
   { add(l1, l2, col_major(), col_major()); }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void add(const L1& l1, L2& l2, col_and_row, col_and_row)
   { add(l1, l2, col_major(), col_major()); }
 
-  template <class L1, class L2> inline
+  template <typename L1, typename L2> inline
   void add(const L1& l1, L2& l2, col_major, col_and_row)
   { add(l1, l2, col_major(), col_major()); }
 
-  template <class L1, class L2, class L3> inline
+  template <typename L1, typename L2, typename L3> inline
     void add(const L1& l1, const L2& l2, L3& l3) {
     if (vect_size(l1) != vect_size(l2) || vect_size(l1) != vect_size(l3))
       DAL_THROW(dimension_error,"dimensions mismatch"); 
@@ -1275,16 +1269,16 @@ namespace gmm {
 	  typename linalg_traits<L3>::storage_type());
   }
 
-  template <class L1, class L2, class L3> inline
+  template <typename L1, typename L2, typename L3> inline
   void add(const L1& l1, const L2& l2, const L3& l3)
   { add(l1, l2, linalg_const_cast(l3)); }
 
-  template <class IT1, class IT2, class IT3>
+  template <typename IT1, typename IT2, typename IT3>
     void _add_full(IT1 it1, IT2 it2, IT3 it3, IT3 ite) {
     for (; it3 != ite; ++it3, ++it2, ++it1) *it3 = *it1 + *it2;
   }
 
-  template <class IT1, class IT2, class IT3>
+  template <typename IT1, typename IT2, typename IT3>
     void _add_almost_full(IT1 it1, IT1 ite1, IT2 it2, IT3 it3, IT3 ite3) {
     IT3 it = it3;
     for (; it != ite3; ++it, ++it2) *it = *it2;
@@ -1292,16 +1286,17 @@ namespace gmm {
       *(it3 + it1.index()) += *it1;
   }
 
-  template <class IT1, class IT2, class IT3>
+  template <typename IT1, typename IT2, typename IT3>
   void _add_to_full(IT1 it1, IT1 ite1, IT2 it2, IT2 ite2,
 		    IT3 it3, IT3 ite3) {
+    typedef typename std::iterator_traits<IT3>::value_type T;
     IT3 it = it3;
-    for (; it != ite3; ++it) *it = 0;
+    for (; it != ite3; ++it) *it = T(0);
     for (; it1 != ite1; ++it1) *(it3 + it1.index()) = *it1;
     for (; it2 != ite2; ++it2) *(it3 + it2.index()) += *it2;    
   }
   
-  template <class L1, class L2, class L3> inline
+  template <typename L1, typename L2, typename L3> inline
   void add(const L1& l1, const L2& l2, L3& l3,
 	   abstract_dense, abstract_dense, abstract_dense) {
     _add_full(vect_const_begin(l1), vect_const_begin(l2),
@@ -1310,23 +1305,23 @@ namespace gmm {
   
   // generic function for add(v1, v2, v3).
   // Need to be specialized to optimize particular additions.
-  template <class L1, class L2, class L3, class ST1, class ST2, class ST3>
+  template <typename L1, typename L2, typename L3, typename ST1, typename ST2, typename ST3>
   inline void add(const L1& l1, const L2& l2, L3& l3, ST1, ST2, ST3)
   { copy(l2, l3); add(l1, l3, ST1(), ST3()); }
 
-  template <class L1, class L2, class L3> inline
+  template <typename L1, typename L2, typename L3> inline
   void add(const L1& l1, const L2& l2, L3& l3,
 	   abstract_sparse, abstract_dense, abstract_dense) {
     _add_almost_full(vect_const_begin(l1), vect_const_end(l1),
 		     vect_const_begin(l2), vect_begin(l3), vect_end(l3));
   }
   
-  template <class L1, class L2, class L3> inline
+  template <typename L1, typename L2, typename L3> inline
   void add(const L1& l1, const L2& l2, L3& l3,
 	   abstract_dense, abstract_sparse, abstract_dense)
   { add(l2, l1, l3, abstract_sparse(), abstract_dense(), abstract_dense()); }
   
-  template <class L1, class L2, class L3> inline
+  template <typename L1, typename L2, typename L3> inline
   void add(const L1& l1, const L2& l2, L3& l3,
 	   abstract_sparse, abstract_sparse, abstract_dense) {
     _add_to_full(vect_const_begin(l1), vect_const_end(l1),
@@ -1334,7 +1329,7 @@ namespace gmm {
 		 vect_begin(l3), vect_end(l3));
   }
   
-  template <class L1, class L2, class L3>
+  template <typename L1, typename L2, typename L3>
   void add(const L1& l1, const L2& l2, L3& l3,
 	   abstract_sparse, abstract_sparse, abstract_sparse) {
     typename linalg_traits<L1>::const_iterator
@@ -1355,7 +1350,7 @@ namespace gmm {
     for (; it2 != ite2; ++it2) l3[it2.index()] += *it2;   
   }
 
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void add(const L1& l1, L2& l2,
 	   abstract_dense, abstract_dense) {
     typename linalg_traits<L1>::const_iterator it1 = vect_const_begin(l1); 
@@ -1364,7 +1359,7 @@ namespace gmm {
     for (; it2 != ite; ++it2, ++it1) *it2 += *it1;
   }
 
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void add(const L1& l1, L2& l2, abstract_dense, abstract_skyline) {
     typedef typename linalg_traits<L1>::const_iterator const_l1_iterator;
     typedef typename linalg_traits<L2>::iterator l2_iterator;
@@ -1392,7 +1387,7 @@ namespace gmm {
   }
 
 
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void add(const L1& l1, L2& l2,
 	   abstract_skyline, abstract_dense) {
     typename linalg_traits<L1>::const_iterator it1 = vect_const_begin(l1),
@@ -1403,7 +1398,7 @@ namespace gmm {
   }
 
   
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void add(const L1& l1, L2& l2,
 	   abstract_sparse, abstract_dense) {
     typename linalg_traits<L1>::const_iterator
@@ -1411,7 +1406,7 @@ namespace gmm {
     for (; it1 != ite1; ++it1) l2[it1.index()] += *it1;
   }
   
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void add(const L1& l1, L2& l2,
 	   abstract_sparse, abstract_sparse) {
     typename linalg_traits<L1>::const_iterator
@@ -1419,7 +1414,7 @@ namespace gmm {
     for (; it1 != ite1; ++it1) l2[it1.index()] += *it1;
   }
 
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void add(const L1& l1, L2& l2,
 	   abstract_sparse, abstract_skyline) {
     typename linalg_traits<L1>::const_iterator
@@ -1428,7 +1423,7 @@ namespace gmm {
   }
 
 
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void add(const L1& l1, L2& l2,
 	   abstract_skyline, abstract_sparse) {
     typename linalg_traits<L1>::const_iterator
@@ -1438,7 +1433,7 @@ namespace gmm {
 	l2[it1.index()] += *it1;
   }
 
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void add(const L1& l1, L2& l2,
 	   abstract_skyline, abstract_skyline) {
     typedef typename linalg_traits<L1>::const_iterator const_l1_iterator;
@@ -1467,7 +1462,7 @@ namespace gmm {
     }
   }
   
-  template <class L1, class L2>
+  template <typename L1, typename L2>
   void add(const L1& l1, L2& l2, abstract_dense, abstract_sparse) {
     typename linalg_traits<L1>::const_iterator
       it1 = vect_const_begin(l1), ite1 = vect_const_end(l1);
@@ -1479,16 +1474,16 @@ namespace gmm {
   /*		Matrix-vector mult                                    	  */
   /* ******************************************************************** */
 
-  template <class L1, class L2, class L3> inline
+  template <typename L1, typename L2, typename L3> inline
   void mult(const L1& l1, const L2& l2, L3& l3) {
     mult_dispatch(l1, l2, l3, typename linalg_traits<L2>::linalg_type());
   }
 
-  template <class L1, class L2, class L3> inline
+  template <typename L1, typename L2, typename L3> inline
   void mult(const L1& l1, const L2& l2, const L3& l3)
   { mult(l1, l2, linalg_const_cast(l3)); }
 
-  template <class L1, class L2, class L3> inline
+  template <typename L1, typename L2, typename L3> inline
   void mult_dispatch(const L1& l1, const L2& l2, L3& l3, abstract_vector) {
     size_type m = mat_nrows(l1), n = mat_ncols(l1);
     if (!m || !n) { gmm::clear(l3); return; }
@@ -1498,7 +1493,7 @@ namespace gmm {
       mult_spec(l1, l2, l3, typename principal_orientation_type<typename
 		linalg_traits<L1>::sub_orientation>::potype());
     else {
-      DAL_WARNING(2, "Warning, A temporary is used for mult\n");assert(0);
+      DAL_WARNING(2, "Warning, A temporary is used for mult\n");
       typename temporary_vector<L3>::vector_type temp(vect_size(l3));
       mult_spec(l1, l2, temp, typename principal_orientation_type<typename
 		linalg_traits<L1>::sub_orientation>::potype());
@@ -1506,7 +1501,7 @@ namespace gmm {
     }
   }
 
-  template <class L1, class L2, class L3>
+  template <typename L1, typename L2, typename L3>
   void mult_by_row(const L1& l1, const L2& l2, L3& l3, abstract_sparse) {
     typedef typename  linalg_traits<L1>::value_type T;
     clear(l3);
@@ -1517,7 +1512,7 @@ namespace gmm {
     }
   }
 
-  template <class L1, class L2, class L3>
+  template <typename L1, typename L2, typename L3>
   void mult_by_row(const L1& l1, const L2& l2, L3& l3, abstract_skyline) {
     typedef typename  linalg_traits<L1>::value_type T;
     clear(l3);
@@ -1528,7 +1523,7 @@ namespace gmm {
     }
   }
 
-  template <class L1, class L2, class L3>
+  template <typename L1, typename L2, typename L3>
   void mult_by_row(const L1& l1, const L2& l2, L3& l3, abstract_dense) {
     typename linalg_traits<L3>::iterator it=vect_begin(l3), ite=vect_end(l3);
     typename linalg_traits<L1>::const_row_iterator
@@ -1539,7 +1534,7 @@ namespace gmm {
 		    typename linalg_traits<L2>::storage_type());
   }
 
-  template <class L1, class L2, class L3>
+  template <typename L1, typename L2, typename L3>
   void mult_by_col(const L1& l1, const L2& l2, L3& l3, abstract_dense) {
     clear(l3);
     size_type nc = mat_ncols(l1);
@@ -1547,7 +1542,7 @@ namespace gmm {
       add(scaled(mat_const_col(l1, i), l2[i]), l3);
   }
 
-  template <class L1, class L2, class L3>
+  template <typename L1, typename L2, typename L3>
   void mult_by_col(const L1& l1, const L2& l2, L3& l3, abstract_sparse) {
     typedef typename linalg_traits<L1>::value_type T;
     clear(l3);
@@ -1557,7 +1552,7 @@ namespace gmm {
       if (*it != T(0)) add(scaled(mat_const_col(l1, it.index()), *it), l3);
   }
 
-  template <class L1, class L2, class L3>
+  template <typename L1, typename L2, typename L3>
   void mult_by_col(const L1& l1, const L2& l2, L3& l3, abstract_skyline) {
     typedef typename linalg_traits<L1>::value_type T;
     clear(l3);
@@ -1567,25 +1562,25 @@ namespace gmm {
       if (*it != T(0)) add(scaled(mat_const_col(l1, it.index()), *it), l3);
   }
 
-  template <class L1, class L2, class L3> inline
+  template <typename L1, typename L2, typename L3> inline
   void mult_spec(const L1& l1, const L2& l2, L3& l3, row_major)
   { mult_by_row(l1, l2, l3, typename linalg_traits<L3>::storage_type()); }
 
-  template <class L1, class L2, class L3> inline
+  template <typename L1, typename L2, typename L3> inline
   void mult_spec(const L1& l1, const L2& l2, L3& l3, col_major)
   { mult_by_col(l1, l2, l3, typename linalg_traits<L2>::storage_type()); }
 
-  template <class L1, class L2, class L3> inline
+  template <typename L1, typename L2, typename L3> inline
   void mult_spec(const L1& l1, const L2& l2, L3& l3, abstract_null_type)
   { mult_ind(l1, l2, l3, typename linalg_traits<L1>::storage_type()); }
 
-  template <class L1, class L2, class L3>
+  template <typename L1, typename L2, typename L3>
   void mult_ind(const L1& l1, const L2& l2, L3& l3, abstract_indirect) {
     DAL_THROW(failure_error,
 	  "You have to define gmm::mult(m, v1, v2) for this kind of matrix");
   }
 
-  template <class L1, class L2, class L3, class L4> inline
+  template <typename L1, typename L2, typename L3, typename L4> inline
   void mult(const L1& l1, const L2& l2, const L3& l3, L4& l4) {
     size_type m = mat_nrows(l1), n = mat_ncols(l1);
     if (!m || !n) { gmm::copy(l3, l4); return; }
@@ -1605,11 +1600,11 @@ namespace gmm {
     }
   }
 
-  template <class L1, class L2, class L3, class L4> inline
+  template <typename L1, typename L2, typename L3, typename L4> inline
   void mult(const L1& l1, const L2& l2, const L3& l3, const L4& l4)
   { mult(l1, l2, l3, linalg_const_cast(l4)); } 
 
-  template <class L1, class L2, class L3, class L4>
+  template <typename L1, typename L2, typename L3, typename L4>
   void mult_by_row(const L1& l1, const L2& l2, const L3& l3,
 		   L4& l4, abstract_sparse) {
     typedef typename linalg_traits<L1>::value_type T;
@@ -1621,7 +1616,7 @@ namespace gmm {
     }
   }
 
-  template <class L1, class L2, class L3, class L4>
+  template <typename L1, typename L2, typename L3, typename L4>
   void mult_by_row(const L1& l1, const L2& l2, const L3& l3,
 		   L4& l4, abstract_skyline) {
     typedef typename linalg_traits<L1>::value_type T;
@@ -1633,7 +1628,7 @@ namespace gmm {
     }
   }
 
-  template <class L1, class L2, class L3, class L4>
+  template <typename L1, typename L2, typename L3, typename L4>
   void mult_by_row(const L1& l1, const L2& l2, const L3& l3, L4& l4,
 		   abstract_dense) {
     copy(l3, l4); 
@@ -1644,7 +1639,7 @@ namespace gmm {
       *it += vect_sp(linalg_traits<L1>::row(itr), l2);
   }
 
-  template <class L1, class L2, class L3, class L4>
+  template <typename L1, typename L2, typename L3, typename L4>
   void mult_by_col(const L1& l1, const L2& l2, const L3& l3, L4& l4,
 		   abstract_dense) {
     copy(l3, l4);
@@ -1653,7 +1648,7 @@ namespace gmm {
       add(scaled(mat_const_col(l1, i), l2[i]), l4);
   }
 
-  template <class L1, class L2, class L3, class L4>
+  template <typename L1, typename L2, typename L3, typename L4>
   void mult_by_col(const L1& l1, const L2& l2, const L3& l3, L4& l4,
 		   abstract_sparse) {
     copy(l3, l4);
@@ -1664,7 +1659,7 @@ namespace gmm {
 	add(scaled(mat_const_col(l1, it.index()), *it), l4);
   }
 
-  template <class L1, class L2, class L3, class L4>
+  template <typename L1, typename L2, typename L3, typename L4>
   void mult_by_col(const L1& l1, const L2& l2, const L3& l3, L4& l4,
 		   abstract_skyline) {
     copy(l3, l4);
@@ -1675,27 +1670,27 @@ namespace gmm {
 	add(scaled(mat_const_col(l1, it.index()), *it), l4);
   }
 
-  template <class L1, class L2, class L3, class L4> inline
+  template <typename L1, typename L2, typename L3, typename L4> inline
   void mult_spec(const L1& l1, const L2& l2, const L3& l3, L4& l4, row_major)
   { mult_by_row(l1, l2, l3, l4, typename linalg_traits<L4>::storage_type()); }
 
-  template <class L1, class L2, class L3, class L4> inline
+  template <typename L1, typename L2, typename L3, typename L4> inline
   void mult_spec(const L1& l1, const L2& l2, const L3& l3, L4& l4, col_major)
   { mult_by_col(l1, l2, l3, l4, typename linalg_traits<L2>::storage_type()); }
 
-  template <class L1, class L2, class L3, class L4> inline
+  template <typename L1, typename L2, typename L3, typename L4> inline
   void mult_spec(const L1& l1, const L2& l2, const L3& l3,
 		 L4& l4, abstract_null_type)
   { mult_ind(l1, l2, l3, l4, typename linalg_traits<L1>::storage_type()); }
 
-  template <class L1, class L2, class L3, class L4>
+  template <typename L1, typename L2, typename L3, typename L4>
   void mult_ind(const L1& l1, const L2& l2, const L3& l3,
 		L4& l4, abstract_indirect) {
     DAL_THROW(failure_error,
 	  "You have to define gmm::mult(m, v1, v2) for this kind of matrix");
   }
 
-  template <class L1, class L2, class L3>
+  template <typename L1, typename L2, typename L3>
   void transposed_mult(const L1& l1, const L2& l2, const L3& l3)
   { mult(gmm::transposed(l1), l2, l3); }
 
@@ -1712,7 +1707,7 @@ namespace gmm {
   struct crmult {};  // col x row mult
 
 
-  template<class SO1, class SO2, class SO3> struct mult_t;
+  template<typename SO1, typename SO2, typename SO3> struct mult_t;
   #define __DEFMU template<> struct mult_t
   __DEFMU<row_major  , row_major  , row_major  > { typedef r_mult t; };
   __DEFMU<row_major  , row_major  , col_major  > { typedef g_mult t; };
@@ -1779,7 +1774,7 @@ namespace gmm {
   __DEFMU<row_and_col, row_and_col, col_and_row> { typedef r_mult t; };
   __DEFMU<row_and_col, row_and_col, row_and_col> { typedef r_mult t; };
 
-  template <class L1, class L2, class L3>
+  template <typename L1, typename L2, typename L3>
   void mult_dispatch(const L1& l1, const L2& l2, L3& l3, abstract_matrix) {
     if (mat_ncols(l1) != mat_nrows(l2) || mat_nrows(l1) != mat_nrows(l3)
 	|| mat_ncols(l2) != mat_ncols(l3))
@@ -1805,7 +1800,7 @@ namespace gmm {
 
   // Completely generic but inefficient
 
-  template <class L1, class L2, class L3>
+  template <typename L1, typename L2, typename L3>
   void mult_spec(const L1& l1, const L2& l2, L3& l3, g_mult) {
     #ifdef GMM_VERIFY
       DAL_WARNING(2, "Inefficient generic matrix-matrix mult is used");
@@ -1819,7 +1814,7 @@ namespace gmm {
 
   // row x col matrix-matrix mult
 
-  template <class L1, class L2, class L3>
+  template <typename L1, typename L2, typename L3>
   void mult_spec(const L1& l1, const L2& l2, L3& l3, rcmult) {
 
     #ifdef GMM_VERIFY
@@ -1841,13 +1836,13 @@ namespace gmm {
 
   // row - row matrix-matrix mult
 
-  template <class L1, class L2, class L3> inline
+  template <typename L1, typename L2, typename L3> inline
   void mult_spec(const L1& l1, const L2& l2, L3& l3, r_mult)
   { mult_spec(l1, l2, l3, r_mult(), typename linalg_traits<L1>::storage_type()); }
 
 
 
-  template <class L1, class L2, class L3>
+  template <typename L1, typename L2, typename L3>
   void mult_spec(const L1& l1, const L2& l2, L3& l3, r_mult, abstract_dense) {
     // optimizable
     clear(l3);
@@ -1858,7 +1853,7 @@ namespace gmm {
     }
   }
 
-  template <class L1, class L2, class L3>
+  template <typename L1, typename L2, typename L3>
   void mult_spec(const L1& l1, const L2& l2, L3& l3, r_mult, abstract_sparse) {
     // optimizable
     clear(l3);
@@ -1872,18 +1867,18 @@ namespace gmm {
     }
   }
 
-  template <class L1, class L2, class L3>
+  template <typename L1, typename L2, typename L3>
   void mult_spec(const L1& l1, const L2& l2, L3& l3, r_mult, abstract_skyline)
   { mult_spec(l1, l2, l3, r_mult(), abstract_sparse()); }
 
   // col - col matrix-matrix mult
 
-  template <class L1, class L2, class L3> inline
+  template <typename L1, typename L2, typename L3> inline
   void mult_spec(const L1& l1, const L2& l2, L3& l3, c_mult)
   { mult_spec(l1, l2,l3,c_mult(),typename linalg_traits<L2>::storage_type()); }
 
 
-  template <class L1, class L2, class L3>
+  template <typename L1, typename L2, typename L3>
   void mult_spec(const L1& l1, const L2& l2, L3& l3, c_mult, abstract_dense) {
     typedef typename linalg_traits<L1>::value_type T;
     size_type nn = mat_ncols(l3), mm = mat_ncols(l1);
@@ -1897,7 +1892,7 @@ namespace gmm {
     }
   }
 
-  template <class L1, class L2, class L3>
+  template <typename L1, typename L2, typename L3>
   void mult_spec(const L1& l1, const L2& l2, L3& l3, c_mult, abstract_sparse) {
     // optimizable
     clear(l3);
@@ -1911,19 +1906,19 @@ namespace gmm {
     }
   }
 
-  template <class L1, class L2, class L3> inline
+  template <typename L1, typename L2, typename L3> inline
   void mult_spec(const L1& l1, const L2& l2, L3& l3, c_mult, abstract_skyline)
   { mult_spec(l1, l2, l3, c_mult(), abstract_sparse()); }
 
   
   // col - row matrix-matrix mult
 
-  template <class L1, class L2, class L3> inline
+  template <typename L1, typename L2, typename L3> inline
   void mult_spec(const L1& l1, const L2& l2, L3& l3, crmult)
   { mult_spec(l1,l2,l3,crmult(), typename linalg_traits<L1>::storage_type()); }
 
 
-  template <class L1, class L2, class L3>
+  template <typename L1, typename L2, typename L3>
   void mult_spec(const L1& l1, const L2& l2, L3& l3, crmult, abstract_dense) {
     // optimizable
     clear(l3);
@@ -1934,7 +1929,7 @@ namespace gmm {
     }
   }
 
-  template <class L1, class L2, class L3>
+  template <typename L1, typename L2, typename L3>
   void mult_spec(const L1& l1, const L2& l2, L3& l3, crmult, abstract_sparse) {
     // optimizable
     clear(l3);
@@ -1948,7 +1943,7 @@ namespace gmm {
     }
   }
 
-  template <class L1, class L2, class L3> inline
+  template <typename L1, typename L2, typename L3> inline
   void mult_spec(const L1& l1, const L2& l2, L3& l3, crmult, abstract_skyline)
   { mult_spec(l1, l2, l3, crmult(), abstract_sparse()); }
 

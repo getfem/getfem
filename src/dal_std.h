@@ -138,8 +138,8 @@ using std::cin;
  *     as possible the incompatibility between differents
  *     configurations. \\ \\
  *     - It assures the existence of the functions \\ \\
- *       template$<$class T$>$ std::abs(T) \\
- *       template$<$class T$>$ std::sqr(T) \\ \\
+ *       template$<$typename T$>$ std::abs(T) \\
+ *       template$<$typename T$>$ std::sqr(T) \\ \\
  *     - It defines fixed size type of integers : \\ \\
  *       int8\_type; uint8\_type; \\
  *       int16\_type; uint16\_type; \\
@@ -153,12 +153,12 @@ namespace dal
 {
 
 #if GETFEM_REVERSE_ITER
-  template <class Iter>
+  template <typename Iter>
     class reverse_iter : public std::reverse_iterator<Iter>
   {
     typedef std::reverse_iterator<Iter> super; 
 #else
-  template <class Iter>
+  template <typename Iter>
     class reverse_iter : public std::reverse_iterator<Iter,
                                            typename Iter::value_type,
                            typename Iter::reference, typename Iter::pointer>
@@ -199,29 +199,31 @@ namespace dal
 
 namespace dal
 {
-  template <class T> inline T sqr(T a) { return a * a; }
-  template <class T> inline T abs(T a) { return (a < T(0)) ? -a : a; }
-  template <class T> inline T abs(std::complex<T> a) { return std::abs(a); }
-  template <class T> inline T abs_sqr(T a) { return a*a; }
-  template <class T> inline T abs_sqr(std::complex<T> a)
+  template <typename T> inline T sqr(T a) { return a * a; }
+  template <typename T> inline T abs(T a) { return (a < T(0)) ? -a : a; }
+  template <typename T> inline T abs(std::complex<T> a) { return std::abs(a); }
+  template <typename T> inline T abs_sqr(T a) { return a*a; }
+  template <typename T> inline T abs_sqr(std::complex<T> a)
   { return dal::sqr(a.real()) + dal::sqr(a.imag()); }
-  template <class T> inline T pos(T a) { return (a < T(0)) ? T(0) : a; }
-  template <class T> inline T neg(T a) { return (a < T(0)) ? -a : T(0); }
-  template <class T> inline T sgn(T a) { return (a < T(0)) ? T(-1) : T(1); }
-  template <class T> inline T sgn(std::complex<T> a)
+  template <typename T> inline T pos(T a) { return (a < T(0)) ? T(0) : a; }
+  template <typename T> inline T neg(T a) { return (a < T(0)) ? -a : T(0); }
+  template <typename T> inline T sgn(T a) { return (a < T(0)) ? T(-1) : T(1); }
+  template <typename T> inline T sgn(std::complex<T> a)
   { return (a.real() / dal::abs(a) < T(0.1)) ? sgn(a.imag()) : sgn(a.real()); }
-  inline double random() { return double(rand())/(RAND_MAX+1.0); }
-  template <class T> inline T random(T) { return dal::random() * T(2) - T(1); }
-  template <class T> inline std::complex<T> random(std::complex<T>)
+  inline double random() { return double(rand())/(RAND_MAX+0.5); }
+  template <typename T> inline T random(T)
+  { return T(rand()*2.0)/(T(RAND_MAX)+T(1)/T(2)) - T(1); }
+  template <typename T> inline std::complex<T> random(std::complex<T>)
   { return std::complex<T>(dal::random(T()), dal::random(T())); }
-  template <class T> inline T irandom(T max) { return T(dal::random() * max); }
-  template <class T> inline T conj(T a) { return a; }
-  template <class T> inline std::complex<T> conj(std::complex<T> a)
+  template <typename T> inline T irandom(T max)
+  { return T(dal::random() * max); }
+  template <typename T> inline T conj(T a) { return a; }
+  template <typename T> inline std::complex<T> conj(std::complex<T> a)
   { return std::conj(a); }
-  template <class T> inline T real(T a) { return a; }
-  template <class T> inline T real(std::complex<T> a) { return a.real(); }
-  template <class T> inline T sqrt(T a) { return ::sqrt(a); }
-  template <class T> inline std::complex<T> sqrt(std::complex<T> a) {
+  template <typename T> inline T real(T a) { return a; }
+  template <typename T> inline T real(std::complex<T> a) { return a.real(); }
+  template <typename T> inline T sqrt(T a) { return ::sqrt(a); }
+  template <typename T> inline std::complex<T> sqrt(std::complex<T> a) {
     T x = a.real(), y = a.imag();
     if (x == T(0)) {
       T t = ::sqrt(dal::abs(y) / T(2));
