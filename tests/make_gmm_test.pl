@@ -3,11 +3,7 @@
 eval 'exec perl -S $0 "$@"'
   if 0;
 
-#usage make_gmm_test.pl 100 toto.C with_lapack with_qd
-
 # à ajouter : - les matrices csr et csc (et les interfaces ?)
-#             - Test interface Lapack -> restreindre au seules matrices denses
-#             - Tests avec QD -> ajouter dd_real et qd_real.
 #             - Quand les vecteurs ou les matrices sont creux,
 #               les intialiser au moins une fois sur deux réellement creux.
 
@@ -24,8 +20,8 @@ if ($srcdir eq "") {
   print "WARNING : no srcdir, taking $srcdir\n";
   $islocal = 1;
 }
-$inc_dir = "$srcdir/../src"; # include directory
 $tests_to_be_done = `ls $srcdir/gmm_test*.C`;  # list of tests
+$fix_base_type = -1;
 
 while(@ARGV) {               # read optional parameters
   $param = $ARGV[0];
@@ -39,6 +35,30 @@ while(@ARGV) {               # read optional parameters
   elsif ($param eq "with_lapack") {
     $with_lapack = 1;
   }
+  elsif ($param eq "float") {
+    $fix_base_type = 0;
+  }
+  elsif ($param eq "double") {
+    $fix_base_type = 1;
+  }
+  elsif ($param eq "complex_float") {
+    $fix_base_type = 2;
+  }
+  elsif ($param eq "complex_double") {
+    $fix_base_type = 3;
+  }
+  elsif ($param eq "dd_real") {
+    $fix_base_type = 0; $with_qd = 1;
+  }
+  elsif ($param eq "qd_real") {
+    $fix_base_type = 1; $with_qd = 1;
+  }
+  elsif ($param eq "complex_dd_real") {
+    $fix_base_type = 2; $with_qd = 1;
+  }
+  elsif ($param eq "complex_qd_real") {
+    $fix_base_type = 3; $with_qd = 1;
+  }
   elsif ($val != 0) {
     $nb_iter = $val;
   }
@@ -48,10 +68,17 @@ while(@ARGV) {               # read optional parameters
     print ". the number of iterations on each test\n";
     print ". with_qd : test also with dd_real and qd_real\n";
     print ". with_lapack : link with lapack\n";
+    print ". double, float, complex_double or complex_float";
+    print " to fix the base type\n";
     print ". source name of a test procedure\n";
     exit(1);
   }
   shift @ARGV;
+}
+
+if ($with_qd && $with_lapack) {
+  print "Options with_qd and with_lapack are not compatible\n";
+  exit(1);
 }
 
 $nb_test = 0;                # number of test procedures
@@ -81,6 +108,13 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 
     print TMPF "#include<gmm.h>\n\n\n";
 
+    if ($with_qd) {
+      print TMPF "#define NO_INLINE\n";
+      print TMPF "#include <dd.h>\n";
+      print TMPF "#include <qd.h>\n";
+      print TMPF "#include <x86.h>\n\n";
+    }
+
     $reading_param = 1;
     $nb_param = 0;
 
@@ -98,8 +132,18 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     $TYPES[1] = "double";
     $TYPES[2] = "std::complex<float> ";
     $TYPES[3] = "std::complex<double> ";
+
+    if ($with_qd) {
+      $TYPES[0] = "dd_real";
+      $TYPES[1] = "qd_real";
+      $TYPES[2] = "std::complex<dd_real> ";
+      $TYPES[3] = "std::complex<qd_real> ";
+    }
+
+
     $NB_TYPES = 4.0;
-    $TYPE = $TYPES[int($NB_TYPES * rand)];
+    if ($fix_base_type == -1) { $TYPE = $TYPES[int($NB_TYPES * rand)]; }
+    else { $TYPE = $TYPES[$fix_base_type]; }
 
     $VECTOR_TYPES[0] = "std::vector<$TYPE> ";
     $VECTOR_TYPES[1] = "std::vector<$TYPE> ";
@@ -125,19 +169,24 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     $theseed = int(10000.0*rand);
     print "Parameters for the test:\n";
     print TMPF "\n\n\n";
-    print TMPF "int main(void) {\n\n  srand($theseed);\n\n";
+    print TMPF "int main(void) {\n\n";
+    if ($with_qd) {
+      print TMPF "  unsigned short old_cw; x86_fix_start(&old_cw);\n\n";
+    }
+    print TMPF "  srand($theseed);\n\n";
     print TMPF "  dal::exception_callback_debug cb;\n";
     print TMPF "  dal::exception_callback::set_exception_callback(&cb);\n\n";
     print TMPF "  try {\n\n";
     for ($j = 0; $j < $nb_param; ++$j) {
       $a = rand; $b = rand;
+      if ($with_lapack) { $a = $b = 1.0; }
       $sizepp = $sizep + int(50.0*rand);
       $step = $sizep; if ($step == 0) { ++$step; }
       $step = int(1.0*int($sizepp/$step - 1)*rand) + 1;
 
       if (($param[$j] == 1) || ($param[$j] == 2)) { # vectors
 	$lt = $VECTOR_TYPES[0];
-	if ($param[$j] == 2) {
+	if ($param[$j] == 2 && $with_lapack==0) {
 	  $lt = $VECTOR_TYPES[int($NB_VECTOR_TYPES * rand)];
 	}
 	if ($a < 0.1) {
@@ -176,7 +225,10 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 	$s = $sizep; if ($param[$j] == 3) { $s = int($size_max*rand); }
 	$sn = $s; if ($b < 0.3) { $sn = $s + int(50.0*rand); }
 	$param_name[$j] = "param$j";
-	$lt = $MATRIX_TYPES[int($NB_MATRIX_TYPES * rand)];
+	$lt = $MATRIX_TYPES[0];
+	if ($with_lapack==0) {
+	  $lt = $MATRIX_TYPES[int($NB_MATRIX_TYPES * rand)];
+	}
 	$li = "    $lt param$j($sm, $sn);";
 	
 	if ($a < 0.3 || $b < 0.3) {
@@ -246,11 +298,14 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     close(TMPF);
 
     `rm -f $root_name`;
-    if (with_lapack) {
-      print `make $root_name CPPFLAGS=\"-I$inc_dir -I../src -lblas -llapack -lg2c -DGMM_USES_LAPACK\"`;
+    if ($with_lapack) {
+      print `make $root_name CPPFLAGS=\"-I$srcdir/../src -I$srcdir/../include -I../src  -I../include -lblas -llapack -lg2c -DGMM_USES_LAPACK\"`;
+    }
+    elsif ($with_qd) {
+      print `make $root_name CPPFLAGS=\"-I$srcdir/../src -I$srcdir/../include -I../src -I../include -lqd\"`;
     }
     else {
-      print `make $root_name CPPFLAGS=\"-I$inc_dir -I../src\"`;
+      print `make $root_name CPPFLAGS=\"-I$srcdir/../src -I$srcdir/../include -I../src -I../include \"`;
     }
 
     if ($? != 0) {

@@ -55,10 +55,8 @@ namespace gmm
     ref_elt_vector(V *p, size_type ll) : pm(p), l(ll) {}
     inline ref_elt_vector operator =(T v)
       { (*pm).w(l,v); return *this; }
-    inline bool operator ==(T v) const
-      { return ((*pm).r(l) == v); }
-    inline bool operator !=(T v) const
-      { return ((*pm).r(l) != v); }
+    inline bool operator ==(T v) const { return ((*pm).r(l) == v); }
+    inline bool operator !=(T v) const { return ((*pm).r(l) != v); }
     inline ref_elt_vector operator +=(T v)
       { (*pm).w(l,(*pm).r(l) + v); return *this; }
     inline ref_elt_vector operator -=(T v)
@@ -69,6 +67,12 @@ namespace gmm
       { (*pm).w(l,(*pm).r(l) * v); return *this; }
     inline ref_elt_vector operator =(const ref_elt_vector &re)
       { *this = T(re); return *this; }
+    T operator +()    { return  T(*this);   } // necessary for unknow reason
+    T operator -()    { return -T(*this);   } // necessary for unknow reason
+    T operator +(T v) { return T(*this)+ v; } // necessary for unknow reason
+    T operator -(T v) { return T(*this)- v; } // necessary for unknow reason
+    T operator *(T v) { return T(*this)* v; } // necessary for unknow reason
+    T operator /(T v) { return T(*this)/ v; } // necessary for unknow reason
   };  
   
   template<class T, class V> T operator +(const ref_elt_vector<T, V> &re)
@@ -892,5 +896,27 @@ namespace gmm
   inline size_type nnz(const slvector<T>& l) { return l.last() - l.first(); }
 
 }
+
+namespace dal {
+
+  template <class T, class V> inline
+  T sqr(const gmm::ref_elt_vector<T, V> &a)
+  { return T(a) * T(a); }
+
+  template <class T, class V> inline
+  typename gmm::number_traits<T>::magnitude_type
+  abs(const gmm::ref_elt_vector<T, V> &a)
+  { return dal::abs(T(a)); }
+
+  template <class T, class V> inline
+  typename gmm::number_traits<T>::magnitude_type
+  abs_sqr(const gmm::ref_elt_vector<T, V> &a)
+  { return dal::abs_sqr(T(a)); }
+  template <class T, class V> inline
+  T conj(const gmm::ref_elt_vector<T, V> &a)
+  { return dal::conj(T(a)); }
+}
+
+
 
 #endif /* __GMM_VECTOR_H */

@@ -542,7 +542,7 @@ namespace gmm {
 //     gmm::mult(eigvect, T, aux1);
 //     gmm::mult(aux1, conjugated(eigvect), aux2);
 //     gmm::add(scaled(A, -1), aux2);
-//     cout << "Ca donne : " << mat_norm2(aux2) << endl;
+//     cout << "it gives : " << mat_norm2(aux2) << endl;
     
     symmetric_stop_criterion(T, p, q, tol);
     
