@@ -95,6 +95,10 @@ namespace lmsg
     template<class T> void send(const T &) const;
     linkmsg_sender(void) {};
     virtual ~linkmsg_sender();
+    const linkmsg_sender& operator =(const linkmsg_sender &) {
+      DAL_THROW(dal::internal_error, "The copy of this object doesn't work");
+    }
+    linkmsg_sender(const linkmsg_sender &v) { *this = v; }
   };
 
   template<class RECEIVER>
@@ -132,37 +136,41 @@ namespace lmsg
   /*	VIRTUAL RECEIVER CLASS, declaration                               */
   /* ******************************************************************** */
 
-  class virtual_linkmsg_receiver
-  {
-    public :
-      
-      typedef int msg_id_type;
+  class virtual_linkmsg_receiver {
+  public :
+    
+    typedef int msg_id_type;
+    
+  protected :
+    
+    dal::dynamic_tas<virtual_linkmsg_sender *> senders;
+    
+    template<class ITER>
+    void _sup_sender(virtual_linkmsg_sender *s, ITER b, const ITER &e,
+		     bool t = true);
 
-    protected :
-      
-      dal::dynamic_tas<virtual_linkmsg_sender *> senders;
-
-      template<class ITER>
-	void _sup_sender(virtual_linkmsg_sender *s, ITER b, const ITER &e,
-			 bool t = true);
-
-    public :
-
-      template <class SENDER, class RECEIVER>
-        void add_sender(SENDER &s, RECEIVER &r, mask m = mask())
+  public :
+    
+    template <class SENDER, class RECEIVER>
+    void add_sender(SENDER &s, RECEIVER &r, mask m = mask())
       { senders.add(&s); s.add_receiver(r, m); }
-      template <class SENDER>
-        void sup_sender(SENDER &s)
+    template <class SENDER>
+    void sup_sender(SENDER &s)
       { _sup_sender(&s, senders.tas_begin(), senders.tas_end()); }
-      template <class SENDER>
-        void out_sender(SENDER &s)
+    template <class SENDER>
+    void out_sender(SENDER &s)
       { _sup_sender(&s, senders.tas_begin(), senders.tas_end(), false); }
-      virtual_linkmsg_receiver(void) {}
-      template <class SENDER>
-	virtual_linkmsg_receiver(SENDER &s, mask m = mask())
+    virtual_linkmsg_receiver(void) {}
+    template <class SENDER>
+    virtual_linkmsg_receiver(SENDER &s, mask m = mask())
       { senders.add(&s); s.add_receiver(*this, m); }
-      ~virtual_linkmsg_receiver()
+    ~virtual_linkmsg_receiver()
       { _sup_sender(NULL, senders.tas_begin(), senders.tas_end()); }
+    const virtual_linkmsg_receiver& operator =(const
+					       virtual_linkmsg_receiver &) {
+      DAL_THROW(dal::internal_error, "The copy of this object doesn't work");
+    }
+    virtual_linkmsg_receiver(const virtual_linkmsg_receiver &v) { *this = v; }
   };
 
 

@@ -99,6 +99,7 @@ namespace dal
     { tsa_iterator tmp = *this; --(*this); return tmp; }
    
     reference operator *() const { return (*p)[index()]; }
+    pointer operator->() const { return &(operator*()); }
     
     bool operator ==(const tsa_iterator &i) const
     { return ((i.depth == 0 && depth == 0) || (i._index() == _index())); }
@@ -214,6 +215,7 @@ namespace dal
     { const_tsa_iterator tmp = *this; --(*this); return tmp; }
    
     reference operator *() const { return (*p)[index()]; }
+    pointer operator->() const { return &(operator*()); }
     
     bool operator ==(const const_tsa_iterator &i) const
     { return ((i.depth == 0 && depth == 0) || (i._index() == _index())); }

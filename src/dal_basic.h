@@ -38,8 +38,6 @@
 /*									   */
 /* - For the moment, the allocation is made by new and delete[].           */
 /*									   */
-/* - No error traitement.                                                  */
-/*									   */
 /* *********************************************************************** */
 
 #include <vector>
@@ -104,8 +102,8 @@ namespace dal
     difference_type operator -(const dna_iterator &i) const
     { return difference_type(in - i.in); }
 	
-    reference operator *() const
-    { return (*pT); }
+    reference operator  *() const { return (*pT); }
+    pointer   operator ->() const { return pT;    }
     reference operator [](size_type ii) const { return (*p)[in+ii]; }
     
     bool operator ==(const dna_iterator &i) const { return (i.in==in);}
@@ -160,7 +158,8 @@ namespace dal
     difference_type operator -(const dna_const_iterator &i) const
     { return difference_type(in - i.in); }
 	
-    reference operator *() const { return (*pT); }
+    reference operator  *() const { return (*pT); }
+    pointer   operator ->() const { return pT;    }
     reference operator [](size_type ii) const { return (*p)[in+ii]; }
     
     bool operator ==(const dna_const_iterator &i) const

@@ -74,8 +74,8 @@ namespace dal
     { return id - i.id; }
 
 	
-    reference operator *() const
-    { return (*id); }
+    reference operator *() const { return (*id); }
+    pointer operator->() const { return &(operator*()); }
 
     bool operator ==(const dnt_iterator &i) const { return i.id==id;}
     bool operator !=(const dnt_iterator &i) const { return i.id!=id;}
@@ -115,8 +115,8 @@ namespace dal
     difference_type operator -(const dnt_const_iterator &i) const
     { return id - i.id; }
 	
-    reference operator *() const
-    { return (*id); }
+    reference operator *() const { return (*id); }
+    pointer operator->() const { return &(operator*()); }
     
     bool operator ==(const dnt_const_iterator &i) const
     { return i.id == id;}

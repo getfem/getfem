@@ -35,34 +35,28 @@
 namespace getfem
 {
 
-  void boundary_description::add_elt(size_type c, short_type f)
-  { 
+  void boundary_description::add_elt(size_type c, short_type f) { 
     faces[  (cvindex[c]) ? cv_in.search(c) : cv_in.add(c)  ].add(f); 
     cvindex.add(c);
   }
-      
-  void boundary_description::sup_elt(size_type c, short_type f)
-  {
-    if (cvindex[c]) 
-    { 
+  
+  void boundary_description::sup_elt(size_type c, short_type f) {
+    if (cvindex[c]) { 
       size_type i = cv_in.search(c);
       faces[i].sup(f);
       if (faces[i].card() == 0) cvindex.sup(c);
     }
   }
 
-  void boundary_description::sup_convex(size_type c)
-  {
-    if (cvindex[c]) 
-    { 
+  void boundary_description::sup_convex(size_type c) {
+    if (cvindex[c]) { 
       size_type i = cv_in.search(c); faces[i].clear();
       cvindex.sup(c); cv_in.sup(i);
     }
   }
-
-  const dal::bit_vector &
-    boundary_description::faces_of_convex(size_type c) const
-  {
+  
+  const dal::bit_vector &boundary_description::faces_of_convex(size_type c)
+    const {
     static dal::bit_vector *without;
     static bool isinit = false;
     if (!isinit) {
@@ -71,29 +65,27 @@ namespace getfem
     return (cvindex[c]) ? faces[cv_in.search(c)] : *without;
   }
 
-  void boundary_description::swap_convex(size_type c1, size_type c2)
-  {
+  void boundary_description::swap_convex(size_type c1, size_type c2) {
     size_type i1, i2;
     dal::bit_vector b1, b2;
     if (cvindex[c1])
-    { i1=cv_in.search(c1); b1=faces[i1]; faces[i1].clear(); cv_in.sup(i1); }
+      { i1=cv_in.search(c1); b1=faces[i1]; faces[i1].clear(); cv_in.sup(i1); }
     if (cvindex[c2])
-    { i2=cv_in.search(c2); b2=faces[i2]; faces[i2].clear(); cv_in.sup(i2); }
+      { i2=cv_in.search(c2); b2=faces[i2]; faces[i2].clear(); cv_in.sup(i2); }
     if (cvindex[c1])
-    { i1 = cv_in.add(c2);  faces[i1] = b1; }
+      { i1 = cv_in.add(c2);  faces[i1] = b1; }
     if (cvindex[c2])
-    { i2 = cv_in.add(c1);  faces[i2] = b2; }
+      { i2 = cv_in.add(c1);  faces[i2] = b2; }
     cvindex.swap(c1, c2);
   }
-
+  
   bool intfem::operator < (const intfem &l) const {
     if (pf < l.pf) return true; if (pf > l.pf) return false; 
     if (pi < l.pi) return true;
     return false;
   }
-
-  pintfem give_intfem(pfem ppf, const bgeot::pintegration_method ppi)
-  {
+  
+  pintfem give_intfem(pfem ppf, const bgeot::pintegration_method ppi) {
     static dal::FONC_TABLE<intfem, intfem> *tab;
     static bool isinit = false;
     if (!isinit) {
@@ -104,11 +96,10 @@ namespace getfem
 		"Incompatibility between fem and integration method");
     return tab->add(intfem(ppf, ppi));
   }
-
+  
   typedef bgeot::ref_mesh_point_ind_ct ref_mesh_dof_ind_ct;
-
-  const dal::bit_vector &mesh_fem::convex_on_boundary(size_type b) const
-  {
+  
+  const dal::bit_vector &mesh_fem::convex_on_boundary(size_type b) const {
     static dal::bit_vector *without;
     static bool isinit = false;
     if (!isinit) {
@@ -116,10 +107,9 @@ namespace getfem
     }
     return (valid_boundaries[b]) ?  boundaries[b].cvindex : *without;
   }
-
+  
   const dal::bit_vector &mesh_fem::faces_of_convex_on_boundary(size_type c,
-							 size_type b) const
-  {
+							  size_type b) const {
     static dal::bit_vector *without;
     static bool isinit = false;
     if (!isinit) {
@@ -129,59 +119,45 @@ namespace getfem
       : *without;
   }
   
-  void mesh_fem::sup_boundaries_of_convex(size_type c)
-  {
+  void mesh_fem::sup_boundaries_of_convex(size_type c) {
     dal::bit_vector::iterator it = valid_boundaries.begin(),
       ite = valid_boundaries.end();
     for (; it != ite; ++it)
       if (*it) boundaries[it.index()].sup_convex(c);
   }
-
-  void mesh_fem::swap_boundaries_convex(size_type c1, size_type c2)
-  {
+  
+  void mesh_fem::swap_boundaries_convex(size_type c1, size_type c2) {
     dal::bit_vector::iterator it = valid_boundaries.begin(),
       ite = valid_boundaries.end();
     for (; it != ite; ++it)
       if (*it) boundaries[it.index()].swap_convex(c1, c2);
   }
-
-  dal::bit_vector mesh_fem::dof_on_boundary(size_type b) const
-  {
+  
+  dal::bit_vector mesh_fem::dof_on_boundary(size_type b) const {
     if (!dof_enumeration_made) ((mesh_fem *)(this))->enumerate_dof();
     dal::bit_vector res;
-    if (valid_boundaries[b])
-    {
+    if (valid_boundaries[b]) {
       dal::bit_vector::const_iterator it = boundaries[b].cvindex.begin(),
 	ite = boundaries[b].cvindex.end();
       for (; it != ite; ++it)
-	if (*it)
-	{
-	  // cout << "scanning convex " << it.index() << endl;
-	  // cout << " dofs : " << res << " ]] " << endl;
-	dal::bit_vector::const_iterator
-	  itf = boundaries[b].faces_of_convex(it.index()).begin(),
-	  itfe = boundaries[b].faces_of_convex(it.index()).end();
-	for (; itf != itfe; ++itf)
-	  if (*itf)
-	  {
-	    // cout << "scanning face " <<  itf.index() << endl;
-	    // cout << " dofs : " << res << " ]] " << endl;
-	    size_type nbb // a refaire ... mais bug ...
-	      = dof_structure.structure_of_convex(it.index())->nb_points_of_face(itf.index());
-	    for (size_type i = 0; i < nbb; ++i)
-	      res.add(dof_structure.ind_points_of_face_of_convex(it.index(), itf.index())[i]);
-	    
-// 	             bgeot::ind_ref_mesh_point_ind_ct::const_iterator
-// 	     	    itp=ind_points_of_face_of_convex(it.index(), itf.index()).begin(),
-// 	     	    itpe=ind_points_of_face_of_convex(it.index(), itf.index()).end();
-// 	     	  for (; itp != itpe; ++itp)
-// 	     	    { cout << "et hop " << endl; cout << " ajout de " << *itp << endl;  res.add(*itp); }
-	  }
+	if (*it) {
+	  dal::bit_vector::const_iterator
+	    itf = boundaries[b].faces_of_convex(it.index()).begin(),
+	    itfe = boundaries[b].faces_of_convex(it.index()).end();
+	  for (; itf != itfe; ++itf)
+	    if (*itf) {
+	      size_type nbb
+		= dof_structure.structure_of_convex(it.index())->
+		nb_points_of_face(itf.index());
+	      for (size_type i = 0; i < nbb; ++i)
+		res.add(dof_structure.ind_points_of_face_of_convex(it.index(),
+							     itf.index())[i]);
+	    }
 	}
     }
     return res;
   }
-
+  
   void mesh_fem::receipt(const MESH_CLEAR &) { clear(); }
   void mesh_fem::receipt(const MESH_DELETE &) {
     clear(); is_valid = false;
@@ -236,13 +212,12 @@ namespace getfem
   }
 
   void mesh_fem::set_finite_element(const dal::bit_vector &cvs, pfem ppf,
-			      const bgeot::pintegration_method ppi)
-  { 
+			      const bgeot::pintegration_method ppi) { 
     dal::bit_vector::const_iterator it = cvs.begin(), ite = cvs.end();
     pintfem pif =  give_intfem(ppf, ppi);
     for ( ; it != ite; ++it) if (*it) set_finite_element(it.index(), pif);
   }
-
+  
   base_node mesh_fem::point_of_dof(size_type cv, size_type i) const {
     return linked_mesh().trans_of_convex(cv)->transform
       (fem_of_element(cv)->node_of_dof(i),
@@ -255,11 +230,9 @@ namespace getfem
 			dof_structure.ind_in_first_convex_of_point(d));
   }
 
-  struct _dof_comp
-  { 
+  struct _dof_comp { 
     dal::approx_less<scalar_type> comp;
-    int operator()(const fem_dof& m, const fem_dof& n) const
-    { 
+    int operator()(const fem_dof& m, const fem_dof& n) const { 
       int d = dal::lexicographical_compare(m.P.begin(), m.P.end(),
 					   n.P.begin(), n.P.end(), comp);
       if (d != 0) return d;
@@ -267,10 +240,8 @@ namespace getfem
     }
     _dof_comp(double e = 1.0E-10) : comp(e) { }
   };
-
-  void mesh_fem::enumerate_dof(void) const
-  {
-    cout << "Begin enum\n" << endl;
+  
+  void mesh_fem::enumerate_dof(void) const {
     dal::bit_vector nn = fe_convex;
     std::queue<int> pile;
     dal::dynamic_tree_sorted<fem_dof, _dof_comp, 10> dof_sort;
@@ -284,8 +255,7 @@ namespace getfem
     cv = nn.take_first();
     dof_structure.clear();
 
-    while (cv != ST_NIL)
-    {
+    while (cv != ST_NIL) {
       /* ajout des voisins dans la pile.                                  */
 
       size_type nbp = _linked_mesh->nb_points_of_convex(cv);
@@ -335,12 +305,11 @@ namespace getfem
     
     dof_enumeration_made = true;
     nb_total_dof = (dof_sort.card() == 0) ? 0 : dof_sort.index().last_true()+1;
-    cout << "end enum\n" << endl;
   }
 
 /*     void mesh_fem::enumerate_dof(void) A finir ...  */
 /*   { */
-     /* L'algorithme deparcours est de type avancement par front           */
+     /* L'algorithme de parcours est de type avancement par front          */
      /* Le tri des ddl prend pas mal de memoire ... faire autrement ?      */
      /* on peut deja ne pas stocker les noeuds interieurs.                 */
 /*     dal::int_set nn = fe_convex; */
@@ -407,8 +376,7 @@ namespace getfem
 /*     } */
 /*   } */
 
-  void mesh_fem::clear(void)
-  {
+  void mesh_fem::clear(void) {
     fe_convex.clear();
     dof_enumeration_made = false;
     linked_mesh().lmsg_sender().send(MESH_FEM_CHANGE((void *)(this)));
@@ -417,8 +385,7 @@ namespace getfem
     valid_boundaries.clear();
   }
 
-  mesh_fem::mesh_fem(getfem_mesh &me)
-  {
+  mesh_fem::mesh_fem(getfem_mesh &me) {
     _linked_mesh = &me;
  
     add_sender(me.lmsg_sender(), *this,
@@ -429,8 +396,7 @@ namespace getfem
     is_valid = true;
   }
 
-  mesh_fem::~mesh_fem()
-  {
+  mesh_fem::~mesh_fem() {
     if (is_valid) {
       linked_mesh().lmsg_sender().send(MESH_FEM_DELETE((void *)(this)));
     }

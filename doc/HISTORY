@@ -1,3 +1,6 @@
+Historique :
+------------
+
 . Le Vendredi 28 Juin 2002 : 
   --------------------------
   Prototype du site WEB terminé. Fabrication de la version 1.0 de GETFEM++.
@@ -17,8 +20,9 @@
   d'Hermite sur le segment et support complet des éléments non
   tau-equivalents. Element interpolant une autre méthode définie sur
   un autre maillage. Nommage des méthodes d'éléments finis, des méthodes
-  d'intégration et des transformation géométrique simplifiant l'interface
-  avec MATLAB, la sauvegarde et la gestion des structure de description.
+  d'intégration et des transformations géométriques simplifiant l'interface
+  avec MATLAB, la sauvegarde et la gestion des structures de description.
+  Les documentations sont améliorées.
 
 
 ------------------------------------------
@@ -30,6 +34,9 @@ http://www.ann.jussieu.fr/~perronne
 (maillage 2D ou 3D, elasticité 2D ou 3D, interface graphique)
 
 . OPT++
+
+. CALFEM
+http://www.byggmek.lth.se/Calfem/
 
 
 ------------------------------------------

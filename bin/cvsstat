@@ -1,0 +1,4 @@
+#!/bin/sh
+
+cvs status | grep "Needs\|Modified"
+
