@@ -178,7 +178,7 @@ namespace getfem {
     }
     size_type count = 0;
     for (size_type ic=0; ic < nb_convex(); ++ic) {
-      cvlst[ic].global_points_count = count; count += nodes(ic-1).size();
+      cvlst[ic].global_points_count = count; count += nodes(ic).size();
     }
     assert(count == points_cnt);
   }
