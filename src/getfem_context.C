@@ -45,18 +45,25 @@ namespace getfem {
   ident_type context_dependencies::current_ident(void)
   { return current_id; }
 
+  void context_dependencies::add_dependency(const context_dependencies &cd) {
+    std::list<dependency>::iterator it = dependencies.begin(),
+      ite = dependencies.end();
+    for (; it != ite; ++it) { if (it->first == &cd) return; }
+    dependencies.push_back(dependency(&cd, cd.ident()));
+  }
+
   bool context_dependencies::context_changed(void) const {
     std::list<dependency>::iterator it = dependencies.begin(),
       ite = dependencies.end();
-    if (c_ident == current_ident()) return false;
+    if (c_ident_ == current_ident()) return false;
     bool b = false;
     for (; it != ite; ++it)
       if (it->first->context_changed()
 	  || it->first->ident() != it->second) {
 	b = true; it->second = it->first->ident();
       }
-    if (b) touch();
-    c_ident = current_ident();
+    if (b) ident_ = new_ident();
+    c_ident_ = current_ident();
     return b;
   }
   

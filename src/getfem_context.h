@@ -51,14 +51,9 @@ namespace getfem {
 
   public :
     ident_type ident(void) const { return ident_; }
-    
-    void add_dependency(const context_dependencies &cd)
-    { dependencies.push_back(dependency(&cd, cd.ident())); }
-    
+    void add_dependency(const context_dependencies &cd);
     bool context_changed(void) const;
-
     void touch(void) { c_ident_ = ident_ = new_ident(); }
-
     context_dependencies() { touch(); }
 
   };
