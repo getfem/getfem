@@ -185,7 +185,7 @@ namespace gmm
   };
 
   template<class T>  void wsvector<T>::clean(double eps) {
-    iterator it = begin(), itf = ++it, ite = end();
+    iterator it = this->begin(), itf = ++it, ite = this->end();
     for ( ; it != ite; ++itf)
       { if (dal::abs((*it).e) <= eps) { erase(it); it = itf; } else ++it; }
   }

@@ -312,7 +312,7 @@ namespace gmm
   };
   
   template<class T> void dense_matrix<T>::fill(T a, T b) { 
-    std::fill(begin(), end(), b);
+    std::fill(this->begin(), this->end(), b);
     iterator p = this->begin(), e = this->end();
     while (p < e) { *p = a; p += nbl+1; }
   }

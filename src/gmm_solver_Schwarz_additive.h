@@ -41,7 +41,7 @@ namespace gmm {
   /* ******************************************************************** */
 
 
-  #define PRECOND choleskyt
+  #define PRECOND choleskyt_precond
 
   template <class Matrix1, class Matrix2, class Matrix3, class SUBI>
   struct schwarz_additif_matrix {
@@ -144,13 +144,13 @@ namespace gmm {
     global_to_local(q, *(M.fi), *(M.cor));
     for (size_type i = 0; i < (M.ml1)->size(); ++i) {
       M.iter.init();
-      cg((*(M.ml1))[i], (*(M.gi))[i], (*(M.fi))[i], (*precond1)[i], M.iter);
+      cg((*(M.ml1))[i], (*(M.gi))[i], (*(M.fi))[i], (*(M.precond1))[i], M.iter);
       itebilan = std::max(itebilan, M.iter.get_iteration());
     }
 
     for (size_type i = 0; i < (M.ml2)->size(); ++i) {
       M.iter.init();
-      cg((*(M.ml2))[i],(*(M.gi))[i+ms], (*(M.fi))[i+ms], (*precond2)[i],
+      cg((*(M.ml2))[i],(*(M.gi))[i+ms], (*(M.fi))[i+ms], (*(M.precond2))[i],
 	 M.iter);
       itebilan = std::max(itebilan, M.iter.get_iteration());
     }
