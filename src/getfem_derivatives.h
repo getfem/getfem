@@ -70,12 +70,16 @@ namespace getfem
       assert(pf_target->is_lagrange());
 
       pgt = mf.linked_mesh().trans_of_convex(cv);
-      if (pf_targetold != pf_target)
+      if (pf_targetold != pf_target) {
+	cerr << "geotrans " << (*pf_target->node_tab())[0] << endl;
         pgp = geotrans_precomp(pgt, pf_target->node_tab());
+      }
       pf_targetold = pf_target;
 
-      if (pf_old != pf) 
+      if (pf_old != pf) {
+	cerr << "fem " << (*pf_target->node_tab())[0] << endl;
 	pfp = fem_precomp(pf, pf_target->node_tab());
+      }
       pf_old = pf;
 
 

@@ -170,9 +170,10 @@ namespace getfem
       const base_node &node_of_dof(size_type i) const
         { return cv_node.points()[i];}
       bgeot::pstored_point_tab node_tab(void) const { 
-	if (pspt_valid) return pspt;
-	/*const_cast<pfem>(this)->*/pspt = store_point_tab(cv_node.points());
-	pspt_valid = true;
+	if (!pspt_valid) {
+	  pspt = store_point_tab(cv_node.points());
+	  pspt_valid = true;
+	}
 	return pspt;
       }
       bool is_equivalent(void) const { return is_equiv; }

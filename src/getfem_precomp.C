@@ -70,7 +70,6 @@ namespace getfem
 	P = pgt->poly_vector()[i];
 	P.derivative(n);
 	for (size_type j = 0; j < pspt->size(); ++j) {
-	  std::cerr << "i=" << i << " n=" << n << " j=" << j << " pspt[j]=" << ((*pspt)[j]).size() << "=" << ((*pspt)[j]) << " N=" << int(N) << endl;
 	  assert((*pspt)[j].size() == N);
 	  assert(pgt->convex_ref()->is_in((*pspt)[j]) < 1.0E-7);
 	  pc[j](i,n) = P.eval((*pspt)[j].begin());
@@ -122,7 +121,8 @@ namespace getfem
     hpc.resize(ls.pspt->size());
     c.resize(ls.pspt->size());
     for (size_type i = 0; i < ls.pspt->size(); ++i) {
-      assert(ls.pspt[i].size() == N);
+      if ((*ls.pspt)[i].size() != N) 
+	throw dimension_error("fem_precomp::_fem_precomp: dimension mismatch");
       ls.pf->base_value((*(ls.pspt))[i], c[i]);
       ls.pf->grad_base_value((*(ls.pspt))[i], pc[i]);
       ls.pf->hess_base_value((*(ls.pspt))[i], hpc[i]);

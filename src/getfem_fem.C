@@ -67,32 +67,37 @@ namespace getfem
 			     const base_matrix &G,
 			     const base_vector coeff, base_matrix &val) const {
     // optimisable !!   verifier et faire le vectoriel
+ 
+    size_type R = nb_dof();
     base_matrix M;
     size_type P = structure()->dim();
-    assert(val.size() == target_dim());
     
+    if (val.nrows() != target_dim() ||
+	val.ncols() != P ||
+	ii >= R ||
+	coeff.size() != R)
+      throw dimension_error("virtual_fem::interpolation_grad: dimension mismatch");
     base_tensor::const_iterator it = pfp->grad(ii).begin();
-
-    size_type R = nb_dof();
 
     if (!is_equivalent())
      { if (M.nrows() != R || M.ncols() != R) M.resize(R, R); mat_trans(M, G); }
 
      val.fill(0.0);
      
-     for (size_type k = 0; k < P; ++k)
-       for (size_type r = 0; r < target_dim(); ++r)
-	 for (size_type j = 0; j < R; ++j, ++it) {
-	   scalar_type co = 0.0;
-	   if (is_equivalent())
-	     co = coeff[j];
-	   else
-	     for (size_type i = 0; i < R; ++i)
-	       co += coeff[i] * M(i, j);
-     
-	     val(r,k) += co * (*it);
-     } 
-
+    for (size_type k = 0; k < P; ++k) {
+      for (size_type r = 0; r < target_dim(); ++r) {
+	for (size_type j = 0; j < R; ++j, ++it) {
+	  
+	  scalar_type co = 0.0;
+	  if (is_equivalent())
+	    co = coeff[j];
+	  else
+	    for (size_type i = 0; i < R; ++i)
+	      co += coeff[i] * M(i, j);
+	  val(r,k) += co * (*it);
+	} 
+      }
+    }
   }
 
 
