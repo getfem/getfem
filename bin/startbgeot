@@ -17,6 +17,5 @@ print "Making links for test progams\n";
 `mkdir -p programs`;
 `cd programs; ln -sf ../bgeot/test/*.C .`; print "\n\n";
 
-
-print `bin/startgetfem`;
+print `bin/start_modif`;
 

@@ -18,6 +18,5 @@ print "Making links for test progams\n";
 print "WARNING : No test programs\n";
 #`cd programs; ln -sf ../dal/test/*.C .`; print "\n\n";
 
-
-print `bin/startgetfem`;
+print `bin/start_modif`;
 
