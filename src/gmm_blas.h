@@ -1596,8 +1596,7 @@ namespace gmm {
 
 
   template <typename L1, typename L2>
-  void add(const L1& l1, L2& l2,
-	   abstract_skyline, abstract_dense) {
+  void add(const L1& l1, L2& l2, abstract_skyline, abstract_dense) {
     typename linalg_traits<L1>::const_iterator it1 = vect_const_begin(l1),
       ite1 = vect_const_end(l1);
     if (it1 != ite1) {
@@ -1609,24 +1608,21 @@ namespace gmm {
 
   
   template <typename L1, typename L2>
-  void add(const L1& l1, L2& l2,
-	   abstract_sparse, abstract_dense) {
+  void add(const L1& l1, L2& l2, abstract_sparse, abstract_dense) {
     typename linalg_traits<L1>::const_iterator
       it1 = vect_const_begin(l1), ite1 = vect_const_end(l1);
     for (; it1 != ite1; ++it1) l2[it1.index()] += *it1;
   }
   
   template <typename L1, typename L2>
-  void add(const L1& l1, L2& l2,
-	   abstract_sparse, abstract_sparse) {
+  void add(const L1& l1, L2& l2, abstract_sparse, abstract_sparse) {
     typename linalg_traits<L1>::const_iterator
       it1 = vect_const_begin(l1), ite1 = vect_const_end(l1);
     for (; it1 != ite1; ++it1) l2[it1.index()] += *it1;
   }
 
   template <typename L1, typename L2>
-  void add(const L1& l1, L2& l2,
-	   abstract_sparse, abstract_skyline) {
+  void add(const L1& l1, L2& l2, abstract_sparse, abstract_skyline) {
     typename linalg_traits<L1>::const_iterator
       it1 = vect_const_begin(l1), ite1 = vect_const_end(l1);
     for (; it1 != ite1; ++it1) l2[it1.index()] += *it1;
@@ -1634,8 +1630,7 @@ namespace gmm {
 
 
   template <typename L1, typename L2>
-  void add(const L1& l1, L2& l2,
-	   abstract_skyline, abstract_sparse) {
+  void add(const L1& l1, L2& l2, abstract_skyline, abstract_sparse) {
     typename linalg_traits<L1>::const_iterator
       it1 = vect_const_begin(l1), ite1 = vect_const_end(l1);
     for (; it1 != ite1; ++it1)
@@ -1644,8 +1639,7 @@ namespace gmm {
   }
 
   template <typename L1, typename L2>
-  void add(const L1& l1, L2& l2,
-	   abstract_skyline, abstract_skyline) {
+  void add(const L1& l1, L2& l2, abstract_skyline, abstract_skyline) {
     typedef typename linalg_traits<L1>::const_iterator const_l1_iterator;
     typedef typename linalg_traits<L2>::iterator l2_iterator;
     typedef typename linalg_traits<L1>::value_type T;
@@ -1656,18 +1650,15 @@ namespace gmm {
     if (ite1 != it1) {
       l2_iterator it2 = vect_begin(l2), ite2 = vect_end(l2);
       while (*(ite1-1) == T(0)) ite1--;
-
       if (it2 == ite2 || it1.index() < it2.index()) {
-	l2[it1.index()] = *it1; ++it1;
-	if (it1 == ite1) return;
+	l2[it1.index()] = T(0);
 	it2 = vect_begin(l2); ite2 = vect_end(l2);
       }
       if (ite1.index() > ite2.index()) {
-	l2[ite1.index() - 1] = *(ite1 - 1);
-	it2 = vect_begin(l2);
+	l2[ite1.index() - 1] = T(0);
+	it2 = vect_begin(l2); 
       }
-      ptrdiff_t m = it1.index() - it2.index();
-      it2 += m;
+      it2 += it1.index() - it2.index();
       for (; it1 != ite1; ++it1, ++it2) *it2 += *it1;
     }
   }
@@ -1725,7 +1716,7 @@ namespace gmm {
   template <typename L1, typename L2, typename L3>
   void mult_by_row(const L1& l1, const L2& l2, L3& l3, abstract_skyline) {
     typedef typename  linalg_traits<L1>::value_type T;
-    clear(l3);
+    clear(l3); 
     size_type nr = mat_nrows(l1);
     for (size_type i = 0; i < nr; ++i) {
       T aux = vect_sp(mat_const_row(l1, i), l2);
@@ -1737,7 +1728,7 @@ namespace gmm {
   void mult_by_row(const L1& l1, const L2& l2, L3& l3, abstract_dense) {
     typename linalg_traits<L3>::iterator it=vect_begin(l3), ite=vect_end(l3);
     typename linalg_traits<L1>::const_row_iterator
-      itr = mat_row_const_begin(l1);
+      itr = mat_row_const_begin(l1); 
     for (; it != ite; ++it, ++itr)
       *it = vect_sp(linalg_traits<L1>::row(itr), l2,
 		    typename linalg_traits<L1>::storage_type(),
@@ -1765,7 +1756,7 @@ namespace gmm {
   template <typename L1, typename L2, typename L3>
   void mult_by_col(const L1& l1, const L2& l2, L3& l3, abstract_skyline) {
     typedef typename linalg_traits<L1>::value_type T;
-    clear(l3);
+    clear(l3); 
     typename linalg_traits<L2>::const_iterator it = vect_const_begin(l2),
       ite = vect_const_end(l2);
     for (; it != ite; ++it)

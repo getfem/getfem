@@ -588,36 +588,37 @@ namespace gmm {
 			      bool compvect = true) {
     VECT &eigval = const_cast<VECT &>(eigval_);
     MAT2 &eigvect = const_cast<MAT2 &>(eigvect_);
-    typedef typename linalg_traits<MAT1>::value_type value_type;
+    typedef typename linalg_traits<MAT1>::value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
 
     size_type n = mat_nrows(A), q = 0, p, ite = 0;
-    dense_matrix<value_type> T(n,n);
-    gmm::copy(A, T);
+    dense_matrix<T> Tri(n,n);
+    gmm::copy(A, Tri);
 
-    Householder_tridiagonalization(T, eigvect, compvect);
+    Householder_tridiagonalization(Tri, eigvect, compvect);
 
-//     dense_matrix<value_type> aux1(n,n), aux2(n,n);
-//     gmm::mult(eigvect, T, aux1);
+//     dense_matrix<T> aux1(n,n), aux2(n,n);
+//     gmm::mult(eigvect, Tri, aux1);
 //     gmm::mult(aux1, conjugated(eigvect), aux2);
 //     gmm::add(scaled(A, -1), aux2);
 //     cout << "it gives : " << mat_euclidean_norm(aux2) << endl;
     
-    symmetric_qr_stop_criterion(T, p, q, tol);
+    symmetric_qr_stop_criterion(Tri, p, q, tol);
     
     while (q < n) {
 
       sub_interval SUBI(p, n-p-q), SUBJ(0, mat_ncols(eigvect)), SUBK(p, n-p-q);
       if (!compvect) SUBK = sub_interval(0,0);
-      symmetric_Wilkinson_qr_step(sub_matrix(T, SUBI), 
+      symmetric_Wilkinson_qr_step(sub_matrix(Tri, SUBI), 
 				  sub_matrix(eigvect, SUBJ, SUBK), compvect);
       
-      symmetric_qr_stop_criterion(T, p, q, tol);
+      symmetric_qr_stop_criterion(Tri, p, q, tol*R(2));
       if (++ite > n*100) DAL_THROW(failure_error, "QR algorithm failed. "
 				   "Probably, your matrix is not real "
 				   "symmetric or complex hermitian");
     }
     
-    extract_eig(T, eigval, tol);
+    extract_eig(Tri, eigval, tol);
   }
 
 
