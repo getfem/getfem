@@ -62,7 +62,7 @@ foreach $k (0..$maxprior)
       print $f1, " =";
       foreach $j (0..$tabnbdep[$i]-1)
       { $f1 = $tabdep[$i][$j]; $f1 =~ s/\./_/g; print " \$(", $f1, ")"; }
-      print " ", $tabfil[$i], "\n";
+      print " include\/", $tabfil[$i], "\n";
     }
   }
 }
