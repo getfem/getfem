@@ -184,9 +184,15 @@ void lap_pb::init(void)
 		"Product of 1D Gauss only for parallelepipeds");
     break;
   case 3 :
-    if (mesh_type == 0)
-      sprintf(meth, "IM_STRUCTURED_COMPOSITE(IM_NC(%d, %d), %d)",
-	      N, 2*K, KI);
+    if (mesh_type == 0) {
+      if (N == 1)
+	sprintf(meth, "IM_STRUCTURED_COMPOSITE(IM_GAUSS1D(%d), %d)", 2, KI);
+      else if (N == 2)
+	sprintf(meth, "IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(%d), %d)", 2, KI);
+      else
+	sprintf(meth, "IM_STRUCTURED_COMPOSITE(IM_NC(%d, %d), %d)",
+		N, 2*K, KI);
+    }
     else
       DAL_THROW(dal::internal_error,
 		"Composite integration only for simplexes");
