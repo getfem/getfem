@@ -24,6 +24,12 @@ Historique :
   avec MATLAB, la sauvegarde et la gestion des structures de description.
   Les documentations sont améliorées.
 
+. Le Mardi 24 Septembre 2002 :
+  ----------------------------
+  Version 1.3 de GETFEM++. Éléments polynomiaux par morceaux, éléments 
+  hierarchiques en degrés et en raffinement. Méthodes d'intégration 
+  composites.
+
 
 ------------------------------------------
 
