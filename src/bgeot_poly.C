@@ -60,25 +60,28 @@ namespace bgeot
   const power_index &power_index::operator ++()
   { 
     short_type n = size(), l;
-    iterator it = begin() + (n-2);
-    for (l = n-2; l != short_type(-1); --l, --it)
-      if (*it != 0) break;
-    short_type a = (*this)[n-1]; (*this)[n-1] = 0;
-    (*this)[short_type(l+1)] = a + 1;
-    if (l != short_type(-1)) ((*this)[l])--;
+    if (n > 0) {
+      iterator it = begin() + (n-2);
+      for (l = n-2; l != short_type(-1); --l, --it)
+	if (*it != 0) break;
+      short_type a = (*this)[n-1]; (*this)[n-1] = 0;
+      (*this)[short_type(l+1)] = a + 1;
+      if (l != short_type(-1)) ((*this)[l])--;
+    }
     return *this;
   }
   
   const power_index &power_index::operator --()
-  { 
+  {
     short_type n = size(), l;
-    iterator it = begin() + (n-1);
-    for (l = n-1; l != short_type(-1); --l, --it)
-      if (*it != 0) break;
-    if (l != short_type(-1))
-    {
-      short_type a = (*this)[l]; (*this)[l] = 0; (*this)[n-1] = a - 1;
-      if (l > 0) ((*this)[l-1])++;
+    if (n > 0) {
+      iterator it = begin() + (n-1);
+      for (l = n-1; l != short_type(-1); --l, --it)
+	if (*it != 0) break;
+      if (l != short_type(-1)) {
+	short_type a = (*this)[l]; (*this)[l] = 0; (*this)[n-1] = a - 1;
+	if (l > 0) ((*this)[l-1])++;
+      }
     }
     return *this;
   }

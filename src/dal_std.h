@@ -63,6 +63,8 @@
 /*	S.T.L. Headers.						          */
 /* ********************************************************************** */
 
+#include <exception>
+#include <typeinfo>
 #include <stdexcept>
 #include <iterator>
 #include <algorithm>
@@ -342,16 +344,16 @@ typedef unsigned char uint8_type;
     cerr << "|  A bad exception  has been detected !!!  |\n";\
     cerr << "============================================\n";\
   } \
-  catch(ios_base::failure) { \
-    cerr << "============================================\n";\
-    cerr << "|  A ios_base::failure has been detected !!!|\n";\
-    cerr << "============================================\n";\
-  } \
   catch(...) {\
     cerr << "============================================\n";\
     cerr << "|  An unknown error has been detected !!!  |\n";\
     cerr << "============================================\n";\
   }
+//   catch(ios_base::failure) { \ a mettre plus tard
+//     cerr << "============================================\n";\
+//     cerr << "|  A ios_base::failure has been detected !!!|\n";\
+//     cerr << "============================================\n";\
+//   } \
 
   #define DAL_THROW(type, thestr) { \
     std::strstream msg; \

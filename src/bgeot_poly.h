@@ -207,7 +207,8 @@ namespace bgeot
        */
       template <class ITER> T eval(const ITER &it) const;
       /// Constructor.
-      polynomial(void) { n = 0; d = 0; }
+      polynomial(void) : std::vector<T>(1)
+      { n = 0; d = 0; (*this)[0] = 0.0; }
       /// Constructor.
       polynomial(short_type nn, short_type dd) : std::vector<T>(alpha(nn,dd))
       { n = nn; d = dd; std::fill(this->begin(), this->end(), T(0)); }
@@ -244,6 +245,7 @@ namespace bgeot
     void polynomial<T>::add_monomial(const T &coeff, const power_index &power)
   {
     size_type i = power.global_index();
+    if (n != power.size()) DAL_THROW(dimension_error, "dimensions mismatch");
     if (i >= size()) { change_degree(power.degree()); }
     ((*this)[i]) += coeff;
   }
@@ -252,8 +254,7 @@ namespace bgeot
     polynomial<T> &polynomial<T>::operator +=(const polynomial &Q)
   {
     if (Q.dim() != dim())
-      throw dimension_error
-	("polynomial<T>::operator += : dimensions mismatch");
+      DAL_THROW(dimension_error, "dimensions mismatch");
 
     if (Q.degree() > degree()) change_degree(Q.degree());
     iterator it = begin();
@@ -265,9 +266,8 @@ namespace bgeot
   template<class T> 
     polynomial<T> &polynomial<T>::operator -=(const polynomial &Q)
   {
-    if (Q.dim() != dim())
-      throw dimension_error
-	("polynomial<T>::operator -= : dimensions mismatch");
+    if (Q.dim() != dim() || dim() == 0)
+      DAL_THROW(dimension_error, "dimensions mismatch");
 
     if (Q.degree() > degree()) change_degree(Q.degree());
     iterator it = begin();
@@ -280,20 +280,20 @@ namespace bgeot
     polynomial<T> &polynomial<T>::operator *=(const polynomial &Q)
   {
     if (Q.dim() != dim())
-      throw dimension_error
-	("polynomial<T>::operator *= : dimensions mismatch");
+      DAL_THROW(dimension_error, "dimensions mismatch");
   
     polynomial aux = *this;
     change_degree(0); (*this)[0] = T(0);
 
     power_index miq(Q.dim()), mia(dim()), mitot(dim());
-    miq[Q.dim()-1] = Q.degree();
+    if (dim() > 0) miq[dim()-1] = Q.degree();
     const_iterator itq = Q.end() - 1, ite = Q.begin() - 1;
     for ( ; itq != ite; --itq, --miq)
       if (*itq != T(0))
       {
 	iterator ita = aux.end() - 1, itae = aux.begin() - 1;
-	std::fill(mia.begin(), mia.end(), 0); mia[dim()-1] = aux.degree();
+	std::fill(mia.begin(), mia.end(), 0);
+	if (dim() > 0) mia[dim()-1] = aux.degree();
 	for ( ; ita != itae; --ita, --mia)
 	  if (*ita != T(0))
 	  {
@@ -312,16 +312,18 @@ namespace bgeot
     void polynomial<T>::direct_product(const polynomial &Q)
   { 
     polynomial aux = *this;
+
     change_degree(0); n += Q.dim(); (*this)[0] = T(0);
 
     power_index miq(Q.dim()), mia(aux.dim()), mitot(dim());
-    miq[Q.dim()-1] = Q.degree();
+    if (Q.dim() > 0) miq[Q.dim()-1] = Q.degree();
     const_iterator itq = Q.end() - 1, ite = Q.begin() - 1;
     for ( ; itq != ite; --itq, --miq)
       if (*itq != T(0))
       {
 	iterator ita = aux.end() - 1, itae = aux.begin() - 1;
-	std::fill(mia.begin(), mia.end(), 0); mia[aux.dim()-1] = aux.degree();
+	std::fill(mia.begin(), mia.end(), 0); 
+	if (aux.dim() > 0) mia[aux.dim()-1] = aux.degree();
 	for ( ; ita != itae; --ita, --mia)
 	  if (*ita != T(0))
 	  {
@@ -353,8 +355,7 @@ namespace bgeot
     void polynomial<T>::derivative(short_type k)
   {
     if (k >= n)
-      throw std::out_of_range
-	("polynomial<T>::derivative : index out of range");
+      DAL_THROW(std::out_of_range, "index out of range");
     
      iterator it = begin(), ite = end();
      power_index mi(dim());

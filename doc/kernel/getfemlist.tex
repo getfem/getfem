@@ -100,12 +100,12 @@ where $\alpha$ is the vector of components $\alpha_i$.
 
 \subsection{Classical ``$P_K$'' Lagrange elements on simplexes}
 
-It is possible to define a classical ``$P_K$'' Lagrange element of arbitrary dimension and arbitrary degree. This element has only degrees of freedom which corresponds to the value of the function on a node. The grid of node is the so-called Lagrange grid. Figures \ref{fig:segmentpk}, \ref{fig:trianglepk} and \ref{fig:tetrahedronpk} show examples in dimension 1, 2 and 3.
+It is possible to define a classical ``$P_K$'' Lagrange element of arbitrary dimension and arbitrary degree. This element has only degrees of freedom which corresponds to the value of the function on a node. The grid of node is the so-called Lagrange grid. Figures \ref{fig:segmentpk}, \ref{fig:trianglepk} and \ref{fig:tetrahedronpk} show examples of dimension 1, 2 and 3.
 
 \begin{figure}[H] 
   \begin{center} 
     \includegraphics[width=14cm,angle=0]{getfemlist_segment_Pk.eps}
-    \caption{ \it Examples of classical $P_K$ Lagrange element on a segment.} \label{fig:segmentpk}
+    \caption{ \it Examples of classical $P_K$ Lagrange elements on a segment.} \label{fig:segmentpk}
   \end{center}
 \end{figure}
 
@@ -117,10 +117,10 @@ It is possible to define a classical ``$P_K$'' Lagrange element of arbitrary dim
     \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P3.eps} & \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P6.eps} \\
     $P_3$ element, 10 d.o.f., $C^0$ & $P_6$ element, 28 d.o.f., $C^0$
   \end{tabular} \end{center}
-  \caption{ \it Examples of classical $P_K$ Lagrange element on a triangle.} \label{fig:trianglepk}
+  \caption{ \it Examples of classical $P_K$ Lagrange elements on a triangle.} \label{fig:trianglepk}
 \end{figure}
 
-The number of degree of freedom for a classical ``$P_K$'' Lagrange element in dimension $N$ and degree $K$ is $\Frac{(N+S)!}{N!S!}$. For instance, in dimension 2 ($N = 2$), this value is $\Frac{(N+1) (N+2)}{2}$, in dimension 3 ($N = 2$), this value is $\Frac{(N+1) (N+2) (N+3)}{6}$ ...
+The number of degree of freedom for a classical ``$P_K$'' Lagrange element of dimension $N$ and degree $K$ is $\Frac{(N+S)!}{N!S!}$. For instance, in dimension 2 ($N = 2$), this value is $\Frac{(N+1) (N+2)}{2}$, in dimension 3 ($N = 2$), this value is $\Frac{(N+1) (N+2) (N+3)}{6}$ ...
 
 \begin{figure}[H]
   \begin{center}
@@ -131,7 +131,7 @@ The number of degree of freedom for a classical ``$P_K$'' Lagrange element in di
      \includegraphics[width=5cm,angle=0]{getfemlist_tetrahedron_P4.eps} \\
      $P_4$ element, 35 d.o.f., $C^0$
   \end{center}
-  \caption{ \it Examples of classical $P_K$ Lagrange element on a tetrahedron.} \label{fig:tetrahedronpk}
+  \caption{ \it Examples of classical $P_K$ Lagrange elements on a tetrahedron.} \label{fig:tetrahedronpk}
 \end{figure}
 
 The particular way selected in GETFEM++ to numerate the nodes are also shown in figures \ref{fig:segmentpk}, \ref{fig:trianglepk} and \ref{fig:tetrahedronpk}. Using another numeration, let 
@@ -144,7 +144,7 @@ $$ a_{i_0, i_1, ... i_N} = \sum_{n = 0}^{N} \Frac{i_n}{K}P_n, $$
 where $P_0, P_1, ... P_N$ are the vertexes of the simplex.
 Then each base function, corresponding of each node $a_{i_0, i_1, ... i_N}$ is defined as
 $$ \phi_{i_0, i_1, ... i_N} = \prod_{n = 0}^{N} \prod_{j=0}^{i_n-1} \left(\Frac{K \lambda_n - j}{j+1}\right).$$
-where $\lambda_n$ is the barycentric coordinate, i.e. the polynomial of order 1 whose value is $1$ on the vertex $P_n$ and whose value is $0$ on the other vetices. On the reference element, one has
+where $\lambda_n$ is the barycentric coordinate, i.e. the polynomial of order 1 whose value is $1$ on the vertex $P_n$ and whose value is $0$ on other vertices. On the reference element, one has
 $$ \lambda_n = x_n, \ \ 0 \le n < N, $$
 $$ \lambda_N = 1 - x_0 - x_1 - ... - x_{N-1}. $$
 
@@ -158,23 +158,84 @@ return the description of the unlinkable element.
 
 \subsection{Classical Lagrange elements on other geometries}
 
+\begin{figure}[H]
+  \begin{center} \begin{tabular}{m{7cm}m{7cm}}
+    \includegraphics[width=5cm,angle=0]{getfemlist_quad_Q1.eps} & \includegraphics[width=5cm,angle=0]{getfemlist_quad_Q3.eps} \\
+    $Q_1$ element, 4 d.o.f., $C^0$ & $Q_3$ element, 16 d.o.f., $C^0$ \\ \\
+    \includegraphics[width=5cm,angle=0]{getfemlist_cube_Q1.eps} & \includegraphics[width=5cm,angle=0]{getfemlist_cube_Q3.eps} \\
+    $Q_1$ element, 8 d.o.f., $C^0$ & $Q_3$ element, 64 d.o.f., $C^0$ \\
+    \includegraphics[width=5cm,angle=0]{getfemlist_prism_P1.eps} & \includegraphics[width=5cm,angle=0]{getfemlist_prism_P3.eps} \\
+    $P_1 \otimes P_1$ element, 6 d.o.f., $C^0$ & $P_3 \otimes P_3$ element, 40 d.o.f., $C^0$ \\
+  \end{tabular} \end{center}
+  \caption{ \it Examples of classical Lagrange elements in dimension 2 and 3} \label{fig:prodpk}
+\end{figure}
+
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=5cm,angle=0]{getfemlist_prism_P2_P1.eps}
+  \end{center}
+  \caption{ \it $P_2 \otimes P_1$ Lagrange element on a prism, 12 d.o.f., $C^0$} 
+  \label{fig:prism_P2_p1}
+\end{figure}
+
+to be described ...
+
 to be done ...
 
 \subsection{Specific elements in dimension 1}
 
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=5cm,angle=0]{getfemlist_segment_hermite.eps}
+  \end{center}
+  \caption{ \it $P_3$ Hermite element on a segment, 4 d.o.f., $C^1$} 
+  \label{fig:triangle_p1_bubble}
+\end{figure}
 to be done ...
 
 \subsection{Specific elements in dimension 2}
 
 \begin{figure}[H]
   \begin{center}
-    \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P1_bubble.eps}
+    \begin{tabular}{m{7cm}m{7cm}}
+      \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P1_bubble.eps} & \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P2_bubble.eps}  \\
+      $P_1$ with additional bubble function, 4 d.o.f., $C^0$ & $P_2$ with additional bubble function, 7 d.o.f., $C^0$
+    \end{tabular}
   \end{center}
-  \caption{ \it$P_1$ Lagrange element on a triangle with additional bubble function, 4 d.o.f., $C^0$} 
+  \caption{ \it Lagrange element on a triangle with additional internal bubble function} 
   \label{fig:triangle_p1_bubble}
 \end{figure}
 
 to be described ...
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P1_bubble_face.eps}
+  \end{center}
+  \caption{ \it $P_1$ Lagrange element on a triangle with additional bubble function on face 0, 4 d.o.f., $C^0$} 
+  \label{fig:triangle_p1_bubble_face}
+\end{figure}
+
+to be described ...
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P1_with_P2_face.eps}
+  \end{center}
+  \caption{ \it $P_1$ Lagrange element on a triangle with additional d.o.f on face 0, 4 d.o.f., $C^0$} 
+  \label{fig:triangle_p1_p2_face}
+\end{figure}
+
+to be described ...
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=6cm,angle=0]{getfemlist_triangle_hermite.eps}
+  \end{center}
+  \caption{ \it Hermite element on a triangle, $P_3$, 10 d.o.f., $C^0$}
+  \label{fig:argyris}
+\end{figure}
+to be done ...
 
 \begin{figure}[H]
   \begin{center}
@@ -187,7 +248,19 @@ to be done ...
 
 \subsection{Specific elements in dimension 3}
 
-to be done ...
+\begin{figure}[H]
+  \begin{center}
+    \begin{tabular}{m{5cm}m{5cm}m{5cm}}
+      \includegraphics[width=4.5cm,angle=0]{getfemlist_tetrahedron_P1_bubble.eps} & \includegraphics[width=4.5cm,angle=0]{getfemlist_tetrahedron_P2_bubble.eps} & \includegraphics[width=4.5cm,angle=0]{getfemlist_tetrahedron_P3_bubble.eps}  \\
+      $P_1$ with additional bubble function, 5 d.o.f., $C^0$ & $P_2$ with additional bubble function, 11 d.o.f., $C^0$ & $P_3$ with additional bubble function, 21 d.o.f., $C^0$
+    \end{tabular}
+  \end{center}
+  \caption{ \it Lagrange element on a tetrahedron with additional internal bubble function.} 
+  \label{fig:tetrahedron_p1_bubble}
+\end{figure}
+
+to be described ...
+
 
 \subsection{Tensorial product of elements}
 
@@ -229,7 +302,163 @@ to be done ...
 
 \subsection{Gauss Integration methods on dimension 2}
 
-to be done ...
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|} \hline 
+graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tabular} & weights & function to call / order \\ \hline
+\end{tabular}
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
+  \hline& & &\\ 
+  \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_triangle1.eps} & 
+  { \small
+    \begin{tabular}{m{3cm}m{3cm}}
+      $1/3$ & $1/3$ 
+    \end{tabular}
+    }
+  & 
+    \begin{tabular}{c}
+      1/2
+    \end{tabular}
+  & {\tt \small triangle1\_approx\_integration()} \hspace{5em} 
+    1 point, order 1. \\ \hline
+\end{tabular}
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
+  \hline& & &\\ 
+  \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_triangle2.eps} & 
+  { \small
+    \begin{tabular}{m{3cm}m{3cm}}
+      $1/2$ & $1/2$ \\ \\
+      $0$   & $1/2$  \\ \\
+      $1/2$ & $0$
+    \end{tabular}
+    }
+  & 
+    \begin{tabular}{c}
+      1/6 \\ \\
+      1/6 \\ \\
+      1/6
+    \end{tabular}
+  & {\tt \small triangle2\_approx\_integration()} \hspace{5em} 3 points, order 2. \\ \hline
+\end{tabular}
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
+  \hline& & &\\ 
+  \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_triangle3.eps} & 
+  { \small
+    \begin{tabular}{m{3cm}m{3cm}}
+      $1/3$ & $1/3$ \\ \\
+      $1/5$ & $1/5$ \\ \\
+      $3/5$ & $1/5$ \\ \\
+      $1/5$ & $3/5$
+    \end{tabular}
+    }
+  & { \small
+    \begin{tabular}{c}
+      -27/96 \\ \\
+      25/96 \\ \\
+      25/96 \\ \\ 
+      25/96 \\ \\
+    \end{tabular} }
+  & {\tt \small triangle3\_approx\_integration()} \hspace{5em} 4 points, order 3. \\ \hline
+\end{tabular}
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
+  \hline& & &\\ 
+  \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_triangle4.eps} & 
+  { \small
+    \begin{tabular}{m{3cm}m{3cm}}
+      $a$ & $a$ \\ \\
+      $1-2a$ & $a$ \\ \\
+      $a$ & $1-2a$ \\ \\
+      $b$ & $b$ \\ \\
+      $1-2b$ & $b$  \\ \\
+      $b$ & $1-2b$
+    \end{tabular}
+    }
+  & { \small
+    \begin{tabular}{c}
+      c \\ \\
+      c \\ \\
+      c \\ \\ 
+      d \\ \\
+      d \\ \\
+      d \\ \\
+    \end{tabular} }
+  & {\tt \small triangle4\_approx\_integration()} \hspace{5em} \mbox{6 points, order 4,}\hspace{7em} \mbox{a = 0.445948490915965,}\hspace{5em} \mbox{b = 0.091576213509771,}\hspace{5em} \mbox{c = 0.111690794839005,}\hspace{5em} \mbox{d = 0.054975871827661.} \\ \hline
+\end{tabular}
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
+  \hline& & &\\ 
+  \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_triangle5.eps} & 
+  { \small
+    \begin{tabular}{m{3cm}m{3cm}}
+      $1/3$ & $1/3$ \\ \\
+      $a$ & $a$ \\ \\
+      $1-2a$ & $a$ \\ \\
+      $a$ & $1-2a$ \\ \\
+      $b$ & $b$ \\ \\
+      $1-2b$ & $b$  \\ \\
+      $b$ & $1-2b$
+    \end{tabular}
+    }
+  & { \small
+    \begin{tabular}{c}
+      9/80 \\ \\
+      c \\ \\
+      c \\ \\
+      c \\ \\ 
+      d \\ \\
+      d \\ \\
+      d \\ \\
+    \end{tabular} }
+  & {\tt \small triangle5\_approx\_integration()} \hspace{5em} \mbox{7 points, order 5,}\hspace{7em} \mbox{$a = \Frac{6+\sqrt{15}}{21}$,}\hspace{5em} \mbox{$b = 4/7 - a$,}\hspace{8em} \mbox{$c = \Frac{155+\sqrt{15}}{2400}$,}\hspace{5em} \mbox{$d = 31/240 - c$.} \\ \hline
+\end{tabular}
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
+  \hline& & &\\ 
+  \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_quad2.eps} & 
+  { \small
+    \begin{tabular}{m{3cm}m{3cm}}
+      $1/2+\sqrt{1/6}$ & $1/2$ \\ \\
+      $1/2-\sqrt{1/24}$ & $1/2\pm\sqrt{1/8}$ 
+    \end{tabular}
+    }
+  & 
+    \begin{tabular}{c}
+      1/3 \\ \\
+      1/3
+    \end{tabular}
+  & {\tt \small quad2\_approx\_integration()} \hspace{5em} 3 points, order 2. \\ \hline
+\end{tabular}
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
+  \hline& & &\\ 
+  \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_quad3.eps} & 
+  { \small
+    \begin{tabular}{m{3cm}m{3cm}}
+      $1/2\pm\sqrt{1/6}$ & $1/2$ \\ \\
+      $1/2$ & $1/2\pm\sqrt{1/6}$ 
+    \end{tabular}
+    }
+  & 
+    \begin{tabular}{c}
+      1/4 \\ \\
+      1/4
+    \end{tabular}
+  & {\tt \small quad3\_approx\_integration()} \hspace{5em} 4 points, order 3. \\ \hline
+\end{tabular}
+\begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
+  \hline& & &\\ 
+  \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_quad5.eps} & 
+  { \small
+    \begin{tabular}{m{3cm}m{3cm}}
+      1/2 & 1/2 \\ \\
+      1/2  & $1/2 \pm \sqrt{7/30}$ \\ \\
+      $1/2\pm\sqrt{3/20}$ & $1/2\pm\sqrt{3/20}$ 
+    \end{tabular}
+    }
+  & 
+    \begin{tabular}{c}
+      2/7 \\ \\
+      5/63 \\ \\
+      5/36
+    \end{tabular}
+  & {\tt \small quad5\_approx\_integration()} \hspace{5em} 7 points, order 5. \\ \hline
+\end{tabular}
+
 
 \subsection{Gauss Integration methods on dimension 3}
 
