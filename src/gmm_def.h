@@ -213,7 +213,12 @@ namespace gmm {
   { return const_cast<typename cref_type<L>::return_type>(l); }
 
 
-
+  // To be used to select between a reference or a const refercence for
+  // the return type of a function
+  // select_return<C1, C2, L *> return C1 if L is a const reference,
+  //                                   C2 otherwise.
+  // select_return<C1, C2, const L *> return C2 if L is a modifiable reference
+  //                                         C1 otherwise. 
   template <class C1, class C2, class REF> struct _select_return {
     typedef abstract_null_type return_type;
   };
@@ -226,6 +231,29 @@ namespace gmm {
     typedef typename _select_return<C1, C2, 
       typename mref_type<PT>::return_type>::return_type return_type;
   };
+
+  
+  // To be used to select between a reference or a const refercence inside
+  // a structure or a linagl_traits
+  // select_ref<C1, C2, L *> return C1 if L is a const reference,
+  //                                C2 otherwise.
+  // select_ref<C1, C2, const L *> return C2 in any case. 
+  template <class C1, class C2, class REF> struct _select_ref {
+    typedef abstract_null_type ref_type;
+  };
+  template <class C1, class C2, class L>
+  struct _select_ref<C1, C2, const L &> { typedef C1 ref_type; };
+  template <class C1, class C2, class L>
+  struct _select_ref<C1, C2, L &> { typedef C2 ref_type; };
+  template <class C1, class C2, class PT> struct select_ref {
+    typedef typename std::iterator_traits<PT>::value_type L;
+    typedef typename _select_ref<C1, C2, 
+      typename mref_type<PT>::return_type>::ref_type ref_type;
+  };
+  template <class C1, class C2, class L> struct select_ref<C1, C2, const L *> {
+    typedef C1 ref_type;
+  };
+
 
   template<class R> struct _is_a_reference
   { typedef linalg_true reference; };

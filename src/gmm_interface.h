@@ -125,10 +125,10 @@ namespace gmm {
     typedef typename which_reference<PT>::is_reference is_reference;
     typedef abstract_vector linalg_type;
     typedef typename linalg_traits<V>::value_type value_type;
-    typedef typename select_return<value_type, typename
-            linalg_traits<V>::reference, PT>::return_type reference;
-    typedef typename select_return<typename linalg_traits<V>::const_iterator,
-	    typename linalg_traits<V>::iterator, PT>::return_type iterator;
+    typedef typename select_ref<value_type, typename
+            linalg_traits<V>::reference, PT>::ref_type reference;
+    typedef typename select_ref<typename linalg_traits<V>::const_iterator,
+	    typename linalg_traits<V>::iterator, PT>::ref_type iterator;
     typedef typename linalg_traits<V>::const_iterator const_iterator;
     typedef typename linalg_traits<V>::storage_type storage_type;
     typedef typename linalg_traits<V>::access_type access_type;

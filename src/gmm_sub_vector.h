@@ -94,7 +94,7 @@ namespace gmm {
   void set_to_begin(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
 		    const void *o, const VECT *) {
     set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV());
-    set_to_end(it.itbe, o, typename linalg_traits<VECT>::V());
+    set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV());
     it.forward();
   }
   
@@ -109,7 +109,7 @@ namespace gmm {
   void set_to_end(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
 		    const void *o, const VECT *) {
     set_to_end(it.itb, o, typename linalg_traits<VECT>::pV());
-    set_to_end(it.itbe, o, typename linalg_traits<VECT>::V());
+    set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV());
     it.forward();
   }
   
@@ -117,13 +117,12 @@ namespace gmm {
     typedef sparse_sub_vector<PT, SUBI> this_type;
     typedef typename std::iterator_traits<PT>::value_type V;
     typedef V * CPT;
-    typedef typename select_return<typename linalg_traits<V>::const_iterator,
-            typename linalg_traits<V>::iterator, PT>::return_type iterator;
+    typedef typename select_ref<typename linalg_traits<V>::const_iterator,
+            typename linalg_traits<V>::iterator, PT>::ref_type iterator;
     typedef typename linalg_traits<this_type>::reference reference;
     typedef typename linalg_traits<V>::access_type access_type;
 
-    iterator _begin, _end; // ne sert pas à grand chose car peut changer,
-    // il faut appeler recursivement begin() et end() du vecteur ...
+    iterator _begin, _end;
     const void *origin;
     SUBI si;
 
@@ -189,13 +188,13 @@ namespace gmm {
     typedef typename which_reference<PT>::is_reference is_reference;
     typedef abstract_vector linalg_type;
     typedef typename linalg_traits<V>::value_type value_type;
-    typedef typename select_return<value_type, typename
-            linalg_traits<V>::reference, PT>::return_type reference;
-    typedef typename select_return<typename linalg_traits<V>::const_iterator,
-	    typename linalg_traits<V>::iterator, PT>::return_type pre_iterator;
-    typedef typename select_return<abstract_null_type, 
+    typedef typename select_ref<value_type, typename
+            linalg_traits<V>::reference, PT>::ref_type reference;
+    typedef typename select_ref<typename linalg_traits<V>::const_iterator,
+	    typename linalg_traits<V>::iterator, PT>::ref_type pre_iterator;
+    typedef typename select_ref<abstract_null_type, 
 	    sparse_sub_vector_iterator<pre_iterator, pre_iterator, SUBI>,
-	    PT>::return_type iterator;
+	    PT>::ref_type iterator;
     typedef sparse_sub_vector_iterator<typename linalg_traits<V>
             ::const_iterator, pre_iterator, SUBI> const_iterator;
     typedef abstract_sparse storage_type;
@@ -322,8 +321,8 @@ namespace gmm {
     typedef skyline_sub_vector<PT, SUBI> this_type;
     typedef typename std::iterator_traits<PT>::value_type V;
     typedef V * pV;
-    typedef typename select_return<typename linalg_traits<V>::const_iterator,
-            typename linalg_traits<V>::iterator, PT>::return_type iterator;
+    typedef typename select_ref<typename linalg_traits<V>::const_iterator,
+            typename linalg_traits<V>::iterator, PT>::ref_type iterator;
     typedef typename linalg_traits<this_type>::reference reference;
     typedef typename linalg_traits<V>::access_type access_type;
 
@@ -384,13 +383,13 @@ namespace gmm {
     typedef typename which_reference<PT>::is_reference is_reference;
     typedef abstract_vector linalg_type;
     typedef typename linalg_traits<V>::value_type value_type;
-    typedef typename select_return<value_type, typename
-            linalg_traits<V>::reference, PT>::return_type reference;
-    typedef typename select_return<typename linalg_traits<V>::const_iterator,
-	    typename linalg_traits<V>::iterator, PT>::return_type pre_iterator;
-    typedef typename select_return<abstract_null_type, 
+    typedef typename select_ref<value_type, typename
+            linalg_traits<V>::reference, PT>::ref_type reference;
+    typedef typename select_ref<typename linalg_traits<V>::const_iterator,
+	    typename linalg_traits<V>::iterator, PT>::ref_type pre_iterator;
+    typedef typename select_ref<abstract_null_type, 
 	    skyline_sub_vector_iterator<pre_iterator, pre_iterator>,
-	    PT>::return_type iterator;
+	    PT>::ref_type iterator;
     typedef skyline_sub_vector_iterator<typename linalg_traits<V>
             ::const_iterator, pre_iterator> const_iterator;
     typedef abstract_skyline storage_type;
