@@ -16,8 +16,8 @@ int main(void) {
     cout << "size of double        : " << sizeof(double)      << endl;
     cout << "size of long double   : " << sizeof(long double) << endl;
     
-    std::size_t e = 1, f = 2;
-    std::ptrdiff_t g = e - f;
+    std::size_t ee = 1, f = 2;
+    std::ptrdiff_t g = ee - f;
     cout << "1 - 2 = " << g << endl;
     if (g != -1) DAL_THROW(dal::internal_error, "Basic operation error");
 

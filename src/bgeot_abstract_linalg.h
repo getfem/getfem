@@ -62,6 +62,37 @@ namespace bgeot {
   struct row_and_col {};     // both accesses but row preference
   struct col_and_row {};     // both accesses but column preference
 
+  template <class V> struct linalg_traits;
+
+  struct linalg_traits<abstract_null_type> {
+    typedef abstract_null_type linalg_type;
+    typedef abstract_null_type base_type;
+    typedef void * iterator;
+    typedef const void * const_iterator;
+    typedef abstract_null_type storage_type;
+    typedef abstract_null_type sub_row_type;
+    typedef abstract_null_type const_sub_row_type;
+    typedef abstract_null_type sub_col_type;
+    typedef abstract_null_type const_sub_col_type;
+    typedef abstract_null_type sub_orientation;
+    size_type size(const linalg_type &) { return 0; }
+    size_type nrows(const linalg_type &) { return 0; }
+    size_type ncols(const linalg_type &) { return 0; }
+    iterator begin(linalg_type &) { return 0; }
+    iterator const_begin(const linalg_type &) { return 0; }
+    iterator end(linalg_type &) { return 0; }
+    iterator const_end(const linalg_type &) { return 0; }
+    const_sub_row_type row(const linalg_type &, size_type)
+      { DAL_THROW(failure_error,"Rows inaccessible for this object"); }
+    const_sub_col_type col(const linalg_type &, size_type)
+      { DAL_THROW(failure_error,"Columns inaccessible for this object"); }
+    sub_row_type row(linalg_type &, size_type)
+      { DAL_THROW(failure_error,"Rows inaccessible for this object"); }
+    sub_col_type col(linalg_type &, size_type) 
+      { DAL_THROW(failure_error,"Columns inaccessible for this object"); }
+    void clear(linalg_type &) { }
+  };
+
   /* ******************************************************************** */
   /*		Operations on scalars                         		  */
   /* ******************************************************************** */
@@ -88,7 +119,7 @@ namespace bgeot {
   };
 
   template <class V> struct linalg_traits<simple_vector_ref<V> > {
-    typedef typename simple_vector_ref<V> linalg_type;
+    typedef simple_vector_ref<V> linalg_type;
     typedef typename linalg_traits<V>::base_type base_type;
     typedef typename linalg_traits<V>::iterator  iterator;
     typedef typename linalg_traits<V>::const_iterator const_iterator;
@@ -100,28 +131,28 @@ namespace bgeot {
     const_sub_col_type;
     typedef typename linalg_traits<V>::sub_orientation sub_orientation;
     size_type size(const linalg_type &v)
-    { return linalg_traits<V>::size(v.deref()); }
+    { return linalg_traits<V>().size(v.deref()); }
     size_type nrows(const linalg_type &v)
-    { return linalg_traits<V>::nrows(v.deref()); }
+    { return linalg_traits<V>().nrows(v.deref()); }
     size_type ncols(const linalg_type &v)
-    { return linalg_traits<V>::ncols(v.deref()); }
+    { return linalg_traits<V>().ncols(v.deref()); }
     iterator begin(linalg_type &v)
-    { return linalg_traits<V>::begin(v.deref()); }
+    { return linalg_traits<V>().begin(v.deref()); }
     iterator const_begin(const linalg_type &v)
-    { return linalg_traits<V>::const_begin(v.deref()); }
+    { return linalg_traits<V>().const_begin(v.deref()); }
     iterator end(linalg_type &v)
-    { return linalg_traits<V>::end(v.deref()); }
+    { return linalg_traits<V>().end(v.deref()); }
     iterator const_end(const linalg_type &v)
-    { return linalg_traits<V>::const_end(v.deref()); }
+    { return linalg_traits<V>().const_end(v.deref()); }
     const_sub_row_type row(const linalg_type &v, size_type i)
-    { return linalg_traits<V>::row(v.deref(), i); }
+    { return linalg_traits<V>().row(v.deref(), i); }
     const_sub_col_type col(const linalg_type &v, size_type i)
-    { return linalg_traits<V>::col(v.deref(), i); }
+    { return linalg_traits<V>().col(v.deref(), i); }
     sub_row_type row(linalg_type &v, size_type i)
-    { return linalg_traits<V>::row(v.deref(), i); }
+    { return linalg_traits<V>().row(v.deref(), i); }
     sub_col_type col(linalg_type &v, size_type i)
-    { return linalg_traits<V>::col(v.deref(), i); }
-    void clear(linalg_type &v) { linalg_traits<V>::clear(v.deref()); }
+    { return linalg_traits<V>().col(v.deref(), i); }
+    void clear(linalg_type &v) { linalg_traits<V>().clear(v.deref()); }
   };
 
   template <class V> class simple_vector_const_ref {
@@ -135,7 +166,7 @@ namespace bgeot {
   };
 
   template <class V> struct linalg_traits<simple_vector_const_ref<V> > {
-    typedef typename simple_vector_const_ref<V> linalg_type;
+    typedef simple_vector_const_ref<V> linalg_type;
     typedef typename linalg_traits<V>::base_type base_type;
     typedef typename linalg_traits<V>::const_iterator  iterator;
     typedef typename linalg_traits<V>::const_iterator const_iterator;
@@ -146,23 +177,23 @@ namespace bgeot {
     typedef typename linalg_traits<V>::const_sub_col_type const_sub_col_type;
     typedef typename linalg_traits<V>::sub_orientation sub_orientation;
     size_type size(const linalg_type &v)
-    { return linalg_traits<V>::size(v.deref()); }
+    { return linalg_traits<V>().size(v.deref()); }
     size_type nrows(const linalg_type &v)
-    { return linalg_traits<V>::nrows(v.deref()); }
+    { return linalg_traits<V>().nrows(v.deref()); }
     size_type ncols(const linalg_type &v)
-    { return linalg_traits<V>::ncols(v.deref()); }
+    { return linalg_traits<V>().ncols(v.deref()); }
     iterator begin(linalg_type &v)
-    { return linalg_traits<V>::const_begin(v.deref()); }
+    { return linalg_traits<V>().const_begin(v.deref()); }
     iterator const_begin(const linalg_type &v)
-    { return linalg_traits<V>::const_begin(v.deref()); }
+    { return linalg_traits<V>().const_begin(v.deref()); }
     iterator end(linalg_type &v)
-    { return linalg_traits<V>::const_end(v.deref()); }
+    { return linalg_traits<V>().const_end(v.deref()); }
     iterator const_end(const linalg_type &v)
-    { return linalg_traits<V>::const_end(v.deref()); }
+    { return linalg_traits<V>().const_end(v.deref()); }
     const_sub_row_type row(const linalg_type &v, size_type i)
-    { return linalg_traits<V>::row(v.deref(), i); }
+    { return linalg_traits<V>().row(v.deref(), i); }
     const_sub_col_type col(const linalg_type &v, size_type i)
-    { return linalg_traits<V>::col(v.deref(), i); }
+    { return linalg_traits<V>().col(v.deref(), i); }
     void clear(linalg_type &v)
       { DAL_THROW(failure_error,"Impossible to clear a constant object");}
   };
@@ -199,16 +230,16 @@ namespace bgeot {
 
   template <class V, class T>
     struct linalg_traits<extern_plain_vector_ref<V, T> > {
-      typedef typename extern_plain_vector_ref<V, T> linalg_type;
-      typedef typename T base_type;
+      typedef extern_plain_vector_ref<V, T> linalg_type;
+      typedef T base_type;
       typedef typename V::iterator  iterator;
       typedef typename V::const_iterator const_iterator;
-      typedef typename abstract_plain storage_type;
-      typedef typename T sub_row_type;
-      typedef typename T const_sub_row_type;
-      typedef typename linalg_type sub_col_type;
-      typedef typename extern_plain_vector_const_ref<V, T> const_sub_col_type;
-      typedef typename col_major sub_orientation;
+      typedef abstract_plain storage_type;
+      typedef T sub_row_type;
+      typedef T const_sub_row_type;
+      typedef linalg_type sub_col_type;
+      typedef extern_plain_vector_const_ref<V, T> const_sub_col_type;
+      typedef col_major sub_orientation;
       size_type size(const linalg_type &v) { return v.size(); }
       size_type nrows(const linalg_type &v) { return v.size(); }
       size_type ncols(const linalg_type &v) { return 1; }
@@ -229,16 +260,16 @@ namespace bgeot {
 
     template <class V, class T>
     struct linalg_traits<extern_plain_vector_const_ref<V, T> > {
-      typedef typename extern_plain_vector_const_ref<V, T> linalg_type;
-      typedef typename T base_type;
+      typedef extern_plain_vector_const_ref<V, T> linalg_type;
+      typedef T base_type;
       typedef typename V::iterator  iterator;
       typedef typename V::const_iterator const_iterator;
-      typedef typename abstract_plain storage_type;
-      typedef typename T sub_row_type;
-      typedef typename T const_sub_row_type;
-      typedef typename linalg_type sub_row_type;
-      typedef typename linalg_type const_sub_row_type;
-      typedef typename col_major sub_orientation;
+      typedef abstract_plain storage_type;
+      typedef T sub_row_type;
+      typedef T const_sub_row_type;
+      typedef linalg_type sub_col_type;
+      typedef linalg_type const_sub_col_type;
+      typedef col_major sub_orientation;
       size_type size(const linalg_type &v) { return v.size(); }
       size_type nrows(const linalg_type &v) { return v.size(); }
       size_type ncols(const linalg_type &v) { return 1; }
@@ -246,11 +277,11 @@ namespace bgeot {
       iterator const_begin(const linalg_type &v) { return v.begin(); }
       iterator end(linalg_type &v) { return v.end(); }
       iterator const_end(const linalg_type &v) { return v.end(); }
-      const_sub_row_type row(const linalg_type &v, size_type i)
-	{ DAL_THROW(failure_error,"Rows inaccessible for this object"); }
       const_sub_col_type col(const linalg_type &v, size_type i)
 	{ return v; }
-      void clear(linalg_type &v)
+      const_sub_row_type row(const linalg_type &, size_type)
+	{ DAL_THROW(failure_error,"Rows inaccessible for this object"); }
+      void clear(linalg_type &)
       { DAL_THROW(failure_error,"Impossible to clear a constant object");}
     };
 
@@ -288,16 +319,16 @@ namespace bgeot {
 
   template <class V, class T>
     struct linalg_traits<extern_sparse_vector_ref<V, T> > {
-      typedef typename extern_sparse_vector_ref<V, T> linalg_type;
-      typedef typename T base_type;
+      typedef extern_sparse_vector_ref<V, T> linalg_type;
+      typedef T base_type;
       typedef typename V::iterator  iterator;
       typedef typename V::const_iterator const_iterator;
-      typedef typename abstract_sparse storage_type;
-      typedef typename T sub_row_type;
-      typedef typename T const_sub_row_type;
-      typedef typename linalg_type sub_col_type;
-      typedef typename extern_sparse_vector_const_ref<V, T> const_sub_col_type;
-      typedef typename col_major sub_orientation;
+      typedef abstract_sparse storage_type;
+      typedef T sub_row_type;
+      typedef T const_sub_row_type;
+      typedef linalg_type sub_col_type;
+      typedef extern_sparse_vector_const_ref<V, T> const_sub_col_type;
+      typedef col_major sub_orientation;
       size_type size(const linalg_type &v) { return v.size(); }
       size_type nrows(const linalg_type &v) { return v.size(); }
       size_type ncols(const linalg_type &v) { return 1; }
@@ -317,16 +348,16 @@ namespace bgeot {
 
   template <class V, class T>
     struct linalg_traits<extern_sparse_vector_const_ref<V, T> > {
-      typedef typename extern_sparse_vector_const_ref<V, T> linalg_type;
-      typedef typename T base_type;
+      typedef extern_sparse_vector_const_ref<V, T> linalg_type;
+      typedef T base_type;
       typedef typename V::iterator  iterator;
       typedef typename V::const_iterator const_iterator;
-      typedef typename abstract_sparse storage_type;
-      typedef typename T sub_row_type;
-      typedef typename T const_sub_row_type;
-      typedef typename linalg_type sub_col_type;
-      typedef typename linalg_type const_sub_col_type;
-      typedef typename col_major sub_orientation;
+      typedef abstract_sparse storage_type;
+      typedef T sub_row_type;
+      typedef T const_sub_row_type;
+      typedef linalg_type sub_col_type;
+      typedef linalg_type const_sub_col_type;
+      typedef col_major sub_orientation;
       size_type size(const linalg_type &v) { return v.size(); }
       size_type nrows(const linalg_type &v) { return v.size(); }
       size_type ncols(const linalg_type &v) { return 1; }
@@ -344,22 +375,32 @@ namespace bgeot {
 
   /* ******************************************************************** */
   /*		                                         		  */
+  /*		Traits for S.T.L. object                     		  */
+  /*		                                         		  */
+  /* ******************************************************************** */
+
+  // to be done : std::vector<T> and std::valarray<T> ...
+
+  /* ******************************************************************** */
+  /*		                                         		  */
   /*		Traits for bgeot objects                     		  */
   /*		                                         		  */
   /* ******************************************************************** */
 
+  // to be done fsmatrix<T>
+
   template <class T, int N> struct linalg_traits<fsvector<T, N> > {
-    typedef typename fsvector<T, N> linalg_type;
-    typedef typename T base_type;
+    typedef fsvector<T, N> linalg_type;
+    typedef T base_type;
     typedef typename linalg_type::iterator  iterator;
     typedef typename linalg_type::const_iterator const_iterator;
-    typedef typename abstract_plain storage_type;
-    typedef typename T sub_row_type;
-    typedef typename T const_sub_row_type;
-    typedef typename simple_vector_ref<fsvector<T, N> > sub_col_type;
-    typedef typename simple_vector_const_ref<fsvector<T, N> >
+    typedef abstract_plain storage_type;
+    typedef abstract_null_type sub_row_type;
+    typedef abstract_null_type const_sub_row_type;
+    typedef simple_vector_ref<fsvector<T, N> > sub_col_type;
+    typedef simple_vector_const_ref<fsvector<T, N> >
     const_sub_col_type;
-    typedef typename col_major sub_orientation;
+    typedef col_major sub_orientation;
     size_type size(const linalg_type &v) { return N; }
     size_type nrows(const linalg_type &v) { return N; }
     size_type ncols(const linalg_type &v) { return 1; }
@@ -379,16 +420,16 @@ namespace bgeot {
 
 
   template <class T> struct linalg_traits<vsvector<T> > {
-    typedef typename vsvector<T> linalg_type;
-    typedef typename T base_type;
+    typedef vsvector<T> linalg_type;
+    typedef T base_type;
     typedef typename linalg_type::iterator  iterator;
     typedef typename linalg_type::const_iterator const_iterator;
-    typedef typename abstract_plain storage_type;
-    typedef typename T sub_row_type;
-    typedef typename T const_sub_row_type;
-    typedef typename simple_vector_ref<vsvector<T> > sub_col_type;
-    typedef typename simple_vector_const_ref<vsvector<T> > const_sub_col_type;
-    typedef typename col_major sub_orientation;
+    typedef abstract_plain storage_type;
+    typedef abstract_null_type sub_row_type;
+    typedef abstract_null_type const_sub_row_type;
+    typedef simple_vector_ref<vsvector<T> > sub_col_type;
+    typedef simple_vector_const_ref<vsvector<T> > const_sub_col_type;
+    typedef col_major sub_orientation;
     size_type size(const linalg_type &v) { return v.size(); }
     size_type nrows(const linalg_type &v) { return v.size(); }
     size_type ncols(const linalg_type &v) { return 1; }
@@ -407,16 +448,16 @@ namespace bgeot {
   };
 
   template <class T> struct linalg_traits<svector<T> > {
-    typedef typename svector<T> linalg_type;
-    typedef typename T base_type;
+    typedef svector<T> linalg_type;
+    typedef T base_type;
     typedef typename linalg_type::iterator  iterator;
     typedef typename linalg_type::const_iterator const_iterator;
-    typedef typename abstract_sparse storage_type;
-    typedef typename T sub_row_type;
-    typedef typename T const_sub_row_type;
-    typedef typename simple_vector_ref<svector<T> > sub_col_type;
-    typedef typename simple_vector_const_ref<svector<T> > const_sub_col_type;
-    typedef typename col_major sub_orientation;
+    typedef abstract_sparse storage_type;
+    typedef abstract_null_type sub_row_type;
+    typedef abstract_null_type const_sub_row_type;
+    typedef simple_vector_ref<svector<T> > sub_col_type;
+    typedef simple_vector_const_ref<svector<T> > const_sub_col_type;
+    typedef col_major sub_orientation;
     size_type size(const linalg_type &v) { return v.size(); }
     size_type nrows(const linalg_type &v) { return v.size(); }
     size_type ncols(const linalg_type &v) { return 1; }
@@ -436,16 +477,16 @@ namespace bgeot {
   };
 
   template <class T> struct linalg_traits<vsmatrix<T> > {
-    typedef typename vsmatrix<T> linalg_type;
-    typedef typename T base_type;
+    typedef vsmatrix<T> linalg_type;
+    typedef T base_type;
     typedef typename linalg_type::iterator  iterator;
     typedef typename linalg_type::const_iterator const_iterator;
-    typedef typename abstract_plain storage_type;
-    typedef typename abstract_null_type sub_row_type;
-    typedef typename abstract_null_type const_sub_row_type;
-    typedef typename simple_vector_ref<vsvector<T> > sub_row_type;
-    typedef typename simple_vector_const_ref<vsvector<T> > const_sub_row_type;
-    typedef typename col_major sub_orientation;
+    typedef abstract_plain storage_type;
+    typedef abstract_null_type sub_row_type;
+    typedef abstract_null_type const_sub_row_type;
+    typedef simple_vector_ref<vsvector<T> > sub_col_type;
+    typedef simple_vector_const_ref<vsvector<T> > const_sub_col_type;
+    typedef col_major sub_orientation;
     size_type size(const linalg_type &m) { return m.size(); }
     size_type nrows(const linalg_type &m) { return m.nrows(); }
     size_type ncols(const linalg_type &m) { return m.ncols(); }
@@ -465,16 +506,16 @@ namespace bgeot {
   };
 
   template <class T> struct linalg_traits<smatrix<T> > {
-    typedef typename smatrix<T> linalg_type;
-    typedef typename T base_type;
+    typedef smatrix<T> linalg_type;
+    typedef T base_type;
     typedef typename linalg_type::iterator  iterator;
     typedef typename linalg_type::const_iterator const_iterator;
-    typedef typename abstract_sparse storage_type;
-    typedef typename abstract_null_type sub_row_type;
-    typedef typename abstract_null_type const_sub_row_type;
-    typedef typename simple_vector_ref<svector<T> > sub_col_type;
-    typedef typename simple_vector_const_ref<svector<T> > const_sub_col_type;
-    typedef typename row_major sub_orientation;
+    typedef abstract_sparse storage_type;
+    typedef abstract_null_type sub_row_type;
+    typedef abstract_null_type const_sub_row_type;
+    typedef simple_vector_ref<svector<T> > sub_col_type;
+    typedef simple_vector_const_ref<svector<T> > const_sub_col_type;
+    typedef row_major sub_orientation;
     size_type size(const linalg_type &m) { return m.size(); }
     size_type nrows(const linalg_type &m) { return m.nrows(); }
     size_type ncols(const linalg_type &m) { return m.ncols(); }
@@ -501,36 +542,40 @@ namespace bgeot {
   /* ******************************************************************** */
 
   template <class V> inline size_type vect_size(const V &v)
-  { return typename linalg_traits<V>::size(v); }
+  { return linalg_traits<V>().size(v); }
 
   template <class MAT> inline size_type mat_nrows(const MAT &m)
-  { return typename linalg_traits<MAT>::nrows(v); }
+  { return linalg_traits<MAT>().nrows(m); }
 
   template <class MAT> inline size_type mat_ncols(const MAT &m)
-  { return typename linalg_traits<MAT>::ncols(v); }
+  { return linalg_traits<MAT>().ncols(m); }
 
-  template <class MAT> inline size_type mat_row(const MAT &m, size_type i)
-  { return typename linalg_traits<MAT>::row(v, i); }
+  template <class MAT> inline 
+    typename linalg_traits<MAT>::const_sub_row_type
+    mat_row(const MAT &m, size_type i)
+  { return linalg_traits<MAT>().row(m, i); }
 
-  template <class MAT> inline size_type mat_col(const MAT &m, size_type i)
-  { return typename linalg_traits<MAT>::col(v, i); }
+  template <class MAT> inline  
+    typename linalg_traits<MAT>::const_sub_col_type
+    mat_col(const MAT &m, size_type i)
+  { return linalg_traits<MAT>().col(m, i); }
+
+  template <class MAT> inline 
+    typename linalg_traits<MAT>::sub_row_type
+    mat_row(MAT &m, size_type i)
+  { return linalg_traits<MAT>().row(m, i); }
+
+  template <class MAT> inline  
+    typename linalg_traits<MAT>::sub_col_type
+    mat_col(MAT &m, size_type i)
+  { return linalg_traits<MAT>().col(m, i); }
 
   template <class L> inline void clear(L &l)
-  { return typename linalg_traits<MAT>::clear(v); }
+  { return linalg_traits<L>().clear(l); }
 
   /* ******************************************************************** */
   /*		Scalar product                             		  */
   /* ******************************************************************** */
-
-  template <class V1, class V2>
-    typename linalg_traits<V1>::base_type
-    vect_sp(const V1 &v1, const V2 &v2) {
-    if (vect_size(v1) != vect_size(v2))
-      DAL_THROW(dimension_error,"dimensions mismatch");
-    return vect_sp(v1, v2,
-		   (typename linalg_traits<V1>::storage_type)(), 
-		   (typename linalg_traits<V2>::storage_type)());
-  }
 
   template <class IT1, class IT2>
     typename std::iterator_traits<IT1>::value_type
@@ -551,30 +596,40 @@ namespace bgeot {
   template <class V1, class V2> inline
     typename linalg_traits<V1>::base_type
     vect_sp(const V1 &v1, const V2 &v2, abstract_plain, abstract_plain) {
-    return _vect_sp_plain(linalg_traits<V1>::const_begin(v1),
-			  linalg_traits<V1>::const_end(v1),
-			  linalg_traits<V2>::const_begin(v2));
+    return _vect_sp_plain(linalg_traits<V1>().const_begin(v1),
+			  linalg_traits<V1>().const_end(v1),
+			  linalg_traits<V2>().const_begin(v2));
   }
 
   template <class V1, class V2> inline
     typename linalg_traits<V1>::base_type
     vect_sp(const V1 &v1, const V2 &v2,abstract_sparse,abstract_plain) {
-    return _vect_sp_sparse(linalg_traits<V1>::const_begin(v1),
-			   linalg_traits<V1>::const_end(v1), v2);
+    return _vect_sp_sparse(linalg_traits<V1>().const_begin(v1),
+			   linalg_traits<V1>().const_end(v1), v2);
   }
 
   template <class V1, class V2> inline
     typename linalg_traits<V1>::base_type
     vect_sp(const V1 &v1, const V2 &v2, abstract_plain,abstract_sparse) {
-    return _vect_sp_sparse(linalg_traits<V2>::const_begin(v2),
-			   linalg_traits<V2>::const_end(v2), v1);
+    return _vect_sp_sparse(linalg_traits<V2>().const_begin(v2),
+			   linalg_traits<V2>().const_end(v2), v1);
   }
 
   template <class V1, class V2> inline
     typename linalg_traits<V1>::base_type
     vect_sp(const V1 &v1, const V2 &v2,abstract_sparse,abstract_sparse) {
-    return _vect_sp_sparse(linalg_traits<V1>::const_begin(v1),
-			   linalg_traits<V1>::const_end(v1), v2);
+    return _vect_sp_sparse(linalg_traits<V1>().const_begin(v1),
+			   linalg_traits<V1>().const_end(v1), v2);
+  }
+
+  template <class V1, class V2>
+    typename linalg_traits<V1>::base_type
+    vect_sp(const V1 &v1, const V2 &v2) {
+    if (vect_size(v1) != vect_size(v2))
+      DAL_THROW(dimension_error,"dimensions mismatch");
+    return vect_sp(v1, v2,
+		   typename linalg_traits<V1>::storage_type(), 
+		   typename linalg_traits<V2>::storage_type());
   }
 
   /* ******************************************************************** */
@@ -582,10 +637,10 @@ namespace bgeot {
   /* ******************************************************************** */
 
    template <class V>
-    typename linalg_traits<V>::base_type vect_norminf(const V &v) {
-    linalg_traits<V>::const_iterator
-      it = linalg_traits<V>::const_begin(v),
-      ite = linalg_traits<V>::const_end(v);
+    typename linalg_traits<V>::base_type vect_norm_new(const V &v) {
+    typename linalg_traits<V>::const_iterator
+      it = linalg_traits<V>().const_begin(v),
+      ite = linalg_traits<V>().const_end(v);
     typename linalg_traits<V>::base_type res(0);
     for (; it != ite; ++it) res += dal::sqr(modulus(*it));
     return sqrt(res);
@@ -596,10 +651,10 @@ namespace bgeot {
   /* ******************************************************************** */
 
   template <class V>
-    typename linalg_traits<V>::base_type vect_norminf(const V &v) {
-    linalg_traits<V>::const_iterator
-      it = linalg_traits<V>::const_begin(v),
-      ite = linalg_traits<V>::const_end(v);
+    typename linalg_traits<V>::base_type vect_norminf_new(const V &v) {
+    typename linalg_traits<V>::const_iterator
+      it = linalg_traits<V>().const_begin(v),
+      ite = linalg_traits<V>().const_end(v);
     typename linalg_traits<V>::base_type res(0);
     for (; it != ite; ++it) res = std::max(res, modulus(*it));
     return res;
@@ -610,10 +665,10 @@ namespace bgeot {
   /* ******************************************************************** */
 
   template <class V>
-    typename linalg_traits<V>::base_type vect_norm1(const V &v) {
-    linalg_traits<V>::const_iterator
-      it = linalg_traits<V>::const_begin(v),
-      ite = linalg_traits<V>::const_end(v);
+    typename linalg_traits<V>::base_type vect_norm1_new(const V &v) {
+    typename linalg_traits<V>::const_iterator
+      it = linalg_traits<V>().const_begin(v),
+      ite = linalg_traits<V>().const_end(v);
     typename linalg_traits<V>::base_type res(0);
     for (; it != ite; ++it) res += modulus(*it);
     return res;
@@ -625,39 +680,39 @@ namespace bgeot {
 
   template <class L1, class L2>
   void copy(const L1& l1, L2& l2) {
-    if (vect_size(v1) != vect_size(v2) || mat_ncols(l1) != mat_ncols(l2)
+    if (vect_size(l1) != vect_size(l2) || mat_ncols(l1) != mat_ncols(l2)
 	|| mat_nrows(l1) != mat_nrows(l2))
       DAL_THROW(dimension_error,"dimensions mismatch");
     if (mat_ncols(l1) != 1)
-      copy_mat(l1, l2, (typename linalg_traits<L1>::sub_orientation)(),
-	 (typename linalg_traits<L2>::sub_orientation)());
+      copy_mat(l1, l2, typename linalg_traits<L1>::sub_orientation(),
+	 typename linalg_traits<L2>::sub_orientation());
     else
-      copy_vect(l1, l2, (typename linalg_traits<L1>::storage_type)(),
-		(typename linalg_traits<L2>::storage_type)());
+      copy_vect(l1, l2, typename linalg_traits<L1>::storage_type(),
+		typename linalg_traits<L2>::storage_type());
   }
 
   template <class L1, class L2>
   void copy_mat_by_row(const L1& l1, L2& l2)
   {
     size_type nbr = mat_nrows(l1);
-    for (size_type i = 0; i < mat_nrows(l1); ++i)
+    for (size_type i = 0; i < nbr; ++i)
       copy_vect(mat_row(l1, i), mat_row(l2, i),
-		(typename linalg_traits<typename linalg_traits<L1>
-		 ::const_sub_row_type>::storage_type)(),
-		(typename linalg_traits<typename linalg_traits<L2>
-		 ::sub_row_type>::storage_type)())
+		typename linalg_traits<typename linalg_traits<L1>
+		 ::const_sub_row_type>::storage_type(),
+		typename linalg_traits<typename linalg_traits<L2>
+		 ::sub_row_type>::storage_type());
   }
 
   template <class L1, class L2>
-  void copy_mat_by_col(const L1& l1, L2& l2)
+  void copy_mat_by_col(const L1 &l1, L2 &l2)
   {
     size_type nbc = mat_ncols(l1);
-    for (size_type i = 0; i < mat_ncols(l1); ++i)
+    for (size_type i = 0; i < nbc; ++i)
       copy_vect(mat_col(l1, i), mat_col(l2, i),
-		(typename linalg_traits<typename linalg_traits<L1>
-		 ::const_col_row_type>::storage_type)(),
-		(typename linalg_traits<typename linalg_traits<L2>
-		 ::sub_col_type>::storage_type)())
+		typename linalg_traits<typename linalg_traits<L1>
+		 ::const_sub_col_type>::storage_type(),
+		typename linalg_traits<typename linalg_traits<L2>
+		 ::sub_col_type>::storage_type());
   }
   
 
@@ -719,43 +774,43 @@ namespace bgeot {
   
   template <class L1, class L2> inline
   void copy_mat_mixed_rc(const L1& l1, L2& l2, size_type i) {
-    copy_mat_mixed_rc(l1, l2, i, (typename linalg_traits<L1>::storage_type)());
+    copy_mat_mixed_rc(l1, l2, i, typename linalg_traits<L1>::storage_type());
   }
 
   template <class L1, class L2>
   void copy_mat_mixed_rc(const L1& l1, L2& l2, size_type i, abstract_sparse) {
-    linalg_traits<L1>::const_iterator
-      it  = linalg_traits<L1>::const_begin(l1),
-      ite = linalg_traits<L1>::const_end(l1);
+    typename linalg_traits<L1>::const_iterator
+      it  = linalg_traits<L1>().const_begin(l1),
+      ite = linalg_traits<L1>().const_end(l1);
     for (; it != ite; ++it) l2(i, it->index()) = *it;
   }
 
   template <class L1, class L2>
   void copy_mat_mixed_rc(const L1& l1, L2& l2, size_type i, abstract_plain) {
-    linalg_traits<L1>::const_iterator
-      it  = linalg_traits<L1>::const_begin(l1),
-      ite = linalg_traits<L1>::const_end(l1);
+    typename linalg_traits<L1>::const_iterator
+      it  = linalg_traits<L1>().const_begin(l1),
+      ite = linalg_traits<L1>().const_end(l1);
     for (size_type j = 0; it != ite; ++it, ++j) l2(i, j) = *it;
   }
 
   template <class L1, class L2> inline
   void copy_mat_mixed_cr(const L1& l1, L2& l2, size_type i) {
-    copy_mat_mixed_cr(l1, l2, i, (typename linalg_traits<L1>::storage_type)());
+    copy_mat_mixed_cr(l1, l2, i, typename linalg_traits<L1>::storage_type());
   }
 
   template <class L1, class L2>
   void copy_mat_mixed_cr(const L1& l1, L2& l2, size_type i, abstract_sparse) {
-    linalg_traits<L1>::const_iterator
-      it  = linalg_traits<L1>::const_begin(l1),
-      ite = linalg_traits<L1>::const_end(l1);
+    typename linalg_traits<L1>::const_iterator
+      it  = linalg_traits<L1>().const_begin(l1),
+      ite = linalg_traits<L1>().const_end(l1);
     for (; it != ite; ++it) l2(it->index(), i) = *it;
   }
 
   template <class L1, class L2>
   void copy_mat_mixed_cr(const L1& l1, L2& l2, size_type i, abstract_plain) {
-    linalg_traits<L1>::const_iterator
-      it  = linalg_traits<L1>::const_begin(l1),
-      ite = linalg_traits<L1>::const_end(l1);
+    typename linalg_traits<L1>::const_iterator
+      it  = linalg_traits<L1>().const_begin(l1),
+      ite = linalg_traits<L1>().const_end(l1);
     for (size_type j = 0; it != ite; ++it, ++j) l2(j, i) = *it;
   }
 
@@ -776,45 +831,44 @@ namespace bgeot {
   }
   
   template <class L1, class L2> inline
-  void copy_vect(const L1& l1, L2& l2,
-		 abstrat_plain, abstract_plain) {
-    std::copy(linalg_traits<L1>::const_begin(l1),
-	      linalg_traits<L1>::const_end(l1),
-	      linalg_traits<L2>::begin(l2));
+  void copy_vect(const L1 &l1, L2 &l2,
+		 abstract_plain, abstract_plain) {
+    std::copy(linalg_traits<L1>().const_begin(l1),
+	      linalg_traits<L1>().const_end(l1),
+	      linalg_traits<L2>().begin(l2));
   }
   
   template <class L1, class L2>
   void copy_vect(const L1& l1, L2& l2,
-		 abstrat_sparse, abstract_plain) {
+		 abstract_sparse, abstract_plain) {
     clear(l2);
-    linalg_traits<L1>::const_iterator
-      it  = linalg_traits<L1>::const_begin(l1),
-      ite = linalg_traits<L1>::const_end(l1);
+    typename linalg_traits<L1>::const_iterator
+      it  = linalg_traits<L1>().const_begin(l1),
+      ite = linalg_traits<L1>().const_end(l1);
     for (; it != ite; ++it) l2[it->index()] = *it;
   }
   
   template <class L1, class L2> inline
   void copy_vect(const L1& l1, L2& l2,
-		 abstrat_sparse, abstract_sparse) {
+		 abstract_sparse, abstract_sparse) {
     clear(l2);
-    linalg_traits<L1>::const_iterator
-      it  = linalg_traits<L1>::const_begin(l1),
-      ite = linalg_traits<L1>::const_end(l1);
+    typename linalg_traits<L1>::const_iterator
+      it  = linalg_traits<L1>().const_begin(l1),
+      ite = linalg_traits<L1>().const_end(l1);
     for (; it != ite; ++it) l2[it->index()] = *it;
   }
   
   template <class L1, class L2> inline
   void copy_vect(const L1& l1, L2& l2,
-		 abstrat_plain, abstract_sparse) {
+		 abstract_plain, abstract_sparse) {
     clear(l2);
-    linalg_traits<L1>::const_iterator
-      it  = linalg_traits<L1>::const_begin(l1),
-      ite = linalg_traits<L1>::const_end(l1);
+    typename linalg_traits<L1>::const_iterator
+      it  = linalg_traits<L1>().const_begin(l1),
+      ite = linalg_traits<L1>().const_end(l1);
     for (size_type i = 0; it != ite; ++it, ++i)
       if (*it != (typename linalg_traits<L1>::base_type)(0))
 	l2[i] = *it;
   }
-  
 
   /* ******************************************************************** */
   /*		Vector Addition                                    	  */
@@ -829,8 +883,8 @@ namespace bgeot {
       DAL_THROW(dimension_error,"dimensions mismatch");
     if (mat_ncols(l1) != 1 || mat_ncols(l2) != 1)
       DAL_THROW(to_be_done_error,"to be done.");
-    add(l1, l2, (typename linalg_traits<L1>::storage_type)(),
-	(typename linalg_traits<L2>::storage_type)());
+    add(l1, l2, typename linalg_traits<L1>::storage_type(),
+	typename linalg_traits<L2>::storage_type());
   }
 
   template <class L1, class L2, class L3>
@@ -844,25 +898,26 @@ namespace bgeot {
     else if ((const void *)(&l2) == (const void *)(&l3))
       add(l1, l3);
     else
-      add(l1, l2, l3, (typename linalg_traits<L1>::storage_type)(),
-	  (typename linalg_traits<L2>::storage_type)(),
-	  (typename linalg_traits<L3>::storage_type)());
+      add(l1, l2, l3, typename linalg_traits<L1>::storage_type(),
+	  typename linalg_traits<L2>::storage_type(),
+	  typename linalg_traits<L3>::storage_type());
   }
 
   template <class IT1, class IT2, class IT3>
-    _add_full(IT1 &it1, IT2 &it2, IT3 &it3, IT3 &ite) {
+    void _add_full(IT1 &it1, IT2 &it2, IT3 &it3, IT3 &ite) {
     for (; it3 != ite; ++it3, ++it2, ++it1) *it3 = *it1 + *it2;
   }
 
   template <class IT1, class IT2, class IT3>
-    _add_almost_full(IT1 &it1, IT1 &ite1, IT2 &it2, IT3 &it3, IT3 &ite3) {
+    void _add_almost_full(IT1 &it1, IT1 &ite1, IT2 &it2, IT3 &it3, IT3 &ite3) {
     IT3 it = it3;
     for (; it != ite3; ++it, ++it2) *it = *it2;
     for (; it1 != ite1; ++it1) *(it3 + it1->index()) += *it1;
   }
 
   template <class IT1, class IT2, class IT3>
-  _add_to_full(IT1 &it1, IT1 &ite1, IT2 &it2, IT2 &ite2,IT3 &it3,IT3 &ite3) {
+  void _add_to_full(IT1 &it1, IT1 &ite1, IT2 &it2, IT2 &ite2,
+		    IT3 &it3, IT3 &ite3) {
     IT3 it = it3;
     for (; it != ite3; ++it) *it = 0;
     for (; it1 != ite1; ++it1) *(it3 + it1->index()) = *it1;
@@ -872,52 +927,52 @@ namespace bgeot {
   template <class L1, class L2, class L3> inline
   void add(const L1& l1, const L2& l2, L3& l3,
 	   abstract_plain, abstract_plain, abstract_plain) {
-    _add_full(linalg_traits<L1>::const_begin(l1),
-	      linalg_traits<L2>::const_begin(l2),
-	      linalg_traits<L3>::begin(l3),
-	      linalg_traits<L3>::end(l3));
+    _add_full(linalg_traits<L1>().const_begin(l1),
+	      linalg_traits<L2>().const_begin(l2),
+	      linalg_traits<L3>().begin(l3),
+	      linalg_traits<L3>().end(l3));
   }
   
   template <class L1, class L2, class L3> inline
   void add(const L1& l1, const L2& l2, L3& l3,
 	   abstract_sparse, abstract_plain, abstract_plain) {
-    _add_almost_full(linalg_traits<L1>::const_begin(l1),
-		     linalg_traits<L1>::const_end(l1),
-		     linalg_traits<L2>::const_begin(l2),
-		     linalg_traits<L3>::begin(l3),
-		     linalg_traits<L3>::end(l3));
+    _add_almost_full(linalg_traits<L1>().const_begin(l1),
+		     linalg_traits<L1>().const_end(l1),
+		     linalg_traits<L2>().const_begin(l2),
+		     linalg_traits<L3>().begin(l3),
+		     linalg_traits<L3>().end(l3));
   }
   
   template <class L1, class L2, class L3> inline
   void add(const L1& l1, const L2& l2, L3& l3,
 	   abstract_plain, abstract_sparse, abstract_plain) {
-    _add_almost_full(linalg_traits<L2>::const_begin(l2),
-		     linalg_traits<L2>::const_end(l2),
-		     linalg_traits<L1>::const_begin(l1),
-		     linalg_traits<L3>::begin(l3),
-		     linalg_traits<L3>::end(l3));
+    _add_almost_full(linalg_traits<L2>().const_begin(l2),
+		     linalg_traits<L2>().const_end(l2),
+		     linalg_traits<L1>().const_begin(l1),
+		     linalg_traits<L3>().begin(l3),
+		     linalg_traits<L3>().end(l3));
   }
   
   template <class L1, class L2, class L3> inline
   void add(const L1& l1, const L2& l2, L3& l3,
 	   abstract_sparse, abstract_sparse, abstract_plain) {
-    _add_almost_full(linalg_traits<L1>::const_begin(l1),
-		     linalg_traits<L1>::const_end(l1),
-		     linalg_traits<L2>::const_begin(l2),
-		     linalg_traits<L2>::const_end(l2),
-		     linalg_traits<L3>::begin(l3),
-		     linalg_traits<L3>::end(l3));
+    _add_almost_full(linalg_traits<L1>().const_begin(l1),
+		     linalg_traits<L1>().const_end(l1),
+		     linalg_traits<L2>().const_begin(l2),
+		     linalg_traits<L2>().const_end(l2),
+		     linalg_traits<L3>().begin(l3),
+		     linalg_traits<L3>().end(l3));
   }
   
   template <class L1, class L2, class L3>
   void add(const L1& l1, const L2& l2, L3& l3,
 	   abstract_sparse, abstract_sparse, abstract_sparse) {
     typename linalg_traits<L1>::const_iterator
-      it1 = linalg_traits<L1>::const_begin(l1), 
-      ite1 = linalg_traits<L1>::const_end(l1);
+      it1 = linalg_traits<L1>().const_begin(l1), 
+      ite1 = linalg_traits<L1>().const_end(l1);
     typename linalg_traits<L2>::const_iterator
-      it2 = linalg_traits<L2>::const_begin(l2), 
-      ite2 = linalg_traits<L2>::const_end(l2);
+      it2 = linalg_traits<L2>().const_begin(l2), 
+      ite2 = linalg_traits<L2>().const_end(l2);
     clear(l3);
     while (it1 != ite1 && it2 != ite2) {
       ptrdiff_t d = it1->index() - it2->index();
@@ -949,10 +1004,10 @@ namespace bgeot {
   void add(const L1& l1, L2& l2,
 	   abstract_plain, abstract_plain) {
     typename linalg_traits<L1>::const_iterator
-      it1 = linalg_traits<L1>::const_begin(l1), 
+      it1 = linalg_traits<L1>().const_begin(l1); 
     typename linalg_traits<L2>::iterator
-      it2 = linalg_traits<L2>::begin(l2), 
-      ite = linalg_traits<L2>::end(l2);
+      it2 = linalg_traits<L2>().begin(l2), 
+      ite = linalg_traits<L2>().end(l2);
     for (; it2 != ite; ++it2, ++it1) *it2 += *it1;
   }
   
@@ -960,8 +1015,8 @@ namespace bgeot {
   void add(const L1& l1, L2& l2,
 	   abstract_sparse, abstract_plain) {
     typename linalg_traits<L1>::const_iterator
-      it1 = linalg_traits<L1>::const_begin(l1), 
-      ite1 = linalg_traits<L1>::const_end(l1);
+      it1 = linalg_traits<L1>().const_begin(l1), 
+      ite1 = linalg_traits<L1>().const_end(l1);
     for (; it1 != ite1; ++it1) l2[it1->index()] += *it1;
   }
   
@@ -969,8 +1024,8 @@ namespace bgeot {
   void add(const L1& l1, L2& l2,
 	   abstract_sparse, abstract_sparse) {
     typename linalg_traits<L1>::const_iterator
-      it1 = linalg_traits<L1>::const_begin(l1), 
-      ite1 = linalg_traits<L1>::const_end(l1);
+      it1 = linalg_traits<L1>().const_begin(l1), 
+      ite1 = linalg_traits<L1>().const_end(l1);
     for (; it1 != ite1; ++it1) l2[it1->index()] += *it1;
   }
   
@@ -985,7 +1040,7 @@ namespace bgeot {
   /* ******************************************************************** */
 
   template < class Matrix, class Vector>
-  int cg(const Matrix& A, Vector& x, const Vector& b, int itemax, 
+  int cg_new(const Matrix& A, Vector& x, const Vector& b, int itemax, 
 	 double residu, bool noisy = true) {
     typedef typename linalg_traits<Vector>::base_type base_type;
     base_type rho(0), rho_1(0), alpha(0), beta(0);
