@@ -190,13 +190,7 @@ where $\alpha$ is the vector of components $\alpha_i$.
 
 A certain number of description of classical finite element method are defined in the file {\tt getfem\_fem.h}. More classical ones are the following:
 
-\begin{center} \begin{tabular}{|m{0.55\linewidth}|m{0.4\linewidth}|} \hline
-{\tt getfem::ppolyfem getfem::PK\_fem(n, k)} & Classical $P_K$ methods on simplexes of dimension  {\tt n} with degree {\tt k} polynomials.\\ \hline
-{\tt getfem::ppolyfem getfem::QK\_fem(n, k)} & Classical $Q_K$ methods on parallelepiped of dimension {\tt n}. Tensorial product of degree {\tt k} $P_K$ method on the segment. \\ \hline
-{\tt getfem::ppolyfem getfem::PK\_prism\_fem(n, k)} & Classical methods on prism of dimension {\tt n}. Tensorial product of two degree {\tt k} $P_K$ method. \\ \hline
-{\tt getfem::ppolyfem getfem::product\_fem( ppolyfem\;a, ppolyfem b)} & Tensorial product of the two polynomial finite element method {\tt a} and {\tt b}. \\ \hline
-{\tt getfem::ppolyfem $\;$ getfem::P1\_nonconforming\_fem()} & Non conforming $P_1$ method on triangles. \\ \hline
-\end{tabular} \end{center}
+\input{getfemelemfem.tex}
 
 One can see in the file {\tt getfem\_fem.C} how to define a new finite element method. Basically, the only thing to do is to give the base functions on the reference element and the corresponding nodes.
 
@@ -206,12 +200,7 @@ The integrations methods are of two kinds. The file {\tt bgeot\_poly\_integratio
 
 In the file {\tt bgeot\_poly\_integration.h} the following functions are defined
 
-\begin{center} \begin{tabular}{|m{0.55\linewidth}|m{0.4\linewidth}|} \hline
-{\tt bgeot::ppoly\_integration bgeot::simplex\_poly\_integration(n)} & Description of the exact integration of polynomials on the simplex of reference of dimension {\tt n}. \\ \hline
-{\tt bgeot::ppoly\_integration bgeot::convex\_product\_poly\_integration( ppoly\_integration a, ppoly\_integration b)} & Description of the exact integration on the convex which is the direct product of the convex in {\tt a} and in {\tt b}.\\ \hline
-{\tt bgeot::ppoly\_integration parallelepiped\_poly\_integration(n)} & Description of the exact integration of polynomials on the parallelepiped of reference of dimension {\tt n}\\ \hline
-{\tt bgeot::ppoly\_integration prism\_poly\_integration(n)} & Description of the exact integration of polynomials on the prism of reference of dimension {\tt n}\\ \hline
-\end{tabular} \end{center}
+\input{getfemelemint.tex}
 
 Even though a description of exact integration method exists on parallelepipeds or prisms, most of the time the geometric transformations on such elements are not linear and the exact integration cannot be used.
 

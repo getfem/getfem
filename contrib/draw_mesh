@@ -3,6 +3,11 @@
 eval 'exec perl -S $0 "$@"'
   if 0;
 
+($calldir, $i) = split('/', $0, 2);
+while ($i) { 
+  ($j, $i) = split('/', $i, 2);
+  if ($i) { $calldir = "$calldir/$j"; }
+}
 
 $prefix = "dr2dgnplot_tmp";
 $count = int(1000 * rand);
@@ -15,13 +20,13 @@ do { $tmp2 = $tmpdir."/".$prefix."\_$count"; ++$count; } while (-f $tmp2);
 sub catch { `rm -f $tmp1 $tmp2`; }
 $SIG{INT} = 'catch';
 
-if (!(open(F, "draw_mesh_doedges $ARGV[0] 2>&1 |")))
+if (!(open(F, "$calldir/draw_mesh_doedges $ARGV[0] 2>&1 |")))
   { catch(); die "Start program impossible : $!\n";}
 
 if (!(open(FT, ">$tmp1"))) { catch; die "Open file impossible : $!\n";}
 
 while (<F>) {
-  if ($_ =~ /N =/) { ($a, $N) = split('=', $_);  }
+  if ($_ =~ /N =/) { ($a, $N) = split('=', $_, 2);  }
   elsif (($_ =~ /=/) || ($_ =~ /for/)) {
     print $_; while (<F>) { print $_; }
     close(FT); close(F); catch; exit(1);
