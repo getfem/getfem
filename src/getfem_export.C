@@ -1,6 +1,6 @@
 /* *********************************************************************** */
 /*                                                                         */
-/* Library :  GEneric Tool for Finite Element Methods (getfem) version 1.0 */
+/* Library :  GEneric Tool for Finite Element Methods (getfem)             */
 /* File    :  getfem_export.C : export and import data.                    */
 /*     									   */
 /* Date : October 15, 2001.                                                */

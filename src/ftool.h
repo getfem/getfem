@@ -1,6 +1,6 @@
 /* *********************************************************************** */
 /*                                                                         */
-/* Library :  File and string TOOL (ftool) version 1.0                     */
+/* Library :  File and string TOOL (ftool)                                 */
 /* File    :  ftool.h :                                                    */
 /*     									   */
 /*                                                                         */

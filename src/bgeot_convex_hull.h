@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode)                                    */
 /* *********************************************************************** */
 /*                                                                         */
-/* Library :  Basic GEOmetric Tool  (bgeot) version 1.0                    */
+/* Library :  Basic GEOmetric Tool  (bgeot)                                */
 /* File    :  bgeot_convex_hull.h : compute the convex hull.               */
 /*     									   */
 /*                                                                         */

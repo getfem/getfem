@@ -1,6 +1,6 @@
 /* *********************************************************************** */
 /*                                                                         */
-/* Library :  GEneric Tool for Finite Elements Methods (getfem) version 1.0*/
+/* Library :  GEneric Tool for Finite Elements Methods (getfem)            */
 /* File    :  getfem_mat_elem.C : computation of elementary matrices.      */
 /*     									   */
 /*                                                                         */

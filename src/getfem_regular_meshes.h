@@ -1,6 +1,6 @@
 /* *********************************************************************** */
 /*                                                                         */
-/* Library :  GEneric Tool for Finite Element Methods (getfem) version 1.0 */
+/* Library :  GEneric Tool for Finite Element Methods (getfem)             */
 /* File    :  getfem_regular_meshes.h : basic refinement of meshes.        */
 /*     									   */
 /*                                                                         */

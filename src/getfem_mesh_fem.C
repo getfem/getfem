@@ -1,6 +1,6 @@
 /* *********************************************************************** */
 /*                                                                         */
-/* Library :  GEneric Tool for Finite Elements Methods (getfem) version 1.0*/
+/* Library :  GEneric Tool for Finite Elements Methods (getfem)            */
 /* File    :  getfem_mesh_fem.C : finite element methods on convex meshes. */
 /*     									   */
 /*                                                                         */

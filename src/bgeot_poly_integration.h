@@ -1,6 +1,6 @@
 /* *********************************************************************** */
 /*                                                                         */
-/* Library :  Basic GEOmetric Tool  (bgeot) version 1.0                    */
+/* Library :  Basic GEOmetric Tool  (bgeot)                                */
 /* File    :  bgeot_poly_integration.h : exact integration of polynomial   */
 /*               on convexes of reference.                                 */
 /*                                                                         */

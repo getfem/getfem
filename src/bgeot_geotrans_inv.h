@@ -1,6 +1,6 @@
 /* *********************************************************************** */
 /*                                                                         */
-/* Library :  Basic GEOmetric Tool  (bgeot) version 1.0                    */
+/* Library :  Basic GEOmetric Tool  (bgeot)                                */
 /* File    :  bgeot_geotrans_inv.h : Allow to inverse geometric transf-    */
 /*     	      ormations and to localize a set of points.    	       	   */
 /*                                                                         */

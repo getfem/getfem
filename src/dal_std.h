@@ -1,6 +1,6 @@
 /* *********************************************************************** */
 /*                                                                         */
-/* Library :  Dynamic Array Library (dal) version 1.0                      */
+/* Library :  Dynamic Array Library (dal)                                  */
 /* File    :  dal_std.h : Compatibility Header.                            */
 /*     									   */
 /*                                                                         */

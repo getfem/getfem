@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode)                                    */
 /* *********************************************************************** */
 /*                                                                         */
-/* Library :  GEneric Tool for Finite Element Methods (getfem) version 1.0 */
+/* Library :  GEneric Tool for Finite Element Methods (getfem)             */
 /* File    :  getfem_assembling.h : assemble linear system for fem.        */
 /*     									   */
 /* Date : November 17, 2000.                                               */

@@ -1,6 +1,6 @@
 /* *********************************************************************** */
 /*                                                                         */
-/* Library :  Dynamic Array Library (dal) version 1.0                      */
+/* Library :  Dynamic Array Library (dal)                                  */
 /* File    :  dal_tree_sorted.h : dynamic tas sorted with balanced trees   */
 /*               AVL (Adelson-Velskii & Landis trees).                     */
 /*                                                                         */

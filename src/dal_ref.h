@@ -1,6 +1,6 @@
 /* *********************************************************************** */
 /*                                                                         */
-/* Library :  Dynamic Array Library (dal) version 1.0                      */
+/* Library :  Dynamic Array Library (dal)                                  */
 /* File    :  dal_ref.h : Structures which refere to containers.           */
 /*     									   */
 /*                                                                         */

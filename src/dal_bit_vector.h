@@ -1,6 +1,6 @@
 /* *********************************************************************** */
 /*                                                                         */
-/* Library :  Dynamic Array Library (dal) version 1.0                      */
+/* Library :  Dynamic Array Library (dal)                                  */
 /* File    :  dal_bit_vector.h : bit vector based on a dynamic array.      */
 /*     									   */
 /*                                                                         */

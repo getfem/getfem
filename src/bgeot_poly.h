@@ -1,6 +1,6 @@
 /* *********************************************************************** */
 /*                                                                         */
-/* Library :  Basic GEOmetric Tool  (bgeot) version 1.0                    */
+/* Library :  Basic GEOmetric Tool  (bgeot)                                */
 /* File    :  bgeot_poly.h : plain polynomials with several variables.     */
 /*     									   */
 /*                                                                         */

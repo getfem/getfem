@@ -1,6 +1,6 @@
 /* *********************************************************************** */
 /*                                                                         */
-/* Library :  LINK MeSsaGE library (linkmsg) version 1.0                   */
+/* Library :  LINK MeSsaGE library (linkmsg)                               */
 /* File    :  linkmsg.h : structure for managing Messages between objects. */
 /*     									   */
 /*                                                                         */

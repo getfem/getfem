@@ -1,6 +1,6 @@
 /* *********************************************************************** */
 /*                                                                         */
-/* Library :  Basic GEOmetric Tool  (bgeot) version 1.0                    */
+/* Library :  Basic GEOmetric Tool  (bgeot)                                */
 /* File    :  bgeot_convex_ref.h :  convexes of reference                  */
 /*     									   */
 /* Date : Septembre 28, 2001.                                              */
