@@ -508,7 +508,7 @@ namespace gmm
     : public linalg_traits<rsvector<T> > {};
 #endif
 
-  /******* Optimized BLAS for rsvector<T> **********************************/
+  /******* Optimized operations for rsvector<T> ****************************/
 
   template <class T> inline void copy(const rsvector<T> &v1, rsvector<T> &v2) {
     if (vect_size(v1) != vect_size(v2))

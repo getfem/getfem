@@ -53,31 +53,31 @@ namespace gmm {
     scaled_const_iterator(const IT &i, value_type x) : it(i), r(x) {}
     
     inline size_type index(void) const { return it.index(); }
-    scaled_const_iterator operator ++(int)
+    inline scaled_const_iterator operator ++(int)
     { scaled_const_iterator tmp = *this; ++it; return tmp; }
-    scaled_const_iterator operator --(int) 
+    inline scaled_const_iterator operator --(int) 
     { scaled_const_iterator tmp = *this; --it; return tmp; }
-    scaled_const_iterator &operator ++() { ++it; return *this; }
-    scaled_const_iterator &operator --() { --it; return *this; }
-    scaled_const_iterator &operator +=(difference_type i)
+    inline scaled_const_iterator &operator ++() { ++it; return *this; }
+    inline scaled_const_iterator &operator --() { --it; return *this; }
+    inline scaled_const_iterator &operator +=(difference_type i)
       { it += i; return *this; }
-    scaled_const_iterator &operator -=(difference_type i)
+    inline scaled_const_iterator &operator -=(difference_type i)
       { it -= i; return *this; }
-    scaled_const_iterator operator +(difference_type i) const
+    inline scaled_const_iterator operator +(difference_type i) const
       { scaled_const_iterator itb = *this; return (itb += i); }
-    scaled_const_iterator operator -(difference_type i) const
+    inline scaled_const_iterator operator -(difference_type i) const
       { scaled_const_iterator itb = *this; return (itb -= i); }
-    difference_type operator -(const scaled_const_iterator &i) const
+    inline difference_type operator -(const scaled_const_iterator &i) const
       { return difference_type(it - i.it); }
     
-    value_type operator  *() const { return (*it) * r; }
-    value_type operator [](size_type ii) const { return it[ii] * r; }
+    inline value_type operator  *() const { return (*it) * r; }
+    inline value_type operator [](size_type ii) const { return it[ii] * r; }
     
-    bool operator ==(const scaled_const_iterator &i) const
+    inline bool operator ==(const scaled_const_iterator &i) const
       { return (i.it == it); }
-    bool operator !=(const scaled_const_iterator &i) const
+    inline bool operator !=(const scaled_const_iterator &i) const
       { return (i.it != it); }
-    bool operator < (const scaled_const_iterator &i) const
+    inline bool operator < (const scaled_const_iterator &i) const
       { return (it < i.it); }
   };
 
@@ -161,10 +161,10 @@ namespace gmm {
     ITER it;
     value_type r;
 
-    iterator operator ++(int) { iterator tmp = *this; it++; return tmp; }
-    iterator operator --(int) { iterator tmp = *this; it--; return tmp; }
-    iterator &operator ++()   { it++; return *this; }
-    iterator &operator --()   { it--; return *this; }
+    inline iterator operator ++(int) { iterator tmp=*this; it++; return tmp; }
+    inline iterator operator --(int) { iterator tmp=*this; it--; return tmp; }
+    inline iterator &operator ++()   { it++; return *this; }
+    inline iterator &operator --()   { it--; return *this; }
     iterator &operator +=(difference_type i) { it += i; return *this; }
     iterator &operator -=(difference_type i) { it -= i; return *this; }
     iterator operator +(difference_type i) const 
@@ -174,12 +174,12 @@ namespace gmm {
     difference_type operator -(const iterator &i) const
     { return it - i.it; }
 
-    ITER operator *() const { return it; }
-    ITER operator [](int i) { return it + i; }
+    inline ITER operator *() const { return it; }
+    inline ITER operator [](int i) { return it + i; }
 
-    bool operator ==(const iterator &i) const { return (it == i.it); }
-    bool operator !=(const iterator &i) const { return !(i == *this); }
-    bool operator < (const iterator &i) const { return (it < i.it); }
+    inline bool operator ==(const iterator &i) const { return (it == i.it); }
+    inline bool operator !=(const iterator &i) const { return !(i == *this); }
+    inline bool operator < (const iterator &i) const { return (it < i.it); }
 
     scaled_row_const_iterator(void) {}
     scaled_row_const_iterator(const ITER &i, value_type rr)

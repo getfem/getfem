@@ -102,6 +102,8 @@ namespace gmm {
   /* lu_inverse(dense_matrix<T>)                                           */
   /* lu_inverse(dense_matrix<T>, std::vector<int>, dense_matrix<T>)        */
   /*                                                                       */
+  /* qr_factor(dense_matrix<T>, dense_matrix<T>, dense_matrix<T>)          */
+  /*                                                                       */
   /* ********************************************************************* */
 
   /* ********************************************************************* */
@@ -131,6 +133,7 @@ namespace gmm {
     void sgetrs_(...); void dgetrs_(...); void cgetrs_(...); void zgetrs_(...);
     void sgetri_(...); void dgetri_(...); void cgetri_(...); void zgetri_(...);
     void sgeqrf_(...); void dgeqrf_(...); void cgeqrf_(...); void zgeqrf_(...);
+    void sorgqr_(...); void dorgqr_(...); void corgqr_(...); void zorgqr_(...);
   }
 
 
@@ -302,7 +305,7 @@ namespace gmm {
   gemv_interface(gem_p1_c, gem_trans1_c, gemv_p2_n, gemv_trans2_n, gemv_p3_s,
 		 gemv_trans3_s, zgemv_, BLAS_Z, row_major);
 
-    // Z <- A scaled(X) + scaled(Y).
+  // Z <- A scaled(X) + scaled(Y).
   gemv_interface(gem_p1_n, gem_trans1_n, gemv_p2_s, gemv_trans2_s, gemv_p3_s,
 		 gemv_trans3_s, sgemv_, BLAS_S, col_major);
   gemv_interface(gem_p1_n, gem_trans1_n, gemv_p2_s, gemv_trans2_s, gemv_p3_s,
@@ -784,10 +787,33 @@ namespace gmm {
 
 
   /* ********************************************************************* */
-  /* QR factorization and QR algorithms.                                   */
+  /* QR factorization.                                                     */
   /* ********************************************************************* */
   
   
+# define geqrf_interface(lapack_name1, lapack_name2, base_type) inline     \
+  void qr_factor(const dense_matrix<base_type> &A,                         \
+       dense_matrix<base_type> &Q, dense_matrix<base_type> &R) {           \
+    int m(mat_nrows(A)), n(mat_ncols(A)), info, lwork(-1); base_type work1;\
+    gmm::copy(A, Q);                                                       \
+    std::vector<base_type> tau(n);                                         \
+    lapack_name1(&m, &n, &Q(0,0), &m, &tau[0], &work1  , &lwork, &info);   \
+    lwork = int(dal::real(work1));                                         \
+    std::vector<base_type> work(lwork);                                    \
+    lapack_name1(&m, &n, &Q(0,0), &m, &tau[0], &work[0], &lwork, &info);   \
+    if (info) DAL_THROW(failure_error, "QR factorization failed");         \
+    base_type *p = &R(0,0), *q = &Q(0,0);                                  \
+    for (int j = 0; j < n; ++j, q += m-n)                                  \
+      for (int i = 0; i < n; ++i, ++p, ++q)                                \
+        *p = (j < i) ? base_type(0) : *q;                                  \
+    lapack_name2(&m, &n, &n, &Q(0,0), &m, &tau[0], &work[0],&lwork,&info); \
+  }
+
+  geqrf_interface(sgeqrf_, sorgqr_, BLAS_S);
+  geqrf_interface(dgeqrf_, dorgqr_, BLAS_D);
+  geqrf_interface(cgeqrf_, corgqr_, BLAS_C);
+  geqrf_interface(zgeqrf_, zorgqr_, BLAS_Z);
+
 
 }
 

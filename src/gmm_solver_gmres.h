@@ -83,7 +83,7 @@ namespace gmm {
 	orthogonalize(KS, mat_col(H, i), i);
 	H(i+1, i) = a = gmm::vect_norm2(KS[i+1]);
 	gmm::scale(KS[i+1], 1.0 / a);
-	for (size_type k = 0; k < i; k++)
+	for (size_type k = 0; k < i; ++k)
 	  Apply_Givens_rotation_left(H(k,i), H(k+1,i), c_rot[k], s_rot[k]);
 	
 	Givens_rotation(H(i,i), H(i+1,i), c_rot[i], s_rot[i]);

@@ -287,10 +287,12 @@ namespace gmm {
       { T t = -b/a; c = T(R(1) / (sqrt(R(1)+dal::abs_sqr(t)))); s = c * t; }
   }
 
+  // Apply Q* v
   template <class T> inline
   void Apply_Givens_rotation_left(T &x, T &y, T c, T s)
   { T t1=x, t2=y; x = dal::conj(c)*t1 - dal::conj(s)*t2; y = c*t2 + s*t1; }
 
+  // Apply v^T Q
   template <class T> inline
   void Apply_Givens_rotation_right(T &x, T &y, T c, T s)
   { T t1=x, t2=y; x = c*t1 - s*t2; y = dal::conj(c)*t2 + dal::conj(s)*t1; }
