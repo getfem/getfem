@@ -114,7 +114,6 @@ namespace getfem
   pmat_elem_computation mat_elem(pmat_elem_type pm, pintegration_method pi,
 				 bgeot::pgeometric_trans pg);
 
-  base_vector compute_normal(const base_matrix &G, size_type ir, bgeot::pgeometric_trans pgt, const base_node &pt);
 
 }  /* end of namespace getfem.                                             */
 
