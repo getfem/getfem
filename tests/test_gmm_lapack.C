@@ -71,7 +71,7 @@ int main(void)
 
   srand(1459);
 
-# ifdef GMM_USES_LAPACK
+# if defined(GMM_USES_LAPACK) || defined(GMM_USES_ATLAS)
   cout << "Trying using Lapack\n";
 # else
   cout << "Not using Lapack\n";
