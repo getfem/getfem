@@ -94,8 +94,10 @@ namespace gmm {
 
     sparse_sub_vector(V &v, const SUBI &s) : _begin(vect_begin(v)),
        _end(vect_end(v)), origin(linalg_origin(v)), si(s) {}
-    sparse_sub_vector(const V &v, const SUBI &s) : _begin(vect_begin(const_cast<V &>(v))),
-       _end(vect_end(const_cast<V &>(v))), origin(linalg_origin(const_cast<V &>(v))), si(s) {}
+    sparse_sub_vector(const V &v, const SUBI &s) 
+      : _begin(vect_begin(const_cast<V &>(v))),
+       _end(vect_end(const_cast<V &>(v))),
+	origin(linalg_origin(const_cast<V &>(v))), si(s) {}
     sparse_sub_vector() {}
     sparse_sub_vector(const sparse_sub_vector<CPT, SUBI> &cr)
       : _begin(cr._begin),_end(cr._end),origin(cr.origin), si(cr.si) {}
@@ -208,8 +210,10 @@ namespace gmm {
     iterator operator ++(int) { iterator tmp = *this; ++(*this); return tmp; }
     iterator &operator --() { it -= N; id--; return *this; }
     iterator operator --(int) { iterator tmp = *this; --(*this); return tmp; }
-    iterator &operator +=(difference_type i) { it += N * i; id += i; return *this; }
-    iterator &operator -=(difference_type i) { it -= N * i; id -= i; return *this; }
+    iterator &operator +=(difference_type i)
+    { it += N * i; id += i; return *this; }
+    iterator &operator -=(difference_type i)
+    { it -= N * i; id -= i; return *this; }
     iterator operator +(difference_type i) const
     { iterator ii = *this; return (ii += i); }
     iterator operator -(difference_type i) const
@@ -224,7 +228,8 @@ namespace gmm {
     bool operator !=(const iterator &i) const { return !(i == *this); }
     bool operator < (const iterator &i) const { return it  < i.it;    }
     skyline_sub_vector_iterator(void) {}
-    skyline_sub_vector_iterator(const IT &i, int NN, size_type j) : it(i), N(NN), id(j) { }
+    skyline_sub_vector_iterator(const IT &i, int NN, size_type j)
+      : it(i), N(NN), id(j) { }
     skyline_sub_vector_iterator(const skyline_sub_vector_iterator<MIT, MIT>
 				&i) : it(i.it), N(i.N), id(i.id) {}
   };
@@ -249,8 +254,10 @@ namespace gmm {
 
     skyline_sub_vector(V &v, const SUBI &s) : _begin(vect_begin(v)),
        _end(vect_end(v)), origin(linalg_origin(v)), si(s) {}
-    skyline_sub_vector(const V &v, const SUBI &s) : _begin(vect_begin(v)),
-       _end(vect_end(v)), origin(linalg_origin(v)), si(s) {}
+    skyline_sub_vector(const V &v, const SUBI &s)
+      : _begin(vect_begin(const_cast<V &>(v))),
+	_end(vect_end(const_cast<V &>(v))),
+	origin(linalg_origin(const_cast<V &>(v))), si(s) {}
     skyline_sub_vector() {}
     skyline_sub_vector(const skyline_sub_vector<CPT, SUBI> &cr)
       : _begin(cr._begin),_end(cr._end),origin(cr.origin), si(cr.si) {}
@@ -304,14 +311,54 @@ namespace gmm {
     typedef skyline_sub_vector_access<PT, SUBI> access_type;
     typedef skyline_sub_vector_clear<PT, SUBI> clear_type;
     static size_type size(const this_type &v) { return v.size(); }
-    static iterator begin(this_type &v)
-    { return iterator(v._begin, v.si.step(), v._begin->index()); }
-    static const_iterator begin(const this_type &v)
-    { return const_iterator(v._begin, v.si.step(), v._begin->index()); }
-    static iterator end(this_type &v)
-    { return iterator(v._end, v.si.step(), v._end->index()); }
-    static const_iterator end(const this_type &v)
-    { return const_iterator(v._end, v.si.step(), v._end->index()); }
+    static iterator end(this_type &v) {
+      size_type i;
+      if (v.si.max + v.si.step() < v._end.index()) {
+	i = v.si.max + v.si.step() - v._begin.index();
+	size_type j = (v._begin.index() + i - v.si.min) / v.si.step();
+	return iterator(v._begin + i, v.si.step(), j);
+      }
+      else {
+	i = (v.si.max + v.si.step() + v.si.step() * v._end.index()
+	     - v._end.index()) % v.si.step();
+	size_type j = (v._end.index() + i - v.si.min) / v.si.step();
+	return iterator(v._end + i, v.si.step(), j);
+      }
+    }
+    static const_iterator end(const this_type &v) {
+      size_type i;
+      if (v.si.max + v.si.step() < v._end.index()) {
+	i = v.si.max + v.si.step() - v._begin.index();
+	size_type j = (v._begin.index() + i - v.si.min) / v.si.step();
+	return const_iterator(v._begin + i, v.si.step(), j);
+      }
+      else {
+	i = (v.si.max + v.si.step() + v.si.step() * v._end.index()
+	     - v._end.index()) % v.si.step();
+	size_type j = (v._end.index() + i - v.si.min) / v.si.step();
+	return const_iterator(v._end + i, v.si.step(), j);
+      }
+    }
+    static iterator begin(this_type &v) {
+      size_type i;
+      if (v.si.min >= v._end.index()) return end(v);
+      if (v.si.min > v._begin.index()) i = v.si.min - v._begin.index();
+      else i = (v.si.min + v.si.step() * v._begin.index()
+		- v._begin.index()) % v.si.step();
+      if (v._begin.index() + i > v.si.max) return end(v);
+      size_type j = (v._begin.index() + i - v.si.min) / v.si.step();
+      return iterator(v._begin + i, v.si.step(), j);
+    }
+    static const_iterator begin(const this_type &v) {
+      size_type i;
+      if (v.si.min >= v._end.index()) return end(v);
+      if (v.si.min > v._begin.index()) i = v.si.min - v._begin.index();
+      else i = (v.si.min + v.si.step() * v._begin.index()
+		- v._begin.index()) % v.si.step();
+      if (v._begin.index() + i > v.si.max) return end(v);
+      size_type j = (v._begin.index() + i - v.si.min) / v.si.step();
+      return const_iterator(v._begin+i, v.si.step(), j);
+    }
     static const void* origin(const this_type &v) { return v.origin; }
     static void do_clear(this_type &v)
       { clear_type()(v.origin, begin(v), end(v)); }
@@ -362,7 +409,7 @@ namespace gmm {
 
   template <class PT, class SUBI>
   struct svrt_ir<PT, SUBI, abstract_skyline> {
-    typedef sparse_sub_vector<PT, sub_index> vector_type;
+    typedef skyline_sub_vector<PT, SUBI> vector_type;
   };
 
   template <class PT>

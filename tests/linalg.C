@@ -231,10 +231,10 @@ int main(void)
     gmm::sub_interval sint1(10, 10), sint2(15, 10);
     gmm::sub_slice ssli1(10, 10, 3), ssli2(15, 10, 2);
     std::vector<gmm::size_type> ind1(10), ind2(10);
-    ind1[0] = 1; ind1[1] = 5; ind1[2] = 3; ind1[3] = 25; ind1[4] = 15; 
-    ind1[5] = 2; ind1[6] = 8; ind1[7] = 6; ind1[8] = 12; ind1[9] = 16; 
-    ind2[0] = 0; ind2[1] = 2; ind2[2] = 5; ind2[3] = 17; ind2[4] = 24; 
-    ind2[5] = 1; ind2[6] = 3; ind2[7] = 6; ind2[8] = 10; ind2[9] = 12; 
+    ind1[0] = 1;  ind1[1] = 3;  ind1[2] = 5;  ind1[3] = 10; ind1[4] = 12; 
+    ind1[5] = 15; ind1[6] = 22; ind1[7] = 23; ind1[8] = 24; ind1[9] = 27; 
+    ind2[0] = 0;  ind2[1] = 2;  ind2[2] = 5;  ind2[3] = 17; ind2[4] = 24; 
+    ind2[5] = 25; ind2[6] = 26; ind2[7] = 30; ind2[8] = 31; ind2[9] = 32; 
     gmm::sub_index sind1(ind1), sind2(ind2);
 
     gmm::dense_matrix<double> m6(38, 38);
@@ -379,7 +379,7 @@ int main(void)
       DAL_THROW(dal::failure_error, "computation error too large : " << error);
 
     cout << "/***********************************************************/\n";
-    cout << "/*      Test of sub_matrices of csr_matrix<slvector>       */\n";
+    cout << "/*      Test of sub_matrices of row_matrix<slvector>       */\n";
     cout << "/***********************************************************/\n";
 
     gmm::row_matrix<gmm::slvector<double> > m7bis(38, 40);
@@ -402,9 +402,9 @@ int main(void)
     gmm::copy(m, gmm::sub_matrix(m7bis, sint1, ssli2));
     cout << "m7bis = " << m7bis << endl;
     cout <<
-      "gmm::transposed(gmm::transposed(gmm::sub_matrix(m7bis, sint1, ssli2))  =\n"
-	 << gmm::transposed(gmm::transposed(gmm::sub_matrix(m7bis, sint1, ssli2)))
-	 << endl;
+    "gmm::transposed(gmm::transposed(gmm::sub_matrix(m7bis, sint1, ssli2)) =\n"
+    << gmm::transposed(gmm::transposed(gmm::sub_matrix(m7bis, sint1, ssli2)))
+    << endl;
     gmm::clear(y3);
     iter.init();
     gmm::bicgstab(gmm::sub_matrix(m7bis, sint1, ssli2), y3, b,

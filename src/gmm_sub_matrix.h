@@ -146,7 +146,6 @@ namespace gmm {
     typedef typename linalg_traits<M>::value_type value_type;
     typedef typename select_return<value_type,
             typename linalg_traits<M>::reference, PT>::return_type reference;
-    typedef typename linalg_traits<M>::storage_type storage_type;
     typedef abstract_null_type sub_col_type;
     typedef abstract_null_type col_iterator;
     typedef abstract_null_type const_sub_col_type;
@@ -162,6 +161,7 @@ namespace gmm {
     typedef typename select_return<abstract_null_type, 
 	    gen_sub_row_matrix_iterator<PT, SUBI1, SUBI2>, PT>::return_type
             row_iterator;
+    typedef typename linalg_traits<const_sub_row_type>::storage_type storage_type;
     typedef gen_sub_row_matrix_access<PT, SUBI1, SUBI2> access_type;
     typedef row_major sub_orientation;
     static size_type nrows(const this_type &m) { return m.nrows(); }
@@ -306,7 +306,6 @@ namespace gmm {
     typedef typename linalg_traits<M>::value_type value_type;
     typedef typename select_return<value_type,
             typename linalg_traits<M>::reference, PT>::return_type reference;
-    typedef typename linalg_traits<M>::storage_type storage_type;
     typedef abstract_null_type sub_row_type;
     typedef abstract_null_type row_iterator;
     typedef abstract_null_type const_sub_row_type;
@@ -324,6 +323,7 @@ namespace gmm {
             col_iterator;
     typedef gen_sub_col_matrix_access<PT, SUBI1, SUBI2> access_type;
     typedef col_major sub_orientation;
+    typedef typename linalg_traits<const_sub_col_type>::storage_type storage_type;
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static size_type ncols(const this_type &m) { return m.ncols(); }
     static const_sub_col_type col(const const_col_iterator &it)

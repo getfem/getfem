@@ -695,7 +695,7 @@ namespace gmm
   {
     typedef T value_type;
     typedef const T *pointer;
-    typedef const T &reference;
+    typedef value_type reference;
     typedef ptrdiff_t difference_type;
     typedef std::random_access_iterator_tag iterator_category;
     typedef size_t size_type;
@@ -802,20 +802,19 @@ namespace gmm
       if (c >= _size) out_of_range_error();
 #   endif
       size_type s = data.size();
-      if (c < shift) { // à verifier
+      if (!s) { data.resize(1); shift = c; }
+      else if (c < shift) {
 	data.resize(s + shift - c); 
-	typename std::vector<T>::iterator it = data.begin(), ite = data.end();
-	typename std::vector<T>::iterator it2 = ite - 1,
-	  it3 = ite - shift + c - 1;
-	for (; it3 != it; --it3, --it2) *it2 = *it3;
+	typename std::vector<T>::iterator it = data.begin(),it2=data.end()-1;
+	typename std::vector<T>::iterator it3 = it2 - shift + c;
+	for (; it3 >= it; --it3, --it2) *it2 = *it3;
 	std::fill(it, it + shift - c, T(0));
 	shift = c;
       }
-      else if (c >= shift + s && s) {
+      else if (c >= shift + s) {
 	data.resize(c - shift + 1);
 	std::fill(data.begin() + s, data.end(), T(0));
       }
-      else { data.resize(1); shift = c; }
       data[c - shift] = e;
       // cout << "résultat : " << *this << endl;
     }

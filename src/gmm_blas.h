@@ -254,8 +254,8 @@ namespace gmm {
 				       abstract_skyline) {
     typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
       ite = vect_const_end(l);
-    o << "<r+" << it.index() << ">(" << it.index() << ", "
-      << ite.index() - it.index() << ") ";
+    o << "<r+" << it.index() << ">";
+      // << "(" << ite.index() - it.index() << ") ";
     if (it != ite) o << " " << cast_char(*it++);
     for (; it != ite; ++it) o << ", " << cast_char(*it);
   }
