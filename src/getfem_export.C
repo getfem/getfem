@@ -403,7 +403,9 @@ namespace getfem
 
   void dx_export::exporting(const stored_mesh_slice& sl, const char *name) {
     char default_name[100];
-    if (name == 0) { name = default_name; sprintf(default_name, "slice%d", log[MESHES].count); }
+    if (name == 0 || strlen(name) == 0) { 
+      name = default_name; sprintf(default_name, "slice%d", log[MESHES].count); 
+    }
     psl = &sl; dim_ = sl.dim();
     if (psl->dim() > 3) DAL_THROW(dal::failure_error, "4D slices and more are not supported");
     for (dim_type d = 0; d <= 3; ++d) {
@@ -420,7 +422,10 @@ namespace getfem
 
   void dx_export::exporting(const mesh_fem& mf, const char *name) {
     const getfem_mesh &m = mf.linked_mesh();
-    
+    char default_name[100];
+    if (name == 0 || strlen(name) == 0) { 
+      name = default_name; sprintf(default_name, "mesh%d", log[MESHES].count);
+    }
     if (mf.linked_mesh().convex_index().card() == 0) 
       DAL_THROW(dal::failure_error, "won't export an empty mesh");
     
