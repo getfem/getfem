@@ -32,11 +32,12 @@
 #ifndef __BGEOT_CONVEX_STRUCTURE_H
 #define __BGEOT_CONVEX_STRUCTURE_H
 
-#include <vector>
 #include <dal_ref.h>
 #include <dal_alloc.h>
 #include <ftool.h>
 #include <bgeot_config.h>
+#include <bgeot_tensor.h>
+#include <bgeot_poly.h>
 #include <dal_fonc_tables.h>
 
 namespace bgeot

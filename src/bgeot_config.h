@@ -40,16 +40,6 @@ namespace bgeot
   typedef size_t size_type;
   typedef double scalar_type;
 
-
-  /* usual constant polynomials  */
-
-  inline base_poly null_poly(short_type n)
-    { return base_poly(n, 0); }
-  inline base_poly one_poly(short_type n)
-    { base_poly res=base_poly(n, 0); res.one(); return res;  }
-  inline base_poly one_var_poly(short_type n, short_type k)
-    { return base_poly(n, 1, k); }
-
   /* errors definitions  */
 
   class dimension_error : public std::logic_error {

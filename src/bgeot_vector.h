@@ -320,12 +320,12 @@ namespace bgeot
 
       #ifdef __GETFEM_VERIFY
       inline const T& operator [](size_type l) const {
-	if (n >= size()) throw std::out_of_range
+	if (l >= size()) throw std::out_of_range
 			   ("vsvector::operator [] : out of range");
 	return *(begin()+l);
       }
       inline T& operator [](size_type l) { 
-	if (n >= size()) throw std::out_of_range
+	if (l >= size()) throw std::out_of_range
 			   ("vsvector::operator [] : out of range");
 	return *(begin()+l);
       }
