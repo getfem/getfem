@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode)                                    */
 /* *********************************************************************** */
 /*                                                                         */
-/* Library :  Basic GEOmetric Tool  (bgeot)                                */
+/* Library :  Basic GEOmetric Tool (bgeot)                                 */
 /* File    :  bgeot_geotrans_inv.h : Allows to inverse geometric transf-   */
 /*     	      ormations and to localize a set of points.    	       	   */
 /*                                                                         */
@@ -10,7 +10,7 @@
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 2000-2001  Yves Renard.                                   */
+/* Copyright (C) 2000-2003  Yves Renard.                                   */
 /*                                                                         */
 /* This file is a part of GETFEM++                                         */
 /*                                                                         */
