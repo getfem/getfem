@@ -22,6 +22,7 @@ include_HEADERS = \
 	dal_fonc_tables.h \
 	dal_ref.h \
 	dal_std.h \
+	dal_except.h \
 	dal_tas.h \
 	dal_tree_sorted.h \
 	ftool.h \
@@ -43,14 +44,14 @@ include_HEADERS = \
 	linkmsg.h
 
 SRC = \
-        dal_std.C \
+        dal_except.C \
+	dal_bit_vector.C \
 	bgeot_convex_ref.C \
 	bgeot_convex_structure.C \
 	bgeot_geometric_trans.C \
 	bgeot_geotrans_inv.C \
 	bgeot_mesh_structure.C \
 	bgeot_poly.C \
-	dal_bit_vector.C \
 	ftool.C \
 	getfem_mesh_fem.C \
 	getfem_integration.C \

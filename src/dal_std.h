@@ -64,6 +64,7 @@
 /*	S.T.L. Headers.						          */
 /* ********************************************************************** */
 
+#include <cstdlib>
 #include <exception>
 #include <typeinfo>
 #include <stdexcept>

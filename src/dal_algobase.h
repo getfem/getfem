@@ -35,6 +35,7 @@
 
 
 #include <dal_std.h>
+#include <dal_except.h>
 #include <functional>
 
 namespace dal
