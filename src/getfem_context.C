@@ -70,7 +70,8 @@ namespace getfem {
     if (state == CONTEXT_CHANGED) {
       state = CONTEXT_NORMAL;
       iterator_list it = dependencies.begin(), ite = dependencies.end();
-      for (; it != ite; ++it) (*it)->context_check();
+      for (; it != ite; ++it)
+	{ (*it)->context_check(); (*it)->touched = false; }
       update_from_context();
     }
     else if (state == CONTEXT_INVALID)
@@ -78,8 +79,11 @@ namespace getfem {
   }
   
   void context_dependencies::touch(void) const {
-    iterator_list it = dependent.begin(), ite = dependent.end();
-    for (; it != ite; ++it) (*it)->change_context();
+    if (!touched) {
+      touched = true;
+      iterator_list it = dependent.begin(), ite = dependent.end();
+      for (; it != ite; ++it) (*it)->change_context();
+    }
   }
   
   context_dependencies::~context_dependencies() {
