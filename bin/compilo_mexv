@@ -1,3 +1,2 @@
 #!/bin/csh
 mex -v |& more
-  
