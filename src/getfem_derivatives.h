@@ -100,13 +100,6 @@ namespace getfem
       base_matrix grad(N, P), TMP1(P,P), B0(P,N), B1(1, N), CS(P,P);
       base_tensor t;
       
-      /* TODO: prendre des iterateurs pour faire la copie */
-      // utiliser transfert_to_G ?
-      
-      // for (size_type j = 0; j < pgt->nb_points(); ++j) // à optimiser !!
-      //  for (size_type i = 0; i < N; ++i)
-      // a(i,j) = mf.linked_mesh().points_of_convex(cv)[j][i];
-      
       coeff.resize(pf->nb_dof());
       val.resize(pf->target_dim(), P);
       B1.resize(pf->target_dim(), N);
@@ -114,11 +107,11 @@ namespace getfem
       for (size_type j = 0; j < pf_target->nb_dof(); ++j) {
 	if (!pgt->is_linear() || j == 0) {
 	  // computation of the pseudo inverse
-	  bgeot::mat_product(G, pgp->grad(j), grad);
+	  bgeot::mat_product_tt(pgp->grad(j), G, grad);
 	  if (P != N) {
-	    bgeot::mat_product_tn(grad, grad, CS);
+	    bgeot::mat_product_nt(grad, grad, CS);
 	    bgeot::mat_inv_cholesky(CS, TMP1);
-	    bgeot::mat_product_tt(CS, grad, B0);
+	    bgeot::mat_product_tn(grad, CS, B0);
 	  }
 	  else {
 	    bgeot::mat_gauss_inverse(grad, TMP1); B0 = grad;
@@ -133,8 +126,6 @@ namespace getfem
 	for (size_type q = 0; q < qdim; ++q) {
 	  for (size_type l = 0; l < pf->nb_base(); ++l)
 	    coeff[l] = U[mf.ind_dof_of_element(cv)[l*qdim] + q ];
-	  // pf->interpolation_grad(pfp, j, G, pgt, coeff, val);
-	  // bgeot::mat_product(val, B0, B1);
 
 	  base_tensor::const_iterator it = t.begin();
 	  B1.fill(0.0);
