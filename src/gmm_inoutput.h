@@ -328,7 +328,7 @@ namespace gmm {
       fprintf(stderr,"Error: Cannot open file: %s\n",filename);
       return 0;
     }
-    
+    memset(Type, 0, sizeof Type);
     readHB_header(in_file, Title, Key, Type, &Nrow, &Ncol, &Nnzero, &Nrhs,
                   Ptrfmt, Indfmt, Valfmt, Rhsfmt,
                   &Ptrcrd, &Indcrd, &Valcrd, &Rhscrd, Rhstype);
@@ -637,7 +637,8 @@ namespace gmm {
   Harwell_Boeing_load(const char *filename, csc_matrix<T, shift>& A) {
     int M, N, nonzeros, i;
     int Nrhs;
-    char Type[5];
+    // char Type[5];
+    char *Type = new char[5]; memset(Type, 0 , 5);
     readHB_info(filename, &M, &N, &nonzeros, Type, &Nrhs);
 
     if (A.pr) { delete[] A.pr; delete[] A.ir; delete[] A.jc; }
@@ -665,6 +666,7 @@ namespace gmm {
     readHB_mat_double(filename, A.jc, A.ir, (double *)(A.pr));
     for (i = 0; i <= N; ++i)       { A.jc[i] += shift; A.jc[i] -= 1; }
     for (i = 0; i < nonzeros; ++i) { A.ir[i] += shift; A.ir[i] -= 1; }
+    delete[] Type;
   }
 
 
