@@ -29,8 +29,8 @@
 //========================================================================
 
 
-#ifndef GETFEM_MESH_IM_H__
-#define GETFEM_MESH_IM_H__
+#ifndef GETFEM_MESH_ADAPTABLE_IM_H__
+#define GETFEM_MESH_ADAPTABLE_IM_H__
 
 #include <getfem_mesh_im.h>
 #include <getfem_level_set.h>
@@ -39,7 +39,7 @@
 namespace getfem {
 
   /// Describe an adaptable integration method linked to a mesh.
-  class mesh_adaptable_im : public getfem_mesh_im {
+  class mesh_adaptable_im : public mesh_im {
   protected :
 
     typedef level_set *plevel_set;
@@ -52,27 +52,29 @@ namespace getfem {
     
   public :
 
-    add_level_set(level_set &ls) { level_sets.insert(&ls); }
-    sup_level_set(level_set &ls) { level_sets.erase(&ls); }
+    void clear(void);
+
+    void add_level_set(level_set &ls) { level_sets.insert(&ls); }
+    void sup_level_set(level_set &ls) { level_sets.erase(&ls); }
     
     void receipt(const MESH_CLEAR &);
     void receipt(const MESH_DELETE &);
-    void receipt(const MESH_ADD_CONVEX &m) {getfem_mesh_receiver::receipt(m); }
-    void receipt(const MESH_SUP_CONVEX &m);
-    void receipt(const MESH_SWAP_CONVEX &m);
+    // void receipt(const MESH_ADD_CONVEX &m)  // to be adapted ?
+    // void receipt(const MESH_SUP_CONVEX &m)  // to be adapted ?
+    // void receipt(const MESH_SWAP_CONVEX &m) // to be adapted ?
     
     size_type memsize() const {
-      return getfem_mesh_im::memsize() + ... ;
+      return mesh_im::memsize(); // + ... ;
     }
     
     mesh_adaptable_im(getfem_mesh &me);
     
   private:
     mesh_adaptable_im(const mesh_adaptable_im &);
-    mesh_adaptable_im & operator=(const meshadaptable__im &);
+    mesh_adaptable_im & operator=(const mesh_adaptable_im &);
   };
   
 }  /* end of namespace getfem.                                             */
 
 
-#endif /* GETFEM_MESH_IM_H__  */
+#endif /* GETFEM_MESH_ADAPTABLE_IM_H__  */
