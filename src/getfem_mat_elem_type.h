@@ -63,22 +63,22 @@ namespace getfem
 
   typedef const mat_elem_type * pmat_elem_type;
   
-  /** Gives a pointer on the structures describing the elementary matrix
+  /** Gives a pointer to the structure describing the elementary matrix
    *   which compute the integral of the basic functions described by pi.
    *    pi is of type bgeot::pfem\_interpolation.
    */
   pmat_elem_type mat_elem_base(pfem pfi);
-  /** Gives a pointer on the structures describing the elementary matrix
+  /** Gives a pointer to the structure describing the elementary matrix
    *   which compute the integral of the gradient of the basic functions
    *    described by pi. pi is of type bgeot::pfem\_interpolation.
    */
   pmat_elem_type mat_elem_grad(pfem pfi);
-  /** Gives a pointer on the structures describing the elementary matrix
+  /** Gives a pointer to the structure describing the elementary matrix
    *   which compute the integral of the hessian of the basic functions
    *    described by pi. pi is of type bgeot::pfem\_interpolation. 
    */
   pmat_elem_type mat_elem_hessian(pfem pfi);
-  /** Gives a pointer on the structures describing the elementary matrix
+  /** Gives a pointer to the structure describing the elementary matrix
    *   which compute the integral of product of the integrals described by
    *   *pet1 and *pet2.
    */

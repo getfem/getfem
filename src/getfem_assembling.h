@@ -60,6 +60,10 @@ namespace getfem
     bgeot::pgeometric_trans pgt, pgtprec = NULL;
     pmat_elem_computation pmec;
 
+    if (&(mf.linked_mesh()) != &(mfdata.linked_mesh()))
+      DAL_THROW(std::invalid_argument,
+		"This assembling procedure only works on a single mesh");
+
     for (cv << nn; cv != ST_NIL; cv << nn)
     {
       pf1 =     mf.fem_of_element(cv); nbd1 = pf1->nb_dof();
@@ -119,11 +123,12 @@ namespace getfem
     pintegration_method pim, pimprec = (bgeot::papprox_integration)(NULL);
     bgeot::pgeometric_trans pgt, pgtprec = NULL;
     size_type nbdof_u, nbdof_p, nbdof_d;
-
     size_type N = mf_u.linked_mesh().dim();
-    if (N != mf_p.linked_mesh().dim() || N != mf_d.linked_mesh().dim())
-      throw dimension_error
-	("assembling_mixed_pressure_term : dimensions mismatch");
+
+    if (&(mf_u.linked_mesh()) != &(mf_p.linked_mesh())
+	|| &(mf_u.linked_mesh()) != &(mf_d.linked_mesh()))
+      DAL_THROW(std::invalid_argument,
+		"This assembling procedure only works on a single mesh");
 
     /* loop over all convexes */
     for (cv << nn; cv != ST_NIL; cv << nn) {
@@ -194,6 +199,10 @@ namespace getfem
     pintegration_method pim, pimprec = (bgeot::papprox_integration)(NULL);
     bgeot::pgeometric_trans pgt, pgtprec = NULL;
     pmat_elem_type pme; pmat_elem_computation pmec;
+
+    if (&(mf.linked_mesh()) != &(mfdata.linked_mesh()))
+      DAL_THROW(std::invalid_argument,
+		"This assembling procedure only works on a single mesh");
   
     for (cv << nn; cv != ST_NIL; cv << nn)
     {
@@ -281,6 +290,10 @@ namespace getfem
     pintegration_method pim, pimprec = (bgeot::papprox_integration)(NULL);
     bgeot::pgeometric_trans pgt, pgtprec = NULL;
     pmat_elem_type pme; pmat_elem_computation pmec;
+
+    if (&(mf_u.linked_mesh()) != &(mf_d.linked_mesh()))
+      DAL_THROW(std::invalid_argument,
+		"This assembling procedure only works on a single mesh");
 
     for (cv << nn; cv != ST_NIL; cv << nn)
     {
@@ -400,6 +413,11 @@ namespace getfem
     pintegration_method pim, pimprec = (bgeot::papprox_integration)(NULL);
     bgeot::pgeometric_trans pgt, pgtprec = NULL;
     pmat_elem_type pme; pmat_elem_computation pmec;
+
+    if (&(mf.linked_mesh()) != &(mfdata.linked_mesh()))
+      DAL_THROW(std::invalid_argument,
+		"This assembling procedure only works on a single mesh");
+
     for (cv << nn; cv != ST_NIL; cv << nn)
     {
       pf1 =     mf.fem_of_element(cv); nbd1 = pf1->nb_dof();
@@ -516,6 +534,10 @@ namespace getfem
     pintegration_method pim, pimprec = (bgeot::papprox_integration)(NULL);
     bgeot::pgeometric_trans pgt, pgtprec = NULL;
     pmat_elem_type pme; pmat_elem_computation pmec;
+
+    if (&(mf.linked_mesh()) != &(mfdata.linked_mesh()))
+      DAL_THROW(std::invalid_argument,
+		"This assembling procedure only works on a single mesh");
   
     for (cv << nn; cv != ST_NIL; cv << nn)
     {

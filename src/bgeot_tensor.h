@@ -106,8 +106,7 @@ namespace bgeot
 	{ 
 	  d += (*q) * (*it);
 	  #ifdef __GETFEM_VERIFY
-	    if (*it >= *qv) throw std::out_of_range
-			    ("tensor::operator () : index out of range");
+	    if (*it >= *qv) DAL_THROW(std::out_of_range, "index out of range");
 	    ++qv;
           #endif
 	}
@@ -121,8 +120,7 @@ namespace bgeot
 	size_type d = 0;
 	for ( ; q != e; ++q, ++it) d += (*q) * (*it);
 	
-	if (d >= size())
-	  throw std::out_of_range("tensor::operator () : index out of range");
+	if (d >= size()) DAL_THROW(std::out_of_range, "index out of range");
 	return *(begin() + d);
       }
 
@@ -171,9 +169,7 @@ namespace bgeot
     *mi = t.sizes();
     size_type dimt = (*mi)[ni], dim = m.nrows();
     
-    if (dimt != m.ncols())
-      throw dimension_error
-	("tensor::mat_transp_reduction : dimensions mismatch");
+    if (dimt != m.ncols()) DAL_THROW(dimension_error, "dimensions mismatch");
     
     (*mi)[ni] = dim;
     if (tmp->size() < dimt) tmp->resize(dimt);
@@ -216,8 +212,7 @@ namespace bgeot
     *mi = t.sizes();
     size_type dimt = (*mi)[ni], dim = m.ncols();
     if (dimt != m.nrows())
-      throw dimension_error
-	("tensor::mat_reduction : dimensions mismatch");
+      DAL_THROW(dimension_error, "dimensions mismatch");
     
     (*mi)[ni] = dim;
     if (tmp->size() < dimt) tmp->resize(dimt);

@@ -129,8 +129,8 @@ namespace getfem
       bgeot::multi_index::iterator mit = sizes.begin(), mite = sizes.end();
       for (k = 1; mit != mite; ++mit, ++k) k *= *mit;
       if (k * nhess * nint * 3 > 1000000)
-	cerr << "Warning, very large elementary computations,\n"
-	     << "Are you sure to want to compute this elementary matrix ?\n"
+	cerr << "Warning, very large elementary computations.\n"
+	     << "Be sure you need to compute this elementary matrix.\n"
 	     << "(sizes = " << sizes << " times " << nhess*nint*3 << " )\n";
       std::fill(mref.begin(), mref.end(), base_tensor(sizes));
       
@@ -272,8 +272,7 @@ namespace getfem
       dim_type P = pgt->structure()->dim(), N = G.nrows();
       short_type NP = pgt->nb_points();
       scalar_type J;
-      if (G.ncols() != NP)
-	DAL_THROW(dimension_error, "dimensions mismatch");
+      if (G.ncols() != NP) DAL_THROW(dimension_error, "dimensions mismatch");
       
       K.resize(N, P); CS.resize(P, P); TMP1.resize(P, P); B.resize(N, P);
       if (hess_reduction.size() > 0) {
@@ -377,17 +376,21 @@ namespace getfem
 
       /* Applying linear transformation for non tau-equivalent elements.   */
 
-      if (trans_reduction.size() > 0)
-      {
+      if (trans_reduction.size() > 0) {
 	std::deque<short_type>::const_iterator it = trans_reduction.begin(),
 	  ite = trans_reduction.end();
 	std::deque<pfem>::const_iterator iti = trans_reduction_pfi.begin();
-	for ( ; it != ite; ++it, ++iti)
-	{ 
+	for ( ; it != ite; ++it, ++iti) { 
 	  if (t.size(*it) != M.nrows() || t.size(*it) != M.ncols())
 	    M.resize(t.size(*it), t.size(*it));
 	  (*iti)->mat_trans(M, G, pgt);
-	  t.mat_reduction(t, M, *it);
+	  if (M.ncols() == M.nrows())
+	    t.mat_reduction(t, M, *it);
+	  else {
+	    base_tensor aux = t; // Optimisable.
+	    t.mat_reduction(aux, M, *it);
+	    
+	  }
 	}
       }
       
