@@ -29,5 +29,5 @@ NSDMY = 4;     % Nomber of sub-domains in y direction
 NSDMZ = 4;     % Nomber of sub-domains in z direction
 OVERLAP = 0.0; % overlap between sub-domains in %
 
-MESHNAME = '';            
+MESHNAME = '';
 
