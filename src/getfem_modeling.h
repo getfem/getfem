@@ -965,7 +965,6 @@ namespace getfem {
       gmm::resize(CRHS, nb_const);
       gmm::copy(gmm::sub_vector(V, SUBI), CRHS);
       this->computed();
-      cout << "G = " << G << endl;
     }
 
   public :

@@ -373,9 +373,8 @@ namespace getfem
    *  same time. 
    */
   template<typename MAT, typename VECT>
-    void asm_stokes(MAT &K, MAT &B, 
-		    const mesh_fem &mf_u,
-		    const mesh_fem &mf_p,
+    void asm_stokes(MAT &K, MAT &BT, 
+		    const mesh_fem &mf_u, const mesh_fem &mf_p,
 		    const mesh_fem &mf_d, const VECT &viscos) {
     if (mf_d.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
@@ -392,19 +391,18 @@ namespace getfem
     assem.push_mf(mf_d);
     assem.push_data(viscos);
     assem.push_mat(K);
-    assem.push_mat(B);
+    assem.push_mat(BT);
     assem.volumic_assembly();
   }
 
   template<typename MAT>
-    void asm_stokes_B(MAT &B, 
-		      const mesh_fem &mf_u,
-		      const mesh_fem &mf_p) {
+    void asm_stokes_B(MAT &B, const mesh_fem &mf_u, const mesh_fem &mf_p) {
     if (mf_p.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
-    generic_assembly assem("M$1(#1,#2)+=comp(vGrad(#1).Base(#2))(:,i,i,:);");
-    assem.push_mf(mf_u);
+    // generic_assembly assem("M$1(#1,#2)+=comp(vGrad(#1).Base(#2))(:,i,i,:);");
+    generic_assembly assem("M$1(#1,#2)+=comp(Base(#1).vGrad(#2))(:,:,i,i);");
     assem.push_mf(mf_p);
+    assem.push_mf(mf_u);
     assem.push_mat(B);
     assem.volumic_assembly();
   }
