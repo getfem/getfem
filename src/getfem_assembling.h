@@ -248,7 +248,7 @@ namespace getfem
     void asm_qu_term_(const MAT &M, 
 		     const mesh_fem &mf_u, 
 		     const mesh_fem &mf_d, const VECT &Q, 
-		      size_type boundary=size_type(-1), T) {
+		      size_type boundary, T) {
     generic_assembly assem;    
     if (mf_u.get_qdim() == 1)
       assem.set("Q=data$1(#2);"
@@ -277,7 +277,7 @@ namespace getfem
     void asm_qu_term_(MAT &M, 
 		     const mesh_fem &mf_u, 
 		     const mesh_fem &mf_d, const VECT &Q, 
-		      size_type boundary=size_type(-1), std::complex<T>) {
+		      size_type boundary, std::complex<T>) {
    asm_qu_term_(gmm::real_part(M), mf_u, mf_d, gmm::real_part(Q), boundary, T());
    asm_qu_term_(gmm::imag_part(M), mf_u, mf_d, gmm::imag_part(Q), boundary, T());
   }
@@ -332,10 +332,11 @@ namespace getfem
 			   "t=comp(vGrad(#1).vGrad(#1).Base(#2));"
 			   //"e=(t{:,2,3,:,5,6,:}+t{:,3,2,:,5,6,:}"
 			   //"+t{:,2,3,:,6,5,:}+t{:,3,2,:,6,5,:})/4;"
-			   "e=(t{:,2,3,:,5,6,:}+t{:,3,2,:,5,6,:})*0.5;"
-			   "M(#1,#1)+= sym(2*e(:,i,j,:,i,j,k).mu(k)"
-			   " + e(:,i,i,:,j,j,k).lambda(k))");
-
+			   //"e=(t{:,2,3,:,5,6,:}+t{:,3,2,:,5,6,:})*0.5;"
+			   /*"M(#1,#1)+= sym(2*e(:,i,j,:,i,j,k).mu(k)"
+                             " + e(:,i,i,:,j,j,k).lambda(k))");*/
+                           "M(#1,#1)+= sym(t(:,i,j,:,i,j,k).mu(k)+t(:,j,i,:,i,j,k).mu(k)"
+                             " + t(:,i,i,:,j,j,k).lambda(k))");
     assem.push_mf(mf);
     assem.push_mf(mfdata);
     assem.push_data(LAMBDA);
@@ -345,7 +346,8 @@ namespace getfem
   }
 
   /** 
-     Stiffness matrix for linear elasticity, with a general Hooke tensor 
+     Stiffness matrix for linear elasticity, with a general Hooke tensor. This is more a
+     demonstration of generic assembly than something useful !
   */
   template<typename MAT, typename VECT> void
   asm_stiffness_matrix_for_linear_elasticity_Hooke(MAT &RM,
@@ -467,7 +469,7 @@ namespace getfem
   void asm_Helmholtz(MAT &M, const mesh_fem &mf_u, const mesh_fem &mf_data,
 		     const VECT &K_squared) {
     asm_Helmholtz(M, mf_u, mf_data, K_squared,
-		  typename gmm::linalg_triats<VECT>::value_type());
+		  typename gmm::linalg_traits<VECT>::value_type());
   }
 
   template<typename MAT, typename VECT, typename T>
@@ -502,8 +504,8 @@ namespace getfem
     assem.volumic_assembly();
   }
 
-  template<typename MATr, typename MATi, typename VECTr, typename VECTi>  
-  void asm_Helmholtz_real(const MAT &M, const mesh_fem &mf_u,
+  template<typename MATr, typename VECTr>  
+  void asm_Helmholtz_real(const MATr &M, const mesh_fem &mf_u,
 			  const mesh_fem &mf_data, const VECTr &K_squared) {
     generic_assembly assem("K=data$1(#2);"
 			   "m = comp(Base(#1).Base(#1).Base(#2)); "
