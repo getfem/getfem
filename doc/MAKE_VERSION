@@ -42,3 +42,7 @@ Liste des items a passer en revue pour fabriquer une nouvelle version
 
   cvs update -j STABLE-1_2-BRANCH toto.C
 
+- Pour un changement de version d'autoconf et libtool :
+  libtool :
+    changer ltmain.sh dans config 
+
