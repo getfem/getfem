@@ -308,9 +308,12 @@ namespace getfem {
   };
 
   /** 
-      build the list of edges and store them in a mesh object (hence all common nodes/edges are eliminated)
+      build the list of edges (i.e. segments) and store them in a mesh
+      object (hence all common nodes/edges are eliminated) slice_edges
+      contains the list of edges with where not part of the original
+      mesh, but come from the slice of faces.
   */
-  void mesh_slice::edges_mesh(getfem_mesh &edges_m) const {
+  void mesh_slice::edges_mesh(getfem_mesh &edges_m, dal::bit_vector& slice_edges) const {
     
     for (size_type ic = 0; ic < cvlst.size(); ++ic) {
       const cs_nodes_ct& n = cvlst[ic].nodes;
@@ -320,8 +323,11 @@ namespace getfem {
 	  for (size_type j=i+1; j <= is->dim(); ++j) {
 	    const slice_node& A = n[is->inodes[i]];
 	    const slice_node& B = n[is->inodes[j]];
-	    if ((A.faces & B.faces).count() >= unsigned(cvlst[ic].cv_dim-1))
-	      edges_m.add_segment_by_points(A.pt,B.pt);
+	    if ((A.faces & B.faces).count() >= unsigned(cvlst[ic].cv_dim-1)) {
+	      slice_node::faces_ct fmask((1 << cvlst[ic].cv_nbfaces)-1); fmask.flip();
+	      size_type e = edges_m.add_segment_by_points(A.pt,B.pt);
+	      if (((A.faces & B.faces) & fmask).any()) slice_edges.add(e);
+	    }
 	  }
 	}
       }

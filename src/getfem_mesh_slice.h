@@ -301,7 +301,7 @@ namespace getfem {
     size_type nb_points() const { return points_cnt; }
     const std::deque<slice_node>& nodes(size_type ic) const { return cvlst[ic].nodes; }
     std::deque<slice_node>& nodes(size_type ic) { return cvlst[ic].nodes; }
-    void edges_mesh(getfem_mesh &edges_m) const;
+    void edges_mesh(getfem_mesh &edges_m, dal::bit_vector& slice_edges) const;
     const std::deque<slice_simplex>& simplexes(size_type ic) const { return cvlst[ic].simplexes; }
     size_type memsize() const;
 
