@@ -177,6 +177,7 @@ namespace gmm
     typedef abstract_null_type col_iterator;
     typedef abstract_null_type const_col_iterator;
     typedef row_major sub_orientation;
+    typedef linalg_true index_sorted;
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static size_type ncols(const this_type &m) { return m.ncols(); }
     static row_iterator row_begin(this_type &m) { return m.begin(); }
@@ -277,6 +278,7 @@ namespace gmm
     typedef abstract_null_type row_iterator;
     typedef abstract_null_type const_row_iterator;
     typedef col_major sub_orientation;
+    typedef linalg_true index_sorted;
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static size_type ncols(const this_type &m) { return m.ncols(); }
     static col_iterator col_begin(this_type &m) { return m.begin(); }
@@ -414,6 +416,7 @@ namespace gmm
 				      typename this_type::iterator,
 				      const this_type *> const_col_iterator;
     typedef col_and_row sub_orientation;
+    typedef linalg_true index_sorted;
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static size_type ncols(const this_type &m) { return m.ncols(); }
     static const_sub_row_type row(const const_row_iterator &it) {
@@ -573,6 +576,7 @@ namespace gmm
     const_col_iterator;
     typedef abstract_null_type col_iterator;
     typedef col_major sub_orientation;
+    typedef linalg_true index_sorted;
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static size_type ncols(const this_type &m) { return m.ncols(); }
     static const_col_iterator col_begin(const this_type &m)
@@ -719,6 +723,7 @@ namespace gmm
     const_row_iterator;
     typedef abstract_null_type row_iterator;
     typedef row_major sub_orientation;
+    typedef linalg_true index_sorted;
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static size_type ncols(const this_type &m) { return m.ncols(); }
     static const_row_iterator row_begin(const this_type &m)
@@ -819,6 +824,7 @@ namespace gmm
     typedef abstract_null_type col_iterator;       // to be done ...
     typedef abstract_null_type const_col_iterator; // to be done ...
     typedef abstract_null_type sub_orientation;    // to be done ...
+    typedef linalg_true index_sorted;
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static size_type ncols(const this_type &m) { return m.ncols(); }
     static origin_type* origin(this_type &m) { return &m; }

@@ -644,6 +644,7 @@ namespace gmm {
 				       shift>  const_col_iterator;
     typedef abstract_null_type col_iterator;
     typedef col_major sub_orientation;
+    typedef linalg_true index_sorted;
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static size_type ncols(const this_type &m) { return m.ncols(); }
     static const_col_iterator col_begin(const this_type &m)
@@ -711,6 +712,7 @@ namespace gmm {
 				       shift>  const_row_iterator;
     typedef abstract_null_type row_iterator;
     typedef row_major sub_orientation;
+    typedef linalg_true index_sorted;
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static size_type ncols(const this_type &m) { return m.ncols(); }
     static const_row_iterator row_begin(const this_type &m)

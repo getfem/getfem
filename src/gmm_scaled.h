@@ -114,6 +114,7 @@ namespace gmm {
     typedef scaled_const_iterator<typename linalg_traits<V>::const_iterator>
             const_iterator;
     typedef typename linalg_traits<V>::storage_type storage_type;
+    typedef linalg_true index_sorted;
     static size_type size(const this_type &v) { return v.size_; }
     static iterator begin(this_type &v)
     { return iterator(v.begin_, v.r); }
@@ -212,6 +213,7 @@ namespace gmm {
     typedef abstract_null_type const_col_iterator;
     typedef abstract_null_type col_iterator;
     typedef row_major sub_orientation;
+    typedef linalg_true index_sorted;
     static size_type nrows(const this_type &m)
     { return m.nr; }
     static size_type ncols(const this_type &m)
@@ -306,6 +308,7 @@ namespace gmm {
     typedef abstract_null_type const_row_iterator;
     typedef abstract_null_type row_iterator;
     typedef col_major sub_orientation;
+    typedef linalg_true index_sorted;
     static size_type ncols(const this_type &m)
     { return m.nc; }
     static size_type nrows(const this_type &m)

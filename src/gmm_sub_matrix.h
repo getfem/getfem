@@ -151,6 +151,7 @@ namespace gmm {
     typedef typename linalg_traits<const_sub_row_type>::storage_type
             storage_type;
     typedef row_major sub_orientation;
+    typedef linalg_true index_sorted;
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static size_type ncols(const this_type &m) { return m.ncols(); }
     static const_sub_row_type row(const const_row_iterator &it)
@@ -295,6 +296,7 @@ namespace gmm {
 	    gen_sub_col_matrix_iterator<PT, SUBI1, SUBI2>, PT>::ref_type
             col_iterator;
     typedef col_major sub_orientation;
+    typedef linalg_true index_sorted;
     typedef typename linalg_traits<const_sub_col_type>::storage_type
     storage_type;
     static size_type nrows(const this_type &m) { return m.nrows(); }

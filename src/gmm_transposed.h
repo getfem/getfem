@@ -90,6 +90,7 @@ namespace gmm {
     typedef typename select_ref<abstract_null_type, typename
             linalg_traits<M>::row_iterator, PT>::ref_type col_iterator;
     typedef col_major sub_orientation;
+    typedef linalg_true index_sorted;
     static size_type ncols(const this_type &v) { return v.nc; }
     static size_type nrows(const this_type &v) { return v.nr; }
     static const_sub_col_type col(const const_col_iterator &it)
@@ -170,6 +171,7 @@ namespace gmm {
     typedef typename select_ref<abstract_null_type, typename
             linalg_traits<M>::col_iterator, PT>::ref_type row_iterator;
     typedef row_major sub_orientation;
+    typedef linalg_true index_sorted;
     static size_type nrows(const this_type &v)
     { return v.nr; }
     static size_type ncols(const this_type &v)

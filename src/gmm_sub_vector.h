@@ -182,6 +182,7 @@ namespace gmm {
     typedef sparse_sub_vector_iterator<typename linalg_traits<V>
             ::const_iterator, pre_iterator, SUBI> const_iterator;
     typedef abstract_sparse storage_type;
+    typedef linalg_true index_sorted;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) {
       iterator it;
@@ -407,6 +408,7 @@ namespace gmm {
     typedef skyline_sub_vector_iterator<const_V_iterator, pre_iterator, SUBI>
             const_iterator;
     typedef abstract_skyline storage_type;
+    typedef linalg_true index_sorted;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) {
       iterator it;
