@@ -105,7 +105,7 @@ while($listeC)
 
 }
 
-$listedotest = "echo \"beginning tests\" ; " . `ls programs/\*.dotest`
+$listedotest = "echo \"beginning tests\" ; cd programs ; " . `cd programs ; ls *.dotest`
                                              . "echo \"tests finished\"";
 $listedotest =~ s/\n/ ; /g;
 

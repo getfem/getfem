@@ -346,7 +346,7 @@ D'une mani\`ere g\'en\'erale, ne gardez pas trop longtemps ouverte une session. 
   bin/startbgeot
   xemacs bgeot/bgeot_poly.h (+ modifications)
   make
-  make test
+  make dotest
   cvs commit -m "la modification que j'ai apport\'ee concerne ..."
   cd ..
   /bin/rm -r getfem++
@@ -391,6 +391,7 @@ L\`a aussi, il faut valider l'op\'eration par un
      \item Ne pas oublier de commenter les sources, et de les documenter (voir section suivante)
      \item Dans les biblioth\`eques, \`a tout fichier .C doit correspondre un fichier .h m\^eme succinct.
      \item respecter la mise en forme des fichiers sources telle qu'elle existe actuellement.
+     \item pour toute modification, ou nouveau module, un programme de test est souhaitable. Ce programme doit tester les fonctionnalités des la librairie et est a mettre dans les répertoire test/ de la librairie concernée. Il faut rédiger un shell avec extension .dotest qui sera automatiquement exécuté.
    \end{itemize}
    \`a compl\'eter
 
