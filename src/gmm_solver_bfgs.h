@@ -1,7 +1,7 @@
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Generic Matrix Methods  (gmm)                                */
-/* File    :  gmm_solver_bfgs.h : a bfgs algorithm                         */
+/* File    :  gmm_solver_bfgs.h : a BFGS and a DFP algorithm               */
 /*     									   */
 /* Date : October 14 2004.                                                 */
 /* Author : Yves Renard, Yves.Renard@insa-toulouse.fr                      */
@@ -37,74 +37,83 @@ namespace gmm {
 
   // BFGS algorithm (Broyden, Fletcher, Goldfarb, Shanno)
   // Quasi Newton method for optimization problems.
+  // with Wolfe Line search.
 
 
   // delta[k] = x[k+1] - x[k]
   // gamma[k] = grad f(x[k+1]) - grad f(x[k])
   // H[0] = I
-  // Hgamma[k] = H[k] gamma[k]
-  // alpha[k] = (1 + (gamma[k]^T H[k] gamma[k]) / delta[k]^T gamma[k])
-  //           / delta[k]^T gamma[k]
-  // beta[k] = gamma[k]^T gamma[k]
-  // H[k+1] = H[k] + alpha[k] delta[k] delta[k]^T
-  //           - (gamma[k] gamma[k]^T H[k] + Hgamma[k] delta[k]^T) / beta[k]
+  // BFGS : zeta[k] = delta[k] - H[k] gamma[k]
+  // DFP  : zeta[k] = H[k] gamma[k]
+  // tau[k] = gamma[k]^T zeta[k]
+  // rho[k] = 1 / gamma[k]^T delta[k]
+  // BFGS : H[k+1] = H[k] + rho[k](zeta[k] delta[k]^T + delta[k] zeta[k]^T)
+  //                 - rho[k]^2 tau[k] delta[k] delta[k]^T
+  // DFP  : H[k+1] = H[k] + rho[k] delta[k] delta[k]^T 
+  //                 - (1/tau[k])zeta[k] zeta[k]^T 
 
+  // Object representing the inverse of the Hessian
   template <typename VECTOR> struct bfgs_invhessian {
     
     typedef typename linalg_traits<VECTOR>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
 
-    std::vector<VECTOR> delta, gamma, Hgamma;
-    std::vector<T> alpha, beta;
+    std::vector<VECTOR> delta, gamma, zeta;
+    std::vector<T> tau, rho;
+    int version;
 
     template<typename VEC1, typename VEC2> void hmult(const VEC1 &X, VEC2 &Y) {
       copy(X, Y);
       for (size_type k = 0 ; k < delta.size(); ++k) {
-	add(scaled(gamma[k], -gmm::vect_sp(Y, gamma[k])/beta[k]), Y);
-	double xgamma = vect_sp(X, delta[k]);
-	add(scaled(delta[k], xgamma*alpha[k]), Y);
-	add(scaled(Hgamma[k], -xgamma / beta[k]), Y);
+	T xdelta = vect_sp(X, delta[k]), xzeta = vect_sp(X, zeta[k]);
+	switch (version) {
+	case 0 : // BFGS
+	  add(scaled(zeta[k], rho[k]*xdelta), Y);
+	  add(scaled(delta[k], rho[k]*(xzeta-rho[k]*tau[k]*xdelta)), Y);
+	  break;
+	case 1 : // DFP
+	  add(scaled(delta[k], rho[k]*xdelta), Y);
+	  add(scaled(zeta[k], -xzeta/tau[k]), Y);
+	  break;
+	}
       }
     }
     
     void restart(void) {
-      delta = std::vector<VECTOR>();
-      gamma = std::vector<VECTOR>();
-      Hgamma = std::vector<VECTOR>();
-      alpha.resize(0); beta.resize(0);
+      delta.resize(0); gamma.resize(0); zeta.resize(0); 
+      tau.resize(0); rho.resize(0);
     }
     
     template<typename VECT1, typename VECT2>
-    void add_updt_vectors(const VECT1 &deltak, const VECT2 &gammak) {
+    void update(const VECT1 &deltak, const VECT2 &gammak) {
       size_type N = vect_size(deltak), k = delta.size();
       VECTOR Y(N);
       hmult(gammak, Y);
-      delta.resize(k+1); gamma.resize(k+1); Hgamma.resize(k+1);
-      alpha.resize(k+1); beta.resize(k+1);
-      resize(delta[k], N); resize(gamma[k], N); resize(Hgamma[k], N); 
+      delta.resize(k+1); gamma.resize(k+1); zeta.resize(k+1);
+      tau.resize(k+1); rho.resize(k+1);
+      resize(delta[k], N); resize(gamma[k], N); resize(zeta[k], N); 
       gmm::copy(deltak, delta[k]);
       gmm::copy(gammak, gamma[k]);
-      gmm::copy(Y, Hgamma[k]);
-      T a = vect_sp(deltak, gammak);
-      T alphak = (T(1) + vect_sp(gammak, Y) / a) / a;
-      T betak = vect_sp(gammak, gammak);
-      alpha[k] = alphak;
-      beta[k] = betak;
+      rho[k] = R(1) / vect_sp(deltak, gammak);
+      if (version == 0)
+	add(delta[k], scaled(Y, -1), zeta[k]);
+      else
+	gmm::copy(Y, zeta[k]);
+      tau[k] = vect_sp(gammak,  zeta[k]);
     }
-
     
+    bfgs_invhessian(int v = 0) { version = v; }
   };
 
 
   template <typename FUNCTION, typename DERIVATIVE, typename VECTOR> 
   void bfgs(FUNCTION f, DERIVATIVE grad, VECTOR &x,
-	    int restart, iteration& iter) {
+	    int restart, iteration& iter, int version = 0) {
 
     typedef typename linalg_traits<VECTOR>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
-
     
-    bfgs_invhessian<VECTOR> invhessian;
+    bfgs_invhessian<VECTOR> invhessian(version);
     VECTOR r(vect_size(x)), d(vect_size(x)), y(vect_size(x)), r2(vect_size(x));
     grad(x, r);
     R lambda(0.001);
@@ -114,17 +123,12 @@ namespace gmm {
       invhessian.hmult(r, d); gmm::scale(d, T(-1));
       
       // Wolfe Line search
-      R lambda_min(0), lambda_max(0);
       T valx = f(x), derivative = gmm::vect_sp(r, d), valy;    
-      R m1 = 0.25, m2 = m1+0.01;
+      R lambda_min(0), lambda_max(0), m1 = 0.27, m2 = 0.57;
       bool unbounded = true, blocked = false;
-      
-      // lambda = 0.001;
       
       for(;;) {
 	add(x, scaled(d, lambda), y);
-	
-	cout << "[d|=" << gmm::vect_norminf(d) << ", f(x) = " << f(x) << ", iter=" << iter.get_iteration() << ", lambda=" << lambda << ", f(y)=" << f(y) << "\n";
 	valy = f(y);
 	if (valy <= valx + m1 * lambda * derivative) {
 	  grad(y, r2);
@@ -136,7 +140,7 @@ namespace gmm {
 	  lambda_max = lambda;
 	  unbounded = false;
 	}
-	if (unbounded) lambda *= R(2);
+	if (unbounded) lambda *= R(10);
 	else  lambda = (lambda_max + lambda_min) / R(2);
 	if (lambda < R(1E-6)) { blocked = true; lambda = 0.001; break; }
       }
@@ -144,14 +148,18 @@ namespace gmm {
       // Rank two update
       ++iter;
       gmm::add(scaled(r2, -1), r);
-      if (iter.get_iteration() % restart == 0 || blocked) {
-	invhessian.restart(); // lambda = 0.01;
-      }
-      else
-	invhessian.add_updt_vectors(gmm::scaled(d, lambda),
-				    gmm::scaled(r, -1));
+      if (iter.get_iteration() % restart == 0 || blocked) invhessian.restart();
+      else invhessian.update(gmm::scaled(d,lambda), gmm::scaled(r,-1));
       copy(r2, r); copy(y, x);
     }
+
+  }
+
+
+  template <typename FUNCTION, typename DERIVATIVE, typename VECTOR> 
+  inline void dfp(FUNCTION f, DERIVATIVE grad, VECTOR &x,
+	    int restart, iteration& iter, int version = 1) {
+    bfgs(f, grad, x, restart, iter, version);
 
   }
 

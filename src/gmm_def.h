@@ -349,36 +349,59 @@ namespace gmm {
   /*  types promotion                                                     */
   /* ******************************************************************** */
 
-  /* should be completed for cases such as <long, float> etc */
-  template <typename T1, typename T2, bool c> struct strongest_numeric_type_aux {
+  /* should be completed for more specific cases <unsigned int, float> etc */
+  template <typename T1, typename T2, bool c>
+  struct strongest_numeric_type_aux {
     typedef T1 T;
   };
-  template <typename T1, typename T2> struct strongest_numeric_type_aux<T1,T2,false> {
+  template <typename T1, typename T2>
+  struct strongest_numeric_type_aux<T1,T2,false> {
     typedef T2 T;
   };
 
-  template <typename T1, typename T2> struct strongest_numeric_type {
-    typedef typename strongest_numeric_type_aux<T1,T2,(sizeof(T1)>sizeof(T2))>::T T;
+  template <typename T1, typename T2>
+  struct strongest_numeric_type {
+    typedef typename
+    strongest_numeric_type_aux<T1,T2,(sizeof(T1)>sizeof(T2))>::T T;
   };
-  template <typename T1, typename T2> struct strongest_numeric_type<T1,std::complex<T2> > {
+  template <typename T1, typename T2>
+  struct strongest_numeric_type<T1,std::complex<T2> > {
     typedef typename number_traits<T1>::magnitude_type R1;
     typedef std::complex<typename strongest_numeric_type<R1,T2>::T > T;
   };
-  template <typename T1, typename T2> struct strongest_numeric_type<std::complex<T1>,T2 > {
+  template <typename T1, typename T2>
+  struct strongest_numeric_type<std::complex<T1>,T2 > {
     typedef typename number_traits<T2>::magnitude_type R2;
     typedef std::complex<typename strongest_numeric_type<T1,R2>::T > T;
   };
-  template <typename T1, typename T2> struct strongest_numeric_type<std::complex<T1>,std::complex<T2> > {
+  template <typename T1, typename T2> 
+  struct strongest_numeric_type<std::complex<T1>,std::complex<T2> > {
     typedef std::complex<typename strongest_numeric_type<T1,T2>::T > T;
   };
 
-  template <typename V1, typename V2> struct strongest_value_type {
-    typedef typename strongest_numeric_type<typename linalg_traits<V1>::value_type,
-					    typename linalg_traits<V2>::value_type>::T value_type;
+  template<> struct strongest_numeric_type<int,float>   { typedef float T;  };
+  template<> struct strongest_numeric_type<float,int>   { typedef float T;  };
+  template<> struct strongest_numeric_type<long,float>  { typedef float T;  };
+  template<> struct strongest_numeric_type<float,long>  { typedef float T;  };
+  template<> struct strongest_numeric_type<long,double> { typedef double T; };
+  template<> struct strongest_numeric_type<double,long> { typedef double T; };
+
+  template <typename V1, typename V2>
+  struct strongest_value_type {
+    typedef typename
+    strongest_numeric_type<typename linalg_traits<V1>::value_type,
+			   typename linalg_traits<V2>::value_type>::T
+    value_type;
   };
-  template <typename V1, typename V2, typename V3> struct strongest_value_type3 {
-    typedef typename strongest_value_type<V1, typename strongest_value_type<V2,V3>::value_type>::value_type value_type;
+  template <typename V1, typename V2, typename V3>
+  struct strongest_value_type3 {
+    typedef typename
+    strongest_value_type<V1, typename
+			 strongest_value_type<V2,V3>::value_type>::value_type
+    value_type;
   };
+
+  
 
   /* ******************************************************************** */
   /*		Basic vectors used                         		  */
