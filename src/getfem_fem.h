@@ -66,7 +66,6 @@ namespace getfem
   /// Product description of the descriptions *pnd1 and *pnd2.
   pdof_description product_dof(pdof_description, pdof_description);
   
-  pdof_description change_coord_index_dof(pdof_description, dim_type);
   /** Gives a total order on the dof description compatible with the
    *   identification.
    */

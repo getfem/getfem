@@ -485,8 +485,9 @@ namespace getfem
 	    for (size_type k = 0; k < N; ++k)
 	      for (size_type l = 0; l < N; ++l)
 	      {
-		if (!(nndof.is_in(dof2)) 
-		    && pf1->dof_types()[j] == lagrange_dof(pf1->dim()))
+		if (!(nndof.is_in(dof2)) &&
+		    dof_compatibility(pf1->dof_types()[j],
+				      lagrange_dof(pf1->dim())))
 		  B[dof2*N+k] -= RM(dof2*N+k, dof1*N+l) * F[dof1*N+l];
 		RM(dof2*N+k, dof1*N+l) = RM(dof1*N+l, dof2*N+k) = 0;
 	      }

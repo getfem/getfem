@@ -147,11 +147,22 @@ namespace getfem
   /* ******************************************************************** */
 
   enum ddl_type { LAGRANGE, NORM_DERIVATIVE, DERIVATIVE, MEAN_VALUE, BUBBLE1, 
-		  LAGRANGE_NONCONFORMING, ALREADY_NUMERATE };
+		  LAGRANGE_NONCONFORMING, ALREADY_NUMERATE};
+
+  struct ddl_elem {
+    ddl_type t;
+    dal::int16_type hier_degree;
+    bool operator < (const ddl_elem &l) const {
+      if (t < l.t) return true; if (t > l.t) return false; 
+      if (hier_degree < l.hier_degree) return true; return false;
+    }
+    ddl_elem(ddl_type s = LAGRANGE, dal::int16_type k = -1)
+      : t(s), hier_degree(k) {}
+  };
 
   struct dof_description
   {
-    std::vector<ddl_type> ddl_desc;
+    std::vector<ddl_elem> ddl_desc;
     bool linkable;
     dim_type coord_index;
 
@@ -163,13 +174,12 @@ namespace getfem
   {
     int operator()(const dof_description &m, const dof_description &n) const
     { 
-      int nn;
-      nn = dal::lexicographical_less<std::vector<ddl_type> >()
+      int nn = dal::lexicographical_less<std::vector<ddl_elem> >()
 	(m.ddl_desc, n.ddl_desc);
       if (nn < 0) return -1; if (nn > 0) return 1;
       nn = int(m.linkable) - int(n.linkable);
       if (nn < 0) return -1; if (nn > 0) return 1;
-      nn = int(m.coord_index) - int(m.coord_index);
+      nn = int(m.coord_index) - int(n.coord_index);
       if (nn < 0) return -1; if (nn > 0) return 1;
       return 0;
     }
@@ -191,20 +201,37 @@ namespace getfem
 
   pdof_description lagrange_dof(dim_type n)
   {
+    dim_type n_old = dim_type(-2);
+    pdof_description p_old = 0;
+    if (n != n_old) {
+      init_tab();
+      dof_description l;
+      l.ddl_desc.resize(n);
+      std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), ddl_elem(LAGRANGE));
+      size_type i = _dof_d_tab->add_norepeat(l);
+      p_old = &((*_dof_d_tab)[i]);
+      n_old = n;
+    }
+    return p_old;
+  }
+
+  pdof_description hierarchical_dof(pdof_description p, int deg)
+  {
     init_tab();
-    dof_description l;
-    l.ddl_desc.resize(n);
-    std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), LAGRANGE);
+    dof_description l = *p;
+    for (size_type i = 0; i < l.ddl_desc.size(); ++i)
+      l.ddl_desc[i].hier_degree = deg;
     size_type i = _dof_d_tab->add_norepeat(l);
     return &((*_dof_d_tab)[i]);
   }
+
 
   pdof_description lagrange_nonconforming_dof(dim_type n)
   {
     init_tab();
     dof_description l; l.linkable = false;
     l.ddl_desc.resize(n);
-    std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), LAGRANGE);
+    std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), ddl_elem(LAGRANGE));
     size_type i = _dof_d_tab->add_norepeat(l);
     return &((*_dof_d_tab)[i]);
   }
@@ -214,7 +241,7 @@ namespace getfem
     init_tab();
     dof_description l;
     l.ddl_desc.resize(n);
-    std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), BUBBLE1);
+    std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), ddl_elem(BUBBLE1));
     size_type i = (*_dof_d_tab).add_norepeat(l);
     return &((*_dof_d_tab)[i]);
   }
@@ -224,8 +251,8 @@ namespace getfem
     init_tab();
     dof_description l;
     l.ddl_desc.resize(n);
-    std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), LAGRANGE);
-    l.ddl_desc[num_der] = DERIVATIVE;
+    std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), ddl_elem(LAGRANGE));
+    l.ddl_desc[num_der] = ddl_elem(DERIVATIVE);
     size_type ii = (*_dof_d_tab).add_norepeat(l);
     return &((*_dof_d_tab)[ii]);
   }
@@ -235,7 +262,7 @@ namespace getfem
     init_tab();
     dof_description l;
     l.ddl_desc.resize(n);
-    std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), NORM_DERIVATIVE);
+    std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), ddl_elem(NORM_DERIVATIVE));
     size_type ii = (*_dof_d_tab).add_norepeat(l);
     return &((*_dof_d_tab)[ii]);
   }
@@ -245,7 +272,7 @@ namespace getfem
     init_tab();
     dof_description l;
     l.ddl_desc.resize(n);
-    std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), MEAN_VALUE);
+    std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), ddl_elem(MEAN_VALUE));
     size_type ii = (*_dof_d_tab).add_norepeat(l);
     return &((*_dof_d_tab)[ii]);
   }
@@ -255,19 +282,9 @@ namespace getfem
     init_tab();
     dof_description l;
     l.ddl_desc.resize(n);
-    std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), ALREADY_NUMERATE);
+    std::fill(l.ddl_desc.begin(), l.ddl_desc.end(),ddl_elem(ALREADY_NUMERATE));
     size_type i = _dof_d_tab->add_norepeat(l);
     return &((*_dof_d_tab)[i]);
-  }
-
-
-  pdof_description change_coord_index_dof(pdof_description a, dim_type n)
-  {
-    init_tab();
-    dof_description l = *a;
-    a->coord_index = n;
-    size_type ii = (*_dof_d_tab).add_norepeat(l);
-    return &((*_dof_d_tab)[ii]);
   }
 
   pdof_description product_dof(pdof_description a, pdof_description b)
@@ -280,6 +297,13 @@ namespace getfem
     l.ddl_desc.resize(nb1+nb2);
     std::copy(a->ddl_desc.begin(), a->ddl_desc.end(), l.ddl_desc.begin());
     std::copy(b->ddl_desc.begin(), b->ddl_desc.end(), l.ddl_desc.begin()+nb1);
+    
+    dal::int16_type deg = -1;
+    for (size_type i = 0; i < l.ddl_desc.size(); ++i)
+      deg = std::max(deg, l.ddl_desc[i].hier_degree);
+    for (size_type i = 0; i < l.ddl_desc.size(); ++i)
+      l.ddl_desc[i].hier_degree = deg;
+
     size_type ii = (*_dof_d_tab).add_norepeat(l);
     return &((*_dof_d_tab)[ii]);
   }
@@ -289,13 +313,13 @@ namespace getfem
     int nn;
     if ((nn = int(a->coord_index) - int(b->coord_index)) != 0) return nn;
     if ((nn = int(a->linkable) - int(b->linkable)) != 0) return nn;
-    std::vector<ddl_type>::const_iterator
+    std::vector<ddl_elem>::const_iterator
       ita = a->ddl_desc.begin(), itae = a->ddl_desc.end(),
       itb = b->ddl_desc.begin(), itbe = b->ddl_desc.end();
     for (; ita != itae && itb != itbe; ++ita, ++itb)
-    { if ((nn = int(*ita) - int (*itb)) != 0) return nn; }
-    for (; ita != itae; ++ita) if (*ita != LAGRANGE) return 1;
-    for (; itb != itbe; ++itb) if (*itb != LAGRANGE) return -1;
+    { if ((nn = int(ita->t) - int (itb->t)) != 0) return nn; }
+    for (; ita != itae; ++ita) if (ita->t != LAGRANGE) return 1;
+    for (; itb != itbe; ++itb) if (itb->t != LAGRANGE) return -1;
     return 0;
   }
 
@@ -446,6 +470,78 @@ namespace getfem
     if (!(pf1->is_polynomial() && pf2->is_polynomial()))
       DAL_THROW(failure_error, "Bad parameters");
     return new tproduct_femi(ppolyfem(pf1), ppolyfem(pf2));
+  }
+
+  /* ******************************************************************** */
+  /*    Generic Hierarchical fem (for polynomial fem). To be interfaced.  */
+  /* ******************************************************************** */
+
+  struct thierach_femi : public fem<base_poly>
+  { 
+    thierach_femi(ppolyfem fi1, ppolyfem fi2) : fem<base_poly>(*fi1)
+    {
+      if (fi2->target_dim() != fi1->target_dim())
+	DAL_THROW(dimension_error, "dimensions mismatch.");
+      if (fi2->basic_structure() != fi1->basic_structure())
+	DAL_THROW(failure_error, "Incompatible elements.");
+      if (!(fi1->is_equivalent() &&  fi2->is_equivalent()))
+	DAL_THROW(to_be_done_error,
+	    "Sorry, no hierachical construction for non tau-equivalent fem.");
+      es_degree = fi2->estimated_degree();
+      is_lag = false;
+      for (size_type i = 0; i < fi2->nb_dof(); ++i) {
+	bool found = false;
+	for (size_type j = 0; j < fi1->nb_dof(); ++j) {
+	  if (fi2->node_of_dof(i) == fi1->node_of_dof(j) 
+	      && fi2->dof_types()[i] == fi1->dof_types()[j])
+	    { found = true; break; }
+	}
+	if (!found) {
+	  add_node(hierarchical_dof(fi2->dof_types()[i], 
+				    fi1->estimated_degree()),
+		   fi2->node_of_dof(i));
+	  _base.resize(nb_dof());
+	  _base[nb_dof()-1] = (fi2->base())[i];
+	}
+      }
+    }
+  };
+
+  static pfem gen_hierarchical_fem(fem_param_list &params) {
+    if (params.size() != 2)
+      DAL_THROW(failure_error, 
+	  "Bad number of parameters : " << params.size() << " should be 2.");
+    if (params[0].type() != 1 || params[1].type() != 1)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    pfem pf1 = params[0].method();
+    pfem pf2 = params[1].method();
+    if (!(pf1->is_polynomial() && pf2->is_polynomial()))
+      DAL_THROW(failure_error, "Bad parameters");
+    return new thierach_femi(ppolyfem(pf1), ppolyfem(pf2));
+  }
+
+  /* ******************************************************************** */
+  /* P2^K hierarchical fem.                                               */
+  /* ******************************************************************** */
+
+  static pfem P2K_hierarch_fem(fem_param_list &params) {
+    if (params.size() != 2)
+      DAL_THROW(failure_error, 
+	   "Bad number of parameters : " << params.size() << " should be 2.");
+    if (params[0].type() != 0 || params[1].type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    int k = int(::floor(params[1].num() + 0.01));
+    if (n <= 0 || n >= 100 || k <= 0 || k > 150 || ((k & 1) && (k != 1)) ||
+	double(n) != params[0].num() || double(k) != params[1].num())
+      DAL_THROW(failure_error, "Bad parameters");
+    std::stringstream name;
+    if (k == 1) 
+      name << "FEM_PK(" << n << ",1)";
+    else
+      name << "FEM_GEN_HIERARCHICAL(FEM_P2K_HIERARCHICAL(" << n << ","
+	   << k/2 << "), FEM_PK(" << n << "," << k << "))";
+    return fem_descriptor(name.str());
   }
 
 
@@ -793,6 +889,8 @@ namespace getfem
     _fem_naming_system->add_suffix("P1_BUBBLE_FACE", P1_with_bubble_on_a_face);
     _fem_naming_system->add_suffix("P1_BUBBLE_FACE_LAG",
 				   P1_with_bubble_on_a_face_lagrange);
+    _fem_naming_system->add_suffix("GEN_HIERARCHICAL", gen_hierarchical_fem);
+    _fem_naming_system->add_suffix("P2K_HIERARCHICAL", P2K_hierarch_fem);
   }
   
   pfem fem_descriptor(std::string name) {
@@ -806,8 +904,10 @@ namespace getfem
     return _fem_naming_system->shorter_name_of_method(p);
   }
 
- /* Fonctions pour la ref. directe.                                     */
-  
+  /* ******************************************************************** */
+  /*    Aliases functions                                                 */
+  /* ******************************************************************** */
+
   pfem PK_fem(size_type n, short_type k) {
     static pfem pf = 0;
     static size_type d = size_type(-2);
@@ -846,4 +946,7 @@ namespace getfem
     }
     return pf;
   }
+
+
+
 }  /* end of namespace getfem.                                            */

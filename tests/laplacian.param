@@ -18,6 +18,7 @@ K = 3;                  % Finite element degree.
 FEM_TYPE = 1;           % Finite element method
 			% 0 = classical Lagrange element
 			% 1 = Hermite element on the segment
+			% 2 = Hierarchical P2^K on simplexes
 INTEGRATION = 0;        % 0 = exact integration.
 			% 1 = Newton Cotes of degree 2 * K
 			% 2 = Product of 1D Gauss for parallelepipeds.

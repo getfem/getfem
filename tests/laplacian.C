@@ -137,6 +137,10 @@ void lap_pb::init(void)
 		"This element is only defined on segments");
     K = 3;
     break;
+  case 2 : 
+    if (mesh_type != 0)
+      DAL_THROW(dal::internal_error,
+		"This element is only defined on simplexes");
   default : DAL_THROW(dal::internal_error, "Unknown finite element method");
   }
 
@@ -224,6 +228,10 @@ void lap_pb::init(void)
     sprintf(meth, "FEM_HERMITE_SEGMENT");
     mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
     break;
+    
+  case 2 :
+    sprintf(meth, "FEM_P2K_HIERARCHICAL(%d, %d)", N, K);
+    mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
   
   }
   
