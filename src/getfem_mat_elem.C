@@ -301,13 +301,15 @@ namespace getfem
 	un.resize(P); up.resize(N);
 	un = pgt->normals()[ir-1];
       }
-      
+      base_tensor taux;
+      bool flag = false;
+
       if (is_linear) { // linear transformation
       
       // if (is_ppi) {
 	
 	pre_tensors_for_linear_trans(ir == 0);
-	base_tensor taux;
+	
 	
 	// on peut simplifier les calculs pour N = P
 	// cout << "mat G : " << G << endl;
@@ -321,8 +323,7 @@ namespace getfem
 	  bgeot::mat_vect_product(B, un, up);
 	  J *= bgeot::vect_norm2(up);
 	}
-	
-	bool flag = false;
+     
 	t = mref[ir]; t *= J;
 	
 	if (hess_reduction.size() > 0) {
@@ -351,22 +352,6 @@ namespace getfem
 	  }
 	}
 	
-	/* Applying linear transformation for non tau-equivalent elements.   */
-	
-	if (trans_reduction.size() > 0) {
-	  std::deque<short_type>::const_iterator it = trans_reduction.begin(),
-	    ite = trans_reduction.end();
-	  std::deque<pfem>::const_iterator iti = trans_reduction_pfi.begin();
-	  for ( ; it != ite; ++it, ++iti) { 
-	    if ((*iti)->nb_dof() != M.nrows() || (*iti)->nb_base()!=M.ncols())
-	      M.resize((*iti)->nb_base(), (*iti)->nb_dof());
-	    (*iti)->mat_trans(M, G, pgt);
-	    (flag ? t:taux).mat_reduction(flag ? taux:t, M, *it);
-	    flag = !flag;
-	  }
-	}
-	
-	if (flag) t = taux;
       }
       else { // non linear transformation
 
@@ -405,6 +390,23 @@ namespace getfem
 	  add_elem(t, ip, J, N, first);
 	}
       }
+
+      /* Applying linear transformation for non tau-equivalent elements.   */
+      
+      if (trans_reduction.size() > 0) {
+	std::deque<short_type>::const_iterator it = trans_reduction.begin(),
+	  ite = trans_reduction.end();
+	std::deque<pfem>::const_iterator iti = trans_reduction_pfi.begin();
+	for ( ; it != ite; ++it, ++iti) { 
+	  if ((*iti)->nb_dof() != M.nrows() || (*iti)->nb_base()!=M.ncols())
+	    M.resize((*iti)->nb_base(), (*iti)->nb_dof());
+	  (*iti)->mat_trans(M, G, pgt);
+	  (flag ? t:taux).mat_reduction(flag ? taux:t, M, *it);
+	  flag = !flag;
+	}
+      }
+      
+      if (flag) t = taux;
     }
     
 
