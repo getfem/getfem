@@ -1,7 +1,5 @@
-2005-01-03  Yves Renard  <Yves.Renard@insa-toulouse.fr>
-
-	* src/getfem_Coulomb_friction.h a model brick for the contact
-	and the Coulomb friction conditions for small conformal displacement.
+2005-01-03
+	* Getfem-1.7 released.
 
 2004-12-10  Yves Renard  <Yves.Renard@insa-toulouse.fr>
 
@@ -18,6 +16,10 @@
 	* src/bgeot_geotrans_inv.C (bgeot): Made inversion geometric
 	transformations more robust (linear search in the Newton
 	algorithm).
+
+2005-01-05  Yves Renard  <Yves.Renard@insa-toulouse.fr>
+
+	* src/getfem_linearized_plate.h linearized plate brick
 
 2004-11-25  Yves Renard  <Yves.Renard@insa-toulouse.fr>
 
