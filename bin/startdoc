@@ -7,5 +7,6 @@ print "loading files from cvs\n";
 
 print "Making and compiling docs\n";
 # print `bin/dodocs`;
+print `cd doc/guide_intervention; make`;
 
 

@@ -44,6 +44,8 @@ while ($ligne = <STDIN>)
     }
     if ($etat > 0)
     {
+      $ligne =~ s/\+FUNCTIONS/\\begin{functionsdescription}/;
+      $ligne =~ s/\-FUNCTIONS/\\end{functionsdescription}/;
       $ligne =~ s/\+FUNCTION/\\begin{functiondescription}/;
       $ligne =~ s/\-FUNCTION/\\end{functiondescription}/;
       $ligne =~ s/\+FILE/\\begin{filedescription}/;
@@ -62,6 +64,8 @@ while ($ligne = <STDIN>)
       $ligne =~ s/\-CLASS/\\end{classdescription}/;
       $ligne =~ s/\+EXAMPLE/\\begin{pexample}/;
       $ligne =~ s/\-EXAMPLE/\\end{pexample}/;
+      $ligne =~ s/\+CODE/\\begin{alltt}/;
+      $ligne =~ s/\-CODE/\\end{alltt}/;
       print $ligne, "\n";
     }
     if ($etat == 2) { $etat = 0; }

@@ -21,6 +21,10 @@
   { \section{Function #1} }
   {  }
 
+\newenvironment{functionsdescription}[1]
+  { \section{#1} }
+  {  }
+
 \newenvironment{classdescription}[1]
   { \section{Class #1} }
   {  }
@@ -35,8 +39,8 @@
   { \end{tabular} \\ }
 
 \newenvironment{classmembersdescription}
-  { \begin{tabular}{|m{0.2\linewidth}|m{0.2\linewidth}|m{0.52\linewidth}|} \hline 
-      Member & Type & Description \\ \hline \hline }
+  { \begin{tabular}{|m{0.3\linewidth}|m{0.15\linewidth}|m{0.47\linewidth}|} \hline 
+      Name & Type & Description \\ \hline \hline }
   { \end{tabular} \\ }
 
 
@@ -47,4 +51,3 @@
 \newcommand{\classdecl}[2]{ \mbox{ #1 } & #2 \\ \hline }
 \newcommand{\classdesc}[1]{ $\;$\\[0.3cm] #1 \\[0.3cm] }
 \newcommand{\classmember}[3]{ #1 & #2 & #3 \\ \hline }
-\newcommand{\code}[1]{\begin{alltt}  #1 \end{alltt} }
