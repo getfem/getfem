@@ -220,7 +220,8 @@ namespace getfem
 	  DAL_THROW(failure_error, "Points of different dimensions.");
 	base_node v(d);
 	for (size_type i = 0; i < d; i++) v[i] = tmpv[i];
-	points()[ip] = v;
+	size_type ipl = add_point(v);
+	if (ip != ipl) swap_points(ip, ipl);
       }
       else
 	DAL_THROW(failure_error, "Syntax error in file.");
