@@ -15,6 +15,7 @@ include_HEADERS =                      \
 	bgeot_tensor.h                 \
 	bgeot_sparse_tensors.h         \
 	bgeot_vector.h                 \
+	bgeot_comma_init.h	       \
 	dal_algobase.h                 \
 	dal_alloc.h                    \
 	dal_basic.h                    \
