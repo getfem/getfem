@@ -1,10 +1,3 @@
-/**************************************************************************/
-/*                                                                        */
-/*  Calcul d'une structure lineairement elastique en contact unilateral   */
-/*  avec frottement avec une fondation rigide en mouvement uniforme.      */
-/*                                                                        */
-/**************************************************************************/
-
 #include <getfem_export.h>
 #include <getfem_assembling.h>
 
@@ -15,9 +8,9 @@ typedef getfem::size_type size_type;
 
 void err_msg(void)
 {
-  cerr << "Bad format for arguments of command compare_solutions\n";
+  cerr << "Bad format for arguments of command interpole_solution\n";
   cerr << "The right format is\n";
-  cerr << "compare_solutions filename1 filename2 filename3\n";
+  cerr << "interpole_solution filename1 filename2 filename3\n";
   cerr << "where filename1 and filename2 are two files containing some\n";
   cerr << "solutions exported by GETFEM++. filename3 is the name of the result\n";
   exit(1);
@@ -170,6 +163,7 @@ void read_file(const std::string &fi, getfem::getfem_mesh &mesh,
 
 int main(int argc, char *argv[])
 {
+  try {
   int found = 0;
   std::string fi1, fi2, fi3;
 
@@ -217,4 +211,7 @@ int main(int argc, char *argv[])
   getfem::scalar_type errin = 0.0;
   getfem::interpolation_solution(mef1, mef2, U1, U3, P1);
   save_solution(fi3, mef2, U3, P1, K2);
+  }
+  DAL_STANDARD_CATCH_ERROR;
+  return 0; 
 }

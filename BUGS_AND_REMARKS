@@ -28,6 +28,12 @@ ___________________________________________________________________________
 On SGI, problem with dynamic libraries 
 the use of 
   -update_registry .libs/so_locations
-doesn't work and should be repalce with
+doesn't work and should be replace with
   -check_registry /usr/lib/so_locations 
 (dans libtool)
+
+problem also to make executables. Prefer something like
+
+CC -o dynamic_array dynamic_array.C -I../src ../src/.libs/libgetfm.a -lm -LANG:std 
+
+instead of making first dynamic_array.o ...

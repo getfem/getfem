@@ -2,9 +2,10 @@ Root directory of GETFEM++
 
 src/            C++ sources of getfem library
 tests/          tests programs
-doc/            Latex doc provided by sources commentaries
+doc/            Latex doc.
 bin/            perl scripts
 config/         config files
+contrib/        application programs
 MODIFS          historic of the modifications
 LICENSE         license information
 CONTAINS        this file

@@ -13,11 +13,11 @@
 
 \input{YRpersdf}
 
-\oddsidemargin -0.2cm
-\evensidemargin -0.2cm
+\oddsidemargin -0.4cm
+\evensidemargin -0.4cm
 \topmargin -1cm
 \textheight 22.5cm
-\textwidth 16.2cm
+\textwidth 16.6cm
 \headheight 1.0cm
 
 % principal notations
@@ -26,34 +26,35 @@
 
 \begin{document}
 
-
 \begin{center}
-  \LARGE Generic Finite Element library in C++ \\ Elementary computations \\
-     GETFEM++
+  \includegraphics[width=10cm,angle=0]{getfem_logo.eps}\\[0.2cm]
+  a Generic Finite Element library in C++ \\[0.5cm]
+  {\Huge \sc Elementary Computations} \\[0.5cm]
+  { \large Yves \sc Renard\footnote{ \it MIP, INSAT, Complexe scientifique de Rangueil, 31077 Toulouse, France, Yves.Renard@gmm.insa-tlse.fr } } \\[1.0cm]
 \end{center}
-\begin{center} \large
-{ Yves \sc Renard\footnote{ \it MIP, INSAT, Complexe scientifique de Rangueil, 31077 Toulouse, France, Yves.Renard@gmm.insa-tlse.fr } },
-\end{center}
-\rcc
 
+% \begin{abstract}
+% Basic description of the structure of the finite element kernel of GETFEM++.
+% \end{abstract}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %          INTRODUCTION                                                 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{abstract}
-Basic description of the structure of the finite element kernel of GETFEM++.
-\end{abstract}
-
-\begin{figure}[htb]
-  \begin{center}
-    \includegraphics[width=10cm,angle=0]{getfem_logo.eps}
-  \end{center}
-\end{figure}
-
 \section*{Introduction}
-The main goal of GETFEM++ is to use C++ language facilities to build an advanced finite element library easy to use, as complete as possible and efficient. Here is presented the finite element kernel of this project. A particular attention has been paid to reduce the computation time. The finite element kernel has been built in order to take into account from the simplest methods ($P_K$ methods on simplexes with a linear geometric transformation) to the more elaborated methods (Hermite elements, vectorial elements, non-polynomials elements ...). Once a finite element method is described on the reference element, arbitrary elementary  matrices cans be computed, even elementary matrices for mixed methods. The code is generic in the sense that there is no limitation in dimension and degree and existing assembling procedures are completely independent of the dimension and the finite element methods used.
+The main goal of GETFEM++ is to use C++ language facilities to build an advanced finite element library easy to use, as complete as possible and efficient. Here is presented the finite element kernel of this project. A particular attention has been paid to reduce the computation time. The finite element kernel has been built in order to take into account from the simplest methods ($P_K$ methods on simplexes with a linear geometric transformation) to the more elaborated methods (Hermite elements, vectorial elements, non-polynomials elements ...). Once a finite element method is described on the reference element, arbitrary elementary  matrices can be computed, even elementary matrices for mixed methods. The code is generic in the sense that there is no limitation in dimension and degree and existing assembling procedures are completely independent of the dimension and the finite element methods used.\\[5cm]
+Copyright (C) 2002\\
+The program GETFEM++ is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; version 2 of the License.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software Foundation,
+Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 \newpage
 \tableofcontents
@@ -271,16 +272,16 @@ $$ \fbox{ $H f(x) = B_3\left(\overline{x}) (\overline{H}\,\overline{f}(\overline
 \subsection{Example of elementary matrix} \label{elmminst}
 
 Assume one needs to compute the elementary ``matrix'':
-$$ t(i_0, i_1, ..., i_7) = \int_{T} \varphi_{i_1}^{i_0}\; \partial_{i_4} \varphi_{i_3}^{i_2}\; \partial^2_{i_7 \mbox{ mod } P, i_7 / P} \varphi_{i_6}^{i_5} dx, $$ 
+$$ t(i_0, i_1, ..., i_7) = \int_{T} \varphi_{i_1}^{i_0}\; \partial_{i_4} \varphi_{i_3}^{i_2}\; \partial^2_{i_7 / P, i_7 \mbox{ mod } P} \varphi_{i_6}^{i_5} dx, $$ 
 The computations to be made on the reference elements are
-$$ \overline{t}_0(i_0, i_1, ..., i_7) = \int_{\overline{T}} \overline{\varphi}_{i_1}^{i_0}\; \partial_{i_4} \overline{\varphi}_{i_3}^{i_2}\; \partial^2_{i_7 \mbox{ mod } P, i_7 / P} \overline{\varphi}_{i_6}^{i_5}  J(\overline{x}) d\overline{x}, $$
+$$ \overline{t}_0(i_0, i_1, ..., i_7) = \int_{\overline{T}} \overline{\varphi}_{i_1}^{i_0}\; \partial_{i_4} \overline{\varphi}_{i_3}^{i_2}\; \partial^2_{i_7 / P, i_7 \mbox{ mod } P} \overline{\varphi}_{i_6}^{i_5}  J(\overline{x}) d\overline{x}, $$
 and
 $$ \overline{t}_1(i_0, i_1, ..., i_7) = \int_{\overline{T}} \overline{\varphi}_{i_1}^{i_0}\; \partial_{i_4} \overline{\varphi}_{i_3}^{i_2}\; \partial_{i_7} \overline{\varphi}_{i_6}^{i_5}  J(\overline{x}) d\overline{x}, $$
 Those two tensor can be computed once on the whole reference element if the geometric transformation is linear (because $J(\overline{x})$ is constant). If the geometric transformation is non-linear, what has to be stored is the value on each integration point. To compute the integral on the real element a certain number of reductions have to be made:
 \begin{itemize}
    \item Concerning the first term ($\varphi_{i_1}^{i_0}$) nothing.
    \item Concerning the second term ($\partial_{i_4} \varphi_{i_3}^{i_2}$) a reduction with respect to $i_4$ with the matrix $B$.
-   \item Concerning the third term ($\partial^2_{i_7 \mbox{ mod } P, i_7 / P} \varphi_{i_6}^{i_5}$) a reduction of $\overline{t}_0$ with respect to $i_7$ with the matrix $B_3$ and a reduction of $\overline{t}_1$ with respect also to $i_7$ with the matrix $B_3B_2$
+   \item Concerning the third term ($\partial^2_{i_7 / P, i_7 \mbox{ mod } P} \varphi_{i_6}^{i_5}$) a reduction of $\overline{t}_0$ with respect to $i_7$ with the matrix $B_3$ and a reduction of $\overline{t}_1$ with respect also to $i_7$ with the matrix $B_3B_2$
 \end{itemize}
 The reductions are to be made on each integration point if the geometric transformation is non-linear. Once those reductions are done, an addition of all the tensor resulting of those reductions is made (with a factor equal to the load of each integration point if the geometric transformation is non-linear).
 
@@ -386,8 +387,16 @@ where $\phi^i$ are the base functions of the $P_1$ finite element method, and $\
                               
 \end{alltt}
 
-\baselineskip=12pt
 
-\bibliographystyle{plain}
-\bibliography{../../biblio/all}
+\begin{thebibliography}{99}
+% \bibliographystyle{apalike}
+% \bibliographystyle{plain}
+% \bibliography{all}
+\bibitem{dh-to1984} 
+  G. {\sc Dhatt, and  G. Touzot}
+  {\it The Finite Element Method Displayed}, 
+ J. Wiley \& Sons,  New York, 1984.
+\end{thebibliography}
+
+
 \end{document}
