@@ -270,7 +270,7 @@ namespace gmm {
 
 
   /* ******************************************************************** */
-  /*		Predefined versions.                                      */
+  /*		Interface for local and global solvers.                   */
   /* ******************************************************************** */
 
   template <typename Matrix1, typename Matrix2, typename Vector2,

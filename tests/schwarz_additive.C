@@ -1,534 +1,347 @@
-/* -*- c++ -*- (enables emacs c++ mode)                                    */
-/* *********************************************************************** */
-/*                                                                         */
-/* Library :  Generic Matrix Methods  (gmm)                                */
-/* File    :  gmm_solvers_Schwarz_additive.h : generic solver.             */
-/*     									   */
-/* Date : October 13, 2002.                                                */
-/* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
-/*          Michel Fournie, fournie@mip.ups-tlse.fr                        */
-/*                                                                         */
-/* *********************************************************************** */
-/*                                                                         */
-/* Copyright (C) 2002-2004  Yves Renard, Michel Fournié.                   */
-/*                                                                         */
-/* This file is a part of GMM++                                            */
-/*                                                                         */
-/* This program is free software; you can redistribute it and/or modify    */
-/* it under the terms of the GNU Lesser General Public License as          */
-/* published by the Free Software Foundation; version 2.1 of the License.  */
-/*                                                                         */
-/* This program is distributed in the hope that it will be useful,         */
-/* but WITHOUT ANY WARRANTY; without even the implied warranty of          */
-/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           */
-/* GNU Lesser General Public License for more details.                     */
-/*                                                                         */
-/* You should have received a copy of the GNU Lesser General Public        */
-/* License along with this program; if not, write to the Free Software     */
-/* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,  */
-/* USA.                                                                    */
-/*                                                                         */
-/* *********************************************************************** */
+/**************************************************************************/
+/*                                                                        */
+/*  Schwarz additive test program on an elastostatic problem with         */
+/*  an optional coarse mesh.                                              */
+/*                                                                        */
+/**************************************************************************/
+
+#include <getfem_assembling.h>
+#include <getfem_norm.h>
+#include <getfem_regular_meshes.h>
+#include <getfem_export.h>
+#include <gmm.h>
+
+using bgeot::base_vector;
+using bgeot::base_node;
+using bgeot::size_type;
+using bgeot::scalar_type;
+
+typedef gmm::rsvector<scalar_type>     sparse_vector;
+typedef gmm::row_matrix<sparse_vector> general_sparse_matrix;
+typedef gmm::row_matrix<sparse_vector> symmetric_sparse_matrix;
+typedef std::vector<scalar_type>       linalg_vector;
 
 
-#ifndef GMM_SOLVERS_SCHWARZ_ADDITIVE_H__
-#define GMM_SOLVERS_SCHWARZ_ADDITIVE_H__
 
-#include <gmm_kernel.h>
-#include <gmm_precond_diagonal.h>
-#include <gmm_superlu_interface.h>
+struct pb_data {
+  getfem::getfem_mesh mesh;
+  getfem::getfem_mesh mesh_coarse;
+  getfem::mesh_fem mef_coarse;
 
-namespace gmm {
-      
-  /* ******************************************************************** */
-  /*		Sequential Additive Schwarz method                        */
-  /* ******************************************************************** */
-  /* ref : Domain decomposition algorithms for the p-version finite       */
-  /*       element method for elliptic problems, Luca F. Pavarino,        */
-  /*       PhD thesis, Courant Institute of Mathematical Sciences, 1992.  */
-  /* ******************************************************************** */
+  getfem::mesh_fem mef;
+  getfem::mesh_fem mef_data;
 
-  /* ******************************************************************** */
-  /*		Additive Schwarz interfaced local solvers                 */
-  /* ******************************************************************** */
+  double PG, mu, lambda, rho;
+  double LX, LY, LZ, residu, overlap;
+  int NX, N, NXCOARSE, USECOARSE;
+  int K;     /* finite element degree.                                    */
+  base_vector D;
 
-  struct using_cg {};
-  struct using_gmres {};
-  struct using_bicgstab {};
-  
-  template <class Matrix1, class Precond> struct sa_local_cg {
-    typedef typename linalg_traits<Matrix1>::value_type value_type;
-    typedef std::vector<value_type> vector_type;
+  std::vector<size_type> nsdm;
 
-    static void solve(const Matrix1 &A, vector_type &x, const vector_type &b,
-		      const Precond &P, iteration &iter)
-      { cg(A, x, b, P, iter); }
-  };
+  symmetric_sparse_matrix RM; /* stifness matrix.                         */
+  linalg_vector U, F;         /* Unknown and right hand side.             */
+  int solver;
 
-  template <class Matrix1, class Precond> struct sa_local_gmres {
-    typedef typename linalg_traits<Matrix1>::value_type value_type;
-    typedef std::vector<value_type> vector_type;
+  std::string datafilename;
 
-    static void solve(const Matrix1 &A, vector_type &x, const vector_type &b,
-	       const Precond &P, iteration &iter)
-      { gmres(A, x, b, P, 50, iter); }
-  };
+  void assemble(void);
+  void init(void);
 
-  template <class Matrix1, class Precond> struct sa_local_bicgstab {
-    typedef typename linalg_traits<Matrix1>::value_type value_type;
-    typedef std::vector<value_type> vector_type;
+  int solve_cg(void);
+  int solve_schwarz(int);
 
-    static void solve(const Matrix1 &A, vector_type &x, const vector_type &b,
-	       const Precond &P, iteration &iter)
-      { bicgstab(A, x, b, P, iter); }
-  };
-
-#ifdef GMM_USES_SUPERLU
-
-  struct using_superlu {};
-
-  /* If you want to use SuperLU as local solver, you have to use
-   * the class SuperLU_factor<value_type> has the preconditioner
-   * class in the schwarz additive algorithm.
-   */
-  
-  template <class Matrix1, class Precond> struct sa_local_superlu {
-    typedef typename linalg_traits<Matrix1>::value_type value_type;
-    typedef std::vector<value_type> vector_type;
-
-    static void solve(const Matrix1 &A, vector_type &x, const vector_type &b,
-	       const Precond &P, iteration &iter)
-      { P.solve(x, b); iter.set_iteration(1); }
-  };
-  
-#endif
-  
-  /* ******************************************************************** */
-  /*		Additive Schwarz Linear system                            */
-  /* ******************************************************************** */
-
-  template <typename Matrix1, typename Matrix2, typename Precond,
-	    typename local_solver>
-  struct schwadd_mat{
-    typedef typename linalg_traits<Matrix1>::value_type value_type;
-    typedef typename std::vector<value_type> vector_type;
-
-    const Matrix1 *A;
-    const std::vector<Matrix2> *vB, *vAloc;
-    mutable iteration iter;
-    double residu;
-    mutable size_type itebilan;
-    std::vector<vector_type> *gi, *fi;
-    const std::vector<Precond> *precond1;
-    bool superlu;
-
-    schwadd_mat(const Matrix1 &A_, const std::vector<Matrix2> &vB_,
-		const std::vector<Matrix2> &vA_, iteration iter_,
-		double residu_, size_type itebilan_, 
-		std::vector<vector_type> &gi_, std::vector<vector_type> &fi_,
-		const std::vector<Precond> &precond_)
-      : A(&A_), vB(&vB_),  vAloc(&vA_), iter(iter_),
-	residu(residu_), itebilan(itebilan_), gi(&gi_), fi(&fi_),
-	precond1(&precond_) {}
-  };
-
-  /* ******************************************************************** */
-  /*		Additive Schwarz interfaced global solvers                */
-  /* ******************************************************************** */
-
-  template <typename Matrix1, typename Matrix2, typename Precond,
-	    typename local_solver>
-  struct sa_global_cg {
-    typedef typename linalg_traits<Matrix1>::value_type value_type;
-    typedef typename std::vector<value_type> vector_type;
-
-    static void solve(const schwadd_mat<Matrix1, Matrix2, Precond,
-		      local_solver> &SAM,
-		      vector_type &x, const vector_type &b, iteration &iter)
-      { cg(SAM, x, b, *(SAM.A),  identity_matrix(), iter); }
-  };
-
-  template <typename Matrix1, typename Matrix2, typename Precond,
-	    typename local_solver>
-  struct sa_global_gmres {
-    typedef typename linalg_traits<Matrix1>::value_type value_type;
-    typedef typename std::vector<value_type> vector_type;
-
-    static void solve(const schwadd_mat<Matrix1, Matrix2, Precond,
-		      local_solver> &SAM,
-		      vector_type &x, const vector_type &b, iteration &iter)
-      { gmres(SAM, x, b,  identity_matrix(), 50, iter); }
-  };
-
-  template <typename Matrix1, typename Matrix2, typename Precond,
-	    typename local_solver>
-  struct sa_global_bicgstab {
-    typedef typename linalg_traits<Matrix1>::value_type value_type;
-    typedef typename std::vector<value_type> vector_type;
-
-    static void solve(const schwadd_mat<Matrix1, Matrix2, Precond,
-		      local_solver> &SAM,
-		      vector_type &x, const vector_type &b, iteration &iter)
-      { bicgstab(SAM, x, b,  identity_matrix(), iter); }
-  };
-
- 
-
-  /* ******************************************************************** */
-  /*		Additive Schwarz algorithm                                */
-  /* ******************************************************************** */
-
-  template <typename Matrix1, typename Matrix2,
-	    typename Vector2, typename Vector3, typename Precond,
-	    typename local_solver, typename global_solver>
-  int sequential_additive_schwarz(const Matrix1 &A, Vector3 &uu,
-				 const Vector2 &f, 
-				 const Precond &P,
-				 const std::vector<Matrix2> &vB,
-				 iteration &iter, const local_solver&,
-				 const global_solver&) {
-
-    typedef typename linalg_traits<Matrix1>::value_type value_type;
-    typedef typename std::vector<value_type> vector_type;
-
-    iter.set_rhsnorm(vect_norm2(f));
-    if (iter.get_rhsnorm() == 0.0) { clear(uu); return 0; }
-    iteration iter2 = iter; iter2.reduce_noisy();
-
-    size_type nb_sub = vB.size(), nb_dof = f.size(), itebilan = 0;
-    std::vector<Matrix2> vAloc(nb_sub);
-    std::vector<vector_type> gi(nb_sub), fi(nb_sub);
-    std::vector<Precond> precond1(nb_sub, P);
-    vector_type g(nb_dof), u(nb_dof);
-    gmm::copy(uu, u);
-
-    for (size_type i = 0; i < nb_sub; ++i) {
-      Matrix2 Maux(mat_nrows(vB[i]), mat_ncols(vB[i])),
-	BT(mat_ncols(vB[i]), mat_nrows(vB[i]));
-      
-      gmm::copy(gmm::transposed(vB[i]), BT);
-      gmm::resize(vAloc[i], mat_nrows(vB[i]), mat_nrows(vB[i]));      
-      gmm::mult(vB[i], A, Maux);
-      gmm::mult(Maux, BT, vAloc[i]);
-      precond1[i].build_with(vAloc[i]);
-      gmm::resize(fi[i], mat_nrows(vB[i]));
-      gmm::resize(gi[i], mat_nrows(vB[i]));
-      gmm::mult(vB[i], f, fi[i]);
-      iter2.init();
-      local_solver::solve(vAloc[i], gi[i], fi[i], precond1[i], iter2);
-      itebilan = std::max(itebilan, iter2.get_iteration());
-      gmm::mult(gmm::transposed(vB[i]), gi[i], g, g);
+  int solve(void) {
+    switch (solver) {
+    case 0 : return solve_cg();  
+    case 1 : return solve_schwarz(1); 
+    case 2 : return solve_schwarz(2); 
     }
+    return -1;
+  }
 
-    schwadd_mat<Matrix1, Matrix2, Precond, local_solver>
-      SAM(A, vB, vAloc, iter2, iter.get_resmax(), itebilan, gi, fi, precond1);
-    global_solver::solve(SAM, u, g, iter);
-    gmm::copy(u, uu);
-    return SAM.itebilan;
+  pb_data(void) : mef_coarse(mesh_coarse), mef(mesh), mef_data(mesh) {}
+};
+
+ftool::md_param PBSTFR_PARAM;
+double gravity = 9.81, prho = 1.0;
+
+
+base_vector second_membre(const base_node &x) {
+  int N = x.size();
+  base_vector res(N);
+  double z = 0; for (int i = 0; i < N-1; i++) z += x[i];
+  res.fill(0.0); res[N-1] = -prho*gravity;
+  return res;
+}
+
+void pb_data::init(void) {
+  dal::bit_vector nn;
+  int i, j, k;
+
+  /***********************************************************************/
+  /*  READING PARAMETER FILE.                                            */
+  /***********************************************************************/
+  
+  /* parametres physiques */
+  N = PBSTFR_PARAM.int_value("N", "Dimension");
+  mu = PBSTFR_PARAM.real_value("MU", "Stiffness parameter mu");
+  PG = PBSTFR_PARAM.real_value("PG", "G");
+  prho = rho = PBSTFR_PARAM.real_value("RHO", "RHO");
+  gravity = PG * rho;
+  lambda = PBSTFR_PARAM.real_value("LAMBDA", "lambda");
+  D.resize(N); D.fill(0.0);
+  D[N-1] = PBSTFR_PARAM.real_value("D", "Dirichlet condition");
+  
+  /* parametres numeriques */
+  LX = PBSTFR_PARAM.real_value("LX", "Size in X");
+  LY = PBSTFR_PARAM.real_value("LY", "Size in Y");
+  LZ = PBSTFR_PARAM.real_value("LZ", "Size in Y");
+  NX = PBSTFR_PARAM.int_value("NX", "Nomber of space step ");
+  NXCOARSE = PBSTFR_PARAM.int_value("NXCOARSE", "Nombre of space step ");
+  USECOARSE = PBSTFR_PARAM.int_value("USECOARSE", "Coarser mesh or not");
+  residu = PBSTFR_PARAM.real_value("RESIDU", "residu");
+  overlap = PBSTFR_PARAM.real_value("OVERLAP", "overlap");
+  K = PBSTFR_PARAM.int_value("K", "Degree");
+  solver = PBSTFR_PARAM.int_value("SOLVER", "solver");
+  nsdm.resize(std::max(3, N));
+  nsdm[0] = PBSTFR_PARAM.int_value("NSDMX", "Nomber of sub-domains");
+  nsdm[1] = PBSTFR_PARAM.int_value("NSDMY", "Nombre of sub-domains");
+  nsdm[2] = PBSTFR_PARAM.int_value("NSDMZ", "Nombre of sub-domains");
+  for (int i = 3; i < N; ++i) nsdm[i] = nsdm[2];
+  
+  datafilename = std::string(PBSTFR_PARAM.string_value("ROOTFILENAME",
+			     "file name"));
+  std::string meshname(PBSTFR_PARAM.string_value("MESHNAME",
+			     "mesh file name"));
+  std::cout << "\n\n";
+
+  /***********************************************************************/
+  /*  BUILDING MESH.                                                     */
+  /***********************************************************************/
+
+  std::cout << "building mesh\n";
+
+  if (meshname.size() > 0) {
+    mesh.read_from_file(meshname);
+  }
+  else {
+    base_node org(N); org.fill(0.0);
+    std::vector<bgeot::base_small_vector> vtab(N);
+    std::vector<size_type> ref(N); std::fill(ref.begin(), ref.end(), NX);
+    for (i = 0; i < N; i++)
+    { 
+      vtab[i] = bgeot::base_small_vector(N); vtab[i].fill(0.0);
+      (vtab[i])[i] = ((i == 0) ? LX : ((i == 1) ? LY : LZ)) / scalar_type(NX);
+    }
+    getfem::parallelepiped_regular_simplex_mesh(mesh, N, org,
+						&(vtab[0]), &(ref[0]));
+  }
+
+
+
+  {
+    base_node org(N); org.fill(0.0);
+    std::vector<bgeot::base_small_vector> vtab(N);
+    std::vector<size_type> ref(N); std::fill(ref.begin(), ref.end(), NXCOARSE);
+    for (i = 0; i < N; i++)
+    { 
+      vtab[i] = bgeot::base_small_vector(N); vtab[i].fill(0.0);
+      (vtab[i])[i] = 
+	((i == 0) ? LX : ((i == 1) ? LY : LZ)) / scalar_type(NXCOARSE);
+    }
+    getfem::parallelepiped_regular_simplex_mesh(mesh_coarse, N, org,
+						&(vtab[0]), &(ref[0]));
   }
   
-  template <typename Matrix1, typename Matrix2, typename Precond,
-	    typename Vector2, typename Vector3, typename local_solver>
-  void mult(const schwadd_mat<Matrix1, Matrix2, Precond, local_solver> &M,
-	    const Vector2 &p, Vector3 &q) {
+  mesh.trans_of_convex(0);
+  mesh.optimize_structure();
 
-    size_type itebilan = 0, nb_sub = M.fi->size();
-    mult(*(M.A), p, q);
-    globaltolocal(q, *(M.fi), *(M.vB));
-    for (size_type i = 0; i < nb_sub; ++i) {
-      M.iter.init();
-      local_solver::solve((*(M.vAloc))[i], (*(M.gi))[i],
-			  (*(M.fi))[i],(*(M.precond1))[i],M.iter);
-      itebilan = std::max(itebilan, M.iter.get_iteration());
-    }
-    localtoglobal(*(M.gi), q, *(M.vB));
-    cout << "itebloc = " << itebilan << endl;
-    M.itebilan += itebilan;
-    M.iter.set_resmax((M.iter.get_resmax() + M.residu) * 0.5);
-  }
-
-  template <typename Matrix1, typename Matrix2, typename Precond,
-	    typename Vector2, typename Vector3, typename Vector4,
-	    typename local_solver>
-  void mult(const schwadd_mat<Matrix1, Matrix2, Precond, local_solver> &M,
-	    const Vector2 &p, const Vector3 &p2, Vector4 &q)
-  { mult(M, p, q); add(p2, q); }
-
-  template <typename Matrix2, typename Vector2, typename Vector3>
-  void globaltolocal(const Vector2 &f, std::vector<Vector3> &fi,
-		       const std::vector<Matrix2> &vB) {
-    for (size_type i = 0; i < fi.size(); ++i) gmm::mult(vB[i], f, fi[i]);
-  }
-
-  template <typename Matrix2, typename Vector2, typename Vector3>
-  void localtoglobal(const std::vector<Vector3> &fi, Vector2 &f, 
-		     const std::vector<Matrix2> &vB) {
-    gmm::clear(f);
-    for (size_type i = 0; i < fi.size(); ++i)
-      gmm::mult(gmm::transposed(vB[i]), fi[i], f, f);
-  }
-
-
-  /* ******************************************************************** */
-  /*		Interface for local and global solvers.                   */
-  /* ******************************************************************** */
-
-  template <typename Matrix1, typename Matrix2, typename Vector2,
-	    typename Vector3, typename Precond, typename local_solver>
-  int sequential_additive_schwarz_pr(const Matrix1 &A, Vector3 &u,
-      const Vector2 &f, const Precond &P, const std::vector<Matrix2> &vB,
-      iteration &iter, const local_solver& LS, const using_cg&) {
-    return sequential_additive_schwarz(A, u, f, P, vB, iter, LS,
-		   sa_global_cg<Matrix1, Matrix2, Precond, local_solver>());
-  }
-
-  template <typename Matrix1, typename Matrix2, typename Vector2,
-	    typename Vector3, typename Precond, typename local_solver>
-  int sequential_additive_schwarz_pr(const Matrix1 &A, Vector3 &u,
-      const Vector2 &f, const Precond &P, const std::vector<Matrix2> &vB,
-      iteration &iter, const local_solver& LS, const using_gmres&) {
-    return sequential_additive_schwarz(A, u, f, P, vB, iter, LS,
-	        sa_global_gmres<Matrix1, Matrix2, Precond, local_solver>());
-  }
-
-  template <typename Matrix1, typename Matrix2, typename Vector2,
-	    typename Vector3, typename Precond, typename local_solver>
-  int sequential_additive_schwarz_pr(const Matrix1 &A, Vector3 &u,
-      const Vector2 &f, const Precond &P, const std::vector<Matrix2> &vB,
-      iteration &iter, const local_solver& LS, const using_bicgstab&) {
-    return sequential_additive_schwarz(A, u, f, P, vB, iter, LS,
-	     sa_global_bicgstab<Matrix1, Matrix2, Precond, local_solver>());
-  }
-
-#ifdef GMM_USES_SUPERLU
-    template <typename Matrix1, typename Matrix2, typename Vector2,
-	    typename Vector3, typename Precond, typename local_solver>
-  int sequential_additive_schwarz_pr(const Matrix1 &A, Vector3 &u,
-      const Vector2 &f, const Precond &P, const std::vector<Matrix2> &vB,
-      iteration &iter, const local_solver& LS, const using_superlu&) {
-      DAL_THROW(failure_error,
-      "You cannot use SuperLU as global solver in additive Schwarz meethod");
-      return 0;
-  }
-#endif
-
-  template <typename Matrix1, typename Matrix2, typename Vector2,
-	    typename Vector3, typename Precond, typename global_solver>
-  int sequential_additive_schwarz(const Matrix1 &A, Vector3 &u,
-      const Vector2 &f, const Precond &P, const std::vector<Matrix2> &vB,
-      iteration &iter, const using_gmres&, const global_solver& GS) {
-    return sequential_additive_schwarz_pr(A, u, f, P, vB, iter,
-			  sa_local_gmres<Matrix1, Precond>(), GS);
-  }
-
-  template <typename Matrix1, typename Matrix2, typename Vector2,
-	    typename Vector3, typename Precond, typename global_solver>
-  int sequential_additive_schwarz(const Matrix1 &A, Vector3 &u,
-      const Vector2 &f, const Precond &P, const std::vector<Matrix2> &vB,
-      iteration &iter, const using_cg&, const global_solver& GS) {
-    return sequential_additive_schwarz_pr(A, u, f, P, vB, iter,
-			  sa_local_cg<Matrix1, Precond>(), GS);
-  }
-
-  template <typename Matrix1, typename Matrix2, typename Vector2,
-	    typename Vector3, typename Precond, typename global_solver>
-  int sequential_additive_schwarz(const Matrix1 &A, Vector3 &u,
-      const Vector2 &f, const Precond &P, const std::vector<Matrix2> &vB,
-      iteration &iter, const using_bicgstab&, const global_solver& GS) {
-    return sequential_additive_schwarz_pr(A, u, f, P, vB, iter,
-			  sa_local_bicgstab<Matrix1, Precond>(), GS);
-  }
-
-#ifdef GMM_USES_SUPERLU
-
-  template <typename Matrix1, typename Matrix2, typename Vector2,
-	    typename Vector3, typename Precond, typename global_solver>
-  int sequential_additive_schwarz(const Matrix1 &A, Vector3 &u,
-      const Vector2 &f, const Precond &P, const std::vector<Matrix2> &vB,
-      iteration &iter, const using_superlu&, const global_solver& GS) {
-    typedef typename linalg_traits<Matrix1>::value_type value_type;
-    return sequential_additive_schwarz_pr(A, u, f,SuperLU_factor<value_type>(),
-	  vB, iter, sa_local_superlu<Matrix1, SuperLU_factor<value_type> >(),
-	  GS);
-  }
-
-#endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  /* ******************************************************************** */
-  /*		Old version, obsolete.                                    */
-  /* ******************************************************************** */
-
-  #define PRECOND ildltt_precond
-
-  template <typename Matrix1, typename Matrix2, typename Matrix3,
-	    typename SUBI>
-  struct schwarz_additif_matrix {
-    typedef typename linalg_traits<Matrix2>::value_type value_type;
-    typedef typename dense_vector_type<value_type>::vector_type vector_type; 
-    const Matrix1 *A;
-    const std::vector<Matrix2> *ml1;
-    const std::vector<Matrix3> *ml2;
-    const std::vector<SUBI> *cor;
-    mutable iteration iter;
-    double residu;
-    mutable size_t itebilan;
-    std::vector<vector_type> *gi;
-    std::vector<vector_type> *fi;
-    
-    std::vector<PRECOND<Matrix2> > *precond1;
-    std::vector<PRECOND<Matrix3> > *precond2;
-
-  };
-
-  template <typename Matrix1, typename Matrix2, typename Matrix3,
-	    typename SUBI,    typename Vector2, typename Vector3>
-  int schwarz_additif(const Matrix1 &A, Vector3 &u,
-		      const std::vector<Matrix2> &ml1,
-		      const std::vector<Matrix3> &ml2,
-		      const std::vector<SUBI> &cor,
-		      const Vector2 &f,
-		      iteration &iter) {
-
-    typedef typename linalg_traits<Matrix2>::value_type value_type;
-    typedef typename dense_vector_type<value_type>::vector_type vector_type;
-
-    size_type nb_sub = ml1.size() + ml2.size();
-    size_t itebilan = 0;
-    std::vector<vector_type> gi(nb_sub);
-    std::vector<vector_type> fi(nb_sub);
-    
-    std::vector<PRECOND<Matrix2> > precond1(ml1.size());
-    std::vector<PRECOND<Matrix3> > precond2(ml2.size());
-
-    for (size_type i = 0; i < ml1.size(); ++i)
-      precond1[i] = PRECOND<Matrix2>(ml1[i], 10, 1E-7);
-    for (size_type i = 0; i < ml2.size(); ++i)
-      precond2[i] = PRECOND<Matrix3>(ml2[i], 10, 1E-7);
-
-    iter.set_rhsnorm(vect_norm2(f));
-    if (iter.get_rhsnorm() == 0.0) { clear(u); return 0; }
-
-    size_type ms = ml1.size();
-
-    for (size_type i = 0; i < nb_sub; ++i) {
-      size_type k = i < ms ? mat_nrows(ml1[i]) : mat_nrows(ml2[i-ms]);
-      fi[i] = gi[i] = vector_type(k);
-      clear(gi[i]);
-    }
-
-    size_type nb_dof = f.size();
-    global_to_local(f, fi, cor);
-
-    iteration iter2 = iter;
-    iter2.reduce_noisy();
-
-    for (size_type i = 0; i < ms; ++i) {
-      iter2.init();
-      cg(ml1[i], gi[i], fi[i], identity_matrix(), precond1[i], iter2);
-      itebilan = std::max(itebilan, iter2.get_iteration());
-    }
-    for (size_type i = 0; i < ml2.size(); ++i) {
-      iter2.init();
-      cg(ml2[i], gi[i+ms], fi[i+ms],
-	 identity_matrix(), precond2[i], iter2);
-      itebilan = std::max(itebilan, iter2.get_iteration());
-    }
-
-    vector_type g(nb_dof);
-    local_to_global(gi, g, cor);
-    
-    schwarz_additif_matrix<Matrix1, Matrix2, Matrix3, SUBI> SAM;
-    SAM.A = &A; SAM.ml1 = &ml1; SAM.ml2 = &ml2; SAM.cor = &cor;
-    SAM.precond1 = &precond1; SAM.precond2 = &precond2; 
-    iter2.init();
-    SAM.iter = iter2;
-    SAM.residu = iter.get_resmax();
-    // SAM.residu_act = 1E-2;
-    SAM.gi = &gi; SAM.fi = &fi; SAM.itebilan = itebilan;
-   
-    cg(SAM, u, g, A, identity_matrix(), iter);
-
-    return SAM.itebilan;
-  }
+  nn = mesh.convex_index(N);
+  char method[500];
+  sprintf(method, "IM_EXACT_SIMPLEX(%d)", N);
+  getfem::pintegration_method ppi = getfem::int_method_descriptor(method);
   
-  template <typename Matrix1, typename Matrix2, typename Matrix3,
-	    typename SUBI,    typename Vector2, typename Vector3>
-  void mult(const schwarz_additif_matrix<Matrix1, Matrix2, Matrix3, SUBI> &M,
-	    const Vector2 &p, Vector3 &q) {
+  sprintf(method, "FEM_PK(%d, %d)", N, K);
+  mef.set_finite_element(nn, getfem::fem_descriptor(method), ppi);
+  mef_coarse.set_finite_element(mesh_coarse.convex_index(N),
+				getfem::fem_descriptor(method), ppi);
+  sprintf(method, "FEM_PK(%d, %d)", N, K);
+  mef_data.set_finite_element(nn, getfem::fem_descriptor(method), ppi);
+  mef.set_qdim(N);
+  mef_coarse.set_qdim(N);
 
-    size_type itebilan = 0;
-    size_type ms = (M.ml1)->size();
-    mult(*(M.A), p, q);
-    global_to_local(q, *(M.fi), *(M.cor));
-    for (size_type i = 0; i < (M.ml1)->size(); ++i) {
-      M.iter.init();
-      cg((*(M.ml1))[i], (*(M.gi))[i], (*(M.fi))[i],(*(M.precond1))[i], M.iter);
-      itebilan = std::max(itebilan, M.iter.get_iteration());
-    }
-
-    for (size_type i = 0; i < (M.ml2)->size(); ++i) {
-      M.iter.init();
-      cg((*(M.ml2))[i],(*(M.gi))[i+ms], (*(M.fi))[i+ms], (*(M.precond2))[i],
-	 M.iter);
-      itebilan = std::max(itebilan, M.iter.get_iteration());
-    }
-
-    local_to_global(*(M.gi), q, *(M.cor));
-    cout << "itebloc = " << itebilan << endl;
-    M.itebilan += itebilan;
-    M.iter.set_resmax((M.iter.get_resmax() + M.residu) * 0.5);
-  }
-
-  template <typename Matrix1, typename Matrix2, typename Matrix3,
-	    typename SUBI,    typename Vector2, typename Vector3,
-	    typename Vector4>
-  void mult(const schwarz_additif_matrix<Matrix1, Matrix2, Matrix3, SUBI> &M,
-	    const Vector2 &p, const Vector3 &p2, Vector4 &q)
-  { mult(M, p, q); add(p2, q); }
-
-  template <typename SUBI, typename Vector2, typename Vector3>
-  void global_to_local(const Vector2 &f, std::vector<Vector3> &fi,
-		       const std::vector<SUBI> &cor) {
-    for (size_type i = 0; i < fi.size(); ++i) {
-      typename linalg_traits<Vector3>::iterator it2 = fi[i].begin();
-      for (size_type j = 0, l = cor[i].size(); j < l; ++j , ++it2)
-        *it2 = f[cor[i].index(j)];
-    }
-  }
-
-  template <typename SUBI, typename Vector2, typename Vector3>
-  void local_to_global(const std::vector<Vector3> &fi, Vector2 &f, 
-		       const std::vector<SUBI> &cor) {
-    clear(f);
-    for (size_type i = 0; i < fi.size(); ++i) {
-      typename linalg_traits<Vector3>::const_iterator it2=fi[i].begin();
-      for (size_type j = 0, l = cor[i].size(); j < l; ++j, ++it2) {
-	f[cor[i].index(j)] += *it2;
+  nn = mesh.convex_index(N);
+  base_vector un(N);
+  for (j << nn; j >= 0; j << nn) {
+    k = mesh.structure_of_convex(j)->nb_faces();
+    for (i = 0; i < k; i++) {
+      if (bgeot::neighbour_of_convex(mesh, j, i).empty()) {
+	gmm::copy(mesh.normal_of_face_of_convex(j, i, 0), un);
+	un /= bgeot::vect_norm2(un);	
+	if (dal::abs(un[N-1] - 1.0) < 1.0E-3)
+	  mef.add_boundary_elt(0, j, i);
       }
     }
   }
-
-
 }
 
+void pb_data::assemble(void) {
+  size_type nb_dof = mef.nb_dof();
+  std::cout << "number of dof : "<< nb_dof << endl;
+  size_type nb_dof_data = mef_data.nb_dof();
+  dal::bit_vector ddlD = mef.dof_on_boundary(0);
+ 
+  F = linalg_vector(nb_dof);
+  gmm::clear(F);
+  U = linalg_vector(nb_dof);
+  gmm::clear(U);
+  RM = symmetric_sparse_matrix(nb_dof, nb_dof);
 
-#endif //  GMM_SOLVERS_SCHWARZ_ADDITIVE_H__
+  std::cout << "Assembly of stiffness matrix" << endl;
+
+  linalg_vector STLA(nb_dof_data), STG(nb_dof_data);
+  std::fill(STLA.begin(), STLA.end(), lambda);
+  std::fill(STG.begin(), STG.end(), mu);
+  getfem::asm_stiffness_matrix_for_linear_elasticity(RM,mef,mef_data,STLA,STG);
+
+  std::cout << "Assembly of source term" << endl;
+  linalg_vector STF(N * nb_dof_data);
+  for (size_type j = 0; j < nb_dof_data; j++)
+    for (int k = 0; k < N; k++)
+      STF[j*N + k] = (second_membre(mef_data.point_of_dof(j)))[k];
+  getfem::asm_source_term(F, mef, mef_data, STF);
+  
+  linalg_vector UD(nb_dof);
+  for (size_type j = 0; j < nb_dof/N; j++)
+    for (size_type k = 0; k < size_type(N); k++) UD[j*N + k] = D[k];
+
+  getfem::assembling_Dirichlet_condition(RM, F, mef, 0, UD);
+}
+
+std::vector<size_type> extract_sub_domain(const getfem::getfem_mesh &mesh,
+					  getfem::mesh_fem &mef,
+					  const base_vector &min,
+					  const base_vector &max) {
+  size_type i, j;
+  const base_node *pt;
+  dal::bit_vector mm = mesh.convex_index(), nn;
+  for (i << mm; i != size_type(-1); i << mm) {
+    bool in = false;
+    for (j = 0; j < mesh.nb_points_of_convex(i) && !in; ++j) {
+      pt = &(mesh.points_of_convex(i)[j]);
+      in = true;
+      for (size_type k = 0; k < pt->size(); ++k)
+	if ((*pt)[k] <  min[k] || (*pt)[k] > max[k])
+	  { in = false; break; }
+    }
+    if (in) {
+      for (j = 0; j < mef.nb_dof_of_element(i); ++j)
+	nn.add(mef.ind_dof_of_element(i)[j]);
+    }
+  }
+  std::vector<size_type> res(nn.card());
+  for (i << nn, j = 0; i != size_type(-1); i << nn, ++j) res[j] = i;
+  return res;
+}
+
+int pb_data::solve_cg(void) {
+  gmm::iteration iter(residu, 1, 1000000);
+  gmm::ildltt_precond<general_sparse_matrix> P(RM, 10, 1E-7);
+  gmm::cg(RM, U, F, gmm::identity_matrix(), P, iter);
+  return iter.get_iteration();
+}
+
+int pb_data::solve_schwarz(int version) {
+  size_type nsd = 1, nb_dof = gmm::mat_nrows(RM);
+  for (int i = 0; i < N; ++i) nsd *= nsdm[i];
+  std::vector<scalar_type> L(N);
+  L[0] = LX; if (N >= 1) L[1] = LY;
+  for (int i = 2; i < N; ++i) L[i] = LZ;
+
+  cout << "Nomber of sub-domains = " << nsd + (USECOARSE != 0) << endl;
+
+  std::vector< gmm::sub_index > index_tab(nsd);
+  std::vector<general_sparse_matrix> vB(nsd+1);
+
+  std::vector<size_type> ind(N);
+  std::fill(ind.begin(), ind.end(), 0);
+  for ( size_type n = 0; n < nsd; ++n) {
+
+    base_vector min(N), max(N);
+    for (int i = 0; i < N; ++i) {
+      min[i] = (L[i] / nsdm[i]) * (ind[i] - overlap); 
+      max[i] = (L[i] / nsdm[i]) * (ind[i] + 1.0 + overlap);
+    }
+    std::vector<size_type> sd = extract_sub_domain(mesh, mef, min, max);
+    gmm::resize(vB[n], sd.size(), nb_dof);
+
+    for (size_type i = 0; i < sd.size(); ++i)
+      vB[n](i, sd[i]) = 1.0;
+  
+    for (int i = 0; i < N; ++i) {
+      (ind[i])++;
+      if (ind[i] == nsdm[i]) { ind[i] = 0; } else break;
+    }
+  }
+  
+  if (USECOARSE) {
+    cout << "interpolation coarse mesh\n";
+    size_type nb_dof_coarse = mef_coarse.nb_dof();
+    gmm::resize(vB[nsd], nb_dof_coarse, nb_dof);
+    general_sparse_matrix aux(nb_dof, nb_dof_coarse);
+    getfem::interpolation_solution(mef_coarse, mef, aux);
+    gmm::copy(gmm::transposed(aux), vB[nsd]);
+  }
+  else resize(vB, nsd);
+  
+  gmm::iteration iter(residu, 1, 1000000);
+  switch (version) {
+  case 1 :
+    return gmm::sequential_additive_schwarz(RM, U, F,
+	      gmm::ildltt_precond<general_sparse_matrix>(10, 1E-7), vB, iter,
+					gmm::using_cg(), gmm::using_cg());
+  case 2 :
+    return gmm::sequential_additive_schwarz(RM, U, F,
+	      gmm::ilut_precond<general_sparse_matrix>(10, 1E-7), vB, iter,
+				     gmm::using_gmres(), gmm::using_gmres());
+  }
+
+  return 0;
+}
+
+  
+class exception_cb : public dal::exception_callback  {
+   public:
+   virtual void callback(const std::string& msg)
+   { cerr << msg << endl; *(int *)(0) = 0; } 
+};
+
+int main(int argc, char *argv[])
+{
+   exception_cb cb;
+   dal::exception_callback::set_exception_callback(&cb);
+
+  try {
+    pb_data p;
+    
+    std::cout << "initialization ...\n";
+    PBSTFR_PARAM.read_command_line(argc, argv);
+    p.init();
+    p.mesh.stat();
+    
+    p.assemble();
+
+    double rutime = ftool::uclock_sec();
+    int itebilan = p.solve();
+    std::cout << "resolution time : " << ftool::uclock_sec() - rutime << endl;
+
+    cout << "itebilan = " << itebilan << endl;
+
+    gmm::mult(p.RM, gmm::scaled(p.U, -1.0), p.F, p.F);
+    cout << "final residu : " << gmm::vect_norm2(p.F) << endl;
+
+  }
+  DAL_STANDARD_CATCH_ERROR;
+  return 0;
+}

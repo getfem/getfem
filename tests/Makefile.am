@@ -11,7 +11,7 @@ check_PROGRAMS = \
 	integration        \
 	laplacian          \
 	poly               \
-	scwarz_additive    \
+	schwarz_additive    \
 	speed_test_for_gmm \
 	test_assembly      \
 	test_int_set       \
