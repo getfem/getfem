@@ -1,0 +1,14 @@
+Liste d'erreurs 
+
+
+- Bibliothèques dynamiques et MATLAB :
+SYMPTOME : 
+ Avec le compilo MEX, et une fois compile, les commandes produisent l'erreur sous MATLAB : 
+
+Unable to load mex file: /home/gmmpc15/renard/source++/getfem++/matlabcom/new_mesh.mexglx.
+/home/gmmpc15/renard/source++/getfem++/matlabcom/new_mesh.mexglx: undefined symbol: 
+??? Invalid MEX-file
+
+with no symbol. 
+
+SOLUTION : Essayer de localiser l'endroit où est le problème. La fois ou ça s'est produit il a suffit d'enlever le corp d'une méthode de la classe pour résoudre le problème.
