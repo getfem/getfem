@@ -59,15 +59,15 @@ namespace getfem {
       for (size_type node_cnt=0; node_cnt < nb_node; ++node_cnt) {
 	size_type node_id;
         base_node n(3); n[0]=0.0; n[1]=0.1; n[2]=1e30;
-	cerr << "node " << node_cnt << std::flush;
+	//cerr << "node " << node_cnt << std::flush;
 	f >> node_id >> n[0] >> n[1] >> n[2];
-	cerr << " id=" << node_id << " n=" << n[0] << "," << n[1] << "," << n[2] << " m.dim() =" << int(m.dim()) << endl;
+	//cerr << " id=" << node_id << " n=" << n[0] << "," << n[1] << "," << n[2] << " m.dim() =" << int(m.dim()) << endl;
 	msh_node_2_getfem_node.add_to_index(m.add_point(n), node_id);
       }
       ftool::read_untill(f, "$ENDNOD");
       
       /* read the convexes */
-      cerr << "reading convexes..\n";
+      //cerr << "reading convexes..\n";
       ftool::read_untill(f, "$ELM");
       size_type nb_cv;
       f >> nb_cv;
@@ -76,7 +76,7 @@ namespace getfem {
       for (size_type cv=0; cv < nb_cv; ++cv) {
 	size_type cv_id, cv_type, cv_region, cv_dummy, cv_nb_nodes;
 	f >> cv_id >> cv_type >> cv_region >> cv_dummy >> cv_nb_nodes;
-	cerr << "convex " << cv << " id=" << cv_id << ", type=" << cv_type << ", nb_nodes=" << cv_nb_nodes << endl;
+	//cerr << "convex " << cv << " id=" << cv_id << ", type=" << cv_type << ", nb_nodes=" << cv_nb_nodes << endl;
 	cv_id--; /* numbering starts at 1 */
 	cv_nodes.resize(cv_nb_nodes);
 	for (size_type i=0; i < cv_nb_nodes; ++i) {
@@ -89,13 +89,13 @@ namespace getfem {
 	}
 	switch (cv_type) {
 	case 1: { /* LINE */
-	  cerr << "add line: cv_nodes = " << cv_nodes << endl;
-	  cerr << "pt0 = " << m.points()[0] << ", pt1=" << m.points()[1] << endl;
+	  //cerr << "add line: cv_nodes = " << cv_nodes << endl;
+	  //cerr << "pt0 = " << m.points()[0] << ", pt1=" << m.points()[1] << endl;
 	  m.add_segment(cv_nodes[0], cv_nodes[1]);
 	} break;
 	case 2: { /* TRIANGLE */
-	  cerr << "and triangle: cv_nodes = " << cv_nodes << endl;
-	  cerr << "pt0 = " << m.points()[0] << ", pt1=" << m.points()[1] << ", pt2=" << m.points()[2] << endl;
+	  //cerr << "and triangle: cv_nodes = " << cv_nodes << endl;
+	  //cerr << "pt0 = " << m.points()[0] << ", pt1=" << m.points()[1] << ", pt2=" << m.points()[2] << endl;
 	  m.add_triangle(cv_nodes[0], cv_nodes[1], cv_nodes[2]);
 	} break;
 	case 3: { /* QUADRANGLE */
@@ -162,7 +162,7 @@ namespace getfem {
 	  >> ftool::skip("ELEMTYPE") >> std::ws 
 	  >> selemtype 
 	  >> ftool::skip("NNODE") >> nnode;
-	cerr << "elem type = " << "'" << selemtype << "', nnode=" << nnode << endl;
+	//cerr << "elem type = " << "'" << selemtype << "', nnode=" << nnode << endl;
 	if (ftool::casecmp(selemtype, "linear")==0) { eltype = LIN;  }
 	else if (ftool::casecmp(selemtype, "triangle")==0) { eltype = TRI; }
 	else if (ftool::casecmp(selemtype, "quadrilateral")==0) { eltype = QUAD; }
@@ -176,7 +176,7 @@ namespace getfem {
 	  dal::dynamic_array<base_node> gid_nodes;
 	  dal::bit_vector gid_nodes_used;
 	  do {
-	    cerr << "reading coordinates " << int(f.tellg()) << "\n";
+	    //cerr << "reading coordinates " << int(f.tellg()) << "\n";
 	    std::string ls;
 	    f >> std::ws;
 	    std::getline(f,ls);
@@ -225,7 +225,7 @@ namespace getfem {
 	bgeot::pgeometric_trans pgt = NULL;
 	std::vector<size_type> order(nnode); // ordre de GiD cf http://gid.cimne.upc.es/support/gid_11.subst#SEC160
 	for (size_type i=0; i < nnode; ++i) order[i]=i;
-	cerr << "reading elements " << int(f.tellg()) << "\n";
+	//cerr << "reading elements " << int(f.tellg()) << "\n";
 	switch (eltype) {
 	case LIN: {
 	  if (nnode == 2) pgt = bgeot::simplex_geotrans(1,1);
@@ -298,7 +298,7 @@ namespace getfem {
 	  for (size_type i=0; i < nnode; ++i) {
 	    getfem_cv_nodes[i] = cv_nodes[order[i]];
 	  }
-	  cerr << "elt " << cv_id << ", " << getfem_cv_nodes << endl;
+	  //cerr << "elt " << cv_id << ", " << getfem_cv_nodes << endl;
 
 	  // envisager la "simplification" quand on a une transfo non 
 	  // lineaire mais que la destination est lineaire 

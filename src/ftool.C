@@ -84,7 +84,7 @@ namespace ftool
     while (!is.get(c).eof() && isspace(c)) /*continue*/;    
     for (i=0; t.s[i]; ++i) {
       if (i) is.get(c);
-      cerr << "skip " << t.s[i] << endl;
+      //cerr << "skip " << t.s[i] << endl;
       if (toupper(c) != toupper(t.s[i]) || is.eof()) DAL_THROW(dal::failure_error, "expected token '" << t.s << "' not found");
     }
     return is;
