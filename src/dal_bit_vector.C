@@ -154,6 +154,13 @@ namespace dal
     }
   }
 
+  bool bit_vector::contains(const dal::bit_vector& other) {
+    for (dal::bv_visitor i(other); !i.finished(); ++i) {
+      if (!(*this)[i]) return false;
+    }
+    return true;
+  }
+
   std::ostream &operator <<(std::ostream &o, const bit_vector &s) {
     o << "int set ";
     for (bv_visitor i(s); !i.finished(); ++i) o << " : " << bit_vector::size_type(i);

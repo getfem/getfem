@@ -299,6 +299,7 @@ namespace dal
       while (b != e) { add(*b++); }
       return *this;
     }
+    bool contains(const dal::bit_vector &other);
    
   /* ********************************************************************* */
   /*									   */
