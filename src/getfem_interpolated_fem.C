@@ -134,20 +134,20 @@ namespace getfem {
 	      already_numerate_dof(dim()));
   }
 
-  virtual size_type interpolated_fem::nb_dof(size_type cv) const
+  size_type interpolated_fem::nb_dof(size_type cv) const
   { if (context_changed()) build_fem(); return elements[cv].nb_dof; }
   
-  virtual size_type interpolated_fem::index_of_already_numerate_dof
+  size_type interpolated_fem::index_of_already_numerate_dof
   (size_type cv, size_type i) const
   { return dofnum[elements[cv].inddof[i]]; }
   
-  virtual bgeot::pconvex_ref interpolated_fem::ref_convex(size_type cv) const
+  bgeot::pconvex_ref interpolated_fem::ref_convex(size_type cv) const
   { return mf2.fem_of_element(cv)->ref_convex(cv); }
   
-  virtual const bgeot::convex<base_node> &interpolated_fem::node_convex
+  const bgeot::convex<base_node> &interpolated_fem::node_convex
   (size_type cv) const
   { return *(bgeot::generic_dummy_convex_ref(dim(), nb_dof(cv))); }
-  virtual bgeot::pstored_point_tab interpolated_fem::node_tab(size_type)
+  bgeot::pstored_point_tab interpolated_fem::node_tab(size_type)
     const { 
     if (!pspt_valid)
       { pspt = bgeot::store_point_tab(node_tab_); pspt_valid = true; }

@@ -101,7 +101,8 @@ namespace getfem {
   public :
 
     virtual size_type nb_dof(size_type cv) const;
-    virtual size_type index_of_already_numerate_dof(size_type cv, size_type i);
+    virtual size_type index_of_already_numerate_dof(size_type cv,
+						    size_type i) const;
     virtual bgeot::pconvex_ref ref_convex(size_type cv) const;
     virtual const bgeot::convex<base_node> &node_convex(size_type cv) const;
     virtual bgeot::pstored_point_tab node_tab(size_type) const;
