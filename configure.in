@@ -9,7 +9,7 @@ define([AC_CACHE_LOAD], )dnl
 define([AC_CACHE_SAVE], )dnl
 
 AC_INIT(config/install-sh)
-AC_PREREQ(2.50)
+AC_PREREQ(2.53)
 AC_ARG_PROGRAM
 AC_CONFIG_AUX_DIR([config])
 
