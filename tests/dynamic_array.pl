@@ -10,4 +10,6 @@ while (<F>) {
   }
 }
 if ($er == 1) { exit(1); }
+`dynamic_array`;
+if ($?) { exit(1); }
 

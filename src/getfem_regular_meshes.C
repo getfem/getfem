@@ -91,4 +91,43 @@ namespace getfem
     }
   }
 
+  void _parallelepiped_regular_mesh(getfem_mesh &me, dim_type N,
+    const base_node &org, const base_vector *ivect, const size_type *iref)
+  {
+    bgeot::convex<base_node>
+      pararef = bgeot::parallelepiped_of_reference<base_node>(N);
+    base_node a = org;
+    size_type i, nbpt = pararef.nb_points();
+
+    for (i = 0; i < nbpt; ++i)
+    {
+      a.fill(0.0);
+      for (dim_type n = 0; n < N; ++n)
+	a.addmul(pararef.points()[i][n], ivect[n]);
+      pararef.points()[i] = a;
+    }
+
+    std::vector<size_type> tab1(N+1), tab(N), tab3(nbpt);
+    size_type total = 0;
+    std::fill(tab.begin(), tab.end(), 0);
+    while (tab[N-1] != iref[N-1])
+    {
+      for (a = org, i = 0; i < N; i++) 
+	a.addmul(scalar_type(tab[i]), ivect[i]);
+
+      for (i = 0; i < nbpt; i++)
+	tab3[i] = me.add_point(a + pararef.points()[i]);
+
+      // me.add_convex(bgeot::parallelepiped_trans(N, 1), tab3.begin());
+     me.add_convex(bgeot::linear_product_trans(bgeot::simplex_trans(1, 1), bgeot::simplex_trans(1, 1)), tab3.begin()); 
+
+      for (i = 0; i < N; i++)
+      {
+	tab[i]++; total++;
+	if (i < N-1 && tab[i] >= iref[i]) { total -= tab[i]; tab[i] = 0; }
+	else break;
+      }
+    }
+  }
+
 }  /* end of namespace getfem.                                             */

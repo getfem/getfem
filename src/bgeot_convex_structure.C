@@ -342,7 +342,7 @@ namespace bgeot
 	  for (int l = 0; l < ls.cv2->nb_points(); l++)
 	  {
 	    (faces[i])[l*ls.cv1->nb_points_of_face(i)+j]
-	      = (ls.cv1->ind_points_of_face(i))[j] + l * ls.cv1->nb_points(); 
+	      = (ls.cv1->ind_points_of_face(i))[j] + l * ls.cv1->nb_points();
 	  }
       }
       for (int i = 0; i < ls.cv2->nb_faces(); i++)
@@ -441,9 +441,9 @@ namespace bgeot
       ost << "CONVEX "
 	  << number_of_convex_structure(_cv_pr_tab->table()[i])
 	  << "\t= PRODUCT "
-	  << number_of_convex_structure(_cv_pr_tab->light_table()[i].cv1)
+	  << int(number_of_convex_structure(_cv_pr_tab->light_table()[i].cv1))
 	  << " \t"
-	  << number_of_convex_structure(_cv_pr_tab->light_table()[i].cv2)
+	  << int(number_of_convex_structure(_cv_pr_tab->light_table()[i].cv2))
 	  << endl;
 
     ost << endl << "END CONVEX STRUCTURE DESCRIPTION" << endl;

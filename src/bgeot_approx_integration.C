@@ -374,6 +374,12 @@ namespace bgeot
   }
 
   /* ********************************************************************* */
+  /*                                                                       */
+  /*   Particular integration methods on dimension 2.                      */
+  /*                                                                       */
+  /* ********************************************************************* */
+
+  /* ********************************************************************* */
   /*   triangle1 :    Integration on a triangle of order 1 with 1 point    */
   /* ********************************************************************* */
 
@@ -387,6 +393,9 @@ namespace bgeot
     friend papprox_integration triangle5_approx_integration(void);
     friend papprox_integration triangle6_approx_integration(void);
     friend papprox_integration triangle7_approx_integration(void);
+    friend papprox_integration quad2_approx_integration(void);
+    friend papprox_integration quad3_approx_integration(void);    
+    friend papprox_integration quad5_approx_integration(void);
     friend papprox_integration tetrahedron1_approx_integration(void);
     friend papprox_integration tetrahedron2_approx_integration(void);
     friend papprox_integration tetrahedron3_approx_integration(void);
@@ -905,6 +914,182 @@ namespace bgeot
     return p;
   }
 
+  /* ********************************************************************* */
+  /* quad2 : Integration on quadrilaterals of order 2 with 3 points        */
+  /* ********************************************************************* */
+
+  papprox_integration quad2_approx_integration(void) {
+    static _particular_approx *p = NULL;
+    if (p == NULL)
+    {
+      const int NB_PER_VOL = 3;
+      const int NB_PER_FA  = 2;
+      const int NB_FA = 4;
+      const int dim = 2;
+      std::vector<base_node> ptab(NB_PER_VOL + NB_PER_FA * NB_FA);
+      base_vector nullpt(dim); nullpt.fill(0);
+      std::fill(ptab.begin(), ptab.end(), nullpt);
+      p = new _particular_approx;
+      p->cvs = parallelepiped_structure(dim);
+      p->repartition.resize(NB_FA+1);
+      p->int_coeffs.resize(ptab.size());
+      std::vector<base_node>::iterator itp = ptab.begin();
+      std::vector<scalar_type>::iterator itc = p->int_coeffs.begin(); 
+
+      // volume
+      *itp++ = base_vector(0.5 + ::sqrt(1.0/6.0), 0.5);
+      *itc++ = 1.0 / 3.0;
+      *itp++ = base_vector(0.5 - ::sqrt(1.0/24.0), 0.5 + ::sqrt(1.0/8.0));
+      *itc++ = 1.0 / 3.0;
+      *itp++ = base_vector(0.5 - ::sqrt(1.0/24.0), 0.5 - ::sqrt(1.0/8.0));
+      *itc++ = 1.0 / 3.0;
+      p->repartition[0] = NB_PER_VOL;
+
+      
+      double a = 0.5 + ::sqrt(1.0/3.0) * 0.5;
+      double b = 0.5 - ::sqrt(1.0/3.0) * 0.5;
+      for (int i = 0; i < NB_FA; ++i) {
+	int i1 = (i < 2) ? 1 : 0;
+	(*itp)[i1] = a; 
+	(*itp)[1 - i1] = scalar_type(1 - (i & 1)); ++itp;
+	*itc++ = 0.5;
+	(*itp)[i1] = b; 
+	(*itp)[1 - i1] = scalar_type(1 - (i & 1)); ++itp;
+	*itc++ = 0.5;
+
+	p->repartition[i+1] = p->repartition[i] + NB_PER_FA;
+      }
+
+      p->pint_points = store_point_tab(ptab);
+      if (itp != ptab.end()) DAL_THROW(internal_error, "internal error");
+    }
+    return p;
+  }
+
+  /* ********************************************************************* */
+  /* quad3 : Integration on quadrilaterals of order 3 with 4 points        */
+  /* ********************************************************************* */
+
+  papprox_integration quad3_approx_integration(void) {
+    static _particular_approx *p = NULL;
+    if (p == NULL)
+    {
+      const int NB_PER_VOL = 4;
+      const int NB_PER_FA  = 2;
+      const int NB_FA = 4;
+      const int dim = 2;
+      std::vector<base_node> ptab(NB_PER_VOL + NB_PER_FA * NB_FA);
+      base_vector nullpt(dim); nullpt.fill(0);
+      std::fill(ptab.begin(), ptab.end(), nullpt);
+      p = new _particular_approx;
+      p->cvs = parallelepiped_structure(dim);
+      p->repartition.resize(NB_FA+1);
+      p->int_coeffs.resize(ptab.size());
+      std::vector<base_node>::iterator itp = ptab.begin();
+      std::vector<scalar_type>::iterator itc = p->int_coeffs.begin(); 
+
+      // volume
+      *itp++ = base_vector(0.5 + ::sqrt(2.0/12.0), 0.5);
+      *itc++ = 0.25;
+      *itp++ = base_vector(0.5 - ::sqrt(2.0/12.0), 0.5);
+      *itc++ = 0.25;
+      *itp++ = base_vector(0.5, 0.5 + ::sqrt(2.0/12.0));
+      *itc++ = 0.25;
+      *itp++ = base_vector(0.5, 0.5 - ::sqrt(2.0/12.0));
+      *itc++ = 0.25;
+      p->repartition[0] = NB_PER_VOL;
+
+      
+      double a = 0.5 + ::sqrt(1.0/3.0) * 0.5;
+      double b = 0.5 - ::sqrt(1.0/3.0) * 0.5;
+      for (int i = 0; i < NB_FA; ++i) {
+	int i1 = (i < 2) ? 1 : 0;
+	(*itp)[i1] = a; 
+	(*itp)[1 - i1] = scalar_type(1 - (i & 1)); ++itp;
+	*itc++ = 0.5;
+	(*itp)[i1] = b; 
+	(*itp)[1 - i1] = scalar_type(1 - (i & 1)); ++itp;
+	*itc++ = 0.5;
+
+	p->repartition[i+1] = p->repartition[i] + NB_PER_FA;
+      }
+
+      p->pint_points = store_point_tab(ptab);
+      if (itp != ptab.end()) DAL_THROW(internal_error, "internal error");
+    }
+    return p;
+  }
+
+
+  /* ********************************************************************* */
+  /* quad5 : Integration on quadrilaterals of order 5 with 7 points        */
+  /* ********************************************************************* */
+
+  papprox_integration quad5_approx_integration(void) {
+    static _particular_approx *p = NULL;
+    if (p == NULL)
+    {
+      const int NB_PER_VOL = 7;
+      const int NB_PER_FA  = 3;
+      const int NB_FA = 4;
+      const int dim = 2;
+      std::vector<base_node> ptab(NB_PER_VOL + NB_PER_FA * NB_FA);
+      base_vector nullpt(dim); nullpt.fill(0);
+      std::fill(ptab.begin(), ptab.end(), nullpt);
+      p = new _particular_approx;
+      p->cvs = parallelepiped_structure(dim);
+      p->repartition.resize(NB_FA+1);
+      p->int_coeffs.resize(ptab.size());
+      std::vector<base_node>::iterator itp = ptab.begin();
+      std::vector<scalar_type>::iterator itc = p->int_coeffs.begin(); 
+
+      // volume
+      *itp++ = base_vector(0.5, 0.5);
+      *itc++ = 2.0 / 7.0;
+      *itp++ = base_vector(0.5, 0.5 + ::sqrt(14.0/60.0));
+      *itc++ = 5.0 / 63.0;
+      *itp++ = base_vector(0.5, 0.5 - ::sqrt(14.0/60.0));
+      *itc++ = 5.0 / 63.0;
+      *itp++ = base_vector(0.5 + ::sqrt(3.0/20.0), 0.5 + ::sqrt(3.0/20.0));
+      *itc++ = 5.0 / 36.0;
+      *itp++ = base_vector(0.5 - ::sqrt(3.0/20.0), 0.5 + ::sqrt(3.0/20.0));
+      *itc++ = 5.0 / 36.0;
+      *itp++ = base_vector(0.5 + ::sqrt(3.0/20.0), 0.5 - ::sqrt(3.0/20.0));
+      *itc++ = 5.0 / 36.0;
+      *itp++ = base_vector(0.5 - ::sqrt(3.0/20.0), 0.5 - ::sqrt(3.0/20.0));
+      *itc++ = 5.0 / 36.0;
+      p->repartition[0] = NB_PER_VOL;
+      
+      double a = 0.5 + ::sqrt(3.0/5.0) * 0.5;
+      for (int i = 0; i < NB_FA; ++i) {
+	int i1 = (i < 2) ? 1 : 0;
+	(*itp)[i1] = 0.5; 
+	(*itp)[1 - i1] = scalar_type(1 - (i & 1)); ++itp;
+	
+	*itc++ = 8.0 / 18.0;
+	(*itp)[i1] = a; 
+	(*itp)[1 - i1] = scalar_type(1 - (i & 1)); ++itp;
+	*itc++ = 5.0 / 18.0;
+	(*itp)[i1] = 1.0 - a; 
+	(*itp)[1 - i1] = scalar_type(1 - (i & 1)); ++itp;
+	*itc++ = 5.0 / 18.0;
+
+	p->repartition[i+1] = p->repartition[i] + NB_PER_FA;
+      }
+
+      p->pint_points = store_point_tab(ptab);
+      if (itp != ptab.end()) DAL_THROW(internal_error, "internal error");
+    }
+    return p;
+  }
+
+
+  /* ********************************************************************* */
+  /*                                                                       */
+  /*   Particular integration methods on dimension 3.                      */
+  /*                                                                       */
+  /* ********************************************************************* */
+
 
   /* ********************************************************************* */
   /*  tetrahedron1 : Integration on a tetrahedron of order 1 with 1 point  */
@@ -1103,43 +1288,47 @@ namespace bgeot
       std::vector<base_node>::iterator itp = ptab.begin();
       std::vector<scalar_type>::iterator itc = p->int_coeffs.begin(); 
 
-      DAL_THROW(internal_error,
-       "Method to be corrected, formulae for volume not accurate enought ...");
-
       // volume
-      double a1 = 0.091971078052723033;
-      double a2 = 0.31979362782962991;
-      double a  = 0.13819660112501052;
+      double b1 = 0.31979362782962991;
+      double b2 = 0.091971078052723033;
+      double c1 = 0.040619116511110275;
+      double c2 = 0.7240867658418309;
+      double d  = 0.056350832689629156;
+      double e  = 0.44364916731037084;
+      double w0 = 0.019753086419753086;
+      double w1 = 0.011511367871045398;
+      double w2 = 0.01198951396316977;
+      double w3 = 0.008818342151675485;
       *itp++ = base_vector(0.25, 0.25, 0.25);
-      *itc++ = 0.019753086419753086;
-      *itp++ = base_vector(a1, a1, a1);
-      *itc++ = 0.01198951396316977;
-      *itp++ = base_vector(1.0 - 2.0 * a1, a1, a1);
-      *itc++ = 0.01198951396316977;
-      *itp++ = base_vector(a1, 1.0 - 2.0 * a1, a1);
-      *itc++ = 0.01198951396316977;
-      *itp++ = base_vector(a1, a1, 1.0 - 2.0 * a1);
-      *itc++ = 0.01198951396316977;
-      *itp++ = base_vector(a2, a2, a2);
-      *itc++ = 0.011511367871045398;
-      *itp++ = base_vector(1.0 - 2.0 * a2, a2, a2);
-      *itc++ = 0.011511367871045398;
-      *itp++ = base_vector(a2, 1.0 - 2.0 * a2, a2);
-      *itc++ = 0.011511367871045398;
-      *itp++ = base_vector(a2, a2, 1.0 - 2.0 * a2);
-      *itc++ = 0.011511367871045398;
-      *itp++ = base_vector(0.5 - a, a, a);
-      *itc++ = 0.008818342151675485;
-      *itp++ = base_vector(a, a, 0.5 - a);
-      *itc++ = 0.008818342151675485;
-      *itp++ = base_vector(a, 0.5 - a, a);
-      *itc++ = 0.008818342151675485;
-      *itp++ = base_vector(0.5 - a, 0.5 - a, a);
-      *itc++ = 0.008818342151675485; 
-      *itp++ = base_vector(a, 0.5 - a, 0.5 - a);
-      *itc++ = 0.008818342151675485;
-      *itp++ = base_vector(0.5 - a, a, 0.5 - a);
-      *itc++ = 0.008818342151675485;
+      *itc++ = w0;
+      *itp++ = base_vector(b1, b1, b1);
+      *itc++ = w1;
+      *itp++ = base_vector(c1, b1, b1);
+      *itc++ = w1;
+      *itp++ = base_vector(b1, c1, b1);
+      *itc++ = w1;
+      *itp++ = base_vector(b1, b1, c1);
+      *itc++ = w1;
+      *itp++ = base_vector(b2, b2, b2);
+      *itc++ = w2;
+      *itp++ = base_vector(c2, b2, b2);
+      *itc++ = w2;
+      *itp++ = base_vector(b2, c2, b2);
+      *itc++ = w2;
+      *itp++ = base_vector(b2, b2, c2);
+      *itc++ = w2;
+      *itp++ = base_vector(d, d, e);
+      *itc++ = w3;
+      *itp++ = base_vector(d, e, d);
+      *itc++ = w3;
+      *itp++ = base_vector(e, d, d);
+      *itc++ = w3;
+      *itp++ = base_vector(d, e, e);
+      *itc++ = w3; 
+      *itp++ = base_vector(e, e, d);
+      *itc++ = w3;
+      *itp++ = base_vector(e, d, e);
+      *itc++ = w3;
       p->repartition[0] = NB_PER_VOL;
 
       

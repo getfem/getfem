@@ -10,4 +10,6 @@ while (<F>) {
   }
 }
 if ($er == 1) { exit(1); }
+`dynamic_tas`;
+if ($?) { exit(1); }
 

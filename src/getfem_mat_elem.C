@@ -102,14 +102,14 @@ namespace getfem
       mat_elem_type::const_iterator it = ls.pmt->begin(), ite = ls.pmt->end();
       
       for (k = 0; it != ite; ++it, ++k) {
-	
 
-	if (is_ppi && !((*it).pfi->is_polynomial()))
-	  throw std::invalid_argument("Elementary matrix computation : "
-	       "Exact computation available on linear tranformations only");
+	if (is_ppi && (!((*it).pfi->is_polynomial()) || 
+		       !(pgt->is_linear())))
+	  DAL_THROW(std::invalid_argument, 
+		    "Exact computation not allowed in this context");
 	if((*it).pfi->basic_structure() != pgt->basic_structure())
-	  throw std::invalid_argument("Elementary matrix computation : "
-				      "incorrect computation");
+	  DAL_THROW(std::invalid_argument, "incorrect computation");
+	
 	if (!((*it).pfi->is_equivalent())) {
 	  trans_reduction.push_back(k);
 	  trans_reduction_pfi.push_back((*ite).pfi);
@@ -121,7 +121,7 @@ namespace getfem
 	  if (!(pgt->is_linear())) nhess *= 2; break;
 	}
       }
-
+      
       mref.resize(nhess * nint * 3);
       mref_count.resize(nhess * nint * 3);
       mref_coeff.resize(nhess * nint * 3);
@@ -129,13 +129,15 @@ namespace getfem
       bgeot::multi_index::iterator mit = sizes.begin(), mite = sizes.end();
       for (k = 1; mit != mite; ++mit, ++k) k *= *mit;
       if (k * nhess * nint * 3 > 1000000)
-	STD_NEEDED cout << "Warning, very large elementary computations,\n"
+	cerr << "Warning, very large elementary computations,\n"
 	     << "Are you sure to want to compute this elementary matrix ?\n"
 	     << "(sizes = " << sizes << " times " << nhess*nint*3 << " )\n";
       std::fill(mref.begin(), mref.end(), base_tensor(sizes));
+      
       for (k = 0; k < nhess; ++k)
 	for (size_type j = 0; j < nint; ++j)
 	  mref[indcomp(j, k, 0)] = base_tensor(sizes);
+      
       if (is_ppi)
       {
 	base_poly P(ls.pgt->structure()->dim(), 0), Q;
@@ -175,8 +177,9 @@ namespace getfem
 	scalar_type V;
 	pfp.resize(ls.pmt->size());
 	it = ls.pmt->begin(), ite = ls.pmt->end();
-	for (k = 0; it != ite; ++it, ++k)
+	for (k = 0; it != ite; ++it, ++k) {
 	  pfp[k] = fem_precomp((*it).pfi, &(pai->integration_points()));
+	}
 
 	for (;!mi.finished(sizes);mi.incrementation(sizes)) {
 	  for (short_type hi = 0; hi < nhess; ++hi) {
@@ -216,6 +219,7 @@ namespace getfem
 	      mref[indcomp(ip, hi, 0)](mi) = V;
 	    }
 	  }
+	  
 	}
 	// If the geometric transformation is linear, it is possible to
 	// precompute the integrals
@@ -269,8 +273,7 @@ namespace getfem
       short_type NP = pgt->nb_points();
       scalar_type J;
       if (G.ncols() != NP)
-	throw dimension_error
-	  ("_emelem_comp_structure::compute : dimensions mismatch");
+	DAL_THROW(dimension_error, "dimensions mismatch");
       
       K.resize(N, P); CS.resize(P, P); TMP1.resize(P, P); B.resize(N, P);
       if (hess_reduction.size() > 0) {
@@ -429,8 +432,7 @@ namespace getfem
       base_poly Poly;
 
       if (G.ncols() != NP)
-	throw dimension_error
-	  ("compute_normal : dimensions mismatch");
+	DAL_THROW(dimension_error, "dimensions mismatch");
 
       un.resize(P); up.resize(N);
       un = pgt->normals()[ir];

@@ -236,11 +236,14 @@ namespace getfem
       {
 	bgeot::multi_index mi(2);
 	mi[1] = target_dim(); mi[0] = nb_dof();
+	// cout << "mi = " << mi << endl;
 	t.adjust_sizes(mi);
 	size_type R = nb_components();
 	base_tensor::iterator it = t.begin();
-	for (size_type  i = 0; i < R; ++i, ++it)
+	for (size_type  i = 0; i < R; ++i, ++it) {
+	  // cout << "base " << i <<  _base[i] << endl;
 	  *it = _base[i].eval(x.begin());
+	}
       }
       void grad_base_value(const base_node &x, base_tensor &t) const
       {

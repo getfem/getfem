@@ -1,17 +1,66 @@
+
+$tmp = `../bin/createmp laplacien.param`;
+# print "TMP = $tmp\n";
+sub catch { `rm -f $tmp`; }
+$SIG{INT} = 'catch';
+
+open(TMPF, ">$tmp") or die "Open file impossible : $!\n";
+print TMPF "N = 2;\n";
+print TMPF "LX = 1.0\n";
+print TMPF "LY = 1.0\n";
+print TMPF "LZ = 1.0\n";
+print TMPF "FT = 0.1\n";
+print TMPF "MESH_TYPE = 0;\n";
+print TMPF "K = 1;\n";
+print TMPF "INTEGRATION = 0;\n";
+print TMPF "NX = 10;\n";
+print TMPF "RESIDU = 1E-9;\n";
+print TMPF "MIXTEHYBRID = 'N'\n";
+print TMPF "ROOTFILENAME = 'laplacien';\n";
+print TMPF "\n";
+print TMPF "\n";
+close(TMPF);
+
+
 $er = 0;
-open F, "laplacien laplacien.param 2>&1 |" or die;
-while (<F>) {
-  if ($_ =~ /L2 error/) {
-    ($a, $b) = split('=', $_);
-    # print "La norme en question :", $b;
-    if ($b > 0.1) { $er = 1; }
-  }
-  if ($_ =~ /error has been detected/) {
-    $er = 1;
-    print "=============================================================\n";
-    print $_, <F>;
-  }
+
+sub start_program # (N, K, NX, OPTION, SOLVER)
+{
+  my $def   = $_[0];
+
+  # print ("def = $def\n");
+
+  open F, "laplacien $tmp $def 2>&1 |" or die;
+  while (<F>) {
+    if ($_ =~ /L2 error/) {
+      ($a, $b) = split('=', $_);
+      # print "La norme en question :", $b;
+      if ($b > 0.01) { print "Error too large\n"; $er = 1; }
+    }
+    if ($_ =~ /error has been detected/) {
+      $er = 1;
+      print "=============================================================\n";
+      print $_, <F>;
+    }
   
-  # print $_;
+    # print $_;
+  }
+  `laplacien $tmp $def`;
+  if ($?) { `rm -f $tmp`; exit(1); }
 }
+
+start_program("");
+start_program("-d N=3 -d NX=5");
+start_program("-d K=2 -d NX=5");
+start_program("-d K=2 -d NX=5");
+start_program("-d INTEGRATION=12 -d NX=10");
+start_program("-d INTEGRATION=15 -d NX=10");
+start_program("-d INTEGRATION=17 -d NX=10");
+start_program("-d INTEGRATION=1  -d MESH_TYPE=1 -d NX=10");
+start_program("-d INTEGRATION=33 -d MESH_TYPE=1 -d NX=10");
+start_program("-d INTEGRATION=35 -d MESH_TYPE=1 -d NX=10");
+
+`rm -f $tmp`;
 if ($er == 1) { exit(1); }
+
+

@@ -159,7 +159,8 @@ namespace bgeot
 						   vsvector<R>& v);
    
     /* Constructors / Destructor.                                         */
-    smatrix(size_type l, size_type c = -6) { if (c == -6) c = l; init(l, c); }
+    smatrix(size_type l, size_type c = size_type(-6))
+      { if (c == size_type(-6)) c = l; init(l, c); }
     smatrix(void) { init(1, 1); }
 
     /* Fonctions diverses. */
@@ -394,7 +395,7 @@ namespace bgeot
     inline ref_elt_smatrix operator *=(T v)
       { (*pm).w(l,c,(*pm).r(l,c) * v); return *this; }
     inline ref_elt_smatrix operator =(const ref_elt_smatrix &re)
-      { *this = T(re); }
+      { *this = T(re); return *this; }
     template<class R> friend R operator +(const ref_elt_smatrix<R> &re);
     template<class R> friend R operator -(const ref_elt_smatrix<R> &re);
     template<class R> friend R operator +(const ref_elt_smatrix<R> &re, R v);

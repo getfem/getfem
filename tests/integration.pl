@@ -10,3 +10,5 @@ while (<F>) {
   }
 }
 if ($er == 1) { exit(1); }
+`integration`;
+if ($?) { exit(1); }

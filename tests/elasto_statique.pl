@@ -10,4 +10,6 @@ while (<F>) {
   }
 }
 if ($er == 1) { exit(1); }
+`elasto_statique elasto_statique.param`;
+if ($?) { exit(1); }
 

@@ -10,3 +10,5 @@ while (<F>) {
 
 }
 if ($er == 1) { exit(1); }
+`test_tree_sorted`;
+if ($?) { exit(1); }

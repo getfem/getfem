@@ -121,6 +121,13 @@ namespace bgeot
   papprox_integration triangle6_approx_integration(void);
   /// Integration on a triangle of order 7 with 13 points
   papprox_integration triangle7_approx_integration(void);
+  /// Integration on quadrilaterals of order 2 with 3 points   
+  papprox_integration quad2_approx_integration(void);
+  /// Integration on quadrilaterals of order 3 with 4 points   
+  papprox_integration quad3_approx_integration(void);    
+  /// Integration on quadrilaterals of order 5 with 7 points   
+  papprox_integration quad5_approx_integration(void);
+
 
   // methods on dimension 3
 

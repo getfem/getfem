@@ -504,7 +504,9 @@ namespace dal
       default : DAL_THROW(internal_error, "internal error");
     #endif
     }
-    return ST_NIL;
+    #ifndef __GETFEM_VERIFY
+      return ST_NIL;
+    #endif
   }
 
   template<class T, class COMP, int pks>

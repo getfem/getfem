@@ -213,13 +213,12 @@ namespace getfem
   void mesh_fem::receipt(const MESH_REFINE_CONVEX &m)
   { 
     // ajouter la strategie au rafinement / derafinement
-    throw internal_error("mesh_fem::receipt : internal error");
-      
+    DAL_THROW(internal_error, "internal error");
   }
   void mesh_fem::receipt(const MESH_UNREFINE_CONVEX &m)
   { 
     // ajouter la strategie au rafinement / derafinement
-    throw internal_error("mesh_fem::receipt : internal error");
+    DAL_THROW(internal_error, "internal error");
   }
    
   void mesh_fem::set_finite_element(size_type cv, pintfem pif)
@@ -233,7 +232,8 @@ namespace getfem
     {
       if (_linked_mesh->structure_of_convex(cv)->basic_structure() 
 	     != pif->pf->basic_structure())
-	throw internal_error("mesh_fem::set_finite_element : internal error");
+	DAL_THROW(internal_error,
+		  "Incompatibility between fem and mesh element");
       if (!fe_convex.is_in(cv) || f_elems[cv] != pif)
       { fe_convex.add(cv); f_elems[cv] = pif; dof_enumeration_made = false; }
     }
@@ -251,21 +251,24 @@ namespace getfem
   {
     pfem pf = f_elems[cv]->pf;
     bgeot::pgeometric_trans pgt = _linked_mesh->trans_of_convex(cv);
-    // std::cout << "pgt = " << pgt << endl;
+    // cout << "pgt = " << pgt << endl;
     const base_node *pt = &(pf->node_of_dof(i));
-    // std::cout << "pt = " << *pt << endl;
-    // std::cout << "dim = " << int(_linked_mesh->dim()) << endl;
+    // cout << "pt = " << *pt << endl;
+    // cout << "dim = " << int(_linked_mesh->dim()) << endl;
     base_node P(_linked_mesh->dim()); P.fill(0.0);
-    // std::cout << "P = " << P << endl;
+    // cout << "P = " << P << endl;
     size_type k = pgt->nb_points();
-    // std::cout << "k = " << k << endl;
+    // cout << "k = " << k << endl;
+    // cout << "taille de pgt->poly_vector() : " << pgt->poly_vector().size() << endl;
     for (size_type l = 0; l < k; ++l)
     {
-      // std::cout << "eval " << l << endl;
+      // cout << "eval " << l << endl;
+      // cout << " de " << pgt->poly_vector()[l] << endl;
       P.addmul(pgt->poly_vector()[l].eval(pt->begin()),
 	       _linked_mesh->points_of_convex(cv)[l]);
       
     }
+    // cout << "fin du calcul du pt\n";
     return P;
   }
 

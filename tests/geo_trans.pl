@@ -10,3 +10,5 @@ while (<F>) {
   }
 }
 if ($er == 1) { exit(1); }
+`geo_trans`;
+if ($?) { exit(1); }

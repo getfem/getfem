@@ -380,20 +380,19 @@ namespace getfem
     {
       ppolyfem fi1 = ls.fi1, fi2 = ls.fi2;
       if (fi2->target_dim() != 1) std::swap(fi1, fi2);
-      if (fi2->target_dim() != 1)
-	throw dimension_error
-	  ("tproduct_femi::tproduct_femi() : dimensions mismatch");
+      if (fi2->target_dim() != 1) 
+	DAL_THROW(dimension_error, "dimensions mismatch");
     
       is_pol = true;
       is_equiv = fi1->is_equivalent() && fi2->is_equivalent();
       is_lag = fi1->is_lagrange() && fi2->is_lagrange();;
       es_degree = fi1->estimated_degree() + fi2->estimated_degree();
-      bgeot::convex<base_node> cv = bgeot::convex_direct_product(fi1->node_convex(),
-								 fi2->node_convex());
+      bgeot::convex<base_node> cv 
+	= bgeot::convex_direct_product(fi1->node_convex(), fi2->node_convex());
       cvr = bgeot::convex_ref_product(fi1->ref_convex(), fi2->ref_convex());
       init_cvs_node();
       
-      ntarget_dim = fi1->target_dim() + fi2->target_dim();
+      ntarget_dim = fi2->target_dim();
       _base.resize(cv.nb_points() * ntarget_dim);
       size_type i, j, r;
       for (j = 0, r = 0; j < fi2->nb_dof(); ++j)

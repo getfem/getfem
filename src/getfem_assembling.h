@@ -74,6 +74,7 @@ namespace getfem
 	pf1prec = pf1; pf2prec = pf2; pgtprec = pgt; pimprec = pim;
       }
       pmec->gen_compute(t, mf.linked_mesh().points_of_convex(cv));
+      // cout << "elem matrix " << t << endl;
       base_tensor::iterator p = t.begin();
       for (size_type r = 0; r < nbd2; r++) {
 	size_type dof3 = mfdata.ind_dof_of_element(cv)[r];
@@ -92,6 +93,7 @@ namespace getfem
 	  }
 	}
       }
+      if (p != t.end()) DAL_THROW(dal::internal_error, "internal error"); 
     }
   }
 
@@ -171,7 +173,7 @@ namespace getfem
 	  } 
 	}
       }
-      // ssert(p == t.end());
+      if (p != t.end()) DAL_THROW(dal::internal_error, "internal error"); 
     }
   }
 
@@ -249,6 +251,7 @@ namespace getfem
 	      }
 	  }
       }
+      if (p != t.end()) DAL_THROW(dal::internal_error, "internal error"); 
     }
   }
 
@@ -290,16 +293,19 @@ namespace getfem
 	pf_d = mf_d.fem_of_element(cv); nbdof_d = pf_d->nb_dof();
 	pgt = mf_u.linked_mesh().trans_of_convex(cv);
 	pim = mf_u.int_method_of_element(cv);
-	if (pf_u_prec != pf_u || pf_d_prec != pf_d || pgtprec!=pgt || pimprec != pim)
+	if (pf_u_prec != pf_u || pf_d_prec != pf_d || pgtprec!=pgt 
+	    || pimprec != pim)
 	{
 	  pme = mat_elem_product(mat_elem_base(pf_d), 
-				 mat_elem_product(mat_elem_base(pf_u),mat_elem_base(pf_u)));
+				 mat_elem_product(mat_elem_base(pf_u),
+						  mat_elem_base(pf_u)));
 	  pmec = mat_elem(pme, pim, pgt);
 	  pf_u_prec = pf_u; pf_d_prec = pf_d; pgtprec = pgt; pimprec = pim;
 	}
 	for (f << nf; f != ST_NIL; f << nf)
 	{
-	  pmec->gen_compute_on_face(t,mf_u.linked_mesh().points_of_convex(cv),f);
+	  pmec->gen_compute_on_face(t,mf_u.linked_mesh().points_of_convex(cv),
+				    f);
 	  base_tensor::iterator p = t.begin();
 
 	  for (size_type j = 0; j < nbdof_u; j++) {
@@ -323,6 +329,7 @@ namespace getfem
 	      }
 	    }
 	  }
+	  if (p != t.end()) DAL_THROW(dal::internal_error, "internal error"); 
 	}
       }
     }
@@ -374,6 +381,7 @@ namespace getfem
 	    }
 	}
       }
+      if (p != t.end()) DAL_THROW(dal::internal_error, "internal error"); 
     }
   }
 
@@ -416,6 +424,7 @@ namespace getfem
 	  for (size_type k = 0; k < N; k++) B[dof1*N + k] += F[dof2*N+k]*(*p);
 	}
       }
+      if (p != t.end()) DAL_THROW(dal::internal_error, "internal error"); 
     }
   }
 
@@ -505,6 +514,15 @@ namespace getfem
   
     for (cv << nn; cv != ST_NIL; cv << nn)
     {
+      // for (int h = 0; h < mf.linked_mesh().nb_points_of_convex(cv); ++h)
+      // cout << "Point " << h << " of cv " << cv << " : " 
+      //     << mf.linked_mesh().points_of_convex(cv)[h] << endl;
+
+      // for (f = 0; f < mf.linked_mesh().structure_of_convex(cv)->nb_faces(); ++f)
+      // for (int h = 0; h < mf.linked_mesh().structure_of_convex(cv)->nb_points_of_face(f); ++h)
+      //  cout << "Point " << h << " of cv " << cv << " on face " << f << " (" << mf.linked_mesh().structure_of_convex(cv)->ind_points_of_face(f)[h] << ") : " 
+      //     << mf.linked_mesh().points_of_convex(cv)[mf.linked_mesh().structure_of_convex(cv)->ind_points_of_face(f)[h]] << endl;
+
       nf = mf.faces_of_convex_on_boundary(cv, boundary);
       if (nf.card() > 0)
       {
@@ -520,7 +538,10 @@ namespace getfem
 	}
 	for (f << nf; f != ST_NIL; f << nf)
 	{
+	  // cout << "cv = " << cv << " f = " << f << endl;
+
 	  pmec->gen_compute_on_face(t,mf.linked_mesh().points_of_convex(cv),f);
+	  // cout << "t = " << t << endl;
 	  base_tensor::iterator p = t.begin();
 	  for (size_type i = 0; i < nbd2; i++)
 	  {
@@ -528,10 +549,12 @@ namespace getfem
 	    for (size_type j = 0; j < nbd1; j++, ++p)
 	    {
 	      size_type dof1 = mf.ind_dof_of_element(cv)[j];
-	      for (size_type k = 0; k < N; k++)
+	      for (size_type k = 0; k < N; k++) {
 		B[dof1*N + k] += F[dof2*N+k]*(*p);
+	      }
 	    }
 	  }
+	  if (p != t.end()) DAL_THROW(dal::internal_error, "internal error"); 
 	}
       }
     }

@@ -222,12 +222,11 @@ namespace bgeot
     r.points().resize(r.nb_points());
     std::fill(r.points().begin(), r.points().end(), PT(r.structure()->dim()));
     dim_type dim1 = cv1.structure()->dim();
-    typename PT_TAB1::const_iterator it1 = cv1.points().begin(),
-                                     it1e = cv1.points().end();
+    typename PT_TAB1::const_iterator it1, it1e = cv1.points().end();
     typename PT_TAB2::const_iterator it2, it2e = cv2.points().end();
     typename convex<PT>::point_tab_type::iterator it = r.points().begin();
-    for ( ; it1 != it1e; ++it1)
-      for (it2 = cv2.points().begin(); it2 != it2e; ++it2, ++it)
+    for (it2 = cv2.points().begin(); it2 != it2e; ++it2)
+      for (it1 = cv1.points().begin() ; it1 != it1e; ++it1, ++it)
       {
 	std::copy((*it1).begin(), (*it1).end(), (*it).begin());
 	std::copy((*it2).begin(), (*it2).end(), (*it).begin()+dim1);

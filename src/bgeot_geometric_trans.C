@@ -171,6 +171,7 @@ namespace bgeot
       is_lin = true;
 
       trans.resize(ls.cv1->nb_points() * ls.cv2->nb_points());
+      std::fill(trans.begin(), trans.end(), null_poly(dim()));
 
       for (size_type i = 0; i <= dim(); ++i)
 	trans[cvr->structure()->ind_dir_points()[i]] 

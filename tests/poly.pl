@@ -10,3 +10,5 @@ while (<F>) {
 
 }
 if ($er == 1) { exit(1); }
+`poly`;
+if ($?) { exit(1); }

@@ -119,12 +119,14 @@ namespace getfem
   };
 
   _fem_precomp::_fem_precomp(const _pre_fem_light &ls) : pf(ls.pf), pspt(ls.pspt) {
-
     dim_type N = ls.pf->structure()->dim();
-    pc.resize(ls.pspt->size());
-    hpc.resize(ls.pspt->size());
-    c.resize(ls.pspt->size());
-    for (size_type i = 0; i < ls.pspt->size(); ++i) {
+    size_type npt = ls.pspt->size();
+    // cout << "Dimension = " << N << endl;
+    pc.resize(npt);
+    hpc.resize(npt);
+    c.resize(npt);
+    // cout << "taille : " << npt << endl;
+    for (size_type i = 0; i < npt; ++i) {
       if ((*ls.pspt)[i].size() != N)
 	DAL_THROW(dimension_error, "dimensions mismatch");
       ls.pf->base_value((*(ls.pspt))[i], c[i]);

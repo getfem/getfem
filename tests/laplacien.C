@@ -56,7 +56,7 @@ struct lap_pb
   linalg_vector U, B; /* inconnue et second membre.                       */
  
   bool mixte;
-  int integration;
+  int integration, mesh_type;
 
   std::string datafilename;
   ftool::md_param PARAM;
@@ -77,21 +77,22 @@ void lap_pb::init(void)
   /***********************************************************************/
   
   /* parametres physiques */
-  N = PARAM.int_value("N", "Dimension de l'espace");
+  N = PARAM.int_value("N", "Domaine dimension");
   /* parametres numeriques */
-  LX = PARAM.real_value("LX", "Taille en X");
-  LY = PARAM.real_value("LY", "Taille en Y");
-  LZ = PARAM.real_value("LZ", "Taille en Y");
-  NX = PARAM.int_value("NX", "Nombre de pas d'espace ");
-  integration = PARAM.int_value("INTEGRATION", "Type d'integration");
-  residu = PARAM.real_value("RESIDU", "Valeur pour test d'arret");
-  K = PARAM.int_value("K", "Degre de l'element fini de Lagrange");
+  LX = PARAM.real_value("LX", "Size in X");
+  LY = PARAM.real_value("LY", "Size in Y");
+  LZ = PARAM.real_value("LZ", "Size in Y");
+  NX = PARAM.int_value("NX", "Nomber of sace steps ");
+  integration = PARAM.int_value("INTEGRATION", "integration method");
+  mesh_type = PARAM.int_value("MESH_TYPE", "Mesh type ");
+  residu = PARAM.real_value("RESIDU", "Residu for c.g.");
+  K = PARAM.int_value("K", "Finite element degree");
   datafilename = std::string( PARAM.string_value("ROOTFILENAME",
-			     "Nom du fichier de sauvegarde sans extension"));
+			     "File name for saving"));
 
-  scalar_type FT = PARAM.real_value("FT", "parametre pour la solution exacte");
+  scalar_type FT = PARAM.real_value("FT", "parameter for exact solution");
 
-  char *dds = PARAM.string_value("MIXTEHYBRID", "Non conforming P1 ? ");
+  char *dds = PARAM.string_value("MIXTEHYBRID", "Use nonconformaing P1 ? ");
   mixte = (strcmp("N", dds) && strcmp("n", dds));
 
   sol_K = base_vector(N);
@@ -112,8 +113,12 @@ void lap_pb::init(void)
     vtab[i] = base_vector(N); vtab[i].fill(0.0);
     (vtab[i])[i] = ((i == 0) ? LX : ((i == 1) ? LY : LZ)) / scalar_type(NX);
   }
-  getfem::parallelepiped_regular_simplex_mesh(mesh, N, org,
-					     vtab.begin(), ref.begin());
+  if (mesh_type)
+    getfem::parallelepiped_regular_mesh(mesh, N, org,
+					vtab.begin(), ref.begin());
+  else
+    getfem::parallelepiped_regular_simplex_mesh(mesh, N, org,
+						vtab.begin(), ref.begin());
 
   mesh.optimize_structure();
 
@@ -126,12 +131,29 @@ void lap_pb::init(void)
   if (mixte)
   { 
     K = 1;
-    if (N != 2) DAL_THROW(bgeot::dimension_error, 
-			  "Non conforming P1 work only for N = 2");
+    if (N != 2 || mesh_type) 
+      DAL_THROW(bgeot::dimension_error, 
+		"Non conforming P1 work only for N = 2");
   }
   switch (integration) {
-  case 0 : ppi = bgeot::simplex_poly_integration(N); break;
-  case 1 : ppi = bgeot::Newton_Cotes_approx_integration(N,2*K); break;
+  case 0 :
+    if (mesh_type)
+      ppi = bgeot::parallelepiped_poly_integration(N);
+    else
+      ppi = bgeot::simplex_poly_integration(N);
+    break;
+  case 1 :
+    if (mesh_type) {
+      bgeot::papprox_integration pai
+	= bgeot::Newton_Cotes_approx_integration(1,2*K);
+      bgeot::papprox_integration pai2 = pai;
+      for (int i = 1; i < N; ++i) 
+	pai = bgeot::convex_product_approx_integration(pai, pai2);
+      ppi = pai;
+    }
+    else
+      ppi = bgeot::Newton_Cotes_approx_integration(N,2*K);
+    break;
   case 11 : ppi = bgeot::triangle1_approx_integration(); break;
   case 12 : ppi = bgeot::triangle2_approx_integration(); break;
   case 13 : ppi = bgeot::triangle3_approx_integration(); break;
@@ -143,20 +165,33 @@ void lap_pb::init(void)
   case 22 : ppi = bgeot::tetrahedron2_approx_integration(); break;
   case 23 : ppi = bgeot::tetrahedron3_approx_integration(); break;
   case 25 : ppi = bgeot::tetrahedron5_approx_integration(); break;
+  case 32 : ppi = bgeot::quad2_approx_integration(); break;
+  case 33 : ppi = bgeot::quad3_approx_integration(); break;
+  case 35 : ppi = bgeot::quad5_approx_integration(); break;
   default : DAL_THROW(std::logic_error, "Undefined integration method");
   }
-
-  if (mixte) {
-    mef.set_finite_element(nn, getfem::P1_nonconforming_fem(), ppi);
+  
+  if (mesh_type)
+    mef.set_finite_element(nn, getfem::QK_fem(N, K), ppi);
+  else {
+    if (mixte)
+      mef.set_finite_element(nn, getfem::P1_nonconforming_fem(), ppi);
+    else
+      mef.set_finite_element(nn, getfem::PK_fem(N, K), ppi);
+  }
+  
+  if (mesh_type) {
+    mef_data.set_finite_element(nn, getfem::QK_fem(N, K),
+				bgeot::parallelepiped_poly_integration(N));
+    mef_data2.set_finite_element(nn, getfem::QK_fem(N, 0),
+				 bgeot::parallelepiped_poly_integration(N));
   }
   else {
-    mef.set_finite_element(nn, getfem::PK_fem(N, K), ppi);
+    mef_data.set_finite_element(nn, getfem::PK_fem(N, K),
+				bgeot::simplex_poly_integration(N));
+    mef_data2.set_finite_element(nn, getfem::PK_fem(N, 0),
+				 bgeot::simplex_poly_integration(N));
   }
-
-  mef_data.set_finite_element(nn, getfem::PK_fem(N, K),
-			      bgeot::simplex_poly_integration(N));
-  mef_data2.set_finite_element(nn, getfem::PK_fem(N, 0),
-			       bgeot::simplex_poly_integration(N));
 
   cout << "Selecting Neumann and Dirichlet boundaries\n";
   nn = mesh.convex_index(N);
@@ -171,7 +206,7 @@ void lap_pb::init(void)
 	un = mesh.convex(j).unit_norm_of_face(i);
 	
 	// if (true)
-	 if (dal::abs(un[N-1] - 1.0) < 1.0E-3)
+        if (dal::abs(un[N-1] - 1.0) < 1.0E-3)
 	{
 	  mef.add_boundary_elt(0, j, i);
 // 	  cout << "ajout d'un bord Dirichlet : convexe\t" << j << "\tface "
@@ -203,18 +238,18 @@ void lap_pb::assemble(void)
   // cout << "nombre de ddl de l'element pour les données : " << nb_dof_data
   //       << endl;
 
-  // cout << "Assemblage de la matrice de rigidite" << endl;
+  cout << "Assembling rigidity matrix" << endl;
   ST = linalg_vector(nb_dof_data2);
   std::fill(ST.begin(), ST.end(), 1.0);
   getfem::assembling_rigidity_matrix_for_laplacian(RM, mef, mef_data2, ST);
   
-  // cout << "Assemblage du terme source" << endl;
+  cout << "Assembling source term" << endl;
   ST = linalg_vector(nb_dof_data);
   for (size_type i = 0; i < nb_dof_data; ++i)
     ST[i] = sol_f(mef_data.point_of_dof(i));
   getfem::assembling_volumic_source_term(B, mef, mef_data, ST, 1);
 
-  // cout << "Assemblage de la condition de Neumann" << endl;
+  cout << "Assembling Neumann condition" << endl;
   ST = linalg_vector(nb_dof_data);
   getfem::base_node pt(N); getfem::base_vector n(N);
   for (size_type i = 0; i < nb_dof_data; ++i)
@@ -229,11 +264,12 @@ void lap_pb::assemble(void)
 	if (dal::abs(pt[k]-LZ) < 10E-6) n[k] = 1.0;
 	else if (dal::abs(pt[k]) < 10E-6) n[k] = -1.0; else n[k] = 0.0;
     }
+    if (bgeot::vect_norm2(n) > 1.0) n /= bgeot::vect_norm2(n);
     ST[i] = bgeot::vect_sp(sol_grad(pt), n);
   }
   getfem::assembling_Neumann_condition(B, mef, 1, mef_data, ST, 1);
   
-  // cout << "Prise en compte de la condition de Dirichlet" << endl;
+  cout << "take Dirichlet condition into account" << endl;
   dal::bit_vector nn = mef.dof_on_boundary(0);
   // cout << "Number of Dirichlet nodes : " << nn.card() << endl;
   // cout << "Dirichlet nodes : " << nn << endl;
@@ -254,7 +290,8 @@ void lap_pb::solve(void)
 
 int main(int argc, char *argv[])
 {
-  try {
+  try
+    {
     
     lap_pb p;
     scalar_type exectime = ftool::uclock_sec(), total_time = 0.0;
@@ -273,7 +310,7 @@ int main(int argc, char *argv[])
     // p.mesh.write_to_file(cout);
     // p.mesh.stat();
     
-    // p.mesh.write_to_file(p.datafilename + ".mesh" + char(0));
+    p.mesh.write_to_file(p.datafilename + ".mesh" + char(0));
     
     exectime = ftool::uclock_sec();
     int nb_dof = p.mef.nb_dof();

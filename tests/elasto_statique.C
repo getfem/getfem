@@ -110,22 +110,23 @@ void pb_data::init(void)
   /***********************************************************************/
   
   /* parametres physiques */
-  N = PBSTFR_PARAM.int_value("N", "Dimension de l'espace");
-  G = PBSTFR_PARAM.real_value("G", "Raideur de cisaillement");
-  lambda = PBSTFR_PARAM.real_value("LAMBDA", "Coeff elastique lambda");
+  N = PBSTFR_PARAM.int_value("N", "Domain dimension");
+  G = PBSTFR_PARAM.real_value("G", "Lamé coefficient G");
+  lambda = PBSTFR_PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
   
   /* parametres numeriques */
-  LX = PBSTFR_PARAM.real_value("LX", "Taille en X");
-  LY = PBSTFR_PARAM.real_value("LY", "Taille en Y");
-  LZ = PBSTFR_PARAM.real_value("LZ", "Taille en Y");
-  NX = PBSTFR_PARAM.int_value("NX", "Nombre de pas d'espace ");
-  integration = PBSTFR_PARAM.int_value("INTEGRATION", "Type d'integration");
-  residu = PBSTFR_PARAM.real_value("RESIDU", "Valeur pour test d'arret");
-  K = PBSTFR_PARAM.int_value("K", "Degre de l'element fini de Lagrange");
+  LX = PBSTFR_PARAM.real_value("LX", "Size in X");
+  LY = PBSTFR_PARAM.real_value("LY", "Size in Y");
+  LZ = PBSTFR_PARAM.real_value("LZ", "Size in Y");
+  NX = PBSTFR_PARAM.int_value("NX", "Number of space steps ");
+  integration = PBSTFR_PARAM.int_value("INTEGRATION", "integration method");
+  residu = PBSTFR_PARAM.real_value("RESIDU", "residu for c.g.");
+  K = PBSTFR_PARAM.int_value("K", "Finite element degree");
 
   datafilename = std::string(PBSTFR_PARAM.string_value("ROOTFILENAME",
-						       "Nom du fichier de sauvegarde sans extension"));
-  scalar_type FT = PBSTFR_PARAM.real_value("FT", "parametre pour solution exacte");
+						       "Filename for saving"));
+  scalar_type FT = PBSTFR_PARAM.real_value("FT", 
+					   "parameter for exact solution");
   for (i = 0; i < N; i++)
   {
     sol_K[i] = base_vector(N);
