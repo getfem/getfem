@@ -104,6 +104,13 @@ namespace gmm {
     static const T &r(const T &x, linalg_imag_part, W) {
       return x; 
     }
+    template<typename T , typename W> 
+    static T &r(T &x, linalg_real_part, W)
+    { return x; }
+    template<typename T, typename W> 
+    static T &r(T &x, linalg_imag_part, W) {
+      return x; 
+    }
   };
 
   

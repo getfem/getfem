@@ -36,7 +36,6 @@
 #include <gmm_scaled.h>
 #include <gmm_transposed.h>
 #include <gmm_conjugated.h>
-#include <gmm_real_part.h>
 
 namespace gmm {
 

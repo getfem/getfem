@@ -34,6 +34,7 @@
 
 #include <gmm_def.h>
 #include <gmm_blas.h>
+#include <gmm_real_part.h>
 #include <gmm_interface.h>
 #include <gmm_sub_vector.h>
 #include <gmm_sub_matrix.h>
