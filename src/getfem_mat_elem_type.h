@@ -117,7 +117,7 @@ namespace getfem
 
   //pmat_elem_type mat_elem_nonlinear_assistant(pnonlinear_elem_term, pfem pfi);
   /** Gives a pointer to the structure describing the elementary matrix
-   *   which compute the integral of product of the integrals described by
+   *   which compute the integral of product described by
    *   *pet1 and *pet2.
    */
   pmat_elem_type mat_elem_product(pmat_elem_type a, pmat_elem_type b);
