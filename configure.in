@@ -42,6 +42,9 @@ CXXFLAGS="${USER_CXXFLAGS}"
 SUPLDFLAGS=""
 
 AC_LANG_CPLUSPLUS
+AC_CANONICAL_HOST
+
+echo "you are compiling getfem++ on a $host"
 
 case $CXX in
  cxx)
@@ -53,21 +56,33 @@ dnl	APPSCXXFLAGS="$CXXFLAGS -ptr `pwd`/src/cxx_repository -O3 -std strict_ansi -
 	APPSCXXFLAGS="$CXXFLAGS -tweak -O3 -std strict_ansi -Wl,-S -nopure_cname"
 	CXXFLAGS="$CXXFLAGS -tweak -std strict_ansi -O3 -Wl,-S -nopure_cname"
 dnl 	CXXFLAGS="$CXXFLAGS -ptr `pwd`/cxx_repository -std strict_ansi -O3"
-	MEX_NEEDS_TWOCOMP=""
  	cd $here
 	;;
  CC)
-dnl	always use ./configure CXX=CC CC=cc !
-dnl 	CXXFLAGS="$CXXFLAGS -LANG:std -diag_suppress 1682 -O3 -OPT:Olimit=0:roundoff=3:div_split=ON:alias=typed -TARG:platform=ip25"
- 	CXXFLAGS="$CXXFLAGS -LANG:std -diag_suppress 1682 -O3"
-	APPSCXXFLAGS="$CXXFLAGS"
-dnl	SUPLDFLAGS="-lCio"
-	MEX_NEEDS_TWOCOMP="#"
+	case $host in
+	*irix*)
+		echo "Using MIPSPRO CC on IRIX                          !!![ always use ./configure CXX=CC CC=cc LD=CC] "
+dnl 		CXXFLAGS="$CXXFLAGS -LANG:std -diag_suppress 1682 -O3 -OPT:Olimit=0:roundoff=3:div_split=ON:alias=typed -TARG:platform=ip25"
+ 		CXXFLAGS="$CXXFLAGS -LANG:std -diag_suppress 1682 -O3"
+		APPSCXXFLAGS="$CXXFLAGS"
+	dnl	SUPLDFLAGS="-lCio"
+		;;
+	*sun*)
+		echo "Using SUN C++ WorkShop Compiler"
+		CXXFLAGS="$CXXFLAGS +w2"
+		APPSCXXFLAGS="$CXXFLAGS"
+		;;
+	esac
 	;;
+ aCC)
+	echo "Using HP ANSI C++ Compiler aCC"
+	CXXFLAGS="$CXXFLAGS -AA +p"	
+	APPSCXXFLAGS="$CXXFLAGS"
+	;;
+	
  g++* | c++)
  	APPSCXXFLAGS="$CXXFLAGS -ftemplate-depth-40 -pedantic -O3 -Wall -W -Wtraditional -Wshadow -Wpointer-arith -Wcast-qual -Wwrite-strings -Wconversion -Wmissing-prototypes -Wredundant-decls"
  	CXXFLAGS="$CXXFLAGS -ftemplate-depth-40 -pedantic -O3 -Wall -W -Wtraditional -Wshadow -Wpointer-arith -Wcast-qual -Wwrite-strings -Wconversion -Wmissing-prototypes -Wredundant-decls"
-	MEX_NEEDS_TWOCOMP="#"
 	;;
  icc | icpc)
 dnl -tpp6 is for pentiumII and more
@@ -77,7 +92,6 @@ dnl -Xc is for ansi conformance
  *)
  	APPSCXXFLAGS="$CXXFLAGS -O3"
  	CXXFLAGS="$CXXFLAGS -O3"
-	MEX_NEEDS_TWOCOMP="#"
 	;;
 esac
 

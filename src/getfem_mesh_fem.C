@@ -151,8 +151,8 @@ namespace getfem
 	      for (size_type i = 0; i < nbb; ++i) {
 		size_type n = Qdim / fem_of_element(it.index())->target_dim();
 		for (size_type ll = 0; ll < n; ++ll)
-		  res.add(n * dof_structure.ind_points_of_face_of_convex(it.index(),
-									 itf.index())[i] + ll);
+		  res.add(dof_structure.ind_points_of_face_of_convex(it.index(),
+								     itf.index())[i] + ll);
 	      }
 	    }
 	}

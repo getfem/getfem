@@ -80,8 +80,6 @@ namespace bgeot
     friend pconvex_structure simplex_structure(dim_type nc);
   };
 
-  static int __nb_simplex = -1;
-
   pconvex_structure simplex_structure(dim_type nc)
   {
     static dal::dynamic_array<_simplex_structure> *_simplex;
@@ -116,7 +114,7 @@ namespace bgeot
 	    (p->faces[i])[j] = (j >= i) ? (j + 1) : j;
 	}
       
-      __nb_simplex=_nb_simplex = nc;
+      _nb_simplex = nc;
     }
     return p;
   }

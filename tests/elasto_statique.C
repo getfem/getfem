@@ -98,7 +98,7 @@ struct pb_data {
   scalar_type LX, LY, LZ, residu;
   size_type NX, N, K;
 
-  sparse_matrix_type RM; /* matrice de rigidite.                     */
+  sparse_matrix_type SM; /* matrice de rigidite.                     */
   linalg_vector U, B; /* inconnue et second membre.                       */
 
   int integration;
@@ -125,6 +125,7 @@ void pb_data::init(void) {
   /* parametres physiques */
   N = PBSTFR_PARAM.int_value("N", "Domain dimension");
   G = PBSTFR_PARAM.real_value("G", "Lamé coefficient G");
+  mef.set_qdim(N);
   lambda = PBSTFR_PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
   
   /* parametres numeriques */
@@ -202,26 +203,25 @@ void pb_data::assemble(void)
 {
   size_type nb_dof = mef.nb_dof(), nb_dof_data = mef_data.nb_dof();
   size_type nb_dof_data2 = mef_data2.nb_dof();
-  B = linalg_vector(N*nb_dof); gmm::clear(B);
-  U = linalg_vector(N*nb_dof); gmm::clear(U);
-  RM = sparse_matrix_type(N*nb_dof, N*nb_dof);
+  B = linalg_vector(nb_dof); gmm::clear(B);
+  U = linalg_vector(nb_dof); gmm::clear(U);
+  SM = sparse_matrix_type(nb_dof, nb_dof);
   linalg_vector ST1, ST2;
 
-  // cout << "nombre de ddl de l'element fini : " << nb_dof << endl;
-  cout << "dof number fo linear elasticity : " << nb_dof * N << endl;
+  cout << "dof number fo linear elasticity : " << nb_dof << ", data nb_dof=" << mef_data.nb_dof() << endl;
   
   // cout << "Assemblage de la matrice de rigidite" << endl;
   ST1 = linalg_vector(nb_dof_data2); ST2 = linalg_vector(nb_dof_data2);
   std::fill(ST1.begin(), ST1.end(), lambda);
   std::fill(ST2.begin(), ST2.end(), G);
-  getfem::assembling_rigidity_matrix_for_linear_elasticity(RM,mef,mef_data2,ST1,ST2);
-
+  getfem::asm_stiffness_matrix_for_linear_elasticity(SM,mef,mef_data2,ST1,ST2);
   // cout << "Assemblage du terme source" << endl;
   ST1 = linalg_vector(nb_dof_data * N);
   for (size_type i = 0; i < nb_dof_data; ++i)
     for (size_type j = 0; j < N; ++j) 
       ST1[i*N+j] = sol_f(mef_data.point_of_dof(i))[j];
-  getfem::assembling_volumic_source_term(B, mef, mef_data, ST1, N);
+  //  getfem::assembling_volumic_source_term(B, mef, mef_data, ST1, N);
+  getfem::asm_source_term(B, mef, mef_data, ST1);
 
   // cout << "Assemblage de la condition de Neumann" << endl;
   ST1 = linalg_vector(nb_dof_data * N);
@@ -241,18 +241,18 @@ void pb_data::assemble(void)
     for (size_type j = 0; j < N; ++j)
       ST1[i*N+j] = v[j];
   }
-  getfem::assembling_Neumann_condition(B, mef, 1, mef_data, ST1, N);
+  getfem::asm_source_term(B, mef, mef_data, ST1, 1);
 
   // cout << "Prise en compte de la condition de Dirichlet" << endl;
-  ST1 = linalg_vector(nb_dof * N);
-  for (size_type i = 0; i < nb_dof; ++i)
+  ST1 = linalg_vector(nb_dof);
+  for (size_type i = 0; i < nb_dof/N; ++i)
     for (size_type j = 0; j < N; ++j)
-      ST1[i*N+j] = sol_u(mef.point_of_dof(i))[j];
-  getfem::assembling_Dirichlet_condition(RM, B, mef, 0, ST1, N);
+      ST1[i*N+j] = sol_u(mef.point_of_dof(i*N))[j];
+  getfem::assembling_Dirichlet_condition(SM, B, mef, 0, ST1);
 }
 
 void pb_data::solve(void) {
-  gmm::cg(RM, U, B, gmm::identity_matrix(), gmm::identity_matrix(),
+  gmm::cg(SM, U, B, gmm::identity_matrix(), gmm::identity_matrix(),
 	  20000, residu, 1);
 }
 
@@ -270,7 +270,7 @@ int main(int argc, char *argv[]) {
     p.assemble();
     
     //   cout << "Matrice de rigidite\n";
-    //   gmm::write(p.RM, cout);
+    //   gmm::write(p.SM, cout);
     
     cout << "Solving linear system\n";
     p.solve();
@@ -278,16 +278,16 @@ int main(int argc, char *argv[]) {
     cout << "Error computation\n";
     
     int nbdof = p.mef.nb_dof();
-    linalg_vector V(nbdof*p.N); V = p.U;
+    linalg_vector V(nbdof); V = p.U;
     base_vector S;
     
-    for (int i = 0; i < nbdof; ++i) {
-      S = sol_u(p.mef.point_of_dof(i));
+    for (int i = 0; i < nbdof/p.N; ++i) {
+      S = sol_u(p.mef.point_of_dof(i*p.N));
       for (dim_type k = 0; k < p.N; ++k) V[i*p.N + k] -= S[k];
     }
     
-    cout <<  "L2 Error = " << getfem::L2_norm(p.mef, V, p.N) << endl;
-    cout <<  "H1 Error = " << getfem::H1_norm(p.mef, V, p.N) << endl;
+    cout <<  "L2 Error = " << getfem::asm_L2_norm(p.mef, V) << endl;
+    cout <<  "H1 Error = " << getfem::asm_H1_norm(p.mef, V) << endl;
   }
   DAL_STANDARD_CATCH_ERROR;
 

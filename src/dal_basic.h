@@ -362,8 +362,7 @@ namespace dal
     typename dynamic_array<T,pks>::const_iterator itxc = itxb+d, ityc = ityb+d;
 
     if  (!std::equal(itxb, itxc, ityb)) return false;
-    for (; itxc != itxe; itxc++)
-      if (*itxc != T(_tab_ref_index_ref_iterator)) return false;
+    for (; itxc != itxe; itxc++) if (*itxc != T()) return false;
     for (; ityc != itye; ityc++) if (*ityc != T()) return false;
     return true;
   }

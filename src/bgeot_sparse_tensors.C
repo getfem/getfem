@@ -396,7 +396,6 @@ namespace bgeot {
 	packed_idx.add(mi);
 	N_packed_idx++;
       } else {
-	cerr << "removing index " << mi << "\n";
 	/* sanity check (TODO: s'assurer que sub_tensor_ref appelle bien ensure_0_stride) */
 	for (dim_type j=0; j < N; ++j) {
 	  if (trtab[j].strides()[mi].size() != 0) {

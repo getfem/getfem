@@ -150,7 +150,7 @@ void lap_pb::assemble(void)
   cout << "Number of dof of interpolated method: " << meflink.nb_dof() << endl;
  
   cout << "Assembling interpolated mass matrix" << endl;
-  getfem::mass_matrix(RM1, meflink, meflink, 1);
+  getfem::asm_mass_matrix(RM1, meflink, meflink);
 
   cout << "Matrice de masse\n";
   sum = 0.0;
@@ -167,7 +167,7 @@ void lap_pb::assemble(void)
 
   sparse_matrix_type RM2 = sparse_matrix_type(nb_dof2, nb_dof2);
   cout << "Assembling normal mass matrix" << endl;
-  getfem::mass_matrix(RM2, mef2, 1);
+  getfem::asm_mass_matrix(RM2, mef2);
   
   cout << "Matrice de masse\n";
   sum = 0.0; diff = 0.0;

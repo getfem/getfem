@@ -374,7 +374,7 @@ namespace getfem {
   }
 
   template<class MAT, class VECT>
-  void old_asm_rigidity_matrix_for_linear_elasticity(MAT &RM,
+  void old_asm_stiffness_matrix_for_linear_elasticity(MAT &RM,
 						     const mesh_fem &mf, 
 						     const mesh_fem &mfdata, 
 						     const VECT &LAMBDA, const VECT &MU)
@@ -530,7 +530,7 @@ namespace getfem {
   }
 
   template<class MAT, class VECT>
-  void old_asm_rigidity_matrix_for_laplacian(MAT &RM, const mesh_fem &mf,
+  void old_asm_stiffness_matrix_for_laplacian(MAT &RM, const mesh_fem &mf,
 					     const mesh_fem &mfdata, const VECT &A)
   { // optimisable
     size_type cv, nbd1, nbd2, N = mf.linked_mesh().dim();
@@ -1073,7 +1073,7 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
     c.init();
     for (size_type cnt = 0; cnt < nloop; ++cnt) {
       gmm::clear(M1); c.tic();
-      getfem::old_asm_rigidity_matrix_for_laplacian(M1, mf, mfd, A);
+      getfem::old_asm_stiffness_matrix_for_laplacian(M1, mf, mfd, A);
       c.toc(); cout << "#" << std::flush;
     }
     cout << "done " << c << endl;
@@ -1083,7 +1083,7 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
     c.init();
     for (size_type cnt = 0; cnt < nloop; ++cnt) {
       gmm::clear(M2); c.tic();
-      getfem::asm_rigidity_matrix_for_laplacian(M2, mf, mfd, A); 
+      getfem::asm_stiffness_matrix_for_laplacian(M2, mf, mfd, A); 
       c.toc(); cout << "#" << std::flush;
     }
     cout << "done " << c << endl;
@@ -1151,7 +1151,7 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
     c.init();
     for (size_type cnt = 0; cnt < nloop; ++cnt) {
       gmm::clear(M1); c.tic();
-      getfem::old_asm_rigidity_matrix_for_linear_elasticity(M1, mf, mfd, A, A2);
+      getfem::old_asm_stiffness_matrix_for_linear_elasticity(M1, mf, mfd, A, A2);
       c.toc(); cout << "#" << std::flush;
     }
     cout << "done " << c << endl;
@@ -1161,7 +1161,7 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
     c.init();
     for (size_type cnt = 0; cnt < nloop; ++cnt) {
       gmm::clear(M2); c.tic();
-      getfem::asm_rigidity_matrix_for_linear_elasticity(M2, mfq, mfd, A, A2);
+      getfem::asm_stiffness_matrix_for_linear_elasticity(M2, mfq, mfd, A, A2);
       c.toc(); cout << "#" << std::flush;
     }
     cout << "done " << c << endl;

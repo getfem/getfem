@@ -74,7 +74,7 @@ struct lap_pb
   size_type N;
   int NX, K, fem_type, KI;
 
-  sparse_matrix_type RM;   /* rigidity matrix.                            */
+  sparse_matrix_type SM;   /* stiffness matrix.                            */
   linalg_vector U, B; /* inconnue et second membre.                       */
  
   int integration, mesh_type;
@@ -324,23 +324,23 @@ void lap_pb::assemble(void)
   size_type nb_dof_data2 = mef_data2.nb_dof();
   B = linalg_vector(nb_dof); gmm::clear(B);
   U = linalg_vector(nb_dof); gmm::clear(U); 
-  RM = sparse_matrix_type(nb_dof, nb_dof);
+  SM = sparse_matrix_type(nb_dof, nb_dof);
   linalg_vector ST;
   
   cout << "Number of dof : " << nb_dof << endl;
   // cout << "dof number 1 : " << nb_dof_data << endl;
   // cout << "dof number 2 : " << nb_dof_data2 << endl;
 
-  cout << "Assembling rigidity matrix" << endl;
+  cout << "Assembling stiffness matrix" << endl;
   ST = linalg_vector(nb_dof_data2);
   std::fill(ST.begin(), ST.end(), 1.0);
-  getfem::assembling_rigidity_matrix_for_laplacian(RM, mef, mef_data2, ST);
+  getfem::asm_stiffness_matrix_for_laplacian(SM, mef, mef_data2, ST);
   
   cout << "Assembling source term" << endl;
   ST = linalg_vector(nb_dof_data);
   for (size_type i = 0; i < nb_dof_data; ++i)
     ST[i] = sol_f(mef_data.point_of_dof(i));
-  getfem::assembling_volumic_source_term(B, mef, mef_data, ST, 1);
+  getfem::asm_source_term(B, mef, mef_data, ST);
 
   cout << "Assembling Neumann condition" << endl;
   ST = linalg_vector(nb_dof_data);
@@ -366,7 +366,7 @@ void lap_pb::assemble(void)
       }
     }
   }
-  getfem::assembling_Neumann_condition(B, mef, 1, mef_data, ST, 1);
+  getfem::asm_source_term(B, mef, mef_data, ST, 1);
   
   cout << "take Dirichlet condition into account" << endl;
   // nn = mef.dof_on_boundary(0);
@@ -375,11 +375,11 @@ void lap_pb::assemble(void)
   ST = linalg_vector(nb_dof);
   for (size_type i = 0; i < nb_dof; ++i)
     ST[i] = sol_u(mef.point_of_dof(i));
-  getfem::assembling_Dirichlet_condition(RM, B, mef, 0, ST, 1);
+  getfem::assembling_Dirichlet_condition(SM, B, mef, 0, ST);
 }
 
 void lap_pb::solve(void) {
-  gmm::cg(RM, U, B, gmm::identity_matrix(), gmm::identity_matrix(), 20000,
+  gmm::cg(SM, U, B, gmm::identity_matrix(), gmm::identity_matrix(), 20000,
 	  residu, 1);
 }
 
@@ -434,7 +434,7 @@ int main(int argc, char *argv[])
     total_time += ftool::uclock_sec() - exectime;
     
     //   cout << "Matrice de rigidite\n";
-    //   gmm::write(p.RM, cout);
+    //   gmm::write(p.SM, cout);
     
     cout << "Solving the system\n";
     exectime = ftool::uclock_sec();
@@ -455,12 +455,12 @@ int main(int argc, char *argv[])
       linfnorm = std::max(linfnorm, dal::abs(V[i]));
     }
     
-    scalar_type l2norm = getfem::L2_norm(p.mef_data, V, 1);
+    scalar_type l2norm = getfem::asm_L2_norm(p.mef_data, V);
     cres << l2norm << "\t";
     cres << ftool::uclock_sec() - exectime << "\t";
     total_time += ftool::uclock_sec() - exectime;
     exectime = ftool::uclock_sec();
-    scalar_type h1norm = getfem::H1_norm(p.mef_data, V, 1);
+    scalar_type h1norm = getfem::asm_H1_norm(p.mef_data, V);
     cres << h1norm << "\t";
     cres << ftool::uclock_sec() - exectime << "\t";
     total_time += ftool::uclock_sec() - exectime;

@@ -41,7 +41,7 @@ namespace getfem
 {
   template<class VEC>
   scalar_type asm_L2_norm(const mesh_fem &mf, const VEC &U) {
-    asm_L2_norm(mf,U,mf.convex_index());
+    return asm_L2_norm(mf,U,mf.convex_index());
   }
   template<class VEC>
   scalar_type asm_L2_norm(const mesh_fem &mf, const VEC &U,
@@ -61,7 +61,7 @@ namespace getfem
 
   template<class VEC>
   scalar_type asm_H1_semi_norm(const mesh_fem &mf, const VEC &U) {
-    asm_H1_semi_norm(mf,U,mf.convex_index());
+    return asm_H1_semi_norm(mf,U,mf.convex_index());
   }
   template<class VEC>
   scalar_type asm_H1_semi_norm(const mesh_fem &mf, const VEC &U,
@@ -81,26 +81,20 @@ namespace getfem
 
   template<class VEC>
   scalar_type asm_H1_norm(const mesh_fem &mf, const VEC &U) {
-    asm_H1_norm(mf,U,mf.convex_index());
+    return asm_H1_norm(mf,U,mf.convex_index());
   }
   template<class VEC>
   scalar_type asm_H1_norm(const mesh_fem &mf, const VEC &U,
 			  const dal::bit_vector &cvlst) {
-    /*    generic_assembly assem;    
-    if (mf.get_qdim() == 1)
-      assem.set("u=data(#1); V()+=u(i).u(j).(comp(Base(#1).Base(#1))+comp(Grad(#1).Grad(#1))(:,d,:,d))(i,j)");
-    else
-      assem.set("u=data(#1); V()+=u(i).u(j).(sym(comp(vBase(#1).vBase(#1))(:,k,:,k)+comp(vGrad(#1).vGrad(#1))(:,k,d,:,k,d)))(i,j)");
-    assem.push_mf(mf);
-    assem.push_data(U);
-    bgeot::vsvector<scalar_type> v(1);
-    assem.push_vec(v);
-    assem.volumic_assembly(cvlst);*/
     return sqrt(dal::sqr(asm_L2_norm(mf,U,cvlst))+dal::sqr(asm_H1_semi_norm(mf,U,cvlst)));
   }
   
 
   /* generic mass matrix assembly (on the whole mesh or on the specified boundary) */
+  template<class MAT>
+  void asm_mass_matrix(MAT &M, const mesh_fem &mf_u1, size_type boundary=size_type(-1)) {
+    asm_mass_matrix(M,mf_u1,mf_u1, boundary);
+  }
   template<class MAT>
   void asm_mass_matrix(MAT &M, const mesh_fem &mf_u1, const mesh_fem &mf_u2,
 		       size_type boundary=size_type(-1))
@@ -186,7 +180,7 @@ namespace getfem
      Stiffness matrix for linear elasticity, with Lamé coefficients
   */
   template<class MAT, class VECT>
-    void asm_rigidity_matrix_for_linear_elasticity(MAT &RM,
+    void asm_stiffness_matrix_for_linear_elasticity(MAT &RM,
 						   mesh_fem &mf, 
 						   mesh_fem &mfdata, 
 						   VECT &LAMBDA, VECT &MU)
@@ -208,10 +202,10 @@ namespace getfem
   }
 
   /* 
-     Rigidity matrix for linear elasticity, with a general Hooke  tensor 
+     Stiffness matrix for linear elasticity, with a general Hooke  tensor 
   */
   template<class MAT, class VECT>
-    void asm_rigidity_matrix_for_linear_elasticity_Hooke(MAT &RM,
+    void asm_stiffness_matrix_for_linear_elasticity_Hooke(MAT &RM,
 							 mesh_fem &mf, 
 							 mesh_fem &mfdata, 
 							 VECT &H)
@@ -254,7 +248,7 @@ namespace getfem
   }
 
   template<class MAT, class VECT>
-    void asm_rigidity_matrix_for_laplacian(MAT &RM, const mesh_fem &mf,
+    void asm_stiffness_matrix_for_laplacian(MAT &RM, const mesh_fem &mf,
 					   const mesh_fem &mfdata, VECT &A)
   {
     generic_assembly assem("a=data$1(#2); M$1(#1,#1)+=sym(comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j))");
@@ -273,13 +267,15 @@ namespace getfem
   /* ********************************************************************* */
 
   /* ********************************************************************* */
-  /*	Rigidity matrix for laplacian.                                     */
+  /*	Stiffness matrix for laplacian.                                     */
   /* ********************************************************************* */
 
   template<class MAT, class VECT>
-    void assembling_rigidity_matrix_for_laplacian(MAT &RM, const mesh_fem &mf,
+    void assembling_stiffness_matrix_for_laplacian(MAT &RM, const mesh_fem &mf,
 						  const mesh_fem &mfdata, const VECT &A)
   { // optimisable
+
+    DAL_WARNING(3, "obsolete function - use asm_stiffness_matrix_for_laplacian");
     size_type cv, nbd1, nbd2, N = mf.linked_mesh().dim();
     dal::bit_vector nn = mf.convex_index();
     base_tensor t;
@@ -339,6 +335,7 @@ namespace getfem
 					const mesh_fem &mf_p,
 					const mesh_fem &mf_d,
 					const VECT &DATA) {
+    DAL_WARNING(3, "obsolete function - use asm_stokes");
     size_type cv;
     dal::bit_vector nn = mf_u.convex_index();
 
@@ -411,14 +408,15 @@ namespace getfem
   }
 
   /* ********************************************************************* */
-  /*	Rigidity matrix for linear elasticity.                             */
+  /*	Stiffness matrix for linear elasticity.                             */
   /* ********************************************************************* */
   template<class MAT, class VECT>
-    void assembling_rigidity_matrix_for_linear_elasticity(MAT &RM,
+    void assembling_stiffness_matrix_for_linear_elasticity(MAT &RM,
 							  const mesh_fem &mf, 
 							  const mesh_fem &mfdata, 
 							  const VECT &LAMBDA, const VECT &MU)
   { // à verifier
+    DAL_WARNING(3, "obsolete function - use asm_stiffness_matrix_for_linear_elasticity");
 
     size_type cv, nbd1, nbd2, N = mf.linked_mesh().dim();
     dal::bit_vector nn = mf.convex_index();
@@ -498,6 +496,7 @@ namespace getfem
 				   const mesh_fem &mf_u, size_type boundary, 
 				   const mesh_fem &mf_d, const VECT &Q, dim_type N)
   {
+    DAL_WARNING(3, "obsolete function - use asm_qu_term");
     size_type cv;
     dal::bit_vector nn = mf_u.convex_index(), nf;
     base_tensor t;
@@ -664,6 +663,21 @@ namespace getfem
       }
     }
   }
+  template<class MAT, class VECT>
+  void asm_dirichlet_constraints(MAT &M, VECT &B, const mesh_fem &mf_u,
+				 const mesh_fem &mf_rh,
+				 const VECT &R, size_type boundary) {
+    if (mf_rh.get_qdim() != 1) DAL_THROW(std::invalid_argument, "mf_rh should be a scalar (qdim=1) mesh_fem");
+    size_type N = mf_rh.nb_dof(), Q=mf_u.get_qdim();
+    VECT H(dal::sqr(mf_u.get_qdim())*N); gmm::clear(H);
+    
+    for (size_type i=0; i < N; ++i) {
+      for (size_type q=0; q < Q; ++q) {
+	H(i*Q*Q+q*Q+q)=1;
+      }
+    }
+    asm_dirichlet_constraints(M,B,mf_u,mf_rh,H,R,boundary);
+  }
 
   /* old version, pre-Qdim */
   template<class MAT, class VECT>
@@ -672,6 +686,7 @@ namespace getfem
 					const mesh_fem &mf_rh,
 				        const VECT &H, const VECT &R,
 					dim_type N) {
+    DAL_WARNING(3, "obsolete function - use asm_dirichlet_constraints");
     size_type cv;
     dal::bit_vector nn = mf_u.convex_index(), nf;
     pfem pf_u, pf_rh;
@@ -729,6 +744,7 @@ namespace getfem
   template<class MATRM, class MESH_FEM>
     void mass_matrix(MATRM &M, const MESH_FEM &mf1, const MESH_FEM &mf2, dim_type N)
   {
+    DAL_WARNING(3, "obsolete function - use asm_mass_matrix");
     size_type cv, nbd1, nbd2;
     dal::bit_vector nn = mf1.convex_index();
     base_tensor t;
@@ -783,6 +799,7 @@ namespace getfem
   void mass_matrix_on_boundary(MATRM &M, const MESH_FEM &mf1,
 		    const MESH_FEM &mf2, size_type boundary, dim_type N)
   {
+    DAL_WARNING(3, "obsolete function - use asm_mass_matrix");
     size_type cv, nbd1, nbd2, f;
     dal::bit_vector nn = mf1.convex_index(), nf;
     base_tensor t;
@@ -846,6 +863,7 @@ namespace getfem
     void assembling_volumic_source_term(VECT1 &B, const mesh_fem &mf,
 					const mesh_fem &mfdata, const VECT2 &F, dim_type N)
   {
+    DAL_WARNING(3, "obsolete function - use asm_source_term");
     size_type cv, nbd1, nbd2;
     dal::bit_vector nn = mf.convex_index();
     base_tensor t;
@@ -893,6 +911,50 @@ namespace getfem
     void assembling_Dirichlet_condition(MATRM &RM, VECT1 &B,
 					const mesh_fem &mf,
 					size_type boundary,
+					const VECT2 &F)
+  { /* Y-a-il un moyen plus performant ? */
+    // Marche uniquement pour des ddl de lagrange.
+    size_type cv, Q=mf.get_qdim();
+    dal::bit_vector nn = mf.convex_index();
+    dal::bit_vector nndof = mf.dof_on_boundary(boundary);
+    pfem pf1;
+
+    for (cv << nn; cv != ST_NIL; cv << nn)
+    {
+      pf1 = mf.fem_of_element(cv);
+      pdof_description ldof = lagrange_dof(pf1->dim());
+      size_type nbd = pf1->nb_dof();
+      for (size_type i = 0; i < nbd; i++)
+      {
+	size_type dof1 = mf.ind_dof_of_element(cv)[i*Q];
+	if (nndof.is_in(dof1) && pf1->dof_types()[i] == ldof)
+	{
+	  // cout << "dof : " << i << endl;
+	  for (size_type j = 0; j < nbd; j++)
+	  {
+	    size_type dof2 = mf.ind_dof_of_element(cv)[j*Q];
+	    for (size_type k = 0; k < Q; ++k)
+	      for (size_type l = 0; l < Q; ++l)
+	      {
+		if (!(nndof.is_in(dof2)) &&
+		    dof_compatibility(pf1->dof_types()[j],
+				      lagrange_dof(pf1->dim())))
+		  B[dof2+k] -= RM(dof2+k, dof1+l) * F[dof1+l];
+		RM(dof2+k, dof1+l) = RM(dof1+l, dof2+k) = 0;
+	      }
+	  }
+	  for (size_type k = 0; k < Q; ++k)
+	  { RM(dof1+k, dof1+k) = 1; B[dof1+k] = F[dof1+k]; }
+	}
+      }
+    }
+  }
+
+
+  template<class MATRM, class VECT1, class VECT2>
+    void old_assembling_Dirichlet_condition(MATRM &RM, VECT1 &B,
+					const mesh_fem &mf,
+					size_type boundary,
 					const VECT2 &F, dim_type N)
   { /* Y-a-il un moyen plus performant ? */
     // Marche uniquement pour des ddl de lagrange.
@@ -934,8 +996,8 @@ namespace getfem
 
 
   template<class MATD, class MATG, class VECT>
-  size_type treat_Dirichlet_condition(const MATD &D, MATG &G,
-				      const VECT &UD, VECT &UDD) {
+  size_type Dirichlet_nullspace(const MATD &D, MATG &G,
+				const VECT &UD, VECT &UDD) {
 
     // To be finalized.
     //  . In order to be used with any sparse matrix type
@@ -1145,6 +1207,7 @@ namespace getfem
     void assembling_Neumann_condition(VECT1 &B, const mesh_fem &mf,
 				      size_type boundary, const mesh_fem &mfdata, const VECT2 &F, dim_type N)
   {
+    DAL_WARNING(3, "obsolete function - use asm_source_term");
     size_type cv, nbd1, nbd2, f;
     dal::bit_vector nn = mf.convex_index(), nf;
     base_tensor t;
