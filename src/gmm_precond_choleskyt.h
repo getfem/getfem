@@ -42,6 +42,7 @@ namespace gmm {
   public :
     typedef typename linalg_traits<Matrix>::value_type value_type;
     typedef rsvector<value_type> svector;
+
     row_matrix<svector> U;
 
   protected:

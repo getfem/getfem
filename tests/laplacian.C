@@ -433,14 +433,13 @@ void lap_pb::solve(void) {
   cout << "Compute preconditionner\n";
   double time = ftool::uclock_sec();
   gmm::iteration iter(residu, 1, 40000);
-  gmm::identity_matrix P;
+  // gmm::identity_matrix P;
   // gmm::diagonal_precond<sparse_matrix_type> P(SM);
   // gmm::mr_approx_inverse_precond<sparse_matrix_type> P(SM, 10, 10E-17);
   // gmm::cholesky_precond<sparse_matrix_type> P(SM);
+  gmm::choleskyt_precond<sparse_matrix_type> P(SM, 0, 1E-6);
   // gmm::ilu_precond<sparse_matrix_type> P(SM);
   // gmm::ilut_precond<sparse_matrix_type> P(SM, 5, 1E-6);
-  // gmm::choleskyt_precond<sparse_matrix_type> P(SM, 5, 1E-6);
-
   cout << "Time to compute preconditionner : "
        << ftool::uclock_sec() - time << " seconds\n";
 
