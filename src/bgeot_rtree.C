@@ -248,7 +248,7 @@ namespace bgeot {
   static void dump_tree_(rtree_elt_base *p, int level, size_type& count) {
     if (!p) return;
     cout << level << "|";
-    for (size_type i=0; i < level; ++i) cout << "  ";
+    for (int i=0; i < level; ++i) cout << "  ";
     cout << "span=" << p->rmin << ".." << p->rmax << " ";
     if (p->isleaf()) {
       rtree_leaf *rl = static_cast<rtree_leaf*>(p);
