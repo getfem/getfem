@@ -56,7 +56,7 @@
 //  Incomplete LU without fill-in Preconditioner.
 //
 // Notes: The idea under a concrete Preconditioner such 
-//        as Incomplete Ilu is to create a Preconditioner
+//        as Incomplete LU is to create a Preconditioner
 //        object to use in iterative methods. 
 //
 
@@ -71,15 +71,10 @@ namespace gmm {
 
   public :
     typedef typename linalg_traits<Matrix>::value_type value_type;
-    typedef typename principal_orientation_type<typename
-      linalg_traits<Matrix>::sub_orientation>::potype sub_orientation;
-    typedef csr_matrix_ref<value_type *, size_type *, size_type *, 0> rtm_type;
-    typedef csc_matrix_ref<value_type *, size_type *, size_type *, 0> ctm_type;
-
-    typedef typename select_orientation<rtm_type, ctm_type,
-					Matrix>::return_type tm_type;
+    typedef csr_matrix_ref<value_type *, size_type *, size_type *, 0> tm_type;
 
     tm_type U, L;
+    bool invert;
   protected :
     std::vector<value_type> L_val, U_val;
     std::vector<size_type> L_ind, U_ind, L_ptr, U_ptr;
@@ -93,11 +88,12 @@ namespace gmm {
     size_type ncols(void) const { return mat_ncols(U); }
     
     ilu_precond(const Matrix& A) :
-       L_ptr(mat_nrows(A)+1), U_ptr(mat_nrows(A)+1) { 
+      L_ptr(mat_nrows(A)+1), U_ptr(mat_nrows(A)+1), invert(false) { 
       if (!is_sparse(A))
 	DAL_THROW(failure_error,
 		  "Matrix should be sparse for incomplete ilu");
-      do_ilu(A, sub_orientation());
+      do_ilu(A, typename principal_orientation_type<typename
+	     linalg_traits<Matrix>::sub_orientation>::potype());
     }
   };
 
@@ -176,124 +172,66 @@ namespace gmm {
   
   template <class Matrix>
   void ilu_precond<Matrix>::do_ilu(const Matrix& A, col_major) {
-    size_type L_loc = 0, U_loc = 0, n = mat_ncols(A), i, j;
-    L_ptr[0] = 0; U_ptr[0] = 0;
-
-    for (int count = 0; count < 2; ++count) {
-      if (count) { 
-	L_val.resize(L_loc); L_ind.resize(L_loc);
-	U_val.resize(U_loc); U_ind.resize(U_loc);
-      }
-      L_at = U_at = L_loc = U_loc = 0;
-      for (i = 0; i < n; ++i) {
-	typedef typename linalg_traits<Matrix>::const_sub_col_type col_type;
-	col_type col = mat_const_col(A, i);
-	typename linalg_traits<col_type>::const_iterator
-	  it = vect_const_begin(col), ite = vect_const_end(col);
-	for (; it != ite; ++it) {
-	  if (it.index() < i) {
-	    if (count) {
-	      U_val[U_loc] = *it; U_ind[U_loc] = it.index();
-	      for (j = U_loc; j > U_at; --j)
-		if (U_ind[j] < U_ind[j-1]) {
-		  std::swap(U_ind[j], U_ind[j-1]);
-		  std::swap(U_val[j], U_val[j-1]);
-		}
-	    }
-	    U_loc++;
-	  }
-	  else {
-	    if (count) {
-	      L_val[L_loc] = *it; L_ind[L_loc] = it.index();
-	      for (j = L_loc; j > L_at; --j)
-		if (L_ind[j] < L_ind[j-1]) {
-		  std::swap(L_ind[j], L_ind[j-1]);
-		  std::swap(L_val[j], L_val[j-1]);
-		}
-	    }
-	    L_loc++;
-	  }
-	}
-	if (count) { L_at = L_ptr[i+1] = L_loc; U_at = U_ptr[i+1] = U_loc; }
-      }
-    }
-
-    size_type qn, pn, rn; 
-    for (i = 0; i < mat_nrows(A) - 1; i++) {
-      value_type multiplier = U_val[U_ptr[i+1]-1];
-      
-      for (j = L_ptr[i]; j < L_ptr[i+1]; j++)
-	L_val[j] /= multiplier;
-      
-      for (j = U_ptr[i+1]; j < U_ptr[i+2]-1; j++) {
-	multiplier = U_val[j];
-	qn = j + 1;
-	rn = L_ptr[i+1];
-	for (pn = L_ptr[U_ind[j]]; 
-	     L_ind[pn] <= i + 1 && pn < L_ptr[U_ind[j]+1]; 
-	     pn++) {
-	  while (U_ind[qn] < L_ind[pn] && qn < U_ptr[i+2])
-	    qn++;
-	  if (L_ind[pn] == U_ind[qn] && qn < U_ptr[i+2])
-	    U_val[qn] -= multiplier * L_val[pn];
-	}
-	for (; pn < L_ptr[U_ind[j]+1]; pn++) {
-	  while (L_ind[rn] < L_ind[pn] && rn < L_ptr[i+2])
-	    rn++;
-	  if (L_ind[pn] == L_ind[rn] && rn < L_ptr[i+2])
-	    L_val[rn] -= multiplier * L_val[pn];
-	}
-      }
-    }
-    L = tm_type(&(L_val[0]), &(L_ind[0]), &(L_ptr[0]), mat_nrows(A), n);
-    U = tm_type(&(U_val[0]), &(U_ind[0]), &(U_ptr[0]), mat_nrows(A), n);
+    do_ilu(gmm::transposed(A), row_major());
+    invert = true;
   }
 
   template <class Matrix, class V1, class V2> inline
   void mult(const ilu_precond<Matrix>& P, const V1 &v1, V2 &v2) {
-    typedef typename ilu_precond<Matrix>::sub_orientation orien;
     gmm::copy(v1, v2);
-    gmm::lower_tri_solve(P.L, v2, is_row_matrix(orien()));
-    gmm::upper_tri_solve(P.U, v2, is_col_matrix(orien()));
+    if (P.invert) {
+      gmm::lower_tri_solve(gmm::transposed(P.U), v2, false);
+      gmm::upper_tri_solve(gmm::transposed(P.L), v2, true);
+    }
+    else {
+      gmm::lower_tri_solve(P.L, v2, true);
+      gmm::upper_tri_solve(P.U, v2, false);
+    }
   }
 
   template <class Matrix, class V1, class V2> inline
   void transposed_mult(const ilu_precond<Matrix>& P,const V1 &v1,V2 &v2) {
-    typedef typename ilu_precond<Matrix>::sub_orientation orien;
     gmm::copy(v1, v2);
-    gmm::lower_tri_solve(gmm::transposed(P.U), v2, is_col_matrix(orien()));
-    gmm::upper_tri_solve(gmm::transposed(P.L), v2, is_row_matrix(orien()));
+    if (P.invert) {
+      gmm::lower_tri_solve(P.L, v2, true);
+      gmm::upper_tri_solve(P.U, v2, false);
+    }
+    else {
+      gmm::lower_tri_solve(gmm::transposed(P.U), v2, false);
+      gmm::upper_tri_solve(gmm::transposed(P.L), v2, true);
+    }
   }
 
   template <class Matrix, class V1, class V2> inline
   void left_mult(const ilu_precond<Matrix>& P, const V1 &v1, V2 &v2) {
-    typedef typename ilu_precond<Matrix>::sub_orientation orien;
     copy(v1, v2);
-    gmm::lower_tri_solve(P.L, v2, is_row_matrix(orien()));
+    if (P.invert) gmm::lower_tri_solve(gmm::transposed(P.U), v2, false);
+    else gmm::lower_tri_solve(P.L, v2, true);
   }
 
   template <class Matrix, class V1, class V2> inline
   void right_mult(const ilu_precond<Matrix>& P, const V1 &v1, V2 &v2) {
-    typedef typename ilu_precond<Matrix>::sub_orientation orien;
     copy(v1, v2);
-    gmm::upper_tri_solve(P.U, v2, is_col_matrix(orien()));
+    if (P.invert) gmm::upper_tri_solve(gmm::transposed(P.L), v2, true);
+    else gmm::upper_tri_solve(P.U, v2, false);
   }
 
   template <class Matrix, class V1, class V2> inline
   void transposed_left_mult(const ilu_precond<Matrix>& P, const V1 &v1,
 			    V2 &v2) {
-    typedef typename ilu_precond<Matrix>::sub_orientation orien;
     copy(v1, v2);
-    gmm::upper_tri_solve(gmm::transposed(P.L), v2, is_row_matrix(orien()));
+    if (P.invert) gmm::upper_tri_solve(P.U, v2, false);
+    else gmm::upper_tri_solve(gmm::transposed(P.L), v2, true);
   }
 
   template <class Matrix, class V1, class V2> inline
   void transposed_right_mult(const ilu_precond<Matrix>& P, const V1 &v1,
 			     V2 &v2) {
-    typedef typename ilu_precond<Matrix>::sub_orientation orien;
     copy(v1, v2);
-    gmm::lower_tri_solve(gmm::transposed(P.U), v2, is_col_matrix(orien()));
+    if (P.invert) gmm::lower_tri_solve(P.L, v2, true);
+    else gmm::lower_tri_solve(gmm::transposed(P.U), v2, false);
   }
+
 
 }
 

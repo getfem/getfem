@@ -63,7 +63,7 @@ namespace gmm {
 
   /* ******************************************************************** */
   /*		conjugate gradient                           		  */
-  /* (preconditionned, with parametrable scalar product)        	  */
+  /* (preconditionned, with parametrable additional scalar product)       */
   /* ******************************************************************** */
 
   template <class Matrix, class Matps, class Precond, 
