@@ -367,7 +367,7 @@ namespace dal
     { return (it - i.it) / N; }
 
     reference operator *() const { return *it; }
-    reference operator [](int ii) { return *(it + ii * N); }
+    reference operator [](int ii) const { return *(it + ii * N); }
 
     bool operator ==(const iterator &i) const { return (it == i.it); }
     bool operator !=(const iterator &i) const { return !(i == *this); }

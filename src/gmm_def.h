@@ -56,6 +56,7 @@ namespace gmm {
 
   struct linalg_true {};
   struct linalg_false {};
+
   struct linalg_const {};       // A reference is either linalg_const,
   struct linalg_modifiable {};  //  linalg_modifiable or linalg_false.
 
@@ -163,6 +164,8 @@ namespace gmm {
   inline bool is_row_matrix(row_major) { return true; }
   inline bool is_row_matrix(col_major) { return false; }
 
+  template <class L> inline bool is_const_reference(L) { return false; }
+  inline bool is_const_reference(linalg_const) { return true; }
 
   /* ******************************************************************** */
   /*  types to deal with const object representing a modifiable reference */
@@ -481,6 +484,26 @@ namespace gmm {
   template <class IT> inline void dense_clear<IT>::operator()(const void *,
 			  const IT &_begin, const IT &_end)
   { std::fill(_begin, _end, value_type(0)); }
+
+  /* ********************************************************************* */
+  /* Set to begin end set to end for iterators on non-const sparse vectors.*/
+  /* ********************************************************************* */
+
+  template <class IT, class VECT> inline
+  void set_to_begin(IT &it, const void *o, VECT *)
+  { it = vect_begin(*(const_cast<VECT *>((const VECT *)(o)))); }
+
+  template <class IT, class VECT> inline
+  void set_to_begin(IT &it, const void *o, const VECT *) 
+  { it = vect_const_begin(*((const VECT *)(o))); }
+
+  template <class IT, class VECT> inline
+  void set_to_end(IT &it, const void *o, VECT *)
+  { it = vect_end(*(const_cast<VECT *>((const VECT *)(o)))); }
+  
+  template <class IT, class VECT> inline
+  void set_to_end(IT &it, const void *o, const VECT *)
+  { it = vect_const_end(*((const VECT *)(o))); }
 
 }
 

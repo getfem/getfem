@@ -34,26 +34,6 @@
 
 namespace gmm {
 
-  template <class IT, class VECT> inline
-  void set_to_begin(IT &it, const void *o, VECT *) {
-    it = vect_begin(*(const_cast<VECT *>((const VECT *)(o)))); 
-  }
-  template <class IT, class VECT> inline
-  void set_to_begin(IT &it, const void *o, const VECT *) {
-    it = vect_const_begin(*((const VECT *)(o)));
-  }
-  template <class IT, class VECT> inline
-  void set_to_end(IT &it, const void *o, VECT *) {
-    it = vect_end(*(const_cast<VECT *>((const VECT *)(o)))); 
-  }
-  template <class IT, class VECT> inline
-  void set_to_end(IT &it, const void *o, const VECT *) {
-    it = vect_const_end(*((const VECT *)(o)));
-  }
-
-  // does not work when VECT is a reference, to be corrected ...
-  // simple_reference has to be corrected too
-
   /* ********************************************************************* */
   /*		sparse sub-vectors                                         */
   /* ********************************************************************* */
@@ -69,15 +49,19 @@ namespace gmm {
     typedef typename traits_type::pointer           pointer;
     typedef typename traits_type::reference         reference;
     typedef typename traits_type::difference_type   difference_type;
-    typedef std::forward_iterator_tag               iterator_category;
+    typedef std::bidirectional_iterator_tag         iterator_category;
     typedef size_t                                  size_type;
     typedef sparse_sub_vector_iterator<IT, MIT, SUBI>    iterator;
 
     size_type index(void) const { return si.rindex(itb.index()); }
     void forward(void);
+    void backward(void);
     iterator &operator ++()
     { ++itb; forward(); return *this; }
     iterator operator ++(int) { iterator tmp = *this; ++(*this); return tmp; }
+    iterator &operator --()
+    { --itb; backward(); return *this; }
+    iterator operator --(int) { iterator tmp = *this; --(*this); return tmp; }
     reference operator *() const { return *itb; }
 
     bool operator ==(const iterator &i) const { return itb == i.itb; }
@@ -90,40 +74,45 @@ namespace gmm {
 	 SUBI> &it) : itb(it.itb), itbe(it.itbe), si(it.si) {}
   };
 
-  template <class IT, class MIT, class SUBI, class VECT> inline
-  void set_to_begin(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
-		    const void *o, VECT *) {
-    set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV());
-    set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV());
-    it.forward();
-  }
-  template <class IT, class MIT, class SUBI, class VECT> inline
-  void set_to_begin(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
-		    const void *o, const VECT *) {
-    set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV());
-    set_to_end(it.itbe, o, typename linalg_traits<VECT>::V());
-    it.forward();
-  }
-  
-  template <class IT, class MIT, class SUBI, class VECT> inline
-  void set_to_end(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
-		    const void *o, VECT *) {
-    set_to_end(it.itb, o, typename linalg_traits<VECT>::pV());
-    set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV());
-    it.forward();
-  }
-  template <class IT, class MIT, class SUBI, class VECT> inline
-  void set_to_end(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
-		    const void *o, const VECT *) {
-    set_to_end(it.itb, o, typename linalg_traits<VECT>::pV());
-    set_to_end(it.itbe, o, typename linalg_traits<VECT>::V());
-    it.forward();
-  }
-  
   template <class IT, class MIT, class SUBI>
   void  sparse_sub_vector_iterator<IT, MIT, SUBI>::forward(void)
-  { while(itb!=itbe && index()==size_type(-1)) ++itb; }
+  { while(itb!=itbe && index()==size_type(-1)) { ++itb; } }
 
+  template <class IT, class MIT, class SUBI>
+  void  sparse_sub_vector_iterator<IT, MIT, SUBI>::backward(void)
+  { while(itb!=itbe && index()==size_type(-1)) --itb; }
+
+
+  template <class IT, class MIT, class SUBI, class VECT> inline
+  void set_to_begin(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
+		    const void *o, VECT *) {
+    set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV());
+    set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV());
+    it.forward();
+  }
+  template <class IT, class MIT, class SUBI, class VECT> inline
+  void set_to_begin(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
+		    const void *o, const VECT *) {
+    set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV());
+    set_to_end(it.itbe, o, typename linalg_traits<VECT>::V());
+    it.forward();
+  }
+  
+  template <class IT, class MIT, class SUBI, class VECT> inline
+  void set_to_end(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
+		    const void *o, VECT *) {
+    set_to_end(it.itb, o, typename linalg_traits<VECT>::pV());
+    set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV());
+    it.forward();
+  }
+  template <class IT, class MIT, class SUBI, class VECT> inline
+  void set_to_end(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
+		    const void *o, const VECT *) {
+    set_to_end(it.itb, o, typename linalg_traits<VECT>::pV());
+    set_to_end(it.itbe, o, typename linalg_traits<VECT>::V());
+    it.forward();
+  }
+  
   template <class PT, class SUBI> struct sparse_sub_vector {
     typedef sparse_sub_vector<PT, SUBI> this_type;
     typedef typename std::iterator_traits<PT>::value_type V;
@@ -215,21 +204,33 @@ namespace gmm {
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) {
       iterator it;
-      it.itb = v._begin; it.itbe = v._end; it.si = v.si; // utile le v._end ?  
-      set_to_begin(it, v.origin, pthis_type()); return it;
+      it.itb = v._begin; it.itbe = v._end; it.si = v.si;
+      if (!is_const_reference(is_reference()))
+	set_to_begin(it, v.origin, pthis_type());
+      else it.forward();
+      return it;
     }
     static const_iterator begin(const this_type &v) {
       const_iterator it; it.itb = v._begin; it.itbe = v._end; it.si = v.si;
-      set_to_begin(it, v.origin, pthis_type()); return it;
+      if (!is_const_reference(is_reference()))
+	{ set_to_begin(it, v.origin, pthis_type()); }
+      else it.forward();
+      return it;
     }
     static iterator end(this_type &v) {
       iterator it;
-      it.itb = v._end; it.itbe = v._end; it.si = v.si; // utile le v._end ?  
-      set_to_end(it, v.origin, pthis_type()); return it;
+      it.itb = v._end; it.itbe = v._end; it.si = v.si;
+      if (!is_const_reference(is_reference()))
+	set_to_end(it, v.origin, pthis_type());
+      else it.forward();
+      return it;
     }
     static const_iterator end(const this_type &v) {
       const_iterator it; it.itb = v._end; it.itbe = v._end; it.si = v.si;
-      set_to_end(it, v.origin, pthis_type()); return it;
+      if (!is_const_reference(is_reference()))
+	set_to_end(it, v.origin, pthis_type());
+      else it.forward();
+      return it;
     }
     static const void* origin(const this_type &v) { return v.origin; }
     static void do_clear(this_type &v)

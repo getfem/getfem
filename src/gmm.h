@@ -32,6 +32,10 @@
 #ifndef __GMM_H
 #define __GMM_H
 
+#if !defined(NOGMM_VERIFY) && defined(GETFEM_VERIFY)
+#   define GMM_VERIFY
+#endif
+
 #include <gmm_def.h>
 #include <gmm_sub_index.h>
 #include <gmm_interface.h>

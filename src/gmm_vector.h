@@ -91,6 +91,9 @@ namespace gmm
     { return T(re)/ v; }
   template<class T, class V> T operator /(T v, const ref_elt_vector<T, V> &re)
     { return v/ T(re); }
+  template<class T, class V> std::ostream &operator <<
+  (std::ostream &o, const ref_elt_vector<T, V> &re) { o << T(re); return o; }
+  
 
   /*************************************************************************/
   /*                                                                       */
@@ -157,7 +160,7 @@ namespace gmm
     { return ref_elt_vector<T, wsvector<T> >(this, c); }
 
     inline void w(size_type c, const T &e) {
-#   ifdef __GETFEM_VERIFY
+#   ifdef GMM_VERIFY
       if (c >= nbl) out_of_range_error();
 #   endif
       if (e == T(0)) { base_type::erase(c); }
@@ -165,7 +168,7 @@ namespace gmm
     }
 
     inline T r(size_type c) const {
-#ifdef __GETFEM_VERIFY
+#ifdef GMM_VERIFY
       if (c >= nbl) out_of_range_error();
 #endif
       const_iterator it = lower_bound(c);
@@ -412,7 +415,7 @@ namespace gmm
   }
 
   template <class T> void rsvector<T>::w(size_type c, const T &e) {
-#   ifdef __GETFEM_VERIFY
+#   ifdef GMM_VERIFY
     if (c >= nbl) out_of_range_error();
 #   endif
     if (e == T(0)) sup(c);
@@ -438,7 +441,7 @@ namespace gmm
   }
   
   template <class T> T rsvector<T>::r(size_type c) const {
-#   ifdef __GETFEM_VERIFY
+#   ifdef GMM_VERIFY
     if (c >= nbl) out_of_range_error();
 #   endif
     if (nb_stored() != 0) {
@@ -562,23 +565,23 @@ namespace gmm
     for (; it2 != ite2; ++it2) ++nbc;
 
     v2.base_resize(nbc);
-    it3 = v2.begin() + old_nbc; --it3;
-    it2 = v2.end(); --it2; ite2 = v2.begin(); --ite2;
-    it1 = vect_end(v1); --it1; ite1 = vect_const_begin(v1); --ite1;
-
-    for (; it1 != ite1 && it3 != ite2; --it2) {
-      if (it3->c > it1.index()) { *it2 = *it3; --it3; }
-      else if (it3->c == it1.index()) { *it2=*it3; it2->e+=*it1; --it3; --it1;}
-      else { it2->c = it1.index(); it2->e = *it1; --it1; }
+    it3 = v2.begin() + old_nbc;
+    it2 = v2.end(); ite2 = v2.begin();
+    it1 = vect_end(v1); ite1 = vect_const_begin(v1);
+    while (it1 != ite1 && it3 != ite2) {
+      --it3; --it1; --it2;
+      if (it3->c > it1.index()) { *it2 = *it3; ++it1; }
+      else if (it3->c == it1.index()) { *it2=*it3; it2->e+=*it1; }
+      else { it2->c = it1.index(); it2->e = *it1; ++it3; }
     }
-    for (; it1 != ite1; --it2) { it2->c = it1.index(); it2->e = *it1; --it1; }
+    while (it1 != ite1) { --it1; --it2; it2->c = it1.index(); it2->e = *it1; }
   }
 
   template <class V, class T> void copy(const V &v1, rsvector<T> &v2) {
     if ((const void *)(&v1) != (const void *)(&v2)) {
       if (vect_size(v1) != vect_size(v2))
 	DAL_THROW(dimension_error,"dimensions mismatch");
-#       ifdef __GETFEM_VERIFY
+#       ifdef GMM_VERIFY
         if (linalg_origin(v1) == linalg_origin(v2))
 	  DAL_WARNING(2, "a conflict is possible in vector copy\n");
 #       endif
@@ -783,7 +786,7 @@ namespace gmm
 
     void w(size_type c, const T &e);
     T r(size_type c) const {
-#   ifdef __GETFEM_VERIFY
+#   ifdef GMM_VERIFY
       if (c >= _size) out_of_range_error();
 #   endif
       if (c < shift || c >= shift + data.size()) return T(0);
@@ -803,7 +806,7 @@ namespace gmm
 
   template<class T>  void slvector<T>::w(size_type c, const T &e) {
     // cout << "vecteur avant : " << *this << " ajout à l'indice " << c << " de " << e << endl;
-#   ifdef __GETFEM_VERIFY
+#   ifdef GMM_VERIFY
       if (c >= _size) out_of_range_error();
 #   endif
       size_type s = data.size();

@@ -101,9 +101,27 @@ namespace gmm {
     { return access_type()(origin, _begin, _end, i); }
   };
 
+  template <class IT, class PT> inline
+  void set_to_begin(IT it, const void *o, simple_vector_ref<PT> *)
+  { set_to_begin(it, o, PT()); }
+
+  template <class IT, class PT> inline
+  void set_to_begin(IT it, const void *o, const simple_vector_ref<PT> *)
+  { set_to_begin(it, o, PT()); }
+
+  template <class IT, class PT> inline
+  void set_to_end(IT it, const void *o, simple_vector_ref<PT> *)
+  { set_to_end(it, o, PT()); }
+
+  template <class IT, class PT> inline
+  void set_to_end(IT it, const void *o, const simple_vector_ref<PT> *)
+  { set_to_end(it, o, PT()); }
+
+
   template <class PT> struct linalg_traits<simple_vector_ref<PT> > {
     typedef simple_vector_ref<PT> this_type;
     typedef typename std::iterator_traits<PT>::value_type V;
+    typedef V *pV;
     typedef typename which_reference<PT>::is_reference is_reference;
     typedef abstract_vector linalg_type;
     typedef typename linalg_traits<V>::value_type value_type;
@@ -116,10 +134,26 @@ namespace gmm {
     typedef typename linalg_traits<V>::access_type access_type;
     typedef typename linalg_traits<V>::clear_type  clear_type;
     static size_type size(const this_type &v) { return v._size; }
-    static iterator begin(this_type &v) { return v._begin; }
-    static const_iterator begin(const this_type &v) { return v._begin; }
-    static iterator end(this_type &v) { return v._end; }
-    static const_iterator end(const this_type &v) { return v._end; }
+    static inline iterator begin(this_type &v) {
+      iterator it = v._begin;
+      if (!is_const_reference(is_reference()))
+	  set_to_begin(it, v.origin, pV()); return it;
+    }
+    static inline const_iterator begin(const this_type &v) {
+      const_iterator it = v._begin;
+      if (!is_const_reference(is_reference()))
+	  set_to_begin(it, v.origin, pV()); return it;
+    }
+    static inline iterator end(this_type &v) {
+      iterator it = v._end;
+      if (!is_const_reference(is_reference()))
+	  set_to_end(it, v.origin, pV()); return it;
+    }
+    static inline const_iterator end(const this_type &v) {
+      const_iterator it = v._end;
+      if (!is_const_reference(is_reference()))
+	  set_to_end(it, v.origin, pV()); return it;
+    }
     static const void* origin(const this_type &v) { return v.origin; }
     static void do_clear(this_type &v)
     { clear_type()(v.origin, v._begin, v._end); }

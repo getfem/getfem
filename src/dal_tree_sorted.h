@@ -123,7 +123,7 @@ namespace dal
   template<class T, class COMP, int pks> 
     void tsa_iterator<T, COMP, pks>::down_left(void)
   {
-    #ifdef __GETFEM_VERIFY
+    #ifdef GETFEM_VERIFY
       if (depth <= 0 || depth >= _DEPTHMAX_ || index() == ST_NIL)
 	DAL_THROW(internal_error, "internal error");
     #endif
@@ -133,7 +133,7 @@ namespace dal
   template<class T, class COMP, int pks> 
     void tsa_iterator<T, COMP, pks>::down_right(void)
   { 
-    #ifdef __GETFEM_VERIFY
+    #ifdef GETFEM_VERIFY
       if (depth <= 0 || depth >= _DEPTHMAX_ || index() == ST_NIL)
 	DAL_THROW(internal_error, "internal error");
     #endif
@@ -258,7 +258,7 @@ namespace dal
   template<class T, class COMP, int pks>
     void const_tsa_iterator<T, COMP, pks>::down_left(void)
   {
-    #ifdef __GETFEM_VERIFY
+    #ifdef GETFEM_VERIFY
       if (depth <= 0 || depth >= _DEPTHMAX_ || index() == ST_NIL)
 	DAL_THROW(internal_error, "internal error");
     #endif
@@ -268,7 +268,7 @@ namespace dal
   template<class T, class COMP, int pks>
     void const_tsa_iterator<T, COMP, pks>::down_right(void)
   { 
-    #ifdef __GETFEM_VERIFY
+    #ifdef GETFEM_VERIFY
       if (depth <= 0 || depth >= _DEPTHMAX_ || index() == ST_NIL)
 	DAL_THROW(internal_error, "internal error");
     #endif
@@ -350,7 +350,7 @@ namespace dal
 
     public :
 
-      #ifdef __GETFEM_VERIFY
+      #ifdef GETFEM_VERIFY
 
         int verify_balance(size_type i = size_type(-2)) const
         {
@@ -512,11 +512,11 @@ namespace dal
       case +2 : if (nodes[pn->r].eq == 1) return rotate_left(i);
                                       else return rotate_right_left(i);
       case  0 : case -1 : case 1 : return i;
-    #ifdef __GETFEM_VERIFY
+    #ifdef GETFEM_VERIFY
       default : DAL_THROW(internal_error, "internal error");
     #endif
     }
-    #ifndef __GETFEM_VERIFY
+    #ifndef GETFEM_VERIFY
       return ST_NIL;
     #endif
   }

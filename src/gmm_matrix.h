@@ -287,13 +287,13 @@ namespace gmm
   public:
     
     inline const T& operator ()(size_type l, size_type c) const {
-#     ifdef __GETFEM_VERIFY
+#     ifdef GMM_VERIFY
       if (l >= nbl || c >= nbc) this->out_of_range_error();
 #     endif
       return *(this->begin() + c*nbl+l);
     }
     inline T& operator ()(size_type l, size_type c) {
-#     ifdef __GETFEM_VERIFY
+#     ifdef GMM_VERIFY
       if (l >= nbl || c >= nbc) this->out_of_range_error();
 #     endif
       return *(this->begin() + c*nbl+l);

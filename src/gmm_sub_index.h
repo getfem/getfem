@@ -118,6 +118,14 @@ namespace gmm {
     }
   };
 
+  inline std::ostream &operator << (std::ostream &o, const sub_index &si) { 
+    o << "sub_index(";
+    if (si.size()) o << si.index(0);
+    for (size_type i = 0; i < si.size(); ++i) o << ", " << si.index(i);
+    o << ")";
+    return o;
+  }
+
   struct sub_interval {
     size_type min, max; 
 
@@ -129,6 +137,9 @@ namespace gmm {
     sub_interval(size_type mi, size_type l) : min(mi), max(mi+l) {}
     sub_interval() {}
   };
+
+  inline std::ostream &operator << (std::ostream &o, const sub_interval &si)
+  { o << "sub_interval(" << si.min << ", " << si.size() << ")"; return o; }
 
   struct sub_slice {
     size_type min, max, N; 
@@ -145,6 +156,12 @@ namespace gmm {
       : min(mi), max(mi+l*n), N(n) {}
     sub_slice(void) {}
   };
+
+  inline std::ostream &operator << (std::ostream &o, const sub_slice &si) {
+    o << "sub_slice(" << si.min << ", " << si.size() << ", " << si.step() 
+      << ")"; return o;
+  }
+
 
 }
 
