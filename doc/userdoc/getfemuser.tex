@@ -27,7 +27,7 @@
   a Generic Finite Element library in C++ \\[0.5cm]
   {\LARGE Documentation, part \Huge 2} \\[0.5cm]
   \fbox{\Huge \sc Short User Documentation} \\[0.5cm]
-  { \large Yves \sc Renard\footnote{ \it MIP, INSAT, Complexe scientifique de Rangueil, 31077 Toulouse, France, Yves.Renard@gmm.insa-tlse.fr } } \\[1.0cm]
+  { \large Yves {\sc Renard}, Julien {\sc Pommier} \footnote{ \it MIP, INSAT, Complexe scientifique de Rangueil, 31077 Toulouse, France, Yves.Renard@gmm.insa-tlse.fr } } \\[1.0cm]
   \today \\[1.0cm]
 \end{center}
 
@@ -356,7 +356,7 @@ Once a finite element method is defined on a mesh, it is possible to obtain info
 
 \section{Standard assembling procedures}
 
-Procedures defined in the file {\tt getfem\_assembling.h} allow to assemble rigidity matrices, mass matrices and boundary conditions for a few amount of classical partial differential equation problems. All the procedures have vectors and matrices template parameters in order to be used with any matrix library (Dense and sparse matrix are defined in {\tt bgeot\_matrix.h} and {\tt bgeot\_smatrix.h} but it is preferable to use a matrix library such as MTL / ITL.).
+Procedures defined in the file {\tt getfem\_assembling.h} allow to assemble stiffness matrices, mass matrices and boundary conditions for a few amount of classical partial differential equation problems. All the procedures have vectors and matrices template parameters in order to be used with any matrix library (Dense and sparse matrix are defined in {\tt bgeot\_matrix.h} and {\tt bgeot\_smatrix.h} but it is preferable to use a matrix library such as MTL / ITL.).
 
 \subsection{Laplacian (Poisson) problem}
 
@@ -367,8 +367,8 @@ An assembling procedure is defined to solve the problem
   \Frac{\partial u}{\partial \bf n} = F(x),  \ \ \mbox{ on } \Gamma_{_N},   
 \end{eqnarray*}
 where $\Omega$ is an open domain of arbitrary dimension, $\Gamma_{_D}$ and $\Gamma_{_N}$ are parts of the boundary of $\Omega$, $u(x)$ is the unknown, $a(x)$ is a given coefficient, $f(x)$ is a given source term, $U(x)$ the prescribed value of $u(x)$ on $\Gamma_{_D}$ and $F(x)$ is the prescribed normal derivative of $u(x)$ on $\Gamma_{_N}$.
-The function to be called to assemble the rigidity matrix is\\[0.5cm]
-{\tt getfem::asm\_rigidity\_matrix\_for\_laplacian(RM, mef1, mef2, A);} \\[0.5cm]
+The function to be called to assemble the stiffness matrix is\\[0.5cm]
+{\tt getfem::asm\_stiffness\_matrix\_for\_laplacian(RM, mef1, mef2, A);} \\[0.5cm]
 where {\tt RM} is a matrix of any type having the right dimension (i.e. {\tt me1.nb\_dof()}), {\tt mef1} is a variable of type {\tt getfem::mesh\_fem} and should define the finite element method for the solution, {\tt mef2}  is a variable of type {\tt getfem::mesh\_fem} (possibly equal to {\tt mef1}) describing the finite element method on which the coefficient $a(x)$ is defined, and {\tt A} is the vector of the values of this coefficient on each degree of freedom of {\tt mef2}. Both should use the same mesh. It is important to pay attention to the fact that the integration methods used to compute the elementary matrices is the ones declared in {\tt mef1}. This integration methods have to be chosen of sufficient order. The order has to be determined considering the degrees of element in {\tt mef1}, in {\tt mef2} and the geometric transformations for non-linear cases. Integration methods defined in {\tt mef2} are ignored.\\[0.5cm]
 To assemble the source term, the  function to be called is\\[0.5cm]
 {\tt getfem::asm\_source\_term(B, mef1, mef2, V);} \\[0.5cm]
@@ -378,21 +378,21 @@ For the Neumann condition on $\Gamma_{_N}$, the same function\\[0.5cm]
 is use again, but an additionnal argument has been added: {\tt nbound} is the index of the boundary in {\tt mef1} (see previous section or how to describe a boundary) where the Neumann condition is applied. Hence the assembly is done on the indicated boundary, and no more on the whole domain. {\tt mef2}  is a variable of type {\tt getfem::mesh\_fem} describing the finite element method on which $F(x)$ is defined, {\tt V} is the vector of the values of $F(x)$ on each degree of freedom of {\tt mef2}.\\[0.5cm]
 there is two manner to take into account the Dirichlet condition on $\Gamma_{_D}$, changing the linear system or explicitly reduce to the kernel of the Dirichlet condition. For the first manner, the following function is defined \\[0.5cm]
 {\tt getfem::assembling\_Dirichlet\_condition(RM, B, mef1, nbound, V, N);} \\[0.5cm]
-where {\tt nbound} is the index of the boundary in {\tt mef1} where the Dirichlet condition is applied, {\tt V} is the vector of the values of $U(x)$ on each degree of freedom of {\tt mef1} and {\tt N} should be {\tt 1}. This operation should be the last one because it transform the rigidity matrix {\tt RM}. It works only for Lagrange elements. At the end, one obtains the discrete system
+where {\tt nbound} is the index of the boundary in {\tt mef1} where the Dirichlet condition is applied, {\tt V} is the vector of the values of $U(x)$ on each degree of freedom of {\tt mef1} and {\tt N} is the dimension for vectorial problems (shold be {\tt 1} for scalar problems). This operation should be the last one because it transform the stiffness matrix {\tt RM}. It works only for Lagrange elements. At the end, one obtains the discrete system
 $$ [RM] U = B, $$
 where $U$ is the discrete unknown.\\[0.5cm]
 
 For the second manner, one should use\\[0.5cm]
 {\tt getfem::asm\_dirichlet\_constraints($\tilde{H}$, $\tilde{R}$, mf\_u, mf\_rh,$H$, $R$, nbound)}. See the Dirichlet condition as a general linear constraint that must satisfy the solution $u$. Here, $H$ is a (sparse) matrix, with {\tt mf\_rh.nb\_dof()} columns, and $n_c$ lines, where $n_c$ is the number of constraints. Hence $u$ must satisfy $Hu=R$, which is expressed on $mf\_rh$ (hopefully lagragian). This function just assemble these constraints into a new linear system $\tilde{H}u=\tilde{R}$, doing some additionnal simplification in order to obtain a ``simple'' constraints matrix.
-Then, one should call {\tt getfem::treat\_Dirichlet\_condition($\tilde{H}$, N, $\tilde{R}$, Ud)}, which will return a vector $U_d$ which satisfies $MU_d=B$, and an orthogonal basis $N$ of the kernel of $\tilde{H}$. Hence, the discrete system that must be solved is 
+Then, one should call {\tt getfem::Dirichlet\_null_space($\tilde{H}$, N, $\tilde{R}$, Ud)}, which will return a vector $U_d$ which satisfies $MU_d=B$, and an orthogonal basis $N$ of the kernel of $\tilde{H}$. Hence, the discrete system that must be solved is 
 $$ (N'[RM]N) U_{int}=N'(B-[RM]U_d),$$
 and the solution is $U=N.U_{int}+U_d$.
 
 
 \subsection{Linear Elasticity problem}
 
-the following function assembles the rigidity matrix for linear elasticity\\[0.5cm]
-{\tt getfem::assembling\_rigidity\_matrix\_for\_linear\_elasticity(RM, mef1, mef2, LAMBDA, MU); } \\[0.5cm]
+the following function assembles the stiffness matrix for linear elasticity\\[0.5cm]
+{\tt getfem::assembling\_stiffness\_matrix\_for\_linear\_elasticity(RM, mef1, mef2, LAMBDA, MU); } \\[0.5cm]
 where {\tt RM} is a matrix of any type having the right dimension (i.e. here {\tt N * me1.nb\_dof()}, N is the dimension of the domain), {\tt mef1} is a variable of type {\tt getfem::mesh\_fem} and should define the finite element method for the solution, {\tt mef2}  is a variable of type {\tt getfem::mesh\_fem} (possibly equal to {\tt mef1}) describing the finite element method on which the Lam{\'e} coefficient are defined, {\tt LAMBDA} and {\tt MU} are vectors of the values of Lam{\'e} coefficients on each degree of freedom of {\tt mef2}. It is important to pay attention to the fact that the integration methods used to compute the elementary matrices is the ones declared in {\tt mef1} and must be of sufficient order.\\[0.5cm]
 
 In order to assemble source term, Neumann and Dirichlet conditions, same functions as in previous section can be used, except the fact that parameter {\tt N} as to be equal to the dimension of the domain (because linear elasticity problem is vectorial)
@@ -444,7 +444,7 @@ convex: {\tt comp(Base(\#1).Base(\#2))} is evaluated as a
 part is a reduction operation, {\tt C(:,j).Z(j)}: each named index
 (here $j$) is summed, i.e. the result is $\sum_jc_{i,j}z_j$.
 
-An other example is the assembly of the rigidity matrix for a vector laplacian:
+An other example is the assembly of the stiffness matrix for a vector laplacian:
 \begin{alltt}
   generic_assembly assem;
   assem.push_mf(mf);
@@ -517,7 +517,7 @@ A special finite element method is defined in {\tt getfem\_fem.h} which is not a
 {\tt getfem::virtual\_link\_fem(getfem::mesh\_fem mf1, getfem::mesh\_fem mf2,} \\ {\tt \mbox{}\hspace{12em} getfem::pintegration\_method pim) }\\[0.2cm]
 or\\[0.2cm]
 {\tt getfem::virtual\_link\_fem\_with\_gradient(getfem::mesh\_fem mf1, getfem::mesh\_fem mf2,} \\ {\tt \mbox{}\hspace{12em} getfem::pintegration\_method pim) }\\[0.5cm]
-Because each base function of the finite element method has to be interpolated, such a computation can be very slow. The first method does not interpolate the gradient, so that you cannot use assembling procedures where the gradient is needed (rigidity matrices for instance). The interpolation of the gradient is a very heavy procedure. It is highly preferable to use the first method if you need not the gradient.\\[0.5cm]
+Because each base function of the finite element method has to be interpolated, such a computation can be very slow. The first method does not interpolate the gradient, so that you cannot use assembling procedures where the gradient is needed (stiffness matrices for instance). The interpolation of the gradient is a very heavy procedure. It is highly preferable to use the first method if you need not the gradient.\\[0.5cm]
 
 The interpolation is made on each Gauss point of the integration method {\tt pim}, so that you have to use this integration method in the assembling procedure.\\[0.5cm]
 
