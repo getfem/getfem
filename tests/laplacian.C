@@ -30,8 +30,8 @@
 #include <getfem_regular_meshes.h>
 #include <gmm.h>
 
-/* try to enable the SIGFPE if something evaluates to a Not-a-number of infinity
- * during computations
+/* try to enable the SIGFPE if something evaluates to a Not-a-number
+ * of infinity during computations
  */
 #ifdef GETFEM_HAVE_FEENABLEEXCEPT
 #  include <fenv.h>
@@ -44,7 +44,8 @@ using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
 
 /* definition of some matrix/vector types. These ones are built
-   using the predefined types in Gmm++ */
+ * using the predefined types in Gmm++
+ */
 typedef gmm::rsvector<scalar_type> sparse_vector_type;
 typedef gmm::row_matrix<sparse_vector_type> sparse_matrix_type;
 typedef gmm::col_matrix<sparse_vector_type> col_sparse_matrix_type;
@@ -69,18 +70,19 @@ base_small_vector sol_grad(const base_node &x)
 struct laplacian_problem {
 
   enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
-  getfem::getfem_mesh mesh;  /* the mesh */
-  getfem::mesh_fem mf_u;     /* the main mesh_fem, for the Laplacian solution */
-  getfem::mesh_fem mf_rhs;   /* the mesh_fem for the right hand side (f(x),..) */
-  getfem::mesh_fem mf_coef;  /* the mesh_fem used to represent pde coefficients */
+  getfem::getfem_mesh mesh; /* the mesh */
+  getfem::mesh_fem mf_u;    /* the main mesh_fem, for the Laplacian solution */
+  getfem::mesh_fem mf_rhs;  /* the mesh_fem for the right hand side(f(x),..) */
+  getfem::mesh_fem mf_coef; /* the mesh_fem to represent pde coefficients   */
 
   scalar_type residu;        /* max residu for the iterative solvers */
+  size_type est_degree;
   bool gen_dirichlet;
 
   sparse_matrix_type SM;     /* stiffness matrix.                           */
   std::vector<scalar_type> U, B;      /* main unknown, and right hand side  */
 
-  std::vector<scalar_type> Ud; /* reduced sol. for generic Dirichlet condition. */
+  std::vector<scalar_type> Ud; /* reduced sol. for gen. Dirichlet condition. */
   col_sparse_matrix_type NS; /* Dirichlet NullSpace 
 			      * (used if gen_dirichlet is true)
 			      */
@@ -135,10 +137,9 @@ void laplacian_problem::init(void)
     sol_K[j] = ((j & 1) == 0) ? FT : -FT;
 
   /* set the finite element on the mf_u */
-  getfem::pfem pf_u = 
-    getfem::fem_descriptor(FEM_TYPE);
-  getfem::pintegration_method ppi = 
-    getfem::int_method_descriptor(INTEGRATION);
+  getfem::pfem pf_u = getfem::fem_descriptor(FEM_TYPE);
+  est_degree = pf_u->estimated_degree();
+  getfem::pintegration_method ppi = getfem::int_method_descriptor(INTEGRATION);
 
   mf_u.set_finite_element(mesh.convex_index(), pf_u, ppi);
 
@@ -320,7 +321,8 @@ int main(int argc, char *argv[]) {
     p.assembly();
     if (!p.solve()) DAL_THROW(dal::failure_error, "Solve procedure has failed");
     p.compute_error();
-    getfem::save_solution(p.datafilename + ".dataelt", p.mf_u, p.U, p.K);
+    getfem::save_solution(p.datafilename + ".dataelt", p.mf_u, p.U,
+			  p.est_degree);
   }
   DAL_STANDARD_CATCH_ERROR;
 
