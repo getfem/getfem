@@ -50,6 +50,12 @@ namespace bgeot
       { }
   };
 
+  class internal_error : public std::logic_error {
+  public:
+    internal_error(const std::string& what_arg): std::logic_error (what_arg)
+      { }
+  };
+
   class failure_error : public std::logic_error {
   public:
     failure_error(const std::string& what_arg): std::logic_error (what_arg)
