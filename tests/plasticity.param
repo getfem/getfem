@@ -84,3 +84,5 @@ OPTASCII=0;            % option for writing results : 0 for binary and other for
 FLAG_HYP=0;          % option for the calculation hypothesis : 1 for stress plane
                        %                                         other for classical 3D
                        %                                         others to be defined, plane strain for instance 
+
+FORCE=330;

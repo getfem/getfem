@@ -32,6 +32,7 @@
 #include <getfem_modeling.h>
 #include <getfem_plasticity.h>
 #include <gmm.h>
+//include <bgeot_mesh.h>
 
 /* try to enable the SIGFPE if something evaluates to a Not-a-number
  * of infinity during computations
@@ -175,17 +176,18 @@ void plasticity_problem::init(void)
   cout << "Selecting Neumann and Dirichlet boundaries\n";
   getfem::convex_face_ct border_faces;
   getfem::outer_faces_of_mesh(mesh, border_faces);
+  
   for (getfem::convex_face_ct::const_iterator it = border_faces.begin();
        it != border_faces.end(); ++it) {
     assert(it->f != size_type(-1));
     base_node un = mesh.normal_of_face_of_convex(it->cv, it->f);
     un /= gmm::vect_norm2(un);
-    if (dal::abs(un[0] - 1.0) < 1.0E-7) { // new Neumann face
+
+    if (dal::abs(un[0] - 1.0) < 1.0E-7)
       mf_u.add_boundary_elt(NEUMANN_BOUNDARY_NUM, it->cv, it->f);
-    } 
-    else if(dal::abs(un[0] + 1.0) < 1.0E-7) {
+    else if(dal::abs(un[0] + 1.0) < 1.0E-7) 
       mf_u.add_boundary_elt(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
-    }
+      
   }
  
   //PARTIE RELATIVE A LA PLASTICITE  
@@ -217,8 +219,8 @@ bool plasticity_problem::solve(plain_vector &U) {
 					  F, DIRICHLET_BOUNDARY_NUM, false);
   getfem::standard_model_state MS(final_model);
 
-  const size_type Nb_t=2;
-  scalar_type t[Nb_t]={0.5,1.2};
+  const size_type Nb_t=1;
+  scalar_type t[Nb_t]={0.5};
 
   std::string uname(datafilename+".U");
   std::ofstream f0(uname.c_str()); f0.precision(16);
@@ -234,7 +236,7 @@ bool plasticity_problem::solve(plain_vector &U) {
 
     // Defining the Neumann condition right hand side.
     base_small_vector v(N);
-    v[N-1] = -330.0;
+    v[N-1] = -PARAM.real_value("FORCE");
     gmm::scale(v,t[nb]);
     
     for (size_type i = 0; i < nb_dof_rhs; ++i)
