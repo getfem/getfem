@@ -719,7 +719,8 @@ namespace getfem {
   }
 
   const mesh_fem& generic_assembly::do_mf_arg(std::vector<const mesh_fem*> * multimf) {
-    advance(); accept(OPEN_PAR,"expecting '('");
+    if (!multimf) advance(); // special hack for NonLin$i(#a,#b,..)
+    accept(OPEN_PAR,"expecting '('");
     if (tok_type() != MFREF) ASM_THROW_PARSE_ERROR("expecting mesh_fem reference");
     if (tok_mfref_num() >= mftab.size()) 
       ASM_THROW_PARSE_ERROR("reference to a non-existant mesh_fem #" << tok_mfref_num()+1);
@@ -752,7 +753,8 @@ namespace getfem {
 	pmf = &do_mf_arg(); what.push_back(mf_comp(pmf, mf_comp::HESS, f[0] == 'v'));
       } else if (f.compare("NonLin")==0) {	
 	size_type num = 0; /* default value */
-	if (advance_if(ARGNUM_SELECTOR)) { num = tok_argnum();  advance(); }
+	advance();
+	if (tok_type() == ARGNUM_SELECTOR) { num = tok_argnum(); advance(); }
 	if (num >= innonlin.size()) ASM_THROW_PARSE_ERROR("NonLin$" << num << " does not exist");
 	std::vector<const mesh_fem*> allmf;
 	pmf = &do_mf_arg(&allmf); what.push_back(mf_comp(allmf, innonlin[num]));
