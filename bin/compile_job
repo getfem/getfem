@@ -73,7 +73,7 @@ if ($systeme =~ /Linux/)
   print MAKEFILE "INCLUDES_MTL = -I/opt/getfem/include/\n";
   print MAKEFILE "INCLUDES_ITL = -I/opt/getfem/include/\n";
   print MAKEFILE "LIB_X11 = -L/usr/X11R6/lib -lX11\n";
-  $extmatcom=.mexglx;
+  $extmatcom = '.mexglx';
 }
 else
 {
@@ -86,7 +86,7 @@ else
   print MAKEFILE "INCLUDES_MTL = -I/usr/local/getfem/include\n";
   print MAKEFILE "INCLUDES_ITL = -I/usr/local/getfem/include\n";
   print MAKEFILE "LIB_X11 = -L/usr/X11R6/lib -lX11\n";
-  $extmatcom=.mexaxp;
+  $extmatcom = '.mexaxp';
 }
 
 print MAKEFILE "CPLUS = \$(COMP) \$(OPTIONS_STANDARD) \$(OPTIONS_OPTIMIZE) \n";
