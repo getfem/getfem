@@ -88,9 +88,12 @@ namespace getfem
   void getfem_mesh::transformation(base_matrix M)
   {
     base_small_vector w(M.nrows());
+    if (gmm::mat_nrows(M) == 0 || gmm::mat_ncols(M) != dim()) 
+      DAL_THROW(dal::dimension_error, "invalid dimensions for the transformation matrix");
     for (dal::bv_visitor i(points().index()); !i.finished(); ++i) {
-      w = points()[i]; gmm::mult(M,w,points()[i]);
+      w = points()[i]; gmm::resize(points()[i], gmm::mat_nrows(M)); gmm::mult(M,w,points()[i]);
     }
+    dimension = gmm::mat_nrows(M);
     points().resort();
   }
 
@@ -162,6 +165,25 @@ namespace getfem
     vectors_to_base_matrix(G,points_of_convex(ic));
     bgeot::geotrans_interpolation_context c(pgp,pgt->structure()->ind_points_of_face(f)[n], G);
     return bgeot::compute_normal(c, f);
+  }
+
+  base_matrix getfem_mesh::local_basis_of_face_of_convex(size_type ic, short_type f,
+							 const base_node &pt) const {
+    bgeot::pgeometric_trans pgt = trans_of_convex(ic);
+    base_matrix G(dim(),pgt->nb_points());
+    vectors_to_base_matrix(G,points_of_convex(ic));
+    bgeot::geotrans_interpolation_context c(trans_of_convex(ic), pt, G);
+    return bgeot::compute_local_basis(c, f);
+  }
+
+  base_matrix getfem_mesh::local_basis_of_face_of_convex(size_type ic, short_type f,
+							 size_type n) const {
+    bgeot::pgeometric_trans pgt = trans_of_convex(ic);
+    bgeot::pgeotrans_precomp pgp = bgeot::geotrans_precomp(pgt, &pgt->geometric_nodes());
+    base_matrix G(dim(),pgt->nb_points());
+    vectors_to_base_matrix(G,points_of_convex(ic));
+    bgeot::geotrans_interpolation_context c(pgp,pgt->structure()->ind_points_of_face(f)[n], G);
+    return bgeot::compute_local_basis(c, f);
   }
 
 
