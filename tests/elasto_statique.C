@@ -8,7 +8,7 @@
 #include <getfem_norm.h>
 #include <getfem_regular_meshes.h>
 #include <bgeot_smatrix.h>
-
+#include <bgeot_abstract_linalg.h>
 
 using bgeot::base_vector;
 using bgeot::base_node;
@@ -30,19 +30,16 @@ typedef bgeot::vsvector<scalar_type> linalg_vector;
 dal::dynamic_array<base_vector> sol_K;
 scalar_type sol_lambda, sol_G;
 
-base_vector sol_u(const base_node &x)
-{
+base_vector sol_u(const base_vector &x) {
   int N = x.size(); base_vector res(N);
   for (int i = 0; i < N; ++i) res[i] = sin(bgeot::vect_sp(sol_K[i], x));
   return res;
 }
 
-base_vector sol_f(const base_node &x)
-{
+base_vector sol_f(const base_vector &x) {
   int N = x.size();
   base_vector res(N);
-  for (int i = 0; i < N; i++)
-  {
+  for (int i = 0; i < N; i++) {
     res[i] = ( sol_G * bgeot::vect_sp(sol_K[i], sol_K[i]) )
                   * sin(bgeot::vect_sp(sol_K[i], x));
     for (int j = 0; j < N; j++)
@@ -52,13 +49,11 @@ base_vector sol_f(const base_node &x)
   return res;
 }
 
-base_matrix sol_sigma(const base_node &x)
-{
+base_matrix sol_sigma(const base_vector &x) {
   int N = x.size();
   base_matrix res(N,N);
   for (int i = 0; i < N; i++)
-    for (int j = 0; j <= i; j++)
-    {
+    for (int j = 0; j <= i; j++) {
       res(j,i) = res(i,j) = sol_G *
 	( sol_K[i][j] * cos(bgeot::vect_sp(sol_K[i], x))
        +  sol_K[j][i] * cos(bgeot::vect_sp(sol_K[j], x))
@@ -75,8 +70,7 @@ base_matrix sol_sigma(const base_node &x)
 /*  Structure definissant le probleme.                                    */
 /**************************************************************************/
 
-struct pb_data
-{
+struct pb_data {
   getfem::getfem_mesh mesh;
   getfem::mesh_fem mef;
   getfem::mesh_fem mef_data;
@@ -102,8 +96,7 @@ struct pb_data
   pb_data(void) : mef(mesh), mef_data(mesh), mef_data2(mesh) {}
 };
 
-void pb_data::init(void)
-{
+void pb_data::init(void) {
   dal::bit_vector nn;
   size_type i, j, k;
 
@@ -129,8 +122,7 @@ void pb_data::init(void)
 						       "Filename for saving"));
   scalar_type FT = PBSTFR_PARAM.real_value("FT", 
 					   "parameter for exact solution");
-  for (i = 0; i < N; i++)
-  {
+  for (i = 0; i < N; i++) {
     sol_K[i] = base_vector(N);
     for (j = 0; j < N; j++)  sol_K[i][j] = (i == j) ? FT : -FT;
   }
@@ -146,8 +138,7 @@ void pb_data::init(void)
   base_node org(N); org.fill(0.0);
   std::vector<base_vector> vtab(N);
   std::vector<size_type> ref(N); std::fill(ref.begin(), ref.end(), NX);
-  for (i = 0; i < N; i++)
-  { 
+  for (i = 0; i < N; i++) { 
     vtab[i] = base_vector(N); vtab[i].fill(0.0);
     (vtab[i])[i] = ((i == 0) ? LX : ((i == 1) ? LY : LZ)) / scalar_type(NX);
   }
@@ -172,13 +163,10 @@ void pb_data::init(void)
   cout << "Selecting Neumann and Dirichlet boundaries\n";
   nn = mesh.convex_index(N);
   base_vector un;
-  for (j << nn; j != size_type(-1); j << nn)
-  {
+  for (j << nn; j != size_type(-1); j << nn) {
     k = mesh.structure_of_convex(j)->nb_faces();
-    for (i = 0; i < k; i++)
-    {
-      if (bgeot::neighbour_of_convex(mesh, j, i).empty())
-      {
+    for (i = 0; i < k; i++) {
+      if (bgeot::neighbour_of_convex(mesh, j, i).empty()) {
 	un = mesh.normal_of_face_of_convex(j, i, 0);
 	un /= bgeot::vect_norm2(un);
 	
@@ -220,8 +208,7 @@ void pb_data::assemble(void)
   // cout << "Assemblage de la condition de Neumann" << endl;
   ST1 = linalg_vector(nb_dof_data * N);
   getfem::base_node pt(N); getfem::base_vector n(N), v;
-  for (size_type i = 0; i < nb_dof_data; ++i)
-  {
+  for (size_type i = 0; i < nb_dof_data; ++i) {
     pt = mef_data.point_of_dof(i);
     if (dal::abs(pt[0]-LX) < 10E-6) n[0] = 1.0; // pas terrible ... !!
       else if (dal::abs(pt[0]) < 10E-6) n[0] = -1.0; else n[0] = 0.0;
@@ -249,8 +236,7 @@ void pb_data::assemble(void)
 void pb_data::solve(void)
 { bgeot::cg(RM, U, B, 20000, residu); }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   try {
     pb_data p;
     

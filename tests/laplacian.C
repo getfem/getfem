@@ -1,4 +1,3 @@
-
 /**************************************************************************/
 /*                                                                        */
 /*  Laplacian problem.                                                    */
@@ -8,6 +7,7 @@
 #include <getfem_assembling.h>
 #include <getfem_export.h>
 #include <getfem_norm.h>
+#include <bgeot_abstract_linalg.h>
 #include <getfem_regular_meshes.h>
 #include <bgeot_smatrix.h>
 
@@ -30,10 +30,10 @@ base_vector sol_K;
 scalar_type sol_u(const base_node &x)
 { return sin(bgeot::vect_sp(sol_K, base_vector(x))); }
 
-scalar_type sol_f(const base_node &x)
+scalar_type sol_f(const base_vector &x)
 { return bgeot::vect_sp(sol_K, sol_K) * sin(bgeot::vect_sp(sol_K, x)); }
 
-base_vector sol_grad(const base_node &x)
+base_vector sol_grad(const base_vector &x)
 {
   base_vector res = sol_K;
   res *= cos(bgeot::vect_sp(sol_K, x));

@@ -288,15 +288,14 @@ namespace bgeot
     public :
       
     operator T() const { return (*pm).r(l,c); }
-    operator T &() { return (*pm).ref(l,c); }
     ref_elt_smatrix(smatrix<T> *p, size_type ll, size_type cc)
       { pm = p; l = ll; c = cc; }
     inline ref_elt_smatrix operator =(T v)
       { (*pm).w(l,c,v); return *this; }
     inline bool operator ==(T v) const
-      { return ((*pm).r(l,c,v) == v); }
+      { return ((*pm).r(l,c) == v); }
     inline bool operator !=(T v) const
-      { return ((*pm).r(l,c,v) != v); }
+      { return ((*pm).r(l,c) != v); }
     inline ref_elt_smatrix operator +=(T v)
       { (*pm).w(l,c,(*pm).r(l,c) + v); return *this; }
     inline ref_elt_smatrix operator -=(T v)
@@ -334,36 +333,36 @@ namespace bgeot
   /*********  generic solver.	*******************/
 
 
-  template < class Matrix, class Vector>
-    int cg(const Matrix& A, Vector& x, const Vector& b, int itemax, 
-	   double residu, bool noisy = true)
-  {
-    typedef typename Vector::value_type value_type;
-    value_type rho(0), rho_1(0), alpha(0), beta(0);
-    Vector p(x.size()), q(x.size()), r(x.size());
-    int iter = 0;
-    r = b - A * x;
-    rho = vect_sp(r, r);
+//   template < class Matrix, class Vector>
+//     int cg(const Matrix& A, Vector& x, const Vector& b, int itemax, 
+// 	   double residu, bool noisy = true)
+//   {
+//     typedef typename Vector::value_type value_type;
+//     value_type rho(0), rho_1(0), alpha(0), beta(0);
+//     Vector p(x.size()), q(x.size()), r(x.size());
+//     int iter = 0;
+//     r = b - A * x;
+//     rho = vect_sp(r, r);
 
-    while (::sqrt(rho) > residu) {
-      if (iter == 0) p = r;		  
-      else { beta = rho / rho_1; p = r + p * beta; }
+//     while (::sqrt(rho) > residu) {
+//       if (iter == 0) p = r;		  
+//       else { beta = rho / rho_1; p = r + p * beta; }
       
-      q = A * p;
-      alpha = rho / vect_sp(p, q);
+//       q = A * p;
+//       alpha = rho / vect_sp(p, q);
       
-      x += alpha * p;
-      r -= alpha * q;
+//       x += alpha * p;
+//       r -= alpha * q;
       
-      rho_1 = rho;
+//       rho_1 = rho;
       
-      ++iter;
-      rho = vect_sp(r, r);
-      if (noisy) cout << "iter " << iter << " residu " << ::sqrt(rho) << endl;
-      if (iter >= itemax) return 1;
-    }
-    return 0;
-  }
+//       ++iter;
+//       rho = vect_sp(r, r);
+//       if (noisy) cout << "iter " << iter << " residu " << ::sqrt(rho) << endl;
+//       if (iter >= itemax) return 1;
+//     }
+//     return 0;
+//   }
 
 }
 

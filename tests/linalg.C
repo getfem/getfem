@@ -35,20 +35,30 @@ int main(void)
     
     cout << "x = " << x << endl;
 
-    bgeot::smatrix<double> m(10, 10);
+    bgeot::vsmatrix<double> m(10, 10);
     m.clear(); m(3, 2) = 1.0;
 
-    transposed(m)(6,8) = 2.0;
+    bgeot::transposed(m)(6,8) = 2.0;
 
     cout << "transposed(m)(2,3) = " <<  (bgeot::transposed(m))(2,3) << endl;
     cout << "transposed(m)(3,2) = " <<  (bgeot::transposed(m))(3,2) << endl;
     
-    bgeot::smatrix<double> n(10, 10);
+    bgeot::smatrix<double> n(10, 10); 
     
-    copy(m, transposed(n));
-    copy(transposed(m), n);
+    bgeot::copy(m, bgeot::transposed(n));
+    bgeot::copy(bgeot::transposed(m), n);
     cout << "m = " << m << endl;
     cout << "n = " << n << endl;
+
+    cout << "x = " << x << endl;
+    bgeot::add(bgeot::scaled(z, 10.0), x);
+    cout << "x = " << x << endl;
+    bgeot::add(bgeot::scaled(v, -10.0), x);
+    cout << "x = " << x << endl;
+
+    bgeot::mult(bgeot::transposed(m), x, x);
+
+    cout << "x = " << x << endl;
     
   }
   DAL_STANDARD_CATCH_ERROR;

@@ -70,7 +70,7 @@ namespace bgeot
 
     reference operator *() const { return id->e; }
     pointer operator->() const { return &(operator*()); }
-    size_type index(void) { return id->c; }
+    size_type index(void) const { return id->c; }
     svector_iterator(void) {}
     svector_iterator(const base_it_type &it) : base_it_type(it) {}
   };
@@ -89,7 +89,7 @@ namespace bgeot
     
     reference operator *() const { return id->e; }
     pointer operator->() const { return &(operator*()); }
-    size_type index(void) { return id->c; }
+    size_type index(void) const { return id->c; }
     svector_const_iterator(void) {}
     svector_const_iterator(const svector_iterator<T> &it) : base_it_type(it) {}
     svector_const_iterator(const base_it_type &it) : base_it_type(it) {}
@@ -303,7 +303,7 @@ namespace bgeot
     size_type l;
     
     public :
-      
+
       operator T() const { return pm->r(l); }
     ref_elt_svector(svector<T> *p, size_type ll)
       { pm = p; l = ll; }
