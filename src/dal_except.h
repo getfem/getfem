@@ -171,11 +171,12 @@ namespace dal {
 
   inline void set_warning_level(int l) { warning_level::level(l); }
 
-#define DAL_WARNING(level, thestr) {                                 \
+#define DAL_WARNING(level_, thestr) {                                 \
     std::stringstream msg;                                           \
     msg << "Warning in "__FILE__ << ", line "                        \
         << __LINE__ << ": \n" << thestr << ends;                     \
-    if (level <= warning_level::level()) cerr << msg.str() << endl;  \
+    if ((level_) <= dal::warning_level::level())                      \
+       std::cerr << msg.str() << std::endl;                          \
   } 
 
   // Warning levels : 0 always
