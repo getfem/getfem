@@ -63,6 +63,3 @@ SRC = \
 lib_LTLIBRARIES = libgetfem.la
 libgetfem_la_SOURCES = $(SRC)
 libgetfem_la_LDFLAGS = ${LIBTOOL_VERSION_INFO}
-
-clean-local:
-	rm -rf cxx_repository

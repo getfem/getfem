@@ -52,7 +52,3 @@ TESTS = \
 	test_tree_sorted.pl
 
 TESTS_ENVIRONMENT = perl
-
-
-clean-local:
-	rm -rf cxx_repository
