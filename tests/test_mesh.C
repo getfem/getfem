@@ -150,7 +150,7 @@ using bgeot::sc;
 void test_convex_quality(getfem::scalar_type dx, getfem::scalar_type dy) {
   getfem::getfem_mesh m;
   getfem::base_node A,B,C;
-  getfem::scalar_type h = sqrt(3);
+  getfem::scalar_type h = sqrt(3.0);
   sc(B)+=0,0;
   sc(C)+=2,0;
   sc(A)+=0,h;
