@@ -22,6 +22,8 @@ int main(int argc, char **argv) {
   feenableexcept(FE_DIVBYZERO | FE_INVALID);
 #endif
   try {
+    // getfem::getfem_mesh_im_level_set_noisy();
+
     getfem::getfem_mesh m; m.read_from_file("meshes/disc_2D_degree3.mesh");
     getfem::mesh_fem mf(m);
     getfem::mesh_im_level_set mim(m, getfem::int_method_descriptor("IM_TRIANGLE(6)"));

@@ -31,7 +31,12 @@
 #include <getfem_mesher.h>
 #include <bgeot_kdtree.h>
 
+
+
 namespace getfem {
+  static bool noisy = false;
+  void getfem_mesh_im_level_set_noisy(void) { noisy = true; }
+
   
   void mesh_im_level_set::receipt(const MESH_CLEAR &) { clear(); }
   void mesh_im_level_set::receipt(const MESH_DELETE &) { clear(); }
@@ -175,8 +180,8 @@ namespace getfem {
 		    && gmm::vect_dist2(points[i], points[inpts[j].i]) < d)
 		  { kept = false; break; }
 	      if (kept) {
-		cout << "kept point : " << points[i] << " co = "
-		     << constraints(i) << endl;
+		if (noisy) cout << "kept point : " << points[i] << " co = "
+				<< constraints(i) << endl;
 		retained_points.add(i);
 	      }
 	    }
@@ -192,129 +197,88 @@ namespace getfem {
   };
 
 
+  static mesher_signed_distance *new_ref_element(bgeot::pgeometric_trans pgt) {
+    size_type n = pgt->structure()->dim();
+    size_type nbp = pgt->basic_structure()->nb_points();
+    /* Identifying simplexes.                                          */
+    if (nbp == n+1 && pgt->basic_structure() == bgeot::simplex_structure(n)) {
+	return new mesher_simplex_ref(n);
+    }
+    
+    /* Identifying parallelepiped.                                     */
+    if (nbp == (size_type(1) << n) &&
+	pgt->basic_structure() == bgeot::parallelepiped_structure(n)) {
+      base_node rmin(n), rmax(n);
+      std::fill(rmax.begin(), rmax.end(), scalar_type(1));
+      return new mesher_rectangle(rmin, rmax);
+    }
+    
+    /* Identifying prisms.                                             */
+    if (nbp == 2 * n && pgt->basic_structure() == bgeot::prism_structure(n)) {
+      return new mesher_prism_ref(n);
+    }
+    
+    DAL_THROW(to_be_done_error,
+	      "This element is not taken into account. Contact us");
+  }
+
+
   static getfem_mesh global_mesh; // to visualize the result with Open dx
 
   void mesh_im_level_set::cut_element(size_type cv,
 				      const dal::bit_vector &primary,
 				      const dal::bit_vector &secondary) {
     cout << "cutting element " << cv << endl;
-    std::auto_ptr<mesher_signed_distance> ref_element;
+    bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
+    std::auto_ptr<mesher_signed_distance> ref_element(new_ref_element(pgt));
     std::vector<mesher_level_set> mesher_level_sets;
     
-    bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
     size_type n = pgt->structure()->dim();
-    size_type nbp = pgt->basic_structure()->nb_points();
     size_type nbtotls = primary.card() + secondary.card();
-    pintegration_method exactint;
+    pintegration_method exactint = classical_exact_im(pgt);
     if (nbtotls > 16)
       DAL_THROW(failure_error,
 		"An element is cutted by more than 16 level_set, aborting");
-      
-    /*
-     * Step 1 : build the signed distance for the reference element.
-     */
-    unsigned found = 0;
-
-    /* Identifying simplexes.                                          */
-    if (nbp == n+1 && pgt->basic_structure() == bgeot::simplex_structure(n)) {
-	ref_element.reset(new mesher_simplex_ref(n)); found = 1;
-	exactint = exact_simplex_im(n);
-    }
-    
-    /* Identifying parallelepiped.                                     */
-    if (!found && nbp == (size_type(1) << n) &&
-	pgt->basic_structure() == bgeot::parallelepiped_structure(n)) {
-      base_node rmin(n), rmax(n);
-      std::fill(rmax.begin(), rmax.end(), scalar_type(1));
-      ref_element.reset(new mesher_rectangle(rmin, rmax)); found = 2;
-      exactint = exact_parallelepiped_im(n);
-    }
-
-    /* Identifying prisms.                                             */
-    if (!found && nbp == 2 * n &&
-	pgt->basic_structure() == bgeot::prism_structure(n)) {
-      ref_element.reset(new mesher_prism_ref(n)); found = 3;
-      exactint = exact_prism_im(n);
-    }
-    
-    if (!found) 
-      DAL_THROW(to_be_done_error,
-		"This element is not taken into account. Contact us");
 
     /* 
-     * Step 2 : build the signed distances, estimate the curvature radius
-     *          and the degree K and find points on intersections of level sets.
+     * Step 1 : build the signed distances, estimate the curvature radius
+     *          and the degree K.
      */
     dim_type K = 0; // Max. degree of the level sets.
     scalar_type r0 = 1E+10; // min curvature radius
-    std::vector<const mesher_signed_distance*> list_constraints, signed_dist;
+    std::vector<const mesher_signed_distance*> list_constraints;
     point_stock mesh_points(list_constraints);
-    cout.precision(16);
 
-    for (size_type count = 0; count < (size_type(1) << nbtotls); ++count) {
-      signed_dist.clear();  signed_dist.reserve(1+nbtotls); 
-      mesher_level_sets.clear(); mesher_level_sets.reserve(1+nbtotls); 
-      signed_dist.push_back(ref_element.get());
-      unsigned k = 0, l = 0; K = 0;
-      pfem max_deg_fem(0);
-      for (std::set<plevel_set>::const_iterator it = level_sets.begin();
-	   it != level_sets.end(); ++it, ++l) {
-	if (primary[l]) {
-	  if ((*it)->degree() > K) {
-	    K = (*it)->degree();
-	    max_deg_fem = (*it)->get_mesh_fem().fem_of_element(cv);
-	  }
-	  mesher_level_sets.push_back((*it)->mls_of_convex(cv, 0,
-					     count & (size_type(1) << k)));
-	  signed_dist.push_back(&mesher_level_sets.back());
-	  ++k;
-	  if (secondary[l]) {
-	    mesher_level_sets.push_back((*it)->mls_of_convex(cv, 1,
-						 count & (size_type(1)<< k)));
-	    signed_dist.push_back(&mesher_level_sets.back());
-	    ++k;
-	  }
+    ref_element->register_constraints(list_constraints);
+    mesher_level_sets.reserve(nbtotls);
+    size_type ll = 0;
+    for (std::set<plevel_set>::const_iterator it = level_sets.begin();
+	 it != level_sets.end(); ++it, ++ll) {
+      if (primary[ll]) {
+	base_node X(n);
+	K = std::max(K, (*it)->degree());
+	mesher_level_sets.push_back((*it)->mls_of_convex(cv, 0));
+	mesher_level_set &mls(mesher_level_sets.back());
+	list_constraints.push_back(&mesher_level_sets.back());
+	r0 = std::min(r0, curvature_radius_estimate(mls, X, true));
+	if (secondary[ll]) {
+	  mesher_level_sets.push_back((*it)->mls_of_convex(cv, 1));
+	  mesher_level_set &mls2(mesher_level_sets.back());
+	  list_constraints.push_back(&mesher_level_sets.back());
+	  r0 = std::min(r0, curvature_radius_estimate(mls2, X, true));
 	}
       }
-      assert(k == nbtotls);
-
-      mesher_intersection final_dist(signed_dist);
-      list_constraints.clear();
-      final_dist.register_constraints(list_constraints);
-      base_node local_box_min(n), local_box_max(n);
-      bool local_box_init = false;
-      for (size_type i=0; i < max_deg_fem->node_convex(cv).nb_points();++i) {
-	base_node X = max_deg_fem->node_convex(cv).points()[i];
-	if (try_projection(final_dist, X)) {
-	  // computation of the curvature radius
-	  dal::bit_vector bv;
-	  final_dist(X, bv);
-	  cout << "constraints : " << bv << endl;
-	  scalar_type r
-	    = min_curvature_radius_estimate(list_constraints, X, bv);
-	  cout << "rayon de courbure de : " << r << endl;
-	  r0 = std::min(r, r0);
-	  if (!local_box_init)
-	    { local_box_min = local_box_max = X; local_box_init = true; }
-	  else for (size_type j = 0; j < n; ++j) {
-	    local_box_min[j] = std::min(local_box_min[j], X[j]);
-	    local_box_max[j] = std::max(local_box_max[j], X[j]);
-	  }
-	  mesh_points.add(X, r);
-	}
-      }
-      cout << "Local_box_min = " << local_box_min << " local_box_max = "
-	   << local_box_max << endl;
     }
     
     /* 
-     * Step 3 : projection of points of a grid on each signed distance.
+     * Step 2 : projection of points of a grid on each signed distance.
      */
     scalar_type h0 = std::min(1./(K+1), 0.2 * r0), dmin = 0.55;
     bool h0_is_ok = true;
 
     do {
       h0_is_ok = true;
+      mesh_points.clear();
       scalar_type geps = .001*h0; 
       size_type nbpt = 1;
       std::vector<size_type> gridnx(n);
@@ -358,11 +322,11 @@ namespace getfem {
 	    for (size_type j = 0; j < nb_co; ++j)
 	      if (count & (size_type(1) << j)) nn.add(co_v[j]);
 	    if (nn.card() > 1 && nn.card() <= n) {
-	      cout << "trying set of constraints" << nn << endl;
+	      if (noisy) cout << "trying set of constraints" << nn << endl;
 	      gmm::copy(P, Q);
 	      bool ok=pure_multi_constraint_projection(list_constraints,Q,nn);
 	      if (ok && (*ref_element)(Q) < 1E-8) {
-		cout << "Intersection point found " << Q << " with "
+		if (noisy) cout << "Intersection point found " << Q << " with "
 		     << nn << endl;
 		mesh_points.add(Q);
 	      }
@@ -373,14 +337,14 @@ namespace getfem {
       if (!h0_is_ok) continue;
       
     /* 
-     * Step 4 : Delaunay, test if a simplex cut a level set and adapt
+     * Step 3 : Delaunay, test if a simplex cut a level set and adapt
      *          the mesh to the curved level sets.
      */
 
       dmin = 2.*h0;
-      cout << "dmin = " << dmin << " h0 = " << h0 << endl;
-      cout << "cetait le convexe " << cv << endl;
-      getchar(); 
+      if (noisy) cout << "dmin = " << dmin << " h0 = " << h0 << endl;
+      if (noisy) cout << "cetait le convexe " << cv << endl;
+      if (noisy) getchar(); 
       
       dal::bit_vector retained_points
 	= mesh_points.decimate(*ref_element, dmin);
@@ -396,7 +360,7 @@ namespace getfem {
       }
       gmm::dense_matrix<size_type> simplexes;
       delaunay(fixed_points, simplexes);
-      cout << "Nb simplexes = " << gmm::mat_ncols(simplexes) << endl;
+      if (noisy) cout << "Nb simplexes = " << gmm::mat_ncols(simplexes) << endl;
       getfem_mesh mesh;
       for (size_type i = 0; i <  fixed_points.size(); ++i) {
 	size_type j = mesh.add_point(fixed_points[i], false);
@@ -416,7 +380,7 @@ namespace getfem {
 		(*(list_constraints[jj]))(mesh.points_of_convex(j)[ii]);
 	      if (gmm::abs(dd) > 1E-7) {
 		if (dd * signs[jj] < 0.0) {
-		  cout << "Intersection trouvee ... \n";
+		  if (noisy) cout << "Intersection trouvee ... \n";
 		  // calcul d'intersection
 		  base_node X = mesh.points_of_convex(j)[ii], G;
 		  base_node VV = mesh.points_of_convex(j)[prev_point[jj]] - X;
@@ -425,14 +389,14 @@ namespace getfem {
 		  size_type nbit = 0;
 		  while (gmm::abs(dd) > 1e-15) {
 		    if (++nbit > 1000)
-		      { cout << "Intersection not found"; assert(false);}
+		      { if (noisy) cout << "Intersection not found"; assert(false);}
 		    scalar_type nG = std::max(1E-8, gmm::vect_sp(G, VV));
 		    gmm::add(gmm::scaled(VV, -dd / nG), X);
 		    dd = (*(list_constraints[jj])).grad(X, G);
 		  }
-		  size_type ii = mesh_points.add(X);
-		  if (!(retained_points[ii])) {
-		    retained_points.add(ii);
+		  size_type kk = mesh_points.add(X);
+		  if (!(retained_points[kk])) {
+		    retained_points.add(kk);
 		    goto delaunay_again;
 		  }
 		}
@@ -453,19 +417,17 @@ namespace getfem {
 	}
       }
       
-      cout << "storing mesh" << endl;
-      
-      {
+      if (noisy) {
+	cout << "storing mesh" << endl;
 	getfem::stored_mesh_slice sl;
-	sl.build(mesh, getfem::slicer_none(), 1); //getfem::slicer_noneexplode(0.8), 8);
+	sl.build(mesh, getfem::slicer_none(), 1);
 	char s[512]; sprintf(s, "totobefore%d.dx", cv);
 	getfem::dx_export exp(s);
 	exp.exporting(sl);
 	exp.exporting_mesh_edges();
 	exp.write_mesh();
+	cout << "end of storing mesh" << endl;
       }
-      
-      cout << "end of storing mesh" << endl;
       
       if (K > 1) { // à ne faire que sur les convexes concernés ..
 	dal::bit_vector ptdone;
@@ -482,7 +444,7 @@ namespace getfem {
 	}
       }
       
-      {
+      if (noisy) {
 	getfem::stored_mesh_slice sl;
 	sl.build(mesh, getfem::slicer_none(), 12); //getfem::slicer_noneexplode(0.8), 8);
 	char s[512]; sprintf(s, "toto%d.dx", cv);
@@ -510,21 +472,21 @@ namespace getfem {
       
       // + test ...
       scalar_type wtot(0);
-      cout << "Number of gauss points : " << gauss_weights.size();
+      if (noisy) cout << "Number of gauss points : " << gauss_weights.size();
       for (size_type k = 0; k < gauss_weights.size(); ++k) wtot += gauss_weights[k];
       base_poly poly = bgeot::one_poly(n);
       scalar_type exactvalue = exactint->exact_method()->int_poly(poly);
-      cout.precision(16);
-      cout << "The Result : " << wtot << " compared to " << exactvalue << endl; 
+      if (noisy) cout.precision(16);
+      if (noisy) cout << "The Result : " << wtot << " compared to " << exactvalue << endl; 
       
       if (gmm::abs(wtot-exactvalue) > 1E-7){
-	cout << "PAS BON NON PLUS\n"; getchar();
+	if (noisy) cout << "PAS BON NON PLUS\n"; if (noisy) getchar();
 	if (dmin > 3*h0) { dmin /= 2.; }
 	else { h0 /= 2.0; dmin = 2.*h0; }
 	h0_is_ok = false;
       }
  
-      if (h0_is_ok) { // ajout dans global mesh pour visu
+      if (h0_is_ok && noisy) { // ajout dans global mesh pour visu
 	base_matrix G;
 	vectors_to_base_matrix(G, linked_mesh().points_of_convex(cv));
 	std::vector<size_type> pts(mesh.nb_points());
@@ -550,7 +512,7 @@ namespace getfem {
 	 !cv.finished(); ++cv) {
       dal::bit_vector prim, sec;
       find_crossing_level_set(cv, prim, sec);
-      cout << "element " << cv << " cutted level sets : " << prim << endl;
+      if (noisy) cout << "element " << cv << " cutted level sets : " << prim << endl;
       if (prim.card()) cut_element(cv, prim, sec);
     }
     getfem::stored_mesh_slice sl;
@@ -562,63 +524,58 @@ namespace getfem {
 
   }
 
-  bool mesh_im_level_set::is_crossed_by(size_type cv, plevel_set ls, unsigned lsnum) {
+  bool mesh_im_level_set::is_crossed_by(size_type cv, plevel_set ls,
+					unsigned lsnum) {
     const mesh_fem &mf = ls->get_mesh_fem();
-    ref_mesh_dof_ind_ct dofs = mf.ind_dof_of_element(cv);
-    base_vector v; v.reserve(dofs.size());
-    int p = -2;
-    base_node G = dal::mean_value(linked_mesh().points_of_convex(cv));
-    scalar_type radius2 = 0, dmin = 1e30;
+    bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
 
+    ref_mesh_dof_ind_ct dofs = mf.ind_dof_of_element(cv);
+    pfem pf = mf.fem_of_element(cv);
+    int p = -2;
+    mesher_level_set mls1 = ls->mls_of_convex(cv, lsnum, false);
     scalar_type EPS = 1e-8;
 
     /* easy cases: 
      - different sign on the dof nodes => intersection for sure
      - min value of the levelset greater than the radius of the convex
-     => no intersection (assuming the level set is locally a signed
-     distance, and the geotrans of the convex is not too strong..)
+     => no intersection
     */ 
-    for (ref_mesh_dof_ind_ct::const_iterator it = dofs.begin();
+    for (ref_mesh_dof_ind_ct::const_iterator it=dofs.begin();
 	 it != dofs.end(); ++it) {
-      radius2 = std::max(radius2, 
-			 gmm::vect_dist2_sqr(G, mf.point_of_dof(*it)));
-      v.push_back(ls->values()[*it]);
-      int p2 = ( (v.back() < -EPS) ? -1 :
-		 ((v.back() > EPS) ? +1 : 0));
-      if (p == -2) p=p2; else
-	if (p*p2 < 0) return true;
-      // il faudrait obtenir le gradient ... dist.grad(X, grad);
-      // dmin = std::min(dmin, gmm::abs(v.back() / gmm::vect_norm2(grad)));
-      dmin = std::min(dmin, gmm::abs(v.back()));
+      scalar_type v = ls->values()[*it];
+      int p2 = ( (v < -EPS) ? -1 : ((v > EPS) ? +1 : 0));
+      if (p == -2) p=p2; else if (p*p2 < 0) return true;
     }
-    cout << "v = " << v << endl;
-    cout << "G = " << G << endl;
-    cout << "dmin = " << dmin << endl;
-    cout << "radius2 = " << radius2 << endl;
-    
-    
-    if (dmin*dmin > radius2*2.) return false;
 
-    pfem pf = mf.fem_of_element(cv);
-    size_type nbdof = mf.nb_dof_of_element(cv);
-    assert(pf->target_dim() == 1);
-    mesher_level_set mls = ls->mls_of_convex(cv, lsnum);
-    for (size_type i=0; i < nbdof; ++i) {
-      base_node Pt = pf->node_convex(cv).points()[i];
-     
-      cout << "trying node " << i << " pt = " << Pt << " ptreal = " << mf.point_of_dof(dofs[i]) << " val = " << ls->values()[dofs[i]] << endl;
-      try_projection(mls, Pt, true);
-      cout << "  -> proj=" << Pt << " isin=" << pf->ref_convex(cv)->is_in(Pt) << "\n";
-      if (pf->ref_convex(cv)->is_in(Pt) < EPS) return true;
-    }
-    return false;
+    base_node X(pf->dim()), G(pf->dim());
+    gmm::fill_random(X); X *= 1E-2;
+    scalar_type d = mls1.grad(X, G);
+    if (gmm::vect_norm2(G)*2. < gmm::abs(d)) return false;
+
+    std::auto_ptr<mesher_signed_distance> ref_element(new_ref_element(pgt));
+    
+    gmm::fill_random(X); X *= 1E-2;
+    mesher_intersection mi1(*ref_element, mls1);
+    if (!try_projection(mi1, X)) return false;
+    if ((*ref_element)(X) > 1E-8) return false;
+    
+    gmm::fill_random(X); X *= 1E-2;
+    mesher_level_set mls2 = ls->mls_of_convex(cv, lsnum, true);
+    mesher_intersection mi2(*ref_element, mls2);
+    if (!try_projection(mi2, X)) return false;
+    if ((*ref_element)(X) > 1E-8) return false;
+   
+    return true;
   }
 
-  void mesh_im_level_set::find_crossing_level_set(size_type cv, dal::bit_vector &prim, dal::bit_vector &sec) {
+  void mesh_im_level_set::find_crossing_level_set(size_type cv,
+						  dal::bit_vector &prim,
+						  dal::bit_vector &sec) {
     prim.clear(); sec.clear();
-    unsigned lsnum = 0;
+    unsigned lsnum = 0, k = 0;
     for (std::set<plevel_set>::const_iterator it = level_sets.begin(); 
-	 it != level_sets.end(); ++it, ++lsnum) {
+	 it != level_sets.end(); ++it, ++lsnum, ++k) {
+      if (noisy) cout << "testing cv " << cv << " with level set " << k << endl;
       if (is_crossed_by(cv, *it, 0)) {
 	prim.add(lsnum);
 	if ((*it)->has_secondary() && is_crossed_by(cv, *it, 1)) sec.add(lsnum);

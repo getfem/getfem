@@ -38,20 +38,28 @@ namespace getfem {
 
   bool try_projection(const mesher_signed_distance& dist, base_node &X,
 		      bool on_surface) {
-    base_small_vector G(X.size());
+    base_small_vector G;
     scalar_type d = dist.grad(X, G);
     size_type it(0);
     if (on_surface || d > 0.0)
       while (gmm::abs(d) > 1e-15) {
-	// cout << "iter " << it << " X = " << X << " dist = " << d << 
-	//  	   " grad = " << G << endl;
 	if (++it > 1000) {
-	  cout << "try projection failed, 1000 iterations\n";
+	  cout << "\n\nTry projection failed, 1000 iterations\n\n";
 	  return false; // is there a possibility to detect
 	} 	// the impossibility without making 1000 iterations ?
-	scalar_type nG = std::max(1E-8, gmm::vect_norm2_sqr(G));
-	gmm::add(gmm::scaled(G, -d / nG), X);
+	scalar_type alpha = -d / std::max(1E-8, gmm::vect_norm2_sqr(G));
+	gmm::add(gmm::scaled(G, alpha), X);
+	scalar_type dn = dist(X);
+	while (gmm::abs(dn) > gmm::abs(d) && gmm::abs(alpha) > 1E-15) {
+	  alpha /= 2;
+	  gmm::add(gmm::scaled(G, -alpha), X);
+	  dn = dist(X);
+	}
+	if (gmm::abs(alpha) < 1E-15) return (gmm::abs(d) < 1E-10);
 	d = dist.grad(X, G);
+// 	cout << "iter " << it << " X = " << X << " dist = " << d << 
+// 	  " grad = " << G << " alpha = " << alpha << endl;
+
       }
     return true;
   }
@@ -92,29 +100,40 @@ namespace getfem {
     std::vector<int> ipvt(nbco);
     gmm::col_matrix<base_node> G(N, nbco);
     gmm::dense_matrix<scalar_type> H(nbco, nbco);
+    base_small_vector dd(N);
     for (dal::bv_visitor ic(cts); !ic.finished(); ++ic, ++i)
       { ls[i] = list_constraints[ic]; d[i] = -(ls[i]->grad(X, G[i])); }
     base_node oldX;
     size_type iter = 0;
+    scalar_type residu, alpha;
     do {
       oldX = X;
       gmm::mult(gmm::transposed(G), G, H);
       info = lu_factor(H, ipvt);
       scalar_type det(1);
       for (i = 0; i < nbco; ++i) det *= H(i,i);
-      // cout << "det = " << det << " d = " << gmm::vect_norm2(d) << endl;
       if (info || gmm::abs(det) < 1E-40) {
 	for (i = 0; i < nbco; ++i)
 	  try_projection(*(ls[i]), X, true);
+	for (i = 0; i < nbco; ++i) d[i] = -(ls[i]->grad(X, G[i]));
       }
       else {
-	// + line search dans la direction Gv ?
 	lu_solve(H, ipvt, v, d);
-	gmm::mult(G, v, X, X);
+	gmm::mult(G, v, dd);
+	gmm::add(dd, X);
+	for (i = 0; i < nbco; ++i) d[i] = -(ls[i]->grad(X, G[i]));
+	alpha = 1.;
+	while (iter > 0 && gmm::vect_norm2(d) > residu && alpha > 1E-15) {
+	  alpha /= 2.;
+	  gmm::add(gmm::scaled(dd, -alpha), X);
+	  for (i = 0; i < nbco; ++i) d[i] = -(ls[i]->grad(X, G[i]));
+	}
+	if (alpha < 1E-15) break;
       }
       for (i = 0; i < nbco; ++i) d[i] = -(ls[i]->grad(X, G[i]));
       ++iter;
-    } while (gmm::vect_norm2(d) > 1e-14 && gmm::vect_dist2(oldX,X) > 1e-14
+      residu = gmm::vect_norm2(d);
+    } while (residu > 1e-14 && gmm::vect_dist2(oldX,X) > 1e-14
 	     && iter < 1000);
 //     cout << "nb iter de pure_multi : " << iter
 //   	 << " norm(d) = " << gmm::vect_norm2(d) << " cts = " << cts << endl;

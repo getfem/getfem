@@ -87,6 +87,8 @@ namespace getfem {
     void find_crossing_level_set(size_type cv, dal::bit_vector &prim, dal::bit_vector &sec);
 
   };
+
+  void getfem_mesh_im_level_set_noisy(void); // for debugging
   
 }  /* end of namespace getfem.                                             */
 
