@@ -1,3 +1,4 @@
+/* -*- c++ -*- (enables emacs c++ mode)                                    */
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Generic Matrix Methods  (gmm)                                */
@@ -118,6 +119,7 @@ namespace gmm {
     VECTOR r(vect_size(x)), d(vect_size(x)), y(vect_size(x)), r2(vect_size(x));
     grad(x, r);
     R lambda = lambda_init, valx = f(x), valy;
+    int nb_restart(0);
     
     if (iter.get_noisy() >= 1) cout << "value " << valx / print_norm << " ";
     while (! iter.finished_vect(r)) {
@@ -149,8 +151,8 @@ namespace gmm {
 	if (unbounded) lambda *= R(10);
 	else  lambda = (lambda_max + lambda_min) / R(2);
 	if (valy <= R(2)*valx &&
-	    (lambda < R(lambda_init*1E-7) ||
-	     (!unbounded && lambda_max-lambda_min < R(lambda_init*1E-7))))
+	    (lambda < R(lambda_init*1E-8) ||
+	     (!unbounded && lambda_max-lambda_min < R(lambda_init*1E-8))))
 	{ blocked = true; lambda = lambda_init; break; }
       }
 
@@ -158,9 +160,18 @@ namespace gmm {
       ++iter;
       if (!grad_computed) grad(y, r2);
       gmm::add(scaled(r2, -1), r);
-      if (iter.get_iteration() % restart == 0 || blocked)
-      { if (iter.get_noisy() >= 1) cout << "Restart\n"; invhessian.restart(); }
-      else invhessian.update(gmm::scaled(d,lambda), gmm::scaled(r,-1));
+      if (iter.get_iteration() % restart == 0 || blocked) { 
+	if (iter.get_noisy() >= 1) cout << "Restart\n";
+	invhessian.restart();
+	if (++nb_restart > 10) {
+	  if (iter.get_noisy() >= 1) cout << "BFGS is blocked, exiting\n";
+	  return;
+	}
+      }
+      else {
+	invhessian.update(gmm::scaled(d,lambda), gmm::scaled(r,-1));
+	nb_restart = 0;
+      }
       copy(r2, r); copy(y, x); valx = valy;
       if (iter.get_noisy() >= 1)
 	cout << "BFGS value " << valx/print_norm << "\t";

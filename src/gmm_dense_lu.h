@@ -28,11 +28,11 @@
 /* File    :  gmm_dense_lu.h : modified version from M.T.L.                */
 /*     									   */
 /* Date : June 5, 2003.                                                    */
-/* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
+/* Author : Yves Renard, Yves.Renard@insa-toulouse.fr                      */
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 2003  Yves Renard.                                        */
+/* Copyright (C) 2003-2004  Yves Renard.                                   */
 /*                                                                         */
 /* This file is a part of GMM++                                            */
 /*                                                                         */

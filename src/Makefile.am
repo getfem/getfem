@@ -64,6 +64,7 @@ include_HEADERS =                       \
 	getfem_nonlinear_elasticity.h   \
 	getfem_superlu.h		\
 	getfem_plasticity.h             \
+	getfem_mesher.h                 \
 	gmm.h                           \
 	gmm_matrix.h                    \
 	gmm_iter_solvers.h              \
@@ -149,7 +150,8 @@ SRC =                                   \
 	getfem_import.C	                \
 	getfem_interpolation.C          \
 	getfem_export.C                 \
-	getfem_assembling_tensors.C
+	getfem_assembling_tensors.C     \
+	getfem_mesher.C
 
 lib_LTLIBRARIES = libgetfem.la
 libgetfem_la_SOURCES = $(SRC)
