@@ -202,6 +202,7 @@ void elastostatic_problem::init(void)
 
   /* set boundary conditions
    * (Neuman on the upper face, Dirichlet elsewhere) */
+  gen_dirichlet = PARAM.int_value("GENERIC_DIRICHLET");
   cout << "Selecting Neumann and Dirichlet boundaries\n";
   getfem::convex_face_ct border_faces;
   getfem::outer_faces_of_mesh(mesh, border_faces);
@@ -266,9 +267,9 @@ void elastostatic_problem::assembly(void)
   cout << "take Dirichlet condition into account" << endl;  
   if (!gen_dirichlet) {    
     std::vector<scalar_type> D(nb_dof);
-    for (size_type i = 0; i < nb_dof; ++i)
+    for (size_type i = 0; i < nb_dof; i+=N)
       gmm::copy(sol_u(mf_u.point_of_dof(i)),
-		gmm::sub_vector(D, gmm::sub_interval(i*N, N)));
+		gmm::sub_vector(D, gmm::sub_interval(i, N)));
 
     getfem::assembling_Dirichlet_condition(SM, B, mf_u,
 					   DIRICHLET_BOUNDARY_NUM, D);

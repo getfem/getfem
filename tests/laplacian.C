@@ -165,6 +165,7 @@ void laplacian_problem::init(void)
 
   /* set boundary conditions
    * (Neuman on the upper face, Dirichlet elsewhere) */
+  gen_dirichlet = PARAM.int_value("GENERIC_DIRICHLET");
   cout << "Selecting Neumann and Dirichlet boundaries\n";
   getfem::convex_face_ct border_faces;
   getfem::outer_faces_of_mesh(mesh, border_faces);

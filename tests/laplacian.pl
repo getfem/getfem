@@ -18,7 +18,7 @@ FEM_TYPE = 'FEM_PK(2,1)';         % P1 for triangles
 INTEGRATION = 'IM_TRIANGLE(6)';   % quadrature rule for polynomials up
                                   % to degree 6 on triangles
 RESIDU = 1E-9;     	          % residu for conjugate gradient.
-GENERIC_DIRICHLET = 0;            % Generic Dirichlet condition.
+GENERIC_DIRICHLET = 1;            % Generic Dirichlet condition.
 ROOTFILENAME = 'laplacian';       % Root of data files.
 
 ;
@@ -31,11 +31,12 @@ sub start_program { # (N, K, NX, OPTION, SOLVER)
 
   my $def   = $_[0];
 
-  # print ("def = $def\n");
+ # print "def = $def\n";
 
   open F, "./laplacian $tmp $def 2>&1 |" or die;
   while (<F>) {
     if ($_ =~ /L2 error/) {
+  #    print $_;
       ($a, $b) = split('=', $_);
       # print "La norme en question :", $b;
       if ($b > 0.01) { print "\nError too large\n"; $er = 1; }
@@ -58,7 +59,7 @@ start_program("-d 'MESH_TYPE=\"GT_PK(3,1)\"' -d 'FEM_TYPE=\"FEM_PK(3,1)\"' -d 'I
 print ".";
 start_program("-d 'MESH_TYPE=\"GT_PK(3,1)\"' -d 'FEM_TYPE=\"FEM_PK(3,2)\"' -d 'INTEGRATION=\"IM_TETRAHEDRON(5)\"' -d NX=3 -d FT=0.01");
 print ".";
-start_program("-d 'MESH_TYPE=\"GT_PK(2,1)\"' -d 'FEM_TYPE=\"FEM_PK(2,2)\"' -d 'INTEGRATION=\"IM_EXACT_SIMPLEX(2)\"' -d NX=5");
+start_program("-d 'MESH_TYPE=\"GT_PK(2,1)\"' -d 'FEM_TYPE=\"FEM_PK(2,2)\"' -d 'INTEGRATION=\"IM_EXACT_SIMPLEX(2)\"' -d NX=5 -d GENERIC_DIRICHLET=0");
 print ".";
 start_program("-d 'INTEGRATION=\"IM_TRIANGLE(2)\"'");
 print ".";
@@ -73,7 +74,7 @@ print ".";
 start_program("-d 'MESH_TYPE=\"GT_QK(2,1)\"' -d 'FEM_TYPE=\"FEM_QK(2,1)\"' -d 'INTEGRATION=\"IM_QUAD(17)\"'");
 #start_program("-d INTEGRATION=35 -d MESH_TYPE=1");
 print ".";
-start_program("-d 'MESH_TYPE=\"GT_PRISM(3,1)\"' -d 'FEM_TYPE=\"FEM_PK_PRISM(3,1)\"' -d 'INTEGRATION=\"IM_NC_PRISM(3,2)\"' -d NX=3 -d FT=0.01");
+start_program("-d 'MESH_TYPE=\"GT_PRISM(3,1)\"' -d 'FEM_TYPE=\"FEM_PK_PRISM(3,1)\"' -d 'INTEGRATION=\"IM_NC_PRISM(3,2)\"' -d NX=3 -d FT=0.01 -d GENERIC_DIRICHLET=0");
 #start_program("-d N=3 -d INTEGRATION=1 -d MESH_TYPE=2 -d NX=3 -d FT=0.01");
 print ".";
 start_program("-d 'MESH_TYPE=\"GT_QK(2,1)\"' -d 'FEM_TYPE=\"FEM_QK(2,1)\"' -d 'INTEGRATION=\"IM_GAUSS_PARALLELEPIPED(2,2)\"' -d NX=10 -d INCLINE=0.5");
