@@ -210,16 +210,15 @@ namespace getfem
   void mesh_fem_link_fem::compute(void) {
     // cout << "Compute called\n";
     bgeot::geotrans_inv gti;
-    dal::bit_vector nn = pmf2->convex_index();
     pintegration_method pim;
     bgeot::pgeometric_trans pgt;
-    size_type cv, nbpt, maxgpt = 0;
+    size_type nbpt, maxgpt = 0;
     dal::dynamic_array<std::deque<size_type> > gauss_to_cv; // + index local
     max_dof = 0;
     
-    cv_info_tab.resize(nn.last_true() + 1);
+    cv_info_tab.resize(pmf2->convex_index().last_true() + 1);
     std::fill(cv_info_tab.begin(), cv_info_tab.end(), cv_info());
-    for (cv << nn; cv != size_type(-1); cv << nn) {
+    for (dal::bv_visitor cv(pmf2->convex_index()); !cv.finished(); ++cv) {
       pim = pmf2->int_method_of_element(cv);
       if (pim->is_ppi) 
 	DAL_THROW(internal_error,
@@ -239,10 +238,9 @@ namespace getfem
     }
     dal::dynamic_array<base_node> ptab;
     dal::dynamic_array<size_type> itab;
-    nn = pmf1->convex_index();
     gauss_ptab.resize(maxgpt);
     std::fill(gauss_ptab.begin(), gauss_ptab.end(), gauss_pt_info());
-    for (cv << nn; cv != size_type(-1); cv << nn) {
+    for (dal::bv_visitor cv(pmf1->convex_index()); !cv.finished(); ++cv) {
       nbpt = gti.points_in_convex(pmf1->linked_mesh().convex(cv),
 				  pmf1->linked_mesh().trans_of_convex(cv),
 				  ptab, itab);

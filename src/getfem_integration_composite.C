@@ -39,11 +39,9 @@ namespace getfem
   papprox_integration
   composite_approx_int_method(const mesh_precomposite &mp, const mesh_fem &mf,
 			      bgeot::pconvex_ref cr) {
-    dal::bit_vector nn = mf.convex_index();
     approx_integration *p = new approx_integration(cr);
     base_vector w;
-    for (size_type cv = nn.take_first(); cv != size_type(-1); cv << nn) {
-
+    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       pintegration_method pim = mf.int_method_of_element(cv);
       bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
       if (pim->is_exact() || !(pgt->is_linear())) {

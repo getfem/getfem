@@ -39,12 +39,10 @@ namespace getfem
     det.resize(m.nb_convex());
     orgs.resize(m.nb_convex());
     gtrans.resize(m.nb_convex());
-    dal::bit_vector nn = m.points().index();
-    for (size_type i = 0; i <= nn.last_true(); ++i) {
+    for (size_type i = 0; i <= m.points().index().last_true(); ++i) {
       vertexes.add(m.points()[i]);
     }
-    nn = m.convex_index();
-    for (size_type cv = nn.take_first(); cv != size_type(-1); cv << nn) {
+    for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
       
       bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
       size_type N = pgt->structure()->dim();
@@ -329,8 +327,7 @@ namespace getfem
       }
     }
     //cerr << "on_face=" << on_face << endl;
-    dal::bit_vector bv = m.convex_index();
-    for (size_type cv = bv.take_first(); cv != size_type(-1); cv << bv) {
+    for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
       for (size_type ff = 0; ff < m.structure_of_convex(cv)->nb_faces(); ++ff) {
         bgeot::ind_ref_mesh_point_ind_ct ipts = m.ind_points_of_face_of_convex(cv,ff);
         bool allin = true;

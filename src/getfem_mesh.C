@@ -81,19 +81,15 @@ namespace getfem
 
   void getfem_mesh::translation(base_vector V)
   {
-    dal::bit_vector nn = points().index();
-    size_type i;
-    for (i << nn; i != ST_NIL; i << nn)
+    for (dal::bv_visitor i(points().index()); !i.finished(); ++i)
       points()[i] += V;
     points().resort();
   }
 
   void getfem_mesh::transformation(base_matrix M)
   {
-    dal::bit_vector nn = points().index();
-    size_type i;
     base_vector w(M.nrows());
-    for (i << nn; i != ST_NIL; i << nn) {
+    for (dal::bv_visitor i(points().index()); !i.finished(); ++i) {
       w = points()[i]; gmm::mult(M,w,points()[i]);
     }
     points().resort();
@@ -186,10 +182,9 @@ namespace getfem
   }
   
   scalar_type getfem_mesh::minimal_convex_radius_estimate() const {
-    dal::bit_vector bv = convex_index();
-    if (bv.empty()) return 1;
-    scalar_type r = convex_radius_estimate(bv.take_first());
-    for (size_type cv = bv.take_first(); cv != size_type(-1); cv << bv) {
+    if (convex_index().empty()) return 1;
+    scalar_type r = convex_radius_estimate(convex_index().first_true());
+    for (dal::bv_visitor cv(convex_index()); !cv.finished(); ++cv) {
       r = std::min(r, convex_radius_estimate(cv));
     }
     return r;
@@ -266,7 +261,6 @@ namespace getfem
     dal::dynamic_alloc<size_type> cv_pt;
     dal::dynamic_array<mesh_convex_structure_loc> cv;
     dal::bit_vector ncv;
-    size_type ic;
     
     ist.seekg(0);
     if (!ftool::read_until(ist, "BEGIN MESH STRUCTURE DESCRIPTION"))
@@ -278,6 +272,7 @@ namespace getfem
       { tend = true; }
       else if (!strcmp(tmp, "CONVEX"))
       {
+        size_type ic;
 	ftool::get_token(ist, tmp, 1023);
         ic = dal::abs(atoi(tmp));
 	if (ncv.is_in(ic)) 
@@ -308,7 +303,7 @@ namespace getfem
       }
     }
 
-    for (ic << ncv; ic != size_type(-1); ic << ncv) {
+    for (dal::bv_visitor ic(ncv); !ic.finished(); ++ic) {
       size_type i = add_convex(cv[ic].cstruct, cv_pt.begin() + cv[ic].pts);
       if (i != ic) swap_convex(i, ic);
     }

@@ -181,34 +181,29 @@ namespace getfem
 	t.adjust_sizes(sizes);
 	std::fill(t.begin(), t.end(), 0.0);
       }
-      base_tensor::iterator pt = t.begin();
-      std::vector<base_tensor::iterator> pts(pme->size());
-      
-      
-      J *= pai->coeff(ip);
-      scalar_type V = J;
+
+      scalar_type V;
       size_type k;
-      for (k = 0; k < pme->size(); ++k) {
+      base_tensor::iterator pt = t.begin();
+      std::vector<base_tensor::const_iterator> pts(pme->size());
+      std::vector<scalar_type> Vtab(pme->size());
+            
+      J *= pai->coeff(ip);
+      for (k = 0; k < pme->size(); ++k)
 	pts[k] = elmt_stored[k].begin();
-	if (k != 0) V *= *(pts[k]); 
-	// cout << "tensor " << k << " : " << elmt_stored[k] << endl;
-      }
+      base_tensor::const_iterator pts0 = pts[0];
       
-      for (;;) {
-	*pt += V * (*(pts[0])); pt++; (pts[0])++;
-	if (pts[0] == elmt_stored[0].end()) {
-	  pts[0] = elmt_stored[0].begin();
-	  for  (k = 1; k < pme->size(); ++k) {
-	    (pts[k])++; 
-	    if (pts[k] == elmt_stored[k].end())
-	      pts[k] = elmt_stored[k].begin();
-	    else break;
-	  }
-	  if (k == pme->size()) break;
-	  V = J;
-	  for  (k = 1; k < pme->size(); ++k) V *= *(pts[k]);
-	}
-      }
+      size_type n0 = elmt_stored[0].size();
+      k = pme->size()-1; Vtab[k] = J;
+      /* very heavy reduction .. takes much time */
+      do {
+        for (V = Vtab[k]; k; --k)
+          Vtab[k-1] = V = *pts[k] * V;
+        for (; k < n0/*elmt_stored[0].size()*/; ++k)
+          *pt++ += V * pts0[k];
+        for (k=1; k != pme->size() && ++pts[k] == elmt_stored[k].end(); ++k)
+          pts[k] = elmt_stored[k].begin();
+      } while (k != pme->size());
       if (pt != t.end()) DAL_THROW(internal_error, "Internal error");
     }
 

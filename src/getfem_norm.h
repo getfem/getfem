@@ -44,9 +44,7 @@ namespace getfem
   template<class MESH_FEM, class VECT>
   scalar_type L2_norm(MESH_FEM &mf, const VECT &U, size_type N, const dal::bit_vector &cvlst)
   { /* optimisable */
-    size_type cv;
     scalar_type no = 0.0;
-    dal::bit_vector nn = cvlst;
     dal::dynamic_array<base_vector, 2> vval;
     base_tensor t;
     pfem pf1, pf1prec = NULL;
@@ -56,7 +54,7 @@ namespace getfem
     pmat_elem_type pme; pmat_elem_computation pmec = 0;
     
     DAL_WARNING(3, "obsolete function (not qdim aware) - use asm_L2_norm");
-    for (cv << nn; cv != ST_NIL; cv << nn)
+    for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv)
       {
 	pf1 =     mf.fem_of_element(cv);
 	pgt = mf.linked_mesh().trans_of_convex(cv);
@@ -95,9 +93,8 @@ namespace getfem
   template<class MESH_FEM, class VECT>
   scalar_type H1_semi_norm(MESH_FEM &mf, const VECT &U, size_type N, const dal::bit_vector& cvlst)
   { /* optimisable */
-    size_type cv, NN = mf.linked_mesh().dim();
+    size_type NN = mf.linked_mesh().dim();
     scalar_type no = 0.0;
-    dal::bit_vector nn = cvlst;
     dal::dynamic_array<base_vector, 2> vval;
     base_tensor t;
     pfem pf1, pf1prec = NULL;
@@ -106,7 +103,7 @@ namespace getfem
     pmat_elem_type pme; pmat_elem_computation pmec = 0;
 
     DAL_WARNING(3, "obsolete function (not qdim aware) - use asm_H1_semi_norm");
-    for (cv << nn; cv != ST_NIL; cv << nn)
+    for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv)
       {
 	pf1 =     mf.fem_of_element(cv);
 	pgt = mf.linked_mesh().trans_of_convex(cv);

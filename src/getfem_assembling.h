@@ -319,8 +319,7 @@ namespace getfem
   { // optimisable
 
     DAL_WARNING(3, "obsolete function - use asm_stiffness_matrix_for_laplacian");
-    size_type cv, nbd1, nbd2, N = mf.linked_mesh().dim();
-    dal::bit_vector nn = mf.convex_index();
+    size_type nbd1, nbd2, N = mf.linked_mesh().dim();
     base_tensor t;
     pfem pf1, pf2, pf1prec = 0, pf2prec = 0;
     pintegration_method pim, pimprec = 0;
@@ -331,8 +330,7 @@ namespace getfem
       DAL_THROW(std::invalid_argument,
 		"This assembling procedure only works on a single mesh");
 
-    for (cv << nn; cv != ST_NIL; cv << nn)
-    {
+    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       pf1 =     mf.fem_of_element(cv); nbd1 = pf1->nb_dof();
       pf2 = mfdata.fem_of_element(cv); nbd2 = pf2->nb_dof();
       pgt = mf.linked_mesh().trans_of_convex(cv);
@@ -379,8 +377,6 @@ namespace getfem
 					const mesh_fem &mf_d,
 					const VECT &DATA) {
     DAL_WARNING(3, "obsolete function - use asm_stokes");
-    size_type cv;
-    dal::bit_vector nn = mf_u.convex_index();
 
     base_tensor t;
 
@@ -399,8 +395,7 @@ namespace getfem
 		"This assembling procedure only works on a single mesh");
 
     /* loop over all convexes */
-    for (cv << nn; cv != ST_NIL; cv << nn) {
-
+    for (dal::bv_visitor cv(mf_u.convex_index()); !cv.finished(); ++cv) {
       pf_u = mf_u.fem_of_element(cv); nbdof_u = pf_u->nb_dof();
       pf_p = mf_p.fem_of_element(cv); nbdof_p = pf_p->nb_dof();
       pf_d = mf_d.fem_of_element(cv); nbdof_d = pf_d->nb_dof();
@@ -461,8 +456,7 @@ namespace getfem
   { // à verifier
     DAL_WARNING(3, "obsolete function - use asm_stiffness_matrix_for_linear_elasticity");
 
-    size_type cv, nbd1, nbd2, N = mf.linked_mesh().dim();
-    dal::bit_vector nn = mf.convex_index();
+    size_type nbd1, nbd2, N = mf.linked_mesh().dim();
     base_tensor t;
     pfem pf1, pf2, pf1prec = NULL, pf2prec = NULL;
     pintegration_method pim, pimprec = 0;
@@ -473,8 +467,7 @@ namespace getfem
       DAL_THROW(std::invalid_argument,
 		"This assembling procedure only works on a single mesh");
   
-    for (cv << nn; cv != ST_NIL; cv << nn)
-    {
+    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       pf1 =     mf.fem_of_element(cv); nbd1 = pf1->nb_dof();
       pf2 = mfdata.fem_of_element(cv); nbd2 = pf2->nb_dof();
       pgt = mf.linked_mesh().trans_of_convex(cv);
@@ -540,8 +533,7 @@ namespace getfem
 				   const mesh_fem &mf_d, const VECT &Q, dim_type N)
   {
     DAL_WARNING(3, "obsolete function - use asm_qu_term");
-    size_type cv;
-    dal::bit_vector nn = mf_u.convex_index(), nf;
+    dal::bit_vector nf;
     base_tensor t;
     pfem pf_u, pf_d, pf_u_prec = NULL, pf_d_prec = NULL;
     pintegration_method pim, pimprec = 0;
@@ -552,8 +544,7 @@ namespace getfem
       DAL_THROW(std::invalid_argument,
 		"This assembling procedure only works on a single mesh");
 
-    for (cv << nn; cv != ST_NIL; cv << nn)
-    {
+    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       nf = mf_u.faces_of_convex_on_boundary(cv, boundary);
       if (nf.card() > 0)
       {
@@ -637,8 +628,7 @@ namespace getfem
   void asm_dirichlet_constraints(MAT &M, VECT &B, const mesh_fem &mf_u,
 				 const mesh_fem &mf_rh,
 				 const VECT &H, const VECT &R, size_type boundary) {
-    size_type cv;
-    dal::bit_vector nn = mf_u.convex_index(), nf;
+    dal::bit_vector nf;
     pfem pf_u, pf_rh;
     
     if (mf_rh.get_qdim() != 1)
@@ -648,7 +638,7 @@ namespace getfem
 
     /* step 2 : simplification of simple dirichlet conditions 
      */
-    for (cv << nn; cv != ST_NIL; cv << nn) {
+    for (dal::bv_visitor cv(mf_u.convex_index()); !cv.finished(); ++cv) {
       nf = mf_u.faces_of_convex_on_boundary(cv, boundary);
       /* don't try anything with vector elements */
       if (mf_u.fem_of_element(cv)->target_dim() != 1) continue;
@@ -732,13 +722,12 @@ namespace getfem
 				        const VECT &H, const VECT &R,
 					dim_type N) {
     DAL_WARNING(3, "obsolete function - use asm_dirichlet_constraints");
-    size_type cv;
-    dal::bit_vector nn = mf_u.convex_index(), nf;
+    dal::bit_vector nf;
     pfem pf_u, pf_rh;
     
     assembling_boundary_qu_term(M, mf_u, boundary, mf_rh, H, N);
     assembling_Neumann_condition(B, mf_u, boundary, mf_rh, R, N);
-    for (cv << nn; cv != ST_NIL; cv << nn) {
+    for (dal::bv_visitor cv(mf_u.convex_index()); !cv.finished(); ++cv) {
       nf = mf_u.faces_of_convex_on_boundary(cv, boundary);
       if (nf.card() > 0) {
 	pf_u = mf_u.fem_of_element(cv); 
@@ -791,8 +780,7 @@ namespace getfem
 		     const MESH_FEM &mf2, dim_type N)
   {
     DAL_WARNING(3, "obsolete function - use asm_mass_matrix");
-    size_type cv, nbd1, nbd2;
-    dal::bit_vector nn = mf1.convex_index();
+    size_type nbd1, nbd2;
     base_tensor t;
     pfem pf1, pf1prec = 0, pf2, pf2prec = 0;
     pintegration_method pim, pimprec = 0;
@@ -804,8 +792,7 @@ namespace getfem
       DAL_THROW(std::invalid_argument,
 		"This assembling procedure only works on a single mesh");
 
-    for (cv << nn; cv != ST_NIL; cv << nn)
-    {
+    for (dal::bv_visitor cv(mf1.convex_index()); !cv.finished(); ++cv) {
       pf1 = mf1.fem_of_element(cv); nbd1 = pf1->nb_dof();
       pf2 = mf2.fem_of_element(cv); nbd2 = pf2->nb_dof();
       pgt = mf1.linked_mesh().trans_of_convex(cv);
@@ -846,8 +833,8 @@ namespace getfem
 		    const MESH_FEM &mf2, size_type boundary, dim_type N)
   {
     DAL_WARNING(3, "obsolete function - use asm_mass_matrix");
-    size_type cv, nbd1, nbd2, f;
-    dal::bit_vector nn = mf1.convex_index(), nf;
+    size_type nbd1, nbd2, f;
+    dal::bit_vector nf;
     base_tensor t;
     pfem pf1, pf1prec = 0, pf2, pf2prec = 0;
     pintegration_method pim, pimprec = 0;
@@ -859,8 +846,7 @@ namespace getfem
       DAL_THROW(std::invalid_argument,
 		"This assembling procedure only works on a single mesh");
 
-    for (cv << nn; cv != ST_NIL; cv << nn)
-    {
+    for (dal::bv_visitor cv(mf1.convex_index()); !cv.finished(); ++cv) {
       nf = mf1.faces_of_convex_on_boundary(cv, boundary);
       if (nf.card() > 0) {
 	pf1 = mf1.fem_of_element(cv); nbd1 = pf1->nb_dof();
@@ -910,8 +896,7 @@ namespace getfem
 					const mesh_fem &mfdata, const VECT2 &F, dim_type N)
   {
     DAL_WARNING(3, "obsolete function - use asm_source_term");
-    size_type cv, nbd1, nbd2;
-    dal::bit_vector nn = mf.convex_index();
+    size_type nbd1, nbd2;
     base_tensor t;
     pfem pf1, pf2, pf1prec = NULL, pf2prec = NULL;
     pintegration_method pim, pimprec = 0;
@@ -922,8 +907,7 @@ namespace getfem
       DAL_THROW(std::invalid_argument,
 		"This assembling procedure only works on a single mesh");
 
-    for (cv << nn; cv != ST_NIL; cv << nn)
-    {
+    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       pf1 =     mf.fem_of_element(cv); nbd1 = pf1->nb_dof();
       pf2 = mfdata.fem_of_element(cv); nbd2 = pf2->nb_dof();
       pgt = mf.linked_mesh().trans_of_convex(cv);
@@ -959,13 +943,11 @@ namespace getfem
 					size_type boundary,
 					const VECT2 &F)
   { // Marche uniquement pour des ddl de lagrange.
-    size_type cv, Q=mf.get_qdim();
-    dal::bit_vector nn = mf.convex_index();
+    size_type Q=mf.get_qdim();
     dal::bit_vector nndof = mf.dof_on_boundary(boundary);
     pfem pf1;
 
-    for (cv << nn; cv != ST_NIL; cv << nn)
-    {
+    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       pf1 = mf.fem_of_element(cv);
       pdof_description ldof = lagrange_dof(pf1->dim());
       size_type nbd = pf1->nb_dof();
@@ -1001,12 +983,11 @@ namespace getfem
     void add_Dirichlet_dof(MATRM &RM, VECT1 &B,
 			   const mesh_fem &mf,
 			   size_type dof, scalar_type dof_val) {     
-    size_type cv, Q=mf.get_qdim();
-    dal::bit_vector nn = mf.convex_index();
+    size_type Q=mf.get_qdim();
     pfem pf1;
 
     // peu performant !
-    for (cv << nn; cv != ST_NIL; cv << nn) {
+    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       pf1 = mf.fem_of_element(cv);
       if (pf1->target_dim() != 1)
 	DAL_THROW(to_be_done_error, "sorry, to be done ... ");
@@ -1035,13 +1016,10 @@ namespace getfem
 					const VECT2 &F, dim_type N)
   { /* Y-a-il un moyen plus performant ? */
     // Marche uniquement pour des ddl de lagrange.
-    size_type cv;
-    dal::bit_vector nn = mf.convex_index();
     dal::bit_vector nndof = mf.dof_on_boundary(boundary);
     pfem pf1;
 
-    for (cv << nn; cv != ST_NIL; cv << nn)
-    {
+    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       pf1 = mf.fem_of_element(cv);
       pdof_description ldof = lagrange_dof(pf1->dim());
       size_type nbd = pf1->nb_dof();
@@ -1288,8 +1266,8 @@ namespace getfem
 				      size_type boundary, const mesh_fem &mfdata, const VECT2 &F, dim_type N)
   {
     DAL_WARNING(3, "obsolete function - use asm_source_term");
-    size_type cv, nbd1, nbd2, f;
-    dal::bit_vector nn = mf.convex_index(), nf;
+    size_type nbd1, nbd2, f;
+    dal::bit_vector nf;
     base_tensor t;
     pfem pf1, pf2, pf1prec = NULL, pf2prec = NULL;
     pintegration_method pim, pimprec = 0;
@@ -1300,8 +1278,7 @@ namespace getfem
       DAL_THROW(std::invalid_argument,
 		"This assembling procedure only works on a single mesh");
   
-    for (cv << nn; cv != ST_NIL; cv << nn)
-    {
+    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       // for (int h = 0; h < mf.linked_mesh().nb_points_of_convex(cv); ++h)
       // cout << "Point " << h << " of cv " << cv << " : " 
       //     << mf.linked_mesh().points_of_convex(cv)[h] << endl;

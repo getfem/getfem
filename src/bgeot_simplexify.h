@@ -48,7 +48,6 @@ namespace bgeot
     void simplexify(const mesh_structure &cvt, mesh_structure &sl,
 		    const PT_TAB &point_list, size_type N, double EPS)
   { // a refaire ...
-    dal::bit_vector nn;
     dal::dynamic_array<mesh_structure> convex_list;
     std::vector<size_type> tab2(N+1);
     size_type nc = 0;
@@ -141,11 +140,10 @@ namespace bgeot
 	  
 	  // cout << "decoupage d'un convexe de " << nbi0 + 1 << " points\n";
 
-	  convex_list[nc+1].clear(); nn.clear(); 
+	  convex_list[nc+1].clear(); 
 	  for (size_type i = 0; i < nbi0; i++)
 	  {
 	    cv->sup_segment(i0, tab[i]);
-	    nn.add(tab[i]);
 	    // convex_list[nc+1].add_edge(i0, tab[i]);
 	  }
 	  
@@ -155,9 +153,7 @@ namespace bgeot
 		  (point_list.begin(), tab.begin(), tab.begin() + tab.size()),
 		  point_list[i0], N, EPS);
 
-	  size_type l;
-	  nn = convex_list[nc+1].convex_index();
-	  for (l << nn; l != size_type(-1); l << nn)
+	  for (dal::bv_visitor l(convex_list[nc+1].convex_index()); !l.finished(); ++l)
 	  {
 	    size_type i = (convex_list[nc+1].ind_points_of_convex(l))[0];
 	    size_type j = (convex_list[nc+1].ind_points_of_convex(l))[1];
@@ -165,8 +161,7 @@ namespace bgeot
 	      convex_list[k].sup_segment(i, j);
 	  }
 
-	  nn = convex_list[nc+1].convex_index();
-	  for (l << nn; l != size_type(-1); l << nn)
+	  for (dal::bv_visitor l(convex_list[nc+1].convex_index()); !l.finished(); ++l)
 	  {
 	    size_type i = (convex_list[nc+1].ind_points_of_convex(l))[0];
 	    size_type j = (convex_list[nc+1].ind_points_of_convex(l))[1];

@@ -99,12 +99,9 @@ namespace getfem
   {
     getfem_mesh aux;
     _parallelepiped_regular_simplex_mesh(aux, N-1, org, ivect, iref);
-    dal::bit_vector nn = aux.convex_index();
-    size_type cv;
     std::vector<base_node> ptab(2 * N);
     
-
-    for (cv << nn; cv != size_type(-1); cv << nn) {
+    for (dal::bv_visitor cv(aux.convex_index()); !cv.finished(); ++cv) {
       std::copy(aux.points_of_convex(cv).begin(),
 		aux.points_of_convex(cv).end(), ptab.begin());
 

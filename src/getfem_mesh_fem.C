@@ -119,43 +119,29 @@ namespace getfem
   }
   
   void mesh_fem::sup_boundaries_of_convex(size_type c) {
-    dal::bit_vector::iterator it = valid_boundaries.begin(),
-      ite = valid_boundaries.end();
-    for (; it != ite; ++it)
-      if (*it) boundaries[it.index()].sup_convex(c);
+    for (dal::bv_visitor i(valid_boundaries); !i.finished(); ++i)
+      boundaries[i].sup_convex(c);
   }
   
   void mesh_fem::swap_boundaries_convex(size_type c1, size_type c2) {
-    dal::bit_vector::iterator it = valid_boundaries.begin(),
-      ite = valid_boundaries.end();
-    for (; it != ite; ++it)
-      if (*it) boundaries[it.index()].swap_convex(c1, c2);
+    for (dal::bv_visitor i(valid_boundaries); !i.finished(); ++i)
+      boundaries[i].swap_convex(c1, c2);
   }
   
   dal::bit_vector mesh_fem::dof_on_boundary(size_type b) const {
     if (!dof_enumeration_made) this->enumerate_dof();
     dal::bit_vector res;
     if (valid_boundaries[b]) {
-      dal::bit_vector::const_iterator it = boundaries[b].cvindex.begin(),
-	ite = boundaries[b].cvindex.end();
-      for (; it != ite; ++it)
-	if (*it) {
-	  dal::bit_vector::const_iterator
-	    itf = boundaries[b].faces_of_convex(it.index()).begin(),
-	    itfe = boundaries[b].faces_of_convex(it.index()).end();
-	  for (; itf != itfe; ++itf)
-	    if (*itf) {
-	      size_type nbb
-		= dof_structure.structure_of_convex(it.index())->
-		nb_points_of_face(itf.index());
-	      for (size_type i = 0; i < nbb; ++i) {
-		size_type n = Qdim / fem_of_element(it.index())->target_dim();
-		for (size_type ll = 0; ll < n; ++ll)
-		  res.add(dof_structure.ind_points_of_face_of_convex(it.index(),
-								     itf.index())[i] + ll);
-	      }
-	    }
-	}
+      for (dal::bv_visitor cv(boundaries[b].cvindex); !cv.finished(); ++cv) {
+        for (dal::bv_visitor f(boundaries[b].faces_of_convex(cv)); !f.finished(); ++f) {
+          size_type nbb = dof_structure.structure_of_convex(cv)->nb_points_of_face(f);
+          for (size_type i = 0; i < nbb; ++i) {
+            size_type n = Qdim / fem_of_element(cv)->target_dim();
+            for (size_type ll = 0; ll < n; ++ll)
+              res.add(dof_structure.ind_points_of_face_of_convex(cv,f)[i] + ll);
+          }
+        }
+      }
     }
     return res;
   }
@@ -217,9 +203,9 @@ namespace getfem
 
   void mesh_fem::set_finite_element(const dal::bit_vector &cvs, pfem ppf,
 			      const pintegration_method ppi) { 
-    dal::bit_vector::const_iterator it = cvs.begin(), ite = cvs.end();
     pintfem pif =  give_intfem(ppf, ppi);
-    for ( ; it != ite; ++it) if (*it) set_finite_element(it.index(), pif);
+    for (dal::bv_visitor cv(cvs); !cv.finished(); ++cv)
+      set_finite_element(cv, pif);
   }
   
   base_node mesh_fem::point_of_dof(size_type cv, size_type i) const {
@@ -441,7 +427,7 @@ namespace getfem
     valid_boundaries.clear();
   }
 
-  mesh_fem::mesh_fem(getfem_mesh &me, dim_type Q) : Qdim(Q) {
+  mesh_fem::mesh_fem(getfem_mesh &me, dim_type Q) : dof_enumeration_made(false), Qdim(Q) {
     _linked_mesh = &me;
  
     add_sender(me.lmsg_sender(), *this,
@@ -544,15 +530,6 @@ namespace getfem
 	  this->dof_enumeration_made = true;
 	  this->nb_total_dof = doflst.card();
 	  ist >> ftool::skip("DOF_ENUMERATION");
-	  /*	  cerr << "end of dof enum, nb_dof=" << nb_dof() << '\n';
-	  dal::bit_vector bv = convex_index(); size_type cv;
-	  for (cv << bv; cv != size_type(-1); cv << bv) {
-	    cerr << "  " << cv << ":" << '\n';
-	    ref_mesh_dof_ind_ct::const_iterator it = ind_dof_of_element(cv).begin();
-	    while (it != ind_dof_of_element(cv).end()) cerr << " " << *it; ++it;
-	    cerr << '\n';
-	  }
-	  */
 	} else if (strlen(tmp)) DAL_THROW(failure_error, "Syntax error in file at token '" << tmp << "' [pos=" << ist.tellg() << "]");
       } else if (strcmp(tmp, "QDIM")==0) {
 	if (dof_read) DAL_THROW(failure_error, "Can't change QDIM after dof enumeration");
@@ -581,26 +558,18 @@ namespace getfem
   {
     ost << '\n' << "BEGIN MESH_FEM" << '\n' << '\n';
     ost << "QDIM " << size_type(get_qdim()) << '\n';
-    dal::bit_vector bv = convex_index();
-    size_type cv;
-    for (cv << bv; cv != size_type(-1); cv << bv) {
+    for (dal::bv_visitor cv(convex_index()); !cv.finished(); ++cv) {
       ost << " CONVEX " << cv;
       ost << " " << name_of_fem(fem_of_element(cv));
       ost << " " << name_of_int_method(int_method_of_element(cv));
       ost << '\n';
     }
-    bv = get_valid_boundaries();
 
-    dal::bit_vector blst = get_valid_boundaries();
-    size_type bnum;
-    for (bnum << blst; bnum != size_type(-1); bnum << blst) {
+    for (dal::bv_visitor bnum(get_valid_boundaries()); !bnum.finished(); ++bnum) {
       ost << " BEGIN BOUNDARY " << bnum;
-      dal::bit_vector cvlst = boundaries[bnum].cvindex;
       size_type cnt = 0;
-      for (cv << cvlst; cv != size_type(-1); cv << cvlst) {
-	dal::bit_vector cvflst = boundaries[bnum].faces_of_convex(cv);
-	size_type f;
-	for (f << cvflst; f != size_type(-1); f << cvflst, ++cnt) {
+      for (dal::bv_visitor cv(boundaries[bnum].cvindex); !cv.finished(); ++cv) {
+        for (dal::bv_visitor_c f(boundaries[bnum].faces_of_convex(cv)); !f.finished(); ++f, ++cnt) {
 	  if ((cnt % 10) == 0) ost << '\n' << " ";
 	  ost << " " << cv << "/" << f;
 	}
@@ -608,8 +577,7 @@ namespace getfem
       ost << '\n' << " END BOUNDARY " << bnum << '\n';
     }
     ost << " BEGIN DOF_ENUMERATION " << '\n';
-    bv = convex_index();
-    for (cv << bv; cv != size_type(-1); cv << bv) {
+    for (dal::bv_visitor cv(convex_index()); !cv.finished(); ++cv) {
       ost << "  " << cv << ": ";
       ref_mesh_dof_ind_ct::const_iterator it = ind_dof_of_element(cv).begin();
       while (it != ind_dof_of_element(cv).end()) {

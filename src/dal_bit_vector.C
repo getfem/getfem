@@ -160,9 +160,8 @@ namespace dal
   }
 
   std::ostream &operator <<(std::ostream &o, const bit_vector &s) {
-    bit_vector u = s; int i;
     o << "int set ";
-    for (i << u; i != int(-1); i << u) o << " : " << i;
+    for (bv_visitor i(s); !i.finished(); ++i) o << " : " << bit_vector::size_type(i);
     o << " ";
     return o;
   }

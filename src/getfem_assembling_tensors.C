@@ -297,6 +297,7 @@ namespace getfem {
   class ATN_computed_tensor : public ATN_tensor {
     std::vector<mf_comp> mfcomp;
     pmat_elem_computation pmec;
+    pmat_elem_type pme;
     pintegration_method pim;
     bgeot::pgeometric_trans pgt;
     base_tensor t;
@@ -305,7 +306,7 @@ namespace getfem {
     stride_type tsize;
   public:
     ATN_computed_tensor(std::vector<mf_comp> _mfcomp) : 
-      mfcomp(_mfcomp), pmec(0), pim(0), pgt(0), data_base(0) {    }
+      mfcomp(_mfcomp), pmec(0), pme(0), pim(0), pgt(0), data_base(0) {    }
 
   private:
     stride_type add_dim(dim_type d, stride_type s) {
@@ -353,14 +354,17 @@ namespace getfem {
       pgt2 = mf.linked_mesh().trans_of_convex(cv);
       pim2 = mf.int_method_of_element(cv);
       // cerr << "computed tensor cv=" << cv << " f=" << int(face) << "\n";
-      _shape_updated = (pgt != pgt2 || pim != pim2);
+      // essai: on commente la ligne du dessous, y'a pas a tout recalculer quand seuls la transfo geo ou
+      // la methode d'integration change
+      // _shape_updated = (pgt != pgt2 || pim != pim2);
+      _shape_updated = false;
       for (size_type i=0; _shape_updated == false && i < mfcomp.size(); ++i) {
-	if  (cv == size_type(-1) || mf.fem_of_element(current_cv) != mf.fem_of_element(cv)) 
+	if  (current_cv == size_type(-1) || mf.fem_of_element(current_cv) != mf.fem_of_element(cv)) 
 	  _shape_updated = true;
       }
       /* build the new mat_elem structure */      
       if (_shape_updated) {
- 	pmat_elem_type pme = NULL;
+ 	pme = NULL;
 	tensor().clear();
 	_r.resize(0);
 	tsize = 1;
@@ -400,13 +404,14 @@ namespace getfem {
 	tensor().update_idx2mask();
 	data_base = 0;
 	tensor().set_base(data_base);
-
-	pgt = pgt2; pim = pim2;
-	pmec = mat_elem(pme, pim, pgt);
 	/*  cerr << "ATN_computed_tensor::check_shape_update(" << cv << ")="; 
 	    const bgeot::tensor_shape& t = tensor(); t._print(); 
 	    tensor()._print(); cerr << endl;
 	*/
+      }
+      if (_shape_updated || pgt != pgt2 || pim != pim2) {
+	pgt = pgt2; pim = pim2;
+	pmec = mat_elem(pme, pim, pgt);
       }
     }
     // virtual void init_required_shape() { req_shape=tensor_shape(ranges()); }
@@ -1100,10 +1105,11 @@ namespace getfem {
     for (size_type i=0; i < atn_tensors.size(); ++i) {
       atn_tensors[i]->check_shape_update(cv,face);
       update_shapes =  (update_shapes || atn_tensors[i]->is_shape_updated());
-      if (atn_tensors[i]->is_shape_updated()) {
-	//cerr << "[cv=" << cv << ",f=" << int(face) << "], shape_updated: " //<< typeid(*atn_tensors[i]).name() 
-	//<< " [" << atn_tensors[i]->name() << "]\n  -> r=" << atn_tensors[i]->ranges() << endl;
+      /*      if (atn_tensors[i]->is_shape_updated()) {
+	cerr << "[cv=" << cv << ",f=" << int(face) << "], shape_updated: " //<< typeid(*atn_tensors[i]).name() 
+             << " [" << atn_tensors[i]->name() << "]\n  -> r=" << atn_tensors[i]->ranges() << endl;
       }
+      */
     }
     if (update_shapes) {
       for (size_type i=0; i < atn_tensors.size(); ++i) {
@@ -1147,17 +1153,14 @@ namespace getfem {
 			       std::vector<size_type>& cvorder) {
     cvorder.reserve(candidates.card()); cvorder.resize(0);
     const getfem_mesh& m = mftab[0]->linked_mesh();      
-    for (dal::bit_vector::const_iterator it = candidates.begin(); 
-	 it != candidates.end(); ++it) {
-      if (*it) {
-	if (m.convex_index().is_in(it.index())) {
-	  for (size_type i=0; i < mftab.size(); ++i)
-	    if (!mftab[i]->convex_index().is_in(it.index()))
-	      ASM_THROW_ERROR("the convex " << it.index() << " has no FEM for the #" << i+1 << " mesh_fem");	  
-	  cvorder.push_back(it.index());
-	} else {
-	  ASM_THROW_ERROR("the convex " << it.index() << " is not part of the mesh");
-	}
+    for (dal::bv_visitor cv(candidates); !cv.finished(); ++cv) {
+      if (m.convex_index().is_in(cv)) {
+        for (size_type i=0; i < mftab.size(); ++i)
+          if (!mftab[i]->convex_index().is_in(cv))
+            ASM_THROW_ERROR("the convex " << cv << " has no FEM for the #" << i+1 << " mesh_fem");	  
+        cvorder.push_back(cv);
+      } else {
+        ASM_THROW_ERROR("the convex " << cv << " is not part of the mesh");
       }
     }
     std::sort(cvorder.begin(), cvorder.end(), cv_fem_compare(mftab));
@@ -1183,11 +1186,9 @@ namespace getfem {
     get_convex_order(mftab, mftab[0]->convex_index(), cv);
     parse();
     for (size_type i=0; i < cv.size(); ++i) {
-      dal::bit_vector flist = mftab[0]->faces_of_convex_on_boundary(cv[i], boundary_number);
-      if (flist.card() > 0) {
-	size_type f;
-	for (f << flist; f != size_type(-1); f << flist)
-	  exec(cv[i], f);
+      for (dal::bv_visitor_c f(mftab[0]->faces_of_convex_on_boundary(cv[i], boundary_number));
+           !f.finished(); ++f) {
+        exec(cv[i], f);
       }
     }
   }

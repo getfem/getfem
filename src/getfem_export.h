@@ -55,8 +55,6 @@ namespace getfem
     dim_type P = mf.get_qdim();
     std::ofstream o(filename.c_str());
     if (!o) DAL_THROW(internal_error, "impossible to open file");
-    dal::bit_vector nn = mf.convex_index();
-    size_type cv;
     base_node pt1(N), pt2, pt3(P), val(1);
     base_matrix G;
     base_vector coeff;
@@ -64,8 +62,7 @@ namespace getfem
     o << "% GETFEM++ DATA FILE\nBEGIN DATA ELEMENT\nN = " << int(N)
       << "\nP = " << int(P) << "\nK = " << K << endl << endl;
     o.precision(14);
-    for (cv << nn; cv != ST_NIL; cv << nn)
-    {
+    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
       pfem pfe = classical_fem(pgt, K);
       pfem pf1 = mf.fem_of_element(cv);
@@ -221,13 +218,12 @@ namespace getfem
     // Data repartition
     // à corriger
     
-    dal::bit_vector nn = mesh.convex_index();
     U.resize(mef.nb_dof());
     std::fill(U.begin(), U.end(), 0.0);
     std::vector<int> cp(mef.nb_dof() / P);
     std::fill(cp.begin(), cp.end(), 0);
-    size_type l = 0, i;
-    for (i << nn; i != size_type(-1); i << nn) {
+    size_type l = 0;
+    for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i) {
       size_type nbd = mef.nb_dof_of_element(i);
       for (size_type j = 0; j < nbd / P; ++j, ++l) {
 	size_type dof = mef.ind_dof_of_element(i)[j*P];
@@ -235,7 +231,7 @@ namespace getfem
 	(cp[dof])++;
       }
     }
-    for (i = 0; i < mef.nb_dof() / P; ++i) {
+    for (size_type i = 0; i < mef.nb_dof() / P; ++i) {
       if (cp[i] == 0) DAL_THROW(internal_error, "Internal error");
       for (short_type k = 0; k < P; ++k)
 	U[i*P +k] /= getfem::scalar_type(cp[i]);
@@ -251,12 +247,10 @@ namespace getfem
   /* ********************************************************************* */
 
   template<class VECT>
-    void interpolation_solution_same_mesh(mesh_fem &mf_source,
-					  mesh_fem &mf_target,
+    void interpolation_solution_same_mesh(const mesh_fem &mf_source,
+					  const mesh_fem &mf_target,
 					  const VECT &U, VECT &V)
   {
-    dal::bit_vector nn = mf_source.convex_index();
-    size_type cv;
     base_node val(1);
     base_matrix G;
     base_vector coeff;
@@ -269,7 +263,7 @@ namespace getfem
 		qdim << " on a mesh_fem whose Qdim is " << 
 		int(mf_target.get_qdim()));
 
-    for (cv << nn; cv != ST_NIL; cv << nn) {
+    for (dal::bv_visitor cv(mf_source.convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt = mf_source.linked_mesh().trans_of_convex(cv);
       pfem pf_s = mf_source.fem_of_element(cv);
       pfem pf_t = mf_target.fem_of_element(cv);
@@ -311,9 +305,8 @@ namespace getfem
 
 
   template<class VECT>
-    void interpolation_solution(mesh_fem &mf_source, mesh_fem &mf_target,
+    void interpolation_solution(const mesh_fem &mf_source, const mesh_fem &mf_target,
 				const VECT &U, VECT &V) {
-    size_type cv;
     base_node val(1);
     bgeot::geotrans_inv gti;
     dal::dynamic_array<base_node> ptab;
@@ -342,31 +335,26 @@ namespace getfem
        pouvoir retrouver le numéro du ddl à partir de son indice
        dans la liste de points de gti 
     */
-    for (dal::bit_vector::const_iterator it = mf_target.convex_index().begin();
-	 it != mf_target.convex_index().end(); ++it) {
-      if (*it) {
-	pfem pf_t = mf_target.fem_of_element(it.index());
-	size_type qmult = mf_target.get_qdim() / pf_t->target_dim();
-	
-	if (pf_t->target_dim() != 1) DAL_THROW(failure_error, "still some work to do on vector FEMs!");
-
-	for (size_type j=0; j < pf_t->nb_dof(); ++j) {
-	  size_type dof_t = mf_target.ind_dof_of_element(it.index())[j*qmult];
-	  if (!tdof_added[dof_t]) {
-	    gti.add_point(mf_target.point_of_dof(dof_t));
-	    gti_pt_2_target_dof.push_back(std::pair<size_type,size_type>(dof_t,qmult));
-	    tdof_added.add(dof_t);
-	  }
-	}
+    for (dal::bv_visitor cv(mf_target.convex_index()); !cv.finished(); ++cv) {
+      pfem pf_t = mf_target.fem_of_element(cv);
+      size_type qmult = mf_target.get_qdim() / pf_t->target_dim();
+      
+      if (pf_t->target_dim() != 1) DAL_THROW(failure_error, "still some work to do on vector FEMs!");
+      
+      for (size_type j=0; j < pf_t->nb_dof(); ++j) {
+        size_type dof_t = mf_target.ind_dof_of_element(cv)[j*qmult];
+        if (!tdof_added[dof_t]) {
+          gti.add_point(mf_target.point_of_dof(dof_t));
+          gti_pt_2_target_dof.push_back(std::pair<size_type,size_type>(dof_t,qmult));
+          tdof_added.add(dof_t);
+        }
       }
     }
     // il faudrait controler que tous les ddl de mf_target sont de
     // type lagrange
-    dal::bit_vector nn = mf_source.convex_index(), ddl_touched;
-    ddl_touched.add(0, mf_target.nb_dof());
+    dal::bit_vector ddl_touched; ddl_touched.add(0, mf_target.nb_dof());
 
-    for (cv << nn; cv != ST_NIL; cv << nn)
-    {
+    for (dal::bv_visitor cv(mf_source.convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt=mf_source.linked_mesh().trans_of_convex(cv);
       size_type nb = gti.points_in_convex(mf_source.linked_mesh().convex(cv),
 					  pgt, ptab, itab);
@@ -410,7 +398,6 @@ namespace getfem
   template<class VECT>
     void interpolation_solution(mesh_fem &mf_source, bgeot::geotrans_inv &gti,
 				const VECT &U, VECT &V) {
-    size_type cv;
     base_node val(1);
     dal::dynamic_array<base_node> ptab;
     dal::dynamic_array<size_type> itab;
@@ -419,11 +406,9 @@ namespace getfem
 
     size_type qdim = mf_source.get_qdim();
 
-    dal::bit_vector nn = mf_source.convex_index(), ddl_touched;
-    ddl_touched.add(0, gti.nb_points());
+    dal::bit_vector ddl_touched; ddl_touched.add(0, gti.nb_points());
 
-    for (cv << nn; cv != ST_NIL; cv << nn)
-    {
+    for (dal::bv_visitor cv(mf_source.convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt=mf_source.linked_mesh().trans_of_convex(cv);
       size_type nb = gti.points_in_convex(mf_source.linked_mesh().convex(cv),
 					  pgt, ptab, itab);
@@ -471,8 +456,6 @@ namespace getfem
     void interpolation_solution_same_mesh(mesh_fem &mf, mesh_fem &mf_target,
 					  const VECT &U, VECT &V, dim_type P)
   {
-    dal::bit_vector nn = mf.convex_index();
-    size_type cv;
     base_node pt2, val(1);
     base_matrix G;
     base_vector coeff;
@@ -480,8 +463,7 @@ namespace getfem
     if ( &(mf.linked_mesh()) != &(mf_target.linked_mesh()))
       DAL_THROW(failure_error, "Meshes should be the same in this function.");
 
-    for (cv << nn; cv != ST_NIL; cv << nn)
-    {
+    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
       pfem pfe = mf_target.fem_of_element(cv);
       pfem pf1 = mf.fem_of_element(cv);
@@ -527,7 +509,7 @@ namespace getfem
     void interpolation_solution(mesh_fem &mf, mesh_fem &mf_target,
 				const VECT &U, VECT &V, dim_type P)
   {
-    size_type cv, nb;
+    size_type nb;
     base_node pt3(P), val(1);
     bgeot::geotrans_inv gti;
     dal::dynamic_array<base_node> ptab;
@@ -547,11 +529,9 @@ namespace getfem
     // il faudrait controler que tous les ddl de mf_target sont de
     // type lagrange
 
-    dal::bit_vector nn = mf.convex_index(), ddl_touched;
-    ddl_touched.add(0, nb);
+    dal::bit_vector ddl_touched; ddl_touched.add(0, nb);
 
-    for (cv << nn; cv != ST_NIL; cv << nn)
-    {
+    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
       nb = gti.points_in_convex(mf.linked_mesh().convex(cv),
 				pgt, ptab, itab);

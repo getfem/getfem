@@ -328,6 +328,9 @@ namespace dal
      for (bv_visitor i(v); !i.finished(); ++i) {
        .... (use i as an unsigned int)
      }
+
+     CAUTION: use bv_visitor_c instead of bv_visitor if the class bv_visitor need to store a copy of the bit_vector 
+     (if the original is destroyed just after the creation...)
   */
   class bv_visitor {
     typedef dal::bit_vector::size_type size_type;
@@ -359,6 +362,9 @@ namespace dal
     operator size_type() const { return ind; }
   };
 
+  /**
+    bv_visitor with local copy of the bit_vector
+  */
   class bv_visitor_c {
     bit_vector bv;
     bv_visitor v; // no inheritance since v must be init after bv

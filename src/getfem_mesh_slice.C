@@ -30,9 +30,7 @@ namespace getfem {
     mesh_faces_by_pts_list lst;
     dal::bit_vector convex_tested;
   
-    for (dal::bit_vector::const_iterator it_cv = cvlst.begin(); it_cv != cvlst.end(); ++it_cv) {
-      if (!(*it_cv)) continue;
-      size_type ic = it_cv.index();
+    for (dal::bv_visitor ic(cvlst); !ic.finished(); ++ic) {
       if (m.structure_of_convex(ic)->dim() == m.dim()) {
 	for (size_type f = 0; f < m.structure_of_convex(ic)->nb_faces(); f++) {
 	  size_type idx = lst.add_norepeat(mesh_faces_by_pts_list_elt(ic,f,m.ind_points_of_face_of_convex(ic, f)));
@@ -57,20 +55,19 @@ namespace getfem {
 
 
   /* -------------------------------------- slicers --------------------------------------*/
-
+  
   slicer_boundary::slicer_boundary(const getfem_mesh& m, slicer *sA, 
 				   const convex_face_ct& cvflst) : A(sA) {
-    dal::bit_vector bv = m.convex_index();
-    if (bv.card()==0) return;
-    convex_faces.resize(bv.last()+1, slice_node::faces_ct(0L));
+    if (m.convex_index().card()==0) return;
+    convex_faces.resize(m.convex_index().last()+1, slice_node::faces_ct(0L));
     for (size_type i=0; i < cvflst.size(); ++i) 
       if (cvflst[i].is_face() && cvflst[i].f<32) convex_faces[cvflst[i].cv][cvflst[i].f]=1;
       else convex_faces[cvflst[i].cv].set();
     /* set the mask to 1 for all other possible faces of the convexes, which may 
        appear after slicing the convex, hence they will be part of the "boundary" */
-    for (size_type i=bv.take_first(); i != size_type(-1); i << bv) {
-      for (size_type j=m.structure_of_convex(i)->nb_faces(); j < convex_faces[i].size(); ++j)
-	convex_faces[i][j]=1;
+    for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
+      for (size_type f=m.structure_of_convex(cv)->nb_faces(); f < convex_faces[cv].size(); ++f)
+	convex_faces[cv][f]=1;
     }
   }
 
@@ -94,8 +91,7 @@ namespace getfem {
     /* quickly check if the convex have any chance to be part of the boundary */
     if (!convex_faces[cv].any()) { splx_in.clear(); return; }
 
-    dal::bit_vector bv = splx_in;
-    for (size_type cnt=bv.take_first(); cnt != size_type(-1); cnt << bv) {
+    for (dal::bv_visitor_c cnt(splx_in); !cnt.finished(); ++cnt) {
       const slice_simplex& s = splxs[cnt]; 
       /*cerr << "slicer_boundary::slice, cnt= " << cnt << ", fmask=" << fmask << endl;
       for (size_type iA=0; iA < s.dim()+1; ++iA) 
@@ -260,8 +256,7 @@ namespace getfem {
     //cerr << "\n\n------------------------------------------------\nslicer_volume::slice : entree, splx_in=" << splx_in << endl;
     if (splx_in.card() == 0) return;
     prepare(cv,nodes);
-    dal::bit_vector bv = splx_in;
-    for (size_type cnt=bv.take_first(); cnt != size_type(-1); cnt << bv) {
+    for (dal::bv_visitor_c cnt(splx_in); !cnt.finished(); ++cnt) {
       slice_simplex& s = splxs[cnt];
       /*cerr << "\n--------slicer_volume::slice : slicing convex " << cnt << endl;
       for (size_type i=0; i < s.dim()+1; ++i)
@@ -321,7 +316,7 @@ namespace getfem {
     size_type sz = splxs.size();
     A->slice(cv, fcnt, nodes, splxs, splx_inA);
     dal::bit_vector bv = splx_in; bv.add(sz, splxs.size()-sz);
-    for (size_type i=bv.take_first(); i != size_type(-1); i << bv) {
+    for (dal::bv_visitor_c i(bv); !i.finished(); ++i) {
       /*cerr << "convex " << cv << ",examining simplex #" << i << ": {";
       for (size_type j=0; j < splxs[i].inodes.size(); ++j) cerr << nodes[splxs[i].inodes[j]].pt << " ";
       cerr << "}, splx_in=" << splx_in[i] << "splx_inA=" << splx_inA[i] << endl;*/
@@ -659,12 +654,11 @@ namespace getfem {
     if (cvlst.size()) DAL_THROW(dal::failure_error,"non empty slice: should use mesh_slice::merge");
     bgeot::geotrans_inv gti;
     gti.add_points(pts);
-    dal::bit_vector nn = m.convex_index();
     dal::dynamic_array<base_node> ptab;
     dal::dynamic_array<size_type> itab;
     cs_nodes_ct cv_nodes;
     cs_simplexes_ct cv_simplexes;
-    for (size_type cv = nn.take_first(); cv != size_type(-1); cv << nn) {
+    for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
       size_type nb = gti.points_in_convex(m.convex(cv), pgt, ptab, itab);
       if (nb) {

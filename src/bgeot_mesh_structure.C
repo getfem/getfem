@@ -50,9 +50,8 @@ namespace bgeot
   
   dal::bit_vector mesh_structure::convex_index(dim_type n) const {
     dal::bit_vector res = convex_tab.index();
-    dal::bit_vector::iterator it = res.begin(), ite = res.end();
-    for ( ; it != ite; ++it)
-      if (*it && structure_of_convex(it.index())->dim() != n) *it = false;
+    for (dal::bv_visitor cv(convex_tab.index()); !cv.finished(); ++cv)
+      if (structure_of_convex(cv)->dim() != n) res.sup(cv);
     return res;
   }
 
@@ -139,9 +138,8 @@ namespace bgeot
       for ( ; !pt.empty(); pt.pop_front())
       { if (ip != pt.front()) nn.add(pt.front()); }
     }
-    r.resize(nn.card());
-    size_type i, j;
-    for (i = 0, j << nn; j != size_type(-1); j << nn, ++i) r[i] = j;
+    r.clear(); r.reserve(nn.card());
+    for (dal::bv_visitor j(nn); !j.finished(); ++j) r.push_back(j);
     return r;
   }
 
@@ -391,13 +389,11 @@ namespace bgeot
   void mesh_edge_list(const mesh_structure &m, edge_list &el, 
 		       bool merge_convex)
   {
-    dal::bit_vector nn = m.convex_index();
-    size_type i;
     std::vector<size_type> p;
-    for (i << nn; i != ST_NIL; i << nn) {
-      p.resize(m.nb_points_of_convex(i));
-      std::copy(m.ind_points_of_convex(i).begin(), m.ind_points_of_convex(i).end(), p.begin());
-      mesh_edge_list_convex(m.structure_of_convex(i), p, i, el, merge_convex);
+    for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
+      p.resize(m.nb_points_of_convex(cv));
+      std::copy(m.ind_points_of_convex(cv).begin(), m.ind_points_of_convex(cv).end(), p.begin());
+      mesh_edge_list_convex(m.structure_of_convex(cv), p, cv, el, merge_convex);
     }
   }
 

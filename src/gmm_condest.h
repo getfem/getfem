@@ -124,7 +124,7 @@ namespace gmm {
     
     emin = dal::abs(eig[0]);
     emax = dal::abs(eig[0]);
-    for (size_type i = 1; i < vsz; ++i)
+    for (int i = 1; i < vsz; ++i)
       { emin = std::min(emin, eig[i]); emax = std::max(emax, eig[i]); } 
     
     return sqrt(emax / emin);

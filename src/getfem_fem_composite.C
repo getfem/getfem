@@ -43,7 +43,6 @@ namespace getfem
     
     if (&(mf.linked_mesh()) != &(mp.linked_mesh()))
       DAL_THROW(failure_error, "Meshes are different.");
-    dal::bit_vector nn = mf.convex_index();
     fem<polynomial_composite> *p = new fem<polynomial_composite>;
 
     p->ref_convex() = cr;
@@ -57,7 +56,7 @@ namespace getfem
     std::fill(base.begin(), base.end(), polynomial_composite(mp));
     std::vector<pdof_description> dofd(mf.nb_dof());
     
-    for (size_type cv = nn.take_first(); cv != size_type(-1); cv << nn) {
+    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       pfem pf1 = mf.fem_of_element(cv);
       if (!pf1->is_lagrange()) p->is_lagrange() = false;
       if (!(pf1->is_equivalent() && pf1->is_polynomial())) {

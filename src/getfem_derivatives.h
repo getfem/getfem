@@ -52,7 +52,6 @@ namespace getfem
   void compute_gradient(mesh_fem &mf, mesh_fem &mf_target,
 			const VECT &U, VECT &V)
   {
-    size_type cv;
     size_type N = mf.linked_mesh().dim();
     size_type qdim = mf.get_qdim();
     size_type target_qdim = mf_target.get_qdim();
@@ -68,14 +67,12 @@ namespace getfem
     base_matrix G, val;
     base_vector coeff;
  
-    dal::bit_vector nn = mf.convex_index();
-      
     pgeotrans_precomp pgp = NULL;
     pfem_precomp pfp = NULL;
     pfem pf, pf_target, pf_old = NULL, pf_targetold = NULL;
     bgeot::pgeometric_trans pgt;
 
-    for (cv << nn; cv != ST_NIL; cv << nn) {
+    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       pf = mf.fem_of_element(cv);
       pf_target = mf_target.fem_of_element(cv);
       if (pf_target->need_G() || !(pf_target->is_lagrange()))

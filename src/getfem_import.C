@@ -161,27 +161,19 @@ namespace getfem {
 	/* suppression of unused dimensions */
 	std::vector<bool> direction_useless(3,true);
 	base_node first_pt = gid_nodes[gid_nodes_used.first()];
-	for (dal::bit_vector::const_iterator it = gid_nodes_used.begin(); 
-	     it != gid_nodes_used.end(); ++it) {
-	  if (*it) {
-	    for (size_type j=0; j < first_pt.size(); ++j) {
-	      if (direction_useless[j] && (dal::abs(gid_nodes[it.index()][j]-first_pt[j]) > 1e-13))
-		direction_useless[j] = false;
-	    }
-	  }
+	for (dal::bv_visitor ip(gid_nodes_used); !ip.finished(); ++ip) {
+          for (size_type j=0; j < first_pt.size(); ++j) {
+            if (direction_useless[j] && (dal::abs(gid_nodes[ip][j]-first_pt[j]) > 1e-13))
+              direction_useless[j] = false;
+          }
 	}
 	size_type dim2=0;
 	for (size_type j=0; j < dim; ++j) if (!direction_useless[j]) dim2++;
-	for (dal::bit_vector::const_iterator it = gid_nodes_used.begin(); 
-	     it != gid_nodes_used.end(); ++it) {
-	  if (*it) {
-	    size_type id = it.index();
-	    
-	    base_node n(dim2);
-	    for (size_type j=0, cnt=0; j < dim; ++j) if (!direction_useless[j]) n[cnt++]=gid_nodes[id][j];
-	    msh_node_2_getfem_node.add_to_index(m.add_point(n), id);
-	  }
-	}
+	for (dal::bv_visitor ip(gid_nodes_used); !ip.finished(); ++ip) {
+          base_node n(dim2);
+          for (size_type j=0, cnt=0; j < dim; ++j) if (!direction_useless[j]) n[cnt++]=gid_nodes[ip][j];
+          msh_node_2_getfem_node.add_to_index(m.add_point(n), ip);
+        }
       }
       
       ftool::read_until(f, "ELEMENTS");
