@@ -65,11 +65,12 @@ namespace gmm {
   /*    to be standard random access iterator                              */
   /*                                                                       */
   /* What is needed for an iterator on a sparse vector                     */
-  /*    to be a standard forward iterator                                  */
+  /*    to be a standard bidirectional iterator                            */
+  /*    elt should be sorted with increasing indices.                      */
   /*    it.index() gives the index of the non-zero element.                */
   /*                                                                       */
   /* Remark : If original iterators are not convenient, they could be      */
-  /*   redefined and interfaced in linalg_traits<Vector> without changin   */
+  /*   redefined and interfaced in linalg_traits<Vector> without changing  */
   /*   the original Vector type.                                           */
   /*                                                                       */
   /* ********************************************************************* */
