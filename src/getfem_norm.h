@@ -55,6 +55,7 @@ namespace getfem
     bgeot::pgeometric_trans pgt, pgtprec = NULL;
     pmat_elem_type pme; pmat_elem_computation pmec = 0;
     
+    DAL_WARNING(3, "obsolete function (not qdim aware) - use asm_L2_norm");
     for (cv << nn; cv != ST_NIL; cv << nn)
       {
 	pf1 =     mf.fem_of_element(cv);
@@ -104,6 +105,7 @@ namespace getfem
     bgeot::pgeometric_trans pgt, pgtprec = NULL;
     pmat_elem_type pme; pmat_elem_computation pmec = 0;
 
+    DAL_WARNING(3, "obsolete function (not qdim aware) - use asm_H1_semi_norm");
     for (cv << nn; cv != ST_NIL; cv << nn)
       {
 	pf1 =     mf.fem_of_element(cv);

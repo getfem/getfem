@@ -265,7 +265,7 @@ namespace getfem
     if (qdim != mf_target.get_qdim())
       DAL_THROW(failure_error, "Attempt to interpolate a field of dimension " << 
 		qdim << " on a mesh_fem whose Qdim is " << 
-		mf_target.get_qdim());
+		int(mf_target.get_qdim()));
 
     for (cv << nn; cv != ST_NIL; cv << nn) {
       bgeot::pgeometric_trans pgt = mf_source.linked_mesh().trans_of_convex(cv);
@@ -329,7 +329,7 @@ namespace getfem
     if (qdim != mf_target.get_qdim())
       DAL_THROW(failure_error, "Attempt to interpolate a field of dimension " << 
 		qdim << " on a mesh_fem whose Qdim is " << 
-		mf_target.get_qdim());
+		int(mf_target.get_qdim()));
 
     dal::bit_vector tdof_added; 
 
