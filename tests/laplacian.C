@@ -309,13 +309,18 @@ void lap_pb::init(void)
         un = mesh.normal_of_face_of_convex(j, i, 0);
 	un /= bgeot::vect_norm2(un);
 
-	// if (true) {
+	// if (false) {
 	if (dal::abs(un[N-1] - 1.0) < 1.0E-7) {
 	  mef.add_boundary_elt(0, j, i);
 	  // cout << "ajout bord Dirichlet, cv\t" << j << "\tf " << i << endl;
 	}
 	else {
-	  mef.add_boundary_elt(1, j, i);
+	  size_type nb;
+	  for(nb = 0; nb < N; ++nb) {
+	    if (dal::abs(un[nb] + 1.0) < 1.0E-7) { nb = 1 + nb * 2; break; }
+	    if (dal::abs(un[nb] - 1.0) < 1.0E-7) { nb = 2 + nb * 2; break; }
+	  }
+	  mef.add_boundary_elt(nb, j, i);
 	  // cout << "ajout bord Neumann, cv\t" << j << "\tf " << i << endl;
 	}
       }
@@ -351,17 +356,16 @@ void lap_pb::assemble(void)
   ST = linalg_vector(nb_dof_data);
   getfem::base_node pt(N);
 
-  dal::bit_vector nn = mesh.convex_index(N);
-  base_vector un;
-  size_type j;
-  for (j << nn; j != size_type(-1); j << nn)
-  { // Ne tiens pas compte des coins ...
-    size_type k = mesh.structure_of_convex(j)->nb_faces();
-    getfem::pfem pf = mef_data.fem_of_element(j);
-    for (size_type i = 0; i < k; ++i) {
-      if (bgeot::neighbour_of_convex(mesh, j, i).empty()) {
-	
-	for (size_type l = 0; l < pf->structure()->nb_points_of_face(i); ++l) {
+  for (size_type nb = 1; nb <= 2*N; ++nb) {
+    dal::bit_vector nn = mesh.convex_index(N);
+    base_vector un;
+    size_type j;
+    for (j << nn; j != size_type(-1); j << nn) {
+      getfem::pfem pf = mef_data.fem_of_element(j);
+      dal::bit_vector nf = mef.faces_of_convex_on_boundary(j, nb);
+      size_type i;
+      for (i << nf; i != size_type(-1); i << nf) {
+	for (size_type l = 0; l<pf->structure()->nb_points_of_face(i); ++l) {
 	  size_type n = pf->structure()->ind_points_of_face(i)[l];
 	  un = mesh.normal_of_face_of_convex(j, i, pf->node_of_dof(n));
 	  un /= bgeot::vect_norm2(un);
@@ -370,8 +374,8 @@ void lap_pb::assemble(void)
 	}
       }
     }
+    getfem::asm_source_term(B, mef, mef_data, ST, nb);
   }
-  getfem::asm_source_term(B, mef, mef_data, ST, 1);
   
   cout << "take Dirichlet condition into account" << endl;
   // nn = mef.dof_on_boundary(0);
@@ -381,6 +385,9 @@ void lap_pb::assemble(void)
   for (size_type i = 0; i < nb_dof; ++i)
     ST[i] = sol_u(mef.point_of_dof(i));
   getfem::assembling_Dirichlet_condition(SM, B, mef, 0, ST);
+
+//   getfem::add_Dirichlet_dof(SM, B, mef, 0, sol_u(mef.point_of_dof(0)));
+//   cout << "Adding Dirichlet condition on dof 0 : " << mef.point_of_dof(0) << endl;
 }
 
 void lap_pb::solve(void) {
@@ -441,11 +448,11 @@ int main(int argc, char *argv[])
     exectime = ftool::uclock_sec();
     
     size_type nbdof = p.mef_data.nb_dof();
-    linalg_vector V(nbdof);
+    linalg_vector V(nbdof), W(nbdof);
     scalar_type linfnorm = 0.0;
     getfem::interpolation_solution_same_mesh(p.mef, p.mef_data, p.U, V, 1);
     for (size_type i = 0; i < nbdof; ++i) {
-      V[i] -= sol_u(p.mef_data.point_of_dof(i));
+      W[i] = sol_u(p.mef_data.point_of_dof(i)); V[i] -= W[i];
       linfnorm = std::max(linfnorm, dal::abs(V[i]));
     }
     
@@ -460,8 +467,9 @@ int main(int argc, char *argv[])
 	 << "H1 error = " << h1norm << endl
 	 << "Linfty error = " << linfnorm << endl;
      
-
     getfem::save_solution(p.datafilename + ".dataelt", p.mef, p.U, p.K);
+    // getfem::save_solution(p.datafilename + "_diff.dataelt", p.mef_data,V,p.K);
+    // getfem::save_solution(p.datafilename + "_exact.dataelt",p.mef_data,W,p.K);
   }
   DAL_STANDARD_CATCH_ERROR;
   return 0; 

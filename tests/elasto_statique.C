@@ -296,8 +296,15 @@ void pb_data::init(void) {
 	// if (true)
 	if (dal::abs(un[N-1] - 1.0) < 1.0E-3)
 	  mef.add_boundary_elt(0, j, i);
-	else
-	  mef.add_boundary_elt(1, j, i);
+	else {
+	  size_type nb;
+	  for(nb = 0; nb < N; ++nb) {
+	    if (dal::abs(un[nb] + 1.0) < 1.0E-7) { nb = 1 + nb * 2; break; }
+	    if (dal::abs(un[nb] - 1.0) < 1.0E-7) { nb = 2 + nb * 2; break; }
+	  }
+	  mef.add_boundary_elt(nb, j, i);
+	  // cout << "ajout bord Neumann, cv\t" << j << "\tf " << i << endl;
+	}
       }
     }
   }
@@ -329,23 +336,28 @@ void pb_data::assemble(void)
 
   // cout << "Assemblage de la condition de Neumann" << endl;
   ST1 = linalg_vector(nb_dof_data * N);
-  getfem::base_node pt(N); getfem::base_vector n(N), v;
-  for (size_type i = 0; i < nb_dof_data; ++i) {
-    pt = mef_data.point_of_dof(i);
-    if (dal::abs(pt[0]-LX) < 10E-6) n[0] = 1.0; // pas terrible ... !!
-      else if (dal::abs(pt[0]) < 10E-6) n[0] = -1.0; else n[0] = 0.0;
-    if (N > 1) {
-      if (dal::abs(pt[1]-LY) < 10E-6) n[1] = 1.0;
-      else if (dal::abs(pt[1]) < 10E-6) n[1] = -1.0; else n[1] = 0.0;
-      for (dim_type k = 2; k < N; ++k)
-	if (dal::abs(pt[k]-LZ) < 10E-6) n[k] = 1.0;
-	else if (dal::abs(pt[k]) < 10E-6) n[k] = -1.0; else n[k] = 0.0;
+  getfem::base_node pt(N);
+  for (size_type nb = 1; nb <= 2*N; ++nb) {
+    dal::bit_vector nn = mesh.convex_index(N);
+    getfem::base_vector un, v;
+    size_type j;
+     for (j << nn; j != size_type(-1); j << nn) {
+      getfem::pfem pf = mef_data.fem_of_element(j);
+      dal::bit_vector nf = mef.faces_of_convex_on_boundary(j, nb);
+      size_type i;
+      for (i << nf; i != size_type(-1); i << nf) {
+	for (size_type l = 0; l<pf->structure()->nb_points_of_face(i); ++l) {
+	  size_type n = pf->structure()->ind_points_of_face(i)[l];
+	  un = mesh.normal_of_face_of_convex(j, i, pf->node_of_dof(n));
+	  un /= bgeot::vect_norm2(un);
+	  size_type dof = mef_data.ind_dof_of_element(j)[n];
+	  v = sol_sigma(mef_data.point_of_dof(dof)) *  un;
+	  for (size_type k = 0; k < N; ++k) ST1[dof*N+k] = v[k];
+	}
+      }
     }
-    v = sol_sigma(pt) *  n;
-    for (size_type j = 0; j < N; ++j)
-      ST1[i*N+j] = v[j];
+    getfem::asm_source_term(B, mef, mef_data, ST1, nb);
   }
-  getfem::asm_source_term(B, mef, mef_data, ST1, 1);
 
   // cout << "Prise en compte de la condition de Dirichlet" << endl;
   ST1 = linalg_vector(nb_dof);

@@ -57,8 +57,8 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
 
 
 $NDDLMAX = 10400;
-$PAUSE = 0;
-$SKIP = 0;
+$PAUSE = 1;
+$SKIP = 2;
 $FT = 10.0;
 
 ##########################################################################
@@ -163,7 +163,7 @@ $INTE += 1;
 ##########################################################################
 print "   TESTS EN DIMENSION 2, ET ELEMENTS PK                         \n";
 ##########################################################################
-$NDDLMAX = 41600; $FT = 0.1;
+$NDDLMAX = 200000; $FT = 10.0;
 $FEM_TYPE = 0;
 $INTE = 0;
 while ($INTE < 2 && $SKIP < 3) {
@@ -218,7 +218,7 @@ $FEM_TYPE = 2;
 $INTE = 0;
 while ($INTE < 2 && $SKIP < 4) {
 open(RES, ">$tmp_res");
-$K = 1; $N = 2; $FT = 1.0; $NX = 1;
+$K = 1; $N = 2; $NX = 1;
 while ($NX**$N <= $NDDLMAX) {
   $K = 1;
   print "Test for NX = $NX \t"; print RES $NX**$N;

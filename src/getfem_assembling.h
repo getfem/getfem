@@ -912,8 +912,7 @@ namespace getfem
 					const mesh_fem &mf,
 					size_type boundary,
 					const VECT2 &F)
-  { /* Y-a-il un moyen plus performant ? */
-    // Marche uniquement pour des ddl de lagrange.
+  { // Marche uniquement pour des ddl de lagrange.
     size_type cv, Q=mf.get_qdim();
     dal::bit_vector nn = mf.convex_index();
     dal::bit_vector nndof = mf.dof_on_boundary(boundary);
