@@ -108,6 +108,7 @@ namespace gmm
     double get_rhsnorm(void) const { return rhsn; }
     void set_rhsnorm(double r) { rhsn = r; }
     
+    bool converged(void) { return res <= rhsn * resmax; }
     bool converged(double nr)
     { res = dal::abs(nr); return res <= rhsn * resmax; }
     template <class VECT> bool converged(const VECT &v)

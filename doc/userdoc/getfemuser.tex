@@ -4,6 +4,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{psfig}
+\usepackage{makeidx}
 \usepackage{graphicx}
 \usepackage{array}
 \usepackage{fancyheadings}
@@ -20,6 +21,8 @@
 \textwidth 17.6cm
 \headheight 1.0cm
 \usepackage{underscore}
+\makeindex
+
 \begin{document}
 
 \begin{center}
@@ -42,7 +45,6 @@
 
 \section*{Introduction}
 
-
 The {\sc Getfem++} project is centered around the development of a generic and efficient elementary computations C++ library for finite element methods. The goal is to build a library which allows to compute any elementary matrix (even for mixed methods) on the largest class of methods and elements and for arbitrary dimension. It offers a complete separation between integration methods (exact or approximated), geometric transformations (linear or not) and finite element methods of arbitrary degrees. It allows to write finite element code which are independent of the particular method, and thus to test easily various finite element method on the same problem.
 
  Moreover, the library includes other tools for computation with finite element such as assembling methods for classical PDEs, interpolation methods, computation of norms, mesh operations, boundary conditions ... This library allows to build finite elements codes which are completely independent of the dimension, the particular method or element. Examples are provided.\\[2cm]
@@ -53,10 +55,11 @@ The {\sc Getfem++} project is centered around the development of a generic and e
 \newpage
 
 \section{How to install}
-
+\index{Install}
 Since we used standard GNU tools, the installation of the {\sc Getfem++} library is somewhat standard. If the {\sc Getfem++} archive is on your current directory you can unpack it and enter inside the directory of the distribution  with the commands
 \begin{alltt}
-  gzcat getfem-x.xx.tar.gz | tar xvf -
+  gunzip getfem-x.xx.tar
+  tar xvf getfem-x.xx.tar
   cd  getfem-x.xx
 \end{alltt}
 Then you you have to run the configure script just typing
@@ -88,6 +91,7 @@ More specific instructions can be found in the \texttt{README*} files of
 the distribution.
 
 \section{Build a mesh}
+\index{mesh}
 {\sc Getfem++} has it own structure to store meshes defined in the files {\tt bgeot\_mesh\_structure.h}, $\;$ ${\tt bgeot\_mesh.h}$ and {\tt getfem\_mesh.h}. The main structure is defined in {\tt getfem\_mesh.h} by the object\\[0.5cm]
 {\tt getfem::getfem\_mesh }\\[0.5cm]
 This object is able to store any element in any dimension even if you mix elements with different dimensions.\\[0.5cm]
@@ -389,84 +393,97 @@ Once a finite element method is defined on a mesh, it is possible to obtain info
 \end{tabular} \end{center}
 
 \section{Linear algebra procedures}
-
-Assembling procedures, especially for Dirichlet boundary conditions need some basic linear algebra computation. In order to make {\sc Getfem++} independent of any matrix library, it contains one called GMM (for Generic Matrix Methods). Theoretically, this library provides a mean to interface any other matrix library. If you want to use your own matrix library, you have just to write some ``traits'' objects. GMM provide also some basic types of sparse and plain matrices and vectors and basic operations on them (copy, addition, multiplication, sub vector and matrices, solvers ... ). The syntax of GMM is very closed to MTL and ITL (see http://www.osl.iu.edu/research/mtl/). Escpecially, the code for iterative solvers has been copied from ITL. The performance of GMM is very closed to the one of MTL, sometime slightly better. The difference between GMM and MTL is that basically GMM has been written to be able to interface other libraries and gives an access to sub matrices and sub vectors in all the cases. Also some optimizations has been made for matrix-matrix multiplication, usage of reference has been somewhat cleared, const qualifier is ..., and we hope it is somewhat easier to use than MTL. The bad news is that some fonctionnalities have not yet been ``ported'' to GMM.
+\index{GMM| Generic Matrix Methods library, }
+\index{ITL| Iterative Template Library, }
+\index{MTL| Matrix Template Library, }
+Assembling procedures, especially for Dirichlet boundary conditions need some basic linear algebra computation. In order to make {\sc Getfem++} independent of any matrix library, it contains one called GMM (for Generic Matrix Methods). Theoretically, this library provides a mean to interface any other matrix library. If you want to use your own matrix library, you have just to write some ``traits'' objects. GMM provide also some basic types of sparse and plain matrices and vectors and basic operations on them (copy, addition, multiplication, sub vector and matrices, solvers ... ). The syntax of GMM is very closed to MTL and ITL (see http://www.osl.iu.edu/research/mtl/). Escpecially, the code for iterative solvers has been copied from ITL. The performance of GMM is very closed to the one of MTL, sometime slightly better. The difference between GMM and MTL is that basically GMM has been written to be able to interface other libraries and gives an access to sub matrices and sub vectors in all the cases. Also some optimizations has been made for matrix-matrix multiplication, usage of reference has been somewhat cleared, const qualifier usage is clarified, and we hope it is somewhat easier to use than MTL. The bad news is that some fonctionnalities have not yet been imported.\\
 
 To use GMM you have to include the file {\tt gmm.h}.
 
 \subsection{Matrix and Vector type provided by GMM}
 
 \subsubsection{plain vectors}
-
-GMM interfaces directly {\tt std::vector<T>} so you can used it as your basic plain vector type. You can use also {\tt bgeot::vsvector<T>} form {\tt bgeot} library. If you need to interface another type of plain vector you can see in {\tt gmm_interface.h} som examples.
+\index{GMM! std::vector<T>}
+\index{GMM! bgeot::vsvector<T>}
+GMM interfaces directly {\tt std::vector<T>} so you can used it as your basic plain vector type. You can use also {\tt bgeot::vsvector<T>} form {\tt bgeot} library. If you need to interface another type of plain vector you can see in {\tt gmm_interface.h} some examples.\\
 
 {\tt vect_size(V)} gives the size of a vector.
 
 \subsubsection{sparse vectors}
-
-GMM provides two types of sparse vectors: {\tt gmm::wsvector<T>} and {\tt gmm::vsvector<T>}. {\tt gmm::wsvector<T>} is optimized for write operations and {\tt gmm::vsvector<T>} is optimized for read operations. It could be appropriate to use {\tt gmm::wsvector<T>} for assembling procedures and then to copy the vector in a {\tt gmm::vsvector<T>} for the solvers. The initialization is
+\index{GMM! bgeot::wsvector<T>}
+\index{GMM! bgeot::rsvector<T>}
+GMM provides two types of sparse vectors: {\tt gmm::wsvector<T>} and {\tt gmm::rsvector<T>}. {\tt gmm::wsvector<T>} is optimized for write operations and {\tt gmm::rsvector<T>} is optimized for read operations. It should be appropriate to use {\tt gmm::wsvector<T>} for assembling procedures and then to copy the vector in a {\tt gmm::rsvector<T>} for the solvers. The initialization is
 \begin{alltt}
-  gmm::vsvector<double> V(s);
+  gmm::rsvector<double> V(s);
 \end{alltt}
 where {\tt s} is the size. For all copy operations use\\[0.2cm]
 \begin{tt}
   gmm::copy (V, W);
 \end{tt}\\[0.2cm]
 instead of {\tt W = V} which is not always supported.
-
-{\tt vect_size(V)} gives the size of a vector.
+\index{GMM! gmm::vect_size(V)}
+{\tt gmm::vect_size(V)} gives the size of a vector.
 
 \subsubsection{matrices}
-
-GMM provides two types of matrices: {\tt gmm::row_matrix<VECT>} and {\tt gmm::col_matrix<VECT>} where vect should be a valid (i.e. interfaced) vector type.
-Those two type of matrices store an array of {\tt VECT} so the memory is not contiguous. You can also use {\tt bgeot::vsmatrix<T>} from {\tt bgeot} library which is a plain matrix with a contiguous memory and fortran type access (more or less column major). Initialisations are
+\index{GMM! gmm::row_matrix<VECT>}
+\index{GMM! gmm::col_matrix<VECT>}
+\index{GMM! bgeot::vsmatrix<T>}
+GMM provides two types of matrices: {\tt gmm::row_matrix<VECT>} and {\tt gmm::col_matrix<VECT>} where {\tt VECT} should be a valid (i.e. interfaced) vector type.
+Those two type of matrices store an array of {\tt VECT} so the memory is not contiguous. You can also use {\tt bgeot::vsmatrix<T>} from {\tt bgeot} library which is a plain matrix with a contiguous memory and fortran type access (column major). Initialisations are
 \begin{alltt}
   gmm::row_matrix< std::vector<double> > M1(10, 10);  // plain row matrix
   gmm::col_matrix< gmm::wsvector<double> > M2(5, 20); // sparse column matrix
   bgeot::vsmatrix<double> M3(4, 5); // plain column and row matrix
 \end{alltt}
 Of course {\tt gmm::row_matrix<VECT>} is a row matrix and it is impossible to access to a particular column of this matrix. {\tt bgeot::vsmatrix<T>} is considered as a column and row matrix (column prefered) and you can access both to the columns and rows.
+\index{GMM! gmm::mat_nrows(M)}
+\index{GMM! gmm::mat_ncols(M)}\\
 
-{\tt mat_nrows(M)} gives the number of rows of a matrix and {\tt mat_ncols(M)} the number of columns.
+{\tt gmm::mat_nrows(M)} gives the number of rows of a matrix and {\tt gmm::mat_ncols(M)} the number of columns.
 
 
 \subsection{sub-vectors and sub-matrices}
+\index{GMM! gmm::sub_interval(first, length)}
 It is possible to obtain any sub-vector or sub-matrix of a fully interfaced object. There are three type of sub indexes.
 \begin{alltt}
   gmm::sub_interval(first, length);
 \end{alltt}
-represents an interval whose first index is {\tt first} and length is {\tt lenght} ( i.e. {\tt gmm::sub_interval(10, 3);} represents the indexes {\tt \{10, 11, 12\} }).
+represents an interval whose first index is {\tt first} and length is {\tt lenght} ( for instance {\tt gmm::sub_interval(10, 3);} represents the indexes {\tt \{10, 11, 12\} }).
+\index{GMM! gmm::sub_slice(first, length, step)}
 \begin{alltt}
   gmm::sub_slice(first, length, step);
 \end{alltt}
-represents also an intervall in which one index over {\tt step} is taken. ( i.e. {\tt gmm::sub_slice(10, 3, 2);} represents the indexes {\tt \{10, 12, 14\} })
+represents also an interval in which one index over {\tt step} is taken. ( for instance {\tt gmm::sub_slice(10, 3, 2);} represents the indexes {\tt \{10, 12, 14\} })
 \begin{alltt}
   gmm::sub_index(CONT c);
 \end{alltt}
-represent the sub index which is the collection of index contained in the container {\tt c}. For instance
+represents the sub-index which is the collection of index contained in the container {\tt c}. For instance
+\index{GMM! gmm::sub_index(c)}
 \begin{alltt}
   std::vector<size_t> c(3);
   c[0] = 1; c[1] = 3; c[2] = 16;
   gmm::sub_index(c);
 \end{alltt}
-represents the indexes {\tt \{1, 3, 16\} }.
+represents the indexes {\tt \{1, 3, 16\} }. \\
 
-Then {\tt gmm::sub_vector(V, subi)} gives a reference to a sub-vector:
+\index{GMM! gmm::sub_vector(V, subi)}
+Now {\tt gmm::sub_vector(V, subi)} gives a reference to a sub-vector:
 \begin{alltt}
   gmm::vsvector<double> V(10);
   V[5] = 3.0;
   std::cout << gmm::sub_vector(V, gmm::sub_interval(2, 3)) << std::endl;  
 \end{alltt}
-prints to the standard output {\tt V[2], V[3]} and {\tt V[4]}.
+prints to the standard output {\tt V[2], V[3]} and {\tt V[4]}.\\
 
+\index{GMM! gmm::sub_matrix(V, subi1, subi2)}
 {\tt gmm::sub_matrix(V, subi1, subi2)} gives a reference to a sub-matrix. For instance:
 \begin{alltt}
   gmm::col_matrix< gmm::wsvector<double> > M(5, 20);
   M(3, 2) = 5.0;
-  std::cout << gmm::sub_matrix(V, gmm::sub_interval(2, 3), gmm::sub_interval(2, 3))
+  std::cout << gmm::sub_matrix(M, gmm::sub_interval(2, 3), gmm::sub_interval(2, 3))
             << std::endl;  
 \end{alltt}
-prints to the output a sub-matrix. If the to sub indexes are equal, it is possible to ommit the second. For instance:
+prints to the output a sub-matrix. If the two sub-indexes are equal, it is possible to ommit the second. For instance:
 \begin{alltt}
   gmm::col_matrix< gmm::wsvector<double> > M(5, 20);
   M(3, 2) = 5.0;
@@ -474,13 +491,18 @@ prints to the output a sub-matrix. If the to sub indexes are equal, it is possib
 \end{alltt}
 
 \subsubsection{row and column of a matrix}
+\index{GMM! gmm::mat_row(M, i)}
+\index{GMM! gmm::mat_col(M, i)}
+\index{GMM! gmm::mat_const_row(M, i)}
+\index{GMM! gmm::mat_const_col(M, i)}
 {\tt gmm::mat_row(M, i)} gives a (possibly writable) reference to the row {\tt i} of matrix {\tt M}, and {\tt gmm::mat_col(M, i)}  gives a (possibly writable) reference to the column {\tt i}. It is not possible to access to the rows if {\tt M} is a column matrix and to the columns if it is a row matrix. It is possible to use {\tt gmm::mat_const_row(M, i)} and {\tt gmm::mat_const_col(M, i)} to have constant references.
 
 
 \subsection{Basic operations}
-The same choice has been made as in MTL to provide basic operations as functions not as operators. The advantages are that it is clearer to see where are the linear algebra operations in the program and the programmation of optimized basic linear operations is greatly simplest.
+The same choice has been made as in MTL to provide basic operations as functions not as operators. The advantages are that it is clearer to see where are the linear algebra operations in the program and the programmation of optimized basic linear operations is greatly simpler.
 
 \subsubsection{write}
+\index{GMM! gmm::write}
 \begin{alltt}
   gmm::write(o, V); gmm::write(o, M);
 \end{alltt}
@@ -495,25 +517,33 @@ Most of the time it is also possible to use simply
 \end{alltt}
 
 \subsubsection{clear}
+\index{GMM! gmm::clear}
 \begin{alltt}
   gmm::clear(V); gmm::clear(M);
 \end{alltt}
 set to zero all the components of a vector or a matrix.
 
 \subsubsection{scale}
-{\tt gmm::scale} should be used to multiply a vector or a matrix with a scalar factor.
+\index{GMM! gmm::scale}
+\index{GMM! gmm::scaled}
+{\tt gmm::scale} is used to multiply a vector or a matrix with a scalar factor.
 \begin{alltt}
   gmm::scale(V, 10.0);  // V * 10.0 ---> V
 \end{alltt}
-If one not needs to multiply the vector but wants to use the multiplied vector in an expression  {\tt gmm::scaled } gives a reference to a multiplied vector. This is only a reference, not operations is made until this reference is used somewhere. For instance
+If one not needs to multiply the vector but wants to use the multiplied vector in an expression  {\tt gmm::scaled } gives a reference to a multiplied vector. This is only a reference, no operation is made until this reference is used somewhere. For instance
 \begin{alltt}
   std::cout << gmm::scaled(V, 10.0) << std::endl;
 \end{alltt}
-print to the standard output the vector V multiplied by {\tt 10.0}.
+print to the standard output the vector {\tt V} multiplied by {\tt 10.0} without changing {\tt V}.
+
+\subsubsection{transposition}
+\index{GMM! gmm::transposed}
+{\tt gmm::transposed(M) } gives a reference on the transposed matrix of {\tt M}.
 
 
 \subsubsection{add}
-addition of vectors or matrices. It is alway possible to mixe different type of vector or matrices in the operations. The following operations are valid.
+\index{GMM! gmm::add}
+addition of vectors or matrices. It is alway possible to mixe different type of vector or matrices in the operations. The following operations are valid:
 \begin{alltt}
   std::vector<double> V1(10);
   gmm::wsvector<double> V2(10);
@@ -522,7 +552,7 @@ addition of vectors or matrices. It is alway possible to mixe different type of 
   gmm::add(V1, V2); // V1 + V2 --> V2
   cout << V2;
 
-  gmm::add(V1, gmm::scaled(V2, -2), V2); // V1 - 2* V2 --> V2
+  gmm::add(V1, gmm::scaled(V2, -2.0), V2); // V1 - 2.0 * V2 --> V2
   cout << V2;
 
   gmm::row_matrix< std::vector<double> > M1(10, 10);
@@ -533,7 +563,8 @@ addition of vectors or matrices. It is alway possible to mixe different type of 
 \end{alltt}
 
 \subsubsection{mult}
-multiplication matrix-vector or matrix-matrix. The following operations are valid.
+\index{GMM! gmm::mult}
+Matrix-vector or matrix-matrix multiplication . The following operations are valid:
 \begin{alltt}
   std::vector<double> V1(10);
   gmm::wsvector<double> V2(10);
@@ -560,12 +591,18 @@ multiplication matrix-vector or matrix-matrix. The following operations are vali
 \end{alltt}
 
 \subsubsection{clean}
+\index{GMM! gmm::clean}
  {\tt gmm::clean(V, 1E-12); } set to zero all the components of {\tt V} whose modulous is less or equal to {\tt  1E-12}. Works also for matrices.
 
 \subsubsection{norms}
-  for vectors only, {\tt gmm::vect_norm1(V); } gives the sum of modulous of the components of {\tt V}. {\tt gmm::vect_norm2(V); } is the euclidian norm of {\tt V} and {\tt gmm::vect_inf(V); } the infinity norm of {\tt V}.
+\index{GMM! gmm::vect_norm1(V)}
+\index{GMM! gmm::vect_norm2(V)}
+\index{GMM! gmm::vect_inf(V)}
+  for vectors only, {\tt gmm::vect_norm1(V)} gives the sum of modulous of the components of {\tt V}.\\
+{\tt gmm::vect_norm2(V)} is the euclidian norm of {\tt V} and {\tt gmm::vect_inf(V)} the infinity norm of {\tt V}.
 
-\subsubsection{scalar product}
+\subsubsection{scalar product} 
+\index{GMM! gmm::vect_sp(V1, V2)}
   for vectors only, {\tt gmm::vect_sp(V1, V2); } gives the scalar product between {\tt V1} and {\tt V2}.
 
 
@@ -573,7 +610,8 @@ multiplication matrix-vector or matrix-matrix. The following operations are vali
 Most of the solvers provided in GMM come form ITL with slight modifications.
 
 \subsubsection{iterations}
-  The iteration object of GMM is a modification of the one in ITL. This is not a template type as in MTL. Preconditionners has not ben yet implemented in GMM, so for the moment it is only possible to use precondionners represented by any matrix. 
+\index{GMM! gmm::iteration}
+  The iteration object of GMM is a modification of the one in ITL. This is not a template type as in ITL. Preconditionners has not ben yet implemented in GMM, so for the moment it is only possible to use precondionners represented by a matrix. 
 
 The simplest initialisation is
 \begin{alltt}
@@ -584,7 +622,7 @@ Some possibilities :
 \begin{alltt}
   iter.set_noisy(n) // n = 0 : no output
                     // n = 1 : output of iterations on the standard output
-                    // n = 2 : output of iterations and sub_iterations 
+                    // n = 2 : output of iterations and sub-iterations 
                     //         on the standard output
                     // ...
   iter.get_iteration() // after a computation, gives the number of
@@ -597,6 +635,12 @@ Some possibilities :
 
 \subsubsection{various solvers}
 To solve linear systems.
+\index{GMM! gmm::cg}
+\index{GMM! gmm::bicgstab}
+\index{GMM! gmm::gmres}
+\index{GMM! gmm::qmr}
+\index{GMM! gmm::cheby}
+\index{GMM! gmm::constrained_cg}
 \begin{alltt}
   gmm::row_matrix< std::vector<double> > A(10, 10);  // The matrix
   std::vector<double> B(10); // Right hand side
@@ -613,26 +657,26 @@ To solve linear systems.
 
   gmm::gmres(A, X, B, PR, restart, iter) // GMRES generalized minimum residual
 
-  gmm::qmr(A, X, B, PR, PR, restart, iter) // Quasi-Minimal Residual method.
+  gmm::qmr(A, X, B, PR, PR, iter) // Quasi-Minimal Residual method.
 
   gmm::cheby(A, X, B, PR, iter) // Preconditioned Chebyshev Method.
 \end{alltt}
 
-The solver {\tt gmm::constrained_cg(A, X, B, PS, PR, iter);} solve a system with linear constaints.
+The solver {\tt gmm::constrained_cg(A, C, X, B, PS, PR, iter);} solve a system with linear constaints, {\tt C} is a matrix which represents the constraints.
 
 \subsection{deeper inside GMM}
 
 \subsubsection{iterators on vectors and matrices}
-... to be done
+... to be done (see {\tt gmm_blas.h}).
 
 \subsubsection{Specify and optimize a particular algorithm}
 ... to be done
 
 \subsubsection{How to interface a new vector}
-... to be done
+... to be done (see examples in {\tt gmm_interface.h}).
 
 \subsubsection{How to interface a new matrix}
-... to be done
+... to be done (see examples in {\tt gmm_interface.h}).
 
 \section{Standard assembling procedures}
 
@@ -918,4 +962,6 @@ The program {\tt elastostatic} is built in a same way and compute the solution o
   {\it Description of Finite Element and Integration Methods in {\sc Getfem++}}, 2002.
 
 \end{thebibliography}
+\printindex
+
 \end{document}

@@ -70,7 +70,8 @@ namespace gmm {
   //maximum number of iterations (determined by the iter object).
   //A return value of 1 indicates a failure to converge.
   //<p>
-  //See: T. Manteuffel, The Chebyshev iteration for nonsysmmetric linear systems
+  //See: T. Manteuffel, The Chebyshev iteration for nonsysmmetric 
+  //     linear systems
   //Numer. Math. 28(1977), pp. 307-327
   //G. H. Golub and C. F. Van Loan, Matrix Computations, The Johns Hopkins 
   //University Press, Baltimore, Maryland, 1996 
@@ -81,10 +82,9 @@ namespace gmm {
   //!tparam: Matrix  - Matrix or multiplier for matrix free methods 
   //!tparam: Vector  - Vector  
   //!tparam: VectorB - Vector 
-  //!tparam: Preconditioner -  Incomplete LU, Incomplete LU with threshold, SSOR or identity_preconditioner. 
+  //!tparam: Preconditioner -  Incomplete LU, Incomplete LU with threshold,
+  //!SSOR or identity_preconditioner. 
   //!tparam: Iteration - Controls the stopping criteria 
-
-  /* required operations: mult,copy,add,scaled */
 
 template < class Matrix, class Vector, class VectorB, class Preconditioner>
 void cheby(const Matrix &A, Vector &x, const VectorB &b,

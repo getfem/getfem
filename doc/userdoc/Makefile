@@ -1,7 +1,7 @@
 all : getfemuser.ps
 
 getfemuser.dvi : getfemuser.tex
-	latex getfemuser.tex; latex getfemuser.tex
+	latex getfemuser.tex; makeindex getfemuser.idx; latex getfemuser.tex; makeindex getfemuser.idx; latex getfemuser.tex
 
 getfemuser.ps : getfemuser.dvi
 	dvips getfemuser -z -Pamz -Pcmz -o
