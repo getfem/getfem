@@ -253,7 +253,7 @@ namespace gmm {
     template <typename IT, typename MIT, typename SUBI>
   struct skyline_sub_vector_iterator {
 
-    IT itb, itbe;
+    IT itb;
     SUBI si;
 
     typedef std::iterator_traits<IT>                traits_type;
@@ -266,8 +266,7 @@ namespace gmm {
     typedef skyline_sub_vector_iterator<IT, MIT, SUBI>    iterator;
 
     size_type index(void) const
-    { return (itb.index() - si.min) / si.step(); }
-    void forward(void);
+    { return (itb.index() - si.min + si.step() - 1) / si.step(); }
     void backward(void);
     iterator &operator ++()
     { itb += si.step(); return *this; }
@@ -290,53 +289,60 @@ namespace gmm {
     reference operator *() const  { return *itb; }
     reference operator [](int ii) { return *(itb + ii * si.step());  }
 
-    bool operator ==(const iterator &i) const { return itb == i.itb;  }
+    bool operator ==(const iterator &i) const { return index() == i.index();}
     bool operator !=(const iterator &i) const { return !(i == *this); }
-    bool operator < (const iterator &i) const { return itb  < i.itb;  }
+    bool operator < (const iterator &i) const { return index()  < i.index();}
 
     skyline_sub_vector_iterator(void) {}
-    skyline_sub_vector_iterator(const IT &it, const IT &ite, const SUBI &s)
-      : itb(it), itbe(ite), si(s) { forward(); }
+    skyline_sub_vector_iterator(const IT &it, const SUBI &s)
+      : itb(it), si(s) {}
     skyline_sub_vector_iterator(const skyline_sub_vector_iterator<MIT, MIT,
-	 SUBI> &it) : itb(it.itb), itbe(it.itbe), si(it.si) {}
+	 SUBI> &it) : itb(it.itb), si(it.si) {}
   };
 
-  template <typename IT, typename MIT, typename SUBI>
-  void  skyline_sub_vector_iterator<IT, MIT, SUBI>::forward(void) { 
-    if (itb.index() < si.min) itb += si.min - itb.index();
-    if (itbe.index() > si.max) itbe -= itbe.index() - si.max;
-    if (itb - itbe > 0) itb = itbe;
-  }
+  template <typename IT, typename SUBI>
+  void update_for_sub_skyline(IT &it, IT &ite, const SUBI &si) {
 
+    if (it.index() >= si.max || ite.index() <= si.min) { it = ite; }
+    else {
+      ptrdiff_t dec1 = si.min - it.index(), dec2 = ite.index() - si.max;
+      if (dec1 > 0) { it  += dec1; }
+      if (dec2 > 0) { ite -= dec2; }
+    }
+  }
 
   template <typename IT, typename MIT, typename SUBI, typename VECT> inline
   void set_to_begin(skyline_sub_vector_iterator<IT, MIT, SUBI> &it,
 		    const void *o, VECT *) {
+    IT itbe;
     set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV());
-    set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV());
-    it.forward();
+    set_to_end(itbe, o, typename linalg_traits<VECT>::pV());
+    update_for_sub_skyline(it.itb, itbe, it.si);
   }
   template <typename IT, typename MIT, typename SUBI, typename VECT> inline
   void set_to_begin(skyline_sub_vector_iterator<IT, MIT, SUBI> &it,
 		    const void *o, const VECT *) {
+    IT itbe;
     set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV());
-    set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV());
-    it.forward();
+    set_to_end(itbe, o, typename linalg_traits<VECT>::pV());
+    update_for_sub_skyline(it.itb, itbe, it.si);
   }
   
   template <typename IT, typename MIT, typename SUBI, typename VECT> inline
   void set_to_end(skyline_sub_vector_iterator<IT, MIT, SUBI> &it,
 		    const void *o, VECT *) {
+    IT itb;
+    set_to_begin(itb, o, typename linalg_traits<VECT>::pV());
     set_to_end(it.itb, o, typename linalg_traits<VECT>::pV());
-    set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV());
-    it.forward();
+    update_for_sub_skyline(itb, it.itb, it.si);
   }
   template <typename IT, typename MIT, typename SUBI, typename VECT> inline
   void set_to_end(skyline_sub_vector_iterator<IT, MIT, SUBI> &it,
 		    const void *o, const VECT *) {
+    IT itb;
+    set_to_begin(itb, o, typename linalg_traits<VECT>::pV());
     set_to_end(it.itb, o, typename linalg_traits<VECT>::pV());
-    set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV());
-    it.forward();
+    update_for_sub_skyline(itb, it.itb, it.si);   
   }
 
 
@@ -359,11 +365,15 @@ namespace gmm {
     { return access_type()(origin, _begin, _end, si.index(i)); }
 
     skyline_sub_vector(V &v, const SUBI &s) : _begin(vect_begin(v)),
-       _end(vect_end(v)), origin(linalg_origin(v)), si(s) {}
+       _end(vect_end(v)), origin(linalg_origin(v)), si(s) {
+      update_for_sub_skyline(_begin, _end, si);
+    }
     skyline_sub_vector(const V &v, const SUBI &s)
       : _begin(vect_begin(const_cast<V &>(v))),
 	_end(vect_end(const_cast<V &>(v))),
-	origin(linalg_origin(const_cast<V &>(v))), si(s) {}
+	origin(linalg_origin(const_cast<V &>(v))), si(s) {
+      update_for_sub_skyline(_begin, _end, si);
+    }
     skyline_sub_vector() {}
     skyline_sub_vector(const skyline_sub_vector<pV, SUBI> &cr)
       : _begin(cr._begin),_end(cr._end),origin(cr.origin), si(cr.si) {}
@@ -423,32 +433,28 @@ namespace gmm {
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) {
       iterator it;
-      it.itb = v._begin; it.itbe = v._end; it.si = v.si;
+      it.itb = v._begin; it.si = v.si;
       if (!is_const_reference(is_reference()))
 	set_to_begin(it, v.origin, pthis_type());
-      else it.forward();
       return it;
     }
     static const_iterator begin(const this_type &v) {
-      const_iterator it; it.itb = v._begin; it.itbe = v._end; it.si = v.si;
+      const_iterator it; it.itb = v._begin; it.si = v.si;
       if (!is_const_reference(is_reference()))
 	{ set_to_begin(it, v.origin, pthis_type()); }
-      else it.forward();
       return it;
     }
     static iterator end(this_type &v) {
       iterator it;
-      it.itb = v._end; it.itbe = v._end; it.si = v.si;
+      it.itb = v._end; it.si = v.si;
       if (!is_const_reference(is_reference()))
 	set_to_end(it, v.origin, pthis_type());
-      else it.forward();
       return it;
     }
     static const_iterator end(const this_type &v) {
-      const_iterator it; it.itb = v._end; it.itbe = v._end; it.si = v.si;
+      const_iterator it; it.itb = v._end; it.si = v.si;
       if (!is_const_reference(is_reference()))
 	set_to_end(it, v.origin, pthis_type());
-      else it.forward();
       return it;
     }
     static const void* origin(const this_type &v) { return v.origin; }

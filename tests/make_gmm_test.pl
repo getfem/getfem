@@ -5,7 +5,6 @@ eval 'exec perl -S $0 "$@"'
 
 sub numerique { $a <=> $b; }
 
-
 $nb_iter = 1;                # number of iterations on each test
 $islocal = 0;
 $with_qd = 0;                # test also with dd_real and qd_real
@@ -206,9 +205,13 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 	    { push (@sub_index, splice(@sortind , rand @sortind, 1)); }
 	  @sub_index = @sub_index[0..$sizep-1];
 	  @sub_index = sort numerique @sub_index;
-	  $li= "$li\n    gmm::size_type param_tab$j [$sizep] = {$sub_index[0]";
-	  for ($k = 1; $k < $sizep; ++$k) { $li = "$li , $sub_index[$k]"; }
-	  $li = "$li};";
+	  if ($sizep == 0)
+	    { $li = "$li\n    gmm::size_type param_tab$j [1] = {0};"; }
+	  else {
+	    $li="$li\n    gmm::size_type param_tab$j [$sizep] ={$sub_index[0]";
+	    for ($k = 1; $k < $sizep; ++$k) { $li = "$li , $sub_index[$k]"; }
+	    $li = "$li};";
+	  }
 	  $param_name[$j] = "gmm::sub_vector(param$j,".
 	    " gmm::sub_index(&param_tab$j [0], &param_tab$j [$sizep]))";
 	}
@@ -249,9 +252,13 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 	      { push (@sub_index, splice(@sortind , rand @sortind, 1)); }
 	    @sub_index = @sub_index[0..$sizep-1];
 	    @sub_index = sort numerique @sub_index;
-	    $li="$li\n    gmm::size_type param_t$j [$sizep] = {$sub_index[0]";
-	    for ($k = 1; $k < $sizep; ++$k) { $li = "$li , $sub_index[$k]"; }
-	    $li = "$li};";
+	    if ($sizep == 0)
+	      { $li = "$li\n    gmm::size_type param_t$j [1] = {0};"; }
+	    else {
+	      $li="$li\n    gmm::size_type param_t$j [$sizep]= {$sub_index[0]";
+	      for ($k = 1; $k < $sizep; ++$k) { $li = "$li , $sub_index[$k]"; }
+	      $li = "$li};";
+	    }
 	    $sub1 = "gmm::sub_index(&param_t$j [0], &param_t$j [$sizep])";
 	  }
 	  if ($b < 0.1) {
@@ -271,10 +278,14 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 	      { push (@sub_index, splice(@sortind , rand @sortind, 1)); }
 	    @sub_index = @sub_index[0..$s-1];
 	    @sub_index = sort numerique @sub_index;
-	    $li="$li\n    gmm::size_type param_u$j [$s] = {$sub_index[0]";
-	    for ($k = 1; $k < $s; ++$k) { $li = "$li , $sub_index[$k]"; }
-	    $li = "$li};";
-	    $sub2 = "gmm::sub_index(&param_u$j [0], &param_u$j [$sizep])";
+	    if ($sizep == 0)
+	      { $li = "$li\n    gmm::size_type param_u$j [1] = {0};"; }
+	    else {
+	      $li="$li\n    gmm::size_type param_u$j [$s] = {$sub_index[0]";
+	      for ($k = 1; $k < $s; ++$k) { $li = "$li , $sub_index[$k]"; }
+	      $li = "$li};";
+	    }
+	    $sub2 = "gmm::sub_index(&param_u$j [0], &param_u$j [$s])";
 	  }
 	  $param_name[$j] = "gmm::sub_matrix(param$j, $sub1, $sub2)";
 	}
@@ -301,13 +312,15 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 
     `rm -f $root_name`;
     if ($with_lapack) {
-      print `make $root_name CPPFLAGS=\"-I$srcdir/../src -I$srcdir/../include -I../src  -I../include -lblas -llapack -lg2c -DGMM_USES_LAPACK\"`;
+      print `make $root_name CPPFLAGS=\"-I$srcdir/../src -I$srcdir/../include -I../src  -I../include -lblas -llapack -lg2c -lm -DGMM_USES_LAPACK\"`;
     }
     elsif ($with_qd) {
-      print `make $root_name LDFLAGS=\" -lqd -lm\" CPPFLAGS=\"-I$srcdir/../src -I$srcdir/../include -I../src -I../include \"`;
+      print `touch auto_gmm_torture_dummy.C`;
+      print `make auto_gmm_torture_dummy CPPFLAGS=\"-I$srcdir/../src -I$srcdir/../include -I../src -I../include $dest_name -lqd -lm\"`;
+      if ($? == 0) { print `mv -f auto_gmm_torture_dummy $root_name`; }
     }
     else {
-      print `make $root_name CPPFLAGS=\"-I$srcdir/../src -I$srcdir/../include -I../src -I../include \"`;
+      print `make $root_name CPPFLAGS=\"-I$srcdir/../src -I$srcdir/../include -I../src -I../include  -lm \"`;
     }
 
     if ($? != 0) {

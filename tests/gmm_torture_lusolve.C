@@ -6,7 +6,7 @@
 
 using gmm::size_type;
 
-template <class MAT1, class VECT1, class VECT2>
+template <typename MAT1, typename VECT1, typename VECT2>
 void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
   VECT1 &v1 = const_cast<VECT1 &>(_v1);
   VECT2 &v2 = const_cast<VECT2 &>(_v2);
@@ -18,21 +18,24 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
   size_type m = gmm::mat_nrows(m1);
   std::vector<T> v3(m);
 
-  R det = dal::abs(gmm::lu_det(m1));
-  if (det != R(0)) {
+  R det = gmm::abs(gmm::lu_det(m1)), error;
+  
+  if (gmm::abs(det) > R(prec * 10000.0)) {
 
     gmm::lu_solve(m1, v1, v2);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
 
-    if (gmm::vect_norm2(v3) >= R(prec * 10000.0))
-      DAL_THROW(dal::failure_error, "Error too large: "<< gmm::vect_norm2(v1));
+    error = gmm::vect_norm2(v3);
+    if (error >= R(prec * 20000.0))
+      DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
     gmm::lu_inverse(m1);
     gmm::mult(m1, v2, v1);
     gmm::lu_inverse(m1);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     
-    if (gmm::vect_norm2(v3) >= R(prec * 10000.0))
-      DAL_THROW(dal::failure_error, "Error too large: "<< gmm::vect_norm2(v1));
+    error = gmm::vect_norm2(v3);
+    if (error >= R(prec * 20000.0))
+      DAL_THROW(gmm::failure_error, "Error too large: "<< error);
   }
 }

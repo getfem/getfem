@@ -329,12 +329,11 @@ namespace gmm {
 
   template <typename L> void write(std::ostream &o, const L &l,
 				       abstract_skyline) {
-    typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
-      ite = vect_const_end(l);
+    typedef typename linalg_traits<L>::const_iterator const_iterator;
+    const_iterator it = vect_const_begin(l), ite = vect_const_end(l);
     o << "<r+" << it.index() << ">";
-      // << "(" << ite.index() - it.index() << ") ";
     if (it != ite) o << " " << cast_char(*it++);
-    for (; it != ite; ++it) o << ", " << cast_char(*it);
+    for (; it != ite; ++it) { o << ", " << cast_char(*it); }
   }
 
   template <typename L> inline void write(std::ostream &o, const L &l,
@@ -824,6 +823,7 @@ namespace gmm {
   void copy(const L1& l1, L2& l2, abstract_vector, abstract_vector) {
     if (vect_size(l1) != vect_size(l2))
       DAL_THROW(dimension_error, "dimensions mismatch");
+
     copy_vect(l1, l2, typename linalg_traits<L1>::storage_type(),
 	      typename linalg_traits<L2>::storage_type());
   }
@@ -1042,7 +1042,7 @@ namespace gmm {
     typedef typename linalg_traits<L2>::iterator l2_iterator;
 
     l1_const_iterator it = vect_const_begin(l1), ite = vect_const_end(l1);
-    l2_iterator it2 = vect_begin(l2), ite2 = vect_end(l2);
+    l2_iterator it2 = vect_begin(l2), ite2 = vect_end(l2);    
 
     size_type i = it.index(), j;
     for (j = 0; j < i; ++j, ++it2) *it2 = T(0);
