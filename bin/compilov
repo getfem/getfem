@@ -11,7 +11,7 @@ print "No compiler, searching one\n";
 }
 
 if (! $CC) { die "No compiler found, aborting\n"; }
-else { print "\n\n Compiler selected : $CC\n\nVersion: \n\n"; } 
+else { print "\n\nCompiler selected : $CC\nVersion: \n\n"; } 
 
 if ($CC =~ /CC/) {
 }
