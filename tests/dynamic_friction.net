@@ -1,5 +1,5 @@
 //
-// time: Fri Jan 14 10:45:28 2005
+// time: Fri Jan 14 11:44:17 2005
 //
 // version: 3.2.0 (format), 4.3.2 (DX)
 //
@@ -12,8 +12,8 @@ macro main(
 ) -> (
 ) {
     // 
-    // node Import[4]: x = 563, y = 86, inputs = 6, label = Import
-    // input[1]: defaulting = 0, visible = 1, type = 32, value = "dynamic_friction2.dx"
+    // node Import[4]: x = 564, y = 89, inputs = 6, label = Import
+    // input[1]: defaulting = 0, visible = 1, type = 32, value = "dynamic_friction.dx"
     // input[2]: defaulting = 0, visible = 1, type = 32, value = "deformationsteps_edges"
     //
 main_Import_4_out_1 = 
@@ -40,7 +40,7 @@ main_Compute_4_out_1 =
     ) [instance: 4, cache: 1];
     // 
     // node Import[1]: x = 554, y = 5, inputs = 6, label = Import
-    // input[1]: defaulting = 0, visible = 1, type = 32, value = "dynamic_friction2.dx"
+    // input[1]: defaulting = 0, visible = 1, type = 32, value = "dynamic_friction.dx"
     // input[2]: defaulting = 0, visible = 1, type = 32, value = "deformationsteps"
     //
 main_Import_1_out_1 = 
@@ -348,7 +348,7 @@ main_Tube_1_out_1 =
 // network: end of macro body
 CacheScene(main_Image_1_in_1, main_Image_1_out_1, main_Image_1_out_2);
 }
-main_Import_4_in_1 = "dynamic_friction2.dx";
+main_Import_4_in_1 = "dynamic_friction.dx";
 main_Import_4_in_2 = "deformationsteps_edges";
 main_Import_4_in_3 = NULL;
 main_Import_4_in_4 = NULL;
@@ -358,7 +358,7 @@ main_Import_4_out_1 = NULL;
 main_Compute_4_in_1 = "$0*1";
 main_Compute_4_in_3 = NULL;
 main_Compute_4_out_1 = NULL;
-main_Import_1_in_1 = "dynamic_friction2.dx";
+main_Import_1_in_1 = "dynamic_friction.dx";
 main_Import_1_in_2 = "deformationsteps";
 main_Import_1_in_3 = NULL;
 main_Import_1_in_4 = NULL;
