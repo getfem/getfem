@@ -418,8 +418,8 @@ where \cpp{mesh} is an already existing mesh. The structure will be linked to th
 It is possible to specify element by element the finite element method, so that element of mixed types can be treated, even if the dimensions are different. For usual elements, the connection between two elements is done when the two elements are compatibles (same degrees of freedom on the common face). A numeration of the degrees of freedom is automatically done with a Cuthill Mc Kee like algorithm. You have to keep in mind that there is absolutely no connection between the numeration of vertices of the mesh and the numeration of the degrees of freedom. Every \cpp{getfem::mesh\_fem} object has its own numeration. \\[0.5cm]
 To select a particular finite element method on a given element, one can use \\[0.5cm]
 \index{GETFEM!mef.set\_finite\_element(i, ppf, ppi)}
-\cpp{mef.set\_finite\_element(i, ppf, ppi); }\\[0.5cm]
-where \cpp{i} is the index of the element, \cpp{ppf} is the descriptor of the finite element method, and \cpp{ppi} is the descriptor of the integration method. The list of all available descriptors of finite element methods is in the file \filename{getfem\_fem.h}. A short description is also given in \cite{BASCOMP}. The list of all available descriptors of integration methods is in the file \filename{getfem\_integration.h}. \\[0.5cm]
+\cpp{mef.set\_finite\_element(i, ppf, ppi=0); }\\[0.5cm]
+where \cpp{i} is the index of the element, \cpp{ppf} is the descriptor of the finite element method, and \cpp{ppi} is the descriptor of the integration method. The list of all available descriptors of finite element methods is in the file \filename{getfem\_fem.h}. A short description is also given in \cite{BASCOMP}. The list of all available descriptors of integration methods is in the file \filename{getfem\_integration.h}. The integration method may be omitted, in that case the dummy integration method {\tt IM\_NONE} will be used.\\[0.5cm]
 Descriptors for finite element methods and integration methods are available thanks to the two follofing functions\\[0.5cm]
 \index{GETFEM!getfem::fem\_descriptor("name")}
 \index{GETFEM!getfem::nt\_method\_descriptor("name")}
@@ -538,7 +538,7 @@ where $\Omega$ is an open domain of arbitrary dimension, $\Gamma_{D}$ and $\Gamm
 The function to be called to assemble the stiffness matrix is\\[0.5cm]
 \index{GETFEM!getfem::asm\_stiffness\_matrix\_for\_laplacian}
 \cpp{getfem::asm\_stiffness\_matrix\_for\_laplacian(SM, mef1, mef2, A);} \\[0.5cm]
-where \cpp{SM} is a matrix of any type having the right dimension (i.e. \cpp{me1.nb\_dof()}), \cpp{mef1} is a variable of type \cpp{getfem::mesh\_fem} and should define the finite element method for the solution, \cpp{mef2}  is a variable of type \cpp{getfem::mesh\_fem} (possibly equal to \cpp{mef1}) describing the finite element method on which the coefficient $a(x)$ is defined, and \cpp{A} is the vector of the values of this coefficient on each degree of freedom of \cpp{mef2}. Both should use the same mesh. It is important to pay attention to the fact that the integration methods used to compute the elementary matrices is the ones declared in \cpp{mef1}. This integration method have to be chosen of sufficient order. The order has to be determined considering the degrees of element in \cpp{mef1}, in \cpp{mef2} and the geometric transformations for non-linear cases. Integration methods defined in \cpp{mef2} are ignored.\\[0.5cm]
+where \cpp{SM} is a matrix of any type having the right dimension (i.e. \cpp{me1.nb\_dof()}), \cpp{mef1} is a variable of type \cpp{getfem::mesh\_fem} and should define the finite element method for the solution, \cpp{mef2}  is a variable of type \cpp{getfem::mesh\_fem} (possibly equal to \cpp{mef1}) describing the finite element method on which the coefficient $a(x)$ is defined, and \cpp{A} is the vector of the values of this coefficient on each degree of freedom of \cpp{mef2}. Both should use the same mesh. It is important to pay attention to the fact that the integration methods used to compute the elementary matrices are the ones declared in \cpp{mef1}. This integration method have to be chosen of sufficient order. The order has to be determined considering the degrees of element in \cpp{mef1}, in \cpp{mef2} and the geometric transformations for non-linear cases. Integration methods defined in \cpp{mef2} are ignored, hence you can use the dummy integration method \index{IM_NONE}{\tt IM\_NONE} with mef2.\\[0.5cm]
 To assemble the source term, the  function to be called is\\[0.5cm]
 \index{GETFEM!getfem::asm\_source\_term}
 \cpp{getfem::asm\_source\_term(B, mef1, mef2, V);} \\[0.5cm]
@@ -799,7 +799,7 @@ For instance if you need to compute the mass matrix between to different finite 
   getfem::pfem pf = getfem::virtual\_link\_fem(mf2, mf\_interpole, pim);
   dal::bit\_vector nn = mf1.convex\_index();
   mf\_interpole.set\_finite\_element(nn, pf, pim);
-  getfem::mass\_matrix(SM1, mf1, mf\_interpole, 1);
+  getfem::asm\_mass\_matrix(SM1, mf1, mf\_interpole, 1);
 \end{cppcode}
 
 The object defined to build the interpolation will be destroyed when the object \cpp{mf\_interpole} will be destroyed. The information stored by this element can be important.

@@ -128,7 +128,7 @@ Presently, only one type of base function type is defined : the polynomials in t
 but in the file  {\tt bgeot\_config.h} the type  {\tt bgeot::base\_poly} is defined to be $\hspace{10em}$ {\tt bgeot::polynomial<double> } and only this type is used.
 
 \section{Geometric transformations}
-
+\subsection{Basic description}
 \begin{figure}[htb]
   \begin{center}
     \includegraphics[width=10cm,angle=0]{getfemelem_trans.eps}
@@ -153,7 +153,9 @@ $$ \fbox{$\hspace{1em}\tau(\overline{x}) = G {\cal N}(\overline{x}).\hspace{1em}
 The derivative of $\tau$ is then
 $$ \fbox{$\hspace{1em} K(\overline{x}) := \nabla \tau(\overline{x}) = G \nabla {\cal N}(\overline{x}),\hspace{1em}$} $$
 where $K(\overline{x}) = \nabla \tau(\overline{x})$ is a $N \times P$ matrix and $\nabla {\cal N}(\overline{x})$ a $n_g \times P$ matrix.
-
+The (transposed) pseudo-inverse of $\nabla\tau(\overline{x})$ is a $N\times P$ matrix denoted $B(\overline{x})$:
+$$ \fbox{$\hspace{1em} B(\overline{x}) := K(\overline{x})(K(\overline{x})^T K(\overline{x}))^{-1},\hspace{1em}$} $$
+Of course, when $P=N$, one has $B(\overline{x})=K(\overline{x})^{-T}$.
 
 Pointer on a descriptor of a geometric transformation can be obtained by the following function defined in the file {\tt bgeot\_geometric\_trans.h}:\\[0.5cm]
 {\tt bgeot::pgeometric\_trans pgt = bgeot::geometric\_trans\_descriptor("name of trans"); }\\[0.5cm]
@@ -166,63 +168,41 @@ where {\tt "name of trans"} should be chosen among the following list.
 {\tt "GT\_LINEAR\_PRODUCT(a,b)"} & Description of the direct product of the two transformations {\tt a} and {\tt b} keeping a linear transformation (this is a restriction of he previous function). This allows, for instance, to use exact integrations on regular meshes with parallelograms.\\ \hline
 \end{tabular} \end{center}
 
-
-A tool allows to invert geometric transformations, especially to find out, among a list of points, which ones are inside a specified convex. The object is defined in the file {\tt bgeot\_geotrans\_inv.h}.\\[0.5cm]
+\subsection{Inversion of geometric transformations}
+The file {\tt bgeot\_geotrans\_inv.h} provides tools to invert geometric transformations. Those can be used for example to find out, among a list of points, which ones are inside a given convex.\\[0.5cm]
 {\tt bgeot::geotrans\_inv gti; }\\[0.5cm]
 To add the list off points to the object use\\[0.5cm]
 {\tt gti.add\_point(pt);  }\\[0.5cm]
-The points to be localized are sorted with ``imbricated\_box\_less'' order
-which is based on a lexicographical order on the decimal
-decomposition of the coordinates. This order allows to find in a 
-fast manner which points are in a specified box. The following function \\[0.5cm]
+The points to be localized are selected via a ``kd-tree'', which is basically a generalisation of binary trees to more than one dimension.
+
+The following function \\[0.5cm]
 {\tt size\_type nb = gti.points\_in\_convex(cv, pgt, ptab, itab); }\\[0.5cm]
 selects the points in the convex given by {\tt cv} and the geometric transformation {\tt pgt}.  To find which points are in a given element, the following algorithm is applied : \\
 - compute a englobing box of the element, assuming that this element,
 even if the geometric transfrmation in non-linear is in the englobing
 box of its nodes times a factor 1.2, \\
-- List all the points in this englobing box, \\
+- List all the points in this englobing box (via the kd-tree), \\
 - For each points, invert the geometric transformation (computation
 of a pseudo inverse in the linear case, and use of a Newton method in
 the non-linear case. \\ \\
-The inversion can be described as follows : \\ \\
-The geometric transformation from the reference element to the real
-element is described by a polynomial function \\
-$ \tau : {I\hspace{-0.3em}R}^P \longrightarrow {I\hspace{-0.3em}R}^N$ \\
-where $P$ is the dimension of the reference element and $N$ the dimension
-of the real element. This transformation is decomposed in \\
-$ \tau(\overline{x}) = \underline{\underline{a}} \ 
-\underline{\cal N}(\overline{x}). $ \\
-where $\underline{\underline{a}}$ is a $N \times n_g$ matrix representing
-the nodes of the real element and $\underline{\cal N}(\overline{x})$ is
-the vector of polynomials representing the geometric transformation. \\
-Then, the gradient $\nabla \tau(\overline{x})$ is the following
-$N \times P$ matrix: \\
-$ \nabla \tau(\overline{x}) = \underline{\underline{a}}\ \nabla
-\underline{\cal N}(\overline{x}). $\\
+The inversion (i.e. finding $\overline{x}$ such that $\overline{x}=\tau{x}$, where $x$ is know in the real element) can be described as follows : \\ \\
 \subsubsection*{Linear case}
 If $\tau$ is linear (affin in fact), then \\
-$y = \tau(\overline{x}) = \nabla \tau(0) \overline{x} + y_0.$ \\
-So that \\
-$\overline{x} = (\nabla \tau^T(0) \nabla \tau(0))^{-1} \nabla \tau^T(0) 
-(y - y_0), $ \\
-where \\
-$B(0) = (\nabla \tau^T(0) \nabla \tau(0))^{-1} \nabla \tau^T(0), $ \\
-is a pseudo inverse of $\nabla \tau(0)$. \\ \\
+$$x = \tau(\overline{x}) = \nabla \tau(0) \overline{x} + x_0. = K(0)\overline{x} + x_0$$ \\
+Hence
+$$\fbox{$\overline{x} = B(0)^T(x - x_0)$}$$
 if $N > P$, the residu \\
-$y - y_0 -  \nabla \tau(0) \overline{x}, $ \\
-indicates wether or not the point in on the "surface" of the convex. \\ 
+$$x - x_0 -  K(0) \overline{x}, $$
+indicates wether or not the point $x$ in on the "surface" of the convex. \\ 
 \\ \subsubsection*{Non-linear case}
-A Newton method is applied., writing \\
-$y = \tau(\overline{x}+\overline{h}) = \tau(\overline{x})
-+ \nabla \tau(\overline{x})\overline{h} + o(\|\overline{h}\|^2). $ \\
-It gives the iterative scheme \\
-$ \overline{x}_{n+1} = \overline{x}_{n}
-+ B(\overline{x}_{n})(y - \tau(\overline{x}_{n})), $  \\
-where \\
-$ B(\overline{x}_{n}) = (\nabla \tau^T(\overline{x}_{n})
-\nabla \tau(\overline{x}_{n}))^{-1} \nabla \tau^T(\overline{x}_{n}).$ \\
-The residu is \\
-$ y - \tau(\overline{x}_{n}).$ \\
+A Newton method is applied., writing
+$$x = \tau(\overline{x}+\overline{h}) = \tau(\overline{x})
++ \nabla \tau(\overline{x})\overline{h} + o(\|\overline{h}\|^2). $$
+It gives the iterative scheme
+$$\fbox{$ \overline{x}_{n+1} = \overline{x}_{n}
++ B^T(\overline{x}_{n})(x - \tau(\overline{x}_{n})).$} $$
+The residu is
+$$ x - \tau(\overline{x}_{n}).$$
 
 \section{Finite element methods description}
 
@@ -277,13 +257,10 @@ $$ \fbox{$\hspace{1em} \ds \int_T f(x) dx = \int_{\overline{T}} \overline{f}(\ov
 When $P = N$, of course $J_{\tau}(\overline{x}) = |\mbox{det}(K(\overline{x}))|$.
 
 \subsection{Surface integral}
-With $\Gamma$ a part of the boundary of $T$ a real element and $\overline{\Gamma}$ the corresponding boundary on the reference element $\overline{T}$ and denoting
-$$ \fbox{$\hspace{1em} B(\overline{x}) := K(\overline{x})(K(\overline{x})^T K(\overline{x}))^{-1},\hspace{1em}$} $$
-with $B(\overline{x})$ a $N \times P$ matrix, one has
+With $\Gamma$ a part of the boundary of $T$ a real element and $\overline{\Gamma}$ the corresponding boundary on the reference element $\overline{T}$ and, one has
 $$ \fbox{$\hspace{1em} \ds \int_{\Gamma} f(x) d\sigma = \int_{\overline{\Gamma}} \overline{f}(\overline{x}) \|B(\overline{x})\overline{\mathbf n}\| J_{\tau}(\overline{x}) d\overline{\sigma},\hspace{1em}$} $$
 where ${\mathbf n}$ is the unit normal to $\overline{T}$ on $\overline{\Gamma}$. On a same manner
 $$ \fbox{$\hspace{1em} \ds \int_{\Gamma} F(x).{\mathbf n} d\sigma = \int_{\overline{\Gamma}} \overline{F}(\overline{x}).(B(\overline{x})\overline{\mathbf n}) J_{\tau}(\overline{x}) d\overline{\sigma}.\hspace{1em}$} $$
-Of course, when $P = N$ one has $B(\overline{x}) = K(\overline{x})^{-T}$.
 
 \subsection{Derivative computation}
 One has

@@ -708,6 +708,9 @@ where {\tt "name of method"} is a string to be choosen among the existing method
 
 The program \texttt{integration} located in the \texttt{tests} directory lists and checks the degree of each integration method.
 
+\subsection{Dummy Integration method}
+The {\tt IM\_NONE} integration method (new in getfem++-1.7) is available. This can be useful for \texttt{mesh\_fem} objects who do not use their integration method. The {\tt IM\_NONE} method is compatible with any convex or FEM.
+
 \subsection{Exact Integration methods}
 
 The list of available Exact integration methods is the following
