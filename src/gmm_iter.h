@@ -87,9 +87,7 @@ namespace gmm
       : rhsn(1.0), maxiter(mit), noise(noi), resmax(r), nit(0), res(0.0) {}
 
     void  operator ++(int) { 
-      nit++; if (nit > maxiter)
-	DAL_THROW(failure_error, "Iterative method failed to converge.");
-      if (noise > 0)
+      nit++; if (noise > 0)
 	cout << name << " iter " << nit << " residu " << res << endl;
     }
     void  operator ++() { (*this)++; }
@@ -113,7 +111,7 @@ namespace gmm
     void set_rhsnorm(double r) { rhsn = r; }
     
     bool finished(double nr)
-    { res = dal::abs(nr); return (res < rhsn * resmax); }
+    { res = dal::abs(nr); return (nit > maxiter || res < rhsn * resmax); }
     template <class VECT> bool finished(const VECT &v)
     { return finished(gmm::vect_norm2(v)); }
 
