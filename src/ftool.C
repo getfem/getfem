@@ -30,9 +30,22 @@
 
 
 #include <ftool.h>
+#include <limits.h>
+#include <unistd.h>
+#include <time.h>
+#include <sys/times.h>
 
 namespace ftool
 {
+
+#ifndef CLK_TCK
+#define TTCLK (double(CLOCKS_PER_SEC) / 10000.0)
+#else
+#define TTCLK double(CLK_TCK)
+#endif
+
+  double uclock_sec(void)
+  { tms t; times(&t); return double(t.tms_utime) / TTCLK; }
 
   bool read_untill(STD_NEEDED istream &ist, const char *st)
   {

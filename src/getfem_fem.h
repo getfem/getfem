@@ -171,7 +171,7 @@ namespace getfem
         { return cv_node.points()[i];}
       bgeot::pstored_point_tab node_tab(void) const { 
 	if (!pspt_valid) {
-	  pspt = store_point_tab(cv_node.points());
+	  pspt = bgeot::store_point_tab(cv_node.points());
 	  pspt_valid = true;
 	}
 	return pspt;
@@ -281,12 +281,11 @@ namespace getfem
      
    template <class FUNC>
      void fem<FUNC>::interpolation(const base_node &x, const base_matrix &G,
-				   const base_vector coeff, base_node &val) const
+			       const base_vector coeff, base_node &val) const
    { // optimisable.   verifier et faire le vectoriel
      base_matrix M;
      if (val.size() != target_dim())
-      throw dimension_error
-	("fem<FUNC>::interpolation : dimensions mismatch");
+       DAL_THROW(dimension_error, "dimensions mismatch");
      
      size_type R = nb_dof();
 
@@ -318,8 +317,7 @@ namespace getfem
      base_tensor t;
 
      if (val.nrows() != target_dim() || val.ncols() != x.size())
-      throw dimension_error
-	("fem<FUNC>::interpolation_grad : dimensions mismatch");
+       DAL_THROW(dimension_error, "dimensions mismatch");
     
      grad_base_value(x, t);
      base_tensor::iterator it = t.begin();

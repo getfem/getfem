@@ -65,14 +65,13 @@ namespace bgeot
 	* ((1.0 - scalar_type(nb_lp)) / scalar_type(nb_lp)));
       (*Legendres_roots)[nb_lp].resize(nb_lp);
       (*Legendres_roots)[nb_lp][nb_lp/2] = 0.0;
-      scalar_type a = -1.0, b, c, d, e, cv, dv, ev, ecart, ecart2;
+      scalar_type a = -1.0, b, c, d, e, cv, ev, ecart, ecart2;
       for (int k = 0; k < nb_lp / 2; ++k) // + symetrie ...
       {
 	b = (*Legendres_roots)[nb_lp-1][k];
 
 	c = a, d = b;
 	cv = (*Legendre_polynomials)[nb_lp].eval(&c);
-	dv = (*Legendre_polynomials)[nb_lp].eval(&d);
 	int imax = 10000;
 	ecart = 2.0 * (d - c);
 	while(c != d)
@@ -82,7 +81,7 @@ namespace bgeot
 	  ecart2 = d - c; if (ecart2 >= ecart) break;
 	  ecart = ecart2;
 	  ev = (*Legendre_polynomials)[nb_lp].eval(&e);
-	  if (ev * cv < 0) { d = e; dv = ev; } else { c = e; cv = ev; }
+	  if (ev * cv < 0) { d = e; } else { c = e; cv = ev; }
 	}
 
 	(*Legendres_roots)[nb_lp][k] = c;

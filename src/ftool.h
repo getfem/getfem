@@ -31,8 +31,6 @@
 
 #include <stdio.h>
 #include <dal_basic.h>
-#include <time.h>
-#include <sys/times.h>
 
 namespace ftool
 {
@@ -48,15 +46,7 @@ namespace ftool
   /*       Clock functions.                                                */
   /* ********************************************************************* */
 
-#ifndef CLK_TCK
-#define TTCLK (double(CLOCKS_PER_SEC) / 10000.0)
-#else
-#define TTCLK double(CLK_TCK)
-#endif
-
-  inline double uclock_sec(void)
-  { tms t; times(&t); return double(t.tms_utime) / TTCLK; }
-
+  double uclock_sec(void);
 
   /* ********************************************************************* */
   /*       Read a parameter file.                                          */
