@@ -139,6 +139,8 @@ namespace getfem
     void asm_source_term(VECT1 &B, const mesh_fem &mf,
 			 const mesh_fem &mfdata, const VECT2 &F, size_type boundary=size_type(-1))
   {
+    if (mfdata.get_qdim() != 1)
+      DAL_THROW(std::invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     generic_assembly assem;
     if (mf.get_qdim() == 1)
       assem.set("F=data(#2); V(#1)+=comp(Base(#1).Base(#2))(:,j).F(j);");
@@ -178,6 +180,8 @@ namespace getfem
 		     const mesh_fem &mf_d, const VECT &Q, 
 		     size_type boundary=size_type(-1))
   {
+    if (mf_d.get_qdim() != 1)
+      DAL_THROW(std::invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     generic_assembly assem;
     if (mf_u.get_qdim() == 1)
       assem.set("Q=data$1(#2);"
@@ -219,6 +223,8 @@ namespace getfem
 						   const mesh_fem &mfdata, 
 						   const VECT &LAMBDA, const VECT &MU)
   {
+    if (mfdata.get_qdim() != 1)
+      DAL_THROW(std::invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     if (mf.get_qdim() != mf.linked_mesh().dim()) DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
     /* e = strain tensor,
        M = 2*mu*e(u):e(v) + lambda*tr(e(u))*tr(e(v))
@@ -246,6 +252,8 @@ namespace getfem
 							  const mesh_fem &mfdata, 
 							  const VECT &H)
   {
+    if (mfdata.get_qdim() != 1)
+      DAL_THROW(std::invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     /* e = strain tensor,
        M = a_{i,j,k,l}e_{i,j}(u)e_{k,l}(v)
     */
@@ -270,6 +278,8 @@ namespace getfem
 		    const mesh_fem &mf_p,
 		    const mesh_fem &mf_d, const VECT &viscos)
   {
+    if (mf_d.get_qdim() != 1)
+      DAL_THROW(std::invalid_argument, "invalid data mesh fem for asm_stokes (Qdim=1 required)");
     generic_assembly assem("visc=data$1(#3); "
 			   "t=comp(vGrad(#1).vGrad(#1).Base(#3));"
 			   "e=(t{:,2,3,:,5,6,:}+t{:,3,2,:,5,6,:}+t{:,2,3,:,6,5,:}+t{:,3,2,:,6,5,:})/4;"
@@ -291,6 +301,8 @@ namespace getfem
     void asm_stiffness_matrix_for_laplacian(MAT &M, const mesh_fem &mf,
 					   const mesh_fem &mfdata, const VECT &A)
   {
+    if (mfdata.get_qdim() != 1)
+      DAL_THROW(std::invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     generic_assembly assem("a=data$1(#2); M$1(#1,#1)+=sym(comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j))");
     //generic_assembly assem("a=data$1(#2); M$1(#1,#1)+=comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j)");
     assem.push_mf(mf);
@@ -323,6 +335,8 @@ namespace getfem
 						  const mesh_fem &mfdata,
 						  const VECT &A)
   {
+    if (mfdata.get_qdim() != 1)
+      DAL_THROW(std::invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     generic_assembly assem("a=data$1(mdim(#1),mdim(#1),#2); M$1(#1,#1)+=comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,j,k).a(j,i,k)");
     assem.push_mf(mf);
     assem.push_mf(mfdata);
@@ -331,230 +345,6 @@ namespace getfem
     assem.volumic_assembly();
   }
 
-
-  /* ********************************************************************* */
-  /*                                                                       */
-  /*  Algorithmes d'assemblage pour quelques problemes elliptiques.        */
-  /*                                                                       */
-  /* ********************************************************************* */
-
-  /* ********************************************************************* */
-  /*	Stiffness matrix for laplacian.                                     */
-  /* ********************************************************************* */
-#if 0
-  template<class MAT, class VECT>
-    void assembling_stiffness_matrix_for_laplacian(MAT &RM, const mesh_fem &mf,
-						  const mesh_fem &mfdata, const VECT &A)
-  { // optimisable
-
-    DAL_WARNING(3, "obsolete function - use asm_stiffness_matrix_for_laplacian");
-    size_type nbd1, nbd2, N = mf.linked_mesh().dim();
-    base_tensor t;
-    pfem pf1, pf2, pf1prec = 0, pf2prec = 0;
-    pintegration_method pim, pimprec = 0;
-    bgeot::pgeometric_trans pgt, pgtprec = 0;
-    pmat_elem_computation pmec = 0;
-
-    if (&(mf.linked_mesh()) != &(mfdata.linked_mesh()))
-      DAL_THROW(std::invalid_argument,
-		"This assembling procedure only works on a single mesh");
-
-    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
-      pf1 =     mf.fem_of_element(cv); nbd1 = pf1->nb_dof();
-      pf2 = mfdata.fem_of_element(cv); nbd2 = pf2->nb_dof();
-      pgt = mf.linked_mesh().trans_of_convex(cv);
-      pim = mf.int_method_of_element(cv);
-      if (pf1prec != pf1 || pf2prec != pf2 || pgtprec != pgt || pimprec != pim)
-      {
-	pmat_elem_type pme = mat_elem_product(mat_elem_product(
-	    mat_elem_grad(pf1), mat_elem_grad(pf1)), mat_elem_base(pf2));
-	pmec = mat_elem(pme, pim, pgt);
-	pf1prec = pf1; pf2prec = pf2; pgtprec = pgt; pimprec = pim;
-      }
-      pmec->gen_compute(t, mf.linked_mesh().points_of_convex(cv), cv);
-      // cout << "elem matrix " << t << endl;
-      base_tensor::iterator p = t.begin();
-      for (size_type r = 0; r < nbd2; r++) {
-	size_type dof3 = mfdata.ind_dof_of_element(cv)[r];
-	for (size_type l = 0; l < N; l++) {
-	  for (size_type i = 0; i < nbd1; i++) {
-	    size_type dof2 = mf.ind_dof_of_element(cv)[i];
-	    p += l * nbd1;
-	    for (size_type j = 0; j < nbd1; j++, ++p) {
-	      size_type dof1 = mf.ind_dof_of_element(cv)[j];
-	      if (dof1 >= dof2) { 
-		RM(dof1, dof2) += A[dof3]*(*p);
-		RM(dof2, dof1) = RM(dof1, dof2);
-	      }
-	    }
-	    p += (N-l-1) * nbd1;
-	  }
-	}
-      }
-      if (p != t.end()) DAL_THROW(dal::internal_error, "internal error"); 
-    }
-  }
-
-
-  /* ********************************************************************* */
-  /*	assembling of the term p.div(v) in Stockes mixed FEM.              */
-  /* ********************************************************************* */
-  template<class MAT, class VECT>
-    void assembling_mixed_pressure_term(MAT &B,
-					const mesh_fem &mf_u,
-					const mesh_fem &mf_p,
-					const mesh_fem &mf_d,
-					const VECT &DATA) {
-    DAL_WARNING(3, "obsolete function - use asm_stokes");
-
-    base_tensor t;
-
-    pmat_elem_computation pmec = 0;
-
-    pfem pf_u, pf_p, pf_d;
-    pfem pf_u_prec = NULL, pf_p_prec = NULL, pf_d_prec = NULL;
-    pintegration_method pim, pimprec = 0;
-    bgeot::pgeometric_trans pgt, pgtprec = NULL;
-    size_type nbdof_u, nbdof_p, nbdof_d;
-    size_type N = mf_u.linked_mesh().dim();
-
-    if (&(mf_u.linked_mesh()) != &(mf_p.linked_mesh())
-	|| &(mf_u.linked_mesh()) != &(mf_d.linked_mesh()))
-      DAL_THROW(std::invalid_argument,
-		"This assembling procedure only works on a single mesh");
-
-    /* loop over all convexes */
-    for (dal::bv_visitor cv(mf_u.convex_index()); !cv.finished(); ++cv) {
-      pf_u = mf_u.fem_of_element(cv); nbdof_u = pf_u->nb_dof();
-      pf_p = mf_p.fem_of_element(cv); nbdof_p = pf_p->nb_dof();
-      pf_d = mf_d.fem_of_element(cv); nbdof_d = pf_d->nb_dof();
-      pgt = mf_u.linked_mesh().trans_of_convex(cv);
-      pim = mf_u.int_method_of_element(cv);
-
-      /* avoids recomputation of already known pmat_elem_computation */
-      if (pf_u_prec != pf_u || pf_p_prec != pf_p || pf_d_prec != pf_d 
-	  || pgtprec != pgt || pimprec != pim) {
-	pmec = mat_elem(mat_elem_product(mat_elem_product(mat_elem_grad(pf_u),
-						mat_elem_base(pf_p)),
-			       mat_elem_base(pf_d)), pim, pgt);
-	pf_u_prec = pf_u;
-	pf_p_prec = pf_p;
-	pf_d_prec = pf_d; pgtprec = pgt; pimprec = pim;
-      }
-      pmec->gen_compute(t, mf_u.linked_mesh().points_of_convex(cv), cv);
-      
-      base_tensor::iterator p = t.begin();
-      for (size_type i = 0; i < nbdof_d; i++) {
-	size_type dof_d = mf_d.ind_dof_of_element(cv)[i];
-	for (size_type j = 0; j < nbdof_p; j++) {
-	  size_type dof_p = mf_p.ind_dof_of_element(cv)[j];
-	  for (size_type l = 0; l < N; l++) {
-	    // loop over derivation directions (d/dx, d/dy ..)
-	    //	    for (size_type m = 0; m < N; m++) {
-	      // loop over vector base function components (phi_x, phi_y ...)
-	      for (size_type k = 0; k < nbdof_u; k++) {
-		//		if (m == l) {
-		/*
-		  ssert(finite(DATA[dof_d])); 
-		  
-		  ssert(p < t.end());
-		  
-		  ssert(finite(*p));
-		*/
-		  size_type dof_u = mf_u.ind_dof_of_element(cv)[k];
-		  B(dof_u*N+l, dof_p) += DATA[dof_d]*(*p);
-		  //		}
-		p++;
-	      }
-	      //	    }
-	  } 
-	}
-      }
-      if (p != t.end()) DAL_THROW(dal::internal_error, "internal error"); 
-    }
-  }
-
-  /* ********************************************************************* */
-  /*	Stiffness matrix for linear elasticity.                             */
-  /* ********************************************************************* */
-  template<class MAT, class VECT>
-    void assembling_stiffness_matrix_for_linear_elasticity(MAT &RM,
-							  const mesh_fem &mf, 
-							  const mesh_fem &mfdata, 
-							  const VECT &LAMBDA, const VECT &MU)
-  { // à verifier
-    DAL_WARNING(3, "obsolete function - use asm_stiffness_matrix_for_linear_elasticity");
-
-    size_type nbd1, nbd2, N = mf.linked_mesh().dim();
-    base_tensor t;
-    pfem pf1, pf2, pf1prec = NULL, pf2prec = NULL;
-    pintegration_method pim, pimprec = 0;
-    bgeot::pgeometric_trans pgt, pgtprec = NULL;
-    pmat_elem_type pme; pmat_elem_computation pmec = 0;
-
-    if (&(mf.linked_mesh()) != &(mfdata.linked_mesh()))
-      DAL_THROW(std::invalid_argument,
-		"This assembling procedure only works on a single mesh");
-  
-    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
-      pf1 =     mf.fem_of_element(cv); nbd1 = pf1->nb_dof();
-      pf2 = mfdata.fem_of_element(cv); nbd2 = pf2->nb_dof();
-      pgt = mf.linked_mesh().trans_of_convex(cv);
-      pim = mf.int_method_of_element(cv);
-      if (pf1prec != pf1 || pf2prec != pf2 || pgtprec != pgt || pimprec != pim)
-      {
-	pme = mat_elem_product(mat_elem_product(mat_elem_grad(pf1),
-						mat_elem_grad(pf1)), 
-			       mat_elem_base(pf2));
-	pmec = mat_elem(pme, pim, pgt);
-	pf1prec = pf1; pf2prec = pf2; pgtprec = pgt; pimprec = pim;
-      }
-      pmec->gen_compute(t, mf.linked_mesh().points_of_convex(cv), cv);
-      base_tensor::iterator p = t.begin();
-      
-      size_type nbd = mf.nb_dof_of_element(cv);
-
-      for (size_type r = 0; r < nbd2; r++)
-      {
-	size_type dof3 = mfdata.ind_dof_of_element(cv)[r];
-	for (dim_type l = 0; l < N; l++)
-	  for (size_type j = 0; j < nbd; j++)
-	  {
-	    size_type dof2 = mf.ind_dof_of_element(cv)[j];
-	    
-	    for (dim_type k = 0; k < N; k++)
-	      for (size_type i = 0; i < nbd; i++, ++p)
-	      {
-		size_type dof1 = mf.ind_dof_of_element(cv)[i];
-		
-		if (dof1*N + k >= dof2*N + l)
-		{
-		  RM(dof1*N + k, dof2*N + l) += LAMBDA[dof3] * (*p);
-		  RM(dof2*N + l, dof1*N + k) = RM(dof1*N + k, dof2*N + l);
-		}
-		
-		if (dof1*N + l >= dof2*N + k)
-		{
-		  RM(dof1*N + l, dof2*N + k) += MU[dof3] * (*p);
-		  RM(dof2*N + k, dof1*N + l) = RM(dof1*N + l, dof2*N + k);
-		}
-
-	      // cout << "matr elem : " << int(l) << " " << int(j) << " " << int(k) << " " << int(i) << " : " << *p << endl; getchar();
-	      
-		if (l == k && dof1 >= dof2)
-		  for (size_type n = 0; n < N; ++n)
-		  {
-		    RM(dof1*N + n, dof2*N + n) += MU[dof3] * (*p);
-		    RM(dof2*N + n, dof1*N + n) = RM(dof1*N + n, dof2*N + n);
-		  }
-		
-	      }
-	  }
-      }
-      if (p != t.end()) DAL_THROW(dal::internal_error, "internal error"); 
-    }
-  }
-#endif
 
   /* 
      new version, which takes into account the qdim dimension of the mesh_fem 
@@ -572,7 +362,7 @@ namespace getfem
     pfem pf_u, pf_rh;
     
     if (mf_rh.get_qdim() != 1)
-      DAL_THROW(std::invalid_argument, "invalid data mesh fem for dirichlet");
+      DAL_THROW(std::invalid_argument, "invalid data mesh fem for dirichlet (Qdim=1 required)");
     asm_qu_term(M, mf_u, mf_rh, H, boundary);
     asm_source_term(B, mf_u, mf_rh, R, boundary);
 
@@ -727,48 +517,6 @@ namespace getfem
       }
     }
   }
-
-#if 0
-  template<class MATRM, class VECT1, class VECT2>
-    void old_assembling_Dirichlet_condition(MATRM &RM, VECT1 &B,
-					const mesh_fem &mf,
-					size_type boundary,
-					const VECT2 &F, dim_type N)
-  { /* Y-a-il un moyen plus performant ? */
-    // Marche uniquement pour des ddl de lagrange.
-    dal::bit_vector nndof = mf.dof_on_boundary(boundary);
-    pfem pf1;
-
-    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
-      pf1 = mf.fem_of_element(cv);
-      pdof_description ldof = lagrange_dof(pf1->dim());
-      size_type nbd = pf1->nb_dof();
-      for (size_type i = 0; i < nbd; i++)
-      {
-	size_type dof1 = mf.ind_dof_of_element(cv)[i];
-	if (nndof.is_in(dof1) && pf1->dof_types()[i] == ldof)
-	{
-	  // cout << "dof : " << i << endl;
-	  for (size_type j = 0; j < nbd; j++)
-	  {
-	    size_type dof2 = mf.ind_dof_of_element(cv)[j];
-	    for (size_type k = 0; k < N; ++k)
-	      for (size_type l = 0; l < N; ++l)
-	      {
-		if (!(nndof.is_in(dof2)) &&
-		    dof_compatibility(pf1->dof_types()[j],
-				      lagrange_dof(pf1->dim())))
-		  B[dof2*N+k] -= RM(dof2*N+k, dof1*N+l) * F[dof1*N+l];
-		RM(dof2*N+k, dof1*N+l) = RM(dof1*N+l, dof2*N+k) = 0;
-	      }
-	  }
-	  for (size_type k = 0; k < N; ++k)
-	  { RM(dof1*N+k, dof1*N+k) = 1; B[dof1*N+k] = F[dof1*N+k]; }
-	}
-      }
-    }
-  }
-#endif
 
   template<class MATD, class MATG, class VECT>
   size_type Dirichlet_nullspace(const MATD &D, MATG &G,
@@ -977,79 +725,7 @@ namespace getfem
 
 //     return nbase;
 //   }
-  
-
-  
-  /* ********************************************************************* */
-  /*	Neumann Condition.                                                 */
-  /* ********************************************************************* */
-#if 0
-  template<class VECT1, class VECT2>
-    void assembling_Neumann_condition(VECT1 &B, const mesh_fem &mf,
-				      size_type boundary, const mesh_fem &mfdata, const VECT2 &F, dim_type N)
-  {
-    DAL_WARNING(3, "obsolete function - use asm_source_term");
-    size_type nbd1, nbd2, f;
-    dal::bit_vector nf;
-    base_tensor t;
-    pfem pf1, pf2, pf1prec = NULL, pf2prec = NULL;
-    pintegration_method pim, pimprec = 0;
-    bgeot::pgeometric_trans pgt, pgtprec = NULL;
-    pmat_elem_type pme; pmat_elem_computation pmec = 0;
-
-    if (&(mf.linked_mesh()) != &(mfdata.linked_mesh()))
-      DAL_THROW(std::invalid_argument,
-		"This assembling procedure only works on a single mesh");
-  
-    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
-      // for (int h = 0; h < mf.linked_mesh().nb_points_of_convex(cv); ++h)
-      // cout << "Point " << h << " of cv " << cv << " : " 
-      //     << mf.linked_mesh().points_of_convex(cv)[h] << endl;
-
-      // for (f = 0; f < mf.linked_mesh().structure_of_convex(cv)->nb_faces(); ++f)
-      // for (int h = 0; h < mf.linked_mesh().structure_of_convex(cv)->nb_points_of_face(f); ++h)
-      //  cout << "Point " << h << " of cv " << cv << " on face " << f << " (" << mf.linked_mesh().structure_of_convex(cv)->ind_points_of_face(f)[h] << ") : " 
-      //     << mf.linked_mesh().points_of_convex(cv)[mf.linked_mesh().structure_of_convex(cv)->ind_points_of_face(f)[h]] << endl;
-
-      nf = mf.faces_of_convex_on_boundary(cv, boundary);
-      if (nf.card() > 0)
-      {
-	pf1 =     mf.fem_of_element(cv); nbd1 = pf1->nb_dof();
-	pf2 = mfdata.fem_of_element(cv); nbd2 = pf2->nb_dof();
-	pgt = mf.linked_mesh().trans_of_convex(cv);
-	pim = mf.int_method_of_element(cv);
-	if (pf1prec != pf1 || pf2prec != pf2 || pgtprec!=pgt || pimprec != pim)
-	{
-	  pme = mat_elem_product(mat_elem_base(pf1), mat_elem_base(pf2));
-	  pmec = mat_elem(pme, pim, pgt);
-	  pf1prec = pf1; pf2prec = pf2; pgtprec = pgt; pimprec = pim;
-	}
-	for (f << nf; f != ST_NIL; f << nf)
-	{
-	  // cout << "cv = " << cv << " f = " << f << endl;
-
-	  pmec->gen_compute_on_face(t,mf.linked_mesh().points_of_convex(cv), 
-				    f, cv);
-	  // cout << "t = " << t << endl;
-	  base_tensor::iterator p = t.begin();
-	  for (size_type i = 0; i < nbd2; i++)
-	  {
-	    size_type dof2 = mfdata.ind_dof_of_element(cv)[i];
-	    for (size_type j = 0; j < nbd1; j++, ++p)
-	    {
-	      size_type dof1 = mf.ind_dof_of_element(cv)[j];
-	      for (size_type k = 0; k < N; k++) {
-		B[dof1*N + k] += F[dof2*N+k]*(*p);
-	      }
-	    }
-	  }
-	  if (p != t.end()) DAL_THROW(dal::internal_error, "internal error"); 
-	}
-      }
-    }
-  }
-#endif
-  
+    
 }  /* end of namespace getfem.                                             */
 
 
