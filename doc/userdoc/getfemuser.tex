@@ -12,7 +12,7 @@
 %\usepackage{here}
 %\usepackage{pslatex}
 \usepackage{eepic,epic}
-%\usepackage{pslatex}%{\c c}a serait cens{\'e} corriger le pb de fontes dans les pdfs mais le fichier produit est pas beau
+%\usepackage{pslatex}%{ç}a serait cens{é} corriger le pb de fontes dans les pdfs mais le fichier produit est pas beau
 \usepackage[english]{babel}
 \usepackage{alltt}
 
@@ -267,7 +267,7 @@ For parallelepiped domains, it is possible to obtain structured meshes with simp
   getfem::parallelepiped\_regular\_mesh(mesh, N, org, ivect, iref);
 \end{cppcode}
 where \cpp{mesh} is a mesh variable in which the structured mesh will be built, \cpp{N} is the dimension (limited to 4 for simplices, 5 for prisms, unlimited for parallelepipeds), \cpp{org} is of type \cpp{bgeot::base\_node} and represents the origin of the mesh, \cpp{ivect} is an iterator on an array of \cpp{N} vectors to build the parallelepiped domain, \cpp{iref} is an iterator on an array of \cpp{N} integers representing the number of division on each direction. \\[0.5cm]
-For instance, to build a mesh with tetrahedrons for a unit cube with $10\times10\times10$ cells one can write\\[0.5cm]
+For instance, to build a mesh with tetrahedrons for a unit cube with $10×10×10$ cells one can write\\[0.5cm]
 \begin{cppcode}
   getfem::getfem\_mesh mesh; \\
   bgeot::base\_node org(0.0, 0.0, 0.0); \\
@@ -624,7 +624,7 @@ constraints into a new linear system $\tildeH u=\tildeR$, doing some
 additional simplification in order to obtain a ``simple'' constraints
 matrix. On a scalar equation or with a Dirichlet condition on all the components one may use \\[0.5cm]
 \cpp{getfem::asm\_dirichlet\_constraints($\tildeH$, $\tildeR$, mf\_u, mf\_rh, $R$, nbound)},\\[0.5cm]
-where again $R$ is the Dirichlet condition expressed on the finite element method \cpp{mf\_d}. The output matrix $\tildeH$ should be a $nbdof \times nbdof$ (sparse) matrix and $\tildeR$ a $nbdof$ vector where $nbdof$ is the number of degrees of freedom of \cpp{mf\_u}.\\[0.5cm]
+where again $R$ is the Dirichlet condition expressed on the finite element method \cpp{mf\_d}. The output matrix $\tildeH$ should be a $nbdof × nbdof$ (sparse) matrix and $\tildeR$ a $nbdof$ vector where $nbdof$ is the number of degrees of freedom of \cpp{mf\_u}.\\[0.5cm]
 
 \index{GETFEM!getfem::Dirichlet\_nullspace} Then, one should
 call \\[0.5cm]\cpp{ncols = getfem::Dirichlet\_nullspace($\tildeH$, $\tildeN$,
@@ -633,19 +633,19 @@ satisfies the Dirichlet condition, and an orthogonal basis $\tildeN$ of the kern
 $\tildeH$. Hence, the discrete system that must be solved is
 \begin{equation*} (\tildeN'[SM]\tildeN) U_{int}=\tildeN'(B-[SM]U_d),\end{equation*}
 and the solution is $U=\tildeN U_{int}+U_d$.
-The output matrix $\tildeN$ should be a $nbdof \times nbdof$ (sparse) matrix but should be resized to \cpp{ncols} columns. The output vector $U_d$ should be a $nbdof$ vector.
+The output matrix $\tildeN$ should be a $nbdof × nbdof$ (sparse) matrix but should be resized to \cpp{ncols} columns. The output vector $U_d$ should be a $nbdof$ vector.
 A big advantage of this approach is to be generic, and do not prescribed for the finite element method \cpp{mf\_u} to be of Lagrange type. If \cpp{mf\_u} and 
 \cpp{mf\_d} are different, there is implicitly a projection (with respect to the $L^2$ norm) of the data on the finite element \cpp{mf\_u}.
 
 If you want to treat the more general scalar elliptic equation $\Div A(x)\nabla u$, where $A(x)$ is square matrix, you should use
-\cpp{getfem::asm_stiffness_matrix_for_scalar_elliptic(M, mf,mfdata, A)}. The matrix data \cpp{A} should be defined on \cpp{mfdata}. It is expected as a vector representing a $n\times n\times nbdof$ tensor (in Fortran order), where $n$ is the mesh dimension of \cpp{mf}, and $nbdof$ is the number of dof of \cpp{mfdata}.
+\cpp{getfem::asm_stiffness_matrix_for_scalar_elliptic(M, mf,mfdata, A)}. The matrix data \cpp{A} should be defined on \cpp{mfdata}. It is expected as a vector representing a $n× n× nbdof$ tensor (in Fortran order), where $n$ is the mesh dimension of \cpp{mf}, and $nbdof$ is the number of dof of \cpp{mfdata}.
 
 \subsection{Linear Elasticity problem}
 
 the following function assembles the stiffness matrix for linear elasticity\\[0.5cm]
 \index{GETFEM!getfem::asm\_stiffness\_matrix\_for\_linear\_elasticity}
 \cpp{getfem::asm\_stiffness\_matrix\_for\_linear\_elasticity(SM, mef1, mef2, LAMBDA, MU); } \\[0.5cm]
-where \cpp{SM} is a matrix of any type having the right dimension (i.e. here \cpp{me1.nb\_dof()}), \cpp{mef1} is a variable of type \cpp{getfem::mesh\_fem} and should define the finite element method for the solution, \cpp{mef2}  is a variable of type \cpp{getfem::mesh\_fem} (possibly equal to \cpp{mef1}) describing the finite element method on which the Lam{\'e} coefficient are defined, \cpp{LAMBDA} and \cpp{MU} are vectors of the values of Lam{\'e} coefficients on each degree of freedom of \cpp{mef2}. It is important to pay attention to the fact that the integration methods used to compute the elementary matrices is the ones declared in \cpp{mef1} and must be of sufficient order.\\[0.5cm]
+where \cpp{SM} is a matrix of any type having the right dimension (i.e. here \cpp{me1.nb\_dof()}), \cpp{mef1} is a variable of type \cpp{getfem::mesh\_fem} and should define the finite element method for the solution, \cpp{mef2}  is a variable of type \cpp{getfem::mesh\_fem} (possibly equal to \cpp{mef1}) describing the finite element method on which the Lam{é} coefficient are defined, \cpp{LAMBDA} and \cpp{MU} are vectors of the values of Lam{é} coefficients on each degree of freedom of \cpp{mef2}. It is important to pay attention to the fact that the integration methods used to compute the elementary matrices is the ones declared in \cpp{mef1} and must be of sufficient order.\\[0.5cm]
 
 CAUTION : Linear elasticity problem is a vectorial problem, so the target dimension of \cpp{mef1} (see \cpp{mef.set_qdim(Q)}) should be the same as the dimension of the mesh.\\[0.5cm]
 
@@ -688,7 +688,7 @@ something that will be executed for each convex \cpp{cv} of the mesh. The terms
 \cpp{\#1} and \cpp{\#2} refer to the first \cpp{mesh\_fem} and the second one
 (i.e. \cpp{mf} and \cpp{mfdata}).  The instruction \cpp{Z=data(\#2);}
 means that for each convex, the ``tensor'' \cpp{Z} will receive the values of the first data argument provided with \cpp{push\_data},
-at indexes corresponding to the degrees of freedom attached to the convex of the second (\cpp{\#2}) \cpp{mesh_fem} (here, \cpp{Z$\leftarrow$F[mfdata.ind_dof_of_element(cv)]}. The
+at indexes corresponding to the degrees of freedom attached to the convex of the second (\cpp{\#2}) \cpp{mesh_fem} (here, \cpp{Z$\gets$F[mfdata.ind_dof_of_element(cv)]}. The
 part \cpp{V(\#1)+=\ldots} means that the result of the next expression will be
 accumulated into the output vector (provided with \cpp{push\_vec}). Here
 again, \cpp{\#1} means that we will write the result at indexes
@@ -699,6 +699,10 @@ convex: \cpp{comp(Base(\#1).Base(\#2))} is evaluated as a
 2-dimensions tensor, $\int\phi^i \psi^j$, for all degrees of freedom $i$ of \cpp{mf} and $j$ of \cpp{mfdata} attached to the current convex. The next
 part is a reduction operation, \cpp{C(:,j).Z(j)}: each named index
 (here $j$) is summed, i.e. the result is $\sum_j c_{i,j} z_j$.
+
+The integration method used inside \cpp{comp(Base(#1).Base(#2))} is
+the one of the first \cpp{mesh\_fem} referenced (here, the
+\cpp{mesh\_fem \#1}). If you need to use integration methods from another \cpp{mesh\_fem}, you can specify it as the first argument of \cpp{comp}, for example \cpp{comp(\#3, Base(\#1).Grad(\#2))} (New in getfem++-1.7).
 
 An other example is the assembly of the stiffness matrix for a vector Laplacian:
 \begin{cppcode}
@@ -761,6 +765,17 @@ number of degrees of freedom of the second \cpp{mesh_fem}.  The \cpp{comp} part 
 vector Laplacian case.  From this tensor, one evaluates
 $\varepsilon(\varphi^i)_{jk}\varepsilon(\phi^l)_{mn}\psi^p$ via permutations, and finally the
 expression is reduced against the hook tensor.
+
+{\bf availaible operations inside the \cpp{comp} command}
+
+\begin{itemize}
+  \item[\cpp{Base(\#i)}] : evaluate the value of the base functions of the \textit{ith} \cpp{mesh\_fem}
+  \item[\cpp{Grad(\#i)}] : evaluate the value of the gradient of the base functions of the \textit{ith} \cpp{mesh\_fem}
+  \item[\cpp{Hess(\#i)}] : evaluate the value of the Hessian of the base functions of the \textit{ith} \cpp{mesh\_fem}
+  \item[\cpp{Normal()}]: (New in getfem++-1.7) evaluate the unit normal (should not be used for volumic integrations !)
+    \item[\cpp{NonLinear\$x(\#mf1,\ldots\#mfn)}] : (New in getfem++-1).7evaluate the \textit{xth} non-linear term (inserted with \cpp{push\_nonlinear\_term(pnonlinear\_elem\_term)}) using the listed mesh\_fem objects.
+      \item (New in getfem++-1.7) you may reference any data object inside the \cpp{comp} command, and perform reductions inside the \cpp{comp()}. This feature is mostly interesting for speeding up assembly of nonlinear terms (see getfem\_nonlinear\_elasticy.h for an example of use).
+\end{itemize}
 
 {\bf others operations}
 
@@ -1072,16 +1087,16 @@ $$ -div(\sigma) = ...; $$
 with \\
 $$ \ \ \ \sigma = \lambda\mbox{tr}(\varepsilon(u))I + 2\mu\varepsilon(u); \ \ \ \varepsilon(u) = (\nabla u + \nabla u^T)/2. $$
 
-$\varepsilon(u)$ is the small strain tensor, $\sigma$ is the stress tensor, $\lambda$ and $\mu$ are the Lam\'e coefficients. This represents the system of linearized isotropic elasticity. It can also be used with $\lambda=0$ together with the linear incompressible brick to build the Stokes problem.
+$\varepsilon(u)$ is the small strain tensor, $\sigma$ is the stress tensor, $\lambda$ and $\mu$ are the Lamé coefficients. This represents the system of linearized isotropic elasticity. It can also be used with $\lambda=0$ together with the linear incompressible brick to build the Stokes problem.
 
-There is two constructors for this brick. The first one is for constant Lam\'e coefficients:
+There is two constructors for this brick. The first one is for constant Lamé coefficients:
 \begin{alltt}
   getfem::mdbrick_isotropic_linearized_elasticity<MODEL_STATE>
      brick(mf_u, mf_data, lambda, mu, mat_stored);
 \end{alltt}
-where \cpp{mf_u} and \cpp{mf_data} are two valid fem descriptor on the same mesh. \cpp{mf_u} describe the finite element method used for the unknown and \cpp{mf_data} the finite element method used for the Lam\'e coefficients. As they are constant \cpp{mf_data} will be chosen to be a constant fem like $P_0$ or $Q_0$ elements. \cpp{lambda} and \cpp{mu} are two real defining the constant Lam\'e coefficients. \cpp{mat_stored} is an optional parameter (the default value is \cpp{false}) specifying if the stiffness matrix has to be stored in the brick or not. Storing the stiffness matrix in the brick will have a memory cost but allows not to recompute it each time when \cpp{compute_tangent_matrix(...)} is called.
+where \cpp{mf_u} and \cpp{mf_data} are two valid fem descriptor on the same mesh. \cpp{mf_u} describe the finite element method used for the unknown and \cpp{mf_data} the finite element method used for the Lamé coefficients. As they are constant \cpp{mf_data} will be chosen to be a constant fem like $P_0$ or $Q_0$ elements. \cpp{lambda} and \cpp{mu} are two real defining the constant Lamé coefficients. \cpp{mat_stored} is an optional parameter (the default value is \cpp{false}) specifying if the stiffness matrix has to be stored in the brick or not. Storing the stiffness matrix in the brick will have a memory cost but allows not to recompute it each time when \cpp{compute_tangent_matrix(...)} is called.
 
-The second constructor is for non homogeneous Lam\'e coefficients:
+The second constructor is for non homogeneous Lamé coefficients:
 \begin{alltt}
   getfem::mdbrick_isotropic_linearized_elasticity(mf_u, mf_data, lambda, mu, mat_stored);
 \end{alltt}
@@ -1089,7 +1104,7 @@ It has the same form but here \cpp{lambda} and \cpp{mu} are two vectors of type 
 
 The following additional methods are available on this brick:
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
-  \cpp{brick.set_Lame_coeff(lambda, mu)} & with \cpp{lambda} and \cpp{mu} two reals, set the Lam\'e coefficients in the homogeneous case.  \\ \hline
+  \cpp{brick.set_Lame_coeff(lambda, mu)} & with \cpp{lambda} and \cpp{mu} two reals, set the Lamé coefficients in the homogeneous case.  \\ \hline
 
   \cpp{brick.set_coeff(lambda, mu)} & with \cpp{lambda} and \cpp{mu} two vectors of type
   \cpp{MODEL_STATE::vector_type}. Set the coefficients in the non-homogeneous case.  \\ \hline
@@ -1160,7 +1175,7 @@ For the nearly incompressibility condition, the constructor is:
 \begin{alltt}
   getfem::mdbrick_linear_incomp<MODEL_STATE> brick(problem, mf_p, mf_data, epsilon);
 \end{alltt}
-where \cpp{mf_data} is the finite element description on which the penalization parameter is descibed and \cpp{epsilon} is either a (small) real or a vector of type \cpp{gmm::vector<scalar_type>}. In nearly incompressible homogeneous linearized elasticity, one has $\varepsilon = 1 / \lambda$ where $\lambda$ is one of the Lam\'e coefficient.\\
+where \cpp{mf_data} is the finite element description on which the penalization parameter is descibed and \cpp{epsilon} is either a (small) real or a vector of type \cpp{gmm::vector<scalar_type>}. In nearly incompressible homogeneous linearized elasticity, one has $\varepsilon = 1 / \lambda$ where $\lambda$ is one of the Lamé coefficient.\\
 
 The following additional methods are available on this brick:
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
@@ -1241,7 +1256,7 @@ where \cpp{Hyperelastic_Law} is an object representing the considered hyperelast
   getfem::Ciarlet_Geymonat_hyperelastic_law Hyperelastic_Law;
   getfem::Mooney_Rivlin_hyperelastic_law Hyperelastic_Law;
 \end{alltt}
-The Saint-Venant Kirchhoff law is a linearized law defined with the two Lam\'e coefficients, Ciarlet Geymonat law is defined with the two Lam\'e coefficients and an additional coefficient and the Mooney-Rivlin law is defined with two coefficients and is to be used with the large strain incompressibility condition.\\
+The Saint-Venant Kirchhoff law is a linearized law defined with the two Lamé coefficients, Ciarlet Geymonat law is defined with the two Lamé coefficients and an additional coefficient and the Mooney-Rivlin law is defined with two coefficients and is to be used with the large strain incompressibility condition.\\
 
 \cpp{mf_u} and \cpp{mf_data} are two valid fem descriptor on the same mesh. \cpp{mf_u} describe the finite element method used for the unknown and \cpp{mf_data} the finite element method used for the parameters of the selected hyperelastic law. \cpp{k} is a vector of type \cpp{MODEL_STATE::vector_type} defining the parameters on \cpp{mf_data}.
 

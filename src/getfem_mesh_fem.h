@@ -156,7 +156,8 @@ namespace getfem
     dal::bit_vector cvindex;
     dal::dynamic_tree_sorted<size_type> cv_in;
     dal::dynamic_array<dal::bit_vector> faces;
-    
+    /** Return true if the face f of convex c is part of the boundary
+     */
     bool is_elt(size_type c, short_type f) const;
     /** Add a boudary element from the face f of the convex of index
      *          i of the mesh.

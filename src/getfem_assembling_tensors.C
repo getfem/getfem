@@ -316,12 +316,16 @@ namespace getfem {
     The reduction may also involve other ATN_tensors.
   */
 
+  struct mf_comp_vect;
+
   struct mf_comp {
     pnonlinear_elem_term nlt;
-    const mesh_fem* pmf;
+    const mesh_fem* pmf; /* always defined except when op_type == NORMAL */
+    mf_comp_vect *owner;
+				     
     ATN_tensor *data;
     std::vector<const mesh_fem*> auxmf; /* used only by nonlinear terms */
-    typedef enum { BASE=1, GRAD=2, HESS=3, NONLIN=4, DATA=5 } op_type;
+    typedef enum { BASE=1, GRAD=2, HESS=3, NORMAL=4, NONLIN=5, DATA=6 } op_type;
     op_type op; /* the numerical values indicates the number 
 		   of dimensions in the tensor */
     bool vectorize; /* true if vectorization was required (adds
@@ -358,7 +362,11 @@ namespace getfem {
             if (!only_reduced || !reduced(i)) 
               rng.push_back(data->ranges()[i]);
           break;
-        default:
+      case NORMAL:
+	assert(pmf);
+	rng.push_back(pmf->linked_mesh().dim());
+	break;
+      default:
           unsigned d = 0;
           if (!only_reduced || !reduced(d)) rng.push_back(pmf->nb_dof_of_element(cv));
           ++d; 
@@ -382,8 +390,16 @@ namespace getfem {
     { if (i >= reduction.size()) return false; else return reduction[i] != ' '; }
   };
 
+  struct mf_comp_vect : public std::vector<mf_comp> {
+    const mesh_fem *main_pmf;
+  public:
+    mf_comp_vect() : std::vector<mf_comp>(), main_pmf(0) {}
+    void set_main_mf(const mesh_fem &mf) { main_pmf = &mf; }
+    const mesh_fem& get_main_mf() const { return *main_pmf; }
+  };
+
   class ATN_computed_tensor : public ATN_tensor {
-    std::vector<mf_comp> mfcomp;
+    mf_comp_vect mfcomp;
     pmat_elem_computation pmec;
     pmat_elem_type pme;
     pintegration_method pim;
@@ -409,7 +425,7 @@ namespace getfem {
     size_type cv_shape_update;
     //mat_elem_inline_reduction inline_red;
   public:
-    ATN_computed_tensor(std::vector<mf_comp> mfcomp_) : 
+    ATN_computed_tensor(const mf_comp_vect &mfcomp_) : 
       mfcomp(mfcomp_), pmec(0), pme(0), pim(0), pgt(0), data_base(0) { 
       has_inline_reduction = false;
       bool in_data = false;
@@ -506,12 +522,13 @@ namespace getfem {
       pme = NULL;
       for (size_type i=0; i < mfcomp.size(); ++i) {
         if (mfcomp[i].op == mf_comp::DATA) continue;
-	pfem fem = mfcomp[i].pmf->fem_of_element(cv);
+	pfem fem = (mfcomp[i].pmf ? mfcomp[i].pmf->fem_of_element(cv) : NULL);
 	pmat_elem_type pme2 = NULL;
 	switch (mfcomp[i].op) {
 	  case mf_comp::BASE: pme2 = mat_elem_base(fem); break;
 	  case mf_comp::GRAD: pme2 = mat_elem_grad(fem); break;
 	  case mf_comp::HESS: pme2 = mat_elem_hessian(fem); break;
+  	case mf_comp::NORMAL: pme2 = mat_elem_unit_normal(); break;
 	  case mf_comp::NONLIN: {
 	      std::vector<pfem> ftab(1+mfcomp[i].auxmf.size()); 
 	      ftab[0] = fem;
@@ -541,6 +558,8 @@ namespace getfem {
 	tref = mc.data->tensor();
 	tsz *= tref.card();
 	d += tref.ndim();
+      } else if (mc.op == mf_comp::NORMAL) {
+	tsz = add_dim(rng, d++, tsz, tref);
       } else {
         size_type target_dim = mc.pmf->fem_of_element(cv)->target_dim();
         size_type qdim = mc.pmf->get_qdim();
@@ -607,7 +626,7 @@ namespace getfem {
     }
 
     void check_shape_update(size_type cv, dim_type) {
-      const mesh_fem& mf = *mfcomp[0].pmf;
+      const mesh_fem& mf = mfcomp.get_main_mf();
       pintegration_method pim2;
       bgeot::pgeometric_trans pgt2;
       pgt2 = mf.linked_mesh().trans_of_convex(cv);
@@ -688,7 +707,7 @@ namespace getfem {
     }
     
     void exec_(size_type cv, dim_type face) {
-      const mesh_fem& mf = *mfcomp[0].pmf;
+      const mesh_fem& mf = mfcomp.get_main_mf();
       for (unsigned i=0; i < mfcomp.size(); ++i) {
         if (mfcomp[i].op == mf_comp::DATA) {
           size_type fullsz = 1;
@@ -1029,8 +1048,22 @@ namespace getfem {
 
   ATN_tensor* generic_assembly::do_comp() {
     accept(OPEN_PAR, "expecting '('");
-    std::vector<mf_comp> what;
+    mf_comp_vect what;
     bool in_data = false;
+    bool got_main_mf = false;
+    /* the first optinal argument is the "main" mesh_fem, i.e. the one
+       whose integration methods are used, (and whose linked_mesh is
+       used for mf_comp::NORMAL computation If the first argument is
+       not given, then the first mesh_fem referenced inside the
+       comp(...) will be taken.
+    */
+    if (tok_type() == MFREF) {
+      if (tok_mfref_num() >= mftab.size()) 
+	ASM_THROW_PARSE_ERROR("reference to a non-existant mesh_fem #" << tok_mfref_num()+1);
+      what.set_main_mf(*mftab[tok_mfref_num()]); advance();
+      accept(COMMA, "expecting ','");
+      got_main_mf = true;
+    }
     do {
       if (tok_type() != IDENT) ASM_THROW_PARSE_ERROR("expecting Base or Grad or Hess..");
       std::string f = tok(); 
@@ -1048,6 +1081,9 @@ namespace getfem {
 	if (num >= innonlin.size()) ASM_THROW_PARSE_ERROR("NonLin$" << num << " does not exist");
 	std::vector<const mesh_fem*> allmf;
 	pmf = &do_mf_arg(&allmf); what.push_back(mf_comp(allmf, innonlin[num]));
+      } else if (f.compare("Normal") == 0) {
+	accept(OPEN_PAR,"expecting '('"); accept(CLOSE_PAR,"expecting ')'");
+	pmf = 0; what.push_back(mf_comp(pmf, mf_comp::NORMAL, false));
       } else {
         if (vars.find(f) != vars.end()) {
           what.push_back(mf_comp(vars[f]));
@@ -1056,6 +1092,10 @@ namespace getfem {
         } else {
           ASM_THROW_PARSE_ERROR("expecting Base, Grad, vBase, NonLin ...");
         }
+      }
+	
+      if (!got_main_mf && pmf) {
+	what.set_main_mf(*pmf); got_main_mf = true;
       }
       if (!in_data && f[0] != 'v' && pmf->get_qdim() != 1 && f.compare("NonLin")) {
 	ASM_THROW_PARSE_ERROR("Attempt to use a vector mesh_fem as a scalar mesh_fem");
