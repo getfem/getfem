@@ -196,3 +196,4 @@ namespace lmsg
 }
 
 #endif /* LINKMSG_H__ */
+
