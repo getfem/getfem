@@ -108,10 +108,10 @@ namespace bgeot {
       kdtree_node *tn = static_cast<kdtree_node*>(t);
       destroy_tree_(tn->right);
       destroy_tree_(tn->left);
-      delete tn; return;
+      delete tn;
     } else {
       kdtree_leaf *tl = static_cast<kdtree_leaf*>(t);
-      delete tl; return;
+      delete tl;
     }
   }
 

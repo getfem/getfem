@@ -259,7 +259,7 @@ void pb_data::init(void) {
 				 getfem::exact_simplex_im(N));
     break;
   case 1 :
-    sprintf(meth, "FEM_QK(%d,%d)", int(N), K);
+    sprintf(meth, "FEM_QK(%d,%d)", int(N), int(K));
     pfprinc = getfem::fem_descriptor(meth);
     mef.set_finite_element(nn, pfprinc, ppi); 
     mef_data.set_finite_element(nn, pfprinc, ppi);
@@ -267,7 +267,7 @@ void pb_data::init(void) {
     mef_data2.set_finite_element(nn, pfprinc,  ppi);
     break;
   case 2 :
-    sprintf(meth, "FEM_PK_PRISM(%d,%d)", int(N), K);
+    sprintf(meth, "FEM_PK_PRISM(%d,%d)", int(N), int(K));
     pfprinc = getfem::fem_descriptor(meth);
     mef.set_finite_element(nn, pfprinc, ppi);
     mef_data.set_finite_element(nn, pfprinc, ppi);

@@ -108,19 +108,7 @@ namespace dal
   }
 
   bit_vector &bit_vector::operator |=(const bit_vector &bv) {
-    bit_container::iterator it1b = bit_container::begin();
-    bit_container::iterator it1e = bit_container::end();
-    bit_container::const_iterator it2b = bv.bit_container::begin();
-    bit_container::const_iterator it2x = it2b;
-    bit_container::const_iterator it2e = bv.bit_container::end();
-    
-    while (it1b != it1e && it2x != it2e) { *it1b++ |= *it2x++; }
-    while (it2x != it2e) (*(bit_container *)(this))[it2x - it2b] = *it2x++;
-    icard_valid = false;
-    ilast_false = std::min(ilast_false, bv.ilast_false);
-    ifirst_false = std::max(ifirst_false, bv.ifirst_false);
-    ilast_true = std::max(ilast_true, bv.ilast_true);
-    ifirst_true = std::min(ifirst_true, bv.ifirst_true);
+    for (bv_visitor i(bv); !i.finished(); ++i) add(i);
     return *this;
   }
   

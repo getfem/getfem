@@ -343,7 +343,7 @@ namespace getfem
   { for ( ; b != e; ++b) ost << "  " << *b; ost << '\n'; }
 
   void getfem_mesh::write_to_file(std::ostream &ost) const {
-    ost.precision(40);
+    ost.precision(16);
     ost << '\n' << "BEGIN POINTS LIST" << '\n' << '\n';
     bgeot::mesh_point_st_ct::const_iterator b = point_structures().begin();
     bgeot::mesh_point_st_ct::const_iterator e = point_structures().end();

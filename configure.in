@@ -43,7 +43,7 @@ dnl test du c++
 dnl -----------------------------------------------
 
 USER_CXXFLAGS="$CXXFLAGS"
-AC_PROG_CXX(cxx KCC CC cc++ xlC aCC g++ c++ icc)
+AC_PROG_CXX(cxx KCC CC cc++ xlC aCC g++ c++ icpc)
 AC_PROG_CXXCPP
 CXXFLAGS="${USER_CXXFLAGS}"
 SUPLDFLAGS=""
@@ -101,7 +101,7 @@ dnl             CXXFLAGS="$CXXFLAGS -LANG:std  -O3 -ansiW "
 		;;
 	*sun*)
 		echo "Using SUN C++ WorkShop Compiler"
-		CXXFLAGS="$CXXFLAGS +w2 -O3"
+		CXXFLAGS="$CXXFLAGS +w2 -O3 -library=stlport4"
 		;;
 	esac
 	;;
@@ -113,16 +113,24 @@ dnl             CXXFLAGS="$CXXFLAGS -LANG:std  -O3 -ansiW "
  *g++* | c++)
 	GCCVER=`$CXX --version | head -1 | cut -d ' ' -f3`
 	echo "Using the GNU g++ compiler $GCCVER"
-	case $GCCVER in
-          2.95*)
-	  	WSHADOW=""
-		;;
-	  *)
-		WSHADOW="-Wshadow"
-		;;
-	esac
- 	CXXFLAGS="$CXXFLAGS -fmessage-length=0 -ftemplate-depth-40 -pedantic -O3 -Wall -W $WSHADOW -Wpointer-arith -Wcast-qual -Wwrite-strings -Wconversion -Wredundant-decls"
-	SUPLDFLAGS="-rdynamic" # -rdynamic for backtraces
+	AC_CHECK_CXX_FLAG([-O3],CXXFLAGS)
+	AC_CHECK_CXX_FLAG([-Wall -W],CXXFLAGS)
+	AC_CHECK_CXX_FLAG([-fmessage-length=0],CXXFLAGS)
+	AC_CHECK_CXX_FLAG([-ftemplate-depth-40],CXXFLAGS)
+	AC_CHECK_CXX_FLAG([-pedantic],CXXFLAGS)
+	AC_CHECK_CXX_FLAG([-Wshadow],CXXFLAGS)
+	AC_CHECK_CXX_FLAG([-Wpointer-arith],CXXFLAGS)
+	AC_CHECK_CXX_FLAG([-Wcast-qual],CXXFLAGS)
+	AC_CHECK_CXX_FLAG([-Wwrite-strings],CXXFLAGS)
+	AC_CHECK_CXX_FLAG([-Wconversion],CXXFLAGS)
+	AC_CHECK_CXX_FLAG([-Wredundant-decls],CXXFLAGS)
+	dnl -Wno-long-double fixes a warning on Darwin
+	AC_CHECK_CXX_FLAG([-Wno-long-double],CXXFLAGS)
+	dnl -rdynamic used for backtraces
+	AC_CHECK_CXX_FLAG([-rdynamic],SUPLDFLAGS)
+
+dnl 	CXXFLAGS="$CXXFLAGS -fmessage-length=0 -ftemplate-depth-40 -pedantic -O3 -Wall -W $WSHADOW -Wpointer-arith -Wcast-qual -Wwrite-strings -Wconversion -Wredundant-decls -Wno-long-double"
+dnl	SUPLDFLAGS="-rdynamic" # -rdynamic for backtraces
 	;;
  icc | icpc)
 	echo "Using INTEL icc"
@@ -144,6 +152,7 @@ dnl ------------------------------------------------------------------------
 
 dnl AC_DISABLE_FAST_INSTALL
 
+AM_DISABLE_SHARED
 AM_ENABLE_STATIC
 
 dnl AM_PROG_LIBTOOL
@@ -231,7 +240,7 @@ AC_CACHE_CHECK([for fenv.h and feenableexcept], ac_have_feenableexcept, [
                 ],
                 [ feenableexcept(FE_DIVBYZERO | FE_INVALID); ],
                 [ ac_have_feenableexcept="yes" ],
-                [ ac_have_feenableexcept=="no"  ])])
+                [ ac_have_feenableexcept="no"  ])])
 if test "x$ac_have_feenableexcept" = "xyes"; then
         AC_DEFINE_UNQUOTED(HAVE_FEENABLEEXCEPT,1,[glibc floating point exceptions control])
 fi;
@@ -263,6 +272,8 @@ AC_OUTPUT
 chmod +x getfem-config-notinstalled
 chmod +x getfem-config
 chmod +x gmm-config
+echo "If you want to build the shared library of getfem++, use --enable-shared"
+echo "(by default, only the static one will be built)"
 if test "x$useQDlib" = "xyes" ; then  
   echo "Using the QD library:"
   echo "   high precision (${QD_PREC}-double precision) polynomials and integration methods are enabled";

@@ -498,10 +498,11 @@ namespace getfem {
         size_type lnum = cv_simplexes[snum].inodes[i];
         if (nused[lnum] == size_type(-1)) {
           nused[lnum] = sc->nodes.size(); sc->nodes.push_back(cv_nodes[lnum]);
-	  for (size_type k=0; k < sc->nodes.back().pt_ref.size(); ++k) {
+	  /*for (size_type k=0; k < sc->nodes.back().pt_ref.size(); ++k) {
 	    assert(!isnan(sc->nodes.back().pt[k]));
 	    assert(!isnan(sc->nodes.back().pt_ref[k]));
 	  }
+	  */
           points_cnt++;
         }
         cv_simplexes[snum].inodes[i] = nused[lnum];

@@ -491,11 +491,6 @@ namespace getfem {
       vv[i][0] = i; vv[i][1] = i/23.; //vv[i][2] = i;
     }
   }
-  template <class V> void tref(std::vector<V>& vv) {
-    const V a(vv[0]);
-    const V b(vv[0]);
-    printf(" ref counted: %p==%p ?\n",&(*a.begin()),&(*b.begin()));
-  }
 
   template <class V> void rrun(std::vector<V>& vv) {
     chrono c;
@@ -509,7 +504,6 @@ namespace getfem {
 	 << vv.capacity()*((char*)&vv[1] - (char*)&vv[0]) << " + "
          << vv.size() * vv[0].size()*((char*)&vv[1][0] - (char*)&vv[0][0]) 
 	 << " bytes\n";
-    tref(vv);
 
     c.init().tic();
     
@@ -561,7 +555,7 @@ namespace getfem {
     }
     cout << " operator -=: " << c.toc().cpu() << " sec\n";
     for (size_type i=0; i < (vv.size()<4 ? vv.size() : 4); ++i) {
-      printf("V[%d]@%p, V[%d][0]@%p\n", i, &vv[i], i, &vv[i][0]);
+      printf("V[%d]@%p, V[%d][0]@%p\n", int(i), &vv[i], int(i), &vv[i][0]);
     }
 
     typedef bgeot::PT<V> PV;

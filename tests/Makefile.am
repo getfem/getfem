@@ -3,6 +3,7 @@ check_PROGRAMS = \
 	dynamic_tas        \
 	test_small_vector  \
 	test_kdtree	   \
+	test_rtree	   \
 	test_interpolation \
 	elasto_statique    \
 	geo_trans          \
@@ -29,6 +30,7 @@ dynamic_array_SOURCES = dynamic_array.C
 dynamic_tas_SOURCES = dynamic_tas.C 
 test_small_vector_SOURCES = test_small_vector.C
 test_kdtree_SOURCES = test_kdtree.C
+test_rtree_SOURCES = test_rtree.C
 test_assembly_SOURCES = test_assembly.C
 laplacian_SOURCES = laplacian.C
 test_interpolation_SOURCES = test_interpolation.C
@@ -54,6 +56,7 @@ TESTS = \
 	$(top_srcdir)/tests/dynamic_tas.pl        \
 	$(top_srcdir)/tests/test_small_vector.pl  \
 	$(top_srcdir)/tests/test_kdtree.pl        \
+	$(top_srcdir)/tests/test_rtree.pl         \
 	$(top_srcdir)/tests/test_interpolation.pl \
 	$(top_srcdir)/tests/test_mat_elem.pl      \
 	$(top_srcdir)/tests/test_assembly.pl      \
@@ -76,6 +79,7 @@ EXTRA_DIST = \
 	dynamic_tas.pl                    \
 	test_small_vector.pl		  \
 	test_kdtree.pl                    \
+	test_rtree.pl                     \
 	test_interpolation.pl             \
 	test_assembly.pl                  \
 	laplacian.pl                      \

@@ -1,3 +1,9 @@
 #!/bin/sh
 getfemconf=`echo $0 | sed -e s/-notinstalled//`
-exec $getfemconf --src $*
+if [ -x $getfemconf ]; then
+    exec $getfemconf --src $*
+else
+    echo "$getfemconf not executable!"
+    echo "please, do a chmod +x $getfemconf"
+    exit 1
+fi

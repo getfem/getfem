@@ -168,25 +168,25 @@ const std::vector<size_type>& CUBE4D_D() {
 static void check_orders() {
   char s[512];
   for (std::vector<size_type>::const_iterator it = TRIANGLE_D().begin(); it != TRIANGLE_D().end(); ++it) {
-    sprintf(s,"IM_TRIANGLE(%d)",*it); check_im_order(s);
+    sprintf(s,"IM_TRIANGLE(%d)",int(*it)); check_im_order(s);
   }
   for (std::vector<size_type>::const_iterator it = TETRA_D().begin(); it != TETRA_D().end(); ++it) {
-    sprintf(s,"IM_TETRAHEDRON(%d)",*it); check_im_order(s);
+    sprintf(s,"IM_TETRAHEDRON(%d)",int(*it)); check_im_order(s);
   }
   for (std::vector<size_type>::const_iterator it = QUAD_D().begin(); it != QUAD_D().end(); ++it) {
-    sprintf(s,"IM_QUAD(%d)",*it); check_im_order(s);
+    sprintf(s,"IM_QUAD(%d)",int(*it)); check_im_order(s);
   }
   for (std::vector<size_type>::const_iterator it = TETRA_D().begin(); it != TETRA_D().end(); ++it) {
-    sprintf(s,"IM_TETRAHEDRON(%d)",*it); check_im_order(s);
+    sprintf(s,"IM_TETRAHEDRON(%d)",int(*it)); check_im_order(s);
   }
   for (std::vector<size_type>::const_iterator it = SIMPLEX4_D().begin(); it != SIMPLEX4_D().end(); ++it) {
-    sprintf(s,"IM_SIMPLEX4D(%d)",*it); check_im_order(s);
+    sprintf(s,"IM_SIMPLEX4D(%d)",int(*it)); check_im_order(s);
   }
   for (std::vector<size_type>::const_iterator it = HEXA_D().begin(); it != HEXA_D().end(); ++it) {
-    sprintf(s,"IM_HEXAHEDRON(%d)",*it); check_im_order(s);
+    sprintf(s,"IM_HEXAHEDRON(%d)",int(*it)); check_im_order(s);
   }
   for (std::vector<size_type>::const_iterator it = CUBE4D_D().begin(); it != CUBE4D_D().end(); ++it) {
-    sprintf(s,"IM_CUBE4D(%d)",*it); check_im_order(s);
+    sprintf(s,"IM_CUBE4D(%d)",int(*it)); check_im_order(s);
   }
 }
 
@@ -194,21 +194,21 @@ static void check_methods() {
   char s[512];
   getfem::pintegration_method ppi;
   for (size_type k=0; k < 15; ++k) {
-    sprintf(s,"IM_GAUSS1D(%d)",k); ppi = getfem::int_method_descriptor(s);
+    sprintf(s,"IM_GAUSS1D(%d)",int(k)); ppi = getfem::int_method_descriptor(s);
     check_method(s,ppi,k,bgeot::simplex_geotrans(1,1));
-    sprintf(s,"IM_NC(1,%d)",k); ppi = getfem::int_method_descriptor(s);
+    sprintf(s,"IM_NC(1,%d)",int(k)); ppi = getfem::int_method_descriptor(s);
     check_method(s,ppi,k,bgeot::simplex_geotrans(1,1));
     sprintf(s,"IM_EXACT_SIMPLEX(1)"); ppi = getfem::int_method_descriptor(s);
     check_method(s,ppi,k,bgeot::simplex_geotrans(1,1));
   }
   for (size_type d=2; d < 5; ++d) {
     for (size_type k=0; k < 7-d; ++k) {
-      sprintf(s,"IM_EXACT_SIMPLEX(%d)",d); ppi = getfem::int_method_descriptor(s);
+      sprintf(s,"IM_EXACT_SIMPLEX(%d)",int(d)); ppi = getfem::int_method_descriptor(s);
       check_method(s,ppi,k,bgeot::simplex_geotrans(d,1));
     }
   }
   for (std::vector<size_type>::const_iterator it = TRIANGLE_D().begin(); it != TRIANGLE_D().end(); ++it) {
-    sprintf(s,"IM_TRIANGLE(%d)",*it); ppi = getfem::int_method_descriptor(s);
+    sprintf(s,"IM_TRIANGLE(%d)",int(*it)); ppi = getfem::int_method_descriptor(s);
     for (size_type k=1; k <= *it; ++k) { 
       check_method(s,ppi,k,bgeot::simplex_geotrans(2,1));
     }
@@ -216,19 +216,19 @@ static void check_methods() {
   for (size_type d=2; d < 5; ++d) {
     for (size_type i=1; i < 8; ++i) {
       for (size_type k=0; k < std::min(i,5-d); ++k) {
-	sprintf(s,"IM_NC(%d,%d)",d,i); ppi = getfem::int_method_descriptor(s);
+	sprintf(s,"IM_NC(%d,%d)",int(d),int(i)); ppi = getfem::int_method_descriptor(s);
 	check_method(s,ppi,k,bgeot::simplex_geotrans(d,1));
       }
     }
   }
   for (std::vector<size_type>::const_iterator it = TETRA_D().begin(); it != TETRA_D().end(); ++it) {
-    sprintf(s,"IM_TETRAHEDRON(%d)",*it); ppi = getfem::int_method_descriptor(s);
+    sprintf(s,"IM_TETRAHEDRON(%d)",int(*it)); ppi = getfem::int_method_descriptor(s);
     for (size_type k=1; k <= *it; ++k) { 
       check_method(s,ppi,k,bgeot::simplex_geotrans(3,1));
     }
   }
   for (std::vector<size_type>::const_iterator it = SIMPLEX4_D().begin(); it != SIMPLEX4_D().end(); ++it) {
-    sprintf(s,"IM_SIMPLEX4D(%d)",*it); ppi = getfem::int_method_descriptor(s);
+    sprintf(s,"IM_SIMPLEX4D(%d)",int(*it)); ppi = getfem::int_method_descriptor(s);
     for (size_type k=1; k <= *it; ++k) { 
       check_method(s,ppi,k,bgeot::simplex_geotrans(4,1));
     }
@@ -243,41 +243,42 @@ static void check_methods() {
     default: kmax = 3; break;
     }
     for (size_type k=0; k < kmax; ++k) {
-      sprintf(s,"IM_EXACT_PARALLELEPIPED(%d)",d); ppi = getfem::int_method_descriptor(s);
+      sprintf(s,"IM_EXACT_PARALLELEPIPED(%d)",int(d)); ppi = getfem::int_method_descriptor(s);
       check_method(s,ppi,k,bgeot::parallelepiped_linear_geotrans(d));
-      sprintf(s,"IM_GAUSS_PARALLELEPIPED(%d,%d)",d,k); ppi = getfem::int_method_descriptor(s);
+      sprintf(s,"IM_GAUSS_PARALLELEPIPED(%d,%d)",int(d),int(k)); ppi = getfem::int_method_descriptor(s);
       check_method(s,ppi,k,bgeot::parallelepiped_linear_geotrans(d));
-      sprintf(s,"IM_NC_PARALLELEPIPED(%d,%d)",d,k); ppi = getfem::int_method_descriptor(s);
+      sprintf(s,"IM_NC_PARALLELEPIPED(%d,%d)",int(d),int(k)); ppi = getfem::int_method_descriptor(s);
       check_method(s,ppi,k,bgeot::parallelepiped_linear_geotrans(d));
       if (d>1) {
-	sprintf(s,"IM_PRODUCT(IM_GAUSS_PARALLELEPIPED(%d,%d),IM_NC(1,%d))",d-1,k,k); ppi = getfem::int_method_descriptor(s);
+	sprintf(s,"IM_PRODUCT(IM_GAUSS_PARALLELEPIPED(%d,%d),IM_NC(1,%d))",int(d-1),int(k),int(k)); 
+	ppi = getfem::int_method_descriptor(s);
 	check_method(s,ppi,k,bgeot::parallelepiped_linear_geotrans(d));
       }
     }
   }
   for (std::vector<size_type>::const_iterator it = QUAD_D().begin(); it != QUAD_D().end(); ++it) {
-    sprintf(s,"IM_QUAD(%d)",*it); ppi = getfem::int_method_descriptor(s);
+    sprintf(s,"IM_QUAD(%d)",int(*it)); ppi = getfem::int_method_descriptor(s);
     for (size_type k=1; k <= size_type(sqrt(scalar_type(*it))); k++) { 
       check_method(s,ppi,k,bgeot::parallelepiped_linear_geotrans(2));
     }
   }
   for (std::vector<size_type>::const_iterator it = HEXA_D().begin(); it != HEXA_D().end(); ++it) {
-    sprintf(s,"IM_HEXAHEDRON(%d)",*it); ppi = getfem::int_method_descriptor(s);
+    sprintf(s,"IM_HEXAHEDRON(%d)",int(*it)); ppi = getfem::int_method_descriptor(s);
     check_method(s,ppi,size_type(::pow(scalar_type(*it),1./3.)), bgeot::parallelepiped_linear_geotrans(3));
   }
   for (std::vector<size_type>::const_iterator it = CUBE4D_D().begin(); it != CUBE4D_D().end(); ++it) {
-    sprintf(s,"IM_CUBE4D(%d)", *it); ppi = getfem::int_method_descriptor(s);
+    sprintf(s,"IM_CUBE4D(%d)", int(*it)); ppi = getfem::int_method_descriptor(s);
     check_method(s,ppi,1,bgeot::parallelepiped_linear_geotrans(4));
   }
 
   for (size_type d=2; d < 5; ++d) {
     for (size_type k=0; k < 7-d; ++k) {
-      sprintf(s,"IM_EXACT_PRISM(%d)",d);
+      sprintf(s,"IM_EXACT_PRISM(%d)",int(d));
       ppi = getfem::int_method_descriptor(s);
       
       check_method(s, getfem::int_method_descriptor(s), k,
 		   bgeot::prism_linear_geotrans(d));
-      sprintf(s,"IM_NC_PRISM(%d,%d)",d,k);
+      sprintf(s,"IM_NC_PRISM(%d,%d)", int(d),int(k));
       ppi = getfem::int_method_descriptor(s);
       check_method(s, getfem::int_method_descriptor(s), k,
 		   bgeot::prism_geotrans(d, std::max(k, size_type(1))));

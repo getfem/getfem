@@ -53,14 +53,14 @@ int main(void) {
 #   endif
 
 #   if defined(__sgi) && !defined(__GNUC__)
-    cout << "Sgi compiler " << COMPILER_VERSION_ << endl;
+    cout << "Sgi compiler " << _COMPILER_VERSION << endl;
 #   endif
 
 #   if defined(__SUNPRO_CC)
     cout << "Sun pro compiler\n";
 #   endif
 
-#   if defined(BORLANDC____)
+#   if defined(__BORLANDC__)
     cout << "Borland compiler\n";
 #   endif
 
