@@ -38,6 +38,31 @@
 
 #include <complex>
 
+#ifndef M_PI
+# define	M_E		2.7182818284590452354       /* e          */
+# define	M_LOG2E		1.4426950408889634074       /* 1/ln(2)    */
+# define	M_LOG10E	0.43429448190325182765      /* 1/ln(10)   */
+# define	M_LN2		0.69314718055994530942      /* ln(2)      */
+# define	M_LN10		2.30258509299404568402      /* ln(10)     */
+# define	M_PI		3.14159265358979323846      /* pi         */
+# define	M_PI_2		1.57079632679489661923      /* pi/2       */
+# define	M_PI_4		0.78539816339744830962      /* pi/4       */
+# define	M_1_PI		0.31830988618379067154      /* 1/pi       */
+# define	M_2_PI		0.63661977236758134308      /* 2/pi       */
+# define	M_2_SQRTPI	1.12837916709551257390      /* 2/sqrt(pi) */
+# define	M_SQRT2		1.41421356237309504880      /* sqrt(2)    */
+# define	M_SQRT1_2	0.70710678118654752440      /* sqrt(2)/2  */
+#endif 
+
+#ifndef M_PIl
+# define M_PIl       3.1415926535897932384626433832795029L  /* pi         */
+# define M_PI_2l     1.5707963267948966192313216916397514L  /* pi/2       */
+# define M_PI_4l     0.7853981633974483096156608458198757L  /* pi/4       */
+# define M_1_PIl     0.3183098861837906715377675267450287L  /* 1/pi       */
+# define M_2_PIl     0.6366197723675813430755350534900574L  /* 2/pi       */
+# define M_2_SQRTPIl 1.1283791670955125738961589031215452L  /* 2/sqrt(pi) */
+#endif
+
 namespace gmm {
 
   typedef size_t size_type;
@@ -310,9 +335,40 @@ namespace gmm {
   /*		Operations on scalars                         		  */
   /* ******************************************************************** */
 
-  using dal::sqr;  using dal::abs;  using dal::abs_sqr;  using dal::neg;
-  using dal::pos;  using dal::sgn;  using dal::random;   using dal::irandom;
-  using dal::conj; using dal::real; using dal::imag;     using dal::sqrt;
+  template <typename T> inline T sqr(T a) { return a * a; }
+  template <typename T> inline T abs(T a) { return (a < T(0)) ? T(-a) : a; }
+  template <typename T> inline T abs(std::complex<T> a) { return std::abs(a); }
+  template <typename T> inline T abs_sqr(T a) { return a*a; }
+  template <typename T> inline T abs_sqr(std::complex<T> a)
+  { return gmm::sqr(a.real()) + gmm::sqr(a.imag()); }
+  template <typename T> inline T pos(T a) { return (a < T(0)) ? T(0) : a; }
+  template <typename T> inline T neg(T a) { return (a < T(0)) ? T(-a) : T(0); }
+  template <typename T> inline T sgn(T a) { return (a < T(0)) ? T(-1) : T(1); }
+  inline double random() { return double(rand())/(RAND_MAX+0.5); }
+  template <typename T> inline T random(T)
+  { return T(rand()*2.0)/(T(RAND_MAX)+T(1)/T(2)) - T(1); }
+  template <typename T> inline std::complex<T> random(std::complex<T>)
+  { return std::complex<T>(gmm::random(T()), gmm::random(T())); }
+  template <typename T> inline T irandom(T max)
+  { return T(gmm::random() * max); }
+  template <typename T> inline T conj(T a) { return a; }
+  template <typename T> inline std::complex<T> conj(std::complex<T> a)
+  { return std::conj(a); }
+  template <typename T> inline T real(T a) { return a; }
+  template <typename T> inline T real(std::complex<T> a) { return a.real(); }
+  template <typename T> inline T imag(T ) { return T(0); }
+  template <typename T> inline T imag(std::complex<T> a) { return a.imag(); }  
+  template <typename T> inline T sqrt(T a) { return ::sqrt(a); }
+  template <typename T> inline std::complex<T> sqrt(std::complex<T> a) {
+    T x = a.real(), y = a.imag();
+    if (x == T(0)) {
+      T t = ::sqrt(gmm::abs(y) / T(2));
+      return std::complex<T>(t, y < T(0) ? -t : t);
+    }
+    T t = ::sqrt(T(2) * (gmm::abs(a) + gmm::abs(x))), u = t / T(2);
+    return x > T(0) ? std::complex<T>(u, y / t)
+      : std::complex<T>(gmm::abs(y) / t, y < T(0) ? -u : u);
+  }
   using std::swap;
 
 

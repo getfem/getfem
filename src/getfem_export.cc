@@ -123,7 +123,7 @@ namespace getfem
     for (unsigned i=1; i < c.size(); ++i) {
       const base_node d = c[i] - P0;
       for (unsigned j=0; j < N; ++j) 
-        if (dal::abs(d[j]) > 1e-7*h[j] && dal::abs(d[j] - h[j]) > 1e-7*h[j]) 
+        if (gmm::abs(d[j]) > 1e-7*h[j] && gmm::abs(d[j] - h[j]) > 1e-7*h[j]) 
           return false;
     }
     return true;

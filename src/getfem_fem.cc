@@ -85,7 +85,7 @@ namespace getfem
       pf()->hess_base_value(xref(), tt);
     }
     bgeot::multi_index mim(3);
-    mim[2] = dal::sqr(tt.sizes()[2]); mim[1] = tt.sizes()[1];
+    mim[2] = gmm::sqr(tt.sizes()[2]); mim[1] = tt.sizes()[1];
     mim[0] = tt.sizes()[0];
     tt.adjust_sizes(mim);
     t.mat_transp_reduction(tt, B3(), 2);
@@ -380,7 +380,7 @@ namespace getfem
     dof_types_[nb] = d;
     cvs_node.add_point_adaptative(nb, short_type(-1));
     for (short_type f = 0; f < cvs_node.nb_faces(); ++f)
-      if (all_faces || dal::abs(cvr->is_in_face(f, pt)) < 1.0E-7)
+      if (all_faces || gmm::abs(cvr->is_in_face(f, pt)) < 1.0E-7)
 	cvs_node.add_point_adaptative(nb, f);
     pspt_valid = false;
   }

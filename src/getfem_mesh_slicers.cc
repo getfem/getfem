@@ -162,7 +162,7 @@ namespace getfem {
       }
     }
     scalar_type d = gmm::lu_det(M);
-    if (dal::abs(d) < pow(1e-6,s.dim())) {
+    if (gmm::abs(d) < pow(1e-6,s.dim())) {
       cout.precision(10);
       cout << "!!Flat (" << d << ") :";
       for (size_type i=0; i < s.dim()+1; ++i) cout << " " << nodes[s.inodes[i]].pt;
@@ -396,7 +396,7 @@ namespace getfem {
       pf->interpolation(ctx, coeff, v, mfU->pmf->get_qdim());
       Uval[i] = v[0];
       // optimisable -- les bit_vectors sont lents..
-      pt_bin[i] = (dal::abs(Uval[i] - val) < EPS * val_scaling);
+      pt_bin[i] = (gmm::abs(Uval[i] - val) < EPS * val_scaling);
       pt_in[i] = (Uval[i] - val < 0); if (orient>0) pt_in[i] = !pt_in[i]; 
       pt_in[i] = pt_in[i] || pt_bin[i];
       //cerr << "cv=" << cv << ", node["<< i << "]=" << nodes[i].pt << ", Uval[i]=" << Uval[i] << ", pt_in[i]=" << pt_in[i] << ", pt_bin[i]=" << pt_bin[i] << endl;
@@ -475,7 +475,7 @@ namespace getfem {
       for (size_type i=0; i < s.dim(); ++i) 
 	for (size_type j=0; j < s.dim(); ++j)
 	  M(i,j) = ms.nodes[s.inodes[i+1]].pt[j] - ms.nodes[s.inodes[0]].pt[j];
-      scalar_type v = dal::abs(gmm::lu_det(M));
+      scalar_type v = gmm::abs(gmm::lu_det(M));
       for (size_type d=2; d <= s.dim(); ++d) v /= d;
       a += v;
     }
@@ -568,7 +568,7 @@ namespace getfem {
     for (size_type i=0; i < pts.size(); ++i) {
       faces[i].reset();      
       for (size_type f=0; f < cvr->structure()->nb_faces(); ++f)
-        faces[i][f] = (dal::abs(cvr->is_in_face(f, pts[i])) < 1e-10);
+        faces[i][f] = (gmm::abs(cvr->is_in_face(f, pts[i])) < 1e-10);
     }
   }
 

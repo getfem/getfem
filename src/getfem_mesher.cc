@@ -138,7 +138,7 @@ namespace getfem {
 	std::copy(P.const_begin(), P.const_begin()+N, G.begin()+i*N);
       }
       gmm::mult(G, W, GW);
-      return dal::abs(1./gmm::condition_number(GW));
+      return gmm::abs(1./gmm::condition_number(GW));
     }
 
     scalar_type worst_element, best_element;
@@ -237,9 +237,9 @@ namespace getfem {
 	    }
 	  }
 	}
-	if (noisy > 0 && dal::abs(lu_det(S)) < 1e-10)
+	if (noisy > 0 && gmm::abs(lu_det(S)) < 1e-10)
 	  cout << "Element " << i << " is very bad, det = "
-	       << dal::abs(lu_det(S)) << "\n";
+	       << gmm::abs(lu_det(S)) << "\n";
 	gmm::mult(S,W,SW);
       }
       
@@ -359,7 +359,7 @@ namespace getfem {
       scalar_type d = dist.grad(X, G);
       size_type it(0);
       if (d > 0.0)
-	while (dal::abs(d) > 1e-10) {
+	while (gmm::abs(d) > 1e-10) {
 	  if (++it > 10000)
 	    DAL_THROW(failure_error, "Object empty, or bad signed distance");
 // 	  cout << "iter " << it << " X = " << X << " dist = " << d << 
@@ -373,7 +373,7 @@ namespace getfem {
       base_small_vector G;
       scalar_type d = dist.grad(X, G);
       size_type it(0);
-      while (dal::abs(d) > 1e-10) {
+      while (gmm::abs(d) > 1e-10) {
 	if (++it > 10000)
 	    DAL_THROW(failure_error,
 		      "Object empty, or bad signed distance");
@@ -390,7 +390,7 @@ namespace getfem {
     void constraint_projection(base_node &X, size_type cnum) {
       base_small_vector G;
       scalar_type d = constraints[cnum]->grad(X, G);
-      while (dal::abs(d) > 1e-10) {
+      while (gmm::abs(d) > 1e-10) {
 	gmm::add(gmm::scaled(G, -d), X);
 	d=constraints[cnum]->grad(X, G);
       }

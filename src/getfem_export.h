@@ -231,7 +231,7 @@ namespace getfem {
       for (size_type i=0; i < nb_val; ++i) {
 	write_vec(U.begin() + i*Q);
       }
-    } else if (Q == dal::sqr(dim_)) {
+    } else if (Q == gmm::sqr(dim_)) {
       /* tensors : coef are supposed to be stored in FORTRAN order 
          in the VTK file, they are written with C (row major) order
        */

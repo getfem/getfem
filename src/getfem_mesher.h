@@ -86,7 +86,7 @@ namespace getfem {
     virtual scalar_type operator()(const base_node &P,
 				   dal::bit_vector &bv) const {
       scalar_type d = xon - bgeot::vect_sp(P,n);
-      bv[id] = (dal::abs(d) < SEPS);
+      bv[id] = (gmm::abs(d) < SEPS);
       return d;
     }
     virtual void register_constraints(std::vector<const
@@ -116,7 +116,7 @@ namespace getfem {
     virtual scalar_type operator()(const base_node &P,
 				   dal::bit_vector &bv) const {
       scalar_type d = (*this)(P);
-      bv[id] = (dal::abs(d) < SEPS);
+      bv[id] = (gmm::abs(d) < SEPS);
       return d;
     }
     virtual void register_constraints(std::vector<const
@@ -150,7 +150,7 @@ namespace getfem {
     virtual scalar_type operator()(const base_node &P,
 				   dal::bit_vector &bv) const {
       scalar_type d = bgeot::vect_dist2(P,x0)-R;
-      bv[id] = (dal::abs(d) < SEPS);
+      bv[id] = (gmm::abs(d) < SEPS);
       return d;
     }
     virtual scalar_type operator()(const base_node &P) const
@@ -513,7 +513,7 @@ class mesher_ellipse : public mesher_signed_distance { // TODO
     virtual scalar_type operator()(const base_node &P,
 				   dal::bit_vector& bv) const {
       scalar_type d = this->operator()(P);
-      bv[id] = (dal::abs(d) < SEPS);
+      bv[id] = (gmm::abs(d) < SEPS);
       return d;
     }
     scalar_type grad(const base_node &P, base_small_vector &G) const
@@ -542,7 +542,7 @@ class mesher_ellipse : public mesher_signed_distance { // TODO
     virtual scalar_type operator()(const base_node &P, dal::bit_vector&bv)
       const {
       scalar_type d = this->operator()(P);
-      bv[id] = (dal::abs(d) < SEPS);
+      bv[id] = (gmm::abs(d) < SEPS);
       return d;
     }
     scalar_type grad(const base_node &P, base_small_vector &G) const {

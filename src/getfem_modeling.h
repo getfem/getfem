@@ -446,12 +446,12 @@ namespace getfem {
 	else gmm::resize(coeffs_,  mf_data.nb_dof());
       }
       else {
-	if (gmm::vect_size(coeffs) == dal::sqr(N)) {
-	  gmm::resize(coeffs_, dal::sqr(N));
+	if (gmm::vect_size(coeffs) == gmm::sqr(N)) {
+	  gmm::resize(coeffs_, gmm::sqr(N));
 	  homogeneous = true;
 	}
 	else
-	  gmm::resize(coeffs_, mf_data.nb_dof() * dal::sqr(N));
+	  gmm::resize(coeffs_, mf_data.nb_dof() * gmm::sqr(N));
       }
       gmm::copy(coeffs, coeffs_);
       this->force_recompute();
@@ -487,7 +487,7 @@ namespace getfem {
    void mdbrick_scalar_elliptic<MODEL_STATE>::compute_K(void) {
     gmm::clear(K);
     gmm::resize(K, this->nb_dof(), this->nb_dof());
-    size_type n = laplacian ? 1 : dal::sqr(mf_u.linked_mesh().dim());
+    size_type n = laplacian ? 1 : gmm::sqr(mf_u.linked_mesh().dim());
     VECTOR coeffs(n * mf_data.nb_dof());
     if (homogeneous) {
       for (size_type i = 0; i < mf_data.nb_dof(); ++i)
@@ -850,10 +850,10 @@ namespace getfem {
       VECTOR wave_number2(mf_data.nb_dof());
       if (homogeneous)
 	std::fill(wave_number2.begin(), wave_number2.end(),
-		  value_type(dal::sqr(wave_number[0])));
+		  value_type(gmm::sqr(wave_number[0])));
       else
 	for (size_type i=0; i < this->nb_dof(); ++i)
-	  wave_number2[i] = dal::sqr(wave_number[i]);
+	  wave_number2[i] = gmm::sqr(wave_number[i]);
       
       asm_Helmholtz(K, mim, mf_u, mf_data, wave_number2);
       this->computed();
@@ -1051,7 +1051,7 @@ namespace getfem {
       nbd = mf_u.nb_dof();
       gmm::clear(K);
       gmm::resize(K, this->nb_dof(), this->nb_dof());
-      size_type N2 = dal::sqr(mf_u.get_qdim());
+      size_type N2 = gmm::sqr(mf_u.get_qdim());
       VECTOR vQ(mf_data.nb_dof() * N2);
       if (homogeneous) {
 	for (size_type i=0; i < mf_data.nb_dof(); ++i) {
@@ -1097,7 +1097,7 @@ namespace getfem {
 
     void set_Q(const VECTOR &q) {
       homogeneous = false;
-      gmm::resize(Q, mf_data.nb_dof()*dal::sqr(this->mesh_fems[num_fem]->get_qdim())); 
+      gmm::resize(Q, mf_data.nb_dof()*gmm::sqr(this->mesh_fems[num_fem]->get_qdim())); 
       gmm::copy(q, Q);
       this->force_recompute();
     }
@@ -1315,7 +1315,7 @@ namespace getfem {
       VECTOR V(nd);
 
       if (!with_H) {
-	gmm::resize(H_, dal::sqr(Q) * ndd);
+	gmm::resize(H_, gmm::sqr(Q) * ndd);
 	gmm::clear(H_);
 	for (size_type i=0; i < ndd; ++i)
 	  for (size_type q=0; q < Q; ++q)  H_[i*Q*Q+q*Q+q] = value_type(1);

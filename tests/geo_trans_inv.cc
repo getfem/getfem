@@ -44,7 +44,7 @@ base_matrix random_base(size_type N) {
       base_node n(N); gmm::fill_random(n); n /= gmm::vect_norm2(n);
       for (size_type j=0; j < N; ++j) M(i,j) = n[j];
     }
-  } while (dal::abs(gmm::lu_det(M)) < 0.7);
+  } while (gmm::abs(gmm::lu_det(M)) < 0.7);
   return M;
 }
 
@@ -84,14 +84,14 @@ void test_inversion(bgeot::pgeometric_trans pgt, bool verbose) {
   cout << "Testing geotrans_inv with " << bgeot::name_of_geometric_trans(pgt) << "\n";
   base_matrix M = random_base(N);
   base_node translat(N); gmm::fill_random(translat);
-  scalar_type scale = dal::random()*10.;
+  scalar_type scale = gmm::random()*10.;
   for (size_type i=0; i < pgt->nb_points(); ++i) {
     cvpts[i] = base_node(N);
     gmm::mult(M,pgt->convex_ref()->points()[i],cvpts[i]);
     cvpts[i] += translat;
     for (size_type j=0; j < cvpts[i].size(); ++j) { 
       cvpts[i][j] *= scale;
-      cvpts[i][j] += dal::random(double())*0.05*scale;
+      cvpts[i][j] += gmm::random(double())*0.05*scale;
     }
   }
   bgeot::geotrans_inv_convex gic;
@@ -101,7 +101,7 @@ void test_inversion(bgeot::pgeometric_trans pgt, bool verbose) {
   }
   for (size_type i=0; i < 100; ++i) {
     base_node Pref(pgt->dim());
-    for (size_type j=0; j < Pref.size(); ++j) Pref[j] = (dal::random() * 1.5 - 0.25);
+    for (size_type j=0; j < Pref.size(); ++j) Pref[j] = (gmm::random() * 1.5 - 0.25);
     base_node P = pgt->transform(Pref, cvpts.begin());
     check_inversion(pgt,cvpts,gic,P,Pref,pgt->convex_ref()->is_in(Pref)<1e-10,verbose);
   }
@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
 
     for (size_type i = 0; i < NB_POINTS; ++i) {
       for (dim_type k = 0; k < N; ++k) 
-	pt[k] = dal::random() + 1; //double());
+	pt[k] = gmm::random() + 1; //double());
       //cout << "point " << i << " : " << pt << "\n";
       gti.add_point(pt);
     }

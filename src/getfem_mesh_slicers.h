@@ -272,7 +272,7 @@ namespace getfem {
       delta = sqrt(delta);
       scalar_type s1 = (-b - delta) / (2*a);
       scalar_type s2 = (-b + delta) / (2*a);
-      if (dal::abs(s1-.5) < dal::abs(s2-.5)) return s1; else return s2;
+      if (gmm::abs(s1-.5) < gmm::abs(s2-.5)) return s1; else return s2;
     }
     void split_simplex(mesh_slicer &ms,
                        slice_simplex s, /* s is NOT a reference, it is on purpose (push_back in the function)*/
@@ -296,7 +296,7 @@ namespace getfem {
       const base_node& B=nodes[iB].pt;
       scalar_type s1 = 0., s2 = 0.;
       for (unsigned i=0; i < A.size(); ++i) { s1 += (A[i] - B[i])*n[i]; s2 += (A[i]-x0[i])*n[i]; }
-      if (dal::abs(s1) < EPS) return 1./EPS;
+      if (gmm::abs(s1) < EPS) return 1./EPS;
       else return s2/s1;
     }
   public:
@@ -343,16 +343,16 @@ namespace getfem {
     void test_point(const base_node& P, bool& in, bool& bound) const {
       base_node N = P-x0;
       scalar_type axpos = bgeot::vect_sp(d, N);
-      scalar_type dist2 = bgeot::vect_norm2_sqr(N) - dal::sqr(axpos);
-      bound = dal::abs(dist2-R*R) < EPS;
+      scalar_type dist2 = bgeot::vect_norm2_sqr(N) - gmm::sqr(axpos);
+      bound = gmm::abs(dist2-R*R) < EPS;
       in = dist2 < R*R;
     }
     scalar_type edge_intersect(size_type iA, size_type iB, const mesh_slicer::cs_nodes_ct& nodes) const {
       base_node F=nodes[iA].pt-x0; scalar_type Fd = bgeot::vect_sp(F,d);
       base_node D=nodes[iB].pt-nodes[iA].pt; scalar_type Dd = bgeot::vect_sp(D,d);
-      scalar_type a = bgeot::vect_norm2_sqr(D) - dal::sqr(Dd); if (a < EPS) return pt_bin.is_in(iA) ? 0. : 1./EPS; assert(a> -EPS);
+      scalar_type a = bgeot::vect_norm2_sqr(D) - gmm::sqr(Dd); if (a < EPS) return pt_bin.is_in(iA) ? 0. : 1./EPS; assert(a> -EPS);
       scalar_type b = 2*(bgeot::vect_sp(F,D) - Fd*Dd);
-      scalar_type c = bgeot::vect_norm2_sqr(F) - dal::sqr(Fd) - dal::sqr(R);
+      scalar_type c = bgeot::vect_norm2_sqr(F) - gmm::sqr(Fd) - gmm::sqr(R);
       return slicer_volume::trinom(a,b,c);
     }
   public:

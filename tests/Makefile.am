@@ -9,29 +9,29 @@ endif
 check_PROGRAMS =                 \
 	dynamic_array            \
 	dynamic_tas              \
+	test_int_set             \
+	test_tree_sorted         \
+	poly                     \
 	test_small_vector        \
 	test_kdtree	         \
 	test_rtree	         \
-	test_interpolation       \
-	elastostatic             \
-	stokes                   \
-	nonlinear_elastostatic   \
-	helmholtz                \
+	test_mesh                \
+	test_slice               \
+	integration              \
 	geo_trans                \
 	geo_trans_inv            \
-	integration              \
-	laplacian                \
-	poly                     \
-	schwarz_additive         \
-	test_assembly            \
-	test_int_set             \
-	test_interpolated_fem    \
 	test_mat_elem            \
-	plate                    \
-	test_slice               \
+	test_interpolation       \
+	test_assembly            \
 	test_norm	         \
-	test_mesh                \
-	test_tree_sorted         \
+	test_interpolated_fem    \
+	laplacian                \
+	elastostatic             \
+	stokes                   \
+	helmholtz                \
+	plate                    \
+	nonlinear_elastostatic   \
+	schwarz_additive         \
 	$(optprog)               \
 	plasticity               \
 	navier_stokes            \
@@ -89,31 +89,32 @@ LDADD    = ../src/libgetfem.la -lm @SUPLDFLAGS@
 TESTS = \
 	$(top_srcdir)/tests/dynamic_array.pl      \
 	$(top_srcdir)/tests/dynamic_tas.pl        \
+	$(top_srcdir)/tests/test_int_set.pl       \
+	$(top_srcdir)/tests/test_tree_sorted.pl   \
+	$(top_srcdir)/tests/poly.pl               \
 	$(top_srcdir)/tests/test_small_vector.pl  \
 	$(top_srcdir)/tests/test_kdtree.pl        \
 	$(top_srcdir)/tests/test_rtree.pl         \
+	$(top_srcdir)/tests/geo_trans.pl          \
+	$(top_srcdir)/tests/geo_trans_inv.pl      \
+	$(top_srcdir)/tests/test_norm.pl          \
+	$(top_srcdir)/tests/test_mesh.pl          \
 	$(top_srcdir)/tests/test_interpolation.pl \
 	$(top_srcdir)/tests/test_mat_elem.pl      \
+	$(top_srcdir)/tests/test_slice.pl         \
+	$(top_srcdir)/tests/integration.pl        \
 	$(top_srcdir)/tests/test_assembly.pl      \
-	$(top_srcdir)/tests/plate.pl              \
+	$(top_srcdir)/tests/test_interpolated_fem.pl      \
 	$(top_srcdir)/tests/laplacian.pl          \
 	$(top_srcdir)/tests/elastostatic.pl       \
 	$(top_srcdir)/tests/stokes.pl             \
+	$(top_srcdir)/tests/plate.pl              \
 	$(top_srcdir)/tests/navier_stokes.pl      \
 	$(top_srcdir)/tests/nonlinear_elastostatic.pl       \
 	$(top_srcdir)/tests/dynamic_friction.pl   \
 	$(top_srcdir)/tests/plasticity.pl         \
 	$(top_srcdir)/tests/helmholtz.pl          \
-	$(top_srcdir)/tests/integration.pl        \
-	$(top_srcdir)/tests/poly.pl               \
-	$(top_srcdir)/tests/test_mesh.pl          \
-	$(top_srcdir)/tests/geo_trans.pl          \
-	$(top_srcdir)/tests/geo_trans_inv.pl      \
 	$(top_srcdir)/tests/schwarz_additive.pl   \
-	$(top_srcdir)/tests/test_int_set.pl       \
-	$(top_srcdir)/tests/test_interpolated_fem.pl      \
-	$(top_srcdir)/tests/test_slice.pl         \
-	$(top_srcdir)/tests/test_tree_sorted.pl   \
 	$(top_srcdir)/tests/make_gmm_test.pl     
 
 EXTRA_DIST = \
@@ -137,6 +138,7 @@ EXTRA_DIST = \
 	test_int_set.pl                   \
 	test_interpolated_fem.pl          \
 	test_slice.pl			  \
+	test_norm.pl			  \
 	test_tree_sorted.pl               \
 	test_mat_elem.pl                  \
 	laplacian.param                   \

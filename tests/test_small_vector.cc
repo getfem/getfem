@@ -540,7 +540,7 @@ namespace getfem {
     for (size_type i=0; i < N*5; ++i) {
       for (size_type j=0; j < vv.size(); ++j) {
 	for (size_type k=0; k < vv[j].size(); ++k) {
-	  if (dal::abs(vv[j][k] - (j+k))>1e-14) { cout << "vv[j][k]=" << vv[j][k] << "!=" << j+k << "\n"; abort(); }
+	  if (gmm::abs(vv[j][k] - (j+k))>1e-14) { cout << "vv[j][k]=" << vv[j][k] << "!=" << j+k << "\n"; abort(); }
 	}
       }
     }

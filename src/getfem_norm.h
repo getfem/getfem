@@ -102,7 +102,7 @@ namespace getfem
 	  for (size_type j=0; j < s.dim(); ++j)
 	    M(i,j) = ms.nodes[s.inodes[i+1]].pt[j] - ms.nodes[s.inodes[0]].pt[j];
 	
-	scalar_type J = dal::abs(gmm::lu_det(M));
+	scalar_type J = gmm::abs(gmm::lu_det(M));
 	
 	/* build nodes1 and nodes2 */
 	std::vector<base_node> ptref(s.dim()+1);
@@ -129,17 +129,17 @@ namespace getfem
 	    pf1->interpolation(ctx1, coeff1, val1, qdim);
 	    pf2->interpolation(ctx2, coeff2, val2, qdim);
 	    for (size_type q=0; q < qdim; ++q) {
-	      l2_norm_sqr += dal::sqr(val1[q]-val2[q])*J*im->coeff(i);
-	      linf_norm = std::max(linf_norm, dal::abs(val1[q]-val2[q]));
+	      l2_norm_sqr += gmm::sqr(val1[q]-val2[q])*J*im->coeff(i);
+	      linf_norm = std::max(linf_norm, gmm::abs(val1[q]-val2[q]));
 	    }
 	  }
 	  if (what & H1_SEMI_NORM) {
 	    pf1->interpolation_grad(ctx1, coeff1, gval1, qdim);
 	    pf2->interpolation_grad(ctx2, coeff2, gval2, qdim);
 	    for (size_type q=0; q < qdim*mdim; ++q) {
-	      scalar_type v = dal::sqr(gval1[q]-gval2[q])*J*im->coeff(i);
+	      scalar_type v = gmm::sqr(gval1[q]-gval2[q])*J*im->coeff(i);
 	      if (v > maxd) { cout << "new maxd: " << v << ", J=" << J << " at " << ctx1.xreal() << ", " << ctx2.xreal() << ", v1=" << gval1[q] << ", v2=" << gval2[q] << "\n"; maxd = v; }
-	      h1_semi_norm_sqr += dal::sqr(gval1[q]-gval2[q])*J*im->coeff(i);
+	      h1_semi_norm_sqr += gmm::sqr(gval1[q]-gval2[q])*J*im->coeff(i);
 	    }
 	  }
 	}

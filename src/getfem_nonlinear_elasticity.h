@@ -44,9 +44,9 @@ namespace getfem {
       for (size_type m = 0; m < N; ++m)
 	for (size_type l = 0; l < N; ++l)
 	  for (size_type k = 0; k < N; ++k) {
-	    if (dal::abs(t(n,m,l,k) - t(l,k,n,m))>1e-10) flags &= (~1); 
-	    if (dal::abs(t(n,m,l,k) - t(m,n,l,k))>1e-10) flags &= (~2); 
-	    if (dal::abs(t(n,m,l,k) - t(n,m,k,l))>1e-10) flags &= (~4);
+	    if (gmm::abs(t(n,m,l,k) - t(l,k,n,m))>1e-10) flags &= (~1); 
+	    if (gmm::abs(t(n,m,l,k) - t(m,n,l,k))>1e-10) flags &= (~2); 
+	    if (gmm::abs(t(n,m,l,k) - t(n,m,k,l))>1e-10) flags &= (~4);
 	  }
     return flags;
   }
@@ -92,7 +92,7 @@ namespace getfem {
       scalar_type d2 = 0;
       for (size_type i=0; i < N; ++i) 
 	for (size_type j=0; j < N; ++j) d2 += sigma1(i,j)*DE(i,j);
-      if (dal::abs(d-d2) > h*1e-5) 
+      if (gmm::abs(d-d2) > h*1e-5) 
 	cout << "wrong derivative of strain_energy, d=" << d
 	     << ", d2=" << d2 << "\n";
 
@@ -106,7 +106,7 @@ namespace getfem {
 	    }
 	  }
 	  sigma2(i,j) -= sigma1(i,j);
-	  if (dal::abs(dsigma(i,j) - sigma2(i,j)) > h*1e-5) {
+	  if (gmm::abs(dsigma(i,j) - sigma2(i,j)) > h*1e-5) {
 	    cout << "wrong derivative of sigma, i=" << i << ", j=" 
 		 << j << ", dsigma=" << dsigma(i,j) << ", var sigma = " 
 		 << sigma2(i,j) << "\n";
@@ -209,7 +209,7 @@ namespace getfem {
       scalar_type d = params[0]/scalar_type(2) + params[1]; 
       //d=params[0] - scalar_type(2)*params[2] - scalar_type(4)*b;
       base_matrix C(N, N);
-      assert(dal::abs(2*a+4*b+2*c-d)<1e-5);
+      assert(gmm::abs(2*a+4*b+2*c-d)<1e-5);
       gmm::copy(gmm::scaled(E, scalar_type(2)), C);
       gmm::add(gmm::identity_matrix(), C);
       gmm::copy(gmm::identity_matrix(), result);

@@ -160,7 +160,7 @@ namespace getfem {
 	base_node first_pt = gid_nodes[gid_nodes_used.first()];
 	for (dal::bv_visitor ip(gid_nodes_used); !ip.finished(); ++ip) {
           for (size_type j=0; j < first_pt.size(); ++j) {
-            if (direction_useless[j] && (dal::abs(gid_nodes[ip][j]-first_pt[j]) > 1e-13))
+            if (direction_useless[j] && (gmm::abs(gid_nodes[ip][j]-first_pt[j]) > 1e-13))
               direction_useless[j] = false;
           }
 	}
@@ -264,7 +264,7 @@ namespace getfem {
     double s = (x < 0 ? -1 : 1);
     double pdec = pow(10.,ndec);
     if (x == 0) return 0.;
-    x = dal::abs(x);
+    x = gmm::abs(x);
     while (x > 1) { x /= 10.0; p*=10; }
     while (x < 0.1) { x *= 10.0; p/=10; }
     //cerr << "x=" << x << ", p=" << p << ", pdec=" << pdec << "\n";

@@ -164,7 +164,7 @@ namespace getfem
     scalar_type c1 = 1., c2 = 1.;
     for (size_type i=0; i < x.size(); ++i) {
       c1*=(x[i]*(1.-x[i]));
-      c2*=(.5 - dal::abs(x[i]-.5));
+      c2*=(.5 - gmm::abs(x[i]-.5));
     }
     z[0] = x[0] + c1;
     for (size_type i=1; i < x.size(); ++i) {
@@ -215,10 +215,10 @@ namespace getfem
       for (dal::bv_visitor ip(m.points().index()); !ip.finished(); ++ip) {
 	bool is_border = false;
 	base_node& P = m.points()[ip];
-	for (size_type i=0; i < N; ++i) { if (dal::abs(P[i]) < 1e-10 || dal::abs(P[i]-1.) < 1e-10) is_border = true; }
+	for (size_type i=0; i < N; ++i) { if (gmm::abs(P[i]) < 1e-10 || gmm::abs(P[i]-1.) < 1e-10) is_border = true; }
 	if (!is_border) { 
 	  P = shake_func(P); 
-	  for (size_type i=0; i < N; ++i) P[i] += 0.30*(1./nsubdiv[i])*dal::random(double());
+	  for (size_type i=0; i < N; ++i) P[i] += 0.30*(1./nsubdiv[i])*gmm::random(double());
 	}
       }
     }

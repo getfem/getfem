@@ -111,7 +111,7 @@ static void check_im_order(const std::string& s/*, size_type expected_pk=size_ty
 	for (size_type d=0; d < dim; ++d) realsum *= opt_long_scalar_type(idx[d]+1);
 	realsum = opt_long_scalar_type(1.)/realsum;
       }
-      if (dal::abs((realsum - sum)/realsum) > 1e-9) { 
+      if (gmm::abs((realsum - sum)/realsum) > 1e-9) { 
         /*	cout << "degree=" << idx.degree() << ", idx=";
           for (size_type d=0; d < dim; ++d) cout << idx[d] << " "; cout << ", realsum=" << realsum << ", sum = " << sum << "\n";*/
 	pk = std::min<size_type>(pk,idx.degree()-1);
@@ -123,7 +123,7 @@ static void check_im_order(const std::string& s/*, size_type expected_pk=size_ty
       const base_node& P = ppi->approx_method()->point(i);
       if (ppi->approx_method()->ref_convex()->is_in(P) > 1e-8) pts_outside++;
       for (size_type f = 0; f < ppi->approx_method()->structure()->nb_faces(); ++f) {
-	if (dal::abs(ppi->approx_method()->ref_convex()->is_in_face(f,P)) < 1e-8) {
+	if (gmm::abs(ppi->approx_method()->ref_convex()->is_in_face(f,P)) < 1e-8) {
 	  pts_on_boundary++; break;
 	}
       }
@@ -334,7 +334,7 @@ static int inspect_results() {
     for (size_type i = 1; i < mc.im_names.size(); ++i) {
       scalar_type sum = std::accumulate(mc.lst[0].begin(), mc.lst[0].end(),0.);
       scalar_type dist = bgeot::vect_dist2(mc.lst[0],mc.lst[i]);
-      bool ok  = (dal::abs(sum-sumref) < 1e-10 && dal::abs(dist) < 1e-6);
+      bool ok  = (gmm::abs(sum-sumref) < 1e-10 && gmm::abs(dist) < 1e-6);
       if (ok)  cout << "  [OK]     ";
       else     cout << "  [ERROR!] ";
       cout << std::setw(70) << mc.im_names[i] << " : sum= " << std::setw(6) << sum << ", dist=" << std::setw(9) << dist << "\n";

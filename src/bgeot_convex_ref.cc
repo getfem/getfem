@@ -126,11 +126,11 @@ namespace bgeot
 	if (pt.size() != cvs->dim())
 	  throw dimension_error(
 		  "K_simplex_of_ref_::is_in_face : Dimension does not match");
-	if (f > 0) return dal::abs(pt[f-1]);
+	if (f > 0) return gmm::abs(pt[f-1]);
 	scalar_type e = -1.0;
 	base_node::const_iterator it = pt.begin(), ite = pt.end();
 	for (; it != ite; e += *it, ++it);
-	return dal::abs(e);
+	return gmm::abs(e);
       }
       K_simplex_of_ref_(const K_simplex_ref_light_ &ls)
       {
@@ -297,7 +297,7 @@ namespace bgeot
     }
     scalar_type is_in_face(short_type f, const base_node &pt) const {
       const base_node &x0 = (f ? points()[f-1] : points().back());
-      return dal::abs(gmm::vect_sp(pt-x0, normals()[f])); 
+      return gmm::abs(gmm::vect_sp(pt-x0, normals()[f])); 
     }
     equilateral_simplex_of_ref_(size_type N) {
       pconvex_ref prev = equilateral_simplex_of_reference(N-1);

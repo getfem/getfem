@@ -104,7 +104,7 @@ static void verify(const std::vector<base_node>& rmin, const std::vector<base_no
 
   for (size_type i=0; i < 100; ++i) {
     base_node min(N), max(N);
-    for (size_type k=0; k < N; ++k) { min[k] = dal::random(double()*1.3); max[k] = min[k]+dal::random()*0.1; }
+    for (size_type k=0; k < N; ++k) { min[k] = gmm::random(double()*1.3); max[k] = min[k]+gmm::random()*0.1; }
     tree.find_containing_boxes(min,max,pbset);
     brute_force_check(rmin,rmax,pbset,contains_p(min,max));
 
@@ -121,10 +121,10 @@ static void verify(const std::vector<base_node>& rmin, const std::vector<base_no
     brute_force_check(rmin,rmax,pbset,has_point_p(max));
   }
   for (size_type i=0; i < rmin.size(); ++i) {
-    base_node min2(rmin[i]); for (size_type k=0; k < N; ++k) { min2[k] -= extent[k]*dal::random()*0.1; }
-    base_node max2(rmax[i]); for (size_type k=0; k < N; ++k) { max2[k] += extent[k]*dal::random()*0.1; }
-    base_node min3(rmin[i]); for (size_type k=0; k < N; ++k) { min3[k] += extent[k]*dal::random()*0.001; }
-    base_node max3(rmax[i]); for (size_type k=0; k < N; ++k) { max3[k] -= extent[k]*dal::random()*0.00001; }
+    base_node min2(rmin[i]); for (size_type k=0; k < N; ++k) { min2[k] -= extent[k]*gmm::random()*0.1; }
+    base_node max2(rmax[i]); for (size_type k=0; k < N; ++k) { max2[k] += extent[k]*gmm::random()*0.1; }
+    base_node min3(rmin[i]); for (size_type k=0; k < N; ++k) { min3[k] += extent[k]*gmm::random()*0.001; }
+    base_node max3(rmax[i]); for (size_type k=0; k < N; ++k) { max3[k] -= extent[k]*gmm::random()*0.00001; }
     tree.find_boxes_at_point(rmin[i],pbset);
     assert(std::find(pbset.begin(), pbset.end(), i) != pbset.end());
     tree.find_boxes_at_point(rmax[i],pbset);
@@ -184,8 +184,8 @@ static void check_tree() {
 
   cout << "2D random check\n";
   for (size_type i=0; i < 600; ++i) {
-    rmin.push_back(base_node(dal::random(double()), dal::random(double())));
-    rmax.push_back(rmin.back() + base_node(1.+dal::random(), 1.+dal::random())/10.);
+    rmin.push_back(base_node(gmm::random(double()), gmm::random(double())));
+    rmax.push_back(rmin.back() + base_node(1.+gmm::random(), 1.+gmm::random())/10.);
     tree.add_box(rmin.back(),rmax.back());
   }
   verify(rmin, rmax, tree);
@@ -202,8 +202,8 @@ static void check_tree() {
   cout << "3D/2D random check\n";
   tree.clear(); rmin.clear(); rmax.clear();
   for (size_type i=0; i < 600; ++i) {
-    rmin.push_back(base_node(dal::random(double()), 0, dal::random(double())));
-    rmax.push_back(rmin.back() + base_node(.1+dal::random(), 0.1, .1+dal::random())/10.);
+    rmin.push_back(base_node(gmm::random(double()), 0, gmm::random(double())));
+    rmax.push_back(rmin.back() + base_node(.1+gmm::random(), 0.1, .1+gmm::random())/10.);
     tree.add_box(rmin.back(),rmax.back());
   }
   verify(rmin, rmax, tree);

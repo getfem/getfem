@@ -172,16 +172,16 @@ struct elastostatic_problem {
 // 	  problem.compute_residu(MS);
 // 	  MS.compute_reduced_system(); // The whole reduced system do not
 // 	  // have to be computed, only the RHS. To be adapted.
-// 	  act_res_new = dal::sqr(MS.reduced_residu_norm());
-// 	  printf("%+12.5g  %+12.5g  %+12.5g\n", -alpha, act_res_new, w*(-alpha)+dal::sqr(r0));
+// 	  act_res_new = gmm::sqr(MS.reduced_residu_norm());
+// 	  printf("%+12.5g  %+12.5g  %+12.5g\n", -alpha, act_res_new, w*(-alpha)+gmm::sqr(r0));
 // 	}
 // 	for (alpha = mtype(1); alpha >= alpha_min/100; alpha *= alpha_mult) {
 // 	  gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
 // 	  problem.compute_residu(MS);
 // 	  MS.compute_reduced_system(); // The whole reduced system do not
 // 	  // have to be computed, only the RHS. To be adapted.
-// 	  act_res_new = dal::sqr(MS.reduced_residu_norm());
-// 	  printf("%+12.5g  %+12.5g  %+12.5g\n", alpha, act_res_new, w*(alpha)+dal::sqr(r0));
+// 	  act_res_new = gmm::sqr(MS.reduced_residu_norm());
+// 	  printf("%+12.5g  %+12.5g  %+12.5g\n", alpha, act_res_new, w*(alpha)+gmm::sqr(r0));
 // 	}
 // 	gmm::copy(stateinit, MS.state());
 // 	problem.compute_residu(MS);
@@ -302,9 +302,9 @@ void elastostatic_problem::init(void) {
     assert(it->f != size_type(-1));
     base_node un = mesh.normal_of_face_of_convex(it->cv, it->f);
     un /= gmm::vect_norm2(un);
-    if (dal::abs(un[N-1] - 1.0) < 1.0E-7) { 
+    if (gmm::abs(un[N-1] - 1.0) < 1.0E-7) { 
       mesh.add_face_to_set(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
-    } else if (dal::abs(un[N-1] + 1.0) < 1.0E-7) {
+    } else if (gmm::abs(un[N-1] + 1.0) < 1.0E-7) {
       mesh.add_face_to_set(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
     }
   }
@@ -370,7 +370,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
 // 	    }
 // 	  }
 // 	  sigma2(i,j) -= sigma1(i,j);
-// 	  if (dal::abs(dsigma(i,j) - sigma2(i,j)) > 1e-13) {
+// 	  if (gmm::abs(dsigma(i,j) - sigma2(i,j)) > 1e-13) {
 // 	    cout << "erreur derivees i=" << i << ", j=" << j
 // 		 << ", dsigma=" << dsigma(i,j)
 // 		 << ", var sigma = " << sigma2(i,j) << "\n";

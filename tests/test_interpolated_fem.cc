@@ -180,7 +180,7 @@ void lap_pb::assemble(void) {
     cout << "ligne " << i << " [ ";
     scalar_type slig = 0;
     for (size_type l = 0; l < RM2.nrows(); l++) {
-      diff += dal::abs(RM2(i, l) - RM1(i, l));
+      diff += gmm::abs(RM2(i, l) - RM1(i, l));
       if (RM2(i, l) != 0.0) {
 	cout << "(" << l << "," << RM2(i, l) << ")  ";
 	slig = slig + RM2(i, l);
@@ -246,7 +246,7 @@ void test2() {
     cout << "sum(line)=" << slig << endl;
   }
   cout << endl << " sum: " << sum << endl << endl;
-  assert(dal::abs(sum - 1.57079) < 1e-5); /* if not PI/2 there is a bug.. */
+  assert(gmm::abs(sum - 1.57079) < 1e-5); /* if not PI/2 there is a bug.. */
   sparse_matrix_type MM2 = sparse_matrix_type(mf2.nb_dof(), mf2.nb_dof());
   getfem::asm_mass_matrix(MM2, mim, mf2, mf2);
   cout << "MM2=" << MM2 << "\n";

@@ -182,9 +182,9 @@ void plasticity_problem::init(void)
     base_node un = mesh.normal_of_face_of_convex(it->cv, it->f);
     un /= gmm::vect_norm2(un);
 
-    if (dal::abs(un[0] - 1.0) < 1.0E-7)
+    if (gmm::abs(un[0] - 1.0) < 1.0E-7)
       mesh.add_face_to_set(NEUMANN_BOUNDARY_NUM, it->cv, it->f);
-    else if(dal::abs(un[0] + 1.0) < 1.0E-7) 
+    else if (gmm::abs(un[0] + 1.0) < 1.0E-7) 
       mesh.add_face_to_set(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
       
   }

@@ -184,7 +184,7 @@ void plate_problem::init(void) {
     assert(it->f != size_type(-1));
     base_node un = mesh.normal_of_face_of_convex(it->cv, it->f);
     un /= gmm::vect_norm2(un);
-    if (dal::abs(un[1]) <= 1.0E-7) { // new Neumann face
+    if (gmm::abs(un[1]) <= 1.0E-7) { // new Neumann face
       mesh.add_face_to_set(SIMPLY_FIXED_BOUNDARY_NUM, it->cv, it->f);
     }
   }
@@ -201,7 +201,7 @@ base_small_vector plate_problem::theta_exact(base_node P) {
 scalar_type plate_problem::u3_exact(base_node P) {
   return (pressure / (32. * mu * epsilon * epsilon * epsilon))
     * P[0] * (P[0] - LX)
-    * (dal::sqr(P[0] - LX * .5) -1.25*LX*LX-(mixed ? 0 : 8.*epsilon*epsilon));
+    * (gmm::sqr(P[0] - LX * .5) -1.25*LX*LX-(mixed ? 0 : 8.*epsilon*epsilon));
 }
 
 
@@ -218,8 +218,8 @@ void plate_problem::compute_error(plain_vector &U) {
   getfem::interpolation(mf_ut, mf_rhs,
 			gmm::sub_vector(U, gmm::sub_interval(0, i1)), V);
   mf_rhs.set_qdim(2);
-  scalar_type l2 = dal::sqr(getfem::asm_L2_norm(mim, mf_rhs, V));
-  scalar_type h1 = dal::sqr(getfem::asm_H1_norm(mim, mf_rhs, V));
+  scalar_type l2 = gmm::sqr(getfem::asm_L2_norm(mim, mf_rhs, V));
+  scalar_type h1 = gmm::sqr(getfem::asm_H1_norm(mim, mf_rhs, V));
   scalar_type linf = gmm::vect_norminf(V);
   mf_rhs.set_qdim(1);
   cout << "L2 error = " << sqrt(l2) << endl
@@ -233,8 +233,8 @@ void plate_problem::compute_error(plain_vector &U) {
 	     gmm::sub_vector(V, gmm::sub_interval(i*2, 2)));
   }
   mf_rhs.set_qdim(2);
-  l2 += dal::sqr(getfem::asm_L2_norm(mim, mf_rhs, V));
-  h1 += dal::sqr(getfem::asm_H1_norm(mim, mf_rhs, V));
+  l2 += gmm::sqr(getfem::asm_L2_norm(mim, mf_rhs, V));
+  h1 += gmm::sqr(getfem::asm_H1_norm(mim, mf_rhs, V));
   linf = std::max(linf, gmm::vect_norminf(V));
   mf_rhs.set_qdim(1);
   cout << "L2 error = " << sqrt(l2) << endl
@@ -248,8 +248,8 @@ void plate_problem::compute_error(plain_vector &U) {
   for (size_type i = 0; i < mf_rhs.nb_dof(); ++i)
     V[i] -= u3_exact(mf_rhs.point_of_dof(i));
 
-  l2 += dal::sqr(getfem::asm_L2_norm(mim, mf_rhs, V));
-  h1 += dal::sqr(getfem::asm_H1_norm(mim, mf_rhs, V));
+  l2 += gmm::sqr(getfem::asm_L2_norm(mim, mf_rhs, V));
+  h1 += gmm::sqr(getfem::asm_H1_norm(mim, mf_rhs, V));
   linf = std::max(linf, gmm::vect_norminf(V));
 
   cout.precision(16);

@@ -67,18 +67,15 @@ namespace bgeot
     for (i = 0; i < nb; i++)
     { for (j = 0; j < i; j++) nne.add(cv.add_segment(i, j)); }
 
-    if (nb > N+1)
-    {
+    if (nb > N+1) {
       /* **************************************************************** */
       /*	  1 - Parcourt des simplexes.                             */
       /* **************************************************************** */
 
       for (i = 0; i < N+1; i++) simplex[i] = i;
 
-      while (simplex[0] == 0)
-      {
-	for (i = 0; i < N; i++)
-	{
+      while (simplex[0] == 0) {
+	for (i = 0; i < N; i++) {
 	  vector_from(point_list[simplex[0]],
 		      point_list[simplex[i+1]], vect_list[i]);
 	  for (j = 0; j <= i; j++)
@@ -88,12 +85,10 @@ namespace bgeot
 	double s = gmm::lu_inverse(A);
 
 	/* if the simplex is not flat .. */
-	if (dal::abs(s) > EPS)
-	{
+	if (gmm::abs(s) > EPS) {
    
 	  nn = nne;
-	  while (nn.card() > 0)
-	  {
+	  while (nn.card() > 0) {
 	    i = nn.take_first();
 	    /* ********************************************************** */
 	    /*	  1 - Parcourt des aretes.                                */
@@ -107,15 +102,13 @@ namespace bgeot
 	      if (simplex[j] == i1 || simplex[j] == i2) ico++;
 	    
 	    // if the edge does not belong to the simplex..
-	    if (ico < 2)
-	    {
+	    if (ico < 2) {
 	      typename PT::vector_type D0
 		= vector_from(point_list[simplex[0]], point_list[i1]);
 	      typename PT::vector_type DV
 		= vector_from(point_list[i1], point_list[i2]);
 	      base_small_vector d0(N), dd0(N), dV(N), ddV(N), v11(N);
-	      for (j = 0; j < N; j++)
-	      {
+	      for (j = 0; j < N; j++) {
 		v11[j] = 1.0;
 		d0[j] = vect_sp(D0, vect_list[j]);
 		dV[j] = vect_sp(DV, vect_list[j]);

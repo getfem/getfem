@@ -188,12 +188,12 @@ namespace getfem {
 	case GETFEM_HESSIAN_ :
 	  if (trans) {
 	    (*it).pfi->real_hess_base_value(ctx, elmt_stored[k]);
-	    *mit++ = dal::sqr(ctx.N());
+	    *mit++ = gmm::sqr(ctx.N());
 	  }
 	  else {
 	    base_tensor tt = pfp[k]->hess(ctx.ii());
 	    bgeot::multi_index mim(3);
-	    mim[2] = dal::sqr(tt.sizes()[2]); mim[1] = tt.sizes()[1];
+	    mim[2] = gmm::sqr(tt.sizes()[2]); mim[1] = tt.sizes()[1];
 	    mim[0] = tt.sizes()[0];
 	    tt.adjust_sizes(mim);
 	    elmt_stored[k] = tt;

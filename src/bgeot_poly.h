@@ -429,7 +429,7 @@ namespace bgeot
       if (*it != T(0)) {
 	if (!first) { if (*it < T(0)) o << " - "; else o << " + "; }
 	else if (*it < T(0)) o << "-";
-	if (dal::abs(*it)!=T(1)) o << dal::abs(*it);
+	if (gmm::abs(*it)!=T(1)) o << gmm::abs(*it);
 	for (short_type j = 0; j < P.dim(); ++j)
 	  if (mi[j] != 0) {
             if (P.dim() <= 3) o << "xyz"[j];

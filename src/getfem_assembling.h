@@ -128,8 +128,8 @@ namespace getfem
   template<typename VEC>
   scalar_type asm_H1_norm(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
 			  const dal::bit_vector &cvlst) {
-    return sqrt(dal::sqr(asm_L2_norm(mim, mf, U, cvlst))
-		+dal::sqr(asm_H1_semi_norm(mim, mf, U, cvlst)));
+    return sqrt(gmm::sqr(asm_L2_norm(mim, mf, U, cvlst))
+		+gmm::sqr(asm_H1_semi_norm(mim, mf, U, cvlst)));
   }
   
   /** 
@@ -703,7 +703,7 @@ namespace getfem
     if (mf_rh.get_qdim() != 1) 
       DAL_THROW(invalid_argument,"mf_rh should be a scalar (qdim=1) mesh_fem");
     size_type N = mf_rh.nb_dof(), Q=mf_u.get_qdim();
-    VECT h_data(dal::sqr(mf_u.get_qdim())*N); gmm::clear(H);
+    VECT h_data(gmm::sqr(mf_u.get_qdim())*N); gmm::clear(H);
     
     for (size_type i=0; i < N; ++i)
       for (size_type q=0; q < Q; ++q)  h_data[i*Q*Q+q*Q+q]=1;
@@ -835,7 +835,7 @@ namespace getfem
       else {
 	bool good = true;
 	for (size_type j = 0; j < nb_bimg; ++j)
-	  if (dal::abs(gmm::vect_sp(aux, base_img[j])) > MAGT(0))
+	  if (gmm::abs(gmm::vect_sp(aux, base_img[j])) > MAGT(0))
 	    { good = false; break; }
 	if (good) {
 	  gmm::copy(e, f);
@@ -857,7 +857,7 @@ namespace getfem
 	gmm::mult(H, e, aux);
 	for (size_type j = 0; j < nb_bimg; ++j) { 
 	  T c = gmm::vect_sp(aux, base_img[j]);
-	  //	  if (dal::abs(c > 1.0E-6) { // à scaler sur l'ensemble de H ...
+	  //	  if (gmm::abs(c > 1.0E-6) { // à scaler sur l'ensemble de H ...
 	  if (c != T(0)) {
 	    gmm::add(gmm::scaled(base_img[j], -c), aux);
 	    gmm::add(gmm::scaled(base_img_inv[j], -c), f);

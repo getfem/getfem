@@ -718,8 +718,8 @@ namespace getfem {
 
   template<class MESH_FEM, class VECT>
   scalar_type old_H1_norm(const mesh_im &mim, MESH_FEM &mf, const VECT &U, size_type N, const dal::bit_vector& cvlst) {
-    return sqrt( dal::sqr(old_L2_norm(mim, mf, U, N, cvlst)) 
-		 + dal::sqr(old_H1_semi_norm(mim, mf, U, N, cvlst)));
+    return sqrt( gmm::sqr(old_L2_norm(mim, mf, U, N, cvlst)) 
+		 + gmm::sqr(old_H1_semi_norm(mim, mf, U, N, cvlst)));
   }
 
 
@@ -782,7 +782,7 @@ namespace getfem {
     bgeot::vsvector<scalar_type> v(1);
     assem.push_vec(v);
     assem.volumic_assembly();
-    return sqrt(v[0] + dal::sqr(old2_asm_L2_norm(mim,mf,U)));
+    return sqrt(v[0] + gmm::sqr(old2_asm_L2_norm(mim,mf,U)));
   }
 
 } /* namespace getfem */
@@ -910,7 +910,7 @@ void comp_vec(const base_vector& V1, const base_vector& V2)
 }
 
 void comp_scal(scalar_type a, scalar_type b) {
-  scalar_type d = dal::abs(a-b)/std::max(dal::abs(a),dal::abs(b));
+  scalar_type d = gmm::abs(a-b)/std::max(gmm::abs(a),gmm::abs(b));
   if (d > 1e-10) {
     fail_cnt++;
     cout << " FAILED !";
@@ -1117,7 +1117,7 @@ void tensor_ref_check3(unsigned n1, unsigned n2, unsigned n3, unsigned n4, unsig
   cout << "ABCD = " << ABCD << "\n =?= " << "\n";
   for (unsigned j=0; j < n5; ++j)
     for (unsigned i=0; i < n1; ++i) {
-      if (dal::abs(trABCD.base()[i+j*n1] - ABCD(i,j)) > 1e-10) {
+      if (gmm::abs(trABCD.base()[i+j*n1] - ABCD(i,j)) > 1e-10) {
 	cerr << "FAILED : " << i << ", " << j << ", " << trABCD.base()[i+j*n1] << "!=" << ABCD(i,j) << "\n";
 	DAL_INTERNAL_ERROR("");
       }
@@ -1496,7 +1496,7 @@ void inline_red_test(const getfem::mesh_im &mim, const getfem::mesh_fem &mf1, co
   assem2.volumic_assembly();
 
   cout << "v1 = " << v1 << ", v2 = " << v2 << endl;
-  assert(dal::abs(v1[0]-v2[0]) < 1e-14);
+  assert(gmm::abs(v1[0]-v2[0]) < 1e-14);
 }
 
 #endif /* ASSEMBLY_CHECK */

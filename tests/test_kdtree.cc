@@ -48,7 +48,7 @@ void check_tree() {
   pts.push_back(base_node(.5,2.2));
   pts.push_back(base_node(-.8,.4));
 
-  for (size_type i=0; i < 50; ++i) pts.push_back(base_node(dal::random(),dal::random()));
+  for (size_type i=0; i < 50; ++i) pts.push_back(base_node(gmm::random(),gmm::random()));
   for (size_type i=0; i < pts.size(); ++i) tree.add_point(pts[i]);
 /* all points */
   verify_points_in_box(pts, tree, base_node(0.,0.),base_node(6.,6.));
@@ -91,7 +91,7 @@ void speed_test(unsigned N, unsigned NPT, unsigned nrepeat) {
   double t = ftool::uclock_sec();
   for (size_type i=0; i < NPT; ++i) {
     for (dim_type k = 0; k < N; ++k) 
-      pt[k] = dal::random(double())*2.;
+      pt[k] = gmm::random(double())*2.;
     tree.add_point(pt);
     assert(pt.refcnt()>1);
   }

@@ -68,21 +68,21 @@ void test_norm(bgeot::pgeometric_trans pgt,
 
   scalar_type d_l2, d_h1;
   getfem::solutions_distance(mf2,U2,mf1,U1,im->approx_method(), &d_l2, &d_h1);
-  d_h1 = sqrt(dal::sqr(d_l2) + dal::sqr(d_h1));
+  d_h1 = sqrt(gmm::sqr(d_l2) + gmm::sqr(d_h1));
   cout << "distance_l2 = " << d_l2 << ", distance_h1 = " 
        << d_h1 << "\n";
   getfem::solutions_distance(mf1,U1,mf2,U2,im->approx_method(), &d_l2, &d_h1);
-  d_h1 = sqrt(dal::sqr(d_l2) + dal::sqr(d_h1));
+  d_h1 = sqrt(gmm::sqr(d_l2) + gmm::sqr(d_h1));
   cout << "distance_l2 = " << d_l2 << ", distance_h1 = " 
        << d_h1 << "\n";
   std::fill(U2.begin(), U2.end(),0.);
   scalar_type d2_l2, d2_h1;
   getfem::solutions_distance(mf1,U1,mf2,U2,im->approx_method(), &d2_l2, &d2_h1);  
-  d2_h1 = sqrt(dal::sqr(d2_l2) + dal::sqr(d2_h1));
+  d2_h1 = sqrt(gmm::sqr(d2_l2) + gmm::sqr(d2_h1));
   cout << "norm_l2 = " << d2_l2 << "(diff=" << d2_l2 - U1_l2 
        << "), norm_h1 = " << d2_h1 << " (diff=" << d2_h1 - U1_h1 << ")\n";
-  assert(dal::abs(d2_l2 - U1_l2) < 1e-7);
-  assert(dal::abs(d2_h1 - U1_h1) < 1e-7);
+  assert(gmm::abs(d2_l2 - U1_l2) < 1e-7);
+  assert(gmm::abs(d2_h1 - U1_h1) < 1e-7);
 }
 
 int main(int /*argc*/, char **/*argv*/) {

@@ -1,3 +1,12 @@
+2005-02-01 Yves Renard,  <Yves.Renard@insa-toulouse.fr> 
+
+	* dal_std.h and gmm_def.h : mathematical definitions are moved from
+	dal_std.h to gmm_def.h
+
+2005-01-31 Yves Renard,  <Yves.Renard@insa-toulouse.fr> 
+
+	* src/getfem_level_set.h addition of a representation of level sets
+
 2005-01-24 Yves Renard, Julien Pommier  <Julien.Pommier@insa-toulouse.fr>
 
 	* src/getfem_mesh_im the description of integration methods on a mesh

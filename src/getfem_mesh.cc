@@ -367,7 +367,7 @@ namespace getfem {
       {
         size_type ic;
 	ftool::get_token(ist, tmp, 1023);
-        ic = dal::abs(atoi(tmp));
+        ic = gmm::abs(atoi(tmp));
 	if (ncv.is_in(ic)) 
 	  DAL_THROW(failure_error,
 		    "Negative or repeated index, loading aborted.");
@@ -384,7 +384,7 @@ namespace getfem {
 	for (size_type i = 0; i < nb; i++)
 	{
 	  ftool::get_token(ist, tmp, 1023);	  
-	  cv_pt[cv[ic].pts+i] = dal::abs(atoi(tmp));
+	  cv_pt[cv[ic].pts+i] = gmm::abs(atoi(tmp));
 	}
       }
       else if (strcmp(tmp, "BEGIN")==0) {

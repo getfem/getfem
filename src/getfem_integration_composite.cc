@@ -52,7 +52,7 @@ namespace getfem
       for (size_type j = 0; j < pai->nb_points_on_convex(); ++j) {
 	base_node pt = pgt->transform(pim->integration_points()[j],
 				      mi.linked_mesh().points_of_convex(cv));
-	p->add_point(pt, pai->coeff(j) * dal::abs(mp.det[cv]));
+	p->add_point(pt, pai->coeff(j) * gmm::abs(mp.det[cv]));
       }
       for (short_type f = 0; f < pgt->structure()->nb_faces(); ++f) {
 
@@ -60,13 +60,13 @@ namespace getfem
                                                mi.linked_mesh().points_of_face_of_convex(cv, f).end());
 	short_type f2 = short_type(-1);
 	for (short_type f3 = 0; f3 < cr->structure()->nb_faces(); ++f3) {
-	  if (dal::abs(cr->is_in_face(f3, barycentre)) < 1.0E-7)
+	  if (gmm::abs(cr->is_in_face(f3, barycentre)) < 1.0E-7)
 	    { f2 = f3; break;}
 	}
 	if (f2 != short_type(-1)) {
 	  w.resize(gmm::mat_nrows(mp.gtrans[cv]));
 	  gmm::mult(mp.gtrans[cv], pgt->normals()[f], w);
-	  scalar_type coeff_mul = dal::abs(gmm::vect_norm2(w) * mp.det[cv]);
+	  scalar_type coeff_mul = gmm::abs(gmm::vect_norm2(w) * mp.det[cv]);
 	  for (size_type j = 0; j < pai->nb_points_on_face(f); ++j) {
 	    base_node pt = pgt->transform
 	      (pai->point_on_face(f, j), 

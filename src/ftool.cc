@@ -35,27 +35,25 @@
 #ifdef HAVE_SYS_TIMES
 #include <sys/times.h>
 #endif
+#include <gmm_def.h>
 
 namespace ftool {
 
-  bool read_until(std::istream &ist, const char *st)
-  {
+  bool read_until(std::istream &ist, const char *st) {
     int i = 0, l = strlen(st); char c;
     while (!ist.eof() && i < l)
       { ist.get(c); if (toupper(c) == toupper(st[i])) i++; else i = 0; }
     if (ist.eof()) return false; else return true;
   }
 
-  bool get_token(std::istream &ist, char *st, int nb)
-  {
+  bool get_token(std::istream &ist, char *st, int nb) {
     char c;
     int i = 0;
     bool te = false;
     st[0] = 0;
     if (ist.eof()) return false;
     ist.get(c);
-    while (!te)
-    {
+    while (!te) {
       while (isspace(c)) { if (ist.eof()) return true; ist.get(c); }
       if (c == '%')
 	{ while (c != '\n') { if (ist.eof()) return true; ist.get(c); } }
@@ -74,7 +72,8 @@ namespace ftool {
     for (i=0; t.s[i]; ++i) {
       if (i) is.get(c);
       //cerr << "skip " << t.s[i] << endl;
-      if (toupper(c) != toupper(t.s[i]) || is.eof()) DAL_THROW(dal::failure_error, "expected token '" << t.s << "' not found");
+      if (toupper(c) != toupper(t.s[i]) || is.eof())
+	DAL_THROW(dal::failure_error, "expected token '"<<t.s<<"' not found");
     }
     return is;
   }
@@ -633,7 +632,7 @@ namespace ftool {
 	else
 	  fwrite(array, dts, nb, fid);
       }
-    if ( dal::abs(int(clk - clock() / CLOCKS_PER_SEC)) > flushtime )
+    if ( gmm::abs(int(clk - clock() / CLOCKS_PER_SEC)) > flushtime )
       { fflush(fid); clk = clock() / CLOCKS_PER_SEC; }
   }
   

@@ -87,7 +87,7 @@ namespace bgeot {
     base_poly P, Q;
     dim_type N = pgt->structure()->dim();
     hpc.clear();
-    hpc.resize(pspt->size(), base_matrix(dal::sqr(N), pgt->nb_points()));
+    hpc.resize(pspt->size(), base_matrix(gmm::sqr(N), pgt->nb_points()));
     for (size_type i = 0; i < pgt->nb_points(); ++i) {
       for (dim_type n = 0; n < N; ++n) {
 	P = pgt->poly_vector()[i];

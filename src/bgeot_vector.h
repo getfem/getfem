@@ -171,7 +171,7 @@ namespace bgeot
     typename VEC::const_iterator d2 = w.begin();
     double res = 0;
     if (v.size() != w.size()) DAL_THROW(dimension_error,"dimensions mismatch");
-    while (d1 != e) res += dal::sqr((double)dal::abs(*d1++ - *d2++));
+    while (d1 != e) res += gmm::sqr((double)gmm::abs(*d1++ - *d2++));
     return res;
   }
 

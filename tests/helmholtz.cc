@@ -108,7 +108,7 @@ void Helmholtz_problem::init(void) {
   bgeot::pgeometric_trans pgt = bgeot::parallelepiped_geotrans(2, gt_order);
   for (size_type i=0; i < Nt; ++i) {
     for (size_type j=0; j < Nr-1; ++j) {
-      std::vector<size_type> ipts; ipts.reserve(dal::sqr(gt_order+1));
+      std::vector<size_type> ipts; ipts.reserve(gmm::sqr(gt_order+1));
       for (size_type ii=0; ii <= gt_order; ++ii) {
         for (size_type jj=0; jj <= gt_order; ++jj) {
           scalar_type r = R0 + j*dR + jj*(dR/gt_order);

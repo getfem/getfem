@@ -82,8 +82,8 @@ namespace bgeot
 	  J_ = ::sqrt(gmm::lu_inverse(CS));
 	  gmm::mult(K, CS, B_);/*O*/
 	} else {
-	  //J_ = dal::abs(gmm::lu_inverse(K)); B_.swap(K); /*O*/
-	 J_ = dal::abs(gmm::lu_inverse(K)); gmm::copy(gmm::transposed(K), B_);
+	  //J_ = gmm::abs(gmm::lu_inverse(K)); B_.swap(K); /*O*/
+	 J_ = gmm::abs(gmm::lu_inverse(K)); gmm::copy(gmm::transposed(K), B_);
 	}
       }
     }

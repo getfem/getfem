@@ -261,7 +261,7 @@ namespace getfem
 				     scalar_type w,short_type f) {
     if (valid) DAL_THROW(internal_error, 
 			 "Impossible to modify a valid integration method.");
-    if (dal::abs(w) > 1.0E-12) {
+    if (gmm::abs(w) > 1.0E-12) {
       ++f;
       if (f > cvr->structure()->nb_faces())
 	DAL_THROW(internal_error, "Wrong argument.");
@@ -353,7 +353,7 @@ namespace getfem
 	  a(i, j) = pts[j][i];
       
       gmm::mult(gmm::transposed(a), a, b);
-      det = ::sqrt(dal::abs(gmm::lu_det(b)));
+      det = ::sqrt(gmm::abs(gmm::lu_det(b)));
     }
     for (size_type i = 0; i < pai->nb_points_on_convex(); ++i) {
       pt = (cvr->dir_points_of_face(f))[0];
@@ -516,8 +516,8 @@ namespace getfem
       int_points[i].resize(1);
       long_scalar_type lr = lp.roots[nbpt][i];
       int_points[i][0] = 0.5 + 0.5 * lr;
-      int_coeffs[i] = (1.0 - dal::sqr(lr))
-	/ dal::sqr( long_scalar_type(nbpt)
+      int_coeffs[i] = (1.0 - gmm::sqr(lr))
+	/ gmm::sqr( long_scalar_type(nbpt)
 		    * (lp.polynomials[nbpt-1].eval(&lr)));
     }
     
