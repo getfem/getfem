@@ -53,9 +53,6 @@ int main(void)
     cout.precision(16);
 
     test_gauss_det();
-    cout << "/***********************************************************/\n";
-    cout << "/*                   Test of dense_matrix                  */\n";
-    cout << "/***********************************************************/\n";
 
     gmm::dense_matrix<double> m(10, 10);
     std::vector<double> y(10), x(10), b(10);
@@ -68,22 +65,44 @@ int main(void)
       j = (j + 6) % 10; k = (k + 15) % 31;
       x[i] = 10.0 * double(i - 5 + ((i >= 5) ? 1 : 0));
     }
+    gmm::mult(m, x, b);
     
     cout << "m = " << m << endl;
     cout << "x = " << x << endl;
+    cout << "b = " << b << endl;
 
-    gmm::dense_matrix<double> r(10, 10), q(10, 10), qr(10, 10), qqt(10, 10);
-    gmm::qr_factor(m, q, r);
+
+    cout << "/***********************************************************/\n";
+    cout << "/*                   Test of QR algorithms                 */\n";
+    cout << "/***********************************************************/\n";
+
+    gmm::dense_matrix<double> r(10, 10), q(10, 10), qr(10, 10), mmt(10, 10);
+    
+    gmm::mult(m, gmm::transposed(m), mmt);
+    cout.precision(8);
+    cout << "mmt = " << mmt << endl;
+    
+    gmm::qr_factor(mmt, q, r);
     cout << "r = " << r << endl;
     cout << "q = " << q << endl;
     gmm::mult(q, r, qr);
+    gmm::clean(qr, 1E-14);
     cout << "qr = " << qr << endl;
-    gmm::mult(q, gmm::transposed(q), qqt);
-    cout << "qqt = " << qqt << endl;
-    // getchar();
 
-    gmm::mult(m, x, b);
-    cout << "b = " << b << endl;
+    gmm::add(gmm::scaled(mmt, -1.0), qr);
+
+    if (gmm::mat_norm2(qr) > 1E-10) 
+      DAL_THROW(dal::failure_error, "write error on matrix m2.");
+
+    qr_method(mmt, y, q);
+
+    cout << "eigenvalues : " << y << endl;
+    cout << "eigenvectors : " << q << endl;
+
+    cout << "/***********************************************************/\n";
+    cout << "/*                   Test of dense_matrix                  */\n";
+    cout << "/***********************************************************/\n";
+    
     gmm::clear(y);
     gmm::iteration iter(1e-16);
     gmm::bicgstab(m, y, b, gmm::identity_matrix(), iter);

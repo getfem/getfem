@@ -257,5 +257,5 @@ R o n a l d
 Future version 1.6, avancées :
 ----------------------------
 . Support pour le calcul sur des domaines fracturés avec X-fem.
-. GMM : Estimation du conditionement
+. GMM : Estimation du conditionnement, factorisation qr et méthode qr.
 . GETFEM : estimation du rayon et de la qualité de éléments

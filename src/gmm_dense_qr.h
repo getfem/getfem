@@ -8,8 +8,7 @@
 /*        The Johns Hopkins University Press, 1989.                        */
 /*     									   */
 /* Date : June 5, 2003.                                                    */
-/* Authors : Caroline Lecalvez, Caroline.Lecalvez@gmm.insa-tlse.fr         */
-/*           Yves Renard, Yves.Renard@gmm.insa-tlse.fr                     */
+/* Authors : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                     */
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */
@@ -91,35 +90,73 @@ namespace gmm {
     size_type m = mat_nrows(A), n = mat_ncols(A);
     
     if (m < n) DAL_THROW(dimension_error, "dimensions mismatch");
-    temp_vector V(m), W(m);
+    std::vector<value_type> W(m);
+    dense_matrix<value_type> VV(m, n);
+    
 
     for (size_type j = 0; j < n; ++j) {
       sub_interval SUBI(j, m-j), SUBJ(j, n-j);
 
       for (size_type i = j; i < m; ++i) W[i] = R(i, j);
-      house_vector(sub_vector(W, SUBI), sub_vector(V, SUBI));
+      house_vector(sub_vector(W, SUBI), sub_vector(mat_col(VV,j), SUBI));
 
       row_house_update(sub_matrix(R, SUBI, SUBJ),
-		       sub_vector(V, SUBI), sub_vector(W, SUBJ));
+		       sub_vector(mat_col(VV,j), SUBI), sub_vector(W, SUBJ));
   
-      for (size_type i = j+1; i < m; ++i) R(i, j) = V[i];
+      for (size_type i = j+1; i < m; ++i) R(i, j) = 0.0;
     }
 
-    cout << "R prov = " << R << endl;
-
     gmm::copy(identity_matrix(), Q);
-    for (size_type j = n-2; j != size_type(-1); --j) {
+    for (size_type j = n-1; j != size_type(-1); --j) {
       sub_interval SUBI(j, m-j);
-
-      V[j] = value_type(1);
-      for (size_type i = j+1; i < m; ++i)
-	{ V[i] = R(i, j); R(i, j) = value_type(0); }
-
       row_house_update(sub_matrix(Q, SUBI, SUBI), 
-		       sub_vector(V, SUBI), sub_vector(W, SUBI));
+		       sub_vector(mat_col(VV,j), SUBI), sub_vector(W, SUBI));
     }
 
   }
+
+  template <class MAT1, class VECT, class MAT2>
+    void qr_method(const MAT1 &a, VECT &eigval, MAT2 &eigvect,
+		   bool vect = true) {
+    typedef typename linalg_traits<MAT1>::value_type value_type;
+    typedef typename number_traits<value_type>::magnitude_type magnitude_type;
+    
+    size_type n = mat_nrows(a);
+    MAT1 q(n, n), r(n,n), a1(n,n); 
+    gmm::copy(a, a1);
+    if (vect) gmm::copy(identity_matrix(), eigvect);
+    
+    for (size_type ite = 0; ite < n*100; ++ite) { // trop d'itérations ?
+      qr_factor(a1, q, r);
+      if (vect) { gmm::mult(eigvect, q, a1); gmm::copy(a1, eigvect); }
+      gmm::mult(r, q, a1);
+      
+      magnitude_type vmax(0);
+      for (size_type i = 0; i < n; ++i)
+	vmax = std::max(vmax, dal::abs(a1(i,i)));
+      
+      bool ok = true;
+      for (size_type i = 0; i < n && ok; ++i) { // to be optimized
+        for (size_type j = 0; j < i; ++j)
+	  if (dal::abs(a1(i,j)) > vmax * 1E-12) // critère à revoir ?
+	    { ok = false; break; }
+      }
+      if (ok) {
+	for (size_type i = 0; i < n; ++i) eigval[i] = a1(i,i);
+	return;
+      }
+    }
+    DAL_THROW(failure_error, "QR method failed");
+  }
+
+  template <class MAT1, class VECT> void qr_method(const MAT1 &a, VECT &eigval)
+  {
+    typedef typename linalg_traits<MAT1>::value_type value_type;
+    
+    dense_matrix<value_type> m(0,0);
+    qr_method(a, eigval, m, false); 
+  }
+
 
 }
 
