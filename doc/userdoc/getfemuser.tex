@@ -810,8 +810,8 @@ An assembling procedure is defined to solve the problem
 where $\Omega$ is an open domain of arbitrary dimension, $\Gamma_{_D}$ and $\Gamma_{_N}$ are parts of the boundary of $\Omega$, $u(x)$ is the unknown, $a(x)$ is a given coefficient, $f(x)$ is a given source term, $U(x)$ the prescribed value of $u(x)$ on $\Gamma_{_D}$ and $F(x)$ is the prescribed normal derivative of $u(x)$ on $\Gamma_{_N}$.
 The function to be called to assemble the stiffness matrix is\\[0.5cm]
 \index{GETFEM!getfem::asm\_stiffness\_matrix\_for\_laplacian}
-\cpp{getfem::asm\_stiffness\_matrix\_for\_laplacian(RM, mef1, mef2, A);} \\[0.5cm]
-where \cpp{RM} is a matrix of any type having the right dimension (i.e. \cpp{me1.nb\_dof()}), \cpp{mef1} is a variable of type \cpp{getfem::mesh\_fem} and should define the finite element method for the solution, \cpp{mef2}  is a variable of type \cpp{getfem::mesh\_fem} (possibly equal to \cpp{mef1}) describing the finite element method on which the coefficient $a(x)$ is defined, and \cpp{A} is the vector of the values of this coefficient on each degree of freedom of \cpp{mef2}. Both should use the same mesh. It is important to pay attention to the fact that the integration methods used to compute the elementary matrices is the ones declared in \cpp{mef1}. This integration method have to be chosen of sufficient order. The order has to be determined considering the degrees of element in \cpp{mef1}, in \cpp{mef2} and the geometric transformations for non-linear cases. Integration methods defined in \cpp{mef2} are ignored.\\[0.5cm]
+\cpp{getfem::asm\_stiffness\_matrix\_for\_laplacian(SM, mef1, mef2, A);} \\[0.5cm]
+where \cpp{SM} is a matrix of any type having the right dimension (i.e. \cpp{me1.nb\_dof()}), \cpp{mef1} is a variable of type \cpp{getfem::mesh\_fem} and should define the finite element method for the solution, \cpp{mef2}  is a variable of type \cpp{getfem::mesh\_fem} (possibly equal to \cpp{mef1}) describing the finite element method on which the coefficient $a(x)$ is defined, and \cpp{A} is the vector of the values of this coefficient on each degree of freedom of \cpp{mef2}. Both should use the same mesh. It is important to pay attention to the fact that the integration methods used to compute the elementary matrices is the ones declared in \cpp{mef1}. This integration method have to be chosen of sufficient order. The order has to be determined considering the degrees of element in \cpp{mef1}, in \cpp{mef2} and the geometric transformations for non-linear cases. Integration methods defined in \cpp{mef2} are ignored.\\[0.5cm]
 To assemble the source term, the  function to be called is\\[0.5cm]
 \index{GETFEM!getfem::asm\_source\_term}
 \cpp{getfem::asm\_source\_term(B, mef1, mef2, V);} \\[0.5cm]
@@ -821,9 +821,9 @@ For the Neumann condition on $\Gamma_{_N}$, the same function\\[0.5cm]
 is used again, but an additionnal argument has been added: \cpp{nbound} is the index of the boundary in \cpp{mef1} (see previous section on how to describe a boundary) where the Neumann condition is applied. Hence the assembly is done on the indicated boundary, and no more on the whole domain. \cpp{mef2}  is a variable of type \cpp{getfem::mesh\_fem} describing the finite element method on which $F(x)$ is defined, \cpp{V} is the vector of the values of $F(x)$ on each degree of freedom of \cpp{mef2}.\\[0.5cm]
 there is two manner to take into account the Dirichlet condition on $\Gamma_{_D}$, changing the linear system or explicitly reduce to the kernel of the Dirichlet condition. For the first manner, the following function is defined \\[0.5cm]
 \index{GETFEM!getfem::assembling\_Dirichlet\_condition}
-\cpp{getfem::assembling\_Dirichlet\_condition(RM, B, mef1, nbound, V, N);} \\[0.5cm]
-where \cpp{nbound} is the index of the boundary in \cpp{mef1} where the Dirichlet condition is applied, \cpp{V} is the vector of the values of $U(x)$ on each degree of freedom of \cpp{mef1} and \cpp{N} is the dimension for vectorial problems (should be \cpp{1} for scalar problems). This operation should be the last one because it transform the stiffness matrix \cpp{RM}. It works only for Lagrange elements. At the end, one obtains the discrete system
-\begin{equation*} [RM] U = B, \end{equation*}
+\cpp{getfem::assembling\_Dirichlet\_condition(SM, B, mef1, nbound, V, N);} \\[0.5cm]
+where \cpp{nbound} is the index of the boundary in \cpp{mef1} where the Dirichlet condition is applied, \cpp{V} is the vector of the values of $U(x)$ on each degree of freedom of \cpp{mef1} and \cpp{N} is the dimension for vectorial problems (should be \cpp{1} for scalar problems). This operation should be the last one because it transform the stiffness matrix \cpp{SM}. It works only for Lagrange elements. At the end, one obtains the discrete system
+\begin{equation*} [SM] U = B, \end{equation*}
 where $U$ is the discrete unknown.\\[0.5cm]
 
 \T \newcommand{\tildeH}{\tilde{H}}
@@ -841,13 +841,13 @@ of constraints. Hence $u$ must satisfy $Hu=R$, which is expressed on
 $mf\_rh$ (hopefully Lagrangian). This function just assemble these
 constraints into a new linear system $\tildeH u=\tildeR$, doing some
 additional simplification in order to obtain a ``simple'' constraints
-matrix.  \index{GETFEM!getfem::Dirichlet\_null_space} Then, one should
-call \\[0.5cm]\cpp{getfem::Dirichlet\_null_space($\tildeH$, N,
+matrix.  \index{GETFEM!getfem::Dirichlet\_nullspace} Then, one should
+call \\[0.5cm]\cpp{getfem::Dirichlet\_nullspace($\tildeH$, NN,
   $\tildeR$, Ud)},\\[0.5cm] which will return a vector $U_d$ which
-satisfies $MU_d=B$, and an orthogonal basis $N$ of the kernel of
+satisfies $MU_d=B$, and an orthogonal basis $NN$ of the kernel of
 $\tildeH$. Hence, the discrete system that must be solved is
-\begin{equation*} (N'[RM]N) U_{int}=N'(B-[RM]U_d),\end{equation*}
-and the solution is $U=N.U_{int}+U_d$.
+\begin{equation*} (NN'[SM]NN) U_{int}=NN'(B-[SM]U_d),\end{equation*}
+and the solution is $U=NN U_{int}+U_d$.
 A big advantage of this approach is to be generic, and do not prescribed for the finite element method \cpp{mf\_u} to be of Lagrange type. If \cpp{mf\_u} and 
 \cpp{mf\_d} are different, there is implicitly a projection (with respect to the $L^2$ norm) of the data on the finite element \cpp{mf\_u}.
 
@@ -855,8 +855,8 @@ A big advantage of this approach is to be generic, and do not prescribed for the
 
 the following function assembles the stiffness matrix for linear elasticity\\[0.5cm]
 \index{GETFEM!getfem::asm\_stiffness\_matrix\_for\_linear\_elasticity}
-\cpp{getfem::asm\_stiffness\_matrix\_for\_linear\_elasticity(RM, mef1, mef2, LAMBDA, MU); } \\[0.5cm]
-where \cpp{RM} is a matrix of any type having the right dimension (i.e. here \cpp{me1.nb\_dof()}), \cpp{mef1} is a variable of type \cpp{getfem::mesh\_fem} and should define the finite element method for the solution, \cpp{mef2}  is a variable of type \cpp{getfem::mesh\_fem} (possibly equal to \cpp{mef1}) describing the finite element method on which the Lam{\'e} coefficient are defined, \cpp{LAMBDA} and \cpp{MU} are vectors of the values of Lam{\'e} coefficients on each degree of freedom of \cpp{mef2}. It is important to pay attention to the fact that the integration methods used to compute the elementary matrices is the ones declared in \cpp{mef1} and must be of sufficient order.\\[0.5cm]
+\cpp{getfem::asm\_stiffness\_matrix\_for\_linear\_elasticity(SM, mef1, mef2, LAMBDA, MU); } \\[0.5cm]
+where \cpp{SM} is a matrix of any type having the right dimension (i.e. here \cpp{me1.nb\_dof()}), \cpp{mef1} is a variable of type \cpp{getfem::mesh\_fem} and should define the finite element method for the solution, \cpp{mef2}  is a variable of type \cpp{getfem::mesh\_fem} (possibly equal to \cpp{mef1}) describing the finite element method on which the Lam{\'e} coefficient are defined, \cpp{LAMBDA} and \cpp{MU} are vectors of the values of Lam{\'e} coefficients on each degree of freedom of \cpp{mef2}. It is important to pay attention to the fact that the integration methods used to compute the elementary matrices is the ones declared in \cpp{mef1} and must be of sufficient order.\\[0.5cm]
 
 CAUTION : Linear elasticity problem is a vectorial problem, so the target dimension of \cpp{mef1} (see \cpp{mef.set_qdim(Q)}) should be the same as the dimension of the mesh.\\[0.5cm]
 
@@ -918,12 +918,12 @@ An other example is the assembly of the stiffness matrix for a vector Laplacian:
   assem.push_mf(mf);
   assem.push_mf(mfdata);
   assem.push_data(A);
-  assem.push_mat(RM);
+  assem.push_mat(SM);
   assem.set("a=data$1(#2);"
             "M$1(#1,#1)+=sym(comp(vGrad(#1).vGrad(#1).Base(#2))(:,j,k,:,j,k,p).a(p))");
   assem.volumic_assembly();
 \end{cppcode}
-Now the output is written in a sparse matrix, inserted with \cpp{assem.push_mat(RM)}. The \cpp{\$1} in \cpp{M\$1(\#1,\#1)} just indicates that we refer to the first matrix ``pushed'' (it is optional, but if the assembly requires two matrices, the second one must be referred this way). The \cpp{sym} function ensure that the result is symmetric (if this is not done, some round-off errors may cancel the symmetricity). Next, the \cpp{comp} part evaluates a 7-dimensions tensor, 
+Now the output is written in a sparse matrix, inserted with \cpp{assem.push_mat(SM)}. The \cpp{\$1} in \cpp{M\$1(\#1,\#1)} just indicates that we refer to the first matrix ``pushed'' (it is optional, but if the assembly requires two matrices, the second one must be referred this way). The \cpp{sym} function ensure that the result is symmetric (if this is not done, some round-off errors may cancel the symmetricity). Next, the \cpp{comp} part evaluates a 7-dimensions tensor, 
 \begin{equation*}\int\partial_k \varphi^{i}_{j} \partial_l \varphi^m_n \psi^p,\end{equation*}
 where $\varphi^i_j$ is a $jth$ component of the $ith$ base function of \cpp{mf} and $\psi^p$ is a (scalar) base function of the second \cpp{mesh_fem}. Since we want to assemble
 \begin{equation*}\int a(x).\nabla\phi^i.\nabla\phi^j,\quad\text{with}\quad a(x)=\sum_pa^p\psi^p(x),\end{equation*}
@@ -994,7 +994,7 @@ For instance if you need to compute the mass matrix between to different finite 
   getfem::pfem pf = getfem::virtual\_link\_fem(mf2, mf\_interpole, pim);
   dal::bit\_vector nn = mf1.convex\_index();
   mf\_interpole.set\_finite\_element(nn, pf, pim);
-  getfem::mass\_matrix(RM1, mf1, mf\_interpole, 1);
+  getfem::mass\_matrix(SM1, mf1, mf\_interpole, 1);
 \end{cppcode}
 
 The object defined to build the interpolation will be destroyed when the object \cpp{mf\_interpole} will be destroyed. The information stored by this element can be important.

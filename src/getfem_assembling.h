@@ -673,10 +673,10 @@ namespace getfem
     
     for (size_type i=0; i < N; ++i) {
       for (size_type q=0; q < Q; ++q) {
-	H(i*Q*Q+q*Q+q)=1;
+	H[i*Q*Q+q*Q+q]=1;
       }
     }
-    asm_dirichlet_constraints(M,B,mf_u,mf_rh,H,R,boundary);
+    asm_dirichlet_constraints(M, B, mf_u, mf_rh, H, R, boundary);
   }
 
   /* old version, pre-Qdim */

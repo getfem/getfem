@@ -38,6 +38,7 @@ using bgeot::dim_type;
 
 typedef gmm::wsvector<scalar_type> sparse_vector_type;
 typedef gmm::row_matrix<sparse_vector_type> sparse_matrix_type;
+typedef gmm::col_matrix<sparse_vector_type> col_sparse_matrix_type;
 typedef std::vector<scalar_type> linalg_vector;
 
 /**************************************************************************/
@@ -72,10 +73,15 @@ struct lap_pb
 
   scalar_type LX, LY, LZ, incline, residu;
   size_type N;
-  int NX, K, fem_type, KI;
+  int NX, K, fem_type, KI, gen_dirichlet;
+  size_type nb_dof;
 
-  sparse_matrix_type SM;   /* stiffness matrix.                            */
+  sparse_matrix_type SM;   /* stiffness matrix.                           */
   linalg_vector U, B; /* inconnue et second membre.                       */
+
+  linalg_vector Ud;  /* reduced solution for generic Dirichlet condition. */
+  col_sparse_matrix_type NN;
+
  
   int integration, mesh_type;
 
@@ -108,6 +114,8 @@ void lap_pb::init(void)
   residu = PARAM.real_value("RESIDU", "Residu for c.g.");
   K = PARAM.int_value("K", "Finite element degree");
   KI = PARAM.int_value("KI", "Integration degree");
+  gen_dirichlet = PARAM.int_value("GENERIC_DIRICHLET",
+				  "Generic Dirichlet condtion");
   fem_type = PARAM.int_value("FEM_TYPE", "Finite element method");
   datafilename = std::string( PARAM.string_value("ROOTFILENAME",
 			     "File name for saving"));
@@ -330,7 +338,8 @@ void lap_pb::init(void)
 
 void lap_pb::assemble(void)
 {
-  size_type nb_dof = mef.nb_dof(), nb_dof_data = mef_data.nb_dof();
+  nb_dof = mef.nb_dof();
+  size_type nb_dof_data = mef_data.nb_dof();
   size_type nb_dof_data2 = mef_data2.nb_dof();
   B = linalg_vector(nb_dof); gmm::clear(B);
   U = linalg_vector(nb_dof); gmm::clear(U); 
@@ -378,25 +387,61 @@ void lap_pb::assemble(void)
   }
   
   cout << "take Dirichlet condition into account" << endl;
-  // nn = mef.dof_on_boundary(0);
-  // cout << "Number of Dirichlet nodes : " << nn.card() << endl;
-  // cout << "Dirichlet nodes : " << nn << endl;
-  cout << "nbdof = " << nb_dof << endl;
-  ST = linalg_vector(nb_dof);
-  cout << "Here0\n";
-  for (size_type i = 0; i < nb_dof; ++i)
-    ST[i] = sol_u(mef.point_of_dof(i));
-  cout << "Here1\n";
-  getfem::assembling_Dirichlet_condition(SM, B, mef, 0, ST);
-  cout << "Here2\n";
+  
+  if (!gen_dirichlet) {
+    ST = linalg_vector(nb_dof);
+    for (size_type i = 0; i < nb_dof; ++i)
+      ST[i] = sol_u(mef.point_of_dof(i));
+    getfem::assembling_Dirichlet_condition(SM, B, mef, 0, ST);
+  }
+  else {
 
-//   getfem::add_Dirichlet_dof(SM, B, mef, 0, sol_u(mef.point_of_dof(0)));
-//   cout << "Adding Dirichlet condition on dof 0 : " << mef.point_of_dof(0) << endl;
+    ST = linalg_vector(nb_dof_data);
+    for (size_type i = 0; i < nb_dof_data; ++i)
+      ST[i] = sol_u(mef_data.point_of_dof(i));
+    
+    Ud = linalg_vector(nb_dof);
+    NN = col_sparse_matrix_type(nb_dof, nb_dof);
+    sparse_matrix_type HH(nb_dof, nb_dof);
+    linalg_vector RR(nb_dof), RHaux(nb_dof);
+
+    getfem::asm_dirichlet_constraints(HH, RR, mef, mef_data, ST, 0);
+    cerr << "1\n";
+    int nbcols = getfem::Dirichlet_nullspace(HH, NN, RR, Ud);
+    cerr << "Number of unknowns : " << nbcols << endl;
+    NN.resize(nbcols);
+
+    cerr << "2\n";
+    gmm::mult(SM, Ud, gmm::scaled(B, -1.0), RHaux);
+    B = linalg_vector(nbcols);
+    U = linalg_vector(nbcols);
+    gmm::mult(gmm::transposed(NN), gmm::scaled(RHaux, -1.0), B);
+
+    cerr << "3\n";
+    sparse_matrix_type SMaux(nbcols, nb_dof);
+    gmm::mult(gmm::transposed(NN), SM, SMaux);
+    SM = sparse_matrix_type(nbcols, nbcols);
+    cerr << "4\n";
+
+    sparse_matrix_type NNaux(nb_dof, nbcols);
+    gmm::copy(NN, NNaux);
+    gmm::mult(SMaux, NNaux, SM);
+    cerr << "5\n";
+
+  }
 }
 
 void lap_pb::solve(void) {
   gmm::iteration iter(residu, 1, 40000);
   gmm::cg(SM, U, B, gmm::identity_matrix(), gmm::identity_matrix(), iter);
+
+  if (gen_dirichlet) {
+    linalg_vector Uaux(nb_dof);
+    gmm::mult(NN, U, Ud, Uaux);
+    U = linalg_vector(nb_dof);
+    gmm::copy(Uaux, U);
+  }
+
   failed = !(iter.converged());
 }
 

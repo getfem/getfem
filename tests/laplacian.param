@@ -30,6 +30,7 @@ INTEGRATION = 0;        % 0 = exact integration.
 			% 32, 33, 35 quadrilateral(n-30)
 NX = 40;            	% space step.
 RESIDU = 1E-9;     	% residu for conjugate gradient.
+GENERIC_DIRICHLET = 0;  % Generic Dirichlet condition for nono-lagrangian elts.
 
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'laplacian';     % Root of data files.
