@@ -75,6 +75,8 @@
 #include <gmm_solver_gmres.h>
 #include <gmm_precond_ildlt.h>
 #include <gmm_precond_ilu.h>
+#include <gmm_precond_ilut.h>
+#include <gmm_superlu_interface.h>
 namespace getfem {
 
   /* ******************************************************************** */
@@ -859,10 +861,12 @@ namespace getfem {
     //        detect the presence of multipliers before using a preconditioner
 
     size_type ndof = problem.nb_dof();
-    bool is_linear = problem.is_linear(), first = true;
+    bool is_linear = problem.is_linear();
     mtype alpha, alpha_min=mtype(1)/mtype(16), alpha_mult=mtype(3)/mtype(4);
     mtype alpha_max_ratio(2);
     dal::bit_vector mixvar;
+    gmm::iteration iter_linsolv = iter;
+    if (!is_linear) { iter_linsolv.reduce_noisy(); }
 
     MS.adapt_sizes(problem);
     if (!is_linear) gmm::fill_random(MS.state()); 
@@ -871,31 +875,41 @@ namespace getfem {
     problem.compute_tangent_matrix(MS);
     MS.compute_reduced_system();
     mtype act_res = MS.reduced_residu_norm(), act_res_new(0);
-    while(act_res > iter.get_resmax()) {
+    while (is_linear || !iter.finished(act_res)) {
       
       VECTOR d(ndof), dr(gmm::vect_size(MS.reduced_residu()));
 
-      if (!first) problem.compute_tangent_matrix(MS);
-      first = false;
+      if (!(iter.first())) problem.compute_tangent_matrix(MS);
+
+#ifdef GMM_USES_SUPERLU
+      double rcond;
+      SuperLU_solve(MS.reduced_tangent_matrix(), dr,
+		    gmm::scaled(MS.reduced_residu(), value_type(-1)),
+		    rcond);
+#else
       if (problem.is_coercive()) {
 	gmm::ildlt_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
 	gmm::cg(MS.reduced_tangent_matrix(), dr, 
-		gmm::scaled(MS.reduced_residu(), value_type(-1)), P, iter);
+		gmm::scaled(MS.reduced_residu(), value_type(-1)),
+		P, iter_linsolv);
       } else {
 	problem.mixed_variables(mixvar);
 	if (mixvar.card() == 0) {
 	  gmm::ilu_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
 	  gmm::gmres(MS.reduced_tangent_matrix(), dr, 
 		     gmm::scaled(MS.reduced_residu(),  value_type(-1)), P,
-		     300, iter);
+		     300, iter_linsolv);
 	}
 	else {
 	  cout << "there is " << mixvar.card() << " mixed variables\n";
+	  gmm::ilut_precond<T_MATRIX> P(MS.reduced_tangent_matrix(),100,1E-10);
+	  //gmm::identity_matrix P()
 	  gmm::gmres(MS.reduced_tangent_matrix(), dr, 
 		     gmm::scaled(MS.reduced_residu(),  value_type(-1)),
-		     gmm::identity_matrix(), 300, iter);
+		     P, 300, iter_linsolv);
 	}
       }
+#endif
       MS.unreduced_solution(dr,d);
       
       if (is_linear) {
@@ -915,7 +929,7 @@ namespace getfem {
 	  if (act_res_new <= act_res * alpha_max_ratio) break;
 	}
       }
-      act_res = act_res_new;
+      act_res = act_res_new; ++iter;
     }
 
   }
