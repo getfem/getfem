@@ -179,7 +179,7 @@ namespace getfem
      */
     template <typename MAT>
     void interpolation(const fem_interpolation_context& c, 
-		       MAT &M, dim_type Qdim) const ;
+		       MAT &M, dim_type Qdim) const;
 
     /** Function which interpolates in the ii th point of pfp. coeff is the
      *  vector of coefficient relatively to the shape functions. G and pgt
@@ -199,7 +199,8 @@ namespace getfem
      */
     template<typename CVEC, typename VMAT> 
     void interpolation_grad(const fem_interpolation_context& c, 
-			    const CVEC& coeff, VMAT &val, dim_type Qdim=1) const;
+			    const CVEC& coeff, VMAT &val,
+			    dim_type Qdim=1) const;
       
     /** Gives the value of all components of the base functions at the
      *  point x of the reference element. Basic function used essentially
@@ -285,7 +286,9 @@ namespace getfem
      filled (for example the xreal will be computed if needed as long
      as pgp+ii is known)
   */
-  class fem_interpolation_context : public bgeot::geotrans_interpolation_context {
+  class fem_interpolation_context :
+    public bgeot::geotrans_interpolation_context {
+
     mutable base_matrix M_;
     pfem pf_;
     pfem_precomp pfp_;
@@ -477,8 +480,9 @@ namespace getfem
    *  of degree k on a geometric convex cvs (coming from the geometric trans).
    */
   pfem classical_fem(bgeot::pgeometric_trans pg, short_type k);
-  /** Gives a pointer on the structures describing the more classical discontinuous fem
-   *  of degree k on a geometric convex cvs (coming from the geometric trans).
+  /** Gives a pointer on the structures describing the more classical
+   *  discontinuous fem of degree k on a geometric convex cvs (coming 
+   *  from the geometric trans).
    */
   pfem classical_discontinuous_fem(bgeot::pgeometric_trans pg, short_type k);
 

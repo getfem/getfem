@@ -320,7 +320,7 @@ int main(int argc, char *argv[]) {
     p.assembly();
     if (!p.solve()) DAL_THROW(dal::failure_error, "Solve procedure has failed");
     p.compute_error();
-    // getfem::save_solution(p.datafilename + ".dataelt", p.mf_u, p.U, p.K);
+    getfem::save_solution(p.datafilename + ".dataelt", p.mf_u, p.U, p.K);
   }
   DAL_STANDARD_CATCH_ERROR;
 
