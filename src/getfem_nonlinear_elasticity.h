@@ -128,6 +128,7 @@ namespace getfem {
 
   struct Ciarlet_Geymonat_hyperelastic_law : public abstract_hyperelastic_law {
     // parameters are lambda=params[0], mu=params[1], gamma'(1)=params[2]
+    // The parameters gamma'(1) has to verify gamma'(1) in ]-lambda/2-mu, -mu[
     virtual scalar_type strain_energy(const base_matrix &L,
 				      base_vector &params) {
       size_type N = gmm::mat_nrows(L);
