@@ -61,12 +61,12 @@ Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 \newpage
 
 \section{Data format}
-The data in the file should begin with a string {\tt DATA ELEMENT}. The text in the file before this string is ignored. Then, the three following lines should be present to define the global caracteristics of the solution
+The data in the file should begin with a string {\tt BEGIN DATA ELEMENT}. The text in the file before this string is ignored. Then, the three following lines should be present to define the global caracteristics of the solution
 {\tt N = ..\\
   P = ..\\
   K = ..\\
 }
-where {\tt N} defines the dimension of the domain, {\tt P} defines the dimension of the solution ({\tt P = 1} if the solution is scalar) and {\tt K} defines the degree of polynomials used to save the solution. Just after those three lines and untill the end of the file should be a list of the finite element interpolation nodes and the values of the solution on each node. A blank line should separate the nodes of each element and the list of node is preceded by a line defining the intrinsic dimension of the element (which is less or equal to the dimension of the domain). Then, on each line defining a node, there should be first the coordinates of the node (i.e. {\tt N} values) then the value of each coordinate of the solution (i.e. {\tt P} values). For exemple if a triangle and a tetrahedron are present in a 3D mesh, there would be the following lines (if {\tt N = 3}, {\tt P = 1} and {\tt K = 1})\\[0.5cm]
+where {\tt N} defines the dimension of the domain, {\tt P} defines the dimension of the solution ({\tt P = 1} if the solution is scalar) and {\tt K} defines the degree of polynomials used to save the solution. Just after those three lines should be a list of the finite element interpolation nodes and the values of the solution on each node. A blank line should separate the nodes of each element and the list of node is preceded by a line defining the intrinsic dimension of the element (which is less or equal to the dimension of the domain). Then, on each line defining a node, there should be first the coordinates of the node (i.e. {\tt N} values) then the value of each coordinate of the solution (i.e. {\tt P} values). For exemple if a triangle and a tetrahedron are present in a 3D mesh, there would be the following lines (if {\tt N = 3}, {\tt P = 1} and {\tt K = 1})\\[0.5cm]
 {\tt 
   DIM = 2 \\
   0 0 0 1.0 \\
@@ -80,6 +80,7 @@ where {\tt N} defines the dimension of the domain, {\tt P} defines the dimension
   0 0 1 0.25 \\
   \\
 }
+Finally, the file should end with the string {\tt END DATA ELEMENT}.
 
 \section{Interpolation program}
 \section{Comparaison program}

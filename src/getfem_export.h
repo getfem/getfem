@@ -128,7 +128,8 @@ namespace getfem
     
     if (!(ftool::read_untill(ist, "BEGIN DATA ELEMENT"))) error = true;
 
-    while (!(ist.eof()) && !error) {
+    while (!error) {
+      if (ist.eof()) { error = true; break; }
       ftool::get_token(ist, tmp, 99); token = 0;
       if (!strcmp(tmp, "N")) token = 1;
       if (!strcmp(tmp, "P")) token = 2;
@@ -155,15 +156,14 @@ namespace getfem
 	began = true;
 	for(int k = strlen(tmp)-1; k >= 0; --k) ist.putback(tmp[k]);
 	size_type nbpt = 0;
-	while(!(ist.eof()) && nbpt < 1000) {
+	while(nbpt < 1000) {
 	  if (ptab[nbpt].size() != N) ptab[nbpt].resize(N);
 	  for (i = 0; i < N; ++i) ist >> (ptab[nbpt])[i];
-	  if (ist.eof()) break;
 	  for (i = 0; i < P; ++i) ist >> vtab[nbvtab * P + i];
 	  nbpt++; nbvtab++;
 	  while(ist.get(c))
 	    { if (!(isspace(c)) || c == 10) { ist.putback(c); break; } }
-	  ist.get(c); if (c != 10 && !(ist.eof())) bad_format(fi);
+	  ist.get(c); if (c != 10 && !(ist.eof())) { error = true; break; }
 	  while(ist.get(c))
 	    { if (!(isspace(c)) || c == 10) { ist.putback(c); break; } }
 	  ist.get(c); if (c == 10 || ist.eof()) break; else ist.putback(c);
