@@ -126,6 +126,67 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2,
   if (!(error <= prec * R(10000)))
     DAL_THROW(gmm::failure_error, "Error too large: "<< error);
 
+  // test for row_vector and col_vector
+  std::vector<T> v5(gmm::vect_size(v2));
+  gmm::mult(m2, v3, v2);
+  gmm::copy(v2, v5);
+  gmm::mult(m2, gmm::col_vector(v3), gmm::col_vector(v2));
+  gmm::add(gmm::scaled(v5, T(-1)), v2);
+  error = gmm::vect_norm2(v2);
+  if (!(error <= prec))
+    DAL_THROW(gmm::failure_error, "Error too large: " << error);
+  gmm::mult(gmm::row_vector(gmm::conjugated(v3)), gmm::conjugated(m2),
+	    gmm::row_vector(v2));
+  gmm::add(gmm::conjugated(gmm::scaled(v5, T(-1))), v2);
+  error = gmm::vect_norm2(v2);
+  if (!(error <= prec))
+    DAL_THROW(gmm::failure_error, "Error too large: " << error);
+
+  if (gmm::is_original_linalg(m1)) {
+    size_type a = gmm::mat_nrows(m1), b = gmm::mat_ncols(m1);
+    size_type a2 = gmm::irandom(size_type(a));
+    size_type b2 = gmm::irandom(size_type(b));
+    gmm::dense_matrix<T> m3(a, b);
+    gmm::copy(m1, m3);
+    gmm::resize(m1, a+a2, b+b2);
+    for (size_type i = 0; i < a+a2; ++i)
+      for (size_type j = 0; i < b+b2; ++j) {
+	if (i < a && j < b) {
+	  if (m3(i, j) != m1(i, j))
+	    DAL_THROW(gmm::failure_error, "Error in resize");
+	}
+	else
+	  if (m1(i, j) != T(0))
+	    DAL_THROW(gmm::failure_error, "Error in resize");
+      }
+    gmm::resize(m1, a2, b2);
+    for (size_type i = 0; i < a2; ++i)
+      for (size_type j = 0; i < b2; ++j)
+	if (m3(i, j) != m1(i, j))
+	    DAL_THROW(gmm::failure_error, "Error in resize");
+  }
+
+  if (gmm::is_original_linalg(v1)) {
+    size_type a = gmm::vect_size(v1);
+    size_type a2 = gmm::irandom(size_type(a));
+    std::vector<T> v6(a);
+    gmm::copy(v1, v6);
+    gmm::resize(v1, a+a2);
+    for (size_type i = 0; i < a+a2; ++i) {
+      if (i < a) {
+	if (v1[i] != v6[i])
+	    DAL_THROW(gmm::failure_error, "Error in resize");
+	}
+	else
+	  if (v1[i] != T(0))
+	    DAL_THROW(gmm::failure_error, "Error in resize");
+    }
+    gmm::resize(v1, a2);
+    for (size_type i = 0; i < a2; ++i)
+      if (v1[i] != v6[i])
+	DAL_THROW(gmm::failure_error, "Error in resize");
+  }
+
 }
 
 

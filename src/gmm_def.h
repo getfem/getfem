@@ -169,7 +169,7 @@ namespace gmm {
   inline bool is_row_matrix(col_major) { return false; }
 
   template <typename L> inline bool is_const_reference(L) { return false; }
-  inline bool is_const_reference(linalg_const) { return true; }
+  inline bool is_const_reference(linalg_const) { return true; }  
 
   /* ******************************************************************** */
   /*  types to deal with const object representing a modifiable reference */
@@ -267,6 +267,13 @@ namespace gmm {
     typedef typename _is_a_reference<typename linalg_traits<L>::is_reference>
       ::reference reference;
   };
+
+
+  template <typename L> inline bool is_original_linalg(const L &) 
+  { return is_original_linalg(typename is_a_reference<L>::reference()); }
+  inline bool is_original_linalg(linalg_false) { return true; }
+  inline bool is_original_linalg(linalg_true) { return false; }
+
 
   template <typename PT> struct which_reference 
   { typedef abstract_null_type is_reference; };

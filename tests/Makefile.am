@@ -65,7 +65,6 @@ EXTRA_DIST = \
 	laplacian.pl                    \
 	elasto_statique.pl              \
 	integration.pl                  \
-	linalg.pl                       \
 	poly.pl                         \
 	test_mesh.pl                    \
 	geo_trans.pl                    \

@@ -150,7 +150,7 @@ namespace gmm
 
   template<typename V> void row_matrix<V>::resize(size_type m, size_type n) {
     li.resize(m);
-    for (size_type i=0; i < m; ++i) resize(li[i], n);
+    for (size_type i=0; i < m; ++i) gmm::resize(li[i], n);
   }
 
 
