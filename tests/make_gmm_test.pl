@@ -178,8 +178,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     print TMPF "  srand($theseed);\n\n";
     print TMPF "  dal::exception_callback_debug cb;\n";
     print TMPF "  dal::exception_callback::set_exception_callback(&cb);\n\n";
-    print TMPF "  for (int iter = 0; iter < 50; ++iter) {\n";
-    print TMPF "    cout << iter << \" : \" << endl;\n\n";
+    print TMPF "  for (int iter = 0; iter < 50; ++iter) {\n\n";
     print TMPF "    try {\n\n";
     for ($j = 0; $j < $nb_param; ++$j) {
       $a = rand(); $b = rand();

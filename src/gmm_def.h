@@ -553,6 +553,20 @@ namespace gmm {
   bool same_porigin(PT pt1, PT pt2) { return (pt1 == pt2); }
 
   /* ******************************************************************** */
+  /*		General index for certain algorithms.         		  */
+  /* ******************************************************************** */
+
+  template<class IT> 
+  size_type index_of_it(const IT &it, size_type k, abstract_sparse)
+  { return it.index(); }
+  template<class IT> 
+  size_type index_of_it(const IT &it, size_type k, abstract_skyline)
+  { return it.index(); }
+  template<class IT> 
+  size_type index_of_it(const IT &it, size_type k, abstract_dense)
+  { return k; }
+
+  /* ******************************************************************** */
   /*		Write                                   		  */
   /* ******************************************************************** */
 

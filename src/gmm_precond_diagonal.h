@@ -41,8 +41,14 @@ namespace gmm {
     std::vector<magnitude_type> diag;
 
     diagonal_precond(const Matrix &M) : diag(mat_nrows(M)) {
-      for (size_type i = 0; i < mat_nrows(M); ++i)
-	diag[i] = magnitude_type(1) / gmm::abs(M(i, i));
+      for (size_type i = 0; i < mat_nrows(M); ++i) {
+	magnitude_type x = gmm::abs(M(i, i));
+	if (x == magnitude_type(0)) {
+	  x = magnitude_type(1);
+	  DAL_WARNING(3, "The matrix has a zero on its diagonal");
+	}
+	diag[i] = magnitude_type(1) / x;
+      }
     }
 
     diagonal_precond(void) {}

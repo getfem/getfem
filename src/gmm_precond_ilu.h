@@ -87,9 +87,6 @@ namespace gmm {
     
     ilu_precond(const Matrix& A) :
       invert(false), L_ptr(mat_nrows(A)+1), U_ptr(mat_nrows(A)+1) { 
-      if (!is_sparse(A))
-	DAL_THROW(failure_error,
-		  "Matrix should be sparse for incomplete ilu");
       do_ilu(A, typename principal_orientation_type<typename
 	     linalg_traits<Matrix>::sub_orientation>::potype());
     }
@@ -99,7 +96,8 @@ namespace gmm {
 
   template <typename Matrix> template <typename M>
   void ilu_precond<Matrix>::do_ilu(const M& A, row_major) {
-    size_type L_loc = 0, U_loc = 0, n = mat_nrows(A), i, j;
+    typedef typename linalg_traits<Matrix>::storage_type store_type;
+    size_type L_loc = 0, U_loc = 0, n = mat_nrows(A), i, j, k;
     L_ptr[0] = 0; U_ptr[0] = 0;
 
     for (int count = 0; count < 2; ++count) {
@@ -113,13 +111,14 @@ namespace gmm {
 	row_type row = mat_const_row(A, i);
 	typename linalg_traits<row_type>::const_iterator
 	  it = vect_const_begin(row), ite = vect_const_end(row);
-	for (; it != ite; ++it) {
-	  if (it.index() < i) {
-	    if (count) { L_val[L_loc] = *it; L_ind[L_loc] = it.index(); }
+	for (k = 0; it != ite; ++it, ++k) {
+	  j = index_of_it(it, k, store_type());
+	  if (j < i) {
+	    if (count) { L_val[L_loc] = *it; L_ind[L_loc] = j; }
 	    L_loc++;
 	  }
 	  else {
-	    if (count) { U_val[U_loc] = *it; U_ind[U_loc] = it.index(); }
+	    if (count) { U_val[U_loc] = *it; U_ind[U_loc] = j; }
 	    U_loc++;
 	  }
 	}

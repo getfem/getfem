@@ -86,8 +86,8 @@ namespace gmm {
 }
 
 #include <gmm_precond_diagonal.h>
-#include <gmm_precond_cholesky.h>
-#include <gmm_precond_choleskyt.h>
+#include <gmm_precond_ildlt.h>
+#include <gmm_precond_ildltt.h>
 #include <gmm_precond_mr_approx_inverse.h>
 #include <gmm_precond_ilu.h>
 #include <gmm_precond_ilut.h>

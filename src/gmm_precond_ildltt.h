@@ -2,10 +2,9 @@
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Generic Matrix Methods  (gmm)                                */
-/* File    :  gmm_precond_choleskyt.h : Incomplete LDLT factorisation      */
-/*                                      with fill-in and threshold.        */
+/* File    :  gmm_precond_ildltt.h : Incomplete LDLT factorisation         */
+/*                                   with fill-in and threshold.           */
 /*					                                   */
-/*     									   */
 /* Date : June 30, 2003.                                                   */
 /* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
 /*                                                                         */
@@ -30,17 +29,19 @@
 /* USA.                                                                    */
 /*                                                                         */
 /* *********************************************************************** */
-#ifndef GMM_PRECOND_CHOLESKYT_H
-#define GMM_PRECOND_CHOLESKYT_H
+#ifndef GMM_PRECOND_ILDLTT_H
+#define GMM_PRECOND_ILDLTT_H
+
+// Store U = LT and D in indiag. On each line, the fill-in is the number
+// of non-zero elements on the line of the original matrix plus K, except if
+// the matrix is dense. In this case the fill-in is K on each line.
 
 #include <gmm_kernel.h>
 
 namespace gmm {
 
-#define ildltt_precond choleskyt_precond
-
   template <typename Matrix>
-  class choleskyt_precond  {
+  class ildltt_precond  {
   public :
     typedef typename linalg_traits<Matrix>::value_type value_type;
     typedef typename number_traits<value_type>::magnitude_type magnitude_type;
@@ -54,26 +55,21 @@ namespace gmm {
     int K;
     double eps;    
 
-    template<typename M> void do_choleskyt(const M&, row_major, int = 0);
-    void do_choleskyt(const Matrix&, col_major);
+    template<typename M> void do_ildltt(const M&, row_major, int = 0);
+    void do_ildltt(const Matrix&, col_major);
 
   public:
-    choleskyt_precond(const Matrix& A, int k_, double eps_) 
+    ildltt_precond(const Matrix& A, int k_, double eps_) 
       : U(mat_nrows(A),mat_ncols(A)),
 	indiag(std::min(mat_nrows(A), mat_ncols(A))), K(k_), eps(eps_) {
-      if (!is_sparse(A))
-	DAL_THROW(failure_error,
-		  "Matrix should be sparse for incomplete cholesky");
-      do_choleskyt(A, typename principal_orientation_type<typename
+      do_ildltt(A, typename principal_orientation_type<typename
 	      linalg_traits<Matrix>::sub_orientation>::potype());
     }
-    choleskyt_precond(void) {}
+    ildltt_precond(void) {}
   };
 
   template<typename Matrix> template<typename M> 
-  void choleskyt_precond<Matrix>::do_choleskyt(const M& A,row_major,int _try) {
-    magnitude_type prec = default_tol(magnitude_type());
-    magnitude_type modmax(0);
+  void ildltt_precond<Matrix>::do_ildltt(const M& A,row_major,int _try) {
     size_type n = mat_nrows(A);
     svector w(n);
     value_type tmp;
@@ -84,8 +80,10 @@ namespace gmm {
       double norm_row = gmm::vect_norm2(w);
 
       size_type nU = 0;
-      typename linalg_traits<svector>::iterator it = vect_begin(w);
-      for (; it != vect_end(w); ++it) if (i < it.index()) nU++;
+      if (is_sparse(A)) {
+	typename linalg_traits<svector>::iterator it = vect_begin(w);
+	for (; it != vect_end(w); ++it) if (i < it.index()) nU++;
+      }
 
       for (size_type krow = 0, k; krow < w.nb_stored(); ++krow) {
 	typename svector::iterator wk = w.begin() + krow;
@@ -97,24 +95,10 @@ namespace gmm {
 
       if ((tmp = w[i]) == value_type(0)) {
 	DAL_WARNING(2, "pivot " << i << " is zero");
-	if (_try > 10)
-	  tmp = value_type(1);
-	else {
-	  ++K; eps /= 2.0;
-	  DAL_WARNING(2, "trying with " << K
-		      << " additional elements and threshold " << eps);
-	  do_choleskyt(A, row_major(), ++_try);
-	  return;
-	}
+	tmp = value_type(1);
+	if (_try <= 10)
+	  { ++K; eps /= 2.0; do_ildltt(A, row_major(), ++_try); return; }
       }
-
-      modmax = std::max(modmax, gmm::abs(tmp));
-      if (gmm::real(tmp) <= magnitude_type(0)
-	  || gmm::abs(gmm::imag(tmp)) > prec * modmax)
-	DAL_WARNING(2, "Pivot " << i << " is not convenient: " << tmp
-		    << "\nBe sure your matrix is real symmetric or "
-		    << "complex hermitian");
-
 
       indiag[i] = value_type(1) / tmp;
       gmm::clean(w, eps * norm_row);
@@ -125,6 +109,55 @@ namespace gmm {
 	if (wit->c > i) { if (nnu < nU+K) U(i, wit->c) = wit->e; ++nnu; }
     }
   }
+
+  template<typename Matrix> 
+  void ildltt_precond<Matrix>::do_ildltt(const Matrix& A, col_major)
+  { do_ildltt(gmm::conjugated(A), row_major()); }
+
+  template <typename Matrix, typename V1, typename V2> inline
+  void mult(const ildltt_precond<Matrix>& P, const V1 &v1, V2 &v2) {
+    gmm::copy(v1, v2);
+    gmm::lower_tri_solve(gmm::conjugated(P.U), v2, true);
+    for (size_type i = 0; i < P.indiag.size(); ++i) v2[i] *= P.indiag[i];
+    gmm::upper_tri_solve(P.U, v2, true);
+  }
+
+  template <typename Matrix, typename V1, typename V2> inline
+  void transposed_mult(const ildltt_precond<Matrix>& P,const V1 &v1, V2 &v2)
+  { mult(P, v1, v2); }
+
+  template <typename Matrix, typename V1, typename V2> inline
+  void left_mult(const ildltt_precond<Matrix>& P, const V1 &v1, V2 &v2) {
+    copy(v1, v2);
+    gmm::lower_tri_solve(gmm::conjugated(P.U), v2, true);
+    for (size_type i = 0; i < P.indiag.size(); ++i) v2[i] *= P.indiag[i];
+  }
+
+  template <typename Matrix, typename V1, typename V2> inline
+  void right_mult(const ildltt_precond<Matrix>& P, const V1 &v1, V2 &v2)
+  { copy(v1, v2); gmm::upper_tri_solve(P.U, v2, true); }
+
+  template <typename Matrix, typename V1, typename V2> inline
+  void transposed_left_mult(const ildltt_precond<Matrix>& P, const V1 &v1,
+			    V2 &v2) {
+    copy(v1, v2);
+    gmm::upper_tri_solve(P.U, v2, true);
+    for (size_type i = 0; i < P.indiag.size(); ++i) v2[i] *= P.indiag[i];
+  }
+
+  template <typename Matrix, typename V1, typename V2> inline
+  void transposed_right_mult(const ildltt_precond<Matrix>& P, const V1 &v1,
+			     V2 &v2)
+  { copy(v1, v2); gmm::lower_tri_solve(gmm::conjugated(P.U), v2, true); }
+
+
+  // for compatibility with old versions
+
+  template <typename Matrix>
+  struct choleskyt_precond : public ildltt_precond<Matrix> {
+    choleskyt_precond(const Matrix& A) : ildltt_precond<Matrix>(A) {}
+    choleskyt_precond(void) {}
+  };
 
   template<typename Matrix> 
   void choleskyt_precond<Matrix>::do_choleskyt(const Matrix& A, col_major)

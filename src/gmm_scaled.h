@@ -425,14 +425,14 @@ namespace gmm {
   void scale(L& l, typename linalg_traits<L>::value_type a, row_major) {
     typename linalg_traits<L>::row_iterator it = mat_row_begin(l),
       ite = mat_row_end(l);
-    for ( ; it != ite; ++it) scale(linalg_traits<L>::row(*it), a);
+    for ( ; it != ite; ++it) scale(linalg_traits<L>::row(it), a);
   }
 
   template <typename L> 
   void scale(L& l, typename linalg_traits<L>::value_type a, col_major) {
     typename linalg_traits<L>::col_iterator it = mat_col_begin(l),
       ite = mat_col_end(l);
-    for ( ; it != ite; ++it) scale(linalg_traits<L>::col(*it), a);
+    for ( ; it != ite; ++it) scale(linalg_traits<L>::col(it), a);
   }
 
 }

@@ -47,9 +47,10 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2, const MAT3 &_m3) {
     DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
   if (nn <= gmm::mat_nrows(m3) && mm <= gmm::mat_ncols(m3)) {
-  
+    
+    gmm::scale(m1, T(2));
     gmm::mult(gmm::scaled(gmm::sub_matrix(m1, gmm::sub_interval(0,mm),
-					  gmm::sub_interval(0,l)), T(-2)),
+					  gmm::sub_interval(0,l)), T(-1)),
 	      gmm::sub_matrix(m2, gmm::sub_interval(0,l),
 			      gmm::sub_interval(0,nn)),
 	      gmm::sub_matrix(gmm::transposed(m3), gmm::sub_interval(0,mm),

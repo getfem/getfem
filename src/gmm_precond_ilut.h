@@ -97,10 +97,6 @@ namespace gmm {
     ilut_precond(const Matrix& A, int k_, double eps_) 
       : invert(false), L(mat_nrows(A), mat_ncols(A)),
 	U(mat_nrows(A), mat_ncols(A)), K(k_), eps(eps_) {
-   
-      if (!is_sparse(A))
-	DAL_THROW(failure_error,
-		  "Matrix should be sparse for incomplete ilu");
       do_ilut(A, typename principal_orientation_type<typename
 	      linalg_traits<Matrix>::sub_orientation>::potype());
     }
@@ -120,10 +116,12 @@ namespace gmm {
       gmm::copy(mat_const_row(A, i), w);
       double norm_row = gmm::vect_norm2(w);
 
-      size_type nL = 0;
-      typename linalg_traits<svector>::iterator it = vect_begin(w);
-      for (; it != vect_end(w); ++it) if (i > it.index()) nL++;
-      size_type nU = w.nb_stored() - nL - 1;
+      size_type nL = 0, nU = 0;
+      if (is_sparse(A)) {
+	typename linalg_traits<svector>::iterator it = vect_begin(w);
+	for (; it != vect_end(w); ++it) if (i > it.index()) nL++;
+	nU = w.nb_stored() - nL - 1;
+      }
 
       for (size_type krow = 0, k; krow < w.nb_stored(); ++krow) {
 	typename svector::iterator wk = w.begin() + krow;
@@ -135,15 +133,9 @@ namespace gmm {
       
       if ((tmp = w[i]) == value_type(0)) {
 	DAL_WARNING(2, "pivot " << i << " is zero");
-	if (_try > 10)
-	  tmp = value_type(1);
-	else {
-	  ++K; eps /= 2.0;
-	  DAL_WARNING(2, "trying with " << K
-		      << " additional elements and threshold " << eps);
-	  do_ilut(A, row_major(), ++_try);
-	  return;
-	}
+	tmp = value_type(1);
+	if (_try <= 10)
+	  { ++K; eps /= 2.0; do_ilut(A, row_major(), ++_try); return; }
       }
 
       indiag[i] = value_type(1) / tmp;
