@@ -98,8 +98,6 @@ namespace gmm {
     typedef abstract_null_type* iterator;
     typedef const abstract_null_type* const_iterator;
     typedef abstract_null_type storage_type;
-    typedef abstract_null_type const_sub_row_type;
-    typedef abstract_null_type const_sub_col_type;
     typedef abstract_null_type clear_type;
     typedef abstract_null_type access_type;
     typedef abstract_null_type const_sub_row_type;
