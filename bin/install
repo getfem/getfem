@@ -36,7 +36,6 @@ while($liste) {
 `mkdir -p lib`;
 
 
-
 #######################################
 #        Compiler detection           #
 #######################################
@@ -51,6 +50,32 @@ print "No compiler in CC variable, searching one\n";
 
 if (! $CC) { die "No compiler found, aborting\n"; }
 else { print "$CC is selected.\nTo select another compiler set the variable CC\n\n"; }
+
+#######################################
+#        Searching MATLAB             #
+#######################################
+
+
+`mex -h`;
+if ($? != 0) {
+  print "mex is not installed on your system (or is not accessible),\n";
+  print "MATLAB command will not be compiled\n";
+  $MEX = 0;
+}
+else {
+  print "mex is present\n";
+  $MEX = 1;
+  $rep = `bin/compilo_mexv`;
+  while($rep) {
+    ($li, $rep) = split('\n', $rep, 2);
+    if ($li =~ /MATLAB *\=/)
+    {
+      ($li, $MATLABREP) = split('\=', $li, 2);
+      print "Matlab found in path $MATLABREP\n";
+    }
+  }
+}
+
 
 #######################################
 #        Building Makefile            #
@@ -109,19 +134,22 @@ else {
 
 }
 
+if ($MEX == 0) {
+  print MAKEFILE "INCLUDES_STANDARD = \n";
+}
+else {
+  print MAKEFILE "INCLUDES_STANDARD = -I$MATLABREP/extern/include \n";
+}
+
+# tenir compte dans la suite du cas $MEX = 0
+
 if ($systeme =~ /Linux/)
 { # les chemins suivant seraient à chercher ...
-  print MAKEFILE "INCLUDES_STANDARD = -I/opt/matlab/extern/include \n";
-  print MAKEFILE "INCLUDES_MTL = -I/opt/mtl/include\n";
-  print MAKEFILE "INCLUDES_ITL = -I/opt/mtl/include\n";
   print MAKEFILE "LIB_X11 = -L/usr/X11R6/lib -lX11\n";
   $extmatcom = 'mexglx ';
 }
 elsif ($systeme =~ /OSF/)
 {
-  print MAKEFILE "INCLUDES_STANDARD =  -I/usr/local/matlab/extern/include \n";
-  print MAKEFILE "INCLUDES_MTL = -I/usr/local/mtl/include\n";
-  print MAKEFILE "INCLUDES_ITL = -I/usr/local/mtl/include\n";
   print MAKEFILE "LIB_X11 = -L/usr/X11R6/lib -lX11\n";
   $extmatcom = 'mexaxp ';
 }
@@ -132,8 +160,8 @@ print MAKEFILE "CPLUSDEBUG = \$(COMP) \$(OPTIONS_STANDARD)";
 print MAKEFILE " \$(OPTIONS_DEBUG) \n";
 print MAKEFILE "CPLUSOPTDEBUG = \$(COMP) \$(OPTIONS_STANDARD)";
 print MAKEFILE " \$(OPTIONS_BOTH) \n";
-print MAKEFILE "INCLUDES = -I./include \$(INCLUDES_STANDARD) \$(INCLUDES_GETFEM) \$(INCLUDES_MTL)";
-print MAKEFILE " \$(INCLUDES_ITL) \n\n\n";
+print MAKEFILE "INCLUDES = -I./include \$(INCLUDES_STANDARD)";
+print MAKEFILE "  \$(INCLUDES_GETFEM) \n\n\n";
 print MAKEFILE "LIB = \$(GETFEM_LIB) \$(LIB_X11) -lm\n";
 
 print MAKEFILE "\n\n", '# Objects to compile : ', "\n";
@@ -234,9 +262,7 @@ if (-d "matlabcom")
       print MAKEFILE "\t", 'cd lib; $(CPLUS) $(COPT)  -c $(INCLUDES)', "..\/$fi -o $fi1.o; rm -f $fi1.$extmatcom", '; mex -O $(INCLUDES) libgetfem.so ', "..\/$fi -o $fi1\n";
     }
   }
-
 }
-
 
 print MAKEFILE "\n\n\$(GETFEM_LIB) : \$(lib_objects)\n";
 print MAKEFILE "\t ar r \$(GETFEM_LIB) \$(lib_objects) ; ranlib \$(GETFEM_LIB)\n";
