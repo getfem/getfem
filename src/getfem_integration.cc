@@ -30,7 +30,7 @@
 
 #include <dal_singleton.h>
 #include <getfem_integration.h>
-#include <ftool_naming.h>
+#include <dal_naming_system.h>
 #include <gmm_dense_lu.h>
 #include <bgeot_permutations.h>
 #include <getfem_im_list.h>
@@ -38,25 +38,17 @@
 namespace getfem
 {
 
-  typedef ftool::naming_system<integration_method>::param_list im_param_list;
-
-  /* a quick hack for deallocation of allocated integration methods on program
-     termination (avoid false leak alerts from valgrind) */
-  template <typename T> struct cleanup_allocated_im : public dal::ptr_collection<T> {};
-
-  template<typename T> static T *remember_for_cleanup(T *p) {
-    dal::singleton<cleanup_allocated_im<T> >::instance().push_back(p);
-    return p;
-  }
+  typedef dal::naming_system<integration_method>::param_list im_param_list;
 
   /*
-    dummy integration method 
-  */
-  static pintegration_method im_none(im_param_list &params) {
+   * dummy integration method 
+   */
+  static pintegration_method im_none(im_param_list &params,
+			       std::vector<dal::pstatic_stored_object> &) {
     if (params.size())
       DAL_THROW(dal::failure_error,
 		"IM_NONE does not accept any parameter");
-    return remember_for_cleanup(new integration_method());
+    return new integration_method();
   }
 
   long_scalar_type poly_integration::int_poly(const base_poly &P) const {
@@ -143,7 +135,8 @@ namespace getfem
     return res;
   }
 
-  static pintegration_method exact_simplex(im_param_list &params) {
+  static pintegration_method exact_simplex(im_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
     if (params.size() != 1)
       DAL_THROW(failure_error, 
 	   "Bad number of parameters : " << params.size() << " should be 1.");
@@ -152,16 +145,16 @@ namespace getfem
     int n = int(::floor(params[0].num() + 0.01));
     if (n <= 0 || n >= 100 || double(n) != params[0].num())
       DAL_THROW(failure_error, "Bad parameters");
-    return remember_for_cleanup(new integration_method
-          (new simplex_poly_integration_(bgeot::simplex_structure(n))));
+    dependencies.push_back(bgeot::simplex_structure(n));
+    return new integration_method
+          (new simplex_poly_integration_(bgeot::simplex_structure(n)));
   }
 
   /* ******************************************************************** */
   /* integration on direct product of convex structures                   */
   /* ******************************************************************** */
 
-  struct plyint_mul_structure_ : public poly_integration
-  {
+  struct plyint_mul_structure_ : public poly_integration {
     ppoly_integration cv1, cv2;
 
     long_scalar_type int_monomial(const bgeot::power_index &power) const;
@@ -200,7 +193,8 @@ namespace getfem
     int_face_monomials.resize(cvs->nb_faces());
   }
 
-  static pintegration_method product_exact(im_param_list &params) {
+  static pintegration_method product_exact(im_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
 	  "Bad number of parameters : " << params.size() << " should be 2.");
@@ -210,16 +204,19 @@ namespace getfem
     pintegration_method b = params[1].method();
     if (!(a->type() == IM_EXACT && b->type() == IM_EXACT))
       DAL_THROW(failure_error, "Bad parameters");
-    return remember_for_cleanup(new integration_method(
-         new plyint_mul_structure_(a->exact_method(),
-                                   b->exact_method())));
+    dependencies.push_back(a); dependencies.push_back(b);
+    dependencies.push_back(bgeot::convex_product_structure(a->structure(),
+							   b->structure()));
+    return new integration_method(new plyint_mul_structure_(a->exact_method(),
+							  b->exact_method()));
   }
 
   /* ******************************************************************** */
   /* integration on parallelepiped.                                       */
   /* ******************************************************************** */
 
-  static pintegration_method exact_parallelepiped(im_param_list &params) {
+  static pintegration_method exact_parallelepiped(im_param_list &params,
+	std::vector<dal::pstatic_stored_object> &) {
     if (params.size() != 1)
       DAL_THROW(failure_error, 
 	   "Bad number of parameters : " << params.size() << " should be 1.");
@@ -238,7 +235,8 @@ namespace getfem
     return int_method_descriptor(name.str());
   }
 
-  static pintegration_method exact_prism(im_param_list &params) {
+  static pintegration_method exact_prism(im_param_list &params,
+	std::vector<dal::pstatic_stored_object> &) {
     if (params.size() != 1)
       DAL_THROW(failure_error, 
 	   "Bad number of parameters : " << params.size() << " should be 1.");
@@ -389,7 +387,8 @@ namespace getfem
   /* ********************************************************************* */
   
   /// search a method in getfem_im_list.h
-  static pintegration_method im_list_integration(std::string name) {
+  static pintegration_method im_list_integration(std::string name,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
     // cerr << "searching " << name << endl;
     for (int i = 0; i < NB_IM; ++i)
       if (!name.compare(im_desc_tab[i].method_name)) {
@@ -435,7 +434,11 @@ namespace getfem
 
 	pai->valid_method();
         // cerr << "finding " << name << endl;
-	return remember_for_cleanup(new integration_method(pai));
+
+	integration_method *p = new integration_method(pai);
+	dependencies.push_back(p->approx_method()->ref_convex());
+	dependencies.push_back(&(p->approx_method()->integration_points()));
+	return p;
       }
     return 0;
   }
@@ -530,7 +533,8 @@ namespace getfem
   }
 
 
-  static pintegration_method gauss1d(im_param_list &params) {
+  static pintegration_method gauss1d(im_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
     if (params.size() != 1)
       DAL_THROW(failure_error, 
 	   "Bad number of parameters : " << params.size() << " should be 1.");
@@ -544,8 +548,13 @@ namespace getfem
       name << "IM_GAUSS1D(" << n-1 << ")";
       return int_method_descriptor(name.str());
     }
-    else
-      return remember_for_cleanup(new integration_method(new gauss_approx_integration_(n/2 + 1)));
+    else {
+      integration_method *p
+	= new integration_method(new gauss_approx_integration_(n/2 + 1));
+      dependencies.push_back(p->approx_method()->ref_convex());
+      dependencies.push_back(&(p->approx_method()->integration_points()));
+      return p;
+    }
   }
 
   /* ********************************************************************* */
@@ -640,7 +649,8 @@ namespace getfem
     valid_method();
   }
 
-  static pintegration_method Newton_Cotes(im_param_list &params) {
+  static pintegration_method Newton_Cotes(im_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
           "Bad number of parameters : " << params.size() << " should be 2.");
@@ -651,7 +661,11 @@ namespace getfem
     if (n < 0 || n >= 100 || k < 0 || k > 150 ||
 	double(n) != params[0].num() || double(k) != params[1].num())
       DAL_THROW(failure_error, "Bad parameters");
-    return remember_for_cleanup(new integration_method(new Newton_Cotes_approx_integration_(n, k)));
+    integration_method *p
+      = new integration_method(new Newton_Cotes_approx_integration_(n, k));
+    dependencies.push_back(p->approx_method()->ref_convex());
+    dependencies.push_back(&(p->approx_method()->integration_points()));
+    return p;
   }
 
   /* ********************************************************************* */
@@ -726,7 +740,8 @@ namespace getfem
     valid = true;
   }
 
-  static pintegration_method product_approx(im_param_list &params) {
+  static pintegration_method product_approx(im_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
        "Bad number of parameters : " << params.size() << " should be 2.");
@@ -736,12 +751,16 @@ namespace getfem
     pintegration_method b = params[1].method();
     if (a->type() != IM_APPROX || b->type() != IM_APPROX)
       DAL_THROW(failure_error, "Bad parameters");
-    return remember_for_cleanup(new integration_method(
-         new a_int_pro_integration(a->approx_method(),
-                                   b->approx_method())));
+    integration_method *p
+      = new integration_method(new a_int_pro_integration(a->approx_method(),
+							 b->approx_method()));
+    dependencies.push_back(p->approx_method()->ref_convex());
+    dependencies.push_back(&(p->approx_method()->integration_points()));
+    return p;
   }
 
-  static pintegration_method product_which(im_param_list &params) {
+  static pintegration_method product_which(im_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
 	  "Bad number of parameters : " << params.size() << " should be 2.");
@@ -749,8 +768,9 @@ namespace getfem
       DAL_THROW(failure_error, "Bad type of parameters");
     pintegration_method a = params[0].method();
     pintegration_method b = params[1].method();
-    if (a->type() == IM_EXACT || b->type() == IM_EXACT) return product_exact(params);
-    else return product_approx(params);
+    if (a->type() == IM_EXACT || b->type() == IM_EXACT)
+      return product_exact(params, dependencies);
+    else return product_approx(params, dependencies);
   }
 
 
@@ -758,7 +778,8 @@ namespace getfem
   /* integration on parallelepiped with Newton Cotes formulae              */
   /* ********************************************************************* */
 
-  static pintegration_method Newton_Cotes_para(im_param_list &params) {
+  static pintegration_method Newton_Cotes_para(im_param_list &params,
+	std::vector<dal::pstatic_stored_object> &) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
           "Bad number of parameters : " << params.size() << " should be 2.");
@@ -779,7 +800,8 @@ namespace getfem
     return int_method_descriptor(name.str());
   }
 
-  static pintegration_method Newton_Cotes_prism(im_param_list &params) {
+  static pintegration_method Newton_Cotes_prism(im_param_list &params,
+	std::vector<dal::pstatic_stored_object> &) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
           "Bad number of parameters : " << params.size() << " should be 2.");
@@ -801,7 +823,8 @@ namespace getfem
   /* integration on parallelepiped with Gauss formulae                     */
   /* ********************************************************************* */
 
-  static pintegration_method Gauss_paramul(im_param_list &params) {
+  static pintegration_method Gauss_paramul(im_param_list &params,
+	std::vector<dal::pstatic_stored_object> &) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
           "Bad number of parameters : " << params.size() << " should be 2.");
@@ -825,11 +848,12 @@ namespace getfem
   /* ******************************************************************** */
   /*    Naming system                                                     */
   /* ******************************************************************** */
-  
-  pintegration_method structured_composite_int_method(im_param_list &);
 
-  struct im_naming_system : public ftool::naming_system<integration_method> {
-    im_naming_system() : ftool::naming_system<integration_method>("IM") {
+  pintegration_method structured_composite_int_method(im_param_list &,
+		      std::vector<dal::pstatic_stored_object> &);
+
+  struct im_naming_system : public dal::naming_system<integration_method> {
+    im_naming_system() : dal::naming_system<integration_method>("IM") {
       add_suffix("NONE",im_none);
       add_suffix("EXACT_SIMPLEX", exact_simplex);
       add_suffix("PRODUCT", product_which);
@@ -900,8 +924,7 @@ namespace getfem
     return classical_exact_im(pgt);
   }
 
-  pintegration_method classical_exact_im(bgeot::pgeometric_trans pgt)
-  {
+  pintegration_method classical_exact_im(bgeot::pgeometric_trans pgt) {
     static bgeot::pgeometric_trans pgt_last = 0;
     static pintegration_method im_last = 0;
     bool found = false;
@@ -945,8 +968,8 @@ namespace getfem
 	      "This element is not taken into account. Contact us");
   }
 
-  static pintegration_method classical_approx_im_(bgeot::pconvex_structure cvs, dim_type degree)
-  {
+  static pintegration_method
+  classical_approx_im_(bgeot::pconvex_structure cvs, dim_type degree) {
     size_type n = cvs->dim();
     std::stringstream name;
 
@@ -960,7 +983,8 @@ namespace getfem
       case 2: name << "IM_TRIANGLE"; break;
       case 3: name << "IM_TETRAHEDRON"; break;
       case 4: name << "IM_SIMPLEX4D"; break;
-      default: DAL_THROW(dal::failure_error, "no approximate integration method for simplexes of dimension " << n);
+      default: DAL_THROW(dal::failure_error,
+	"no approximate integration method for simplexes of dimension " << n);
       }
       for (size_type k = degree; k < size_type(degree+10); ++k) {
 	pintegration_method im = 0;
@@ -973,7 +997,8 @@ namespace getfem
 	catch (dal::failure_error) { im = 0; }
 	if (im) return im;
       }
-      DAL_THROW(dal::failure_error, "could not find an " << name.str() << " of degree >= " << int(degree));
+      DAL_THROW(dal::failure_error,
+       "could not find an " << name.str() << " of degree >= " << int(degree));
     } else if (cvs->is_product(&a,&b)) {
       name << "IM_PRODUCT(" 
 	   << name_of_int_method(classical_approx_im_(a,degree)) << ","
@@ -982,8 +1007,8 @@ namespace getfem
     return int_method_descriptor(name.str());
   }
 
-  pintegration_method classical_approx_im(bgeot::pgeometric_trans pgt, dim_type degree)
-  {
+  pintegration_method classical_approx_im(bgeot::pgeometric_trans pgt,
+					  dim_type degree) {
     static bgeot::pgeometric_trans pgt_last = 0;
     static dim_type degree_last;
     static pintegration_method im_last = 0;

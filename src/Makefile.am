@@ -38,7 +38,6 @@ include_HEADERS =                        \
 	bgeot_vector.h                   \
 	bgeot_comma_init.h	         \
 	ftool.h                          \
-	ftool_naming.h                   \
 	getfem_arch_config.h             \
 	getfem_integration.h             \
 	getfem_context.h                 \
@@ -50,7 +49,6 @@ include_HEADERS =                        \
 	getfem_interpolation.h           \
 	getfem_export.h                  \
 	getfem_import.h	                 \
-	getfem_precomp.h                 \
 	getfem_derivatives.h             \
 	getfem_fem.h                     \
 	getfem_interpolated_fem.h        \
@@ -157,7 +155,6 @@ SRC =                                    \
 	getfem_fem_composite.cc          \
 	getfem_mat_elem.cc               \
 	getfem_mat_elem_type.cc          \
-	getfem_precomp.cc                \
 	getfem_mesh.cc                   \
 	getfem_level_set.cc	         \
 	getfem_mesh_im_level_set.cc      \

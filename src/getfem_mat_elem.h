@@ -34,9 +34,9 @@
 #include <bgeot_geometric_trans.h>
 #include <getfem_mat_elem_type.h>
 #include <getfem_fem.h>
+#include <dal_fonc_tables.h>
 
-namespace getfem
-{
+namespace getfem {
   /** (optional) callback to be called for each point of the
       integration (i.e. only with approximate integrations). It is
       used by getfem_assembling_tensors to perform reductions before

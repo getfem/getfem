@@ -35,17 +35,32 @@ namespace getfem {
 
   bool operator < (const constituant &m, const constituant &n) {
     if (m.t < n.t) return true; if (m.t > n.t) return false;
-    if (m.pfi < n.pfi) return true; if (m.pfi > n.pfi) return false;
-    if (m.nlt < n.nlt) return true; if (m.nlt > n.nlt) return false;
+    if (m.pfi < n.pfi) return true; if (n.pfi < m.pfi) return false;
+    if (m.nlt < n.nlt) return true; if (n.nlt < m.nlt) return false;
     return false;
   }
 
-  typedef dal::dynamic_tree_sorted<mat_elem_type,
-    dal::lexicographical_less<mat_elem_type> > mat_elem_type_tab;
+  struct mat_elem_type_key : public dal::static_stored_object_key {
+    const mat_elem_type *pmet;
+  public :
+    virtual bool compare(const static_stored_object_key &oo) const {
+      const mat_elem_type_key &o
+	= dynamic_cast<const mat_elem_type_key &>(oo);
+      if (dal::lexicographical_less<mat_elem_type>(*pmet, *(o->pmet)))
+	return true;
+      return false;
+    }
+    mat_elem_type_key(const mat_elem_type *p) : pmet(p) {}
+  };
 
   static pmat_elem_type add_to_met_tab(const mat_elem_type &f) {
-    mat_elem_type_tab &tab = dal::singleton<mat_elem_type_tab>::instance();
-    return &(tab[tab.add_norepeat(f)]);
+    dal::pstatic_stored_object o
+      = dal::search_stored_object(mat_elem_type_key(&f));
+    if (o) return dal::stored_cast<mat_elem_type>(o);
+    pmat_elem_type p = new mat_elem_type(f);
+    dal::add_stored_object(new mat_elem_type_key(p.get()), p,
+			   dal::AUTODELETE_STATIC_OBJECT);
+    return p;
   }
 
   /* on destruction, all occurences of the nonlinear term are removed

@@ -31,7 +31,7 @@
 #include <getfem_poly_composite.h>
 #include <getfem_integration.h>
 #include <getfem_mesh_im.h>
-#include <ftool_naming.h>
+#include <dal_naming_system.h>
 
 namespace getfem
 { 
@@ -82,9 +82,10 @@ namespace getfem
     return p;
   }
 
-  typedef ftool::naming_system<integration_method>::param_list im_param_list;
+  typedef dal::naming_system<integration_method>::param_list im_param_list;
 
-  pintegration_method structured_composite_int_method(im_param_list &params) {
+  pintegration_method structured_composite_int_method(im_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
 	  "Bad number of parameters : " << params.size() << " should be 2.");
@@ -102,9 +103,13 @@ namespace getfem
     mesh_im mi(*pm);
     mi.set_integration_method(pm->convex_index(), pim);
 
-    return new integration_method
+    integration_method *p
+      = new integration_method
       (composite_approx_int_method(*pmp, mi,
 				   pim->approx_method()->ref_convex()));
+    dependencies.push_back(p->approx_method()->ref_convex());
+    dependencies.push_back(&(p->approx_method()->integration_points()));
+    return p;
   }
   
 }  /* end of namespace getfem.                                            */

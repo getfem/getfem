@@ -66,7 +66,8 @@ namespace bgeot {
       = dal::search_stored_object(stored_point_tab_key(&spt));
     if (o) return dal::stored_cast<stored_point_tab>(o);
     pstored_point_tab p = new stored_point_tab(spt);
-    dal::add_stored_object(new stored_point_tab_key(p.get()), p, 4);
+    dal::add_stored_object(new stored_point_tab_key(p.get()), p,
+			   dal::AUTODELETE_STATIC_OBJECT);
     return p;
   }
 
@@ -179,6 +180,7 @@ namespace bgeot {
 	  }
 	}
       }
+      ppoints = store_point_tab(convex<base_node>::points());
     }
   };
 
@@ -187,8 +189,9 @@ namespace bgeot {
       = dal::search_stored_object(convex_of_reference_key(0, nc, K));
     if (o) return dal::stored_cast<convex_of_reference>(o);
     pconvex_ref p = new K_simplex_of_ref_(nc, K);
-    dal::add_stored_object(new convex_of_reference_key(0, nc, K), p, 0,
-			   p->structure());
+    dal::add_stored_object(new convex_of_reference_key(0, nc, K), p,
+			   p->structure(), &(p->points()),
+			   dal::PERMANENT_STATIC_OBJECT);
     pconvex_ref p1 = simplex_of_reference(nc, 1);
     p->attach_basic_convex_ref(p1);
     if (p != p1) add_dependency(p, p1); 
@@ -253,6 +256,7 @@ namespace bgeot {
 	std::copy(cvr2->normals()[r].begin(), cvr2->normals()[r].end(),
 		  normals_[r+cvr1->structure()->nb_faces()].begin()
 		  + cvr1->structure()->dim());
+      ppoints = store_point_tab(convex<base_node>::points());
     }
   };
 
@@ -262,9 +266,10 @@ namespace bgeot {
       = dal::search_stored_object(product_ref_key_(a, b));
     if (o) return dal::stored_cast<convex_of_reference>(o);
     pconvex_ref p = new product_ref_(a, b);
-    dal::add_stored_object(new product_ref_key_(a, b), p, 0, a, b,
+    dal::add_stored_object(new product_ref_key_(a, b), p, a, b,
 			   convex_product_structure(a->structure(),
-						    b->structure()));
+						    b->structure()),
+			   &(p->points()), dal::PERMANENT_STATIC_OBJECT);
     pconvex_ref p1 = convex_ref_product(a->basic_convex_ref(),
 					b->basic_convex_ref());
     p->attach_basic_convex_ref(p1);
@@ -330,6 +335,7 @@ namespace bgeot {
         normals_[f] = G - convex<base_node>::points()[f]; 
         gmm::scale(normals_[f], 1/gmm::vect_norm2(normals_[f]));
       }
+      ppoints = store_point_tab(convex<base_node>::points());
     }
   };
 
@@ -339,8 +345,9 @@ namespace bgeot {
       = dal::search_stored_object(convex_of_reference_key(1, nc));
     if (o) return dal::stored_cast<convex_of_reference>(o);
     pconvex_ref p = new equilateral_simplex_of_ref_(nc);
-    dal::add_stored_object(new convex_of_reference_key(1, nc), p, 0,
-			   p->structure());
+    dal::add_stored_object(new convex_of_reference_key(1, nc), p,
+			   p->structure(), &(p->points()),
+			   dal::PERMANENT_STATIC_OBJECT);
     return p;
   }
 
@@ -361,6 +368,7 @@ namespace bgeot {
       base_node P(d);
       std::fill(P.begin(), P.end(), scalar_type(1)/scalar_type(20));
       std::fill(convex<base_node>::points().begin(), convex<base_node>::points().end(), P);
+      ppoints = store_point_tab(convex<base_node>::points());
     }
   };
 
@@ -370,8 +378,9 @@ namespace bgeot {
       = dal::search_stored_object(convex_of_reference_key(2, nc, n, nf));
     if (o) return dal::stored_cast<convex_of_reference>(o);
     pconvex_ref p = new generic_dummy_(nc, n, nf);
-    dal::add_stored_object(new convex_of_reference_key(2, nc, n, nf), p, 0,
-			   p->structure());
+    dal::add_stored_object(new convex_of_reference_key(2, nc, n, nf), p,
+			   p->structure(), &(p->points()),
+			   dal::PERMANENT_STATIC_OBJECT);
     return p;
   }
 

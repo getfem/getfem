@@ -76,14 +76,6 @@ namespace getfem
     is_valid = false;
   }
   
-  /*
-  void Xfem::get_fem_precomp_tab(pfem_precomp pfp, std::vector<pfem_precomp>& vpfp) const {
-    vpfp.resize(uniq_pfe.size());
-    for (size_type k=0; k < uniq_pfe.size(); ++k) 
-      vpfp[k] = (uniq_pfe[k] == pfb) ? pfp : (*pfp->pool())(uniq_pfe[k], &pfp->get_point_tab());
-  }
-  */
-  
   /* create an interpolation_context array based on
      c0, for each fem of the Xfem. */
   void Xfem::get_fem_interpolation_context_tab(const fem_interpolation_context& c0,
@@ -92,9 +84,7 @@ namespace getfem
     for (size_type k=0; k < uniq_pfe.size(); ++k) {
       vc[k] = c0; 
       if (c0.have_pfp()) {
-	/* allocate a new pfp for the fem uniq_pfe[k], using the same fem_precomp_pool
-	   than c0.pfp() */
-	vc[k].set_pfp((*c0.pfp()->pool())(uniq_pfe[k], &c0.pfp()->get_point_tab()));
+	vc[k].set_pfp(fem_precomp(uniq_pfe[k], &c0.pfp()->get_point_tab()));
       } else { vc[k].set_pf(uniq_pfe[k]); }
     }
   }

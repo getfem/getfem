@@ -80,9 +80,9 @@ namespace bgeot {
 			      public convex<base_node> {
   protected :     
     std::vector<base_small_vector> normals_;
+    pstored_point_tab ppoints;
     mutable mesh_structure *psimplexified_convex;
     mutable const convex_of_reference *basic_convex_ref_;
-    mutable pstored_point_tab ppoints;
   public :
     convex_of_reference() : convex<base_node>(), psimplexified_convex(0),
 			    basic_convex_ref_(0) {}
@@ -91,14 +91,8 @@ namespace bgeot {
     const std::vector<base_small_vector> &normals(void) const
     { return normals_; }
 
-    const stored_point_tab &points(void) const {
-      if (ppoints == 0) ppoints = store_point_tab(convex<base_node>::points());
-      return *ppoints;
-    }
-    const stored_point_tab &points(void) {
-      if (ppoints == 0) ppoints = store_point_tab(convex<base_node>::points());
-      return *ppoints;
-    }
+    const stored_point_tab &points(void) const { return *ppoints; }
+    const stored_point_tab &points(void) { return *ppoints; }
     
     /* returns a mesh structure composed of simplexes whose union
        is the reference convex. All simplexes have the same (direct)

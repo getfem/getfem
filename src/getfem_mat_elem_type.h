@@ -35,15 +35,15 @@
 #include <getfem_integration.h>
 #include <getfem_fem.h>
 
-namespace getfem
-{
+namespace getfem {
 
   enum constituant_type
     { GETFEM_BASE_, GETFEM_GRAD_, GETFEM_HESSIAN_, GETFEM_NONLINEAR_,
       GETFEM_UNIT_NORMAL_ };
 
   /**
-     abstract class for integration of non-linear terms into the mat_elem computations
+     abstract class for integration of non-linear terms into the mat_elem
+     computations
      the nonlinear term is added into the mat_elem_type via mat_elem_nonlinear
 
      When this object is destroyed, its destructor will remove all
@@ -70,10 +70,14 @@ namespace getfem
   struct constituant {
     constituant_type t;
     pfem pfi;
-    unsigned nl_part; /* only usefull with GETFEM_NONLINEAR_ : since the nonlinear term may use
-			 more than one pfem, it will be splitted into one "constituant" per fem
-			 for (nl_part = 0), the mat_elem_* computations will call nlt->compute,
-			 for (nl_part != 0) they will cal nlt->prepare(ctx,nl_part) */
+    unsigned nl_part; /* only usefull with GETFEM_NONLINEAR_ : since the
+			 nonlinear term may use more than one pfem, it will
+			 be splitted into one "constituant" per fem
+			 for (nl_part = 0), the mat_elem_* computations will
+			 call nlt->compute,
+			 for (nl_part != 0) they will call
+			 nlt->prepare(ctx,nl_part)
+		      */
     pnonlinear_elem_term nlt;
   };
 
@@ -81,7 +85,8 @@ namespace getfem
    *  is not to be manipulate by itself. Use pmat\_elem\_type and
    *  the functions written to produce those descriptions.
    */ 
-  struct mat_elem_type : public std::vector<constituant> {
+  struct mat_elem_type
+    : public dal::static_stored_object, std::vector<constituant> {
   protected :
     bgeot::multi_index mi;
   public :
@@ -93,8 +98,8 @@ namespace getfem
    /** @name functions on elementary matrix descriptions
    */
   //@{
-
-  typedef const mat_elem_type * pmat_elem_type;
+  
+  typedef boost::intrusive_ptr<const mat_elem_type> pmat_elem_type;
   
   /** Gives a pointer to the structure describing the elementary matrix
    *   which compute the integral of the basic functions described by pfi.
@@ -127,9 +132,9 @@ namespace getfem
     and then
       pnonlinear_elem_term->compute() will be called for pfi[0]
    */
-  pmat_elem_type mat_elem_nonlinear(pnonlinear_elem_term, std::vector<pfem> pfi);
+  pmat_elem_type mat_elem_nonlinear(pnonlinear_elem_term,
+				    std::vector<pfem> pfi);
 
-  //pmat_elem_type mat_elem_nonlinear_assistant(pnonlinear_elem_term, pfem pfi);
   /** Gives a pointer to the structure describing the elementary matrix
    *   which compute the integral of product described by
    *   *pet1 and *pet2.

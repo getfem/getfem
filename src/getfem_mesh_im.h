@@ -31,9 +31,8 @@
 #ifndef GETFEM_MESH_IM_H__
 #define GETFEM_MESH_IM_H__
 
-#include <getfem_mesh.h>
 #include <getfem_integration.h>
-#include <getfem_precomp.h>
+#include <getfem_fem.h>
 
 namespace getfem {
 

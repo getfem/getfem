@@ -30,8 +30,8 @@
 
 #include <deque>
 #include <dal_singleton.h>
+#include <getfem_fem.h>
 #include <getfem_mat_elem.h>
-#include <getfem_precomp.h>
 
 extern "C" void daxpy_(const int *n, const double *alpha, const double *x,
 		       const int *incx, double *y, const int *incy);
@@ -358,7 +358,7 @@ namespace getfem {
 	    if ((*it).pfi->target_dim() > 1)
 	      { ind += (*it).pfi->nb_base(0) * (*mit); ++mit; }
 	    
-	    Q = ((ppolyfem)((*it).pfi))->base()[ind];
+	    Q = ((ppolyfem)((*it).pfi).get())->base()[ind];
 	  }
 
 	  switch ((*it).t) {
@@ -381,7 +381,7 @@ namespace getfem {
 	      
 	      if ((*it).pfi->target_dim() > 1)
 		{ ind += (*it).pfi->nb_base(0) * (*mit); ++mit; }
-	      R = ((ppolyfem)((*it).pfi))->base()[ind];
+	      R = ((ppolyfem)((*it).pfi).get())->base()[ind];
 	      
 	      switch ((*it).t) {
 	      case GETFEM_GRAD_    : R.derivative(*mit); ++mit; break;

@@ -657,13 +657,12 @@ namespace bgeot {
       = dal::search_stored_object(pre_geot_key_(pg, pspt));
     if (o) return dal::stored_cast<geotrans_precomp_>(o);
     pgeotrans_precomp p = new geotrans_precomp_(pg, pspt);
-    dal::add_stored_object(new pre_geot_key_(pg, pspt), p, 0, pg, pspt);
+    dal::add_stored_object(new pre_geot_key_(pg, pspt), p, pg, pspt);
     return p;
   }
 
-  void delete_geotrans_precomp(pgeotrans_precomp pgp) {
-    del_stored_object(pgp);
-  }
+  void delete_geotrans_precomp(pgeotrans_precomp pgp)
+  { dal::del_stored_object(pgp); }
 
 }  /* end of namespace bgeot.                                            */
 

@@ -39,12 +39,13 @@ namespace dal {
   struct enr_static_stored_object {
     pstatic_stored_object p;
     bool valid;
-    int permanence;
+    permanence perm;
     std::map<pstatic_stored_object, bool> dependent_object;
     std::map<pstatic_stored_object, bool> dependencies;
-    enr_static_stored_object(pstatic_stored_object o, int perma)
-      : p(o), valid(true), permanence(perma) {}
-    enr_static_stored_object(void) : p(0), valid(true), permanence(2) {}
+    enr_static_stored_object(pstatic_stored_object o, permanence perma)
+      : p(o), valid(true), perm(perma) {}
+    enr_static_stored_object(void)
+      : p(0), valid(true), perm(STANDARD_STATIC_OBJECT) {}
   };
   
   // Pointer to a key with a coherent order
@@ -58,8 +59,11 @@ namespace dal {
   // Storing array types
   typedef std::map<enr_static_stored_object_key, enr_static_stored_object>
   stored_object_tab;
-  typedef std::map<pstatic_stored_object, pstatic_stored_object_key> 
-  stored_key_tab;
+  struct stored_key_tab : public std::map<pstatic_stored_object,
+					  pstatic_stored_object_key> {
+    ~stored_key_tab()
+    { for (iterator it = begin(); it != end(); ++it) delete it->second; }
+  };
   
   // Gives a pointer to a key of an object from its pointer
   pstatic_stored_object_key key_of_stored_object(pstatic_stored_object o) {
@@ -117,10 +121,7 @@ namespace dal {
 
   // Add an object with two optional dependencies
   void add_stored_object(pstatic_stored_object_key k, pstatic_stored_object o,
-			 int permanence,
-			 pstatic_stored_object dep1,
-			 pstatic_stored_object dep2,
-			 pstatic_stored_object dep3) {
+			 permanence perm) {
     stored_object_tab& stored_objects
       = dal::singleton<stored_object_tab>::instance();
     stored_key_tab& stored_keys = dal::singleton<stored_key_tab>::instance();
@@ -129,10 +130,7 @@ namespace dal {
 		"possibly with another key");
     stored_keys[o] = k;
     stored_objects[enr_static_stored_object_key(k)]
-      = enr_static_stored_object(o, permanence);
-    if (dep1) add_dependency(o, dep1);
-    if (dep2) add_dependency(o, dep2);
-    if (dep3) add_dependency(o, dep3);
+      = enr_static_stored_object(o, perm);
   }
 
   // Only delete the object but not the dependencies
@@ -168,7 +166,8 @@ namespace dal {
 	     itd != ito->second.dependencies.end(); ++itd) {
 	  if (del_dependency(*it, itd->first)) {
 	    stored_object_tab::iterator itod=iterator_of_object(itd->first);
-	    if (itod->second.permanence == 4 && itod->second.valid) {
+	    if (itod->second.perm == AUTODELETE_STATIC_OBJECT
+		&& itod->second.valid) {
 	      itod->second.valid = false;
 	      to_delete.push_back(itd->first);
 	    }
@@ -178,7 +177,7 @@ namespace dal {
 	     itd != ito->second.dependent_object.end(); ++itd) {
 	  stored_object_tab::iterator itod=iterator_of_object(itd->first);
 	  if (itod != stored_objects.end()) {
-	    if (itod->second.permanence == 0)
+	    if (itod->second.perm == PERMANENT_STATIC_OBJECT)
 	      DAL_THROW(failure_error,"Trying to delete a permanent object");
 	    if (itod->second.valid) {
 	      itod->second.valid = false;
@@ -198,19 +197,17 @@ namespace dal {
     del_stored_objects(to_delete);
   }
   
-  // Delete all the object whose permanence is greater or equal to perm
-  void del_stored_objects(int perm) {
+  // Delete all the object whose perm is greater or equal to perm
+  void del_stored_objects(permanence perm) {
     stored_object_tab& stored_objects
       = dal::singleton<stored_object_tab>::instance();
-    if (perm == 0) ++perm;
+    if (perm == PERMANENT_STATIC_OBJECT) perm = STRONG_STATIC_OBJECT;
     std::list<pstatic_stored_object> to_delete;
     stored_object_tab::iterator it;
     for (it = stored_objects.begin(); it != stored_objects.end(); ++it)
-      if (it->second.permanence >= perm)
+      if (it->second.perm >= perm)
 	to_delete.push_back(it->second.p);
     del_stored_objects(to_delete);
-    // + gestion des objets ayant l'option de permanence 4 : à détruire
-    //  si plus aucun objet ne dépend d'eux.
   }
 
 

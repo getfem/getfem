@@ -31,7 +31,7 @@
 #include <dal_singleton.h>
 #include <dal_tree_sorted.h>
 #include <dal_algobase.h>
-#include <ftool_naming.h>
+#include <dal_naming_system.h>
 #include <getfem_fem.h>
 
 /* do not read this file ! */
@@ -39,15 +39,7 @@
 #include <getfem_integration.h> /* for gauss-lobatto points */
 namespace getfem
 {
-  typedef ftool::naming_system<virtual_fem>::param_list fem_param_list;
-  
-  /* a quick hack for deallocation of allocated fem on program termination
-     (avoid false leak alerts from valgrind) */
-  struct cleanup_allocated_fem : public dal::ptr_collection<virtual_fem> {};
-  static pfem remember_for_cleanup(virtual_fem *p) {
-    dal::singleton<cleanup_allocated_fem>::instance().push_back(p);
-    return p;
-  }
+  typedef dal::naming_system<virtual_fem>::param_list fem_param_list;
 
   const base_matrix& fem_interpolation_context::M() const {
     if (!have_pgt() || !have_G() || !have_pf())
@@ -450,7 +442,8 @@ namespace getfem
     for (size_type r = 0; r < R; r++) calc_base_func(base_[r], r, k);
   }
 
-  static pfem PK_fem(fem_param_list &params) {
+  static pfem PK_fem(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
 	   "Bad number of parameters : " << params.size() << " should be 2.");
@@ -461,7 +454,11 @@ namespace getfem
     if (n <= 0 || n >= 100 || k < 0 || k > 150 ||
 	double(n) != params[0].num() || double(k) != params[1].num())
       DAL_THROW(failure_error, "Bad parameters");
-    return remember_for_cleanup(new PK_fem_(n, k));
+    virtual_fem *p = new PK_fem_(n, k);
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_convex(0).structure());
+    dependencies.push_back(p->node_tab(0));
+    return p;
   }
 
 
@@ -506,7 +503,8 @@ namespace getfem
       }
   }
 
-  static pfem product_fem(fem_param_list &params) {
+  static pfem product_fem(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
 	  "Bad number of parameters : " << params.size() << " should be 2.");
@@ -516,7 +514,12 @@ namespace getfem
     pfem pf2 = params[1].method();
     if (!(pf1->is_polynomial() && pf2->is_polynomial()))
       DAL_THROW(failure_error, "Bad parameters");
-    return remember_for_cleanup(new tproduct_femi(ppolyfem(pf1), ppolyfem(pf2)));
+    virtual_fem *p = new tproduct_femi(ppolyfem(pf1.get()),
+				       ppolyfem(pf2.get()));
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_convex(0).structure());
+    dependencies.push_back(p->node_tab(0));
+    return p;
   }
 
   /* ******************************************************************** */
@@ -598,7 +601,8 @@ namespace getfem
     }
   }
 
-  static pfem gen_hierarchical_fem(fem_param_list &params) {
+  static pfem gen_hierarchical_fem(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
 	  "Bad number of parameters : " << params.size() << " should be 2.");
@@ -607,9 +611,15 @@ namespace getfem
     pfem pf1 = params[0].method();
     pfem pf2 = params[1].method();
     if (pf1->is_polynomial() && pf2->is_polynomial())
-      return remember_for_cleanup(new thierach_femi(ppolyfem(pf1),ppolyfem(pf2)));
-    if (pf1->is_polynomialcomp() && pf2->is_polynomialcomp())
-      return remember_for_cleanup(new thierach_femi_comp(ppolycompfem(pf1),ppolycompfem(pf2)));
+      return new thierach_femi(ppolyfem(pf1.get()),ppolyfem(pf2.get()));
+    if (pf1->is_polynomialcomp() && pf2->is_polynomialcomp()) {
+      virtual_fem *p = new thierach_femi_comp(ppolycompfem(pf1.get()),
+					      ppolycompfem(pf2.get()));
+      dependencies.push_back(p->ref_convex(0));
+      dependencies.push_back(p->node_convex(0).structure());
+      dependencies.push_back(p->node_tab(0));
+      return p;
+    }
     DAL_THROW(failure_error, "Bad parameters");
   }
 
@@ -617,7 +627,8 @@ namespace getfem
   /* PK hierarchical fem.                                                 */
   /* ******************************************************************** */
 
-  static pfem PK_hierarch_fem(fem_param_list &params) {
+  static pfem PK_hierarch_fem(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
 	   "Bad number of parameters : " << params.size() << " should be 2.");
@@ -639,7 +650,8 @@ namespace getfem
     return fem_descriptor(name.str());
   }
 
-  static pfem QK_hierarch_fem(fem_param_list &params) {
+  static pfem QK_hierarch_fem(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
 	   "Bad number of parameters : " << params.size() << " should be 2.");
@@ -659,7 +671,8 @@ namespace getfem
     return fem_descriptor(name.str());
   }
 
-  static pfem PK_prism_hierarch_fem(fem_param_list &params) {
+  static pfem PK_prism_hierarch_fem(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
 	   "Bad number of parameters : " << params.size() << " should be 2.");
@@ -700,14 +713,16 @@ namespace getfem
     if (n == 1)
       name << fempk << "(1," << k << ")";
     else 
-      name << "FEM_PRODUCT(" << femqk << "(" << n-1 << "," << k << ")," << fempk << "(1,"
-	   << k << "))";
+      name << "FEM_PRODUCT(" << femqk << "(" << n-1 << ","
+	   << k << ")," << fempk << "(1," << k << "))";
     return fem_descriptor(name.str());
   }
-  static pfem QK_fem(fem_param_list &params) {
+  static pfem QK_fem(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &) {
     return QK_fem_(params, "FEM_PK", "FEM_QK");
   }
-  static pfem QK_discontinuous_fem(fem_param_list &params) {
+  static pfem QK_discontinuous_fem(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &) {
     return QK_fem_(params, "FEM_PK_DISCONTINUOUS", "FEM_QK_DISCONTINUOUS");
   }
 
@@ -716,7 +731,8 @@ namespace getfem
   /* prims fems.                                                          */
   /* ******************************************************************** */
 
-  static pfem PK_prism_fem(fem_param_list &params) {
+  static pfem PK_prism_fem(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
 	   "Bad number of parameters : " << params.size() << " should be 2.");
@@ -740,11 +756,11 @@ namespace getfem
   /*	P1 NON CONFORMING (dim 2)                                         */
   /* ******************************************************************** */
 
-   static pfem P1_nonconforming_fem(fem_param_list &params) {
+   static pfem P1_nonconforming_fem(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
     if (params.size() != 0)
       DAL_THROW(failure_error, "Bad number of parameters");
     fem<base_poly> *p = new fem<base_poly>;
-    remember_for_cleanup(p);
     p->mref_convex() = bgeot::simplex_of_reference(2);
     p->dim() = 2;
     p->is_equivalent() = p->is_polynomial() = p->is_lagrange() = true;
@@ -759,6 +775,9 @@ namespace getfem
     p->base()[1] = one - x * 2.0;
     p->add_node(lagrange_dof(2), base_small_vector(0.5, 0.0));
     p->base()[2] = one - y * 2.0;
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_convex(0).structure());
+    dependencies.push_back(p->node_tab(0));
 
     return p;
   }
@@ -784,7 +803,8 @@ namespace getfem
     // modifier qlq chose (transformer les fct de base P1) 
   }
 
-  static pfem P1_with_bubble_on_a_face(fem_param_list &params) {
+  static pfem P1_with_bubble_on_a_face(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
     if (params.size() != 1)
       DAL_THROW(failure_error, 
 	   "Bad number of parameters : " << params.size() << " should be 2.");
@@ -793,7 +813,11 @@ namespace getfem
     int n = int(::floor(params[0].num() + 0.01));
     if (n <= 1 || n >= 100 || double(n) != params[0].num())
       DAL_THROW(failure_error, "Bad parameters");
-    return remember_for_cleanup(new P1_wabbfoaf_(n));
+    virtual_fem *p = new P1_wabbfoaf_(n);
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_convex(0).structure());
+    dependencies.push_back(p->node_tab(0));
+    return p;
   }
 
   /* ******************************************************************** */
@@ -821,10 +845,15 @@ namespace getfem
     base_[3] = y * x * 4.0;
   }
   
-  static pfem P1_with_bubble_on_a_face_lagrange(fem_param_list &params) {
+  static pfem P1_with_bubble_on_a_face_lagrange(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
     if (params.size() != 0)
       DAL_THROW(failure_error, "Bad number of parameters");
-    return remember_for_cleanup(new P1_wabbfoafla_);
+    virtual_fem *p = new P1_wabbfoafla_;
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_convex(0).structure());
+    dependencies.push_back(p->node_tab(0));
+    return p;
   }
 
 
@@ -862,17 +891,20 @@ namespace getfem
     }
   }
 
-  static pfem PK_GL_fem(fem_param_list &params) {
+  static pfem PK_GL_fem(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
     if (params.size() != 1)
       DAL_THROW(failure_error, 
 	   "Bad number of parameters : " << params.size() << " should be 1.");
     if (params[0].type() != 0)
       DAL_THROW(failure_error, "Bad type of parameters");
     int k = int(::floor(params[0].num() + 0.01));
-    return remember_for_cleanup(new PK_GL_fem_(k));
+    virtual_fem *p = new PK_GL_fem_(k);
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_convex(0).structure());
+    dependencies.push_back(p->node_tab(0));
+    return p;
   }
-
-
 
   /* ******************************************************************** */
   /*	Hermite element on the segment                                    */
@@ -935,10 +967,15 @@ namespace getfem
     cout << "base(3) = " << base_[3] << endl;
   }
 
-  static pfem segment_Hermite_fem(fem_param_list &params) {
+  static pfem segment_Hermite_fem(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
     if (params.size() != 0)
       DAL_THROW(failure_error, "Bad number of parameters");
-    return remember_for_cleanup(new hermite_segment__);
+    virtual_fem *p = new hermite_segment__;
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_convex(0).structure());
+    dependencies.push_back(p->node_tab(0));
+    return p;
   }
 
   /* ******************************************************************** */
@@ -972,7 +1009,8 @@ namespace getfem
     }
   };
   
-  static pfem PK_discontinuous_fem(fem_param_list &params) {
+  static pfem PK_discontinuous_fem(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
     if (params.size() != 2 && params.size() != 3)
       DAL_THROW(failure_error, "Bad number of parameters : " << params.size()
 		<< " should be 2 or 3.");
@@ -985,7 +1023,11 @@ namespace getfem
     if (n <= 0 || n >= 100 || k < 0 || k > 150 ||
 	double(n) != params[0].num() || double(k) != params[1].num() || alpha < 0 || alpha >= 1)
       DAL_THROW(failure_error, "Bad parameters");
-    return remember_for_cleanup(new PK_discont_(n, k, alpha));
+    virtual_fem *p = new PK_discont_(n, k, alpha);
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_convex(0).structure());
+    dependencies.push_back(p->node_tab(0));
+    return p;
   }
 
 
@@ -1017,7 +1059,8 @@ namespace getfem
     // cout << "buble = " << base_[j] << endl;
   }
 
-  static pfem PK_with_cubic_bubble(fem_param_list &params) {
+  static pfem PK_with_cubic_bubble(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
 	   "Bad number of parameters : " << params.size() << " should be 2.");
@@ -1029,7 +1072,11 @@ namespace getfem
     if (n <= 0 || n >= 100 || k < 0 || k > 150 ||
 	double(n) != params[0].num() || double(k) != params[1].num())
       DAL_THROW(failure_error, "Bad parameters");
-    return remember_for_cleanup(new PK_with_cubic_bubble_(n, k));
+    virtual_fem *p = new PK_with_cubic_bubble_(n, k);
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_convex(0).structure());
+    dependencies.push_back(p->node_tab(0));
+    return p;
   }
 
   /* ******************************************************************** */
@@ -1095,12 +1142,15 @@ namespace getfem
   /*    Naming system                                                     */
   /* ******************************************************************** */
 
-  pfem structured_composite_fem_method(fem_param_list &params);
-  pfem PK_composite_hierarch_fem(fem_param_list &params);
-  pfem PK_composite_full_hierarch_fem(fem_param_list &params);
+  pfem structured_composite_fem_method(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies);
+  pfem PK_composite_hierarch_fem(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies);
+  pfem PK_composite_full_hierarch_fem(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies);
 
-  struct fem_naming_system : public ftool::naming_system<virtual_fem> {
-    fem_naming_system() : ftool::naming_system<virtual_fem>("FEM") {
+  struct fem_naming_system : public dal::naming_system<virtual_fem> {
+    fem_naming_system() : dal::naming_system<virtual_fem>("FEM") {
       add_suffix("HERMITE_SEGMENT", segment_Hermite_fem);
       add_suffix("PK", PK_fem);
       add_suffix("QK", QK_fem);
@@ -1118,7 +1168,8 @@ namespace getfem
       add_suffix("PK_PRISM_HIERARCHICAL", PK_prism_hierarch_fem);
       add_suffix("STRUCTURED_COMPOSITE", structured_composite_fem_method);
       add_suffix("PK_HIERARCHICAL_COMPOSITE", PK_composite_hierarch_fem);
-      add_suffix("PK_FULL_HIERARCHICAL_COMPOSITE", PK_composite_full_hierarch_fem);
+      add_suffix("PK_FULL_HIERARCHICAL_COMPOSITE",
+		 PK_composite_full_hierarch_fem);
       add_suffix("PK_GAUSSLOBATTO1D", PK_GL_fem);
     }
   };
@@ -1178,6 +1229,59 @@ namespace getfem
       d = n; r = k;
     }
     return pf;
+  }
+
+  /* ********************************************************************* */
+  /*       Precomputation on fem.                                          */
+  /* ********************************************************************* */
+
+  struct pre_fem_key_ : public dal::static_stored_object_key {
+    pfem pf;
+    bgeot::pstored_point_tab pspt;
+    virtual bool compare(const static_stored_object_key &oo) const {
+      const pre_fem_key_ &o = dynamic_cast<const pre_fem_key_ &>(oo);
+      if (pf < o.pf) return true; if (o.pf < pf) return false; 
+      if (pspt < o.pspt) return true; return false;
+    }
+    pre_fem_key_(pfem pff, bgeot::pstored_point_tab ps) : pf(pff), pspt(ps) {}
+    pre_fem_key_(void) { }   
+  };
+
+  fem_precomp_::fem_precomp_(pfem pff, bgeot::pstored_point_tab ps) :
+    pf(pff), pspt(ps) {
+      for (size_type i = 0; i < pspt->size(); ++i)
+	if ((*pspt)[i].size() != pf->dim())
+	  DAL_THROW(dimension_error, "dimensions mismatch");
+    }
+
+  //  fem_precomp_::fem_precomp_() : pf(0), pspt(0) {}
+  
+  void fem_precomp_::init_val() const {
+    c.resize(pspt->size());
+    for (size_type i = 0; i < pspt->size(); ++i) 
+      pf->base_value((*pspt)[i], c[i]);
+  }
+
+  void fem_precomp_::init_grad() const {
+    pc.resize(pspt->size());
+    for (size_type i = 0; i < pspt->size(); ++i)
+      pf->grad_base_value((*pspt)[i], pc[i]);
+  }
+
+  void fem_precomp_::init_hess() const {
+    hpc.resize(pspt->size());
+    for (size_type i = 0; i < pspt->size(); ++i)
+      pf->hess_base_value((*pspt)[i], hpc[i]);
+  }
+
+  pfem_precomp fem_precomp(pfem pf, bgeot::pstored_point_tab pspt) {
+    dal::pstatic_stored_object o
+      = dal::search_stored_object(pre_fem_key_(pf, pspt));
+    if (o) return dal::stored_cast<fem_precomp_>(o);
+    pfem_precomp p = new fem_precomp_(pf, pspt);
+    dal::add_stored_object(new pre_fem_key_(pf, pspt), p, pf, pspt);
+    return p;
+    
   }
 
 }  /* end of namespace getfem.                                            */

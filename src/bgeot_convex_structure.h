@@ -38,7 +38,6 @@
 #include <bgeot_config.h>
 #include <bgeot_tensor.h>
 #include <bgeot_poly.h>
-#include <dal_fonc_tables.h>
 #include <dal_static_stored_objects.h>
 
 namespace bgeot {

@@ -31,10 +31,10 @@
 #ifndef GETFEM_FEM_H__
 #define GETFEM_FEM_H__
 
+#include <dal_static_stored_objects.h>
 #include <bgeot_geometric_trans.h>
 #include <getfem_integration.h>
 #include <getfem_poly_composite.h>
-#include <getfem_precomp.h>
 #include <deque>
 
 namespace getfem {
@@ -43,6 +43,7 @@ namespace getfem {
   /************************************************************************/
   
   struct dof_description;
+
   /// Pointer on a dof_description
   typedef dof_description *pdof_description;
   
@@ -83,11 +84,13 @@ namespace getfem {
   /* ******************************************************************** */
   
   class virtual_fem;
-  typedef const virtual_fem * pfem;
+  typedef boost::intrusive_ptr<const virtual_fem> pfem;
+  struct fem_precomp_; 
+  typedef boost::intrusive_ptr<const fem_precomp_> pfem_precomp;
 
   class fem_interpolation_context;
   
-  class virtual_fem {
+  class virtual_fem : public dal::static_stored_object {
 
   protected :
 
@@ -280,7 +283,6 @@ namespace getfem {
       hier_raff = f.hier_raff;
       return *this;
     }
-    virtual_fem(const virtual_fem &f) { *this = f; }
 
     virtual ~virtual_fem() {}
   };
@@ -410,7 +412,8 @@ namespace getfem {
 	    }
       }
       gmm::mult(c.B(), val2, gmm::transposed(val));
-      // replaced by the loop because gmm does not support product of a complex<> matrix with a real matrix
+      // replaced by the loop because gmm does not support product
+      // of a complex<> matrix with a real matrix
       /*for (size_type i=0; i < Qdim; ++i)
 	for (size_type j=0; j < N; ++j) {
 	  T s = 0;
@@ -542,6 +545,94 @@ namespace getfem {
   pfem PK_prism_fem(size_type n, short_type k);
 
   std::string name_of_fem(pfem p);
+
+  /**
+   * Pre-computations on a fem.     
+   */
+  
+  class fem_precomp_ : public dal::static_stored_object {
+  protected:      
+    pfem pf;
+    bgeot::pstored_point_tab pspt;
+    mutable std::vector<base_tensor> c;
+    mutable std::vector<base_tensor> pc;
+    mutable std::vector<base_tensor> hpc;
+  public:    
+    inline const base_tensor &val(size_type i) const
+    { if (c.empty()) init_val(); return c[i]; }
+    inline const base_tensor &grad(size_type i) const
+    { if (pc.empty()) init_grad(); return pc[i]; }
+    inline const base_tensor &hess(size_type i) const
+    { if (hpc.empty()) init_hess(); return hpc[i]; }
+    inline pfem get_pfem() const { return pf; }
+    inline const bgeot::stored_point_tab& get_point_tab() const
+    { return *pspt; }
+
+    fem_precomp_(pfem, bgeot::pstored_point_tab);
+  private:
+    void init_val() const;
+    void init_grad() const;
+    void init_hess() const;    
+  };
+  
+
+  /**
+     statically allocates a fem-precomputation object, and returns a
+     pointer to it. The precomputations are "cached", i.e. they are
+     stored in a global pool and if this function is called two times
+     with the same arguments, a pointer to the same object will be
+     returned.
+
+     @param pf a pointer to the fem object.
+     @param pspt a pointer to a list of points in the reference convex.CAUTION:
+     this array must not be destroyed as long as the fem_precomp is used!!. 
+
+     Moreover pspt is supposed to identify uniquely the set of
+     points. This means that you should NOT alter its content at any
+     time after using this function.
+
+     If you need a set of "temporary" fem_precomp, create them
+     via a geotrans_precomp_pool structure. All memory will be freed
+     when this structure will be destroyed.  */
+  pfem_precomp fem_precomp(pfem pf, bgeot::pstored_point_tab pspt);
+
+  /**
+     handles a pool (i.e. a set) of fem_precomp. The difference with
+     the global fem_precomp function is that these fem_precomp objects
+     are freed when the fem_precomp_pool is destroyed (they can eat
+     much memory). An example of use can be found in the
+     interpolation_solution functions of getfem_export.h
+
+     @param pf a pointer to the fem object.
+     @param pspt a pointer to a list of points in the reference convex.CAUTION:
+     this array must not be destroyed as long as the fem_precomp is used!!
+
+     Moreover pspt is supposed to identify uniquely the set of
+     points. This means that you should NOT alter its content until
+     the fem_precomp_pool is destroyed.
+  */
+  inline void delete_fem_precomp(pfem_precomp pfp)
+  { dal::del_stored_object(pfp); }
+
+
+  class fem_precomp_pool {
+    std::map<pfem_precomp, bool> precomps;
+    
+  public :
+    
+    pfem_precomp operator()(pfem pf, bgeot::pstored_point_tab pspt) {
+      pfem_precomp p = fem_precomp(pf, pspt);
+      precomps[p] = true;
+      return p;
+    }
+    void clear(void) {
+      for (std::map<pfem_precomp, bool>::iterator it = precomps.begin();
+	   it != precomps.end(); ++it)
+	delete_fem_precomp(it->first);
+    }
+    ~fem_precomp_pool() { clear(); }
+  };
+  
   
 }  /* end of namespace getfem.                                            */
 

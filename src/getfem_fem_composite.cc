@@ -31,7 +31,7 @@
 #include <getfem_poly_composite.h>
 #include <getfem_integration.h>
 #include <getfem_mesh_fem.h>
-#include <ftool_naming.h>
+#include <dal_naming_system.h>
 
 namespace getfem
 { 
@@ -63,7 +63,7 @@ namespace getfem
 	delete p;
 	DAL_THROW(failure_error, "Only for polynomial and equivalent fem.");
       }
-      ppolyfem pf = ppolyfem(pf1);
+      ppolyfem pf = ppolyfem(pf1.get());
       p->estimated_degree() = std::max(p->estimated_degree(),
 				       pf->estimated_degree());
       for (size_type k = 0; k < pf->nb_dof(cv); ++k) {
@@ -81,9 +81,10 @@ namespace getfem
     return p;
   }
 
-  typedef ftool::naming_system<virtual_fem>::param_list fem_param_list;
+  typedef dal::naming_system<virtual_fem>::param_list fem_param_list;
 
-  pfem structured_composite_fem_method(fem_param_list &params) {
+  pfem structured_composite_fem_method(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &dependencies) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
 	  "Bad number of parameters : " << params.size() << " should be 2.");
@@ -102,11 +103,15 @@ namespace getfem
 
     mesh_fem mf(*pm);
     mf.set_finite_element(pm->convex_index(), pf);
-
-    return composite_fe_method(*pmp, mf, pf->ref_convex(0));
+    const virtual_fem *p = composite_fe_method(*pmp, mf, pf->ref_convex(0));
+    dependencies.push_back(p->ref_convex(0));
+    dependencies.push_back(p->node_convex(0).structure());
+    dependencies.push_back(p->node_tab(0));
+    return p;
   }
 
-  pfem PK_composite_hierarch_fem(fem_param_list &params) {
+  pfem PK_composite_hierarch_fem(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &) {
     if (params.size() != 3)
       DAL_THROW(failure_error, 
 	   "Bad number of parameters : " << params.size() << " should be 2.");
@@ -131,7 +136,8 @@ namespace getfem
     return fem_descriptor(name.str());
   }
 
-    pfem PK_composite_full_hierarch_fem(fem_param_list &params) {
+    pfem PK_composite_full_hierarch_fem(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &) {
     if (params.size() != 3)
       DAL_THROW(failure_error, 
 	   "Bad number of parameters : " << params.size() << " should be 2.");

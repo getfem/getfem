@@ -1,6 +1,17 @@
+2005-02-25 Yves Renard,  <Yves.Renard@insa-toulouse.fr> 
+
+	* dal_static_stored_object.h and dal_static_stored_object.cc
+	centralize the management of the static objects (convex structures,
+	geometric transformations, fems, precomps, mat elems ...), and store
+	the dependencies between them to be able to delete consistently a
+	part of them. Many changements in the rest of Getfem : ftool_naming
+	becomes dal_naming_system, dal_fonc_table disappears, intrusive_ptr<T>
+	from boost is introduced and replace the simple pointers on the static
+	stored objects.
+
 2005-02-04 Yves Renard,  <Yves.Renard@insa-toulouse.fr> 
 
-	* navier_stokes.cc ajout des programmes de test stokes et navier stokes
+	* navier_stokes.cc addition of tests programs stokes and navier stokes
 
 2005-02-01 Yves Renard,  <Yves.Renard@insa-toulouse.fr> 
 

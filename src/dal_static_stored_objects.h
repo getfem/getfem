@@ -60,14 +60,15 @@ namespace dal {
   //                   new your_object(parameters),
   //                   dependence)
   // Boost intrusive pointer are used
-  // 
-  // The options of permancence are the following :
-  //   0 = not deletable object, always kept
-  //   1 = preferable not to delete it
-  //   2 = standard
-  //   3 = delete it if memory is necessary
-  //   4 = automatically deleted when the last dependent object
-  //       is deleted
+
+  enum permanence { PERMANENT_STATIC_OBJECT = 0, // not deletable object
+		    STRONG_STATIC_OBJECT = 1,    // preferable not to delete it
+		    STANDARD_STATIC_OBJECT = 2,  // standard
+		    WEAK_STATIC_OBJECT = 3,      // delete it if necessary
+		    AUTODELETE_STATIC_OBJECT = 4 // automatically deleted 
+		             // when the last dependent object is deleted
+  };
+
 
   class static_stored_object_key {
   protected :
@@ -132,10 +133,47 @@ namespace dal {
 
   /** Add an object with two optional dependencies. */
   void add_stored_object(pstatic_stored_object_key k, pstatic_stored_object o,
-			 int permanence = 2,
-			 pstatic_stored_object dep1 = 0,
-			 pstatic_stored_object dep2 = 0,
-			 pstatic_stored_object dep3 = 0);
+			 permanence perm = STANDARD_STATIC_OBJECT);
+
+  inline void
+  add_stored_object(pstatic_stored_object_key k, pstatic_stored_object o,
+		    pstatic_stored_object dep1,
+		    permanence perm = STANDARD_STATIC_OBJECT) {
+    add_stored_object(k, o, perm);
+    add_dependency(o, dep1);
+  }
+			 
+  inline void
+  add_stored_object(pstatic_stored_object_key k, pstatic_stored_object o,
+		    pstatic_stored_object dep1, pstatic_stored_object dep2, 
+		    permanence perm = STANDARD_STATIC_OBJECT) {
+    add_stored_object(k, o, perm);
+    add_dependency(o, dep1);
+    add_dependency(o, dep2);
+  }
+  
+  inline void
+  add_stored_object(pstatic_stored_object_key k, pstatic_stored_object o,
+		    pstatic_stored_object dep1, pstatic_stored_object dep2,
+		    pstatic_stored_object dep3,
+		    permanence perm = STANDARD_STATIC_OBJECT) {
+    add_stored_object(k, o, perm);
+    add_dependency(o, dep1);
+    add_dependency(o, dep2);
+    add_dependency(o, dep3);
+  }
+  
+  inline void
+  add_stored_object(pstatic_stored_object_key k, pstatic_stored_object o,
+		    pstatic_stored_object dep1, pstatic_stored_object dep2,
+		    pstatic_stored_object dep3, pstatic_stored_object dep4,
+		    permanence perm = STANDARD_STATIC_OBJECT) {
+    add_stored_object(k, o, perm);
+    add_dependency(o, dep1);
+    add_dependency(o, dep2);
+    add_dependency(o, dep3);
+    add_dependency(o, dep4);
+  }
 
   /** Delete an object and the object which depend on it. */
   void del_stored_object(pstatic_stored_object o);

@@ -42,8 +42,7 @@ namespace getfem
    *  This class is not to be manipulate by itself. Use ppoly_integration and
    *  the functions written to produce the basic descriptions.
    */
-  class poly_integration
-  {
+  class poly_integration {
     protected :
 
       bgeot::pconvex_structure cvs;
@@ -68,7 +67,8 @@ namespace getfem
       /** Evaluate the integral of the polynomial P on the face f of the
        *    reference element.
        */
-      long_scalar_type int_poly_on_face(const base_poly &P, short_type f) const;
+      long_scalar_type int_poly_on_face(const base_poly &P,
+					short_type f) const;
 
       virtual ~poly_integration() {}
 
@@ -82,11 +82,11 @@ namespace getfem
    *  and the functions written to produce the basic descriptions.
    */
 
-  class integration_method;
-  typedef const integration_method *pintegration_method;
+  class integration_method;  
+  typedef boost::intrusive_ptr<const integration_method> pintegration_method;
 
-  class approx_integration
-  {
+
+  class approx_integration {
     protected :
 
       typedef dal::dynamic_tree_sorted<base_node,
@@ -155,7 +155,7 @@ namespace getfem
     
   };
 
-  typedef const approx_integration * papprox_integration;
+  typedef const approx_integration *papprox_integration;
 
   /**
      the list of main integration method types 
@@ -166,7 +166,7 @@ namespace getfem
      this structure is not intended to be used directly. It is built via
      the int_method_descriptor() function
   */
-  class integration_method {    
+  class integration_method : public dal::static_stored_object {    
     union {
       ppoly_integration ppi; /* for exact integrations */
       papprox_integration pai; /* for approximate integrations (i.e. cubatures) */

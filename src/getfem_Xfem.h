@@ -46,7 +46,6 @@
 
 #include <getfem_fem.h>
 #include <getfem_mesh_fem.h>
-#include <getfem_precomp.h>
 /* Works only for tau-equivalent elements                                  */
 
 namespace getfem
