@@ -84,7 +84,6 @@ namespace getfem
       size_type P = pgt->structure()->dim(); /* dimension of the convex.*/
       base_matrix a(N, pgt->nb_points());
       base_matrix grad(N, P), TMP1(P,P), B0(P,N), B1(1, N), CS(P,P);
-      size_type nbpt = 0, i;
       
       /* TODO: prendre des iterateurs pour faire la copie */
       // utiliser transfert_to_G ?
