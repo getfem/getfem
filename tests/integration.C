@@ -20,7 +20,7 @@ int main(void)
 
     }
 
-    getchar(); cout << endl << endl;
+    cout << endl << endl;
 
   }
 
@@ -36,7 +36,7 @@ int main(void)
 
   }
 
-  getchar(); cout << endl << endl;
+  cout << endl << endl;
 
   for (int n = 1; n < 6; n++)
   {
@@ -52,7 +52,7 @@ int main(void)
 	cout << " point : " << pai->integration_points()[k] << endl; 
       }
       
-      getchar(); cout << endl << endl;
+      cout << endl << endl;
     }
   }
 }

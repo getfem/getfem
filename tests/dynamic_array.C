@@ -126,8 +126,9 @@ int main(void) {
     if (t.capacity() != 80)
       throw dal::internal_error("dynamic_array.C : bad capacity");
 
-    cout << "Dynamic_array test ok\n";
   }
   DAL_STANDARD_CATCH_ERROR;
+
+  cout << "Dynamic_array test ok\n";
   return 0;
 }

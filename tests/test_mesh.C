@@ -53,9 +53,9 @@ template<class MESH> void test_mesh(MESH &m)
   cout << "point 1 of convex " << (cv.points())[1] << endl;
   cout << "point 2 of convex " << (cv.points())[2] << endl;
 
-  size_t ic2 = m.add_convex(cv);
+  size_t ic2 = m.add_convex_by_points(bgeot::simplex_trans(2,1), pts.begin());
 
-  size_t ic3 = m.add_convex(cv);
+  size_t ic3 = m.add_convex_by_points(bgeot::simplex_trans(2,1), pts.begin());
 
   assert(ic2 == ic3);
 
@@ -77,7 +77,6 @@ template<class MESH> void test_mesh(MESH &m)
 
   m.write_to_file("test_mesh.mesh");
   m.write_to_file(cout);
-  cout << "Press a key : " << endl; getchar();
 
 }
 
@@ -86,12 +85,8 @@ template<class MESH> void test_mesh(MESH &m)
 int main(void)
 {
   getfem::getfem_mesh m1;
-  getfem::getfem_mesh m2;
-  getfem::getfem_mesh m3;
 
   test_mesh(m1);
-  test_mesh(m2);
-  test_mesh(m3);
 
   return 0;
 }
