@@ -10,5 +10,5 @@ while (<F>) {
 
 }
 if ($er == 1) { exit(1); }
-`test_mesh`;
+`./test_mesh`;
 if ($?) { exit(1); }

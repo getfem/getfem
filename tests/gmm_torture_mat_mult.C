@@ -23,15 +23,20 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2, const MAT3 &_m3) {
 
   gmm::dense_matrix<T> m4(k, m);
   gmm::mult(m1, m2, m4);
-  
-  if (mat_euclidean_norm(m4) > mat_euclidean_norm(m1) * mat_euclidean_norm(m2))
-    DAL_THROW(gmm::failure_error, "Inconsistence of fröbenius norm");
 
-  if (mat_norm1(m4) > mat_norm1(m1) * mat_norm1(m2))
-    DAL_THROW(gmm::failure_error, "Inconsistence of norm1 for matrices");
+  R error = mat_euclidean_norm(m4)
+    - mat_euclidean_norm(m1) * mat_euclidean_norm(m2);
+  if (error > prec * R(10))
+    DAL_THROW(gmm::failure_error, "Inconsistence of fröbenius norm" << error);
 
-  if (mat_norminf(m4) > mat_norminf(m1) * mat_norminf(m2))
-    DAL_THROW(gmm::failure_error, "Inconsistence of norminf for matrices");
+  error = mat_norm1(m4) - mat_norm1(m1) * mat_norm1(m2);
+  if (error > prec * R(10))
+    DAL_THROW(gmm::failure_error, "Inconsistence of norm1 for matrices"
+	      << error);
+  error = mat_norminf(m4) - mat_norminf(m1) * mat_norminf(m2);
+  if (error > prec * R(10))
+    DAL_THROW(gmm::failure_error, "Inconsistence of norminf for matrices"
+	      << error);
 
   size_type mm = std::min(m, k);
   size_type nn = std::min(n, m);
@@ -52,7 +57,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2, const MAT3 &_m3) {
 	   gmm::sub_matrix(m3, gmm::sub_interval(0,mm),
 			   gmm::sub_interval(0,nn)));
   
-  R error = gmm::mat_euclidean_norm(gmm::sub_matrix(m3, gmm::sub_interval(0,mm),
+  error = gmm::mat_euclidean_norm(gmm::sub_matrix(m3, gmm::sub_interval(0,mm),
 					   gmm::sub_interval(0,nn)));
 
   if (!(error <= prec * R(10000)))

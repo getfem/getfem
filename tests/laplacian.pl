@@ -32,7 +32,7 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
 
   # print ("def = $def\n");
 
-  open F, "laplacian $tmp $def 2>&1 |" or die;
+  open F, "./laplacian $tmp $def 2>&1 |" or die;
   while (<F>) {
     if ($_ =~ /L2 error/) {
       ($a, $b) = split('=', $_);
@@ -47,7 +47,7 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
  # 
  #   print $_;
   }
-  `laplacian $tmp $def`;
+  `./laplacian $tmp $def`;
   if ($?) { `rm -f $tmp`; exit(1); }
 }
 

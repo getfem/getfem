@@ -9,7 +9,7 @@
 
 
 using gmm::size_type;
-
+bool print_debug = false;
 
 // template <typename MAT, typename T> void print_for_matlab(const MAT &m, T) { 
 //   cout.precision(16);
@@ -47,8 +47,11 @@ std::complex<T> real_or_complex(double a, double b, std::complex<T>) {
 
 template <typename T> struct cmp_eval {
   bool operator()(T a, T b) {
-    if (gmm::real(a) != gmm::real(b)) return (gmm::real(a) < gmm::real(b));
-    else return (gmm::imag(a) < gmm::imag(b));
+    typedef typename gmm::number_traits<T>::magnitude_type R;
+    // R prec = gmm::default_tol(R());
+    R dr = gmm::real(a) - gmm::real(b);
+    R di = gmm::imag(a) - gmm::imag(b);
+    if (gmm::abs(dr) > gmm::abs(di)) return (dr<R(0)); else return (di<R(0));
   }
 };
 
@@ -73,6 +76,12 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
   //
   size_type m = gmm::mat_nrows(m1), n = gmm::mat_ncols(m1);
   size_type k = size_type(rand() % 50);
+
+  if (print_debug) {
+    static int nexpe = 0;
+    cout << "Begin experiment " << ++nexpe << "\n\nwith " << m1 << "\n\n"; 
+    dal::set_warning_level(3);
+  }
     
   gmm::dense_matrix<T> dm1(m, n);
   gmm::copy(m1, dm1);
@@ -164,9 +173,12 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
   std::vector<T> cv(m), eigc(m);
   do {
     gmm::fill_random(cq);
-  } while (gmm::abs(gmm::lu_det(cq)) < sqrt(prec));
+  } while (gmm::abs(gmm::lu_det(cq)) < sqrt(prec)
+	   || gmm::condition_number(cq) > R(1000));
   gmm::copy(cq, cr);
   gmm::lu_inverse(cr);
+
+  
 
   gmm::fill_random(cv);
   if (m >  0) cv[ 0] = real_or_complex(     0.0,  0.0, cv[0]);
@@ -195,8 +207,8 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
   sort_eval(cv);
   sort_eval(eigc);
   error = gmm::vect_dist2(cv, eigc);
-  if (!(error <= prec * gmm::vect_norm2(cv) * R(10000)))
-    DAL_THROW(gmm::failure_error, "Error in QR algorithm.");
+  if (!(error <= sqrt(prec) * gmm::vect_norm2(cv)))
+    DAL_THROW(gmm::failure_error, "Error in QR algorithm, error = " << error);
 
   gmm::dense_matrix<T> aa(m, m), bb(m, m);
   gmm::mult(gmm::conjugated(cq), ca, aa);
@@ -205,8 +217,8 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
     for (size_type j = (i == 0) ? 0 : i-1; j < m; ++j)
       bb(i, j) = T(0);
   error = gmm::mat_maxnorm(bb);
-  if (!(error <= prec * gmm::vect_norm2(cv) *R(10000)))
-    DAL_THROW(gmm::failure_error, "Error in Schur vectors, error = " << error); 
+  if (!(error <= sqrt(prec) * gmm::vect_norm2(cv)))
+    DAL_THROW(gmm::failure_error, "Error in Schur vectors, error = "<< error); 
 
   //
   // Test for symmetric_qr_algorithm
@@ -216,7 +228,9 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
   std::vector<R> cvr(m), eigcr(m);
   do {
     gmm::fill_random(cr);
-  } while (gmm::abs(gmm::lu_det(cr)) < sqrt(prec));
+  } while (gmm::abs(gmm::lu_det(cr)) < sqrt(prec)
+	   || gmm::condition_number(cr) > R(1000));
+  
   gmm::qr_factor(cr, cq, ca);
   gmm::fill_random(cvr);
 
@@ -251,7 +265,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
      gmm::mult(ca, gmm::mat_col(cq, l),
 	       gmm::scaled(gmm::mat_col(cq, l), -eigcr[l]), vy);
      error = gmm::vect_norm2(vy);
-     if (!(error <= prec * gmm::vect_norm2(cvr) *R(10000))) 
+     if (!(error <= sqrt(prec) * gmm::vect_norm2(cvr))) 
        DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
   }
@@ -259,7 +273,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
   sort_eval(cvr);
   sort_eval(eigcr);
   error = gmm::vect_dist2(cvr, eigcr);
-  if (!(error <= prec * gmm::vect_norm2(cvr) * R(10000)))
+  if (!(error <= sqrt(prec) * gmm::vect_norm2(cvr)))
     DAL_THROW(gmm::failure_error, "Error in QR algorithm.");
 
 
