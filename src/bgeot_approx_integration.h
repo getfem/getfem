@@ -105,11 +105,33 @@ namespace bgeot
 
   // methods on dimension 2
 
-  // ... a rentrer
+  /// Integration on a triangle of order 1 with 1 point
+  papprox_integration triangle1_approx_integration(void);
+  /// Integration on a triangle of order 2 with 3 points
+  papprox_integration triangle2_approx_integration(void);
+  /// Integration on a triangle of order 2 with 3 points
+  papprox_integration triangle2bis_approx_integration(void);
+  /// Integration on a triangle of order 3 with 4 points
+  papprox_integration triangle3_approx_integration(void);
+  /// Integration on a triangle of order 4 with 6 points
+  papprox_integration triangle4_approx_integration(void);
+  /// Integration on a triangle of order 5 with 7 points
+  papprox_integration triangle5_approx_integration(void);
+  /// Integration on a triangle of order 7 with 13 points
+  papprox_integration triangle7_approx_integration(void);
 
   // methods on dimension 3
 
-  // ... a rentrer
+  /// Integration on a tetrahedron of order 1 with 1 point
+  papprox_integration tetrahedron1_approx_integration(void);
+  /// Integration on a tetrahedron of order 2 with 4 points
+  papprox_integration tetrahedron2_approx_integration(void);
+  /// Integration on a tetrahedron of order 3 with 5 points
+  papprox_integration tetrahedron3_approx_integration(void);
+  /// Integration on a tetrahedron of order 5 with 15 points
+  papprox_integration tetrahedron5_approx_integration(void);
+ 
+ 
 
   // methods on simplex
 

@@ -259,10 +259,6 @@ namespace bgeot
     }
   };
 
-
-  
-
-
   papprox_integration Newton_Cotes_approx_integration(dim_type n,
 						      short_type k)
   { 
@@ -274,6 +270,7 @@ namespace bgeot
     }
     return t->add(_NC_apx_light(n, k));
   }
+
 
   /* ********************************************************************* */
   /* integration on direct product of convex structures                    */
@@ -375,6 +372,762 @@ namespace bgeot
     }
     return tab->add(a_int_pro_light(a, b));
   }
+
+  /* ********************************************************************* */
+  /*   triangle1 :    Integration on a triangle of order 1 with 1 point    */
+  /* ********************************************************************* */
+
+  struct _particular_approx : public approx_integration
+  {
+    friend papprox_integration triangle1_approx_integration(void);
+    friend papprox_integration triangle2_approx_integration(void);
+    friend papprox_integration triangle2bis_approx_integration(void);
+    friend papprox_integration triangle3_approx_integration(void);
+    friend papprox_integration triangle4_approx_integration(void);
+    friend papprox_integration triangle5_approx_integration(void);
+    friend papprox_integration triangle7_approx_integration(void);
+    friend papprox_integration tetrahedron1_approx_integration(void);
+    friend papprox_integration tetrahedron2_approx_integration(void);
+    friend papprox_integration tetrahedron3_approx_integration(void);
+    friend papprox_integration tetrahedron5_approx_integration(void);
+  };
+
+  papprox_integration triangle1_approx_integration(void) {
+    static _particular_approx *p = NULL;
+    if (p == NULL)
+    {
+      std::vector<base_node> ptab(4);
+      std::fill(ptab.begin(), ptab.end(), base_node(2));
+      p = new _particular_approx;
+      p->cvs = simplex_structure(2);
+      p->repartition.resize(p->cvs->nb_faces()+1);
+      p->int_coeffs.resize(ptab.size());
+      // volume
+      int i = 0;
+      ptab[i][0] = 1.0 / 3.0; ptab[i][1] = 1.0 / 3.0;
+      p->int_coeffs[i] = 0.5; 
+      p->repartition[0] = 1;
+      // face 0
+      ptab[++i][0] = 0.5; ptab[i][1] = 0.5;
+      p->int_coeffs[i] = ::sqrt(2.0); 
+      p->repartition[1] = p->repartition[0] + 1;
+      // face 1
+      ptab[++i][0] = 0.0; ptab[i][1] = 0.5;
+      p->int_coeffs[i] = 1.0; 
+      p->repartition[2] = p->repartition[1] + 1;
+      // face 2
+      ptab[++i][0] = 0.5; ptab[i][1] = 0.0;
+      p->int_coeffs[i] = 1.0; 
+      p->repartition[3] = p->repartition[2] + 1;
+
+      p->pint_points = store_point_tab(ptab);
+      
+    }
+    return p;
+  }
+
+  /* ********************************************************************* */
+  /*   triangle2 :    Integration on a triangle of order 2 with 3 points   */
+  /* ********************************************************************* */
+
+    papprox_integration triangle2_approx_integration(void) {
+    static _particular_approx *p = NULL;
+    if (p == NULL)
+    {
+      std::vector<base_node> ptab(9);
+      std::fill(ptab.begin(), ptab.end(), base_node(2));
+      p = new _particular_approx;
+      p->cvs = simplex_structure(2);
+      p->repartition.resize(p->cvs->nb_faces()+1);
+      p->int_coeffs.resize(ptab.size());
+      // volume
+      int i = 0;
+      ptab[  i][0] = 1.0 / 6.0; ptab[i][1] = 1.0 / 6.0;
+      p->int_coeffs[i] = 1.0 / 6.0; 
+      ptab[++i][0] = 2.0 / 3.0; ptab[i][1] = 1.0 / 6.0;
+      p->int_coeffs[i] = 1.0 / 6.0; 
+      ptab[++i][0] = 1.0 / 6.0; ptab[i][1] = 2.0 / 3.0;
+      p->int_coeffs[i] = 1.0 / 6.0; 
+      p->repartition[0] = 3;
+      // face 0
+      double a = 0.5 - 0.5/::sqrt(3.0);
+      double b = 0.5 + 0.5/::sqrt(3.0);
+      ptab[++i][0] = a; ptab[i][1] = b;
+      p->int_coeffs[i] = ::sqrt(2.0) * 0.5; 
+      ptab[++i][0] = b; ptab[i][1] = a;
+      p->int_coeffs[i] = ::sqrt(2.0) * 0.5; 
+      p->repartition[1] = p->repartition[0] + 2;
+      // face 1
+      ptab[++i][0] = 0.0; ptab[i][1] = a;
+      p->int_coeffs[i] = 0.5; 
+      ptab[++i][0] = 0.0; ptab[i][1] = b;
+      p->int_coeffs[i] = 0.5; 
+      p->repartition[2] = p->repartition[1] + 2;
+      // face 2
+      ptab[++i][0] = a; ptab[i][1] = 0.0;
+      p->int_coeffs[i] = 0.5; 
+      ptab[++i][0] = b; ptab[i][1] = 0.0;
+      p->int_coeffs[i] = 0.5; 
+      p->repartition[3] = p->repartition[2] + 2;
+
+      p->pint_points = store_point_tab(ptab);
+      
+    }
+    return p;
+  }
+
+  /* ********************************************************************* */
+  /*   triangle2bis :   Integration on a triangle of order 2 with 3 points */
+  /* ********************************************************************* */
+
+    papprox_integration triangle2bis_approx_integration(void) {
+    static _particular_approx *p = NULL;
+    if (p == NULL)
+    {
+      std::vector<base_node> ptab(9);
+      std::fill(ptab.begin(), ptab.end(), base_node(2));
+      p = new _particular_approx;
+      p->cvs = simplex_structure(2);
+      p->repartition.resize(p->cvs->nb_faces()+1);
+      p->int_coeffs.resize(ptab.size());
+      // volume
+      int i = 0;
+      ptab[  i][0] = 0.5; ptab[i][1] = 0.5;
+      p->int_coeffs[i] = 1.0 / 6.0; 
+      ptab[++i][0] = 0; ptab[i][1] = 0.5;
+      p->int_coeffs[i] = 1.0 / 6.0; 
+      ptab[++i][0] = 0.5; ptab[i][1] = 0.0;
+      p->int_coeffs[i] = 1.0 / 6.0; 
+      p->repartition[0] = 3;
+      // face 0
+      double a = 0.5 - 0.5/::sqrt(3.0);
+      double b = 0.5 + 0.5/::sqrt(3.0);
+      ptab[++i][0] = a; ptab[i][1] = b;
+      p->int_coeffs[i] = ::sqrt(2.0) * 0.5; 
+      ptab[++i][0] = b; ptab[i][1] = a;
+      p->int_coeffs[i] = ::sqrt(2.0) * 0.5; 
+      p->repartition[1] = p->repartition[0] + 2;
+      // face 1
+      ptab[++i][0] = 0.0; ptab[i][1] = a;
+      p->int_coeffs[i] = 0.5; 
+      ptab[++i][0] = 0.0; ptab[i][1] = b;
+      p->int_coeffs[i] = 0.5; 
+      p->repartition[2] = p->repartition[1] + 2;
+      // face 2
+      ptab[++i][0] = a; ptab[i][1] = 0.0;
+      p->int_coeffs[i] = 0.5; 
+      ptab[++i][0] = b; ptab[i][1] = 0.0;
+      p->int_coeffs[i] = 0.5; 
+      p->repartition[3] = p->repartition[2] + 2;
+
+      p->pint_points = store_point_tab(ptab);
+      
+    }
+    return p;
+  }
+
+  /* ********************************************************************* */
+  /*   triangle3 :    Integration on a triangle of order 3 with 4 points   */
+  /* ********************************************************************* */
+
+  papprox_integration triangle3_approx_integration(void) {
+    static _particular_approx *p = NULL;
+    if (p == NULL)
+    {
+      std::vector<base_node> ptab(10);
+      std::fill(ptab.begin(), ptab.end(), base_node(2));
+      p = new _particular_approx;
+      p->cvs = simplex_structure(2);
+      p->repartition.resize(p->cvs->nb_faces()+1);
+      p->int_coeffs.resize(ptab.size());
+      // volume
+      int i = 0;
+      ptab[  i][0] = 1.0 / 3.0; ptab[i][1] = 1.0 / 3.0;
+      p->int_coeffs[i] = -27.0 / 96.0; 
+      ptab[++i][0] = 1.0 / 5.0; ptab[i][1] = 1.0 / 5.0;
+      p->int_coeffs[i] = 25.0 / 96.0; 
+      ptab[++i][0] = 3.0 / 5.0; ptab[i][1] = 1.0 / 5.0;
+      p->int_coeffs[i] = 25.0 / 96.0; 
+      ptab[++i][0] = 1.0 / 5.0; ptab[i][1] = 3.0 / 5.0;
+      p->int_coeffs[i] = 25.0 / 96.0; 
+      p->repartition[0] = 4;
+      // face 0
+      double a = 0.5 - 0.5/::sqrt(3.0);
+      double b = 0.5 + 0.5/::sqrt(3.0);
+      ptab[++i][0] = a; ptab[i][1] = b;
+      p->int_coeffs[i] = ::sqrt(2.0) * 0.5; 
+      ptab[++i][0] = b; ptab[i][1] = a;
+      p->int_coeffs[i] = ::sqrt(2.0) * 0.5; 
+      p->repartition[1] = p->repartition[0] + 2;
+      // face 1
+      ptab[++i][0] = 0.0; ptab[i][1] = a;
+      p->int_coeffs[i] = 0.5; 
+      ptab[++i][0] = 0.0; ptab[i][1] = b;
+      p->int_coeffs[i] = 0.5; 
+      p->repartition[2] = p->repartition[1] + 2;
+      // face 2
+      ptab[++i][0] = a; ptab[i][1] = 0.0;
+      p->int_coeffs[i] = 0.5; 
+      ptab[++i][0] = b; ptab[i][1] = 0.0;
+      p->int_coeffs[i] = 0.5; 
+      p->repartition[3] = p->repartition[2] + 2;
+
+      p->pint_points = store_point_tab(ptab);
+      
+    }
+    return p;
+  }
+
+
+  /* ********************************************************************* */
+  /*   triangle4 :    Integration on a triangle of order 4 with 6 points   */
+  /* ********************************************************************* */
+
+  papprox_integration triangle4_approx_integration(void) {
+    static _particular_approx *p = NULL;
+    if (p == NULL)
+    {
+      std::vector<base_node> ptab(15);
+      std::fill(ptab.begin(), ptab.end(), base_node(2));
+      p = new _particular_approx;
+      p->cvs = simplex_structure(2);
+      p->repartition.resize(p->cvs->nb_faces()+1);
+      p->int_coeffs.resize(ptab.size());
+      // volume
+      int i = 0;
+      double a = 0.445948490915965;
+      double b = 0.091576213509771;
+      double c = 0.111690794839005;
+      double d = 0.054975871827661;
+      ptab[  i][0] = a; ptab[i][1] = a;
+      p->int_coeffs[i] = c; 
+      ptab[++i][0] = 1.0 - 2.0 * a; ptab[i][1] = a;
+      p->int_coeffs[i] = c; 
+      ptab[++i][0] = a; ptab[i][1] = 1.0 - 2.0 * a;
+      p->int_coeffs[i] = c; 
+      ptab[++i][0] = b; ptab[i][1] = b;
+      p->int_coeffs[i] = d; 
+      ptab[++i][0] = 1.0 - 2.0 * b; ptab[i][1] = b;
+      p->int_coeffs[i] = d; 
+      ptab[++i][0] = b; ptab[i][1] = 1.0 - 2.0 * b;
+      p->int_coeffs[i] = d; 
+      p->repartition[0] = 6;
+      // face 0
+      double e = 0.5 - 0.5/::sqrt(3.0 / 5.0);
+      double f = 0.5 + 0.5/::sqrt(3.0 / 5.0);
+      ptab[++i][0] = e; ptab[i][1] = f;
+      p->int_coeffs[i] = ::sqrt(2.0) * 5.0 / 18.0; 
+      ptab[++i][0] = 0.5; ptab[i][1] = 0.5;
+      p->int_coeffs[i] = ::sqrt(2.0) * 8.0 / 18.0; 
+      ptab[++i][0] = f; ptab[i][1] = e;
+      p->int_coeffs[i] = ::sqrt(2.0) * 5.0 / 18.0; 
+      p->repartition[1] = p->repartition[0] + 3;
+      // face 1
+      ptab[++i][0] = 0.0; ptab[i][1] = e;
+      p->int_coeffs[i] = 5.0 / 18.0; 
+      ptab[++i][0] = 0.0; ptab[i][1] = 0.5;
+      p->int_coeffs[i] = 8.0 / 18.0; 
+      ptab[++i][0] = 0.0; ptab[i][1] = f;
+      p->int_coeffs[i] = 5.0 / 18.0; 
+      p->repartition[2] = p->repartition[1] + 3;
+      // face 2
+      ptab[++i][0] = e; ptab[i][1] = 0.0;
+      p->int_coeffs[i] = 5.0 / 18.0; 
+      ptab[++i][0] = 0.5; ptab[i][1] = 0.0;
+      p->int_coeffs[i] = 8.0 / 18.0; 
+      ptab[++i][0] = f; ptab[i][1] = 0.0;
+      p->int_coeffs[i] = 5.0 / 18.0; 
+      p->repartition[3] = p->repartition[2] + 3;
+
+      p->pint_points = store_point_tab(ptab);
+      
+    }
+    return p;
+  }
+
+  /* ********************************************************************* */
+  /*   triangle5 :    Integration on a triangle of order 5 with 7 points   */
+  /* ********************************************************************* */
+
+  papprox_integration triangle5_approx_integration(void) {
+    static _particular_approx *p = NULL;
+    if (p == NULL)
+    {
+      std::vector<base_node> ptab(16);
+      std::fill(ptab.begin(), ptab.end(), base_node(2));
+      p = new _particular_approx;
+      p->cvs = simplex_structure(2);
+      p->repartition.resize(p->cvs->nb_faces()+1);
+      p->int_coeffs.resize(ptab.size());
+      // volume
+      int i = 0;
+      double a = 0.470142064105115;
+      double b = 0.101286507323456;
+      double c = 0.0661970763942530;
+      double d = 0.0629695902724135;
+      ptab[  i][0] = a; ptab[i][1] = a;
+      p->int_coeffs[i] = c; 
+      ptab[++i][0] = 1.0 - 2.0 * a; ptab[i][1] = a;
+      p->int_coeffs[i] = c; 
+      ptab[++i][0] = a; ptab[i][1] = 1.0 - 2.0 * a;
+      p->int_coeffs[i] = c; 
+      ptab[++i][0] = b; ptab[i][1] = b;
+      p->int_coeffs[i] = d; 
+      ptab[++i][0] = 1.0 - 2.0 * b; ptab[i][1] = b;
+      p->int_coeffs[i] = d; 
+      ptab[++i][0] = b; ptab[i][1] = 1.0 - 2.0 * b;
+      p->int_coeffs[i] = d; 
+      ptab[++i][0] = 1.0 / 3.0; ptab[i][1] = 1.0 / 3.0;
+      p->int_coeffs[i] = 9.0 / 80.0; 
+      p->repartition[0] = 7;
+      // face 0
+      double e = 0.5 - 0.5/::sqrt(3.0 / 5.0);
+      double f = 0.5 + 0.5/::sqrt(3.0 / 5.0);
+      ptab[++i][0] = e; ptab[i][1] = f;
+      p->int_coeffs[i] = ::sqrt(2.0) * 5.0 / 18.0; 
+      ptab[++i][0] = 0.5; ptab[i][1] = 0.5;
+      p->int_coeffs[i] = ::sqrt(2.0) * 8.0 / 18.0; 
+      ptab[++i][0] = f; ptab[i][1] = e;
+      p->int_coeffs[i] = ::sqrt(2.0) * 5.0 / 18.0; 
+      p->repartition[1] = p->repartition[0] + 3;
+      // face 1
+      ptab[++i][0] = 0.0; ptab[i][1] = e;
+      p->int_coeffs[i] = 5.0 / 18.0; 
+      ptab[++i][0] = 0.0; ptab[i][1] = 0.5;
+      p->int_coeffs[i] = 8.0 / 18.0; 
+      ptab[++i][0] = 0.0; ptab[i][1] = f;
+      p->int_coeffs[i] = 5.0 / 18.0; 
+      p->repartition[2] = p->repartition[1] + 3;
+      // face 2
+      ptab[++i][0] = e; ptab[i][1] = 0.0;
+      p->int_coeffs[i] = 5.0 / 18.0; 
+      ptab[++i][0] = 0.5; ptab[i][1] = 0.0;
+      p->int_coeffs[i] = 8.0 / 18.0; 
+      ptab[++i][0] = f; ptab[i][1] = 0.0;
+      p->int_coeffs[i] = 5.0 / 18.0; 
+      p->repartition[3] = p->repartition[2] + 3;
+
+      p->pint_points = store_point_tab(ptab);
+      
+    }
+    return p;
+  }
+
+  /* ********************************************************************* */
+  /*   triangle7 :    Integration on a triangle of order 7 with 13 points  */
+  /* ********************************************************************* */
+
+  papprox_integration triangle7_approx_integration(void) {
+    static _particular_approx *p = NULL;
+    if (p == NULL)
+    {
+      std::vector<base_node> ptab(25);
+      std::fill(ptab.begin(), ptab.end(), base_node(2));
+      p = new _particular_approx;
+      p->cvs = simplex_structure(2);
+      p->repartition.resize(p->cvs->nb_faces()+1);
+      p->int_coeffs.resize(ptab.size());
+      // volume
+      int i = 0;
+      double r1  = 0.0651301029022;
+      double r2  = 0.8697397941956;
+      double r4  = 0.3128654960049;
+      double r5  = 0.6384441885698;
+      double r6  = 0.0486903154253;
+      double r10 = 0.2603459660790;
+      double r11 = 0.4793080678419;
+      double r13 = 0.3333333333333;
+      double w1  = 0.0533472356088;
+      double w4  = 0.0771137608903;
+      double w10 = 0.1756152574332;
+      double w13 = -0.1495700444677;
+      ptab[  i][0] = r1; ptab[i][1] = r1;
+      p->int_coeffs[i] = w1; 
+      ptab[++i][0] = r2; ptab[i][1] = r1;
+      p->int_coeffs[i] = w1; 
+      ptab[++i][0] = r1; ptab[i][1] = r2;
+      p->int_coeffs[i] = w1; 
+      ptab[++i][0] = r4; ptab[i][1] = r6;
+      p->int_coeffs[i] = w4; 
+      ptab[++i][0] = r5; ptab[i][1] = r4;
+      p->int_coeffs[i] = w4; 
+      ptab[++i][0] = r6; ptab[i][1] = r5;
+      p->int_coeffs[i] = w4; 
+      ptab[++i][0] = r5; ptab[i][1] = r6;
+      p->int_coeffs[i] = w4; 
+      ptab[++i][0] = r4; ptab[i][1] = r5;
+      p->int_coeffs[i] = w4; 
+      ptab[++i][0] = r6; ptab[i][1] = r4;
+      p->int_coeffs[i] = w4; 
+      ptab[++i][0] = r10; ptab[i][1] = r10;
+      p->int_coeffs[i] = w10; 
+      ptab[++i][0] = r11; ptab[i][1] = r10;
+      p->int_coeffs[i] = w10; 
+      ptab[++i][0] = r10; ptab[i][1] = r11;
+      p->int_coeffs[i] = w10; 
+      ptab[++i][0] = r13; ptab[i][1] = r13;
+      p->int_coeffs[i] = w13; 
+      p->repartition[0] = 13;
+      // face 0
+      double a = 0.5 - 0.4305681557970265;
+      double b = 0.5 - 0.1699905217924280;
+      double c = 0.5 + 0.1699905217924280;
+      double d = 0.5 + 0.4305681557970265;
+      double e = 0.326072577431273;
+      double f = 0.173927422568727;
+      ptab[++i][0] = a; ptab[i][1] = d;
+      p->int_coeffs[i] = ::sqrt(2.0) * f; 
+      ptab[++i][0] = b; ptab[i][1] = c;
+      p->int_coeffs[i] = ::sqrt(2.0) * e; 
+      ptab[++i][0] = c; ptab[i][1] = b;
+      p->int_coeffs[i] = ::sqrt(2.0) * e; 
+      ptab[++i][0] = d; ptab[i][1] = a;
+      p->int_coeffs[i] = ::sqrt(2.0) * f; 
+      p->repartition[1] = p->repartition[0] + 4;
+      // face 1
+      ptab[++i][0] = 0.0; ptab[i][1] = a;
+      p->int_coeffs[i] = f; 
+      ptab[++i][0] = 0.0; ptab[i][1] = b;
+      p->int_coeffs[i] = e; 
+      ptab[++i][0] = 0.0; ptab[i][1] = c;
+      p->int_coeffs[i] = e; 
+      ptab[++i][0] = 0.0; ptab[i][1] = d;
+      p->int_coeffs[i] = f; 
+      p->repartition[2] = p->repartition[1] + 4;
+      // face 2
+      ptab[++i][0] = a; ptab[i][1] = 0.0;
+      p->int_coeffs[i] = f; 
+      ptab[++i][0] = b; ptab[i][1] = 0.0;
+      p->int_coeffs[i] = e; 
+      ptab[++i][0] = c; ptab[i][1] = 0.0;
+      p->int_coeffs[i] = e; 
+      ptab[++i][0] = d; ptab[i][1] = 0.0;
+      p->int_coeffs[i] = f; 
+      p->repartition[3] = p->repartition[2] + 4;
+
+      p->pint_points = store_point_tab(ptab);
+      
+    }
+    return p;
+  }
+
+
+  /* ********************************************************************* */
+  /*  tetrahedron1 : Integration on a tetrahedron of order 1 with 1 point  */
+  /* ********************************************************************* */
+
+  papprox_integration tetrahedron1_approx_integration(void) {
+    static _particular_approx *p = NULL;
+    if (p == NULL)
+    {
+      std::vector<base_node> ptab(5);
+      std::fill(ptab.begin(), ptab.end(), base_node(3));
+      p = new _particular_approx;
+      p->cvs = simplex_structure(3);
+      p->repartition.resize(p->cvs->nb_faces()+1);
+      p->int_coeffs.resize(ptab.size());
+      // volume
+      int i = 0;
+      ptab[  i][0] = 0.25; ptab[i][1] = 0.25; ptab[i][2] = 0.25;
+      p->int_coeffs[i] = 1.0 / 6.0; 
+      p->repartition[0] = 1;
+      // face 0
+      ptab[++i][0] = 1.0 / 3.0; ptab[i][1] = 1.0 / 3.0; ptab[i][2] = 1.0 / 3.0;
+      p->int_coeffs[i] = ::sqrt(3.0); 
+      p->repartition[1] = p->repartition[0] + 1;
+      // face 1
+      ptab[++i][0] = 0.0; ptab[i][1] = 0.5; ptab[i][2] = 0.5;
+      p->int_coeffs[i] = 0.5; 
+      p->repartition[2] = p->repartition[1] + 1;
+      // face 2
+      ptab[++i][0] = 0.5; ptab[i][1] = 0.0; ptab[i][2] = 0.5;
+      p->int_coeffs[i] = 0.5; 
+      p->repartition[3] = p->repartition[2] + 1;
+      // face 3
+      ptab[++i][0] = 0.5; ptab[i][1] = 0.5; ptab[i][2] = 0.0;
+      p->int_coeffs[i] = 0.5; 
+      p->repartition[4] = p->repartition[3] + 1;
+
+      p->pint_points = store_point_tab(ptab);
+      
+    }
+    return p;
+  }
+
+  /* ********************************************************************* */
+  /*  tetrahedron2 : Integration on a tetrahedron of order 2 with 4 points */
+  /* ********************************************************************* */
+
+  papprox_integration tetrahedron2_approx_integration(void) {
+    static _particular_approx *p = NULL;
+    if (p == NULL)
+    {
+      std::vector<base_node> ptab(16);
+      std::fill(ptab.begin(), ptab.end(), base_node(3));
+      p = new _particular_approx;
+      p->cvs = simplex_structure(3);
+      p->repartition.resize(p->cvs->nb_faces()+1);
+      p->int_coeffs.resize(ptab.size());
+      // volume
+      int i = 0;
+      double c = 0.13819660112501052;
+      ptab[  i][0] = c; ptab[i][1] = c; ptab[i][2] = c;
+      p->int_coeffs[i] = 1.0 / 24.0; 
+      ptab[++i][0] = 1 - 3.0 * c; ptab[i][1] = c; ptab[i][2] = c;
+      p->int_coeffs[i] = 1.0 / 24.0; 
+      ptab[++i][0] = c; ptab[i][1] = 1 - 3.0 * c; ptab[i][2] = c;
+      p->int_coeffs[i] = 1.0 / 24.0; 
+      ptab[++i][0] = c; ptab[i][1] = c; ptab[i][2] = 1 - 3.0 * c;
+      p->int_coeffs[i] = 1.0 / 24.0; 
+      p->repartition[0] = 4;
+
+      // face 0
+      double a = 1.0 / 6.0;
+      double b = 2.0 / 3.0;
+      ptab[++i][0] = 1.0 - a - a; ptab[i][1] = a; ptab[i][2] = a;
+      p->int_coeffs[i] = ::sqrt(3.0) / 6.0; 
+      ptab[++i][0] = 1.0 - b - a; ptab[i][1] = b; ptab[i][2] = a;
+      p->int_coeffs[i] = ::sqrt(3.0) / 6.0; 
+      ptab[++i][0] = 1.0 - a - b; ptab[i][1] = a; ptab[i][2] = b;
+      p->int_coeffs[i] = ::sqrt(3.0) / 6.0; 
+      p->repartition[1] = p->repartition[0] + 3;
+      // face 1
+      ptab[++i][0] = 0.0; ptab[i][1] = a; ptab[i][2] = a;
+      p->int_coeffs[i] = 1.0 / 6.0; 
+      ptab[++i][0] = 0.0; ptab[i][1] = b; ptab[i][2] = a;
+      p->int_coeffs[i] = 1.0 / 6.0; 
+      ptab[++i][0] = 0.0; ptab[i][1] = a; ptab[i][2] = b;
+      p->int_coeffs[i] = 1.0 / 6.0; 
+      p->repartition[2] = p->repartition[1] + 3;
+      // face 2
+      ptab[++i][0] = a; ptab[i][1] = 0.0; ptab[i][2] = a;
+      p->int_coeffs[i] = 1.0 / 6.0; 
+      ptab[++i][0] = b; ptab[i][1] = 0.0; ptab[i][2] = a;
+      p->int_coeffs[i] = 1.0 / 6.0; 
+      ptab[++i][0] = a; ptab[i][1] = 0.0; ptab[i][2] = b;
+      p->int_coeffs[i] = 1.0 / 6.0; 
+      p->repartition[3] = p->repartition[2] + 3;
+      // face 3
+      ptab[++i][0] = a; ptab[i][1] = a; ptab[i][2] = 0.0;
+      p->int_coeffs[i] = 1.0 / 6.0; 
+      ptab[++i][0] = b; ptab[i][1] = a; ptab[i][2] = 0.0;
+      p->int_coeffs[i] = 1.0 / 6.0; 
+      ptab[++i][0] = a; ptab[i][1] = b; ptab[i][2] = 0.0;
+      p->int_coeffs[i] = 1.0 / 6.0; 
+      p->repartition[4] = p->repartition[3] + 3;
+
+      p->pint_points = store_point_tab(ptab);
+      
+    }
+    return p;
+  }
+
+
+  /* ********************************************************************* */
+  /*  tetrahedron3 : Integration on a tetrahedron of order 3 with 5 points */
+  /* ********************************************************************* */
+
+  papprox_integration tetrahedron3_approx_integration(void) {
+    static _particular_approx *p = NULL;
+    if (p == NULL)
+    {
+      std::vector<base_node> ptab(21);
+      std::fill(ptab.begin(), ptab.end(), base_node(3));
+      p = new _particular_approx;
+      p->cvs = simplex_structure(3);
+      p->repartition.resize(p->cvs->nb_faces()+1);
+      p->int_coeffs.resize(ptab.size());
+      // volume
+      int i = 0;      
+      ptab[  i][0] = 0.25; ptab[i][1] = 0.25; ptab[i][2] = 0.25;
+      p->int_coeffs[i] = - 4.0 / 30.0; 
+      ptab[++i][0] = 1.0 / 4.0; ptab[i][1] = 1.0 / 4.0; ptab[i][2] = 1.0 / 4.0;
+      p->int_coeffs[i] = 9.0 / 120.0; 
+      ptab[++i][0] = 1.0 / 2.0; ptab[i][1] = 1.0 / 6.0; ptab[i][2] = 1.0 / 6.0;
+      p->int_coeffs[i] = 9.0 / 120.0; 
+      ptab[++i][0] = 1.0 / 6.0; ptab[i][1] = 1.0 / 2.0; ptab[i][2] = 1.0 / 6.0;
+      p->int_coeffs[i] = 9.0 / 120.0; 
+      ptab[++i][0] = 1.0 / 6.0; ptab[i][1] = 1.0 / 6.0; ptab[i][2] = 1.0 / 2.0;
+      p->int_coeffs[i] = 9.0 / 120.0; 
+      p->repartition[0] = 5;
+
+      // face 0
+      double a = 1.0 / 3.0;
+      double b = 1.0 / 5.0;
+      double c = 1.0 / 5.0;
+      ptab[++i][0] = 1.0 - a - a; ptab[i][1] = a; ptab[i][2] = a;
+      p->int_coeffs[i] = -::sqrt(3.0) * 9.0 / 16.0; 
+      ptab[++i][0] = 1.0 - b - b; ptab[i][1] = b; ptab[i][2] = b;
+      p->int_coeffs[i] = ::sqrt(3.0) * 25 / 48.0; 
+      ptab[++i][0] = 1.0 - c - b; ptab[i][1] = c; ptab[i][2] = b;
+      p->int_coeffs[i] = ::sqrt(3.0) * 25 / 48.0; 
+      ptab[++i][0] = 1.0 - b - c; ptab[i][1] = b; ptab[i][2] = c;
+      p->int_coeffs[i] = ::sqrt(3.0) * 25 / 48.0; 
+      p->repartition[1] = p->repartition[0] + 4;
+
+      // face 1
+      ptab[++i][0] = 0.0; ptab[i][1] = a; ptab[i][2] = a;
+      p->int_coeffs[i] = - 9.0 / 32.0; 
+      ptab[++i][0] = 0.0; ptab[i][1] = b; ptab[i][2] = b;
+      p->int_coeffs[i] = 25.0 / 96.0; 
+      ptab[++i][0] = 0.0; ptab[i][1] = c; ptab[i][2] = b;
+      p->int_coeffs[i] = 25.0 / 96.0; 
+      ptab[++i][0] = 0.0; ptab[i][1] = b; ptab[i][2] = c;
+      p->int_coeffs[i] = 25.0 / 96.0; 
+      p->repartition[2] = p->repartition[1] + 4;
+      // face 2
+      ptab[++i][0] = a; ptab[i][1] = 0.0; ptab[i][2] = a;
+      p->int_coeffs[i] = - 9.0 / 32.0; 
+      ptab[++i][0] = b; ptab[i][1] = 0.0; ptab[i][2] = b;
+      p->int_coeffs[i] = 25.0 / 96.0; 
+      ptab[++i][0] = c; ptab[i][1] = 0.0; ptab[i][2] = b;
+      p->int_coeffs[i] = 25.0 / 96.0; 
+      ptab[++i][0] = b; ptab[i][1] = 0.0; ptab[i][2] = c;
+      p->int_coeffs[i] = 25.0 / 96.0; 
+      p->repartition[3] = p->repartition[2] + 4;
+      // face 3
+      ptab[++i][0] = a; ptab[i][1] = a; ptab[i][2] = 0.0;
+      p->int_coeffs[i] = - 9.0 / 32.0; 
+      ptab[++i][0] = b; ptab[i][1] = b; ptab[i][2] = 0.0;
+      p->int_coeffs[i] = 25.0 / 96.0; 
+      ptab[++i][0] = c; ptab[i][1] = b; ptab[i][2] = 0.0;
+      p->int_coeffs[i] = 25.0 / 96.0; 
+      ptab[++i][0] = b; ptab[i][1] = c; ptab[i][2] = 0.0;
+      p->int_coeffs[i] = 25.0 / 96.0; 
+      p->repartition[4] = p->repartition[3] + 4;
+
+      p->pint_points = store_point_tab(ptab);
+      
+    }
+    return p;
+  }
+
+
+  /* ********************************************************************* */
+  /* tetrahedron5 : Integration on a tetrahedron of order 5 with 15 points */
+  /* ********************************************************************* */
+
+  papprox_integration tetrahedron5_approx_integration(void) {
+    static _particular_approx *p = NULL;
+    if (p == NULL)
+    {
+      std::vector<base_node> ptab(43);
+      std::fill(ptab.begin(), ptab.end(), base_node(3));
+      p = new _particular_approx;
+      p->cvs = simplex_structure(3);
+      p->repartition.resize(p->cvs->nb_faces()+1);
+      p->int_coeffs.resize(ptab.size());
+      // volume
+      int i = 0;
+      double a1 = 0.091971078052723033;
+      double a2 = 0.31979362782962991;
+      double a  = 0.13819660112501052;
+      ptab[  i][0] = 0.25; ptab[i][1] = 0.25; ptab[i][2] = 0.25;
+      p->int_coeffs[i] = 0.019753086419753086;
+      ptab[++i][0] = a1; ptab[i][1] = a1; ptab[i][2] = a1;
+      p->int_coeffs[i] = 0.01198951396316977;
+      ptab[++i][0] = 1.0 - 2.0 * a1; ptab[i][1] = a1; ptab[i][2] = a1;
+      p->int_coeffs[i] = 0.01198951396316977;
+      ptab[++i][0] = a1; ptab[i][1] = 1.0 - 2.0 * a1; ptab[i][2] = a1;
+      p->int_coeffs[i] = 0.01198951396316977;
+      ptab[++i][0] = a1; ptab[i][1] = a1; ptab[i][2] = 1.0 - 2.0 * a1;
+      p->int_coeffs[i] = 0.01198951396316977;
+      ptab[++i][0] = a2; ptab[i][1] = a2; ptab[i][2] = a2;
+      p->int_coeffs[i] = 0.011511367871045398;
+      ptab[++i][0] = 1.0 - 2.0 * a2; ptab[i][1] = a2; ptab[i][2] = a2;
+      p->int_coeffs[i] = 0.011511367871045398;
+      ptab[++i][0] = a2; ptab[i][1] = 1.0 - 2.0 * a2; ptab[i][2] = a2;
+      p->int_coeffs[i] = 0.011511367871045398;
+      ptab[++i][0] = a2; ptab[i][1] = a2; ptab[i][2] = 1.0 - 2.0 * a2;
+      p->int_coeffs[i] = 0.011511367871045398;
+      ptab[++i][0] = a; ptab[i][1] = a; ptab[i][2] = 0.5 - a;
+      p->int_coeffs[i] = 0.008818342151675485;
+      ptab[++i][0] = a; ptab[i][1] = 0.5 - a; ptab[i][2] = a;
+      p->int_coeffs[i] = 0.008818342151675485;
+      ptab[++i][0] = 0.5 - a; ptab[i][1] = a; ptab[i][2] = a;
+      p->int_coeffs[i] = 0.008818342151675485;
+      ptab[++i][0] = a; ptab[i][1] = 0.5 - a; ptab[i][2] = 0.5 - a;
+      p->int_coeffs[i] = 0.008818342151675485; 
+      ptab[++i][0] = 0.5 - a; ptab[i][1] = a; ptab[i][2] = 0.5 - a;
+      p->int_coeffs[i] = 0.008818342151675485;
+      ptab[++i][0] = 0.5 - a; ptab[i][1] = 0.5 - a; ptab[i][2] = a;
+      p->int_coeffs[i] = 0.008818342151675485;
+      p->repartition[0] = 15;
+
+      // face 0
+      double aa1 = 0.10128650732345634;
+      double aa2 = 0.47014206410511509;
+      ptab[++i][0] = 1.0 / 3.0; ptab[i][1] = 1.0 / 3.0; ptab[i][2] = 1.0 / 3.0;
+      p->int_coeffs[i] = ::sqrt(3.0) * 9.0 / 40.0; 
+      ptab[++i][0] = 1.0 - aa1 - aa1; ptab[i][1] = aa1; ptab[i][2] = aa1;
+      p->int_coeffs[i] = ::sqrt(3.0) * 0.12593918054482715; 
+      ptab[++i][0] = aa1; ptab[i][1] = aa1; ptab[i][2] = 1.0 - aa1 - aa1;
+      p->int_coeffs[i] = ::sqrt(3.0) * 0.12593918054482715; 
+      ptab[++i][0] = aa1; ptab[i][1] = 1.0 - aa1 - aa1; ptab[i][2] = aa1;
+      p->int_coeffs[i] = ::sqrt(3.0) * 0.12593918054482715; 
+      ptab[++i][0] = 1.0 - aa2 - aa2; ptab[i][1] = aa2; ptab[i][2] = aa2;
+      p->int_coeffs[i] = ::sqrt(3.0) * 0.13239415278850618; 
+      ptab[++i][0] = aa2; ptab[i][1] = aa2; ptab[i][2] = 1.0 - aa2 - aa2;
+      p->int_coeffs[i] = ::sqrt(3.0) * 0.13239415278850618; 
+      ptab[++i][0] = aa2; ptab[i][1] = 1.0 - aa2 - aa2; ptab[i][2] = aa2;
+      p->int_coeffs[i] = ::sqrt(3.0) * 0.13239415278850618; 
+      p->repartition[1] = p->repartition[0] + 7;
+
+      // face 1
+      ptab[++i][0] = 0.0; ptab[i][1] = 1.0 / 3.0; ptab[i][2] = 1.0 / 3.0;
+      p->int_coeffs[i] = 0.5 * 9.0 / 40.0; 
+      ptab[++i][0] = 0.0; ptab[i][1] = aa1; ptab[i][2] = aa1;
+      p->int_coeffs[i] = 0.5 * 0.12593918054482715; 
+      ptab[++i][0] = 0.0; ptab[i][1] = 1 - aa1 - aa1; ptab[i][2] = aa1;
+      p->int_coeffs[i] = 0.5 * 0.12593918054482715; 
+      ptab[++i][0] = 0.0; ptab[i][1] = aa1; ptab[i][2] = 1 - aa1 - aa1;
+      p->int_coeffs[i] = 0.5 * 0.12593918054482715; 
+      ptab[++i][0] = 0.0; ptab[i][1] = aa2; ptab[i][2] = aa2;
+      p->int_coeffs[i] = 0.5 * 0.13239415278850618; 
+      ptab[++i][0] = 0.0; ptab[i][1] = 1 - aa2 - aa2; ptab[i][2] = aa2;
+      p->int_coeffs[i] = 0.5 * 0.13239415278850618; 
+      ptab[++i][0] = 0.0; ptab[i][1] = aa2; ptab[i][2] = 1 - aa2 - aa2;
+      p->int_coeffs[i] = 0.5 * 0.13239415278850618; 
+      p->repartition[2] = p->repartition[1] + 7;
+      // face 2
+      ptab[++i][0] =  1.0 / 3.0; ptab[i][1] = 0.0; ptab[i][2] = 1.0 / 3.0;
+      p->int_coeffs[i] = 0.5 * 9.0 / 40.0; 
+      ptab[++i][0] = aa1; ptab[i][1] = 0.0; ptab[i][2] = aa1;
+      p->int_coeffs[i] = 0.5 * 0.12593918054482715; 
+      ptab[++i][0] = 1 - aa1 - aa1; ptab[i][1] = 0.0; ptab[i][2] = aa1;
+      p->int_coeffs[i] = 0.5 * 0.12593918054482715; 
+      ptab[++i][0] = aa1; ptab[i][1] = 0.0; ptab[i][2] = 1 - aa1 - aa1;
+      p->int_coeffs[i] = 0.5 * 0.12593918054482715; 
+      ptab[++i][0] = aa2; ptab[i][1] = 0.0; ptab[i][2] = aa2;
+      p->int_coeffs[i] = 0.5 * 0.13239415278850618; 
+      ptab[++i][0] = 1 - aa2 - aa2; ptab[i][1] = 0.0; ptab[i][2] = aa2;
+      p->int_coeffs[i] = 0.5 * 0.13239415278850618; 
+      ptab[++i][0] = aa2; ptab[i][1] = 0.0; ptab[i][2] = 1 - aa2 - aa2;
+      p->int_coeffs[i] = 0.5 * 0.13239415278850618; 
+      p->repartition[3] = p->repartition[2] + 7;
+      // face 3
+      ptab[++i][0] =  1.0 / 3.0; ptab[i][1] = 1.0 / 3.0; ptab[i][2] = 0.0;
+      p->int_coeffs[i] = 0.5 * 9.0 / 40.0; 
+      ptab[++i][0] = aa1; ptab[i][1] = aa1; ptab[i][2] = 0.0;
+      p->int_coeffs[i] = 0.5 * 0.12593918054482715; 
+      ptab[++i][0] = 1 - aa1 - aa1; ptab[i][1] = aa1; ptab[i][2] = 0.0;
+      p->int_coeffs[i] = 0.5 * 0.12593918054482715; 
+      ptab[++i][0] = aa1; ptab[i][1] = 1 - aa1 - aa1; ptab[i][2] = 0.0;
+      p->int_coeffs[i] = 0.5 * 0.12593918054482715;
+      ptab[++i][0] = aa2; ptab[i][1] = aa2; ptab[i][2] = 0.0;
+      p->int_coeffs[i] = 0.5 * 0.13239415278850618; 
+      ptab[++i][0] = 1 - aa2 - aa2; ptab[i][1] = aa2; ptab[i][2] = 0.0;
+      p->int_coeffs[i] = 0.5 * 0.13239415278850618; 
+      ptab[++i][0] = aa2; ptab[i][1] = 1 - aa2 - aa2; ptab[i][2] = 0.0;
+      p->int_coeffs[i] = 0.5 * 0.13239415278850618; 
+      p->repartition[4] = p->repartition[3] + 7;
+
+      p->pint_points = store_point_tab(ptab);
+      
+    }
+    return p;
+  }
+
 
 }  /* end of namespace bgeot.                                            */
 
