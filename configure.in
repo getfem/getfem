@@ -13,7 +13,7 @@ AC_PREREQ(2.53)
 AC_ARG_PROGRAM
 AC_CONFIG_AUX_DIR([config])
 
-PACKAGE="getfem"
+PACKAGE="getfem++"
 MAJOR_VERSION="1"
 MINOR_VERSION="0"
 VERSION=$MAJOR_VERSION.$MINOR_VERSION
@@ -80,42 +80,6 @@ LIBTOOL_VERSION_INFO="-version-info ${MAJOR_VERSION}:${MINOR_VERSION}:0"
 
 dnl AC_CHECK_PROGS(RANLIB, ranlib)
 
-dnl ------------------------------------------------------------------------
-dnl   matlab
-dnl ------------------------------------------------------------------------
-AC_CHECK_PROGS(MEX, mex)
-if test x"$MEX" != x""; then
-   MATLAB_DIR=`mex -v 2>&1 | grep "MATLAB " | awk '{print $4}'|sed -e '2,$d'`
-   MATLAB_INC_DIR=$MATLAB_DIR/extern/include
-   echo "checking for matlab path... " $MATLAB_DIR
-   AC_SUBST(MATLAB_INC_DIR)
-   AC_SUBST(MEX_NEEDS_TWOCOMP)
-
-   host_arch=`uname -s`
-   case $host_arch in
-     Linux)
-	MATLAB_COM_EXT=.mexglx
-	;;
-     OSF1)
-	MATLAB_COM_EXT=.mexaxp
-	;;
-     SunOS)
-	MATLAB_COM_EXT=.mexsol
-	;;
-     HP-UX)
-	MATLAB_COM_EXT=.mexhpux
-	;;
-     IRIX64)
-	MATLAB_COM_EXT=.mexsg
-	;;
-     *)
-	echo "checking for mex extension... not found for" $host_arch 
-        stop
-	;;
-   esac
-   echo "checking for mex extension... " $MATLAB_COM_EXT
-   AC_SUBST(MATLAB_COM_EXT)
-fi
 dnl -----------------------------------------------
 dnl sorties
 dnl -----------------------------------------------
@@ -124,9 +88,6 @@ AC_CONFIG_FILES(\
 	config/Makefile \
 	src/Makefile \
 	tests/Makefile \
-	misc/Makefile \
-	matlabint/Makefile \
-	matlabcom/Makefile \
 	)
 AC_OUTPUT
 
