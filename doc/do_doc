@@ -1,0 +1,22 @@
+#!/usr/bin/perl
+
+`rm -f doc.tex`;
+`cat entete.tex macro.tex > doc.tex`;
+
+open F, ">>doc.tex" or die;
+print F '\begin{document}', "\n\n";
+print F '$\;$\\\\[3cm]\thispagestyle{empty}', "\n\n";
+print F '{\begin{center} \Large Basic documentation of \\\\[2cm]', "\n\n";
+print F ' \Huge \bf GETFEM++ \end{center}} \newpage', "\n\n";
+print F '\tableofcontents', "\n\n";
+close F;
+
+`extract_latex < ../include/getfem/dal_std.h >> doc.tex`;
+`extract_latex < ../include/getfem/dal_basic.h >> doc.tex`;
+`extract_latex < ../include/getfem/dal_algobase.h >> doc.tex`;
+`extract_latex < ../include/getfem/bgeot_poly.h >> doc.tex`;
+`extract_latex < ../include/getfem/bgeot_geometric_trans.h >> doc.tex`;
+
+open F, ">>doc.tex" or die;
+print F "\n", '\end{document}', "\n";
+close F;

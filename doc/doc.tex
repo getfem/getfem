@@ -1,0 +1,495 @@
+\documentclass[10pt,a4paper]{doc}
+
+\usepackage{fancyheadings}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{psfig}
+\usepackage{here}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{eepic,epic}
+\usepackage{alltt}
+% \usepackage[french]{babel}
+% \usepackage[dvips]{epsfig}
+
+
+\oddsidemargin -1.0cm
+\evensidemargin -1.0cm
+\topmargin -2.2cm
+\textheight 24.7cm
+\textwidth 18cm
+\headheight 1.0cm
+
+\newfont{\eufmtwelve}   {eufm10 scaled \magstep1}
+\newfont{\eufmten}      {eufm10 }
+\newfont{\eufmnine}     {eufm9 }
+\newfont{\eufmeight}    {eufm8 }
+\newfont{\eufmseven}    {eufm7 }
+\newfont{\eufmsix}      {eufm6 }
+\newfont{\eufmfive}     {eufm5 }
+\newfont{\eusmtwelve}   {eusm10 scaled \magstep1}
+\newfont{\eusmten}      {eusm10}
+\newfont{\eusmnine}     {eusm9 }
+\newfont{\eusmeight}    {eusm8 }
+\newfont{\eusmseven}    {eusm7 }
+\newfont{\eusmsix}      {eusm6 }
+\newfont{\eusmfive}     {eusm5 }
+\newfont{\msbmtwelve}   {msbm10 scaled \magstep1}
+\newfont{\msbmeight}    {msbm8}
+
+\newcommand{\udl}{\underline}
+\newcommand{\udll}[1]{{\udl{\udl{#1}}}}
+\newcommand{\udlll}[1]{{\udl{\udl{\udl{#1}}}}}
+\newcommand{\Reel}{{\mbox{\msbmtwelve R}}}      % L'ensemble des reels.
+\newcommand{\reel}{{\mbox{\msbmeight R}}}       % L'ensemble des reels.
+\newcommand{\Rn}{\Reel^{n}}
+\newcommand{\Rtrois}{\Reel^{3}}
+\newcommand{\Complex}{\mbox{\msbmtwelve C}}     % L'ensemble des complexes.
+\newcommand{\Naturel}{\mbox{\msbmtwelve N}}  % L'ensemble des entiers naturels.
+\renewcommand{\emptyset}{\mbox{$\circ$\hspace{-.50em}/}}  % ensemble vide.
+\newcommand{\Cont}{{\cal C}}            % L'ensemble des fonctions continues
+\newcommand{\Cinf}{{\cal C}^{\infty}}   % L'ensemble des fonction C-infinies
+\renewcommand{\vec}[1]{\overrightarrow{\!\!#1}}
+\newcommand{\subsetcont}{{\subset\hspace{-.6em}_{\scriptscriptstyle >} }}
+\newcommand{\Frac}[2]{{\ds \frac{\ds #1}{\ds #2}}}
+\newcommand{\interior}[1]{{\stackrel{\circ}{#1}}}
+\newcommand{\cqfd}{{\hfill\rule{2.5mm}{2.5mm}}}
+\newcommand{\vectwo}[2]{{\left(\hspace{-.5em}\begin{array}{c} {#1} \\ {#2}
+     \end{array}\hspace{-.5em}\right)}}
+\newcommand{\vecthree}[3]{{\left(\hspace{-.5em}\begin{array}{c} {#1}
+     \\ {#2} \\ {#3} \end{array}\hspace{-.5em}\right)}}
+\newcommand{\vecfive}[5]{{\left(\hspace{-.5em}\begin{array}{c} {#1}
+     \\ {#2} \\ {#3} \\ {#4} \\ {#5} \end{array}\hspace{-.5em}\right)}}
+\def\infess{\mathop{\iflanguage{english}{\mbox{ess$\,$inf}}{\mbox{inf$\,$ess}}}}
+\def\supess{\mathop{\iflanguage{english}{\mbox{ess$\,$sup}}{\mbox{sup$\,$ess}}}}
+\def\essinf{\mathop{\iflanguage{english}{\mbox{ess$\,$inf}}{\mbox{inf$\,$ess}}}}
+\def\esssup{\mathop{\iflanguage{english}{\mbox{ess$\,$sup}}{\mbox{sup$\,$ess}}}}
+\def\aplim{\mathop{\mbox{ap$\,$lim}}}
+\def\aplimsup{\mathop{\mbox{ap$\,$lim$\,$sup}}}
+\def\apliminf{\mathop{\mbox{ap$\,$lim$\,$inf}}}
+\def\convto{\mathop{\hbox{\rightarrowfill}}} % converge vers.
+\newcommand{\rightgap}{{]\hspace{-0.12em}]}}
+\newcommand{\leftgap}{{[\hspace{-0.12em}[}}
+\newcommand{\gapof}[1]{{\leftgap {#1} \rightgap}}
+\newcommand{\restrictiona}[1]
+{{ \begin{picture}(13,10) \put(-1,-4){$\mid_{#1}$} \end{picture}
+}} % Le signe "Restriction sur #1"
+
+\def\Indic{\mbox{1\hspace{-0.20em}I}}   % Fonction l'indicatrice
+
+\def\bar3{|\hspace{-1pt}\|} % 3bar verticaux pour les normes matricielles.
+\def\fleche{\overrightarrow} %fleche en haut
+\def\cvfaible{\rightharpoonup} %fleche cv faiblement
+\def\longmapsto
+{ \begin{picture}(0,10)
+  \put(0,0){$\scriptstyle{\vdash}$} \end{picture} \mbox{$\longrightarrow$}
+} 
+
+\def\build#1_#2^#3{\mathrel{
+ \mathop{\kern 0pt#1}\limits_{#2}^{#3}}} % Ecrire en dessous et dessus un symbole.
+
+\def\Dist{\mbox{\eusmtwelve D}} %signe de distribution
+\def\dist{\mbox{\eusmten D}} %signe de distribution
+
+
+%definition de commandes utilses
+\newcommand{\ds}{\displaystyle}
+\newcommand{\rc}{{\par}}
+\newcommand{\rcc}{{\par\medskip}}
+\newcommand{\rccc}{{\par\bigskip}}
+
+
+%definition des environnements theoreme, lemme, ...
+\usepackage{boxedminipage}
+% \newenvironment{largebox}
+%   { \rc\noindent \begin{boxedminipage}[t]{\textwidth} }
+%   { \end{boxedminipage}  \rccc\noindent }
+\newenvironment{largebox}
+  { \rc\noindent \begin{boxedminipage}[t]{\linewidth} }
+  { \end{boxedminipage}  \rccc\noindent }
+
+
+\newtheorem{ltheoreme}{Th\'eor\`eme}
+\newenvironment{theoreme}
+  { \begin{largebox} \begin{ltheoreme} }
+  { \end{ltheoreme} \end{largebox} }
+\newtheorem{lproposition}{Proposition}
+\newenvironment{proposition}
+  { \begin{largebox} \begin{lproposition} }
+  { \end{lproposition} \end{largebox} }
+\newtheorem{llemme}{Lemme}
+\newenvironment{lemme}
+  { \begin{largebox} \begin{llemme} }
+  { \end{llemme} \end{largebox} }
+\newtheorem{ldefinition}{D\'efinition}
+\newenvironment{definition}
+  { \begin{largebox} \begin{ldefinition} }
+  { \end{ldefinition} \end{largebox} }
+\newtheorem{lhypothese}{Hypoth\`ese}
+\newenvironment{hypothese}
+  { \begin{largebox} \begin{lhypothese} }
+  { \end{lhypothese} \end{largebox} }
+\newtheorem{lcorollaire}{Corollaire}
+\newenvironment{corollaire}
+  { \begin{largebox} \begin{lcorollaire} }
+  { \end{lcorollaire} \end{largebox} }
+\newenvironment{remarque}
+  { \begin{largebox} {\bf \udl{Remarque} : }}
+  { \end{largebox} }
+
+\newcounter{numberofprobl}
+\setcounter{numberofprobl}{1}
+
+\newlength{\compteurtpourprobla}
+\newlength{\compteurtpourproblb}
+\newenvironment{caseeqnarray}[1]
+  {
+   $${#1}
+   \settowidth{\compteurtpourprobla}{${#1}\left\{\right.$}
+   \setlength{\compteurtpourproblb}{\textwidth}
+   \addtolength{\compteurtpourproblb}{-1\compteurtpourprobla}
+   \settowidth{\compteurtpourprobla}{$\;$}
+   \addtolength{\compteurtpourproblb}{-1\compteurtpourprobla}
+   \left\{ \begin{minipage}[l]{\compteurtpourproblb}
+   \vspace{-1em} \begin{eqnarray}
+  }
+  { \end{eqnarray} \end{minipage} \right. $$}
+
+
+\newtheorem{hypothesis}{Hypothesis}
+\newtheorem{prop}{Proposition}
+\newtheorem{defi}{Definition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+
+
+% pour plus tard ...
+% \DeclareGraphicsRule{ps.Z}{eps}{ps.bb}{`zcat #1}
+% \DeclareGraphicsRule{eps.Z}{eps}{eps.bb}{`zcat #1}
+% \DeclareGraphicsRule{ps.gz}{eps}{ps.bb}{`gunzip #1}
+% \DeclareGraphicsRule{eps.gz}{eps}{eps.bb}{`gunzip #1}
+\newenvironment{librarydescription}[1]
+  { \part{#1} \setcounter{chapter}{0} \section*{Presentation of #1} }
+  { }
+
+\newenvironment{filedescription}[3]
+  { \chapter{#2}
+    {\LARGE \begin{alltt} \begin{center} #3 \end{center} \end{alltt}}
+    {\large \begin{center} Part of the #1 \end{center} }
+  }
+  { }
+
+\newenvironment{filepresentation}
+  { \section{Presentation} }
+  {  }
+
+\newenvironment{fileinfocomp}
+  { \section{Complementary information} }
+  {  }
+
+\newenvironment{functiondescription}[1]
+  { \section{Function #1} }
+  {  }
+
+\newenvironment{classdescription}[1]
+  { \section{Class #1} }
+  {  }
+
+\newenvironment{pexample}[1]
+  { \section{#1} }
+  {  }
+
+\newenvironment{classdeclaration}
+  { \begin{tabular}{|m{0.42\linewidth}|m{0.524\linewidth}|} \hline 
+      Constructor & Description \\ \hline \hline }
+  { \end{tabular} \\ }
+
+\newenvironment{classmembersdescription}
+  { \begin{tabular}{|m{0.2\linewidth}|m{0.2\linewidth}|m{0.52\linewidth}|} \hline 
+      Member & Type & Description \\ \hline \hline }
+  { \end{tabular} \\ }
+
+
+\newcommand{\functiondecl}[1]{ \begin{alltt} \hspace{2em} #1 \end{alltt} }
+\newcommand{\functiondesc}[1]{ $\;$\\[0.2cm] #1 }
+\newcommand{\comitem}[1]{ \subsection{ #1 } }
+\newcommand{\comsubitem}[1]{ \subsubsection{ #1 } }
+\newcommand{\classdecl}[2]{ \mbox{ #1 } & #2 \\ \hline }
+\newcommand{\classdesc}[1]{ $\;$\\[0.3cm] #1 \\[0.3cm] }
+\newcommand{\classmember}[3]{ #1 & #2 & #3 \\ \hline }
+\newcommand{\code}[1]{\begin{alltt}  #1 \end{alltt} }
+\begin{document}
+
+$\;$\\[3cm]\thispagestyle{empty}
+
+{\begin{center} \Large Basic documentation of \\[2cm]
+
+ \Huge \bf GETFEM++ \end{center}} \newpage
+
+\tableofcontents
+
+ \begin{librarydescription}{The Dynamic Array Library}
+   The Dynamic Array Library (dal) is a library of containers
+   and algorithms on containers. Thoses containers are initialy adapted
+   to store data for meshes, but they are also of larger
+   interest. The library is build on a container wich is \\ \\
+   dal::dynamic\_array$<$T$>$. \\ \\
+   This container is very similar to std::vector$<$T$>$ of the Standard
+   Template Library. The major difference
+   is that memory is allocated by block with dal::dynamic\_array$<$T$>$ and
+   the allocation is automatic when an acces to a non existing element 
+   is called. \\ \\
+   Others containers like dal::dynamic\_tas$<$T$>$ or
+   dal::dynamic\_tree\_sorted$<$T$>$ allow to add or delete elements
+   in an array. Particularily, dal::dynamic\_tree\_sorted$<$T$>$ combines
+   the random access of an array and the logarithmic search in a balanced
+   sorted tree.
+   \end{librarydescription}
+   \begin{filedescription}{ Dynamic Array Library }{ Incompatibility resolutions }
+        { dal\_std.h }
+     This file load the very standard c++ header files and solve as much
+     as possible the incompatibility between differents
+     configurations. \\ \\
+     - It assures the existence of the functions \\ \\
+       template$<$class T$>$ std::abs(T) \\
+       template$<$class T$>$ std::sqr(T) \\ \\
+     - It defines fixed size type of integers : \\ \\
+       int8\_type; uint8\_type; \\
+       int16\_type; uint16\_type; \\
+       int32\_type; uint32\_type; \\ \\
+     - The macro
+       \code{\_\_GETFEM\_VERIFY}
+       allow to switch on or off verifications on libraries,
+       such as verification of range on arrays, on vectors ...
+    \end{filedescription} 
+ \begin{filedescription}{ Dynamic Array Library }
+             { Basic dynamic array }
+             { dal\_basic.h }
+    \begin{filepresentation}
+      Defines the basic container of the library which is 
+      dal::dynamic\_array$<$T, pks$>$. This container is virtually an
+      infinite array of element of type T. When a random acces tab[i] is
+      called, a control is made on i and an allocation is made if 
+      needed. The allocation is made by blocks of n elements, where
+      $n = 2^{pks}$.
+    \end{filepresentation}
+  
+ \begin{classdescription}{dna\_iterator$<$T, pks$>$}
+   \begin{classdeclaration}
+   \classdecl{dna\_iterator$<$T, pks$>$ it(dna, i);}
+    {give an iterator on the dynamic array dna which points on element i}
+   \classdecl{dna\_iterator$<$T, pks$>$ it;}{undefined iterator }
+   \end{classdeclaration}
+   \classdesc{Iterator on container dal::dynamic\_array$<$T, pks$>$. 
+   pks is optional, assumed to be 5.}
+   \begin{classmembersdescription}
+     \classmember{$++$it, it$++$}{method}{next element }
+     \classmember{$--$it, it$--$}{method}{previous element }
+     \classmember{index()}{const method}{index of pointed element }
+     \classmember{it += n}{method}{go n elements forward }
+     \classmember{it +  n}{const method}
+                 {iterator which points n elements forward }
+     \classmember{it -= n}{method}{go n elements backward }
+     \classmember{it -  n}{const method}
+                 {iterator which points n elements backward }
+     \classmember{*it}{const method}{element pointed by it}
+     \classmember{it1 - it2}{const method}{distance between it1 and it2}
+     \classmember{it[n]}{const method}{equivalent to *(it+n)}
+     \classmember{==, !=}{const method}{equality tests}
+     \classmember{$<$}{const method}{inequality test}
+   \end{classmembersdescription}
+  \end{classdescription} 
+ \begin{classdescription}{dna\_const\_iterator$<$T, pks$>$}
+   \begin{classdeclaration}
+   \classdecl{dna\_const\_iterator$<$T, pks$>$ cit(dna, i);}
+   {give a const iterator on the dynamic array dna which points
+    on element i}
+   \classdecl{dna\_const\_iterator$<$T, pks$>$ cit(it);}
+          {build a const iterator from an iterator}
+   \classdecl{dna\_const\_iterator$<$T, pks$>$ cit;}{undefined iterator }
+   \end{classdeclaration}
+   \classdesc{Iterator on container dal::dynamic\_array$<$T$>$.
+              Same members as dna\_iterator$<$T, pks$>$}
+  \end{classdescription} 
+ \begin{classdescription}{dynamic\_array$<$T, pks$>$}
+   \begin{classdeclaration}
+     \classdecl{dynamic\_array$<$T, pks$>$ tab;}
+               {array initialized with 0 element}
+     \classdecl{dynamic\_array$<$T, pks$>$ tab(n);}
+               {array initialized with n element}
+   \end{classdeclaration}
+   \classdesc{Container dal::dynamic\_array$<$T, pks$>$. This container act
+          as an array of element of type T. The allocation is made by pack
+              of $2^{pks}$ elements. $pks$ is an optional parameter.}
+   \begin{classmembersdescription}
+     \classmember{size()}{const method}{number of allocated elements}
+     \classmember{begin()}{(const) method}{iterator on first element}
+     \classmember{end()}{(const) method}{iterator on last element 
+         allocated+ 1. This is in general different that the last
+         accessed element, be carrefull.}
+     \classmember{tab[i]}{(const) method}{reference to element i}
+     \classmember{swap(i,j)}{method}{swap element i and j}
+     \classmember{clear()}{method}{desallocate all elements}
+     \classmember{swap(tab)}{method}{swap arrays *this and tab}
+     \classmember{memsize()}{const method}{evaluate the total
+                  memory occupated by the array}
+   \end{classmembersdescription}
+  \end{classdescription} 
+ \begin{pexample}{Example of code}
+  If T is any type (with or without trivial constructor/destructor, 
+  and with constructor T(0) and T(1)), the
+  following code is valid:
+ \code{ \#include$<$getfem/dal\_basic.h$>$ \\ \\
+        dal::dynamic\_array$<$T$>$ tab; \\ \\
+        tab[50] = T(0); // to be sure to have at least 50 elements \\ \\
+        std::fill(tab.begin(), tab.end(), T(0)); // at least 50 elements 
+        are initialized \\ \\
+        dal::dynamic\_array$<$T$>$::iterator it = tab.begin(); \\
+        dal::dynamic\_array$<$T$>$::iterator ite = it + 50;  \\ \\
+        for( ; it != ite; ++it) \\
+        \{ *it = T(1); \} // only the 50 first elements are changed.
+      }
+ 
+  \end{pexample}  \end{filedescription} 
+ \begin{librarydescription}{ Basic GEOmetric Tool }
+   The basic geometric tool is ...
+   \\ \\
+  \end{librarydescription} 
+ \begin{filedescription}{ Basic GEOmetric Tool }
+             { Plain Polynomials with several variables }
+             { bgeot\_poly.h }
+    \begin{filepresentation}
+      This unit deals with the plain polynomials with
+      several variables. The coefficients are abstract ($<$T$>$).
+      A polynomial of $n$ variables and degree $d$ is stored in a vector
+       of $\alpha_d^n$ components.
+    \end{filepresentation}
+  
+ \begin{functiondescription}{alpha}
+   \functiondecl{size\_type alpha(short\_type n, short\_type d)}
+   \functiondesc{Return the value of $\Frac{(n+p)!}{n!p!}$ which is the
+     number of monomials of a polynomial of $n$ variables and degree $d$.}
+  \end{functiondescription} 
+ \begin{classdescription}{power\_index}
+   \begin{classdeclaration}
+   \classdecl{power\_index pi(short\_type n);}{power index for n variables}
+   \classdecl{power\_index pi;}{ undefined power index }
+   \end{classdeclaration}
+   \classdesc{Vector of integer (16 bits type) which represent the powers
+     of a monomial}
+   \begin{classmembersdescription}
+     \classmember{$++$pi, pi$++$}{method}
+                 { gives the next power index in the ... }
+     \classmember{$--$pi, pi$--$}{method}
+                 { gives the previous power index in the ... }
+   \end{classmembersdescription}
+  \end{classdescription} 
+ \begin{classdescription}{polynomial$<$T$>$}
+   \begin{classdeclaration}
+   \classdecl{polynomial$<$T$>$ P;}{Undefined polynomial}
+   \classdecl{polynomial$<$T$>$ P(n,d);}
+     {Polynomial of n variable and degree d.}
+   \classdecl{polynomial$<$T$>$ P(n,d,k);}
+     {Polynomial of n variables and degree d, initialized with the monomial
+      which represent the k$^{\mbox{th}}$ variable to the power 1.}
+   \end{classdeclaration}
+   \classdesc{Polynomial with coefficient of class $<$T$>$.}
+   \begin{classmembersdescription}
+     \classmember{degree()}{const method}
+                 { gives the degree of the polynomial }
+     \classmember{real\_degree()}{const method}
+                 { gives the degree of the polynomial, considering only
+                   non-zero coefficients }
+   \end{classmembersdescription}
+  \end{classdescription} 
+
+   + exemples d'utilisation ...
+  
+ \begin{fileinfocomp}
+     \comitem{Monomials ordering}
+       The constant coefficient is placed first with the index 0.\\
+       Two monomials of different degrees are ordered following
+       there respective degree.
+       If two polynoms have the same degree, they are ordered with the
+       degree of the polynomials without the n firsts variables which
+       have the same degree. The index of the monomial
+       $$ x_0^{i_0}x_1^{i_1} ... x_{n-1}^{i_{n-1}} $$
+       is then
+       $$ \alpha_{d-1}^{n} + \alpha_{d-i_0-1}^{n-1} 
+          + \alpha_{d-i_0-i_1-1}^{n-2} + ... + \alpha_{i_{n-1}-1}^{1}, $$
+       where $d = \sum_{l=0}^{n-1} i_l$ is the degree of the monomial.
+       (by convention $\alpha_{-1}^{n} = 0$).
+     \comitem{Dealing with the vector of power}
+        The answer to the question : what is the next and previous
+        monomial of $x_0^{i_0}x_1^{i_1} ... x_{n-1}^{i_{n-1}}$ in the
+        vector is the following :\\
+        To take the next coefficient, let $l$ be the last index between 0
+        and $n-2$ such that $i_l \ne 0$ ($l = -1$ if there is not), then
+        make the operations $a = i_{n-1}; i_{n-1} = 0; i_{l+1} = a+1;
+        \mbox{ if } l \ge 0 \mbox{ then } i_l = i_l - 1$.\\
+        To take the previous coefficient, let $l$ be the last index 
+        between 0 and $n-1$ such that $i_l \ne 0$ (if there is not, there
+        is no previous monomial) then make the operations $a = i_l;
+        i_l = 0; i_{n-1} = a - 1; \mbox{ if } l \ge 1 \mbox{ then } 
+        i_{l-1} = i_{l-1} + 1$.
+     \comitem{Direct product multiplication}
+        This direct product multiplication of P and Q is the
+        multiplication considering that the variables of Q follow the
+        variables of P. The result is a polynomial with the number of
+        variables of P plus the number of variables of Q.\\
+        The resulting polynomials have a smaller degree.\\
+   \end{fileinfocomp}
+  \end{filedescription} 
+ \begin{filedescription}{ Basic GEOmetric Tool }
+             { Description of Geometric transformations }
+             { bgeot\_geometric\_trans.h }
+    \begin{filepresentation}
+      Class which is the description of a geometric transformation
+      between a reference element and a real element. This transformation
+      is represented by a vector of polynomials.
+    \end{filepresentation}
+  
+ \begin{fileinfocomp}
+   \comitem{Description of the geometry}
+     Let $T \in\ \Reel^P$ be a real element and
+     $\overline{T} \in\ \Reel^N$ be a reference element, with $P >= N$. \\
+     The geometric nodes of $\overline{T}$ are the points
+     $\overline{a}^i \in\ \Reel^N$, for $i = 0 .. n_g-1$, and the
+     corresponding (via the geometric
+     transformation) nodes of $T$ are the points $a^i \in\ \Reel^P$. 
+   \comitem{Geometric transformation}
+     The geometric transformation is the application
+     $$ \begin{array}{rl}
+        \tau : \overline{T} & \longrightarrow \ T, \\
+               \overline{x} & \longmapsto \ \ x,
+     \end{array} $$
+     which should be a diffeomorphism between $\overline{T}$ and $T$. It
+     is assumed that there exists a polynomial vector
+     $$ \underline{\cal N}(\overline{x}) = {\cal N}_i(\overline{x}),
+        \ \ i = 0 .. n_g-1, $$
+     defined on $\overline{T}$ of size $n_g$, such that the transformation
+     $\tau$ can be written
+     $$ \tau(\overline{x}) = \sum_{i = 0}^{n_g-1} {\cal N}_i(\overline{x})
+     a^i. $$
+     Denoting by
+     $$ \udl{\udl{a}} = (a^0; a^1; ...;a^{n_g-1}), $$
+     The matrix in which each column is a geometric node of $T$,
+     the transformation $\tau$ can be written as
+     $$ \tau(\overline{x}) = \udl{\udl{a}} \ 
+        \underline{\cal N}(\overline{x}). $$
+   \comitem{Gradient of the transformation}
+     The gradient of the transformation is
+     $$ \nabla \tau(\overline{x}) = 
+     \left( \Frac{\partial \tau_i}{\partial \overline{x}_j} \right)_{ij}
+     = \left( \sum_{l = 0}^{n_g-1}a^l_i
+     \Frac{\partial {\cal N}_l(\overline{x})}{\partial \overline{x}_j}
+     \right)_{ij} = \udl{\udl{a}}\ \nabla
+     \underline{\cal N}(\overline{x}), $$
+     Remark : $\udl{\udl{a}}$ is a $P \times n_g$ matrix,
+       $\nabla \underline{\cal N}(\overline{x})$ is a $n_g \times N$
+       matrix, and thus $\nabla \tau(\overline{x})$ is a $P \times N$
+       matrix.
+   \comitem{Inverse transformation and pseudo-inverse}
+  \end{fileinfocomp} \end{filedescription} 
+
+\end{document}

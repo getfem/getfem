@@ -1,0 +1,170 @@
+\documentclass[10pt,a4paper]{doc}
+
+\usepackage{fancyheadings}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{psfig}
+\usepackage{here}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{eepic,epic}
+\usepackage{alltt}
+% \usepackage[french]{babel}
+% \usepackage[dvips]{epsfig}
+
+
+\oddsidemargin -1.0cm
+\evensidemargin -1.0cm
+\topmargin -2.2cm
+\textheight 24.7cm
+\textwidth 18cm
+\headheight 1.0cm
+
+\newfont{\eufmtwelve}   {eufm10 scaled \magstep1}
+\newfont{\eufmten}      {eufm10 }
+\newfont{\eufmnine}     {eufm9 }
+\newfont{\eufmeight}    {eufm8 }
+\newfont{\eufmseven}    {eufm7 }
+\newfont{\eufmsix}      {eufm6 }
+\newfont{\eufmfive}     {eufm5 }
+\newfont{\eusmtwelve}   {eusm10 scaled \magstep1}
+\newfont{\eusmten}      {eusm10}
+\newfont{\eusmnine}     {eusm9 }
+\newfont{\eusmeight}    {eusm8 }
+\newfont{\eusmseven}    {eusm7 }
+\newfont{\eusmsix}      {eusm6 }
+\newfont{\eusmfive}     {eusm5 }
+\newfont{\msbmtwelve}   {msbm10 scaled \magstep1}
+\newfont{\msbmeight}    {msbm8}
+
+\newcommand{\udl}{\underline}
+\newcommand{\udll}[1]{{\udl{\udl{#1}}}}
+\newcommand{\udlll}[1]{{\udl{\udl{\udl{#1}}}}}
+\newcommand{\Reel}{{\mbox{\msbmtwelve R}}}      % L'ensemble des reels.
+\newcommand{\reel}{{\mbox{\msbmeight R}}}       % L'ensemble des reels.
+\newcommand{\Rn}{\Reel^{n}}
+\newcommand{\Rtrois}{\Reel^{3}}
+\newcommand{\Complex}{\mbox{\msbmtwelve C}}     % L'ensemble des complexes.
+\newcommand{\Naturel}{\mbox{\msbmtwelve N}}  % L'ensemble des entiers naturels.
+\renewcommand{\emptyset}{\mbox{$\circ$\hspace{-.50em}/}}  % ensemble vide.
+\newcommand{\Cont}{{\cal C}}            % L'ensemble des fonctions continues
+\newcommand{\Cinf}{{\cal C}^{\infty}}   % L'ensemble des fonction C-infinies
+\renewcommand{\vec}[1]{\overrightarrow{\!\!#1}}
+\newcommand{\subsetcont}{{\subset\hspace{-.6em}_{\scriptscriptstyle >} }}
+\newcommand{\Frac}[2]{{\ds \frac{\ds #1}{\ds #2}}}
+\newcommand{\interior}[1]{{\stackrel{\circ}{#1}}}
+\newcommand{\cqfd}{{\hfill\rule{2.5mm}{2.5mm}}}
+\newcommand{\vectwo}[2]{{\left(\hspace{-.5em}\begin{array}{c} {#1} \\ {#2}
+     \end{array}\hspace{-.5em}\right)}}
+\newcommand{\vecthree}[3]{{\left(\hspace{-.5em}\begin{array}{c} {#1}
+     \\ {#2} \\ {#3} \end{array}\hspace{-.5em}\right)}}
+\newcommand{\vecfive}[5]{{\left(\hspace{-.5em}\begin{array}{c} {#1}
+     \\ {#2} \\ {#3} \\ {#4} \\ {#5} \end{array}\hspace{-.5em}\right)}}
+\def\infess{\mathop{\iflanguage{english}{\mbox{ess$\,$inf}}{\mbox{inf$\,$ess}}}}
+\def\supess{\mathop{\iflanguage{english}{\mbox{ess$\,$sup}}{\mbox{sup$\,$ess}}}}
+\def\essinf{\mathop{\iflanguage{english}{\mbox{ess$\,$inf}}{\mbox{inf$\,$ess}}}}
+\def\esssup{\mathop{\iflanguage{english}{\mbox{ess$\,$sup}}{\mbox{sup$\,$ess}}}}
+\def\aplim{\mathop{\mbox{ap$\,$lim}}}
+\def\aplimsup{\mathop{\mbox{ap$\,$lim$\,$sup}}}
+\def\apliminf{\mathop{\mbox{ap$\,$lim$\,$inf}}}
+\def\convto{\mathop{\hbox{\rightarrowfill}}} % converge vers.
+\newcommand{\rightgap}{{]\hspace{-0.12em}]}}
+\newcommand{\leftgap}{{[\hspace{-0.12em}[}}
+\newcommand{\gapof}[1]{{\leftgap {#1} \rightgap}}
+\newcommand{\restrictiona}[1]
+{{ \begin{picture}(13,10) \put(-1,-4){$\mid_{#1}$} \end{picture}
+}} % Le signe "Restriction sur #1"
+
+\def\Indic{\mbox{1\hspace{-0.20em}I}}   % Fonction l'indicatrice
+
+\def\bar3{|\hspace{-1pt}\|} % 3bar verticaux pour les normes matricielles.
+\def\fleche{\overrightarrow} %fleche en haut
+\def\cvfaible{\rightharpoonup} %fleche cv faiblement
+\def\longmapsto
+{ \begin{picture}(0,10)
+  \put(0,0){$\scriptstyle{\vdash}$} \end{picture} \mbox{$\longrightarrow$}
+} 
+
+\def\build#1_#2^#3{\mathrel{
+ \mathop{\kern 0pt#1}\limits_{#2}^{#3}}} % Ecrire en dessous et dessus un symbole.
+
+\def\Dist{\mbox{\eusmtwelve D}} %signe de distribution
+\def\dist{\mbox{\eusmten D}} %signe de distribution
+
+
+%definition de commandes utilses
+\newcommand{\ds}{\displaystyle}
+\newcommand{\rc}{{\par}}
+\newcommand{\rcc}{{\par\medskip}}
+\newcommand{\rccc}{{\par\bigskip}}
+
+
+%definition des environnements theoreme, lemme, ...
+\usepackage{boxedminipage}
+% \newenvironment{largebox}
+%   { \rc\noindent \begin{boxedminipage}[t]{\textwidth} }
+%   { \end{boxedminipage}  \rccc\noindent }
+\newenvironment{largebox}
+  { \rc\noindent \begin{boxedminipage}[t]{\linewidth} }
+  { \end{boxedminipage}  \rccc\noindent }
+
+
+\newtheorem{ltheoreme}{Th\'eor\`eme}
+\newenvironment{theoreme}
+  { \begin{largebox} \begin{ltheoreme} }
+  { \end{ltheoreme} \end{largebox} }
+\newtheorem{lproposition}{Proposition}
+\newenvironment{proposition}
+  { \begin{largebox} \begin{lproposition} }
+  { \end{lproposition} \end{largebox} }
+\newtheorem{llemme}{Lemme}
+\newenvironment{lemme}
+  { \begin{largebox} \begin{llemme} }
+  { \end{llemme} \end{largebox} }
+\newtheorem{ldefinition}{D\'efinition}
+\newenvironment{definition}
+  { \begin{largebox} \begin{ldefinition} }
+  { \end{ldefinition} \end{largebox} }
+\newtheorem{lhypothese}{Hypoth\`ese}
+\newenvironment{hypothese}
+  { \begin{largebox} \begin{lhypothese} }
+  { \end{lhypothese} \end{largebox} }
+\newtheorem{lcorollaire}{Corollaire}
+\newenvironment{corollaire}
+  { \begin{largebox} \begin{lcorollaire} }
+  { \end{lcorollaire} \end{largebox} }
+\newenvironment{remarque}
+  { \begin{largebox} {\bf \udl{Remarque} : }}
+  { \end{largebox} }
+
+\newcounter{numberofprobl}
+\setcounter{numberofprobl}{1}
+
+\newlength{\compteurtpourprobla}
+\newlength{\compteurtpourproblb}
+\newenvironment{caseeqnarray}[1]
+  {
+   $${#1}
+   \settowidth{\compteurtpourprobla}{${#1}\left\{\right.$}
+   \setlength{\compteurtpourproblb}{\textwidth}
+   \addtolength{\compteurtpourproblb}{-1\compteurtpourprobla}
+   \settowidth{\compteurtpourprobla}{$\;$}
+   \addtolength{\compteurtpourproblb}{-1\compteurtpourprobla}
+   \left\{ \begin{minipage}[l]{\compteurtpourproblb}
+   \vspace{-1em} \begin{eqnarray}
+  }
+  { \end{eqnarray} \end{minipage} \right. $$}
+
+
+\newtheorem{hypothesis}{Hypothesis}
+\newtheorem{prop}{Proposition}
+\newtheorem{defi}{Definition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+
+
+% pour plus tard ...
+% \DeclareGraphicsRule{ps.Z}{eps}{ps.bb}{`zcat #1}
+% \DeclareGraphicsRule{eps.Z}{eps}{eps.bb}{`zcat #1}
+% \DeclareGraphicsRule{ps.gz}{eps}{ps.bb}{`gunzip #1}
+% \DeclareGraphicsRule{eps.gz}{eps}{eps.bb}{`gunzip #1}

@@ -1,0 +1,50 @@
+\newenvironment{librarydescription}[1]
+  { \part{#1} \setcounter{chapter}{0} \section*{Presentation of #1} }
+  { }
+
+\newenvironment{filedescription}[3]
+  { \chapter{#2}
+    {\LARGE \begin{alltt} \begin{center} #3 \end{center} \end{alltt}}
+    {\large \begin{center} Part of the #1 \end{center} }
+  }
+  { }
+
+\newenvironment{filepresentation}
+  { \section{Presentation} }
+  {  }
+
+\newenvironment{fileinfocomp}
+  { \section{Complementary information} }
+  {  }
+
+\newenvironment{functiondescription}[1]
+  { \section{Function #1} }
+  {  }
+
+\newenvironment{classdescription}[1]
+  { \section{Class #1} }
+  {  }
+
+\newenvironment{pexample}[1]
+  { \section{#1} }
+  {  }
+
+\newenvironment{classdeclaration}
+  { \begin{tabular}{|m{0.42\linewidth}|m{0.524\linewidth}|} \hline 
+      Constructor & Description \\ \hline \hline }
+  { \end{tabular} \\ }
+
+\newenvironment{classmembersdescription}
+  { \begin{tabular}{|m{0.2\linewidth}|m{0.2\linewidth}|m{0.52\linewidth}|} \hline 
+      Member & Type & Description \\ \hline \hline }
+  { \end{tabular} \\ }
+
+
+\newcommand{\functiondecl}[1]{ \begin{alltt} \hspace{2em} #1 \end{alltt} }
+\newcommand{\functiondesc}[1]{ $\;$\\[0.2cm] #1 }
+\newcommand{\comitem}[1]{ \subsection{ #1 } }
+\newcommand{\comsubitem}[1]{ \subsubsection{ #1 } }
+\newcommand{\classdecl}[2]{ \mbox{ #1 } & #2 \\ \hline }
+\newcommand{\classdesc}[1]{ $\;$\\[0.3cm] #1 \\[0.3cm] }
+\newcommand{\classmember}[3]{ #1 & #2 & #3 \\ \hline }
+\newcommand{\code}[1]{\begin{alltt}  #1 \end{alltt} }
