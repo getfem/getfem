@@ -235,7 +235,6 @@ In {\tt getfem\_mesh.h}, two methods are defined to load meshes from file and wr
   {\tt mesh.read\_from\_file(const std::string \&name)} & load the mesh from a file.\\ \hline
 
 \end{tabular} \\[0.5cm]
-At this stage of development, the loading function only accepts to load classical elements (simplexes, prisms and parallelepipeds with usual geometric transformations). If one needs other kind of elements, the loading function has to be extended.  \\[0.5cm]
 
 A little tool allows to display a mesh using Gnuplot (and Perl). This tool is present in the directory {\tt contrib/} and of course you need to have a working distribution of Gnuplot installed on your system. This little tool is built when you execute a {\tt make} instruction on the root directory of GETFEM++. So, if GETFEM++ is normally installed on your system, you can change your current directory to {\tt contrib/} and execute the command \\[0.5cm]
 {\tt draw\_mesh filename.mesh} \\[0.5cm]
@@ -287,17 +286,26 @@ It is possible to specify element by element the finite element method, so that 
 To select a particular finite element method on a given element, one can use \\[0.5cm]
 {\tt mef.set\_finite\_element(i, ppf, ppi); }\\[0.5cm]
 where {\tt i} is the index of the element, {\tt ppf} is the descriptor of the finite element method, and {\tt ppi} is the descriptor of the integration method. The list of all available descriptors of finite element methods is in the file {\tt getfem\_fem.h}. A short description is also given in \cite{BAS_COMP}. The list of all available descriptors of integration methods is in the file {\tt bgeot\_poly\_integration.h} for exact integration methods and in the file {\tt bgeot\_approx\_integration.h} for approximate integration methods. \\[0.5cm]
+Descriptors for finite element methods and integration methods are available thanks to the two follofing functions\\[0.5cm]
+{\tt ppf = getfem::fem\_descriptor("name of method"); \\
+  ppi = bgeot::int\_method\_descriptor("name of method");
+}\\[0.5cm]
+where {\tt "name of method"} is to be chosen among the existing methods.
+A name of a method can be retrieved thanks to the following functions\\[0.5cm]
+{\tt std::string femname = getfem::name\_of\_fem(ppf); \\
+  std::string im\_name = getfem::name\_of\_int\_method(ppi);
+}\\[0.5cm]
 A non exhautive list (see \cite{FEM_LIST} for exhaustive lists) of finite element methods is given by
 \input{../kernel/getfemelemfem.tex}
-A list of exact integration methods is given by
+Examples of exact integration methods:
 \input{../kernel/getfemelemint.tex}
-A list of approximated integration methods is given by
+Examples of approximated integration methods:
 \input{../kernel/getfemeleminta.tex}
 
 For instance if one needs to have a description of a $P_1$ finite element method on a triangle with an exact integration, the way to set it is\\[0.5cm]
-{\tt mef.set\_finite\_element(i, getfem::PK\_fem(2, 1), bgeot::simplex\_poly\_integration(2)); }\\[0.5cm]
+{\tt mef.set\_finite\_element(i, getfem::fem\_descriptor("FEM\_PK(2, 1)"),\\$\mbox{}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ $  bgeot::int\_method\_descriptor("IM\_EXACT\_SIMPLEX(2)")); }\\[0.5cm]
 where {\tt i} is still the index of the triangle. It is also possible to select a particular method directly on a set of element, passing to {\tt mef.set\_finite\_element} a {\tt dal::bit\_vector} instead of a single index. For instance\\[0.5cm]
-{\tt mef.set\_finite\_element(mesh.convex\_index(), getfem::PK\_fem(2, 1),\\$\mbox{}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ $ bgeot::simplex\_poly\_integration(2)); }\\[0.5cm]
+{\tt mef.set\_finite\_element(mesh.convex\_index(), getfem::fem\_descriptor("FEM\_PK(2, 1)"),\\$\mbox{}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ $ bgeot::int\_method\_descriptor("IM\_EXACT\_SIMPLEX(2)")); }\\[0.5cm]
 select the method on all the elements of the mesh.
 
 Once a finite element method is defined on a mesh, it is possible to obtain information on it with the following methods (the list is not exhaustive).\\[0.5cm]

@@ -786,7 +786,8 @@ namespace getfem
     _fem_naming_system->add_suffix("QK", QK_fem);
     _fem_naming_system->add_suffix("PK_PRISM", PK_prism_fem);
     _fem_naming_system->add_suffix("PK_DISCONTINUOUS", PK_discontinuous_fem);
-    _fem_naming_system->add_suffix("PK_WITH_CUBIC_BUBLE",PK_with_cubic_bubble);
+    _fem_naming_system->add_suffix("PK_WITH_CUBIC_BUBBLE",
+				   PK_with_cubic_bubble);
     _fem_naming_system->add_suffix("PRODUCT", product_fem);
     _fem_naming_system->add_suffix("P1_NONCONFORMING", P1_nonconforming_fem);
     _fem_naming_system->add_suffix("P1_BUBBLE_FACE", P1_with_bubble_on_a_face);

@@ -162,14 +162,15 @@ $$ \fbox{$\hspace{1em} K(\overline{x}) := \nabla \tau(\overline{x}) = G \nabla {
 where $K(\overline{x}) = \nabla \tau(\overline{x})$ is a $N \times P$ matrix and $\nabla {\cal N}(\overline{x})$ a $n_g \times P$ matrix.
 
 
-Pointer on a descriptor of a geometric transformation can be obtained by the following functions defined in the file {\tt bgeot\_geometric\_trans.h}:
-
-\begin{center} \begin{tabular}{|m{0.55\linewidth}|m{0.4\linewidth}|} \hline
+Pointer on a descriptor of a geometric transformation can be obtained by the following function defined in the file {\tt bgeot\_geometric\_trans.h}:\\[0.5cm]
+{\tt bgeot::pgeometric\_trans pgt = bgeot::geometric\_trans\_descriptor("name of trans"); }\\[0.5cm]
+where {\tt "name of trans"} should be chosen among the following list.
+\begin{center} \begin{tabular}{|m{0.3\linewidth}|m{0.65\linewidth}|} \hline
 {\tt "GT\_PK(n,k)"} & Description of the simplex transformation of dimension {\tt n} and degree {\tt k} (Most of the time, the degree 1 is used).\\ \hline
 {\tt "GT\_QK(n,k)"} & Description of the parallelepiped transformation of dimension {\tt n} and degree {\tt k}.\\ \hline
 {\tt "GT\_PRISM(n,k)"} & Description of the prism transformation of dimension {\tt n} and degree {\tt k}. \\ \hline
-{\tt bgeot::pgeometric\_trans bgeot::convex\_product\_trans(pgeometric\_trans a, pgeometric\_trans b)} & Description of the direct product of the two transformations {\tt a} and {\tt b}.\\ \hline
-{\tt bgeot::pgeometric\_trans bgeot::linear\_product\_trans(pgeometric\_trans a, pgeometric\_trans b)} & Description of the direct product of the two transformations {\tt a} and {\tt b} keeping a linear transformation (this is a restriction of he previous function). This allows, for instance, to use exact integrations on regular meshes with parallelograms.\\ \hline
+{\tt "GT\_PRODUCT(a,b)"} & Description of the direct product of the two transformations {\tt a} and {\tt b}.\\ \hline
+{\tt "GT\_LINEAR\_PRODUCT(a,b)"} & Description of the direct product of the two transformations {\tt a} and {\tt b} keeping a linear transformation (this is a restriction of he previous function). This allows, for instance, to use exact integrations on regular meshes with parallelograms.\\ \hline
 \end{tabular} \end{center}
 
 \section{Finite element methods description}
@@ -192,14 +193,15 @@ where $\alpha$ is the vector of components $\alpha_i$.
 A certain number of description of classical finite element method are defined in the file {\tt getfem\_fem.h}. More classical ones are the following (see \cite{FEM_LIST} for an exhaustive list):
 
 \input{getfemelemfem.tex}
-
+One can obtain a particular descriptor thanks to the function
+{\tt getfem::pfem pfe = getfem::fem\_descriptor("name of method"); }\\[0.5cm]
 One can see in the file {\tt getfem\_fem.C} how to define a new finite element method. Basically, the only thing to do is to give the base functions on the reference element and the corresponding nodes.
 
 \section{Integration methods}
 
 The integrations methods are of two kinds. The file {\tt bgeot\_poly\_integration.h} defines exact integrations of polynomials and the file {\tt bgeot\_approx\_integration.h} defines approximated integrations of any function. The exact integration can only be used if all the elements are polynomial and if the geometric transformation is linear.
 
-In the file {\tt bgeot\_poly\_integration.h} the following functions are defined
+In the file {\tt bgeot\_poly\_integration.h} the following methods are defined
 
 \input{getfemelemint.tex}
 
@@ -207,6 +209,9 @@ Even though a description of exact integration method exists on parallelepipeds 
 
 Description of approximated integation methods can be found in file {\tt bgeot\_approx\_integration.h}. Some examples (see \cite{FEM_LIST} for an exhaustive list):
 \input{getfemeleminta.tex}
+
+One can obtain a particular descriptor thanks to the function
+{\tt bgeot::pintegration\_method pfe = bgeot::int\_method\_descriptor("name of method"); }\\[0.5cm]
 
 
 \section{Mathematical description of basic calculus}
@@ -320,17 +325,22 @@ where $\phi^i$ are the base functions on the real element $T$ (even though for t
 
 int main(void) \{
   int N = 3;                // dimension
+  char method\_name[100];
+  char gt\_name[100];
   getfem::base_tensor t;    // tensor for the computation of elementary matrix
 
-  getfem::pfem pf = getfem::PK_fem(N, 1); // P_1 fem method in dimension N
+  sprintf(method\_name, "FEM\_PK(\%d, \%d)", N, 1);
+  getfem::pfem pf = getfem::fem\_descriptor(method\_name); // P_1 method, dimension N
 
   getfem::pmat_elem_type pet = // Type of elementary matrix
      getfem::mat_elem_product(getfem::mat_elem_grad(pf),
                               getfem::mat_elem_grad(pf));
 
+  sprintf(method\_name, "IM\_EXAXT\_SIMPLEX(\%d)");
+  sprintf(gt\_name, "GT\_PK(\%d, \%d)", N, 1);
   getfem::pmat_elem_computation pmec = // Object which computes elementary matrices.
-     getfem::mat_elem(pet, bgeot::simplex_poly_integration(N),
-                           bgeot::simplex_trans(N, 1));
+     getfem::mat_elem(pet, bgeot::int\_method\_descriptor(method\_name),
+                           bgeot::geometric\_trans\_descriptor(gt\_name));
 
   std::vector<base_node> A(N+1);  // Build a list of vertices.
   base_node pt;  // Of course, usually, the real vertices come from the mesh
@@ -361,8 +371,10 @@ where $\phi^i$ are the base functions of the $P_1$ finite element method, and $\
 
 \begin{alltt}
 
-  getfem::pfem pf1 = getfem::PK_fem(N, 1); // P_1 fem method in dimension N
-  getfem::pfem pf2 = getfem::PK_fem(N, 2); // P_2 fem method in dimension N  
+  sprintf(method\_name, "FEM\_PK(\%d, \%d)", N, 1);
+  getfem::pfem pf1 = getfem::fem\_descriptor(method\_name); // P_1 method, dimension N
+  sprintf(method\_name, "FEM\_PK(\%d, \%d)", N, 2);
+  getfem::pfem pf2 = getfem::fem\_descriptor(method\_name); // P_2 method, dimension N  
 
   getfem::pmat_elem_type pet = // Type of elementary matrix
      getfem::mat_elem_product(getfem::mat_elem_base(pf1),

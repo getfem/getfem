@@ -382,8 +382,8 @@ namespace getfem
    *  "FEM_PK_DISCONTINUOUS(N,K)" discontinuous Lagrange element PK on simplex
    *  "FEM_QK(N,K)" classical Lagrange element QK on a parellepiped
    *  "FEM_PK_PRISM(N,K)" classical Lagrange element PK on a prism
-   *  "FEM_PK_WITH_CUBIC_BUBLE(N,K)" classicla Lagrange element PK on a simplex
-   *                      with an additional volumic bubble function.
+   *  "FEM_PK_WITH_CUBIC_BUBBLE(N,K)" classical Lagrange element PK on a
+   *                      simplex with an additional volumic bubble function.
    *  "FEM_PRODUCT(FEM1,FEM2)" tensorial product of two polynomial elements
    *  "FEM_P1_NONCONFORMING" Nonconforming P1 method on a triangle.
    *  "FEM_P1_BUBBLE_FACE(N)" P1 methd on a simplex with an additional bubble
@@ -395,7 +395,7 @@ namespace getfem
    *
    */
 
-   pfem PK_fem(size_type n, short_type k);
+  pfem PK_fem(size_type n, short_type k);
   pfem QK_fem(size_type n, short_type k);
   pfem PK_prism_fem(size_type n, short_type k);
 

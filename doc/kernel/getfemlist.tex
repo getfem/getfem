@@ -67,6 +67,10 @@ Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 \section{Finite element methods}
 
 all finite element methods defined in GETFEM++ are interfaced in the file {\tt getfem\_fem.h}.
+A descriptor on a finite element method is available thanks to the function
+{\tt getfem::pfem pf = getfem::fem\_descriptor("name of method");
+}\\[0.5cm]
+where {\tt "name of method"} is a string to be choosen among the existing methods.
 
 \subsection{Finite element methods description}
 
@@ -193,7 +197,7 @@ For some applications (computation of a gradient for instance) one does not want
 \begin{center}
 \begin{tabular}{|m{13.68cm}|} \hline 
 {\bf Classical ``$P_K$'' Lagrange element}\\
-{\tt getfem::ppolyfem getfem::PK\_fem(P, K)} 
+{\tt "FEM\_PK(P, K)"} 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
@@ -203,7 +207,7 @@ Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent
 \begin{center}
 \begin{tabular}{|m{13.68cm}|} \hline 
 {\bf Discontinuous ``$P_K$'' Lagrange element}\\
-{\tt getfem::ppolyfem getfem::PK\_discontinuous\_fem(P, K)} 
+{\tt "FEM\_PK\_DISCONTINUOUS(P, K)"} 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
@@ -254,7 +258,7 @@ A prism in dimension $P > 1$ is the direct product of a simplex of dimension $P-
 \begin{center}
 \begin{tabular}{|m{13.68cm}|} \hline 
 {\bf $Q_K$ Lagrange element on parallelepipeds}\\
-{\tt getfem::ppolyfem getfem::QK\_fem(P, K)} 
+{\tt "FEM\_QK(P, K)"} 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
@@ -265,7 +269,7 @@ Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent
 \begin{center}
 \begin{tabular}{|m{13.68cm}|} \hline 
 {\bf $P_K \otimes P_K$ Lagrange element on prisms}\\
-{\tt getfem::ppolyfem getfem::PK\_prism\_fem(P, K)} 
+{\tt "FEM\_PK\_PRISM(P, K)"} 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
@@ -276,7 +280,7 @@ Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent
 \begin{center}
 \begin{tabular}{|m{13.68cm}|} \hline 
 {\bf $P_{K_1} \otimes P_{K_2}$ Lagrange element on prisms}\\
-{\tt getfem::ppolyfem getfem::product\_fem(getfem::PK\_fem(P-1, K$_1$), getfem::PK\_fem(1, K$_2$))} 
+{\tt "FEM\_PRODUCT(FEM\_PK(P-1, K$_1$), FEM\_PK(1, K$_2$))"} 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
@@ -305,7 +309,7 @@ This element is close to be \mbox{$\tau$-equivalent} but it is not. On the real 
 \begin{center}
 \begin{tabular}{|m{14.18cm}|} \hline 
 {\bf Hermite element on the segment}\\
-{\tt getfem::ppolyfem getfem::segment\_Hermite\_fem()}
+{\tt "FEM\_HERMITE\_SEGMENT"}
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
@@ -326,7 +330,7 @@ to be described ...
 \begin{center}
 \begin{tabular}{|m{14.18cm}|} \hline 
 { \bf Lagrange $P_1$ element with an additional internal bubble function}\\
-{\tt getfem::ppolyfem getfem::PK\_with\_cubic\_bubble\_fem(1, 1)} 
+{\tt "PK\_WITH\_CUBIC\_BUBBLE(1, 1)"} 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
@@ -353,7 +357,7 @@ to be described ...
 \begin{center}
 \begin{tabular}{|m{14.18cm}|} \hline 
 { \bf Lagrange $P_1$ or $P_2$ element with an additional internal bubble function}\\
-{\tt getfem::ppolyfem getfem::PK\_with\_cubic\_bubble\_fem(2, K)} 
+{\tt "PK\_WITH\_CUBIC\_BUBBLE(2, K)"} 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
@@ -374,7 +378,7 @@ to be described ...
 \begin{center}
 \begin{tabular}{|m{14.18cm}|} \hline 
 { \bf Lagrange $P_1$ element with an additional bubble function on face 0}\\
-{\tt getfem::ppolyfem getfem::P1\_with\_bubble\_on\_a\_face(2)} 
+{\tt "P1\_BUBBLE\_FACE(2)"} 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
@@ -395,7 +399,7 @@ to be described ...
 \begin{center}
 \begin{tabular}{|m{14.18cm}|} \hline 
 { \bf $P_1$ Lagrange element on a triangle with additional d.o.f on face 0}\\
-{\tt getfem::ppolyfem getfem::P1\_with\_bubble\_on\_a\_face\_lagrange()} 
+{\tt "P1\_BUBBLE\_FACE\_LAG"} 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
@@ -418,7 +422,7 @@ to be described ...
 \begin{center}
 \begin{tabular}{|m{14.18cm}|} \hline 
 { \bf $P_1$ non-conforming element on a triangle}\\
-{\tt getfem::ppolyfem getfem::P1\_non\_conforming\_fem()} 
+{\tt "P1\_NONCONFORMING"} 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
@@ -488,7 +492,7 @@ to be described ...
 \begin{center}
 \begin{tabular}{|m{14.18cm}|} \hline 
 { \bf $P_K$ Lagrange element with an additional internal bubble function}\\
-{\tt getfem::ppolyfem getfem::PK\_with\_cubic\_bubble\_fem(3, K)} 
+{\tt "PK\_WITH\_CUBIC\_BUBBLE(3, K)"} 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
@@ -509,7 +513,7 @@ to be described ...
 \begin{center}
 \begin{tabular}{|m{14.18cm}|} \hline 
 { \bf Lagrange $P_1$ element with an additional bubble function on face 0}\\
-{\tt getfem::ppolyfem getfem::P1\_with\_bubble\_on\_a\_face(3)} 
+{\tt "P1\_BUBBLE\_FACE(3)"} 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
@@ -528,7 +532,7 @@ to be described ...
   \begin{center}
     \includegraphics[width=5cm,angle=0]{getfemlist_virtual_fem.eps}
   \end{center}
-  \caption{ \it Element which intepolates a finite element method defined on another mesh. The element has as many d.o.f. as the union of d.o.f. of triangles of the other mesh having an intersection with it. The interpolation is made on Gauss points of the integration method.} 
+  \caption{ \it Element which intepolates a finite element method defined on another mesh. The element has as many d.o.f. as the union of d.o.f. of elements of the other mesh having an intersection with it. The interpolation is made on Gauss points of the integration method.} 
   \label{fig:virtual_fem}
 \end{figure}
 
@@ -536,7 +540,7 @@ to be described ...
 
 \begin{center}
 \begin{tabular}{|m{14.18cm}|} \hline 
-{ \bf Element which intepolates an element defined on another mesh}\\
+{ \bf Element which interpolates an element defined on another mesh}\\
   {\tt getfem::virtual\_link\_fem(getfem::mesh\_fem mf1, getfem::mesh\_fem mf2,} \\ {\tt \mbox{}\hspace{12em} getfem::pintegration\_method pim) }
   {\tt getfem::virtual\_link\_fem\_with\_gradient(getfem::mesh\_fem mf1, } \\ {\tt \hspace{5em} getfem::mesh\_fem mf2, \mbox{}getfem::pintegration\_method pim) }
 \end{tabular} \\ \vspace{-1pt} 
@@ -554,23 +558,21 @@ undefined & arbitrary & variable & variable & No & No \\ \hline
 
 \subsection{Integration methods description}
 
-The integrations methods are of two kinds. The file {\tt bgeot\_poly\_integration.h} defines exact integrations of polynomials and the file {\tt bgeot\_approx\_integration.h} defines approximated integrations of any function. The exact integration can only be used if all the elements are polynomial and if the geometric transformation is linear.
+The integrations methods are of two kinds. Exact integrations of polynomials and approximated integrations of any function. The exact integration can only be used if all the elements are polynomial and if the geometric transformation is linear.
 
-In the file {\tt bgeot\_poly\_integration.h} the following functions are defined
+ A descriptor on an integration method is available thanks to the function
+{\tt
+  ppi = bgeot::int\_method\_descriptor("name of method");
+}\\[0.5cm]
+where {\tt "name of method"} is a string to be choosen among the existing methods.
+
+\subsection{Exact Integration methods}
+
+The list of available Exact integration methods is the following
 
 \input{getfemelemint.tex}
 
 Even though a description of exact integration method exists on parallelepipeds or prisms, most of the time the geometric transformations on such elements are not linear and the exact integration cannot be used.
-
-In the file {\tt bgeot\_approx\_integration.h} the following functions are defined
-
-% \input{getfemeleminta.tex}
-
-Other methods can be easily defined.
-
-\subsection{Exact Integration methods}
-
-to be done ...
 
 \subsection{Newton cotes Integration methods}
 to be done ...
@@ -597,7 +599,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
     \begin{tabular}{c}
       1/2
     \end{tabular}
-  & {\tt \small triangle1\_approx\_integration()} \hspace{5em} 
+  & {\tt \small "IM\_TRIANGLE(1)"} \hspace{7em} 
     1 point, order 1. \\ \hline
 \end{tabular}
 \begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
@@ -616,7 +618,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
       1/6 \\ \\
       1/6
     \end{tabular}
-  & {\tt \small triangle2\_approx\_integration()} \hspace{5em} 3 points, order 2. \\ \hline
+  & {\tt \small "IM\_TRIANGLE(2)"} \hspace{7em} 3 points, order 2. \\ \hline
 \end{tabular} 
 \begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
   \hline& & &\\ 
@@ -636,7 +638,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
       25/96 \\ \\ 
       25/96 
     \end{tabular} }
-  & {\tt \small triangle3\_approx\_integration()} \hspace{5em} 4 points, order 3. \\ \hline
+  & {\tt \small "IM\_TRIANGLE(3)"} \hspace{7em} 4 points, order 3. \\ \hline
 \end{tabular} 
 \begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
   \hline& & &\\ 
@@ -660,7 +662,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
       d \\ 
       d
     \end{tabular} }
-  & {\tt \small triangle4\_approx\_integration()} \hspace{5em} \mbox{6 points, order 4,}\hspace{7em} \mbox{a = 0.445948490915965,}\hspace{5em} \mbox{b = 0.091576213509771,}\hspace{5em} \mbox{c = 0.111690794839005,}\hspace{5em} \mbox{d = 0.054975871827661.} \\ \hline
+  & {\tt \small "IM\_TRIANGLE(4)"} \hspace{7em} \mbox{6 points, order 4,}\hspace{7em} \mbox{a = 0.445948490915965,}\hspace{5em} \mbox{b = 0.091576213509771,}\hspace{5em} \mbox{c = 0.111690794839005,}\hspace{5em} \mbox{d = 0.054975871827661.} \\ \hline
 \end{tabular} 
 \begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
   \hline& & &\\ 
@@ -686,7 +688,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
       d \\ 
       d 
     \end{tabular} }
-  & {\tt \small triangle5\_approx\_integration()} \hspace{5em} \mbox{7 points, order 5,}\hspace{7em} \mbox{$a = \Frac{6+\sqrt{15}}{21}$,}\hspace{5em} \mbox{$b = 4/7 - a$,}\hspace{8em} \mbox{$c = \Frac{155+\sqrt{15}}{2400}$,}\hspace{5em} \mbox{$d = 31/240 - c$.} \\ \hline
+  & {\tt \small "IM\_TRIANGLE(5)"} \hspace{7em} \mbox{7 points, order 5,}\hspace{7em} \mbox{$a = \Frac{6+\sqrt{15}}{21}$,}\hspace{5em} \mbox{$b = 4/7 - a$,}\hspace{8em} \mbox{$c = \Frac{155+\sqrt{15}}{2400}$,}\hspace{5em} \mbox{$d = 31/240 - c$.} \\ \hline
 \end{tabular}  
 \begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
   \hline& & &\\ 
@@ -722,7 +724,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
       g \\ 
       g
     \end{tabular} }
-  & {\tt \small triangle6\_approx\_integration()} \hspace{5em} \mbox{12 points, order 6,}\hspace{7em}
+  & {\tt \small "IM\_TRIANGLE(6)"} \hspace{7em} \mbox{12 points, order 6,}\hspace{7em}
   \mbox{$a = 0.063089104491502$,}\hspace{5em}
   \mbox{$b = 0.249286745170910$,}\hspace{8em}
   \mbox{$c = 0.310352451033785$,}\hspace{5em}
@@ -768,7 +770,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
       j \\
       k
     \end{tabular} }
-  & {\tt \small triangle7\_approx\_integration()} \hspace{5em} \mbox{13 points, order 7,}\hspace{7em}
+  & {\tt \small "IM\_TRIANGLE(7)"} \hspace{7em} \mbox{13 points, order 7,}\hspace{7em}
   \mbox{$a = 0.0651301029022$,}\hspace{5em}
   \mbox{$b = 0.8697397941956$,}\hspace{5em}
   \mbox{$c = 0.3128654960049$,}\hspace{5em}
@@ -796,7 +798,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
       1/3 \\ \\
       1/3
     \end{tabular}
-  & {\tt \small quad2\_approx\_integration()} \hspace{5em} 3 points, order 2. \\ \hline
+  & {\tt \small "IM\_QUAD(2)"} \hspace{9em} 3 points, order 2. \\ \hline
 \end{tabular}  
 \begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
   \hline& & &\\ 
@@ -812,7 +814,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
       1/4 \\ \\
       1/4
     \end{tabular}
-  & {\tt \small quad3\_approx\_integration()} \hspace{5em} 4 points, order 3. \\ \hline
+  & {\tt \small "IM\_QUAD(3)"} \hspace{9em} 4 points, order 3. \\ \hline
 \end{tabular} 
 \begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
   \hline& & &\\ 
@@ -830,7 +832,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
       5/63 \\ \\
       5/36
     \end{tabular}
-  & {\tt \small quad5\_approx\_integration()} \hspace{5em} 7 points, order 5. \\ \hline
+  & {\tt \small "IM\_QUAD(5)"} \hspace{9em} 7 points, order 5. \\ \hline
 \end{tabular}  
 
 
@@ -851,7 +853,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{1.7cm}m{1.7cm}m{1.7cm}} x &
     { \small \begin{tabular}{c}
       1/6
     \end{tabular} }
-  & {\tt \small tetrahedron1\_approx\_integration()} \hspace{5em} 
+  & {\tt \small "IM\_TETRAHEDRON(1)"} \hspace{7em} 
     1 point, order 1. \\ \hline
 \end{tabular}  
 \begin{tabular}{|m{2.5cm}|m{5.5cm}|m{1.2cm}|m{6cm}|}
@@ -872,7 +874,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{1.7cm}m{1.7cm}m{1.7cm}} x &
       1/24 \\
       1/24       
     \end{tabular} }
-  & {\tt \small tetrahedron2\_approx\_integration()} \hspace{5em} 
+  & {\tt \small "IM\_TETRAHEDRON(2)"} \hspace{7em} 
     \mbox{4 points, order 2} \hspace{7em}
     \mbox{$a = \Frac{5 - \sqrt{5}}{20}$,}\hspace{5em}
     \mbox{$b = \Frac{5 + 3\sqrt{5}}{20}$.}\hspace{5em} \hspace{5em} \hspace{5em}
@@ -897,7 +899,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{1.7cm}m{1.7cm}m{1.7cm}} x &
       3/40 \\
       3/40       
     \end{tabular} }
-  & {\tt \small tetrahedron3\_approx\_integration()} \hspace{5em} 
+  & {\tt \small "IM\_TETRAHEDRON(3)"} \hspace{7em} 
     \mbox{5 points, order 3} \hspace{7em} \\ \hline
 \end{tabular}  
 \begin{tabular}{|m{2.5cm}|m{5.5cm}|m{1.2cm}|m{6cm}|}
@@ -940,7 +942,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{1.7cm}m{1.7cm}m{1.7cm}} x &
       5/567 \\
       5/567
     \end{tabular} }
-  & {\tt \small tetrahedron5\_approx\_integration()} \hspace{5em} 
+  & {\tt \small "IM\_TETRAHEDRON(5)"} \hspace{7em} 
     \mbox{15 points, order 5} \hspace{7em}
     \mbox{$a = \Frac{7 + \sqrt{15}}{34}$,}
     \mbox{$b = \Frac{7 - \sqrt{15}}{34}$,}\hspace{5em}
