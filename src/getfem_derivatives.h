@@ -85,12 +85,12 @@ namespace getfem
 
       pgt = mf.linked_mesh().trans_of_convex(cv);
       if (pf_targetold != pf_target) {
-        pgp = bgeot::geotrans_precomp(pgt, pf_target->node_tab());
+        pgp = bgeot::geotrans_precomp(pgt, pf_target->node_tab(cv));
       }
       pf_targetold = pf_target;
 
       if (pf_old != pf) {
-	pfp = fem_precomp(pf, pf_target->node_tab());
+	pfp = fem_precomp(pf, pf_target->node_tab(cv));
       }
       pf_old = pf;
 
