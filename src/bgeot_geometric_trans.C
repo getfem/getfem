@@ -336,5 +336,19 @@ namespace bgeot
     return pgt;
   }
 
+  pgeometric_trans product_geotrans(pgeometric_trans pg1, pgeometric_trans pg2) {
+    static pgeometric_trans pgt = 0;
+    static pgeometric_trans _pg1 = 0;
+    static pgeometric_trans _pg2 = 0;
+    if (pg1 != _pg1 || pg2 != _pg2) {
+      _STRINGSTREAM name;
+      name << "GT_PRODUCT(" << name_of_geometric_trans(pg1) << "," 
+	   << name_of_geometric_trans(pg2) << ")" << ends;
+      pgt = geometric_trans_descriptor(name.str());
+      _pg1 = pg1; _pg2 = pg2;
+    }
+    return pgt;    
+  }
+
 }  /* end of namespace bgeot.                                            */
 

@@ -284,7 +284,10 @@ namespace getfem
     std::ifstream o(name.c_str());
     if (!o) DAL_THROW(file_not_found_error,
 		      "Mesh file '" << name << "' does not exist");
-    return read_from_file(o);
+    
+    read_from_file(o); 
+    o.close();
+    return 0;
   }
 
   template<class ITER>
@@ -298,7 +301,7 @@ namespace getfem
     for ( ; b != e; ++b) {
       size_type i = b.index();
       ost << "CONVEX " << i << "    "
-	  << bgeot::name_of_geometric_trans(ms.trans_of_convex(i)) << "    ";
+	  << bgeot::name_of_geometric_trans(ms.trans_of_convex(i)).c_str() << "    ";
       _write_tab_to_file(ost, ms.ind_points_of_convex(i).begin(),
 			 ms.ind_points_of_convex(i).end()  );
       ost << endl;
@@ -339,7 +342,11 @@ namespace getfem
       o << "% GETFEM VERSION " << __GETFEM_VERSION << "."
 	<< __GETFEM_REVISION << endl << endl << endl;
     
-      return write_to_file(o);
+      write_to_file(o);
+      o.close();
+      return 0;
+    } else {
+      DAL_THROW(failure_error, "impossible to open file '" << name << "'"); 
     }
     return -1;
   }
