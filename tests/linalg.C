@@ -19,7 +19,6 @@
 /* *********************************************************************** */
 #include <bgeot_matrix.h>
 #include <gmm.h>
-#include <gmm_inoutput.h>
 
 
 void test_gauss_det() {
@@ -73,16 +72,6 @@ int main(void)
     
     cout << "m = " << m << endl;
     cout << "x = " << x << endl;
-
-    gmm::csc_matrix<double> cscm(10,10);
-    gmm::copy(m, cscm);
-    cout << "cscm = " << cscm << endl;
-    
-    gmm::Harwell_Boeing_save("toto.mat", cscm);
-
-    gmm::csc_matrix<double> cscm2;
-    gmm::Harwell_Boeing_load("toto.mat", cscm2);
-    cout << "cscm2 = " << cscm2 << endl;
 
     gmm::mult(m, x, b);
     cout << "b = " << b << endl;

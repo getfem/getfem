@@ -86,8 +86,8 @@ namespace gmm {
       }
 
       if ((a = w[i]) <= 0)
-	DAL_THROW(failure_error, "negative value found : " << a);
-      a = sqrt(a);
+	{ DAL_WARNING(2, "negative value found : " << a); a = 1.0; }
+      else a = sqrt(a);
 
       U(i,i) = a; gmm::clean(w, eps * norm_row); gmm::scale(w, 1.0 / a);
       std::sort(w.begin(), w.end(), _elt_rsvector_value_less<value_type>());

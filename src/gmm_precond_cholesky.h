@@ -121,8 +121,12 @@ namespace gmm {
     
     for (k = 0; k < n; k++) {
       d = Tri_ptr[k];
-      if (Tri_val[d] < 0) DAL_THROW(failure_error, "negative value found");
-      z = Tri_val[d] = sqrt(Tri_val[d]);
+      if (Tri_val[d] < 0) { 
+	DAL_WARNING(2, "negative value found");
+	z = Tri_val[d] = 1.0;
+      }
+      else 
+	z = Tri_val[d] = sqrt(Tri_val[d]);
 
       for (i = d + 1; i < Tri_ptr[k+1]; i++) Tri_val[i] /= z;
       for (i = d + 1; i < Tri_ptr[k+1]; i++) {
