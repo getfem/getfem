@@ -33,7 +33,7 @@ void read_file(const std::string &fi, getfem::getfem_mesh &mesh,
 	       getfem::mesh_fem &mef, std::vector<getfem::scalar_type> &U, 
 	       size_type &N, size_type &P, size_type &K)
 {
-  ifstream ist((fi + char(0)).data());
+  std::ifstream ist((fi + char(0)).data());
   size_type i;
 
   cout << "reading file " << fi << endl;
