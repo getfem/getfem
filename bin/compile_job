@@ -34,6 +34,9 @@ else
   $make = "gmake";
 }
 
+
 print `cd ..; cvs checkout getfem++`; print "\n\n";
+exec "touch aclocal.m4"; print "\n\n";
+exec "touch configure"; print "\n\n";
 exec "./configure --prefix=$rootlib ; $make; $make install"; print "\n\n";
 
