@@ -284,8 +284,6 @@ namespace gmm {
     Hessenberg_reduction(A1, eigvect, compvect);
     
     for (size_type ite = 0; ite < n*1000; ++ite) {
-      gmm::clean(A1, 1E-14);
-      cout.precision(8);
       qr_factor(A1, Q, R);
       gmm::mult(R, Q, A1);
       if (compvect) { gmm::mult(eigvect, Q, R); gmm::copy(R, eigvect); }
