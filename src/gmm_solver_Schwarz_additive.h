@@ -219,7 +219,7 @@ namespace gmm {
 
     typedef typename linalg_traits<Matrix1>::value_type value_type;
 
-    size_type nb_sub = SAM.vB->size(), nb_dof = f.size();
+    size_type nb_sub = SAM.vB->size(), nb_dof = gmm::vect_size(f);
     SAM.itebilan = 0;
     std::vector<value_type> g(nb_dof);
 
@@ -523,7 +523,7 @@ namespace gmm {
     }
 
     local_to_global(*(M.gi), q, *(M.cor));
-    cout << "itebloc = " << itebilan << endl;
+    if (M.iter.get_noisy()) cout << "itebloc = " << itebilan << endl;
     M.itebilan += itebilan;
     M.iter.set_resmax((M.iter.get_resmax() + M.residu) * 0.5);
   }

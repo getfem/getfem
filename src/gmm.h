@@ -44,4 +44,6 @@
 #include <gmm_superlu_interface.h>
 
 
+#include <gmm_domain_decomp.h>
+
 #endif //  GMM_H__
