@@ -19,4 +19,5 @@ print "Making links for test progams\n";
 
 
 print `bin/startbgeot`;
+print `bin/startlinkmsg`;
 
