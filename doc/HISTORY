@@ -188,3 +188,41 @@ http://www.ann.jussieu.fr/~perronne
 
 . CALFEM
 http://www.byggmek.lth.se/Calfem/
+
+Cette librairie peut s'intégrer facilement dans un code élément fini ...
+ Toute collaboration sera la bienvenue. GETFEM++ est un package libre de droit distribué sous GPL (Gnu Public License).
+
+
+----------------utilisation des formules de quadrature de http://www.cs.kuleuven.ac.be/~nines/research/ecf/ecf.html
+On Wed, Mar 05, 2003 at 01:30:09PM +0100, julien pommier wrote:
+> On Wed, 5 Mar 2003 10:02:42 +0100
+> Ronald Cools <Ronald.Cools@cs.kuleuven.ac.be> wrote:
+> 
+> > Dear Mr Pommier,
+> > 
+> > You can use login= cubature
+> > and passwd= kepler15
+> > 
+> > All comments are welcome and please keep me informed of what you
+> > do with this. 
+> > 
+> > Please consider this as a book with tables and, if you use results in
+> > your papers, refer to the papers I mention on the front page or to the
+> > web page.  The future of this project will depend on it.
+> > 
+> > Note that all formulas presented on these pages are recomputed and
+> > in general more accurate than the ones in the original publications.
+> > I like to receive a copy of your publications that refer to this.
+> 
+> Thank you very much for your answer,
+> Indeed we would like to use (with your permission) some of the cubature
+> formulas in our finite elements package (
+> http://www.gmm.insa-tlse.fr/getfem ), especially for 4D and 5D simplices
+> and high order quadratures on triangles and tetra.
+> Of course we would put a link to your page on the getfem website and in
+> the getfem sources.
+
+That's fine with me.
+Kind regards,
+R o n a l d
+---------------------------------------------------------------------------------=======
