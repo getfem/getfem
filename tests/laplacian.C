@@ -133,8 +133,6 @@ void lap_pb::init(void)
   }
   if (N > 1) vtab[N-1][0] = incline * LX / scalar_type(NX);
 
-  size_type i1 = mesh.add_point(getfem::base_vector(3.4324, 65.56));
-
   switch (mesh_type) {
   case 0 : getfem::parallelepiped_regular_simplex_mesh
 		   (mesh, N, org, vtab.begin(), ref.begin()); break;
@@ -144,8 +142,6 @@ void lap_pb::init(void)
 		   (mesh, N, org, vtab.begin(), ref.begin()); break;
   default : DAL_THROW(dal::internal_error, "Unknown type of mesh");
   }
-
-  mesh.swap_points(2, 5);
 
   mesh.optimize_structure();
 
