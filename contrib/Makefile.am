@@ -9,7 +9,7 @@ draw_mesh_doedges_SOURCES = draw_mesh_doedges.C
 CXXFLAGS = @APPSCXXFLAGS@
 
 INCLUDES = -I$(top_srcdir)/src 
-LDADD    = $(top_srcdir)/src/.libs/libgetfem.so -lm
+LDADD    = $(top_srcdir)/src/.libs/libgetfem.a -lm
 
 
 clean-local:
