@@ -108,7 +108,6 @@ namespace gmm {
 
     cout << "precalcul\n";
     for (size_type i = 0; i < nb_sub; ++i) {
-      cout << " " << i << std::flush;
       Matrix2 Maux(mat_nrows(vB[i]), mat_ncols(vB[i])),
 	BT(mat_ncols(vB[i]), mat_nrows(vB[i]));
       
@@ -116,6 +115,8 @@ namespace gmm {
       gmm::resize(vAloc[i], mat_nrows(vB[i]), mat_nrows(vB[i]));      
       gmm::mult(vB[i], A, Maux);
       gmm::mult(Maux, BT, vAloc[i]);
+
+      cout << " " << i << " (" << gmm::mat_nrows(vAloc[i]) << ") " << std::flush;
 
 #ifdef GMM_USES_SUPERLU
       if (superlu)
@@ -157,13 +158,7 @@ namespace gmm {
     for (size_type i = 0; i < nb_sub; ++i) {
 #ifdef GMM_USES_SUPERLU
       if (M.superlu) {
-	
 	(*(M.SuperLU_mat))[i].solve((*(M.gi))[i], (*(M.fi))[i]);
-
-// 	std::vector<double> aux((*(M.gi))[i].size());
-// 	gmm::mult((*(M.vAloc))[i], (*(M.gi))[i], gmm::scaled((*(M.fi))[i], -1.0), aux);
-// 	cout << "residu local " << i << " : " << gmm::vect_norm2(aux) << endl;
-
 	itebilan = 1;
       }
       else {

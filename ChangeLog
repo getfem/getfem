@@ -1,3 +1,14 @@
+2004-03-31  Yves Renard  <Yves.Renard@gmm.insa-tlse.fr>
+
+	* src/getfem_fem.h and src/getfem_import.h: ajout d'une methode*	       qui donne la matrice d'interpolation au lieu d'interpoler avec
+	des coefficients particuliers.
+
+2004-03-31  Yves Renard  <Yves.Renard@gmm.insa-tlse.fr>
+
+	* src/gmm_superlu_interface.h: passage de la version 2.0 à 3.0 de
+	SuperLU. Introduction d'un objet stockant la decomposition LU et
+	permettant de faire des résolutions ultérieures.
+
 2004-03-26  Yves Renard  <Yves.Renard@gmm.insa-tlse.fr>
 
 	* src/gmm_precond_ildltt.h: fix bug which slowed the ildltt from
@@ -12,7 +23,6 @@
 	function, which returns an approx. integration method for a given
 	{geometric_trans,degree}. Renamed exact_classical_im to
 	classical_exact_im.
-
 	
 2004-03-09  julien pommier  <pommier@gmm.insa-tlse.fr>
 

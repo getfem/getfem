@@ -176,7 +176,7 @@ namespace getfem
 	    coeff[nlocdof] = 1.0;
 	    fem_interpolation_context ctx(pmf1->linked_mesh().trans_of_convex(cv1),
 					  pf,gauss_ptab[indg].localcoords, G1,cv1);
-	    pf->interpolation(ctx, coeff, val);
+	    pf->interpolation(ctx, coeff, val, 1);
 	    M(j, k) = val[0];
 	    if (wg) {
  	      pf->interpolation_grad(ctx, coeff, val2);

@@ -276,8 +276,7 @@ namespace gmm {
       set_default_options(&options);
       options.ColPerm = NATURAL;
       options.PrintStat = NO;
-      // options.Equil = NO;
-      options.ConditionNumber = YES;
+      options.ConditionNumber = NO;
       switch (permc_spec) {
       case 1 : options.ColPerm = MMD_ATA; break;
       case 2 : options.ColPerm = MMD_AT_PLUS_A; break;
@@ -309,7 +308,6 @@ namespace gmm {
 		    &ferr[0] /* estimated forward error             */,
 		    &berr[0] /* relative backward error             */,
 		    &stat, &info, T());
-      cout << "condition number : " << 1.0/rcond << endl;
       
       Destroy_SuperMatrix_Store(&SB);
       Destroy_SuperMatrix_Store(&SX);

@@ -169,7 +169,17 @@ namespace getfem
      */
     template<typename CVEC, typename VVEC> 
     void interpolation(const fem_interpolation_context& c, 
-		       const CVEC& coeff, VVEC &val, dim_type Qdim=1) const;
+		       const CVEC& coeff, VVEC &val, dim_type Qdim) const;
+
+    /** Function which interpolates in a arbitrary point x given on the
+     *  reference element.
+     *  This method take all cases into account (non tau-equivalent element)
+     *  the result is the matrix M such that M * coeff gives the value of
+     *  the interpolation (i.e. the result of the latter function).
+     */
+    template <typename MAT>
+    void interpolation(const fem_interpolation_context& c, 
+		       MAT &M, dim_type Qdim) const ;
 
     /** Function which interpolates in the ii th point of pfp. coeff is the
      *  vector of coefficient relatively to the shape functions. G and pgt
@@ -313,7 +323,7 @@ namespace getfem
 				  const CVEC& coeff, VVEC &val,
 				  dim_type Qdim) const {
     size_type Qmult = size_type(Qdim) / target_dim();
-    if (val.size() != Qdim)
+    if (gmm::vect_size(val) != Qdim)
       DAL_THROW(dimension_error, "dimensions mismatch");
     size_type R = nb_dof(), RR = nb_base();
     
@@ -332,6 +342,29 @@ namespace getfem
       } 
     }
   }
+
+  template <typename MAT>
+  void virtual_fem::interpolation(const fem_interpolation_context& c, 
+				  MAT &M, dim_type Qdim) const {
+    size_type Qmult = size_type(Qdim) / target_dim();
+    size_type R = nb_dof(), RR = nb_base();
+    if (gmm::mat_nrows(M) != Qdim || gmm::mat_ncols(M) != R*Qmult)
+      DAL_THROW(dimension_error, "dimensions mismatch");
+    
+    gmm::clear(M);
+    base_tensor Z; real_base_value(c,Z);
+    for (size_type j = 0; j < RR; ++j) {
+      for (size_type q = 0; q < Qmult; ++q) {
+	for (size_type r = 0; r < target_dim(); ++r)
+	  if (is_equivalent())
+	    M(r+q*target_dim(), j*Qmult+q) = Z[j + r*R];
+	  else
+	    for (size_type i = 0; i < R; ++i)
+	      M(r+q*target_dim(), i*Qmult+q) = c.M()(i, j) * Z[j + r*R];
+      } 
+    }
+  }
+
 
   template<typename CVEC, typename VMAT> 
   void virtual_fem::interpolation_grad(const fem_interpolation_context& c, 

@@ -899,7 +899,11 @@ example of use.
 The file \filename{getfem\_export.h} defines the following function to interpolate a solution from a mesh and a finite element method  to another mesh and another Lagrange finite element method.\\[0.5cm]
 \index{GETFEM!getfem::interpolation\_solution}
 \cpp{getfem::interpolation\_solution(mef1, mef2, U, V); }\\[0.5cm]
-where \cpp{mef1}  is a variable of type \cpp{getfem::mesh\_fem} and describes the finite element method on which the solution is defined, \cpp{mef2} is the finite element method on which the solution will be interpolate,  \cpp{U} is a vector representing the solution and should be of size \cpp{mef1.nb\_dof()}, \cpp{V} is a vector on which the interpolation will be computed and should be of size \cpp{mef2.nb\_dof()}. IMPORTANT : \cpp{mef2} should be of Lagrange type for the interpolation to makes sense but the meshes linked to \cpp{mef1} and \cpp{mef2} may be different (and this is the interest of this function). There is no restriction for the dimension of the domain. 
+where \cpp{mef1}  is a variable of type \cpp{getfem::mesh\_fem} and describes the finite element method on which the solution is defined, \cpp{mef2} is the finite element method on which the solution will be interpolate,  \cpp{U} is a vector representing the solution and should be of size \cpp{mef1.nb\_dof()}, \cpp{V} is a vector on which the interpolation will be computed and should be of size \cpp{mef2.nb\_dof()}. IMPORTANT : \cpp{mef2} should be of Lagrange type for the interpolation to makes sense but the meshes linked to \cpp{mef1} and \cpp{mef2} may be different (and this is the interest of this function). There is no restriction for the dimension of the domain.\\
+
+(version 1.7) If you need to make more than one interpolation between the same finite element methods, it is better to use the function
+\cpp{getfem::interpolation\_solution(mef1, mef2, M); }\\[0.5cm]
+where \cpp{M} is a row matrix which will be filled with the linear map representing the interpolation (i.e. such that \cpp{V = MU}). The matrix should have the right dimensions (i.e. \cpp{mef2.nb\_dof()} x \cpp{mef1.nb\_dof()}).
  
 \section{Catch errors}
 \index{errors}
