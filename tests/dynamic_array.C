@@ -1,3 +1,22 @@
+/* *********************************************************************** */
+/*                                                                         */
+/* Copyright (C) 2002  Yves Renard.                                        */
+/*                                                                         */
+/* This program is free software; you can redistribute it and/or modify    */
+/* it under the terms of the GNU Lesser General Public License as          */
+/* published by the Free Software Foundation; version 2.1 of the License.  */
+/*                                                                         */
+/* This program is distributed in the hope that it will be useful,         */
+/* but WITHOUT ANY WARRANTY; without even the implied warranty of          */
+/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           */
+/* GNU Lesser General Public License for more details.                     */
+/*                                                                         */
+/* You should have received a copy of the GNU Lesser General Public        */
+/* License along with this program; if not, write to the Free Software     */
+/* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,  */
+/* USA.                                                                    */
+/*                                                                         */
+/* *********************************************************************** */
 #include <dal_basic.h>
 #include <deque>
 #include <complex>
@@ -21,6 +40,23 @@ int main(void) {
 	 << endl;
     cout << "size of complex<long double>: "
 	 << sizeof(std::complex<long double>) << endl;
+
+    // from stl_config.h
+#   ifdef __GNUC__
+    cout << "Gnu compiler " << __GNUC__ << "." << __GNUC_MINOR__ << endl;
+#   endif
+
+#   if defined(__sgi) && !defined(__GNUC__)
+    cout << "Sgi compiler " << _COMPILER_VERSION << endl;
+#   endif
+
+#   if defined(__SUNPRO_CC)
+    cout << "Sun pro compiler\n";
+#   endif
+
+#   if defined(__BORLANDC__)
+    cout << "Borland compiler\n";
+#   endif
 
     std::complex<float> x(1.0,0.0);
     cout << "A complex : " << x << endl;

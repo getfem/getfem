@@ -9,22 +9,23 @@
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 2001  Yves Renard.                                        */
+/* Copyright (C) 2002  Yves Renard.                                        */
 /*                                                                         */
 /* This file is a part of GETFEM++                                         */
 /*                                                                         */
 /* This program is free software; you can redistribute it and/or modify    */
-/* it under the terms of the GNU General Public License as published by    */
-/* the Free Software Foundation; version 2 of the License.                 */
+/* it under the terms of the GNU Lesser General Public License as          */
+/* published by the Free Software Foundation; version 2.1 of the License.  */
 /*                                                                         */
 /* This program is distributed in the hope that it will be useful,         */
 /* but WITHOUT ANY WARRANTY; without even the implied warranty of          */
 /* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           */
-/* GNU General Public License for more details.                            */
+/* GNU Lesser General Public License for more details.                     */
 /*                                                                         */
-/* You should have received a copy of the GNU General Public License       */
-/* along with this program; if not, write to the Free Software Foundation, */
-/* Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.         */
+/* You should have received a copy of the GNU Lesser General Public        */
+/* License along with this program; if not, write to the Free Software     */
+/* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,  */
+/* USA.                                                                    */
 /*                                                                         */
 /* *********************************************************************** */
 
@@ -55,15 +56,13 @@ namespace gmm
   template <class M> void copy(const identity_matrix&, M &m) {
     size_type i = 0, n = std::max(mat_nrows(m), mat_ncols(m)); clear(m);
     for (; i < n; ++i) m(i,i) = typename linalg_traits<M>::value_type(1);
-  }
+  } 
+  template <class M> inline void copy(const identity_matrix &, const M &m)
+  { copy_ident(identity_matrix(), linalg_const_cast(m)); }
   template <class V1, class V2> inline
   typename linalg_traits<V1>::value_type
   vect_sp(const identity_matrix &, const V1 &v1, const V2 &v2)
   { return vect_sp(v1, v2); }
-  template <class M> inline void copy(const identity_matrix&, const M &m)
-  { copy_ident(m, linalg_traits<M>::is_reference()); }
-  template <class M> inline void copy_ident(const M &m, linalg_true)
-  { copy(identity_matrix(), const_cast<M &>(m)); }
   template<class M> inline bool is_identity(const M&) { return false; }
   inline bool is_identity(const identity_matrix&) { return true; }
 
@@ -71,20 +70,19 @@ namespace gmm
   /*		Row matrix                                   		  */
   /* ******************************************************************** */
 
-
   template<class V> class row_matrix {
   protected :
     std::vector<V> li; /* array of rows.                                   */
     
   public :
     
-    typedef typename linalg_traits<V>::reference_type reference_type;
+    typedef typename linalg_traits<V>::reference reference;
     typedef typename linalg_traits<V>::value_type value_type;
     
     row_matrix(size_type r, size_type c) : li(r)
     { for (size_type i = 0; i < r; ++i) li[i] = V(c); }
     row_matrix(void) {}
-    reference_type operator ()(size_type l, size_type c)
+    reference operator ()(size_type l, size_type c)
     { return li[l][c]; }
     value_type operator ()(size_type l, size_type c) const
     { return li[l][c]; }
@@ -92,6 +90,16 @@ namespace gmm
     void clear_row(size_type i) { clear(li[i]); }
     void clear_mat() { for (size_type i=0; i < nrows(); ++i) clear_row(i); }
     void resize(size_type i) { li.resize(i); }
+
+    typename std::vector<V>::iterator begin(void)
+    { return li.begin(); }
+    typename std::vector<V>::iterator end(void)  
+    { return li.end(); }
+    typename std::vector<V>::const_iterator begin(void) const
+    { return li.begin(); }
+    typename std::vector<V>::const_iterator end(void) const
+    { return li.end(); }
+    
     
     V& row(size_type i) { return li[i]; }
     const V& row(size_type i) const { return li[i]; }
@@ -101,27 +109,51 @@ namespace gmm
     { return (nrows() == 0) ? 0 : li[0].size(); }
   };
 
+  template <class V> struct row_matrix_access {
+    typedef typename linalg_traits<row_matrix<V> >::reference reference;
+    typedef typename linalg_traits<row_matrix<V> >::row_iterator iterator;
+    
+    reference operator()(const iterator &itrow, size_type j)
+    { return (*itrow)[j]; }
+  };
+
   template <class V> struct linalg_traits<row_matrix<V> > {
     typedef row_matrix<V> this_type;
     typedef linalg_false is_reference;
     typedef abstract_matrix linalg_type;
     typedef typename linalg_traits<V>::value_type value_type;
-    typedef typename linalg_traits<V>::reference_type reference_type;
+    typedef typename linalg_traits<V>::reference reference;
     typedef typename linalg_traits<V>::storage_type storage_type;
     typedef simple_vector_ref<V *> sub_row_type;
     typedef simple_vector_ref<const V *> const_sub_row_type;
+    typedef typename std::vector<V>::iterator row_iterator;
+    typedef typename std::vector<V>::const_iterator const_row_iterator;
     typedef abstract_null_type sub_col_type;
     typedef abstract_null_type const_sub_col_type;
+    typedef abstract_null_type col_iterator;
+    typedef abstract_null_type const_col_iterator;
     typedef row_major sub_orientation;
+    typedef row_matrix_access<V> access_type;
     size_type nrows(const this_type &m) { return m.nrows(); }
     size_type ncols(const this_type &m) { return m.ncols(); }
-    const_sub_row_type row(const this_type &m, size_type i)
-    { return const_sub_row_type(m.row(i)); }
-    sub_row_type row(this_type &m, size_type i) 
-    { return sub_row_type(m.row(i)); }
+    row_iterator row_begin(this_type &m) { return m.begin(); }
+    row_iterator row_end(this_type &m) { return m.end(); }
+    const_row_iterator row_begin(const this_type &m) { return m.begin(); }
+    const_row_iterator row_end(const this_type &m) { return m.end(); }
+    const_sub_row_type row(const const_row_iterator &it)
+    { return const_sub_row_type(*it); }
+    sub_row_type row(const row_iterator &it) 
+    { return sub_row_type(*it); }
     const void* origin(const this_type &m) { return &m; }
     void do_clear(this_type &m) { m.clear_mat(); }
   };
+
+  // for GCC 2.95
+  template <class V> struct linalg_traits<const row_matrix<V> >
+    : public linalg_traits<row_matrix<V> > {};
+
+   template<class V> std::ostream &operator <<
+  (std::ostream &o, const row_matrix<V>& m) { gmm::write(o,m); return o; }
 
   /* ******************************************************************** */
   /*		Column matrix                                		  */
@@ -133,27 +165,44 @@ namespace gmm
     
   public :
     
-    typedef typename linalg_traits<V>::reference_type reference_type;
+    typedef typename linalg_traits<V>::reference reference;
     typedef typename linalg_traits<V>::value_type value_type;
     
     col_matrix(size_type r, size_type c) : li(c)
     { for (size_type i = 0; i < c; ++i) li[i] = V(r); }
     col_matrix(void) {}
-    reference_type operator ()(size_type l, size_type c)
+    reference operator ()(size_type l, size_type c)
     { return li[c][l]; }
     value_type operator ()(size_type l, size_type c) const
     { return li[c][l]; }
 
     void clear_col(size_type i) { clear(li[i]); }
-    void clear() { for (size_type i=0; i < ncols(); ++i) clear_col(i); }
+    void clear_mat() { for (size_type i=0; i < ncols(); ++i) clear_col(i); }
     void resize(size_type i) { li.resize(i); }
 
     V& col(size_type i) { return li[i]; }
     const V& col(size_type i) const { return li[i]; }
+
+    typename std::vector<V>::iterator begin(void)
+    { return li.begin(); }
+    typename std::vector<V>::iterator end(void)  
+    { return li.end(); }
+    typename std::vector<V>::const_iterator begin(void) const
+    { return li.begin(); }
+    typename std::vector<V>::const_iterator end(void) const
+    { return li.end(); }
     
     inline size_type ncols(void) const { return li.size(); }
     inline size_type nrows(void) const
     { return (ncols() == 0) ? 0 : li[0].size(); }
+  };
+
+  template <class V> struct col_matrix_access {
+    typedef typename linalg_traits<col_matrix<V> >::reference reference;
+    typedef typename linalg_traits<col_matrix<V> >::col_iterator iterator;
+    
+    reference operator()(const iterator &itcol, size_type i)
+    { return (*itcol)[j]; }
   };
 
   template <class V> struct linalg_traits<col_matrix<V> > {
@@ -161,23 +210,38 @@ namespace gmm
     typedef linalg_false is_reference;
     typedef abstract_matrix linalg_type;
     typedef typename linalg_traits<V>::value_type value_type;
-    typedef typename linalg_traits<V>::reference_type reference_type;
+    typedef typename linalg_traits<V>::reference reference;
     typedef typename linalg_traits<V>::storage_type storage_type;
     typedef simple_vector_ref<V *> sub_col_type;
     typedef simple_vector_ref<const V *> const_sub_col_type;
+    typedef typename std::vector<V>::iterator col_iterator;
+    typedef typename std::vector<V>::const_iterator const_col_iterator;
     typedef abstract_null_type sub_row_type;
     typedef abstract_null_type const_sub_row_type;
+    typedef abstract_null_type row_iterator;
+    typedef abstract_null_type const_row_iterator;
     typedef col_major sub_orientation;
+    typedef col_matrix_access<V> access_type;
     size_type nrows(const this_type &m) { return m.nrows(); }
     size_type ncols(const this_type &m) { return m.ncols(); }
-    const_sub_col_type col(const this_type &m, size_type i)
-    { return const_sub_col_type(m.col(i)); }
-    sub_col_type col(this_type &m, size_type i) 
-    { return sub_col_type(m.col(i)); }
+    col_iterator col_begin(this_type &m) { return m.begin(); }
+    col_iterator col_end(this_type &m) { return m.end(); }
+    const_col_iterator col_begin(const this_type &m) { return m.begin(); }
+    const_col_iterator col_end(const this_type &m) { return m.end(); }
+    const_sub_col_type col(const const_col_iterator &it)
+    { return const_sub_col_type(*it); }
+    sub_col_type col(const col_iterator &it) 
+    { return sub_col_type(*it); }
     const void* origin(const this_type &m) { return &m; }
-    void do_clear(this_type &m) { m.clear(); }
+    void do_clear(this_type &m) { m.clear_mat(); }
   };
 
+  template<class V> std::ostream &operator <<
+  (std::ostream &o, const col_matrix<V>& m) { gmm::write(o,m); return o; }
+
+    // for GCC 2.95
+  template <class V> struct linalg_traits<const col_matrix<V> >
+    : public linalg_traits<col_matrix<V> > {};
 
   /* ******************************************************************** */
   /*		Block matrix                                		  */
@@ -218,13 +282,18 @@ namespace gmm
     typedef linalg_false is_reference;
     typedef abstract_matrix linalg_type;
     typedef typename linalg_traits<MAT>::value_type value_type;
-    typedef typename linalg_traits<MAT>::reference_type reference_type;
+    typedef typename linalg_traits<MAT>::reference reference;
     typedef typename linalg_traits<MAT>::abstract_storage storage_type;
     typedef abstract_null_type sub_row_type; // to be done ...
     typedef abstract_null_type const_sub_row_type; // to be done ...
+    typedef abstract_null_type row_iterator; // to be done ...
+    typedef abstract_null_type const_row_iterator; // to be done ...
     typedef abstract_null_type sub_col_type; // to be done ...
     typedef abstract_null_type const_sub_col_type; // to be done ...
+    typedef abstract_null_type col_iterator; // to be done ...
+    typedef abstract_null_type const_col_iterator; // to be done ...
     typedef abstract_null_type sub_orientation; // to be done ...
+    typedef abstract_null_type access_type; // to be done ...
     size_type nrows(const this_type &m) { return m.nrows(); }
     size_type ncols(const this_type &m) { return m.ncols(); }
     const void* origin(const this_type &m) { return &m; }
@@ -244,9 +313,9 @@ namespace gmm
     intcol.resize(_ncolblocks);
     introw.resize(_nrowblocks);
     for (size_type j = 0, l = 0; j < _ncolblocks; ++j) {
-      intcol[j] = sub_interval(l, l+c2[j]-1); l += c2[j];
+      intcol[j] = sub_interval(l, c2[j]); l += c2[j];
       for (size_type i = 0, k = 0; i < _nrowblocks; ++i) {
-	if (j == 0) { introw[i] = sub_interval(k, k+c1[i]-1); k += c1[i]; }
+	if (j == 0) { introw[i] = sub_interval(k, c1[i]); k += c1[i]; }
 	block(i, j) = MAT(c1[i], c2[j]);
       }
     }
@@ -283,22 +352,12 @@ namespace gmm
 
   template <class MAT, class V1, class V2>
   void mult(const block_matrix<MAT> &m, const V1 &v1, const V2 &v2)
-  { mult_const(m, v1, v2, typename linalg_traits<V2>::is_reference()); }
-
-  template <class MAT, class V1, class V2>
-  void mult_const(const block_matrix<MAT> &m, const V1 &v1, const V2 &v2, 
-	     linalg_true)
-  { mult(m, v1, const_cast<V2 &>(v2)); }
+  { mult(m, v1, linalg_const_cast(v2)); }
 
   template <class MAT, class V1, class V2, class V3>
-  void mult(const block_matrix<MAT> &m, const V1 &v1, const V2 &v2, const V3 &v3)
-  { mult_const(m, v1, v2, v3, typename linalg_traits<V3>::is_reference()); }
-
-  template <class MAT, class V1, class V2, class V3>
-  void mult_const(const block_matrix<MAT> &m, const V1 &v1, const V2 &v2,
-	     const V3 &v3, linalg_true)
-  { mult(m, v1, v2, const_cast<V3 &>(v3)); }
-
+  void mult(const block_matrix<MAT> &m, const V1 &v1, const V2 &v2, 
+	    const V3 &v3)
+  { mult_const(m, v1, v2, linalg_const_cast(v3)); }
 
 }
 

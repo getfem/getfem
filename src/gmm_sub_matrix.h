@@ -9,22 +9,23 @@
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 2001  Yves Renard.                                        */
+/* Copyright (C) 2002  Yves Renard.                                        */
 /*                                                                         */
 /* This file is a part of GETFEM++                                         */
 /*                                                                         */
 /* This program is free software; you can redistribute it and/or modify    */
-/* it under the terms of the GNU General Public License as published by    */
-/* the Free Software Foundation; version 2 of the License.                 */
+/* it under the terms of the GNU Lesser General Public License as          */
+/* published by the Free Software Foundation; version 2.1 of the License.  */
 /*                                                                         */
 /* This program is distributed in the hope that it will be useful,         */
 /* but WITHOUT ANY WARRANTY; without even the implied warranty of          */
 /* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           */
-/* GNU General Public License for more details.                            */
+/* GNU Lesser General Public License for more details.                     */
 /*                                                                         */
-/* You should have received a copy of the GNU General Public License       */
-/* along with this program; if not, write to the Free Software Foundation, */
-/* Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.         */
+/* You should have received a copy of the GNU Lesser General Public        */
+/* License along with this program; if not, write to the Free Software     */
+/* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,  */
+/* USA.                                                                    */
 /*                                                                         */
 /* *********************************************************************** */
 
@@ -34,176 +35,361 @@
 namespace gmm {
 
   /* ********************************************************************* */
-  /*		sub-vector for matrices                                    */
+  /*		sub row matrices type                                      */
   /* ********************************************************************* */
 
-  template <class PT, class SUBI> 
-  struct mat_sub_vector {
-
-    typedef typename std::iterator_traits<PT>::value_type V;
-    typedef typename std::iterator_traits<PT>::reference ref_V;
-    typedef typename linalg_traits<V>::value_type value_type;
-    typedef typename vect_ref_type<PT,  V>::access_type access_type;
-
-    typename sub_vector_type<PT, SUBI>::vector_type sv;
-    V ref_vect;
-    
-    access_type operator[](size_type i) { return sv[psi->index(i)]; }
-    value_type operator[](size_type i) const { return sv[psi->index(i)]; }
-
-    mat_sub_vector(const V &v, const SUBI &si) : ref_vect(v)
-      { sv = sub_vector(ref_vect, si); }
-    mat_sub_vector(void) {}
-  };
-
-  template <class PT, class SUBI> // à supprimer à terme...
-  struct linalg_traits<mat_sub_vector<PT, SUBI> > {
-    typedef mat_sub_vector<PT, SUBI> this_type;
-    typedef typename std::iterator_traits<PT>::value_type V;
-    typedef typename sub_vector_type<PT, SUBI>::vector_type W;
-    typedef linalg_true is_reference;
-    typedef abstract_vector linalg_type;
-    typedef typename linalg_traits<V>::value_type value_type;
-    typedef typename linalg_traits<V>::reference_type reference_type;
-    typedef typename linalg_traits<W>::iterator iterator;
-    typedef typename linalg_traits<W>::const_iterator const_iterator;
-    typedef typename linalg_traits<V>::storage_type storage_type;
-    size_type size(const this_type &v) { return vect_size(v.sv); }
-    iterator begin(this_type &v)
-      { return vect_begin(v.sv); }
-    const_iterator begin(const this_type &v)
-      { return vect_begin(v.sv); }
-    iterator end(this_type &v)
-      { return vect_end(v.sv); }
-    const_iterator end(const this_type &v)
-      { return vect_end(v.sv); }
-    const void* origin(const this_type &v) { return linalg_origin(v.ref_vect);}
-    void do_clear(this_type &v) { std::fill(begin(v), end(v), value_type(0)); }
-  };
-
-  /* ********************************************************************* */
-  /*		sub-matrices types                                         */
-  /* ********************************************************************* */
-
-  template <class PT, class SUBI1, class SUBI2, class STORAGE, class SUBORIENT>
-  struct gen_sub_matrix {
-    const SUBI1 *psi1;
-    const SUBI1 *psi2;
-    PT pm;
-    
+  template <class PT, class SUBI1, class SUBI2> struct gen_sub_row_matrix {
+    typedef gen_sub_row_matrix<PT, SUBI1, SUBI2> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
     typedef typename std::iterator_traits<PT>::reference ref_M;
-    typedef typename linalg_traits<M>::value_type value_type;
-    typedef typename mat_ref_type<PT,  M>::access_type access_type;
+    typedef typename select_return<typename linalg_traits<M>
+            ::const_row_iterator, typename linalg_traits<M>::row_iterator,
+	    PT>::return_type iterator;
+    typedef typename linalg_traits<this_type>::reference reference;
+    typedef typename linalg_traits<M>::access_type access_type;
+
+    const SUBI1 *psi1;
+    const SUBI2 *psi2;
+    iterator _begin;
+    const void *origin;
     
-    ref_M deref(void) const { return *pm; }
-    access_type operator()(size_type i, size_type j) const
-    { return (*pm)(psi1->index(i), psi2->index(j)); }
-    value_type operator()(size_type i, size_type j)
-    { return (*pm)(psi1->index(i), psi2->index(j)); }
+    reference operator()(size_type i, size_type j) const
+    { return access_type()(_begin + psi1->index(i), psi2->index(j)); }
+   
     size_type nrows(void) const { return psi1->size(); }
     size_type ncols(void) const { return psi2->size(); }
     
-    gen_sub_matrix(ref_M mm, const SUBI1 &si1, const SUBI2 &si2)
-      : psi1(&si1), psi2(&si2), pm(&mm) {}
-    gen_sub_matrix() {}
+    gen_sub_row_matrix(ref_M m, const SUBI1 &si1, const SUBI2 &si2)
+      : psi1(&si1), psi2(&si2), _begin(mat_row_begin(m)),
+	origin(linalg_origin(m)) {}
+    gen_sub_row_matrix() {}
   };
-  
-  template <class PT, class SUBI1, class SUBI2, class STORAGE>
-  struct linalg_traits<gen_sub_matrix<PT, SUBI1, SUBI2, STORAGE, row_major> > {
-    typedef gen_sub_matrix<PT, SUBI1, SUBI2, STORAGE, row_major> this_type;
+
+  template <class PT, class SUBI1, class SUBI2> 
+  struct gen_sub_row_matrix_access {
+    typedef gen_sub_row_matrix<PT, SUBI1, SUBI2> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
-    typedef linalg_true is_reference;
+    typedef typename linalg_traits<this_type>::reference reference;
+    typedef typename linalg_traits<M>::access_type access_type;
+    typedef typename linalg_traits<this_type>::row_iterator iterator;
+    
+    reference operator()(const iterator &itrow, size_type i)
+    { return access_type()(*itrow, itrow.psi2->index(i)); }
+  };
+
+  template <class PT, class SUBI1, class SUBI2>
+  struct gen_sub_row_matrix_iterator {
+    typedef gen_sub_row_matrix<PT, SUBI1, SUBI2> this_type;
+    typedef typename modifiable_pointer<PT>::pointer MPT;
+    typedef typename std::iterator_traits<PT>::value_type M;
+    typedef typename linalg_traits<M>::row_iterator ITER;
+    typedef ITER value_type;
+    typedef ITER *pointer;
+    typedef ITER &reference;
+    typedef typename linalg_traits<M>::access_type access_type;
+    typedef ptrdiff_t difference_type;
+    typedef size_t size_type;
+    typedef std::random_access_iterator_tag  iterator_category;
+    typedef gen_sub_row_matrix_iterator<PT, SUBI1, SUBI2> iterator;
+
+    ITER it;
+    const SUBI1 *psi1;
+    const SUBI2 *psi2;
+    size_type ii;
+    
+    iterator operator ++(int) { iterator tmp = *this; ii++; return tmp; }
+    iterator operator --(int) { iterator tmp = *this; ii--; return tmp; }
+    iterator &operator ++()   { ii++; return *this; }
+    iterator &operator --()   { ii--; return *this; }
+    iterator &operator +=(difference_type i) { ii += i; return *this; }
+    iterator &operator -=(difference_type i) { ii -= i; return *this; }
+    iterator operator +(difference_type i) const 
+    { iterator itt = *this; return (itt += i); }
+    iterator operator -(difference_type i) const
+    { iterator itt = *this; return (itt -= i); }
+    difference_type operator -(const iterator &i) const { return ii - i.ii; }
+
+    ITER operator *() const { return it + psi1->index(ii); }
+    ITER operator [](int i) { return it + psi1->index(ii+i); }
+
+    bool operator ==(const iterator &i) const { return (ii == i.ii); }
+    bool operator !=(const iterator &i) const { return !(i == *this); }
+    bool operator < (const iterator &i) const { return (ii < i.ii); }
+
+    gen_sub_row_matrix_iterator(void) {}
+    gen_sub_row_matrix_iterator(const 
+	     gen_sub_row_matrix_iterator<MPT, SUBI1, SUBI2> &itm)
+      : it(itm.it), psi1(itm.psi1), psi2(itm.psi2), ii(itm.ii) {}
+    gen_sub_row_matrix_iterator(const ITER &iter, const SUBI1 &si1,
+				const SUBI2 &si2, size_type i)
+      : it(iter), psi1(&si1), psi2(&si2), ii(i) { }
+    
+  };
+
+  template <class PT, class SUBI1, class SUBI2>
+  struct linalg_traits<gen_sub_row_matrix<PT, SUBI1, SUBI2> > {
+    typedef gen_sub_row_matrix<PT, SUBI1, SUBI2> this_type;
+    typedef typename std::iterator_traits<PT>::value_type M;
+    typedef typename which_reference<PT>::is_reference is_reference;
     typedef abstract_matrix linalg_type;
     typedef typename linalg_traits<M>::value_type value_type;
-    typedef typename linalg_traits<M>::reference_type reference_type;
+    typedef typename select_return<value_type,
+            typename linalg_traits<M>::reference, PT>::return_type reference;
     typedef typename linalg_traits<M>::storage_type storage_type;
     typedef abstract_null_type sub_col_type;
+    typedef abstract_null_type col_iterator;
     typedef abstract_null_type const_sub_col_type;
-    typedef mat_sub_vector<typename linalg_traits<M>::sub_row_type *, SUBI1>
-    sub_row_type;
-    typedef mat_sub_vector<const typename linalg_traits<M>
-    ::const_sub_row_type *, SUBI1> const_sub_row_type;
+    typedef abstract_null_type const_col_iterator;
+    typedef typename sub_vector_type<const typename
+            linalg_traits<M>::const_sub_row_type *, SUBI2>::vector_type
+            const_sub_row_type;
+    typedef typename select_return<const_sub_row_type, 
+            typename sub_vector_type<typename linalg_traits<M>::sub_row_type *,
+	    SUBI2>::vector_type, PT>::return_type sub_row_type;
+    typedef gen_sub_row_matrix_iterator<typename const_pointer<PT>::pointer,
+	    SUBI1, SUBI2> const_row_iterator;
+    typedef gen_sub_row_matrix_iterator<PT, SUBI1, SUBI2> row_iterator;
+    typedef gen_sub_row_matrix_access<PT, SUBI1, SUBI2> access_type;
     typedef row_major sub_orientation;
     size_type nrows(const this_type &m) { return m.nrows(); }
     size_type ncols(const this_type &m) { return m.ncols(); }
-    const_sub_row_type row(const this_type &m, size_type i) { 
-      return const_sub_row_type(mat_row(m.deref(),m.psi2->index(i)),*(m.psi1));
+    const_sub_row_type row(const const_row_iterator &it)
+    { return const_sub_row_type(linalg_traits<M>().row(*it), *(it.psi2)); }
+    sub_row_type row(const row_iterator &it)
+    { return sub_row_type(linalg_traits<M>().row(*it), *(it.psi2)); }
+    const_row_iterator row_begin(const this_type &m)
+    { return const_row_iterator(m._begin, *(m.psi1), *(m.psi2), 0); }
+    row_iterator row_begin(this_type &m)
+    { return row_iterator(m._begin, *(m.psi1), *(m.psi2), 0); }
+    const_row_iterator row_end(const this_type &m)
+    { return const_row_iterator(m._begin, *(m.psi1), *(m.psi2),  m.nrows()); }
+    row_iterator row_end(this_type &m)
+    { return row_iterator(m._begin, *(m.psi1), *(m.psi2), m.nrows()); }    
+    const void* origin(const this_type &m) { return m.origin; }
+    void do_clear(this_type &m) {
+      row_iterator it = mat_row_begin(m), ite = mat_row_end(m);
+      for (; it != ite; ++it) clear(row(it));
     }
-    sub_row_type row(this_type &m, size_type i)
-    { return sub_row_type(mat_row(m.deref(), m.psi2->index(i)), *(m.psi1)); }
-    const void* origin(const this_type &m) { return linalg_origin(m.deref()); }
-    void do_clear(this_type &m)
-    { for (size_type i = 0; i < nrows(m); ++i) clear(row(m,i)); }
+  };
+  
+  template <class PT, class SUBI1, class SUBI2> std::ostream &operator <<
+  (std::ostream &o, const gen_sub_row_matrix<PT, SUBI1, SUBI2>& m)
+  { gmm::write(o,m); return o; }
+
+  // for GCC 2.95
+  template <class PT, class SUBI1, class SUBI2>
+  struct linalg_traits<const gen_sub_row_matrix<PT, SUBI1, SUBI2> >
+    : public linalg_traits<gen_sub_row_matrix<PT, SUBI1, SUBI2> > {};
+
+  /* ********************************************************************* */
+  /*		sub column matrices type                                   */
+  /* ********************************************************************* */
+
+  template <class PT, class SUBI1, class SUBI2> struct gen_sub_col_matrix {
+    typedef gen_sub_col_matrix<PT, SUBI1, SUBI2> this_type;
+    typedef typename std::iterator_traits<PT>::value_type M;
+    typedef typename std::iterator_traits<PT>::reference ref_M;
+    typedef typename select_return<typename linalg_traits<M>
+            ::const_col_iterator, typename linalg_traits<M>::col_iterator,
+	    PT>::return_type iterator;
+    typedef typename linalg_traits<this_type>::reference reference;
+    typedef typename linalg_traits<M>::access_type access_type;
+
+    const SUBI1 *psi1;
+    const SUBI2 *psi2;
+    iterator _begin;
+    const void *origin;
+    
+    reference operator()(size_type i, size_type j) const
+    { // cout << "to(" << psi1->index(i) << "," << psi2->index(j) << ")";
+    return access_type()(_begin + psi2->index(j), psi1->index(i)); }
+
+    size_type nrows(void) const { return psi1->size(); }
+    size_type ncols(void) const { return psi2->size(); }
+    
+    gen_sub_col_matrix(ref_M m, const SUBI1 &si1, const SUBI2 &si2)
+      : psi1(&si1), psi2(&si2), _begin(mat_col_begin(m)),
+        origin(linalg_origin(m)) {}
+    gen_sub_col_matrix() {}
   };
 
-    template <class PT, class SUBI1, class SUBI2, class STORAGE>
-  struct linalg_traits<gen_sub_matrix<PT, SUBI1, SUBI2, STORAGE, col_major> > {
-    typedef gen_sub_matrix<PT, SUBI1, SUBI2, STORAGE, col_major> this_type;
+  template <class PT, class SUBI1, class SUBI2> 
+  struct gen_sub_col_matrix_access {
+    typedef gen_sub_col_matrix<PT, SUBI1, SUBI2> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
-    typedef linalg_true is_reference;
+    typedef typename linalg_traits<this_type>::reference reference;
+    typedef typename linalg_traits<M>::access_type access_type;
+    typedef typename linalg_traits<this_type>::col_iterator iterator;
+    
+    reference operator()(const iterator &itcol, size_type i)
+    { return access_type()(*itcol, itcol.psi1->index(i)); }
+  };
+
+  template <class PT, class SUBI1, class SUBI2>
+  struct gen_sub_col_matrix_iterator {
+    typedef gen_sub_col_matrix<PT, SUBI1, SUBI2> this_type;
+    typedef typename modifiable_pointer<PT>::pointer MPT;
+    typedef typename std::iterator_traits<PT>::value_type M;
+    typedef typename linalg_traits<M>::col_iterator ITER;
+    typedef ITER value_type;
+    typedef ITER *pointer;
+    typedef ITER &reference;
+    typedef typename linalg_traits<M>::access_type access_type;
+    typedef ptrdiff_t difference_type;
+    typedef size_t size_type;
+    typedef std::random_access_iterator_tag  iterator_category;
+    typedef gen_sub_col_matrix_iterator<PT, SUBI1, SUBI2> iterator;
+
+    ITER it;
+    const SUBI1 *psi1;
+    const SUBI2 *psi2;
+    size_type ii;
+    
+    iterator operator ++(int) { iterator tmp = *this; ii++; return tmp; }
+    iterator operator --(int) { iterator tmp = *this; ii--; return tmp; }
+    iterator &operator ++()   { ii++; return *this; }
+    iterator &operator --()   { ii--; return *this; }
+    iterator &operator +=(difference_type i) { ii += i; return *this; }
+    iterator &operator -=(difference_type i) { ii -= i; return *this; }
+    iterator operator +(difference_type i) const 
+    { iterator itt = *this; return (itt += i); }
+    iterator operator -(difference_type i) const
+    { iterator itt = *this; return (itt -= i); }
+    difference_type operator -(const iterator &i) const { return ii - i.ii; }
+
+    ITER operator *() const { return it + psi2->index(ii); }
+    ITER operator [](int i) { return it + psi2->index(ii+i); }
+
+    bool operator ==(const iterator &i) const { return (ii == i.ii); }
+    bool operator !=(const iterator &i) const { return !(i == *this); }
+    bool operator < (const iterator &i) const { return (ii < i.ii); }
+
+    gen_sub_col_matrix_iterator(void) {}
+    gen_sub_col_matrix_iterator(const 
+	gen_sub_col_matrix_iterator<MPT, SUBI1, SUBI2> &itm)
+      : it(itm.it), psi1(itm.psi1), psi2(itm.psi2), ii(itm.ii) {}
+    gen_sub_col_matrix_iterator(const ITER &iter, const SUBI1 &si1,
+				const SUBI2 &si2, size_type i)
+      : it(iter), psi1(&si1), psi2(&si2), ii(i) { }
+  };
+
+  template <class PT, class SUBI1, class SUBI2>
+  struct linalg_traits<gen_sub_col_matrix<PT, SUBI1, SUBI2> > {
+    typedef gen_sub_col_matrix<PT, SUBI1, SUBI2> this_type;
+    typedef typename std::iterator_traits<PT>::value_type M;
+    typedef typename which_reference<PT>::is_reference is_reference;
     typedef abstract_matrix linalg_type;
     typedef typename linalg_traits<M>::value_type value_type;
-    typedef typename linalg_traits<M>::reference_type reference_type;
+    typedef typename select_return<value_type,
+            typename linalg_traits<M>::reference, PT>::return_type reference;
     typedef typename linalg_traits<M>::storage_type storage_type;
     typedef abstract_null_type sub_row_type;
+    typedef abstract_null_type row_iterator;
     typedef abstract_null_type const_sub_row_type;
-    typedef mat_sub_vector<typename linalg_traits<M>
-    ::sub_col_type *, SUBI1> sub_col_type;
-    typedef mat_sub_vector<const typename linalg_traits<M>
-    ::const_sub_col_type *, SUBI1> const_sub_col_type;
+    typedef abstract_null_type const_row_iterator;
+    typedef typename sub_vector_type<const typename
+            linalg_traits<M>::const_sub_col_type *, SUBI1>::vector_type
+            const_sub_col_type;
+    typedef typename select_return<const_sub_col_type, 
+            typename sub_vector_type<typename linalg_traits<M>::sub_col_type *,
+	    SUBI1>::vector_type, PT>::return_type sub_col_type;
+    typedef gen_sub_col_matrix_iterator<typename const_pointer<PT>::pointer,
+	    SUBI1, SUBI2> const_col_iterator;
+    typedef gen_sub_col_matrix_iterator<PT, SUBI1, SUBI2> col_iterator;
+    typedef gen_sub_col_matrix_access<PT, SUBI1, SUBI2> access_type;
     typedef col_major sub_orientation;
     size_type nrows(const this_type &m) { return m.nrows(); }
     size_type ncols(const this_type &m) { return m.ncols(); }
-    const_sub_col_type col(const this_type &m, size_type i)
-    { return const_sub_col_type(mat_col(m.deref(),m.psi1->index(i)),*(m.psi2)); }
-    sub_col_type col(this_type &m, size_type i)
-    { return sub_col_type(mat_col(m.deref(), m.psi1->index(i)), *(m.psi2)); }
-    const void* origin(const this_type &m) { return linalg_origin(m.deref()); }
-    void do_clear(this_type &m)
-    { for (size_type i = 0; i < ncols(m); ++i) clear(col(m,i)); }
+    const_sub_col_type col(const const_col_iterator &it)
+    { return const_sub_col_type(linalg_traits<M>().col(*it), *(it.psi1)); }
+    sub_col_type col(const col_iterator &it)
+    { return sub_col_type(linalg_traits<M>().col(*it), *(it.psi1)); }
+    const_col_iterator col_begin(const this_type &m)
+    { return const_col_iterator(m._begin, *(m.psi1), *(m.psi2), 0); }
+    col_iterator col_begin(this_type &m)
+    { return col_iterator(m._begin, *(m.psi1), *(m.psi2), 0); }
+    const_col_iterator col_end(const this_type &m)
+    { return const_col_iterator(m._begin, *(m.psi1), *(m.psi2),  m.ncols()); }
+    col_iterator col_end(this_type &m)
+    { return col_iterator(m._begin, *(m.psi1), *(m.psi2), m.ncols()); }    
+    const void* origin(const this_type &m) { return m.origin; }
+    void do_clear(this_type &m) {
+      col_iterator it = mat_col_begin(m), ite = mat_col_end(m);
+      for (; it != ite; ++it) clear(col(it));
+    }
   };
+
+  template <class PT, class SUBI1, class SUBI2> std::ostream &operator <<
+  (std::ostream &o, const gen_sub_col_matrix<PT, SUBI1, SUBI2>& m)
+  { gmm::write(o,m); return o; }
+
+  // for GCC 2.95
+  template <class PT, class SUBI1, class SUBI2>
+  struct linalg_traits<const gen_sub_col_matrix<PT, SUBI1, SUBI2> >
+    : public linalg_traits<gen_sub_col_matrix<PT, SUBI1, SUBI2> > {};
+
 
   /* ******************************************************************** */
   /*		sub matrices                                              */
   /* ******************************************************************** */
+
   
+  template <class PT, class SUBI1, class SUBI2, class ST>
+  struct _sub_matrix_type;
+  template <class PT, class SUBI1, class SUBI2>
+  struct _sub_matrix_type<PT, SUBI1, SUBI2, col_major>
+  { typedef gen_sub_col_matrix<PT, SUBI1, SUBI2> matrix_type; };
+  template <class PT, class SUBI1, class SUBI2>
+  struct _sub_matrix_type<PT, SUBI1, SUBI2, row_major>
+  { typedef gen_sub_row_matrix<PT, SUBI1, SUBI2> matrix_type; };
   template <class PT, class SUBI1, class SUBI2>
   struct sub_matrix_type {
     typedef typename std::iterator_traits<PT>::value_type M;
-    typedef gen_sub_matrix<PT, SUBI1, SUBI2,
-      typename linalg_traits<M>::storage_type,
-      typename principal_orientation_type<typename
-     linalg_traits<M>::sub_orientation>::potype> matrix_type;
+    typedef typename _sub_matrix_type<PT, SUBI1, SUBI2,
+        typename principal_orientation_type<typename
+        linalg_traits<M>::sub_orientation>::potype>::matrix_type matrix_type;
   };
 
   template <class M, class SUBI1, class SUBI2>  inline
-  typename sub_matrix_type<M *, SUBI1, SUBI2>::matrix_type
+    typename select_return<typename sub_matrix_type<const M *, SUBI1, SUBI2>
+    ::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI2>::matrix_type,
+    M *>::return_type
   sub_matrix(M &m, const SUBI1 &si1, const SUBI2 &si2) {
-    return
-      typename sub_matrix_type<M *, SUBI1, SUBI2>::matrix_type(m, si1, si2);
+    return typename select_return<typename sub_matrix_type<const M *, SUBI1,
+      SUBI2>::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI2>
+      ::matrix_type, M *>::return_type(linalg_cast(m), si1, si2);
+  }
+
+  template <class M, class SUBI1, class SUBI2>  inline
+    typename select_return<typename sub_matrix_type<const M *, SUBI1, SUBI2>
+    ::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI2>::matrix_type,
+    const M *>::return_type
+  sub_matrix(const M &m, const SUBI1 &si1, const SUBI2 &si2) {
+    return typename select_return<typename sub_matrix_type<const M *, SUBI1,
+      SUBI2>::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI2>
+      ::matrix_type, M *>::return_type(linalg_cast(m), si1, si2);
   }
 
   template <class M, class SUBI1>  inline
-  typename sub_matrix_type<M *, SUBI1, SUBI1>::matrix_type
+    typename select_return<typename sub_matrix_type<const M *, SUBI1, SUBI1>
+    ::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI1>::matrix_type,
+    M *>::return_type
   sub_matrix(M &m, const SUBI1 &si1) {
-    return typename sub_matrix_type<M *, SUBI1, SUBI1>::matrix_type(m, si1, si1);
+    return typename select_return<typename sub_matrix_type<const M *, SUBI1,
+      SUBI1>::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI1>
+      ::matrix_type, M *>::return_type(linalg_cast(m), si1, si1);
   }
 
-  // à spécifier suivant le type de la référence
-
-   template <class M, class SUBI1, class SUBI2>  inline
-   typename sub_matrix_type<const M *, SUBI1, SUBI2>::matrix_type
-   sub_matrix(const M &m, const SUBI1 &si1, const SUBI2 &si2) {
-     return typename sub_matrix_type<const M *, SUBI1, SUBI2>::matrix_type(m,
-								   si1, si2);
-   }
-  
   template <class M, class SUBI1>  inline
-  typename sub_matrix_type<const M *, SUBI1, SUBI1>::matrix_type
+    typename select_return<typename sub_matrix_type<const M *, SUBI1, SUBI1>
+    ::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI1>::matrix_type,
+    const M *>::return_type
   sub_matrix(const M &m, const SUBI1 &si1) {
-    return typename sub_matrix_type<const M *, SUBI1, SUBI1>::matrix_type(m, si1, si1);
+    return typename select_return<typename sub_matrix_type<const M *, SUBI1,
+      SUBI1>::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI1>
+      ::matrix_type, M *>::return_type(linalg_cast(m), si1, si1);
   }
+  
 
 }
 

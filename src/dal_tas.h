@@ -11,24 +11,25 @@
 /*                                                                         */
 /***************************************************************************/
 /*                                                                         */
-/* Copyright (C) 2001  Yves Renard.                                        */
+/* Copyright (C) 1995-2002  Yves Renard.                                   */
 /*                                                                         */
 /* This file is a part of GETFEM++                                         */
 /*                                                                         */
 /* This program is free software; you can redistribute it and/or modify    */
-/* it under the terms of the GNU General Public License as published by    */
-/* the Free Software Foundation; version 2 of the License.                 */
+/* it under the terms of the GNU Lesser General Public License as          */
+/* published by the Free Software Foundation; version 2.1 of the License.  */
 /*                                                                         */
 /* This program is distributed in the hope that it will be useful,         */
 /* but WITHOUT ANY WARRANTY; without even the implied warranty of          */
 /* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           */
-/* GNU General Public License for more details.                            */
+/* GNU Lesser General Public License for more details.                     */
 /*                                                                         */
-/* You should have received a copy of the GNU General Public License       */
-/* along with this program; if not, write to the Free Software Foundation, */
-/* Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.         */
+/* You should have received a copy of the GNU Lesser General Public        */
+/* License along with this program; if not, write to the Free Software     */
+/* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,  */
+/* USA.                                                                    */
 /*                                                                         */
-/***************************************************************************/
+/* *********************************************************************** */
 
 
 #ifndef __DAL_TAS_H
@@ -98,7 +99,7 @@ namespace dal
     dnt_const_iterator(void) {}
     dnt_const_iterator(const dynamic_tas<T,pks> &da, size_type ii)
       : id(da, ii), ib(da.index(), ii) { lt = da.index().last_true(); }
-    dnt_const_iterator(const dnt_iterator<T,pks> &it, size_type ii)
+    dnt_const_iterator(const dnt_iterator<T,pks> &it)
       : id(it.id), ib(it.ib), lt(it.lt) { }
     
     inline size_type index(void) const { return id.index(); }
@@ -126,16 +127,12 @@ namespace dal
     { return id < i.id;}
   };
 
-
   template<class T, unsigned char pks> class dynamic_tas
-    : public dynamic_array<T, pks>
-  {
+    : public dynamic_array<T, pks> {
     protected :
-
       bit_vector ind;
     
     public :
-
       typedef typename dynamic_array<T, pks>::iterator iterator;
       typedef typename dynamic_array<T, pks>::const_iterator const_iterator;
       typedef dnt_iterator<T, pks> tas_iterator;

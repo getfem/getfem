@@ -1,95 +1,285 @@
-#include <gmm.h>
+/* *********************************************************************** */
+/*                                                                         */
+/* Copyright (C) 2002  Yves Renard.                                        */
+/*                                                                         */
+/* This program is free software; you can redistribute it and/or modify    */
+/* it under the terms of the GNU Lesser General Public License as          */
+/* published by the Free Software Foundation; version 2.1 of the License.  */
+/*                                                                         */
+/* This program is distributed in the hope that it will be useful,         */
+/* but WITHOUT ANY WARRANTY; without even the implied warranty of          */
+/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           */
+/* GNU Lesser General Public License for more details.                     */
+/*                                                                         */
+/* You should have received a copy of the GNU Lesser General Public        */
+/* License along with this program; if not, write to the Free Software     */
+/* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,  */
+/* USA.                                                                    */
+/*                                                                         */
+/* *********************************************************************** */
 #include <bgeot_matrix.h>
-
+#include <gmm.h>
 
 int main(void)
 {
   try {
-    std::vector<std::complex<float> > cc(10);
-    gmm::clear(cc);
-    cout << "cc = "; gmm::write(cout, cc); cout << endl;
 
-    std::vector<double> v(10), w(10);
-    gmm::clear(v);
-    gmm::clear(w);
-    std::fill(v.begin(), v.end(), 1.0);
-    gmm::copy(v, w);
+    cout.precision(16);
+
+    cout << "/***********************************************************/\n";
+    cout << "/*                   Test of fsmatrix                      */\n";
+    cout << "/***********************************************************/\n";
+
+    bgeot::fsmatrix<double, 10> m;
+    bgeot::fsvector<double, 10> y, x, b;
+    gmm::copy(gmm::identity_matrix(), m);
+    int j = 5, k = 12;
+    for (int i = 0; i < 10; ++i) { 
+      m(i, j) = double(k);
+      j = (j + 6) % 10; k = (k + 15) % 31; 
+      m(i, j) = double(k);
+      j = (j + 6) % 10; k = (k + 15) % 31;
+      x[i] = 10.0 * double(i - 5 + ((i >= 5) ? 1 : 0));
+    }
+    cout << "m = " << m << endl;
+    cout << "x = " << x << endl;
+
+    gmm::mult(m, x, b);
+    cout << "b = " << b << endl;
+    gmm::clear(y);
+    gmm::bicgstab(m, y, b, gmm::identity_matrix(), 1000, 1E-16, 0);
+    cout << "y = " << y << endl;
+    gmm::add(gmm::scaled(x, -1.0), y);
+    cout << "y = " << y << endl;
+    double error = gmm::vect_norm2(y);
+    cout << "Error : " << error << endl;
+    if (error > 1.0E-10)
+      DAL_THROW(dal::failure_error, "computation error too large : " << error);
     
-    cout << "w = "; gmm::write(cout, w); cout << endl;
+    cout << "/***********************************************************/\n";
+    cout << "/*                   Test of vsmatrix                      */\n";
+    cout << "/***********************************************************/\n";
 
-    bgeot::fsvector<double, 10> x;
-
-    gmm::copy(v, x);
-
-    cout << "x = "; gmm::write(cout, x); cout << endl;
-
-    gmm::add(v, w, x);
-
-    cout << "x = "; gmm::write(cout, x); cout << endl;
-
-    // cout << "sp = " << gmm::vect_sp(v, w) << endl;
-
-    gmm::wsvector<double> z(10);
-    z[4] = 1; z[5] = 1;
-
-    gmm::add(v, z, x);
-
-    cout << "x = "; gmm::write(cout, x); cout << endl;
-
-    gmm::copy(z, x);
+    bgeot::vsmatrix<double> m2(10,10);
+    gmm::copy(m, m2);
+    cout << "m2 = " << m2 << endl;
+    std::vector<double> y2(10), b2(10);
+    gmm::copy(b, b2);
+    gmm::clear(y2);
+    gmm::bicgstab(m2, y2, b2, gmm::identity_matrix(), 1000, 1E-16, 0);
+    cout << "y2 = " << y2 << endl;
+    gmm::add(gmm::scaled(x, -1.0), y2);
+    error = gmm::vect_norm2(y2);
+    cout << "Error : " << error << endl;
+    if (error > 1.0E-10)
+      DAL_THROW(dal::failure_error, "computation error too large : " << error);
     
-    cout << "x = "; gmm::write(cout, x); cout << endl;
-
-    bgeot::vsmatrix<double> m(10, 10);
-    gmm::clear(m); m(3, 2) = 1.0;
-
-    gmm::transposed(m)(6,8) = 2.0;
-
-    cout << "transposed(m)(2,3) = " <<  (gmm::transposed(m))(2,3) << endl;
-    cout << "transposed(m)(3,2) = " <<  (gmm::transposed(m))(3,2) << endl;
+    cout << "transposed(m2) = " << gmm::transposed(m2) << endl;
+    cout << "transposed(transposed(m2)) = "
+	 << gmm::transposed(gmm::transposed(m2)) << endl;
     
-    gmm::row_matrix<gmm::wsvector<double> > n(10, 10); 
+    gmm::transposed(gmm::transposed(m2))(3, 1) = 5.0;
+    if (m2(3, 1) != 5.0) 
+      DAL_THROW(dal::failure_error, "write error on matrix m2.");
+    gmm::transposed(gmm::transposed(m2))(3, 1) = 0.0;
+
+    cout << "/***********************************************************/\n";
+    cout << "/*             Test of row_matrix<wsvector>                */\n";
+    cout << "/***********************************************************/\n";
+
+    gmm::row_matrix<gmm::wsvector<double> > m3(10, 10);
+    gmm::copy(m, m3);
+    cout << "m3 = " << m3 << endl;
+    cout << "transposed(m3) = " << gmm::transposed(m3) << endl;
+    gmm::clear(y2);
+    gmm::bicgstab(m3, y2, b, gmm::identity_matrix(), 1000, 1E-16, 0);
+    cout << "y2 = " << y2 << endl;
+    gmm::add(gmm::scaled(x, -1.0), y2);
+    error = gmm::vect_norm2(y2);
+    cout << "Error : " << error << endl;
+    if (error > 1.0E-10)
+      DAL_THROW(dal::failure_error, "computation error too large : " << error);
     
-    gmm::copy(m, gmm::transposed(n));
-    gmm::copy(gmm::transposed(m), n);
-    cout << "m = "; gmm::write(cout, m); cout << endl;
-    cout << "n = "; gmm::write(cout, n); cout << endl;
+    cout << "/***********************************************************/\n";
+    cout << "/*         Test of row_matrix<std::vector>                 */\n";
+    cout << "/***********************************************************/\n";
 
-    cout << "x = "; gmm::write(cout, x); cout << endl;
-    gmm::add(gmm::scaled(z, 10.0), x);
-    cout << "x = "; gmm::write(cout, x); cout << endl;
-    gmm::add(gmm::scaled(v, -10.0), x);
-    cout << "x = "; gmm::write(cout, x); cout << endl;
-
-    gmm::mult(gmm::transposed(m), x, x);
-
-    cout << "x = "; gmm::write(cout, x); cout << endl;
-
-    gmm::clear(x);
-    std::vector<size_t> index(3); index[0] = 2; index[1] = 8; index[2] = 3;
-    std::vector<double> zz(3); zz[0] = 1; zz[1] = 2; zz[2] = 3;
-    gmm::sub_index si1(index.begin(), index.end(), x.size(), x);
+    gmm::row_matrix<std::vector<double> > m4(10, 10);
+    gmm::copy(m, m4);
+    cout << "m4 = " << m4 << endl;
+    cout << "transposed(m4) = " << gmm::transposed(m4) << endl;
+    gmm::clear(y2);
+    gmm::bicgstab(m4, y2, b, gmm::identity_matrix(), 1000, 1E-16, 0);
+    cout << "y2 = " << y2 << endl;
+    gmm::add(gmm::scaled(x, -1.0), y2);
+    error = gmm::vect_norm2(y2);
+    cout << "Error : " << error << endl;
+    if (error > 1.0E-10)
+      DAL_THROW(dal::failure_error, "computation error too large : " << error);
     
-    gmm::copy(zz, gmm::sub_vector(x, si1));
-    cout << "x = "; gmm::write(cout, x); cout << endl;
+    cout << "/***********************************************************/\n";
+    cout << "/*             Test of col_matrix<wsvector>                */\n";
+    cout << "/***********************************************************/\n";
 
-    std::vector<size_t> index2(2); index2[0] = 1; index2[2] = 0;
-    std::vector<double> zzz(2); zzz[0] = 5; zzz[1] = 6;
-    gmm::sub_index si2(index2.begin(), index2.end(), 3, x);
-    
-    gmm::copy(zzz, gmm::sub_vector(gmm::sub_vector(x, si1), si2));
-    cout << "x = "; gmm::write(cout, x); cout << endl;
+    gmm::col_matrix<gmm::wsvector<double> > m5(10, 10);
+    gmm::copy(m3, m5);
+    cout << "m3 = " << m5 << endl;
+    cout << "transposed(m5) = " << gmm::transposed(m5) << endl;
+    gmm::clear(y2);
+    gmm::bicgstab(m5, y2, b, gmm::identity_matrix(), 1000, 1E-16, 0);
+    cout << "y2 = " << y2 << endl;
+    gmm::add(gmm::scaled(x, -1.0), y2);
+    error = gmm::vect_norm2(y2);
+    cout << "Error : " << error << endl;
+    if (error > 1.0E-10)
+      DAL_THROW(dal::failure_error, "computation error too large : " << error);
 
+    cout << "/***********************************************************/\n";
+    cout << "/*         Test of sub_matrices of fsmatrix                */\n";
+    cout << "/***********************************************************/\n";
 
-    std::vector<size_t> index3(3); index3[0] = 2; index3[1] = 4; index3[2] = 3;
-    gmm::sub_index si3(index3.begin(), index3.end(), 10, m);
-    bgeot::vsmatrix<double> mm(3,3);
+    gmm::sub_interval sint1(10, 10), sint2(15, 10);
+    gmm::sub_slice ssli1(10, 10, 3), ssli2(15, 10, 2);
+    std::vector<gmm::size_type> ind1(10), ind2(10);
+    ind1[0] = 1; ind1[1] = 5; ind1[2] = 3; ind1[3] = 25; ind1[4] = 15; 
+    ind1[5] = 2; ind1[6] = 8; ind1[7] = 6; ind1[8] = 12; ind1[9] = 16; 
+    ind2[0] = 0; ind2[1] = 2; ind2[2] = 5; ind2[3] = 17; ind2[4] = 24; 
+    ind2[5] = 1; ind2[6] = 3; ind2[7] = 6; ind2[8] = 10; ind2[9] = 12; 
+    gmm::sub_index sind1(ind1, 50), sind2(ind2, 50);
 
-    cout << "mm(0,0) = " << gmm::sub_matrix(m, si3)(0,0) << endl;
+    bgeot::fsmatrix<double, 38> m6;
+    gmm::clear(m6);
+    gmm::copy(m, gmm::sub_matrix(m6, sint1, sint2));
+    cout << "m6 = " << m6 << endl;
+    cout << "gmm::sub_matrix(m6, sint1, sint2)  = "
+//           << gmm::transposed(gmm::transposed
+// 			     (gmm::sub_matrix(m6,sint2, sint1))) << endl;
+	 << gmm::sub_matrix(m6,sint1, sint2) << endl;
+    gmm::clear(y2);
+    gmm::bicgstab(gmm::sub_matrix(m6, sint1, sint2), y2, b,
+		  gmm::identity_matrix(), 1000, 1E-16, 0);
+    cout << "y2 = " << y2 << endl;
+    gmm::add(gmm::scaled(x, -1.0), y2);
+    error = gmm::vect_norm2(y2);
+    cout << "Error : " << error << endl;
+    if (error > 1.0E-10)
+      DAL_THROW(dal::failure_error, "computation error too large : " << error);
 
-    gmm::copy(gmm::sub_matrix(m, si3), mm);
-    cout << "mm = "; gmm::write(cout, mm); cout << endl;
-   
+    gmm::copy(m3, gmm::sub_matrix(m6, ssli1, ssli2));
+    cout << "m6 = " << m6 << endl;
+    cout << "gmm::sub_matrix(m6, ssli1, ssli2)  = "
+	 << gmm::sub_matrix(m6, ssli1, ssli2) << endl;
+    gmm::clear(y2);
+    gmm::bicgstab(gmm::sub_matrix(m6, ssli1, ssli2), y2, b,
+		  gmm::identity_matrix(), 1000, 1E-16, 0);
+    cout << "y2 = " << y2 << endl;
+    gmm::add(gmm::scaled(x, -1.0), y2);
+    error = gmm::vect_norm2(y2);
+    cout << "Error : " << error << endl;
+    if (error > 1.0E-10)
+      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+
+    gmm::copy(m3, gmm::sub_matrix(m6, sint1, ssli2));
+    cout << "m6 = " << m6 << endl;
+    cout << "gmm::sub_matrix(m6, sint1, ssli2)  = "
+	 << gmm::sub_matrix(m6, sint1, ssli2) << endl;
+    gmm::clear(y2);
+    gmm::bicgstab(gmm::sub_matrix(m6, sint1, ssli2), y2, b,
+		  gmm::identity_matrix(), 1000, 1E-16, 0);
+    cout << "y2 = " << y2 << endl;
+    gmm::add(gmm::scaled(x, -1.0), y2);
+    error = gmm::vect_norm2(y2);
+    cout << "Error : " << error << endl;
+    if (error > 1.0E-10)
+      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+
+    gmm::copy(m4, gmm::sub_matrix(m6, sind1, sind2));
+    gmm::wsvector<double> y3(10);
+    cout << "m6 = " << m6 << endl;
+    cout << "gmm::sub_matrix(m6, sind1, sind2)  = "
+	 << gmm::sub_matrix(m6, sind1, sind2) << endl;
+    gmm::clear(y3);
+    gmm::bicgstab(gmm::sub_matrix(m6, sind1, sind2), y3, b,
+		  gmm::identity_matrix(), 1000, 1E-16, 0);
+    cout << "y3 = " << y3 << endl;
+    gmm::add(gmm::scaled(x, -1.0), y3);
+    error = gmm::vect_norm2(y3);
+    cout << "Error : " << error << endl;
+    if (error > 1.0E-10)
+      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+
+    cout << "/***********************************************************/\n";
+    cout << "/*      Test of sub_matrices of row_matrix<wsvector>       */\n";
+    cout << "/***********************************************************/\n";
+
+    gmm::row_matrix<gmm::wsvector<double> > m7(38, 40);
+    gmm::clear(m7);
+    gmm::copy(m3, gmm::sub_matrix(m7, sind1, sind2));
+    cout << "m7 = " << m7 << endl;
+    cout << "gmm::transposed(gmm::sub_matrix(m7, sind1, sind2))  = "
+	 << gmm::transposed(gmm::sub_matrix(m7, sind1, sind2)) << endl;
+    gmm::clear(y);
+    gmm::bicgstab(gmm::sub_matrix(m7, sind1, sind2), y, b,
+		  gmm::identity_matrix(), 1000, 1E-16, 0);
+    cout << "y = " << y << endl;
+    gmm::add(gmm::scaled(x, -1.0), y);
+    error = gmm::vect_norm2(y);
+    cout << "Error : " << error << endl;
+    if (error > 1.0E-10)
+      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+
+    gmm::copy(m, gmm::sub_matrix(m7, sint1, ssli2));
+    cout << "m7 = " << m7 << endl;
+    cout <<
+      "gmm::transposed(gmm::transposed(gmm::sub_matrix(m7, sint1, ssli2))  =\n"
+	 << gmm::transposed(gmm::transposed(gmm::sub_matrix(m7, sint1, ssli2)))
+	 << endl;
+    gmm::clear(y3);
+    gmm::bicgstab(gmm::sub_matrix(m7, sint1, ssli2), y3, b,
+		  gmm::identity_matrix(), 1000, 1E-16, 0);
+    cout << "y3 = " << y3 << endl;
+    gmm::add(gmm::scaled(x, -1.0), y3);
+    error = gmm::vect_norm2(y3);
+    cout << "Error : " << error << endl;
+    if (error > 1.0E-10)
+      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+
+    cout << "/***********************************************************/\n";
+    cout << "/*      Test of sub_matrices of row_matrix<rsvector>       */\n";
+    cout << "/***********************************************************/\n";
+
+    gmm::row_matrix<gmm::rsvector<double> > m8(38, 40);
+    gmm::clear(m8);
+    gmm::copy(m3, gmm::sub_matrix(m8, sind1, sind2)); //essayer m3 par la suite
+    cout << "m8 = " << m8 << endl;
+    cout << "gmm::transposed(gmm::sub_matrix(m8, sind1, sind2))  = "
+	 << gmm::transposed(gmm::sub_matrix(m8, sind1, sind2)) << endl;
+    gmm::clear(y);
+    gmm::bicgstab(gmm::sub_matrix(m8, sind1, sind2), y, b,
+		  gmm::identity_matrix(), 1000, 1E-16, 0);
+    cout << "y = " << y << endl;
+    gmm::add(gmm::scaled(x, -1.0), y);
+    error = gmm::vect_norm2(y);
+    cout << "Error : " << error << endl;
+    if (error > 1.0E-10)
+      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+
+    gmm::copy(m, gmm::sub_matrix(m8, sint1, ssli2));
+    cout << "m8 = " << m8 << endl;
+    cout <<
+      "gmm::transposed(gmm::transposed(gmm::sub_matrix(m8, sint1, ssli2))  =\n"
+	 << gmm::transposed(gmm::transposed(gmm::sub_matrix(m8, sint1, ssli2)))
+	 << endl;
+    gmm::clear(y3);
+    gmm::bicgstab(gmm::sub_matrix(m8, sint1, ssli2), y3, b,
+		  gmm::identity_matrix(), 1000, 1E-16, 0);
+    cout << "y3 = " << y3 << endl;
+    gmm::add(gmm::scaled(x, -1.0), y3);
+    error = gmm::vect_norm2(y3);
+    cout << "Error : " << error << endl;
+    if (error > 1.0E-10)
+      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+
 
   }
   DAL_STANDARD_CATCH_ERROR;

@@ -44,6 +44,8 @@ include_HEADERS =                      \
 	gmm_matrix.h                   \
 	gmm_solvers.h                  \
 	gmm_vector.h                   \
+	gmm_transposed.h               \
+	gmm_scaled.h                   \
 	gmm_def.h                      \
 	gmm_solver_Schwarz_additive.h  \
 	gmm_sub_matrix.h               \

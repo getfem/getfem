@@ -10,22 +10,23 @@
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 2001  Yves Renard.                                        */
+/* Copyright (C) 1995-2002  Yves Renard.                                   */
 /*                                                                         */
 /* This file is a part of GETFEM++                                         */
 /*                                                                         */
 /* This program is free software; you can redistribute it and/or modify    */
-/* it under the terms of the GNU General Public License as published by    */
-/* the Free Software Foundation; version 2 of the License.                 */
+/* it under the terms of the GNU Lesser General Public License as          */
+/* published by the Free Software Foundation; version 2.1 of the License.  */
 /*                                                                         */
 /* This program is distributed in the hope that it will be useful,         */
 /* but WITHOUT ANY WARRANTY; without even the implied warranty of          */
 /* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           */
-/* GNU General Public License for more details.                            */
+/* GNU Lesser General Public License for more details.                     */
 /*                                                                         */
-/* You should have received a copy of the GNU General Public License       */
-/* along with this program; if not, write to the Free Software Foundation, */
-/* Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.         */
+/* You should have received a copy of the GNU Lesser General Public        */
+/* License along with this program; if not, write to the Free Software     */
+/* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,  */
+/* USA.                                                                    */
 /*                                                                         */
 /* *********************************************************************** */
 
@@ -626,21 +627,19 @@ namespace bgeot
 
   template<class MAT> inline void mat_out(std::ostream &o, const MAT &m)
   {
-    for (typename MAT::size_type l = 0; l < m.nrows(); l++ )
-    {
+    o << endl;
+    for (typename MAT::size_type l = 0; l < m.nrows(); l++ ) {
       for (typename MAT::size_type c = 0; c < m.ncols(); c++ )
 	o << m(l,c) << ' ';
-      o << '\n';
+      o << endl;
     }
   }
 
-  template<class T>  std::ostream &operator <<(std::ostream &o, const vsmatrix<T>& m)
-  { mat_out(o,m); return o; }
+  template<class T>  std::ostream &operator <<
+  (std::ostream &o, const vsmatrix<T>& m) { mat_out(o,m); return o; }
 
-  template<class T, int N>
-    std::ostream &operator <<(std::ostream &o, const fsmatrix<T,N>& m)
-  { mat_out(o,m); return o; }
-
+  template<class T, int N> std::ostream &operator <<
+  (std::ostream &o, const fsmatrix<T,N>& m) { mat_out(o,m); return o; }
 
   /* ******************************************************************** */
   /*	resolution d'un systeme lineaire par pivot de gauss.		  */

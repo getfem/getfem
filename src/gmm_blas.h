@@ -9,38 +9,35 @@
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 2001  Yves Renard.                                        */
+/* Copyright (C) 2002  Yves Renard.                                        */
 /*                                                                         */
 /* This file is a part of GETFEM++                                         */
 /*                                                                         */
 /* This program is free software; you can redistribute it and/or modify    */
-/* it under the terms of the GNU General Public License as published by    */
-/* the Free Software Foundation; version 2 of the License.                 */
+/* it under the terms of the GNU Lesser General Public License as          */
+/* published by the Free Software Foundation; version 2.1 of the License.  */
 /*                                                                         */
 /* This program is distributed in the hope that it will be useful,         */
 /* but WITHOUT ANY WARRANTY; without even the implied warranty of          */
 /* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           */
-/* GNU General Public License for more details.                            */
+/* GNU Lesser General Public License for more details.                     */
 /*                                                                         */
-/* You should have received a copy of the GNU General Public License       */
-/* along with this program; if not, write to the Free Software Foundation, */
-/* Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.         */
+/* You should have received a copy of the GNU Lesser General Public        */
+/* License along with this program; if not, write to the Free Software     */
+/* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,  */
+/* USA.                                                                    */
 /*                                                                         */
 /* *********************************************************************** */
 
 //
-// A faire
+// To be done
 //
-//   . mult : optimisable dans certains cas.
-//       (utilisation d'iterateurs, renvoie à add ou copie en
-//        evitant les tests repetitifs)
-//   . add : protection contre les écritures sur le même vecteur : contrôler
-//           les origines ...
-//   . faire scale et scaled sur les matrices aussi
-//   . it.index() pour les vecteurs creux peut renvoyer -1 : ne faut-il pas
-//       obliger l'iterateur à passer sur les -1 pour optimiser les cas ou
-//       on a jamais de -1 ?
+//   . mult : optimisable in certain cases.
+//       (more iterators on vector and matrices, avoid repeated tests)
 //
+//   . add : best control on overlapping writing : origins.
+//
+
 
 #ifndef __GMM_BLAS_H
 #define __GMM_BLAS_H
@@ -73,16 +70,17 @@ namespace gmm {
   template <class V> inline
   typename select_return<typename linalg_traits<V>::const_iterator,
                          typename linalg_traits<V>::iterator,
-                         const V *>::return_type
-  vect_begin(const V &v)
+                         V *>::return_type
+  vect_begin(V &v)
   { return linalg_traits<V>().begin(linalg_cast(v)); }
 
   template <class V> inline
   typename select_return<typename linalg_traits<V>::const_iterator,
                          typename linalg_traits<V>::iterator,
-                         V *>::return_type
-  vect_begin(V &v)
+                         const V *>::return_type
+  vect_begin(const V &v)
   { return linalg_traits<V>().begin(linalg_cast(v)); }
+
 
   template <class V> inline
   typename select_return<typename linalg_traits<V>::const_iterator,
@@ -98,26 +96,82 @@ namespace gmm {
   vect_end(V &v)
   { return linalg_traits<V>().end(linalg_cast(v)); }
 
+  template <class M> inline
+  typename select_return<typename linalg_traits<M>::const_row_iterator,
+                         typename linalg_traits<M>::row_iterator,
+                         const M *>::return_type
+  mat_row_begin(const M &v)
+  { return linalg_traits<M>().row_begin(linalg_cast(v)); }
+
+  template <class M> inline
+  typename select_return<typename linalg_traits<M>::const_row_iterator,
+                         typename linalg_traits<M>::row_iterator,
+                         M *>::return_type
+  mat_row_begin(M &v)
+  { return linalg_traits<M>().row_begin(linalg_cast(v)); }
+
+  template <class M> inline
+  typename select_return<typename linalg_traits<M>::const_row_iterator,
+                         typename linalg_traits<M>::row_iterator,
+                         const M *>::return_type
+  mat_row_end(const M &v)
+  { return linalg_traits<M>().row_end(linalg_cast(v)); }
+
+  template <class M> inline
+  typename select_return<typename linalg_traits<M>::const_row_iterator,
+                         typename linalg_traits<M>::row_iterator,
+                         M *>::return_type
+  mat_row_end(M &v)
+  { return linalg_traits<M>().row_end(linalg_cast(v)); }
+
+   template <class M> inline
+  typename select_return<typename linalg_traits<M>::const_col_iterator,
+                         typename linalg_traits<M>::col_iterator,
+                         const M *>::return_type
+  mat_col_begin(const M &v)
+  { return linalg_traits<M>().col_begin(linalg_cast(v)); }
+
+  template <class M> inline
+  typename select_return<typename linalg_traits<M>::const_col_iterator,
+                         typename linalg_traits<M>::col_iterator,
+                         M *>::return_type
+  mat_col_begin(M &v)
+  { return linalg_traits<M>().col_begin(linalg_cast(v)); }
+
+  template <class M> inline
+  typename select_return<typename linalg_traits<M>::const_col_iterator,
+                         typename linalg_traits<M>::col_iterator,
+                         const M *>::return_type
+  mat_col_end(const M &v)
+  { return linalg_traits<M>().col_end(linalg_cast(v)); }
+
+  template <class M> inline
+  typename select_return<typename linalg_traits<M>::const_col_iterator,
+                         typename linalg_traits<M>::col_iterator,
+                         M *>::return_type
+  mat_col_end(M &v)
+  { return linalg_traits<M>().col_end(linalg_cast(v)); }
+
   template <class MAT> inline
   typename select_return<typename linalg_traits<MAT>::const_sub_row_type,
                          typename linalg_traits<MAT>::sub_row_type,
                          const MAT *>::return_type
   mat_row(const MAT &m, size_type i)
-  { return linalg_traits<MAT>().row(linalg_cast(m), i); }
+  { return linalg_traits<MAT>().row(mat_row_begin(m) + i); }
 
   template <class MAT> inline
   typename select_return<typename linalg_traits<MAT>::const_sub_row_type,
                          typename linalg_traits<MAT>::sub_row_type,
                          MAT *>::return_type
   mat_row(MAT &m, size_type i)
-  { return linalg_traits<MAT>().row(linalg_cast(m), i); }
+  { return linalg_traits<MAT>().row(mat_row_begin(m) + i); }
 
   template <class MAT> inline
   typename select_return<typename linalg_traits<MAT>::const_sub_col_type,
                          typename linalg_traits<MAT>::sub_col_type,
                          const MAT *>::return_type
   mat_col(const MAT &m, size_type i)
-  { return linalg_traits<MAT>().col(linalg_cast(m), i); }
+  { return linalg_traits<MAT>().col(mat_col_begin(m) + i); }
 
 
   template <class MAT> inline
@@ -125,54 +179,13 @@ namespace gmm {
                          typename linalg_traits<MAT>::sub_col_type,
                          MAT *>::return_type
   mat_col(MAT &m, size_type i)
-  { return linalg_traits<MAT>().col(linalg_cast(m), i); }
+  { return linalg_traits<MAT>().col(mat_col_begin(m) + i); }
 
   template <class L> inline void clear(L &l)
-  { return linalg_traits<L>().do_clear(l); }
+  { linalg_traits<L>().do_clear(l); }
 
   template <class L> inline void clear(const L &l)
-  { return linalg_traits<L>().do_clear(linalg_cast(l)); }
-
-  template <class L> inline
-    scaled_vector_const_ref<L> scaled(const L &l,
-				      typename linalg_traits<L>::value_type x)
-  { return scaled_vector_const_ref<L>(l, x); }
-  
-
-  template <class TYPE, class PT> struct _transposed_return;
-  template <class PT> struct _transposed_return<abstract_matrix, PT> {
-    typedef typename std::iterator_traits<PT>::value_type L;
-    typedef typename select_return<transposed_ref<const L *>,
-                                   transposed_ref< L *>,
-                                   PT>::return_type return_type;
-  };
-  template <class PT> struct _transposed_return<abstract_vector, PT> {
-    typedef typename std::iterator_traits<PT>::value_type L;
-    typedef typename select_return<vect_transposed_ref<const L *>,
-                                   vect_transposed_ref< L *>,
-                                   PT>::return_type return_type;
-  };
-  template <class PT> struct transposed_return {
-    typedef typename std::iterator_traits<PT>::value_type L;
-    typedef typename _transposed_return<typename
-      linalg_traits<L>::linalg_type, PT>::return_type return_type;
-  };
-
-  template <class L> inline 
-  typename transposed_return<const L *>::return_type transposed(const L &l)
-  { return typename transposed_return<const L *>::return_type(linalg_cast(l));}
-
-  template <class L> inline 
-  typename transposed_return<L *>::return_type transposed(L &l)
-  { return typename transposed_return<L *>::return_type(linalg_cast(l)); }
-  
-
-  inline bool _is_sparse(abstract_sparse)  { return true;  }
-  inline bool _is_sparse(abstract_plain)   { return false; }
-  inline bool _is_sparse(abstract_indirect)  { return false; }
-
-  template <class L> inline bool is_sparse(const L &) 
-  { return _is_sparse(linalg_traits<L>::storage_type()); }
+  { clear(linalg_cast(l)); }
 
   /* ******************************************************************** */
   /*		Write                                   		  */
@@ -192,10 +205,7 @@ namespace gmm {
 				       abstract_sparse) {
     typename linalg_traits<L>::const_iterator it = vect_begin(l),
       ite = vect_end(l);
-    for (; it != ite; ++it) 
-      if (it.index() != size_type(-1)
-	  && *it != typename linalg_traits<L>::value_type(0))
-	o << " (r" << it.index() << "," << (*it) << ")";
+    for (; it != ite; ++it) o << " (r" << it.index() << "," << (*it) << ")";
   }
 
   template <class L> inline void write(std::ostream &o, const L &l,
@@ -228,11 +238,23 @@ namespace gmm {
   template <class L> inline void write(std::ostream &o, const L &l,col_and_row)
   { write(o, l, row_major()); }
 
-  // to be corrected
   template <class L> inline void write(std::ostream &o, const L &l,col_major) {
-    o << "transposed "; write(o, transposed(l), row_major());
+    o << "matrix(" << mat_nrows(l) << ", " << mat_ncols(l) << ")" << endl;
+    for (size_type i = 0; i < mat_nrows(l); ++i) {
+      o << "(";
+      if (is_sparse(l)) { // not optimized ...
+	for (size_type j = 0; j < mat_ncols(l); ++j)
+	  if (l(i,j) != typename linalg_traits<L>::value_type(0)) 
+	    o << " (r" << j << "," << l(i,j) << ")";
+      }
+      else {
+	if (mat_ncols(l) != 0) o << ' ' << l(i, 0);
+	for (size_type j = 1; j < mat_ncols(l); ++j) o << " ," << l(i, j); 
+      }
+	
+      o << " )\n";
+    }
   }
-
 
   /* ******************************************************************** */
   /*		Scalar product                             		  */
@@ -273,8 +295,7 @@ namespace gmm {
       it = vect_begin(v2), ite = vect_end(v2);
     typename linalg_traits<V1>::value_type res(0);
     for (; it != ite; ++it)
-      if (it.index() != size_type(-1))
-	res += conj_product(vect_sp(mat_row(ps, it.index()), v1), *it);
+      res += conj_product(vect_sp(mat_row(ps, it.index()), v1), *it);
     return res;
   }
 
@@ -282,7 +303,7 @@ namespace gmm {
     typename linalg_traits<V1>::value_type
     vect_sp_with_matr(const MATSP &ps, const V1 &v1, const V2 &v2,
 		      abstract_plain) {
-    if (vect_size(v1) != mat_ncols() || vect_size(v2) != mat_nrows())
+    if (vect_size(v1) != mat_ncols(ps) || vect_size(v2) != mat_nrows(ps))
       DAL_THROW(dimension_error,"dimensions mismatch");
     size_type nr = mat_nrows(ps);
     typename linalg_traits<V2>::const_iterator
@@ -315,8 +336,7 @@ namespace gmm {
       it = vect_begin(v1), ite = vect_end(v1);
     typename linalg_traits<V1>::value_type res(0);
     for (; it != ite; ++it)
-      if (it.index() != size_type(-1))
-	res += conj_product(vect_sp(mat_col(ps, it.index()), v2), *it);
+      res += conj_product(vect_sp(mat_col(ps, it.index()), v2), *it);
     return res;
   }
 
@@ -373,7 +393,7 @@ namespace gmm {
     _vect_sp_sparse(IT1 it, IT1 ite, const V &v) {
     typename std::iterator_traits<IT1>::value_type res(0);
     for (; it != ite; ++it) 
-      if (it.index() != size_type(-1)) res += conj_product(*it, v[it.index()]);
+      res += conj_product(*it, v[it.index()]);
     return res;
   }
 
@@ -413,7 +433,8 @@ namespace gmm {
       it = vect_begin(v), ite = vect_end(v);
     typename number_traits<typename linalg_traits<V>::value_type>
       ::magnitude_type res(0);
-    for (; it != ite; ++it) res += dal::sqr(modulus(*it));
+    for (; it != ite; ++it) res += dal::sqr(dal::abs(*it));
+    cout << "res = " << res << endl;
     return sqrt(res);
   }
 
@@ -429,7 +450,7 @@ namespace gmm {
       it = vect_begin(v), ite = vect_end(v);
       typename number_traits<typename linalg_traits<V>::value_type>
 	::magnitude_type res(0);
-    for (; it != ite; ++it) res = std::max(res, modulus(*it));
+    for (; it != ite; ++it) res = std::max(res, dal::abs(*it));
     return res;
   }
   
@@ -445,7 +466,7 @@ namespace gmm {
       it = vect_begin(v), ite = vect_end(v);
     typename number_traits<typename linalg_traits<V>::value_type>
 	::magnitude_type res(0);
-    for (; it != ite; ++it) res += modulus(*it);
+    for (; it != ite; ++it) res += dal::abs(*it);
     return res;
   }
 
@@ -457,7 +478,7 @@ namespace gmm {
   { clean(l, seuil, typename linalg_traits<L>::linalg_type()); }
 
   template <class L> inline void clean(const L &l, double seuil)
-  { clean(linalg_cast(l), seuil);}
+  { clean(linalg_const_cast(l), seuil);}
 
   template <class L> inline void clean(L &l, double seuil, abstract_vector)
   { clean(l, seuil, typename linalg_traits<L>::storage_type()); }
@@ -465,14 +486,14 @@ namespace gmm {
   template <class L> void clean(L &l, double seuil, abstract_plain) {
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
     for (; it != ite; ++it)
-      if (modulus(*it) < seuil)
+      if (dal::abs(*it) < seuil)
 	*it = typename linalg_traits<L>::value_type(0);
   }
 
   template <class L> void clean(L &l, double seuil, abstract_sparse) {
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
     for (; it != ite; ++it)
-      if (modulus(*it) < seuil && it.index() != size_type(-1))
+      if (dal::abs(*it) < seuil)
 	l[it.index()] = typename linalg_traits<L>::value_type(0);
   }
 
@@ -500,7 +521,7 @@ namespace gmm {
     if ((const void *)(&l1) != (const void *)(&l2)) {
       #ifdef __GETFEM_VERIFY
         if (linalg_origin(l1) == linalg_origin(l2))
-	  cerr << "Warning : a conflict is possible in vector copy\n";
+	  cerr << "Warning : a conflict is possible in copy\n";
       #endif
       copy(l1, l2, typename linalg_traits<L1>::linalg_type(),
 	   typename linalg_traits<L2>::linalg_type());
@@ -508,7 +529,7 @@ namespace gmm {
   }
 
   template <class L1, class L2> inline
-  void copy(const L1& l1, const L2& l2) { copy(l1, linalg_cast(l2)); }
+  void copy(const L1& l1, const L2& l2) { copy(l1, linalg_const_cast(l2)); }
 
   template <class L1, class L2>
   void copy(const L1& l1, L2& l2, abstract_vector, abstract_vector) {
@@ -616,7 +637,7 @@ namespace gmm {
     typename linalg_traits<L1>::const_iterator
       it  = vect_begin(l1), ite = vect_end(l1);
     for (; it != ite; ++it)
-      if (it.index() != size_type(-1)) l2(i, it.index()) = *it;
+      l2(i, it.index()) = *it;
   }
 
   template <class L1, class L2>
@@ -636,7 +657,7 @@ namespace gmm {
     typename linalg_traits<L1>::const_iterator
       it  = vect_begin(l1), ite = vect_end(l1);
     for (; it != ite; ++it)
-      if (it.index() != size_type(-1)) l2(it.index(), i) = *it;
+      l2(it.index(), i) = *it;
   }
 
   template <class L1, class L2>
@@ -674,7 +695,7 @@ namespace gmm {
     typename linalg_traits<L1>::const_iterator
       it  = vect_begin(l1), ite = vect_end(l1);
     for (; it != ite; ++it)
-      if (it.index() != size_type(-1)) l2[it.index()] = *it;
+      l2[it.index()] = *it;
   }
   
   template <class L1, class L2>
@@ -684,8 +705,8 @@ namespace gmm {
     typename linalg_traits<L1>::const_iterator
       it  = vect_begin(l1), ite = vect_end(l1);
     for (; it != ite; ++it)
-      if (*it != (typename linalg_traits<L1>::value_type)(0)
-	&& it.index() != size_type(-1)) l2[it.index()] = *it;
+      if (*it != (typename linalg_traits<L1>::value_type)(0))
+	l2[it.index()] = *it;
   }
   
   template <class L1, class L2>
@@ -712,12 +733,12 @@ namespace gmm {
   }
 
   template <class L1, class L2> inline
-  void add(const L1& l1, const L2& l2) { add(l1, linalg_cast(l2)); }
+  void add(const L1& l1, const L2& l2) { add(l1, linalg_const_cast(l2)); }
 
   template <class L1, class L2>
     void add_spec(const L1& l1, L2& l2, abstract_vector) {
     if (vect_size(l1) != vect_size(l2))
-      DAL_THROW(dimension_error,"dimensions mismatch");
+      DAL_THROW(dimension_error, "dimensions mismatch");
     add(l1, l2, typename linalg_traits<L1>::storage_type(),
 	typename linalg_traits<L2>::storage_type());
   }
@@ -738,7 +759,7 @@ namespace gmm {
 
   template <class L1, class L2, class L3> inline
   void add(const L1& l1, const L2& l2, const L3& l3)
-  { add(l1, l2, linalg_cast(l3)); }
+  { add(l1, l2, linalg_const_cast(l3)); }
 
   template <class IT1, class IT2, class IT3> inline
     void _add_full(IT1 it1, IT2 it2, IT3 it3, IT3 ite) {
@@ -750,7 +771,7 @@ namespace gmm {
     IT3 it = it3;
     for (; it != ite3; ++it, ++it2) *it = *it2;
     for (; it1 != ite1; ++it1)
-      if (it1.index() != size_type(-1)) *(it3 + it1.index()) += *it1;
+      *(it3 + it1.index()) += *it1;
   }
 
   template <class IT1, class IT2, class IT3> inline
@@ -758,10 +779,8 @@ namespace gmm {
 		    IT3 it3, IT3 ite3) {
     IT3 it = it3;
     for (; it != ite3; ++it) *it = 0;
-    for (; it1 != ite1; ++it1)
-      if (it1.index() != size_type(-1)) *(it3 + it1.index()) = *it1;
-    for (; it2 != ite2; ++it2)
-      if (it2.index() != size_type(-1)) *(it3 + it2.index()) += *it2;    
+    for (; it1 != ite1; ++it1) *(it3 + it1.index()) = *it1;
+    for (; it2 != ite2; ++it2) *(it3 + it2.index()) += *it2;    
   }
   
   template <class L1, class L2, class L3> inline
@@ -802,8 +821,6 @@ namespace gmm {
       it2 = vect_begin(l2), ite2 = vect_end(l2);
     clear(l3);
     while (it1 != ite1 && it2 != ite2) {
-      while (it1.index() == size_type(-1) && it1 != ite1) ++it1;
-      while (it2.index() == size_type(-1) && it2 != ite2) ++it2;
       ptrdiff_t d = it1.index() - it2.index();
       if (d < 0)
 	{ l3[it1.index()] += *it1; ++it1; }
@@ -817,25 +834,24 @@ namespace gmm {
   }
   
   template <class L1, class L2, class L3> inline
-  void add(const L1&, const L2&, L3&,
+  void add(const L1& l1, const L2& l2, L3& l3,
 	   abstract_plain, abstract_sparse, abstract_sparse)
-  { DAL_THROW(failure_error,"Unauthorized addition"); }
+  { copy(l2, l3); add(l1, l3, abstract_plain(), abstract_sparse()); }
   template <class L1, class L2, class L3> inline
-  void add(const L1&, const L2&, L3&,
+  void add(const L1& l1, const L2& l2, L3& l3,
 	   abstract_plain, abstract_plain, abstract_sparse)
-  { DAL_THROW(failure_error,"Unauthorized addition"); }
+  { copy(l2, l3); add(l1, l3, abstract_plain(), abstract_sparse()); }
   template <class L1, class L2, class L3> inline
   void add(const L1&, const L2&, L3&,
 	   abstract_sparse, abstract_plain, abstract_sparse)
-  { DAL_THROW(failure_error,"Unauthorized addition"); }
+  { copy(l2, l3); add(l1, l3, abstract_sparse(), abstract_sparse());  }
   
   template <class L1, class L2> inline
   void add(const L1& l1, L2& l2,
 	   abstract_plain, abstract_plain) {
-    typename linalg_traits<L1>::const_iterator
-      it1 = vect_begin(l1); 
+    typename linalg_traits<L1>::const_iterator it1 = vect_begin(l1); 
     typename linalg_traits<L2>::iterator
-      it2 = vect_begin(l2), ite = vect_end(l2);
+             it2 = vect_begin(l2), ite = vect_end(l2);
     for (; it2 != ite; ++it2, ++it1) *it2 += *it1;
   }
   
@@ -844,8 +860,7 @@ namespace gmm {
 	   abstract_sparse, abstract_plain) {
     typename linalg_traits<L1>::const_iterator
       it1 = vect_begin(l1), ite1 = vect_end(l1);
-    for (; it1 != ite1; ++it1) 
-      if (it1.index() != size_type(-1)) l2[it1.index()] += *it1;
+    for (; it1 != ite1; ++it1) l2[it1.index()] += *it1;
   }
   
   template <class L1, class L2> inline
@@ -853,29 +868,16 @@ namespace gmm {
 	   abstract_sparse, abstract_sparse) {
     typename linalg_traits<L1>::const_iterator
       it1 = vect_begin(l1), ite1 = vect_end(l1);
-    for (; it1 != ite1; ++it1) 
-      if (it1.index() != size_type(-1)) l2[it1.index()] += *it1;
+    for (; it1 != ite1; ++it1) l2[it1.index()] += *it1;
   }
   
   template <class L1, class L2> inline
-  void add(const L1&, L2&, abstract_plain, abstract_sparse)
-  { DAL_THROW(failure_error,"Unauthorized addition"); } 
-
-
-  /* ******************************************************************** */
-  /*		scale                                    	          */
-  /* ******************************************************************** */
-
-  template <class L> void scale(L& l, typename linalg_traits<L>::value_type a)
-  {
-    typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
-    for ( ; it != ite; ++it) *it *= a;
-  }
-
-  template <class L> inline
-  void scale(const L& l, typename linalg_traits<L>::value_type a)
-  { scale(linalg_cast(l), a); }
-
+  void add(const L1& l1, L2& l2, abstract_plain, abstract_sparse) {
+    typename linalg_traits<L1>::const_iterator
+      it1 = vect_begin(l1), ite1 = vect_end(l1);
+    for (size_type i = 0; it1 != ite1; ++it1, ++i)
+      if (*it1 != typename linalg_traits<L1>::value_type(0)) l2[i] += *it1;
+  } 
 
   /* ******************************************************************** */
   /*		Matrix-vector mult                                    	  */
@@ -901,7 +903,7 @@ namespace gmm {
 
   template <class L1, class L2, class L3> inline
   void mult(const L1& l1, const L2& l2, const L3& l3)
-  { mult_const(l1, l2, linalg_cast(l3)); }
+  { mult_const(l1, l2, linalg_const_cast(l3)); }
 
   template <class L1, class L2, class L3> inline
   void mult_by_row(const L1& l1, const L2& l2, L3& l3, abstract_sparse) {
@@ -978,7 +980,7 @@ namespace gmm {
   
   template <class L1, class L2, class L3, class L4> inline
   void mult(const L1& l1, const L2& l2, const L3& l3, const L4& l4)
-  { mult_const(l1, l2, l3, linalg_cast(l4)); }
+  { mult_const(l1, l2, l3, linalg_const_cast(l4)); }
 
   template <class L1, class L2, class L3, class L4> inline
   void mult_by_row(const L1& l1, const L2& l2, const L3& l3,

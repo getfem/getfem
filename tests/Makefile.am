@@ -47,7 +47,19 @@ TESTS = \
 	$(top_srcdir)/tests/test_tree_sorted.pl
 
 EXTRA_DIST = \
-	$(TESTS) \
+	dynamic_array.pl \
+	dynamic_tas.pl \
+	laplacian.pl \
+	elasto_statique.pl  \
+	integration.pl \
+	linalg.pl \
+	poly.pl \
+	test_mesh.pl \
+	geo_trans.pl \
+	geo_trans_inv.pl \
+	test_int_set.pl \
+	test_link_fem.pl \
+	test_tree_sorted.pl \
 	laplacian.param \
 	elasto_statique.param \
 	test_link_fem.param \

@@ -3,41 +3,37 @@
 /*                                                                         */
 /* Library :  Dynamic Array Library (dal)                                  */
 /* File    :  dal_std.h : Compatibility Header.                            */
-/*     									   */
 /*                                                                         */
 /* Date : June 01, 1995.                                                   */
 /* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 2001  Yves Renard.                                        */
+/* Copyright (C) 1995-2002  Yves Renard.                                   */
 /*                                                                         */
 /* This file is a part of GETFEM++                                         */
 /*                                                                         */
 /* This program is free software; you can redistribute it and/or modify    */
-/* it under the terms of the GNU General Public License as published by    */
-/* the Free Software Foundation; version 2 of the License.                 */
+/* it under the terms of the GNU Lesser General Public License as          */
+/* published by the Free Software Foundation; version 2.1 of the License.  */
 /*                                                                         */
 /* This program is distributed in the hope that it will be useful,         */
 /* but WITHOUT ANY WARRANTY; without even the implied warranty of          */
 /* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           */
-/* GNU General Public License for more details.                            */
+/* GNU Lesser General Public License for more details.                     */
 /*                                                                         */
-/* You should have received a copy of the GNU General Public License       */
-/* along with this program; if not, write to the Free Software Foundation, */
-/* Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.         */
+/* You should have received a copy of the GNU Lesser General Public        */
+/* License along with this program; if not, write to the Free Software     */
+/* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,  */
+/* USA.                                                                    */
 /*                                                                         */
 /* *********************************************************************** */
-
 
 #ifndef __DAL_STD_H
 #define __DAL_STD_H
 
 #define __GETFEM_VERSION 1
 #define __GETFEM_REVISION 3
-
-#define __DAL_VERSION 1
-#define __DAL_REVISION 0
 
 #define __GETFEM_VERIFY
 
@@ -72,7 +68,18 @@
 #include <algorithm>
 #include <vector>
 #include <string>
-#include <sstream>
+#include <complex>
+
+#if defined(__GNUC__)
+#  if (__GNUC__ < 3)
+#    include <strstream>
+#    define stringstream strstream // not perfectly correct
+#  else
+#    include <sstream>
+#  endif
+#else
+#  include <sstream>
+#endif
 
 using std::endl;
 using std::cout;
@@ -177,6 +184,7 @@ namespace dal
 {
   template <class T> inline T sqr(T a) { return a * a; }
   template <class T> inline T abs(T a) { return (a < 0) ? -a : a; }
+  template <class T> inline T abs(std::complex<T> a) { return std::abs(a); }
   template <class T> inline T pos(T a) { return (a < 0) ? 0 : a; }
   template <class T> inline T neg(T a) { return (a < 0) ? -a : 0; }
 }
