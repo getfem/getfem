@@ -99,10 +99,10 @@ namespace gmm {
       typename linalg_traits<VecX>::const_iterator itx = vect_const_begin(x);
 #   ifdef USING_BROKEN_GCC295
       typedef typename linalg_traits<Matrix>::value_type T;
-      for (; it != ite; ++it, ++ity)
+      for (; it != ite; ++it, ++itx)
 	const_cast<T &>(*it) += conj_product(*itx, *ity);
 #   else
-      for (; it != ite; ++it, ++ity) *it += conj_product(*itx, *ity);
+      for (; it != ite; ++it, ++itx) *it += conj_product(*itx, *ity);
 #   endif
     }
   }
