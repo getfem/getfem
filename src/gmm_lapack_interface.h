@@ -43,7 +43,7 @@
 
 namespace gmm {
 
-  #define GMMLAPACK_TRACE(f) 
+#define GMMLAPACK_TRACE(f) 
   // #define GMMLAPACK_TRACE(f) cout << "function " << f << " called" << endl;
 
   /* ********************************************************************* */
@@ -844,6 +844,7 @@ namespace gmm {
   /* QR factorization.                                                     */
   /* ********************************************************************* */
   
+
 # define geqrf_interface(lapack_name1, base_type) inline                   \
   void qr_factor(dense_matrix<base_type > &A){                             \
     GMMLAPACK_TRACE("geqrf_interface");                                    \
@@ -860,8 +861,10 @@ namespace gmm {
 
   geqrf_interface(sgeqrf_, BLAS_S)
   geqrf_interface(dgeqrf_, BLAS_D)
-  geqrf_interface(cgeqrf_, BLAS_C)
-  geqrf_interface(zgeqrf_, BLAS_Z)
+    // For complex values, housholder vectors are not the same as in
+    // gmm::lu_factor. Impossible to interface for the moment.
+    //  geqrf_interface(cgeqrf_, BLAS_C)
+    //  geqrf_interface(zgeqrf_, BLAS_Z)
 
 # define geqrf_interface2(lapack_name1, lapack_name2, base_type) inline    \
   void qr_factor(const dense_matrix<base_type > &A,                        \

@@ -99,8 +99,11 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
   while ($tests_list) {
     ($org_name, $tests_list) = split('\s', $tests_list, 2);
 
-    if ($nb_iter == 1) { print "Testing  $org_name\n"; }
-    else { print "\nTest $iter for $org_name\n"; }
+    if ($nb_iter == 1) { print "Testing  $org_name"; }
+    else { print "Test $iter for $org_name"; }
+    if ($with_lapack) { print " linked with lapack"; }
+    if ($with_qd) { print " with qd types"; }
+    print "\n";
 
     $d = $org_name;
     do { ($b, $d) = split('/', $d, 2); } while ($d);
@@ -339,16 +342,12 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     $compile_options="$compile_options -I$srcdir/../src -I$srcdir/../include -I../src -I../include";
     $compile_libs="-lm";
 
-    if ($with_lapack) {
-      $compile_libs="-llapack -lblas -lg2c -lm";
-    }
-    elsif ($with_qd) {
-      $compile_libs="-lqd -lm";
-    }
-    print "$compilo $compile_options $dest_name -o $root_name $compile_libs\n";
+    if ($with_lapack) { $compile_libs="-llapack -lblas -lg2c $compile_libs"; }
+    if ($with_qd) { $compile_libs="-lqd $compile_libs"; }
     print `$compilo $compile_options $dest_name -o $root_name $compile_libs`;
 
     if ($? != 0) {
+      print "$compilo $compile_options $dest_name -o $root_name $compile_libs\n";
       print "\n******************************************************\n";
       print "* Compilation error, please submit this bug to\n";
       print "* Yves.Renard\@gmm.insa-toulouse.fr, with the file\n";
@@ -359,6 +358,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     }
     print `./$root_name`;
     if ($? != 0) {
+      print "$compilo $compile_options $dest_name -o $root_name $compile_libs\n";
       print "\n******************************************************\n";
       print "* Execution error, please submit this bug to\n";
       print "* Yves.Renard\@gmm.insa-toulouse.fr, with the file\n";
