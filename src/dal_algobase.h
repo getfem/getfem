@@ -172,8 +172,8 @@ namespace dal
   /* ********************************************************************* */
 
   template <class ITER1, class SIZE, class ITER2>
-    void copy_n(ITER1 first, SIZE count, ITER2 result)
-  { for ( ; count > 0; --count) { *result = *first; ++first; ++result; } }
+    ITER2 copy_n(ITER1 first, SIZE count, ITER2 result)
+  { for ( ; count > 0; --count) { *result = *first; ++first; ++result; } return result; }
 
   template<class ITER>
     typename std::iterator_traits<ITER>::value_type

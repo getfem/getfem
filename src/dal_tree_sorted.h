@@ -225,6 +225,12 @@ namespace dal
 
   };
 
+  template<class T, class COMP, int pks> std::ostream& operator<<(std::ostream& o, const const_tsa_iterator<T,COMP,pks>& it) {
+    o << "const_tsa_iterator : depth=" << it.depth << ", path/dir=[";
+    for (unsigned i=0; i < it.depth; ++i) o << "{" << it.path[i] << ", " << int(it.dir[i]) << "} ";
+    o << "]";
+  }
+
   template<class T, class COMP, int pks> 
     void const_tsa_iterator<T, COMP, pks>::copy(
 				   const const_tsa_iterator<T, COMP, pks> &it)
@@ -573,10 +579,9 @@ namespace dal
     typename dynamic_tree_sorted<T, COMP, pks>::sorted_iterator
       dynamic_tree_sorted<T, COMP, pks>::sorted_ge(const T &elt)
   {
-    const_sorted_iterator it(*this); insert_path(elt, it);
+    sorted_iterator it(*this); insert_path(elt, it);
     short_type dir = it.direction();
-    if (it.index() == ST_NIL)
-    { it.up(); if (it.index() != ST_NIL && dir == +1) ++it; }
+    it.up(); if (it.index() != ST_NIL && dir == +1) ++it;
     return it;
   } 
 
@@ -586,8 +591,8 @@ namespace dal
   {
     const_sorted_iterator it(*this); insert_path(elt, it);
     short_type dir = it.direction();
-    if (it.index() == ST_NIL)
-    { it.up(); if (it.index() != ST_NIL && dir == +1) ++it; }
+    it.up(); 
+    if (it.index() != ST_NIL && dir == +1) ++it;
     return it;
   }
   
