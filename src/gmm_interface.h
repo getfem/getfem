@@ -538,7 +538,6 @@ namespace gmm {
     static const_iterator begin(const this_type &v) { return v.begin(); }
     static iterator end(this_type &v) { return v.end(); }
     static const_iterator end(const this_type &v) { return v.end(); }
-    static const void* origin(const this_type &v) { return v.pr; }
     static const origin_type* origin(const this_type &v) { return v.pr; }
     static value_type access(const origin_type *, const const_iterator &b,
 			     const const_iterator &e, size_type i) {
@@ -562,9 +561,9 @@ namespace gmm {
 
   template <typename PT1, typename PT2, typename PT3, int shift = 0>
   struct sparse_compressed_iterator {
-    typedef PT1 value_type;
-    typedef PT1 *pointer;
-    typedef PT1 &reference;
+    typedef typename std::iterator_traits<PT1>::value_type value_type;
+    typedef const value_type *pointer;
+    typedef const value_type &reference;
     typedef ptrdiff_t difference_type;
     typedef size_t size_type;
     typedef std::random_access_iterator_tag iterator_category;
