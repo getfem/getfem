@@ -280,8 +280,8 @@ namespace getfem
        *          Return the index of the convex in the mesh.
        */
       template<class ITER>
-	size_type add_simplex(dim_type dim, ITER ipts)
-      { return add_convex(bgeot::simplex_geotrans(dim, 1), ipts); }
+	size_type add_simplex(dim_type di, ITER ipts)
+      { return add_convex(bgeot::simplex_geotrans(di, 1), ipts); }
       /** Add a simplex of dimension dim to the mesh. 
        *          "it" is an iterator on a list of points of type base\_node.
        *          Return the index of the convex in the mesh.
@@ -307,13 +307,13 @@ namespace getfem
        *          Return the index of the convex in the mesh.
        */
       template<class ITER>
-	size_type add_parallelepiped(dim_type dim, const ITER &ipts);
+	size_type add_parallelepiped(dim_type di, const ITER &ipts);
       /** Add a parallelepiped of dimension dim to the mesh. 
        *          "it" is an iterator on a list of points of type base\_node.
        *          Return the index of the convex in the mesh.
        */
       template<class ITER>
-	size_type add_parallelepiped_by_points(dim_type dim, const ITER &pts);
+	size_type add_parallelepiped_by_points(dim_type di, const ITER &ps);
       /** Add a parallelepiped of dimension dim to the
        *          mesh. org is the point of type base\_node representing
        *          the origine and "it" is an iterator on a list of
@@ -321,7 +321,7 @@ namespace getfem
        *          Return the index of the convex in the mesh.
        */
       template<class ITER>
-	size_type add_parallelepiped_by_vectors(dim_type dim,
+	size_type add_parallelepiped_by_vectors(dim_type di,
 				    const base_node &org, const ITER &vects);
 
       /** Add a prism of dimension dim to the mesh. 
@@ -329,14 +329,14 @@ namespace getfem
        *          Return the index of the convex in the mesh.
        */
       template<class ITER>
-	size_type add_prism(dim_type dim, const ITER &ipts);
+	size_type add_prism(dim_type di, const ITER &ipts);
 
        /** Add a prism of dimension dim to the mesh. 
        *          "it" is an iterator on a list of points of type base\_node.
        *          Return the index of the convex in the mesh.
        */
       template<class ITER>
-	size_type add_prism_by_points(dim_type dim, const ITER &pts);
+	size_type add_prism_by_points(dim_type di, const ITER &ps);
 
       /// Delete the convex of index i from the mesh.
       void sup_convex(size_type ic);
@@ -387,47 +387,47 @@ namespace getfem
   }
 
   template<class ITER>
-   size_type getfem_mesh::add_simplex_by_points(dim_type dim, ITER ipts)
+   size_type getfem_mesh::add_simplex_by_points(dim_type di, ITER ipts)
   {
-    return add_convex_by_points(bgeot::simplex_geotrans(dim, 1), ipts);
+    return add_convex_by_points(bgeot::simplex_geotrans(di, 1), ipts);
   }
 
   template<class ITER>
-    size_type getfem_mesh::add_parallelepiped(dim_type dim, const ITER &ipts)
-  { return add_convex(bgeot::parallelepiped_geotrans(dim, 1), ipts); }
+    size_type getfem_mesh::add_parallelepiped(dim_type di, const ITER &ipts)
+  { return add_convex(bgeot::parallelepiped_geotrans(di, 1), ipts); }
 
   template<class ITER>
     size_type getfem_mesh::add_parallelepiped_by_points
-    (dim_type dim, const ITER &pts)
-  { return add_convex_by_points(bgeot::parallelepiped_geotrans(dim, 1), pts); }
+    (dim_type di, const ITER &ps)
+  { return add_convex_by_points(bgeot::parallelepiped_geotrans(di, 1), ps); }
 
   template<class ITER>
     size_type getfem_mesh::add_parallelepiped_by_vectors
-    (dim_type dim, const base_node &org, const ITER &vects)
+    (dim_type di, const base_node &org, const ITER &vects)
   {
-    size_type nbp = (size_type(1) << size_type(dim)), i, j;
+    size_type nbp = (size_type(1) << size_type(di)), i, j;
     std::vector<size_type> ipt;
     ipt.resize(nbp);
     base_node a; ITER b;
 
     for (i = 0; i < nbp; i++)
     {
-      for (a = org, b = vects, j = 0; j < dim; ++j, ++b)
+      for (a = org, b = vects, j = 0; j < di; ++j, ++b)
 	if (i & (1 << j)) a += *b;
       ipt[i] = add_point(a);
     }
 
-    return add_parallelepiped(dim, ipt.begin());
+    return add_parallelepiped(di, ipt.begin());
   }
 
   template<class ITER>
-    size_type getfem_mesh::add_prism(dim_type dim, const ITER &ipts)
-  { return add_convex(bgeot::prism_trans(dim, 1), ipts); }
+    size_type getfem_mesh::add_prism(dim_type di, const ITER &ipts)
+  { return add_convex(bgeot::prism_trans(di, 1), ipts); }
 
   template<class ITER>
     size_type getfem_mesh::add_prism_by_points
-    (dim_type dim, const ITER &pts)
-  { return add_convex_by_points(bgeot::prism_geotrans(dim, 1), pts); }
+    (dim_type di, const ITER &ps)
+  { return add_convex_by_points(bgeot::prism_geotrans(di, 1), ps); }
 
   typedef getfem_mesh *pgetfem_mesh;
 

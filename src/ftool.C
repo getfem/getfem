@@ -79,7 +79,7 @@ namespace ftool
 
   static char temp_string[512];
   
-  int md_param::search_param(char *name) {
+  int md_param::search_param(const char *name) {
     for (int i = 0; i < nb_param; i++)
       if (!strcmp(name, param_name(i))) return i;
     return -1;
@@ -211,7 +211,7 @@ namespace ftool
     state = newstate; if (newstate == -1) return -1; else return 0;
   }
   
-  int md_param::read_string(char *st) {
+  int md_param::read_string(const char *st) {
     for (unsigned int i = 0; i < strlen(st); ++i) {
       if (read_char(st[i]) == -1) return -1;
     }
@@ -219,7 +219,7 @@ namespace ftool
     return 0;
   }
   
-  void md_param::read_param_file(char *fn) {
+  void md_param::read_param_file(const char *fn) {
     FILE *F = fopen(fn, "r");
     if (F == NULL)
       DAL_THROW(dal::internal_error, "file " << fn << " not found");
@@ -281,7 +281,7 @@ namespace ftool
   }
   
   
-  void md_param::write_param_file(char *fn) {
+  void md_param::write_param_file(const char *fn) {
     FILE *F = fopen(fn, "w");
     add_int_param("BLKSIZE1", blk1); add_int_param("BLKSIZE2", blk2);
     add_int_param("BLKSIZE3", blk3); add_int_param("BLKSIZE4", blk4);
@@ -313,7 +313,7 @@ namespace ftool
   }
   
   
-  double md_param::real_value(char *name) { 
+  double md_param::real_value(const char *name) { 
     int i = search_param(name);
     double e;
     if (i == -1) return 0.0;
@@ -329,7 +329,7 @@ namespace ftool
     return 0.0;
   }
   
-  double md_param::real_value(char *name, char *comment) {
+  double md_param::real_value(const char *name, const char *comment) {
     int i = search_param(name);
     if (i == -1) {
       double f;
@@ -337,13 +337,14 @@ namespace ftool
       cout << comment << " : "; cin >> f; sprintf(string_read, "%g", f);
       i = add_real_param(name, atof(string_read));
     }
-    if (param_comment(i) != NULL) delete param_comment(i);
-    param_comment(i) = new char[strlen(comment)+1];
-    strcpy(param_comment(i), comment);
+    if (param_comment(i) != 0) delete[] param_comment(i);
+    char *p = new char[strlen(comment)+1];
+    strcpy(p, comment);
+    param_comment(i) = p;
     return real_value(name);
   }
   
-  long md_param::int_value(char *name) { 
+  long md_param::int_value(const char *name) { 
     int i = search_param(name);
     long e;
     if (i == -1) return 0;
@@ -359,7 +360,7 @@ namespace ftool
     return 0;
   }
   
-  long md_param::int_value(char *name, char *comment) {
+  long md_param::int_value(const char *name, const char *comment) {
     int i = search_param(name);
     if (i == -1) {
       long f;
@@ -367,44 +368,47 @@ namespace ftool
       cout << comment << " : "; cin >> f; sprintf(string_read, "%ld", f);
       i = add_int_param(name, atol(string_read));
     }
-    if (param_comment(i) != NULL) delete param_comment(i);
-    param_comment(i) = new char[strlen(comment)+1];
-    strcpy(param_comment(i), comment);
+    if (param_comment(i) != 0) delete[] param_comment(i);
+    char *p = new char[strlen(comment)+1];
+    strcpy(p, comment);
+    param_comment(i) = p;
     return int_value(name);
   }
   
-  char *md_param::string_value(char *name) {
+  const char *md_param::string_value(const char *name) {
     int i = search_param(name); if (i==-1) return NULL; return string_value(i);
   }
   
-  char *md_param::string_value(char *name, char *comment) {
+  const char *md_param::string_value(const char *name, const char *comment) {
     int i = search_param(name);
     if (i == -1) {
       cout << "No parameter " << name << " found, please enter its value\n";
       cout << comment << " : "; cin >> string_read;
       i = add_string_param(name, string_read);
     }
-    if (param_comment(i) != NULL) delete param_comment(i);
-    param_comment(i) = new char[strlen(comment)+1];
-    strcpy(param_comment(i), comment);
+    if (param_comment(i) != 0) delete[] param_comment(i);
+    char *p = new char[strlen(comment)+1];
+    strcpy(p, comment);
+    param_comment(i) = p;
     return string_value(name);
   }
   
-  int md_param::nb_sub_param(char *name) {
+  int md_param::nb_sub_param(const char *name) {
     int i = search_param(name); if (i == -1) return 0;
     if (param_type(i) != 4) return 0;
     return nb_sub_param(i);
   }
   
-  int md_param::nb_sub_param(char *name, char *comment) {
+  int md_param::nb_sub_param(const char *name, const char *comment) {
     int i = search_param(name), nb;
     
     if (i == -1 || param_type(i) != 4) {
       
       if (i == -1) {
 	i = nb_param++;
-	param_name(i) = new char[strlen(name)+1];
-	strcpy(param_name(i), name);
+	char *p = new char[strlen(name)+1];
+	strcpy(p, name);
+	param_name(i) = p;
 	param_type(i) = 4; nb_sub_param(i) = 0;
 	sub_param(i) = new dal::dynamic_array<t_value>; 
       }
@@ -421,13 +425,14 @@ namespace ftool
 	add_string_param_to_param(name, string_read);
       }
     }
-    if (param_comment(i) != NULL) delete param_comment(i);
-    param_comment(i) = new char[strlen(comment)+1];
-    strcpy(param_comment(i), comment);
+    if (param_comment(i) != 0) delete[] param_comment(i);
+    char *p = new char[strlen(comment)+1];
+    strcpy(p, comment);
+    param_comment(i) = p;
     return nb_sub_param(i);
   }
   
-  long md_param::sub_int_value(char *name, int n) {
+  long md_param::sub_int_value(const char *name, int n) {
     int i = search_param(name);
     if (i == -1) return 0;
     if (param_type(i) != 4) return 0;
@@ -441,7 +446,7 @@ namespace ftool
     return 0;
   }
   
-  char *md_param::sub_string_value(char *name, int n) {
+  const char *md_param::sub_string_value(const char *name, int n) {
     int i = search_param(name);
     if (i == -1) return 0;
     if (param_type(i) != 4) return 0;
@@ -458,7 +463,7 @@ namespace ftool
     return 0;
   }
   
-  double md_param::sub_real_value(char *name, int n) {
+  double md_param::sub_real_value(const char *name, int n) {
     int i = search_param(name);
     if (i == -1) return 0;
     if (param_type(i) != 4) return 0;
@@ -473,7 +478,7 @@ namespace ftool
     return 0.0;
   }
   
-  int md_param::add_string_param(char *name, char *value) {
+  int md_param::add_string_param(const char *name, const char *value) {
     int i = search_param(name);
     if (!strcmp(name, "DATA_TYPE")) {
       if (!strcmp(value, "BIN")) is_text = false; else is_text = true;
@@ -483,25 +488,28 @@ namespace ftool
     }
     if (i == -1) {
       i = nb_param++;
-      param_name(i) = new char[strlen(name)+1];
-      strcpy(param_name(i), name);
+      char *p = new char[strlen(name)+1];
+      strcpy(p, name);
+      param_name(i) = p;
     }
     else {
       clear_value(i);    
     }
-    string_value(i) = new char[strlen(value)+1];
-    strcpy(string_value(i), value);
+    char *p = new char[strlen(value)+1];
+    strcpy(p, value);
+    string_value(i) = p;
     param_type(i) = 3;
     return i;
   }
 
-  int md_param::add_string_param_to_param(char *name, char *value) {
+  int md_param::add_string_param_to_param(const char *name, const char *value) {
     int i = search_param(name);
     if (i == -1)
       {
 	i = nb_param++;
-	param_name(i) = new char[strlen(name)+1];
-	strcpy(param_name(i), name);
+	char *p = new char[strlen(name)+1];
+	strcpy(p, name);
+	param_name(i) = p;
 	param_type(i) = 4; nb_sub_param(i) = 0;
 	sub_param(i) = new dal::dynamic_array<t_value>;
       }
@@ -513,8 +521,9 @@ namespace ftool
 	    sub_param(i) = new dal::dynamic_array<t_value>;
 	  }  
       }
-    (* sub_param(i))[nb_sub_param(i)].value.v_string=new char[strlen(value)+1];
-    strcpy((* sub_param(i))[nb_sub_param(i)].value.v_string, value);
+    char *p = new char[strlen(value)+1];
+    strcpy(p, value);
+    (* sub_param(i))[nb_sub_param(i)].value.v_string = p;
     (* sub_param(i))[nb_sub_param(i)].type = 3;
     nb_sub_param(i)++;
     
@@ -522,13 +531,14 @@ namespace ftool
   }
   
 
-  int md_param::add_real_param(char *name, double e) {
+  int md_param::add_real_param(const char *name, double e) {
     int i = search_param(name);
     if (i == -1)
       {
 	i = nb_param++;
-	param_name(i) = new char[strlen(name)+1];
-	strcpy(param_name(i), name);
+	char *p = new char[strlen(name)+1];
+	strcpy(p, name);
+	param_name(i) = p;
       }
     else
       {
@@ -539,18 +549,17 @@ namespace ftool
     return i;
   }
 
-  int md_param::add_int_param(char *name, long e) {
+  int md_param::add_int_param(const char *name, long e) {
     int i = search_param(name);
-    if (i == -1)
-      {
-	i = nb_param++;
-	param_name(i) = new char[strlen(name)+1];
-	strcpy(param_name(i), name);
-      }
-    else
-      {
-	clear_value(i);    
-      }
+    if (i == -1) {
+      i = nb_param++;
+      char *p = new char[strlen(name)+1];
+      strcpy(p, name);
+      param_name(i) = p;
+    }
+    else {
+      clear_value(i);    
+    }
     int_value(i) = e;
     param_type(i) = 2;
     return i;

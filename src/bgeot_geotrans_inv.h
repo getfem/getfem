@@ -117,7 +117,7 @@ namespace bgeot
     base_node x(N), y(P);
     base_matrix pc(pgt->nb_points() , N);
     base_matrix grad(P, N), TMP1(N,N), B0(N, P), CS(N,N);
-    size_type nbpt = 0, i;
+    size_type nbpt = 0;
     dal::dynamic_array<size_type> pts;
 
     min = max = pgt->geometric_nodes()[0];
@@ -129,7 +129,7 @@ namespace bgeot
       }
     
     if (pgt->is_linear()) {
-      for (i = 0; i < N; ++i) { min[i] -= EPS; max[i] += EPS; }
+      for (size_type i = 0; i < N; ++i) { min[i] -= EPS; max[i] += EPS; }
       // cout << "boxmin = " << min << " boxmax = " << max << endl;
       
       size_type nbib = points_in_box(pts, min, max);
@@ -138,7 +138,7 @@ namespace bgeot
       // On peut éviter ce calcul en faisant appel à un pre-geotrans
       // ou en stockant le calcul qui est toujours le même.
       // on peut aussi l'optimiser en ne faisant pas appel à derivative().
-      for (i = 0; i < pgt->nb_points(); ++i)
+      for (size_type i = 0; i < pgt->nb_points(); ++i)
 	for (dim_type n = 0; n < N; ++n)
 	  { PO = pgt->poly_vector()[i]; PO.derivative(n); pc(i,n) = PO[0]; }
       
@@ -174,7 +174,7 @@ namespace bgeot
       
     }
     else { // partie non testée
-      for (i = 0; i < N; ++i)
+      for (size_type i = 0; i < N; ++i)
 	{ scalar_type e = (max[i]-min[i]) * 0.2;  min[i] -= e; max[i] += e; }
       size_type nbib = points_in_box(pts, min, max);
       
@@ -182,7 +182,7 @@ namespace bgeot
       scalar_type res;
 
       for (size_type l = 0; l < nbib; ++l) {
-	i = pts[l];
+	size_type i = pts[l];
 	x = pgt->geometric_nodes()[0]; y = cv.points()[0];  
 	scalar_type d = vect_dist2(y, ptab[i]);
 	for (size_type j = 1; j < pgt->nb_points(); ++j) { 

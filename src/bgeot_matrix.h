@@ -552,8 +552,9 @@ namespace bgeot
   { // mr = m1 * m2; optimisable.
    
     if (m1.ncols() != m2.nrows() || mr.nrows() != m1.nrows()
-	  || mr.ncols() != m2.ncols() || ((void *)(&mr) == (void *)(&m1))
-	  || ((void *)(&mr) == (void *)(&m2)))
+	  || mr.ncols() != m2.ncols() 
+	  || ((const void *)(&mr) == (const void *)(&m1))
+	  || ((const void *)(&mr) == (const void *)(&m2)))
       DAL_THROW(dimension_error, "dimensions mismatch");
 
     for (size_t i = 0; i < mr.nrows(); ++i)
@@ -565,7 +566,7 @@ namespace bgeot
     void mat_vect_product(const MAT &m, const VECT &v, VECTR &vr)
   { // vr = m * v; optimisable.
     if (m.ncols() != v.size() || vr.size() != m.nrows()
-	|| ((void *)(&vr) == (void *)(&v)))
+	|| ((const void *)(&vr) == (const void *)(&v)))
       DAL_THROW(dimension_error, "dimensions mismatch");
     
     for (size_t i = 0; i < vr.size(); ++i) vr[i] = lv_product(m, i, v);
@@ -576,7 +577,7 @@ namespace bgeot
   { // mr = transp(m1) * trans(m2); optimisable.
     if (m1.nrows() != m2.ncols() || mr.nrows() != m1.ncols()
 	  || mr.ncols() != m2.nrows() || ((void *)(&mr) == (void *)(&m1))
-	  || ((void *)(&mr) == (void *)(&m2)))
+	  || ((const void *)(&mr) == (const void *)(&m2)))
       DAL_THROW(dimension_error, "dimensions mismatch");
 
     for (size_t i = 0; i < mr.nrows(); ++i)
@@ -588,7 +589,7 @@ namespace bgeot
     void mat_vect_product_t(const MAT &m, const VECT &v, VECTR &vr)
   { // vr = transp(m) * v; optimisable.
     if (m.ncols() != vr.size() || v.size() != m.nrows()
-	|| ((void *)(&vr) == (void *)(&v)))
+	|| ((const void *)(&vr) == (const void *)(&v)))
       DAL_THROW(dimension_error, "dimensions mismatch");
   
     for (size_t i = 0; i < vr.size(); ++i) vr[i] = cv_product(m, i, v);
@@ -598,8 +599,9 @@ namespace bgeot
     void mat_product_tn(const MAT1 &m1, const MAT2 &m2, MATR &mr) 
   { // mr = trans(m1) * m2; optimisable.
     if (m1.nrows() != m2.nrows() || mr.nrows() != m1.ncols()
-	  || mr.ncols() != m2.ncols() || ((void *)(&mr) == (void *)(&m1))
-	  || ((void *)(&mr) == (void *)(&m2)))
+	  || mr.ncols() != m2.ncols()
+	  || ((const void *)(&mr) == (const void *)(&m1))
+	  || ((const void *)(&mr) == (const void *)(&m2)))
       DAL_THROW(dimension_error, "dimensions mismatch");
     
     for (size_t i = 0; i < mr.nrows(); ++i)
@@ -611,8 +613,9 @@ namespace bgeot
     void mat_add_product_tn(const MAT1 &m1, const MAT2 &m2, MATR &mr) 
   { // mr += trans(m1) * m2; optimisable.
     if (m1.nrows() != m2.nrows() || mr.nrows() != m1.nrows()
-	  || mr.ncols() != m2.ncols() || ((void *)(&mr) == (void *)(&m1))
-	  || ((void *)(&mr) == (void *)(&m2)))
+	  || mr.ncols() != m2.ncols()
+	  || ((const void *)(&mr) == (const void *)(&m1))
+	  || ((const void *)(&mr) == (const void *)(&m2)))
       DAL_THROW(dimension_error, "dimensions mismatch");
 
     for (size_t i = 0; i < mr.nrows(); ++i)

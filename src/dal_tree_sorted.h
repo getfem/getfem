@@ -801,7 +801,7 @@ namespace dal
   {
     const TAB *tab;
     COMP compare;
-    const T *search_elt;
+    mutable const T *search_elt;
     
     int operator()(size_t i, size_t j) const
     { 
@@ -840,12 +840,12 @@ namespace dal
 
       size_type search(const T &elt) const
       { 
-	*((const T **)(&(compar.search_elt))) = &elt;
+	compar.search_elt = &elt;
 	return dts_type::search(ST_NIL);
       }
       size_type search_ge(const T &elt) const
       {
-	*((const T **)(&(compar.search_elt))) = &elt;
+	compar.search_elt = &elt;
 	return dts_type::search_ge(ST_NIL);
       }
       size_type add(size_type i)
