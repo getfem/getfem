@@ -1,15 +1,15 @@
 #!/bin/sh
 
 if test $# -lt 3; then
- echo usage : test_dist getfem++-1.4 machine compiler login
- echo "à faire  : getfem++-1.4 telline.cict.fr aCC"
- echo "         : getfem++-1.4 calmip.cict.fr CC"
- echo "         : getfem++-1.4 superdec cxx"
- echo "         : getfem++-1.4 superdec g++"
- echo "         : getfem++-1.4 gmmlinux2 g++-2.95"
- echo "         : getfem++-1.4 gmmlinux2 g++-3.0"
- echo "         : getfem++-1.4 gmmlinux2 g++-3.2"
- echo "         : getfem++-1.4 gmmlinux2 icc   "
+ echo usage : test_dist getfem++-1.6 machine compiler login
+ echo "à faire  : getfem++-1.6 telline.cict.fr aCC mip"
+ echo "         : getfem++-1.6 calmip.cict.fr CC"
+ echo "         : getfem++-1.6 superdec cxx"
+ echo "         : getfem++-1.6 superdec g++"
+ echo "         : getfem++-1.6 gmmlinux2 g++-2.95"
+ echo "         : getfem++-1.6 gmmlinux2 g++-3.0"
+ echo "         : getfem++-1.6 gmmlinux2 g++-3.2"
+ echo "         : getfem++-1.6 gmmlinux2 icc   "
  exit 0
 fi
 
