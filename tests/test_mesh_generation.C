@@ -15,6 +15,7 @@ extern "C"
 #include <qhull/stat.h>
 }
 
+#include <gmm_solver_bfgs.h>
 #include <getfem_export.h>
 #include <bgeot_kdtree.h>
 #include <typeinfo>
@@ -22,7 +23,38 @@ extern "C"
 int ORIGINAL = 1;
 
 namespace getfem {
+  /*template <typename MAT> 
+  typename number_traits<typename 
+  linalg_traits<MAT>::value_type>::magnitude_type
+  Frobenius_condition_number(const MAT& M) { 
+    typedef typename linalg_traits<MAT>::value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
+    size_type m = gmm::mat_nrows(M), n = gmm::mat_ncols(M);
+    dense_matrix<T> B(std::min(m,n), std::min(m,n));
+    if (m < n) gmm::mult(M,gmm::conjugated(M),B);
+    else       gmm::mult(gmm::conjugated(M),M,B);
+    R trB = gmm::abs(gmm::mat_trace(B));
+    gmm::lu_inverse(B);
+    return sqrt(trB*gmm::abs(gmm::mat_trace(B)));
+  }
+  */
 
+  template <typename MAT, typename MAT2> void
+  squared_Frobenius_condition_number_gradient(const MAT& M, MAT2& G) { 
+    typedef typename gmm::linalg_traits<MAT>::value_type T;
+    typedef typename gmm::number_traits<T>::magnitude_type R;
+    
+    size_type n = mat_ncols(M);
+    gmm::dense_matrix<T> B(n,n), C(n,n);
+    gmm::mult(M,gmm::transposed(M),B);
+    R trB = gmm::mat_trace(B);
+    gmm::lu_inverse(B);
+    R trBinv = gmm::mat_trace(B);
+    gmm::mult(B,B,C);
+    gmm::mult(gmm::scaled(M, T(-2)*trB), C, G);
+    gmm::add(gmm::scaled(M, T(2)*trBinv), G);
+  }
+  
   void delaunay(const std::vector<base_node> &pts, gmm::dense_matrix<size_type>& simplexes)
   {
     if (pts.size() == 0) return;
@@ -300,6 +332,8 @@ namespace getfem {
 
     std::vector<const mesher_signed_distance*> constraints;
 
+    gmm::dense_matrix<scalar_type> W;
+
     mesher(size_type K_,
 	   const mesher_signed_distance& dist_, 
 	   const mesher_virtual_function& edge_len_, 
@@ -320,7 +354,108 @@ namespace getfem {
       }
       deps=sqrt(1e-8)*h0;
       dist.register_constraints(this->constraints);
+
+      bgeot::pgeometric_trans pgt = bgeot::simplex_geotrans(N,1);
+      gmm::resize(W,N,N);
+      base_matrix G(N,N+1); 
+      vectors_to_base_matrix(G, bgeot::equilateral_simplex_of_reference(N)->points());
+      gmm::mult(G, bgeot::geotrans_precomp(pgt, &pgt->convex_ref()->points())->grad(0), W);
+      gmm::lu_inverse(W);
       run(m,fixed_points);
+    }
+
+    scalar_type fbcond_cost_function(const base_vector &c) {
+      unsigned nbt = gmm::mat_ncols(t);
+      scalar_type cost = 0;
+      base_matrix S(N,N), SW(N,N);
+      for (unsigned i=0; i < nbt; ++i) {
+	for (size_type j=0; j < N; ++j) {
+	  for (size_type k=0; k < N; ++k) {
+	    S(k,j) = c[t(j+1,i)*N+k] - c[t(0,i)*N+k];
+	  }
+	}
+	gmm::mult(S,W,SW);
+	if (gmm::lu_det(SW) < 0) cost += 1e30;
+	else cost += gmm::Frobenius_condition_number(SW);
+      }
+      return cost;
+    }
+
+    void fbcond_cost_function_derivative(const base_vector& c, base_vector &grad) {
+      gmm::clear(grad);
+      base_matrix Dcond(N,N), G(N,N), S(N,N);
+      
+      for (unsigned i=0; i < gmm::mat_ncols(t); ++i) {
+	for (size_type j=0; j < N; ++j) {
+	  for (size_type k=0; k < N; ++k) {
+	    S(k,j) = c[t(j+1,i)*N+k] - c[t(0,i)*N+k];
+	  }
+	}
+	squared_Frobenius_condition_number_gradient(S,Dcond);
+	gmm::mult(Dcond, gmm::transposed(W), G);
+	for (size_type j=0; j < N; ++j) {
+	  for (size_type k=0; k < N; ++k) {
+	    grad[t(j+1,i)*N+k] += G(k,j);
+	    grad[t(0,i)*N+k] -= G(k,j);
+	  }
+	}
+      }
+      for (unsigned i=0; i < pts.size(); ++i) {
+	if (pts_attr[i]->constraints.card() || pts_attr[i]->fixed) 
+	  for (size_type k=0; k < N; ++k) {
+	    grad[i*N+k] = 0;
+	  }
+      }
+      gmm::scale(grad, -1.);
+    }
+
+    struct fbcond_cost_function_object {
+      mesher &m;
+      fbcond_cost_function_object(mesher &m_) : m(m_) {}
+      scalar_type operator()(const base_vector& c) { return m.fbcond_cost_function(c); }
+    };
+
+    struct fbcond_cost_function_derivative_object {
+      mesher &m;
+      fbcond_cost_function_derivative_object(mesher &m_) : m(m_) {}
+      void operator()(const base_vector& c, base_vector &grad) { m.fbcond_cost_function_derivative(c, grad); }
+    };
+
+    void optimize_quality() {
+      base_vector X(pts.size() * N);
+      for (unsigned i=0; i < pts.size(); ++i)
+	dal::copy_n(pts[i].const_begin(), N, X.begin() + i*N);
+
+      base_matrix S(N,N), SW(N,N);
+      for (unsigned i=0; i < gmm::mat_ncols(t); ++i) {
+	for (size_type j=0; j < N; ++j) {
+	  for (size_type k=0; k < N; ++k) {
+	    S(k,j) = X[t(j+1,i)*N+k] - X[t(0,i)*N+k];
+	  }
+	}
+	if (gmm::lu_det(S) < 0) {
+	  std::swap(t(0,i), t(1,i));
+	  for (size_type j=0; j < N; ++j) {
+	    for (size_type k=0; k < N; ++k) {
+	      S(k,j) = X[t(j+1,i)*N+k] - X[t(0,i)*N+k];
+	    }
+	  }
+	}
+	if (dal::abs(lu_det(S)) < 1e-10) cout << "oulala " << i << ", " << dal::abs(lu_det(S)) << "\n";
+	gmm::mult(S,W,SW);
+	assert(gmm::lu_det(S) > 0);
+	assert(gmm::lu_det(SW) > 0);
+      }
+      
+      cout << "Initial quality: " << fbcond_cost_function(X) << "\n";
+      gmm::iteration iter; iter.set_noisy(1);
+      gmm::bfgs(fbcond_cost_function_object(*this), 
+		fbcond_cost_function_derivative_object(*this),
+		X, 50, iter);
+
+      cout << "Final quality: " << fbcond_cost_function(X) << "\n";
+      for (unsigned i=0; i < pts.size(); ++i)
+	dal::copy_n(X.begin() + i*N, N, pts[i].begin());      
     }
 
     void projection(base_node &X, dal::bit_vector& bv) {
@@ -334,6 +469,7 @@ namespace getfem {
 	}
       }
     }
+
 
     void projection(base_node &X) { dal::bit_vector bv; projection(X,bv); }
 
@@ -594,11 +730,12 @@ namespace getfem {
 	      }
 	    }
 	    cout << " worst q = " << worst_q << "\n";
-	    if (worst_q < 1e-2) {
+	    /*if (worst_q < 1e-2) {
 	      cout << "Inserting a new node @" << worst_q_P << "\n";	      
 	      pts.push_back(worst_q_P); pts_attr.push_back(get_attr(false, dal::bit_vector(),false));
 	      pts_prev = pts;
 	    } else break;
+	    */
 	  }
 	  edges_mesh.clear();
 	  cout << "nb splx = " << gmm::mat_ncols(t) << "\n";
@@ -772,8 +909,11 @@ namespace getfem {
 	  m.write_to_file(s);
 	}
 	//getchar();
-      } while ((count < 40 || sqrt(maxdp)*deltat > ptol * h0) && count < 500);
+      } while ((count < 40 || sqrt(maxdp)*deltat > ptol * h0) && count < 50);
       delaunay(pts, t);
+      
+      optimize_quality();
+
       { m.clear();
 	build_simplex_mesh(m,K);
 	m.write_to_file("toto.mesh");

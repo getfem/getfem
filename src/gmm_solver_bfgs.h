@@ -57,9 +57,9 @@ namespace gmm {
     std::vector<VECTOR> delta, gamma, Hgamma;
     std::vector<T> alpha, beta;
 
-    void hmult(const VECTOR &X, VECTOR &Y) {
+    template<typename VEC1, typename VEC2> void hmult(const VEC1 &X, VEC2 &Y) {
       copy(X, Y);
-      for (k = 0 ; k < delta.size(); ++k) {
+      for (size_type k = 0 ; k < delta.size(); ++k) {
 	add(scaled(gamma[k], -gmm::vect_sp(Y, gamma[k])/beta[k]), Y);
 	double xgamma = vect_sp(X, delta[k]);
 	add(scaled(delta[k], xgamma*alpha[k]), Y);
@@ -93,11 +93,11 @@ namespace gmm {
     }
 
     
-  }
+  };
 
 
   template <typename FUNCTION, typename DERIVATIVE, typename VECTOR> 
-  void bfgs(const FUNCTION &f, const DERIVATIVE &d, VECTOR &x,
+  void bfgs(FUNCTION f, DERIVATIVE grad, VECTOR &x,
 	    int restart, iteration& iter) {
 
     typedef typename linalg_traits<VECTOR>::value_type T;
@@ -106,29 +106,30 @@ namespace gmm {
     
     bfgs_invhessian<VECTOR> invhessian;
     VECTOR r(vect_size(x)), d(vect_size(x)), y(vect_size(x)), r2(vect_size(x));
-    d(x, r);
+    grad(x, r);
     T lambda;
-    R m1 = 0.3, m2 = 0.6;
     
     while (! iter.finished_vect(r)) {
 
-      invhessian.mult(r, d); gmm::scale(d, T(-1));
+      invhessian.hmult(r, d); gmm::scale(d, T(-1));
       
 
       // Wolfe Line search
-      T lambda_min = 0, lambda_max, val = f(x);
-      T derivative = gmm::vect_sp(r, d);
+      T lambda_min = 0, lambda_max = 0, val = f(x);
+      T derivative = gmm::vect_sp(r, d);    
+      R m1 = 0.3, m2 = 0.6;
+
       bool unbounded = true;
       lambda = 1;
       
       for(;;) {
-
-	add(x, scaled(lambda, d), y);
+	add(x, scaled(d, lambda), y);
 	
+	cout << "[d|=" << gmm::vect_norminf(d) << ", f(x) = " << f(x) << ", iter=" << iter.get_iteration() << ", lambda=" << lambda << ", f(y)=" << f(y) << "\n";
 	if (f(y) <= val + m1 * lambda * derivative) {
-	  d(y, r2);
+	  grad(y, r2);
 	  T derivative2 = gmm::vect_sp(r2, d);
-	  if (derivative2 >= m2 derivative) break;
+	  if (derivative2 >= m2*derivative) break;
 	  lambda_min = lambda;
 	}
 	else {
