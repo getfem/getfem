@@ -226,7 +226,7 @@ $\;$\\[3cm]\thispagestyle{empty}
 
 \begin{figure}[H]
 \begin{center}
-  { \sc Getfem++  / Getfem }
+  { \sc Getfem++}
 \end{center}
 \end{figure}
 $\;$\\[1cm]
@@ -243,7 +243,7 @@ $\;$\\[1cm]
 
 
 \section{Introduction}
-  Merci de participer au projet {\sc Getfem++ / Getfem}. Ce projet a pour vocation la r\'ealisation d'un code interfac\'e avec MATLAB dans le domaine du calcul scientifique des EDP. Il s'ins\`ere dans le cadre de la formation en calcul scientifique du d\'epartement de G\'enie Math\'ematique et Mod\'elisation de l'INSA de Toulouse et du laboratoire MIP (math\'ematiques pour l'Industrie et la Physique).\\[0.4cm]
+  Merci de participer au projet {\sc Getfem++}. Ce projet a pour vocation la r\'ealisation d'un code interfac\'e avec MATLAB dans le domaine du calcul scientifique des EDP. Il s'ins\`ere dans le cadre de la formation en calcul scientifique du d\'epartement de G\'enie Math\'ematique et Mod\'elisation de l'INSA de Toulouse et du laboratoire MIP (math\'ematiques pour l'Industrie et la Physique).\\[0.4cm]
 Ce guide a pour objectif de vous faciliter l'intervention sur le projet. Comme toutes les parties du projet, il est r\'evisable, et toute initiative visant \`a son am\'elioration est la bienvenue (r\'epertoire getfem++/doc/guide\_intervention/).
 
 \newpage
@@ -298,6 +298,7 @@ ATTENTION : Soyez bien s\^ur de vous lorsque vous apportez des modifications au 
 
 \begin{center}
 \includegraphics[width=17cm,angle=0]{files_structure.eps}
+\includegraphics[width=17cm,angle=0]{files_structure2.eps}
 \end{center}
 
 \section{R\'ecup\'erer et mettre \`a jour des fichiers avec CVS}
@@ -327,18 +328,6 @@ Par exemple la commande
 \end{alltt}
 va cr\'eer dans le r\'epertoire courant la structure de r\'epertoire \begin{alltt} getfem++/dal/ \end{alltt} et y mettre les fichier correspondants, c'est \`a dire les programmes de la biblioth\`eque dal.
 
-\subsection{Plus pratique, les shells d'installation et de mise \`a jour}
-Les shells d'installation et de mise \`a jour regroupent toutes les instructions permettant de r\'ecup\'erer les sources, et d'installer un environnement de compilation et de test. Pour r\'ecup\'erer l'ensemble des shells d'installation, ex\'ecuter la commande
-\begin{alltt}
-  cvs checkout getfem++/bin
-\end{alltt}
-Cette commande rapatrie en fait tout les shells ex\'ecutables du projet getfem++. Entrer alors dans le r\'epertoire getfem++ ainsi cr\'ee par
-\begin{alltt} cd getfem++ \end{alltt}
-et taper
-\begin{alltt} 
-  bin/install_from_cvs
-\end{alltt}
-
 Une fois les modifications apport\'ees, il faut passer \`a une phase de test, i.e. compilation et lancement des programmes de tests. Si la partie que vous avez modifi\'ee n'a pas de programme de test correspondant, cr\'eez-en un, en essayant de tester toutes les fonctionnalit\'es.\\[0.4cm]
 
 Une fois la phase de test compl\'et\'ee, quand vous \^etes s\^ur que vous n'introduisez pas de nouveaux bugs dans le projet, vous pouvez valider les changements effectués. Pour cela vous pouvez vérifier que certains modules n'ont pas été modifiés entre temps par un autre intervenant par la commande 
@@ -356,12 +345,11 @@ D'une mani\`ere g\'en\'erale, ne gardez pas trop longtemps ouverte une session. 
 \underline{exemple de session de modification, test, et validation}
 \begin{largebox}
 \begin{alltt}
-  cvs checkout getfem++/bin
+  cvs checkout getfem++
   cd getfem++
-  bin/install_from_cvs
-  xemacs bgeot/bgeot_poly.h (+ modifications)
-  make
-  make test
+  xemacs src/bgeot_poly.h (+ modifications)
+  gmake
+  gmake check
   cvs diff
   cvs commit -m "la modification que j'ai apport\'ee concerne ..."
   cd ..
@@ -405,7 +393,6 @@ L\`a aussi, il faut valider l'op\'eration par un
    on veillera \`a respecter les points suivants :
    \begin{itemize}
      \item Ne pas oublier de commenter les sources, et de les documenter (voir section suivante)
-     \item Dans les biblioth\`eques, \`a tout fichier .C doit correspondre un fichier .h m\^eme succinct.
      \item respecter la mise en forme des fichiers sources telle qu'elle existe actuellement.
    \end{itemize}
    \`a compl\'eter
