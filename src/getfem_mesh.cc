@@ -91,7 +91,7 @@ namespace getfem {
     cvindex.swap(c1, c2);
   }
 
-  const dal::bit_vector &getfem_mesh::convex_in_set(size_type b) const {
+  const dal::bit_vector &getfem_mesh::convexes_in_set(size_type b) const {
     return (valid_cvf_sets[b]) ?  
       cvf_sets[b].cvindex : dal::singleton<empty_bit_vector>::instance().bv;
   }

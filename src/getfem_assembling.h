@@ -605,7 +605,7 @@ namespace getfem
     if (!(version & ASMDIR_SIMPLIFY)) return;
 
     /* step 2 : simplification of simple dirichlet conditions */
-    dal::bit_vector bv = mf_u.linked_mesh().convex_in_set(boundary);
+    dal::bit_vector bv = mf_u.linked_mesh().convexes_in_set(boundary);
     for (dal::bv_visitor cv(bv); !cv.finished(); ++cv) {
       nf = mf_u.linked_mesh().faces_of_convex_in_set(cv, boundary);
       size_type nbf = mf_u.linked_mesh().structure_of_convex(cv)->nb_faces();

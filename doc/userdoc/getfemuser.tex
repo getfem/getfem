@@ -637,6 +637,8 @@ Once a finite element method is defined on a mesh, it is possible to obtain info
 
   \cpp{mef.clear()} & Clear the structure, no finite element method is still defined.  \\ \hline
 
+  \cpp{mef.dof_on_set(i)} & Return a \cpp{dal::bit_vector} which represent the indices of dof which are in the set of convexes or the set of faces of index \cpp{i} (see the \cpp{getfem_mesh} object).  \\ \hline
+
 \end{tabular} \end{center}
 
 \section{Linear algebra procedures}

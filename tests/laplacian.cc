@@ -206,7 +206,7 @@ void laplacian_problem::assembly(void)
   
   cout << "Assembling Neumann condition" << endl;
   /* Fill F with Grad(sol_u).n .. a bit complicated */
-  for (dal::bv_visitor cv(mesh.convex_in_set(NEUMANN_BOUNDARY_NUM));
+  for (dal::bv_visitor cv(mesh.convexes_in_set(NEUMANN_BOUNDARY_NUM));
        !cv.finished(); ++cv) {
     getfem::pfem pf = mf_rhs.fem_of_element(cv);
     getfem::mesh_cvf_set::face_bitset fb = mesh.faces_of_convex_in_set(cv,

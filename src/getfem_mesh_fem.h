@@ -311,7 +311,7 @@ namespace getfem
       const IS_DEPRECATED { return linked_mesh().is_face_in_set(b,c,f); }
     /** returns the list of convexes on the boundary b */
     const dal::bit_vector &convex_on_boundary(size_type b) const IS_DEPRECATED
-    { return linked_mesh().convex_in_set(b); }
+    { return linked_mesh().convexes_in_set(b); }
     const mesh_cvf_set::face_bitset
       &faces_of_convex_on_boundary(size_type c, size_type b) const 
       IS_DEPRECATED { return linked_mesh().faces_of_convex_in_set(c,b); }

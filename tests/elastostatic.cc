@@ -271,7 +271,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
 
   // Defining the Neumann condition right hand side.
   base_small_vector un(N), v(N);
-  for (dal::bv_visitor cv(mesh.convex_in_set(NEUMANN_BOUNDARY_NUM));
+  for (dal::bv_visitor cv(mesh.convexes_in_set(NEUMANN_BOUNDARY_NUM));
        !cv.finished(); ++cv) {
     getfem::pfem pf = mf_rhs.fem_of_element(cv);
     getfem::mesh_cvf_set::face_bitset fb = mesh.faces_of_convex_in_set(cv,
