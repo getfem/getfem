@@ -81,6 +81,7 @@ struct lap_pb
 
   std::string datafilename;
   ftool::md_param PARAM;
+  bool failed;
 
   void assemble(void);
   void solve(void);
@@ -396,8 +397,9 @@ void lap_pb::assemble(void)
 }
 
 void lap_pb::solve(void) {
-  gmm::iteration iter(residu);
+  gmm::iteration iter(residu, 0, 40000);
   gmm::cg(SM, U, B, gmm::identity_matrix(), gmm::identity_matrix(), iter);
+  failed = !(iter.converged());
 }
 
 /**************************************************************************/
@@ -448,6 +450,8 @@ int main(int argc, char *argv[])
     cout << "Solving the system\n";
     exectime = ftool::uclock_sec();
     p.solve();
+
+    if (p.failed) { cerr << "Solve procedure has failed\n"; }
     
     total_time += ftool::uclock_sec() - exectime;
     exectime = ftool::uclock_sec();

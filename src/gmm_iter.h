@@ -110,7 +110,7 @@ namespace gmm
     
     bool converged(void) { return res <= rhsn * resmax; }
     bool converged(double nr)
-    { res = dal::abs(nr); return res <= rhsn * resmax; }
+    { res = dal::abs(nr); return converged(); }
     template <class VECT> bool converged(const VECT &v)
     { return converged(gmm::vect_norm2(v)); }
 
