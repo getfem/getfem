@@ -1,0 +1,34 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% parametres du programme elastostatique                                  %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%% parametres physiques :					      %%%%%
+
+N = 2;                  % dimension du probleme.
+PG = 9.81; 		% valeur de la constante de gravitation.
+% G = 77.0;	        % raideur elastique de cisaillement (acier).
+% LAMBDA = 107.0;   	% Coefficient elastique lambda (acier).
+G = 1.0;	        % raideur elastique de cisaillement.
+LAMBDA = 1.0;   	% Coefficient elastique lambda.
+LX = 1.0;		% taille en X.
+LY = 1.0;	        % taille en Y.
+LZ = 1.0;		% taille en Z;
+FT = 0.2;               % parametre pour la solution exacte.
+%FT = 12.566370614;     
+%FT = 3.141593;
+
+%%%%%   parametres de discretisation :  			      %%%%%
+K = 1;                  % Degre de l'element fini de Lagrange.
+INTEGRATION = 0;        % 0 = integration exacte
+			% 1 = Newton Cotes de degré 2 * K
+NX = 20;            	% Nombre de pas d'espace.
+ITEIMPL = 1;            % nombre d'iteration de point fixe.
+RESIDU = 1E-6;     	% Test d'arret pour la methode iterative
+
+
+%%%%%   parametres lies a la sauvegarde ou a la visualisation :       %%%%%
+GRAPHICS = 'N';			  % affichage a l'ecran des solutions ou non.
+NBLEVEL = 10;               	  % nombre de courbes de niveau
+ROOTFILENAME = 'elasto_statique'; % Racine des fichiers de donnees.
+MULDEP = 0.1;                     % coeff. de multiplication du deplacement
+				  % a la visualisation.
