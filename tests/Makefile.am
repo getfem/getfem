@@ -1,18 +1,18 @@
 check_PROGRAMS = \
-	dynamic_array \
-	dynamic_tas \
-	elasto_statique  \
-	geo_trans \
-	geo_trans_inv \
-	integration \
-	laplacian \
-	poly \
+	dynamic_array      \
+	dynamic_tas        \
+	elasto_statique    \
+	geo_trans          \
+	geo_trans_inv      \
+	integration        \
+	laplacian          \
+	poly               \
 	speed_test_for_gmm \
-	test_assembly \
-	test_int_set \
-	test_link_fem \
-	test_mat_elem \
-	test_mesh \
+	test_assembly      \
+	test_int_set       \
+	test_link_fem      \
+	test_mat_elem      \
+	test_mesh          \
 	test_tree_sorted
 
 CLEANFILES = \
@@ -41,49 +41,49 @@ INCLUDES = -I$(top_srcdir)/src -I../src
 LDADD    = ../src/libgetfem.la -lm @SUPLDFLAGS@
 
 TESTS = \
-	$(top_srcdir)/tests/dynamic_array.pl \
-	$(top_srcdir)/tests/dynamic_tas.pl \
-	$(top_srcdir)/tests/test_mat_elem.pl \
-	$(top_srcdir)/tests/test_assembly.pl \
-	$(top_srcdir)/tests/laplacian.pl \
-	$(top_srcdir)/tests/elasto_statique.pl  \
-	$(top_srcdir)/tests/integration.pl \
-	$(top_srcdir)/tests/poly.pl \
-	$(top_srcdir)/tests/test_mesh.pl \
-	$(top_srcdir)/tests/geo_trans.pl \
-	$(top_srcdir)/tests/geo_trans_inv.pl \
+	$(top_srcdir)/tests/dynamic_array.pl      \
+	$(top_srcdir)/tests/dynamic_tas.pl        \
+	$(top_srcdir)/tests/test_mat_elem.pl      \
+	$(top_srcdir)/tests/test_assembly.pl      \
+	$(top_srcdir)/tests/laplacian.pl          \
+	$(top_srcdir)/tests/elasto_statique.pl    \
+	$(top_srcdir)/tests/integration.pl        \
+	$(top_srcdir)/tests/poly.pl               \
+	$(top_srcdir)/tests/test_mesh.pl          \
+	$(top_srcdir)/tests/geo_trans.pl          \
+	$(top_srcdir)/tests/geo_trans_inv.pl      \
 	$(top_srcdir)/tests/speed_test_for_gmm.pl \
-	$(top_srcdir)/tests/test_int_set.pl \
-	$(top_srcdir)/tests/test_link_fem.pl \
-	$(top_srcdir)/tests/make_gmm_test.pl \
+	$(top_srcdir)/tests/test_int_set.pl       \
+	$(top_srcdir)/tests/test_link_fem.pl      \
+	$(top_srcdir)/tests/make_gmm_test.pl      \
 	$(top_srcdir)/tests/test_tree_sorted.pl
 
 EXTRA_DIST = \
-	dynamic_array.pl \
-	dynamic_tas.pl \
-	test_assembly.pl \
-	laplacian.pl \
-	elasto_statique.pl  \
-	integration.pl \
-	linalg.pl \
-	poly.pl \
-	test_mesh.pl \
-	geo_trans.pl \
-	geo_trans_inv.pl \
-	speed_test_for_gmm.pl \
-	test_int_set.pl \
-	test_link_fem.pl \
-	test_tree_sorted.pl \
-	test_mat_elem.pl \
-	laplacian.param \
-	elasto_statique.param \
-	test_link_fem.param \
-	geo_trans_inv.param \
-	make_gmm_test.pl \
-	gmm_torture_sub.C \
-	gmm_torture_mult.C \
-	gmm_torture_mat_mult.C \
-	gmm_torture_qr.C \
+	dynamic_array.pl        \
+	dynamic_tas.pl          \
+	test_assembly.pl        \
+	laplacian.pl            \
+	elasto_statique.pl      \
+	integration.pl          \
+	linalg.pl               \
+	poly.pl                 \
+	test_mesh.pl            \
+	geo_trans.pl            \
+	geo_trans_inv.pl        \
+	speed_test_for_gmm.pl   \
+	test_int_set.pl         \
+	test_link_fem.pl        \
+	test_tree_sorted.pl     \
+	test_mat_elem.pl        \
+	laplacian.param         \
+	elasto_statique.param   \
+	test_link_fem.param     \
+	geo_trans_inv.param     \
+	make_gmm_test.pl        \
+	gmm_torture_sub.C       \
+	gmm_torture_mult.C      \
+	gmm_torture_mat_mult.C  \
+	gmm_torture_qr.C        \
 	gmm_torture_lusolve.C
 
 TESTS_ENVIRONMENT = perl

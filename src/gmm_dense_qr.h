@@ -153,14 +153,14 @@ namespace gmm {
 	  gmm::abs(A(i+1,i)) >= (gmm::abs(A(i,i))+gmm::abs(A(i+1,i+1)))*tol) {
 	TA tr = A(i,i) + A(i+1, i+1);
 	TA det = A(i,i)*A(i+1, i+1) - A(i,i+1)*A(i+1, i);
-	TA delta = tr*tr - TA(4.0) * det;
+	TA delta = tr*tr - TA(4) * det;
 	if (delta < TA(0)) {
 	  DAL_WARNING(2, "A complex eigenvalue has been detected");
-	  V[i] = V[i+1] = tr / TA(2.0);
+	  V[i] = V[i+1] = tr / TA(2);
 	}
 	else {
-	  V[i  ] = TA(tr + gmm::sqrt(delta))/ TA(2.0);
-	  V[i+1] = TA(tr -  gmm::sqrt(delta))/ TA(2.0);
+	  V[i  ] = TA(tr + gmm::sqrt(delta))/ TA(2);
+	  V[i+1] = TA(tr -  gmm::sqrt(delta))/ TA(2);
 	}
 	++i;
       }
@@ -181,23 +181,44 @@ namespace gmm {
       else {
 	TA tr = A(i,i) + A(i+1, i+1);
 	TA det = A(i,i)*A(i+1, i+1) - A(i,i+1)*A(i+1, i);
-	TA delta = tr*tr - TA(4.0) * det;
+	TA delta = tr*tr - TA(4) * det;
 	if (delta < TA(0)) {
-	  V[i] = std::complex<TV>(tr / TA(2.0), gmm::sqrt(-delta) / TA(2.0));
-	  V[i+1] = std::complex<TV>(tr / TA(2.0), -gmm::sqrt(-delta)/ TA(2.0));
+	  V[i] = std::complex<TV>(tr / TA(2), gmm::sqrt(-delta) / TA(2));
+	  V[i+1] = std::complex<TV>(tr / TA(2), -gmm::sqrt(-delta)/ TA(2));
 	}
 	else {
-	  V[i  ] = TA(tr + gmm::sqrt(delta)) / TA(2.0);
-	  V[i+1] = TA(tr -  gmm::sqrt(delta)) / TA(2.0);
+	  V[i  ] = TA(tr + gmm::sqrt(delta)) / TA(2);
+	  V[i+1] = TA(tr -  gmm::sqrt(delta)) / TA(2);
 	}
 	++i;
       }
   }
 
   template <typename TA, typename TV, typename MAT, typename VECT>
-  void extract_eig(const MAT &A, const VECT &VV, double tol,
-		   std::complex<TA>, TV)
-  { DAL_THROW(failure_error, "Sorry, not allowed"); }
+  void extract_eig(const MAT &A, VECT &V, double tol,
+		   std::complex<TA>, TV) {
+    size_type n = mat_nrows(A);
+    tol *= 2.0;
+    for (size_type i = 0; i < n; ++i)
+      if ((i == n-1) ||
+	  gmm::abs(A(i+1,i)) < (gmm::abs(A(i,i))+gmm::abs(A(i+1,i+1)))*tol) {
+	if (std::imag(A(i,i)) != TA(0))
+	  DAL_WARNING(2, "A complex eigenvalue has been detected");
+	V[i] = std::real(A(i,i));
+      }
+      else {
+	std::complex<TA> tr = A(i,i) + A(i+1, i+1);
+	std::complex<TA> det = A(i,i)*A(i+1, i+1) - A(i,i+1)*A(i+1, i);
+	std::complex<TA> delta = tr*tr - TA(4) * det;
+	std::complex<TA> a1 = (tr + gmm::sqrt(delta)) / TA(2);
+	std::complex<TA> a2 = (tr - gmm::sqrt(delta)) / TA(2);
+	if (std::imag(a1) != TA(0) || std::imag(a2) != TA(0))
+	  DAL_WARNING(2, "A complex eigenvalue has been detected");
+
+	V[i] = std::real(a1); V[i+1] = std::real(a2);
+	++i;
+      }
+  }
 
   template <typename TA, typename TV, typename MAT, typename VECT>
   void extract_eig(const MAT &A, VECT &V, double tol,
@@ -211,9 +232,9 @@ namespace gmm {
       else {
 	std::complex<TA> tr = A(i,i) + A(i+1, i+1);
 	std::complex<TA> det = A(i,i)*A(i+1, i+1) - A(i,i+1)*A(i+1, i);
-	std::complex<TA> delta = tr*tr - TA(4.0) * det;
-	V[i] = (tr + gmm::sqrt(delta)) / TA(2.0);
-	V[i+1] = (tr - gmm::sqrt(delta)) / TA(2.0);
+	std::complex<TA> delta = tr*tr - TA(4) * det;
+	V[i] = (tr + gmm::sqrt(delta)) / TA(2);
+	V[i+1] = (tr - gmm::sqrt(delta)) / TA(2);
 	++i;
       }
   }

@@ -6,6 +6,9 @@
 // VECTOR_PARAM;
 // ENDPARAM;
 
+#include <gmm_kernel.h>
+#include <gmm_dense_lu.h>
+#include <gmm_dense_qr.h>
 
 using gmm::size_type;
 

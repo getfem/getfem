@@ -38,6 +38,7 @@
 
 namespace getfem
 {
+
   typedef ftool::naming_system<integration_method>::param_list im_param_list;
 
   long_scalar_type poly_integration::int_poly(const base_poly &P) const
@@ -421,19 +422,18 @@ namespace getfem
 
 
   /* ********************************************************************* */
-  /* method de Gauss.                                                      */
+  /* Gauss method.                                                         */
   /* ********************************************************************* */
 
   static dal::dynamic_array<base_poly> *Legendre_polynomials;
   static dal::dynamic_array< std::vector<long_scalar_type> > *Legendres_roots;
-  static void init_legendre(short_type de)
-  {
+  static void init_legendre(short_type de) {
     static int nb_lp = -1;
 
-    if (nb_lp < 0)
-    {
+    if (nb_lp < 0) {
       Legendre_polynomials = new dal::dynamic_array<base_poly>();
-      Legendres_roots = new dal::dynamic_array< std::vector<long_scalar_type> >();
+      Legendres_roots =
+	new dal::dynamic_array< std::vector<long_scalar_type> >();
       (*Legendre_polynomials)[0] = base_poly(1,0);
       (*Legendre_polynomials)[0].one();
       (*Legendre_polynomials)[1] = base_poly(1,1,0);
@@ -441,27 +441,24 @@ namespace getfem
       (*Legendres_roots)[1][0] = 0.0;
       nb_lp = 1;
     }
-    while (nb_lp < de)
-    {
+    while (nb_lp < de) {
       ++nb_lp;
       (*Legendre_polynomials)[nb_lp] =
 	(base_poly(1,1,0) * (*Legendre_polynomials)[nb_lp-1]
 	 * ((2.0 * long_scalar_type(nb_lp) - 1.0) / long_scalar_type(nb_lp)))
 	+ ((*Legendre_polynomials)[nb_lp-2]
-	* ((1.0 - long_scalar_type(nb_lp)) / long_scalar_type(nb_lp)));
+	   * ((1.0 - long_scalar_type(nb_lp)) / long_scalar_type(nb_lp)));
       (*Legendres_roots)[nb_lp].resize(nb_lp);
       (*Legendres_roots)[nb_lp][nb_lp/2] = 0.0;
       long_scalar_type a = -1.0, b, c, d, e, cv, ev, ecart, ecart2;
-      for (int k = 0; k < nb_lp / 2; ++k) // + symetrie ...
-      {
+      for (int k = 0; k < nb_lp / 2; ++k) { // + symetrie ...
 	b = (*Legendres_roots)[nb_lp-1][k];
 
 	c = a, d = b;
 	cv = (*Legendre_polynomials)[nb_lp].eval(&c);
 	int imax = 10000;
 	ecart = 2.0 * (d - c);
-	while(c != d)
-	{
+	while(c != d) {
 	  --imax; if (imax == 0) break;
 	  e = (c + d) / 2.0;
 	  ecart2 = d - c; if (ecart2 >= ecart) break;
@@ -477,8 +474,7 @@ namespace getfem
     } 
   }
 
-  struct _gauss_approx_integration : public approx_integration
-  {
+  struct _gauss_approx_integration : public approx_integration {
     _gauss_approx_integration(short_type nbpt);
   };
 
@@ -500,7 +496,8 @@ namespace getfem
       long_scalar_type lr = (*Legendres_roots)[nbpt][i];
       int_points[i][0] = 0.5 + 0.5 * lr;
       int_coeffs[i] = (1.0 - dal::sqr(lr))
-	/ dal::sqr( long_scalar_type(nbpt) * ((*Legendre_polynomials)[nbpt-1].eval(&lr)));
+	/ dal::sqr( long_scalar_type(nbpt)
+		    * ((*Legendre_polynomials)[nbpt-1].eval(&lr)));
     }
     
     int_points[nbpt].resize(1);
@@ -511,6 +508,7 @@ namespace getfem
     pint_points = bgeot::store_point_tab(int_points);
     valid = true;
   }
+
 
   static pintegration_method gauss1d(im_param_list &params) {
     if (params.size() != 1)
@@ -529,6 +527,8 @@ namespace getfem
     else
       return new integration_method(new _gauss_approx_integration(n/2 + 1));
   }
+
+
 
   /* ********************************************************************* */
   /* integration on simplexes                                              */
@@ -601,7 +601,8 @@ namespace getfem
 // 	      if (q < (R+1)/2) 
 // 		M(r, q) += bgeot::eval_monomial(base[R-1-r], nodes[q].begin());
 // 	      else
-// 		M(r, R-1-q) += bgeot::eval_monomial(base[R-1-r], nodes[q].begin());
+// 		M(r, R-1-q) += bgeot::eval_monomial(base[R-1-r],
+//	  nodes[q].begin());
 // 	    }
 // 	  }
 // 	  else
