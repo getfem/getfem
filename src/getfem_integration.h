@@ -100,7 +100,8 @@ namespace getfem
       std::vector<scalar_type> int_coeffs;
       std::vector<size_type> repartition;
 
-      std::vector<PT_TAB> pt_to_store;
+    // index 0 : points for volumic integration, index > 0 : points for faces
+      std::vector<PT_TAB> pt_to_store; 
       bool valid;
 
     public :
