@@ -98,6 +98,11 @@ namespace gmm {
 		  linalg_traits<Matrix>::sub_orientation>::potype());
     }
     ildlt_precond(const Matrix& A)  { build_with(A); }
+    size_type memsize() const { 
+      return sizeof(*this) + 
+	Tri_val.size() * sizeof(value_type) + 
+	(Tri_ind.size()+Tri_ptr.size()) * sizeof(size_type); 
+    }
   };
 
   template <typename Matrix> template<typename M>

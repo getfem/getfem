@@ -94,6 +94,12 @@ namespace gmm {
     }
     ilu_precond(const Matrix& A) { build_with(A); }
     ilu_precond(void) {}
+    size_type memsize() const { 
+      return sizeof(*this) + 
+	(L_val.size()+U_val.size()) * sizeof(value_type) + 
+	(L_ind.size()+L_ptr.size()) * sizeof(size_type) +
+	(U_ind.size()+U_ptr.size()) * sizeof(size_type); 
+    }
   };
 
   template <typename Matrix> template <typename M>

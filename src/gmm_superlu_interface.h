@@ -62,25 +62,25 @@ namespace gmm {
 
   /*  interface for Create_CompCol_Matrix */
 
-  void Create_CompCol_Matrix(SuperMatrix *A, int m, int n, int nnz,
+  inline void Create_CompCol_Matrix(SuperMatrix *A, int m, int n, int nnz,
 			     float *a, int *ir, int *jc) {
     SuperLU_S::sCreate_CompCol_Matrix(A, m, n, nnz, a, ir, jc,
 				      SLU_NC, SLU_S, SLU_GE);
   }
   
-  void Create_CompCol_Matrix(SuperMatrix *A, int m, int n, int nnz,
+  inline void Create_CompCol_Matrix(SuperMatrix *A, int m, int n, int nnz,
 			     double *a, int *ir, int *jc) {
     SuperLU_D::dCreate_CompCol_Matrix(A, m, n, nnz, a, ir, jc,
 				      SLU_NC, SLU_D, SLU_GE);
   }
   
-  void Create_CompCol_Matrix(SuperMatrix *A, int m, int n, int nnz,
+  inline void Create_CompCol_Matrix(SuperMatrix *A, int m, int n, int nnz,
 			     std::complex<float> *a, int *ir, int *jc) {
     SuperLU_C::cCreate_CompCol_Matrix(A, m, n, nnz, (SuperLU_C::complex *)(a),
 				      ir, jc, SLU_NC, SLU_C, SLU_GE);
   }
   
-  void Create_CompCol_Matrix(SuperMatrix *A, int m, int n, int nnz,
+  inline void Create_CompCol_Matrix(SuperMatrix *A, int m, int n, int nnz,
 			     std::complex<double> *a, int *ir, int *jc) {
     SuperLU_Z::zCreate_CompCol_Matrix(A, m, n, nnz,
 				      (SuperLU_Z::doublecomplex *)(a), ir, jc,
@@ -89,16 +89,16 @@ namespace gmm {
 
   /*  interface for Create_Dense_Matrix */
 
-  void Create_Dense_Matrix(SuperMatrix *A, int m, int n, float *a, int k)
+  inline void Create_Dense_Matrix(SuperMatrix *A, int m, int n, float *a, int k)
   { SuperLU_S::sCreate_Dense_Matrix(A, m, n, a, k, SLU_DN, SLU_S, SLU_GE); }
-  void Create_Dense_Matrix(SuperMatrix *A, int m, int n, double *a, int k)
+  inline void Create_Dense_Matrix(SuperMatrix *A, int m, int n, double *a, int k)
   { SuperLU_D::dCreate_Dense_Matrix(A, m, n, a, k, SLU_DN, SLU_D, SLU_GE); }
-  void Create_Dense_Matrix(SuperMatrix *A, int m, int n,
+  inline void Create_Dense_Matrix(SuperMatrix *A, int m, int n,
 			   std::complex<float> *a, int k) {
     SuperLU_C::cCreate_Dense_Matrix(A, m, n, (SuperLU_C::complex *)(a),
 				    k, SLU_DN, SLU_C, SLU_GE);
   }
-  void Create_Dense_Matrix(SuperMatrix *A, int m, int n, 
+  inline void Create_Dense_Matrix(SuperMatrix *A, int m, int n, 
 			   std::complex<double> *a, int k) {
     SuperLU_Z::zCreate_Dense_Matrix(A, m, n, (SuperLU_Z::doublecomplex *)(a),
 				    k, SLU_DN, SLU_Z, SLU_GE);
@@ -107,7 +107,7 @@ namespace gmm {
   /*  interface for gssv */
 
 #define DECL_GSSV(NAMESPACE,FNAME,FLOATTYPE,KEYTYPE) \
-  void SuperLU_gssv(superlu_options_t *options, SuperMatrix *A, int *p, \
+  inline void SuperLU_gssv(superlu_options_t *options, SuperMatrix *A, int *p, \
   int *q, SuperMatrix *L, SuperMatrix *U, SuperMatrix *B,               \
   SuperLUStat_t *stats, int *info, KEYTYPE) {                           \
   NAMESPACE::FNAME(options, A, p, q, L, U, B, stats, info);             \
@@ -121,7 +121,7 @@ namespace gmm {
   /*  interface for gssvx */
 
 #define DECL_GSSVX(NAMESPACE,FNAME,FLOATTYPE,KEYTYPE) \
-  void SuperLU_gssvx(superlu_options_t *options, SuperMatrix *A,         \
+    inline float SuperLU_gssvx(superlu_options_t *options, SuperMatrix *A,	\
 		     int *perm_c, int *perm_r, int *etree, char *equed,  \
 		     FLOATTYPE *R, FLOATTYPE *C, SuperMatrix *L,         \
 		     SuperMatrix *U, void *work, int lwork,              \
@@ -133,6 +133,7 @@ namespace gmm {
     NAMESPACE::FNAME(options, A, perm_c, perm_r, etree, equed, R, C, L,  \
 		     U, work, lwork, B, X, recip_pivot_growth, rcond,    \
 		     ferr, berr, &mem_usage, stats, info);               \
+    return mem_usage.for_lu; /* bytes used by the factor storage */     \
   }
 
   DECL_GSSVX(SuperLU_S,sgssvx,float,float)
@@ -194,7 +195,7 @@ namespace gmm {
     std::vector<R> ferr(nrhs), berr(nrhs);
     R recip_pivot_gross, rcond;
     std::vector<int> perm_r(m), perm_c(n);
-    
+
     SuperLU_gssvx(&options, &SA, &perm_c[0], &perm_r[0], 
 		  &etree[0] /* output */, equed /* output         */, 
 		  &Rscale[0] /* row scale factors (output)        */, 
@@ -228,6 +229,7 @@ namespace gmm {
     mutable SuperMatrix SA, SL, SB, SU, SX;
     mutable SuperLUStat_t stat;
     mutable superlu_options_t options;
+    float memory_used;
     mutable std::vector<int> etree, perm_r, perm_c;
     mutable std::vector<R> Rscale, Cscale;
     mutable std::vector<R> ferr, berr;
@@ -247,6 +249,7 @@ namespace gmm {
     void solve(const VECTX &X_, const VECTB &B, int transp=LU_NOTRANSP) const;
     SuperLU_factor(void) { is_init = false; }
     ~SuperLU_factor() { free_supermatrix(); }
+    float memsize() { return memory_used; }
   };
 
 
@@ -298,7 +301,7 @@ namespace gmm {
       ferr.resize(1); berr.resize(1);
       R recip_pivot_gross, rcond;
       perm_r.resize(m); perm_c.resize(n);
-      SuperLU_gssvx(&options, &SA, &perm_c[0], &perm_r[0], 
+      memory_used = SuperLU_gssvx(&options, &SA, &perm_c[0], &perm_r[0], 
 		    &etree[0] /* output */, &equed /* output        */, 
 		    &Rscale[0] /* row scale factors (output)        */, 
 		    &Cscale[0] /* col scale factors (output)        */,

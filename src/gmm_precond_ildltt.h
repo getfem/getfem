@@ -69,7 +69,9 @@ namespace gmm {
       : U(mat_nrows(A),mat_ncols(A)), K(k_), eps(eps_) { build_with(A); }
     ildltt_precond(void) { K=10; eps = 1E-7; }
     ildltt_precond(int k_, double eps_) :  K(k_), eps(eps_) {}
-    
+    size_type memsize() const { 
+      return sizeof(*this) + nnz(U)*sizeof(value_type) + indiag.size() * sizeof(magnitude_type);
+    }    
   };
 
   template<typename Matrix> template<typename M> 

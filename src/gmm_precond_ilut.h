@@ -112,7 +112,9 @@ namespace gmm {
 	K(k_), eps(eps_) { build_with(A); }
     ilut_precond(int k_, double eps_) :  K(k_), eps(eps_) {}
     ilut_precond(void) { K = 10; eps = 1E-7; }
-
+    size_type memsize() const { 
+      return sizeof(*this) + (nnz(U)+nnz(L))*sizeof(value_type);
+    }
   };
 
   template<typename Matrix> template<typename M> 

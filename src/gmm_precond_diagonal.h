@@ -52,7 +52,7 @@ namespace gmm {
 	diag[i] = magnitude_type(1) / x;
       }
     }
-
+    size_type memsize() const { return sizeof(*this) + diag.size() * sizeof(value_type); }
     diagonal_precond(const Matrix &M) { build_with(M); }
     diagonal_precond(void) {}
   };
