@@ -358,10 +358,10 @@ namespace getfem
       void optimize_structure(void);
       void clear(void);
       
-      int write_to_file(const std::string &name) const;
-      int write_to_file(std::ostream &ost) const;
-      int read_from_file(const std::string &name);
-      int read_from_file(std::istream &ist);
+      void write_to_file(const std::string &name) const;
+      void write_to_file(std::ostream &ost) const;
+      void read_from_file(const std::string &name);
+      void read_from_file(std::istream &ist);
      
     ~getfem_mesh() { lmsg_sender().send(MESH_DELETE()); }
   };

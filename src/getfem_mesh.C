@@ -75,7 +75,8 @@ namespace getfem
       if (!convex_tab.index_valid(i))
 	swap_convex(i, convex_tab.ind_last());
 
-    for (i = 0, j = (points_tab.end()-points_tab.begin())-1; i < j && j != ST_NIL; ++i, --j)
+    for (i = 0, j = (points_tab.end()-points_tab.begin())-1; 
+	 i < j && j != ST_NIL; ++i, --j)
     {
       while (i < j && j != ST_NIL && points_tab[i].first != ST_NIL) ++i;
       while (i < j && j != ST_NIL && points_tab[j].first == ST_NIL) --j;
@@ -132,8 +133,10 @@ namespace getfem
     return add_simplex(3, &(ipt[0]));
   }
 
-  size_type getfem_mesh::add_tetrahedron_by_points
-    (const base_node &p1, const base_node &p2, const base_node &p3, const base_node &p4)
+  size_type getfem_mesh::add_tetrahedron_by_points(const base_node &p1,
+						   const base_node &p2,
+						   const base_node &p3,
+						   const base_node &p4)
   {
     return add_tetrahedron(add_point(p1), add_point(p2),
 			   add_point(p3), add_point(p4));
@@ -184,7 +187,7 @@ namespace getfem
     size_type pts;
   };
 
-  int getfem_mesh::read_from_file(std::istream &ist) {
+  void getfem_mesh::read_from_file(std::istream &ist) {
    
     dal::bit_vector npt;
     dal::dynamic_array<double> tmpv;
@@ -235,7 +238,7 @@ namespace getfem
     
     ist.seekg(0);
     if (!ftool::read_untill(ist, "BEGIN MESH STRUCTURE DESCRIPTION"))
-      return -1;
+      DAL_THROW(failure_error, "This seems not to be a mesh file");
 
     while (!tend)
     {
@@ -276,18 +279,15 @@ namespace getfem
     }
 
     lmsg_sender().send(MESH_READ_FROM_FILE(ist));
-    return 0;
   }
 
-  int getfem_mesh::read_from_file(const std::string &name)
+  void getfem_mesh::read_from_file(const std::string &name)
   { 
     std::ifstream o(name.c_str());
     if (!o) DAL_THROW(file_not_found_error,
 		      "Mesh file '" << name << "' does not exist");
-    
     read_from_file(o); 
     o.close();
-    return 0;
   }
 
   template<class ITER>
@@ -301,7 +301,8 @@ namespace getfem
     for ( ; b != e; ++b) {
       size_type i = b.index();
       ost << "CONVEX " << i << "    "
-	  << bgeot::name_of_geometric_trans(ms.trans_of_convex(i)).c_str() << "    ";
+	  << bgeot::name_of_geometric_trans(ms.trans_of_convex(i)).c_str()
+	  << "    ";
       _write_tab_to_file(ost, ms.ind_points_of_convex(i).begin(),
 			 ms.ind_points_of_convex(i).end()  );
       ost << endl;
@@ -312,7 +313,7 @@ namespace getfem
 						  ITER b, ITER e)
   { for ( ; b != e; ++b) ost << "  " << *b; ost << endl; }
 
-  int getfem_mesh::write_to_file(std::ostream &ost) const
+  void getfem_mesh::write_to_file(std::ostream &ost) const
   {
     ost << endl << "BEGIN POINTS LIST" << endl << endl;
     bgeot::mesh_point_st_ct::const_iterator b = point_structures().begin();
@@ -329,26 +330,19 @@ namespace getfem
 			              convex_tab.tas_end());
     ost << endl << "END MESH STRUCTURE DESCRIPTION" << endl;
     lmsg_sender().send(MESH_WRITE_TO_FILE(ost));
-    return 0;
   }
 
 
-  int getfem_mesh::write_to_file(const std::string &name) const
+  void getfem_mesh::write_to_file(const std::string &name) const
   {
     std::ofstream o(name.c_str());
-    if (o)
-    {
-      o << "% GETFEM MESH FILE " << endl;
-      o << "% GETFEM VERSION " << __GETFEM_VERSION << "."
-	<< __GETFEM_REVISION << endl << endl << endl;
-    
-      write_to_file(o);
-      o.close();
-      return 0;
-    } else {
-      DAL_THROW(failure_error, "impossible to open file '" << name << "'"); 
-    }
-    return -1;
+    if (!o)
+      DAL_THROW(failure_error, "impossible to open file '" << name << "'");
+    o << "% GETFEM MESH FILE " << endl;
+    o << "% GETFEM VERSION " << __GETFEM_VERSION << "."
+      << __GETFEM_REVISION << endl << endl << endl;
+    write_to_file(o);
+    o.close();
   }
 
 }  /* end of namespace getfem.                                             */
