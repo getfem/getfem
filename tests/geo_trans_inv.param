@@ -9,7 +9,7 @@ LY = 1.0;	        % size in Y.
 LZ = 1.0;		% size in Z.
 
 %%%%%   discretisation parameters  :                     	      %%%%%
-MESH_TYPE = 2;          % 0 = simplexes
+MESH_TYPE = 0;          % 0 = simplexes
 			% 1 = parallelepipeds
 			% 2 = prisms
 NX = 10;          	% space step.
