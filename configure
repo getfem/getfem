@@ -2598,7 +2598,6 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-echo "Flags de Automake : $CXXFLAGS"
 CXXFLAGS="${USER_CXXFLAGS}"
 
 ac_ext=cc
@@ -3811,7 +3810,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 3814 "configure"' > conftest.$ac_ext
+  echo '#line 3813 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -7290,7 +7289,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 7293 "configure"
+#line 7292 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -7388,7 +7387,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 7391 "configure"
+#line 7390 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10491,7 +10490,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10494 "configure"
+#line 10493 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10589,7 +10588,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10592 "configure"
+#line 10591 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13212,7 +13211,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 13215 "configure"
+#line 13214 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13310,7 +13309,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 13313 "configure"
+#line 13312 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
