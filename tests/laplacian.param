@@ -14,13 +14,13 @@ MESH_TYPE = 0;          % 0 = simplexes
 			% 1 = parallelepipeds
 			% 2 = prisms
 INCLINE = 0;            % Incline of the mesh.
-K = 15;                  % Finite element degree.
+K = 16;                 % Finite element degree.
 FEM_TYPE = 0;           % Finite element method
 			% 0 = classical Lagrange element
 			% 1 = Hermite element on the segment
 			% 2 = Hierarchical PK on simplexes (K = 2^i)
 			% 3 = Hierarchical P1 with K divisions
-KI = 4; 		% Parameter for integration method
+KI = 10; 		% Parameter for integration method
 INTEGRATION = 1;        % 0 = exact integration.
 			% 1 = Newton Cotes of degree 2 * K
 			% 2 = Product of 1D Gauss for parallelepipeds.

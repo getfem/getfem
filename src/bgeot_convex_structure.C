@@ -79,7 +79,7 @@ namespace bgeot
     friend pconvex_structure simplex_structure(dim_type nc);
   };
 
-#ifdef HAVE_QDLIB
+#ifdef GETFEM_HAVE_QDLIB
 #  include <x86.h>
 #endif
 
@@ -89,7 +89,7 @@ namespace bgeot
     static int _nb_simplex = -1;
     static bool isinit = false;
     if (!isinit) {
-#ifdef HAVE_QDLIB
+#ifdef GETFEM_HAVE_QDLIB
       /* initialisation for QD on intel CPUs */
       unsigned short old_cw;
       x86_fix_start(&old_cw);

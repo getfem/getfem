@@ -437,7 +437,7 @@ namespace getfem
 
     base_node c(nc); 
     if (nc == 0) {
-      add_point(c, long_scalar_type(1.0));
+      add_point(c, LONG_SCAL(1));
     }
     else {
       
@@ -818,39 +818,49 @@ namespace getfem
 	 http://www.cs.kuleuven.ac.be/~nines/research/ecf/ecf.html
       */
       {
-        triangle_add_point_full_symmetric(p, /* +3 */
-                                          LONG_SCAL(0.5),
-                                          LONG_SCAL(0.00267845189554543044455908674650066));
-        triangle_add_point_full_symmetric(p, /* +1 */
-                                          LONG_SCAL(0.333333333333333333333333333333333),
-                                          LONG_SCAL(0.0293480398063595158995969648597808));
-        triangle_add_point_full_symmetric(p, /* +3 */
-                                          LONG_SCAL(0.0246071886432302181878499494124643),
-                                          LONG_SCAL(0.00392538414805004016372590903990464));
-        triangle_add_point_full_symmetric(p, /* +3 */
-                                          LONG_SCAL(0.420308753101194683716920537182100),
-                                          LONG_SCAL(0.0253344765879434817105476355306468));
-        triangle_add_point_full_symmetric(p, /* +3 */
-                                          LONG_SCAL(0.227900255506160619646298948153592),
-                                          LONG_SCAL(0.0250401630452545330803738542916538));
-        triangle_add_point_full_symmetric(p, /* +3 */
-                                          LONG_SCAL(0.116213058883517905247155321839271),
-                                          LONG_SCAL(0.0158235572961491595176634480481793));
-        triangle_add_point_full_symmetric(p, /* +3 */
-                                          LONG_SCAL(0.476602980049079152951254215211496),
-                                          LONG_SCAL(0.0157462815379843978450278590138683));
-        triangle_add_point_full_symmetric(p, /* +6 */
-                                          LONG_SCAL(0.851775587145410469734660003794168),
-                                          LONG_SCAL(0.0227978945382486125477207592747430),
-                                          LONG_SCAL(0.00790126610763037567956187298486575));
-        triangle_add_point_full_symmetric(p, /* +6 */
-                                          LONG_SCAL(0.692797317566660854594116289398433),
-                                          LONG_SCAL(0.0162757709910885409437036075960413),
-                                          LONG_SCAL(0.00799081889046420266145965132482933));
-        triangle_add_point_full_symmetric(p, /* +6 */
-                                          LONG_SCAL(0.637955883864209538412552782122039),
-                                          LONG_SCAL(0.0897330604516053590796290561145196),
-                                          LONG_SCAL(0.0182757511120486476280967518782978));
+        triangle_add_point_full_symmetric
+	  (p, /* +3 */
+	   LONG_SCAL(0.5),
+	   LONG_SCAL(0.00267845189554543044455908674650066));
+        triangle_add_point_full_symmetric
+	  (p, /* +1 */
+	   LONG_SCAL(0.333333333333333333333333333333333),
+	   LONG_SCAL(0.0293480398063595158995969648597808));
+        triangle_add_point_full_symmetric
+	  (p, /* +3 */
+	   LONG_SCAL(0.0246071886432302181878499494124643),
+	   LONG_SCAL(0.00392538414805004016372590903990464));
+        triangle_add_point_full_symmetric
+	  (p, /* +3 */
+	   LONG_SCAL(0.420308753101194683716920537182100),
+	   LONG_SCAL(0.0253344765879434817105476355306468));
+        triangle_add_point_full_symmetric
+	  (p, /* +3 */
+	   LONG_SCAL(0.227900255506160619646298948153592),
+	   LONG_SCAL(0.0250401630452545330803738542916538));
+        triangle_add_point_full_symmetric
+	  (p, /* +3 */
+	   LONG_SCAL(0.116213058883517905247155321839271),
+	   LONG_SCAL(0.0158235572961491595176634480481793));
+        triangle_add_point_full_symmetric
+	  (p, /* +3 */
+	   LONG_SCAL(0.476602980049079152951254215211496),
+	   LONG_SCAL(0.0157462815379843978450278590138683));
+        triangle_add_point_full_symmetric
+	  (p, /* +6 */
+	   LONG_SCAL(0.851775587145410469734660003794168),
+	   LONG_SCAL(0.0227978945382486125477207592747430),
+	   LONG_SCAL(0.00790126610763037567956187298486575));
+        triangle_add_point_full_symmetric
+	  (p, /* +6 */
+	   LONG_SCAL(0.692797317566660854594116289398433),
+	   LONG_SCAL(0.0162757709910885409437036075960413),
+	   LONG_SCAL(0.00799081889046420266145965132482933));
+        triangle_add_point_full_symmetric
+	  (p, /* +6 */
+	   LONG_SCAL(0.637955883864209538412552782122039),
+	   LONG_SCAL(0.0897330604516053590796290561145196),
+	   LONG_SCAL(0.0182757511120486476280967518782978));
         /* total : 37 points */
         assert(p->nb_points() == 37);
       }
