@@ -28,8 +28,8 @@ if ($systeme =~ /Linux/)
   print MAKEFILE "OPTIONS_OPTIMIZE = -O3\n";
   print MAKEFILE "OPTIONS_BOTH     = -g -O3\n";
   print MAKEFILE "INCLUDES_STANDARD = \n";
-  print MAKEFILE "INCLUDES_MTL = -I/tmp_mnt/mnt-home/gmmpc15/renard/source++/getfem/../mtl\n";
-  print MAKEFILE "INCLUDES_ITL = -I/tmp_mnt/mnt-home/gmmpc15/renard/source++/getfem/../itl\n";
+  print MAKEFILE "INCLUDES_MTL = -I/usr/local/getfem/include\n";
+  print MAKEFILE "INCLUDES_ITL = -I/usr/local/getfem/include\n";
   print MAKEFILE "LIB_X11 = -L/usr/X11R6/lib -lX11\n";
 }
 else
@@ -40,8 +40,8 @@ else
   print MAKEFILE "OPTIONS_OPTIMIZE = -O3\n";
   print MAKEFILE "OPTIONS_BOTH     = -g3\n";
   print MAKEFILE "INCLUDES_STANDARD = \n";
-  print MAKEFILE "INCLUDES_MTL = -I/home/gmmpc15/renard/source++/mtl\n";
-  print MAKEFILE "INCLUDES_ITL = -I/home/gmmpc15/renard/source++/itl\n";
+  print MAKEFILE "INCLUDES_MTL = -I/opt/getfem/include\n";
+  print MAKEFILE "INCLUDES_ITL = -I/opt/getfem/include\n";
   print MAKEFILE "LIB_X11 = -L/usr/X11R6/lib -lX11\n";
 }
 
@@ -50,7 +50,7 @@ print MAKEFILE "CPLUSDEBUG = \$(COMP) \$(OPTIONS_STANDARD)";
 print MAKEFILE " \$(OPTIONS_DEBUG) \n";
 print MAKEFILE "CPLUSOPTDEBUG = \$(COMP) \$(OPTIONS_STANDARD)";
 print MAKEFILE " \$(OPTIONS_BOTH) \n";
-print MAKEFILE "INCLUDES = \$(INCLUDES_STANDARD) \$(INCLUDES_MTL)";
+print MAKEFILE "INCLUDES = -I ./include \$(INCLUDES_STANDARD) \$(INCLUDES_MTL)";
 print MAKEFILE " \$(INCLUDES_ITL) -I$rootlib\/include \n\n\n";
 print MAKEFILE "LIB = $getfem_lib -lm\n";
 
