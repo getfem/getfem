@@ -20,9 +20,11 @@ USECOARSE = 0; % use a coarse mesh or not.
 
 RESIDU = 1E-7;  %
 SOLVER = 1;     % 0 = C.G. préconditionné ildlt
-		% 1 = additive Schwarz with global and local CG
-		% 2 = additive Schwarz with global et local Gmres
-		% 3 = C.G. non preconditionné
+		% 1 = C.G. non preconditionné
+	        % 2 = superlu
+		% 3 = additive Schwarz with global and local CG
+		% 4 = additive Schwarz with global and local Gmres
+		% 5 = additive Schwarz with global cg and local Superlu
 
 SUBDOMSIZE = 0.2; % Size of sub-domains.
 OVERLAP = 0.1;    % ratio of overlap between sub-domains

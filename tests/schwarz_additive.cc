@@ -5,11 +5,15 @@
 /*                                                                        */
 /**************************************************************************/
 
+#define GMM_USES_SUPERLU
+
 #include <getfem_assembling.h>
 #include <getfem_norm.h>
 #include <getfem_regular_meshes.h>
 #include <getfem_export.h>
 #include <gmm.h>
+
+#include <mpi++.h>
 
 using bgeot::base_vector;
 using bgeot::base_node;
@@ -43,14 +47,16 @@ struct pb_data {
 
   int solve_cg(void);
   int solve_cg2(void);
+  int solve_superlu(void);
   int solve_schwarz(int);
 
   int solve(void) {
     cout << "solving" << endl;
     switch (solver) {
     case 0 : return solve_cg();
-    case 1 : case 2 : return solve_schwarz(solver);
-    case 3 : return solve_cg2();
+    case 1 : return solve_cg2();
+    case 2 : return solve_superlu();
+    default : return solve_schwarz(solver);
     }
     return 0;
   }
@@ -196,6 +202,12 @@ int pb_data::solve_cg(void) {
   return iter.get_iteration();
 }
 
+int pb_data::solve_superlu(void) {
+  double rcond;
+  SuperLU_solve(RM, U, F, rcond);
+  return 1;
+}
+
 int pb_data::solve_cg2(void) {
   gmm::iteration iter(residu, 1, 1000000);
   gmm::cg(RM, U, F, gmm::identity_matrix(), gmm::identity_matrix(), iter);
@@ -226,13 +238,17 @@ int pb_data::solve_schwarz(int version) {
   
   gmm::iteration iter(residu, 1, 1000000);
   switch (version) {
-  case 1 : gmm::sequential_additive_schwarz(RM, U, F,
+  case 3 : gmm::sequential_additive_schwarz(RM, U, F,
 	      gmm::ildlt_precond<general_sparse_matrix>(), vB, iter,
 	      gmm::using_cg(), gmm::using_cg());
     break;
-  case 2 : gmm::sequential_additive_schwarz(RM, U, F,
+  case 4 : gmm::sequential_additive_schwarz(RM, U, F,
 	      gmm::ilu_precond<general_sparse_matrix>(), vB, iter,
 	      gmm::using_gmres(), gmm::using_gmres());
+    break;
+  case 5 : gmm::sequential_additive_schwarz(RM, U, F,
+	      gmm::ilu_precond<general_sparse_matrix>(), vB, iter,
+	      gmm::using_superlu(), gmm::using_cg());
     break;
   }
   return 0;
@@ -245,7 +261,11 @@ struct exception_cb : public dal::exception_callback  {
 };
 
 int main(int argc, char *argv[]) {
-   exception_cb cb;
+#ifdef GMM_USES_MPI
+    MPI_Init(&argc,&argv);
+#endif
+ 
+  exception_cb cb;
    dal::exception_callback::set_exception_callback(&cb);
 
   try {
@@ -268,5 +288,8 @@ int main(int argc, char *argv[]) {
     cout << "final residu : " << gmm::vect_norm2(p.F) << endl;
   }
   DAL_STANDARD_CATCH_ERROR;
+#ifdef GMM_USES_MPI
+   MPI_Finalize();
+#endif
   return 0;
 }

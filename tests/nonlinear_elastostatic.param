@@ -36,7 +36,7 @@ FEM_TYPE = 'FEM_PK(3,2)';  % P1 for triangles
 %FEM_TYPE = 'FEM_PK_HIERARCHICAL(2,2)'; % Hierarchical PK on simplexes
 %FEM_TYPE = 'FEM_PK_HIERARCHICAL_COMPOSITE(2,1,2)'; % Hierarchical PK with s divisions
 
- FEM_TYPE_P = 'FEM_PK(3,1)';  % P1 for triangles
+FEM_TYPE_P = 'FEM_PK(3,1)';  % P1 for triangles
 %FEM_TYPE_P = 'FEM_PK_DISCONTINUOUS(3,1)';  % Discontinuous P1 for triangles
 
 % DATA_FEM_TYPE must be defined if your main FEM is not Lagrangian
