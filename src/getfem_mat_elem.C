@@ -134,9 +134,9 @@ namespace getfem
 	case GETFEM_NONLINEAR_ :
 	  if ((*it).nl_part == 0) {
 	    for (dim_type ii = 1; ii < (*it).nlt->sizes().size(); ++ii) ++k;
-	    if (is_ppi)
-	      DAL_THROW(failure_error,
-			"For nonlinear terms you have to use approximated integration");
+	    if (is_ppi) DAL_THROW(failure_error,
+				  "For nonlinear terms you have to"
+				  " use approximated integration");
 	    computed_on_real_element = true;
 	  }
 	  break;
@@ -222,7 +222,7 @@ namespace getfem
       
       size_type n0 = elmt_stored[0].size();
       k = pme->size()-1; Vtab[k] = J;
-      /* very heavy reduction .. takes much time */
+      /* very heavy expansion .. takes much time */
       do {
         for (V = Vtab[k]; k; --k)
           Vtab[k-1] = V = *pts[k] * V;

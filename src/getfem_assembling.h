@@ -504,9 +504,9 @@ namespace getfem
     assem.volumic_assembly();
   }
 
-  template<typename MATr, typename VECTr>  
-  void asm_Helmholtz_real(const MATr &M, const mesh_fem &mf_u,
-			  const mesh_fem &mf_data, const VECTr &K_squared) {
+  template<typename MAT, typename VECT>  
+  void asm_Helmholtz_real(const MAT &M, const mesh_fem &mf_u,
+			  const mesh_fem &mf_data, const VECT &K_squared) {
     generic_assembly assem("K=data$1(#2);"
 			   "m = comp(Base(#1).Base(#1).Base(#2)); "
 			   "M$1(#1,#1)+=sym(m(:,:,i).K(i) - "
@@ -514,7 +514,7 @@ namespace getfem
     assem.push_mf(mf_u);
     assem.push_mf(mf_data);
     assem.push_data(K_squared);
-    assem.push_mat(const_cast<MATr&>(M));
+    assem.push_mat(const_cast<MAT&>(M));
     assem.volumic_assembly();
   }
 

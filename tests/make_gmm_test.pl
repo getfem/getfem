@@ -342,8 +342,12 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     $compile_options="$compile_options -I$srcdir/../src -I$srcdir/../include -I../src -I../include";
     $compile_libs="-lm";
 
-    if ($with_lapack) { $compile_libs="-llapack -lblas -lg2c $compile_libs"; }
+    if ($with_lapack) {
+      $compile_libs="-llapack -lblas -lg2c $compile_libs";
+      $compile_options="$compile_options -DGMM_USES_LAPACK"
+    }
     if ($with_qd) { $compile_libs="-lqd $compile_libs"; }
+    print "$compilo $compile_options $dest_name -o $root_name $compile_libs\n";
     print `$compilo $compile_options $dest_name -o $root_name $compile_libs`;
 
     if ($? != 0) {

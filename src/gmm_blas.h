@@ -1586,8 +1586,7 @@ namespace gmm {
   }
 
   template <typename L1, typename L2>
-  void add(const L1& l1, L2& l2,
-	   abstract_dense, abstract_dense) {
+  void add(const L1& l1, L2& l2, abstract_dense, abstract_dense) {
     typename linalg_traits<L1>::const_iterator it1 = vect_const_begin(l1); 
     typename linalg_traits<L2>::iterator
              it2 = vect_begin(l2), ite = vect_end(l2);

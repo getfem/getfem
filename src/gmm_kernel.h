@@ -42,6 +42,7 @@
 #include <gmm_vector.h>
 #include <gmm_matrix.h>
 #include <gmm_tri_solve.h>
+#include <gmm_blas_interface.h>
 
 
 #endif //  GMM_KERNEL_H__
