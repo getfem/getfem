@@ -58,16 +58,31 @@ namespace getfem {
   */
   class slicer {
   public:
+    enum { IN=1, BOUND=2, OUT=4 };
     static const float EPS;
-    virtual bool is_in(const base_node& , bool = false) const { return true; }
+    virtual void test_point(const base_node&, bool& in, bool& bound) const { in=true; bound=true; }
+    bool is_in(const base_node& P, int where=IN|BOUND) const { 
+      bool in, bound;
+      test_point(P, in, bound);
+      switch (where) {
+      case 0: return false;
+      case IN: return in && !bound;
+      case OUT: return !in && !bound;
+      case BOUND: return bound;
+      case OUT|BOUND: return bound || (!in);
+      case IN|BOUND: return bound || in;
+      case IN|OUT: return !bound;
+      }
+      return true;
+    }
     virtual scalar_type edge_intersect(const base_node& , const base_node& ) const { return -1.; };
     virtual void slice(size_type cv, dim_type& fcnt,
                        std::deque<slice_node>& nodes, std::deque<slice_simplex>& splxs, 
-                       dal::bit_vector& splx_in) const = 0;
-    size_type is_in(const std::deque<slice_node>& nodes, const slice_simplex& s) const {
+                       dal::bit_vector& splx_in) const = 0;    
+    size_type is_in(const std::deque<slice_node>& nodes, const slice_simplex& s, int where=IN|BOUND) const {
       size_type in_cnt = 0;
       for (size_type i=0; i < s.dim()+1; ++i)
-        if (is_in(nodes[s.inodes[i]].pt)) ++in_cnt;
+        if (is_in(nodes[s.inodes[i]].pt,where)) ++in_cnt;
       return in_cnt;
     }
     void split_simplex(std::deque<slice_node>& nodes, 
@@ -115,10 +130,10 @@ namespace getfem {
       slicer_volume(on_boundary), x0(_x0), n(_n) {
       n *= (1./bgeot::vect_norm2(n));
     }
-    bool is_in(const base_node& P, bool bound=false) const {
+    void test_point(const base_node& P, bool& in, bool& bound) const {
       scalar_type s = 0.;
       for (unsigned i=0; i < P.size(); ++i) s += (P[i] - x0[i])*n[i];
-      return ((!bound && s <= 0) || s*s <= dal::sqr(EPS*bgeot::vect_norm2_sqr(P)));
+      in = (s <= 0); bound = (s*s <= dal::sqr(EPS*bgeot::vect_norm2_sqr(P)));
     }
     scalar_type edge_intersect(const base_node& A, const base_node& B) const {
       scalar_type s1 = 0., s2 = 0.;
@@ -134,13 +149,14 @@ namespace getfem {
   public:
     slicer_sphere(base_node _x0, scalar_type _R, bool boundary_slice) : 
       slicer_volume(boundary_slice), x0(_x0), R(_R) {} //cerr << "slicer_volume, x0=" << x0 << ", R=" << R << endl; }
-    bool is_in(const base_node& P, bool bound=false) const {
-      bool b = (!bound) ||  bgeot::vect_dist2_sqr(P,x0) >= (1-EPS)*R*R;
-      return b && bgeot::vect_dist2_sqr(P,x0) <= (1+EPS)*R*R;
+    void test_point(const base_node& P, bool& in, bool& bound) const {
+      scalar_type R2 = bgeot::vect_dist2_sqr(P,x0);
+      bound = (R2 >= (1-EPS)*R*R && R2 <= (1+EPS)*R*R);
+      in = R2 <= R*R;
     }
     scalar_type edge_intersect(const base_node& A, const base_node& B) const {
       scalar_type a,b,c; // a*x^2 + b*x + c = 0
-      a = bgeot::vect_norm2_sqr(B-A); if (a < EPS) return is_in(A,true) ? 0. : 1./EPS;
+      a = bgeot::vect_norm2_sqr(B-A); if (a < EPS) return is_in(A,BOUND) ? 0. : 1./EPS;
       b = 2*bgeot::vect_sp(A-x0,B-A);
       c = bgeot::vect_norm2_sqr(A-x0)-R*R;
       return slicer_volume::trinom(a,b,c);
@@ -155,16 +171,17 @@ namespace getfem {
       slicer_volume(boundary_slice), x0(_x0), d(_x1-_x0), R(_R) {
       d /= bgeot::vect_norm2(d);
     }
-    bool is_in(const base_node& P, bool bound = false) const {
+    void test_point(const base_node& P, bool& in, bool& bound) const {
       base_node N = P-x0;
       scalar_type axpos = bgeot::vect_sp(d, N);
       scalar_type dist2 = bgeot::vect_norm2_sqr(N) - dal::sqr(axpos);
-      return (!bound && dist2 < R*R) || (dal::abs(dist2-R*R) < EPS);
+      bound = dal::abs(dist2-R*R) < EPS;
+      in = dist2 < R*R;
     }
     scalar_type edge_intersect(const base_node& A, const base_node& B) const {
       base_node F=A-x0; scalar_type Fd = bgeot::vect_sp(F,d);
       base_node D=B-A;  scalar_type Dd = bgeot::vect_sp(D,d);
-      scalar_type a = bgeot::vect_norm2_sqr(D) - dal::sqr(Dd); if (a < EPS) return is_in(A,true) ? 0. : 1./EPS; assert(a> -EPS);
+      scalar_type a = bgeot::vect_norm2_sqr(D) - dal::sqr(Dd); if (a < EPS) return is_in(A,BOUND) ? 0. : 1./EPS; assert(a> -EPS);
       scalar_type b = 2*(bgeot::vect_sp(F,D) - Fd*Dd);
       scalar_type c = bgeot::vect_norm2_sqr(F) - dal::sqr(Fd) - dal::sqr(R);
       return slicer_volume::trinom(a,b,c);
@@ -175,8 +192,11 @@ namespace getfem {
     slicer *A, *B;
   public:
     slicer_union(slicer *_A, slicer *_B) : A(_A), B(_B) {}
-    bool is_in(const base_node& P, bool bound) const {
-      return (A->is_in(P,bound) || B->is_in(P,bound));
+    void test_point(const base_node& P, bool& in, bool& bound) const {
+      bool inA, boundA, inB, boundB;
+      A->test_point(P,inA,boundA); B->test_point(P,inB,boundB);
+      bound = (boundA && !inB) || (boundB && !inA) || (boundA && boundB);
+      in = inA || inB;
     }
     void slice(size_type cv, dim_type& fcnt,
 	       std::deque<slice_node>& nodes, std::deque<slice_simplex>& splxs, 
@@ -187,25 +207,29 @@ namespace getfem {
     slicer *A, *B;
   public:
     slicer_intersect(slicer *_A, slicer *_B) : A(_A), B(_B) {}
-    bool is_in(const base_node& P, bool bound) const {
-      return (A->is_in(P,bound) && B->is_in(P,bound));
+    void test_point(const base_node& P, bool& in, bool& bound) const {
+      bool inA, boundA, inB, boundB;
+      A->test_point(P,inA,boundA); B->test_point(P,inB,boundB);
+      bound = (boundA && inB) || (boundB && inA) || (boundA && boundB);
+      in = inA && inB;
     }
     void slice(size_type cv, dim_type& fcnt,
 	       std::deque<slice_node>& nodes, std::deque<slice_simplex>& splxs, 
 	       dal::bit_vector& splx_in) const;
   };
 
-  class slicer_diff : public slicer {
-    slicer *A, *B;
+  class slicer_complementary : public slicer {
+    slicer *A;
   public:
-    slicer_diff(slicer *_A, slicer *_B) : A(_A), B(_B) {}
-    bool is_in(const base_node& P, bool bound) const {
-      return (A->is_in(P,bound) && (!B->is_in(P,bound) || B->is_in(P,true)));
+    slicer_complementary(slicer *_A) : A(_A) {}
+    void test_point(const base_node& P, bool& in, bool& bound) const {
+      A->test_point(P,in,bound); in = !in;
     }
     void slice(size_type cv, dim_type& fcnt,
 	       std::deque<slice_node>& nodes, std::deque<slice_simplex>& splxs, 
 	       dal::bit_vector& splx_in) const;    
   };
+  
 
   /** this slicer does nothing! */
   class slicer_none : public slicer {

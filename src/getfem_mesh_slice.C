@@ -140,9 +140,9 @@ namespace getfem {
     //cerr << "\n\n------------------------------------------------\nslicer_volume::slice : entree, splx_in=" << splx_in << endl;
     if (splx_in.card() == 0) return;
     dal::bit_vector pt_in; pt_in.sup(0,nodes.size());
-    for (size_type i=0; i < nodes.size(); ++i) if (is_in(nodes[i].pt)) pt_in.add(i);
+    for (size_type i=0; i < nodes.size(); ++i) if (is_in(nodes[i].pt,IN|BOUND)) pt_in.add(i);
     dal::bit_vector pt_bin; pt_bin.sup(0,nodes.size());
-    for (size_type i=0; i < nodes.size(); ++i) if (is_in(nodes[i].pt,true)) pt_bin.add(i);
+    for (size_type i=0; i < nodes.size(); ++i) if (is_in(nodes[i].pt,BOUND)) pt_bin.add(i);
 
     dal::bit_vector bv = splx_in;
     for (size_type cnt=bv.take_first(); cnt != size_type(-1); cnt << bv) {
@@ -184,65 +184,36 @@ namespace getfem {
   void slicer_union::slice(size_type cv, dim_type& fcnt,
                            std::deque<slice_node>& nodes, std::deque<slice_simplex>& splxs, 
                            dal::bit_vector& splx_in) const {
-    dal::bit_vector idx = splx_in;
-    for (size_type cnt = idx.take_first(); cnt != size_type(-1); cnt << idx) {
-      size_type in_cntA = A->is_in(nodes, splxs[cnt]);
-
-      if (in_cntA == splxs[cnt].dim()+1) { /* the simplex is inside A */
-        continue;
-      }
-      size_type in_cntB = B->is_in(nodes, splxs[cnt]);
-      if (in_cntB == splxs[cnt].dim()+1) { /* the simplex is inside B */
-        continue;
-      }      
-      dal::bit_vector bv; bv.add(cnt);
-      if (in_cntA == 0) {
-        B->slice(cv, fcnt, nodes, splxs, bv);
-      } else if (in_cntB) {
-        A->slice(cv, fcnt, nodes, splxs, bv);
-      } else splx_in.sup(cnt);
-      splx_in |= bv;
-    }
-    
+    dal::bit_vector splx_inA = splx_in;
+    A->slice(cv,fcnt,nodes,splxs,splx_inA);
+    B->slice(cv,fcnt,nodes,splxs,splx_in);
+    splx_in |= splx_inA;
   }
 
   void slicer_intersect::slice(size_type cv, dim_type& fcnt,
                               std::deque<slice_node>& nodes, std::deque<slice_simplex>& splxs, 
                                dal::bit_vector& splx_in) const {
-    dal::bit_vector idx = splx_in;
-    for (size_type cnt = idx.take_first(); cnt != size_type(-1); cnt << idx) {
-      size_type in_cntA = A->is_in(nodes, splxs[cnt]);
-      size_type in_cntB = B->is_in(nodes, splxs[cnt]);
-      if (in_cntA == splxs[cnt].dim()+1 && in_cntB == splxs[cnt].dim()+1) {
-        continue;
-      } else {
-        dal::bit_vector bv; bv.add(cnt);
-        splx_in.sup(cnt);
-        A->slice(cv, fcnt, nodes, splxs, bv);
-        B->slice(cv, fcnt, nodes, splxs, bv);
-        splx_in |= bv;
-      }
-    }
+    A->slice(cv,fcnt,nodes,splxs,splx_in);
+    B->slice(cv,fcnt,nodes,splxs,splx_in);
   }
 
-  void slicer_diff::slice(size_type cv, dim_type& fcnt,
-			  std::deque<slice_node>& nodes, std::deque<slice_simplex>& splxs, 
-			  dal::bit_vector& splx_in) const {
+  void slicer_complementary::slice(size_type cv, dim_type& fcnt,
+                                   std::deque<slice_node>& nodes, std::deque<slice_simplex>& splxs, 
+                                   dal::bit_vector& splx_in) const {
     dal::bit_vector idx = splx_in;
     for (size_type cnt = idx.take_first(); cnt != size_type(-1); cnt << idx) {
-      size_type in_cntA = A->is_in(nodes, splxs[cnt]);
-      size_type in_cntB = B->is_in(nodes, splxs[cnt]);
-      if (in_cntA == splxs[cnt].dim()+1 && in_cntB == 0) {
+      size_type in_cnt = A->is_in(nodes,splxs[cnt],BOUND|OUT);
+      if (in_cnt == splxs[cnt].dim()+1) {
         continue;
       } else {
-        dal::bit_vector bv; bv.add(cnt);
         splx_in.sup(cnt);
-        A->slice(cv, fcnt, nodes, splxs, bv);
-	dal::bit_vector bv2(bv);
-        B->slice(cv, fcnt, nodes, splxs, bv2);
-	for (size_type i=bv.take_first(); i != size_type(-1); i << bv)
-	  if (!bv2[i])
-	    splx_in.add(i);
+        if (in_cnt != 0) {
+          dal::bit_vector bv; bv.add(cnt);
+          size_type sz = splxs.size();
+          A->slice(cv, fcnt, nodes, splxs, bv);
+          for (size_type i=sz; i < splxs.size(); ++i)
+            if (A->is_in(nodes,splxs[i],BOUND|OUT) == splxs[i].dim()+1) splx_in.add(i);
+        }
       }
     }
   }
