@@ -1,3 +1,4 @@
+/* -*- c++ -*- (enables emacs c++ mode)                                    */
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Basic GEOmetric Tool  (bgeot)                                */
@@ -105,7 +106,9 @@ namespace bgeot
 	{ 
 	  d += (*q) * (*it);
 	  #ifdef __GETFEM_VERIFY
-            assert(*it < *qv); ++qv;
+	    if (*it >= *qv) throw std::out_of_range
+			    ("tensor::operator () : index out of range");
+	    ++qv;
           #endif
 	}
 	return *(begin() + d);
@@ -117,9 +120,9 @@ namespace bgeot
 	multi_index::iterator q = coeff.begin(), e = coeff.end();
 	size_type d = 0;
 	for ( ; q != e; ++q, ++it) d += (*q) * (*it);
-	#ifdef __GETFEM_VERIFY
-          assert(d < size());
-        #endif
+	
+	if (d >= size())
+	  throw std::out_of_range("tensor::operator () : index out of range");
 	return *(begin() + d);
       }
 
@@ -162,9 +165,11 @@ namespace bgeot
 
 	*mi = t.sizes();
 	size_type dimt = (*mi)[ni], dim = m.nrows();
-	#ifdef __GETFEM_VERIFY
-          assert(dimt == m.ncols());
-        #endif
+       
+	  if (dimt != m.ncols())
+	    throw dimension_error
+	      ("tensor::mat_transp_reduction : dimensions mismatch");
+
 	(*mi)[ni] = dim;
 	if (tmp->size() < dimt) tmp->resize(dimt);
 	adjust_sizes(*mi);
@@ -205,9 +210,10 @@ namespace bgeot
 	}
 	*mi = t.sizes();
 	size_type dimt = (*mi)[ni], dim = m.ncols();
-	#ifdef __GETFEM_VERIFY
-          assert(dimt == m.nrows());
-        #endif
+	if (dimt != m.nrows())
+	  throw dimension_error
+	    ("tensor::mat_reduction : dimensions mismatch");
+	
 	(*mi)[ni] = dim;
 	if (tmp->size() < dimt) tmp->resize(dimt);
 	adjust_sizes(*mi);
@@ -245,6 +251,9 @@ namespace bgeot
     o << *((const vsvector<T> *)(&t));
     return o;
   }
+
+  typedef tensor<scalar_type> base_tensor;
+
 
 }  /* end of namespace bgeot.                                              */
 

@@ -68,7 +68,7 @@
 #include <algorithm>
 #include <vector>
 #include <string>
-#include <strstream>
+#include <sstream>
 
 /* ********************************************************************** */
 /*	STD Needed.                     			          */

@@ -32,9 +32,6 @@
 #ifndef __BGEOT_CONFIG_H
 #define __BGEOT_CONFIG_H
 
-#include <bgeot_tensor.h>
-#include <bgeot_poly.h>
-
 namespace bgeot
 {
   static const size_t ST_NIL = size_t(-1);
@@ -42,12 +39,6 @@ namespace bgeot
   typedef dal::uint16_type short_type;
   typedef size_t size_type;
   typedef double scalar_type;
-
-  typedef vsvector<scalar_type> base_vector;
-  typedef vsmatrix<scalar_type> base_matrix;
-  typedef tensor<scalar_type> base_tensor;
-  typedef polynomial<scalar_type> base_poly;
-  typedef PT<base_vector> base_node;
 
 
   /* usual constant polynomials  */
@@ -59,14 +50,30 @@ namespace bgeot
   inline base_poly one_var_poly(short_type n, short_type k)
     { return base_poly(n, 1, k); }
 
+  /* errors definitions  */
+
   class dimension_error : public std::logic_error {
   public:
-    dimension_error(const std::string& what_arg): std::logic_error (what_arg) { }
+    dimension_error(const std::string& what_arg): std::logic_error (what_arg)
+      { }
   };
 
-  class internal_error : public std::logic_error {
+  class failure_error : public std::logic_error {
   public:
-    internal_error(const std::string& what_arg): std::logic_error (what_arg) { }
+    failure_error(const std::string& what_arg): std::logic_error (what_arg)
+      { }
+  };
+
+  class not_linear_error : public std::logic_error {
+  public:
+    not_linear_error(const std::string& what_arg): std::logic_error (what_arg)
+      { }
+  };
+
+  class to_be_done_error : public std::logic_error {
+  public:
+    to_be_done_error(const std::string& what_arg): std::logic_error (what_arg)
+      { }
   };
 
 }  /* end of namespace bgeot.                                             */

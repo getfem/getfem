@@ -281,10 +281,10 @@ namespace getfem
 				   const base_vector coeff, base_node &val) const
    { // optimisable.   verifier et faire le vectoriel
      base_matrix M;
-     #ifdef __GETFEM_VERIFY
-       assert(val.size() == target_dim());
-     #endif
-    
+     if (val.size() != target_dim())
+      throw dimension_error
+	("fem<FUNC>::interpolation : dimensions mismatch");
+     
      size_type R = nb_dof();
 
      if (!is_equivalent())
@@ -313,9 +313,10 @@ namespace getfem
    { // optimisable.   verifier
      base_matrix M;
      base_tensor t;
-     #ifdef __GETFEM_VERIFY
-       assert(val.nrows() == target_dim() && val.ncols() == x.size());
-     #endif
+
+     if (val.nrows() != target_dim() || val.ncols() != x.size())
+      throw dimension_error
+	("fem<FUNC>::interpolation_grad : dimensions mismatch");
     
      grad_base_value(x, t);
      base_tensor::iterator it = t.begin();

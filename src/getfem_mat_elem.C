@@ -102,8 +102,14 @@ namespace getfem
       mat_elem_type::const_iterator it = ls.pmt->begin(), ite = ls.pmt->end();
       
       for (k = 0; it != ite; ++it, ++k) {
-	if (is_ppi) assert((*it).pfi->is_polynomial());
-	assert((*it).pfi->basic_structure() == pgt->basic_structure());
+	
+
+	if (is_ppi && !((*it).pfi->is_polynomial()))
+	  throw std::invalid_argument("Elementary matrix computation : "
+	       "Exact computation available on linear tranformations only");
+	if((*it).pfi->basic_structure() != pgt->basic_structure())
+	  throw std::invalid_argument("Elementary matrix computation : "
+				      "incorrect computation");
 	if (!((*it).pfi->is_equivalent())) {
 	  trans_reduction.push_back(k);
 	  trans_reduction_pfi.push_back((*ite).pfi);
@@ -262,7 +268,10 @@ namespace getfem
       dim_type P = pgt->structure()->dim(), N = G.nrows();
       short_type NP = pgt->nb_points();
       scalar_type J;
-      assert(G.ncols() == NP);
+      if (G.ncols() != NP)
+	throw dimension_error
+	  ("_emelem_comp_structure::compute : dimensions mismatch");
+      
       K.resize(N, P); CS.resize(P, P); TMP1.resize(P, P); B.resize(N, P);
       if (hess_reduction.size() > 0) {
 	B2.resize(P*P, P*P); B3.resize(N*N, P*P); Htau.resize(N, P*P);
@@ -419,7 +428,9 @@ namespace getfem
       base_vector un, up;
       base_poly Poly;
 
-      assert(G.ncols() == NP);
+      if (G.ncols() != NP)
+	throw dimension_error
+	  ("compute_normal : dimensions mismatch");
 
       un.resize(P); up.resize(N);
       un = pgt->normals()[ir];

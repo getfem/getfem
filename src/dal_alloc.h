@@ -108,7 +108,9 @@ namespace dal
       if (i != ST_NIL)
       {
 	res = fr_tab[i].ind;
-	assert(size <= fr_tab[i].size); // internal test
+	if (size > fr_tab[i].size)
+	  throw dal::internal_error
+	    ("dynamic_alloc<T,pks>::alloc : internal error (1)");
 	if (size <  fr_tab[i].size)
 	{
 	  ind_fr_tab.sup(i); fr_tab[i].ind += size;
@@ -118,7 +120,9 @@ namespace dal
 	{ ind_fr_tab.sup(i); fr_tab.sup(i); }
       }
       else
-      { assert(false); } // internal test
+      { throw dal::internal_error
+	  ("dynamic_alloc<T,pks>::alloc : internal error (2)");
+      }
     }
     return res;
   }

@@ -97,7 +97,9 @@ namespace bgeot
 
     _gauss_approx_integration(short_type nbpt)
     {
-      assert(nbpt > 0);
+      if (nbpt > 32000)
+	throw std::out_of_range("_gauss_approx_integration : too much points");
+      
       cvs = simplex_structure(1);
       stored_point_tab int_points(nbpt+2);
       int_coeffs.resize(nbpt+2);

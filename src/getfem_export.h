@@ -1,3 +1,4 @@
+/* -*- c++ -*- (enables emacs c++ mode)                                    */
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  GEneric Tool for Finite Element Methods (getfem)             */
@@ -50,7 +51,8 @@ namespace getfem
   { 
     dim_type N = mf.linked_mesh().dim();
     STD_NEEDED ofstream o((filename + char(0)).data());
-    assert(o != NULL);
+    if (o == NULL)
+      throw internal_error("save_solution : impossible to open file");
     dal::bit_vector nn = mf.convex_index();
     size_type cv;
     base_node pt1(N), pt2, pt3(P), val(1);
@@ -69,8 +71,10 @@ namespace getfem
       size_type nbd2 = pfe->nb_dof();
       size_type nbpt = pgt->nb_points();
       coeff.resize(nbd1);
-      assert(pf1->target_dim() == 1);
-      assert(pf1->is_equivalent());
+
+      if (pf1->target_dim() != 1 || !(pf1->is_equivalent()))
+	throw to_be_done_error("save_solution : to be done ... ");
+      
       for (size_type i = 0; i < nbd2; ++i)
       {
 	/* point corresponding to the i th node.                           */
@@ -194,7 +198,9 @@ namespace getfem
       }
     }
     // cout << "ddl untouched : " << ddl_touched << endl;
-    assert(ddl_touched.card() == 0); // lancer seulement une alerte ?
+    if (ddl_touched.card() != 0)
+      cerr << "WARNING : in interpolation_solution,"
+	   << " all points have not been touched" << endl;
   }
 
 

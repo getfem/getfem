@@ -70,8 +70,12 @@ namespace getfem
 	P = pgt->poly_vector()[i];
 	P.derivative(n);
 	for (size_type j = 0; j < pspt->size(); ++j) {
-	  assert((*pspt)[j].size() == N);
-	  assert(pgt->convex_ref()->is_in((*pspt)[j]) < 1.0E-7);
+	  if ((*pspt)[j].size() != N)
+	    throw dimension_error
+	      ("_geotrans_precomp::_geotrans_precomp : dimensions mismatch");
+	  if(pgt->convex_ref()->is_in((*pspt)[j]) > 1.0E-7)
+	    throw internal_error
+	      ("_geotrans_precomp::_geotrans_precomp : internal error");
 	  pc[j](i,n) = P.eval((*pspt)[j].begin());
 	}
 	for (dim_type m = 0; m <= n; ++m) {

@@ -1,3 +1,4 @@
+/* -*- c++ -*- (enables emacs c++ mode)                                    */
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Dynamic Array Library (dal)                                  */
@@ -121,8 +122,9 @@ namespace dal
     void tsa_iterator<T, COMP, pks>::down_left(void)
   {
     #ifdef __GETFEM_VERIFY
-      assert(depth>0); assert(depth<_DEPTHMAX_); assert(index() != ST_NIL);
-      // internal error
+      if (depth <= 0 || depth >= _DEPTHMAX_ || index() == ST_NIL)
+	throw dal::internal_error
+	      ("tsa_iterator<T, COMP, pks>::down_left : internal error");
     #endif
     path[depth] = p->left_elt(_index()); dir[depth++] = -1;
   }
@@ -131,8 +133,9 @@ namespace dal
     void tsa_iterator<T, COMP, pks>::down_right(void)
   { 
     #ifdef __GETFEM_VERIFY
-      assert(depth>0); assert(depth<_DEPTHMAX_); assert(index()!=ST_NIL);
-      // internal error
+      if (depth <= 0 || depth >= _DEPTHMAX_ || index() == ST_NIL)
+	throw dal::internal_error
+	  ("tsa_iterator<T, COMP, pks>::down_right : internal error");
     #endif
     path[depth] = p->right_elt(_index()); dir[depth++] = 1;
   }
@@ -249,8 +252,9 @@ namespace dal
     void const_tsa_iterator<T, COMP, pks>::down_left(void)
   {
     #ifdef __GETFEM_VERIFY
-      assert(depth>0); assert(depth<_DEPTHMAX_); assert(index()!=ST_NIL);
-      // internal error
+      if (depth <= 0 || depth >= _DEPTHMAX_ || index() == ST_NIL)
+	throw dal::internal_error
+	  ("const_tsa_iterator<T, COMP, pks>::down_left : internal error");
     #endif
     path[depth] = p->left_elt(_index()); dir[depth++] = -1;
   }
@@ -259,8 +263,9 @@ namespace dal
     void const_tsa_iterator<T, COMP, pks>::down_right(void)
   { 
     #ifdef __GETFEM_VERIFY
-      assert(depth>0); assert(depth<_DEPTHMAX_); assert(index()!=ST_NIL);
-      // internal error
+      if (depth <= 0 || depth >= _DEPTHMAX_ || index() == ST_NIL)
+	throw dal::internal_error
+	  ("const_tsa_iterator<T, COMP, pks>::down_right : internal error");
     #endif
     path[depth] = p->right_elt(_index()); dir[depth++] = 1;
   }
@@ -348,8 +353,10 @@ namespace dal
 	  if (i == ST_NIL) return 0;
 	  int l = verify_balance(nodes[i].l);
 	  int r = verify_balance(nodes[i].r);
-	    assert(short_type(r - l) ==  nodes[i].eq);   // internal error
-	    assert(nodes[i].eq <= 1 && nodes[i].eq>=-1); // internal error
+	  if (short_type(r - l) !=  nodes[i].eq || 
+	      !(nodes[i].eq <= 1 && nodes[i].eq>=-1))
+	    throw dal::internal_error
+	      ("dynamic_tree_sorted::verify_balance : internal error");
 	  return std::max(l,r) + 1;
 	}
 
@@ -499,7 +506,8 @@ namespace dal
                                       else return rotate_right_left(i);
       case  0 : case -1 : case 1 : return i;
     #ifdef __GETFEM_VERIFY
-      default : assert(dal::abs(pn->eq) <= 2); exit(1); // internal error
+      default : throw internal_error
+        ("dynamic_tree_sorted<T, COMP, pks>::balance_again : internal error");
     #endif
     }
     return ST_NIL;
@@ -684,9 +692,6 @@ namespace dal
   {
     size_type f, ni = i, ic;
     short_type dir;
-    #ifdef __GETFEM_VERIFY
-      assert(i != ST_NIL); // internal error
-    #endif
     tree_elt *pni = &(nodes[i]), *pnc;
 
     if (pni->l == ST_NIL || pni->r == ST_NIL)
@@ -741,9 +746,12 @@ namespace dal
   template<class T, class COMP, int pks>
     void dynamic_tree_sorted<T, COMP, pks>::sup(size_type i)
   {
-    if (i >= INT_MAX)
-      throw std::out_of_range(
-	 "dynamic_tree_sorted<T, COMP, pks>::sup : index out of range");
+    if (i >= INT_MAX) {
+	std::stringstream msg;
+	msg << "dynamic_tree_sorted<T, COMP, pks>::sup : index " << long(i)
+	    << " out of range" << ends;
+	throw std::out_of_range(msg.str());
+      }
 
     const_sorted_iterator it(*this); find_sorted_iterator(i, it);
     if (it.index() != ST_NIL)
@@ -753,9 +761,12 @@ namespace dal
   template<class T, class COMP, int pks>
     void dynamic_tree_sorted<T, COMP, pks>::swap(size_type i, size_type j)
   {
-    if (i >= INT_MAX || j >= INT_MAX)
-      throw std::out_of_range(
-	 "dynamic_tree_sorted<T, COMP, pks>::swap : index out of range");
+    if (i >= INT_MAX || j >= INT_MAX){
+	std::stringstream msg;
+	msg << "dynamic_tree_sorted<T, COMP, pks>::swap : index "
+	    << long(std::max(i, j)) << " out of range" << ends;
+	throw std::out_of_range(msg.str());
+      }
 
     if (i != j)
     {

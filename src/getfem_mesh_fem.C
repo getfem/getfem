@@ -210,12 +210,13 @@ namespace getfem
   void mesh_fem::receipt(const MESH_REFINE_CONVEX &m)
   { 
     // ajouter la strategie au rafinement / derafinement
-    assert(false);
+    throw internal_error("mesh_fem::receipt : internal error");
+      
   }
   void mesh_fem::receipt(const MESH_UNREFINE_CONVEX &m)
   { 
     // ajouter la strategie au rafinement / derafinement
-    assert(false);
+    throw internal_error("mesh_fem::receipt : internal error");
   }
    
   void mesh_fem::set_finite_element(size_type cv, pintfem pif)
@@ -227,10 +228,9 @@ namespace getfem
     }
     else
     {
-      #ifdef __GETFEM_VERIFY
-      assert(_linked_mesh->structure_of_convex(cv)->basic_structure() 
-	     == pif->pf->basic_structure());
-      #endif
+      if (_linked_mesh->structure_of_convex(cv)->basic_structure() 
+	     != pif->pf->basic_structure());
+      throw internal_error("mesh_fem::set_finite_element : internal error");
       if (!fe_convex.is_in(cv) || f_elems[cv] != pif)
       { fe_convex.add(cv); f_elems[cv] = pif; dof_enumeration_made = false; }
     }
@@ -371,7 +371,7 @@ namespace getfem
 /*       { */
 /* 	ip = _linked_mesh->ind_point_of_convex(cv, i); */
 /* 	nbd = _linked_mesh->convex_to_point(ip, tab); */
-/* 	assert(nbd < 10000); */
+/* 	ssert(nbd < 10000); */
 /* 	for (i = 0; i < nbd; i++) */
 /* 	{ */
 /* 	  ncv = tab[i]; */
@@ -402,7 +402,7 @@ namespace getfem
 /* 	cv = front1[i++]; */
 /* 	nbp = _linked_mesh->nb_points_of_convex(cv); */
 /* 	nbd = _linked_mesh->convex_to_point(ip, tab); */
-/* 	assert(nbd < 10000); extraire une fonction qui ajoute les ddl d'un cv*/
+/* 	ssert(nbd < 10000); extraire une fonction qui ajoute les ddl d'un cv*/
 /* 	for (i = 0; i < nbd; i++) */
 /* 	{ */
 /* 	  ncv = tab[i]; */

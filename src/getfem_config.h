@@ -52,6 +52,10 @@ namespace getfem
 
   using bgeot::dimension_error;
   using bgeot::internal_error;
+  using bgeot::not_linear_error;
+  using bgeot::to_be_done_error;
+  using bgeot::failure_error;
+
 }  /* end of namespace getfem.                                             */
 
 

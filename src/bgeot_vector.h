@@ -1,3 +1,4 @@
+/* -*- c++ -*- (enables emacs c++ mode)                                    */
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Basic GEOmetric Tool  (bgeot)                                */
@@ -33,6 +34,7 @@
 #define __BGEOT_VECTOR_H
 
 #include <dal_std.h>
+#include <bgeot_config.h>
 #include <vector>
 
 
@@ -180,9 +182,16 @@ namespace bgeot
       inline bool empty() const { return (N == 0); }
 
       #ifdef __GETFEM_VERIFY
-        reference operator[](size_type n) { assert(n < N); return array[n]; }
-        const_reference operator[](size_type n) const
-	{ assert(n < N); return array[n]; }
+        reference operator[](size_type n) { 
+	  if (n >= N) throw std::out_of_range
+			("fsvector::operator [] : out of range");
+	  return array[n];
+	}
+        const_reference operator[](size_type n) const {
+	  if (n >= N) throw std::out_of_range
+			("fsvector::operator [] : out of range");
+	  return array[n];
+	}
       #else
 	/// Return a reference on the component n of the vector
         inline reference operator[](size_type n) { return array[n]; }
@@ -192,15 +201,27 @@ namespace bgeot
 
       fsvector(void) {}
       /// Constructor. For 2 components initialized with a0 and a1.
-      fsvector(T a0, T a1)
-      { assert(N == 2); iterator p = begin(); *p++ = a0; *p++ = a1; }
+      fsvector(T a0, T a1) {
+	if (N != 2) throw std::invalid_argument
+		      ("fsvector::fsvector() : out of range");
+	iterator p = begin(); *p++ = a0; *p++ = a1;
+      }
       /// Constructor. For 3 components initialized with a0, a1 and a2.
-      fsvector(T a0, T a1, T a2)
-      { assert(N == 3); iterator p = begin(); *p++ = a0; *p++ = a1; *p++ = a2;}
+      fsvector(T a0, T a1, T a2) {
+	if (N != 3) throw std::invalid_argument
+		      ("fsvector::fsvector() : out of range");	
+	iterator p = begin(); *p++ = a0; *p++ = a1; *p++ = a2;
+      }
       /// Constructor. For 4 components initialized with a0, a1, a2 and a3.
-      fsvector(T a0, T a1, T a2, T a3)
-      { assert(N == 4); iterator p = begin(); *p++=a0;*p++=a1;*p++=a2;*p++=a3;}
-      fsvector(size_type l) { assert(l == N); }
+      fsvector(T a0, T a1, T a2, T a3) {
+	if (N != 4) throw std::invalid_argument
+		      ("fsvector::fsvector() : out of range");	 
+	iterator p = begin(); *p++=a0;*p++=a1;*p++=a2;*p++=a3;
+      }
+      fsvector(size_type l) { 
+	if (N != l) throw std::invalid_argument
+		      ("fsvector::fsvector() : out of range");	 
+      }
       fsvector(const fsvector<T,N> &v)
       { copy(v.begin(), bgeot_count<N>(), begin()); }
       fsvector &operator =(const fsvector<T, N> &v)
@@ -298,10 +319,16 @@ namespace bgeot
       typedef typename std::vector<T>::const_iterator const_iterator;
 
       #ifdef __GETFEM_VERIFY
-      inline const T& operator [](size_type l) const
-      { assert(l < size()); return *(begin()+l); }
-      inline T& operator [](size_type l)
-      { assert(l < size()); return *(begin()+l); }
+      inline const T& operator [](size_type l) const {
+	if (n >= size()) throw std::out_of_range
+			   ("vsvector::operator [] : out of range");
+	return *(begin()+l);
+      }
+      inline T& operator [](size_type l) { 
+	if (n >= size()) throw std::out_of_range
+			   ("vsvector::operator [] : out of range");
+	return *(begin()+l);
+      }
       #endif
 
       void fill(const T &);
@@ -336,9 +363,8 @@ namespace bgeot
   {                             
     register typename vsvector<T>::iterator d1 = begin(), e = end();
     register const_iterator d2 = v.begin();
-    #ifdef __GETFEM_VERIFY
-      assert( v.size() == this->size());
-    #endif
+    if ( v.size() != this->size())
+      throw dimension_error("vsvector<T>::addmul : dimensions mismatch");
     while (d1 != e) *d1++ += (*d2++) * a;
   }
 
@@ -366,9 +392,8 @@ namespace bgeot
   {                             
     register typename vsvector<T>::iterator d1 = begin(), e = end();
     register typename vsvector<T>::const_iterator d2 = w.begin();
-    #ifdef __GETFEM_VERIFY
-      assert(size() == w.size());
-    #endif
+    if (size() != w.size())
+      throw dimension_error("vsvector<T>::operator += : dimensions mismatch");
     while (d1 != e) *d1++ += (*d2++);
     return *this;
   }
@@ -377,9 +402,9 @@ namespace bgeot
   {    
     register typename vsvector<T>::iterator d1 = begin(), e = end();
     register typename vsvector<T>::const_iterator d2 = w.begin();
-    #ifdef __GETFEM_VERIFY
-      assert(size() == w.size());
-    #endif
+    if (size() != w.size())
+      throw dimension_error("vsvector<T>::operator -= : dimensions mismatch");
+
     while (d1 != e) *d1++ -= (*d2++);
     return *this;
   }
@@ -425,9 +450,9 @@ namespace bgeot
     register typename vsvector<T>::const_iterator d1 = v.begin(), e = v.end();
     register typename vsvector<T>::const_iterator d2 = w.begin();
     register double res = 0.0;
-    #ifdef __GETFEM_VERIFY
-    assert(v.size() == w.size());
-    #endif
+    if (v.size() != w.size())
+      throw dimension_error("vect_sp : dimensions mismatch");
+   
     while (d1 != e) res += (*d1++) * (*d2++);
     return res;
   }
@@ -492,9 +517,8 @@ namespace bgeot
     register typename VEC::const_iterator d1 = v.begin(), e = v.end();
     register typename VEC::const_iterator d2 = w.begin();
     double res = 0;
-    #ifdef __GETFEM_VERIFY
-    assert(v.size() == w.size());
-    #endif
+    if (v.size() != w.size())
+      throw dimension_error("vect_dist1 : dimensions mismatch");
     while (d1 != e) res += (double)dal::abs(*d1++ - *d2++);
     return res;
   }
@@ -505,9 +529,8 @@ namespace bgeot
     register typename VEC::const_iterator d1 = v.begin(), e = v.end();
     register typename VEC::const_iterator d2 = w.begin();
     double res = 0;
-    #ifdef __GETFEM_VERIFY
-    assert(v.size() == w.size());
-    #endif
+    if (v.size() != w.size())
+      throw dimension_error("vect_dist2 : dimensions mismatch");
     while (d1 != e) res += dal::sqr((double)dal::abs(*d1++ - *d2++));
     return sqrt(res);
   }
@@ -518,16 +541,15 @@ namespace bgeot
     register typename VEC::const_iterator d1 = v.begin(), e = v.end();
     register typename VEC::const_iterator d2 = w.begin();
     double res = 0;
-    #ifdef __GETFEM_VERIFY
-    assert(v.size() == w.size());
-    #endif
+    if (v.size() != w.size())
+      throw dimension_error("vect_distinf : dimensions mismatch");
+
     while (d1 != e) res += std::max(res, (double)dal::abs(*d1++ - *d2++));
     return res;
   }
 
   //@}
 
-  // +LATEX -CLASSMEMBERS -FUNCTIONS -LATEX
 
   /* ******************************************************************** */
   /*		Points.                                     		  */
@@ -575,6 +597,10 @@ namespace bgeot
 
   
   //@}
+
+  typedef vsvector<scalar_type> base_vector;
+  typedef PT<base_vector> base_node;
+
 
 }  /* end of namespace bgeot.                                           */
 

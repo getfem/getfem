@@ -51,7 +51,10 @@ namespace getfem
     size_type cv;
     size_type N = mf.linked_mesh().dim();
 
-    assert(&mf.linked_mesh() == &mf_target.linked_mesh());
+    
+    if (&mf.linked_mesh() != &mf_target.linked_mesh())
+      throw std::invalid_argument
+	("getfem::compute_gradient : meshes are not the same");
 
     base_matrix G, val;
     base_vector coeff;
@@ -66,8 +69,10 @@ namespace getfem
     for (cv << nn; cv != ST_NIL; cv << nn) {
       pf = mf.fem_of_element(cv);
       pf_target = mf_target.fem_of_element(cv);
-      assert(pf_target->is_equivalent());
-      assert(pf_target->is_lagrange());
+      if (!(pf_target->is_equivalent()) || !(pf_target->is_lagrange()))
+      throw std::invalid_argument
+	("getfem::compute_gradient : finite element target is not convenient");
+	
 
       pgt = mf.linked_mesh().trans_of_convex(cv);
       if (pf_targetold != pf_target) {
@@ -110,7 +115,10 @@ namespace getfem
 	  }
 	}
 
-	assert(pf_target->target_dim() == 1); // !!
+	if (pf_target->target_dim() != 1)
+	  throw to_be_done_error
+	    ("getfem::compute_gradient : vectorial gradient, to be done ... ");
+
 	for (size_type q = 0; q < Q; ++q) {
 	  for (size_type l = 0; l < pf->nb_dof(); ++l)
 	    coeff[l] = U[mf.ind_dof_of_element(cv)[l] * Q + q ];

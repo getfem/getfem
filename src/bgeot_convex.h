@@ -214,9 +214,10 @@ namespace bgeot
     convex<PT> convex_direct_product(const convex<PT, PT_TAB1> &cv1,
 				     const convex<PT, PT_TAB2> &cv2)
   {
-    #ifdef __GETFEM_VERIFY
-      assert(cv1.nb_points() != 0 && cv2.nb_points() != 0);
-    #endif
+    if (cv1.nb_points() == 0 || cv2.nb_points() == 0)
+      throw std::invalid_argument(
+		     "convex_direct_product : null convex product");
+
     convex<PT> r(convex_product_structure(cv1.structure(), cv2.structure()));
     r.points().resize(r.nb_points());
     std::fill(r.points().begin(), r.points().end(), PT(r.structure()->dim()));
@@ -237,9 +238,9 @@ namespace bgeot
   template<class PT, class PT_TAB>
     convex<PT> convex_multiply(const convex<PT, PT_TAB> &cv, dim_type n)
   {
-    #ifdef __GETFEM_VERIFY
-      assert(cv.nb_points() != 0 && n != 0);
-    #endif
+    if (cv.nb_points() == 0 || n == 0)
+      throw std::invalid_argument(
+		     "convex_multiply : null convex product");
     convex<PT> r(multiply_convex_structure(cv.structure(), n));
     r.points().resize(r.nb_points());
     std::fill(r.points().begin(), r.points().end(), PT(r.structure()->dim()));

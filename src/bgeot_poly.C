@@ -50,9 +50,10 @@ namespace bgeot
       }
       init = true;
     }
-    #ifdef __GETFEM_VERIFY
-      assert(n < STORED && d < STORED);
-    #endif
+    if (n >= STORED || d >= STORED)
+      throw internal_error
+	("bgeot::alpha : internal error");
+
     return M(d, n);
   }
 

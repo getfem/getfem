@@ -1,3 +1,4 @@
+/* -*- c++ -*- (enables emacs c++ mode)                                    */
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Basic GEOmetric Tool  (bgeot)                                */
@@ -53,14 +54,16 @@ namespace bgeot
       inline const T& operator ()(size_type l, size_type c) const
       {
         #ifdef __GETFEM_VERIFY
-        assert(l < N && c < N);
+	if (l >= N || c >= N)
+	  throw std::out_of_range("fsmatrix::operator () : out of range");
         #endif
 	return *(begin() + c*N+l);
       }
       inline T& operator ()(size_type l, size_type c)
       {
         #ifdef __GETFEM_VERIFY
-        assert(l < N && c < N);
+	if (l >= N || c >= N)
+	  throw std::out_of_range("fsmatrix::operator () : out of range");
         #endif
         return *(begin() + c*N+l);
       }
@@ -76,7 +79,10 @@ namespace bgeot
       fsmatrix &operator *=(const T &a)
       { fsvector<T, N*N>::operator *=(a); return *this; }
      
-      fsmatrix(size_type l, size_type c) { assert((N==l) && (N==c)); }
+      fsmatrix(size_type l, size_type c) {
+	if ((N!=l) || (N!=c))
+	  throw std::invalid_argument("fsmatrix::operator *= : bad arguments");
+      }
       fsmatrix(void) {}
   };
 
@@ -220,14 +226,16 @@ namespace bgeot
       inline const T& operator ()(size_type l, size_type c) const
       {
         #ifdef __GETFEM_VERIFY
-	assert(l < nbl && c < nbc);
+	if (l >= nbl || c >= nbc)
+	  throw std::out_of_range("vsmatrix::operator () : out of range");
         #endif
 	return *(begin() + c*nbl+l);
       }
       inline T& operator ()(size_type l, size_type c)
       {
         #ifdef __GETFEM_VERIFY
-	assert(l < nbl && c < nbc);
+	if (l >= nbl || c >= nbc)
+	  throw std::out_of_range("vsmatrix::operator () : out of range");
         #endif
 	return *(begin() + c*nbl+l);
       }
@@ -303,10 +311,9 @@ namespace bgeot
 
   template<class T>  vsmatrix<T>& vsmatrix<T>::operator *=(const vsmatrix<T>& m)
   {
-  
-    #ifdef __GETFEM_VERIFY
-    assert(nbc == m.nbl && nbc == m.nbc);
-    #endif
+    if (nbc != m.nbl || nbc != m.nbc)
+      throw dimension_error
+	("smatrix<T>& vsmatrix<T>::operator *= dimensions mismatch");
     
     if (begin() != m.begin())
     {
@@ -347,9 +354,9 @@ namespace bgeot
 
   template<class T>  vsvector<T>& operator *=(vsvector<T>& v, const vsmatrix<T>& m)
   {
-    #ifdef __GETFEM_VERIFY
-    assert(v.size() == m.nrows() && v.size() == m.ncols());
-    #endif
+    if (v.size() != m.nrows() || v.size() != m.ncols())
+      throw dimension_error
+	("vsvector<T>& operator *= : dimensions mismatch");
   
     vsvector<T> tmp = v;
     typename vsvector<T>::iterator p1 = v.begin(), te = tmp.end(), p2;
@@ -366,9 +373,10 @@ namespace bgeot
   template<class T>
     vsvector<T> operator *(const vsmatrix<T>& m, const vsvector<T>& v)
   {
-    #ifdef __GETFEM_VERIFY
-    assert(v.size() == m.ncols());
-    #endif
+
+    if (v.size() != m.ncols())
+      throw dimension_error
+	("vsvector<T>& operator * : dimension mismatch");
 
     vsvector<T> res(m.nrows());
     typename vsvector<T>::iterator p1 = res.begin();
@@ -387,9 +395,10 @@ namespace bgeot
   template<class T>
     vsmatrix<T> operator *(const vsmatrix<T>& m, const vsmatrix<T>& n)
   {
-    #ifdef __GETFEM_VERIFY
-    assert(m.ncols() == n.nrows());
-    #endif
+
+    if (m.ncols() != n.nrows())
+      throw dimension_error
+	("vsmatrix<T> operator * : dimension mismatch");
 
     vsmatrix<T> res(m.nrows(), n.ncols());
     typename vsmatrix<T>::iterator p1 = res.begin();
@@ -417,9 +426,9 @@ namespace bgeot
 				     const MAT& m2, typename MAT::size_type j)
   {
     typename MAT::value_type res = typename MAT::value_type(0);
-    #ifdef __GETFEM_VERIFY
-    assert(m1.ncols() == m2.nrows());
-    #endif
+    if (m1.ncols() != m2.nrows())
+      throw dimension_error
+	("typename MAT::value_type lc_product : dimensions mismatch");
     typename MAT::const_iterator p1 = m1.begin() + i, e = m1.end();
     typename MAT::const_iterator p2 = m2.begin() + j * m2.nrows();
     while (p1 < e) { res += (*p1) * (*p2++); p1 += m1.nrows(); }
@@ -432,9 +441,11 @@ namespace bgeot
 			 typename MAT::size_type j, typename MAT::size_type k)
   {
     typename MAT::value_type res = typename MAT::value_type(0);
-    #ifdef __GETFEM_VERIFY
-    assert(m1.ncols() >= k && m2.nrows() >= k);
-    #endif
+        
+    if (m1.ncols() < k || m2.nrows() < k)
+      throw dimension_error
+    ("typename MAT::value_type partial_lc_product : dimensions mismatch");
+
     typename MAT::const_iterator p1 = m1.begin() + i;
     typename MAT::const_iterator e  = m1.begin() + k * m1.nrows();
     typename MAT::const_iterator p2 = m2.begin() + j * m2.nrows();
@@ -448,9 +459,10 @@ namespace bgeot
 				     const MAT& m2, typename MAT::size_type j)
   {
     typename MAT::value_type res = typename MAT::value_type(0);
-    #ifdef __GETFEM_VERIFY
-      assert(m1.nrows() == m2.nrows());
-    #endif
+    if (m1.nrows() != m2.nrows())
+      throw dimension_error
+	("typename MAT::value_type cc_product : dimensions mismatch");
+
     typename MAT::const_iterator p1 = m1.begin() + i * m1.nrows(), 
                                  e = p1 + m1.nrows();
     typename MAT::const_iterator p2 = m2.begin() + j * m2.nrows();
@@ -463,9 +475,10 @@ namespace bgeot
 				      typename MAT::size_type i, const VEC& v)
   {
     typename MAT::value_type res = typename MAT::value_type(0);
-    #ifdef __GETFEM_VERIFY
-    assert(m1.ncols() == v.size());
-    #endif
+    if (m1.ncols() != v.size())
+      throw dimension_error
+	("typename MAT::value_type lv_product : dimensions mismatch");
+
     typename MAT::const_iterator p1 = m1.begin() + i, e = m1.end();
     typename VEC::const_iterator p2 = v.begin();
     while (p1 < e) { res += (*p1) * (*p2++); p1 += m1.nrows(); }
@@ -478,9 +491,10 @@ namespace bgeot
                         typename MAT::size_type i1, typename MAT::size_type i2)
   {
     typename MAT::value_type res = typename MAT::value_type(0);
-    #ifdef __GETFEM_VERIFY
-    assert(m1.ncols() >= i2 && v.size() >= i2);
-    #endif
+    if (!(m1.ncols() >= i2 && v.size() >= i2))
+      throw dimension_error
+     ("typename MAT::value_type partial_lv_product : dimensions mismatch");
+  
     typename MAT::const_iterator p1 = m1.begin() + i + i1 * m1.nrows();
     typename VEC::const_iterator p2 = v.begin() + i1, e = v.begin() + i2;
     while (p2 < e) { res += (*p1) * (*p2++); p1 += m1.nrows(); }
@@ -492,9 +506,10 @@ namespace bgeot
 				       typename MAT::size_type i, const VEC& v)
   {
     typename MAT::value_type res = typename MAT::value_type(0);
-    #ifdef __GETFEM_VERIFY
-    assert(m1.nrows() == v.size());
-    #endif
+    if (m1.nrows() != v.size())
+      throw dimension_error
+	("typename MAT::value_type cv_product : dimensions mismatch");
+
     typename MAT::const_iterator p1 = m1.begin() + i * m1.nrows();
     typename VEC::const_iterator p2 = v.begin(), e = v.end();
     while (p2 < e) res += (*p1++) * (*p2++);
@@ -507,9 +522,10 @@ namespace bgeot
                        typename MAT::size_type i1, typename MAT::size_type i2)
   {
     typename MAT::value_type res = typename MAT::value_type(0);
-    #ifdef __GETFEM_VERIFY
-    assert(m1.nrows() >= i2 && v.size() >= i2);
-    #endif
+    if (!(m1.nrows() >= i2 && v.size() >= i2))
+      throw dimension_error
+    ("typename MAT::value_type partial_cv_product : dimensions mismatch");
+      
     typename MAT::const_iterator p1 = m1.begin() + i1 + i * m1.nrows();
     typename VEC::const_iterator p2 = v.begin() + i1, e = v.begin() + i2;
     while (p2 < e) res += (*p1++) * (*p2++);
@@ -522,9 +538,10 @@ namespace bgeot
 			       	     const MAT& m2, typename MAT::size_type j)
   {
     typename MAT::value_type res = typename MAT::value_type(0);
-    #ifdef __GETFEM_VERIFY
-    assert(m1.nrows() == m2.nrows());
-    #endif
+    if (m1.nrows() != m2.nrows())
+      throw dimension_error
+	("typename MAT::value_type ll_product : dimensions mismatch");
+   
     typename MAT::const_iterator p1 = m1.begin() + i, e = m1.end();
     typename MAT::const_iterator p2 = m2.begin() + j;
     while (p1 < e) { res += (*p1)*(*p2); p1 += m1.nrows(); p2 += m2.nrows(); }
@@ -537,9 +554,10 @@ namespace bgeot
 			 typename MAT::size_type j, typename MAT::size_type k)
   {
     typename MAT::value_type res = typename MAT::value_type(0);
-    #ifdef __GETFEM_VERIFY
-      assert(m1.nrows() >= k && m2.nrows() >= k);
-    #endif
+    if (!(m1.nrows() >= k && m2.nrows() >= k))
+      throw dimension_error
+    ("typename MAT::value_type partial_ll_product : dimensions mismatch");
+
     typename MAT::const_iterator p1 = m1.begin() + i;
     typename MAT::const_iterator e  = m1.begin() + k * m1.nrows();
     typename MAT::const_iterator p2 = m2.begin() + j;
@@ -550,12 +568,12 @@ namespace bgeot
   template<class MAT1, class MAT2, class MATR>
     void mat_product(const MAT1 &m1, const MAT2 &m2, MATR &mr)
   { // mr = m1 * m2; optimisable.
-    #ifdef __GETFEM_VERIFY
-      assert(m1.ncols() == m2.nrows() && mr.nrows() == m1.nrows()
-	                              && mr.ncols() == m2.ncols()
-	                              && ((void *)(&mr) != (void *)(&m1))
-	                              && ((void *)(&mr) != (void *)(&m2)));
-    #endif
+   
+    if (m1.ncols() != m2.nrows() || mr.nrows() != m1.nrows()
+	  || mr.ncols() != m2.ncols() || ((void *)(&mr) == (void *)(&m1))
+	  || ((void *)(&mr) == (void *)(&m2)))
+      throw dimension_error("mat_product : dimensions mismatch");
+
     for (size_t i = 0; i < mr.nrows(); ++i)
       for (size_t j = 0; j < mr.ncols(); ++j)
 	mr(i,j) = lc_product(m1, i, m2, j);
@@ -564,22 +582,21 @@ namespace bgeot
   template<class MAT, class VECT, class VECTR>
     void mat_vect_product(const MAT &m, const VECT &v, VECTR &vr)
   { // vr = m * v; optimisable.
-    #ifdef __GETFEM_VERIFY
-      assert(m.ncols() == v.size() && vr.size() == m.nrows()
-	                           && ((void *)(&vr) != (void *)(&v)));
-    #endif
+    if (m.ncols() != v.size() || vr.size() != m.nrows()
+	|| ((void *)(&vr) == (void *)(&v)))
+      throw dimension_error("mat_vect_product : dimensions mismatch");
+    
     for (size_t i = 0; i < vr.size(); ++i) vr[i] = lv_product(m, i, v);
   }
 
   template<class MAT1, class MAT2, class MATR>
     void mat_product_tt(const MAT1 &m1, const MAT2 &m2, MATR &mr) 
   { // mr = transp(m1) * trans(m2); optimisable.
-    #ifdef __GETFEM_VERIFY
-      assert(m1.nrows() == m2.ncols() && mr.nrows() == m1.ncols()
-	                              && mr.ncols() == m2.nrows()
-	                              && ((void *)(&mr) != (void *)(&m1))
-	                              && ((void *)(&mr) != (void *)(&m2)));
-    #endif
+    if (m1.nrows() != m2.ncols() || mr.nrows() != m1.ncols()
+	  || mr.ncols() != m2.nrows() || ((void *)(&mr) == (void *)(&m1))
+	  || ((void *)(&mr) == (void *)(&m2)))
+      throw dimension_error("mat_product_tt : dimensions mismatch");
+
     for (size_t i = 0; i < mr.nrows(); ++i)
       for (size_t j = 0; j < mr.ncols(); ++j)
 	mr(i,j) = lc_product(m2, j, m1, i);
@@ -588,22 +605,21 @@ namespace bgeot
   template<class MAT, class VECT, class VECTR>
     void mat_vect_product_t(const MAT &m, const VECT &v, VECTR &vr)
   { // vr = transp(m) * v; optimisable.
-    #ifdef __GETFEM_VERIFY
-      assert(m.ncols() == vr.size() && v.size() == m.nrows()
-	                            && ((void *)(&vr) != (void *)(&v)));
-    #endif
+    if (m.ncols() != vr.size() || v.size() != m.nrows()
+	|| ((void *)(&vr) == (void *)(&v)))
+      throw dimension_error("mat_vect_product_t : dimensions mismatch");
+  
     for (size_t i = 0; i < vr.size(); ++i) vr[i] = cv_product(m, i, v);
   }
 
   template<class MAT1, class MAT2, class MATR>
     void mat_product_tn(const MAT1 &m1, const MAT2 &m2, MATR &mr) 
   { // mr = trans(m1) * m2; optimisable.
-    #ifdef __GETFEM_VERIFY
-      assert(m1.nrows() == m2.nrows() && mr.nrows() == m1.ncols()
-	                              && mr.ncols() == m2.ncols()
-	                              && ((void *)(&mr) != (void *)(&m1))
-	                              && ((void *)(&mr) != (void *)(&m2)));
-    #endif
+    if (m1.nrows() != m2.nrows() || mr.nrows() != m1.nrows()
+	  || mr.ncols() != m2.ncols() || ((void *)(&mr) == (void *)(&m1))
+	  || ((void *)(&mr) == (void *)(&m2)))
+      throw dimension_error("mat_product_tn : dimensions mismatch");
+    
     for (size_t i = 0; i < mr.nrows(); ++i)
       for (size_t j = 0; j < mr.ncols(); ++j)
 	mr(i,j) = cc_product(m1, i, m2, j);
@@ -612,12 +628,11 @@ namespace bgeot
   template<class MAT1, class MAT2, class MATR>
     void mat_add_product_tn(const MAT1 &m1, const MAT2 &m2, MATR &mr) 
   { // mr += trans(m1) * m2; optimisable.
-    #ifdef __GETFEM_VERIFY
-      assert(m1.nrows() == m2.nrows() && mr.nrows() == m1.ncols()
-	                              && mr.ncols() == m2.ncols()
-	                              && ((void *)(&mr) != (void *)(&m1))
-	                              && ((void *)(&mr) != (void *)(&m2)));
-    #endif
+    if (m1.nrows() != m2.nrows() || mr.nrows() != m1.nrows()
+	  || mr.ncols() != m2.ncols() || ((void *)(&mr) == (void *)(&m1))
+	  || ((void *)(&mr) == (void *)(&m2)))
+      throw dimension_error("mat_add_product_tn : dimensions mismatch");
+
     for (size_t i = 0; i < mr.nrows(); ++i)
       for (size_t j = 0; j < mr.ncols(); ++j)
 	mr(i,j) += cc_product(m1, i, m2, j);
@@ -650,10 +665,9 @@ namespace bgeot
 			 double EPS = 1E-12)
   {
     x = b; tmp = m;
-    #ifdef __GETFEM_VERIFY
-    assert((m.nrows() == m.ncols()) && (m.ncols() == b.size())
-	                            && (m.ncols() == x.size()));
-    #endif
+    if ((m.nrows() != m.ncols()) || (m.ncols() != b.size())
+	|| (m.ncols() != x.size()))
+      throw dimension_error("mat_gauss_solve : dimensions mismatch");
  
     typename MAT::value_type vlp;
     typename MAT::size_type l, c, pc, l2, nbl = m.nrows();
@@ -671,7 +685,8 @@ namespace bgeot
       /* triangulation.                                                   */
       vlp = tmp(l,l);
 
-      assert(dal::abs(vlp) > EPS);
+      if (dal::abs(vlp) < EPS)
+	throw failure_error("mat_gauss_solve : Non invertible matrix");
 
       for (c = l; c < nbl; c++) tmp(l, c) /= vlp;
       x[l] /= vlp;
@@ -701,10 +716,9 @@ namespace bgeot
 
   template<class MAT>
     void mat_gauss_inverse(MAT &m, MAT &tmp, double EPS = 1E-12)
-  {     
-    #ifdef __GETFEM_VERIFY
-    assert(m.nrows() == m.ncols());
-    #endif
+  {
+    if (m.nrows() != m.ncols())
+      throw dimension_error("mat_gauss_inverse : dimensions mismatch");
       
     typename MAT::value_type vlp;
     typename MAT::size_type l, c, pc, l2, nbl = m.nrows();
@@ -723,7 +737,8 @@ namespace bgeot
       
       /* triangulation.                                   */
       vlp = tmp(l,l); tmp(l,l) = 1;
-      assert(dal::abs(vlp) > EPS);
+      if (dal::abs(vlp) < EPS)
+	throw failure_error("mat_gauss_inverse : Non invertible matrix");
 	
       for (c = l + 1; c < nbl; c++) tmp(l, c) /= vlp;
       for (c = 0; c < nbl; c++) m(l,c) /= vlp;
@@ -756,9 +771,8 @@ namespace bgeot
 					                double EPS = 1E-12)
   {
     typename MAT::size_type nbl = m.nrows(), nbc = m.ncols();
-    #ifdef __GETFEM_VERIFY
-    assert(nbl == nbc);
-    #endif
+    if (nbl != nbc)
+      throw dimension_error("mat_gauss_det : dimensions mismatch");
     
     tmp = m;
     typename MAT::size_type l, c, pc, l2;
@@ -797,9 +811,9 @@ namespace bgeot
 	              			         MAT &tmp, double EPS = 1E-12)
   {
     typename MAT::size_type nbl = m.nrows(), nbc = m.ncols();
-    #ifdef __GETFEM_VERIFY
-    assert(nbl == nbc && i < nbl && j < nbl);
-    #endif
+    if (!(nbl == nbc && i < nbl && j < nbl))
+      throw dimension_error("mat_gauss_sub_det : dimensions mismatch");
+    
     if (nbl == 1) return typename MAT::value_type(1);
     tmp = m; nbl--;
     typename MAT::size_type l, c, pc, l2;
@@ -855,9 +869,8 @@ namespace bgeot
     if (l.nrows() != n || l.ncols() != n) l = a;
     if (u.nrows() != n || u.ncols() != n) u = a;
 
-    #ifdef __GETFEM_VERIFY
-    assert(n == a.ncols && n == l.ncols && n == u.ncols);
-    #endif
+    if (n !=  a.ncols || n != l.ncols || n != u.ncols)
+      throw dimension_error("mat_decomposition_lu : dimensions mismatch");
 
     l.fill(typename MAT::value_type(0)); u.fill(typename MAT::value_type(0));
 
@@ -865,7 +878,8 @@ namespace bgeot
     {
       typename MAT::value_type e = a(i,i) - partial_lc_product(l,i,u,i,i);
       typename MAT::value_type lii = sqrt(dal::abs(e)), uii;
-      assert(e != typename MAT::value_type(0));
+      if (e == typename MAT::value_type(0))
+	throw failure_error("mat_decomposition_lu : Non invertible matrix ?");
       if (e > typename MAT::value_type(0)) uii = lii; else uii = -lii;
 
       l(i,i) = lii; u(i,i) = uii;
@@ -889,15 +903,17 @@ namespace bgeot
   {
     typename MAT::size_type n = a.nrows(), i, j;
     if (l.nrows() != n || l.ncols() != n) l = a;
-    #ifdef __GETFEM_VERIFY
-    assert(n == a.ncols() && n == l.ncols());
-    #endif
+    if (n != a.ncols() || n != l.ncols())
+      throw dimension_error("mat_decomposition_llt : dimensions mismatch");
+    
     l.fill((typename MAT::value_type)(0));
     typename MAT::value_type lii;
     for (i = 0; i < n; i++)
     {
       lii = a(i,i) - partial_ll_product(l,i,l,i,i);
-      assert(lii != (typename MAT::value_type)(0));
+      if (lii == typename MAT::value_type(0))
+	throw failure_error("mat_decomposition_llt : Non invertible matrix ?");
+      
       lii = sqrt(lii); l(i,i) = lii;
       for (j = i+1; j < n; j++)
       { l(j,i) = (a(i,j) - partial_ll_product(l,j,l,i,i)) / lii;}
@@ -907,16 +923,16 @@ namespace bgeot
   template <class MAT> void mat_decomposition_llt(MAT &a)
   {
     typename MAT::size_type n = a.nrows(), i, j;
-    #ifdef __GETFEM_VERIFY
-    assert(n == a.ncols());
-    #endif
+    if (n != a.ncols())
+      throw dimension_error("mat_decomposition_llt : dimensions mismatch");
+    
     typename MAT::value_type lii;
     for (i = 0; i < n; i++)
     {
       lii = a(i,i) - partial_ll_product(a,i,a,i,i);
-      #ifdef __GETFEM_VERIFY
-      assert(lii != (typename MAT::value_type)(0));
-      #endif
+      if (lii == typename MAT::value_type(0))
+	throw failure_error("mat_decomposition_llt : Non invertible matrix ?");
+
       lii = sqrt(lii); a(i,i) = lii;
       for (j = i+1; j < n; j++)
       { 
@@ -930,9 +946,8 @@ namespace bgeot
   {
     typename MAT::size_type n = l.nrows(), j; 
     if (b.size() != x.size()) x = b;
-    #ifdef __GETFEM_VERIFY
-    assert((n == l.ncols() && n == b.size() && n == x.size()));
-    #endif
+    if ((n != l.ncols() || n != b.size() || n != x.size()))
+      throw dimension_error("mat_solve_llt : dimensions mismatch");
 
     for (j = 0; j < n; j++)
     { x[j] = (b[j] - partial_lv_product(l, j, x, 0, j)) / l(j,j); }
@@ -971,6 +986,7 @@ namespace bgeot
     typename MAT::value_type mat_inv_cholesky(MAT &m)
   { MAT tmp; return mat_inv_cholesky(m, tmp); }
   
+  typedef vsmatrix<scalar_type> base_matrix;
 
 
 }  /* end of namespace bgeot.                                           */

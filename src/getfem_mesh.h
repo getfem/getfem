@@ -1,3 +1,4 @@
+/* -*- c++ -*- (enables emacs c++ mode)                                    */
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  GEneric Tool for Finite Element Methods (getfem)             */
@@ -129,17 +130,28 @@ namespace getfem
   {
     public :
 
-      virtual void receipt(const MESH_CLEAR           &) { assert(false); }
-      virtual void receipt(const MESH_ADD_POINT       &) { assert(false); }
-      virtual void receipt(const MESH_SUP_POINT       &) { assert(false); }
-      virtual void receipt(const MESH_SWAP_POINT      &) { assert(false); }
-      virtual void receipt(const MESH_ADD_CONVEX      &) { assert(false); }
-      virtual void receipt(const MESH_SUP_CONVEX      &) { assert(false); }
-      virtual void receipt(const MESH_SWAP_CONVEX     &) { assert(false); }
-      virtual void receipt(const MESH_REFINE_CONVEX   &) { assert(false); }
-      virtual void receipt(const MESH_UNREFINE_CONVEX &) { assert(false); }
-      virtual void receipt(const MESH_WRITE_TO_FILE   &) { assert(false); }
-      virtual void receipt(const MESH_READ_FROM_FILE  &) { assert(false); }
+      virtual void receipt(const MESH_CLEAR           &)
+      { throw internal_error("getfem_mesh_receiver::receipt: internal error");}
+      virtual void receipt(const MESH_ADD_POINT       &) 
+      { throw internal_error("getfem_mesh_receiver::receipt: internal error");}
+      virtual void receipt(const MESH_SUP_POINT       &) 
+      { throw internal_error("getfem_mesh_receiver::receipt: internal error");}
+      virtual void receipt(const MESH_SWAP_POINT      &) 
+      { throw internal_error("getfem_mesh_receiver::receipt: internal error");}
+      virtual void receipt(const MESH_ADD_CONVEX      &) 
+      { throw internal_error("getfem_mesh_receiver::receipt: internal error");}
+      virtual void receipt(const MESH_SUP_CONVEX      &) 
+      { throw internal_error("getfem_mesh_receiver::receipt: internal error");}
+      virtual void receipt(const MESH_SWAP_CONVEX     &)
+      { throw internal_error("getfem_mesh_receiver::receipt: internal error");}
+      virtual void receipt(const MESH_REFINE_CONVEX   &) 
+      { throw internal_error("getfem_mesh_receiver::receipt: internal error");}
+      virtual void receipt(const MESH_UNREFINE_CONVEX &) 
+      { throw internal_error("getfem_mesh_receiver::receipt: internal error");}
+      virtual void receipt(const MESH_WRITE_TO_FILE   &) 
+      { throw internal_error("getfem_mesh_receiver::receipt: internal error");}
+      virtual void receipt(const MESH_READ_FROM_FILE  &) 
+      { throw internal_error("getfem_mesh_receiver::receipt: internal error");}
 
   };
 
@@ -200,7 +212,11 @@ namespace getfem
       { return pts.search(pt); }
 
       bgeot::pgeometric_trans trans_of_convex(size_type ic) const
-      { assert(trans_exists[ic]); return gtab[ic]; }
+      { 
+	if (!(trans_exists[ic]))
+	  throw(internal_error("trans_of_convex : internal error"));
+	return gtab[ic]; 
+      }
 
       /** Add a convex to the mesh. cvs is of type 
        *          bgeot::convex\_structure and "it" is an iterator on a list

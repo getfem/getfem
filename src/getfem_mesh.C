@@ -43,9 +43,8 @@ namespace getfem
   size_type getfem_mesh::add_point(const base_node &pt)
   {
     if (dimension == dim_type(-1)) dimension = pt.size();
-    #ifdef __GETFEM_VERIFY
-    assert(pt.size() == dimension);
-    #endif
+    if (pt.size() != dimension)
+      throw dimension_error("getfem_mesh::add_point : dimensions mismatch");
     
     bool present;
     size_type i = pts.add_norepeat(pt, false, &present);

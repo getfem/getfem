@@ -95,7 +95,9 @@ namespace bgeot
     public :
       scalar_type is_in(const base_node &pt) const
       { // return a negative or null number if pt is in the convex
-        assert(pt.size() == cvs->dim());
+	if (pt.size() != cvs->dim())
+	  throw dimension_error(
+		    "_K_simplex_of_ref::is_in : Dimension does not match");
 	scalar_type e = -1.0, r = 0.0;
 	base_node::const_iterator it = pt.begin(), ite = pt.end();
 	for (; it != ite; e += *it, ++it) r = std::min(r, *it);
@@ -103,7 +105,9 @@ namespace bgeot
       }
       scalar_type is_in_face(short_type f, const base_node &pt) const
       { // return a null number if pt is in the face of the convex
-	assert(pt.size() == cvs->dim());
+	if (pt.size() != cvs->dim())
+	  throw dimension_error(
+		  "_K_simplex_of_ref::is_in_face : Dimension does not match");
 	if (f > 0) return dal::abs(pt[f-1]);
 	scalar_type e = -1.0;
 	base_node::const_iterator it = pt.begin(), ite = pt.end();
@@ -186,7 +190,9 @@ namespace bgeot
       static bool isinit = false;
       if (!isinit) { pt1=new base_node(1); pt2=new base_node(1); isinit=true; }
       dim_type n1 = cvr1->structure()->dim(), n2 = cvr2->structure()->dim();
-      assert(pt.size() == cvs->dim());
+      if (pt.size() != cvs->dim())
+	throw dimension_error(
+		   "_product_ref::is_in : Dimension does not match");
       if (pt1->size() != n1) { delete pt1; pt1 = new base_node(n1); }
       if (pt2->size() != n2) { delete pt2; pt2 = new base_node(n2); }
       std::copy(pt.begin(), pt.begin()+n1, pt1->begin());
@@ -200,7 +206,9 @@ namespace bgeot
       static bool isinit = false;
       if (!isinit) { pt1=new base_node(1); pt2=new base_node(1); isinit=true; }
       dim_type n1 = cvr1->structure()->dim(), n2 = cvr2->structure()->dim();
-      assert(pt.size() == cvs->dim());
+      if (pt.size() != cvs->dim())
+	throw dimension_error(
+		   "_product_ref::is_in_face : Dimension does not match");
       if (pt1->size() != n1) { delete pt1; pt1 = new base_node(n1); }
       if (pt2->size() != n2) { delete pt2; pt2 = new base_node(n2); }
       std::copy(pt.begin(), pt.begin()+n1, pt1->begin());

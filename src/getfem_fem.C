@@ -39,8 +39,9 @@ namespace getfem
 			     const base_vector coeff, base_node &val) const {
     // optimisable.   verifier et faire le vectoriel
     base_matrix M;
-    assert(val.size() == target_dim());
-    
+    if (val.size() != target_dim())
+      throw dimension_error
+	("virtual_fem::interpolation : dimensions mismatch");
     
     size_type R = nb_dof();
 
@@ -77,7 +78,8 @@ namespace getfem
 	val.ncols() != P ||
 	ii >= pfp->get_point_tab()->size() ||
 	coeff.size() != R)
-      throw dimension_error("virtual_fem::interpolation_grad: dimension mismatch");
+      throw dimension_error
+	("virtual_fem::interpolation_grad: dimension mismatch");
 
     if (pfp->get_pfem() != this) {
       throw internal_error("virtual_fem::interpolation_grad: internal error");
@@ -100,7 +102,6 @@ namespace getfem
 	  else
 	    for (size_type i = 0; i < R; ++i)
 	      co += coeff[i] * M(i, j);
-	  assert(it-pfp->grad(ii).begin() < pfp->grad(ii).size());
 	  val(r,k) += co * (*it);
 	} 
       }
@@ -379,7 +380,10 @@ namespace getfem
     {
       ppolyfem fi1 = ls.fi1, fi2 = ls.fi2;
       if (fi2->target_dim() != 1) std::swap(fi1, fi2);
-      assert(fi2->target_dim() == 1);
+      if (fi2->target_dim() != 1)
+	throw dimension_error
+	  ("tproduct_femi::tproduct_femi() : dimensions mismatch");
+    
       is_pol = true;
       is_equiv = fi1->is_equivalent() && fi2->is_equivalent();
       is_lag = fi1->is_lagrange() && fi2->is_lagrange();;
@@ -524,7 +528,9 @@ namespace getfem
       exists = new dal::bit_vector();
       isinit = true;
     }
-    assert(nc > 1);
+    if (nc <= 1)
+      throw dimension_error
+	("P1_with_bubble_on_a_face : dimensions mismatch");
     if (!(*exists)[nc])
       { (*exists)[nc] = true; (*tab)[nc]= new _P1_wabbfoaf(nc); }
     return (*tab)[nc];
@@ -633,7 +639,10 @@ namespace getfem
     static dal::FONC_TABLE<_PK_femi_light, _PK_with_cubic_bubble> *tab;
     static bool isinit = false;
 
-    assert(k<n+1);
+    if (k >= n+1)
+      throw dimension_error
+	("PK_with_cubic_bubble_fem : dimensions mismatch");
+    
     if (!isinit) {
       tab = new dal::FONC_TABLE<_PK_femi_light, _PK_with_cubic_bubble>();
       isinit = true;
@@ -673,8 +682,9 @@ namespace getfem
     // To be completed
 
  
-    STD_NEEDED cerr << "This element is not taken into account. Contact us\n";
-    assert(false); return NULL;
+    throw to_be_done_error
+      ("classical_fem : This element is not taken into account. Contact us");
+    return NULL;
   }
 
 }  /* end of namespace getfem.                                            */

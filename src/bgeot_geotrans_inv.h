@@ -1,3 +1,4 @@
+/* -*- c++ -*- (enables emacs c++ mode)                                    */
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Basic GEOmetric Tool  (bgeot)                                */
@@ -50,8 +51,11 @@ namespace bgeot
     /// comparaison function
     int operator()(const base_node &x, const base_node &y) const
     { 
-      size_type s = x.size(); assert(y.size() == s);
+      size_type s = x.size(); 
       scalar_type c1 = c_max, c2 = c_max*10.0;
+      if (y.size() != s)
+	throw dimension_error(
+	    "imbricated_box_less::operator() : dimension error");
 
       base_node::const_iterator itx=x.begin(), itex=x.end(), ity=y.begin();
       for (; itx != itex; ++itx, ++ity)

@@ -251,9 +251,10 @@ namespace bgeot
   template<class T> 
     polynomial<T> &polynomial<T>::operator +=(const polynomial &Q)
   {
-    #ifdef __GETFEM_VERIFY
-      assert(Q.dim() == dim());
-    #endif
+    if (Q.dim() != dim())
+      throw dimension_error
+	("polynomial<T>::operator += : dimensions mismatch");
+
     if (Q.degree() > degree()) change_degree(Q.degree());
     iterator it = begin();
     const_iterator itq = Q.begin(), ite = Q.end();
@@ -264,9 +265,10 @@ namespace bgeot
   template<class T> 
     polynomial<T> &polynomial<T>::operator -=(const polynomial &Q)
   {
-    #ifdef __GETFEM_VERIFY
-      assert(Q.dim() == dim());
-    #endif
+    if (Q.dim() != dim())
+      throw dimension_error
+	("polynomial<T>::operator -= : dimensions mismatch");
+
     if (Q.degree() > degree()) change_degree(Q.degree());
     iterator it = begin();
     const_iterator itq = Q.begin(), ite = Q.end();
@@ -277,9 +279,10 @@ namespace bgeot
   template<class T>
     polynomial<T> &polynomial<T>::operator *=(const polynomial &Q)
   {
-    #ifdef __GETFEM_VERIFY
-      assert(Q.dim() == dim());
-    #endif
+    if (Q.dim() != dim())
+      throw dimension_error
+	("polynomial<T>::operator *= : dimensions mismatch");
+  
     polynomial aux = *this;
     change_degree(0); (*this)[0] = T(0);
 
@@ -349,9 +352,10 @@ namespace bgeot
   template<class T>
     void polynomial<T>::derivative(short_type k)
   {
-     #ifdef __GETFEM_VERIFY
-       assert(k < n);
-     #endif
+    if (k >= n)
+      throw out_of_range
+	("polynomial<T>::derivative : index out of range");
+    
      iterator it = begin(), ite = end();
      power_index mi(dim());
      for ( ; it != ite; ++it, ++mi)
@@ -412,6 +416,9 @@ namespace bgeot
     if (n == 0) o << "0";
     return o;
   }
+  
+  typedef polynomial<scalar_type> base_poly;
+
 
 }  /* end of namespace bgeot.                                           */
 

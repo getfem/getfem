@@ -32,6 +32,7 @@
 #ifndef __BGEOT_GEOMETRIC_TRANSFORMATION_H
 #define __BGEOT_GEOMETRIC_TRANSFORMATION_H
 
+#include <bgeot_config.h>
 #include <bgeot_convex_ref.h>
 
 namespace bgeot

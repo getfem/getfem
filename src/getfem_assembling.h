@@ -119,8 +119,9 @@ namespace getfem
     size_type nbdof_u, nbdof_p, nbdof_d;
 
     size_type N = mf_u.linked_mesh().dim();
-    assert(N == mf_p.linked_mesh().dim());
-    assert(N == mf_d.linked_mesh().dim());
+    if (N != mf_p.linked_mesh().dim() || N != mf_d.linked_mesh().dim())
+      throw dimension_error
+	("assembling_mixed_pressure_term : dimensions mismatch");
 
     /* loop over all convexes */
     for (cv << nn; cv != ST_NIL; cv << nn) {
@@ -155,11 +156,11 @@ namespace getfem
 	      for (size_type k = 0; k < nbdof_u; k++) {
 		//		if (m == l) {
 		/*
-		  assert(finite(DATA[dof_d])); 
+		  ssert(finite(DATA[dof_d])); 
 		  
-		  assert(p < t.end());
+		  ssert(p < t.end());
 		  
-		  assert(finite(*p));
+		  ssert(finite(*p));
 		*/
 		  size_type dof_u = mf_u.ind_dof_of_element(cv)[k];
 		  B(dof_u*N+l, dof_p) += DATA[dof_d]*(*p);
@@ -170,7 +171,7 @@ namespace getfem
 	  } 
 	}
       }
-      assert(p == t.end());
+      // ssert(p == t.end());
     }
   }
 

@@ -42,7 +42,8 @@ namespace bgeot
 
   void convex_structure::add_point_adaptative(short_type i, short_type f)
   {
-    assert(nbpt >= i);
+    if (nbpt < i) throw dal::internal_error(
+		   "convex_structure::add_point_adaptative : internal error");
     if (i == nbpt) nbpt++;
     if (f != short_type(-1))
     {
