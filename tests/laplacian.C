@@ -403,44 +403,35 @@ int main(int argc, char *argv[])
     lap_pb p;
     scalar_type exectime = ftool::uclock_sec(), total_time = 0.0;
     
-    // cout << "initialisation ...\n";
+    cout << "initialisation ...\n";
     p.PARAM.read_command_line(argc, argv);
     p.init();
-    // cout << "Initialisation terminee\n";
-    
-    std::ofstream cres((p.datafilename + ".res").c_str());
-    cres << p.N << "\t" <<  p.K << "\t" << p.NX << "\t";
-    cres << ftool::uclock_sec() - exectime << "  ";
+    cout << "Initialisation terminee en "
+	 << ftool::uclock_sec() - exectime << " secondes\n";
     
     total_time += ftool::uclock_sec() - exectime;
-    
-    // p.mesh.write_to_file(cout);
-    // p.mesh.stat();
     
     p.mesh.write_to_file(p.datafilename + ".mesh" + char(0));
     
     exectime = ftool::uclock_sec();
     int nb_dof = p.mef.nb_dof();
+    cout << "Nb dofs : " << nb_dof << endl;
     
     total_time += ftool::uclock_sec() - exectime;
-    
-    cres << nb_dof << "\t" <<  ftool::uclock_sec() - exectime << "\t";
     
     cout << "Assembling \n";
     exectime = ftool::uclock_sec();
     p.assemble();
     
-    cres << ftool::uclock_sec() - exectime << "\t";
     total_time += ftool::uclock_sec() - exectime;
     
-    //   cout << "Matrice de rigidite\n";
+    //   cout << "Stifness matrix\n";
     //   gmm::write(p.SM, cout);
     
     cout << "Solving the system\n";
     exectime = ftool::uclock_sec();
     p.solve();
     
-    cres << ftool::uclock_sec() - exectime << "\t";
     total_time += ftool::uclock_sec() - exectime;
     exectime = ftool::uclock_sec();
     
@@ -450,21 +441,14 @@ int main(int argc, char *argv[])
     getfem::interpolation_solution_same_mesh(p.mef, p.mef_data, p.U, V, 1);
     for (size_type i = 0; i < nbdof; ++i) {
       V[i] -= sol_u(p.mef_data.point_of_dof(i));
-//       cout << "i = " << i << " V[i] = " <<  V[i]
-// 	   << " point of dof : " << p.mef_data.point_of_dof(i) << endl;
       linfnorm = std::max(linfnorm, dal::abs(V[i]));
     }
     
     scalar_type l2norm = getfem::asm_L2_norm(p.mef_data, V);
-    cres << l2norm << "\t";
-    cres << ftool::uclock_sec() - exectime << "\t";
     total_time += ftool::uclock_sec() - exectime;
     exectime = ftool::uclock_sec();
     scalar_type h1norm = getfem::asm_H1_norm(p.mef_data, V);
-    cres << h1norm << "\t";
-    cres << ftool::uclock_sec() - exectime << "\t";
     total_time += ftool::uclock_sec() - exectime;
-    cres << total_time << endl;
 
     cout.precision(16);
     cout << "L2 error = " << l2norm << endl

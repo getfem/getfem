@@ -236,7 +236,7 @@ namespace getfem
 	std::fill(mref.begin()+1, mref.end(), aux);
       }
 
-      if (is_ppi)
+      if (is_ppi) // pour accelerer, il faudrait précalculer les dérivées
       {
 	base_poly P(dim, 0), Q(dim, 0), R(dim, 0);
 	size_type old_ind = size_type(-1), ind; 
