@@ -165,8 +165,8 @@ void elastostatic_problem::init(void)
     for (size_type j = 0; j < N; j++)
       sol_K(i,j) = (i == j) ? FT : -FT;
 
-  mu = PBSTFR_PARAM.real_value("MU", "Lamé coefficient mu");
-  lambda = PBSTFR_PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
+  mu = PARAM.real_value("MU", "Lamé coefficient mu");
+  lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
   sol_lambda = lambda; sol_mu = mu;
   mf_u.set_qdim(N);
 
@@ -229,7 +229,7 @@ void elastostatic_problem::assembly(void)
   
   cout << "Number of dof : " << nb_dof << endl;
   cout << "Assembling stiffness matrix" << endl;
-  getfem::asm_stiffness_matrix_for_linear_elasticity(SM, mf_u, mef_coef,
+  getfem::asm_stiffness_matrix_for_linear_elasticity(SM, mf_u, mf_coef,
 		      std::vector<scalar_type>(mf_coef.nb_dof(), lambda),
 		      std::vector<scalar_type>(mf_coef.nb_dof(), mu));
   
@@ -255,7 +255,7 @@ void elastostatic_problem::assembly(void)
 	un = mesh.normal_of_face_of_convex(cv, f, pf->node_of_dof(n));
 	un /= gmm::vect_norm2(un);
 	size_type dof = mf_rhs.ind_dof_of_element(cv)[n];
-	gmm::mult(sol_sigma(mef_data.point_of_dof(dof)), un, v);
+	gmm::mult(sol_sigma(mf_rhs.point_of_dof(dof)), un, v);
 	gmm::copy(v, gmm::sub_vector(F, gmm::sub_interval(dof*N, N)));
       }
     }
@@ -334,7 +334,7 @@ bool elastostatic_problem::solve(void) {
 /* compute the error with respect to the exact solution */
 void elastostatic_problem::compute_error() {
   size_type N = mesh.dim();
-  std::vector<scalar_type> V(mf_rhs.nb_dof());
+  std::vector<scalar_type> V(mf_rhs.nb_dof()*N);
   getfem::interpolation_solution(mf_u, mf_rhs, U, V);
   for (size_type i = 0; i < mf_rhs.nb_dof(); ++i) {
     gmm::add(gmm::scaled(sol_u(mf_rhs.point_of_dof(i)), -1.0),

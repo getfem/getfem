@@ -6,9 +6,9 @@
 LX = 1.0;		% size in X.
 LY = 1.0;	        % size in Y.
 LZ = 1.0;		% size in Z.
-% G = 77.0;	        % Lamé coefficient.
+% MU = 77.0;	        % Lamé coefficient.
 % LAMBDA = 107.0;   	% Lamé coefficient.
-G = 1.0;	        % Lamé coefficient.
+MU = 1.0;	        % Lamé coefficient.
 LAMBDA = 1.0;   	% Lamé coefficient.
 INCLINE = 0;            % Incline of the mesh.
 
