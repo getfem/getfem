@@ -15,43 +15,27 @@ if ($nb_param != 2) {
   exit(1);
 }
 
-open (F, list_name) or die "Open file impossible : $!\n";
+open (F, $list_name) or die "Open file impossible : $!\n";
 
 sub read_line {
   while(1) {
     $li = <F>; if (!($li)) { return; }
     chomp($li); ($li, $a) = split('\%', $li, 2);
-    $li =~s/\s//g;
-    if ($li) { return; }
+    $lp = $li;
+    $lp =~s/\s//g;
+    if ($lp) { return; }
   }
 }
+
+$nb_mail = 0;
 
 while(1) {
   read_line;
   if ($li) {
-    print "une adresse : $li \n";
+    ++$nb_mail;
+    print `mail \"$li\" < $mail_name`;
   }
-  else { exit(0); }
+  else { print "nb mails sent : $nb_mail\n"; exit(0); }
 }
 
-
-# open (F, "<") or die "Open standard input impossible !!\n";
-while (<STDIN>) {
-  if ($_ =~ /§/) {
-    $res = "";
-    while ($_) {
-      ($f, $_) = split('§', $_, 2);
-      $res .= $f;
-      $_ =~ s/([a-z§\_]*)//;
-      $a = $1;
-      $b = $a; $b =~ s/\_//g;
-      $res .= $b."[$a]";
-    }
-    print $res;
-
-  }
-  else {
-    print $_;
-}
-}
 
