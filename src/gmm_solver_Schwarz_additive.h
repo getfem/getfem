@@ -41,7 +41,7 @@
 namespace gmm {
       
   /* ******************************************************************** */
-  /*		Sequential Additive Schwarz method                        */
+  /*		Sequential Linear Additive Schwarz method                 */
   /* ******************************************************************** */
   /* ref : Domain decomposition algorithms for the p-version finite       */
   /*       element method for elliptic problems, Luca F. Pavarino,        */
@@ -71,7 +71,7 @@ namespace gmm {
 
     static void solve(const Matrix1 &A, vector_type &x, const vector_type &b,
 	       const Precond &P, iteration &iter)
-      { gmres(A, x, b, P, 50, iter); }
+      { gmres(A, x, b, P, 100, iter); }
   };
 
   template <typename Matrix1, typename Precond> struct sa_local_bicgstab {
@@ -190,7 +190,7 @@ namespace gmm {
     static void solve(const schwadd_mat<Matrix1, Matrix2, Precond,
 		      local_solver> &SAM,
 		      vector_type &x, const vector_type &b, iteration &iter)
-      { gmres(SAM, x, b,  identity_matrix(), 50, iter); }
+      { gmres(SAM, x, b,  identity_matrix(), 100, iter); }
   };
 
   template <typename Matrix1, typename Matrix2, typename Precond,
@@ -395,8 +395,110 @@ namespace gmm {
 
 
 
+  /* ******************************************************************** */
+  /*		Sequential Non-Linear Additive Schwarz method             */
+  /* ******************************************************************** */
+  /* ref : Nonlinearly Preconditionned Inexact Newton Algorithms,         */
+  /*       Xiao-Chuan Cai, David E. Keyes,                                */
+  /*       SIAM J. Sci. Comp. 24: p183-200. .                             */
+  /* ******************************************************************** */
+
+#ifdef sdlkfjfdslfkj
+
+  template <typename Matrixt, typename MatrixBi> 
+  class NewtonAS_struct {
+    
+    typedef Matrixt tangent_matrix_type;
+    typedef typename linalg_traits<Matrix1>::value_type value_type;
+    
+  public :
+    size_type nb_subdomains(void);
+    size_type size(void);
+    const std::vector<MatrixBi> &get_vB();
+    
+    void compute_tangent_matrix(Matrixt &M, std::vector<value_type> x);
+    
+    // compute Bi^T grad(F(X)) Bi
+    void compute_sub_tangent_matrix(Matrixt &Mloc, 
+				    std::vector<value_type> x, size_type i);
+    
+    // compute Bi^T F(X)
+    void compute_sub_F(std::vector<value_type> fi,
+		       std::vector<value_type> x, size_type i);
+    
+  };
+  
+  
+  template <typename NewtonAS_struct_, typename Vector, typename Precond
+	    typename local_solver, typename global_solver>
+  Newton_additive_Schwarz(NewtonAS_struct_ &NS, const Vector &u_,
+			  iteration &iter, const Precond &P,
+			  local_solver &LS, global_solver &GS) {
+    Vector &u = const_cast<Vector &>(u_);
+    typedef typename linalg_traits<Vector>::value_type value_type;
+    typedef typename number_traits<value_type>::magnitude_type m_type;
+    typedef typename NewtonAS_struct_::tangent_matrix_type Matrixt;
+    
+    iter.set_rhsnorm(m_type(1));
+    iteration iter2(iter);
+    iter2.reduce_noisy(); iter2.set_maxiter(size_type(-1));
+    iteration iter3(iter); iter3.reduce_noisy();
+    
+    std::vector<value_type> rhs(NS.size()), x(NS.size()), d(NS.size());
+    std::vector<value_type> xi, xii, fi, di;
+    Matrixt Mloc, M(NS.size(), NS.size());
+    
+    for(;;) { // Newton global iteration
+      
+      gmm::clear(rhs); 
+      for (size_type isd = 0; isd < NS.nb_subdomains(); ++isd) {
+	// solving non-linear local problem isd
+	typename NewtonAS_struct_::Matrixloc &Bi = (NS.get_vB())[isd];
+	size_type si = mat_ncols(Bi);
+	gmm::resize(Mloc, si, si);
+	xi.resize(si); xii.resize(si); fi.resize(si); di.resize(si);
+	
+	iter2.init(); 
+	gmm::clear(xi);
+	gmm::copy(u, x);
+	NS.compute_sub_F(fi, x, isd);
+	m_type r = gmm::norm2(fi), r_t;
+	
+	while(!iter2.finished_vect(r)) {
+	  
+	  NS.compute_sub_tangent_matrix(Mloc, x, isd);
+	  P.init_with(Mloc);
+	  iter3.init();
+	  local_solver::solve(Mloc, di, fi, P, iter3);
+	  
+	  for (m_type alpha(1); alpha>=m_type(1)/m_type(8); alpha/=m_type(2)) {
+	    gmm::add(xi, gmm::scaled(di, alpha), xii);
+	    gmm::mult(Bi, xii, u, x);
+	    NS.compute_sub_F(fi, x, isd);
+	    if ((r_t = gmm::norm2(fi)) <= r) break;
+	  }
+	  r = r_t;
+	  gmm::copy(xii, xi);
+	}
+	gmm::mult(Bi, gmm::scaled(xii, value_type(-1)), rhs, rhs);
+      }
+      
+      if (iter2.finished_vect(rhs)) break;
+      
+      // solving linear system for the global Newton method
+      NS.compute_tangent_matrix(M, u);
+
+      schwadd_mat<Matrix1, Matrix2, Precond, local_solver>
+	SAM(M, NS.get_vB(), iter2, P, iter.get_resmax());
+
+      global_solver::solve(ASM, d, rhs, iter);
+      gmm::add(d, u);
+    }
+  }
 
 
+
+#endif
 
 
 

@@ -53,8 +53,6 @@ namespace gmm {
 
     typedef typename linalg_traits<Vec>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
-    
-    R a, beta;
 
     std::vector<T> w(vect_size(x)), r(vect_size(x)), u(vect_size(x));
     std::vector<T> c_rot(restart+1), s_rot(restart+1), s(restart+1);
@@ -66,7 +64,7 @@ namespace gmm {
     
     mult(A, scaled(x, -T(1)), b, w);
     mult(M, w, r);
-    beta = gmm::vect_norm2(r);
+    R beta = gmm::vect_norm2(r), beta_old = beta;
     int blocked = 0;
 
     iteration inner = outer;
@@ -74,7 +72,6 @@ namespace gmm {
     inner.set_maxiter(restart);
     inner.set_name("GMRes inner iter");
 
-    cout << "beta = " << beta << endl;
     while (! outer.finished(beta)) {
       
       gmm::copy(gmm::scaled(r, T(1)/beta), KS[0]);
@@ -87,7 +84,7 @@ namespace gmm {
 	gmm::mult(A, KS[i], u);
 	gmm::mult(M, u, KS[i+1]);
 	orthogonalize(KS, mat_col(H, i), i);
-	H(i+1, i) = a = gmm::vect_norm2(KS[i+1]);
+	R a = H(i+1, i) = gmm::vect_norm2(KS[i+1]);
 	gmm::scale(KS[i+1], T(1) / a);
 	for (size_type k = 0; k < i; ++k)
 	  Apply_Givens_rotation_left(H(k,i), H(k+1,i), c_rot[k], s_rot[k]);
@@ -99,14 +96,13 @@ namespace gmm {
 	++inner, ++outer, ++i;
       } while (! inner.finished(gmm::abs(s[i])));
 
-      if (int(inner.get_iteration()) < restart -1)
-	++blocked; else blocked = 0;
-
       gmm::upper_tri_solve(H, s, i, false);
       gmm::combine(KS, s, x, i);
       gmm::mult(A, gmm::scaled(x, -T(1)), b, w);
       gmm::mult(M, w, r);
-      beta = gmm::vect_norm2(r);
+      beta_old = std::min(beta, beta_old); beta = gmm::vect_norm2(r);
+      if (int(inner.get_iteration()) < restart -1 || beta_old <= beta)
+	++blocked; else blocked = 0;
       if (blocked > 10) {
 	if (outer.get_noisy()) cout << "Gmres is blocked, exiting\n";
 	break;
