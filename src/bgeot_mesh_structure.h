@@ -409,6 +409,7 @@ namespace bgeot
   /*                                                                       */
   /* ********************************************************************* */
 
+  /* maybe this should be remove from the matlab interface and obsoleted oneday */
   struct edge_list_elt  {
     size_type i, j;
     size_type cv;
@@ -425,7 +426,7 @@ namespace bgeot
 
   typedef dal::dynamic_tree_sorted<edge_list_elt> edge_list;
   
-
+  /* do not use that */
   void mesh_edge_list_convex(pconvex_structure cvs, 
                              std::vector<size_type> points_of_convex, 
                              size_type cv_id, edge_list &el, 
