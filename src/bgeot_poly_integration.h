@@ -69,6 +69,8 @@ namespace bgeot
       scalar_type int_poly_on_face(const polynomial<scalar_type> &P,
 				   short_type f) const;
 
+      virtual ~poly_integration() {}
+
   };
 
    /** @name functions on poly integration

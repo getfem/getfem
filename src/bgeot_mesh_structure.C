@@ -57,6 +57,17 @@ namespace bgeot
     return res;
   }
 
+  size_type mesh_structure::local_ind_of_convex_point(size_type ic,
+						      size_type ip) const {
+    ref_mesh_point_ind_ct ct = ind_points_of_convex(ic);
+    ref_mesh_point_ind_ct::const_iterator
+      it = std::find(ct.begin(), ct.end(), ip);
+    if (it == ct.end())
+      DAL_THROW(internal_error, "This point does not exist on this convex.");
+    return *it;
+  }
+    
+
   ind_ref_mesh_point_ind_ct
      mesh_structure::ind_points_of_face_of_convex(size_type ic,
 					      short_type iff) const

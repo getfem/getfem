@@ -41,7 +41,7 @@ namespace getfem
   /* ********************************************************************* */
 
   void mesh_edge_list_convex(const getfem_mesh &m, size_type i, 
-			     int face, edge_list &el)
+			     edge_list &el)
   { // a tester ... optimisable.
     dal::dynamic_array<bgeot::pconvex_structure> cvstab;
     dal::dynamic_array< std::vector<size_type> > indpttab;
@@ -57,21 +57,20 @@ namespace getfem
       bgeot::pconvex_structure cvs = cvstab[ncs];
       if (cvs->dim() == 1) // il faudrait étendre aux autres cas classiques.
       {
-	el.add(edge_list_elt((indpttab[ncs])[0], (indpttab[ncs])[1]));
+	for (size_type i = 1; i < cvs->nb_points(); ++i)
+	el.add(edge_list_elt((indpttab[ncs])[i-1], (indpttab[ncs])[i]));
       }
       else
       {
 	size_type nf = cvs->nb_faces();
-	if (face >= cvs->nb_faces()) DAL_THROW(failure_error, "Invalid face number");
-	for (size_type f = 1; f < nf; ++f)
+	for (size_type f = 0; f < nf; ++f)
 	{
-	  if (face == -1 || f == face) {
-	    cvstab[ncs+f] = (cvs->faces_structure())[f];
-	    indpttab[ncs+f].resize(cvs->nb_points_of_face(f));
-	    for (size_type k = 0; k < cvs->nb_points_of_face(f); ++k)
-	      (indpttab[ncs+f])[k]
-		= (indpttab[ncs])[(cvs->ind_points_of_face(f))[k]];
-	  }
+	  if (cvs->dim() > 2) ++f;
+	  cvstab[ncs+f] = (cvs->faces_structure())[f];
+	  indpttab[ncs+f].resize(cvs->nb_points_of_face(f));
+	  for (size_type k = 0; k < cvs->nb_points_of_face(f); ++k)
+	    (indpttab[ncs+f])[k]
+	      = (indpttab[ncs])[(cvs->ind_points_of_face(f))[k]];
 	}
 	cvstab[ncs] = cvstab[ncs + nf - 1];
 	indpttab[ncs] = indpttab[ncs + nf - 1];
@@ -122,7 +121,7 @@ namespace getfem
       }
       else
       {
-	mesh_edge_list_convex(m, i, -1, el);
+	mesh_edge_list_convex(m, i, el);
       }
 
     }

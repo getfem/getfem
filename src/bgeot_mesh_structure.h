@@ -185,6 +185,7 @@ namespace bgeot
       bool point_is_valid(size_type i)
       { return (points_tab[i].first != size_type(-1)); }
       ref_mesh_point_ind_ct ind_points_of_convex(size_type ic) const;
+      size_type local_ind_of_convex_point(size_type ic, size_type ip) const;
       size_type ind_dir_point_of_convex(size_type ic, size_type j) const
       {
 	return ind_points_of_convex(ic)

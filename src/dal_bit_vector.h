@@ -143,7 +143,7 @@ namespace dal
     bit_const_iterator() {}
     bit_const_iterator(const bit_vector &b, size_type i);
     bit_const_iterator(const bit_iterator& x)
-      : p(x.p), ind(x.ind), bv(x.bv), mask(x.mask) {}
+      : ind(x.ind),  mask(x.mask), p(x.p), bv(x.bv) {}
     reference operator*() const { return (*p & mask) != 0; }
     bit_const_iterator& operator++() { bump_up();  return *this; }
     bit_const_iterator operator++(int)

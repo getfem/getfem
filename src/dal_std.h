@@ -349,11 +349,11 @@ typedef unsigned char uint8_type;
     cerr << "|  An unknown error has been detected !!!  |\n";\
     cerr << "============================================\n";\
   }
-//   catch(ios_base::failure) { \ a mettre plus tard
-//     cerr << "============================================\n";\
-//     cerr << "|  A ios_base::failure has been detected !!!|\n";\
-//     cerr << "============================================\n";\
-//   } \
+//   catch(ios_base::failure) {  a mettre plus tard
+//     cerr << "============================================\n";
+//     cerr << "|  A ios_base::failure has been detected !!!|\n";
+//     cerr << "============================================\n";
+//   } 
 
   #define DAL_THROW(type, thestr) { \
     std::strstream msg; \

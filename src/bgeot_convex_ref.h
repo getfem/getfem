@@ -88,6 +88,7 @@ namespace bgeot
       virtual scalar_type is_in(const base_node &) const = 0;
       virtual scalar_type is_in_face(short_type, const base_node &) const =0;
       const std::vector<base_vector> &normals(void) const { return _normals; }
+      virtual ~convex_of_reference() {}
   };
 
   typedef const convex_of_reference * pconvex_ref;

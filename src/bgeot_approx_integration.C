@@ -152,13 +152,13 @@ namespace bgeot
 
   struct _NC_apx_light
   {
-    int n, k;
+    dim_type n; short_type k;
     bool operator < (const _NC_apx_light &ls) const
     {
       if (n < ls.n) return true; if (n > ls.n) return false; 
       if (k < ls.k) return true; return false;
     }
-    _NC_apx_light(int nn, int kk) { n = nn; k = kk; }
+    _NC_apx_light(dim_type nn, short_type kk) { n = nn; k = kk; }
     _NC_apx_light(void) { }
    
   };
@@ -167,7 +167,7 @@ namespace bgeot
   struct _Newton_Cotes_approx_integration : public approx_integration
   {
 
-    void calc_base_func(base_poly &p, size_type i, short_type K, base_node &c)
+    void calc_base_func(base_poly &p, short_type K, base_node &c)
       const
     {
       dim_type N = dim();
@@ -217,7 +217,7 @@ namespace bgeot
       for (size_type r = 0; r < R; ++r)
       {
 	int_points[r] = c;
-	calc_base_func(P, r, ls.k, c);
+	calc_base_func(P, ls.k, c);
 	int_coeffs[r] = ppi->int_poly(P);
 
 	for (short_type f = 1; f <= ls.n; ++f)
