@@ -145,7 +145,15 @@ if ($systeme =~ /Linux/)
 }
 else
 {
-  print MAKEFILE "\t", 'ar r libaux.a sources/dal*.o sources/bgeot*.o sources/ftool*.o sources/getfem*.o sources/matlabint*.o; ar r libaux.a cxx_repository/*.o; ', 'ld -shared libaux.a -o ../lib/libgetfem.so', "\n\n";
+  $listeD = `ls cxx_repository`;
+  open(AUXFILE, ">ldauxfile") or die "Open \'ldauxfile\' impossible : $!\n";
+  while($listeD)
+  {
+    ($fi, $listeD) = split('\s', $listeD, 2);
+    print AUXFILE 'cxx_repository/', $fi;
+  }
+  close(AUXFILE);
+  print MAKEFILE "\t", 'ld -shared sources/dal*.o sources/bgeot*.o sources/ftool*.o sources/getfem*.o sources/matlabint*.o -input ldauxfile -o ../lib/libgetfem.so', "\n\n";
 }
 
 # il faut moduler ça si tout n'est pas chargé ...
