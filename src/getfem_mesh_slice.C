@@ -1,3 +1,4 @@
+#include <map>
 #include <getfem_mesh_fem.h>
 #include <getfem_mesh_slice.h>
 
@@ -20,9 +21,9 @@ namespace getfem {
     */
     //cerr << "\n\n------------------------------------------------\nslicer_volume::slice : entree, splx_in=" << splx_in << endl;
     if (splx_in.card() == 0) return;
-    dal::bit_vector pt_in; pt_in.sup(0,nodes.size()-1);
+    dal::bit_vector pt_in; pt_in.sup(0,nodes.size());
     for (size_type i=0; i < nodes.size(); ++i) if (is_in(nodes[i].pt)) pt_in.add(i);
-    dal::bit_vector pt_bin; pt_bin.sup(0,nodes.size()-1);
+    dal::bit_vector pt_bin; pt_bin.sup(0,nodes.size());
     for (size_type i=0; i < nodes.size(); ++i) if (is_in(nodes[i].pt,true)) pt_bin.add(i);
 
     dal::bit_vector bv = splx_in;
@@ -46,7 +47,7 @@ namespace getfem {
         size_type l = splxs.size();//, n = nodes.size();
         //cerr << "slicer_volume::slice : convex " << cnt << " will be splited" << endl;
 	split_simplex(nodes, pt_in, pt_bin, splxs, s, splxs.size(), is_boundary_slice);
-        if (splxs.size()>l) splx_in.add(l,splxs.size()-1);
+        splx_in.add(l,splxs.size()-l);
       }
     }
   }
@@ -180,28 +181,72 @@ namespace getfem {
     level--;
   }
 
-  /* not proud of this one ... */
-  void mesh_slice::edges(size_type ic, std::vector<size_type>& e) const { 
-    e.resize(0);
-    /* 
-       toudou : appliquer un masque pour virer une possible face commune à
-       _tous_ les points du convexe (une tranche qui traverse pile-poil une
-       face) 
-    */
-    for (size_type i=0; i < cvlst[ic].simplexes.size(); ++i) {
-      for (size_type j=0; j < cvlst[ic].simplexes[i].dim()+1; ++j) {
-        size_type ip = cvlst[ic].simplexes[i].inodes[j];
-        if (cvlst[ic].nodes[ip].faces.any()) {
-          for (size_type k=j+1; k < cvlst[ic].simplexes[i].dim()+1; ++k) {
-            size_type ip2 = cvlst[ic].simplexes[i].inodes[k];
-            //if (ip2 < ip) {
-            slice_node::faces_ct f = cvlst[ic].nodes[ip].faces & cvlst[ic].nodes[ip2].faces;
-            if (f.any()) {
-              e.push_back(ip); e.push_back(ip2);
+  struct slice_node_compare_pt_ref : public std::binary_function<slice_node,slice_node,bool> {
+    bool operator()(const slice_node& a, const slice_node& b) const { return a.pt_ref < b.pt_ref; }
+  };
+
+  /** 
+      build the list of edges and store them in a mesh object (hence all common nodes/edges are eliminated)
+  */
+  void mesh_slice::edges_mesh(getfem::getfem_mesh &m) const {
+    cs_nodes_ct n;
+    std::vector<size_type> fpts;
+    std::vector<dim_type> bits;
+    std::vector<dim_type> cnt;
+    for (size_type ic = 0; ic < cvlst.size(); ++ic) {
+      //cerr << "examen du convexe " << ic << " (" << nodes(ic).size << " nodes, " << simplexes(ic).size() << " simplexes" << endl;
+      n.resize(nodes(ic).size());
+      /* the trick is here: the nodes are sorted according to their
+	 reference point. Since the edges of the reference convex are
+	 assumed to be straight, the edges points will be also
+	 sorted */
+      std::partial_sort_copy(cvlst[ic].nodes.begin(), cvlst[ic].nodes.end(), 
+			     n.begin(), n.end(), slice_node_compare_pt_ref());
+      typedef std::map<unsigned long,dal::bit_vector> fmap_t;
+      fmap_t fmap;
+      dim_type nface = cvlst[ic].cv_dim-1;        
+      fpts.resize(n.size());
+      for (size_type ip = 0; ip < n.size(); ++ip) {
+	slice_node::faces_ct f = n[ip].faces;
+        dim_type nbits = f.count();
+	//cerr << "  noeud " << ;
+        if (nface <= nbits) { /* not sure that is the right test for
+				 dimension > 3 .. */
+          /* add the point to the mesh */
+          fpts[ip] = m.add_point(n[ip].pt);
+
+          /* now generate all combinations of (cvlst[ic].cv_dim-1)
+	     bits in the f.count() that are set in f .. */
+
+          /* build list of faces */
+          bits.clear(); 
+	  for (dim_type bcnt = 0; f.any(); ++bcnt) { 
+	    if (f[0]) bits.push_back(bcnt); 
+	    f >>= 1; 
+	  }
+          /* init counter */
+          cnt.resize(nface+1); 
+	  for (size_type i=0; i < nface; ++i) cnt[i] = i; 
+	  cnt[nface] = nbits+1;
+	  
+          while (cnt[nface-1] != nbits) {
+            f.reset(); for (size_type i=0; i < cnt.size(); ++i) f[bits[cnt[i]]] = 1;
+            if (cvlst[ic].cv_dim-1 == int(f.count())) {
+              fmap[f.to_ulong()].add(ip);
             }
-            //}
+            /* next combination */
+            for (dim_type i=0, pcnt=0; i < nface; ++i) {
+              if (++cnt[i] < cnt[i+1]) break; else cnt[i] = pcnt;
+              pcnt = cnt[i]+1;
+            }
           }
         }
+      }
+      for (fmap_t::iterator it = fmap.begin(); it != fmap.end(); ++it) {
+        dal::bit_vector &bv = (*it).second;
+        size_type pip = bv.take_first();
+        for (size_type ip = bv.take_first(); ip != size_type(-1); ip << bv)
+          m.add_segment(fpts[pip], fpts[ip]);
       }
     }
   }
@@ -219,7 +264,6 @@ namespace getfem {
   }
 
   std::ostream& operator<<(std::ostream& o, const mesh_slice& m) {
-    std::vector<size_type> e;
     o << "mesh_slice, containing " << m.nb_convex() << " convexes\n";
     for (size_type ic = 0; ic < m.nb_convex(); ++ic) {
       o << "slice convex #" << ic << " (original = " << m.convex_num(ic) << ")\n";
@@ -232,8 +276,6 @@ namespace getfem {
           o << m.simplexes(ic)[i].inodes[j] << " ";
         o << endl;
       }
-      m.edges(ic,e);
-      o << "edges: "; for (size_type i=0; i < e.size()/2; ++i) o << e[2*i] << "-" << e[2*i+1] << " ";
       o << endl;
     }
     return o;
@@ -284,7 +326,7 @@ namespace getfem {
         for (std::vector<size_type>::iterator itp = cv_simplexes[snum].inodes.begin();
              itp != cv_simplexes[snum].inodes.end(); ++itp) {
           if (ptsid[*itp] == size_type(-1)) {
-            cv_nodes.push_back();
+            cv_nodes.push_back(slice_node());
             ptsid[*itp] = pcnt;
             cv_nodes[pcnt].pt_ref = cvm_pts[*itp];
             cv_nodes[pcnt].faces = points_on_faces[*itp];
@@ -354,14 +396,15 @@ namespace getfem {
 
 
       /* do the slices */
-      dal::bit_vector splx_in; if (cv_simplexes.size()) splx_in.add(0, cv_simplexes.size()-1);
+      dal::bit_vector splx_in; splx_in.add(0, cv_simplexes.size());
       ms.slice(cv_nodes, cv_simplexes, splx_in);
 
       /* push the used nodes and simplexes in the final list */         
       if (splx_in.card()) {
         std::vector<size_type> nused(cv_nodes.size(), size_type(-1));      
-        cvlst.push_back();
+        cvlst.push_back(convex_slice());
         cvlst.back().cv_num = cv;
+        cvlst.back().cv_dim = cvr->structure()->dim();
         for (size_type snum = splx_in.take_first(); snum != size_type(-1); snum << splx_in) {
           for (size_type i=0; i < cv_simplexes[snum].dim()+1; ++i) {
             size_type lnum = cv_simplexes[snum].inodes[i];
@@ -379,6 +422,36 @@ namespace getfem {
     //cerr << *this << endl;
   }
 
+  void mesh_slice::merge(const mesh_slice& sl) {
+    if (dim() != sl.dim()) DAL_THROW(dal::dimension_error, "inconsistent dimensions for slice merging");
+    size_type maxcvid=0;
+    for (size_type i=0; i < nb_convex(); ++i) maxcvid=std::max(maxcvid,convex_num(i));
+    for (size_type i=0; i < sl.nb_convex(); ++i) maxcvid=std::max(maxcvid,sl.convex_num(i));
+    std::vector<size_type> cvs(maxcvid,size_type(-1));
+    for (size_type i=0; i < nb_convex(); ++i) cvs[convex_num(i)] = i;
+    for (size_type i=0; i < sl.nb_convex(); ++i) 
+      if (cvs[sl.convex_num(i)] != size_type(-1) &&
+	  cvlst[cvs[sl.convex_num(i)]].cv_dim != sl.cvlst[i].cv_num)
+	DAL_THROW(dal::dimension_error, "inconsistent dimensions for convex " << sl.cvlst[i].cv_num << " on the slices");
+
+    for (size_type i=0; i < sl.nb_convex(); ++i) {
+      size_type cv = sl.convex_num(i);
+      if (cvs[cv] == size_type(-1)) {
+	cvs[cv] = cvlst.size(); cvlst.push_back(convex_slice());
+      }
+      const mesh_slice::convex_slice *src = &sl.cvlst[i];
+      mesh_slice::convex_slice *dst = &cvlst[cvs[cv]];
+      size_type n = dst->nodes.size();
+      dst->nodes.insert(dst->nodes.end(), src->nodes.begin(), src->nodes.end());
+      for (cs_simplexes_ct::const_iterator it = src->simplexes.begin(); it != src->simplexes.end(); ++it) {
+	dst->simplexes.push_back(*it);
+	for (size_type j = 0; j < (*it).dim()+1; ++j) dst->simplexes.back().inodes[j] += n;	
+	simplex_cnt[dst->simplexes.back().dim()]++;
+      }
+      points_cnt += src->nodes.size();
+    }
+  }
+
   size_type mesh_slice::memsize() const {
     size_type sz = sizeof(mesh_slice);
     for (cvlst_ct::const_iterator it = cvlst.begin(); it != cvlst.end(); ++it) {
@@ -392,4 +465,5 @@ namespace getfem {
     }
     return sz;
   }
+
 }

@@ -28,7 +28,7 @@ namespace getfem {
   class slicer {
   public:
     static const float EPS;
-    virtual bool is_in(const base_node& P, bool bound=false) const = 0;
+    virtual bool is_in(const base_node& , bool = false) const { return true; }
     virtual scalar_type edge_intersect(const base_node& , const base_node& ) const { return -1.; };
     virtual void slice(std::deque<slice_node>& nodes, std::deque<slice_simplex>& splxs, dal::bit_vector& splx_in) const = 0;
     size_type is_in(const std::deque<slice_node>& nodes, const slice_simplex& s) const {
@@ -146,6 +146,13 @@ namespace getfem {
                std::deque<slice_simplex>& splxs, dal::bit_vector& splx_in) const;
   };
 
+  /** this slicer does nothing! */
+  class slicer_none : public slicer {
+  public:
+    slicer_none() {}
+    void slice(std::deque<slice_node>& nodes, 
+	       std::deque<slice_simplex>& splxs, dal::bit_vector& splx_in) const {}
+  };
 
   struct convex_face  {
     size_type cv;
@@ -195,7 +202,7 @@ namespace getfem {
     typedef std::deque<slice_simplex> cs_simplexes_ct;
   private:
     struct convex_slice {
-      size_type cv_num;
+      size_type cv_num; dim_type cv_dim;
       cs_nodes_ct nodes;
       cs_simplexes_ct simplexes;
     };
@@ -208,15 +215,23 @@ namespace getfem {
     mesh_slice(const getfem_mesh& m, const slicer& ms, size_type nrefine, 
                convex_face_ct& cvlst, mesh_slice_cv_dof_data_base *def_mf_data=0);
     size_type nb_convex() const { return cvlst.size(); }
+    size_type convex_num(size_type ic) const { return cvlst[ic].cv_num; }
     size_type dim() const { return _dim; }
+
     void nb_simplexes(std::vector<size_type>& c) const { c = simplex_cnt; }
     size_type nb_simplexes(size_type sdim) const { return simplex_cnt[sdim]; }
     size_type nb_points() const { return points_cnt; }
-    size_type convex_num(size_type ic) const { return cvlst[ic].cv_num; }
     const std::deque<slice_node>& nodes(size_type ic) const { return cvlst[ic].nodes; }
-    void edges(size_type ic, std::vector<size_type>& e) const;
+    void edges_mesh(getfem_mesh& m) const;
     const std::deque<slice_simplex>& simplexes(size_type ic) const { return cvlst[ic].simplexes; }
     size_type memsize() const;
+
+    /** merges with another mesh slice */
+    void merge(const mesh_slice& sl);
+
+    /** interpolation of a mesh_fem on a slice (the mesh_fem
+	and the slice must share the same mesh, of course)
+    */
     template<typename V1, typename V2> void 
     interpolate(const getfem::mesh_fem &mf, const V1& U, V2& V) {
       _fem_precomp fprecomp;
