@@ -807,10 +807,10 @@ namespace getfem {
   (const std::vector<const mesher_signed_distance*> &list_constraints,
    base_node &X, const dal::bit_vector &cts);
   scalar_type curvature_radius_estimate(const mesher_signed_distance &dist,
-					base_node X);
+					base_node X, bool proj = false);
   scalar_type min_curvature_radius_estimate
   (const std::vector<const mesher_signed_distance*> &list_constraints,
-   base_node &X, const dal::bit_vector &cts, size_type hide_first = 0);
+   const base_node &X, const dal::bit_vector &cts, size_type hide_first = 0);
 
 }
 

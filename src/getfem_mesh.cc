@@ -119,14 +119,17 @@ namespace getfem {
                 dal::approx_less<base_node::value_type> >(eps_p);
   }
 
-  size_type getfem_mesh::add_point(const base_node &pt) {
+  size_type getfem_mesh::add_point(const base_node &pt, bool norepeat) {
     if (dimension == dim_type(-1)) dimension = pt.size();
     if (pt.size() != dimension)
       throw dimension_error("getfem_mesh::add_point : dimensions mismatch");
     
-    bool present;
-    size_type i = pts.add_norepeat(pt, false, &present);
-    return i;
+    if (norepeat) {
+      bool present;
+      size_type i = pts.add_norepeat(pt, false, &present);
+      return i;
+    }
+    else return pts.add(pt);
   }
 
   void getfem_mesh::sup_point(size_type i)

@@ -60,6 +60,29 @@ namespace bgeot
     return xreal_;
   }
 
+  void geotrans_interpolation_context::compute_J(void) const {
+    if (!have_G() || !have_pgt()) {
+      DAL_THROW(dal::failure_error, "unable to compute B\n");
+    } else {
+      size_type P = pgt_->structure()->dim();
+      B_.resize(N(), P);
+      base_matrix K(N(),P), CS(P,P);
+      if (have_pgp()) {
+	gmm::mult(G(), pgp_->grad(ii_), K);
+      } else {
+	base_matrix pc(pgt()->nb_points(), P); 
+	pgt()->gradient(xref(), pc);
+	gmm::mult(G(),pc,K);
+      }
+      if (P != N()) {
+	gmm::mult(gmm::transposed(K), K, CS);/*O*/
+	J_ = ::sqrt(gmm::lu_det(CS));
+      } else {
+	J_ = gmm::abs(gmm::lu_det(K));
+      }
+    }
+  }
+
   const base_matrix& geotrans_interpolation_context::B() const {
     if (!have_B()) {
       if (!have_G() || !have_pgt()) {
@@ -135,7 +158,7 @@ namespace bgeot
     if (have_B3() && !pgt()->is_linear()) { 
       B3_.resize(0,0); B32_.resize(0,0); }
     xref_.clear(); xreal_.clear();
-    ii_=ii__; 
+    ii_=ii__;  J_ = scalar_type(-1);
   }
 
   void geotrans_interpolation_context::set_xref(const base_node& P) {
@@ -143,17 +166,17 @@ namespace bgeot
     if (have_B() && !pgt()->is_linear()) { B_.resize(0,0); }
     if (have_B3() && !pgt()->is_linear()) { 
       B3_.resize(0,0); B32_.resize(0,0); }
-    xreal_.clear(); ii_ = size_type(-1);
+    xreal_.clear(); ii_ = size_type(-1); J_ = scalar_type(-1);
   }
 
   geotrans_interpolation_context::geotrans_interpolation_context() :
-    G_(0), pgt_(0), pgp_(0), ii_(size_type(-1)) {}
+    G_(0), pgt_(0), pgp_(0), ii_(size_type(-1)), J_(-1) {}
   geotrans_interpolation_context::geotrans_interpolation_context
   (bgeot::pgeotrans_precomp pgp__, size_type ii__, const base_matrix& G__) :
-    G_(&G__), pgt_(pgp__->get_trans()), pgp_(pgp__), ii_(ii__) {}
+    G_(&G__), pgt_(pgp__->get_trans()), pgp_(pgp__), ii_(ii__), J_(-1) {}
   geotrans_interpolation_context::geotrans_interpolation_context
   (bgeot::pgeometric_trans pgt__, const base_node& xref__,const base_matrix& G__) :
-    xref_(xref__), G_(&G__), pgt_(pgt__), pgp_(0), ii_(size_type(-1)) {}
+    xref_(xref__), G_(&G__), pgt_(pgt__), pgp_(0), ii_(size_type(-1)), J_(-1) {}
  
 
   typedef ftool::naming_system<geometric_trans>::param_list gt_param_list;

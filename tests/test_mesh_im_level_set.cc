@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
   try {
     getfem::getfem_mesh m; m.read_from_file("meshes/disc_2D_degree3.mesh");
     getfem::mesh_fem mf(m);
-    getfem::mesh_im_level_set  mim(m, getfem::int_method_descriptor("IM_TRIANGLE(7)"));
+    getfem::mesh_im_level_set mim(m, getfem::int_method_descriptor("IM_TRIANGLE(6)"));
     getfem::level_set ls1(m, 2), ls2(m, 3);
     const getfem::mesh_fem &ls1mf = ls1.get_mesh_fem();
     scalar_type R=.4;
@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
 					    getfem::base_node(0,0)) -R*R;
     }
     const getfem::mesh_fem &ls2mf = ls2.get_mesh_fem();
-    R=.1001;
+    R=.1;
     for (unsigned i=0; i < ls2mf.nb_dof(); ++i) {
       ls2.values()[i] = gmm::vect_dist2_sqr(ls2mf.point_of_dof(i), 
 					    getfem::base_node(0,0.3)) -R*R;

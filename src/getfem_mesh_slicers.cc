@@ -636,13 +636,13 @@ namespace getfem {
 
       if (pgt->dim() == m.dim() && m.dim()>=2) { /* no orient check for convexes of lower dim */
 	base_matrix G; bgeot::vectors_to_base_matrix(G,m.points_of_convex(cv));
-	/*base_node g(pgt->dim()); g.fill(.5); 
+	base_node g(pgt->dim()); g.fill(.5); 
 	base_matrix pc; pgt->gradient(g,pc);
 	base_matrix K(pgt->dim(),pgt->dim());
 	gmm::mult(G,pc,K);
-	scalar_type J = gmm::lu_det(K);*/
-	bgeot::geotrans_interpolation_context ctx(pgp,0,G);
-	scalar_type J = gmm::lu_det(ctx.B());
+	scalar_type J = gmm::lu_det(K);
+	// bgeot::geotrans_interpolation_context ctx(pgp,0,G);
+	// scalar_type J = gmm::lu_det(ctx.B()); // pb car inverse K même
 	if (J < 0) revert_orientation = true;
 	//cout << "cv = " << cv << ", J = " << J << "\n";
       }

@@ -56,28 +56,76 @@ namespace getfem {
     return true;
   }
 
+//   bool pure_multi_constraint_projection
+//   (const std::vector<const mesher_signed_distance*> &list_constraints,
+//    base_node &X, const dal::bit_vector &cts) {
+//     base_node oldX;
+//     size_type cnt = 0;
+//     do {     
+//       oldX = X;
+//       for (dal::bv_visitor ic(cts); !ic.finished(); ++ic)
+// 	try_projection(*(list_constraints[ic]), X, true);
+//       ++cnt;
+//     } while (cts.card() && gmm::vect_dist2(oldX,X) > 1e-14 && cnt < 1000);
+//     if (cnt >= 1000) return false;
+//     if (cts.card()) {
+//       dal::bit_vector ct2;
+//       for (dal::bv_visitor ic(cts); !ic.finished(); ++ic)
+// 	if (gmm::abs((*(list_constraints[ic]))(X)) < SEPS)
+// 	  ct2.add(ic);
+//       return ct2.contains(cts);
+//     }
+//     return true;
+//   }
+
+  
+  // Try to find an intersection of a set of signed distance d_i.
+  // Newton method on v solution to d_i(X+Gv) = 0, where the column of
+  // G are the gradients of d_i. 
   bool pure_multi_constraint_projection
   (const std::vector<const mesher_signed_distance*> &list_constraints,
    base_node &X, const dal::bit_vector &cts) {
-    base_node oldX; // Pour améliorer la convergence : sur relaxation ou
-    // CG sur somme au carré des level sets ...?
-    size_type cnt = 0;
-    do {     
+    size_type nbco = cts.card(), i(0), info, N = X.size();
+    if (!nbco) return true;
+    std::vector<const mesher_signed_distance*> ls(nbco);
+    std::vector<scalar_type> d(nbco), v(nbco);
+    std::vector<int> ipvt(nbco);
+    gmm::col_matrix<base_node> G(N, nbco);
+    gmm::dense_matrix<scalar_type> H(nbco, nbco);
+    for (dal::bv_visitor ic(cts); !ic.finished(); ++ic, ++i)
+      { ls[i] = list_constraints[ic]; d[i] = -(ls[i]->grad(X, G[i])); }
+    base_node oldX;
+    size_type iter = 0;
+    do {
       oldX = X;
-      for (dal::bv_visitor ic(cts); !ic.finished(); ++ic)
-	try_projection(*(list_constraints[ic]), X, true);
-      ++cnt;
-    } while (cts.card() && gmm::vect_dist2(oldX,X) > 1e-14 && cnt < 1000);
-    if (cnt >= 1000) return false;
-    if (cts.card()) {
-      dal::bit_vector ct2;
-      for (dal::bv_visitor ic(cts); !ic.finished(); ++ic)
-	if (gmm::abs((*(list_constraints[ic]))(X)) < SEPS)
-	  ct2.add(ic);
-      return ct2.contains(cts);
+      gmm::mult(gmm::transposed(G), G, H);
+      info = lu_factor(H, ipvt);
+      scalar_type det(1);
+      for (i = 0; i < nbco; ++i) det *= H(i,i);
+      // cout << "det = " << det << " d = " << gmm::vect_norm2(d) << endl;
+      if (info || gmm::abs(det) < 1E-40) {
+	for (i = 0; i < nbco; ++i)
+	  try_projection(*(ls[i]), X, true);
+      }
+      else {
+	// + line search dans la direction Gv ?
+	lu_solve(H, ipvt, v, d);
+	gmm::mult(G, v, X, X);
+      }
+      for (i = 0; i < nbco; ++i) d[i] = -(ls[i]->grad(X, G[i]));
+      ++iter;
+    } while ((gmm::vect_norm2(d) > 1e-14 || gmm::vect_dist2(oldX,X) > 1e-14)
+	     && iter < 1000);
+//     cout << "nb iter de pure_multi : " << iter
+//   	 << " norm(d) = " << gmm::vect_norm2(d) << " cts = " << cts << endl;
+    for (i = 0; i < nbco; ++i) if (gmm::abs(d[i]) > SEPS) {
+      cout << "PURE MULTI HAS FAILED for " << cts << " nb iter = " << iter << endl;
+      return false;
     }
     return true;
   }
+
+
 
 
   // return the eigenvalue of maximal abolute value for a
@@ -93,7 +141,8 @@ namespace getfem {
   }
 
   scalar_type curvature_radius_estimate(const mesher_signed_distance &dist,
-					base_node X) {
+					base_node X, bool proj) {  
+    if (proj) try_projection(dist, X, true);
     base_small_vector V;
     base_matrix H;
     dist.grad(X, V);
@@ -103,7 +152,7 @@ namespace getfem {
 
   scalar_type min_curvature_radius_estimate
   (const std::vector<const mesher_signed_distance*> &list_constraints,
-   base_node &X, const dal::bit_vector &cts, size_type hide_first) {
+   const base_node &X, const dal::bit_vector &cts, size_type hide_first) {
     scalar_type r0 = 1E+10;
     for (dal::bv_visitor j(cts); !j.finished(); ++j) 
       if (j >= hide_first) {
@@ -489,21 +538,23 @@ namespace getfem {
 
     bool pure_multi_constraint_projection(base_node &X,
 					  const dal::bit_vector &cts) {
-      base_node oldX;
-      size_type cnt = 0;
-      do {     
-	oldX = X;
-	for (dal::bv_visitor ic(cts); !ic.finished(); ++ic)
-	  constraint_projection(X,ic);
-	++cnt;
-      } while (cts.card() && gmm::vect_dist2(oldX,X) > 1e-14 && cnt < 1000);
-      if (cnt >= 1000) return false;
-      if (cts.card()) {
-	dal::bit_vector ct2;
-	dist(X, ct2);
-	return ct2.contains(cts);
-      }
-      return true;
+      getfem::pure_multi_constraint_projection(constraints, X, cts);
+
+//       base_node oldX;
+//       size_type cnt = 0;
+//       do {     
+// 	oldX = X;
+// 	for (dal::bv_visitor ic(cts); !ic.finished(); ++ic)
+// 	  constraint_projection(X,ic);
+// 	++cnt;
+//       } while (cts.card() && gmm::vect_dist2(oldX,X) > 1e-14 && cnt < 1000);
+//       if (cnt >= 1000) return false;
+//       if (cts.card()) {
+      dal::bit_vector ct2;
+      dist(X, ct2);
+      return ct2.contains(cts);
+//       }
+//       return true;
     }
 
     bool multi_constraint_projection(base_node &X,

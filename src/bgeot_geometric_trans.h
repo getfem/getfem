@@ -184,6 +184,7 @@ namespace bgeot
     pgeotrans_precomp pgp_;
     size_type ii_; /* index of current point in the pgp */
     mutable scalar_type J_; /* Jacobian */
+    void compute_J(void) const;
   public:
     bool have_xref() const { return !xref_.empty(); }
     bool have_xreal() const { return !xreal_.empty(); }
@@ -200,7 +201,7 @@ namespace bgeot
     const base_matrix& B32() const;
     bgeot::pgeometric_trans pgt() const { return pgt_; }
     const base_matrix& G() const { return *G_; }
-    scalar_type J() const { return J_; }
+    scalar_type J() const { if (J_ < scalar_type(0)) compute_J(); return J_; }
     size_type N() const { if (have_G()) return G().nrows(); 
       else if (have_xreal()) return xreal_.size(); 
       else DAL_THROW(dal::failure_error, "cannot get N"); }

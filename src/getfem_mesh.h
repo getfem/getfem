@@ -184,7 +184,7 @@ namespace getfem {
      *          function do not add the point and return the index of the
      *          already existing point. pt should be of type base\_node.
      */
-    size_type add_point(const base_node &pt);
+    size_type add_point(const base_node &pt, bool norepeat = true);
     /// Gives the number of points in the mesh.
     size_type nb_points(void) const { return pts.card(); }
     /// points index
