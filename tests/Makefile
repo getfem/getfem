@@ -3,9 +3,9 @@ include /opt/getfem/getfem++/defmakefile
 
 
 EXECUTABLES = elasto_statique laplacien
-CPLUS = $(CPLUSOPTDEBUG)
+# CPLUS = $(CPLUSOPTDEBUG)
 # CPLUS = $(CPLUSDEBUG)
-# CPLUS = g++ -ainsi -ftemplate-depth-40
+CPLUS = g++ -ainsi -ftemplate-depth-40
 all : lib_outil $(EXECUTABLES)
 INC += -I../include $(INCLUDES)
 
