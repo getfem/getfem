@@ -33,6 +33,7 @@ include_HEADERS =                      \
 	getfem_assembling_tensors.h    \
 	getfem_config.h                \
 	getfem_export.h                \
+	getfem_import.h	               \
 	getfem_precomp.h               \
 	getfem_norm.h                  \
 	getfem_derivatives.h           \
