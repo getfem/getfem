@@ -63,8 +63,8 @@ namespace gmm {
     }
     else {
       dense_matrix<T> B(m+n, m+n); // not very efficient ??
-      gmm::copy(M, sub_matrix(B, sub_interval(m, n), sub_interval(0, m)));
-      gmm::copy(conjugated(M), sub_matrix(B, sub_interval(0, m),
+      gmm::copy(conjugated(M), sub_matrix(B, sub_interval(m, n), sub_interval(0, m)));
+      gmm::copy(M, sub_matrix(B, sub_interval(0, m),
 					  sub_interval(m, n)));
       gmm::symmetric_qr_algorithm(B, eig);
     }
