@@ -87,7 +87,6 @@ namespace getfem {
      modify/destroy the exported mesh objects during the exportation
    */
   class opendx_export {
-    size_type object_cnt;
     struct _exported_mesh {
       size_type  nrefine;
       bool continuous_data;
@@ -100,17 +99,19 @@ namespace getfem {
       std::vector<const getfem_mesh *> refined_convexes_mesh;
       std::vector<size_type> pts_id; // list of node numbers (used only when the field continuity is enforced)
       _exported_mesh(const getfem::getfem_mesh *_pm, size_type _nrefine, bool _continuous_data) :
-	nrefine(_nrefine), pm(_pm), sdim(0), nb_pts(0), nb_simplexes(0), 
-	pts_object_num(0), cvs_object_num(0), continuous_data(_continuous_data) {}
+	nrefine(_nrefine), continuous_data(_continuous_data), pts_object_num(0), cvs_object_num(0), 
+	nb_pts(0), nb_simplexes(0), sdim(0), pm(_pm)
+      {}
     };
     std::vector<_exported_mesh*> exported_meshes;
 
     const getfem::getfem_mesh *current_mesh;
-    const getfem::mesh_fem *mf;
+    const getfem::mesh_fem *_mf;
 
-    bool closed, binary;
     std::ofstream of;
     std::ostream& o;
+    size_type object_cnt;
+    bool closed, binary;
   public:
     static const char* indianness() {
       static int i=0x12345678;
@@ -288,8 +289,8 @@ namespace getfem {
       //bgeot::pconvex_ref prev_cvr = NULL;
       size_type count_pts = 0;
       for (size_type i=0; i < em->cvlist.size(); ++i) {
-	scalar_type v = volume_of_simplex(em->pm->points_of_convex(em->cvlist[i]));
-	cerr << "volume du simplex " << em->cvlist[i] << ": v=" << v << endl;
+	//scalar_type v = volume_of_simplex(em->pm->points_of_convex(em->cvlist[i]));
+	//cerr << "volume du simplex " << em->cvlist[i] << ": v=" << v << endl;
 	//bgeot::pconvex_ref cvr = m.trans_of_convex(cvlist[i])->convex_ref();
 	const getfem_mesh *cvm = em->refined_convexes_mesh[i];
 	dal::bit_vector bv = cvm->convex_index();
@@ -465,7 +466,7 @@ public:
   }
   std::string pop() {
     std::string s;
-    if (carg_num < argv.size()) s = argv[carg_num];
+    if (carg_num < int(argv.size())) s = argv[carg_num];
     else DAL_THROW(dal::failure_error, "not enough arguments for option " << carg_name);
     argv.erase(argv.begin()+carg_num);
     return s;
@@ -476,7 +477,7 @@ private:
     int i;
     carg_name = s;
     carg_num = -1;
-    for (i=0; i < argv.size(); ++i)
+    for (i=0; i < int(argv.size()); ++i)
       if (strcmp(argv[i],s) == 0)
 	carg_num = i; 
     return carg_num;

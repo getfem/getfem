@@ -21,5 +21,5 @@ EXTRA_DIST = \
 	draw_mesh_example6.mesh
 
 INCLUDES = -I$(top_srcdir)/src -I../src
-LDADD    = ../src/.libs/libgetfem.so -lm @SUPLDFLAGS@
+LDADD    = ../src/libgetfem.la -lm @SUPLDFLAGS@
 
