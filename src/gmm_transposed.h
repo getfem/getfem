@@ -102,11 +102,15 @@ namespace gmm {
     const_col_iterator col_begin(const this_type &m) { return m._begin; }
     const_col_iterator col_end(const this_type &m) { return m._end; }
     const void* origin(const this_type &v) { return v.origin; }
-    void do_clear(this_type &v) { 
-      col_iterator it = mat_col_begin(v), ite = mat_col_end(v);
-      for (; it != ite; ++it) clear(col(it));
-    }
+    void do_clear(this_type &v);
   };
+  
+  template <class PT> 
+  void linalg_traits<transposed_row_ref<PT> >::do_clear(this_type &v) { 
+    col_iterator it = mat_col_begin(v), ite = mat_col_end(v);
+    for (; it != ite; ++it) clear(col(it));
+  }
+  
 
   // for GCC 2.95
   template <class PT> struct linalg_traits<const transposed_row_ref<PT> > 
@@ -180,11 +184,15 @@ namespace gmm {
     const_row_iterator row_begin(const this_type &m) { return m._begin; }
     const_row_iterator row_end(const this_type &m) { return m._end; }
     const void* origin(const this_type &m) { return m.origin; }
-    void do_clear(this_type &m) { 
-      row_iterator it = mat_row_begin(v), ite = mat_row_end(v);
-      for (; it != ite; ++it) clear(row(it));
-    }
+    void do_clear(this_type &m);
   };
+
+  template <class PT> 
+  void linalg_traits<transposed_col_ref<PT> >::do_clear(this_type &v) { 
+    row_iterator it = mat_row_begin(v), ite = mat_row_end(v);
+    for (; it != ite; ++it) clear(row(it));
+  }
+
 
   // for GCC 2.95
   template <class PT> struct linalg_traits<const transposed_col_ref<PT> > 

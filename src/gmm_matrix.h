@@ -88,7 +88,7 @@ namespace gmm
     { return li[l][c]; }
 
     void clear_row(size_type i) { clear(li[i]); }
-    void clear_mat() { for (size_type i=0; i < nrows(); ++i) clear_row(i); }
+    void clear_mat();
     void resize(size_type i) { li.resize(i); }
 
     typename std::vector<V>::iterator begin(void)
@@ -108,6 +108,9 @@ namespace gmm
     inline size_type ncols(void) const
     { return (nrows() == 0) ? 0 : li[0].size(); }
   };
+
+  template<class V> void row_matrix<V>::clear_mat()
+  { for (size_type i=0; i < nrows(); ++i) clear_row(i); }
 
   template <class V> struct row_matrix_access {
     typedef typename linalg_traits<row_matrix<V> >::reference reference;
@@ -177,7 +180,7 @@ namespace gmm
     { return li[c][l]; }
 
     void clear_col(size_type i) { clear(li[i]); }
-    void clear_mat() { for (size_type i=0; i < ncols(); ++i) clear_col(i); }
+    void clear_mat();
     void resize(size_type i) { li.resize(i); }
 
     V& col(size_type i) { return li[i]; }
@@ -196,6 +199,9 @@ namespace gmm
     inline size_type nrows(void) const
     { return (ncols() == 0) ? 0 : li[0].size(); }
   };
+
+  template<class V> void col_matrix<V>::clear_mat()
+  { for (size_type i=0; i < ncols(); ++i) clear_col(i); }
 
   template <class V> struct col_matrix_access {
     typedef typename linalg_traits<col_matrix<V> >::reference reference;

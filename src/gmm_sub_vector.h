@@ -54,7 +54,7 @@ namespace gmm {
     typedef sparse_sub_vector_iterator<IT, MIT, SUBI>    iterator;
 
     size_type index(void) const { return psi->rindex(itb.index()); }
-    void forward(void) { while(itb!=itbe && index()==size_type(-1)) ++itb; }
+    void forward(void);
     iterator &operator ++()
     { ++itb; forward(); return *this; }
     iterator operator ++(int) { iterator tmp = *this; ++(*this); return tmp; }
@@ -69,6 +69,10 @@ namespace gmm {
     sparse_sub_vector_iterator(const sparse_sub_vector_iterator<MIT, MIT,
 	 SUBI> &it) : itb(it.itb), itbe(it.itbe), psi(it.psi) {}
   };
+  
+  template <class IT, class MIT, class SUBI>
+  void  sparse_sub_vector_iterator<IT, MIT, SUBI>::forward(void)
+  { while(itb!=itbe && index()==size_type(-1)) ++itb; }
 
   template <class PT, class SUBI> struct sparse_sub_vector {
     typedef sparse_sub_vector<PT, SUBI> this_type;

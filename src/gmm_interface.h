@@ -507,9 +507,12 @@ namespace gmm {
     const_col_iterator col_end(const this_type &m)
     { return const_col_iterator(m.end(), N, N, N, &m); }
     const void* origin(const this_type &m) { return &m; }
-    void do_clear(this_type &m)
-    { std::fill(m.begin(), m.end(), value_type(0)); }
+    void do_clear(this_type &m);
   };
+  template <class T, int N>
+  void linalg_traits<bgeot::fsmatrix<T, N> >::do_clear(this_type &m)
+  { std::fill(m.begin(), m.end(), value_type(0)); }
+
 
   // for GCC 2.95
   template <class T, int N> struct linalg_traits<const bgeot::fsmatrix<T, N> >
@@ -647,13 +650,19 @@ namespace gmm {
     typedef typename linalg_traits<V>::const_iterator const_iterator;
     
     value_type operator()(const void *, const const_iterator &b,
-			  const const_iterator &e, size_type i) {
-      static value_type zero(0);
-      if (n == 0) return zero;
-      PT2 p = std::lower_bound(b.ir, e.ir, i+shift);
-      return (p != b.ir && *p == i+shift) ? b.pr[p-b.ir] : zero;
-    }
+			  const const_iterator &e, size_type i);
   };
+
+  template <class PT1, class PT2, int shift>
+  typename linalg_traits<cs_vector_ref<PT1, PT2, shift> >::value_type
+  cs_vector_access<PT1, PT2, shift>::operator()(const void *,
+                          const const_iterator &b,
+			  const const_iterator &e, size_type i) {
+    static value_type zero(0);
+    if (n == 0) return zero;
+    PT2 p = std::lower_bound(b.ir, e.ir, i+shift);
+    return (p != b.ir && *p == i+shift) ? b.pr[p-b.ir] : zero;
+  }
 
   template <class PT1, class PT2, int shift>
   struct linalg_traits<cs_vector_ref<PT1, PT2, shift> > {

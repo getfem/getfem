@@ -138,6 +138,7 @@ namespace gmm {
     const_iterator end(const this_type &v)
     { return const_iterator(v._end, v.r); }
     const void* origin(const this_type &v) { return v.origin; }
+    void do_clear(this_type &v) { clear_type()(v.origin, v._begin, v._end); }
   };
 
   // for GCC 2.95

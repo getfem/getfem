@@ -377,10 +377,7 @@ namespace bgeot
   }
 
   template<class T>  void vsvector<T>::fill(const T &x)
-  {
-    typename vsvector<T>::iterator d = begin(), e = end();
-    while (d != e) *d++ = x;
-  }
+  { std::fill(begin(), end(), x); }
  
   template<class T>  vsvector<T>& vsvector<T>::operator *=(const T &x)
   {

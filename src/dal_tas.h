@@ -62,8 +62,7 @@ namespace dal
     
     inline size_type index(void) const { return id.index(); }
     
-    dnt_iterator &operator ++()
-    { ++ib; ++id; while(id.in <= lt && !*ib) {++ib; ++id; } return *this; }
+    dnt_iterator &operator ++();
     dnt_iterator &operator --()
     { while (!*(--ib)) --id; --id; return *this; }
     dnt_iterator operator ++(int)
@@ -82,6 +81,10 @@ namespace dal
     bool operator !=(const dnt_iterator &i) const { return i.id!=id;}
     bool operator < (const dnt_iterator &i) const { return id <i.id;}
   };
+  
+  template<class T, unsigned char pks> dnt_iterator<T, pks> &
+  dnt_iterator<T, pks>::operator ++()
+  { ++ib; ++id; while(id.in <= lt && !*ib) {++ib; ++id; } return *this; }
 
   template<class T, unsigned char pks = 5> struct dnt_const_iterator
   {
