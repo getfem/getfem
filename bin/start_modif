@@ -20,16 +20,30 @@ print MAKEFILE "GETFEM_LIB = $rootlib\/sources\/$getfem_lib\n";
 print MAKEFILE "GENERAL_ROOT = $rootlib\n";
 
 print MAKEFILE "\n\n", '# compilator options :', "\n";
-print MAKEFILE "COMP = g++\n";
-print MAKEFILE "OPTIONS_STANDARD = -ainsi -ftemplate-depth-40\n";
-print MAKEFILE "OPTIONS_DEBUG    = -g\n";
-print MAKEFILE "OPTIONS_OPTIMIZE = -O3\n";
-print MAKEFILE "OPTIONS_BOTH     = -g -O3\n";
-print MAKEFILE "INCLUDES_STANDARD = \n";
-print MAKEFILE "INCLUDES_MTL = -I/tmp_mnt/mnt-home/gmmpc15/renard/source++/getfem/../mtl\n";
-print MAKEFILE "INCLUDES_ITL = -I/tmp_mnt/mnt-home/gmmpc15/renard/source++/getfem/../itl\n";
-print MAKEFILE "LIB_X11 = -L/usr/X11R6/lib -lX11\n";
-
+if ($systeme =~ /Linux/)
+{
+  print MAKEFILE "COMP = g++\n";
+  print MAKEFILE "OPTIONS_STANDARD = -ainsi -ftemplate-depth-40\n";
+  print MAKEFILE "OPTIONS_DEBUG    = -g\n";
+  print MAKEFILE "OPTIONS_OPTIMIZE = -O3\n";
+  print MAKEFILE "OPTIONS_BOTH     = -g -O3\n";
+  print MAKEFILE "INCLUDES_STANDARD = \n";
+  print MAKEFILE "INCLUDES_MTL = -I/tmp_mnt/mnt-home/gmmpc15/renard/source++/getfem/../mtl\n";
+  print MAKEFILE "INCLUDES_ITL = -I/tmp_mnt/mnt-home/gmmpc15/renard/source++/getfem/../itl\n";
+  print MAKEFILE "LIB_X11 = -L/usr/X11R6/lib -lX11\n";
+}
+else
+{
+  print MAKEFILE "COMP = cxx\n";
+  print MAKEFILE "OPTIONS_STANDARD = -ansi  -ptr $rootlib/cxx_repository\n";
+  print MAKEFILE "OPTIONS_DEBUG    = -g\n";
+  print MAKEFILE "OPTIONS_OPTIMIZE = -O3\n";
+  print MAKEFILE "OPTIONS_BOTH     = -g3\n";
+  print MAKEFILE "INCLUDES_STANDARD = \n";
+  print MAKEFILE "INCLUDES_MTL = -I/home/gmmpc15/renard/source++/mtl\n";
+  print MAKEFILE "INCLUDES_ITL = -I/home/gmmpc15/renard/source++/itl\n";
+  print MAKEFILE "LIB_X11 = -L/usr/X11R6/lib -lX11\n";
+}
 
 print MAKEFILE "CPLUS = \$(COMP) \$(OPTIONS_STANDARD) \$(OPTIONS_OPTIMIZE) \n";
 print MAKEFILE "CPLUSDEBUG = \$(COMP) \$(OPTIONS_STANDARD)";
