@@ -217,8 +217,7 @@ namespace gmm {
 
   template <class L> inline void write(std::ostream &o, const L &l,
 				       abstract_matrix) {
-    write(o, l, typename principal_orientation_type<typename
-	  linalg_traits<L>::sub_orientation>::potype());
+    write(o, l, typename linalg_traits<L>::sub_orientation());
   }
 
 
@@ -231,6 +230,12 @@ namespace gmm {
       o << " )\n";
     }
   }
+
+  template <class L> inline void write(std::ostream &o, const L &l,row_and_col)
+  { write(o, l, row_major()); }
+
+  template <class L> inline void write(std::ostream &o, const L &l,col_and_row)
+  { write(o, l, row_major()); }
 
   // to be corrected
   template <class L> inline void write(std::ostream &o, const L &l,col_major) {

@@ -249,15 +249,7 @@ int main(int argc, char *argv[]) {
     p.assemble();
     
     //   cout << "Matrice de rigidite\n";
-    //   for (int i = 0; i < p.RM.nrows(); i++)
-    //   { 
-    //     cout << "ligne " << i << " [ ";
-    //     for (l = 0; l < p.RM.nrows(); l++)
-    //       if (p.RM(i, l) != 0.0)
-    // 	cout << "(" << l << "," << p.RM(i, l) << ")  ";
-    //     cout << "]" << endl;
-    //   }
-    //   cout << endl << endl;
+    //   gmm::write(p.RM, cout);
     
     cout << "Solving linear system\n";
     p.solve();
