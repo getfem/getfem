@@ -91,7 +91,7 @@ namespace gmm {
         for (i = j+1; i < M; ++i) { A(i, j) /= A(j,j); c[i-j-1] = -A(i, j); }
         for (i = j+1; i < N; ++i) r[i-j-1] = A(j, i);  // avoid the copy ?
 	rank_one_update(sub_matrix(A, sub_interval(j+1, M-j-1),
-				   sub_interval(j+1, N-j-1)), c, r);
+				   sub_interval(j+1, N-j-1)), c, conjugated(r));
       }
       ipvt[j] = j + 1;
     }
