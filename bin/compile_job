@@ -7,7 +7,7 @@ $systeme = `uname -s`; chomp($systeme); $systeme .= `uname -r`;chomp($systeme);
 $getfem_lib = "libgetfem.a";
 
 print "Checkout for files\n";
-print `cd ..; cvs checkout getfem++`; print "\n";
+print `cd ..; cvs -d :pserver:renard\@gmmlinux2.gmm.priv:\/var\/cvs checkout getfem++`; print "\n";
 
 print "Making links\n";
 `mkdir -p include`;
@@ -27,7 +27,7 @@ print MAKEFILE "OBJ_DIR = $rootlib\/sources\n";
 print MAKEFILE "GETFEM_LIB = $rootlib\/sources\/$getfem_lib\n";
 print MAKEFILE "GENERAL_ROOT = $rootlib\n";
 
-print MAKEFILE "\n\n", '# compilator options :', "\n";
+print MAKEFILE "\n\n", '# compiler options :', "\n";
 if ($systeme =~ /Linux/)
 {
   print MAKEFILE "COMP = g++\n";
@@ -110,10 +110,11 @@ print "\n\nCompiling\n";
 open F, "make |" or die; print $_ while (<F>); close F;
 
 
-# + fabrication de la doc.
+# fabrication de la doc.
 
-print "\n\n Documentation compilation, to be added.\n";
+print "\n\n Documentation compilation.\n";
+print `cd doc; do_doc++;`;
 
-# + faire les liens
+# faire les liens 'lequels ?)
 
 print "\n\n Links to be added too.\n";
