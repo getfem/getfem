@@ -44,5 +44,9 @@ Liste des items a passer en revue pour fabriquer une nouvelle version
 
 - Pour un changement de version d'autoconf et libtool :
   libtool :
-    changer ltmain.sh dans config 
+    changer ltmain.sh dans config
+  autoconf :
+    aclocal.m4 ax_prefix_config_h.m4
+  automake
+    config.guess install-sh  config.sub missing  depcomp mkinstalldirs
 
