@@ -5,7 +5,7 @@
 ../bgeot/bgeot_convex_structure.h
 ../bgeot/bgeot_fem_interpolation.h
 ../bgeot/bgeot_geometric_trans.h
- ../bgeot/bgeot_approx_integration.h
+../bgeot/bgeot_approx_integration.h
 ../getfem/getfem_config.h
 ../getfem/getfem_fem.h
 ../getfem/getfem_mat_elem_type.h
