@@ -1,0 +1,46 @@
+
+# -*- perl -*-
+eval 'exec perl -S $0 "$@"'
+  if 0;
+
+$prefix = "wc";
+$count = int(1000 * rand);
+if ($ENV{TMPDIR} eq "") { $tmpdir = "/tmp"; } else { $tmpdir = $ENV{TMPDIR} }
+if (substr($tmpdir, length($tmpdir)-1, 1) eq "/")
+  { $tmpdir = substr($tmpdir, 0, length($tmpdir)-1); }
+do { $tmp1 = $tmpdir."/".$prefix."\_$count"; ++$count; } while (-f $tmp1);
+
+
+sub catch { `rm -f $tmp1`; }
+$SIG{INT} = 'catch';
+
+sub read_line {
+  while(1) {
+    $li = <DATAF>; if (!($li)) { return; }
+    chomp($li); ($li, $a) = split('\/\/', $li, 2);
+    ($li, $a) = split('\/\*', $li, 2);
+    $li2 = $li; $li2 =~s/\s//g;
+    if ($li2) { return; }
+  }
+}
+
+open(TMPF1, ">$tmp1") or die "Open file impossible : $!\n";
+
+$lss = `ls *.C *.h`;
+
+while ($lss) {
+
+  ($filename, $lss) = split('\n', $lss, 2);
+
+  open(DATAF, $filename) or die "Open file impossible : $!\n";
+  read_line;
+  while ($li) {
+    print TMPF1 $li, "\n";
+    read_line;
+  }
+}
+
+close(TMPF1);
+
+print `wc $tmp1`;
+`rm -f $tmp1`;
