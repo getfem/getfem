@@ -141,8 +141,8 @@ scalar_type interpolate_check(const mesh_fem &mf1, const mesh_fem& mf2) {
   std::vector<scalar_type> U(mf1.nb_dof()), U2(mf1.nb_dof());
   std::vector<scalar_type> V(mf2.nb_dof());
   for (size_type d=0; d < mf1.nb_dof(); ++d) U[d] = func(mf1.point_of_dof(d));
-  getfem::interpolation_solution(mf1,mf2,U,V);
-  getfem::interpolation_solution(mf2,mf1,V,U2);
+  getfem::interpolation(mf1,mf2,U,V);
+  getfem::interpolation(mf2,mf1,V,U2);
   gmm::add(gmm::scaled(U,-1.),U2);
   return gmm::vect_norminf(U2)/gmm::vect_norminf(U);
 }

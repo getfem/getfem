@@ -34,6 +34,15 @@ using std::flush;
 // #define cout coutvoid
 // #define cerr coutvoid
 
+void classical_mesh_fem(getfem::mesh_fem& mf, getfem::short_type K) {
+  for (dal::bv_visitor cv(mf.linked_mesh().convex_index()); !cv.finished();
+       ++cv) {
+    bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
+    mf.set_finite_element(cv, getfem::classical_fem(pgt,K),
+			  getfem::exact_classical_im(pgt));
+  }
+}
+
 typedef enum {DO_BOUNDARY_MASS,
       DO_SCAL_VOLUMIC_SOURCE,
       DO_VEC_VOLUMIC_SOURCE,
@@ -1285,10 +1294,10 @@ int main(int argc, char *argv[])
      m.add_triangle_by_points(mknode(0.,0.),mknode(1.2,0.),mknode(0.1,1.5));     
      m.add_triangle_by_points(mknode(0.,0.),mknode(-1.2,0.),mknode(0.1,1.5));
      getfem::mesh_fem mf(m);
-     getfem::classical_mesh_fem(mf, 2);
+     classical_mesh_fem(mf, 2);
      getfem::mesh_fem mfq(m); 
      mfq.set_qdim(m.dim());
-     getfem::classical_mesh_fem(mfq, 2);
+     classical_mesh_fem(mfq, 2);
      getfem::mesh_fem mfd(m); 
      mfd.set_classical_finite_element(1);
      getfem::mesh_fem mfdq(m); 

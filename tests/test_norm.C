@@ -10,8 +10,8 @@
 #endif
 
 /* some Getfem++ types that we will be using */
-using bgeot::base_small_vector;  /* special class for small (dim < 16) vectors */
-using bgeot::base_node;   /* geometrical nodes (derived from base_small_vector)*/
+using bgeot::base_small_vector; /* special class for small(dim < 16) vectors */
+using bgeot::base_node; /* geometrical nodes (derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
 
@@ -36,7 +36,7 @@ void test_norm(bgeot::pgeometric_trans pgt,
   mf1.set_finite_element(mesh1.convex_index(), pf, im);
   mf2.set_finite_element(mesh2.convex_index(), pf, im);
   std::vector<scalar_type> U1(mf1.nb_dof()), U2(mf2.nb_dof());
-  bgeot::geotrans_inv gti;
+  getfem::mesh_trans_inv gti(mf1.linked_mesh());
   for (size_type d=0; d < mf1.nb_dof(); ++d) {
     U1[d] = interp_fun(mf1.point_of_dof(d));
     gti.add_point(mf1.point_of_dof(d));
@@ -45,7 +45,7 @@ void test_norm(bgeot::pgeometric_trans pgt,
     U2[d] = interp_fun(mf2.point_of_dof(d));
 
   std::vector<scalar_type> V1(mf1.nb_dof());
-  getfem::interpolation_solution(mf1,gti,U1,V1);
+  getfem::interpolation(mf1,gti,U1,V1);
   scalar_type iterr = gmm::vect_dist2(U1,V1);
   cout << "interpol error: " << iterr << "\n";
   assert(iterr < 1e-10);
@@ -53,7 +53,7 @@ void test_norm(bgeot::pgeometric_trans pgt,
   cout << "interpol.."; cout.flush();
   double t0;
   t0 = ftool::uclock_sec();
-  getfem::interpolation_solution(mf1,mf2,U1,U2);
+  getfem::interpolation(mf1,mf2,U1,U2);
   cout << ftool::uclock_sec() - t0 << " sec -- " << gmm::vect_norm2(U1) << " " << gmm::vect_norm2(U2) << "\n";
   */
   scalar_type U1_l2 = getfem::asm_L2_norm(mf1,U1);

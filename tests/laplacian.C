@@ -292,7 +292,7 @@ bool laplacian_problem::solve(void) {
 /* compute the error with respect to the exact solution */
 void laplacian_problem::compute_error() {
   std::vector<scalar_type> V(mf_rhs.nb_dof());
-  getfem::interpolation_solution(mf_u, mf_rhs, U, V);
+  getfem::interpolation(mf_u, mf_rhs, U, V);
   for (size_type i = 0; i < mf_rhs.nb_dof(); ++i)
     V[i] -= sol_u(mf_rhs.point_of_dof(i));
   cout.precision(16);

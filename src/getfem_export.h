@@ -230,7 +230,7 @@ namespace getfem {
 
 
   /* this function has nothing to do here .. */
-  void classical_mesh_fem(mesh_fem& mf, short_type K) IS_DEPRECATED;
+  // void classical_mesh_fem(mesh_fem& mf, short_type K) IS_DEPRECATED;
 
   /** 
       export class to VTK ( http://www.kitware.com/vtk.html ) file format 

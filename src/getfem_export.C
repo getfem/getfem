@@ -33,13 +33,13 @@
 
 namespace getfem
 {
-  void classical_mesh_fem(mesh_fem& mf, short_type K) {
-    for (dal::bv_visitor cv(mf.linked_mesh().convex_index()); !cv.finished();
-	 ++cv) {
-      bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
-      mf.set_finite_element(cv, classical_fem(pgt,K), exact_classical_im(pgt));
-    }
-  }
+//   void classical_mesh_fem(mesh_fem& mf, short_type K) {
+//     for (dal::bv_visitor cv(mf.linked_mesh().convex_index()); !cv.finished();
+// 	 ++cv) {
+//       bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
+//       mf.set_finite_element(cv, classical_fem(pgt,K), exact_classical_im(pgt));
+//     }
+//   }
   
   vtk_export::vtk_export(std::ostream &os_, bool ascii_)
     : os(os_), ascii(ascii_) { init(); } 

@@ -14,7 +14,7 @@ D = 0.00;		% Dirichlet condition.
 
 %%%%%   discretisation parameters :        			      %%%%%
 K = 1;         % Degree of the finite element method.
-NX = 40;       % space step.
+NX = 10;       % space step.
 NXCOARSE = 4;  % space step for the coarse mesh.
 USECOARSE = 1; % use a coarse mesh or not.
 

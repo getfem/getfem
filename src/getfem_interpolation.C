@@ -41,7 +41,7 @@ namespace getfem {
       itab[j++] = it->first;
   }
   
-  void mesh_trans_inv::ventilate(bool projection) {
+  void mesh_trans_inv::distribute(bool extrapolation) {
     size_type nbpts = nb_points();
     dal::bit_vector nn = mesh.convex_index(), npt;
     size_type nbcvx = nn.last_true() + 1;
@@ -60,7 +60,7 @@ namespace getfem {
       points_in_box(boxpts, min, max);
       for (size_type l = 0; l < boxpts.size(); ++l) {
 	bool gicisin = gic.invert(boxpts[l].n, pt_ref, EPS);
-	bool toadd = projection || gicisin;
+	bool toadd = extrapolation || gicisin;
 	double isin = pgt->convex_ref()->is_in(pt_ref);
 	size_type ind = boxpts[l].i;
 	if (toadd && npt[ind]) {

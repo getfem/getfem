@@ -43,7 +43,7 @@ namespace getfem {
 
   /* ********************************************************************* */
   /*								   	   */
-  /*	I. Ventilation of a set of points on a mesh.         		   */
+  /*	I. Distribution of a set of points on a mesh.         		   */
   /*									   */
   /* ********************************************************************* */
 
@@ -65,13 +65,15 @@ namespace getfem {
     void points_on_convex(size_type i, std::vector<size_type> &itab) const;
     const std::vector<base_node> &reference_coords(void) { return ref_coords; }
 
-    /* projection = false : Only the points inside the mesh are ventilated.
-     * projection = true  : Try to project the exterior points.
-     * TODO : for projection, verify that all the points have been projected
-     *        else project them on the frontiere convexes.
+    /* extrapolation = false : Only the points inside the mesh are distributed.
+     * extrapolation = true  : Try to project the exterior points.
+     * TODO : for extrapolation, verify that all the points have been taken
+     *        into account, else test them on the frontiere convexes.
      */
-    void ventilate(bool projection = false);
+    void distribute(bool extrapolation = false);
     mesh_trans_inv(const getfem_mesh &m):bgeot::geotrans_inv(1E-12),mesh(m) {}
+  private :
+    void add_point_with_id(base_node, size_type) {}
   };
   
 
@@ -93,10 +95,10 @@ namespace getfem {
   */
 
   template<typename VECTU, typename VECTV, typename MAT>
-    void interpolation_solution_same_mesh(const mesh_fem &mf_source,
-					  const mesh_fem &mf_target,
-					  const VECTU &U, VECTV &V,
-					  MAT &M, int version) {
+    void interpolation_same_mesh(const mesh_fem &mf_source,
+				 const mesh_fem &mf_target,
+				 const VECTU &U, VECTV &V,
+				 MAT &M, int version) {
     base_matrix G;
     size_type qdim = mf_source.get_qdim();
     base_vector coeff, val(qdim);
@@ -154,44 +156,28 @@ namespace getfem {
     }
   }
 
-
+  
   /**
      interpolation of a solution on another mesh.
-     - mf_target must be of lagrange type.
-     - the solution should be continuous..
+     - mti contains the points where to interpole.
+     - the solution should be continuous.
      - M should be a row major matrix.
    */
   template<typename VECTU, typename VECTV, typename MAT>
-    void interpolation_solution(const mesh_fem &mf_source,
-				const mesh_fem &mf_target,
-				const VECTU &U, VECTV &V, MAT &M,
-				int version, bool projection = false) {
+  void interpolation(const mesh_fem &mf_source,
+		     mesh_trans_inv &mti,
+		     const VECTU &U, VECTV &V, MAT &M,
+		     int version, bool extrapolation = false) {
 
     const getfem_mesh &mesh(mf_source.linked_mesh());
-    getfem::mesh_trans_inv mti(mesh);
-    size_type qdim_s = mf_source.get_qdim(), qdim_t = mf_target.get_qdim();
-    size_type qdim_ratio = qdim_s / qdim_t;
-    if (qdim_s != qdim_t && qdim_t != 1)
-      DAL_THROW(failure_error, "Attempt to interpolate a field of dimension "
-		<< qdim_s << " on a mesh_fem whose Qdim is " << qdim_t);
-
-    /* test if the target mesh_fem is really of Lagrange type.         */
-    for (dal::bv_visitor cv(mf_target.convex_index()); !cv.finished();++cv) {
-      pfem pf_t = mf_target.fem_of_element(cv);
-      if (pf_t->target_dim() != 1 || !(pf_t->is_lagrange()))
-	DAL_THROW(failure_error,"Target fem not convenient for interpolation");
-    }
-    /* initialisation of the mesh_trans_inv */
-    size_type nbpts = mf_target.nb_dof() / qdim_ratio;
-    for (size_type i = 0; i < nbpts; ++i)
-      mti.add_point(mf_target.point_of_dof(i * qdim_ratio));
-    mti.ventilate(projection);
-
+    size_type qdim_s = mf_source.get_qdim();
+    
+    mti.distribute(extrapolation);
     std::vector<size_type> itab;    
     base_matrix G;
 
     /* interpolation */
-    dal::bit_vector dof_done; dof_done.add(0, nbpts);
+    dal::bit_vector dof_done; dof_done.add(0, mti.nb_points());
     base_vector val(qdim_s), coeff;
     base_tensor Z;
 
@@ -200,7 +186,6 @@ namespace getfem {
       mti.points_on_convex(cv, itab);
       if (itab.size() == 0) continue;
 
-      // size_type nb=gti.points_in_convex(mesh.convex(cv), pgt, ptab, itab);
       pfem pf_s = mf_source.fem_of_element(cv);
       if (pf_s->need_G()) 
 	bgeot::vectors_to_base_matrix(G, mesh.points_of_convex(cv));
@@ -217,10 +202,17 @@ namespace getfem {
 	if (dof_done[dof_t]) {
 	  dof_done.sup(dof_t);
 	  ctx.set_xref(mti.reference_coords()[dof_t]);
-	  size_type pos = dof_t * qdim_ratio;
+	  size_type pos = dof_t * qdim_s;
 	  if (version == 0) {
 	    pf_s->interpolation(ctx, coeff, val, qdim_s);
 	    for (size_type k=0; k < qdim_s; ++k) V[pos + k] = val[k];
+	    // Partie à arranger si on veut en option pouvoir interpoler
+	    // le gradient.
+	    //	  if (PVGRAD) {
+	    // base_matrix grad(mdim, qdim);
+	    // pf_s->interpolation_grad(ctx, coeff, grad, qdim);
+	    // std::copy(grad.begin(), grad.end(), V.begin()+dof_t*qdim*mdim);
+	    // }
 	  }
 	  else {
 	    base_matrix Mloc(qdim_s, mf_source.nb_dof_of_element(cv));
@@ -236,112 +228,135 @@ namespace getfem {
       }
     }
     if (dof_done.card() != 0) {
-      cerr << "WARNING : in interpolation_solution (different meshes),"
+      cerr << "WARNING : in interpolation (different meshes),"
 	   << dof_done.card() << " dof of target mesh_fem have been missed\n";
-      for (dal::bv_visitor d(dof_done); !d.finished(); ++d) {
-        cerr << "dof_done[" << d << "]=" << mf_target.point_of_dof(d)  << "\n";
-      }
+      cerr << "missing dofs : " << dof_done << endl;
     }
   }
 
   template<typename VECTU, typename VECTV>
-  void interpolation_solution(const mesh_fem &mf_source,
-			      const mesh_fem &mf_target,
-			      const VECTU &U, VECTV &V,
-			      bool projection = false) {
+  void interpolation(const mesh_fem &mf_source, mesh_trans_inv &mti,
+		     const VECTU &U, VECTV &V, bool extrapolation = false) {
+    base_matrix M;
+    if (mf_source.nb_dof() != gmm::vect_size(U) || gmm::vect_size(V) == 0)
+      DAL_THROW(dimension_error, "Dimensions mismatch");
+    interpolation(mf_source, mti, U, V, M, 0, extrapolation);
+  }
+
+
+
+  /**
+     interpolation of a solution on another mesh.
+     - mf_target must be of lagrange type.
+     - the solution should be continuous..
+     - M should be a row major matrix.
+   */
+  template<typename VECTU, typename VECTV, typename MAT>
+    void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
+		       const VECTU &U, VECTV &V, MAT &M,
+		       int version, bool extrapolation = false) {
+
+    const getfem_mesh &mesh(mf_source.linked_mesh());
+    getfem::mesh_trans_inv mti(mesh);
+    size_type qdim_s = mf_source.get_qdim(), qdim_t = mf_target.get_qdim();
+    if (qdim_s != qdim_t && qdim_t != 1)
+      DAL_THROW(failure_error, "Attempt to interpolate a field of dimension "
+		<< qdim_s << " on a mesh_fem whose Qdim is " << qdim_t);
+
+    /* test if the target mesh_fem is really of Lagrange type.         */
+    for (dal::bv_visitor cv(mf_target.convex_index()); !cv.finished();++cv) {
+      pfem pf_t = mf_target.fem_of_element(cv);
+      if (pf_t->target_dim() != 1 || !(pf_t->is_lagrange()))
+	DAL_THROW(failure_error,"Target fem not convenient for interpolation");
+    }
+    /* initialisation of the mesh_trans_inv */
+    size_type nbpts = mf_target.nb_dof() / qdim_t;
+    for (size_type i = 0; i < nbpts; ++i)
+      mti.add_point(mf_target.point_of_dof(i * qdim_t));
+    interpolation(mf_source, mti, U, V, M, version, extrapolation);
+  }
+
+  template<typename VECTU, typename VECTV>
+  void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
+		     const VECTU &U, VECTV &V, bool extrapolation = false) {
     base_matrix M;
     if (mf_source.nb_dof() != gmm::vect_size(U)
 	|| (gmm::vect_size(V) % mf_target.nb_dof()) != 0
 	|| gmm::vect_size(V) == 0)
       DAL_THROW(dimension_error, "Dimensions mismatch");
     if (&mf_source.linked_mesh() == &mf_target.linked_mesh()) {
-      interpolation_solution_same_mesh(mf_source, mf_target, U, V, M, 0);
+      interpolation_same_mesh(mf_source, mf_target, U, V, M, 0);
     }
     else 
-      interpolation_solution(mf_source, mf_target, U, V, M, 0, projection);
+      interpolation(mf_source, mf_target, U, V, M, 0, extrapolation);
   }
 
   template<typename MAT>
-  void interpolation_solution(const mesh_fem &mf_source,
-			      const mesh_fem &mf_target,
-			      MAT &M,
-			      bool projection = false) {
+  void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
+		     MAT &M, bool extrapolation = false) {
     if (mf_source.nb_dof() != gmm::mat_ncols(M)
 	|| (gmm::mat_nrows(M) % mf_target.nb_dof()) != 0
 	|| gmm::mat_nrows(M) == 0)
       DAL_THROW(dimension_error, "Dimensions mismatch");
     std::vector<scalar_type> U, V;
     if (&mf_source.linked_mesh() == &mf_target.linked_mesh()) {
-      interpolation_solution_same_mesh(mf_source, mf_target, U, V, M, 1);
+      interpolation_same_mesh(mf_source, mf_target, U, V, M, 1);
     }
     else 
-      interpolation_solution(mf_source, mf_target, U, V, M, 1, projection);
+      interpolation(mf_source, mf_target, U, V, M, 1, extrapolation);
   }
 
 
+  // Deprecated functions (for version 1.6 -> 1.7)
 
-  /** 
-      interpolation of a solution on a set of sparse points filled in
-      the provided geotrans_inv object.  The gradient is also
-      interpolated if PVGRAD is non-null.
-   */
+  template<typename VECTU, typename VECTV>
+  void interpolation_solution(const mesh_fem &mf_source,
+			      const mesh_fem &mf_target,
+			      const VECTU &U, VECTV &V,
+			      bool extrapolation = false) IS_DEPRECATED;
+
+  template<typename VECTU, typename VECTV>
+  void interpolation_solution(const mesh_fem &mf_source,
+			      const mesh_fem &mf_target,
+			      const VECTU &U, VECTV &V,
+			      bool extrapolation = false) {
+    base_matrix M;
+    if (mf_source.nb_dof() != gmm::vect_size(U)
+	|| (gmm::vect_size(V) % mf_target.nb_dof()) != 0
+	|| gmm::vect_size(V) == 0)
+      DAL_THROW(dimension_error, "Dimensions mismatch");
+    if (&mf_source.linked_mesh() == &mf_target.linked_mesh()) {
+      interpolation_same_mesh(mf_source, mf_target, U, V, M, 0);
+    }
+    else 
+      interpolation(mf_source, mf_target, U, V, M, 0, extrapolation);
+  }
+
   template<class VECT>
   void interpolation_solution(const mesh_fem &mf_source,
-			      bgeot::geotrans_inv &gti,
-			      const VECT &U, VECT &V, VECT* PVGRAD = 0) {
-    size_type mdim = mf_source.linked_mesh().dim();
-    size_type qdim = mf_source.get_qdim();
-    dal::dynamic_array<base_node> ptab;
-    dal::dynamic_array<size_type> itab;
-    base_vector coeff;
-    base_matrix G;
-    
-    dal::bit_vector dof_done; dof_done.add(0, gti.nb_points());
-    
-    for (dal::bv_visitor cv(mf_source.convex_index()); !cv.finished(); ++cv) {
-      bgeot::pgeometric_trans pgt=mf_source.linked_mesh().trans_of_convex(cv);
-      size_type nb = gti.points_in_convex(mf_source.linked_mesh().convex(cv),
-					  pgt, ptab, itab);
-      if (nb == 0) continue;
-      pfem pf_s = mf_source.fem_of_element(cv);
+			      mesh_trans_inv &mti,
+			      const VECT &U, VECT &V) IS_DEPRECATED;
 
-      if (pf_s->need_G())
-	bgeot::vectors_to_base_matrix(G,
-			  mf_source.linked_mesh().points_of_convex(cv));
-      // cerr << "is_equiv:" << pf_s->is_equivalent() << ",inerp: G="
-      //   << G << ",nrow=" << G.nrows() << ", ncols=" << G.ncols() << endl;
-      size_type nbd_s = pf_s->nb_dof();
-      coeff.resize(nbd_s);
+  template<class VECT>
+  void interpolation_solution(const mesh_fem &mf_source,
+			      mesh_trans_inv &mti,
+			      const VECT &U, VECT &V) {
+    base_matrix M;
+    interpolation_solution(mf_source, mti, U, V, M, 0, false);
+  }
 
-      fem_interpolation_context ctx(pgt,pf_s,base_node(),G,cv);
-      gmm::resize(coeff, mf_source.nb_dof_of_element(cv));
-      gmm::copy(gmm::sub_vector(U,
-		gmm::sub_index(mf_source.ind_dof_of_element(cv))), coeff);
+  template<typename VECTU, typename VECTV, typename MAT>
+  void interpolation_solution_same_mesh(const mesh_fem &mf_source,
+					const mesh_fem &mf_target,
+					const VECTU &U, VECTV &V,
+					MAT &M, int version)  IS_DEPRECATED;
 
-      for (size_type i = 0; i < nb; ++i) {
-	size_type dof_t = itab[i];
-	if (dof_done[dof_t])
-	{ // inverser les deux boucles pour gagner du temps ?
-	  // Il faut verifier que le dof est bien de Lagrange ...
-	  ctx.set_xref(ptab[i]);
-	  // cerr << "cv=" << cv << ", ptab[" << i << "]=" << ptab[i]
-	  //      << ", coeff=" << coeff << endl;
-	  typename gmm::sub_vector_type<VECT*,
-	    gmm::sub_interval>::vector_type dest = 
-	    gmm::sub_vector(V,gmm::sub_interval(dof_t*qdim,qdim));
-	  pf_s->interpolation(ctx, coeff, dest, qdim);
-	  if (PVGRAD) {
-	    base_matrix grad(mdim, qdim);
-	    pf_s->interpolation_grad(ctx, coeff, grad, qdim);
-	    std::copy(grad.begin(), grad.end(), V.begin() + dof_t*qdim*mdim);
-	  }
-	  dof_done.sup(dof_t, qdim);
-	}
-      }
-    }
-    if (dof_done.card() != 0)
-      cerr << "WARNING : in interpolation_solution (set of sparse points),"
-	   << dof_done.card() << " points have not been done\n";
+  template<typename VECTU, typename VECTV, typename MAT>
+  void interpolation_solution_same_mesh(const mesh_fem &mf_source,
+					const mesh_fem &mf_target,
+					const VECTU &U, VECTV &V,
+					MAT &M, int version) {
+    interpolation_same_mesh(mf_source, mf_target, U, V, M, version);
   }
 
 }  /* end of namespace getfem.                                             */
