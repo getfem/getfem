@@ -135,8 +135,7 @@ void lap_pb::init(void)
     if (N != 1 || mesh_type != 0)
       DAL_THROW(dal::internal_error,
 		"This element is only defined on segments");
-    // K = 3;
-    K = 1;
+     K = 3;
     break;
   case 2 : 
     if (mesh_type != 0)
@@ -146,7 +145,7 @@ void lap_pb::init(void)
   default : DAL_THROW(dal::internal_error, "Unknown finite element method");
   }
 
-  bgeot::pintegration_method ppi;
+  getfem::pintegration_method ppi;
   char meth[500];
   nn = mesh.convex_index(N);
   switch (integration) {
@@ -194,7 +193,7 @@ void lap_pb::init(void)
   case 35 : sprintf(meth, "IM_QUAD(5)"); break;
   default : DAL_THROW(std::logic_error, "Undefined integration method");
   }
-  ppi = bgeot::int_method_descriptor(meth);
+  ppi = getfem::int_method_descriptor(meth);
   getfem::pfem pfprinc = 0;
   switch (mesh_type) {
   case 0 :
@@ -202,10 +201,10 @@ void lap_pb::init(void)
     pfprinc = getfem::fem_descriptor(meth);
     mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
     mef_data.set_finite_element(nn, getfem::fem_descriptor(meth),
-				bgeot::exact_simplex_im(N));
+				getfem::exact_simplex_im(N));
     sprintf(meth, "FEM_PK(%d,%d)", N, 0);
     mef_data2.set_finite_element(nn, getfem::fem_descriptor(meth),
-				 bgeot::exact_simplex_im(N));
+				 getfem::exact_simplex_im(N));
     break;
   case 1 :
     sprintf(meth, "FEM_QK(%d,%d)", N, K);
@@ -403,8 +402,8 @@ int main(int argc, char *argv[])
     interpolation_solution_same_mesh(p.mef, p.mef_data, p.U, V, 1);
     for (size_type i = 0; i < nbdof; ++i) {
       V[i] -= sol_u(p.mef_data.point_of_dof(i));
-      cout << "i = " << i << " V[i] = " <<  V[i]
-	   << " point of dof : " << p.mef_data.point_of_dof(i) << endl;
+//       cout << "i = " << i << " V[i] = " <<  V[i]
+// 	   << " point of dof : " << p.mef_data.point_of_dof(i) << endl;
       linfnorm = std::max(linfnorm, dal::abs(V[i]));
     }
     

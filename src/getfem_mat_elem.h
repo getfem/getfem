@@ -74,7 +74,7 @@ namespace getfem
   typedef mat_elem_computation *pmat_elem_computation;
 
   pmat_elem_computation mat_elem(pmat_elem_type pm, 
-				 bgeot::pintegration_method pi,
+				 pintegration_method pi,
 				 bgeot::pgeometric_trans pg);
 
 

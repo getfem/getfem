@@ -34,7 +34,7 @@
 #define __GETFEM_MAT_ELEM_TYPE_H
 
 #include <getfem_config.h>
-#include <bgeot_integration.h>
+#include <getfem_integration.h>
 #include <getfem_fem.h>
 
 namespace getfem

@@ -85,7 +85,7 @@ namespace getfem
     return false;
   }
   
-  pintfem give_intfem(pfem ppf, const bgeot::pintegration_method ppi) {
+  pintfem give_intfem(pfem ppf, const pintegration_method ppi) {
     static dal::FONC_TABLE<intfem, intfem> *tab;
     static bool isinit = false;
     if (!isinit) {
@@ -212,7 +212,7 @@ namespace getfem
   }
 
   void mesh_fem::set_finite_element(const dal::bit_vector &cvs, pfem ppf,
-			      const bgeot::pintegration_method ppi) { 
+			      const pintegration_method ppi) { 
     dal::bit_vector::const_iterator it = cvs.begin(), ite = cvs.end();
     pintfem pif =  give_intfem(ppf, ppi);
     for ( ; it != ite; ++it) if (*it) set_finite_element(it.index(), pif);

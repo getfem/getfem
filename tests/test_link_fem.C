@@ -86,7 +86,7 @@ void lap_pb::init(void)
   mesh2.optimize_structure();
   cout << "Selecting finite element method.\n";
   char meth[500];
-  bgeot::pintegration_method ppi;
+  getfem::pintegration_method ppi;
   switch (integration) {
   case 0  : sprintf(meth, "IM_EXACT_SIMPLEX(%d)", N); break;
   case 1  : sprintf(meth, "IM_NC(%d, %d)", N, KI); break;
@@ -104,7 +104,7 @@ void lap_pb::init(void)
   case 25 : sprintf(meth, "IM_TETRAHEDRON(5)"); break;
   default : DAL_THROW(std::logic_error, "Undefined integration method");
   }
-  ppi = bgeot::int_method_descriptor(meth);
+  ppi = getfem::int_method_descriptor(meth);
   
   sprintf(meth, "FEM_PK(%d,%d)", N, K);
   nn = mesh1.convex_index(N);

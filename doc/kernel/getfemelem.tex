@@ -199,19 +199,19 @@ One can see in the file {\tt getfem\_fem.C} how to define a new finite element m
 
 \section{Integration methods}
 
-The integrations methods are of two kinds. The file {\tt bgeot\_poly\_integration.h} defines exact integrations of polynomials and the file {\tt bgeot\_approx\_integration.h} defines approximated integrations of any function. The exact integration can only be used if all the elements are polynomial and if the geometric transformation is linear.
+The integrations methods are of two kinds. The file {\tt getfem\_integration.h} defines approximated and exact integrations methods. The exact integration can only be used if all the elements are polynomial and if the geometric transformation is linear.
 
-In the file {\tt bgeot\_poly\_integration.h} the following methods are defined
+The following exact methods are defined
 
 \input{getfemelemint.tex}
 
 Even though a description of exact integration method exists on parallelepipeds or prisms, most of the time the geometric transformations on such elements are not linear and the exact integration cannot be used.
 
-Description of approximated integation methods can be found in file {\tt bgeot\_approx\_integration.h}. Some examples (see \cite{FEM_LIST} for an exhaustive list):
+Some examples of approximated methods (see \cite{FEM_LIST} for an exhaustive list):
 \input{getfemeleminta.tex}
 
 One can obtain a particular descriptor thanks to the function
-{\tt bgeot::pintegration\_method pfe = bgeot::int\_method\_descriptor("name of method"); }\\[0.5cm]
+{\tt getfem::pintegration\_method pfe = getfem::int\_method\_descriptor("name of method"); }\\[0.5cm]
 
 
 \section{Mathematical description of basic calculus}
@@ -339,7 +339,7 @@ int main(void) \{
   sprintf(method\_name, "IM\_EXAXT\_SIMPLEX(\%d)");
   sprintf(gt\_name, "GT\_PK(\%d, \%d)", N, 1);
   getfem::pmat_elem_computation pmec = // Object which computes elementary matrices.
-     getfem::mat_elem(pet, bgeot::int\_method\_descriptor(method\_name),
+     getfem::mat_elem(pet, getfem::int\_method\_descriptor(method\_name),
                            bgeot::geometric\_trans\_descriptor(gt\_name));
 
   std::vector<base_node> A(N+1);  // Build a list of vertices.

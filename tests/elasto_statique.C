@@ -158,11 +158,11 @@ void pb_data::init(void)
 
   cout << "Selecting finite element method.\n";
   char meth[500];
-  bgeot::pintegration_method ppi;
+  getfem::pintegration_method ppi;
   nn = mesh.convex_index(N);
   if (integration == 0) sprintf(meth, "IM_EXACT_SIMPLEX(%d)", N);
   else sprintf(meth, "IM_NC(%d, %d)", N, 2*K);
-  ppi = bgeot::int_method_descriptor(meth);
+  ppi = getfem::int_method_descriptor(meth);
   sprintf(meth, "FEM_PK(%d,%d)", N, K);
   mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
   mef_data.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);

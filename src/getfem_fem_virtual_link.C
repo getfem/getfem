@@ -194,7 +194,7 @@ namespace getfem
     // cout << "Compute called\n";
     bgeot::geotrans_inv gti;
     dal::bit_vector nn = pmf2->convex_index();
-    bgeot::pintegration_method pim;
+    pintegration_method pim;
     bgeot::pgeometric_trans pgt;
     size_type cv, nbpt, maxgpt = 0;
     dal::dynamic_array<std::deque<size_type> > gauss_to_cv; // + index local
@@ -321,14 +321,14 @@ namespace getfem
 
   struct _virtual_link_fem_light {
     pmesh_fem_link_fem pmflf;
-    bgeot::papprox_integration pai;
+    papprox_integration pai;
     bool with_grad;
     bool operator < (const _virtual_link_fem_light &l) const {
       if (pmflf < l.pmflf) return true; if (pmflf > l.pmflf) return false; 
       if (pai < l.pai) return true; if (pai > l.pai) return false;
       if (with_grad < l.with_grad) return true; return false;
     }
-    _virtual_link_fem_light(pmesh_fem_link_fem a,bgeot::papprox_integration b,
+    _virtual_link_fem_light(pmesh_fem_link_fem a, papprox_integration b,
 			    bool c)
       : pmflf(a), pai(b), with_grad(c) {}
     _virtual_link_fem_light(void) {}
@@ -340,7 +340,7 @@ namespace getfem
 
   protected :
     pmesh_fem_link_fem pmflf;
-    bgeot::papprox_integration pai;
+    papprox_integration pai;
     bool with_grad;
     dim_type di;
     
@@ -355,7 +355,7 @@ namespace getfem
   public :
 
     pmesh_fem_link_fem associated_mf_link_fem(void) { return pmflf; }
-    bgeot::papprox_integration associated_integration(void) { return pai; }
+    papprox_integration associated_integration(void) { return pai; }
     bool is_with_grad(void) { return with_grad; }
 
     virtual size_type nb_dof(void) const {
@@ -448,7 +448,7 @@ namespace getfem
   static virtual_link_fem_table *__vlf_tab = 0;
 
   pfem virtual_link_fem(mesh_fem &mf1, mesh_fem &mf2,
-			bgeot::pintegration_method pim) {
+			pintegration_method pim) {
     if (pim->is_ppi) DAL_THROW(std::invalid_argument,
 	     "This element is only defined on approximated integration.");
     if (__vlf_tab == 0) __vlf_tab = new virtual_link_fem_table();
@@ -457,7 +457,7 @@ namespace getfem
   }
 	
   pfem virtual_link_fem_with_gradient(mesh_fem &mf1, mesh_fem &mf2,
-			bgeot::pintegration_method pim) {
+			pintegration_method pim) {
     if (pim->is_ppi) DAL_THROW(std::invalid_argument,
 	     "This element is only defined on approximated integration.");
     if (__vlf_tab == 0) __vlf_tab = new virtual_link_fem_table();

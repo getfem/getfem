@@ -11,7 +11,6 @@ include_HEADERS = \
 	bgeot_mesh.h \
 	bgeot_mesh_structure.h \
 	bgeot_poly.h \
-	bgeot_integration.h \
 	bgeot_simplexify.h \
 	bgeot_tensor.h \
 	bgeot_vector.h \
@@ -27,6 +26,8 @@ include_HEADERS = \
 	dal_tree_sorted.h \
 	ftool.h \
 	ftool_naming.h \
+	getfem_integration.h \
+	getfem_poly_composite.h \
 	getfem_assembling.h \
 	getfem_config.h \
 	getfem_export.h \
@@ -48,11 +49,11 @@ SRC = \
 	bgeot_geotrans_inv.C \
 	bgeot_mesh_structure.C \
 	bgeot_poly.C \
-	bgeot_integration.C \
 	dal_bit_vector.C \
 	ftool.C \
-	getfem_fem.C \
 	getfem_mesh_fem.C \
+	getfem_integration.C \
+	getfem_fem.C \
 	getfem_fem_virtual_link.C \
 	getfem_mat_elem.C \
 	getfem_mat_elem_type.C \

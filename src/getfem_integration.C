@@ -29,15 +29,12 @@
 /* *********************************************************************** */
 
 
-#include <bgeot_integration.h>
+#include <getfem_integration.h>
 #include <ftool_naming.h>
 
-namespace bgeot
+namespace getfem
 {
-
   typedef ftool::naming_system<integration_method>::param_list im_param_list;
-
-  typedef polynomial<scalar_type> base_poly;
 
   scalar_type poly_integration::int_poly(const base_poly &P) const
   {
@@ -48,11 +45,11 @@ namespace bgeot
 	*hum = (std::vector<scalar_type> *)(&int_monomials);
       size_type i = P.size(), j = int_monomials.size();
       hum->resize(i);
-      power_index mi(P.dim()); mi[P.dim()-1] = P.degree();
+      bgeot::power_index mi(P.dim()); mi[P.dim()-1] = P.degree();
       for (size_type k = i; k > j; --k, --mi)
 	(*hum)[k-1] = int_monomial(mi);
     }
-    polynomial<scalar_type>::const_iterator it = P.begin(), ite = P.end();
+    base_poly::const_iterator it = P.begin(), ite = P.end();
     std::vector<scalar_type>::const_iterator itb = int_monomials.begin();
     for ( ; it != ite; ++it, ++itb) res += (*it) * (*itb);
     return res;
@@ -68,11 +65,11 @@ namespace bgeot
     {
       size_type i = P.size(), j = hum->size();
       hum->resize(i);
-      power_index mi(P.dim()); mi[P.dim()-1] = P.degree();
+      bgeot::power_index mi(P.dim()); mi[P.dim()-1] = P.degree();
       for (size_type k = i; k > j; --k, --mi)
 	(*hum)[k-1] = int_monomial_on_face(mi, f);
     }
-    polynomial<scalar_type>::const_iterator it = P.begin(), ite = P.end();
+    base_poly::const_iterator it = P.begin(), ite = P.end();
     std::vector<scalar_type>::const_iterator itb = hum->begin();
     for ( ; it != ite; ++it, ++itb) res += (*it) * (*itb);
     return res;
@@ -84,11 +81,11 @@ namespace bgeot
 
   struct _simplex_poly_integration : public poly_integration
   {
-    scalar_type int_monomial(const power_index &power) const
+    scalar_type int_monomial(const bgeot::power_index &power) const
     {
       scalar_type res = 1.0;
       short_type fa = 1;
-      power_index::const_iterator itm = power.begin(), itme = power.end();
+      bgeot::power_index::const_iterator itm = power.begin(), itme = power.end();
       for ( ; itm != itme; ++itm)
 	for (int k = 1; k <= *itm; ++k, ++fa)
 	  res *= scalar_type(k) / scalar_type(fa);
@@ -97,7 +94,7 @@ namespace bgeot
       return res;
     }
 
-    scalar_type int_monomial_on_face(const power_index &power, 
+    scalar_type int_monomial_on_face(const bgeot::power_index &power, 
 					       short_type f) const
     {
       scalar_type res = 0.0;
@@ -106,7 +103,7 @@ namespace bgeot
       {
 	res = (f == 0) ? sqrt(scalar_type(cvs->dim())) : 1.0;
 	short_type fa = 1;
-	power_index::const_iterator itm = power.begin(), itme = power.end();
+	bgeot::power_index::const_iterator itm = power.begin(), itme = power.end();
 	for ( ; itm != itme; ++itm)
 	  for (int k = 1; k <= *itm; ++k, ++fa)
 	    res *= scalar_type(k) / scalar_type(fa);
@@ -116,11 +113,8 @@ namespace bgeot
       return res;
     }
 
-    _simplex_poly_integration(pconvex_structure c)
-    {
-      cvs = c;
-      int_face_monomials.resize(c->nb_faces());
-    }
+    _simplex_poly_integration(bgeot::pconvex_structure c)
+      { cvs = c;  int_face_monomials.resize(c->nb_faces()); }
   };
 
   static pintegration_method exact_simplex(im_param_list &params) {
@@ -133,7 +127,7 @@ namespace bgeot
     if (n <= 0 || n >= 100 || double(n) != params[0].num())
       DAL_THROW(failure_error, "Bad parameters");
     return new integration_method
-      (new _simplex_poly_integration(simplex_structure(n)));
+      (new _simplex_poly_integration(bgeot::simplex_structure(n)));
   }
 
   /* ******************************************************************** */
@@ -144,18 +138,18 @@ namespace bgeot
   {
     ppoly_integration cv1, cv2;
 
-    scalar_type int_monomial(const power_index &power) const
+    scalar_type int_monomial(const bgeot::power_index &power) const
     {
-      power_index mi1(cv1->dim()), mi2(cv2->dim());
+      bgeot::power_index mi1(cv1->dim()), mi2(cv2->dim());
       std::copy(power.begin(), power.begin() + cv1->dim(), mi1.begin());
       std::copy(power.begin() + cv1->dim(), power.end(), mi2.begin());
       return cv1->int_monomial(mi1) * cv2->int_monomial(mi2);
     }
 
-    scalar_type int_monomial_on_face(const power_index &power, 
+    scalar_type int_monomial_on_face(const bgeot::power_index &power, 
 				     short_type f) const
     {
-      power_index mi1(cv1->dim()), mi2(cv2->dim());
+      bgeot::power_index mi1(cv1->dim()), mi2(cv2->dim());
       std::copy(power.begin(), power.begin() + cv1->dim(), mi1.begin());
       std::copy(power.begin() + cv1->dim(), power.end(), mi2.begin());
       short_type nfx = cv1->structure()->nb_faces();
@@ -227,6 +221,47 @@ namespace bgeot
   }
 
   /* ********************************************************************* */
+  /* Approximated integration                                              */
+  /* ********************************************************************* */
+
+  void approx_integration::add_point(base_node pt,scalar_type w,short_type f) {
+    if (valid) DAL_THROW(internal_error, 
+			 "Impossible to modify a valid intergation method.");
+    ++f;
+    if (f > cvr->structure()->nb_faces())
+      DAL_THROW(internal_error, "Wrong argument.");
+    cout << " 0.0 " << f << " \n";
+    size_type i = pt_to_store[f].search(pt);
+    if (i == size_type(-1)) {
+      i = pt_to_store[f].add(pt);
+      int_coeffs.resize(int_coeffs.size() + 1); cout << " 0.1 \n";
+      for (size_type j = f; j < cvr->structure()->nb_faces(); ++j)
+	repartition[j] += 1;
+      cout << " 0.1 \n";
+      for (size_type j = repartition[f]; j < int_coeffs.size(); ++j)
+	int_coeffs[j] = int_coeffs[j-1];
+      cout << " 0.1 \n";
+      cout << "repartition[f] = " << repartition[f] << endl;
+      int_coeffs[repartition[f]-1] = 0.0;
+    }cout << " 0.1 \n";
+    int_coeffs[((f == 0) ? 0 : repartition[f-1]) + i] += w;cout << " 0.1 \n";
+  }
+
+  void approx_integration::valid_method(void) {
+    bgeot::stored_point_tab ptab(int_coeffs.size());
+    size_type i = 0;
+    for (short_type f = 0; f <= cvr->structure()->nb_faces(); ++f)
+      for (size_type j = 0; j < pt_to_store[f].size(); ++j)
+	{ ptab[i++] = pt_to_store[f][j]; cout << " dim = " << ptab[i-1] << endl; }
+    if (i != int_coeffs.size()) DAL_THROW(internal_error, "internal error.");
+    pint_points = bgeot::store_point_tab(ptab);
+    pt_to_store = std::vector<PT_TAB>();
+    pt_to_store.clear();
+    valid = true;
+  }
+
+
+  /* ********************************************************************* */
   /* method de Gauss.                                                      */
   /* ********************************************************************* */
 
@@ -289,8 +324,8 @@ namespace bgeot
     {
       if (nbpt > 32000) DAL_THROW(std::out_of_range, "too much points");
       
-      cvr = simplex_of_reference(1);
-      stored_point_tab int_points(nbpt+2);
+      cvr = bgeot::simplex_of_reference(1);
+      bgeot::stored_point_tab int_points(nbpt+2);
       int_coeffs.resize(nbpt+2);
       repartition.resize(3);
       repartition[0] = nbpt; 
@@ -313,8 +348,8 @@ namespace bgeot
 
       int_points[nbpt+1].resize(1);
       int_points[nbpt+1][0] = 0.0; int_coeffs[nbpt+1] = 1.0;
-      pint_points = store_point_tab(int_points);
-
+      pint_points = bgeot::store_point_tab(int_points);
+      valid = true;
     }
   };
 
@@ -348,7 +383,7 @@ namespace bgeot
     {
       dim_type N = dim();
       base_poly l0(N, 0), l1(N, 0);
-      power_index w(N+1);
+      bgeot::power_index w(N+1);
       l0.one(); l1.one(); p = l0;
       for (int nn = 0; nn < N; ++nn) l0 -= base_poly(N, 1, nn);
       
@@ -368,16 +403,16 @@ namespace bgeot
 
     _Newton_Cotes_approx_integration(dim_type nc, short_type k)
     {
-      cvr = simplex_of_reference(nc);
-      size_type R = alpha(nc,k);
-      size_type R2 = (nc > 0) ? alpha(nc-1,k) : 0;
+      cvr = bgeot::simplex_of_reference(nc);
+      size_type R = bgeot::alpha(nc,k);
+      size_type R2 = (nc > 0) ? bgeot::alpha(nc-1,k) : 0;
       base_poly P;
       std::stringstream name;
       name << "IM_EXACT_SIMPLEX(" << int(nc) << ")";
       ppoly_integration ppi 
 	= int_method_descriptor(name.str())->method.ppi;
       std::vector<size_type> fa(nc+1);
-      stored_point_tab int_points;
+      bgeot::stored_point_tab int_points;
       int_points.resize(R + (nc+1) * R2);
       int_coeffs.resize(R + (nc+1) * R2);
       repartition.resize(nc+2);
@@ -433,7 +468,8 @@ namespace bgeot
 	  }
 	}
       }
-      pint_points = store_point_tab(int_points);
+      pint_points = bgeot::store_point_tab(int_points);
+      valid = true;
     }
   };
 
@@ -463,7 +499,7 @@ namespace bgeot
       cvr = convex_ref_product(a->ref_convex(), b->ref_convex());
       size_type n1 = a->nb_points_on_convex();
       size_type n2 = b->nb_points_on_convex();
-      stored_point_tab int_points;
+      bgeot::stored_point_tab int_points;
       int_points.resize(n1 * n2);
       int_coeffs.resize(n1 * n2);
       repartition.resize(cvr->structure()->nb_faces()+1);
@@ -521,7 +557,8 @@ namespace bgeot
 		      int_points[w + i1 + i2 * n1].begin() + a->dim());
 	  }
       }
-      pint_points = store_point_tab(int_points);
+      pint_points = bgeot::store_point_tab(int_points);
+      valid = true;
     }
   };
 
@@ -632,9 +669,6 @@ namespace bgeot
 
   struct _particular_approx : public approx_integration
   {
-    friend papprox_integration triangle1_approx_integration(void);
-    friend papprox_integration triangle2_approx_integration(void);
-    friend papprox_integration triangle2bis_approx_integration(void);
     friend papprox_integration triangle3_approx_integration(void);
     friend papprox_integration triangle4_approx_integration(void);
     friend papprox_integration triangle5_approx_integration(void);
@@ -648,38 +682,15 @@ namespace bgeot
     friend papprox_integration tetrahedron3_approx_integration(void);
     friend papprox_integration tetrahedron5_approx_integration(void);
   };
-
-  papprox_integration triangle1_approx_integration(void) {
-    static _particular_approx *p = NULL;
-    if (p == NULL)
-    {
-      std::vector<base_node> ptab(4);
-      std::fill(ptab.begin(), ptab.end(), base_node(2));
-      p = new _particular_approx;
-      p->cvr = simplex_of_reference(2);
-      p->repartition.resize(p->cvr->structure()->nb_faces()+1);
-      p->int_coeffs.resize(ptab.size());
-      // volume
-      int i = 0;
-      ptab[i][0] = 1.0 / 3.0; ptab[i][1] = 1.0 / 3.0;
-      p->int_coeffs[i] = 0.5; 
-      p->repartition[0] = 1;
-      // face 0
-      ptab[++i][0] = 0.5; ptab[i][1] = 0.5;
-      p->int_coeffs[i] = ::sqrt(2.0); 
-      p->repartition[1] = p->repartition[0] + 1;
-      // face 1
-      ptab[++i][0] = 0.0; ptab[i][1] = 0.5;
-      p->int_coeffs[i] = 1.0; 
-      p->repartition[2] = p->repartition[1] + 1;
-      // face 2
-      ptab[++i][0] = 0.5; ptab[i][1] = 0.0;
-      p->int_coeffs[i] = 1.0; 
-      p->repartition[3] = p->repartition[2] + 1;
-
-      p->pint_points = store_point_tab(ptab);
-      
-    }
+  
+  static papprox_integration triangle1_approx_integration(void) {
+    approx_integration *p
+      = new approx_integration(bgeot::simplex_of_reference(2));
+    p->add_point(base_vector(1.0/3.0, 1.0/3.0), 0.5           );
+    p->add_point(base_vector(0.5,       0.5  ), ::sqrt(2.0), 0);
+    p->add_point(base_vector(0.0,       0.5  ), 1.0        , 1);
+    p->add_point(base_vector(0.5,       0.0  ), 1.0        , 2);
+    p->valid_method();
     return p;
   }
 
@@ -687,49 +698,27 @@ namespace bgeot
   /*   triangle2 :    Integration on a triangle of order 2 with 3 points   */
   /* ********************************************************************* */
 
-    papprox_integration triangle2_approx_integration(void) {
-    static _particular_approx *p = NULL;
-    if (p == NULL)
-    {
-      std::vector<base_node> ptab(9);
-      std::fill(ptab.begin(), ptab.end(), base_node(2));
-      p = new _particular_approx;
-      p->cvr = simplex_of_reference(2);
-      p->repartition.resize(p->cvr->structure()->nb_faces()+1);
-      p->int_coeffs.resize(ptab.size());
-      // volume
-      int i = 0;
-      ptab[  i][0] = 1.0 / 6.0; ptab[i][1] = 1.0 / 6.0;
-      p->int_coeffs[i] = 1.0 / 6.0; 
-      ptab[++i][0] = 2.0 / 3.0; ptab[i][1] = 1.0 / 6.0;
-      p->int_coeffs[i] = 1.0 / 6.0; 
-      ptab[++i][0] = 1.0 / 6.0; ptab[i][1] = 2.0 / 3.0;
-      p->int_coeffs[i] = 1.0 / 6.0; 
-      p->repartition[0] = 3;
-      // face 0
-      double a = 0.5 - 0.5/::sqrt(3.0);
-      double b = 0.5 + 0.5/::sqrt(3.0);
-      ptab[++i][0] = a; ptab[i][1] = b;
-      p->int_coeffs[i] = ::sqrt(2.0) * 0.5; 
-      ptab[++i][0] = b; ptab[i][1] = a;
-      p->int_coeffs[i] = ::sqrt(2.0) * 0.5; 
-      p->repartition[1] = p->repartition[0] + 2;
-      // face 1
-      ptab[++i][0] = 0.0; ptab[i][1] = a;
-      p->int_coeffs[i] = 0.5; 
-      ptab[++i][0] = 0.0; ptab[i][1] = b;
-      p->int_coeffs[i] = 0.5; 
-      p->repartition[2] = p->repartition[1] + 2;
-      // face 2
-      ptab[++i][0] = a; ptab[i][1] = 0.0;
-      p->int_coeffs[i] = 0.5; 
-      ptab[++i][0] = b; ptab[i][1] = 0.0;
-      p->int_coeffs[i] = 0.5; 
-      p->repartition[3] = p->repartition[2] + 2;
-
-      p->pint_points = store_point_tab(ptab);
-      
-    }
+  static papprox_integration triangle2_approx_integration(void) {
+    approx_integration *p
+      = new approx_integration(bgeot::simplex_of_reference(2));
+    cout << "ok 1\n";
+    p->add_point(base_vector(1.0/6.0, 1.0/6.0), 1.0/6.0);
+    cout << "ok 1bis\n";
+    p->add_point(base_vector(2.0/3.0, 1.0/6.0), 1.0/6.0);
+    cout << "ok 1.3\n";
+    p->add_point(base_vector(1.0/6.0, 2.0/3.0), 1.0/6.0);
+    cout << "ok 1.4\n";
+    double a = 0.5 - 0.5/::sqrt(3.0);
+    double b = 0.5 + 0.5/::sqrt(3.0);
+    p->add_point(base_vector(a  , b), ::sqrt(2.0) * 0.5, 0);cout << "ok 1.3\n";
+    p->add_point(base_vector(b  , a), ::sqrt(2.0) * 0.5, 0);cout << "ok 1.3\n";
+    p->add_point(base_vector(0.0, a), 0.5              , 1);cout << "ok 1.3\n";
+    p->add_point(base_vector(0.0, b), 0.5              , 1);cout << "ok 1.3\n";
+    p->add_point(base_vector(a, 0.0), 0.5              , 2);cout << "ok 1.3\n";
+    p->add_point(base_vector(b, 0.0), 0.5              , 2);cout << "ok 1.3\n";
+    cout << "ok 2\n";
+    p->valid_method();
+    cout << "ok 3\n";
     return p;
   }
 
@@ -737,49 +726,20 @@ namespace bgeot
   /*   triangle2bis :   Integration on a triangle of order 2 with 3 points */
   /* ********************************************************************* */
 
-    papprox_integration triangle2bis_approx_integration(void) {
-    static _particular_approx *p = NULL;
-    if (p == NULL)
-    {
-      std::vector<base_node> ptab(9);
-      std::fill(ptab.begin(), ptab.end(), base_node(2));
-      p = new _particular_approx;
-      p->cvr = simplex_of_reference(2);
-      p->repartition.resize(p->cvr->structure()->nb_faces()+1);
-      p->int_coeffs.resize(ptab.size());
-      // volume
-      int i = 0;
-      ptab[  i][0] = 0.5; ptab[i][1] = 0.5;
-      p->int_coeffs[i] = 1.0 / 6.0; 
-      ptab[++i][0] = 0; ptab[i][1] = 0.5;
-      p->int_coeffs[i] = 1.0 / 6.0; 
-      ptab[++i][0] = 0.5; ptab[i][1] = 0.0;
-      p->int_coeffs[i] = 1.0 / 6.0; 
-      p->repartition[0] = 3;
-      // face 0
-      double a = 0.5 - 0.5/::sqrt(3.0);
-      double b = 0.5 + 0.5/::sqrt(3.0);
-      ptab[++i][0] = a; ptab[i][1] = b;
-      p->int_coeffs[i] = ::sqrt(2.0) * 0.5; 
-      ptab[++i][0] = b; ptab[i][1] = a;
-      p->int_coeffs[i] = ::sqrt(2.0) * 0.5; 
-      p->repartition[1] = p->repartition[0] + 2;
-      // face 1
-      ptab[++i][0] = 0.0; ptab[i][1] = a;
-      p->int_coeffs[i] = 0.5; 
-      ptab[++i][0] = 0.0; ptab[i][1] = b;
-      p->int_coeffs[i] = 0.5; 
-      p->repartition[2] = p->repartition[1] + 2;
-      // face 2
-      ptab[++i][0] = a; ptab[i][1] = 0.0;
-      p->int_coeffs[i] = 0.5; 
-      ptab[++i][0] = b; ptab[i][1] = 0.0;
-      p->int_coeffs[i] = 0.5; 
-      p->repartition[3] = p->repartition[2] + 2;
-
-      p->pint_points = store_point_tab(ptab);
-      
-    }
+  static papprox_integration triangle2bis_approx_integration(void) {
+    approx_integration *p = new approx_integration(bgeot::simplex_of_reference(2));
+    p->add_point(base_vector(1.0/2.0, 1.0/2.0), 1.0/6.0);
+    p->add_point(base_vector(0.0    , 1.0/2.0), 1.0/6.0);
+    p->add_point(base_vector(1.0/2.0, 0.0    ), 1.0/6.0);
+    double a = 0.5 - 0.5/::sqrt(3.0);
+    double b = 0.5 + 0.5/::sqrt(3.0);
+    p->add_point(base_vector(a  , b), ::sqrt(2.0) * 0.5, 0);
+    p->add_point(base_vector(b  , a), ::sqrt(2.0) * 0.5, 0);
+    p->add_point(base_vector(0.0, a), 0.5              , 1);
+    p->add_point(base_vector(0.0, b), 0.5              , 1);
+    p->add_point(base_vector(a, 0.0), 0.5              , 2);
+    p->add_point(base_vector(b, 0.0), 0.5              , 2);
+    p->valid_method();
     return p;
   }
 
@@ -794,7 +754,7 @@ namespace bgeot
       std::vector<base_node> ptab(10);
       std::fill(ptab.begin(), ptab.end(), base_node(2));
       p = new _particular_approx;
-      p->cvr = simplex_of_reference(2);
+      p->cvr = bgeot::simplex_of_reference(2);
       p->repartition.resize(p->cvr->structure()->nb_faces()+1);
       p->int_coeffs.resize(ptab.size());
       // volume
@@ -829,7 +789,8 @@ namespace bgeot
       p->int_coeffs[i] = 0.5; 
       p->repartition[3] = p->repartition[2] + 2;
 
-      p->pint_points = store_point_tab(ptab);
+      p->pint_points = bgeot::store_point_tab(ptab);
+      p->valid = true;
       
     }
     return p;
@@ -847,7 +808,7 @@ namespace bgeot
       std::vector<base_node> ptab(15);
       std::fill(ptab.begin(), ptab.end(), base_node(2));
       p = new _particular_approx;
-      p->cvr = simplex_of_reference(2);
+      p->cvr = bgeot::simplex_of_reference(2);
       p->repartition.resize(p->cvr->structure()->nb_faces()+1);
       p->int_coeffs.resize(ptab.size());
       // volume
@@ -896,7 +857,8 @@ namespace bgeot
       p->int_coeffs[i] = 5.0 / 18.0; 
       p->repartition[3] = p->repartition[2] + 3;
 
-      p->pint_points = store_point_tab(ptab);
+      p->pint_points = bgeot::store_point_tab(ptab);
+      p->valid = true;
       
     }
     return p;
@@ -913,7 +875,7 @@ namespace bgeot
       std::vector<base_node> ptab(16);
       std::fill(ptab.begin(), ptab.end(), base_node(2));
       p = new _particular_approx;
-      p->cvr = simplex_of_reference(2);
+      p->cvr = bgeot::simplex_of_reference(2);
       p->repartition.resize(p->cvr->structure()->nb_faces()+1);
       p->int_coeffs.resize(ptab.size());
       // volume
@@ -964,7 +926,8 @@ namespace bgeot
       p->int_coeffs[i] = 5.0 / 18.0; 
       p->repartition[3] = p->repartition[2] + 3;
 
-      p->pint_points = store_point_tab(ptab);
+      p->pint_points = bgeot::store_point_tab(ptab);
+      p->valid = true;
       
     }
     return p;
@@ -982,7 +945,7 @@ namespace bgeot
       std::vector<base_node> ptab(24);
       std::fill(ptab.begin(), ptab.end(), base_node(2));
       p = new _particular_approx;
-      p->cvr = simplex_of_reference(2);
+      p->cvr = bgeot::simplex_of_reference(2);
       p->repartition.resize(p->cvr->structure()->nb_faces()+1);
       p->int_coeffs.resize(ptab.size());
       // volume
@@ -1056,7 +1019,8 @@ namespace bgeot
       p->int_coeffs[i] = f; 
       p->repartition[3] = p->repartition[2] + 4;
 
-      p->pint_points = store_point_tab(ptab);
+      p->pint_points = bgeot::store_point_tab(ptab);
+      p->valid = true;
       if (++i != ptab.size()) DAL_THROW(internal_error, "internal error");
     }
     return p;
@@ -1073,7 +1037,7 @@ namespace bgeot
       std::vector<base_node> ptab(25);
       std::fill(ptab.begin(), ptab.end(), base_node(2));
       p = new _particular_approx;
-      p->cvr = simplex_of_reference(2);
+      p->cvr = bgeot::simplex_of_reference(2);
       p->repartition.resize(p->cvr->structure()->nb_faces()+1);
       p->int_coeffs.resize(ptab.size());
       // volume
@@ -1154,7 +1118,8 @@ namespace bgeot
       p->int_coeffs[i] = f; 
       p->repartition[3] = p->repartition[2] + 4;
 
-      p->pint_points = store_point_tab(ptab);
+      p->pint_points = bgeot::store_point_tab(ptab);
+      p->valid = true;
       if (++i != ptab.size()) DAL_THROW(internal_error, "internal error");
 
     }
@@ -1217,7 +1182,7 @@ namespace bgeot
       base_vector nullpt(dim); nullpt.fill(0);
       std::fill(ptab.begin(), ptab.end(), nullpt);
       p = new _particular_approx;
-      p->cvr = parallelepiped_of_reference(dim);
+      p->cvr = bgeot::parallelepiped_of_reference(dim);
       p->repartition.resize(NB_FA+1);
       p->int_coeffs.resize(ptab.size());
       std::vector<base_node>::iterator itp = ptab.begin();
@@ -1247,7 +1212,8 @@ namespace bgeot
 	p->repartition[i+1] = p->repartition[i] + NB_PER_FA;
       }
 
-      p->pint_points = store_point_tab(ptab);
+      p->pint_points = bgeot::store_point_tab(ptab);
+      p->valid = true;
       if (itp != ptab.end()) DAL_THROW(internal_error, "internal error");
     }
     return p;
@@ -1269,7 +1235,7 @@ namespace bgeot
       base_vector nullpt(dim); nullpt.fill(0);
       std::fill(ptab.begin(), ptab.end(), nullpt);
       p = new _particular_approx;
-      p->cvr = parallelepiped_of_reference(dim);
+      p->cvr = bgeot::parallelepiped_of_reference(dim);
       p->repartition.resize(NB_FA+1);
       p->int_coeffs.resize(ptab.size());
       std::vector<base_node>::iterator itp = ptab.begin();
@@ -1301,7 +1267,8 @@ namespace bgeot
 	p->repartition[i+1] = p->repartition[i] + NB_PER_FA;
       }
 
-      p->pint_points = store_point_tab(ptab);
+      p->pint_points = bgeot::store_point_tab(ptab);
+      p->valid = true;
       if (itp != ptab.end()) DAL_THROW(internal_error, "internal error");
     }
     return p;
@@ -1324,7 +1291,7 @@ namespace bgeot
       base_vector nullpt(dim); nullpt.fill(0);
       std::fill(ptab.begin(), ptab.end(), nullpt);
       p = new _particular_approx;
-      p->cvr = parallelepiped_of_reference(dim);
+      p->cvr = bgeot::parallelepiped_of_reference(dim);
       p->repartition.resize(NB_FA+1);
       p->int_coeffs.resize(ptab.size());
       std::vector<base_node>::iterator itp = ptab.begin();
@@ -1364,7 +1331,8 @@ namespace bgeot
 	p->repartition[i+1] = p->repartition[i] + NB_PER_FA;
       }
 
-      p->pint_points = store_point_tab(ptab);
+      p->pint_points = bgeot::store_point_tab(ptab);
+      p->valid = true;
       if (itp != ptab.end()) DAL_THROW(internal_error, "internal error");
     }
     return p;
@@ -1408,7 +1376,7 @@ namespace bgeot
       std::vector<base_node> ptab(5);
       std::fill(ptab.begin(), ptab.end(), base_node(3));
       p = new _particular_approx;
-      p->cvr = simplex_of_reference(3);
+      p->cvr = bgeot::simplex_of_reference(3);
       p->repartition.resize(p->cvr->structure()->nb_faces()+1);
       p->int_coeffs.resize(ptab.size());
       // volume
@@ -1433,7 +1401,8 @@ namespace bgeot
       p->int_coeffs[i] = 0.5; 
       p->repartition[4] = p->repartition[3] + 1;
 
-      p->pint_points = store_point_tab(ptab);
+      p->pint_points = bgeot::store_point_tab(ptab);
+      p->valid = true;
       
     }
     return p;
@@ -1450,7 +1419,7 @@ namespace bgeot
       std::vector<base_node> ptab(16);
       std::fill(ptab.begin(), ptab.end(), base_node(3));
       p = new _particular_approx;
-      p->cvr = simplex_of_reference(3);
+      p->cvr = bgeot::simplex_of_reference(3);
       p->repartition.resize(p->cvr->structure()->nb_faces()+1);
       p->int_coeffs.resize(ptab.size());
       // volume
@@ -1501,7 +1470,8 @@ namespace bgeot
       p->int_coeffs[i] = 1.0 / 6.0; 
       p->repartition[4] = p->repartition[3] + 3;
 
-      p->pint_points = store_point_tab(ptab);
+      p->pint_points = bgeot::store_point_tab(ptab);
+      p->valid = true;
       
     }
     return p;
@@ -1524,7 +1494,7 @@ namespace bgeot
       base_vector nullpt(dim); nullpt.fill(0);
       std::fill(ptab.begin(), ptab.end(), nullpt);
       p = new _particular_approx;
-      p->cvr = simplex_of_reference(dim);
+      p->cvr = bgeot::simplex_of_reference(dim);
       p->repartition.resize(NB_FA+1);
       p->int_coeffs.resize(ptab.size());
       std::vector<base_node>::iterator itp = ptab.begin();
@@ -1566,7 +1536,8 @@ namespace bgeot
 	surf = 0.5;
       }
 
-      p->pint_points = store_point_tab(ptab);
+      p->pint_points = bgeot::store_point_tab(ptab);
+      p->valid = true;
       if (itp != ptab.end()) DAL_THROW(internal_error, "internal error");
     }
     return p;
@@ -1588,7 +1559,7 @@ namespace bgeot
       base_vector nullpt(dim); nullpt.fill(0);
       std::fill(ptab.begin(), ptab.end(), nullpt);
       p = new _particular_approx;
-      p->cvr = simplex_of_reference(dim);
+      p->cvr = bgeot::simplex_of_reference(dim);
       p->repartition.resize(NB_FA+1);
       p->int_coeffs.resize(ptab.size());
       std::vector<base_node>::iterator itp = ptab.begin();
@@ -1670,7 +1641,8 @@ namespace bgeot
 	surf = 0.5;
       }
 
-      p->pint_points = store_point_tab(ptab);
+      p->pint_points = bgeot::store_point_tab(ptab);
+      p->valid = true;
       if (itp != ptab.end()) DAL_THROW(internal_error, "internal error");
     }
     return p;
@@ -1770,5 +1742,5 @@ namespace bgeot
   }
 
 
-}  /* end of namespace bgeot.                                            */
+}  /* end of namespace getfem.                                           */
 

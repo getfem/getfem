@@ -78,7 +78,8 @@ namespace getfem
       {
 	bgeot::ref_mesh_point_ind_ct tab2 = sl.ind_points_of_convex(i);
 	for (dim_type l = 0; l < N+1; l++)
-	  tab1[l] = tab3[(tab2[l] + ((total & 1) ? (nbpt/2) : 0)) % nbpt];
+	  tab1[l] = tab3[(tab2[l]
+			  + (((total & 1) && N > 1) ? (nbpt/2) : 0)) % nbpt];
 	me.add_simplex(N, tab1.begin());
       }
 

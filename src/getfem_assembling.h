@@ -56,7 +56,7 @@ namespace getfem
     dal::bit_vector nn = mf.convex_index();
     base_tensor t;
     pfem pf1, pf2, pf1prec = 0, pf2prec = 0;
-    bgeot::pintegration_method pim, pimprec = 0;
+    pintegration_method pim, pimprec = 0;
     bgeot::pgeometric_trans pgt, pgtprec = 0;
     pmat_elem_computation pmec = 0;
 
@@ -120,7 +120,7 @@ namespace getfem
 
     pfem pf_u, pf_p, pf_d;
     pfem pf_u_prec = NULL, pf_p_prec = NULL, pf_d_prec = NULL;
-    bgeot::pintegration_method pim, pimprec = 0;
+    pintegration_method pim, pimprec = 0;
     bgeot::pgeometric_trans pgt, pgtprec = NULL;
     size_type nbdof_u, nbdof_p, nbdof_d;
     size_type N = mf_u.linked_mesh().dim();
@@ -196,7 +196,7 @@ namespace getfem
     dal::bit_vector nn = mf.convex_index();
     base_tensor t;
     pfem pf1, pf2, pf1prec = NULL, pf2prec = NULL;
-    bgeot::pintegration_method pim, pimprec = 0;
+    pintegration_method pim, pimprec = 0;
     bgeot::pgeometric_trans pgt, pgtprec = NULL;
     pmat_elem_type pme; pmat_elem_computation pmec = 0;
 
@@ -287,7 +287,7 @@ namespace getfem
     dal::bit_vector nn = mf_u.convex_index(), nf;
     base_tensor t;
     pfem pf_u, pf_d, pf_u_prec = NULL, pf_d_prec = NULL;
-    bgeot::pintegration_method pim, pimprec = 0;
+    pintegration_method pim, pimprec = 0;
     bgeot::pgeometric_trans pgt, pgtprec = NULL;
     pmat_elem_type pme; pmat_elem_computation pmec = 0;
 
@@ -360,7 +360,7 @@ namespace getfem
     dal::bit_vector nn = mf1.convex_index();
     base_tensor t;
     pfem pf1, pf1prec = 0, pf2, pf2prec = 0;
-    bgeot::pintegration_method pim, pimprec = 0;
+    pintegration_method pim, pimprec = 0;
     bgeot::pgeometric_trans pgt, pgtprec = NULL;
     pmat_elem_type pme; pmat_elem_computation pmec = 0;
     // M(0,0) = 1.0;  ??
@@ -419,7 +419,7 @@ namespace getfem
     dal::bit_vector nn = mf.convex_index();
     base_tensor t;
     pfem pf1, pf2, pf1prec = NULL, pf2prec = NULL;
-    bgeot::pintegration_method pim, pimprec = 0;
+    pintegration_method pim, pimprec = 0;
     bgeot::pgeometric_trans pgt, pgtprec = NULL;
     pmat_elem_type pme; pmat_elem_computation pmec = 0;
 
@@ -542,7 +542,7 @@ namespace getfem
     dal::bit_vector nn = mf.convex_index(), nf;
     base_tensor t;
     pfem pf1, pf2, pf1prec = NULL, pf2prec = NULL;
-    bgeot::pintegration_method pim, pimprec = 0;
+    pintegration_method pim, pimprec = 0;
     bgeot::pgeometric_trans pgt, pgtprec = NULL;
     pmat_elem_type pme; pmat_elem_computation pmec = 0;
 

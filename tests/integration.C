@@ -1,17 +1,17 @@
-#include <bgeot_integration.h>
+#include <getfem_integration.h>
 
-using bgeot::size_type;
+using getfem::size_type;
 
 int main(void)
 {
   try {
     char meth[500];
-    bgeot::papprox_integration pai;
+    getfem::papprox_integration pai;
     cout.precision(16);
     
     for (size_type i = 1; i < 15; ++i) {
       sprintf(meth, "IM_GAUSS1D(%d)", 2*(i - 1));
-      pai = bgeot::int_method_descriptor(meth)->method.pai;
+      pai = getfem::int_method_descriptor(meth)->method.pai;
       
       cout << "methode a " << i << " points " << endl;
       
@@ -28,7 +28,7 @@ int main(void)
     }
 
     sprintf(meth, "IM_PRODUCT(IM_GAUSS1D(2),IM_GAUSS1D(2))");
-    pai = bgeot::int_method_descriptor(meth)->method.pai;
+    pai = getfem::int_method_descriptor(meth)->method.pai;
 
     cout << "methode produit\n";
     
@@ -45,7 +45,7 @@ int main(void)
       for (size_type i = 0; i < 2; ++i) {
 	cout << "methode d'ordre  " << i << "\n";
 	sprintf(meth, "IM_NC(%d,%d)", n, i);
-	pai = bgeot::int_method_descriptor(meth)->method.pai;
+	pai = getfem::int_method_descriptor(meth)->method.pai;
 	
 	for (size_type k = 0; k < pai->nb_points(); ++k) {
 	  cout << "Coeff " << k << " : " << pai->integration_coefficients()[k];

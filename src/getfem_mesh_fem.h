@@ -85,14 +85,14 @@ namespace getfem
 
   struct intfem  { // integrable fem
     pfem pf;
-    bgeot::pintegration_method pi;
+    pintegration_method pi;
     bool operator < (const intfem &l) const;
-    intfem(pfem ppf, bgeot::pintegration_method ppi) { pf = ppf; pi = ppi; }
+    intfem(pfem ppf, pintegration_method ppi) { pf = ppf; pi = ppi; }
     intfem(void) { }
   };
   
   typedef const intfem * pintfem;
-  pintfem give_intfem(pfem ppf, const bgeot::pintegration_method ppi);
+  pintfem give_intfem(pfem ppf, const pintegration_method ppi);
   
   typedef bgeot::ref_mesh_point_ind_ct ref_mesh_dof_ind_ct;
   
@@ -131,7 +131,7 @@ namespace getfem
      *          type pintegration_method.
      */
     void set_finite_element(size_type cv, pfem ppf,
-			    const bgeot::pintegration_method ppi)
+			    const pintegration_method ppi)
       { set_finite_element(cv, give_intfem(ppf, ppi)); }	
     /** Set on all the convexes of indexes in bv, which is of type
      *          dal::bit\_vector, the finite element method
@@ -139,10 +139,10 @@ namespace getfem
      *          type pintegration_method.
      */
     void set_finite_element(const dal::bit_vector &cvs, pfem ppf,
-			    const bgeot::pintegration_method ppi);
+			    const pintegration_method ppi);
     pfem fem_of_element(size_type cv) const
       { return  f_elems[cv]->pf; }
-    const bgeot::pintegration_method &int_method_of_element(size_type cv) const
+    const pintegration_method &int_method_of_element(size_type cv) const
       { return  f_elems[cv]->pi; }
     /** Gives an array of the degrees of freedom of the element
      *           of the convex of index i. 

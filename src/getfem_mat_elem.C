@@ -43,7 +43,7 @@ namespace getfem
   struct _emelem_comp_light
   {
     pmat_elem_type pmt;
-    bgeot::pintegration_method ppi;
+    pintegration_method ppi;
     bgeot::pgeometric_trans pgt;
     bool operator < (const _emelem_comp_light &ls) const
     {
@@ -52,7 +52,7 @@ namespace getfem
       if (pgt < ls.pgt) return true; return false;
     }
     _emelem_comp_light(pmat_elem_type pm,
-		   bgeot::pintegration_method pi, bgeot::pgeometric_trans pg)
+		   pintegration_method pi, bgeot::pgeometric_trans pg)
     { pmt = pm; ppi = pi; pgt = pg; }
     _emelem_comp_light(void) { }
   };
@@ -61,8 +61,8 @@ namespace getfem
   struct _emelem_comp_structure : public mat_elem_computation
   {
     pgeotrans_precomp pgp;
-    bgeot::ppoly_integration ppi;
-    bgeot::papprox_integration pai;
+    ppoly_integration ppi;
+    papprox_integration pai;
     bool is_ppi;
     std::vector<base_tensor> mref;
     std::vector<short_type>  mref_count;
@@ -423,7 +423,7 @@ namespace getfem
   static dal::FONC_TABLE<_emelem_comp_light, _emelem_comp_structure>
     *_tab__mat_elet = 0;
   
-  pmat_elem_computation mat_elem(pmat_elem_type pm, bgeot::pintegration_method pi,
+  pmat_elem_computation mat_elem(pmat_elem_type pm, pintegration_method pi,
 				 bgeot::pgeometric_trans pg)
   { 
     if (_tab__mat_elet == 0)

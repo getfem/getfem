@@ -515,7 +515,9 @@ namespace getfem
       for (size_type i = 0; i < fi2->nb_dof(); ++i) {
 	bool found = false;
 	for (size_type j = 0; j < fi1->nb_dof(); ++j) {
-	  if (fi2->node_of_dof(i) == fi1->node_of_dof(j) 
+	  if ( dal::lexicographical_less<base_node,
+	       dal::approx_less<scalar_type> >()
+	       (fi2->node_of_dof(i), fi1->node_of_dof(i)) == 0
 	      && dof_hierarchical_compatibility(fi2->dof_types()[i],
 						fi1->dof_types()[j]))
 	    { found = true; break; }
@@ -571,6 +573,46 @@ namespace getfem
     else
       name << "FEM_GEN_HIERARCHICAL(FEM_P2K_HIERARCHICAL(" << n << ","
 	   << k/2 << "), FEM_PK(" << n << "," << k << "))";
+    return fem_descriptor(name.str());
+  }
+
+  static pfem Q2K_hierarch_fem(fem_param_list &params) {
+    if (params.size() != 2)
+      DAL_THROW(failure_error, 
+	   "Bad number of parameters : " << params.size() << " should be 2.");
+    if (params[0].type() != 0 || params[1].type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    int k = int(::floor(params[1].num() + 0.01));
+    if (n <= 0 || n >= 100 || k <= 0 || k > 150 ||
+	double(n) != params[0].num() || double(k) != params[1].num())
+      DAL_THROW(failure_error, "Bad parameters");
+    std::stringstream name;
+    if (n == 1)
+      name << "FEM_P2K_HIERARCHICAL(1," << k << ")";
+    else
+      name << "FEM_PRODUCT(FEM_P2K_HIERARCHICAL(" << n-1 << "," << k
+	   << "),FEM_P2K(1_HIERARCHICAL," << k << "))";
+    return fem_descriptor(name.str());
+  }
+
+  static pfem P2K_prism_hierarch_fem(fem_param_list &params) {
+    if (params.size() != 2)
+      DAL_THROW(failure_error, 
+	   "Bad number of parameters : " << params.size() << " should be 2.");
+    if (params[0].type() != 0 || params[1].type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    int k = int(::floor(params[1].num() + 0.01));
+    if (n <= 1 || n >= 100 || k < 0 || k > 150 ||
+	double(n) != params[0].num() || double(k) != params[1].num())
+      DAL_THROW(failure_error, "Bad parameters");
+    std::stringstream name;
+    if (n == 2)
+      name << "FEM_Q2K_HIERARCHICAL(1," << k << ")";
+    else 
+      name << "FEM_PRODUCT(FEM_P2K_HIERARCHICAL(" << n-1 << "," << k
+	   << "),FEM_P2K_HIERARCHICAL(1," << k << "))";
     return fem_descriptor(name.str());
   }
 
@@ -764,16 +806,17 @@ namespace getfem
        _base.resize(4);
       
       pt[0] = 0.0; add_node(lagrange_dof(1), pt);
-      // _base[0] = one + x * x * (-one * 3.0  + x * 2.0);
-      _base[0] = one - x;
+      _base[0] = one + x * x * (-one * 3.0  + x * 2.0);
+      // _base[0] = one - x;
+      // _base[0] = (one - x) * (one - x * 2.0);
       pt[0] = 1.0; add_node(lagrange_dof(1), pt);
-      // _base[1] = x * x * (one * 3.0 - x * 2.0);
-      _base[1] = x;
-      // pt[0] = 0.0; add_node(derivative_dof(1, 0), pt);
-      pt[0] = 0.1; add_node(lagrange_nonconforming_dof(1), pt);
+      _base[1] = x * x * (one * 3.0 - x * 2.0);
+      // _base[1] = x * (x * 2.0 - one);
+      pt[0] = 0.0; add_node(derivative_dof(1, 0), pt);
+      // pt[0] = 0.1; add_node(lagrange_nonconforming_dof(1), pt);
       _base[2] = x * (one + x * (-one * 2.0 + x));
-      // pt[0] = 1.0; add_node(derivative_dof(1, 0), pt);
-      pt[0] = 0.9; add_node(lagrange_nonconforming_dof(1), pt);
+      pt[0] = 1.0; add_node(derivative_dof(1, 0), pt);
+      // pt[0] = 0.9; add_node(lagrange_nonconforming_dof(1), pt);
       _base[3] = x * x * (-one + x);
 
       cout << "base(0) = " << _base[0] << endl;
@@ -936,6 +979,9 @@ namespace getfem
 				   P1_with_bubble_on_a_face_lagrange);
     _fem_naming_system->add_suffix("GEN_HIERARCHICAL", gen_hierarchical_fem);
     _fem_naming_system->add_suffix("P2K_HIERARCHICAL", P2K_hierarch_fem);
+    _fem_naming_system->add_suffix("Q2K_HIERARCHICAL", Q2K_hierarch_fem);
+    _fem_naming_system->add_suffix("P2K_PRISM_HIERARCHICAL",
+				   P2K_prism_hierarch_fem);
   }
   
   pfem fem_descriptor(std::string name) {

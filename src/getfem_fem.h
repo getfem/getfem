@@ -33,10 +33,9 @@
 #define __GETFEM_FEM_H
 
 #include <bgeot_geometric_trans.h>
-#include <bgeot_integration.h>
-#include <getfem_config.h>
+#include <getfem_integration.h>
+#include <getfem_poly_composite.h>
 #include <getfem_precomp.h>
-//#include <getfem_mesh.h>
 #include <deque>
 
 namespace getfem
@@ -422,9 +421,9 @@ namespace getfem
   
   class mesh_fem;
   pfem virtual_link_fem(mesh_fem &mf1, mesh_fem &mf2,
-			bgeot::pintegration_method pim);
+			pintegration_method pim);
   pfem virtual_link_fem_with_gradient(mesh_fem &mf1, mesh_fem &mf2,
-				      bgeot::pintegration_method pim);
+				      pintegration_method pim);
   
   //@}
   
