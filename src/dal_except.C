@@ -35,7 +35,9 @@ namespace dal {
   static exception_callback *exc_cback = 0;
   
   void do_exception_callback(const std::string &msg) {
-    if (exc_cback) exc_cback->callback(msg);
+    if (exc_cback) {
+      exc_cback->callback(msg);
+    }
   }
   
   void set_exception_callback(exception_callback *e) {
