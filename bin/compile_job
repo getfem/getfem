@@ -145,7 +145,7 @@ if ($systeme =~ /Linux/)
 }
 else
 {
-   print MAKEFILE "\t ld", ' -shared sources/dal*.o sources/bgeot*.o sources/ftool*.o sources/getfem*.o sources/matlabint*.o /cxx_repository/*.o -o ../lib/libgetfem.so', "\n\n";
+   print MAKEFILE "\t ld", ' -shared sources/dal*.o sources/bgeot*.o sources/ftool*.o sources/getfem*.o sources/matlabint*.o cxx_repository/*.o -o ../lib/libgetfem.so', "\n\n";
 }
 
 # il faut moduler ça si tout n'est pas chargé ...
