@@ -1611,17 +1611,18 @@ namespace getfem {
 
       // cout << "MM = " << MS.reduced_tangent_matrix() << endl;
 
-//       gmm::dense_matrix<value_type> MM(nreddof, nreddof), Q(nreddof, nreddof);
-//       std::vector<value_type> eigval(nreddof);
-//       gmm::copy(MS.reduced_tangent_matrix(), MM);
-//       gmm::symmetric_qr_algorithm(MM, eigval, Q);
-//       std::sort(eigval.begin(), eigval.end());
-//       cout << "eival = " << eigval << endl;
+//     gmm::dense_matrix<value_type> MM(nreddof,nreddof), Q(nreddof,nreddof);
+//        std::vector<value_type> eigval(nreddof);
+//        gmm::copy(MS.reduced_tangent_matrix(), MM);
+//        // gmm::symmetric_qr_algorithm(MM, eigval, Q);
+//        gmm::implicit_qr_algorithm(MM, eigval, Q);
+//        std::sort(eigval.begin(), eigval.end());
+//        cout << "eival = " << eigval << endl;
 //       cout << "vectp : " << gmm::mat_col(Q, nreddof-1) << endl;
 //       cout << "vectp : " << gmm::mat_col(Q, nreddof-2) << endl;
 
 //       double emax, emin;
-//       cout << "condition number" << condition_number(MM, emax, emin) << endl;
+//       cout << "condition number" << condition_number(MM,emax,emin) << endl;
 //       cout << "emin = " << emin << endl;
 //       cout << "emax = " << emax << endl;
 
@@ -1692,7 +1693,8 @@ namespace getfem {
 	}
 
 	// Something should be done to detect oscillating behaviors ...
-	// alpha_max_ratio += (1-alpha_max_ratio) / mtype(10);
+        alpha_max_ratio += (mtype(1)-alpha_max_ratio) / mtype(10);
+	alpha_min *= mtype(1) - mtype(1)/mtype(10);
       }
       act_res = act_res_new; ++iter;
       

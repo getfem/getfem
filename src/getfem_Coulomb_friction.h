@@ -68,7 +68,7 @@ namespace getfem {
     mesh_fem *mf_u;
     gmm::sub_interval SUBU, SUBN, SUBT;
     
-    bool Tresca_version, symmetrized, contact_only;
+    bool Tresca_version, symmetrized, contact_only, stationary;
 
 
     template<typename VEC> static void ball_projection(const VEC &x,
@@ -114,9 +114,10 @@ namespace getfem {
 		    RLN);
       if (!contact_only) {
 	gmm::mult(BT, gmm::scaled(WT, -r),
-		 gmm::sub_vector(MS.state(), SUBT), RLT);
-	gmm::mult_add(BT, gmm::scaled(gmm::sub_vector(MS.state(), SUBU), -r),
-		      RLT);
+		    gmm::sub_vector(MS.state(), SUBT), RLT);
+	if (!stationary)
+	  gmm::mult_add(BT, gmm::scaled(gmm::sub_vector(MS.state(), SUBU), -r),
+			RLT);
       }
     }
 
@@ -165,10 +166,11 @@ namespace getfem {
 	    : - (MS.state())[SUBN.first()+i] * friction_coef[i];
 	  
 	  ball_projection_grad(gmm::sub_vector(RLT, SUBI), th, pg);
-	  gmm::mult(gmm::scaled(pg, -value_type(1)), 
-		    gmm::sub_matrix(BT, SUBI,
-				    gmm::sub_interval(0, gmm::mat_ncols(BT))),
-		    gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBU));
+	  if (!stationary)
+	    gmm::mult(gmm::scaled(pg, -value_type(1)), 
+		      gmm::sub_matrix(BT, SUBI,
+				   gmm::sub_interval(0, gmm::mat_ncols(BT))),
+		      gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBU));
 	  
 	  if (!Tresca_version) {
 	    ball_projection_grad_r(gmm::sub_vector(RLT, SUBI), th, vg);
@@ -270,6 +272,8 @@ namespace getfem {
       gmm::resize(threshold, nbc); gmm::resize(WT, mf_u->nb_dof());
     }
 
+    void set_stationary(bool b) { stationary = b; }
+
     void set_r(value_type r_) { r = r_; }
     value_type get_r(void) const { return r; }
     template <class VEC> void set_WT(const VEC &WT_) { gmm::copy(WT_, WT); }
@@ -291,7 +295,7 @@ namespace getfem {
     (mdbrick_abstract<MODEL_STATE> &problem, const MAT &BN_, const VEC &gap_,
      scalar_type FC_, const MAT &BT_, size_type num_fem_=0)
       : sub_problem(problem), num_fem(num_fem_) {
-      contact_only = false; Tresca_version = false; symmetrized = false;
+      contact_only = false; Tresca_version = symmetrized = stationary = false;
       init(gmm::mat_nrows(BN_));
       gmm::copy(BN_, BN); gmm::copy(BT_, BT); gmm::copy(gap_, gap);
       std::fill(friction_coef.begin(), friction_coef.end(), FC_);
@@ -301,7 +305,7 @@ namespace getfem {
     template <class MAT, class VEC> mdbrick_Coulomb_friction
     (mdbrick_abstract<MODEL_STATE> &problem, const MAT &BN_, const VEC &gap_,
      size_type num_fem_=0) : sub_problem(problem), num_fem(num_fem_) {
-      contact_only = true; Tresca_version = false; symmetrized = false;
+      contact_only = true; Tresca_version = symmetrized = stationary = false;
       init(gmm::mat_nrows(BN_));
       gmm::copy(BN_, BN); gmm::copy(gap_, gap);
     }

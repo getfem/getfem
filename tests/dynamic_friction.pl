@@ -31,10 +31,12 @@ PERIODICITY=0;          % Periodic condition
 DT_ADAPT = 0;           % Time step adaptation regarding the energy
 R = 100.0;              % Augmentation parameter
 DIRICHLET = 0;
-DIRICHLET_VAL = -0.2	   % parametre pour la condition de Dirichlet
+DIRICHLET_RATIO = -0.2	   % parametre pour la condition de Dirichlet
 INIT_VERT_SPEED = -100.0;  % Initial vertical velocity
 INIT_VERT_POS = 1.0;       % Initial vertical position
 FOUNDATION_HSPEED = 0.;    % Horizontal velocity of the rigid foundation
+STATIONARY = 0;            % Initial condition is the stationary solution ?
+PERT_STATIONARY = 0.0;     % Perturbation on the initial velocity
 FEM_TYPE = 'FEM_PK(2, 1)';     % Main FEM
 DATA_FEM_TYPE = 'FEM_PK(2,1)'; % must be defined for non-Lagrangian main FEM
 INTEGRATION = 'IM_TRIANGLE(6)'; % Quadrature rule
@@ -61,7 +63,7 @@ MESHNAME='meshes/disc_P2_h4.mesh';
 % MESHNAME='disc_P2_h0.3.mesh';
 ROOTFILENAME = 'dynamic_friction';     % Root of data files.
 DX_EXPORT = 0 % export solution to an OpenDX file ?
-
+DT_EXPORT = 0.001; % Time step for the export
 
 ;
 close(TMPF);

@@ -75,14 +75,15 @@ struct friction_problem {
                /* 3 = middle point with separated contact forces.            */
   size_type N, noisy, nocontact_mass;
   scalar_type beta, theta, gamma;
-  plain_vector Dirichlet_displacement;
   scalar_type T, dt, r;
-  scalar_type init_vert_pos, init_vert_speed, hspeed;
-  bool dt_adapt, periodic, dxexport;
+  scalar_type init_vert_pos, init_vert_speed, hspeed, dtexport;
+  scalar_type pert_stationary, Dirichlet_ratio;
+  bool dt_adapt, periodic, dxexport, Dirichlet, init_stationary;
 
   std::string datafilename;
   ftool::md_param PARAM;
 
+  void stationary(plain_vector &U0, plain_vector &LN, plain_vector &LT);
   void solve(void);
   void init(void);
   friction_problem(void) : mf_u(mesh), mf_rhs(mesh), mf_coef(mesh) {}
@@ -138,9 +139,8 @@ void friction_problem::init(void) {
   beta = PARAM.real_value("BETA", "Parameter beta for Newmark");
   gamma = PARAM.real_value("GAMMA", "Parameter gamma for Newmark");
 
-  bool Dirichlet = PARAM.int_value("DIRICHLET","Dirichlet condition or not");
-  Dirichlet_displacement.resize(N);
-  Dirichlet_displacement[N-1] = PARAM.real_value("DIRICHLET_VAL",
+  Dirichlet = PARAM.int_value("DIRICHLET","Dirichlet condition or not");
+  Dirichlet_ratio = PARAM.real_value("DIRICHLET_RATIO",
 				     "parameter for Dirichlet condition");
   T = PARAM.real_value("T", "from [0,T] the time interval");
   dt = PARAM.real_value("DT", "time step");
@@ -149,6 +149,8 @@ void friction_problem::init(void) {
 	      != 0);
   dxexport = (PARAM.int_value("DX_EXPORT", "Exporting on OpenDX format")
 	      != 0);
+  dtexport = PARAM.real_value("DT_EXPORT", "time step for the export");
+  dtexport = dt * double(int(dtexport / dt + 0.5));
   nocontact_mass = PARAM.int_value("NOCONTACT_MASS", "Suppress the mass "
 				   "of contact nodes");
   r = PARAM.real_value("R", "augmentation parameter");
@@ -156,11 +158,14 @@ void friction_problem::init(void) {
   init_vert_pos = PARAM.real_value("INIT_VERT_POS", "initial position");
   init_vert_speed = PARAM.real_value("INIT_VERT_SPEED","initial speed");
   hspeed = PARAM.real_value("FOUNDATION_HSPEED","initial speed");
+  init_stationary = (PARAM.int_value("STATIONARY",
+				     "initial condition is stationary") != 0);
+  pert_stationary = PARAM.real_value("PERT_STATIONARY",
+				     "Perturbation on the initial velocity");
   mf_u.set_qdim(N);
 
   /* set the finite element on the mf_u */
-  getfem::pfem pf_u = 
-    getfem::fem_descriptor(FEM_TYPE);
+  getfem::pfem pf_u = getfem::fem_descriptor(FEM_TYPE);
   getfem::pintegration_method ppi = 
     getfem::int_method_descriptor(INTEGRATION);
 
@@ -194,7 +199,7 @@ void friction_problem::init(void) {
 	base_small_vector un = mesh.normal_of_face_of_convex(cv, f);
 	un /= gmm::vect_norm2(un);	
 	base_node pt = mesh.points_of_face_of_convex(cv,f)[0];
-	if (un[N-1] < 0.0001 && (N != 3 || (bgeot::vect_dist2(pt, center)
+	if (un[N-1] < -0.000001 && (N != 3 || (bgeot::vect_dist2(pt, center)
 			   > .99*sqrt(25. + 15*15) && pt[N-1] < 20.1)))
 	  mf_u.add_boundary_elt(CONTACT_BOUNDARY, cv, f); 
 	if (un[0] > 0.98) mf_u.add_boundary_elt(PERIODIC_BOUNDARY1, cv, f); 
@@ -204,6 +209,99 @@ void friction_problem::init(void) {
       }
     }
   }
+}
+
+/**************************************************************************/
+/*  Computation of the stationary solution.                               */
+/**************************************************************************/
+
+void friction_problem::stationary(plain_vector &U0, plain_vector &LN,
+				  plain_vector &LT) {
+  size_type nb_dof_rhs = mf_rhs.nb_dof();
+  N = mesh.dim();
+
+  // Linearized elasticity brick.
+  getfem::mdbrick_isotropic_linearized_elasticity<>
+    ELAS(mf_u, mf_coef, lambda, mu, true);
+
+  // Defining the volumic source term.
+  plain_vector F(nb_dof_rhs * N);
+  plain_vector f(N); f[N-1] = -rho*PG;
+  for (size_type i = 0; i < nb_dof_rhs; ++i)
+      gmm::copy(f,gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
+  
+  // Volumic source term brick.
+  getfem::mdbrick_source_term<> VOL_F(ELAS, mf_rhs, F);
+
+  // Dirichlet condition brick.
+  gmm::clear(F);
+  for (size_type i = 0; i < nb_dof_rhs; ++i)
+    F[(i+1)*N-1] = Dirichlet_ratio * mf_rhs.point_of_dof(i)[N-1];
+  getfem::mdbrick_Dirichlet<> DIRICHLET(VOL_F, mf_rhs, F, DIRICHLET_BOUNDARY);
+
+  // contact condition for Lagrange elements
+  dal::bit_vector cn = mf_u.dof_on_boundary(CONTACT_BOUNDARY);
+  if (periodic) cn.setminus(mf_u.dof_on_boundary(PERIODIC_BOUNDARY1));
+  sparse_matrix BN(cn.card()/N, mf_u.nb_dof());
+  sparse_matrix BT((N-1)*cn.card()/N, mf_u.nb_dof());
+  plain_vector gap(cn.card()/N);
+  size_type jj = 0;
+  for (dal::bv_visitor i(cn); !i.finished(); ++i)
+    if (i % N == 0) {
+      BN(jj, i+N-1) = -1.;
+      gap[jj] = mf_u.point_of_dof(i)[N-1];
+      for (size_type k = 0; k < N-1; ++k) BT((N-1)*jj+k, i+k) = 1.;
+      ++jj;
+    }
+
+  getfem::mdbrick_Coulomb_friction<>
+    FRICTION(DIRICHLET, BN, gap,
+	     friction_coef * ((scheme == 3) ? (1./theta) : 1.), BT);
+
+  // Eventual periodic condition (lagrange element only).
+  sparse_matrix BP(0,mf_u.nb_dof());
+  if (periodic) {
+    dal::bit_vector b1 = mf_u.dof_on_boundary(PERIODIC_BOUNDARY1);
+    dal::bit_vector b2 = mf_u.dof_on_boundary(PERIODIC_BOUNDARY2);
+    dal::bit_vector bd = mf_u.dof_on_boundary(DIRICHLET_BOUNDARY);
+    b1.setminus(bd); b2.setminus(bd);
+    gmm::resize(BP, b1.card(), mf_u.nb_dof());
+    size_type k =0;
+    for (dal::bv_visitor i(b1); !i.finished(); ++i, ++k)
+      if (i % N == 0) {
+	for (dal::bv_visitor j(b2); !j.finished(); ++j) 
+	  if (j % N == 0) {
+	    base_node pt = mf_u.point_of_dof(i) - mf_u.point_of_dof(j);
+	    pt[0] = 0.;
+	    if (gmm::vect_norm2(pt) < 1E-4) {
+	      for (size_type l = 0; l < N; ++l)
+		{ BP(k+l, i+l) = 1.; BP(k+l, j+l) = -1.; }
+	      break; 
+	    }
+	  }
+      }
+  }
+  gmm::resize(F, gmm::mat_nrows(BP)); gmm::clear(F);
+  getfem::mdbrick_constraint<> PERIODIC(FRICTION, BP, F);
+  
+  cout << "Total number of variables: " << PERIODIC.nb_dof() << endl;
+  getfem::standard_model_state MS(PERIODIC);
+  
+  FRICTION.set_r(r); 
+   
+  plain_vector WT(mf_u.nb_dof()), HSPEED(mf_u.nb_dof());
+  for (size_type i=0; i < mf_u.nb_dof(); ++i)
+    if ((i % N) == 0) HSPEED[i] = -hspeed;
+  FRICTION.set_WT(HSPEED);
+  FRICTION.set_stationary(true);
+
+  gmm::iteration iter(residu, 0, 40000);
+  getfem::standard_solve(MS, PERIODIC, iter);
+
+  gmm::copy(ELAS.get_solution(MS), U0);
+  gmm::copy(FRICTION.get_LN(MS), LN);
+  gmm::copy(FRICTION.get_LT(MS), LT);
+
 }
 
 /**************************************************************************/
@@ -231,16 +329,40 @@ void friction_problem::solve(void) {
   // Dirichlet condition brick.
   gmm::clear(F);
   for (size_type i = 0; i < nb_dof_rhs; ++i)
-    gmm::copy(Dirichlet_displacement,
-	      gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
+    F[(i+1)*N-1] = Dirichlet_ratio * mf_rhs.point_of_dof(i)[N-1];
   getfem::mdbrick_Dirichlet<> DIRICHLET(VOL_F, mf_rhs, F, DIRICHLET_BOUNDARY);
+  
+  // Dynamic brick.
+  getfem::mdbrick_dynamic<> DYNAMIC(DIRICHLET, mf_coef, rho);
+  if (nocontact_mass) DYNAMIC.no_mass_on_boundary(CONTACT_BOUNDARY);
+
+  // contact condition for Lagrange elements
+  dal::bit_vector cn = mf_u.dof_on_boundary(CONTACT_BOUNDARY);
+  if (periodic) cn.setminus(mf_u.dof_on_boundary(PERIODIC_BOUNDARY1));
+  sparse_matrix BN(cn.card()/N, mf_u.nb_dof());
+  sparse_matrix BT((N-1)*cn.card()/N, mf_u.nb_dof());
+  plain_vector gap(cn.card()/N);
+  size_type jj = 0;
+  for (dal::bv_visitor i(cn); !i.finished(); ++i)
+    if (i % N == 0) {
+      BN(jj, i+N-1) = -1.;
+      gap[jj] = mf_u.point_of_dof(i)[N-1];
+      for (size_type k = 0; k < N-1; ++k) BT((N-1)*jj+k, i+k) = 1.;
+      ++jj;
+    }
+
+  getfem::mdbrick_Coulomb_friction<>
+    FRICTION(DYNAMIC, BN, gap,
+	     friction_coef * ((scheme == 3) ? (1./theta) : 1.), BT);
 
   // Eventual periodic condition (lagrange element only).
-  getfem::mdbrick_abstract<> *PERIODIC;
+  sparse_matrix BP(0,mf_u.nb_dof());
   if (periodic) {
     dal::bit_vector b1 = mf_u.dof_on_boundary(PERIODIC_BOUNDARY1);
     dal::bit_vector b2 = mf_u.dof_on_boundary(PERIODIC_BOUNDARY2);
-    sparse_matrix BP(b1.card(), mf_u.nb_dof());
+    dal::bit_vector bd = mf_u.dof_on_boundary(DIRICHLET_BOUNDARY);
+    b1.setminus(bd); b2.setminus(bd);
+    gmm::resize(BP, b1.card(), mf_u.nb_dof());
     size_type k =0;
     for (dal::bv_visitor i(b1); !i.finished(); ++i, ++k)
       if (i % N == 0) {
@@ -255,52 +377,51 @@ void friction_problem::solve(void) {
 	    }
 	  }
       }
-    gmm::resize(F, b1.card()); gmm::clear(F);
-    PERIODIC = new getfem::mdbrick_constraint<>(DIRICHLET, BP, F);
   }
-  else PERIODIC = &DIRICHLET;
+  gmm::resize(F, gmm::mat_nrows(BP)); gmm::clear(F);
+  getfem::mdbrick_constraint<> PERIODIC(FRICTION, BP, F);
   
-  // Dynamic brick.
-  getfem::mdbrick_dynamic<> DYNAMIC(*PERIODIC, mf_coef, rho);
-  if (nocontact_mass) DYNAMIC.no_mass_on_boundary(CONTACT_BOUNDARY);
-
-  // contact condition for Lagrange elements
-  dal::bit_vector cn = mf_u.dof_on_boundary(CONTACT_BOUNDARY);
-  sparse_matrix BN(cn.card()/N, mf_u.nb_dof());
-  sparse_matrix BT((N-1)*cn.card()/N, mf_u.nb_dof());
-  plain_vector gap(cn.card()/N);
-  size_type j = 0;
-  for (dal::bv_visitor i(cn); !i.finished(); ++i)
-    if (i % N == 0) {
-      BN(j, i+N-1) = -1.;
-      gap[j] = mf_u.point_of_dof(i)[N-1];
-      for (size_type k = 0; k < N-1; ++k) BT((N-1)*j+k, i+k) = 1.;
-      ++j;
-    }
-  getfem::mdbrick_Coulomb_friction<> FRICTION(DYNAMIC, BN, gap,
-					      friction_coef, BT);
-  cout << "BT = " << BT << endl;
-
-  cout << "Total number of variables: " << FRICTION.nb_dof() << endl;
-  getfem::standard_model_state MS(FRICTION);
+  cout << "Total number of variables: " << PERIODIC.nb_dof() << endl;
+  getfem::standard_model_state MS(PERIODIC);
 
   plain_vector WT(mf_u.nb_dof()), DF(mf_u.nb_dof()), HSPEED(mf_u.nb_dof());
   plain_vector U0(mf_u.nb_dof()), V0(mf_u.nb_dof()), A0(mf_u.nb_dof());
   plain_vector U1(mf_u.nb_dof()), V1(mf_u.nb_dof()), A1(mf_u.nb_dof());
-  scalar_type a(1), b(1), dt0 = dt, t(0);
+  plain_vector LT0(gmm::mat_nrows(BT)), LN0(gmm::mat_nrows(BN));
+  scalar_type a(1), b(1), dt0 = dt, t(0), t_export(dtexport);
+  scalar_type J_friction0(0), J_friction1(0);
 
   // Initial conditions (U0, V0, M A0 = F)
-  gmm::clear(U0); gmm::clear(V0);
+  gmm::clear(U0); gmm::clear(V0); gmm::clear(LT0);
   for (size_type i=0; i < mf_u.nb_dof(); ++i)
     if ((i % N) == 0) { 
-      U0[i+N-1] = init_vert_pos;
-      V0[i+N-1] = init_vert_speed;
+      U0[i+N-1] = Dirichlet ? (Dirichlet_ratio * mf_u.point_of_dof(i)[N-1])
+	: init_vert_pos;
+      V0[i+N-1] = Dirichlet ? 0.0 : init_vert_speed;
       HSPEED[i] = hspeed;
     }
+  
+  if (init_stationary) {
+    stationary(U0, LN0, LT0);
+    scalar_type aa(0), bb(0);
+    switch(scheme) {
+    case 0 : aa = bb = dt*dt*theta*theta; break;
+    case 1 : aa = bb = dt*dt*beta*0.5; break;
+    case 2 : aa = bb = dt*dt*0.25; break;
+    case 3 : aa = theta*dt*dt*0.5; bb = dt*dt*0.5; break;
+    }
+    gmm::scale(LN0, aa); gmm::scale(LT0, bb);
+    gmm::fill_random(V0); gmm::scale(V0, pert_stationary);
+  }
+ 
+
   gmm::iteration iter(residu, 0, 40000);
-  if ((scheme == 0 || scheme == 1) && !nocontact_mass)
-    gmm::cg(DYNAMIC.mass_matrix(), A0, VOL_F.source_term(),
-	    gmm::identity_matrix(), iter);
+  if ((scheme == 0 || scheme == 1) && !nocontact_mass) {
+    plain_vector FA(mf_u.nb_dof());
+    gmm::mult(ELAS.stiffness_matrix(), gmm::scaled(U0, -1.0),
+	      VOL_F.source_term(), FA);
+    gmm::cg(DYNAMIC.mass_matrix(), A0, FA, gmm::identity_matrix(), iter);
+  }
   iter.set_noisy(noisy);
 
   scalar_type J0 = 0.5*gmm::vect_sp(ELAS.stiffness_matrix(), U0, U0)
@@ -310,9 +431,13 @@ void friction_problem::solve(void) {
   std::auto_ptr<getfem::dx_export> exp;
   getfem::stored_mesh_slice sl;
   if (dxexport) {
-    exp.reset(new getfem::dx_export(datafilename + ".dx", true));
-    sl.build(mesh, getfem::slicer_boundary(mesh),4);
-    exp->exporting(sl,true); exp->exporting_mesh_edges();
+    exp.reset(new getfem::dx_export(datafilename + ".dx", false));
+    if (N <= 2)
+      sl.build(mesh, getfem::slicer_none(),4);
+    else
+      sl.build(mesh, getfem::slicer_boundary(mesh),4);
+    exp->exporting(sl,true);
+    exp->exporting_mesh_edges();
     exp->write_point_data(mf_u, U0, "stepinit"); 
     exp->serie_add_object("deformationsteps");
   }
@@ -362,7 +487,7 @@ void friction_problem::solve(void) {
     DYNAMIC.set_DF(DF);
     
     iter.init();
-    getfem::standard_solve(MS, FRICTION, iter);
+    getfem::standard_solve(MS, PERIODIC, iter);
     gmm::copy(ELAS.get_solution(MS), U1); 
 
 //     {
@@ -372,9 +497,11 @@ void friction_problem::solve(void) {
 //       cout << "Contact pressure : " << FRICTION.get_LN(MS) << endl;
 //     }
 
-    switch (scheme) { // computation of U^{n+1}, V^{n+1}, A^{n+1}
+    switch (scheme) { // computation of U^{n+1}, V^{n+1}, A^{n+1}, J_friction1
     case 0 :
       gmm::add(gmm::scaled(U1, 1./dt), gmm::scaled(U0, -1./dt), V1);
+      J_friction1 = J_friction0 + (1.-theta) * gmm::vect_sp(BT, V1, LT0)/dt
+	+ theta * gmm::vect_sp(BT, V1, FRICTION.get_LT(MS))/dt;
       gmm::add(gmm::scaled(V0, -(1.-theta)), V1);
       gmm::scale(V1, 1./theta);
       gmm::add(gmm::scaled(V1, 1./dt), gmm::scaled(V0, -1./dt), A1);
@@ -384,6 +511,8 @@ void friction_problem::solve(void) {
     case 1 :
       gmm::add(gmm::scaled(U1, 2./(beta*dt*dt)),
 	       gmm::scaled(U0, -2./(beta*dt*dt)), A1);
+      J_friction1 = J_friction0 + (1.-gamma)*gmm::vect_sp(BT,V1,LT0)
+	+ theta * gmm::vect_sp(BT, V1, FRICTION.get_LT(MS));
       gmm::add(gmm::scaled(V0, -2./(beta*dt)), A1);
       gmm::add(gmm::scaled(A0, -(1. - beta)/beta), A1);
       gmm::add(gmm::scaled(A0, (1.-gamma)*dt), gmm::scaled(A1, gamma*dt), V1);
@@ -393,11 +522,14 @@ void friction_problem::solve(void) {
       gmm::copy(U1, V1);
       gmm::add(gmm::scaled(V1, 2.), gmm::scaled(U0, -1.), U1);
       gmm::add(gmm::scaled(U1, 2./dt), gmm::scaled(U0, -2./dt), V1);
+      J_friction1 = J_friction0
+	+ 2. * gmm::vect_sp(BT, V1, FRICTION.get_LT(MS)) / dt;
       gmm::add(gmm::scaled(V0, -1), V1);
       break;
     case 3 :
       gmm::mult(gmm::transposed(BN), FRICTION.get_LN(MS), A1);
       gmm::add(gmm::scaled(U1, 2./dt), gmm::scaled(U0, -2./dt), V1);
+      J_friction1 = J_friction0 + gmm::vect_sp(BT,V1,FRICTION.get_LT(MS))/dt;
       gmm::add(gmm::scaled(V0, -1), V1);
       break;
     }
@@ -412,19 +544,21 @@ void friction_problem::solve(void) {
       cout << "Trying with dt = " << dt << endl;
     }
     else {
-      t += dt;    cout << "t = " << t << " dt = " << dt;
-      cout << " total energy : " << J1 << endl;
+      t += dt;
+      cout << "t = " << t << " dt = " << dt << " total energy : " << J1
+	   << " frictional energy : " << J_friction1 << endl;
       dt = std::min(2.*dt, dt0);
 
       gmm::copy(U1, U0); gmm::copy(V1, V0); gmm::copy(A1, A0); J0 = J1;
-       if (dxexport) {
+      J_friction0 = J_friction1; gmm::copy(FRICTION.get_LT(MS), LT0);
+       if (dxexport && t >= t_export-dt/20.0) {
 	 exp->write_point_data(mf_u, U0);
 	 exp->serie_add_object("deformationsteps");
+	 t_export += dtexport;
        }
     }
     
   }
-  if (periodic) delete PERIODIC;
 }
   
 /**************************************************************************/
@@ -446,6 +580,14 @@ int main(int argc, char *argv[]) {
     p.solve();
   }
   DAL_STANDARD_CATCH_ERROR;
+
+  cout << "To see the simulation, you have to set DX_EXPORT to 1 in "
+    "dynamic_friction.param and DT_EXPORT to a suitable value (for "
+    "instance equal to DT). Then you can use Open_DX (type just \"dx\" "
+    "if it is installed on your system) with the Visual Program "
+    "dynamic_friction.net (use for instance \"Edit Visual Programs ...\" "
+    "with dynamic_friction.net, then \"execute once\" in Execute menu and "
+    "use the sequencer to start the animation).\n";
 
   return 0; 
 }
