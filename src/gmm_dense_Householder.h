@@ -55,13 +55,8 @@ namespace gmm {
       typename linalg_traits<row_type>::iterator
 	it = vect_begin(row), ite = vect_end(row);
       typename linalg_traits<VecY>::const_iterator ity = vect_const_begin(y);
-#   ifdef USING_BROKEN_GCC295
-      for (; it != ite; ++it, ++ity)
-	const_cast<T &>(*it) += conj_product(*ity, *itx);
-#   else
       T tx = *itx;
       for (; it != ite; ++it, ++ity) *it += conj_product(*ity, tx);
-#   endif
     }
   }
 
@@ -79,13 +74,8 @@ namespace gmm {
       typename linalg_traits<col_type>::iterator
 	it = vect_begin(col), ite = vect_end(col);
       typename linalg_traits<VecX>::const_iterator itx = vect_const_begin(x);
-#   ifdef USING_BROKEN_GCC295
-      for (; it != ite; ++it, ++itx)
-	const_cast<T &>(*it) += conj_product(*ity, *itx);
-#   else
       T ty = *ity;
-      for (; it != ite; ++it, ++itx) *it += conj_product(ty, *itx); 
-#   endif
+      for (; it != ite; ++it, ++itx) *it += conj_product(ty, *itx);
     }
   }
   
@@ -117,16 +107,9 @@ namespace gmm {
 	it = vect_begin(row), ite = vect_end(row);
       typename linalg_traits<VecX>::const_iterator itx2 = vect_const_begin(x);
       typename linalg_traits<VecY>::const_iterator ity1 = vect_const_begin(y);
-#   ifdef USING_BROKEN_GCC295
-      typedef typename linalg_traits<Matrix>::value_type T;
-      for (; it != ite; ++it, ++ity1, ++itx2)
-	const_cast<T &>(*it) += conj_product(*ity1, *itx1)
-	                      + conj_product(*itx2, *ity2);
-#   else
       value_type tx = *itx1, ty = *ity2;
       for (; it != ite; ++it, ++ity1, ++itx2)
 	*it += conj_product(*ity1, tx) + conj_product(*itx2, ty);
-#   endif
     }
   }
 
@@ -146,16 +129,9 @@ namespace gmm {
 	it = vect_begin(col), ite = vect_end(col);
       typename linalg_traits<VecX>::const_iterator itx1 = vect_const_begin(x);
       typename linalg_traits<VecY>::const_iterator ity2 = vect_const_begin(y);
-#   ifdef USING_BROKEN_GCC295
-      typedef typename linalg_traits<Matrix>::value_type T;
-      for (; it != ite; ++it, ++itx1, ++ity2)
-	const_cast<T &>(*it) += conj_product(*ity1, *itx1)
-	                      + conj_product(*itx2, *ity2);
-#   else
       value_type ty = *ity1, tx = *itx2;
       for (; it != ite; ++it, ++itx1, ++ity2)
 	*it += conj_product(ty, *itx1) + conj_product(tx, *ity2); 
-#   endif
     }
   }
   

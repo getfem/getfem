@@ -134,12 +134,6 @@ namespace gmm {
   (std::ostream &o, const scaled_vector_const_ref<V>& m)
   { gmm::write(o,m); return o; }
 
-#ifdef USING_BROKEN_GCC295
-  template <typename V> struct linalg_traits<const scaled_vector_const_ref<V> > 
-    : public linalg_traits<scaled_vector_const_ref<V> > {};
-#endif
-
-
   /* ********************************************************************* */
   /*		Scaled references on matrices            		   */
   /* ********************************************************************* */
@@ -237,12 +231,6 @@ namespace gmm {
   (std::ostream &o, const scaled_row_matrix_const_ref<M>& m)
   { gmm::write(o,m); return o; }
 
-#ifdef USING_BROKEN_GCC295
-  template <typename M>
-  struct linalg_traits<const scaled_row_matrix_const_ref<M> > 
-    : public linalg_traits<scaled_row_matrix_const_ref<M> > {};
-#endif
-
 
   template <typename M> struct scaled_col_const_iterator {
     typedef scaled_col_const_iterator<M> iterator;
@@ -337,12 +325,6 @@ namespace gmm {
   (std::ostream &o, const scaled_col_matrix_const_ref<M>& m)
   { gmm::write(o,m); return o; }
 
-
-#ifdef USING_BROKEN_GCC295
-  template <typename M>
-  struct linalg_traits<const scaled_col_matrix_const_ref<M> > 
-    : public linalg_traits<scaled_col_matrix_const_ref<M> > {};
-#endif
 
   template <typename L, typename R> struct scaled_return__ {
     typedef abstract_null_type return_type;

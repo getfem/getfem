@@ -131,13 +131,6 @@ namespace gmm {
     (std::ostream &o, const conjugated_vector_const_ref<V>& m)
   { gmm::write(o,m); return o; }
 
-#ifdef USING_BROKEN_GCC295
-  template <typename V>
-  struct linalg_traits<const conjugated_vector_const_ref<V> > 
-    : public linalg_traits<conjugated_vector_const_ref<V> > {};
-#endif
-
-
   /* ********************************************************************* */
   /*		Conjugated references on matrices            		   */
   /* ********************************************************************* */
@@ -232,12 +225,6 @@ namespace gmm {
   (std::ostream &o, const conjugated_row_matrix_const_ref<M>& m)
   { gmm::write(o,m); return o; }
 
-#ifdef USING_BROKEN_GCC295
-  template <typename M>
-  struct linalg_traits<const conjugated_row_matrix_const_ref<M> > 
-    : public linalg_traits<conjugated_row_matrix_const_ref<M> > {};
-#endif
-
 
   template <typename M> struct conjugated_col_const_iterator {
     typedef conjugated_col_const_iterator<M> iterator;
@@ -328,13 +315,6 @@ namespace gmm {
   template<typename M> std::ostream &operator <<
   (std::ostream &o, const conjugated_col_matrix_const_ref<M>& m)
   { gmm::write(o,m); return o; }
-
-
-#ifdef USING_BROKEN_GCC295
-  template <typename M>
-  struct linalg_traits<const conjugated_col_matrix_const_ref<M> > 
-    : public linalg_traits<conjugated_col_matrix_const_ref<M> > {};
-#endif
 
 
   template <typename L, typename SO> struct conjugated_return__ {

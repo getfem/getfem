@@ -101,11 +101,6 @@ namespace gmm {
     static void resize(this_type &v, size_type n) { v.resize(n); }
   };
 
-#ifdef USING_BROKEN_GCC295
-  template <typename T> struct linalg_traits<const bgeot::vsvector<T> > 
-    : public linalg_traits<bgeot::vsvector<T> > {};
-#endif
-
   template <typename VECT> struct linalg_traits<bgeot::PT<VECT> > {
     typedef bgeot::PT<VECT> this_type;
     typedef this_type origin_type;
@@ -135,11 +130,6 @@ namespace gmm {
     { return it[i]; }
     static void resize(this_type &v, size_type n) { v.resize(n); }
   };
-
-#ifdef USING_BROKEN_GCC295
-  template <typename VECT> struct linalg_traits<const bgeot::PT<VECT> >
-  : public linalg_traits<bgeot::PT<VECT> > {};
-#endif
 
 }
 

@@ -159,12 +159,6 @@ namespace gmm {
   std::ostream &operator <<(std::ostream &o, const gen_row_vector<PT>& m)
   { gmm::write(o,m); return o; }
 
-#ifdef USING_BROKEN_GCC295
-  template <typename PT>
-  struct linalg_traits<const gen_row_vector<PT> >
-    : public linalg_traits<gen_row_vector<PT> > {};
-#endif
-
   /* ********************************************************************* */
   /*	     col vector -> transform a vector in a (n, 1) matrix.          */
   /* ********************************************************************* */
@@ -287,14 +281,6 @@ namespace gmm {
   template <typename PT>
   std::ostream &operator <<(std::ostream &o, const gen_col_vector<PT>& m)
   { gmm::write(o,m); return o; }
-
-#ifdef USING_BROKEN_GCC295
-  template <typename PT>
-  struct linalg_traits<const gen_col_vector<PT> >
-    : public linalg_traits<gen_col_vector<PT> > {};
-#endif
-
-
 
   /* ******************************************************************** */
   /*		col and row vectors                                       */

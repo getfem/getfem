@@ -116,12 +116,6 @@ namespace gmm {
     for (; it != ite; ++it) clear(col(it));
   }
   
-
-#ifdef USING_BROKEN_GCC295
-  template <typename PT> struct linalg_traits<const transposed_row_ref<PT> > 
-  : public linalg_traits<transposed_row_ref<PT> > {}; 
-#endif
-
   template<typename PT> std::ostream &operator <<
   (std::ostream &o, const transposed_row_ref<PT>& m)
   { gmm::write(o,m); return o; }
@@ -203,12 +197,6 @@ namespace gmm {
     row_iterator it = mat_row_begin(v), ite = mat_row_end(v);
     for (; it != ite; ++it) clear(row(it));
   }
-
-
-#ifdef USING_BROKEN_GCC295
-  template <typename PT> struct linalg_traits<const transposed_col_ref<PT> > 
-  : public linalg_traits<transposed_col_ref<PT> > {}; 
-#endif
 
   template<typename PT> std::ostream &operator <<
   (std::ostream &o, const transposed_col_ref<PT>& m)

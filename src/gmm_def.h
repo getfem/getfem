@@ -714,7 +714,6 @@ namespace gmm {
   }
   template<typename T> inline T default_min(std::complex<T>)
   { return default_min(T()); }
-
   
 }
 

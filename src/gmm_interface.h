@@ -186,11 +186,6 @@ namespace gmm {
   std::ostream &operator << (std::ostream &o, const simple_vector_ref<PT>& v)
   { gmm::write(o,v); return o; }
 
-#ifdef USING_BROKEN_GCC295
-  template <typename PT> struct linalg_traits<const simple_vector_ref<PT> >
-  : public linalg_traits<simple_vector_ref<PT> > {};
-#endif
-
   /* ********************************************************************* */
   /*		                                         		   */
   /*		Traits for S.T.L. object                     		   */
@@ -232,10 +227,6 @@ namespace std {
   (std::ostream &o, const vector<T>& m) { gmm::write(o,m); return o; }
 }
 namespace gmm {
-#ifdef USING_BROKEN_GCC295
-  template <typename T> struct linalg_traits<const std::vector<T> > 
-    : public linalg_traits<std::vector<T> > {};
-#endif
 
   template <typename T>
   inline size_type nnz(const std::vector<T>& l) { return l.size(); }
@@ -309,10 +300,6 @@ namespace gmm {
   (std::ostream &o, const tab_ref_with_origin<IT, V>& m)
   { gmm::write(o,m); return o; }
 
-#ifdef USING_BROKEN_GCC295
-  template <typename IT, typename V> struct linalg_traits<const tab_ref_with_origin<IT, V> >
-    : public linalg_traits<tab_ref_with_origin<IT> >{};
-#endif
 
   template <typename IT, typename V>
   struct tab_ref_reg_spaced_with_origin : public dal::tab_ref_reg_spaced<IT> {
@@ -374,11 +361,6 @@ namespace gmm {
   (std::ostream &o, const tab_ref_reg_spaced_with_origin<IT, V>& m)
   { gmm::write(o,m); return o; }
 
-#ifdef USING_BROKEN_GCC295
-  template <typename IT, typename V> 
-  struct linalg_traits<const tab_ref_reg_spaced_with_origin<IT, V> >
-    : public linalg_traits<tab_ref_reg_spaced_with_origin<IT, V> > {};
-#endif
 
   template <typename IT, typename ITINDEX, typename V>
   struct tab_ref_index_ref_with_origin 
@@ -441,11 +423,6 @@ namespace gmm {
   (std::ostream &o, const tab_ref_index_ref_with_origin<IT, ITINDEX, V>& m)
   { gmm::write(o,m); return o; }
 
-#ifdef USING_BROKEN_GCC295
-  template <typename IT, typename ITINDEX, typename V>
-  struct linalg_traits<const tab_ref_index_ref_with_origin<IT, ITINDEX, V> >
-    : public  linalg_traits<tab_ref_index_ref_with_origin<IT, ITINDEX, V> > {};
-#endif
 
   template<typename ITER, typename MIT, typename PT> 
   struct dense_compressed_iterator {
@@ -682,11 +659,6 @@ namespace gmm {
     { return col(itcol)[j]; }
   };
 
-#ifdef USING_BROKEN_GCC295
-  template <typename PT1, typename PT2, typename PT3, int shift>
-  struct linalg_traits<const csc_matrix_ref<PT1, PT2, PT3, shift> >
-    : public linalg_traits<csc_matrix_ref<PT1, PT2, PT3, shift> > {};
-#endif
 
   template <typename PT1, typename PT2, typename PT3, int shift>
   std::ostream &operator <<

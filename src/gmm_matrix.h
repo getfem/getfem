@@ -200,11 +200,6 @@ namespace gmm
     { DAL_THROW(failure_error, "Sorry, to be done"); }
   };
 
-#ifdef USING_BROKEN_GCC295
-  template <typename V> struct linalg_traits<const row_matrix<V> >
-    : public linalg_traits<row_matrix<V> > {};
-#endif
-
   template<typename V> std::ostream &operator <<
     (std::ostream &o, const row_matrix<V>& m) { gmm::write(o,m); return o; }
 
@@ -307,11 +302,6 @@ namespace gmm
 
   template<typename V> std::ostream &operator <<
     (std::ostream &o, const col_matrix<V>& m) { gmm::write(o,m); return o; }
-
-#ifdef USING_BROKEN_GCC295
-  template <typename V> struct linalg_traits<const col_matrix<V> >
-    : public linalg_traits<col_matrix<V> > {};
-#endif
 
   /* ******************************************************************** */
   /*		                                            		  */
@@ -470,11 +460,6 @@ namespace gmm
   template<typename T> std::ostream &operator <<
     (std::ostream &o, const dense_matrix<T>& m) { gmm::write(o,m); return o; }
 
-#ifdef USING_BROKEN_GCC295
-  template <typename T> struct linalg_traits<const dense_matrix<T> >
-    : public linalg_traits<dense_matrix<T> > {};
-#endif
-
   /* ******************************************************************** */
   /*                                                                      */
   /*	        Read only compressed sparse column matrix                 */
@@ -602,12 +587,6 @@ namespace gmm
     static value_type access(const const_col_iterator &itcol, size_type j)
     { return col(itcol)[j]; }
   };
-
-#ifdef USING_BROKEN_GCC295
-  template <typename T, int shift>
-  struct linalg_traits<const csc_matrix<T, shift> >
-    : public linalg_traits<csc_matrix<T, shift> > {};
-#endif
 
   template <typename T, int shift>
   std::ostream &operator <<
@@ -754,12 +733,6 @@ namespace gmm
     static value_type access(const const_row_iterator &itrow, size_type j)
     { return row(itrow)[j]; }
   };
-
-#ifdef USING_BROKEN_GCC295
-  template <typename T, int shift>
-  struct linalg_traits<const csr_matrix<T, shift> >
-    : public linalg_traits<csr_matrix<T, shift> > {};
-#endif
 
   template <typename T, int shift>
   std::ostream &operator <<

@@ -280,11 +280,6 @@ namespace gmm
   template<typename T> std::ostream &operator <<
   (std::ostream &o, const wsvector<T>& v) { gmm::write(o,v); return o; }
 
-#ifdef USING_BROKEN_GCC295
-  template <typename T> struct linalg_traits<const wsvector<T> >
-    : public linalg_traits<wsvector<T> > {};
-#endif
-
   /******* Optimized BLAS for wsvector<T> **********************************/
 
   template <typename T> inline void copy(const wsvector<T> &v1, wsvector<T> &v2) {
@@ -535,11 +530,6 @@ namespace gmm
 
   template<typename T> std::ostream &operator <<
   (std::ostream &o, const rsvector<T>& v) { gmm::write(o,v); return o; }
-
-#ifdef USING_BROKEN_GCC295
-  template <typename T> struct linalg_traits<const rsvector<T> >
-    : public linalg_traits<rsvector<T> > {};
-#endif
 
   /******* Optimized operations for rsvector<T> ****************************/
 
@@ -907,11 +897,6 @@ namespace gmm
 
   template<typename T> std::ostream &operator <<
   (std::ostream &o, const slvector<T>& v) { gmm::write(o,v); return o; }
-
-#ifdef USING_BROKEN_GCC295
-  template <typename T> struct linalg_traits<const slvector<T> >
-    : public linalg_traits<slvector<T> > {};
-#endif
 
   template <typename T>
   inline size_type nnz(const slvector<T>& l) { return l.last() - l.first(); }

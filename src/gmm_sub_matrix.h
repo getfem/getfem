@@ -182,11 +182,6 @@ namespace gmm {
 			    const gen_sub_row_matrix<PT, SUBI1, SUBI2>& m)
   { gmm::write(o,m); return o; }
 
-#ifdef USING_BROKEN_GCC295
-  template <typename PT, typename SUBI1, typename SUBI2>
-  struct linalg_traits<const gen_sub_row_matrix<PT, SUBI1, SUBI2> >
-    : public linalg_traits<gen_sub_row_matrix<PT, SUBI1, SUBI2> > {};
-#endif
 
   /* ********************************************************************* */
   /*		sub column matrices type                                   */
@@ -331,12 +326,6 @@ namespace gmm {
   template <typename PT, typename SUBI1, typename SUBI2> std::ostream &operator <<
   (std::ostream &o, const gen_sub_col_matrix<PT, SUBI1, SUBI2>& m)
   { gmm::write(o,m); return o; }
-
-#ifdef USING_BROKEN_GCC295
-  template <typename PT, typename SUBI1, typename SUBI2>
-  struct linalg_traits<const gen_sub_col_matrix<PT, SUBI1, SUBI2> >
-    : public linalg_traits<gen_sub_col_matrix<PT, SUBI1, SUBI2> > {};
-#endif
 
   /* ******************************************************************** */
   /*		sub matrices                                              */

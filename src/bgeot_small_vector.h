@@ -135,7 +135,6 @@ namespace bgeot {
     typedef const T & const_reference;
     typedef T *iterator;
     typedef const T * const_iterator;
-    typedef this_type vector_type;
 
     void out_of_range_error(void) const { DAL_THROW(std::out_of_range, "out of range"); }
     reference operator[](size_type l) { if (l >= size()) out_of_range_error(); return base()[l]; }

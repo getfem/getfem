@@ -348,13 +348,7 @@ namespace getfem {
       m.clear();
       throw exc;
     }
-    catch (
-#ifdef USING_BROKEN_GCC295
-	   std::logic_error &exc
-#else
-	   std::ios_base::failure& exc
-#endif
-	   ) {
+    catch (std::ios_base::failure& exc) {
       m.clear();
       DAL_THROW(dal::failure_error, "error while importing " << format << " mesh file \"" << filename << "\" : " << exc.what());
     }
