@@ -10,12 +10,12 @@ LZ = 30.0;		% size in Z.
 %LAMBDA = 11500;   	% Lamé coefficient.
 MU = 5;
 LAMBDA = 10;
-FRICTION_COEF = 0.0;    % Friction coefficient.
+FRICTION_COEF = 0.3;    % Friction coefficient.
 PG = 9810; 		% gravitation constante (on earth) (mm/s^2).
 %PG = 1000000; 		% gravitation constante (on jupiter !) (mm/s^2).
 RHO = 6e-6;     	% "realistic" density for steel
-T = 0.2;
-DT = 0.001;            % Time step
+T = 0.1;
+DT = 0.0001;            % Time step
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
@@ -23,10 +23,10 @@ MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 %MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
 NX = 10;            	          % space step.
 MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
-RESIDU = 1E-9;     	% residu for conjugate gradient.
+RESIDU = 1E-9;     	% residu for Newton.
 NOISY = 0;
 
-SCHEME = 2; % 0 = theta-method, 1 = Newmark, 2 = middle point
+SCHEME = 3; % 0 = theta-method, 1 = Newmark, 2 = middle point
             % 3 = middle point with modified contact forces
 THETA = 1.0;
 BETA = 1.0;
@@ -40,7 +40,7 @@ DIRICHLET = 0;
 DIRICHLET_RATIO = -0.2	   % parametre pour la condition de Dirichlet
 INIT_VERT_SPEED = -100.0;  % Initial vertical velocity
 INIT_VERT_POS = 1.0;       % Initial vertical position
-FOUNDATION_HSPEED = 0.3;   % Horizontal velocity of the rigid foundation
+FOUNDATION_HSPEED = 0.0;   % Horizontal velocity of the rigid foundation
 STATIONARY = 0;            % Initial condition is the stationary solution ?
 PERT_STATIONARY = 0.0;     % Perturbation of the initial velocity
 

@@ -19,7 +19,7 @@ DT = 0.001;             % Time step
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 NX = 10;            	          % space step.
 MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
-RESIDU = 1E-15;     	% residu for conjugate gradient.
+RESIDU = 1E-15;     	% residu for Newton.
 NOISY = 0;
 SCHEME = 3; % 0 = theta-method, 1 = Newmark, 2 = middle point
             % 3 = middle point with modified contact forces
