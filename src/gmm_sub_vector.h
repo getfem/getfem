@@ -165,6 +165,7 @@ namespace gmm {
     typedef this_type * pthis_type;
     typedef PT pV;
     typedef typename std::iterator_traits<PT>::value_type V;
+    typedef typename index_is_sorted<SUBI>::bool_type index_sorted;
     typedef typename linalg_traits<V>::is_reference V_reference;
     typedef typename linalg_traits<V>::origin_type origin_type;
     typedef typename select_ref<const origin_type *, origin_type *,
@@ -473,6 +474,14 @@ namespace gmm {
   }; 
 
   template <typename PT>
+  struct svrt_ir<PT, unsorted_sub_index, abstract_dense> {
+    typedef typename std::iterator_traits<PT>::value_type V;
+    typedef typename vect_ref_type<PT,  V>::iterator iterator;
+    typedef tab_ref_index_ref_with_origin<iterator,
+      unsorted_sub_index::const_iterator, V> vector_type;
+  }; 
+
+  template <typename PT>
   struct svrt_ir<PT, sub_interval, abstract_dense> {
     typedef typename std::iterator_traits<PT>::value_type V;
     typedef typename vect_ref_type<PT,  V>::iterator iterator;
@@ -494,6 +503,11 @@ namespace gmm {
   template <typename PT>
   struct svrt_ir<PT, sub_index, abstract_skyline> {
     typedef sparse_sub_vector<PT, sub_index> vector_type;
+  };
+
+  template <typename PT>
+  struct svrt_ir<PT, unsorted_sub_index, abstract_skyline> {
+    typedef sparse_sub_vector<PT, unsorted_sub_index> vector_type;
   };
 
 

@@ -585,21 +585,38 @@ namespace gmm {
     return vect_sp_sparse_(vect_const_begin(v2), vect_const_end(v2), v1);
   }
 
+
   template <typename V1, typename V2> inline
-    typename linalg_traits<V1>::value_type
-    vect_sp(const V1 &v1, const V2 &v2,abstract_sparse,abstract_sparse) {
+  typename linalg_traits<V1>::value_type
+  vect_sp_sparse_sparse(const V1 &v1, const V2 &v2, linalg_true) {
     typename linalg_traits<V1>::const_iterator it1 = vect_const_begin(v1),
       ite1 = vect_const_end(v1);
     typename linalg_traits<V2>::const_iterator it2 = vect_const_begin(v2),
       ite2 = vect_const_end(v2);
     typedef typename linalg_traits<V1>::value_type T;
     T res(0);
-    while (it1 != ite1 && it2 != ite2) {
-      if (it1.index() == it2.index())
-	{ res += (*it1) * T(*it2); ++it1; ++it2; }
-      else if (it1.index() < it2.index()) ++it1; else ++it2;
+      
+      while (it1 != ite1 && it2 != ite2) {
+	if (it1.index() == it2.index())
+	  { res += (*it1) * T(*it2); ++it1; ++it2; }
+	else if (it1.index() < it2.index()) ++it1; else ++it2;
+      }
+      return res;
     }
-    return res;
+  }
+
+  template <typename V1, typename V2> inline
+  typename linalg_traits<V1>::value_type
+  vect_sp_sparse_sparse(const V1 &v1, const V2 &v2, linalg_false) {
+    return vect_sp_sparse_(vect_const_begin(v1), vect_const_end(v1), v2);
+  }
+
+  template <typename V1, typename V2> inline
+    typename linalg_traits<V1>::value_type
+    vect_sp(const V1 &v1, const V2 &v2,abstract_sparse,abstract_sparse) {
+    return vect_sp_sparse_sparse(v1, v2,
+	    typename linalg_and<typename linalg_traits<V1>index_sorted,
+	    typename linalg_traits<V2>index_sorted>::bool_type());
   }
 
   /* ******************************************************************** */
@@ -632,7 +649,7 @@ namespace gmm {
   }
 
   /* ******************************************************************** */
-  /*		Euclidian norm                             		  */
+  /*		Euclidean norm                             		  */
   /* ******************************************************************** */
 
   template <typename V>
@@ -650,11 +667,9 @@ namespace gmm {
 
   template <typename V> inline
    typename number_traits<typename linalg_traits<V>::value_type>
-   ::magnitude_type
-   vect_norm2(const V &v)
+   ::magnitude_type 
+  vect_norm2(const V &v)
   { return sqrt(vect_norm2_sqr(v)); }
-
-
   
   template <typename V1, typename V2> inline
    typename number_traits<typename linalg_traits<V1>::value_type>
@@ -689,15 +704,11 @@ namespace gmm {
     return res;
   }
  
-
   template <typename V1, typename V2> inline
    typename number_traits<typename linalg_traits<V1>::value_type>
    ::magnitude_type
   vect_dist2(const V1 &v1, const V2 &v2)
   { return sqrt(vect_dist2_sqr(v1, v2)); }
-  
-
-
 
   template <typename M>
    typename number_traits<typename linalg_traits<M>::value_type>
@@ -920,9 +931,9 @@ namespace gmm {
   { clean(l, seuil, typename linalg_traits<L>::linalg_type()); }
 
   template <typename L> inline void clean(const L &l, double seuil)
-  { clean(linalg_const_cast(l), seuil);}
+  { clean(linalg_const_cast(l), seuil); }
 
-  template <typename L> inline void clean(L &l, double seuil, abstract_vector) {
+  template <typename L> inline void clean(L &l, double seuil,abstract_vector) {
     clean(l, seuil, typename linalg_traits<L>::storage_type(),
 	  typename linalg_traits<L>::value_type());
   }
@@ -980,20 +991,16 @@ namespace gmm {
     }
   }
 
-  template <typename L> inline void clean(L &l, double seuil, abstract_matrix) {
+  template <typename L> inline void clean(L &l, double seuil,abstract_matrix) {
     clean(l, seuil, typename principal_orientation_type<typename
 	  linalg_traits<L>::sub_orientation>::potype());
   }
   
-  template <typename L> void clean(L &l, double seuil, row_major) {
-    for (size_type i = 0; i < mat_nrows(l); ++i)
-      clean(mat_row(l, i), seuil);
-  }
+  template <typename L> void clean(L &l, double seuil, row_major)
+  { for (size_type i = 0; i < mat_nrows(l); ++i) clean(mat_row(l, i), seuil); }
 
-  template <typename L> void clean(L &l, double seuil, col_major) {
-    for (size_type i = 0; i < mat_ncols(l); ++i)
-      clean(mat_col(l, i), seuil);
-  }
+  template <typename L> void clean(L &l, double seuil, col_major)
+  { for (size_type i = 0; i < mat_ncols(l); ++i) clean(mat_col(l, i), seuil); }
 
   /* ******************************************************************** */
   /*		Copy                                    		  */
@@ -1534,10 +1541,10 @@ namespace gmm {
 		 vect_const_begin(l2), vect_const_end(l2),
 		 vect_begin(l3), vect_end(l3));
   }
-  
+
+
   template <typename L1, typename L2, typename L3>
-  void add(const L1& l1, const L2& l2, L3& l3,
-	   abstract_sparse, abstract_sparse, abstract_sparse) {
+  void add_spspsp(const L1& l1, const L2& l2, L3& l3, linalg_true) {
     typename linalg_traits<L1>::const_iterator
       it1 = vect_const_begin(l1), ite1 = vect_const_end(l1);
     typename linalg_traits<L2>::const_iterator
@@ -1554,6 +1561,18 @@ namespace gmm {
     }
     for (; it1 != ite1; ++it1) l3[it1.index()] += *it1;
     for (; it2 != ite2; ++it2) l3[it2.index()] += *it2;   
+  }
+
+  template <typename L1, typename L2, typename L3>
+  void add_spspsp(const L1& l1, const L2& l2, L3& l3, linalg_false)
+  { copy(l2, l3); add(l2, l3); }
+  
+  template <typename L1, typename L2, typename L3>
+  void add(const L1& l1, const L2& l2, L3& l3,
+	   abstract_sparse, abstract_sparse, abstract_sparse) {
+    add_spspsp(l1, l2, l3, typename linalg_and<typename
+	       linalg_traits<L1>::index_sorted,
+	       typename linalg_traits<L2>::index_sorted>::bool_type());
   }
 
   template <typename L1, typename L2>

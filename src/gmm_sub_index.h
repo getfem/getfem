@@ -80,7 +80,6 @@ namespace gmm {
 
   };
 
-
   struct sub_index {
 
     typedef basic_index base_type;
@@ -123,6 +122,16 @@ namespace gmm {
       return *this;
     }
   };
+
+  struct unsorted_sub_index : public sub_index {
+    template <typename IT> unsorted_sub_index(IT it, IT ite)
+      : sub_index(it, ite) {}
+    template <typename CONT> unsorted_sub_index(const CONT &c)
+      : sub_index(c) {}
+    unsorted_sub_index(const unsorted_sub_index &si) : sub_index(si) {}
+    unsorted_sub_index &operator =(const unsorted_sub_index &si)
+    { return sub_index::operator =(si); }
+  }
 
   inline std::ostream &operator << (std::ostream &o, const sub_index &si) { 
     o << "sub_index(";
@@ -172,6 +181,10 @@ namespace gmm {
       << ")"; return o;
   }
 
+  template<class SUBI> struct index_is_sorted
+  {  typedef linalg_true bool_type; };
+  struct index_is_sorted<unsorted_sub_index>
+  {  typedef linalg_false bool_type; };
 
 }
 

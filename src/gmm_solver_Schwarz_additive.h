@@ -348,7 +348,7 @@ namespace gmm {
     mtype alpha, alpha_min = mtype(1)/mtype(8), alpha_mult = mtype(3)/mtype(4);
     
     while(!iter.finished(std::min(act_res, precond_res))) {
-      for (int SOR_step = 1;  SOR_step >= 0; --SOR_step) {
+      for (int SOR_step = 0;  SOR_step >= 0; --SOR_step) {
 	gmm::clear(rhs);
 	for (size_type isd = 0; isd < NS.get_vB().size(); ++isd) {
 	  const MatrixBi &Bi = (NS.get_vB())[isd];
@@ -455,8 +455,15 @@ namespace gmm {
 		      const std::vector<Matrix2> &ml1,
 		      const std::vector<Matrix3> &ml2,
 		      const std::vector<SUBI> &cor,
-		      const Vector2 &f,
-		      iteration &iter) {
+		      const Vector2 &f, iteration &iter) IS_DEPRECATED;
+  
+  template <typename Matrix1, typename Matrix2, typename Matrix3,
+	    typename SUBI,    typename Vector2, typename Vector3>
+  int schwarz_additif(const Matrix1 &A, Vector3 &u,
+		      const std::vector<Matrix2> &ml1,
+		      const std::vector<Matrix3> &ml2,
+		      const std::vector<SUBI> &cor,
+		      const Vector2 &f, iteration &iter) {
 
     typedef typename linalg_traits<Matrix2>::value_type value_type;
     typedef typename dense_vector_type<value_type>::vector_type vector_type;

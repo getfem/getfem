@@ -62,6 +62,15 @@ namespace gmm {
   struct linalg_true {};
   struct linalg_false {};
 
+  template <typename V, typename W> struct linalg_and
+  { typedef linalg_false bool_type; };
+  struct linalg_and<linalg_true, linalg_true>
+  { typedef linalg_true bool_type; };
+  template <typename V, typename W> struct linalg_or
+  { typedef linalg_true bool_type; };
+  struct linalg_and<linalg_false, linalg_false>
+  { typedef linalg_false bool_type; };
+
   struct linalg_const {};       // A reference is either linalg_const,
   struct linalg_modifiable {};  //  linalg_modifiable or linalg_false.
 
@@ -104,6 +113,7 @@ namespace gmm {
     typedef abstract_null_type& reference;
     typedef abstract_null_type* iterator;
     typedef const abstract_null_type* const_iterator;
+    typedef abstract_null_type index_sorted;
     typedef abstract_null_type storage_type;
     typedef abstract_null_type origin_type;
     typedef abstract_null_type const_sub_row_type;

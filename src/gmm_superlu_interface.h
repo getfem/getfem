@@ -320,7 +320,7 @@ namespace gmm {
       Create_Dense_Matrix(&SX, m, 1, &sol[0], m);
 
       if (info != 0) {
-	cout << "Mat = " << csc_A << endl;
+	// cout << "Mat = " << csc_A << endl;
 	DAL_THROW(failure_error, "SuperLU solve failed: info=" << info);
       }
       is_init = true;
