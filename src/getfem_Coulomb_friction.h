@@ -39,7 +39,8 @@
 namespace getfem {
 
   /* ******************************************************************** */
-  /*		Mixed nonlinear incompressible condition brick.           */
+  /*   	Unilateral contact and Coulomb friction condition brick.          */
+  /*    (for conformal small displacement problems)                       */
   /* ******************************************************************** */
 
 # define MDBRICK_COULOMB_FRICTION 434245
@@ -72,9 +73,9 @@ namespace getfem {
 
     template<typename VEC> static void ball_projection(const VEC &x,
 						       value_type radius) {
-      radius = std::max(value_type(0), radius);
       value_type a = gmm::vect_norm2(x);
-      if (a > radius) gmm::scale(const_cast<VEC&>(x), radius/a); 
+      if (radius <= 0) gmm::clear(const_cast<VEC&>(x));
+      else if (a > radius) gmm::scale(const_cast<VEC&>(x), radius/a); 
     }
 
     template<class VEC, class VECR>
@@ -88,17 +89,16 @@ namespace getfem {
 
     template <class VEC, class MAT>
     static void ball_projection_grad(const VEC &x, double radius, MAT &g) {
-      if (radius > value_type(0)) {
-	gmm::copy(gmm::identity_matrix(), g);
-	value_type a = gmm::vect_norm2(x);
-	if (a >= radius) { 
-	  gmm::scale(g, radius/a);
-	  for (size_type i = 0; i < x.size(); ++i)
-	    for (size_type j = 0; j < x.size(); ++j)
-	      g(i,j) -= radius*x[i]*x[j] / (a*a*a);
-	}
+      if (radius <= value_type(0)) { gmm::clear(g); return; }
+      gmm::copy(gmm::identity_matrix(), g);
+      value_type a = gmm::vect_norm2(x);
+      if (a >= radius) { 
+	gmm::scale(g, radius/a);
+	// gmm::rank_one_update(g, gmm::scaled(x, -radius/(a*a*a)), x);
+	for (size_type i = 0; i < x.size(); ++i)
+	  for (size_type j = 0; j < x.size(); ++j)
+	    g(i,j) -= radius*x[i]*x[j] / (a*a*a);
       }
-      else gmm::clear(g);
     }
 
     void precomp(MODEL_STATE &MS, size_type i0) {
@@ -133,7 +133,7 @@ namespace getfem {
     virtual size_type nb_dof(void)
     { return sub_problem.nb_dof() + gmm::mat_nrows(BN)+gmm::mat_nrows(BT); }
 
-    inline size_type nb_contact_nodes(void) const 
+    inline size_type nb_contact_nodes(void) const
     { return gmm::mat_nrows(BN); }
 
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
@@ -146,7 +146,6 @@ namespace getfem {
       gmm::copy(gmm::scaled(BN, value_type(-1)),
 		gmm::sub_matrix(MS.tangent_matrix(), SUBN, SUBU));
       gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBN));
-      // cout << "RLN = " << RLN << endl; getchar(); 
       for (size_type i=0; i < nb_contact_nodes(); ++i) {
 	if (RLN[i] >= value_type(0)) {
 	  gmm::clear(gmm::sub_matrix(MS.tangent_matrix(),
@@ -161,6 +160,7 @@ namespace getfem {
 	
 	for (size_type i=0; i < nb_contact_nodes(); ++i) {
 	  gmm::sub_interval SUBI(i*(d-1), d-1);
+	  gmm::sub_interval SUBJ(SUBT.first()+i*(d-1),(d-1));
 	  value_type th = Tresca_version ? threshold[i]
 	    : - (MS.state())[SUBN.first()+i] * friction_coef[i];
 	  
@@ -168,8 +168,7 @@ namespace getfem {
 	  gmm::mult(gmm::scaled(pg, -value_type(1)), 
 		    gmm::sub_matrix(BT, SUBI,
 				    gmm::sub_interval(0, gmm::mat_ncols(BT))),
-		    gmm::sub_matrix(MS.tangent_matrix(), gmm::sub_interval
-				    (SUBT.first()+i*(d-1),(d-1)), SUBU));
+		    gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBU));
 	  
 	  if (!Tresca_version) {
 	    ball_projection_grad_r(gmm::sub_vector(RLT, SUBI), th, vg);
@@ -179,8 +178,7 @@ namespace getfem {
 	  }
 	  for (size_type j = 0; j < d-1; ++j) pg(j,j) -= value_type(1);
 	  gmm::copy(gmm::scaled(pg,value_type(1)/r), 
-		    gmm::sub_matrix(MS.tangent_matrix(), gmm::sub_interval
-				    (SUBT.first()+i*(d-1),(d-1))));
+		    gmm::sub_matrix(MS.tangent_matrix(), SUBJ));
 	}
       }
       
@@ -223,12 +221,10 @@ namespace getfem {
     
       for (size_type i=0; i < nb_contact_nodes(); ++i) {
 	RLN[i] = std::min(value_type(0), RLN[i]);
-	if (!contact_only) {
-	  value_type th = Tresca_version ?
-	    threshold[i] : -friction_coef[i]*RLN[i];
+	if (!contact_only)
 	  ball_projection(gmm::sub_vector(RLT, gmm::sub_interval(i*(d-1),d-1)),
-			  th);
-	}
+			  Tresca_version ? threshold[i]
+			  : -friction_coef[i]*(MS.state())[SUBN.first()+i]);
       }
 
       if (symmetrized) {

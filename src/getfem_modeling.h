@@ -1567,8 +1567,9 @@ namespace getfem {
     size_type dim = problem.dim();
 
     bool is_linear = problem.is_linear();
+    // mtype alpha, alpha_min=mtype(1)/mtype(20);
     mtype alpha, alpha_min=mtype(1)/mtype(20);
-    mtype alpha_mult=mtype(3)/mtype(4), alpha_max_ratio(1.5);
+    mtype alpha_mult=mtype(3)/mtype(4), alpha_max_ratio=mtype(3)/mtype(2);
     dal::bit_vector mixvar;
     gmm::iteration iter_linsolv0 = iter;
     iter_linsolv0.set_maxiter(10000);
@@ -1678,7 +1679,10 @@ namespace getfem {
 	VECTOR stateinit(ndof);
 	gmm::copy(MS.state(), stateinit);
        
-	for (alpha = mtype(1); alpha >= alpha_min; alpha *= alpha_mult) {
+	if ((iter.get_iteration() % 10) || (iter.get_iteration() == 0))
+	  alpha = mtype(1); else alpha = mtype(1)/mtype(2);
+	
+	for (; alpha >= alpha_min; alpha *= alpha_mult) {
 	  gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
 	  problem.compute_residu(MS);
 	  MS.compute_reduced_residu();
@@ -1686,8 +1690,12 @@ namespace getfem {
 	  act_res_new = MS.reduced_residu_norm();
 	  if (act_res_new <= act_res * alpha_max_ratio) break;
 	}
+
+	// Something should be done to detect oscillating behaviors ...
+	// alpha_max_ratio += (1-alpha_max_ratio) / mtype(10);
       }
       act_res = act_res_new; ++iter;
+      
 
       if (iter.get_noisy()) cout << "alpha = " << alpha << " ";
     }

@@ -274,11 +274,12 @@ void friction_problem::solve(void) {
     if (i % N == 0) {
       BN(j, i+N-1) = -1.;
       gap[j] = mf_u.point_of_dof(i)[N-1];
-      for (size_type k = 0; k < N-1; ++k) BT(j+k, i+k) = 1.;
+      for (size_type k = 0; k < N-1; ++k) BT((N-1)*j+k, i+k) = 1.;
       ++j;
     }
   getfem::mdbrick_Coulomb_friction<> FRICTION(DYNAMIC, BN, gap,
 					      friction_coef, BT);
+  cout << "BT = " << BT << endl;
 
   cout << "Total number of variables: " << FRICTION.nb_dof() << endl;
   getfem::standard_model_state MS(FRICTION);
@@ -364,12 +365,12 @@ void friction_problem::solve(void) {
     getfem::standard_solve(MS, FRICTION, iter);
     gmm::copy(ELAS.get_solution(MS), U1); 
 
-    {
-      plain_vector w(gmm::mat_nrows(BN));
-      gmm::mult(BN, U1, gmm::scaled(gap, -1.), w);
-      cout << "Normal dep : " << w << endl;
-      cout << "Contact pressure : " << FRICTION.get_LN(MS) << endl;
-    }
+//     {
+//       plain_vector w(gmm::mat_nrows(BN));
+//       gmm::mult(BN, U1, gmm::scaled(gap, -1.), w);
+//       cout << "Normal dep : " << w << endl;
+//       cout << "Contact pressure : " << FRICTION.get_LN(MS) << endl;
+//     }
 
     switch (scheme) { // computation of U^{n+1}, V^{n+1}, A^{n+1}
     case 0 :
@@ -416,8 +417,10 @@ void friction_problem::solve(void) {
       dt = std::min(2.*dt, dt0);
 
       gmm::copy(U1, U0); gmm::copy(V1, V0); gmm::copy(A1, A0); J0 = J1;
-      exp->write_point_data(mf_u, U0);
-      exp->serie_add_object("deformationsteps");
+       if (dxexport) {
+	 exp->write_point_data(mf_u, U0);
+	 exp->serie_add_object("deformationsteps");
+       }
     }
     
   }
