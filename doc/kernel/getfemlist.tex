@@ -29,12 +29,13 @@
 \begin{center}
   \includegraphics[width=10cm,angle=0]{getfem_logo.eps}\\[0.2cm]
   a Generic Finite Element library in C++ \\[0.5cm]
+  {\LARGE Documentation, part \Huge 3} \\[0.5cm]
   \begin{largebox} \begin{center}
       \Huge \sc Description of Finite Element and Integration Methods
   \end{center}  \end{largebox}
   \\[0.5cm]
   { \large Yves \sc Renard\footnote{ \it MIP, INSAT, Complexe scientifique de Rangueil, 31077 Toulouse, France, Yves.Renard@gmm.insa-tlse.fr } } \\[1.0cm]
-      July 31, 2002\\[1.0cm]
+      \today \\[1.0cm]
 \end{center}
 
 % \begin{abstract}
@@ -83,7 +84,7 @@ where {\tt "name of method"} is a string to be choosen among the existing method
 
 A finite element method is defined on a reference element $\overline{T} \subset \Reel^P$ by a set of $n_d$ nodes $a^i$ and corresponding base functions 
 $$ \overline{\varphi}^i : \overline{T} \subset \Reel^P \longrightarrow \Reel^Q. $$
-Each base function corresponds to degree of freedom (d.o.f).
+Each base function corresponds to a degree of freedom (d.o.f).
 Most finite element methods are scalar, which means that $Q = 1$, but GETFEM++ support also intrinsic vectorial elements. The map between the reference element and the real element is called the geometric transformation and is denoted by 
 $$ \tau :  \overline{T} \longrightarrow T, $$
 and is supposed to be polynomial (see \cite{dh-to1984} or \cite{BAS_COMP}). The base functions $\overline{\varphi}^i$ defined on the reference element define a set of base function on the real element defined by
@@ -195,23 +196,23 @@ When between two elements of the same degrees (even with different dimensions), 
 For some applications (computation of a gradient for instance) one does not want the d.o.f. of a common face to be linked. This is why there are two versions of the classical ``$P_K$'' Lagrange element.\\[1cm]
 
 \begin{center}
-\begin{tabular}{|m{13.68cm}|} \hline 
+\begin{tabular}{|m{16.109cm}|} \hline
 {\bf Classical ``$P_K$'' Lagrange element}\\
 {\tt "FEM\_PK(P, K)"} 
 \end{tabular} \\ \vspace{-1pt} 
-\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
-\small $K$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 1 \le P \le 255$} & $\Frac{(K+P)!}{K! P!}$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)} \\ \hline
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial \\ \hline
+\small $K$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 1 \le P \le 255$} & $\Frac{(K+P)!}{K! P!}$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)} & Yes \\ \hline
 \end{tabular}
 \end{center}
 \begin{center}
-\begin{tabular}{|m{13.68cm}|} \hline 
+\begin{tabular}{|m{16.109cm}|} \hline 
 {\bf Discontinuous ``$P_K$'' Lagrange element}\\
 {\tt "FEM\_PK\_DISCONTINUOUS(P, K)"} 
 \end{tabular} \\ \vspace{-1pt} 
-\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
-\small $K$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 1 \le P \le 255$} & $\Frac{(K+P)!}{K! P!}$ & discon-tinuous & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)} \\ \hline
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial \\ \hline
+\small $K$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 1 \le P \le 255$} & $\Frac{(K+P)!}{K! P!}$ & discon-tinuous & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)} & Yes \\ \hline
 \end{tabular}
 \end{center}$\ $\\[3cm]
 
@@ -257,53 +258,126 @@ A prism in dimension $P > 1$ is the direct product of a simplex of dimension $P-
 
 
 \begin{center}
-\begin{tabular}{|m{13.68cm}|} \hline 
+\begin{tabular}{|m{16.109cm}|} \hline 
 {\bf $Q_K$ Lagrange element on parallelepipeds}\\
 {\tt "FEM\_QK(P, K)"} 
 \end{tabular} \\ \vspace{-1pt} 
-\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
-\small $KP$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 2 \le P \le 255$} & $(K+1)^P$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)} \\ \hline
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial \\ \hline
+\small $KP$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 2 \le P \le 255$} & $(K+1)^P$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)}  & Yes \\ \hline
 \end{tabular}
 \end{center}
 
 \begin{center}
-\begin{tabular}{|m{13.68cm}|} \hline 
+\begin{tabular}{|m{16.109cm}|} \hline 
 {\bf $P_K \otimes P_K$ Lagrange element on prisms}\\
 {\tt "FEM\_PK\_PRISM(P, K)"} 
 \end{tabular} \\ \vspace{-1pt} 
-\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
-\small $2K$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 2 \le P \le 255$} & \mbox{$(K+1)$} \mbox{$\times \Frac{(K+P-1)!}{K! (P-1)!}$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)} \\ \hline
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
+\small $2K$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 2 \le P \le 255$} & \mbox{$(K+1)$} \mbox{$\times \Frac{(K+P-1)!}{K! (P-1)!}$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)}  & Yes\\ \hline
 \end{tabular}
 \end{center}
 
 \begin{center}
-\begin{tabular}{|m{13.68cm}|} \hline 
+\begin{tabular}{|m{16.109cm}|} \hline 
 {\bf $P_{K_1} \otimes P_{K_2}$ Lagrange element on prisms}\\
 {\tt "FEM\_PRODUCT(FEM\_PK(P-1, K$_1$), FEM\_PK(1, K$_2$))"} 
 \end{tabular} \\ \vspace{-1pt} 
-\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
-\small \mbox{$K_1+K_2$}, \tiny \mbox{$0 \le K_1,K_2 \le 255$} & \small $P$, \mbox{$\ 2 \le P \le 255$} & \mbox{$(K_2+1)$} \mbox{$\times \Frac{(K_1+P-1)!}{K_1! (P-1)!}$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)} \\ \hline
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
+\small \mbox{$K_1+K_2$}, \tiny \mbox{$0 \le K_1,K_2 \le 255$} & \small $P$, \mbox{$\ 2 \le P \le 255$} & \mbox{$(K_2+1)$} \mbox{$\times \Frac{(K_1+P-1)!}{K_1! (P-1)!}$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)}  & Yes\\ \hline
 \end{tabular}
 \end{center}
 
 \subsection{Elements with hierarchical basis}
 
-to be descirbed ...
+The idea behind hierarchical basis is the desciption of the solution at different level : a rought level, a more refined level ... In the same discretisation some degrees of freedom represent the rought description, some other the more rafined and so on. This correspond to imbricated spaces of discretisation. The hierarchical basis contains a basis of each of those spaces (this is not the case in classical Lagrange elements when the mesh is refined).\\[0.5cm]
+Among the advantages, the condition number of  rigidity matrices can be greatly improved, it allows local raffinement and a resolution with a multigrid approach.
+
 
 \subsubsection{Hiercarchical elements with respect to the degree}
 
-to be descirbed ...
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=5cm,angle=0]{getfemlist_segment_hier.eps}
+  \end{center}
+  \caption{ \it $P_K$ Hierarchical element on a segment, $C^0$} 
+  \label{fig:seg_hier}
+\end{figure}
+
+
+\begin{center}
+\begin{tabular}{|m{16.109cm}|} \hline 
+{\bf $P_{K}$ Classical Lagrange element on simplexes but with a hierarchical basis with respect to the degree}\\
+{\tt "FEM\_PK\_HIERARCHICAL(P,K)"} 
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
+\small \mbox{$K$}, \small \mbox{$0 \le K\le 255$} & \small $P$, \mbox{$\ 1 \le P \le 255$} & \mbox{$\Frac{(K_1+P)!}{K_1! P!}$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)}  & Yes\\ \hline
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tabular}{|m{16.109cm}|} \hline 
+{\bf $Q_{K}$ Classical Lagrange element on parallelepipeds but with a hierarchical basis with respect to the degree}\\
+{\tt "FEM\_QK\_HIERARCHICAL(P,K)"} 
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
+\small \mbox{$K$}, \small \mbox{$0 \le K\le 255$} & \small $P$, \mbox{$\ 2 \le P \le 255$} & \mbox{$(K+1)^P$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)}  & Yes\\ \hline
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tabular}{|m{16.109cm}|} \hline 
+{\bf $P_{K}$ Classical Lagrange element on prisms but with a hierarchical basis with respect to the degree}\\
+{\tt "FEM\_PK\_PRISM\_HIERARCHICAL(P,K)"} 
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
+\small \mbox{$K$}, \small \mbox{$0 \le K\le 255$} & \small $P$, \mbox{$\ 2 \le P \le 255$} & \mbox{$(K+1)$} \mbox{$\times \Frac{(K+P-1)!}{K! (P-1)!}$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)}  & Yes\\ \hline
+\end{tabular}
+\end{center}
+
+
+
+to be described ...
+
+some particular choices : $P_4$ will be build with the basis of the $P_1$, the additional basis of the $P_2$ then the additionnal basis of the $P_4$.
+
+$P_6$ will be build  with the basis of the $P_1$, the additional basis of the $P_2$ then the additionnal basis of the $P_6$ (not with the basis of the $P_1$, 
+the additional basis of the $P_3$ then the additionnal basis of the $P_6$, this is possible to build the latter with {\tt "FEM\_GEN\_HIERARCHICAL(a,b)})
 
 \subsubsection{Composite elements}
 
-to be descirbed ...
+The principal interest of the composite elements is to build hierarchical elements. But this tool can also be used to build piecewise polynomial elements.
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P1comp.eps}
+  \end{center}
+  \caption{ \it composite element {\tt "FEM\_STRUCTURED\_COMPOSITE(FEM\_PK(2,1), 3)"}} 
+  \label{fig:triangle_comp}
+\end{figure}
+
+
+to be described ...
+
+\begin{center}
+\begin{tabular}{|m{16.109cm}|} \hline 
+{\bf composition of a finite element method on a element with {\tt K} subdivisions}\\
+{\tt "FEM\_STRUCTURED\_COMPOSITE(FEM1, K)"} 
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
+\small degree of FEM1 & \small dimension of FEM1 & variable & variable & No \mbox{($Q = 1$)} & If {\tt FEM1} is  & piecewise\\ \hline
+\end{tabular}
+\end{center}
 
 \subsubsection{Hierarchical composite elements}
 
-to be descirbed ...
+to be described ...
 
 \subsection{Specific elements in dimension 1}
 
@@ -324,13 +398,13 @@ Base functions on the reference element
 This element is close to be \mbox{$\tau$-equivalent} but it is not. On the real element the value of the gradient on vertices will be multiplied by the gradient of the geometric transformation, This has to be corrected. The matrix $\tilde{M}$ is not equal to identity but is still diagonal.
 
 \begin{center}
-\begin{tabular}{|m{14.18cm}|} \hline 
+\begin{tabular}{|m{16.11cm}|} \hline 
 {\bf Hermite element on the segment}\\
 {\tt "FEM\_HERMITE\_SEGMENT"}
 \end{tabular} \\ \vspace{-1pt} 
-\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
-$3$ & $1$ & $4$ & $C^1$ & No \mbox{($Q = 1$)} & No \\ \hline
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.2cm}|m{2cm}|m{2cm}|m{1.8cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
+$3$ & $1$ & $4$ & $C^1$ & No \mbox{($Q = 1$)} & No & Yes\\ \hline
 \end{tabular}
 \end{center}
 
@@ -345,13 +419,13 @@ $3$ & $1$ & $4$ & $C^1$ & No \mbox{($Q = 1$)} & No \\ \hline
 to be described ...
 
 \begin{center}
-\begin{tabular}{|m{14.18cm}|} \hline 
+\begin{tabular}{|m{16.11cm}|} \hline 
 { \bf Lagrange $P_1$ element with an additional internal bubble function}\\
 {\tt "PK\_WITH\_CUBIC\_BUBBLE(1, 1)"} 
 \end{tabular} \\ \vspace{-1pt} 
-\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
-$2$ & $1$ & $3$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \\ \hline
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.2cm}|m{2cm}|m{2cm}|m{1.8cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
+$2$ & $1$ & $3$ & $C^0$ & No \mbox{($Q = 1$)} & Yes & Yes\\ \hline
 \end{tabular}
 \end{center}
 
@@ -372,13 +446,13 @@ $2$ & $1$ & $3$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \\ \hline
 to be described ...
 
 \begin{center}
-\begin{tabular}{|m{14.18cm}|} \hline 
+\begin{tabular}{|m{16.11cm}|} \hline 
 { \bf Lagrange $P_1$ or $P_2$ element with an additional internal bubble function}\\
 {\tt "PK\_WITH\_CUBIC\_BUBBLE(2, K)"} 
 \end{tabular} \\ \vspace{-1pt} 
-\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
-$3$ & $2$ & $4$ or $7$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \\ \hline
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.2cm}|m{2cm}|m{2cm}|m{1.8cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
+$3$ & $2$ & $4$ or $7$ & $C^0$ & No \mbox{($Q = 1$)} & Yes & Yes\\ \hline
 \end{tabular}
 \end{center}
 
@@ -393,13 +467,13 @@ $3$ & $2$ & $4$ or $7$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \\ \hline
 to be described ...
 
 \begin{center}
-\begin{tabular}{|m{14.18cm}|} \hline 
+\begin{tabular}{|m{16.11cm}|} \hline 
 { \bf Lagrange $P_1$ element with an additional bubble function on face 0}\\
 {\tt "P1\_BUBBLE\_FACE(2)"} 
 \end{tabular} \\ \vspace{-1pt} 
-\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
-$2$ & $2$ & $4$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \\ \hline
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.2cm}|m{2cm}|m{2cm}|m{1.8cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
+$2$ & $2$ & $4$ & $C^0$ & No \mbox{($Q = 1$)} & Yes & Yes\\ \hline
 \end{tabular}
 \end{center}
 
@@ -414,13 +488,13 @@ $2$ & $2$ & $4$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \\ \hline
 to be described ...
 
 \begin{center}
-\begin{tabular}{|m{14.18cm}|} \hline 
+\begin{tabular}{|m{16.11cm}|} \hline 
 { \bf $P_1$ Lagrange element on a triangle with additional d.o.f on face 0}\\
 {\tt "P1\_BUBBLE\_FACE\_LAG"} 
 \end{tabular} \\ \vspace{-1pt} 
-\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
-$2$ & $2$ & $4$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \\ \hline
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.2cm}|m{2cm}|m{2cm}|m{1.8cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
+$2$ & $2$ & $4$ & $C^0$ & No \mbox{($Q = 1$)} & Yes & Yes\\ \hline
 \end{tabular}
 \end{center}
 
@@ -437,13 +511,13 @@ $2$ & $2$ & $4$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \\ \hline
 
 to be described ...
 \begin{center}
-\begin{tabular}{|m{14.18cm}|} \hline 
+\begin{tabular}{|m{16.11cm}|} \hline 
 { \bf $P_1$ non-conforming element on a triangle}\\
 {\tt "P1\_NONCONFORMING"} 
 \end{tabular} \\ \vspace{-1pt} 
-\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
-$1$ & $2$ & $3$ & discon-tinuous & No \mbox{($Q = 1$)} & Yes \\ \hline
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.2cm}|m{2cm}|m{2cm}|m{1.8cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
+$1$ & $2$ & $3$ & discon-tinuous & No \mbox{($Q = 1$)} & Yes & Yes\\ \hline
 \end{tabular}
 \end{center}
 
@@ -459,13 +533,13 @@ $1$ & $2$ & $3$ & discon-tinuous & No \mbox{($Q = 1$)} & Yes \\ \hline
 
 
 \begin{center}
-\begin{tabular}{|m{14.18cm}|} \hline 
+\begin{tabular}{|m{16.11cm}|} \hline 
 { \bf Hermite element on a triangle}\\
 Not yet available
 \end{tabular} \\ \vspace{-1pt} 
-\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
-$3$ & $2$ & $10$ & $C^0$ & No \mbox{($Q = 1$)} & No \\ \hline
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.2cm}|m{2cm}|m{2cm}|m{1.8cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
+$3$ & $2$ & $10$ & $C^0$ & No \mbox{($Q = 1$)} & No & Yes\\ \hline
 \end{tabular}
 \end{center}
 
@@ -481,13 +555,13 @@ $3$ & $2$ & $10$ & $C^0$ & No \mbox{($Q = 1$)} & No \\ \hline
 Not yet available
 
 \begin{center}
-\begin{tabular}{|m{14.18cm}|} \hline 
+\begin{tabular}{|m{16.11cm}|} \hline 
 { \bf Argyris element on a triangle}\\
 Not yet available
 \end{tabular} \\ \vspace{-1pt} 
-\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
-$5$ & $2$ & $21$ & $C^1$ & No \mbox{($Q = 1$)} & No \\ \hline
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.2cm}|m{2cm}|m{2cm}|m{1.8cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
+$5$ & $2$ & $21$ & $C^1$ & No \mbox{($Q = 1$)} & No & Yes\\ \hline
 \end{tabular}
 \end{center}
 
@@ -507,13 +581,13 @@ $5$ & $2$ & $21$ & $C^1$ & No \mbox{($Q = 1$)} & No \\ \hline
 to be described ...
 
 \begin{center}
-\begin{tabular}{|m{14.18cm}|} \hline 
+\begin{tabular}{|m{16.11cm}|} \hline 
 { \bf $P_K$ Lagrange element with an additional internal bubble function}\\
 {\tt "PK\_WITH\_CUBIC\_BUBBLE(3, K)"} 
 \end{tabular} \\ \vspace{-1pt} 
-\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
-$4$ & $3$ & $5$, $11$ or $21$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \\ \hline
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.2cm}|m{2cm}|m{2cm}|m{1.8cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
+$4$ & $3$ & $5$, $11$ or $21$ & $C^0$ & No \mbox{($Q = 1$)} & Yes & Yes\\ \hline
 \end{tabular}
 \end{center}
 
@@ -528,13 +602,13 @@ $4$ & $3$ & $5$, $11$ or $21$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \\ \hline
 to be described ...
 
 \begin{center}
-\begin{tabular}{|m{14.18cm}|} \hline 
+\begin{tabular}{|m{16.11cm}|} \hline 
 { \bf Lagrange $P_1$ element with an additional bubble function on face 0}\\
 {\tt "P1\_BUBBLE\_FACE(3)"} 
 \end{tabular} \\ \vspace{-1pt} 
-\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
-$3$ & $3$ & $5$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \\ \hline
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.2cm}|m{2cm}|m{2cm}|m{1.8cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
+$3$ & $3$ & $5$ & $C^0$ & No \mbox{($Q = 1$)} & Yes & Yes\\ \hline
 \end{tabular}
 \end{center}
 
@@ -556,14 +630,14 @@ to be described ...
 to be described ...
 
 \begin{center}
-\begin{tabular}{|m{14.18cm}|} \hline 
+\begin{tabular}{|m{16.11cm}|} \hline 
 { \bf Element which interpolates an element defined on another mesh}\\
   {\tt getfem::virtual\_link\_fem(getfem::mesh\_fem mf1, getfem::mesh\_fem mf2,} \\ {\tt \mbox{}\hspace{12em} getfem::pintegration\_method pim) }
   {\tt getfem::virtual\_link\_fem\_with\_gradient(getfem::mesh\_fem mf1, } \\ {\tt \hspace{5em} getfem::mesh\_fem mf2, \mbox{}getfem::pintegration\_method pim) }
 \end{tabular} \\ \vspace{-1pt} 
-\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
-undefined & arbitrary & variable & variable & No & No \\ \hline
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.2cm}|m{2cm}|m{2cm}|m{1.8cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
+undefined & arbitrary & variable & variable & No & No & No\\ \hline
 \end{tabular}
 \end{center}
 

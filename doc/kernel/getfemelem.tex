@@ -30,9 +30,10 @@
 \begin{center}
   \includegraphics[width=10cm,angle=0]{getfem_logo.eps}\\[0.2cm]
   a Generic Finite Element library in C++ \\[0.5cm]
+  {\LARGE Documentation, part \Huge 1} \\[0.5cm]
   \fbox{\Huge \sc Elementary Computations} \\[0.5cm]
   { \large Yves \sc Renard\footnote{ \it MIP, INSAT, Complexe scientifique de Rangueil, 31077 Toulouse, France, Yves.Renard@gmm.insa-tlse.fr } } \\[1.0cm]
-      July 05, 2002\\[1.0cm]
+      \today \\[1.0cm]
 \end{center}
 
 % \begin{abstract}
@@ -45,7 +46,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section*{Introduction}
-The main goal of GETFEM++ is to use C++ language facilities to build an advanced finite element library easy to use, as complete as possible and efficient. Here is presented the finite element kernel of this project. A particular attention has been paid to reduce the computation time. The finite element kernel has been built in order to take into account from the simplest methods ($P_K$ methods on simplexes with a linear geometric transformation) to the more elaborated methods (Hermite elements, vectorial elements, non-polynomials elements ...). Once a finite element method is described on the reference element, arbitrary elementary  matrices can be computed, even elementary matrices for mixed methods. The code is generic in the sense that there is no limitation in dimension and degree and existing assembling procedures are completely independent of the dimension and the finite element methods used.\\[4cm]
+The main goal of GETFEM++ is to use C++ language facilities to build an advanced finite element library easy to use, as complete as possible and efficient. Here is presented the finite element kernel of this project. A particular attention has been paid to reduce the computation time. The finite element kernel has been built in order to take into account from the simplest methods ($P_K$ methods on simplexes with a linear geometric transformation) to the more elaborated methods (Hermite elements, vectorial elements, non-polynomials elements ...). Once a finite element method is described on the reference element, arbitrary elementary  matrices can be computed, even elementary matrices for mixed methods. The code is generic in the sense that there is no limitation in dimension and degree and existing assembling procedures are completely independent of the dimension and the finite element methods used.\\[3cm]
 Copyright (C) 2002\\
 The program GETFEM++ is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -252,7 +253,7 @@ where $\alpha$ is the vector of components $\alpha_i$.
 A certain number of description of classical finite element method are defined in the file {\tt getfem\_fem.h}. More classical ones are the following (see \cite{FEM_LIST} for an exhaustive list):
 
 \input{getfemelemfem.tex}
-One can obtain a particular descriptor thanks to the function
+One can obtain a particular descriptor thanks to the function\\[0.5cm]
 {\tt getfem::pfem pfe = getfem::fem\_descriptor("name of method"); }\\[0.5cm]
 One can see in the file {\tt getfem\_fem.C} how to define a new finite element method. Basically, the only thing to do is to give the base functions on the reference element and the corresponding nodes.
 
@@ -269,7 +270,7 @@ Even though a description of exact integration method exists on parallelepipeds 
 Some examples of approximated methods (see \cite{FEM_LIST} for an exhaustive list):
 \input{getfemeleminta.tex}
 
-One can obtain a particular descriptor thanks to the function
+One can obtain a particular descriptor thanks to the function\\[0.5cm]
 {\tt getfem::pintegration\_method pfe = getfem::int\_method\_descriptor("name of method"); }\\[0.5cm]
 
 
