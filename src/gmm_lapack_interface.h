@@ -462,7 +462,7 @@ namespace gmm {
 # define gemm_interface_nn(blas_name, base_type)                           \
   inline void mult_spec(const dense_matrix<base_type > &A,                 \
             const dense_matrix<base_type > &B,                             \
-            dense_matrix<base_type > &C, c_mult) {                         \
+            dense_matrix<base_type > &C, c_mult, col_major) {              \
     const char t = 'N';                                                    \
     int m = mat_nrows(A), lda = m, k = mat_ncols(A), n = mat_ncols(B);     \
     int ldb = k, ldc = m;                                                  \
@@ -514,7 +514,7 @@ namespace gmm {
 # define gemm_interface_nt(blas_name, base_type, is_const)                 \
   inline void mult_spec(const dense_matrix<base_type > &A,                 \
          const transposed_col_ref<is_const dense_matrix<base_type > *> &_B,\
-         dense_matrix<base_type > &C, c_mult) {                            \
+         dense_matrix<base_type > &C, c_mult, row_major) {                 \
     dense_matrix<base_type > &B =  *(linalg_origin(_B));                   \
     const char t = 'N', u = 'T';                                           \
     int m = mat_nrows(A), lda = m, k = mat_ncols(A), n = mat_nrows(B);     \
@@ -606,7 +606,7 @@ namespace gmm {
 # define gemm_interface_nc(blas_name, base_type)                           \
   inline void mult_spec(const dense_matrix<base_type > &A,                 \
       const conjugated_col_matrix_const_ref<dense_matrix<base_type > > &_B,\
-      dense_matrix<base_type > &C, c_mult) {                               \
+      dense_matrix<base_type > &C, c_mult, row_major) {                    \
     dense_matrix<base_type > &B = *(linalg_origin(_B));                    \
     const char t = 'N', u = 'C';                                           \
     int m = mat_nrows(A), lda = m, k = mat_ncols(A), n = mat_nrows(B);     \

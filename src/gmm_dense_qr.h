@@ -60,11 +60,11 @@ namespace gmm {
       sub_interval SUBI(j, m-j), SUBJ(j, n-j);
       V.resize(m-j); W.resize(n-j);
 
-      for (size_type i = j; i < m; ++i) V(i-j) = A(i, j);
+      for (size_type i = j; i < m; ++i) V[i-j] = A(i, j);
       house_vector(V);
 
       row_house_update(sub_matrix(A, SUBI, SUBJ), V, W);
-      for (size_type i = j+1; i < m; ++i) A(i, j) = V(i-j);
+      for (size_type i = j+1; i < m; ++i) A(i, j) = V[i-j];
     }
   }
 
@@ -73,7 +73,7 @@ namespace gmm {
   // and the lower part contains the Householder reflectors.
   // A <- AQ
   template <typename MAT1, typename MAT2>
-  void apply_house_right(const MAT1 &QR, const MAT1 &_A) { 
+  void apply_house_right(const MAT1 &QR, const MAT2 &_A) { 
     MAT2 &A = const_cast<MAT2 &>(_A);
     typedef typename linalg_traits<MAT1>::value_type T;
     size_type m = mat_nrows(QR), n = mat_ncols(QR);
@@ -82,7 +82,7 @@ namespace gmm {
     V[0] = T(1);
     for (size_type j = 0; j < n; ++j) {
       V.resize(m-j);
-      for (size_type i = j+1; i < m; ++i) V(i-j) = QR(i, j);
+      for (size_type i = j+1; i < m; ++i) V[i-j] = QR(i, j);
       col_house_update(sub_matrix(A, sub_interval(0, mat_nrows(A)),
 				  sub_interval(j, m-j)), V, W);
     }
@@ -92,7 +92,7 @@ namespace gmm {
   // and the lower part contains the Householder reflectors.
   // A <- Q*A
   template <typename MAT1, typename MAT2>
-  void apply_house_left(const MAT1 &QR, const MAT1 &_A) { 
+  void apply_house_left(const MAT1 &QR, const MAT2 &_A) { 
     MAT2 &A = const_cast<MAT2 &>(_A);
     typedef typename linalg_traits<MAT1>::value_type T;
     size_type m = mat_nrows(QR), n = mat_ncols(QR);
@@ -101,7 +101,7 @@ namespace gmm {
     V[0] = T(1);
     for (size_type j = 0; j < n; ++j) {
       V.resize(m-j);
-      for (size_type i = j+1; i < m; ++i) V(i-j) = QR(i, j);
+      for (size_type i = j+1; i < m; ++i) V[i-j] = QR(i, j);
       row_house_update(sub_matrix(A, sub_interval(j, m-j),
 				  sub_interval(0, mat_ncols(A))), V, W);
     }

@@ -744,10 +744,9 @@ namespace gmm {
   template <typename L1, typename L2> inline
   void copy(const L1& l1, L2& l2) { 
     if ((const void *)(&l1) != (const void *)(&l2)) {
-      #ifdef GMM_VERIFY
-        if (same_origin(l1,l2))
-	  DAL_WARNING(2, "Warning : a conflict is possible in copy\n");
-      #endif
+      if (same_origin(l1,l2))
+	DAL_WARNING(2, "Warning : a conflict is possible in copy\n");
+     
       copy(l1, l2, typename linalg_traits<L1>::linalg_type(),
 	   typename linalg_traits<L2>::linalg_type());
     }
@@ -1692,7 +1691,7 @@ namespace gmm {
   __DEFMU<col_major  , row_and_col, row_and_col> { typedef c_mult t; };
   __DEFMU<col_and_row, row_major  , row_major  > { typedef r_mult t; };
   __DEFMU<col_and_row, row_major  , col_major  > { typedef c_mult t; };
-  __DEFMU<col_and_row, row_major  , col_and_row> { typedef c_mult t; };
+  __DEFMU<col_and_row, row_major  , col_and_row> { typedef r_mult t; };
   __DEFMU<col_and_row, row_major  , row_and_col> { typedef r_mult t; };
   __DEFMU<col_and_row, col_major  , row_major  > { typedef rcmult t; };
   __DEFMU<col_and_row, col_major  , col_major  > { typedef c_mult t; };
@@ -1751,9 +1750,7 @@ namespace gmm {
 
   template <typename L1, typename L2, typename L3>
   void mult_spec(const L1& l1, const L2& l2, L3& l3, g_mult) {
-    #ifdef GMM_VERIFY
-      DAL_WARNING(2, "Inefficient generic matrix-matrix mult is used");
-    #endif
+    DAL_WARNING(2, "Inefficient generic matrix-matrix mult is used");
     clear(l3);
     for (size_type i = 0; i < mat_nrows(l3) ; ++i)
       for (size_type j = 0; j < mat_nrows(l3) ; ++j)
@@ -1766,10 +1763,8 @@ namespace gmm {
   template <typename L1, typename L2, typename L3>
   void mult_spec(const L1& l1, const L2& l2, L3& l3, rcmult) {
 
-    #ifdef GMM_VERIFY
-      if (is_sparse(l1) || is_sparse(l2))
-        DAL_WARNING(3, "Inefficient matrix-matrix mult for sparse matrices");
-    #endif
+    if (is_sparse(l1) || is_sparse(l2))
+      DAL_WARNING(3, "Inefficient matrix-matrix mult for sparse matrices");
 
     typename linalg_traits<L2>::const_col_iterator
       it2b = linalg_traits<L2>::col_begin(l2), it2,
@@ -1823,12 +1818,15 @@ namespace gmm {
   // col - col matrix-matrix mult
 
   template <typename L1, typename L2, typename L3> inline
-  void mult_spec(const L1& l1, const L2& l2, L3& l3, c_mult)
-  { mult_spec(l1, l2,l3,c_mult(),typename linalg_traits<L2>::storage_type()); }
+  void mult_spec(const L1& l1, const L2& l2, L3& l3, c_mult) {
+    mult_spec(l1, l2,l3,c_mult(),typename linalg_traits<L2>::storage_type(),
+	      typename linalg_traits<L2>::sub_orientation());
+  }
 
 
-  template <typename L1, typename L2, typename L3>
-  void mult_spec(const L1& l1, const L2& l2, L3& l3, c_mult, abstract_dense) {
+  template <typename L1, typename L2, typename L3, typename ORIEN>
+  void mult_spec(const L1& l1, const L2& l2, L3& l3, c_mult,
+		 abstract_dense, ORIEN) {
     typedef typename linalg_traits<L1>::value_type T;
     size_type nn = mat_ncols(l3), mm = mat_ncols(l1);
 
@@ -1841,8 +1839,9 @@ namespace gmm {
     }
   }
 
-  template <typename L1, typename L2, typename L3>
-  void mult_spec(const L1& l1, const L2& l2, L3& l3, c_mult, abstract_sparse) {
+  template <typename L1, typename L2, typename L3, typename ORIEN>
+  void mult_spec(const L1& l1, const L2& l2, L3& l3, c_mult,
+		 abstract_sparse, ORIEN) {
     // optimizable
     clear(l3);
     size_type nn = mat_ncols(l3);
@@ -1855,9 +1854,24 @@ namespace gmm {
     }
   }
 
-  template <typename L1, typename L2, typename L3> inline
-  void mult_spec(const L1& l1, const L2& l2, L3& l3, c_mult, abstract_skyline)
-  { mult_spec(l1, l2, l3, c_mult(), abstract_sparse()); }
+  template <typename L1, typename L2, typename L3>
+  void mult_spec(const L1& l1, const L2& l2, L3& l3, c_mult,
+		 abstract_sparse, row_major) {
+     typedef typename linalg_traits<L2>::value_type T;
+     DAL_WARNING(3, "Inefficient matrix-matrix mult for sparse matrices");
+     clear(l3);
+     size_type mm = mat_nrows(l2), nn = mat_ncols(l3);
+     for (size_type i = 0; i < nn; ++i)
+       for (size_type j = 0; j < mm; ++j) {
+	 T a = l2(i,j);
+	 if (a != T(0)) add(scaled(mat_const_col(l1, j), a), mat_col(l3, i));
+       }
+   }
+
+  template <typename L1, typename L2, typename L3, typename ORIEN> inline
+  void mult_spec(const L1& l1, const L2& l2, L3& l3, c_mult,
+		 abstract_skyline, ORIEN)
+  { mult_spec(l1, l2, l3, c_mult(), abstract_sparse(), ORIEN()); }
 
   
   // col - row matrix-matrix mult
@@ -1894,9 +1908,7 @@ namespace gmm {
 
   template <typename L1, typename L2, typename L3> inline
   void mult_spec(const L1& l1, const L2& l2, L3& l3, crmult, abstract_skyline)
-  { mult_spec(l1, l2, l3, crmult(), abstract_sparse()); }
-
+  { mult_spec(l1, l2, l3, crmult(), abstract_sparse()); }}
   
-}
 
 #endif //  __GMM_BLAS_H
