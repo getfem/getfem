@@ -46,7 +46,7 @@
 #  else
 #    include <qd/dd.h>
 #  endif
-#  include <fpu.h>
+#  include <qd/fpu.h>
 #endif
 
 namespace bgeot

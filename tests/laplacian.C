@@ -19,29 +19,31 @@
 /* *********************************************************************** */
 
 /**
-   Laplacian (Poisson) problem.
-
-   This program is used to check that getfem++ is working. This is also 
-   a good example of use of Getfem++.
+ * Laplacian (Poisson) problem.
+ *
+ * This program is used to check that getfem++ is working. This is also 
+ * a good example of use of Getfem++.
 */
 
-#include <getfem_assembling.h> /* import assembly methods (and computation of norms) */
-#include <getfem_export.h>     /* export functions (save the solution in a file) */
+#include <getfem_assembling.h> /* import assembly methods (and comp. of norms) */
+#include <getfem_export.h>   /* export functions (save the solution in a file) */
 #include <getfem_regular_meshes.h>
 #include <gmm.h>
 
 /* try to enable the SIGFPE if something evaluates to a Not-a-number of infinity
-   during computations */
+ * during computations
+ */
 #ifdef GETFEM_HAVE_FEENABLEEXCEPT
 #  include <fenv.h>
 #endif
 
 /* some Getfem++ types that we will be using */
-using bgeot::base_small_vector;   /* special class for small ( dim < 16) vectors */
-using bgeot::base_node;           /* class for geometrical nodes ( derived from base_small_vector ) */
-using bgeot::scalar_type;         /* = double */
-using bgeot::size_type;           /* = unsigned long */
-using bgeot::dim_type;            /* = unsigned char */
+using bgeot::base_small_vector;  /* special class for small (dim < 16) vectors */
+using bgeot::base_node;   /* class for geometrical nodes (derived from
+			   * base_small_vector )                               */
+using bgeot::scalar_type; /* = double */
+using bgeot::size_type;   /* = unsigned long */
+using bgeot::dim_type;    /* = unsigned char */
 
 /* definition of some matrix/vector types. These ones are built
    using the predefined types in Gmm++ */
@@ -50,7 +52,8 @@ typedef gmm::row_matrix<sparse_vector_type> sparse_matrix_type;
 typedef gmm::col_matrix<sparse_vector_type> col_sparse_matrix_type;
 
 /* Definitions for the exact solution of the Laplacian problem,
-   i.e. Delta(sol_u) + sol_f = 0 */
+ *  i.e. Delta(sol_u) + sol_f = 0
+ */
 
 base_small_vector sol_K; /* a coefficient */
 /* exact solution */
@@ -72,37 +75,41 @@ base_small_vector sol_grad(const base_node &x)
 */
 struct lap_pb
 {
-  enum { DIRICHLET_BOUNDARY_NUM = 0,
-	 NEUMANN_BOUNDARY_NUM = 1};
-  getfem::getfem_mesh mesh;      /* the mesh */
-  getfem::mesh_fem mf_u;          /* the main mesh_fem, for the Laplacian solution */
-  getfem::mesh_fem mf_rhs;        /* the mesh_fem for the right hand side (f(x),..) */
-  getfem::mesh_fem mf_coef;       /* the mesh_fem used to represent pde coefficients */
+  enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
+  getfem::getfem_mesh mesh;  /* the mesh */
+  getfem::mesh_fem mf_u;     /* the main mesh_fem, for the Laplacian solution */
+  getfem::mesh_fem mf_rhs;   /* the mesh_fem for the right hand side (f(x),..) */
+  getfem::mesh_fem mf_coef;  /* the mesh_fem used to represent pde coefficients */
 
-  scalar_type residu; /* max residu for the iterative solvers */
+  scalar_type residu;        /* max residu for the iterative solvers */
   bool gen_dirichlet;
 
-  sparse_matrix_type SM;   /* stiffness matrix.                           */
-  std::vector<scalar_type> U, B;      /* main unknown, and right hand side */
+  sparse_matrix_type SM;     /* stiffness matrix.                           */
+  std::vector<scalar_type> U, B;      /* main unknown, and right hand side  */
 
-  std::vector<scalar_type> Ud;          /* reduced solution for generic Dirichlet condition. */
-  col_sparse_matrix_type NS; /* Dirichlet NullSpace (used if gen_dirichlet is true) */
-
+  std::vector<scalar_type> Ud; /* reduced sol. for generic Dirichlet condition. */
+  col_sparse_matrix_type NS; /* Dirichlet NullSpace 
+			      * (used if gen_dirichlet is true)
+			      */
   std::string datafilename;
   ftool::md_param PARAM;
 
-  void assemble(void);
+  void assembly(void);
   bool solve(void);
   void init(void);
   void compute_error();
   lap_pb(void) : mf_u(mesh), mf_rhs(mesh), mf_coef(mesh) {}
 };
 
+/* Read parameters from the .param file, build the mesh, set finite element
+ * and integration methods and selects the boundaries.
+ */
 void lap_pb::init(void)
 {
   const char *MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
   const char *FEM_TYPE = PARAM.string_value("FEM_TYPE","FEM name");
-  const char *INTEGRATION = PARAM.string_value("INTEGRATION","Name of integration method");
+  const char *INTEGRATION = PARAM.string_value("INTEGRATION",
+					       "Name of integration method");
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE=" << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
@@ -111,9 +118,11 @@ void lap_pb::init(void)
   bgeot::pgeometric_trans pgt = 
     bgeot::geometric_trans_descriptor(MESH_TYPE);
   size_type N = pgt->dim();
-  std::vector<size_type> nsubdiv(N); std::fill(nsubdiv.begin(),nsubdiv.end(),
-					       PARAM.int_value("NX", "Nomber of space steps "));
-  getfem::regular_unit_mesh(mesh, nsubdiv, pgt, PARAM.int_value("MESH_NOISED") != 0);
+  std::vector<size_type> nsubdiv(N);
+  std::fill(nsubdiv.begin(),nsubdiv.end(),
+	    PARAM.int_value("NX", "Nomber of space steps "));
+  getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
+			    PARAM.int_value("MESH_NOISED") != 0);
   
   bgeot::base_matrix M(N,N);
   for (size_type i=0; i < N; ++i) {
@@ -144,22 +153,24 @@ void lap_pb::init(void)
   const char *data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name == 0) {
     if (!pf_u->is_lagrange()) {
-      DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM "	<< data_fem_name << 
-		". In that case you need to set DATA_FEM_TYPE in the .param file");
+      DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM "
+		<< data_fem_name << ". In that case you need to set "
+		<< "DATA_FEM_TYPE in the .param file");
     }
     mf_rhs.set_finite_element(mesh.convex_index(), pf_u, ppi);
   } else {
-    mf_rhs.set_finite_element(mesh.convex_index(), getfem::fem_descriptor(data_fem_name), ppi);
+    mf_rhs.set_finite_element(mesh.convex_index(), 
+			      getfem::fem_descriptor(data_fem_name), ppi);
   }
-
+  
   /* set the finite element on mf_coef. Here we use a very simple element
-     since the only function that need to be interpolated on the mesh_fem 
-     is f(x)=1 ... */
-  mf_coef.set_finite_element(mesh.convex_index(), getfem::classical_fem(pgt,0), ppi);
+   *  since the only function that need to be interpolated on the mesh_fem 
+   * is f(x)=1 ... */
+  mf_coef.set_finite_element(mesh.convex_index(),
+			     getfem::classical_fem(pgt,0), ppi);
 
-  /*
-    set boundary conditions (Neuman on the upper face, Dirichlet elsewhere) 
-  */
+  /* set boundary conditions
+   * (Neuman on the upper face, Dirichlet elsewhere) */
   cout << "Selecting Neumann and Dirichlet boundaries\n";
   getfem::convex_face_ct border_faces;
   getfem::outer_faces_of_mesh(mesh, border_faces);
@@ -176,7 +187,7 @@ void lap_pb::init(void)
   }
 }
 
-void lap_pb::assemble(void)
+void lap_pb::assembly(void)
 {
   size_type nb_dof = mf_u.nb_dof();
   size_type nb_dof_rhs = mf_rhs.nb_dof();
@@ -201,11 +212,13 @@ void lap_pb::assemble(void)
   for (dal::bv_visitor cv(mf_u.convex_on_boundary(NEUMANN_BOUNDARY_NUM));
        !cv.finished(); ++cv) {
     getfem::pfem pf = mf_rhs.fem_of_element(cv);
-    for (dal::bv_visitor f(mf_u.faces_of_convex_on_boundary(cv,NEUMANN_BOUNDARY_NUM));
+    for (dal::bv_visitor f(mf_u.faces_of_convex_on_boundary(cv,
+							NEUMANN_BOUNDARY_NUM));
 	 !f.finished(); ++f) {
       for (size_type l = 0; l< pf->structure()->nb_points_of_face(f); ++l) {
 	size_type n = pf->structure()->ind_points_of_face(f)[l];
-	base_small_vector un = mesh.normal_of_face_of_convex(cv, f, pf->node_of_dof(n));
+	base_small_vector un = mesh.normal_of_face_of_convex(cv, f,
+							     pf->node_of_dof(n));
 	un /= gmm::vect_norm2(un);
 	size_type dof = mf_rhs.ind_dof_of_element(cv)[n];
 	F[dof] = gmm::vect_sp(sol_grad(mf_rhs.point_of_dof(dof)), un);
@@ -231,7 +244,8 @@ void lap_pb::assemble(void)
     std::vector<scalar_type> R(nb_dof), RHaux(nb_dof);
 
     /* build H and R such that U mush satisfy H*U = R */
-    getfem::asm_dirichlet_constraints(H, R, mf_u, mf_rhs, F, DIRICHLET_BOUNDARY_NUM);    
+    getfem::asm_dirichlet_constraints(H, R, mf_u,
+				      mf_rhs, F, DIRICHLET_BOUNDARY_NUM);    
     gmm::clean(H, 1e-15);
     int nbcols = getfem::Dirichlet_nullspace(H, NS, R, Ud);
     // cerr << "Number of irreductible unknowns : " << nbcols << endl;
@@ -310,10 +324,9 @@ int main(int argc, char *argv[]) {
     
     cout << "initialisation ...\n";
     p.PARAM.read_command_line(argc, argv);
-    cout<< "hello\n";
     p.init();
     p.mesh.write_to_file(p.datafilename + ".mesh");
-    p.assemble();
+    p.assembly();
     if (!p.solve()) {
       cerr << "Solve procedure has failed\n";
     }
