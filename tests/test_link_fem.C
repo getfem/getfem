@@ -199,7 +199,6 @@ void lap_pb::assemble(void)
 
 int main(int argc, char *argv[])
 {
-  int j;
   try {
 
     lap_pb p;
