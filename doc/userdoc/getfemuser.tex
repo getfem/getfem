@@ -326,14 +326,18 @@ The following is an example of how to load a mesh and extract information on it.
 
 \section{Select finite element and integration methods}
 
+\index{GETFEM!getfem::mesh\_fem}
 In order to define a complete finite element procedure on a mesh, the structure {\tt getfem::mesh\_fem} is defined in the file {\tt getfem\_mesh\_fem.h}. Basically, this structure describe the finite element method on each element of the mesh, and can store information about boundary structure. It is possible to have an arbitrary number of finite element description for a single mesh. This is particularly necessary for mixed methods, but also to describe different data on the same mesh. One can instantiate a {\tt getfem::mesh\_fem} object as follows\\[0.5cm]
 {\tt getfem::mesh\_fem mef(mesh); }\\[0.5cm]
 where {\tt mesh} is an already existing mesh. The structure will be linked to this mesh and will react when modifications will be done on it. \\[0.5cm]
 It is possible to specify element by element the finite element method, so that element of mixed types can be treated, even if the dimensions are different. For usual elements, the connection between two elements is done when the two elements are compatibles (same degrees of freedom on the common face). A numeration of the degrees of freedom is automatically done with a Cuthill Mc Kee like algorithm. You have to keep in mind that there is absolutely no connection between the numeration of vertices of the mesh and the numeration of the degrees of freedom. Every {\tt getfem::mesh\_fem} object has its own numeration. \\[0.5cm]
 To select a particular finite element method on a given element, one can use \\[0.5cm]
+\index{GETFEM!mef.set\_finite\_element(i, ppf, ppi)}
 {\tt mef.set\_finite\_element(i, ppf, ppi); }\\[0.5cm]
 where {\tt i} is the index of the element, {\tt ppf} is the descriptor of the finite element method, and {\tt ppi} is the descriptor of the integration method. The list of all available descriptors of finite element methods is in the file {\tt getfem\_fem.h}. A short description is also given in \cite{BASCOMP}. The list of all available descriptors of integration methods is in the file {\tt getfem\_integration.h}. \\[0.5cm]
 Descriptors for finite element methods and integration methods are available thanks to the two follofing functions\\[0.5cm]
+\index{GETFEM!getfem::fem\_descriptor("name")}
+\index{GETFEM!getfem::nt\_method\_descriptor("name")}
 {\tt ppf = getfem::fem\_descriptor("name of method"); \\
   ppi = getfem::int\_method\_descriptor("name of method");
 }\\[0.5cm]
@@ -353,17 +357,19 @@ For instance if one needs to have a description of a $P_1$ finite element method
 {\tt mef.set\_finite\_element(i, getfem::fem\_descriptor("FEM\_PK(2, 1)"),\\$\mbox{}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ $  getfem::int\_method\_descriptor("IM\_EXACT\_SIMPLEX(2)")); }\\[0.5cm]
 where {\tt i} is still the index of the triangle. It is also possible to select a particular method directly on a set of element, passing to {\tt mef.set\_finite\_element} a {\tt dal::bit\_vector} instead of a single index. For instance\\[0.5cm]
 {\tt mef.set\_finite\_element(mesh.convex\_index(), getfem::fem\_descriptor("FEM\_PK(2, 1)"),\\$\mbox{}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ $ getfem::int\_method\_descriptor("IM\_EXACT\_SIMPLEX(2)")); }\\[0.5cm]
-select the method on all the elements of the mesh.
-
-If the target dimension $Q$ is set to a value different of $1$ (see
-\cite{FEMLIST} for the definition of the target dimension $Q$), the
+select the method on all the elements of the mesh.\\[0.5cm]
+IMPORTANT: If the finite element represents an unknown for a vectorial problem (such as linear elasticity), one should use
+{\alltt mef.set_qdim(Q)}\\[0.5cm]
+to set the target dimension (see
+\cite{BASCOMP} for the definition of the target dimension $Q$)\\[0.5cm]
+If the target dimension $Q$ is set to a value different of $1$, the
 scalar FEMs (such as $P_k$ fems etc.) are automatically
 ``vectorized'', i.e. each scalar degree of freedom is duplicated $Q$
 times, from the {\tt mesh\_fem} object point of vue. To sum it up,
 \begin{itemize}
-\item if the fem of the $ith$ element is a real vector FEMs, {\tt mef.get\_qdim() == mef.fem\_of\_element(i)->target\_dim()} and {\tt
+\item if the fem of the $ith$ element is a real vector FEMs, {\alltt mef.get\_qdim() == mef.fem\_of\_element(i)->target\_dim()} \\ and\\ {\alltt
     mef.nb\_dof\_of\_element(i) == mef.fem\_of\_element(i).nb\_dof()}.
-\item if the fem has a {\tt target\_dim} equal to $1$, {\tt mef.nb\_dof\_of\_element(i) == mef.get\_qdim()*mef.fem\_of\_element(i).nb\_dof()}.
+\item if the fem has a {\tt target\_dim} equal to $1$, {\alltt mef.nb\_dof\_of\_element(i) == mef.get\_qdim()*mef.fem\_of\_element(i).nb\_dof()}.
 \end{itemize}
 
 Once a finite element method is defined on a mesh, it is possible to obtain information on it with the following methods (the list is not exhaustive).\\[0.5cm]
@@ -391,6 +397,8 @@ Once a finite element method is defined on a mesh, it is possible to obtain info
   
   {\tt mef.nb\_dof()} & gives the total number of different degrees of freedom.  \\ \hline
 
+  {\tt mef.get_qdim()} & gives the target dimension {\tt Q}.  \\ \hline
+
   {\tt mef.clear()} & Clear the structure, no finite element method is still defined.  \\ \hline
 
   {\tt mef.add\_boundary\_elt(b, c, f)} & Add a face to a description of a boundary. Add the face {\tt f} of the element of index {\tt c} to the boundary of index {\tt b}.  \\ \hline
@@ -414,7 +422,7 @@ Once a finite element method is defined on a mesh, it is possible to obtain info
 \index{GMM| Generic Matrix Methods library, }
 \index{ITL| Iterative Template Library, }
 \index{MTL| Matrix Template Library, }
-Assembling procedures, especially for Dirichlet boundary conditions need some basic linear algebra computation. In order to make {\sc Getfem++} independent of any matrix library, it contains one called GMM (for Generic Matrix Methods). Theoretically, this library provides a mean to interface any other matrix library. If you want to use your own matrix library, you have just to write some ``traits'' objects. GMM provide also some basic types of sparse and plain matrices and vectors and basic operations on them (copy, addition, multiplication, sub vector and matrices, solvers ... ). The syntax of GMM is very closed to MTL and ITL (see http://www.osl.iu.edu/research/mtl/). Escpecially, the code for iterative solvers has been copied from ITL. The performance of GMM is very closed to the one of MTL, sometime slightly better. The difference between GMM and MTL is that basically GMM has been written to be able to interface other libraries and gives an access to sub matrices and sub vectors in all the cases. Also some optimizations has been made for matrix-matrix multiplication, usage of reference has been somewhat cleared, const qualifier usage is clarified, and we hope it is somewhat easier to use than MTL. The bad news is that some fonctionnalities have not yet been imported.\\
+Assembling procedures, especially for Dirichlet boundary conditions need some basic linear algebra computation. In order to make {\sc Getfem++} independent of any matrix library, it contains one called GMM (for Generic Matrix Methods). Theoretically, this library provides a mean to interface any other matrix library. If you want to use your own matrix library, you have just to write some ``traits'' objects. GMM provide also some basic types of sparse and plain matrices and vectors and basic operations on them (copy, addition, multiplication, sub vector and matrices, solvers ... ). The syntax of GMM is very closed to MTL and ITL (see http://www.osl.iu.edu/research/mtl/). Escpecially, the code for iterative solvers has been copied from ITL. The performance of GMM is very closed to the one of MTL, sometime slightly better. The difference between GMM and MTL is that basically GMM has been written to be able to interface other libraries and gives an access to sub matrices and sub vectors in all cases. Also some optimizations has been made for matrix-matrix multiplication, usage of reference has been somewhat cleared, const qualifier usage is clarified, and we hope it is somewhat easier to use than MTL. The bad news is that some fonctionnalities have not yet been imported.\\
 
 To use GMM you have to include the file {\tt gmm.h}.
 
@@ -516,7 +524,7 @@ prints to the output a sub-matrix. If the two sub-indexes are equal, it is possi
 {\tt gmm::mat_row(M, i)} gives a (possibly writable) reference to the row {\tt i} of matrix {\tt M}, and {\tt gmm::mat_col(M, i)}  gives a (possibly writable) reference to the column {\tt i}. It is not possible to access to the rows if {\tt M} is a column matrix and to the columns if it is a row matrix. It is possible to use {\tt gmm::mat_const_row(M, i)} and {\tt gmm::mat_const_col(M, i)} to have constant references.
 
 
-\subsection{Basic operations}
+\subsection{Basic linear algebra operations}
 The same choice has been made as in MTL to provide basic operations as functions not as operators. The advantages are that it is clearer to see where are the linear algebra operations in the program and the programmation of optimized basic linear operations is greatly simpler.
 
 \subsubsection{write}
@@ -629,13 +637,13 @@ Most of the solvers provided in GMM come form ITL with slight modifications.
 
 \subsubsection{iterations}
 \index{GMM! gmm::iteration}
-  The iteration object of GMM is a modification of the one in ITL. This is not a template type as in ITL. Preconditionners has not ben yet implemented in GMM, so for the moment it is only possible to use precondionners represented by a matrix. 
+  The iteration object of GMM is a modification of the one in ITL. This is not a template type as in ITL. Preconditionners has not been yet fully implemented in GMM, so for the moment it is only possible to use precondionners whose inverse is represented by a matrix. 
 
 The simplest initialisation is
 \begin{alltt}
   gmm::iteration iter(2.0E-10);
 \end{alltt}
-where {\tt 2.0E-10} is the (relative) residual to be obtained to converge.
+where {\tt 2.0E-10} is the (relative) residual to be obtained to have the convergence.
 Some possibilities :
 \begin{alltt}
   iter.set_noisy(n) // n = 0 : no output
@@ -647,7 +655,7 @@ Some possibilities :
                        // iterations made.
   iter.converged()     // true if the method converged.
   iter.set_maxiter(n)  // Set the maximum of iterations.
-                       // A solver stoppe if the maximum of iteration is 
+                       // A solver stops if the maximum of iteration is 
                        // reached, iter.converged() is then false.
 \end{alltt}
 
@@ -698,9 +706,11 @@ The solver {\tt gmm::constrained_cg(A, C, X, B, PS, PR, iter);} solve a system w
 
 \section{Standard assembling procedures}
 
-Procedures defined in the file {\tt getfem\_assembling.h} allow to assemble stiffness matrices, mass matrices and boundary conditions for a few amount of classical partial differential equation problems. All the procedures have vectors and matrices template parameters in order to be used with any matrix library (Dense and sparse matrix are defined in {\tt bgeot\_matrix.h} and {\tt bgeot\_smatrix.h} but it is preferable to use a matrix library such as MTL / ITL.).
+Procedures defined in the file {\tt getfem\_assembling.h} allow to assemble stiffness matrices, mass matrices and boundary conditions for a few amount of classical partial differential equation problems. All the procedures have vectors and matrices template parameters in order to be used with any matrix library.
 
 \subsection{Laplacian (Poisson) problem}
+\index{laplacian}
+\index{Poisson problem}
 
 An assembling procedure is defined to solve the problem
 \begin{eqnarray*}
@@ -710,23 +720,28 @@ An assembling procedure is defined to solve the problem
 \end{eqnarray*}
 where $\Omega$ is an open domain of arbitrary dimension, $\Gamma_{_D}$ and $\Gamma_{_N}$ are parts of the boundary of $\Omega$, $u(x)$ is the unknown, $a(x)$ is a given coefficient, $f(x)$ is a given source term, $U(x)$ the prescribed value of $u(x)$ on $\Gamma_{_D}$ and $F(x)$ is the prescribed normal derivative of $u(x)$ on $\Gamma_{_N}$.
 The function to be called to assemble the stiffness matrix is\\[0.5cm]
+\index{GETFEM!getfem::asm\_stiffness\_matrix\_for\_laplacian}
 {\tt getfem::asm\_stiffness\_matrix\_for\_laplacian(RM, mef1, mef2, A);} \\[0.5cm]
-where {\tt RM} is a matrix of any type having the right dimension (i.e. {\tt me1.nb\_dof()}), {\tt mef1} is a variable of type {\tt getfem::mesh\_fem} and should define the finite element method for the solution, {\tt mef2}  is a variable of type {\tt getfem::mesh\_fem} (possibly equal to {\tt mef1}) describing the finite element method on which the coefficient $a(x)$ is defined, and {\tt A} is the vector of the values of this coefficient on each degree of freedom of {\tt mef2}. Both should use the same mesh. It is important to pay attention to the fact that the integration methods used to compute the elementary matrices is the ones declared in {\tt mef1}. This integration methods have to be chosen of sufficient order. The order has to be determined considering the degrees of element in {\tt mef1}, in {\tt mef2} and the geometric transformations for non-linear cases. Integration methods defined in {\tt mef2} are ignored.\\[0.5cm]
+where {\tt RM} is a matrix of any type having the right dimension (i.e. {\tt me1.nb\_dof()}), {\tt mef1} is a variable of type {\tt getfem::mesh\_fem} and should define the finite element method for the solution, {\tt mef2}  is a variable of type {\tt getfem::mesh\_fem} (possibly equal to {\tt mef1}) describing the finite element method on which the coefficient $a(x)$ is defined, and {\tt A} is the vector of the values of this coefficient on each degree of freedom of {\tt mef2}. Both should use the same mesh. It is important to pay attention to the fact that the integration methods used to compute the elementary matrices is the ones declared in {\tt mef1}. This integration method have to be chosen of sufficient order. The order has to be determined considering the degrees of element in {\tt mef1}, in {\tt mef2} and the geometric transformations for non-linear cases. Integration methods defined in {\tt mef2} are ignored.\\[0.5cm]
 To assemble the source term, the  function to be called is\\[0.5cm]
+\index{GETFEM!getfem::asm\_source\_term}
 {\tt getfem::asm\_source\_term(B, mef1, mef2, V);} \\[0.5cm]
 where {\tt B} is a vector of any type having the right dimension (still {\tt me1.nb\_dof()}), {\tt mef2}  is a variable of type {\tt getfem::mesh\_fem} (possibly equal to {\tt mef1}) describing the finite element method on which $f(x)$ is defined, {\tt V} is the vector of the values of $f(x)$ on each degree of freedom of {\tt mef2}.\\[0.5cm]
 For the Neumann condition on $\Gamma_{_N}$, the same function\\[0.5cm]
 {\tt getfem::asm\_source\_term(B, mef1, mef2, V, nbound);} \\[0.5cm]
-is use again, but an additionnal argument has been added: {\tt nbound} is the index of the boundary in {\tt mef1} (see previous section or how to describe a boundary) where the Neumann condition is applied. Hence the assembly is done on the indicated boundary, and no more on the whole domain. {\tt mef2}  is a variable of type {\tt getfem::mesh\_fem} describing the finite element method on which $F(x)$ is defined, {\tt V} is the vector of the values of $F(x)$ on each degree of freedom of {\tt mef2}.\\[0.5cm]
+is used again, but an additionnal argument has been added: {\tt nbound} is the index of the boundary in {\tt mef1} (see previous section on how to describe a boundary) where the Neumann condition is applied. Hence the assembly is done on the indicated boundary, and no more on the whole domain. {\tt mef2}  is a variable of type {\tt getfem::mesh\_fem} describing the finite element method on which $F(x)$ is defined, {\tt V} is the vector of the values of $F(x)$ on each degree of freedom of {\tt mef2}.\\[0.5cm]
 there is two manner to take into account the Dirichlet condition on $\Gamma_{_D}$, changing the linear system or explicitly reduce to the kernel of the Dirichlet condition. For the first manner, the following function is defined \\[0.5cm]
+\index{GETFEM!getfem::assembling\_Dirichlet\_condition}
 {\tt getfem::assembling\_Dirichlet\_condition(RM, B, mef1, nbound, V, N);} \\[0.5cm]
 where {\tt nbound} is the index of the boundary in {\tt mef1} where the Dirichlet condition is applied, {\tt V} is the vector of the values of $U(x)$ on each degree of freedom of {\tt mef1} and {\tt N} is the dimension for vectorial problems (shold be {\tt 1} for scalar problems). This operation should be the last one because it transform the stiffness matrix {\tt RM}. It works only for Lagrange elements. At the end, one obtains the discrete system
 $$ [RM] U = B, $$
 where $U$ is the discrete unknown.\\[0.5cm]
 
 For the second manner, one should use\\[0.5cm]
+\index{GETFEM!getfem::asm\_dirichlet\_constraints}
 {\tt getfem::asm\_dirichlet\_constraints($\tilde{H}$, $\tilde{R}$, mf\_u, mf\_rh,$H$, $R$, nbound)}.\\[0.5cm]
 See the Dirichlet condition as a general linear constraint that must satisfy the solution $u$. Here, $H$ is a (sparse) matrix, with {\tt mf\_rh.nb\_dof()} columns, and $n_c$ lines, where $n_c$ is the number of constraints. Hence $u$ must satisfy $Hu=R$, which is expressed on $mf\_rh$ (hopefully lagragian). This function just assemble these constraints into a new linear system $\tilde{H}u=\tilde{R}$, doing some additionnal simplification in order to obtain a ``simple'' constraints matrix.
+\index{GETFEM!getfem::Dirichlet\_null_space}
 Then, one should call \\[0.5cm]{\tt getfem::Dirichlet\_null_space($\tilde{H}$, N, $\tilde{R}$, Ud)},\\[0.5cm] which will return a vector $U_d$ which satisfies $MU_d=B$, and an orthogonal basis $N$ of the kernel of $\tilde{H}$. Hence, the discrete system that must be solved is 
 $$ (N'[RM]N) U_{int}=N'(B-[RM]U_d),$$
 and the solution is $U=N.U_{int}+U_d$.
@@ -736,10 +751,13 @@ A big advantage of this approach is to be generic, and do not prescribed for the
 \subsection{Linear Elasticity problem}
 
 the following function assembles the stiffness matrix for linear elasticity\\[0.5cm]
+\index{GETFEM!getfem::asm\_stiffness\_matrix\_for\_linear\_elasticity}
 {\tt getfem::asm\_stiffness\_matrix\_for\_linear\_elasticity(RM, mef1, mef2, LAMBDA, MU); } \\[0.5cm]
 where {\tt RM} is a matrix of any type having the right dimension (i.e. here {\tt me1.nb\_dof()}), {\tt mef1} is a variable of type {\tt getfem::mesh\_fem} and should define the finite element method for the solution, {\tt mef2}  is a variable of type {\tt getfem::mesh\_fem} (possibly equal to {\tt mef1}) describing the finite element method on which the Lam{\'e} coefficient are defined, {\tt LAMBDA} and {\tt MU} are vectors of the values of Lam{\'e} coefficients on each degree of freedom of {\tt mef2}. It is important to pay attention to the fact that the integration methods used to compute the elementary matrices is the ones declared in {\tt mef1} and must be of sufficient order.\\[0.5cm]
 
-In order to assemble source term, Neumann and Dirichlet conditions, same functions as in previous section can be used, except the fact that parameter {\tt N} as to be equal to the dimension of the domain (because linear elasticity problem is vectorial)
+CAUTION : Linear elasticity problem is a vectorial problem, so the target dimension of {\tt mef1} (see {\tt mef.set_qdim(Q)}) should be the same as the dimension of the mesh.\\[0.5cm]
+
+In order to assemble source term, Neumann and Dirichlet conditions, same functions as in previous section can be used.
 
 \subsection{Stockes Problem with mixed finite element method}
 
@@ -749,7 +767,10 @@ to be done ... (see the file {\tt getfem\_assembling.h}).
 
 The following function allows to assemble a mass matrix for a finite element method\\[0.5cm]
 {\tt getfem::asm_mass\_matrix(M, mef); } \\[0.5cm]
-where {\tt M} is a matrix of any type having the right dimension (i.e. here {\tt me1.nb\_dof()}), {\tt mef} is a variable of type {\tt getfem::mesh\_fem} and should define the finite element method.
+where {\tt M} is a matrix of any type having the right dimension (i.e. here {\tt me1.nb\_dof()}), {\tt mef} is a variable of type {\tt getfem::mesh\_fem} and should define the finite element method. {\tt mef} could represent a vectorial finite element method (i.e. {\tt mef.get_qdim } $> 1$).
+It is also possible to obtain  mass matrix on a boundary with the same function:
+{\alltt getfem::asm_mass\_matrix(M, mef, nbound); } \\[0.5cm]
+where {\tt nbound} is the index of the boundary in {\tt mef}.
 
 
 \section{Compute arbitrary elementary matrices - generic assembly procedures}
@@ -757,8 +778,9 @@ As it can be seen in the file {\tt getfem_assembling.h}, all the
 previous assembly procedures use a {\tt generic_assembly} object and
 provide it an adequate description of what must be done. For example, 
 the assembly of a volumic source term for a scalar FEM is done with the following excerpt of code:
+\index{GETFEM!getfem::generic_assembly}
 \begin{alltt}
-  generic_assembly assem;
+  getfem::generic_assembly assem;
   assem.push_mf(mf);
   assem.push_mf(mfdata);
   assem.push_data(F);
@@ -768,7 +790,7 @@ the assembly of a volumic source term for a scalar FEM is done with the followin
 \end{alltt}
 The first instructions declare the object, and set the data that it will use: the two {\tt mesh\_fem} objects, the input data {\tt F}, and the destination vector {\tt B}.
 
-The input data is the vector $F$, defined on {\tt mfdata}. One want to
+The input data is the vector $F$, defined on {\tt mfdata}. One wants to
 evaluate $\sum_{j}f_j(\int_\Omega\phi^i\psi^j)$. The instruction must be seen as
 something that will be executed for each convex of the mesh. The terms
 {\tt\#1} and {\tt\#2} refer to the first {\tt mesh\_fem} and the second one
@@ -790,7 +812,7 @@ part is a reduction operation, {\tt C(:,j).Z(j)}: each named index
 
 An other example is the assembly of the stiffness matrix for a vector laplacian:
 \begin{alltt}
-  generic_assembly assem;
+  getfem::generic_assembly assem;
   assem.push_mf(mf);
   assem.push_mf(mfdata);
   assem.push_data(A);
@@ -853,11 +875,13 @@ If there is more than one data array, output array  or output sparse matrix, one
 
 \section{Incorporate new finite element methods in {\sc Getfem++}}
 
-Basically, It is sufficient to describe an element on the reference element, i.e. to describe each base function of each degree of freedom. Vectorial elements and non-equivalent elements are partially supported ... (supported by the finite element kernel but not by assembling procedures). To be done ... please read \cite{BASCOMP} for more details and see the file {\tt getfem\_fem.C} for practical implementation.
+Basically, It is sufficient to describe an element on the reference element, i.e. to describe each base function of each degree of freedom. Vectorial elements and non-equivalent elements are partially supported ... (supported by the finite element kernel but not by assembling procedures).\\[0.5cm]
+To be done ... please read \cite{BASCOMP} for more details and see the file {\tt getfem\_fem.C} for practical implementation.
 
 \section{Finite element methods defined on two different meshes}
 
 A special finite element method is defined in {\tt getfem\_fem.h} which is not a real finite element method but allows to interpolate a finite element method defined on another mesh. When an assembling procedure has different finite element methods as arguments, the mesh on which those methods are defined should be the same. If you need to assemble a matrix with finite element methods defined on different meshes, you may use the finite element methods\\[0.5cm]
+\index{GETFEM!getfem::virtual\_link\_fem}
 {\tt getfem::virtual\_link\_fem(getfem::mesh\_fem mf1, getfem::mesh\_fem mf2,} \\ {\tt \mbox{}\hspace{12em} getfem::pintegration\_method pim) }\\[0.2cm]
 or\\[0.2cm]
 {\tt getfem::virtual\_link\_fem\_with\_gradient(getfem::mesh\_fem mf1, getfem::mesh\_fem mf2,} \\ {\tt \mbox{}\hspace{12em} getfem::pintegration\_method pim) }\\[0.5cm]
@@ -885,24 +909,27 @@ The object defined to build the interpolation will be destroyed when the object 
 \section{Compute $L^2$ and $H^1$ norms}
 
 The file {\tt getfem\_norm.h} defines the functions to compute $L^2$ and $H^1$ norms of a solution. The following functions compute the different norms\\[0.5cm]
-{\tt getfem::L2\_norm(mef, U, N); } \\[0.5cm]
-{\tt getfem::H1\_semi\_norm(mef, U, N); } \\[0.5cm]
-{\tt getfem::H1\_norm(mef, U, N); } \\[0.5cm]
-where {\tt mef} is a variable of type {\tt getfem::mesh\_fem} and describes the finite element method on which the solution is defined, {\tt U} is the vector of values of the solution on each degree of freedom of {\tt mef} and 
-{\tt N} is the dimension of the solution for vectorial solutions. The size of  {\tt U} should be {\tt N * mef.nb\_dof()}.\\[0.5cm]
+\index{GETFEM!asm_L2\_norm(mef, U)}
+\index{GETFEM!asm_H1\_norm(mef, U)}
+{\tt getfem::asm_L2\_norm(mef, U); } \\[0.5cm]
+{\tt getfem::asm_H1\_semi\_norm(mef, U); } \\[0.5cm]
+{\tt getfem::asm_H1\_norm(mef, U); } \\[0.5cm]
+where {\tt mef} is a variable of type {\tt getfem::mesh\_fem} and describes the finite element method on which the solution is defined, {\tt U} is the vector of values of the solution on each degree of freedom of {\tt mef}. The size of  {\tt U} should be {\tt mef.nb\_dof()}.\\[0.5cm]
 
 \section{Compute derivatives}
 
 The file {\tt getfem\_derivatives.h}  defines the following function to compute the gradient of a solution\\[0.5cm]
-{\tt getfem::compute\_gradient(mef1, mef2, U, V, Q); }\\[0.5cm]
-where {\tt mef1} is a variable of type {\tt getfem::mesh\_fem} and describes the finite element method on which the solution is defined, {\tt mef2} describes the fintie element method to compute the gradient, {\tt U} is a vector representing the solution and should be of size {\tt Q * mef1.nb\_dof()}, {\tt V} is the vector on which the gradient will be computed and should be of size
-{\tt N * Q * mef2.nb\_dof()} where {\tt N} is the dimension of the domain and {\tt Q} is the dimension of the solution for vectorial solutions. IMPORTANT : This function only work when {\tt mef2} is a Lagrange element. This element should be, most of the time, a discontinuous lagrangian element, because for usual element (for instance {\tt getfem::PK\_discontinuous\_fem(n, k)}), the gradient is not continuous.
+\index{GETFEM!getfem::compute\_gradient}
+{\tt getfem::compute\_gradient(mef1, mef2, U, V); }\\[0.5cm]
+where {\tt mef1} is a variable of type {\tt getfem::mesh\_fem} and describes the finite element method on which the solution is defined, {\tt mef2} describes the fintie element method to compute the gradient, {\tt U} is a vector representing the solution and should be of size {\tt mef1.nb\_dof()}, {\tt V} is the vector on which the gradient will be computed and should be of size
+{\tt N * mef2.nb\_dof()} where {\tt N} is the dimension of the domain. IMPORTANT : This function only work when {\tt mef2} is a Lagrange element. This element should be, most of the time, a discontinuous lagrangian element, because for usual element (for instance {\tt getfem::PK\_discontinuous\_fem(n, k)}), the gradient is not continuous.
 
 \section{Export and view a solution}
 
 The file {\tt getfem\_export.h} defines the following function to save a solution in a file\\[0.5cm]
-{\tt getfem::save\_solution(filename, mef, U, Q, K); }\\[0.5cm]
-where {\tt filename} is of type {\tt std::string}, {\tt mef}  is a variable of type {\tt getfem::mesh\_fem} and describes the finite element method on which the solution is defined, {\tt U} is a vector representing the solution and should be of size {\tt Q * mef.nb\_dof()} and {\tt K} is the degree of the standard lagrange element used to save the solution. The solution is interpolated on each element on the more classical lagrange element of degree {\tt K} defined on this element.\\[0.5cm]
+\index{GETFEM!getfem::save\_solution}
+{\tt getfem::save\_solution(filename, mef, U, K); }\\[0.5cm]
+where {\tt filename} is of type {\tt std::string}, {\tt mef}  is a variable of type {\tt getfem::mesh\_fem} and describes the finite element method on which the solution is defined, {\tt U} is a vector representing the solution and should be of size {\tt mef.nb\_dof()} and {\tt K} is the degree of the standard lagrange element used to save the solution. The solution is interpolated on each element on the more classical lagrange element of degree {\tt K} defined on this element.\\[0.5cm]
 To view a solution, two perl scripts are provided (in the directory {\tt bin/} of {\sc Getfem++} distribution) but work only for 2D domains and are very basic.\\[0.5cm]
 {\tt sc2dgnuplot filename}\\[0.5cm]
 {\tt dr2dgnuplot filename S}\\[0.5cm]
@@ -911,10 +938,12 @@ Both scripts use Gnuplot to draw the solution and thus you need to have a workin
 \section{Interpolation on different meshes}
 
 The file {\tt getfem\_export.h} defines the following function to interpolate a solution from a mesh and a finite element method  to another mesh and another Lagrange finite element method.\\[0.5cm]
-{\tt getfem::interpolation\_solution(mef1, mef2, U, V, Q); }\\[0.5cm]
-where {\tt mef1}  is a variable of type {\tt getfem::mesh\_fem} and describes the finite element method on which the solution is defined, {\tt mef2} is the finite element method on which the solution will be interpolate,  {\tt U} is a vector representing the solution and should be of size {\tt Q * mef1.nb\_dof()}, {\tt V} is a vector on which the interpolation will be computed and should be of size {\tt Q * mef2.nb\_dof()} and {\tt Q} is the dimension of the solution for vectorial solutions. IMPORTANT : {\tt mef2} should be of lagrange type for the interpolation to makes sense but the meshes linked to {\tt mef1} and {\tt mef2} may be different (and this is the interest of this function). There is no restriction for the dimension of the domain. 
+\index{GETFEM!getfem::interpolation\_solution}
+{\tt getfem::interpolation\_solution(mef1, mef2, U, V); }\\[0.5cm]
+where {\tt mef1}  is a variable of type {\tt getfem::mesh\_fem} and describes the finite element method on which the solution is defined, {\tt mef2} is the finite element method on which the solution will be interpolate,  {\tt U} is a vector representing the solution and should be of size {\tt mef1.nb\_dof()}, {\tt V} is a vector on which the interpolation will be computed and should be of size {\tt mef2.nb\_dof()}. IMPORTANT : {\tt mef2} should be of lagrange type for the interpolation to makes sense but the meshes linked to {\tt mef1} and {\tt mef2} may be different (and this is the interest of this function). There is no restriction for the dimension of the domain. 
  
 \section{Catch errors}
+\index{errors}
 
 Errors used in getfem++ are defined in the file {\tt dal\_std.h}. In order to make easier  the error catching all errors derive from the type {\tt std::logic\_error} defined in the file {\tt  stdexcept} of the S.T.L.\\[0.5cm]
 A standard procedure, {\tt DAL\_STANDARD\_CATCH\_ERROR}, is defined in {\tt dal\_std.h}. This procedure catches all errors and print the error message when an error occurs. It can be used in the main procedure of the program as follows\\[0.5cm]
@@ -930,6 +959,8 @@ A standard procedure, {\tt DAL\_STANDARD\_CATCH\_ERROR}, is defined in {\tt dal\
 }
 
 \section{Example : Laplacian program}
+\index{laplacian}
+\index{Poisson problem}
 
 The program {\tt laplacian} is provided in the directory {\tt tests} of {\sc Getfem++} distribution. This program compute the solution of the Poisson problem in a parellepiped domain in any dimension with various finite element methods and elements. This program can be used as a model to build application programs. To compile it execute a {\tt gmake check} on the root directory of {\sc Getfem++}. Once the program is compiled you can test it executing the command\\[0.5cm]
 {\tt laplacian laplacian.param}\\[0.5cm]
@@ -960,6 +991,7 @@ The file {\tt laplacian.param} is the parameter file. You can edit it and test v
 
 \end{tabular} \end{center}
 The mesh is exported as {\tt laplacian.mesh} and the solution is exported as {\tt laplacian.dataelt}. The mesh can be viewed using {\tt ../contrib/draw\_mesh laplacian.mesh} and the solution with {\tt ../bin/sc2dgnuplot laplacian.dataelt}. The program print the $L^2$ and $H^1$ error from an exact solution.\\[0.5cm]
+\index{elastostatic}
 The program {\tt elastostatic} is built in a same way and compute the solution of linear elasticity problem.
 
 \begin{thebibliography}{99}
