@@ -2,7 +2,8 @@
 
 `rm -f doc.tex`;
 
-print `doc++ --tex -o doc1.tex`;
+open F, "doc++ --tex -o doc1.tex |" or die; print $_ while (<F>); close F;
+open F, "doc++ --dir html |" or die; print $_ while (<F>); close F;
 
 open(F1, "doc1.tex") or die "Open file impossible : $!\n";
 open(F2, ">doc.tex") or die "Open file impossible : $!\n";
@@ -23,6 +24,10 @@ close(F2);
 open F, "latex doc |" or die; print $_ while (<F>); close F;
 open F, "latex doc |" or die; print $_ while (<F>); close F;
 open F, "dvips -o -p1 doc |" or die; print $_ while (<F>); close F;
+open F, "pstops \"2:0L@.7(21cm,0)+1L@.7(21cm,14.85cm)\" doc.ps doc2.ps |" or die; print $_ while (<F>); close F;
+`rm -f doc.ps`;
+`mv doc2.ps doc.ps`;
+
 
 `rm -f doc1.tex doc.tex doc.log doc.aux doc.cls` 
 

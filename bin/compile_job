@@ -118,7 +118,7 @@ if ($systeme =~ /Linux/)
 else
 {
   print "\n\n Documentation compilation.\n";
-  print `cd doc; do_doc++;`;
+  print `cd ../doc; make;`;
 }
 
 # faire les liens 'lequels ?)
