@@ -1,4 +1,5 @@
 // -*- c++ -*-
+//
 //=======================================================================
 // Copyright (C) 1997-2001
 // Authors: Andrew Lumsdaine <lums@osl.iu.edu> 
@@ -23,11 +24,11 @@
 // OR DOCUMENTATION WILL NOT INFRINGE ANY PATENTS, COPYRIGHTS, TRADEMARKS
 // OR OTHER RIGHTS.
 //=======================================================================
-//
+//                                                                           
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Generic Matrix Methods  (gmm)                                */
-/* File    :  gmm_solver_gmres.h : from I.T.L.                             */
+/* File    :  gmm_solver_cheby.h : from I.T.L.                             */
 /*     									   */
 /* Date : October 13, 2002.                                                */
 /* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
@@ -53,97 +54,78 @@
 /* USA.                                                                    */
 /*                                                                         */
 /* *********************************************************************** */
-
-#ifndef GMM_KRYLOV_GMRES_H
-#define GMM_KRYLOV_GMRES_H
+#ifndef GMM_CHEBY_H
+#define GMM_CHEBY_H
 
 #include <gmm_solvers.h>
 
+
 namespace gmm {
 
-  // Generalized Minimum Residual
+  //: Chebyshev Iteration
+  //This solves the unsymmetric  linear system Ax = b using 
+  //the Preconditioned Chebyshev Method.
+  //<p>
+  //A return value of 0 indicates convergence within the
+  //maximum number of iterations (determined by the iter object).
+  //A return value of 1 indicates a failure to converge.
+  //<p>
+  //See: T. Manteuffel, The Chebyshev iteration for nonsysmmetric linear systems
+  //Numer. Math. 28(1977), pp. 307-327
+  //G. H. Golub and C. F. Van Loan, Matrix Computations, The Johns Hopkins 
+  //University Press, Baltimore, Maryland, 1996 
   //
-  //   This solve the unsymmetric linear system Ax = b using restarted GMRES.
-  //
-  //   See: Y. Saad and M. Schulter. GMRES: A generalized minimum residual
-  //   algorithm for solving nonsysmmetric linear systems, SIAM
-  //   J. Sci. Statist. Comp.  7(1986), pp, 856-869
-  //
+  //!category: itl,algorithms 
+  //!component: function 
+  //!definition: cheby.h 
+  //!tparam: Matrix  - Matrix or multiplier for matrix free methods 
+  //!tparam: Vector  - Vector  
+  //!tparam: VectorB - Vector 
+  //!tparam: Preconditioner -  Incomplete LU, Incomplete LU with threshold, SSOR or identity_preconditioner. 
+  //!tparam: Iteration - Controls the stopping criteria 
 
-  template < class Matrix, class Vector, class VectorB, class Preconditioner, 
-	     class Basis >
-  void gmres(const Matrix &A, Vector &x, const VectorB &b,
-	     const Preconditioner &M, int restart,
-	     iteration &outer, Basis& KS) {
+  /* required operations: mult,copy,add,scaled */
 
-    typedef typename linalg_traits<Vector>::value_type T;
-    typedef size_t size_type;
-    
-   
-    typedef typename temporary_vector<Vector>::vector_type internal_vector;
-    internal_vector w(vect_size(x)), r(vect_size(x)), u(vect_size(x));
-    
-    typename number_traits<T>::magnitude_type a, beta;
-    typedef std::vector<typename number_traits<T>::magnitude_type> TmpVec;
-    typedef gmm::col_matrix<TmpVec> HMat;
+template < class Matrix, class Vector, class VectorB, class Preconditioner>
+void cheby(const Matrix &A, Vector &x, const VectorB &b,
+	   const Preconditioner &M, iteration& iter,
+	   typename Vector::value_type eigmin, 
+	   typename Vector::value_type eigmax)
+{
+  typedef typename linalg_traits<Vector>::value_type Real;
+  Real alpha, beta, c, d;
+  typedef typename temporary_vector<Vector>::vector_type TmpVec;
+  TmpVec p(vect_size(x)), q(vect_size(x)), z(vect_size(x)), r(vect_size(x));
 
-    HMat H(restart+1, restart);
-    TmpVec s(restart+1);
-    outer.set_rhsnorm(gmm::vect_norm2(b));
+  iter.set_rhsnorm(gmm::vect_norm2(b));
+  if (iter.get_rhsnorm() == 0.0) { clear(x); return; }
 
-    if (outer.get_rhsnorm() == 0.0) { clear(x); return; }
-    
-    std::vector< gmm::givens_rotation<T> > rotations(restart+1);
-    
-    mult(A, scaled(x, -1.0), b, w);
-    
-    mult(M, w, r);
-    beta = dal::abs(gmm::vect_norm2(r));
+  gmm::mult(A, gmm::scaled(x, -1.0), b, r);
 
-    iteration inner = outer;
-    inner.reduce_noisy();
-    inner.set_maxiter(restart);
-    
-    while (! outer.finished(beta)) {
-      
-      gmm::copy(gmm::scaled(r, 1.0/beta), KS[0]);
-      gmm::clear(s);
-      s[0] = beta;
-      
-      size_type i = 0; inner.init();
-      
-      do {
-	gmm::mult(A, KS[i], u);
-	gmm::mult(M, u, KS[i+1]);
-	orthogonalize(KS, mat_col(H, i), i);
-	H(i+1, i) = a = gmm::vect_norm2(KS[i+1]);
-	gmm::scale(KS[i+1], 1.0 / a);
-	for (size_type k = 0; k < i; k++)
- 	  rotations[k].scalar_apply(H(k,i), H(k+1,i));
-	
-	rotations[i] = givens_rotation<T>(H(i,i), H(i+1,i));
-	rotations[i].scalar_apply(H(i,i), H(i+1,i));
-	rotations[i].scalar_apply(s[i], s[i+1]);
-	
-	++inner, ++outer, ++i;
-      } while (! inner.finished(dal::abs(s[i])));
+  c = (eigmax - eigmin) / 2.0;
+  d = (eigmax + eigmin) / 2.0;
 
-      gmm::upper_tri_solve(H, s, i);
-      gmm::combine(KS, s, x, i);
-      gmm::mult(A, gmm::scaled(x, -1.0), b, w);
-      gmm::mult(M, w, r);
-      beta = dal::abs(gmm::vect_norm2(r));
+  while ( ! iter.finished(r) ) {
+    gmm::mult(M, r, z);         
+
+    if ( iter.first() ) {
+      gmm::copy(z, p);          
+      alpha = 2.0 / d;
+    } else {
+      beta = c * alpha / 2.0;    
+      beta = beta * beta;
+      alpha = 1.0 / (d - beta);  
+      gmm::add(z, gmm::scaled(p, beta), p);
     }
+
+    gmm::mult(A, p, q);
+    gmm::add(x, gmm::scaled(p, alpha), x);
+    gmm::add(r, gmm::scaled(q, -alpha), r);
+
+    ++iter;
   }
 
-
-  template < class Matrix, class Vector, class VectorB, class Preconditioner >
-  void gmres(const Matrix &A, Vector &x, const VectorB &b,
-	     const Preconditioner &M, int restart, iteration& outer) {
-    modified_gram_schmidt<typename 
-      temporary_plain_vector<Vector>::vector_type> orth(restart, vect_size(x));
-    gmres(A, x, b, M, restart, outer, orth); 
-  }
+}
 
 }
 
