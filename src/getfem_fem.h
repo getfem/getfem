@@ -327,7 +327,7 @@ namespace getfem
 	  co += coeff[i] * M(i, j);
       
       for (size_type r = 0; r < target_dim(); ++r)
-	val[r] += co * base()[j + r*R].eval(x.begin());
+	val[r] += co * double(base()[j + r*R].eval(x.begin()));
     } 
   }
   

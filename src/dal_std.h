@@ -191,10 +191,10 @@ namespace dal
 namespace dal
 {
   template <class T> inline T sqr(T a) { return a * a; }
-  template <class T> inline T abs(T a) { return (a < 0) ? -a : a; }
+  template <class T> inline T abs(T a) { return (a < T(0)) ? -a : a; }
   template <class T> inline T abs(std::complex<T> a) { return std::abs(a); }
-  template <class T> inline T pos(T a) { return (a < 0) ? 0 : a; }
-  template <class T> inline T neg(T a) { return (a < 0) ? -a : 0; }
+  template <class T> inline T pos(T a) { return (a < T(0)) ? T(0) : a; }
+  template <class T> inline T neg(T a) { return (a < T(0)) ? -a : T(0); }
 }
 
 

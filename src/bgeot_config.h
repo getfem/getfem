@@ -36,6 +36,11 @@
 
 #include <dal_except.h>
 
+#ifdef HAVE_QDLIB
+#include <dd.h>
+#include <x86.h>
+#endif
+
 namespace bgeot
 {
   static const size_t ST_NIL = size_t(-1);
@@ -43,9 +48,13 @@ namespace bgeot
   typedef dal::uint16_type short_type;
   typedef size_t size_type;
   typedef double scalar_type;
+#ifndef HAVE_QDLIB
   typedef double long_scalar_type;
   typedef double opt_long_scalar_type;
-
+#else
+  typedef dd_real long_scalar_type;
+  typedef dd_real opt_long_scalar_type;
+#endif
   using dal::dimension_error;
   using dal::file_not_found_error;
   using dal::internal_error;

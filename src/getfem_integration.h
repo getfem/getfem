@@ -50,8 +50,8 @@ namespace getfem
 
       bgeot::pconvex_structure cvs;
 
-      mutable std::vector<scalar_type> int_monomials;
-      mutable std::vector< std::vector<scalar_type> > int_face_monomials;
+      mutable std::vector<long_scalar_type> int_monomials;
+      mutable std::vector< std::vector<long_scalar_type> > int_face_monomials;
 
     public :
 
@@ -60,9 +60,9 @@ namespace getfem
       /// {Structure of convex of reference.  
       bgeot::pconvex_structure structure(void) const { return cvs; }
 
-      virtual scalar_type int_monomial(const bgeot::power_index &power)
+      virtual long_scalar_type int_monomial(const bgeot::power_index &power)
 	const = 0;
-      virtual scalar_type int_monomial_on_face(const bgeot::power_index
+      virtual long_scalar_type int_monomial_on_face(const bgeot::power_index
 					       &power, short_type f) const = 0;
 
       /// Evaluate the integral of the polynomial P on the reference element.

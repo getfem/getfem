@@ -299,7 +299,11 @@ namespace bgeot
 	    for ( ; mita != mite; ++mita, ++mitq, ++mit)
 	      *mit = (*mita) + (*mitq); /* on pourrait calculer
 					   directement l'index global. */
+	    //	     cerr << "*= : " << *this << ", itq*ita=" << (*itq) * (*ita) << endl;
+	    //	     cerr << " itq = " << *itq << endl;
+	    //	     cerr << " ita = " << *ita << endl;
 	    add_monomial((*itq) * (*ita), mitot);
+	   
 	  }
       }
     return *this;
@@ -408,7 +412,7 @@ namespace bgeot
     return o;
   }
   
-  typedef polynomial<scalar_type> base_poly;
+  typedef polynomial<opt_long_scalar_type> base_poly;
 
   /* usual constant polynomials  */
   

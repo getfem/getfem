@@ -39,10 +39,10 @@ namespace getfem
 
   scalar_type poly_integration::int_poly(const base_poly &P) const
   {
-    scalar_type res = 0.0;
+    long_scalar_type res = 0.0;
     if (P.size() > int_monomials.size())
     {
-      std::vector<scalar_type> *hum = &int_monomials;
+      std::vector<long_scalar_type> *hum = &int_monomials;
       size_type i = P.size(), j = int_monomials.size();
       hum->resize(i);
       bgeot::power_index mi(P.dim()); mi[P.dim()-1] = P.degree();
@@ -50,16 +50,18 @@ namespace getfem
 	(*hum)[k-1] = int_monomial(mi);
     }
     base_poly::const_iterator it = P.begin(), ite = P.end();
-    std::vector<scalar_type>::const_iterator itb = int_monomials.begin();
-    for ( ; it != ite; ++it, ++itb) res += (*it) * (*itb);
-    return res;
+    std::vector<long_scalar_type>::const_iterator itb = int_monomials.begin();
+    for ( ; it != ite; ++it, ++itb) {
+      res += long_scalar_type(*it) * long_scalar_type(*itb);
+    }
+    return scalar_type(res);
   }
 
   scalar_type
     poly_integration::int_poly_on_face(const base_poly &P, short_type f) const
   {
-    scalar_type res = 0.0;
-    std::vector<scalar_type> *hum = &(int_face_monomials[f]);
+    long_scalar_type res = 0.0;
+    std::vector<long_scalar_type> *hum = &(int_face_monomials[f]);
     if (P.size() > hum->size()) {
       size_type i = P.size(), j = hum->size();
       hum->resize(i);
@@ -68,9 +70,9 @@ namespace getfem
 	(*hum)[k-1] = int_monomial_on_face(mi, f);
     }
     base_poly::const_iterator it = P.begin(), ite = P.end();
-    std::vector<scalar_type>::const_iterator itb = hum->begin();
-    for ( ; it != ite; ++it, ++itb) res += (*it) * (*itb);
-    return res;
+    std::vector<long_scalar_type>::const_iterator itb = hum->begin();
+    for ( ; it != ite; ++it, ++itb) res += long_scalar_type(*it) * long_scalar_type(*itb);
+    return scalar_type(res);
   }
 
   /* ******************************************************************** */
@@ -79,43 +81,44 @@ namespace getfem
 
   struct _simplex_poly_integration : public poly_integration
   {
-    scalar_type int_monomial(const bgeot::power_index &power) const;
+    long_scalar_type int_monomial(const bgeot::power_index &power) const;
 
-    scalar_type int_monomial_on_face(const bgeot::power_index &power, 
+    long_scalar_type int_monomial_on_face(const bgeot::power_index &power, 
 				     short_type f) const;
 
     _simplex_poly_integration(bgeot::pconvex_structure c)
       { cvs = c;  int_face_monomials.resize(c->nb_faces()); }
   };
 
-  scalar_type _simplex_poly_integration::int_monomial
+
+  long_scalar_type _simplex_poly_integration::int_monomial
   (const bgeot::power_index &power) const {
-    scalar_type res = 1.0;
+    long_scalar_type res = 1.0;
     short_type fa = 1;
     bgeot::power_index::const_iterator itm = power.begin(),
       itme = power.end();
     for ( ; itm != itme; ++itm)
       for (int k = 1; k <= *itm; ++k, ++fa)
-	res *= scalar_type(k) / scalar_type(fa);
+	res *= long_scalar_type(k) / long_scalar_type(fa);
     
-    for (int k = 0; k < cvs->dim(); k++) { res /= scalar_type(fa); fa++; }
+    for (int k = 0; k < cvs->dim(); k++) { res /= long_scalar_type(fa); fa++; }
     return res;
   }
   
-  scalar_type _simplex_poly_integration::int_monomial_on_face
+  long_scalar_type _simplex_poly_integration::int_monomial_on_face
   (const bgeot::power_index &power, short_type f) const {
-    scalar_type res = 0.0;
+    long_scalar_type res = 0.0;
     
     if (f == 0 || power[f-1] == 0.0) {
-      res = (f == 0) ? sqrt(scalar_type(cvs->dim())) : 1.0;
+      res = (f == 0) ? sqrt(long_scalar_type(cvs->dim())) : long_scalar_type(1.0);
       short_type fa = 1;
       bgeot::power_index::const_iterator itm = power.begin(),
 	itme = power.end();
       for ( ; itm != itme; ++itm)
 	for (int k = 1; k <= *itm; ++k, ++fa)
-	  res *= scalar_type(k) / scalar_type(fa);
+	  res *= long_scalar_type(k) / long_scalar_type(fa);
       
-      for (int k = 1; k < cvs->dim(); k++) { res /= scalar_type(fa); fa++; }
+      for (int k = 1; k < cvs->dim(); k++) { res /= long_scalar_type(fa); fa++; }
     }
     return res;
   }
@@ -141,15 +144,15 @@ namespace getfem
   {
     ppoly_integration cv1, cv2;
 
-    scalar_type int_monomial(const bgeot::power_index &power) const;
+    long_scalar_type int_monomial(const bgeot::power_index &power) const;
 
-    scalar_type int_monomial_on_face(const bgeot::power_index &power, 
+    long_scalar_type int_monomial_on_face(const bgeot::power_index &power, 
 				     short_type f) const;
 
     _plyint_mul_structure(ppoly_integration a, ppoly_integration b);
   };
 
-  scalar_type _plyint_mul_structure::int_monomial
+  long_scalar_type _plyint_mul_structure::int_monomial
   (const bgeot::power_index &power) const {
     bgeot::power_index mi1(cv1->dim()), mi2(cv2->dim());
     std::copy(power.begin(), power.begin() + cv1->dim(), mi1.begin());
@@ -157,7 +160,7 @@ namespace getfem
     return cv1->int_monomial(mi1) * cv2->int_monomial(mi2);
   }
   
-  scalar_type _plyint_mul_structure::int_monomial_on_face
+  long_scalar_type _plyint_mul_structure::int_monomial_on_face
   (const bgeot::power_index &power, short_type f) const {
     bgeot::power_index mi1(cv1->dim()), mi2(cv2->dim());
     std::copy(power.begin(), power.begin() + cv1->dim(), mi1.begin());
@@ -306,7 +309,7 @@ namespace getfem
   /* ********************************************************************* */
 
   static dal::dynamic_array<base_poly> *Legendre_polynomials;
-  static dal::dynamic_array< std::vector<scalar_type> > *Legendres_roots;
+  static dal::dynamic_array< std::vector<long_scalar_type> > *Legendres_roots;
   static void init_legendre(short_type de)
   {
     static int nb_lp = -1;
@@ -314,7 +317,7 @@ namespace getfem
     if (nb_lp < 0)
     {
       Legendre_polynomials = new dal::dynamic_array<base_poly>();
-      Legendres_roots = new dal::dynamic_array< std::vector<scalar_type> >();
+      Legendres_roots = new dal::dynamic_array< std::vector<long_scalar_type> >();
       (*Legendre_polynomials)[0] = base_poly(1,0);
       (*Legendre_polynomials)[0].one();
       (*Legendre_polynomials)[1] = base_poly(1,1,0);
@@ -327,12 +330,12 @@ namespace getfem
       ++nb_lp;
       (*Legendre_polynomials)[nb_lp] =
 	(base_poly(1,1,0) * (*Legendre_polynomials)[nb_lp-1]
-	 * ((2.0 * scalar_type(nb_lp) - 1.0) / scalar_type(nb_lp)))
+	 * ((2.0 * long_scalar_type(nb_lp) - 1.0) / long_scalar_type(nb_lp)))
 	+ ((*Legendre_polynomials)[nb_lp-2]
-	* ((1.0 - scalar_type(nb_lp)) / scalar_type(nb_lp)));
+	* ((1.0 - long_scalar_type(nb_lp)) / long_scalar_type(nb_lp)));
       (*Legendres_roots)[nb_lp].resize(nb_lp);
       (*Legendres_roots)[nb_lp][nb_lp/2] = 0.0;
-      scalar_type a = -1.0, b, c, d, e, cv, ev, ecart, ecart2;
+      long_scalar_type a = -1.0, b, c, d, e, cv, ev, ecart, ecart2;
       for (int k = 0; k < nb_lp / 2; ++k) // + symetrie ...
       {
 	b = (*Legendres_roots)[nb_lp-1][k];
@@ -348,7 +351,7 @@ namespace getfem
 	  ecart2 = d - c; if (ecart2 >= ecart) break;
 	  ecart = ecart2;
 	  ev = (*Legendre_polynomials)[nb_lp].eval(&e);
-	  if (ev * cv < 0) { d = e; } else { c = e; cv = ev; }
+	  if (ev * cv < 0.) { d = e; } else { c = e; cv = ev; }
 	}
 
 	(*Legendres_roots)[nb_lp][k] = c;
@@ -378,10 +381,10 @@ namespace getfem
     
     for (short_type i = 0; i < nbpt; ++i) {
       int_points[i].resize(1);
-      scalar_type lr = (*Legendres_roots)[nbpt][i];
+      long_scalar_type lr = (*Legendres_roots)[nbpt][i];
       int_points[i][0] = 0.5 + 0.5 * lr;
       int_coeffs[i] = (1.0 - dal::sqr(lr))
-	/ dal::sqr( (nbpt) * ((*Legendre_polynomials)[nbpt-1].eval(&lr)));
+	/ dal::sqr( long_scalar_type(nbpt) * ((*Legendre_polynomials)[nbpt-1].eval(&lr)));
     }
     
     int_points[nbpt].resize(1);

@@ -408,18 +408,19 @@ namespace getfem
       
       w[0] = K;
       for (int nn = 1; nn <= N; ++nn) { 
-	w[nn]=int(floor(0.5+((cv_node.points()[i])[nn-1]*double(K))));
+	w[nn]=int(floor(0.5+((cv_node.points()[i])[nn-1]*opt_long_scalar_type(K))));
 	w[0]-=w[nn];
       }
       
       for (int nn = 0; nn <= N; ++nn)
-	for (int j = 0; j < w[nn]; ++j)
+	for (int j = 0; j < w[nn]; ++j) {
 	  if (nn == 0)
-	    p *= (l0 * (scalar_type(K) / scalar_type(j+1))) 
-	      - (l1 * (scalar_type(j) / scalar_type(j+1)));
+	    p *= (l0 * (opt_long_scalar_type(K) / opt_long_scalar_type(j+1))) 
+	      - (l1 * (opt_long_scalar_type(j) / opt_long_scalar_type(j+1)));
 	  else
-	    p *= (base_poly(N,1,nn-1) * (scalar_type(K)/scalar_type(j+1))) 
-	      - (l1 * (scalar_type(j) / scalar_type(j+1)));
+	    p *= (base_poly(N,1,nn-1) * (opt_long_scalar_type(K)/opt_long_scalar_type(j+1))) 
+	      - (l1 * (opt_long_scalar_type(j) / opt_long_scalar_type(j+1)));
+	}
     }
   }
   

@@ -54,7 +54,7 @@ namespace bgeot
     
     imbricated_box_less(int ba = 10, int emi = -15, int ema = -2) {
       base = ba; exp_max = ema; exp_min = emi;
-      c_max = pow(scalar_type(base), -exp_max);
+      c_max = pow(double(base), double(-exp_max));
     }
   };
 

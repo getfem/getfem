@@ -63,7 +63,6 @@ if test "$ac_cv_cxx_partial_specialization_syntax" != yes; then
   exit 1;
 fi
 
-
 AC_CANONICAL_HOST
 
 echo "you are compiling getfem++ on a $host"
@@ -148,9 +147,54 @@ dnl AM_PROG_LIBTOOL
 AM_PROG_LIBTOOL
 AC_SUBST([LIBTOOL_DEPS])
 
-dnl AC_SUBST(LIBTOOL_VERSION_INFO)
 
-dnl LIBTOOL_VERSION_INFO="-version-info ${MAJOR_VERSION}:${MINOR_VERSION}:0"
+dnl -----------------------------QD TESTS--------------------------------
+AC_ARG_WITH(qd-lib-dir, [  --with-qd-lib-dir       directory in which the libqd.a can be found],
+	QDLIB="$withval/libqd.a")
+AC_ARG_WITH(qd-include-dir, [  --with-include-dir      directory in which the qd.h header can be found],
+	QDINC="-I $withval")
+AC_ARG_ENABLE(qd,
+ [  --enable-qd             enable the use of the qd library (double-double precision, usefull for high order FEMs)],
+ [ if   test "x$enableval" = "xyes" ; then
+	useQDlib="yes"
+   fi
+ ], [useQDlib="no"])
+if test "x$useQDlib" = "xyes" ; then  
+  LIBS="$LIBS $QDLIB"
+  CXXFLAGS="$CXXFLAGS $QDINC"
+  AC_TRY_RUN([
+#include <qd.h>
+#include <dd.h>
+#include <x86.h>
+#include <iostream>
+int main() {
+  unsigned short old_cw;
+  int ok;
+  x86_fix_start(&old_cw);
+  qd_real q = 1.0;
+  qd_real qq = qd_real("0.01");
+  qd_real qqq = "1.010101010101010101010101010101010101010101010101010101010101010E0";
+  dd_real d = 1.0;
+  dd_real dd = dd_real("0.1");
+  dd_real ddd = "1.1111111111111111111111111111111E0";
+  for (int i=0; i < 100; ++i) { d += dd; dd *= dd_real("0.1"); }
+  for (int i=0; i < 100; ++i) { q += qq; qq *= qd_real("0.01"); }
+  std::cerr << "d = " << d << std::endl << "q = " << q << std::endl;
+  std::cerr << abs(q - qqq) << endl;
+  std::cerr << abs(d - ddd) << endl;
+  if (abs(q - qqq) < 1e-63 && abs(d -ddd) < 1e-31) ok = 1;
+  else ok = 0;
+  x86_fix_end(&old_cw); return 1-ok;
+}
+  ], [echo "checking if qd library is working...yes"], [ echo "QD library is not working (check config.log)"; exit 1])
+  AC_DEFINE_UNQUOTED([HAVE_QDLIB],1,[defined if the qd library was found and is working])
+fi;
+dnl -----------------------------END QD TESTS--------------------------------
+
+
+
+LIBTOOL_VERSION_INFO="-version-info ${MAJOR_VERSION}:${MINOR_VERSION}:0"
+AC_SUBST(LIBTOOL_VERSION_INFO)
 
 dnl AC_CHECK_PROGS(RANLIB, ranlib)
 
