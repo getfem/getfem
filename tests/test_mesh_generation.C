@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
     getfem::scalar_type h = .3;
     int K=1;
     int opt = 0;
-    int max_iter = 1000;
+    int max_iter = 400;
     int prefind = 1;
     if (argc > 1) { opt = atoi(argv[1]); }
     if (argc > 2) { h = atof(argv[2]); cout << "h = " << h << "\n"; }

@@ -101,6 +101,9 @@ namespace getfem {
     gmm::dense_matrix<scalar_type> W;
     bgeot::mesh_structure edges_mesh;
 
+    std::vector<size_type> attracted_points;
+    std::vector<base_node> attractor_points;
+
     mesher(size_type K_,
 	   const mesher_signed_distance& dist_, 
 	   const mesher_virtual_function& edge_len_, 
@@ -821,7 +824,102 @@ namespace getfem {
       }
     }
 
-    void running_delaunay(void) {
+    void special_constraints_management(void) {
+
+      bgeot::kdtree tree;
+      bgeot::kdtree_tab_type neighbours;
+      bool tree_empty = true;
+	  
+      attractor_points.resize(0); attracted_points.resize(0);
+      
+      for (dal::bv_visitor ie(edges_mesh.convex_index());
+	   !ie.finished(); ++ie) {
+	size_type iA = edges_mesh.ind_points_of_convex(ie)[0];
+	size_type iB = edges_mesh.ind_points_of_convex(ie)[1];
+	// if (L[ie] > L0[ie]) continue;
+	if (pts_attr[iA] == pts_attr[iB] ||
+	    pts_attr[iA]->constraints.card() == 0 ||
+	    pts_attr[iB]->constraints.card() == 0) continue;
+	if (pts_attr[iA]->constraints == pts_attr[iB]->constraints)
+	  continue;
+	dal::bit_vector bv1(pts_attr[iA]->constraints);
+	bv1.setminus(pts_attr[iB]->constraints);
+	dal::bit_vector bv2(pts_attr[iB]->constraints);
+	bv2.setminus(pts_attr[iA]->constraints);
+	if (bv1.card() && bv2.card()) {
+	  bv1 |= bv2;
+	  bgeot::mesh_point_search_ind_ct
+	    iAneighbours = edges_mesh.ind_points_to_point(iA);
+	  bgeot::mesh_point_search_ind_ct
+	    iBneighbours = edges_mesh.ind_points_to_point(iB);
+	  std::vector<size_type>
+	    common_pts(iAneighbours.size()+iBneighbours.size());
+	  std::sort(iAneighbours.begin(),iAneighbours.end());
+	  std::sort(iBneighbours.begin(),iBneighbours.end());
+	  std::vector<size_type>::iterator ite = 
+	    std::set_intersection(iAneighbours.begin(), iAneighbours.end(),
+				  iBneighbours.begin(), iBneighbours.end(),
+				  common_pts.begin());
+	  common_pts.resize(ite-common_pts.begin());
+	  bool do_projection = true;
+	  if (dist(.5*(pts[iA]+pts[iB])) < 0) {
+	    for (std::vector<size_type>::iterator it = common_pts.begin();
+		 it != ite; ++it) {
+	      if (pts_attr[*it]->constraints.contains(bv1)) {
+		do_projection = false;
+		break;
+	      }
+	    }
+	  }
+	  if (do_projection) {
+	    
+	    if (pts_attr[iA]->constraints.card()
+		< pts_attr[iB]->constraints.card()) std::swap(iA,iB);
+	    
+	    base_node PA = pts[iA];
+	    bool okA = multi_constraint_projection(PA, bv1);
+	    base_node PB = pts[iB];
+	    bool okB = multi_constraint_projection(PB, bv1);
+	    
+	    if (okB && !okA)
+	      { std::swap(PA,PB); std::swap(iA,iB); std::swap(okB, okA); }
+	    
+	    if (okB && (gmm::vect_dist2(PA,pts[iA])
+			> 1.1*gmm::vect_dist2(PB,pts[iB]))) {
+	      // 1.5 au lieu de 1.1 ?
+	      std::swap(iA,iB); std::swap(PA,PB);
+	    }
+	    
+	    
+	    if (okA && gmm::vect_dist2(PA, pts[iA]) < h0*0.75) {
+	      
+	      if (tree_empty) {
+		for (size_type i=0; i < pts.size(); ++i)
+		  tree.add_point_with_id(pts[i],i);
+		tree_empty = false;
+	      }
+	      
+	      base_node bmin = PA, bmax = PA;
+	      for (size_type k = 0; k < N; ++k)
+		{ bmin[k] -= h0/1.8; bmax[k] += h0/1.8; }
+	      tree.points_in_box(neighbours, bmin, bmax);
+	      for (size_type k=0; k < neighbours.size(); ++k) {
+		if (neighbours[k].i != iA && neighbours[k].i != iB)
+		  do_projection = false;
+	      }
+	      
+	      if (do_projection) {
+		attractor_points.push_back(PA);
+		attracted_points.push_back(iA);
+	      }
+	    }
+	  }
+	}
+      }
+    }
+
+
+    void running_delaunay(bool mct) {
       if (noisy > 0)
 	cout << "NEW DELAUNAY, running on " << pts.size() << " points\n";
       size_type nbpt = pts.size();
@@ -830,7 +928,16 @@ namespace getfem {
       pts.resize(nbpt);
       if (noisy > 1) cout << "number of elements before selection = "
 			  << gmm::mat_ncols(t) << "\n";
-      select_elements(0);
+      if (mct) {
+	select_elements(0);
+	edges_mesh.clear();
+	for (size_type i=0; i < gmm::mat_ncols(t); ++i)
+	  for (size_type j=0; j < N+1; ++j)
+	    for (size_type k=j+1; k < N+1; ++k)
+	      edges_mesh.add_segment(t(j,i), t(k,i));
+	special_constraints_management();
+      }
+      select_elements(1);
       if (noisy > 0) cout << "number of elements after selection = "
 			  << gmm::mat_ncols(t) << "\n";
       edges_mesh.clear();
@@ -865,13 +972,12 @@ namespace getfem {
 		       const std::vector<base_node> &fixed_points) {
 
       distribute_points_regularly(fixed_points);
-      std::vector<size_type> attracted_points;
-      std::vector<base_node> attractor_points;
-
       std::vector<base_node> pts2(pts.size(),base_node(N));
-      size_type count = 0, count_id = 0;
+      size_type count = 0, count_id = 0, count_ct = 0;
       bool pt_changed = false;
       iter_wtcc = 0;
+      attracted_points.resize(0);
+      attractor_points.resize(0);
 
       do {
 	if (noisy > 1) {
@@ -886,11 +992,16 @@ namespace getfem {
 	  size_type nbpt = pts.size();
 	  cleanup_points(); /* and copy pts to pts_prev */
 	  if (noisy == 1) cout << "Iter " << count << " ";
-	  running_delaunay();
+	  bool mct = false;
+	  if (count_ct >= 20 || pt_changed) {
+	    mct = true;
+	    count_ct = 0;
+	  }
+	  running_delaunay(mct);
 	  pt_changed = nbpt != pts.size();
 	  count_id = 0;
 	}
-	++count_id;
+	++count_id; ++count_ct;
 	pts2 = pts;
 
 	// computation of L and L0.
@@ -910,101 +1021,6 @@ namespace getfem {
 	}
 	gmm::scale(L0, L0mult * pow(sL/sL0, 1./N));
 
-	// dealing with intersection of constraints
-	if (count % 20 == 0 || pt_changed) {
-
-	  bgeot::kdtree tree;
-	  bgeot::kdtree_tab_type neighbours;
-	  bool tree_empty = true;
-	  
-	  attractor_points.resize(0); attracted_points.resize(0);
-
-	  for (dal::bv_visitor ie(edges_mesh.convex_index());
-	     !ie.finished(); ++ie) {
-	    size_type iA = edges_mesh.ind_points_of_convex(ie)[0];
-	    size_type iB = edges_mesh.ind_points_of_convex(ie)[1];
-	    // if (L[ie] > L0[ie]) continue;
-	    if (pts_attr[iA] == pts_attr[iB] ||
-		pts_attr[iA]->constraints.card() == 0 ||
-		pts_attr[iB]->constraints.card() == 0) continue;
-	    if (pts_attr[iA]->constraints == pts_attr[iB]->constraints)
-	      continue;
-	    dal::bit_vector bv1(pts_attr[iA]->constraints);
-	    bv1.setminus(pts_attr[iB]->constraints);
-	    dal::bit_vector bv2(pts_attr[iB]->constraints);
-	    bv2.setminus(pts_attr[iA]->constraints);
-	    if (bv1.card() && bv2.card()) {
-	      bv1 |= bv2;
-	      bgeot::mesh_point_search_ind_ct
-		iAneighbours = edges_mesh.ind_points_to_point(iA);
-	      bgeot::mesh_point_search_ind_ct
-		iBneighbours = edges_mesh.ind_points_to_point(iB);
-	      std::vector<size_type>
-		common_pts(iAneighbours.size()+iBneighbours.size());
-	      std::sort(iAneighbours.begin(),iAneighbours.end());
-	      std::sort(iBneighbours.begin(),iBneighbours.end());
-	      std::vector<size_type>::iterator ite = 
-		std::set_intersection(iAneighbours.begin(), iAneighbours.end(),
-				      iBneighbours.begin(), iBneighbours.end(),
-				      common_pts.begin());
-	      common_pts.resize(ite-common_pts.begin());
-	      bool do_projection = true;
-	      if (dist(.5*(pts[iA]+pts[iB])) < 0) {
-		for (std::vector<size_type>::iterator it = common_pts.begin();
-		     it != ite; ++it) {
-		  if (pts_attr[*it]->constraints.contains(bv1)) {
-		    do_projection = false;
-		    break;
-		  }
-		}
-	      }
-	      if (do_projection) {
-		
-		if (pts_attr[iA]->constraints.card()
-		    < pts_attr[iB]->constraints.card()) std::swap(iA,iB);
-		
-		base_node PA = pts[iA];
-		bool okA = multi_constraint_projection(PA, bv1);
-		base_node PB = pts[iB];
-		bool okB = multi_constraint_projection(PB, bv1);
-		
-		if (okB && !okA)
-		  { std::swap(PA,PB); std::swap(iA,iB); std::swap(okB, okA); }
-		
-		if (okB && (gmm::vect_dist2(PA,pts[iA])
-			    > 1.1*gmm::vect_dist2(PB,pts[iB]))) {
-		// 1.5 au lieu de 1.1 ?
-		  std::swap(iA,iB); std::swap(PA,PB);
-		}
-		
-		
-		if (okA && gmm::vect_dist2(PA, pts[iA]) < h0*0.75) {
-		  
-		  if (tree_empty) {
-		    for (size_type i=0; i < pts.size(); ++i)
-		      tree.add_point_with_id(pts[i],i);
-		    tree_empty = false;
-		  }
-		  
-		  base_node bmin = PA, bmax = PA;
-		  for (size_type k = 0; k < N; ++k)
-		    { bmin[k] -= h0/1.8; bmax[k] += h0/1.8; }
-		  tree.points_in_box(neighbours, bmin, bmax);
-		  for (size_type k=0; k < neighbours.size(); ++k) {
-		    if (neighbours[k].i != iA && neighbours[k].i != iB)
-		      do_projection = false;
-		  }
-		  
-		  if (do_projection) {
-		    attractor_points.push_back(PA);
-		    attracted_points.push_back(iA);
-		  }
-		}
-	    }
-	    }
-	  }
-	}
-
 	// Moving the points with standard strategy
 	base_vector X(pts.size() * N);
 	standard_move_strategy(X);
@@ -1022,14 +1038,7 @@ namespace getfem {
 	       << ptol << " CV=" << sqrt(maxdp)*deltat/h0 << "\n";
 	++count; ++iter_wtcc;
 
-	// if (iter_wtcc == 100) control_mesh_surface();
-
-	// m.clear();
-	// for (size_type i=0; i < t.size()/(N+1); ++i)
-	//  m.add_convex_by_points(bgeot::simplex_geotrans(N,1),
-	//		 dal::index_ref_iterator(pts.begin(), &t[i*(N+1)]));
-	// char s[50]; sprintf(s, "toto%02d.mesh", count);
-	// m.write_to_file(s);
+	if (iter_wtcc == 100) control_mesh_surface();
 
 	if ( (count > 40 && sqrt(maxdp)*deltat < ptol * h0)
 	     || iter_wtcc>iter_max || count > 10000) {
