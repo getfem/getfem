@@ -49,19 +49,18 @@
 namespace getfem
 {
 
-  struct fem_dof
-  {
+  struct fem_dof {
     base_node P;
     pdof_description pnd;
   };
-
+  
   ///  Describe a boundary as a list of faces of elements.
-  struct boundary_description // should receive messages directly ?
-  {
+  struct boundary_description  {
+    
     dal::bit_vector cvindex;
     dal::dynamic_tree_sorted<size_type> cv_in;
     dal::dynamic_array<dal::bit_vector> faces;
-
+    
     /** Add a boudary element from the face f of the convex of index
      *          i of the mesh.
      */
@@ -84,138 +83,138 @@ namespace getfem
     
   };
 
-  struct intfem // integrable fem
-  {
+  struct intfem  { // integrable fem
     pfem pf;
     bgeot::pintegration_method pi;
     bool operator < (const intfem &l) const;
     intfem(pfem ppf, bgeot::pintegration_method ppi) { pf = ppf; pi = ppi; }
     intfem(void) { }
   };
-
+  
   typedef const intfem * pintfem;
   pintfem give_intfem(pfem ppf, const bgeot::pintegration_method ppi);
-
+  
   typedef bgeot::ref_mesh_point_ind_ct ref_mesh_dof_ind_ct;
-
+  
   /// Describe a finite element method linked to a mesh.
-  class mesh_fem : public getfem_mesh_receiver
-  {
-    protected :
-
-      dal::dynamic_array<boundary_description> boundaries;
-      dal::bit_vector valid_boundaries;
-      dal::dynamic_array<pintfem> f_elems;
-      dal::bit_vector fe_convex;
-      getfem_mesh *_linked_mesh;
-      mutable bgeot::mesh_structure dof_structure;
-      mutable bool dof_enumeration_made;
-      mutable size_type nb_total_dof;
-      bool is_valid;
-
-    public :
-      
-      typedef base_node point_type;
-
-      /** Gives in a structure dal::bit\_vector all convexes of the
-       *          mesh where a finite element is defined.
-       */
-      inline const dal::bit_vector &convex_index(void) const
+  class mesh_fem : public getfem_mesh_receiver {
+  protected :
+    
+    dal::dynamic_array<boundary_description> boundaries;
+    dal::bit_vector valid_boundaries;
+    dal::dynamic_array<pintfem> f_elems;
+    dal::bit_vector fe_convex;
+    getfem_mesh *_linked_mesh;
+    mutable bgeot::mesh_structure dof_structure;
+    mutable bool dof_enumeration_made;
+    mutable size_type nb_total_dof;
+    bool is_valid;
+    
+  public :
+    
+    typedef base_node point_type;
+    
+    /** Gives in a structure dal::bit\_vector all convexes of the
+     *          mesh where a finite element is defined.
+     */
+    inline const dal::bit_vector &convex_index(void) const
       { return fe_convex; }
-      
-      /// Gives a pointer to the linked mesh of type getfem\_mesh.
-      getfem_mesh &linked_mesh(void) const { return *_linked_mesh; }
-      /** Set on the convex of index i the integrable finite element method
-       *          with the description pif which is of type pintfem.
-       */
-      void set_finite_element(size_type cv, pintfem pif);
-      /** Set on the convex of index i the finite element method
-       *          with the description pf which is of type pfem and ppi of
-       *          type pintegration_method.
-       */
-      void set_finite_element(size_type cv, pfem ppf,
-			      const bgeot::pintegration_method ppi)
+    
+    /// Gives a pointer to the linked mesh of type getfem\_mesh.
+    getfem_mesh &linked_mesh(void) const { return *_linked_mesh; }
+    /** Set on the convex of index i the integrable finite element method
+     *          with the description pif which is of type pintfem.
+     */
+    void set_finite_element(size_type cv, pintfem pif);
+    /** Set on the convex of index i the finite element method
+     *          with the description pf which is of type pfem and ppi of
+     *          type pintegration_method.
+     */
+    void set_finite_element(size_type cv, pfem ppf,
+			    const bgeot::pintegration_method ppi)
       { set_finite_element(cv, give_intfem(ppf, ppi)); }	
-      /** Set on all the convexes of indexes in bv, which is of type
-       *          dal::bit\_vector, the finite element method
-       *          with the description pf which is of type pfem and ppi of
-       *          type pintegration_method.
-       */
-      void set_finite_element(const dal::bit_vector &cvs, pfem ppf,
-			      const bgeot::pintegration_method ppi);
-      pfem fem_of_element(size_type cv) const
+    /** Set on all the convexes of indexes in bv, which is of type
+     *          dal::bit\_vector, the finite element method
+     *          with the description pf which is of type pfem and ppi of
+     *          type pintegration_method.
+     */
+    void set_finite_element(const dal::bit_vector &cvs, pfem ppf,
+			    const bgeot::pintegration_method ppi);
+    pfem fem_of_element(size_type cv) const
       { return  f_elems[cv]->pf; }
-      const bgeot::pintegration_method &int_method_of_element(size_type cv) const
+    const bgeot::pintegration_method &int_method_of_element(size_type cv) const
       { return  f_elems[cv]->pi; }
-      /** Gives an array of the degrees of freedom of the element
-       *           of the convex of index i. 
-       */
-      ref_mesh_dof_ind_ct ind_dof_of_element(size_type ic) const {
-	if (!dof_enumeration_made) enumerate_dof();
-	return dof_structure.ind_points_of_convex(ic);
-      }
-      /** Gives the number of  degrees of freedom of the element
-       *           of the convex of index i. 
-       */
-      size_type nb_dof_of_element(size_type cv) const {
-	return f_elems[cv]->pf->nb_dof();
-      }
-      /** Gives the point (base_node)  corresponding to the 
-       *          degree of freedom i  of the element of index cv.
-       */
-      const base_node &reference_point_of_dof(size_type cv,size_type i) const {
-	return f_elems[cv]->pf->node_of_dof(i);
-      }
-      /** Gives the point (base_node) corresponding to the degree of freedom
-       *  i of the element of index cv in the element of reference.
-       */
-      base_node point_of_dof(size_type cv, size_type i) const;
-      /** Gives the point (base_node)  corresponding to the 
-       *          degree of freedom with global index i.
-       */
-      base_node point_of_dof(size_type d) const;
-//       size_type first_convex_of_dof(size_type d) const
-//       { return points_tab[d].first; }
-//       size_type ind_in_first_convex_of_dof(size_type d) const {
-// 	if (!dof_enumeration_made) enumerate_dof(); 
-// 	return points_tab[d].ind_in_first;
-//       }
-      void enumerate_dof(void) const;
-      /// Gives the total number of degrees of freedom.
-      size_type nb_dof(void) const
+    /** Gives an array of the degrees of freedom of the element
+     *           of the convex of index i. 
+     */
+    ref_mesh_dof_ind_ct ind_dof_of_element(size_type ic) const {
+      if (!dof_enumeration_made) enumerate_dof();
+      return dof_structure.ind_points_of_convex(ic);
+    }
+    bgeot::ind_ref_mesh_point_ind_ct 
+    ind_dof_of_face_of_element(size_type cv, short_type f)
+      { return dof_structure.ind_points_of_face_of_convex(cv, f); }
+    /** Gives the number of  degrees of freedom of the element
+     *           of the convex of index i. 
+     */
+    size_type nb_dof_of_element(size_type cv) const {
+      return f_elems[cv]->pf->nb_dof();
+    }
+    /** Gives the point (base_node)  corresponding to the 
+     *          degree of freedom i  of the element of index cv.
+     */
+    const base_node &reference_point_of_dof(size_type cv,size_type i) const {
+      return f_elems[cv]->pf->node_of_dof(i);
+    }
+    /** Gives the point (base_node) corresponding to the degree of freedom
+     *  i of the element of index cv in the element of reference.
+     */
+    base_node point_of_dof(size_type cv, size_type i) const;
+    /** Gives the point (base_node)  corresponding to the 
+     *          degree of freedom with global index i.
+     */
+    base_node point_of_dof(size_type d) const;
+    size_type first_convex_of_dof(size_type d) const
+      { return dof_structure.first_convex_of_point(d); }
+    size_type ind_in_first_convex_of_dof(size_type d) const {
+      if (!dof_enumeration_made) enumerate_dof(); 
+      return dof_structure.ind_in_first_convex_of_point(d);
+    }
+    void enumerate_dof(void) const;
+    /// Gives the total number of degrees of freedom.
+    size_type nb_dof(void) const
       { if (!dof_enumeration_made) enumerate_dof(); return nb_total_dof; }
-      dal::bit_vector dof_on_boundary(size_type b) const;
-      void clear(void);
-
-      /// Add to the boundary b the face f of the element i.
-      void add_boundary_elt(size_type b, size_type c, short_type f)
+    dal::bit_vector dof_on_boundary(size_type b) const;
+    void clear(void);
+    
+    /// Add to the boundary b the face f of the element i.
+    void add_boundary_elt(size_type b, size_type c, short_type f)
       { valid_boundaries.add(b); boundaries[b].add_elt(c, f); }
-      /// Says whether or not element i is on the boundary b. 
-      bool is_convex_on_boundary(size_type c, size_type b) const
+    /// Says whether or not element i is on the boundary b. 
+    bool is_convex_on_boundary(size_type c, size_type b) const
       { return (valid_boundaries[b] && boundaries[b].cvindex[c]); }
-      const dal::bit_vector &convex_on_boundary(size_type b) const;
-      const dal::bit_vector &faces_of_convex_on_boundary(size_type c,
-							 size_type b) const;
-
-      /* returns the list of boundary numbers  [JP] */
-      const dal::bit_vector &get_valid_boundaries() const 
-	{ return valid_boundaries; }
-
-      void sup_boundaries_of_convex(size_type c);
-      void sup_boundary_elt(size_type b, size_type c, short_type f)
+    const dal::bit_vector &convex_on_boundary(size_type b) const;
+    const dal::bit_vector &faces_of_convex_on_boundary(size_type c,
+						       size_type b) const;
+    /* returns the list of boundary numbers  [JP] */
+    const dal::bit_vector &get_valid_boundaries() const 
+      { return valid_boundaries; }
+    
+    void sup_boundaries_of_convex(size_type c);
+    void sup_boundary_elt(size_type b, size_type c, short_type f)
       { if (valid_boundaries[b]) boundaries[b].sup_elt(c,f); }
-      void sup_boundary(size_type b)
+    void sup_boundary(size_type b)
       { valid_boundaries.sup(b); boundaries[b].clear(); }
-      void swap_boundaries_convex(size_type c1, size_type c2);
-
-      void receipt(const MESH_CLEAR &);
-      void receipt(const MESH_DELETE &);
-      void receipt(const MESH_SUP_CONVEX &m);
-      void receipt(const MESH_SWAP_CONVEX &m);
-      void receipt(const MESH_REFINE_CONVEX &m);
-      void receipt(const MESH_UNREFINE_CONVEX &m);
-      void receipt(const MESH_FEM_TOUCH &m);
-
+    void swap_boundaries_convex(size_type c1, size_type c2);
+    
+    void receipt(const MESH_CLEAR &);
+    void receipt(const MESH_DELETE &);
+    void receipt(const MESH_SUP_CONVEX &m);
+    void receipt(const MESH_SWAP_CONVEX &m);
+    void receipt(const MESH_REFINE_CONVEX &m);
+    void receipt(const MESH_UNREFINE_CONVEX &m);
+    void receipt(const MESH_FEM_TOUCH &m);
+    
     size_type memsize() const {
       return dof_structure.memsize() + 
 	sizeof(mesh_fem) - sizeof(bgeot::mesh_structure) +

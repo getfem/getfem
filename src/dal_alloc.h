@@ -1,3 +1,4 @@
+/* -*- c++ -*- (enables emacs c++ mode)                                    */
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Dynamic Array Library (dal)                                  */
@@ -39,58 +40,52 @@ namespace dal
 {
 
   struct _fr_sp { size_t ind, size; };
-  struct _less1_fr_sp : public std::binary_function<_fr_sp, _fr_sp, int>
-  {
+  struct _less1_fr_sp : public std::binary_function<_fr_sp, _fr_sp, int> {
     int operator()(const _fr_sp &f1, const _fr_sp &f2) const
       { return (f1.ind < f2.ind) ? -1 : ((f1.ind > f2.ind) ? 1 : 0); }
   };
-  struct _less2_fr_sp : public std::binary_function<_fr_sp, _fr_sp, int>
-  {
+  struct _less2_fr_sp : public std::binary_function<_fr_sp, _fr_sp, int> {
     int operator()(const _fr_sp &f1, const _fr_sp &f2) const
-    { return (f1.size < f2.size) ? -1 : ((f1.size > f2.size) ? 1 : 0); }
+      { return (f1.size < f2.size) ? -1 : ((f1.size > f2.size) ? 1 : 0); }
   };
   
-
+  
   template<class T,  unsigned char pks = 5> class dynamic_alloc
-    : public dynamic_array<T, pks>
-  {
-    public :
-
-      typedef typename dynamic_array<T, pks>::size_type size_type;
-                                                    /* gcc needs this ... */
-
-    protected :
-
-      typedef dynamic_tree_sorted<_fr_sp, _less1_fr_sp, 6> fsptab_t;
-
-      fsptab_t fr_tab;
-      dynamic_tree_sorted_index<_fr_sp, fsptab_t, _less2_fr_sp, 6> ind_fr_tab;
-
-      void init(void)
-      { 
-	_fr_sp fsp; fsp.size = size_type(-2); fsp.ind = 0;
-	size_type i = fr_tab.add(fsp); ind_fr_tab.add(i);
-      }
+    : public dynamic_array<T, pks> {
+  public :
     
-    public :
-
-      dynamic_alloc(void) : ind_fr_tab(fr_tab) { init(); }
-      dynamic_alloc(const dynamic_alloc<T, pks> &da)
-           : dynamic_array<T, pks>(da), ind_fr_tab(da.ind_fr_tab),
-             fr_tab(da.fr_tab)
-      { ind_fr_tab.change_tab(fr_tab); }
-      dynamic_alloc<T, pks> &operator =(const dynamic_alloc<T, pks> &da)
-      {
-	dynamic_array<T, pks>::operator =(da);
-	fr_tab = da.fr_tab;
-	ind_fr_tab = da.ind_fr_tab;
-	ind_fr_tab.change_tab(fr_tab);
-	return *this;
-      }
-      
-      size_type alloc(size_type); 
-      void free(size_type, size_type);
-      void clear(void);
+    typedef typename dynamic_array<T, pks>::size_type size_type;
+    /* gcc needs this ... */
+    
+  protected :
+    
+    typedef dynamic_tree_sorted<_fr_sp, _less1_fr_sp, 6> fsptab_t;
+    
+    fsptab_t fr_tab;
+    dynamic_tree_sorted_index<_fr_sp, fsptab_t, _less2_fr_sp, 6> ind_fr_tab;
+    
+    void init(void) { 
+      _fr_sp fsp; fsp.size = size_type(-2); fsp.ind = 0;
+      size_type i = fr_tab.add(fsp); ind_fr_tab.add(i);
+    }
+    
+  public :
+    
+    dynamic_alloc(void) : ind_fr_tab(fr_tab) { init(); }
+    dynamic_alloc(const dynamic_alloc<T, pks> &da) :
+      dynamic_array<T, pks>(da), fr_tab(da.fr_tab),
+      ind_fr_tab(da.ind_fr_tab) { ind_fr_tab.change_tab(fr_tab); }
+    dynamic_alloc<T, pks> &operator =(const dynamic_alloc<T, pks> &da) {
+      dynamic_array<T, pks>::operator =(da);
+      fr_tab = da.fr_tab;
+      ind_fr_tab = da.ind_fr_tab;
+      ind_fr_tab.change_tab(fr_tab);
+      return *this;
+    }
+    
+    size_type alloc(size_type); 
+    void free(size_type, size_type);
+    void clear(void);
   };
   
   template<class T, unsigned char pks>

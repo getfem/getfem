@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/csh
 
-cvs status | grep "Needs\|Locally"
+cvs status |& grep "Needs\|Locally"
 
