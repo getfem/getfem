@@ -5,7 +5,7 @@
 /* This program is free software; you can redistribute it and/or modify    */
 /* it under the terms of the GNU Lesser General Public License as          */
 /* published by the Free Software Foundation; version 2.1 of the License.  */
-/*                                                                         */
+/*                                                                        */
 /* This program is distributed in the hope that it will be useful,         */
 /* but WITHOUT ANY WARRANTY; without even the implied warranty of          */
 /* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           */
@@ -113,7 +113,8 @@ template <typename MODEL_STATE> void
     MS.compute_reduced_system();
     mtype act_res = MS.reduced_residu_norm(), act_res_new(0);
     cout << "residu initial: " << gmm::vect_norm2(MS.residu()) << ", " 
-	 << gmm::vect_norm2(MS.reduced_residu()) << ", |U0|" << gmm::vect_norm2(MS.state()) << "\n";
+	 << gmm::vect_norm2(MS.reduced_residu())
+	 << ", |U0|" << gmm::vect_norm2(MS.state()) << "\n";
     while (!iter.finished(act_res)) {
       gmm::iteration iter_linsolv = iter_linsolv0;
       VECTOR d(ndof), dr(gmm::vect_size(MS.reduced_residu()));
@@ -128,11 +129,20 @@ template <typename MODEL_STATE> void
 	     << (gmm::is_symmetric(MS.tangent_matrix()) ? "" : "not ")
 	     <<  "symmetric. ";
 
-      gmm::ildlt_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
-      gmm::gmres(MS.reduced_tangent_matrix(), dr, 
-		 gmm::scaled(MS.reduced_residu(), value_type(-1)),
-		 P, 300, iter_linsolv);
-      if (!iter_linsolv.converged()) DAL_WARNING(2,"cg did not converge!");
+      if (0)
+      {
+	gmm::dense_matrix<double> MM(ndof, ndof);
+	gmm::copy(MS.reduced_tangent_matrix(), MM);
+	gmm::lu_solve(MM, dr, gmm::scaled(MS.reduced_residu(), value_type(-1)));
+      }
+      else {
+	gmm::ildlt_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
+	gmm::gmres(MS.reduced_tangent_matrix(), dr, 
+		   gmm::scaled(MS.reduced_residu(), value_type(-1)),
+		   P, 300, iter_linsolv);
+	if (!iter_linsolv.converged())
+	  DAL_WARNING(2,"gmres did not converge!");
+      }
       MS.unreduced_solution(dr,d);
 
       VECTOR stateinit(ndof);

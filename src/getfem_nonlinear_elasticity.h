@@ -578,11 +578,11 @@ namespace getfem {
 
     getfem::generic_assembly
       assem("P=data(#2);"
-	    "t=comp(NonLin(#1).vGrad(#1).Base(#2));"
+	    "t=comp(NonLin$1(#1).vGrad(#1).Base(#2));"
 	    "M$2(#1,#2)+= t(i,j,:,i,j,:);"
  	    "w=comp(NonLin$2(#1).vGrad(#1).NonLin$2(#1).vGrad(#1).Base(#2));"
- 	    "M$1(#1,#1)+= w(i,j,:,k,j, m,k,:,m,i,p).P(p)"
- 	    "- w(i,j,:,i,j, k,l,:,k,l,p).P(p)"
+	    "M$1(#1,#1)+= w(j,i,:,j,k, m,k,:,m,i,p).P(p)"
+	    "-w(i,j,:,i,j, k,l,:,k,l,p).P(p)"
 	    );
 
     assem.push_mf(mf_u);
