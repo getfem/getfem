@@ -89,12 +89,11 @@ namespace dal
       const_reference back(void) const { return *(--(end())); }
       void pop_front(void) { ++_begin; }
 
-      value_type operator [](size_type ii) const { return *(_begin + ii);}
+      const_reference operator [](size_type ii) const { return *(_begin + ii);}
       reference operator [](size_type ii) { return *(_begin + ii); }
 
       tab_ref(void) {}
       tab_ref(const ITER &b, const ITER &e) : _begin(b), _end(e) {}
-
   };
 
 
@@ -446,19 +445,17 @@ namespace dal
                                                               difference_type;
     typedef std::forward_iterator_tag iterator_category;
     typedef _tab_ref_with_selection_iterator<ITER, COND> iterator;
-    const COND *cond;
+    const COND cond;
     
-    void forward(void) { while (!(*cond)(*this)) (*((ITER *)(this)))++; }
+    void forward(void) { while (!(cond)(*this)) ITER::operator ++(); }
     iterator &operator ++()
-    { (*((ITER *)(this)))++; forward(); return *this; }
+    { ITER::operator ++(); forward(); return *this; }
     iterator operator ++(int)
     { iterator tmp = *this; ++(*this); return tmp; }
-    void begin(const ITER &iter, const COND *c)
-    { *((ITER *)(this)) = iter; cond = c; forward(); }
     
     _tab_ref_with_selection_iterator(void) {}
-    _tab_ref_with_selection_iterator(const ITER &iter, const COND *c)
-      : ITER(iter) { cond = c; }
+    _tab_ref_with_selection_iterator(const ITER &iter, const COND c)
+      : ITER(iter), cond(c) {}
     
   };
 
@@ -482,15 +479,12 @@ namespace dal
 
     public :
 
-      iterator begin(void)
-      { iterator it; it.begin(_begin, &cond); return it; }
-      const_iterator begin(void) const { return iterator(_begin, &cond); }
-      iterator end(void) { return iterator(_end, &cond); }
-      const_iterator end(void) const { return iterator(_end, &cond); }
+      iterator begin(void) const
+      { iterator it(_begin, cond); it.forward(); return it; }
+      iterator end(void) const { return iterator(_end, cond); }
       bool empty(void) const { return _begin == _end; }
 
-      reference front(void) { return *begin(); }
-      const_reference front(void) const { return *begin(); }
+      reference front(void) const { return *begin(); }
       void pop_front(void) { ++_begin; _begin = begin(); }
 
       COND &condition(void) { return cond; }

@@ -74,10 +74,10 @@ namespace gmm {
   /* ********************************************************************* */
 
   template <class PT> class simple_vector_ref {
-    protected :
-      PT l;
+  protected :
+    PT l; // pas bon
 
-    public :
+  public :
       typedef typename std::iterator_traits<PT>::value_type V;
       typedef typename std::iterator_traits<PT>::reference ref_V;
       typedef typename linalg_traits<V>::value_type value_type;
