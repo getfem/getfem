@@ -111,7 +111,7 @@ namespace getfem {
 
   // TODO : fonctions à mettre dans le .C
 
-  struct SaintVenantKirchhoff_hyperelastic_law : 
+  struct SaintVenant_Kirchhoff_hyperelastic_law : 
     public abstract_hyperelastic_law {
     /* W = lambda*0.5*trace(L)^2 + mu*tr(L^2) */
     virtual scalar_type strain_energy(const base_matrix &L,
@@ -138,7 +138,7 @@ namespace getfem {
 	}
       // assert(check_symmetry(result) == 7);
     }
-    SaintVenantKirchhoff_hyperelastic_law(void) { nb_params_ = 2; }
+    SaintVenant_Kirchhoff_hyperelastic_law(void) { nb_params_ = 2; }
   };
 
   struct Mooney_Rivlin_hyperelastic_law : public abstract_hyperelastic_law {
@@ -180,7 +180,8 @@ namespace getfem {
       scalar_type a = params[1] + params[2] / scalar_type(2);
       scalar_type b = -(params[1] + params[2]) / scalar_type(2);
       scalar_type c = params[0]/scalar_type(4)  - b;
-      scalar_type d = params[0] - scalar_type(2)*params[2] - scalar_type(4)*b;
+      scalar_type d = params[0]/scalar_type(2) + params[1];
+      //scalar_type d = params[0] - scalar_type(2)*params[2] - scalar_type(4)*b;
       scalar_type e = -(scalar_type(3)*(a+b) + c);
       base_matrix C(N, N);
       gmm::copy(gmm::scaled(L, scalar_type(2)), C);
@@ -197,8 +198,10 @@ namespace getfem {
       scalar_type a = params[1] + params[2] / scalar_type(2);
       scalar_type b = -(params[1] + params[2]) / scalar_type(2);
       scalar_type c = params[0]/scalar_type(4)  - b;
-      scalar_type d = params[0] - scalar_type(2)*params[2] - scalar_type(4)*b;
+      scalar_type d = params[0]/scalar_type(2) + params[1]; 
+      //d=params[0] - scalar_type(2)*params[2] - scalar_type(4)*b;
       base_matrix C(N, N);
+      assert(dal::abs(2*a+4*b+2*c-d)<1e-5);
       gmm::copy(gmm::scaled(L, scalar_type(2)), C);
       gmm::add(gmm::identity_matrix(), C);
       gmm::copy(gmm::identity_matrix(), result);
@@ -212,7 +215,8 @@ namespace getfem {
       size_type N = gmm::mat_nrows(L);
       scalar_type b2 = -(params[1] + params[2]); // b * 2
       scalar_type c = (params[0]  - 2*b2) / scalar_type(4);
-      scalar_type d = params[0] - scalar_type(2)*params[2] - 2*b2;
+      //scalar_type d = params[0] - scalar_type(2)*params[2] - 2*b2;
+      scalar_type d = params[0]/scalar_type(2) + params[1]; 
       base_matrix C(N, N);
       gmm::copy(gmm::scaled(L, scalar_type(2)), C);
       gmm::add(gmm::identity_matrix(), C);
