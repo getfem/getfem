@@ -155,6 +155,10 @@ namespace getfem
     } method;
     bool is_ppi;
 
+    papprox_integration approx_method(void) const { return method.pai; }
+    ppoly_integration exact_method(void) const { return method.ppi; }
+    bool is_exact(void) const { return is_ppi; }
+
     const bgeot::stored_point_tab &integration_points(void) const { 
       if (is_ppi)
 	return *(bgeot::org_stored_point_tab(method.ppi->structure()->dim()));

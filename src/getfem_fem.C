@@ -355,7 +355,7 @@ namespace getfem
     _dof_types[nb] = d;
     cvs_node.add_point_adaptative(nb, short_type(-1));
     for (short_type f = 0; f < cvs_node.nb_faces(); ++f)
-      if (dal::abs(cvr->is_in_face(f, pt)) < 1.0E-5)
+      if (dal::abs(cvr->is_in_face(f, pt)) < 1.0E-7)
 	cvs_node.add_point_adaptative(nb, f);
     pspt_valid = false;
   }
