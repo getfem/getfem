@@ -166,7 +166,7 @@ namespace bgeot {
     }
     void swap(small_vector<T> &v) { std::swap(id,v.id); }
     small_vector() : id(0) {}
-    small_vector(size_type n) : id(allocate(n)) {}
+    explicit small_vector(size_type n) : id(allocate(n)) {}
     small_vector(const small_vector<T>& v) : static_block_allocator(), id(allocator().inc_ref(v.id)) {}
     explicit small_vector(const std::vector<T>& v) : id(allocate(v.size())) { 
       std::copy(v.begin(),v.end(),begin());
