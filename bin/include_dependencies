@@ -14,7 +14,7 @@ while($fis)
   $nb_dep = 0;
   while ($line = <FICHIER>)
   {
-    if ($line =~ /^([ ])*#include/)
+    if ($line =~ /^([ ])*\#include/)
     {
       ($f1, $f2) = split('#include', $line, 2);
       if ($line =~ /</)
