@@ -708,15 +708,15 @@ struct Chrono {
     if (ls->has_secondary()) mls1 = ls->mls_of_convex(cv, 1);
     int p = 0;
     bool cutted = false;
-    scalar_type d2 = 0, d1 = 1, d = 0;
+    scalar_type d2 = 0, d1 = 1, d0 = 0;
     for (size_type i = 0; i < pgt2->nb_points(); ++i) {
-      scalar_type d = mls0(cvi.pmesh->points_of_convex(sub_cv)[i]);
+      d0 = mls0(cvi.pmesh->points_of_convex(sub_cv)[i]);
       if (ls->has_secondary())
 	d1 = std::min(d1, mls1(cvi.pmesh->points_of_convex(sub_cv)[i]));
       
-      int p2 = ( (d < -EPS) ? -1 : ((d > EPS) ? +1 : 0));
+      int p2 = ( (d0 < -EPS) ? -1 : ((d0 > EPS) ? +1 : 0));
       if (p == 0) p = p2;
-      if (gmm::abs(d) > gmm::abs(d2)) d2 = d;
+      if (gmm::abs(d0) > gmm::abs(d2)) d2 = d0;
       if (!p2 || p*p2 < 0) cutted = true;
     }
     if (cutted && d1 < -EPS) return 0;
