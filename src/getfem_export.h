@@ -364,10 +364,10 @@ namespace getfem
     for (cv << nn; cv != ST_NIL; cv << nn)
     {
       bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
-      cout << "dealing with convex " << cv << " remaining " << nn.card() << endl;
+      //cout << "dealing with convex " << cv << " remaining " << nn.card() << endl;
       nb = gti.points_in_convex(mf.linked_mesh().convex(cv),
 			    mf.linked_mesh().trans_of_convex(cv), ptab, itab);
-      cout << "nb points in this convex " << nb << endl;
+      //cout << "nb points in this convex " << nb << endl;
       // cout << "convex : " << mf.linked_mesh().convex(cv) << endl;
       pfem pfe = mf.fem_of_element(cv);
       if (!(pfe->is_equivalent())) 

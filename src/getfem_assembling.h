@@ -49,8 +49,8 @@ namespace getfem
   /* ********************************************************************* */
 
   template<class MAT, class VECT>
-    void assembling_rigidity_matrix_for_laplacian(MAT &RM, mesh_fem &mf,
-						  mesh_fem &mfdata, VECT &A)
+    void assembling_rigidity_matrix_for_laplacian(MAT &RM, const mesh_fem &mf,
+						  const mesh_fem &mfdata, const VECT &A)
   { // optimisable
     size_type cv, nbd1, nbd2, N = mf.linked_mesh().dim();
     dal::bit_vector nn = mf.convex_index();
@@ -107,10 +107,10 @@ namespace getfem
 
   template<class MAT, class VECT>
     void assembling_mixed_pressure_term(MAT &B,
-					mesh_fem &mf_u,
-					mesh_fem &mf_p,
-					mesh_fem &mf_d,
-					VECT &DATA) {
+					const mesh_fem &mf_u,
+					const mesh_fem &mf_p,
+					const mesh_fem &mf_d,
+					const VECT &DATA) {
     size_type cv;
     dal::bit_vector nn = mf_u.convex_index();
 
@@ -189,7 +189,9 @@ namespace getfem
 
   template<class MAT, class VECT>
     void assembling_rigidity_matrix_for_linear_elasticity(MAT &RM,
-	        mesh_fem &mf, mesh_fem &mfdata, VECT &LAMBDA, VECT &MU)
+							  const mesh_fem &mf, 
+							  const mesh_fem &mfdata, 
+							  const VECT &LAMBDA, const VECT &MU)
   { // à verifier
 
     size_type cv, nbd1, nbd2, N = mf.linked_mesh().dim();
@@ -280,8 +282,9 @@ namespace getfem
     (Q is a vector, so the matrice is assumed to be stored by columns (fortran style)
    */
   template<class MAT, class VECT>
-  void assembling_boundary_qu_term(MAT &M, mesh_fem &mf_u, size_type boundary, 
-				   mesh_fem &mf_d, VECT &Q, dim_type N)
+  void assembling_boundary_qu_term(MAT &M, 
+				   const mesh_fem &mf_u, size_type boundary, 
+				   const mesh_fem &mf_d, const VECT &Q, dim_type N)
   {
     size_type cv;
     dal::bit_vector nn = mf_u.convex_index(), nf;
@@ -365,8 +368,9 @@ namespace getfem
     for (cv << nn; cv != ST_NIL; cv << nn) {
       nf = mf_u.faces_of_convex_on_boundary(cv, boundary);
       if (nf.card() > 0) {
-	pf_u = mf_u.fem_of_element(cv); nbdof_u = pf_u->nb_dof();
-	pf_rh = mf_rh.fem_of_element(cv); nbdof_rh = pf_rh->nb_dof();
+	pf_u = mf_u.fem_of_element(cv); 
+	pf_rh = mf_rh.fem_of_element(cv); 
+	size_type f;
 	for (f << nf; f != ST_NIL; f << nf) {
 	  bgeot::pconvex_structure cvs_u = pf_u->structure();
 	  bgeot::pconvex_structure cvs_rh = pf_rh->structure();
@@ -383,7 +387,6 @@ namespace getfem
 		    < 1.0E-7) {
 		  // à optimiser (racine carrée
 		  // à ce niveau on a HU = R localement
-		  
 		  for (size_type k = 0; k < pf_u->nb_dof(); ++k) {
 		    size_type dof_k = mf_u.ind_dof_of_element(cv)[k];
 		    for (int ii=0; ii < N; ii++)
@@ -394,7 +397,7 @@ namespace getfem
 		  size_type dof_rh = mf_rh.ind_dof_of_element(cv)[ind_rh];
 		  for (int ii=0; ii < N; ii++) {
 		    for (int jj=0; jj < N; jj++)
-		      M(dof_u*N+ii, dof_u*N+jj) = Q[(jj*N+ii) + N*N*(dof_rh)];
+		      M(dof_u*N+ii, dof_u*N+jj) = H[(jj*N+ii) + N*N*(dof_rh)];
 		    B[dof_u*N+ii] = R[dof_rh*N+ii];
 		  }
 		}
@@ -412,7 +415,7 @@ namespace getfem
   /* ********************************************************************* */
 
   template<class MATRM, class MESH_FEM>
-    void mass_matrix(MATRM &M, MESH_FEM &mf1, MESH_FEM &mf2, dim_type N)
+    void mass_matrix(MATRM &M, const MESH_FEM &mf1, const MESH_FEM &mf2, dim_type N)
   {
     size_type cv, nbd1, nbd2;
     dal::bit_vector nn = mf1.convex_index();
@@ -461,7 +464,7 @@ namespace getfem
   }
 
   template<class MATRM, class MESH_FEM>
-    inline void mass_matrix(MATRM &M, MESH_FEM &mf, dim_type N)
+    inline void mass_matrix(MATRM &M, const MESH_FEM &mf, dim_type N)
     { mass_matrix(M, mf, mf, N); }
 
 
@@ -470,8 +473,8 @@ namespace getfem
   /* ********************************************************************* */
 
   template<class VECT1, class VECT2>
-    void assembling_volumic_source_term(VECT1 &B, mesh_fem &mf,
-					mesh_fem &mfdata, VECT2 &F, dim_type N)
+    void assembling_volumic_source_term(VECT1 &B, const mesh_fem &mf,
+					const mesh_fem &mfdata, const VECT2 &F, dim_type N)
   {
     size_type cv, nbd1, nbd2;
     dal::bit_vector nn = mf.convex_index();
@@ -517,8 +520,8 @@ namespace getfem
   /* ********************************************************************* */
 
   template<class MATRM, class VECT1, class VECT2>
-    void assembling_Dirichlet_condition(MATRM &RM, VECT1 &B, mesh_fem &mf,
-		  size_type boundary, VECT2 &F, dim_type N)
+    void assembling_Dirichlet_condition(MATRM &RM, VECT1 &B, const mesh_fem &mf,
+					size_type boundary, const VECT2 &F, dim_type N)
   { /* Y-a-il un moyen plus performant ? */
     // Marche uniquement pour des ddl de lagrange.
     size_type cv;
@@ -593,8 +596,8 @@ namespace getfem
   /* ********************************************************************* */
 
   template<class VECT1, class VECT2>
-    void assembling_Neumann_condition(VECT1 &B, mesh_fem &mf,
-		  size_type boundary, mesh_fem &mfdata, VECT2 &F, dim_type N)
+    void assembling_Neumann_condition(VECT1 &B, const mesh_fem &mf,
+				      size_type boundary, const mesh_fem &mfdata, const VECT2 &F, dim_type N)
   {
     size_type cv, nbd1, nbd2, f;
     dal::bit_vector nn = mf.convex_index(), nf;
