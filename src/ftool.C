@@ -77,28 +77,6 @@ namespace ftool
     return true;
   }
 
-  bool get_nonspace(std::istream &ist, char *st, int nb)
-  {
-    char c;
-    int i = 0;
-    bool te = false;
-    st[0] = 0;
-    if (ist.eof()) return false;
-    ist.get(c);
-    while (!te)
-    {
-      while (isspace(c)) { if (ist.eof()) return true; ist.get(c); }
-      if (c == '%')
-	{ while (c != '\n') { if (ist.eof()) return true; ist.get(c); } }
-      else { te = true; }
-    }
-    while (i < nb-1 && !isspace(c) && !iscntrl(c))
-      { st[i++] = toupper(c); if (ist.eof()) break; ist.get(c); }
-    st[i] = 0;
-    return true;
-  }
-
-
   static char temp_string[512];
   
   int md_param::search_param(char *name) {
