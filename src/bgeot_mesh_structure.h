@@ -420,10 +420,12 @@ namespace bgeot
   typedef dal::dynamic_tree_sorted<edge_list_elt> edge_list;
   
 
-  void mesh_edge_list_convex(const mesh_structure &m, size_type i, 
-			     edge_list &el, bool merge_convex = true);
-  void mesh_edges_list(const mesh_structure &m, edge_list &el, 
-		       bool merge_convex = true);
+  void mesh_edge_list_convex(pconvex_structure cvs, 
+                             std::vector<size_type> points_of_convex, 
+                             size_type cv_id, edge_list &el, 
+                             bool merge_convex);
+  void mesh_edge_list(const mesh_structure &m, edge_list &el, 
+                      bool merge_convex = true);
 
 
 

@@ -304,40 +304,38 @@ namespace bgeot
   /*                                                                       */
   /* ********************************************************************* */
 
-  void mesh_edge_list_convex(const mesh_structure &m, size_type i, 
-			     edge_list &el, bool merge_convex)
+  void mesh_edge_list_convex(pconvex_structure cvs, std::vector<size_type> points_of_convex, 
+                             size_type cv_id, edge_list &el, bool merge_convex)
   { // a tester ... optimisable.
-
-    pconvex_structure cvs = m.structure_of_convex(i);
     size_type n = cvs->dim();
     size_type nbp = cvs->nb_points();
-    size_type ncv = merge_convex ? 0 : i;
+    size_type ncv = merge_convex ? 0 : cv_id;
 
     if (nbp == n+1 && cvs == simplex_structure(n)) {
       for (dim_type k = 0; k < n; ++k)
 	for (dim_type l = k+1; l <= n; ++l)
-	  el.add(edge_list_elt(m.ind_points_of_convex(i)[k],
-			       m.ind_points_of_convex(i)[l], ncv));
+	  el.add(edge_list_elt(points_of_convex[k],
+			       points_of_convex[l], ncv));
     }
     else if (nbp == (size_type(1) << n) 
 	     && cvs == parallelepiped_structure(n)) {
       for (size_type k = 0; k < (size_type(1) << n); ++k)
 	for (dim_type j = 0; j < n; ++j)
 	  if ((k & (1 << j)) == 0)
-	    el.add(edge_list_elt(m.ind_points_of_convex(i)[k],
-			      m.ind_points_of_convex(i)[k | (1 << j)], ncv));
+	    el.add(edge_list_elt(points_of_convex[k],
+			      points_of_convex[k | (1 << j)], ncv));
     }
     else if (nbp == 2 * n && cvs == prism_structure(n)) {
       for (dim_type k = 0; k < n - 1; ++k)
 	for (dim_type l = k+1; l < n; ++l) {
-	  el.add(edge_list_elt(m.ind_points_of_convex(i)[k],
-			       m.ind_points_of_convex(i)[l], ncv));
-	  el.add(edge_list_elt(m.ind_points_of_convex(i)[k+n],
-			       m.ind_points_of_convex(i)[l+n], ncv));
+	  el.add(edge_list_elt(points_of_convex[k],
+			       points_of_convex[l], ncv));
+	  el.add(edge_list_elt(points_of_convex[k+n],
+			       points_of_convex[l+n], ncv));
 	}
       for (dim_type k = 0; k < n; ++k)
-	el.add(edge_list_elt(m.ind_points_of_convex(i)[k],
-			     m.ind_points_of_convex(i)[k+n], ncv));
+	el.add(edge_list_elt(points_of_convex[k],
+			     points_of_convex[k+n], ncv));
     }
     else {
       dal::dynamic_array<pconvex_structure> cvstab;
@@ -345,8 +343,8 @@ namespace bgeot
       size_type ncs = 1;
       cvstab[0] = cvs;
       indpttab[0].resize(cvstab[0]->nb_points());
-      std::copy(m.ind_points_of_convex(i).begin(),
-		m.ind_points_of_convex(i).end(), indpttab[0].begin());
+      std::copy(points_of_convex.begin(),
+		points_of_convex.end(), indpttab[0].begin());
 
       /* pseudo recursive decomposition of the initial convex into
 	 face of face of ... of face of convex , cvstab and indpttab
@@ -390,13 +388,17 @@ namespace bgeot
   }
     
 
-  void mesh_edges_list(const mesh_structure &m, edge_list &el, 
+  void mesh_edge_list(const mesh_structure &m, edge_list &el, 
 		       bool merge_convex)
   {
     dal::bit_vector nn = m.convex_index();
     size_type i;
-    for (i << nn; i != ST_NIL; i << nn)
-      mesh_edge_list_convex(m, i, el, merge_convex);
+    std::vector<size_type> p;
+    for (i << nn; i != ST_NIL; i << nn) {
+      p.resize(m.nb_points_of_convex(i));
+      std::copy(m.ind_points_of_convex(i).begin(), m.ind_points_of_convex(i).end(), p.begin());
+      mesh_edge_list_convex(m.structure_of_convex(i), p, i, el, merge_convex);
+    }
   }
 
 
