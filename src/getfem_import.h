@@ -118,26 +118,14 @@ namespace getfem {
       dal::dynamic_tree_sorted<size_type> msh_node_2_getfem_node;
       std::vector<size_type> cv_nodes, getfem_cv_nodes;
       do {
-	cerr << "hello..." << int(f.tellg()) << "\n";
 	if (!f.eof()) f >> std::ws;
 	if (f.eof() || !ftool::read_untill(f, "MESH")) break;
-	cerr << "hello2..." << int(f.tellg()) << "\n";
 	std::string selemtype;
 	f >> ftool::skip("DIMENSION") >> dim 
 	  >> ftool::skip("ELEMTYPE") >> std::ws 
 	  >> selemtype 
 	  >> ftool::skip("NNODE") >> nnode;
 	cerr << "elem type = " << "'" << selemtype << "', nnode=" << nnode << endl;
-
-// 	ftool::read_untill(f, "DIMENSION");
-// 	cerr << "read dim " << int(f.tellg()) << "\n";
-// 	f >> dim; if (dim < 1 || dim > 3) DAL_THROW(dal::failure_error, "wrong mesh dimension");
-// 	cerr << "dim = " << dim << endl;
-// 	ftool::read_untill(f, "ELEMTYPE");
-// 	char selemtype[512]; ftool::get_token(f, selemtype, 512);
-// cerr << "before  coordinates " << int(f.tellg()) << "\n";
-// 	f >> nnode;
-// 	cerr << "elem type = " << "'" << selemtype << "', nnode" << nnode << endl;
 	if (ftool::casecmp(selemtype, "linear")==0) { eltype = LIN;  }
 	else if (ftool::casecmp(selemtype, "triangle")==0) { eltype = TRI; }
 	else if (ftool::casecmp(selemtype, "quadrilateral")==0) { eltype = QUAD; }
@@ -145,9 +133,7 @@ namespace getfem {
 	else if (ftool::casecmp(selemtype, "prisma")==0) { eltype = PRISM; }
 	else if (ftool::casecmp(selemtype, "hexahedra")==0) { eltype = HEX; }
 	else DAL_THROW(dal::failure_error, "unknown element type '"<< selemtype << "'");
-	cerr << "before  coordinates " << int(f.tellg()) << "\n";
 	assert(!f.eof());
-	//ftool::read_untill(f,"COORDINATES");
 	f >> ftool::skip("COORDINATES");
 	do {
 	  cerr << "reading coordinates " << int(f.tellg()) << "\n";
@@ -225,11 +211,9 @@ namespace getfem {
 	  f >> std::ws;
 	  std::getline(f,ls);
 	  if (ftool::casecmp(ls, "END ELEMENTS", 12)==0) break;
-	  cerr << "line: '" << ls << "'" << endl;
 	  std::stringstream s(ls); 
 	  size_type cv_id;
 	  s >> cv_id;
-	  cerr << "cv_id=" << cv_id << endl;
 	  cv_nodes.resize(nnode);
 	  for (size_type i=0; i < nnode; ++i) {
 	    size_type j;
