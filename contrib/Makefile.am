@@ -5,7 +5,6 @@ bin_PROGRAMS = \
 
 bin_SCRIPTS = draw_mesh
 
-getfem_import_export_SOURCES = getfem_import_export.cc
 compare_solutions_SOURCES = compare_solutions.cc
 interpole_solution_SOURCES = interpole_solution.cc
 draw_mesh_doedges_SOURCES = draw_mesh_doedges.cc

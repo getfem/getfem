@@ -62,6 +62,7 @@ struct elastostatic_problem {
 
   enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
   getfem::getfem_mesh mesh;  /* the mesh */
+  getfem::mesh_im mim;       /* the integration methods */
   getfem::mesh_fem mf_u;     /* main mesh_fem, for the elastostatic solution */
   getfem::mesh_fem mf_p;     /* mesh_fem for the pressure.                   */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
@@ -75,7 +76,7 @@ struct elastostatic_problem {
 
   bool solve(plain_vector &U);
   void init(void);
-  elastostatic_problem(void) : mf_u(mesh), mf_p(mesh), mf_rhs(mesh), mf_coef(mesh) {}
+  elastostatic_problem(void) : mim(mesh), mf_u(mesh), mf_p(mesh), mf_rhs(mesh), mf_coef(mesh) {}
 };
 
 
@@ -265,9 +266,10 @@ void elastostatic_problem::init(void) {
   getfem::pintegration_method ppi = 
     getfem::int_method_descriptor(INTEGRATION);
 
-  mf_u.set_finite_element(mesh.convex_index(), pf_u, ppi);
+  mim.set_integration_method(ppi);
+  mf_u.set_finite_element(pf_u);
 
-  mf_p.set_finite_element(mesh.convex_index(), getfem::fem_descriptor(FEM_TYPE_P), ppi);
+  mf_p.set_finite_element(getfem::fem_descriptor(FEM_TYPE_P));
 
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
@@ -278,17 +280,17 @@ void elastostatic_problem::init(void) {
 		". In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
     }
-    mf_rhs.set_finite_element(mesh.convex_index(), pf_u, ppi);
+    mf_rhs.set_finite_element(mesh.convex_index(), pf_u);
   } else {
     mf_rhs.set_finite_element(mesh.convex_index(), 
-			      getfem::fem_descriptor(data_fem_name), ppi);
+			      getfem::fem_descriptor(data_fem_name));
   }
   
   /* set the finite element on mf_coef. Here we use a very simple element
    *  since the only function that need to be interpolated on the mesh_fem 
    * is f(x)=1 ... */
   mf_coef.set_finite_element(mesh.convex_index(),
-			     getfem::classical_fem(pgt,0), ppi);
+			     getfem::classical_fem(pgt,0));
 
   /* set boundary conditions
    * (Neuman on the upper face, Dirichlet elsewhere) */
@@ -383,7 +385,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
   // ll.test_derivatives(3, 1E-6, test_params);
 
   p.resize(pl->nb_params());
-  getfem::mdbrick_nonlinear_elasticity<>  ELAS(*pl, mf_u, mf_coef, p);
+  getfem::mdbrick_nonlinear_elasticity<>  ELAS(*pl, mim, mf_u, mf_coef, p);
 
   getfem::mdbrick_abstract<> *pINCOMP = &ELAS;
   switch (law_num) {

@@ -62,6 +62,7 @@
 /* Brick idents :                                                          */
 /* MDBRICK_SCALAR_ELLIPTIC       174397                                    */
 /* MDBRICK_LIN_ISO_ELASTICITY    852327                                    */
+/* MDBRICK_MASS_MATRIX           756543                                    */
 /* MDBRICK_HELMHOLTZ             354864                                    */
 /* MDBRICK_LINEAR_INCOMP         239898                                    */
 /* MDBRICK_NONLINEAR_ELASTICITY  821357                                    */
@@ -77,7 +78,6 @@
 #ifndef GETFEM_MODELING_H__
 #define GETFEM_MODELING_H__
 
-#include <getfem_assembling_tensors.h>
 #include <getfem_assembling.h>
 #include <gmm_solver_cg.h>
 #include <gmm_solver_gmres.h>
@@ -276,9 +276,11 @@ namespace getfem {
 
     std::vector<mdbrick_abstract *> sub_bricks;
     mutable std::vector<mesh_fem *> mesh_fems;
+    mutable std::vector<mesh_im *> mesh_ims;
     mutable std::vector<mesh_fem_info_> mesh_fems_info;
     mutable std::vector<size_type> mesh_fem_positions;
     std::vector<mesh_fem *> proper_mesh_fems;
+    std::vector<mesh_im *> proper_mesh_ims;
     std::vector<mesh_fem_info_> proper_mesh_fems_info;
     std::vector<boundary_cond_info_> proper_boundary_cond_info;
 
@@ -293,17 +295,20 @@ namespace getfem {
       is_linear_ = proper_is_linear_;
       is_symmetric_ = proper_is_symmetric_;
       is_coercive_ = proper_is_coercive_;
-      mesh_fems.resize(0); mesh_fem_positions.resize(0);
+      mesh_fems.resize(0); mesh_ims.resize(0); mesh_fem_positions.resize(0);
       for (size_type i = 0; i < sub_bricks.size(); ++i) {
 	for (size_type j = 0; j < sub_bricks[i]->mesh_fems.size(); ++j) {
 	  mesh_fems.push_back(sub_bricks[i]->mesh_fems[j]);
 	  mesh_fems_info.push_back(sub_bricks[i]->mesh_fems_info[j]);
 	  mesh_fem_positions.push_back(nb_total_dof 
 				       + sub_bricks[i]->mesh_fem_positions[j]);
-	  is_linear_ = is_linear_ && sub_bricks[i]->is_linear();
-	  is_symmetric_ = is_symmetric_ && sub_bricks[i]->is_symmetric();
-	  is_coercive_ = is_coercive_ && sub_bricks[i]->is_coercive();
 	}
+	for (size_type j = 0; j < sub_bricks[i]->mesh_ims.size(); ++j) {
+	  mesh_ims.push_back(sub_bricks[i]->mesh_ims[j]);
+	}
+	is_linear_ = is_linear_ && sub_bricks[i]->is_linear();
+	is_symmetric_ = is_symmetric_ && sub_bricks[i]->is_symmetric();
+	is_coercive_ = is_coercive_ && sub_bricks[i]->is_coercive();
 	nb_total_dof += sub_bricks[i]->nb_dof();
       }
       for (size_type j = 0; j < proper_mesh_fems.size(); ++j) {
@@ -312,6 +317,8 @@ namespace getfem {
 	mesh_fem_positions.push_back(nb_total_dof);
 	nb_total_dof += proper_mesh_fems[j]->nb_dof();
       }
+      for (size_type j = 0; j < proper_mesh_ims.size(); ++j)
+	mesh_ims.push_back(proper_mesh_ims[j]);
       for (size_type j = 0; j < proper_boundary_cond_info.size(); ++j) {
 	mesh_fems_info[proper_boundary_cond_info[j].num_fem]
 	  .add_boundary(proper_boundary_cond_info[j].num_bound,
@@ -330,6 +337,11 @@ namespace getfem {
       proper_mesh_fems.push_back(&mf);
       proper_mesh_fems_info.push_back(mfi);
       add_dependency(mf);
+    }
+
+    void add_proper_mesh_im(mesh_im &mim) {
+      proper_mesh_ims.push_back(&mim);
+      add_dependency(mim);
     }
 
     void add_proper_boundary_info(size_type num_fem, size_type num_bound,
@@ -399,6 +411,7 @@ namespace getfem {
 				 gmm::sub_interval>::vector_type SUBVECTOR;
 
     gmm::sub_interval SUBU;
+    mesh_im  &mim;
     mesh_fem &mf_u;
     mesh_fem &mf_data;
     VECTOR coeffs_;
@@ -451,20 +464,22 @@ namespace getfem {
 
     void init_(void) {
       this->add_dependency(mf_data);
+      this->add_proper_mesh_im(mim);
       this->add_proper_mesh_fem(mf_u, MDBRICK_SCALAR_ELLIPTIC);
       this->update_from_context();
     }
 
     // constructor for the Laplace operator
-    mdbrick_scalar_elliptic(mesh_fem &mf_u_, mesh_fem &mf_data_,
+    mdbrick_scalar_elliptic(mesh_im &mim_, mesh_fem &mf_u_, mesh_fem &mf_data_,
        value_type a, bool mat_stored = false)
-      : mf_u(mf_u_), mf_data(mf_data_), matrix_stored(mat_stored)
+      : mim(mim_), mf_u(mf_u_), mf_data(mf_data_), matrix_stored(mat_stored)
     { set_coeff(a); init_(); }
 
     // constructor for a non-homogeneous material
-    mdbrick_scalar_elliptic(mesh_fem &mf_u_, mesh_fem &mf_data_,
+    mdbrick_scalar_elliptic(mesh_im &mim_, mesh_fem &mf_u_, mesh_fem &mf_data_,
        const VECTOR &coeff, bool laplace, bool mat_stored = false)
-      : mf_u(mf_u_), mf_data(mf_data_),	matrix_stored(mat_stored)
+      : mim(mim_), mf_u(mf_u_), mf_data(mf_data_),
+	matrix_stored(mat_stored)
     { set_coeff(coeff, laplace); init_(); }
   };
 
@@ -480,9 +495,9 @@ namespace getfem {
     }
     else { gmm::copy(coeffs_, coeffs); }
     if (laplacian)
-      asm_stiffness_matrix_for_laplacian(K, mf_u, mf_data, coeffs);
+      asm_stiffness_matrix_for_laplacian(K, mim, mf_u, mf_data, coeffs);
     else
-      asm_stiffness_matrix_for_scalar_elliptic(K, mf_u, mf_data, coeffs);
+      asm_stiffness_matrix_for_scalar_elliptic(K, mim, mf_u, mf_data, coeffs);
     this->computed();
   }
 
@@ -546,6 +561,7 @@ namespace getfem {
 				 gmm::sub_interval>::vector_type SUBVECTOR;
 
     gmm::sub_interval SUBU;
+    mesh_im &mim;
     mesh_fem &mf_u;
     mesh_fem &mf_data;
     VECTOR lambda_, mu_;
@@ -589,21 +605,23 @@ namespace getfem {
     void init_(void) {
       this->add_dependency(mf_data);
       this->add_proper_mesh_fem(mf_u, MDBRICK_LIN_ISO_ELASTICITY);
+      this->add_proper_mesh_im(mim);
       this->update_from_context();
     }
 
     // constructor for a homogeneous material (constant lambda and mu)
     mdbrick_isotropic_linearized_elasticity
-    (mesh_fem &mf_u_, mesh_fem &mf_data_,
+    (mesh_im &mim_, mesh_fem &mf_u_, mesh_fem &mf_data_,
      value_type lambdai, value_type mui, bool mat_stored = false)
-      : mf_u(mf_u_), mf_data(mf_data_), matrix_stored(mat_stored)
+      : mim(mim_), mf_u(mf_u_), mf_data(mf_data_), matrix_stored(mat_stored)
     { set_Lame_coeff(lambdai, mui); init_(); }
 
     // constructor for a non-homogeneous material
     mdbrick_isotropic_linearized_elasticity
-    (mesh_fem &mf_u_, mesh_fem &mf_data_,
+    (mesh_im &mim_, mesh_fem &mf_u_, mesh_fem &mf_data_,
      const VECTOR &lambdai, const VECTOR &mui, bool mat_stored = false)
-      : mf_u(mf_u_), mf_data(mf_data_),	matrix_stored(mat_stored)
+      : mim(mim_), mf_u(mf_u_), mf_data(mf_data_),
+	matrix_stored(mat_stored)
     { set_Lame_coeff(lambdai, mui); init_(); }
   };
 
@@ -618,7 +636,8 @@ namespace getfem {
       std::fill(mu.begin(), mu.end(), value_type(mu_[0]));
     }
     else { gmm::copy(lambda_, lambda); gmm::copy(mu_, mu); }
-    asm_stiffness_matrix_for_linear_elasticity(K, mf_u, mf_data, lambda, mu);
+    asm_stiffness_matrix_for_linear_elasticity(K, mim, mf_u, mf_data,
+					       lambda, mu);
     this->computed();
   }
 
@@ -667,6 +686,137 @@ namespace getfem {
   /* TODO : arbitrary elasticity tensor */
 
   /* ******************************************************************** */
+  /*		Mass matrix bricks.                                       */
+  /* ******************************************************************** */
+
+# define MDBRICK_MASS_MATRIX 756543
+
+  template<typename MODEL_STATE = standard_model_state>
+  class mdbrick_mass_matrix
+    : public mdbrick_abstract<MODEL_STATE> {
+
+    typedef typename MODEL_STATE::vector_type VECTOR;
+    typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
+    typedef typename MODEL_STATE::value_type value_type;
+    typedef typename gmm::sub_vector_type<VECTOR *,
+				 gmm::sub_interval>::vector_type SUBVECTOR;
+
+    gmm::sub_interval SUBU;
+    mesh_fem &mf_u;
+    mesh_fem &mf_data;
+    VECTOR rho_;
+    bool homogeneous;
+    bool matrix_stored;
+    T_MATRIX K;
+
+    void compute_K(void);
+
+  public :
+
+    virtual void mixed_variables(dal::bit_vector &, size_type = 0) {}
+    virtual size_type nb_constraints(void) { return 0; }
+    virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
+					size_type = 0, bool modified = false);
+    virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
+				size_type = 0);
+
+    const T_MATRIX &stiffness_matrix(void)
+    { if (this->to_be_computed()) compute_K(); return K; }
+
+    void set_rho(value_type rhoi) {
+      homogeneous = true;
+      gmm::resize(rho_, 1); rho_[0] = rhoi;
+      this->force_recompute();
+    }
+
+    void set_rho(const VECTOR &rhoi) {
+      homogeneous = false;
+      gmm::resize(rho_, mf_data.nb_dof()); gmm::copy(rhoi, rho_);
+      this->force_recompute();
+    }
+
+    SUBVECTOR get_solution(MODEL_STATE &MS) {
+      SUBU = gmm::sub_interval (this->first_index(), this->nb_dof());
+      return gmm::sub_vector(MS.state(), SUBU);
+    }
+
+    void init_(void) {
+      this->add_dependency(mf_data);
+      this->add_proper_mesh_fem(mf_u, MDBRICK_MASS_MATRIX);
+      this->update_from_context();
+    }
+
+    // constructor for a homogeneous material (constant lambda and mu)
+    mdbrick_mass_matrix
+    (mesh_fem &mf_u_, mesh_fem &mf_data_,
+     value_type rhoi, bool mat_stored = false)
+      : mf_u(mf_u_), mf_data(mf_data_), matrix_stored(mat_stored)
+    { set_rho(rhoi); init_(); }
+
+    // constructor for a non-homogeneous material
+    mdbrick_mass_matrix
+    (mesh_fem &mf_u_, mesh_fem &mf_data_,
+     const VECTOR &rhoi, bool mat_stored = false)
+      : mf_u(mf_u_), mf_data(mf_data_),	matrix_stored(mat_stored)
+    { set_rho(rhoi); init_(); }
+  };
+
+  template<typename MODEL_STATE>
+   void mdbrick_mass_matrix<MODEL_STATE>::compute_K(void) {
+    gmm::clear(K);
+    gmm::resize(K, this->nb_dof(), this->nb_dof());
+    VECTOR rho(mf_data.nb_dof()), mu(mf_data.nb_dof());
+    if (homogeneous) {
+      std::fill(rho.begin(), rho.end(), value_type(rho_[0]));
+    }
+    else { gmm::copy(rho_, rho); }
+    asm_mass_matrix_param(K, mf_u, mf_data, rho);
+    this->computed();
+  }
+
+  template<typename MODEL_STATE>
+  void mdbrick_mass_matrix<MODEL_STATE>::
+  compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
+			 size_type, bool modified) {
+    if (modified && !matrix_stored) 
+      DAL_THROW(failure_error, "The residu will not be consistant. "
+		"Use this brick with the stiffness matrix stored option");
+    react(MS, i0, modified);
+    gmm::sub_interval SUBI(i0, this->nb_dof());
+    if (this->to_be_computed()
+	|| (!matrix_stored && this->to_be_transferred()))
+      compute_K();
+    if (this->to_be_transferred()) { 
+      gmm::copy(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI));
+      this->transferred();
+    }
+    if (!matrix_stored) gmm::clear(K);
+  }
+  
+  template<typename MODEL_STATE>
+  void mdbrick_mass_matrix<MODEL_STATE>::
+  compute_residu(MODEL_STATE &MS, size_type i0, size_type) {
+    react(MS, i0, false);
+    gmm::sub_interval SUBI(i0, this->nb_dof());
+    if (this->to_be_computed()) { 
+      compute_K();
+      if (!matrix_stored) {
+	gmm::copy(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI)); 
+	gmm::clear(K);
+	this->transferred();
+      }
+    }
+    if (matrix_stored) {
+      gmm::mult(K, gmm::sub_vector(MS.state(), SUBI),
+		gmm::sub_vector(MS.residu(), SUBI));
+    } else {
+      gmm::mult(gmm::sub_matrix(MS.tangent_matrix(), SUBI),
+		gmm::sub_vector(MS.state(), SUBI),
+		gmm::sub_vector(MS.residu(), SUBI));
+    }
+  }
+
+  /* ******************************************************************** */
   /*		Helmholtz brick.                                          */
   /* ******************************************************************** */
 
@@ -683,6 +833,7 @@ namespace getfem {
 				 gmm::sub_interval>::vector_type SUBVECTOR;
 
     gmm::sub_interval SUBU;
+    mesh_im &mim;
     mesh_fem &mf_u;
     mesh_fem &mf_data;
     VECTOR wave_number;
@@ -701,7 +852,7 @@ namespace getfem {
 	for (size_type i=0; i < this->nb_dof(); ++i)
 	  wave_number2[i] = dal::sqr(wave_number[i]);
       
-      asm_Helmholtz(K, mf_u, mf_data, wave_number2);
+      asm_Helmholtz(K, mim, mf_u, mf_data, wave_number2);
       this->computed();
     }
 
@@ -767,20 +918,22 @@ namespace getfem {
     void init_(void) {
       this->add_dependency(mf_data);
       this->add_proper_mesh_fem(mf_u, MDBRICK_HELMHOLTZ);
+      this->add_proper_mesh_im(mim);
       this->proper_is_coercive_ = false;
       this->update_from_context();
     }
 
     // constructor for a homogeneous wave number
-    mdbrick_Helmholtz(mesh_fem &mf_u_, mesh_fem &mf_data_,
+    mdbrick_Helmholtz(mesh_im &mim_, mesh_fem &mf_u_, mesh_fem &mf_data_,
        value_type k, bool mat_stored = true)
-      : mf_u(mf_u_), mf_data(mf_data_), matrix_stored(mat_stored)
+      : mim(mim_), mf_u(mf_u_), mf_data(mf_data_), matrix_stored(mat_stored)
     { set_wave_number(k); init_(); }
 
     // constructor for a non-homogeneous wave number
-    mdbrick_Helmholtz(mesh_fem &mf_u_, mesh_fem &mf_data_,
+    mdbrick_Helmholtz(mesh_im &mim_, mesh_fem &mf_u_, mesh_fem &mf_data_,
 		      const VECTOR &k, bool mat_stored = true)
-      : mf_u(mf_u_), mf_data(mf_data_),	matrix_stored(mat_stored)
+      : mim(mim_), mf_u(mf_u_), mf_data(mf_data_),
+	matrix_stored(mat_stored)
     { set_wave_number(k); init_(); }
     
   };
@@ -813,7 +966,7 @@ namespace getfem {
 		  " You have to change the rhs in that case.");
       gmm::resize(F_, mf_u.nb_dof());
       gmm::clear(F_);
-      asm_source_term(F_, mf_u, mf_data, B_, boundary);
+      asm_source_term(F_, *(this->mesh_ims[0]), mf_u, mf_data, B_, boundary);
       this->computed();
     }
 
@@ -904,7 +1057,7 @@ namespace getfem {
 	}
       }
       else gmm::copy(Q, vQ);
-      asm_qu_term(K, mf_u, mf_data, vQ, boundary);
+      asm_qu_term(K, *(this->mesh_ims[0]), mf_u, mf_data, vQ, boundary);
       this->computed();
     }
 
@@ -1003,7 +1156,7 @@ namespace getfem {
       nbd = mf_u.nb_dof();
       size_type nd = mf_u.nb_dof(), ndd = mf_p.nb_dof();
       gmm::clear(B); gmm::resize(B, ndd, nd);
-      asm_stokes_B(B, mf_u, mf_p);
+      asm_stokes_B(B, *(this->mesh_ims[0]), mf_u, mf_p);
  
 //        gmm::dense_matrix<value_type> MM(ndd, ndd);
 //        std::vector<value_type> eigval(ndd);
@@ -1017,7 +1170,7 @@ namespace getfem {
 	if (homogeneous) std::fill(epsilon.begin(), epsilon.end(),epsilon_[0]);
 	else gmm::copy(epsilon_, epsilon);
 	gmm::clear(M); gmm::resize(M, ndd, ndd);
-	asm_mass_matrix_param(M, mf_p, mf_data, epsilon);
+	asm_mass_matrix_param(M, *(this->mesh_ims[0]), mf_p, mf_data, epsilon);
 	gmm::scale(M, value_type(-1));
       }
       this->computed();
@@ -1165,7 +1318,8 @@ namespace getfem {
 	  for (size_type q=0; q < Q; ++q)  H_[i*Q*Q+q*Q+q] = value_type(1);
       }
       if (!with_multipliers) version |= ASMDIR_SIMPLIFY;
-      asm_dirichlet_constraints(M, V, mf_u, mf_data,H_, B_, boundary, version);
+      asm_dirichlet_constraints(M, V, *(this->mesh_ims[0]), mf_u, mf_data,
+				H_, B_, boundary, version);
 
       if (!with_H) gmm::resize(H_, 0);
 
@@ -1323,7 +1477,6 @@ namespace getfem {
       init_(); gmm::copy(B__, B_);
       compute_constraints(ASMDIR_BUILDH + ASMDIR_BUILDR);
     }
-    
   };
 
   /* ******************************************************************** */
@@ -1459,7 +1612,7 @@ namespace getfem {
 
     void compute_M(void) {
       gmm::clear(M_); gmm::resize(M_, mf_u->nb_dof(), mf_u->nb_dof());
-      asm_mass_matrix_param(M_, *mf_u, mf_data, RHO_);
+      asm_mass_matrix_param(M_, *(this->mesh_ims[0]), *mf_u, mf_data, RHO_);
       if (have_subs) {
 	gmm::sub_interval SUBI(0, mf_u->nb_dof());
 	gmm::clear(gmm::sub_matrix(M_, SUBS, SUBI));

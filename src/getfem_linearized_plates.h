@@ -42,21 +42,21 @@ namespace getfem {
 
   template<class MAT, class VECT>
   void asm_stiffness_matrix_for_plate_transverse_shear
-  (const MAT &RM, const mesh_fem &mf_u3, const mesh_fem &mf_theta,
-   const mesh_fem &mfdata, const VECT &MU) {
+  (const MAT &RM, const mesh_im &mim, const mesh_fem &mf_u3,
+   const mesh_fem &mf_theta, const mesh_fem &mfdata, const VECT &MU) {
     gmm::sub_interval I1(0, mf_u3.nb_dof());
     gmm::sub_interval I2(mf_u3.nb_dof(), mf_theta.nb_dof());
     
     asm_stiffness_matrix_for_plate_transverse_shear
       (gmm::sub_matrix(RM, I1), gmm::sub_matrix(RM, I1, I2),
        gmm::transposed(gmm::sub_matrix(RM, I2, I1)),
-       gmm::sub_matrix(RM, I2), mf_u3, mf_theta, mfdata, MU);
+       gmm::sub_matrix(RM, I2), mim, mf_u3, mf_theta, mfdata, MU);
   }
 
   template<class MAT, class MAT3, class VECT>
   void asm_stiffness_matrix_for_plate_transverse_shear
   (const MAT &RM1, const MAT &RM2, const MAT3 &RM3, const MAT &RM4,
-   const mesh_fem &mf_u3, const mesh_fem &mf_theta,
+   const mesh_im &mim, const mesh_fem &mf_u3, const mesh_fem &mf_theta,
    const mesh_fem &mfdata, const VECT &MU) {
     if (mfdata.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
@@ -66,14 +66,13 @@ namespace getfem {
     generic_assembly assem("mu=data$1(#3);"
 			   "t1=comp(Grad(#1).Grad(#1).Base(#3));"
 			   "M$1(#1,#1)+=sym(t1(:,i,:,i,j).mu(j));"
-			   // "t2=comp(vBase(#2).vBase(#2).Base(#3));"
-			   "t2=comp(#1,vBase(#2).vBase(#2).Base(#3));"
+			   "t2=comp(vBase(#2).vBase(#2).Base(#3));"
 			   "M$4(#2,#2)+=sym(t2(:,i,:,i,j).mu(j));"
-			   // "M$4(#2,#2)+=sym(t2(k,:,i,:,i,j).mu(j));"
 			   "t3=comp(Grad(#1).vBase(#2).Base(#3));"
 			   "M$2(#1,#2)+=t3(:,i,:,i,j).mu(j);"
 			   "M$3(#1,#2)+=t3(:,i,:,i,j).mu(j);"
 			   );
+    assem.push_mi(mim);
     assem.push_mf(mf_u3);
     assem.push_mf(mf_theta);
     assem.push_mf(mfdata);
@@ -103,6 +102,7 @@ namespace getfem {
 			    gmm::sub_interval>::vector_type SUBVECTOR;
 
     gmm::sub_interval SUBU;
+    mesh_im &mim, &mim_subint;
     mesh_fem &mf_ut;
     mesh_fem &mf_u3;
     mesh_fem &mf_theta;
@@ -128,14 +128,14 @@ namespace getfem {
       gmm::scale(lambda, value_type(2) * epsilon);
       gmm::scale(mu, value_type(2) * epsilon);
       asm_stiffness_matrix_for_linear_elasticity
-	(gmm::sub_matrix(K, I1), mf_ut, mf_data, lambda, mu);
+	(gmm::sub_matrix(K, I1), mim, mf_ut, mf_data, lambda, mu);
       gmm::scale(mu, value_type(1) / value_type(2));
       asm_stiffness_matrix_for_plate_transverse_shear
-	(gmm::sub_matrix(K, I2), mf_u3, mf_theta, mf_data, mu);
+	(gmm::sub_matrix(K, I2), mim_subint, mf_u3, mf_theta, mf_data, mu);
       gmm::scale(lambda, epsilon * epsilon / value_type(3));
       gmm::scale(mu, value_type(2) * epsilon * epsilon / value_type(3));
       asm_stiffness_matrix_for_linear_elasticity
-	(gmm::sub_matrix(K, I3), mf_theta, mf_data, lambda, mu);
+	(gmm::sub_matrix(K, I3), mim, mf_theta, mf_data, lambda, mu);
       this->computed();
     }
     
@@ -226,6 +226,8 @@ namespace getfem {
 	DAL_THROW(failure_error, "Qdim of mf_ut should be 1.");
       if (mf_theta.get_qdim() != 2)
 	DAL_THROW(failure_error, "Qdim of mf_theta should be 2.");
+      this->add_proper_mesh_im(mim);
+      this->add_proper_mesh_im(mim_subint);      
       this->add_proper_mesh_fem(mf_ut, MDBRICK_LINEAR_PLATE, 1);
       this->add_proper_mesh_fem(mf_u3, MDBRICK_LINEAR_PLATE, 0);
       this->add_proper_mesh_fem(mf_theta, MDBRICK_LINEAR_PLATE, 0);
@@ -235,19 +237,42 @@ namespace getfem {
 
     // constructor for a homogeneous material (constant lambda and mu)
     mdbrick_isotropic_linearized_plate
-    (mesh_fem &mf_ut_, mesh_fem &mf_u3_, mesh_fem &mf_theta_,
+    (mesh_im &mim_, mesh_fem &mf_ut_, mesh_fem &mf_u3_, mesh_fem &mf_theta_,
      mesh_fem &mf_data_, value_type lambdai, value_type mui,
      double epsilon_, bool mat_stored = false)
-      : mf_ut(mf_ut_), mf_u3(mf_u3_), mf_theta(mf_theta_), mf_data(mf_data_),
+      : mim(mim_), mim_subint(mim_), mf_ut(mf_ut_), mf_u3(mf_u3_),
+	mf_theta(mf_theta_), mf_data(mf_data_),
 	epsilon(epsilon_), matrix_stored(mat_stored)
     { set_Lame_coeff(lambdai, mui); init_(); }
 
     // constructor for a non-homogeneous material
     mdbrick_isotropic_linearized_plate
-    (mesh_fem &mf_ut_, mesh_fem &mf_u3_, mesh_fem &mf_theta_,
+    (mesh_im &mim_, mesh_fem &mf_ut_, mesh_fem &mf_u3_, mesh_fem &mf_theta_,
      mesh_fem &mf_data_, const VECTOR &lambdai, const VECTOR &mui,
      double epsilon_, bool mat_stored = false)
-      : mf_ut(mf_ut_), mf_u3(mf_u3_), mf_theta(mf_theta_), mf_data(mf_data_),
+      : mim(mim_), mim_subint(mim_), mf_ut(mf_ut_), mf_u3(mf_u3_),
+	mf_theta(mf_theta_), mf_data(mf_data_),
+	epsilon(epsilon_), matrix_stored(mat_stored)
+    { set_Lame_coeff(lambdai, mui); init_(); }
+ 
+    // constructor for a homogeneous material (constant lambda and mu) with
+    // sub integration
+    mdbrick_isotropic_linearized_plate
+    (mesh_im &mim_, mesh_im &mim_subint_, mesh_fem &mf_ut_, mesh_fem &mf_u3_,
+     mesh_fem &mf_theta_, mesh_fem &mf_data_, value_type lambdai,
+     value_type mui, double epsilon_, bool mat_stored = false)
+      : mim(mim_), mim_subint(mim_subint_), mf_ut(mf_ut_), mf_u3(mf_u3_),
+	mf_theta(mf_theta_), mf_data(mf_data_),
+	epsilon(epsilon_), matrix_stored(mat_stored)
+    { set_Lame_coeff(lambdai, mui); init_(); }
+
+    // constructor for a non-homogeneous material
+    mdbrick_isotropic_linearized_plate
+    (mesh_im &mim_, mesh_im &mim_subint_, mesh_fem &mf_ut_, mesh_fem &mf_u3_,
+     mesh_fem &mf_theta_, mesh_fem &mf_data_, const VECTOR &lambdai,
+     const VECTOR &mui, double epsilon_, bool mat_stored = false)
+      : mim(mim_), mim_subint(mim_subint_), mf_ut(mf_ut_), mf_u3(mf_u3_),
+	mf_theta(mf_theta_), mf_data(mf_data_),
 	epsilon(epsilon_), matrix_stored(mat_stored)
     { set_Lame_coeff(lambdai, mui); init_(); }
  
@@ -259,13 +284,15 @@ namespace getfem {
   /* ******************************************************************** */
 
   template<class MAT>
-  void asm_coupling_u3theta(const MAT &RM, const mesh_fem &mf_u3,
+  void asm_coupling_u3theta(const MAT &RM, const mesh_im &mim,
+			    const mesh_fem &mf_u3,
 			    const mesh_fem &mf_theta) {
     
     if (mf_u3.get_qdim() != 1 || mf_theta.get_qdim() != 2)
       DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
     generic_assembly assem("t1=comp(Grad(#1).vBase(#2));"
 			   "M$1(#1,#2)+=t1(:,i,:,i);");
+    assem.push_mi(mim);
     assem.push_mf(mf_u3);
     assem.push_mf(mf_theta);
     assem.push_mat(const_cast<MAT &>(RM));
@@ -273,13 +300,15 @@ namespace getfem {
   }
 
   template<class MAT>
-  void asm_coupling_psitheta(const MAT &RM, const mesh_fem &mf_u3,
+  void asm_coupling_psitheta(const MAT &RM,  const mesh_im &mim,
+			     const mesh_fem &mf_u3,
 			     const mesh_fem &mf_theta) {
     
     if (mf_u3.get_qdim() != 1 || mf_theta.get_qdim() != 2)
       DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
     generic_assembly assem("t1=comp(Base(#1).vGrad(#2));"
 			   "M$1(#1,#2)+=t1(:,:,2,1)-t1(:,:,1,2);");
+    assem.push_mi(mim);
     assem.push_mf(mf_u3);
     assem.push_mf(mf_theta);
     assem.push_mat(const_cast<MAT &>(RM));
@@ -321,7 +350,7 @@ namespace getfem {
 			      gmm::sub_interval>::vector_type SUBVECTOR;
 
     gmm::sub_interval SUBU;
-
+    mesh_im &mim;
     mesh_fem &mf_ut;
     mesh_fem &mf_u3;
     mesh_fem &mf_theta;
@@ -346,22 +375,22 @@ namespace getfem {
       gmm::sub_interval I4(nd1 + nd2 + nd3, nd2), I5(nd1 + 2*nd2 + nd3, nd2);
       
       asm_stiffness_matrix_for_linear_elasticity
-	(gmm::sub_matrix(K, I1), mf_ut, mf_data, lambda, mu);
+	(gmm::sub_matrix(K, I1), mim, mf_ut, mf_data, lambda, mu);
       gmm::scale(gmm::sub_matrix(K, I1), value_type(2) * epsilon);
       
       
       asm_stiffness_matrix_for_homogeneous_laplacian(gmm::sub_matrix(K, I2),
-						     mf_u3);
+						     mim, mf_u3);
       gmm::scale(gmm::sub_matrix(K, I2),
 		 value_type(2) * epsilon * epsilon * epsilon / value_type(3));
       
       asm_stiffness_matrix_for_linear_elasticity
-	(gmm::sub_matrix(K, I3), mf_theta, mf_data, lambda, mu);
+	(gmm::sub_matrix(K, I3), mim, mf_theta, mf_data, lambda, mu);
       //       gmm::scale(gmm::sub_matrix(K, I3),
       //  		 value_type(2) * epsilon * epsilon * epsilon / value_type(3));
       
       
-      asm_coupling_u3theta(gmm::sub_matrix(K, I2, I3), mf_u3, mf_theta);
+      asm_coupling_u3theta(gmm::sub_matrix(K, I2, I3), mim, mf_u3, mf_theta);
       gmm::scale(gmm::sub_matrix(K, I2, I3),
 		 value_type(2) * epsilon * epsilon * epsilon / value_type(3));
 
@@ -369,39 +398,39 @@ namespace getfem {
       //       affiche_moi_valp(gmm::sub_matrix(K, I2, I3));
 
 
-      asm_coupling_psitheta(gmm::sub_matrix(K, I4, I3), mf_u3, mf_theta);
+      asm_coupling_psitheta(gmm::sub_matrix(K, I4, I3), mim, mf_u3, mf_theta);
       gmm::scale(gmm::sub_matrix(K, I4, I3), epsilon*epsilon/value_type(3));
 
       //       cout << "\n\nval p de I4 I3 ";
       //       affiche_moi_valp(gmm::sub_matrix(K, I4, I3));
      
 
-      asm_coupling_psitheta(gmm::transposed(gmm::sub_matrix(K, I3, I4)),
+      asm_coupling_psitheta(gmm::transposed(gmm::sub_matrix(K, I3, I4)), mim,
 			    mf_u3, mf_theta);
       gmm::scale(gmm::sub_matrix(K, I3, I4), epsilon*epsilon/value_type(3));
 
 
-      asm_coupling_u3theta(gmm::transposed(gmm::sub_matrix(K, I3, I5)),
+      asm_coupling_u3theta(gmm::transposed(gmm::sub_matrix(K, I3, I5)), mim,
 			   mf_u3, mf_theta);
       gmm::scale(gmm::sub_matrix(K, I3, I5), epsilon*epsilon/value_type(3));
 
       if (!symmetrized)
 	asm_stiffness_matrix_for_homogeneous_laplacian(gmm::sub_matrix(K, I5),
-						       mf_u3);
+						       mim, mf_u3);
       if (symmetrized) {
-	asm_mass_matrix(gmm::sub_matrix(K, I3), mf_theta);
-	asm_coupling_u3theta(gmm::transposed(gmm::sub_matrix(K, I3, I2)),
+	asm_mass_matrix(gmm::sub_matrix(K, I3), mim, mf_theta);
+	asm_coupling_u3theta(gmm::transposed(gmm::sub_matrix(K, I3, I2)), mim,
 			     mf_u3, mf_theta);
 	gmm::scale(gmm::sub_matrix(K, I3, I2),
 		   value_type(2) * epsilon * epsilon * epsilon / value_type(3));
 
 	asm_stiffness_matrix_for_homogeneous_laplacian
-	  (gmm::sub_matrix(K, I2, I5), mf_u3);
+	  (gmm::sub_matrix(K, I2, I5), mim, mf_u3);
 	gmm::scale(gmm::sub_matrix(K, I2, I5), epsilon*epsilon/value_type(3));
 	asm_stiffness_matrix_for_homogeneous_laplacian
-	  (gmm::sub_matrix(K, I5, I2), mf_u3);
+	  (gmm::sub_matrix(K, I5, I2), mim, mf_u3);
 	gmm::scale(gmm::sub_matrix(K, I5, I2), epsilon*epsilon/value_type(3));
-	asm_coupling_u3theta(gmm::sub_matrix(K, I5, I3), mf_u3, mf_theta);
+	asm_coupling_u3theta(gmm::sub_matrix(K, I5, I3), mim, mf_u3, mf_theta);
 	gmm::scale(gmm::sub_matrix(K, I5, I3), epsilon*epsilon/value_type(3));
       }
       gmm::scale(gmm::sub_matrix(K, I3),
@@ -500,6 +529,7 @@ namespace getfem {
 	DAL_THROW(failure_error, "Qdim of mf_ut should be 1.");
       if (mf_theta.get_qdim() != 2)
 	DAL_THROW(failure_error, "Qdim of mf_theta should be 2.");
+      this->add_proper_mesh_im(mim);
       this->add_proper_mesh_fem(mf_ut, MDBRICK_MIXED_LINEAR_PLATE, info );
       this->add_proper_mesh_fem(mf_u3, MDBRICK_MIXED_LINEAR_PLATE, 0);
       this->add_proper_mesh_fem(mf_theta, MDBRICK_MIXED_LINEAR_PLATE, 0); 
@@ -513,20 +543,22 @@ namespace getfem {
 
     // constructor for a homogeneous material (constant lambda and mu)
     mdbrick_mixed_isotropic_linearized_plate
-    (mesh_fem &mf_ut_, mesh_fem &mf_u3_, mesh_fem &mf_theta_,
+    (mesh_im &mim_, mesh_fem &mf_ut_, mesh_fem &mf_u3_, mesh_fem &mf_theta_,
      mesh_fem &mf_data_, value_type lambdai, value_type mui,
      double epsilon_, bool sym = false, bool mat_stored = false)
-      : mf_ut(mf_ut_), mf_u3(mf_u3_), mf_theta(mf_theta_), mf_data(mf_data_),
-	epsilon(epsilon_), matrix_stored(mat_stored), symmetrized(sym)
+      : mim(mim_), mf_ut(mf_ut_), mf_u3(mf_u3_), mf_theta(mf_theta_),
+	mf_data(mf_data_), epsilon(epsilon_), matrix_stored(mat_stored),
+	symmetrized(sym)
     { set_Lame_coeff(lambdai, mui); init_(); }
 
     // constructor for a non-homogeneous material
     mdbrick_mixed_isotropic_linearized_plate
-    (mesh_fem &mf_ut_, mesh_fem &mf_u3_, mesh_fem &mf_theta_,
+    (mesh_im &mim_, mesh_fem &mf_ut_, mesh_fem &mf_u3_, mesh_fem &mf_theta_,
      mesh_fem &mf_data_, const VECTOR &lambdai, const VECTOR &mui,
      double epsilon_, bool sym = false, bool mat_stored = false)
-      : mf_ut(mf_ut_), mf_u3(mf_u3_), mf_theta(mf_theta_), mf_data(mf_data_),
-	epsilon(epsilon_), matrix_stored(mat_stored), symmetrized(sym)
+      : mim(mim_), mf_ut(mf_ut_), mf_u3(mf_u3_), mf_theta(mf_theta_),
+	mf_data(mf_data_), epsilon(epsilon_), matrix_stored(mat_stored),
+	symmetrized(sym)
     { set_Lame_coeff(lambdai, mui); init_(); }
  
   };
@@ -747,10 +779,11 @@ namespace getfem {
   /* ******************************************************************** */
 
   template<class VEC>
-  void asm_constraint_on_theta(const VEC &V, const mesh_fem &mf_theta,
-			       size_type boundary) {
+  void asm_constraint_on_theta(const VEC &V, const mesh_im &mim, 
+			       const mesh_fem &mf_theta, size_type boundary) {
     generic_assembly assem("t=comp(vBase(#1).Normal());"
 			   "V(#1)+= t(:,2,1) - t(:,1,2);");
+    assem.push_mi(mim);
     assem.push_mf(mf_theta);
     assem.push_vec(const_cast<VEC &>(V));
     assem.boundary_assembly(boundary);
@@ -855,7 +888,8 @@ namespace getfem {
 						      face_nums[i]);
 
 	  std::vector<value_type> V(mf_theta->nb_dof());
-	  asm_constraint_on_theta(V, *mf_theta, boundary);
+	  asm_constraint_on_theta(V, *(this->mesh_ims[0]), *mf_theta,
+				  boundary);
 	  gmm::copy(V, gmm::mat_row(CO, k));
 	  mf_theta->linked_mesh().sup_set(boundary);
 	}

@@ -36,6 +36,7 @@
 
 #include <getfem_fem.h>
 #include <getfem_mesh_fem.h>
+#include <getfem_mesh_im.h>
 #include <bgeot_rtree.h>
 #include <bgeot_geotrans_inv.h>
 
@@ -81,9 +82,9 @@ namespace getfem {
       std::vector<size_type> inddof;
     }; 
 
-    const mesh_fem &mf1;    // mf represents the original finite element method
+    const mesh_fem &mf;    // mf represents the original finite element method
                             // to be interpolated.
-    const mesh_fem &mf2;    // mesh on which mf1 is interpolated. contains
+    const mesh_im &mim;    // mesh on which mf1 is interpolated. contains
                             // also the integration method.
     pinterpolated_func pif; // optional transformation
 
@@ -134,9 +135,10 @@ namespace getfem {
 			      base_tensor &) const;
 
 
-    interpolated_fem(const mesh_fem &mef1, const mesh_fem &mef2,
+    interpolated_fem(const mesh_fem &mef, const mesh_im &meim,
 		     pinterpolated_func pif_ = 0,
-		     dal::bit_vector blocked_dof = dal::bit_vector(), bool store_val = true);
+		     dal::bit_vector blocked_dof = dal::bit_vector(),
+		     bool store_val = true);
   };
   
   

@@ -348,7 +348,7 @@ namespace getfem {
 
   struct mf_comp {
     pnonlinear_elem_term nlt;
-    const mesh_fem* pmf; /* always defined. When op_type == NORMAL, it is set to the main_pmf pointer of the mf_comp_vect */
+    const mesh_fem* pmf; /* always defined except when op_type == NORMAL */
     mf_comp_vect *owner;
 				     
     ATN_tensor *data;
@@ -378,53 +378,62 @@ namespace getfem {
       nlt(nlt_), pmf(vmf[0]), data(0), auxmf(vmf.begin()+1, vmf.end()), op(NONLIN), vectorize(false) { }
     mf_comp(ATN_tensor *t) :
       nlt(0), pmf(0), data(t), op(DATA), vectorize(0) {}
-    void push_back_dimensions(size_type cv, tensor_ranges &rng, bool only_reduced=false) const {
-      switch (op) {
-        case NONLIN:
-	  for (unsigned j=0; j < nlt->sizes().size(); ++j)
-	    if (!only_reduced || !reduced(j)) 
-	      rng.push_back(nlt->sizes()[j]);
-          break;
-        case DATA:
-          for (unsigned i=0; i < data->ranges().size(); ++i) 
-            if (!only_reduced || !reduced(i)) 
-              rng.push_back(data->ranges()[i]);
-          break;
-      case NORMAL:
-	assert(pmf);
-	rng.push_back(pmf->linked_mesh().dim());
-	break;
-      default:
-          unsigned d = 0;
-          if (!only_reduced || !reduced(d)) rng.push_back(pmf->nb_dof_of_element(cv));
-          ++d; 
-          if (vectorize) {
-            if (!only_reduced || !reduced(d)) rng.push_back(pmf->get_qdim());
-            ++d;
-          }
-          
-          if (op == GRAD || op == HESS) {
-            if (!only_reduced || !reduced(d)) rng.push_back(pmf->linked_mesh().dim());
-            ++d;
-          }
-          if (op == HESS) {
-            if (!only_reduced || !reduced(d)) rng.push_back(pmf->linked_mesh().dim());
-            ++d;
-          }
-          break;
-      }
-    }
+    void push_back_dimensions(size_type cv, tensor_ranges &rng, bool only_reduced=false) const;
     bool reduced(unsigned i) const
     { if (i >= reduction.size()) return false; else return reduction[i] != ' '; }
   };
 
   struct mf_comp_vect : public std::vector<mf_comp> {
-    const mesh_fem *main_pmf;
+    const mesh_im *main_im;
   public:
-    mf_comp_vect() : std::vector<mf_comp>(), main_pmf(0) {}
-    void set_main_mf(const mesh_fem &mf) { main_pmf = &mf; }
-    const mesh_fem& get_main_mf() const { return *main_pmf; }
+    mf_comp_vect() : std::vector<mf_comp>(), main_im(0) {}
+    void set_im(const mesh_im &mim) { main_im = &mim; }
+    const mesh_im& get_im() const { 
+      cerr << "get_im: this = " << this << ", main_im=" << main_im << "\n";
+      return *main_im; 
+    }
   };
+
+  void mf_comp::push_back_dimensions(size_type cv, tensor_ranges &rng, bool only_reduced) const {
+    switch (op) {
+      case NONLIN:
+	for (unsigned j=0; j < nlt->sizes().size(); ++j)
+	  if (!only_reduced || !reduced(j)) 
+	    rng.push_back(nlt->sizes()[j]);
+	break;
+      case DATA:
+	for (unsigned i=0; i < data->ranges().size(); ++i) 
+	  if (!only_reduced || !reduced(i)) 
+	    rng.push_back(data->ranges()[i]);
+	break;
+      case NORMAL:
+	assert(pmf==0);
+	assert(&owner->get_im());
+	cerr << "Normal: mdim = " << int(owner->get_im().linked_mesh().dim()) << "\n";
+	assert(owner->get_im().linked_mesh().dim() != dim_type(-1));
+	rng.push_back(owner->get_im().linked_mesh().dim());
+	break;
+      default:
+	unsigned d = 0;
+	if (!only_reduced || !reduced(d)) rng.push_back(pmf->nb_dof_of_element(cv));
+	++d; 
+	if (vectorize) {
+	  if (!only_reduced || !reduced(d)) rng.push_back(pmf->get_qdim());
+	  ++d;
+	}
+        
+	if (op == GRAD || op == HESS) {
+	  if (!only_reduced || !reduced(d)) rng.push_back(pmf->linked_mesh().dim());
+	  ++d;
+	}
+	if (op == HESS) {
+	  if (!only_reduced || !reduced(d)) rng.push_back(pmf->linked_mesh().dim());
+	  ++d;
+	}
+	break;
+    }
+  }
+
 
   class ATN_computed_tensor : public ATN_tensor {
     mf_comp_vect mfcomp;
@@ -654,11 +663,13 @@ namespace getfem {
     }
 
     void check_shape_update(size_type cv, dim_type) {
-      const mesh_fem& mf = mfcomp.get_main_mf();
+      const mesh_im& mi = mfcomp.get_im();
+      cerr << "check_shape_update: mi = " << &mi << "\n";
+      cerr << "  -> mdim = " << int(mi.linked_mesh().dim()) << "\n";
       pintegration_method pim2;
       bgeot::pgeometric_trans pgt2;
-      pgt2 = mf.linked_mesh().trans_of_convex(cv);
-      pim2 = mf.int_method_of_element(cv);
+      pgt2 = mi.linked_mesh().trans_of_convex(cv);
+      pim2 = mi.int_method_of_element(cv);
       // cerr << "computed tensor cv=" << cv << " f=" << int(face) << "\n";
       /* shape is considered for update only if the FEM changes,
 	 changes of pgt or integration method does not affect shape
@@ -668,9 +679,10 @@ namespace getfem {
       for (size_type i=0; i < nchilds(); ++i)
         shape_updated_ = shape_updated_ || child(i).is_shape_updated();
       for (size_type i=0; shape_updated_ == false && i < mfcomp.size(); ++i) {
+	if (mfcomp[i].pmf == 0) continue;
 	if  (current_cv == size_type(-1) || 
-	     (mf.fem_of_element(current_cv) != mf.fem_of_element(cv) ||
-	      mf.nb_dof_of_element(current_cv) != mf.nb_dof_of_element(cv))) /* for FEM with non-constant nb_dof.. */ 
+	     (mfcomp[i].pmf->fem_of_element(current_cv) != mfcomp[i].pmf->fem_of_element(cv) ||
+	      mfcomp[i].pmf->nb_dof_of_element(current_cv) != mfcomp[i].pmf->nb_dof_of_element(cv))) /* for FEM with non-constant nb_dof.. */ 
 	  shape_updated_ = true;
       }
       if (shape_updated_) {
@@ -735,7 +747,7 @@ namespace getfem {
     }
     
     void exec_(size_type cv, dim_type face) {
-      const mesh_fem& mf = mfcomp.get_main_mf();
+      const mesh_im& mim = mfcomp.get_im();
       for (unsigned i=0; i < mfcomp.size(); ++i) {
         if (mfcomp[i].op == mf_comp::DATA) {
           size_type fullsz = 1;
@@ -748,10 +760,10 @@ namespace getfem {
       }
       icb.was_called = false;
       if (face == dim_type(-1)) {
-	  pmec->gen_compute(t, mf.linked_mesh().points_of_convex(cv), cv, 
+	  pmec->gen_compute(t, mim.linked_mesh().points_of_convex(cv), cv, 
 			    has_inline_reduction ? &icb : 0);
       } else {
-	pmec->gen_compute_on_face(t, mf.linked_mesh().points_of_convex(cv), face, cv, 
+	pmec->gen_compute_on_face(t, mim.linked_mesh().points_of_convex(cv), face, cv, 
 				  has_inline_reduction ? &icb : 0);
       }
       
@@ -760,7 +772,7 @@ namespace getfem {
         do_post_reduction(cv);
         data_base = &fallback_red.out_data[0];
       } else data_base = &(*t.begin());
-      if (t.size() != size_type(tsize)) DAL_INTERNAL_ERROR("");
+      if (t.size() != size_type(tsize)) DAL_INTERNAL_ERROR(t.size() << " != " << tsize);
     }
   };
 
@@ -997,8 +1009,10 @@ namespace getfem {
       curr_tok_type = END; tok_len = 0;
     } else if (strchr("{}(),;:=-.*/+", str[tok_pos])) { 
       curr_tok_type = tok_type_enum(str[tok_pos]); tok_len = 1;
-    } else if (str[tok_pos] == '$' || str[tok_pos] == '#') { 
-      curr_tok_type = str[tok_pos] == '$' ? ARGNUM_SELECTOR : MFREF; tok_len = 1; 
+    } else if (str[tok_pos] == '$' || str[tok_pos] == '#' || str[tok_pos] == '%') { 
+      curr_tok_type = str[tok_pos] == '$' ? ARGNUM_SELECTOR : 
+	(str[tok_pos] == '#' ? MFREF : IMREF);
+      tok_len = 1; 
       curr_tok_ival = 0;
       while (isdigit(str[tok_pos+tok_len])) { 
 	curr_tok_ival*=10; 
@@ -1078,19 +1092,18 @@ namespace getfem {
     accept(OPEN_PAR, "expecting '('");
     mf_comp_vect what;
     bool in_data = false;
-    bool got_main_mf = false;
-    /* the first optinal argument is the "main" mesh_fem, i.e. the one
+    /* the first optinal argument is the "main" mesh_im, i.e. the one
        whose integration methods are used, (and whose linked_mesh is
-       used for mf_comp::NORMAL computation If the first argument is
-       not given, then the first mesh_fem referenced inside the
-       comp(...) will be taken.
+       used for mf_comp::NORMAL computation). If not given, then the first mesh_im
+       pushed is used (then expect problems when assembling simultaneously on two different meshes).
     */
-    if (tok_type() == MFREF) {
-      if (tok_mfref_num() >= mftab.size()) 
-	ASM_THROW_PARSE_ERROR("reference to a non-existant mesh_fem #" << tok_mfref_num()+1);
-      what.set_main_mf(*mftab[tok_mfref_num()]); advance();
+    if (tok_type() == IMREF) {
+      if (tok_imref_num() >= imtab.size()) 
+	ASM_THROW_PARSE_ERROR("reference to a non-existant mesh_im #" << tok_imref_num()+1);
+      what.set_im(*imtab[tok_imref_num()]); advance();
       accept(COMMA, "expecting ','");
-      got_main_mf = true;
+    } else {
+      what.set_im(*imtab[0]);
     }
     do {
       if (tok_type() != IDENT) ASM_THROW_PARSE_ERROR("expecting Base or Grad or Hess, Normal, etc..");
@@ -1123,18 +1136,12 @@ namespace getfem {
         }
       }
 	
-      if (!got_main_mf && pmf) {
-	what.set_main_mf(*pmf); got_main_mf = true;
-      }
       if (!in_data && f[0] != 'v' && pmf && pmf->get_qdim() != 1 && f.compare("NonLin")) {
 	ASM_THROW_PARSE_ERROR("Attempt to use a vector mesh_fem as a scalar mesh_fem");
       }
       what.back().reduction = do_comp_red_ops();
     } while (advance_if(PRODUCT));
     accept(CLOSE_PAR, "expecting ')'");
-
-    for (unsigned i=0; i < what.size(); ++i) 
-      if (what[i].op == mf_comp::NORMAL) what[i].pmf = what.main_pmf;
 
     return record(new ATN_computed_tensor(what));
   }
@@ -1566,12 +1573,14 @@ namespace getfem {
   
   void generic_assembly::volumic_assembly() {
     if (mftab.size() == 0) ASM_THROW_ERROR("no mesh_fem for assembly!");
+    if (imtab.size() == 0) ASM_THROW_ERROR("no mesh_im (integration methods) given for assembly!");
     volumic_assembly(mftab[0]->convex_index());
   }
 
   void generic_assembly::volumic_assembly(const dal::bit_vector& cvlst) {
     std::vector<size_type> cv;
     if (mftab.size() == 0) ASM_THROW_ERROR("no mesh_fem for assembly!");
+    if (imtab.size() == 0) ASM_THROW_ERROR("no mesh_im (integration methods) given for assembly!");
     get_convex_order(mftab, cvlst, cv);
     parse();
     for (size_type i=0; i < cv.size(); ++i)
@@ -1581,6 +1590,7 @@ namespace getfem {
   void generic_assembly::boundary_assembly(size_type boundary_number) {
     std::vector<size_type> cv;
     if (mftab.size() == 0) ASM_THROW_ERROR("no mesh_fem for assembly!");
+    if (imtab.size() == 0) ASM_THROW_ERROR("no mesh_im (integration methods) given for assembly!");
     get_convex_order(mftab, mftab[0]->convex_index(), cv);
     parse();
     for (size_type i=0; i < cv.size(); ++i) {

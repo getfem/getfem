@@ -32,6 +32,7 @@
 
 #include <gmm_kernel.h>
 #include <getfem_mesh_fem.h>
+#include <getfem_mesh_im.h>
 #include <bgeot_sparse_tensors.h>
 #include <getfem_mat_elem_type.h>
 #include <numeric>
@@ -387,7 +388,7 @@ namespace getfem {
   class asm_tokenizer {
   public:
     typedef enum { OPEN_PAR='(', CLOSE_PAR=')', COMMA=',', 
-		   SEMICOLON=';', COLON=':', EQUAL='=', MFREF='#', 
+		   SEMICOLON=';', COLON=':', EQUAL='=', MFREF='#', IMREF='%', 
 		   PLUS='+',MINUS='-', PRODUCT='.',MULTIPLY='*', 
 		   DIVIDE='/', ARGNUM_SELECTOR='$', 
 		   OPEN_BRACE='{', CLOSE_BRACE='}', 
@@ -435,13 +436,14 @@ namespace getfem {
     }
     void get_tok();
     double tok_number_dval() { assert(tok_type()==NUMBER); return curr_tok_dval; }
-    int tok_number_ival(int maxval=10000000) { 
+    int tok_number_ival(int maxval=10000000) {
       int n=int(tok_number_dval());
       if (n != curr_tok_dval) ASM_THROW_PARSE_ERROR("non an integer"); 
       if (n > maxval) ASM_THROW_PARSE_ERROR("out of bound integer");
       return n-1; /* -1 pour un indicage qui commence à 1! */ 
     }
     size_type tok_mfref_num() { assert(tok_type()==MFREF); return curr_tok_ival; }
+    size_type tok_imref_num() { assert(tok_type()==IMREF); return curr_tok_ival; }
     size_type tok_argnum() { assert(tok_type()==ARGNUM_SELECTOR); return curr_tok_ival; }
   };
 
@@ -451,6 +453,7 @@ namespace getfem {
   /* main class for generic assembly */
   class generic_assembly : public asm_tokenizer {
     std::deque<const mesh_fem *> mftab;/* list of the mesh_fem used in the computation */
+    std::deque<const mesh_im *> imtab;/* list of the mesh_im used in the computation */
     std::deque<pnonlinear_elem_term> innonlin;  /* alternatives to base, grad, hess in comp() for non-linear computations) */
     std::deque<base_asm_data*> indata;              /* data sources */
     std::deque<base_asm_vec*> outvec;               /* vectors in which is done the assembly */
@@ -478,10 +481,11 @@ namespace getfem {
     { set_str(s_); }
     generic_assembly(const std::string& s_,
 	       std::deque<const mesh_fem*>& mftab_, 
+	       std::deque<const mesh_im*>& imtab_, 
 	       std::deque<base_asm_data*> indata_,
 	       std::deque<base_asm_mat*> outmat_,
 	       std::deque<base_asm_vec*> outvec_) : 
-      mftab(mftab_), 
+      mftab(mftab_), imtab(imtab_),
       indata(indata_), outvec(outvec_), outmat(outmat_),
       vec_fact(0), mat_fact(0), parse_done(false)
     { set_str(s_); }    
@@ -497,11 +501,13 @@ namespace getfem {
 
     void set(const std::string& s_) { set_str(s_); }
     const std::deque<const mesh_fem*>& mf() const { return mftab; }
+    const std::deque<const mesh_im*>& im() const { return imtab; }
     const std::deque<pnonlinear_elem_term> nonlin() const { return innonlin; }
     const std::deque<base_asm_data*>& data() const { return indata; }
     const std::deque<base_asm_vec*>& vec() const { return outvec; }
     const std::deque<base_asm_mat*>& mat() const { return outmat; }
     void push_mf(const mesh_fem& mf_) { mftab.push_back(&mf_); }
+    void push_mi(const mesh_im& im_) { imtab.push_back(&im_); }
     void push_nonlinear_term(pnonlinear_elem_term net) {
       innonlin.push_back(net);
     }

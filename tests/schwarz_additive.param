@@ -2,7 +2,7 @@
 % parameters of test program schwarz additive             	          %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-N = 3;                  % dimension.
+N = 2;                  % dimension.
 PG = 9.81;		% gravity constant.
 RHO = 0.1;     	        % mass density
 MU = 1.0;	        % shear elastic stiffness.

@@ -182,12 +182,13 @@ namespace getfem {
   };
   
   // Compute the projection of D*e + sigma_bar_ on a Gauss point.
-  class plasticity_projection : public getfem::nonlinear_elem_term {
+  class plasticity_projection : public nonlinear_elem_term {
   protected:
     base_vector params, coeff;
     size_type N;
-    const getfem::mesh_fem &mf;
-    const getfem::mesh_fem &mf_data;
+    const mesh_im &mim;
+    const mesh_fem &mf;
+    const mesh_fem &mf_data;
     const std::vector<scalar_type> &U;
     const std::vector<scalar_type> &stress_threshold;
     const std::vector<scalar_type> &lambda, &mu;  
@@ -212,8 +213,9 @@ namespace getfem {
     { return saved_proj_[cv][ii*N*N + j*N + i]; }
 
     // constructor
-    plasticity_projection(const getfem::mesh_fem &mf_,
-			  const getfem::mesh_fem &mf_data_,
+    plasticity_projection(const mesh_im &mim_,
+			  const mesh_fem &mf_,
+			  const mesh_fem &mf_data_,
 			  const std::vector<scalar_type> &U_, 
 			  const std::vector<scalar_type> &stress_threshold_, 
 			  const std::vector<scalar_type> &lambda_,
@@ -223,7 +225,8 @@ namespace getfem {
 			  std::vector<std::vector<scalar_type> > &saved_proj__,
 			  const size_type flag_proj_,
 			  const bool fill_sigma) :
-      params(3), N(mf_.linked_mesh().dim()), mf(mf_), mf_data(mf_data_),
+      params(3), N(mf_.linked_mesh().dim()), mim(mim_),
+      mf(mf_), mf_data(mf_data_),
       U(U_),  stress_threshold(stress_threshold_),
       lambda(lambda_), mu(mu_), sizes_(N, N, N, N), t_proj(t_proj_),
       sigma_bar_( sigma_bar__),saved_proj_(saved_proj__),
@@ -243,14 +246,14 @@ namespace getfem {
     const bgeot::multi_index &sizes() const { return sizes_; }
 
     // compute() method from nonlinear_elem, gives on output the tensor
-    virtual void compute(getfem::fem_interpolation_context& ctx,
+    virtual void compute(fem_interpolation_context& ctx,
 			 bgeot::base_tensor &t){ 
 
       size_type cv = ctx.convex_num();
 
       size_type ii = ctx.ii(); 
 
-      getfem::pfem pf = ctx.pf();
+      pfem pf = ctx.pf();
       coeff.resize(mf.nb_dof_of_element(cv));
       base_matrix gradU(N, N), sigma(N,N);
       gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))),
@@ -264,7 +267,7 @@ namespace getfem {
       // to the number of integration points on the convexe. Seems that
       // this is rarely needed. 
       if (sigma_bar_[cv].size() == 0){
-	size_type nbgausspt = mf.int_method_of_element(cv)
+	size_type nbgausspt = mim.int_method_of_element(cv)
 	  ->approx_method()->nb_points_on_convex();
 	sigma_bar_[cv].resize(N*N*nbgausspt);
 	gmm::clear(sigma_bar_[cv]);
@@ -325,15 +328,18 @@ namespace getfem {
      Right hand side vector for plasticity 
   */
   template<typename VECT> 
-  void asm_rhs_for_plasticity(VECT &V, const getfem::mesh_fem &mf,
-			      const getfem::mesh_fem &mfdata,
+  void asm_rhs_for_plasticity(VECT &V, 
+			      const mesh_im &mim, 
+			      const mesh_fem &mf,
+			      const mesh_fem &mfdata,
 			      nonlinear_elem_term *plast)
   {
     if (mf.get_qdim() != mf.linked_mesh().dim())
       DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
-    getfem::generic_assembly assem("t=comp(NonLin(#1,#2).vGrad(#1));"
+    generic_assembly assem("t=comp(NonLin(#1,#2).vGrad(#1));"
 				   "e=(t{:,:,:,4,5}+t{:,:,:,5,4})/2;"
 				   "V(#1) += e(i,j,:,i,j)");
+    assem.push_mi(mim);
     assem.push_mf(mf);
     assem.push_mf(mfdata);
     assem.push_nonlinear_term(plast);
@@ -346,19 +352,20 @@ namespace getfem {
   */
   template<typename MAT,typename VECT> 
   void asm_lhs_for_plasticity(MAT &H, 
-			      const getfem::mesh_fem &mf,
-			      const getfem::mesh_fem &mfdata,
+			      const mesh_im &mim, 
+			      const mesh_fem &mf,
+			      const mesh_fem &mfdata,
 			      const VECT &LAMBDA, const VECT &MU,
 			      nonlinear_elem_term *gradplast)
   {
     if (mf.get_qdim() != mf.linked_mesh().dim())
       DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
-    getfem::generic_assembly assem("lambda=data$1(#2); mu=data$2(#2);"
+    generic_assembly assem("lambda=data$1(#2); mu=data$2(#2);"
 				   "t=comp(NonLin(#1,#2).vGrad(#1).vGrad(#1).Base(#2));"
 				   "e=(t{:,:,:,:,:,6,7,:,9,10,:}+t{:,:,:,:,:,7,6,:,9,10,:}+t{:,:,:,:,:,6,7,:,10,9,:}+t{:,:,:,:,:,7,6,:,10,9,:})/4;"
 				   "M(#1,#1)+= sym(2*e(i,j,k,l,:,k,l,:,i,j,m).mu(m)+e(i,j,k,k,:,l,l,:,i,j,m).lambda(m))");
     // comp()  to be optimized !!
-    
+    assem.push_mi(mim);
     assem.push_mf(mf);
     assem.push_mf(mfdata);
     assem.push_data(LAMBDA);
@@ -388,6 +395,7 @@ namespace getfem {
 				 gmm::sub_interval>::vector_type SUBVECTOR;
 
       gmm::sub_interval SUBU;
+      mesh_im &mim;
       mesh_fem &mf_u;
       mesh_fem &mf_data;
       VECTOR lambda_, mu_;
@@ -444,12 +452,12 @@ namespace getfem {
 
 	fill_coeff(lambda, mu, stress_threshold);
 	
-	plasticity_projection gradproj(mf_u, mf_data, MS.state(),
+	plasticity_projection gradproj(mim, mf_u, mf_data, MS.state(),
 				       stress_threshold, lambda, mu, &t_proj,
 				       sigma_bar, saved_proj, 1, false);
 	
 	/* Calculate the actual matrix */
-	asm_lhs_for_plasticity(K, mf_u, mf_data, lambda, mu, &gradproj);
+	asm_lhs_for_plasticity(K, mim, mf_u, mf_data, lambda, mu, &gradproj);
 	gmm::copy(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI));
       }
       
@@ -461,12 +469,13 @@ namespace getfem {
 
 	gmm::sub_interval SUBI(i0, this->nb_dof());        
 	VECTOR K(this->nb_dof());
-	plasticity_projection proj(mf_u, mf_data, MS.state(), stress_threshold,
+	plasticity_projection proj(mim, mf_u, mf_data, MS.state(),
+				   stress_threshold,
 				   lambda, mu, &t_proj, sigma_bar,
 				   saved_proj, 0, false);
 	
 	/* Calculate the actual vector */
-	asm_rhs_for_plasticity(K, mf_u, mf_data, &proj);
+	asm_rhs_for_plasticity(K, mim, mf_u, mf_data, &proj);
 	gmm::copy(K, gmm::sub_vector(MS.residu(), SUBI));
       }
       
@@ -476,12 +485,13 @@ namespace getfem {
 	fill_coeff(lambda, mu, stress_threshold);
 	VECTOR K(this->nb_dof());
 	
-	plasticity_projection proj(mf_u, mf_data, MS.state(), stress_threshold,
+	plasticity_projection proj(mim, mf_u, mf_data, MS.state(),
+				   stress_threshold,
 				   lambda, mu, &t_proj, sigma_bar,
 				   saved_proj, 0, true);
 	
 	/* Calculate the actual vector */
-	asm_rhs_for_plasticity(K, mf_u, mf_data, &proj);
+	asm_rhs_for_plasticity(K, mim, mf_u, mf_data, &proj);
       }
       
       void set_coeff(value_type lambdai, value_type mui,
@@ -504,6 +514,7 @@ namespace getfem {
 
       void init_(void) {
 	this->add_dependency(mf_data);
+	this->add_proper_mesh_im(mim);
 	this->add_proper_mesh_fem(mf_u, MDBRICK_SMALL_DEF_PLASTICITY);
 	this->proper_is_coercive_ = this->proper_is_linear_ = false;
 	this->proper_is_symmetric_ = true;
@@ -513,19 +524,19 @@ namespace getfem {
 
       // constructor for a homogeneous material (constant lambda, mu and
       // stress_threshold)
-      mdbrick_plasticity(mesh_fem &mf_u_, mesh_fem &mf_data_,
+      mdbrick_plasticity(mesh_im &mim_, mesh_fem &mf_u_, mesh_fem &mf_data_,
 			 value_type lambdai, value_type mui,
 			 value_type stress_threshold,
 			 const type_proj &t_proj_) 
-      : mf_u(mf_u_), mf_data(mf_data_), t_proj(t_proj_)
+	: mim(mim_), mf_u(mf_u_), mf_data(mf_data_), t_proj(t_proj_)
       { set_coeff(lambdai, mui, stress_threshold); init_(); }
 
       // constructor for a non-homogeneous material
-      mdbrick_plasticity(mesh_fem &mf_u_, mesh_fem &mf_data_,
+      mdbrick_plasticity(mesh_im &mim_, mesh_fem &mf_u_, mesh_fem &mf_data_,
 			 const VECTOR &lambdai, const VECTOR &mui,
 			 const VECTOR &stress_threshold,
 			 const type_proj &t_proj_)
-      : mf_u(mf_u_), mf_data(mf_data_), t_proj(t_proj_)
+      : mim(mim_), mf_u(mf_u_), mf_data(mf_data_), t_proj(t_proj_)
       { set_coeff(lambdai, mui, stress_threshold); init_(); }
 
     };

@@ -204,8 +204,8 @@ void test_same_mesh(int mat_version, size_type N, size_type NX, size_type K, siz
        << ", P" << K << "<->P" << K+1 << ":"; cout.flush();
   getfem_mesh m;
   build_mesh(m, 0, N, N, NX, K, false);
-  mesh_fem mf1(m,Qdim1); mf1.set_finite_element(m.convex_index(), getfem::PK_fem(N,K), getfem::exact_simplex_im(N));
-  mesh_fem mf2(m,Qdim2); mf2.set_finite_element(m.convex_index(), getfem::PK_fem(N,K+1), getfem::exact_simplex_im(N));
+  mesh_fem mf1(m,Qdim1); mf1.set_finite_element(getfem::PK_fem(N,K));
+  mesh_fem mf2(m,Qdim2); mf2.set_finite_element(getfem::PK_fem(N,K+1));
   /* force evaluation of a number of things which are not part of interpolation */
   size_type d = mf1.nb_dof(); d -= mf2.nb_dof();
   double err = 0.;  
@@ -231,8 +231,8 @@ void test_different_mesh(int mat_version, size_type dim, size_type N, size_type 
   size_type gK=1;
   build_mesh(m1, 0, dim, N, NX, gK, true);
   build_mesh(m2, 0, dim, N, NX, gK, true);
-  mesh_fem mf1(m1); mf1.set_finite_element(m1.convex_index(), getfem::PK_fem(N,K), getfem::exact_simplex_im(N));
-  mesh_fem mf2(m2); mf2.set_finite_element(m2.convex_index(), getfem::PK_fem(N,K), getfem::exact_simplex_im(N));    
+  mesh_fem mf1(m1); mf1.set_finite_element(getfem::PK_fem(N,K));
+  mesh_fem mf2(m2); mf2.set_finite_element(getfem::PK_fem(N,K));
   /* force evaluation of a number of things which are not part of interpolation */
   size_type d = mf1.nb_dof(); d -= mf2.nb_dof();
   double err = 0;

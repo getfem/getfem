@@ -24,6 +24,7 @@ struct pb_data {
   getfem::getfem_mesh mesh;
   getfem::getfem_mesh mesh_coarse;
 
+  getfem::mesh_im  mim;
   getfem::mesh_fem mef;
   getfem::mesh_fem mef_data;
   getfem::mesh_fem mef_coarse;
@@ -57,7 +58,7 @@ struct pb_data {
   base_vector vol_force(const base_node &x)
   { base_vector res(x.size()); res[N-1] = -rho*gravity; return res; }
 
-  pb_data(void) : mef(mesh), mef_data(mesh), mef_coarse(mesh_coarse)  {}
+  pb_data(void) : mim(mesh), mef(mesh), mef_data(mesh), mef_coarse(mesh_coarse)  {}
 };
 
 ftool::md_param PBSTFR_PARAM;
@@ -136,10 +137,11 @@ void pb_data::init(ftool::md_param &params) {
   getfem::pintegration_method ppi = getfem::int_method_descriptor(method);
   
   sprintf(method, "FEM_PK(%d, %d)", N, K);
-  mef.set_finite_element(nn, getfem::fem_descriptor(method), ppi);
+  mim.set_integration_method(nn, ppi);
+  mef.set_finite_element(nn, getfem::fem_descriptor(method));
   mef_coarse.set_finite_element(mesh_coarse.convex_index(N),
-				getfem::fem_descriptor(method), ppi);
-  mef_data.set_finite_element(nn, getfem::fem_descriptor(method), ppi);
+				getfem::fem_descriptor(method));
+  mef_data.set_finite_element(nn, getfem::fem_descriptor(method));
   mef.set_qdim(N);
   mef_coarse.set_qdim(N);
 
@@ -172,14 +174,14 @@ void pb_data::assemble(void) {
   linalg_vector STLA(nb_dof_data), STG(nb_dof_data);
   std::fill(STLA.begin(), STLA.end(), lambda);
   std::fill(STG.begin(), STG.end(), mu);
-  getfem::asm_stiffness_matrix_for_linear_elasticity(RM,mef,mef_data,STLA,STG);
+  getfem::asm_stiffness_matrix_for_linear_elasticity(RM,mim,mef,mef_data,STLA,STG);
 
   std::cout << "Assembly of source term" << endl;
   linalg_vector STF(N * nb_dof_data);
   for (size_type j = 0; j < nb_dof_data; j++)
     for (int k = 0; k < N; k++)
       STF[j*N + k] = (vol_force(mef_data.point_of_dof(j)))[k];
-  getfem::asm_source_term(F, mef, mef_data, STF);
+  getfem::asm_source_term(F, mim, mef, mef_data, STF);
   
   linalg_vector UD(nb_dof);
   for (size_type j = 0; j < nb_dof/N; j++)

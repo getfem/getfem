@@ -173,7 +173,7 @@ namespace getfem {
     pfem_precomp pfp = c.pfp();
     pfem pf = c.pf();
     base_tensor::iterator it1 = t.begin();
-    for (size_type k = 0; k < target_dim() * dim(); ++k)
+    for (size_type k = 0; k < size_type(target_dim() * dim()); ++k)
 	{ vit[k] = it1; it1 += nbdof; }
     
     for (size_type i = 0; i < mfs.size(); ++i)
@@ -184,7 +184,7 @@ namespace getfem {
 	else c.set_pf(pfloc);
 	  pfloc->real_grad_base_value(c, taux[i]);
 	  base_tensor::iterator it2 = taux[i].begin();
-	  for (size_type k = 0; k < target_dim() * dim(); ++k)
+	  for (size_type k = 0; k < size_type(target_dim() * dim()); ++k)
 	    for (size_type l = 0; l < nbdofloc; ++l)
 	      *(vit[k]++) = *it2++;
       }

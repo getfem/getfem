@@ -35,7 +35,6 @@
 /*									   */
 /* Ameliorations :                                                         */
 /*    - faire un vrai Cutill-Mc Kee pour la numerotation des ddl.          */
-/*                                                                         */
 /* *********************************************************************** */
 
 #include <getfem_mesh.h>
@@ -140,32 +139,21 @@ namespace getfem
     value_type operator [](size_type ii) const { return *(begin() + ii);}
   };
 
-
-
   struct fem_dof {
     base_node P;
     pdof_description pnd;
   };
-
-  struct intfem  { // integrable fem
-    pfem pf;
-    pintegration_method pi;
-    bool operator < (const intfem &l) const;
-    intfem(pfem ppf, pintegration_method ppi) { pf = ppf; pi = ppi; }
-    intfem(void) { }
-  };
-  
-  typedef const intfem * pintfem;
-  pintfem give_intfem(pfem ppf, pintegration_method ppi);
   
   typedef tab_scal_to_vect<bgeot::ref_mesh_point_ind_ct> ref_mesh_dof_ind_ct;
   typedef tab_scal_to_vect<bgeot::ind_ref_mesh_point_ind_ct> 
     ind_ref_mesh_dof_ind_ct;
+  
+
   /// Describe a finite element method linked to a mesh.
   class mesh_fem : public getfem_mesh_receiver, public context_dependencies {
   protected :
     
-    dal::dynamic_array<pintfem> f_elems;
+    dal::dynamic_array<pfem> f_elems;
     dal::bit_vector fe_convex;
     getfem_mesh *linked_mesh_;
     mutable bgeot::mesh_structure dof_structure;
@@ -192,52 +180,41 @@ namespace getfem
     void     set_qdim(dim_type q) { if (q != Qdim) 
       { Qdim = q; dof_enumeration_made = false; touch(); }}
 
-    /** Set on the convex of index i the integrable finite element method
-     *          with the description pif which is of type pintfem.
+    /** Set on the convex of index i the integrable finite element method.
      */
-    void set_finite_element(size_type cv, pintfem pif);
-    /** Set on the convex of index i the finite element method
-     *          with the description pf which is of type pfem and ppi of
-     *          type pintegration_method.
-     */
-    void set_finite_element(size_type cv, pfem ppf,
-			    pintegration_method ppi=0)
-      { set_finite_element(cv, give_intfem(ppf, ppi)); }	
+    void set_finite_element(size_type cv, pfem pf);	
     /** Set on all the convexes of indexes in bv, which is of type
      *          dal::bit\_vector, the finite element method
-     *          with the description pf which is of type pfem and ppi of
-     *          type pintegration_method. 
-     *  The argument ppi is optional. If omitted, the dummy integration
-     * method IM_NONE() will be used.
+     *          with the description pf which is of type pfem.
      */
-    void set_finite_element(const dal::bit_vector &cvs, pfem ppf,
-			    pintegration_method ppi = 0);
-    /** shortcut for set_finite_element(linked_mesh().convex_index(),pf,ppf); */
-    void set_finite_element(pfem pf, pintegration_method ppi = 0);
+    void set_finite_element(const dal::bit_vector &cvs, pfem ppf);
+    /** shortcut for set_finite_element(linked_mesh().convex_index(),pf); */
+    void set_finite_element(pfem pf);
     /** Set a classical (i.e. lagrange polynomial) finite element on
-	the convexes listed in cvs (using getfem::classical_fem). If
-	im_degree is not specified then IM_NONE will by used. If it is
-	specified, the an appropriate approximated integration method
-	will be selected (using getfem::classical_approx_im)
+	the convexes listed in cvs (using getfem::classical_fem).
     */
     void set_classical_finite_element(const dal::bit_vector &cvs, 
-				      dim_type fem_degree, dim_type im_degree=dim_type(-1));
-    /** Similar to set_classical_finite_element, but uses discontinuous lagrange elements */
+				      dim_type fem_degree);
+    /** Similar to set_classical_finite_element, but uses discontinuous 
+     * lagrange elements
+     */
     void set_classical_discontinuous_finite_element(const dal::bit_vector &cvs, 
-						    dim_type fem_degree, dim_type im_degree=dim_type(-1));
-    /** shortcut for set_classical_finite_element(linked_mesh().convex_index(),...) */
-    void set_classical_finite_element(dim_type fem_degree, dim_type im_degree=dim_type(-1));
-    /** shortcut for set_classical_discontinuous_finite_element(linked_mesh().convex_index(),...) */
-    void set_classical_discontinuous_finite_element(dim_type fem_degree, dim_type im_degree=dim_type(-1));
+						    dim_type fem_degree);
+    /** shortcut for
+     * set_classical_finite_element(linked_mesh().convex_index(),...)
+     */
+    void set_classical_finite_element(dim_type fem_degree);
+    /** shortcut for
+     *  set_classical_discontinuous_finite_element(linked_mesh().convex_index()
+     *  ,...)
+     */
+    void set_classical_discontinuous_finite_element(dim_type fem_degree);
     
     /** return the fem associated with an element (in no fem is
 	associated, the function will crash! use the convex_index() of
 	the mesh_fem to check that a fem is associated to a given
 	convex) */
-    pfem fem_of_element(size_type cv) const
-      { return  f_elems[cv]->pf; }
-    pintegration_method int_method_of_element(size_type cv) const
-      { return  f_elems[cv]->pi; }
+    pfem fem_of_element(size_type cv) const { return  f_elems[cv]; }
     /** Gives an array of the degrees of freedom of the element
      *           of the convex of index i. 
      */
@@ -255,7 +232,7 @@ namespace getfem
 	 Qdim /fem_of_element(cv)->target_dim());
     }
     size_type nb_dof_of_face_of_element(size_type cv, short_type f) const {
-      pfem pf = f_elems[cv]->pf;
+      pfem pf = f_elems[cv];
       return dof_structure.structure_of_convex(cv)->nb_points_of_face(f)
 	* Qdim / pf->target_dim();
     }
@@ -263,15 +240,13 @@ namespace getfem
     /** Gives the number of  degrees of freedom of the element
      *           of the convex of index i. 
      */
-    size_type nb_dof_of_element(size_type cv) const {
-      pfem pf = f_elems[cv]->pf;
-      return pf->nb_dof(cv) * Qdim / pf->target_dim();
-    }
+    size_type nb_dof_of_element(size_type cv) const
+    { pfem pf = f_elems[cv]; return pf->nb_dof(cv) * Qdim / pf->target_dim(); }
     /** Gives the point (base_node)  corresponding to the 
      *          degree of freedom i  of the element of index cv.
      */
     const base_node &reference_point_of_dof(size_type cv,size_type i) const {
-      pfem pf = f_elems[cv]->pf;
+      pfem pf = f_elems[cv];
       return pf->node_of_dof(cv, i * pf->target_dim() / Qdim);
     }
     /** Gives the point (base_node) corresponding to the degree of freedom
@@ -301,7 +276,8 @@ namespace getfem
     void add_boundary_elt(size_type b, size_type c, short_type f) IS_DEPRECATED;
     /// Says whether or not element i is on the boundary b. 
     bool is_convex_on_boundary(size_type c, size_type b) const IS_DEPRECATED;
-    bool is_face_on_boundary(size_type b, size_type c, short_type f) const IS_DEPRECATED;
+    bool is_face_on_boundary(size_type b, size_type c, short_type f)
+      const IS_DEPRECATED;
     /** returns the list of convexes on the boundary b */
     const dal::bit_vector &convex_on_boundary(size_type b) const IS_DEPRECATED;
     const mesh_cvf_set::face_bitset

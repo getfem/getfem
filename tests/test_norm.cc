@@ -32,9 +32,12 @@ void test_norm(bgeot::pgeometric_trans pgt,
   getfem::regular_unit_mesh(mesh1, nsubdiv, pgt, noised);
   std::fill(nsubdiv.begin(),nsubdiv.end(),28);
   getfem::regular_unit_mesh(mesh2, nsubdiv, pgt, noised);
+  getfem::mesh_im mim1(mesh1), mim2(mesh2);
   getfem::mesh_fem mf1(mesh1), mf2(mesh2);
-  mf1.set_finite_element(mesh1.convex_index(), pf, im);
-  mf2.set_finite_element(mesh2.convex_index(), pf, im);
+  mim1.set_integration_method(mesh1.convex_index(), im);
+  mim2.set_integration_method(mesh2.convex_index(), im);  
+  mf1.set_finite_element(mesh1.convex_index(), pf);
+  mf2.set_finite_element(mesh2.convex_index(), pf);
   std::vector<scalar_type> U1(mf1.nb_dof()), U2(mf2.nb_dof());
   getfem::mesh_trans_inv gti(mf1.linked_mesh());
   for (size_type d=0; d < mf1.nb_dof(); ++d) {
@@ -56,11 +59,11 @@ void test_norm(bgeot::pgeometric_trans pgt,
   getfem::interpolation(mf1,mf2,U1,U2);
   cout << ftool::uclock_sec() - t0 << " sec -- " << gmm::vect_norm2(U1) << " " << gmm::vect_norm2(U2) << "\n";
   */
-  scalar_type U1_l2 = getfem::asm_L2_norm(mf1,U1);
-  scalar_type U1_h1 = getfem::asm_H1_norm(mf1,U1);
+  scalar_type U1_l2 = getfem::asm_L2_norm(mim1, mf1, U1);
+  scalar_type U1_h1 = getfem::asm_H1_norm(mim1, mf1, U1);
   cout << "|U1|_l2=" << U1_l2 << "|U1|_h1=" << U1_h1 << "\n";
-  scalar_type U2_l2 = getfem::asm_L2_norm(mf2,U2);
-  scalar_type U2_h1 = getfem::asm_H1_norm(mf2,U2);
+  scalar_type U2_l2 = getfem::asm_L2_norm(mim2, mf2, U2);
+  scalar_type U2_h1 = getfem::asm_H1_norm(mim2, mf2, U2);
   cout << "|U2|_l2=" << U2_l2 << "|U2|_h1=" << U2_h1 << "\n";
 
   scalar_type d_l2, d_h1;

@@ -33,8 +33,7 @@ void classical_mesh_fem(getfem::mesh_fem& mf, getfem::short_type K) {
   for (dal::bv_visitor cv(mf.linked_mesh().convex_index()); !cv.finished();
        ++cv) {
     bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
-    mf.set_finite_element(cv, getfem::classical_fem(pgt,K),
-                          getfem::classical_exact_im(pgt));
+    mf.set_finite_element(cv, getfem::classical_fem(pgt,K));
   }
   //mf.set_classical_finite_element(K,2*K);
 }
@@ -134,7 +133,7 @@ void g_params::init(int argc, char *argv[]) {
 
 namespace getfem {
   template<class VECT1, class VECT2>
-  void old_asm_Neumann_condition(VECT1 &B, const mesh_fem &mf,
+  void old_asm_Neumann_condition(VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
 				 size_type boundary, const mesh_fem &mfdata, const VECT2 &F, dim_type N)
   {
     size_type cv, nbd1, nbd2, f;
@@ -155,7 +154,7 @@ namespace getfem {
 	pf1 =     mf.fem_of_element(cv); nbd1 = pf1->nb_dof(cv);
 	pf2 = mfdata.fem_of_element(cv); nbd2 = pf2->nb_dof(cv);
 	pgt = mf.linked_mesh().trans_of_convex(cv);
-	pim = mf.int_method_of_element(cv);
+	pim = mim.int_method_of_element(cv);
 	if (pf1prec != pf1 || pf2prec != pf2 || pgtprec!=pgt || pimprec != pim) {
 	  pme = mat_elem_product(mat_elem_base(pf1), mat_elem_base(pf2));
 	  pmec = mat_elem(pme, pim, pgt);
@@ -182,7 +181,7 @@ namespace getfem {
   }
 
   template<class VECT1, class VECT2>
-  void old_asm_volumic_source_term(VECT1 &B, const mesh_fem &mf,
+  void old_asm_volumic_source_term(VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
 				   const mesh_fem &mfdata, const VECT2 &F, dim_type N)
   {
     size_type cv, nbd1, nbd2;
@@ -202,7 +201,7 @@ namespace getfem {
 	pf1 =     mf.fem_of_element(cv); nbd1 = pf1->nb_dof(cv);
 	pf2 = mfdata.fem_of_element(cv); nbd2 = pf2->nb_dof(cv);
 	pgt = mf.linked_mesh().trans_of_convex(cv);
-	pim = mf.int_method_of_element(cv);
+	pim = mim.int_method_of_element(cv);
 	if (pf1prec != pf1 || pf2prec != pf2 || pgtprec != pgt || pimprec != pim)
 	  {
 	    pme = mat_elem_product(mat_elem_base(pf1), mat_elem_base(pf2));
@@ -225,7 +224,7 @@ namespace getfem {
   }
 
   template<class MATRM, class MESH_FEM>
-  void old_asm_mass_matrix_on_boundary(MATRM &M, const MESH_FEM &mf1,
+  void old_asm_mass_matrix_on_boundary(MATRM &M, const mesh_im &mim, const MESH_FEM &mf1,
 				       const MESH_FEM &mf2, size_type boundary, dim_type N)
   {
     size_type cv, nbd1, nbd2, f;
@@ -249,7 +248,7 @@ namespace getfem {
 	  pf1 = mf1.fem_of_element(cv); nbd1 = pf1->nb_dof(cv);
 	  pf2 = mf2.fem_of_element(cv); nbd2 = pf2->nb_dof(cv);
 	  pgt = mf1.linked_mesh().trans_of_convex(cv);
-	  pim = mf1.int_method_of_element(cv);
+	  pim = mim.int_method_of_element(cv);
 	  if (pf1prec != pf1 || pf2prec != pf2 || pgtprec != pgt 
 	      || pimprec != pim) {
 	    pme = mat_elem_product(mat_elem_base(pf1), mat_elem_base(pf2));
@@ -281,7 +280,7 @@ namespace getfem {
   }
 
   template<class MATRM, class MESH_FEM>
-  void old_asm_mass_matrix(MATRM &M, const MESH_FEM &mf1, const MESH_FEM &mf2, dim_type N)
+  void old_asm_mass_matrix(MATRM &M, const mesh_im &mim, const MESH_FEM &mf1, const MESH_FEM &mf2, dim_type N)
   {
     size_type cv, nbd1, nbd2;
     dal::bit_vector nn = mf1.convex_index();
@@ -301,7 +300,7 @@ namespace getfem {
 	pf1 = mf1.fem_of_element(cv); nbd1 = pf1->nb_dof(cv);
 	pf2 = mf2.fem_of_element(cv); nbd2 = pf2->nb_dof(cv);
 	pgt = mf1.linked_mesh().trans_of_convex(cv);
-	pim = mf1.int_method_of_element(cv);
+	pim = mim.int_method_of_element(cv);
 	if (pf1prec != pf1 || pf2prec != pf2 || pgtprec != pgt || pimprec != pim)
 	  {
 	    pme = mat_elem_product(mat_elem_base(pf1), mat_elem_base(pf2));
@@ -331,6 +330,7 @@ namespace getfem {
 
   template<class MAT, class VECT>
   void old_asm_boundary_qu_term(MAT &M, 
+				const mesh_im &mim, 
 				const mesh_fem &mf_u, size_type boundary, 
 				const mesh_fem &mf_d, const VECT &Q, dim_type N)
   {
@@ -356,7 +356,7 @@ namespace getfem {
 	    pf_u = mf_u.fem_of_element(cv); nbdof_u = pf_u->nb_dof(cv);
 	    pf_d = mf_d.fem_of_element(cv); nbdof_d = pf_d->nb_dof(cv);
 	    pgt = mf_u.linked_mesh().trans_of_convex(cv);
-	    pim = mf_u.int_method_of_element(cv);
+	    pim = mim.int_method_of_element(cv);
 	    if (pf_u_prec != pf_u || pf_d_prec != pf_d || pgtprec!=pgt 
 		|| pimprec != pim)
 	      {
@@ -420,6 +420,7 @@ namespace getfem {
 
   template<class MAT, class VECT>
   void old_asm_stiffness_matrix_for_linear_elasticity(MAT &RM,
+						      const mesh_im &mim, 
 						     const mesh_fem &mf, 
 						     const mesh_fem &mfdata, 
 						     const VECT &LAMBDA, const VECT &MU)
@@ -442,7 +443,7 @@ namespace getfem {
 	pf1 =     mf.fem_of_element(cv); 
 	pf2 = mfdata.fem_of_element(cv); nbd2 = pf2->nb_dof(cv);
 	pgt = mf.linked_mesh().trans_of_convex(cv);
-	pim = mf.int_method_of_element(cv);
+	pim = mim.int_method_of_element(cv);
 	if (pf1prec != pf1 || pf2prec != pf2 || pgtprec != pgt || pimprec != pim)
 	  {
 	    pme = mat_elem_product(mat_elem_product(mat_elem_grad(pf1),
@@ -499,6 +500,7 @@ namespace getfem {
 
   template<class MAT, class VECT>
   void old_asm_mixed_pressure_term(MAT &B,
+				   const mesh_im &mim, 
 				   const mesh_fem &mf_u,
 				   const mesh_fem &mf_p,
 				   const mesh_fem &mf_d,
@@ -529,7 +531,7 @@ namespace getfem {
       pf_p = mf_p.fem_of_element(cv); nbdof_p = pf_p->nb_dof(cv);
       pf_d = mf_d.fem_of_element(cv); nbdof_d = pf_d->nb_dof(cv);
       pgt = mf_u.linked_mesh().trans_of_convex(cv);
-      pim = mf_u.int_method_of_element(cv);
+      pim = mim.int_method_of_element(cv);
 
       /* avoids recomputation of already known pmat_elem_computation */
       if (pf_u_prec != pf_u || pf_p_prec != pf_p || pf_d_prec != pf_d 
@@ -575,7 +577,7 @@ namespace getfem {
   }
 
   template<class MAT, class VECT>
-  void old_asm_stiffness_matrix_for_laplacian(MAT &RM, const mesh_fem &mf,
+  void old_asm_stiffness_matrix_for_laplacian(MAT &RM, const mesh_im &mim, const mesh_fem &mf,
 					     const mesh_fem &mfdata, const VECT &A)
   { // optimisable
     size_type cv, nbd1, nbd2, N = mf.linked_mesh().dim();
@@ -595,7 +597,7 @@ namespace getfem {
 	pf1 =     mf.fem_of_element(cv); nbd1 = pf1->nb_dof(cv);
 	pf2 = mfdata.fem_of_element(cv); nbd2 = pf2->nb_dof(cv);
 	pgt = mf.linked_mesh().trans_of_convex(cv);
-	pim = mf.int_method_of_element(cv);
+	pim = mim.int_method_of_element(cv);
 	if (pf1prec != pf1 || pf2prec != pf2 || pgtprec != pgt || pimprec != pim)
 	  {
 	    pmat_elem_type pme = mat_elem_product(mat_elem_product(
@@ -628,7 +630,7 @@ namespace getfem {
   }
 
   template<class MESH_FEM, class VECT>
-  scalar_type old_L2_norm(MESH_FEM &mf, const VECT &U, size_type N, const dal::bit_vector &cvlst)
+  scalar_type old_L2_norm(const mesh_im &mim, MESH_FEM &mf, const VECT &U, size_type N, const dal::bit_vector &cvlst)
   { /* optimisable */
     size_type cv;
     scalar_type no = 0.0;
@@ -645,7 +647,7 @@ namespace getfem {
       {
 	pf1 =     mf.fem_of_element(cv);
 	pgt = mf.linked_mesh().trans_of_convex(cv);
-	pim = mf.int_method_of_element(cv);
+	pim = mim.int_method_of_element(cv);
 	size_type nbd = mf.nb_dof_of_element(cv);
 	if (pf1prec != pf1 || pgtprec != pgt || pimprec != pim)
 	  {
@@ -672,7 +674,7 @@ namespace getfem {
   }
 
   template<class MESH_FEM, class VECT>
-  scalar_type old_H1_semi_norm(MESH_FEM &mf, const VECT &U, size_type N, const dal::bit_vector& cvlst)
+  scalar_type old_H1_semi_norm(const mesh_im &mim, MESH_FEM &mf, const VECT &U, size_type N, const dal::bit_vector& cvlst)
   { /* optimisable */
     size_type cv, NN = mf.linked_mesh().dim();
     scalar_type no = 0.0;
@@ -688,7 +690,7 @@ namespace getfem {
       {
 	pf1 =     mf.fem_of_element(cv);
 	pgt = mf.linked_mesh().trans_of_convex(cv);
-	pim = mf.int_method_of_element(cv);
+	pim = mim.int_method_of_element(cv);
 	size_type nbd = mf.nb_dof_of_element(cv);
 	if (pf1prec != pf1 || pgtprec != pgt || pimprec != pim)
 	  {
@@ -715,9 +717,9 @@ namespace getfem {
   }
 
   template<class MESH_FEM, class VECT>
-  scalar_type old_H1_norm(MESH_FEM &mf, const VECT &U, size_type N, const dal::bit_vector& cvlst) {
-    return sqrt( dal::sqr(old_L2_norm(mf, U, N, cvlst)) 
-		 + dal::sqr(old_H1_semi_norm(mf, U, N, cvlst)));
+  scalar_type old_H1_norm(const mesh_im &mim, MESH_FEM &mf, const VECT &U, size_type N, const dal::bit_vector& cvlst) {
+    return sqrt( dal::sqr(old_L2_norm(mim, mf, U, N, cvlst)) 
+		 + dal::sqr(old_H1_semi_norm(mim, mf, U, N, cvlst)));
   }
 
 
@@ -726,6 +728,7 @@ namespace getfem {
 
   template<class MAT, class VECT>
     void old2_asm_stiffness_matrix_for_linear_elasticity(const MAT &RM_,
+							 const mesh_im &mim, 
                                                          const mesh_fem &mf,
                                                          const mesh_fem &mfdata,
                                                          const VECT &LAMBDA,const VECT &MU) {
@@ -739,6 +742,7 @@ namespace getfem {
 			   "M(#1,#1)+= sym(comp(vGrad(#1)(:,i,j).vGrad(#1)(:,i,j).Base(#2)(k).mu(k)) +"
 			   "               comp(vGrad(#1)(:,j,i).vGrad(#1)(:,i,j).Base(#2)(k).mu(k)) +"
 			   "               comp(vGrad(#1)(:,i,i).vGrad(#1)(:,j,j).Base(#2)(k).lambda(k)));");
+    assem.push_mi(mim);
     assem.push_mf(mf);
     assem.push_mf(mfdata);
     assem.push_data(LAMBDA);
@@ -748,13 +752,14 @@ namespace getfem {
   }
 
   template<typename VEC>
-  scalar_type old2_asm_L2_norm(const mesh_fem &mf, const VEC &U) {
+  scalar_type old2_asm_L2_norm(const mesh_im &mim, const mesh_fem &mf, const VEC &U) {
     generic_assembly assem;    
     if (mf.get_qdim() == 1)
       assem.set("u=data(#1); v=u; V()+=comp(Base(#1)(i).Base(#1)(j).u(i).v(j))");
     else
       assem.set("u=data(#1); v=u;"
 		"V()+=comp(vBase(#1)(i,k).vBase(#1)(j,k).u(i).v(j))");
+    assem.push_mi(mim);
     assem.push_mf(mf);
     assem.push_data(U);
     bgeot::vsvector<scalar_type> v(1);
@@ -764,19 +769,20 @@ namespace getfem {
   }
 
   template<typename VEC>
-  scalar_type old2_asm_H1_norm(const mesh_fem &mf, const VEC &U) {
+  scalar_type old2_asm_H1_norm(const mesh_im &mim, const mesh_fem &mf, const VEC &U) {
     generic_assembly assem;    
     if (mf.get_qdim() == 1)
       assem.set("u=data(#1); V()+=comp(Grad(#1)(i,d).Grad(#1)(j,d).u(i).u(j))");
     else
       assem.set("u=data(#1);"
 		"V()+=comp(vGrad(#1)(i,k,d).vGrad(#1)(j,k,d).u(i).u(j))");
+    assem.push_mi(mim);
     assem.push_mf(mf);
     assem.push_data(U);
     bgeot::vsvector<scalar_type> v(1);
     assem.push_vec(v);
     assem.volumic_assembly();
-    return sqrt(v[0] + dal::sqr(old2_asm_L2_norm(mf,U)));
+    return sqrt(v[0] + dal::sqr(old2_asm_L2_norm(mim,mf,U)));
   }
 
 } /* namespace getfem */
@@ -822,29 +828,41 @@ void gen_mesh(getfem::getfem_mesh& mesh) {
     }*/
 }
 
-void init_mesh_fem(getfem::mesh_fem &mf, bool datamf, bool use_exact_im=true) {
+void init_mesh_fem(getfem::mesh_fem &mf, bool datamf) {
   size_type cv;
   if (datamf)
     mf.set_classical_finite_element(param.Kdata);
   else {
     dal::bit_vector cvlst = mf.linked_mesh().convex_index();
     for (cv << cvlst; cv != size_type(-1); cv << cvlst) {      
+      bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
       if ((cv+1) % 100) {
-	bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
-	mf.set_finite_element(cv, getfem::classical_fem(pgt,param.K), 
-			      (use_exact_im && (rand() % 10)==0) ? getfem::classical_exact_im(pgt) : 
-                               getfem::classical_approx_im(pgt,param.K*3));
+	mf.set_finite_element(cv, getfem::classical_fem(pgt,param.K));
       } else {
-	bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
-	mf.set_finite_element(cv, getfem::classical_fem(pgt,param.K2), 
-                              (use_exact_im && (rand() % 10)==0)  ? getfem::classical_exact_im(pgt) : 
-			      getfem::classical_approx_im(pgt,param.K2*3));
+	mf.set_finite_element(cv, getfem::classical_fem(pgt,param.K2));
       }
     }
   }
   for (cv=0; cv < std::min(mf.convex_index().card(),
 			   param.NX*param.Ndim*param.Ndim*10); cv += 2) {
     mf.linked_mesh().add_face_to_set(1, cv, (cv/4) % (param.Ndim > 1 ? 3 : 2)); 
+  }
+}
+
+void init_mesh_im(getfem::mesh_im &mim, bool use_exact_im=true) {
+  size_type cv;
+  dal::bit_vector cvlst = mim.linked_mesh().convex_index();
+  for (cv << cvlst; cv != size_type(-1); cv << cvlst) {      
+    bgeot::pgeometric_trans pgt = mim.linked_mesh().trans_of_convex(cv);
+    if ((cv+1) % 100) {
+      mim.set_integration_method(cv, 
+				 (use_exact_im && (rand() % 10)==0) ? getfem::classical_exact_im(pgt) : 
+				 getfem::classical_approx_im(pgt,param.K*3));
+    } else {
+      mim.set_integration_method(cv, 
+				 (use_exact_im && (rand() % 10)==0)  ? getfem::classical_exact_im(pgt) : 
+				 getfem::classical_approx_im(pgt,param.K2*3));
+    }
   }
 }
 
@@ -1121,7 +1139,8 @@ double nrand() { return (::rand() % 10000) / 10000. + 0.01; }
 #ifdef ASSEMBLY_CHECK
 
 void
-run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
+run_tests(getfem::mesh_im &mim, 
+	  getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
 	  getfem::mesh_fem& mfd, getfem::mesh_fem& mfdq,
 	  bool do_new, bool do_old, const std::vector<bool>& do_what, unsigned nloop, unsigned nloop_bound) {
   size_type Ndim = mf.linked_mesh().dim();
@@ -1148,7 +1167,7 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
       c.init();
       for (size_type cnt = 0; cnt < nloop_bound; ++cnt) {
 	gmm::clear(M1); c.tic();
-	getfem::old_asm_mass_matrix_on_boundary(M1, mf, mfd, 1, Ndim);
+	getfem::old_asm_mass_matrix_on_boundary(M1, mim, mf, mfd, 1, Ndim);
 	c.toc(); cout << "#" << flushy; 
       }
       cout << "done " << c << endl;
@@ -1158,7 +1177,7 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
       c.init();
       for (size_type cnt = 0; cnt < nloop_bound; ++cnt) {
 	gmm::clear(M2); c.tic();
-	getfem::asm_mass_matrix(M2, mfq, mfdq, 1);
+	getfem::asm_mass_matrix(M2, mim, mfq, mfdq, 1);
 	c.toc(); cout << "#" << flushy;
       }
       cout << "done " << c << endl;    
@@ -1174,7 +1193,7 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
       c.init();
       for (size_type cnt = 0; cnt < nloop_bound; ++cnt) {
 	gmm::clear(V1); c.tic(); //gmm::resize(M1, mfq.nb_dof(),mfq.nb_dof());
-	getfem::old_asm_volumic_source_term(V1, mf, mfd, A, 1);
+	getfem::old_asm_volumic_source_term(V1, mim, mf, mfd, A, 1);
 	c.toc(); cout << "#" << flushy;
       }
       cout << "done " << c << endl;
@@ -1184,7 +1203,7 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
       c.init();
       for (size_type cnt = 0; cnt < nloop_bound; ++cnt) {
 	gmm::clear(V2); c.tic();
-	getfem::asm_source_term(V2, mf, mfd, A);
+	getfem::asm_source_term(V2, mim, mf, mfd, A);
 	c.toc(); cout << "#" << flushy;
       }
       cout << "done " << c << endl;
@@ -1201,7 +1220,7 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
       c.init();
       for (size_type cnt = 0; cnt < nloop_bound; ++cnt) {
 	gmm::clear(V1q); c.tic(); //gmm::resize(M1, mfq.nb_dof(),mfq.nb_dof());
-	getfem::old_asm_volumic_source_term(V1q, mf, mfd, Aq, Ndim);
+	getfem::old_asm_volumic_source_term(V1q, mim, mf, mfd, Aq, Ndim);
 	c.toc(); cout << "#" << flushy;
       }
       cout << "done " << c << endl;
@@ -1211,7 +1230,7 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
       c.init();
       for (size_type cnt = 0; cnt < nloop_bound; ++cnt) {
 	gmm::clear(V2q); c.tic();
-	getfem::asm_source_term(V2q, mfq, mfd, Aq);
+	getfem::asm_source_term(V2q, mim, mfq, mfd, Aq);
 	c.toc(); cout << "#" << flushy;
       }
       cout << "done " << c << endl;
@@ -1226,7 +1245,7 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
       c.init();
       for (size_type cnt = 0; cnt < nloop; ++cnt) {
 	gmm::clear(M1); c.tic(); //gmm::resize(M1, mfq.nb_dof(),mfq.nb_dof());
-      getfem::old_asm_mass_matrix(M1, mf, mfd, 1);
+	getfem::old_asm_mass_matrix(M1, mim, mf, mfd, 1);
       c.toc(); cout << "#" << flushy;
     }
     cout << "done " << c << endl;
@@ -1236,7 +1255,7 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
     c.init();
     for (size_type cnt = 0; cnt < nloop; ++cnt) {
       gmm::clear(M2); c.tic(); 
-      getfem::asm_mass_matrix(M2, mf, mfd);
+      getfem::asm_mass_matrix(M2, mim, mf, mfd);
       c.toc(); cout << "#" << flushy;
     }
     cout << "done " << c << endl;
@@ -1251,7 +1270,7 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
     c.init();
     for (size_type cnt = 0; cnt < nloop; ++cnt) {
       gmm::clear(M1); c.tic(); //gmm::resize(M1, mfq.nb_dof(),mfq.nb_dof());
-      getfem::old_asm_mass_matrix(M1, mf, mfd, Ndim);
+      getfem::old_asm_mass_matrix(M1, mim, mf, mfd, Ndim);
       c.toc(); cout << "#" << flushy;
     }
     cout << "done " << c << endl;
@@ -1261,7 +1280,7 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
     c.init();
     for (size_type cnt = 0; cnt < nloop; ++cnt) {
       gmm::clear(M2); c.tic();
-      getfem::asm_mass_matrix(M2, mfq, mfdq);
+      getfem::asm_mass_matrix(M2, mim, mfq, mfdq);
       c.toc(); cout << "#" << flushy;
     }
     cout << "done " << c << endl;
@@ -1278,7 +1297,7 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
     c.init();
     for (size_type cnt = 0; cnt < nloop; ++cnt) {
       gmm::clear(M1); c.tic();
-      getfem::old_asm_stiffness_matrix_for_laplacian(M1, mf, mfd, A);
+      getfem::old_asm_stiffness_matrix_for_laplacian(M1, mim, mf, mfd, A);
       c.toc(); cout << "#" << flushy;
     }
     cout << "done " << c << endl;
@@ -1288,7 +1307,7 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
     c.init();
     for (size_type cnt = 0; cnt < nloop; ++cnt) {
       gmm::clear(M2); c.tic();
-      getfem::asm_stiffness_matrix_for_laplacian(M2, mf, mfd, A); 
+      getfem::asm_stiffness_matrix_for_laplacian(M2, mim, mf, mfd, A); 
       c.toc(); cout << "#" << flushy;
     }
     cout << "done " << c << endl;
@@ -1304,7 +1323,7 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
       c.init();
       for (size_type cnt = 0; cnt < nloop; ++cnt) {
 	c.tic();
-	s1 = getfem::old_L2_norm(mf, V1, 1, mf.convex_index());
+	s1 = getfem::old_L2_norm(mim, mf, V1, 1, mf.convex_index());
 	c.toc(); cout << "#" << flushy;
       }
       cout << "done " << c << endl;
@@ -1314,7 +1333,7 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
       c.init();
       for (size_type cnt = 0; cnt < nloop; ++cnt) {
 	c.tic();
-	s2 = getfem::asm_L2_norm(mf, V2, mf.convex_index());
+	s2 = getfem::asm_L2_norm(mim, mf, V2, mf.convex_index());
 	c.toc(); cout << "#" << flushy;
       }
       cout << "done " << c << endl;
@@ -1325,7 +1344,7 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
       c.init();
       for (size_type cnt = 0; cnt < nloop; ++cnt) {
 	c.tic();
-	s2 = getfem::old2_asm_L2_norm(mf, V2);
+	s2 = getfem::old2_asm_L2_norm(mim, mf, V2);
 	c.toc(); cout << "#" << flushy;
       }
       cout << "done " << c << endl;
@@ -1341,7 +1360,7 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
       c.init();
       for (size_type cnt = 0; cnt < nloop; ++cnt) {
 	c.tic();
-	s1 = getfem::old_H1_norm(mf, V1q, Ndim, mf.convex_index());
+	s1 = getfem::old_H1_norm(mim, mf, V1q, Ndim, mf.convex_index());
 	c.toc(); cout << "#" << flushy;
       }
       cout << "done " << c << endl;
@@ -1351,7 +1370,7 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
       c.init();
       for (size_type cnt = 0; cnt < nloop; ++cnt) {
 	c.tic();
-	s2 = getfem::asm_H1_norm(mfq, V2q, mfq.convex_index());
+	s2 = getfem::asm_H1_norm(mim, mfq, V2q, mfq.convex_index());
 	c.toc(); cout << "#" << flushy;
       }
       cout << "done " << c << endl;
@@ -1363,7 +1382,7 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
       c.init();
       for (size_type cnt = 0; cnt < nloop; ++cnt) {
 	c.tic();
-	s2 = getfem::old2_asm_H1_norm(mfq, V2q);
+	s2 = getfem::old2_asm_H1_norm(mim, mfq, V2q);
 	c.toc(); cout << "#" << flushy;
       }
       cout << "done " << c << endl;
@@ -1379,7 +1398,7 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
     c.init();
     for (size_type cnt = 0; cnt < nloop; ++cnt) {
       gmm::clear(M1); c.tic();
-      getfem::old_asm_stiffness_matrix_for_linear_elasticity(M1, mf, mfd, A, A2);
+      getfem::old_asm_stiffness_matrix_for_linear_elasticity(M1, mim, mf, mfd, A, A2);
       c.toc(); cout << "#" << flushy;
     }
     cout << "done " << c << endl;
@@ -1389,7 +1408,7 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
     c.init();
     for (size_type cnt = 0; cnt < nloop; ++cnt) {
       gmm::clear(M2); c.tic();
-      getfem::asm_stiffness_matrix_for_linear_elasticity(M2, mfq, mfd, A, A2);
+      getfem::asm_stiffness_matrix_for_linear_elasticity(M2, mim, mfq, mfd, A, A2);
       c.toc(); cout << "#" << flushy;
     }
     cout << "done " << c << endl;
@@ -1398,7 +1417,7 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
     c.init();
     for (size_type cnt = 0; cnt < nloop; ++cnt) {
       gmm::clear(M2); c.tic();
-      getfem::old2_asm_stiffness_matrix_for_linear_elasticity(M2, mfq, mfd, A, A2);
+      getfem::old2_asm_stiffness_matrix_for_linear_elasticity(M2, mim, mfq, mfd, A, A2);
       c.toc(); cout << "#" << flushy;
     }
     cout << "done " << c << endl;
@@ -1420,7 +1439,7 @@ struct dummy_nonlin : public getfem::nonlinear_elem_term {
   }
 };
 
-void test_nonlin(const getfem::mesh_fem &mf)
+void test_nonlin(const getfem::mesh_im &mim, const getfem::mesh_fem &mf)
 {
   size_type N = mf.linked_mesh().dim();
   dummy_nonlin bidon(N);
@@ -1433,6 +1452,7 @@ void test_nonlin(const getfem::mesh_fem &mf)
 			   "V$2(#1) += comp(vGrad(#1))(:,%d,%d)", bidon.i+1, bidon.j+1);
       cout << s << "\n";
       getfem::generic_assembly assem(s);
+      assem.push_mi(mim);
       assem.push_mf(mf);
       assem.push_nonlinear_term(&bidon);
       assem.push_vec(V1);
@@ -1446,13 +1466,14 @@ void test_nonlin(const getfem::mesh_fem &mf)
   }
 }
 
-void inline_red_test(const getfem::mesh_fem &mf1, const getfem::mesh_fem &mf2) {
+void inline_red_test(const getfem::mesh_im &mim, const getfem::mesh_fem &mf1, const getfem::mesh_fem &mf2) {
   std::vector<scalar_type> U(mf1.nb_dof()); gmm::fill_random(U);
   std::vector<scalar_type> V(mf2.nb_dof()); gmm::fill_random(V);
   getfem::generic_assembly assem;    
   cout << "INLINE RED\n";
   assem.set("u=data(#1);v=data$2(#2);"
             "V()+=u(i).v(j).comp(Grad(#1)(:,d).Grad(#2)(:,d))(i,j); print comp(Grad(#1)(:,d).Grad(#2)(:,d))");
+  assem.push_mi(mim);
   assem.push_mf(mf1);
   assem.push_mf(mf2);
   assem.push_data(U);
@@ -1465,6 +1486,7 @@ void inline_red_test(const getfem::mesh_fem &mf1, const getfem::mesh_fem &mf2) {
   getfem::generic_assembly assem2;
   assem2.set("u=data(#1);v=data$2(#2);"
             "V()+=u(i).v(j).comp(Grad(#1).Grad(#2))(i,d,j,d); print comp(Grad(#1).Grad(#2))(:,d,:,d)");
+  assem2.push_mi(mim);
   assem2.push_mf(mf1);
   assem2.push_mf(mf2);
   assem2.push_data(U);
@@ -1515,10 +1537,12 @@ int main(int argc, char *argv[])
      getfem::mesh_fem mfdq(m); 
      mfdq.set_classical_finite_element(1);
      mfdq.set_qdim(m.dim());     
+     
+     getfem::mesh_im mim(m);
+     init_mesh_im(mim, true);
+     inline_red_test(mim,mf,mfd);
 
-     inline_red_test(mf,mfd);
-
-     run_tests(mf,mfq,mfd,mfdq,do_new,do_old,tests,1,1);
+     run_tests(mim,mf,mfq,mfd,mfdq,do_new,do_old,tests,1,1);
    }
 
    cerr << "\n\n-----------------------------PERFORMANCE TESTS---------------------\n\n";   
@@ -1526,18 +1550,20 @@ int main(int argc, char *argv[])
      getfem::getfem_mesh m; 
      gen_mesh(m);
      
-     getfem::mesh_fem mf(m);  
-     init_mesh_fem(mf,false,true);
-  
+     getfem::mesh_fem mf(m); 
+     init_mesh_fem(mf,false);
+
+     getfem::mesh_im mim(m);
+     init_mesh_im(mim, false);
+
      getfem::mesh_fem mfq(m); 
      mfq.set_qdim(m.dim());
-     init_mesh_fem(mfq,false,true);
+     init_mesh_fem(mfq,false);
 
      getfem::mesh_fem mfqne(m);
-     init_mesh_fem(mf,false,false);
+     init_mesh_fem(mfqne,false);
   
-     test_nonlin(mfqne);
-     test_nonlin(mfqne);
+     test_nonlin(mim,mfqne);
 
      getfem::mesh_fem mfd(m); 
      init_mesh_fem(mfd,true);
@@ -1549,7 +1575,7 @@ int main(int argc, char *argv[])
      //mf.write_to_file("toto1.mf",true);
      //mfq.write_to_file("totoq.mf",true);
 
-     run_tests(mf,mfq,mfd,mfdq,param.do_new,param.do_old,tests,1,1);
+     run_tests(mim,mf,mfq,mfd,mfdq,param.do_new,param.do_old,tests,1,1);
    }
 #endif /* ASSEMBLY_CHECK */
   }

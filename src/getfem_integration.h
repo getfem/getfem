@@ -252,9 +252,9 @@ namespace getfem
 
   std::string name_of_int_method(pintegration_method p);
   class mesh_precomposite;
-  class mesh_fem;
+  class mesh_im;
   papprox_integration composite_approx_int_method(const mesh_precomposite &mp, 
-						  const mesh_fem &mf,
+						  const mesh_im &mf,
 						  bgeot::pconvex_ref cr);
 }  /* end of namespace getfem.                                            */
 

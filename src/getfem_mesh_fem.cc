@@ -34,23 +34,6 @@
 
 namespace getfem {
   
-  bool intfem::operator < (const intfem &l) const {
-    if (pf < l.pf) return true; if (pf > l.pf) return false; 
-    if (pi < l.pi) return true;
-    return false;
-  }
-  
-  pintfem give_intfem(pfem ppf, pintegration_method ppi) {
-    static pintegration_method im_none = 0; // the dummy integration method
-    if (!im_none)
-      im_none = getfem::int_method_descriptor("IM_NONE()");
-//      if (ppf->basic_structure() != ppi->structure())
-//        DAL_THROW(internal_error, 
-//  		"Incompatibility between fem and integration method");
-    return dal::singleton<dal::FONC_TABLE<intfem, intfem> >
-      ::instance().add(intfem(ppf, ppi ? ppi : im_none));
-  }
-  
   dal::bit_vector mesh_fem::dof_on_set(size_type b) const {
     if (!dof_enumeration_made) this->enumerate_dof();
     dal::bit_vector res;
@@ -100,8 +83,8 @@ namespace getfem {
     f_elems.swap(m.icv1, m.icv2);
   }
    
-  void mesh_fem::set_finite_element(size_type cv, pintfem pif) {
-    if (pif == NULL || pif->pf == NULL ) {
+  void mesh_fem::set_finite_element(size_type cv, pfem pf) {
+    if (pf == NULL) {
       if (fe_convex.is_in(cv)) {
 	fe_convex.sup(cv);
 	dof_enumeration_made = false;
@@ -110,61 +93,58 @@ namespace getfem {
     }
     else {
       if (linked_mesh_->structure_of_convex(cv)->basic_structure() 
-	  != pif->pf->basic_structure(cv) || 
-	  (pif->pf->target_dim() != Qdim && pif->pf->target_dim() != 1))
+	  != pf->basic_structure(cv) || 
+	  (pf->target_dim() != Qdim && pf->target_dim() != 1))
 	DAL_THROW(std::logic_error,
-		  "Incompatibility between fem " << name_of_fem(pif->pf) << 
-		  " and mesh element " << name_of_geometric_trans(linked_mesh_->trans_of_convex(cv)));
-      if (!fe_convex.is_in(cv) || f_elems[cv] != pif) {
+		  "Incompatibility between fem " << name_of_fem(pf) << 
+		  " and mesh element " <<
+		  name_of_geometric_trans(linked_mesh_->trans_of_convex(cv)));
+      if (!fe_convex.is_in(cv) || f_elems[cv] != pf) {
 	fe_convex.add(cv);
-	f_elems[cv] = pif;
+	f_elems[cv] = pf;
 	dof_enumeration_made = false;  
 	touch();
       }
     }
   }
 
-  void mesh_fem::set_finite_element(const dal::bit_vector &cvs, pfem ppf,
-				    pintegration_method ppi) { 
-    pintfem pif =  give_intfem(ppf, ppi);
+  void mesh_fem::set_finite_element(const dal::bit_vector &cvs, pfem ppf) { 
     for (dal::bv_visitor cv(cvs); !cv.finished(); ++cv)
-      set_finite_element(cv, pif);
+      set_finite_element(cv, ppf);
   }
 
-  void mesh_fem::set_finite_element(pfem ppf, pintegration_method ppi) { 
-    set_finite_element(linked_mesh().convex_index(), ppf, ppi);
-  }
+  void mesh_fem::set_finite_element(pfem ppf)
+  { set_finite_element(linked_mesh().convex_index(), ppf); }
   
   void mesh_fem::set_classical_finite_element(const dal::bit_vector &cvs, 
-					      dim_type fem_degree, dim_type im_degree) {
+					      dim_type fem_degree) {
     for (dal::bv_visitor cv(cvs); !cv.finished(); ++cv) {
-      pfem pf = getfem::classical_fem(linked_mesh().trans_of_convex(cv), fem_degree);
-      pintegration_method pim = im_degree != dim_type(-1) ? 
-	getfem::classical_approx_im(linked_mesh().trans_of_convex(cv), im_degree) : 0;
-      set_finite_element(cv, pf, pim);
+      pfem pf = getfem::classical_fem(linked_mesh().trans_of_convex(cv), 
+				      fem_degree);
+      set_finite_element(cv, pf);
     }
   }
 
-  void mesh_fem::set_classical_finite_element(dim_type fem_degree, dim_type im_degree) { 
-    set_classical_finite_element(linked_mesh().convex_index(), fem_degree, im_degree);
-  }
+  void mesh_fem::set_classical_finite_element(dim_type fem_degree)
+  { set_classical_finite_element(linked_mesh().convex_index(), fem_degree); }
 
-  void mesh_fem::set_classical_discontinuous_finite_element(const dal::bit_vector &cvs, 
-							    dim_type fem_degree, dim_type im_degree) {
+  void mesh_fem::set_classical_discontinuous_finite_element
+  (const dal::bit_vector &cvs, dim_type fem_degree) {
     for (dal::bv_visitor cv(cvs); !cv.finished(); ++cv) {
-      pfem pf = getfem::classical_discontinuous_fem(linked_mesh().trans_of_convex(cv), fem_degree);
-      pintegration_method pim = im_degree != dim_type(-1) ? 
-	getfem::classical_approx_im(linked_mesh().trans_of_convex(cv), im_degree) : 0;
-      set_finite_element(cv, pf, pim);
+      pfem pf = getfem::classical_discontinuous_fem
+	(linked_mesh().trans_of_convex(cv), fem_degree);
+      set_finite_element(cv, pf);
     }
   }
 
-  void mesh_fem::set_classical_discontinuous_finite_element(dim_type fem_degree, dim_type im_degree) { 
-    set_classical_discontinuous_finite_element(linked_mesh().convex_index(), fem_degree, im_degree);
+  void mesh_fem::set_classical_discontinuous_finite_element
+  (dim_type fem_degree) { 
+    set_classical_discontinuous_finite_element(linked_mesh().convex_index(),
+					       fem_degree);
   }
 
   base_node mesh_fem::point_of_dof(size_type cv, size_type i) const {
-    pfem pf = f_elems[cv]->pf;
+    pfem pf = f_elems[cv];
     return linked_mesh().trans_of_convex(cv)->transform
       (pf->node_of_dof(cv, i * pf->target_dim() / Qdim),
        linked_mesh().points_of_convex(cv));
@@ -178,7 +158,7 @@ namespace getfem {
 
   dim_type mesh_fem::dof_qdim(size_type d) const {
     if (!dof_enumeration_made) enumerate_dof();
-    size_type tdim = f_elems[first_convex_of_dof(d)]->pf->target_dim();
+    size_type tdim = f_elems[first_convex_of_dof(d)]->target_dim();
     return ind_in_first_convex_of_dof(d) % (Qdim / tdim);
   }
 
@@ -206,7 +186,8 @@ namespace getfem {
     for (size_type i = d; i != d - Qdim && i != size_type(-1); --i) {
       size_type j = dof_structure.first_convex_of_point(i);
       if (j != size_type(-1))
-	return (dof_structure.ind_in_first_convex_of_point(i) * Qdim / f_elems[j]->pf->target_dim());
+	return (dof_structure.ind_in_first_convex_of_point(i)
+		* Qdim / f_elems[j]->target_dim());
     }
     return size_type(-1);
   }
@@ -232,7 +213,6 @@ namespace getfem {
     cv = nn.take_first();
     dof_structure.clear();
     encountered_global_dof.clear();
-
 
     while (cv != ST_NIL) {
       /* ajout des voisins dans la pile.                                  */
@@ -391,7 +371,6 @@ namespace getfem {
 
   mesh_fem::~mesh_fem() {}
 
-
   void mesh_fem::read_from_file(std::istream &ist) {
     dal::bit_vector npt;
     dal::dynamic_array<double> tmpv;
@@ -402,8 +381,7 @@ namespace getfem {
     ist.seekg(0);ist.clear();
     ftool::read_until(ist, "BEGIN MESH_FEM");
 
-    while (true)
-    {
+    while (true) {
       ist >> std::ws; ftool::get_token(ist, tmp, 1023);
       if (strcmp(tmp, "END")==0) {
 	break;
@@ -420,14 +398,7 @@ namespace getfem {
 	getfem::pfem fem = getfem::fem_descriptor(tmp);
 	if (!fem) DAL_THROW(failure_error, "could not create the FEM '" 
 			    << tmp << "'");
-
-	ftool::get_token(ist, tmp, 1023);
-	getfem::pintegration_method pfi = getfem::int_method_descriptor(tmp);
-	if (!pfi) DAL_THROW(failure_error,
-	  "could not create the integration method '" << tmp << "'");
-	
-	dal::bit_vector bv; bv.add(ic);
-	set_finite_element(bv, fem, pfi);
+	set_finite_element(ic, fem);
       } else if (strcmp(tmp, "BEGIN")==0) {
 	ftool::get_token(ist, tmp, 1023);
 	if (!strcmp(tmp,"DOF_ENUMERATION")) {
@@ -503,7 +474,6 @@ namespace getfem {
     for (dal::bv_visitor cv(convex_index()); !cv.finished(); ++cv) {
       ost << " CONVEX " << cv;
       ost << " " << name_of_fem(fem_of_element(cv));
-      ost << " " << name_of_int_method(int_method_of_element(cv));
       ost << '\n';
     }
 

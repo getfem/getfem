@@ -139,7 +139,7 @@ namespace getfem
     dim_ = m.dim();
     if (dim_ > 3) DAL_THROW(dal::failure_error, "4D meshes and more are not supported");
     pmf.reset(new mesh_fem(const_cast<getfem_mesh&>(m),1));
-    pmf->set_classical_finite_element(1, dim_type(-1));
+    pmf->set_classical_finite_element(1);
     exporting(*pmf);
   }
 
@@ -472,7 +472,7 @@ namespace getfem
     dim_ = m.dim();
     if (dim_ > 3) DAL_THROW(dal::failure_error, "4D meshes and more are not supported");
     pmf.reset(new mesh_fem(const_cast<getfem_mesh&>(m),1));
-    pmf->set_classical_finite_element(1, dim_type(-1));
+    pmf->set_classical_finite_element(1);
     exporting(*pmf, name);
   }
 

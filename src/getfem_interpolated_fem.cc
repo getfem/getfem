@@ -34,9 +34,9 @@ namespace getfem {
     base_node min, max;
     scalar_type EPS=1E-13;
     boxtree.clear();
-    for (dal::bv_visitor cv(mf1.convex_index()); !cv.finished(); ++cv) {
-      bounding_box(min, max, mf1.linked_mesh().points_of_convex(cv),
-		   mf1.linked_mesh().trans_of_convex(cv));
+    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
+      bounding_box(min, max, mf.linked_mesh().points_of_convex(cv),
+		   mf.linked_mesh().trans_of_convex(cv));
       for (unsigned k=0; k < min.size(); ++k) { min[k]-=EPS; max[k]+=EPS; }
       boxtree.add_box(min, max, cv);
     }
@@ -52,8 +52,8 @@ namespace getfem {
       ite = boxlst.end();
     for (; it != ite; ++it) {
       gic = bgeot::geotrans_inv_convex
-	(mf1.linked_mesh().convex((*it)->id),
-	 mf1.linked_mesh().trans_of_convex((*it)->id));
+	(mf.linked_mesh().convex((*it)->id),
+	 mf.linked_mesh().trans_of_convex((*it)->id));
       cv_stored = (*it)->id;
       if (gic.invert(pt, ptr)) { cv = (*it)->id; return true; }
     }
@@ -64,38 +64,37 @@ namespace getfem {
     fictx_cv = cv_stored = size_type(-1);
     dim_ = dim_type(-1);
     build_rtree();
-    elements = std::vector<elt_interpolation_data>(mf2.convex_index().card());
+    elements = std::vector<elt_interpolation_data>(mim.convex_index().card());
     base_node gpt;
-    ind_dof.resize(mf1.nb_dof());
+    ind_dof.resize(mf.nb_dof());
     dal::bit_vector alldofs;
     size_type i, max_dof = 0;
-    if (mf2.convex_index().card() == 0) return;
-    for (dal::bv_visitor cv(mf2.convex_index()); !cv.finished(); ++cv) {
-      cout << "cv = " << cv << endl; 
+    if (mim.convex_index().card() == 0) return;
+    for (dal::bv_visitor cv(mim.convex_index()); !cv.finished(); ++cv) {
       if (dim_ == dim_type(-1))
-	dim_ = mf2.linked_mesh().structure_of_convex(cv)->dim();
+	dim_ = mim.linked_mesh().structure_of_convex(cv)->dim();
       
-      if (dim_ != mf2.linked_mesh().structure_of_convex(cv)->dim())
+      if (dim_ != mim.linked_mesh().structure_of_convex(cv)->dim())
 	DAL_THROW(dal::failure_error, "Convexes of different dimension"
 		  ": to be done");
-      pintegration_method pim = mf2.int_method_of_element(cv);
+      pintegration_method pim = mim.int_method_of_element(cv);
       if (pim->type() != IM_APPROX) 
 	DAL_THROW(dal::failure_error, "You have to use approximated "
 		  "integration to interpolate an fem");
       papprox_integration pai = pim->approx_method();
-      bgeot::pgeometric_trans pgt = mf2.linked_mesh().trans_of_convex(cv);
+      bgeot::pgeometric_trans pgt = mim.linked_mesh().trans_of_convex(cv);
       elements[cv].gausspt.resize(pai->nb_points());
       dal::bit_vector dofs;
       size_type last_cv = size_type(-1);
       for (size_type k = 0; k < pai->nb_points(); ++k) {
 	gausspt_interpolation_data &gpid = elements[cv].gausspt[k];
 	gpt = pgt->transform(pai->point(k),
-			     mf2.linked_mesh().points_of_convex(cv));
+			     mim.linked_mesh().points_of_convex(cv));
 	gpid.flags = find_a_point(gpt, gpid.ptref, gpid.elt) ? 1 : 0;
 	if (gpid.flags && last_cv != gpid.elt) {
-	  size_type nbd = mf1.fem_of_element(gpid.elt)->nb_dof(gpid.elt);
+	  size_type nbd = mf.fem_of_element(gpid.elt)->nb_dof(gpid.elt);
 	  for (i = 0; i < nbd; ++i) {
-	    size_type idof = mf1.ind_dof_of_element(gpid.elt)[i];
+	    size_type idof = mf.ind_dof_of_element(gpid.elt)[i];
 	    if (!(blocked_dof[idof])) dofs.add(idof);
 	  }
 	  last_cv = gpid.elt;
@@ -110,10 +109,10 @@ namespace getfem {
       for (size_type k = 0; k < pai->nb_points(); ++k) {
 	gausspt_interpolation_data &gpid = elements[cv].gausspt[k];
 	if (gpid.flags) {
-	  size_type nbd = mf1.fem_of_element(gpid.elt)->nb_dof(gpid.elt);
+	  size_type nbd = mf.fem_of_element(gpid.elt)->nb_dof(gpid.elt);
 	  gpid.local_dof.resize(nbd);
 	  for (i = 0; i < nbd; ++i)
-	    gpid.local_dof[i] = ind_dof[mf1.ind_dof_of_element(gpid.elt)[i]];
+	    gpid.local_dof[i] = ind_dof[mf.ind_dof_of_element(gpid.elt)[i]];
 	}
       }
       alldofs |= dofs;
@@ -138,7 +137,7 @@ namespace getfem {
   { return elements[cv].inddof[i]; }
   
   bgeot::pconvex_ref interpolated_fem::ref_convex(size_type cv) const
-  { return mf2.fem_of_element(cv)->ref_convex(cv); }
+  { return mim.int_method_of_element(cv)->approx_method()->ref_convex(); }
   
   const bgeot::convex<base_node> &interpolated_fem::node_convex
   (size_type cv) const
@@ -164,9 +163,9 @@ namespace getfem {
     if (fictx_cv != cv) {
       if (pf->need_G()) 
 	bgeot::vectors_to_base_matrix
-	  (G, mf1.linked_mesh().points_of_convex(cv));
+	  (G, mf.linked_mesh().points_of_convex(cv));
       fictx = fem_interpolation_context
-	(mf1.linked_mesh().trans_of_convex(cv), pf, base_node(), G, cv);
+	(mf.linked_mesh().trans_of_convex(cv), pf, base_node(), G, cv);
       fictx_cv = cv;
     }
     fictx.set_xref(ptr);
@@ -185,7 +184,7 @@ namespace getfem {
 	= elements[c.convex_num()].gausspt[c.ii()];
       if (gpid.flags & 1) {
 	cv = gpid.elt;
-	pfem pf = mf1.fem_of_element(cv);
+	pfem pf = mf.fem_of_element(cv);
 	if (gpid.flags & 2) { t = gpid.base_val; return; }
 	actualize_fictx(pf, cv, gpid.ptref);
 	pf->real_base_value(fictx, taux);
@@ -198,15 +197,15 @@ namespace getfem {
     }
     else {
       if (find_a_point(c.xreal(), ptref, cv)) {
-	pfem pf = mf1.fem_of_element(cv);
+	pfem pf = mf.fem_of_element(cv);
 	actualize_fictx(pf, cv, ptref);
 	pf->real_base_value(fictx, taux);
 	for (size_type i = 0; i < nbdof; ++i)
 	  ind_dof[elements[cv].inddof[i]] = i;
 	for (size_type i = 0; i < pf->nb_dof(cv); ++i)
 	  for (size_type j = 0; j < target_dim(); ++j)
-	    if (ind_dof[mf1.ind_dof_of_element(cv)[i]] != size_type(-1))
-	      t(ind_dof[mf1.ind_dof_of_element(cv)[i]], j) = taux(i, j);
+	    if (ind_dof[mf.ind_dof_of_element(cv)[i]] != size_type(-1))
+	      t(ind_dof[mf.ind_dof_of_element(cv)[i]], j) = taux(i, j);
 	for (size_type i = 0; i < nbdof; ++i)
 	  ind_dof[elements[cv].inddof[i]] = size_type(-1);
       }
@@ -227,7 +226,7 @@ namespace getfem {
 	= elements[c.convex_num()].gausspt[c.ii()];
       if (gpid.flags & 1) {
 	cv = gpid.elt;
-	pfem pf = mf1.fem_of_element(cv);
+	pfem pf = mf.fem_of_element(cv);
 	if (gpid.flags & 4) { t = gpid.grad_val; return; }
 	actualize_fictx(pf, cv, gpid.ptref);
 	pf->real_grad_base_value(fictx, taux);
@@ -256,7 +255,7 @@ namespace getfem {
     }
     else {
       if (find_a_point(c.xreal(), ptref, cv)) {
-	pfem pf = mf1.fem_of_element(cv);
+	pfem pf = mf.fem_of_element(cv);
 	actualize_fictx(pf, cv, ptref);
 	fictx.set_xref(ptref);
 	pf->real_grad_base_value(fictx, taux);
@@ -267,19 +266,19 @@ namespace getfem {
 	  for (size_type i = 0; i < pf->nb_dof(cv); ++i)
 	    for (size_type j = 0; j < target_dim(); ++j)
 	      for (size_type k = 0; k < dim(); ++k)
-		if (ind_dof[mf1.ind_dof_of_element(cv)[i]] != size_type(-1)) {
+		if (ind_dof[mf.ind_dof_of_element(cv)[i]] != size_type(-1)) {
 		  scalar_type e(0);
 		  for (size_type l = 0; l < dim(); ++l)
 		    e += trans(l, k) * taux(i, j, l);
-		  t(ind_dof[mf1.ind_dof_of_element(cv)[i]],j,k) = e;
+		  t(ind_dof[mf.ind_dof_of_element(cv)[i]],j,k) = e;
 		}
 	}
 	else {
 	  for (size_type i = 0; i < pf->nb_dof(cv); ++i)
 	    for (size_type j = 0; j < target_dim(); ++j)
 	      for (size_type k = 0; k < dim(); ++k)
-		if (ind_dof[mf1.ind_dof_of_element(cv)[i]] != size_type(-1))
-		  t(ind_dof[mf1.ind_dof_of_element(cv)[i]],j,k) = taux(i,j,k);
+		if (ind_dof[mf.ind_dof_of_element(cv)[i]] != size_type(-1))
+		  t(ind_dof[mf.ind_dof_of_element(cv)[i]],j,k) = taux(i,j,k);
 	}
 	  for (size_type i = 0; i < nbdof; ++i)
 	    ind_dof[elements[cv].inddof[i]] = size_type(-1);
@@ -292,19 +291,19 @@ namespace getfem {
   { DAL_THROW(internal_error, "Sorry, to be done."); }
   
   
-  interpolated_fem::interpolated_fem(const mesh_fem &mef1,
-				     const mesh_fem &mef2, 
+  interpolated_fem::interpolated_fem(const mesh_fem &mef,
+				     const mesh_im &meim, 
 				     pinterpolated_func pif_,
 				     dal::bit_vector blocked_dof_,
 				     bool store_val)
-    : mf1(mef1), mf2(mef2), pif(pif_), store_values(store_val),
+    : mf(mef), mim(meim), pif(pif_), store_values(store_val),
       blocked_dof(blocked_dof_), mi2(2), mi3(3) {
-    this->add_dependency(mef1);
-    this->add_dependency(mef2);
+    this->add_dependency(mf);
+    this->add_dependency(mim);
     is_pol = is_lag = false; es_degree = 5;
     is_equiv = real_element_defined = true;
     update_from_context();
-    gmm::resize(trans, mf1.linked_mesh().dim(), mf1.linked_mesh().dim());
+    gmm::resize(trans, mf.linked_mesh().dim(), mf.linked_mesh().dim());
     ntarget_dim = 1; // An extension for vectorial elements should be easy
     // The detection should be done and the multilication of components
     // for scalar elements interpolated.

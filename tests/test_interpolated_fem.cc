@@ -47,6 +47,7 @@ typedef std::vector<scalar_type> linalg_vector;
 
 struct lap_pb {
   getfem::getfem_mesh mesh1, mesh2;
+  getfem::mesh_im      mim;
   getfem::mesh_fem     mef1,  mef2, mefinterpolated;
   getfem::interpolated_fem ifem;
 
@@ -57,8 +58,8 @@ struct lap_pb {
 
   void assemble(void);
   void init(void);
-  lap_pb(void) : mef1(mesh1), mef2(mesh2), mefinterpolated(mesh1),
-		 ifem(mef2, mef1) {}
+  lap_pb(void) : mim(mesh1), mef1(mesh1), mef2(mesh2), mefinterpolated(mesh1),
+		 ifem(mef2, mim) {}
 };
 
 void lap_pb::init(void) {
@@ -132,11 +133,12 @@ void lap_pb::init(void) {
   
   sprintf(meth, "FEM_PK(%d,%d)", int(N), int(K));
   nn = mesh1.convex_index(N);
-  mef1.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
+  mim.set_integration_method(nn, ppi);
+  mef1.set_finite_element(nn, getfem::fem_descriptor(meth));
   nn = mesh2.convex_index(N);
-  mef2.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
+  mef2.set_finite_element(nn, getfem::fem_descriptor(meth));
   nn = mesh1.convex_index(N);
-  mefinterpolated.set_finite_element(nn, &ifem, ppi);
+  mefinterpolated.set_finite_element(nn, &ifem);
 }
 
 void lap_pb::assemble(void) {
@@ -150,7 +152,7 @@ void lap_pb::assemble(void) {
        << mefinterpolated.nb_dof() << endl;
  
   cout << "Assembling interpolated mass matrix" << endl;
-  getfem::asm_mass_matrix(RM1, mefinterpolated, mefinterpolated);
+  getfem::asm_mass_matrix(RM1, mim, mefinterpolated, mefinterpolated);
 
   cout << "Matrice de masse\n";
   sum = 0.0;
@@ -169,7 +171,7 @@ void lap_pb::assemble(void) {
 
   sparse_matrix_type RM2 = sparse_matrix_type(nb_dof2, nb_dof2);
   cout << "Assembling normal mass matrix" << endl;
-  getfem::asm_mass_matrix(RM2, mef2);
+  getfem::asm_mass_matrix(RM2, mim, mef2);
   
   cout << "Matrice de masse\n";
   sum = 0.0; diff = 0.0;
@@ -211,20 +213,22 @@ void test2() {
   //                         bgeot::base_node(.75,.65));
   //m2.add_segment_by_points(bgeot::base_node(.8,.7),bgeot::base_node(.23,.3));
   getfem::mesh_fem mf1(m1), mf2(m2);
-  getfem::pintegration_method pim1
-    = getfem::int_method_descriptor("IM_QUAD(17)");
+  getfem::mesh_im mim(m2);
+  // getfem::pintegration_method pim1
+  //   = getfem::int_method_descriptor("IM_QUAD(17)");
   getfem::pintegration_method pim2
     = getfem::int_method_descriptor("IM_GAUSS1D(10)");
+  mim.set_integration_method(m2.convex_index(), pim2);
   mf1.set_finite_element(m1.convex_index(),
-			 getfem::fem_descriptor("FEM_QK(2,1)"), pim1);
+			 getfem::fem_descriptor("FEM_QK(2,1)"));
   mf2.set_finite_element(m2.convex_index(),
-			 getfem::fem_descriptor("FEM_PK(1,3)"), pim2);
+			 getfem::fem_descriptor("FEM_PK(1,3)"));
   
   getfem::mesh_fem mflnk(m2);
-  getfem::interpolated_fem ifem(mf1, mf2);
-  mflnk.set_finite_element(m2.convex_index(), &ifem, pim2);
+  getfem::interpolated_fem ifem(mf1, mim);
+  mflnk.set_finite_element(m2.convex_index(), &ifem);
   sparse_matrix_type MM = sparse_matrix_type(mf2.nb_dof(), mflnk.nb_dof());
-  getfem::asm_mass_matrix(MM, mf2, mflnk);
+  getfem::asm_mass_matrix(MM, mim, mf2, mflnk);
   cout << "MM=" << MM << "\n";
   cout << "mflnk.nb_dof()=" << mflnk.nb_dof() << ", mf2.nb_dof()="
        << mf2.nb_dof() << ", mf1.nb_dof=" << mf1.nb_dof() << "\n";
@@ -243,7 +247,7 @@ void test2() {
   cout << endl << " sum: " << sum << endl << endl;
   assert(dal::abs(sum - 1.57079) < 1e-5); /* if not PI/2 there is a bug.. */
   sparse_matrix_type MM2 = sparse_matrix_type(mf2.nb_dof(), mf2.nb_dof());
-  getfem::asm_mass_matrix(MM2, mf2, mf2);
+  getfem::asm_mass_matrix(MM2, mim, mf2, mf2);
   cout << "MM2=" << MM2 << "\n";
 }
 

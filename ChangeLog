@@ -1,3 +1,10 @@
+2005-01-24 Yves Renard, Julien Pommier  <Julien.Pommier@insa-toulouse.fr>
+
+	* src/getfem_mesh_im the description of integration methods on a mesh
+	has moved from the object mesh_fem to a new separated object mesh_im.
+	A consequence is that this new object is a parameter of all assembly
+	procedure.
+
 2005-01-24 Yves Renard  <Yves.Renard@insa-toulouse.fr> 
 
 	* src/getfem_mesh the description of the boundaries is moved

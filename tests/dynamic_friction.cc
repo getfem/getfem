@@ -62,7 +62,8 @@ struct friction_problem {
     PERIODIC_BOUNDARY2 
   };
   getfem::getfem_mesh mesh;  /* the mesh */
-  getfem::mesh_fem mf_u;     /* main mesh_fem, for the friction solution */
+  getfem::mesh_im  mim;      /* integration methods.                         */
+  getfem::mesh_fem mf_u;     /* main mesh_fem, for the friction solution     */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   getfem::mesh_fem mf_coef;  /* mesh_fem used to represent pde coefficients  */
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
@@ -86,7 +87,7 @@ struct friction_problem {
   void stationary(plain_vector &U0, plain_vector &LN, plain_vector &LT);
   void solve(void);
   void init(void);
-  friction_problem(void) : mf_u(mesh), mf_rhs(mesh), mf_coef(mesh) {}
+  friction_problem(void) : mim(mesh), mf_u(mesh), mf_rhs(mesh), mf_coef(mesh) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
@@ -169,7 +170,8 @@ void friction_problem::init(void) {
   getfem::pintegration_method ppi = 
     getfem::int_method_descriptor(INTEGRATION);
 
-  mf_u.set_finite_element(mesh.convex_index(), pf_u, ppi);
+  mim.set_integration_method(mesh.convex_index(), ppi);
+  mf_u.set_finite_element(mesh.convex_index(), pf_u);
 
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
@@ -180,14 +182,14 @@ void friction_problem::init(void) {
 		<< "In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
     }
-    mf_rhs.set_finite_element(mesh.convex_index(), pf_u, ppi);
+    mf_rhs.set_finite_element(mesh.convex_index(), pf_u);
   } else {
     mf_rhs.set_finite_element(mesh.convex_index(), 
-			      getfem::fem_descriptor(data_fem_name), ppi);
+			      getfem::fem_descriptor(data_fem_name));
   }
   
   mf_coef.set_finite_element(mesh.convex_index(),
-			     getfem::classical_fem(pgt,0), ppi);
+			     getfem::classical_fem(pgt,0));
 
   /* set boundary conditions */
   base_node center(0.,0.,20.);
@@ -222,7 +224,7 @@ void friction_problem::stationary(plain_vector &U0, plain_vector &LN,
 
   // Linearized elasticity brick.
   getfem::mdbrick_isotropic_linearized_elasticity<>
-    ELAS(mf_u, mf_coef, lambda, mu, true);
+    ELAS(mim, mf_u, mf_coef, lambda, mu, true);
 
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs * N);
@@ -313,7 +315,7 @@ void friction_problem::solve(void) {
 
   // Linearized elasticity brick.
   getfem::mdbrick_isotropic_linearized_elasticity<>
-    ELAS(mf_u, mf_coef, lambda, mu, true);
+    ELAS(mim, mf_u, mf_coef, lambda, mu, true);
 
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs * N);

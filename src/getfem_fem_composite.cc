@@ -100,8 +100,7 @@ namespace getfem
     structured_mesh_for_convex(pf->ref_convex(0), k, pm, pmp);
 
     mesh_fem mf(*pm);
-    mf.set_finite_element(pm->convex_index(), pf, 
-			  classical_exact_im(pm->trans_of_convex(0)));
+    mf.set_finite_element(pm->convex_index(), pf);
 
     return composite_fe_method(*pmp, mf, pf->ref_convex(0));
   }

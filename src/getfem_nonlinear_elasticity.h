@@ -327,6 +327,7 @@ namespace getfem {
 
   template<typename MAT, typename VECT1, typename VECT2> 
   void asm_nonlinear_elasticity_tangent_matrix(const MAT &K_, 
+					       const mesh_im &mim, 
 					       const getfem::mesh_fem &mf,
 					       const VECT1 &U,
 					       const getfem::mesh_fem &mf_data,
@@ -344,7 +345,7 @@ namespace getfem {
 	    "M(#1,#1)+= sym(t(i,j,k,l,:,i,j,:,k,l))");
       */
       assem("M(#1,#1)+=sym(comp(NonLin(#1,#2)(i,j,k,l).vGrad(#1)(:,i,j).vGrad(#1)(:,k,l)))");
-
+    assem.push_mi(mim);
     assem.push_mf(mf);
     assem.push_mf(mf_data);
     assem.push_nonlinear_term(&nterm);
@@ -355,6 +356,7 @@ namespace getfem {
 
   template<typename VECT1, typename VECT2, typename VECT3> 
   void asm_nonlinear_elasticity_rhs(const VECT1 &R_, 
+				    const mesh_im &mim, 
 				    const getfem::mesh_fem &mf,
 				    const VECT2 &U,
 				    const getfem::mesh_fem &mf_data,
@@ -370,7 +372,7 @@ namespace getfem {
     getfem::generic_assembly
       assem("t=comp(NonLin(#1,#2).vGrad(#1)); V(#1) += t(i,j,:,i,j)");
     // comp() to be optimized ?
-
+    assem.push_mi(mim);
     assem.push_mf(mf);
     assem.push_mf(mf_data);
     assem.push_nonlinear_term(&nterm);
@@ -396,6 +398,7 @@ namespace getfem {
 
     gmm::sub_interval SUBU;
     const abstract_hyperelastic_law &AHL;
+    mesh_im &mim;
     mesh_fem &mf_u;
     mesh_fem &mf_data;
     VECTOR PARAMS_;
@@ -422,7 +425,7 @@ namespace getfem {
       gmm::sub_interval SUBI(i0, this->nb_dof());
       gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBI));
       asm_nonlinear_elasticity_tangent_matrix
-	(gmm::sub_matrix(MS.tangent_matrix(), SUBI), mf_u,
+	(gmm::sub_matrix(MS.tangent_matrix(), SUBI), mim, mf_u,
 	 gmm::sub_vector(MS.state(), SUBI), mf_data, PARAMS,  AHL);
     }
     virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
@@ -440,8 +443,8 @@ namespace getfem {
 
       gmm::sub_interval SUBI(i0, this->nb_dof());
       gmm::clear(gmm::sub_vector(MS.residu(), SUBI));
-      asm_nonlinear_elasticity_rhs(gmm::sub_vector(MS.residu(), SUBI), mf_u,
-				   gmm::sub_vector(MS.state(), SUBI), 
+      asm_nonlinear_elasticity_rhs(gmm::sub_vector(MS.residu(), SUBI), mim,
+				   mf_u, gmm::sub_vector(MS.state(), SUBI), 
 				   mf_data, PARAMS, AHL);
     }
 
@@ -460,30 +463,34 @@ namespace getfem {
     void init_(void) {
       this->add_dependency(mf_data);
       this->add_proper_mesh_fem(mf_u, MDBRICK_NONLINEAR_ELASTICITY);
+      this->add_proper_mesh_im(mim);
       this->proper_is_linear_ = false;
       this->proper_is_coercive_ = this->proper_is_symmetric_ = true;
       this->update_from_context();
     }
 
     mdbrick_nonlinear_elasticity(const abstract_hyperelastic_law &AHL_,
+				 mesh_im &mim_,
 				 mesh_fem &mf_u_, mesh_fem &mf_data_,
 				 const VECTOR &PARAMS)
-      : AHL(AHL_), mf_u(mf_u_), mf_data(mf_data_) {
+      : AHL(AHL_), mim(mim_), mf_u(mf_u_), mf_data(mf_data_) {
       set_params(PARAMS); init_();
     }
  
     mdbrick_nonlinear_elasticity(const abstract_hyperelastic_law &AHL_,
+				 mesh_im &mim_,
 				 mesh_fem &mf_u_, mesh_fem &mf_data_,
 				 value_type p1, value_type p2)
-      : AHL(AHL_), mf_u(mf_u_), mf_data(mf_data_) {
+      : AHL(AHL_), mim(mim_), mf_u(mf_u_), mf_data(mf_data_) {
       VECTOR PARAMS(2); PARAMS[0] = p1;  PARAMS[1] = p2; 
       set_params(PARAMS); init_();
     }
 
     mdbrick_nonlinear_elasticity(const abstract_hyperelastic_law &AHL_,
+				 mesh_im &mim_,
 				 mesh_fem &mf_u_, mesh_fem &mf_data_,
 				 value_type p1, value_type p2, value_type p3)
-      : AHL(AHL_), mf_u(mf_u_), mf_data(mf_data_) {
+      : AHL(AHL_), mim(mim_), mf_u(mf_u_), mf_data(mf_data_) {
       VECTOR PARAMS(3); PARAMS[0] = p1;  PARAMS[1] = p2; PARAMS[2] = p3;
       set_params(PARAMS); init_();
     }
@@ -539,9 +546,10 @@ namespace getfem {
   };
 
   template<typename MAT1, typename MAT2, typename VECT1, typename VECT2> 
-  void asm_nonlinear_incomp_tangent_matrix(const MAT1 &K_, const MAT2 &B_, 
-					   const getfem::mesh_fem &mf_u,
-					   const getfem::mesh_fem &mf_p,
+  void asm_nonlinear_incomp_tangent_matrix(const MAT1 &K_, const MAT2 &B_,
+					   const mesh_im &mim,
+					   const mesh_fem &mf_u,
+					   const mesh_fem &mf_p,
 					   const VECT1 &U, const VECT2 &P) {
     MAT1 &K = const_cast<MAT1 &>(K_);
     MAT2 &B = const_cast<MAT2 &>(B_);
@@ -567,6 +575,7 @@ namespace getfem {
 	    "M$1(#1,#1)+= w1-w2"            
 	    );
 
+    assem.push_mi(mim);
     assem.push_mf(mf_u);
     assem.push_mf(mf_p);
     assem.push_nonlinear_term(&ntermk);
@@ -580,6 +589,7 @@ namespace getfem {
 
   template<typename VECT1, typename VECT2, typename VECT3> 
   void asm_nonlinear_incomp_rhs(const VECT1 &R_U_, const VECT1 &R_P_, 
+				const mesh_im &mim,
 				const getfem::mesh_fem &mf_u,
 				const getfem::mesh_fem &mf_p,
 				const VECT2 &U, const VECT3 &P) {
@@ -598,6 +608,7 @@ namespace getfem {
 	    "w=comp(NonLin$2(#1).Base(#2)); V$2(#2) += w(1,:)");
     // assem() to be optimized ?
 
+    assem.push_mi(mim);
     assem.push_mf(mf_u);
     assem.push_mf(mf_p);
     assem.push_nonlinear_term(&nterm_tg);
@@ -644,7 +655,7 @@ namespace getfem {
 
       asm_nonlinear_incomp_tangent_matrix(gmm::sub_matrix(MS.tangent_matrix(),
 							  SUBJ, SUBJ), B,
-					  mf_u, mf_p, 
+					  *(this->mesh_ims[0]), mf_u, mf_p, 
 					  gmm::sub_vector(MS.state(), SUBJ), 
 					  gmm::sub_vector(MS.state(), SUBI));
       gmm::copy(B, gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBI));
@@ -665,7 +676,7 @@ namespace getfem {
 
       asm_nonlinear_incomp_rhs(gmm::sub_vector(MS.residu(), SUBJ),
 			       gmm::sub_vector(MS.residu(), SUBI),
-			       mf_u, mf_p, 
+			       *(this->mesh_ims[0]), mf_u, mf_p, 
 			       gmm::sub_vector(MS.state(), SUBJ),
 			       gmm::sub_vector(MS.state(), SUBI));
     }

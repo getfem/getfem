@@ -41,6 +41,7 @@ using bgeot::dim_type;
 
 struct lap_pb {
   getfem::getfem_mesh mesh;
+  getfem::mesh_im mim;
   getfem::mesh_fem mef;
   getfem::mesh_fem mef_data;
 
@@ -55,7 +56,7 @@ struct lap_pb {
 
   
   void init(void);
-  lap_pb(void) : mef(mesh), mef_data(mesh) {}
+  lap_pb(void) : mim(mesh), mef(mesh), mef_data(mesh) {}
 };
 
 void lap_pb::init(void)
@@ -203,25 +204,27 @@ void lap_pb::init(void)
   case 0 :
     sprintf(meth, "FEM_PK(%d,%d)", int(N), int(K));
     pfprinc = getfem::fem_descriptor(meth);
-    mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
-    mef_data.set_finite_element(nn, getfem::fem_descriptor(meth),
-				getfem::exact_simplex_im(N));
+    mim.set_integration_method(nn, ppi);
+    mef.set_finite_element(nn, getfem::fem_descriptor(meth));
+    mef_data.set_finite_element(nn, getfem::fem_descriptor(meth));
     sprintf(meth, "FEM_PK(%d,%d)", int(N), 0);
     
     break;
   case 1 :
     sprintf(meth, "FEM_QK(%d,%d)", int(N), K);
     pfprinc = getfem::fem_descriptor(meth);
-    mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi); 
-    mef_data.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
+    mim.set_integration_method(nn, ppi);
+    mef.set_finite_element(nn, getfem::fem_descriptor(meth)); 
+    mef_data.set_finite_element(nn, getfem::fem_descriptor(meth));
     sprintf(meth, "FEM_QK(%d,%d)", int(N), 0);
     
     break;
   case 2 :
     sprintf(meth, "FEM_PK_PRISM(%d,%d)", int(N), K);
     pfprinc = getfem::fem_descriptor(meth);
-    mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
-    mef_data.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
+    mim.set_integration_method(nn, ppi);
+    mef.set_finite_element(nn, getfem::fem_descriptor(meth));
+    mef_data.set_finite_element(nn, getfem::fem_descriptor(meth));
     sprintf(meth, "FEM_PK_PRISM(%d,%d)", int(N), 0);
     
     break;
@@ -234,19 +237,19 @@ void lap_pb::init(void)
   case 1 :
     sprintf(meth, "FEM_HERMITE_SEGMENT");
     pfprinc = getfem::fem_descriptor(meth);
-    mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
+    mef.set_finite_element(nn, getfem::fem_descriptor(meth));
     break;
     
   case 2 :
     sprintf(meth, "FEM_PK_HIERARCHICAL(%d, %d)", int(N), int(K));
     pfprinc = getfem::fem_descriptor(meth);
-    mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
+    mef.set_finite_element(nn, getfem::fem_descriptor(meth));
     break;
 
   case 3 :
     sprintf(meth, "FEM_PK_HIERARCHICAL_COMPOSITE(%d,%d,%d)", int(N), 1, int(K));
     pfprinc = getfem::fem_descriptor(meth);
-    mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
+    mef.set_finite_element(nn, getfem::fem_descriptor(meth));
     break;
   
   }
@@ -257,7 +260,8 @@ void lap_pb::init(void)
        << getfem::name_of_int_method(ppi) << endl;
 }
 
-void test1_mat_elem(const getfem::mesh_fem &mf,
+void test1_mat_elem(const getfem::mesh_im &mim,
+		    const getfem::mesh_fem &mf,
 		   const getfem::mesh_fem &mfdata) { 
   
   size_type cv;
@@ -276,7 +280,7 @@ void test1_mat_elem(const getfem::mesh_fem &mf,
     pf1 =     mf.fem_of_element(cv);
     pf2 = mfdata.fem_of_element(cv);
     pgt = mf.linked_mesh().trans_of_convex(cv);
-    pim = mf.int_method_of_element(cv);
+    pim = mim.int_method_of_element(cv);
     if (pf1prec != pf1 || pf2prec != pf2 || pgtprec != pgt || pimprec != pim) {
       getfem::pmat_elem_type pme 
 	= getfem::mat_elem_product
@@ -291,7 +295,7 @@ void test1_mat_elem(const getfem::mesh_fem &mf,
   }
 }
 
-void test2_mat_elem(const getfem::mesh_fem &mf,
+void test2_mat_elem(const getfem::mesh_im &mim, const getfem::mesh_fem &mf,
 		   const getfem::mesh_fem &mfdata) { 
   
   size_type cv;
@@ -310,7 +314,7 @@ void test2_mat_elem(const getfem::mesh_fem &mf,
     pf1 =     mf.fem_of_element(cv);
     pf2 = mfdata.fem_of_element(cv);
     pgt = mf.linked_mesh().trans_of_convex(cv);
-    pim = mf.int_method_of_element(cv);
+    pim = mim.int_method_of_element(cv);
     if (pf1prec != pf1 || pf2prec != pf2 || pgtprec != pgt || pimprec != pim) {
       getfem::pmat_elem_type pme 
 	= getfem::mat_elem_product(getfem::mat_elem_base(pf1),
@@ -353,12 +357,12 @@ int main(int argc, char *argv[])
     p.mesh.write_to_file(p.datafilename + ".mesh" + char(0));
     
     exectime = ftool::uclock_sec();
-    test1_mat_elem(p.mef, p.mef_data);
+    test1_mat_elem(p.mim, p.mef, p.mef_data);
     cout << "Mat elem computation time 1 : "
 	 << ftool::uclock_sec() - exectime << endl;
  
     exectime = ftool::uclock_sec();
-    test2_mat_elem(p.mef, p.mef_data);
+    test2_mat_elem(p.mim, p.mef, p.mef_data);
     cout << "Mat elem computation time 2 : "
 	 << ftool::uclock_sec() - exectime << endl;
 

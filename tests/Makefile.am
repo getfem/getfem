@@ -6,33 +6,35 @@ else
 optprog =
 endif
 
-check_PROGRAMS = \
-	dynamic_array      \
-	dynamic_tas        \
-	test_small_vector  \
-	test_kdtree	   \
-	test_rtree	   \
-	test_interpolation \
-	elastostatic       \
+check_PROGRAMS =                 \
+	dynamic_array            \
+	dynamic_tas              \
+	test_small_vector        \
+	test_kdtree	         \
+	test_rtree	         \
+	test_interpolation       \
+	elastostatic             \
+	stokes                   \
 	nonlinear_elastostatic   \
-	helmholtz          \
-	geo_trans          \
-	geo_trans_inv      \
-	integration        \
-	laplacian          \
-	poly               \
-	schwarz_additive    \
-	test_assembly      \
-	test_int_set       \
-	test_interpolated_fem      \
-	test_mat_elem      \
-	plate              \
-	test_slice         \
-	test_norm	   \
-	test_mesh          \
-	test_tree_sorted   \
-	$(optprog) \
-	plasticity         \
+	helmholtz                \
+	geo_trans                \
+	geo_trans_inv            \
+	integration              \
+	laplacian                \
+	poly                     \
+	schwarz_additive         \
+	test_assembly            \
+	test_int_set             \
+	test_interpolated_fem    \
+	test_mat_elem            \
+	plate                    \
+	test_slice               \
+	test_norm	         \
+	test_mesh                \
+	test_tree_sorted         \
+	$(optprog)               \
+	plasticity               \
+	navier_stokes            \
 	dynamic_friction
 
 CLEANFILES = \
@@ -55,6 +57,7 @@ laplacian_SOURCES = laplacian.cc
 plate_SOURCES = plate.cc
 test_interpolation_SOURCES = test_interpolation.cc
 elastostatic_SOURCES = elastostatic.cc
+stokes_SOURCES = stokes.cc
 nonlinear_elastostatic_SOURCES = nonlinear_elastostatic.cc
 helmholtz_SOURCES = helmholtz.cc
 integration_SOURCES = integration.cc
@@ -70,6 +73,7 @@ test_slice_SOURCES = test_slice.cc
 test_norm_SOURCES = test_norm.cc
 schwarz_additive_SOURCES = schwarz_additive.cc
 plasticity_SOURCES = plasticity.cc
+navier_stokes_SOURCES = navier_stokes.cc
 if QHULL
 test_mesh_generation_SOURCES = test_mesh_generation.cc 
 endif
@@ -94,6 +98,9 @@ TESTS = \
 	$(top_srcdir)/tests/plate.pl              \
 	$(top_srcdir)/tests/laplacian.pl          \
 	$(top_srcdir)/tests/elastostatic.pl       \
+	$(top_srcdir)/tests/stokes.pl             \
+	$(top_srcdir)/tests/navier_stokes.pl      \
+	$(top_srcdir)/tests/navier_stokes.pl      \
 	$(top_srcdir)/tests/nonlinear_elastostatic.pl       \
 	$(top_srcdir)/tests/dynamic_friction.pl   \
 	$(top_srcdir)/tests/plasticity.pl         \
@@ -120,6 +127,8 @@ EXTRA_DIST = \
 	test_assembly.pl                  \
 	laplacian.pl                      \
 	elastostatic.pl                   \
+	stokes.pl                         \
+	navier_stokes.pl                  \
 	helmholtz.pl                      \
 	integration.pl                    \
 	poly.pl                           \
@@ -137,6 +146,7 @@ EXTRA_DIST = \
 	schwarz_additive.pl               \
 	schwarz_additive.param            \
 	elastostatic.param                \
+	stokes.param                      \
 	nonlinear_elastostatic.pl         \
 	dynamic_friction.pl               \
 	dynamic_friction.param            \

@@ -60,6 +60,7 @@ struct plate_problem {
 
   enum { SIMPLY_FIXED_BOUNDARY_NUM = 0 };
   getfem::getfem_mesh mesh;  /* the mesh */
+  getfem::mesh_im mim, mim_subint;
   getfem::mesh_fem mf_ut;
   getfem::mesh_fem mf_u3;
   getfem::mesh_fem mf_theta;
@@ -81,8 +82,8 @@ struct plate_problem {
   bool solve(plain_vector &U);
   void init(void);
   void compute_error(plain_vector &U);
-  plate_problem(void) : mf_ut(mesh), mf_u3(mesh), mf_theta(mesh),
-			       mf_rhs(mesh), mf_coef(mesh) {}
+  plate_problem(void) : mim(mesh), mim_subint(mesh), mf_ut(mesh), mf_u3(mesh),
+			mf_theta(mesh), mf_rhs(mesh), mf_coef(mesh) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
@@ -146,9 +147,11 @@ void plate_problem::init(void) {
   getfem::pintegration_method ppi_ct = 
     getfem::int_method_descriptor(INTEGRATION_CT);
 
-  mf_ut.set_finite_element(mesh.convex_index(), pf_ut, ppi);
-  mf_u3.set_finite_element(mesh.convex_index(), pf_u3, ppi_ct);
-  mf_theta.set_finite_element(mesh.convex_index(), pf_theta, ppi);
+  mim.set_integration_method(mesh.convex_index(), ppi);
+  mim_subint.set_integration_method(mesh.convex_index(), ppi_ct);
+  mf_ut.set_finite_element(mesh.convex_index(), pf_ut);
+  mf_u3.set_finite_element(mesh.convex_index(), pf_u3);
+  mf_theta.set_finite_element(mesh.convex_index(), pf_theta);
 
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
@@ -159,17 +162,17 @@ void plate_problem::init(void) {
 		<< "In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
     }
-    mf_rhs.set_finite_element(mesh.convex_index(), pf_ut, ppi);
+    mf_rhs.set_finite_element(mesh.convex_index(), pf_ut);
   } else {
     mf_rhs.set_finite_element(mesh.convex_index(), 
-			      getfem::fem_descriptor(data_fem_name), ppi);
+			      getfem::fem_descriptor(data_fem_name));
   }
   
   /* set the finite element on mf_coef. Here we use a very simple element
    *  since the only function that need to be interpolated on the mesh_fem 
    * is f(x)=1 ... */
   mf_coef.set_finite_element(mesh.convex_index(),
-			     getfem::classical_fem(pgt,0), ppi);
+			     getfem::classical_fem(pgt,0));
 
   /* set boundary conditions
    * (Neuman on the upper face, Dirichlet elsewhere) */
@@ -215,8 +218,8 @@ void plate_problem::compute_error(plain_vector &U) {
   getfem::interpolation(mf_ut, mf_rhs,
 			gmm::sub_vector(U, gmm::sub_interval(0, i1)), V);
   mf_rhs.set_qdim(2);
-  scalar_type l2 = dal::sqr(getfem::asm_L2_norm(mf_rhs, V));
-  scalar_type h1 = dal::sqr(getfem::asm_H1_norm(mf_rhs, V));
+  scalar_type l2 = dal::sqr(getfem::asm_L2_norm(mim, mf_rhs, V));
+  scalar_type h1 = dal::sqr(getfem::asm_H1_norm(mim, mf_rhs, V));
   scalar_type linf = gmm::vect_norminf(V);
   mf_rhs.set_qdim(1);
   cout << "L2 error = " << sqrt(l2) << endl
@@ -230,8 +233,8 @@ void plate_problem::compute_error(plain_vector &U) {
 	     gmm::sub_vector(V, gmm::sub_interval(i*2, 2)));
   }
   mf_rhs.set_qdim(2);
-  l2 += dal::sqr(getfem::asm_L2_norm(mf_rhs, V));
-  h1 += dal::sqr(getfem::asm_H1_norm(mf_rhs, V));
+  l2 += dal::sqr(getfem::asm_L2_norm(mim, mf_rhs, V));
+  h1 += dal::sqr(getfem::asm_H1_norm(mim, mf_rhs, V));
   linf = std::max(linf, gmm::vect_norminf(V));
   mf_rhs.set_qdim(1);
   cout << "L2 error = " << sqrt(l2) << endl
@@ -245,8 +248,8 @@ void plate_problem::compute_error(plain_vector &U) {
   for (size_type i = 0; i < mf_rhs.nb_dof(); ++i)
     V[i] -= u3_exact(mf_rhs.point_of_dof(i));
 
-  l2 += dal::sqr(getfem::asm_L2_norm(mf_rhs, V));
-  h1 += dal::sqr(getfem::asm_H1_norm(mf_rhs, V));
+  l2 += dal::sqr(getfem::asm_L2_norm(mim, mf_rhs, V));
+  h1 += dal::sqr(getfem::asm_H1_norm(mim, mf_rhs, V));
   linf = std::max(linf, gmm::vect_norminf(V));
 
   cout.precision(16);
@@ -270,10 +273,12 @@ bool plate_problem::solve(plain_vector &U) {
 
   // Linearized plate brick.
   getfem::mdbrick_isotropic_linearized_plate<>
-    ELAS1(mf_ut, mf_u3, mf_theta, mf_coef, lambda, mu, epsilon);
+    ELAS1(mim, mim_subint, mf_ut, mf_u3, mf_theta, mf_coef, lambda,
+	  mu, epsilon);
 
   getfem::mdbrick_mixed_isotropic_linearized_plate<>
-    ELAS2(mf_ut, mf_u3, mf_theta, mf_coef, lambda, mu, epsilon, symmetrized);
+    ELAS2(mim, mf_ut, mf_u3, mf_theta, mf_coef, lambda, mu, epsilon,
+	  symmetrized);
 
   if (mixed) ELAS = &ELAS2; else ELAS = &ELAS1;
 

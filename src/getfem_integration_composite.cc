@@ -29,19 +29,19 @@
 
 #include <getfem_poly_composite.h>
 #include <getfem_integration.h>
-#include <getfem_mesh_fem.h>
+#include <getfem_mesh_im.h>
 #include <ftool_naming.h>
 
 namespace getfem
 { 
   papprox_integration
-  composite_approx_int_method(const mesh_precomposite &mp, const mesh_fem &mf,
+  composite_approx_int_method(const mesh_precomposite &mp, const mesh_im &mi,
 			      bgeot::pconvex_ref cr) {
     approx_integration *p = new approx_integration(cr);
     base_vector w;
-    for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
-      pintegration_method pim = mf.int_method_of_element(cv);
-      bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
+    for (dal::bv_visitor cv(mi.convex_index()); !cv.finished(); ++cv) {
+      pintegration_method pim = mi.int_method_of_element(cv);
+      bgeot::pgeometric_trans pgt = mi.linked_mesh().trans_of_convex(cv);
       if (pim->type() != IM_APPROX || !(pgt->is_linear())) {
 	delete p;
 	DAL_THROW(failure_error,
@@ -51,13 +51,13 @@ namespace getfem
       
       for (size_type j = 0; j < pai->nb_points_on_convex(); ++j) {
 	base_node pt = pgt->transform(pim->integration_points()[j],
-				      mf.linked_mesh().points_of_convex(cv));
+				      mi.linked_mesh().points_of_convex(cv));
 	p->add_point(pt, pai->coeff(j) * dal::abs(mp.det[cv]));
       }
       for (short_type f = 0; f < pgt->structure()->nb_faces(); ++f) {
 
-	base_node barycentre = dal::mean_value(mf.linked_mesh().points_of_face_of_convex(cv, f).begin(),
-                                               mf.linked_mesh().points_of_face_of_convex(cv, f).end());
+	base_node barycentre = dal::mean_value(mi.linked_mesh().points_of_face_of_convex(cv, f).begin(),
+                                               mi.linked_mesh().points_of_face_of_convex(cv, f).end());
 	short_type f2 = short_type(-1);
 	for (short_type f3 = 0; f3 < cr->structure()->nb_faces(); ++f3) {
 	  if (dal::abs(cr->is_in_face(f3, barycentre)) < 1.0E-7)
@@ -70,7 +70,7 @@ namespace getfem
 	  for (size_type j = 0; j < pai->nb_points_on_face(f); ++j) {
 	    base_node pt = pgt->transform
 	      (pai->point_on_face(f, j), 
-	       mf.linked_mesh().points_of_convex(cv));
+	       mi.linked_mesh().points_of_convex(cv));
 	    p->add_point(pt, pai->coeff_on_face(f, j) * coeff_mul, f2);
 	  }
 	}
@@ -84,7 +84,6 @@ namespace getfem
   typedef ftool::naming_system<integration_method>::param_list im_param_list;
 
   pintegration_method structured_composite_int_method(im_param_list &params) {
-
     if (params.size() != 2)
       DAL_THROW(failure_error, 
 	  "Bad number of parameters : " << params.size() << " should be 2.");
@@ -99,12 +98,11 @@ namespace getfem
     pmesh_precomposite pmp;
 
     structured_mesh_for_convex(pim->approx_method()->ref_convex(), k, pm, pmp);
-    mesh_fem mf(*pm);
-    mf.set_finite_element(pm->convex_index(),
-			  classical_fem(pm->trans_of_convex(0), 0), pim);
+    mesh_im mi(*pm);
+    mi.set_integration_method(pm->convex_index(), pim);
 
     return new integration_method
-      (composite_approx_int_method(*pmp, mf,
+      (composite_approx_int_method(*pmp, mi,
 				   pim->approx_method()->ref_convex()));
   }
   

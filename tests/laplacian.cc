@@ -72,6 +72,7 @@ struct laplacian_problem {
 
   enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
   getfem::getfem_mesh mesh; /* the mesh */
+  getfem::mesh_im mim;      /* the integration methods. */
   getfem::mesh_fem mf_u;    /* the main mesh_fem, for the Laplacian solution */
   getfem::mesh_fem mf_rhs;  /* the mesh_fem for the right hand side(f(x),..) */
   getfem::mesh_fem mf_coef; /* the mesh_fem to represent pde coefficients   */
@@ -94,7 +95,8 @@ struct laplacian_problem {
   bool solve(void);
   void init(void);
   void compute_error();
-  laplacian_problem(void) : mf_u(mesh), mf_rhs(mesh), mf_coef(mesh) {}
+  laplacian_problem(void) : mim(mesh), mf_u(mesh), mf_rhs(mesh),
+			    mf_coef(mesh) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
@@ -142,7 +144,8 @@ void laplacian_problem::init(void)
   est_degree = pf_u->estimated_degree();
   getfem::pintegration_method ppi = getfem::int_method_descriptor(INTEGRATION);
 
-  mf_u.set_finite_element(mesh.convex_index(), pf_u, ppi);
+  mim.set_integration_method(mesh.convex_index(), ppi);
+  mf_u.set_finite_element(mesh.convex_index(), pf_u);
 
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
@@ -153,17 +156,17 @@ void laplacian_problem::init(void)
 		<< "In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
     }
-    mf_rhs.set_finite_element(mesh.convex_index(), pf_u, ppi);
+    mf_rhs.set_finite_element(mesh.convex_index(), pf_u);
   } else {
     mf_rhs.set_finite_element(mesh.convex_index(), 
-			      getfem::fem_descriptor(data_fem_name), ppi);
+			      getfem::fem_descriptor(data_fem_name));
   }
   
   /* set the finite element on mf_coef. Here we use a very simple element
    *  since the only function that need to be interpolated on the mesh_fem 
    * is f(x)=1 ... */
   mf_coef.set_finite_element(mesh.convex_index(),
-			     getfem::classical_fem(pgt,0), ppi);
+			     getfem::classical_fem(pgt,0));
 
   /* set boundary conditions
    * (Neuman on the upper face, Dirichlet elsewhere) */
@@ -195,14 +198,14 @@ void laplacian_problem::assembly(void)
   
   cout << "Number of dof : " << nb_dof << endl;
   cout << "Assembling stiffness matrix" << endl;
-  getfem::asm_stiffness_matrix_for_laplacian(SM, mf_u, mf_coef, 
+  getfem::asm_stiffness_matrix_for_laplacian(SM, mim, mf_u, mf_coef, 
      std::vector<scalar_type>(mf_coef.nb_dof(), 1.0));
   
   cout << "Assembling source term" << endl;
   std::vector<scalar_type> F(nb_dof_rhs);
   for (size_type i = 0; i < nb_dof_rhs; ++i)
     F[i] = sol_f(mf_rhs.point_of_dof(i));
-  getfem::asm_source_term(B, mf_u, mf_rhs, F);
+  getfem::asm_source_term(B, mim, mf_u, mf_rhs, F);
   
   cout << "Assembling Neumann condition" << endl;
   /* Fill F with Grad(sol_u).n .. a bit complicated */
@@ -222,7 +225,7 @@ void laplacian_problem::assembly(void)
       }
     }
   }
-  getfem::asm_source_term(B, mf_u, mf_rhs, F, NEUMANN_BOUNDARY_NUM);
+  getfem::asm_source_term(B, mim, mf_u, mf_rhs, F, NEUMANN_BOUNDARY_NUM);
 
   cout << "take Dirichlet condition into account" << endl;  
   if (!gen_dirichlet) {    
@@ -241,7 +244,7 @@ void laplacian_problem::assembly(void)
     std::vector<scalar_type> R(nb_dof), RHaux(nb_dof);
 
     /* build H and R such that U mush satisfy H*U = R */
-    getfem::asm_dirichlet_constraints(H, R, mf_u,
+    getfem::asm_dirichlet_constraints(H, R, mim, mf_u,
 				      mf_rhs, F, DIRICHLET_BOUNDARY_NUM);    
     gmm::clean(H, 1e-15);
     int nbcols = getfem::Dirichlet_nullspace(H, NS, R, Ud);
@@ -299,8 +302,8 @@ void laplacian_problem::compute_error() {
   for (size_type i = 0; i < mf_rhs.nb_dof(); ++i)
     V[i] -= sol_u(mf_rhs.point_of_dof(i));
   cout.precision(16);
-  cout << "L2 error = " << getfem::asm_L2_norm(mf_rhs, V) << endl
-       << "H1 error = " << getfem::asm_H1_norm(mf_rhs, V) << endl
+  cout << "L2 error = " << getfem::asm_L2_norm(mim, mf_rhs, V) << endl
+       << "H1 error = " << getfem::asm_H1_norm(mim, mf_rhs, V) << endl
        << "Linfty error = " << gmm::vect_norminf(V) << endl;     
 }
 
