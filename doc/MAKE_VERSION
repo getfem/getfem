@@ -15,7 +15,8 @@ Liste des items a passer en revue pour fabriquer une nouvelle version
   . sur SUN avec CC (sur aurore ?)
   . Tester GMM avec lapack et qd.
 
-  gmake check    doit fonctionner.
+  a) faire passer gmake check sur des version cvs.
+  b) faire passer gmake distcheck sur l'archive
 
 - gmake dist
 

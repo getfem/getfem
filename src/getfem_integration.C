@@ -9,7 +9,7 @@
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 2000-2002  Yves Renard.                                   */
+/* Copyright (C) 2000-2004  Yves Renard.                                   */
 /*                                                                         */
 /* This file is a part of GETFEM++                                         */
 /*                                                                         */
@@ -41,11 +41,9 @@ namespace getfem
 
   typedef ftool::naming_system<integration_method>::param_list im_param_list;
 
-  long_scalar_type poly_integration::int_poly(const base_poly &P) const
-  {
+  long_scalar_type poly_integration::int_poly(const base_poly &P) const {
     long_scalar_type res = 0.0;
-    if (P.size() > int_monomials.size())
-    {
+    if (P.size() > int_monomials.size()) {
       std::vector<long_scalar_type> *hum = &int_monomials;
       size_type i = P.size(), j = int_monomials.size();
       hum->resize(i);
@@ -62,8 +60,7 @@ namespace getfem
   }
 
   long_scalar_type
-    poly_integration::int_poly_on_face(const base_poly &P, short_type f) const
-  {
+    poly_integration::int_poly_on_face(const base_poly &P, short_type f) const {
     long_scalar_type res = 0.0;
     std::vector<long_scalar_type> *hum = &(int_face_monomials[f]);
     if (P.size() > hum->size()) {
@@ -84,8 +81,8 @@ namespace getfem
   /* integration on simplex                                               */
   /* ******************************************************************** */
 
-  struct simplex_poly_integration_ : public poly_integration
-  {
+  struct simplex_poly_integration_ : public poly_integration {
+
     long_scalar_type int_monomial(const bgeot::power_index &power) const;
 
     long_scalar_type int_monomial_on_face(const bgeot::power_index &power, 
@@ -96,8 +93,8 @@ namespace getfem
   };
 
 
-  long_scalar_type simplex_poly_integration_::int_monomial
-  (const bgeot::power_index &power) const {
+  long_scalar_type
+  simplex_poly_integration_::int_monomial(const bgeot::power_index &power) const{
     long_scalar_type res = LONG_SCAL(1);
     short_type fa = 1;
     bgeot::power_index::const_iterator itm = power.begin(),
@@ -365,7 +362,7 @@ namespace getfem
   /* ********************************************************************* */
   
   /// search a method in getfem_im_list.h
-  pintegration_method im_list_integration(std::string name) {
+  static pintegration_method im_list_integration(std::string name) {
     // cerr << "searching " << name << endl;
     for (int i = 0; i < NB_IM; ++i)
       if (!name.compare(im_desc_tab[i].method_name)) {
@@ -517,8 +514,6 @@ namespace getfem
       return new integration_method(new gauss_approx_integration_(n/2 + 1));
   }
 
-
-
   /* ********************************************************************* */
   /* integration on simplexes                                              */
   /* ********************************************************************* */
@@ -600,22 +595,13 @@ namespace getfem
       }
       
       gmm::lu_solve(M, U, F);
-
-      /*
-      if (nc == 1)
-	for (size_type r = 0; r < R; ++r)
-	  cout << "node " << r << " : " << nodes[r] << " poids : " 
-	       << U[r] << endl;
-      */      
       for (size_type r = 0; r < R; ++r)
 	add_point(nodes[r], U[r]);
       
       std::stringstream name2;
       name2 << "IM_NC(" << int(nc-1) << "," << int(k) << ")";
-      for (short_type f = 0; f < structure()->nb_faces(); ++f) {
-	//cout << "method on face : " << name2.str() << endl;
+      for (short_type f = 0; f < structure()->nb_faces(); ++f)
 	add_method_on_face(int_method_descriptor(name2.str()), f);
-      }
     }
     valid_method();
   }
@@ -771,7 +757,7 @@ namespace getfem
       DAL_THROW(failure_error, "Bad parameters");
 
     std::stringstream name;
-     name << "IM_PRODUCT(IM_NC(" << n-1 << "," << k << "),IM_NC(1,"
+    name << "IM_PRODUCT(IM_NC(" << n-1 << "," << k << "),IM_NC(1,"
 	 << k << "))";
     return int_method_descriptor(name.str());
   }
@@ -800,340 +786,6 @@ namespace getfem
 	   << "),IM_GAUSS1D(" << k << "))";
     return int_method_descriptor(name.str());
   }
-
-  /* ********************************************************************* */
-  /*                                                                       */
-  /*   Particular integration methods on dimension 2.                      */
-  /*                                                                       */
-  /* ********************************************************************* */
-
-  /* ********************************************************************* */
-  /*    Integration on a triangle                                          */
-  /* ********************************************************************* */
-
-//   static void triangle_add_point_full_symmetric(approx_integration *p, 
-//                                                 long_scalar_type c1, 
-//                                                 long_scalar_type c2,
-//                                                 long_scalar_type w) {
-//     long_scalar_type c3 = 1.-c1-c2;
-//     p->add_point_norepeat(base_vector(c1,c2),w);
-//     p->add_point_norepeat(base_vector(c2,c1),w);
-//     p->add_point_norepeat(base_vector(c1,c3),w);
-//     p->add_point_norepeat(base_vector(c3,c1),w);
-//     p->add_point_norepeat(base_vector(c2,c3),w);
-//     p->add_point_norepeat(base_vector(c3,c2),w);
-//   }
-//   static void triangle_add_point_full_symmetric(approx_integration *p, 
-//                                                 long_scalar_type c, 
-//                                                 long_scalar_type w) {
-//     triangle_add_point_full_symmetric(p,c,c,w);
-//   }
-
-//   static pintegration_method approx_triangle(im_param_list &params) {
-//     if (params.size() != 1)
-//       DAL_THROW(failure_error, 
-// 	   "Bad number of parameters : " << params.size() << " should be 1.");
-//     if (params[0].type() != 0)
-//       DAL_THROW(failure_error, "Bad type of parameters");
-//     int n = int(::floor(params[0].num() + 0.01));
-//     if (n <= 0 || n >= 100 || double(n) != params[0].num())
-//       DAL_THROW(failure_error, "Bad parameters");
-
-//     approx_integration *p
-//       = new approx_integration(bgeot::simplex_of_reference(2));
-
-//     switch (n) {
-//     case 1: 
-//       p->add_point(base_vector(1.0/3.0, 1.0/3.0), 0.5);
-//       break;
-//     case 2: 
-//       p->add_point(base_vector(1.0/6.0, 1.0/6.0), 1.0/6.0);
-//       p->add_point(base_vector(2.0/3.0, 1.0/6.0), 1.0/6.0);
-//       p->add_point(base_vector(1.0/6.0, 2.0/3.0), 1.0/6.0);
-//       break;
-//     case 3: 
-//       p->add_point(base_vector(1.0/3.0, 1.0/3.0), -27.0/96.0);
-//       p->add_point(base_vector(1.0/5.0, 1.0/5.0), 25.0/96.0);
-//       p->add_point(base_vector(3.0/5.0, 1.0/5.0), 25.0/96.0);
-//       p->add_point(base_vector(1.0/5.0, 3.0/5.0), 25.0/96.0);
-//       break;
-//     case 4: 
-//       {  
-// 	double a = 0.445948490915965;
-// 	double b = 0.091576213509771;
-// 	double c = 0.111690794839005;
-// 	double d = 0.054975871827661;
-// 	p->add_point(base_vector(a, a),             c);
-// 	p->add_point(base_vector(1.0 - 2.0 * a, a), c);
-// 	p->add_point(base_vector(a, 1.0 - 2.0 * a), c);
-// 	p->add_point(base_vector(b, b),             d);
-// 	p->add_point(base_vector(1.0 - 2.0 * b, b), d);
-// 	p->add_point(base_vector(b, 1.0 - 2.0 * b), d);
-//       }
-//       break;
-//     case 5:  
-//       {
-// 	double a = 0.470142064105115;
-// 	double b = 0.101286507323456;
-// 	double c = 0.0661970763942530;
-// 	double d = 0.0629695902724135;
-// 	p->add_point(base_vector(a, a),             c);
-// 	p->add_point(base_vector(1.0 - 2.0 * a, a), c);
-// 	p->add_point(base_vector(a, 1.0 - 2.0 * a), c);
-// 	p->add_point(base_vector(b, b),             d);
-// 	p->add_point(base_vector(1.0 - 2.0 * b, b), d);
-// 	p->add_point(base_vector(b, 1.0 - 2.0 * b), d);
-// 	p->add_point(base_vector(1.0/3.0, 1.0/3.0), 9.0/80.0);
-//       }
-//       break;
-//     case 6: 
-//       {
-// 	double a1 = 0.063089104491502;
-// 	double a2 = 0.249286745170910;
-// 	double aa = 0.310352451033785;
-// 	double bb = 0.053145049844816;
-// 	p->add_point(base_vector(a1, a1),             0.050844906370206 * 0.5);
-// 	p->add_point(base_vector(1.0 - 2.0 * a1, a1), 0.050844906370206 * 0.5);
-// 	p->add_point(base_vector(a1, 1.0 - 2.0 * a1), 0.050844906370206 * 0.5);
-// 	p->add_point(base_vector(a2, a2),             0.116786275726378 * 0.5);
-// 	p->add_point(base_vector(1.0 - 2.0 * a2, a2), 0.116786275726378 * 0.5);
-// 	p->add_point(base_vector(a2, 1.0 - 2.0 * a2), 0.116786275726378 * 0.5);
-// 	p->add_point(base_vector(aa, bb), 0.082851075618374 * 0.5);
-// 	p->add_point(base_vector(aa, 1.0 - aa - bb), 0.082851075618374 * 0.5);
-// 	p->add_point(base_vector(bb, aa), 0.082851075618374 * 0.5);
-// 	p->add_point(base_vector(bb, 1.0 - aa - bb), 0.082851075618374 * 0.5);
-// 	p->add_point(base_vector(1.0 - aa - bb, aa), 0.082851075618374 * 0.5);
-// 	p->add_point(base_vector(1.0 - aa - bb, bb), 0.082851075618374 * 0.5);
-//       }
-//       break;
-//     case 7:
-//       {
-// 	double r1  = 0.0651301029022;
-// 	double r2  = 0.8697397941956;
-// 	double r4  = 0.3128654960049;
-// 	double r5  = 0.6384441885698;
-// 	double r6  = 0.0486903154253;
-// 	double r10 = 0.2603459660790;
-// 	double r11 = 0.4793080678419;
-// 	double r13 = 0.3333333333333;
-// 	double w1  = 0.0533472356088;
-// 	double w4  = 0.0771137608903;
-// 	double w10 = 0.1756152574332;
-// 	double w13 = -0.1495700444677;
-// 	p->add_point(base_vector(r1, r1),   w1  * 0.5);
-// 	p->add_point(base_vector(r2, r1),   w1  * 0.5);
-// 	p->add_point(base_vector(r1, r2),   w1  * 0.5);
-// 	p->add_point(base_vector(r4, r6),   w4  * 0.5);
-// 	p->add_point(base_vector(r5, r4),   w4  * 0.5);
-// 	p->add_point(base_vector(r6, r5),   w4  * 0.5);
-// 	p->add_point(base_vector(r5, r6),   w4  * 0.5);
-// 	p->add_point(base_vector(r4, r5),   w4  * 0.5);
-// 	p->add_point(base_vector(r6, r4),   w4  * 0.5);
-// 	p->add_point(base_vector(r10, r10), w10 * 0.5);
-// 	p->add_point(base_vector(r11, r10), w10 * 0.5);
-// 	p->add_point(base_vector(r10, r11), w10 * 0.5);
-// 	p->add_point(base_vector(r13, r13), w13 * 0.5);
-//       }
-//       break;
-//     case 13:
-//       /*
-// 	taken from the  Encyclopaedia of Cubature Formulas
-// 	 http://www.cs.kuleuven.ac.be/~nines/research/ecf/ecf.html
-//       */
-//       {
-//         triangle_add_point_full_symmetric
-// 	  (p, /* +3 */
-// 	   LONG_SCAL(0.5),
-// 	   LONG_SCAL(0.00267845189554543044455908674650066));
-//         triangle_add_point_full_symmetric
-// 	  (p, /* +1 */
-// 	   LONG_SCAL(0.333333333333333333333333333333333),
-// 	   LONG_SCAL(0.0293480398063595158995969648597808));
-//         triangle_add_point_full_symmetric
-// 	  (p, /* +3 */
-// 	   LONG_SCAL(0.0246071886432302181878499494124643),
-// 	   LONG_SCAL(0.00392538414805004016372590903990464));
-//         triangle_add_point_full_symmetric
-// 	  (p, /* +3 */
-// 	   LONG_SCAL(0.420308753101194683716920537182100),
-// 	   LONG_SCAL(0.0253344765879434817105476355306468));
-//         triangle_add_point_full_symmetric
-// 	  (p, /* +3 */
-// 	   LONG_SCAL(0.227900255506160619646298948153592),
-// 	   LONG_SCAL(0.0250401630452545330803738542916538));
-//         triangle_add_point_full_symmetric
-// 	  (p, /* +3 */
-// 	   LONG_SCAL(0.116213058883517905247155321839271),
-// 	   LONG_SCAL(0.0158235572961491595176634480481793));
-//         triangle_add_point_full_symmetric
-// 	  (p, /* +3 */
-// 	   LONG_SCAL(0.476602980049079152951254215211496),
-// 	   LONG_SCAL(0.0157462815379843978450278590138683));
-//         triangle_add_point_full_symmetric
-// 	  (p, /* +6 */
-// 	   LONG_SCAL(0.851775587145410469734660003794168),
-// 	   LONG_SCAL(0.0227978945382486125477207592747430),
-// 	   LONG_SCAL(0.00790126610763037567956187298486575));
-//         triangle_add_point_full_symmetric
-// 	  (p, /* +6 */
-// 	   LONG_SCAL(0.692797317566660854594116289398433),
-// 	   LONG_SCAL(0.0162757709910885409437036075960413),
-// 	   LONG_SCAL(0.00799081889046420266145965132482933));
-//         triangle_add_point_full_symmetric
-// 	  (p, /* +6 */
-// 	   LONG_SCAL(0.637955883864209538412552782122039),
-// 	   LONG_SCAL(0.0897330604516053590796290561145196),
-// 	   LONG_SCAL(0.0182757511120486476280967518782978));
-//         /* total : 37 points */
-//         assert(p->nb_points() == 37);
-//       }
-//       break;
-//     default : DAL_THROW(failure_error, "Method not implemented");
-//     }  
-    
-//     std::stringstream name;
-//     name << "IM_GAUSS1D(" << n << ")";
-//     for (short_type f = 0; f < p->structure()->nb_faces(); ++f)
-//       p->add_method_on_face(int_method_descriptor(name.str()), f);
-//     p->valid_method();
-//     return new integration_method(p);
-//   }
-
-
-  /* ********************************************************************* */
-  /* Integration on quadrilaterals                                         */
-  /* ********************************************************************* */
-
-//   static pintegration_method approx_quad(im_param_list &params) {
-//     if (params.size() != 1)
-//       DAL_THROW(failure_error, 
-// 	   "Bad number of parameters : " << params.size() << " should be 1.");
-//     if (params[0].type() != 0)
-//       DAL_THROW(failure_error, "Bad type of parameters");
-//     int n = int(::floor(params[0].num() + 0.01));
-//     if (n <= 0 || n >= 100 || double(n) != params[0].num())
-//       DAL_THROW(failure_error, "Bad parameters");
-
-//     approx_integration *p
-//       = new approx_integration(bgeot::parallelepiped_of_reference(2));
- 
-//     switch (n) {
-//  case 2: 
-//    p->add_point(base_vector(0.5+sqrt(1.0/6.0), 0.5),              1.0/3.0);
-//    p->add_point(base_vector(0.5-sqrt(1.0/24.0),0.5+sqrt(1.0/8.0)),1.0/3.0);
-//    p->add_point(base_vector(0.5-sqrt(1.0/24.0),0.5-sqrt(1.0/8.0)),1.0/3.0);
-//       break;
-//     case 3:
-//       p->add_point(base_vector(0.5 + ::sqrt(1.0/6.0), 0.5), 0.25);
-//       p->add_point(base_vector(0.5 - ::sqrt(1.0/6.0), 0.5), 0.25);
-//       p->add_point(base_vector(0.5, 0.5 + ::sqrt(1.0/6.0)), 0.25);
-//       p->add_point(base_vector(0.5, 0.5 - ::sqrt(1.0/6.0)), 0.25);
-//       break;
-//     case 5: 
-//       p->add_point(base_vector(0.5, 0.5), 2.0/7.0);
-//       p->add_point(base_vector(0.5, 0.5 + ::sqrt(14.0/60.0)), 5.0/63.0);
-//       p->add_point(base_vector(0.5, 0.5 - ::sqrt(14.0/60.0)), 5.0/63.0);
-//       p->add_point(base_vector(0.5 + ::sqrt(3.0/20.0),
-// 			       0.5 + ::sqrt(3.0/20.0)), 5.0/36.0);
-//       p->add_point(base_vector(0.5 - ::sqrt(3.0/20.0),
-// 			       0.5 + ::sqrt(3.0/20.0)), 5.0/36.0);
-//       p->add_point(base_vector(0.5 + ::sqrt(3.0/20.0),
-// 			       0.5 - ::sqrt(3.0/20.0)), 5.0/36.0);
-//       p->add_point(base_vector(0.5 - ::sqrt(3.0/20.0),
-// 			       0.5 - ::sqrt(3.0/20.0)), 5.0/36.0);
-//       break;
-//     default : DAL_THROW(failure_error, "Method not implemented");
-//     }
-//     std::stringstream name;
-//     name << "IM_GAUSS1D(" << n << ")";
-//     for (short_type f = 0; f < p->structure()->nb_faces(); ++f)
-//       p->add_method_on_face(int_method_descriptor(name.str()), f);
-//     p->valid_method();
-//     return new integration_method(p);
-//   }
-
-  /* ********************************************************************* */
-  /*                                                                       */
-  /*   Particular integration methods on dimension 3.                      */
-  /*                                                                       */
-  /* ********************************************************************* */
-
-
-  /* ********************************************************************* */
-  /*  Integration on a tetrahedron                                         */
-  /* ********************************************************************* */
-  
-//   static pintegration_method approx_tetra(im_param_list &params) {
-//     if (params.size() != 1)
-//       DAL_THROW(failure_error, 
-// 	   "Bad number of parameters : " << params.size() << " should be 1.");
-//     if (params[0].type() != 0)
-//       DAL_THROW(failure_error, "Bad type of parameters");
-//     int n = int(::floor(params[0].num() + 0.01));
-//     if (n <= 0 || n >= 100 || double(n) != params[0].num())
-//       DAL_THROW(failure_error, "Bad parameters");
-//
-//     approx_integration *p = 
-//       new approx_integration(bgeot::simplex_of_reference(3));
-//  
-//     switch (n) {
-//     case 1: 
-//       p->add_point(base_vector(0.25, 0.25, 0.25), 1.0/6.0);
-//       break;
-//     case 2:
-//       {
-// 	double c = 0.13819660112501052;       
-// 	p->add_point(base_vector(c, c, c),           1.0/24.0);
-// 	p->add_point(base_vector(1 - 3.0 * c, c, c), 1.0/24.0);
-// 	p->add_point(base_vector(c, 1 - 3.0 * c, c), 1.0/24.0);
-// 	p->add_point(base_vector(c, c, 1 - 3.0 * c), 1.0/24.0);
-//       }
-//       break;
-//     case 3: 
-//       p->add_point(base_vector(0.25, 0.25, 0.25), -4.0/30.0);
-//       p->add_point(base_vector(1.0/6.0, 1.0/6.0, 1.0/6.0), 9.0/120.0);
-//       p->add_point(base_vector(1.0/2.0, 1.0/6.0, 1.0/6.0), 9.0/120.0);
-//       p->add_point(base_vector(1.0/6.0, 1.0/2.0, 1.0/6.0), 9.0/120.0);
-//       p->add_point(base_vector(1.0/6.0, 1.0/6.0, 1.0/2.0), 9.0/120.0);
-//       break;
-//     case 5:  
-//       {
-// 	double b1 = 0.31979362782962991;
-// 	double b2 = 0.091971078052723033;
-// 	double c1 = 0.040619116511110275;
-// 	double c2 = 0.7240867658418309;
-// 	double d  = 0.056350832689629156;
-// 	double e  = 0.44364916731037084;
-// 	double w0 = 0.019753086419753086;
-// 	double w1 = 0.011511367871045398;
-// 	double w2 = 0.01198951396316977;
-// 	double w3 = 0.008818342151675485;
-// 	p->add_point(base_vector(0.25, 0.25, 0.25), w0);
-// 	p->add_point(base_vector(b1, b1, b1), w1);
-// 	p->add_point(base_vector(c1, b1, b1), w1);
-// 	p->add_point(base_vector(b1, c1, b1), w1);
-// 	p->add_point(base_vector(b1, b1, c1), w1);
-// 	p->add_point(base_vector(b2, b2, b2), w2);
-// 	p->add_point(base_vector(c2, b2, b2), w2);
-// 	p->add_point(base_vector(b2, c2, b2), w2);
-// 	p->add_point(base_vector(b2, b2, c2), w2);
-// 	p->add_point(base_vector(d, d, e), w3);
-// 	p->add_point(base_vector(d, e, d), w3);
-// 	p->add_point(base_vector(e, d, d), w3);
-// 	p->add_point(base_vector(d, e, e), w3);
-// 	p->add_point(base_vector(e, e, d), w3);    
-// 	p->add_point(base_vector(e, d, e), w3);
-//       }
-//       break;
-//     default : DAL_THROW(failure_error, "Method not implemented");
-//     } 
-//     std::stringstream name;
-//     name << "IM_TRIANGLE(" << n << ")";
-//     for (short_type f = 0; f < p->structure()->nb_faces(); ++f)
-//       p->add_method_on_face(int_method_descriptor(name.str()), f);
-//     p->valid_method();
-//     return new integration_method(p);
-//   }
 
   /* ******************************************************************** */
   /*    Naming system                                                     */
