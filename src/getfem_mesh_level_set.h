@@ -44,6 +44,8 @@ namespace getfem {
   class mesh_level_set : public getfem_mesh_receiver,
 			 public context_dependencies {
   protected :
+    mutable std::set<std::string> diff_zones;
+    dal::dynamic_array<const std::string *> zones_of_convexes;
     getfem_mesh *linked_mesh_;
     mutable bool is_valid_, is_adapted_;
 
@@ -54,7 +56,7 @@ namespace getfem {
 
     struct convex_info {
       pgetfem_mesh pmesh;
-      std::vector<std::string> zones;
+      std::vector<const std::string *> zones;
       convex_info() : pmesh(0) {}
     };
 
@@ -107,10 +109,19 @@ namespace getfem {
     }
 
     void adapt(void);
+    void merge_zonesets(std::vector<const std::string *> &zones1,
+			const std::vector<const std::string *> &zones2) const;
+    void merge_zoneset(std::vector<const std::string *> &zones,
+		       std::string z) const;
+    bool convex_is_cutted(size_type cv) const
+    { return (cut_cv.find(cv) != cut_cv.end()); }
+    const std::string &primary_zone_of_convex(size_type cv)
+    { return *(zones_of_convexes[cv]); }
     
-
     mesh_level_set(getfem_mesh &me);
     virtual ~mesh_level_set();
+    
+
   private:
     mesh_level_set(const mesh_level_set &);
     mesh_level_set & operator=(const mesh_level_set &);

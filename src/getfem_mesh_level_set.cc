@@ -294,23 +294,27 @@ struct Chrono {
       a[i] = char_are_compatible(a[i], b[i]);
   }
 
-  static void merge_zoneset(std::vector<std::string> &zones,
-			    const std::string &z) {
-    cout << "merging " << z << " with ";
-    for (size_type l = 0; l < zones.size(); ++l) cout << zones[l] << ", ";
-    cout << endl;
+  void mesh_level_set::merge_zoneset(std::vector<const std::string *> &zones,
+				     std::string z) const {
     size_type i = 0, j = 0, k = size_type(-1);
     for (; i < zones.size(); ++i, ++j) {
       if (i != j) zones[j] = zones[i];
-      if (string_are_compatible(zones[j], z)) {
+      if (*(zones[j]) == z) return;
+      if (string_are_compatible(*(zones[j]), z)) {
 	if (k == size_type(-1)) k = j; else j--;
-	string_merge(zones[k], z);
+	string_merge(z, (*zones[k]));
+	zones[k] = &(*(diff_zones.insert(z).first));
       }
     }
-    if (k == size_type(-1)) zones.push_back(z); else zones.resize(j);
-    cout << "result : ";
-    for (size_type l = 0; l < zones.size(); ++l) cout << zones[l] << ", ";
-    cout << endl;
+    if (k == size_type(-1)) zones.push_back(&(*(diff_zones.insert(z).first)));
+    else zones.resize(j);
+  }
+
+  void mesh_level_set::merge_zonesets(std::vector<const std::string *> &zones1,
+				      const std::vector<const std::string *>
+				      &zones2) const {
+    for (size_type i = 0; i < zones2.size(); ++i)
+      merge_zoneset(zones1, *(zones2[i]));
   }
 
   void mesh_level_set::find_zones_of_element(size_type cv,
@@ -672,14 +676,15 @@ struct Chrono {
     // for each element touched, compute the sub mesh
     //   then compute the adapted integration method
     cut_cv.clear();
+    diff_zones.clear();
     std::string zone;
     for (dal::bv_visitor cv(linked_mesh().convex_index()); 
 	 !cv.finished(); ++cv) {
       dal::bit_vector prim, sec;
       find_crossing_level_set(cv, prim, sec, zone);
-      cout << "zone of element " << cv << " : " << zone << endl;
+      zones_of_convexes[cv] = &(*(diff_zones.insert(zone).first));
       if (noisy) cout << "element " << cv << " cut level sets : "
-		      << prim << endl;
+		      << prim << " zone : " << zone << endl;
       if (prim.card()) {
 	cut_element(cv, prim, sec);
 	find_zones_of_element(cv, zone);
@@ -720,7 +725,7 @@ struct Chrono {
       if (!p2 || p*p2 < 0) cutted = true;
     }
     if (cutted && d1 < -EPS) return 0;
-    return (d2 < 0.) ? -1 : ((d2 > 0.) ? 1 : 0);
+    return (d2 < 0.) ? -1 : 1;
   }
 
 
