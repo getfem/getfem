@@ -20,7 +20,7 @@ while($fis)
       { ($f1, $f2) = split('<', $f2, 2); ($f2, $f1) =  split('>', $f2, 2); }
       else
       { ($f1, $f2) = split('\"', $f2, 2); ($f2, $f1) =  split('\"', $f2, 2); }
-      if ($f2 =~ /getfem/)
+      if (($f2 =~ /getfem/) or ($f2 =~ /dal/) or ($f2 =~ /bgeot/) or ($f2 =~ /linkmsg/) or ($f2 =~ /ftool/))
       {
 	while ($f2 =~ /\//) { ($f1, $f2) = split('\/', $f2, 2); }
 	$tabdep[$nb_file][$nb_dep++] = $f2;
