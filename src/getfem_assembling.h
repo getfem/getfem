@@ -115,10 +115,16 @@ namespace getfem
 		       size_type boundary=size_type(-1))
   {
     generic_assembly assem;
-    if (mf_u1.get_qdim() == 1 && mf_u2.get_qdim() == 1)
-      assem.set("M(#1,#2)+=comp(Base(#1).Base(#2))");
+    if (&mf_u1 != &mf_u2)
+      if (mf_u1.get_qdim() == 1 && mf_u2.get_qdim() == 1)
+	assem.set("M(#1,#2)+=comp(Base(#1).Base(#2))");
+      else
+	assem.set("M(#1,#2)+=comp(vBase(#1).vBase(#2))(:,i,:,i);");
     else
-      assem.set("M(#1,#2)+=comp(vBase(#1).vBase(#2))(:,i,:,i);");
+      if (mf_u1.get_qdim() == 1 && mf_u2.get_qdim() == 1)
+	assem.set("M(#1,#2)+=sym(comp(Base(#1).Base(#2)))");
+      else
+	assem.set("M(#1,#2)+=sym(comp(vBase(#1).vBase(#2))(:,i,:,i));");
     assem.push_mf(mf_u1);
     assem.push_mf(mf_u2);
     assem.push_mat(M);
