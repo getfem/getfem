@@ -217,8 +217,9 @@ tru64)
    base=`echo "$object" | sed -e 's|^.*/||' -e 's/\.o$//' -e 's/\.lo$//'`
 
    if test "$libtool" = yes; then
-      tmpdepfile1="$dir.libs/$base.lo.d"
+      tmpdepfile1="$dir.libs/$base.o.d"
       tmpdepfile2="$dir.libs/$base.d"
+      tmpdepfile3="$dir.libs/$base.lo.d"
       "$@" -Wc,-MD
    else
       tmpdepfile1="$dir$base.o.d"
@@ -236,7 +237,11 @@ tru64)
    if test -f "$tmpdepfile1"; then
       tmpdepfile="$tmpdepfile1"
    else
+      if test -f "$tmpdepfile2"; then
       tmpdepfile="$tmpdepfile2"
+      else
+      tmpdepfile="$tmpdepfile3";
+      fi
    fi
    if test -f "$tmpdepfile"; then
       sed -e "s,^.*\.[a-z]*:,$object:," < "$tmpdepfile" > "$depfile"
