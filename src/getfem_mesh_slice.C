@@ -712,6 +712,21 @@ namespace getfem {
     }
   }
 
+  void mesh_slice::to_mesh(getfem_mesh& mm) const {
+    std::vector<size_type> pnums;
+    for (cvlst_ct::const_iterator it=cvlst.begin(); it != cvlst.end(); ++it) {
+      pnums.clear();
+      for (cs_nodes_ct::const_iterator itn=(*it).nodes.begin(); 
+	   itn != (*it).nodes.end(); ++itn)
+	pnums.push_back(mm.add_point((*itn).pt));
+      for (cs_simplexes_ct::const_iterator its=(*it).simplexes.begin();
+	   its != (*it).simplexes.end(); ++its)
+	mm.add_convex(bgeot::simplex_geotrans((*its).dim(),1), 
+		      dal::index_ref_iterator(pnums.begin(),
+					      (*its).inodes.begin()));
+    }
+  }
+
   size_type mesh_slice::memsize() const {
     size_type sz = sizeof(mesh_slice);
     for (cvlst_ct::const_iterator it = cvlst.begin(); it != cvlst.end(); ++it) {

@@ -139,6 +139,9 @@ namespace getfem {
     /** merges with another mesh slice */
     void merge(const mesh_slice& sl);
 
+    /** builds a P1 mesh from the slice */
+    void to_mesh(getfem_mesh& m) const; 
+
     /** interpolation of a mesh_fem on a slice (the mesh_fem
 	and the slice must share the same mesh, of course)
     */
@@ -335,6 +338,9 @@ namespace getfem {
       return slicer_volume::trinom(a,b,c);
     }
   public:
+    /* orient = -1 => select interior, 
+       orient = 0  => select boundary 
+       orient = +1 => select exterior */
     slicer_sphere(base_node x0_, scalar_type R_, int orient_) : 
       slicer_volume(orient_), x0(x0_), R(R_) {} //cerr << "slicer_volume, x0=" << x0 << ", R=" << R << endl; }
   };
