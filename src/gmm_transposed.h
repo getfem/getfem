@@ -250,8 +250,10 @@ namespace gmm {
   };
 
   template <class L> inline 
-  typename transposed_return<const L *>::return_type transposed(const L &l)
-  { return typename transposed_return<const L *>::return_type(linalg_cast(const_cast<L &>(l)));}
+  typename transposed_return<const L *>::return_type transposed(const L &l) {
+    return typename transposed_return<const L *>::return_type
+      (linalg_cast(const_cast<L &>(l)));
+  }
 
   template <class L> inline 
   typename transposed_return<L *>::return_type transposed(L &l)

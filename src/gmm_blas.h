@@ -157,8 +157,15 @@ namespace gmm {
   typename select_return<typename linalg_traits<M>::const_col_iterator,
                          typename linalg_traits<M>::col_iterator,
                          M *>::return_type
-  mat_col_end(M &v)
-  { return linalg_traits<M>::col_end(linalg_cast(v)); }
+  mat_col_end(M &m)
+  { return linalg_traits<M>::col_end(linalg_cast(m)); }
+
+  template <class M> inline
+  typename select_return<typename linalg_traits<M>::const_col_iterator,
+                         typename linalg_traits<M>::col_iterator,
+                         const M *>::return_type
+  mat_col_end(const M &m)
+  { return linalg_traits<M>::col_end(linalg_cast(m)); }
 
   template <class MAT> inline
   typename select_return<typename linalg_traits<MAT>::const_sub_row_type,

@@ -29,10 +29,8 @@ void const_ref_test(const M1 &m1, const M2 &m2) {
 
   cout << gmm::transposed(gmm::sub_matrix(m1, gmm::sub_interval(0, 2),
 					  gmm::sub_interval(2, 2))) << endl;
-//   cout << gmm::sub_matrix(gmm::transposed
-// 			  (gmm::sub_matrix(m2,gmm::sub_interval(2, 3),
-// 					   gmm::sub_slice(1, 2, 3))),
-// 			  gmm::sub_interval(1, 2)) << endl;
+  cout << gmm::transposed(gmm::sub_matrix(m2,gmm::sub_interval(2, 3),
+ 					   gmm::sub_slice(1, 2, 3))) << endl;
 }
 
 
