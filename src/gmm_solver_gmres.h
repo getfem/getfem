@@ -99,7 +99,7 @@ namespace gmm {
       gmm::upper_tri_solve(H, s, i, false);
       gmm::combine(KS, s, x, i);
       gmm::mult(A, gmm::scaled(x, -T(1)), b, w);
-      gmm::mult(M, w, r);
+      mult(M, w, r);
       beta_old = std::min(beta, beta_old); beta = gmm::vect_norm2(r);
       if (int(inner.get_iteration()) < restart -1 || beta_old <= beta)
 	++blocked; else blocked = 0;
