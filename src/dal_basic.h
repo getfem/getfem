@@ -387,8 +387,8 @@ namespace dal
     typedef typename std::vector<T*>::iterator iterator;
     typedef typename std::vector<T*>::const_iterator const_iterator;
     ptr_collection() : std::vector<T*>() {}
-    ptr_collection(size_type sz) : std::vector<T*>(sz) { std::fill(begin(),end(),0); }
-    ~ptr_collection() { for (iterator i=begin(); i != end(); ++i) { delete *i; *i = 0; } }
+    ptr_collection(size_type sz) : std::vector<T*>(sz) { std::fill(this->begin(),this->end(),0); }
+    ~ptr_collection() { for (iterator i=this->begin(); i != this->end(); ++i) { delete *i; *i = 0; } }
   };
 
 }
