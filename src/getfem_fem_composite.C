@@ -122,7 +122,7 @@ namespace getfem
     if (s == 1) 
       name << "FEM_STRUCTURED_COMPOSITE(FEM_PK(" << n << "," << k << "),1)";
     else
-      name << "FEM_GEN_HIERARCHICAL(PK2S_HIERARCHICAL_COMPOSITE(" << n
+      name << "FEM_GEN_HIERARCHICAL(FEM_PK2S_HIERARCHICAL_COMPOSITE(" << n
 	   << "," << k << "," << s/2 << "), FEM_STRUCTURED_COMPOSITE(FEM_PK("
 	   << n << "," << k << ")," << s << "))";
     return fem_descriptor(name.str());
