@@ -150,6 +150,11 @@ namespace dal {
 
   };
 
+  struct exception_callback_debug : public dal::exception_callback  {
+    virtual void callback(const std::string& msg)
+    { cerr << msg << endl; *(int *)(0) = 0; }
+  };
+
   inline void set_exception_callback(exception_callback *e)
   { exception_callback::which_except(e); }
 

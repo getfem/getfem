@@ -173,6 +173,19 @@ namespace gmm {
     }
   }
 
+  template <class SUBI, class Vector2, class Vector3>
+  void small_local_to_global(const std::vector<Vector3> &fi, Vector2 &f, 
+		       const std::vector<SUBI> &cor, size_type i) {
+    clear(f);
+    typename linalg_traits<Vector3>::const_iterator it2=fi[i].begin();
+    for (size_type j = 0, l = cor[i].size(); j < l; ++j, ++it2) {
+      f[cor[i].index(j)] += *it2;
+    }
+  }
+  
+  // CO global constraint matrix (CO * U <= cof)
+  // f  RHS
+
   template <class Matrix1, class Matrix2, class Matrix3, class Matrix4,
 	    class Matrix5, class Matrix6, class SUBI, class Vector2,
 	    class Vector3, class Vector4>
@@ -195,6 +208,7 @@ namespace gmm {
     std::vector<vector_type> gi(nb_sub);
     std::vector<vector_type> fi(nb_sub);
     std::vector<vector_type> cofi(nb_sub);
+    std::vector<vector_type> ui(nb_sub);
     std::vector<vector_type> wi(nb_sub);
     iter.set_rhsnorm(vect_norm2(f));
 
@@ -202,18 +216,20 @@ namespace gmm {
 
     for (size_type i = 0; i < nb_sub; ++i) {
       size_type k = i < ms ? mat_nrows(ml1[i]) : mat_nrows(ml2[i-ms]);
-      cofi[i] = vector_type(k); fi[i] = vector_type(k);
+      ui[i] = vector_type(k); cofi[i] = vector_type(k); fi[i] = vector_type(k);
       gi[i] = vector_type(k);   wi[i] = vector_type(k);
     }
 
     vector_type w(vect_size(u));
     global_to_local(f, fi, cor);
-    global_to_local(cof, cofi, cor); // pas bon
+    global_to_local(cof, cofi, cor); // pas bon, il faudrait un cor pour les contraintes ...
 
     for (;;) {
 
+      // Step 1
       gmm::mult(A, u, w);
       global_to_local(w, wi, cor);
+      global_to_local(u, ui, cor);
       
       for (size_type i = 0; i < nb_sub; ++i) {
 	gmm::add(fi[i], gmm::scaled(wi[i], -1.0), wi[i]);
@@ -225,19 +241,54 @@ namespace gmm {
       
       for (size_type i = 0; i < ms; ++i) {
 	iter2.init();
-	constrained_cg(ml1[i], mco1[i], gi[i], fi[i], cofi[i],
+	vector_type cofloc(mat_nrows(mco1[i]));
+	gmm::mult(mco1[i], gmm::scaled(ui[i], -1.0), cofi[i], cofloc); 
+	constrained_cg(ml1[i], mco1[i], gi[i], wi[i], cofloc,
 		       identity_matrix(), identity_matrix(), iter2);
 	itebilan = std::max(itebilan, iter2.get_iteration());
       }
       
       for (size_type i = 0; i < ml2.size(); ++i) {
 	iter2.init();
-	constrained_cg(ml2[i], mco2[i], gi[i+ms], fi[i+ms], cofi[i+ms],
+	vector_type cofloc(mat_nrows(mco2[i]));
+	gmm::mult(mco2[i], gmm::scaled(ui[i+ms], -1.0), cofi[i+ms], cofloc); 
+	constrained_cg(ml2[i], mco2[i], gi[i+ms], wi[i+ms], cofloc,
 		       identity_matrix(), identity_matrix(), iter2);
 	itebilan = std::max(itebilan, iter2.get_iteration());
       }
       
+      // Step 2
+
+      gmm::row_matrix<std::vector<value_type> > global_sm(nb_sub, nb_sub);
+      gmm::row_matrix<std::vector<value_type> > global_CO(1, nb_sub);
+      std::vector<value_type> global_cof(1);
+      std::vector<value_type> global_f(nb_sub), alpha(nb_sub);
+      std::vector<gmm::wsvector<value_type> > Gi(nb_sub);
+      gmm::wsvector<value_type> W(vect_size(u));
+      for (size_type i = 0; i < nb_sub; ++i) {
+	Gi[i] = gmm::wsvector<value_type>(vect_size(u));
+	small_local_to_global(gi, Gi[i], cor, i);
+      } // to be optimized (passer à des produits locaux)
       
+      global_cof[0] = 1.0;
+      for (size_type i = 0; i < nb_sub; ++i) {
+	global_CO(0,i) = 1.0; // peut être calculée une seule fois.
+	gmm::mult(A, Gi[i], W);
+	global_f[i] = gmm::vect_sp(f, Gi[i]) - gmm::vect_sp(w, Gi[i]) ;
+	for (size_type j = 0; j < nb_sub; ++j)
+	  global_sm(i,j) = gmm::vect_sp(W, Gi[i]);
+      } // to be optimized (symmetrie et produits locaux)
+      
+      iteration iter3 = iter;
+      iter3.reduce_noisy();
+      iter3.init();
+      constrained_cg(global_sm, global_CO, alpha, global_f, global_cof,
+		     identity_matrix(), identity_matrix(), iter3);
+      for (size_type i = 0; i < nb_sub; ++i)
+	gmm::add(u, gmm::scaled(Gi[i], alpha[i]), u);
+
+      ++iter;
+      if (iter.finished(vect_norm2(alpha))) break;
     }
 
     return itebilan;

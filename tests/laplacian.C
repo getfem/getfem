@@ -446,15 +446,9 @@ void lap_pb::solve(void) {
 /*  main program.                                                         */
 /**************************************************************************/
 
-class exception_cb : public dal::exception_callback  {
-  public:
-  virtual void callback(const std::string& msg)
-  { cerr << msg << endl; *(int *)(0) = 0; }
-};
-
 int main(int argc, char *argv[])
 {
-  exception_cb cb;
+  dal::exception_callback_debug cb;
   dal::exception_callback::set_exception_callback(&cb);
 
   try {
@@ -511,7 +505,7 @@ int main(int argc, char *argv[])
     scalar_type h1norm = getfem::asm_H1_norm(p.mef_data, V);
     total_time += ftool::uclock_sec() - exectime;
 
-    cout.precision(16);
+    cout.precision(40);
     cout << "L2 error = " << l2norm << endl
 	 << "H1 error = " << h1norm << endl
 	 << "Linfty error = " << linfnorm << endl;
