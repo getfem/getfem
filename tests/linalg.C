@@ -17,7 +17,6 @@
 /* USA.                                                                    */
 /*                                                                         */
 /* *********************************************************************** */
-#include <bgeot_matrix.h>
 #include <gmm.h>
 
 
@@ -59,7 +58,7 @@ int main(void)
     cout << "/***********************************************************/\n";
 
     gmm::dense_matrix<double> m(10, 10);
-    bgeot::vsvector<double> y(10), x(10), b(10);
+    std::vector<double> y(10), x(10), b(10);
     gmm::copy(gmm::identity_matrix(), m);
     int j = 5, k = 12;
     for (int i = 0; i < 10; ++i) { 
@@ -378,6 +377,85 @@ int main(void)
     cout << "Error : " << error << endl;
     if (error > 1.0E-10)
       DAL_THROW(dal::failure_error, "computation error too large : " << error);
+
+    cout << "/***********************************************************/\n";
+    cout << "/*      Test of sub_matrices of csr_matrix<slvector>       */\n";
+    cout << "/***********************************************************/\n";
+
+    gmm::row_matrix<gmm::slvector<double> > m7bis(38, 40);
+    gmm::clear(m7bis);
+    gmm::copy(m3, gmm::sub_matrix(m7bis, sind1, sind2));
+    cout << "m7bis = " << m7bis << endl;
+    cout << "gmm::transposed(gmm::sub_matrix(m7bis, sind1, sind2))  = "
+	 << gmm::transposed(gmm::sub_matrix(m7bis, sind1, sind2)) << endl;
+    gmm::clear(y);
+    iter.init();
+    gmm::bicgstab(gmm::sub_matrix(m7bis, sind1, sind2), y, b,
+		  gmm::identity_matrix(), iter);
+    cout << "y = " << y << endl;
+    gmm::add(gmm::scaled(x, -1.0), y);
+    error = gmm::vect_norm2(y);
+    cout << "Error : " << error << endl;
+    if (error > 1.0E-10)
+      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+
+    gmm::copy(m, gmm::sub_matrix(m7bis, sint1, ssli2));
+    cout << "m7bis = " << m7bis << endl;
+    cout <<
+      "gmm::transposed(gmm::transposed(gmm::sub_matrix(m7bis, sint1, ssli2))  =\n"
+	 << gmm::transposed(gmm::transposed(gmm::sub_matrix(m7bis, sint1, ssli2)))
+	 << endl;
+    gmm::clear(y3);
+    iter.init();
+    gmm::bicgstab(gmm::sub_matrix(m7bis, sint1, ssli2), y3, b,
+		  gmm::identity_matrix(), iter);
+    cout << "y3 = " << y3 << endl;
+    gmm::add(gmm::scaled(x, -1.0), y3);
+    error = gmm::vect_norm2(y3);
+    cout << "Error : " << error << endl;
+    if (error > 1.0E-10)
+      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+
+
+    cout << "/***********************************************************/\n";
+    cout << "/*      Test of sub_matrices of col_matrix<slvector>       */\n";
+    cout << "/***********************************************************/\n";
+
+    gmm::col_matrix<gmm::slvector<double> > m7ter(38, 40);
+    gmm::clear(m7ter);
+    gmm::copy(m3, gmm::sub_matrix(m7ter, sind1, sind2));
+    cout << "m7ter = " << m7ter << endl;
+    cout << "gmm::transposed(gmm::sub_matrix(m7ter, sind1, sind2))  = "
+	 << gmm::transposed(gmm::sub_matrix(m7ter, sind1, sind2)) << endl;
+    gmm::clear(y);
+    iter.init();
+    gmm::bicgstab(gmm::sub_matrix(m7ter, sind1, sind2), y, b,
+		  gmm::identity_matrix(), iter);
+    cout << "y = " << y << endl;
+    gmm::add(gmm::scaled(x, -1.0), y);
+    error = gmm::vect_norm2(y);
+    cout << "Error : " << error << endl;
+    if (error > 1.0E-10)
+      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+
+    gmm::copy(m, gmm::sub_matrix(m7ter, sint1, ssli2));
+    cout << "m7ter = " << m7ter << endl;
+    cout <<
+      "gmm::transposed(gmm::transposed(gmm::sub_matrix(m7ter, sint1, ssli2))  =\n"
+	 << gmm::transposed(gmm::transposed(gmm::sub_matrix(m7ter, sint1, ssli2)))
+	 << endl;
+    gmm::clear(y3);
+    iter.init();
+    gmm::bicgstab(gmm::sub_matrix(m7ter, sint1, ssli2), y3, b,
+		  gmm::identity_matrix(), iter);
+    cout << "y3 = " << y3 << endl;
+    gmm::add(gmm::scaled(x, -1.0), y3);
+    error = gmm::vect_norm2(y3);
+    cout << "Error : " << error << endl;
+    if (error > 1.0E-10)
+      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+
+
 
     cout << "/***********************************************************/\n";
     cout << "/*      matrix-matrix multiplication                       */\n";

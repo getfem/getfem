@@ -436,13 +436,14 @@ void lap_pb::solve(void) {
   // gmm::diagonal_precond<sparse_matrix_type> P(SM);
   // gmm::mr_approx_inverse_precond<sparse_matrix_type> P(SM, 10, 10E-17);
   // gmm::cholesky_precond<sparse_matrix_type> P(SM);
-  gmm::choleskyt_precond<sparse_matrix_type> P(SM, 5, 1E-8);
+  gmm::choleskyt_precond<sparse_matrix_type> P(SM, 0, 1E-9);
   // gmm::ilu_precond<sparse_matrix_type> P(SM);
   cout << "Time to compute preconditionner : "
        << ftool::uclock_sec() - time << " seconds\n";
 
   cout << "Solve\n";
   gmm::cg(SM, U, B, P, iter);
+  // gmm::gmres(SM, U, B, P, 50, iter);
 
   if (gen_dirichlet) {
     linalg_vector Uaux(nb_dof);
@@ -482,9 +483,10 @@ int main(int argc, char *argv[])
     
     total_time += ftool::uclock_sec() - exectime;
     
-    cout << "Assembling \n";
+    cout << "Assembly \n";
     exectime = ftool::uclock_sec();
     p.assemble();
+    cout << "Assembly time : " << ftool::uclock_sec() - exectime << endl;
     
     total_time += ftool::uclock_sec() - exectime;
     

@@ -32,8 +32,6 @@
 #ifndef __DAL_STD_H
 #define __DAL_STD_H
 
-#include <getfem_arch_config.h>
-
 #define __GETFEM_VERIFY
 
 #ifndef __USE_STD_IOSTREAM

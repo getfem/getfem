@@ -34,6 +34,8 @@
 #ifndef __BGEOT_CONFIG_H
 #define __BGEOT_CONFIG_H
 
+#include <getfem_arch_config.h>
+
 #include <dal_except.h>
 
 #ifdef GETFEM_HAVE_QDLIB
