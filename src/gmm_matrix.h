@@ -255,7 +255,7 @@ namespace gmm
 
   template<typename V> void col_matrix<V>::resize(size_type m, size_type n) {
     li.resize(n);
-    for (size_type i=0; i < n; ++i) resize(li[i], m);
+    for (size_type i=0; i < n; ++i) gmm::resize(li[i], m);
   }
 
   template<typename V> void col_matrix<V>::clear_mat()
@@ -370,9 +370,9 @@ namespace gmm
 	std::fill(this->begin()+(i*m), this->begin()+(i+1)*m, T(0));
       }
     else {
-      for (size_type i = std::min(nbc, n)-1; i > 0; --i)
-	std::copy(this->begin()+i*nbl, this->begin()+(i+1)*nbl,
-		  this->begin()+i*m);
+      for (size_type i = std::min(nbc, n); i > 1; --i)
+	std::copy(this->begin()+(i-1)*nbl, this->begin()+i*nbl,
+		  this->begin()+(i-1)*m);
       for (size_type i = 0; i < std::min(nbc, n); ++i)
 	std::fill(this->begin()+(i*m+nbl), this->begin()+(i+1)*m, T(0));
     }
