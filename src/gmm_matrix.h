@@ -486,7 +486,6 @@ namespace gmm
     for (size_type j = 0; j < nc; ++j) jc[j] = shift;
     jc[nc] = shift;
   }
-  
 
   template <class T, int shift>
   struct linalg_traits<csc_matrix<T, shift> > {

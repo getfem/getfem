@@ -56,8 +56,8 @@ namespace gmm {
 
   struct linalg_true {};
   struct linalg_false {};
-  struct linalg_const {};
-  struct linalg_modifiable {};
+  struct linalg_const {};       // A reference is either linalg_const,
+  struct linalg_modifiable {};  //  linalg_modifiable or linalg_false.
 
   struct abstract_vector {};    // The object is a vector
   struct abstract_matrix {};    // The object is a matrix
