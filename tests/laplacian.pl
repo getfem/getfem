@@ -36,7 +36,7 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
     if ($_ =~ /L2 error/) {
       ($a, $b) = split('=', $_);
       # print "La norme en question :", $b;
-      if ($b > 0.01) { print "Error too large\n"; $er = 1; }
+      if ($b > 0.01) { print "\nError too large\n"; $er = 1; }
     }
     if ($_ =~ /error has been detected/) {
       $er = 1;
@@ -76,7 +76,7 @@ start_program("-d INTEGRATION=35 -d MESH_TYPE=1");
 print ".";
 start_program("-d N=3 -d INTEGRATION=1 -d MESH_TYPE=2 -d NX=5 -d FT=0.01");
 print ".";
-start_program("-d INTEGRATION=2 -d MESH_TYPE=1 -d INCLINE=0.5");
+start_program("-d INTEGRATION=2 -d MESH_TYPE=1 -d -d NX=10 INCLINE=0.5");
 print ".";
 start_program("-d N=1 -d FEM_TYPE=2 -d FT=1.0");
 print ".\n";
