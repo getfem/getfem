@@ -135,16 +135,13 @@ namespace getfem
   }
 
 
-  /**
-     source term (for both volumic sources and boundary (neumann) sources  
-  */
-  template<class VECT1, class VECT2>
+  /** source term (for both volumic sources and boundary (neumann) sources.
+   *  real version.
+   */
+  template<class VECT1, class VECT2, class T>
     void asm_source_term(VECT1 &B, const mesh_fem &mf,
 			 const mesh_fem &mfdata, const VECT2 &F,
-			 size_type boundary=size_type(-1)) {
-    if (mfdata.get_qdim() != 1)
-      DAL_THROW(std::invalid_argument,
-		"invalid data mesh fem (Qdim=1 required)");
+			 size_type boundary, T) {
     generic_assembly assem;
     if (mf.get_qdim() == 1)
       assem.set("F=data(#2); V(#1)+=comp(Base(#1).Base(#2))(:,j).F(j);");
@@ -155,9 +152,44 @@ namespace getfem
     assem.push_mf(mfdata);
     assem.push_data(F);
     assem.push_vec(B);
-    if (boundary == size_type(-1))
-      assem.volumic_assembly();
-    else assem.boundary_assembly(boundary);
+    (boundary == size_type(-1)) ?
+      assem.volumic_assembly() : assem.boundary_assembly(boundary);
+  }
+
+  /** source term (for both volumic sources and boundary (neumann) sources.
+   *  complex version.
+   */
+  template<class VECT1, class VECT2, class T>
+    void asm_source_term(VECT1 &B, const mesh_fem &mf,
+			 const mesh_fem &mfdata, const VECT2 &F,
+			 size_type boundary, std::complex<T>) {
+    generic_assembly assem;
+    if (mf.get_qdim() == 1)
+      assem.set("Fr=data$1(#2); V$1(#1)+=comp(Base(#1).Base(#2))(:,j).Fr(j);"
+		"Fi=data$2(#2); V$2(#1)+=comp(Base(#1).Base(#2))(:,j).Fi(j);");
+    else
+      assem.set("Fr=data$1(qdim(#1),#2); Fi=data$2(qdim(#1),#2);"
+		"V$1(#1)+=comp(vBase(#1).Base(#2))(:,i,j).Fr(i,j);"
+		"V$2(#1)+=comp(vBase(#1).Base(#2))(:,i,j).Fi(i,j);");
+    assem.push_mf(mf);
+    assem.push_mf(mfdata);
+    assem.push_data(gmm::real_part(F));
+    assem.push_data(gmm::imag_part(F));
+    assem.push_vec(gmm::real_part(B));
+    assem.push_vec(gmm::imag_part(B));
+    (boundary == size_type(-1)) ?
+      assem.volumic_assembly() : assem.boundary_assembly(boundary);
+  }
+
+  template<class VECT1, class VECT2>
+  void asm_source_term(VECT1 &B, const mesh_fem &mf,
+		       const mesh_fem &mfdata, const VECT2 &F,
+		       size_type boundary=size_type(-1)) {
+    if (mfdata.get_qdim() != 1)
+      DAL_THROW(std::invalid_argument,
+		"invalid data mesh fem (Qdim=1 required)");
+    asm_source_term(B, mf, mfdata, F, boundary,
+		    typename gmm::linalg_traits<VECT1>::value_type());
   }
 
 
@@ -258,12 +290,11 @@ namespace getfem
   /** 
      Stiffness matrix for linear elasticity, with a general Hooke  tensor 
   */
-  template<class MAT, class VECT>
-    void asm_stiffness_matrix_for_linear_elasticity_Hooke(MAT &RM,
-							  const mesh_fem &mf, 
-							  const mesh_fem &mfdata, 
-							  const VECT &H)
-  {
+  template<class MAT, class VECT> void
+  asm_stiffness_matrix_for_linear_elasticity_Hooke(MAT &RM,
+						   const mesh_fem &mf, 
+						   const mesh_fem &mfdata, 
+						   const VECT &H) {
     if (mfdata.get_qdim() != 1)
       DAL_THROW(std::invalid_argument,
 		"invalid data mesh fem (Qdim=1 required)");
@@ -273,7 +304,7 @@ namespace getfem
     generic_assembly assem("a=data$1(qdim(#1),qdim(#1),qdim(#1),qdim(#1),#2);"
 			   "t=comp(vGrad(#1).vGrad(#1).Base(#2));"
 			   "e=(t{:,2,3,:,5,6,:}+t{:,3,2,:,5,6,:}"
-			   "+t{:,2,3,:,6,5,:}+t{:,3,2,:,6,5,:})/4;"
+			   "  +t{:,2,3,:,6,5,:}+t{:,3,2,:,6,5,:})/4;"
 			   "M(#1,#1)+= sym(e(:,i,j,:,k,l,p).a(i,j,k,l,p))");
     assem.push_mf(mf);
     assem.push_mf(mfdata);
@@ -290,13 +321,14 @@ namespace getfem
     void asm_stokes(MAT &K, MAT &B, 
 		    const mesh_fem &mf_u,
 		    const mesh_fem &mf_p,
-		    const mesh_fem &mf_d, const VECT &viscos)
-  {
+		    const mesh_fem &mf_d, const VECT &viscos) {
     if (mf_d.get_qdim() != 1)
-      DAL_THROW(std::invalid_argument, "invalid data mesh fem for asm_stokes (Qdim=1 required)");
+      DAL_THROW(std::invalid_argument,
+		"invalid data mesh fem for asm_stokes (Qdim=1 required)");
     generic_assembly assem("visc=data$1(#3); "
 			   "t=comp(vGrad(#1).vGrad(#1).Base(#3));"
-			   "e=(t{:,2,3,:,5,6,:}+t{:,3,2,:,5,6,:}+t{:,2,3,:,6,5,:}+t{:,3,2,:,6,5,:})/4;"
+			   "e=(t{:,2,3,:,5,6,:}+t{:,3,2,:,5,6,:}"
+			   "  +t{:,2,3,:,6,5,:}+t{:,3,2,:,6,5,:})/4;"
 			   "M$1(#1,#1) += sym(e(:,i,j,:,i,j,k).visc(k));"          // visc*D(u):D(v)
 			   "M$2(#1,#2) += comp(vGrad(#1).Base(#2))(:,i,i,:);");    // p.div v
     assem.push_mf(mf_u);
@@ -362,10 +394,12 @@ namespace getfem
   }
 
   template<class MAT, class VECT>
-  void asm_Helmholtz(MAT &M, const mesh_fem &mf_u, const mesh_fem &mfdata, const VECT &K_squared) {
+  void asm_Helmholtz(MAT &M, const mesh_fem &mf_u, const mesh_fem &mfdata,
+		     const VECT &K_squared) {
     generic_assembly assem("Kr=data$1(#2); Ki=data$2(#2);"
 			   "m = comp(Base(#1).Base(#1).Base(#2)); "
-			   "M$1(#1,#1)+=sym(comp(Grad(#1).Grad(#1))(:,i,:,i) + m(:,:,i).Kr(i)); "
+			   "M$1(#1,#1)+=sym(comp(Grad(#1).Grad(#1))(:,i,:,i)"
+			   "          + m(:,:,i).Kr(i)); "
 			   "M$2(#1,#1)+=sym(m(:,:,i).Ki(i));");
     assem.push_mf(mf_u);
     assem.push_mf(mfdata);
