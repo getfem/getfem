@@ -56,6 +56,7 @@ namespace getfem
   using bgeot::base_poly;
   using bgeot::base_node;
 
+  using std::invalid_argument;
   using dal::dimension_error;
   using dal::file_not_found_error;
   using dal::internal_error;

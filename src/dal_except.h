@@ -44,6 +44,8 @@ namespace dal {
 
   /* errors definitions  */
 
+  using std::invalid_argument;
+
   class dimension_error : public std::logic_error {
   public:
     dimension_error(const std::string& what_arg): std::logic_error (what_arg)

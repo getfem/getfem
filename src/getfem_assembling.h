@@ -38,12 +38,13 @@
 namespace getfem
 {
   /**
-     compute $\|U\|2_$
-  */
+   * compute $\|U\|2_$
+   */
   template<class VEC>
   scalar_type asm_L2_norm(const mesh_fem &mf, const VEC &U) {
     return asm_L2_norm(mf,U,mf.convex_index());
   }
+
   template<class VEC>
   scalar_type asm_L2_norm(const mesh_fem &mf, const VEC &U,
 			  const dal::bit_vector &cvlst) {
@@ -51,7 +52,8 @@ namespace getfem
     if (mf.get_qdim() == 1)
       assem.set("u=data(#1); V()+=u(i).u(j).comp(Base(#1).Base(#1))(i,j)");
     else
-      assem.set("u=data(#1); V()+=u(i).u(j).comp(vBase(#1).vBase(#1))(i,k,j,k)");
+      assem.set("u=data(#1);"
+		"V()+=u(i).u(j).comp(vBase(#1).vBase(#1))(i,k,j,k)");
     assem.push_mf(mf);
     assem.push_data(U);
     bgeot::vsvector<scalar_type> v(1);
@@ -61,12 +63,13 @@ namespace getfem
   }
 
   /**
-     compute $\|\nabla U\|2_$
+   * compute $\|\nabla U\|2_$
    */
   template<class VEC>
   scalar_type asm_H1_semi_norm(const mesh_fem &mf, const VEC &U) {
     return asm_H1_semi_norm(mf,U,mf.convex_index());
   }
+
   template<class VEC>
   scalar_type asm_H1_semi_norm(const mesh_fem &mf, const VEC &U,
 			       const dal::bit_vector &cvlst) {
@@ -74,7 +77,8 @@ namespace getfem
     if (mf.get_qdim() == 1)
       assem.set("u=data(#1); V()+=u(i).u(j).comp(Grad(#1).Grad(#1))(i,d,j,d)");
     else
-      assem.set("u=data(#1); V()+=u(i).u(j).comp(vGrad(#1).vGrad(#1))(i,k,d,j,k,d)");
+      assem.set("u=data(#1);"
+		"V()+=u(i).u(j).comp(vGrad(#1).vGrad(#1))(i,k,d,j,k,d)");
     assem.push_mf(mf);
     assem.push_data(U);
     bgeot::vsvector<scalar_type> v(1);
@@ -84,12 +88,13 @@ namespace getfem
   }
 
   /** 
-      compute the H1 norm of U.
-  */
+   *   compute the H1 norm of U.
+   */
   template<class VEC>
   scalar_type asm_H1_norm(const mesh_fem &mf, const VEC &U) {
     return asm_H1_norm(mf,U,mf.convex_index());
   }
+
   template<class VEC>
   scalar_type asm_H1_norm(const mesh_fem &mf, const VEC &U,
 			  const dal::bit_vector &cvlst) {
@@ -97,11 +102,10 @@ namespace getfem
 		+dal::sqr(asm_H1_semi_norm(mf,U,cvlst)));
   }
   
-
   /** 
-      generic mass matrix assembly (on the whole mesh or on the specified
-      boundary) 
-  */
+   *  generic mass matrix assembly (on the whole mesh or on the specified
+   *  boundary) 
+   */
   template<class MAT>
   void asm_mass_matrix(MAT &M, const mesh_fem &mf_u1,
 		       size_type boundary=size_type(-1)) {
@@ -109,9 +113,9 @@ namespace getfem
   }
 
   /** 
-      generic mass matrix assembly (on the whole mesh or on the specified
-      boundary) 
-  */
+   *  generic mass matrix assembly (on the whole mesh or on the specified
+   *  boundary) 
+   */
   template<class MAT>
   void asm_mass_matrix(MAT &M, const mesh_fem &mf_u1, const mesh_fem &mf_u2,
 		       size_type boundary=size_type(-1)) {
@@ -135,7 +139,7 @@ namespace getfem
   }
 
 
-  /** source term (for both volumic sources and boundary (neumann) sources.
+  /*  source term (for both volumic sources and boundary (neumann) sources.
    *  real version.
    */
   template<class VECT1, class VECT2, class T>
@@ -156,7 +160,7 @@ namespace getfem
       assem.volumic_assembly() : assem.boundary_assembly(boundary);
   }
 
-  /** source term (for both volumic sources and boundary (neumann) sources.
+  /*  source term (for both volumic sources and boundary (neumann) sources.
    *  complex version.
    */
   template<class VECT1, class VECT2, class T>
@@ -181,13 +185,15 @@ namespace getfem
       assem.volumic_assembly() : assem.boundary_assembly(boundary);
   }
 
+  /** 
+   *  source term (for both volumic sources and boundary (neumann) sources.
+   */
   template<class VECT1, class VECT2>
   void asm_source_term(VECT1 &B, const mesh_fem &mf,
 		       const mesh_fem &mfdata, const VECT2 &F,
 		       size_type boundary=size_type(-1)) {
     if (mfdata.get_qdim() != 1)
-      DAL_THROW(std::invalid_argument,
-		"invalid data mesh fem (Qdim=1 required)");
+      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     asm_source_term(B, mf, mfdata, F, boundary,
 		    typename gmm::linalg_traits<VECT1>::value_type());
   }
@@ -217,8 +223,7 @@ namespace getfem
 		     const mesh_fem &mf_d, const VECT &Q, 
 		     size_type boundary=size_type(-1)) {
     if (mf_d.get_qdim() != 1)
-      DAL_THROW(std::invalid_argument,
-		"invalid data mesh fem (Qdim=1 required)");
+      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     generic_assembly assem;
     if (mf_u.get_qdim() == 1)
       assem.set("Q=data$1(#2);"
@@ -237,10 +242,12 @@ namespace getfem
     bye:
       if (Q_symmetric)
 	assem.set("Q=data$1(qdim(#1),qdim(#1),#2);"
-		  "M(#1,#1)+=sym(comp(vBase(#1).vBase(#1).Base(#2))(:,i,:,j,k).Q(i,j,k));");
+		  "M(#1,#1)+=sym(comp(vBase(#1).vBase(#1).Base(#2))"
+		  "(:,i,:,j,k).Q(i,j,k));");
       else
 	assem.set("Q=data$1(qdim(#1),qdim(#1),#2);"
-		  "M(#1,#1)+=comp(vBase(#1).vBase(#1).Base(#2))(:,i,:,j,k).Q(i,j,k);");
+		  "M(#1,#1)+=comp(vBase(#1).vBase(#1).Base(#2))"
+		  "(:,i,:,j,k).Q(i,j,k);");
     }
     assem.push_mf(mf_u);
     assem.push_mf(mf_d);
@@ -263,8 +270,7 @@ namespace getfem
 					   const VECT &LAMBDA,const VECT &MU) {
     MAT &RM = const_cast<MAT &>(RM_);
     if (mfdata.get_qdim() != 1)
-      DAL_THROW(std::invalid_argument,
-		"invalid data mesh fem (Qdim=1 required)");
+      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     
     if (mf.get_qdim() != mf.linked_mesh().dim())
       DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
@@ -296,8 +302,7 @@ namespace getfem
 						   const mesh_fem &mfdata, 
 						   const VECT &H) {
     if (mfdata.get_qdim() != 1)
-      DAL_THROW(std::invalid_argument,
-		"invalid data mesh fem (Qdim=1 required)");
+      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     /* e = strain tensor,
        M = a_{i,j,k,l}e_{i,j}(u)e_{k,l}(v)
     */
@@ -314,23 +319,24 @@ namespace getfem
   }
 
   /** two-in-one assembly of stokes equation:
-      linear elasticty part and p.div(v) term are assembled at the
-      same time. 
-  */
+   *  linear elasticty part and p.div(v) term are assembled at the
+   *  same time. 
+   */
   template<class MAT, class VECT>
     void asm_stokes(MAT &K, MAT &B, 
 		    const mesh_fem &mf_u,
 		    const mesh_fem &mf_p,
 		    const mesh_fem &mf_d, const VECT &viscos) {
     if (mf_d.get_qdim() != 1)
-      DAL_THROW(std::invalid_argument,
-		"invalid data mesh fem for asm_stokes (Qdim=1 required)");
+      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     generic_assembly assem("visc=data$1(#3); "
 			   "t=comp(vGrad(#1).vGrad(#1).Base(#3));"
 			   "e=(t{:,2,3,:,5,6,:}+t{:,3,2,:,5,6,:}"
 			   "  +t{:,2,3,:,6,5,:}+t{:,3,2,:,6,5,:})/4;"
-			   "M$1(#1,#1) += sym(e(:,i,j,:,i,j,k).visc(k));"          // visc*D(u):D(v)
-			   "M$2(#1,#2) += comp(vGrad(#1).Base(#2))(:,i,i,:);");    // p.div v
+			   // visc*D(u):D(v)
+			   "M$1(#1,#1)+=sym(e(:,i,j,:,i,j,k).visc(k));"
+			   // p.div v
+			   "M$2(#1,#2)+=comp(vGrad(#1).Base(#2))(:,i,i,:);");
     assem.push_mf(mf_u);
     assem.push_mf(mf_p);
     assem.push_mf(mf_d);
@@ -348,10 +354,12 @@ namespace getfem
 					    const mesh_fem &mfdata,
 					    const VECT &A) {
     if (mfdata.get_qdim() != 1)
-      DAL_THROW(std::invalid_argument,
-		"invalid data mesh fem (Qdim=1 required)");
-    generic_assembly assem("a=data$1(#2); M$1(#1,#1)+=sym(comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j))");
-    //generic_assembly assem("a=data$1(#2); M$1(#1,#1)+=comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j)");
+      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    generic_assembly
+      assem("a=data$1(#2); M$1(#1,#1)+="
+	    "sym(comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j))");
+    //generic_assembly assem("a=data$1(#2); M$1(#1,#1)"
+    //        "+=comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j)");
     assem.push_mf(mf);
     assem.push_mf(mfdata);
     assem.push_data(A);
@@ -384,7 +392,7 @@ namespace getfem
 						  const VECT &A)
   {
     if (mfdata.get_qdim() != 1)
-      DAL_THROW(std::invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     generic_assembly assem("a=data$1(mdim(#1),mdim(#1),#2); M$1(#1,#1)+=comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,j,k).a(j,i,k)");
     assem.push_mf(mf);
     assem.push_mf(mfdata);
@@ -433,8 +441,7 @@ namespace getfem
     pfem pf_u, pf_rh;
     
     if (mf_rh.get_qdim() != 1)
-      DAL_THROW(std::invalid_argument,
-		"invalid data mesh fem for dirichlet (Qdim=1 required)");
+      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     if (version & 1) {
       asm_qu_term(M, mf_u, mf_rh, H, boundary);
       std::vector<size_type> ind(0);
@@ -514,8 +521,7 @@ namespace getfem
 				 const VECT &R, size_type boundary,
 				 int version = 7) {
     if (mf_rh.get_qdim() != 1) 
-      DAL_THROW(std::invalid_argument,
-		"mf_rh should be a scalar (qdim=1) mesh_fem");
+      DAL_THROW(invalid_argument,"mf_rh should be a scalar (qdim=1) mesh_fem");
     size_type N = mf_rh.nb_dof(), Q=mf_u.get_qdim();
     VECT H(dal::sqr(mf_u.get_qdim())*N); gmm::clear(H);
     
