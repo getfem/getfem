@@ -353,7 +353,7 @@ namespace getfem
     void read_from_file(std::istream &ist);
     void read_from_file(const std::string &name);
     void write_to_file(std::ostream &ost) const;
-    void write_to_file(const std::string &name) const;
+    void write_to_file(const std::string &name, bool with_mesh=false) const;
   };
   
 }  /* end of namespace getfem.                                             */
