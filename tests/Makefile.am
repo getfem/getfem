@@ -6,7 +6,6 @@ check_PROGRAMS = \
 	geo_trans_inv \
 	integration \
 	laplacian \
-	linalg \
 	poly \
 	speed_test_for_gmm \
 	test_assembly \
@@ -29,7 +28,6 @@ laplacian_SOURCES = laplacian.C
 elasto_statique_SOURCES = elasto_statique.C
 integration_SOURCES = integration.C
 poly_SOURCES = poly.C
-linalg_SOURCES = linalg.C
 test_mesh_SOURCES = test_mesh.C
 geo_trans_SOURCES = geo_trans.C
 geo_trans_inv_SOURCES = geo_trans_inv.C
@@ -50,7 +48,6 @@ TESTS = \
 	$(top_srcdir)/tests/laplacian.pl \
 	$(top_srcdir)/tests/elasto_statique.pl  \
 	$(top_srcdir)/tests/integration.pl \
-	$(top_srcdir)/tests/linalg.pl \
 	$(top_srcdir)/tests/poly.pl \
 	$(top_srcdir)/tests/test_mesh.pl \
 	$(top_srcdir)/tests/geo_trans.pl \
@@ -85,6 +82,7 @@ EXTRA_DIST = \
 	gmm_test_sub.C \
 	gmm_test_mult.C \
 	gmm_test_mat_mult.C \
+	gmm_test_qr.C \
 	gmm_test_lusolve.C
 
 TESTS_ENVIRONMENT = perl
