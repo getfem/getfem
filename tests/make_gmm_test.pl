@@ -9,6 +9,7 @@ sub numerique { $a <=> $b; }
 #             - Gerer l'interface Lapack, SuperLU et QD.
 #             - Quand les vecteurs ou les matrices sont creuses,
 #             - les intialiser au moins une fois sur deux réellement creuses.
+#             - test complet sur les mult matriciels (dans gmm_test_mult.C)
 
 $islocal = 0;
 
@@ -150,6 +151,8 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 	    $sub1 = "gmm::sub_interval($c, $sizep)";
 	  }
 	  elsif ($a < 0.2) {
+	    $step = $sizep; if ($step == 0) { ++$step; }
+	    $step = int(1.0*int($sm/$step - 1)*rand) + 1;
 	    $c = int(1.0*($sm-($sizep*$step+1))*rand);
 	    $sub1 = "gmm::sub_slice($c, $sizep, $step)";
 	  }
@@ -170,6 +173,8 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 	    $sub2 = "gmm::sub_interval($c, $s)";
 	  }
 	  elsif ($b < 0.2) {
+	    $step = $sizep; if ($step == 0) { ++$step; }
+	    $step = int(1.0*int($sn/$step - 1)*rand) + 1;
 	    $c = int(1.0*($sn-($s*$step+1))*rand);
 	    $sub2 = "gmm::sub_slice($c, $s, $step)";
 	  }
