@@ -275,20 +275,20 @@ namespace gmm {
 		      double tol = 1E-12, bool compvect = true) {
     typedef typename linalg_traits<MAT1>::value_type value_type;
 
-    size_type n = mat_nrows(A), p, q;
+    size_type n = mat_nrows(A), p, q, ite = 0;
     MAT1 Q(n, n), R(n,n), A1(n,n); 
     gmm::copy(A, A1);
 
     Hessenberg_reduction(A1, eigvect, compvect);
     stop_criterion(A1, p, q, tol);
 
-    for (size_type ite = 0; q < n; ++ite) {
+    while (q < n) {
       qr_factor(A1, Q, R);
       gmm::mult(R, Q, A1);
       if (compvect) { gmm::mult(eigvect, Q, R); gmm::copy(R, eigvect); }
       
       stop_criterion(A1, p, q, tol);
-      if (ite > n*1000) DAL_THROW(failure_error, "QR algorithm failed");
+      if (++ite > n*1000) DAL_THROW(failure_error, "QR algorithm failed");
     }
     extract_eig(A1, eigval, tol); 
   }
