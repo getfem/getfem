@@ -46,8 +46,7 @@ namespace getfem
     pmat_elem_type pmt;
     pintegration_method ppi;
     bgeot::pgeometric_trans pgt;
-    bool operator < (const _emelem_comp_light &ls) const
-    {
+    bool operator < (const _emelem_comp_light &ls) const {
       if (pmt < ls.pmt) return true; if (pmt > ls.pmt) return false; 
       if (ppi < ls.ppi) return true; if (ppi > ls.ppi) return false; 
       if (pgt < ls.pgt) return true; return false;
@@ -98,13 +97,14 @@ namespace getfem
 	indv.capacity() * sizeof(std::vector<short_type>);
 
       for (size_type i=0; i < mref.size(); ++i) sz += mref[i].memsize();
-      for (size_type i=0; i < indv.size(); ++i) sz += indv[i].capacity() * sizeof(short_type);
+      for (size_type i=0; i < indv.size(); ++i)
+	sz += indv[i].capacity() * sizeof(short_type);
       return sz;
     }
 
 
-    _emelem_comp_structure(const _emelem_comp_light &ls)
-    { // optimisable ... !!
+    _emelem_comp_structure(const _emelem_comp_light &ls) {
+      // optimisable ... !!
       pgt = ls.pgt;
       pgp = geotrans_precomp(ls.pgt, &(ls.ppi->integration_points()));
       pme = ls.pmt;
@@ -286,6 +286,7 @@ namespace getfem
 	  indv[f+1].resize(1); indv[f+1][0] = f+1;
 	  mref_coeff[indcomp(f+1, 0, 0)] = 1.0;
 	}
+	// cout << "Un tenseur elem : " << mref[0] << endl;
       }
       else {
 	indv[0].resize(pai->nb_points_on_convex());
