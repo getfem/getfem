@@ -240,6 +240,8 @@ void lap_pb::init(void)
   case 32 : sprintf(meth, "IM_QUAD(2)"); break;
   case 33 : sprintf(meth, "IM_QUAD(3)"); break;
   case 35 : sprintf(meth, "IM_QUAD(5)"); break;
+  case 37 : sprintf(meth, "IM_QUAD(7)"); break;
+  case 39 : sprintf(meth, "IM_QUAD(9)"); break;
   default : DAL_THROW(std::logic_error, "Undefined integration method");
   }
   ppi = getfem::int_method_descriptor(meth);
@@ -508,7 +510,7 @@ int main(int argc, char *argv[])
     size_type nbdof = p.mef_data.nb_dof();
     linalg_vector V(nbdof), W(nbdof);
     scalar_type linfnorm = 0.0;
-    getfem::interpolation_solution_same_mesh(p.mef, p.mef_data, p.U, V, 1);
+    getfem::interpolation_solution_same_mesh(p.mef, p.mef_data, p.U, V);
     for (size_type i = 0; i < nbdof; ++i) {
       W[i] = sol_u(p.mef_data.point_of_dof(i)); V[i] -= W[i];
       linfnorm = std::max(linfnorm, dal::abs(V[i]));
