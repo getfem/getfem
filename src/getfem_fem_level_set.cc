@@ -43,25 +43,33 @@ namespace getfem {
     dal::bit_vector enriched_dofs, enriched_elements;
     
     for (size_type i = 0; i < mf.nb_dof(); ++i) {
-      std::vector<const std::string *> zoneset;
-      
       bgeot::mesh_convex_ind_ct ct = mf.convex_to_dof(i);
+      bool touch_cutted = false;
       for (bgeot::mesh_convex_ind_ct::const_iterator it = ct.begin();
-	   it != ct.end(); ++it) {
-	if (mls.convex_is_cutted(*it))
-	  mls.merge_zonesets(zoneset, mls.zoneset_of_element(*it));
-	else
-	  mls.merge_zonesets(zoneset, primary_zone_of_element(*it));
-      }
+	   it != ct.end(); ++it)
+	if (mls.convex_is_cutted(*it)) { touch_cutted = true; break; }
       
 
-      if (zoneset.size() != 1) { // stockage dans un map + bitset
-	cout << "number of zones for dof " << i << " : "
-	     << zoneset.size() << endl;
-	enriched_dofs.add(i);
+      if (touch_cutted) {
+	std::vector<const std::string *> zoneset;
+	
+	bgeot::mesh_convex_ind_ct ct = mf.convex_to_dof(i);
 	for (bgeot::mesh_convex_ind_ct::const_iterator it = ct.begin();
-	     it != ct.end(); ++it) enriched_elements.add(*it);
-
+	     it != ct.end(); ++it) {
+	  if (mls.convex_is_cutted(*it))
+	    mls.merge_zonesets(zoneset, mls.zoneset_of_element(*it));
+	  else
+	    mls.merge_zonesets(zoneset, primary_zone_of_element(*it));
+	}
+	
+	
+	if (zoneset.size() != 1) { // stockage dans un map + bitset
+	  cout << "number of zones for dof " << i << " : "
+	       << zoneset.size() << endl;
+	  enriched_dofs.add(i);
+	  for (bgeot::mesh_convex_ind_ct::const_iterator it = ct.begin();
+	       it != ct.end(); ++it) enriched_elements.add(*it);
+	}
       }
 
       

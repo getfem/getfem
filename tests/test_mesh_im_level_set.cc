@@ -159,7 +159,7 @@ int main(/* int argc, char **argv */) {
   feenableexcept(FE_DIVBYZERO | FE_INVALID);
 #endif
   try {
-    getfem::getfem_mesh_level_set_noisy();
+    // getfem::getfem_mesh_level_set_noisy();
     test_2d();
   }
   DAL_STANDARD_CATCH_ERROR;

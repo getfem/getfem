@@ -1,9 +1,12 @@
 SUBDIRS = meshes
 
 if QHULL
-optprogs = test_mesh_generation 	test_mesh_im_level_set
+optprogs = test_mesh_generation test_mesh_im_level_set crack
+optpl = $(top_srcdir)/tests/test_mesh_im_level_set.pl \
+        $(top_srcdir)/tests/crack.pl
 else
 optprogs =
+optpl = 
 endif
 
 check_PROGRAMS =                 \
@@ -30,7 +33,6 @@ check_PROGRAMS =                 \
 	stokes                   \
 	helmholtz                \
 	plate                    \
-	crack                    \
 	nonlinear_elastostatic   \
 	schwarz_additive         \
 	$(optprogs)              \
@@ -59,7 +61,6 @@ plate_SOURCES = plate.cc
 test_interpolation_SOURCES = test_interpolation.cc
 elastostatic_SOURCES = elastostatic.cc
 stokes_SOURCES = stokes.cc
-crack_SOURCES = crack.cc
 nonlinear_elastostatic_SOURCES = nonlinear_elastostatic.cc
 helmholtz_SOURCES = helmholtz.cc
 integration_SOURCES = integration.cc
@@ -79,6 +80,7 @@ navier_stokes_SOURCES = navier_stokes.cc
 if QHULL
 test_mesh_generation_SOURCES = test_mesh_generation.cc 
 test_mesh_im_level_set_SOURCES = test_mesh_im_level_set.cc 
+crack_SOURCES = crack.cc
 endif
 #test_fem_SOURCES = test_fem.cc
 dynamic_friction_SOURCES = dynamic_friction.cc
@@ -112,7 +114,7 @@ TESTS = \
 	$(top_srcdir)/tests/elastostatic.pl            \
 	$(top_srcdir)/tests/stokes.pl                  \
 	$(top_srcdir)/tests/plate.pl                   \
-	$(top_srcdir)/tests/crack.pl                   \
+	$(optpl)                                       \
 	$(top_srcdir)/tests/navier_stokes.pl           \
 	$(top_srcdir)/tests/nonlinear_elastostatic.pl  \
 	$(top_srcdir)/tests/dynamic_friction.pl        \
@@ -143,6 +145,7 @@ EXTRA_DIST = \
 	test_interpolated_fem.pl          \
 	test_slice.pl			  \
 	test_norm.pl			  \
+	test_mesh_im_level_set.pl         \
 	test_tree_sorted.pl               \
 	test_mat_elem.pl                  \
 	crack.pl                          \
