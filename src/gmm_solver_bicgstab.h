@@ -72,6 +72,7 @@ namespace gmm {
 	       const Preconditioner& M, iteration &iter) {
 
     typedef typename linalg_traits<Vector>::value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
     typedef typename temporary_dense_vector<Vector>::vector_type temp_vector;
     
     T rho_1, rho_2(0), alpha(0), beta, omega(0);
@@ -81,7 +82,7 @@ namespace gmm {
     
     gmm::mult(A, gmm::scaled(x, -T(1)), b, r);	  
     gmm::copy(r, rtilde);
-    T norm_r = gmm::vect_norm2(r);
+    R norm_r = gmm::vect_norm2(r);
     iter.set_rhsnorm(gmm::vect_norm2(b));
 
     if (iter.get_rhsnorm() == 0.0)
@@ -101,7 +102,7 @@ namespace gmm {
 	  
 	  beta = (rho_1 / rho_2) * (alpha / omega);
 	  
-	  gmm::add(gmm::scaled(v, -omega), p); // c'est bon ça ? 
+	  gmm::add(gmm::scaled(v, -omega), p); // is it ok ? 
 	  gmm::add(r, gmm::scaled(p, beta), p);      
 	}
 	gmm::mult(M, p, phat);
