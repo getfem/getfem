@@ -115,7 +115,7 @@ namespace getfem {
       for (size_type i=0; i < ipts.size(); ++i) {
 	if (ipts[i] >= nb_vertices && !ptdone[ipts[i]]) { 
 	  base_node &P = m.points()[ipts[i]];
-	  if (cts.card() > 1) cout << "WARNING, projection sur " << cts << endl;
+	  //if (cts.card() > 1) cout << "WARNING, projection sur " << cts << endl;
 	  pure_multi_constraint_projection(list_constraints, P, cts);
 	  // dist(P, new_cts);
 	}
@@ -254,7 +254,9 @@ namespace getfem {
   void mesh_im_level_set::run_delaunay(std::vector<base_node> &fixed_points,
 				       gmm::dense_matrix<size_type> &simplexes,
 				       std::vector<dal::bit_vector> &fixed_points_constraints) {
+    double t0=ftool::uclock_sec(); if (noisy) cout << "running delaunay with " << fixed_points.size() << " points.." << std::flush;
     delaunay(fixed_points, simplexes);
+    if (noisy) cout << " -> " << gmm::mat_ncols(simplexes) << " simplexes [" << ftool::uclock_sec()-t0 << "sec]\n";
 //     if (noisy) cout << "Nb simplexes = " << gmm::mat_ncols(simplexes)<< endl;
 //     size_type nt = gmm::mat_ncols(simplexes);
 //     size_type N = gmm::mat_nrows(simplexes)-1;
@@ -577,19 +579,10 @@ namespace getfem {
       /* 
        * Step 5 : Test the validity of produced integration method.
        */
-
-      scalar_type wtot(0);
-      if (noisy) cout << "Number of gauss points : " << new_approx.nb_points()
-		      << endl;
-      for (size_type k = 0; k <  new_approx.nb_points_on_convex(); ++k)
-	wtot += new_approx.coeff(k);
-      base_poly poly = bgeot::one_poly(n);
-      scalar_type exactvalue = exactint->exact_method()->int_poly(poly);
-      if (noisy) cout.precision(16);
-      if (noisy) cout << "The Result : " << wtot << " compared to "
-		      << exactvalue << endl; 
       
-      if (gmm::abs(wtot-exactvalue) > 1E-7){
+      scalar_type error = test_integration_error(&new_approx, 1);
+      if (noisy) cout << " max monomial integration err: " << error << "\n";
+      if (error > 1e-5) {
 	if (noisy) cout << "PAS BON NON PLUS\n"; if (noisy) getchar();
 	if (dmin > 3*h0) { dmin /= 2.; }
 	else { h0 /= 2.0; dmin = 2.*h0; }

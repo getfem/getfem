@@ -924,35 +924,35 @@ namespace getfem
     return classical_exact_im(pgt);
   }
 
-  pintegration_method classical_exact_im(bgeot::pgeometric_trans pgt) {
-    static bgeot::pgeometric_trans pgt_last = 0;
+  static pintegration_method classical_exact_im(bgeot::pconvex_structure cvs) {
+    cvs = cvs->basic_structure();
+    static bgeot::pconvex_structure cvs_last = 0;
     static pintegration_method im_last = 0;
     bool found = false;
 
-    if (pgt_last == pgt)
+    if (cvs_last == cvs)
       return im_last;
 
-
-    size_type n = pgt->structure()->dim();
-    size_type nbp = pgt->basic_structure()->nb_points();
+    size_type n = cvs->dim();
+    size_type nbp = cvs->nb_points();
     std::stringstream name;
 
     /* Identifying P1-simplexes.                                          */
 
     if (nbp == n+1)
-      if (pgt->basic_structure() == bgeot::simplex_structure(n))
+      if (cvs == bgeot::simplex_structure(n))
     	{ name << "IM_EXACT_SIMPLEX("; found = true; }
     
     /* Identifying Q1-parallelepiped.                                     */
 
     if (!found && nbp == (size_type(1) << n))
-      if (pgt->basic_structure() == bgeot::parallelepiped_structure(n))
+      if (cvs == bgeot::parallelepiped_structure(n))
     	{ name << "IM_EXACT_PARALLELEPIPED("; found = true; }
 
     /* Identifying Q1-prisms.                                             */
  
     if (!found && nbp == 2 * n)
-      if (pgt->basic_structure() == bgeot::prism_structure(n))
+      if (cvs == bgeot::prism_structure(n))
      	{ name << "IM_EXACT_PRISM("; found = true; }
      
     // To be completed
@@ -960,12 +960,17 @@ namespace getfem
     if (found) {
       name << int(n) << ')';
       im_last = int_method_descriptor(name.str());
-      pgt_last = pgt;
+      cvs_last = cvs;
       return im_last;
     }
  
     DAL_THROW(to_be_done_error,
 	      "This element is not taken into account. Contact us");
+  }
+
+
+  pintegration_method classical_exact_im(bgeot::pgeometric_trans pgt) {
+    return classical_exact_im(pgt->structure());
   }
 
   static pintegration_method
@@ -1019,5 +1024,25 @@ namespace getfem
     pgt_last = pgt;
     return im_last;
   }
+
+  /* try to integrate all monomials up to order 'order' and return the 
+     max. error */
+  scalar_type test_integration_error(papprox_integration pim, dim_type order) {
+    size_type dim = pim->dim();
+    pintegration_method exact = classical_exact_im(pim->structure());
+    opt_long_scalar_type error(0);
+    for (bgeot::power_index idx(dim); idx.degree() <= order; ++idx) {
+      opt_long_scalar_type sum(0), realsum;
+      for (size_type i=0; i < pim->nb_points_on_convex(); ++i) {
+	opt_long_scalar_type prod = pim->coeff(i);
+	for (size_type d=0; d < dim; ++d) prod *= pow(pim->point(i)[d], idx[d]);
+	sum += prod;
+      }
+      realsum = exact->exact_method()->int_monomial(idx);
+      error = std::max(error, gmm::abs(realsum-sum));
+    }
+    return error;
+  }
+
 }  /* end of namespace getfem.                                           */
 

@@ -513,7 +513,6 @@ namespace getfem {
 			 short_type f, size_type elt, 
 			 mat_elem_integration_callback *icb) const
     { compute(t, G, f+1, elt, icb); }
-
   };
 
   pmat_elem_computation mat_elem(pmat_elem_type pm, pintegration_method pi,

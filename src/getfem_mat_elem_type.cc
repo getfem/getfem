@@ -35,8 +35,11 @@ namespace getfem {
 
   bool operator < (const constituant &m, const constituant &n) {
     if (m.t < n.t) return true; if (m.t > n.t) return false;
-    if (m.pfi < n.pfi) return true; if (n.pfi < m.pfi) return false;
-    if (m.nlt < n.nlt) return true; if (n.nlt < m.nlt) return false;
+    if (m.t == GETFEM_NONLINEAR_) {
+      if (m.nlt < n.nlt) return true; if (n.nlt < m.nlt) return false;
+      if (m.nl_part < n.nl_part) return true; 
+    }
+    else if (m.pfi < n.pfi) return true;
     return false;
   }
 
@@ -46,7 +49,7 @@ namespace getfem {
     virtual bool compare(const static_stored_object_key &oo) const {
       const mat_elem_type_key &o
 	= dynamic_cast<const mat_elem_type_key &>(oo);
-      if (dal::lexicographical_less<mat_elem_type>()(*pmet, *(o.pmet)))
+      if (dal::lexicographical_less<mat_elem_type>()(*pmet, *(o.pmet)) < 0)
 	return true;
       return false;
     }

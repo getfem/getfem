@@ -588,7 +588,7 @@ namespace getfem {
 	      ftab[0] = fem;
 	      for (unsigned k=0; k < mfcomp[i].auxmf.size(); ++k) 
 		ftab[k+1] = mfcomp[i].auxmf[k]->fem_of_element(cv);
-	      pme2 = mat_elem_nonlinear(mfcomp[i].nlt, ftab); 
+	      pme2 = mat_elem_nonlinear(mfcomp[i].nlt, ftab);
 	    } break;
           case mf_comp::DATA: /*ignore*/;
         } 

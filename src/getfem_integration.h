@@ -266,6 +266,11 @@ namespace getfem
   papprox_integration composite_approx_int_method(const mesh_precomposite &mp, 
 						  const mesh_im &mf,
 						  bgeot::pconvex_ref cr);
+
+  /* try to integrate all monomials up to order 'order' and return the 
+     max. error */
+  scalar_type test_integration_error(papprox_integration pim, dim_type order);
+
 }  /* end of namespace getfem.                                            */
 
 

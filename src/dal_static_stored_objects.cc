@@ -90,10 +90,24 @@ namespace dal {
     stored_object_tab& stored_objects
       = dal::singleton<stored_object_tab>::instance();
     pstatic_stored_object_key k = key_of_stored_object(o);
-    if (!k) cout << "No stored object for " << o.get() << endl;
-    else cout << "Stored object "  << o.get() << "has a key " << endl; 
-    if (k) return stored_objects.find(enr_static_stored_object_key(k));
+    if (k) {
+      stored_object_tab::iterator it = stored_objects.find(enr_static_stored_object_key(k));
+      if (it == stored_objects.end()) DAL_THROW(internal_error, "Object has key but cannot be found");
+      return it;
+    }
     return stored_objects.end();
+  }
+
+  // Test the validity of arrays
+  void test_stored_objects(void) {
+    stored_key_tab& stored_keys = dal::singleton<stored_key_tab>::instance();
+    for (stored_key_tab::iterator it = stored_keys.begin(); it != stored_keys.end(); ++it)
+      iterator_of_object(it->first);
+    stored_object_tab& stored_objects
+      = dal::singleton<stored_object_tab>::instance();
+    for (stored_object_tab::iterator it = stored_objects.begin(); it != stored_objects.end(); ++it)
+      if (iterator_of_object(it->second.p) == stored_objects.end())
+	DAL_THROW(internal_error, "Object has key but cannot be found");
   }
 
   // Add a dependency, object o1 will depend on object o2
@@ -134,7 +148,7 @@ namespace dal {
     stored_keys[o] = k;
     stored_objects[enr_static_stored_object_key(k)]
       = enr_static_stored_object(o, perm);
-    cout << "add object " << o.get() << endl;
+    // cout << "add object " << o.get() << " of type " << typeid(*o).name() << endl;
   }
 
   // Only delete the object but not the dependencies
@@ -144,7 +158,7 @@ namespace dal {
     stored_key_tab& stored_keys = dal::singleton<stored_key_tab>::instance();
     std::list<pstatic_stored_object>::iterator it;
     for (it = to_delete.begin(); it != to_delete.end(); ++it) {
-      cout << "delete object " << (*it).get() << endl;
+      // cout << "delete object " << (*it).get() << " of type " << typeid(*(*it)).name() << endl;
       pstatic_stored_object_key k = key_of_stored_object(*it);
       stored_object_tab::iterator ito = stored_objects.find(k);
       if (k) stored_keys.erase(*it);
