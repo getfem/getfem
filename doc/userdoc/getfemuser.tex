@@ -41,7 +41,7 @@
 \W \setcounter{htmldepth}{2}
 \W \setcounter{htmlautomenu}{2}
 \W \renewcommand{\HlxMeta}{\xml{META description="getfem++ user manual"}}
-\htmlonly{
+\htmlonly{%
   \htmlpanelfield{Index}{getfemuser}
   \htmlcss{docstyle.css}
   \newcommand{\text}[1]{\mathrm{#1}}
@@ -127,7 +127,7 @@
 
 The \gf project focuses on the development of a generic and efficient elementary computations C++ library for finite element methods. The goal is to build a library which allows to compute any elementary matrix (even for mixed methods) on the largest class of methods and elements and for arbitrary dimension. It offers a complete separation between integration methods (exact or approximated), geometric transformations (linear or not) and finite element methods of arbitrary degrees. It allows to write finite element code which are independent of the particular method, and thus to test easily various finite element method on the same problem.
 
- Moreover, the library includes other tools for computation with finite element such as assembling methods for classical PDEs, interpolation methods, computation of norms, mesh operations, boundary conditions ... This library allows to build finite elements codes which are completely independent of the dimension, the particular method or element. Examples are provided.\\[2cm]
+Moreover, the library includes other tools for computation with finite element such as assembling methods for classical PDEs, interpolation methods, computation of norms, mesh operations, boundary conditions... This library allows to build finite elements codes which are completely independent of the dimension, the particular method or element. Examples are provided.\\[2cm]
 \htmlonly{\\\\\\}
 \begin{quote}
 \input{../license.tex}
@@ -345,7 +345,7 @@ This operator takes the first index such that \cpp{nn[i] == true} and remove it 
   for (i << nn; i != bgeot::size\_type(-1); i << nn)
     cout << "Point of index " << i << " of the mesh : " << mesh.points()[i] << endl;
 \end{cppcode}
-The numeration of faces on usual elements is given in figure \ref{fig:elemf}.
+The numeration of faces on usual elements is given in figure~\ref{fig:elemf}.
 \begin{figure}[htb]
   \begin{center}
     \texonly{\includegraphics[width=15cm,angle=0]{getfemuserelemf}}
@@ -410,7 +410,7 @@ The following is an example of how to load a mesh and extract information on it.
 \end{cppcode}
 
 \section{Select finite element and integration methods}
-
+\subsection{Obtaining descriptors to finite elements and integration methods}
 \index{GETFEM!getfem::mesh\_fem}
 In order to define a complete finite element procedure on a mesh, the structure \cpp{getfem::mesh\_fem} is defined in the file \cpp{getfem\_mesh\_fem.h}. Basically, this structure describes the finite element method on each element of the mesh, and can store information about boundary structure. It is possible to have an arbitrary number of finite element description for a single mesh. This is particularly necessary for mixed methods, but also to describe different data on the same mesh. One can instantiate a \cpp{getfem::mesh\_fem} object as follows\\[0.5cm]
 \cpp{getfem::mesh\_fem mef(mesh); }\\[0.5cm]
@@ -419,13 +419,22 @@ It is possible to specify element by element the finite element method, so that 
 To select a particular finite element method on a given element, one can use \\[0.5cm]
 \index{GETFEM!mef.set\_finite\_element(i, ppf, ppi)}
 \cpp{mef.set\_finite\_element(i, ppf, ppi=0); }\\[0.5cm]
-where \cpp{i} is the index of the element, \cpp{ppf} is the descriptor of the finite element method, and \cpp{ppi} is the descriptor of the integration method. The list of all available descriptors of finite element methods is in the file \filename{getfem\_fem.h}. A short description is also given in \cite{BASCOMP}. The list of all available descriptors of integration methods is in the file \filename{getfem\_integration.h}. The integration method may be omitted, in that case the dummy integration method {\tt IM\_NONE} will be used.\\[0.5cm]
-Descriptors for finite element methods and integration methods are available thanks to the two follofing functions\\[0.5cm]
-\index{GETFEM!getfem::fem\_descriptor("name")}
-\index{GETFEM!getfem::nt\_method\_descriptor("name")}
+where \cpp{i} is the index of the element, \cpp{ppf} is the descriptor of the finite element method, and \cpp{ppi} is the descriptor of the integration method. Alternative forms of this member function are:
 \begin{cppcode}
-  ppf = getfem::fem\_descriptor("name of method");
-  ppi = getfem::int\_method\_descriptor("name of method");
+  void mesh\_fem::set\_finite\_element(const dal::bit\_vector &cvs, 
+    getfem::pfem ppf, getfem::pintegration\_method ppi = 0);
+  void mesh\_fem::set\_finite\_element(getfem::pfem pf, 
+    getfem::pintegration\_method ppi = 0);
+\end{cppcode}
+which set the finite elements for either the convexes listed in the \cpp{bit\_vector} cvs, or all the convexes of the mesh.
+
+The list of all available descriptors of finite element methods is in the file \filename{getfem\_fem.h}. A short description is also given in \cite{BASCOMP}. The list of all available descriptors of integration methods is in the file \filename{getfem\_integration.h}. The integration method may be omitted, in that case the dummy integration method {\tt IM\_NONE} will be used.\\[0.5cm]
+Descriptors for finite element methods and integration methods are available thanks to the two follofing functions\\[0.5cm]
+\index{GETFEM!getfem::fem\_descriptor("name")}\index{GETFEM!getfem::pfem}
+\index{GETFEM!getfem::int\_method\_descriptor("name")}\index{GETFEM!getfem::pintegration_method}
+\begin{cppcode}
+  getfem::pfem                ppf = getfem::fem\_descriptor("name of method");
+  getfem::pintegration_method ppi = getfem::int\_method\_descriptor("name of method");
 \end{cppcode}
 where \cpp{"name of method"} is to be chosen among the existing methods.
 A name of a method can be retrieved thanks to the following functions\\[0.5cm]
@@ -440,6 +449,38 @@ Examples of exact integration methods:
 Examples of approximated integration methods:
 \input{../kernel/getfemeleminta.tex}
 
+Remark: note that \texttt{IM\_QUAD(3)} is not able to integrate
+exactly the base functions of the \texttt{FEM_QK(2,3)} finite element!
+Since its base function are tensorial product of 1D polynomials of
+degree 3, one would need to use \texttt{IM\_QUAD(7)} (6 is not
+available). Hence \texttt{IM\_GAUSS\_PARALLELEPIPED(2,k)} should
+always be prefered over \texttt{IM\_QUAD(2*k)} since it has less
+integration points.
+
+(new in getfem++-1.7) An alternative way to obtain a Lagrange polynomial fem suitable for a given geometric transformation is to use%
+\index{GETFEM!getfem::classical\_fem(pgt,degree)}\index{GETFEM!getfem::classical\_discontinuous\_fem(pgt,degree)}
+\begin{cppcode}
+ getfem::pfem getfem::classical\_fem(bgeot::pgeometric\_trans pg, short\_type degree);
+ pfem getfem::classical\_discontinuous\_fem(bgeot::pgeometric\_trans pg, short\_type degree);
+\end{cppcode}
+For integration methods, one may also use\index{GETFEM!getfem::classical\_exact\_im(pgt)}\index{GETFEM!getfem::classical\_approx\_im(pgt,degree)}
+\begin{cppcode}
+  getfem::pintegration\_method getfem::classical\_exact\_im(bgeot::pgeometric\_trans pgt);
+  getfem::pintegration\_method getfem::classical\_approx\_im(bgeot::pgeometric\_trans pgt, dim\_type d);
+\end{cppcode}
+These functions return an exact (i.e. analytical) integration method, or select an approximate integration method which is able to integrate exactly polynamials of degree <= \cpp{d} (at least) for convexes defined with the specified geometric transformation.
+
+The \cpp{mesh\_fem} can call directly these functions via:\index{GETFEM!getfem::set_classical\_finite\_element}\index{GETFEM!getfem::set\_classical\_discontinuous\_finite\_element}
+\begin{cppcode}
+  void mesh\_fem::set\_classical\_finite\_element(const dal::bit\_vector &cvs, 
+    dim\_type fem\_degree, dim\_type im\_degree=dim\_type(-1));
+  void mesh\_fem::set\_classical\_discontinuous\_finite\_element(const dal::bit\_vector &cvs, 
+    dim\_type fem\_degree, dim\_type im\_degree=dim\_type(-1));
+  void mesh\_fem::set\_classical\_finite\_element(dim\_type fem\_degree, dim\_type im\_degree=dim\_type(-1));
+  void mesh\_fem::set\_classical\_discontinuous\_finite\_element(dim\_type fem\_degree, dim\_type im\_degree=dim\_type(-1));                           
+\end{cppcode}
+
+\subsection{Examples}
 For instance if one needs to have a description of a $P_1$ finite element method on a triangle with an exact integration, the way to set it is
 \begin{cppcode}
  mef.set\_finite\_element(i, getfem::fem\_descriptor("FEM\_PK(2, 1)"),
@@ -464,6 +505,10 @@ times, from the \cpp{mesh\_fem} object point of vue. To sum it up,
     mef.nb\_dof\_of\_element(i) == mef.fem\_of\_element(i).nb\_dof()}.
 \item if the fem has a \cpp{target\_dim} equal to $1$, \cpp{mef.nb\_dof\_of\_element(i) == mef.get\_qdim()*mef.fem\_of\_element(i).nb\_dof()}.
 \end{itemize}
+
+
+
+\subsection{Methods of the \cpp{mesh\_fem} object}
 
 Once a finite element method is defined on a mesh, it is possible to obtain information on it with the following methods (the list is not exhaustive).\\[0.5cm]
 \begin{center} \texonly{\begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline}\htmlonly{\xmlattributes*{table}{border}\begin{tabular}{l|l}}

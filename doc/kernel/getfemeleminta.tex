@@ -1,5 +1,5 @@
 \begin{center} \begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline
-{\tt "IM\_GAUSS1D(k)" } & Description of the Gauss integration on a segment of order {\tt k}. \\ \hline
+{\tt "IM\_GAUSS1D(k)" } & Description of the Gauss integration on a segment of order {\tt k}. Available for all odd values of k <= 99.\\ \hline
 \end{tabular}  
 \begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline
 {\tt "IM\_NC(n,k)"} & Description of the integration on a simplex of reference of dimension {\tt n} for polynomials of degree {\tt k} with the Newton Cotes method (based on Lagrange interpolation).\\ \hline
@@ -14,7 +14,13 @@
 {\tt "IM\_TRIANGLE(7)"} & Integration on a triangle of order 7 with 13 points. \\ \hline
 \end{tabular} 
 \begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline
+{\tt "IM\_TRIANGLE(19)"} & Integration on a triangle of order 19 with 73 points. \\ \hline
+\end{tabular} 
+\begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline
 {\tt "IM\_QUAD(2)"} & Integration on quadrilaterals of order 2 with 3 points. \\ \hline
+\end{tabular}
+\begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline
+{\tt "IM\_GAUSS\_PARALLELEPIPED(2,3)"} & Integration on quadrilaterals of order 3 with 4 points (shortcut for {\tt "IM\_PRODUCT(IM\_GAUSS1D(3),IM\_GAUSS1D(3))"}). \\ \hline
 \end{tabular}
 \begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline
 {\tt "IM\_TETRAHEDRON(5)"} & Integration on a tetrahedron of order 5 with 15 points. \\ \hline
