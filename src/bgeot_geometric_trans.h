@@ -126,6 +126,7 @@ namespace bgeot
     /** Compute the gradient at point x, pc is resized to [nb_points() x dim()]
 	if the transformation is linear, x is not used at all */
     void gradient(const base_node& x, base_matrix& pc) const;
+    virtual ~geometric_trans() {}
   };
 
   template<class CONT>
