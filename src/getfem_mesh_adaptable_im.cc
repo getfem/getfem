@@ -4,7 +4,6 @@
 // Library : GEneric Tool for Finite Elements Methods (getfem)
 // File    : getfem_mesh_adaptable_im.cc : adaptable integration methods
 //           on convex meshes.
-//           
 // Date    : February 02, 2005.
 // Author  : Yves Renard <Yves.Renard@insa-toulouse.fr>
 //

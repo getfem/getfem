@@ -5,12 +5,12 @@
 // File    : getfem_level_set.cc : Dealing with level set representation.
 //           
 // Date    : January 31, 2005.
-// Author  : Yves Renard <Yves.Renard@insa-toulouse.fr>
+// Authors : Yves Renard <Yves.Renard@insa-toulouse.fr>
 //           Julien Pommier <Julien.Pommier@insa-toulouse.fr>
 //
 //========================================================================
 //
-// Copyright (C) 1999-2005 Yves Renard, Julien Pommier
+// Copyright (C) 1999-2005 Yves Renard
 //
 // This file is a part of GETFEM++
 //

@@ -1,3 +1,4 @@
+// -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
 // Library : Basic GEOmetric Tool  (bgeot)

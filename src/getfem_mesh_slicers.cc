@@ -3,7 +3,7 @@
 //
 // Library : GEneric Tool for Finite Element Methods (Getfem)
 // File    : getfem_mesh_slicers.cc : .
-//
+//           
 // Date    : February 2004.
 // Author  : Julien Pommier <Julien.Pommier@insa-toulouse.fr>
 //

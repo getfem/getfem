@@ -1,3 +1,4 @@
+// -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
 // Library : GEneric Tool for Finite Elements Methods (getfem)

@@ -1,3 +1,7 @@
+2005-02-04 Yves Renard,  <Yves.Renard@insa-toulouse.fr> 
+
+	* navier_stokes.cc ajout des programmes de test stokes et navier stokes
+
 2005-02-01 Yves Renard,  <Yves.Renard@insa-toulouse.fr> 
 
 	* dal_std.h and gmm_def.h : mathematical definitions are moved from

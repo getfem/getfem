@@ -1,3 +1,4 @@
+// -*- c++ -*- (enables emacs c++ mode)
 //========================================================================
 //
 // Library : Dynamic Array Library (dal)
