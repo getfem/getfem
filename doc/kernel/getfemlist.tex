@@ -1,0 +1,183 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{pifont}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{psfig}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{fancyheadings}
+\usepackage{here}
+\usepackage{eepic,epic}
+\usepackage[english]{babel}
+
+\input{YRpersdf}
+
+\oddsidemargin -0.4cm
+\evensidemargin -0.4cm
+\topmargin -1cm
+\textheight 22.5cm
+\textwidth 16.6cm
+\headheight 1.0cm
+
+% principal notations
+
+
+
+\begin{document}
+
+\begin{center}
+  \includegraphics[width=10cm,angle=0]{getfem_logo.eps}\\[0.2cm]
+  a Generic Finite Element library in C++ \\[0.5cm]
+  \begin{largebox} \begin{center}
+      \Huge \sc Description of Finite Element and Integration Methods
+  \end{center}  \end{largebox}
+  \\[0.5cm]
+  { \large Yves \sc Renard\footnote{ \it MIP, INSAT, Complexe scientifique de Rangueil, 31077 Toulouse, France, Yves.Renard@gmm.insa-tlse.fr } } \\[1.0cm]
+      July 31, 2002\\[1.0cm]
+\end{center}
+
+% \begin{abstract}
+% Basic description of the structure of the finite element kernel of GETFEM++.
+% \end{abstract}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%          INTRODUCTION                                                 %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section*{Introduction}
+This documentation describes the different finite element methods and approximative integration methods available in GETFEM++.\\[4cm]
+Copyright (C) 2002\\
+The program GETFEM++ is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; version 2 of the License.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software Foundation,
+Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+\newpage
+\tableofcontents
+\newpage
+
+\section{Finite element methods}
+
+\subsection{Finite element methods description}
+
+A finite element method is defined on a reference element $\overline{T} \subset \Reel^P$ by a set of $n_d$ nodes $a^i$ and corresponding base functions 
+$$ \overline{\varphi}^i : \overline{T} \subset \Reel^P \longrightarrow \Reel^Q, $$
+Denoting
+$$ \tilde{\varphi}^i(x) = \overline{\varphi}^i(\overline{x}) = \overline{\varphi}^i(\tau^{-1}(x)), $$
+a linear transformation is allowed for the real base function
+$$ \varphi^i(x) = \sum_{j = 0}^{n_d - 1} M_{ij} \tilde{\varphi}^j(x), $$
+where $M$ is a $n_d \times n_d$ matrix possibly depending on the geometric transformation (i.e. on the real element).
+We denote
+$$ [\overline{\varphi}(\overline{x})] = \vecfour{\overline{\varphi}^0(\overline{x})}{\overline{\varphi}^1(\overline{x})}{...}{\overline{\varphi}^{n_d-1}(\overline{x})}, $$
+the $n_d \times Q$ matrix, such that when a function is defined by
+$$ f(x) = \sum_{i = 0}^{n_d - 1} \alpha_i \varphi^i(x), $$
+one has
+$$ \fbox{$\hspace{1em} f(\tau(\overline{x})) = \alpha^T M [\overline{\varphi}(\overline{x})],\hspace{1em}$} $$
+where $\alpha$ is the vector of components $\alpha_i$.
+
+A certain number of description of classical finite element method are defined in the file {\tt getfem\_fem.h}. More classical ones are the following:
+
+\input{getfemelemfem.tex}
+
+One can see in the file {\tt getfem\_fem.C} how to define a new finite element method. Basically, the only thing to do is to give the base functions on the reference element and the corresponding nodes.
+
+\subsubsection{graphical codification of d.o.f.}
+
+\begin{figure}[H] \label{fig:symbols}
+  \begin{center}
+    \includegraphics[width=13cm,angle=0]{getfemlist_symbols.eps}
+  \end{center}
+  \caption{ \it Symbols representing degree of freedom types}
+\end{figure}
+
+\subsection{Basic Lagrange elements on simplexes}
+
+a chaque élément : 
+dessin des ddl avec code
+nb de ddl, degre, equivalence via la transformation géometrique, vectoriel ou non, analyse du raccord
+
+\subsection{Basic Lagrange elements on other geometries}
+
+
+\subsection{Specific elements in dimension 1}
+
+
+\subsection{Specific elements in dimension 2}
+
+
+\begin{figure}[H] \label{fig:symbols}
+  \begin{center}
+    \includegraphics[width=7cm,angle=0]{getfemlist_argyris.eps}
+  \end{center}
+  \caption{ \it Argyris element, $P_5$, 21 d.o.f., $C^1$}
+\end{figure}
+
+\subsection{Specific elements in dimension 3}
+
+
+\subsection{Tensorial product of elements}
+
+
+\section{Integration methods}
+
+\subsection{Integration methods description}
+
+The integrations methods are of two kinds. The file {\tt bgeot\_poly\_integration.h} defines exact integrations of polynomials and the file {\tt bgeot\_approx\_integration.h} defines approximated integrations of any function. The exact integration can only be used if all the elements are polynomial and if the geometric transformation is linear.
+
+In the file {\tt bgeot\_poly\_integration.h} the following functions are defined
+
+\input{getfemelemint.tex}
+
+Even though a description of exact integration method exists on parallelepipeds or prisms, most of the time the geometric transformations on such elements are not linear and the exact integration cannot be used.
+
+In the file {\tt bgeot\_approx\_integration.h} the following functions are defined
+
+\input{getfemeleminta.tex}
+
+Other methods can be easily defined.
+
+\subsection{Exact Integration methods}
+
+\subsection{Newton cotes Integration methods}
+
+\subsection{Gauss Integration methods on dimension 1}
+
+\subsection{Gauss Integration methods on dimension 2}
+
+\subsection{Gauss Integration methods on dimension 3}
+
+\subsection{Direct product of integration methods}
+
+
+\begin{thebibliography}{99}
+% \bibliographystyle{apalike}
+% \bibliographystyle{plain}
+% \bibliography{all}
+\bibitem{dh-to1984} 
+  G. {\sc Dhatt, and  G. Touzot}
+  {\it The Finite Element Method Displayed}, 
+ J. Wiley \& Sons,  New York, 1984.
+
+\bibitem{BAS_COMP}
+  Y. {\sc Renard},
+  {\it Elementary Computations in GETFEM++}, 2002.
+
+\bibitem{USER_DOC}
+  Y. {\sc Renard},
+  {\it Short User Documentation of GETFEM++}, 2002.
+
+\bibitem{nedelec1991}
+  J.-C. {\sc Nedelec},
+  {\it Notions sur les techniques d'éléments finis}, Ellipses, SMAI, Mathématiques \& Applications n°7, 1991.
+\end{thebibliography}
+
+
+\end{document}
