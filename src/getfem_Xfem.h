@@ -52,9 +52,12 @@ namespace getfem
   typedef virtual_Xfem_grad *pXfem_grad;
 
   struct virtual_Xfem_hess {
-    virtual base_matrix operator()(const base_node &) = 0;
+    virtual base_matrix operator()(const base_node &);
   };
   typedef virtual_Xfem_hess *pXfem_hess;
+  
+  extern pXfem_hess pno_Xfem_hess_defined;
+  
 
   // Xfem definition
   
@@ -76,8 +79,9 @@ namespace getfem
 
     virtual size_type nb_dof(void) const;
 
-    void add_func(pXfem_func pXf, pXfem_grad pXg, pXfem_hess pXh,
-		  size_type ind);
+    void add_func(pXfem_func pXf, pXfem_grad pXg,
+		  pXfem_hess pXh = pno_Xfem_hess_defined,
+		  size_type ind = size_type(-1));
     
     void interpolation(const base_node &x, const base_matrix &G,
 		       bgeot::pgeometric_trans pgt,

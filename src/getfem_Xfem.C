@@ -36,6 +36,13 @@
 namespace getfem
 {
 
+  static virtual_Xfem_hess no_Xfem_hess_defined;
+  pXfem_hess pno_Xfem_hess_defined = &no_Xfem_hess_defined;
+
+  base_matrix virtual_Xfem_hess::operator()(const base_node &) {
+    DAL_THROW(failure_error, "No hessian defined for this function");
+  }
+
   void Xfem::valid(void) {
     init_cvs_node();
     for (size_type k = 0; k < pfi->nb_base(); ++k)
@@ -59,6 +66,7 @@ namespace getfem
   void Xfem::add_func(pXfem_func pXf, pXfem_grad pXg, pXfem_hess pXh,
 		      size_type ind) {
     nb_func ++;
+    if (ind == size_type(-1)) ind = nb_func;
     funcs.resize(nb_func); grads.resize(nb_func); hess.resize(nb_func);
     func_indices.resize(nb_func);
     funcs[nb_func-1] = pXf;
