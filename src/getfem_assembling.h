@@ -35,7 +35,6 @@
 #define GETFEM_ASSEMBLING_H__
 
 #include <getfem_assembling_tensors.h>
-#include <getfem_plasticity.h>
 
 namespace getfem
 {
@@ -51,7 +50,7 @@ namespace getfem
   scalar_type asm_L2_norm(const mesh_fem &mf, const VEC &U,
 			  const dal::bit_vector &cvlst) {
     return sqrt(asm_L2_norm_sqr(mf,U,cvlst,
-				typename gmm::linalg_traits<VEC>::value_type()));
+			       typename gmm::linalg_traits<VEC>::value_type()));
   }
 
   template<typename VEC, typename T>
@@ -726,8 +725,7 @@ namespace getfem
 
     // To be finalized.
     //  . In order to be used with any sparse matrix type
-    //  . transpose the result and give the effective dimension of
-    //    the kernel
+    //  . transpose the result and give the effective dimension of the kernel
     //  . Compute the ctes / D.
     //  . Optimization (suppress temporary ...). 
     //  . Verify sizes of data
@@ -832,101 +830,6 @@ namespace getfem
 		  << gmm::vect_norm2(aux));
     return nbase;
   }
-  
-
-//   template<typename MATD, typename VECT>
-//     size_type treat_Dirichlet_condition(const MATD &D, MATD &G,
-// 				   const VECT &UD, VECT &UDD) {
-
-//     size_type nbd = D.ncols(), nbase = 0;
-//     gmm::wsvector<scalar_type> aux(D.nrows()), e(nbd);
-//     gmm::wsvector<scalar_type> f(nbd);
-//     dal::dynamic_array<gmm::wsvector<scalar_type> > base_img;
-//     dal::dynamic_array<gmm::wsvector<scalar_type> > base_img_inv;
-//     size_type nb_bimg = 0;
-
-//     // First, detection of null columns of D, and already orthogonals 
-//     // vectors of the image of D.
-//     dal::bit_vector nn;
-//     for (size_type i = 0; i < nbd; ++i) {
-//       e.clear(); e[i] = 1.0; f.clear(); f[i] = 1.0;
-//       aux = D*e;
-//       if (gmm::vect_norm2(aux) < 1.0E-8) { //à scaler sur l'ensemble de D ...
-// 	G(nbase++, i) = 1.0; nn[i] = true;
-//       }
-//       else {
-// 	bool good = true;
-// 	for (size_type j = 0; j < nb_bimg; ++j)
-// 	  if (dal::abs(gmm::vect_sp(aux, base_img[j])) > 1.0E-16)
-// 	    { good = false; break; }
-// 	if (good) {
-// 	  scalar_type n = gmm::vect_norm2(aux);
-// 	  f /= n; aux /= n;
-// 	  base_img_inv[nb_bimg] = f;
-// 	  //	  cerr << "ajout de " << aux << "\n";
-// 	  aux.clean(1.0E-18);
-// 	  base_img[nb_bimg++] = aux; nn[i] = true;
-// 	}
-//       }
-//     }
-//     size_type nb_triv_base = nbase;
-
-//     for (size_type i = 0; i < nbd; ++i)
-//       if (!(nn[i])) {
-// 	e.clear(); e[i] = 1.0; f.clear(); f[i] = 1.0;
-// 	aux = D*e;
-// 	for (size_type j = 0; j < nb_bimg; ++j) { 
-// 	  scalar_type c = gmm::vect_sp(aux, base_img[j]);
-// 	  //	  if (dal::abs(c > 1.0E-6) { // à scaler sur l'ensemble de D ...
-// 	  if (c != 0.) {
-// 	    aux -= base_img[j] * c;
-// 	    f -= base_img_inv[j] * c;
-// 	  }
-// 	}
-// 	//	cerr << "norm2(aux)= " << gmm::vect_norm2(aux) << "\n";
-// 	if (gmm::vect_norm2(aux) < 1.0E-8) { // à scaler sur l'ensemble de D ...
-// 	  G.row(nbase++) = f;
-// 	}
-// 	else {
-// 	  scalar_type n = gmm::vect_norm2(aux);
-// 	  f /= n; aux /= n;
-// 	  base_img_inv[nb_bimg] = f;
-// 	  base_img[nb_bimg++] = aux;
-// 	  f.clean(1.0E-18); aux.clean(1.0E-18);
-// 	  //	  cerr << "ajout de " << aux << "\n";
-// 	}
-// 	e[i] = 0.0;
-//       }
-
-//     // Compute a solution in UDD
-//     UDD.fill(0.0);
-//     for (size_type i = 0; i < nb_bimg; ++i) {
-//       scalar_type c = gmm::vect_sp(base_img[i], UD);
-//       UDD += base_img_inv[i].full() * c;
-//     }
-
-//     // Orthogonalisation of the basis of the kernel of D.
-//     for (size_type i = nb_triv_base + 1; i < nbase; ++i) {
-//       for (size_type j = nb_triv_base; j < i; ++j) {
-// 	scalar_type c = gmm::vect_sp(G.row(i), G.row(j));
-// 	if (c != 0.)
-// 	  G.row(i) -= G.row(j) * c;
-//       }
-//     }
-
-//     // projection of UDD on the orthogonal to the kernel.
-//     for (size_type j = nb_triv_base; j < nbase; ++j) {
-//       scalar_type c = gmm::vect_sp(G.row(j), UDD);
-//       if (c != 0.)
-// 	UDD -= G.row(j).full() * c;
-//     }
-
-//     // Test ...
-//     if (gmm::vect_norm2(D * UDD - UD) > 1.0E-12)
-//       cerr << "Dirichlet condition not well inverted\n";
-
-//     return nbase;
-//   }
 
 }  /* end of namespace getfem.                                             */
 

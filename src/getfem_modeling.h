@@ -101,7 +101,7 @@ namespace getfem {
     ctx_ident_type ident_;
     
     T_MATRIX SM;
-    gmm::col_matrix< gmm::rsvector<value_type> > NS; /* nullspace of constraints */
+    gmm::col_matrix< gmm::rsvector<value_type> > NS; /* constraints nullspace */
     VECTOR reduced_residu_, Ud;
   public :
 
@@ -152,7 +152,7 @@ namespace getfem {
     gmm::resize(NS, ndof, ndof);
     gmm::resize(Ud, ndof);
     
-    size_type nbcols=getfem::Dirichlet_nullspace(constraints_matrix(),
+    size_type nbcols=Dirichlet_nullspace(constraints_matrix(),
 						 NS, constraints_rhs(), Ud);
     gmm::resize(NS, ndof, nbcols);
     gmm::resize(SM, nbcols, nbcols);

@@ -1,3 +1,4 @@
+/* -*- c++ -*- (enables emacs c++ mode)                                    */
 /************************************************************************* */
 /*                                                                         */
 /* Library :  GEneric Tool for Finite Element Methods (getfem)             */
@@ -5,7 +6,7 @@
 /*                           materials                                     */
 /*                                                                         */
 /* Date : June 10, 2004.                                                   */
-/* Author : Marc ODUNLAMI, Rémi DELMAS                                     */
+/* Authors : Marc ODUNLAMI, Rémi DELMAS                                    */
 /*                                                                         */
 /* *********************************************************************** */
 
@@ -29,22 +30,15 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef GETFEM_PLASTICITY
-#define GETFEM_PLASTICITY
-
-/* try to enable the SIGFPE if something evaluates to a Not-a-number of infinity
- * during computations
- */
-#ifdef GETFEM_HAVE_FEENABLEEXCEPT
-#  include <fenv.h>
-#endif
+#ifndef GETFEM_PLASTICITY__
+#define GETFEM_PLASTICITY__
 
 #include <getfem_assembling_tensors.h>
 #include <getfem_modeling.h>
 
 namespace getfem {
 
-  /* used to calcute the projection */
+  /* used to compute the projection */
   template<typename MAT> MAT tau_m_Id(const MAT& tau){
     scalar_type trace=gmm::mat_trace(tau);
     size_type size_of_tau=gmm::mat_nrows(tau);
@@ -54,7 +48,7 @@ namespace getfem {
     return taumId;
   } 
 
-  /* used to calcute the projection */
+  /* used to compute the projection */
   template<typename MAT> MAT tau_d(const MAT& tau){
     size_type size_of_tau=gmm::mat_nrows(tau);
     MAT taud(size_of_tau,size_of_tau);
