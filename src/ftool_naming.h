@@ -232,7 +232,7 @@ namespace ftool
 	case 1  : i += l; break;
 	case 2  : 
 	  pm = method(name, i);
-	  cerr << "params.size()=" << params.size() << ", i=" << i << ", name=" << name << ", pm=" << pm << "state=" << state << endl;
+	  //cerr << "params.size()=" << params.size() << ", i=" << i << ", name=" << name << ", pm=" << pm << "state=" << state << endl;
 	  params.push_back(parameter(pm));
 	  state = 3; break;
 	case 3  :

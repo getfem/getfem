@@ -529,7 +529,7 @@ namespace bgeot {
       */
       if (s.find(s[i]) != i) pos = std::string::npos; 
       if (pos == std::string::npos) {
-	redidx.push_back(s[i]);
+	redidx += s[i];
 	r.push_back(tr.dim(i));
 	tr2r_dim.back()[i] = r.size()-1;
 	if (s[i] == ' ') {
