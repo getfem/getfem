@@ -597,13 +597,8 @@ namespace gmm {
    mat_norm2(const M &m, row_major) {
     typename number_traits<typename linalg_traits<M>::value_type>
       ::magnitude_type res(0);
-    for (size_type i = 0; i < mat_nrows(m); ++i) {
-      typedef typename linalg_traits<M>::const_sub_row_type row_type;
-      row_type row = mat_const_row(m, i);
-      typename linalg_traits<row_type>::const_iterator
-	it = vect_const_begin(row), ite = vect_const_end(row);
-      for (; it != ite; ++it) res += gmm::sqr(gmm::abs(*it));
-    }
+    for (size_type i = 0; i < mat_nrows(m); ++i)
+      res += vect_norm2_sqr(mat_const_row(m, i));
     return sqrt(res);
   }
 
@@ -613,13 +608,8 @@ namespace gmm {
    mat_norm2(const M &m, col_major) {
     typename number_traits<typename linalg_traits<M>::value_type>
       ::magnitude_type res(0);
-    for (size_type i = 0; i < mat_ncols(m); ++i) {
-      typedef typename linalg_traits<M>::const_sub_col_type col_type;
-      col_type col = mat_const_col(m, i);
-      typename linalg_traits<col_type>::const_iterator
-	it = vect_const_begin(col), ite = vect_const_end(col);
-      for (; it != ite; ++it) res += gmm::sqr(gmm::abs(*it));
-    }
+    for (size_type i = 0; i < mat_ncols(m); ++i)
+      res += vect_norm2_sqr(mat_const_col(m, i));
     return sqrt(res);
   }
 
@@ -633,7 +623,7 @@ namespace gmm {
   }
 
   /* ******************************************************************** */
-  /*		Inifity norm                              		  */
+  /*		Infinity norm                              		  */
   /* ******************************************************************** */
 
   template <typename V>
@@ -647,6 +637,38 @@ namespace gmm {
     for (; it != ite; ++it) res = std::max(res, gmm::abs(*it));
     return res;
   }
+
+  template <typename M>
+   typename number_traits<typename linalg_traits<M>::value_type>
+   ::magnitude_type
+   mat_norminf(const M &m, row_major) {
+    typename number_traits<typename linalg_traits<M>::value_type>
+      ::magnitude_type res(0);
+    for (size_type i = 0; i < mat_nrows(m); ++i)
+      res = std::max(res, vect_norminf(mat_const_row(m,i)));
+    return res;
+  }
+
+  template <typename M>
+   typename number_traits<typename linalg_traits<M>::value_type>
+   ::magnitude_type
+   mat_norminf(const M &m, col_major) {
+    typename number_traits<typename linalg_traits<M>::value_type>
+      ::magnitude_type res(0);
+    for (size_type i = 0; i < mat_ncols(m); ++i)
+      res = std::max(res, vect_norminf(mat_const_col(m,i)));
+    return res;
+  }
+
+  template <typename M>
+   typename number_traits<typename linalg_traits<M>::value_type>
+   ::magnitude_type
+   mat_norminf(const M &m) {
+    return mat_norminf(m,
+		     typename principal_orientation_type<typename
+		     linalg_traits<M>::sub_orientation>::potype());
+  }
+
   
   /* ******************************************************************** */
   /*		norm1                                    		  */
