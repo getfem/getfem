@@ -311,8 +311,7 @@ namespace getfem
 
   template<class VECT>
     void interpolation_solution(mesh_fem &mf_source, mesh_fem &mf_target,
-				const VECT &U, VECT &V)
-  {
+				const VECT &U, VECT &V) {
     size_type cv;
     base_node val(1);
     bgeot::geotrans_inv gti;
@@ -367,12 +366,9 @@ namespace getfem
 
     for (cv << nn; cv != ST_NIL; cv << nn)
     {
-      bgeot::pgeometric_trans pgt = mf_source.linked_mesh().trans_of_convex(cv);
-      //cout << "dealing with convex " << cv << " remaining " << nn.card() << endl;
+      bgeot::pgeometric_trans pgt=mf_source.linked_mesh().trans_of_convex(cv);
       size_type nb = gti.points_in_convex(mf_source.linked_mesh().convex(cv),
 					  pgt, ptab, itab);
-      //cout << "nb points in this convex " << nb << endl;
-      // cout << "convex : " << mf_source.linked_mesh().convex(cv) << endl;
       pfem pf_s = mf_source.fem_of_element(cv);
       if (!(pf_s->is_equivalent())) 
 	transfert_to_G(G, mf_source.linked_mesh().points_of_convex(cv));
@@ -383,7 +379,6 @@ namespace getfem
 	size_type dof_t = gti_pt_2_target_dof[itab[i]].first;
 	size_type nrep  = gti_pt_2_target_dof[itab[i]].second;
 	assert(nrep>0);
-	// cout << "dealing with ddl : " << itab[i] << "  coords : " << mf_target.point_of_dof(itab[i]) << " internal coords : " << ptab[i] << endl;
 	if (ddl_touched[dof_t])
 	{ // inverser les deux boucles pour gagner du temps ?
 	  // Il faut verifier que le ddl est bien de Lagrange ...
@@ -391,7 +386,6 @@ namespace getfem
 	    for (size_type j = 0; j < nbd_s; ++j) {
 	      size_type dof_s = mf_source.ind_dof_of_element(cv)[j*nrep+k];
 	      coeff[j] = U[dof_s];
-	      //cerr << "dof_s=" << dof_s << " dof_t=" << dof_t << " k=" << k << " i=" << i << endl;
 	    }
 	    pf_s->interpolation(ptab[i], G, pgt, coeff, val);
 	    V[dof_t + k] = val[0];
@@ -405,6 +399,64 @@ namespace getfem
       cerr << "WARNING : in interpolation_solution,"
 	   << " all points have not been touched" << endl;
   }
+
+  /* ********************************************************************* */
+  /*                                                                       */
+  /*  interpolation of a solution on a set of points.                      */
+  /*                                                                       */
+  /* ********************************************************************* */
+
+  template<class VECT>
+    void interpolation_solution(mesh_fem &mf_source, bgeot::geotrans_inv &gti,
+				const VECT &U, VECT &V) {
+    size_type cv;
+    base_node val(1);
+    dal::dynamic_array<base_node> ptab;
+    dal::dynamic_array<size_type> itab;
+    base_vector coeff;
+    base_matrix G;
+
+    size_type qdim = mf_source.get_qdim();
+
+    dal::bit_vector nn = mf_source.convex_index(), ddl_touched;
+    ddl_touched.add(0, gti.nb_points());
+
+    for (cv << nn; cv != ST_NIL; cv << nn)
+    {
+      bgeot::pgeometric_trans pgt=mf_source.linked_mesh().trans_of_convex(cv);
+      size_type nb = gti.points_in_convex(mf_source.linked_mesh().convex(cv),
+					  pgt, ptab, itab);
+      pfem pf_s = mf_source.fem_of_element(cv);
+      if (!(pf_s->is_equivalent())) 
+	transfert_to_G(G, mf_source.linked_mesh().points_of_convex(cv));
+      size_type nbd_s = pf_s->nb_dof();
+      coeff.resize(nbd_s);
+      for (size_type i = 0; i < nb; ++i)
+      {
+	size_type dof_t = itab[i];
+	size_type nrep  = qdim / pf_s->get_target_dim();
+	if (ddl_touched[dof_t])
+	{ // inverser les deux boucles pour gagner du temps ?
+	  // Il faut verifier que le ddl est bien de Lagrange ...
+	  for (size_type k = 0; k < nrep; ++k) {
+	    for (size_type j = 0; j < nbd_s; ++j) {
+	      size_type dof_s = mf_source.ind_dof_of_element(cv)[j*nrep+k];
+	      coeff[j] = U[dof_s];
+	    }
+	    pf_s->interpolation(ptab[i], G, pgt, coeff, val);
+	    V[dof_t + k] = val[0];
+	    ddl_touched.sup(dof_t+k);
+	  }
+	}
+      }
+    }
+    if (ddl_touched.card() != 0)
+      cerr << "WARNING : in interpolation_solution,"
+	   << " all points have not been touched" << endl;
+  }
+
+
+
 
 
 

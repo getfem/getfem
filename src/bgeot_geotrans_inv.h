@@ -76,6 +76,9 @@ namespace bgeot
 	for (; it != ite; ++it) ptab.add(*it);
       }
 
+      /// Number of points.
+      size_type nb_points(void) const { return ptab.card(); }
+
       /// Add point p to the list of points.
       size_type add_point(base_node p) { return ptab.add(p); }
       
