@@ -34,7 +34,16 @@ int main(void)
     bgeot::copy(z, x);
     
     cout << "x = " << x << endl;
-    
+
+    bgeot::vsmatrix<double> m(10, 10), n(10, 10);
+    m.fill(0.0); m(3, 2) = 1.0;
+
+    cout << "transposed(m)(2,3) = " <<  bgeot::transposed(m)(2,3) << endl;
+    cout << "transposed(m)(3,2) = " <<  bgeot::transposed(m)(3,2) << endl;
+
+    copy(transposed(m), n);
+    cout << "m = " << m << endl;
+    cout << "n = " << n << endl;
     
   }
   DAL_STANDARD_CATCH_ERROR;

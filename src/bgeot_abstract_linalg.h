@@ -36,8 +36,11 @@
 //     vsmatrix<T>
 //   . donner l'accés aux colonnes pour vsmatrix<T> et smatrix<T>
 //   . un programme de test qui mélange un peu tout les cas
+//   . scale, scaled
+//   . extraction de sous matrices.
 //
 
+// Inspired from M.T.L. (http://www.osl.iu.edu/research/mtl)
 
 #ifndef __BGEOT_ABSTRACT_LINALG_H
 #define __BGEOT_ABSTRACT_LINALG_H
@@ -61,6 +64,13 @@ namespace bgeot {
   struct col_major {};       // matrix with a column access
   struct row_and_col {};     // both accesses but row preference
   struct col_and_row {};     // both accesses but column preference
+
+  template <class T> struct transposed_type;
+  template<> struct transposed_type<row_major>   {typedef col_major   t_type;};
+  template<> struct transposed_type<col_major>   {typedef row_major   t_type;};
+  template<> struct transposed_type<row_and_col> {typedef col_and_row t_type;};
+  template<> struct transposed_type<col_and_row> {typedef row_and_col t_type;};
+  
 
   template <class V> struct linalg_traits;
 
@@ -161,7 +171,8 @@ namespace bgeot {
       const V *l;
 
     public :
-      simple_vector_const_ref(simple_vector_ref<V> &v) : l(&(v.deref())) {}
+      simple_vector_const_ref(const simple_vector_ref<V> &v)
+	: l(&(v.deref())) {}
       simple_vector_const_ref(const V &v) : l(&v) {}
       typedef typename linalg_traits<V>::base_type base_type;
       const V &deref(void) const { return *l; }
@@ -200,6 +211,115 @@ namespace bgeot {
     void clear(linalg_type &v)
       { DAL_THROW(failure_error,"Impossible to clear a constant object");}
   };
+
+  /* ******************************************************************** */
+  /*		transposed reference                    		  */
+  /* ******************************************************************** */
+  
+  template <class V> class transposed_ref {
+    protected :
+      V *l;
+
+    public :
+      typedef typename linalg_traits<V>::base_type base_type;
+      transposed_ref(V &v) : l(&v) {}
+      V &deref(void) { return *l; }
+      const V &deref(void) const { return *l; }
+    // base_type &operator[](size_type i) { return (*l)[i]; }
+    // base_type operator[](size_type i) const { return (*l)[i]; }
+      base_type &operator()(size_type i, size_type j) { return (*l)(j,i); }
+      base_type operator()(size_type i, size_type j) const 
+      { return (*l)(j,i); }      
+  };
+
+  template <class V> struct linalg_traits<transposed_ref<V> > {
+    typedef transposed_ref<V> linalg_type;
+    typedef typename linalg_traits<V>::base_type base_type;
+    typedef typename linalg_traits<V>::iterator  iterator;
+    typedef typename linalg_traits<V>::const_iterator const_iterator;
+    typedef typename linalg_traits<V>::storage_type storage_type;
+    typedef typename linalg_traits<V>::sub_col_type sub_row_type;
+    typedef typename linalg_traits<V>::const_sub_col_type const_sub_row_type;
+    typedef typename linalg_traits<V>::sub_row_type sub_col_type;
+    typedef typename linalg_traits<V>::const_sub_row_type
+    const_sub_col_type;
+    typedef typename transposed_type<typename 
+      linalg_traits<V>::sub_orientation>::t_type sub_orientation;
+    size_type size(const linalg_type &v)
+    { return linalg_traits<V>().size(v.deref()); }
+    size_type nrows(const linalg_type &v)
+    { return linalg_traits<V>().ncols(v.deref()); }
+    size_type ncols(const linalg_type &v)
+    { return linalg_traits<V>().nrows(v.deref()); }
+    iterator begin(linalg_type &v)
+    { return linalg_traits<V>().begin(v.deref()); }
+    const_iterator const_begin(const linalg_type &v)
+    { return linalg_traits<V>().const_begin(v.deref()); }
+    iterator end(linalg_type &v)
+    { return linalg_traits<V>().end(v.deref()); }
+    const_iterator const_end(const linalg_type &v)
+    { return linalg_traits<V>().const_end(v.deref()); }
+    const_sub_row_type row(const linalg_type &v, size_type i)
+    { return linalg_traits<V>().col(v.deref(), i); }
+    const_sub_col_type col(const linalg_type &v, size_type i)
+    { return linalg_traits<V>().row(v.deref(), i); }
+    sub_row_type row(linalg_type &v, size_type i)
+    { return linalg_traits<V>().col(v.deref(), i); }
+    sub_col_type col(linalg_type &v, size_type i)
+    { return linalg_traits<V>().row(v.deref(), i); }
+    void clear(linalg_type &v) { linalg_traits<V>().clear(v.deref()); }
+  };
+
+  template <class V> class transposed_const_ref {
+    protected :
+      const V *l;
+
+    public :
+      typedef typename linalg_traits<V>::base_type base_type;
+      transposed_const_ref(const V &v) : l(&v) {}
+      transposed_const_ref(const transposed_ref<V> &v) : l(&(v.deref())) {}
+      const V &deref(void) const { return *l; }
+    // base_type &operator[](size_type i) { return (*l)[i]; }
+    // base_type operator[](size_type i) const { return (*l)[i]; }
+      base_type operator()(size_type i, size_type j) const 
+      { return (*l)(j,i); }      
+  };
+
+  template <class V> struct linalg_traits<transposed_const_ref<V> > {
+    typedef transposed_const_ref<V> linalg_type;
+    typedef typename linalg_traits<V>::base_type base_type;
+    typedef typename linalg_traits<V>::const_iterator  iterator;
+    typedef typename linalg_traits<V>::const_iterator const_iterator;
+    typedef typename linalg_traits<V>::storage_type storage_type;
+    typedef typename linalg_traits<V>::const_sub_col_type sub_row_type;
+    typedef typename linalg_traits<V>::const_sub_col_type const_sub_row_type;
+    typedef typename linalg_traits<V>::const_sub_row_type sub_col_type;
+    typedef typename linalg_traits<V>::const_sub_row_type
+    const_sub_col_type;
+    typedef typename transposed_type<typename 
+      linalg_traits<V>::sub_orientation>::t_type sub_orientation;
+    size_type size(const linalg_type &v)
+    { return linalg_traits<V>().size(v.deref()); }
+    size_type nrows(const linalg_type &v)
+    { return linalg_traits<V>().ncols(v.deref()); }
+    size_type ncols(const linalg_type &v)
+    { return linalg_traits<V>().nrows(v.deref()); }
+    iterator begin(linalg_type &v)
+    { return linalg_traits<V>().begin(v.deref()); }
+    const_iterator const_begin(const linalg_type &v)
+    { return linalg_traits<V>().const_begin(v.deref()); }
+    iterator end(linalg_type &v)
+    { return linalg_traits<V>().end(v.deref()); }
+    const_iterator const_end(const linalg_type &v)
+    { return linalg_traits<V>().const_end(v.deref()); }
+    const_sub_row_type row(const linalg_type &v, size_type i)
+    { return linalg_traits<V>().col(v.deref(), i); }
+    const_sub_col_type col(const linalg_type &v, size_type i)
+    { return linalg_traits<V>().row(v.deref(), i); }
+    void clear(linalg_type &v)
+      { DAL_THROW(failure_error,"Impossible to clear a constant object");}
+  };
+  
 
   /* ******************************************************************** */
   /*		standard extern references for plain vectors              */
@@ -575,6 +695,12 @@ namespace bgeot {
 
   template <class L> inline void clear(L &l)
   { return linalg_traits<L>().clear(l); }
+
+  template <class L> inline transposed_ref<L> transposed(L &l)
+  { return transposed_ref<L>(l); }
+
+  template <class L> inline transposed_const_ref<L> transposed(const L &l)
+  { return transposed_const_ref<L>(l); }
 
   /* ******************************************************************** */
   /*		Scalar product                             		  */
@@ -1047,29 +1173,26 @@ namespace bgeot {
   template < class Matrix, class Vector>
   int cg_new(const Matrix& A, Vector& x, const Vector& b, int itemax, 
 	 double residu, bool noisy = true) {
-    typedef typename linalg_traits<Vector>::base_type base_type;
-    base_type rho(0), rho_1(0), alpha(0), beta(0);
+    typename linalg_traits<Vector>::base_type rho(0), rho_1(0), a(0), beta(0);
     Vector p(x.size()), q(x.size()), r(x.size());
     int iter = 0;
     mult(A, scaled(x, -1.0), b, r);
     rho = vect_sp(r,r);
     
-    while (::sqrt(rho) > residu) {
+    while (sqrt(rho) > residu) {
       if (iter == 0) copy(r, p);		  
       else { beta = rho / rho_1; add(r, scaled(p, beta), p); }
       
       mult(A, p, q);
-      alpha = rho / vect_sp(p, q);
+      a = rho / vect_sp(p, q);
       
-      add(scaled(p, alpha), x);
-      add(scaled(q, -alpha), r);
+      add(scaled(p, a), x);
+      add(scaled(q, -a), r);
       
-      rho_1 = rho;
-      
-      ++iter;
-      rho = vect_sp(r, r);
-      if (noisy) cout << "iter " << iter << " residu " << ::sqrt(rho) << endl;
-      if (iter >= itemax) return 1;
+      rho_1 = rho; rho = vect_sp(r, r);
+
+      if (++iter >= itemax) return 1;
+      if (noisy) cout << "iter " << iter << " residu " << sqrt(rho) << endl;
     }
     return 0;
   }
