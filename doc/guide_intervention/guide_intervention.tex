@@ -330,7 +330,11 @@ ces shells chargent l'int\'egralit\'e des biblioth\`eques consid\'er\'ees et pr\
 
 Une fois les modifications apport\'ees, il faut passer \`a une phase de test, i.e. compilation et lancement des programmes de tests. Si la partie que vous avez modifi\'ee n'a pas de programme de test correspondant, cr\'eez-en un, en essayant de tester toutes les fonctionnalit\'es.\\[0.4cm]
 
-Une fois la phase de test compl\'et\'ee, quand vous \^etes s\^ur que vous n'introduisez pas de nouveaux bugs dans le projet, validez les changements en ex\'ecutant
+Une fois la phase de test compl\'et\'ee, quand vous \^etes s\^ur que vous n'introduisez pas de nouveaux bugs dans le projet, vous pouvez valider les changements effectués. Pour cela vous pouvez vérifier que certains modules n'ont pas été modifiés entre temps par un autre intervenant par la commande 
+\begin{alltt}
+  cvs diff
+\end{alltt}
+puis valider ces changements par la commande
 \begin{alltt}
   cvs commit -m "commentaire"
 \end{alltt}
@@ -347,9 +351,10 @@ D'une mani\`ere g\'en\'erale, ne gardez pas trop longtemps ouverte une session. 
   xemacs bgeot/bgeot_poly.h (+ modifications)
   make
   make test
+  cvs diff
   cvs commit -m "la modification que j'ai apport\'ee concerne ..."
   cd ..
-  /bin/rm -r getfem++
+  rm -fr getfem++
 \end{alltt}
 \end{largebox}
 
