@@ -25,6 +25,7 @@ print TMPF "\n\n";
 close(TMPF);
 
 
+
 $er = 0;
 open F, "elasto_statique $tmp 2>&1 |" or die;
 while (<F>) {

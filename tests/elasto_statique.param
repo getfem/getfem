@@ -8,27 +8,27 @@ PG = 9.81; 		% constant of gravitation.
 % G = 77.0;	        % Lamé coefficient.
 % LAMBDA = 107.0;   	% Lamé coefficient.
 G = 1.0;	        % Lamé coefficient.
-LAMBDA = 0.0;   	% Lamé coefficient.
+LAMBDA = 1.0;   	% Lamé coefficient.
 LX = 1.0;		% size in X.
 LY = 1.0;	        % size in Y.
 LZ = 1.0;		% size in Z.
-FT = 0.2;               % parameter for the exact solution.  
+FT = 0.1;               % parameter for the exact solution.  
 %FT = 3.141593;
 
 %%%%%   discretisation parameters  :                     	      %%%%%
-MESH_TYPE = 1;          % 0 = simplexes
+MESH_TYPE = 0;          % 0 = simplexes
 			% 1 = parallelepipeds
 			% 2 = prisms
-K = 1;                  % Finite element degree.
+K = 2;                  % Finite element degree.
 KI = 1; 		% Parameter for integration method
-INTEGRATION = 2;        % 0 = exact integration.
+INTEGRATION = 0;        % 0 = exact integration.
 			% 1 = Newton Cotes of degree 2 * K
 			% 2 = Product of 1D Gauss for parallelepipeds.
 			% 3 = Composite Gauss of degree 2 with KI divisions
 			% 11, 12, 13, 14, 15, 16, 17 triangle(n-10)
 			% 21, 22, 23, 25 tetrahedron(n-20)
 			% 32, 33, 35 quadrilateral(n-30)
-NX = 1;            	% space steps.
+NX = 5;            	% space steps.
 RESIDU = 1E-9;     	% residu for conjugate gradient.
 
 
