@@ -201,7 +201,7 @@ if ($systeme =~ /Linux/)
 else
 {
   print "\n\n Documentation compilation.\n";
-  print `cd doc; make;`;
+  # print `cd doc; make;`;
   print "\n\n Making links.\n";
   print `cd ..; mkdir -p doc; cd doc; ln -sf ../getfem++/doc/basic_doc.ps .`;
   print `cd ../doc; ln -sf ../getfem++/doc/guide_intervention/guide_intervention.ps .`;
