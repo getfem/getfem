@@ -329,7 +329,7 @@ namespace getfem {
 
   template<typename VECTU, typename VECTV>
   void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
-		     const VECTU &U, VECTV &V, bool extrapolation = false) {
+		     const VECTU &U, VECTV &V, bool extrapolation) {
     base_matrix M;
     if (mf_source.nb_dof() != gmm::vect_size(U)
 	|| (gmm::vect_size(V) % mf_target.nb_dof()) != 0
@@ -370,7 +370,7 @@ namespace getfem {
   void interpolation_solution(const mesh_fem &mf_source,
 			      const mesh_fem &mf_target,
 			      const VECTU &U, VECTV &V,
-			      bool extrapolation = false) {
+			      bool extrapolation) {
     base_matrix M;
     if (mf_source.nb_dof() != gmm::vect_size(U)
 	|| (gmm::vect_size(V) % mf_target.nb_dof()) != 0

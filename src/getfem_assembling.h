@@ -316,8 +316,8 @@ namespace getfem
   */
   template<class MAT, class VECT>
     void asm_stiffness_matrix_for_linear_elasticity(const MAT &RM_,
-					   const mesh_fem &mf, 
-					   const mesh_fem &mfdata, 
+					   const mesh_fem &mf,
+					   const mesh_fem &mfdata,
 					   const VECT &LAMBDA,const VECT &MU) {
     MAT &RM = const_cast<MAT &>(RM_);
     if (mfdata.get_qdim() != 1)
