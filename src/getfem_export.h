@@ -143,7 +143,7 @@ namespace getfem
   {
     dim_type N = mf.linked_mesh().dim();
     size_type cv, nb;
-    base_node pt3(P), pt4(P), val(1);
+    base_node pt3(P), val(1);
     bgeot::geotrans_inv gti;
     dal::dynamic_array<base_node> ptab;
     dal::dynamic_array<size_type> itab;
@@ -181,7 +181,7 @@ namespace getfem
 	      size_type dof1 = mf.ind_dof_of_element(cv)[j];
 	      coeff[j] = U[dof1*P+k];
 	    }
-	    pfe->interpolation(pt4, G, coeff, val);
+	    pfe->interpolation(ptab[i], G, coeff, val);
 	    pt3[k] = val[0];
 
 	  }
