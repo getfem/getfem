@@ -55,72 +55,7 @@
 #ifndef GMM_DENSE_LU_H
 #define GMM_DENSE_LU_H
 
-#include "gmm_solvers.h"
-
 namespace gmm {
-
-  // rank one update for dense matrices
-
-  template <class Matrix, class VecX, class VecY>
-  inline void rank_one_update(Matrix &A, const VecX& x,
-			      const VecY& y, row_major) {
-    typedef typename linalg_traits<Matrix>::value_type value_type;
-    size_type N = mat_nrows(A);
-    if (N > vect_size(x) || mat_ncols(A) > vect_size(y))
-      DAL_THROW(dimension_error,"dimensions mismatch");
-    typename linalg_traits<VecX>::const_iterator itx = vect_const_begin(x);
-    for (size_type i = 0; i < N; ++i, ++itx) {
-      typedef typename linalg_traits<Matrix>::sub_row_type row_type;
-      row_type row = mat_row(A, i);
-      typename linalg_traits<row_type>::iterator
-	it = vect_begin(row), ite = vect_end(row);
-      typename linalg_traits<VecY>::const_iterator ity = vect_const_begin(y);
-#   ifdef USING_BROKEN_GCC295
-      typedef typename linalg_traits<Matrix>::value_type T;
-      for (; it != ite; ++it, ++ity)
-	const_cast<T &>(*it) += conj_product(*itx, *ity);
-#   else
-      value_type tx = *itx;
-      for (; it != ite; ++it, ++ity) *it += conj_product(tx, *ity);
-#   endif
-    }
-  }
-
-  template <class Matrix, class VecX, class VecY>
-  inline void rank_one_update(Matrix &A, const VecX& x,
-			      const VecY& y, col_major) {
-    typedef typename linalg_traits<Matrix>::value_type value_type;
-    size_type M = mat_ncols(A);
-    if (mat_nrows(A) > vect_size(x) || M > vect_size(y))
-      DAL_THROW(dimension_error,"dimensions mismatch");
-    typename linalg_traits<VecY>::const_iterator ity = vect_const_begin(y);
-    for (size_type i = 0; i < M; ++i, ++ity) {
-      typedef typename linalg_traits<Matrix>::sub_col_type col_type;
-      col_type col = mat_col(A, i);
-      typename linalg_traits<col_type>::iterator
-	it = vect_begin(col), ite = vect_end(col);
-      typename linalg_traits<VecX>::const_iterator itx = vect_const_begin(x);
-#   ifdef USING_BROKEN_GCC295
-      typedef typename linalg_traits<Matrix>::value_type T;
-      for (; it != ite; ++it, ++itx)
-	const_cast<T &>(*it) += conj_product(*itx, *ity);
-#   else
-      value_type ty = *ity;
-      for (; it != ite; ++it, ++itx) *it += conj_product(*itx, ty); 
-#   endif
-    }
-  }
-  
-  template <class Matrix, class VecX, class VecY>
-  inline void rank_one_update(const Matrix &A_, const VecX& x,
-			      const VecY& y) {
-    Matrix& A = const_cast<Matrix&>(A_);
-    if (is_sparse(A))
-      DAL_THROW(failure_error,
-		"Sorry, rank one update for sparse matrices does not exist");
-    rank_one_update(A, x, y, typename principal_orientation_type<typename
-		    linalg_traits<Matrix>::sub_orientation>::potype());
-  }
 
 
   // LU Factorization of a general (dense) matrix

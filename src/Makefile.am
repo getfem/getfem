@@ -66,6 +66,7 @@ include_HEADERS =                      \
 	gmm_solver_cg.h                \
 	gmm_solver_constrained_cg.h    \
 	gmm_modified_gram_schmidt.h    \
+	gmm_dense_Householder.h        \
 	gmm_dense_lu.h                 \
 	gmm_dense_qr.h                 \
 	gmm_tri_solve.h                \

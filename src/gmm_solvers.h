@@ -33,8 +33,6 @@
 #ifndef __GMM_SOLVERS_H
 #define __GMM_SOLVERS_H
 
-#include <gmm_dense_lu.h>
-
 #include <gmm_iter.h>
 
 

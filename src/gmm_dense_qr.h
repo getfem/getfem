@@ -42,48 +42,7 @@
 namespace gmm {
 
   /* ********************************************************************* */
-  /*    Householder vector computation (complex and real version)          */
-  /* ********************************************************************* */
-
-  template <class VECT> void house_vector(const VECT &VV) {
-    VECT &V = const_cast<VECT &>(VV);
-    typedef typename linalg_traits<VECT>::value_type value_type;
-    typedef typename number_traits<value_type>::magnitude_type magnitude_type;
-    
-    magnitude_type mu = vect_norm2(V);
-    value_type beta;
-    if (mu != magnitude_type(0)) {
-      if (dal::abs(V[0]) != magnitude_type(0))
-	beta = V[0] + mu * V[0] / dal::abs(V[0]);
-      else
-	beta = mu;
-      gmm::scale(V, value_type(1) / beta);
-    }
-    V[0] = value_type(1);
-  }
-  
-  /* ********************************************************************* */
-  /*    Householder updates  (complex and real version)                    */
-  /* ********************************************************************* */
-
-  template <class MAT, class VECT1, class VECT2> inline
-    void row_house_update(const MAT &AA, const VECT1 &V, const VECT2 &WW) {
-    VECT2 &W = const_cast<VECT2 &>(WW); MAT &A = const_cast<MAT &>(AA);
-    
-    gmm::mult(transposed(A), scaled(conjugated(V), -2 / vect_norm2_sqr(V)), W);
-    rank_one_update(A, V, W);
-  }
-
-  template <class MAT, class VECT1, class VECT2> inline
-    void col_house_update(const MAT &AA, const VECT1 &V, const VECT2 &WW) {
-    VECT2 &W = const_cast<VECT2 &>(WW); MAT &A = const_cast<MAT &>(AA);
-    
-    gmm::mult(A, scaled(V, -2 / vect_norm2_sqr(V)), W);
-    rank_one_update(A, W, conjugated(V));
-  }
-
-  /* ********************************************************************* */
-  /*    QR factorization using Householder method.                         */
+  /* QR factorization using Householder method (complex and real version). */
   /* ********************************************************************* */
   
   template <class MAT1, class MAT2, class MAT3>
@@ -94,47 +53,27 @@ namespace gmm {
     size_type m = mat_nrows(A), n = mat_ncols(A);
     if (m < n) DAL_THROW(dimension_error, "dimensions mismatch");
     gmm::copy(A, R);
+    gmm::copy(identity_matrix(), Q);
     
     std::vector<value_type> W(m);
     dense_matrix<value_type> VV(m, n);
 
     for (size_type j = 0; j < n; ++j) {
-      sub_interval SUBI(j, m-j), SUBJ(j, n-j);
+      sub_interval SUBI(j, m-j), SUBJ(j, n-j) /* , SUBK(0, m) */;
 
       for (size_type i = j; i < m; ++i) VV(i,j) = R(i, j);
       house_vector(sub_vector(mat_col(VV,j), SUBI));
+
       row_house_update(sub_matrix(R, SUBI, SUBJ),
 		       sub_vector(mat_col(VV,j), SUBI), sub_vector(W, SUBJ));
-      // for (size_type i = j+1; i < m; ++i) R(i, j) = 0.0; // usefull ?
+      //      col_house_update(sub_matrix(Q, SUBK, SUBI), 
+      //	       sub_vector(mat_col(VV,j), SUBI), sub_vector(W, SUBK));
     }
 
-    gmm::copy(identity_matrix(), Q);
     for (size_type j = n-1; j != size_type(-1); --j) {
       sub_interval SUBI(j, m-j);
       row_house_update(sub_matrix(Q, SUBI), 
 		       sub_vector(mat_col(VV,j), SUBI), sub_vector(W, SUBI));
-    }
-  }
-
-  /* ********************************************************************* */
-  /*    Hessember reduction with Householder.                              */
-  /* ********************************************************************* */
-
-  template <class MAT1, class MAT2>
-    void Hessenberg_reduction(const MAT1& AA, const MAT2 &QQ, bool compute_Q){
-    MAT1& A = const_cast<MAT1&>(AA); MAT1& Q = const_cast<MAT2&>(QQ);
-    typedef typename linalg_traits<MAT1>::value_type value_type;
-    size_type n = mat_nrows(A);
-    std::vector<value_type> v(n), w(n);
-    if (compute_Q) gmm::copy(identity_matrix(), Q);
-    for (size_type k = 1; k < n-1; ++k) {
-      sub_interval SUBI(k, n-k), SUBJ(k-1,n-k+1), SUBK(0,n);
-      v.resize(n-k);
-      for (size_type j = k; j < n; ++j) v[j-k] = A(j, k-1);
-      house_vector(v);
-      row_house_update(sub_matrix(A, SUBI, SUBJ), v, sub_vector(w, SUBJ));
-      col_house_update(sub_matrix(A, SUBK, SUBI), v, w);
-      if (compute_Q) col_house_update(sub_matrix(Q, SUBK, SUBI), v, w);
     }
   }
 
@@ -187,10 +126,10 @@ namespace gmm {
   { for (size_type i = 0; i < mat_nrows(A); ++i) V[i] = TV(A1(i,i)); }
 
   template <class TA, class TV, class MAT, class VECT>
-  void extract_eig(const MAT &A, const VECT &VV, double tol,
+  void extract_eig(const MAT &A, VECT &V, double tol,
 		   std::complex<TA>, std::complex<TV>) {
     for (size_type i = 0; i < mat_nrows(A); ++i)
-      V[i] = std::complex<TV>(A1(i,i));
+      V[i] = std::complex<TV>(A(i,i));
   }
 
   template <class MAT, class VECT> inline
@@ -205,8 +144,7 @@ namespace gmm {
   /* ********************************************************************* */
 
   template <class MAT, class T>
-  void stop_criterion(MAT &A, size_type &p, size_type &q,
-		      double tol, T) {
+  void stop_criterion(MAT &A, size_type &p, size_type &q, double tol, T) {
 
     size_type n = mat_nrows(A);
     for (size_type i = 1; i < n; ++i)
@@ -219,6 +157,8 @@ namespace gmm {
     if (q >= n-2) q = n;
     p = n-q; if (p) --p; if (p) --p;
     while (p > 0 && A(p,p-1) != T(0)) --p;
+
+    cout << "q = " << q << endl;
   }
 
   template <class MAT, class T> // complex version, to be verified
@@ -262,39 +202,41 @@ namespace gmm {
 
 
   /* ********************************************************************* */
-  /*    Power qr algorihm.                                                 */
+  /*    Basic qr algorithm.                                                */
   /* ********************************************************************* */
 
   // QR method for real square matrices based on QR factorisation.
   // eigval has to be a complex vector if A has complex eigeinvalues.
   // Very slow method. Use implicit_qr_method instead.
   template <class MAT1, class VECT, class MAT2>
-    void power_qr_algorithm(const MAT1 &A, VECT &eigval, MAT2 &eigvect,
+    void rudimentary_qr_algorithm(const MAT1 &A, VECT &eigval, MAT2 &eigvect,
 		      double tol = 1E-12, bool compvect = true) {
     typedef typename linalg_traits<MAT1>::value_type value_type;
+    typedef typename number_traits<value_type>::magnitude_type magnitude_type;
 
     size_type n = mat_nrows(A), p, q, ite = 0;
     MAT1 Q(n, n), R(n,n), A1(n,n); 
     gmm::copy(A, A1);
 
     Hessenberg_reduction(A1, eigvect, compvect);
-    stop_criterion(A1, p, q, tol);
+    stop_criterion(A1, p, q, tol, magnitude_type());
 
     while (q < n) {
       qr_factor(A1, Q, R);
       gmm::mult(R, Q, A1);
       if (compvect) { gmm::mult(eigvect, Q, R); gmm::copy(R, eigvect); }
       
-      stop_criterion(A1, p, q, tol);
+      stop_criterion(A1, p, q, tol, magnitude_type());
       if (++ite > n*1000) DAL_THROW(failure_error, "QR algorithm failed");
     }
     extract_eig(A1, eigval, tol); 
   }
 
   template <class MAT1, class VECT>
-    void power_qr_algorithm(const MAT1 &a, VECT &eigval, double tol = 1E-12) {
+    void rudimentary_qr_algorithm(const MAT1 &a, VECT &eigval,
+				  double tol = 1E-12) {
     dense_matrix<typename linalg_traits<MAT1>::value_type> m(0,0);
-    power_qr_algorithm(a, eigval, m, tol, false); 
+    rudimentary_qr_algorithm(a, eigval, m, tol, false); 
   }
 
   /* ********************************************************************* */
@@ -380,50 +322,6 @@ namespace gmm {
   }
 
   /* ********************************************************************* */
-  /*    Givens rotations                                                   */
-  /* ********************************************************************* */
-
-  template <class T> void Givens_rotation(T a, T b, T &c, T &s) {
-    if (b == T(0)) { c = T(1); s = T(0); return; }
-    if (dal::abs(b) > dal::abs(a))
-      { T tau = -a/b; s = T(1) / sqrt(1+tau*tau); c = s*tau; }
-    else
-      { T tau = -b/a; c = T(1) / sqrt(1+tau*tau); s = c*tau; }
-  }
-
-  template <class T> inline void Apply_Givens_rotation(T &x, T &y, T c, T s)
-  { T t1=x, t2=y; x = c*t1 - s*t2; y = c*t2 + s*t1; }
-
-  template <class T>
-  void Givens_rotation(std::complex<T> a, std::complex<T> b,
-		       std::complex<T> &c, std::complex<T> &s) {
-    T aa = dal::abs(a);
-    if (aa == T(0)) { c = std::complex<T>(0); s = std::complex<T>(1); return; }
-    T norm = ::sqrt(dal::abs_sqr(a) + dal::abs_sqr(b));
-    c = std::complex<T>(aa / norm);
-    s = a/aa * std::conj(b)/norm;
-  }
-
-  template <class T> inline
-  void Apply_Givens_rotation(std::complex<T> &x, std::complex<T> &y,
-			     std::complex<T>  c, std::complex<T>  s)
-  { std::complex<T> t1=x, t2=y; x = c*t1 - s*t2; y = c*t2 + std::conj(s)*t1; }
-
-  template <class MAT, class T>
-  void row_rot(const MAT &AA, T c, T s, size_type i, size_type k) {
-    MAT &A = const_cast<MAT &>(AA); // can be specialized for row matrices
-    for (size_type j = 0; j < mat_ncols(A); ++j)
-      Apply_Givens_rotation(A(i,j), A(k,j), c, s);
-  }
-
-  template <class MAT, class T>
-  void col_rot(const MAT &AA, T c, T s, size_type i, size_type k) {
-    MAT &A = const_cast<MAT &>(AA); // can be specialized for column matrices
-    for (size_type j = 0; j < mat_nrows(A); ++j)
-      Apply_Givens_rotation(A(j,i), A(j,k), c, s);
-  }
-
-  /* ********************************************************************* */
   /*    Implicit symmetric QR step with Wilkinson Shift.                   */
   /* ********************************************************************* */
   /* for a real matrix T.                                                  */
@@ -472,39 +370,6 @@ namespace gmm {
     }
 
   }
-
-  /* ********************************************************************* */
-  /*    Householder tridiagonalisation.                                    */
-  /* ********************************************************************* */
-
-  template <class MAT1, class MAT2> 
-  void Householder_tridiagonalisation(const MAT1 &AA, const MAT2 &QQ,
-				     bool compute_q) {
-    MAT1 &A = const_cast<MAT1 &>(AA); MAT2 &Q = const_cast<MAT2 &>(QQ);
-    typedef typename linalg_traits<MAT1>::value_type value_type;
-    typedef typename number_traits<value_type>::magnitude_type magnitude_type;
-
-    size_type n = mat_nrows(A); 
-    std::vector<value_type> v(n), p(n), w(n);
-    for (size_type k = 1; k < n-1; ++k) { // A pas mal optimiser ...
-      sub_interval SUBI(k, n-k);
-      v.resize(n-k); p.resize(n-k); w.resize(n-k); 
-      for (size_type l = k; l < n; ++l) 
-	{ v[l-k] = A(l, k-1); A(l, k-1)=0.0; A(k-1, l)=0.0; }
-      magnitude_type norm_x = -vect_norm2(v) * dal::sgn(v[0]);
-      house_vector(v);
-      magnitude_type norm = vect_norm2_sqr(v);
-      A(k, k-1) = A(k-1, k) = norm_x;
-      gmm::mult(sub_matrix(A, SUBI), v, p);
-      gmm::scale(p, value_type(2) / norm);
-      gmm::add(gmm::scaled(p, value_type(-1)),
-	       gmm::scaled(v, vect_sp(p, v) / norm), w);
-      rank_one_update(sub_matrix(A, SUBI), v, w);
-      rank_one_update(sub_matrix(A, SUBI), w, v);
-      // + act de Q ...
-    }
-  }
-
 
   /* ********************************************************************* */
   /*    Implicit QR algorithm for symmetric matrices.                      */

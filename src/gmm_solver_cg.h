@@ -82,8 +82,8 @@ namespace gmm {
     else {
       mult(A, scaled(x, -1.0), b, r);
       mult(P, r, z);
-      rho = vect_sp(PS, r, z);
-      copy(z, p);
+      rho = vect_sp(PS, r, z); // faut-il utiliser le produit hermitien en 
+      copy(z, p);              //  complexe ?
 
       while (!iter.finished_vect(r)) {
 

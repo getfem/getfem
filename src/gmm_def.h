@@ -269,7 +269,7 @@ namespace gmm {
   template <class T> T conj_product(T a, T b) { return a * b; }
   template <class T> std::complex<T> conj_product(const std::complex<T> &a,
 						  const std::complex<T> &b)
-  { return std::conj(a) * b; } // to be optimized
+  { return a * std::conj(b); } // to be optimized
 
   /* ******************************************************************** */
   /*		Basic vectors used                         		  */

@@ -43,8 +43,10 @@
 #include <gmm_sub_matrix.h>
 #include <gmm_vector.h>
 #include <gmm_matrix.h>
-#include <gmm_solvers.h>
+#include <gmm_dense_Householder.h>
+#include <gmm_dense_lu.h>
 #include <gmm_dense_qr.h>
+#include <gmm_solvers.h>
 #include <gmm_condest.h>
 #include <gmm_opt.h>
 

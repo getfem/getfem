@@ -302,7 +302,7 @@ namespace gmm {
       _end(mat_col_end(m)), origin(linalg_origin(m)) {}
 
     value_type operator()(size_type i, size_type j) const
-    { return std::conj(access_type()(_begin+i, j)); }
+    { return std::conj(access_type()(_begin+j, i)); }
   };
 
   template <class M> struct conjugated_col_matrix_access {
@@ -312,7 +312,7 @@ namespace gmm {
     typedef typename linalg_traits<M>::access_type access_type;
     
     value_type operator()(const iterator &itcol, size_type i)
-    { return std::conj(access_type(itcol.it, i)); }
+    { return std::conj(access_type()(itcol.it, i)); }
   };
 
   template <class M>

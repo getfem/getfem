@@ -216,7 +216,7 @@ namespace gmm {
     typedef typename linalg_traits<M>::access_type access_type;
     
     value_type operator()(const iterator &itrow, size_type i)
-    { return itrow.r * access_type(itrow.it, i); }
+    { return itrow.r * access_type()(itrow.it, i); }
   };
 
   template <class M> struct linalg_traits<scaled_row_matrix_const_ref<M> > {
@@ -312,7 +312,7 @@ namespace gmm {
       _end(mat_col_end(m)), origin(linalg_origin(m)), r(rr) {}
 
     value_type operator()(size_type i, size_type j) const
-    { return r * access_type()(_begin+i, j); }
+    { return r * access_type()(_begin+j, i); }
   };
 
   template <class M> struct scaled_col_matrix_access {

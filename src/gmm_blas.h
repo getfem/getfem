@@ -232,12 +232,12 @@ namespace gmm {
     return res;
   }
 
-  template <class L> inline void fill_random(L& l) {
-    fill_random(l, typename linalg_traits<L>::linalg_type());
-  }
+  template <class L> inline void fill_random(L& l)
+  { fill_random(l, typename linalg_traits<L>::linalg_type()); }
 
   template <class L> inline void fill_random(const L& l) {
-    fill_random(linalg_const_cast(l), typename linalg_traits<L>::linalg_type());
+    fill_random(linalg_const_cast(l),
+		typename linalg_traits<L>::linalg_type());
   }
 
   template <class L> inline void fill_random(L& l, abstract_vector) {
@@ -251,36 +251,41 @@ namespace gmm {
 	l(i,j) = dal::random(typename linalg_traits<L>::value_type());
   }
 
-  template <class L> inline void fill_random(L& l, double cfill) {
-    fill_random(l, cfill, typename linalg_traits<L>::linalg_type());
-  }
+  template <class L> inline void fill_random(L& l, double cfill)
+  { fill_random(l, cfill, typename linalg_traits<L>::linalg_type()); }
 
   template <class L> inline void fill_random(const L& l, double cfill) {
-    fill_random(linalg_const_cast(l), cfill, typename linalg_traits<L>::linalg_type());
+    fill_random(linalg_const_cast(l), cfill,
+		typename linalg_traits<L>::linalg_type());
   }
 
-  template <class L> inline void fill_random(L& l, double cfill, abstract_vector) {
+  template <class L> inline void fill_random(L& l, double cfill,
+					     abstract_vector) {
     if (cfill > 0.1) {
       for (size_type i = 0; i < vect_size(l); ++i) 
-	if (dal::random(typename linalg_traits<L>::value_type()) < cfill) l[i] = dal::random(typename linalg_traits<L>::value_type()); else l[i] = 0;
+	if (dal::random(typename linalg_traits<L>::value_type()) < cfill)
+	  l[i] = dal::random(typename linalg_traits<L>::value_type());
+	else l[i] = 0;
     } else {
       for (size_type i=0; i < size_type(vect_size(l)*cfill)+1; ++i) {
-	l[dal::irandom(vect_size(l))]=dal::random(typename linalg_traits<L>::value_type());
+	l[dal::irandom(vect_size(l))]
+	  = dal::random(typename linalg_traits<L>::value_type());
       }
     }
   }
 
-  template <class L> inline void fill_random(L& l, double cfill, abstract_matrix) {
+  template <class L> inline void fill_random(L& l, double cfill,
+					     abstract_matrix) {
     fill_random(l, cfill, typename principal_orientation_type<typename
 		linalg_traits<L>::sub_orientation>::potype());
   }
 
   template <class L> inline void fill_random(L& l, double cfill, row_major) {
-    for (size_type i=0; i < mat_nrows(l); ++i) fill_random(mat_row(l,i), cfill);
+    for (size_type i=0; i < mat_nrows(l); ++i) fill_random(mat_row(l,i),cfill);
   }
 
   template <class L> inline void fill_random(L& l, double cfill, col_major) {
-    for (size_type j=0; j < mat_ncols(l); ++j) fill_random(mat_col(l,j), cfill);
+    for (size_type j=0; j < mat_ncols(l); ++j) fill_random(mat_col(l,j),cfill);
   }
 
 
@@ -411,7 +416,7 @@ namespace gmm {
       it = vect_const_begin(v2), ite = vect_const_end(v2);
     typename linalg_traits<V1>::value_type res(0);
     for (; it != ite; ++it)
-      res += conj_product(vect_sp(mat_const_row(ps, it.index()), v1), *it);
+      res += vect_sp(mat_const_row(ps, it.index()), v1)* (*it);
     return res;
   }
 
@@ -431,7 +436,7 @@ namespace gmm {
       it = vect_const_begin(v2), ite = vect_const_end(v2);
     typename linalg_traits<V1>::value_type res(0);
     for (size_type i = 0; it != ite; ++i, ++it)
-      res += conj_product(vect_sp(mat_const_row(ps, i), v1), *it);
+      res += vect_sp(mat_const_row(ps, i), v1) * (*it);
     return res;
   }
 
@@ -457,7 +462,7 @@ namespace gmm {
       it = vect_const_begin(v1), ite = vect_const_end(v1);
     typename linalg_traits<V1>::value_type res(0);
     for (; it != ite; ++it)
-      res += conj_product(vect_sp(mat_const_col(ps, it.index()), v2), *it);
+      res += vect_sp(mat_const_col(ps, it.index()), v2) * (*it);
     return res;
   }
 
@@ -477,7 +482,7 @@ namespace gmm {
       it = vect_const_begin(v1), ite = vect_const_end(v1);
     typename linalg_traits<V1>::value_type res(0);
     for (size_type i = 0; it != ite; ++i, ++it)
-      res += conj_product(vect_sp(mat_const_col(ps, i), v2), *it);
+      res += vect_sp(mat_const_col(ps, i), v2) * (*it);
     return res;
   }
 
@@ -501,7 +506,7 @@ namespace gmm {
     _vect_sp_dense(IT1 it, IT1 ite, IT2 it2) {
     typename std::iterator_traits<IT1>::value_type res(0);
     for (; it != ite; ++it, ++it2) {
-      res += conj_product(*it, *it2);
+      res += (*it) * (*it2);
     }
     return res;
   }
@@ -512,7 +517,7 @@ namespace gmm {
     typedef typename std::iterator_traits<IT1>::value_type value_type;
     value_type res(0);
     for (; it != ite; ++it) 
-      res += conj_product(*it, value_type(v[it.index()]));
+      res += (*it) * (value_type(v[it.index()]));
     return res;
   }
 
@@ -595,11 +600,19 @@ namespace gmm {
     value_type res(0);
     while (it1 != ite1 && it2 != ite2) {
       if (it1.index() == it2.index())
-	{ res += conj_product(*it1, value_type(*it2)); ++it1; ++it2; }
+	{ res += (*it1) * value_type(*it2); ++it1; ++it2; }
       else if (it1.index() < it2.index()) ++it1; else ++it2;
     }
     return res;
   }
+
+  /* ******************************************************************** */
+  /*		Hermitian product                             		  */
+  /* ******************************************************************** */
+
+  template <class V1, class V2> inline typename linalg_traits<V1>::value_type
+  vect_hp(const V1 &v1, const V2 &v2)
+  { return vect_sp(conjugated(v1), v2); }
 
   /* ******************************************************************** */
   /*		Trace of a matrix                             		  */
@@ -719,29 +732,60 @@ namespace gmm {
   template <class L> inline void clean(const L &l, double seuil)
   { clean(linalg_const_cast(l), seuil);}
 
-  template <class L> inline void clean(L &l, double seuil, abstract_vector)
-  { clean(l, seuil, typename linalg_traits<L>::storage_type()); }
-
-  template <class L> void clean(L &l, double seuil, abstract_dense) {
-    typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
-    for (; it != ite; ++it)
-      if (dal::abs(*it) < seuil)
-	*it = typename linalg_traits<L>::value_type(0);
+  template <class L> inline void clean(L &l, double seuil, abstract_vector) {
+    clean(l, seuil, typename linalg_traits<L>::storage_type(),
+	  typename linalg_traits<L>::value_type());
   }
 
-  template <class L> void clean(L &l, double seuil, abstract_skyline) {
+  template <class L, class T>
+  void clean(L &l, double seuil, abstract_dense, T) {
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
     for (; it != ite; ++it)
-      if (dal::abs(*it) < seuil) *it= typename linalg_traits<L>::value_type(0);
+      if (dal::abs(*it) < seuil) *it = T(0);
   }
 
-  template <class L> void clean(L &l, double seuil, abstract_sparse) {
+  template <class L, class T>
+  void clean(L &l, double seuil, abstract_skyline, T)
+  { clean(l, seuil, abstract_dense(), T()); }
+
+  template <class L, class T>
+  void clean(L &l, double seuil, abstract_sparse, T) {
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
-    for (; it != ite; ++it)
+    for (; it != ite; ++it) // to be optimized ...
       if (dal::abs(*it) < seuil) {
-	l[it.index()] = typename linalg_traits<L>::value_type(0);
+	l[it.index()] = T(0);
 	it = vect_begin(l); ite = vect_end(l);
       }
+  }
+
+  template <class L, class T>
+  void clean(L &l, double seuil, abstract_dense, std::complex<T>) {
+    typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
+    for (; it != ite; ++it){
+      if (dal::abs((*it).real()) < seuil)
+	*it = std::complex<T>(T(0), (*it).imag());
+      if (dal::abs((*it).imag()) < seuil)
+	*it = std::complex<T>((*it).real(), T(0));
+    }
+  }
+
+  template <class L, class T>
+  void clean(L &l, double seuil, abstract_skyline, std::complex<T>)
+  { clean(l, seuil, abstract_dense(), std::complex<T>()); }
+
+  template <class L, class T>
+  void clean(L &l, double seuil, abstract_sparse, std::complex<T>) {
+    typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
+    for (; it != ite; ++it) { // to be optimized ...
+      if (dal::abs((*it).real()) < seuil) {
+	l[it.index()] = std::complex<T>(T(0), (*it).imag());
+	it = vect_begin(l); ite = vect_end(l); continue;
+      }
+      if (dal::abs((*it).imag()) < seuil) {
+	l[it.index()] = std::complex<T>((*it).real(), T(0));
+	it = vect_begin(l); ite = vect_end(l); continue;
+      }
+    }
   }
 
   template <class L> inline void clean(L &l, double seuil, abstract_matrix) {
