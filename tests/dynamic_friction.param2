@@ -19,7 +19,7 @@ PG = 0.0;
 %PG = 9810; 		% gravitation constante (on earth) (mm/s^2).
 %PG = 1000000; 		% gravitation constante (on jupiter !) (mm/s^2).
 RHO = 6e-6;     	% "realistic" density for steel
-T = 5.0;
+T = 3.0;
 DT = 0.0001;             % Time step
 
 %%%%%   discretisation parameters  :                     	      %%%%%
@@ -37,7 +37,7 @@ THETA = 1.0;
 BETA = 1.0;
 GAMMA=0.5;
 NOCONTACT_MASS = 0;     % Suppress or not the mass of contact nodes
-PERIODICITY=1;          % Periodic condition
+PERIODICITY=0;          % Periodic condition
 DT_ADAPT = 0;           % Time step adaptation regarding the energy
 R = 1.0;                % Augmentation parameter
 

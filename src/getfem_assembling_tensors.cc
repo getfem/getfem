@@ -372,12 +372,12 @@ namespace getfem {
       0     0  phi2
       ...
     */
-    mf_comp(const mesh_fem* pmf_, op_type op_, bool vect) :
-      nlt(0), pmf(pmf_), data(0), op(op_), vectorize(vect) { }
-    mf_comp(const std::vector<const mesh_fem*> vmf, pnonlinear_elem_term nlt_) : 
-      nlt(nlt_), pmf(vmf[0]), data(0), auxmf(vmf.begin()+1, vmf.end()), op(NONLIN), vectorize(false) { }
-    mf_comp(ATN_tensor *t) :
-      nlt(0), pmf(0), data(t), op(DATA), vectorize(0) {}
+    mf_comp(mf_comp_vect *ow, const mesh_fem* pmf_, op_type op_, bool vect) :
+      nlt(0), pmf(pmf_), owner(ow), data(0), op(op_), vectorize(vect) { }
+    mf_comp(mf_comp_vect *ow, const std::vector<const mesh_fem*> vmf, pnonlinear_elem_term nlt_) : 
+      nlt(nlt_), pmf(vmf[0]), owner(ow), data(0), auxmf(vmf.begin()+1, vmf.end()), op(NONLIN), vectorize(false) { }
+    mf_comp(mf_comp_vect *ow, ATN_tensor *t) :
+      nlt(0), pmf(0), owner(ow), data(t), op(DATA), vectorize(0) {}
     void push_back_dimensions(size_type cv, tensor_ranges &rng, bool only_reduced=false) const;
     bool reduced(unsigned i) const
     { if (i >= reduction.size()) return false; else return reduction[i] != ' '; }
@@ -387,14 +387,19 @@ namespace getfem {
     const mesh_im *main_im;
   public:
     mf_comp_vect() : std::vector<mf_comp>(), main_im(0) {}
-    void set_im(const mesh_im &mim) { main_im = &mim; }
+    void set_im(const mesh_im &mim) {
+      cerr << " set_im:" << &mim << "\n";
+      main_im = &mim;
+    }
     const mesh_im& get_im() const { 
-      cerr << "get_im: this = " << this << ", main_im=" << main_im << "\n";
+      cerr << "get_im: this = " << this << ", main_im=" << main_im << endl;
       return *main_im; 
     }
+    ~mf_comp_vect() { cerr << "delete called for "<< this<< endl; }
   };
 
-  void mf_comp::push_back_dimensions(size_type cv, tensor_ranges &rng, bool only_reduced) const {
+  void mf_comp::push_back_dimensions(size_type cv, tensor_ranges &rng,
+				     bool only_reduced) const {
     switch (op) {
       case NONLIN:
 	for (unsigned j=0; j < nlt->sizes().size(); ++j)
@@ -410,6 +415,7 @@ namespace getfem {
 	assert(pmf==0);
 	assert(&owner->get_im());
 	cerr << "Normal: mdim = " << int(owner->get_im().linked_mesh().dim()) << "\n";
+	cerr << "convex_index() = " << owner->get_im().linked_mesh().convex_index() << "\n";
 	assert(owner->get_im().linked_mesh().dim() != dim_type(-1));
 	rng.push_back(owner->get_im().linked_mesh().dim());
 	break;
@@ -1110,25 +1116,25 @@ namespace getfem {
       std::string f = tok(); 
       const mesh_fem *pmf = 0;
       if (f.compare("Base")==0 || f.compare("vBase")==0) {
-	pmf = &do_mf_arg(); what.push_back(mf_comp(pmf, mf_comp::BASE, f[0] == 'v'));
+	pmf = &do_mf_arg(); what.push_back(mf_comp(&what, pmf, mf_comp::BASE, f[0] == 'v'));
       } else if (f.compare("Grad")==0 || f.compare("vGrad")==0) {
-	pmf = &do_mf_arg(); what.push_back(mf_comp(pmf, mf_comp::GRAD, f[0] == 'v'));
+	pmf = &do_mf_arg(); what.push_back(mf_comp(&what, pmf, mf_comp::GRAD, f[0] == 'v'));
       } else if (f.compare("Hess")==0 || f.compare("vHess")==0) {
-	pmf = &do_mf_arg(); what.push_back(mf_comp(pmf, mf_comp::HESS, f[0] == 'v'));
+	pmf = &do_mf_arg(); what.push_back(mf_comp(&what, pmf, mf_comp::HESS, f[0] == 'v'));
       } else if (f.compare("NonLin")==0) {	
 	size_type num = 0; /* default value */
 	advance();
 	if (tok_type() == ARGNUM_SELECTOR) { num = tok_argnum(); advance(); }
 	if (num >= innonlin.size()) ASM_THROW_PARSE_ERROR("NonLin$" << num << " does not exist");
 	std::vector<const mesh_fem*> allmf;
-	pmf = &do_mf_arg(&allmf); what.push_back(mf_comp(allmf, innonlin[num]));
+	pmf = &do_mf_arg(&allmf); what.push_back(mf_comp(&what, allmf, innonlin[num]));
       } else if (f.compare("Normal") == 0) {
 	advance();
 	accept(OPEN_PAR,"expecting '('"); accept(CLOSE_PAR,"expecting ')'");
-	pmf = 0; what.push_back(mf_comp(pmf, mf_comp::NORMAL, false));
+	pmf = 0; what.push_back(mf_comp(&what, pmf, mf_comp::NORMAL, false));
       } else {
         if (vars.find(f) != vars.end()) {
-          what.push_back(mf_comp(vars[f]));
+          what.push_back(mf_comp(&what, vars[f]));
           in_data = true;
           advance();
         } else {
