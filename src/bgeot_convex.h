@@ -60,8 +60,8 @@ namespace bgeot
   public :
     
     ref_convex_pt_ct point_of_face(short_type i) const { 
-      return ref_convex_pt_ct(pts.begin(), cvs->faces[i].begin(),
-			      cvs->faces[i].end() );
+      return ref_convex_pt_ct(pts.begin(), cvs->ind_points_of_face(i).begin(),
+			      cvs->ind_points_of_face(i).end() );
     }
     
     ref_convex_pt_ct dir_points(void) const { 
