@@ -48,7 +48,8 @@ namespace getfem
 
     p->ref_convex() = cr;
     p->is_polynomialcomp() = p->is_equivalent() = true;
-    p->is_polynomial() = p->is_lagrange() = false;
+    p->is_polynomial() = false;
+    p->is_lagrange() = true;
     p->estimated_degree() = 0;
     p->init_cvs_node();
 
@@ -58,6 +59,7 @@ namespace getfem
     
     for (size_type cv = nn.take_first(); cv != size_type(-1); cv << nn) {
       pfem pf1 = mf.fem_of_element(cv);
+      if (!pf1->is_lagrange()) p->is_lagrange() = false;
       if (!(pf1->is_equivalent() && pf1->is_polynomial())) {
 	delete p;
 	DAL_THROW(failure_error, "Only for polynomial and equivalent fem.");
