@@ -31,6 +31,7 @@
   a Generic Finite Element library in C++ \\[0.5cm]
   \fbox{\Huge \sc Elementary Computations} \\[0.5cm]
   { \large Yves \sc Renard\footnote{ \it MIP, INSAT, Complexe scientifique de Rangueil, 31077 Toulouse, France, Yves.Renard@gmm.insa-tlse.fr } } \\[1.0cm]
+      July 05, 2002\\[1.0cm]
 \end{center}
 
 % \begin{abstract}
@@ -43,7 +44,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section*{Introduction}
-The main goal of GETFEM++ is to use C++ language facilities to build an advanced finite element library easy to use, as complete as possible and efficient. Here is presented the finite element kernel of this project. A particular attention has been paid to reduce the computation time. The finite element kernel has been built in order to take into account from the simplest methods ($P_K$ methods on simplexes with a linear geometric transformation) to the more elaborated methods (Hermite elements, vectorial elements, non-polynomials elements ...). Once a finite element method is described on the reference element, arbitrary elementary  matrices can be computed, even elementary matrices for mixed methods. The code is generic in the sense that there is no limitation in dimension and degree and existing assembling procedures are completely independent of the dimension and the finite element methods used.\\[5cm]
+The main goal of GETFEM++ is to use C++ language facilities to build an advanced finite element library easy to use, as complete as possible and efficient. Here is presented the finite element kernel of this project. A particular attention has been paid to reduce the computation time. The finite element kernel has been built in order to take into account from the simplest methods ($P_K$ methods on simplexes with a linear geometric transformation) to the more elaborated methods (Hermite elements, vectorial elements, non-polynomials elements ...). Once a finite element method is described on the reference element, arbitrary elementary  matrices can be computed, even elementary matrices for mixed methods. The code is generic in the sense that there is no limitation in dimension and degree and existing assembling procedures are completely independent of the dimension and the finite element methods used.\\[4cm]
 Copyright (C) 2002\\
 The program GETFEM++ is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -104,7 +105,7 @@ It is then possible to extract some information such as {\tt p->nb\_faces()} for
 
 A convex of reference is a particular real element, i.e. a structure of convex with a list of the vertices. It describes the particular element from which a finite element method is defined. In the file {\tt bgeot\_convex\_ref.h} the object\\[0.5cm]
 {\tt bgeot::convex\_of\_reference }\\[0.5cm]
-makes this description. As it is for the object {\tt bgeot::convex\_structure }, the library keeps only one  description for each type of convex. So what will be manipulated is the type of pointer\\[0.5cm]
+makes this description. As it is for the object {\tt bgeot::convex\_structure}, the library keeps only one  description for each type of convex. So what will be manipulated is the type of pointer\\[0.5cm]
 {\tt bgeot::pconvex\_ref }\\[0.5cm]
 The following functions build the descriptions:
 
@@ -129,7 +130,7 @@ Most of the time the base functions of finite element methods are polynomials, a
 evaluation on a point : {\tt a = F.eval(pt)}, where {\tt pt} is a {\tt base\_node} \\[0.5cm]
 derivation with respect to a variable : F.derivative(i).\\[0.5cm]
 
-Presently, only the polynomials are defined in the file {\tt bgeot\_poly.h}. We refer to this file to see all the functions defined on the polynomials (multiplication, sum, evaluation ...). It is possible to obtain a type of polynomial with any base type, the declaration is\\[0.5cm]
+Presently, only one type of base function type is defined : the polynomials in the file {\tt bgeot\_poly.h}. We refer to this file to see all the functions defined on the polynomials (multiplication, sum, evaluation ...). It is possible to obtain a type of polynomial with any base type, the declaration is\\[0.5cm]
 {\tt bgeot::polynomial<base\_type> P;}\\[0.5cm]
 but in the file  {\tt bgeot\_config.h} the type  {\tt bgeot::base\_poly} is defined to be $\hspace{10em}$ {\tt bgeot::polynomial<double> } and only this type is used.
 
@@ -253,7 +254,6 @@ $$ \fbox{ $(B_3(\overline{x}))_{ij} = B_{i / N, j / P}(\overline{x}) B_{i \mbox{
 then
 $$ \fbox{ $H f(x) = B_3\left(\overline{x}) (\overline{H}\,\overline{f}(\overline{x}) - B_2(\overline{x})\overline{\nabla}\,\overline{f}(\overline{x})\right), $ } $$
 
-
 \subsection{Example of elementary matrix} \label{elmminst}
 
 Assume one needs to compute the elementary ``matrix'':
@@ -277,10 +277,10 @@ If the finite element is non-affine equivalent, a supplementary reduction of the
 Before to compute a particular elementary matrix one has to obtain a descriptor  of this elementary matrix. The basic descriptor are defined in the file {\tt getfem\_mat\_elem\_type.h}. 
 
 \begin{center} \begin{tabular}{|m{0.55\linewidth}|m{0.4\linewidth}|} \hline
-{\tt getfem::pmat\_elem\_type getfem::mat\_elem\_base(getfem::pfem pfi) } & Elementary matrix which compute the integral of each base functions (in fact each component of each base function)\\ \hline
-{\tt getfem::pmat\_elem\_type getfem::mat\_elem\_grad(getfem::pfem pfi) } & Elementary matrix which compute the integral of the gradient of each base functions\\ \hline
-{\tt getfem::pmat\_elem\_type getfem::mat\_elem\_hess(getfem::pfem pfi) } & Elementary matrix which compute the integral of the Hessian of each base functions\\ \hline
-{\tt getfem::pmat\_elem\_type getfem::mat\_elem\_product(pmat\_elem\_type a, pmat\_elem\_type b) } & Elementary matrix which compute the integral of the product of what is computed in {\tt a} and {\tt b}. \\ \hline
+{\tt getfem::pmat\_elem\_type getfem::mat\_elem\_base(getfem::pfem pfi) } & Elementary matrix which computes the integral of each base functions (in fact each component of each base function)\\ \hline
+{\tt getfem::pmat\_elem\_type getfem::mat\_elem\_grad(getfem::pfem pfi) } & Elementary matrix which computes the integral of the gradient of each base functions\\ \hline
+{\tt getfem::pmat\_elem\_type getfem::mat\_elem\_hess(getfem::pfem pfi) } & Elementary matrix which computes the integral of the Hessian of each base functions\\ \hline
+{\tt getfem::pmat\_elem\_type getfem::mat\_elem\_product(pmat\_elem\_type a, pmat\_elem\_type b) } & Elementary matrix which computes the integral of the product of what is computed in {\tt a} and {\tt b}. \\ \hline
 \end{tabular} \end{center}
 
 For instance if one wants the description of the elementary matrix given in Section \ref{elmminst} one can obtain it as
@@ -291,7 +291,7 @@ For instance if one wants the description of the elementary matrix given in Sect
 }
 
 
-\section{Elementary matrices computation}
+\section{Elementary matrices computation, order of indices}
 
 The file {\tt getfem\_mat\_elem.h} provides objects which are capable to compute elementary matrices.  There are three parameters to build those objects : a description of the elementary matrix (which contains information on the finite element methods), a description of the integration method and the geometric transformation.
 
@@ -306,7 +306,7 @@ This object has two generic methods which can be called to actually compute the 
 {\tt pmec->gen\_compute\_on\_face(base\_tensor \&t, const CONT \&a, f)} & Compute the elementary matrix on the face {\tt f} of the element in the tensor {\tt t} (and adjust sizes if necessary). The variable {\tt a} is any container containing the list of the vertices of the real element\\ \hline
 \end{tabular} \end{center}
 
-Order of indices in the tensor {\tt t} follows the example in section \ref{elmminst}
+\underline{Order of indices in the tensor {\tt t} follows the example in section \ref{elmminst}}
 
 \section{Example of utilization}
 In the file {\tt getfem\_assembling.h}, one can see some examples of utilization of the elementary matrices computation. This file contains a certain number of assembling functions for classical problems systems (linear elasticity, Laplacian Stokes problem ...).
@@ -330,7 +330,7 @@ int main(void) \{
      getfem::mat_elem_product(getfem::mat_elem_grad(pf),
                               getfem::mat_elem_grad(pf));
 
-  getfem::pmat_elem_computation pmec = // Object which compute elementary matrices.
+  getfem::pmat_elem_computation pmec = // Object which computes elementary matrices.
      getfem::mat_elem(pet, bgeot::simplex_poly_integration(N),
                            bgeot::simplex_trans(N, 1));
 

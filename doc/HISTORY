@@ -1,0 +1,12 @@
+. Le Vendredi 28 Juin 2002 : 
+  ------------------------
+  Prototype du site WEB terminé. Fabrication de la version 1.0 de GETFEM++.
+  Les docs ne sont pas encore finalisées.
+
+
+. Le Jeudi 18 Juillet 2002 :
+  ------------------------
+  Version 1.1 de GETFEM++. Un certain nombre de bugs en moins. Des tests
+  plus etandus. Shell de visualisation de maillage. modification du format
+  de sauvegarde des données. Extension du programme d'interpolation qui ne 
+  marchait que sur les simplexes.
