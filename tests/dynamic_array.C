@@ -14,15 +14,16 @@ int main(void) {
   try {
 
 
-    cout << "size of int         : " << sizeof(int)         << endl;
-    cout << "size of size_t      : " << sizeof(size_t)      << endl;
-    cout << "size of (int *)     : " << sizeof(int *)       << endl;
-    cout << "size of short int   : " << sizeof(short int)   << endl;
-    cout << "size of long int    : " << sizeof(long int)    << endl;
-    cout << "size of char        : " << sizeof(char)        << endl;
-    cout << "size of float       : " << sizeof(float)       << endl;
-    cout << "size of double      : " << sizeof(double)      << endl;
-    cout << "size of long double : " << sizeof(long double) << endl;
+    cout << "size of int           : " << sizeof(int)         << endl;
+    cout << "size of size_t        : " << sizeof(size_t)      << endl;
+    cout << "size of (int *)       : " << sizeof(int *)       << endl;
+    cout << "size of short int     : " << sizeof(short int)   << endl;
+    cout << "size of long int      : " << sizeof(long int)    << endl;
+    cout << "size of long long int : " << sizeof(long long int)    << endl;
+    cout << "size of char          : " << sizeof(char)        << endl;
+    cout << "size of float         : " << sizeof(float)       << endl;
+    cout << "size of double        : " << sizeof(double)      << endl;
+    cout << "size of long double   : " << sizeof(long double) << endl;
     
     dal::dynamic_array<int, 4> t;
 
