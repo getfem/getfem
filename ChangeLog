@@ -1,3 +1,8 @@
+2004-08-27  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/getfem_fem.h, src/getfem_interpolation.h: added hability to
+	interpolate complex-valued fields.
+
 2004-08-09  julien pommier  <pommier@gmm.insa-tlse.fr>
 
 	* src/getfem_assembling_tensors.C, src/bgeot_sparse_tensors.C,

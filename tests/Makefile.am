@@ -26,7 +26,7 @@ check_PROGRAMS = \
 
 CLEANFILES = \
 	laplacian.res laplacian.mesh laplacian.dataelt \
-	elastostatic.mesh test_mesh.mesh toto.mat test_mat_elem.mesh \
+	elasto_static.mesh test_mesh.mesh toto.mat test_mat_elem.mesh helmholtz.vtk \
 	ii_files/* auto_gmm*
 
 

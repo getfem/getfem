@@ -122,8 +122,9 @@ namespace getfem {
     */
     template<typename V1, typename V2> void 
     interpolate(const getfem::mesh_fem &mf, const V1& U, V2& V) const {
+      typedef typename gmm::linalg_traits<V2>::value_type T;
       bgeot::stored_point_tab refpts;
-      std::vector<base_vector> coeff;
+      std::vector<std::vector<T> > coeff;
       base_matrix G;
       size_type qdim = mf.get_qdim();
       size_type qqdim = gmm::vect_size(U)/mf.nb_dof();
@@ -142,7 +143,7 @@ namespace getfem {
         ref_mesh_dof_ind_ct dof = mf.ind_dof_of_element(cv);
         for (size_type qq=0; qq < qqdim; ++qq) {
           coeff[qq].resize(mf.nb_dof_of_element(cv));
-          base_vector::iterator cit = coeff[qq].begin();
+          typename std::vector<T>::iterator cit = coeff[qq].begin();
           for (ref_mesh_dof_ind_ct::iterator it=dof.begin(); it != dof.end(); ++it, ++cit)
             *cit = U[(*it)*qqdim+qq];
         }

@@ -48,10 +48,12 @@ namespace getfem
     in any case, the size of V should be N*(mf.qdim)*(mf_target.nbdof/mf_target.qdim)
     elements (this is not checked by the function!)
   */
-  template<class VECT>
+  template<class VECT1, class VECT2>
   void compute_gradient(const mesh_fem &mf, const mesh_fem &mf_target,
-			const VECT &U, VECT &V)
+			const VECT1 &U, VECT2 &V)
   {
+    typedef typename gmm::linalg_traits<VECT1>::value_type T;
+
     size_type N = mf.linked_mesh().dim();
     size_type qdim = mf.get_qdim();
     size_type target_qdim = mf_target.get_qdim();
@@ -64,8 +66,8 @@ namespace getfem
       DAL_THROW(std::invalid_argument, "invalid Qdim for gradient mesh_fem");
     }
 
-    base_matrix G, val;
-    base_vector coeff;
+    base_matrix G;
+    std::vector<T> coeff;
  
     bgeot::pgeotrans_precomp pgp = NULL;
     pfem_precomp pfp = NULL;
@@ -92,7 +94,7 @@ namespace getfem
       }
       pf_old = pf;
 
-      base_matrix grad(N,qdim), gradt(qdim,N);
+      gmm::dense_matrix<T> grad(N,qdim), gradt(qdim,N);
       fem_interpolation_context ctx(pgp,pfp,0,G,cv);
       gmm::resize(coeff, mf.nb_dof_of_element(cv));
       gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))), 

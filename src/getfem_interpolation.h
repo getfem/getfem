@@ -129,11 +129,12 @@ namespace getfem {
 				 const mesh_fem &mf_target,
 				 const VECTU &U, VECTV &V,
 				 MAT &M, int version) {
+    typedef typename gmm::linalg_traits<VECTU>::value_type T;
     base_matrix G;
     size_type qdim = mf_source.get_qdim();
     size_type qqdim = gmm::vect_size(U)/mf_source.nb_dof();
-    base_vector val(qdim);
-    std::vector<base_vector> coeff;
+    std::vector<T> val(qdim);
+    std::vector<std::vector<T> > coeff;
     std::vector<size_type> dof_source;
     if (qdim != mf_target.get_qdim() && mf_target.get_qdim() != 1)
       DAL_THROW(failure_error, "Attempt to interpolate a field of dimension "
@@ -220,6 +221,7 @@ namespace getfem {
 		     const VECTU &U, VECTV &V, MAT &M,
 		     int version, bool extrapolation = false) {
 
+    typedef typename gmm::linalg_traits<VECTU>::value_type T;
     const getfem_mesh &mesh(mf_source.linked_mesh());
     size_type qdim_s = mf_source.get_qdim();
     size_type qqdim = gmm::vect_size(U)/mf_source.nb_dof();
@@ -232,8 +234,8 @@ namespace getfem {
 
     /* interpolation */
     dal::bit_vector dof_done; dof_done.add(0, mti.nb_points());
-    base_vector val(qdim_s);
-    std::vector<base_vector> coeff;
+    std::vector<T> val(qdim_s);
+    std::vector<std::vector<T> > coeff;
     base_tensor Z;
     std::vector<size_type> dof_source;
 

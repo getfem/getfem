@@ -156,4 +156,4 @@ libgetfem_la_LDFLAGS = ${LIBTOOL_VERSION_INFO}
 libgetfem_la_LIBADD = ../superlu/libsuperlu.la
 
 CLEANFILES = ii_files/* *.o.d
-DISTCLEANFILES = getfem_arch_config.h
+DISTCLEANFILES = getfem_im_list.h getfem_arch_config.h

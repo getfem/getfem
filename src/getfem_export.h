@@ -232,6 +232,12 @@ namespace getfem {
     
   }
 
+  inline std::string remove_spaces(const std::string &s) {
+    std::string s2(s); 
+    for (unsigned i=0; i < s.size(); ++i) 
+      if (s2[i] <= ' ') s2[i] = '_';
+    return s2;
+  }
 
   /** 
       export class to VTK ( http://www.kitware.com/vtk.html ) file format 
@@ -262,7 +268,7 @@ namespace getfem {
     vtk_export(const std::string& fname, bool ascii_ = false);
     vtk_export(std::ostream &os_, bool ascii_ = false);
 
-    
+    /** should be called before write_*_data */
     void exporting(const getfem_mesh& m);
     void exporting(const mesh_fem& mf);
     void exporting(const stored_mesh_slice& sl);
@@ -274,6 +280,8 @@ namespace getfem {
     /** append a new scalar or vector field defined on mf to the .vtk file.  If
         you are exporting a slice, or if mf != get_exported_mesh_fem(), U will
         be interpolated on the slice, or on get_exported_mesh_fem().
+
+        Note that vectors should be written AFTER scalars, and tensors after vectors
 
         NO SPACE ALLOWED in 'name' */
     template<class VECT> void write_point_data(const getfem::mesh_fem &mf, const VECT& U0, const std::string& name);
@@ -401,13 +409,15 @@ namespace getfem {
                 << gmm::vect_size(U) << " != " << nb_val << "*" << Q);
     write_separ();
     if (Q == 1) {
-      os << "SCALARS " << name << " float 1\n";
+      cout << "Q=" << Q << ", " << "SCALARS " << remove_spaces(name) << " float 1\n";
+      os << "SCALARS " << remove_spaces(name) << " float 1\n";
       os << "LOOKUP_TABLE default\n";
       for (size_type i=0; i < nb_val; ++i) {
 	write_val(float(U[i]));
       }
     } else if (Q <= 3) {
-      os << "VECTORS " << name << " float\n";
+      cout << "Q=" << Q << ", " << "VECTORS " << remove_spaces(name) << " float\n";
+      os << "VECTORS " << remove_spaces(name) << " float\n";
       for (size_type i=0; i < nb_val; ++i) {
 	write_vec(U.begin() + i*Q);
       }
@@ -415,7 +425,8 @@ namespace getfem {
       /* tensors : coef are supposed to be stored in FORTRAN order 
          in the VTK file, they are written with C (row major) order
        */
-      os << "TENSORS " << name << " float\n";
+      cout << "Q=" << Q << ", " << "TENSORS " << remove_spaces(name) << " float\n";
+      os << "TENSORS " << remove_spaces(name) << " float\n";
       for (size_type i=0; i < nb_val; ++i) {
         write_3x3tensor(U.begin() + i*Q);
       }

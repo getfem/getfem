@@ -337,7 +337,7 @@ namespace getfem
     base_tensor Z; real_base_value(c,Z);
     for (size_type j = 0; j < RR; ++j) {
       for (size_type q = 0; q < Qmult; ++q) {
-	scalar_type co = 0.0;
+	typename gmm::linalg_traits<CVEC>::value_type co = 0.0;
 	if (is_equivalent())
 	  co = coeff[j*Qmult+q];
 	else
@@ -375,6 +375,7 @@ namespace getfem
   template<typename CVEC, typename VMAT> 
   void virtual_fem::interpolation_grad(const fem_interpolation_context& c, 
 			  const CVEC& coeff, VMAT &val, dim_type Qdim) const {
+    typedef typename gmm::linalg_traits<CVEC>::value_type T;
     size_type Qmult = size_type(Qdim) / target_dim();
     dim_type N = c.N();
     if (gmm::mat_ncols(val) != N || gmm::mat_nrows(val) != Qdim)
@@ -391,14 +392,14 @@ namespace getfem
       } else {
 	t = c.pfp()->grad(c.ii());
       }
-      base_matrix val2(P, Qdim);
+      gmm::dense_matrix<T> val2(P, Qdim);
       gmm::clear(val2);
       for (size_type q = 0; q < Qmult; ++q) {
 	base_tensor::iterator it = t.begin();	
 	for (size_type k = 0; k < P; ++k)
 	  for (size_type r = 0; r < target_dim(); ++r)
 	    for (size_type j = 0; j < RR; ++j, ++it) {
-	      scalar_type co = 0.0;
+	      T co = 0.0;
 	      if (is_equivalent())
 		co = coeff[j*Qmult+q];
 	      else
@@ -407,7 +408,14 @@ namespace getfem
 	      val2(k, r + q*target_dim()) += co * (*it);
 	    }
       }
-      gmm::mult(c.B(), val2, gmm::transposed(val));
+      //gmm::mult(c.B(), val2, gmm::transposed(val));
+      // replaced by the loop because gmm does not support product of a complex<> matrix with a real matrix
+      for (size_type i=0; i < Qdim; ++i)
+	for (size_type j=0; j < N; ++j) {
+	  T s = 0;
+	  for (size_type k=0; k < P; ++k) s += c.B()(i,k)*val2(k,j);
+	  val(j,i) = s;
+	}
     } else {
       real_grad_base_value(c, t);
       for (size_type q = 0; q < Qmult; ++q) {
@@ -415,7 +423,7 @@ namespace getfem
 	for (size_type k = 0; k < N; ++k)
 	  for (size_type r = 0; r < target_dim(); ++r)
 	    for (size_type j = 0; j < RR; ++j, ++it) {
-	      scalar_type co = 0.0;
+	      T co = 0.0;
 	      if (is_equivalent())
 		co = coeff[j*Qmult+q];
 	      else

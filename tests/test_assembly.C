@@ -1545,8 +1545,8 @@ int main(int argc, char *argv[])
      mfdq.set_qdim(m.dim());
      init_mesh_fem(mfdq,true);
      
-     mf.write_to_file("toto1.mf",true);
-     mfq.write_to_file("totoq.mf",true);
+     //mf.write_to_file("toto1.mf",true);
+     //mfq.write_to_file("totoq.mf",true);
 
      run_tests(mf,mfq,mfd,mfdq,param.do_new,param.do_old,tests,1,1);
    }
