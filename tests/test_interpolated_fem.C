@@ -28,6 +28,7 @@
 #include <getfem_regular_meshes.h>
 #include <gmm.h>
 #include <getfem_interpolated_fem.h>
+#include <getfem_fem_sum.h>
 
 using bgeot::base_vector;
 using bgeot::base_small_vector;

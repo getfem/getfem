@@ -266,8 +266,7 @@ namespace getfem {
   
   
   interpolated_fem::interpolated_fem(const mesh_fem &mef1,
-				     const mesh_fem &mef2,
-				     bool store_val)
+				     const mesh_fem &mef2, bool store_val)
     : mf1(mef1), mf2(mef2), store_values(store_val), mi2(2), mi3(3) {
     this->add_dependency(mef1);
     this->add_dependency(mef2);

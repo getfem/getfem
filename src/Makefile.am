@@ -50,6 +50,7 @@ include_HEADERS =                       \
 	getfem_derivatives.h            \
 	getfem_fem.h                    \
 	getfem_interpolated_fem.h       \
+	getfem_fem_sum.h                \
 	getfem_gauss_lobatto_fem_coef.h \
 	getfem_Xfem.h                   \
 	getfem_im_list.h                \
