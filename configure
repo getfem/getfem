@@ -22,16 +22,14 @@ if ($CC) { $ENV{CC} = $CC; }
 
 print "Installing Getfem++\n\n";
 
-print "To compile the library, type make after the configuration process ended\n\n";
+print "To compile the library, type make after the configuration process ";
+print "ended\n\n";
 
-print "The library will be compiled in the files\n";
-print "lib/libgetfem.a\n";
-print "and\n";
-print "lib/libgetfem.so\n";
+print "Library name : lib/libgetfem.a  and  lib/libgetfem.so\n";
 
-# + commandes Matlab en options
-
-# open F, "bin/install |" or die; while (<F>) { print $_; }
+if (-d "matlabcom") {
+  print "Matlab commands are compiled also in directory lib/ \n";
+}
 
 exec "bin/install";
 

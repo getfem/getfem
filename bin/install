@@ -196,6 +196,9 @@ elsif ($systeme =~ /OSF/) {
 elsif ($systeme =~ /Sun/) {
   $extmatcom = 'mexsol ';
 }
+elsif ($systeme =~ /IRIX/) {
+  $extmatcom = 'mexsg  ';
+}
 else { die "System unknown ..."; }
 
 print MAKEFILE "CPLUS = \$(COMP) \$(OPTIONS_STANDARD) \$(OPTIONS_OPTIMIZE) \n";
@@ -294,7 +297,7 @@ if ((-d "matlabcom") && ($MEX != 0))
 }
 
 print MAKEFILE "\n\n\$(GETFEM_LIB) : \$(lib_objects)\n";
-print MAKEFILE "\t ar r \$(GETFEM_LIB) \$(lib_objects) ; ranlib \$(GETFEM_LIB)\n";
+print MAKEFILE "\t ar r \$(GETFEM_LIB) \$(lib_objects) ; ar -s \$(GETFEM_LIB)\n";
 print MAKEFILE "\n\nlib/libgetfem.so : \$(lib_objects) \n";
   print MAKEFILE "\t rm -f lib/libgetfem.so; ", '$(CPLUS) -shared sources/dal*.o sources/bgeot*.o sources/ftool*.o sources/getfem*.o sources/matlabint*.o -o lib/libgetfem.so -lm', "\n\n";
 print MAKEFILE "\n\nclean :\n";

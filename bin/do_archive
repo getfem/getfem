@@ -1,5 +1,11 @@
 #!/usr/bin/perl
  
+$date = localtime;
+
+($sec, $min, $heure, $mjour, $mois, $annee, $sjour, $ajour, $isdst)=localtime;
+$mois += 1; $annee += 1900; $sjour += 1;
+
+print "Doing archive for the date : $mois/$mjour/$annee\n";
 
 #######################################
 #       System identification         #
@@ -38,11 +44,12 @@ else
 
 print "loading getfem++ from cvs\n\n";
 
-print `cd temp; cvs checkout getfem++`; print "\n\n";
+print `cd temp; cvs export -D $mois/$mjour/$annee getfem++`; print "\n\n";
 `rm -fr temp/getfem++/misc`;
 `rm -fr temp/getfem++/gensolv`;
 `rm -fr temp/getfem++/matlabcom`;
 `rm -fr temp/getfem++/matlabint`;
+`rm -fr temp/getfem++/archives`;
 
 # + faire la transformation --> mise dans include/ et sources/
 
