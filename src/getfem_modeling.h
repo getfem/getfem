@@ -865,8 +865,8 @@ namespace getfem {
     mtype alpha, alpha_min=mtype(1)/mtype(16), alpha_mult=mtype(3)/mtype(4);
     mtype alpha_max_ratio(2);
     dal::bit_vector mixvar;
-    gmm::iteration iter_linsolv = iter;
-    if (!is_linear) { iter_linsolv.reduce_noisy(); }
+    gmm::iteration iter_linsolv0 = iter;
+    if (!is_linear) { iter_linsolv0.reduce_noisy(); }
 
     MS.adapt_sizes(problem);
     if (!is_linear) gmm::fill_random(MS.state()); 
@@ -876,7 +876,7 @@ namespace getfem {
     MS.compute_reduced_system();
     mtype act_res = MS.reduced_residu_norm(), act_res_new(0);
     while (is_linear || !iter.finished(act_res)) {
-      
+      gmm::iteration iter_linsolv = iter_linsolv0;
       VECTOR d(ndof), dr(gmm::vect_size(MS.reduced_residu()));
 
       if (!(iter.first())) problem.compute_tangent_matrix(MS);
