@@ -57,14 +57,14 @@ namespace getfem {
     }
     
     init_cvs_node();
-    cout << "creating fem_level_sel:\n";
+    cout << "creating fem_level_set:\n";
     for (size_type k = 0; k < bfem->nb_dof(0); ++k) {
       if (!dofzones[k]) {
 	add_node(bfem->dof_types()[k], bfem->node_of_dof(0,k));
       } else {
 	for (size_type j = 0; j < dofzones[k]->size(); ++j) {
 	  cout << " -> +dof: '" << *(*dofzones[k])[j] << "'\n";
-	  add_node(xfem_dof(bfem->dof_types()[k], j+1000), /* +1000 to avoid messing with the real xfem */
+	  add_node(xfem_dof(bfem->dof_types()[k], j+XFEM_INDEX_START), /* +1000 to avoid messing with the real xfem */
 		   bfem->node_of_dof(0,k));
 	}
       }

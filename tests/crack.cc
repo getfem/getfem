@@ -184,7 +184,6 @@ void sol_ref_infinite_plane(scalar_type nu, scalar_type E, scalar_type sigma, sc
   assert(!isnan(U[1]));
 }
 
-
 gmm::row_matrix<base_small_vector> sol_K;
 static scalar_type sol_lambda, sol_mu;
 
@@ -195,7 +194,7 @@ base_small_vector sol_u(const base_node &x) {
 
 base_small_vector sol_f(const base_node &x) {
   int N = x.size();
-  base_small_vector res(N); res[N-1] = -1.0;
+  base_small_vector res(N); //res[N-1] = (x[1] < 0 ? -1.0 : 0);
   return res;
 }
 
@@ -204,6 +203,68 @@ base_matrix sol_sigma(const base_node &x) {
   base_matrix res(N,N);
   return res;
 }
+
+struct toto_function : public getfem::global_function {
+  virtual scalar_type val(const getfem::fem_interpolation_context&c) const
+  { base_node P=c.xreal(); 
+    cout << "P = " << P << " -> toto renvoie " << gmm::sgn(P[1])*(1-P[0]) << "\n";
+    return 3*gmm::sgn(P[1])*(1-P[0]); }
+};
+
+struct toto_solution {
+  getfem::mesh_fem_global_function mf;
+  getfem::base_vector U;
+
+  toto_solution(getfem::getfem_mesh &me) : mf(me) {}
+  void init() {
+    U.resize(2); U[0] = 0; U[1] = .1;
+    mf.set_functions(new toto_function());
+  }
+}; 
+
+struct exact_solution {
+  getfem::mesh_fem_global_function mf;
+  getfem::base_vector U;
+
+  exact_solution(getfem::getfem_mesh &me) : mf(me) {}
+  
+  void init(int mode, scalar_type lambda, scalar_type mu, getfem::level_set &ls) {
+    std::vector<getfem::pglobal_function> cfun(4);
+    for (unsigned j=0; j < 4; ++j)
+      cfun[j] = getfem::isotropic_crack_singular_2D(j, ls);
+    mf.set_functions(cfun);
+    
+    mf.set_qdim(1);
+    
+    U.resize(8); assert(mf.nb_dof() == 4);
+    getfem::base_vector::iterator it = U.begin();
+    scalar_type coeff=0.;
+    switch(mode) {
+      case 1: {
+	scalar_type A=2+2*mu/(lambda+2*mu), B=-2*(lambda+mu)/(lambda+2*mu);
+	/* "colonne" 1: ux, colonne 2: uy */
+	*it++ = 0;       *it++ = A-B;   /* sin(theta/2) */
+	*it++ = A+B;     *it++ = 0;   /* cos(theta/2) */
+	*it++ = -B;      *it++ = 0;   /* sin(theta/2)*sin(theta) */ 
+	*it++ = 0;       *it++ = B;   /* cos(theta/2)*cos(theta) */
+	coeff = 1/sqrt(2*M_PI);
+      } break;
+      case 2: {
+	scalar_type C1 = (lambda+3*mu)/(lambda+mu); 
+	*it++ = C1+2-1;   *it++ = 0;
+	*it++ = 0;      *it++ = -(C1-2+1);
+	*it++ = 0;      *it++ = 1;
+	*it++ = 1;      *it++ = 0;
+	coeff = 2*(mu+lambda)/(lambda+2*mu)/sqrt(2*M_PI);
+      } break;
+      default:
+	assert(0);
+	break;
+    }
+    U *= coeff;
+  }
+};
+
 
 /*
  * structure for the crack problem
@@ -217,10 +278,15 @@ struct crack_problem {
   getfem::mesh_fem mf_pre_u; 
   getfem::mesh_fem_level_set mfls_u; 
   getfem::mesh_fem_global_function mf_sing_u;
-  getfem::mesh_fem_sum mf_u;
+  getfem::mesh_fem_sum mf_u_sum;
+
+  getfem::mesh_fem& mf_u() { return mfls_u; } //_u_sum; }
+
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   getfem::mesh_fem mf_p;     /* mesh_fem for the pressure for mixed form     */
   getfem::mesh_fem mf_coef;  /* mesh_fem used to represent pde coefficients  */
+  exact_solution exact_sol;
+  
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
 
   getfem::level_set ls;      /* The two level sets defining the crack.       */
@@ -235,8 +301,9 @@ struct crack_problem {
   void init(void);
   void compute_error(plain_vector &U);
   crack_problem(void) : mls(mesh), mim(mls), mf_pre_u(mesh),
-			mfls_u(mls, mf_pre_u), mf_sing_u(mesh), mf_u(mesh), mf_rhs(mesh),
-			mf_p(mesh), mf_coef(mesh), ls(mesh, 1, true) {}
+			mfls_u(mls, mf_pre_u), mf_sing_u(mesh), mf_u_sum(mesh), mf_rhs(mesh),
+			mf_p(mesh), mf_coef(mesh), exact_sol(mesh), 
+			ls(mesh, 1, true) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
@@ -271,7 +338,7 @@ void crack_problem::init(void) {
   mu = PARAM.real_value("MU", "Lamé coefficient mu");
   lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
   sol_lambda = lambda; sol_mu = mu;
-  mf_u.set_qdim(N);
+  mf_u().set_qdim(N);
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = 
@@ -323,21 +390,22 @@ void crack_problem::init(void) {
   for (getfem::convex_face_ct::const_iterator it = border_faces.begin();
        it != border_faces.end(); ++it) {
     assert(it->f != size_type(-1));
-    base_node un = mesh.normal_of_face_of_convex(it->cv, it->f);
+    /*base_node un = mesh.normal_of_face_of_convex(it->cv, it->f);
     un /= gmm::vect_norm2(un);
     if (gmm::abs(un[N-1] - 1.0) >= 1.0E-7) { // new Neumann face
       mesh.add_face_to_set(NEUMANN_BOUNDARY_NUM, it->cv, it->f);
-    } else {
+      } else {*/
       mesh.add_face_to_set(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
-    }
   }
+
+  exact_sol.init(1, sol_lambda, sol_mu, ls);
 }
 
 /* compute the error with respect to the exact solution */
 void crack_problem::compute_error(plain_vector &U) {
   size_type N = mesh.dim();
   std::vector<scalar_type> V(mf_rhs.nb_dof()*N);
-  getfem::interpolation(mf_u, mf_rhs, U, V);
+  getfem::interpolation(mf_u(), mf_rhs, U, V);
   for (size_type i = 0; i < mf_rhs.nb_dof(); ++i) {
     gmm::add(gmm::scaled(sol_u(mf_rhs.point_of_dof(i)), -1.0),
 	     gmm::sub_vector(V, gmm::sub_interval(i*N, N)));
@@ -372,16 +440,18 @@ bool crack_problem::solve(plain_vector &U) {
   for (size_type i = 0; i < 4; ++i) vfunc[i] = isotropic_crack_singular_2D(i, ls);
   
   mf_sing_u.set_functions(vfunc);
-  mf_u.set_mesh_fems(mfls_u, mf_sing_u);
-  U.resize(mf_u.nb_dof());
+  mf_u_sum.set_mesh_fems(mfls_u, mf_sing_u);
+
+
+  U.resize(mf_u().nb_dof());
 
 
   if (mixed_pressure) cout << "Number of dof for P: " << mf_p.nb_dof() << endl;
-  cout << "Number of dof for u: " << mf_u.nb_dof() << endl;
+  cout << "Number of dof for u: " << mf_u().nb_dof() << endl;
 
   // Linearized elasticity brick.
   getfem::mdbrick_isotropic_linearized_elasticity<>
-    ELAS(mim, mf_u, mf_coef, mixed_pressure ? 0.0 : lambda, mu);
+    ELAS(mim, mf_u(), mf_coef, mixed_pressure ? 0.0 : lambda, mu);
 
   getfem::mdbrick_linear_incomp<> INCOMP(ELAS, mf_p, mf_coef, 1.0/lambda);
 
@@ -419,14 +489,17 @@ bool crack_problem::solve(plain_vector &U) {
   // Neumann condition brick.
   getfem::mdbrick_source_term<> NEUMANN(VOL_F, mf_rhs, F,NEUMANN_BOUNDARY_NUM);
   
-  // Defining the Dirichlet condition value.
-  for (size_type i = 0; i < nb_dof_rhs; ++i)
-      gmm::copy(sol_u(mf_rhs.point_of_dof(i)), 
-		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
+  
+  gmm::clear(F);
 
+  //toto_solution toto(mf_rhs.linked_mesh()); toto.init();
+  //assert(toto.mf.nb_dof() == 1);
   // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> final_model(NEUMANN, mf_rhs,
-					  F, DIRICHLET_BOUNDARY_NUM);
+  getfem::mdbrick_Dirichlet<> final_model(NEUMANN, 
+					  //mf_rhs, F, 
+					  exact_sol.mf, exact_sol.U, 
+					  //toto.mf, toto.U,
+					  DIRICHLET_BOUNDARY_NUM);
 
   // Generic solve.
   cout << "Total number of variables : " << final_model.nb_dof() << endl;
@@ -452,7 +525,7 @@ int main(int argc, char *argv[]) {
   feenableexcept(FE_DIVBYZERO | FE_INVALID);
 #endif
 
-  getfem::getfem_mesh_level_set_noisy();
+  //getfem::getfem_mesh_level_set_noisy();
 
 
   try {
@@ -460,26 +533,58 @@ int main(int argc, char *argv[]) {
     p.PARAM.read_command_line(argc, argv);
     p.init();
     p.mesh.write_to_file(p.datafilename + ".mesh");
-    plain_vector U(p.mf_u.nb_dof());
+    plain_vector U(p.mf_u().nb_dof());
     if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
     //p.compute_error(U);
     if (p.PARAM.int_value("VTK_EXPORT")) {
       getfem::getfem_mesh mcut;
       p.mls.global_cut_mesh(mcut);
-      getfem::mesh_fem mf(mcut, p.mf_u.get_qdim());
+      getfem::mesh_fem mf(mcut, p.mf_u().get_qdim());
       mf.set_finite_element(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 2, 0.01)"));
       plain_vector V(mf.nb_dof());
-      getfem::interpolation(p.mf_u, mf, U, V);
+
+      getfem::interpolation(p.mf_u(), mf, U, V);
+
+      getfem::stored_mesh_slice sl;
+      getfem::getfem_mesh mcut_refined;
+      sl.build(mcut, 
+	       getfem::slicer_build_mesh(mcut_refined), 6);
+      getfem::mesh_im mim_refined(mcut_refined); 
+      mim_refined.set_integration_method(getfem::int_method_descriptor("IM_TRIANGLE(6)"));
+
+      getfem::mesh_fem mf_refined(mcut_refined, p.mf_u().get_qdim());
+      mf_refined.set_finite_element(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 1, 0.01)"));
+      plain_vector W(mf_refined.nb_dof());
+      getfem::interpolation(p.mf_u(), mf_refined, U, W);
+
+      plain_vector EXACT(mf_refined.nb_dof());
+      p.exact_sol.mf.set_qdim(2);
+      assert(p.exact_sol.mf.nb_dof() == p.exact_sol.U.size());
+      getfem::interpolation(p.exact_sol.mf, mf_refined, 
+			    p.exact_sol.U, EXACT);
 
 
-      cout << "export to " << p.datafilename + ".vtk" << "..\n";
-      getfem::vtk_export exp(p.datafilename + ".vtk",
-			     p.PARAM.int_value("VTK_EXPORT")==1);
-      exp.exporting(mf); 
-      exp.write_point_data(mf, V, "elastostatic_displacement");
-      cout << "export done, you can view the data file with (for example)\n"
-	"mayavi -d " << p.datafilename << ".vtk -f ExtractVectorNorm -f "
-	"WarpVector -m BandedSurfaceMap -m Outline\n";
+      {
+	cout << "export to " << p.datafilename + ".vtk" << "..\n";
+	getfem::vtk_export exp(p.datafilename + ".vtk",
+			       p.PARAM.int_value("VTK_EXPORT")==1);
+	exp.exporting(mf_refined); 
+	exp.write_point_data(mf_refined, W, "elastostatic_displacement");
+	cout << "export done, you can view the data file with (for example)\n"
+	  "mayavi -d " << p.datafilename << ".vtk -f ExtractVectorNorm -f "
+	  "WarpVector -m BandedSurfaceMap -m Outline\n";
+      }
+      {
+
+	getfem::vtk_export exp("crack_exact.vtk");
+	exp.exporting(mf_refined);
+	exp.write_point_data(mf_refined, EXACT, 
+			     "reference solution");
+      }
+
+      plain_vector DIFF(EXACT); gmm::add(gmm::scaled(W,-1),DIFF);
+      cout << "ERROR L2:" << getfem::asm_L2_norm(mim_refined,mf_refined,DIFF) 
+	   << " H1:" << getfem::asm_H1_norm(mim_refined,mf_refined,DIFF) << "\n";
     }
   }
   DAL_STANDARD_CATCH_ERROR;

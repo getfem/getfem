@@ -52,3 +52,5 @@ mat_elem & reduction inline: quid des elts non equivalents
 ajouter à la faq de gmm: "Q: est-ce que gmm et getfem resteront deux packages separés"
 
 tester les geotransinv de R^N dans R^P... 
+
+gerer les "convex set" dans assem.volumic_assembly

@@ -78,6 +78,8 @@ namespace getfem {
   bool dof_compatibility(pdof_description, pdof_description);
   /// Returns the xfem_index of dof (0 for normal dof)
   size_type dof_xfem_index(pdof_description);
+
+  enum { XFEM_INDEX_START = 1000 };
   
   /* ******************************************************************** */
   /*	Classes for description of a finite element.                      */

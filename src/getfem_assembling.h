@@ -40,20 +40,15 @@ namespace getfem
    * compute $\|U\|2_$, U might be real or complex
    */
   template<typename VEC>
-  scalar_type asm_L2_norm(const mesh_im &mim, const mesh_fem &mf, const VEC &U) {
-    return asm_L2_norm(mim, mf, U, mf.convex_index());
-  }
-
-  template<typename VEC>
   scalar_type asm_L2_norm(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-			  const dal::bit_vector &cvlst) {
-    return sqrt(asm_L2_norm_sqr(mim, mf,U,cvlst,
+			  size_type cvset=size_type(-1)) {
+    return sqrt(asm_L2_norm_sqr(mim, mf,U,cvset,
 				typename gmm::linalg_traits<VEC>::value_type()));
   }
 
   template<typename VEC, typename T>
   scalar_type asm_L2_norm_sqr(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-			      const dal::bit_vector &cvlst, T) {
+			      size_type cvset, T) {
     generic_assembly assem;    
     if (mf.get_qdim() == 1)
       assem.set("u=data(#1); V()+=u(i).u(j).comp(Base(#1).Base(#1))(i,j)");
@@ -65,15 +60,16 @@ namespace getfem
     assem.push_data(U);
     bgeot::vsvector<scalar_type> v(1);
     assem.push_vec(v);
-    assem.volumic_assembly(cvlst);
+    if (cvset+1) assem.boundary_assembly(cvset);
+    else         assem.volumic_assembly();
     return v[0];
   }
 
   template<typename VEC, typename T>
   scalar_type asm_L2_norm_sqr(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-			      const dal::bit_vector &cvlst, std::complex<T>) {
-    return asm_L2_norm_sqr(mim, mf,gmm::real_part(U),cvlst,T()) + 
-      asm_L2_norm_sqr(mim, mf,gmm::imag_part(U),cvlst,T());
+			      size_type cvset=size_type(-1), std::complex<T>) {
+    return asm_L2_norm_sqr(mim, mf,gmm::real_part(U),cvset,T()) + 
+      asm_L2_norm_sqr(mim, mf,gmm::imag_part(U),cvset,T());
   }
 
   
@@ -81,19 +77,14 @@ namespace getfem
    * compute $\|\nabla U\|2_$, U might be real or complex
    */
   template<typename VEC>
-  scalar_type asm_H1_semi_norm(const mesh_im &mim, const mesh_fem &mf, const VEC &U) {
-    return asm_H1_semi_norm(mim, mf,U,mf.convex_index());
-  }
-
-  template<typename VEC>
   scalar_type asm_H1_semi_norm(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-			       const dal::bit_vector &cvlst) {
-    return sqrt(asm_H1_semi_norm_sqr(mim, mf,U,cvlst,typename gmm::linalg_traits<VEC>::value_type()));
+			       size_type cvset=size_type(-1)) {
+    return sqrt(asm_H1_semi_norm_sqr(mim, mf,U,cvset,typename gmm::linalg_traits<VEC>::value_type()));
   }
 
   template<typename VEC, typename T>
   scalar_type asm_H1_semi_norm_sqr(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-				   const dal::bit_vector &cvlst, T) {
+				   size_type cvset, T) {
     generic_assembly assem;    
     if (mf.get_qdim() == 1)
       assem.set("u=data(#1); V()+=u(i).u(j).comp(Grad(#1).Grad(#1))(i,d,j,d)");
@@ -105,15 +96,17 @@ namespace getfem
     assem.push_data(U);
     bgeot::vsvector<scalar_type> v(1);
     assem.push_vec(v);
-    assem.volumic_assembly(cvlst);
+    if (cvset == size_type(-1))
+      assem.volumic_assembly();
+    else assem.boundary_assembly(cvset);
     return v[0];
   }
 
   template<typename VEC, typename T>
   scalar_type asm_H1_semi_norm_sqr(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-				   const dal::bit_vector &cvlst, std::complex<T>) {
-    return asm_H1_semi_norm_sqr(mim, mf, gmm::real_part(U), cvlst, T()) + 
-      asm_H1_semi_norm_sqr(mim, mf, gmm::imag_part(U), cvlst, T());
+				   size_type cvset, std::complex<T>) {
+    return asm_H1_semi_norm_sqr(mim, mf, gmm::real_part(U), cvset, T()) + 
+      asm_H1_semi_norm_sqr(mim, mf, gmm::imag_part(U), cvset, T());
   }
 
 
@@ -121,15 +114,10 @@ namespace getfem
    *   compute the H1 norm of U.
    */
   template<typename VEC>
-  scalar_type asm_H1_norm(const mesh_im &mim, const mesh_fem &mf, const VEC &U) {
-    return asm_H1_norm(mim, mf, U, mf.convex_index());
-  }
-
-  template<typename VEC>
   scalar_type asm_H1_norm(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-			  const dal::bit_vector &cvlst) {
-    return sqrt(gmm::sqr(asm_L2_norm(mim, mf, U, cvlst))
-		+gmm::sqr(asm_H1_semi_norm(mim, mf, U, cvlst)));
+			  size_type cvset=size_type(-1)) {
+    return sqrt(gmm::sqr(asm_L2_norm(mim, mf, U, cvset))
+		+gmm::sqr(asm_H1_semi_norm(mim, mf, U, cvset)));
   }
   
   /** 
@@ -659,17 +647,17 @@ namespace getfem
   template<typename MAT, typename VECT1, typename VECT2, typename VECT3>
   void asm_dirichlet_constraints(MAT &H, VECT1 &R, 
 				 const mesh_im &mim, const mesh_fem &mf_u,
-				 const mesh_fem &mf_rh,
+				 const mesh_fem &mf_h, const mesh_fem &mf_r,
 				 const VECT2 &h_data, const VECT3 &r_data,
 				 size_type boundary,
 				 int version =  ASMDIR_BUILDALL) {
     mesh_cvf_set::face_bitset nf;
     pfem pf_u, pf_rh;
     
-    if (mf_rh.get_qdim() != 1)
+    if (mf_h.get_qdim() != 1 || mf_r.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     if (version & ASMDIR_BUILDH) {
-      asm_qu_term(H, mim, mf_u, mf_rh, h_data, boundary);
+      asm_qu_term(H, mim, mf_u, mf_h, h_data, boundary);
       std::vector<size_type> ind(0);
       dal::bit_vector bdof = mf_u.dof_on_set(boundary);
       // gmm::clean(H, 1E-15 * gmm::mat_maxnorm(H));
@@ -677,69 +665,71 @@ namespace getfem
 	if (!(bdof[i])) ind.push_back(i);
       gmm::clear(gmm::sub_matrix(H, gmm::sub_index(ind)));
     }
-    if (version & ASMDIR_BUILDR) asm_source_term(R, mim, mf_u, mf_rh, r_data, boundary);
+    if (version & ASMDIR_BUILDR) asm_source_term(R, mim, mf_u, mf_r, r_data, boundary);
     if (!(version & ASMDIR_SIMPLIFY)) return;
 
     /* step 2 : simplification of simple dirichlet conditions */
-    dal::bit_vector bv = mf_u.linked_mesh().convexes_in_set(boundary);
-    for (dal::bv_visitor cv(bv); !cv.finished(); ++cv) {
-      nf = mf_u.linked_mesh().faces_of_convex_in_set(boundary, cv);
-      size_type nbf = mf_u.linked_mesh().structure_of_convex(cv)->nb_faces();
-      /* don't try anything with vector elements */
-      if (mf_u.fem_of_element(cv)->target_dim() != 1) continue;
-      if (nf.count() > 0) {
-	pf_u = mf_u.fem_of_element(cv); 
-	pf_rh = mf_rh.fem_of_element(cv);
-	
-	for (size_type f = 0; f < nbf; ++f)
-	  if (nf[f]) {
-	    bgeot::pconvex_structure cvs_u = pf_u->structure(cv);
-	    bgeot::pconvex_structure cvs_rh = pf_rh->structure(cv);
-	    for (size_type i = 0; i < cvs_u->nb_points_of_face(f); ++i) {
-	      
-	      size_type Q = mf_u.get_qdim();  // pf_u->target_dim() (==1)
-	      
-	      size_type ind_u = cvs_u->ind_points_of_face(f)[i];
-	      pdof_description tdof_u = pf_u->dof_types()[ind_u];
-	      
-	      for (size_type j = 0; j < cvs_rh->nb_points_of_face(f); ++j) {
-		size_type ind_rh = cvs_rh->ind_points_of_face(f)[j];
-		pdof_description tdof_rh = pf_rh->dof_types()[ind_rh];
-		/*
-		  same kind of dof and same location of dof ? 
-		  => then the previous was not useful for this dofs (introducing
-		  a mass matrix which is not diagonal in the constraints matrix)
-		  -> the constraint is simplified:
-		  we replace \int{(H_j.psi_j)*phi_i}=\int{R_j.psi_j} (sum over j)
-		  with             H_j*phi_i = R_j     
-		*/
-		if (tdof_u == tdof_rh &&
-		    bgeot::vect_dist2_sqr((*(pf_u->node_tab(cv)))[ind_u], 
-					  (*(pf_rh->node_tab(cv)))[ind_rh])
-		    < 1.0E-14) {
-		  /* the dof might be "duplicated" */
-		  for (size_type q = 0; q < Q; ++q) {
-		    size_type dof_u = mf_u.ind_dof_of_element(cv)[ind_u*Q + q];
-		    
-		    /* "erase" the row */
-		    if (version & ASMDIR_BUILDH)
-		      for (size_type k=0; k < mf_u.nb_dof_of_element(cv); ++k)
-			H(dof_u, mf_u.ind_dof_of_element(cv)[k]) = 0.0;
-		    
-		    size_type dof_rh = mf_rh.ind_dof_of_element(cv)[ind_rh];
-		    /* set the "simplified" row */
-		    if (version & ASMDIR_BUILDH)
-		      for (unsigned jj=0; jj < Q; jj++) {
-			size_type dof_u2
-			  = mf_u.ind_dof_of_element(cv)[ind_u*Q+jj];
-			H(dof_u, dof_u2) = h_data[(jj*Q+q) + Q*Q*(dof_rh)];
-		      }
-		    if (version & ASMDIR_BUILDR) R[dof_u] = r_data[dof_rh*Q+q];
+    if (&mf_r == &mf_h) {
+      dal::bit_vector bv = mf_u.linked_mesh().convexes_in_set(boundary);
+      for (dal::bv_visitor cv(bv); !cv.finished(); ++cv) {
+	nf = mf_u.linked_mesh().faces_of_convex_in_set(boundary, cv);
+	size_type nbf = mf_u.linked_mesh().structure_of_convex(cv)->nb_faces();
+	/* don't try anything with vector elements */
+	if (mf_u.fem_of_element(cv)->target_dim() != 1) continue;
+	if (nf.count() > 0) {
+	  pf_u = mf_u.fem_of_element(cv); 
+	  pf_rh = mf_r.fem_of_element(cv);
+	  
+	  for (size_type f = 0; f < nbf; ++f)
+	    if (nf[f]) {
+	      bgeot::pconvex_structure cvs_u = pf_u->structure(cv);
+	      bgeot::pconvex_structure cvs_rh = pf_rh->structure(cv);
+	      for (size_type i = 0; i < cvs_u->nb_points_of_face(f); ++i) {
+		
+		size_type Q = mf_u.get_qdim();  // pf_u->target_dim() (==1)
+		
+		size_type ind_u = cvs_u->ind_points_of_face(f)[i];
+		pdof_description tdof_u = pf_u->dof_types()[ind_u];
+		
+		for (size_type j = 0; j < cvs_rh->nb_points_of_face(f); ++j) {
+		  size_type ind_rh = cvs_rh->ind_points_of_face(f)[j];
+		  pdof_description tdof_rh = pf_rh->dof_types()[ind_rh];
+		  /*
+		    same kind of dof and same location of dof ? 
+		    => then the previous was not useful for this dofs (introducing
+		    a mass matrix which is not diagonal in the constraints matrix)
+		    -> the constraint is simplified:
+		    we replace \int{(H_j.psi_j)*phi_i}=\int{R_j.psi_j} (sum over j)
+		    with             H_j*phi_i = R_j     
+		  */
+		  if (tdof_u == tdof_rh &&
+		      bgeot::vect_dist2_sqr((*(pf_u->node_tab(cv)))[ind_u], 
+					    (*(pf_rh->node_tab(cv)))[ind_rh])
+		      < 1.0E-14) {
+		    /* the dof might be "duplicated" */
+		    for (size_type q = 0; q < Q; ++q) {
+		      size_type dof_u = mf_u.ind_dof_of_element(cv)[ind_u*Q + q];
+		      
+		      /* "erase" the row */
+		      if (version & ASMDIR_BUILDH)
+			for (size_type k=0; k < mf_u.nb_dof_of_element(cv); ++k)
+			  H(dof_u, mf_u.ind_dof_of_element(cv)[k]) = 0.0;
+		      
+		      size_type dof_rh = mf_r.ind_dof_of_element(cv)[ind_rh];
+		      /* set the "simplified" row */
+		      if (version & ASMDIR_BUILDH)
+			for (unsigned jj=0; jj < Q; jj++) {
+			  size_type dof_u2
+			    = mf_u.ind_dof_of_element(cv)[ind_u*Q+jj];
+			  H(dof_u, dof_u2) = h_data[(jj*Q+q) + Q*Q*(dof_rh)];
+			}
+		      if (version & ASMDIR_BUILDR) R[dof_u] = r_data[dof_rh*Q+q];
+		    }
 		  }
 		}
 	      }
 	    }
-	  }
+	}
       }
     }
   }
@@ -748,18 +738,26 @@ namespace getfem
   void asm_dirichlet_constraints(MAT &H, VECT &R, 
 				 const mesh_im &mim, 
 				 const mesh_fem &mf_u,
-				 const mesh_fem &mf_rh,
+				 const mesh_fem &mf_r,
 				 const VECT &r_data, size_type boundary,
 				 int version = ASMDIR_BUILDALL) {
-    if (mf_rh.get_qdim() != 1) 
-      DAL_THROW(invalid_argument,"mf_rh should be a scalar (qdim=1) mesh_fem");
-    size_type N = mf_rh.nb_dof(), Q=mf_u.get_qdim();
+    if (mf_r.get_qdim() != 1) 
+      DAL_THROW(invalid_argument,"mf_r should be a scalar (qdim=1) mesh_fem");
+    mesh_fem mf_h_(mim.linked_mesh()); 
+    bool is_lagrange = true;
+    for (dal::bv_visitor cv(mf_r.convex_index()); !cv.finished(); ++cv) 
+      if (!mf_r.fem_of_element(cv)->is_lagrange()) { is_lagrange = false; break; }
+    
+    const mesh_fem &mf_h = (is_lagrange ? mf_r : mf_h_);
+    if (!is_lagrange) mf_h_.set_classical_finite_element(0);
+    
+    size_type N = mf_h.nb_dof(), Q=mf_u.get_qdim();
     VECT h_data(gmm::sqr(mf_u.get_qdim())*N); gmm::clear(H);
     
     for (size_type i=0; i < N; ++i)
       for (size_type q=0; q < Q; ++q)  h_data[i*Q*Q+q*Q+q]=1;
    
-    asm_dirichlet_constraints(H, R, mim, mf_u, mf_rh, h_data, r_data, boundary, version);
+    asm_dirichlet_constraints(H, R, mim, mf_u, mf_h, mf_r, h_data, r_data, boundary, version);
   }
 
   /**
@@ -953,9 +951,10 @@ namespace getfem
     if (gmm::vect_norm2(aux) > gmm::vect_norm2(U0)*tol*MAGT(10000))
       DAL_WARNING(2, "Dirichlet condition not well inverted: residu="
 		  << gmm::vect_norm2(aux));
+    
     return nbase;
   }
-
+  
 }  /* end of namespace getfem.                                             */
 
 

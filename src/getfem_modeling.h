@@ -1333,18 +1333,16 @@ namespace getfem {
       gmm::row_matrix<gmm::rsvector<value_type> > M(nd, nd);
       VECTOR V(nd);
 
-      if (!with_H) {
-	gmm::resize(H_, gmm::sqr(Q) * ndd);
-	gmm::clear(H_);
-	for (size_type i=0; i < ndd; ++i)
-	  for (size_type q=0; q < Q; ++q)  H_[i*Q*Q+q*Q+q] = value_type(1);
-      }
+      cout << "M: " << nd << "\n";
       if (!with_multipliers) version |= ASMDIR_SIMPLIFY;
-      asm_dirichlet_constraints(M, V, *(this->mesh_ims[0]), mf_u, mf_data,
-				H_, B_, boundary, version);
+      if (!with_H) {
+	asm_dirichlet_constraints(M, V, *(this->mesh_ims[0]), mf_u, mf_data,
+				  B_, boundary, version);
+      } else {
+	asm_dirichlet_constraints(M, V, *(this->mesh_ims[0]), mf_u, mf_data,mf_data,
+				  H_, B_, boundary, version);
+      }
       //cout <<"M[0,0] = "<<M[0,0]<<" and M[0,1] ="<<M[0,1]<<" and M[1,0] = "<<M[1,0];
-      
-      if (!with_H) gmm::resize(H_, 0);
 
       if (version & ASMDIR_BUILDH) {
 	R tol=gmm::mat_maxnorm(M)*gmm::default_tol(value_type())*R(100);
