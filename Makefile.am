@@ -1,7 +1,7 @@
 SUBDIRS = config cubature src tests contrib bin
 
 EXTRA_DIST = \
-	BUGS_AND_REMARKS \
+	BUGS \
 	MTL-ITL-LICENSE
 
 CLEANFILES = so_locations

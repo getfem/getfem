@@ -557,7 +557,6 @@ namespace getfem {
 //     for (size_type i=0; i < (vv.size()<4 ? vv.size() : 4); ++i) {
 //       printf("V[%d]@%p, V[%d][0]@%p\n", int(i), &vv[i], int(i), &vv[i][0]);
 //     }
-
     typedef bgeot::PT<V> PV;
     dal::lexicographical_less<V, dal::approx_less<typename V::value_type> > comp;
     c.init().tic();
