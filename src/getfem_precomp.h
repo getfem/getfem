@@ -80,7 +80,7 @@ namespace getfem
     template <typename CONT, typename VEC> void transform(const CONT& G, size_type ii, VEC& pt);
 
     base_node transform(size_type i, const base_matrix &G) const;
-
+    bgeot::pgeometric_trans get_trans() const { return pgt; }
     void assign(const _pre_geot_light &ls);
     _geotrans_precomp(const _pre_geot_light &ls);
     _geotrans_precomp();

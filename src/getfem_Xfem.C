@@ -84,15 +84,16 @@ namespace getfem
   void Xfem::interpolation(const base_node &x, const base_matrix &G,
 			   bgeot::pgeometric_trans pgt,
 			   const base_vector &coeff, base_node &val) const {
+    Xfem_func_context ctx(pgt,x,G);
     base_node val2(val.size());
-    base_node xreal = pgt->transform(x, G);
     pfb->interpolation(x, G, pgt, coeff, val);
     base_vector coeff2;
     for (size_type k = 0, dofcnt = pfb->nb_base(); k < nb_func; ++k) {
-      scalar_type a = funcs[k]->val(xreal);
       coeff2.resize(pfe(k)->nb_base());
-      for (size_type j = 0; j != pfe(k)->nb_base(); ++j, ++dofcnt) {
-	coeff2[j] = coeff[dofcnt] * a;
+      ctx.pf = pfe(k); 
+      for (ctx.base_num = 0; ctx.base_num != pfe(k)->nb_base(); 
+	   ++ctx.base_num, ++dofcnt) {
+	coeff2[ctx.base_num] = coeff[dofcnt] * funcs[k]->val(ctx);
       }
       pfe(k)->interpolation(x, G, pgt, coeff2, val2);
       val += val2;
@@ -114,14 +115,16 @@ namespace getfem
 			   base_node &val, dim_type Qdim) const {
     size_type Qmult = size_type(Qdim) / target_dim();
     base_node val2(val.size());
-    base_node xreal = pgt->transform((*(pfp->get_point_tab()))[ii], G);
+    Xfem_func_context ctx(pgt,(*(pfp->get_point_tab()))[ii],G);
     pfb->interpolation(pfp, ii, G, pgt, coeff, val, Qdim);
     base_vector coeff2;
     std::vector<pfem_precomp> vpfp; get_fem_precomp_tab(pfp,vpfp);
     for (size_type k = 0, dofcnt = pfb->nb_base(); k < nb_func; ++k) {
-      scalar_type a = funcs[k]->val(xreal);
       coeff2.resize(pfe(k)->nb_base() * Qmult);
+      ctx.pf = pfe(k);
       for (size_type j = 0; j != pfe(k)->nb_base(); ++j, ++dofcnt) {
+	ctx.base_num = j; 
+	scalar_type a = funcs[k]->val(ctx);
 	for (dim_type q = 0; q < Qmult; ++q)
 	  coeff2[j*Qmult + q] = coeff[dofcnt*Qmult + q] * a;
       }
@@ -137,14 +140,16 @@ namespace getfem
 				base_matrix &val) const {
     base_matrix val2(val.nrows(), val.ncols());
     base_node val3(ntarget_dim);
-    base_node xreal = pgt->transform(x, G);
+    Xfem_func_context ctx(pgt,x,G);
     pfb->interpolation_grad(x, G, pgt, coeff, val);
     base_vector coeff2;
     // func * grad(base)
     for (size_type k = 0, dofcnt = pfb->nb_base(); k < nb_func; ++k) {
-      scalar_type a = funcs[k]->val(xreal);
       coeff2.resize(pfe(k)->nb_base());
+      ctx.pf = pfe(k);
       for (size_type j = 0; j != pfe(k)->nb_base(); ++j, ++dofcnt) {
+	ctx.base_num = j;
+	scalar_type a = funcs[k]->val(ctx);
 	coeff2[j] = coeff[dofcnt] * a;
       }
       pfe(k)->interpolation_grad(x, G, pgt, coeff2, val2);
@@ -152,10 +157,12 @@ namespace getfem
     }
     // grad(func) * base
     for (size_type k = 0, dofcnt = pfb->nb_base(); k < nb_func; ++k) {
-      base_vector v = funcs[k]->grad(xreal);
       coeff2.resize(pfe(k)->nb_base());
+      ctx.pf = pfe(k);
       for (size_type q = 0; q < G.nrows(); ++q) {
 	for (size_type j = 0; j != pfe(k)->nb_base(); ++j, ++dofcnt) {
+	  ctx.base_num = j;
+	  base_vector v = funcs[k]->grad(ctx);
 	  coeff2[j] = coeff[dofcnt] * v[q];
 	}
 	pfe(k)->interpolation(x, G, pgt, coeff2, val3);
@@ -179,7 +186,8 @@ namespace getfem
     mi[1] = target_dim(); mi[0] = nb_base();
     t.adjust_sizes(mi);
     scalar_type a;
-    base_node xreal = pgp->transform(ii, G);
+    Xfem_func_context ctx(pgp->get_trans(), (*(pfp->get_point_tab()))[ii], G);
+    //base_node xreal = pgp->transform(ii, G);
     base_tensor::iterator it = t.begin();
     base_tensor::const_iterator itf = pfp->val(ii).begin();
     std::vector<pfem_precomp> vpfp; get_fem_precomp_tab(pfp,vpfp);
@@ -190,9 +198,11 @@ namespace getfem
 
       for (size_type k = 0; k < nb_func; ++k) {
 	const base_tensor& val_e = vpfp[func_pf[k]]->val(ii);
-        a = funcs[k]->val(xreal);
-	for (size_type i = 0; i < pfe(k)->nb_base(); ++i, ++it)
+	ctx.pf = pfe(k);
+	for (size_type i = 0; i < pfe(k)->nb_base(); ++i, ++it) {
+	  ctx.base_num = i; a = funcs[k]->val(ctx);
 	  *it = val_e[i + q*pfe(k)->nb_base()] * a;
+	}
       }
     }
   }
@@ -205,9 +215,8 @@ namespace getfem
     dim_type n = G.nrows();
     mi[2] = n; mi[1] = target_dim(); mi[0] = nb_base();
     t.adjust_sizes(mi);
-    scalar_type a;
     
-    base_node xreal = pgp->transform(ii, G);
+    Xfem_func_context ctx(pgp->get_trans(), (*(pfp->get_point_tab()))[ii], G);
     base_tensor tt; tt.mat_transp_reduction(pfp->grad(ii), B, 2);
 
     base_tensor::iterator it = t.begin();
@@ -220,10 +229,17 @@ namespace getfem
       val_e[i] = &vpfp[i]->val(ii);
       grad_e[i].mat_transp_reduction(vpfp[i]->grad(ii), B, 2);
     }
-    std::vector<scalar_type> vf(nb_func);
-    std::vector<base_vector> gvf(nb_func);
-    for (size_type f = 0; f < nb_func; ++f)
-      { vf[f] = funcs[f]->val(xreal); gvf[f] = funcs[f]->grad(xreal); }
+    std::vector<std::vector<scalar_type> > vf(nb_func);
+    std::vector<std::vector<base_vector> > gvf(nb_func);
+    for (size_type f = 0; f < nb_func; ++f) {
+      vf[f].resize(pfe(f)->nb_base());
+      gvf[f].resize(pfe(f)->nb_base());
+      ctx.pf = pfe(f);
+      for (ctx.base_num=0; ctx.base_num < pfe(f)->nb_base(); ++ctx.base_num) {
+	vf[f][ctx.base_num] = funcs[f]->val(ctx); 
+	gvf[f][ctx.base_num] = funcs[f]->grad(ctx); 
+      }
+    }
 
     //    cerr << "pfp->val(ii)={"; 
     //    for (size_type i=0; i < pfp->val(ii).size(); ++i) cerr << pfp->val(ii)[i] << " "; cerr << "}\n";
@@ -233,12 +249,11 @@ namespace getfem
 	for (size_type i = 0; i < pfb->nb_base(); ++i, ++it)
 	    *it = *itvf++;
 	for (size_type f = 0; f < nb_func; ++f) {
-	  a = vf[f];
           size_type posg = pfe(f)->nb_base()*(q + k*target_dim());
           size_type posv = pfe(f)->nb_base()*q;
 	  for (size_type i = 0; i < pfe(f)->nb_base(); ++i, ++it) {
-	    *it = grad_e[func_pf[f]][i + posg] * a;
-	    *it += gvf[f][k] * (*val_e[func_pf[f]])[i + posv];
+	    *it = grad_e[func_pf[f]][i + posg] * vf[f][i];
+	    *it += gvf[f][i][k] * (*val_e[func_pf[f]])[i + posv];
 	  }
 	}
       }

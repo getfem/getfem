@@ -56,13 +56,27 @@
 
 namespace getfem
 {
+  struct Xfem_func_context {
+    base_node xreal, xref;
+    pfem pf;
+    bgeot::pgeometric_trans pgt;
+    size_type base_num; /* number of the current base function of pf */
+    const base_matrix& G;
+    Xfem_func_context(bgeot::pgeometric_trans zpgt, base_node zxref,
+		      const base_matrix& zG) :
+      xref(zxref), pgt(zpgt), G(zG) {
+	xreal = pgt->transform(xref, G);
+      }
+  };
 
   // Object representing global functions. To be derived.
 
   struct virtual_Xfem_func {
-    virtual scalar_type val(const base_node &) { DAL_THROW(dal::failure_error,"this Xfem_func has no value"); }
-    virtual base_vector grad(const base_node&) { DAL_THROW(dal::failure_error,"this Xfem_func has no gradient"); }
-    virtual base_matrix hess(const base_node&) { DAL_THROW(dal::failure_error,"this Xfem_func has no hessian"); }
+    /* 
+    */
+    virtual scalar_type val(const Xfem_func_context&) { DAL_THROW(dal::failure_error,"this Xfem_func has no value"); }
+    virtual base_vector grad(const Xfem_func_context&) { DAL_THROW(dal::failure_error,"this Xfem_func has no gradient"); }
+    virtual base_matrix hess(const Xfem_func_context&) { DAL_THROW(dal::failure_error,"this Xfem_func has no hessian"); }
     virtual ~virtual_Xfem_func() {}
   };
   typedef virtual_Xfem_func *pXfem_func;
