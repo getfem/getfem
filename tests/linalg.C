@@ -1,4 +1,4 @@
-#include <bgeot_generic_solver.h>
+#include <bgeot_generic_solvers.h>
 
 
 int main(void)
