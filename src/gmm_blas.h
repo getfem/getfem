@@ -2,7 +2,7 @@
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Generic Matrix Methods  (gmm)                                */
-/* File    :  gmm_blas.h : generic basic linear  algebra algorithms.       */
+/* File    :  gmm_blas.h : generic basic linear algebra algorithms.        */
 /*     									   */
 /* Date : October 13, 2002.                                                */
 /* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
@@ -67,8 +67,7 @@ namespace gmm {
   template <class MAT> inline size_type mat_ncols(const MAT &m)
   { return linalg_traits<MAT>().ncols(m); }
 
-  template <class L>
-  inline const void *linalg_origin(const L &l)
+  template <class L> inline const void *linalg_origin(const L &l)
   { return linalg_traits<L>().origin(l); }
 
   template <class V> inline
@@ -99,38 +98,34 @@ namespace gmm {
   vect_end(V &v)
   { return linalg_traits<V>().end(linalg_cast(v)); }
 
-
- 
-// à spécifier suivant le type de la référence
-  template <class MAT> inline 
-  typename linalg_traits<MAT>::const_sub_row_type
+  template <class MAT> inline
+  typename select_return<typename linalg_traits<MAT>::const_sub_row_type,
+                         typename linalg_traits<MAT>::sub_row_type,
+                         const MAT *>::return_type
   mat_row(const MAT &m, size_type i)
-  { return linalg_traits<MAT>().row(m, i); }
+  { return linalg_traits<MAT>().row(linalg_cast(m), i); }
 
-  template <class MAT> inline  
-    typename linalg_traits<MAT>::const_sub_col_type
-    mat_col(const MAT &m, size_type i)
-  { return linalg_traits<MAT>().col(m, i); }
+  template <class MAT> inline
+  typename select_return<typename linalg_traits<MAT>::const_sub_row_type,
+                         typename linalg_traits<MAT>::sub_row_type,
+                         MAT *>::return_type
+  mat_row(MAT &m, size_type i)
+  { return linalg_traits<MAT>().row(linalg_cast(m), i); }
 
-  template <class MAT> inline 
-    typename linalg_traits<MAT>::const_sub_row_type
-    mat_const_row(const MAT &m, size_type i)
-  { return linalg_traits<MAT>().row(m, i); }
+  template <class MAT> inline
+  typename select_return<typename linalg_traits<MAT>::const_sub_col_type,
+                         typename linalg_traits<MAT>::sub_col_type,
+                         const MAT *>::return_type
+  mat_col(const MAT &m, size_type i)
+  { return linalg_traits<MAT>().col(linalg_cast(m), i); }
 
-  template <class MAT> inline  
-    typename linalg_traits<MAT>::const_sub_col_type
-    mat_const_col(const MAT &m, size_type i)
-  { return linalg_traits<MAT>().col(m, i); }
 
-  template <class MAT> inline 
-    typename linalg_traits<MAT>::sub_row_type
-    mat_row(MAT &m, size_type i)
-  { return linalg_traits<MAT>().row(m, i); }
-
-  template <class MAT> inline  
-    typename linalg_traits<MAT>::sub_col_type
-    mat_col(MAT &m, size_type i)
-  { return linalg_traits<MAT>().col(m, i); }
+  template <class MAT> inline
+  typename select_return<typename linalg_traits<MAT>::const_sub_col_type,
+                         typename linalg_traits<MAT>::sub_col_type,
+                         MAT *>::return_type
+  mat_col(MAT &m, size_type i)
+  { return linalg_traits<MAT>().col(linalg_cast(m), i); }
 
   template <class L> inline void clear(L &l)
   { return linalg_traits<L>().do_clear(l); }
@@ -143,40 +138,34 @@ namespace gmm {
 				      typename linalg_traits<L>::value_type x)
   { return scaled_vector_const_ref<L>(l, x); }
   
-// à spécifier suivant le type de la référence
-  template <class TYPE, class PT> struct transposed_return;
-  template <class PT> struct transposed_return<abstract_vector, PT>
-  { typedef vect_transposed_ref<PT> ret_type; };
-  template <class PT> struct transposed_return<abstract_matrix, PT>
-  { typedef transposed_ref<PT> ret_type; };
+
+  template <class TYPE, class PT> struct _transposed_return;
+  template <class PT> struct _transposed_return<abstract_matrix, PT> {
+    typedef typename std::iterator_traits<PT>::value_type L;
+    typedef typename select_return<transposed_ref<const L *>,
+                                   transposed_ref< L *>,
+                                   PT>::return_type return_type;
+  };
+  template <class PT> struct _transposed_return<abstract_vector, PT> {
+    typedef typename std::iterator_traits<PT>::value_type L;
+    typedef typename select_return<vect_transposed_ref<const L *>,
+                                   vect_transposed_ref< L *>,
+                                   PT>::return_type return_type;
+  };
+  template <class PT> struct transposed_return {
+    typedef typename std::iterator_traits<PT>::value_type L;
+    typedef typename _transposed_return<typename
+      linalg_traits<L>::linalg_type, PT>::return_type return_type;
+  };
 
   template <class L> inline 
-  transposed_ref<L *> transposed(L &l, abstract_matrix)
-  { return transposed_ref<L *>(l); }
+  typename transposed_return<const L *>::return_type transposed(const L &l)
+  { return typename transposed_return<const L *>::return_type(linalg_cast(l));}
 
   template <class L> inline 
-  transposed_ref<const L *> transposed(const L &l, abstract_matrix)
-  { return transposed_ref<const L *>(l); }
-
-  template <class L> inline
-  vect_transposed_ref<L *> transposed(L &l, abstract_vector)
-  { return vect_transposed_ref<L *>(l); }
-
-  template <class L> inline 
-  vect_transposed_ref<const L *> transposed(const L &l, abstract_vector)
-  { return vect_transposed_ref<const L *>(l); }
-
-  template <class L> inline
-  typename transposed_return<typename linalg_traits<L>::linalg_type,
-							L *>::ret_type
-  transposed(L &l)
-  { return transposed(l, typename linalg_traits<L>::linalg_type()); }
-
-  template <class L> inline
-  typename transposed_return<typename linalg_traits<L>::linalg_type,
-							const L *>::ret_type
-  transposed(const L &l)
-  { return transposed(l, typename linalg_traits<L>::linalg_type()); }
+  typename transposed_return<L *>::return_type transposed(L &l)
+  { return typename transposed_return<L *>::return_type(linalg_cast(l)); }
+  
 
   inline bool _is_sparse(abstract_sparse)  { return true;  }
   inline bool _is_sparse(abstract_plain)   { return false; }
@@ -547,7 +536,7 @@ namespace gmm {
   {
     size_type nbr = mat_nrows(l1);
     for (size_type i = 0; i < nbr; ++i)
-      copy_vect(mat_const_row(l1, i), mat_row(l2, i),
+      copy_vect(mat_row(l1, i), mat_row(l2, i),
       		typename linalg_traits<L1>::storage_type(),
 		typename linalg_traits<L2>::storage_type());
   }

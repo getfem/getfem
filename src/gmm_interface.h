@@ -233,9 +233,9 @@ namespace gmm {
     size_type nrows(const this_type &v) { return mat_ncols(v.deref()); }
     size_type ncols(const this_type &v) { return mat_nrows(v.deref()); }
     const_sub_row_type row(const this_type &v, size_type i)
-    { return mat_const_col(v.deref(), i); }
+    { return mat_col(v.deref(), i); }
     const_sub_col_type col(const this_type &v, size_type i)
-    { return mat_const_row(v.deref(), i); }
+    { return mat_row(v.deref(), i); }
     sub_row_type row(this_type &v, size_type i)
     { return mat_col(v.deref(), i); }
     sub_col_type col(this_type &v, size_type i)

@@ -128,7 +128,7 @@ namespace gmm {
     size_type nrows(const this_type &m) { return m.nrows(); }
     size_type ncols(const this_type &m) { return m.ncols(); }
     const_sub_row_type row(const this_type &m, size_type i) { 
-      return const_sub_row_type(mat_const_row(m.deref(),m.psi2->index(i)),*(m.psi1));
+      return const_sub_row_type(mat_row(m.deref(),m.psi2->index(i)),*(m.psi1));
     }
     sub_row_type row(this_type &m, size_type i)
     { return sub_row_type(mat_row(m.deref(), m.psi2->index(i)), *(m.psi1)); }
@@ -156,7 +156,7 @@ namespace gmm {
     size_type nrows(const this_type &m) { return m.nrows(); }
     size_type ncols(const this_type &m) { return m.ncols(); }
     const_sub_col_type col(const this_type &m, size_type i)
-    { return const_sub_col_type(mat_const_col(m.deref(),m.psi1->index(i)),*(m.psi2)); }
+    { return const_sub_col_type(mat_col(m.deref(),m.psi1->index(i)),*(m.psi2)); }
     sub_col_type col(this_type &m, size_type i)
     { return sub_col_type(mat_col(m.deref(), m.psi1->index(i)), *(m.psi2)); }
     const void* origin(const this_type &m) { return linalg_origin(m.deref()); }
