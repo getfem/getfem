@@ -38,6 +38,7 @@ dnl -----------------------------------------------
 USER_CXXFLAGS="$CXXFLAGS"
 AC_PROG_CXX(cxx KCC CC cc++ xlC aCC g++ c++)
 AC_PROG_CXXCPP
+echo "Flags de Automake : $CXXFLAGS"
 CXXFLAGS="${USER_CXXFLAGS}"
 
 AC_LANG_CPLUSPLUS
