@@ -51,7 +51,7 @@ struct lap_pb
   getfem::mesh_fem mef_data2;
 
   scalar_type LX, LY, LZ, incline, residu;
-  int NX, N, K;
+  int NX, N, K, fem_type;
 
   sparse_matrix_type RM;   /* rigidity matrix.                            */
   linalg_vector U, B; /* inconnue et second membre.                       */
@@ -86,6 +86,7 @@ void lap_pb::init(void)
   mesh_type = PARAM.int_value("MESH_TYPE", "Mesh type ");
   residu = PARAM.real_value("RESIDU", "Residu for c.g.");
   K = PARAM.int_value("K", "Finite element degree");
+  fem_type = PARAM.int_value("FEM_TYPE", "Finite element method");
   datafilename = std::string( PARAM.string_value("ROOTFILENAME",
 			     "File name for saving"));
 
@@ -126,6 +127,18 @@ void lap_pb::init(void)
   if (mesh_type == 2 && N <= 1) mesh_type = 0;
 
   cout << "Selecting finite element method.\n";
+
+  switch(fem_type) {
+  case 0 : break;
+  case 1 :
+    if (N != 1 || mesh_type != 0)
+      DAL_THROW(dal::internal_error,
+		"This element is only defined on segments");
+    K = 3;
+    break;
+  default : DAL_THROW(dal::internal_error, "Unknown finite element method");
+  }
+
   getfem::pintegration_method ppi;
   nn = mesh.convex_index(N);
   switch (integration) {
@@ -173,7 +186,7 @@ void lap_pb::init(void)
   case 35 : ppi = bgeot::quad5_approx_integration(); break;
   default : DAL_THROW(std::logic_error, "Undefined integration method");
   }
-  
+
   switch (mesh_type) {
   case 0 : 
     mef.set_finite_element(nn, getfem::PK_fem(N, K), ppi);
@@ -198,6 +211,18 @@ void lap_pb::init(void)
 						  getfem::PK_fem(1, 0)), ppi);
     break;
   }
+
+  switch(fem_type) {
+
+  case 0 : break;
+
+  case 1 :
+    mef.set_finite_element(nn, getfem::segment_Hermite_fem(), ppi);
+    break;
+  
+  }
+  
+  
 
   cout << "Selecting Neumann and Dirichlet boundaries\n";
   nn = mesh.convex_index(N);

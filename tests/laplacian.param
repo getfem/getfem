@@ -15,6 +15,9 @@ MESH_TYPE = 2;          % 0 = simplexes
 			% 2 = prisms
 INCLINE = 2;            % Incline of the mesh.
 K = 2;                  % Finite element degree.
+FEM_TYPE = 0;           % Finite element method
+			% 0 = classical Lagrange element
+			% 1 = Hermite element on the segment
 INTEGRATION = 1;        % 0 = exact integration.
 			% 1 = Newton Cotes of degree 2 * K
 			% 2 = Product of 1D Gauss for parallelepipeds.
@@ -23,7 +26,6 @@ INTEGRATION = 1;        % 0 = exact integration.
 			% 32, 33, 35 quadrilateral(n-30)
 NX = 3;            	% space step.
 RESIDU = 1E-9;     	% residu for conjugate gradient.
-MIXTEHYBRID = 'N';
 
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'laplacian';     % Root of data files.

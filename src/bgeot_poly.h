@@ -177,6 +177,7 @@ namespace bgeot
       /// Substract Q to P.
       polynomial operator -(const polynomial &Q) const
       { polynomial R = *this; R -= Q; return R; }
+      polynomial operator -(void) const;
       /// Multiply P with Q. P contains the result.
       polynomial &operator *=(const polynomial &Q);
       /// Multiply P with Q. 
@@ -274,6 +275,15 @@ namespace bgeot
     const_iterator itq = Q.begin(), ite = Q.end();
     for ( ; itq != ite; ++itq, ++it) *it -= *itq;
     return *this;
+  }
+
+  template<class T> 
+    polynomial<T> polynomial<T>::operator -(void) const
+  {
+    polynomial<T> Q = *this;
+    iterator itq = Q.begin(), ite = Q.end();
+    for ( ; itq != ite; ++itq) *itq = -(*itq);
+    return Q;
   }
 
   template<class T>

@@ -70,14 +70,25 @@ all finite element methods defined in GETFEM++ are interfaced in the file {\tt g
 
 \subsection{Finite element methods description}
 
+\begin{figure}[H]
+  \begin{center} 
+    \includegraphics[width=12cm,angle=0]{getfemlist_extrans.eps}
+    \caption{ \it Example of geometric transformation for a triangle.} \label{fig:extrans}
+  \end{center}
+\end{figure}
+
 A finite element method is defined on a reference element $\overline{T} \subset \Reel^P$ by a set of $n_d$ nodes $a^i$ and corresponding base functions 
-$$ \overline{\varphi}^i : \overline{T} \subset \Reel^P \longrightarrow \Reel^Q, $$
-Denoting
+$$ \overline{\varphi}^i : \overline{T} \subset \Reel^P \longrightarrow \Reel^Q. $$
+Each base function corresponds to degree of freedom (d.o.f).
+Most finite element methods are scalar, which means that $Q = 1$, but GETFEM++ support also intrinsic vectorial elements. The map between the reference element and the real element is called the geometric transformation and is denoted by 
+$$ \tau :  \overline{T} \longrightarrow T, $$
+and is supposed to be polynomial (see \cite{dh-to1984} or \cite{BAS_COMP}). The base functions $\overline{\varphi}^i$ defined on the reference element define a set of base function on the real element defined by
 $$ \tilde{\varphi}^i(x) = \overline{\varphi}^i(\overline{x}) = \overline{\varphi}^i(\tau^{-1}(x)), $$
-a linear transformation is allowed for the real base function
-$$ \varphi^i(x) = \sum_{j = 0}^{n_d - 1} M_{ij} \tilde{\varphi}^j(x), $$
-where $M$ is a $n_d \times n_d$ matrix possibly depending on the geometric transformation (i.e. on the real element).
-We denote
+If the element is said to be equivalent throught the geometric transformation $\tau$ then base functions on the real element are just defined by
+$$\varphi(x) = \tilde{\varphi}^i(x).$$
+This is generally the case for Lagrange element, but not for Hermite elements (when the gradient of the functions are taken into account). When the element is not equivalent throught the geometric transformation (we will just say ``not equivalent'') then GETFEM++ allows to define a matrix $M$ depending on the real element (i.e. on the geometric transformation) such that base functions on the real element are defined by
+$$ \varphi^i(x) = \sum_{j = 0}^{n_d - 1} M_{ij} \tilde{\varphi}^j(x). $$
+We denote by
 $$ [\overline{\varphi}(\overline{x})] = \vecfour{\overline{\varphi}^0(\overline{x})}{\overline{\varphi}^1(\overline{x})}{...}{\overline{\varphi}^{n_d-1}(\overline{x})}, $$
 the $n_d \times Q$ matrix, such that when a function is defined by
 $$ f(x) = \sum_{i = 0}^{n_d - 1} \alpha_i \varphi^i(x), $$
@@ -85,7 +96,33 @@ one has
 $$ \fbox{$\hspace{1em} f(\tau(\overline{x})) = \alpha^T M [\overline{\varphi}(\overline{x})],\hspace{1em}$} $$
 where $\alpha$ is the vector of components $\alpha_i$.
 
-\subsubsection{graphical codification of d.o.f.}
+\subsubsection{Different types of d.o.f.}
+
+To each base function of a finite element method corresponds a degree of freedom (d.o.f) which is a linear form on this function. The following table gives the most significant types of d.o.f.\\
+
+\begin{center}
+\begin{tabular}{|m{3cm}|m{3cm}|m{8cm}|} \hline 
+type & expression  & commentary \\ \hline
+\end{tabular}
+\begin{tabular}{|m{3cm}|m{3cm}|m{8cm}|} \hline
+Lagrange type & $\phi(a_i)$ & Value of $\phi$ on the node $a_i$. The most simple d.o.f. Allows the Lagrange interpolation. \\ \hline
+\end{tabular}
+\begin{tabular}{|m{3cm}|m{3cm}|m{8cm}|} \hline
+Hierarchical Lagrange type & $\phi(a_i) - ...$ & Difference between the value of $\phi$ on the node $a_i$ and the value of some other base functions. This is generally the bubble functions type of d.o.f . \\ \hline
+\end{tabular}
+\begin{tabular}{|m{3cm}|m{3cm}|m{8cm}|} \hline
+mean type & $\Frac{1}{|T|}\int_T \phi(x) dx$ & Value of the mean value of $\phi$ on the element. Exists also for the restriction on a face.\\ \hline
+\end{tabular}
+\begin{tabular}{|m{3cm}|m{3cm}|m{8cm}|} \hline
+derivative type & $\Frac{\partial}{\partial x_i}\phi(a_i)$ or $\Frac{\partial}{\partial n}\phi(a_i)$ & Value of a derivative of $\phi$ on the node $a_i$. This kind of d.o.f. makes the element not to be equivalent. $\Frac{\partial}{\partial n}\phi(a_i)$ denotes the normal derivative with respect to a face.\\ \hline
+\end{tabular}
+\begin{tabular}{|m{3cm}|m{3cm}|m{8cm}|} \hline
+second derivative type & $\Frac{\partial^2}{\partial x_i\partial x_j}\phi(a_i)$  & Value of a second derivative of $\phi$ on the node $a_i$. This kind of d.o.f. makes also the element not to be equivalent.\\ \hline
+\end{tabular}
+
+\end{center}
+
+\subsubsection{Graphical codification of d.o.f.}
 
 \begin{figure}[H] \label{fig:symbols}
   \begin{center}
@@ -111,6 +148,7 @@ It is possible to define a classical ``$P_K$'' Lagrange element of arbitrary dim
 
 
 \begin{figure}[H]
+  
   \begin{center} \begin{tabular}{m{7cm}m{7cm}}
     \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P1.eps} & \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P2.eps} \\
     $P_1$ element, 3 d.o.f., $C^0$ & $P_2$ element, 6 d.o.f., $C^0$ \\ \\
@@ -120,7 +158,7 @@ It is possible to define a classical ``$P_K$'' Lagrange element of arbitrary dim
   \caption{ \it Examples of classical $P_K$ Lagrange elements on a triangle.} \label{fig:trianglepk}
 \end{figure}
 
-The number of degree of freedom for a classical ``$P_K$'' Lagrange element of dimension $N$ and degree $K$ is $\Frac{(N+S)!}{N!S!}$. For instance, in dimension 2 ($N = 2$), this value is $\Frac{(N+1) (N+2)}{2}$, in dimension 3 ($N = 2$), this value is $\Frac{(N+1) (N+2) (N+3)}{6}$ ...
+The number of degree of freedom for a classical ``$P_K$'' Lagrange element of dimension $P$ and degree $K$ is $\Frac{(P+K)!}{P!K!}$. For instance, in dimension 2 ($P = 2$), this value is $\Frac{(P+1) (P+2)}{2}$, in dimension 3 ($P = 3$), this value is $\Frac{(P+1) (P+2) (P+3)}{6}$ ...
 
 \begin{figure}[H]
   \begin{center}
@@ -135,39 +173,71 @@ The number of degree of freedom for a classical ``$P_K$'' Lagrange element of di
 \end{figure}
 
 The particular way selected in GETFEM++ to numerate the nodes are also shown in figures \ref{fig:segmentpk}, \ref{fig:trianglepk} and \ref{fig:tetrahedronpk}. Using another numeration, let 
-$$ i_0, i_1, ... i_N, $$
+$$ i_0, i_1, ... i_P, $$
 be somme indexes such that
-$$ 0 \le i_0, i_1, ... i_N \le K, $$
-$$ \sum_{n = 0}^{N} i_n = K.$$
-Then, the coordinate of a node could be defined as
-$$ a_{i_0, i_1, ... i_N} = \sum_{n = 0}^{N} \Frac{i_n}{K}P_n, $$
-where $P_0, P_1, ... P_N$ are the vertexes of the simplex.
-Then each base function, corresponding of each node $a_{i_0, i_1, ... i_N}$ is defined as
-$$ \phi_{i_0, i_1, ... i_N} = \prod_{n = 0}^{N} \prod_{j=0}^{i_n-1} \left(\Frac{K \lambda_n - j}{j+1}\right).$$
-where $\lambda_n$ is the barycentric coordinate, i.e. the polynomial of order 1 whose value is $1$ on the vertex $P_n$ and whose value is $0$ on other vertices. On the reference element, one has
-$$ \lambda_n = x_n, \ \ 0 \le n < N, $$
-$$ \lambda_N = 1 - x_0 - x_1 - ... - x_{N-1}. $$
+$$ 0 \le i_0, i_1, ... i_P \le K, \ \mbox{ and } \ \sum_{n = 0}^{P} i_n = K.$$
+Then, the coordinate of a node can be computed as
+$$ a_{i_0, i_1, ... i_P} = \sum_{n = 0}^{P} \Frac{i_n}{K}S_n, \ \ \mbox{ for } K \ne 0, $$
+where $S_0, S_1, ... S_N$ are the vertexes of the simplex (for $K = 0$ the particular choice $a_{0, 0, ... 0} = \ds \sum_{n = 0}^{P} \Frac{1}{P+1}S_n$ has been chosen).
+Then each base function, corresponding of each node $a_{i_0, i_1, ... i_P}$ is defined as
+$$ \phi_{i_0, i_1, ... i_P} = \prod_{n = 0}^{P} \prod_{j=0}^{i_n-1} \left(\Frac{K \lambda_n - j}{j+1}\right).$$
+where $\lambda_n$ are the barycentric coordinates, i.e. the polynomials of degree 1 whose value is $1$ on the vertex $S_n$ and whose value is $0$ on other vertices. On the reference element, one has
+$$ \lambda_n = x_n, \ \ 0 \le n < P, $$
+$$ \lambda_P = 1 - x_0 - x_1 - ... - x_{P-1}. $$
 
-When between two elements of the same order (even with different dimensions), the degrees of freedom of a common face are linked, the element is of class $C^0$. This mean that the global polynomial is continuous. If you try to link elements of different orders, you will get some trouble with the unlinked degrees of freedom. This is not automatically supported by GETFEM++, so you will have to support it (add constraints on this degrees of freedom).\\[0.5cm] 
+When between two elements of the same degrees (even with different dimensions), the d.o.f. of a common face are linked, the element is of class $C^0$. This means that the global polynomial is continuous. If you try to link elements of different degrees, you will get some trouble with the unlinked d.o.f. This is not automatically supported by GETFEM++, so you will have to support it (add constraints on these d.o.f.).\\
 
-For some applications (computation of a gradient for instance) one does not want the degrees of freedom of a common face to be linked. This is why there are two versions of the classical ``$P_K$'' Lagrange element. The function\\[0.5cm]
-{\tt getfem::ppolyfem getfem::PK\_fem(N, K)}\\[0.5cm]
-return the description of the linkable element, and\\[0.5cm]
- {\tt getfem::ppolyfem getfem::PK\_discontinuous\_fem(N, K)}\\[0.5cm]
-return the description of the unlinkable element.
+For some applications (computation of a gradient for instance) one does not want the d.o.f. of a common face to be linked. This is why there are two versions of the classical ``$P_K$'' Lagrange element.\\[1cm]
+
+\begin{center}
+\begin{tabular}{|m{13.68cm}|} \hline 
+{\bf Classical ``$P_K$'' Lagrange element}\\
+{\tt getfem::ppolyfem getfem::PK\_fem(P, K)} 
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+\small $K$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 1 \le P \le 255$} & $\Frac{(K+P)!}{K! P!}$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($M = Id$)} \\ \hline
+\end{tabular}
+\end{center}
+\begin{center}
+\begin{tabular}{|m{13.68cm}|} \hline 
+{\bf Discontinuous ``$P_K$'' Lagrange element}\\
+{\tt getfem::ppolyfem getfem::PK\_discontinuous\_fem(P, K)} 
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+\small $K$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 1 \le P \le 255$} & $\Frac{(K+P)!}{K! P!}$ & discon-tinuous & No \mbox{($Q = 1$)} & Yes \mbox{($M = Id$)} \\ \hline
+\end{tabular}
+\end{center}$\ $\\[3cm]
+
 
 \subsection{Classical Lagrange elements on other geometries}
+
+Classical Lagrange elements on parallelepipeds or prisms are obtained as tensorial product of Lagrange elements on simplexes. When two element are defined, one on a dimension $P_1$ and the other in dimension $P_2$, one obtains the base functions of the tensorial product (on the reference element) as
+$$ \bar{\phi}_{ij}(x,y) = \bar{\phi}^1_i(x) \bar{\phi}^2_j(y), \ \ x \in \Reel^{P_1}, y \in  \Reel^{P_2}, $$
+where $\bar{\phi}^1_i$ and $\bar{\phi}^2_i$ are respectively the base functions of the first and second element.
+
 
 \begin{figure}[H]
   \begin{center} \begin{tabular}{m{7cm}m{7cm}}
     \includegraphics[width=5cm,angle=0]{getfemlist_quad_Q1.eps} & \includegraphics[width=5cm,angle=0]{getfemlist_quad_Q3.eps} \\
-    $Q_1$ element, 4 d.o.f., $C^0$ & $Q_3$ element, 16 d.o.f., $C^0$ \\ \\
+    $Q_1$ element, 4 d.o.f., $C^0$ & $Q_3$ element, 16 d.o.f., $C^0$ \\
+  \end{tabular} \end{center}
+  \caption{ \it Examples of classical Lagrange elements in dimension 2} \label{fig:prodpkdeux}
+\end{figure}
+
+The $Q_K$ element on a parallelepiped of dimension $P$ is obtained as the tensorial product of $P$ classical $P_K$ element on the segment. Examples in dimension $2$ are shown in figure \ref{fig:prodpkdeux} and in dimension $3$ in figure \ref{fig:prodpktrois}. \\
+
+A prism in dimension $P > 1$ is the direct product of a simplex of dimension $P-1$ with a segment. The $P_K \otimes P_K$ element on this prism is the tensorial product of the classical $P_K$ element on a simplex of dimension $P-1$ with the classical $P_K$ element on a segment. For $P=2$ this coincide with a parallelepiped. Examples in dimension $3$ are shown in figure \ref{fig:prodpktrois}. This is also possible not to have the same degree on each dimension. An example is shown on figure \ref{fig:prism_P2_p1}. 
+
+\begin{figure}[H]
+  \begin{center} \begin{tabular}{m{7cm}m{7cm}}
     \includegraphics[width=5cm,angle=0]{getfemlist_cube_Q1.eps} & \includegraphics[width=5cm,angle=0]{getfemlist_cube_Q3.eps} \\
     $Q_1$ element, 8 d.o.f., $C^0$ & $Q_3$ element, 64 d.o.f., $C^0$ \\
     \includegraphics[width=5cm,angle=0]{getfemlist_prism_P1.eps} & \includegraphics[width=5cm,angle=0]{getfemlist_prism_P3.eps} \\
     $P_1 \otimes P_1$ element, 6 d.o.f., $C^0$ & $P_3 \otimes P_3$ element, 40 d.o.f., $C^0$ \\
   \end{tabular} \end{center}
-  \caption{ \it Examples of classical Lagrange elements in dimension 2 and 3} \label{fig:prodpk}
+  \caption{ \it Examples of classical Lagrange elements in dimension 3} \label{fig:prodpktrois}
 \end{figure}
 
 
@@ -179,9 +249,39 @@ return the description of the unlinkable element.
   \label{fig:prism_P2_p1}
 \end{figure}
 
-to be described ...
 
-to be done ...
+\begin{center}
+\begin{tabular}{|m{13.68cm}|} \hline 
+{\bf $Q_K$ Lagrange element on parallelepipeds}\\
+{\tt getfem::ppolyfem getfem::QK\_fem(P, K)} 
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+\small $KP$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 2 \le P \le 255$} & $(K+1)^P$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($M = Id$)} \\ \hline
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tabular}{|m{13.68cm}|} \hline 
+{\bf $P_K \otimes P_K$ Lagrange element on prisms}\\
+{\tt getfem::ppolyfem getfem::PK\_prism\_fem(P, K)} 
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+\small $2K$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 2 \le P \le 255$} & \mbox{$(K+1)$} \mbox{$\times \Frac{(K+P-1)!}{K! (P-1)!}$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($M = Id$)} \\ \hline
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tabular}{|m{13.68cm}|} \hline 
+{\bf $P_{K_1} \otimes P_{K_2}$ Lagrange element on prisms}\\
+{\tt getfem::ppolyfem getfem::product\_fem(getfem::PK\_fem(P-1, K$_1$), getfem::PK\_fem(1, K$_2$))} 
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+\small \mbox{$K_1+K_2$}, \tiny \mbox{$0 \le K_1,K_2 \le 255$} & \small $P$, \mbox{$\ 2 \le P \le 255$} & \mbox{$(K_2+1)$} \mbox{$\times \Frac{(K_1+P-1)!}{K_1! (P-1)!}$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($M = Id$)} \\ \hline
+\end{tabular}
+\end{center}
 
 \subsection{Specific elements in dimension 1}
 
@@ -190,11 +290,30 @@ to be done ...
     \includegraphics[width=5cm,angle=0]{getfemlist_segment_hermite.eps}
   \end{center}
   \caption{ \it $P_3$ Hermite element on a segment, 4 d.o.f., $C^1$} 
-  \label{fig:triangle_p1_bubble}
+  \label{fig:segment_hermite}
 \end{figure}
-to be done ...
+
+Base functions on the reference element
+\begin{eqnarray*}
+ \bar{\phi}_0 = 2x^3 - 3x^2 + 1,&&\ \ \ \bar{\phi}_1 = -2x^3 + 3x^2+1, \\
+ \bar{\phi}_2 = x^3 - 2x^2 + x,&& \ \ \ \bar{\phi}_3 = x^3 - x^2. 
+\end{eqnarray*}
+
+This element is close to be equivalent but it is not. On the real element the value of the gradient on vertices will be multiplied by the gradient of the geometric transformation, This has to be corrected. The matrix $M$ is not equal to identity but is still diagonal.
+
+\begin{center}
+\begin{tabular}{|m{14.18cm}|} \hline 
+{\bf Hermite element on the segment}\\
+{\tt getfem::ppolyfem getfem::segment\_Hermite\_fem()}
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+$3$ & $1$ & $4$ & $C^1$ & No \mbox{($Q = 1$)} & No \\ \hline
+\end{tabular}
+\end{center}
 
 \subsection{Specific elements in dimension 2}
+\subsubsection{Elements with additional bubble functions}
 
 \begin{figure}[H]
   \begin{center}
@@ -209,6 +328,17 @@ to be done ...
 
 to be described ...
 
+\begin{center}
+\begin{tabular}{|m{14.18cm}|} \hline 
+{ \bf Lagrange $P_1$ of $P_2$ element with an additional internal bubble function}\\
+{\tt getfem::ppolyfem getfem::PK\_with\_cubic\_bubble\_fem(2, K)} 
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+$3$ & $2$ & $4$ or $7$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \\ \hline
+\end{tabular}
+\end{center}
+
 \begin{figure}[H]
   \begin{center}
     \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P1_bubble_face.eps}
@@ -219,6 +349,17 @@ to be described ...
 
 to be described ...
 
+\begin{center}
+\begin{tabular}{|m{14.18cm}|} \hline 
+{ \bf Lagrange $P_1$ element with an additional bubble function on face 0}\\
+{\tt getfem::ppolyfem getfem::P1\_with\_bubble\_on\_a\_face(2)} 
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+$2$ & $2$ & $4$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \\ \hline
+\end{tabular}
+\end{center}
+
 \begin{figure}[H]
   \begin{center}
     \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P1_with_P2_face.eps}
@@ -228,14 +369,64 @@ to be described ...
 \end{figure}
 
 to be described ...
+
+\begin{center}
+\begin{tabular}{|m{14.18cm}|} \hline 
+{ \bf $P_1$ Lagrange element on a triangle with additional d.o.f on face 0}\\
+{\tt getfem::ppolyfem getfem::P1\_with\_bubble\_on\_a\_face\_lagrange()} 
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+$2$ & $2$ & $4$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \\ \hline
+\end{tabular}
+\end{center}
+
+\subsubsection{Non-conforming $P_1$ element}
+
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P1_non_conforming.eps}
+  \end{center}
+  \caption{ \it $P_1$ non-conforming element on a triangle, 3 d.o.f., discontinuous} 
+  \label{fig:triangle_non_conforming}
+\end{figure}
+
+to be described ...
+\begin{center}
+\begin{tabular}{|m{14.18cm}|} \hline 
+{ \bf $P_1$ non-conforming element on a triangle}\\
+{\tt getfem::ppolyfem getfem::P1\_non\_conforming\_fem()} 
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+$1$ & $2$ & $3$ & discon-tinuous & No \mbox{($Q = 1$)} & Yes \\ \hline
+\end{tabular}
+\end{center}
+
+\subsubsection{Hermite element}
+
 \begin{figure}[H]
   \begin{center}
     \includegraphics[width=6cm,angle=0]{getfemlist_triangle_hermite.eps}
   \end{center}
   \caption{ \it Hermite element on a triangle, $P_3$, 10 d.o.f., $C^0$}
-  \label{fig:argyris}
+  \label{fig:triangle_hermite}
 \end{figure}
-to be done ...
+
+
+\begin{center}
+\begin{tabular}{|m{14.18cm}|} \hline 
+{ \bf Hermite element on a triangle}\\
+Not yet available
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+$3$ & $2$ & $10$ & $C^0$ & No \mbox{($Q = 1$)} & No \\ \hline
+\end{tabular}
+\end{center}
+
+\subsubsection{Argyris element}
 
 \begin{figure}[H]
   \begin{center}
@@ -244,10 +435,21 @@ to be done ...
   \caption{ \it Argyris element, $P_5$, 21 d.o.f., $C^1$}
   \label{fig:argyris}
 \end{figure}
-to be done ...
+Not yet available
+
+\begin{center}
+\begin{tabular}{|m{14.18cm}|} \hline 
+{ \bf Argyris element on a triangle}\\
+Not yet available
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+$5$ & $2$ & $21$ & $C^1$ & No \mbox{($Q = 1$)} & No \\ \hline
+\end{tabular}
+\end{center}
 
 \subsection{Specific elements in dimension 3}
-
+\subsubsection{Elements with additional bubble functions}
 \begin{figure}[H]
   \begin{center}
     \begin{tabular}{m{5cm}m{5cm}m{5cm}}
@@ -260,6 +462,38 @@ to be done ...
 \end{figure}
 
 to be described ...
+
+\begin{center}
+\begin{tabular}{|m{14.18cm}|} \hline 
+{ \bf $P_K$ Lagrange element with an additional internal bubble function}\\
+{\tt getfem::ppolyfem getfem::PK\_with\_cubic\_bubble\_fem(3, K)} 
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+$4$ & $3$ & $5$, $11$ or $21$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \\ \hline
+\end{tabular}
+\end{center}
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=5cm,angle=0]{getfemlist_tetrahedron_P1_bubble_face.eps}
+  \end{center}
+  \caption{ \it $P_1$ Lagrange element on a tetrahedron with additional bubble function on face 0, 5 d.o.f., $C^0$} 
+  \label{fig:tetrahedron_p1_bubble_face}
+\end{figure}
+
+to be described ...
+
+\begin{center}
+\begin{tabular}{|m{14.18cm}|} \hline 
+{ \bf Lagrange $P_1$ element with an additional bubble function on face 0}\\
+{\tt getfem::ppolyfem getfem::P1\_with\_bubble\_on\_a\_face(3)} 
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+$3$ & $3$ & $5$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \\ \hline
+\end{tabular}
+\end{center}
 
 
 \subsection{Tensorial product of elements}
@@ -284,7 +518,7 @@ Even though a description of exact integration method exists on parallelepipeds 
 
 In the file {\tt bgeot\_approx\_integration.h} the following functions are defined
 
-\input{getfemeleminta.tex}
+% \input{getfemeleminta.tex}
 
 Other methods can be easily defined.
 
@@ -337,7 +571,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
       1/6
     \end{tabular}
   & {\tt \small triangle2\_approx\_integration()} \hspace{5em} 3 points, order 2. \\ \hline
-\end{tabular}
+\end{tabular} 
 \begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_triangle3.eps} & 
@@ -357,7 +591,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
       25/96 
     \end{tabular} }
   & {\tt \small triangle3\_approx\_integration()} \hspace{5em} 4 points, order 3. \\ \hline
-\end{tabular}
+\end{tabular} 
 \begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_triangle4.eps} & 
@@ -381,7 +615,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
       d
     \end{tabular} }
   & {\tt \small triangle4\_approx\_integration()} \hspace{5em} \mbox{6 points, order 4,}\hspace{7em} \mbox{a = 0.445948490915965,}\hspace{5em} \mbox{b = 0.091576213509771,}\hspace{5em} \mbox{c = 0.111690794839005,}\hspace{5em} \mbox{d = 0.054975871827661.} \\ \hline
-\end{tabular}
+\end{tabular} 
 \begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_triangle5.eps} & 
@@ -407,7 +641,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
       d 
     \end{tabular} }
   & {\tt \small triangle5\_approx\_integration()} \hspace{5em} \mbox{7 points, order 5,}\hspace{7em} \mbox{$a = \Frac{6+\sqrt{15}}{21}$,}\hspace{5em} \mbox{$b = 4/7 - a$,}\hspace{8em} \mbox{$c = \Frac{155+\sqrt{15}}{2400}$,}\hspace{5em} \mbox{$d = 31/240 - c$.} \\ \hline
-\end{tabular}
+\end{tabular}  
 \begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_triangle6.eps} & 
@@ -451,7 +685,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
   \mbox{$f = 0.058393137863189$,}\hspace{5em}
   \mbox{$g = 0.041425537809187$.}\hspace{5em}
   \\ \hline
-\end{tabular}
+\end{tabular}  
 \begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_triangle7.eps} & 
@@ -501,7 +735,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
   \mbox{$j = 0.0878076287166$,}\hspace{5em}
   \mbox{$k = -0.0747850222338$.}\hspace{5em}
   \\ \hline
-\end{tabular}
+\end{tabular}  
 \begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_quad2.eps} & 
@@ -517,7 +751,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
       1/3
     \end{tabular}
   & {\tt \small quad2\_approx\_integration()} \hspace{5em} 3 points, order 2. \\ \hline
-\end{tabular}
+\end{tabular}  
 \begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_quad3.eps} & 
@@ -533,7 +767,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
       1/4
     \end{tabular}
   & {\tt \small quad3\_approx\_integration()} \hspace{5em} 4 points, order 3. \\ \hline
-\end{tabular}
+\end{tabular} 
 \begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_quad5.eps} & 
@@ -551,14 +785,14 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
       5/36
     \end{tabular}
   & {\tt \small quad5\_approx\_integration()} \hspace{5em} 7 points, order 5. \\ \hline
-\end{tabular}
+\end{tabular}  
 
 
 \subsection{Gauss Integration methods on dimension 3}
 
 \begin{tabular}{|m{2.5cm}|m{5.5cm}|m{1.2cm}|m{6cm}|} \hline 
 graphic & coordinates \hspace{5em} \begin{tabular}{m{1.7cm}m{1.7cm}m{1.7cm}} x & y & z \end{tabular} & weights & function to call / order \\ \hline
-\end{tabular}
+\end{tabular}  
 \begin{tabular}{|m{2.5cm}|m{5.5cm}|m{1.2cm}|m{6cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_tetrahedron1.eps} & 
@@ -573,7 +807,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{1.7cm}m{1.7cm}m{1.7cm}} x &
     \end{tabular} }
   & {\tt \small tetrahedron1\_approx\_integration()} \hspace{5em} 
     1 point, order 1. \\ \hline
-\end{tabular}
+\end{tabular}  
 \begin{tabular}{|m{2.5cm}|m{5.5cm}|m{1.2cm}|m{6cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_tetrahedron2.eps} & 
@@ -597,7 +831,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{1.7cm}m{1.7cm}m{1.7cm}} x &
     \mbox{$a = \Frac{5 - \sqrt{5}}{20}$,}\hspace{5em}
     \mbox{$b = \Frac{5 + 3\sqrt{5}}{20}$.}\hspace{5em} \hspace{5em} \hspace{5em}
   \\ \hline
-\end{tabular}
+\end{tabular}  
 \begin{tabular}{|m{2.5cm}|m{5.5cm}|m{1.2cm}|m{6cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_tetrahedron3.eps} & 
@@ -619,7 +853,7 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{1.7cm}m{1.7cm}m{1.7cm}} x &
     \end{tabular} }
   & {\tt \small tetrahedron3\_approx\_integration()} \hspace{5em} 
     \mbox{5 points, order 3} \hspace{7em} \\ \hline
-\end{tabular}
+\end{tabular}  
 \begin{tabular}{|m{2.5cm}|m{5.5cm}|m{1.2cm}|m{6cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_tetrahedron5.eps} & 

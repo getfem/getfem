@@ -547,11 +547,12 @@ namespace getfem
       _base.resize(nb_dof());
       
       base_poly one(2, 0); one.one();
+      base_poly x(2, 1, 0), y(2, 1, 1);
       
-      _base[0] = one - base_poly(2, 1, 1) - base_poly(2, 1, 0);
-      _base[1] = base_poly(2, 1, 0) * (one - base_poly(2, 1, 1) * 2.0);
-      _base[2] = base_poly(2, 1, 1) * (one - base_poly(2, 1, 0) * 2.0);
-      _base[3] = base_poly(2, 1, 1) * base_poly(2, 1, 0) * 4.0;
+      _base[0] = one - y - x;
+      _base[1] = x * (one - y * 2.0);
+      _base[2] = y * (one - x * 2.0);
+      _base[3] = y * x * 4.0;
     }
   };
   
@@ -565,7 +566,40 @@ namespace getfem
     return elt;
   }
 
+  /* ******************************************************************** */
+  /*	Hemite element on the segment                                     */
+  /* ******************************************************************** */
 
+  struct _hermite_segment_ : public fem<base_poly>
+  {
+    _hermite_segment_(void)
+    { 
+      base_node pt(1);
+      base_poly one(2, 0), x(1, 1, 0); one.one();
+      cvr = bgeot::simplex_of_reference(1);
+      init_cvs_node();
+      es_degree = 3;
+      is_pol = true;
+      is_equiv = is_lag = false;
+      _base.resize(4);
+      pt[0] = 0.0; add_node(lagrange_dof(1), pt);
+      _base[0] = one + x * x * (-one * 3.0  + x * 2.0);
+      pt[0] = 1.0; add_node(lagrange_dof(1), pt);
+      _base[1] = x * x * (one * 3.0 - x * 2.0);
+      pt[0] = 0.0; add_node(derivative_dof(1, 0), pt);
+      _base[2] = x * (one + x * (-one * 2.0 + x));
+      pt[0] = 1.0; add_node(derivative_dof(1, 0), pt);
+      _base[3] = x * x * (-one + x);
+    }
+  };
+
+  ppolyfem segment_Hermite_fem(void)
+  { 
+    static bool exists = false;
+    static _hermite_segment_ *elt;
+    if (!exists) { exists = true; elt = new _hermite_segment_; }
+    return elt;
+  }
 
   /* ******************************************************************** */
   /*	DISCONTINUOUS PK                                                  */
@@ -578,7 +612,8 @@ namespace getfem
     
      _PK_discont(const _PK_femi_light &l) : _PK_fem(l)
      {
-       std::fill(_dof_types.begin(), _dof_types.end(), lagrange_nonconforming_dof(l.nc));
+       std::fill(_dof_types.begin(), _dof_types.end(),
+		 lagrange_nonconforming_dof(l.nc));
      }
    };  
 

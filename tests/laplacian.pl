@@ -16,7 +16,7 @@ print TMPF "K = 1;\n";
 print TMPF "INTEGRATION = 0;\n";
 print TMPF "NX = 10;\n";
 print TMPF "RESIDU = 1E-9;\n";
-print TMPF "MIXTEHYBRID = 'N'\n";
+print TMPF "FEM_TYPE = 0;\n"; 
 print TMPF "ROOTFILENAME = 'laplacian';\n";
 print TMPF "\n";
 print TMPF "\n";
