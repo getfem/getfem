@@ -1,15 +1,35 @@
 . Le Vendredi 28 Juin 2002 : 
-  ------------------------
+  --------------------------
   Prototype du site WEB terminé. Fabrication de la version 1.0 de GETFEM++.
   Les docs ne sont pas encore finalisées.
 
 
 . Le Jeudi 18 Juillet 2002 :
-  ------------------------
+  --------------------------
   Version 1.1 de GETFEM++. Un certain nombre de bugs en moins. Des tests
   plus etandus. Shell de visualisation de maillage. modification du format
   de sauvegarde des données. Extension du programme d'interpolation qui ne 
   marchait que sur les simplexes.
+
+. Le Mardi 21 Aout 2002 :
+  -----------------------
+  Version 1.2 de GETFEM++. Quelques bugs de moins. Element
+  d'Hermite sur le segment et support complet des éléments non
+  tau-equivalents. Element interpolant une autre méthode définie sur
+  un autre maillage. Nommage des méthodes d'éléments finis, des méthodes
+  d'intégration et des transformation géométrique simplifiant l'interface
+  avec MATLAB, la sauvegarde et la gestion des structure de description.
+
+
+------------------------------------------
+
+Autres packages à regarder : 
+
+. MEFISTO, A. Peronnet
+http://www.ann.jussieu.fr/~perronne
+(maillage 2D ou 3D, elasticité 2D ou 3D, interface graphique)
+
+. OPT++
 
 
 ------------------------------------------
@@ -19,7 +39,7 @@ courant aout : annonce NaNet. texte possible :
 
 subject : GETFEM++ a package for generic finite element methods
 
-GETFEM++ 1.1 Available for Download
+GETFEM++ 1.2 Available for Download
 
 The GETFEM++ project is centred around the development of a generic and efficient C++ library for elementary computations for finite element methods. The goal is to build a library which allows to compute any elementary matrix (even for mixed methods) on the largest class of methods and elements and for arbitrary dimension (1 <= n <= 255). It offers a complete separation between integration methods (exact or approximated), geometric transformations (linear or not) and finite element methods of arbitray degrees.
 
@@ -29,7 +49,9 @@ The GETFEM++ project is centred around the development of a generic and efficien
 
  Moreover, the library includes other tools for computation with finite element such as assembling methods for classical PDEs, interpolation methods, computation of norms, mesh operations, boundary conditions ... This library allows t build finite elements codes which are completely independent of the dimension, the particular method or element. Examples are provided.
 
- A MATLAB interface to this library is in preparation and will be soon accessible.
+It is possible to obtain mass matrices (or other type of matrices) for finite element method defined on two different meshes, allowing mortar methods or certain mixed methods.
+
+A MATLAB interface to this library is in preparation and will be soon accessible (Oct. 2002 probably).
 
  
 
@@ -49,6 +71,7 @@ La librairie GETFEM++ (version 1.1) est maintenant téléchargeable à l'adresse
 
 http://www.gmm.insa-tlse.fr/~renard/getfem/index.html
 (corriger l'adresse)
+sous license GPL (Gnu Public License).
 
 Cette bibliothèque permet de faire les calculs élémentaires nécessaires aux codes éléments finis et ce de manière générique :
 - calcul de matrices élémentaires quelconques
@@ -62,7 +85,7 @@ Pour définir un nouvel élément fini, il suffit de la décrire sur l'élément de ré
 
 Éléments déjà définis : Pk sur des simplexes (dimension et degrés arbitraires), Qk sur des parallélépipèdes, Éléments produits sur les prismes, P1 ou P2 avec fonction bulle, Pk discontinus sur des simplexes ...
 
-L'intérêt d'un tel package est qu'il peut s'étendre très facilement à de nouvelles méthodes et de nouvelles applications. Toute collaboration sera la bienvenue.
+L'intérêt d'un tel package est qu'il peut s'étendre très facilement à de nouvelles méthodes et de nouvelles applications. Toute collaboration ou remarque sera la bienvenue.
 
 ------------------------------------------
 courant aout : Inria ?. texte possible :

@@ -43,30 +43,27 @@ namespace bgeot
   /* ******************************************************************** */
 
   class mesh_structure;
-
-  struct mesh_point          /* structure for a point.                    */
-  {
+  
+  struct mesh_point {        /* structure for a point.                    */
     size_type first;         /* first convex attached to point or ST_NIL. */
     short_type ind_in_first; /* index of the point in first convex.       */
     mesh_point(void) { first = ST_NIL; }
     bool is_valid(void) const { return (first != ST_NIL); }
   };
-
-  struct mesh_convex_structure
-  {
+  
+  struct mesh_convex_structure {
     pconvex_structure cstruct;       /* type of convexe.                  */
     size_type pts;                   /* index in  points list.            */
     pconvex_structure structure(void) const { return cstruct; }
     pconvex_structure &structure(void) { return cstruct; }
   };
-
-  struct mesh_point_link      /* link between convex and points.          */
-  {
+  
+  struct mesh_point_link {    /* link between convex and points.          */
     size_type next;           /* index of next convex linked to the point.*/
     short_type ind_in_next;   /* index of this point in next convex.      */
     mesh_point_link(void) { next = ST_NIL; }
   };
-
+  
   typedef dal::dynamic_array<mesh_point, 8>          mesh_point_st_ct;
   typedef dal::dynamic_tas<mesh_convex_structure, 8> mesh_convex_ct;
   typedef dal::dynamic_alloc<mesh_point_link, 8>     mesh_link_ct;
@@ -76,14 +73,13 @@ namespace bgeot
   typedef std::vector<size_type>                     mesh_point_search_ind_ct;
   typedef dal::tab_ref_index_ref<mesh_point_ind_ct::const_iterator,
                                  convex_ind_ct::const_iterator>
-                                                    ind_ref_mesh_point_ind_ct;
+                                                     ind_ref_mesh_point_ind_ct;
 
   /* ********************************************************************* */
   /* Container : convex attached to a point.                               */
   /* ********************************************************************* */
 
-  struct mc_const_iterator
-  {
+  struct mc_const_iterator {
     typedef size_t              value_type;
     typedef const value_type*   pointer;
     typedef const value_type&   reference;
@@ -98,11 +94,11 @@ namespace bgeot
     
     mc_const_iterator(void) { ind_cv = ST_NIL; }
     mc_const_iterator(const mesh_structure &ms, size_type ip);
-	
+    
     mc_const_iterator &operator ++();
     
     mc_const_iterator operator ++(int)
-    { mc_const_iterator tmp = *this; ++(*this); return tmp; }
+      { mc_const_iterator tmp = *this; ++(*this); return tmp; }
     
     template<class ITER> bool is_convex_has_points(short_type nb,
 						   const ITER &ipt) const;
@@ -110,134 +106,140 @@ namespace bgeot
     bool is_end(void) const { return (ind_cv == ST_NIL); }
     value_type operator *() const { return ind_cv; }
     pconvex_structure structure(void) const
-    { return pc->structure(); }
+      { return pc->structure(); }
     
     bool operator ==(const mc_const_iterator &i) const
-    { return (i.ind_cv == ind_cv);}
+      { return (i.ind_cv == ind_cv);}
     bool operator !=(const mc_const_iterator &i) const
-    { return (i.ind_cv != ind_cv);}
+      { return (i.ind_cv != ind_cv);}
   };
-
+  
   class mesh_convex_ind_ct
   {
-    public :
+  public :
       
-      typedef size_t               value_type;
-      typedef value_type*          pointer;
-      typedef const value_type*    const_pointer;
-      typedef value_type&          reference;
-      typedef const value_type&    const_reference;
-      typedef size_t               size_type;
-      typedef mc_const_iterator    const_iterator;
-      typedef mc_const_iterator    iterator;
-      
-    protected :
-
-      iterator _begin, _end;
-
-    public :
-
-      bool empty(void) const { return _begin == _end; }
+    typedef size_t               value_type;
+    typedef value_type*          pointer;
+    typedef const value_type*    const_pointer;
+    typedef value_type&          reference;
+    typedef const value_type&    const_reference;
+    typedef size_t               size_type;
+    typedef mc_const_iterator    const_iterator;
+    typedef mc_const_iterator    iterator;
     
-      mesh_convex_ind_ct(const mesh_structure &ms, size_type ip)
+  protected :
+    
+    iterator _begin, _end;
+    
+  public :
+    
+    bool empty(void) const { return _begin == _end; }
+    
+    mesh_convex_ind_ct(const mesh_structure &ms, size_type ip)
       { _begin = iterator(ms, ip); }
-
-      const iterator &begin() const { return _begin; }
-      const iterator &end() const { return _end; }
-      iterator &begin() { return _begin; }
-      iterator &end() { return _end; }
-      
-      value_type front(void) const { return *_begin; }
-      void pop_front(void) { ++_begin; }
+    
+    const iterator &begin() const { return _begin; }
+    const iterator &end() const { return _end; }
+    iterator &begin() { return _begin; }
+    iterator &end() { return _end; }
+    
+    value_type front(void) const { return *_begin; }
+    void pop_front(void) { ++_begin; }
   };
-
+  
   /* ********************************************************************* */
   /* mesh_structure.                                                       */
   /* ********************************************************************* */
-
-
+  
+  
   class mesh_structure
   {
-    protected :
-
-      mesh_point_st_ct    points_tab;
-      mesh_convex_ct      convex_tab;
-      mesh_point_ind_ct   point_lists;
-      mesh_link_ct        point_links;
-
-    public :
-
-      mesh_link_ct &links(void) { return point_links; }
-      mesh_convex_ct &convex(void) { return convex_tab; }
-      mesh_point_st_ct &points(void) { return points_tab; }
-
-      const dal::bit_vector &convex_index(void) const
+  protected :
+    
+    mesh_point_st_ct    points_tab;
+    mesh_convex_ct      convex_tab;
+    mesh_point_ind_ct   point_lists;
+    mesh_link_ct        point_links;
+    
+  public :
+    
+    mesh_link_ct &links(void) { return point_links; }
+    mesh_convex_ct &convex(void) { return convex_tab; }
+    mesh_point_st_ct &points(void) { return points_tab; }
+    
+    const dal::bit_vector &convex_index(void) const
       { return convex_tab.index(); }
-      dal::bit_vector convex_index(dim_type) const;
-      const mesh_point_st_ct &point_structures(void) const
+    dal::bit_vector convex_index(dim_type) const;
+    const mesh_point_st_ct &point_structures(void) const
       { return points_tab; }
-      const mesh_link_ct  &links(void) const { return point_links; }
-      const mesh_convex_ct &convex(void) const { return convex_tab; }
-
-      void swap_points(size_type i, size_type j);
-      size_type nb_convex(void) const { return convex_tab.card(); }
-      bool convex_is_valid(size_type i) { return (convex_tab.index())[i]; }
-      bool point_is_valid(size_type i)
+    const mesh_link_ct  &links(void) const { return point_links; }
+    const mesh_convex_ct &convex(void) const { return convex_tab; }
+    
+    void swap_points(size_type i, size_type j);
+    size_type nb_convex(void) const { return convex_tab.card(); }
+    bool convex_is_valid(size_type i) { return (convex_tab.index())[i]; }
+    bool point_is_valid(size_type i)
       { return (points_tab[i].first != size_type(-1)); }
-      ref_mesh_point_ind_ct ind_points_of_convex(size_type ic) const;
-      size_type local_ind_of_convex_point(size_type ic, size_type ip) const;
-      size_type ind_dir_point_of_convex(size_type ic, size_type j) const
-      {
-	return ind_points_of_convex(ic)
-	  [convex_tab[ic].cstruct->ind_dir_points()[j] ];
-      }
-
-      pconvex_structure structure_of_convex(size_type i) const
+    ref_mesh_point_ind_ct ind_points_of_convex(size_type ic) const;
+    size_type local_ind_of_convex_point(size_type ic, size_type ip) const;
+    size_type ind_dir_point_of_convex(size_type ic, size_type j) const {
+      return ind_points_of_convex(ic)
+	[convex_tab[ic].cstruct->ind_dir_points()[j] ];
+    }
+    
+    pconvex_structure structure_of_convex(size_type i) const
       { return convex_tab[i].cstruct; }
-      short_type nb_points_of_convex(size_type i) const
+    short_type nb_points_of_convex(size_type i) const
       { return convex_tab[i].cstruct->nb_points(); }
-      void swap_convex(size_type i, size_type j);
-
-
-      template<class ITER>
-       size_type add_convex_noverif(pconvex_structure cs, ITER ipts,
-				    size_type to_index = size_type(-1));
-      template<class ITER>
-	size_type add_convex(pconvex_structure cs,
-			     ITER ipts, bool *present = 0);
-      template<class ITER> size_type add_simplex(dim_type dim, ITER ipts)
+    void swap_convex(size_type i, size_type j);
+    
+    
+    template<class ITER>
+    size_type add_convex_noverif(pconvex_structure cs, ITER ipts,
+				 size_type to_index = size_type(-1));
+    template<class ITER>
+    size_type add_convex(pconvex_structure cs,
+			 ITER ipts, bool *present = 0);
+    template<class ITER> size_type add_simplex(dim_type dim, ITER ipts)
       { return add_convex(simplex_structure(dim), ipts); }
-      size_type add_segment(size_type a, size_type b);
-
-      void sup_convex(size_type ic);
-      template<class ITER> 
-	void sup_convex_with_points(ITER ipts, short_type nb);
-      void sup_segment(size_type a, size_type b)
+    size_type add_segment(size_type a, size_type b);
+    
+    void sup_convex(size_type ic);
+    template<class ITER> 
+    void sup_convex_with_points(ITER ipts, short_type nb);
+    void sup_segment(size_type a, size_type b)
       { size_type t[2]; t[0] = a; t[1] = b; sup_convex_with_points(&t[0], 2); }
-      size_type add_face_of_convex(size_type ic, short_type f);
-      void add_faces_of_convex(size_type ic);
-      void to_faces(dim_type n);
-      void to_edges(void);
-
-      mesh_convex_ind_ct convex_to_point(size_type ip) const
+    size_type add_face_of_convex(size_type ic, short_type f);
+    void add_faces_of_convex(size_type ic);
+    void to_faces(dim_type n);
+    void to_edges(void);
+    
+    mesh_convex_ind_ct convex_to_point(size_type ip) const
       { return mesh_convex_ind_ct(*this, ip); }
-      
-      mesh_point_search_ind_ct ind_points_to_point(size_type ip) const;
-      
-      template<class ITER>
-	bool is_convex_has_points(size_type ic,short_type nb, ITER pit) const;
-
-      template<class ITER> 
-        bool is_convex_face_has_points(size_type ic, size_type face_num,
-                                  short_type nb, ITER pit) const;
-      ind_ref_mesh_point_ind_ct ind_points_of_face_of_convex(size_type ic,
-							 short_type f) const;
-
-      size_type memsize(void) const;
-      void optimize_structure(void);
-      void clear(void);
-      void stat(void);
-     
+    
+    mesh_point_search_ind_ct ind_points_to_point(size_type ip) const;
+    
+    template<class ITER>
+      bool is_convex_has_points(size_type ic,short_type nb, ITER pit) const;
+    
+    template<class ITER> 
+      bool is_convex_face_has_points(size_type ic, size_type face_num,
+				     short_type nb, ITER pit) const;
+    ind_ref_mesh_point_ind_ct ind_points_of_face_of_convex(size_type ic,
+							   short_type f) const;
+    
+    size_type memsize(void) const;
+    void optimize_structure(void);
+    void clear(void);
+    void stat(void);
+    
+    size_type first_convex_of_point(size_type ip) const {
+      return points_tab[ip].first;
+    }
+    size_type ind_in_first_convex_of_point(size_type ip) const {
+      return points_tab[ip].ind_in_first;
+    }
+    
   };
 
   /* ******************************************************************** */

@@ -26,6 +26,7 @@ include_HEADERS = \
 	dal_tas.h \
 	dal_tree_sorted.h \
 	ftool.h \
+	ftool_naming.h \
 	getfem_assembling.h \
 	getfem_config.h \
 	getfem_export.h \
@@ -51,12 +52,12 @@ SRC = \
 	dal_bit_vector.C \
 	ftool.C \
 	getfem_fem.C \
+	getfem_mesh_fem.C \
 	getfem_fem_virtual_link.C \
 	getfem_mat_elem.C \
 	getfem_mat_elem_type.C \
 	getfem_precomp.C \
 	getfem_mesh.C \
-	getfem_mesh_fem.C \
 	getfem_regular_meshes.C \
 	getfem_export.C
 

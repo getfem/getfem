@@ -64,7 +64,7 @@ dnl 	CXXFLAGS="$CXXFLAGS -ptr `pwd`/cxx_repository -std strict_ansi -O3"
 	;;
  g++* | c++)
  	APPSCXXFLAGS="$CXXFLAGS -ftemplate-depth-40 -pedantic -O3 -Wall -W"
- 	CXXFLAGS="$CXXFLAGS -ftemplate-depth-40 -pedantic -g -Wall -W -DGETFEM_VERIFY"
+ 	CXXFLAGS="$CXXFLAGS -ftemplate-depth-40 -pedantic -Wall -W"
 	MEX_NEEDS_TWOCOMP="#"
 	;;
  *)

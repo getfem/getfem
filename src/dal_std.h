@@ -70,14 +70,10 @@
 #include <algorithm>
 #include <vector>
 #include <string>
+#include <sstream>
 
-#if (!defined(__GNUC__) || __GNUC__ < 3)
-# include <strstream>
-# define _STRINGSTREAM std::strstream
-#else
-# include <sstream>
-# define _STRINGSTREAM std::stringstream
-#endif
+#define _STRINGSTREAM std::stringstream
+
 using std::endl;
 using std::cout;
 using std::cerr;
@@ -361,21 +357,12 @@ typedef unsigned char uint8_type;
 //     cerr << "============================================\n";
 //   } 
 
-#if (!defined(__GNUC__) || __GNUC__ < 3)
-  #define DAL_THROW(type, thestr) { \
-    std::strstream msg; \
-    msg << "in "__FILE__ << ", line " << __LINE__ << ": \n" << thestr << ends;\
-    std::string s = msg.str();  /* copy the content to the string */ \
-    msg.freeze(false);/* and un-freeze the strstream to avoid the mem leak */ \
-    throw (type)(s); \
-  }
-#else
-  #define DAL_THROW(type, thestr) { \
+#define DAL_THROW(type, thestr) { \
     std::stringstream msg; \
     msg << "in "__FILE__ << ", line " << __LINE__ << ": \n" << thestr << ends;\
     throw (type)(msg.str()); \
   }
-#endif
+
 } /* end of namespace dal.                                                */
 
 

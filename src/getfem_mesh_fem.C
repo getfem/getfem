@@ -167,9 +167,9 @@ namespace getfem
 	    // cout << "scanning face " <<  itf.index() << endl;
 	    // cout << " dofs : " << res << " ]] " << endl;
 	    size_type nbb // a refaire ... mais bug ...
-	      = structure_of_convex(it.index())->nb_points_of_face(itf.index());
+	      = dof_structure.structure_of_convex(it.index())->nb_points_of_face(itf.index());
 	    for (size_type i = 0; i < nbb; ++i)
-	      res.add(ind_points_of_face_of_convex(it.index(), itf.index())[i]);
+	      res.add(dof_structure.ind_points_of_face_of_convex(it.index(), itf.index())[i]);
 	    
 // 	             bgeot::ind_ref_mesh_point_ind_ct::const_iterator
 // 	     	    itp=ind_points_of_face_of_convex(it.index(), itf.index()).begin(),
@@ -249,8 +249,11 @@ namespace getfem
        linked_mesh().points_of_convex(cv));
   }
 
-  base_node mesh_fem::point_of_dof(size_type d) const
-  { return point_of_dof(points_tab[d].first, points_tab[d].ind_in_first); }
+  base_node mesh_fem::point_of_dof(size_type d) const { 
+    if (!dof_enumeration_made) enumerate_dof();
+    return point_of_dof(dof_structure.first_convex_of_point(d),
+			dof_structure.ind_in_first_convex_of_point(d));
+  }
 
   struct _dof_comp
   { 
@@ -265,8 +268,9 @@ namespace getfem
     _dof_comp(double e = 1.0E-10) : comp(e) { }
   };
 
-  void mesh_fem::enumerate_dof(void)
+  void mesh_fem::enumerate_dof(void) const
   {
+    cout << "Begin enum\n" << endl;
     dal::bit_vector nn = fe_convex;
     std::queue<int> pile;
     dal::dynamic_tree_sorted<fem_dof, _dof_comp, 10> dof_sort;
@@ -278,7 +282,7 @@ namespace getfem
     // cout << "\n\nEntering enumerate_dof\n\n\n\n\n";
 
     cv = nn.take_first();
-    bgeot::mesh_structure::clear();
+    dof_structure.clear();
 
     while (cv != ST_NIL)
     {
@@ -323,7 +327,7 @@ namespace getfem
 	tab[i] = j;
       }
       
-      add_convex_noverif(pf->structure(), tab.begin(), cv);
+      dof_structure.add_convex_noverif(pf->structure(), tab.begin(), cv);
       
       if (pile.empty()) cv = nn.take_first();
                  else { cv = pile.front(); pile.pop(); }
@@ -331,7 +335,7 @@ namespace getfem
     
     dof_enumeration_made = true;
     nb_total_dof = (dof_sort.card() == 0) ? 0 : dof_sort.index().last_true()+1;
-    
+    cout << "end enum\n" << endl;
   }
 
 /*     void mesh_fem::enumerate_dof(void) A finir ...  */
@@ -408,7 +412,7 @@ namespace getfem
     fe_convex.clear();
     dof_enumeration_made = false;
     linked_mesh().lmsg_sender().send(MESH_FEM_CHANGE((void *)(this)));
-    bgeot::mesh_structure::clear();
+    dof_structure.clear();
     boundaries.clear();
     valid_boundaries.clear();
   }

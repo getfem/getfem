@@ -1,3 +1,4 @@
+/* -*- c++ -*- (enables emacs c++ mode)                                    */
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  GEneric Tool for Finite Element Methods (getfem)             */
@@ -98,7 +99,7 @@ namespace getfem
   typedef bgeot::ref_mesh_point_ind_ct ref_mesh_dof_ind_ct;
 
   /// Describe a finite element method linked to a mesh.
-  class mesh_fem : public getfem_mesh_receiver, public bgeot::mesh_structure
+  class mesh_fem : public getfem_mesh_receiver
   {
     protected :
 
@@ -106,9 +107,10 @@ namespace getfem
       dal::bit_vector valid_boundaries;
       dal::dynamic_array<pintfem> f_elems;
       dal::bit_vector fe_convex;
-      size_type nb_total_dof;
       getfem_mesh *_linked_mesh;
-      bool dof_enumeration_made;
+      mutable bgeot::mesh_structure dof_structure;
+      mutable bool dof_enumeration_made;
+      mutable size_type nb_total_dof;
       bool is_valid;
 
     public :
@@ -148,18 +150,22 @@ namespace getfem
       /** Gives an array of the degrees of freedom of the element
        *           of the convex of index i. 
        */
-      ref_mesh_dof_ind_ct ind_dof_of_element(size_type ic)
-      { return ind_points_of_convex(ic); }
+      ref_mesh_dof_ind_ct ind_dof_of_element(size_type ic) const {
+	if (!dof_enumeration_made) enumerate_dof();
+	return dof_structure.ind_points_of_convex(ic);
+      }
       /** Gives the number of  degrees of freedom of the element
        *           of the convex of index i. 
        */
-      size_type nb_dof_of_element(size_type cv)
-      { return f_elems[cv]->pf->nb_dof(); }
+      size_type nb_dof_of_element(size_type cv) const {
+	return f_elems[cv]->pf->nb_dof();
+      }
       /** Gives the point (base_node)  corresponding to the 
        *          degree of freedom i  of the element of index cv.
        */
-      const base_node &reference_point_of_dof(size_type cv, size_type i) const
-      { return f_elems[cv]->pf->node_of_dof(i); }
+      const base_node &reference_point_of_dof(size_type cv,size_type i) const {
+	return f_elems[cv]->pf->node_of_dof(i);
+      }
       /** Gives the point (base_node) corresponding to the degree of freedom
        *  i of the element of index cv in the element of reference.
        */
@@ -168,13 +174,15 @@ namespace getfem
        *          degree of freedom with global index i.
        */
       base_node point_of_dof(size_type d) const;
-      size_type first_convex_of_dof(size_type d) const
-      { return points_tab[d].first; }
-      size_type ind_in_first_convex_of_dof(size_type d) const
-      { return points_tab[d].ind_in_first; }
-      void enumerate_dof(void);
+//       size_type first_convex_of_dof(size_type d) const
+//       { return points_tab[d].first; }
+//       size_type ind_in_first_convex_of_dof(size_type d) const {
+// 	if (!dof_enumeration_made) enumerate_dof(); 
+// 	return points_tab[d].ind_in_first;
+//       }
+      void enumerate_dof(void) const;
       /// Gives the total number of degrees of freedom.
-      size_type nb_dof(void)
+      size_type nb_dof(void) const
       { if (!dof_enumeration_made) enumerate_dof(); return nb_total_dof; }
       dal::bit_vector dof_on_boundary(size_type b) const;
       void clear(void);
@@ -208,13 +216,15 @@ namespace getfem
       void receipt(const MESH_UNREFINE_CONVEX &m);
       void receipt(const MESH_FEM_TOUCH &m);
 
-      size_type memsize() const { return bgeot::mesh_structure::memsize() + 
-				    sizeof(mesh_fem) - sizeof(bgeot::mesh_structure) +
-				    boundaries.memsize() + valid_boundaries.memsize() +
-				    f_elems.memsize() + fe_convex.memsize(); }
-      
-      mesh_fem(getfem_mesh &me); 
-      virtual ~mesh_fem();
+    size_type memsize() const {
+      return dof_structure.memsize() + 
+	sizeof(mesh_fem) - sizeof(bgeot::mesh_structure) +
+	boundaries.memsize() + valid_boundaries.memsize() +
+	f_elems.memsize() + fe_convex.memsize();
+    }
+    
+    mesh_fem(getfem_mesh &me); 
+    virtual ~mesh_fem();
   };
   
 }  /* end of namespace getfem.                                             */

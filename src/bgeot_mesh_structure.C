@@ -63,8 +63,8 @@ namespace bgeot
 
     /* we can't use it.index() here */
     size_type ind = 0;
-    for (ref_mesh_point_ind_ct::const_iterator
-	   it = ct.begin(); it != ct.end() && (*it) != ip; ++it) ind++;
+    ref_mesh_point_ind_ct::const_iterator it = ct.begin();
+    for (; it != ct.end() && (*it) != ip; ++it) ind++;
     if (it == ct.end())
       DAL_THROW(internal_error, "This point does not exist on this convex.");
     return ind;
