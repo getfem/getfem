@@ -36,8 +36,8 @@ if ($systeme =~ /Linux/)
   print MAKEFILE "OPTIONS_OPTIMIZE = -O3\n";
   print MAKEFILE "OPTIONS_BOTH     = -g -O3\n";
   print MAKEFILE "INCLUDES_STANDARD = \n";
-  print MAKEFILE "INCLUDES_MTL = -I/opt/include/\n";
-  print MAKEFILE "INCLUDES_ITL = -I/opt/include/\n";
+  print MAKEFILE "INCLUDES_MTL = -I/opt/getfem/include/\n";
+  print MAKEFILE "INCLUDES_ITL = -I/opt/getfem/include/\n";
   print MAKEFILE "LIB_X11 = -L/usr/X11R6/lib -lX11\n";
 }
 else
