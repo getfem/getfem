@@ -406,7 +406,7 @@ namespace getfem
    *  "FEM_PK(N,K)"                      : classical Lagrange element PK on a
    *                                       simplex
    *  "FEM_PK_DISCONTINUOUS(N,K)"        : discontinuous Lagrange element PK
-   *                                       on simplex
+   *                                       on a simplex
    *  "FEM_QK(N,K)"                      : classical Lagrange element QK on a
    *                                       parellepiped
    *  "FEM_PK_PRISM(N,K)"                : classical Lagrange element PK on a

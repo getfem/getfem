@@ -598,7 +598,6 @@ namespace getfem
     }
   };
 
-
   static pfem gen_hierarchical_fem(fem_param_list &params) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
@@ -607,14 +606,13 @@ namespace getfem
       DAL_THROW(failure_error, "Bad type of parameters");
     pfem pf1 = params[0].method();
     pfem pf2 = params[1].method();
-    try {
+
+    if (dynamic_cast<ppolyfem>(pf1) && dynamic_cast<ppolyfem>(pf2))
       return new thierach_femi(dynamic_cast<ppolyfem>(pf1),
 			       dynamic_cast<ppolyfem>(pf2));
-    } catch (const std::bad_cast &) {}
-    try {
+    if (dynamic_cast<ppolycompfem>(pf1) && dynamic_cast<ppolycompfem>(pf2))
       return new thierach_femi_comp(dynamic_cast<ppolycompfem>(pf1),
 				    dynamic_cast<ppolycompfem>(pf2));
-    } catch (const std::bad_cast &) {}
     DAL_THROW(failure_error, "Bad parameters");
   }
 

@@ -1,10 +1,19 @@
 #include <dal_basic.h>
 #include <deque>
 
+struct titi {
+  virtual void toto(void) { cout << "bibi\n"; }
+};
+
+struct tutu : public titi {
+  virtual void toto(void) { cout << "bubu\n"; }
+};
+
 
 int main(void) {
   try {
-    
+
+
     cout << "size of int         : " << sizeof(int)         << endl;
     cout << "size of size_t      : " << sizeof(size_t)      << endl;
     cout << "size of (int *)     : " << sizeof(int *)       << endl;
