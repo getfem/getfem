@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% parameters for program laplacien                                        %
+% parameters for program laplacian                                        %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%% pde parameters :	        				      %%%%%
@@ -26,5 +26,5 @@ RESIDU = 1E-9;     	% residu for conjugate gradient.
 MIXTEHYBRID = 'N';
 
 %%%%%   saving parameters                                             %%%%%
-ROOTFILENAME = 'laplacien';     % Root of data files.
+ROOTFILENAME = 'laplacian';     % Root of data files.
 

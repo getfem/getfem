@@ -1,5 +1,5 @@
 
-$tmp = `../bin/createmp laplacien.param`;
+$tmp = `../bin/createmp laplacian.param`;
 # print "TMP = $tmp\n";
 sub catch { `rm -f $tmp`; }
 $SIG{INT} = 'catch';
@@ -17,7 +17,7 @@ print TMPF "INTEGRATION = 0;\n";
 print TMPF "NX = 10;\n";
 print TMPF "RESIDU = 1E-9;\n";
 print TMPF "MIXTEHYBRID = 'N'\n";
-print TMPF "ROOTFILENAME = 'laplacien';\n";
+print TMPF "ROOTFILENAME = 'laplacian';\n";
 print TMPF "\n";
 print TMPF "\n";
 close(TMPF);
@@ -31,7 +31,7 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
 
   # print ("def = $def\n");
 
-  open F, "laplacien $tmp $def 2>&1 |" or die;
+  open F, "laplacian $tmp $def 2>&1 |" or die;
   while (<F>) {
     if ($_ =~ /L2 error/) {
       ($a, $b) = split('=', $_);
@@ -46,7 +46,7 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
  # 
  #   print $_;
   }
-  `laplacien $tmp $def`;
+  `laplacian $tmp $def`;
   if ($?) { `rm -f $tmp`; exit(1); }
 }
 
