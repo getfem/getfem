@@ -1,0 +1,41 @@
+#!/usr/bin/perl
+ 
+
+#######################################
+#       System identification         #
+#######################################
+
+$rootlib = `pwd`; chomp($rootlib);
+$machine = `uname -m`; chomp($machine);
+$systeme = `uname -s`; chomp($systeme); $systeme .= `uname -r`;chomp($systeme);
+$getfem_lib = "libgetfem.a";
+
+
+#######################################
+# Environnement variables for shell   #
+#######################################
+
+$ENV{PATH} = "/bin:/usr/dt/bin:.:/usr/ucb:/sbin:/usr/bin:/usr/sbin:/etc:/usr/etc:/usr/lib:/usr/ccs/bin:/usr/local/bin:/usr/local/opt/bin:/usr/bin/X11:/usr/local/opt/sbin:/usr/bin:/usr/local/bin:/usr/bin/X11:/usr/dt/bin:/usr/local/texmf/bin/alpha_osf1:opt/bin:/opt/matlab/bin:/usr/local/matlab/bin";
+$ENV{SHELL} = "/usr/bin/tcsh";
+if ($systeme =~ /Linux/)
+{
+  $ENV{SYSDEX} = "Linux";
+}
+else
+{
+  $ENV{SYSDEX} = "OSF1";
+  $ENV{TEXMF} = "/usr/local/texmf";
+  $ENV{TEXMFUPD} = "/usr/local";
+  $ENV{LU_TEXENV} = "=1";
+  $ENV{MTPK_DESTROOT} = "/usr/local/texmf/fonts";
+  $ENV{MTP_MAPFILE} = "/usr/local/texmf/dvips/psfonts.map";
+  $ENV{TEXMFCNF} = "/usr/local/texmf/web2c";
+}
+
+print `bin/install_form_cvs`;
+
+# Il faut ajouter la fabrication de la librairie dynamique et des commandes
+# matlab.
+
+print `make`;
+print `make matlabcom`;
