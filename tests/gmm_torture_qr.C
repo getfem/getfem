@@ -171,7 +171,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
   m = gmm::mat_nrows(m2);
   gmm::dense_matrix<T> cq(m, m), cr(m, m), ca(m, m);  
   std::vector<T> cv(m), eigc(m);
-  do {
+  if (m > 0) do {
     gmm::fill_random(cq);
   } while (gmm::abs(gmm::lu_det(cq)) < sqrt(prec)
 	   || gmm::condition_number(cq) > R(1000));
@@ -226,7 +226,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
 
   m = gmm::mat_nrows(m2);
   std::vector<R> cvr(m), eigcr(m);
-  do {
+  if (m > 0) do {
     gmm::fill_random(cr);
   } while (gmm::abs(gmm::lu_det(cr)) < sqrt(prec)
 	   || gmm::condition_number(cr) > R(1000));
