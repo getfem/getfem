@@ -952,8 +952,7 @@ namespace gmm {
       ite = mat_row_end(l1);
     typename linalg_traits<L2>::row_iterator it2 = mat_row_begin(l2);
     for ( ; it1 != ite; ++it1, ++it2)
-      add_spec(linalg_traits<L1>::row(*it1),
-	       linalg_traits<L2>::row(*it2), abstract_vector());
+      add(linalg_traits<L1>::row(it1), linalg_traits<L2>::row(it2));
   }
 
   template <class L1, class L2>
@@ -962,8 +961,7 @@ namespace gmm {
       ite = mat_col_end(l1);
     typename linalg_traits<L2>::col_iterator it2 = mat_col_begin(l2);
     for ( ; it1 != ite; ++it1, ++it2)
-      add_spec(linalg_traits<L1>::col(*it1),
-	       linalg_traits<L2>::col(*it2), abstract_vector());
+      add(linalg_traits<L1>::col(it1),  linalg_traits<L2>::col(it2));
   }
 
   template <class L1, class L2>
