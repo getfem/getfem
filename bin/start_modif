@@ -17,7 +17,7 @@ print MAKEFILE "\n\n", '# principal paths and options:', "\n";
 if ($systeme =~ /Linux/)
 {
   print MAKEFILE "INCLUDES_GETFEM = -I/opt/getfem/include\n";
-  print MAKEFILE "GETFEM_LIB = /opt/gefem/lib/libgetfem.a\n";
+  print MAKEFILE "GETFEM_LIB = /opt/getfem/lib/libgetfem.a\n";
   print MAKEFILE "COMP = g++\n";
   print MAKEFILE "OPTIONS_STANDARD = -ainsi -ftemplate-depth-40\n";
   print MAKEFILE "OPTIONS_DEBUG    = -g\n";
@@ -50,12 +50,7 @@ print MAKEFILE "CPLUSOPTDEBUG = \$(COMP) \$(OPTIONS_STANDARD)";
 print MAKEFILE " \$(OPTIONS_BOTH) \n";
 print MAKEFILE "INCLUDES = -I ./include \$(INCLUDES_STANDARD) \$(INCLUDES_GETFEM) \$(INCLUDES_MTL)";
 print MAKEFILE " \$(INCLUDES_ITL) -I$rootlib\/include \n\n\n";
-print MAKEFILE "LIB = $getfem_lib -lm\n";
-
-print MAKEFILE "\n\n\n", "all : \$(GETFEM_LIB)\n\n";
-
-print MAKEFILE "\n\n", '# Dependencies : ', "\n";
-print MAKEFILE `bin/include_dependencies include`;
+print MAKEFILE "LIB = $(GETFEM_LIB) -lm\n";
 
 print MAKEFILE "\n\n", '# Objects to compile : ', "\n";
 
@@ -71,6 +66,10 @@ while($listeo)
   print MAKEFILE " sources\/", $fi;
 }
 
+print MAKEFILE "\n\n\n", "all : \$(lib_objects)\n\n";
+
+print MAKEFILE "\n\n", '# Dependencies : ', "\n";
+print MAKEFILE `bin/include_dependencies include`;
 
 
 print MAKEFILE "\n\n", '# Compilation lines : ',  "\n";
@@ -104,15 +103,13 @@ while($listeC)
   $fi2 =~ s/\.o/_h/;
 #  $fi2 =~ s/\.o/.h/;
   print MAKEFILE "\n", "programs\/$fi1 : $fi \$(GETFEM_LIB) \n";
-  print MAKEFILE "\t", '$(CPLUS) $(COPT) $(INCLUDES) ./sources/*.o $(GETFEM_LIB) ', $fi, " -o programs\/$fi1", "\n";
+  print MAKEFILE "\t", '$(CPLUS) $(COPT) $(INCLUDES) ./sources/*.o $(LIB) ', $fi, " -o programs\/$fi1", "\n";
 
 }
 
 print MAKEFILE "\n", 'test :', $listetests, "\n";
 print MAKEFILE "\t", $listetestsex, "\n";
 
-print MAKEFILE "\n\n\$(GETFEM_LIB) : \$(lib_objects)\n";
-print MAKEFILE "\t ar r \$(GETFEM_LIB) \$(lib_objects) ; ranlib \$(GETFEM_LIB)\n";
 print MAKEFILE "\n\nclean :\n";
 print MAKEFILE "\t \/bin\/rm -f sources\/\*.o sources\/\*.a\n";
 
