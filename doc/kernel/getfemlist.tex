@@ -312,6 +312,27 @@ $3$ & $1$ & $4$ & $C^1$ & No \mbox{($Q = 1$)} & No \\ \hline
 \end{tabular}
 \end{center}
 
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=5cm,angle=0]{getfemlist_segment_bubble.eps}
+  \end{center}
+  \caption{ \it $P_1$ Lagrange element on a segment with additional internal bubble function, 3 d.o.f., $C^0$} 
+  \label{fig:segment_bubble}
+\end{figure}
+
+to be described ...
+
+\begin{center}
+\begin{tabular}{|m{14.18cm}|} \hline 
+{ \bf Lagrange $P_1$ element with an additional internal bubble function}\\
+{\tt getfem::ppolyfem getfem::PK\_with\_cubic\_bubble\_fem(1, 1)} 
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
+$2$ & $1$ & $3$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \\ \hline
+\end{tabular}
+\end{center}
+
 \subsection{Specific elements in dimension 2}
 \subsubsection{Elements with additional bubble functions}
 
@@ -330,7 +351,7 @@ to be described ...
 
 \begin{center}
 \begin{tabular}{|m{14.18cm}|} \hline 
-{ \bf Lagrange $P_1$ of $P_2$ element with an additional internal bubble function}\\
+{ \bf Lagrange $P_1$ or $P_2$ element with an additional internal bubble function}\\
 {\tt getfem::ppolyfem getfem::PK\_with\_cubic\_bubble\_fem(2, K)} 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
