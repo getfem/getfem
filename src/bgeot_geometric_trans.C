@@ -335,6 +335,24 @@ namespace bgeot
     return pgt;
   }
 
+  static std::string name_of_linear_qk_trans(int dim) {
+    switch (dim) {
+    case 1: return "GT_PK(1,1)";
+    default: return std::string("GT_LINEAR_PRODUCT(") + name_of_linear_qk_trans(dim-1) + std::string(",GT_PK(1,1))");
+    }
+  }
+
+  pgeometric_trans parallelepiped_linear_geotrans(size_type n) {
+    static pgeometric_trans pgt = 0;
+    static size_type d = size_type(-2);
+    if (d != n) {
+      std::stringstream name(name_of_linear_qk_trans(n));
+      pgt = geometric_trans_descriptor(name.str());
+      d = n;
+    }
+    return pgt;
+  }
+
   pgeometric_trans prism_geotrans(size_type n, short_type k) {
     static pgeometric_trans pgt = 0;
     static size_type d = size_type(-2);

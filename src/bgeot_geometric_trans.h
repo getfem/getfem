@@ -143,6 +143,7 @@ namespace bgeot
 
   pgeometric_trans simplex_geotrans(size_type n, short_type k);
   pgeometric_trans parallelepiped_geotrans(size_type n, short_type k);
+  pgeometric_trans parallelepiped_linear_geotrans(size_type n);
   pgeometric_trans prism_geotrans(size_type n, short_type k);
   pgeometric_trans product_geotrans(pgeometric_trans pg1, pgeometric_trans pg2);
 

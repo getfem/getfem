@@ -1,3 +1,4 @@
+
 /* *********************************************************************** */
 /*                                                                         */
 /* Library : GEneric Tool for Finite Element Methods (getfem)              */
@@ -255,38 +256,38 @@ namespace getfem
     scalar_type h = 1./k;
     size_type n = cvs->dim();
     size_type pow2n = (size_type(1) << n);
+    size_type powkn = 1; for (size_type i=0; i < n; ++i) powkn *= k;
     std::vector<size_type> strides(n);
     size_type nbpts = 1; for (size_type i=0; i < n; ++i) { strides[i] = nbpts; nbpts *= (k+1); }
-    std::vector<short_type>  kcnt(n,0);
+    std::vector<short_type> kcnt; kcnt.resize(n+1,0);
     std::vector<size_type> pids; pids.reserve(nbpts);
     base_node pt(n);
-
+    size_type kk;
     /* insert nodes and fill pids with their numbers */
-    while (true) {
-      short_type kk=0;
-      while (kk < n) { kcnt[kk]++; if (kcnt[kk] == k+1) { kcnt[kk] = 0; kk++; } else break; }
-      for (size_type z = 0; z < n; ++z) {
-	pt[z] = h*kcnt[kk];
-	if ((k & (size_type(1) << z))) pt[z] += h;
-      }
+    while (kcnt[n] == 0) {
+      for (size_type z = 0; z < n; ++z)
+	pt[z] = h*kcnt[z];
       if (opt_gt) pt = opt_gt->transform(pt, *opt_gt_pts);	  
       pids.push_back(pm->add_point(pt));
+      kk=0; while (kk <= n) { kcnt[kk]++; if (kcnt[kk] == k+1) { kcnt[kk] = 0; kk++; } else break; }
     }
 
     /* 
        insert convexes using node ids stored in 'pids'
-       kcnt is again filled with 0,no need to do it 
     */
     std::vector<size_type> ppts(pow2n);
-    while (true) {
-      short_type kk=0;
-      while (kk < n) { kcnt[kk]++; if (kcnt[kk] == k+1) { kcnt[kk] = 0; kk++; } else break; }
-      
-      for (k = 0; k < pow2n; ++k) {
-	ppts[k] = 0;
-	for (size_type z = 0; z < n; ++z) if ((k & (size_type(1) << z))) ppts[k] += strides[z];
+    kcnt[n] = 0;
+    while (kcnt[n] == 0) {
+      for (kk = 0; kk < pow2n; ++kk) {
+	size_type pos = 0;
+	for (size_type z = 0; z < n; ++z) {
+          pos += kcnt[z]*strides[z];
+          if ((kk & (size_type(1) << z))) pos += strides[z];
+        }
+        ppts[kk] = pids.at(pos);
       }
-      pm->add_parallelepiped(n,ppts.begin());
+      pm->add_convex(bgeot::parallelepiped_linear_geotrans(n), ppts.begin());
+      kk=0; while (kk <= n) { kcnt[kk]++; if (kcnt[kk] == k) { kcnt[kk] = 0; kk++; } else break; }
     }
   }
 

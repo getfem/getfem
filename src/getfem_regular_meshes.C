@@ -118,7 +118,7 @@ namespace getfem
 
 
   void _parallelepiped_regular_mesh(getfem_mesh &me, dim_type N,
-    const base_node &org, const base_vector *ivect, const size_type *iref)
+                                    const base_node &org, const base_vector *ivect, const size_type *iref, bool linear_gt)
   {
     bgeot::convex<base_node>
       pararef = *(bgeot::parallelepiped_of_reference(N));
@@ -143,8 +143,9 @@ namespace getfem
 
       for (i = 0; i < nbpt; i++)
 	tab3[i] = me.add_point(a + pararef.points()[i]);
-
-      me.add_convex(bgeot::parallelepiped_geotrans(N, 1), tab3.begin());
+      me.add_convex(linear_gt ? 
+                    bgeot::parallelepiped_linear_geotrans(N) : 
+                    bgeot::parallelepiped_geotrans(N, 1), tab3.begin());
      
       for (dim_type l = 0; l < N; l++)
       {

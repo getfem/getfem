@@ -58,11 +58,8 @@ namespace getfem
       }
       for (short_type f = 0; f < pgt->structure()->nb_faces(); ++f) {
 
-	base_node barycentre = mf.linked_mesh().points_of_face_of_convex(cv, f)[0];
-	for (size_type k = 1; k < pgt->structure()->nb_points_of_face(f); ++k)
-	  barycentre += mf.linked_mesh().points_of_face_of_convex(cv, f)[k];
-	barycentre /= scalar_type(pgt->structure()->nb_points_of_face(f));
- 
+	base_node barycentre = dal::mean_value(mf.linked_mesh().points_of_face_of_convex(cv, f).begin(),
+                                               mf.linked_mesh().points_of_face_of_convex(cv, f).end());
 	short_type f2 = short_type(-1);
 	for (short_type f3 = 0; f3 < cr->structure()->nb_faces(); ++f3) {
 	  if (dal::abs(cr->is_in_face(f3, barycentre)) < 1.0E-7)
@@ -79,9 +76,7 @@ namespace getfem
 	    p->add_point(pt, pai->coeff_on_face(f, j) * coeff_mul, f2);
 	  }
 	}
-
       }
-
     }
     p->valid_method();	
 
@@ -91,8 +86,6 @@ namespace getfem
   typedef ftool::naming_system<integration_method>::param_list im_param_list;
 
   pintegration_method structured_composite_int_method(im_param_list &params) {
-
-    cout << "structured_composite_int_method enter\n";
 
     if (params.size() != 2)
       DAL_THROW(failure_error, 
@@ -108,7 +101,6 @@ namespace getfem
     pmesh_precomposite pmp;
 
     structured_mesh_for_convex(pim->approx_method()->ref_convex(), k, pm, pmp);
-
     mesh_fem mf(*pm);
     mf.set_finite_element(pm->convex_index(),
 			  classical_fem(pm->trans_of_convex(0), 0), pim);

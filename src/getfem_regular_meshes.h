@@ -83,19 +83,18 @@ namespace getfem
   } 
 
     void _parallelepiped_regular_mesh(getfem_mesh &me, dim_type N,
-    const base_node &org, const base_vector *ivect, const size_type *iref);
+                                      const base_node &org, const base_vector *ivect, const size_type *iref, bool linear_gt);
 
   template<class ITER1, class ITER2>
     void parallelepiped_regular_mesh(getfem_mesh &me,
 					     dim_type N,
-	     const base_node &org, ITER1 ivect, ITER2 iref)
+                                     const base_node &org, ITER1 ivect, ITER2 iref, bool linear_gt=false)
   { 
     std::vector<base_vector> vect(N);
     std::copy(ivect, ivect+N, vect.begin());
     std::vector<size_type> ref(N);
     std::copy(iref, iref+N, ref.begin());
-    _parallelepiped_regular_mesh(me, N, org, &(vect[0]),
-					 &(ref[0]));
+    _parallelepiped_regular_mesh(me, N, org, &(vect[0]), &(ref[0]), linear_gt);
   } 
 
 }  /* end of namespace getfem.                                             */
