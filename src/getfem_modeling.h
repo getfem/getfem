@@ -869,7 +869,7 @@ namespace getfem {
 	if (homogeneous) std::fill(epsilon.begin(), epsilon.end(),epsilon_[0]);
 	else gmm::copy(epsilon_, epsilon);
 	gmm::clear(M); gmm::resize(M, ndd, ndd);
-	asm_mass_matrix(M, mf_p, mf_data, epsilon);
+	asm_mass_matrix_param(M, mf_p, mf_data, epsilon);
 	gmm::scale(M, value_type(-1));
       }
       this->computed();

@@ -173,8 +173,8 @@ namespace getfem
    *  (on the whole mesh or on the specified boundary) 
    */
   template<typename MAT, typename VECT>
-  void asm_mass_matrix(MAT &M, const mesh_fem &mf_u, const mesh_fem &mfdata,
-		       const VECT &F, size_type boundary=size_type(-1)) {
+  void asm_mass_matrix_param(MAT &M, const mesh_fem &mf_u, const mesh_fem &mfdata,
+			     const VECT &F, size_type boundary=size_type(-1)) {
     generic_assembly assem;
     if (mf_u.get_qdim() == 1)
       assem.set("F=data(#2);"
