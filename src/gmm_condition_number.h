@@ -57,7 +57,6 @@ namespace gmm {
     std::vector<R> eig(m+n);
 
     if (m+n == 0) return R(0);
-
     if (is_hermitian(M)) {
       eig.resize(m);
       gmm::symmetric_qr_algorithm(M, eig);
@@ -67,11 +66,8 @@ namespace gmm {
       gmm::copy(M, sub_matrix(B, sub_interval(m, n), sub_interval(0, m)));
       gmm::copy(conjugated(M), sub_matrix(B, sub_interval(0, m),
 					  sub_interval(m, n)));
-    
       gmm::symmetric_qr_algorithm(B, eig);
     }
-    
-    // cout << "eigenvalues = " << eig << endl;
     emin = emax = gmm::abs(eig[0]);
     for (size_type i = 1; i < eig.size(); ++i) {
       R e = gmm::abs(eig[i]); 

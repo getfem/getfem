@@ -232,7 +232,7 @@ namespace test {
       : id(allocate(a.size())) { std::transform(a.begin(), a.end(), begin(), op); }
     template<class BINOP> small_vector(const small_vector<T>& a, const small_vector<T>& b, BINOP op) 
       : id(allocate(a.size())) { std::transform(a.begin(), a.end(), b.begin(), begin(), op); }
-    bool empty() const { return id==0; }
+    bool empty() const { return this->id==node_id(0); }
     unsigned char refcnt() const { return allocator().refcnt(id); }
     dim_type size() const { return allocator().obj_sz(id)/sizeof(value_type); }
     small_vector<T> operator+(const small_vector<T>& other) const 
@@ -554,9 +554,9 @@ namespace getfem {
       }
     }
     cout << " operator -=: " << c.toc().cpu() << " sec\n";
-    for (size_type i=0; i < (vv.size()<4 ? vv.size() : 4); ++i) {
-      printf("V[%d]@%p, V[%d][0]@%p\n", int(i), &vv[i], int(i), &vv[i][0]);
-    }
+//     for (size_type i=0; i < (vv.size()<4 ? vv.size() : 4); ++i) {
+//       printf("V[%d]@%p, V[%d][0]@%p\n", int(i), &vv[i], int(i), &vv[i][0]);
+//     }
 
     typedef bgeot::PT<V> PV;
     dal::lexicographical_less<V, dal::approx_less<typename V::value_type> > comp;

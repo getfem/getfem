@@ -448,8 +448,8 @@ void lap_pb::solve(void) {
        << ftool::uclock_sec() - time << " seconds\n";
 
   cout << "Solve\n";
-  // gmm::cg(SM, U, B, P, iter);
-  gmm::gmres(SM, U, B, P, 50, iter);
+  gmm::cg(SM, U, B, P, iter);
+  // gmm::gmres(SM, U, B, P, 50, iter);
   
   cout << "Time to solve : "
        << ftool::uclock_sec() - time << " seconds\n";
