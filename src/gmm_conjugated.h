@@ -32,6 +32,8 @@
 #ifndef __GMM_CONJUGATED_H
 #define __GMM_CONJUGATED_H
 
+#include <gmm_def.h>
+
 namespace gmm {
 
   /* ********************************************************************* */

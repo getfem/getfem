@@ -55,7 +55,8 @@
 #ifndef __GMM_SOLVER_CG_H
 #define __GMM_SOLVER_CG_H
 
-#include <gmm_solvers.h>
+#include <gmm_kernel.h>
+#include <gmm_precond_diagonal.h>
 
 namespace gmm {
 

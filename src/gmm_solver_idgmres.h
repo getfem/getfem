@@ -33,6 +33,9 @@
 #ifndef GMM_IDGMRES_H
 #define GMM_IDGMRES_H
 
+#include <gmm_kernel.h>
+#include <gmm_precond_diagonal.h>
+
 namespace gmm {
 
   // Implicitly restarted and deflated Generalized Minimum Residual

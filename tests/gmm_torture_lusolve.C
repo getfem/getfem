@@ -20,13 +20,15 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
 
   R det = gmm::abs(gmm::lu_det(m1)), error;
   
-  if (gmm::abs(det) > R(prec * 10000.0)) {
+  if (det > R(prec * 10000.0)) {
+
+    det = std::min(det, R(1));
 
     gmm::lu_solve(m1, v1, v2);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
 
     error = gmm::vect_norm2(v3);
-    if (error >= R(prec * 30000.0))
+    if (error >= R(prec * 1000.0 / det))
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
     gmm::lu_inverse(m1);
@@ -35,7 +37,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     
     error = gmm::vect_norm2(v3);
-    if (error >= R(prec * 30000.0))
+    if (error >= R(prec * 1000.0 / det))
       DAL_THROW(gmm::failure_error, "Error too large: "<< error);
   }
 }

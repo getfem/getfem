@@ -36,6 +36,8 @@
 #ifndef GMM_SUPERLU_INTERFACE_H
 #define GMM_SUPERLU_INTERFACE_H
 
+#include <gmm_kernel.h>
+
 typedef int int_t;
 #include "SuperLU/SRC/Cnames.h"
 #include "SuperLU/SRC/supermatrix.h"
@@ -172,7 +174,8 @@ namespace gmm {
     SuperLU_S::get_perm_c(permc_spec, &SA, &perm_c[n]);
 
     SuperLU_gssv(&SA, &perm_c[n], &perm_r[0], &SL, &SU, &SB, &info, T());
-    if (info != 0) DAL_THROW(failure_error, "SuperLU solve failed: info=" << info);
+    if (info != 0)
+      DAL_THROW(failure_error, "SuperLU solve failed: info=" << info);
     gmm::copy(rhs, X);
     SuperLU_S::Destroy_SuperMatrix_Store(&SB);
     SuperLU_S::Destroy_SuperMatrix_Store(&SA);
@@ -216,7 +219,8 @@ namespace gmm {
     std::vector<R> Rscale(m),Cscale(n); // row scale factors
     std::vector<R> ferr(nrhs), berr(nrhs);
     R recip_pivot_gross, rcond;
-    // perm_c oversized to turn around a bug (?) of superlu with full matrices.
+    // perm_c oversized to turn around a bug (?) of superlu 
+    // with almost full matrices.
     std::vector<int> perm_r(m), perm_c(3*n); 
     SuperLU_S::get_perm_c(permc_spec, &SA, &perm_c[n]);
     
@@ -235,7 +239,8 @@ namespace gmm {
 		  &ferr[0] /* estimated forward error             */,
 		  &berr[0] /* relative backward error             */,
 		  &info, T());
-    if (info != 0) DAL_THROW(failure_error, "SuperLU solve failed: info=" << info);
+    if (info != 0)
+      DAL_THROW(failure_error, "SuperLU solve failed: info=" << info);
     gmm::copy(sol, X);
     _rcond = rcond;
     SuperLU_S::Destroy_SuperMatrix_Store(&SB);

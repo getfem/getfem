@@ -56,6 +56,9 @@
 #ifndef __GMM_SOLVER_BICGSTAB_H
 #define __GMM_SOLVER_BICGSTAB_H
 
+#include <gmm_kernel.h>
+#include <gmm_precond_diagonal.h>
+
 namespace gmm {
 
   /* ******************************************************************** */
@@ -128,7 +131,7 @@ namespace gmm {
 
   template <typename Matrix, typename Vector, typename VectorB,
 	    typename Preconditioner>
-  int bicgstab(const Matrix& A, const Vector& x, const VectorB& b,
+  void bicgstab(const Matrix& A, const Vector& x, const VectorB& b,
 	       const Preconditioner& M, iteration &iter)
   { bicgstab(A, linalg_const_cast(x), b, M, iter); }
   

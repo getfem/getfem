@@ -55,7 +55,7 @@
 #ifndef __GMM_TRI_SOLVE_H
 #define __GMM_TRI_SOLVE_H
 
-#include <gmm_solvers.h>
+#include <gmm_interface.h>
 
 namespace gmm {
 

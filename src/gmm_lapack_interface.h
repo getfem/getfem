@@ -37,6 +37,10 @@
 #ifndef GMM_LAPACK_INTERFACE_H
 #define GMM_LAPACK_INTERFACE_H
 
+#include <gmm_dense_lu.h>
+#include <gmm_dense_qr.h>
+
+
 namespace gmm {
 
   /* ********************************************************************* */

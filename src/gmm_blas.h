@@ -33,6 +33,10 @@
 #ifndef __GMM_BLAS_H
 #define __GMM_BLAS_H
 
+#include <gmm_scaled.h>
+#include <gmm_transposed.h>
+#include <gmm_conjugated.h>
+
 namespace gmm {
 
   /* ******************************************************************** */
@@ -279,8 +283,8 @@ namespace gmm {
 		typename linalg_traits<L>::linalg_type());
   }
 
-  template <typename L> inline void fill_random(L& l, double cfill,
-					     abstract_vector) {
+  template <typename L> inline
+  void fill_random(L& l, double cfill, abstract_vector) {
     gmm::clear(l);
     typedef typename linalg_traits<L>::value_type T;
     size_type ntot = std::min(vect_size(l), size_type(vect_size(l)*cfill) + 1);
@@ -293,108 +297,22 @@ namespace gmm {
     }
   }
 
-  template <typename L> inline void fill_random(L& l, double cfill,
-					     abstract_matrix) {
+  template <typename L> inline
+  void fill_random(L& l, double cfill, abstract_matrix) {
     fill_random(l, cfill, typename principal_orientation_type<typename
 		linalg_traits<L>::sub_orientation>::potype());
   }
 
-  template <typename L> inline void fill_random(L& l, double cfill, row_major) {
+  template <typename L> inline
+  void fill_random(L& l, double cfill, row_major) {
     for (size_type i=0; i < mat_nrows(l); ++i) fill_random(mat_row(l,i),cfill);
   }
 
-  template <typename L> inline void fill_random(L& l, double cfill, col_major) {
+  template <typename L> inline
+  void fill_random(L& l, double cfill, col_major) {
     for (size_type j=0; j < mat_ncols(l); ++j) fill_random(mat_col(l,j),cfill);
   }
 
-
-  /* ******************************************************************** */
-  /*		Write                                   		  */
-  /* ******************************************************************** */
-
-  template <typename T> struct cast_char_type { typedef T return_type; };
-  template <> struct cast_char_type<signed char> { typedef int return_type; };
-  template <> struct cast_char_type<unsigned char>
-  { typedef unsigned int return_type; };
-  template <typename T> inline typename cast_char_type<T>::return_type
-  cast_char(const T &c) { return typename cast_char_type<T>::return_type(c); }
-
-
-  template <typename L> inline void write(std::ostream &o, const L &l)
-  { write(o, l, typename linalg_traits<L>::linalg_type()); }
-
-  template <typename L> void write(std::ostream &o, const L &l,
-				       abstract_vector) {
-    o << "vector(" << vect_size(l) << ") [";
-    write(o, l, typename linalg_traits<L>::storage_type());
-    o << " ]";
-  }
-
-  template <typename L> void write(std::ostream &o, const L &l,
-				       abstract_sparse) {
-    typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
-      ite = vect_const_end(l);
-    for (; it != ite; ++it) 
-      o << " (r" << it.index() << "," << cast_char(*it) << ")";
-  }
-
-  template <typename L> void write(std::ostream &o, const L &l,
-				       abstract_dense) {
-    typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
-      ite = vect_const_end(l);
-    if (it != ite) o << " " << cast_char(*it++);
-    for (; it != ite; ++it) o << ", " << cast_char(*it);
-  }
-
-  template <typename L> void write(std::ostream &o, const L &l,
-				       abstract_skyline) {
-    typedef typename linalg_traits<L>::const_iterator const_iterator;
-    const_iterator it = vect_const_begin(l), ite = vect_const_end(l);
-    o << "<r+" << it.index() << ">";
-    if (it != ite) o << " " << cast_char(*it++);
-    for (; it != ite; ++it) { o << ", " << cast_char(*it); }
-  }
-
-  template <typename L> inline void write(std::ostream &o, const L &l,
-				       abstract_matrix) {
-    write(o, l, typename linalg_traits<L>::sub_orientation());
-  }
-
-
-  template <typename L> void write(std::ostream &o, const L &l,
-				       row_major) {
-    o << "matrix(" << mat_nrows(l) << ", " << mat_ncols(l) << ")" << endl;
-    for (size_type i = 0; i < mat_nrows(l); ++i) {
-      o << "(";
-      write(o, mat_const_row(l, i), typename linalg_traits<L>::storage_type());
-      o << " )\n";
-    }
-  }
-
-  template <typename L> inline
-  void write(std::ostream &o, const L &l, row_and_col) 
-  { write(o, l, row_major()); }
-
-  template <typename L> inline
-  void write(std::ostream &o, const L &l, col_and_row)
-  { write(o, l, row_major()); }
-
-  template <typename L> void write(std::ostream &o, const L &l, col_major) {
-    o << "matrix(" << mat_nrows(l) << ", " << mat_ncols(l) << ")" << endl;
-    for (size_type i = 0; i < mat_nrows(l); ++i) {
-      o << "(";
-      if (is_sparse(l)) { // not optimized ...
-	for (size_type j = 0; j < mat_ncols(l); ++j)
-	  if (l(i,j) != typename linalg_traits<L>::value_type(0)) 
-	    o << " (r" << j << ", " << l(i,j) << ")";
-      }
-      else {
-	if (mat_ncols(l) != 0) o << ' ' << l(i, 0);
-	for (size_type j = 1; j < mat_ncols(l); ++j) o << ", " << l(i, j); 
-      }
-      o << " )\n";
-    }
-  }
 
   /* ******************************************************************** */
   /*		Scalar product                             		  */
@@ -1060,14 +978,18 @@ namespace gmm {
     typedef typename linalg_traits<L2>::iterator l2_iterator;
 
     l1_const_iterator it = vect_const_begin(l1), ite = vect_const_end(l1);
-    l2_iterator it2 = vect_begin(l2), ite2 = vect_end(l2);    
-
-    size_type i = it.index(), j;
-    for (j = 0; j < i; ++j, ++it2) *it2 = T(0);
-    for (; it != ite; ++it, ++it2) *it2 = *it;
-    for (; it2 != ite2; ++it2) *it2 = T(0);
+    if (it == ite)
+      gmm::clear(l2);
+    else {
+      l2_iterator it2 = vect_begin(l2), ite2 = vect_end(l2);
+      
+      size_type i = it.index(), j;
+      for (j = 0; j < i; ++j, ++it2) *it2 = T(0);
+      for (; it != ite; ++it, ++it2) *it2 = *it;
+      for (; it2 != ite2; ++it2) *it2 = T(0);
+    }
   }
-
+    
   template <typename L1, typename L2>
   void copy_vect(const L1& l1, L2& l2, abstract_sparse, abstract_sparse) {
     typename linalg_traits<L1>::const_iterator
@@ -1409,10 +1331,12 @@ namespace gmm {
   void add(const L1& l1, L2& l2,
 	   abstract_skyline, abstract_dense) {
     typename linalg_traits<L1>::const_iterator it1 = vect_const_begin(l1),
-      ite1 = vect_const_end(l1);; 
-    typename linalg_traits<L2>::iterator it2 = vect_begin(l2);
-    it2 += it1.index();
-    for (; it1 != ite1; ++it2, ++it1) *it2 += *it1;
+      ite1 = vect_const_end(l1);
+    if (it1 != ite1) {
+      typename linalg_traits<L2>::iterator it2 = vect_begin(l2);
+      it2 += it1.index();
+      for (; it1 != ite1; ++it2, ++it1) *it2 += *it1;
+    }
   }
 
   

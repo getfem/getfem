@@ -32,6 +32,9 @@
 #ifndef __GMM_INTERFACE_H
 #define __GMM_INTERFACE_H
 
+#include <gmm_blas.h>
+#include <gmm_sub_index.h>
+
 namespace gmm {
 
   /* ********************************************************************* */

@@ -32,6 +32,8 @@
 #ifndef __GMM_TRANSPOSED_H
 #define __GMM_TRANSPOSED_H
 
+#include <gmm_def.h>
+
 namespace gmm {
 
   /* ********************************************************************* */

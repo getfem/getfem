@@ -33,6 +33,7 @@
 #define __GMM_VECTOR_H
 
 #include <map>
+#include <gmm_interface.h>
 
 namespace gmm
 {
@@ -217,7 +218,7 @@ namespace gmm
     static const_iterator end(const this_type &v) { return v.end(); }
     static origin_type* origin(this_type &v) { return &v; }
     static const origin_type* origin(const this_type &v) { return &v; }
-    static void clear(origin_type* o, const iterator &it, const iterator &ite)
+    static void clear(origin_type* o, const iterator &, const iterator &)
     { o->clear(); }
     static void do_clear(this_type &v) { v.clear(); }
     static value_type access(const origin_type *o, const const_iterator &,
@@ -460,7 +461,7 @@ namespace gmm
       { return const_iterator(v.end()); }
     static origin_type* origin(this_type &v) { return &v; }
     static const origin_type* origin(const this_type &v) { return &v; }
-    static void clear(origin_type* o, const iterator &it, const iterator &ite)
+    static void clear(origin_type* o, const iterator &, const iterator &)
     { o->clear(); }
     static void do_clear(this_type &v) { v.clear(); }
     static value_type access(const origin_type *o, const const_iterator &,

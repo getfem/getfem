@@ -32,6 +32,9 @@
 #ifndef __GMM_SUB_VECTOR_H
 #define __GMM_SUB_VECTOR_H
 
+#include <gmm_interface.h>
+#include <gmm_sub_index.h>
+
 namespace gmm {
 
   /* ********************************************************************* */
@@ -418,7 +421,7 @@ namespace gmm {
     }
     static origin_type* origin(this_type &v) { return v.origin; }
     static const origin_type* origin(const this_type &v) { return v.origin; }
-    static void clear(origin_type* o, const iterator &it, const iterator &ite)
+    static void clear(origin_type*, const iterator &it, const iterator &ite)
     { std::fill(it, ite, value_type(0)); }
     static void do_clear(this_type &v) { clear(v.origin, begin(v), end(v)); }
     static value_type access(const origin_type *o, const const_iterator &it,

@@ -57,10 +57,7 @@
  * see P301 of Saad book
 */
 
-#include <gmm_solvers.h>
-#include <gmm_tri_solve.h>
-#include <gmm_interface.h>
-#include <gmm_matrix.h>
+#include <gmm_kernel.h>
 
 namespace gmm {
 

@@ -2,14 +2,15 @@
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Generic Matrix Methods  (gmm)                                */
-/* File    :  gmm_solvers.h : generic solvers.                             */
+/* File    :  gmm_iter_solvers.h : generic iterative solvers               */
+/*                                 and preconditionners.                   */
 /*     									   */
 /* Date : October 13, 2002.                                                */
 /* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 2001  Yves Renard.                                        */
+/* Copyright (C) 2002-2004  Yves Renard.                                   */
 /*                                                                         */
 /* This file is a part of GMM++                                            */
 /*                                                                         */
@@ -30,8 +31,8 @@
 /* *********************************************************************** */
 
 
-#ifndef __GMM_SOLVERS_H
-#define __GMM_SOLVERS_H
+#ifndef __GMM_ITER_SOLVERS_H
+#define __GMM_ITER_SOLVERS_H
 
 #include <gmm_iter.h>
 
@@ -52,7 +53,7 @@ namespace gmm {
    * iterations of dichotomie and regula falsi are applied.
    */
   template <typename FUNC, typename T>
-  T find_root(const FUNC &G, T a = 0.0, T b = a+1.0,
+  T find_root(const FUNC &G, T a = 0.0, T b = 1.0,
 	      double tol = gmm::default_tol(T())) {
     
     T c, Ga = G(a), Gb = G(b), Gc, d;
@@ -103,8 +104,7 @@ namespace gmm {
 #include <gmm_tri_solve.h>
 #include <gmm_solver_gmres.h>
 // #include <gmm_solver_idgmres.h>
-#include <gmm_superlu_interface.h>
 
 
 
-#endif //  __GMM_SOLVERS_H
+#endif //  __GMM_ITER_SOLVERS_H

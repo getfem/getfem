@@ -54,7 +54,8 @@
 #ifndef GMM_QMR_H
 #define GMM_QMR_H
 
-#include <gmm_solvers.h>
+#include <gmm_kernel.h>
+#include <gmm_precond_diagonal.h>
 
 namespace gmm {
 
@@ -88,11 +89,11 @@ namespace gmm {
     gmm::mult(A, gmm::scaled(x, -1.0), b, r);
     gmm::copy(r, v_tld);
 
-    gmm::mult_left(M1, v_tld, y);
+    gmm::left_mult(M1, v_tld, y);
     value_type rho = gmm::vect_norm2(y);
 
     gmm::copy(r, w_tld);
-    gmm::transposed_mult_right(M1, w_tld, z);
+    gmm::transposed_right_mult(M1, w_tld, z);
     value_type xi = gmm::vect_norm2(z);
   
     value_type gamma = 1.0, eta = -1.0, theta = 0.0;
@@ -111,8 +112,8 @@ namespace gmm {
       delta = gmm::vect_sp(z, y);
       if (delta == 0.0) DAL_THROW(failure_error, "QMR failed to converge");
 
-      gmm::mult_right(M1, y, y_tld);		
-      gmm::transposed_mult_left(M1, z, z_tld);
+      gmm::right_mult(M1, y, y_tld);		
+      gmm::transposed_left_mult(M1, z, z_tld);
 
       if (iter.first()) {
 	gmm::copy(y_tld, p);
@@ -131,14 +132,14 @@ namespace gmm {
       if (beta == 0.0) DAL_THROW(failure_error, "QMR failed to converge");
 
       gmm::add(p_tld, gmm::scaled(v, -beta), v_tld);
-      gmm::mult_left(M1, v_tld, y);
+      gmm::left_mult(M1, v_tld, y);
 
       rho_1 = rho;
       rho = gmm::vect_norm2(y);
 
       gmm::mult(gmm::transposed(A), q, w_tld);
       gmm::add(w_tld, gmm::scaled(w, -beta), w_tld);
-      gmm::transposed_mult_right(M1, w_tld, z);
+      gmm::transposed_right_mult(M1, w_tld, z);
 
       xi = gmm::vect_norm2(z);
 

@@ -33,7 +33,7 @@
 #ifndef __GMM_CONDEST_H
 #define __GMM_CONDEST_H
 
-#include "gmm_dense_qr.h"
+#include <gmm_dense_qr.h>
 
 namespace gmm {
 

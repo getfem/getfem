@@ -60,6 +60,10 @@
 #ifndef __GMM_SOLVER_CCG_H
 #define __GMM_SOLVER_CCG_H
 
+#include <gmm_kernel.h>
+#include <gmm_precond_diagonal.h>
+
+
 namespace gmm {
 
   template <typename CMatrix, typename CINVMatrix, typename Matps,

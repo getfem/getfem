@@ -50,7 +50,7 @@ include_HEADERS =                      \
 	getfem_regular_meshes.h        \
 	gmm.h                          \
 	gmm_matrix.h                   \
-	gmm_solvers.h                  \
+	gmm_iter_solvers.h             \
 	gmm_iter.h                     \
 	gmm_inoutput.h                 \
 	gmm_vector.h                   \
@@ -62,6 +62,7 @@ include_HEADERS =                      \
 	gmm_sub_vector.h               \
 	gmm_sub_matrix.h               \
 	gmm_interface.h                \
+	gmm_kernel.h                   \
 	gmm_interface_bgeot.h          \
 	gmm_solver_cg.h                \
 	gmm_solver_constrained_cg.h    \

@@ -33,9 +33,7 @@
 #ifndef GMM_PRECOND_CHOLESKYT_H
 #define GMM_PRECOND_CHOLESKYT_H
 
-#include <gmm_solvers.h>
-#include <gmm_tri_solve.h>
-#include <gmm_interface.h>
+#include <gmm_kernel.h>
 
 namespace gmm {
 

@@ -37,17 +37,10 @@
 #ifndef GMM_DENSE_QR_H
 #define GMM_DENSE_QR_H
 
+#include <gmm_dense_Householder.h>
+
 namespace gmm {
 
-
-  /* ********************************************************************* */
-  /* Default tolerance.                                                    */
-  /* ********************************************************************* */
-  
-  template<typename T> inline double default_tol(T)
-  { int i=sizeof(T)/4; double tol(2); while(i-- > 0) tol*=1E-8; return tol; }
-  template<typename T> inline double default_tol(std::complex<T>)
-  { return default_tol(T()); }
 
   /* ********************************************************************* */
   /* QR factorization using Householder method (complex and real version). */

@@ -2,14 +2,14 @@
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Generic Matrix Methods  (gmm)                                */
-/* File    :  gmm.h : generic algorithms on linear algebra                 */
+/* File    :  gmm_kernel.h : vector and matrices definition + blas         */
 /*     									   */
-/* Date : October 13, 2002.                                                */
+/* Date : November 15, 2003.                                               */
 /* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 2002-2003  Yves Renard.                                   */
+/* Copyright (C) 2002-2004  Yves Renard.                                   */
 /*                                                                         */
 /* This file is a part of GMM++                                            */
 /*                                                                         */
@@ -29,19 +29,17 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef __GMM_H
-#define __GMM_H
+#ifndef __GMM_KERNEL_H
+#define __GMM_KERNEL_H
 
-#include <gmm_kernel.h>
-#include <gmm_dense_lu.h>
-#include <gmm_dense_qr.h>
-
-#include <gmm_iter_solvers.h>
-#include <gmm_condest.h>
-#include <gmm_inoutput.h>
-
-#include <gmm_lapack_interface.h>
-#include <gmm_superlu_interface.h>
+#include <gmm_def.h>
+#include <gmm_blas.h>
+#include <gmm_interface.h>
+#include <gmm_sub_vector.h>
+#include <gmm_sub_matrix.h>
+#include <gmm_vector.h>
+#include <gmm_matrix.h>
+#include <gmm_tri_solve.h>
 
 
-#endif //  __GMM_H
+#endif //  __GMM_KERNEL_H

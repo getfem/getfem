@@ -60,9 +60,7 @@
 //        object to use in iterative methods. 
 //
 
-#include <gmm_solvers.h>
-#include <gmm_tri_solve.h>
-#include <gmm_interface.h>
+#include <gmm_kernel.h>
 
 namespace gmm {
 

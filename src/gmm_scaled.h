@@ -32,6 +32,8 @@
 #ifndef __GMM_SCALED_H
 #define __GMM_SCALED_H
 
+#include <gmm_def.h>
+
 namespace gmm {
 
   /* ********************************************************************* */

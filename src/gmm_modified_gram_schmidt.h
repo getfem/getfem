@@ -57,7 +57,7 @@
 #ifndef GMM_MODIFIED_GRAM_SCHMIDT_H
 #define GMM_MODIFIED_GRAM_SCHMIDT_H
 
-#include <gmm_solvers.h>
+#include <gmm_kernel.h>
 
 namespace gmm {
 

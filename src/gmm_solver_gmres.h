@@ -32,7 +32,8 @@
 #ifndef GMM_KRYLOV_GMRES_H
 #define GMM_KRYLOV_GMRES_H
 
-#include <gmm_solvers.h>
+#include <gmm_kernel.h>
+#include <gmm_precond_diagonal.h>
 
 namespace gmm {
 

@@ -63,6 +63,8 @@
 #ifndef __GMM_ITER_H
 #define __GMM_ITER_H
 
+#include <gmm_kernel.h>
+
 namespace gmm
 {
 

@@ -55,6 +55,9 @@
 #ifndef GMM_DENSE_LU_H
 #define GMM_DENSE_LU_H
 
+#include <gmm_dense_Householder.h>
+#include <gmm_opt.h>
+
 namespace gmm {
 
 

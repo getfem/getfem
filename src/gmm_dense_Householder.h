@@ -33,7 +33,7 @@
 #ifndef GMM_DENSE_HOUSEHOLDER_H
 #define GMM_DENSE_HOUSEHOLDER_H
 
-#include "gmm_solvers.h"
+#include <gmm_kernel.h>
 
 namespace gmm {
 

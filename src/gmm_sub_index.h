@@ -32,6 +32,8 @@
 #ifndef __GMM_SUB_INDEX_H
 #define __GMM_SUB_INDEX_H
 
+#include <gmm_def.h>
+
 namespace gmm {
 
   /* ******************************************************************** */
