@@ -202,8 +202,8 @@ This is a template function, with \cpp{pgt} of type \cpp{bgeot::pgeometric\_tran
 then adding the element is done by\\[0.5cm]
 \cpp{mesh.add\_convex(bgeot::simplex\_trans(2,1), ind.begin()); }\\[0.5cm]
 \index{BGEOT!bgeot::simplex\_trans(N,1)}
-where \cpp{bgeot::simplex\_trans(N,1);} denotes the usual linear geometric transformation for simplexes of dimension N.\\[0.5cm]
-For simplexes, a more specialized function exists, which is\\[0.5cm]
+where \cpp{bgeot::simplex\_trans(N,1);} denotes the usual linear geometric transformation for simplices of dimension N.\\[0.5cm]
+For simplices, a more specialized function exists, which is\\[0.5cm]
 \cpp{mesh.add\_simplex(2, ind.begin()); }\\[0.5cm]
 
 It is also possible to give directly the list of points with the function\\[0.5cm]
@@ -221,7 +221,7 @@ Still add a triangle to the mesh.
 It is possible to use also \\[0.5cm]
 \cpp{mesh.add\_simplex\_by\_points(2, pts.begin()); } \\[0.5cm]
 
-For other elements than simplexes, it is still possible to use \cpp{mesh.add\_convex\_by\_points} or $\ $$\ $ \cpp{mesh.add\_convex} with the appropriate geometric transformation. \\[0.5cm]
+For other elements than simplices, it is still possible to use \cpp{mesh.add\_convex\_by\_points} or $\ $$\ $ \cpp{mesh.add\_convex} with the appropriate geometric transformation. \\[0.5cm]
 \index{BGEOT!bgeot::parallelepiped\_trans(N, 1)}
 \cpp{bgeot::parallelepiped\_trans(N, 1) }
 describes the usual transformation for parallelepipeds of dimension \cpp{N} (quadrilateron for \cpp{N=2}, hexahedron for \cpp{N=3}, ...) \\[0.5cm]
@@ -236,7 +236,7 @@ Specialized functions exist also: \\[0.5cm]
   mesh.add\_prism\_by\_points(N, itp);
 \end{cppcode}
 
-The order of the points in the array of point is not important for simplexes. For other element, it is important to respect the order shown in figure \ref{fig:elem}.
+The order of the points in the array of point is not important for simplices. For other element, it is important to respect the order shown in figure \ref{fig:elem}.
 
 \begin{figure}[htb]
   \begin{center}
@@ -255,14 +255,14 @@ where \cpp{i} is the index of the element.
 
 \subsection{Simple structured meshes}
 
-For parallelepiped domains, it is possible to obtain structured meshes with simplexes, parallelepipeds or prisms elements from three functions defined in \cpp{getfem\_regular\_meshes.h}. \\[0.5cm]
+For parallelepiped domains, it is possible to obtain structured meshes with simplices, parallelepipeds or prisms elements from three functions defined in \cpp{getfem\_regular\_meshes.h}. \\[0.5cm]
 \index{GETFEM!getfem::parallelepiped\_regular\_mesh}
 \begin{cppcode}
   getfem::parallelepiped\_regular\_simplex\_mesh(mesh, N, org, ivect, iref); \\
   getfem::parallelepiped\_regular\_prism\_mesh(mesh, N, org, ivect, iref); \\
   getfem::parallelepiped\_regular\_mesh(mesh, N, org, ivect, iref);
 \end{cppcode}
-where \cpp{mesh} is a mesh variable in which the structured mesh will be built, \cpp{N} is the dimension (limited to 4 for simplexes, 5 for prisms, unlimited for parallelepipeds), \cpp{org} is of type \cpp{bgeot::base\_node} and represents the origin of the mesh, \cpp{ivect} is an iterator on an array of \cpp{N} vectors to build the parallelepiped domain, \cpp{iref} is an iterator on an array of \cpp{N} integers representing the number of division on each direction. \\[0.5cm]
+where \cpp{mesh} is a mesh variable in which the structured mesh will be built, \cpp{N} is the dimension (limited to 4 for simplices, 5 for prisms, unlimited for parallelepipeds), \cpp{org} is of type \cpp{bgeot::base\_node} and represents the origin of the mesh, \cpp{ivect} is an iterator on an array of \cpp{N} vectors to build the parallelepiped domain, \cpp{iref} is an iterator on an array of \cpp{N} integers representing the number of division on each direction. \\[0.5cm]
 For instance, to build a mesh with tetrahedrons for a unit cube with $10\times10\times10$ cells one can write\\[0.5cm]
 \begin{cppcode}
   getfem::getfem\_mesh mesh; \\
@@ -989,6 +989,37 @@ If there is more than one data array, output array  or output sparse matrix, one
 Basically, It is sufficient to describe an element on the reference element, i.e. to describe each base function of each degree of freedom. Vectorial elements and non-equivalent elements are partially supported ... (supported by the finite element kernel but not by assembling procedures).\\[0.5cm]
 To be done ... please read \cite{BASCOMP} for more details and see the file \filename{getfem\_fem.C} for practical implementation.
 
+\section{Incorporate new approximated integration methods in \gf }
+
+A perl script automatically incorporates new cubature methods into \gf from a description file. You can see in the directory {\tt cubature} such description files (with extension {\tt.IM}) . For instance for {\tt IM_TETRAHEDRON(5)} the following file describes the method:
+
+\begin{alltt}
+NAME = IM_TETRAHEDRON(5)
+N = 3
+GEOTRANS = GT_PK(3,1)
+NBPT = 4
+0, 0.25, 0.25, 0.25, 0.008818342151675485
+1, 0.31979362782962991, 0.31979362782962991, 0.31979362782962991, 0.011511367871045398 
+1, 0.091971078052723033, 0.091971078052723033, 0.091971078052723033, 0.01198951396316977
+1, 0.056350832689629156, 0.056350832689629156, 0.44364916731037084, 0.008818342151675485
+NBF = 4
+IM_TRIANGLE(5)
+IM_TRIANGLE(5)
+IM_TRIANGLE(5)
+IM_TRIANGLE(5)
+\end{alltt}
+
+where {\tt NAME} is the name of the method in \gf (constant integer parameter are allowed), {\tt N} is the dimension, {\tt GEOTRANS} describes a valid geometric transformation of \gf. This geometric transformation just defines the reference element on which the integration method is described. {\tt NBPT} is the number of integration node definitions. Integration node definitions include a symmetry definition such that the total number of integration nodes would be greater than {\tt NBPT}.
+
+Composition of the integration node definition :
+\begin{itemize}
+  \item an integer : 0 = no symmetry, 1 = full symmetric (x6 for a triangle, x4 for a quadrangle, x24 for a tetrahedron ...),
+  \item the {\tt N} coordinates of the integration node,
+  \item the load.
+\end{itemize}
+
+{\tt NBF} is the number of faces of the reference element (should correpond to {\tt GEOTRANS}). Then follows an already existing integration method for each face (each on a line). This is necessary to make integrations on boundaries.
+
 \section{Finite element methods defined on two different meshes}
 
 A special finite element method is defined in \filename{getfem\_fem.h} which is not a real finite element method but allows to interpolate a finite element method defined on another mesh. When an assembling procedure has different finite element methods as arguments, the mesh on which those methods are defined should be the same. If you need to assemble a matrix with finite element methods defined on different meshes, you may use the finite element methods\\[0.5cm]
@@ -1076,13 +1107,13 @@ The program \filename{laplacian} is provided in the directory \filename{tests} o
 The file \filename{laplacian.param} is the parameter file. You can edit it and test various situation. The following parameter can be changed\\[0.5cm]
 \begin{center} \begin{tabular}{|m{0.2\linewidth}|m{0.75\linewidth}|} \hline
 
-  {\tt N} & Dimension of the domain, $1 \leq {\tt N} \leq 255$ for parellepipedic elements, mesh generation limited to ${\tt N} \leq 4$ for simplexes and ${\tt N} \leq 5$ for prisms.  \\ \hline
+  {\tt N} & Dimension of the domain, $1 \leq {\tt N} \leq 255$ for parellepipedic elements, mesh generation limited to ${\tt N} \leq 4$ for simplices and ${\tt N} \leq 5$ for prisms.  \\ \hline
 
   {\tt LX, LY} and {\tt LZ} &  Sizes of the domain. \\ \hline
 
   {\tt FT} &  parameter for the exact solution. \\ \hline
 
-  {\tt MESH\_TYPE} &  {\tt MESH\_TYPE = 0} for a mesh with simplexes,   {\tt MESH\_TYPE = 1} for a mesh with parallelepipeds elements or {\tt MESH\_TYPE = 2} for a mesh with prisms. \\ \hline
+  {\tt MESH\_TYPE} &  {\tt MESH\_TYPE = 0} for a mesh with simplices,   {\tt MESH\_TYPE = 1} for a mesh with parallelepipeds elements or {\tt MESH\_TYPE = 2} for a mesh with prisms. \\ \hline
 
   {\tt INCLINE} &  Incline of the mesh.\\ \hline
 

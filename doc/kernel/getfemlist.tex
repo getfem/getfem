@@ -133,7 +133,7 @@ second derivative type & $\Frac{\partial^2}{\partial x_i\partial x_j}\phi(a_i)$ 
 % dessin des ddl avec code
 % nb de ddl, degre, equivalence via la transformation g{\'e}ometrique, vectoriel ou non, analyse du raccord
 
-\subsection{Classical ``$P_K$'' Lagrange elements on simplexes}
+\subsection{Classical ``$P_K$'' Lagrange elements on simplices}
 
 It is possible to define a classical ``$P_K$'' Lagrange element of arbitrary dimension and arbitrary degree. This element has only degrees of freedom which corresponds to the value of the function on a node. The grid of node is the so-called Lagrange grid. Figures \ref{fig:segmentpk}, \ref{fig:trianglepk} and \ref{fig:tetrahedronpk} show examples of dimension 1, 2 and 3.
 
@@ -212,7 +212,7 @@ Even thought Lagrange elements are defined for arbitrary degrees, to choose a hi
 
 \subsection{Classical Lagrange elements on other geometries}
 
-Classical Lagrange elements on parallelepipeds or prisms are obtained as tensorial product of Lagrange elements on simplexes. When two element are defined, one on a dimension $P_1$ and the other in dimension $P_2$, one obtains the base functions of the tensorial product (on the reference element) as
+Classical Lagrange elements on parallelepipeds or prisms are obtained as tensorial product of Lagrange elements on simplices. When two element are defined, one on a dimension $P_1$ and the other in dimension $P_2$, one obtains the base functions of the tensorial product (on the reference element) as
 $$ \bar{\phi}_{ij}(x,y) = \bar{\phi}^1_i(x) \bar{\phi}^2_j(y), \ \ x \in \Reel^{P_1}, y \in  \Reel^{P_2}, $$
 where $\bar{\phi}^1_i$ and $\bar{\phi}^2_i$ are respectively the base functions of the first and second element.
 
@@ -301,7 +301,7 @@ Among the advantages, the condition number of  rigidity matrices can be greatly 
 
 \begin{center}
 \begin{tabular}{|m{16.109cm}|} \hline 
-{\bf $P_{K}$ Classical Lagrange element on simplexes but with a hierarchical basis with respect to the degree}\\
+{\bf $P_{K}$ Classical Lagrange element on simplices but with a hierarchical basis with respect to the degree}\\
 {\tt "FEM\_PK\_HIERARCHICAL(P,K)"} 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
@@ -698,7 +698,7 @@ Even though a description of exact integration method exists on parallelepipeds 
 \subsection{Newton cotes Integration methods}
 
 use {\tt "IM\_NC(N,K)"}, {\tt "IM\_NC\_PARALLELEPIPED(N,K)"}
-and {\tt "IM\_NC\_PRISM(N,K)"} to have the Newton cotes integration of order {\tt K} respectively on simplexes, parallelepipeds and prisms.
+and {\tt "IM\_NC\_PRISM(N,K)"} to have the Newton cotes integration of order {\tt K} respectively on simplices, parallelepipeds and prisms.
 
 
 to be described ...
