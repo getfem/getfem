@@ -48,19 +48,19 @@ namespace gmm {
     typedef typename linalg_traits<this_type>::reference reference;
     typedef typename linalg_traits<M>::access_type access_type;
 
-    const SUBI1 *psi1;
-    const SUBI2 *psi2;
+    const SUBI1 si1;
+    const SUBI2 si2;
     iterator _begin;
     const void *origin;
     
     reference operator()(size_type i, size_type j) const
-    { return access_type()(_begin + psi1->index(i), psi2->index(j)); }
+    { return access_type()(_begin + si1.index(i), si2.index(j)); }
    
-    size_type nrows(void) const { return psi1->size(); }
-    size_type ncols(void) const { return psi2->size(); }
+    size_type nrows(void) const { return si1.size(); }
+    size_type ncols(void) const { return si2.size(); }
     
-    gen_sub_row_matrix(ref_M m, const SUBI1 &si1, const SUBI2 &si2)
-      : psi1(&si1), psi2(&si2), _begin(mat_row_begin(m)),
+    gen_sub_row_matrix(ref_M m, const SUBI1 &s1, const SUBI2 &s2)
+      : si1(s1), si2(s2), _begin(mat_row_begin(m)),
 	origin(linalg_origin(m)) {}
     gen_sub_row_matrix() {}
   };
@@ -74,7 +74,7 @@ namespace gmm {
     typedef typename linalg_traits<this_type>::row_iterator iterator;
     
     reference operator()(const iterator &itrow, size_type i)
-    { return access_type()(*itrow, itrow.psi2->index(i)); }
+    { return access_type()(*itrow, itrow.si2.index(i)); }
   };
 
   template <class PT, class SUBI1, class SUBI2>
@@ -93,8 +93,8 @@ namespace gmm {
     typedef gen_sub_row_matrix_iterator<PT, SUBI1, SUBI2> iterator;
 
     ITER it;
-    const SUBI1 *psi1;
-    const SUBI2 *psi2;
+    const SUBI1 si1;
+    const SUBI2 si2;
     size_type ii;
     
     iterator operator ++(int) { iterator tmp = *this; ii++; return tmp; }
@@ -109,8 +109,8 @@ namespace gmm {
     { iterator itt = *this; return (itt -= i); }
     difference_type operator -(const iterator &i) const { return ii - i.ii; }
 
-    ITER operator *() const { return it + psi1->index(ii); }
-    ITER operator [](int i) { return it + psi1->index(ii+i); }
+    ITER operator *() const { return it + si1.index(ii); }
+    ITER operator [](int i) { return it + si1.index(ii+i); }
 
     bool operator ==(const iterator &i) const { return (ii == i.ii); }
     bool operator !=(const iterator &i) const { return !(i == *this); }
@@ -119,10 +119,10 @@ namespace gmm {
     gen_sub_row_matrix_iterator(void) {}
     gen_sub_row_matrix_iterator(const 
 	     gen_sub_row_matrix_iterator<MPT, SUBI1, SUBI2> &itm)
-      : it(itm.it), psi1(itm.psi1), psi2(itm.psi2), ii(itm.ii) {}
-    gen_sub_row_matrix_iterator(const ITER &iter, const SUBI1 &si1,
-				const SUBI2 &si2, size_type i)
-      : it(iter), psi1(&si1), psi2(&si2), ii(i) { }
+      : it(itm.it), si1(itm.si1), si2(itm.si2), ii(itm.ii) {}
+    gen_sub_row_matrix_iterator(const ITER &iter, const SUBI1 &s1,
+				const SUBI2 &s2, size_type i)
+      : it(iter), si1(s1), si2(s2), ii(i) { }
     
   };
 
@@ -154,17 +154,17 @@ namespace gmm {
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static size_type ncols(const this_type &m) { return m.ncols(); }
     static const_sub_row_type row(const const_row_iterator &it)
-    { return const_sub_row_type(linalg_traits<M>::row(*it), *(it.psi2)); }
+    { return const_sub_row_type(linalg_traits<M>::row(*it), it.si2); }
     static sub_row_type row(const row_iterator &it)
-    { return sub_row_type(linalg_traits<M>::row(*it), *(it.psi2)); }
+    { return sub_row_type(linalg_traits<M>::row(*it), it.si2); }
     static const_row_iterator row_begin(const this_type &m)
-    { return const_row_iterator(m._begin, *(m.psi1), *(m.psi2), 0); }
+    { return const_row_iterator(m._begin, m.si1, m.si2, 0); }
     static row_iterator row_begin(this_type &m)
-    { return row_iterator(m._begin, *(m.psi1), *(m.psi2), 0); }
+    { return row_iterator(m._begin, m.si1, m.si2, 0); }
     static const_row_iterator row_end(const this_type &m)
-    { return const_row_iterator(m._begin, *(m.psi1), *(m.psi2),  m.nrows()); }
+    { return const_row_iterator(m._begin, m.si1, m.si2,  m.nrows()); }
     static row_iterator row_end(this_type &m)
-    { return row_iterator(m._begin, *(m.psi1), *(m.psi2), m.nrows()); }    
+    { return row_iterator(m._begin, m.si1, m.si2, m.nrows()); }    
     static const void* origin(const this_type &m) { return m.origin; }
     static void do_clear(this_type &m) {
       row_iterator it = mat_row_begin(m), ite = mat_row_end(m);
@@ -195,20 +195,20 @@ namespace gmm {
     typedef typename linalg_traits<this_type>::reference reference;
     typedef typename linalg_traits<M>::access_type access_type;
 
-    const SUBI1 *psi1;
-    const SUBI2 *psi2;
+    const SUBI1 si1;
+    const SUBI2 si2;
     iterator _begin;
     const void *origin;
     
     reference operator()(size_type i, size_type j) const
-    { // cout << "to(" << psi1->index(i) << "," << psi2->index(j) << ")";
-    return access_type()(_begin + psi2->index(j), psi1->index(i)); }
+    { // cout << "to(" << si1.index(i) << "," << si2.index(j) << ")";
+    return access_type()(_begin + si2.index(j), si1.index(i)); }
 
-    size_type nrows(void) const { return psi1->size(); }
-    size_type ncols(void) const { return psi2->size(); }
+    size_type nrows(void) const { return si1.size(); }
+    size_type ncols(void) const { return si2.size(); }
     
-    gen_sub_col_matrix(ref_M m, const SUBI1 &si1, const SUBI2 &si2)
-      : psi1(&si1), psi2(&si2), _begin(mat_col_begin(m)),
+    gen_sub_col_matrix(ref_M m, const SUBI1 &s1, const SUBI2 &s2)
+      : si1(s1), si2(s2), _begin(mat_col_begin(m)),
         origin(linalg_origin(m)) {}
     gen_sub_col_matrix() {}
   };
@@ -222,7 +222,7 @@ namespace gmm {
     typedef typename linalg_traits<this_type>::col_iterator iterator;
     
     reference operator()(const iterator &itcol, size_type i)
-    { return access_type()(*itcol, itcol.psi1->index(i)); }
+    { return access_type()(*itcol, itcol.si1.index(i)); }
   };
 
   template <class PT, class SUBI1, class SUBI2>
@@ -241,8 +241,8 @@ namespace gmm {
     typedef gen_sub_col_matrix_iterator<PT, SUBI1, SUBI2> iterator;
 
     ITER it;
-    const SUBI1 *psi1;
-    const SUBI2 *psi2;
+    const SUBI1 si1;
+    const SUBI2 si2;
     size_type ii;
     
     iterator operator ++(int) { iterator tmp = *this; ii++; return tmp; }
@@ -257,8 +257,8 @@ namespace gmm {
     { iterator itt = *this; return (itt -= i); }
     difference_type operator -(const iterator &i) const { return ii - i.ii; }
 
-    ITER operator *() const { return it + psi2->index(ii); }
-    ITER operator [](int i) { return it + psi2->index(ii+i); }
+    ITER operator *() const { return it + si2.index(ii); }
+    ITER operator [](int i) { return it + si2.index(ii+i); }
 
     bool operator ==(const iterator &i) const { return (ii == i.ii); }
     bool operator !=(const iterator &i) const { return !(i == *this); }
@@ -267,10 +267,10 @@ namespace gmm {
     gen_sub_col_matrix_iterator(void) {}
     gen_sub_col_matrix_iterator(const 
 	gen_sub_col_matrix_iterator<MPT, SUBI1, SUBI2> &itm)
-      : it(itm.it), psi1(itm.psi1), psi2(itm.psi2), ii(itm.ii) {}
-    gen_sub_col_matrix_iterator(const ITER &iter, const SUBI1 &si1,
-				const SUBI2 &si2, size_type i)
-      : it(iter), psi1(&si1), psi2(&si2), ii(i) { }
+      : it(itm.it), si1(itm.si1), si2(itm.si2), ii(itm.ii) {}
+    gen_sub_col_matrix_iterator(const ITER &iter, const SUBI1 &s1,
+				const SUBI2 &s2, size_type i)
+      : it(iter), si1(s1), si2(s2), ii(i) { }
   };
 
   template <class PT, class SUBI1, class SUBI2>
@@ -301,17 +301,17 @@ namespace gmm {
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static size_type ncols(const this_type &m) { return m.ncols(); }
     static const_sub_col_type col(const const_col_iterator &it)
-    { return const_sub_col_type(linalg_traits<M>::col(*it), *(it.psi1)); }
+    { return const_sub_col_type(linalg_traits<M>::col(*it), it.si1); }
     static sub_col_type col(const col_iterator &it)
-    { return sub_col_type(linalg_traits<M>::col(*it), *(it.psi1)); }
+    { return sub_col_type(linalg_traits<M>::col(*it), it.si1); }
     static const_col_iterator col_begin(const this_type &m)
-    { return const_col_iterator(m._begin, *(m.psi1), *(m.psi2), 0); }
+    { return const_col_iterator(m._begin, m.si1, m.si2, 0); }
     static col_iterator col_begin(this_type &m)
-    { return col_iterator(m._begin, *(m.psi1), *(m.psi2), 0); }
+    { return col_iterator(m._begin, m.si1, m.si2, 0); }
     static const_col_iterator col_end(const this_type &m)
-    { return const_col_iterator(m._begin, *(m.psi1), *(m.psi2),  m.ncols()); }
+    { return const_col_iterator(m._begin, m.si1, m.si2,  m.ncols()); }
     static col_iterator col_end(this_type &m)
-    { return col_iterator(m._begin, *(m.psi1), *(m.psi2), m.ncols()); }    
+    { return col_iterator(m._begin, m.si1, m.si2, m.ncols()); }    
     static const void* origin(const this_type &m) { return m.origin; }
     static void do_clear(this_type &m) {
       col_iterator it = mat_col_begin(m), ite = mat_col_end(m);

@@ -283,12 +283,12 @@ namespace gmm {
     template <class V> tab_ref_index_ref_with_origin(const V &v,
 						     const sub_index &si) :
       dal::tab_ref_index_ref<IT, ITINDEX>(vect_begin(v),
-					  si.ind.begin(), si.ind.end()),
+					  si.begin(), si.end()),
                                           origin(linalg_origin(v)) {}
     template <class V> tab_ref_index_ref_with_origin(V &v,
 						     const sub_index &si) :
       dal::tab_ref_index_ref<IT, ITINDEX>(vect_begin(v),
-					  si.ind.begin(), si.ind.end()),
+					  si.begin(), si.end()),
                                           origin(linalg_origin(v)) {}
   };
 
@@ -843,7 +843,7 @@ namespace gmm {
     typedef typename linalg_traits<this_type>::row_iterator iterator;
     
     reference operator()(const iterator &itrow, size_type i)
-    { return linalg_traits<this_type>().row(itrow)[i]; }
+    { return linalg_traits<this_type>::row(itrow)[i]; }
   };
   
   template <class PT1, class PT2, class PT3, int shift>

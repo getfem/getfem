@@ -42,7 +42,7 @@ namespace gmm {
   struct sparse_sub_vector_iterator {
 
     IT itb, itbe;
-    const SUBI *psi;
+    SUBI si;
 
     typedef std::iterator_traits<IT>                traits_type;
     typedef typename traits_type::value_type        value_type;
@@ -53,7 +53,7 @@ namespace gmm {
     typedef size_t                                  size_type;
     typedef sparse_sub_vector_iterator<IT, MIT, SUBI>    iterator;
 
-    size_type index(void) const { return psi->rindex(itb.index()); }
+    size_type index(void) const { return si.rindex(itb.index()); }
     void forward(void);
     iterator &operator ++()
     { ++itb; forward(); return *this; }
@@ -64,10 +64,10 @@ namespace gmm {
     bool operator !=(const iterator &i) const { return !(i == *this); }
 
     sparse_sub_vector_iterator(void) {}
-    sparse_sub_vector_iterator(const IT &it, const IT &ite,const SUBI &si)
-      : itb(it), itbe(ite), psi(&si) { forward(); }
+    sparse_sub_vector_iterator(const IT &it, const IT &ite, const SUBI &s)
+      : itb(it), itbe(ite), si(s) { forward(); }
     sparse_sub_vector_iterator(const sparse_sub_vector_iterator<MIT, MIT,
-	 SUBI> &it) : itb(it.itb), itbe(it.itbe), psi(it.psi) {}
+	 SUBI> &it) : itb(it.itb), itbe(it.itbe), si(it.si) {}
   };
   
   template <class IT, class MIT, class SUBI>
@@ -84,17 +84,17 @@ namespace gmm {
 
     iterator _begin, _end;
     const void *origin;
-    const SUBI *psi;
+    const SUBI si;
 
-    size_type size(void) const { return psi->size(); }
+    size_type size(void) const { return si.size(); }
    
     reference operator[](size_type i) const
-    { return access_type()(origin, _begin, _end, psi->index(i)); }
+    { return access_type()(origin, _begin, _end, si.index(i)); }
 
-    sparse_sub_vector(V &v, const SUBI &si) : _begin(vect_begin(v)),
-       _end(vect_end(v)), origin(linalg_origin(v)), psi(&si) {}
-    sparse_sub_vector(const V &v, const SUBI &si) : _begin(vect_begin(v)),
-       _end(vect_end(v)), origin(linalg_origin(v)), psi(&si) {}
+    sparse_sub_vector(V &v, const SUBI &s) : _begin(vect_begin(v)),
+       _end(vect_end(v)), origin(linalg_origin(v)), si(s) {}
+    sparse_sub_vector(const V &v, const SUBI &s) : _begin(vect_begin(v)),
+       _end(vect_end(v)), origin(linalg_origin(v)), si(s) {}
     sparse_sub_vector() {}
   };
 
@@ -109,11 +109,11 @@ namespace gmm {
     
     reference operator()(const void *o, const iterator &it,
 			 const iterator &ite, size_type i)
-    { return access_type()(o, it.itb, ite.itb, it.psi->index(i)); }
+    { return access_type()(o, it.itb, ite.itb, it.si.index(i)); }
     
     value_type operator()(const void *o, const const_iterator &it,
 			 const const_iterator &ite, size_type i)
-    { return access_type()(o, it.itb, ite.itb, it.psi->index(i)); }
+    { return access_type()(o, it.itb, ite.itb, it.si.index(i)); }
   };
 
   template <class PT, class SUBI> struct sparse_sub_vector_clear {
@@ -156,13 +156,13 @@ namespace gmm {
     typedef sparse_sub_vector_clear<PT, SUBI> clear_type;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v)
-    { return iterator(v._begin, v._end, *(v.psi)); }
+    { return iterator(v._begin, v._end, v.si); }
     static const_iterator begin(const this_type &v)
-    { return const_iterator(v._begin, v._end, *(v.psi)); }
+    { return const_iterator(v._begin, v._end, v.si); }
     static iterator end(this_type &v)
-    { return iterator(v._end, v._end, *(v.psi)); }
+    { return iterator(v._end, v._end, v.si); }
     static const_iterator end(const this_type &v)
-    { return const_iterator(v._end, v._end, *(v.psi)); }
+    { return const_iterator(v._end, v._end, v.si); }
     static const void* origin(const this_type &v) { return v.origin; }
     static void do_clear(this_type &v) { clear_type()(v.origin, begin(v), end(v)); }
   };

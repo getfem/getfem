@@ -314,7 +314,6 @@ namespace gmm {
 		      abstract_plain) {
     if (vect_size(v1) != mat_ncols(ps) || vect_size(v2) != mat_nrows(ps))
       DAL_THROW(dimension_error,"dimensions mismatch");
-    size_type nr = mat_nrows(ps);
     typename linalg_traits<V2>::const_iterator
       it = vect_begin(v2), ite = vect_end(v2);
     typename linalg_traits<V1>::value_type res(0);

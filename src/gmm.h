@@ -33,6 +33,7 @@
 #define __GMM_H
 
 #include <gmm_def.h>
+#include <gmm_sub_index.h>
 #include <gmm_interface.h>
 #include <gmm_scaled.h>
 #include <gmm_transposed.h>

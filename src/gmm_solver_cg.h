@@ -101,12 +101,12 @@ namespace gmm {
 	rho_1 = rho;
 	rho = vect_sp(PS, r, z);
 	
-	if (++iter >= itemax) return 1;
+	if (++iter >= itemax) return -1;
 	if (noisy > 0)  cout << "iter " << iter << " residu "
 			     << sqrt(dal::abs(rho)) / norm_b << endl;
       }
     }
-    return 0;
+    return iter;
   }
 
   template <class Matrix, class Matps, class Precond, 

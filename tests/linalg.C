@@ -145,7 +145,7 @@ int main(void)
     ind1[5] = 2; ind1[6] = 8; ind1[7] = 6; ind1[8] = 12; ind1[9] = 16; 
     ind2[0] = 0; ind2[1] = 2; ind2[2] = 5; ind2[3] = 17; ind2[4] = 24; 
     ind2[5] = 1; ind2[6] = 3; ind2[7] = 6; ind2[8] = 10; ind2[9] = 12; 
-    gmm::sub_index sind1(ind1, 50), sind2(ind2, 50);
+    gmm::sub_index sind1(ind1), sind2(ind2);
 
     bgeot::fsmatrix<double, 38> m6;
     gmm::clear(m6);
