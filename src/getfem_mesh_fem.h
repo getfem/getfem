@@ -265,11 +265,9 @@ namespace getfem
 	(dof_structure.ind_points_of_face_of_convex(cv, f),
 	 Qdim /fem_of_element(cv)->target_dim());
     }
-
-    bgeot::ref_mesh_point_ind_ct
-    ind_dof_of_element_old(size_type ic) const {
-      if (!dof_enumeration_made) enumerate_dof();
-      return dof_structure.ind_points_of_convex(ic);
+    size_type nb_dof_of_face_of_element(size_type cv, short_type f) const {
+      pfem pf = f_elems[cv]->pf;
+      return dof_structure.structure_of_convex(cv)->nb_points_of_face(f) * Qdim / pf->target_dim();
     }
 
     /** Gives the number of  degrees of freedom of the element
