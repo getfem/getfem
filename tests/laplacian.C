@@ -36,7 +36,7 @@ using bgeot::scalar_type;
 using bgeot::size_type;
 using bgeot::dim_type;
 
-typedef gmm::wsvector<scalar_type> sparse_vector_type;
+typedef gmm::rsvector<scalar_type> sparse_vector_type;
 typedef gmm::row_matrix<sparse_vector_type> sparse_matrix_type;
 typedef gmm::col_matrix<sparse_vector_type> col_sparse_matrix_type;
 typedef std::vector<scalar_type> linalg_vector;
@@ -429,13 +429,23 @@ void lap_pb::assemble(void)
 }
 
 void lap_pb::solve(void) {
+
+  cout << "Compute preconditionner\n";
+  double time = ftool::uclock_sec();
   gmm::iteration iter(residu, 1, 40000);
   gmm::identity_matrix P;
   // gmm::diagonal_precond<sparse_matrix_type> P(SM);
+  // gmm::mr_approx_inverse_precond<sparse_matrix_type> P(SM, 10, 10E-17);
   // gmm::cholesky_precond<sparse_matrix_type> P(SM);
   // gmm::ilu_precond<sparse_matrix_type> P(SM);
-  // gmm::mr_approx_inverse_precond<sparse_matrix_type> P(SM, 10, 10E-17);
+  // gmm::ilut_precond<sparse_matrix_type> P(SM, 5, 1E-6);
+  // gmm::choleskyt_precond<sparse_matrix_type> P(SM, 5, 1E-6);
 
+  cout << "Time to compute preconditionner : "
+       << ftool::uclock_sec() - time << " seconds\n";
+
+  cout << "Solve\n";
+  // gmm::gmres(SM, U, B, P, 50, iter);
   gmm::cg(SM, U, B, P, iter);
 
   if (gen_dirichlet) {
@@ -465,8 +475,6 @@ int main(int argc, char *argv[])
     cout << "initialisation ...\n";
     p.PARAM.read_command_line(argc, argv);
     p.init();
-    cout << "Initialisation terminee en "
-	 << ftool::uclock_sec() - exectime << " secondes\n";
     
     total_time += ftool::uclock_sec() - exectime;
     
@@ -484,13 +492,11 @@ int main(int argc, char *argv[])
     
     total_time += ftool::uclock_sec() - exectime;
     
-    //   cout << "Stifness matrix\n";
-    //   gmm::write(p.SM, cout);
+    //   cout << "Stifness matrix\n" << p.SM << endl;
     
-    cout << "Solving the system\n";
     exectime = ftool::uclock_sec();
     p.solve();
-
+    cout << "solve time : " << ftool::uclock_sec() - exectime << "seconds" << endl;
     if (p.failed) { cerr << "Solve procedure has failed\n"; }
     
     total_time += ftool::uclock_sec() - exectime;
@@ -517,8 +523,6 @@ int main(int argc, char *argv[])
 	 << "Linfty error = " << linfnorm << endl;
      
     getfem::save_solution(p.datafilename + ".dataelt", p.mef, p.U, p.K);
-    // getfem::save_solution(p.datafilename + "_diff.dataelt", p.mef_data,V,p.K);
-    // getfem::save_solution(p.datafilename + "_exact.dataelt",p.mef_data,W,p.K);
   }
   DAL_STANDARD_CATCH_ERROR;
   return 0; 

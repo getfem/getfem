@@ -1,6 +1,6 @@
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 2002  Yves Renard.                                        */
+/* Copyright (C) 2002-2003  Yves Renard.                                   */
 /*                                                                         */
 /* This program is free software; you can redistribute it and/or modify    */
 /* it under the terms of the GNU Lesser General Public License as          */
@@ -19,7 +19,7 @@
 /* *********************************************************************** */
 /* *********************************************************************** */
 /*                                                                         */
-/*  Calcul sur une structure lineairement elastique                        */
+/*  Deformation of a linearly elastic structure.                           */
 /*                                                                         */
 /* *********************************************************************** */
 
@@ -35,11 +35,9 @@ using bgeot::scalar_type;
 using bgeot::size_type;
 using bgeot::dim_type;
 
-typedef gmm::wsvector<scalar_type> sparse_vector_type;
+typedef gmm::rsvector<scalar_type> sparse_vector_type;
 typedef gmm::row_matrix<sparse_vector_type> sparse_matrix_type;
 typedef std::vector<scalar_type> linalg_vector;
-
-
 
 /**************************************************************************/
 /*  Definition de la solution test.                                       */
@@ -334,7 +332,7 @@ void pb_data::assemble(void)
   //  getfem::assembling_volumic_source_term(B, mef, mef_data, ST1, N);
   getfem::asm_source_term(B, mef, mef_data, ST1);
 
-  // cout << "Assemblage de la condition de Neumann" << endl;
+
   ST1 = linalg_vector(nb_dof_data * N);
   getfem::base_node pt(N);
   for (size_type nb = 1; nb <= 2*N; ++nb) {
@@ -359,7 +357,6 @@ void pb_data::assemble(void)
     getfem::asm_source_term(B, mef, mef_data, ST1, nb);
   }
 
-  // cout << "Prise en compte de la condition de Dirichlet" << endl;
   ST1 = linalg_vector(nb_dof);
   for (size_type i = 0; i < nb_dof/N; ++i)
     for (size_type j = 0; j < N; ++j)
@@ -369,7 +366,8 @@ void pb_data::assemble(void)
 
 void pb_data::solve(void) {
   gmm::iteration iter(residu);
-  gmm::cg(SM, U, B, gmm::identity_matrix(), gmm::identity_matrix(), iter);
+  gmm::cholesky_precond<sparse_matrix_type> P(SM);
+  gmm::cg(SM, U, B, P, iter);
 }
 
 int main(int argc, char *argv[]) {
@@ -385,7 +383,7 @@ int main(int argc, char *argv[]) {
     cout << "Assembling\n";
     p.assemble();
     
-    // cout << "Matrice de rigidite\n";
+    // cout << "Stiffness Matrix\n";
     // cout << p.SM << endl;
     
     cout << "Solving linear system\n";
