@@ -22,7 +22,7 @@ close(F2);
 
 open F, "latex doc |" or die; print $_ while (<F>); close F;
 open F, "latex doc |" or die; print $_ while (<F>); close F;
-open F, "dvips doc |" or die; print $_ while (<F>); close F;
+open F, "dvips -o -p1 doc |" or die; print $_ while (<F>); close F;
 
 `rm -f doc1.tex doc.tex doc.log doc.aux doc.cls` 
 

@@ -9,5 +9,5 @@
 ../getfem/getfem_config.h
 ../getfem/getfem_fem.h
 ../getfem/getfem_mat_elem_type.h
- ../getfem/getfem_mesh.h
- ../getfem/getfem_mesh_fem.h
+../getfem/getfem_mesh.h
+../getfem/getfem_mesh_fem.h
