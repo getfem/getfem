@@ -40,10 +40,11 @@ namespace getfem
 
   void virtual_fem::interpolation(pfem_precomp pfp, size_type ii,
 			    const base_matrix &G, bgeot::pgeometric_trans pgt, 
-			    const base_vector coeff, base_node &val) const {
+			    const base_vector &coeff, base_node &val, dim_type Qdim) const {
     // optimisable.   verifier et faire le vectoriel
     base_matrix M;
-    if (val.size() != target_dim())
+    size_type Qmult = size_type(Qdim) / target_dim();
+    if (val.size() != Qdim)
       DAL_THROW(dimension_error, "dimensions mismatch");
     
     size_type R = nb_dof(), RR = nb_base();
@@ -52,22 +53,24 @@ namespace getfem
 
     val.fill(0.0);
     for (size_type j = 0; j < RR; ++j) {
-      scalar_type co = 0.0;
-      if (is_equivalent())
-	co = coeff[j];
-      else
-	for (size_type i = 0; i < R; ++i)
-	  co += coeff[i] * M(i, j);
+      for (size_type q = 0; q < Qmult; ++q) {
+	scalar_type co = 0.0;
+	if (is_equivalent())
+	  co = coeff[j*Qmult+q];
+	else
+	  for (size_type i = 0; i < R; ++i)
+	    co += coeff[i*Qmult+q] * M(i, j);
       
-      for (size_type r = 0; r < target_dim(); ++r)
-	val[r] += co * pfp->val(ii)[j + r*R];
-    } 
+	for (size_type r = 0; r < target_dim(); ++r)
+	  val[r*Qmult+q] += co * pfp->val(ii)[j + r*R];
+      } 
+    }
   }
 
 
   void virtual_fem::interpolation_grad(pfem_precomp pfp, size_type ii,
 			    const base_matrix &G, bgeot::pgeometric_trans pgt, 
-			    const base_vector coeff, base_matrix &val) const {
+			    const base_vector &coeff, base_matrix &val) const {
     // optimisable !!   verifier et faire le vectoriel
  
     size_type R = nb_dof(), RR = nb_base();
@@ -109,7 +112,7 @@ namespace getfem
   void virtual_fem::complete_interpolation_grad(const base_node &x,
 						const base_matrix &G,
 						bgeot::pgeometric_trans pgt,
-						const base_vector coeff,
+						const base_vector &coeff,
 						base_matrix &val) const {
     dim_type N = G.nrows();
     dim_type P = dim();
