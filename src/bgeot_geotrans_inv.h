@@ -191,24 +191,10 @@ namespace bgeot {
 					   CONT1 &pftab, CONT2 &itab, bool bruteforce) {
     size_type N = pgt->structure()->dim(); /* dimension of the convex.*/
     size_type P = cv.points()[0].size(); /* dimension of the image.     */
-    base_node min(cv.points()[0]), max(cv.points()[0]); /* bound of the box enclosing the convex */
+    base_node min, max; /* bound of the box enclosing the convex */
     size_type nbpt = 0; /* nb of points in the convex */
     kdtree_tab_type boxpts;
-    for (size_type j = 1; j < pgt->nb_points(); ++j) { // à optimiser !!
-      base_node pt = cv.points()[j]; /* need a temporary storage since cv.points()[j] may not
-					be a reference to a base_node, but a temporary base_node !!
-				     */
-      base_node::const_iterator it = pt.begin();
-      for (size_type i = 0; i < P; ++i) { 
-	min[i] = std::min(min.at(i), it[i]);
-	max[i] = std::max(max.at(i), it[i]);
-      }
-    }
-    /* enlarge the box for non-linear transformations .. */
-    if (!pgt->is_linear()) 
-      for (size_type i = 0; i < N; ++i)
-	{ scalar_type e = (max[i]-min[i]) * 0.2;  min[i] -= e; max[i] += e; }
-
+    pgt->bounding_box(min, max, cv.points());    
     gic.init(cv,pgt);
     /* get the points in a box enclosing the convex */
     if (!bruteforce) points_in_box(boxpts, min, max);

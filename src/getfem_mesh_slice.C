@@ -83,8 +83,8 @@ namespace getfem {
   void slicer_boundary::slice(size_type cv, dim_type& fcnt,
                               mesh_slice::cs_nodes_ct& nodes, 
                               mesh_slice::cs_simplexes_ct& splxs, 
-                              dal::bit_vector& splx_in) {
-    A->slice(cv, fcnt, nodes, splxs, splx_in);
+                              dal::bit_vector& splx_in, dal::bit_vector& dead_simplexes) {
+    A->slice(cv, fcnt, nodes, splxs, splx_in, dead_simplexes);
     if (splx_in.card() == 0) return;
     slice_node::faces_ct fmask(cv < convex_faces.size() ? convex_faces[cv] : 0);
     //cerr << "slicer_boundary::slice(cv=" << cv << ", fmask=" << fmask << ")\n";
@@ -101,7 +101,7 @@ namespace getfem {
 	//cerr << " -> splx_in[cnt]=" << test_bound(s, fmask, nodes) << endl;
         if (!test_bound(s, fmask, nodes)) splx_in.sup(cnt);
       } else if (s.dim() == 2) {
-	splx_in.sup(cnt);
+	splx_in.sup(cnt);dead_simplexes.add(cnt);
         slice_simplex s2(2);
         for (size_type j=0; j < 3; ++j) {
           /* usage of s forbidden in this loop since push_back happens .. */
@@ -112,7 +112,7 @@ namespace getfem {
           }
         }
       } else if (s.dim() == 3) {
-        splx_in.sup(cnt);
+        splx_in.sup(cnt);dead_simplexes.add(cnt);
         slice_simplex s2(3);
         for (size_type j=0; j < 4; ++j) {
           /* usage of s forbidden in this loop since push_back happens .. */
@@ -158,12 +158,14 @@ namespace getfem {
 
 
 
-  /* intersects the simplex with the slice, and (recursively) decomposes it
-     into sub-simplices, which are added to the list 'splxs' 
-     if 'reduce_dimension' is true, then it is the faces of 
-     sub-simplices which are added
+  /* 
+     intersects the simplex with the slice, and (recursively)
+     decomposes it into sub-simplices, which are added to the list
+     'splxs' if orient == 0, then it is the faces of sub-simplices
+     which are added
 
-     assertion: when called, it will always push *at least* one new simplex on the stack
+     assertion: when called, it will always push *at least* one new
+     simplex on the stack
   */
   void slicer_volume::split_simplex(mesh_slice::cs_nodes_ct& nodes, 
 				    mesh_slice::cs_simplexes_ct& splxs, dal::bit_vector& splx_in, 
@@ -191,6 +193,7 @@ namespace getfem {
       if (intersection) break;
     }
     if (intersection) {
+      /* will call split_simplex recursively */
       const slice_node& A = nodes[s.inodes[iA]]; 
       const slice_node& B = nodes[s.inodes[iB]]; 
       slice_node n; 
@@ -211,11 +214,12 @@ namespace getfem {
         s1.inodes[k] = (k != iB) ? s.inodes[k] : nn;
       split_simplex(nodes,splxs,splx_in,s1,sstart);
     } else {
+      /* end of recursion .. */
       bool all_in = true;
       for (size_type i=0; i < s.dim()+1; ++i) if (!pt_in[s.inodes[i]]) all_in = false;
       //cerr << " -> no intersection , all_in=" << all_in << endl;
       splxs.push_back(s); // even simplexes "outside" are pushed, in case of a slicer_complementary op
-      if (all_in && orient != 0) splx_in.add(splxs.size()-1);
+      if ((all_in && orient != VOLBOUND) || orient == VOLSPLIT) splx_in.add(splxs.size()-1);
       if (orient==0) { /* reduce dimension */
         slice_simplex face(s.dim());
         for (size_type f=0; f < s.dim()+1; ++f) {
@@ -247,7 +251,8 @@ namespace getfem {
   */
   void slicer_volume::slice(size_type cv, dim_type& fcnt,
                             mesh_slice::cs_nodes_ct& nodes, 
-                            mesh_slice::cs_simplexes_ct& splxs, dal::bit_vector& splx_in) {
+                            mesh_slice::cs_simplexes_ct& splxs, 
+			    dal::bit_vector& splx_in, dal::bit_vector& dead_simplexes) {
     /*size_type cnt=0;
     for (mesh_slice::cs_simplexes_ct::iterator it = splxs.begin();
          it != splxs.end(); ++it, ++cnt) {    
@@ -270,14 +275,13 @@ namespace getfem {
       }
 
       if (in_cnt == 0) {
-        splx_in.sup(cnt);
-      } else if (in_cnt != s.dim()+1 || orient==0) {           /* the simplex crosses the slice boundary */
-        splx_in.sup(cnt);
+        if (orient != VOLSPLIT) splx_in.sup(cnt);
+      } else if (in_cnt != s.dim()+1 || orient==VOLBOUND) {           /* the simplex crosses the slice boundary */
+        splx_in.sup(cnt);dead_simplexes.add(cnt);
         //size_type l = splxs.size();//, n = nodes.size();
         //cerr << "slicer_volume::slice : convex " << cnt << " will be splited" << endl;
 	split_simplex(nodes, splxs, splx_in, slice_simplex(s), splxs.size());
-        splxs[cnt] = splxs.back(); splxs.pop_back(); splx_in.swap(cnt,splxs.size()); // replace the sliced simplex by one of its slices
-        //splx_in.add(l,splxs.size()-l);
+        // NON ! ça fout la merde .. splxs[cnt] = splxs.back(); splxs.pop_back(); splx_in.swap(cnt,splxs.size()); // replace the sliced simplex by one of its slices
       }
     }
 
@@ -293,29 +297,76 @@ namespace getfem {
     }
   }
 
+  slicer_mesh::slicer_mesh(const getfem_mesh& slm_) :  slm(slm_) { 
+    base_node min,max;
+    for (dal::bv_visitor cv(slm.convex_index()); !cv.finished(); ++cv) {
+      slm.trans_of_convex(cv)->bounding_box(min,max,slm.points_of_convex(cv));
+      tree.add_box(min, max, cv);
+    }
+  }
+  void slicer_mesh::slice(size_type cv, dim_type& fcnt,
+                           mesh_slice::cs_nodes_ct& nodes, mesh_slice::cs_simplexes_ct& splxs, 
+                           dal::bit_vector& splx_in, dal::bit_vector& dead_simplexes) {
+    /* TODO */
+  }
+
+
   void slicer_union::slice(size_type cv, dim_type& fcnt,
                            mesh_slice::cs_nodes_ct& nodes, mesh_slice::cs_simplexes_ct& splxs, 
-                           dal::bit_vector& splx_in) {
+                           dal::bit_vector& splx_in, dal::bit_vector& dead_simplexes) {
     dal::bit_vector splx_inA = splx_in;
-    A->slice(cv,fcnt,nodes,splxs,splx_inA);
-    B->slice(cv,fcnt,nodes,splxs,splx_in);
-    splx_in |= splx_inA;
+    size_type c = splxs.size();
+    dim_type fcnt_0 = fcnt;
+    A->slice(cv,fcnt,nodes,splxs,splx_inA, dead_simplexes);
+    dim_type fcnt_1 = fcnt;
+
+    dal::bit_vector splx_inB = splx_in; splx_inB.add(c, splxs.size()-c);
+    splx_inB.setminus(splx_inA); splx_inB.setminus(dead_simplexes);
+
+    B->slice(cv,fcnt,nodes,splxs,splx_inB, dead_simplexes);
+    splx_in = splx_inA | splx_inB;
+
+    /* 
+       the boring part : making sure that the "slice face" node markers
+       are correctly set
+    */
+    for (unsigned f=fcnt_0; f < fcnt_1; ++f) {
+      for (dal::bv_visitor i(splx_inB); !i.finished(); ++i) {
+	for (unsigned j=0; j < splxs[i].dim()+1; ++j) {
+	  bool face_boundA = true;
+	  for (unsigned k=0; k < splxs[i].dim()+1; ++k) {
+	    if (j != k && !nodes[splxs[i].inodes[k]].faces[f]) {
+	      face_boundA = false; break;
+	    }
+	  }
+	  if (face_boundA) {
+	    /* now we know that the face was on slice A boundary, and
+	       that the convex is inside slice B. The conclusion: the
+	       face is not on a face of A union B.
+	    */
+	    for (unsigned k=0; k < splxs[i].dim()+1; ++k)
+	      if (j != k) nodes[splxs[i].inodes[k]].faces[f] = false;	    
+	  }
+	}
+      }
+    }
   }
 
   void slicer_intersect::slice(size_type cv, dim_type& fcnt,
 			       mesh_slice::cs_nodes_ct& nodes, mesh_slice::cs_simplexes_ct& splxs, 
-                               dal::bit_vector& splx_in) {
-    A->slice(cv,fcnt,nodes,splxs,splx_in);
-    B->slice(cv,fcnt,nodes,splxs,splx_in);
+                               dal::bit_vector& splx_in, dal::bit_vector& dead_simplexes) {
+    A->slice(cv,fcnt,nodes,splxs,splx_in, dead_simplexes);
+    B->slice(cv,fcnt,nodes,splxs,splx_in, dead_simplexes);
   }
 
   void slicer_complementary::slice(size_type cv, dim_type& fcnt,
                                    mesh_slice::cs_nodes_ct& nodes, mesh_slice::cs_simplexes_ct& splxs, 
-                                   dal::bit_vector& splx_in) {
+                                   dal::bit_vector& splx_in, dal::bit_vector& dead_simplexes) {
     dal::bit_vector splx_inA = splx_in;
     size_type sz = splxs.size();
-    A->slice(cv, fcnt, nodes, splxs, splx_inA);
-    dal::bit_vector bv = splx_in; bv.add(sz, splxs.size()-sz);
+    A->slice(cv, fcnt, nodes, splxs, splx_inA, dead_simplexes);
+    splx_in.setminus(dead_simplexes);
+    dal::bit_vector bv = splx_in; bv.add(sz, splxs.size()-sz); bv.setminus(dead_simplexes);
     for (dal::bv_visitor_c i(bv); !i.finished(); ++i) {
       /*cerr << "convex " << cv << ",examining simplex #" << i << ": {";
       for (size_type j=0; j < splxs[i].inodes.size(); ++j) cerr << nodes[splxs[i].inodes[j]].pt << " ";
@@ -468,9 +519,12 @@ namespace getfem {
   void mesh_slice::do_slicing(size_type cv, bgeot::pconvex_ref cvr, slicer *ms, cs_nodes_ct cv_nodes, 
 			      cs_simplexes_ct cv_simplexes, dal::bit_vector& splx_in) {
     dim_type fcnt = cvr->structure()->nb_faces();
+    dal::bit_vector dead_simplexes;
     /* do the slices */
-    if (ms) ms->slice(cv, fcnt, cv_nodes, cv_simplexes, splx_in);
+    if (ms) ms->slice(cv, fcnt, cv_nodes, cv_simplexes, splx_in, dead_simplexes);
     
+    dead_simplexes &= splx_in; assert(dead_simplexes.card() == 0);
+
     set_convex(size_type(-1), cv, cvr, cv_nodes, cv_simplexes, fcnt, splx_in);
   }
 

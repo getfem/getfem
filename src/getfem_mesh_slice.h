@@ -4,6 +4,7 @@
 
 #include <bitset>
 #include <gmm_kernel.h>
+#include <bgeot_rtree.h>
 #include <getfem_mesh_fem.h>
 #include <memory> // auto_ptr for g++ 2.95
 
@@ -225,9 +226,12 @@ namespace getfem {
   class slicer {
   public:
     static const float EPS;
+    /* dead_simplexes is the list of simplexes that were splitted into
+       sub-simplexes, and hence that should be ignored.
+       assertion: (splx_in & dead_simplexes).card() == 0 */
     virtual void slice(size_type cv, dim_type& fcnt,
                        mesh_slice::cs_nodes_ct& nodes, mesh_slice::cs_simplexes_ct& splxs, 
-                       dal::bit_vector& splx_in) = 0;    
+                       dal::bit_vector& splx_in, dal::bit_vector& dead_simplexes) = 0;
     virtual ~slicer() {}
   };
 
@@ -243,7 +247,7 @@ namespace getfem {
     slicer_boundary(const getfem_mesh& m, slicer *sA, const convex_face_ct& fbound);
     void slice(size_type cv, dim_type& fcnt,
 	       mesh_slice::cs_nodes_ct& nodes, mesh_slice::cs_simplexes_ct& splxs, 
-               dal::bit_vector& splx_in);
+               dal::bit_vector& splx_in, dal::bit_vector& dead_simplexes);
   };
 
   /**
@@ -251,7 +255,15 @@ namespace getfem {
   */
   class slicer_volume : public slicer {
   protected:
-    enum {VOLIN=-1, VOLBOUND=0, VOLOUT=+1}; 
+    /*
+      orient defines the kind of slicing :
+        VOLIN -> keep the inside of the volume,
+	VOLBOUND -> its boundary,
+	VOLOUT -> its outside,
+	VOLSPLIT -> keep everything but make split simplexes 
+	untils no simplex crosses the boundary
+    */
+    enum {VOLIN=-1, VOLBOUND=0, VOLOUT=+1, VOLSPLIT=+2}; 
     int orient;
     dal::bit_vector pt_in, pt_bin;    
     
@@ -288,7 +300,7 @@ namespace getfem {
   public:
     void slice(size_type cv, dim_type& fcnt,
 	       mesh_slice::cs_nodes_ct& nodes, mesh_slice::cs_simplexes_ct& splxs, 
-	       dal::bit_vector& splx_in);
+	       dal::bit_vector& splx_in, dal::bit_vector& dead_simplexes);
   };
 
   /**
@@ -398,6 +410,22 @@ namespace getfem {
     }
   };
 
+  /** 
+      slices a mesh with another mesh (of same dimension,
+      and whose convex are preferably linear). Note that slicing
+      a refined mesh with a rough mesh should be faster than slicing 
+      a rough mesh with a refined mesh.
+  */
+  class slicer_mesh : public slicer {
+    const getfem_mesh& slm;
+    bgeot::rtree tree; /* tree of bounding boxes for slm */
+  public:
+    slicer_mesh(const getfem_mesh&);
+    void slice(size_type cv, dim_type& fcnt,
+	       mesh_slice::cs_nodes_ct& nodes, mesh_slice::cs_simplexes_ct& splxs, 
+	       dal::bit_vector& splx_in, dal::bit_vector& dead_simplexes);
+  };
+
   /**
      union of two slices
   */
@@ -413,7 +441,7 @@ namespace getfem {
       }*/
     void slice(size_type cv, dim_type& fcnt,
 	       mesh_slice::cs_nodes_ct& nodes, mesh_slice::cs_simplexes_ct& splxs, 
-	       dal::bit_vector& splx_in);
+	       dal::bit_vector& splx_in, dal::bit_vector& dead_simplexes);
   };
 
   /**
@@ -431,7 +459,7 @@ namespace getfem {
       }*/
     void slice(size_type cv, dim_type& fcnt,
 	       mesh_slice::cs_nodes_ct& nodes, mesh_slice::cs_simplexes_ct& splxs, 
-	       dal::bit_vector& splx_in);
+	       dal::bit_vector& splx_in, dal::bit_vector& dead_simplexes);
   };
 
   /**
@@ -446,7 +474,7 @@ namespace getfem {
       }*/
     void slice(size_type cv, dim_type& fcnt,
 	       mesh_slice::cs_nodes_ct& nodes, mesh_slice::cs_simplexes_ct& splxs, 
-	       dal::bit_vector& splx_in);
+	       dal::bit_vector& splx_in, dal::bit_vector& dead_simplexes);
   };
   
 
@@ -457,7 +485,8 @@ namespace getfem {
   public:
     slicer_none() {}
     void slice(size_type /*cv*/, dim_type& /*fcnt*/, mesh_slice::cs_nodes_ct& /*nodes*/, 
-	       mesh_slice::cs_simplexes_ct& /*splxs*/, dal::bit_vector& /*splx_in*/) {}
+	       mesh_slice::cs_simplexes_ct& /*splxs*/, 
+	       dal::bit_vector& /*splx_in*/, dal::bit_vector& /*dead_simplexes*/) {}
   };
   
   std::ostream& operator<<(std::ostream& o, const mesh_slice& m);

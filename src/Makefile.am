@@ -33,6 +33,7 @@ include_HEADERS =                      \
 	dal_tree_sorted.h              \
 	ftool.h                        \
 	ftool_naming.h                 \
+	getfem_arch_config.h           \
 	getfem_integration.h           \
 	getfem_poly_composite.h        \
 	getfem_assembling.h            \
