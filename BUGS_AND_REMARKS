@@ -10,3 +10,7 @@ with cxx (dec compiler) the difficulty to build dynamic libraries is to be
 sure that all the template implementations are linked.
 ___________________________________________________________________________
 
+MTL and ITL don't support the -pedantic option from g++
+___________________________________________________________________________
+
+
