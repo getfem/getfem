@@ -28,7 +28,7 @@
 // #define GMM_USES_LAPACK
 #include <ftool.h>
 #include <gmm.h>
-
+#include <gmm_superlu_interface.h>
 using gmm::size_type;
 
 template <class T> void test_with(T) {
@@ -38,7 +38,7 @@ template <class T> void test_with(T) {
   std::vector<T> x(n), y(n), z(n);
   
   gmm::copy(gmm::identity_matrix(), A);
-  gmm::fill_random(A, 1.0);
+  gmm::fill_random(A, 0.1);
   gmm::fill_random(B);
   gmm::fill_random(x);
   gmm::fill_random(y);
@@ -48,8 +48,11 @@ template <class T> void test_with(T) {
   A(2,4) = 0;
   A(3,0) = 0;
   A(4,1) = 0;
+  double rcond;
 
-  gmm::SuperLU_solve(A, x, y);
+  for (size_type cnt=0; cnt < 10; ++cnt)
+    gmm::SuperLU_solve(A, x, y, rcond);
+  cout << "rcond = " << rcond << "\n";
 
   // gmm::lu_solve(A, z, y);
 
