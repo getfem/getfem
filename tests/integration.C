@@ -33,6 +33,8 @@ using bgeot::scalar_type;
 using bgeot::opt_long_scalar_type;
 using bgeot::dim_type;
 
+bool do_heavy_checks = false;
+
 void print_method(getfem::pintegration_method ppi) {
   cout << "methode : " << getfem::name_of_int_method(ppi) << endl;
   getfem::papprox_integration pai = ppi->method.pai;
@@ -91,16 +93,21 @@ static void check_im_order(const std::string& s, size_type expected_pk=size_type
 	for (size_type d=0; d < dim; ++d) prod *= pow(ppi->approx_method()->point(i)[d], idx[d]);
 	sum += prod;
       }
-      if (ppi->structure()->basic_structure() == bgeot::simplex_structure(dim)) {
-	for (size_type d=dim-1, c=0; d+1 != 0; --d) { c += idx[d]+1; realsum *= opt_long_scalar_type(c); }
-	realsum = opt_long_scalar_type(1.)/realsum;
+      if (ppi->structure()->basic_structure() == bgeot::simplex_structure(dim)) {        
+        size_type fa = 1;
+        for (size_type z = 0; z < dim; z++)
+          for (size_type k = 1; k <= idx[z]; ++k, ++fa)
+            realsum *= opt_long_scalar_type(k) / opt_long_scalar_type(fa);
+        for (size_type k = 0; k < dim; k++) { realsum /= opt_long_scalar_type(fa); fa++; }
+    /*	for (size_type d=dim-1, c=0; d+1 != 0; --d) { c += idx[d]+1; realsum *= opt_long_scalar_type(c); }
+      realsum = opt_long_scalar_type(1.)/realsum;*/
       } else if (ppi->structure()->basic_structure() == bgeot::parallelepiped_structure(dim)) {
-	for (size_type d=0; d < dim; ++d) realsum *= opt_long_scalar_type(1.)/(idx[d]+1);
+	for (size_type d=0; d < dim; ++d) realsum *= opt_long_scalar_type(idx[d]+1);
 	realsum = opt_long_scalar_type(1.)/realsum;
       }
       if (dal::abs((realsum - sum)/realsum) > 1e-9) { 
-	cout << "degree=" << idx.degree() << ", idx=";
-	for (size_type d=0; d < dim; ++d) cout << idx[d] << " "; cout << ", realsum=" << realsum << ", sum = " << sum << "\n";
+        /*	cout << "degree=" << idx.degree() << ", idx=";
+          for (size_type d=0; d < dim; ++d) cout << idx[d] << " "; cout << ", realsum=" << realsum << ", sum = " << sum << "\n";*/
 	pk = std::min<size_type>(pk,idx.degree());
 	qk = std::min<size_type>(qk, *std::max_element(idx.begin(),idx.end()));
       }
@@ -117,12 +124,27 @@ const std::vector<size_type>& TRIANGLE_D() {
 }
 const std::vector<size_type>& TETRA_D() { 
   static std::vector<size_type> i_d;
-  if (i_d.size() == 0) bgeot::sc(i_d) += 1, 2, 3, 5;
+  if (i_d.size() == 0) bgeot::sc(i_d) += 1, 2, 3, 5, 6, 8;
+  return i_d;
+}
+const std::vector<size_type>& SIMPLEX4_D() { 
+  static std::vector<size_type> i_d;
+  if (i_d.size() == 0) bgeot::sc(i_d) += 3;
   return i_d;
 }
 const std::vector<size_type>& QUAD_D() { 
   static std::vector<size_type> i_d;
   if (i_d.size() == 0) bgeot::sc(i_d) += 2, 3, 5, 7, 9, 17;
+  return i_d;
+}
+const std::vector<size_type>& HEXA_D() { 
+  static std::vector<size_type> i_d;
+  if (i_d.size() == 0) bgeot::sc(i_d) += 5,9,11;
+  return i_d;
+}
+const std::vector<size_type>& CUBE4D_D() { 
+  static std::vector<size_type> i_d;
+  if (i_d.size() == 0) bgeot::sc(i_d) += 5,9;
   return i_d;
 }
 
@@ -136,6 +158,18 @@ static void check_orders() {
   }
   for (std::vector<size_type>::const_iterator it = QUAD_D().begin(); it != QUAD_D().end(); ++it) {
     sprintf(s,"IM_QUAD(%d)",*it); check_im_order(s);
+  }
+  for (std::vector<size_type>::const_iterator it = TETRA_D().begin(); it != TETRA_D().end(); ++it) {
+    sprintf(s,"IM_TETRAHEDRON(%d)",*it); check_im_order(s);
+  }
+  for (std::vector<size_type>::const_iterator it = SIMPLEX4_D().begin(); it != SIMPLEX4_D().end(); ++it) {
+    sprintf(s,"IM_SIMPLEX4D(%d)",*it); check_im_order(s);
+  }
+  for (std::vector<size_type>::const_iterator it = HEXA_D().begin(); it != HEXA_D().end(); ++it) {
+    sprintf(s,"IM_HEXAHEDRON(%d)",*it); check_im_order(s);
+  }
+  for (std::vector<size_type>::const_iterator it = CUBE4D_D().begin(); it != CUBE4D_D().end(); ++it) {
+    sprintf(s,"IM_CUBE4D(%d)",*it); check_im_order(s);
   }
 }
 
@@ -176,14 +210,20 @@ static void check_methods() {
       check_method(s,ppi,k,bgeot::simplex_geotrans(3,1));
     }
   }
+  for (std::vector<size_type>::const_iterator it = SIMPLEX4_D().begin(); it != SIMPLEX4_D().end(); ++it) {
+    sprintf(s,"IM_SIMPLEX4D(%d)",*it); ppi = getfem::int_method_descriptor(s);
+    for (size_type k=1; k <= *it; ++k) { 
+      check_method(s,ppi,k,bgeot::simplex_geotrans(4,1));
+    }
+  }
   
   for (size_type d=1; d < 5; ++d) {
     size_type kmax = 0;
     switch (d) {
-    case 1: kmax = 8; break;
-    case 2: kmax = 8; break;
-    case 3: kmax = 4; break;
-    default: kmax = 2; break;
+    case 1: kmax = 10; break;
+    case 2: kmax = 10; break;
+    case 3: kmax = 6; break;
+    default: kmax = 3; break;
     }
     for (size_type k=0; k < kmax; ++k) {
       sprintf(s,"IM_EXACT_PARALLELEPIPED(%d)",d); ppi = getfem::int_method_descriptor(s);
@@ -198,12 +238,19 @@ static void check_methods() {
       }
     }
   }
-  std::vector<size_type> i_d; bgeot::sc(i_d) += 2, 3, 5, 7, 9, 17;
   for (std::vector<size_type>::const_iterator it = QUAD_D().begin(); it != QUAD_D().end(); ++it) {
     sprintf(s,"IM_QUAD(%d)",*it); ppi = getfem::int_method_descriptor(s);
-    for (size_type k=1; k <= *it; ++k) { 
+    for (size_type k=1; k <= size_type(sqrt(scalar_type(*it))); k++) { 
       check_method(s,ppi,k,bgeot::parallelepiped_linear_geotrans(2));
     }
+  }
+  for (std::vector<size_type>::const_iterator it = HEXA_D().begin(); it != HEXA_D().end(); ++it) {
+    sprintf(s,"IM_HEXAHEDRON(%d)",*it); ppi = getfem::int_method_descriptor(s);
+    check_method(s,ppi,size_type(::pow(scalar_type(*it),1./3.)), bgeot::parallelepiped_linear_geotrans(3));
+  }
+  for (std::vector<size_type>::const_iterator it = CUBE4D_D().begin(); it != CUBE4D_D().end(); ++it) {
+    sprintf(s,"IM_CUBE4D(%d)", *it); ppi = getfem::int_method_descriptor(s);
+    check_method(s,ppi,1,bgeot::parallelepiped_linear_geotrans(4));
   }
 
   for (size_type d=2; d < 5; ++d) {
@@ -233,7 +280,7 @@ static void check_methods() {
       sprintf(s,"IM_STRUCTURED_COMPOSITE(IM_NC(4,2),3)");
       check_method(s, getfem::int_method_descriptor(s), 2,bgeot::simplex_geotrans(4,1));
     */
-    sprintf(s,"IM_STRUCTURED_COMPOSITE(IM_QUAD(5),4)");
+    sprintf(s,"IM_STRUCTURED_COMPOSITE(IM_QUAD(5),10)"); // QUAD(5) can't integrate Q5 polynomials, but it is sufficiently refined...
     check_method(s, getfem::int_method_descriptor(s), 5, bgeot::parallelepiped_linear_geotrans(2));
     sprintf(s,"IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(3,2),2)");
     check_method(s, getfem::int_method_descriptor(s), 2, bgeot::parallelepiped_linear_geotrans(3));
@@ -308,19 +355,21 @@ static void print_some_methods() {
   sprintf(meth, "IM_TETRAHEDRON(3)");
   print_method(getfem::int_method_descriptor(meth));
 
-  sprintf(meth, "IM_QUAD(3)");
+  sprintf(meth, "IM_HEXAHEDRON(9)");
   print_method(getfem::int_method_descriptor(meth));
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
   exception_cb cb;
   dal::exception_callback::set_exception_callback(&cb);
 
+  if (argc == 2 && strcmp(argv[1], "-all")) do_heavy_checks = true;
   try {
     print_some_methods();
     check_methods();
     int failcnt = inspect_results();
+    cout << "\nOrders of some approximate integration methods:\n";
     check_orders();
     if (failcnt) { cerr << "an error occured with " << failcnt << " integration methods\n"; return 1; }
   }
