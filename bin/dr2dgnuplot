@@ -22,8 +22,8 @@ open(TMPF, ">$tmp1") or die "Open file impossible : $!\n";
 while ($li = <DATAF>)
 {
   chomp($li);
-  if (!($li=~/N/ || $li=~/P/ || $li=~/K/ || $li=~/DIR/ || $li=~/%/
-	|| $li=~/DATA/ || $li=~/END/) ) {
+  if (!($li=~/N/ || $li=~/P/ || $li=~/K/ || $li=~/DIM/ || $li=~/%/
+	|| $li=~/DATA/ || $li=~/END/) && $li) {
 
     $c = 0;
     while ($li) { $cov[$c++] = $li; $li = <DATAF>; chomp($li); }
