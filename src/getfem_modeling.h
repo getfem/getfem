@@ -1042,17 +1042,14 @@ namespace getfem {
 	gmm::mult(G, gmm::sub_vector(MS.state(), SUBJ),
 		  gmm::scaled(CRHS, value_type(-1)),
 		  gmm::sub_vector(MS.residu(), SUBI));
-	cout << "MS.residu() = " << MS.residu() << endl;
-     
 	gmm::mult_add(gmm::transposed(G), gmm::sub_vector(MS.state(), SUBI),
 		      gmm::sub_vector(MS.residu(), SUBJ));
-	cout << "MS.residu() = " << MS.residu() << endl;
       }
       else {
 	size_type nd = sub_problem.main_mesh_fem().nb_dof();
 	size_type ncs = sub_problem.nb_constraints();
 	gmm::sub_interval SUBI(j0+ncs,nb_const), SUBJ(i0, nd);
-	gmm::mult(G, gmm::scaled(gmm::sub_vector(MS.state(), SUBJ),
+	gmm::mult(G, gmm::scaled(gmm::sub_vector(MS.state(), SUBJ), 
 				 value_type(-1)),
 		  CRHS, gmm::sub_vector(MS.constraints_rhs(), SUBI));
       }
@@ -1115,7 +1112,6 @@ namespace getfem {
 
     // TODO : take iter into account for the Newton. compute a consistent 
     //        max residu.
-    //        detect the presence of multipliers before using a preconditioner
 
     size_type ndof = problem.nb_dof();
     bool is_linear = problem.is_linear();
@@ -1134,7 +1130,14 @@ namespace getfem {
       gmm::iteration iter_linsolv = iter_linsolv0;
       VECTOR d(ndof), dr(gmm::vect_size(MS.reduced_residu()));
 
-      if (!(iter.first())) problem.compute_tangent_matrix(MS);
+      if (!(iter.first())) {
+	problem.compute_tangent_matrix(MS);
+	MS.compute_reduced_system();
+      }
+
+      cout << "tangent matrix is "
+	   << (gmm::is_symmetric(MS.tangent_matrix()) ? "" : "not ")
+	   <<  "symmetric. ";
 
 #ifdef GMM_USES_SUPERLU
       double rcond;
@@ -1157,14 +1160,6 @@ namespace getfem {
 	}
 	else {
 	  cout << "there is " << mixvar.card() << " mixed variables\n";
-	  // gmm::ilut_precond<T_MATRIX> P(MS.reduced_tangent_matrix(),100,1E-10);
-// 	  size_type nn = gmm::mat_nrows(MS.reduced_tangent_matrix());
-// 	  gmm::dense_matrix<double> MM(nn,nn);
-// 	  std::vector<double> VV(nn);	  
-// 	  gmm::copy(MS.reduced_tangent_matrix(), MM);
-// 	  cout << "det = " << gmm::lu_det(MM) << endl;
-// 	  symmetric_qr_algorithm(MM, VV);
-// 	  cout << "VV =  " << VV;
 	  gmm::identity_matrix P;
 	  gmm::gmres(MS.reduced_tangent_matrix(), dr, 
 		     gmm::scaled(MS.reduced_residu(),  value_type(-1)),
@@ -1192,6 +1187,7 @@ namespace getfem {
 	}
       }
       act_res = act_res_new; ++iter;
+      if (iter.get_noisy()) cout << "alpha = " << alpha << " ";
     }
 
   }

@@ -41,6 +41,7 @@ namespace getfem {
     size_type nb_params_;
     virtual void sigma(const base_matrix &L, base_matrix &result,
 		       base_vector &params) const = 0;
+    // the result of grad_sigma has to be completely symmetric.
     virtual void grad_sigma(const base_matrix &L, base_tensor &result, 
 			    base_vector &params) const = 0;
     size_type nb_params(void) const { return nb_params_; }
@@ -85,9 +86,9 @@ namespace getfem {
       size_type N = gmm::mat_nrows(L);
       for (size_type i = 0; i < N; ++i)
 	for (size_type l = 0; l < N; ++l) {
-	  result(i, i, l, l) = 4.0 * C2;
-	  result(i, l, i, l) -= 1.0;
-	  result(i, l, l, i) -= 1.0;
+	  result(i, i, l, l) = scalar_type(4) * C2;
+	  result(i, l, i, l) -= scalar_type(1);
+	  result(i, l, l, i) -= scalar_type(1);
 	}
     }
     Mooney_Rivlin_hyperelastic_law(void) { nb_params_ = 2; }
@@ -129,7 +130,7 @@ namespace getfem {
       gmm::mult(gmm::transposed(gradU), gradU, L);
       gmm::add(gradU, L);
       gmm::add(gmm::transposed(gradU), L);
-      gmm::scale(L, scalar_type(0.5));
+      gmm::scale(L, scalar_type(1) / scalar_type(2));
       gmm::add(gmm::identity_matrix(), gradU);
 
       AHL.sigma(L, B, params);
@@ -137,17 +138,41 @@ namespace getfem {
       if (version == 0) {	  
 	AHL.grad_sigma(L, tt, params);
 	
+// 	for (size_type n = 0; n < N; ++n)
+// 	  for (size_type m = 0; m < N; ++m)
+// 	    for (size_type l = 0; l < N; ++l)
+// 	      for (size_type k = 0; k < N; ++k) {
+// 		// scalar_type aux = (k == l) ? B(m, l) : scalar_type(0);
+// 		scalar_type aux(0);
+// 		for (size_type j = 0; j < N; ++j)
+// 		  for (size_type i = 0; i < N; ++i) {
+// 		    aux += gradU(n ,j) * gradU(k, i) * tt(j, m, i, l);
+// 		  }
+// 		t(n, m, k, l) = aux;
+// 	      }
+	
 	for (size_type n = 0; n < N; ++n)
-	  for (size_type m = 0; m < N; ++m)
-	    for (size_type l = 0; l < N; ++l)
-	      for (size_type k = 0; k < N; ++k) {
-		scalar_type aux = (k == l) ? B(m, l) : 0.0;
+	  for (size_type m = 0; m <= n; ++m)
+	    for (size_type k = 0; k <= m; ++k)
+	      for (size_type l = 0; l <= k; ++l) {
+		// scalar_type aux = (k == l) ? B(m, l) : scalar_type(0);
+		scalar_type aux(0);
 		for (size_type j = 0; j < N; ++j)
 		  for (size_type i = 0; i < N; ++i) {
-		    aux += B(n ,j) * B(k, i) * tt(j, m, i, l);
+		    aux += gradU(n ,j) * gradU(k, i) * tt(j, m, i, l);
 		  }
-		t(n, m, k, l) = aux;
+		t(n, m, k, l) = t(m, n, k, l) = t(n, m, l, k) = aux;
+		t(m, n, l, k) = t(k, l, m, n) = t(l, k, m, n) = aux;
+		t(k, l, n, m) = t(l, k, n, m) = aux;
 	      }
+
+ 	for (size_type n = 0; n < N; ++n)
+ 	  for (size_type m = 0; m < N; ++m)
+ 	    for (size_type l = 0; l < N; ++l) {
+ 	      t(n, m, n, l) += B(m, l);
+ 	      // t(n, m, l, m) += B(n, l) * 0.5;
+ 	    }
+
       } else {
 	for (size_type i = 0; i < N; ++i)
 	  for (size_type j = 0; j < N; ++j) {
@@ -187,7 +212,7 @@ namespace getfem {
     getfem::generic_assembly
       assem("t=comp(NonLin(#1,#2).vGrad(#1).vGrad(#1));"
 	    "M(#1,#1)+= sym(t(i,j,k,l,:,i,j,:,k,l))");
-
+    // "M(#1,#1)+= t(i,j,k,l,:,i,j,:,k,l)");
     assem.push_mf(mf);
     assem.push_mf(mf_data);
     assem.push_nonlinear_term(&nterm);

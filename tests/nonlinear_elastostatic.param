@@ -14,7 +14,7 @@ P3 = 1.0;   	        % Third elastic coefficient.
 %MESH_TYPE = 'GT_PK(3,1)';         % linear triangles
 MESH_TYPE = 'GT_QK(3,1)'; % linear rectangles
 %MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
-NX = 10;            	          % space step.
+NX = 5;            	          % space step.
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 
 %FEM_TYPE = 'FEM_PK(2,1)';  % P1 for triangles
@@ -46,7 +46,7 @@ INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3,4)'; % Product of two
 %INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(7), 3)';
 
 RESIDU = 1E-9;     	% residu for conjugate gradient.
-MAXITER = 3;
+MAXITER = 300;
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'nonlinear_elastostatic';     % Root of data files.
 VTK_EXPORT = 2 % export solution to a .vtk file ?
