@@ -274,6 +274,15 @@ namespace dal
       
     };
 
+  /** 
+      convenience template function for quick obtention of a indexed iterator
+      without having to specify its (long) typename
+  */
+  template<typename ITER, typename ITER_INDEX>
+  _tab_ref_index_ref_iterator<ITER,ITER_INDEX>
+  index_ref_iterator(ITER it, ITER_INDEX it_i) {
+    return _tab_ref_index_ref_iterator<ITER,ITER_INDEX>(it, it_i);
+  }
 
   template<typename ITER, typename ITER_INDEX> class tab_ref_index_ref {
   public :
