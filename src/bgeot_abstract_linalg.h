@@ -636,6 +636,40 @@ namespace bgeot {
     void clear(this_type &v) { v.fill(T(0)); }
   };
 
+  template <class VECT> struct linalg_traits<PT<VECT> > {
+    typedef PT<VECT> this_type;
+    typedef linalg_false is_reference;
+    typedef typename linalg_traits<VECT>::base_type base_type;
+    typedef typename linalg_traits<VECT>::reference_type reference_type;
+    typedef abstract_vector linalg_type;
+    typedef typename linalg_traits<VECT>::iterator  iterator;
+    typedef typename linalg_traits<VECT>::const_iterator const_iterator;
+    typedef typename linalg_traits<VECT>::storage_type storage_type;
+    typedef abstract_null_type sub_row_type;
+    typedef abstract_null_type const_sub_row_type;
+    typedef typename linalg_traits<VECT>::sub_col_type sub_col_type;
+    typedef typename linalg_traits<VECT>::sub_row_type const_sub_col_type;
+    typedef col_major sub_orientation;
+    size_type size(const this_type &v) { return v.size(); }
+    size_type nrows(const this_type &v) { return v.size(); }
+    size_type ncols(const this_type &) { return 1; }
+    iterator begin(this_type &v) { return linalg_traits<VECT>().begin(v); }
+    const_iterator const_begin(const this_type &v)
+    { return linalg_traits<VECT>().const_begin(v); }
+    iterator end(this_type &v) { return linalg_traits<VECT>().end(v); }
+    const_iterator const_end(const this_type &v)
+    { return linalg_traits<VECT>().const_end(v); }
+    const_sub_row_type row(const this_type &v, size_type i)
+    { DAL_THROW(failure_error,"Rows inaccessible for this object"); }
+    const_sub_col_type col(const this_type &v, size_type i)
+    { return const_sub_col_type(v); }
+    sub_row_type row(this_type &v, size_type i)
+    { DAL_THROW(failure_error,"Rows inaccessible for this object"); }
+    sub_col_type col(this_type &v, size_type i) { return sub_col_type(v); }
+    const void* origin(const this_type &v) { return &v; }
+    void clear(this_type &v) { v.fill(T(0)); }
+  };
+
   template <class T> struct linalg_traits<svector<T> > {
     typedef svector<T> this_type;
     typedef linalg_false is_reference;
@@ -1484,41 +1518,6 @@ namespace bgeot {
 	  "You have to define the mult(m, v1, v2) for this kind of matrix");
   }
 
-
-  /* ******************************************************************** */
-  /*		conjugate gradient  (unpreconditionned)        		  */
-  /* ******************************************************************** */
-
-  template < class Matrix, class Vector>
-  int cg(const Matrix& A, Vector& x, const Vector& b, int itemax, 
-	 double residu, bool noisy = true) {
-    typename linalg_traits<Vector>::base_type rho(0), rho_1(0), a(0), beta(0);
-    Vector p(x.size()), q(x.size()), r(x.size());
-    int iter = 0;
-    mult(A, scaled(x, -1.0), b, r);
-
-    rho = vect_sp(r,r);
-    
-    while (sqrt(rho) > residu) {
-
-      if (iter == 0) copy(r, p);		  
-      else { beta = rho / rho_1; add(r, scaled(p, beta), p); }
-
-      mult(A, p, q);
-
-      a = rho / vect_sp(p, q);
-      
-      add(scaled(p, a), x);
-      add(scaled(q, -a), r);
-
-      rho_1 = rho; rho = vect_sp(r, r);
-
-      if (++iter >= itemax) return 1;
-      if (noisy) cout << "iter " << iter << " residu " << sqrt(rho) << endl;
-    }
-    return 0;
-  }
-  
 }
 
 

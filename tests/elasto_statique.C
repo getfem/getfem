@@ -8,7 +8,7 @@
 #include <getfem_norm.h>
 #include <getfem_regular_meshes.h>
 #include <bgeot_smatrix.h>
-#include <bgeot_abstract_linalg.h>
+#include <bgeot_generic_solver.h>
 
 using bgeot::base_vector;
 using bgeot::base_node;

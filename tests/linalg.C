@@ -1,4 +1,4 @@
-#include <bgeot_abstract_linalg.h>
+#include <bgeot_generic_solver.h>
 
 
 int main(void)

@@ -7,7 +7,7 @@
 #include <getfem_assembling.h>
 #include <getfem_export.h>
 #include <getfem_norm.h>
-#include <bgeot_abstract_linalg.h>
+#include <bgeot_generic_solvers.h>
 #include <getfem_regular_meshes.h>
 #include <bgeot_smatrix.h>
 
