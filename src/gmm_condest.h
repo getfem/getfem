@@ -3,7 +3,7 @@
 /*                                                                         */
 /* Library :  Generic Matrix Methods  (gmm)                                */
 /* File    :  gmm_condest.h : condition number estimation                  */
-/*     				                			           */
+/*     				                		           */
 /* Date : August 27, 2003.                                                 */
 /* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr,                     */
 /*          Julien Pommier, Julien.Pommier@gmm.insa-tlse.fr.               */
@@ -35,15 +35,17 @@
 
 namespace gmm {
 
-  /* estimation of the magnitude of the largest eigenvalue 
-     works also with non-square matrices
-
-     todo: specialization for 2x2 matrices
+  /** estimation of the magnitude of the largest eigenvalue 
+   *  works also with non-square matrices
    */
- template <typename MAT> 
-  typename number_traits<typename linalg_traits<MAT>::value_type>::magnitude_type
+  /*  todo: specialization for 2x2 matrices
+   */
+  template <typename MAT> 
+  typename number_traits<typename
+  linalg_traits<MAT>::value_type>::magnitude_type
   norm_lin2_est(const MAT& M) {
-    typedef typename number_traits<typename linalg_traits<MAT>::value_type>::magnitude_type magnitude_type;
+    typedef typename number_traits<typename
+      linalg_traits<MAT>::value_type>::magnitude_type magnitude_type;
     typedef typename linalg_traits<MAT>::value_type value_type;
     typedef typename temporary_dense_vector<MAT>::vector_type vector_type;
     
@@ -56,11 +58,11 @@ namespace gmm {
       e0=e;
       if (d == 0)
 	mult(B,v,tmp);
-      else if (d > 0) {
+      else if (d > 0)
 	mult(B,v,tmp2); mult(transposed(B),tmp2,tmp);
-      } else {
+      else 
 	mult(transposed(B),v,tmp2); mult(B,tmp2,tmp);
-      }
+      
       e = vect_norm2(tmp);
       scale(tmp, 1.0 / e);
       copy(tmp,v);
@@ -75,25 +77,26 @@ namespace gmm {
 
  /* estimation of the condition number (using lu_inverse => dense matrix only)*/
   template <typename MAT> 
-  typename number_traits<typename linalg_traits<MAT>::value_type>::magnitude_type
+  typename number_traits<typename
+  linalg_traits<MAT>::value_type>::magnitude_type
   condest(const MAT& M) {
     typedef typename linalg_traits<MAT>::value_type value_type;
     
     int d = mat_nrows(M) - mat_ncols(M);
     int vsz = std::min(mat_nrows(M), mat_ncols(M));
-    dense_matrix<value_type> B(vsz,vsz);
-    if (d == 0) {
-      copy(M,B);
-    } else if (d > 0) {
-      mult(transposed(M),M,B);
-    } else if (d < 0) {
-      mult(M,transposed(M),B);
-    }
+    dense_matrix<value_type> B(vsz, vsz);
+    if (d == 0)
+      copy(M, B);
+    else if (d > 0)
+      mult(transposed(M), M, B);
+    else 
+      mult(M,transposed(M), B);
+
     gmm::lu_inverse(B);
     if (d == 0)
-      return norm_lin2_est(M)*norm_lin2_est(B);
+      return norm_lin2_est(M) * norm_lin2_est(B);
     else 
-      return norm_lin2_est(M)*sqrt(norm_lin2_est(B));
+      return norm_lin2_est(M) * sqrt(norm_lin2_est(B));
   }
 }
 
