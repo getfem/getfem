@@ -279,7 +279,8 @@ namespace getfem
        Q1_22 Q2_22 ..... Qn_22
     if  N = 2, and mf_d has n/N degree of freedom
 
-    (Q is a vector, so the matrice is assumed to be stored by columns (fortran style)
+    Q is a vector, so the matrice is assumed to be stored by columns
+    (fortran style)
    */
   template<class MAT, class VECT>
   void assembling_boundary_qu_term(MAT &M, 
@@ -385,8 +386,7 @@ namespace getfem
 		if (bgeot::vect_dist2(pf_u->node_convex().points()[ind_u], 
 				      pf_rh->node_convex().points()[ind_rh])
 		    < 1.0E-7) {
-		  // à optimiser (racine carrée
-		  // à ce niveau on a HU = R localement
+		  // to be optimized (square root ..!)
 		  for (size_type k = 0; k < pf_u->nb_dof(); ++k) {
 		    size_type dof_k = mf_u.ind_dof_of_element(cv)[k];
 		    for (int ii=0; ii < N; ii++)
