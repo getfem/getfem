@@ -149,17 +149,40 @@ namespace dal {
       { which_except(e); }
 
   };
-  
-  // void do_exception_callback(const std::string &msg);
-  // void set_exception_callback(exception_callback *e);
 
-#define DAL_THROW(type, thestr) {                \
-    std::stringstream msg;                       \
-    msg << "in "__FILE__ << ", line "            \
-        << __LINE__ << ": \n" << thestr << ends; \
+  inline void set_exception_callback(exception_callback *e)
+  { exception_callback::which_except(e); }
+
+#define DAL_THROW(type, thestr) {                                    \
+    std::stringstream msg;                                           \
+    msg << "Error in "__FILE__ << ", line "                          \
+        << __LINE__ << ": \n" << thestr << ends;                     \
     dal::exception_callback::do_exception_callback(msg.str());       \
-    throw (type)(msg.str());                     \
+    throw (type)(msg.str());                                         \
   }
+
+  struct warning_level {
+    static int level(int l = -2) {
+      static int _level = 3;
+      if (l != -2) _level = l;
+      return _level;
+    }
+  };
+
+  inline void set_warning_level(int l) { warning_level::level(l); }
+
+#define DAL_WARNING(level, thestr) {                                 \
+    std::stringstream msg;                                           \
+    msg << "Warning in "__FILE__ << ", line "                        \
+        << __LINE__ << ": \n" << thestr << ends;                     \
+    if (level <= warning_level::level()) cerr << msg.str() << endl;  \
+  } 
+
+  // Warning levels : 0 always
+  //                  1 very important
+  //                  2 important
+  //                  3 remark
+
   
 } /* end of namespace dal.                                                */
 
