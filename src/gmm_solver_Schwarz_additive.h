@@ -344,8 +344,9 @@ namespace gmm {
     std::vector<value_type> xi, xii, fi, di;
     Matrixt Mloc, M(NS.size(), NS.size());
     NS.compute_F(rhs, u);
-    mtype act_res = gmm::vect_norm2(rhs), act_res_new, precond_res = act_res;
-    mtype alpha, alpha_min = mtype(1)/mtype(8), alpha_mult = mtype(3)/mtype(4);
+    mtype act_res=gmm::vect_norm2(rhs), act_res_new(0), precond_res = act_res;
+    mtype alpha, alpha_min=mtype(1)/mtype(16), alpha_mult=mtype(3)/mtype(4);
+    mtype alpha_max_ratio(2);
     
     while(!iter.finished(std::min(act_res, precond_res))) {
       for (int SOR_step = 0;  SOR_step >= 0; --SOR_step) {
@@ -376,9 +377,9 @@ namespace gmm {
 		gmm::add(xi, gmm::scaled(di, alpha), xii);
 		gmm::mult(Bi, xii, u, x);
 		NS.compute_sub_F(fi, x, isd); gmm::scale(fi, value_type(-1));
-		if ((r_t = gmm::vect_norm2(fi)) <= r) break;
+		if ((r_t = gmm::vect_norm2(fi)) <= r * alpha_max_ratio) break;
 	      }
-	      if (iternc.get_noisy()) cout << "(step=" << alpha << ")\t ";
+	      if (iternc.get_noisy()) cout << "(step=" << alpha << ")\t";
 	      ++iternc; r = r_t; gmm::copy(xii, xi); 
 	    }
 	    if (SOR_step) gmm::mult(Bi, gmm::scaled(xii, 1.7), u, u);
@@ -401,11 +402,14 @@ namespace gmm {
 	gmm::add(gmm::scaled(d, alpha), u, x);
 	NS.compute_F(rhs, x);
 	act_res_new = gmm::vect_norm2(rhs);
-	if (act_res_new <= act_res) break;
+	if (act_res_new <= act_res * alpha_max_ratio) break;
       }
       if (iter.get_noisy() > 1) cout << endl;
-      if (iter.get_noisy()) cout << "(step=" << alpha << ")\t ";
-      ++iter; act_res = act_res_new; gmm::copy(x, u);
+      act_res = act_res_new; 
+      if (iter.get_noisy()) cout << "(step=" << alpha << ")\t unprecond res = " << act_res << " ";
+      
+      
+      ++iter; gmm::copy(x, u);
     }
   }
 
