@@ -64,7 +64,7 @@ int main(void) {
     cout << "Borland compiler\n";
 #   endif
 
-    std::complex<float> x(1.0,0.0);
+    // std::complex<float> x(1.0,0.0);
     // cout << "A complex : " << x << endl;
     
     size_t ee = 1, f = 2;
