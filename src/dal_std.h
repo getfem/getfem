@@ -215,6 +215,8 @@ namespace dal
   template <class T> inline T conj(T a) { return a; }
   template <class T> inline std::complex<T> conj(std::complex<T> a)
   { return std::conj(a); }
+  template <class T> inline T real(T a) { return a; }
+  template <class T> inline T real(std::complex<T> a) { return a.real(); }
 }
 
 

@@ -11,7 +11,7 @@
 /*                                                                         */
 /* Copyright (C) 2002  Yves Renard.                                        */
 /*                                                                         */
-/* This file is a part of GMM++                                         */
+/* This file is a part of GMM++                                            */
 /*                                                                         */
 /* This program is free software; you can redistribute it and/or modify    */
 /* it under the terms of the GNU Lesser General Public License as          */
@@ -28,9 +28,6 @@
 /* USA.                                                                    */
 /*                                                                         */
 /* *********************************************************************** */
-
-//   . faire scale et scaled sur les matrices aussi
-//
 
 #ifndef __GMM_SCALED_H
 #define __GMM_SCALED_H

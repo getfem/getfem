@@ -1639,72 +1639,73 @@ namespace gmm {
   struct rcmult {};  // row x col mult
   struct crmult {};  // col x row mult
 
+
   template<class SO1, class SO2, class SO3> struct mult_t;
   #define __DEFMU template<> struct mult_t
-  __DEFMU<row_major, row_major, row_major>       {typedef r_mult t;};
-  __DEFMU<row_major, row_major, col_major>       {typedef g_mult t;};
-  __DEFMU<row_major, row_major, col_and_row>     {typedef r_mult t;};
-  __DEFMU<row_major, row_major, row_and_col>     {typedef r_mult t;};
-  __DEFMU<row_major, col_major, row_major>       {typedef rcmult t;};
-  __DEFMU<row_major, col_major, col_major>       {typedef rcmult t;};
-  __DEFMU<row_major, col_major, col_and_row>     {typedef rcmult t;};
-  __DEFMU<row_major, col_major, row_and_col>     {typedef rcmult t;};
-  __DEFMU<row_major, col_and_row, row_major>     {typedef r_mult t;};
-  __DEFMU<row_major, col_and_row, col_major>     {typedef rcmult t;};
-  __DEFMU<row_major, col_and_row, col_and_row>   {typedef r_mult t;};
-  __DEFMU<row_major, col_and_row, row_and_col>   {typedef r_mult t;};
-  __DEFMU<row_major, row_and_col, row_major>     {typedef r_mult t;};
-  __DEFMU<row_major, row_and_col, col_major>     {typedef rcmult t;};
-  __DEFMU<row_major, row_and_col, col_and_row>   {typedef r_mult t;};
-  __DEFMU<row_major, row_and_col, row_and_col>   {typedef r_mult t;};
-  __DEFMU<col_major, row_major, row_major>       {typedef crmult t;};
-  __DEFMU<col_major, row_major, col_major>       {typedef g_mult t;};
-  __DEFMU<col_major, row_major, col_and_row>     {typedef crmult t;};
-  __DEFMU<col_major, row_major, row_and_col>     {typedef crmult t;};
-  __DEFMU<col_major, col_major, row_major>       {typedef g_mult t;};
-  __DEFMU<col_major, col_major, col_major>       {typedef c_mult t;};
-  __DEFMU<col_major, col_major, col_and_row>     {typedef c_mult t;};
-  __DEFMU<col_major, col_major, row_and_col>     {typedef c_mult t;};
-  __DEFMU<col_major, col_and_row, row_major>     {typedef crmult t;};
-  __DEFMU<col_major, col_and_row, col_major>     {typedef c_mult t;};
-  __DEFMU<col_major, col_and_row, col_and_row>   {typedef c_mult t;};
-  __DEFMU<col_major, col_and_row, row_and_col>   {typedef c_mult t;};
-  __DEFMU<col_major, row_and_col, row_major>     {typedef crmult t;};
-  __DEFMU<col_major, row_and_col, col_major>     {typedef c_mult t;};
-  __DEFMU<col_major, row_and_col, col_and_row>   {typedef c_mult t;};
-  __DEFMU<col_major, row_and_col, row_and_col>   {typedef c_mult t;};
-  __DEFMU<col_and_row, row_major, row_major>     {typedef r_mult t;};
-  __DEFMU<col_and_row, row_major, col_major>     {typedef g_mult t;};
-  __DEFMU<col_and_row, row_major, col_and_row>   {typedef r_mult t;};
-  __DEFMU<col_and_row, row_major, row_and_col>   {typedef r_mult t;};
-  __DEFMU<col_and_row, col_major, row_major>     {typedef rcmult t;};
-  __DEFMU<col_and_row, col_major, col_major>     {typedef c_mult t;};
-  __DEFMU<col_and_row, col_major, col_and_row>   {typedef c_mult t;};
-  __DEFMU<col_and_row, col_major, row_and_col>   {typedef c_mult t;};
-  __DEFMU<col_and_row, col_and_row, row_major>   {typedef r_mult t;};
-  __DEFMU<col_and_row, col_and_row, col_major>   {typedef c_mult t;};
-  __DEFMU<col_and_row, col_and_row, col_and_row> {typedef c_mult t;};
-  __DEFMU<col_and_row, col_and_row, row_and_col> {typedef c_mult t;};
-  __DEFMU<col_and_row, row_and_col, row_major>   {typedef r_mult t;};
-  __DEFMU<col_and_row, row_and_col, col_major>   {typedef c_mult t;};
-  __DEFMU<col_and_row, row_and_col, col_and_row> {typedef c_mult t;};
-  __DEFMU<col_and_row, row_and_col, row_and_col> {typedef r_mult t;};
-  __DEFMU<row_and_col, row_major, row_major>     {typedef r_mult t;};
-  __DEFMU<row_and_col, row_major, col_major>     {typedef g_mult t;};
-  __DEFMU<row_and_col, row_major, col_and_row>   {typedef r_mult t;};
-  __DEFMU<row_and_col, row_major, row_and_col>   {typedef r_mult t;};
-  __DEFMU<row_and_col, col_major, row_major>     {typedef rcmult t;};
-  __DEFMU<row_and_col, col_major, col_major>     {typedef c_mult t;};
-  __DEFMU<row_and_col, col_major, col_and_row>   {typedef c_mult t;};
-  __DEFMU<row_and_col, col_major, row_and_col>   {typedef c_mult t;};
-  __DEFMU<row_and_col, col_and_row, row_major>   {typedef r_mult t;};
-  __DEFMU<row_and_col, col_and_row, col_major>   {typedef c_mult t;};
-  __DEFMU<row_and_col, col_and_row, col_and_row> {typedef c_mult t;};
-  __DEFMU<row_and_col, col_and_row, row_and_col> {typedef c_mult t;};
-  __DEFMU<row_and_col, row_and_col, row_major>   {typedef r_mult t;};
-  __DEFMU<row_and_col, row_and_col, col_major>   {typedef c_mult t;};
-  __DEFMU<row_and_col, row_and_col, col_and_row> {typedef r_mult t;};
-  __DEFMU<row_and_col, row_and_col, row_and_col> {typedef r_mult t;};
+  __DEFMU<row_major  , row_major  , row_major  > { typedef r_mult t; };
+  __DEFMU<row_major  , row_major  , col_major  > { typedef g_mult t; };
+  __DEFMU<row_major  , row_major  , col_and_row> { typedef r_mult t; };
+  __DEFMU<row_major  , row_major  , row_and_col> { typedef r_mult t; };
+  __DEFMU<row_major  , col_major  , row_major  > { typedef rcmult t; };
+  __DEFMU<row_major  , col_major  , col_major  > { typedef rcmult t; };
+  __DEFMU<row_major  , col_major  , col_and_row> { typedef rcmult t; };
+  __DEFMU<row_major  , col_major  , row_and_col> { typedef rcmult t; };
+  __DEFMU<row_major  , col_and_row, row_major  > { typedef rcmult t; };
+  __DEFMU<row_major  , col_and_row, col_major  > { typedef rcmult t; };
+  __DEFMU<row_major  , col_and_row, col_and_row> { typedef rcmult t; };
+  __DEFMU<row_major  , col_and_row, row_and_col> { typedef rcmult t; };
+  __DEFMU<row_major  , row_and_col, row_major  > { typedef r_mult t; };
+  __DEFMU<row_major  , row_and_col, col_major  > { typedef rcmult t; };
+  __DEFMU<row_major  , row_and_col, col_and_row> { typedef r_mult t; };
+  __DEFMU<row_major  , row_and_col, row_and_col> { typedef r_mult t; };
+  __DEFMU<col_major  , row_major  , row_major  > { typedef crmult t; };
+  __DEFMU<col_major  , row_major  , col_major  > { typedef g_mult t; };
+  __DEFMU<col_major  , row_major  , col_and_row> { typedef crmult t; };
+  __DEFMU<col_major  , row_major  , row_and_col> { typedef crmult t; };
+  __DEFMU<col_major  , col_major  , row_major  > { typedef g_mult t; };
+  __DEFMU<col_major  , col_major  , col_major  > { typedef c_mult t; };
+  __DEFMU<col_major  , col_major  , col_and_row> { typedef c_mult t; };
+  __DEFMU<col_major  , col_major  , row_and_col> { typedef c_mult t; };
+  __DEFMU<col_major  , col_and_row, row_major  > { typedef crmult t; };
+  __DEFMU<col_major  , col_and_row, col_major  > { typedef c_mult t; };
+  __DEFMU<col_major  , col_and_row, col_and_row> { typedef c_mult t; };
+  __DEFMU<col_major  , col_and_row, row_and_col> { typedef c_mult t; };
+  __DEFMU<col_major  , row_and_col, row_major  > { typedef crmult t; };
+  __DEFMU<col_major  , row_and_col, col_major  > { typedef c_mult t; };
+  __DEFMU<col_major  , row_and_col, col_and_row> { typedef c_mult t; };
+  __DEFMU<col_major  , row_and_col, row_and_col> { typedef c_mult t; };
+  __DEFMU<col_and_row, row_major  , row_major  > { typedef r_mult t; };
+  __DEFMU<col_and_row, row_major  , col_major  > { typedef c_mult t; };
+  __DEFMU<col_and_row, row_major  , col_and_row> { typedef c_mult t; };
+  __DEFMU<col_and_row, row_major  , row_and_col> { typedef r_mult t; };
+  __DEFMU<col_and_row, col_major  , row_major  > { typedef rcmult t; };
+  __DEFMU<col_and_row, col_major  , col_major  > { typedef c_mult t; };
+  __DEFMU<col_and_row, col_major  , col_and_row> { typedef c_mult t; };
+  __DEFMU<col_and_row, col_major  , row_and_col> { typedef c_mult t; };
+  __DEFMU<col_and_row, col_and_row, row_major  > { typedef r_mult t; };
+  __DEFMU<col_and_row, col_and_row, col_major  > { typedef c_mult t; };
+  __DEFMU<col_and_row, col_and_row, col_and_row> { typedef c_mult t; };
+  __DEFMU<col_and_row, col_and_row, row_and_col> { typedef c_mult t; };
+  __DEFMU<col_and_row, row_and_col, row_major  > { typedef r_mult t; };
+  __DEFMU<col_and_row, row_and_col, col_major  > { typedef c_mult t; };
+  __DEFMU<col_and_row, row_and_col, col_and_row> { typedef c_mult t; };
+  __DEFMU<col_and_row, row_and_col, row_and_col> { typedef r_mult t; };
+  __DEFMU<row_and_col, row_major  , row_major  > { typedef r_mult t; };
+  __DEFMU<row_and_col, row_major  , col_major  > { typedef c_mult t; };
+  __DEFMU<row_and_col, row_major  , col_and_row> { typedef r_mult t; };
+  __DEFMU<row_and_col, row_major  , row_and_col> { typedef r_mult t; };
+  __DEFMU<row_and_col, col_major  , row_major  > { typedef rcmult t; };
+  __DEFMU<row_and_col, col_major  , col_major  > { typedef c_mult t; };
+  __DEFMU<row_and_col, col_major  , col_and_row> { typedef c_mult t; };
+  __DEFMU<row_and_col, col_major  , row_and_col> { typedef c_mult t; };
+  __DEFMU<row_and_col, col_and_row, row_major  > { typedef rcmult t; };
+  __DEFMU<row_and_col, col_and_row, col_major  > { typedef rcmult t; };
+  __DEFMU<row_and_col, col_and_row, col_and_row> { typedef rcmult t; };
+  __DEFMU<row_and_col, col_and_row, row_and_col> { typedef rcmult t; };
+  __DEFMU<row_and_col, row_and_col, row_major  > { typedef r_mult t; };
+  __DEFMU<row_and_col, row_and_col, col_major  > { typedef c_mult t; };
+  __DEFMU<row_and_col, row_and_col, col_and_row> { typedef r_mult t; };
+  __DEFMU<row_and_col, row_and_col, row_and_col> { typedef r_mult t; };
 
   template <class L1, class L2, class L3>
   void mult_dispatch(const L1& l1, const L2& l2, L3& l3, abstract_matrix) {
@@ -1807,19 +1808,44 @@ namespace gmm {
 
   template <class L1, class L2, class L3> inline
   void mult_spec(const L1& l1, const L2& l2, L3& l3, c_mult)
-  { mult_spec(l1, l2, l3, c_mult(), typename linalg_traits<L2>::storage_type()); }
+  { mult_spec(l1, l2,l3,c_mult(),typename linalg_traits<L2>::storage_type()); }
 
 
   template <class L1, class L2, class L3>
   void mult_spec(const L1& l1, const L2& l2, L3& l3, c_mult, abstract_dense) {
-    // optimizable
-    clear(l3);
+    typedef typename linalg_traits<L1>::value_type T;
     size_type nn = mat_ncols(l3), mm = mat_ncols(l1);
+
     for (size_type i = 0; i < nn; ++i) {
-      for (size_type j = 0; j < mm; ++j)
-      add(scaled(mat_const_col(l1, j), l2(j, i)), mat_col(l3, i));
+      clear(mat_col(l3, i));
+      for (size_type j = 0; j < mm; ++j) {
+	T b = l2(j, i);
+	if (b != T(0)) add(scaled(mat_const_col(l1, j), b), mat_col(l3, i));
+      }
     }
   }
+
+//   template <class L1, class L2, class L3> // à ne pas garder ... !
+//   void mult_spec(const L1& l1, const L2& l2, L3& l3, c_mult, abstract_dense) {
+//     typedef typename linalg_traits<L1>::value_type T;
+//     size_type nn = mat_ncols(l3), mm = mat_ncols(l1), ll = mat_nrows(l3);
+
+//     for (size_type i = 0; i < nn; ++i) {
+//       T *p = &l3(0, i), *r = p + ll;
+//       //clear(mat_col(l3, i));
+//       for (T *q = p; q < r; ++q) *q = T(0);
+//       for (size_type j = 0; j < mm; ++j) {
+// 	T b = l2(j, i);
+// 	if (b != T(0)) {
+// 	  const T *s = &l1(0, j);
+// 	  for (T *q = p; q < r; ++q, ++s) *q += b * (*s);
+// 	}
+//       }
+//     }
+//   }
+
+
+  
 
 
   template <class L1, class L2, class L3>

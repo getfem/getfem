@@ -102,7 +102,7 @@ namespace gmm {
     
     sub_interval SUBI(0, V.nrows()), SUBJ(0, i+1);
     std::vector<T> corr(i+1);
-    gmm::mult(conjugated(transposed(sub_matrix(V.mat(), SUBI, SUBJ))),
+    gmm::mult(conjugated(sub_matrix(V.mat(), SUBI, SUBJ)),
 	      V[i+1], corr);
     gmm::mult(sub_matrix(V.mat(), SUBI, SUBJ),
 	      scaled(corr, T(-1)), V[i+1],V[i+1]);

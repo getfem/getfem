@@ -198,7 +198,7 @@ namespace gmm {
     typedef typename linalg_traits<MAT>::value_type value_type;
     typedef typename number_traits<value_type>::magnitude_type magnitude_type;
 
-    gmm::mult(conjugated(transposed(A)),
+    gmm::mult(conjugated(A),
 	      scaled(V, magnitude_type(-2.0)/vect_norm2_sqr(V)), W);
     rank_one_update(A, V, W);
   }

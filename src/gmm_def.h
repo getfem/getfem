@@ -475,10 +475,10 @@ namespace gmm {
 
   template <class IT> struct dense_clear {
     typedef typename std::iterator_traits<IT>::value_type value_type;
-    void operator()(const void *,const IT &_begin,const IT &_end);
+    inline void operator()(const void *,const IT &_begin,const IT &_end);
   };
   
-  template <class IT> void dense_clear<IT>::operator()(const void *,
+  template <class IT> inline void dense_clear<IT>::operator()(const void *,
 			  const IT &_begin, const IT &_end)
   { std::fill(_begin, _end, value_type(0)); }
 

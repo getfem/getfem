@@ -106,7 +106,6 @@ template <class MAT>  void test_qr(const MAT &m) {
   gmm::mult(cq, cr, ca);
   gmm::add(gmm::scaled(cm, -1.0), ca);
   cout << "difference on QR factorization : " << gmm::mat_norm2(ca) << endl;
-  // if (gmm::mat_norm2(ca) > tol * 1E3)
   if (gmm::mat_norm2(ca) > sqrt(tol)) 
     DAL_THROW(dal::failure_error, "Error on QR factorisation");
 
@@ -133,8 +132,10 @@ template <class MAT>  void test_qr(const MAT &m) {
   // cout << "time to compute rudimentary QR : "<<ftool::uclock_sec()-exectime;
   // cout << "\neigenvalues : " << eigc << endl;
   // cout << "eigenvectors : " << cq << endl;
+  MAT cm_conj(nn, nn); /* to avoid a Warning in the mult. */
+  gmm::copy(gmm::conjugated(gmm::transposed(cm)), cm_conj);
 
-  gmm::mult(cm, gmm::conjugated(gmm::transposed(cm)), cq); gmm::copy(cq, cm);
+  gmm::mult(cm, cm_conj, cq); gmm::copy(cq, cm);
   // print_for_matlab(cm);
   exectime = ftool::uclock_sec();
   symmetric_qr_algorithm(cm, eigc, cq);

@@ -49,5 +49,6 @@
 #include <gmm_solvers.h>
 #include <gmm_condest.h>
 #include <gmm_opt.h>
+#include <gmm_lapack_interface.h>
 
 #endif //  __GMM_H

@@ -69,8 +69,8 @@ namespace gmm {
     difference_type operator -(const conjugated_const_iterator &i) const
       { return difference_type(it - i.it); }
     
-    value_type operator  *() const { return std::conj(*it); }
-    value_type operator [](size_type ii) const { return std::conj(it[ii]); }
+    value_type operator  *() const { return dal::conj(*it); }
+    value_type operator [](size_type ii) const { return dal::conj(it[ii]); }
     
     bool operator ==(const conjugated_const_iterator &i) const
       { return (i.it == it); }
@@ -97,7 +97,7 @@ namespace gmm {
 	_size(vect_size(v)) {}
 
     reference operator[](size_type i) const
-    { return std::conj(access_type()(origin, _begin, _end, i)); }
+    { return dal::conj(access_type()(origin, _begin, _end, i)); }
   };
 
   template <class V> struct conjugated_vector_const_access {
@@ -107,7 +107,7 @@ namespace gmm {
     
     value_type operator()(const void *o, const iterator &_begin,
 			  const iterator &_end, size_type i) {
-      return std::conj(typename linalg_traits<V>::access_type()(o, _begin.it,
+      return dal::conj(typename linalg_traits<V>::access_type()(o, _begin.it,
 								_end.it, i));
     }
   };
@@ -198,7 +198,7 @@ namespace gmm {
       _end(mat_row_end(m)), origin(linalg_origin(m)) {}
 
     value_type operator()(size_type i, size_type j) const
-    { return std::conj(access_type()(_begin+i, j)); }
+    { return dal::conj(access_type()(_begin+j, i)); }
   };
 
   template <class M> struct conjugated_row_matrix_access {
@@ -208,7 +208,7 @@ namespace gmm {
     typedef typename linalg_traits<M>::access_type access_type;
     
     value_type operator()(const iterator &itrow, size_type i)
-    { return std::conj(access_type()(itrow.it, i)); }
+    { return dal::conj(access_type()(itrow.it, i)); }
   };
 
   template <class M>
@@ -220,25 +220,25 @@ namespace gmm {
     typedef value_type reference;
     typedef typename linalg_traits<M>::storage_type storage_type;
     typedef typename linalg_traits<M>::const_sub_row_type vector_type;
-    typedef conjugated_vector_const_ref<vector_type> sub_row_type;
-    typedef conjugated_vector_const_ref<vector_type> const_sub_row_type;
-    typedef conjugated_row_const_iterator<M> row_iterator;
-    typedef conjugated_row_const_iterator<M> const_row_iterator;
-    typedef abstract_null_type const_sub_col_type;
-    typedef abstract_null_type sub_col_type;
-    typedef abstract_null_type const_col_iterator;
-    typedef abstract_null_type col_iterator;
-    typedef row_major sub_orientation;
+    typedef conjugated_vector_const_ref<vector_type> sub_col_type;
+    typedef conjugated_vector_const_ref<vector_type> const_sub_col_type;
+    typedef conjugated_row_const_iterator<M> col_iterator;
+    typedef conjugated_row_const_iterator<M> const_col_iterator;
+    typedef abstract_null_type const_sub_row_type;
+    typedef abstract_null_type sub_row_type;
+    typedef abstract_null_type const_row_iterator;
+    typedef abstract_null_type row_iterator;
+    typedef col_major sub_orientation;
     typedef conjugated_row_matrix_access<M> access_type;
-    static size_type nrows(const this_type &m) { return m._end - m._begin; }
-    static size_type ncols(const this_type &m)
-    { return (nrows(m) == 0) ? 0 : vect_size(mat_row(m, 0)); }
-    static const_sub_row_type row(const const_row_iterator &it)
+    static size_type ncols(const this_type &m) { return m._end - m._begin; }
+    static size_type nrows(const this_type &m)
+    { return (ncols(m) == 0) ? 0 : vect_size(mat_col(m, 0)); }
+    static const_sub_col_type col(const const_col_iterator &it)
     { return conjugated(linalg_traits<M>::row(it.it)); }
-    static const_row_iterator row_begin(const this_type &m)
-    { return const_row_iterator(m._begin); }
-    static const_row_iterator row_end(const this_type &m)
-    { return const_row_iterator(m._end); }
+    static const_col_iterator col_begin(const this_type &m)
+    { return const_col_iterator(m._begin); }
+    static const_col_iterator col_end(const this_type &m)
+    { return const_col_iterator(m._end); }
     static const void* origin(const this_type &m) { return m.origin; }
   };
 
@@ -302,7 +302,7 @@ namespace gmm {
       _end(mat_col_end(m)), origin(linalg_origin(m)) {}
 
     value_type operator()(size_type i, size_type j) const
-    { return std::conj(access_type()(_begin+j, i)); }
+    { return dal::conj(access_type()(_begin+i, j)); }
   };
 
   template <class M> struct conjugated_col_matrix_access {
@@ -312,7 +312,7 @@ namespace gmm {
     typedef typename linalg_traits<M>::access_type access_type;
     
     value_type operator()(const iterator &itcol, size_type i)
-    { return std::conj(access_type()(itcol.it, i)); }
+    { return dal::conj(access_type()(itcol.it, i)); }
   };
 
   template <class M>
@@ -324,25 +324,25 @@ namespace gmm {
     typedef value_type reference;
     typedef typename linalg_traits<M>::storage_type storage_type;
     typedef typename linalg_traits<M>::const_sub_col_type vector_type;
+    typedef conjugated_vector_const_ref<vector_type> sub_row_type;
+    typedef conjugated_vector_const_ref<vector_type> const_sub_row_type;
+    typedef conjugated_col_const_iterator<M> row_iterator;
+    typedef conjugated_col_const_iterator<M> const_row_iterator;
+    typedef abstract_null_type const_sub_col_type;
     typedef abstract_null_type sub_col_type;
-    typedef conjugated_vector_const_ref<vector_type> const_sub_col_type;
-    typedef abstract_null_type  col_iterator;
-    typedef conjugated_col_const_iterator<M> const_col_iterator;
-    typedef abstract_null_type const_sub_row_type;
-    typedef abstract_null_type sub_row_type;
-    typedef abstract_null_type const_row_iterator;
-    typedef abstract_null_type row_iterator;
-    typedef col_major sub_orientation;
+    typedef abstract_null_type const_col_iterator;
+    typedef abstract_null_type col_iterator;
+    typedef row_major sub_orientation;
     typedef conjugated_col_matrix_access<M> access_type;
-    static size_type ncols(const this_type &m) { return m._end - m._begin; }
-    static size_type nrows(const this_type &m)
-    { return (ncols(m) == 0) ? 0 : vect_size(mat_col(m, 0)); }
-    static const_sub_col_type col(const const_col_iterator &it)
+    static size_type nrows(const this_type &m) { return m._end - m._begin; }
+    static size_type ncols(const this_type &m)
+    { return (nrows(m) == 0) ? 0 : vect_size(mat_row(m, 0)); }
+    static const_sub_row_type row(const const_row_iterator &it)
     { return conjugated(linalg_traits<M>::col(it.it)); }
-    static const_col_iterator col_begin(const this_type &m)
-    { return const_col_iterator(m._begin); }
-    static const_col_iterator col_end(const this_type &m)
-    { return const_col_iterator(m._end); }
+    static const_row_iterator row_begin(const this_type &m)
+    { return const_row_iterator(m._begin); }
+    static const_row_iterator row_end(const this_type &m)
+    { return const_row_iterator(m._end); }
     static const void* origin(const this_type &m) { return m.origin; }
   };
 
@@ -372,7 +372,7 @@ namespace gmm {
     typedef conjugated_vector_const_ref<L> return_type;
   };
   template <class L, class T>
-  struct _conjugated_return<L, std::complex<T>, abstract_matrix> {
+  struct _conjugated_return<L, T, abstract_matrix> {
     typedef typename __conjugated_return<L,
     typename principal_orientation_type<typename
     linalg_traits<L>::sub_orientation>::potype
@@ -404,7 +404,7 @@ namespace gmm {
   typename __conjugated_return<L,
     typename principal_orientation_type<typename
     linalg_traits<L>::sub_orientation>::potype>::return_type
-  conjugated(const L &v, std::complex<T>, abstract_matrix) {
+  conjugated(const L &v, T, abstract_matrix) {
     return conjugated(v, typename principal_orientation_type<typename
 		      linalg_traits<L>::sub_orientation>::potype());
   }

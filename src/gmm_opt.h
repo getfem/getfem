@@ -90,7 +90,7 @@ namespace gmm {
     }
     else {
       dense_matrix<T> B(mat_nrows(A), mat_ncols(A));
-      std::vector<size_type> ipvt(mat_nrows(A));
+      std::vector<int> ipvt(mat_nrows(A));
       gmm::copy(A, B);
       if (lu_factor(B, ipvt)) DAL_THROW(failure_error,"Non invertible matrix");
       lu_inverse(B, ipvt, A);

@@ -193,33 +193,15 @@ namespace gmm {
 
 // Triangular Solve:  x <-- T^{-1} * x
 
-  template <class TriMatrix, class VecX>
-  void upper_tri_solve(const TriMatrix& T, VecX &x_, bool is_unit = false) {
-    VecX& x = const_cast<VecX&>(x_);
-    if ((mat_nrows(T) > vect_size(x)) || (mat_ncols(T) > vect_size(x))
-	|| (mat_nrows(T) != mat_ncols(T)) || is_sparse(x_))
-      DAL_THROW(dimension_error, "dimensions mismatch");
-    upper_tri_solve__(T, x, mat_nrows(T), 
-		      typename principal_orientation_type<typename
-		      linalg_traits<TriMatrix>::sub_orientation>::potype(),
-		      typename linalg_traits<TriMatrix>::storage_type(),
-		      is_unit);
-  }
+  template <class TriMatrix, class VecX> inline
+  void upper_tri_solve(const TriMatrix& T, VecX &x_, bool is_unit = false)
+  { upper_tri_solve(T, x_, mat_nrows(T), is_unit); }
   
-  template <class TriMatrix, class VecX>
-  void lower_tri_solve(const TriMatrix& T, VecX &x_, bool is_unit = false) {
-    VecX& x = const_cast<VecX&>(x_);
-    if ((mat_nrows(T) > vect_size(x)) || (mat_ncols(T) > vect_size(x))
-	|| (mat_nrows(T) != mat_ncols(T)) || is_sparse(x_))
-      DAL_THROW(dimension_error, "dimensions mismatch");
-    lower_tri_solve__(T, x, mat_nrows(T), 
-		      typename principal_orientation_type<typename
-		      linalg_traits<TriMatrix>::sub_orientation>::potype(),
-		      typename linalg_traits<TriMatrix>::storage_type(),
-		      is_unit);
-  }
+  template <class TriMatrix, class VecX> inline
+  void lower_tri_solve(const TriMatrix& T, VecX &x_, bool is_unit = false)
+  { lower_tri_solve(T, x_, mat_nrows(T), is_unit); }
 
-  template <class TriMatrix, class VecX>
+  template <class TriMatrix, class VecX> inline
   void upper_tri_solve(const TriMatrix& T, VecX &x_, size_t k,
 		       bool is_unit) {
     VecX& x = const_cast<VecX&>(x_);
@@ -233,7 +215,7 @@ namespace gmm {
 		      is_unit);
   }
   
-  template <class TriMatrix, class VecX>
+  template <class TriMatrix, class VecX> inline
   void lower_tri_solve(const TriMatrix& T, VecX &x_, size_t k,
 		       bool is_unit) {
     VecX& x = const_cast<VecX&>(x_);

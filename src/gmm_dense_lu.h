@@ -119,7 +119,7 @@ namespace gmm {
   template <class DenseMatrix, class VectorB, class VectorX>
   void lu_solve(const DenseMatrix &A, VectorX &x, const VectorB &b) {
     DenseMatrix B(mat_nrows(A), mat_ncols(A));
-    std::vector<size_type> ipvt(mat_nrows(A));
+    std::vector<int> ipvt(mat_nrows(A));
     gmm::copy(A, B);
     lu_factor(B, ipvt);
     lu_solve(B, ipvt, x, b);
@@ -141,7 +141,6 @@ namespace gmm {
 
   // LU Inverse : Given an LU factored matrix, construct the inverse 
   //              of the matrix.
-  //  Thanks to Valient Gough for this routine!
   template <class DenseMatrixLU, class DenseMatrix, class Pvector>
   void lu_inverse(const DenseMatrixLU& LU, const Pvector& pvector,
 		  DenseMatrix& AInv, col_major) {
@@ -188,7 +187,7 @@ namespace gmm {
     typedef typename linalg_traits<DenseMatrix>::value_type value_type;
     DenseMatrix& A = const_cast<DenseMatrix&>(A_);
     dense_matrix<value_type> B(mat_nrows(A), mat_ncols(A));
-    std::vector<size_type> ipvt(mat_nrows(A));
+    std::vector<int> ipvt(mat_nrows(A));
     gmm::copy(A, B);
     if (lu_factor(B, ipvt)) DAL_THROW(failure_error, "Non invertible matrix");
     lu_inverse(B, ipvt, A);
@@ -209,7 +208,7 @@ namespace gmm {
   lu_det(const DenseMatrix& A) {
     typedef typename linalg_traits<DenseMatrix>::value_type value_type;
     dense_matrix<value_type> B(mat_nrows(A), mat_ncols(A));
-    std::vector<size_type> ipvt(mat_nrows(A));
+    std::vector<int> ipvt(mat_nrows(A));
     gmm::copy(A, B);
     lu_factor(B, ipvt);
     return lu_det(B, ipvt);

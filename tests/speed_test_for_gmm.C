@@ -269,7 +269,7 @@ int main(void) {
       cout << "\nbuilding the stiffness matrix\n";
       scalar_type exectime = ftool::uclock_sec();
       pb_data p;
-      p.init(10 /* NX */ , 3 /* K */);
+      p.init(5 /* NX */ , 3 /* K */);
       p.assemble();
       cout << "Stiffness matrix computation : "
 	   << ftool::uclock_sec() - exectime << " seconds\n";

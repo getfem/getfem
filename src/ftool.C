@@ -39,18 +39,7 @@
 #include <sys/times.h>
 #endif
 
-namespace ftool
-{
-
-#ifdef HAVE_SYS_TIMES
-  double uclock_sec(void)
-  { static double ttclk = 0.;
-    if (ttclk == 0.) ttclk = sysconf(_SC_CLK_TCK);
-    tms t; times(&t); return double(t.tms_utime) / ttclk; }
-#else
-  double uclock_sec(void)
-  { return double(clock())/double(CLOCKS_PER_SEC); }
-#endif
+namespace ftool {
 
   bool read_until(std::istream &ist, const char *st)
   {

@@ -215,7 +215,7 @@ namespace gmm {
     static iterator end(this_type &v) { return v.end(); }
     static const_iterator end(const this_type &v) { return v.end(); }
     static const void* origin(const this_type &v) { return v.origin; }
-    static void do_clear(this_type &v) { clear_type()(v.origin, v.begin(), v.end()); }
+    static inline void do_clear(this_type &v) { clear_type()(v.origin, v.begin(), v.end()); }
   };
 
   template <class IT> std::ostream &operator <<

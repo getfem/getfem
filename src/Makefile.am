@@ -83,6 +83,7 @@ include_HEADERS =                      \
 	gmm_precond_ilu.h              \
 	gmm_precond_ilut.h             \
 	gmm_blas.h                     \
+	gmm_lapack_interface.h         \
 	gmm_condest.h                  \
 	gmm_opt.h                      \
 	linkmsg.h

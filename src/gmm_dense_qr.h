@@ -478,7 +478,7 @@ namespace gmm {
 
 //     dense_matrix<value_type> aux1(n,n), aux2(n,n);
 //     gmm::mult(eigvect, T, aux1);
-//     gmm::mult(aux1, conjugated(transposed(eigvect)), aux2);
+//     gmm::mult(aux1, conjugated(eigvect), aux2);
 //     gmm::add(scaled(A, -1), aux2);
 //     cout << "Ca donne : " << mat_norm2(aux2) << endl;
 
