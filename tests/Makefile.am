@@ -22,7 +22,7 @@ check_PROGRAMS = \
 	schwarz_additive    \
 	test_assembly      \
 	test_int_set       \
-	test_link_fem      \
+	test_interpolated_fem      \
 	test_mat_elem      \
 	test_slice         \
 	test_norm	   \
@@ -54,7 +54,7 @@ test_mesh_SOURCES = test_mesh.C
 geo_trans_SOURCES = geo_trans.C
 geo_trans_inv_SOURCES = geo_trans_inv.C
 test_int_set_SOURCES = test_int_set.C
-test_link_fem_SOURCES = test_link_fem.C
+test_interpolated_fem_SOURCES = test_interpolated_fem.C
 test_tree_sorted_SOURCES = test_tree_sorted.C
 test_mat_elem_SOURCES = test_mat_elem.C
 test_slice_SOURCES = test_slice.C
@@ -91,7 +91,7 @@ TESTS = \
 	$(top_srcdir)/tests/geo_trans_inv.pl      \
 	$(top_srcdir)/tests/schwarz_additive.pl   \
 	$(top_srcdir)/tests/test_int_set.pl       \
-	$(top_srcdir)/tests/test_link_fem.pl      \
+	$(top_srcdir)/tests/test_interpolated_fem.pl      \
 	$(top_srcdir)/tests/test_slice.pl         \
 	$(top_srcdir)/tests/test_tree_sorted.pl   \
 	$(top_srcdir)/tests/make_gmm_test.pl     
@@ -113,7 +113,7 @@ EXTRA_DIST = \
 	geo_trans.pl                      \
 	geo_trans_inv.pl                  \
 	test_int_set.pl                   \
-	test_link_fem.pl                  \
+	test_interpolated_fem.pl          \
 	test_slice.pl			  \
 	test_tree_sorted.pl               \
 	test_mat_elem.pl                  \
