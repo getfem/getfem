@@ -62,6 +62,7 @@ struct elastostatic_problem {
   enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
   getfem::getfem_mesh mesh;  /* the mesh */
   getfem::mesh_fem mf_u;     /* main mesh_fem, for the elastostatic solution */
+  getfem::mesh_fem mf_p;     /* mesh_fem for the pressure.                   */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   getfem::mesh_fem mf_coef;  /* mesh_fem used to represent pde coefficients  */
   scalar_type p1, p2, p3;    /* elastic coefficients.                        */
@@ -73,7 +74,7 @@ struct elastostatic_problem {
 
   bool solve(plain_vector &U);
   void init(void);
-  elastostatic_problem(void) : mf_u(mesh), mf_rhs(mesh), mf_coef(mesh) {}
+  elastostatic_problem(void) : mf_u(mesh), mf_p(mesh), mf_rhs(mesh), mf_coef(mesh) {}
 };
 
 void test(scalar_type a, scalar_type b, scalar_type c) {
@@ -276,6 +277,7 @@ template <typename MODEL_STATE> void
 void elastostatic_problem::init(void) {
   const char *MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
   const char *FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
+  const char *FEM_TYPE_P  = PARAM.string_value("FEM_TYPE_P","FEM name for the pressure");
   const char *INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
@@ -320,6 +322,8 @@ void elastostatic_problem::init(void) {
     getfem::int_method_descriptor(INTEGRATION);
 
   mf_u.set_finite_element(mesh.convex_index(), pf_u, ppi);
+
+  mf_p.set_finite_element(mesh.convex_index(), getfem::fem_descriptor(FEM_TYPE_P), ppi);
 
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
@@ -407,6 +411,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
   //getfem::Mooney_Rivlin_hyperelastic_law l;
   getfem::mdbrick_nonlinear_elasticity<>  ELAS(l, mf_u, mf_coef, p1, p2);
 
+  getfem::mdbrick_nonlinear_incomp<>  INCOMP(ELAS, mf_p);
+
   // Defining the volumic source term.
   base_vector f(N); 
   f[0] = PARAM.real_value("FORCEX","Amplitude of the force");
@@ -420,23 +426,26 @@ bool elastostatic_problem::solve(plain_vector &U) {
   // Volumic source term brick.
   int nb_step = PARAM.int_value("NBSTEP");
 
+
+  getfem::mdbrick_source_term<> VOL_F(INCOMP, mf_rhs, F);
+  getfem::mdbrick_Dirichlet<> final_model(VOL_F, mf_rhs,
+					  F, DIRICHLET_BOUNDARY_NUM,
+					  PARAM.int_value("USE_MULTIPLIERS"));
+
   // Generic solve.
-  getfem::standard_model_state MS;
+  getfem::standard_model_state MS(final_model);
   size_type maxit = PARAM.int_value("MAXITER"); 
   gmm::iteration iter;
-  gmm::clear(MS.state());
+
   for (int step = 0; step < nb_step; ++step) {
     plain_vector DF(F);
+
     gmm::copy(gmm::scaled(F, (step+1.)/(scalar_type)nb_step), DF);
-    getfem::mdbrick_source_term<> VOL_F(ELAS, mf_rhs, DF);
-    gmm::clear(DF);
-    getfem::mdbrick_Dirichlet<> final_model(VOL_F, mf_rhs,
-					    DF, DIRICHLET_BOUNDARY_NUM,
-					    PARAM.int_value("USE_MULTIPLIERS"));
+    VOL_F.set_rhs(DF);
     cout << "step " << step << ", number of variables : " << final_model.nb_dof() << endl;
     iter = gmm::iteration(residu, 1, maxit ? maxit : 40000);
     cout << "|U0| = " << gmm::vect_norm2(MS.state()) << "\n";
-    getfem::nl_solve(MS, final_model, iter);
+    getfem::standard_solve(MS, final_model, iter);
   }
 
   // Solution extraction

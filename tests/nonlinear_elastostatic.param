@@ -17,17 +17,19 @@ FORCEZ = 0;
 %MESH_TYPE = 'GT_PK(3,1)';         % linear triangles
 MESH_TYPE = 'GT_QK(3,1)'; % linear rectangles
 %MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
-NX = 6;            	          % space step.
-NZ = 12;
-LZ = 2;
+NX = 2;            	          % space step.
+NZ = 2;
+LZ = 1;
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 
 %FEM_TYPE = 'FEM_PK(2,1)';  % P1 for triangles
-FEM_TYPE = 'FEM_QK(3,1)';  % Q1 fem for quadrangles
+FEM_TYPE = 'FEM_QK(3,2)';  % Q1 fem for quadrangles
 %FEM_TYPE = 'FEM_PRODUCT(FEM_PK(2,1),FEM_PK(1,1))'; % tensorial product of FEM for prisms
 %FEM_TYPE = 'FEM_HERMITE_SEGMENT'; % (broken) Hermite fem on a segment
 %FEM_TYPE = 'FEM_PK_HIERARCHICAL(2,2)'; % Hierarchical PK on simplexes
 %FEM_TYPE = 'FEM_PK_HIERARCHICAL_COMPOSITE(2,1,2)'; % Hierarchical PK with s divisions
+
+FEM_TYPE_P = 'FEM_QK(3,1)';  % P1 for triangles
 
 % DATA_FEM_TYPE must be defined if your main FEM is not Lagrangian
 %DATA_FEM_TYPE = 'FEM_PK(2,1)';
@@ -44,7 +46,7 @@ FEM_TYPE = 'FEM_QK(3,1)';  % Q1 fem for quadrangles
 %INTEGRATION = 'IM_GAUSSLOBATTO1D(10)'; % Gauss-Lobatto-Legendre
                                       % integration on the segment
                                       % of order 10
-INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3,3)'; % Product of two
+INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3,5)'; % Product of two
                                               % IM_GAUSS1D(10) (for
                                               % quadrangles)
 %INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS1D(5), 3)';

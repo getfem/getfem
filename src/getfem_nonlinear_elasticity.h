@@ -375,7 +375,194 @@ namespace getfem {
 
   };
 
-  
+
+
+
+
+  /* ******************************************************************** */
+  /*		Mixed nonlinear incompressible condition brick.           */
+  /* ******************************************************************** */
+
+
+  template<typename VECT1> class incomp_nonlinear_term 
+    : public getfem::nonlinear_elem_term {
+    const mesh_fem &mf;
+    const VECT1 &U;
+    size_type N;
+    base_vector coeff;
+    base_matrix gradPhi;
+    bgeot::multi_index sizes_;
+    int version; 
+
+  public:
+    incomp_nonlinear_term(const mesh_fem &mf_, const VECT1 &U_,
+			      int version_) 
+      : mf(mf_), U(U_),
+	N(mf_.get_qdim()),
+	gradPhi(N, N), sizes_(N, N),
+	version(version_)
+    { if (version == 1) { sizes_.resize(1); sizes_[0] = 1; } }
+    const bgeot::multi_index &sizes() const { return sizes_; }
+    virtual void compute(getfem::fem_interpolation_context& ctx,
+			 bgeot::base_tensor &t) {
+      size_type cv = ctx.convex_num();
+      coeff.resize(mf.nb_dof_of_element(cv));
+      gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))),
+		coeff);
+      base_matrix gradPhit(3,3);
+      ctx.pf()->interpolation_grad(ctx, coeff, gradPhit, mf.get_qdim());
+      gmm::copy(gmm::transposed(gradPhit),gradPhi);
+
+      gmm::add(gmm::identity_matrix(), gradPhi);
+
+      scalar_type det = gmm::lu_inverse(gradPhi);
+
+      if (version != 1) {
+	if (version == 2) det = sqrt(dal::abs(det));
+	for (size_type i = 0; i < N; ++i) 
+	  for (size_type j = 0; j < N; ++j) {
+	    t(i,j) = - det * gradPhi(j,i);
+	  }
+      } else if (version == 1) {
+	t[0] = 1 - det;
+      }
+    }
+  };
+
+  template<typename MAT1, typename MAT2, typename VECT1, typename VECT2> 
+  void asm_nonlinear_incomp_tangent_matrix(const MAT1 &K_, const MAT2 &B_, 
+					   const getfem::mesh_fem &mf_u,
+					   const getfem::mesh_fem &mf_p,
+					   const VECT1 &U, const VECT2 &P) {
+    MAT1 &K = const_cast<MAT1 &>(K_);
+    MAT2 &B = const_cast<MAT2 &>(B_);
+    if (mf_u.get_qdim() != mf_u.linked_mesh().dim())
+      DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
+
+    incomp_nonlinear_term<VECT1>
+      ntermk(mf_u, U, 0);
+    incomp_nonlinear_term<VECT1>
+      ntermb(mf_u, U, 2);
+
+    getfem::generic_assembly
+      assem("P=data(#2);"
+	    "t=comp(NonLin(#1).vGrad(#1).Base(#2));"
+	    "M$2(#1,#2)+= t(i,j,:,i,j,:);"
+	    "w=comp(NonLin$2(#1).vGrad(#1).NonLin$2(#1).vGrad(#1).Base(#2));"
+	    "M$1(#1,#1)+= w(i,j,:,j,i, k,l,:,l,k,p).P(p) + w(i,j,:,k,j, k,m,:,i,m,p).P(p)");
+
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_p);
+    assem.push_nonlinear_term(&ntermk);
+    assem.push_nonlinear_term(&ntermb);
+    assem.push_mat(K);
+    assem.push_mat(B);
+    assem.push_data(P);
+    assem.volumic_assembly();
+  }
+
+
+  template<typename VECT1, typename VECT2, typename VECT3> 
+  void asm_nonlinear_incomp_rhs(const VECT1 &R_U_, const VECT1 &R_P_, 
+				const getfem::mesh_fem &mf_u,
+				const getfem::mesh_fem &mf_p,
+				const VECT2 &U, const VECT3 &P) {
+    VECT1 &R_U = const_cast<VECT1 &>(R_U_);
+    VECT1 &R_P = const_cast<VECT1 &>(R_P_);
+    if (mf_u.get_qdim() != mf_u.linked_mesh().dim())
+      DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
+
+    incomp_nonlinear_term<VECT2>
+      nterm_tg(mf_u, U, 0);
+    incomp_nonlinear_term<VECT2>
+      nterm(mf_u, U, 1);
+
+    getfem::generic_assembly
+      assem("P=data(#2); "
+	    "t=comp(NonLin$1(#1).vGrad(#1).Base(#2)); V$1(#1) += t(i,j,:,i,j,k).P(k);"
+	    "w=comp(NonLin$2(#1).Base(#2)); V$2(#2) += w(1,:)");
+
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_p);
+    assem.push_nonlinear_term(&nterm_tg);
+    assem.push_nonlinear_term(&nterm);
+    assem.push_vec(R_U);
+    assem.push_vec(R_P);
+    assem.push_data(P);
+    assem.volumic_assembly();
+  }
+
+
+  template<typename MODEL_STATE = standard_model_state>
+  class mdbrick_nonlinear_incomp : public mdbrick_abstract<MODEL_STATE>  {
+    
+    typedef typename MODEL_STATE::vector_type VECTOR;
+    typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
+    typedef typename MODEL_STATE::value_type value_type;
+    typedef typename gmm::number_traits<value_type>::magnitude_type R;
+
+    mdbrick_abstract<MODEL_STATE> &sub_problem;
+    mesh_fem &mf_p;
+
+  public :
+    
+    virtual bool is_linear(void)   { return false; }
+    virtual bool is_coercive(void) { return false; }
+    virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0) {
+      sub_problem.mixed_variables(b, i0);
+      b.add(i0 + sub_problem.nb_dof(), mf_p.nb_dof());
+    }
+    virtual size_type nb_dof(void) {
+      return sub_problem.nb_dof() + mf_p.nb_dof();
+    }
+    
+    virtual size_type nb_constraints(void) {
+      return sub_problem.nb_constraints();
+    }
+
+    virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
+				    size_type j0 = 0, bool modified = false) {
+      sub_problem.compute_tangent_matrix(MS, i0, j0, modified);
+      gmm::sub_interval SUBI(i0+sub_problem.nb_dof(), mf_p.nb_dof()); /* P */
+      gmm::sub_interval SUBJ(i0, main_mesh_fem().nb_dof());           /* U */
+
+      asm_nonlinear_incomp_tangent_matrix(gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBJ),
+					  gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBI),
+					  main_mesh_fem(), mf_p, 
+					  gmm::sub_vector(MS.state(), SUBJ), 
+					  gmm::sub_vector(MS.state(), SUBI));
+      
+      gmm::copy(gmm::transposed(gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBI)),
+		gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBJ));
+      gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBI));
+    }
+
+    virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
+				size_type j0 = 0) {
+      sub_problem.compute_residu(MS, i0, j0);
+     
+      gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), mf_p.nb_dof());
+      gmm::sub_interval SUBJ(i0, main_mesh_fem().nb_dof());
+
+      asm_nonlinear_incomp_rhs(gmm::sub_vector(MS.residu(), SUBJ),
+			       gmm::sub_vector(MS.residu(), SUBI),
+			       main_mesh_fem(), mf_p, 
+			       gmm::sub_vector(MS.state(), SUBJ),
+			       gmm::sub_vector(MS.state(), SUBI));
+    }
+    virtual mesh_fem &main_mesh_fem(void)
+    { return sub_problem.main_mesh_fem(); }
+
+    // Constructor which does not define the rhs
+    mdbrick_nonlinear_incomp(mdbrick_abstract<MODEL_STATE> &problem,
+		      mesh_fem &mf_p_)
+      : sub_problem(problem), mf_p(mf_p_) {
+      this->add_dependency(mf_p);
+      this->add_dependency(sub_problem.main_mesh_fem());
+    }
+  };
+
+
 
 }  /* end of namespace getfem.                                             */
 

@@ -130,7 +130,7 @@ The incompressibility constraint $i_3(\TC) = 1$ is handled with a Lagrange multi
 
 Incompressibility Round 2:
 
-constraint: $\sigma = -pI \Rightarrow \TS = p\nabla\Phi\nabla\Phi^{-T}\det\nabla\Phi$ 
+constraint: $\sigma = -pI \Rightarrow \TS = -p\nabla\Phi\nabla\Phi^{-T}\det\nabla\Phi$ 
 \begin{align}
   1 - i_3(\nabla\Phi) &= 0 \\
   -\int_{\Omega_0} (\det\nabla\Phi  -1) w \dx &= 0
@@ -140,7 +140,7 @@ constraint: $\sigma = -pI \Rightarrow \TS = p\nabla\Phi\nabla\Phi^{-T}\det\nabla
  B &= -\int_{\Omega_0} p(\nabla\Phi)^{-T} \det \nabla\Phi : \nabla v \dx \\
  K &= \int_{\Omega_0} \left( p(\nabla\Phi)^{-T}(\nabla h)^{T}(\nabla\Phi)^{-T}\det\nabla\Phi : \nabla v \dx - 
    p(\nabla\Phi)^{-T}(\det \nabla\Phi(\nabla\Phi)^{-T}:\nabla h) : \nabla v \right) \dx\\
-   &= \int_{\Omega_0} p(\nabla h^T\nabla\Phi^{-T}):(\nabla\Phi^{-1}\nabla v)\det\nabla\Phi dx - \int_{\Omega_0} p(\nabla\Phi^{-T}:\nabla h)(\nabla\Phi^{-T}:\nabla v)\det\nabla\Phi dx
+   &= \int_{\Omega_0} p(\nabla h^T\nabla\Phi^{-T}):(\nabla\Phi^{-1}\nabla v)\det\nabla\Phi\dx - \int_{\Omega_0} p(\nabla\Phi^{-T}:\nabla h)(\nabla\Phi^{-T}:\nabla v)\det\nabla\Phi\dx
 \end{align}
 
 \subsubsection{Ciarlet-Geymonat}
