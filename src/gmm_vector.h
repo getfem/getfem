@@ -196,9 +196,9 @@ namespace gmm
     inline ref_elt_wsvector operator =(T v)
       { (*pm).w(l,v); return *this; }
     inline bool operator ==(T v) const
-      { return ((*pm).r(l,v) == v); }
+      { return ((*pm).r(l) == v); }
     inline bool operator !=(T v) const
-      { return ((*pm).r(l,v) != v); }
+      { return ((*pm).r(l) != v); }
     inline ref_elt_wsvector operator +=(T v)
       { (*pm).w(l,(*pm).r(l) + v); return *this; }
     inline ref_elt_wsvector operator -=(T v)

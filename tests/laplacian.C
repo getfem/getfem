@@ -303,8 +303,8 @@ void lap_pb::assemble(void)
 {
   size_type nb_dof = mef.nb_dof(), nb_dof_data = mef_data.nb_dof();
   size_type nb_dof_data2 = mef_data2.nb_dof();
-  B = linalg_vector(nb_dof); B.fill(0.0);
-  U = linalg_vector(nb_dof); U.fill(0.0); 
+  B = linalg_vector(nb_dof); gmm::clear(B);
+  U = linalg_vector(nb_dof); gmm::clear(U); 
   RM = sparse_matrix_type(nb_dof, nb_dof);
   linalg_vector ST;
   

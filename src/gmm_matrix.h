@@ -35,6 +35,43 @@
 
 namespace gmm
 {
+
+  /* ******************************************************************** */
+  /*		Identity matrix                         		  */
+  /* ******************************************************************** */
+
+  struct identity_matrix {};
+
+  template <class V1, class V2> inline
+  void mult(identity_matrix, const V1 &v1, V2 &v2) { copy(v1, v2); }
+  template <class V1, class V2> inline
+  void mult(identity_matrix, const V1 &v1, const V2 &v2) { copy(v1, v2); }
+  template <class V1, class V2, class V3> inline
+  void mult(identity_matrix, const V1 &v1, const V2 &v2, V3 &v3)
+  { add(v1, v2, v3); }
+  template <class V1, class V2, class V3> inline
+  void mult(const identity_matrix&, const V1 &v1, const V2 &v2, const V3 &v3)
+  { add(v1, v2, v3); }
+  template <class M> void copy(const identity_matrix&, M &m) {
+    size_type i = 0, n = std::max(mat_nrows(m), mat_ncols(m)); clear(m);
+    for (; i < n; ++i) m(i,i) = typename linalg_traits<M>::value_type(1);
+  }
+  template <class V1, class V2> inline
+  typename linalg_traits<V1>::value_type
+  vect_sp(const identity_matrix &, const V1 &v1, const V2 &v2)
+  { return vect_sp(v1, v2); }
+  template <class M> inline void copy(const identity_matrix&, const M &m)
+  { copy_ident(m, linalg_traits<M>::is_reference()); }
+  template <class M> inline void copy_ident(const M &m, linalg_true)
+  { copy(identity_matrix(), const_cast<M &>(m)); }
+  template<class M> inline bool is_identity(const M&) { return false; }
+  inline bool is_identity(const identity_matrix&) { return true; }
+
+  /* ******************************************************************** */
+  /*		Row matrix                                   		  */
+  /* ******************************************************************** */
+
+
   template<class V> class row_matrix {
   protected :
     std::vector<V> li; /* array of rows.                                   */
@@ -85,6 +122,9 @@ namespace gmm
     void do_clear(this_type &m) { m.clear(); }
   };
 
+  /* ******************************************************************** */
+  /*		Column matrix                                		  */
+  /* ******************************************************************** */
 
   template<class V> class col_matrix {
   protected :

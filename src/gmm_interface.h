@@ -32,6 +32,7 @@
 #define __GMM_INTERFACE_H
 
 #include <gmm.h>
+#include <bgeot_matrix.h>
 
 namespace gmm {
 
@@ -200,7 +201,7 @@ namespace gmm {
       typedef typename std::iterator_traits<PT>::value_type V;
       typedef typename std::iterator_traits<PT>::reference ref_V;
       typedef typename linalg_traits<V>::value_type value_type;
-      typedef typename vect_ref_type<PT,  V>::access_type access_type;
+      typedef typename mat_ref_type<PT,  V>::access_type access_type;
       transposed_ref(ref_V v) : l(&v) {}
       ref_V deref(void) { return *l; }
       const V &deref(void) const { return *l; }

@@ -59,37 +59,6 @@
 namespace gmm {
 
   /* ******************************************************************** */
-  /*		Identity matrix                         		  */
-  /* ******************************************************************** */
-
-  struct identity_matrix {};
-
-  template <class V1, class V2> inline
-  void mult(identity_matrix, const V1 &v1, V2 &v2) { copy(v1, v2); }
-  template <class V1, class V2> inline
-  void mult(identity_matrix, const V1 &v1, const V2 &v2) { copy(v1, v2); }
-  template <class V1, class V2, class V3> inline
-  void mult(identity_matrix, const V1 &v1, const V2 &v2, V3 &v3)
-  { add(v1, v2, v3); }
-  template <class V1, class V2, class V3> inline
-  void mult(const identity_matrix&, const V1 &v1, const V2 &v2, const V3 &v3)
-  { add(v1, v2, v3); }
-  template <class M> void copy(const identity_matrix&, M &m) {
-    size_type i = 0, n = std::max(mat_nrows(m), mat_ncols(m)); clear(m);
-    for (; i < n; ++i) m(i,i) = typename linalg_traits<M>::value_type(1);
-  }
-  template <class V1, class V2> inline
-  typename linalg_traits<V1>::value_type
-  vect_sp(const identity_matrix &, const V1 &v1, const V2 &v2)
-  { return vect_sp(v1, v2); }
-  template <class M> inline void copy(const identity_matrix&, const M &m)
-  { copy_ident(m, linalg_traits<M>::is_reference()); }
-  template <class M> inline void copy_ident(const M &m, linalg_true)
-  { copy(identity_matrix(), const_cast<M &>(m)); }
-  template<class M> inline bool is_identity(const M&) { return false; }
-  inline bool is_identity(const identity_matrix&) { return true; }
-
-  /* ******************************************************************** */
   /*		                                         		  */
   /*		Generic algorithms                           		  */
   /*		                                         		  */
@@ -216,6 +185,57 @@ namespace gmm {
 
   template <class L> inline bool is_sparse(const L &) 
   { return _is_sparse(linalg_traits<L>::storage_type()); }
+
+  /* ******************************************************************** */
+  /*		Write                                   		  */
+  /* ******************************************************************** */
+
+  template <class L> void write(const L &l, std::ostream &o)
+  { write(o, l, typename linalg_traits<L>::linalg_type()); }
+
+  template <class L> inline void write(std::ostream &o, const L &l,
+				       abstract_vector) {
+    o << "vector(" << vect_size(l) << ") [";
+    write(o, l, typename linalg_traits<L>::storage_type());
+    o << " ]";
+  }
+
+  template <class L> inline void write(std::ostream &o, const L &l,
+				       abstract_sparse) {
+    typename linalg_traits<L>::const_iterator it = vect_begin(l),
+      ite = vect_end(l);
+    for (; it != ite; ++it) o << " (" << it.index() << "," << (*it) << ")";
+  }
+
+  template <class L> inline void write(std::ostream &o, const L &l,
+				       abstract_plain) {
+    typename linalg_traits<L>::const_iterator it = vect_begin(l),
+      ite = vect_end(l);
+    if (it != ite) o << " " << (*it++);
+    for (; it != ite; ++it) o << ", " << (*it);
+  }
+
+  template <class L> inline void write(std::ostream &o, const L &l,
+				       abstract_matrix) {
+    write(o, l, typename principal_orientation_type<typename
+	  linalg_traits<L>::sub_orientation>::potype());
+  }
+
+
+  template <class L> inline void write(std::ostream &o, const L &l,
+				       row_major) {
+    o << "matrix(" << mat_nrows(l) << ", " << mat_ncols(l) << ")" << endl;
+    for (size_type i = 0; i < mat_nrows(l); ++i) {
+      o << "(";
+      write(o, mat_row(l, i), typename linalg_traits<L>::storage_type());
+      o << " )\n";
+    }
+  }
+
+  // to be corrected
+  template <class L> inline void write(std::ostream &o, const L &l,col_major) {
+    o << "transposed "; write(o, transposed(l), row_major());
+  }
 
 
   /* ******************************************************************** */
@@ -431,6 +451,47 @@ namespace gmm {
 	::magnitude_type res(0);
     for (; it != ite; ++it) res += modulus(*it);
     return res;
+  }
+
+  /* ******************************************************************** */
+  /*		Clean                                    		  */
+  /* ******************************************************************** */
+
+  template <class L> inline void clean(L &l, double seuil) {
+    clean(l, seuil, typename linalg_traits<L>::linalg_type());
+  }
+
+  template <class L> inline void clean(L &l, double seuil, abstract_vector) {
+    clean(l, seuil, typename linalg_traits<L>::storage_type());
+  }
+
+  template <class L> void clean(L &l, double seuil, abstract_plain) {
+    typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
+    for (; it != ite; ++it)
+      if (modulus(*it) < seuil)
+	*it = typename linalg_traits<L>::value_type(0);
+  }
+
+  template <class L> void clean(L &l, double seuil, abstract_sparse) {
+    typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
+    for (; it != ite; ++it)
+      if (modulus(*it) < seuil)
+	l[it.index()] = typename linalg_traits<L>::value_type(0);
+  }
+
+  template <class L> inline void clean(L &l, double seuil, abstract_matrix) {
+    clean(l, seuil, typename principal_orientation_type<typename
+	  linalg_traits<L>::sub_orientation>::potype());
+  }
+  
+  template <class L> void clean(L &l, double seuil, row_major) {
+    for (size_type i = 0; i < mat_nrows(l); ++i)
+      clean(mat_row(l, i), seuil);
+  }
+
+  template <class L> void clean(L &l, double seuil, col_major) {
+    for (size_type i = 0; i < mat_ncols(l); ++i)
+      clean(mat_col(l, i), seuil);
   }
 
   /* ******************************************************************** */

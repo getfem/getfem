@@ -210,8 +210,9 @@ namespace gmm {
   { typedef V vector_type; };
 
   template <class V> struct temporary_plain_vector {
-    typedef typename _temporary_vector<typename linalg_traits<V>::is_reference,
-      typename linalg_traits<V>::storage_type, V>::vector_type vector_type;
+    typedef typename _temporary_plain_vector<typename
+    linalg_traits<V>::is_reference,
+    typename linalg_traits<V>::storage_type, V>::vector_type vector_type;
   };
 
   /* ******************************************************************** */
@@ -232,8 +233,9 @@ namespace gmm {
   { typedef wsvector<typename linalg_traits<V>::value_type> vector_type; };
 
   template <class V> struct temporary_sparse_vector {
-    typedef typename _temporary_vector<typename linalg_traits<V>::is_reference,
-      typename linalg_traits<V>::storage_type, V>::vector_type vector_type;
+    typedef typename _temporary_sparse_vector<typename
+    linalg_traits<V>::is_reference,
+    typename linalg_traits<V>::storage_type, V>::vector_type vector_type;
   };
 
 
