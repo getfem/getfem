@@ -287,7 +287,7 @@ namespace gmm {
     typedef typename linalg_traits<this_type>::value_type value_type;
     typedef typename linalg_traits<this_type>::access_type access_type;
     
-    void operator()(const void *o,const iterator &_begin,const iterator &_end)
+    void operator()(const void */*o*/,const iterator &_begin,const iterator &_end)
       { std::fill(_begin, _end, value_type(0)); }
   };
 

@@ -140,10 +140,10 @@ namespace gmm
   template<class T> class wsvector : public std::map<size_type, T> {
   public:
     
+    typedef typename std::map<int, T>::size_type size_type;
     typedef std::map<size_type, T> base_type;
     typedef typename base_type::iterator iterator;
     typedef typename base_type::const_iterator const_iterator;
-    //  typedef typename base_type::size_type size_type;
 
   protected:
     size_type nbl;
