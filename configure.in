@@ -18,7 +18,7 @@ AC_CONFIG_AUX_DIR([config])
 PACKAGE="getfem++"
 MAJOR_VERSION="1"
 MINOR_VERSION="7"
-PATCH_VERSION="0"
+PATCH_VERSION="1"
 dnl VERSION=$MAJOR_VERSION.$MINOR_VERSION-`date +%Y%m%d`
 VERSION=$MAJOR_VERSION.$MINOR_VERSION
 AC_DEFINE_UNQUOTED([MAJOR_VERSION],$MAJOR_VERSION,[getfem major version number])
@@ -399,7 +399,7 @@ dnl -----------------------------END OF QHULL TEST--------------------------
 dnl ------------------------------LAPACK TEST--------------------------------
 dnl -----------------------------END OF LAPACK TEST--------------------------
 
-AC_CHECK_HEADERS(sys/times.h)
+AC_CHECK_HEADERS(sys/times.h,[],[SUPERLU_CPPFLAGS="$SUPERLU_CPPFLAGS -DNO_TIMER"])
 AC_CHECK_HEADERS(cxxabi.h)
 dnl ---------------------------- CHECK FOR __PRETTY_FUNCTION__ MACRO --------
 AC_CACHE_CHECK([for __PRETTY_FUNCTION__], ac_have_pretty_function, [
@@ -507,6 +507,7 @@ else
   addpathm=""
 fi
 
+dnl utiliser AC_CONFIG_LINKS a la place ?
 for i in `ls $srcdir/tests/meshes/*.mesh`; do
 	j="tests/meshes/"`basename $i`
 	if test ! -L $j && test ! -f $j; then

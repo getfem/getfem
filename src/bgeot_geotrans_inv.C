@@ -143,9 +143,9 @@ namespace bgeot
     //cout << " invert_nonlin done\n";
     //cerr << "cnt=" << cnt << ", P=" << P << ", N=" << N << ", G=" << G << "\nX=" << xreal << " Xref=" << x << "\nresidu=" << res << "\nB=" << B << ", K=" << K << "\n" << ", pc=" << pc << "\n-------------------^^^^^^^^\n";
     if (cnt == 0) {
-      cout << "BFGS in geotrans_inv_convex!\n";
+      //cout << "BFGS in geotrans_inv_convex!\n";
       geotrans_inv_convex_bfgs b(*this, xreal);
-      gmm::iteration iter(EPS,1);
+      gmm::iteration iter(EPS,0);
       x = x0;
       gmm::bfgs(b,b,x,10,iter);
       rn = pgt->transform(x,cvpts) - xreal; 

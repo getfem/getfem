@@ -1,3 +1,7 @@
+2005-01-06  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* minor changes for MinGW (getfem-1.7.1)
+
 2005-01-03
 	* Getfem-1.7 released.
 

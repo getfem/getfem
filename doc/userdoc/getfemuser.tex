@@ -561,7 +561,7 @@ Once a finite element method is defined on a mesh, it is possible to obtain info
 \section{Linear algebra procedures}
 The linear algebra library used by \gf is Gmm++ which is now a separate library. Please see the \WEB{http://www.gmm.insa-tlse.fr/getfem/gmmuser/gmmuser.html}{GMM++ user documentation}.\\
 
-Notes that Getfem++ includes its own version of SuperLU 3.0 (http://crd.lbl.gov/\verb\~\xiaoye/SuperLU/). So that a direct sparse solver is alway available.
+Note that Getfem++ includes (since release 1.7) its own version of SuperLU 3.0 (http://crd.lbl.gov/\verb\~\xiaoye/SuperLU/), hence a direct sparse solver is available out of the box.
 
 
 \section{Standard assembling procedures}
@@ -690,7 +690,7 @@ something that will be executed for each convex \cpp{cv} of the mesh. The terms
 \cpp{\#1} and \cpp{\#2} refer to the first \cpp{mesh\_fem} and the second one
 (i.e. \cpp{mf} and \cpp{mfdata}).  The instruction \cpp{Z=data(\#2);}
 means that for each convex, the ``tensor'' \cpp{Z} will receive the values of the first data argument provided with \cpp{push\_data},
-at indexes corresponding to the degrees of freedom attached to the convex of the second (\cpp{\#2}) \cpp{mesh_fem} (here, \cpp{Z $\leftarrow$ F[mfdata.ind_dof_of_element(cv)]}. The
+at indexes corresponding to the degrees of freedom attached to the convex of the second (\cpp{\#2}) \cpp{mesh_fem} (here, \cpp{Z $\gets$ F[mfdata.ind_dof_of_element(cv)]}. The
 part \cpp{V(\#1)+=\ldots} means that the result of the next expression will be
 accumulated into the output vector (provided with \cpp{push\_vec}). Here
 again, \cpp{\#1} means that we will write the result at indexes
