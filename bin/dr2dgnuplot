@@ -1,3 +1,5 @@
+
+# -*- perl -*-
 eval 'exec perl -S $0 "$@"'
   if 0;
 
@@ -16,37 +18,34 @@ $SIG{INT} = 'catch';
 open(DATAF, $ARGV[0]) or die "Open file impossible : $!\n";
 open(TMPF, ">$tmp1") or die "Open file impossible : $!\n";
 
-$li = <DATAF>;$li = <DATAF>;$li = <DATAF>;$li = <DATAF>;$li = <DATAF>;
 
 while ($li = <DATAF>)
 {
   chomp($li);
-  $c = 0;
-  while ($li)
-  { $cov[$c++] = $li; $li = <DATAF>; chomp($li); }
+  if (!($li=~/N/ || $li=~/P/ || $li=~/K/ || $li=~/DIR/ || $li=~/%/
+	|| $li=~/DATA/ || $li=~/END/) ) {
 
-  if ($c == 3)  # P1
-  {
-    print TMPF "$cov[0]\n$cov[1]\n$cov[2]\n$cov[0]\n\n";
-  }
-  elsif ($c == 6)  # P2
-  {
-    print TMPF "$cov[0]\n$cov[1]\n$cov[2]\n$cov[4]\n$cov[5]\n";
-    print TMPF "$cov[3]\n$cov[0]\n\n";
-  }
-  elsif ($c == 10)  # P3
-  {
-    print TMPF "$cov[0]\n$cov[1]\n$cov[2]\n$cov[3]\n$cov[6]\n";
-    print TMPF "$cov[8]\n$cov[9]\n$cov[7]\n$cov[4]\n$cov[0]\n\n";
-  }
-  elsif ($c == 15)  # P4
-  {
-    print TMPF "$cov[0]\n$cov[1]\n$cov[2]\n$cov[3]\n$cov[4]\n";
-    print TMPF "$cov[8]\n$cov[11]\n$cov[13]\n$cov[14]\n$cov[12]\n";
-    print TMPF "$cov[9]\n$cov[5]\n$cov[0]\n\n";
-  }
-  else { die "Unknown format with $c lines\n"; }
+    $c = 0;
+    while ($li) { $cov[$c++] = $li; $li = <DATAF>; chomp($li); }
 
+    if ($c == 3)  { # P1
+      print TMPF "$cov[0]\n$cov[1]\n$cov[2]\n$cov[0]\n\n";
+    }
+    elsif ($c == 6) {  # P2
+      print TMPF "$cov[0]\n$cov[1]\n$cov[2]\n$cov[4]\n$cov[5]\n";
+      print TMPF "$cov[3]\n$cov[0]\n\n";
+    }
+    elsif ($c == 10)  { # P3
+      print TMPF "$cov[0]\n$cov[1]\n$cov[2]\n$cov[3]\n$cov[6]\n";
+      print TMPF "$cov[8]\n$cov[9]\n$cov[7]\n$cov[4]\n$cov[0]\n\n";
+    }
+    elsif ($c == 15)  { # P4
+      print TMPF "$cov[0]\n$cov[1]\n$cov[2]\n$cov[3]\n$cov[4]\n";
+      print TMPF "$cov[8]\n$cov[11]\n$cov[13]\n$cov[14]\n$cov[12]\n";
+      print TMPF "$cov[9]\n$cov[5]\n$cov[0]\n\n";
+    }
+    else { die "Unknown format with $c lines\n"; }
+  }
 }
 
 close(DATAF);
