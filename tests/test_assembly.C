@@ -80,7 +80,7 @@ public:
 #endif
 
 std::ostream& operator<<(std::ostream& o, const chrono& c) {
-  o << "[elapsed=" << c.elapsed() << ", cpu=" << c.cpu() << ", system=" << c.system() << "]";
+  o << "[elapsed=" << int(c.elapsed()) << ", cpu=" << int(c.cpu()) << ", system=" << int(c.system()) << "]";
   return o;
 }
 

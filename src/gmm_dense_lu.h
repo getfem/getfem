@@ -133,10 +133,14 @@ namespace gmm {
   size_type lu_factor(DenseMatrix& A, Pvector& ipvt) {
     typedef typename linalg_traits<DenseMatrix>::value_type value_type;
     size_type info = 0, i, j, jp, M = A.nrows(), N = A.ncols();
+    size_type NN = std::min(M-1, N-1);
     std::vector<value_type> c(M), r(N);
+    
+    if (ipvt.size() < NN) DAL_THROW(failure_error, "IPVT too small");
+    for (size_type i = 0; i < NN; ++i) ipvt[i] = i;
       
     if (M || N) {
-      for (j = 0; j < std::min(M-1, N-1); ++j) {
+      for (j = 0; j < NN; ++j) {
 	double max = dal::abs(A(j,j)); jp = j;
 	for (i = j+1; i < M; ++i)		   /* find pivot.          */
 	  if (dal::abs(A(i,j)) > max) { jp = i; max = dal::abs(A(i,j)); }
