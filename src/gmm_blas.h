@@ -1057,8 +1057,9 @@ namespace gmm {
 
   template <class L1, class L2>
   void add(const L1& l1, L2& l2, col_major, col_major) {
-    typename linalg_traits<L1>::const_col_iterator it1 = mat_col_begin(l1),
-      ite = mat_col_end(l1);
+    typename linalg_traits<L1>::const_col_iterator
+      it1 = mat_col_const_begin(l1),
+      ite = mat_col_const_end(l1);
     typename linalg_traits<L2>::col_iterator it2 = mat_col_begin(l2);
     for ( ; it1 != ite; ++it1, ++it2)
       add(linalg_traits<L1>::col(it1),  linalg_traits<L2>::col(it2));

@@ -163,12 +163,12 @@ namespace getfem {
   template <typename CONT> scalar_type volume_of_simplex(CONT pts) {
     if (pts.size() == 0) return 0;
     size_type N = pts.size()-1;
-    base_matrix m(N,N), n;
+    base_matrix m(N,N);
     typename CONT::const_iterator it0 = pts.begin(), it = pts.begin()+1;
     for (size_type j=0; j < N; ++j, ++it)
       for (size_type i=0; i < N; ++i)
 	m(i,j) = (*it)[i] - (*it0)[i];
-    return mat_gauss_det(m,n);
+    return gmm::lu_det(m);
   }
 
   /**

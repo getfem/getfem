@@ -23,3 +23,4 @@ EXTRA_DIST = \
 INCLUDES = -I$(top_srcdir)/src -I../src
 LDADD    = ../src/libgetfem.la -lm @SUPLDFLAGS@
 
+CLEANFILES = ii_files/*

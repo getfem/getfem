@@ -576,7 +576,7 @@ namespace getfem
 	  pmec->gen_compute_on_face(t,mf_u.linked_mesh().points_of_convex(cv),
 				    f);
 	  base_tensor::iterator p = t.begin();
-	  scalar_type vmax = bgeot::vect_norminf(t);
+	  scalar_type vmax = gmm::vect_norminf(base_vector(t));
 
 	  for (size_type j = 0; j < nbdof_u; j++) {
 	    size_type dof_j = mf_u.ind_dof_of_element(cv)[j];

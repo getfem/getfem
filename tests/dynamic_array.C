@@ -59,7 +59,7 @@ int main(void) {
 #   endif
 
     std::complex<float> x(1.0,0.0);
-    cout << "A complex : " << x << endl;
+    // cout << "A complex : " << x << endl;
     
     size_t ee = 1, f = 2;
     ptrdiff_t g = ee - f;

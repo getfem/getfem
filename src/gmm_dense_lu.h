@@ -74,7 +74,13 @@ namespace gmm {
       typename linalg_traits<row_type>::iterator
 	it = vect_begin(row), ite = vect_end(row);
       typename linalg_traits<VecY>::const_iterator ity = vect_const_begin(y);
+#   ifdef USING_BROKEN_GCC295
+      typedef typename linalg_traits<Matrix>::value_type T;
+      for (; it != ite; ++it, ++ity)
+	const_cast<T &>(*it) += conj_product(*itx, *ity);
+#   else
       for (; it != ite; ++it, ++ity) *it += conj_product(*itx, *ity);
+#   endif
     }
   }
 
@@ -91,7 +97,13 @@ namespace gmm {
       typename linalg_traits<col_type>::iterator
 	it = vect_begin(col), ite = vect_end(col);
       typename linalg_traits<VecX>::const_iterator itx = vect_const_begin(x);
-      for (; it != ite; ++it, ++itx) *it += conj_product(*itx, *ity);
+#   ifdef USING_BROKEN_GCC295
+      typedef typename linalg_traits<Matrix>::value_type T;
+      for (; it != ite; ++it, ++ity)
+	const_cast<T &>(*it) += conj_product(*itx, *ity);
+#   else
+      for (; it != ite; ++it, ++ity) *it += conj_product(*itx, *ity);
+#   endif
     }
   }
   

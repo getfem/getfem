@@ -17,7 +17,8 @@ check_PROGRAMS = \
 
 CLEANFILES = \
 	laplacian.res laplacian.mesh laplacian.dataelt \
-	elasto_statique.mesh test_mesh.mesh
+	elasto_statique.mesh test_mesh.mesh toto.mat test_mat_elem.mesh \
+	ii_files/*
 
 
 dynamic_array_SOURCES = dynamic_array.C 

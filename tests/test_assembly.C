@@ -19,6 +19,17 @@ typedef gmm::row_matrix<sparse_vector_type> sparse_matrix_type;
 typedef std::vector<scalar_type> linalg_vector;
 
 
+using std::flush;
+#define flushy flush
+// #define endl "\n"
+// using std::flush;
+// #define flushy "\n"
+// struct cvoid {};
+// template <class V> cvoid &operator <<(cvoid &c, V e) { return c; }
+// static cvoid coutvoid;
+// #define cout coutvoid
+// #define cerr coutvoid
+
 typedef enum {DO_BOUNDARY_MASS,
       DO_SCAL_VOLUMIC_SOURCE,
       DO_VEC_VOLUMIC_SOURCE,
@@ -346,7 +357,7 @@ namespace getfem {
 		pmec->gen_compute_on_face(t,mf_u.linked_mesh().points_of_convex(cv),
 					  f);
 		base_tensor::iterator p = t.begin();
-		scalar_type vmax = bgeot::vect_norminf(t);
+		scalar_type vmax = gmm::vect_norminf(base_vector(t));
 
 		for (size_type j = 0; j < nbdof_u; j++) {
 		  size_type dof_j = mf_u.ind_dof_of_element(cv)[j];
@@ -958,22 +969,22 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
   /* --- BOUNDARY MASS MATRIX --- */
   if (do_what[DO_BOUNDARY_MASS]) {
     if (do_old) {
-      cout << "boundary mass matrix, old way [" << nloop_bound << " times] .." << std::flush;
+      cout << "boundary mass matrix, old way [" << nloop_bound << " times] .." << flushy;
       c.init();
       for (size_type cnt = 0; cnt < nloop_bound; ++cnt) {
 	gmm::clear(M1); c.tic();
 	getfem::old_asm_mass_matrix_on_boundary(M1, mf, mfd, 1, Ndim);
-	c.toc(); cout << "#" << std::flush; 
+	c.toc(); cout << "#" << flushy; 
       }
       cout << "done " << c << endl;
     }
     if (do_new) {
-      cout << "boundary mass matrix, new way [" << nloop_bound << " times] .." << std::flush;
+      cout << "boundary mass matrix, new way [" << nloop_bound << " times] .." << flushy;
       c.init();
       for (size_type cnt = 0; cnt < nloop_bound; ++cnt) {
 	gmm::clear(M2); c.tic();
 	getfem::asm_mass_matrix(M2, mfq, mfdq, 1);
-	c.toc(); cout << "#" << std::flush;
+	c.toc(); cout << "#" << flushy;
       }
       cout << "done " << c << endl;    
     }
@@ -984,22 +995,22 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
   /* --- SCALAR VOLUMIC SOURCE --- */
   if (do_what[DO_SCAL_VOLUMIC_SOURCE]) {
     if (do_old) {
-      cout << "volumic source, Q=" << 1 << ", old way [" << nloop_bound << " times] .." << std::flush;
+      cout << "volumic source, Q=" << 1 << ", old way [" << nloop_bound << " times] .." << flushy;
       c.init();
       for (size_type cnt = 0; cnt < nloop_bound; ++cnt) {
 	gmm::clear(V1); c.tic(); //gmm::resize(M1, mfq.nb_dof(),mfq.nb_dof());
 	getfem::old_asm_volumic_source_term(V1, mf, mfd, A, 1);
-	c.toc(); cout << "#" << std::flush;
+	c.toc(); cout << "#" << flushy;
       }
       cout << "done " << c << endl;
     }
     if (do_new) {
-      cout << "volumic source, Q=" << 1 << ", new way [" << nloop_bound << " times] .." << std::flush;
+      cout << "volumic source, Q=" << 1 << ", new way [" << nloop_bound << " times] .." << flushy;
       c.init();
       for (size_type cnt = 0; cnt < nloop_bound; ++cnt) {
 	gmm::clear(V2); c.tic();
 	getfem::asm_source_term(V2, mf, mfd, A);
-	c.toc(); cout << "#" << std::flush;
+	c.toc(); cout << "#" << flushy;
       }
       cout << "done " << c << endl;
     }
@@ -1011,22 +1022,22 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
   /* --- VECTOR VOLUMIC SOURCE --- */
   if (do_what[DO_VEC_VOLUMIC_SOURCE]) {
     if (do_old) {
-      cout << "volumic source, Q=" << Ndim << ", old way [" << nloop_bound << " times] .." << std::flush;
+      cout << "volumic source, Q=" << Ndim << ", old way [" << nloop_bound << " times] .." << flushy;
       c.init();
       for (size_type cnt = 0; cnt < nloop_bound; ++cnt) {
 	gmm::clear(V1q); c.tic(); //gmm::resize(M1, mfq.nb_dof(),mfq.nb_dof());
 	getfem::old_asm_volumic_source_term(V1q, mf, mfd, Aq, Ndim);
-	c.toc(); cout << "#" << std::flush;
+	c.toc(); cout << "#" << flushy;
       }
       cout << "done " << c << endl;
     }
     if (do_new) {
-      cout << "volumic source, Q=" << Ndim << ", new way [" << nloop_bound << " times] .." << std::flush;
+      cout << "volumic source, Q=" << Ndim << ", new way [" << nloop_bound << " times] .." << flushy;
       c.init();
       for (size_type cnt = 0; cnt < nloop_bound; ++cnt) {
 	gmm::clear(V2q); c.tic();
 	getfem::asm_source_term(V2q, mfq, mfd, Aq);
-	c.toc(); cout << "#" << std::flush;
+	c.toc(); cout << "#" << flushy;
       }
       cout << "done " << c << endl;
     }  
@@ -1036,22 +1047,22 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
   /* --- SCALAR MASS MATRIX --- */
   if (do_what[DO_SCAL_MASS_MATRIX]) {
     if (do_old) {
-      cout << "mass matrix, Q=" << 1 << ", old way [" << nloop << " times] .." << std::flush;
+      cout << "mass matrix, Q=" << 1 << ", old way [" << nloop << " times] .." << flushy;
       c.init();
       for (size_type cnt = 0; cnt < nloop; ++cnt) {
 	gmm::clear(M1); c.tic(); //gmm::resize(M1, mfq.nb_dof(),mfq.nb_dof());
       getfem::old_asm_mass_matrix(M1, mf, mfd, 1);
-      c.toc(); cout << "#" << std::flush;
+      c.toc(); cout << "#" << flushy;
     }
     cout << "done " << c << endl;
   }
   if (do_new) {
-    cout << "mass matrix, Q=" << 1 << ", new way [" << nloop << " times] .." << std::flush;
+    cout << "mass matrix, Q=" << 1 << ", new way [" << nloop << " times] .." << flushy;
     c.init();
     for (size_type cnt = 0; cnt < nloop; ++cnt) {
       gmm::clear(M2); c.tic(); 
       getfem::asm_mass_matrix(M2, mf, mfd);
-      c.toc(); cout << "#" << std::flush;
+      c.toc(); cout << "#" << flushy;
     }
     cout << "done " << c << endl;
   }
@@ -1061,22 +1072,22 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
   /* --- VECTOR MASS MATRIX --- */
   if (do_what[DO_VEC_MASS_MATRIX]) {
   if (do_old) {
-    cout << "mass matrix, Q=" << Ndim << ", old way [" << nloop << " times] .." << std::flush;
+    cout << "mass matrix, Q=" << Ndim << ", old way [" << nloop << " times] .." << flushy;
     c.init();
     for (size_type cnt = 0; cnt < nloop; ++cnt) {
       gmm::clear(M1); c.tic(); //gmm::resize(M1, mfq.nb_dof(),mfq.nb_dof());
       getfem::old_asm_mass_matrix(M1, mf, mfd, Ndim);
-      c.toc(); cout << "#" << std::flush;
+      c.toc(); cout << "#" << flushy;
     }
     cout << "done " << c << endl;
   }
   if (do_new) {
-    cout << "mass matrix, Q=" << Ndim << ", new way [" << nloop << " times] .." << std::flush;
+    cout << "mass matrix, Q=" << Ndim << ", new way [" << nloop << " times] .." << flushy;
     c.init();
     for (size_type cnt = 0; cnt < nloop; ++cnt) {
       gmm::clear(M2); c.tic();
       getfem::asm_mass_matrix(M2, mfq, mfdq);
-      c.toc(); cout << "#" << std::flush;
+      c.toc(); cout << "#" << flushy;
     }
     cout << "done " << c << endl;
   }
@@ -1088,22 +1099,22 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
   /* ---- SCALAR LAPLACIAN ---- */
   if (do_what[DO_SCAL_LAPLACIAN]) {
   if (do_old) {
-    cout << "laplacian, Q=1, old way [" << nloop << " times] .." << std::flush;
+    cout << "laplacian, Q=1, old way [" << nloop << " times] .." << flushy;
     c.init();
     for (size_type cnt = 0; cnt < nloop; ++cnt) {
       gmm::clear(M1); c.tic();
       getfem::old_asm_stiffness_matrix_for_laplacian(M1, mf, mfd, A);
-      c.toc(); cout << "#" << std::flush;
+      c.toc(); cout << "#" << flushy;
     }
     cout << "done " << c << endl;
   }
   if (do_new) {
-    cout << "laplacian, Q=1, new way [" << nloop << " times] .." << std::flush;
+    cout << "laplacian, Q=1, new way [" << nloop << " times] .." << flushy;
     c.init();
     for (size_type cnt = 0; cnt < nloop; ++cnt) {
       gmm::clear(M2); c.tic();
       getfem::asm_stiffness_matrix_for_laplacian(M2, mf, mfd, A); 
-      c.toc(); cout << "#" << std::flush;
+      c.toc(); cout << "#" << flushy;
     }
     cout << "done " << c << endl;
   }
@@ -1114,22 +1125,22 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
   if (do_what[DO_SCAL_L2_NORM]) {
     for (size_type i=0; i < mf.nb_dof(); ++i) { V1[i] = V2[i] = float(rand())/RAND_MAX; }
     if (do_old) {
-      cout << "L2 norm, Q=" << 1 << ", old way [" << nloop << " times] .." << std::flush;
+      cout << "L2 norm, Q=" << 1 << ", old way [" << nloop << " times] .." << flushy;
       c.init();
       for (size_type cnt = 0; cnt < nloop; ++cnt) {
 	c.tic();
 	s1 = getfem::old_L2_norm(mf, V1, 1, mf.convex_index());
-	c.toc(); cout << "#" << std::flush;
+	c.toc(); cout << "#" << flushy;
       }
       cout << "done " << c << endl;
     }
     if (do_new) {
-      cout << "L2 norm, Q=" << 1 << ", new way [" << nloop << " times] .." << std::flush;
+      cout << "L2 norm, Q=" << 1 << ", new way [" << nloop << " times] .." << flushy;
       c.init();
       for (size_type cnt = 0; cnt < nloop; ++cnt) {
 	c.tic();
 	s2 = getfem::asm_L2_norm(mf, V2, mf.convex_index());
-	c.toc(); cout << "#" << std::flush;
+	c.toc(); cout << "#" << flushy;
       }
       cout << "done " << c << endl;
     }
@@ -1140,22 +1151,22 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
   if (do_what[DO_VECT_H1_NORM]) {
     for (size_type i=0; i < mfq.nb_dof(); ++i) { V1q[i] = V2q[i] = float(rand())/RAND_MAX; }
     if (do_old) {
-      cout << "H1 norm, Q=" << Ndim << ", old way [" << nloop << " times] .." << std::flush;
+      cout << "H1 norm, Q=" << Ndim << ", old way [" << nloop << " times] .." << flushy;
       c.init();
       for (size_type cnt = 0; cnt < nloop; ++cnt) {
 	c.tic();
 	s1 = getfem::old_H1_norm(mf, V1q, Ndim, mf.convex_index());
-	c.toc(); cout << "#" << std::flush;
+	c.toc(); cout << "#" << flushy;
       }
       cout << "done " << c << endl;
     }
     if (do_new) {
-      cout << "H1 norm, Q=" << Ndim << ", new way [" << nloop << " times] .." << std::flush;
+      cout << "H1 norm, Q=" << Ndim << ", new way [" << nloop << " times] .." << flushy;
       c.init();
       for (size_type cnt = 0; cnt < nloop; ++cnt) {
 	c.tic();
 	s2 = getfem::asm_H1_norm(mfq, V2q, mfq.convex_index());
-	c.toc(); cout << "#" << std::flush;
+	c.toc(); cout << "#" << flushy;
       }
       cout << "done " << c << endl;
     }
@@ -1166,22 +1177,22 @@ run_tests(getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
   /* ---- LINEAR ELASTICITY ---- */
   if (do_what[DO_LIN_ELAST]) {
   if (do_old) {
-    cout << "linear elasticity, Q=" << Ndim<<", old way [" << nloop << " times] .." << std::flush;
+    cout << "linear elasticity, Q=" << Ndim<<", old way [" << nloop << " times] .." << flushy;
     c.init();
     for (size_type cnt = 0; cnt < nloop; ++cnt) {
       gmm::clear(M1); c.tic();
       getfem::old_asm_stiffness_matrix_for_linear_elasticity(M1, mf, mfd, A, A2);
-      c.toc(); cout << "#" << std::flush;
+      c.toc(); cout << "#" << flushy;
     }
     cout << "done " << c << endl;
   }
   if (do_new) {
-    cout << "linear elasticity, Q=" << Ndim<<", new way [" << nloop << " times] .." << std::flush;
+    cout << "linear elasticity, Q=" << Ndim<<", new way [" << nloop << " times] .." << flushy;
     c.init();
     for (size_type cnt = 0; cnt < nloop; ++cnt) {
       gmm::clear(M2); c.tic();
       getfem::asm_stiffness_matrix_for_linear_elasticity(M2, mfq, mfd, A, A2);
-      c.toc(); cout << "#" << std::flush;
+      c.toc(); cout << "#" << flushy;
     }
     cout << "done " << c << endl;
   }

@@ -33,6 +33,9 @@
 #define __GMM_INOUTPUT_H
 
 namespace gmm {
+  
+  // Due to aCC excentricity
+  #define strchr(a, b) const_cast<char *>(::strchr(a, b))
 
   /*************************************************************************/
   /*                                                                       */

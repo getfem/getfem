@@ -111,3 +111,5 @@ SRC =                                  \
 lib_LTLIBRARIES = libgetfem.la
 libgetfem_la_SOURCES = $(SRC)
 libgetfem_la_LDFLAGS = ${LIBTOOL_VERSION_INFO}
+
+CLEANFILES = getfem_arch_config.h ii_files/*
