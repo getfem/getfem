@@ -10,7 +10,7 @@
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 1999-2002  Yves Renard.                                   */
+/* Copyright (C) 1999-2004  Yves Renard.                                   */
 /*                                                                         */
 /* This file is a part of GETFEM++                                         */
 /*                                                                         */
@@ -35,7 +35,7 @@
 #define GETFEM_MESH_H__
 
 #include <bgeot_mesh.h>
-#include <bgeot_geometric_trans.h>
+#include <bgeot_geotrans_inv.h>
 #include <linkmsg.h>
 #include <getfem_config.h>
 
@@ -50,52 +50,45 @@ namespace getfem
 
   struct MESH_CLEAR  /* clear message for the structure.                   */
   { operator int(void) const { return 0; } };
-  struct MESH_DELETE  /* clear message for the structure.                   */
+  struct MESH_DELETE  /* clear message for the structure.                  */
   { operator int(void) const { return 1; } };
-  struct MESH_ADD_POINT /* point suppression message.                      */
-  { 
+  struct MESH_ADD_POINT { /* point addition message.                       */ 
     size_t ipt;
     operator int(void) const { return 2; }
     MESH_ADD_POINT(size_t i) { ipt = i; }
     MESH_ADD_POINT(void) {}
   };
-  struct MESH_SUP_POINT
-  { 
+  struct MESH_SUP_POINT { 
     size_t ipt;
     operator int(void) const { return 3; }
     MESH_SUP_POINT(size_t i) { ipt = i; }
     MESH_SUP_POINT(void) {}
   };
-  struct MESH_SWAP_POINT
-  { 
+  struct MESH_SWAP_POINT { 
     size_t ipt1, ipt2;
     operator int(void) const { return 4; }
     MESH_SWAP_POINT(size_t i, size_t j) { ipt1 = i; ipt2 = j; }
     MESH_SWAP_POINT(void) {}
   };
-  struct MESH_ADD_CONVEX
-  { 
+  struct MESH_ADD_CONVEX { 
     size_t icv;
     operator int(void) const { return 5; }
     MESH_ADD_CONVEX(size_t i) { icv = i; }
     MESH_ADD_CONVEX(void) {}
   };
-  struct MESH_SUP_CONVEX
-  { 
+  struct MESH_SUP_CONVEX { 
     size_t icv;
     operator int(void) const { return 6; }
     MESH_SUP_CONVEX(size_t i) { icv = i; }
     MESH_SUP_CONVEX(void) {}
   };
-  struct MESH_SWAP_CONVEX
-  { 
+  struct MESH_SWAP_CONVEX { 
     size_t icv1, icv2;
     operator int(void) const { return 7; }
     MESH_SWAP_CONVEX(size_t i, size_t j) { icv1 = i; icv2 = j; }
     MESH_SWAP_CONVEX(void) {}
   };
-  struct MESH_REFINE_CONVEX
-  { 
+  struct MESH_REFINE_CONVEX { 
     size_t icv, nb;
     size_t *alist;
     int mtype;
@@ -104,8 +97,7 @@ namespace getfem
     { icv = i; nb = n; alist = l; mtype = m; }
     MESH_REFINE_CONVEX(void) {}
   };
-  struct MESH_UNREFINE_CONVEX
-  { 
+  struct MESH_UNREFINE_CONVEX { 
     size_t icv, nb;
     size_t *alist;
     int mtype;
@@ -114,36 +106,31 @@ namespace getfem
     { icv = i; nb = n; alist = l; mtype = m; }
     MESH_UNREFINE_CONVEX(void) {}
   };
-  struct MESH_WRITE_TO_FILE
-  { 
+  struct MESH_WRITE_TO_FILE { 
     std::ostream *ost;
     operator int(void) const { return 10; }
     MESH_WRITE_TO_FILE(std::ostream &o) { ost = &o; }
     MESH_WRITE_TO_FILE(void) {}
   };
-  struct MESH_READ_FROM_FILE
-  { 
+  struct MESH_READ_FROM_FILE { 
     std::istream *ist;
     operator int(void)  const { return 11; }
     MESH_READ_FROM_FILE(std::istream &i) { ist = &i; }
     MESH_READ_FROM_FILE(void) {}
   };
-  struct MESH_FEM_CHANGE
-  { 
+  struct MESH_FEM_CHANGE { 
     void *ptr;
     operator int(void)  const { return 12; }
     MESH_FEM_CHANGE(void *p) : ptr(p) {}
     MESH_FEM_CHANGE(void) {}
   };
-  struct MESH_FEM_DELETE
-  { 
+  struct MESH_FEM_DELETE { 
     void *ptr;
     operator int(void)  const { return 13; }
     MESH_FEM_DELETE(void *p) : ptr(p) {}
     MESH_FEM_DELETE(void) {}
   };
-  struct MESH_FEM_TOUCH
-  { 
+  struct MESH_FEM_TOUCH { 
     void *ptr;
     operator int(void)  const { return 14; }
     MESH_FEM_TOUCH(void *p) : ptr(p) {}
@@ -212,7 +199,8 @@ namespace getfem
       typedef lmsg::linkmsg_sender<getfem_mesh_receiver> msg_sender;
 
     protected :
-    /* if a new field is added here, do NOT forget to add it in the copy_from method! */
+    /* if a new field is added here, do NOT forget to add it in the
+     * copy_from method! */
 
       double eps_p;  /* infinity distance under wich two points are equal. */
       msg_sender lkmsg; /* gestionnaire de msg.                            */
@@ -261,8 +249,7 @@ namespace getfem
        *          of the convex in the mesh.
        */
       template<class ITER>
-	size_type add_convex(bgeot::pgeometric_trans pgt, ITER ipts)
-      { 
+	size_type add_convex(bgeot::pgeometric_trans pgt, ITER ipts) { 
 	bool present;
 	size_type i = bgeot::mesh<base_node>::add_convex(pgt->structure(),
 							 ipts, &present);
@@ -284,7 +271,7 @@ namespace getfem
        *          Return the index of the convex in the mesh.
        */
       template<class ITER>
-	size_type add_simplex(dim_type di, ITER ipts)
+      size_type add_simplex(dim_type di, ITER ipts)
       { return add_convex(bgeot::simplex_geotrans(di, 1), ipts); }
       /** Add a simplex of dimension dim to the mesh. 
        *          "it" is an iterator on a list of points of type base\_node.
@@ -388,16 +375,17 @@ namespace getfem
 					                           ITER ipts)
   {
     short_type nb = pgt->nb_points();
-    std::vector<size_type> ind(nb);
-    for (short_type i = 0; i < nb; ++ipts, ++i) ind[i] = add_point(*ipts);
-    return add_convex(pgt, ind.begin());
+    static std::vector<size_type> *ind;
+    static bool isinit = false;
+    if (!isinit) { ind = new std::vector<size_type>(); isinit = true; }
+    if (ind->size() != nb) ind->resize(nb);
+    for (short_type i = 0; i < nb; ++ipts, ++i) (*ind)[i] = add_point(*ipts);
+    return add_convex(pgt, ind->begin());
   }
 
   template<class ITER>
    size_type getfem_mesh::add_simplex_by_points(dim_type di, ITER ipts)
-  {
-    return add_convex_by_points(bgeot::simplex_geotrans(di, 1), ipts);
-  }
+  { return add_convex_by_points(bgeot::simplex_geotrans(di, 1), ipts); }
 
   template<class ITER>
     size_type getfem_mesh::add_parallelepiped(dim_type di, const ITER &ipts)
@@ -410,20 +398,17 @@ namespace getfem
 
   template<class ITER>
     size_type getfem_mesh::add_parallelepiped_by_vectors
-    (dim_type di, const base_node &org, const ITER &vects)
-  {
+    (dim_type di, const base_node &org, const ITER &vects) {
     size_type nbp = (size_type(1) << size_type(di)), i, j;
     std::vector<size_type> ipt;
     ipt.resize(nbp);
     base_node a; ITER b;
 
-    for (i = 0; i < nbp; i++)
-    {
+    for (i = 0; i < nbp; ++i) {
       for (a = org, b = vects, j = 0; j < di; ++j, ++b)
 	if (i & (1 << j)) a += *b;
       ipt[i] = add_point(a);
     }
-
     return add_parallelepiped(di, ipt.begin());
   }
 
@@ -459,22 +444,101 @@ namespace getfem
       return false;
     }
     bool is_face() const { return f != size_type(-1); }
-    convex_face(size_type cv_, size_type f_ = size_type(-1)) : cv(cv_), f(f_) {}
+    convex_face(size_type cv_, size_type f_=size_type(-1)) : cv(cv_), f(f_) {}
     convex_face() : cv(size_type(-1)), f(size_type(-1)) {}
   };
   typedef std::vector<convex_face> convex_face_ct;
 
-
-  /**
-     returns a list of "exterior" faces of a mesh (i.e. faces which are not shared by two convexes)
-      + convexes whose dimension is smaller that m.dim()
-  */
+  /** returns a list of "exterior" faces of a mesh
+   * (i.e. faces which are not shared by two convexes) 
+   * + convexes whose dimension is smaller that m.dim()
+   */
   void  outer_faces_of_mesh(const getfem::getfem_mesh &m, 
-			    const dal::bit_vector& cvlst, convex_face_ct& flist);
+			const dal::bit_vector& cvlst, convex_face_ct& flist);
   inline void  outer_faces_of_mesh(const getfem::getfem_mesh &m, 
 				   convex_face_ct& flist) {
     outer_faces_of_mesh(m,m.convex_index(),flist);
   }
+
+  /* ********************************************************************* */
+  /*								   	   */
+  /*	II. Ventilation of a set of points on a mesh.         		   */
+  /*									   */
+  /* ********************************************************************* */
+
+  class mesh_trans_inv : public bgeot::geotrans_inv {
+
+  protected :
+    typedef gmm::abstract_null_type void_type;
+    const getfem_mesh &mesh;
+    std::vector<std::map<size_type, void_type> > pts_cvx;
+    typedef std::map<size_type, void_type>::const_iterator map_iterator;
+    std::vector<base_node> ref_coords;
+    std::vector<double> dist;
+    std::vector<size_type> cvx_pts;
+    double EPS;
+
+  public :
+
+    size_type nb_points_on_convex(size_type i) const
+    { return pts_cvx[i].size(); }
+    void points_on_convex(size_type i, std::vector<size_type> &itab) const {
+      itab.resize(pts_cvx[i].size()); size_type j = 0;
+      for (map_iterator it = pts_cvx[i].begin(); it != pts_cvx[i].end(); ++it)
+	itab[j++] = it->first;
+    }
+
+    const std::vector<base_node> &reference_coords(void) { return ref_coords; }
+
+    /* projection = false : Only the points inside the mesh are ventilated.
+     * projection = true  : Try to project the exterior points.
+     * TODO : for projection, verify that all the points have been projected
+     *        else project them on the frontiere convexes.
+     */
+    void ventilate(bool projection = false) {
+      size_type nbpts = nb_points();
+      dal::bit_vector nn = mesh.convex_index(), npt;
+      size_type nbcvx = nn.last_true() + 1;
+      ref_coords.resize(nbpts); dist.resize(nbpts);
+      pts_cvx.resize(nbcvx);
+      base_node min, max, pt_ref; /* bound of the box enclosing the convex */
+      bgeot::kdtree_tab_type boxpts;
+
+      for (size_type j = nn.take_first(); j != size_type(-1); j << nn) {
+	pts_cvx[j].clear();
+	bgeot::pgeometric_trans pgt = mesh.trans_of_convex(j);
+	bounding_box(min, max, mesh.points_of_convex(j), pgt);
+	for (size_type k=0; k < min.size(); ++k) { min[k]-=EPS; max[k]+=EPS; }
+	gic.init(mesh.convex(j), pgt);
+	points_in_box(boxpts, min, max);
+	for (size_type l = 0; l < boxpts.size(); ++l) {
+	  bool gicisin = gic.invert(boxpts[l].n, pt_ref, EPS);
+	  bool toadd = projection || gicisin;
+	  double isin = pgt->convex_ref()->is_in(pt_ref);
+	  size_type ind = boxpts[l].i;
+	  if (toadd && npt[ind]) {
+	    if (isin < dist[ind]) pts_cvx[cvx_pts[ind]].erase(ind);
+	    else toadd = false;
+	  }
+	  if (toadd) {
+	    ref_coords[ind] = pt_ref;
+	    dist[ind] = isin;
+	    cvx_pts[ind] = j;
+	    pts_cvx[j][ind] = void_type();
+	    npt[ind] = true;
+	  }
+	}
+      }
+    }
+
+
+    mesh_trans_inv(const getfem_mesh &m) : bgeot::geotrans_inv(1E-12), mesh(m)
+    {}
+
+
+  };
+  
+
 
 }  /* end of namespace getfem.                                             */
 

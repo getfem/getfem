@@ -126,7 +126,6 @@ namespace bgeot
     /** Compute the gradient at point x, pc is resized to [nb_points() x dim()]
 	if the transformation is linear, x is not used at all */
     void gradient(const base_node& x, base_matrix& pc) const;
-    virtual ~geometric_trans() {}
   };
 
   template<class CONT>
@@ -149,8 +148,9 @@ namespace bgeot
     min = max = *it; size_type P = min.size();
     base_node::iterator itmin = min.begin(), itmax = max.begin();
     for ( ++it; it != ptab.end(); ++it) {
-      base_node pt = *it; /* need a temporary storage since cv.points()[j] may not
-			     be a reference to a base_node, but a temporary base_node !! */
+      base_node pt = *it; /* need a temporary storage since cv.points()[j] may
+			     not be a reference to a base_node, but a
+			     temporary base_node !! (?) */
       base_node::const_iterator it2 = pt.begin();
       for (size_type i = 0; i < P; ++i) {
 	itmin[i] = std::min(itmin[i], it2[i]);
@@ -159,8 +159,10 @@ namespace bgeot
     }
     /* enlarge the box for non-linear transformations .. */
     if (pgt && !pgt->is_linear()) 
-      for (size_type i = 0; i < P; ++i)
-	{ scalar_type e = (itmax[i]-itmin[i]) * 0.2;  itmin[i] -= e; itmax[i] += e; }
+      for (size_type i = 0; i < P; ++i) {
+	scalar_type e = (itmax[i]-itmin[i]) * 0.2;
+	itmin[i] -= e; itmax[i] += e;
+      }
   }
 
   class geotrans_precomp_;
