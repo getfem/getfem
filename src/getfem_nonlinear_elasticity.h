@@ -371,6 +371,7 @@ namespace getfem {
 
     getfem::generic_assembly
       assem("t=comp(NonLin(#1,#2).vGrad(#1)); V(#1) += t(i,j,:,i,j)");
+    // comp() to be optimized ?
 
     assem.push_mf(mf);
     assem.push_mf(mf_data);
@@ -599,6 +600,7 @@ namespace getfem {
 	    "t=comp(NonLin$1(#1).vGrad(#1).Base(#2));"
 	    "V$1(#1) += t(i,j,:,i,j,k).P(k);"
 	    "w=comp(NonLin$2(#1).Base(#2)); V$2(#2) += w(1,:)");
+    // assem() to be optimized ?
 
     assem.push_mf(mf_u);
     assem.push_mf(mf_p);

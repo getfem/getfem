@@ -353,7 +353,7 @@ namespace gmm {
       tol_i = (gmm::abs(H(i,i))+gmm::abs(H(i+1,i+1)))*tol;
       tol_cplx = std::max(tol_cplx, tol_i);
       
-      if (gmm::abs(H(i+1,i)) >= tol_i) { // 2x2 block detected
+      if (gmm::abs(H(i+1,i)) > tol_i) { // 2x2 block detected
 	T tr = (H(i+1, i+1) - H(i,i)) / T(2);
 	T delta = tr*tr + H(i,i+1)*H(i+1, i);
 

@@ -127,7 +127,8 @@ namespace getfem
 	  if((*it).pfi->basic_structure() != pgt->basic_structure())
 	    DAL_THROW(std::invalid_argument, "incorrect computation");
 	  
-	  if (!((*it).pfi->is_equivalent())) {
+	  if (!((*it).pfi->is_equivalent()) && (*it).t != GETFEM_NONLINEAR_) {
+	    // TODO : le numero d'indice à reduire peut changer ...
 	    trans_reduction.push_back(k);
 	    trans_reduction_pfi.push_back((*it).pfi);
 	  }
@@ -476,7 +477,11 @@ namespace getfem
       /* Applying linear transformation for non tau-equivalent elements.   */
       
       if (trans_reduction.size() > 0) {
-	if (icb) DAL_INTERNAL_ERROR("big bug... FIXME!");
+	if (icb) // Dans ce cas, il faudrait annuler la reduction finale (si
+	  // l'indice des numerod de fonctions de base est réduit) et faire
+	  // la reduction sur chaque point de Gauss.
+	  DAL_INTERNAL_ERROR("Non tau-equivalent elements are not"
+			     "working with this kind of assembly!");
 	std::deque<short_type>::const_iterator it = trans_reduction.begin(),
 	  ite = trans_reduction.end();
 	std::deque<pfem>::const_iterator iti = trans_reduction_pfi.begin();

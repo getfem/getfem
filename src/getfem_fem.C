@@ -949,7 +949,6 @@ namespace getfem
   /*	DISCONTINUOUS PK                                                  */
   /* ******************************************************************** */
 
-  
   struct PK_discont_ : public PK_fem_ {
   public :
     

@@ -9,8 +9,6 @@
 /* Authors : Marc ODUNLAMI, Rémi DELMAS                                    */
 /*                                                                         */
 /* *********************************************************************** */
-
-/* *********************************************************************** */
 /*                                                                         */
 /* Copyright (C) 2002-2004 Yves Renard, Julien Pommier.                    */
 /*                                                                         */
@@ -33,7 +31,6 @@
 #ifndef GETFEM_PLASTICITY__
 #define GETFEM_PLASTICITY__
 
-#include <getfem_assembling_tensors.h>
 #include <getfem_modeling.h>
 
 namespace getfem {
@@ -244,7 +241,6 @@ namespace getfem {
       saved_proj_.resize(mf.linked_mesh().convex_index().last_true()+1);
     }
 
-    // sizes() method from nonlinear_elem, gives on output the size of the tensor
     const bgeot::multi_index &sizes() const { return sizes_; }
 
     // compute() method from nonlinear_elem, gives on output the tensor
@@ -265,9 +261,12 @@ namespace getfem {
       scalar_type ltrace_eps;
       ltrace_eps = params[0]*gmm::mat_trace(gradU);
 
-      //if needed, we give sigma_bar[cv] and saved_proj[cv] a size equal to the number of integration points on the convexe. Seems that this is rarely needed. 
+      // if needed, we give sigma_bar[cv] and saved_proj[cv] a size equal
+      // to the number of integration points on the convexe. Seems that
+      // this is rarely needed. 
       if (sigma_bar_[cv].size() == 0){
-	size_type nbgausspt = mf.int_method_of_element(cv)->approx_method()->nb_points_on_convex();
+	size_type nbgausspt = mf.int_method_of_element(cv)
+	  ->approx_method()->nb_points_on_convex();
 	sigma_bar_[cv].resize(N*N*nbgausspt);
 	gmm::clear(sigma_bar_[cv]);
 	saved_proj_[cv].resize(N*N*nbgausspt);
@@ -299,11 +298,10 @@ namespace getfem {
 	gmm::add(gmm::scaled(gradU, -params[1]), proj);
 	gmm::add(gmm::scaled(gmm::transposed(gradU), -params[1]), proj);
 
-	for (size_type i=0; i < N; ++i) proj(i,i) += ltrace_eps;    
 	for (size_type i=0; i < N; ++i) {
-	  for (size_type j=0; j < N; ++j) {          
+	  proj(i,i) += ltrace_eps;
+	  for (size_type j=0; j < N; ++j)
 	    sigma_bar(cv,ii,i,j) = proj(i,j);
-	  }
 	}
       }
       std::copy(proj.begin(),proj.end(), t.begin());
@@ -360,6 +358,7 @@ namespace getfem {
 				   "t=comp(NonLin(#1,#2).vGrad(#1).vGrad(#1).Base(#2));"
 				   "e=(t{:,:,:,:,:,6,7,:,9,10,:}+t{:,:,:,:,:,7,6,:,9,10,:}+t{:,:,:,:,:,6,7,:,10,9,:}+t{:,:,:,:,:,7,6,:,10,9,:})/4;"
 				   "M(#1,#1)+= sym(2*e(i,j,k,l,:,k,l,:,i,j,m).mu(m)+e(i,j,k,k,:,l,l,:,i,j,m).lambda(m))");
+    // comp()  to be optimized !!
     
     assem.push_mf(mf);
     assem.push_mf(mfdata);
@@ -375,8 +374,8 @@ namespace getfem {
   /*		Plasticity bricks.                                        */
   /* ******************************************************************** */  
   /* TODO :
-     - contraintes planes, deformations planes  (cf flag_hyp) 
-  */
+   *  - plan strain, plan stress  (cf flag_hyp) 
+   */
   
   template<typename MODEL_STATE = standard_model_state> 
     class mdbrick_plasticity : public mdbrick_abstract<MODEL_STATE> {
