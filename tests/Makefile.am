@@ -1,7 +1,7 @@
 check_PROGRAMS = \
 	dynamic_array \
 	dynamic_tas \
-	laplacien \
+	laplacian \
 	elasto_statique  \
 	integration \
 	poly \
@@ -13,7 +13,7 @@ check_PROGRAMS = \
 EXTRA_DIST = \
 	dynamic_array.pl \
 	dynamic_tas.pl \
-	laplacien.pl \
+	laplacian.pl \
 	elasto_statique.pl  \
 	integration.pl \
 	poly.pl \
@@ -21,12 +21,12 @@ EXTRA_DIST = \
 	geo_trans.pl \
 	test_int_set.pl \
 	test_tree_sorted.pl \
-	laplacien.param \
+	laplacian.param \
 	elasto_statique.param
 
 dynamic_array_SOURCES = dynamic_array.C 
 dynamic_tas_SOURCES = dynamic_tas.C 
-laplacien_SOURCES = laplacien.C
+laplacian_SOURCES = laplacian.C
 elasto_statique_SOURCES = elasto_statique.C
 integration_SOURCES = integration.C
 poly_SOURCES = poly.C
@@ -42,7 +42,7 @@ CXXFLAGS = @APPSCXXFLAGS@
 TESTS = \
 	dynamic_array.pl \
 	dynamic_tas.pl \
-	laplacien.pl \
+	laplacian.pl \
 	elasto_statique.pl  \
 	integration.pl \
 	poly.pl \
