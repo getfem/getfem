@@ -418,7 +418,7 @@ namespace bgeot {
     sub_row_type row(linalg_type &v, size_type i)
     { DAL_THROW(failure_error,"Rows inaccessible for this object"); }
     sub_col_type col(linalg_type &v, size_type i) { return sub_col_type(v); }
-    void clear(linalg_type &v) { v.clear(); }
+    void clear(linalg_type &v) { v.fill(T(0)); }
   };
 
 
@@ -447,7 +447,7 @@ namespace bgeot {
     sub_row_type row(linalg_type &v, size_type i)
     { DAL_THROW(failure_error,"Rows inaccessible for this object"); }
     sub_col_type col(linalg_type &v, size_type i) { return sub_col_type(v); }
-    void clear(linalg_type &v) { v.clear(); }
+    void clear(linalg_type &v) { v.fill(T(0)); }
   };
 
   template <class T> struct linalg_traits<svector<T> > {

@@ -25,10 +25,14 @@ int main(void)
     // cout << "sp = " << bgeot::vect_sp(v, w) << endl;
 
     bgeot::svector<double> z(10);
-    z[4] = 1;z[5] = 1;
+    z[4] = 1; z[5] = 1;
 
     bgeot::add(v, z, x);
 
+    cout << "x = " << x << endl;
+
+    bgeot::copy(z, x);
+    
     cout << "x = " << x << endl;
     
     
