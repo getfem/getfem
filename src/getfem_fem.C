@@ -379,6 +379,9 @@ namespace getfem
 
   bool dof_compatibility(pdof_description a, pdof_description b)
   { return (dof_description_compare(a, b) == 0 && dof_linkable(a)); }
+  
+  size_type dof_xfem_index(pdof_description a) 
+  { return a->xfem_index; }
 
   bool dof_hierarchical_compatibility(pdof_description a, pdof_description b)
   { 

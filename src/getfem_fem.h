@@ -78,7 +78,8 @@ namespace getfem
   bool dof_linkable(pdof_description);
   /// Says if the two dofs can be identified.
   bool dof_compatibility(pdof_description, pdof_description);
-
+  /// Returns the xfem_index of dof (0 for normal dof)
+  size_type dof_xfem_index(pdof_description);
   
   /* ******************************************************************** */
   /*	Classes for description of a finite element.                      */
@@ -153,6 +154,7 @@ namespace getfem
     bool &is_polynomial(void) { return is_pol; }
     short_type estimated_degree(void) const { return es_degree; }
     short_type &estimated_degree(void) { return es_degree; }
+    
     virtual void mat_trans(base_matrix &, const base_matrix &,
 			   bgeot::pgeometric_trans) const
       { DAL_THROW(internal_error, "This function should not be called."); }
