@@ -316,9 +316,9 @@ namespace getfem
       tab.resize(nbd);
       for (size_type i = 0; i < nbd; i++)
       {
-	 std::cout << "dof " << i << " of convex " << cv << endl;
+	// std::cout << "dof " << i << " of convex " << cv << endl;
 	fd.P = point_of_dof(cv, i); // optimisable ...
-	 std::cout << "point of dof : " << fd.P << endl;
+	// std::cout << "point of dof : " << fd.P << endl;
 	fd.pnd = f_elems[cv]->pf->dof_types()[i];
 	size_type j;
 	if (dof_linkable(fd.pnd)) {
