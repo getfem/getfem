@@ -317,7 +317,11 @@ namespace getfem
       ita = a->ddl_desc.begin(), itae = a->ddl_desc.end(),
       itb = b->ddl_desc.begin(), itbe = b->ddl_desc.end();
     for (; ita != itae && itb != itbe; ++ita, ++itb)
-    { if ((nn = int(ita->t) - int (itb->t)) != 0) return nn; }
+    {
+      if ((nn = int(ita->t) - int (itb->t)) != 0) return nn;
+      if ((nn = int(ita->hier_degree) - int (itb->hier_degree)) != 0)
+	return nn;
+    }
     for (; ita != itae; ++ita) if (ita->t != LAGRANGE) return 1;
     for (; itb != itbe; ++itb) if (itb->t != LAGRANGE) return -1;
     return 0;
@@ -329,6 +333,19 @@ namespace getfem
   bool dof_compatibility(pdof_description a, pdof_description b)
   { return (dof_description_compare(a, b) == 0 && dof_linkable(a)); }
 
+  bool dof_hierarchical_compatibility(pdof_description a, pdof_description b)
+  { 
+    if (a->coord_index != b->coord_index) return false;
+    if (a->linkable != b->linkable) return false;
+    std::vector<ddl_elem>::const_iterator
+      ita = a->ddl_desc.begin(), itae = a->ddl_desc.end(),
+      itb = b->ddl_desc.begin(), itbe = b->ddl_desc.end();
+    for (; ita != itae && itb != itbe; ++ita, ++itb)
+    { if (ita->t != itb->t) return false; }
+    for (; ita != itae; ++ita) if (ita->t != LAGRANGE) return false;
+    for (; itb != itbe; ++itb) if (itb->t != LAGRANGE) return false;
+    return true;
+  }
 
   void virtual_fem::add_node(const pdof_description &d, const base_node &pt) {
     short_type nb = cv_node.nb_points();
@@ -499,7 +516,8 @@ namespace getfem
 	bool found = false;
 	for (size_type j = 0; j < fi1->nb_dof(); ++j) {
 	  if (fi2->node_of_dof(i) == fi1->node_of_dof(j) 
-	      && fi2->dof_types()[i] == fi1->dof_types()[j])
+	      && dof_hierarchical_compatibility(fi2->dof_types()[i],
+						fi1->dof_types()[j]))
 	    { found = true; break; }
 	}
 	if (!found) {
@@ -509,14 +527,14 @@ namespace getfem
 	  // verifer que la copie se fait bien ...
 	  _base.resize(nb_dof());
 	  _base[nb_dof()-1] = (fi2->base())[i];
-	  cout << "adding base : " << _base[nb_dof()-1] << endl;
-	  cout << "point : " << node_of_dof(nb_dof()-1) << endl;
-	  cout << "Nb dof cici = " << nb_dof() << endl;
+// 	  cout << "adding base : " << _base[nb_dof()-1] << endl;
+// 	  cout << "point : " << node_of_dof(nb_dof()-1) << endl;
+// 	  cout << "Nb dof cici = " << nb_dof() << endl;
 	}
       }
-      cout << "Nb dof = " << nb_dof() << endl;
-      for (size_type j = 0; j < nb_dof(); ++j)
-	cout << " base : " << j << " : " << _base[j] << endl;
+       cout << "Nb dof = " << nb_dof() << endl;
+       for (size_type j = 0; j < nb_dof(); ++j)
+ 	cout << " base : " << j << " : " << _base[j] << endl;
     }
   };
 
