@@ -255,7 +255,7 @@ void lap_pb::init(void)
     break;
 
   case 3 :
-    sprintf(meth, "FEM_STRUCTURED_COMPOSITE(FEM_PK(%d,%d), %d)", N, 1, K);
+    sprintf(meth, "PK2S_HIERARCHICAL_COMPOSITE(%d,%d,%d)", N, 1, K);
     pfprinc = getfem::fem_descriptor(meth);
     mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
     break;

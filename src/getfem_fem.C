@@ -1015,6 +1015,7 @@ namespace getfem
   /* ******************************************************************** */
 
   pfem structured_composite_fem_method(fem_param_list &params);
+  pfem PK_composite_2s_hierarch_fem(fem_param_list &params);
 
   static ftool::naming_system<virtual_fem> *_fem_naming_system = 0;
   
@@ -1039,6 +1040,8 @@ namespace getfem
 				   P2K_prism_hierarch_fem);
     _fem_naming_system->add_suffix("STRUCTURED_COMPOSITE",
 				   structured_composite_fem_method);
+    _fem_naming_system->add_suffix("PK2S_HIERARCHICAL_COMPOSITE",
+				   PK_composite_2s_hierarch_fem);
   }
   
   pfem fem_descriptor(std::string name) {
