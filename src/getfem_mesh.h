@@ -359,7 +359,10 @@ namespace getfem
        (on the face..) -- should be faster since it uses a geotrans_precomp */
       base_small_vector normal_of_face_of_convex(size_type ic, short_type f,
 						 size_type n=0) const;
-
+      base_matrix local_basis_of_face_of_convex(size_type ic, short_type f,
+	                                        const base_node &pt) const;
+      base_matrix local_basis_of_face_of_convex(size_type ic, short_type f,
+	                                        size_type n) const;
       scalar_type convex_quality_estimate(size_type ic) const;
       scalar_type convex_radius_estimate(size_type ic) const;
       scalar_type minimal_convex_radius_estimate() const;
