@@ -100,7 +100,6 @@ namespace dal
     bit_iterator(bit_vector &b, size_type i);
     reference operator*() const
     { return reference(&(*p), mask, ind, bv); }
-    pointer operator->() const { return &(operator*()); }
     bit_iterator& operator++() { bump_up(); return *this; }
     bit_iterator operator++(int)
     { bit_iterator tmp=*this; bump_up(); return tmp; }
@@ -146,7 +145,6 @@ namespace dal
     bit_const_iterator(const bit_iterator& x)
       : ind(x.ind),  mask(x.mask), p(x.p), bv(x.bv) {}
     reference operator*() const { return (*p & mask) != 0; }
-    pointer operator->()  const { return &(operator*()); }
     bit_const_iterator& operator++() { bump_up();  return *this; }
     bit_const_iterator operator++(int)
     { bit_const_iterator tmp = *this; bump_up(); return tmp; }
