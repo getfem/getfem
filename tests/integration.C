@@ -41,7 +41,7 @@ bool do_heavy_checks = false;
 
 void print_method(getfem::pintegration_method ppi) {
   cout << "methode : " << getfem::name_of_int_method(ppi) << endl;
-  getfem::papprox_integration pai = ppi->method.pai;
+  getfem::papprox_integration pai = ppi->approx_method();
   cout << "Nb points on convex " << pai->nb_points_on_convex() << endl;
   for (size_type k = 0; k < pai->structure()->nb_faces(); ++k)
     cout << "Nb points on face " << k << " : "
@@ -90,7 +90,7 @@ static void check_im_order(const std::string& s/*, size_type expected_pk=size_ty
   size_type pk = 10000, qk = 10000;
   size_type pts_on_boundary = 0;
   size_type pts_outside = 0;
-  if (!ppi->is_exact()) {
+  if (ppi->type() == getfem::IM_APPROX) {
     size_type dim = ppi->approx_method()->dim();
     for (bgeot::power_index idx(dim); idx.degree() <= pk; ++idx) {
       opt_long_scalar_type sum = 0, realsum = 1.;
@@ -114,8 +114,9 @@ static void check_im_order(const std::string& s/*, size_type expected_pk=size_ty
       if (dal::abs((realsum - sum)/realsum) > 1e-9) { 
         /*	cout << "degree=" << idx.degree() << ", idx=";
           for (size_type d=0; d < dim; ++d) cout << idx[d] << " "; cout << ", realsum=" << realsum << ", sum = " << sum << "\n";*/
-	pk = std::min<size_type>(pk,idx.degree());
+	pk = std::min<size_type>(pk,idx.degree()-1);
 	qk = std::min<size_type>(qk, *std::max_element(idx.begin(),idx.end()));
+	break;
       }
     }
     for (size_type i=0; i < ppi->approx_method()->nb_points_on_convex(); ++i) {
@@ -128,7 +129,7 @@ static void check_im_order(const std::string& s/*, size_type expected_pk=size_ty
       }
     }
   }
-  cout << std::setw(70) << getfem::name_of_int_method(ppi) << ", PK DEGREE=" << std::setw(2) << pk-1 
+  cout << std::setw(70) << getfem::name_of_int_method(ppi) << ", PK DEGREE=" << std::setw(2) << pk
        << ", QK DEGREE=" << std::setw(2) << qk-1;
   if (pts_on_boundary || pts_outside) cout << " CAUTION: uses " << pts_on_boundary << " points on the convex boundary, and " << pts_outside << " points outside the convex";
   cout << "\n";
@@ -167,6 +168,10 @@ const std::vector<size_type>& CUBE4D_D() {
 
 static void check_orders() {
   char s[512];
+  for (int k=1; k < 20; k+=6) {
+    sprintf(s,"IM_GAUSS1D(%d)",k); check_im_order(s);
+    sprintf(s,"IM_GAUSSLOBATTO1D(%d)",k); check_im_order(s);
+  }
   for (std::vector<size_type>::const_iterator it = TRIANGLE_D().begin(); it != TRIANGLE_D().end(); ++it) {
     sprintf(s,"IM_TRIANGLE(%d)",int(*it)); check_im_order(s);
   }
@@ -374,6 +379,9 @@ static void print_some_methods() {
 
   sprintf(meth, "IM_TRIANGLE(3)");
   print_method(getfem::int_method_descriptor(meth));
+
+  print_method(getfem::classical_approx_im(bgeot::simplex_geotrans(3,2), 3));
+  print_method(getfem::classical_approx_im(bgeot::product_geotrans(bgeot::product_geotrans(bgeot::simplex_geotrans(2,2), bgeot::simplex_geotrans(2,2)), bgeot::simplex_geotrans(1,1)), 3));
 }
 
 int main(int argc, char **argv)
@@ -381,11 +389,20 @@ int main(int argc, char **argv)
 #ifdef GETFEM_HAVE_FEENABLEEXCEPT
   feenableexcept(FE_DIVBYZERO | FE_INVALID);
 #endif
-  exception_cb cb;
+  /*exception_cb cb;
   dal::exception_callback::set_exception_callback(&cb);
-
+  */
   if (argc == 2 && strcmp(argv[1], "-all")) do_heavy_checks = true;
+  
   try {
+    int ok = 0;
+    getfem::pintegration_method im_none = getfem::int_method_descriptor("IM_NONE()");
+    try {
+      cout << "nbpts=" << im_none->structure()->nb_points() << "\n";
+    } catch (dal::failure_error e) {
+      ok = 1;
+    }
+    if (!ok) throw(dal::failure_error("IM_NONE failed..\n"));
     print_some_methods();
     check_methods();
     int failcnt = inspect_results();

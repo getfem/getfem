@@ -187,9 +187,54 @@ void lap_pb::assemble(void)
     cout << "] -> sum(line)=" << slig << endl;
   }
   cout << endl << " sum: " << sum << endl << endl;
-  cout << endl << " diff: " << diff << "max_norm=" << gmm::mat_maxnorm(RM1) << endl << endl;
+  cout << endl << " diff: " << diff << "max_norm=" << gmm::mat_maxnorm(RM1) << endl << endl;  
+}
 
-  
+
+/* integration of a quarter of circle (approximated with a degree 5 segment) against a planar regular mesh */
+void test2() {
+  getfem::getfem_mesh m1, m2;
+  std::vector<size_type> nsubdiv(2); nsubdiv[0] = nsubdiv[1] = 5;
+
+  getfem::regular_unit_mesh(m1, nsubdiv, bgeot::geometric_trans_descriptor("GT_QK(2,2)"), false);
+
+  std::vector<base_node> v;
+  for (size_type k=0; k < 6; ++k) {
+    scalar_type c = k/5. * M_PI/2;
+    v.push_back(base_node(cos(c), sin(c)));
+  }
+  m2.add_convex_by_points(bgeot::geometric_trans_descriptor("GT_PK(1,5)"), v.begin());
+  //m2.add_segment_by_points(bgeot::base_node(.45,.35),bgeot::base_node(.75,.65));
+  //m2.add_segment_by_points(bgeot::base_node(.8,.7),bgeot::base_node(.23,.3));
+  getfem::mesh_fem mf1(m1), mf2(m2);
+  getfem::pintegration_method pim1 = getfem::int_method_descriptor("IM_QUAD(17)");
+  getfem::pintegration_method pim2 = getfem::int_method_descriptor("IM_GAUSS1D(10)");
+  mf1.set_finite_element(m1.convex_index(),getfem::fem_descriptor("FEM_QK(2,1)"), pim1);
+  mf2.set_finite_element(m2.convex_index(),getfem::fem_descriptor("FEM_PK(1,3)"), pim2);
+
+  getfem::mesh_fem mflnk(m2);
+  mflnk.set_finite_element(m2.convex_index(), getfem::virtual_link_fem(mf1, mflnk, pim2),
+			   pim2);
+  sparse_matrix_type MM = sparse_matrix_type(mf2.nb_dof(), mflnk.nb_dof());
+  getfem::asm_mass_matrix(MM, mf2, mflnk);
+  cout << "MM=" << MM << "\n";
+  cout << "mflnk.nb_dof()=" << mflnk.nb_dof() << ", mf2.nb_dof()=" << mf2.nb_dof() << ", mf1.nb_dof=" << mf1.nb_dof() << "\n";
+  cout << "Matrice de masse\n";
+  scalar_type sum = 0.0; 
+  for (size_type i = 0; i < MM.nrows(); i++) { 
+    scalar_type slig = 0;
+    for (size_type l = 0; l < MM.ncols(); l++) {
+      slig = slig + MM(i, l);
+      //cout << "M(" << i << "," << l << ")=" << MM(i,l) << ", slig = " << slig << "\n";
+    }
+    sum += slig;
+    cout << "sum(line)=" << slig << endl;
+  }
+  cout << endl << " sum: " << sum << endl << endl;
+  assert(dal::abs(sum - 1.57079) < 1e-5); /* if not PI/2 there is a bug.. */
+  sparse_matrix_type MM2 = sparse_matrix_type(mf2.nb_dof(), mf2.nb_dof());
+  getfem::asm_mass_matrix(MM2, mf2, mf2);
+  cout << "MM2=" << MM2 << "\n";
 }
 
 /**************************************************************************/
@@ -199,7 +244,7 @@ void lap_pb::assemble(void)
 int main(int argc, char *argv[])
 {
   try {
-
+    test2();
     lap_pb p;
     
     cout << "initialisation ...\n";

@@ -1,3 +1,19 @@
+2004-03-11  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/getfem_fem.C (getfem): added a classical_discontinuous_fem
+	similar to the classical_fem already available.
+
+	* src/getfem_integration.C (getfem): added the classical_approx_im
+	function, which returns an approx. integration method for a given
+	{geometric_trans,degree}. Renamed exact_classical_im to
+	classical_exact_im.
+
+	
+2004-03-09  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/bgeot_geometric_trans.C (bgeot): added compute_local_basis
+	which returns the normal of a face + tangents
+
 2004-02-26  julien pommier  <pommier@gmm.insa-tlse.fr>
 
 	* src/getfem_fem.C (getfem): correction the wrong quadrature rules
