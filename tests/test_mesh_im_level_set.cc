@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
     getfem::getfem_mesh m; m.read_from_file("meshes/disc_2D_degree3.mesh");
     getfem::mesh_fem mf(m);
     getfem::mesh_im_level_set mim(m, getfem::int_method_descriptor("IM_TRIANGLE(6)"));
-    getfem::level_set ls1(m, 2), ls2(m, 3);
+    getfem::level_set ls1(m, 2), ls2(m, 2), ls3(m, 3);
     const getfem::mesh_fem &ls1mf = ls1.get_mesh_fem();
     scalar_type R=.4;
     for (unsigned i=0; i < ls1mf.nb_dof(); ++i) {
@@ -38,8 +38,16 @@ int main(int argc, char **argv) {
       ls2.values()[i] = gmm::vect_dist2_sqr(ls2mf.point_of_dof(i), 
 					    getfem::base_node(0,0.3)) -R*R;
     }
+    const getfem::mesh_fem &ls3mf = ls3.get_mesh_fem();
+    R=.03;
+    for (unsigned i=0; i < ls3mf.nb_dof(); ++i) {
+      ls3.values()[i] = gmm::vect_dist2_sqr(ls3mf.point_of_dof(i), 
+					    getfem::base_node(0,0.38)) -R*R;
+    }
+    
     mim.add_level_set(ls1);
     mim.add_level_set(ls2);
+    mim.add_level_set(ls3);
     mim.adapt();
   }
   DAL_STANDARD_CATCH_ERROR;

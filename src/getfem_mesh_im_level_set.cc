@@ -58,7 +58,8 @@ namespace getfem {
 			       bgeot::pconvex_structure cvs, 
 			       size_type nb_vertices,
 			       const std::vector<dal::bit_vector> &constraints,
-			       const std::vector<const mesher_signed_distance *> &list_constraints) {
+			       const std::vector<const
+			       mesher_signed_distance *> &list_constraints) {
     if (cvs->dim() == 0) return;
     else if (cvs->dim() > 1) {
       std::vector<size_type> fpts;
@@ -66,7 +67,8 @@ namespace getfem {
 	fpts.resize(cvs->nb_points_of_face(f));
 	for (size_type k=0; k < fpts.size(); ++k)
 	  fpts[k] = ipts[cvs->ind_points_of_face(f)[k]];
-	interpolate_face(m,ptdone,fpts,cvs->faces_structure()[f], nb_vertices, constraints, list_constraints);
+	interpolate_face(m,ptdone,fpts,cvs->faces_structure()[f], nb_vertices,
+			 constraints, list_constraints);
       }
     }
     dal::bit_vector cts; size_type cnt = 0;
@@ -162,7 +164,7 @@ namespace getfem {
 	      bool kept = true;
 	      scalar_type d = (nb_co == 0) ? (dmin * 3.)
 		: std::min(radius(i)*0.25, dmin);
-	      if (nb_co == n) d = dmin / 10.; // utile ?
+	      // if (nb_co == n) d = dmin / 10.; // utile ?
 	      base_node min = points[i], max = min;
 	      for (size_type m = 0; m < n; ++m) { min[m]-=d; max[m]+=d; }
 	      bgeot::kdtree_tab_type inpts;
@@ -173,7 +175,8 @@ namespace getfem {
 		    && gmm::vect_dist2(points[i], points[inpts[j].i]) < d)
 		  { kept = false; break; }
 	      if (kept) {
-		cout << "kept point : " << points[i] << " co = " << constraints(i) << endl;
+		cout << "kept point : " << points[i] << " co = "
+		     << constraints(i) << endl;
 		retained_points.add(i);
 	      }
 	    }
@@ -197,15 +200,10 @@ namespace getfem {
     cout << "cutting element " << cv << endl;
     std::auto_ptr<mesher_signed_distance> ref_element;
     std::vector<mesher_level_set> mesher_level_sets;
-    std::vector<base_node> gauss_points;
-    std::vector<scalar_type> gauss_weights;
-    base_small_vector V; base_matrix H;
     
     bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
-    unsigned found = 0;
     size_type n = pgt->structure()->dim();
     size_type nbp = pgt->basic_structure()->nb_points();
-    size_type nbds_for_element(0);
     size_type nbtotls = primary.card() + secondary.card();
     pintegration_method exactint;
     if (nbtotls > 16)
@@ -215,32 +213,27 @@ namespace getfem {
     /*
      * Step 1 : build the signed distance for the reference element.
      */
+    unsigned found = 0;
 
     /* Identifying simplexes.                                          */
-
     if (nbp == n+1 && pgt->basic_structure() == bgeot::simplex_structure(n)) {
 	ref_element.reset(new mesher_simplex_ref(n)); found = 1;
-	nbds_for_element = n+1;
 	exactint = exact_simplex_im(n);
     }
     
     /* Identifying parallelepiped.                                     */
-
     if (!found && nbp == (size_type(1) << n) &&
 	pgt->basic_structure() == bgeot::parallelepiped_structure(n)) {
       base_node rmin(n), rmax(n);
       std::fill(rmax.begin(), rmax.end(), scalar_type(1));
       ref_element.reset(new mesher_rectangle(rmin, rmax)); found = 2;
-      nbds_for_element = 2*n;
       exactint = exact_parallelepiped_im(n);
     }
 
     /* Identifying prisms.                                             */
- 
     if (!found && nbp == 2 * n &&
 	pgt->basic_structure() == bgeot::prism_structure(n)) {
       ref_element.reset(new mesher_prism_ref(n)); found = 3;
-      nbds_for_element = n+2;
       exactint = exact_prism_im(n);
     }
     
@@ -250,32 +243,68 @@ namespace getfem {
 
     /* 
      * Step 2 : build the signed distances, estimate the curvature radius
-     *          and the degree K.
+     *          and the degree K and find points on intersections of level sets.
      */
     dim_type K = 0; // Max. degree of the level sets.
     scalar_type r0 = 1E+10; // min curvature radius
-    std::vector<const mesher_signed_distance*> list_constraints;
+    std::vector<const mesher_signed_distance*> list_constraints, signed_dist;
     point_stock mesh_points(list_constraints);
+    cout.precision(16);
 
-    ref_element->register_constraints(list_constraints);
-    mesher_level_sets.reserve(nbtotls);
-    size_type ll = 0;
-    for (std::set<plevel_set>::const_iterator it = level_sets.begin();
-	 it != level_sets.end(); ++it, ++ll) {
-      if (primary[ll]) {
-	base_node X(n);
-	K = std::max(K, (*it)->degree());
-	mesher_level_sets.push_back((*it)->mls_of_convex(cv, 0));
-	mesher_level_set &mls(mesher_level_sets.back());
-	list_constraints.push_back(&mesher_level_sets.back());
-	r0 = std::min(r0, curvature_radius_estimate(mls, X, true));
-	if (secondary[ll]) {
-	  mesher_level_sets.push_back((*it)->mls_of_convex(cv, 1));
-	  mesher_level_set &mls2(mesher_level_sets.back());
-	  list_constraints.push_back(&mesher_level_sets.back());
-	  r0 = std::min(r0, curvature_radius_estimate(mls2, X, true));
+    for (size_type count = 0; count < (size_type(1) << nbtotls); ++count) {
+      signed_dist.clear();  signed_dist.reserve(1+nbtotls); 
+      mesher_level_sets.clear(); mesher_level_sets.reserve(1+nbtotls); 
+      signed_dist.push_back(ref_element.get());
+      unsigned k = 0, l = 0; K = 0;
+      pfem max_deg_fem(0);
+      for (std::set<plevel_set>::const_iterator it = level_sets.begin();
+	   it != level_sets.end(); ++it, ++l) {
+	if (primary[l]) {
+	  if ((*it)->degree() > K) {
+	    K = (*it)->degree();
+	    max_deg_fem = (*it)->get_mesh_fem().fem_of_element(cv);
+	  }
+	  mesher_level_sets.push_back((*it)->mls_of_convex(cv, 0,
+					     count & (size_type(1) << k)));
+	  signed_dist.push_back(&mesher_level_sets.back());
+	  ++k;
+	  if (secondary[l]) {
+	    mesher_level_sets.push_back((*it)->mls_of_convex(cv, 1,
+						 count & (size_type(1)<< k)));
+	    signed_dist.push_back(&mesher_level_sets.back());
+	    ++k;
+	  }
 	}
       }
+      assert(k == nbtotls);
+
+      mesher_intersection final_dist(signed_dist);
+      list_constraints.clear();
+      final_dist.register_constraints(list_constraints);
+      base_node local_box_min(n), local_box_max(n);
+      bool local_box_init = false;
+      for (size_type i=0; i < max_deg_fem->node_convex(cv).nb_points();++i) {
+	base_node X = max_deg_fem->node_convex(cv).points()[i];
+	if (try_projection(final_dist, X)) {
+	  // computation of the curvature radius
+	  dal::bit_vector bv;
+	  final_dist(X, bv);
+	  cout << "constraints : " << bv << endl;
+	  scalar_type r
+	    = min_curvature_radius_estimate(list_constraints, X, bv);
+	  cout << "rayon de courbure de : " << r << endl;
+	  r0 = std::min(r, r0);
+	  if (!local_box_init)
+	    { local_box_min = local_box_max = X; local_box_init = true; }
+	  else for (size_type j = 0; j < n; ++j) {
+	    local_box_min[j] = std::min(local_box_min[j], X[j]);
+	    local_box_max[j] = std::max(local_box_max[j], X[j]);
+	  }
+	  mesh_points.add(X, r);
+	}
+      }
+      cout << "Local_box_min = " << local_box_min << " local_box_max = "
+	   << local_box_max << endl;
     }
     
     /* 
@@ -285,14 +314,13 @@ namespace getfem {
     bool h0_is_ok = true;
 
     do {
-      mesh_points.clear();
       h0_is_ok = true;
       scalar_type geps = .001*h0; 
       size_type nbpt = 1;
       std::vector<size_type> gridnx(n);
       for (size_type i=0; i < n; ++i)
 	{ gridnx[i]=1+(size_type)(1./h0); nbpt *= gridnx[i]; }
-      base_node P(n), Q(n);
+      base_node P(n), Q(n), V(n);
       dal::bit_vector co;
       std::vector<size_type> co_v;
 
@@ -360,6 +388,8 @@ namespace getfem {
     delaunay_again :
       std::vector<base_node> fixed_points;
       std::vector<dal::bit_vector> fixed_points_constraints;
+      fixed_points.reserve(retained_points.card());
+      fixed_points_constraints.reserve(retained_points.card());
       for (dal::bv_visitor i(retained_points); !i.finished(); ++i) {
 	fixed_points.push_back(mesh_points[i]);
 	fixed_points_constraints.push_back(mesh_points.constraints(i));
@@ -462,8 +492,8 @@ namespace getfem {
 	exp.write_mesh();
       }
       
-      gauss_points.clear();
-      gauss_weights.clear();
+      std::vector<base_node> gauss_points;
+      std::vector<scalar_type> gauss_weights;
       for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i) {
 	base_matrix G;
 	vectors_to_base_matrix(G, mesh.points_of_convex(i));

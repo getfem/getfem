@@ -114,7 +114,7 @@ namespace getfem {
       }
       for (i = 0; i < nbco; ++i) d[i] = -(ls[i]->grad(X, G[i]));
       ++iter;
-    } while ((gmm::vect_norm2(d) > 1e-14 || gmm::vect_dist2(oldX,X) > 1e-14)
+    } while (gmm::vect_norm2(d) > 1e-14 && gmm::vect_dist2(oldX,X) > 1e-14
 	     && iter < 1000);
 //     cout << "nb iter de pure_multi : " << iter
 //   	 << " norm(d) = " << gmm::vect_norm2(d) << " cts = " << cts << endl;
