@@ -55,7 +55,7 @@ namespace getfem {
     std::fill(dof_types_.begin(), dof_types_.end(),
 	      global_dof(dim()));
     
-    vit.resize(target_dim()*dim());  
+    vit.resize(target_dim()*dim());
   }
   
   void fem_sum::init(const std::vector<const mesh_fem *> &mfs_) {
@@ -111,7 +111,7 @@ namespace getfem {
   }
   
   const bgeot::convex<base_node> &fem_sum::node_convex(size_type cv) const
-  { return *(bgeot::generic_dummy_convex_ref(dim(), nb_dof(cv))); }
+  { return *(bgeot::generic_dummy_convex_ref(dim(), nb_dof(cv), mfs[0]->linked_mesh().structure_of_convex(cv)->nb_faces())); }
   
   bgeot::pstored_point_tab fem_sum::node_tab(size_type) const { 
     if (!pspt_valid)

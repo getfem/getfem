@@ -369,10 +369,10 @@ namespace bgeot
   // generic convex with n global nodes
 
   class dummy_structure_ : public convex_structure
-  { friend pconvex_structure generic_dummy_structure(dim_type, size_type); };
+  { friend pconvex_structure generic_dummy_structure(dim_type, size_type, size_type); };
 
 
-  pconvex_structure generic_dummy_structure(dim_type nc, size_type n) {
+  pconvex_structure generic_dummy_structure(dim_type nc, size_type n, size_type nf) {
     static std::vector< std::vector<pconvex_structure> > tab;
     if (size_type(nc)+1 > tab.size()) tab.resize(nc+1);
     if (n+1 > tab[nc].size()) {
@@ -381,8 +381,13 @@ namespace bgeot
       for (size_type i = d; i <= n; ++i) {
 	dummy_structure_ *p = new dummy_structure_;
 	p->Nc = nc; p->nbpt = n; p->nbf = 0;
-	p->faces_struct.resize(0);
-	p->faces.resize(0);
+	p->faces_struct.resize(nf);
+	p->faces.resize(nf);
+	for (size_type j = 0; j < nf; ++j) {
+	  p->faces_struct[j] = generic_dummy_structure(nc == 0 ? 0 : nc-1, n, nc == 0 ? 1 : nc);
+	  p->faces[j].resize(n);
+	  for (size_type k = 0; k < n; ++k) p->faces[j][k] = k;
+	}
 	p->dir_points_.resize(0);
 	p->basic_pcvs = p;
 	tab[nc][i] = p;

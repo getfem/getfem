@@ -142,7 +142,7 @@ namespace getfem {
   
   const bgeot::convex<base_node> &interpolated_fem::node_convex
   (size_type cv) const
-  { return *(bgeot::generic_dummy_convex_ref(dim(), nb_dof(cv))); }
+  { return *(bgeot::generic_dummy_convex_ref(dim(), nb_dof(cv), mf2.linked_mesh().structure_of_convex(cv)->nb_faces())); }
   bgeot::pstored_point_tab interpolated_fem::node_tab(size_type)
     const { 
     if (!pspt_valid)

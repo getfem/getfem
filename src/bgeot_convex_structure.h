@@ -153,7 +153,7 @@ namespace bgeot {
   pconvex_structure simplex_structure(dim_type n, short_type k);
 
   /// generic convex with n global nodes
-  pconvex_structure generic_dummy_structure(dim_type nc, size_type n);
+  pconvex_structure generic_dummy_structure(dim_type nc, size_type n, size_type nf);
 
   //@}
 

@@ -123,7 +123,7 @@ namespace bgeot
   pconvex_ref equilateral_simplex_of_reference(dim_type nc);
 
   /** generic convex with n global nodes      */
-  pconvex_ref generic_dummy_convex_ref(dim_type nc, size_type n);
+  pconvex_ref generic_dummy_convex_ref(dim_type nc, size_type n, size_type nf);
 
 }  /* end of namespace bgeot.                                             */
 

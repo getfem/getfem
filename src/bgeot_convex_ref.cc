@@ -349,8 +349,8 @@ namespace bgeot
     scalar_type is_in_face(short_type, const base_node &) const 
     { DAL_THROW(failure_error, "Information not available here"); }
   
-    generic_dummy_(dim_type d, size_type n) {
-      cvs = generic_dummy_structure(d, n);
+    generic_dummy_(dim_type d, size_type n, size_type nf) {
+      cvs = generic_dummy_structure(d, n, nf);
       points().resize(n);
       normals_.resize(0);
       base_node P(d);
@@ -359,14 +359,14 @@ namespace bgeot
     }
   };
 
-  pconvex_ref generic_dummy_convex_ref(dim_type nc, size_type n) {
+  pconvex_ref generic_dummy_convex_ref(dim_type nc, size_type n, size_type nf) {
     static std::vector< std::vector<pconvex_ref> > tab;
     if (size_type(nc)+1 > tab.size()) tab.resize(nc+1);
     if (n+1 > tab[nc].size()) {
       size_type d = tab[nc].size();
       tab[nc].resize(n+1);
       for (size_type i = d; i <= n; ++i)
-	tab[nc][i] = new generic_dummy_(nc, i);
+	tab[nc][i] = new generic_dummy_(nc, i, nf);
     }
     return tab[nc][n];
   }

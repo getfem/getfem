@@ -670,6 +670,7 @@ namespace getfem
       asm_qu_term(H, mim, mf_u, mf_rh, h_data, boundary);
       std::vector<size_type> ind(0);
       dal::bit_vector bdof = mf_u.dof_on_set(boundary);
+      // gmm::clean(H, 1E-15 * gmm::mat_maxnorm(H));
       for (size_type i = 0; i < mf_u.nb_dof(); ++i)
 	if (!(bdof[i])) ind.push_back(i);
       gmm::clear(gmm::sub_matrix(H, gmm::sub_index(ind)));
