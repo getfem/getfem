@@ -189,7 +189,9 @@ namespace getfem {
 	mii[j] = (*this)[i].pfi->nb_base(cv); ++j;
 	if ((*this)[i].pfi->target_dim() != 1) ++j;
 	break;
-      case GETFEM_NONLINEAR_ : j+=(*this)[i].nlt->sizes().size(); --j;
+      case GETFEM_NONLINEAR_ :
+	if ((*this)[i].nl_part == 0)
+	  { j+=(*this)[i].nlt->sizes().size(); --j; }
 	break;
       }
     }

@@ -166,7 +166,7 @@ namespace getfem
                   mat_elem_integration_callback *icb,
 		  bgeot::multi_index sizes) {
       mat_elem_type::const_iterator it = pme->begin(), ite = pme->end();
-      //      bgeot::multi_index mi(pme->mi.size());
+
       bgeot::multi_index::iterator mit = sizes.begin();
       for (size_type k = 0; it != ite; ++it, ++k) {
 	ctx.set_pfp(pfp[k]);
@@ -199,8 +199,9 @@ namespace getfem
 	  }
 	  break;
 	case GETFEM_NONLINEAR_ :
-	  if ((*it).nl_part != 0) { /* for auxiliary fem of the nonlinear_term, the "prepare" method is called */
-	    (*it).nlt->prepare(ctx, (*it).nl_part);
+	  if ((*it).nl_part != 0) { /* for auxiliary fem of the nonlinear_term, */
+	                            /* the "prepare" method is called           */
+	     (*it).nlt->prepare(ctx, (*it).nl_part);
 	    /* the dummy assistant multiplies everybody by 1
 	       -> not efficient ! */
 	    bgeot::multi_index sz(1); sz[0] = 1;
@@ -214,7 +215,6 @@ namespace getfem
 	}
       }
       
-
       //expand_product_old(t,J*pai->coeff(ctx.ii()), first);
       scalar_type c = J*pai->coeff(ctx.ii());
       if (!icb) {
@@ -271,8 +271,10 @@ namespace getfem
     void expand_product_daxpy(base_tensor &t, scalar_type J, bool first) {
       size_type k;
       base_tensor::iterator pt = t.begin();
-      std::vector<base_tensor::const_iterator> pts(pme->size()), es_beg(pme->size()), es_end(pme->size());
-      std::vector<scalar_type> Vtab(pme->size());
+      static std::vector<base_tensor::const_iterator> pts, es_beg, es_end;
+      static std::vector<scalar_type> Vtab;
+      pts.resize(pme->size()); es_beg.resize(pme->size());
+      es_end.resize(pme->size()); Vtab.resize(pme->size());
       size_type nm = 0;
       if (first) memset(&(*t.begin()), 0, t.size()*sizeof(*t.begin())); //std::fill(t.begin(), t.end(), 0.0);
       for (k = 0, nm = 0; k < pme->size(); ++k) {

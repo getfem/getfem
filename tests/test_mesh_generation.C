@@ -118,12 +118,11 @@ int main(int argc, char **argv) {
 			       3.0, 0.1);
     getfem::mesher_cylinder C11(base_node(0.5,0.5,0.), base_node(0.,0.,-1.),
 			       1.0, 0.3);
-
     getfem::mesher_rectangle P3(base_node(0.,0.,0.), base_node(1.,1.,1.));
     getfem::mesher_rectangle P4(base_node(0.3,0.3,1.0), base_node(0.6,0.6,1.2));
     getfem::mesher_union U2(P3, C11);
     getfem::mesher_setminus M1(U2, C10);
-    getfem::mesher_setminus D18(M1, P4);
+    getfem::mesher_setminus D19(M1, P4);
 
 
     
@@ -161,6 +160,7 @@ int main(int argc, char **argv) {
     case 16: dist = &D16; break; /* cube with a hole */
     case 17: dist = &D17; break; /* space station */
     case 18: dist = &D18; break;
+    case 19: dist = &D19; break;
     }
     getfem::build_mesh(m, *dist, h, fixed, K, 2, max_iter, prefind);
   }

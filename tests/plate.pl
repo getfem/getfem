@@ -13,25 +13,23 @@ MU = 1.0;	        % Lamé coefficient.
 LAMBDA = 0.0;   	% Lamé coefficient.
 EPSILON = 0.01;          % thickness of the plate
 PRESSURE = 0.01;         % pressure on the top surface of the plate.
-MESH_TYPE = 'GT_LINEAR_QK(2)'; % linear rectangles
+MESH_TYPE = 'GT_QK(2,1)'; % linear rectangles
 NX = 10;            	          % space step.
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 FEM_TYPE_UT = 'FEM_QK(2,1)';
 FEM_TYPE_U3 = 'FEM_QK(2,1)';
-FEM_TYPE_THETA= 'FEM_QK(2,1)';
+FEM_TYPE_THETA= 'FEM_QK(2,2)';
 DATA_FEM_TYPE = 'FEM_QK(2,1)';
-INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,3)';
-INTEGRATION_CT = 'IM_GAUSS_PARALLELEPIPED(2,1)';
+INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,4)';
+INTEGRATION_CT = 'IM_GAUSS_PARALLELEPIPED(2,4)';
 RESIDU = 1E-9;     	% residu for conjugate gradient.
 ROOTFILENAME = 'plate';     % Root of data files.
 VTK_EXPORT = 2 % export solution to a .vtk file ?
 MIXED = 1;
-SYMMETRIZED = 0;
+SYMMETRIZED = 1;
 
 ;
 close(TMPF);
-
-
 
 $er = 0;
 open F, "./plate $tmp 2>&1 |" or die;
