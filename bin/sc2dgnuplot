@@ -49,7 +49,7 @@ close(TMPF);
 
 open(GNF, ">$tmp2") or die "Open file impossible : $!\n";
 print GNF "set data style line \n";
-print GNF "splot \'$tm1p\' title \'solution\'\n";
+print GNF "splot \'$tmp1\' title \'solution\'\n";
 print GNF "pause -1\n";
 print GNF "set term postscript\n";
 print GNF "set output \'$ARGV[0].ps\'\n";
