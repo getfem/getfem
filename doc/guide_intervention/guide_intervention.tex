@@ -268,12 +268,20 @@ Les diff\'erentes biblioth\`eques :
   \item MISC : Partie du projet recevant les algorithmes r\'ecents et non organis\'es en biblioth\`eques. Les algorithmes de r\'esolutions sont pour le moment rangés ici. Certaines parties de cet ensemble de fichiers sont destin\'es à dispara\^\i tre. \\[0.2cm]
 \end{itemize}
 
-\section{Futur organigramme simplifi\'e de GETFEM}
-GETFEM repr\'esentera une sur-couche de GETFEM++ compos\'ee de sources C - C++ faisant interface \`a des commandes MATLAB et de sources MATLAB.
+\section{Organigramme simplifi\'e de GETFEM}
+GETFEM repr\'esente une sur-couche de GETFEM++ compos\'ee de sources C - C++ faisant interface \`a des commandes MATLAB et des sources MATLAB.
 
 \begin{center}
 \includegraphics[width=17cm,angle=0]{getfemlab_orga.eps}
 \end{center}
+
+Afin de pouvoir utiliser les commandes de GETFEM sous MATLAB il faut définir les variables suivantes :
+\begin{figure}
+\begin{alltt}
+  setenv LD\_LIBRARY\_PATH \$\{LD\_LIBRARY\_PATH\}:/usr/local/getfem/lib
+  setenv MATLABPATH /usr/local/getfem/lib
+\end{alltt}
+\end{figure}
 
 \section{Organisation du projet avec CVS}
 
