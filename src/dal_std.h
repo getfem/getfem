@@ -281,6 +281,12 @@ typedef unsigned char uint8_type;
       { }
   };
 
+  class file_not_found_error : public std::logic_error {
+  public:
+    file_not_found_error(const std::string& what_arg)
+      : std::logic_error (what_arg) { }
+  };
+
   class internal_error : public std::logic_error {
   public:
     internal_error(const std::string& what_arg): std::logic_error (what_arg)

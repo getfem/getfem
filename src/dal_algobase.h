@@ -92,7 +92,7 @@ namespace dal
     double eps;
     inline int operator()(const T &x, const T &y) const
     { if (dal::abs(x - y) < eps) return 0; if (x < y) return -1; return 1; }
-    approx_less(double e = 1E-10) { eps = e; }
+    approx_less(double e = 1E-13) { eps = e; }
   };
 
   template <class T>
@@ -101,7 +101,7 @@ namespace dal
     double eps;
     inline int operator()(const T &x, const T &y) const
     { if (dal::abs(x - y) < eps) return 0; if (x > y) return -1; return 1; }
-    approx_greater(double e = 1E-10) { eps = e; }
+    approx_greater(double e = 1E-13) { eps = e; }
   };
 
   template<class ITER1, class ITER2, class COMP>
