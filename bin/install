@@ -177,7 +177,7 @@ if (-d "matlabcom")
     $fi1 = $fi;
     $fi1 =~ s/\.C//g;
     $fi1 =~ s/matlabcom\//lib\//g;
-    print MAKEFILE "\n", "$fi1.$extmatcom : $fi \$(GETFEM_LIB) .\/sources\/*.o \n";
+    print MAKEFILE "\n", "$fi1.$extmatcom : $fi lib/libgetfem.so .\/sources\/*.o \n";
     $fi1 =~ s/lib\///g;
     if ($systeme =~ /Linux/) {
       print MAKEFILE "\t", 'cd lib; mex -O $(INCLUDES) libgetfem.so ', "..\/$fi -o $fi1\n";
