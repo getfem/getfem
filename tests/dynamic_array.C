@@ -16,9 +16,9 @@ int main(void) {
     cout << "size of long double : " << sizeof(long double) << endl;
     
     dal::dynamic_array<int, 4> t;
-
+t[-5] = 8;
     try {
-      // t[-5] = 8;
+      t[-5] = 8;
       std::strstream msg;
       msg << "dynamic_array.C : negative index does not produce an error\0"; 
       throw dal::internal_error(msg.str()); 

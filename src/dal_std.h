@@ -285,9 +285,9 @@ typedef unsigned char uint8_type;
 /*	Getfem++ generic errors.                     			  */
 /* ********************************************************************** */
 
-class internal_error : public logic_error {
+class internal_error : public std::logic_error {
 public:
-  internal_error (const string& what_arg): logic_error (what_arg) { }
+  internal_error (const std::string& what_arg): std::logic_error (what_arg) { }
 };
 
 
