@@ -284,7 +284,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
   getfem::standard_solve(MS, final_model, iter);
 
   // Solution extraction
-  ELAS.get_displacement(MS, U);
+  ELAS.get_solution(MS, U);
   
   return (iter.converged());
 }
