@@ -118,9 +118,8 @@ namespace getfem
       for (i = 0; i < nbpt; i++)
 	tab3[i] = me.add_point(a + pararef.points()[i]);
 
-      // me.add_convex(bgeot::parallelepiped_trans(N, 1), tab3.begin());
-     me.add_convex(bgeot::linear_product_trans(bgeot::simplex_trans(1, 1), bgeot::simplex_trans(1, 1)), tab3.begin()); 
-
+      me.add_convex(bgeot::parallelepiped_trans(N, 1), tab3.begin());
+     
       for (i = 0; i < N; i++)
       {
 	tab[i]++; total++;

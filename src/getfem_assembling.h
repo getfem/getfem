@@ -400,7 +400,6 @@ namespace getfem
     pintegration_method pim, pimprec = (bgeot::papprox_integration)(NULL);
     bgeot::pgeometric_trans pgt, pgtprec = NULL;
     pmat_elem_type pme; pmat_elem_computation pmec;
-  
     for (cv << nn; cv != ST_NIL; cv << nn)
     {
       pf1 =     mf.fem_of_element(cv); nbd1 = pf1->nb_dof();

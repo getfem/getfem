@@ -51,6 +51,7 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
 
 start_program("");
 start_program("-d N=3 -d NX=5");
+start_program("-d N=3 -d INTEGRATION=25 -d NX=5");
 start_program("-d K=2 -d NX=5");
 start_program("-d K=2 -d NX=5");
 start_program("-d INTEGRATION=12 -d NX=10");

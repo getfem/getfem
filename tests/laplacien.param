@@ -11,7 +11,7 @@ FT = 0.1;               % parameter for the exact solution.
 % FT = 3.141593;
 
 %%%%%   discretisation parameters  :                     	      %%%%%
-MESH_TYPE = 1;          % 0 = simplexes
+MESH_TYPE = 0;          % 0 = simplexes
 			% 1 = parallelepipeds
 K = 1;                  % Finite element degree.
 INTEGRATION = 0;        % 0 = exact integration.

@@ -234,9 +234,9 @@ void lap_pb::assemble(void)
   RM = sparse_matrix_type(nb_dof, nb_dof);
   linalg_vector ST;
   
-  cout << "dof number : " << nb_dof << endl;
-  // cout << "nombre de ddl de l'element pour les données : " << nb_dof_data
-  //       << endl;
+  cout << "Number of dof : " << nb_dof << endl;
+  // cout << "dof number 1 : " << nb_dof_data << endl;
+  // cout << "dof number 2 : " << nb_dof_data2 << endl;
 
   cout << "Assembling rigidity matrix" << endl;
   ST = linalg_vector(nb_dof_data2);
