@@ -55,13 +55,32 @@ namespace gmm {
   template <typename MAT> inline size_type mat_ncols(const MAT &m)
   { return linalg_traits<MAT>::ncols(m); }
 
-  template <typename L> inline const void *linalg_origin(const L &l)
-  { return linalg_traits<L>::origin(l); }
+
+  template <typename L> 
+  typename select_return<const typename linalg_traits<L>::origin_type *,
+			 typename linalg_traits<L>::origin_type *,
+			 L *>::return_type
+  linalg_origin(L &l)
+  { return linalg_traits<L>::origin(linalg_cast(l)); }
+
+  template <typename L> 
+  typename select_return<const typename linalg_traits<L>::origin_type *,
+			 typename linalg_traits<L>::origin_type *,
+			 const L *>::return_type
+  linalg_origin(const L &l)
+  { return linalg_traits<L>::origin(linalg_cast(l)); }
+
 
   template <typename V> inline
   typename select_return<typename linalg_traits<V>::const_iterator,
     typename linalg_traits<V>::iterator, V *>::return_type
   vect_begin(V &v)
+  { return linalg_traits<V>::begin(linalg_cast(v)); }
+
+  template <typename V> inline
+  typename select_return<typename linalg_traits<V>::const_iterator,
+    typename linalg_traits<V>::iterator, const V *>::return_type
+  vect_begin(const V &v)
   { return linalg_traits<V>::begin(linalg_cast(v)); }
 
   template <typename V> inline
@@ -352,10 +371,12 @@ namespace gmm {
     }
   }
 
-  template <typename L> inline void write(std::ostream &o, const L &l,row_and_col)
+  template <typename L> inline
+  void write(std::ostream &o, const L &l, row_and_col) 
   { write(o, l, row_major()); }
 
-  template <typename L> inline void write(std::ostream &o, const L &l,col_and_row)
+  template <typename L> inline
+  void write(std::ostream &o, const L &l, col_and_row)
   { write(o, l, row_major()); }
 
   template <typename L> void write(std::ostream &o, const L &l, col_major) {
@@ -504,9 +525,7 @@ namespace gmm {
     typename std::iterator_traits<IT1>::value_type
     _vect_sp_dense(IT1 it, IT1 ite, IT2 it2) {
     typename std::iterator_traits<IT1>::value_type res(0);
-    for (; it != ite; ++it, ++it2) {
-      res += (*it) * (*it2);
-    }
+    for (; it != ite; ++it, ++it2) res += (*it) * (*it2);
     return res;
   }
   
@@ -515,8 +534,7 @@ namespace gmm {
     _vect_sp_sparse(IT1 it, IT1 ite, const V &v) {
     typedef typename std::iterator_traits<IT1>::value_type T;
     T res(0);
-    for (; it != ite; ++it) 
-      res += (*it) * (T(v[it.index()]));
+    for (; it != ite; ++it) res += (*it) * (T(v[it.index()]));
     return res;
   }
 
@@ -808,7 +826,7 @@ namespace gmm {
   void copy(const L1& l1, L2& l2) { 
     if ((const void *)(&l1) != (const void *)(&l2)) {
       #ifdef GMM_VERIFY
-        if (linalg_origin(l1) == linalg_origin(l2))
+        if (same_origin(l1,l2))
 	  DAL_WARNING(2, "Warning : a conflict is possible in copy\n");
       #endif
       copy(l1, l2, typename linalg_traits<L1>::linalg_type(),
@@ -1489,7 +1507,7 @@ namespace gmm {
     if (!m || !n) { gmm::clear(l3); return; }
     if (n != vect_size(l2) || m != vect_size(l3))
       DAL_THROW(dimension_error,"dimensions mismatch");
-    if (linalg_origin(l2) != linalg_origin(l3))
+    if (!same_origin(l2, l3))
       mult_spec(l1, l2, l3, typename principal_orientation_type<typename
 		linalg_traits<L1>::sub_orientation>::potype());
     else {
@@ -1586,7 +1604,7 @@ namespace gmm {
     if (!m || !n) { gmm::copy(l3, l4); return; }
     if (n != vect_size(l2) || m != vect_size(l3) || m != vect_size(l4))
       DAL_THROW(dimension_error,"dimensions mismatch");
-    if (linalg_origin(l2) != linalg_origin(l4))
+    if (!same_origin(l2, l4))
       mult_spec(l1, l2, l3, l4, typename principal_orientation_type<typename
 		linalg_traits<L1>::sub_orientation>::potype());
     else {
@@ -1779,7 +1797,7 @@ namespace gmm {
     if (mat_ncols(l1) != mat_nrows(l2) || mat_nrows(l1) != mat_nrows(l3)
 	|| mat_ncols(l2) != mat_ncols(l3))
       DAL_THROW(dimension_error,"dimensions mismatch");
-    if (linalg_origin(l2) != linalg_origin(l3))
+    if (!same_origin(l2, l3))
       mult_spec(l1, l2, l3, typename mult_t<
 		typename linalg_traits<L1>::sub_orientation,
 		typename linalg_traits<L2>::sub_orientation,

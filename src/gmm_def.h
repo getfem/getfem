@@ -100,8 +100,7 @@ namespace gmm {
     typedef abstract_null_type* iterator;
     typedef const abstract_null_type* const_iterator;
     typedef abstract_null_type storage_type;
-    typedef abstract_null_type clear_type;
-    typedef abstract_null_type access_type;
+    typedef abstract_null_type origin_type;
     typedef abstract_null_type const_sub_row_type;
     typedef abstract_null_type sub_row_type;
     typedef abstract_null_type const_row_iterator;
@@ -483,65 +482,40 @@ namespace gmm {
     typename linalg_traits<V>::storage_type, V>::vector_type vector_type;
   };
 
-
-  /* ********************************************************************* */
-  /*		Standard access and clear objects             		   */
-  /* ********************************************************************* */
-
-  template <typename IT, typename CIT> struct dense_access {
-    
-    typedef typename std::iterator_traits<IT>::value_type value_type;
-    typedef typename std::iterator_traits<IT>::reference reference;
-    typedef typename std::iterator_traits<CIT>::pointer const_pointer;
-
-    typedef typename select_return<const value_type &, reference,
-			 const_pointer>::return_type const_reference;
-  
-    reference operator()(const void *, const IT &_begin,
-			 const IT &, size_type i)
-    { return _begin[i]; }
-    const_reference operator()(const void *, const CIT &_begin,
-			       const CIT &, size_type i)
-    { return _begin[i]; }
-  };
-
-  template <typename IT> struct dense_access<IT, IT> {
-    typedef typename std::iterator_traits<IT>::value_type value_type;
-  
-    value_type operator()(const void *, const IT &_begin,
-			 const IT &, size_type i)
-    { return _begin[i]; }
-  };
-
-
-  template <typename IT> struct dense_clear {
-    typedef typename std::iterator_traits<IT>::value_type value_type;
-    inline void operator()(const void *,const IT &_begin,const IT &_end);
-  };
-  
-  template <typename IT> inline void dense_clear<IT>::operator()(const void *,
-			  const IT &_begin, const IT &_end)
-  { std::fill(_begin, _end, value_type(0)); }
-
   /* ********************************************************************* */
   /* Set to begin end set to end for iterators on non-const sparse vectors.*/
   /* ********************************************************************* */
 
-  template <typename IT, typename VECT> inline
-  void set_to_begin(IT &it, const void *o, VECT *)
-  { it = vect_begin(*(const_cast<VECT *>((const VECT *)(o)))); }
+  template <typename IT, typename ORG, typename VECT> inline
+  void set_to_begin(IT &it, ORG o, VECT *)
+  { it = vect_begin(*o); }
 
-  template <typename IT, typename VECT> inline
-  void set_to_begin(IT &it, const void *o, const VECT *) 
-  { it = vect_const_begin(*((const VECT *)(o))); }
+  template <typename IT, typename ORG, typename VECT> inline
+  void set_to_begin(IT &it, ORG o, const VECT *) 
+  { it = vect_const_begin(*o); }
 
-  template <typename IT, typename VECT> inline
-  void set_to_end(IT &it, const void *o, VECT *)
-  { it = vect_end(*(const_cast<VECT *>((const VECT *)(o)))); }
+  template <typename IT, typename ORG, typename VECT> inline
+  void set_to_end(IT &it, ORG o, VECT *)
+  { it = vect_end(*o); }
   
-  template <typename IT, typename VECT> inline
-  void set_to_end(IT &it, const void *o, const VECT *)
-  { it = vect_const_end(*((const VECT *)(o))); }
+  template <typename IT, typename ORG, typename VECT> inline
+  void set_to_end(IT &it, ORG o, const VECT *)
+  { it = vect_const_end(*o); }
+
+  /* ********************************************************************* */
+  /* Comparison of origins.                                                */
+  /* ********************************************************************* */
+
+  template <typename L1, typename L2>
+  bool same_origin(const L1 &l1, const L2 &l2)
+  { return same_porigin(linalg_origin(l1), linalg_origin(l2)); }
+
+  template <typename PT1, typename PT2>
+  bool same_porigin(PT1, PT2) { return false; }
+
+  template <typename PT>
+  bool same_porigin(PT pt1, PT pt2) { return (pt1 == pt2); }
+
 
 }
 

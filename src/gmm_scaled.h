@@ -86,31 +86,19 @@ namespace gmm {
     typedef typename linalg_traits<V>::value_type value_type;
     typedef typename linalg_traits<V>::const_iterator iterator;
     typedef typename linalg_traits<this_type>::reference reference;
-    typedef typename linalg_traits<V>::access_type access_type;
+    typedef typename linalg_traits<this_type>::origin_type origin_type;
 
     iterator _begin, _end;
-    const void *origin;
+    const origin_type *origin;
     size_type _size;
     value_type r;
 
     scaled_vector_const_ref(const V &v, value_type rr)
-      : _begin(vect_const_begin(v)), _end(vect_const_end(v)), origin(linalg_origin(v)),
-	_size(vect_size(v)), r(rr) {}
+      : _begin(vect_const_begin(v)), _end(vect_const_end(v)),
+	origin(linalg_origin(v)), _size(vect_size(v)), r(rr) {}
 
     reference operator[](size_type i) const
-    { return r * access_type()(origin, _begin, _end, i); }
-  };
-
-  template <typename V> struct scaled_vector_const_access {
-    typedef scaled_vector_const_ref<V> this_type;
-    typedef typename linalg_traits<V>::value_type value_type;
-    typedef typename linalg_traits<this_type>::const_iterator iterator;
-    
-    value_type operator()(const void *o, const iterator &_begin,
-			  const iterator &_end, size_type i) {
-      return _begin.r 
-	* typename linalg_traits<V>::access_type()(o, _begin.it, _end.it, i);
-    }
+    { return r * linalg_traits<V>::access(origin, _begin, _end, i); }
   };
 
   template <typename V> struct linalg_traits<scaled_vector_const_ref<V> > {
@@ -118,13 +106,12 @@ namespace gmm {
     typedef linalg_const is_reference;
     typedef abstract_vector linalg_type;
     typedef typename linalg_traits<V>::value_type value_type;
+    typedef typename linalg_traits<V>::origin_type origin_type;
     typedef value_type reference;
     typedef abstract_null_type iterator;
     typedef scaled_const_iterator<typename linalg_traits<V>::const_iterator>
             const_iterator;
     typedef typename linalg_traits<V>::storage_type storage_type;
-    typedef scaled_vector_const_access<V> access_type;
-    typedef abstract_null_type clear_type;
     static size_type size(const this_type &v) { return v._size; }
     static iterator begin(this_type &v)
     { return iterator(v._begin, v.r); }
@@ -134,7 +121,11 @@ namespace gmm {
     { return iterator(v._end, v.r); }
     static const_iterator end(const this_type &v)
     { return const_iterator(v._end, v.r); }
-    static const void* origin(const this_type &v) { return v.origin; }
+    static const origin_type* origin(const this_type &v) { return v.origin; }
+    static value_type access(const origin_type *o, const const_iterator &it,
+			     const const_iterator &ite, size_type i)
+    { return it.r * (linalg_traits<V>::access(o, it.it, ite.it, i)); }
+
   };
 
    template<typename V> std::ostream &operator <<
@@ -192,10 +183,10 @@ namespace gmm {
     typedef scaled_row_matrix_const_ref<M> this_type;
     typedef typename linalg_traits<M>::const_row_iterator iterator;
     typedef typename linalg_traits<M>::value_type value_type;
-    typedef typename linalg_traits<M>::access_type access_type;
+    typedef typename linalg_traits<this_type>::origin_type origin_type;
 
     iterator _begin, _end;
-    const void *origin;
+    const origin_type *origin;
     value_type r;
 
     scaled_row_matrix_const_ref(const M &m, value_type rr)
@@ -203,23 +194,14 @@ namespace gmm {
       _end(mat_row_end(m)), origin(linalg_origin(m)), r(rr) {}
 
     value_type operator()(size_type i, size_type j) const
-    { return r * access_type()(_begin+i, j); }
-  };
-
-  template <typename M> struct scaled_row_matrix_access {
-    typedef scaled_row_matrix_const_ref<M> this_type;
-    typedef typename linalg_traits<this_type>::row_iterator iterator;
-    typedef typename linalg_traits<M>::value_type value_type;
-    typedef typename linalg_traits<M>::access_type access_type;
-    
-    value_type operator()(const iterator &itrow, size_type i)
-    { return itrow.r * access_type()(itrow.it, i); }
+    { return r * linalg_traits<M>::access(_begin+i, j); }
   };
 
   template <typename M> struct linalg_traits<scaled_row_matrix_const_ref<M> > {
     typedef scaled_row_matrix_const_ref<M> this_type;
     typedef linalg_const is_reference;
     typedef abstract_matrix linalg_type;
+    typedef typename linalg_traits<M>::origin_type origin_type;
     typedef typename linalg_traits<M>::value_type value_type;
     typedef value_type reference;
     typedef typename linalg_traits<M>::storage_type storage_type;
@@ -233,7 +215,6 @@ namespace gmm {
     typedef abstract_null_type const_col_iterator;
     typedef abstract_null_type col_iterator;
     typedef row_major sub_orientation;
-    typedef scaled_row_matrix_access<M> access_type;
     static size_type nrows(const this_type &m)
     { return (m._end == m._begin) ? 0 : m._end - m._begin; }
     static size_type ncols(const this_type &m)
@@ -244,7 +225,9 @@ namespace gmm {
     { return const_row_iterator(m._begin, m.r); }
     static const_row_iterator row_end(const this_type &m)
     { return const_row_iterator(m._end, m.r); }
-    static const void* origin(const this_type &m) { return m.origin; }
+    static const origin_type* origin(const this_type &m) { return m.origin; }
+    static value_type access(const const_row_iterator &it, size_type i)
+    { return it.r * (linalg_traits<M>::access(it.it, i)); }
   };
 
   template<typename M> std::ostream &operator <<
@@ -299,10 +282,10 @@ namespace gmm {
     typedef scaled_col_matrix_const_ref<M> this_type;
     typedef typename linalg_traits<M>::const_col_iterator iterator;
     typedef typename linalg_traits<M>::value_type value_type;
-    typedef typename linalg_traits<M>::access_type access_type;
+    typedef typename linalg_traits<this_type>::origin_type origin_type;
 
     iterator _begin, _end;
-    const void *origin;
+    const origin_type *origin;
     value_type r;
 
     scaled_col_matrix_const_ref(const M &m, value_type rr)
@@ -310,17 +293,7 @@ namespace gmm {
       _end(mat_col_end(m)), origin(linalg_origin(m)), r(rr) {}
 
     value_type operator()(size_type i, size_type j) const
-    { return r * access_type()(_begin+j, i); }
-  };
-
-  template <typename M> struct scaled_col_matrix_access {
-    typedef scaled_col_matrix_const_ref<M> this_type;
-    typedef typename linalg_traits<this_type>::const_col_iterator iterator;
-    typedef typename linalg_traits<M>::value_type value_type;
-    typedef typename linalg_traits<M>::access_type access_type;
-    
-    value_type operator()(const iterator &itcol, size_type i)
-    { return itcol.r * access_type(itcol.it, i); }
+    { return r * linalg_traits<M>::access(_begin+j, i); }
   };
 
   template <typename M> struct linalg_traits<scaled_col_matrix_const_ref<M> > {
@@ -328,6 +301,7 @@ namespace gmm {
     typedef linalg_const is_reference;
     typedef abstract_matrix linalg_type;
     typedef typename linalg_traits<M>::value_type value_type;
+    typedef typename linalg_traits<M>::origin_type origin_type;
     typedef value_type reference;
     typedef typename linalg_traits<M>::storage_type storage_type;
     typedef typename linalg_traits<M>::const_sub_col_type vector_type;
@@ -340,7 +314,6 @@ namespace gmm {
     typedef abstract_null_type const_row_iterator;
     typedef abstract_null_type row_iterator;
     typedef col_major sub_orientation;
-    typedef scaled_col_matrix_access<M> access_type;
     static size_type ncols(const this_type &m)
     { return (m._end == m._begin) ? 0 : m._end - m._begin; }
     static size_type nrows(const this_type &m)
@@ -351,7 +324,9 @@ namespace gmm {
     { return const_col_iterator(m._begin, m.r); }
     static const_col_iterator col_end(const this_type &m)
     { return const_col_iterator(m._end, m.r); }
-    static const void* origin(const this_type &m) { return m.origin; }
+    static const origin_type* origin(const this_type &m) { return m.origin; }
+    static value_type access(const const_col_iterator &it, size_type i)
+    { return it.r * (linalg_traits<M>::access(it.it, i)); }
   };
 
   template<typename M> std::ostream &operator <<

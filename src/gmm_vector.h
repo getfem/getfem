@@ -75,26 +75,26 @@ namespace gmm
     T operator /(T v) { return T(*this)/ v; } // necessary for unknow reason
   };  
   
-  template<typename T, typename V> T operator +(const ref_elt_vector<T, V> &re)
-    { return T(re); }
-  template<typename T, typename V> T operator -(const ref_elt_vector<T, V> &re)
-    { return -T(re); }
-  template<typename T, typename V> T operator +(const ref_elt_vector<T, V> &re, T v)
-    { return T(re)+ v; }
-  template<typename T, typename V> T operator +(T v, const ref_elt_vector<T, V> &re)
-    { return v+ T(re); }
-  template<typename T, typename V> T operator -(const ref_elt_vector<T, V> &re, T v)
-    { return T(re)- v; }
-  template<typename T, typename V> T operator -(T v, const ref_elt_vector<T, V> &re)
-    { return v- T(re); }
-  template<typename T, typename V> T operator *(const ref_elt_vector<T, V> &re, T v)
-    { return T(re)* v; }
-  template<typename T, typename V> T operator *(T v, const ref_elt_vector<T, V> &re)
-    { return v* T(re); }
-  template<typename T, typename V> T operator /(const ref_elt_vector<T, V> &re, T v)
-    { return T(re)/ v; }
-  template<typename T, typename V> T operator /(T v, const ref_elt_vector<T, V> &re)
-    { return v/ T(re); }
+  template<typename T, typename V> inline
+  T operator +(const ref_elt_vector<T, V> &re) { return T(re); }
+  template<typename T, typename V> inline
+  T operator -(const ref_elt_vector<T, V> &re) { return -T(re); }
+  template<typename T, typename V> inline
+  T operator +(const ref_elt_vector<T, V> &re, T v) { return T(re)+ v; }
+  template<typename T, typename V> inline
+  T operator +(T v, const ref_elt_vector<T, V> &re) { return v+ T(re); }
+  template<typename T, typename V> inline
+  T operator -(const ref_elt_vector<T, V> &re, T v) { return T(re)- v; }
+  template<typename T, typename V> inline
+  T operator -(T v, const ref_elt_vector<T, V> &re) { return v- T(re); }
+  template<typename T, typename V>  inline
+  T operator *(const ref_elt_vector<T, V> &re, T v) { return T(re)* v; }
+  template<typename T, typename V> inline
+  T operator *(T v, const ref_elt_vector<T, V> &re) { return v* T(re); }
+  template<typename T, typename V> inline
+  T operator /(const ref_elt_vector<T, V> &re, T v) { return T(re)/ v; }
+  template<typename T, typename V> inline
+  T operator /(T v, const ref_elt_vector<T, V> &re) { return v/ T(re); }
   template<typename T, typename V> std::ostream &operator <<
   (std::ostream &o, const ref_elt_vector<T, V> &re) { o << T(re); return o; }
   
@@ -200,33 +200,9 @@ namespace gmm
   template<typename T>  void wsvector<T>::out_of_range_error(void) const
   { DAL_THROW(std::out_of_range, "out of range"); }
 
-  template <typename T> struct wsvector_access {
-    typedef wsvector<T> V;
-    typedef typename linalg_traits<V>::value_type value_type;
-    typedef typename linalg_traits<V>::reference reference;
-    typedef typename linalg_traits<V>::iterator iterator;
-    typedef typename linalg_traits<V>::const_iterator const_iterator;
-    
-    reference operator()(const void *o, const iterator &,
-			 const iterator &, size_type i)
-    { return (*(const_cast<V *>((const V *)(o))))[i]; }
-
-    value_type operator()(const void *o, const const_iterator &,
-			 const const_iterator &, size_type i)
-    { return (*(const V *)(o))[i]; }
-
-  };
-
-  template <typename T> struct wsvector_clear {
-    typedef wsvector<T> V;
-    typedef typename linalg_traits<V>::iterator iterator;
-    
-    void operator()(const void *o, const iterator &, const iterator &)
-    { (const_cast<V *>((const V *)(o)))->clear(); }
-  };
-
   template <typename T> struct linalg_traits<wsvector<T> > {
     typedef wsvector<T> this_type;
+    typedef this_type origin_type;
     typedef linalg_false is_reference;
     typedef abstract_vector linalg_type;
     typedef T value_type;
@@ -234,16 +210,22 @@ namespace gmm
     typedef wsvector_iterator<T>  iterator;
     typedef wsvector_const_iterator<T> const_iterator;
     typedef abstract_sparse storage_type;
-    typedef wsvector_access<T> access_type;
-    typedef wsvector_clear<T> clear_type;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) { return v.begin(); }
     static const_iterator begin(const this_type &v) { return v.begin(); }
     static iterator end(this_type &v) { return v.end(); }
     static const_iterator end(const this_type &v) { return v.end(); }
-    static const void* origin(const this_type &v) { return &v; }
-    static void do_clear(this_type &v)
-    { clear_type()(origin(v), begin(v), end(v)); }
+    static origin_type* origin(this_type &v) { return &v; }
+    static const origin_type* origin(const this_type &v) { return &v; }
+    static void clear(origin_type* o, const iterator &it, const iterator &ite)
+    { o->clear(); }
+    static void do_clear(this_type &v) { v.clear(); }
+    static value_type access(const origin_type *o, const const_iterator &,
+			     const const_iterator &, size_type i)
+    { return (*o)[i]; }
+    static reference access(origin_type *o, const iterator &, const iterator &,
+			    size_type i)
+    { return (*o)[i]; }
   };
 
   template<typename T> std::ostream &operator <<
@@ -266,7 +248,7 @@ namespace gmm
     simple_vector_ref<wsvector<T> *>
       *svr = const_cast<simple_vector_ref<wsvector<T> *> *>(&v2);
     wsvector<T>
-      *pv = const_cast<wsvector<T> *>((const wsvector<T> *)(v2.origin));
+      *pv = const_cast<wsvector<T> *>(v2.origin);
     if (vect_size(v1) != vect_size(v2))
 	DAL_THROW(dimension_error,"dimensions mismatch");
     *pv = v1; svr->_begin = vect_begin(*pv); svr->_end = vect_end(*pv);
@@ -274,10 +256,10 @@ namespace gmm
   template <typename T> inline
   void copy(const simple_vector_ref<const wsvector<T> *> &v1,
 	    wsvector<T> &v2)
-  { copy(*(const wsvector<T> *)(v1.origin), v2); }
+  { copy(*(v1.origin), v2); }
   template <typename T> inline
   void copy(const simple_vector_ref<wsvector<T> *> &v1, wsvector<T> &v2)
-  { copy(*(const wsvector<T> *)(v1.origin), v2); }
+  { copy(*(v1.origin), v2); }
 
   template <typename T> inline void clean(wsvector<T> &v, double eps) {
     typename wsvector<T>::iterator it = v.begin(), ite = v.end(), itc;
@@ -291,7 +273,7 @@ namespace gmm
     simple_vector_ref<wsvector<T> *>
       *svr = const_cast<simple_vector_ref<wsvector<T> *> *>(&l);
     wsvector<T>
-      *pv = const_cast<wsvector<T> *>((const wsvector<T> *)(l.origin));
+      *pv = const_cast<wsvector<T> *>((l.origin));
     clean(*pv, eps);
     svr->_begin = vect_begin(*pv); svr->_end = vect_end(*pv);
   }
@@ -459,33 +441,9 @@ namespace gmm
   template<typename T>  void rsvector<T>::out_of_range_error(void) const
   { DAL_THROW(std::out_of_range, "out of range"); }
 
-  template <typename T> struct rsvector_access {
-    typedef rsvector<T> V;
-    typedef typename linalg_traits<V>::value_type value_type;
-    typedef typename linalg_traits<V>::reference reference;
-    typedef typename linalg_traits<V>::iterator iterator;
-    typedef typename linalg_traits<V>::const_iterator const_iterator;
-    
-    reference operator()(const void *o, const iterator &,
-			 const iterator &, size_type i)
-    { return (*(const_cast<V *>((const V *)(o))))[i]; }
-
-    value_type operator()(const void *o, const const_iterator &,
-			 const const_iterator &, size_type i)
-    { return (*(const V *)(o))[i]; }
-
-  };
-
-  template <typename T> struct rsvector_clear {
-    typedef rsvector<T> V;
-    typedef typename linalg_traits<V>::iterator iterator;
-    
-    void operator()(const void *o, const iterator &, const iterator &)
-    { (*(const_cast<V *>((const V *)(o)))).clear(); }
-  };
-
   template <typename T> struct linalg_traits<rsvector<T> > {
     typedef rsvector<T> this_type;
+    typedef this_type origin_type;
     typedef linalg_false is_reference;
     typedef abstract_vector linalg_type;
     typedef T value_type;
@@ -493,8 +451,6 @@ namespace gmm
     typedef rsvector_iterator<T>  iterator;
     typedef rsvector_const_iterator<T> const_iterator;
     typedef abstract_sparse storage_type;
-    typedef rsvector_access<T> access_type;
-    typedef rsvector_clear<T> clear_type;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) { return iterator(v.begin()); }
     static const_iterator begin(const this_type &v)
@@ -502,9 +458,17 @@ namespace gmm
     static iterator end(this_type &v) { return iterator(v.end()); }
     static const_iterator end(const this_type &v)
       { return const_iterator(v.end()); }
-    static const void* origin(const this_type &v) { return &v; }
-    static void do_clear(this_type &v)
-      { clear_type()(origin(v), begin(v), end(v)); }
+    static origin_type* origin(this_type &v) { return &v; }
+    static const origin_type* origin(const this_type &v) { return &v; }
+    static void clear(origin_type* o, const iterator &it, const iterator &ite)
+    { o->clear(); }
+    static void do_clear(this_type &v) { v.clear(); }
+    static value_type access(const origin_type *o, const const_iterator &,
+			     const const_iterator &, size_type i)
+    { return (*o)[i]; }
+    static reference access(origin_type *o, const iterator &, const iterator &,
+			    size_type i)
+    { return (*o)[i]; }
   };
 
   template<typename T> std::ostream &operator <<
@@ -527,7 +491,7 @@ namespace gmm
     simple_vector_ref<rsvector<T> *>
       *svr = const_cast<simple_vector_ref<rsvector<T> *> *>(&v2);
     rsvector<T>
-      *pv = const_cast<rsvector<T> *>((const rsvector<T> *)(v2.origin));
+      *pv = const_cast<rsvector<T> *>((v2.origin));
     if (vect_size(v1) != vect_size(v2))
 	DAL_THROW(dimension_error,"dimensions mismatch");
     *pv = v1; svr->_begin = vect_begin(*pv); svr->_end = vect_end(*pv);
@@ -535,10 +499,10 @@ namespace gmm
   template <typename T> inline
   void copy(const simple_vector_ref<const rsvector<T> *> &v1,
 	    rsvector<T> &v2)
-  { copy(*(const rsvector<T> *)(v1.origin), v2); }
+  { copy(*(v1.origin), v2); }
   template <typename T> inline
   void copy(const simple_vector_ref<rsvector<T> *> &v1, rsvector<T> &v2)
-  { copy(*(const rsvector<T> *)(v1.origin), v2); }
+  { copy(*(v1.origin), v2); }
 
   template <typename V, typename T> inline void add(const V &v1, rsvector<T> &v2) {
     if ((const void *)(&v1) != (const void *)(&v2)) {
@@ -586,7 +550,7 @@ namespace gmm
       if (vect_size(v1) != vect_size(v2))
 	DAL_THROW(dimension_error,"dimensions mismatch");
 #       ifdef GMM_VERIFY
-        if (linalg_origin(v1) == linalg_origin(v2))
+         if (same_origin(v1, v2))
 	  DAL_WARNING(2, "a conflict is possible in vector copy\n");
 #       endif
 	copy_rsvector(v1, v2, typename linalg_traits<V>::storage_type());
@@ -637,7 +601,7 @@ namespace gmm
     simple_vector_ref<rsvector<T> *>
       *svr = const_cast<simple_vector_ref<rsvector<T> *> *>(&l);
     rsvector<T>
-      *pv = const_cast<rsvector<T> *>((const rsvector<T> *)(l.origin));
+      *pv = const_cast<rsvector<T> *>((l.origin));
     clean(*pv, eps);
     svr->_begin = vect_begin(*pv); svr->_end = vect_end(*pv);
   }
@@ -809,7 +773,6 @@ namespace gmm
   };
 
   template<typename T>  void slvector<T>::w(size_type c, const T &e) {
-    // cout << "vecteur avant : " << *this << " ajout à l'indice " << c << " de " << e << endl;
 #   ifdef GMM_VERIFY
       if (c >= _size) out_of_range_error();
 #   endif
@@ -828,39 +791,14 @@ namespace gmm
 	std::fill(data.begin() + s, data.end(), T(0));
       }
       data[c - shift] = e;
-      // cout << "résultat : " << *this << endl;
     }
 
   template<typename T>  void slvector<T>::out_of_range_error(void) const
   { DAL_THROW(std::out_of_range, "out of range"); }
 
-  template <typename T> struct slvector_access {
-    typedef slvector<T> V;
-    typedef typename linalg_traits<V>::value_type value_type;
-    typedef typename linalg_traits<V>::reference reference;
-    typedef typename linalg_traits<V>::iterator iterator;
-    typedef typename linalg_traits<V>::const_iterator const_iterator;
-    
-    reference operator()(const void *o, const iterator &,
-			 const iterator &, size_type i)
-    { return (*(const_cast<V *>((const V *)(o))))[i]; }
-
-    value_type operator()(const void *o, const const_iterator &,
-			 const const_iterator &, size_type i)
-    { return (*(const V *)(o))[i]; }
-
-  };
-
-  template <typename T> struct slvector_clear {
-    typedef slvector<T> V;
-    typedef typename linalg_traits<V>::iterator iterator;
-    
-    void operator()(const void *o, const iterator &, const iterator &)
-    { (*(const_cast<V *>((const V *)(o)))).clear(); }
-  };
-
   template <typename T> struct linalg_traits<slvector<T> > {
     typedef slvector<T> this_type;
+    typedef this_type origin_type;
     typedef linalg_false is_reference;
     typedef abstract_vector linalg_type;
     typedef T value_type;
@@ -868,8 +806,6 @@ namespace gmm
     typedef slvector_iterator<T>  iterator;
     typedef slvector_const_iterator<T> const_iterator;
     typedef abstract_skyline storage_type;
-    typedef slvector_access<T> access_type;
-    typedef slvector_clear<T> clear_type;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v)
       { return iterator(v.data_begin(), v.first()); }
@@ -879,9 +815,17 @@ namespace gmm
       { return iterator(v.data_end(), v.last()); }
     static const_iterator end(const this_type &v)
       { return const_iterator(v.data_end(), v.last()); }
-    static const void* origin(const this_type &v) { return &v; }
-    static void do_clear(this_type &v)
-      { clear_type()(origin(v), begin(v), end(v)); }
+    static origin_type* origin(this_type &v) { return &v; }
+    static const origin_type* origin(const this_type &v) { return &v; }
+    static void clear(origin_type* o, const iterator &, const iterator &)
+    { o->clear(); }
+    static void do_clear(this_type &v) { v.clear(); }
+    static value_type access(const origin_type *o, const const_iterator &,
+			     const const_iterator &, size_type i)
+    { return (*o)[i]; }
+    static reference access(origin_type *o, const iterator &, const iterator &,
+			    size_type i)
+    { return (*o)[i]; }
   };
 
   template<typename T> std::ostream &operator <<

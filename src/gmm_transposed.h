@@ -48,10 +48,10 @@ namespace gmm {
             ::const_col_iterator, typename linalg_traits<this_type>
             ::col_iterator, PT>::ref_type iterator;
     typedef typename linalg_traits<this_type>::reference reference;
-    typedef typename linalg_traits<M>::access_type access_type;
+    typedef typename linalg_traits<this_type>::porigin_type porigin_type;
 
     iterator _begin, _end;
-    const void *origin; 
+    porigin_type origin; 
 
     transposed_row_ref(ref_M m) : _begin(mat_row_begin(m)), 
       _end(mat_row_end(m)),
@@ -61,29 +61,15 @@ namespace gmm {
       _begin(cr._begin),_end(cr._end),origin(cr.origin) {}
 
     reference operator()(size_type i, size_type j) const
-    { return access_type()(_begin+j, i); }
-  };
-
-  template <typename PT> struct transposed_row_matrix_access {
-    typedef transposed_row_ref<PT> this_type;
-    typedef typename std::iterator_traits<PT>::value_type M;
-    typedef typename linalg_traits<this_type>::reference reference;
-    typedef typename linalg_traits<this_type>::value_type value_type;
-    typedef typename linalg_traits<M>::access_type access_type;
-    typedef typename linalg_traits<this_type>::const_col_iterator const_iter;
-    typedef typename linalg_traits<this_type>::col_iterator iterator;
-    
-    reference operator()(const iterator &itcol, size_type i)
-    { return access_type()(itcol, i); }
-
-    value_type operator()(const const_iter &itcol, size_type i)
-    { return access_type()(itcol, i); }
-
+    { return linalg_traits<M>::access(_begin+j, i); }
   };
 
   template <typename PT> struct linalg_traits<transposed_row_ref<PT> > {
     typedef transposed_row_ref<PT> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
+    typedef typename linalg_traits<M>::origin_type origin_type;
+    typedef typename select_ref<const origin_type *, origin_type *,
+			        PT>::ref_type porigin_type;
     typedef typename which_reference<PT>::is_reference is_reference;
     typedef abstract_matrix linalg_type;
     typedef typename linalg_traits<M>::value_type value_type;
@@ -101,7 +87,6 @@ namespace gmm {
     typedef typename select_ref<abstract_null_type, typename
             linalg_traits<M>::row_iterator, PT>::ref_type col_iterator;
     typedef col_major sub_orientation;
-    typedef transposed_row_matrix_access<PT> access_type;
     static size_type ncols(const this_type &v)
     { return (v._end == v._begin) ? 0 : v._end - v._begin; }
     static size_type nrows(const this_type &v)
@@ -115,8 +100,13 @@ namespace gmm {
     static const_col_iterator col_begin(const this_type &m)
     { return m._begin; }
     static const_col_iterator col_end(const this_type &m) { return m._end; }
-    static const void* origin(const this_type &v) { return v.origin; }
+    static origin_type* origin(this_type &v) { return v.origin; }
+    static const origin_type* origin(const this_type &v) { return v.origin; }
     static void do_clear(this_type &v);
+    static value_type access(const const_col_iterator &itcol, size_type i)
+    { return linalg_traits<M>::access(itcol, i); }
+    static reference access(const col_iterator &itcol, size_type i)
+    { return linalg_traits<M>::access(itcol, i); }
   };
   
   template <typename PT> 
@@ -145,10 +135,10 @@ namespace gmm {
             ::const_row_iterator, typename linalg_traits<this_type>
             ::row_iterator, PT>::ref_type iterator;
     typedef typename linalg_traits<this_type>::reference reference;
-    typedef typename linalg_traits<M>::access_type access_type;
+    typedef typename linalg_traits<this_type>::porigin_type porigin_type;
     
     iterator _begin, _end;
-    const void *origin; 
+    porigin_type origin; 
 
     transposed_col_ref(ref_M m) : _begin(mat_col_begin(m)),
 				  _end(mat_col_end(m)),
@@ -158,29 +148,15 @@ namespace gmm {
       _begin(cr._begin),_end(cr._end),origin(cr.origin) {}
 
     reference operator()(size_type i, size_type j) const
-    { return access_type()(_begin+i, j); }
-  };
-
-  template <typename PT> struct transposed_col_matrix_access {
-    typedef transposed_col_ref<PT> this_type;
-    typedef typename std::iterator_traits<PT>::value_type M;
-    typedef typename linalg_traits<this_type>::reference reference;
-    typedef typename linalg_traits<this_type>::value_type value_type;   
-    typedef typename linalg_traits<M>::access_type access_type;
-    typedef typename linalg_traits<this_type>::const_row_iterator const_iter;
-    typedef typename linalg_traits<this_type>::row_iterator iterator;
-    
-    reference operator()(const iterator &itrow, size_type i)
-    { return access_type()(itrow, i); }
-
-    value_type operator()(const const_iter &itrow, size_type i)
-    { return access_type()(itrow, i); }
-    
+    { return linalg_traits<M>::access(_begin+i, j); }
   };
 
   template <typename PT> struct linalg_traits<transposed_col_ref<PT> > {
     typedef transposed_col_ref<PT> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
+    typedef typename linalg_traits<M>::origin_type origin_type;
+    typedef typename select_ref<const origin_type *, origin_type *,
+			        PT>::ref_type porigin_type;
     typedef typename which_reference<PT>::is_reference is_reference;
     typedef abstract_matrix linalg_type;
     typedef typename linalg_traits<M>::value_type value_type;
@@ -198,7 +174,6 @@ namespace gmm {
     typedef typename select_ref<abstract_null_type, typename
             linalg_traits<M>::col_iterator, PT>::ref_type row_iterator;
     typedef row_major sub_orientation;
-    typedef transposed_col_matrix_access<PT> access_type;
     static size_type nrows(const this_type &v)
     { return (v._end == v._begin) ? 0 : v._end - v._begin; }
     static size_type ncols(const this_type &v)
@@ -209,10 +184,16 @@ namespace gmm {
     { return linalg_traits<M>::col(it); }
     static row_iterator row_begin(this_type &m) { return m._begin; }
     static row_iterator row_end(this_type &m) { return m._end; }
-    static const_row_iterator row_begin(const this_type &m) { return m._begin; }
+    static const_row_iterator row_begin(const this_type &m)
+    { return m._begin; }
     static const_row_iterator row_end(const this_type &m) { return m._end; }
-    static const void* origin(const this_type &m) { return m.origin; }
+    static origin_type* origin(this_type &v) { return v.origin; }
+    static const origin_type* origin(const this_type &v) { return v.origin; }
     static void do_clear(this_type &m);
+    static value_type access(const const_row_iterator &itrow, size_type i)
+    { return linalg_traits<M>::access(itrow, i); }
+    static reference access(const row_iterator &itrow, size_type i)
+    { return linalg_traits<M>::access(itrow, i); }
   };
 
   template <typename PT> 

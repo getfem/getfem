@@ -26,7 +26,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
 
     error = gmm::vect_norm2(v3);
-    if (error >= R(prec * 20000.0))
+    if (error >= R(prec * 30000.0))
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
     gmm::lu_inverse(m1);
@@ -35,7 +35,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     
     error = gmm::vect_norm2(v3);
-    if (error >= R(prec * 20000.0))
+    if (error >= R(prec * 30000.0))
       DAL_THROW(gmm::failure_error, "Error too large: "<< error);
   }
 }

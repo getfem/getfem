@@ -118,21 +118,9 @@ namespace gmm
   template<typename V> void row_matrix<V>::clear_mat()
   { for (size_type i=0; i < nrows(); ++i) clear_row(i); }
 
-  template <typename V> struct row_matrix_access {
-    typedef typename linalg_traits<row_matrix<V> >::reference reference;
-    typedef typename linalg_traits<row_matrix<V> >::row_iterator iterator;
-    typedef typename linalg_traits<row_matrix<V> >::value_type value_type;
-    typedef typename linalg_traits<row_matrix<V> >::const_row_iterator
-    const_iterator;
-    
-    reference operator()(const iterator &itrow, size_type j)
-    { return (*itrow)[j]; }
-    value_type operator()(const const_iterator &itrow, size_type j)
-    { return (*itrow)[j]; }
-  };
-
   template <typename V> struct linalg_traits<row_matrix<V> > {
     typedef row_matrix<V> this_type;
+    typedef this_type origin_type;
     typedef linalg_false is_reference;
     typedef abstract_matrix linalg_type;
     typedef typename linalg_traits<V>::value_type value_type;
@@ -147,19 +135,25 @@ namespace gmm
     typedef abstract_null_type col_iterator;
     typedef abstract_null_type const_col_iterator;
     typedef row_major sub_orientation;
-    typedef row_matrix_access<V> access_type;
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static size_type ncols(const this_type &m) { return m.ncols(); }
     static row_iterator row_begin(this_type &m) { return m.begin(); }
     static row_iterator row_end(this_type &m) { return m.end(); }
-    static const_row_iterator row_begin(const this_type &m) { return m.begin(); }
-    static const_row_iterator row_end(const this_type &m) { return m.end(); }
+    static const_row_iterator row_begin(const this_type &m)
+    { return m.begin(); }
+    static const_row_iterator row_end(const this_type &m)
+    { return m.end(); }
     static const_sub_row_type row(const const_row_iterator &it)
     { return const_sub_row_type(*it); }
     static sub_row_type row(const row_iterator &it) 
     { return sub_row_type(*it); }
-    static const void* origin(const this_type &m) { return &m; }
+    static origin_type* origin(this_type &m) { return &m; }
+    static const origin_type* origin(const this_type &m) { return &m; }
     static void do_clear(this_type &m) { m.clear_mat(); }
+    static value_type access(const const_row_iterator &itrow, size_type j)
+    { return (*itrow)[j]; }
+    static reference access(const row_iterator &itrow, size_type j)
+    { return (*itrow)[j]; }
   };
 
 #ifdef USING_BROKEN_GCC295
@@ -217,21 +211,9 @@ namespace gmm
   template<typename V> void col_matrix<V>::clear_mat()
   { for (size_type i=0; i < ncols(); ++i) clear_col(i); }
 
-  template <typename V> struct col_matrix_access {
-    typedef typename linalg_traits<col_matrix<V> >::reference reference;
-    typedef typename linalg_traits<col_matrix<V> >::col_iterator iterator;
-    typedef typename linalg_traits<col_matrix<V> >::value_type value_type;
-    typedef typename linalg_traits<col_matrix<V> >::const_col_iterator
-    const_iterator;
-    
-    reference operator()(const iterator &itcol, size_type j)
-    { return (*itcol)[j]; }
-    value_type operator()(const const_iterator &itcol, size_type j)
-    { return (*itcol)[j]; }
-  };
-
   template <typename V> struct linalg_traits<col_matrix<V> > {
     typedef col_matrix<V> this_type;
+    typedef this_type origin_type;
     typedef linalg_false is_reference;
     typedef abstract_matrix linalg_type;
     typedef typename linalg_traits<V>::value_type value_type;
@@ -246,19 +228,25 @@ namespace gmm
     typedef abstract_null_type row_iterator;
     typedef abstract_null_type const_row_iterator;
     typedef col_major sub_orientation;
-    typedef col_matrix_access<V> access_type;
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static size_type ncols(const this_type &m) { return m.ncols(); }
     static col_iterator col_begin(this_type &m) { return m.begin(); }
     static col_iterator col_end(this_type &m) { return m.end(); }
-    static const_col_iterator col_begin(const this_type &m) { return m.begin(); }
-    static const_col_iterator col_end(const this_type &m) { return m.end(); }
+    static const_col_iterator col_begin(const this_type &m)
+    { return m.begin(); }
+    static const_col_iterator col_end(const this_type &m)
+    { return m.end(); }
     static const_sub_col_type col(const const_col_iterator &it)
     { return const_sub_col_type(*it); }
     static sub_col_type col(const col_iterator &it) 
     { return sub_col_type(*it); }
-    static const void* origin(const this_type &m) { return &m; }
+    static origin_type* origin(this_type &m) { return &m; }
+    static const origin_type* origin(const this_type &m) { return &m; }
     static void do_clear(this_type &m) { m.clear_mat(); }
+    static value_type access(const const_col_iterator &itcol, size_type j)
+    { return (*itcol)[j]; }
+    static reference access(const col_iterator &itcol, size_type j)
+    { return (*itcol)[j]; }
   };
 
   template<typename V> std::ostream &operator <<
@@ -322,43 +310,35 @@ namespace gmm
   template<typename T>  void dense_matrix<T>::out_of_range_error(void) const
   { DAL_THROW(std::out_of_range, "out of range"); }
 
-  template <typename T> struct dense_matrix_access {
-    typedef typename linalg_traits<dense_matrix<T> >::reference reference;
-    typedef typename linalg_traits<dense_matrix<T> >::value_type value_type;
-    typedef typename linalg_traits<dense_matrix<T> >::col_iterator iterator;
-    typedef typename linalg_traits<dense_matrix<T> >::const_col_iterator
-    const_iterator;
-    
-    reference operator()(const iterator &itcol, size_type j)
-    { return (*itcol)[j]; }
-    value_type operator()(const const_iterator &itcol, size_type j)
-    { return (*itcol)[j]; }
-  };
-
   template <typename T> struct linalg_traits<dense_matrix<T> > {
     typedef dense_matrix<T> this_type;
+    typedef this_type origin_type;
     typedef linalg_false is_reference;
     typedef abstract_matrix linalg_type;
     typedef T value_type;
     typedef T& reference;
     typedef abstract_dense storage_type;
-    typedef tab_ref_reg_spaced_with_origin<typename this_type::iterator>
-    sub_row_type;
-    typedef tab_ref_reg_spaced_with_origin<typename this_type
-    ::const_iterator> const_sub_row_type;
+    typedef tab_ref_reg_spaced_with_origin<typename this_type::iterator,
+					   this_type> sub_row_type;
+    typedef tab_ref_reg_spaced_with_origin<typename this_type::const_iterator,
+					   this_type> const_sub_row_type;
     typedef dense_compressed_iterator<typename this_type::iterator,
-				      typename this_type::iterator> row_iterator;
+				      typename this_type::iterator,
+				      this_type *> row_iterator;
     typedef dense_compressed_iterator<typename this_type::const_iterator,
-				      typename this_type::iterator> const_row_iterator;
-    typedef tab_ref_with_origin<typename this_type::iterator> sub_col_type;
-    typedef tab_ref_with_origin<typename this_type::const_iterator>
-    const_sub_col_type;
+				      typename this_type::iterator,
+				      const this_type *> const_row_iterator;
+    typedef tab_ref_with_origin<typename this_type::iterator, 
+				this_type> sub_col_type;
+    typedef tab_ref_with_origin<typename this_type::const_iterator,
+				this_type> const_sub_col_type;
     typedef dense_compressed_iterator<typename this_type::iterator,
-				      typename this_type::iterator> col_iterator;
+				      typename this_type::iterator,
+				      this_type *> col_iterator;
     typedef dense_compressed_iterator<typename this_type::const_iterator,
-				      typename this_type::iterator> const_col_iterator;
+				      typename this_type::iterator,
+				      const this_type *> const_col_iterator;
     typedef col_and_row sub_orientation;
-    typedef dense_matrix_access<T> access_type;
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static size_type ncols(const this_type &m) { return m.ncols(); }
     static const_sub_row_type row(const const_row_iterator &it) {
@@ -391,8 +371,13 @@ namespace gmm
     { return const_col_iterator(m.begin(),m.nrows(),m.nrows(),m.ncols(),&m); }
     static const_col_iterator col_end(const this_type &m)
     { return const_col_iterator(m.end(), m.nrows(),m.nrows(),m.ncols(), &m); }
-    static const void* origin(const this_type &m) { return &m; }
+    static origin_type* origin(this_type &m) { return &m; }
+    static const origin_type* origin(const this_type &m) { return &m; }
     static void do_clear(this_type &m) { m.fill(value_type(0)); }
+    static value_type access(const const_col_iterator &itcol, size_type j)
+    { return (*itcol)[j]; }
+    static reference access(const col_iterator &itcol, size_type j)
+    { return (*itcol)[j]; }
   };
 
   template<typename T> std::ostream &operator <<
@@ -427,7 +412,8 @@ namespace gmm
     { init_with_good_format(B); }
     void init_with(const col_matrix<wsvector<T> > &B)
     { init_with_good_format(B); }
-    template <typename PT1, typename PT2, typename PT3, int cshift> void init_with(const csc_matrix_ref<PT1,PT2,PT3,cshift>& B)
+    template <typename PT1, typename PT2, typename PT3, int cshift>
+    void init_with(const csc_matrix_ref<PT1,PT2,PT3,cshift>& B)
     { init_with_good_format(B); }
     void init_with_identity(size_type n);
 
@@ -498,6 +484,7 @@ namespace gmm
     typedef linalg_const is_reference;
     typedef abstract_matrix linalg_type;
     typedef T value_type;
+    typedef T origin_type;
     typedef T reference;
     typedef abstract_sparse storage_type;
     typedef abstract_null_type sub_row_type;
@@ -511,8 +498,6 @@ namespace gmm
 				       const IND_TYPE *, shift>
     const_col_iterator;
     typedef abstract_null_type col_iterator;
-    typedef csc_matrix_access<T *, IND_TYPE *, IND_TYPE *, shift> 
-    access_type;
     typedef col_major sub_orientation;
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static size_type ncols(const this_type &m) { return m.ncols(); }
@@ -522,10 +507,13 @@ namespace gmm
     { return const_col_iterator(m.pr, m.ir, m.jc + m.nc, m.nr, m.pr); }
     static const_sub_col_type col(const const_col_iterator &it) {
       return const_sub_col_type(it.pr + *(it.jc) - shift,
-				it.ir + *(it.jc) - shift, *(it.jc + 1) - *(it.jc), it.n);
+				it.ir + *(it.jc) - shift,
+				*(it.jc + 1) - *(it.jc), it.n);
     }
-    static const void* origin(const this_type &m) { return m.pr; }
+    static const origin_type* origin(const this_type &m) { return m.pr; }
     static void do_clear(this_type &m) { m.do_clear(); }
+    static value_type access(const const_col_iterator &itcol, size_type j)
+    { return col(itcol)[j]; }
   };
 
 #ifdef USING_BROKEN_GCC295
@@ -558,7 +546,7 @@ namespace gmm
 
     typedef unsigned int IND_TYPE;
 
-    T *pr;         // values.
+    T *pr;        // values.
     IND_TYPE *ir; // row indexes.
     IND_TYPE *jc; // row repartition on pr and ir.
     size_type nc, nr;
@@ -646,6 +634,7 @@ namespace gmm
     typedef linalg_const is_reference;
     typedef abstract_matrix linalg_type;
     typedef T value_type;
+    typedef T origin_type;
     typedef T reference;
     typedef abstract_sparse storage_type;
     typedef abstract_null_type sub_col_type;
@@ -659,8 +648,6 @@ namespace gmm
 				       const IND_TYPE *, shift>
     const_row_iterator;
     typedef abstract_null_type row_iterator;
-    typedef csr_matrix_access<T *, IND_TYPE *, IND_TYPE *, shift> 
-    access_type;
     typedef row_major sub_orientation;
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static size_type ncols(const this_type &m) { return m.ncols(); }
@@ -670,10 +657,13 @@ namespace gmm
     { return const_row_iterator(m.pr, m.ir, m.jc + m.nc, m.nr, m.pr); }
     static const_sub_row_type row(const const_row_iterator &it) {
       return const_sub_row_type(it.pr + *(it.jc) - shift,
-				it.ir + *(it.jc) - shift, *(it.jc + 1) - *(it.jc), it.n);
+				it.ir + *(it.jc) - shift,
+				*(it.jc + 1) - *(it.jc), it.n);
     }
-    static const void* origin(const this_type &m) { return m.pr; }
+    static const origin_type* origin(const this_type &m) { return m.pr; }
     static void do_clear(this_type &m) { m.do_clear(); }
+    static value_type access(const const_row_iterator &itrow, size_type j)
+    { return row(itrow)[j]; }
   };
 
 #ifdef USING_BROKEN_GCC295
@@ -752,23 +742,25 @@ namespace gmm
     typedef block_matrix<MAT> this_type;
     typedef linalg_false is_reference;
     typedef abstract_matrix linalg_type;
+    typedef this_type origin_type;
     typedef typename linalg_traits<MAT>::value_type value_type;
     typedef typename linalg_traits<MAT>::reference reference;
     typedef typename linalg_traits<MAT>::storage_type storage_type;
-    typedef abstract_null_type sub_row_type; // to be done ...
+    typedef abstract_null_type sub_row_type;       // to be done ...
     typedef abstract_null_type const_sub_row_type; // to be done ...
-    typedef abstract_null_type row_iterator; // to be done ...
+    typedef abstract_null_type row_iterator;       // to be done ...
     typedef abstract_null_type const_row_iterator; // to be done ...
-    typedef abstract_null_type sub_col_type; // to be done ...
+    typedef abstract_null_type sub_col_type;       // to be done ...
     typedef abstract_null_type const_sub_col_type; // to be done ...
-    typedef abstract_null_type col_iterator; // to be done ...
+    typedef abstract_null_type col_iterator;       // to be done ...
     typedef abstract_null_type const_col_iterator; // to be done ...
-    typedef abstract_null_type sub_orientation; // to be done ...
-    typedef abstract_null_type access_type; // to be done ...
+    typedef abstract_null_type sub_orientation;    // to be done ...
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static size_type ncols(const this_type &m) { return m.ncols(); }
-    static const void* origin(const this_type &m) { return &m; }
+    static origin_type* origin(this_type &m) { return &m; }
+    static const origin_type* origin(const this_type &m) { return &m; }
     static void do_clear(this_type &m) { m.do_clear(); }
+    // access to be done ...
   };
 
   template <typename MAT> void block_matrix<MAT>::do_clear(void) { 
