@@ -44,57 +44,57 @@ namespace getfem
     
   public :
     
-    void interpolation(const base_node &x, const base_matrix &G,
-		       bgeot::pgeometric_trans pgt,
-		       const base_vector &coeff, base_node &val) const
+    void interpolation(const base_node &, const base_matrix &,
+		       bgeot::pgeometric_trans ,
+		       const base_vector &, base_node &) const
     { DAL_THROW(failure_error, "Uninstantied function"); }
     
-    void interpolation(pfem_precomp pfp, size_type ii,
-		       const base_matrix &G,
-		       bgeot::pgeometric_trans pgt, 
-		       const base_vector &coeff, 
-		       base_node &val, dim_type Qdim=1) const
+    void interpolation(pfem_precomp , size_type ,
+		       const base_matrix &,
+		       bgeot::pgeometric_trans , 
+		       const base_vector &, 
+		       base_node &, dim_type=1) const
     { DAL_THROW(failure_error, "Uninstantied function"); }
 
-    void interpolation_grad(const base_node &x, const base_matrix &G,
-			    bgeot::pgeometric_trans pgt,
-			    const base_vector &coeff, base_matrix &val) const
+    void interpolation_grad(const base_node &, const base_matrix &,
+			    bgeot::pgeometric_trans ,
+			    const base_vector &, base_matrix &) const
     { DAL_THROW(failure_error, "Uninstantied function"); }
 
-    void base_value(const base_node &x, base_tensor &t) const
+    void base_value(const base_node &, base_tensor &) const
     { DAL_THROW(failure_error, "Uninstantied function"); }
-    void grad_base_value(const base_node &x, base_tensor &t) const
+    void grad_base_value(const base_node &, base_tensor &) const
     { DAL_THROW(failure_error, "Uninstantied function"); }
-    void hess_base_value(const base_node &x, base_tensor &t) const
+    void hess_base_value(const base_node &, base_tensor &) const
     { DAL_THROW(failure_error, "Uninstantied function"); }
 
-    void real_base_value(pgeotrans_precomp pgp, pfem_precomp pfp,
-			 size_type ii, const base_matrix &G,
-			 base_tensor &t, size_type elt) const
+    void real_base_value(pgeotrans_precomp , pfem_precomp ,
+			 size_type , const base_matrix &,
+			 base_tensor &, size_type ) const
     { DAL_THROW(failure_error, "Uninstantied function"); } 
     
-    void real_grad_base_value(pgeotrans_precomp pgp, pfem_precomp pfp,
-			      size_type ii, const base_matrix &G,
-			      const base_matrix &B, base_tensor &t,
-			      size_type elt) const
+    void real_grad_base_value(pgeotrans_precomp , pfem_precomp ,
+			      size_type , const base_matrix &,
+			      const base_matrix &, base_tensor &,
+			      size_type ) const
     { DAL_THROW(failure_error, "Uninstantied function"); }
     
-    void real_hess_base_value(pgeotrans_precomp pgp, pfem_precomp pfp,
-			      size_type ii, const base_matrix &G,
-			      const base_matrix &B3, const base_matrix &B32,
-			      base_tensor &t,
-			      size_type elt) const
+    void real_hess_base_value(pgeotrans_precomp , pfem_precomp ,
+			      size_type , const base_matrix &,
+			      const base_matrix &, const base_matrix &,
+			      base_tensor &,
+			      size_type ) const
     { DAL_THROW(failure_error, "Uninstantied function"); }
 
-    gauss_points_fem(const bgeot::pconvex_ref _cvr, size_type dim = 1) {
+    external_data_fem(const bgeot::pconvex_ref _cvr, size_type dim = 1) {
       cvr = _cvr;
       is_equiv = real_element_defined = true;
       is_polycomp = is_pol = is_lag = false;
       es_degree = 5;
       ntarget_dim = dim;
       init_cvs_node();
-      base_node pt(cvr->dim()); pt.fill(0.001);
-      add_node(lagrange_dof(cvr->dim()), pt);
+      base_node pt(cvr->structure()->dim()); pt.fill(0.001);
+      add_node(lagrange_dof(cvr->structure()->dim()), pt);
     }
   };
 
