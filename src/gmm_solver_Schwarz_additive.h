@@ -207,6 +207,9 @@ namespace gmm {
   /*		Additive Schwarz algorithm                                */
   /* ******************************************************************** */
 
+  /** Function to call if the SAM matrix is precomputed for successive solve
+   * with the same system.
+   */
   template <typename Matrix1, typename Matrix2,
 	    typename Vector2, typename Vector3, typename Precond,
 	    typename local_solver, typename global_solver>
@@ -233,6 +236,9 @@ namespace gmm {
     return SAM.itebilan;
   }
 
+  /** Global function. Compute the SAM matrix and call the previous function.
+      The SAM matrix represent the preconditionned linear system.
+   */
   template <typename Matrix1, typename Matrix2,
 	    typename Vector2, typename Vector3, typename Precond,
 	    typename local_solver, typename global_solver>
