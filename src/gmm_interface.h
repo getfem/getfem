@@ -802,6 +802,11 @@ namespace gmm {
     void do_clear(this_type &m) { m.do_clear(); }
   };
 
+   // for GCC 2.95
+  template <class PT1, class PT2, class PT3, int shift>
+  struct linalg_traits<const csc_matrix_ref<PT1, PT2, PT3, shift> >
+    : public linalg_traits<csc_matrix_ref<PT1, PT2, PT3, shift> > {};
+
   template <class PT1, class PT2, class PT3, int shift>
   std::ostream &operator <<
   (std::ostream &o, const csc_matrix_ref<PT1, PT2, PT3, shift>& m)
