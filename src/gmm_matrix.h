@@ -121,7 +121,7 @@ namespace gmm
 
   template<typename V> class row_matrix {
   protected :
-    std::vector<V> li; /* array of rows.                                   */
+    std::vector<V> li; /* array of rows.                                  */
     size_type nc;
     
   public :
@@ -158,6 +158,7 @@ namespace gmm
     inline size_type ncols(void) const { return nc;        }
 
     void swap(row_matrix<V> &m) { std::swap(li, m.li); std::swap(nc, m.nc); }
+    void swap_row(size_type i, size_type j) { std::swap(li[i], li[j]); }
   };
 
   template<typename V> void row_matrix<V>::resize(size_type m, size_type n) {
@@ -260,6 +261,7 @@ namespace gmm
     inline size_type nrows(void) const { return nr; }
 
     void swap(col_matrix<V> &m) { std::swap(li, m.li); std::swap(nr, m.nr); }
+    void swap_col(size_type i, size_type j) { std::swap(li[i], li[j]); }
   };
 
   template<typename V> void col_matrix<V>::resize(size_type m, size_type n) {

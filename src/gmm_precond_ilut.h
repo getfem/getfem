@@ -135,12 +135,12 @@ namespace gmm {
       gmm::copy(mat_const_row(A, i), w);
       double norm_row = gmm::vect_norm2(w);
 
-      size_type nL = 0, nU = 0;
+      size_type nL = 0, nU = 1;
       if (is_sparse(A)) {
 	typename linalg_traits<svector>::iterator it = vect_begin(w),
 	  ite = vect_end(w);
 	for (; it != ite; ++it) if (i > it.index()) nL++;
-	nU = w.nb_stored() - nL - 1;
+	nU = w.nb_stored() - nL;
       }
 
       for (size_type krow = 0, k; krow < w.nb_stored(); ++krow) {
@@ -152,18 +152,20 @@ namespace gmm {
       }
       tmp = w[i];
 
-      if (gmm::abs(tmp) <= max_pivot)
-	{ DAL_WARNING(2, "pivot " << i << " is too small"); tmp = T(1); }
+      if (gmm::abs(tmp) <= max_pivot) {
+	DAL_WARNING(2, "pivot " << i << " too small. try with ilutp ?");
+	w[i] = tmp = T(1);
+      }
 
       max_pivot = std::max(max_pivot, std::min(gmm::abs(tmp) * prec, R(1)));
       indiag[i] = T(1) / tmp;
-      U(i,i) = tmp; gmm::clean(w, eps * norm_row); w[i] = T(0);
+      gmm::clean(w, eps * norm_row);
       std::sort(w.begin(), w.end(), elt_rsvector_value_less_<T>());
       typename svector::const_iterator wit = w.begin(), wite = w.end();
       size_type nnl = 0, nnu = 0;
       for (; wit != wite; ++wit) // copy to be optimized ...
 	if (wit->c < i) { if (nnl < nL+K) L(i, wit->c) = wit->e; ++nnl; }
-	else            { if (nnu < nU+K) U(i, wit->c) = wit->e; ++nnu; }
+	else { if (nnu < nU+K) U(i, wit->c) = wit->e; ++nnu; }
     }
 
   }

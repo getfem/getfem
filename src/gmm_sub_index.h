@@ -63,10 +63,14 @@ namespace gmm {
       for (it = pbi->begin(), i = 0; it != ite; ++it, ++i)
 	std::vector<size_t>::operator[](*it) = i;
     }
-
+    void swap(size_type i, size_type j) {
+      std::swap(std::vector<size_t>::operator[](i),
+		std::vector<size_t>::operator[](j));
+    }
+    
   };
 
-  typedef const basic_index *pbasic_index;
+  typedef basic_index *pbasic_index;
 
   struct index_generator {
 
@@ -86,7 +90,7 @@ namespace gmm {
     typedef basic_index base_type;
     typedef base_type::const_iterator const_iterator;
 
-    pbasic_index ind;
+    mutable pbasic_index ind;
     mutable pbasic_index rind;
 
     void comp_extr(void) {
@@ -141,6 +145,12 @@ namespace gmm {
     unsorted_sub_index(const unsorted_sub_index &si) : sub_index(si) {}
     unsorted_sub_index &operator =(const unsorted_sub_index &si)
     { sub_index::operator =(si); return *this; }
+    void swap(size_type i, size_type j) {
+      if (ind->nb_ref > 1)
+	DAL_THROW(failure_error, "Operation not allowed on this index");
+      if (rind) rind->swap((*ind)[i], (*ind)[j]);
+      ind->swap(i, j);
+    }
   };
 
   inline std::ostream &operator << (std::ostream &o, const sub_index &si) { 

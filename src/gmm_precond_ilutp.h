@@ -32,9 +32,9 @@
 #ifndef GMM_PRECOND_ILUTP_H
 #define GMM_PRECOND_ILUTP_H
 
-//: ILUTP:  Incomplete LU with threshold and K fill-in Preconditioner and
-//          partial pivoting (See Yousef Saad, Iterative Methods for
-//          sparse linear systems, PWS Publishing Company, section 10.4.4
+// ILUTP:  Incomplete LU with threshold and K fill-in Preconditioner and
+//         column pivoting (See Yousef Saad, Iterative Methods for
+//         sparse linear systems, PWS Publishing Company, section 10.4.4
 
 #include <gmm_precond_ilut.h>
 
@@ -46,6 +46,7 @@ namespace gmm {
     typedef typename linalg_traits<Matrix>::value_type value_type;
     typedef rsvector<value_type> svector;
     typedef row_matrix<svector> LU_Matrix;
+    typedef col_matrix<svector> CLU_Matrix;
 
     bool invert;
     LU_Matrix L, U;
@@ -57,7 +58,7 @@ namespace gmm {
 
   protected:
     int K;
-    double eps;    
+    double eps;
 
     template<typename M> void do_ilutp(const M&, row_major);
     void do_ilutp(const Matrix&, col_major);
@@ -81,74 +82,34 @@ namespace gmm {
   };
 
 
-  template<typename V, typename R>
-  size_type find_max_after_i(const V &v, size_type i, R val, abstract_dense) {
-    typename linalg_traits<V>::const_iterator it = vect_const_begin(v) + i,
-      ite = vect_const_end(v);
-    size_type j = i;
-    for ( ; it != ite; ++it, ++j)
-      if (gmm::abs(*it) > val && j > i)
-	{ i = j; val = gmm::abs(*it); }
-    return i;
-  }
-
-  template<typename V, typename R>
-  size_type find_max_after_i(const V &v, size_type i, R val, abstract_sparse) {
-    typename linalg_traits<V>::const_iterator it = vect_const_begin(v),
-      ite = vect_const_end(v);
-    for ( ; it != ite; ++it)
-      if (gmm::abs(*it) > val && it.index() > i)
-	{ i = it.index(); val = gmm::abs(*it); }
-    return i;
-  }
-
-  template<typename V, typename R>
-  size_type find_max_after_i(const V &v, size_type i, R val, abstract_skyline)
-  { return find_max_after_i(v, i, val, abstract_sparse()); }
-
-  template<typename V, typename R>
-  size_type find_max_after_i(const V &v, size_type i, R val) {
-    return find_max_after_i(v, i, val,
-			    typename linalg_traits<V>::storage_type());
-  }
-
   template<typename Matrix> template<typename M> 
   void ilutp_precond<Matrix>::do_ilutp(const M& A, row_major) {
     typedef value_type T;
     typedef typename number_traits<T>::magnitude_type R;
     
     size_type n = mat_nrows(A);
+    CLU_Matrix CU(n,n);
     if (n == 0) return;
     std::vector<T> indiag(n);
     ipvt.resize(n); ipvtinv.resize(n); temporary.resize(n);
-    for (size_type i = 0; i < n; ++i) ipvt[i] = i;
+    for (size_type i = 0; i < n; ++i) ipvt[i] = ipvtinv[i] = i;
+    indperm = unsorted_sub_index(ipvt);
+    indperminv = unsorted_sub_index(ipvtinv);
     svector w(mat_ncols(A));
+    
     T tmp;
-    gmm::clear(U); gmm::clear(L);
+    gmm::clear(L);
     R prec = default_tol(R()); 
     R max_pivot = gmm::abs(A(0,0)) * prec;
 
     for (size_type i = 0; i < n; ++i) {
-
-      // To be optimized, computation of sub_index is made twice ...
-      //     the reverse index could be updated at each iteration
-      size_type ip= find_max_after_i(gmm::sub_vector(mat_const_row(A, i),
-						     unsorted_sub_index(ipvt)),
-				     i, gmm::abs(A(i,i)));
-      if (ip != i) std::swap(ipvt[i], ipvt[ip]);
       
-      gmm::copy(gmm::sub_vector(mat_const_row(A, i),
-				unsorted_sub_index(ipvt)), w);
+      copy(sub_vector(mat_const_row(A, i), indperm), w);
+      double norm_row = gmm::vect_norm2(mat_const_row(A, i)); 
 
-      double norm_row = gmm::vect_norm2(w);
-
-      size_type nL = 0, nU = 0;
-      if (is_sparse(A)) {
-	typename linalg_traits<svector>::iterator it = vect_begin(w),
-	  ite = vect_end(w);
-	for (; it != ite; ++it) if (i > it.index()) nL++;
-	nU = w.nb_stored() - nL - 1;
-      }
+      size_type nL = 0, nU = 1;
+      if (is_sparse(A))
+	{ nL = nnz(mat_const_row(A, i)) / 2; nU = nL + 1; }
 
       for (size_type krow = 0, k; krow < w.nb_stored(); ++krow) {
 	typename svector::iterator wk = w.begin() + krow;
@@ -157,25 +118,44 @@ namespace gmm {
 	if (gmm::abs(tmp) < eps * norm_row) { w.sup(k); --krow; } 
 	else { wk->e += tmp; gmm::add(scaled(mat_row(U, k), -tmp), w); }
       }
-      tmp = w[i];
-
-      if (gmm::abs(tmp) <= max_pivot)
-	{ DAL_WARNING(2, "pivot " << i << " is too small"); tmp = T(1); }
-
-      max_pivot = std::max(max_pivot, std::min(gmm::abs(tmp) * prec, R(1)));
-      indiag[i] = T(1) / tmp;
-      U(i,i) = tmp; gmm::clean(w, eps * norm_row); w[i] = T(0);
+      gmm::clean(w, eps * norm_row);
       std::sort(w.begin(), w.end(), elt_rsvector_value_less_<T>());
       typename svector::const_iterator wit = w.begin(), wite = w.end();
+      size_type ip = size_type(-1);
+      for (; wit != wite; ++wit)
+	if (wit->c >= i) { ip = wit->c; tmp = wit->e; break; }
+      if (ip == size_type(-1) || gmm::abs(tmp) <= max_pivot)
+	{ DAL_WARNING(2, "pivot " << i << " too small"); ip=i; w[i]=tmp=T(1); }
+      max_pivot = std::max(max_pivot, std::min(gmm::abs(tmp) * prec, R(1)));
+      indiag[i] = T(1) / tmp;
+      wit = w.begin();
       size_type nnl = 0, nnu = 0;
-      for (; wit != wite; ++wit) // copy to be optimized ...
-	if (wit->c < i) { if (nnl < nL+K) L(i, wit->c) = wit->e; ++nnl; }
-	else            { if (nnu < nU+K) U(i, wit->c) = wit->e; ++nnu; }
+      for (; wit != wite; ++wit) {
+	if (wit->c < i) { if (nnl < nL+K) { L(i, wit->c) = wit->e; ++nnl; } }
+	else if (nnu < nU+K) { CU(i, wit->c) = U(i, wit->c) = wit->e; ++nnu; }
+      }
+      if (ip != i) {
+	typename svector::const_iterator iti = CU.col(i).begin();
+	typename svector::const_iterator itie = CU.col(i).end();
+	typename svector::const_iterator itp = CU.col(ip).begin();
+	typename svector::const_iterator itpe = CU.col(ip).end();
+	
+	while (iti != itie && itp != itpe) {
+	  if (iti->c < itp->c) { U.row(iti->c).swap_indices(i, ip); ++iti; }
+	  else if (iti->c > itp->c) { U.row(itp->c).swap_indices(i,ip);++itp; }
+	  else { U.row(iti->c).swap_indices(i, ip); ++iti; ++itp; }
+	}
+	for( ; iti != itie; ++iti) U.row(iti->c).swap_indices(i, ip);
+	for( ; itp != itpe; ++itp) U.row(itp->c).swap_indices(i, ip);
+
+	CU.swap_col(i, ip);
+	
+	indperm.swap(i, ip);
+	indperminv.swap(ipvt[i], ipvt[ip]);
+	std::swap(ipvtinv[ipvt[i]], ipvtinv[ipvt[ip]]);
+	std::swap(ipvt[i], ipvt[ip]);
+      }
     }
-    indperm = unsorted_sub_index(ipvt);
-    cout << "pivots = " << ipvt << endl;
-    for (size_type i = 0; i < n; ++i) ipvtinv[ipvt[i]] = i;
-    indperminv = unsorted_sub_index(ipvtinv);
   }
 
   template<typename Matrix> 
@@ -187,7 +167,7 @@ namespace gmm {
   template <typename Matrix, typename V1, typename V2> inline
   void mult(const ilutp_precond<Matrix>& P, const V1 &v1, V2 &v2) {
     if (P.invert) {
-      gmm::copy(gmm::sub_vector(v1, P.indperminv), v2);
+      gmm::copy(gmm::sub_vector(v1, P.indperm), v2);
       gmm::lower_tri_solve(gmm::transposed(P.U), v2, false);
       gmm::upper_tri_solve(gmm::transposed(P.L), v2, true);
     }
@@ -195,7 +175,7 @@ namespace gmm {
       gmm::copy(v1, P.temporary);
       gmm::lower_tri_solve(P.L, P.temporary, true);
       gmm::upper_tri_solve(P.U, P.temporary, false);
-      gmm::copy(gmm::sub_vector(P.temporary, P.indperm), v2);
+      gmm::copy(gmm::sub_vector(P.temporary, P.indperminv), v2);
     }
   }
 
@@ -205,10 +185,10 @@ namespace gmm {
       gmm::copy(v1, P.temporary);
       gmm::lower_tri_solve(P.L, P.temporary, true);
       gmm::upper_tri_solve(P.U, P.temporary, false);
-      gmm::copy(gmm::sub_vector(P.temporary, P.indperm), v2);
+      gmm::copy(gmm::sub_vector(P.temporary, P.indperminv), v2);
     }
     else {
-      gmm::copy(gmm::sub_vector(v1, P.indperminv), v2);
+      gmm::copy(gmm::sub_vector(v1, P.indperm), v2);
       gmm::lower_tri_solve(gmm::transposed(P.U), v2, false);
       gmm::upper_tri_solve(gmm::transposed(P.L), v2, true);
     }
@@ -217,7 +197,7 @@ namespace gmm {
   template <typename Matrix, typename V1, typename V2> inline
   void left_mult(const ilutp_precond<Matrix>& P, const V1 &v1, V2 &v2) {
     if (P.invert) {
-      gmm::copy(gmm::sub_vector(v1, P.indperminv), v2);
+      gmm::copy(gmm::sub_vector(v1, P.indperm), v2);
       gmm::lower_tri_solve(gmm::transposed(P.U), v2, false);
     }
     else {
@@ -235,7 +215,7 @@ namespace gmm {
     else {
       copy(v1, P.temporary);
       gmm::upper_tri_solve(P.U, P.temporary, false);
-      gmm::copy(gmm::sub_vector(P.temporary, P.indperm), v2);
+      gmm::copy(gmm::sub_vector(P.temporary, P.indperminv), v2);
     }
   }
 
@@ -245,7 +225,7 @@ namespace gmm {
     if (P.invert) {
       copy(v1, P.temporary);
       gmm::upper_tri_solve(P.U, P.temporary, false);
-      gmm::copy(gmm::sub_vector(P.temporary, P.indperm), v2);
+      gmm::copy(gmm::sub_vector(P.temporary, P.indperminv), v2);
     }
     else {
       copy(v1, v2);
@@ -261,7 +241,7 @@ namespace gmm {
       gmm::lower_tri_solve(P.L, v2, true);
     }
     else {
-      gmm::copy(gmm::sub_vector(v1, P.indperminv), v2);
+      gmm::copy(gmm::sub_vector(v1, P.indperm), v2);
       gmm::lower_tri_solve(gmm::transposed(P.U), v2, false);
     }
   }

@@ -283,7 +283,8 @@ namespace gmm
 
   /******* Optimized BLAS for wsvector<T> **********************************/
 
-  template <typename T> inline void copy(const wsvector<T> &v1, wsvector<T> &v2) {
+  template <typename T> inline void copy(const wsvector<T> &v1,
+					 wsvector<T> &v2) {
     if (vect_size(v1) != vect_size(v2))
       DAL_THROW(dimension_error,"dimensions mismatch");
     v2 = v1;
@@ -424,6 +425,7 @@ namespace gmm
 
     void w(size_type c, const T &e);
     T r(size_type c) const;
+    void swap_indices(size_type i, size_type j);
 
     inline T operator [](size_type c) const { return r(c); }
     
@@ -437,6 +439,31 @@ namespace gmm
     explicit rsvector(size_type l) : nbl(l) { }
     rsvector(void) : nbl(0) { }
   };
+
+  template <typename T>
+  void rsvector<T>::swap_indices(size_type i, size_type j) {
+    if (i > j) std::swap(i, j);
+    if (i != j) {
+      int situation = 0;
+      elt_rsvector_<T> a;
+      iterator it = this->begin(), ite = this->end(), iti = it, itj = ite;
+      for (; it != ite; ++it)
+	if (it->c == i) { situation |= 1; iti = it; }
+	else if (it->c == j) { situation |= 2; itj = it; }
+      switch (situation) {
+      case 1 : a = *iti; a.c = j; it = iti; ++it;
+	       for (; it != ite && it->c <= j; ++it, ++iti) *iti = *it;
+	       *iti = a;
+	       break;
+      case 2 : a = *itj; a.c = i; it = itj; --it;
+	       for (; it >= iti && it->c >= i; --it, --itj) *itj = *it;
+	       *itj = a;
+	       break;
+      case 3 : std::swap(iti->e, itj->e);
+	       break;
+      }
+    }
+  }
 
   template <typename T> void rsvector<T>::sup(size_type j) {
     if (nb_stored() != 0) {
@@ -535,7 +562,8 @@ namespace gmm
 
   /******* Optimized operations for rsvector<T> ****************************/
 
-  template <typename T> inline void copy(const rsvector<T> &v1, rsvector<T> &v2) {
+  template <typename T> inline void copy(const rsvector<T> &v1,
+					 rsvector<T> &v2) {
     if (vect_size(v1) != vect_size(v2))
       DAL_THROW(dimension_error,"dimensions mismatch");
     v2 = v1;
@@ -558,7 +586,8 @@ namespace gmm
   void copy(const simple_vector_ref<rsvector<T> *> &v1, rsvector<T> &v2)
   { copy(*(v1.origin), v2); }
 
-  template <typename V, typename T> inline void add(const V &v1, rsvector<T> &v2) {
+  template <typename V, typename T> inline void add(const V &v1,
+						    rsvector<T> &v2) {
     if ((const void *)(&v1) != (const void *)(&v2)) {
       if (vect_size(v1) != vect_size(v2))
 	DAL_THROW(dimension_error,"dimensions mismatch");
@@ -576,6 +605,16 @@ namespace gmm
 
   template <typename V, typename T> 
   void add_rsvector(const V &v1, rsvector<T> &v2, abstract_sparse) {
+    add_rsvector(v1, v2, typename linalg_traits<V>::index_sorted());
+  }
+
+  template <typename V, typename T> 
+  void add_rsvector(const V &v1, rsvector<T> &v2, linalg_false) {
+    add(v1, v2, abstract_sparse(), abstract_sparse());
+  }
+
+  template <typename V, typename T> 
+  void add_rsvector(const V &v1, rsvector<T> &v2, linalg_true) {
     typename linalg_traits<V>::const_iterator it1 = vect_const_begin(v1),
       ite1 = vect_const_end(v1);
     typename rsvector<T>::iterator it2 = v2.begin(), ite2 = v2.end(), it3;
@@ -619,23 +658,36 @@ namespace gmm
   void copy_rsvector(const V &v1, rsvector<T> &v2, abstract_skyline)
   { copy_vect(v1, v2, abstract_skyline(), abstract_sparse()); }
 
-  template <typename V, typename T> // à refaire
+  template <typename V, typename T>
   void copy_rsvector(const V &v1, rsvector<T> &v2, abstract_sparse) {
-     typename linalg_traits<V>::const_iterator it = vect_const_begin(v1),
+    copy_rsvector(v1, v2, typename linalg_traits<V>::index_sorted());
+  }
+  
+  template <typename V, typename T2>
+  void copy_rsvector(const V &v1, rsvector<T2> &v2, linalg_true) {
+    typedef typename linalg_traits<V>::value_type T1;
+    typename linalg_traits<V>::const_iterator it = vect_const_begin(v1),
       ite = vect_const_end(v1);
-    std::vector<size_type> tab(100);
-    size_type i = 0;
+    v2.base_resize(nnz(v1));
+    typename rsvector<T2>::iterator it2 = v2.begin();
+    size_type nn = 0;
     for (; it != ite; ++it)
-      if ((*it) != typename linalg_traits<V>::value_type(0)) {
-	tab[i++] = it.index();
-	if (i >= tab.size()) tab.resize(i + 100);
-      }
-    v2.base_resize(i);
-    if (i > 0) {
-      typename rsvector<T>::iterator it2 = v2.begin(), ite2 = v2.end();
-      for (i = 0; it2 != ite2; ++it2, ++i)
-	{ it2->c = tab[i]; it2->e = v1[tab[i]]; }
-    }
+      if ((*it) != T1(0)) { it2->c = it.index(); it2->e = *it; ++it2; ++nn; }
+    v2.base_resize(nn);
+  }
+
+  template <typename V, typename T2>
+  void copy_rsvector(const V &v1, rsvector<T2> &v2, linalg_false) {
+    typedef typename linalg_traits<V>::value_type T1;
+    typename linalg_traits<V>::const_iterator it = vect_const_begin(v1),
+      ite = vect_const_end(v1);
+    v2.base_resize(nnz(v1));
+    typename rsvector<T2>::iterator it2 = v2.begin();
+    size_type nn = 0;
+    for (; it != ite; ++it)
+      if ((*it) != T1(0)) { it2->c = it.index(); it2->e = *it; ++it2; ++nn; }
+    v2.base_resize(nn);
+    std::sort(v2.begin(), v2.end());
   }
   
   template <typename T> inline void clean(rsvector<T> &v, double eps) {
