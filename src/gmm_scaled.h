@@ -97,7 +97,7 @@ namespace gmm {
     value_type r;
 
     scaled_vector_const_ref(const V &v, value_type rr)
-      : _begin(vect_begin(v)), _end(vect_end(v)), origin(linalg_origin(v)),
+      : _begin(vect_const_begin(v)), _end(vect_const_end(v)), origin(linalg_origin(v)),
 	_size(vect_size(v)), r(rr) {}
 
     reference operator[](size_type i) const

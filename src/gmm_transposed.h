@@ -76,7 +76,7 @@ namespace gmm {
   template <class PT> struct linalg_traits<transposed_row_ref<PT> > {
     typedef transposed_row_ref<PT> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
-    typedef linalg_const is_reference;
+    typedef typename which_reference<PT>::is_reference is_reference;
     typedef abstract_matrix linalg_type;
     typedef typename linalg_traits<M>::value_type value_type;
     typedef typename select_return<value_type,
@@ -96,7 +96,7 @@ namespace gmm {
     typedef transposed_row_matrix_access<PT> access_type;
     static size_type ncols(const this_type &v) { return v._end - v._begin; }
     static size_type nrows(const this_type &v)
-    { return (ncols(v) == 0) ? 0 : vect_size(const_mat_col(v, 0)); }
+    { return (ncols(v) == 0) ? 0 : vect_size(mat_const_col(v, 0)); }
     static const_sub_col_type col(const const_col_iterator &it)
     { return linalg_traits<M>::row(it); }
     static sub_col_type col(col_iterator &it)
@@ -183,7 +183,7 @@ namespace gmm {
     typedef transposed_col_matrix_access<PT> access_type;
     static size_type nrows(const this_type &v) { return v._end - v._begin; }
     static size_type ncols(const this_type &v)
-    { return (nrows(v) == 0) ? 0 : vect_size(const_mat_row(v, 0)); }
+    { return (nrows(v) == 0) ? 0 : vect_size(mat_const_row(v, 0)); }
     static const_sub_row_type row(const const_row_iterator &it)
     { return linalg_traits<M>::col(it); }
     static sub_row_type row(row_iterator &it)
@@ -231,7 +231,7 @@ namespace gmm {
 
   template <class L> inline 
   typename transposed_return<const L *>::return_type transposed(const L &l)
-  { return typename transposed_return<const L *>::return_type(linalg_cast(l));}
+  { return typename transposed_return<const L *>::return_type(linalg_cast(const_cast<L &>(l)));}
 
   template <class L> inline 
   typename transposed_return<L *>::return_type transposed(L &l)

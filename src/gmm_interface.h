@@ -96,7 +96,8 @@ namespace gmm {
     size_type _size;
 
     simple_vector_ref(ref_V v)
-      : _begin(vect_begin(v)), _end(vect_end(v)), origin(linalg_origin(v)),
+      : _begin(vect_begin(const_cast<V&>(v))), _end(vect_end(const_cast<V&>(v))), 
+	origin(linalg_origin(const_cast<V&>(v))),
 	_size(vect_size(v)) {}
 
     simple_vector_ref(const simple_vector_ref<CPT> &cr)
@@ -185,11 +186,11 @@ namespace gmm {
     tab_ref_with_origin(const IT &b, const IT &e, const void *p)
       : dal::tab_ref<IT>(b,e), origin(p) {}
     template <class V> tab_ref_with_origin(const V &v, const sub_interval &si)
-      : dal::tab_ref<IT>(vect_begin(v)+si.min, vect_begin(v)+si.max+1),
-        origin(linalg_origin(v)) {}
+      : dal::tab_ref<IT>(vect_begin(const_cast<V&>(v))+si.min, vect_begin(const_cast<V&>(v))+si.max+1),
+        origin(linalg_origin(const_cast<V&>(v))) {}
     template <class V> tab_ref_with_origin(V &v, const sub_interval &si)
-      : dal::tab_ref<IT>(vect_begin(v)+si.min, vect_begin(v)+si.max+1),
-        origin(linalg_origin(v)) {}
+      : dal::tab_ref<IT>(vect_begin(const_cast<V&>(v))+si.min, vect_begin(const_cast<V&>(v))+si.max+1),
+        origin(linalg_origin(const_cast<V&>(v))) {}
   };
 
   template <class IT> struct linalg_traits<tab_ref_with_origin<IT> > {
@@ -232,14 +233,14 @@ namespace gmm {
       : dal::tab_ref_reg_spaced<IT>(b,e,n), origin(p) {}
     template <class V> tab_ref_reg_spaced_with_origin(const V &v,
 						      const sub_slice &si) :
-       dal::tab_ref_reg_spaced<IT>(vect_begin(v) + si.min,
-				   vect_begin(v) + si.max+si.N,
-				   si.N), origin(linalg_origin(v)) {}
+       dal::tab_ref_reg_spaced<IT>(vect_begin(const_cast<V&>(v)) + si.min,
+				   vect_begin(const_cast<V&>(v)) + si.max+si.N,
+				   si.N), origin(linalg_origin(const_cast<V&>(v))) {}
     template <class V> tab_ref_reg_spaced_with_origin(V &v,
 						      const sub_slice &si) :
-       dal::tab_ref_reg_spaced<IT>(vect_begin(v) + si.min,
-				   vect_begin(v) + si.max+si.N,
-				   si.N), origin(linalg_origin(v)) {}
+       dal::tab_ref_reg_spaced<IT>(vect_begin(const_cast<V&>(v)) + si.min,
+				   vect_begin(const_cast<V&>(v)) + si.max+si.N,
+				   si.N), origin(linalg_origin(const_cast<V&>(v))) {}
 
   };
 
@@ -286,14 +287,14 @@ namespace gmm {
 
     template <class V> tab_ref_index_ref_with_origin(const V &v,
 						     const sub_index &si) :
-      dal::tab_ref_index_ref<IT, ITINDEX>(vect_begin(v),
+      dal::tab_ref_index_ref<IT, ITINDEX>(vect_begin(const_cast<V&>(v)),
 					  si.begin(), si.end()),
-                                          origin(linalg_origin(v)) {}
+                                          origin(linalg_origin(const_cast<V&>(v))) {}
     template <class V> tab_ref_index_ref_with_origin(V &v,
 						     const sub_index &si) :
-      dal::tab_ref_index_ref<IT, ITINDEX>(vect_begin(v),
+      dal::tab_ref_index_ref<IT, ITINDEX>(vect_begin(const_cast<V&>(v)),
 					  si.begin(), si.end()),
-                                          origin(linalg_origin(v)) {}
+                                          origin(linalg_origin(const_cast<V&>(v))) {}
   };
 
   template <class IT, class ITINDEX>

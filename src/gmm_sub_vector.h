@@ -94,8 +94,8 @@ namespace gmm {
 
     sparse_sub_vector(V &v, const SUBI &s) : _begin(vect_begin(v)),
        _end(vect_end(v)), origin(linalg_origin(v)), si(s) {}
-    sparse_sub_vector(const V &v, const SUBI &s) : _begin(vect_begin(v)),
-       _end(vect_end(v)), origin(linalg_origin(v)), si(s) {}
+    sparse_sub_vector(const V &v, const SUBI &s) : _begin(vect_begin(const_cast<V &>(v))),
+       _end(vect_end(const_cast<V &>(v))), origin(linalg_origin(const_cast<V &>(v))), si(s) {}
     sparse_sub_vector() {}
     sparse_sub_vector(const sparse_sub_vector<CPT, SUBI> &cr)
       : _begin(cr._begin),_end(cr._end),origin(cr.origin), si(cr.si) {}
