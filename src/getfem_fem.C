@@ -517,7 +517,7 @@ namespace getfem
 	for (size_type j = 0; j < fi1->nb_dof(); ++j) {
 	  if ( dal::lexicographical_less<base_node,
 	       dal::approx_less<scalar_type> >()
-	       (fi2->node_of_dof(i), fi1->node_of_dof(i)) == 0
+	       (fi2->node_of_dof(i), fi1->node_of_dof(j)) == 0
 	      && dof_hierarchical_compatibility(fi2->dof_types()[i],
 						fi1->dof_types()[j]))
 	    { found = true; break; }

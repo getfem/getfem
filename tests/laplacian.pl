@@ -14,7 +14,7 @@ print TMPF "FT = 0.1\n";
 print TMPF "MESH_TYPE = 0;\n";
 print TMPF "K = 1;\n";
 print TMPF "INTEGRATION = 0;\n";
-print TMPF "NX = 10;\n";
+print TMPF "NX = 7;\n";
 print TMPF "RESIDU = 1E-9;\n";
 print TMPF "FEM_TYPE = 0;\n"; 
 print TMPF "ROOTFILENAME = 'laplacian';\n";
@@ -77,6 +77,8 @@ print ".";
 start_program("-d N=3 -d INTEGRATION=1 -d MESH_TYPE=2 -d NX=5 -d FT=0.01");
 print ".";
 start_program("-d INTEGRATION=2 -d MESH_TYPE=1 -d INCLINE=0.5");
+print ".";
+start_program("-d N=1 -d FEM_TYPE=2 -d FT=1.0");
 print ".\n";
 
 `rm -f $tmp`;
