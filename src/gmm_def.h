@@ -78,7 +78,8 @@ namespace gmm {
   template<> struct transposed_type<row_and_col> {typedef col_and_row t_type;};
   template<> struct transposed_type<col_and_row> {typedef row_and_col t_type;};
 
-  template <class T> struct principal_orientation_type;
+  template <class T> struct principal_orientation_type
+  { typedef abstract_null_type potype; };
   template<> struct principal_orientation_type<row_major>
   { typedef row_major potype; };
   template<> struct principal_orientation_type<col_major>

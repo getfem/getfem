@@ -99,7 +99,7 @@ dnl 		CXXFLAGS="$CXXFLAGS -LANG:std -O3 -OPT:Olimit=0:roundoff=3:div_split=ON:al
 	;;
  aCC)
 	echo "Using HP ANSI C++ Compiler aCC"
-	CXXFLAGS="$CXXFLAGS -AA +p -fast"	
+	CXXFLAGS="$CXXFLAGS -AA -fast"	
 	APPSCXXFLAGS="$CXXFLAGS"
 	;;
 	
