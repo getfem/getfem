@@ -448,6 +448,36 @@ namespace getfem
       }
     }
   }
+
+  template<class MATD, class VECT>
+    void treat_Dirichlet_condition(const MATD &D, MATD &G,
+				   const VECT &UD, VECT &UDD) {
+      dal::bit_vector nn;
+      size_type s = UD.size(), i, j, k;
+      VECT E(s), F(s);
+      std::fill(E.begin(), E.end(), 0);
+      for (i = 0; i < s; ++i) {
+	E[i] = 1.0;
+	getfem::mult(D, E, F);
+	if (getfem::dot(F,F) < 1.0E-30) nn.add(i);
+	// définir getfem::dot de manière générique et trouver un moyen
+	// pour avoir un getfem::mult générique aussi ... 
+      }
+      size_type sn = nn.card(), son = s - sn;
+      G = MATD(s, sn);
+      MATD B(s, son);
+      for (i = j = k = 0; i < s; ++i)
+	if (nn[i]) G(i,j++) = 1.0; else B(i, k++) = 1.0;
+      
+      // il faut résoudre le système B^T D B UDDR = B^T UD
+      // On a alors UDD = B UDDR
+      // pour cela faire une factorisation LU (cf MATLAB null ...)
+      // En profiter pour tester si ce système est inversible
+      // s'il ne l'est pas il faut trouver son noyau
+
+    }
+  
+
   
   /* ********************************************************************* */
   /*	Neumann Condition.                                                 */
@@ -594,10 +624,9 @@ namespace getfem
   }
 
   template<class MESH_FEM, class VECT>
-    scalar_type H1_norm(MESH_FEM &mf, const VECT &U, size_type N)
-    {
+    scalar_type H1_norm(MESH_FEM &mf, const VECT &U, size_type N) {
       return sqrt( dal::sqr(L2_norm(mf, U, N)) 
-	       	      + dal::sqr(H1_semi_norm(mf, U, N)));
+		   + dal::sqr(H1_semi_norm(mf, U, N)));
     }
 
   
