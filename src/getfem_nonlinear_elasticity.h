@@ -49,6 +49,7 @@ namespace getfem {
   };
 
   struct Hooke_hyperelastic_law : public abstract_hyperelastic_law {
+    /* sigma = lambda*trace(L) + 2 mu * L */
     virtual void sigma(const base_matrix &L, base_matrix &result,
 		       base_vector &params) const {
       gmm::copy(gmm::identity_matrix(), result);
@@ -124,11 +125,13 @@ namespace getfem {
       gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))),
 		coeff);
       ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf.get_qdim());
+
       gmm::mult(gmm::transposed(gradU), gradU, L);
       gmm::add(gradU, L);
       gmm::add(gmm::transposed(gradU), L);
       gmm::scale(L, scalar_type(0.5));
       gmm::add(gmm::identity_matrix(), gradU);
+
       AHL.sigma(L, B, params);
 
       if (version == 0) {	  
@@ -140,12 +143,12 @@ namespace getfem {
 	      for (size_type k = 0; k < N; ++k) {
 		scalar_type aux = (k == l) ? B(m, l) : 0.0;
 		for (size_type j = 0; j < N; ++j)
-		  for (size_type i = 0; i < N; ++i)
+		  for (size_type i = 0; i < N; ++i) {
 		    aux += B(n ,j) * B(k, i) * tt(j, m, i, l);
+		  }
 		t(n, m, k, l) = aux;
 	      }
-      }
-      else {
+      } else {
 	for (size_type i = 0; i < N; ++i)
 	  for (size_type j = 0; j < N; ++j) {
 	    scalar_type aux(0);
@@ -161,7 +164,7 @@ namespace getfem {
       coeff.resize(mf_data.nb_dof_of_element(cv)*nb);
       for (size_type i = 0; i < mf_data.nb_dof_of_element(cv); ++i)
 	for (size_type k = 0; k < nb; ++k)
-	  coeff[i * nb + k] = PARAMS[mf.ind_dof_of_element(cv)[i]*nb+k];
+	  coeff[i * nb + k] = PARAMS[mf_data.ind_dof_of_element(cv)[i]*nb+k];
       ctx.pf()->interpolation(ctx, coeff, params, nb);
     } 
     
@@ -183,7 +186,7 @@ namespace getfem {
 
     getfem::generic_assembly
       assem("t=comp(NonLin(#1,#2).vGrad(#1).vGrad(#1));"
-	    "M(#1,#1)+= sym(t(i,j,k,l,:,i,j,:,k,l)");
+	    "M(#1,#1)+= sym(t(i,j,k,l,:,i,j,:,k,l))");
 
     assem.push_mf(mf);
     assem.push_mf(mf_data);
