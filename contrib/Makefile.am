@@ -1,12 +1,8 @@
 bin_PROGRAMS = \
-	compare_solutions \
-	interpole_solution \
 	draw_mesh_doedges
 
 bin_SCRIPTS = draw_mesh
 
-compare_solutions_SOURCES = compare_solutions.cc
-interpole_solution_SOURCES = interpole_solution.cc
 draw_mesh_doedges_SOURCES = draw_mesh_doedges.cc
 
 EXTRA_DIST = \

@@ -19,7 +19,7 @@ PG = 0.0;
 %PG = 9810; 		% gravitation constante (on earth) (mm/s^2).
 %PG = 1000000; 		% gravitation constante (on jupiter !) (mm/s^2).
 RHO = 6e-6;     	% "realistic" density for steel
-T = 3.0;
+T = 5.0;
 DT = 0.0001;             % Time step
 
 %%%%%   discretisation parameters  :                     	      %%%%%
@@ -43,12 +43,12 @@ R = 1.0;                % Augmentation parameter
 
 
 DIRICHLET = 1;
-DIRICHLET_RATIO = -0.01;   % parametre pour la condition de Dirichlet
+DIRICHLET_RATIO = -0.005;   % parametre pour la condition de Dirichlet
 INIT_VERT_SPEED = -100.0;  % Initial vertical velocity
 INIT_VERT_POS = 1.0;       % Initial vertical position
 FOUNDATION_HSPEED = 10.0;  % Horizontal velocity of the rigid foundation
 STATIONARY = 1;            % Initial condition is the stationary solution ?
-PERT_STATIONARY = 1.0;     % Perturbation on the initial velocity
+PERT_STATIONARY = 3.0;     % Perturbation on the initial velocity
 
 FEM_TYPE = 'FEM_PK(2, 2)';     % Main FEM
 DATA_FEM_TYPE = 'FEM_PK(2,2)'; % must be defined for non-Lagrangian main FEM
