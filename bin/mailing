@@ -1,0 +1,57 @@
+
+# -*- perl -*-
+eval 'exec perl -S $0 "$@"'
+  if 0;
+
+$nb_param = 0;
+
+if (@ARGV) { $list_name = $ARGV[0]; ++$nb_param; shift @ARGV; }
+if (@ARGV) { $mail_name = $ARGV[0]; ++$nb_param; shift @ARGV; }
+if (@ARGV) { ++$nb_param; }
+
+if ($nb_param != 2) {
+  print "Usage :\n";
+  print "mailing list_name mail_name\n";
+  exit(1);
+}
+
+open (F, list_name) or die "Open file impossible : $!\n";
+
+sub read_line {
+  while(1) {
+    $li = <F>; if (!($li)) { return; }
+    chomp($li); ($li, $a) = split('\%', $li, 2);
+    $li =~s/\s//g;
+    if ($li) { return; }
+  }
+}
+
+while(1) {
+  read_line;
+  if ($li) {
+    print "une adresse : $li \n";
+  }
+  else { exit(0); }
+}
+
+
+# open (F, "<") or die "Open standard input impossible !!\n";
+while (<STDIN>) {
+  if ($_ =~ /§/) {
+    $res = "";
+    while ($_) {
+      ($f, $_) = split('§', $_, 2);
+      $res .= $f;
+      $_ =~ s/([a-z§\_]*)//;
+      $a = $1;
+      $b = $a; $b =~ s/\_//g;
+      $res .= $b."[$a]";
+    }
+    print $res;
+
+  }
+  else {
+    print $_;
+}
+}
+
