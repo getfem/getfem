@@ -332,19 +332,21 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     close(TMPF);
 
     `rm -f $root_name`;
+
+    $compilo=`../gmm-config --cxx`; chomp($compilo);
+    $compile_options=`../gmm-config --build-flags`;
+    chomp($compile_options);
+    $compile_options="$compile_options -I$srcdir/../src -I$srcdir/../include -I../src -I../include";
+    $compile_libs="-lm";
+
     if ($with_lapack) {
-      print `touch auto_gmm_torture_dummy.C`;
-      print `make auto_gmm_torture_dummy CPPFLAGS=\"-I$srcdir/../src -I$srcdir/../include -I../src -I../include $dest_name -llapack -lblas -lg2c -lm -DGMM_USES_LAPACK\"`;
-      if ($? == 0) { print `mv -f auto_gmm_torture_dummy $root_name`; }
+      $compile_libs="-llapack -lblas -lg2c -lm";
     }
     elsif ($with_qd) {
-      print `touch auto_gmm_torture_dummy.C`;
-      print `make auto_gmm_torture_dummy CPPFLAGS=\"-I$srcdir/../src -I$srcdir/../include -I../src -I../include $dest_name -lqd -lm\"`;
-      if ($? == 0) { print `mv -f auto_gmm_torture_dummy $root_name`; }
+      $compile_libs="-lqd -lm";
     }
-    else {
-      print `make $root_name CPPFLAGS=\"-I$srcdir/../src -I$srcdir/../include -I../src -I../include  -lm \"`;
-    }
+    print "$compilo $compile_options $dest_name -o $root_name $compile_libs\n";
+    print `$compilo $compile_options $dest_name -o $root_name $compile_libs`;
 
     if ($? != 0) {
       print "\n******************************************************\n";
