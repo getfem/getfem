@@ -138,7 +138,7 @@ namespace gmm {
   template <class PT, class SUBI> class sparse_sub_vector {
   protected :
     const SUBI *psi;
-    PT pv;
+    PT pv; // garder uniquement un itérateur !!
 
   public :
     typedef typename std::iterator_traits<PT>::value_type V;
