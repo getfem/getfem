@@ -121,7 +121,7 @@ if (-d "matlabcom")
   $listeC = `ls matlabcom/\*.C`;
   $listeC =~ s/\@//g;
   $listeB = $listeC;
-  $listeB =~ s/.C/$extmatcom/g;
+  $listeB =~ s/\.C/$extmatcom/g;
   $listeB =~ s/\n/ /g;
   $listeB =~ s/matlabcom\//lib\//g;
   print MAKEFILE "\n\n", 'matlabcom : lib/libgetfem.so ', $listeB, "\n\n";
