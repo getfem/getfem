@@ -286,7 +286,7 @@ namespace getfem
     void asm_stiffness_matrix_for_scalar_elliptic(MAT &M, const mesh_fem &mf,
 						  const mesh_fem &mfdata, VECT &A)
   {
-    generic_assembly assem("a=data$1(#2,mdim(#1),mdim(#1)); M$1(#1,#1)+=comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,j,k).a(k,j,i)");
+    generic_assembly assem("a=data$1(mdim(#1),mdim(#1),#2); M$1(#1,#1)+=comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,j,k).a(j,i,k)");
     assem.push_mf(mf);
     assem.push_mf(mfdata);
     assem.push_data(A);
