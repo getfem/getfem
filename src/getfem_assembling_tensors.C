@@ -1144,16 +1144,19 @@ namespace getfem {
   static void get_convex_order(const std::deque<const mesh_fem *>& mftab, 
 			       const dal::bit_vector& candidates, 
 			       std::vector<size_type>& cvorder) {
-    cvorder.resize(candidates.card());
+    cvorder.reserve(candidates.card()); cvorder.resize(0);
     const getfem_mesh& m = mftab[0]->linked_mesh();      
-    unsigned cnt=0;
     for (dal::bit_vector::const_iterator it = candidates.begin(); 
 	 it != candidates.end(); ++it) {
       if (*it) {
-	if (m.convex_index()[it.index()])
-	  cvorder[cnt++] = it.index();
-	else 
+	if (m.convec_index().is_in(it.index()) {
+	  for (size_type i=0; i < mftab.size(); ++i)
+	    if (!mftab[i].convex_index().is_in(it.index()))
+	      ASM_THROW_ERROR("the convex " << it.index() << " has no FEM for the #" << i+1 << " mesh_fem");	  
+	  cvorder.push_back(it.index());
+	} else {
 	  ASM_THROW_ERROR("the convex " << it.index() << " is not part of the mesh");
+	}
       }
     }
     std::sort(cvorder.begin(), cvorder.end(), cv_fem_compare(mftab));
