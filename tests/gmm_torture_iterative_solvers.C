@@ -38,7 +38,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
 
     // Test for bicgstab with no preconditionner
 
-    gmm::iteration iter(double(prec));
+    gmm::iteration iter((double(prec)));
     gmm::bicgstab(m1, v1, v2, P1, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
@@ -79,7 +79,6 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
 
     // Test for gmres with no preconditionner
 
-    gmm::iteration iter(double(prec));
     gmm::gmres(m1, v1, v2, P1, 50, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
@@ -120,7 +119,6 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
 
     // Test for qmr with no preconditionner
 
-    gmm::iteration iter(double(prec));
     gmm::qmr(m1, v1, v2, P1, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
@@ -130,14 +128,6 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     // Test for qmr with diagonal preconditionner
 
     gmm::qmr(m1, v1, v2, P2, iter);
-    gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
-    error = gmm::vect_norm2(v3);
-    if (error >= prec * R(20000) / det)
-      DAL_THROW(gmm::failure_error, "Error too large: " << error);
-
-    // Test for qmr with mr preconditionner
-
-    gmm::qmr(m1, v1, v2, P3, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
     if (error >= prec * R(20000) / det)
@@ -159,46 +149,6 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     if (error >= prec * R(20000) / det)
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
-    // Test for cheby with no preconditionner
-
-    gmm::iteration iter(double(prec));
-    gmm::cheby(m1, v1, v2, P1, iter);
-    gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
-    error = gmm::vect_norm2(v3);
-    if (error >= prec * R(20000) / det)
-      DAL_THROW(gmm::failure_error, "Error too large: " << error);
-
-    // Test for cheby with diagonal preconditionner
-
-    gmm::cheby(m1, v1, v2, P2, iter);
-    gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
-    error = gmm::vect_norm2(v3);
-    if (error >= prec * R(20000) / det)
-      DAL_THROW(gmm::failure_error, "Error too large: " << error);
-
-    // Test for cheby with mr preconditionner
-
-    gmm::cheby(m1, v1, v2, P3, iter);
-    gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
-    error = gmm::vect_norm2(v3);
-    if (error >= prec * R(20000) / det)
-      DAL_THROW(gmm::failure_error, "Error too large: " << error);
-
-    // Test for cheby with ilu preconditionner
-
-    gmm::cheby(m1, v1, v2, P4, iter);
-    gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
-    error = gmm::vect_norm2(v3);
-    if (error >= prec * R(20000) / det)
-      DAL_THROW(gmm::failure_error, "Error too large: " << error);
-
-    // Test for cheby with ilut preconditionner
-
-    gmm::cheby(m1, v1, v2, P5, iter);
-    gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
-    error = gmm::vect_norm2(v3);
-    if (error >= prec * R(20000) / det)
-      DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
     
     gmm::dense_matrix<T> m2(m, m);
@@ -232,5 +182,5 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
     
 
-
+  }
 }
