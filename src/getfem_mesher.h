@@ -593,8 +593,9 @@ namespace getfem {
     }
     virtual void register_constraints(std::vector<const
 				      mesher_signed_distance*>& list) const {
-      for (size_type k = 0; k < dists.size(); ++k)
+      for (size_type k = 0; k < dists.size(); ++k) {
 	dists[k]->register_constraints(list); 
+      }
     }
     scalar_type grad(const base_node &P, base_small_vector &G) const {
       scalar_type d = (*(dists[0]))(P);
