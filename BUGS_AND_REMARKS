@@ -12,7 +12,7 @@ also for static library, the cxx_repository is needed to link application
 programs ...
 
 
-l'utilisation de -tweak resout le problème
+Using -tweak solve the problem. It needs version 6.3 or later.
 ___________________________________________________________________________
 
 MTL and ITL don't support the -pedantic option from g++
