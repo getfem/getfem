@@ -294,6 +294,8 @@ void test0() {
 }
 
 int main(int argc, char *argv[]) {
+  dal::exception_callback_debug cb;
+  dal::exception_callback::set_exception_callback(&cb); // for debugging ...
 #ifdef GETFEM_HAVE_FEENABLEEXCEPT /* trap SIGFPE */
   feenableexcept(FE_DIVBYZERO | FE_INVALID);
 #endif

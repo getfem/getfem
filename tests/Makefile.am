@@ -30,6 +30,7 @@ check_PROGRAMS =                 \
 	stokes                   \
 	helmholtz                \
 	plate                    \
+	crack                    \
 	nonlinear_elastostatic   \
 	schwarz_additive         \
 	$(optprogs)              \
@@ -58,6 +59,7 @@ plate_SOURCES = plate.cc
 test_interpolation_SOURCES = test_interpolation.cc
 elastostatic_SOURCES = elastostatic.cc
 stokes_SOURCES = stokes.cc
+crack_SOURCES = crack.cc
 nonlinear_elastostatic_SOURCES = nonlinear_elastostatic.cc
 helmholtz_SOURCES = helmholtz.cc
 integration_SOURCES = integration.cc
@@ -110,6 +112,7 @@ TESTS = \
 	$(top_srcdir)/tests/elastostatic.pl            \
 	$(top_srcdir)/tests/stokes.pl                  \
 	$(top_srcdir)/tests/plate.pl                   \
+	$(top_srcdir)/tests/crack.pl                   \
 	$(top_srcdir)/tests/navier_stokes.pl           \
 	$(top_srcdir)/tests/nonlinear_elastostatic.pl  \
 	$(top_srcdir)/tests/dynamic_friction.pl        \
@@ -142,6 +145,8 @@ EXTRA_DIST = \
 	test_norm.pl			  \
 	test_tree_sorted.pl               \
 	test_mat_elem.pl                  \
+	crack.pl                          \
+	crack.param                       \
 	laplacian.param                   \
 	plate.param                       \
 	plate.pl                          \

@@ -20,7 +20,7 @@
 /* *********************************************************************** */
 
 /**
- * Linear Elastostatic problem.
+ * Linear Elastostatic problem with a crack.
  *
  * This program is used to check that getfem++ is working. This is also 
  * a good example of use of Getfem++.
@@ -30,6 +30,7 @@
 #include <getfem_export.h>   /* export functions (save solution in a file)  */
 #include <getfem_regular_meshes.h>
 #include <getfem_modeling.h>
+#include <getfem_mesh_im_level_set.h>
 #include <gmm.h>
 
 /* try to enable the SIGFPE if something evaluates to a Not-a-number
@@ -100,17 +101,19 @@ base_matrix sol_sigma(const base_node &x) {
 /*
   structure for the elastostatic problem
 */
-struct elastostatic_problem {
+struct crack_problem {
 
   enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
   getfem::getfem_mesh mesh;  /* the mesh */
-  getfem::mesh_im mim;       /* the integration methods.                     */
+  getfem::mesh_im_level_set mim;    /* the integration methods.              */
   getfem::mesh_fem mf_u;     /* main mesh_fem, for the elastostatic solution */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   getfem::mesh_fem mf_p;     /* mesh_fem for the pressure for mixed form     */
   getfem::mesh_fem mf_coef;  /* mesh_fem used to represent pde coefficients  */
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
 
+  getfem::level_set ls;      /* The two level sets defining the crack.       */
+  
   scalar_type residue;        /* max residue for the iterative solvers         */
   bool mixed_pressure;
 
@@ -120,18 +123,20 @@ struct elastostatic_problem {
   bool solve(plain_vector &U);
   void init(void);
   void compute_error(plain_vector &U);
-  elastostatic_problem(void) : mim(mesh), mf_u(mesh), mf_rhs(mesh), mf_p(mesh),
-			       mf_coef(mesh) {}
+  crack_problem(void) : mim(mesh), mf_u(mesh), mf_rhs(mesh), mf_p(mesh),
+			mf_coef(mesh), ls(mesh, 1, true) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
  * and integration methods and selects the boundaries.
  */
-void elastostatic_problem::init(void) {
+void crack_problem::init(void) {
   const char *MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
   const char *FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
   const char *INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
+  const char *SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION",
+					       "Name of simplex integration method");
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
@@ -175,8 +180,12 @@ void elastostatic_problem::init(void) {
     getfem::fem_descriptor(FEM_TYPE);
   getfem::pintegration_method ppi = 
     getfem::int_method_descriptor(INTEGRATION);
+  getfem::pintegration_method sppi = 
+    getfem::int_method_descriptor(SIMPLEX_INTEGRATION);
 
   mim.set_integration_method(mesh.convex_index(), ppi);
+  mim.add_level_set(ls);
+  mim.set_simplex_im(sppi);
   mf_u.set_finite_element(mesh.convex_index(), pf_u);
   
   mixed_pressure =
@@ -227,7 +236,7 @@ void elastostatic_problem::init(void) {
 }
 
 /* compute the error with respect to the exact solution */
-void elastostatic_problem::compute_error(plain_vector &U) {
+void crack_problem::compute_error(plain_vector &U) {
   size_type N = mesh.dim();
   std::vector<scalar_type> V(mf_rhs.nb_dof()*N);
   getfem::interpolation(mf_u, mf_rhs, U, V);
@@ -247,9 +256,15 @@ void elastostatic_problem::compute_error(plain_vector &U) {
 /*  Model.                                                                */
 /**************************************************************************/
 
-bool elastostatic_problem::solve(plain_vector &U) {
+bool crack_problem::solve(plain_vector &U) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   size_type N = mesh.dim();
+
+  
+  gmm::fill_random(ls.values(0));
+  gmm::fill_random(ls.values(1)); // à remplacer !!
+  mim.adapt();
+
 
   if (mixed_pressure) cout << "Number of dof for P: " << mf_p.nb_dof() << endl;
   cout << "Number of dof for u: " << mf_u.nb_dof() << endl;
@@ -327,8 +342,8 @@ int main(int argc, char *argv[]) {
   feenableexcept(FE_DIVBYZERO | FE_INVALID);
 #endif
 
-  try {    
-    elastostatic_problem p;
+  try {
+    crack_problem p;
     p.PARAM.read_command_line(argc, argv);
     p.init();
     p.mesh.write_to_file(p.datafilename + ".mesh");
