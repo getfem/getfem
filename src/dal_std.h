@@ -49,13 +49,7 @@
 /*	C++ Standard Headers.						  */
 /* ********************************************************************** */
 
-#ifdef __PURE_CNAME
-#  undef __PURE_CNAME
-#  include <stdlib.h>
-#  define __PURE_CNAME
-#else
-#  include <stdlib.h>
-#endif
+#include <stdlib.h>
 #include <stddef.h>
 #include <math.h>
 #include <string.h>
