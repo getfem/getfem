@@ -31,6 +31,7 @@
 
 
 #include <deque>
+#include <dal_singleton.h>
 #include <getfem_mat_elem.h>
 #include <getfem_precomp.h>
 #include <bgeot_precomp.h>
@@ -418,19 +419,22 @@ namespace getfem
     { compute(t, G, f+1, elt); }
 
   };
-
-  static dal::FONC_TABLE<emelem_comp_light_, emelem_comp_structure_>
-    *tab__mat_elet_ = 0;
   
-  pmat_elem_computation mat_elem(pmat_elem_type pm, pintegration_method pi,
-				 bgeot::pgeometric_trans pg)
-  { 
-    if (tab__mat_elet_ == 0)
-      tab__mat_elet_ = 
-	new dal::FONC_TABLE<emelem_comp_light_, emelem_comp_structure_>();
-    return tab__mat_elet_->add(emelem_comp_light_(pm, pi, pg));
+  size_type stored_mat_elem_memsize() {
+    const dal::FONC_TABLE<emelem_comp_light_, emelem_comp_structure_>& f = 
+      dal::singleton<dal::FONC_TABLE<emelem_comp_light_, emelem_comp_structure_> >::const_instance();
+    size_type sz = 0;
+    for (dal::bv_visitor i(f.index()); !i.finished(); ++i) {
+      sz += f.table()[i]->memsize();
+    }
+    return sz;
   }
 
+  pmat_elem_computation mat_elem(pmat_elem_type pm, pintegration_method pi,
+				 bgeot::pgeometric_trans pg) { 
+    return dal::singleton<dal::FONC_TABLE<emelem_comp_light_, emelem_comp_structure_> >
+      ::instance().add(emelem_comp_light_(pm, pi, pg));
+  }
 
 }  /* end of namespace getfem.                                            */
 

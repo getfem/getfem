@@ -30,9 +30,10 @@
 /* *********************************************************************** */
 
 
+#include <dal_singleton.h>
 #include <getfem_integration.h>
 #include <ftool_naming.h>
-#include <gmm.h>
+#include <gmm_dense_lu.h>
 #include <bgeot_permutations.h>
 #include <getfem_im_list.h>
 
@@ -41,6 +42,15 @@ namespace getfem
 
   typedef ftool::naming_system<integration_method>::param_list im_param_list;
 
+  /* a quick hack for deallocation of allocated integration methods on program
+     termination (avoid false leak alerts from valgrind) */
+  template <typename T> struct cleanup_allocated_im : public dal::ptr_collection<T> {};
+
+  template<typename T> static T *remember_for_cleanup(T *p) {
+    dal::singleton<cleanup_allocated_im<T> >::instance().push_back(p);
+    return p;
+  }
+
   /*
     dummy integration method 
   */
@@ -48,7 +58,7 @@ namespace getfem
     if (params.size())
       DAL_THROW(dal::failure_error,
 		"IM_NONE does not accept any parameter");
-    return new integration_method(); 
+    return remember_for_cleanup(new integration_method());
   }
 
   long_scalar_type poly_integration::int_poly(const base_poly &P) const {
@@ -144,8 +154,8 @@ namespace getfem
     int n = int(::floor(params[0].num() + 0.01));
     if (n <= 0 || n >= 100 || double(n) != params[0].num())
       DAL_THROW(failure_error, "Bad parameters");
-    return new integration_method
-      (new simplex_poly_integration_(bgeot::simplex_structure(n)));
+    return remember_for_cleanup(new integration_method
+          (new simplex_poly_integration_(bgeot::simplex_structure(n))));
   }
 
   /* ******************************************************************** */
@@ -202,8 +212,9 @@ namespace getfem
     pintegration_method b = params[1].method();
     if (!(a->type() == IM_EXACT && b->type() == IM_EXACT))
       DAL_THROW(failure_error, "Bad parameters");
-    return new integration_method(new plyint_mul_structure_(a->exact_method(),
-							    b->exact_method()));
+    return remember_for_cleanup(new integration_method(
+         new plyint_mul_structure_(a->exact_method(),
+                                   b->exact_method())));
   }
 
   /* ******************************************************************** */
@@ -425,7 +436,7 @@ namespace getfem
 
 	pai->valid_method();
         // cerr << "finding " << name << endl;
-	return new integration_method(pai);
+	return remember_for_cleanup(new integration_method(pai));
       }
     return 0;
   }
@@ -435,54 +446,53 @@ namespace getfem
   /* Gauss method.                                                         */
   /* ********************************************************************* */
 
-  static dal::dynamic_array<base_poly> *Legendre_polynomials;
-  static dal::dynamic_array< std::vector<long_scalar_type> > *Legendres_roots;
-  static void init_legendre(short_type de) {
-    static int nb_lp = -1;
-
-    if (nb_lp < 0) {
-      Legendre_polynomials = new dal::dynamic_array<base_poly>();
-      Legendres_roots =
-	new dal::dynamic_array< std::vector<long_scalar_type> >();
-      (*Legendre_polynomials)[0] = base_poly(1,0);
-      (*Legendre_polynomials)[0].one();
-      (*Legendre_polynomials)[1] = base_poly(1,1,0);
-      (*Legendres_roots)[1].resize(1);
-      (*Legendres_roots)[1][0] = 0.0;
-      nb_lp = 1;
-    }
-    while (nb_lp < de) {
-      ++nb_lp;
-      (*Legendre_polynomials)[nb_lp] =
-	(base_poly(1,1,0) * (*Legendre_polynomials)[nb_lp-1]
-	 * ((2.0 * long_scalar_type(nb_lp) - 1.0) / long_scalar_type(nb_lp)))
-	+ ((*Legendre_polynomials)[nb_lp-2]
-	   * ((1.0 - long_scalar_type(nb_lp)) / long_scalar_type(nb_lp)));
-      (*Legendres_roots)[nb_lp].resize(nb_lp);
-      (*Legendres_roots)[nb_lp][nb_lp/2] = 0.0;
-      long_scalar_type a = -1.0, b, c, d, e, cv, ev, ecart, ecart2;
-      for (int k = 0; k < nb_lp / 2; ++k) { // + symetrie ...
-	b = (*Legendres_roots)[nb_lp-1][k];
-
-	c = a, d = b;
-	cv = (*Legendre_polynomials)[nb_lp].eval(&c);
-	int imax = 10000;
-	ecart = 2.0 * (d - c);
-	while(c != d) {
-	  --imax; if (imax == 0) break;
-	  e = (c + d) / 2.0;
-	  ecart2 = d - c; if (ecart2 >= ecart) break;
-	  ecart = ecart2;
-	  ev = (*Legendre_polynomials)[nb_lp].eval(&e);
-	  if (ev * cv < 0.) { d = e; } else { c = e; cv = ev; }
-	}
-
-	(*Legendres_roots)[nb_lp][k] = c;
-	(*Legendres_roots)[nb_lp][nb_lp-k-1] = -c;
-	a = b;
+  struct Legendre_polynomials {
+    dal::dynamic_array<base_poly> polynomials;
+    dal::dynamic_array< std::vector<long_scalar_type> > roots;
+    int nb_lp;
+    Legendre_polynomials() : nb_lp(-1) {}
+    void init(short_type de) {
+      if (nb_lp < 0) {
+        polynomials[0] = base_poly(1,0);
+        polynomials[0].one();
+        polynomials[1] = base_poly(1,1,0);
+        roots[1].resize(1);
+        roots[1][0] = 0.0;
+        nb_lp = 1;
       }
-    } 
-  }
+      while (nb_lp < de) {
+        ++nb_lp;
+        polynomials[nb_lp] =
+          (base_poly(1,1,0) * polynomials[nb_lp-1]
+           * ((2.0 * long_scalar_type(nb_lp) - 1.0) / long_scalar_type(nb_lp)))
+          + (polynomials[nb_lp-2]
+	   * ((1.0 - long_scalar_type(nb_lp)) / long_scalar_type(nb_lp)));
+        roots[nb_lp].resize(nb_lp);
+        roots[nb_lp][nb_lp/2] = 0.0;
+        long_scalar_type a = -1.0, b, c, d, e, cv, ev, ecart, ecart2;
+        for (int k = 0; k < nb_lp / 2; ++k) { // + symetry ...
+          b = roots[nb_lp-1][k];
+
+          c = a, d = b;
+          cv = polynomials[nb_lp].eval(&c);
+          int imax = 10000;
+          ecart = 2.0 * (d - c);
+          while(c != d) {
+            --imax; if (imax == 0) break;
+            e = (c + d) / 2.0;
+            ecart2 = d - c; if (ecart2 >= ecart) break;
+            ecart = ecart2;
+            ev = polynomials[nb_lp].eval(&e);
+            if (ev * cv < 0.) { d = e; } else { c = e; cv = ev; }
+          }
+
+          roots[nb_lp][k] = c;
+          roots[nb_lp][nb_lp-k-1] = -c;
+          a = b;
+        }
+      } 
+    }
+  };
 
   struct gauss_approx_integration_ : public approx_integration {
     gauss_approx_integration_(short_type nbpt);
@@ -499,15 +509,16 @@ namespace getfem
     repartition[1] = nbpt + 1;
     repartition[2] = nbpt + 2; 
     
-    init_legendre(nbpt);
+    Legendre_polynomials &lp = dal::singleton<Legendre_polynomials>::instance();
+    lp.init(nbpt);
     
     for (short_type i = 0; i < nbpt; ++i) {
       int_points[i].resize(1);
-      long_scalar_type lr = (*Legendres_roots)[nbpt][i];
+      long_scalar_type lr = lp.roots[nbpt][i];
       int_points[i][0] = 0.5 + 0.5 * lr;
       int_coeffs[i] = (1.0 - dal::sqr(lr))
 	/ dal::sqr( long_scalar_type(nbpt)
-		    * ((*Legendre_polynomials)[nbpt-1].eval(&lr)));
+		    * (lp.polynomials[nbpt-1].eval(&lr)));
     }
     
     int_points[nbpt].resize(1);
@@ -535,7 +546,7 @@ namespace getfem
       return int_method_descriptor(name.str());
     }
     else
-      return new integration_method(new gauss_approx_integration_(n/2 + 1));
+      return remember_for_cleanup(new integration_method(new gauss_approx_integration_(n/2 + 1)));
   }
 
   /* ********************************************************************* */
@@ -641,7 +652,7 @@ namespace getfem
     if (n < 0 || n >= 100 || k < 0 || k > 150 ||
 	double(n) != params[0].num() || double(k) != params[1].num())
       DAL_THROW(failure_error, "Bad parameters");
-    return new integration_method(new Newton_Cotes_approx_integration_(n, k));
+    return remember_for_cleanup(new integration_method(new Newton_Cotes_approx_integration_(n, k)));
   }
 
   /* ********************************************************************* */
@@ -726,8 +737,9 @@ namespace getfem
     pintegration_method b = params[1].method();
     if (a->type() != IM_APPROX || b->type() != IM_APPROX)
       DAL_THROW(failure_error, "Bad parameters");
-    return new integration_method(new a_int_pro_integration(a->approx_method(),
-							    b->approx_method()));
+    return remember_for_cleanup(new integration_method(
+         new a_int_pro_integration(a->approx_method(),
+                                   b->approx_method())));
   }
 
   static pintegration_method product_which(im_param_list &params) {
@@ -817,37 +829,34 @@ namespace getfem
   
   pintegration_method structured_composite_int_method(im_param_list &);
 
-  static ftool::naming_system<integration_method> *im_naming_system_ = 0;
-  
-  static void init_im_naming_system(void) {
-    im_naming_system_ = new ftool::naming_system<integration_method>("IM");
-    im_naming_system_->add_suffix("NONE",im_none);
-    im_naming_system_->add_suffix("EXACT_SIMPLEX", exact_simplex);
-    im_naming_system_->add_suffix("PRODUCT", product_which);
-    im_naming_system_->add_suffix("EXACT_PARALLELEPIPED",exact_parallelepiped);
-    im_naming_system_->add_suffix("EXACT_PRISM", exact_prism);
-    im_naming_system_->add_suffix("GAUSS1D", gauss1d);
-    im_naming_system_->add_suffix("NC", Newton_Cotes);
-    im_naming_system_->add_suffix("NC_PARALLELEPIPED", Newton_Cotes_para);
-    im_naming_system_->add_suffix("NC_PRISM", Newton_Cotes_prism);
-    im_naming_system_->add_suffix("GAUSS_PARALLELEPIPED", Gauss_paramul);
-    // im_naming_system_->add_suffix("TRIANGLE", approx_triangle);
-    // im_naming_system_->add_suffix("QUAD", approx_quad);
-    // im_naming_system_->add_suffix("TETRAHEDRON", approx_tetra);
-    im_naming_system_->add_suffix("STRUCTURED_COMPOSITE",
-				  structured_composite_int_method);
-    im_naming_system_->add_generic_function(im_list_integration);
-  }
-  
+  struct im_naming_system : public ftool::naming_system<integration_method> {
+    im_naming_system() : ftool::naming_system<integration_method>("IM") {
+      add_suffix("NONE",im_none);
+      add_suffix("EXACT_SIMPLEX", exact_simplex);
+      add_suffix("PRODUCT", product_which);
+      add_suffix("EXACT_PARALLELEPIPED",exact_parallelepiped);
+      add_suffix("EXACT_PRISM", exact_prism);
+      add_suffix("GAUSS1D", gauss1d);
+      add_suffix("NC", Newton_Cotes);
+      add_suffix("NC_PARALLELEPIPED", Newton_Cotes_para);
+      add_suffix("NC_PRISM", Newton_Cotes_prism);
+      add_suffix("GAUSS_PARALLELEPIPED", Gauss_paramul);
+      // add_suffix("TRIANGLE", approx_triangle);
+      // add_suffix("QUAD", approx_quad);
+      // add_suffix("TETRAHEDRON", approx_tetra);
+      add_suffix("STRUCTURED_COMPOSITE",
+                 structured_composite_int_method);
+      add_generic_function(im_list_integration);
+    }
+  };
+
   pintegration_method int_method_descriptor(std::string name) {
-    if (im_naming_system_ == 0) init_im_naming_system();
     size_type i = 0;
-    return im_naming_system_->method(name, i);
+    return dal::singleton<im_naming_system>::instance().method(name, i);
   }
 
   std::string name_of_int_method(pintegration_method p) {
-    if (im_naming_system_ == 0) init_im_naming_system();
-    return im_naming_system_->shorter_name_of_method(p);
+    return dal::singleton<im_naming_system>::instance().shorter_name_of_method(p);
   }
 
   /* Fonctions pour la ref. directe.                                     */
@@ -954,11 +963,12 @@ namespace getfem
       case 4: name << "IM_SIMPLEX4D"; break;
       default: DAL_THROW(dal::failure_error, "no approximate integration method for simplexes of dimension " << n);
       }
-      for (size_type k = degree; k < degree+10; ++k) {
+      for (size_type k = degree; k < degree+size_type(10); ++k) {
 	pintegration_method im = 0;
 	std::stringstream name2; name2 << name.str() << "(" << k << ")";
+        /* TODO: remove the catch .. */
 	try {
-	  cerr << "testing " << name2.str() << "\n";
+	  //cerr << "testing " << name2.str() << "\n";
 	  im = int_method_descriptor(name2.str());
 	}
 	catch (dal::failure_error) { im = 0; }

@@ -70,10 +70,10 @@ namespace dal
       if (i != size_type(-1))
 	{ light_table_.sup(i); delete desc_table[i]; desc_table[i] = 0;}
     }
-    const desc_table_type &table(void) { return desc_table; }
-    const dynamic_tree_sorted<LIGHT> &light_table(void)
+    const desc_table_type &table(void) const { return desc_table; }
+    const dynamic_tree_sorted<LIGHT> &light_table(void) const
       { return light_table_; }
-    const bit_vector &index(void) { return light_table_.index(); }
+    const bit_vector &index(void) const { return light_table_.index(); }
     ~FONC_TABLE(void) { 
       for (dal::bv_visitor i(light_table_.index()); !i.finished(); ++i) delete desc_table[i];
     }

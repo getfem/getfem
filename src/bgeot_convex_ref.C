@@ -28,7 +28,7 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-
+#include <dal_singleton.h>
 #include <bgeot_convex_ref.h>
 #include <bgeot_simplexify.h>
 
@@ -39,7 +39,7 @@ namespace bgeot
   /*       Point tab storage.                                              */
   /* ********************************************************************* */
 
-  int comp_stored_point_tab::operator()(const stored_point_tab &x,
+  int compare_stored_point_tab::operator()(const stored_point_tab &x,
 					const stored_point_tab &y) const {
     std::vector<base_node>::const_iterator it1 = x.begin(), it2 = y.begin();
     base_node::const_iterator itn1, itn2, itne;
@@ -56,31 +56,35 @@ namespace bgeot
     return 0;
   }
 
-  dal::dynamic_tree_sorted<stored_point_tab, comp_stored_point_tab>
-    *stored_point_tab_tab_;
-  bool isinit_stored_point_tab_tab = false;
-
-  pstored_point_tab org_stored_point_tab(size_type n)
-  {
-    static std::vector<pstored_point_tab> *tab = 0;
-    if (!tab) { tab = new std::vector<pstored_point_tab>(); }
-    while (n >= tab->size())
-    {
-      size_type i = tab->size();
-      stored_point_tab spt;
-      tab->resize(i+1); spt.resize(1); spt[0].resize(i); spt[0].fill(0.0); 
-      (*tab)[i] = store_point_tab(spt);
-    }
-    return (*tab)[n];
+  stored_point_tab_tab &stored_point_tab_tab::instance() {
+    return dal::singleton<stored_point_tab_tab>::instance();
   }
+
+  struct org_stored_point_tab_data : public std::vector<pstored_point_tab> { };
+
+  pstored_point_tab org_stored_point_tab(size_type n) {
+    std::vector<pstored_point_tab> &tab = 
+      dal::singleton<org_stored_point_tab_data>::instance();
+    while (n >= tab.size()) {
+      stored_point_tab spt(1);
+      spt[0].resize(tab.size()); spt[0].fill(0.0); 
+      tab.push_back(store_point_tab(spt));
+    }
+    return tab[n];
+  }
+
+  struct cleanup_simplexified_convexes : public dal::ptr_collection<mesh_structure> {};
 
   /* should be called on the basic_convex_ref */
   const mesh_structure*
   convex_of_reference::simplexified_convex() const {    
     if (psimplexified_convex == NULL) {
       psimplexified_convex = new mesh_structure();
+      dal::singleton<cleanup_simplexified_convexes>::instance().push_back(psimplexified_convex);
       if (this != basic_convex_ref()) 
-	DAL_THROW(to_be_done_error, "always use simplexified_convex on the basic_convex_ref() [this=" << nb_points() << ", basic=" << basic_convex_ref()->nb_points());
+	DAL_THROW(to_be_done_error, 
+                  "always use simplexified_convex on the basic_convex_ref() [this=" << 
+                  nb_points() << ", basic=" << basic_convex_ref()->nb_points());
       mesh_structure ms;
       std::vector<size_type> ipts(nb_points());
       for (size_type i=0; i < ipts.size(); ++i) ipts[i] = i;
@@ -169,15 +173,15 @@ namespace bgeot
       }
   };
 
+  struct simplex_of_reference_FONC_TABLE : 
+    public dal::FONC_TABLE<K_simplex_ref_light_, K_simplex_of_ref_> {};
 
   pconvex_ref simplex_of_reference(dim_type nc, short_type k)
   {
-    static dal::FONC_TABLE<K_simplex_ref_light_, K_simplex_of_ref_> *tab = 0;
-    if (!tab) {
-      tab = new dal::FONC_TABLE<K_simplex_ref_light_, K_simplex_of_ref_>();
-    }
-    bgeot::convex_of_reference * p1 = tab->add(K_simplex_ref_light_(nc, 1));
-    bgeot::convex_of_reference * pk = tab->add(K_simplex_ref_light_(nc, k));
+    simplex_of_reference_FONC_TABLE &tab = 
+      dal::singleton<simplex_of_reference_FONC_TABLE>::instance();
+    bgeot::convex_of_reference * p1 = tab.add(K_simplex_ref_light_(nc, 1));
+    bgeot::convex_of_reference * pk = tab.add(K_simplex_ref_light_(nc, k));
     p1->attach_basic_convex_ref(p1);
     pk->attach_basic_convex_ref(p1);
     return pk;
@@ -237,7 +241,9 @@ namespace bgeot
   
   product_ref_::product_ref_(const product_ref_light_ &ls) { 
     if (ls.cvr1->structure()->dim() < ls.cvr2->structure()->dim())
-      DAL_WARNING(1, "Illegal convex : swap your operands: dim(cv1)=" << int(ls.cvr1->structure()->dim()) << " < dim(cv2)=" << int(ls.cvr2->structure()->dim()));
+      DAL_WARNING(1, "Illegal convex : swap your operands: dim(cv1)=" << 
+		  int(ls.cvr1->structure()->dim()) << " < dim(cv2)=" << 
+		  int(ls.cvr2->structure()->dim()));
     cvr1 = ls.cvr1; cvr2 = ls.cvr2;
     *((convex<base_node> *)(this)) 
       = convex_direct_product(*(ls.cvr1), *(ls.cvr2));
@@ -252,13 +258,16 @@ namespace bgeot
 		normals_[r+cvr1->structure()->nb_faces()].begin()
 		+ cvr1->structure()->dim());
   }
-  
+
+  struct convex_direct_product_FONC_TABLE : 
+    public dal::FONC_TABLE<product_ref_light_, product_ref_> {};
 
   pconvex_ref convex_ref_product(pconvex_ref a, pconvex_ref b) { 
-    static dal::FONC_TABLE<product_ref_light_, product_ref_> *tab = 0;
-    if (!tab) tab = new dal::FONC_TABLE<product_ref_light_, product_ref_>();
-    bgeot::convex_of_reference *bprod = tab->add(product_ref_light_(a->basic_convex_ref(), b->basic_convex_ref()));
-    bgeot::convex_of_reference *prod = tab->add(product_ref_light_(a, b));
+    convex_direct_product_FONC_TABLE &tab = 
+      dal::singleton<convex_direct_product_FONC_TABLE>::instance();
+    bgeot::convex_of_reference *bprod = 
+      tab.add(product_ref_light_(a->basic_convex_ref(), b->basic_convex_ref()));
+    bgeot::convex_of_reference *prod = tab.add(product_ref_light_(a, b));
     bprod->attach_basic_convex_ref(bprod);
     prod->attach_basic_convex_ref(bprod);
     return prod;
@@ -322,15 +331,17 @@ namespace bgeot
     }
   };
 
+
+  struct equilateral_simplex_list :
+    public dal::ptr_collection<equilateral_simplex_of_ref_> { };
+
   pconvex_ref equilateral_simplex_of_reference(dim_type nc) {
-    static std::vector<pconvex_ref> *stab = 0;
-    if (!stab) stab = new std::vector<pconvex_ref>();
+    equilateral_simplex_list &stab = 
+      dal::singleton<equilateral_simplex_list>::instance();
     if (nc <= 1) return simplex_of_reference(nc);
-    if (nc >= stab->size()) stab->resize(nc+1);
-    if ((*stab)[nc] == 0) {
-      (*stab)[nc] = new equilateral_simplex_of_ref_(nc);
-    }
-    return (*stab)[nc];
+    if (nc >= stab.size()) stab.resize(nc+1);
+    if (stab[nc] == 0) stab[nc] = new equilateral_simplex_of_ref_(nc);
+    return stab[nc];
   }
 
 

@@ -30,6 +30,7 @@
 /* *********************************************************************** */
 
 
+#include <dal_singleton.h>
 #include <bgeot_convex_structure.h>
 
 namespace bgeot
@@ -79,27 +80,28 @@ namespace bgeot
     friend pconvex_structure simplex_structure(dim_type nc);
   };
 
+
 #ifdef GETFEM_HAVE_QDLIB
 #  include <qd/fpu.h>
 #endif
 
-  pconvex_structure simplex_structure(dim_type nc)
-  {
-    static dal::dynamic_array<simplex_structure_> *simplex_;
-    static int nb_simplex_ = -1;
-    static bool isinit = false;
-    if (!isinit) {
+  struct simplex_structure_data {
+    dal::dynamic_array<simplex_structure_> simplex;
+    int nb_simplex;
+    simplex_structure_data() : nb_simplex(-1) {
 #ifdef GETFEM_HAVE_QDLIB
       /* initialisation for QD on intel CPUs */
       unsigned int old_cw;
       fpu_fix_start(&old_cw);
 #endif
-      simplex_ = new dal::dynamic_array<simplex_structure_>();
-      isinit = true;
     }
+  };
 
-    simplex_structure_ *p = &(*simplex_)[nc];
-    if (nb_simplex_ < nc)
+  pconvex_structure simplex_structure(dim_type nc)
+  {
+    simplex_structure_data& ssd = dal::singleton<simplex_structure_data>::instance();
+    simplex_structure_ *p = &(ssd.simplex[nc]);
+    if (ssd.nb_simplex < nc)
     {
       p->Nc = nc; p->nbpt = nc+1; p->nbf = nc+1;
       p->faces_struct.resize(p->nbf);
@@ -122,7 +124,7 @@ namespace bgeot
 	    (p->faces[i])[j] = (j >= i) ? (j + 1) : j;
 	}
       
-      nb_simplex_ = nc;
+      ssd.nb_simplex = nc;
     }
     return p;
   }
@@ -198,14 +200,13 @@ namespace bgeot
       }
 
   };
-  
+
+  typedef dal::FONC_TABLE<K_simplex_light_, K_simplex_structure_> simplexes_FONC_TABLE;
+
   pconvex_structure simplex_structure(dim_type nc, short_type K) {
-    static dal::FONC_TABLE<K_simplex_light_, K_simplex_structure_> *tab = 0;
-    if (tab == 0)
-      tab = new dal::FONC_TABLE<K_simplex_light_, K_simplex_structure_>();
     if (nc == 0) return simplex_structure(0);
     if (K == 1) return simplex_structure(nc);
-    return tab->add(K_simplex_light_(nc, K));
+    return dal::singleton<simplexes_FONC_TABLE>::instance().add(K_simplex_light_(nc, K));
   }
 
   /* ******************************************************************** */
@@ -215,23 +216,22 @@ namespace bgeot
   class polygon_structure_ : public convex_structure {
     friend pconvex_structure polygon_structure(short_type nc);
   };
+
+  struct polygon_structure_data {
+    dal::bit_vector ind_polygon;
+    dal::dynamic_array<polygon_structure_> polygon;
+  };
   
   static dal::bit_vector *ind_polygon_ = 0;
 
   pconvex_structure polygon_structure(short_type nbt)
   {
-    static dal::dynamic_array<polygon_structure_> *polygon_;
-    static bool initialized = false;
+    polygon_structure_data &psd = dal::singleton<polygon_structure_data>::instance();
 
-    if (!initialized) {
-      initialized = true; ind_polygon_ = new dal::bit_vector();
-      polygon_ = new dal::dynamic_array<polygon_structure_>();
-    }
-
-    polygon_structure_ *p = &(*polygon_)[nbt];
+    polygon_structure_ *p = &(psd.polygon[nbt]);
     if (nbt < 4) return simplex_structure(nbt-1);
 
-    if (!ind_polygon_->is_in(nbt))
+    if (!psd.ind_polygon.is_in(nbt))
     {
       p->Nc = 2; p->nbpt = nbt; p->nbf = nbt;
       p->basic_pcvs = p;
@@ -251,7 +251,7 @@ namespace bgeot
       p->dir_points_[1] = 1;
       p->dir_points_[2] = nbt - 1;
 
-      ind_polygon_->add(nbt);
+      psd.ind_polygon.add(nbt);
     }
     return p;
   }
@@ -341,40 +341,36 @@ namespace bgeot
     }
   };
 
-  static dal::FONC_TABLE<cv_pr_light_, cv_pr_structure_> *cv_pr_tab_ = 0;
-  
   pconvex_structure convex_product_structure(pconvex_structure a,
 					     pconvex_structure b) {
-    if (cv_pr_tab_ == 0) 
-      cv_pr_tab_ = new dal::FONC_TABLE<cv_pr_light_, cv_pr_structure_>();
-    return cv_pr_tab_->add(cv_pr_light_(a, b));
+    return dal::singleton< dal::FONC_TABLE<cv_pr_light_, cv_pr_structure_> >
+      ::instance().add(cv_pr_light_(a, b));
   }
 
   /* ******************************************************************** */
   /* parallelepiped structures.                                           */
   /* ******************************************************************** */
 
+  struct parallelepiped_structure_data {
+    dal::dynamic_array<pconvex_structure> tab;
+    int nb_parallelepiped;
+    parallelepiped_structure_data() : nb_parallelepiped(-1) {}
+  };
+
   pconvex_structure parallelepiped_structure(dim_type nc)
   {
-     static dal::dynamic_array<pconvex_structure> *tab;
-     static int nb_parallelepiped_ = -1;
-     static bool isinit = false;
-     if (!isinit) {
-       tab = new dal::dynamic_array<pconvex_structure>();
-       isinit = true;
-     }
-
-    if (nc > nb_parallelepiped_) {
-      if (nb_parallelepiped_ < 0) {
-	(*tab)[0] = simplex_structure(0);
-	(*tab)[1] = simplex_structure(1);
+    parallelepiped_structure_data &psd = dal::singleton<parallelepiped_structure_data>::instance();
+    if (nc > psd.nb_parallelepiped) {
+      if (psd.nb_parallelepiped < 0) {
+	psd.tab[0] = simplex_structure(0);
+	psd.tab[1] = simplex_structure(1);
       }
       for (int i = 1; i < nc; i++)
-	(*tab)[i+1]
-	  = convex_product_structure((*tab)[i], simplex_structure(1));
-      nb_parallelepiped_ = nc;
+	psd.tab[i+1]
+	  = convex_product_structure(psd.tab[i], simplex_structure(1));
+      psd.nb_parallelepiped = nc;
     }
-    return (*tab)[nc];
+    return psd.tab[nc];
   }
 
 

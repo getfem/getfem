@@ -71,7 +71,7 @@ namespace getfem
 				 pintegration_method pi,
 				 bgeot::pgeometric_trans pg);
 
-
+  size_type stored_mat_elem_memsize();
 }  /* end of namespace getfem.                                             */
 
 

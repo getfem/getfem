@@ -388,12 +388,9 @@ namespace getfem
 					                           ITER ipts)
   {
     short_type nb = pgt->nb_points();
-    static std::vector<size_type> *ind;
-    static bool isinit = false;
-    if (!isinit) { ind = new std::vector<size_type>(); isinit = true; }
-    if (ind->size() != nb) ind->resize(nb);
-    for (short_type i = 0; i < nb; ++ipts, ++i) (*ind)[i] = add_point(*ipts);
-    return add_convex(pgt, ind->begin());
+    std::vector<size_type> ind(nb);
+    for (short_type i = 0; i < nb; ++ipts, ++i) ind[i] = add_point(*ipts);
+    return add_convex(pgt, ind.begin());
   }
 
   template<class ITER>

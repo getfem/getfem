@@ -29,6 +29,7 @@
 /*                                                                         */
 /* *********************************************************************** */
 
+#include <dal_singleton.h>
 #include <gmm_condition_number.h>
 #include <getfem_mesh.h>
 #include <bgeot_precomp.h>
@@ -399,10 +400,9 @@ namespace getfem
 
 
   static const base_matrix &equilateral_to_GT_PK_grad(dim_type N) {
-    static std::vector<base_matrix> *pbm = 0;
-    if (pbm == 0) pbm = new std::vector<base_matrix>();
-    if (N > pbm->size()) pbm->resize(N);    
-    if ((*pbm)[N-1].empty()) {
+    std::vector<base_matrix> &pbm = dal::singleton<std::vector<base_matrix> >::instance();
+    if (N > pbm.size()) pbm.resize(N);
+    if (pbm[N-1].empty()) {
       bgeot::pgeometric_trans pgt = bgeot::simplex_geotrans(N,1);
       base_matrix Gr(N,N);
       base_matrix G(N,N+1); 
@@ -410,9 +410,9 @@ namespace getfem
       cout << "equilateral_simplex_of_reference: G[" << N << "]=" << G << "\n";
       gmm::mult(G, bgeot::geotrans_precomp(pgt, &pgt->convex_ref()->points())->grad(0), Gr);
       gmm::lu_inverse(Gr);
-      (*pbm)[N-1].swap(Gr);
+      pbm[N-1].swap(Gr);
     }
-    return (*pbm)[N-1];
+    return pbm[N-1];
   }
     
   /* TODO : use the geotrans from an "equilateral" reference element to the real element 

@@ -43,6 +43,7 @@ namespace bgeot {
     }
     //cout << "allocated " << first_unfilled[n] << ", " << vid << " @" << obj_data(id) << "\n";
     SVEC_ASSERT(obj_data(id));
+    memset(obj_data(id), 0, n);
     //SVEC_ASSERT(refcnt(id) == 0);
     return id;
   }

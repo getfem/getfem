@@ -102,7 +102,7 @@ namespace getfem
 
     mesh_fem mf(*pm);
     mf.set_finite_element(pm->convex_index(), pf, 
-			  exact_classical_im(pm->trans_of_convex(0)));
+			  classical_exact_im(pm->trans_of_convex(0)));
 
     return composite_fe_method(*pmp, mf, pf->ref_convex());
   }

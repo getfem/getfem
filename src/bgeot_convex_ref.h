@@ -38,7 +38,6 @@
 
 namespace bgeot
 {
-  
 
   /** 
       Point tab storage.
@@ -46,41 +45,46 @@ namespace bgeot
   typedef std::vector<base_node> stored_point_tab;
   typedef const stored_point_tab * pstored_point_tab;
 
-  class comp_stored_point_tab
-    : public std::binary_function<stored_point_tab, stored_point_tab, int>
-  {
-    public :
+  /* comparison of two arrays of points */
+  struct compare_stored_point_tab
+    : public std::binary_function<stored_point_tab, stored_point_tab, int> {
     int operator()(const stored_point_tab &x,
 		   const stored_point_tab &y) const;
   };
 
-  extern dal::dynamic_tree_sorted<stored_point_tab, comp_stored_point_tab>
-    *stored_point_tab_tab_;
-  extern bool isinit_stored_point_tab_tab;
+  /* holds all the stored_point_tab (singleton) */
+  struct stored_point_tab_tab : public 
+  dal::dynamic_tree_sorted<stored_point_tab, compare_stored_point_tab> 
+  { static stored_point_tab_tab &instance(); };
 
-  template<class CONT> pstored_point_tab store_point_tab(const CONT &TAB)
-  { 
-    if (!isinit_stored_point_tab_tab) {
-      stored_point_tab_tab_ =
-	new dal::dynamic_tree_sorted<stored_point_tab,
-	                             comp_stored_point_tab>();
-      isinit_stored_point_tab_tab = true;
-    }
-    typename CONT::const_iterator it = TAB.begin(), ite = TAB.end();
-    size_type nb;
-    for (nb = 0; it != ite; ++it, ++nb);
-    stored_point_tab spt; spt.resize(nb);
-    it = TAB.begin(); ite = TAB.end();
-    for (nb = 0; it != ite; ++it, ++nb) spt[nb] = *it;
-    return &((*stored_point_tab_tab_)[stored_point_tab_tab_->add_norepeat(spt)]);
+  /* store a new (read-only) array of points in stored_point_tab_tab */
+  template<class CONT> pstored_point_tab store_point_tab(const CONT &TAB) { 
+    stored_point_tab spt(TAB.begin(), TAB.end());
+    return &(stored_point_tab_tab::instance()[stored_point_tab_tab::instance().add_norepeat(spt)]);
   }
 
+  /* returns the (read-only) origin for points of dimension n */
   pstored_point_tab org_stored_point_tab(size_type n);
 
   class mesh_structure;
 
-  /* structures de reference.                                             */
+  /**
+     convex_of_reference: base class for reference convexes (the order
+     1 triangle (0,0)-(1,0)-(0,1), the order 2 segment
+     (0)-(.5)-(1.), etc...)  stores :
 
+       - a list of points (vertices of the reference convex, plus
+       other points for reference convexes of degree > 1)
+
+       - a normal for each face of the convex
+
+       - a mesh structure defining the smallest simplex partition of
+       the convex
+
+       - a pointer to the "basic convex_ref": for a convex_ref of
+       degree k, this is a pointer to the correspounding convex_ref of
+       degree 1.
+   */
   class convex_of_reference : public convex<base_node> {
   protected :     
     std::vector<base_small_vector> normals_;
@@ -102,17 +106,18 @@ namespace bgeot
   };
 
   typedef const convex_of_reference * pconvex_ref;
+  
+  /* these are the public functions for obtaining a convex of reference */
 
+  /** returns a simplex of reference of dimension nc and degree k */
   pconvex_ref simplex_of_reference(dim_type nc, short_type k = 1);
+  /** parallelepiped of reference of dimension nc (and degree 1) */
   pconvex_ref parallelepiped_of_reference(dim_type nc);
+  /** tensorial product of two convex ref.
+      in order to ensure unicity, it is required the a->dim() >= b->dim() */
   pconvex_ref convex_ref_product(pconvex_ref a, pconvex_ref b);
+  /** equilateral simplex (degree 1). used only for mesh quality estimations */
   pconvex_ref equilateral_simplex_of_reference(dim_type nc);
-
-  /* fonctions en sursis ... */
-  // pconvex_ref multiply_convex_of_reference(pconvex_ref a, dim_type n);
-
-  // pconvex_ref nonconforming_triangle_ref(void);
-
 }  /* end of namespace bgeot.                                             */
 
 

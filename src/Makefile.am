@@ -22,6 +22,7 @@ include_HEADERS =                      \
 	bgeot_vector.h                 \
 	bgeot_comma_init.h	       \
 	dal_algobase.h                 \
+	dal_singleton.h		       \
 	dal_alloc.h                    \
 	dal_basic.h                    \
 	dal_bit_vector.h               \
@@ -103,6 +104,7 @@ include_HEADERS =                      \
 SRC =                                  \
 	dal_backtrace.C                \
 	dal_bit_vector.C               \
+	dal_singleton.C		       \
 	bgeot_convex_ref.C             \
 	bgeot_convex_structure.C       \
 	bgeot_geometric_trans.C        \

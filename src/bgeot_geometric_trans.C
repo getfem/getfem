@@ -30,7 +30,7 @@
 /* *********************************************************************** */
 
 
-
+#include <dal_singleton.h>
 #include <dal_tree_sorted.h>
 #include <ftool_naming.h>
 #include <bgeot_geometric_trans.h>
@@ -38,6 +38,14 @@
 
 namespace bgeot
 {
+  /* a quick hack for deallocation of allocated fem on program termination
+     (avoid false leak alerts from valgrind) */
+  struct cleanup_allocated_geotrans : public dal::ptr_collection<geometric_trans> {};
+  static pgeometric_trans remember_for_cleanup(geometric_trans *p) {
+    dal::singleton<cleanup_allocated_geotrans>::instance().push_back(p);
+    return p;
+  }
+
   const base_node& geotrans_interpolation_context::xref() const { 
     if (!have_xref()) 
       if (have_pgp()) xref_ = pgp_->get_point_tab()[ii_];
@@ -231,7 +239,7 @@ namespace bgeot
     if (n < 0 || n >= 100 || k < 0 || k > 150 ||
 	double(n) != params[0].num() || double(k) != params[1].num())
       DAL_THROW(failure_error, "Bad parameters");
-    return new simplex_trans_(n, k);
+    return remember_for_cleanup(new simplex_trans_(n, k));
   }
 
   /* ******************************************************************** */
@@ -264,7 +272,7 @@ namespace bgeot
       DAL_THROW(failure_error, "Bad type of parameters");
     pgeometric_trans a = params[0].method();
     pgeometric_trans b = params[1].method();
-    return new cv_pr_t_(a, b);
+    return remember_for_cleanup(new cv_pr_t_(a, b));
   }
 
   /* ******************************************************************** */
@@ -302,7 +310,7 @@ namespace bgeot
       DAL_THROW(failure_error, "Bad type of parameters");
     pgeometric_trans a = params[0].method();
     pgeometric_trans b = params[1].method();
-    return new cv_pr_tl_(a, b);
+    return remember_for_cleanup(new cv_pr_tl_(a, b));
   }
 
   /* ******************************************************************** */
@@ -430,26 +438,23 @@ namespace bgeot
   /*    Naming system                                                     */
   /* ******************************************************************** */
 
-  static ftool::naming_system<geometric_trans> *gt_naming_system_ = 0;
-  
-  static void init_gt_naming_system(void) {
-    gt_naming_system_ = new ftool::naming_system<geometric_trans>("GT");
-    gt_naming_system_->add_suffix("PK", PK_gt);
-    gt_naming_system_->add_suffix("QK", QK_gt);
-    gt_naming_system_->add_suffix("PRISM", prism_gt);
-    gt_naming_system_->add_suffix("PRODUCT", product_gt);
-    gt_naming_system_->add_suffix("LINEAR_PRODUCT", linear_product_gt);
-  }
+  struct geometric_trans_naming_system : public ftool::naming_system<geometric_trans> {
+    geometric_trans_naming_system() : ftool::naming_system<geometric_trans>("GT") {
+      add_suffix("PK", PK_gt);
+      add_suffix("QK", QK_gt);
+      add_suffix("PRISM", prism_gt);
+      add_suffix("PRODUCT", product_gt);
+      add_suffix("LINEAR_PRODUCT", linear_product_gt);
+    }
+  };
   
   pgeometric_trans geometric_trans_descriptor(std::string name) {
-    if (gt_naming_system_ == 0) init_gt_naming_system();
-    size_type i = 0;
-    return gt_naming_system_->method(name, i);
+    size_type i=0;
+    return dal::singleton<geometric_trans_naming_system>::instance().method(name, i);
   }
 
   std::string name_of_geometric_trans(pgeometric_trans p) {
-    if (gt_naming_system_ == 0) init_gt_naming_system();
-    return gt_naming_system_->shorter_name_of_method(p);
+    return dal::singleton<geometric_trans_naming_system>::instance().shorter_name_of_method(p);
   }
 
   /* Fonctions pour la ref. directe.                                     */

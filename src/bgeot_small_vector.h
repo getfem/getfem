@@ -2,6 +2,7 @@
 #ifndef BGEOT_SMALL_VECTOR_H
 #define BGEOT_SMALL_VECTOR_H
 
+#include <dal_singleton.h>
 #include <bgeot_config.h>
 #ifdef DEBUG_SMALL_VECTOR
 # include <cassert>
@@ -114,7 +115,7 @@ namespace bgeot {
     /* must be a pointer ... sgi CC is not able to order correctly the 
        destructors of static variables */
     static block_allocator *palloc;
-    static_block_allocator() { if (!palloc) palloc=new block_allocator(); }
+    static_block_allocator() { if (!palloc) palloc=&dal::singleton<block_allocator,1000>::instance(); } //new block_allocator(); }
   };
   
   /**

@@ -1,3 +1,14 @@
+2004-05-28  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/getfem_assembling.h (getfem): minor speedup for the assembly
+	of linear elasticity.
+	
+	* src/bgeot_small_vector.h : small_vectors are now initialized
+	with zeros.
+
+	* src/dal_singleton.h, *.C: added ability to cleanup allocated
+	static data on exit -- mostly for valgrind --leak-check=yes.
+	
 2004-05-14  Yves Renard  <Yves.Renard@gmm.insa-tlse.fr>
 
 	* src/gmm_solvers_Schwarz_additive.h: A sequential version of

@@ -29,6 +29,7 @@
 /*                                                                         */
 /* *********************************************************************** */
 
+#include <dal_singleton.h>
 #include <bgeot_comma_init.h>
 #include <getfem_poly_composite.h>
 
@@ -352,12 +353,20 @@ namespace getfem
       if (cvs < ls.cvs) return true; if (cvs > ls.cvs) return false; 
       if (n < ls.n) return true; return false;
     }
-    str_mesh_cv__(void) {}
+    str_mesh_cv__(void) : pm(0), pmp(0) {}
     str_mesh_cv__(bgeot::pconvex_structure c, short_type k, bool smesh_) : 
       cvs(c), n(k), simplex_mesh(smesh_) {}
+    void destroy() { 
+      if (pm) delete pm; if (pmp) delete pmp; pm = 0; pmp = 0;
+      for (size_type i=0; i < pfacem.size(); ++i) delete pfacem[i];
+    }
   };
 
-  static dal::dynamic_tree_sorted<str_mesh_cv__> *str_mesh_cv_tab__ = 0;
+  struct stored_str_mesh_cv : public dal::dynamic_tree_sorted<str_mesh_cv__> {
+    ~stored_str_mesh_cv() {
+      for (size_type i=0; i < size(); ++i) (*this)[i].destroy();
+    }
+  };
 
   /**
    * This function returns a mesh in pm which contains a refinement of the convex cvr
@@ -371,12 +380,13 @@ namespace getfem
     size_type n = cvr->structure()->dim();
     size_type nbp = cvr->structure()->basic_structure()->nb_points();
     
-    if (str_mesh_cv_tab__ == 0)
-      str_mesh_cv_tab__ = new dal::dynamic_tree_sorted<str_mesh_cv__>();
+    stored_str_mesh_cv &tab = 
+      dal::singleton< stored_str_mesh_cv >::instance();
+
     
     str_mesh_cv__ smc(cvr->structure()->basic_structure(), k, (force_simplexification || nbp == n+1));
     
-    size_type iss = str_mesh_cv_tab__->search(smc);
+    size_type iss = tab.search(smc);
     if (iss == size_type(-1)) {
       smc.pm = new getfem_mesh();
       
@@ -402,10 +412,10 @@ namespace getfem
       }
 
       smc.pmp = new mesh_precomposite(*(smc.pm));
-      iss = str_mesh_cv_tab__->add(smc);
+      iss = tab.add(smc);
     }
-    pm  = (*str_mesh_cv_tab__)[iss].pm;
-    pmp = (*str_mesh_cv_tab__)[iss].pmp;
+    pm  = tab[iss].pm;
+    pmp = tab[iss].pmp;
   }
 
   const getfem_mesh *
@@ -419,10 +429,12 @@ namespace getfem
   const std::vector<bgeot::mesh_structure*>& 
   refined_simplex_mesh_for_convex_faces(bgeot::pconvex_ref cvr, 
                                   short_type k) {
+    stored_str_mesh_cv &tab = 
+      dal::singleton< stored_str_mesh_cv >::instance();
     str_mesh_cv__ smc(cvr->structure()->basic_structure(), k, true);    
-    size_type iss = str_mesh_cv_tab__->search(smc);
+    size_type iss = tab.search(smc);
     if (iss == size_type(-1)) DAL_THROW(dal::internal_error, "call refined_simplex_mesh_for_convex first (or fix me)");
-    return (*str_mesh_cv_tab__)[iss].pfacem;
+    return tab[iss].pfacem;
   }
 
 }  /* end of namespace getfem.                                            */

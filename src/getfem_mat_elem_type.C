@@ -29,7 +29,7 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-
+#include <dal_singleton.h>
 #include <getfem_mat_elem_type.h>
 #include <dal_tree_sorted.h>
 
@@ -42,16 +42,12 @@ namespace getfem {
     return false;
   }
 
+  typedef dal::dynamic_tree_sorted<mat_elem_type,
+    dal::lexicographical_less<mat_elem_type> > mat_elem_type_tab;
+
   static pmat_elem_type add_to_met_tab(const mat_elem_type &f) {
-    static dal::dynamic_tree_sorted<mat_elem_type,
-      dal::lexicographical_less<mat_elem_type> > *tab;
-    static bool isinit = false;
-    if (!isinit) {
-      tab = new dal::dynamic_tree_sorted<mat_elem_type,
-	dal::lexicographical_less<mat_elem_type> >();
-      isinit = true;
-    }
-    return &((*tab)[tab->add_norepeat(f)]);
+    mat_elem_type_tab &tab = dal::singleton<mat_elem_type_tab>::instance();
+    return &(tab[tab.add_norepeat(f)]);
   }
 
   pmat_elem_type mat_elem_base(pfem pfi) {

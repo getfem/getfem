@@ -31,6 +31,7 @@
 
 
 #include <queue>
+#include <dal_singleton.h>
 #include <getfem_mesh_fem.h>
 
 namespace getfem
@@ -56,14 +57,13 @@ namespace getfem
     }
   }
   
+  struct empty_bit_vector {
+    dal::bit_vector bv;
+  };
+
   const dal::bit_vector &boundary_description::faces_of_convex(size_type c)
     const {
-    static dal::bit_vector *without;
-    static bool isinit = false;
-    if (!isinit) {
-      without = new dal::bit_vector(); isinit = true;
-    }
-    return (cvindex[c]) ? faces[cv_in.search(c)] : *without;
+    return (cvindex[c]) ? faces[cv_in.search(c)] : dal::singleton<empty_bit_vector>::instance().bv;
   }
 
   void boundary_description::swap_convex(size_type c1, size_type c2) {
@@ -87,37 +87,25 @@ namespace getfem
   }
   
   pintfem give_intfem(pfem ppf, pintegration_method ppi) {
-    static dal::FONC_TABLE<intfem, intfem> *tab;
     static pintegration_method im_none = 0; // the dummy integration method
-    static bool isinit = false;
-    if (!isinit) {
-      tab = new dal::FONC_TABLE<intfem, intfem>(); isinit = true;
+    if (!im_none)
       im_none = getfem::int_method_descriptor("IM_NONE()");
-    }
 //      if (ppf->basic_structure() != ppi->structure())
 //        DAL_THROW(internal_error, 
 //  		"Incompatibility between fem and integration method");
-    return tab->add(intfem(ppf, ppi ? ppi : im_none));
+    return dal::singleton<dal::FONC_TABLE<intfem, intfem> >
+      ::instance().add(intfem(ppf, ppi ? ppi : im_none));
   }
   
   const dal::bit_vector &mesh_fem::convex_on_boundary(size_type b) const {
-    static dal::bit_vector *without;
-    static bool isinit = false;
-    if (!isinit) {
-      without = new dal::bit_vector(); isinit = true;
-    }
-    return (valid_boundaries[b]) ?  boundaries[b].cvindex : *without;
+    return (valid_boundaries[b]) ?  
+      boundaries[b].cvindex : dal::singleton<empty_bit_vector>::instance().bv;
   }
   
   const dal::bit_vector &mesh_fem::faces_of_convex_on_boundary(size_type c,
 							  size_type b) const {
-    static dal::bit_vector *without;
-    static bool isinit = false;
-    if (!isinit) {
-      without = new dal::bit_vector(); isinit = true;
-    }
-    return (valid_boundaries[b]) ? boundaries[b].faces_of_convex(c)
-      : *without;
+    return (valid_boundaries[b]) ? 
+      boundaries[b].faces_of_convex(c) : dal::singleton<empty_bit_vector>::instance().bv;
   }
   
   void mesh_fem::sup_boundaries_of_convex(size_type c) {

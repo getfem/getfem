@@ -29,6 +29,7 @@
 /*                                                                         */
 /* *********************************************************************** */
 
+#include <dal_singleton.h>
 #include <getfem_mat_elem.h>
 #include <getfem_precomp.h>
 
@@ -108,9 +109,7 @@ namespace getfem
 
   pfem_precomp fem_precomp(pfem pf, bgeot::pstored_point_tab pspt)
   { 
-    static fem_precomp_pool *pool = 0;
-    if (!pool) pool = new fem_precomp_pool();
-    return (*pool)(pf, pspt);
+    return dal::singleton<fem_precomp_pool>::instance()(pf, pspt);
   }
 }  /* end of namespace getfem.                                            */
 
