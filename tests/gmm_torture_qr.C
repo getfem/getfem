@@ -35,11 +35,13 @@ using gmm::size_type;
 // { print_for_matlab(m, gmm::linalg_traits<MAT>::value_type()); }
 
 template <typename T> inline T real_or_complex(double a, double, T)
-{ return a; }
+{ return T(a); }
 
 template <typename T> inline
-std::complex<T> real_or_complex(double a, double b, std::complex<T>)
-{ return std::complex<T>(a, b); }
+std::complex<T> real_or_complex(double a, double b, std::complex<T>) {
+  typedef typename gmm::number_traits<T>::magnitude_type R;
+  return std::complex<T>(R(a), R(b)); 
+}
 
 
 template <typename MAT1, typename MAT2>
@@ -48,7 +50,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
   MAT2  &m2 = const_cast<MAT2  &>(_m2);
   typedef typename gmm::linalg_traits<MAT1>::value_type T;
   typedef typename gmm::number_traits<T>::magnitude_type R;
-  double prec = gmm::default_tol(R());
+  R prec = gmm::default_tol(R());
   R error;
 
   // gmm::qr_factor(A, Q, R) is tested in test_gmm_mult.C
@@ -76,7 +78,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
     gmm::mult(q, dm1, dm1aux);
     gmm::add(gmm::scaled(m1aux, T(-1)), dm1aux);
     error = gmm::mat_norm2(dm1aux);
-    if (error >= R(prec * 10000.0)) 
+    if (error >= prec * R(10000)) 
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
     gmm::copy(gmm::identity_matrix(), q);
@@ -87,7 +89,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
     if (k > m) gmm::mult(gmm::conjugated(q), q, a);
     else gmm::mult(q, gmm::conjugated(q), a);
     error = gmm::mat_norm2(a);
-    if (error >= R(prec * 10000.0)) 
+    if (error >= prec * R(10000)) 
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
       
     gmm::copy(gmm::conjugated(qaux), q2);
@@ -95,7 +97,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
     gmm::mult(gmm::conjugated(q2), dm1, dm1aux);
     gmm::add(gmm::scaled(m1aux, T(-1)), dm1aux);
     error = gmm::mat_norm2(dm1aux);
-    if (error >= R(prec * 10000.0)) 
+    if (error >= prec * R(10000)) 
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
   }
@@ -114,7 +116,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
     gmm::mult(q, gmm::transposed(dm1), dm1aux);
     gmm::add(gmm::scaled(m1aux, T(-1)), dm1aux);
     error = gmm::mat_norm2(dm1aux);
-    if (error >= R(prec * 10000.0)) 
+    if (error >= prec * R(10000)) 
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
     gmm::copy(gmm::identity_matrix(), q);
@@ -125,7 +127,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
     if (k > n) gmm::mult(gmm::conjugated(q), q, a);
     else gmm::mult(q, gmm::conjugated(q), a);
     error = gmm::mat_norm2(a);
-    if (error >= R(prec * 10000.0)) 
+    if (error >= prec * R(10000)) 
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
       
     gmm::copy(gmm::conjugated(qaux), q2);
@@ -133,7 +135,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
     gmm::mult(gmm::conjugated(q2), gmm::transposed(dm1), dm1aux);
     gmm::add(gmm::scaled(m1aux, T(-1)), dm1aux);
     error = gmm::mat_norm2(dm1aux);
-    if (error >= R(prec * 10000.0)) 
+    if (error >= prec * R(10000)) 
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
   }
@@ -177,7 +179,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
     bool found = false;
      for (size_type kk = 0; kk < m; ++kk)
        if (gmm::abs(eigc[l] - cv[kk]) <
-	   sqrt(sqrt(prec))*(gmm::abs(eigc[l])+1.0))
+	   sqrt(sqrt(prec))*(gmm::abs(eigc[l])+R(1)))
 	 { cv[kk] = -1.123236; found = true; break; }
      if (found == false) {
        cerr << "Eigenvalue " << l << " not found\n" << std::flush;
@@ -188,7 +190,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
      gmm::mult(ca, gmm::mat_col(cq, l),
 	       gmm::scaled(gmm::mat_col(cq, l), -eigc[l]), vy);
      error = gmm::vect_norm2(vy);
-     if (error >= R(prec * 10000.0)) 
+     if (error >= prec * R(10000)) 
        DAL_THROW(gmm::failure_error, "Error too large: " << error);
   }
 
@@ -205,22 +207,22 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
 
   gmm::copy(gmm::identity_matrix(), m2);
 
-  if (m >  0) cvr[ 0] = T(R(     0.0 ));
-  if (m >  1) cvr[ 1] = T(R(     0.0 ));
-  if (m >  2) cvr[ 2] = T(R(     0.01));
-  if (m >  3) cvr[ 3] = T(R(     0.01));
-  if (m >  4) cvr[ 4] = T(R(    -2.0 ));
-  if (m >  5) cvr[ 5] = T(R(    -2.0 ));
-  if (m >  6) cvr[ 6] = T(R(   -50.0 ));
-  if (m >  7) cvr[ 7] = T(R(   100.0 ));
-  if (m >  8) cvr[ 8] = T(R(   300.0 ));
-  if (m >  9) cvr[ 9] = T(R(   500.0 ));
-  if (m > 10) cvr[10] = T(R(  1000.0 ));
-  if (m > 11) cvr[11] = T(R(  4000.0 ));
-  if (m > 12) cvr[12] = T(R(  5000.0 ));
-  if (m > 13) cvr[13] = T(R( 10000.0 ));
-  if (m > 14) cvr[14] = T(R( 80000.0 ));
-  if (m > 15) cvr[15] = T(R(100000.0 ));
+  if (m >  0) cvr[ 0] = R(     0.0 );
+  if (m >  1) cvr[ 1] = R(     0.0 );
+  if (m >  2) cvr[ 2] = R(     0.01);
+  if (m >  3) cvr[ 3] = R(     0.01);
+  if (m >  4) cvr[ 4] = R(    -2.0 );
+  if (m >  5) cvr[ 5] = R(    -2.0 );
+  if (m >  6) cvr[ 6] = R(   -50.0 );
+  if (m >  7) cvr[ 7] = R(   100.0 );
+  if (m >  8) cvr[ 8] = R(   300.0 );
+  if (m >  9) cvr[ 9] = R(   500.0 );
+  if (m > 10) cvr[10] = R(  1000.0 );
+  if (m > 11) cvr[11] = R(  4000.0 );
+  if (m > 12) cvr[12] = R(  5000.0 );
+  if (m > 13) cvr[13] = R( 10000.0 );
+  if (m > 14) cvr[14] = R( 80000.0 );
+  if (m > 15) cvr[15] = R(100000.0 );
   gmm::clear(m2);
   for (size_type l = 0; l < m; ++l) m2(l, l) = cv[l];
 
@@ -233,7 +235,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
     bool found = false;
      for (size_type kk = 0; kk < m; ++kk)
        if (gmm::abs(eigcr[l]-cvr[kk]) <
-	   sqrt(sqrt(prec))*(gmm::abs(eigcr[l])+1.0))
+	   sqrt(sqrt(prec))*(gmm::abs(eigcr[l])+R(1)))
 	 { cvr[kk] = -1.123236; found = true; break; }
      if (found == false) {
        cerr << "Eigenvalue " << l << " not found\n" << std::flush;
@@ -244,7 +246,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
      gmm::mult(ca, gmm::mat_col(cq, l),
 	       gmm::scaled(gmm::mat_col(cq, l), -eigcr[l]), vy);
      error = gmm::vect_norm2(vy);
-     if (error >= R(prec * 10000.0)) 
+     if (error >= prec * R(10000)) 
        DAL_THROW(gmm::failure_error, "Error too large: " << error);
 
   }

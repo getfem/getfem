@@ -14,7 +14,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2, const MAT3 &_m3) {
   MAT3  &m3 = const_cast<MAT3  &>(_m3);
   typedef typename gmm::linalg_traits<MAT1>::value_type T;
   typedef typename gmm::number_traits<T>::magnitude_type R;
-  double prec = gmm::default_tol(R());
+  R prec = gmm::default_tol(R());
 
   size_type k = gmm::mat_nrows(m1);
   size_type l = std::max(gmm::mat_ncols(m1), gmm::mat_nrows(m2));
@@ -43,23 +43,26 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2, const MAT3 &_m3) {
   R error = gmm::mat_norm2(gmm::sub_matrix(m3, gmm::sub_interval(0,mm),
 					   gmm::sub_interval(0,nn)));
 
-  if (error >= R(prec * 10000.0)) 
+  if (error >= prec * R(10000)) 
     DAL_THROW(gmm::failure_error, "Error too large: " << error);
-  
-  gmm::mult(gmm::scaled(gmm::sub_matrix(m1, gmm::sub_interval(0,mm),
-					gmm::sub_interval(0,l)), T(-2)),
-	    gmm::sub_matrix(m2, gmm::sub_interval(0,l),
-			    gmm::sub_interval(0,nn)),
-	    gmm::sub_matrix(gmm::transposed(m3), gmm::sub_interval(0,mm),
-			    gmm::sub_interval(0,nn)));
-  gmm::add(gmm::scaled(m3bis, T(2)),
-	   gmm::transposed(gmm::sub_matrix(m3, gmm::sub_interval(0,nn),
-					   gmm::sub_interval(0,mm))));
-  
-  error = gmm::mat_norm2(gmm::sub_matrix(m3, gmm::sub_interval(0,nn),
-					 gmm::sub_interval(0,mm)));
 
-  if (error >= R(prec * 10000.0)) 
-    DAL_THROW(gmm::failure_error, "Error too large: " << error);
+  if (nn <= gmm::mat_nrows(m3) && mm <= gmm::mat_ncols(m3)) {
+  
+    gmm::mult(gmm::scaled(gmm::sub_matrix(m1, gmm::sub_interval(0,mm),
+					  gmm::sub_interval(0,l)), T(-2)),
+	      gmm::sub_matrix(m2, gmm::sub_interval(0,l),
+			      gmm::sub_interval(0,nn)),
+	      gmm::sub_matrix(gmm::transposed(m3), gmm::sub_interval(0,mm),
+			      gmm::sub_interval(0,nn)));
+    gmm::add(gmm::scaled(m3bis, T(2)),
+	     gmm::transposed(gmm::sub_matrix(m3, gmm::sub_interval(0,nn),
+					     gmm::sub_interval(0,mm))));
+    
+    error = gmm::mat_norm2(gmm::sub_matrix(m3, gmm::sub_interval(0,nn),
+					   gmm::sub_interval(0,mm)));
+    
+    if (error >= prec * R(10000)) 
+      DAL_THROW(gmm::failure_error, "Error too large: " << error);
+  }
   
 }

@@ -84,6 +84,7 @@ EXTRA_DIST = \
 	gmm_torture_mult.C      \
 	gmm_torture_mat_mult.C  \
 	gmm_torture_qr.C        \
+	gmm_torture_iterative_solvers.C        \
 	gmm_torture_lusolve.C
 
 TESTS_ENVIRONMENT = perl

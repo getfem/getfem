@@ -106,7 +106,6 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     print TMPF "\n\n";
 
     if ($with_qd) {
-      print TMPF "#define NO_INLINE\n";
       print TMPF "#include <dd.h>\n";
       print TMPF "#include <qd.h>\n";
       print TMPF "#include <x86.h>\n\n";
@@ -126,19 +125,25 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     }
 
     $TYPES[0] = "float";
-    $TYPES[1] = "double";
-    $TYPES[2] = "std::complex<float> ";
+    $TYPES[1] = "std::complex<float> ";
+    $TYPES[2] = "double";
     $TYPES[3] = "std::complex<double> ";
+    $TYPES[4] = "long double";
+    $TYPES[5] = "std::complex<long double> ";
+    $NB_TYPES = 6.0;
+
+    if ($with_lapack) {
+      $NB_TYPES = 4.0;
+    }
 
     if ($with_qd) {
       $TYPES[0] = "dd_real";
       $TYPES[1] = "qd_real";
       $TYPES[2] = "std::complex<dd_real> ";
       $TYPES[3] = "std::complex<qd_real> ";
+      $NB_TYPES = 4.0;
     }
 
-
-    $NB_TYPES = 4.0;
     if ($fix_base_type == -1) { $TYPE = $TYPES[int($NB_TYPES * rand())]; }
     else { $TYPE = $TYPES[$fix_base_type]; }
 
@@ -173,7 +178,9 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     print TMPF "  srand($theseed);\n\n";
     print TMPF "  dal::exception_callback_debug cb;\n";
     print TMPF "  dal::exception_callback::set_exception_callback(&cb);\n\n";
-    print TMPF "  try {\n\n";
+    print TMPF "  for (int iter = 0; iter < 50; ++iter) {\n";
+    print TMPF "    cout << iter << \" : \" << endl;\n\n";
+    print TMPF "    try {\n\n";
     for ($j = 0; $j < $nb_param; ++$j) {
       $a = rand(); $b = rand();
       if ($with_lapack) { $a = $b = 1.0; }
@@ -187,7 +194,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 	  $lt = $VECTOR_TYPES[int($NB_VECTOR_TYPES * rand())];
 	}
 	if ($a < 0.1) {
-	  $li = "    $lt param$j($sizepp);";
+	  $li = "      $lt param$j($sizepp);";
 	  $c = int(1.0*($sizepp-$sizep+1)*rand());
 	  $param_name[$j]
 	    = "gmm::sub_vector(param$j, gmm::sub_interval($c, $sizep))";
@@ -199,16 +206,16 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 	    = "gmm::sub_vector(param$j, gmm::sub_slice($c, $sizep, $step))";
 	}
 	elsif ($a < 0.3) {
-	  $li = "    $lt param$j($sizepp);"; @sub_index = ();
+	  $li = "      $lt param$j($sizepp);"; @sub_index = ();
 	  @sortind = 0 .. ($sizepp-1);
 	  while (@sortind)
 	    { push (@sub_index, splice(@sortind , rand @sortind, 1)); }
 	  @sub_index = @sub_index[0..$sizep-1];
 	  @sub_index = sort numerique @sub_index;
 	  if ($sizep == 0)
-	    { $li = "$li\n    gmm::size_type param_tab$j [1] = {0};"; }
+	    { $li = "$li\n      gmm::size_type param_tab$j [1] = {0};"; }
 	  else {
-	    $li="$li\n    gmm::size_type param_tab$j [$sizep] ={$sub_index[0]";
+	    $li="$li\n      gmm::size_type param_tab$j [$sizep] ={$sub_index[0]";
 	    for ($k = 1; $k < $sizep; ++$k) { $li = "$li , $sub_index[$k]"; }
 	    $li = "$li};";
 	  }
@@ -216,10 +223,10 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 	    " gmm::sub_index(&param_tab$j [0], &param_tab$j [$sizep]))";
 	}
 	else {
-	  $li = "    $lt param$j($sizep);";
+	  $li = "      $lt param$j($sizep);";
 	  $param_name[$j] = "param$j";
 	}
-	print TMPF "$li\n    gmm::fill_random(param$j);\n";
+	print TMPF "$li\n      gmm::fill_random(param$j);\n";
       }
       elsif ($param[$j] == 3 || $param[$j] == 4) { # matrices
 	$sm = $sizep; if ($a < 0.3) { $sm = $sizep + int(50.0*rand()); }
@@ -230,7 +237,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 	if ($with_lapack==0) {
 	  $lt = $MATRIX_TYPES[int($NB_MATRIX_TYPES * rand())];
 	}
-	$li = "    $lt param$j($sm, $sn);";
+	$li = "      $lt param$j($sm, $sn);";
 	
 	if ($a < 0.3 || $b < 0.3) {
 	  $sub1 = "gmm::sub_interval(0, $sizep)";
@@ -253,9 +260,9 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 	    @sub_index = @sub_index[0..$sizep-1];
 	    @sub_index = sort numerique @sub_index;
 	    if ($sizep == 0)
-	      { $li = "$li\n    gmm::size_type param_t$j [1] = {0};"; }
+	      { $li = "$li\n      gmm::size_type param_t$j [1] = {0};"; }
 	    else {
-	      $li="$li\n    gmm::size_type param_t$j [$sizep]= {$sub_index[0]";
+	      $li="$li\n      gmm::size_type param_t$j [$sizep]= {$sub_index[0]";
 	      for ($k = 1; $k < $sizep; ++$k) { $li = "$li , $sub_index[$k]"; }
 	      $li = "$li};";
 	    }
@@ -279,9 +286,9 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 	    @sub_index = @sub_index[0..$s-1];
 	    @sub_index = sort numerique @sub_index;
 	    if ($sizep == 0)
-	      { $li = "$li\n    gmm::size_type param_u$j [1] = {0};"; }
+	      { $li = "$li\n      gmm::size_type param_u$j [1] = {0};"; }
 	    else {
-	      $li="$li\n    gmm::size_type param_u$j [$s] = {$sub_index[0]";
+	      $li="$li\n      gmm::size_type param_u$j [$s] = {$sub_index[0]";
 	      for ($k = 1; $k < $s; ++$k) { $li = "$li , $sub_index[$k]"; }
 	      $li = "$li};";
 	    }
@@ -290,20 +297,21 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 	  $param_name[$j] = "gmm::sub_matrix(param$j, $sub1, $sub2)";
 	}
 	if (1.0 * rand() < 0.5) {
-	  print TMPF "$li\n    gmm::fill_random(param$j);\n";
+	  print TMPF "$li\n      gmm::fill_random(param$j);\n";
 	}
 	else {
-	  print TMPF "$li\n    gmm::fill_random(param$j, 0.2);\n";
+	  print TMPF "$li\n      gmm::fill_random(param$j, 0.2);\n";
 	}
 	$sizep = $s;
       }
 #      print "$li ($param_name[$j])\n";
     }
-    print TMPF "    \n\n    test_procedure($param_name[0]";
+    print TMPF "    \n\n      test_procedure($param_name[0]";
     for ($j = 1; $j < $nb_param; ++$j) { print TMPF ", $param_name[$j]"; }
     print TMPF ");\n\n";
+    print TMPF "    }\n";
+    print TMPF "    DAL_STANDARD_CATCH_ERROR;\n";
     print TMPF "  }\n";
-    print TMPF "  DAL_STANDARD_CATCH_ERROR;\n";
     print TMPF "  return 0;\n";
     print TMPF "}\n";
 
