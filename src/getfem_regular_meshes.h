@@ -65,6 +65,22 @@ namespace getfem
 					 &(ref[0]));
   } 
 
+  void _parallelepiped_regular_prism_mesh(getfem_mesh &me, dim_type N,
+      const base_node &org, const base_vector *ivect, const size_type *iref);
+
+  template<class ITER1, class ITER2>
+    void parallelepiped_regular_prism_mesh(getfem_mesh &me,
+					     dim_type N,
+	     const base_node &org, ITER1 ivect, ITER2 iref)
+  { 
+    std::vector<base_vector> vect(N);
+    std::copy(ivect, ivect+N, vect.begin());
+    std::vector<size_type> ref(N);
+    std::copy(iref, iref+N, ref.begin());
+    _parallelepiped_regular_prism_mesh(me, N, org, &(vect[0]),
+					 &(ref[0]));
+  } 
+
     void _parallelepiped_regular_mesh(getfem_mesh &me, dim_type N,
     const base_node &org, const base_vector *ivect, const size_type *iref);
 

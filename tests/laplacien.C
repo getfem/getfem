@@ -49,7 +49,7 @@ struct lap_pb
   getfem::mesh_fem mef_data;
   getfem::mesh_fem mef_data2;
 
-  scalar_type LX, LY, LZ, residu;
+  scalar_type LX, LY, LZ, incline, residu;
   int NX, N, K;
 
   sparse_matrix_type RM;   /* rigidity matrix.                            */
@@ -82,6 +82,7 @@ void lap_pb::init(void)
   LX = PARAM.real_value("LX", "Size in X");
   LY = PARAM.real_value("LY", "Size in Y");
   LZ = PARAM.real_value("LZ", "Size in Y");
+  incline = PARAM.real_value("INCLINE", "incline of the mesh");
   NX = PARAM.int_value("NX", "Nomber of sace steps ");
   integration = PARAM.int_value("INTEGRATION", "integration method");
   mesh_type = PARAM.int_value("MESH_TYPE", "Mesh type ");
@@ -113,17 +114,23 @@ void lap_pb::init(void)
     vtab[i] = base_vector(N); vtab[i].fill(0.0);
     (vtab[i])[i] = ((i == 0) ? LX : ((i == 1) ? LY : LZ)) / scalar_type(NX);
   }
-  if (mesh_type)
-    getfem::parallelepiped_regular_mesh(mesh, N, org,
-					vtab.begin(), ref.begin());
-  else
-    getfem::parallelepiped_regular_simplex_mesh(mesh, N, org,
-						vtab.begin(), ref.begin());
+  vtab[N-1][0] = incline * LX;
+
+  switch (mesh_type) {
+  case 0 : getfem::parallelepiped_regular_simplex_mesh
+		   (mesh, N, org, vtab.begin(), ref.begin()); break;
+  case 1 : getfem::parallelepiped_regular_mesh
+		   (mesh, N, org, vtab.begin(), ref.begin()); break;
+  case 2 : getfem::parallelepiped_regular_prism_mesh
+		   (mesh, N, org, vtab.begin(), ref.begin()); break;
+  default : DAL_THROW(dal::internal_error, "Unknow type of mesh");
+  }
 
   mesh.optimize_structure();
 
   // mesh.write_to_file(cout);
 
+  if (mesh_type == 2 && N <= 1) mesh_type = 0;
 
   cout << "Selecting finite element method.\n";
   getfem::pintegration_method ppi;
@@ -137,19 +144,28 @@ void lap_pb::init(void)
   }
   switch (integration) {
   case 0 :
-    if (mesh_type)
-      ppi = bgeot::parallelepiped_poly_integration(N);
-    else
-      ppi = bgeot::simplex_poly_integration(N);
+    switch (mesh_type) { 
+    case 0 : ppi = bgeot::simplex_poly_integration(N); break;
+    case 1 : ppi = bgeot::parallelepiped_poly_integration(N); break;
+    default : DAL_THROW(dal::internal_error, 
+    "Exact integration not allowed in this context");
+    }
     break;
   case 1 :
-    if (mesh_type)
-      ppi = bgeot::parallelepiped_Newton_Cotes_approx_integration(N, 2*K);
-    else
+    switch (mesh_type) { 
+    case 0 : 
       ppi = bgeot::Newton_Cotes_approx_integration(N,2*K);
+      break;
+    case 1 : 
+      ppi = bgeot::parallelepiped_Newton_Cotes_approx_integration(N, 2*K);
+      break;
+    case 2 :
+      ppi = bgeot::prism_Newton_Cotes_approx_integration(N, 2*K);
+      break;
+    }
     break;
   case 2 :
-    if (mesh_type)
+    if (mesh_type == 1)
       ppi = bgeot::parallelepiped_Gauss_approx_integration(N, K+1);
     else
       DAL_THROW(dal::internal_error,
@@ -172,26 +188,32 @@ void lap_pb::init(void)
   default : DAL_THROW(std::logic_error, "Undefined integration method");
   }
   
-  if (mesh_type)
-    mef.set_finite_element(nn, getfem::QK_fem(N, K), ppi);
-  else {
+  switch (mesh_type) {
+  case 0 : 
     if (mixte)
       mef.set_finite_element(nn, getfem::P1_nonconforming_fem(), ppi);
     else
       mef.set_finite_element(nn, getfem::PK_fem(N, K), ppi);
-  }
-  
-  if (mesh_type) {
-    mef_data.set_finite_element(nn, getfem::QK_fem(N, K),
-				bgeot::parallelepiped_poly_integration(N));
-    mef_data2.set_finite_element(nn, getfem::QK_fem(N, 0),
-				 bgeot::parallelepiped_poly_integration(N));
-  }
-  else {
     mef_data.set_finite_element(nn, getfem::PK_fem(N, K),
 				bgeot::simplex_poly_integration(N));
     mef_data2.set_finite_element(nn, getfem::PK_fem(N, 0),
 				 bgeot::simplex_poly_integration(N));
+    break;
+  case 1 : 
+    mef.set_finite_element(nn, getfem::QK_fem(N, K), ppi); 
+    mef_data.set_finite_element(nn, getfem::QK_fem(N, K), ppi);
+    mef_data2.set_finite_element(nn, getfem::QK_fem(N, 0),  ppi);
+    break;
+  case 2 : 
+    mef.set_finite_element(nn, getfem::product_fem(getfem::PK_fem(N-1, K),
+						   getfem::PK_fem(1, K)), ppi);
+    mef_data.set_finite_element(nn,
+				getfem::product_fem(getfem::PK_fem(N-1, K),
+						 getfem::PK_fem(1, K)), ppi);
+    mef_data2.set_finite_element(nn, 
+				 getfem::product_fem(getfem::PK_fem(N-1, 0),
+						  getfem::PK_fem(1, 0)), ppi);
+    break;
   }
 
   cout << "Selecting Neumann and Dirichlet boundaries\n";
@@ -206,8 +228,9 @@ void lap_pb::init(void)
       {
 	un = mesh.convex(j).unit_norm_of_face(i);
 	
+	cout << "normale = " << un << endl;
 	// if (true)
-        if (dal::abs(un[N-1] - 1.0) < 1.0E-3)
+	if (dal::abs(un[N-1] - 1.0) < 1.0E-3)
 	{
 	  mef.add_boundary_elt(0, j, i);
 // 	  cout << "ajout d'un bord Dirichlet : convexe\t" << j << "\tface "

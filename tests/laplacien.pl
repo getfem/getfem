@@ -9,6 +9,7 @@ print TMPF "N = 2;\n";
 print TMPF "LX = 1.0\n";
 print TMPF "LY = 1.0\n";
 print TMPF "LZ = 1.0\n";
+print TMPF "INCLINE = 0.0\n";
 print TMPF "FT = 0.1\n";
 print TMPF "MESH_TYPE = 0;\n";
 print TMPF "K = 1;\n";

@@ -91,6 +91,33 @@ namespace getfem
     }
   }
 
+
+  void _parallelepiped_regular_prism_mesh(getfem_mesh &me, dim_type N,
+    const base_node &org, const base_vector *ivect, const size_type *iref)
+  {
+    getfem_mesh aux;
+    _parallelepiped_regular_simplex_mesh(aux, N-1, org, ivect, iref);
+    dal::bit_vector nn = aux.convex_index();
+    size_type cv;
+    std::vector<base_node> ptab(2 * N);
+    
+
+    for (cv << nn; cv != size_type(-1); cv << nn) {
+      std::copy(aux.points_of_convex(cv).begin(),
+		aux.points_of_convex(cv).end(), ptab.begin());
+
+      for (int k = 0; k < iref[N-1]; ++k) {
+	
+	for (int j = 0; j < N; ++j) ptab[j+N] = ptab[j] + ivect[N-1];
+	me.add_prism_by_points(N, ptab.begin());
+	
+	std::copy(ptab.begin()+N, ptab.end(), ptab.begin());
+      }
+    }
+  }
+
+
+
   void _parallelepiped_regular_mesh(getfem_mesh &me, dim_type N,
     const base_node &org, const base_vector *ivect, const size_type *iref)
   {
