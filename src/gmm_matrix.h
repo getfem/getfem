@@ -500,8 +500,11 @@ namespace gmm
 
     size_type nrows(void) const { return nr; }
     size_type ncols(void) const { return nc; }
-    void swap(csc_matrix<T, shift> &m) { std::swap(*this, m); }
-   
+    void swap(csc_matrix<T, shift> &m) { 
+      std::swap(pr, m.pr); 
+      std::swap(ir,m.ir); std::swap(jc, m.jc); 
+      std::swap(nc, m.nc); std::swap(nr,m.nr);
+    }
     value_type operator()(size_type i, size_type j) const
     { return mat_col(*this, j)[i]; }
   };
@@ -645,7 +648,11 @@ namespace gmm
 
     size_type nrows(void) const { return nr; }
     size_type ncols(void) const { return nc; }
-    void swap(csr_matrix<T, shift> &m) { std::swap(*this, m); }
+    void swap(csr_matrix<T, shift> &m) { 
+      std::swap(pr, m.pr); 
+      std::swap(ir,m.ir); std::swap(jc, m.jc); 
+      std::swap(nc, m.nc); std::swap(nr,m.nr);
+    }
    
     value_type operator()(size_type i, size_type j) const
     { return mat_row(*this, i)[j]; }
@@ -918,6 +925,10 @@ namespace std {
   { m1.swap(m2); }
   template <typename T> void swap(gmm::dense_matrix<T> &m1, gmm::dense_matrix<T> &m2)
   { m1.swap(m2); }
+  template <typename T, int shift> void 
+  swap(gmm::csc_matrix<T,shift> &m1, gmm::csc_matrix<T,shift> &m2) { m1.swap(m2); }
+  template <typename T, int shift> void 
+  swap(gmm::csr_matrix<T,shift> &m1, gmm::csr_matrix<T,shift> &m2) { m1.swap(m2); }
 }
 
 
