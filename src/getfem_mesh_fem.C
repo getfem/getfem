@@ -229,8 +229,8 @@ namespace getfem
     else
     {
       if (_linked_mesh->structure_of_convex(cv)->basic_structure() 
-	     != pif->pf->basic_structure());
-      throw internal_error("mesh_fem::set_finite_element : internal error");
+	     != pif->pf->basic_structure())
+	throw internal_error("mesh_fem::set_finite_element : internal error");
       if (!fe_convex.is_in(cv) || f_elems[cv] != pif)
       { fe_convex.add(cv); f_elems[cv] = pif; dof_enumeration_made = false; }
     }
