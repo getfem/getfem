@@ -1,37 +1,16 @@
 /* -*- c++ -*- (enables emacs c++ mode)                                    */
-//=======================================================================
-// Copyright (C) 1997-2001
-// Authors: Andrew Lumsdaine <lums@osl.iu.edu> 
-//          Lie-Quan Lee     <llee@osl.iu.edu>
-//
-// You should have received a copy of the License Agreement for the
-// Iterative Template Library along with the software;  see the
-// file LICENSE.  
-//
-// Permission to modify the code and to distribute modified code is
-// granted, provided the text of this NOTICE is retained, a notice that
-// the code was modified is included with the above COPYRIGHT NOTICE and
-// with the COPYRIGHT NOTICE in the LICENSE file, and that the LICENSE
-// file is distributed with the modified code.
-//
-// LICENSOR MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR IMPLIED.
-// By way of example, but not limitation, Licensor MAKES NO
-// REPRESENTATIONS OR WARRANTIES OF MERCHANTABILITY OR FITNESS FOR ANY
-// PARTICULAR PURPOSE OR THAT THE USE OF THE LICENSED SOFTWARE COMPONENTS
-// OR DOCUMENTATION WILL NOT INFRINGE ANY PATENTS, COPYRIGHTS, TRADEMARKS
-// OR OTHER RIGHTS.
-//=======================================================================
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Generic Matrix Methods  (gmm)                                */
-/* File    :  gmm_precond_ilut.h : modified version from I.T.L.            */
+/* File    :  gmm_precond_ilutp.h : ILUTP preconditionner for sparse       */
+/*                                  matrices                               */
 /*     									   */
-/* Date : June 5, 2003.                                                    */
+/* Date : October 14, 2004.                                                */
 /* Author : Yves Renard, Yves.Renard@insa-toulouse.fr                      */
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 2003-2004  Yves Renard.                                   */
+/* Copyright (C) 2004  Yves Renard.                                        */
 /*                                                                         */
 /* This file is a part of GMM++                                            */
 /*                                                                         */
@@ -50,40 +29,19 @@
 /* USA.                                                                    */
 /*                                                                         */
 /* *********************************************************************** */
-#ifndef GMM_PRECOND_ILUT_H
-#define GMM_PRECOND_ILUT_H
+#ifndef GMM_PRECOND_ILUTP_H
+#define GMM_PRECOND_ILUTP_H
 
-//: ILUT:  Incomplete LU with threshold and K fill-in Preconditioner.
-//  The algorithm of ILUT(A, 0, 1.0e-6) is slower than ILU(A). If No fill-in 
-//  is arrowed, you can use ILU instead of ILUT.
-//
-// Notes: The idea under a concrete Preconditioner such 
-//        as ilut is to create a Preconditioner
-//        object to use in iterative methods. 
-//
+//: ILUTP:  Incomplete LU with threshold and K fill-in Preconditioner and
+//          partial pivoting (See Yousef Saad, Iterative Methods for
+//          sparse linear systems, PWS Publishing Company, section 10.4.4
 
-/*
-  Performane comparing for SSOR, ILU and ILUT based on sherman 5 matrix 
-  in Harwell-Boeing collection on Sun Ultra 30 UPA/PCI (UltraSPARC-II 296MHz)
-  Preconditioner & Factorization time  &  Number of Iteration \\ \hline
-  SSOR        &   0.010577  & 41 \\
-  ILU         &   0.019336  & 32 \\
-  ILUT with 0 fill-in and threshold of 1.0e-6 & 0.343612 &  23 \\
-  ILUT with 5 fill-in and threshold of 1.0e-6 & 0.343612 &  18 \\ \hline
-*/
-
-#include <gmm_precond.h>
+#include <gmm_precond_ilut.h>
 
 namespace gmm {
 
-  template<typename T> struct elt_rsvector_value_less_ {
-    inline bool operator()(const elt_rsvector_<T>& a, 
-			   const elt_rsvector_<T>& b) const
-    { return (gmm::abs(a.e) > gmm::abs(b.e)); }
-  };
-
   template <typename Matrix>
-  class ilut_precond  {
+  class ilutp_precond  {
   public :
     typedef typename linalg_traits<Matrix>::value_type value_type;
     typedef rsvector<value_type> svector;
@@ -91,40 +49,79 @@ namespace gmm {
 
     bool invert;
     LU_Matrix L, U;
+    std::vector<size_type> ipvt;
+    std::vector<size_type> ipvtinv;
+    gmm::unsorted_sub_index indperm;
+    gmm::unsorted_sub_index indperminv;    
+    mutable std::vector<value_type> temporary;
 
   protected:
     int K;
     double eps;    
 
-    template<typename M> void do_ilut(const M&, row_major);
-    void do_ilut(const Matrix&, col_major);
+    template<typename M> void do_ilutp(const M&, row_major);
+    void do_ilutp(const Matrix&, col_major);
 
   public:
     void build_with(const Matrix& A) {
       invert = false;
       gmm::resize(L, mat_nrows(A), mat_ncols(A));
       gmm::resize(U, mat_nrows(A), mat_ncols(A));
-      do_ilut(A, typename principal_orientation_type<typename
+      do_ilutp(A, typename principal_orientation_type<typename
 	      linalg_traits<Matrix>::sub_orientation>::potype());
     }
-    ilut_precond(const Matrix& A, int k_, double eps_) 
+    ilutp_precond(const Matrix& A, int k_, double eps_) 
       : L(mat_nrows(A), mat_ncols(A)), U(mat_nrows(A), mat_ncols(A)),
 	K(k_), eps(eps_) { build_with(A); }
-    ilut_precond(int k_, double eps_) :  K(k_), eps(eps_) {}
-    ilut_precond(void) { K = 10; eps = 1E-7; }
+    ilutp_precond(int k_, double eps_) :  K(k_), eps(eps_) {}
+    ilutp_precond(void) { K = 10; eps = 1E-7; }
     size_type memsize() const { 
       return sizeof(*this) + (nnz(U)+nnz(L))*sizeof(value_type);
     }
   };
 
+
+  template<typename V, typename R>
+  size_type find_max_after_i(const V &v, size_type i, R val, abstract_dense) {
+    typename linalg_traits<V>::const_iterator it = vect_const_begin(v) + i,
+      ite = vect_const_end(v);
+    size_type j = i;
+    for ( ; it != ite; ++it, ++j)
+      if (gmm::abs(*it) > val && j > i)
+	{ i = j; val = gmm::abs(*it); }
+    return i;
+  }
+
+  template<typename V, typename R>
+  size_type find_max_after_i(const V &v, size_type i, R val, abstract_sparse) {
+    typename linalg_traits<V>::const_iterator it = vect_const_begin(v),
+      ite = vect_const_end(v);
+    for ( ; it != ite; ++it)
+      if (gmm::abs(*it) > val && it.index() > i)
+	{ i = it.index(); val = gmm::abs(*it); }
+    return i;
+  }
+
+  template<typename V, typename R>
+  size_type find_max_after_i(const V &v, size_type i, R val, abstract_skyline)
+  { return find_max_after_i(v, i, val, abstract_sparse()); }
+
+  template<typename V, typename R>
+  size_type find_max_after_i(const V &v, size_type i, R val) {
+    return find_max_after_i(v, i, val,
+			    typename linalg_traits<V>::storage_type());
+  }
+
   template<typename Matrix> template<typename M> 
-  void ilut_precond<Matrix>::do_ilut(const M& A, row_major) {
+  void ilutp_precond<Matrix>::do_ilutp(const M& A, row_major) {
     typedef value_type T;
     typedef typename number_traits<T>::magnitude_type R;
     
     size_type n = mat_nrows(A);
     if (n == 0) return;
     std::vector<T> indiag(n);
+    ipvt.resize(n); ipvtinv.resize(n); temporary.resize(n);
+    for (size_type i = 0; i < n; ++i) ipvt[i] = i;
     svector w(mat_ncols(A));
     T tmp;
     gmm::clear(U); gmm::clear(L);
@@ -132,7 +129,17 @@ namespace gmm {
     R max_pivot = gmm::abs(A(0,0)) * prec;
 
     for (size_type i = 0; i < n; ++i) {
-      gmm::copy(mat_const_row(A, i), w);
+
+      // To be optimized, computation of sub_index is made twice ...
+      //     the reverse index could be updated at each iteration
+      size_type ip= find_max_after_i(gmm::sub_vector(mat_const_row(A, i),
+						     unsorted_sub_index(ipvt)),
+				     i, gmm::abs(A(i,i)));
+      if (ip != i) std::swap(ipvt[i], ipvt[ip]);
+      
+      gmm::copy(gmm::sub_vector(mat_const_row(A, i),
+				unsorted_sub_index(ipvt)), w);
+
       double norm_row = gmm::vect_norm2(w);
 
       size_type nL = 0, nU = 0;
@@ -165,69 +172,98 @@ namespace gmm {
 	if (wit->c < i) { if (nnl < nL+K) L(i, wit->c) = wit->e; ++nnl; }
 	else            { if (nnu < nU+K) U(i, wit->c) = wit->e; ++nnu; }
     }
-
+    indperm = unsorted_sub_index(ipvt);
+    cout << "pivots = " << ipvt << endl;
+    for (size_type i = 0; i < n; ++i) ipvtinv[ipvt[i]] = i;
+    indperminv = unsorted_sub_index(ipvtinv);
   }
 
   template<typename Matrix> 
-  void ilut_precond<Matrix>::do_ilut(const Matrix& A, col_major) {
-    do_ilut(gmm::transposed(A), row_major());
+  void ilutp_precond<Matrix>::do_ilutp(const Matrix& A, col_major) {
+    do_ilutp(gmm::transposed(A), row_major());
     invert = true;
   }
 
   template <typename Matrix, typename V1, typename V2> inline
-  void mult(const ilut_precond<Matrix>& P, const V1 &v1, V2 &v2) {
-    gmm::copy(v1, v2);
+  void mult(const ilutp_precond<Matrix>& P, const V1 &v1, V2 &v2) {
     if (P.invert) {
+      gmm::copy(gmm::sub_vector(v1, P.indperminv), v2);
       gmm::lower_tri_solve(gmm::transposed(P.U), v2, false);
       gmm::upper_tri_solve(gmm::transposed(P.L), v2, true);
     }
     else {
-      gmm::lower_tri_solve(P.L, v2, true);
-      gmm::upper_tri_solve(P.U, v2, false);
+      gmm::copy(v1, P.temporary);
+      gmm::lower_tri_solve(P.L, P.temporary, true);
+      gmm::upper_tri_solve(P.U, P.temporary, false);
+      gmm::copy(gmm::sub_vector(P.temporary, P.indperm), v2);
     }
   }
 
   template <typename Matrix, typename V1, typename V2> inline
-  void transposed_mult(const ilut_precond<Matrix>& P,const V1 &v1,V2 &v2) {
-    gmm::copy(v1, v2);
+  void transposed_mult(const ilutp_precond<Matrix>& P,const V1 &v1,V2 &v2) {
     if (P.invert) {
-      gmm::lower_tri_solve(P.L, v2, true);
-      gmm::upper_tri_solve(P.U, v2, false);
+      gmm::copy(v1, P.temporary);
+      gmm::lower_tri_solve(P.L, P.temporary, true);
+      gmm::upper_tri_solve(P.U, P.temporary, false);
+      gmm::copy(gmm::sub_vector(P.temporary, P.indperm), v2);
     }
     else {
+      gmm::copy(gmm::sub_vector(v1, P.indperminv), v2);
       gmm::lower_tri_solve(gmm::transposed(P.U), v2, false);
       gmm::upper_tri_solve(gmm::transposed(P.L), v2, true);
     }
   }
 
   template <typename Matrix, typename V1, typename V2> inline
-  void left_mult(const ilut_precond<Matrix>& P, const V1 &v1, V2 &v2) {
-    copy(v1, v2);
-    if (P.invert) gmm::lower_tri_solve(gmm::transposed(P.U), v2, false);
-    else gmm::lower_tri_solve(P.L, v2, true);
+  void left_mult(const ilutp_precond<Matrix>& P, const V1 &v1, V2 &v2) {
+    if (P.invert) {
+      gmm::copy(gmm::sub_vector(v1, P.indperminv), v2);
+      gmm::lower_tri_solve(gmm::transposed(P.U), v2, false);
+    }
+    else {
+      copy(v1, v2);
+      gmm::lower_tri_solve(P.L, v2, true);
+    }
   }
 
   template <typename Matrix, typename V1, typename V2> inline
-  void right_mult(const ilut_precond<Matrix>& P, const V1 &v1, V2 &v2) {
-    copy(v1, v2);
-    if (P.invert) gmm::upper_tri_solve(gmm::transposed(P.L), v2, true);
-    else gmm::upper_tri_solve(P.U, v2, false);
+  void right_mult(const ilutp_precond<Matrix>& P, const V1 &v1, V2 &v2) {
+    if (P.invert) {
+      copy(v1, v2);
+      gmm::upper_tri_solve(gmm::transposed(P.L), v2, true);
+    }
+    else {
+      copy(v1, P.temporary);
+      gmm::upper_tri_solve(P.U, P.temporary, false);
+      gmm::copy(gmm::sub_vector(P.temporary, P.indperm), v2);
+    }
   }
 
   template <typename Matrix, typename V1, typename V2> inline
-  void transposed_left_mult(const ilut_precond<Matrix>& P, const V1 &v1,
+  void transposed_left_mult(const ilutp_precond<Matrix>& P, const V1 &v1,
 			    V2 &v2) {
-    copy(v1, v2);
-    if (P.invert) gmm::upper_tri_solve(P.U, v2, false);
-    else gmm::upper_tri_solve(gmm::transposed(P.L), v2, true);
+    if (P.invert) {
+      copy(v1, P.temporary);
+      gmm::upper_tri_solve(P.U, P.temporary, false);
+      gmm::copy(gmm::sub_vector(P.temporary, P.indperm), v2);
+    }
+    else {
+      copy(v1, v2);
+      gmm::upper_tri_solve(gmm::transposed(P.L), v2, true);
+    }
   }
-
+  
   template <typename Matrix, typename V1, typename V2> inline
-  void transposed_right_mult(const ilut_precond<Matrix>& P, const V1 &v1,
+  void transposed_right_mult(const ilutp_precond<Matrix>& P, const V1 &v1,
 			     V2 &v2) {
-    copy(v1, v2);
-    if (P.invert) gmm::lower_tri_solve(P.L, v2, true);
-    else gmm::lower_tri_solve(gmm::transposed(P.U), v2, false);
+    if (P.invert) {
+      copy(v1, v2);
+      gmm::lower_tri_solve(P.L, v2, true);
+    }
+    else {
+      gmm::copy(gmm::sub_vector(v1, P.indperminv), v2);
+      gmm::lower_tri_solve(gmm::transposed(P.U), v2, false);
+    }
   }
 
 }

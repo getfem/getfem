@@ -106,6 +106,7 @@ include_HEADERS =                       \
 	gmm_precond_diagonal.h          \
 	gmm_precond_ilu.h               \
 	gmm_precond_ilut.h              \
+	gmm_precond_ilutp.h             \
 	gmm_blas.h                      \
 	gmm_blas_interface.h            \
 	gmm_lapack_interface.h          \

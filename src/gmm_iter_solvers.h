@@ -85,6 +85,7 @@ namespace gmm {
 #include <gmm_precond_mr_approx_inverse.h>
 #include <gmm_precond_ilu.h>
 #include <gmm_precond_ilut.h>
+#include <gmm_precond_ilutp.h>
 
 
 
