@@ -106,7 +106,6 @@ namespace getfem {
     VECTOR reduced_residu_, Ud;
   public :
 
-
     const T_MATRIX &tangent_matrix(void) const 
     { return tangent_matrix_; }
     T_MATRIX &tangent_matrix(void) { return tangent_matrix_; }
@@ -137,42 +136,48 @@ namespace getfem {
 	gmm::mult(NS, U_reduced, Ud, U);
       else gmm::copy(U_reduced, U);
     }
-    void compute_reduced_system() {
-      if (gmm::mat_nrows(constraints_matrix()) == 0) return;
-      size_type ndof = gmm::mat_ncols(tangent_matrix());
-      gmm::resize(NS, ndof, ndof);
-      gmm::resize(Ud, ndof);
-	
-      size_type nbcols=getfem::Dirichlet_nullspace(constraints_matrix(),
-						   NS, constraints_rhs(), Ud);
-      gmm::resize(NS, ndof, nbcols);
-      gmm::resize(SM, nbcols, nbcols);
-      VECTOR RHaux(ndof);
-      gmm::mult(tangent_matrix(), Ud, residu(), RHaux);
-      gmm::resize(reduced_residu_, nbcols);
-      gmm::mult(gmm::transposed(NS), RHaux, reduced_residu_);
-      T_MATRIX SMaux(nbcols, ndof);
-      gmm::col_matrix< gmm::rsvector<value_type> >
-	NST(gmm::mat_ncols(NS), gmm::mat_nrows(NS));
-      gmm::copy(gmm::transposed(NS), NST);
-      gmm::mult(NST, tangent_matrix(), SMaux);
-      gmm::mult(SMaux, NS, SM);
-    }
+    void compute_reduced_system();
     VECTOR &residu(void) { return residu_; }
     ctx_ident_type ident(void) { return ident_; }
     void touch(void) { ident_ = context_dependencies::new_ident(); }
-    void adapt_sizes(mdbrick_abstract<model_state> &problem) {
-      size_type ndof = problem.nb_dof(), nc = problem.nb_constraints();
-      gmm::resize(tangent_matrix_, ndof, ndof);
-      gmm::resize(constraints_matrix_, nc, ndof);
-      gmm::resize(constraints_rhs_, nc);
-      gmm::resize(state_, ndof);
-      gmm::resize(residu_, ndof);
-      touch();
-    } 
-
+    void adapt_sizes(mdbrick_abstract<model_state> &problem);
     model_state(void) { ident_ = context_dependencies::new_ident(); }
   };
+
+  template<typename T_MATRIX, typename C_MATRIX, typename VECTOR>
+  void model_state<T_MATRIX, C_MATRIX, VECTOR>::compute_reduced_system() {
+    if (gmm::mat_nrows(constraints_matrix()) == 0) return;
+    size_type ndof = gmm::mat_ncols(tangent_matrix());
+    gmm::resize(NS, ndof, ndof);
+    gmm::resize(Ud, ndof);
+    
+    size_type nbcols=getfem::Dirichlet_nullspace(constraints_matrix(),
+						 NS, constraints_rhs(), Ud);
+    gmm::resize(NS, ndof, nbcols);
+    gmm::resize(SM, nbcols, nbcols);
+    VECTOR RHaux(ndof);
+    gmm::mult(tangent_matrix(), Ud, residu(), RHaux);
+    gmm::resize(reduced_residu_, nbcols);
+    gmm::mult(gmm::transposed(NS), RHaux, reduced_residu_);
+    T_MATRIX SMaux(nbcols, ndof);
+    gmm::col_matrix< gmm::rsvector<value_type> >
+      NST(gmm::mat_ncols(NS), gmm::mat_nrows(NS));
+    gmm::copy(gmm::transposed(NS), NST);
+    gmm::mult(NST, tangent_matrix(), SMaux);
+    gmm::mult(SMaux, NS, SM);
+  }
+
+  template<typename T_MATRIX, typename C_MATRIX, typename VECTOR>
+  void model_state<T_MATRIX, C_MATRIX, VECTOR>::
+  adapt_sizes(mdbrick_abstract<model_state> &problem) {
+    size_type ndof = problem.nb_dof(), nc = problem.nb_constraints();
+    gmm::resize(tangent_matrix_, ndof, ndof);
+    gmm::resize(constraints_matrix_, nc, ndof);
+    gmm::resize(constraints_rhs_, nc);
+    gmm::resize(state_, ndof);
+    gmm::resize(residu_, ndof);
+    touch();
+  } 
 
   template<typename MODEL_STATE>
   class mdbrick_abstract : public context_dependencies {
@@ -236,6 +241,147 @@ namespace getfem {
 		      modeling_standard_complex_plain_vector >
     standard_complex_model_state;
 
+  /* ******************************************************************** */
+  /*		general scalar elliptic brick.                            */
+  /* ******************************************************************** */
+
+  template<typename MODEL_STATE = standard_model_state>
+  class mdbrick_scalar_elliptic : public mdbrick_abstract<MODEL_STATE> {
+
+    typedef typename MODEL_STATE::vector_type VECTOR;
+    typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
+    typedef typename MODEL_STATE::value_type value_type;
+    mesh_fem &mf_u;
+    mesh_fem &mf_data;
+    VECTOR coeffs_;
+    bool homogeneous, laplacian;
+    bool matrix_stored;
+    T_MATRIX K;
+
+    void compute_K(void);
+
+  public :
+
+    virtual bool is_linear(void) { return true; }
+    virtual bool is_coercive(void) { return true; }
+    virtual void mixed_variables(dal::bit_vector &) {}
+    virtual size_type nb_dof(void) { return mf_u.nb_dof(); }
+    virtual size_type nb_constraints(void) { return 0; }
+    virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
+					size_type = 0, bool modified = false);
+    virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
+				size_type = 0);
+    virtual mesh_fem &main_mesh_fem(void) { return mf_u; }
+
+    
+    void set_coeff(value_type a) {
+      homogeneous = true; laplacian = true;
+      gmm::resize(coeffs_, 1); coeffs_[0] = a;
+      this->force_recompute();
+    }
+
+    void set_coeff(const VECTOR &coeffs, bool laplace) {
+      laplacian = laplace;
+      homogeneous = false;
+      int N = mf_u.linked_mesh().dim();
+      if (laplacian) {
+	if (gmm::vect_size(coeffs) == 1) set_coeff(coeffs[0]);
+	else gmm::resize(coeffs_,  mf_data.nb_dof());
+      }
+      else {
+	if (gmm::vect_size(coeffs) == dal::sqr(N)) {
+	  gmm::resize(coeffs_, dal::sqr(N));
+	  homogeneous = true;
+	}
+	else
+	  gmm::resize(coeffs_, mf_data.nb_dof() * dal::sqr(N));
+      }
+      gmm::copy(coeffs, coeffs_);
+      this->force_recompute();
+    }
+
+    template<typename VECT> void get_solution(MODEL_STATE &MS, VECT &V) {
+      gmm::sub_interval SUBI(this->first_index(), nb_dof());
+      gmm::copy(gmm::sub_vector(MS.state(), SUBI), V);
+    }
+
+    // constructor for the Laplace operator
+    mdbrick_scalar_elliptic(mesh_fem &mf_u_, mesh_fem &mf_data_,
+       value_type a, bool mat_stored = false)
+      : mf_u(mf_u_), mf_data(mf_data_), matrix_stored(mat_stored) {
+      set_coeff(a);
+      this->add_dependency(mf_u); this->add_dependency(mf_data);
+    }
+
+    // constructor for a non-homogeneous material
+    mdbrick_scalar_elliptic(mesh_fem &mf_u_, mesh_fem &mf_data_,
+       const VECTOR &coeff, bool laplace, bool mat_stored = false)
+      : mf_u(mf_u_), mf_data(mf_data_),	matrix_stored(mat_stored) {
+      set_coeff(coeff, laplace);
+      this->add_dependency(mf_u); this->add_dependency(mf_data);
+    }
+ 
+  };
+
+  template<typename MODEL_STATE>
+   void mdbrick_scalar_elliptic<MODEL_STATE>::compute_K(void) {
+    gmm::clear(K);
+    gmm::resize(K, nb_dof(), nb_dof());
+    size_type n = laplacian ? 1 : dal::sqr(mf_u.linked_mesh().dim());
+    VECTOR coeffs(n * mf_data.nb_dof());
+    if (homogeneous) {
+      for (size_type i = 0; i < mf_data.nb_dof(); ++i)
+	gmm::copy(coeffs_, gmm::sub_vector(coeffs, gmm::sub_interval(i*n, n)));
+    }
+    else { gmm::copy(coeffs_, coeffs); }
+    if (laplacian)
+      asm_stiffness_matrix_for_laplacian(K, mf_u, mf_data, coeffs);
+    else
+      asm_stiffness_matrix_for_scalar_elliptic(K, mf_u, mf_data, coeffs);
+    this->computed();
+  }
+
+  template<typename MODEL_STATE>
+  void mdbrick_scalar_elliptic<MODEL_STATE>::
+  compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
+			 size_type, bool modified) {
+    if (modified && !matrix_stored) 
+      DAL_THROW(failure_error, "The residu will not be consistant. "
+		"Use this brick with the stiffness matrix stored option");
+    react(MS, i0, modified);
+    gmm::sub_interval SUBI(i0, nb_dof());
+    if (this->to_be_computed()
+	|| (!matrix_stored && this->to_be_transferred()))
+      compute_K();
+    if (this->to_be_transferred()) { 
+      gmm::copy(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI));
+      this->transferred();
+    }
+    if (!matrix_stored) gmm::clear(K);
+  }
+  
+  template<typename MODEL_STATE>
+  void mdbrick_scalar_elliptic<MODEL_STATE>::
+  compute_residu(MODEL_STATE &MS, size_type i0, size_type) {
+    react(MS, i0, false);
+    gmm::sub_interval SUBI(i0, nb_dof());
+    if (this->to_be_computed()) { 
+      compute_K();
+      if (!matrix_stored) {
+	gmm::copy(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI)); 
+	gmm::clear(K);
+      }
+    }
+    if (matrix_stored) {
+      gmm::mult(K, gmm::sub_vector(MS.state(), SUBI),
+		gmm::sub_vector(MS.residu(), SUBI));
+    } else {
+      gmm::mult(gmm::sub_matrix(MS.tangent_matrix(), SUBI),
+		gmm::sub_vector(MS.state(), SUBI),
+		gmm::sub_vector(MS.residu(), SUBI));
+    }
+  }
+
 
   /* ******************************************************************** */
   /*		Linearized elasticity bricks.                             */
@@ -255,18 +401,7 @@ namespace getfem {
     bool matrix_stored;
     T_MATRIX K;
 
-    void compute_K(void) {
-      gmm::clear(K);
-      gmm::resize(K, nb_dof(), nb_dof());
-      VECTOR lambda(mf_data.nb_dof()), mu(mf_data.nb_dof());
-      if (homogeneous) {
-	std::fill(lambda.begin(), lambda.end(), value_type(lambda_[0]));
-	std::fill(mu.begin(), mu.end(), value_type(mu_[0]));
-      }
-      else { gmm::copy(lambda_, lambda); gmm::copy(mu_, mu); }
-      asm_stiffness_matrix_for_linear_elasticity(K, mf_u, mf_data, lambda, mu);
-      this->computed();
-    }
+    void compute_K(void);
 
   public :
 
@@ -276,41 +411,9 @@ namespace getfem {
     virtual size_type nb_dof(void) { return mf_u.nb_dof(); }
     virtual size_type nb_constraints(void) { return 0; }
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
-					size_type = 0, bool modified = false) {
-      if (modified && !matrix_stored) 
-	DAL_THROW(failure_error, "The residu will not be consistant. "
-		  "Use this brick with the stiffness matrix stored option");
-      react(MS, i0, modified);
-      gmm::sub_interval SUBI(i0, nb_dof());
-      if (this->to_be_computed()
-	  || (!matrix_stored && this->to_be_transferred()))
-	  compute_K();
-      if (this->to_be_transferred()) { 
-	gmm::copy(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI));
-	this->transferred();
-      }
-      if (!matrix_stored) gmm::clear(K);
-    }
+					size_type = 0, bool modified = false);
     virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
-				size_type = 0) {
-      react(MS, i0, false);
-      gmm::sub_interval SUBI(i0, nb_dof());
-      if (this->to_be_computed()) { 
-	compute_K();
-	if (!matrix_stored) {
-	  gmm::copy(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI)); 
-	  gmm::clear(K);
-	}
-      }
-      if (matrix_stored) {
-	gmm::mult(K, gmm::sub_vector(MS.state(), SUBI),
-		     gmm::sub_vector(MS.residu(), SUBI));
-      } else {
-	gmm::mult(gmm::sub_matrix(MS.tangent_matrix(), SUBI),
-		  gmm::sub_vector(MS.state(), SUBI),
-		  gmm::sub_vector(MS.residu(), SUBI));
-      }
-    }
+				size_type = 0);
     virtual mesh_fem &main_mesh_fem(void) { return mf_u; }
 
     void set_Lame_coeff(value_type lambdai, value_type mui) {
@@ -349,6 +452,62 @@ namespace getfem {
     }
  
   };
+
+
+  template<typename MODEL_STATE>
+   void mdbrick_Hooke_linearized_elasticity<MODEL_STATE>::compute_K(void) {
+    gmm::clear(K);
+    gmm::resize(K, nb_dof(), nb_dof());
+    VECTOR lambda(mf_data.nb_dof()), mu(mf_data.nb_dof());
+    if (homogeneous) {
+      std::fill(lambda.begin(), lambda.end(), value_type(lambda_[0]));
+      std::fill(mu.begin(), mu.end(), value_type(mu_[0]));
+    }
+    else { gmm::copy(lambda_, lambda); gmm::copy(mu_, mu); }
+    asm_stiffness_matrix_for_linear_elasticity(K, mf_u, mf_data, lambda, mu);
+    this->computed();
+  }
+
+  template<typename MODEL_STATE>
+  void mdbrick_Hooke_linearized_elasticity<MODEL_STATE>::
+  compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
+			 size_type, bool modified) {
+    if (modified && !matrix_stored) 
+      DAL_THROW(failure_error, "The residu will not be consistant. "
+		"Use this brick with the stiffness matrix stored option");
+    react(MS, i0, modified);
+    gmm::sub_interval SUBI(i0, nb_dof());
+    if (this->to_be_computed()
+	|| (!matrix_stored && this->to_be_transferred()))
+      compute_K();
+    if (this->to_be_transferred()) { 
+      gmm::copy(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI));
+      this->transferred();
+    }
+    if (!matrix_stored) gmm::clear(K);
+  }
+  
+  template<typename MODEL_STATE>
+  void mdbrick_Hooke_linearized_elasticity<MODEL_STATE>::
+  compute_residu(MODEL_STATE &MS, size_type i0, size_type) {
+    react(MS, i0, false);
+    gmm::sub_interval SUBI(i0, nb_dof());
+    if (this->to_be_computed()) { 
+      compute_K();
+      if (!matrix_stored) {
+	gmm::copy(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI)); 
+	gmm::clear(K);
+      }
+    }
+    if (matrix_stored) {
+      gmm::mult(K, gmm::sub_vector(MS.state(), SUBI),
+		gmm::sub_vector(MS.residu(), SUBI));
+    } else {
+      gmm::mult(gmm::sub_matrix(MS.tangent_matrix(), SUBI),
+		gmm::sub_vector(MS.state(), SUBI),
+		gmm::sub_vector(MS.residu(), SUBI));
+    }
+  }
 
   /* TODO : arbitrary elasticity tensor */
 
@@ -788,7 +947,7 @@ namespace getfem {
 	gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), dof_on_bound.card());
 	gmm::sub_interval SUBJ(i0, sub_problem.nb_dof());
 	gmm::mult(G, gmm::sub_vector(MS.state(), SUBJ),
-		  gmm::scaled(CRHS, value_type(-1)),
+		  gmm::scaled(CRHS, value_type(1)),
 		  gmm::sub_vector(MS.residu(), SUBI));
       }
       else {

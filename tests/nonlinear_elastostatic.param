@@ -9,7 +9,6 @@ LZ = 1.0;		% size in Z.
 P1 = 1.0;	        % First elastic coefficient.
 P2 = 1.0;   	        % Second elastic coefficient.
 P3 = 1.0;   	        % Third elastic coefficient.
-INCLINE = 0;            % Incline of the mesh.
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 %MESH_TYPE = 'GT_PK(3,1)';         % linear triangles

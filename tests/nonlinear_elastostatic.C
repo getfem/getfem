@@ -103,10 +103,7 @@ void elastostatic_problem::init(void) {
     static const char *t[] = {"LX","LY","LZ"};
     M(i,i) = (i<3) ? PARAM.real_value(t[i],t[i]) : 1.0;
   }
-  if (N>1) { M(0,1) = PARAM.real_value("INCLINE") * PARAM.real_value("LY"); }
-
-  /* scale the unit mesh to [LX,LY,..] and incline it */
-  mesh.transformation(M);
+  mesh.transformation(M);   /* scale the unit mesh to [LX,LY,..] */
 
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residu = PARAM.real_value("RESIDU"); if (residu == 0.) residu = 1e-10;
