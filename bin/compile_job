@@ -33,6 +33,6 @@ else
 }
 
 print `cd ..; cvs checkout getfem++`; print "\n\n";
-print `./configure --prefix=$rootlib`;print "\n\n";
-print `gmake`; print "\n\n";
-print `gmake install`; print "\n\n";
+exec "./configure --prefix=$rootlib"; print "\n\n";
+exec "gmake"; print "\n\n";
+exec "gmake install"; print "\n\n";
