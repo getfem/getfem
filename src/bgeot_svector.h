@@ -145,6 +145,15 @@ namespace bgeot
       return (_base_type::operator[](i)).e;
     }
 
+    inline T &ref(size_type c) {  
+      _elt_svector<T> ev(c);
+#ifdef __GETFEM_VERIFY
+      if (c >= nbl) out_of_range_error();
+#endif
+      size_type i = add_norepeat(ev);
+      return (_base_type::operator[](i)).e;
+    }
+
     inline T operator [](size_type c) const { return r(c); }
     
     bool stored(size_type c) {
@@ -285,6 +294,8 @@ namespace bgeot
 
   /*********  intermediary structure for r/w operation.	*******************/
   
+  /* revoir cette stratégie pour l'interfacage générique de abstrct_linalg
+
   template<class T> class ref_elt_svector { /* ref. on an matrix element.  */
 
     svector<T> *pm;
@@ -297,6 +308,10 @@ namespace bgeot
       { pm = p; l = ll; }
     inline ref_elt_svector operator =(T v)
       { (*pm).w(l,v); return *this; }
+    inline bool operator ==(T v) const
+      { return ((*pm).r(l,v) == v); }
+    inline bool operator !=(T v) const
+      { return ((*pm).r(l,v) != v); }
     inline ref_elt_svector operator +=(T v)
       { (*pm).w(l,(*pm).r(l) + v); return *this; }
     inline ref_elt_svector operator -=(T v)

@@ -35,12 +35,16 @@ int main(void)
     
     cout << "x = " << x << endl;
 
-    bgeot::vsmatrix<double> m(10, 10), n(10, 10);
-    m.fill(0.0); m(3, 2) = 1.0;
+    bgeot::smatrix<double> m(10, 10);
+    m.clear(); m(3, 2) = 1.0;
 
-    cout << "transposed(m)(2,3) = " <<  bgeot::transposed(m)(2,3) << endl;
-    cout << "transposed(m)(3,2) = " <<  bgeot::transposed(m)(3,2) << endl;
+    transposed(m)(6,8) = 2.0;
 
+    cout << "transposed(m)(2,3) = " <<  (bgeot::transposed(m))(2,3) << endl;
+    cout << "transposed(m)(3,2) = " <<  (bgeot::transposed(m))(3,2) << endl;
+    
+    bgeot::smatrix<double> n(10, 10);
+    
     copy(transposed(m), n);
     cout << "m = " << m << endl;
     cout << "n = " << n << endl;

@@ -77,6 +77,12 @@ namespace bgeot
       #endif
       return li[l].r(c);
     }
+    inline T &ref(size_type l, size_type c) {
+      #ifdef __GETFEM_VERIFY
+        if (l >= li.size()) out_of_range_error();
+      #endif
+      return li[l].ref(c);
+    }
     inline T operator ()(size_type l, size_type c) const { return r(l,c);}
 
     /* Manipulation of lines and columns functions.               	*/
@@ -281,11 +287,16 @@ namespace bgeot
     
     public :
       
-      operator T() const { return (*pm).r(l,c); }
+    operator T() const { return (*pm).r(l,c); }
+    operator T &() { return (*pm).ref(l,c); }
     ref_elt_smatrix(smatrix<T> *p, size_type ll, size_type cc)
       { pm = p; l = ll; c = cc; }
     inline ref_elt_smatrix operator =(T v)
       { (*pm).w(l,c,v); return *this; }
+    inline bool operator ==(T v) const
+      { return ((*pm).r(l,c,v) == v); }
+    inline bool operator !=(T v) const
+      { return ((*pm).r(l,c,v) != v); }
     inline ref_elt_smatrix operator +=(T v)
       { (*pm).w(l,c,(*pm).r(l,c) + v); return *this; }
     inline ref_elt_smatrix operator -=(T v)
