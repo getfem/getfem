@@ -50,7 +50,7 @@ namespace getfem
     pintegration_method pim, pimprec = (bgeot::papprox_integration)(NULL);
 
     bgeot::pgeometric_trans pgt, pgtprec = NULL;
-    pmat_elem_type pme; pmat_elem_computation pmec;
+    pmat_elem_type pme; pmat_elem_computation pmec = 0;
     
     for (cv << nn; cv != ST_NIL; cv << nn)
     {
@@ -93,7 +93,7 @@ namespace getfem
     pfem pf1, pf1prec = NULL;
     pintegration_method pim, pimprec = (bgeot::papprox_integration)(NULL);
     bgeot::pgeometric_trans pgt, pgtprec = NULL;
-    pmat_elem_type pme; pmat_elem_computation pmec;
+    pmat_elem_type pme; pmat_elem_computation pmec = 0;
 
     for (cv << nn; cv != ST_NIL; cv << nn)
     {

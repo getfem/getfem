@@ -69,7 +69,6 @@ namespace getfem
       pfem pf1 = mf.fem_of_element(cv);
       size_type nbd1 = mf.nb_dof_of_element(cv);
       size_type nbd2 = pfe->nb_dof();
-      size_type nbpt = pgt->nb_points();
       coeff.resize(nbd1);
 
       o << "DIM = " << int(pgt->dim()) << endl;
@@ -162,9 +161,9 @@ namespace getfem
 	//      << K << " DIM = " << DIM << endl;
 	while(nbpt < 1000) {
 	  if (ptab[nbpt].size() != N) ptab[nbpt].resize(N);
-	  for (int i = 0; i < N; ++i) ist >> (ptab[nbpt])[i];
+	  for (dim_type i = 0; i < N; ++i) ist >> (ptab[nbpt])[i];
 	  // cout << "Ptab[" << nbpt << "] = " << ptab[nbpt] << endl;
-	  for (int i = 0; i < P; ++i) ist >> vtab[nbvtab * P + i];
+	  for (short_type i = 0; i < P; ++i) ist >> vtab[nbvtab * P + i];
 	  nbpt++; nbvtab++;
 	  while(ist.get(c))
 	    { if (!(isspace(c)) || c == 10) { ist.putback(c); break; } }
@@ -176,20 +175,20 @@ namespace getfem
 	if (nbpt >= 1000) { error = true; break; }
 	if (nbpt == 0) break;
 
-	Np = 1; for (int i = 0; i < DIM; ++i) Np *= K + 1;
+	Np = 1; for (dim_type i = 0; i < DIM; ++i) Np *= K + 1;
 	
 	if (nbpt == bgeot::alpha(DIM, K)) {
 	  std::vector<getfem::base_node> pnode(DIM+1);
-	  for (int i = 0; i <= DIM; ++i) 
+	  for (dim_type i = 0; i <= DIM; ++i) 
 	    pnode[i] = ptab[bgeot::alpha(i, K) - 1];
-	  int i = mesh.add_simplex_by_points(DIM, pnode.begin());
+	  size_type i = mesh.add_simplex_by_points(DIM, pnode.begin());
 	  mef.set_finite_element(i, getfem::PK_fem(DIM, K),
 				 bgeot::simplex_poly_integration(DIM));
 	}
 	else if (nbpt == Np) {
 	  std::vector<getfem::base_node> pnode(1 << DIM);
 	  size_type j = 0;
-	  for (int i = 0; i <= (1 << DIM); ++i) {
+	  for (size_type i = 0; i <= (size_type(1) << DIM); ++i) {
 	    pnode[i] = ptab[j];
 	    size_type k = i + 1, l = K-1;
 	    while (!(k & 1)) { l *= K+1; k >>= 1; }
@@ -201,9 +200,9 @@ namespace getfem
 	}
 	else if (nbpt == bgeot::alpha(DIM - 1, K) * bgeot::alpha(1, K)) {
 	  std::vector<getfem::base_node> pnode(2*DIM);
-	  for (int i = 0; i < DIM; ++i)
+	  for (dim_type i = 0; i < DIM; ++i)
 	    pnode[i] = ptab[bgeot::alpha(i, K) - 1];
-	  for (int i = 0; i < DIM; ++i)
+	  for (dim_type i = 0; i < DIM; ++i)
 	    pnode[i+DIM] = ptab[bgeot::alpha(i, K)-1 + bgeot::alpha(DIM-1, K)];
 	  int i = mesh.add_prism_by_points(DIM, pnode.begin());
 	  mef.set_finite_element(i, getfem::PK_prism_fem(DIM, K),
@@ -227,15 +226,16 @@ namespace getfem
     size_type l = 0, i;
     for (i << nn; i != size_type(-1); i << nn) {
       size_type nbd = mef.nb_dof_of_element(i);
-      for (int j = 0; j < nbd; ++j, ++l) {
+      for (size_type j = 0; j < nbd; ++j, ++l) {
 	size_type dof = mef.ind_dof_of_element(i)[j];
-	for (int k = 0; k < P; ++k) U[dof*P +k] += vtab[l*P+k];
+	for (short_type k = 0; k < P; ++k) U[dof*P +k] += vtab[l*P+k];
 	(cp[dof])++;
       }
     }
     for (i = 0; i < mef.nb_dof(); ++i) {
       if (cp[i] == 0) DAL_THROW(internal_error, "Internal error");
-      for (int k = 0; k < P; ++k) U[i*P +k] /= getfem::scalar_type(cp[i]);
+      for (short_type k = 0; k < P; ++k)
+	U[i*P +k] /= getfem::scalar_type(cp[i]);
     }
     
   }
@@ -246,15 +246,16 @@ namespace getfem
   /*                                                                       */
   /* ********************************************************************* */
 
-  struct edge_list_elt
-  {
+  struct edge_list_elt  {
     size_type i, j;
+    size_type cv;
     inline bool operator < (const edge_list_elt &e) const
     {
       if (i < e.i) return true; if (i > e.i) return false; 
-      if (j < e.j) return true; return false;
+      if (j < e.j) return true; else if (j > e.j) return false;
+      if (cv < e.cv) return true; return false;
     }
-    edge_list_elt(size_type ii, size_type jj)
+    edge_list_elt(size_type ii, size_type jj, size_type ic = 0) : cv(ic)
     { i = std::min(ii, jj); j = std::max(ii, jj); }
     edge_list_elt(void) {}
   };
@@ -263,8 +264,9 @@ namespace getfem
   
 
   void mesh_edge_list_convex(const getfem_mesh &m, size_type i, 
-			     edge_list &el);
-  void mesh_edges_list(const getfem_mesh &m, edge_list &el);
+			     edge_list &el, bool merge_convex = true);
+  void mesh_edges_list(const getfem_mesh &m, edge_list &el, 
+		       bool merge_convex = true);
 
 
   /* ********************************************************************* */
@@ -279,7 +281,6 @@ namespace getfem
     void interpolation_solution(mesh_fem &mf, mesh_fem &mf_target,
 				const VECT &U, VECT &V, dim_type P)
   {
-    dim_type N = mf.linked_mesh().dim();
     size_type cv, nb;
     base_node pt3(P), val(1);
     bgeot::geotrans_inv gti;

@@ -55,10 +55,10 @@ namespace getfem
     size_type cv, nbd1, nbd2, N = mf.linked_mesh().dim();
     dal::bit_vector nn = mf.convex_index();
     base_tensor t;
-    pfem pf1, pf2, pf1prec = NULL, pf2prec = NULL;
+    pfem pf1, pf2, pf1prec = 0, pf2prec = 0;
     pintegration_method pim, pimprec = (bgeot::papprox_integration)(NULL);
-    bgeot::pgeometric_trans pgt, pgtprec = NULL;
-    pmat_elem_computation pmec;
+    bgeot::pgeometric_trans pgt, pgtprec = 0;
+    pmat_elem_computation pmec = 0;
 
     if (&(mf.linked_mesh()) != &(mfdata.linked_mesh()))
       DAL_THROW(std::invalid_argument,
@@ -116,7 +116,7 @@ namespace getfem
 
     base_tensor t;
 
-    pmat_elem_computation pmec;
+    pmat_elem_computation pmec = 0;
 
     pfem pf_u, pf_p, pf_d;
     pfem pf_u_prec = NULL, pf_p_prec = NULL, pf_d_prec = NULL;
@@ -198,7 +198,7 @@ namespace getfem
     pfem pf1, pf2, pf1prec = NULL, pf2prec = NULL;
     pintegration_method pim, pimprec = (bgeot::papprox_integration)(NULL);
     bgeot::pgeometric_trans pgt, pgtprec = NULL;
-    pmat_elem_type pme; pmat_elem_computation pmec;
+    pmat_elem_type pme; pmat_elem_computation pmec = 0;
 
     if (&(mf.linked_mesh()) != &(mfdata.linked_mesh()))
       DAL_THROW(std::invalid_argument,
@@ -289,7 +289,7 @@ namespace getfem
     pfem pf_u, pf_d, pf_u_prec = NULL, pf_d_prec = NULL;
     pintegration_method pim, pimprec = (bgeot::papprox_integration)(NULL);
     bgeot::pgeometric_trans pgt, pgtprec = NULL;
-    pmat_elem_type pme; pmat_elem_computation pmec;
+    pmat_elem_type pme; pmat_elem_computation pmec = 0;
 
     if (&(mf_u.linked_mesh()) != &(mf_d.linked_mesh()))
       DAL_THROW(std::invalid_argument,
@@ -362,7 +362,7 @@ namespace getfem
     pfem pf1, pf1prec = 0, pf2, pf2prec = 0;
     pintegration_method pim, pimprec = (bgeot::papprox_integration)(NULL);
     bgeot::pgeometric_trans pgt, pgtprec = NULL;
-    pmat_elem_type pme; pmat_elem_computation pmec;
+    pmat_elem_type pme; pmat_elem_computation pmec = 0;
     // M(0,0) = 1.0;  ??
 
     if (&(mf1.linked_mesh()) != &(mf2.linked_mesh()))
@@ -421,7 +421,7 @@ namespace getfem
     pfem pf1, pf2, pf1prec = NULL, pf2prec = NULL;
     pintegration_method pim, pimprec = (bgeot::papprox_integration)(NULL);
     bgeot::pgeometric_trans pgt, pgtprec = NULL;
-    pmat_elem_type pme; pmat_elem_computation pmec;
+    pmat_elem_type pme; pmat_elem_computation pmec = 0;
 
     if (&(mf.linked_mesh()) != &(mfdata.linked_mesh()))
       DAL_THROW(std::invalid_argument,
@@ -543,7 +543,7 @@ namespace getfem
     pfem pf1, pf2, pf1prec = NULL, pf2prec = NULL;
     pintegration_method pim, pimprec = (bgeot::papprox_integration)(NULL);
     bgeot::pgeometric_trans pgt, pgtprec = NULL;
-    pmat_elem_type pme; pmat_elem_computation pmec;
+    pmat_elem_type pme; pmat_elem_computation pmec = 0;
 
     if (&(mf.linked_mesh()) != &(mfdata.linked_mesh()))
       DAL_THROW(std::invalid_argument,
