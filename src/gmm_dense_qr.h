@@ -156,7 +156,7 @@ namespace gmm {
 	TA det = A(i,i)*A(i+1, i+1) - A(i,i+1)*A(i+1, i);
 	TA delta = tr*tr - TA(4) * det;
 	if (delta < TA(0)) {
-	  DAL_WARNING(3, "A complex eigenvalue has been detected");
+	  DAL_WARNING(1, "A complex eigenvalue has been detected");
 	  V[i] = V[i+1] = tr / TA(2);
 	}
 	else {
@@ -206,7 +206,7 @@ namespace gmm {
       if ((i == n-1) ||
 	  gmm::abs(A(i+1,i)) < (gmm::abs(A(i,i))+gmm::abs(A(i+1,i+1)))*tol) {
 	if (gmm::abs(std::imag(A(i,i))) > tol_cplx*gmm::abs(std::real(A(i,i))))
-	  DAL_WARNING(3, "A complex eigenvalue has been detected : "
+	  DAL_WARNING(1, "A complex eigenvalue has been detected : "
 		      << T(A(i,i)) << " : "  << gmm::abs(std::imag(A(i,i)))
 		      / gmm::abs(std::real(A(i,i))) << " : " << tol_cplx);
 	V[i] = std::real(A(i,i));
@@ -218,9 +218,9 @@ namespace gmm {
 	T a1 = (tr + gmm::sqrt(delta)) / TA(2);
 	T a2 = (tr - gmm::sqrt(delta)) / TA(2);
 	if (gmm::abs(std::imag(a1)) > tol_cplx * gmm::abs(std::real(a1)))
-	  DAL_WARNING(3, "A complex eigenvalue has been detected : " << a1);
+	  DAL_WARNING(1, "A complex eigenvalue has been detected : " << a1);
 	if (gmm::abs(std::imag(a2)) > tol_cplx * gmm::abs(std::real(a2)))
-	  DAL_WARNING(3, "A complex eigenvalue has been detected : " << a2);
+	  DAL_WARNING(1, "A complex eigenvalue has been detected : " << a2);
 
 	V[i] = std::real(a1); V[i+1] = std::real(a2);
 	++i;
@@ -528,7 +528,7 @@ namespace gmm {
     T d = (M(n-2, n-2) - M(n-1, n-1)) / T(2);
     if (gmm::abs(gmm::imag(d))
 	> (gmm::abs(M(n-2, n-2)) + gmm::abs(M(n-1, n-1))) * tol * R(1000))
-      DAL_WARNING(2, "Please, be sure that your matrix is hermitian\n"
+      DAL_WARNING(1, "Please, be sure that your matrix is hermitian\n"
 		  "value found on the diagonal :" << d);
     R rd = gmm::real(d);
     R e = gmm::abs_sqr(M(n-1, n-2));

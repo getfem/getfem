@@ -45,7 +45,7 @@ namespace gmm {
 	magnitude_type x = gmm::abs(M(i, i));
 	if (x == magnitude_type(0)) {
 	  x = magnitude_type(1);
-	  DAL_WARNING(3, "The matrix has a zero on its diagonal");
+	  DAL_WARNING(2, "The matrix has a zero on its diagonal");
 	}
 	diag[i] = magnitude_type(1) / x;
       }
@@ -118,7 +118,6 @@ namespace gmm {
   void transposed_right_mult(const diagonal_precond<Matrix>& P,
 			    const V1 &v1, V2 &v2)
     { right_mult(P, v1, v2); }
-
 
 }
 

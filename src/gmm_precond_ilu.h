@@ -97,8 +97,14 @@ namespace gmm {
   template <typename Matrix> template <typename M>
   void ilu_precond<Matrix>::do_ilu(const M& A, row_major) {
     typedef typename linalg_traits<Matrix>::storage_type store_type;
+    typedef value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
+
     size_type L_loc = 0, U_loc = 0, n = mat_nrows(A), i, j, k;
     L_ptr[0] = 0; U_ptr[0] = 0;
+    R max_pivot = gmm::abs(A(0,0));
+    R prec = default_tol(R());
+
 
     for (int count = 0; count < 2; ++count) {
       if (count) { 
@@ -111,6 +117,7 @@ namespace gmm {
 	row_type row = mat_const_row(A, i);
 	typename linalg_traits<row_type>::const_iterator
 	  it = vect_const_begin(row), ite = vect_const_end(row);
+	bool first_U = true;
 	for (k = 0; it != ite; ++it, ++k) {
 	  j = index_of_it(it, k, store_type());
 	  if (j < i) {
@@ -118,6 +125,13 @@ namespace gmm {
 	    L_loc++;
 	  }
 	  else {
+	    if (first_U) {
+	      if (j != i) {
+		if (count) { U_val[U_loc] = T(0); U_ind[U_loc] = i; }
+		U_loc++;
+	      }
+	      first_U = false;
+	    }
 	    if (count) { U_val[U_loc] = *it; U_ind[U_loc] = j; }
 	    U_loc++;
 	  }
@@ -126,18 +140,25 @@ namespace gmm {
       }
     }
     
+    if (A(0,0) == T(0)) {
+      U_val[U_ptr[0]] = T(1);
+      DAL_WARNING(2, "pivot 0 is too small");
+    }
+
     size_type qn, pn, rn;
     for (i = 1; i < n; i++) {
 
+      pn = U_ptr[i];
+      if (gmm::abs(U_val[pn]) <= max_pivot * prec) {
+	U_val[pn] = T(1);
+	DAL_WARNING(2, "pivot " << i << " is too small");
+      }
+      max_pivot = std::max(max_pivot, gmm::abs(U_val[pn]));
+
       for (j = L_ptr[i]; j < L_ptr[i+1]; j++) {
 	pn = U_ptr[L_ind[j]];
-
-	if (U_val[pn] == value_type(0)) {
-	  U_val[pn] = value_type(1);
-	  DAL_WARNING(2, "pivot " << L_ind[j] << " is zero");
-	}
 	
-	value_type multiplier = (L_val[j] /= U_val[pn]);
+	T multiplier = (L_val[j] /= U_val[pn]);
 	
 	qn = j + 1;
 	rn = U_ptr[i];

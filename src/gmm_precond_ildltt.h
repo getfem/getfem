@@ -70,9 +70,15 @@ namespace gmm {
 
   template<typename Matrix> template<typename M> 
   void ildltt_precond<Matrix>::do_ildltt(const M& A,row_major,int _try) {
+    typedef value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
+
     size_type n = mat_nrows(A);
     svector w(n);
-    value_type tmp;
+    T tmp;   
+    R max_pivot = gmm::abs(A(0,0));
+    R prec = default_tol(R());
+
 
     gmm::clear(U);
     for (size_type i = 0; i < n; ++i) {
@@ -92,18 +98,20 @@ namespace gmm {
 	if (gmm::abs(tmp) < eps * norm_row) { w.sup(k); --krow; } 
 	else { wk->e += tmp; gmm::add(scaled(mat_row(U, k), -tmp), w); }
       }
+      tmp = w[i];
 
-      if ((tmp = w[i]) == value_type(0)) {
-	DAL_WARNING(2, "pivot " << i << " is zero");
-	tmp = value_type(1);
+      if (gmm::abs(tmp) <= max_pivot * prec) {
+	DAL_WARNING(2, "pivot " << i << " is too small");
+	tmp = T(1);
 	if (_try <= 10 && i > 0)
 	  { ++K; eps /= 2.0; do_ildltt(A, row_major(), ++_try); return; }
       }
 
-      indiag[i] = value_type(1) / tmp;
+      max_pivot = std::max(max_pivot, gmm::abs(tmp));
+      indiag[i] = T(1) / tmp;
       gmm::clean(w, eps * norm_row);
       gmm::scale(w, indiag[i]);
-      std::sort(w.begin(), w.end(), _elt_rsvector_value_less<value_type>());
+      std::sort(w.begin(), w.end(), _elt_rsvector_value_less<T>());
       typename svector::const_iterator wit = w.begin(), wite = w.end();
       for (size_type nnu = 0; wit != wite; ++wit)
 	if (wit->c > i) { if (nnu < nU+K) U(i, wit->c) = wit->e; ++nnu; }

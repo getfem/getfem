@@ -102,10 +102,15 @@ namespace gmm {
   template <typename Matrix> template<typename M>
   void ildlt_precond<Matrix>::do_ildlt(const M& A, row_major) {
     typedef typename linalg_traits<Matrix>::storage_type store_type;
+    typedef value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
+
     size_type Tri_loc = 0, n = mat_nrows(A), d, g, h, i, j, k;
-    value_type z, zz;
+    T z, zz;
     Tri_ptr[0] = 0;
-    
+    R max_pivot = gmm::abs(A(0,0));
+    R prec = default_tol(R());
+
     for (int count = 0; count < 2; ++count) {
       if (count) { Tri_val.resize(Tri_loc); Tri_ind.resize(Tri_loc); }
       for (Tri_loc = 0, i = 0; i < n; ++i) {
@@ -113,10 +118,19 @@ namespace gmm {
 	row_type row = mat_const_row(A, i);
         typename linalg_traits<row_type>::const_iterator
 	  it = vect_const_begin(row), ite = vect_const_end(row);
-	
+	bool first_U = true;
 	for (k = 0; it != ite; ++it, ++k) {
 	  j = index_of_it(it, k, store_type());
 	  if (j >= i) {
+	    if (j != i) {
+	      if (first_U) {
+		if (count) {
+		  Tri_val[Tri_loc] = T(0); Tri_ind[Tri_loc] = i;
+		}
+		Tri_loc++;
+	      }
+	      first_U = false;
+	    }
 	    if (count) { Tri_val[Tri_loc] = *it; Tri_ind[Tri_loc]=j; }
 	    ++Tri_loc;
 	  }
@@ -124,14 +138,23 @@ namespace gmm {
 	Tri_ptr[i+1] = Tri_loc;
       }
     }
+
+    if (A(0,0) == T(0)) {
+      Tri_val[Tri_ptr[0]] = T(1);
+      DAL_WARNING(2, "pivot 0 is too small");
+    }
     
     for (k = 0; k < n; k++) {
       d = Tri_ptr[k];
       z = Tri_val[d];
 
-      if (gmm::real(z) == magnitude_type(0))
-	DAL_THROW(failure_error, "Pivot " << k << " is zero");
+      if (gmm::abs(z) <= max_pivot * prec) {
+	Tri_val[d] = z = T(1);
+	DAL_WARNING(2, "pivot " << k << " is too small");
+      }
+      max_pivot = std::max(max_pivot, gmm::abs(z));
 
+      
       for (i = d + 1; i < Tri_ptr[k+1]; ++i) Tri_val[i] /= z;
       for (i = d + 1; i < Tri_ptr[k+1]; ++i) {
 	zz = gmm::conj(Tri_val[i] * z);

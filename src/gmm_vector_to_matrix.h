@@ -306,7 +306,7 @@ namespace gmm {
 			  const V *>::return_type
   row_vector(const V& v) {
     return typename select_return< gen_row_vector<const V *>,
-      gen_row_vector<V *>, const V *>::return_type(v);
+      gen_row_vector<V *>, const V *>::return_type(linalg_cast(v));
   }
 
   template <class V> inline
@@ -314,7 +314,7 @@ namespace gmm {
 			  V *>::return_type
   row_vector(V& v) {
     return typename select_return< gen_row_vector<const V *>,
-      gen_row_vector<V *>, V *>::return_type(v);
+      gen_row_vector<V *>, V *>::return_type(linalg_cast(v));
   }
  
   template <class V> inline gen_row_vector<const V *>
@@ -327,7 +327,7 @@ namespace gmm {
 			  const V *>::return_type
   col_vector(const V& v) {
     return typename select_return< gen_col_vector<const V *>,
-      gen_col_vector<V *>, const V *>::return_type(v);
+      gen_col_vector<V *>, const V *>::return_type(linalg_cast(v));
   }
 
   template <class V> inline
@@ -335,7 +335,7 @@ namespace gmm {
 			  V *>::return_type
   col_vector(V& v) {
     return typename select_return< gen_col_vector<const V *>,
-      gen_col_vector<V *>, V *>::return_type(v);
+      gen_col_vector<V *>, V *>::return_type(linalg_cast(v));
   }
  
   template <class V> inline gen_col_vector<const V *>

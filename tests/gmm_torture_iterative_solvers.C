@@ -23,9 +23,11 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     if (v1[i] != T(0) && gmm::abs(v1[i]) < R(1) / R(101))
       DAL_THROW(gmm::failure_error, "Error in clean");
 
-  static int nexpe = 0;
-  if (print_debug) 
-    { cout << "Begin experiment " << ++nexpe << "\n\nwith " << m1 << "\n\n"; }
+  if (print_debug) {
+    static int nexpe = 0;
+    cout << "Begin experiment " << ++nexpe << "\n\nwith " << m1 << "\n\n"; 
+    dal::set_warning_level(3);
+  }
 
   size_type m = gmm::mat_nrows(m1);
   std::vector<T> v3(m);
