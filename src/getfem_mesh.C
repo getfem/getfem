@@ -269,7 +269,7 @@ namespace getfem
 		  << ist.tellg() << "(expecting 'CONVEX' or 'END', found '" 
 		  << tmp << "')"); 
       } else if (ist.eof()) {
-	DAL_THROW(failure_error, "Unexpected end of stream");	
+	DAL_THROW(failure_error, "Unexpected end of stream (missing BEGIN MESH/END MESH ?)");
       }
     }
 
