@@ -258,10 +258,11 @@ AC_CONFIG_FILES(\
 	tests/Makefile \
 	contrib/Makefile \
 	bin/Makefile \
-getfem-config getfem-config-notinstalled)
+getfem-config getfem-config-notinstalled gmm-config)
 AC_OUTPUT
 chmod +x getfem-config-notinstalled
 chmod +x getfem-config
+chmod +x gmm-config
 if test "x$useQDlib" = "xyes" ; then  
   echo "Using the QD library:"
   echo "   high precision (${QD_PREC}-double precision) polynomials and integration methods are enabled";
