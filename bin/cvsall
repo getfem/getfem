@@ -17,7 +17,7 @@ foreach $dire ("getfem++", "getfem_matlab", "getfem_apps", "getfem_html") {
   }
   else {
     print "Directory $dire not found\n";
-  } 
+  }
 }
 
 
