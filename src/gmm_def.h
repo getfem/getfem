@@ -331,7 +331,7 @@ namespace gmm {
     void operator()(const void *,const iterator &_begin,const iterator &_end);
   };
   
-  template <class V> void plain_clear::operator()(const void *,
+  template <class V> void plain_clear<V>::operator()(const void *,
 			  const iterator &_begin, const iterator &_end)
   { std::fill(_begin, _end, value_type(0)); }
 
