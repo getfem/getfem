@@ -139,15 +139,15 @@ namespace bgeot
 	else
 	{
 	  size_type sum = 0, l;
-	  for (size_type r = 0; r < R; ++r)
-	  {
+	  for (size_type r = 0; r < R; ++r) {
 	    points()[r] = c;
-	    l = 0; c[l] += 1.0 / scalar_type(ls.K); sum++;
-	    while (sum > ls.K)
-	    {
-	      sum -= int(floor(0.5+(c[l] * ls.K)));
-	      c[l] = 0.0; l++; if (l == ls.N) break;
-	      c[l] += 1.0 / scalar_type(ls.K); sum++;
+	    if (ls.K != 0 && ls.N > 0) {
+	      l = 0; c[l] += 1.0 / scalar_type(ls.K); sum++;
+	      while (sum > ls.K) {
+		sum -= int(floor(0.5+(c[l] * ls.K)));
+		c[l] = 0.0; l++; if (l == ls.N) break;
+		c[l] += 1.0 / scalar_type(ls.K); sum++;
+	      }
 	    }
 	  }
 	}

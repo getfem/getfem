@@ -43,6 +43,8 @@ namespace bgeot
   typedef dal::uint16_type short_type;
   typedef size_t size_type;
   typedef double scalar_type;
+  typedef double long_scalar_type;
+  typedef double opt_long_scalar_type;
 
   using dal::dimension_error;
   using dal::file_not_found_error;

@@ -45,6 +45,8 @@ namespace getfem
   using bgeot::short_type;
   using bgeot::short_type;
   using bgeot::scalar_type;
+  using bgeot::long_scalar_type;
+  using bgeot::opt_long_scalar_type;
   
   using bgeot::base_vector;
   using bgeot::base_matrix;

@@ -417,73 +417,65 @@ namespace getfem
 
   struct _Newton_Cotes_approx_integration : public approx_integration
   {
-    void calc_base_func(base_poly &p, short_type K, base_node &c) const;
+    // void calc_base_func(base_poly &p, short_type K, base_node &c) const;
     _Newton_Cotes_approx_integration(dim_type nc, short_type k);
   };
 
-  void _Newton_Cotes_approx_integration::calc_base_func
-  (base_poly &p, short_type K, base_node &c) const {
-    dim_type N = dim();
-    base_poly l0(N, 0), l1(N, 0);
-    bgeot::power_index w(N+1);
-    l0.one(); l1.one(); p = l0;
-    for (int nn = 0; nn < N; ++nn) l0 -= base_poly(N, 1, nn);
-    
-    w[0] = K;
-    for (int nn = 1; nn <= N; ++nn)
-      { w[nn]=int(floor(0.5+(c[nn-1]*double(K)))); w[0]-=w[nn]; }
-    
-    for (int nn = 0; nn <= N; ++nn)
-      for (int j = 0; j < w[nn]; ++j)
-	if (nn == 0)
-	  p *= (l0 * (scalar_type(K) / scalar_type(j+1))) 
-	    - (l1 * (scalar_type(j) / scalar_type(j+1)));
-	else
-	  p *= (base_poly(N, 1, nn-1) * (scalar_type(K) / scalar_type(j+1))) 
-	    - (l1 * (scalar_type(j) / scalar_type(j+1)));
-  }
-  
   _Newton_Cotes_approx_integration::_Newton_Cotes_approx_integration
   (dim_type nc, short_type k)
-    // à simplifier en faisant la fonction qui place une methode sur une face
     : approx_integration(bgeot::simplex_of_reference(nc)) {
     size_type R = bgeot::alpha(nc,k);
-    base_poly P;
-    std::stringstream name;
-    name << "IM_EXACT_SIMPLEX(" << int(nc) << ")";
-    ppoly_integration ppi 
-      = int_method_descriptor(name.str())->method.ppi;
-    
-    size_type sum = 0, l;
-    base_node c(nc), c2(nc); 
-    c *= scalar_type(0.0);
-    if (k == 0) c.fill(1.0 / scalar_type(nc+1));
-    
-    for (size_type r = 0; r < R; ++r) {
-      calc_base_func(P, k, c);
-      add_point(c, ppi->int_poly(P));
+
+    base_node c(nc); 
+    if (nc == 0) {
+      add_point(c, long_scalar_type(1.0));
+    }
+    else {
       
-      for (short_type f = 1; f <= nc; ++f)
-	if (c[f-1] == 0.0)
-	  add_point(c, ppi->int_poly_on_face(P, f), f);
-      if (k == 0) {
-	for (short_type f = 0; f <= nc; ++f) {
-	  c2.fill(1.0 / scalar_type(nc));
-	  if (f > 0) c2[f-1] = 0.0;
-	  add_point(c2, ppi->int_poly_on_face(P, f), f);
+      std::stringstream name;
+      name << "IM_EXACT_SIMPLEX(" << int(nc) << ")";
+      ppoly_integration ppi = int_method_descriptor(name.str())->method.ppi;
+      
+      size_type sum = 0, l;
+      c *= scalar_type(0.0);
+      if (k == 0) c.fill(1.0 / scalar_type(nc+1));
+      
+      bgeot::vsmatrix<long_scalar_type> M(R, R);
+      bgeot::vsvector<long_scalar_type> F(R), U(R);
+      std::vector<base_poly> base(R);
+      std::vector<base_node> nodes(R);
+      std::fill(base.begin(), base.end(), base_poly(nc, 0));
+      
+      bgeot::power_index pi(nc);
+      
+      for (size_type r = 0; r < R; ++r, ++pi) {
+	base[r].add_monomial(1.0, pi); nodes[r] = c;
+	if (k != 0 && nc > 0) {
+	  l = 0; c[l] += 1.0 / scalar_type(k); sum++;
+	  while (sum > k) {
+	    sum -= int(floor(0.5+(c[l] * k)));
+	    c[l] = 0.0; l++; if (l == nc) break;
+	    c[l] += 1.0 / scalar_type(k); sum++;
+	  }
 	}
       }
-      else if (sum == k)
-	add_point(c, ppi->int_poly_on_face(P, 0), 0);
       
-      if (k != 0) {
-	l = 0; c[l] += 1.0 / scalar_type(k); sum++;
-	while (sum > k) {
-	  sum -= int(floor(0.5+(c[l] * k)));
-	  c[l] = 0.0; l++; if (l == nc) break;
-	  c[l] += 1.0 / scalar_type(k); sum++;
-	}
+      for (size_type r = 0; r < R; ++r) {
+	F[r] = ppi->int_poly(base[r]);
+	for (size_type q = 0; q < R; ++q)
+	  M(r, q) = base[r].eval(nodes[q].begin());
       }
+      
+      bgeot::mat_gauss_solve(M, F, U);
+      
+      for (size_type r = 0; r < R; ++r)
+	add_point(nodes[r], U[r]);
+      
+      std::stringstream name2;
+      name2 << "IM_NC(" << int(nc-1) << "," << int(k) << ")";
+      cout << "name in face : " << name2.str() << endl;
+      for (short_type f = 0; f < structure()->nb_faces(); ++f)
+	add_method_on_face(int_method_descriptor(name2.str()), f);
     }
     valid_method();
   }
@@ -496,7 +488,7 @@ namespace getfem
       DAL_THROW(failure_error, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     int k = int(::floor(params[1].num() + 0.01));
-    if (n <= 0 || n >= 100 || k < 0 || k > 150 ||
+    if (n < 0 || n >= 100 || k < 0 || k > 150 ||
 	double(n) != params[0].num() || double(k) != params[1].num())
       DAL_THROW(failure_error, "Bad parameters");
     return new integration_method(new _Newton_Cotes_approx_integration(n, k));

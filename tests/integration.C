@@ -36,9 +36,18 @@ void print_method(getfem::pintegration_method ppi) {
   cout << endl << endl;
 }
 
+class exception_cb : public dal::exception_callback  {
+  public:
+  virtual void callback(const std::string& msg)
+  { cerr << msg << endl; *(int *)(0) = 0; }
+};
+
 
 int main(void)
 {
+  exception_cb cb;
+  dal::exception_callback::set_exception_callback(&cb);
+
   try {
     char meth[500];
     cout.precision(16);
