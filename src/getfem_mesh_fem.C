@@ -277,7 +277,7 @@ namespace getfem
       for (size_type i = 0; i < nbd; i++) {
 	fd.P = point_of_dof(cv, i); // optimisable ...
 	fd.pnd = pf->dof_types()[i];
-	size_type j;
+	size_type j, j_old;
 	if (fd.pnd == andof) {
 	  // cout << "detecting a specialdof\n";
 	  j = pf->index_of_already_numerate_dof(cv, i);
@@ -290,12 +290,34 @@ namespace getfem
 	    dof_sort.add_to_index(j, fd);
 	}
 	else {
-	  if (dof_linkable(fd.pnd))
+	  if (pf->target_dim() == 1 && Qdim != 1) {
+
+	    pdof_description paux = fd.pnd;
+	    
+	    for (size_type k = 0; k < Qdim; ++k) {
+	      fd.pnd = to_coord_dof(paux, k);
+	      
+	      if (dof_linkable(fd.pnd))
+		j = dof_sort.add_norepeat(fd);
+	      else
+		j = dof_sort.add(fd);
+	      if (k == 0)
+		tab[i] = j;
+	      else if (j != j_old + 1)
+		dof_sort.swap(j, j_old+1);
+	      j_old = j;
+	    }
+	    
+	  }
+	  else {
+	    if (dof_linkable(fd.pnd))
 	    j = dof_sort.add_norepeat(fd);
 	  else
 	    j = dof_sort.add(fd);
+	  }
+	  tab[i] = j;
 	}
-	tab[i] = j;
+
       }
       
       dof_structure.add_convex_noverif(pf->structure(), tab.begin(), cv);
@@ -386,7 +408,7 @@ namespace getfem
     valid_boundaries.clear();
   }
 
-  mesh_fem::mesh_fem(getfem_mesh &me) {
+  mesh_fem::mesh_fem(getfem_mesh &me, dim_type Q) : Qdim(Q) {
     _linked_mesh = &me;
  
     add_sender(me.lmsg_sender(), *this,

@@ -105,6 +105,7 @@ namespace ftool
 	if (name != 0) delete[] name;
 	if (comment != 0)  delete[] comment;
       }
+      t_param() : name(0), comment(0) {}
     };
     
     protected :

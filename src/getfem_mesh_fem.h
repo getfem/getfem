@@ -110,6 +110,7 @@ namespace getfem
     mutable bool dof_enumeration_made;
     mutable size_type nb_total_dof;
     bool is_valid;
+    dim_type Qdim;
     
   public :
     
@@ -223,7 +224,7 @@ namespace getfem
 	f_elems.memsize() + fe_convex.memsize();
     }
     
-    mesh_fem(getfem_mesh &me); 
+    mesh_fem(getfem_mesh &me, dim_type Q = 1); 
     virtual ~mesh_fem();
     void read_from_file(std::istream &ist);
     void read_from_file(const std::string &name);

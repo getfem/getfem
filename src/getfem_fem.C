@@ -149,6 +149,8 @@ namespace getfem
   enum ddl_type { LAGRANGE, NORM_DERIVATIVE, DERIVATIVE, MEAN_VALUE, BUBBLE1, 
 		  LAGRANGE_NONCONFORMING, ALREADY_NUMERATE};
 
+  enum coord_type { NORMAL = -2, TANGENTIAL = -1, FIRST = 0, SECOND, THIRD };
+
   struct ddl_elem {
     ddl_type t;
     dal::int16_type hier_degree;
@@ -166,10 +168,10 @@ namespace getfem
   struct dof_description {
     std::vector<ddl_elem> ddl_desc;
     bool linkable;
-    dim_type coord_index;
+    coord_type coord_index;
 
     dof_description(void)
-    { linkable = true; coord_index = 0; }
+    { linkable = true; coord_index = FIRST; }
   };
 
   struct __dof_description_comp {
@@ -219,6 +221,14 @@ namespace getfem
     dof_description l = *p;
     for (size_type i = 0; i < l.ddl_desc.size(); ++i)
       l.ddl_desc[i].hier_degree = deg;
+    size_type i = _dof_d_tab->add_norepeat(l);
+    return &((*_dof_d_tab)[i]);
+  }
+
+  pdof_description to_coord_dof(pdof_description p, dim_type ct) {
+    init_tab();
+    dof_description l = *p;
+    l.coord_index = coord_type(ct);
     size_type i = _dof_d_tab->add_norepeat(l);
     return &((*_dof_d_tab)[i]);
   }

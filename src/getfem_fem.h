@@ -65,6 +65,8 @@ namespace getfem
   pdof_description already_numerate_dof(dim_type);
   /// Product description of the descriptions *pnd1 and *pnd2.
   pdof_description product_dof(pdof_description, pdof_description);
+
+  pdof_description to_coord_dof(pdof_description p, dim_type ct);
   
   /** Gives a total order on the dof description compatible with the
    *   identification.
@@ -74,6 +76,7 @@ namespace getfem
   bool dof_linkable(pdof_description);
   /// Says if the two dofs can be identified.
   bool dof_compatibility(pdof_description, pdof_description);
+
   
   /* ******************************************************************** */
   /*	Classes for description of a finite element.                      */
