@@ -123,13 +123,25 @@ namespace gmm {
   template <class TA, class TV, class MAT, class VECT>
   void extract_eig(const MAT &A, const VECT &VV, double tol,
 		   std::complex<TA>, TV)
-  { for (size_type i = 0; i < mat_nrows(A); ++i) V[i] = TV(A1(i,i)); }
+  { DAL_THROW(failure_error, "Sorry, not allowed"); }
 
   template <class TA, class TV, class MAT, class VECT>
   void extract_eig(const MAT &A, VECT &V, double tol,
 		   std::complex<TA>, std::complex<TV>) {
-    for (size_type i = 0; i < mat_nrows(A); ++i)
-      V[i] = std::complex<TV>(A(i,i));
+    size_type n = mat_nrows(A);
+    tol *= 2.0;
+    for (size_type i = 0; i < n; ++i)
+      if ((i == n-1) ||
+	  dal::abs(A(i+1,i)) < (dal::abs(A(i,i))+dal::abs(A(i+1,i+1)))*tol)
+	V[i] = std::complex<TV>(A(i,i));
+      else {
+	std::complex<TA> tr = A(i,i) + A(i+1, i+1);
+	std::complex<TA> det = A(i,i)*A(i+1, i+1) - A(i,i+1)*A(i+1, i);
+	std::complex<TA> delta = tr*tr - 4.0 * det;
+	V[i] = (tr + sqrt(delta)) / 2.0;
+	V[i+1] = (tr - sqrt(delta)) / 2.0;
+	++i;
+      }
   }
 
   template <class MAT, class VECT> inline
@@ -143,44 +155,42 @@ namespace gmm {
   /*    Stop criterion for QR algorithms                                   */
   /* ********************************************************************* */
 
-  template <class MAT, class T>
-  void stop_criterion(MAT &A, size_type &p, size_type &q, double tol, T) {
-
+  template <class MAT/*, class T*/>
+  void stop_criterion(MAT &A, size_type &p, size_type &q, double tol/*, T*/) {
+    typedef typename linalg_traits<MAT>::value_type value_type;
     size_type n = mat_nrows(A);
     for (size_type i = 1; i < n; ++i)
       if (dal::abs(A(i,i-1)) < (dal::abs(A(i,i))+ dal::abs(A(i-1,i-1)))*tol)
-	A(i,i-1) = T(0);
+	A(i,i-1) = value_type(0);
        
     q = 0;
-    while ((q < n-1 && A(n-1-q, n-2-q) == T(0)) ||
-	   (q < n-2 && A(n-2-q, n-3-q) == T(0))) ++q;
+    while ((q < n-1 && A(n-1-q, n-2-q) == value_type(0)) ||
+	   (q < n-2 && A(n-2-q, n-3-q) == value_type(0))) ++q;
     if (q >= n-2) q = n;
     p = n-q; if (p) --p; if (p) --p;
-    while (p > 0 && A(p,p-1) != T(0)) --p;
-
-    cout << "q = " << q << endl;
+    while (p > 0 && A(p,p-1) != value_type(0)) --p;
   }
 
-  template <class MAT, class T> // complex version, to be verified
-  void stop_criterion(MAT &A, size_type &p, size_type &q,
-		      double tol, std::complex<T>) {
-    size_type n = mat_nrows(A);
-    for (size_type i = 1; i < n; ++i)
-      if (dal::abs(A(i,i-1)) < (dal::abs(A(i,i))+ dal::abs(A(i-1,i-1)))*tol)
-	A(i,i-1) = std::complex<T>(0);
+//   template <class MAT, class T> // complex version, to be verified
+//   void stop_criterion(MAT &A, size_type &p, size_type &q,
+// 		      double tol, std::complex<T>) {
+//     size_type n = mat_nrows(A);
+//     for (size_type i = 1; i < n; ++i)
+//       if (dal::abs(A(i,i-1)) < (dal::abs(A(i,i))+ dal::abs(A(i-1,i-1)))*tol)
+// 	A(i,i-1) = std::complex<T>(0);
        
-    q = 0;
-    while (q < n-1 && A(n-1-q, n-2-q) == std::complex<T>(0)) ++q;
-    if (q >= n-1) q = n;
-    p = n-q; if (p) --p; if (p) --p;
-    while (p > 0 && A(p,p-1) != std::complex<T>(0)) --p;
-  }
+//     q = 0;
+//     while (q < n-1 && A(n-1-q, n-2-q) == std::complex<T>(0)) ++q;
+//     if (q >= n-1) q = n;
+//     p = n-q; if (p) --p; if (p) --p;
+//     while (p > 0 && A(p,p-1) != std::complex<T>(0)) --p;
+//   }
 
-  template <class MAT> inline
-  void stop_criterion(const MAT &A, size_type &p, size_type &q, double tol) {
-    stop_criterion(const_cast<MAT&>(A), p, q, tol,
-		   typename linalg_traits<MAT>::value_type());
-  }
+//   template <class MAT> inline
+//   void stop_criterion(const MAT &A, size_type &p, size_type &q,double tol) {
+//     stop_criterion(const_cast<MAT&>(A), p, q, tol,
+// 		   typename linalg_traits<MAT>::value_type());
+//   }
   
   
   template <class MAT> inline
@@ -212,21 +222,20 @@ namespace gmm {
     void rudimentary_qr_algorithm(const MAT1 &A, VECT &eigval, MAT2 &eigvect,
 		      double tol = 1E-12, bool compvect = true) {
     typedef typename linalg_traits<MAT1>::value_type value_type;
-    typedef typename number_traits<value_type>::magnitude_type magnitude_type;
 
     size_type n = mat_nrows(A), p, q, ite = 0;
     MAT1 Q(n, n), R(n,n), A1(n,n); 
     gmm::copy(A, A1);
 
     Hessenberg_reduction(A1, eigvect, compvect);
-    stop_criterion(A1, p, q, tol, magnitude_type());
+    stop_criterion(A1, p, q, tol);
 
     while (q < n) {
       qr_factor(A1, Q, R);
       gmm::mult(R, Q, A1);
       if (compvect) { gmm::mult(eigvect, Q, R); gmm::copy(R, eigvect); }
       
-      stop_criterion(A1, p, q, tol, magnitude_type());
+      stop_criterion(A1, p, q, tol);
       if (++ite > n*1000) DAL_THROW(failure_error, "QR algorithm failed");
     }
     extract_eig(A1, eigval, tol); 
@@ -310,6 +319,7 @@ namespace gmm {
 //       }
       stop_criterion(H, p, q, tol);
     }
+    clean(H, 1E-12); cout << "H = " << H << endl;
     extract_eig(H, eigval, tol);
   }
 
@@ -341,7 +351,8 @@ namespace gmm {
 
     for (size_type k = 1; k < n; ++k) {
       Givens_rotation(x, z, c, s);
-      cout << "x = " << x << " z = " << z << " c = " << c << " s = " << s << endl;
+      cout << "x = " << x << " z = " << z << " c = " << c
+	   << " s = " << s << endl;
 
       if (k > 2)
       Apply_Givens_rotation(T(k-1,k-3), T(k,k-3), c, s);
@@ -383,18 +394,19 @@ namespace gmm {
 			      double tol = 1E-12, bool compvect = true) {
     typedef typename linalg_traits<MAT1>::value_type value_type;
 
-    size_type n = mat_nrows(A), q = 0, p;
+    size_type n = mat_nrows(A), q = 0, p, ite = 0;
     dense_matrix<value_type> T(n,n);
     gmm::copy(A, T);
     Householder_tridiagonalisation(T, eigvect, compvect);
     symmetric_stop_criterion(T, p, q, tol);
 
     while (q < n) {
-      cout << "q = " << q << " T = " << T << endl;
+      // cout << "q = " << q << " T = " << T << endl;
       sub_interval SUBI(p, n-p-q);
       Wilkinson_qr_step(sub_matrix(T, SUBI), 
 			sub_matrix(eigvect, SUBI), compvect);
       symmetric_stop_criterion(T, p, q, tol);
+      if (++ite > n*1000) DAL_THROW(failure_error, "QR algorithm failed");
     }
     extract_eig(T, eigval, tol);
   }
@@ -404,7 +416,7 @@ namespace gmm {
     void symmetric_qr_algorithm(const MAT1 &a, VECT &eigval, 
 			       double tol = 1E-12) {
     dense_matrix<typename linalg_traits<MAT1>::value_type> m(0,0);
-    symmetric_qr_algorithm(a, eigval, m, tol, false); 
+    symmetric_qr_algorithm(a, eigval, m, tol, false);
   }
 
 

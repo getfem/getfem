@@ -46,9 +46,34 @@ void const_ref_test(const M1 &m1, const M2 &m2) {
  					   gmm::sub_slice(1, 2, 3))) << endl;
 }
 
+template <class MAT, class T> void print_for_matlab(const MAT &m, T) { 
+  cout.precision(16);
+  cout << "[" << endl;
+  for (int i = 0; i < gmm::mat_nrows(m); ++i) {
+    for (int j = 0; j < gmm::mat_ncols(m); ++j) cout << " " << m(i,j);
+    if (i != gmm::mat_nrows(m)-1) cout << " ; \n";
+  }
+  cout << "]" << endl;
+}
+
+template <class MAT, class T> void print_for_matlab(const MAT &m,
+						    std::complex<T>) { 
+  cout.precision(16);
+  cout << "[" << endl;
+  for (int i = 0; i < gmm::mat_nrows(m); ++i) {
+    for (int j = 0; j < gmm::mat_ncols(m); ++j)
+      cout << " (" << m(i,j).real() << "+" << m(i,j).imag() << "*i)" ;
+    if (i != gmm::mat_nrows(m)-1) cout << " ; \n";
+  }
+  cout << "]" << endl;
+}
+
+template <class MAT> void print_for_matlab(const MAT &m)
+{ print_for_matlab(m, gmm::linalg_traits<MAT>::value_type()); }
+
 void test_qr(void) {
 
-  int nn = 8;
+  int nn = 15;
   gmm::dense_matrix<double> mm(nn,nn);
   gmm::fill_random(mm);
 
@@ -62,15 +87,7 @@ void test_qr(void) {
 
   gmm::fill_random(cv);
   gmm::copy(mm, cm); // gmm::fill_random(cm);
-  cout.precision(16);
-  cout << "[" << endl;
-  for (int i = 0; i < nn; ++i) {
-    for (int j = 0; j < nn; ++j)
-      cout << " (" << cm(i,j).real() << "+" << cm(i,j).imag() << "*i)" ;
-    if (i != nn-1) cout << " ; \n";
-  }
-  cout << "]" << endl;
-  
+  print_for_matlab(cm);
 
 
   cout.precision(6);
@@ -86,9 +103,50 @@ void test_qr(void) {
 
   double exectime = ftool::uclock_sec();
   rudimentary_qr_algorithm(cm, eigc, cq);
-  cout << "time to compute rude QR : " << ftool::uclock_sec() - exectime;
+  cout << "time to compute rudimentary QR : " << ftool::uclock_sec()-exectime;
   cout << "\neigenvalues : " << eigc << endl;
   cout << "eigenvectors : " << cq << endl;
+
+  gmm::fill_random(cm);
+  print_for_matlab(cm);
+  cout.precision(6);
+  exectime = ftool::uclock_sec();
+  implicit_qr_algorithm(cm, eigc, cq);
+  cout << "time to compute implicit complex QR : " << ftool::uclock_sec()-exectime;
+  cout << "\neigenvalues : " << eigc << endl;
+  cout << "eigenvectors : " << cq << endl;
+
+  gmm::fill_random(cq);
+  gmm::copy(cq, cr);
+  gmm::lu_inverse(cr);
+  gmm::copy(gmm::identity_matrix(), cm);
+  std::fill(cv.begin(), cv.end(), 1.0);
+  if (nn > 0) cv[0] = cm(0,0) = std::complex<double>(0.0);
+  if (nn > 1) cv[1] = cm(1,1) = std::complex<double>(0.0);
+  if (nn > 2) cv[2] = cm(2,2) = std::complex<double>(0.0, 0.1);
+  if (nn > 3) cv[3] = cm(3,3) = std::complex<double>(0.0, -0.1);
+  if (nn > 4) cv[4] = cm(4,4) = std::complex<double>(-2.0, 3.0);
+  if (nn > 5) cv[5] = cm(5,5) = std::complex<double>(-2.0, 3.0);
+  if (nn > 6) cv[6] = cm(6,6) = std::complex<double>(-2.0, 3.0);
+  if (nn > 7) cv[7] = cm(7,7) = std::complex<double>(1000.0, 1.0);
+  gmm::mult(cq, cm, ca); 
+  gmm::mult(ca, cr, cm);
+  cout << "With predetermined eigenvalues\n";
+  print_for_matlab(cm);
+  cout.precision(6);
+  exectime = ftool::uclock_sec();
+  implicit_qr_algorithm(cm, eigc, cq);
+  cout << "time to compute implicit complex QR : " << ftool::uclock_sec()-exectime;
+  // gmm::clean(eigc, 1E-10); cout << "\neigenvalues : " << eigc << endl;
+  // gmm::clean(cq, 1E-10); cout << "eigenvectors : " << cq << endl;
+  for (int l = 0; l < nn; ++l) {
+    bool found = false;
+     for (int k = 0; k < nn; ++k)
+       if (dal::abs(eigc[l] - cv[k]) < 1E-8)
+	 { cv[k] = -1.123236; found = true; break; }
+     if (found = false)
+       DAL_THROW(dal::failure_error, "Error on complex QR algorithm.");
+  }
 
   gmm::fill_random(cm);
   gmm::copy(cm, cq);
@@ -109,15 +167,7 @@ void test_qr(void) {
   gmm::dense_matrix<double> r(nn, nn), q(nn, nn),
     qr(nn, nn), mmt(nn, nn);
   
-  
-  cout.precision(16);
-  cout << "[" << endl;
-  for (int i = 0; i < nn; ++i) {
-    for (int j = 0; j < nn; ++j) cout << " " << mm(i,j);
-    if (i != nn-1) cout << " ; \n";
-  }
-  cout << "]" << endl;
-  
+  print_for_matlab(cm);
   cout.precision(8);
   exectime = ftool::uclock_sec();
 //   rudimentary_qr_algorithm(mm, eigc, q);
@@ -144,14 +194,7 @@ void test_qr(void) {
     DAL_THROW(dal::failure_error, "Error on QR factorisation.");
 
   gmm::mult(mm, gmm::transposed(mm), mmt);
-  cout.precision(16);
-  cout << "[" << endl;
-  for (int i = 0; i < nn; ++i) {
-    for (int j = 0; j < nn; ++j) cout << " " << mmt(i,j);
-    if (i != nn-1) cout << " ; \n";
-  }
-  cout << "]" << endl;
-  
+  print_for_matlab(cm);
   cout.precision(8);
   std::vector<double> eig(nn);
 
@@ -163,7 +206,7 @@ void test_qr(void) {
 
   implicit_qr_algorithm(mmt, eig, q);
   cout << "\neigval(par impl qr) = " << eig << endl;
-  getchar();
+  // getchar();
 
 
   gmm::copy(mm, q);

@@ -4,7 +4,8 @@
 /* File    :  gmm_dense_Householder.h : Householder calculus.              */
 /*     									   */
 /* Date : June 5, 2003.                                                    */
-/* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
+/* Author : Caroline Lecalvez, Caroline.Lecalvez@gmm.insa-tlse.fr          */
+/*          Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */
