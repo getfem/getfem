@@ -171,9 +171,19 @@ namespace getfem {
   typedef gmm::col_matrix<modeling_standard_sparse_vector>
                                     modeling_standard_sparse_matrix;
   typedef std::vector<scalar_type> modeling_standard_plain_vector;
+
+  typedef gmm::rsvector<complex_type> modeling_standard_complex_sparse_vector;
+  typedef gmm::col_matrix<modeling_standard_complex_sparse_vector>
+                                    modeling_standard_complex_sparse_matrix;
+  typedef std::vector<complex_type> modeling_standard_complex_plain_vector;
+
   typedef model_state<modeling_standard_sparse_matrix,
 		      modeling_standard_sparse_matrix,
 		      modeling_standard_plain_vector > standard_model_state;
+
+  typedef model_state<modeling_standard_complex_sparse_matrix,
+		      modeling_standard_complex_sparse_matrix,
+		      modeling_standard_complex_plain_vector > standard_complex_model_state;
 
 
   /* ******************************************************************** */
@@ -264,7 +274,7 @@ namespace getfem {
       this->force_recompute();
     }
 
-    template<typename VECT> void get_displacement(MODEL_STATE &MS, VECT &V) {
+    template<typename VECT> void get_solution(MODEL_STATE &MS, VECT &V) {
       gmm::sub_interval SUBI(this->first_index(), nb_dof());
       gmm::copy(gmm::sub_vector(MS.state(), SUBI), V);
     }
@@ -288,6 +298,116 @@ namespace getfem {
   };
 
   /* TODO : arbitrary elasticity tensor */
+
+
+  /* ******************************************************************** */
+  /*		Helmholtz brick.                                          */
+  /* ******************************************************************** */
+ template<typename MODEL_STATE = standard_complex_model_state>
+  class mdbrick_Helmholtz
+    : public mdbrick_abstract<MODEL_STATE> {
+
+    typedef typename MODEL_STATE::vector_type VECTOR;
+    typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
+    typedef typename MODEL_STATE::value_type value_type;
+    mesh_fem &mf_u;
+    mesh_fem &mf_data;
+    VECTOR wave_number;
+    bool homogeneous;
+    bool matrix_stored;
+    T_MATRIX K;
+
+    void compute_K(void) {
+      gmm::clear(K);
+      gmm::resize(K, nb_dof(), nb_dof());
+      VECTOR wave_number2(mf_data.nb_dof());
+      if (homogeneous) {
+	std::fill(wave_number2.begin(), wave_number2.end(), value_type(dal::sqr(wave_number[0])));
+      }
+      else { 
+	for (size_type i=0; i < nb_dof(); ++i)
+	  wave_number2[i] = dal::sqr(wave_number[i]);
+      }
+      asm_Helmholtz(K, mf_u, mf_data, wave_number2);
+      this->computed();
+    }
+
+  public :
+
+    virtual bool is_linear(void) { return true; }
+    virtual bool is_coercive(void) { return false; }
+    virtual size_type nb_dof(void) { return mf_u.nb_dof(); }
+    virtual size_type nb_constraints(void) { return 0; }
+    virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
+					size_type = 0, bool modified = false) {
+      if (modified && !matrix_stored) 
+	DAL_THROW(failure_error, "The residu will not be consistant. "
+		  "Use this brick with the stiffness matrix stored option");
+      react(MS, i0, modified);
+      gmm::sub_interval SUBI(i0, nb_dof());
+      if (this->to_be_computed()
+	  || (!matrix_stored && this->to_be_transferred()))
+	  compute_K();
+      if (this->to_be_transferred()) { 
+	gmm::copy(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI));
+	this->transferred();
+      }
+      if (!matrix_stored) gmm::clear(K);
+    }
+    virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0) {
+      react(MS, i0, false);
+      gmm::sub_interval SUBI(i0, nb_dof());
+      if (this->to_be_computed()) {
+	compute_K();
+	if (!matrix_stored) {
+	  gmm::copy(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI)); 
+	  gmm::clear(K);
+	}
+      }
+      if (matrix_stored) {
+	gmm::mult(K, gmm::sub_vector(MS.state(), SUBI),
+		     gmm::sub_vector(MS.residu(), SUBI));
+      } else {
+	gmm::mult(gmm::sub_matrix(MS.tangent_matrix(), SUBI),
+		  gmm::sub_vector(MS.state(), SUBI),
+		  gmm::sub_vector(MS.residu(), SUBI));
+      }
+    }
+    virtual mesh_fem &main_mesh_fem(void) { return mf_u; }
+
+    void set_wave_number(complex_type k) {
+      homogeneous = true;
+      gmm::resize(wave_number, 1); wave_number[0] = k;
+      this->force_recompute();
+    }
+
+    void set_wave_number(const VECTOR &k) {
+      homogeneous = false;
+      gmm::resize(wave_number, mf_data.nb_dof()); gmm::copy(k, wave_number);
+      this->force_recompute();
+    }
+
+    template<typename VECT> void get_solution(MODEL_STATE &MS, VECT &V) {
+      gmm::sub_interval SUBI(this->first_index(), nb_dof());
+      gmm::copy(gmm::sub_vector(MS.state(), SUBI), V);
+    }
+
+    // constructor for a homogeneous wave number
+    mdbrick_Helmholtz(mesh_fem &mf_u_, mesh_fem &mf_data_,
+       complex_type k, bool mat_stored = false)
+      : mf_u(mf_u_), mf_data(mf_data_), matrix_stored(mat_stored) {
+      set_wave_number(k);
+      this->add_dependency(mf_u); this->add_dependency(mf_data);
+    }
+
+    // constructor for a non-homogeneous wave number
+    mdbrick_Helmholtz(mesh_fem &mf_u_, mesh_fem &mf_data_,
+		      const VECTOR &k, bool mat_stored = false)
+      : mf_u(mf_u_), mf_data(mf_data_),	matrix_stored(mat_stored) {
+      set_wave_number(k);
+      this->add_dependency(mf_u); this->add_dependency(mf_data);
+    }
+  };
 
 
   /* ******************************************************************** */
@@ -362,6 +482,110 @@ namespace getfem {
     }
   };
 
+  /* ******************************************************************** */
+  /*		Q.U term (for Fourier-Robin conditions)                   */
+  /* ******************************************************************** */
+
+  template<typename MODEL_STATE = standard_model_state>
+  class mdbrick_QU_term
+    : public mdbrick_abstract<MODEL_STATE> {
+
+    typedef typename MODEL_STATE::vector_type VECTOR;
+    typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
+    typedef typename MODEL_STATE::value_type value_type;
+    mdbrick_abstract<MODEL_STATE> &sub_problem;
+    mesh_fem &mf_data;
+    VECTOR Q;
+    bool homogeneous;
+    size_type boundary;
+    T_MATRIX K;
+
+    void compute_K(void) {
+      mesh_fem &mf_u = sub_problem.main_mesh_fem();
+      gmm::clear(K);
+      gmm::resize(K, nb_dof(), nb_dof());
+      size_type N2 = dal::sqr(mf_u.get_qdim());
+      VECTOR vQ(mf_data.nb_dof() * N2);
+      if (homogeneous) {
+	for (size_type i=0; i < mf_data.nb_dof(); ++i) {
+	  for (size_type j=0; j < N2; ++j)
+	    vQ[i*N2 + j] = (j % (mf_u.get_qdim()+1)) == 0 ? Q[0] : 0.;
+	}
+      }
+      else gmm::copy(Q, vQ);
+      asm_qu_term(K, mf_u, mf_data, Q, boundary);
+      this->computed();
+    }
+
+  public :
+
+    virtual bool is_linear(void) { return sub_problem.is_linear(); }
+    virtual bool is_coercive(void) { return false; }
+    virtual size_type nb_dof(void) { return sub_problem.nb_dof(); }    
+    virtual size_type nb_constraints(void) { return sub_problem.nb_constraints(); }
+    virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
+					size_type j0 = 0, bool modified = false) {
+      sub_problem.compute_tangent_matrix(MS, i0, j0, true);
+      react(MS, i0, true);
+      gmm::sub_interval SUBI(i0, nb_dof());
+      if (this->to_be_computed())
+	  compute_K();
+      gmm::add(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI));
+    }
+    virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0) {
+      sub_problem.compute_residu(MS, i0);
+      react(MS, i0, false);
+      gmm::sub_interval SUBI(i0, nb_dof());
+      if (this->to_be_computed()) { 
+	compute_K();
+      }
+      gmm::mult(K, gmm::sub_vector(MS.state(), SUBI),
+		gmm::sub_vector(MS.residu(), SUBI),
+		gmm::sub_vector(MS.residu(), SUBI));
+    }
+    virtual mesh_fem &main_mesh_fem(void) { return sub_problem.main_mesh_fem(); }
+
+    void set_Q(value_type q) {
+      homogeneous = true;
+      gmm::resize(Q, 1); Q[0] = q;
+      this->force_recompute();
+    }
+
+    void set_Q(const VECTOR &q) {
+      homogeneous = false;
+      gmm::resize(Q, mf_data.nb_dof()*dal::sqr(main_mesh_fem().get_qdim())); 
+      gmm::copy(q, Q);
+      this->force_recompute();
+    }
+    // Constructor which does not define the rhs
+    mdbrick_QU_term(mdbrick_abstract<MODEL_STATE> &problem,
+		    mesh_fem &mf_data_, value_type q=value_type(1), size_type bound = size_type(-1)) 
+      : sub_problem(problem), mf_data(mf_data_), boundary(bound) {
+      this->add_dependency(mf_data);
+      this->add_dependency(sub_problem.main_mesh_fem());
+      set_Q(value_type(q));
+    }
+
+    // Constructor defining the rhs
+    mdbrick_QU_term(mdbrick_abstract<MODEL_STATE> &problem,
+		    mesh_fem &mf_data_, const VECTOR &q,
+		    size_type bound = size_type(-1))
+      : sub_problem(problem), mf_data(mf_data_), boundary(bound) {
+      this->add_dependency(mf_data);
+      this->add_dependency(sub_problem.main_mesh_fem());
+      set_Q(q);
+    }
+  };
+
+
+
+
+
+
+
+
+
+
 
   /* ******************************************************************** */
   /*		Dirichlet condition bricks.                               */
@@ -414,7 +638,7 @@ namespace getfem {
 
       if (!with_H) gmm::resize(H_, 0);
 
-      R tol=gmm::mat_maxnorm(M)*gmm::default_tol(value_type())*value_type(100);
+      R tol=gmm::mat_maxnorm(M)*gmm::default_tol(value_type())*R(100);
       if (version & 1) gmm::clean(M, tol);
       
       std::vector<size_type> ind(0);
