@@ -69,7 +69,7 @@ namespace getfem
   // Object representing global functions. To be derived.
 
   struct virtual_Xfem_func {
-    /* 
+    /*
     */
     virtual scalar_type val(const Xfem_func_context&) { DAL_THROW(dal::failure_error,"this Xfem_func has no value"); }
     virtual base_small_vector grad(const Xfem_func_context&) { DAL_THROW(dal::failure_error,"this Xfem_func has no gradient"); }
@@ -115,8 +115,8 @@ namespace getfem
 			      base_tensor &t) const;
     void real_hess_base_value(const fem_interpolation_context& c, 
 			      base_tensor &t) const;
-    
-    Xfem(pfem pfb);
+    void init(pfem pf);
+    Xfem(pfem pf);
   };
 
 

@@ -53,6 +53,7 @@ include_HEADERS =                       \
 	getfem_fem_sum.h                \
 	getfem_gauss_lobatto_fem_coef.h \
 	getfem_Xfem.h                   \
+	getfem_spider.h                 \
 	getfem_im_list.h                \
 	getfem_mat_elem.h               \
 	getfem_mat_elem_type.h          \

@@ -38,8 +38,9 @@ namespace getfem
   void Xfem::valid(void) {
     init_cvs_node();
     /* setup nodes of the base fem */
-    for (size_type k = 0; k < pfb->nb_base(0); ++k)
-      add_node(pfb->dof_types()[k], pfb->node_of_dof(0,k));
+    if (pfb)
+      for (size_type k = 0; k < pfb->nb_base(0); ++k)
+	add_node(pfb->dof_types()[k], pfb->node_of_dof(0,k));
     
     /* setup nodes of the enriched fems */
     for (size_type k = 0; k < nb_func; ++k) {
@@ -58,12 +59,13 @@ namespace getfem
   }
 
   void Xfem::add_func(pfem pf, pXfem_func pXf, size_type ind) {
+    if (!pfb) init(pf);
     nb_func ++;
     if (ind == size_type(-1)) ind = nb_func;
     funcs.resize(nb_func);
     func_indices.resize(nb_func);
     funcs[nb_func-1] = pXf;
-    if (cvr != pf->ref_convex(0) || pfb->target_dim() != pf->target_dim())
+    if (cvr != pf->ref_convex(0) || (pfb && pfb->target_dim() != pf->target_dim()))
       DAL_THROW(failure_error, "Incompatible Xfem fems");
 
     /* insert the new fem in the list */
@@ -102,11 +104,11 @@ namespace getfem
   }
   
   void Xfem::base_value(const base_node &x, base_tensor &t) const
-  { pfb->base_value(x, t); }
+  { if (pfb) pfb->base_value(x, t); }
   void Xfem::grad_base_value(const base_node &x, base_tensor &t) const
-  { pfb->grad_base_value(x, t); }
+  { if (pfb) pfb->grad_base_value(x, t); }
   void Xfem::hess_base_value(const base_node &x, base_tensor &t) const
-  { pfb->hess_base_value(x, t); }
+  { if (pfb) pfb->hess_base_value(x, t); }
 
   void Xfem::real_base_value(const fem_interpolation_context &c,
 			     base_tensor &t) const {
@@ -120,7 +122,7 @@ namespace getfem
     base_tensor::const_iterator itf = tt.begin();
     std::vector<fem_interpolation_context> vc; get_fem_interpolation_context_tab(c, vc);
     for (dim_type q = 0; q < target_dim(); ++q) {
-      for (size_type i = 0; i < pfb->nb_base(0); ++i, ++itf, ++it)
+      for (size_type i = 0; i < (pfb ? pfb->nb_base(0) : 0); ++i, ++itf, ++it)
           *it = *itf;
       for (size_type k = 0; k < nb_func; ++k) {
 	base_tensor val_e; vc[func_pf[k]].base_value(val_e);
@@ -167,7 +169,7 @@ namespace getfem
     
     for (dim_type k = 0; k < c.N() ; ++k) {
       for (dim_type q = 0; q < target_dim(); ++q) {
-	for (size_type i = 0; i < pfb->nb_base(0); ++i, ++it)
+	for (size_type i = 0; i < (pfb ? pfb->nb_base(0) : 0); ++i, ++it)
 	    *it = *itvf++;
 	for (size_type f = 0; f < nb_func; ++f) {
           size_type posg = pfe(f)->nb_base(0)*(q + k*target_dim());
@@ -186,18 +188,23 @@ namespace getfem
     DAL_THROW(to_be_done_error,
 	      "Sorry order 2 derivatives for Xfem to be done.");
   }
-  
-  Xfem::Xfem(pfem pf) : pfb(pf), is_valid(false), nb_func(0) {
-    if (!(pfb->is_equivalent()))
-      DAL_THROW(to_be_done_error,
-		"Sorry, Xfem for non tau-equivalent elements to be done.");
-    cvr = pfb->ref_convex(0);
+
+  void Xfem::init(pfem pf) {
+    cvr = pf->ref_convex(0);
     dim_ = cvr->structure()->dim();
     is_equiv = real_element_defined = true;
     is_polycomp = is_pol = is_lag = false;
     es_degree = 5; /* humm ... */
-    ntarget_dim = pfb->target_dim();
+    ntarget_dim = pf->target_dim();
   }
-
+  
+  Xfem::Xfem(pfem pf) : pfb(pf), is_valid(false), nb_func(0) {
+    if (pf) {
+      if (!(pfb->is_equivalent()))
+	DAL_THROW(to_be_done_error,
+		  "Sorry, Xfem for non tau-equivalent elements to be done.");
+      init(pfb);
+    }
+  }
 
 }  /* end of namespace getfem.                                            */
