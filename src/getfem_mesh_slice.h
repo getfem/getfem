@@ -99,7 +99,7 @@ namespace getfem {
     bool test_bound(const slice_simplex& s, slice_node::faces_ct& fmask, 
                     const std::deque<slice_node>& nodes) const;
   public:
-    slicer_boundary(const getfem_mesh& m, slicer *_A, const convex_face_ct& fbound);
+    slicer_boundary(const getfem_mesh& m, slicer *sA, const convex_face_ct& fbound);
     void slice(size_type cv, dim_type& fcnt,
 	       std::deque<slice_node>& nodes, std::deque<slice_simplex>& splxs, 
                dal::bit_vector& splx_in) const;
@@ -191,7 +191,7 @@ namespace getfem {
   class slicer_union : public slicer {
     slicer *A, *B;
   public:
-    slicer_union(slicer *_A, slicer *_B) : A(_A), B(_B) {}
+    slicer_union(slicer *sA, slicer *sB) : A(sA), B(sB) {}
     void test_point(const base_node& P, bool& in, bool& bound) const {
       bool inA, boundA, inB, boundB;
       A->test_point(P,inA,boundA); B->test_point(P,inB,boundB);
@@ -206,7 +206,7 @@ namespace getfem {
   class slicer_intersect : public slicer {
     slicer *A, *B;
   public:
-    slicer_intersect(slicer *_A, slicer *_B) : A(_A), B(_B) {}
+    slicer_intersect(slicer *sA, slicer *sB) : A(sA), B(sB) {}
     void test_point(const base_node& P, bool& in, bool& bound) const {
       bool inA, boundA, inB, boundB;
       A->test_point(P,inA,boundA); B->test_point(P,inB,boundB);
@@ -221,7 +221,7 @@ namespace getfem {
   class slicer_complementary : public slicer {
     slicer *A;
   public:
-    slicer_complementary(slicer *_A) : A(_A) {}
+    slicer_complementary(slicer *sA) : A(sA) {}
     void test_point(const base_node& P, bool& in, bool& bound) const {
       A->test_point(P,in,bound); in = !in;
     }
@@ -254,7 +254,7 @@ namespace getfem {
   template<typename VEC> class mesh_slice_cv_dof_data : public mesh_slice_cv_dof_data_base {
     const VEC *u;
   public:
-    mesh_slice_cv_dof_data(const mesh_fem &_mf, VEC &_u) : u(_u) { pmf = &mf; }
+    mesh_slice_cv_dof_data(const mesh_fem &mf_, VEC &u_) : u(u_) { pmf = &mf_; }
     virtual void copy(size_type cv, base_vector& coeff) {
       coeff.resize(pmf->nb_dof_of_element(cv));
       ref_mesh_dof_ind_ct dof = pmf->ind_dof_of_element(cv);

@@ -61,8 +61,8 @@ namespace getfem {
 
   /* -------------------------------------- slicers --------------------------------------*/
 
-  slicer_boundary::slicer_boundary(const getfem_mesh& m, slicer *_A, 
-				   const convex_face_ct& cvflst) : A(_A) {
+  slicer_boundary::slicer_boundary(const getfem_mesh& m, slicer *sA, 
+				   const convex_face_ct& cvflst) : A(sA) {
     dal::bit_vector bv = m.convex_index();
     if (bv.card()==0) return;
     convex_faces.resize(bv.last()+1, slice_node::faces_ct(0L));
