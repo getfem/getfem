@@ -57,8 +57,6 @@ along with this program; if not, write to the Free Software Foundation,
 Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 \newpage
-\tableofcontents
-\newpage
 
 \section{Data format}
 The data in the file should begin with the string ``{\tt BEGIN DATA ELEMENT}''. The text in the file before this string is ignored. Then, the three following lines should be present to define the global caracteristics of the solution\\[0.5cm]
@@ -83,9 +81,16 @@ where {\tt N} defines the dimension of the domain, {\tt P} defines the dimension
 Finally, the file should end with the string ``{\tt END DATA ELEMENT}''.
 
 \section{Interpolation program}
+
+{\tt interpole\_solution fi1 fi2 fi3} \\[0.5cm]
+
+where {\tt fi1} is the file containing the solution to interpolate on the mesh defined by the solution in the file {\tt fi2}. {\tt fi3} is the file name where the resulting interpolation will be written. 
+
 \section{Comparaison program}
 
+{\tt compare\_solution fi1 fi2} \\[0.5cm]
 
+where {\tt fi1} and {\tt fi2} are two files containing two solution defined on the save domain but not on necessarily on the same mesh and degree. The program print the $L^2$, $H^1$ (energy) and $L^{\infty}$ (maximal gap) error between the two solutions. 
 
 \begin{thebibliography}{99}
 % \bibliographystyle{apalike}
