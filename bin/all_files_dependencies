@@ -55,7 +55,7 @@ sub file_dep
       add_dependencie($i, $tabdep[$j][$k]);
     }
   }
-  
+
   $fi2 = $fname; $fi2 =~ s/\./_/g;
   print "$fi2 = ";
   for ($k = 0; $k < $tabnbf[$i]; $k++) { print "$tabdep[$i][$k] "; }
