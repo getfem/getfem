@@ -11,6 +11,7 @@ check_PROGRAMS = \
 	integration        \
 	laplacian          \
 	poly               \
+	scwarz_additive    \
 	speed_test_for_gmm \
 	test_assembly      \
 	test_int_set       \
@@ -48,6 +49,7 @@ test_tree_sorted_SOURCES = test_tree_sorted.C
 test_mat_elem_SOURCES = test_mat_elem.C
 test_slice_SOURCES = test_slice.C
 test_norm_SOURCES = test_norm.C
+schwarz_additive_SOURCES = schwarz_additive.C
 #test_fem_SOURCES = test_fem.C
 
 INCLUDES = -I$(top_srcdir)/src -I../src
@@ -70,6 +72,7 @@ TESTS = \
 	$(top_srcdir)/tests/geo_trans.pl          \
 	$(top_srcdir)/tests/geo_trans_inv.pl      \
 	$(top_srcdir)/tests/speed_test_for_gmm.pl \
+	$(top_srcdir)/tests/schwarz_additive.pl   \
 	$(top_srcdir)/tests/test_int_set.pl       \
 	$(top_srcdir)/tests/test_link_fem.pl      \
 	$(top_srcdir)/tests/test_slice.pl         \
@@ -98,6 +101,7 @@ EXTRA_DIST = \
 	test_tree_sorted.pl               \
 	test_mat_elem.pl                  \
 	laplacian.param                   \
+	schwarz_additive.pl               \
 	elastostatic.param                \
 	test_link_fem.param               \
 	geo_trans_inv.param               \
