@@ -397,7 +397,7 @@ void lap_pb::assemble(void)
 }
 
 void lap_pb::solve(void) {
-  gmm::iteration iter(residu, 0, 40000);
+  gmm::iteration iter(residu, 1, 40000);
   gmm::cg(SM, U, B, gmm::identity_matrix(), gmm::identity_matrix(), iter);
   failed = !(iter.converged());
 }

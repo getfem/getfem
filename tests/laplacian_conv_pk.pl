@@ -50,7 +50,7 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
       print "============================================\n";
       print $_, <F>;
     }
-    # print $_;
+    print $_;
   }
 }
 
@@ -58,8 +58,8 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
 # $NDDLMAX = 20800;
 $NDDLMAX = 4800;
 $PAUSE = 0;
-$SKIP = 0;
-$FT = 10.0;
+$SKIP = 2;
+$FT = 30.0;
 
 @Ks=(1, 2, 3, 4, 6, 9, 12, 15, 18, 24);
 
@@ -157,7 +157,7 @@ $INTE += 1;
 ##########################################################################
 print "   TESTS EN DIMENSION 2, ET ELEMENTS PK                         \n";
 ##########################################################################
-$NDDLMAX = 20000; $FT = 10.0;
+$NDDLMAX = 100000; $FT = 10.0;
 $FEM_TYPE = 0;
 $INTE = 0;
 while ($INTE < 2 && $SKIP < 3) {
@@ -205,6 +205,7 @@ $INTE += 1;
 ##########################################################################
 print "   TESTS EN DIMENSION 3, ET ELEMENTS PK                        \n";
 ##########################################################################
+$NDDLMAX = 150000; $FT = 2.0;
 $FEM_TYPE = 0;
 $INTE = 0;
 while ($INTE < 2 && $SKIP < 4) {
@@ -238,7 +239,7 @@ foreach $K (@Ks) {
 }
 print GNF "\n";
 if ($PAUSE) { print GNF "pause -1;\n"; }
-print GNF "set output 'laplacian_2D_hier_$INTE.ps'\n";
+print GNF "set output 'laplacian_3D_$INTE.ps'\n";
 print GNF "set term postscript color\n";
 print GNF "replot\n";
 
@@ -284,7 +285,7 @@ foreach $K (@Ks) {
 }
 print GNF "\n";
 if ($PAUSE) { print GNF "pause -1;\n"; }
-print GNF "set output 'laplacian_2D_hier_$INTE.ps'\n";
+print GNF "set output 'laplacian_4D_$INTE.ps'\n";
 print GNF "set term postscript color\n";
 print GNF "replot\n";
 
@@ -296,18 +297,6 @@ $INTE += 1;
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 `rm -f $tmp $tmp_gnuplot`;
 
-# `rm -f $tmp $tmp_gnuplot`;
+
