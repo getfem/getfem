@@ -411,7 +411,7 @@ void lap_pb::assemble(void)
     gmm::clean(HH, 1e-15);
 
     int nbcols = getfem::Dirichlet_nullspace(HH, NN, RR, Ud);
-    cerr << "Number of unknowns : " << nbcols << endl;
+    // cerr << "Number of unknowns : " << nbcols << endl;
     NN.resize(nbcols);
 
     gmm::mult(SM, Ud, gmm::scaled(B, -1.0), RHaux);
