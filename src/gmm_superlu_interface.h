@@ -172,7 +172,7 @@ namespace gmm {
     SuperLU_S::get_perm_c(permc_spec, &SA, &perm_c[n]);
 
     SuperLU_gssv(&SA, &perm_c[n], &perm_r[0], &SL, &SU, &SB, &info, T());
-    if (info != 0) DAL_THROW(failure_error, "SuperLU solve failed");
+    if (info != 0) DAL_THROW(failure_error, "SuperLU solve failed: info=" << info);
     gmm::copy(rhs, X);
     SuperLU_S::Destroy_SuperMatrix_Store(&SB);
     SuperLU_S::Destroy_SuperMatrix_Store(&SA);
@@ -194,7 +194,7 @@ namespace gmm {
     typedef typename linalg_traits<MAT>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
 
-    int m = mat_nrows(A), n = mat_ncols(A), nrhs = 1, info;
+    int m = mat_nrows(A), n = mat_ncols(A), nrhs = 1, info=0;
 
     csc_matrix<T> csc_A(m, n); gmm::copy(A, csc_A);
     std::vector<T> rhs(m), sol(m);
@@ -235,7 +235,7 @@ namespace gmm {
 		  &ferr[0] /* estimated forward error             */,
 		  &berr[0] /* relative backward error             */,
 		  &info, T());
-    if (info != 0) DAL_THROW(failure_error, "SuperLU solve failed");
+    if (info != 0) DAL_THROW(failure_error, "SuperLU solve failed: info=" << info);
     gmm::copy(sol, X);
     _rcond = rcond;
     SuperLU_S::Destroy_SuperMatrix_Store(&SB);

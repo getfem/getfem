@@ -538,7 +538,8 @@ namespace bgeot {
       } else {
 	if (tr.dim(i) != r[pos]) 
 	  DAL_THROW(std::invalid_argument, 
-		    "inconsistent dimensions for reduction index " << int(s[i]));
+		    "inconsistent dimensions for reduction index " << s[i] 
+                    << "(" << int(tr.dim(i)) << " != " << int(r[pos]) << ")");
 	tr2r_dim.back()[i] = pos;
       }
     }
@@ -617,8 +618,28 @@ namespace bgeot {
 	} while (mti.bnext(1));
 	mti.p(0) += s1;
       } while (mti.bnext(0));	
+    } else if (N == 5) {
+      do {
+	scalar_type s1 = 0;
+	do { 
+	  scalar_type s2 = 0;
+	  do {
+	    scalar_type s3 = 0;
+	    do { 
+              scalar_type s4 = 0;
+              do {
+                s4 += mti.p(4);
+              } while (mti.bnext(4));
+              s3 += mti.p(3)*s4;
+	    } while (mti.bnext(3));
+	    s2 += mti.p(2)*s3;
+	  } while (mti.bnext(2));
+	  s1 += mti.p(1)*s2; 
+	} while (mti.bnext(1));
+	mti.p(0) += s1;
+      } while (mti.bnext(0));	
     } else {
-      DAL_THROW(std::invalid_argument, "unhandled reduction case ! (N=" << N << ")");
+      DAL_THROW(std::invalid_argument, "unhandled reduction case ! (N=" << int(N) << ")");
     }
   }
 
