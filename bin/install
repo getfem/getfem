@@ -1,3 +1,4 @@
+# -*- perl -*-
 eval 'exec perl -S $0 "$@"'
   if 0;
 
@@ -16,7 +17,7 @@ print "\n\nInstalling Getfem++ on system $systeme\n\n";
 
 
 #######################################
-#         Updating files              #
+#         Making links                #
 #######################################
 
 print "Making links\n";
@@ -67,6 +68,8 @@ if (-d "gensolv") {
   `cd include; ln -sf ../gensolv/*.h .`;
 }
 
+# ne pa oublier de mettre à jour do_archive aussi en cas de modif ...
+
 $liste = `ls include`; $liste =~ s/\@//g;
 while($liste) {
   ($fi, $liste) = split('\s', $liste, 2);
@@ -99,29 +102,29 @@ else { print "$CC is selected.\nTo select another compiler set the variable CC\n
 #        Searching MATLAB             #
 #######################################
 
+$MEX = 0;
+$MATLABREP = "";
 
-`mex -h`;
-if ($? != 0) {
-  print "mex is not installed on your system (or is not accessible),\n";
-  print "MATLAB command will not be compiled\n";
-  $MEX = 0;
-}
-else {
-  print "mex is present\n";
-  $MEX = 1;
-  $rep = `bin/compilo_mexv`;
-  while($rep) {
-    ($li, $rep) = split('\n', $rep, 2);
-    if ($li =~ /MATLAB *\=/)
-    {
-      ($li, $MATLABREP) = split('\=', $li, 2);
-      print "Matlab found in path $MATLABREP\n";
+if (-d "matlabcom") {
+  `mex -h`;
+  if ($? != 0) {
+    print "mex is not installed on your system (or is not accessible),\n";
+    print "MATLAB command will not be compiled\n";
+  }
+  else {
+    print "mex is present\n";
+    $MEX = 1;
+    $rep = `bin/compilo_mexv`;
+    while($rep) {
+      ($li, $rep) = split('\n', $rep, 2);
+      if ($li =~ /MATLAB *\=/) {
+	($li, $MATLABREP) = split('\=', $li, 2);
+	print "Matlab found in path $MATLABREP\n";
+      }
     }
   }
-} 
-
-$MATLABREP =~ s/\s//g;
-
+  $MATLABREP =~ s/\s//g;
+}
 # il faudrait verifier que c'est au moins la version 6 ...
 
 
@@ -159,7 +162,13 @@ elsif ($CC =~ /cxx/) {
 }
 elsif (($CC =~ /g\+\+/) || ($CC =~ /gcc/)) {
   $rep = `bin/compilo_g++v $CC`;
-  print "compiler version : $rep\n";
+  ($a, $b) = split('version ', $rep, 2);
+  ($a, $b, $c) = split('\.', $b, 3);
+  ($c, $d) = split('\s', $c, 2);
+  print "compiler version : $a.$b.$c\n";
+  if ((($a < 3) && ($b < 90)) || ($a < 2)) {
+    die "Compiler version older than 2.90, too old";
+  }
   print MAKEFILE "COMP = $CC\n";
   print MAKEFILE "OPTIONS_STANDARD = -ftemplate-depth-40\n";
   print MAKEFILE "OPTIONS_STRICT = -pedantic\n";
@@ -177,7 +186,6 @@ else {
   print MAKEFILE "OPTIONS_BOTH     = -g -03\n";
 
 }
-
 
 if ($MEX == 0) {
   print MAKEFILE "INCLUDES_STANDARD = \n";
