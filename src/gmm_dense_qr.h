@@ -602,27 +602,21 @@ namespace gmm {
 //     gmm::add(scaled(A, -1), aux2);
 //     cout << "it gives : " << mat_euclidean_norm(aux2) << endl;
     
-    // symmetric_qr_stop_criterion(T, p, q, tol);
-    qr_stop_criterion(T, p, q, tol);
+    symmetric_qr_stop_criterion(T, p, q, tol);
     
     while (q < n) {
 
       sub_interval SUBI(p, n-p-q), SUBJ(0, mat_ncols(eigvect)), SUBK(p, n-p-q);
       if (!compvect) SUBK = sub_interval(0,0);
       symmetric_Wilkinson_qr_step(sub_matrix(T, SUBI), 
-				  sub_matrix(eigvect, SUBJ, SUBK),
-				  compvect);
+				  sub_matrix(eigvect, SUBJ, SUBK), compvect);
       
       symmetric_qr_stop_criterion(T, p, q, tol);
-      // qr_stop_criterion(T, p, q, tol);
       if (++ite > n*100) DAL_THROW(failure_error, "QR algorithm failed. "
 				   "Probably, your matrix is not real "
-				   "symmetric or complex hermitian"
-				   << " A = " << A << " T = " << T 
-				   << " q = " << q << " p = " << p);
+				   "symmetric or complex hermitian");
     }
     
-
     extract_eig(T, eigval, tol);
   }
 

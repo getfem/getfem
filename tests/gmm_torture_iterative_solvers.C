@@ -421,28 +421,39 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
 
   if (nexpe == 100) {
     cout << "\n mean number of iterations\n";
-    cout << "bicgstab: " << double(bicgstab_nb_iter) / double(bicgstab_nb)
+    if (bicgstab_nb) 
+      cout << "bicgstab: " << double(bicgstab_nb_iter) / double(bicgstab_nb)
+	   << endl;
+    if (gmres_nb) 
+      cout << "gmres: " << double(gmres_nb_iter) / double(gmres_nb)
+	   << endl;
+    if (qmr_nb) 
+      cout << "qmr: " << double(qmr_nb_iter) / double(qmr_nb)
+	   << endl;
+    if (cg_nb) 
+      cout << "cg: " << double(cg_nb_iter) / double(cg_nb)
+	   << endl;
+    if (ident_nb) 
+      cout << "no precond: " << double(ident_nb_iter) / double(ident_nb)
+	   << endl;
+    if (diagonal_nb) 
+      cout << "diagonal precond: "
+	   << double(diagonal_nb_iter) / double(diagonal_nb) << endl;
+    if (mr_nb) 
+      cout << "mr precond: " << double(mr_nb_iter) / double(mr_nb)
+	   << endl;
+    if (ilu_nb) 
+      cout << "ilu precond: " << double(ilu_nb_iter) / double(ilu_nb)
+	   << endl;
+    if (ilut_nb) 
+      cout << "ilut precond: " << double(ilut_nb_iter) / double(ilut_nb)
+	   << endl;
+    if (ildlt_nb) 
+      cout << "ildlt precond: " << double(ildlt_nb_iter) / double(ildlt_nb)
 	 << endl;
-    cout << "gmres: " << double(gmres_nb_iter) / double(gmres_nb)
-	 << endl;
-    cout << "qmr: " << double(qmr_nb_iter) / double(qmr_nb)
-	 << endl;
-    cout << "cg: " << double(cg_nb_iter) / double(cg_nb)
-	 << endl;
-    cout << "no precond: " << double(ident_nb_iter) / double(ident_nb)
-	 << endl;
-    cout << "diagonal precond: "
-	 << double(diagonal_nb_iter) / double(diagonal_nb) << endl;
-    cout << "mr precond: " << double(mr_nb_iter) / double(mr_nb)
-	 << endl;
-    cout << "ilu precond: " << double(ilu_nb_iter) / double(ilu_nb)
-	 << endl;
-    cout << "ilut precond: " << double(ilut_nb_iter) / double(ilut_nb)
-	 << endl;
-    cout << "ildlt precond: " << double(ildlt_nb_iter) / double(ildlt_nb)
-	 << endl;
-    cout << "ildltt precond: " << double(ildltt_nb_iter) / double(ildltt_nb)
-	 << endl;
+    if (ildltt_nb) 
+      cout << "ildltt precond: " << double(ildltt_nb_iter) / double(ildltt_nb)
+	   << endl;
   }
 
 }

@@ -533,20 +533,28 @@ namespace gmm {
 
 
   template <typename IT, typename ORG, typename VECT> inline
-  void set_to_begin(IT &, ORG, VECT *, linalg_modifiable)
-  { DAL_THROW(internal_error, "internal_error"); }
+  void set_to_begin(IT &, ORG, VECT *v, linalg_modifiable) { 
+    if (is_sparse(*v))
+      DAL_THROW(internal_error, "internal_error");  
+  }
 
   template <typename IT, typename ORG, typename VECT> inline
-  void set_to_begin(IT &, ORG, const VECT *, linalg_modifiable) 
-  { DAL_THROW(internal_error, "internal_error"); }
+  void set_to_begin(IT &, ORG, const VECT *v, linalg_modifiable) {
+    if (is_sparse(*v))
+      DAL_THROW(internal_error, "internal_error");
+  }
 
   template <typename IT, typename ORG, typename VECT> inline
-  void set_to_end(IT &, ORG, VECT *, linalg_modifiable)
-  { DAL_THROW(internal_error, "internal_error"); }
+  void set_to_end(IT &, ORG, VECT *v, linalg_modifiable) {
+    if (is_sparse(*v))
+      DAL_THROW(internal_error, "internal_error"); 
+  }
   
   template <typename IT, typename ORG, typename VECT> inline
-  void set_to_end(IT &, ORG, const VECT *, linalg_modifiable)
-  { DAL_THROW(internal_error, "internal_error"); }
+  void set_to_end(IT &, ORG, const VECT *v, linalg_modifiable) {
+    if (is_sparse(*v))
+      DAL_THROW(internal_error, "internal_error");
+  }
 
 
   /* ********************************************************************* */
