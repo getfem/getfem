@@ -133,19 +133,31 @@ namespace dal {
 //     exit(1);
 //   } 
 
-  class exception_callback {
-  public:
+  struct exception_callback {
     virtual void callback(const std::string&) = 0; //{};
+
+    static exception_callback *which_except(exception_callback *p = 0) {
+      static exception_callback *exc_cback = 0;
+      if (p != 0) exc_cback = p;
+      return exc_cback;
+    }
+
+    static void do_exception_callback(const std::string &msg)
+      { if (which_except()) which_except()->callback(msg); }
+  
+    static void set_exception_callback(exception_callback *e)
+      { which_except(e); }
+
   };
   
-  void do_exception_callback(const std::string &msg);
-  void set_exception_callback(exception_callback *e);
+  // void do_exception_callback(const std::string &msg);
+  // void set_exception_callback(exception_callback *e);
 
 #define DAL_THROW(type, thestr) {                \
     std::stringstream msg;                       \
     msg << "in "__FILE__ << ", line "            \
         << __LINE__ << ": \n" << thestr << ends; \
-    dal::do_exception_callback(msg.str());       \
+    dal::exception_callback::do_exception_callback(msg.str());       \
     throw (type)(msg.str());                     \
   }
   

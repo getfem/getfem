@@ -34,17 +34,17 @@
 #include <dal_except.h>
 
 namespace dal {
-  static exception_callback *exc_cback = 0;
+//   static exception_callback *exc_cback = 0;
   
-  void do_exception_callback(const std::string &msg) {
-    if (exc_cback) {
-      exc_cback->callback(msg);
-    }
-  }
+//   void do_exception_callback(const std::string &msg) {
+//     if (exc_cback) {
+//       exc_cback->callback(msg);
+//     }
+//   }
   
-  void set_exception_callback(exception_callback *e) {
-    exc_cback = e;
-  }
+//   void set_exception_callback(exception_callback *e) {
+//     exc_cback = e;
+//   }
 
   /* juste pour forcer l'instanciation dans libgetfem de tous les
      type qu'on est suceptible afficher. Si il en manque un (c'est le cas pour unsigned et float)
