@@ -176,9 +176,6 @@ namespace bgeot
     template<class R> friend vsvector<R>& operator *=(vsvector<R>& v, 
 						     const smatrix<R>& m);
 
-    template<class R> friend vsvector<R> operator *(const smatrix<R>& m,
-						   vsvector<R>& v);
-   
     /* Constructors / Destructor.                                         */
     smatrix(size_type l, size_type c = size_type(-6))
       { if (c == size_type(-6)) c = l; init(l, c); }
@@ -204,14 +201,14 @@ namespace bgeot
     for (size_type l = 0; l < m.nbl; l++) v(l) = lv_product(m, l, tmp);
     return v;
   }
-  
-  template<class T> vsvector<T> operator *(const smatrix<T>& m, vsvector<T>& v)
+  template<class R, class VECT> VECT operator *(const smatrix<R>& m,
+						       const VECT& v)
   {	/* optimiser l' acces a la matrice.				*/
     if (v.size() != m.ncols())
       throw dimension_error
 	("vsvector<T>& smatrix<T>::operator *= dimensions mismatch");
-    vsvector<T> res(m.nrows());
-    for (size_type l = 0; l < m.nbl; l++) res[l] = lv_product(m, l, v);
+    VECT res(m.nrows());
+    for (size_type l = 0; l < m.nrows(); l++) res[l] = lv_product(m, l, v);
     return res;
   }
   
@@ -255,8 +252,8 @@ namespace bgeot
     return res;
   }
   
-  template<class T> T lv_product(const smatrix<T> &m1, size_type i,
-				 const typename smatrix<T>::vector_type &v)
+  template<class T, class VECT> inline T lv_product(const smatrix<T> &m1, size_type i,
+					     const VECT& v)
   { 
     return vect_sp(m1.row(i), v);
   }
