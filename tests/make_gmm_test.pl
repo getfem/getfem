@@ -354,7 +354,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
       print "$compilo $compile_options $dest_name -o $root_name $compile_libs\n";
       print "\n******************************************************\n";
       print "* Compilation error, please submit this bug to\n";
-      print "* Yves.Renard\@gmm.insa-toulouse.fr, with the file\n";
+      print "* Yves.Renard\@insa-toulouse.fr, with the file\n";
       print "* $dest_name\n";
       print "* produced in directory \"tests\".\n";
       print "******************************************************\n";
@@ -365,7 +365,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
       print "$compilo $compile_options $dest_name -o $root_name $compile_libs\n";
       print "\n******************************************************\n";
       print "* Execution error, please submit this bug to\n";
-      print "* Yves.Renard\@gmm.insa-toulouse.fr, with the file\n";
+      print "* Yves.Renard\@insa-toulouse.fr, with the file\n";
       print "* $dest_name\n";
       print "* produced in directory \"tests\".\n";
       print "******************************************************\n";
