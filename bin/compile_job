@@ -157,7 +157,7 @@ while($listeC)
 {
   ($fi, $listeC) = split('\s', $listeC, 2);
   $fi1 = $fi;
-  $fi1 =~ s/.C//g;
+  $fi1 =~ s/\.C//g;
   $fi1 =~ s/matlabcom\//lib\//g;
   print MAKEFILE "\n", "../$fi1.$extmatcom : $fi \$(GETFEM_LIB) .\/sources\/*.o \n";
   $fi1 =~ s/lib\///g;
