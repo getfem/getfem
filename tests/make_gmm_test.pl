@@ -113,6 +113,10 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 
     print TMPF "\n\n";
 
+    if ($with_lapack) {
+      print TMPF "#include<gmm_lapack_interface.h>\n\n";
+    }
+
     if ($with_qd) {
       print TMPF "#include <dd.h>\n";
       print TMPF "#include <qd.h>\n";
@@ -329,7 +333,9 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 
     `rm -f $root_name`;
     if ($with_lapack) {
-      print `make $root_name CPPFLAGS=\"-I$srcdir/../src -I$srcdir/../include -I../src  -I../include -lblas -llapack -lg2c -lm -DGMM_USES_LAPACK\"`;
+      print `touch auto_gmm_torture_dummy.C`;
+      print `make auto_gmm_torture_dummy CPPFLAGS=\"-I$srcdir/../src -I$srcdir/../include -I../src -I../include $dest_name -llapack -lblas -lg2c -lm -DGMM_USES_LAPACK\"`;
+      if ($? == 0) { print `mv -f auto_gmm_torture_dummy $root_name`; }
     }
     elsif ($with_qd) {
       print `touch auto_gmm_torture_dummy.C`;

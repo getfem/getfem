@@ -43,6 +43,9 @@
 
 namespace gmm {
 
+  #define GMMLAPACK_TRACE(f) 
+  // #define GMMLAPACK_TRACE(f) cout << "function " << f << " called" << endl;
+
   /* ********************************************************************* */
   /* Operations interfaced for T = float, double, std::complex<float>      */
   /*    or std::complex<double> :                                          */
@@ -159,6 +162,7 @@ namespace gmm {
                         blas_name, base_type, orien)                       \
   inline void mult_spec(param1(base_type), param2(base_type),              \
               param3(base_type), std::vector<base_type > &z, orien) {      \
+    GMMLAPACK_TRACE("gemv_interface");                                     \
     trans1(base_type); trans2(base_type); trans3(base_type);               \
     int m(mat_nrows(A)), lda(m), n(mat_ncols(A)), inc(1); gmm::copy(y, z); \
     if (m && n)                                                            \
@@ -371,6 +375,7 @@ namespace gmm {
                          base_type, orien)                                 \
   inline void mult_spec(param1(base_type), param2(base_type),              \
               std::vector<base_type > &z, orien) {                         \
+    GMMLAPACK_TRACE("gemv_interface2");                                    \
     trans1(base_type); trans2(base_type); base_type beta(0);               \
     int m(mat_nrows(A)), lda(m), n(mat_ncols(A)), inc(1);                  \
     if (m && n)                                                            \
@@ -467,6 +472,7 @@ namespace gmm {
   inline void mult_spec(const dense_matrix<base_type > &A,                 \
             const dense_matrix<base_type > &B,                             \
             dense_matrix<base_type > &C, c_mult, col_major) {              \
+    GMMLAPACK_TRACE("gemm_interface_nn");                                  \
     const char t = 'N';                                                    \
     int m = mat_nrows(A), lda = m, k = mat_ncols(A), n = mat_ncols(B);     \
     int ldb = k, ldc = m;                                                  \
@@ -491,6 +497,7 @@ namespace gmm {
          const transposed_col_ref<is_const dense_matrix<base_type > *> &_A,\
          const dense_matrix<base_type > &B,                                \
          dense_matrix<base_type > &C, rcmult) {                            \
+    GMMLAPACK_TRACE("gemm_interface_tn");                                  \
     dense_matrix<base_type > &A                                            \
          = const_cast<dense_matrix<base_type > &>(*(linalg_origin(_A)));   \
     const char t = 'T', u = 'N';                                           \
@@ -520,6 +527,7 @@ namespace gmm {
   inline void mult_spec(const dense_matrix<base_type > &A,                 \
          const transposed_col_ref<is_const dense_matrix<base_type > *> &_B,\
          dense_matrix<base_type > &C, c_mult, row_major) {                 \
+    GMMLAPACK_TRACE("gemm_interface_nt");                                  \
     dense_matrix<base_type > &B                                            \
         = const_cast<dense_matrix<base_type > &>(*(linalg_origin(_B)));    \
     const char t = 'N', u = 'T';                                           \
@@ -550,6 +558,7 @@ namespace gmm {
         const transposed_col_ref<isA_const dense_matrix<base_type > *> &_A,\
         const transposed_col_ref<isB_const dense_matrix<base_type > *> &_B,\
         dense_matrix<base_type > &C, r_mult) {                             \
+    GMMLAPACK_TRACE("gemm_interface_tt");                                  \
     dense_matrix<base_type > &A                                            \
         = const_cast<dense_matrix<base_type > &>(*(linalg_origin(_A)));    \
     dense_matrix<base_type > &B                                            \
@@ -591,6 +600,7 @@ namespace gmm {
       const conjugated_col_matrix_const_ref<dense_matrix<base_type > > &_A,\
       const dense_matrix<base_type > &B,                                   \
       dense_matrix<base_type > &C, rcmult) {                               \
+    GMMLAPACK_TRACE("gemm_interface_cn");                                  \
     dense_matrix<base_type > &A                                            \
           = const_cast<dense_matrix<base_type > &>(*(linalg_origin(_A)));  \
     const char t = 'C', u = 'N';                                           \
@@ -616,6 +626,7 @@ namespace gmm {
   inline void mult_spec(const dense_matrix<base_type > &A,                 \
       const conjugated_col_matrix_const_ref<dense_matrix<base_type > > &_B,\
       dense_matrix<base_type > &C, c_mult, row_major) {                    \
+    GMMLAPACK_TRACE("gemm_interface_nc");                                  \
     dense_matrix<base_type > &B                                            \
          = const_cast<dense_matrix<base_type > &>(*(linalg_origin(_B)));   \
     const char t = 'N', u = 'C';                                           \
@@ -642,6 +653,7 @@ namespace gmm {
       const conjugated_col_matrix_const_ref<dense_matrix<base_type > > &_A,\
       const conjugated_col_matrix_const_ref<dense_matrix<base_type > > &_B,\
       dense_matrix<base_type > &C, r_mult) {                               \
+    GMMLAPACK_TRACE("gemm_interface_cc");                                  \
     dense_matrix<base_type > &A                                            \
         = const_cast<dense_matrix<base_type > &>(*(linalg_origin(_A)));    \
     dense_matrix<base_type > &B                                            \
@@ -668,6 +680,7 @@ namespace gmm {
 # define trsv_interface(f_name, loru, param1, trans1, blas_name, base_type)\
   inline void f_name(param1(base_type), std::vector<base_type > &x,        \
                               size_type k, bool is_unit) {                 \
+    GMMLAPACK_TRACE("trsv_interface");                                     \
     loru; trans1(base_type); char d = is_unit ? 'U' : 'N';                 \
     int lda(mat_nrows(A)), inc(1), n(k);                                   \
     if (lda) blas_name(&l, &t, &d, &n, &A(0,0), &lda, &x[0], &inc);        \
@@ -763,6 +776,7 @@ namespace gmm {
 
 # define getrf_interface(lapack_name, base_type) inline                    \
   size_type lu_factor(dense_matrix<base_type > &A, std::vector<int> &ipvt){\
+    GMMLAPACK_TRACE("getrf_interface");                                    \
     int m(mat_nrows(A)), n(mat_ncols(A)), lda(m), info(0);                 \
     if (m && n) lapack_name(&m, &n, &A(0,0), &lda, &ipvt[0], &info);       \
     return size_type(info);                                                \
@@ -781,6 +795,7 @@ namespace gmm {
   void f_name(const dense_matrix<base_type > &A,                           \
 	      const std::vector<int> &ipvt, std::vector<base_type > &x,    \
 	      const std::vector<base_type > &b) {                          \
+    GMMLAPACK_TRACE("getrs_interface");                                    \
     int n(mat_nrows(A)), info, nrhs(1);                                    \
     gmm::copy(b, x); trans1;                                               \
     if (n)                                                                 \
@@ -806,6 +821,7 @@ namespace gmm {
 # define getri_interface(lapack_name, base_type) inline                    \
   void lu_inverse(const dense_matrix<base_type > &LU,                      \
        std::vector<int> &ipvt, const dense_matrix<base_type > &A_) {       \
+    GMMLAPACK_TRACE("getri_interface");                                    \
     dense_matrix<base_type >&                                              \
     A = const_cast<dense_matrix<base_type > &>(A_);                        \
     int n(mat_nrows(A)), info, lwork(-1); base_type work1;                 \
@@ -830,6 +846,7 @@ namespace gmm {
   
 # define geqrf_interface(lapack_name1, base_type) inline                   \
   void qr_factor(dense_matrix<base_type > &A){                             \
+    GMMLAPACK_TRACE("geqrf_interface");                                    \
     int m(mat_nrows(A)), n(mat_ncols(A)), info, lwork(-1); base_type work1;\
     if (m && n) {                                                          \
       std::vector<base_type > tau(n);                                      \
@@ -849,6 +866,7 @@ namespace gmm {
 # define geqrf_interface2(lapack_name1, lapack_name2, base_type) inline    \
   void qr_factor(const dense_matrix<base_type > &A,                        \
        dense_matrix<base_type > &Q, dense_matrix<base_type > &R) {         \
+    GMMLAPACK_TRACE("geqrf_interface2");                                   \
     int m(mat_nrows(A)), n(mat_ncols(A)), info, lwork(-1); base_type work1;\
     if (m && n) {                                                          \
       gmm::copy(A, Q);                                                     \
@@ -881,6 +899,7 @@ namespace gmm {
          const dense_matrix<base_type > &A,  const VECT &eigval_,          \
          dense_matrix<base_type > &Q,                                      \
          double tol=gmm::default_tol(base_type()), bool compvect = true) { \
+    GMMLAPACK_TRACE("gees_interface");                                     \
     typedef bool (*L_fp)(...);  L_fp p = 0;                                \
     int n(mat_nrows(A)), info, lwork(-1), sdim; base_type work1;           \
     if (!n) return;                                                        \
@@ -902,6 +921,7 @@ namespace gmm {
          const dense_matrix<base_type > &A,  const VECT &eigval_,          \
          dense_matrix<base_type > &Q,                                      \
          double tol=gmm::default_tol(base_type()), bool compvect = true) { \
+    GMMLAPACK_TRACE("gees_interface2");                                    \
     typedef bool (*L_fp)(...);  L_fp p = 0;                                \
     int n(mat_nrows(A)), info, lwork(-1), sdim; base_type work1;           \
     if (!n) return;                                                        \

@@ -99,7 +99,6 @@ namespace gmm {
       }
       ipvt[j] = j + 1;
     }
-    
     return info;
   }
   
