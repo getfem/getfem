@@ -353,18 +353,19 @@ namespace gmm {
     return impl->memory_used;
   }
 
-  void force_instantiation() {
-    SuperLU_factor<float> *a;
-    SuperLU_factor<double> *b;
-    SuperLU_factor<std::complex<float> > *c;
-    SuperLU_factor<std::complex<double> > *d;
-    a = 0; b = 0; c = 0; d = 0;
-  }
-  /*
-  template SuperLU_factor<float>;
-  template SuperLU_factor<double>;
-  template SuperLU_factor<std::complex<float> >;
-  template SuperLU_factor<std::complex<double> >;
-  */
+  /*  void force_instantiation() {
+    SuperLU_factor<float> a;
+    SuperLU_factor<double> b;
+    SuperLU_factor<std::complex<float> > c;
+    SuperLU_factor<std::complex<double> > d;
+    //a = 0; b = 0; c = 0; d = 0;
+  } 
+  */ 
 }
+
+template class gmm::SuperLU_factor<float>;
+template class gmm::SuperLU_factor<double>;
+template class gmm::SuperLU_factor<std::complex<float> >;
+template class gmm::SuperLU_factor<std::complex<double> >;
+
 
