@@ -20,6 +20,19 @@
 #include <bgeot_matrix.h>
 #include <gmm.h>
 
+
+void test_gauss_det() {
+  bgeot::vsmatrix<double> m(5,5), tmp(5,5);
+  // vander(1:5)
+  for (unsigned i=0; i < m.nrows(); ++i)
+    for (unsigned j=0; j < m.ncols(); ++j) {
+      m(i,j) = 1; for (unsigned k=j; k < m.ncols()-1; ++k) m(i,j) *= (i+1);
+    }
+  cout << "m=" << m << endl;
+  double det = bgeot::mat_gauss_inverse(m,tmp);
+  cout << "det = " << det << "\n m=" << m << "\ntmp=" << tmp << endl;
+}
+
 template <class M1, class M2> 
 void const_ref_test(const M1 &m1, const M2 &m2) {
 
@@ -40,6 +53,7 @@ int main(void)
 
     cout.precision(16);
 
+    test_gauss_det();
     cout << "/***********************************************************/\n";
     cout << "/*                   Test of fsmatrix                      */\n";
     cout << "/***********************************************************/\n";
