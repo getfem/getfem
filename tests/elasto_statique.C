@@ -356,8 +356,8 @@ void pb_data::assemble(void)
 }
 
 void pb_data::solve(void) {
-  gmm::cg(SM, U, B, gmm::identity_matrix(), gmm::identity_matrix(),
-	  20000, residu, 1);
+  gmm::iteration iter(residu);
+  gmm::cg(SM, U, B, gmm::identity_matrix(), gmm::identity_matrix(), iter);
 }
 
 int main(int argc, char *argv[]) {

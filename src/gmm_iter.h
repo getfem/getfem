@@ -69,18 +69,21 @@
 namespace gmm
 {
 
-  class iter {
+  class iteration {
   protected :
-    scalar_type rhsn;  /* Right hand side norm.                            */
+    double rhsn;       /* Right hand side norm.                            */
     size_type maxiter; /* Max. number of iterations.                       */
     int noise;         /* if noise > 0 iterations are printed.             */
-    scalar_type resmax;/* maximum residu.                                  */
+    double resmax;/* maximum residu.                                  */
     size_type nit;     /* iteration number.                                */
-    scalar_type res;   /* last computed residu.                            */
+    double res;   /* last computed residu.                            */
     std::string name;  /* eventually, name of the method.                  */
     
   public :
-    iter(scalar_type r, int noi = 0, size_type mit = size_type(-1))
+
+    void init(void) { nit = 0; res = 0.0; }
+
+    iteration(double r, int noi = 0, size_type mit = size_type(-1))
       : rhsn(1.0), maxiter(mit), noise(noi), resmax(r), nit(0), res(0.0) {}
 
     void  operator ++(int) { 
@@ -95,9 +98,10 @@ namespace gmm
 
     int get_noisy(void) const { return noise; }
     void set_noisy(int n) { noise = n; }
+    void reduce_noisy(void) { if (noise > 0) noise--; }
 
-    scalar_type get_resmax(void) const { return resmax; }
-    void set_resmax(scalar_type r) { resmax = r; }
+    double get_resmax(void) const { return resmax; }
+    void set_resmax(double r) { resmax = r; }
     
     size_type get_iteration(void) const { return nit; }
     void set_iteration(size_type i) { nit = i; }
@@ -105,17 +109,18 @@ namespace gmm
     size_type get_maxiter(void) const { return maxiter; }
     void set_maxiter(size_type i) { maxiter = i; }
 
-    scalar_type get_rhsnorm(void) const { return rhsn; }
-    void set_rhsnorm(scalar_type r) { rhsn = r; }
+    double get_rhsnorm(void) const { return rhsn; }
+    void set_rhsnorm(double r) { rhsn = r; }
     
-    bool finished(scalar_type nr) { res = nr; return (nr < rhsn * resmax); }
+    bool finished(double nr)
+    { res = dal::abs(nr); return (res < rhsn * resmax); }
     template <class VECT> bool finished(const VECT &v)
-    { return finished(vect_norm2(v)); }
+    { return finished(gmm::vect_norm2(v)); }
 
     void set_name(const std::string &n) { name = n; }
     const std::string &get_name(void) const { return name; }
 
-  }
+  };
   
 
 }

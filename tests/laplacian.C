@@ -379,8 +379,8 @@ void lap_pb::assemble(void)
 }
 
 void lap_pb::solve(void) {
-  gmm::cg(SM, U, B, gmm::identity_matrix(), gmm::identity_matrix(), 20000,
-	  residu, 1);
+  gmm::iteration iter(residu);
+  gmm::cg(SM, U, B, gmm::identity_matrix(), gmm::identity_matrix(), iter);
 }
 
 /**************************************************************************/

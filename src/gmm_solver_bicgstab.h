@@ -1,28 +1,4 @@
 /* -*- c++ -*- (enables emacs c++ mode)                                    */
-//=======================================================================
-// Copyright (C) 1997-2001
-// Authors: Andrew Lumsdaine <lums@osl.iu.edu> 
-//          Lie-Quan Lee     <llee@osl.iu.edu>
-//
-// This file is part of the Iterative Template Library
-//
-// You should have received a copy of the License Agreement for the
-// Iterative Template Library along with the software;  see the
-// file LICENSE.  
-//
-// Permission to modify the code and to distribute modified code is
-// granted, provided the text of this NOTICE is retained, a notice that
-// the code was modified is included with the above COPYRIGHT NOTICE and
-// with the COPYRIGHT NOTICE in the LICENSE file, and that the LICENSE
-// file is distributed with the modified code.
-//
-// LICENSOR MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR IMPLIED.
-// By way of example, but not limitation, Licensor MAKES NO
-// REPRESENTATIONS OR WARRANTIES OF MERCHANTABILITY OR FITNESS FOR ANY
-// PARTICULAR PURPOSE OR THAT THE USE OF THE LICENSED SOFTWARE COMPONENTS
-// OR DOCUMENTATION WILL NOT INFRINGE ANY PATENTS, COPYRIGHTS, TRADEMARKS
-// OR OTHER RIGHTS.
-//=======================================================================
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Generic Matrix Methods  (gmm)                                */
@@ -54,7 +30,30 @@
 /* USA.                                                                    */
 /*                                                                         */
 /* *********************************************************************** */
-
+//=======================================================================
+// Copyright (C) 1997-2001
+// Authors: Andrew Lumsdaine <lums@osl.iu.edu> 
+//          Lie-Quan Lee     <llee@osl.iu.edu>
+//
+// This file is part of the Iterative Template Library
+//
+// You should have received a copy of the License Agreement for the
+// Iterative Template Library along with the software;  see the
+// file LICENSE.  
+//
+// Permission to modify the code and to distribute modified code is
+// granted, provided the text of this NOTICE is retained, a notice that
+// the code was modified is included with the above COPYRIGHT NOTICE and
+// with the COPYRIGHT NOTICE in the LICENSE file, and that the LICENSE
+// file is distributed with the modified code.
+//
+// LICENSOR MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR IMPLIED.
+// By way of example, but not limitation, Licensor MAKES NO
+// REPRESENTATIONS OR WARRANTIES OF MERCHANTABILITY OR FITNESS FOR ANY
+// PARTICULAR PURPOSE OR THAT THE USE OF THE LICENSED SOFTWARE COMPONENTS
+// OR DOCUMENTATION WILL NOT INFRINGE ANY PATENTS, COPYRIGHTS, TRADEMARKS
+// OR OTHER RIGHTS.
+//=======================================================================
 
 #ifndef __GMM_SOLVER_BICGSTAB_H
 #define __GMM_SOLVER_BICGSTAB_H
@@ -67,8 +66,8 @@ namespace gmm {
   /* ******************************************************************** */
 
   template <class Matrix, class Vector, class VectorB, class Preconditioner>
-  int bicgstab(const Matrix& A, Vector& x, const VectorB& b,
-	   const Preconditioner& M, int itemax, double residu, int noisy) {
+  void bicgstab(const Matrix& A, Vector& x, const VectorB& b,
+	       const Preconditioner& M, iteration &iter) {
 
     typedef typename linalg_traits<Vector>::value_type T;
     typedef typename temporary_plain_vector<Vector>::vector_type temp_vector;
@@ -80,22 +79,23 @@ namespace gmm {
     
     gmm::mult(A, gmm::scaled(x, -1.0), b, r);	  
     gmm::copy(r, rtilde);
-    int iter = 0;
     T norm_r = gmm::vect_norm2(r);
-    T norm_b = gmm::vect_norm2(b);
+    iter.set_rhsnorm(gmm::vect_norm2(b));
 
-    if (norm_b == T(0))
+    if (iter.get_rhsnorm() == 0.0)
       clear(x);
     else {
-      while (norm_r > residu * norm_b) {
+      while (!iter.finished(norm_r)) {
 	
 	rho_1 = gmm::vect_sp(rtilde, r);
-	if (rho_1 == T(0) || iter > itemax) return 1;
+	if (rho_1 == T(0))
+	  DAL_THROW(failure_error, "Bicgstab failed to converge");
 	
-	if (iter == 0)
+	if (iter.first())
 	  gmm::copy(r, p);
 	else {
-	  if (omega == T(0.)) return 1;
+	  if (omega == T(0))
+	    DAL_THROW(failure_error, "Bicgstab failed to converge");
 	  
 	  beta = (rho_1 / rho_2) * (alpha / omega);
 	  
@@ -107,8 +107,7 @@ namespace gmm {
 	alpha = rho_1 / gmm::vect_sp(v, rtilde);
 	gmm::add(r, gmm::scaled(v, -alpha), s);
 	
-	T norm_s = gmm::vect_norm2(s);
-	if (norm_s <= residu * norm_b) {
+	if (iter.finished(s)) {
 	  gmm::add(gmm::scaled(phat, alpha), x); 
 	  break;
 	}
@@ -124,18 +123,14 @@ namespace gmm {
 	rho_2 = rho_1;
 	
 	++iter;
-	if (noisy > 0)  cout << "iter " << iter << " residu "
-			     << norm_r / norm_b << endl;
       }
     }
-    return 0;
   }
 
   template <class Matrix, class Vector, class VectorB, class Preconditioner>
   int bicgstab(const Matrix& A, const Vector& x, const VectorB& b,
-	   const Preconditioner& M, int itemax, double residu, int noisy) {
-    return bicgstab(A, linalg_const_cast(x), b, M, itemax, residu, noisy);
-  }
+	       const Preconditioner& M, iteration &iter)
+  { bicgstab(A, linalg_const_cast(x), b, M, iter); }
   
 }
 

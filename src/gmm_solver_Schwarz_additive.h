@@ -48,16 +48,16 @@ namespace gmm {
     const std::vector<Matrix2> *ml1;
     const std::vector<Matrix3> *ml2;
     const std::vector<SUBI> *cor;
-    int itemax, noisy;
-    mutable int itebilan;
-    mutable double residu_act;
+    mutable iteration iter;
     double residu;
+    mutable int itebilan;
     std::vector<vector_type> *gi;
     std::vector<vector_type> *fi;
   };
 
   template <class Matrix1, class Matrix2, class Matrix3, class Matrix4,
-	    class Matrix5, class Matrix6, class SUBI, class Vector2, class Vector3>
+	    class Matrix5, class Matrix6, class SUBI, class Vector2,
+	    class Vector3>
   int schwarz_additif(const Matrix1 &A,
 		      Vector3 &u, const Matrix4 &CO,
 		      const std::vector<Matrix2> &ml1,
@@ -66,7 +66,7 @@ namespace gmm {
 		      const std::vector<Matrix5> &mco2, 
 		      const std::vector<SUBI> &cor,
 		      const Vector2 &f,
-		      int itemax,  double residu, int noisy = 1) {
+		      iteration &iter) {
 
     typedef typename linalg_traits<Matrix2>::value_type value_type;
     typedef typename plain_vector_type<value_type>::vector_type vector_type;
@@ -89,19 +89,20 @@ namespace gmm {
     size_type nb_dof = f.size();
     global_to_local(f, fi, cor);
 
+    iteration iter2 = iter;
+    iter2.reduce_noisy();
+
     for (size_type i = 0; i < ms; ++i) {
-      // cout << "mco1[" << i << "] = " << mco1[i] << endl;
-      itebilan = std::max(itebilan,
-		constrained_cg(ml1[i], mco1[i], gi[i], fi[i],
-			       identity_matrix(),
-			       identity_matrix(), itemax, residu, noisy - 1));
-      // cout << "gi[" << i << "] = " << gi[i] << endl;
+      iter2.init();
+      constrained_cg(ml1[i], mco1[i], gi[i], fi[i],
+		     identity_matrix(), identity_matrix(), iter2);
+      itebilan = std::max(itebilan, iter2.get_iteration());
     }
     for (size_type i = 0; i < ml2.size(); ++i) {
-      itebilan = std::max(itebilan,
-		constrained_cg(ml2[i], mco2[i], gi[i+ms], fi[i+ms],
-			       identity_matrix(),
-			       identity_matrix(), itemax, residu, noisy - 1));
+      iter2.init();
+      constrained_cg(ml2[i], mco2[i], gi[i+ms], fi[i+ms],
+		     identity_matrix(), identity_matrix(), iter2);
+      itebilan = std::max(itebilan, iter2.get_iteration());
     }
 
     vector_type g(nb_dof);
@@ -109,13 +110,13 @@ namespace gmm {
     
     schwarz_additif_matrix<Matrix1, Matrix2, Matrix3, SUBI> SAM;
     SAM.A = &A; SAM.ml1 = &ml1; SAM.ml2 = &ml2; SAM.cor = &cor;
-    SAM.itemax = itemax;
+    iter2.init();
+    SAM.iter = iter2;
+    SAM.residu = iter.get_resmax();
     // SAM.residu_act = 1E-2;
-    SAM.residu_act = residu;
-    SAM.residu = residu;
-    SAM.noisy = noisy; SAM.gi = &gi; SAM.fi = &fi; SAM.itebilan = itebilan;
+    SAM.gi = &gi; SAM.fi = &fi; SAM.itebilan = itebilan;
    
-    constrained_cg(SAM, CO, u, g, A, identity_matrix(), itemax, residu, noisy);
+    constrained_cg(SAM, CO, u, g, A, identity_matrix(), iter);
 
     return SAM.itebilan;
   }
@@ -129,21 +130,23 @@ namespace gmm {
     size_type ms = (M.ml1)->size();
     mult(*(M.A), p, q);
     global_to_local(q, *(M.fi), *(M.cor));
-    for (size_type i = 0; i < (M.ml1)->size(); ++i)
-      itebilan = std::max(itebilan, 
-			  cg((*(M.ml1))[i], (*(M.gi))[i], (*(M.fi))[i],
-		      identity_matrix(), M.itemax, M.residu_act, M.noisy-1));
+    for (size_type i = 0; i < (M.ml1)->size(); ++i) {
+      M.iter.init();
+      cg((*(M.ml1))[i], (*(M.gi))[i], (*(M.fi))[i], identity_matrix(), M.iter);
+      itebilan = std::max(itebilan, M.iter.get_iteration());
+    }
 
-    for (size_type i = 0; i < (M.ml2)->size(); ++i)
-      itebilan = std::max(itebilan, 
-			  cg((*(M.ml2))[i],(*(M.gi))[i+ms],
-			     (*(M.fi))[i+ms], identity_matrix(),
-			     M.itemax, M.residu_act, M.noisy-1));
+    for (size_type i = 0; i < (M.ml2)->size(); ++i) {
+      M.iter.init();
+      cg((*(M.ml2))[i],(*(M.gi))[i+ms], (*(M.fi))[i+ms], identity_matrix(),
+	 M.iter);
+      itebilan = std::max(itebilan, M.iter.get_iteration());
+    }
 
     local_to_global(*(M.gi), q, *(M.cor));
     cout << "itebloc = " << itebilan << endl;
     M.itebilan += itebilan;
-    M.residu_act += (M.residu - M.residu_act) * 0.5;
+    M.iter.set_resmax((M.iter.get_resmax() + M.residu) * 0.5);
   }
 
   template <class Matrix1, class Matrix2, class Matrix3, class SUBI,

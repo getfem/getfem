@@ -1,28 +1,4 @@
 /* -*- c++ -*- (enables emacs c++ mode)                                    */
-//=======================================================================
-// Copyright (C) 1997-2001
-// Authors: Andrew Lumsdaine <lums@osl.iu.edu> 
-//          Lie-Quan Lee     <llee@osl.iu.edu>
-//
-// This file is part of the Iterative Template Library
-//
-// You should have received a copy of the License Agreement for the
-// Iterative Template Library along with the software;  see the
-// file LICENSE.  
-//
-// Permission to modify the code and to distribute modified code is
-// granted, provided the text of this NOTICE is retained, a notice that
-// the code was modified is included with the above COPYRIGHT NOTICE and
-// with the COPYRIGHT NOTICE in the LICENSE file, and that the LICENSE
-// file is distributed with the modified code.
-//
-// LICENSOR MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR IMPLIED.
-// By way of example, but not limitation, Licensor MAKES NO
-// REPRESENTATIONS OR WARRANTIES OF MERCHANTABILITY OR FITNESS FOR ANY
-// PARTICULAR PURPOSE OR THAT THE USE OF THE LICENSED SOFTWARE COMPONENTS
-// OR DOCUMENTATION WILL NOT INFRINGE ANY PATENTS, COPYRIGHTS, TRADEMARKS
-// OR OTHER RIGHTS.
-//=======================================================================
 /* *********************************************************************** */
 /*                                                                         */
 /* Library : Generic Matrix Methods  (gmm)                                 */
@@ -53,6 +29,31 @@
 /* USA.                                                                    */
 /*                                                                         */
 /* *********************************************************************** */
+//=======================================================================
+// Copyright (C) 1997-2001
+// Authors: Andrew Lumsdaine <lums@osl.iu.edu> 
+//          Lie-Quan Lee     <llee@osl.iu.edu>
+//
+// This file is part of the Iterative Template Library
+//
+// You should have received a copy of the License Agreement for the
+// Iterative Template Library along with the software;  see the
+// file LICENSE.  
+//
+// Permission to modify the code and to distribute modified code is
+// granted, provided the text of this NOTICE is retained, a notice that
+// the code was modified is included with the above COPYRIGHT NOTICE and
+// with the COPYRIGHT NOTICE in the LICENSE file, and that the LICENSE
+// file is distributed with the modified code.
+//
+// LICENSOR MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR IMPLIED.
+// By way of example, but not limitation, Licensor MAKES NO
+// REPRESENTATIONS OR WARRANTIES OF MERCHANTABILITY OR FITNESS FOR ANY
+// PARTICULAR PURPOSE OR THAT THE USE OF THE LICENSED SOFTWARE COMPONENTS
+// OR DOCUMENTATION WILL NOT INFRINGE ANY PATENTS, COPYRIGHTS, TRADEMARKS
+// OR OTHER RIGHTS.
+//=======================================================================
+
 
 // to be unified with cg, preconditionning does not work
 
@@ -109,95 +110,89 @@ void pseudo_inverse(const CMatrix &C, CINVMatrix &CINV, const Matps& PS,
   }
 }
 
-template < class Matrix, class CMatrix, class Matps, class VectorX,
-	   class VectorB, class Preconditioner >
-int constrained_cg(const Matrix& A, const CMatrix& C, VectorX& x,
-		   const VectorB& b, const Matps& PS, const Preconditioner& M,
-		   int itemax, double residu, int noisy)
-{
-  typedef typename temporary_plain_vector<VectorX>::vector_type TmpVec;
-  typedef typename temporary_vector<typename
-    linalg_traits<CMatrix>::sub_row_type>::vector_type TmpCVec;
-  typedef row_matrix<TmpCVec> TmpCmat;
-  
-  typedef size_t size_type;
-  typedef typename linalg_traits<VectorX>::value_type value_type;
-  value_type rho = 1.0, rho_1, lambda, gamma, norm_b = sqrt(vect_sp(PS, b, b));
-  TmpVec p(vect_size(x)), q(vect_size(x)), q2(vect_size(x)),
-    r(vect_size(x)), old_z(vect_size(x)), z(vect_size(x)), memox(vect_size(x));
-  std::vector<bool> satured(mat_nrows(C));
-  clear(p);
-  int iter = 0;
-
-  TmpCmat CINV(mat_nrows(C), mat_ncols(C));
-  pseudo_inverse(C, CINV, PS, x);
-
-  // cout << "C = " << C << " CINV = " << CINV << endl;
-
-  while(true)
-  {
-    // computation of residu
-    copy(z, old_z);
-    copy(x, memox);
-    mult(A, scaled(x, -1.0), b, r);
-    mult(M, r, z); // ...
-    bool transition = false;
-    for (size_type i = 0; i < mat_nrows(C); ++i) {
-      value_type al = vect_sp(mat_row(C, i), x);
-      if (al >= -1.0E-15)
-      {
-	if (!satured[i]) { satured[i] = true; transition = true; }
-	value_type bb = vect_sp(mat_row(CINV, i), z);
-	if (bb > 0.0) add(scaled(mat_row(C, i), -bb), z);
- 
-/* 	bb = itl::dot(mtl::rows(CINV)[i], r); */
+  template < class Matrix, class CMatrix, class Matps, class VectorX,
+	     class VectorB, class Preconditioner >
+  void constrained_cg(const Matrix& A, const CMatrix& C, VectorX& x,
+		      const VectorB& b, const Matps& PS,
+		      const Preconditioner& M, iteration &iter) {
+    typedef typename temporary_plain_vector<VectorX>::vector_type TmpVec;
+    typedef typename temporary_vector<typename
+      linalg_traits<CMatrix>::sub_row_type>::vector_type TmpCVec;
+    typedef row_matrix<TmpCVec> TmpCmat;
+    
+    typedef size_t size_type;
+    typedef typename linalg_traits<VectorX>::value_type value_type;
+    value_type rho = 1.0, rho_1, lambda, gamma;
+    TmpVec p(vect_size(x)), q(vect_size(x)), q2(vect_size(x)),
+      r(vect_size(x)), old_z(vect_size(x)), z(vect_size(x)),
+      memox(vect_size(x));
+    std::vector<bool> satured(mat_nrows(C));
+    clear(p);
+    iter.set_rhsnorm(sqrt(vect_sp(PS, b, b)));
+    
+    TmpCmat CINV(mat_nrows(C), mat_ncols(C));
+    pseudo_inverse(C, CINV, PS, x);
+    
+    // cout << "C = " << C << " CINV = " << CINV << endl;
+    
+    while(true) {
+      // computation of residu
+      copy(z, old_z);
+      copy(x, memox);
+      mult(A, scaled(x, -1.0), b, r);
+      mult(M, r, z); // ...
+      bool transition = false;
+      for (size_type i = 0; i < mat_nrows(C); ++i) {
+	value_type al = vect_sp(mat_row(C, i), x);
+	if (al >= -1.0E-15) {
+	  if (!satured[i]) { satured[i] = true; transition = true; }
+	  value_type bb = vect_sp(mat_row(CINV, i), z);
+	  if (bb > 0.0) add(scaled(mat_row(C, i), -bb), z);
+	  
+	  /* 	bb = itl::dot(mtl::rows(CINV)[i], r); */
 /* 	if (bb > 0.0) // itl::add(r, itl::scaled(mtl::rows(C)[i], -bb), r); */
 /* 	  add_vect_sparse__(r, mtl::rows(C)[i].begin(), */
 /* 			       mtl::rows(C)[i].end(), -bb); */
+			  }
+	else
+	  satured[i] = false;
       }
+    
+      // descent direction
+      // rho_1 = rho; rho = itl::dot(r, r);
+      rho_1 = rho; rho = vect_sp(PS, z, z); // ...
+      // std::cout << "norm of residu : " << rho << endl; getchar();
+      
+      
+      if (iter.finished(rho)) break;
+      
+      if (iter.get_noisy() > 0 && transition) std::cout << "transition\n";
+      if (transition || iter.first()) gamma = 0.0;
       else
-	satured[i] = false;
+	// gamma = std::max(0.0, (rho - itl::dot(old_r, r) ) / rho_1);
+	// gamma = rho / rho_1;
+	gamma = std::max(0.0, (rho - vect_sp(PS, old_z, z) ) / rho_1); // ...
+      // std::cout << "gamma = " << gamma << endl;
+      // itl::add(r, itl::scaled(p, gamma), p);
+      add(z, scaled(p, gamma), p); // ...
+      
+      ++iter;
+      // one dimensionnal optimization
+      mult(A, p, q2);
+      mult(M, q2, q);
+      lambda = rho / vect_sp(PS, q, p);
+      for (size_type i = 0; i < mat_nrows(C); ++i)
+	if (!satured[i]) {
+	  value_type bb = vect_sp(mat_row(C, i), p);
+	  if (bb > 0.0)
+	    lambda = std::min(lambda, -vect_sp(mat_row(C, i), x) / bb);
+	}
+      add(x, scaled(p, lambda), x);
+      add(memox, scaled(x, -1.0), memox);
+      
     }
-    
-    // descent direction
-    // rho_1 = rho; rho = itl::dot(r, r);
-    rho_1 = rho; rho = vect_sp(PS, z, z); // ...
-    // std::cout << "norm of residu : " << rho << endl; getchar();
-
-
-    if (sqrt(dal::abs(rho)) < residu * norm_b) break;
-
-    if (noisy && transition) std::cout << "transition\n";
-    if (transition || (iter == 0)) gamma = 0.0;
-    else
-      // gamma = std::max(0.0, (rho - itl::dot(old_r, r) ) / rho_1);
-      // gamma = rho / rho_1;
-      gamma = std::max(0.0, (rho - vect_sp(PS, old_z, z) ) / rho_1); // ...
-    // std::cout << "gamma = " << gamma << endl;
-    // itl::add(r, itl::scaled(p, gamma), p);
-    add(z, scaled(p, gamma), p); // ...
- 
-    if (++iter >= itemax) return -1;
-    // one dimensionnal optimization
-    mult(A, p, q2);
-    mult(M, q2, q);
-    lambda = rho / vect_sp(PS, q, p);
-    for (size_type i = 0; i < mat_nrows(C); ++i)
-      if (!satured[i])
-      {
-	value_type bb = vect_sp(mat_row(C, i), p);
-	if (bb > 0.0)
-	  lambda = std::min(lambda, -vect_sp(mat_row(C, i), x) / bb);
-      }
-    add(x, scaled(p, lambda), x);
-    add(memox, scaled(x, -1.0), memox);
-    if (noisy > 0)  cout << "iter " << iter << " residu "
-			 << sqrt(dal::abs(rho)) / norm_b << endl;
-    
   }
-  return iter;
-}
-
+  
 }
 
 
