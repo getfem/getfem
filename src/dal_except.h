@@ -173,7 +173,7 @@ namespace dal {
 
   struct warning_level {
     static int level(int l = -2)
-    { static int _level = 3; return (l != 2) (_level = l) : _level; }
+    { static int _level = 3; return (l != -2) ? (_level = l) : _level; }
   };
 
   inline void set_warning_level(int l) { warning_level::level(std::max(0,l)); }
