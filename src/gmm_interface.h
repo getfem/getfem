@@ -616,7 +616,7 @@ namespace gmm {
 
     typedef cs_vector_ref<PT1, PT2, shift> this_type;
     typedef typename std::iterator_traits<PT1>::value_type value_type;
-    typedef typename linalg_traits<this_type>::iterator iterator;
+    typedef typename linalg_traits<this_type>::const_iterator const_iterator;
 
     cs_vector_ref(PT1 pt1, PT2 pt2, size_type nnz, size_type ns)
       : pr(pt1), ir(pt2), n(nnz), _size(ns) {}
@@ -624,8 +624,8 @@ namespace gmm {
 
     size_type size(void) const { return _size; }
     
-    iterator begin(void) const { return const_iterator(pr, ir); }
-    iterator end(void) const { return const_iterator(pr+n, ir+n); }
+    const_iterator begin(void) const { return const_iterator(pr, ir); }
+    const_iterator end(void) const { return const_iterator(pr+n, ir+n); }
     
     value_type operator[](size_type i) const
     { typename linalg_traits<this_type>::access_type()(pr, begin(), end(),i); }
@@ -634,10 +634,10 @@ namespace gmm {
   template <class PT1, class PT2, int shift> struct cs_vector_access {
     typedef cs_vector_ref<PT1, PT2, shift> V;
     typedef typename linalg_traits<V>::value_type value_type;
-    typedef typename linalg_traits<V>::iterator iterator;
+    typedef typename linalg_traits<V>::const_iterator const_iterator;
     
-    value_type operator()(const void *, const iterator &b,
-			  const iterator &e, size_type i) {
+    value_type operator()(const void *, const const_iterator &b,
+			  const const_iterator &e, size_type i) {
       static value_type zero(0);
       if (n == 0) return zero;
       PT2 p = std::lower_bound(b.ir, e.ir, i+shift);

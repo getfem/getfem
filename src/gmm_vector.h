@@ -565,18 +565,17 @@ namespace gmm
     v2.base_resize(i);
     if (i > 0) {
       typename rsvector<T>::iterator it2 = v2.begin(), ite2 = v2.end();
-      for (i = 0; it2 != ite2; ++it2, ++i) { it2->c = tab[i]; it2->e = v1[i]; }
+      for (i = 0; it2 != ite2; ++it2, ++i) { it2->c = tab[i]; it2->e = v1[tab[i]]; }
     }
   }
 
   template <class V, class T> 
   void copy_rsvector(const V &v1, rsvector<T> &v2, abstract_sparse) {
-    cout << "routine à verifier\n";
      typename linalg_traits<V>::const_iterator it = vect_begin(v1),
       ite = vect_end(v1);
     std::vector<size_type> tab(100);
     size_type i = 0;
-    for (; it != _end; ++it)
+    for (; it != ite; ++it)
       if ((*it) != typename linalg_traits<V>::value_type(0)) {
 	tab[i++] = it.index();
 	if (i >= tab.size()) tab.resize(i + 100);
@@ -584,12 +583,17 @@ namespace gmm
     v2.base_resize(i);
     if (i > 0) {
       typename rsvector<T>::iterator it2 = v2.begin(), ite2 = v2.end();
-      for (i = 0; it2 != ite2; ++it2, ++i) { it2->c = tab[i]; it2->e = v1[i]; }
+      for (i = 0; it2 != ite2; ++it2, ++i) { it2->c = tab[i]; it2->e = v1[tab[i]]; }
       std::sort(v2.begin(), v2.end());
     }
   }
   
-
+  template <class T> 
+  void copy_rsvector(const wsvector<T> &v1, rsvector<T> &v2, abstract_sparse) {
+     v2.base_resize(v1.nb_stored());
+     std::copy(v1.sorted_begin(), v1.sorted_end(), v2.begin());
+  }
+  
 }
 
 #endif /* __GMM_VECTOR_H */

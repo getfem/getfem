@@ -391,9 +391,10 @@ namespace gmm {
   template <class IT1, class V> inline
     typename std::iterator_traits<IT1>::value_type
     _vect_sp_sparse(IT1 it, IT1 ite, const V &v) {
-    typename std::iterator_traits<IT1>::value_type res(0);
+    typedef typename std::iterator_traits<IT1>::value_type value_type;
+    value_type res(0);
     for (; it != ite; ++it) 
-      res += conj_product(*it, v[it.index()]);
+      res += conj_product(*it, value_type(v[it.index()]));
     return res;
   }
 
@@ -434,7 +435,6 @@ namespace gmm {
     typename number_traits<typename linalg_traits<V>::value_type>
       ::magnitude_type res(0);
     for (; it != ite; ++it) res += dal::sqr(dal::abs(*it));
-    cout << "res = " << res << endl;
     return sqrt(res);
   }
 
