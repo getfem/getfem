@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
     cout << "interpolation of the solution in " << fi1
 	 << " on the mesh of " << fi2 << endl;
     U3.resize(mef2.nb_dof() * P1);
-    getfem::interpolation_solution(mef1, mef2, U1, U3, P1);
+    getfem::interpolation(mef1, mef2, U1, U3);
     getfem::save_solution(fi3, mef2, U3, K2);
   }
   DAL_STANDARD_CATCH_ERROR;

@@ -12,9 +12,9 @@ void interpolation_solution(getfem::mesh_fem &mf, const getfem::mesh_fem &mf_tar
 			    const VECT &U, VECT &V, dim_type P) {
   if (mf.get_qdim() == 1) {
     mf.set_qdim(P);
-    getfem::interpolation_solution(mf,mf_target,U,V); mf.set_qdim(1);
+    getfem::interpolation(mf,mf_target,U,V); mf.set_qdim(1);
   }
-  else getfem::interpolation_solution(mf,mf_target,U,V);
+  else getfem::interpolation(mf,mf_target,U,V);
 }
 
 

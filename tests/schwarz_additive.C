@@ -218,9 +218,7 @@ int pb_data::solve_schwarz(int version) {
     cout << "interpolation coarse mesh\n";
     size_type nb_dof_coarse = mef_coarse.nb_dof();
     gmm::resize(vB[nsd], nb_dof, nb_dof_coarse);
-    // general_sparse_matrix aux(nb_dof, nb_dof_coarse);
-    getfem::interpolation(mef_coarse, mef, vB[nsd]);
-    // gmm::copy(aux, vB[nsd]);
+    getfem::interpolation(mef_coarse, mef, vB[nsd], true);
     ++nsd;
   }
   

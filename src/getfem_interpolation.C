@@ -59,20 +59,21 @@ namespace getfem {
       gic.init(mesh.convex(j), pgt);
       points_in_box(boxpts, min, max);
       for (size_type l = 0; l < boxpts.size(); ++l) {
-	bool gicisin = gic.invert(boxpts[l].n, pt_ref, EPS);
-	bool toadd = extrapolation || gicisin;
-	double isin = pgt->convex_ref()->is_in(pt_ref);
 	size_type ind = boxpts[l].i;
-	if (toadd && npt[ind]) {
-	  if (isin < dist[ind]) pts_cvx[cvx_pts[ind]].erase(ind);
-	  else toadd = false;
-	}
-	if (toadd) {
-	  ref_coords[ind] = pt_ref;
-	  dist[ind] = isin;
-	  cvx_pts[ind] = j;
-	  pts_cvx[j][ind] = void_type();
-	  npt[ind] = true;
+	if (!(npt[ind]) || dist[ind] > 0) {
+	  bool gicisin = gic.invert(boxpts[l].n, pt_ref, EPS);
+	  bool toadd = extrapolation || gicisin;
+	  double isin = pgt->convex_ref()->is_in(pt_ref);
+	  if (toadd && npt[ind]) {
+	    if (isin < dist[ind]) pts_cvx[cvx_pts[ind]].erase(ind);
+	    else toadd = false;
+	  }
+	  if (toadd) {
+	    ref_coords[ind] = pt_ref;
+	    dist[ind] = isin; cvx_pts[ind] = j;
+	    pts_cvx[j][ind] = void_type();
+	    npt[ind] = true;
+	  }
 	}
       }
     }
