@@ -289,7 +289,7 @@ namespace gmm
     typedef abstract_matrix linalg_type;
     typedef typename linalg_traits<MAT>::value_type value_type;
     typedef typename linalg_traits<MAT>::reference reference;
-    typedef typename linalg_traits<MAT>::abstract_storage storage_type;
+    typedef typename linalg_traits<MAT>::storage_type storage_type;
     typedef abstract_null_type sub_row_type; // to be done ...
     typedef abstract_null_type const_sub_row_type; // to be done ...
     typedef abstract_null_type row_iterator; // to be done ...
@@ -326,7 +326,20 @@ namespace gmm
       }
     }
   }
+
+  template <class M1, class M2>
+  void copy(const block_matrix<M1> &m1, M2 &m2) {
+    for (size_type j = 0, l = 0; j < m1.ncolblocks(); ++j)
+      for (size_type i = 0, k = 0; i < m1.nrowblocks(); ++i)
+	copy(m1.block(i,j), sub_matrix(m2, m1.subrowinterval(i), 
+				       m1.subcolinterval(j)));
+  }
+
+  template <class M1, class M2>
+  void copy(const block_matrix<M1> &m1, const M2 &m2)
+  { copy(m1, linalg_const_cast(m2)); }
   
+
   template <class MAT, class V1, class V2>
   void mult(const block_matrix<MAT> &m, const V1 &v1, V2 &v2) {
     clear(v2);
