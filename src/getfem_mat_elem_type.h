@@ -43,7 +43,8 @@ namespace getfem
 {
 
   enum constituant_type
-  { GETFEM_BASE_, GETFEM_GRAD_, GETFEM_HESSIAN_, GETFEM_NONLINEAR_ };
+    { GETFEM_BASE_, GETFEM_GRAD_, GETFEM_HESSIAN_, GETFEM_NONLINEAR_,
+      GETFEM_UNIT_NORMAL_ };
 
   /**
      abstract class for integration of non-linear terms into the mat_elem computations
@@ -110,10 +111,14 @@ namespace getfem
    */
   pmat_elem_type mat_elem_grad(pfem pfi);
   /** Gives a pointer to the structure describing the elementary matrix
+   *   which compute the unit normal on the boundary of the element 
+   */
+  pmat_elem_type mat_elem_unit_normal(void);
+  /** Gives a pointer to the structure describing the elementary matrix
    *   which compute the integral of the hessian of the basic functions
    *    described by pfi. pfi is of type bgeot::pfem\_interpolation. 
    */
-  pmat_elem_type mat_elem_hessian(pfem pfi);
+    pmat_elem_type mat_elem_hessian(pfem pfi);
   /** Gives a pointer to the structure describing the elementary
     matrix which compute the integral of a nonlinear term.  
     

@@ -396,9 +396,8 @@ namespace bgeot
 				   size_type face) {
     if (c.G().ncols() != c.pgt()->nb_points())
       DAL_THROW(dimension_error, "dimensions mismatch");
-    base_small_vector up = c.pgt()->normals()[face];
     base_small_vector un(c.N());
-    gmm::mult(c.B(), up, un);
+    gmm::mult(c.B(), c.pgt()->normals()[face], un);
     return un;
   }
 

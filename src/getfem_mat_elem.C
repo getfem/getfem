@@ -36,11 +36,13 @@
 #include <getfem_precomp.h>
 #include <bgeot_precomp.h>
 
-extern "C" void daxpy_(const int *n, const double *alpha, const double *x, const int *incx, double *y, const int *incy);
-extern "C" void dger_(const int *m, const int *n, const double *alpha, const double *x, const int *incx, const double *y, const int *incy, double *A, const int *lda);
+extern "C" void daxpy_(const int *n, const double *alpha, const double *x,
+		       const int *incx, double *y, const int *incy);
+extern "C" void dger_(const int *m, const int *n, const double *alpha,
+		      const double *x, const int *incx, const double *y,
+		      const int *incy, double *A, const int *lda);
 
-namespace getfem
-{
+namespace getfem {
   /* ********************************************************************* */
   /*       Elementary matrices computation.                                */
   /* ********************************************************************* */
@@ -79,7 +81,7 @@ namespace getfem
     short_type nbf, dim; 
     std::deque<short_type> grad_reduction, hess_reduction, trans_reduction;
     std::deque<pfem> trans_reduction_pfi;
-    base_small_vector un, up;
+    base_small_vector un, up, upunit;
     bool faces_computed;
     bool volume_computed;
     bool is_linear;
@@ -135,6 +137,7 @@ namespace getfem
 	}
 	switch ((*it).t) {
 	case GETFEM_BASE_    : break;
+	case GETFEM_UNIT_NORMAL_    : computed_on_real_element = true; break;
 	case GETFEM_GRAD_    : ++k;
 	  if (!((*it).pfi->is_on_real_element())) grad_reduction.push_back(k);
 	  break;
@@ -197,6 +200,17 @@ namespace getfem
 	    tt.adjust_sizes(mim);
 	    elmt_stored[k] = tt;
 	  }
+	  break;
+	case GETFEM_UNIT_NORMAL_ :
+	  *(mit-1) = ctx.N();
+	  { 
+	    bgeot::multi_index sz(1); sz[0] = ctx.N();
+	    elmt_stored[k].adjust_sizes(sz);
+	    scalar_type no = gmm::vect_norm2(up);
+	    upunit = up;
+	    if (no != scalar_type(0)) up /= no;
+	  }
+	  std::copy(upunit.begin(), upunit.end(), elmt_stored[k].begin());
 	  break;
 	case GETFEM_NONLINEAR_ :
 	  if ((*it).nl_part != 0) { /* for auxiliary fem of the nonlinear_term, */
@@ -366,6 +380,7 @@ namespace getfem
 	    Q.derivative(*mit % dim); Q.derivative(*mit / dim);
 	    ++mit; break;
 	  case GETFEM_BASE_ : break;
+	  case GETFEM_UNIT_NORMAL_ :
 	  case GETFEM_NONLINEAR_ :
 	    DAL_THROW(failure_error, "No nonlinear term allowed here");
 	  }
@@ -387,6 +402,7 @@ namespace getfem
 		R.derivative(*mit % dim); R.derivative(*mit / dim);
 		++mit; break;
 	      case GETFEM_BASE_ : break;
+	      case GETFEM_UNIT_NORMAL_ :
 	      case GETFEM_NONLINEAR_ :
 		DAL_THROW(failure_error, "No nonlinear term allowed here");
 	      }
@@ -426,8 +442,9 @@ namespace getfem
 
       if (G.ncols() != NP) DAL_THROW(dimension_error, "dimensions mismatch");
       
+      up.resize(N); gmm::clear(up);
       if (ir > 0) {
-	un.resize(P); up.resize(N);
+	un.resize(P);
 	un = pgt->normals()[ir-1];
       }
       base_tensor taux;

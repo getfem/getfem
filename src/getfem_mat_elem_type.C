@@ -87,6 +87,13 @@ namespace getfem {
     return add_to_met_tab(f);
   }
 
+  pmat_elem_type mat_elem_unit_normal(void) {
+    mat_elem_type f; f.resize(1); f[0].t = GETFEM_UNIT_NORMAL_;
+    f[0].pfi = 0; f[0].nlt = 0;
+    f.get_mi().resize(1); f.get_mi()[0] = 1;
+    return add_to_met_tab(f);
+  }
+
   pmat_elem_type mat_elem_grad(pfem pfi) {
     mat_elem_type f; f.resize(1); f[0].t = GETFEM_GRAD_; f[0].pfi = pfi;
     f[0].nlt = 0;
@@ -188,6 +195,8 @@ namespace getfem {
       case GETFEM_HESSIAN_   :
 	mii[j] = (*this)[i].pfi->nb_base(cv); ++j;
 	if ((*this)[i].pfi->target_dim() != 1) ++j;
+	break;
+      case GETFEM_UNIT_NORMAL_ :
 	break;
       case GETFEM_NONLINEAR_ :
 	if ((*this)[i].nl_part == 0)
