@@ -296,6 +296,8 @@ namespace getfem
     base_node pt2(n);
     if (n+1 == cvr->structure()->nb_faces()) {
       // simplices
+      // for a point at (x,y) you have to consider the other points 
+      // at (y,x) (x,1-x-y) (1-x-y,x) (y,1-x-y) (1-x-y,y)
       base_node pt3(n+1);
       std::copy(pt.begin(), pt.end(), pt3.begin());
       pt3[n] = 1;  for (k = 0; k < n; ++k) pt3[n] -= pt[k];
@@ -315,6 +317,7 @@ namespace getfem
 	while(ind[k] == n+1) { ind[k++] = 0; if (k == n) return; ind[k]++; }
       }
     }
+
     else if (cvr->structure()->nb_points() == (size_type(1) << n)) {
       // parallelepidedic
       for (size_type i = 0; i < (size_type(1) << n); ++i) {
