@@ -127,6 +127,7 @@ void laplacian_problem::init(void)
   /* scale the unit mesh to [LX,LY,..] and incline it */
   mesh.transformation(M);
 
+  datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   scalar_type FT = PARAM.real_value("FT", "parameter for exact solution");
   residu = PARAM.real_value("RESIDU"); if (residu == 0.) residu = 1e-10;
   sol_K = base_small_vector(N);
