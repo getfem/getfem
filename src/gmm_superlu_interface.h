@@ -237,11 +237,14 @@ namespace gmm {
     mutable char equed;
 
   public :
-    
+    enum { LU_NOTRANSP, LU_TRANSP, LU_CONJUGATED };
     void free_supermatrix(void);
     template <class MAT> void build_with(const MAT &A,  int permc_spec = 3);
     template <typename VECTX, typename VECTB> 
-    void solve(const VECTX &X_, const VECTB &B) const;
+    /* transp = LU_NOTRANSP   -> solves Ax = B
+       transp = LU_TRANSP     -> solves A'x = B
+       transp = LU_CONJUGATED -> solves conj(A)X = B */
+    void solve(const VECTX &X_, const VECTB &B, int transp=LU_NOTRANSP) const;
     SuperLU_factor(void) { is_init = false; }
     ~SuperLU_factor() { free_supermatrix(); }
   };
@@ -322,11 +325,17 @@ namespace gmm {
     }
     
     template <class T> template <typename VECTX, typename VECTB> 
-    void SuperLU_factor<T>::solve(const VECTX &X_, const VECTB &B) const {
+    void SuperLU_factor<T>::solve(const VECTX &X_, const VECTB &B, int transp) const {
       VECTX &X = const_cast<VECTX &>(X_);
       gmm::copy(B, rhs);
       options.Fact = FACTORED;
       options.IterRefine = NOREFINE;
+      switch (transp) {
+      case LU_NOTRANSP: options.Trans = NOTRANS; break;
+      case LU_TRANSP: options.Trans = TRANS; break;
+      case LU_CONJUGATED: options.Trans = CONJ; break;
+      default: DAL_THROW(dal::failure_error, "invalid value for transposition option");
+      }
       StatInit(&stat);
       int info = 0;
       R recip_pivot_gross, rcond;
@@ -350,6 +359,15 @@ namespace gmm {
       gmm::copy(sol, X);
     }
 
+  template <typename T, typename V1, typename V2> inline
+  void mult(const SuperLU_factor<T>& P, const V1 &v1, V2 &v2) {
+    P.solve(v2,v1);
+  }
+
+  template <typename T, typename V1, typename V2> inline
+  void transposed_mult(const SuperLU_factor<T>& P,const V1 &v1,V2 &v2) {
+    P.solve(v2, v1, SuperLU_factor<T>::LU_TRANSP);
+  }
 
 }
 
