@@ -39,26 +39,23 @@ namespace getfem {
 	if (order < a.order) return true; else return false;
   }
 
-  mesh_fem *level_set::add_mesh_fem(getfem_mesh &mesh, dim_type o) {
+  dal::shared_ptr<mesh_fem> level_set::add_mesh_fem(getfem_mesh &mesh,
+						    dim_type o) {
     mf_key key(mesh, o);
-    std::map<mf_key, mesh_fem *>::iterator it = mesh_fems.find(key);
+    std::map<mf_key, pmesh_fem>::iterator it = mesh_fems.find(key);
     if (it == mesh_fems.end()) {
       mesh_fem *pmf = new mesh_fem(mesh);
       pmf->set_classical_finite_element(o);
-	mesh_fems[key] = pmf;
+      return (mesh_fems[key] = pmesh_fem(pmf));
     }
-    else {
-      (it->first.nbref)++;
-      return it->second;
-      }
+    else return it->second;
   }
   
   void level_set::sup_mesh_fem(getfem_mesh &mesh, dim_type o) {
     mf_key key(mesh, o);
-    std::map<mf_key, mesh_fem *>::iterator it = mesh_fems.find(key);
+    std::map<mf_key, pmesh_fem>::iterator it = mesh_fems.find(key);
     if (it != mesh_fems.end()) {
-      (it->first.nbref)--;
-      if (it->first.nbref <= 0) { delete it->second; mesh_fems.erase(key); }
+      if (it->second.use_count() <= 2) mesh_fems.erase(key);
     }
   }
  

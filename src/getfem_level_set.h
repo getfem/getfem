@@ -32,6 +32,7 @@
 #ifndef GETFEM_LEVEL_SET_H__
 #define GETFEM_LEVEL_SET_H__
 
+#include <dal_shared_ptr.h>
 #include <getfem_mesh_fem.h>
 
 namespace getfem {
@@ -44,26 +45,25 @@ namespace getfem {
     struct mf_key {
       getfem_mesh *pmesh;
       dim_type order;
-      mutable int nbref;
-      mf_key(getfem_mesh &mesh, dim_type o) : pmesh(&mesh),order(o),nbref(1) {}
+      mf_key(getfem_mesh &mesh, dim_type o) : pmesh(&mesh),order(o) {}
       bool operator <(const mf_key &a) const;
     };
 
   protected :
-    mesh_fem *add_mesh_fem(getfem_mesh &mesh, dim_type o);
+    typedef dal::shared_ptr<mesh_fem> pmesh_fem;
+    pmesh_fem add_mesh_fem(getfem_mesh &mesh, dim_type o);
     void sup_mesh_fem(getfem_mesh &mesh, dim_type o);
 
-    static std::map<mf_key, mesh_fem *> mesh_fems;
+    static std::map<mf_key, pmesh_fem> mesh_fems;
     getfem_mesh *pmesh;
     dim_type order_;
-    mesh_fem *mf;
+    pmesh_fem mf;
     std::vector<scalar_type> primary, secondary;
 
   public :
 
     level_set(getfem_mesh &mesh, dim_type o = dim_type(1))
-      : pmesh(&mesh), order_(o) {
-      mf = add_mesh_fem(mesh, order_);
+      : pmesh(&mesh), order_(o), mf(add_mesh_fem(mesh, o)) {
       primary.resize(mf->nb_dof());
       secondary.resize(mf->nb_dof());
     }

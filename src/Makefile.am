@@ -24,6 +24,7 @@ include_HEADERS =                        \
 	dal_algobase.h                   \
 	dal_singleton.h		         \
 	dal_alloc.h                      \
+	dal_shared_ptr.h                 \
 	dal_basic.h                      \
 	dal_bit_vector.h                 \
 	dal_fonc_tables.h                \

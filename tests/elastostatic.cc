@@ -344,7 +344,6 @@ int main(int argc, char *argv[]) {
 	"mayavi -d " << p.datafilename << ".vtk -f ExtractVectorNorm -f "
 	"WarpVector -m BandedSurfaceMap -m Outline\n";
     }
-    // getfem::save_solution(p.datafilename + ".dataelt", p.mf_u, p.U, p.K);
   }
   DAL_STANDARD_CATCH_ERROR;
 
