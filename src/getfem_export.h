@@ -269,77 +269,6 @@ namespace getfem
 		       bool merge_convex = true);
 
 
-  /* ********************************************************************* */
-  /*                                                                       */
-  /*  interpolation of a solution on another mesh.                         */
-  /*   - mf_target must be of lagrange type.                               */
-  /*   - the solution must be continuous.                                  */
-  /*                                                                       */
-  /* ********************************************************************* */
-
-  template<class VECT>
-    void interpolation_solution(mesh_fem &mf, mesh_fem &mf_target,
-				const VECT &U, VECT &V, dim_type P)
-  {
-    size_type cv, nb;
-    base_node pt3(P), val(1);
-    bgeot::geotrans_inv gti;
-    dal::dynamic_array<base_node> ptab;
-    dal::dynamic_array<size_type> itab;
-    base_vector coeff;
-    base_matrix G;
-
-    // cout << "entering interpolation ... P = " << int(P) << " \n";
-    
-    nb = mf_target.nb_dof();
-    for (size_type i = 0; i < nb; ++i)
-      gti.add_point(mf_target.point_of_dof(i));
-    // il faudrait controler que tous les ddl de mf_target sont de
-    // type lagrange
-
-    dal::bit_vector nn = mf.convex_index(), ddl_touched;
-    ddl_touched.add(0, nb-1);
-
-    for (cv << nn; cv != ST_NIL; cv << nn)
-    {
-      bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
-      // cout << "dealing with convex " << cv << endl;
-      nb = gti.points_in_convex(mf.linked_mesh().convex(cv),
-			    mf.linked_mesh().trans_of_convex(cv), ptab, itab);
-      // cout << "nb points in this convex " << nb << endl;
-      // cout << "convex : " << mf.linked_mesh().convex(cv) << endl;
-      pfem pfe = mf.fem_of_element(cv);
-      if (!(pfe->is_equivalent())) 
-	transfert_to_G(G, mf.linked_mesh().points_of_convex(cv));
-      size_type nbd1 = pfe->nb_dof();
-      coeff.resize(nbd1);
-      for (size_type i = 0; i < nb; ++i)
-      {
-	// cout << "dealing with ddl : " << itab[i] << "  coords : " << mf_target.point_of_dof(itab[i]) << " internal coords : " << ptab[i] << endl;
-	if (ddl_touched[itab[i]])
-	{ // inverser les deux boucles pour gagner du temps ?
-	  // Il faut verifier que le ddl est bien de Lagrange ...
-	  pt3.fill(0.0);
-	  for (size_type k = 0; k < P; ++k) {
-	    for (size_type j = 0; j < nbd1; ++j) {
-	      size_type dof1 = mf.ind_dof_of_element(cv)[j];
-	      coeff[j] = U[dof1*P+k];
-	    }
-	    pfe->interpolation(ptab[i], G, pgt, coeff, val);
-	    pt3[k] = val[0];
-	  }
-	  
-	  // cout << "Résultat : " << pt3 << endl;
-	  for (size_type j = 0; j < P; ++j) V[itab[i]*P+j] = pt3[j];
-	  ddl_touched.sup(itab[i]);
-	}
-      }
-    }
-    // cout << "ddl untouched : " << ddl_touched << endl;
-    if (ddl_touched.card() != 0)
-      cerr << "WARNING : in interpolation_solution,"
-	   << " all points have not been touched" << endl;
-  }
 
 
   /* ********************************************************************* */
@@ -395,8 +324,86 @@ namespace getfem
     }
   }
 
+  /* ********************************************************************* */
+  /*                                                                       */
+  /*  interpolation of a solution on another mesh.                         */
+  /*   - mf_target must be of lagrange type.                               */
+  /*   - the solution must be continuous.                                  */
+  /*                                                                       */
+  /* ********************************************************************* */
 
-  
+
+
+  template<class VECT>
+    void interpolation_solution(mesh_fem &mf, mesh_fem &mf_target,
+				const VECT &U, VECT &V, dim_type P)
+  {
+    size_type cv, nb;
+    base_node pt3(P), val(1);
+    bgeot::geotrans_inv gti;
+    dal::dynamic_array<base_node> ptab;
+    dal::dynamic_array<size_type> itab;
+    base_vector coeff;
+    base_matrix G;
+
+    if (&mf.linked_mesh() == &mf_target.linked_mesh()) {
+      interpolation_solution_same_mesh(mf, mf_target, U, V, P);
+      return;
+    }
+    // cout << "entering interpolation ... P = " << int(P) << " \n";
+    
+    nb = mf_target.nb_dof();
+    for (size_type i = 0; i < nb; ++i)
+      gti.add_point(mf_target.point_of_dof(i));
+    // il faudrait controler que tous les ddl de mf_target sont de
+    // type lagrange
+
+    dal::bit_vector nn = mf.convex_index(), ddl_touched;
+    ddl_touched.add(0, nb-1);
+
+    for (cv << nn; cv != ST_NIL; cv << nn)
+    {
+      bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
+      // cout << "dealing with convex " << cv << endl;
+      nb = gti.points_in_convex(mf.linked_mesh().convex(cv),
+			    mf.linked_mesh().trans_of_convex(cv), ptab, itab);
+      // cout << "nb points in this convex " << nb << endl;
+      // cout << "convex : " << mf.linked_mesh().convex(cv) << endl;
+      pfem pfe = mf.fem_of_element(cv);
+      if (!(pfe->is_equivalent())) 
+	transfert_to_G(G, mf.linked_mesh().points_of_convex(cv));
+      size_type nbd1 = pfe->nb_dof();
+      coeff.resize(nbd1);
+      for (size_type i = 0; i < nb; ++i)
+      {
+	// cout << "dealing with ddl : " << itab[i] << "  coords : " << mf_target.point_of_dof(itab[i]) << " internal coords : " << ptab[i] << endl;
+	if (ddl_touched[itab[i]])
+	{ // inverser les deux boucles pour gagner du temps ?
+	  // Il faut verifier que le ddl est bien de Lagrange ...
+	  pt3.fill(0.0);
+	  for (size_type k = 0; k < P; ++k) {
+	    for (size_type j = 0; j < nbd1; ++j) {
+	      size_type dof1 = mf.ind_dof_of_element(cv)[j];
+	      coeff[j] = U[dof1*P+k];
+	    }
+	    pfe->interpolation(ptab[i], G, pgt, coeff, val);
+	    pt3[k] = val[0];
+	  }
+	  
+	  // cout << "Résultat : " << pt3 << endl;
+	  for (size_type j = 0; j < P; ++j) V[itab[i]*P+j] = pt3[j];
+	  ddl_touched.sup(itab[i]);
+	}
+      }
+    }
+    // cout << "ddl untouched : " << ddl_touched << endl;
+    if (ddl_touched.card() != 0)
+      cerr << "WARNING : in interpolation_solution,"
+	   << " all points have not been touched" << endl;
+  }
+
+
+  void classical_mesh_fem(mesh_fem& mf, short_type K);
 }  /* end of namespace getfem.                                             */
 
 

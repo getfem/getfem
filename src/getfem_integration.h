@@ -35,6 +35,7 @@
 #include <getfem_config.h>
 #include <bgeot_convex_ref.h>
 #include <dal_tree_sorted.h>
+#include <bgeot_geometric_trans.h>
 
 namespace getfem
 {
@@ -214,6 +215,7 @@ namespace getfem
   pintegration_method exact_simplex_im(size_type n);
   pintegration_method exact_parallelepiped_im(size_type n);
   pintegration_method exact_prism_im(size_type n);
+  pintegration_method exact_classical_im(bgeot::pgeometric_trans pgt);
   
   std::string name_of_int_method(pintegration_method p);
 

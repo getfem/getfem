@@ -1733,5 +1733,50 @@ namespace getfem
   }
 
 
+  pintegration_method exact_classical_im(bgeot::pgeometric_trans pgt)
+  {
+    static bgeot::pgeometric_trans pgt_last = 0;
+    static pintegration_method im_last = 0;
+    bool found = false;
+
+    if (pgt_last == pgt)
+      return im_last;
+
+
+    size_type n = pgt->structure()->dim();
+    size_type nbp = pgt->basic_structure()->nb_points();
+    std::stringstream name;
+
+    /* Identifying P1-simplexes.                                          */
+
+    if (nbp == n+1)
+      if (pgt->basic_structure() == bgeot::simplex_structure(n))
+    	{ name << "IM_EXACT_SIMPLEX("; found = true; }
+    
+    /* Identifying Q1-parallelepiped.                                     */
+
+    if (!found && nbp == (size_type(1) << n))
+      if (pgt->basic_structure() == bgeot::parallelepiped_structure(n))
+    	{ name << "IM_EXACT_PARALLELEPIPED("; found = true; }
+
+    /* Identifying Q1-prisms.                                             */
+ 
+    if (!found && nbp == 2 * n)
+      if (pgt->basic_structure() == bgeot::prism_structure(n))
+     	{ name << "IM_EXACT_PRISM("; found = true; }
+     
+    // To be completed
+
+    if (found) {
+      name << int(n) << ')';
+      im_last = int_method_descriptor(name.str());
+      pgt_last = pgt;
+      return im_last;
+    }
+ 
+    DAL_THROW(to_be_done_error,
+	      "This element is not taken into account. Contact us");
+  }
+
 }  /* end of namespace getfem.                                           */
 

@@ -119,6 +119,17 @@ namespace getfem
       mesh_edge_list_convex(m, i, el, merge_convex);
   }
 
+
+  void classical_mesh_fem(mesh_fem& mf, short_type K)
+  {
+    dal::bit_vector bv = mf.linked_mesh().convex_index();
+    for (size_type cv = bv.take_first(); cv != size_type(-1); cv << bv) {
+      bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
+      mf.set_finite_element(cv, classical_fem(pgt,K), exact_classical_im(pgt));
+    }
+  }
+
+
 }  /* end of namespace getfem.                                             */
 
 
