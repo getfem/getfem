@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <getfem_regular_meshes.h>
 #include <getfem_poly_composite.h>
+#include <bgeot_comma_init.h>
 
 using getfem::size_type;
 
@@ -144,8 +145,30 @@ test_convex_simplif(void) {
   mprr->write_to_file(cout);
 }
 
+using bgeot::sc;
+
+void test_convex_quality(getfem::scalar_type dx, getfem::scalar_type dy) {
+  getfem::getfem_mesh m;
+  getfem::base_node A,B,C;
+  getfem::scalar_type h = sqrt(3);
+  sc(B)+=0,0;
+  sc(C)+=2,0;
+  sc(A)+=0,h;
+  cerr << "quality of triangles, and their radius estimates (should decrease): ";
+  for (size_type i=0; i < 10; ++i) {    
+    size_type cv = m.add_triangle_by_points(A,B,C);
+    cerr << "Q=" << m.convex_quality_estimate(cv) << "\t" << "R=" << m.convex_radius_estimate(cv) << endl;
+    A[0] += dx; A[1] += dy;
+  }
+}
+
+class myexc : public dal::exception_callback {
+  void callback(const std::string& s) { cerr << "exception launched: " << s << std::endl; }
+};
+
 int main(void)
 {
+  dal::set_exception_callback(new myexc);
   try {
     cout << "sizeof(size_type)=" << sizeof(size_type) << endl;
   getfem::getfem_mesh m1;
@@ -153,6 +176,9 @@ int main(void)
   test_convex_simplif();
   test_mesh(m1);
   test_convex_simplif();
+  test_convex_quality(0.2,0);
+  test_convex_quality(-0.2,0);
+  test_convex_quality(-0.01,-0.2);
   }
   DAL_STANDARD_CATCH_ERROR;
   return 0;
