@@ -105,7 +105,7 @@ namespace getfem
     return composite_fe_method(*pmp, mf, pf->ref_convex());
   }
 
-  pfem PK_composite_2s_hierarch_fem(fem_param_list &params) {
+  pfem PK_composite_hierarch_fem(fem_param_list &params) {
     if (params.size() != 3)
       DAL_THROW(failure_error, 
 	   "Bad number of parameters : " << params.size() << " should be 2.");
@@ -113,7 +113,7 @@ namespace getfem
       DAL_THROW(failure_error, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     int k = int(::floor(params[1].num() + 0.01));
-    int s = int(::floor(params[2].num() + 0.01));
+    int s = int(::floor(params[2].num() + 0.01)), t;
     if (n <= 0 || n >= 100 || k <= 0 || k > 150 || s <= 0 || s > 150 ||
 	((s & 1) && (s != 1)) || double(s) != params[2].num() ||
 	double(n) != params[0].num() || double(k) != params[1].num())
@@ -121,10 +121,38 @@ namespace getfem
     std::stringstream name;
     if (s == 1) 
       name << "FEM_STRUCTURED_COMPOSITE(FEM_PK(" << n << "," << k << "),1)";
-    else
-      name << "FEM_GEN_HIERARCHICAL(FEM_PK2S_HIERARCHICAL_COMPOSITE(" << n
-	   << "," << k << "," << s/2 << "), FEM_STRUCTURED_COMPOSITE(FEM_PK("
+    else {
+      for (t = 2; t <= s; ++t) if ((s % t) == 0) break;
+      name << "FEM_GEN_HIERARCHICAL(FEM_PK_HIERARCHICAL_COMPOSITE(" << n
+	   << "," << k << "," << s/t << "), FEM_STRUCTURED_COMPOSITE(FEM_PK("
 	   << n << "," << k << ")," << s << "))";
+    }
+    return fem_descriptor(name.str());
+  }
+
+    pfem PK_composite_full_hierarch_fem(fem_param_list &params) {
+    if (params.size() != 3)
+      DAL_THROW(failure_error, 
+	   "Bad number of parameters : " << params.size() << " should be 2.");
+    if (params[0].type() != 0 || params[1].type() != 0 || params[2].type()!= 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    int k = int(::floor(params[1].num() + 0.01));
+    int s = int(::floor(params[2].num() + 0.01)), t;
+    if (n <= 0 || n >= 100 || k <= 0 || k > 150 || s <= 0 || s > 150 ||
+	((s & 1) && (s != 1)) || double(s) != params[2].num() ||
+	double(n) != params[0].num() || double(k) != params[1].num())
+      DAL_THROW(failure_error, "Bad parameters");
+    std::stringstream name;
+    if (s == 1) 
+      name << "FEM_STRUCTURED_COMPOSITE(FEM_PK_HIERARCHICAL(" << n << "," << k << "),1)";
+    else {
+      for (t = 2; t <= s; ++t) if ((s % t) == 0) break;
+      name << "FEM_GEN_HIERARCHICAL(FEM_PK_FULL_HIERARCHICAL_COMPOSITE(" << n
+	   << "," << k << "," << s/t
+	   << "), FEM_STRUCTURED_COMPOSITE(FEM_PK_HIERARCHICAL("
+	   << n << "," << k << ")," << s << "))";
+    }
     return fem_descriptor(name.str());
   }
 

@@ -615,50 +615,52 @@ namespace getfem
   }
 
   /* ******************************************************************** */
-  /* P2^K hierarchical fem.                                               */
+  /* PK hierarchical fem.                                                 */
   /* ******************************************************************** */
 
-  static pfem P2K_hierarch_fem(fem_param_list &params) {
+  static pfem PK_hierarch_fem(fem_param_list &params) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
 	   "Bad number of parameters : " << params.size() << " should be 2.");
     if (params[0].type() != 0 || params[1].type() != 0)
       DAL_THROW(failure_error, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
-    int k = int(::floor(params[1].num() + 0.01));
-    if (n <= 0 || n >= 100 || k <= 0 || k > 150 || ((k & 1) && (k != 1)) ||
+    int k = int(::floor(params[1].num() + 0.01)), s;
+    if (n <= 0 || n >= 100 || k <= 0 || k > 150 ||
 	double(n) != params[0].num() || double(k) != params[1].num())
       DAL_THROW(failure_error, "Bad parameters");
     std::stringstream name;
     if (k == 1) 
       name << "FEM_PK(" << n << ",1)";
-    else
-      name << "FEM_GEN_HIERARCHICAL(FEM_P2K_HIERARCHICAL(" << n << ","
-	   << k/2 << "), FEM_PK(" << n << "," << k << "))";
+    else {
+      for (s = 2; s <= k; ++s) if ((k % s) == 0) break;
+      name << "FEM_GEN_HIERARCHICAL(FEM_PK_HIERARCHICAL(" << n << ","
+	   << k/s << "), FEM_PK(" << n << "," << k << "))";
+    }
     return fem_descriptor(name.str());
   }
 
-  static pfem Q2K_hierarch_fem(fem_param_list &params) {
+  static pfem QK_hierarch_fem(fem_param_list &params) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
 	   "Bad number of parameters : " << params.size() << " should be 2.");
     if (params[0].type() != 0 || params[1].type() != 0)
       DAL_THROW(failure_error, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
-    int k = int(::floor(params[1].num() + 0.01));
+    int k = int(::floor(params[1].num() + 0.01)), s;
     if (n <= 0 || n >= 100 || k <= 0 || k > 150 ||
 	double(n) != params[0].num() || double(k) != params[1].num())
       DAL_THROW(failure_error, "Bad parameters");
     std::stringstream name;
     if (n == 1)
-      name << "FEM_P2K_HIERARCHICAL(1," << k << ")";
+      name << "FEM_PK_HIERARCHICAL(1," << k << ")";
     else
-      name << "FEM_PRODUCT(FEM_P2K_HIERARCHICAL(" << n-1 << "," << k
-	   << "),FEM_P2K(1_HIERARCHICAL," << k << "))";
+      name << "FEM_PRODUCT(FEM_PK_HIERARCHICAL(" << n-1 << "," << k
+	   << "),FEM_PK(1_HIERARCHICAL," << k << "))";
     return fem_descriptor(name.str());
   }
 
-  static pfem P2K_prism_hierarch_fem(fem_param_list &params) {
+  static pfem PK_prism_hierarch_fem(fem_param_list &params) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
 	   "Bad number of parameters : " << params.size() << " should be 2.");
@@ -671,10 +673,10 @@ namespace getfem
       DAL_THROW(failure_error, "Bad parameters");
     std::stringstream name;
     if (n == 2)
-      name << "FEM_Q2K_HIERARCHICAL(1," << k << ")";
+      name << "FEM_QK_HIERARCHICAL(1," << k << ")";
     else 
-      name << "FEM_PRODUCT(FEM_P2K_HIERARCHICAL(" << n-1 << "," << k
-	   << "),FEM_P2K_HIERARCHICAL(1," << k << "))";
+      name << "FEM_PRODUCT(FEM_PK_HIERARCHICAL(" << n-1 << "," << k
+	   << "),FEM_PK_HIERARCHICAL(1," << k << "))";
     return fem_descriptor(name.str());
   }
 
@@ -1013,7 +1015,8 @@ namespace getfem
   /* ******************************************************************** */
 
   pfem structured_composite_fem_method(fem_param_list &params);
-  pfem PK_composite_2s_hierarch_fem(fem_param_list &params);
+  pfem PK_composite_hierarch_fem(fem_param_list &params);
+  pfem PK_composite_full_hierarch_fem(fem_param_list &params);
 
   static ftool::naming_system<virtual_fem> *_fem_naming_system = 0;
   
@@ -1032,14 +1035,16 @@ namespace getfem
     _fem_naming_system->add_suffix("P1_BUBBLE_FACE_LAG",
 				   P1_with_bubble_on_a_face_lagrange);
     _fem_naming_system->add_suffix("GEN_HIERARCHICAL", gen_hierarchical_fem);
-    _fem_naming_system->add_suffix("P2K_HIERARCHICAL", P2K_hierarch_fem);
-    _fem_naming_system->add_suffix("Q2K_HIERARCHICAL", Q2K_hierarch_fem);
-    _fem_naming_system->add_suffix("P2K_PRISM_HIERARCHICAL",
-				   P2K_prism_hierarch_fem);
+    _fem_naming_system->add_suffix("PK_HIERARCHICAL", PK_hierarch_fem);
+    _fem_naming_system->add_suffix("QK_HIERARCHICAL", QK_hierarch_fem);
+    _fem_naming_system->add_suffix("PK_PRISM_HIERARCHICAL",
+				   PK_prism_hierarch_fem);
     _fem_naming_system->add_suffix("STRUCTURED_COMPOSITE",
 				   structured_composite_fem_method);
-    _fem_naming_system->add_suffix("PK2S_HIERARCHICAL_COMPOSITE",
-				   PK_composite_2s_hierarch_fem);
+    _fem_naming_system->add_suffix("PK_HIERARCHICAL_COMPOSITE",
+				   PK_composite_hierarch_fem);
+    _fem_naming_system->add_suffix("PK_FULL_HIERARCHICAL_COMPOSITE",
+				   PK_composite_full_hierarch_fem);
   }
   
   pfem fem_descriptor(std::string name) {

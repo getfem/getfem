@@ -350,11 +350,6 @@ namespace getfem
 	} 
   }
   
-  
-  /** @name functions on convex structures
-   */
-  //@{
-  
   /** Gives a pointer on the structures describing the more classical fem
    *  of degree k on a geometric convex cvs (coming from the geometric trans).
    */
@@ -363,29 +358,39 @@ namespace getfem
   pfem fem_descriptor(std::string name);
   /*  List of elements :
    *  "FEM_PK(N,K)"                      : classical Lagrange element PK on a
-   *                                       simplex
+   *                                     :  simplex
    *  "FEM_PK_DISCONTINUOUS(N,K)"        : discontinuous Lagrange element PK
-   *                                       on a simplex
+   *                                     :  on a simplex
    *  "FEM_QK(N,K)"                      : classical Lagrange element QK on a
-   *                                       parellepiped
+   *                                     :  parellepiped
    *  "FEM_PK_PRISM(N,K)"                : classical Lagrange element PK on a
-   *                                       prism
+   *                                     :  prism
    *  "FEM_PK_WITH_CUBIC_BUBBLE(N,K)"    : classical Lagrange element PK on a
-   *                                       simplex with an additional volumic
-   *                                       bubble function.
+   *                                     :  simplex with an additional volumic
+   *                                     :  bubble function.
    *  "FEM_PRODUCT(FEM1,FEM2)"           : tensorial product of two polynomial
-   *                                       elements
+   *                                     :  elements
    *  "FEM_P1_NONCONFORMING"             : Nonconforming P1 method on a
-   *                                       triangle.
-   *  "FEM_P1_BUBBLE_FACE(N)"            : P1 methd on a simplex with an
-   *                                       additional bubble function on
-   *                                       face 0.
-   *  "FEM_P1_BUBBLE_FACE_LAG"           : P1 methd on a simplex with an
-   *                                     : additional lagrange dof on face 0.
+   *                                     :  triangle.
+   *  "FEM_P1_BUBBLE_FACE(N)"            : P1 method on a simplex with an
+   *                                     :  additional bubble function on
+   *                                     :  face 0.
+   *  "FEM_P1_BUBBLE_FACE_LAG"           : P1 method on a simplex with an
+   *                                     :  additional lagrange dof on face 0.
    *  "FEM_HERMITE_SEGMENT"              : Hermite element on the segment
+   *  "FEM_PK_HIERARCHICAL(N,K)"         : PK element with a hierarchical basis
+   *  "FEM_QK_HIERARCHICAL(N,K)"         : QK element with a hierarchical basis
+   *  "FEM_PK_PRISM_HIERARCHICAL(N,K)"   : PK element on a prism with a
+   *                                     :  hierarchical basis
    *  "FEM_STRUCTURED_COMPOSITE(FEM, K)" : Composite fem on a grid with
-   *                                       K divisions
-   *
+   *                                     :  K divisions
+   *  "FEM_PK_HIERARCHICAL_COMPOSITE(N,K,S)" : PK composite element on a grid
+   *                                     :  with S subdivisions and with a
+   *                                     : hierarchical basis
+   *  "FEM_PK_FULL_HIERARCHICAL_COMPOSITE(N,K,S)" : PK composite element with
+   *                                     :  S subdivisions and a hierarchical
+   *                                     :  basis on both degree and
+   *                                     :  subdivision
    */
 
   pfem PK_fem(size_type n, short_type k);
@@ -400,8 +405,6 @@ namespace getfem
 			pintegration_method pim);
   pfem virtual_link_fem_with_gradient(mesh_fem &mf1, mesh_fem &mf2,
 				      pintegration_method pim);
-  
-  //@}
   
 }  /* end of namespace getfem.                                            */
 

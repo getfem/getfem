@@ -355,7 +355,8 @@ namespace bgeot
       /// Constructor.
       vsvector(void) : std::vector<T>() {}
 
-    size_type memsize() const { return std::vector<T>::capacity()*sizeof(T) + sizeof(vsvector<T>); }
+    size_type memsize() const
+      { return std::vector<T>::capacity()*sizeof(T) + sizeof(vsvector<T>); }
   };
 
   template<class T>  void vsvector<T>::out_of_range_error(void) const

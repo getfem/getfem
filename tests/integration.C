@@ -48,6 +48,9 @@ int main(void)
     sprintf(meth, "IM_TETRAHEDRON(3)");
     print_method(getfem::int_method_descriptor(meth));
 
+    sprintf(meth, "IM_QUAD(3)");
+    print_method(getfem::int_method_descriptor(meth));
+
   }
   DAL_STANDARD_CATCH_ERROR;
   

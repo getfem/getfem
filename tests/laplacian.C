@@ -255,13 +255,13 @@ void lap_pb::init(void)
     break;
     
   case 2 :
-    sprintf(meth, "FEM_P2K_HIERARCHICAL(%d, %d)", N, K);
+    sprintf(meth, "FEM_PK_HIERARCHICAL(%d, %d)", N, K);
     pfprinc = getfem::fem_descriptor(meth);
     mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
     break;
 
   case 3 :
-    sprintf(meth, "FEM_PK2S_HIERARCHICAL_COMPOSITE(%d,%d,%d)", N, 1, K);
+    sprintf(meth, "FEM_PK_HIERARCHICAL_COMPOSITE(%d,%d,%d)", N, 1, K);
     pfprinc = getfem::fem_descriptor(meth);
     mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
     break;
