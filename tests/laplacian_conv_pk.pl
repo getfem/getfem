@@ -56,7 +56,7 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
 }
 
 
-$NDDLMAX = 41600;
+$NDDLMAX = 20800;
 $PAUSE = 0;
 $SKIP = 0;
 $FT = 10.0;
@@ -73,7 +73,7 @@ $N = 1;  $NX = 1;
 while ($NX**$N <= $NDDLMAX) {
   $K = 1;
   print "Test for NX = $NX \t"; print RES $NX**$N;
-  while ((($K * $NX)**$N) * $K <= 4*$NDDLMAX && $K <= $KMAX) {
+  while ((($K * $NX)**$N) * $K *$K <= 4*$NDDLMAX && $K <= $KMAX) {
     start_program("-d N=$N -d NX=$NX -d K=$K -d FT=$FT -d INTEGRATION=$INTE -d FEM_TYPE=$FEM_TYPE");
     print RES "$linferror "; print ".";
     ++$K;
@@ -180,7 +180,7 @@ print GNF "set xlabel 'number of dof'\n";
 print GNF "set ylabel 'L-infinity error'\n";
 print GNF "plot ";
 for ($K = 1; $K <= $KMAX; $K++) {
-  $L = $K+1; $KK = $K * $K
+  $L = $K+1; $KK = $K * $K;
   print GNF " '$tmp_res' using ((\$1)*$KK):$L title 'PK(1,$K)'";
   if ($K != $KMAX) { print GNF ", "; }
 }
@@ -225,7 +225,7 @@ print GNF "set xlabel 'number of dof'\n";
 print GNF "set ylabel 'L-infinity error'\n";
 print GNF "plot ";
 for ($K = 1; $K <= $KMAX; $K++) {
-  $L = $K+1; $KK = $K * $K
+  $L = $K+1; $KK = $K * $K;
   print GNF " '$tmp_res' using ((\$1)*$KK):$L title 'PK(1,$K)'";
   if ($K != $KMAX) { print GNF ", "; }
 }
