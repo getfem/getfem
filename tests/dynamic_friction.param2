@@ -1,6 +1,10 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % parameters for program dynamic Coulomb friction problem                 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% pour l'animation (en sh):
+%% for i in *.png; do convert $i `basename $i png`jpg; done
+%% mencoder "mf://dyn*.jpg" -mf fps=25 -o output.avi -ovc lavc
+
 
 %%%%% pde parameters :	        				      %%%%%
 LX = 30.0;		% size in X.
@@ -15,7 +19,7 @@ PG = 0.0;
 %PG = 9810; 		% gravitation constante (on earth) (mm/s^2).
 %PG = 1000000; 		% gravitation constante (on jupiter !) (mm/s^2).
 RHO = 6e-6;     	% "realistic" density for steel
-T = 2.0;
+T = 5.0;
 DT = 0.0001;             % Time step
 
 %%%%%   discretisation parameters  :                     	      %%%%%
@@ -46,8 +50,8 @@ FOUNDATION_HSPEED = 10.0;  % Horizontal velocity of the rigid foundation
 STATIONARY = 1;            % Initial condition is the stationary solution ?
 PERT_STATIONARY = 1.0;     % Perturbation on the initial velocity
 
-FEM_TYPE = 'FEM_PK(2, 1)';     % Main FEM
-DATA_FEM_TYPE = 'FEM_PK(2,1)'; % must be defined for non-Lagrangian main FEM
+FEM_TYPE = 'FEM_PK(2, 2)';     % Main FEM
+DATA_FEM_TYPE = 'FEM_PK(2,2)'; % must be defined for non-Lagrangian main FEM
 INTEGRATION = 'IM_TRIANGLE(6)'; % Quadrature rule
 % INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3,6)'; % Quadrature rule
 
@@ -83,4 +87,4 @@ MESHNAME='splx:';
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'dynamic_friction2';     % Root of data files.
 DX_EXPORT = 1; % export solution to an OpenDX file ?
-DT_EXPORT = 0.001; % Time step for the export
+DT_EXPORT = 0.002; % Time step for the export

@@ -16,7 +16,7 @@ $fix_base_type = -1;
 while(@ARGV) {               # read optional parameters
   $param = $ARGV[0];
   $val = int(1 * $param);
-  if ($param =~ /.C/) {
+  if ($param =~ /.cc/) {
     $tests_to_be_done = $param;
   }
   elsif ($param eq "with-qd") {
@@ -76,7 +76,7 @@ if ($srcdir eq "") {
   $islocal = 1;
 }
 if ($tests_to_be_done eq "") {
-  $tests_to_be_done = `ls $srcdir/gmm_torture*.C`;  # list of tests
+  $tests_to_be_done = `ls $srcdir/gmm_torture*.cc`;  # list of tests
 }
 
 if ($with_qd && $with_lapack) {
@@ -108,7 +108,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     $d = $org_name;
     do { ($b, $d) = split('/', $d, 2); } while ($d);
     $dest_name = "auto_$b";
-    ($root_name, $d) = split('.C', $dest_name, 2);
+    ($root_name, $d) = split('.cc', $dest_name, 2);
     $size_max = 30.0;
 
     open(DATAF, $org_name) or die "Open input file impossible : $!\n";

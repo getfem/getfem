@@ -45,36 +45,36 @@ CLEANFILES = \
 	plasticity.meshfem plasticity.coef ii_files/* auto_gmm*
 
 
-dynamic_array_SOURCES = dynamic_array.C 
-dynamic_tas_SOURCES = dynamic_tas.C 
-test_small_vector_SOURCES = test_small_vector.C
-test_kdtree_SOURCES = test_kdtree.C
-test_rtree_SOURCES = test_rtree.C
-test_assembly_SOURCES = test_assembly.C
-laplacian_SOURCES = laplacian.C
-plate_SOURCES = plate.C
-test_interpolation_SOURCES = test_interpolation.C
-elastostatic_SOURCES = elastostatic.C
-nonlinear_elastostatic_SOURCES = nonlinear_elastostatic.C
-helmholtz_SOURCES = helmholtz.C
-integration_SOURCES = integration.C
-poly_SOURCES = poly.C
-test_mesh_SOURCES = test_mesh.C
-geo_trans_SOURCES = geo_trans.C
-geo_trans_inv_SOURCES = geo_trans_inv.C
-test_int_set_SOURCES = test_int_set.C
-test_interpolated_fem_SOURCES = test_interpolated_fem.C
-test_tree_sorted_SOURCES = test_tree_sorted.C
-test_mat_elem_SOURCES = test_mat_elem.C
-test_slice_SOURCES = test_slice.C
-test_norm_SOURCES = test_norm.C
-schwarz_additive_SOURCES = schwarz_additive.C
-plasticity_SOURCES = plasticity.C
+dynamic_array_SOURCES = dynamic_array.cc 
+dynamic_tas_SOURCES = dynamic_tas.cc 
+test_small_vector_SOURCES = test_small_vector.cc
+test_kdtree_SOURCES = test_kdtree.cc
+test_rtree_SOURCES = test_rtree.cc
+test_assembly_SOURCES = test_assembly.cc
+laplacian_SOURCES = laplacian.cc
+plate_SOURCES = plate.cc
+test_interpolation_SOURCES = test_interpolation.cc
+elastostatic_SOURCES = elastostatic.cc
+nonlinear_elastostatic_SOURCES = nonlinear_elastostatic.cc
+helmholtz_SOURCES = helmholtz.cc
+integration_SOURCES = integration.cc
+poly_SOURCES = poly.cc
+test_mesh_SOURCES = test_mesh.cc
+geo_trans_SOURCES = geo_trans.cc
+geo_trans_inv_SOURCES = geo_trans_inv.cc
+test_int_set_SOURCES = test_int_set.cc
+test_interpolated_fem_SOURCES = test_interpolated_fem.cc
+test_tree_sorted_SOURCES = test_tree_sorted.cc
+test_mat_elem_SOURCES = test_mat_elem.cc
+test_slice_SOURCES = test_slice.cc
+test_norm_SOURCES = test_norm.cc
+schwarz_additive_SOURCES = schwarz_additive.cc
+plasticity_SOURCES = plasticity.cc
 if QHULL
-test_mesh_generation_SOURCES = test_mesh_generation.C 
+test_mesh_generation_SOURCES = test_mesh_generation.cc 
 endif
-#test_fem_SOURCES = test_fem.C
-dynamic_friction_SOURCES = dynamic_friction.C
+#test_fem_SOURCES = test_fem.cc
+dynamic_friction_SOURCES = dynamic_friction.cc
 
 INCLUDES = -I$(top_srcdir)/src -I../src
 LDADD    = ../src/libgetfem.la -lm @SUPLDFLAGS@
@@ -145,11 +145,11 @@ EXTRA_DIST = \
 	test_interpolated_fem.param       \
 	geo_trans_inv.param               \
 	make_gmm_test.pl                  \
-	gmm_torture01_lusolve.C           \
-	gmm_torture05_mult.C              \
-	gmm_torture06_mat_mult.C          \
-	gmm_torture10_qr.C                \
-	gmm_torture15_sub.C               \
-	gmm_torture20_iterative_solvers.C
+	gmm_torture01_lusolve.cc          \
+	gmm_torture05_mult.cc             \
+	gmm_torture06_mat_mult.cc         \
+	gmm_torture10_qr.cc               \
+	gmm_torture15_sub.cc              \
+	gmm_torture20_iterative_solvers.cc
 
 TESTS_ENVIRONMENT = perl

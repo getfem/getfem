@@ -5,10 +5,10 @@ bin_PROGRAMS = \
 
 bin_SCRIPTS = draw_mesh
 
-getfem_import_export_SOURCES = getfem_import_export.C
-compare_solutions_SOURCES = compare_solutions.C
-interpole_solution_SOURCES = interpole_solution.C
-draw_mesh_doedges_SOURCES = draw_mesh_doedges.C
+getfem_import_export_SOURCES = getfem_import_export.cc
+compare_solutions_SOURCES = compare_solutions.cc
+interpole_solution_SOURCES = interpole_solution.cc
+draw_mesh_doedges_SOURCES = draw_mesh_doedges.cc
 
 EXTRA_DIST = \
 	$(bin_SCRIPTS) \
