@@ -226,14 +226,14 @@ int pb_data::solve_schwarz(int version) {
   
   gmm::iteration iter(residu, 1, 1000000);
   switch (version) {
-  case 1 :
-    return gmm::sequential_additive_schwarz(RM, U, F,
+  case 1 : gmm::sequential_additive_schwarz(RM, U, F,
 	      gmm::ildlt_precond<general_sparse_matrix>(), vB, iter,
-					gmm::using_cg(), gmm::using_cg());
-  case 2 :
-    return gmm::sequential_additive_schwarz(RM, U, F,
+	      gmm::using_cg(), gmm::using_cg());
+    break;
+  case 2 : gmm::sequential_additive_schwarz(RM, U, F,
 	      gmm::ilu_precond<general_sparse_matrix>(), vB, iter,
-				     gmm::using_gmres(), gmm::using_gmres());
+	      gmm::using_gmres(), gmm::using_gmres());
+    break;
   }
   return 0;
 }

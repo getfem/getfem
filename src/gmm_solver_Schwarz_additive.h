@@ -41,20 +41,19 @@
 namespace gmm {
       
   /* ******************************************************************** */
-  /*		Sequential Linear Additive Schwarz method                 */
-  /* ******************************************************************** */
-  /* ref : Domain decomposition algorithms for the p-version finite       */
-  /*       element method for elliptic problems, Luca F. Pavarino,        */
-  /*       PhD thesis, Courant Institute of Mathematical Sciences, 1992.  */
-  /* ******************************************************************** */
-
-  /* ******************************************************************** */
   /*		Additive Schwarz interfaced local solvers                 */
   /* ******************************************************************** */
 
   struct using_cg {};
   struct using_gmres {};
   struct using_bicgstab {};
+  struct using_qmr {};
+
+  template <typename P, typename local_solver, typename Matrix>
+  struct actual_precond {
+    typedef P APrecond;
+    static APrecond &transform(const P &PP) { return PP; }
+  };
 
   template <typename Matrix1, typename Precond, typename Vector> 
   void SA_local_solve(using_cg, const Matrix1 &A, Vector &x, const Vector &b,
@@ -71,12 +70,10 @@ namespace gmm {
 		      const Vector &b, const Precond &P, iteration &iter)
   { bicgstab(A, x, b, P, iter); }
 
-  template <typename P, typename local_solver, typename Matrix>
-  struct actual_precond {
-    typedef P APrecond;
-    static APrecond &transform(const P &PP) { return PP; }
-  };
-
+  template <typename Matrix1, typename Precond, typename Vector> 
+  void SA_local_solve(using_qmr, const Matrix1 &A, Vector &x,
+		      const Vector &b, const Precond &P, iteration &iter)
+  { qmr(A, x, b, P, iter); }
 
 #ifdef GMM_USES_SUPERLU
   struct using_superlu {};
@@ -157,97 +154,8 @@ namespace gmm {
     }
     if (iter.get_noisy()) cout << "\n";
   }
-
-
-  /* ******************************************************************** */
-  /*		Additive Schwarz interfaced global solvers                */
-  /* ******************************************************************** */
-
-  template <typename Matrix1, typename Matrix2, typename Precond,
-	    typename local_solver, typename Vect>
-  void SA_global_solve(using_cg, const add_schwarz_mat<Matrix1, Matrix2,
-	Precond, local_solver> &ASM, Vect &x, const Vect &b, iteration &iter)
-  { cg(ASM, x, b, *(ASM.A),  identity_matrix(), iter); }
-
-  template <typename Matrix1, typename Matrix2, typename Precond,
-	    typename local_solver, typename Vect>
-  void SA_global_solve(using_gmres, const add_schwarz_mat<Matrix1, Matrix2,
-	Precond, local_solver> &ASM, Vect &x, const Vect &b, iteration &iter)
-  { gmres(ASM, x, b, identity_matrix(), 100, iter); }
-
-  template <typename Matrix1, typename Matrix2, typename Precond,
-	    typename local_solver, typename Vect>
-  void SA_global_solve(using_bicgstab, const add_schwarz_mat<Matrix1, Matrix2,
-	 Precond, local_solver> &ASM, Vect &x, const Vect &b, iteration &iter)
-  { bicgstab(ASM, x, b, identity_matrix(), 100, iter); }
-
-#ifdef GMM_USES_SUPERLU
-  template <typename Matrix1, typename Matrix2, typename Precond,
-	    typename local_solver, typename Vect>
-  void SA_global_solve(using_superlu, const add_schwarz_mat<Matrix1, Matrix2,
-	    Precond, local_solver> &, Vect &, const Vect &, iteration &) {
-    DAL_THROW(failure_error,
-     "You cannot use SuperLU as global solver in additive Schwarz meethod");
-  }
-#endif
   
-  /* ******************************************************************** */
-  /*		Additive Schwarz algorithm                                */
-  /* ******************************************************************** */
-
-  /** Function to call if the ASM matrix is precomputed for successive solve
-   * with the same system.
-   */
-  template <typename Matrix1, typename Matrix2,
-	    typename Vector2, typename Vector3, typename Precond,
-	    typename local_solver, typename global_solver>
-  int sequential_additive_schwarz(
-    add_schwarz_mat<Matrix1, Matrix2, Precond, local_solver> &ASM, Vector3 &u,
-    const Vector2 &f, iteration &iter, const global_solver&) {
-
-    typedef typename linalg_traits<Matrix1>::value_type value_type;
-
-    size_type nb_sub = ASM.vB->size(), nb_dof = gmm::vect_size(f);
-    ASM.itebilan = 0;
-    std::vector<value_type> g(nb_dof);
-
-    for (size_type i = 0; i < nb_sub; ++i) {
-      gmm::mult((*(ASM.vB))[i], f, ASM.fi[i]);
-      ASM.iter.init();
-      SA_local_solve(local_solver(), ASM.vAloc[i], ASM.gi[i], ASM.fi[i],
-		     ASM.precond1[i], ASM.iter);
-      ASM.itebilan = std::max(ASM.itebilan, ASM.iter.get_iteration());
-      gmm::mult(gmm::transposed((*(ASM.vB))[i]), ASM.gi[i], g, g);
-    }
-
-    SA_global_solve(global_solver(), ASM, u, g, iter);
-    return ASM.itebilan;
-  }
-
-  /** Global function. Compute the ASM matrix and call the previous function.
-      The ASM matrix represent the preconditionned linear system.
-   */
-  template <typename Matrix1, typename Matrix2,
-	    typename Vector2, typename Vector3, typename Precond,
-	    typename local_solver, typename global_solver>
-  int sequential_additive_schwarz(const Matrix1 &A, Vector3 &u,
-				  const Vector2 &f, const Precond &P,
-				  const std::vector<Matrix2> &vB,
-				  iteration &iter, const local_solver&,
-				  const global_solver &GS) {
-    iter.set_rhsnorm(vect_norm2(f));
-    if (iter.get_rhsnorm() == 0.0) { gmm::clear(u); return 0; }
-    iteration iter2 = iter; iter2.reduce_noisy();
-    iter2.set_maxiter(size_type(-1));
-    // iter2.set_resmax(iter.get_resmax() / 100.0);
-
-    add_schwarz_mat<Matrix1, Matrix2, Precond, local_solver>
-      ASM(A, vB, iter2, P, iter.get_resmax());
-
-    return sequential_additive_schwarz(ASM, u, f, iter, GS);
-  }
-  
-  template <typename Matrix1, typename Matrix2, typename Precond,
+    template <typename Matrix1, typename Matrix2, typename Precond,
 	    typename Vector2, typename Vector3, typename local_solver>
   void mult(const add_schwarz_mat<Matrix1, Matrix2, Precond, local_solver> &M,
 	    const Vector2 &p, Vector3 &q) {
@@ -288,6 +196,102 @@ namespace gmm {
   }
 
   /* ******************************************************************** */
+  /*		Additive Schwarz interfaced global solvers                */
+  /* ******************************************************************** */
+
+  template <typename Matrix1, typename Matrix2, typename Precond,
+	    typename local_solver, typename Vect>
+  void SA_global_solve(using_cg, const add_schwarz_mat<Matrix1, Matrix2,
+	Precond, local_solver> &ASM, Vect &x, const Vect &b, iteration &iter)
+  { cg(ASM, x, b, *(ASM.A),  identity_matrix(), iter); }
+
+  template <typename Matrix1, typename Matrix2, typename Precond,
+	    typename local_solver, typename Vect>
+  void SA_global_solve(using_gmres, const add_schwarz_mat<Matrix1, Matrix2,
+	Precond, local_solver> &ASM, Vect &x, const Vect &b, iteration &iter)
+  { gmres(ASM, x, b, identity_matrix(), 100, iter); }
+
+  template <typename Matrix1, typename Matrix2, typename Precond,
+	    typename local_solver, typename Vect>
+  void SA_global_solve(using_bicgstab, const add_schwarz_mat<Matrix1, Matrix2,
+	 Precond, local_solver> &ASM, Vect &x, const Vect &b, iteration &iter)
+  { bicgstab(ASM, x, b, identity_matrix(), iter); }
+
+  template <typename Matrix1, typename Matrix2, typename Precond,
+	    typename local_solver, typename Vect>
+  void SA_global_solve(using_qmr, const add_schwarz_mat<Matrix1, Matrix2,
+	 Precond, local_solver> &ASM, Vect &x, const Vect &b, iteration &iter)
+  { qmr(ASM, x, b, identity_matrix(), iter); }
+
+#ifdef GMM_USES_SUPERLU
+  template <typename Matrix1, typename Matrix2, typename Precond,
+	    typename local_solver, typename Vect>
+  void SA_global_solve(using_superlu, const add_schwarz_mat<Matrix1, Matrix2,
+	    Precond, local_solver> &, Vect &, const Vect &, iteration &) {
+    DAL_THROW(failure_error,
+     "You cannot use SuperLU as global solver in additive Schwarz meethod");
+  }
+#endif
+  
+  /* ******************************************************************** */
+  /*		Sequential Linear Additive Schwarz method                 */
+  /* ******************************************************************** */
+  /* ref : Domain decomposition algorithms for the p-version finite       */
+  /*       element method for elliptic problems, Luca F. Pavarino,        */
+  /*       PhD thesis, Courant Institute of Mathematical Sciences, 1992.  */
+  /* ******************************************************************** */
+
+  /** Function to call if the ASM matrix is precomputed for successive solve
+   * with the same system.
+   */
+  template <typename Matrix1, typename Matrix2,
+	    typename Vector2, typename Vector3, typename Precond,
+	    typename local_solver, typename global_solver>
+  void sequential_additive_schwarz(
+    add_schwarz_mat<Matrix1, Matrix2, Precond, local_solver> &ASM, Vector3 &u,
+    const Vector2 &f, iteration &iter, const global_solver&) {
+
+    typedef typename linalg_traits<Matrix1>::value_type value_type;
+
+    size_type nb_sub = ASM.vB->size(), nb_dof = gmm::vect_size(f);
+    ASM.itebilan = 0;
+    std::vector<value_type> g(nb_dof);
+
+    for (size_type i = 0; i < nb_sub; ++i) {
+      gmm::mult((*(ASM.vB))[i], f, ASM.fi[i]);
+      ASM.iter.init();
+      SA_local_solve(local_solver(), ASM.vAloc[i], ASM.gi[i], ASM.fi[i],
+		     ASM.precond1[i], ASM.iter);
+      ASM.itebilan = std::max(ASM.itebilan, ASM.iter.get_iteration());
+      gmm::mult(gmm::transposed((*(ASM.vB))[i]), ASM.gi[i], g, g);
+    }
+
+    SA_global_solve(global_solver(), ASM, u, g, iter);
+    if (iter.get_noisy())
+      cout << "Total number of internal iterations : " << ASM.itebilan << endl;
+  }
+
+  /** Global function. Compute the ASM matrix and call the previous function.
+      The ASM matrix represent the preconditionned linear system.
+   */
+  template <typename Matrix1, typename Matrix2,
+	    typename Vector2, typename Vector3, typename Precond,
+	    typename local_solver, typename global_solver>
+  void sequential_additive_schwarz(const Matrix1 &A, Vector3 &u,
+				  const Vector2 &f, const Precond &P,
+				  const std::vector<Matrix2> &vB,
+				  iteration &iter, const local_solver&,
+				  const global_solver &GS) {
+    iter.set_rhsnorm(vect_norm2(f));
+    if (iter.get_rhsnorm() == 0.0) { gmm::clear(u); return; }
+    iteration iter2 = iter; iter2.reduce_noisy();
+    iter2.set_maxiter(size_type(-1));
+    add_schwarz_mat<Matrix1, Matrix2, Precond, local_solver>
+      ASM(A, vB, iter2, P, iter.get_resmax());
+    sequential_additive_schwarz(ASM, u, f, iter, GS);
+  }
+
+  /* ******************************************************************** */
   /*		Sequential Non-Linear Additive Schwarz method             */
   /* ******************************************************************** */
   /* ref : Nonlinearly Preconditionned Inexact Newton Algorithms,         */
@@ -295,60 +299,52 @@ namespace gmm {
   /*       SIAM J. Sci. Comp. 24: p183-200. .                             */
   /* ******************************************************************** */
 
-#ifdef sdlkfjfdslfkj
-
   template <typename Matrixt, typename MatrixBi> 
   class NewtonAS_struct {
     
     typedef Matrixt tangent_matrix_type;
-    typedef typename linalg_traits<Matrix1>::value_type value_type;
+    typedef MatrixBi B_matrix_type;
+    typedef typename linalg_traits<Matrixt>::value_type value_type;
+    typedef std::vector<value_type> Vector;
     
   public :
     size_type nb_subdomains(void);
     size_type size(void);
     const std::vector<MatrixBi> &get_vB();
     
-    void compute_tangent_matrix(Matrixt &M, std::vector<value_type> x);
-    
+    void compute_tangent_matrix(Matrixt &M, Vector x);
     // compute Bi^T grad(F(X)) Bi
-    void compute_sub_tangent_matrix(Matrixt &Mloc, 
-				    std::vector<value_type> x, size_type i);
-    
+    void compute_sub_tangent_matrix(Matrixt &Mloc, Vector x, size_type i);
     // compute Bi^T F(X)
-    void compute_sub_F(std::vector<value_type> fi,
-		       std::vector<value_type> x, size_type i);
-    
+    void compute_sub_F(Vector fi, Vector x, size_type i);
   };
   
-  
-  template <typename NewtonAS_struct_, typename Vector, typename Precond
-	    typename local_solver, typename global_solver>
-  Newton_additive_Schwarz(NewtonAS_struct_ &NS, const Vector &u_,
-			  iteration &iter, const Precond &P,
-			  local_solver &LS, global_solver &GS) {
+  template <typename Matrixt, typename MatrixBi, typename Vector,
+	    typename Precond, typename local_solver, typename global_solver>
+  void Newton_additive_Schwarz(NewtonAS_struct<Matrixt, MatrixBi> &NS,
+			       const Vector &u_,
+			       iteration &iter, const Precond &P,
+			       local_solver &LS, global_solver &GS) {
     Vector &u = const_cast<Vector &>(u_);
     typedef typename linalg_traits<Vector>::value_type value_type;
     typedef typename number_traits<value_type>::magnitude_type m_type;
-    typedef typename NewtonAS_struct_::tangent_matrix_type Matrixt;
+    typedef actual_precond<Precond, local_solver, Matrixt> chgt_precond;
     
-    typename actual_precond<Precond, local_solver, Matrix1>::APrecond PP;
-    PP = actual_precond<Precond, local_solver, Matrix1>::transform(P);
-
+    typename chgt_precond::APrecond PP = chgt_precond::transform(P);
     iter.set_rhsnorm(m_type(1));
     iteration iter2(iter);
     iter2.reduce_noisy(); iter2.set_maxiter(size_type(-1));
     iteration iter3(iter); iter3.reduce_noisy();
-    
     std::vector<value_type> rhs(NS.size()), x(NS.size()), d(NS.size());
     std::vector<value_type> xi, xii, fi, di;
     Matrixt Mloc, M(NS.size(), NS.size());
     
-    for(;;) { // Newton global iteration
+    for(;;) { // Global Newton iteration
       
       gmm::clear(rhs); 
       for (size_type isd = 0; isd < NS.nb_subdomains(); ++isd) {
-	// solving non-linear local problem isd
-	typename NewtonAS_struct_::Matrixloc &Bi = (NS.get_vB())[isd];
+	// solving non-linear local problem isd with a local Newton
+	MatrixBi &Bi = (NS.get_vB())[isd];
 	size_type si = mat_ncols(Bi);
 	gmm::resize(Mloc, si, si);
 	xi.resize(si); xii.resize(si); fi.resize(si); di.resize(si);
@@ -357,21 +353,19 @@ namespace gmm {
 	gmm::clear(xi);
 	gmm::copy(u, x);
 	NS.compute_sub_F(fi, x, isd);
-	m_type r = gmm::norm2(fi), r_t;
+	m_type r = gmm::vect_norm2(fi), r_t;
 	
 	while(!iter2.finished_vect(r)) {
-	  
 	  NS.compute_sub_tangent_matrix(Mloc, x, isd);
 	  PP.init_with(Mloc);
 	  iter3.init();
 	  SA_local_solve(local_solver(), Mloc, di, fi, PP, iter3);
-	  // local_solver::solve(Mloc, di, fi, P, iter3);
 	  
 	  for (m_type alpha(1); alpha>=m_type(1)/m_type(8); alpha/=m_type(2)) {
 	    gmm::add(xi, gmm::scaled(di, alpha), xii);
 	    gmm::mult(Bi, xii, u, x);
 	    NS.compute_sub_F(fi, x, isd);
-	    if ((r_t = gmm::norm2(fi)) <= r) break;
+	    if ((r_t = gmm::vect_norm2(fi)) <= r) break;
 	  }
 	  r = r_t;
 	  gmm::copy(xii, xi);
@@ -383,18 +377,13 @@ namespace gmm {
       
       // solving linear system for the global Newton method
       NS.compute_tangent_matrix(M, u);
-
-      add_schwarz_mat<Matrix1, Matrix2, Precond, local_solver>
+      add_schwarz_mat<Matrixt, MatrixBi, Precond, local_solver>
 	ASM(M, NS.get_vB(), iter2, P, iter.get_resmax());
-
       SA_global_solve(global_solver(), ASM, d, rhs, iter);
       gmm::add(d, u);
     }
   }
 
-
-
-#endif
 
 
 
