@@ -29,6 +29,8 @@
 /* USA.                                                                    */
 /*                                                                         */
 /* *********************************************************************** */
+#ifndef FTOOL_H
+#define FTOOL_H
 
 #include <stdio.h>
 #include <dal_basic.h>
@@ -213,3 +215,5 @@ namespace ftool
   };
 
 }
+
+#endif

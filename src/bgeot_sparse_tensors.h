@@ -1,4 +1,4 @@
-/* -*- c++ -*- (enables emacs c++ mode)                                    */
+/* -*- c++ -*- (enables emacs c++ mode)     */
 /* 
    "sparse" tensors: these are not handle like sparse matrices
    
@@ -29,6 +29,8 @@
 
    "ought to be enough for anybody"
 */
+#ifndef BGEOT_SPARSE_TENSORS
+#define BGEOT_SPARSE_TENSORS
 
 #include <bgeot_config.h>
 #include <dal_except.h>
@@ -866,3 +868,5 @@ namespace bgeot {
     }
   };
 } /* namespace bgeot */
+
+#endif

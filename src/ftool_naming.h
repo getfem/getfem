@@ -30,6 +30,9 @@
 /*                                                                         */
 /* *********************************************************************** */
 
+#ifndef FTOOL_NAMING_H
+#define FTOOL_NAMING_H
+
 #include <stdio.h>
 #include <dal_basic.h>
 #include <ctype.h>
@@ -306,3 +309,4 @@ namespace ftool
   }
   
 }
+#endif
