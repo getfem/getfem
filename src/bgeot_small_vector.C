@@ -1,6 +1,6 @@
 #include <bgeot_small_vector.h>
 namespace bgeot {
-  block_allocator static_block_allocator::alloc;
+  block_allocator *static_block_allocator::palloc = 0;
 
   block_allocator::block_allocator() {
     for (size_type i=0; i < OBJ_SIZE_LIMIT; ++i) 

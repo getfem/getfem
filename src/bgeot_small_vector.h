@@ -111,7 +111,10 @@ namespace bgeot {
   
   /* common class for all mini_vec, provides access to the common static allocator */
   struct static_block_allocator {
-    static block_allocator alloc;
+    /* must be a pointer ... sgi CC is not able to order correctly the 
+       destructors of static variables */
+    static block_allocator *palloc;
+    static_block_allocator() { if (!palloc) palloc=new block_allocator(); }
   };
   
   /**
@@ -215,7 +218,7 @@ namespace bgeot {
     const_pointer const_base() const { 
       SVEC_ASSERT(id == 0 || refcnt()); return static_cast<pointer>(allocator().obj_data(id)); 
     }
-    block_allocator& allocator() const { return alloc; }
+    block_allocator& allocator() const { return *palloc; }
     node_id allocate(size_type n) {
       return (allocator().allocate(n*sizeof(value_type))); SVEC_ASSERT(refcnt() == 1);
     }

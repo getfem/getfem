@@ -708,7 +708,7 @@ namespace getfem {
       hop2<bgeot::small_vector<char> >();
       hop<bgeot::small_vector<double> >();       
     }
-    bgeot::static_block_allocator::alloc.memstats();
+    bgeot::static_block_allocator::palloc->memstats();
     for (size_type i=0; i < 5; ++i) {
       hop2<test::small_vector<double> >();
       //hop2<test::small_vector<unsigned> >();
@@ -740,7 +740,10 @@ namespace getfem {
     //rrun(mv);
     rrun(Sv);
     //rrun(av);
-    bgeot::static_block_allocator::alloc.memstats();
+    bgeot::static_block_allocator::palloc->memstats();
+    cout << "sizeof(size_type)=" << sizeof(size_type) 
+	 << ", sizeof(base_node)=" << sizeof(base_node) 
+	 << ", sizeof(base_small_vector)=" << sizeof(base_small_vector) << "\n";
   }
 }
 
