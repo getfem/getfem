@@ -47,6 +47,10 @@ void const_ref_test(const M1 &m1, const M2 &m2) {
 }
 
 void test_qr(void) {
+  cout << "/***********************************************************/\n";
+  cout << "/*                   Test of QR algorithms                 */\n";
+  cout << "/***********************************************************/\n";
+
   int nn = 16;
   gmm::dense_matrix<double> mm(nn,nn), r(nn, nn), q(nn, nn),
     qr(nn, nn), mmt(nn, nn);
@@ -120,12 +124,6 @@ int main(void)
     cout << "m = " << m << endl;
     cout << "x = " << x << endl;
     cout << "b = " << b << endl;
-
-    cout << "/***********************************************************/\n";
-    cout << "/*                   Test of QR algorithms                 */\n";
-    cout << "/***********************************************************/\n";
-
-    
 
     cout << "/***********************************************************/\n";
     cout << "/*                   Test of dense_matrix                  */\n";
