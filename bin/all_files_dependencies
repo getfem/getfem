@@ -1,4 +1,5 @@
-#!/usr/bin/perl
+eval 'exec perl -S $0 "$@"'
+  if 0;
 
 $nb_file = 0;
 $nb_scaned = 0;

@@ -1,4 +1,5 @@
-#!/usr/bin/perl
+eval 'exec perl -S $0 "$@"'
+  if 0;
 # Create a temporary file with a unique name.
 # if the environement variable TMPDIR exists it creates the temporary inside.
 

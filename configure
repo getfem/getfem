@@ -1,4 +1,5 @@
-#!/usr/bin/perl
+eval 'exec perl -S $0 "$@"'
+  if 0;
 
 $CC = $ENV{CC};
 
@@ -10,7 +11,9 @@ while ($ARGV[0])
     ($li, $CC) = split('=', $ARGV[0], 2);
   }
   else
-  { die "Sorry, unrecognized option"; }
+  { 
+    die "Sorry, unrecognized option";
+  }
   shift ARGV;	
 }
 

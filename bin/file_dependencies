@@ -1,4 +1,6 @@
-#!/usr/bin/perl
+eval 'exec perl -S $0 "$@"'
+  if 0;
+
 # list all GETFEM++ internal dependencies of a file
 
 open(FICHIER, $ARGV[0]) or die "Open file impossible : $!\n";
