@@ -121,28 +121,28 @@ namespace gmm {
   struct sub_interval {
     size_type min, max; 
 
-    size_type size(void) const { return max - min + 1; }
+    size_type size(void) const { return max - min; }
     size_type index(size_type i) const { return min + i; }
     size_type step(void) const { return 1; }
     size_type rindex(size_type i) const
-    { if (i >= min && i <= max) return i - min; return size_type(-1); }
-    sub_interval(size_type mi, size_type l) : min(mi), max(mi+l-1) {}
+    { if (i >= min && i < max) return i - min; return size_type(-1); }
+    sub_interval(size_type mi, size_type l) : min(mi), max(mi+l) {}
     sub_interval() {}
   };
 
   struct sub_slice {
     size_type min, max, N; 
 
-    size_type size(void) const { return (max - min) / N + 1; }
+    size_type size(void) const { return (max - min) / N; }
     size_type step(void) const { return N; }
     size_type index(size_type i) const { return min + N * i; }
     size_type rindex(size_type i) const { 
-      if (i >= min && i <= max)
+      if (i >= min && i < max)
 	{ size_type j = (i - min); if (j % N == 0) return j / N; }
       return size_type(-1);
     }
     sub_slice(size_type mi, size_type l, size_type n)
-      : min(mi), max(mi+(l-1)*n), N(n) {}
+      : min(mi), max(mi+l*n), N(n) {}
     sub_slice(void) {}
   };
 

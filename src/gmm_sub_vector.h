@@ -375,13 +375,13 @@ namespace gmm {
     static size_type size(const this_type &v) { return v.size(); }
     static iterator end(this_type &v) {
       size_type i;
-      if (v.si.max + v.si.step() < v._end.index()) {
-	i = v.si.max + v.si.step() - v._begin.index();
+      if (v.si.max < v._end.index()) {
+	i = v.si.max - v._begin.index();
 	size_type j = (v._begin.index() + i - v.si.min) / v.si.step();
 	return iterator(v._begin + i, v.si.step(), j);
       }
       else {
-	i = (v.si.max + v.si.step() + v.si.step() * v._end.index()
+	i = (v.si.max + v.si.step() * v._end.index()
 	     - v._end.index()) % v.si.step();
 	size_type j = (v._end.index() + i - v.si.min) / v.si.step();
 	return iterator(v._end + i, v.si.step(), j);
@@ -389,13 +389,13 @@ namespace gmm {
     }
     static const_iterator end(const this_type &v) {
       size_type i;
-      if (v.si.max + v.si.step() < v._end.index()) {
-	i = v.si.max + v.si.step() - v._begin.index();
+      if (v.si.max < v._end.index()) {
+	i = v.si.max - v._begin.index();
 	size_type j = (v._begin.index() + i - v.si.min) / v.si.step();
 	return const_iterator(v._begin + i, v.si.step(), j);
       }
       else {
-	i = (v.si.max + v.si.step() + v.si.step() * v._end.index()
+	i = (v.si.max + v.si.step() * v._end.index()
 	     - v._end.index()) % v.si.step();
 	size_type j = (v._end.index() + i - v.si.min) / v.si.step();
 	return const_iterator(v._end + i, v.si.step(), j);
@@ -407,7 +407,7 @@ namespace gmm {
       if (v.si.min > v._begin.index()) i = v.si.min - v._begin.index();
       else i = (v.si.min + v.si.step() * v._begin.index()
 		- v._begin.index()) % v.si.step();
-      if (v._begin.index() + i > v.si.max) return end(v);
+      if (v._begin.index() + i + v.si.step() > v.si.max) return end(v);
       size_type j = (v._begin.index() + i - v.si.min) / v.si.step();
       return iterator(v._begin + i, v.si.step(), j);
     }
@@ -417,7 +417,7 @@ namespace gmm {
       if (v.si.min > v._begin.index()) i = v.si.min - v._begin.index();
       else i = (v.si.min + v.si.step() * v._begin.index()
 		- v._begin.index()) % v.si.step();
-      if (v._begin.index() + i > v.si.max) return end(v);
+      if (v._begin.index() + i + v.si.step() > v.si.max) return end(v);
       size_type j = (v._begin.index() + i - v.si.min) / v.si.step();
       return const_iterator(v._begin+i, v.si.step(), j);
     }

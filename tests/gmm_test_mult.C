@@ -23,7 +23,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2,
   typedef typename gmm::number_traits<T>::magnitude_type R;
   double prec = gmm::default_tol(R());
 
-  size_type m = gmm::mat_nrows(m2), n = gmm::mat_ncols(m2);
+  size_type m = gmm::vect_size(v1), n = gmm::vect_size(v3);
   size_type nn = std::min(m,n), mm = std::max(m, n);
   std::vector<T> v6(m);
 

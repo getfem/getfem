@@ -712,8 +712,8 @@ namespace gmm
     typedef typename linalg_traits<MAT>::value_type value_type;
     typedef typename linalg_traits<MAT>::reference reference;
 
-    size_type nrows(void) const { return introw[_nrowblocks-1].max + 1; }
-    size_type ncols(void) const { return intcol[_ncolblocks-1].max + 1; }
+    size_type nrows(void) const { return introw[_nrowblocks-1].max; }
+    size_type ncols(void) const { return intcol[_ncolblocks-1].max; }
     size_type nrowblocks(void) const { return _nrowblocks; }
     size_type ncolblocks(void) const { return _ncolblocks; }
     const sub_interval &subrowinterval(size_type i) const { return introw[i]; }
@@ -727,17 +727,17 @@ namespace gmm
     value_type operator() (size_type i, size_type j) const {
       size_type k, l;
       for (k = 0; k < _nrowblocks; ++k)
-	if (i >= introw[k].min && i <=  introw[k].max) break;
+	if (i >= introw[k].min && i <  introw[k].max) break;
       for (l = 0; l < _nrowblocks; ++l)
-	if (j >= introw[l].min && j <=  introw[l].max) break;
+	if (j >= introw[l].min && j <  introw[l].max) break;
       return (block(k, l))(i - introw[k].min, j - introw[l].min);
     }
     reference operator() (size_type i, size_type j) {
       size_type k, l;
       for (k = 0; k < _nrowblocks; ++k)
-	if (i >= introw[k].min && i <=  introw[k].max) break;
+	if (i >= introw[k].min && i <  introw[k].max) break;
       for (l = 0; l < _nrowblocks; ++l)
-	if (j >= introw[l].min && j <=  introw[l].max) break;
+	if (j >= introw[l].min && j <  introw[l].max) break;
       return (block(k, l))(i - introw[k].min, j - introw[l].min);
     }
     
