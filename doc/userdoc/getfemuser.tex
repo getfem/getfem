@@ -217,14 +217,67 @@ This operator takes the first index such that {\tt nn[i] == true} and remove it 
   bgeot::size\_type i; \\
   for (i << nn; i != bgeot::size\_type(-1); i << nn) \\
   \mbox{}\hspace{1em}  cout << "Point of index " << i << " of the mesh : " << mesh.points()[i] << endl; \\
-}
+} \\[0.5cm]
+The numerotation of faces on usual elements is given in figure \ref{fig:elemf}.
+\begin{figure}[htb] \label{fig:elemf}
+  \begin{center}
+    \includegraphics[width=15cm,angle=0]{getfemuser_elemf.eps}
+  \end{center}
+  \caption{ \it faces numerotation for usual elements }
+\end{figure}
 
-\subsection{Save and load meshes}
+\subsection{Save, load and draw meshes}
 
-\subsection{draw meshes}
+In {\tt getfem\_mesh.h}, two methods are defined to load meshes from file and write meshes to a file. \\[0.5cm]
+\begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|}\hline
+
+  {\tt mesh.write\_to\_file(const std::string \&name)} & save the mesh into a file.\\ \hline
+
+  {\tt mesh.read\_from\_file(const std::string \&name)} & load the mesh from a file.\\ \hline
+
+\end{tabular} \\[0.5cm]
+At this stage of development, the loading function only accepts to load classical elements (simplexes, prisms and parallelepipeds). If one needs other kind of elements, the loading function has to be extended.  \\[0.5cm]
+
+A little tool allows to display a mesh using Gnuplot (and Perl). This tool is present in the directory {\tt contrib/} and of course you need to have a working distribution of Gnuplot installed on your system. This little tool is built when you execute a {\tt make} instruction on the root directory of GETFEM++. So, if GETFEM++ is normally installed on your system, you can change your current directory to {\tt contrib/} and execute the command \\[0.5cm]
+{\tt draw\_mesh filename.mesh} \\[0.5cm]
+where {\tt filename.mesh} is the file containing the mesh. This works only for meshes whose principal dimension is between 1 and 3. Examples of mesh files are also present into the directory {\tt contrib/} to test the program.
 
 \subsection{example}
 
+The following is an example of how to load a mesh and extract information on it. \\[0.5cm]
+{\tt
+  \#include <getfem\_mesh.h> \\
+  \\
+  getfem::getfem\_mesh mesh; \\
+  \\
+  int main(int argc, char *argv[]) \{ \\
+    $\mbox{}\ \ $ try \{ \\
+    $\mbox{}\ \ \ \ $ \\
+    $\mbox{}\ \ \ \ $ // read the mesh from the file name given by the first argument \\
+    $\mbox{}\ \ \ \ $ mesh.read\_from\_file(std::string(argv[0])); \\
+    $\mbox{}\ \ \ \ $ \\
+    $\mbox{}\ \ \ \ $ // List all the convexes\\
+    $\mbox{}\ \ \ \ $ dal::bit\_vector nn = mesh.convex\_index(); \\
+    $\mbox{}\ \ \ \ $ bgeot::size\_type i; \\
+    $\mbox{}\ \ \ \ $ for (i << nn; i != bgeot::size\_type(-1); i << nn) \{\\
+    $\mbox{}\ \ \ \ \ \ $ cout << "Convex of index " << i << endl; \\
+    $\mbox{}\ \ \ \ \ \ $ bgeot::pconvex\_structure cvs =  mesh.structure\_of\_convex(i); \\
+    $\mbox{}\ \ \ \ \ \ $ cout << "Number of vertices : " << cvs->nb\_points() << endl; \\
+    $\mbox{}\ \ \ \ \ \ $ cout << "Number of faces : " << cvs->nb\_faces() << endl;\\
+    $\mbox{}\ \ \ \ \ \ $ for (bgeot::size\_type f = 0; f < cvs->nb\_faces(); ++f) \{\\
+    $\mbox{}\ \ \ \ \ \ \ \ $ cout << "face " << f << " has " << cvs->nb\_points\_of\_face(f); \\
+    $\mbox{}\ \ \ \ \ \ \ \ $ cout << " vertices with local indexes : "; \\
+    $\mbox{}\ \ \ \ \ \ \ \ $ for (bgeot::size\_type k = 0; k < cvs->nb\_points\_of\_face(f); ++k) \\
+    $\mbox{}\ \ \ \ \ \ \ \ \ \ $ cout << cvs->ind\_points\_of\_face(f)[k] << " "; \\ 
+    $\mbox{}\ \ \ \ \ \ \ \ $ cout << " and global indexes : ";\\
+    $\mbox{}\ \ \ \ \ \ \ \ $ for (bgeot::size\_type k = 0; k < cvs->nb\_points\_of\_face(f); ++k) \\
+    $\mbox{}\ \ \ \ \ \ \ \ \ \ $ cout << mesh.ind\_points\_of\_convex(i)(cvs->ind\_points\_of\_face(f)[k]) << " "; \\ 
+    $\mbox{}\ \ \ \ \ \ \}$ \\
+    $\mbox{}\ \ \ \ \}$ \\
+    $\mbox{}\ \ $ \} DAL\_STANDARD\_CATCH\_ERROR; // catches standard errors\\
+  \}
+
+}
 
 \section{Select a finite element method}
 
