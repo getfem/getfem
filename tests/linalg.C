@@ -140,7 +140,7 @@ int main(void)
     double error = gmm::vect_norm2(y);
     cout << "Error : " << error << endl;
     if (error > 1.0E-10)
-      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+      DAL_THROW(dal::failure_error, "computation error too large : "<< error);
     
     cout << "/***********************************************************/\n";
     cout << "/*                   Test of dense_matrix                  */\n";
@@ -159,7 +159,7 @@ int main(void)
     error = gmm::vect_norm2(y2);
     cout << "Error : " << error << endl;
     if (error > 1.0E-10)
-      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+      DAL_THROW(dal::failure_error, "computation error too large : "<< error);
     
     cout << "transposed(m2) = " << gmm::transposed(m2) << endl;
     cout << "transposed(transposed(m2)) = "
@@ -186,14 +186,14 @@ int main(void)
     cout << "transposed(m3) = " << gmm::transposed(m3) << endl;
     gmm::clear(y2);
     iter.init();
-    gmm::ilut_precond<gmm::row_matrix<gmm::wsvector<double> > > P(m3, 2, 1E-3);
+    gmm::ilut_precond<gmm::row_matrix<gmm::wsvector<double> > > P(m3,2,1E-3);
     gmm::bicgstab(m3, y2, b, P, iter);
     cout << "y2 = " << y2 << endl;
     gmm::add(gmm::scaled(x, -1.0), y2);
     error = gmm::vect_norm2(y2);
     cout << "Error : " << error << endl;
     if (error > 1.0E-10)
-      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+      DAL_THROW(dal::failure_error, "computation error too large : "<< error);
     
     cout << "/***********************************************************/\n";
     cout << "/*         Test of row_matrix<std::vector>                 */\n";
@@ -211,7 +211,7 @@ int main(void)
     error = gmm::vect_norm2(y2);
     cout << "Error : " << error << endl;
     if (error > 1.0E-10)
-      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+      DAL_THROW(dal::failure_error, "computation error too large : "<< error);
     
     cout << "/***********************************************************/\n";
     cout << "/*             Test of col_matrix<wsvector>                */\n";
@@ -229,7 +229,7 @@ int main(void)
     error = gmm::vect_norm2(y2);
     cout << "Error : " << error << endl;
     if (error > 1.0E-10)
-      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+      DAL_THROW(dal::failure_error, "computation error too large : "<< error);
 
     cout << "/***********************************************************/\n";
     cout << "/*             Test of row_matrix<slvector>                */\n";
@@ -247,7 +247,7 @@ int main(void)
     error = gmm::vect_norm2(y2);
     cout << "Error : " << error << endl;
     if (error > 1.0E-10)
-      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+      DAL_THROW(dal::failure_error, "computation error too large : "<< error);
 
 
     cout << "/***********************************************************/\n";
@@ -266,7 +266,7 @@ int main(void)
     error = gmm::vect_norm2(y2);
     cout << "Error : " << error << endl;
     if (error > 1.0E-10)
-      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+      DAL_THROW(dal::failure_error, "computation error too large : "<< error);
 
 
     cout << "/***********************************************************/\n";
@@ -285,7 +285,7 @@ int main(void)
     error = gmm::vect_norm2(y2);
     cout << "Error : " << error << endl;
     if (error > 1.0E-10)
-      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+      DAL_THROW(dal::failure_error, "computation error too large : "<< error);
 
 
     cout << "/***********************************************************/\n";
@@ -318,7 +318,7 @@ int main(void)
     error = gmm::vect_norm2(y2);
     cout << "Error : " << error << endl;
     if (error > 1.0E-10)
-      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+      DAL_THROW(dal::failure_error, "computation error too large : "<< error);
 
     gmm::copy(m3, gmm::sub_matrix(m6, ssli1, ssli2));
     cout << "m6 = " << m6 << endl;
@@ -333,7 +333,7 @@ int main(void)
     error = gmm::vect_norm2(y2);
     cout << "Error : " << error << endl;
     if (error > 1.0E-10)
-      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+      DAL_THROW(dal::failure_error, "computation error too large : "<< error);
 
     gmm::copy(m3, gmm::sub_matrix(m6, sint1, ssli2));
     cout << "m6 = " << m6 << endl;
@@ -348,7 +348,7 @@ int main(void)
     error = gmm::vect_norm2(y2);
     cout << "Error : " << error << endl;
     if (error > 1.0E-10)
-      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+      DAL_THROW(dal::failure_error, "computation error too large : "<< error);
 
     gmm::copy(m4, gmm::sub_matrix(m6, sind1, sind2));
     gmm::wsvector<double> y3(10);
@@ -364,7 +364,7 @@ int main(void)
     error = gmm::vect_norm2(y3);
     cout << "Error : " << error << endl;
     if (error > 1.0E-10)
-      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+      DAL_THROW(dal::failure_error, "computation error too large : "<< error);
 
     cout << "/***********************************************************/\n";
     cout << "/*      Test of sub_matrices of row_matrix<wsvector>       */\n";
@@ -385,13 +385,13 @@ int main(void)
     error = gmm::vect_norm2(y);
     cout << "Error : " << error << endl;
     if (error > 1.0E-10)
-      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+      DAL_THROW(dal::failure_error, "computation error too large : "<< error);
 
     gmm::copy(m, gmm::sub_matrix(m7, sint1, ssli2));
     cout << "m7 = " << m7 << endl;
     cout <<
-      "gmm::transposed(gmm::transposed(gmm::sub_matrix(m7, sint1, ssli2))  =\n"
-	 << gmm::transposed(gmm::transposed(gmm::sub_matrix(m7, sint1, ssli2)))
+     "gmm::transposed(gmm::transposed(gmm::sub_matrix(m7, sint1, ssli2))  =\n"
+	 << gmm::transposed(gmm::transposed(gmm::sub_matrix(m7, sint1,ssli2)))
 	 << endl;
     gmm::clear(y3);
     iter.init();
@@ -402,7 +402,7 @@ int main(void)
     error = gmm::vect_norm2(y3);
     cout << "Error : " << error << endl;
     if (error > 1.0E-10)
-      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+      DAL_THROW(dal::failure_error, "computation error too large : "<< error);
 
     cout << "/***********************************************************/\n";
     cout << "/*      Test of sub_matrices of row_matrix<rsvector>       */\n";
@@ -410,7 +410,7 @@ int main(void)
 
     gmm::row_matrix<gmm::rsvector<double> > m8(40, 40);
     gmm::clear(m8);
-    gmm::copy(m3, gmm::sub_matrix(m8, sind1, sind2)); //essayer m3 par la suite
+    gmm::copy(m3, gmm::sub_matrix(m8, sind1, sind2)); //essayer m3 ensuite
     cout << "m8 = " << m8 << endl;
     cout << "gmm::transposed(gmm::sub_matrix(m8, sind1, sind2))  = "
 	 << gmm::transposed(gmm::sub_matrix(m8, sind1, sind2)) << endl;
@@ -423,12 +423,12 @@ int main(void)
     error = gmm::vect_norm2(y);
     cout << "Error : " << error << endl;
     if (error > 1.0E-10)
-      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+      DAL_THROW(dal::failure_error, "computation error too large : "<< error);
 
     gmm::copy(m, gmm::sub_matrix(m8, sint1, ssli2));
     cout << "m8 = " << m8 << endl;
     cout <<
-      "gmm::transposed(gmm::transposed(gmm::sub_matrix(m8, sint1, ssli2))  =\n"
+      "gmm::transposed(gmm::transposed(gmm::sub_matrix(m8,sint1,ssli2))  =\n"
 	 << gmm::transposed(gmm::transposed(gmm::sub_matrix(m8, sint1, ssli2)))
 	 << endl;
     gmm::clear(y3);
@@ -461,12 +461,12 @@ int main(void)
     error = gmm::vect_norm2(y);
     cout << "Error : " << error << endl;
     if (error > 1.0E-10)
-      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+      DAL_THROW(dal::failure_error, "computation error too large : "<< error);
 
     gmm::copy(m, gmm::sub_matrix(m7bis, sint1, ssli2));
     cout << "m7bis = " << m7bis << endl;
     cout <<
-    "gmm::transposed(gmm::transposed(gmm::sub_matrix(m7bis, sint1, ssli2)) =\n"
+    "gmm::transposed(gmm::transposed(gmm::sub_matrix(m7bis,sint1,ssli2)) =\n"
     << gmm::transposed(gmm::transposed(gmm::sub_matrix(m7bis, sint1, ssli2)))
     << endl;
     gmm::clear(y3);
@@ -478,7 +478,7 @@ int main(void)
     error = gmm::vect_norm2(y3);
     cout << "Error : " << error << endl;
     if (error > 1.0E-10)
-      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+      DAL_THROW(dal::failure_error, "computation error too large : "<< error);
 
 
     cout << "/***********************************************************/\n";
@@ -500,13 +500,14 @@ int main(void)
     error = gmm::vect_norm2(y);
     cout << "Error : " << error << endl;
     if (error > 1.0E-10)
-      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+      DAL_THROW(dal::failure_error, "computation error too large : "<< error);
 
     gmm::copy(m, gmm::sub_matrix(m7ter, sint1, ssli2));
     cout << "m7ter = " << m7ter << endl;
     cout <<
-      "gmm::transposed(gmm::transposed(gmm::sub_matrix(m7ter, sint1, ssli2))  =\n"
-	 << gmm::transposed(gmm::transposed(gmm::sub_matrix(m7ter, sint1, ssli2)))
+      "gmm::transposed(gmm::transposed(gmm::sub_matrix(m7t,sint1,ssli2)) =\n"
+	 << gmm::transposed(gmm::transposed(gmm::sub_matrix(m7ter,
+							    sint1, ssli2)))
 	 << endl;
     gmm::clear(y3);
     iter.init();
@@ -517,7 +518,7 @@ int main(void)
     error = gmm::vect_norm2(y3);
     cout << "Error : " << error << endl;
     if (error > 1.0E-10)
-      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+      DAL_THROW(dal::failure_error, "computation error too large : "<< error);
 
 
 
@@ -537,7 +538,7 @@ int main(void)
     error = gmm::vect_norm2(y3);
     cout << "Error : " << error << endl;
     if (error > 1.0E-10)
-      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+      DAL_THROW(dal::failure_error, "computation error too large : "<< error);
     
 
     /***********************************************************/
