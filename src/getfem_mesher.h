@@ -31,6 +31,8 @@
 /*                                                                         */
 /* *********************************************************************** */
 
+
+#ifdef HAVE_QHULL_QHULL_H
 #include <getfem_mesh.h>
 #include <gmm_condition_number.h>
 #include <bgeot_comma_init.h>
@@ -364,3 +366,5 @@ namespace getfem {
 
 
 }
+
+#endif

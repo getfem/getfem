@@ -32,6 +32,8 @@
 
 #include <getfem_mesher.h>
 
+#ifdef HAVE_QHULL_QHULL_H
+
 namespace getfem {
 
   template <typename MAT, typename MAT2> void
@@ -1272,5 +1274,8 @@ extern "C" {
 // 	    project_and_update_constraints(ip);
 // 	  }
 // 	}
+
+#endif
+
 
 #endif
