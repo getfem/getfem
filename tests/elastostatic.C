@@ -276,7 +276,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
 
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<> final_model(NEUMANN, mf_rhs,
-					  F, DIRICHLET_BOUNDARY_NUM, true);
+					  F, DIRICHLET_BOUNDARY_NUM);
 
   // Generic solve.
   cout << "Number of variables : " << final_model.nb_dof() << endl;
@@ -317,7 +317,7 @@ int main(int argc, char *argv[]) {
       exp.exporting(p.mf_u); 
       exp.write_point_data(p.mf_u, U, "elastostatic_displacement");
       cout << "export done, you can view the data file with (for example)\n"
-	"mayavi -d elastostatic.vtk -f ExtractVectorNorm -f "
+	"mayavi -d " << p.datafilename << ".vtk -f ExtractVectorNorm -f "
 	"WarpVector -m BandedSurfaceMap -m Outline\n";
     }
     // getfem::save_solution(p.datafilename + ".dataelt", p.mf_u, p.U, p.K);

@@ -42,21 +42,19 @@
 /*        including the constraints defined in the sub-problem(s) if any.  */
 /*  - is_linear()   : true if the problem is linear.                       */
 /*  - is_coercive() : true if the problem is symmetric coercive.           */
-/*  - compute_tangent_matrix(MS, i0, modified) : the brick has to compute  */
-/*        its own part of the tangent matrix (i0 if the shift in the       */
-/*        tangent matrix defined in MS) and has to call the                */
-/*        compute_tangent_matrix(MS, i0,modified) of sub-problem(s) if any.*/
+/*  - compute_tangent_matrix(MS, i0, j0, modified) : the brick has to call */
+/*        the compute_tangent_matrix(MS, i0,modified) of sub-problem(s) if */
+/*        any and to compute  its own part of the tangentand constraint    */
+/*        matrices (i0 and j0 are the shifts in the matrices defined in MS)*/
 /*        modified indicates if the part of the tangent matrix dedicated   */
 /*        to this brick will be modified by other bricks.                  */
-/*  - compute_residu(MS, i0) : the brick has to compute its own            */
-/*        part of the residu (i0 if the shift in the residu vector defined */
-/*        in MS) and has to call the compute_residu(MS, i0, modified) of   */
-/*        sub-problem(s) if any.                                           */
-/*  - constraints_system(MS, i0, j0, modified) : the brick has to compute  */
-/*        its own part of the linear constraints system and has to call    */
-/*        the constraints_system(MS, i0, j0,modified) of sub-problem(s)    */
-/*        if any. modified indicates if the part of the constraint system  */
-/*        dedicated to this brick will be modified by other bricks.        */
+/*  - compute_residu(MS, i0, j0) : the brick has to call the               */
+/*        compute_residu(MS, i0, modified) of sub-problem(s) if any and    */
+/*        has to compute its own part of the residu of the linear system   */
+/*        and of the constraint system (i0 and j0 are the shifts in the    */
+/*        residu vectors defined in MS)                                    */
+/*  - mixed_variables(bv, i0) : indicates in bv the indices of the         */
+/*        variables which are considered as multipliers or mixed variables.*/
 /*  - main_mesh_fem() : the principal finite element method. For instance  */
 /*         a Dirichlet condition will act on this main mesh_fem. For a     */
 /*         mixed method, the main fem will be the primal variable fem.     */
@@ -223,7 +221,7 @@ namespace getfem {
     virtual mesh_fem &main_mesh_fem(void) = 0;
     virtual bool is_linear(void) = 0;
     virtual bool is_coercive(void) = 0;
-    virtual void mixed_variables(dal::bit_vector &) = 0;
+    virtual void mixed_variables(dal::bit_vector &, size_type = 0) = 0;
     mdbrick_abstract(void) :  to_compute(true), to_transfer(true),
 			      MS_i0(0), ident_ms(-1) { }
     virtual ~mdbrick_abstract() {}
@@ -271,7 +269,7 @@ namespace getfem {
 
     virtual bool is_linear(void) { return true; }
     virtual bool is_coercive(void) { return true; }
-    virtual void mixed_variables(dal::bit_vector &) {}
+    virtual void mixed_variables(dal::bit_vector &, size_type = 0) {}
     virtual size_type nb_dof(void) { return mf_u.nb_dof(); }
     virtual size_type nb_constraints(void) { return 0; }
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
@@ -414,7 +412,7 @@ namespace getfem {
 
     virtual bool is_linear(void) { return true; }
     virtual bool is_coercive(void) { return true; }
-    virtual void mixed_variables(dal::bit_vector &) {}
+    virtual void mixed_variables(dal::bit_vector &, size_type = 0) {}
     virtual size_type nb_dof(void) { return mf_u.nb_dof(); }
     virtual size_type nb_constraints(void) { return 0; }
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
@@ -555,7 +553,7 @@ namespace getfem {
 
     virtual bool is_linear(void) { return true; }
     virtual bool is_coercive(void) { return false; }
-    virtual void mixed_variables(dal::bit_vector &) {}
+    virtual void mixed_variables(dal::bit_vector &, size_type = 0) {}
     virtual size_type nb_dof(void) { return mf_u.nb_dof(); }
     virtual size_type nb_constraints(void) { return 0; }
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
@@ -672,8 +670,8 @@ namespace getfem {
     
     virtual bool is_linear(void) { return sub_problem.is_linear(); }
     virtual bool is_coercive(void) { return sub_problem.is_coercive(); }
-    virtual void mixed_variables(dal::bit_vector &b)
-    { sub_problem.mixed_variables(b); }
+    virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0)
+    { sub_problem.mixed_variables(b, i0); }
     virtual size_type nb_dof(void) { return sub_problem.nb_dof(); }
     virtual size_type nb_constraints(void)
     { return sub_problem.nb_constraints(); }
@@ -745,8 +743,8 @@ namespace getfem {
 
     virtual bool is_linear(void) { return sub_problem.is_linear(); }
     virtual bool is_coercive(void) { return false; }
-    virtual void mixed_variables(dal::bit_vector &b)
-    { sub_problem.mixed_variables(b); }
+    virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0)
+    { sub_problem.mixed_variables(b, i0); }
     virtual size_type nb_dof(void) { return sub_problem.nb_dof(); }    
     virtual size_type nb_constraints(void)
     { return sub_problem.nb_constraints(); }
@@ -837,13 +835,13 @@ namespace getfem {
     
     virtual bool is_linear(void)   { return sub_problem.is_linear(); }
     virtual bool is_coercive(void) { return false; }
-    virtual void mixed_variables(dal::bit_vector &b) {
-      sub_problem.mixed_variables(b);
+    virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0) {
+      sub_problem.mixed_variables(b, i0);
       if (this->context_changed()) {
 	this->force_recompute();
 	compute_B();
       }
-      b.add(sub_problem.nb_dof(), mf_p.nb_dof());
+      b.add(i0 + sub_problem.nb_dof(), mf_p.nb_dof());
     }
     virtual size_type nb_dof(void) {
       return sub_problem.nb_dof() + mf_p.nb_dof();
@@ -972,15 +970,15 @@ namespace getfem {
     virtual bool is_linear(void)   { return sub_problem.is_linear(); }
     virtual bool is_coercive(void) 
     { return (!with_multipliers && sub_problem.is_coercive()); }
-    virtual void mixed_variables(dal::bit_vector &b) {
-      sub_problem.mixed_variables(b);
+    virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0) {
+      sub_problem.mixed_variables(b, i0);
       if (with_multipliers) {
 	if (this->context_changed()) {
 	  fixing_dimensions();
 	  this->force_recompute();
 	  compute_constraints(ASMDIR_BUILDH + ASMDIR_BUILDR);
 	}
-	b.add(sub_problem.nb_dof(), nb_const);
+	b.add(i0 + sub_problem.nb_dof(), nb_const);
       }
     }
     virtual size_type nb_dof(void) {

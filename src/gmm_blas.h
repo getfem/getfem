@@ -1467,8 +1467,22 @@ namespace gmm {
   void add(const L1& l1, L2& l2, col_major, col_and_row)
   { add(l1, l2, col_major(), col_major()); }
 
+
   template <typename L1, typename L2, typename L3> inline
-    void add(const L1& l1, const L2& l2, L3& l3) {
+  void add(const L1& l1, const L2& l2, L3& l3) {
+    add_spec(l1, l2, l3, typename linalg_traits<L2>::linalg_type());
+  }
+  
+  template <typename L1, typename L2, typename L3> inline
+  void add(const L1& l1, const L2& l2, const L3& l3)
+  { add(l1, l2, linalg_const_cast(l3)); }
+
+  template <typename L1, typename L2, typename L3> inline
+    void add_spec(const L1& l1, const L2& l2, L3& l3, abstract_matrix)
+  { copy(l2, l3); add(l1, l3); }
+
+  template <typename L1, typename L2, typename L3> inline
+    void add_spec(const L1& l1, const L2& l2, L3& l3, abstract_vector) {
     if (vect_size(l1) != vect_size(l2) || vect_size(l1) != vect_size(l3))
       DAL_THROW(dimension_error,"dimensions mismatch"); 
     if ((const void *)(&l1) == (const void *)(&l3))
@@ -1480,10 +1494,6 @@ namespace gmm {
 	  typename linalg_traits<L2>::storage_type(),
 	  typename linalg_traits<L3>::storage_type());
   }
-
-  template <typename L1, typename L2, typename L3> inline
-  void add(const L1& l1, const L2& l2, const L3& l3)
-  { add(l1, l2, linalg_const_cast(l3)); }
 
   template <typename IT1, typename IT2, typename IT3>
     void add_full_(IT1 it1, IT2 it2, IT3 it3, IT3 ite) {
@@ -1517,7 +1527,8 @@ namespace gmm {
   
   // generic function for add(v1, v2, v3).
   // Need to be specialized to optimize particular additions.
-  template <typename L1, typename L2, typename L3, typename ST1, typename ST2, typename ST3>
+  template <typename L1, typename L2, typename L3,
+	    typename ST1, typename ST2, typename ST3>
   inline void add(const L1& l1, const L2& l2, L3& l3, ST1, ST2, ST3)
   { copy(l2, l3); add(l1, l3, ST1(), ST3()); }
 

@@ -241,7 +241,7 @@ namespace getfem {
 
     virtual bool is_linear(void) { return false; }
     virtual bool is_coercive(void) { return true; }
-    virtual void mixed_variables(dal::bit_vector &) {}
+    virtual void mixed_variables(dal::bit_vector &, size_type = 0) {}
     virtual size_type nb_dof(void) { return mf_u.nb_dof(); }
     virtual size_type nb_constraints(void) { return 0; }
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
