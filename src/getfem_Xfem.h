@@ -32,6 +32,18 @@
 /*                                                                         */
 /* *********************************************************************** */
 
+/*
+  what is an Xfem ?
+
+  It is a "base" fem (for example PK(2,2)), with additional base functions.
+  These additionnal base functions are the product of:
+   - a global function (the virtual_Xfem_func)
+   - base functions of another fem (for example PK(2,1))
+
+  The Xfem is built using the add_func member function, which takes as
+  parameters, a global function and a fem.
+*/
+
 #include <getfem_fem.h>
 #include <getfem_mesh_fem.h>
 
@@ -65,7 +77,9 @@ namespace getfem
   class Xfem : public virtual_fem {
   
   protected:
-    pfem pfi;
+    pfem pfb; // base fem
+    std::vector<pfem> uniq_pfe; 
+    std::vector<size_type> func_pf; // nb_func fems which are enriched (indexes in the array uniq_pfe)
     bool is_valid;
     size_type nb_func;
     std::vector<pXfem_func> funcs; // List of functions to be added
@@ -73,14 +87,17 @@ namespace getfem
     std::vector<pXfem_hess> hess;  // Hessians of theses functions
     std::vector<size_type> func_indices;
 
-
+    void get_fem_precomp_tab(pfem_precomp pfp, std::vector<pfem_precomp>& vpfp) const;
+    pfem pfe(size_type k) const { return uniq_pfe[func_pf[k]]; }
   public:
 
     void valid(void);
 
     virtual size_type nb_dof(void) const;
 
-    void add_func(pXfem_func pXf, pXfem_grad pXg,
+    /* ind should be > 0 */
+    void add_func(pfem pf,
+                  pXfem_func pXf, pXfem_grad pXg,
 		  pXfem_hess pXh = pno_Xfem_hess_defined,
 		  size_type ind = size_type(-1));
     
@@ -118,7 +135,7 @@ namespace getfem
 			      const base_matrix &B3, const base_matrix &B32,
 			      base_tensor &t, size_type elt) const;
     
-    Xfem(pfem pf);
+    Xfem(pfem pfb);
   };
 
 
