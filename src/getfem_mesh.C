@@ -105,6 +105,7 @@ namespace getfem
   void getfem_mesh::clear(void)
   { 
     bgeot::mesh<base_node>::clear();
+    gtab.clear(); trans_exists.clear();
     lmsg_sender().send(MESH_CLEAR());
   }
 
@@ -143,21 +144,30 @@ namespace getfem
   void getfem_mesh::sup_convex(size_type ic)
   {
     bgeot::mesh<base_node>::sup_convex(ic);
+    trans_exists[ic] = false;
     lmsg_sender().send(MESH_SUP_CONVEX(ic));
   }
 
-  void getfem_mesh::swap_convex(size_type i, size_type j)
-  {
-    if (i != j)
-    {
+  void getfem_mesh::swap_convex(size_type i, size_type j) {
+    if (i != j) {
       bgeot::mesh<base_node>::swap_convex(i,j);
+      trans_exists.swap(i, j);
+      gtab.swap(i,j);
       lmsg_sender().send(MESH_SWAP_CONVEX(i, j));
     }
   }
 
-  int getfem_mesh::read_from_file(STD_NEEDED istream &ist)
-  {
+  int getfem_mesh::read_from_file(STD_NEEDED istream &ist) {
+   
     int r = bgeot::mesh<base_node>::read_from_file(ist);
+    dal::bit_vector nn = convex_index();
+    size_type i;
+    for (i << nn; i != size_type(-1); i << nn)
+      if (!(trans_exists[i])) {
+	gtab[i] = bgeot::associated_trans(structure_of_convex(i));
+	trans_exists[i] = true;
+      }
+
     lmsg_sender().send(MESH_READ_FROM_FILE(ist));
     return r;
   }
@@ -166,12 +176,6 @@ namespace getfem
   { 
     STD_NEEDED ifstream o(name.data());
     if (!o) throw std::invalid_argument("Mesh file does not exist");
-
-    dal::bit_vector nn = convex_index();
-    size_type i;
-    for (i << nn; i != size_type(-1); i << nn)
-      gtab[i] = bgeot::associated_trans(structure_of_convex(i));
-    
     return read_from_file(o);
   }
 

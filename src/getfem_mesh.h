@@ -170,6 +170,7 @@ namespace getfem
       double eps_p;  /* infinity distance under wich two points are equal. */
       msg_sender lkmsg; /* gestionnaire de msg.                            */
       dal::dynamic_array<bgeot::pgeometric_trans> gtab;
+      dal::bit_vector trans_exists;
 
     public :
 
@@ -199,7 +200,7 @@ namespace getfem
       { return pts.search(pt); }
 
       bgeot::pgeometric_trans trans_of_convex(size_type ic) const
-      { return gtab[ic]; }
+      { assert(trans_exists[ic]); return gtab[ic]; }
 
       /** Add a convex to the mesh. cvs is of type 
        *          bgeot::convex\_structure and "it" is an iterator on a list
@@ -212,7 +213,7 @@ namespace getfem
 	bool present;
 	size_type i = bgeot::mesh<base_node>::add_convex(pgt->structure(),
 							 ipts, &present);
-	gtab[i] = pgt;
+	gtab[i] = pgt; trans_exists[i] = true;
 	if (!present) lmsg_sender().send(MESH_ADD_CONVEX(i));
 	return i;
       }

@@ -247,12 +247,17 @@ namespace getfem
   {
     pfem pf = f_elems[cv]->pf;
     bgeot::pgeometric_trans pgt = _linked_mesh->trans_of_convex(cv);
+    // std::cout << "pgt = " << pgt << endl;
     const base_node *pt = &(pf->node_of_dof(i));
+    // std::cout << "pt = " << *pt << endl;
+    // std::cout << "dim = " << int(_linked_mesh->dim()) << endl;
     base_node P(_linked_mesh->dim()); P.fill(0.0);
-
+    // std::cout << "P = " << P << endl;
     size_type k = pgt->nb_points();
+    // std::cout << "k = " << k << endl;
     for (size_type l = 0; l < k; ++l)
     {
+      // std::cout << "eval " << l << endl;
       P.addmul(pgt->poly_vector()[l].eval(pt->begin()),
 	       _linked_mesh->points_of_convex(cv)[l]);
       
@@ -294,9 +299,9 @@ namespace getfem
     {
       /* ajout des voisins dans la pile.                                  */
 
-      // cout << "nbd = " <<  nb_dof_of_element(cv) << endl; getchar();
+      // std::cout << "cv = " << cv << " nbd = " << nb_dof_of_element(cv) << endl;
       size_type nbp = _linked_mesh->nb_points_of_convex(cv);
-     
+      
       for (size_type i = 0; i < nbp; i++)
       {
 	size_type ip = _linked_mesh->ind_points_of_convex(cv)[i];
@@ -311,8 +316,9 @@ namespace getfem
       tab.resize(nbd);
       for (size_type i = 0; i < nbd; i++)
       {
+	// std::cout << "dof " << i << " of convex " << cv << endl;
 	fd.P = point_of_dof(cv, i); // optimisable ...
-	// cout << "point of dof : " << fd.P << endl;
+	// std::cout << "point of dof : " << fd.P << endl;
 	fd.pnd = f_elems[cv]->pf->dof_types()[i];
 	size_type j;
 	if (dof_linkable(fd.pnd)) {
