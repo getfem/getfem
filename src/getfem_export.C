@@ -83,7 +83,11 @@ namespace getfem
       indpttab[0].resize(cvstab[0]->nb_points());
       std::copy(m.ind_points_of_convex(i).begin(),
 		m.ind_points_of_convex(i).end(), indpttab[0].begin());
-      
+
+      /* pseudo recursive decomposition of the initial convex into
+	 face of face of ... of face of convex , cvstab and indpttab
+	 being the "stack" of convexes to treat
+      */
       while (ncs != 0) {
 	ncs--;
 	cvs = cvstab[ncs];
@@ -91,7 +95,7 @@ namespace getfem
 	if (cvs->dim() == 1) { // il faudrait étendre aux autres cas classiques.
 	  
 	  for (size_type j = 1; j < cvs->nb_points(); ++j) {
-	    //	    cerr << "ncs=" << ncs << "j=" << j << ", ajout de " << (indpttab[ncs])[j-1] << "," << (indpttab[ncs])[j] << endl;
+	    //cerr << "ncs=" << ncs << "j=" << j << ", ajout de " << (indpttab[ncs])[j-1] << "," << (indpttab[ncs])[j] << endl;
 	    el.add(edge_list_elt((indpttab[ncs])[j-1],(indpttab[ncs])[j],ncv));
 	  }
 	}
@@ -99,10 +103,8 @@ namespace getfem
 	  size_type nf = cvs->nb_faces();
 	  //cerr << "ncs = " << ncs << ",cvs->dim=" << int(cvs->dim()) << ", nb_faces=" << nf << endl;
 	  for (size_type f = 0; f < nf; ++f) {
-	    if (cvs->dim() > 2) ++f;
 	    cvstab[ncs+f] = (cvs->faces_structure())[f];
 	    indpttab[ncs+f].resize(cvs->nb_points_of_face(f));
-
 	    /*
 	    cerr << "   -> f=" << f << ", cvs->nb_points_of_face(f)=" << 
 	      cvs->nb_points_of_face(f) << "=[";
@@ -111,15 +113,13 @@ namespace getfem
 		   << int(cvs->ind_points_of_face(f)[k]) << "{" << pts[cvs->ind_points_of_face(f)[k]] << "}";
 	    cerr << "]" << endl;
 	    */
-
 	    for (size_type k = 0; k < cvs->nb_points_of_face(f); ++k)
-	      (indpttab[ncs+f])[k]
-		//		= (indpttab[ncs])[(cvs->ind_points_of_face(f))[k]];
-		= pts[cvs->ind_points_of_face(f)[k]];
+	      (indpttab[ncs+f])[k] = pts[cvs->ind_points_of_face(f)[k]];
 	  }
 	  //	  cvstab[ncs] = cvstab[ncs + nf - 1];
 	  //indpttab[ncs] = indpttab[ncs + nf - 1];
 	  ncs += nf;
+	  //cerr << "on empile les " << nf << " faces, -> ncs=" << ncs << endl;
 	}
       }
     }

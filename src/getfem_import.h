@@ -165,7 +165,7 @@ namespace getfem {
 	} break;
 	case TRI: {
 	  if (nnode == 3) pgt = bgeot::simplex_geotrans(2,1);
-	  else if (nnode == 6) {
+	  else if (nnode == 6) { // validé
 	    static size_type lorder[6] = {0,3,1,5,4,2};
 	    pgt = bgeot::simplex_geotrans(2,2);
 	    std::copy(lorder,lorder+nnode,order.begin());
@@ -181,8 +181,8 @@ namespace getfem {
 	} break;
 	case TETR: {
 	  if (nnode == 4) pgt = bgeot::simplex_geotrans(3,1);
-	  else if (nnode == 10) {
-	    static size_type lorder[10] = {0,4,1, 7,8, 3, 5,6, 9, 2};
+	  else if (nnode == 10) { // validé
+	    static size_type lorder[10] = {0,4,1, 7,8, 3, 6, 5, 9, 2};
 	    pgt = bgeot::simplex_geotrans(3,2);
 	    std::copy(lorder,lorder+nnode,order.begin());
 	  }
