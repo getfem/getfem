@@ -309,7 +309,10 @@ namespace dal
   
     public : 
 
-      bool is_in(size_type i) const { return (*this)[i]; }
+    bool is_in(size_type i) const { 
+      if (i < ifirst_true || i > ilast_true) return false;
+      else return (((*(const bit_container*)(this))[i / WD_BIT]) & 
+		   (bit_support(1) << (i & WD_MASK))) ? true : false; }
       void add(size_type i) { (*this)[i] = true; }
     /** set the interval [i...i+nb-1] to true */
       void add(size_type i, size_type nb);
