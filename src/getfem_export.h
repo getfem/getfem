@@ -411,7 +411,8 @@ namespace getfem
 			      const VECTU &U, VECTV &V) {
     base_matrix M;
     if (mf_source.nb_dof() != gmm::vect_size(U)
-	|| mf_target.nb_dof() != gmm::vect_size(V))
+	|| (gmm::vect_size(V) % mf_target.nb_dof()) != 0
+	|| gmm::vect_size(V) == 0)
       DAL_THROW(dimension_error, "Dimensions mismatch");
     if (&mf_source.linked_mesh() == &mf_target.linked_mesh()) {
       interpolation_solution_same_mesh(mf_source, mf_target, U, V, M, 0);
@@ -425,7 +426,8 @@ namespace getfem
 			      const mesh_fem &mf_target,
 			      MAT &M) {
     if (mf_source.nb_dof() != gmm::mat_ncols(M)
-	|| mf_target.nb_dof() != gmm::mat_nrows(M))
+	|| (gmm::mat_nrows(M) % mf_target.nb_dof()) != 0
+	|| gmm::mat_nrows(M) == 0)
       DAL_THROW(dimension_error, "Dimensions mismatch");
     std::vector<scalar_type> U, V;
     if (&mf_source.linked_mesh() == &mf_target.linked_mesh()) {

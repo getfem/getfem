@@ -116,7 +116,7 @@ namespace gmm {
       gmm::mult(vB[i], A, Maux);
       gmm::mult(Maux, BT, vAloc[i]);
 
-      cout << " " << i << " (" << gmm::mat_nrows(vAloc[i]) << ") " << std::flush;
+      cout << i << " (" << gmm::mat_nrows(vAloc[i]) << ") " << std::flush;
 
 #ifdef GMM_USES_SUPERLU
       if (superlu)
@@ -329,7 +329,7 @@ namespace gmm {
     global_to_local(q, *(M.fi), *(M.cor));
     for (size_type i = 0; i < (M.ml1)->size(); ++i) {
       M.iter.init();
-      cg((*(M.ml1))[i], (*(M.gi))[i], (*(M.fi))[i], (*(M.precond1))[i], M.iter);
+      cg((*(M.ml1))[i], (*(M.gi))[i], (*(M.fi))[i],(*(M.precond1))[i], M.iter);
       itebilan = std::max(itebilan, M.iter.get_iteration());
     }
 
