@@ -51,26 +51,27 @@ namespace gmm {
    * of secant are applied. When a convenient interval is found,
    * iterations of dichotomie and regula falsi are applied.
    */
-  template <class FUNC>
-  double find_a_zero(const FUNC &G, double a = 0.0, double b = a+1.0) {
+  template <class FUNC, class T>
+  T find_root(const FUNC &G, T a = 0.0, T b = a+1.0,
+	      double tol = gmm::default_tol(T())) {
     
-    double c, Ga = G(a), Gb = G(b), Gc, d;
+    T c, Ga = G(a), Gb = G(b), Gc, d;
     d = abs(b - a);
-    for (int i = 0; i < 4; i++) { /* iterations de secante.               */
-      if (d < eps) return (b + a) / 2.0;
+    for (int i = 0; i < 4; i++) { /* secant iterations.                   */
+      if (d < tol) return (b + a) / 2.0;
       c = b - Gb * (b - a) / (Gb - Ga); Gc = G(c);
       a = b; b = c; Ga = Gb; Gb = Gc;
       d = abs(b - a);
     }
-    while (Ga * Gb > 0.0) { /* iterations de secante.                     */
-      if (d < eps) return (b + a) / 2.0;
+    while (Ga * Gb > 0.0) { /* secant iterations.                         */
+      if (d < tol) return (b + a) / 2.0;
       c = b - Gb * (b - a) / (Gb - Ga); Gc = G(c);
       a = b; b = c; Ga = Gb; Gb = Gc;
       d = abs(b - a);
     }
     
     c = max(a, b); a = min(a, b); b = c;
-    while (d > eps) {
+    while (d > tol) {
       c = b - (b - a) * (Gb / (Gb - Ga)); Gc = G(c); /* regula falsi.     */
       if (c > b) c = b; if (c < a) c = a;
       if (Gc > 0) { b = c; Gb = Gc; } else { a = c; Ga = Gc; }
