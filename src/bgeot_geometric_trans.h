@@ -215,7 +215,7 @@ namespace bgeot
 				   const base_matrix& G__); 
     geotrans_interpolation_context(bgeot::pgeometric_trans pgt__,
 				   const base_node& xref__,
-				   const base_matrix& G__);
+			 	   const base_matrix& G__);
   };
 
   /** @name functions on geometric transformations

@@ -1122,12 +1122,14 @@ namespace getfem {
       exp.write_mesh_quality(m);
 
       getfem::stored_mesh_slice sl;
-      sl.build(m, getfem::slicer_explode(0.8), 3);
+      sl.build(m, getfem::slicer_explode(0.8), 8);
       getfem::vtk_export exp2("totoq.vtk");
       exp2.exporting(sl);
       exp2.write_mesh();
       exp2.write_mesh_quality(m);
-
+      getfem::dx_export exp3("totoq.dx");
+      exp3.exporting(sl);
+      exp3.write_mesh();
 
 //       getfem::stored_mesh_slice slb; slb.build(m, getfem::slicer_boundary(m), 4);
 //       getfem::stored_mesh_slice sl2;

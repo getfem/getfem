@@ -2,7 +2,7 @@
 //========================================================================
 //
 // Library : GEneric Tool for Finite Element Methods (getfem)
-// File    : getfem_mesh_adaptable_im.h : adaptable Integration methods
+// File    : getfem_mesh_im_level_set.h : adaptable Integration methods
 //           on convex meshes.
 //           
 // Date    : February 02, 2005.
@@ -29,8 +29,8 @@
 //========================================================================
 
 
-#ifndef GETFEM_MESH_ADAPTABLE_IM_H__
-#define GETFEM_MESH_ADAPTABLE_IM_H__
+#ifndef GETFEM_MESH_IM_LEVEL_SET_H__
+#define GETFEM_MESH_IM_LEVEL_SET_H__
 
 #include <getfem_mesh_im.h>
 #include <getfem_level_set.h>
@@ -54,8 +54,6 @@ namespace getfem {
     // + set of stored adapted integration methods
     // + original methods ?
 
-    void cut_element(size_type cv);
-    
   public :
 
     void adapt(void);
@@ -83,11 +81,14 @@ namespace getfem {
   private:
     mesh_im_level_set(const mesh_im_level_set &);
     mesh_im_level_set & operator=(const mesh_im_level_set &);
-  
+    void cut_element(size_type cv, const dal::bit_vector &primary,
+		const dal::bit_vector &secondary);    
+    bool is_crossed_by(size_type c, plevel_set ls, unsigned lsnum);
+    void find_crossing_level_set(size_type cv, dal::bit_vector &prim, dal::bit_vector &sec);
 
   };
   
 }  /* end of namespace getfem.                                             */
 
 
-#endif /* GETFEM_MESH_ADAPTABLE_IM_H__  */
+#endif /* GETFEM_MESH_IM_LEVEL_SET_H__  */

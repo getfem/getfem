@@ -28,6 +28,9 @@
 //
 //========================================================================
 
+#ifndef GETFEM_MESHER_H__
+#define GETFEM_MESHER_H__
+
 
 #include <getfem_mesh.h>
 #include <gmm_condition_number.h>
@@ -101,18 +104,21 @@ namespace getfem {
 
   class mesher_level_set : public mesher_signed_distance {
     pfem pf;
-    base_tensor t;
+    mutable base_tensor t;
     std::vector<scalar_type> coeff;
   public:
     template <class VECT>
     mesher_level_set(pfem pf_, const VECT &coeff_) : pf(pf_) {
+      assert(gmm::vect_norm2(coeff_) != 0);
       coeff.resize(gmm::vect_size(coeff_));
       gmm::copy(coeff_, coeff);
     }
     bool bounding_box(base_node &, base_node &) const
     { return false; }
     virtual scalar_type operator()(const base_node &P) const
-    { pf->base_value(P, t); return gmm::vect_sp(coeff, t); }
+    { pf->base_value(P, t); scalar_type s=0;
+      for (size_type i=0; i < t.size(); ++i) s+=coeff[i]*t[i];
+      return s; }
     virtual scalar_type operator()(const base_node &P,
 				   dal::bit_vector &bv) const
     { scalar_type d = (*this)(P); bv[id] = (gmm::abs(d) < SEPS); return d; }
@@ -273,7 +279,9 @@ namespace getfem {
       hfs.push_back(mesher_half_space(org, no));
     }
     bool bounding_box(base_node &bmin, base_node &bmax) const {
-      gmm::clear(bmin); std::fill(bmax.begin(), bmax.end(), scalar_type(1));
+      bmin.resize(N); bmax.resize(N);
+      std::fill(bmin.begin(), bmin.end(), scalar_type(0));
+      std::fill(bmax.begin(), bmax.end(), scalar_type(1));
       return true;
     }
     virtual scalar_type operator()(const base_node &P) const {
@@ -286,12 +294,12 @@ namespace getfem {
     virtual scalar_type operator()(const base_node &P, dal::bit_vector &bv)
       const {
       scalar_type d = this->operator()(P);
-      if (gmm::abs(d) < SEPS) for (int k = 0; k < N+1; ++k) hfs[k](P, bv);
+      if (gmm::abs(d) < SEPS) for (unsigned k = 0; k < N+1; ++k) hfs[k](P, bv);
       return d;
     }
     scalar_type grad(const base_node &P, base_small_vector &G) const {
       unsigned i = 0; scalar_type di = hfs[i](P);
-      for (int k = 1; k < N+1; ++k) {
+      for (unsigned k = 1; k < N+1; ++k) {
 	scalar_type dk = hfs[k](P);
 	if (dk > di) { i = k; di = dk; }
       }
@@ -299,7 +307,7 @@ namespace getfem {
     }
     virtual void register_constraints(std::vector<const
 				      mesher_signed_distance*>& list) const
-    { for (int k = 0; k < N+1; ++k) hfs[k].register_constraints(list); }
+    { for (unsigned k = 0; k < N+1; ++k) hfs[k].register_constraints(list); }
   };
 
   class mesher_prism_ref : public mesher_signed_distance {
@@ -326,7 +334,9 @@ namespace getfem {
       
     }
     bool bounding_box(base_node &bmin, base_node &bmax) const {
-      gmm::clear(bmin); std::fill(bmax.begin(), bmax.end(), scalar_type(1));
+      bmin.resize(N); bmax.resize(N);
+      std::fill(bmin.begin(), bmin.end(), scalar_type(0));
+      std::fill(bmax.begin(), bmax.end(), scalar_type(1));
       return true;
     }
     virtual scalar_type operator()(const base_node &P) const {
@@ -340,12 +350,12 @@ namespace getfem {
     virtual scalar_type operator()(const base_node &P, dal::bit_vector &bv)
       const {
       scalar_type d = this->operator()(P);
-      if (gmm::abs(d) < SEPS) for (int k = 0; k < N+2; ++k) hfs[k](P, bv);
+      if (gmm::abs(d) < SEPS) for (unsigned k = 0; k < N+2; ++k) hfs[k](P, bv);
       return d;
     }
     scalar_type grad(const base_node &P, base_small_vector &G) const {
       unsigned i = 0; scalar_type di = hfs[i](P);
-      for (int k = 1; k < N+2; ++k) {
+      for (unsigned k = 1; k < N+2; ++k) {
 	scalar_type dk = hfs[k](P);
 	if (dk > di) { i = k; di = dk; }
       }
@@ -353,7 +363,7 @@ namespace getfem {
     }
     virtual void register_constraints(std::vector<const
 				      mesher_signed_distance*>& list) const
-    { for (int k = 0; k < N+2; ++k) hfs[k].register_constraints(list); }
+    { for (unsigned k = 0; k < N+2; ++k) hfs[k].register_constraints(list); }
   };
 
 
@@ -464,7 +474,7 @@ namespace getfem {
     
     mesher_intersection(const std::vector<const mesher_signed_distance *>
 			&dists_) : dists(dists_) 
-    { vd.resize(dist.size()); }
+    { vd.resize(dists.size()); }
     
     mesher_intersection(const mesher_signed_distance &a_,
 		 const mesher_signed_distance &b_,
@@ -729,3 +739,4 @@ class mesher_ellipse : public mesher_signed_distance { // TODO
 
 }
 
+#endif /* GETFEM_MESHER_H__ */

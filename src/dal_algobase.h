@@ -186,6 +186,10 @@ namespace dal
     return res;
   }
 
+  template<class CONT>
+    typename CONT::value_type
+  mean_value(const CONT &c) { return mean_value(c.begin(), c.end()); }
+
   template<class ITER> /* hum ... */
     void minmax_box(typename std::iterator_traits<ITER>::value_type &pmin,
 		    typename std::iterator_traits<ITER>::value_type &pmax,

@@ -397,7 +397,7 @@ namespace getfem {
       gmm::dense_matrix<T> val2(P, Qdim);
       gmm::clear(val2);
       for (size_type q = 0; q < Qmult; ++q) {
-	base_tensor::iterator it = t.begin();	
+	base_tensor::const_iterator it = t.begin();	
 	for (size_type k = 0; k < P; ++k)
 	  for (size_type r = 0; r < target_dim(); ++r)
 	    for (size_type j = 0; j < RR; ++j, ++it) {
@@ -422,7 +422,7 @@ namespace getfem {
     } else {
       real_grad_base_value(c, t);
       for (size_type q = 0; q < Qmult; ++q) {
-	base_tensor::iterator it = t.begin();
+	base_tensor::const_iterator it = t.begin();
 	for (size_type k = 0; k < N; ++k)
 	  for (size_type r = 0; r < target_dim(); ++r)
 	    for (size_type j = 0; j < RR; ++j, ++it) {

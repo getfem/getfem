@@ -216,6 +216,8 @@ namespace bgeot {
     { return small_vector<T>(*this,other,std::plus<T>()); }
     small_vector<T> operator-(const small_vector<T>& other) const 
     { return small_vector<T>(*this,other,std::minus<T>()); }
+    small_vector<T> operator-() const 
+    { return -1.*(*this); }
     small_vector<T> operator*(T v) const 
     { return small_vector<T>(*this, std::bind2nd(std::multiplies<T>(),v)); }
     small_vector<T> operator/(T v) const { return (*this)*(T(1)/v); }

@@ -33,6 +33,8 @@
 
 namespace getfem {
 
+  std::map<level_set::mf_key, level_set::pmesh_fem> level_set::mesh_fems;
+
   bool level_set::mf_key::operator <(const mf_key &a) const {
     if (pmesh < a.pmesh) return true; else
       if (a.pmesh < pmesh) return false; else
@@ -50,13 +52,21 @@ namespace getfem {
     }
     else return it->second;
   }
-  
+
   void level_set::sup_mesh_fem(getfem_mesh &mesh, dim_type o) {
     mf_key key(mesh, o);
     std::map<mf_key, pmesh_fem>::iterator it = mesh_fems.find(key);
     if (it != mesh_fems.end()) {
       if (it->second.use_count() <= 2) mesh_fems.erase(key);
     }
+  }
+
+  mesher_level_set level_set::mls_of_convex(size_type cv, unsigned lsnum, bool inverted) {
+    std::vector<scalar_type> coeff(mf->nb_dof_of_element(cv));
+    for (size_type i = 0; i < coeff.size(); ++i)
+      coeff[i] = (inverted ? scalar_type(1) : scalar_type(-1)) * 
+	values(lsnum)[mf->ind_dof_of_element(cv)[i]];
+    return mesher_level_set(mf->fem_of_element(cv), coeff);
   }
  
 

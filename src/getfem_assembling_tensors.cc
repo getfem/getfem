@@ -149,7 +149,7 @@ namespace getfem {
 	tensor_shape ts(child(n).ranges());
 	tensor_ranges rn(child(n).ranges());
 	const std::string &s = red[n].second;
-	bool ok = true; assert(rn.size() == s.size());
+	assert(rn.size() == s.size());
 	for (unsigned i=0; i < rn.size(); ++i)
 	  if (s[i] != ' ') {
 	    size_type p = s.find(s[i]);

@@ -1,7 +1,7 @@
 SUBDIRS = meshes
 
 if QHULL
-optprog = test_mesh_generation
+optprog = test_mesh_generation 	test_mesh_im_level_set
 else
 optprog =
 endif
@@ -76,6 +76,7 @@ plasticity_SOURCES = plasticity.cc
 navier_stokes_SOURCES = navier_stokes.cc
 if QHULL
 test_mesh_generation_SOURCES = test_mesh_generation.cc 
+test_mesh_im_level_set_SOURCES = test_mesh_im_level_set.cc 
 endif
 #test_fem_SOURCES = test_fem.cc
 dynamic_friction_SOURCES = dynamic_friction.cc

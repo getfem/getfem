@@ -34,6 +34,7 @@
 
 #include <dal_shared_ptr.h>
 #include <getfem_mesh_fem.h>
+#include <getfem_mesher.h>
 
 namespace getfem {
 
@@ -53,29 +54,31 @@ namespace getfem {
     typedef dal::shared_ptr<mesh_fem> pmesh_fem;
     pmesh_fem add_mesh_fem(getfem_mesh &mesh, dim_type o);
     void sup_mesh_fem(getfem_mesh &mesh, dim_type o);
-
     static std::map<mf_key, pmesh_fem> mesh_fems;
     getfem_mesh *pmesh;
-    dim_type order_;
+    dim_type degree_;
     pmesh_fem mf;
     std::vector<scalar_type> primary_, secondary_;
+    bool with_secondary;
 
   public :
     
-    std::vector<scalar_type> &primary(void) { return primary_; }
-    const std::vector<scalar_type> &primary(void) const { return primary_; }
-    std::vector<scalar_type> &secondary(void) { return secondary_; }
-    const std::vector<scalar_type> &secondary(void) const {return secondary_;}
+    std::vector<scalar_type> &values(unsigned i = 0)
+    { return (i == 0) ? primary_ : secondary_; }
+    const std::vector<scalar_type> &values(unsigned i = 0) const
+    { return (i == 0) ? primary_ : secondary_; }
 
+    mesher_level_set mls_of_convex(size_type cv, unsigned i = 0, bool inverted = false);
+    bool has_secondary(void) { return with_secondary; }
     mesh_fem &get_mesh_fem(void) { return *mf; }
-
-    level_set(getfem_mesh &mesh, dim_type o = dim_type(1))
-      : pmesh(&mesh), order_(o), mf(add_mesh_fem(mesh, o)) {
+    dim_type degree() const { return degree_; }
+    level_set(getfem_mesh &mesh, dim_type o = dim_type(1), bool with_secondary_ = false)
+      : pmesh(&mesh), degree_(o), mf(add_mesh_fem(mesh, o)), with_secondary(with_secondary_) {
       primary_.resize(mf->nb_dof());
       secondary_.resize(mf->nb_dof());
     }
-
-    ~level_set() { sup_mesh_fem(*pmesh, order_); }
+    
+    ~level_set() { sup_mesh_fem(*pmesh, degree_); }
 
   };
  
