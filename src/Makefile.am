@@ -70,6 +70,7 @@ include_HEADERS =                      \
 	gmm_solver_bicgstab.h          \
 	gmm_solver_Schwarz_additive.h  \
 	gmm_precond_cholesky.h         \
+	gmm_precond_choleskyt.h        \
 	gmm_precond_mr_approx_inverse.h\
 	gmm_precond_diagonal.h         \
 	gmm_precond_ilu.h              \

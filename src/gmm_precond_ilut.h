@@ -77,12 +77,6 @@
 #include <gmm_interface.h>
 
 namespace gmm {
-  
-  template<class T> struct _elt_rsvector_value_less {
-    inline bool operator()(const _elt_rsvector<T>& a, 
-			   const _elt_rsvector<T>& b) const
-    { return (dal::abs(a.e) > dal::abs(b.e)); }
-  };
 
   template <class Matrix>
   class ilut_precond  {
@@ -128,16 +122,12 @@ namespace gmm {
       for (; it != vect_end(w); ++it) if (i > it.index()) nL++;
       size_type nU = w.nb_stored() - nL - 1;
 
-      for (size_type krow = 0; krow < w.nb_stored(); ++krow) {
+      for (size_type krow = 0, k; krow < w.nb_stored(); ++krow) {
 	typename svector::iterator wk = w.begin() + krow;
-	size_type k = wk->c;
-	if (k >= i) break;
-	value_type tmp = (wk->e) * indiag[k];
+	if ((k = wk->c) >= i) break;
+	value_type tmp = (wk->e) / indiag[k];
 	if (dal::abs(tmp) < eps * norm_row) { w.sup(k); --krow; } 
-	else { 
-	  wk->e = tmp;
-	  gmm::add(scaled(mat_row(U, k), -tmp), w);  w[k] += U(k,k) * tmp;
-	}
+	else { wk->e += tmp; gmm::add(scaled(mat_row(U, k), -tmp), w); }
       }
       
       U(i,i) = w[i]; gmm::clean(w, eps * norm_row); w[i] = 0.0;
@@ -148,7 +138,7 @@ namespace gmm {
 	if (wit->c < i) { if (nnl < nL+K) L(i, wit->c) = wit->e; ++nnl; }
 	else            { if (nnu < nU+K) U(i, wit->c) = wit->e; ++nnu; }
       
-      indiag[i] = 1.0 / U(i,i);
+      indiag[i] = U(i,i);
     }
   }
 
