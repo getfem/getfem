@@ -62,8 +62,8 @@ SRC = \
 	getfem_regular_meshes.C
 
 lib_LTLIBRARIES = libgetfem.la
-libgetfm_la_SOURCES = $(SRC)
-libgetfm_la_LDFLAGS = ${LIBTOOL_VERSION_INFO}
+libgetfem_la_SOURCES = $(SRC)
+libgetfem_la_LDFLAGS = ${LIBTOOL_VERSION_INFO}
 
 clean-local:
 	rm -rf cxx_repository
