@@ -331,8 +331,8 @@ namespace getfem {
   }
 
   template<class ITER>
-    static void write_tab_to_file_(std::ostream &ost, ITER b, ITER e)
-  { for ( ; b != e; ++b) ost << "  " << *b; }
+    void write_tab_to_file_(std::ostream &ost, const ITER& b_, const ITER& e)
+  { for (ITER b(b_) ; b != e; ++b) ost << "  " << *b; }
 
   template<class ITER>
     static void write_convex_to_file_(const getfem_mesh &ms,

@@ -896,7 +896,7 @@ namespace bgeot {
       do {
         /*cout << "vectorized_ reduction2a : n=" << n << ", s = " << s << " mti.p=" << &mti.p(0)-b[0] << "," 
           << &mti.p(1)-b[1] << "," << &mti.p(2)-b[2] << "\n";*/
-        daxpy_(&n, &mti.p(2), &mti.p(1), &incx, &mti.p(0), &incy);
+	gmm::daxpy_(&n, &mti.p(2), &mti.p(1), &incx, &mti.p(0), &incy);
       } while (mti.vnext());
       return true;
     } else return false;
@@ -930,7 +930,7 @@ namespace bgeot {
       int incx = s[1], incy = s[0];
       do {
         double v = mti.p(2)*mti.p(3);
-        daxpy_(&n, &v, &mti.p(1), &incx, &mti.p(0), &incy);
+	gmm::daxpy_(&n, &v, &mti.p(1), &incx, &mti.p(0), &incy);
       } while (mti.vnext());
       return true;
     } else return false;

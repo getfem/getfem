@@ -728,96 +728,6 @@ namespace gmm {
   size_type index_of_it(const IT &, size_type k, abstract_dense)
   { return k; }
 
-  /* ******************************************************************** */
-  /*		Write                                   		  */
-  /* ******************************************************************** */
-
-  template <typename T> struct cast_char_type { typedef T return_type; };
-  template <> struct cast_char_type<signed char> { typedef int return_type; };
-  template <> struct cast_char_type<unsigned char>
-  { typedef unsigned int return_type; };
-  template <typename T> inline typename cast_char_type<T>::return_type
-  cast_char(const T &c) { return typename cast_char_type<T>::return_type(c); }
-
-
-  template <typename L> inline void write(std::ostream &o, const L &l)
-  { write(o, l, typename linalg_traits<L>::linalg_type()); }
-
-  template <typename L> void write(std::ostream &o, const L &l,
-				       abstract_vector) {
-    o << "vector(" << vect_size(l) << ") [";
-    write(o, l, typename linalg_traits<L>::storage_type());
-    o << " ]";
-  }
-
-  template <typename L> void write(std::ostream &o, const L &l,
-				       abstract_sparse) {
-    typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
-      ite = vect_const_end(l);
-    for (; it != ite; ++it) 
-      o << " (r" << it.index() << "," << cast_char(*it) << ")";
-  }
-
-  template <typename L> void write(std::ostream &o, const L &l,
-				       abstract_dense) {
-    typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
-      ite = vect_const_end(l);
-    if (it != ite) o << " " << cast_char(*it++);
-    for (; it != ite; ++it) o << ", " << cast_char(*it);
-  }
-
-  template <typename L> void write(std::ostream &o, const L &l,
-				       abstract_skyline) {
-    typedef typename linalg_traits<L>::const_iterator const_iterator;
-    const_iterator it = vect_const_begin(l), ite = vect_const_end(l);
-    if (it != ite) {
-      o << "<r+" << it.index() << ">";
-      if (it != ite) o << " " << cast_char(*it++);
-      for (; it != ite; ++it) { o << ", " << cast_char(*it); }
-    }
-  }
-
-  template <typename L> inline void write(std::ostream &o, const L &l,
-				       abstract_matrix) {
-    write(o, l, typename linalg_traits<L>::sub_orientation());
-  }
-
-
-  template <typename L> void write(std::ostream &o, const L &l,
-				       row_major) {
-    o << "matrix(" << mat_nrows(l) << ", " << mat_ncols(l) << ")" << endl;
-    for (size_type i = 0; i < mat_nrows(l); ++i) {
-      o << "(";
-      write(o, mat_const_row(l, i), typename linalg_traits<L>::storage_type());
-      o << " )\n";
-    }
-  }
-
-  template <typename L> inline
-  void write(std::ostream &o, const L &l, row_and_col) 
-  { write(o, l, row_major()); }
-
-  template <typename L> inline
-  void write(std::ostream &o, const L &l, col_and_row)
-  { write(o, l, row_major()); }
-
-  template <typename L> void write(std::ostream &o, const L &l, col_major) {
-    o << "matrix(" << mat_nrows(l) << ", " << mat_ncols(l) << ")" << endl;
-    for (size_type i = 0; i < mat_nrows(l); ++i) {
-      o << "(";
-      if (is_sparse(l)) { // not optimized ...
-	for (size_type j = 0; j < mat_ncols(l); ++j)
-	  if (l(i,j) != typename linalg_traits<L>::value_type(0)) 
-	    o << " (r" << j << ", " << l(i,j) << ")";
-      }
-      else {
-	if (mat_ncols(l) != 0) o << ' ' << l(i, 0);
-	for (size_type j = 1; j < mat_ncols(l); ++j) o << ", " << l(i, j); 
-      }
-      o << " )\n";
-    }
-  }
-
   /* ********************************************************************* */
   /* Numeric limits.                                                       */
   /* ********************************************************************* */
@@ -1017,6 +927,97 @@ namespace gmm {
   mat_const_col(const MAT &m, size_type i)
   { return linalg_traits<MAT>::col(mat_col_const_begin(m) + i); }
   
+
+  /* ******************************************************************** */
+  /*		Write                                   		  */
+  /* ******************************************************************** */
+
+  template <typename T> struct cast_char_type { typedef T return_type; };
+  template <> struct cast_char_type<signed char> { typedef int return_type; };
+  template <> struct cast_char_type<unsigned char>
+  { typedef unsigned int return_type; };
+  template <typename T> inline typename cast_char_type<T>::return_type
+  cast_char(const T &c) { return typename cast_char_type<T>::return_type(c); }
+
+
+  template <typename L> inline void write(std::ostream &o, const L &l)
+  { write(o, l, typename linalg_traits<L>::linalg_type()); }
+
+  template <typename L> void write(std::ostream &o, const L &l,
+				       abstract_vector) {
+    o << "vector(" << vect_size(l) << ") [";
+    write(o, l, typename linalg_traits<L>::storage_type());
+    o << " ]";
+  }
+
+  template <typename L> void write(std::ostream &o, const L &l,
+				       abstract_sparse) {
+    typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
+      ite = vect_const_end(l);
+    for (; it != ite; ++it) 
+      o << " (r" << it.index() << "," << cast_char(*it) << ")";
+  }
+
+  template <typename L> void write(std::ostream &o, const L &l,
+				       abstract_dense) {
+    typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
+      ite = vect_const_end(l);
+    if (it != ite) o << " " << cast_char(*it++);
+    for (; it != ite; ++it) o << ", " << cast_char(*it);
+  }
+
+  template <typename L> void write(std::ostream &o, const L &l,
+				       abstract_skyline) {
+    typedef typename linalg_traits<L>::const_iterator const_iterator;
+    const_iterator it = vect_const_begin(l), ite = vect_const_end(l);
+    if (it != ite) {
+      o << "<r+" << it.index() << ">";
+      if (it != ite) o << " " << cast_char(*it++);
+      for (; it != ite; ++it) { o << ", " << cast_char(*it); }
+    }
+  }
+
+  template <typename L> inline void write(std::ostream &o, const L &l,
+				       abstract_matrix) {
+    write(o, l, typename linalg_traits<L>::sub_orientation());
+  }
+
+
+  template <typename L> void write(std::ostream &o, const L &l,
+				       row_major) {
+    o << "matrix(" << mat_nrows(l) << ", " << mat_ncols(l) << ")" << endl;
+    for (size_type i = 0; i < mat_nrows(l); ++i) {
+      o << "(";
+      write(o, mat_const_row(l, i), typename linalg_traits<L>::storage_type());
+      o << " )\n";
+    }
+  }
+
+  template <typename L> inline
+  void write(std::ostream &o, const L &l, row_and_col) 
+  { write(o, l, row_major()); }
+
+  template <typename L> inline
+  void write(std::ostream &o, const L &l, col_and_row)
+  { write(o, l, row_major()); }
+
+  template <typename L> void write(std::ostream &o, const L &l, col_major) {
+    o << "matrix(" << mat_nrows(l) << ", " << mat_ncols(l) << ")" << endl;
+    for (size_type i = 0; i < mat_nrows(l); ++i) {
+      o << "(";
+      if (is_sparse(l)) { // not optimized ...
+	for (size_type j = 0; j < mat_ncols(l); ++j)
+	  if (l(i,j) != typename linalg_traits<L>::value_type(0)) 
+	    o << " (r" << j << ", " << l(i,j) << ")";
+      }
+      else {
+	if (mat_ncols(l) != 0) o << ' ' << l(i, 0);
+	for (size_type j = 1; j < mat_ncols(l); ++j) o << ", " << l(i, j); 
+      }
+      o << " )\n";
+    }
+  }
+
   /* ********************************************************************* */
   /* Time mesurement.                                                      */
   /* ********************************************************************* */
