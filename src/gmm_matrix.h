@@ -126,7 +126,7 @@ namespace gmm
 
     void clear_row(size_type i) { clear(li[i]); }
     void clear_mat();
-    void resize(size_type i) { li.resize(i); }
+    void resize(size_type m, size_type n);
 
     typename std::vector<V>::iterator begin(void)
     { return li.begin(); }
@@ -147,6 +147,12 @@ namespace gmm
     inline size_type ncols(void) const
     { return (nrows() == 0) ? 0 : vect_size(li[0]); }
   };
+
+  template<typename V> void row_matrix<V>::resize(size_type m, size_type n) {
+    li.resize(m);
+    for (size_type i=0; i < m; ++i) resize(li[i], n);
+  }
+
 
   template<typename V> void row_matrix<V>::clear_mat()
   { for (size_type i=0; i < nrows(); ++i) clear_row(i); }
@@ -187,6 +193,10 @@ namespace gmm
     { return (*itrow)[j]; }
     static reference access(const row_iterator &itrow, size_type j)
     { return (*itrow)[j]; }
+    static void resize(this_type &v, size_type m, size_type n)
+    { v.resize(m, n); }
+    static void reshape(this_type &, size_type, size_type)
+    { DAL_THROW(failure_error, "Sorry, to be done"); }
   };
 
 #ifdef USING_BROKEN_GCC295
@@ -222,7 +232,7 @@ namespace gmm
 
     void clear_col(size_type i) { clear(li[i]); }
     void clear_mat();
-    void resize(size_type i) { li.resize(i); }
+    void resize(size_type, size_type);
 
     V& col(size_type i) { return li[i]; }
     const V& col(size_type i) const { return li[i]; }
@@ -242,6 +252,11 @@ namespace gmm
     inline size_type nrows(void) const
     { return (ncols() == 0) ? 0 : vect_size(li[0]); }
   };
+
+  template<typename V> void col_matrix<V>::resize(size_type m, size_type n) {
+    li.resize(n);
+    for (size_type i=0; i < n; ++i) resize(li[i], m);
+  }
 
   template<typename V> void col_matrix<V>::clear_mat()
   { for (size_type i=0; i < ncols(); ++i) clear_col(i); }
@@ -282,6 +297,10 @@ namespace gmm
     { return (*itcol)[j]; }
     static reference access(const col_iterator &itcol, size_type j)
     { return (*itcol)[j]; }
+    static void resize(this_type &v, size_type m, size_type n)
+    { v.resize(m,n); }
+    static void reshape(this_type &, size_type, size_type)
+    { DAL_THROW(failure_error, "Sorry, to be done"); }
   };
 
   template<typename V> std::ostream &operator <<
@@ -324,8 +343,8 @@ namespace gmm
 
     void out_of_range_error(void) const;
     
-    void resize(size_type l, size_type c)
-    { if (c*l != this->size()) std::vector<T>::resize(c*l); nbl = l; nbc = c; }
+    void resize(size_type, size_type);
+    void reshape(size_type, size_type);
     
     void fill(T a, T b = T(0));
     inline size_type nrows(void) const { return nbl; }
@@ -335,6 +354,32 @@ namespace gmm
       : std::vector<T>(c*l), nbc(c), nbl(l)  {}
     dense_matrix(void) { nbl = nbc = 0; }
   };
+
+  template<typename T> void dense_matrix<T>::reshape(size_type m,size_type n) {
+    if (n*m != nbl*nbc) DAL_THROW(dimension_error,"dimensions mismatch");
+    nbl = m; nbc = n;
+  }
+
+  template<typename T> void dense_matrix<T>::resize(size_type m, size_type n) {
+    if (n*m > nbc*nbl) std::vector<T>::resize(n*m);
+    if (m < nbl) {
+      for (size_type i = 1; i < std::min(nbc, n); ++i)
+	std::copy(this->begin()+i*nbl, this->begin()+(i*nbl+m),
+		  this->begin()+i*m);
+      for (size_type i = std::min(nbc, n); i < n; ++i)
+	std::fill(this->begin()+(i*m), this->begin()+(i+1)*m, T(0));
+      }
+    else {
+      for (size_type i = std::min(nbc, n)-1; i > 0; --i)
+	std::copy(this->begin()+i*nbl, this->begin()+(i+1)*nbl,
+		  this->begin()+i*m);
+      for (size_type i = 0; i < std::min(nbc, n); ++i)
+	std::fill(this->begin()+(i*m+nbl), this->begin()+(i+1)*m, T(0));
+    }
+    if (n*m < nbc*nbl)
+      std::vector<T>::resize(n*m);
+    nbl = m; nbc = n;
+  }
   
   template<typename T> void dense_matrix<T>::fill(T a, T b) { 
     std::fill(this->begin(), this->end(), b);
@@ -413,6 +458,10 @@ namespace gmm
     { return (*itcol)[j]; }
     static reference access(const col_iterator &itcol, size_type j)
     { return (*itcol)[j]; }
+    static void resize(this_type &v, size_type m, size_type n)
+    { v.resize(m,n); }
+    static void reshape(this_type &v, size_type m, size_type n)
+    { v.reshape(m, n); }
   };
 
   template<typename T> std::ostream &operator <<
@@ -595,7 +644,8 @@ namespace gmm
     { init_with_good_format(B); }
     void init_with(const row_matrix<rsvector<T> > &B)
     { init_with_good_format(B); }
-    template <typename PT1, typename PT2, typename PT3, int cshift> void init_with(const csr_matrix_ref<PT1,PT2,PT3,cshift>& B)
+    template <typename PT1, typename PT2, typename PT3, int cshift>
+    void init_with(const csr_matrix_ref<PT1,PT2,PT3,cshift>& B)
     { init_with_good_format(B); }
 
     template <typename Matrix> void init_with(const Matrix &A);
@@ -795,7 +845,11 @@ namespace gmm
     static origin_type* origin(this_type &m) { return &m; }
     static const origin_type* origin(const this_type &m) { return &m; }
     static void do_clear(this_type &m) { m.do_clear(); }
-    // access to be done ...
+    // access to be done ...    
+    static void resize(this_type &, size_type , size_type)
+    { DAL_THROW(failure_error, "Sorry, to be done"); }
+    static void reshape(this_type &, size_type , size_type)
+    { DAL_THROW(failure_error, "Sorry, to be done"); }
   };
 
   template <typename MAT> void block_matrix<MAT>::do_clear(void) { 

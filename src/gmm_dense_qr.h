@@ -517,11 +517,13 @@ namespace gmm {
     typedef typename linalg_traits<MAT1>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
     // to be optimized (use a real tridiag matrix).
-    
+
     size_type n = mat_nrows(M);
-    R d = gmm::real(M(n-2, n-2) - M(n-1, n-1)) / R(2);
+    T d = (M(n-2, n-2) - M(n-1, n-1)) / T(2);
+    if (gmm::imag(d) != R(0))
+      DAL_WARNING(2, "Please, be sure that your matrix is hermitian");
     T e = gmm::sqr(M(n-1, n-2));
-    T mu = M(n-1, n-1) - e / (d + gmm::sgn(d) * gmm::sqrt(d*d + e));
+    T mu = M(n-1, n-1) - e / (d + T(gmm::sgn(gmm::real(d)))*gmm::sqrt(d*d + e));
     T x = M(0,0) - mu, z = M(1, 0), c, s;
 
     for (size_type k = 1; k < n; ++k) {
@@ -540,7 +542,7 @@ namespace gmm {
       Apply_Givens_rotation_right(M(k  ,k-1), M(k,k)  , c, s);
       if (k < n-1) Apply_Givens_rotation_right(M(k+1,k-1), M(k+1,k), c, s);
       // if (k < n-2) Apply_Givens_rotation_right(M(k+2,k-1), M(k+2,k), c, s);
-      
+
       if (compute_z) col_rot(Z, c, s, k-1, k);
       if (k < n-1) { x = M(k, k-1); z = M(k+1, k-1); }
     }
@@ -576,7 +578,8 @@ namespace gmm {
 //     gmm::add(scaled(A, -1), aux2);
 //     cout << "it gives : " << mat_euclidean_norm(aux2) << endl;
     
-    symmetric_qr_stop_criterion(T, p, q, tol);
+    // symmetric_qr_stop_criterion(T, p, q, tol);
+    qr_stop_criterion(T, p, q, tol);
     
     while (q < n) {
 
@@ -584,10 +587,14 @@ namespace gmm {
       if (!compvect) SUBK = sub_interval(0,0);
       symmetric_Wilkinson_qr_step(sub_matrix(T, SUBI), 
 				  sub_matrix(eigvect, SUBJ, SUBK), compvect);
-      symmetric_qr_stop_criterion(T, p, q, tol);
+      
+      // symmetric_qr_stop_criterion(T, p, q, tol);
+      qr_stop_criterion(T, p, q, tol);
       if (++ite > n*100) DAL_THROW(failure_error, "QR algorithm failed. "
 				   "Probably, your matrix is not real "
-				   "symmetric or complex hermitian");
+				   "symmetric or complex hermitian"
+				   << " A = " << A << " T = " << T 
+				   << " q = " << q);
     }
     
 

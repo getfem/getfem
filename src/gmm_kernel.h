@@ -37,6 +37,7 @@
 #include <gmm_interface.h>
 #include <gmm_sub_vector.h>
 #include <gmm_sub_matrix.h>
+#include <gmm_vector_to_matrix.h>
 #include <gmm_vector.h>
 #include <gmm_matrix.h>
 #include <gmm_tri_solve.h>

@@ -94,6 +94,7 @@ namespace gmm {
 
     VVector m(mat_ncols(A)),r(mat_ncols(A)),ei(mat_ncols(A)),Ar(mat_ncols(A)); 
     value_type alpha = mat_trace(A)/ mat_euclidean_norm_sqr(A);
+    if (alpha == value_type(0)) alpha = value_type(1);
     
     for (size_type i = 0; i < mat_nrows(A); ++i) {
       gmm::clear(m); gmm::clear(ei); 
@@ -107,6 +108,7 @@ namespace gmm {
 	gmm::add(gmm::scaled(r, vect_sp(r, Ar) / vect_sp(Ar, Ar)), m);
 	gmm::clean(m, threshold * gmm::vect_norm2(m));
       }
+      if (gmm::vect_norm2(m) == magnitude_type(0)) m[i] = alpha;
       gmm::copy(m, M.col(i));
     }
   }

@@ -59,6 +59,7 @@ include_HEADERS =                      \
 	gmm_conjugated.h               \
 	gmm_def.h                      \
 	gmm_sub_index.h                \
+	gmm_vector_to_matrix.h         \
 	gmm_sub_vector.h               \
 	gmm_sub_matrix.h               \
 	gmm_interface.h                \

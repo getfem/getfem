@@ -313,6 +313,69 @@ namespace gmm {
     for (size_type j=0; j < mat_ncols(l); ++j) fill_random(mat_col(l,j),cfill);
   }
 
+  /** resize a vector **/
+  template <typename V> inline
+  void resize(V &v, size_type n, linalg_false) {
+    linalg_traits<V>::resize(v, n);
+  }
+
+  template <typename V> inline
+  void resize(V &v, size_type n, linalg_modifiable) {
+    DAL_THROW(failure_error, "You cannot resize a reference");
+  }
+
+  template <typename V> inline
+  void resize(V &v, size_type n, linalg_const) {
+    DAL_THROW(failure_error, "You cannot resize a reference");
+  }
+
+  template <typename V> inline
+  void resize(V &v, size_type n) {
+    resize(v, n, typename linalg_traits<V>::is_reference());
+  }
+
+  /** resize a matrix **/
+  template <typename M> inline
+  void resize(M &v, size_type m, size_type n, linalg_false) {
+    linalg_traits<M>::resize(v, m, n);
+  }
+
+  template <typename M> inline
+  void resize(M &v, size_type m, size_type n, linalg_modifiable) {
+    DAL_THROW(failure_error, "You cannot resize a reference");
+  }
+
+  template <typename M> inline
+  void resize(M &v, size_type m, size_type n, linalg_const) {
+    DAL_THROW(failure_error, "You cannot resize a reference");
+  }
+
+  template <typename M> inline
+  void resize(M &v, size_type m, size_type n) {
+    resize(v, m, n, typename linalg_traits<M>::is_reference());
+  }
+
+  /** reshape a matrix **/
+  template <typename M> inline
+  void reshape(M &v, size_type m, size_type n, linalg_false) {
+    linalg_traits<M>::reshape(v, m, n);
+  }
+
+  template <typename M> inline
+  void reshape(M &v, size_type m, size_type n, linalg_modifiable) {
+    DAL_THROW(failure_error, "You cannot reshape a reference");
+  }
+
+  template <typename M> inline
+  void reshape(M &v, size_type m, size_type n, linalg_const) {
+    DAL_THROW(failure_error, "You cannot reshape a reference");
+  }
+
+  template <typename M> inline
+  void reshape(M &v, size_type m, size_type n) {
+    reshape(v, m, n, typename linalg_traits<M>::is_reference());
+  }
+  
 
   /* ******************************************************************** */
   /*		Scalar product                             		  */
@@ -821,9 +884,10 @@ namespace gmm {
 
   template <typename L, typename T>
   void clean(L &l, double seuil, abstract_dense, T) {
+    typedef typename number_traits<T>::magnitude_type R;
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
     for (; it != ite; ++it)
-      if (gmm::abs(*it) < seuil) *it = T(0);
+      if (gmm::abs(*it) < R(seuil)) *it = T(0);
   }
 
   template <typename L, typename T>
@@ -832,9 +896,10 @@ namespace gmm {
 
   template <typename L, typename T>
   void clean(L &l, double seuil, abstract_sparse, T) {
+    typedef typename number_traits<T>::magnitude_type R;
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
     for (; it != ite; ++it) // to be optimized ...
-      if (gmm::abs(*it) < seuil) {
+      if (gmm::abs(*it) < R(seuil)) {
 	l[it.index()] = T(0);
 	it = vect_begin(l); ite = vect_end(l);
       }
@@ -844,9 +909,9 @@ namespace gmm {
   void clean(L &l, double seuil, abstract_dense, std::complex<T>) {
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
     for (; it != ite; ++it){
-      if (gmm::abs((*it).real()) < seuil)
+      if (gmm::abs((*it).real()) < T(seuil))
 	*it = std::complex<T>(T(0), (*it).imag());
-      if (gmm::abs((*it).imag()) < seuil)
+      if (gmm::abs((*it).imag()) < T(seuil))
 	*it = std::complex<T>((*it).real(), T(0));
     }
   }
@@ -859,11 +924,11 @@ namespace gmm {
   void clean(L &l, double seuil, abstract_sparse, std::complex<T>) {
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
     for (; it != ite; ++it) { // to be optimized ...
-      if (gmm::abs((*it).real()) < seuil) {
+      if (gmm::abs((*it).real()) < T(seuil)) {
 	l[it.index()] = std::complex<T>(T(0), (*it).imag());
 	it = vect_begin(l); ite = vect_end(l); continue;
       }
-      if (gmm::abs((*it).imag()) < seuil) {
+      if (gmm::abs((*it).imag()) < T(seuil)) {
 	l[it.index()] = std::complex<T>((*it).real(), T(0));
 	it = vect_begin(l); ite = vect_end(l); continue;
       }

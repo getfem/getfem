@@ -175,7 +175,7 @@ namespace gmm
   public:
     void out_of_range_error(void) const;
     void clean(double eps);
-    void resize(size_type l) { nbl = l;  /* + suprimer les elements en trop */}
+    void resize(size_type);
     
     inline ref_elt_vector<T, wsvector<T> > operator [](size_type c)
     { return ref_elt_vector<T, wsvector<T> >(this, c); }
@@ -211,7 +211,16 @@ namespace gmm
   template<typename T>  void wsvector<T>::clean(double eps) {
     iterator it = this->begin(), itf = ++it, ite = this->end();
     for ( ; it != ite; ++itf)
-      { if (gmm::abs((*it).e) <= eps) { erase(it); it = itf; } else ++it; }
+      { if (gmm::abs(it->second) <= eps) { erase(it); it = itf; } else ++it; }
+  }
+
+  template<typename T>  void wsvector<T>::resize(size_type n) {
+    if (n < nbl) {
+      iterator it = this->begin(), itf = ++it, ite = this->end();
+      for ( ; it != ite; ++itf)
+	{ if (it->first >= n) { erase(it); it = itf; } else ++it; }
+    }
+    nbl = n;
   }
 
   template<typename T>  void wsvector<T>::out_of_range_error(void) const
@@ -243,6 +252,7 @@ namespace gmm
     static reference access(origin_type *o, const iterator &, const iterator &,
 			    size_type i)
     { return (*o)[i]; }
+    static void resize(this_type &v, size_type n) { v.resize(n); }
   };
 
   template<typename T> std::ostream &operator <<
@@ -279,9 +289,10 @@ namespace gmm
   { copy(*(v1.origin), v2); }
 
   template <typename T> inline void clean(wsvector<T> &v, double eps) {
+    typedef typename number_traits<T>::magnitude_type R;
     typename wsvector<T>::iterator it = v.begin(), ite = v.end(), itc;
     while (it != ite) 
-      if (gmm::abs((*it).second) <= eps)
+      if (gmm::abs((*it).second) <= R(eps))
 	{ itc=it; ++it; v.erase(itc); } else ++it; 
   }
 
@@ -381,14 +392,14 @@ namespace gmm
     typedef T value_type;
 
   protected:
-    size_type nbl;    	/* Nombre d'elements max.	        	  */
+    size_type nbl;    	/* size of the vector.	          	  */
     
   public:
 
     void sup(size_type j);
     void out_of_range_error(void) const;
     void base_resize(size_type n) { _base_type::resize(n); }
-    void resize(size_type l) { nbl = l; /* + suprimer les elements en trop*/ }
+    void resize(size_type);
     
     ref_elt_vector<T, rsvector<T> > operator [](size_type c)
     { return ref_elt_vector<T, rsvector<T> >(this, c); }
@@ -415,6 +426,14 @@ namespace gmm
 	_base_type::resize(nb_stored()-1);
       }
     }
+  }
+
+  template<typename T>  void rsvector<T>::resize(size_type n) {
+    if (n < nbl) {
+      for (size_type i = 0; i < nb_stored(); ++i)
+	if (_base_type::operator[](i).c >= n) { base_resize(i); break; }
+    }
+    nbl = n;
   }
 
   template <typename T> void rsvector<T>::w(size_type c, const T &e) {
@@ -486,6 +505,7 @@ namespace gmm
     static reference access(origin_type *o, const iterator &, const iterator &,
 			    size_type i)
     { return (*o)[i]; }
+    static void resize(this_type &v, size_type n) { v.resize(n); }
   };
 
   template<typename T> std::ostream &operator <<
@@ -602,13 +622,14 @@ namespace gmm
   }
   
   template <typename T> inline void clean(rsvector<T> &v, double eps) {
+    typedef typename number_traits<T>::magnitude_type R;
     typename rsvector<T>::iterator it = v.begin(), ite = v.end();
     for (; it != ite; ++it) if (gmm::abs((*it).e) <= eps) break;
     if (it != ite) {
       typename rsvector<T>::iterator itc = it;
       size_type erased = 1;
       for (++it; it != ite; ++it)
-	{ *itc = *it; if (gmm::abs((*it).e) <= eps) ++erased; else ++itc; }
+	{ *itc = *it; if (gmm::abs((*it).e) <= R(eps)) ++erased; else ++itc; }
       v.base_resize(v.nb_stored() - erased);
     }
   }
@@ -779,7 +800,7 @@ namespace gmm
     }
 
     inline T operator [](size_type c) const { return r(c); }
-
+    void resize(size_type);
     void clear(void) { data.resize(0); shift = 0; }
 
     slvector(void) : data(0), shift(0), _size(0) {}
@@ -788,6 +809,13 @@ namespace gmm
       : data(d), shift(d), _size(l) {}
 
   };
+
+  template<typename T>  void slvector<T>::resize(size_type n) {
+    if (n < last()) {
+      if (shift >= n) clear(); else { data.resize(n-shift); }
+    }
+    _size = n;
+  }
 
   template<typename T>  void slvector<T>::w(size_type c, const T &e) {
 #   ifdef GMM_VERIFY
@@ -843,6 +871,7 @@ namespace gmm
     static reference access(origin_type *o, const iterator &, const iterator &,
 			    size_type i)
     { return (*o)[i]; }
+    static void resize(this_type &v, size_type n) { v.resize(n); }
   };
 
   template<typename T> std::ostream &operator <<

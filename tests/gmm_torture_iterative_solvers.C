@@ -18,6 +18,11 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
   typedef typename gmm::number_traits<T>::magnitude_type R;
   R prec = gmm::default_tol(R());
 
+  gmm::clean(v1, 0.01);
+  for (size_type i = 0; i < vect_size(v1); ++i)
+    if (gmm::abs(v1[i]) < R(1) / R(100))
+      DAL_THROW(gmm::failure_error, "Error in clean");
+
   static int nexpe = 0;
   if (print_debug) 
     { cout << "Begin experiment " << ++nexpe << "\n\nwith " << m1 << "\n\n"; }
@@ -45,7 +50,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
       cout << "\nTest for bicgstab with no preconditionner\n";
 
     gmm::fill_random(v1);
-    gmm::iteration iter((double(prec*cond))*10.0, print_debug ? 1:0, 1000*m);
+    gmm::iteration iter((double(prec*cond))*100.0, print_debug ? 1:0, 1000*m);
     gmm::bicgstab(m1, v1, v2, P1, iter);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
     error = gmm::vect_norm2(v3);
@@ -202,6 +207,8 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     error = gmm::vect_norm2(v3);
     if (!(error <= prec * cond * cond * R(20000)))
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
+    if (!is_hermitian(m1))
+      DAL_THROW(gmm::failure_error, "The matrix is not hermitian");
 
     if (print_debug)
       cout << "\nTest for cg with diagonal preconditionner\n";
@@ -237,6 +244,8 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     if (print_debug)
       cout << "\nTest for gmres with ildltt preconditionner\n";
     gmm::copy(m3, m1);
+    if (!is_hermitian(m1))
+      DAL_THROW(gmm::failure_error, "The matrix is not hermitian");
     cond = gmm::condest(m1);
     if (print_debug)
       cout << "condition number for this experiment= " << cond << endl;

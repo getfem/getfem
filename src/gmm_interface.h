@@ -89,11 +89,10 @@ namespace gmm {
     porigin_type origin;
     size_type _size;
 
-    simple_vector_ref(ref_V v)
-      : _begin(vect_begin(const_cast<V&>(v))), 
-	_end(vect_end(const_cast<V&>(v))), 
-	origin(linalg_origin(const_cast<V&>(v))),
-	_size(vect_size(v)) {}
+    simple_vector_ref(ref_V v) : _begin(vect_begin(const_cast<V&>(v))), 
+				 _end(vect_end(const_cast<V&>(v))), 
+				 origin(linalg_origin(const_cast<V&>(v))),
+				 _size(vect_size(v)) {}
 
     simple_vector_ref(const simple_vector_ref<CPT> &cr)
       : _begin(cr._begin),_end(cr._end),origin(cr.origin),_size(cr._size) {}
@@ -223,6 +222,7 @@ namespace gmm {
     static reference access(origin_type *, const iterator &it,
 			    const iterator &, size_type i)
     { return it[i]; }
+    static void resize(this_type &v, size_type n) { v.resize(n); }
   };
 }
 namespace std {

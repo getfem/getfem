@@ -68,6 +68,7 @@ namespace gmm {
     static reference access(origin_type *, const iterator &it,
 			    const iterator &, size_type i)
     { return it[i]; }
+    static void resize(this_type &v, size_type n) { v.resize(n); }
   };
 
 #ifdef USING_BROKEN_GCC295
@@ -102,6 +103,7 @@ namespace gmm {
     static reference access(origin_type *, const iterator &it,
 			    const iterator &, size_type i)
     { return it[i]; }
+    static void resize(this_type &v, size_type n) { v.resize(n); }
   };
 
 #ifdef USING_BROKEN_GCC295

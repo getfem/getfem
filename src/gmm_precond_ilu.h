@@ -126,10 +126,16 @@ namespace gmm {
       }
     }
     
-    size_type qn, pn, rn; 
+    size_type qn, pn, rn;
     for (i = 1; i < n; i++) {
+
       for (j = L_ptr[i]; j < L_ptr[i+1]; j++) {
 	pn = U_ptr[L_ind[j]];
+
+	if (U_val[pn] == value_type(0)) {
+	  U_val[pn] = value_type(1);
+	  DAL_WARNING(2, "pivot " << L_ind[j] << " is zero");
+	}
 	
 	value_type multiplier = (L_val[j] /= U_val[pn]);
 	

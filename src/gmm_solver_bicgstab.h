@@ -101,7 +101,7 @@ namespace gmm {
 	
 	beta = (rho_1 / rho_2) * (alpha / omega);
 	
-	gmm::add(gmm::scaled(v, -omega), p); // is it ok ? 
+	gmm::add(gmm::scaled(v, -omega), p);
 	gmm::add(r, gmm::scaled(p, beta), p);      
       }
       gmm::mult(M, p, phat);
