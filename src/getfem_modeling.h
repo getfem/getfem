@@ -1437,7 +1437,7 @@ namespace getfem {
   };
   
   /* ******************************************************************** */
-  /*  dynamic brick : not stabilized, could change a lot in the futur     */
+  /*  dynamic brick : not stabilized, could change a lot in the future    */
   /* ******************************************************************** */
 
   template<typename MODEL_STATE = standard_model_state>
@@ -1481,7 +1481,7 @@ namespace getfem {
       if (this->to_be_computed()) { compute_M(); }
       gmm::sub_interval
 	SUBI(i0+this->mesh_fem_positions[num_fem], mf_u->nb_dof());
-      gmm::scale(gmm::sub_matrix(MS.tangent_matrix(), SUBI), Kcoef);
+      gmm::scale(MS.tangent_matrix(), Kcoef);
       gmm::add(gmm::scaled(M_, Mcoef),
 	       gmm::sub_matrix(MS.tangent_matrix(), SUBI));
     }
@@ -1490,7 +1490,7 @@ namespace getfem {
       sub_problem.compute_residu(MS, i0, j0);
       gmm::sub_interval
 	SUBI(i0+this->mesh_fem_positions[num_fem], mf_u->nb_dof());
-      gmm::scale(gmm::sub_vector(MS.residu(), SUBI), Kcoef);
+      gmm::scale(MS.residu(), Kcoef);
       gmm::add(gmm::scaled(DF, -value_type(1)),
 	       gmm::sub_vector(MS.residu(), SUBI));
       gmm::mult_add(M_, gmm::scaled(gmm::sub_vector(MS.state(), SUBI), Mcoef),
@@ -1611,13 +1611,13 @@ namespace getfem {
 
       // cout << "MM = " << MS.reduced_tangent_matrix() << endl;
 
-//     gmm::dense_matrix<value_type> MM(nreddof,nreddof), Q(nreddof,nreddof);
-//        std::vector<value_type> eigval(nreddof);
-//        gmm::copy(MS.reduced_tangent_matrix(), MM);
-//        // gmm::symmetric_qr_algorithm(MM, eigval, Q);
-//        gmm::implicit_qr_algorithm(MM, eigval, Q);
-//        std::sort(eigval.begin(), eigval.end());
-//        cout << "eival = " << eigval << endl;
+//       gmm::dense_matrix<value_type> MM(nreddof,nreddof), Q(nreddof,nreddof);
+//       std::vector<value_type> eigval(nreddof);
+//       gmm::copy(MS.reduced_tangent_matrix(), MM);
+//       // gmm::symmetric_qr_algorithm(MM, eigval, Q);
+//       gmm::implicit_qr_algorithm(MM, eigval, Q);
+//       std::sort(eigval.begin(), eigval.end());
+//       cout << "eival = " << eigval << endl;
 //       cout << "vectp : " << gmm::mat_col(Q, nreddof-1) << endl;
 //       cout << "vectp : " << gmm::mat_col(Q, nreddof-2) << endl;
 

@@ -255,8 +255,7 @@ void friction_problem::stationary(plain_vector &U0, plain_vector &LN,
     }
 
   getfem::mdbrick_Coulomb_friction<>
-    FRICTION(DIRICHLET, BN, gap,
-	     friction_coef * ((scheme == 3) ? (1./theta) : 1.), BT);
+    FRICTION(DIRICHLET, BN, gap, friction_coef, BT);
 
   // Eventual periodic condition (lagrange elements only).
   sparse_matrix BP(0,mf_u.nb_dof());
@@ -331,10 +330,6 @@ void friction_problem::solve(void) {
     F[(i+1)*N-1] = Dirichlet_ratio * mf_rhs.point_of_dof(i)[N-1];
   getfem::mdbrick_Dirichlet<> DIRICHLET(VOL_F, mf_rhs, F, DIRICHLET_BOUNDARY);
   
-  // Dynamic brick.
-  getfem::mdbrick_dynamic<> DYNAMIC(DIRICHLET, mf_coef, rho);
-  if (nocontact_mass) DYNAMIC.no_mass_on_boundary(CONTACT_BOUNDARY);
-
   // contact condition for Lagrange elements
   dal::bit_vector cn = mf_u.dof_on_boundary(CONTACT_BOUNDARY);
   if (periodic) cn.setminus(mf_u.dof_on_boundary(PERIODIC_BOUNDARY1));
@@ -351,8 +346,12 @@ void friction_problem::solve(void) {
     }
 
   getfem::mdbrick_Coulomb_friction<>
-    FRICTION(DYNAMIC, BN, gap,
+    FRICTION(DIRICHLET, BN, gap,
 	     friction_coef * ((scheme == 3) ? (1./theta) : 1.), BT);
+
+  // Dynamic brick.
+  getfem::mdbrick_dynamic<> DYNAMIC(FRICTION, mf_coef, rho);
+  if (nocontact_mass) DYNAMIC.no_mass_on_boundary(CONTACT_BOUNDARY);
 
   // Eventual periodic condition (lagrange element only).
   sparse_matrix BP(0,mf_u.nb_dof());
@@ -378,7 +377,7 @@ void friction_problem::solve(void) {
       }
   }
   gmm::resize(F, gmm::mat_nrows(BP)); gmm::clear(F);
-  getfem::mdbrick_constraint<> PERIODIC(FRICTION, BP, F);
+  getfem::mdbrick_constraint<> PERIODIC(DYNAMIC, BP, F);
   
   cout << "Total number of variables: " << PERIODIC.nb_dof() << endl;
   getfem::standard_model_state MS(PERIODIC);
@@ -388,7 +387,7 @@ void friction_problem::solve(void) {
   plain_vector U1(mf_u.nb_dof()), V1(mf_u.nb_dof()), A1(mf_u.nb_dof());
   plain_vector LT0(gmm::mat_nrows(BT)), LN0(gmm::mat_nrows(BN));
   plain_vector LT1(gmm::mat_nrows(BT)), LN1(gmm::mat_nrows(BN));
-  scalar_type a(1), b(1), dt0 = dt, t(0), t_export(dtexport);
+  scalar_type a(1), b(1), dt0 = dt, t(0), t_export(dtexport), alpha(0);
   scalar_type J_friction0(0), J_friction1(0);
 
   // Initial conditions (U0, V0, M A0 = F)
@@ -408,7 +407,7 @@ void friction_problem::solve(void) {
  
   gmm::clear(A0);
   gmm::iteration iter(residu, 0, 40000);
-  if ((scheme == 0 || scheme == 1) && !nocontact_mass) {
+  if ((scheme == 0 || scheme == 1) && !nocontact_mass && !init_stationary) {
     plain_vector FA(mf_u.nb_dof());
     gmm::mult(ELAS.stiffness_matrix(), gmm::scaled(U0, -1.0),
  	      VOL_F.source_term(), FA);
@@ -417,7 +416,6 @@ void friction_problem::solve(void) {
     gmm::cg(DYNAMIC.mass_matrix(), A0, FA, gmm::identity_matrix(), iter);
   }
   iter.set_noisy(noisy);
-  
 
   scalar_type J0 = 0.5*gmm::vect_sp(ELAS.stiffness_matrix(), U0, U0)
     + 0.5 * gmm::vect_sp(DYNAMIC.mass_matrix(), V0, V0)
@@ -442,42 +440,39 @@ void friction_problem::solve(void) {
 
     switch (scheme) { // complementary left hand side and velocity complement
     case 0 :
-      gmm::add(U0, gmm::scaled(V0, dt), U1);
-      gmm::add(gmm::scaled(A0, dt*dt*theta*(1.-theta)), U1);
+      a = 1./(dt*dt*theta*theta); b = 1.; alpha = 1./(theta*dt);
+      gmm::add(gmm::scaled(U0, a), gmm::scaled(V0, dt*a), U1);
+      gmm::add(gmm::scaled(A0, (1.-theta)/theta), U1);
       gmm::mult(DYNAMIC.mass_matrix(), U1, DF);
       gmm::add(gmm::scaled(U0, -1.), gmm::scaled(V0, -dt*(1.-theta)), WT);
-      gmm::add(gmm::scaled(HSPEED, -theta*dt), WT);
-      a = 1.; b = dt*dt*theta*theta;
       break;
     case 1 :
-      gmm::add(U0, gmm::scaled(V0, dt), U1);
-      gmm::add(gmm::scaled(A0, dt*dt*(1.-beta)*0.5), U1);
+      a = 2./(dt*dt*beta); b = 1.; alpha = 2.*gamma/(beta*dt);
+      gmm::add(gmm::scaled(U0, a), gmm::scaled(V0, a*dt), U1);
+      gmm::add(gmm::scaled(A0, (1.-beta)/beta), U1);
       gmm::mult(DYNAMIC.mass_matrix(), U1, DF);
       gmm::add(gmm::scaled(U0, -1.),
 	       gmm::scaled(V0, dt*(beta*0.5/gamma -1.)), WT);
       gmm::add(gmm::scaled(A0, dt*dt*0.5*(beta-gamma)/gamma), WT);
-      gmm::add(gmm::scaled(HSPEED, -0.5*dt*beta/gamma), WT);
-      a = 1.; b = dt*dt*beta*0.5;
       break;
     case 2 :
-      gmm::add(U0, gmm::scaled(V0, dt*0.5), U1);
+      a = 4./(dt*dt); b = 1.; alpha = 2./dt;
+      gmm::add(gmm::scaled(U0, a), gmm::scaled(V0, 2./dt), U1);
       gmm::mult(DYNAMIC.mass_matrix(), U1, DF);
       gmm::copy(gmm::scaled(U0, -1.), WT);
-      gmm::add(gmm::scaled(HSPEED, -dt*0.5), WT);
-      a = 1.; b = dt*dt*0.25;
       break;
     case 3 : // for the friction, it should be better to take the average 
       // for the contact forces to define the friction threshold
-      gmm::add(U0, gmm::scaled(V0, dt), U1);
+      a = 2./(dt*dt); b = 1.;  alpha = 1./dt;
+      gmm::add(gmm::scaled(U0, a), gmm::scaled(V0, 2./dt), U1);
       gmm::mult(DYNAMIC.mass_matrix(), U1, DF);
-      gmm::add(gmm::scaled(A0, (1.-theta)/theta), DF);
+      gmm::mult_add(gmm::transposed(BT), gmm::scaled(LN0, (1.-theta)), DF);
       gmm::copy(gmm::scaled(U0, -1.), WT);
-      gmm::add(gmm::scaled(HSPEED, -dt), WT);
-      a = 1.; b = dt*dt*0.5; 
       break;
     }
+    gmm::add(gmm::scaled(HSPEED, -1./alpha), WT);
 
-    FRICTION.set_WT(WT); FRICTION.set_r(r); 
+    FRICTION.set_WT(WT); FRICTION.set_r(r); FRICTION.set_alpha(alpha); 
     DYNAMIC.set_dynamic_coeff(a, b);
     DYNAMIC.set_DF(DF);
     
@@ -487,22 +482,11 @@ void friction_problem::solve(void) {
     gmm::copy(FRICTION.get_LN(MS), LN1);
     gmm::copy(FRICTION.get_LT(MS), LT1);
 
-//     {
-//       plain_vector w(gmm::mat_nrows(BN));
-//       gmm::mult(BN, U1, gmm::scaled(gap, -1.), w);
-//       cout << "Normal dep : " << w << endl;
-//       cout << "Contact pressure : " << FRICTION.get_LN(MS) << endl;
-//     }
-
-    scalar_type LN_mult(0), LT_mult(0);
     switch (scheme) { // computation of U^{n+1}, V^{n+1}, A^{n+1}, J_friction1
-                      // LN^{n+1} and LT^{n+1}
     case 0 :
-      LN_mult = LT_mult = dt*dt*theta*theta;
-      gmm::scale(LN1, 1./LN_mult); gmm::scale(LT1, 1./LT_mult);
       gmm::add(gmm::scaled(U1, 1./dt), gmm::scaled(U0, -1./dt), V1);
       J_friction1 = J_friction0 + dt * theta * gmm::vect_sp(BT, V1, LT1) 
-	+ dt * (1.-theta) * gmm::vect_sp(BT, V1, LT0)/dt;
+	+ dt * (1.-theta) * gmm::vect_sp(BT, V1, LT0);
       gmm::add(gmm::scaled(V0, -(1.-theta)), V1);
       gmm::scale(V1, 1./theta);
       gmm::add(gmm::scaled(V1, 1./dt), gmm::scaled(V0, -1./dt), A1);
@@ -510,20 +494,16 @@ void friction_problem::solve(void) {
       gmm::scale(A1, 1./theta);
       break;
     case 1 :
-      LN_mult = LT_mult = dt*dt*beta*0.5;
-      gmm::scale(LN1, 1./LN_mult); gmm::scale(LT1, 1./LT_mult);
-      gmm::add(gmm::scaled(U1, 2./(beta*dt*dt)),
-	       gmm::scaled(U0, -2./(beta*dt*dt)), A1);
-      J_friction1 = J_friction0 + (1.-gamma)*LT_mult*gmm::vect_sp(BT, V1, LT0)
-	+ theta * LT_mult * gmm::vect_sp(BT, V1, LT1);
+      gmm::add(gmm::scaled(U1, 1.), gmm::scaled(U0, -1.), A1);
+      J_friction1 = J_friction0 + (1.-gamma)*gmm::vect_sp(BT, A1, LT0)
+	+ theta * gmm::vect_sp(BT, A1, LT1);
+      gmm::scale(A1, 2./(beta*dt*dt));
       gmm::add(gmm::scaled(V0, -2./(beta*dt)), A1);
       gmm::add(gmm::scaled(A0, -(1. - beta)/beta), A1);
       gmm::add(gmm::scaled(A0, (1.-gamma)*dt), gmm::scaled(A1, gamma*dt), V1);
       gmm::add(V0, V1);
       break;
     case 2 :
-      LN_mult = LT_mult = dt*dt*0.25;
-      gmm::scale(LN1, 1./LN_mult); gmm::scale(LT1, 1./LT_mult);
       gmm::copy(U1, V1);
       gmm::add(gmm::scaled(V1, 2.), gmm::scaled(U0, -1.), U1);
       gmm::add(gmm::scaled(U1, 2./dt), gmm::scaled(U0, -2./dt), V1);
@@ -531,14 +511,19 @@ void friction_problem::solve(void) {
       gmm::add(gmm::scaled(V0, -1), V1);
       break;
     case 3 :
-      LN_mult = theta*dt*dt*0.5; LT_mult = dt*dt*0.5;
-      gmm::scale(LN1, 1./LN_mult); gmm::scale(LT1, 1./LT_mult);
-      gmm::mult(gmm::transposed(BN), FRICTION.get_LN(MS), A1);
+      gmm::scale(LN1, 1./theta);
       gmm::add(gmm::scaled(U1, 2./dt), gmm::scaled(U0, -2./dt), V1);
       J_friction1 = J_friction0 + dt * 0.5 * gmm::vect_sp(BT,V1, LT1);
       gmm::add(gmm::scaled(V0, -1), V1);
       break;
     }
+
+//     {
+//       plain_vector w(gmm::mat_nrows(BN));
+//       gmm::mult(BN, U1, gmm::scaled(gap, -1.), w);
+//       cout << "Normal dep : " << w << endl;
+//       cout << "Contact pressure : " << LN1 << endl;
+//     }
 
     scalar_type J1 = 0.5*gmm::vect_sp(ELAS.stiffness_matrix(), U1, U1)
       + 0.5 * gmm::vect_sp(DYNAMIC.mass_matrix(), V1, V1)
