@@ -1022,6 +1022,23 @@ Composition of the integration node definition :
 
 The file format is inspired from \cite{EncyclopCubature}.
 
+\section{Support for Xfem methods}
+
+Xfem are finite element method with a particuar enrichment with non-polynomials functions (see \cite{Xfem} for instance). The file {\tt getfem_Xfem.h} gives a support for this kind of method (version 1.5 and later). Any ($\tau$-equivalent) valid finite element method can be extended. If {\tt pf} is a valid descriptor of a finite element method, one can build a Xfem with the declaration
+\begin{alltt}
+  Xfem  xf(pf);
+\end{alltt}
+then one adds a global function with
+\begin{alltt}
+  xf.add_function(pXf, pXg, pXh, ind);
+\end{alltt}
+where {\tt pXf} should be a pointer on a type derived from the object {\tt virtual_Xfem_func} representing the global function, {\tt pXg} should be a pointer on a type derived from the object {\tt virtual_Xfem_grad} representing the global function gradient, {\tt pXh} is an optional parameter (only for fourth order derivative problems) which should be a pointer on a type derived from the object {\tt virtual_Xfem_hess} representing the global function Hessian and {\tt ind} is an index which should correspond to this function to identify the degrees of freedom (this should be different for each function added). It is possible to add an arbitrary nuber of global functions. The total number of degrees of freedom of the Xfem is the number of degrees of freedom of the initial fem times $N_f+1$ where $N_f$ is the number of global functions added.\\[0.5cm]
+
+If $\varphi_i$ for $i=1..N_d$ are the basis functions of {\tt pf} and $f_j$ for 
+$j=1..N_f$ the additional global functions, the basis functions of the Xfem are the basis function $\varphi_i$ for $i=1..N_d$ and the basis functions $f_j\varphi_i$ for $i=1..N_d$ and $j=1..N_f$. From an element to another and for each function $f_j$, the correspondings degrees of freedom are connected in a same manner as the correspondings degrees of freedom of {\tt pf}.\\[0.5cm]
+
+Most of the time, one only needs an enrichment on a subset of node of the original element. If it is so, one should a posteriori eliminate the unwanted extra-dofs.
+
 \section{Finite element methods defined on two different meshes}
 
 A special finite element method is defined in \filename{getfem\_fem.h} which is not a real finite element method but allows to interpolate a finite element method defined on another mesh. When an assembling procedure has different finite element methods as arguments, the mesh on which those methods are defined should be the same. If you need to assemble a matrix with finite element methods defined on different meshes, you may use the finite element methods\\[0.5cm]
@@ -1145,11 +1162,15 @@ The program \filename{elastostatic} is built in a same way and compute the solut
   R. {\texonly{\sc} Cools}
   {\it An Encyclopaedia of Cubature Formulas}, J. Complexity, {\tt http://www.cs.kuleuven.ac.be/{\~n}ines/research/ecf/ecf.html}
 
+\bibitem{Xfem}
+  N. {\texonly{\sc} Moës, J. Dolbow and T. Belytschko}
+  {\it A finite element method for crack growth without remeshing },
+  Int. J. Num. Meth. Engng. 46, 131-150 (1999).  
 
 \bibitem{dh-to1984} 
   {\texonly{\sc} G. Dhatt, and  G. Touzot}
   {\it The Finite Element Method Displayed}, 
- J. Wiley \& Sons,  New York, 1984.
+  J. Wiley \& Sons,  New York, 1984.
 
 \bibitem{BASCOMP}
   Y. {\texonly{\sc} Renard},
