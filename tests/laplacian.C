@@ -430,9 +430,10 @@ void lap_pb::assemble(void)
 
 void lap_pb::solve(void) {
   gmm::iteration iter(residu, 1, 40000);
-  // gmm::identity_matrix P;
+  gmm::identity_matrix P;
   // gmm::diagonal_precond<sparse_matrix_type> P(SM);
-  gmm::cholesky_precond<sparse_matrix_type> P(SM);
+  // gmm::cholesky_precond<sparse_matrix_type> P(SM);
+  // gmm::ilu_precond<sparse_matrix_type> P(SM);
   // gmm::mr_approx_inverse_precond<sparse_matrix_type> P(SM, 10, 10E-17);
 
   gmm::cg(SM, U, B, P, iter);

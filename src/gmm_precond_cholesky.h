@@ -122,7 +122,7 @@ namespace gmm {
 		if (Tri_ind[j] < Tri_ind[j-1]) {
 		  std::swap(Tri_ind[j], Tri_ind[j-1]);
 		  std::swap(Tri_val[j], Tri_val[j-1]);
-		}
+		} else break;
 	    }
 	    ++Tri_loc;
 	  }
@@ -147,12 +147,12 @@ namespace gmm {
       }
     }
     trimatrix = tm_type(&(Tri_val[0]), &(Tri_ind[0]), &(Tri_ptr[0]),
-			mat_nrows(A),mat_ncols(A));
+			n, mat_ncols(A));
   }
   
   template <class Matrix>
   void cholesky_precond<Matrix>::do_cholesky(const Matrix& A, col_major) {
-    size_type Tri_loc = 0, d, g, h, i, j, k, n = mat_nrows(A);
+    size_type Tri_loc = 0, d, g, h, i, j, k, n = mat_ncols(A);
     value_type z;
     Tri_ptr[0] = 0;
     
@@ -172,7 +172,7 @@ namespace gmm {
 		if (Tri_ind[j] < Tri_ind[j-1]) {
 		  std::swap(Tri_ind[j], Tri_ind[j-1]);
 		  std::swap(Tri_val[j], Tri_val[j-1]);
-		}
+		} else break;
 	    }
 	    ++Tri_loc;
 	  }
@@ -198,7 +198,7 @@ namespace gmm {
     }
     
     trimatrix = tm_type(&(Tri_val[0]), &(Tri_ind[0]), &(Tri_ptr[0]),
-			mat_nrows(A),mat_ncols(A));
+			mat_nrows(A), n);
   }
 
 

@@ -63,14 +63,14 @@ namespace gmm {
 
   template <class TriMatrix, class VecX>
   inline void upper_tri_solve__(const TriMatrix& T, VecX& x, size_t k,
-				col_major, abstract_sparse) {
+				col_major, abstract_sparse, bool is_unit) {
     typename linalg_traits<TriMatrix>::value_type x_j;
     for (int j = k - 1; j >= 0; --j) {
       typedef typename linalg_traits<TriMatrix>::const_sub_col_type COL;
       COL c = mat_const_col(T, j);
       typename linalg_traits<COL>::const_iterator 
 	it = vect_const_begin(c), ite = vect_const_end(c);
-      x[j] /= c[j];
+      if (!is_unit) x[j] /= c[j];
       for (x_j = x[j]; it != ite ; ++it)
 	if (int(it.index()) < j) x[it.index()] -= x_j * (*it);
     }    
@@ -78,7 +78,7 @@ namespace gmm {
 
   template <class TriMatrix, class VecX>
   inline void upper_tri_solve__(const TriMatrix& T, VecX& x, size_t k,
-				col_major, abstract_plain) {
+				col_major, abstract_plain, bool is_unit) {
     typename linalg_traits<TriMatrix>::value_type x_j;
     for (int j = k - 1; j >= 0; --j) {
       typedef typename linalg_traits<TriMatrix>::const_sub_col_type COL;
@@ -86,14 +86,14 @@ namespace gmm {
       typename linalg_traits<COL>::const_iterator
 	it = vect_const_begin(c), ite = it + j;
       typename linalg_traits<VecX>::iterator itx = vect_begin(x);
-      x[j] /= c[j];
+      if (!is_unit) x[j] /= c[j];
       for (x_j = x[j]; it != ite ; ++it, ++itx) *itx -= x_j * (*it);
     }
   }
 
   template <class TriMatrix, class VecX>
   inline void lower_tri_solve__(const TriMatrix& T, VecX& x, size_t k,
-				col_major, abstract_sparse) {
+				col_major, abstract_sparse, bool is_unit) {
     typename linalg_traits<TriMatrix>::value_type x_j;
     // cout << "(lower col)The Tri Matrix = " << T << endl;
     // cout << "k = " << endl;
@@ -102,7 +102,7 @@ namespace gmm {
       COL c = mat_const_col(T, j);
       typename linalg_traits<COL>::const_iterator 
 	it = vect_const_begin(c), ite = vect_const_end(c);
-      x[j] /= c[j];
+      if (!is_unit) x[j] /= c[j];
       for (x_j = x[j]; it != ite ; ++it)
 	if (int(it.index()) > j && it.index() < k) x[it.index()] -= x_j*(*it);
     }    
@@ -118,7 +118,7 @@ namespace gmm {
       typename linalg_traits<COL>::const_iterator 
 	it = vect_const_begin(c) + (j+1), ite = vect_const_begin(c) + k;
       typename linalg_traits<VecX>::iterator itx = vect_begin(x) + (j+1);
-      x[j] /= c[j];
+      if (!is_unit) x[j] /= c[j];
       for (x_j = x[j]; it != ite ; ++it, ++itx) *itx -= x_j * (*it);
     }    
   }
@@ -126,25 +126,22 @@ namespace gmm {
 
   template <class TriMatrix, class VecX>
   inline void upper_tri_solve__(const TriMatrix& T, VecX& x, size_t k,
-				row_major, abstract_sparse) {
+				row_major, abstract_sparse, bool is_unit) {
     typename linalg_traits<TriMatrix>::value_type t;
-    // cout << "(upper row)The Tri Matrix = " << T << endl;
-    // cout << "k = " << endl;
     for (int i = k - 1; i >= 0; --i) {
       typedef typename linalg_traits<TriMatrix>::const_sub_row_type ROW;
       ROW c = mat_const_row(T, i);
       typename linalg_traits<ROW>::const_iterator 
 	it = vect_const_begin(c), ite = vect_const_end(c);
-
       for (t = x[i]; it != ite; ++it)
 	if (int(it.index()) > i && it.index() < k) t -= (*it) * x[it.index()];
-      x[i] = t / c[i];      
+      if (!is_unit) x[i] = t / c[i]; else x[i] = t;    
     }    
   }
 
   template <class TriMatrix, class VecX>
   inline void upper_tri_solve__(const TriMatrix& T, VecX& x, size_t k,
-				row_major, abstract_plain) {
+				row_major, abstract_plain, bool is_unit) {
     typename linalg_traits<TriMatrix>::value_type t;
    
     for (int i = k - 1; i >= 0; --i) {
@@ -155,13 +152,13 @@ namespace gmm {
       typename linalg_traits<VecX>::iterator itx = vect_begin(x) + (i+1);
       
       for (t = x[i]; it != ite; ++it, ++itx) t -= (*it) * (*itx);
-      x[i] = t / c[i];    
+      if (!is_unit) x[i] = t / c[i]; else x[i] = t;   
     }    
   }
 
   template <class TriMatrix, class VecX>
   inline void lower_tri_solve__(const TriMatrix& T, VecX& x, size_t k,
-				row_major, abstract_sparse) {
+				row_major, abstract_sparse, bool is_unit) {
     typename linalg_traits<TriMatrix>::value_type t;
    
     for (int i = 0; i < int(k); ++i) {
@@ -172,13 +169,13 @@ namespace gmm {
 
       for (t = x[i]; it != ite; ++it)
 	if (int(it.index()) < i) t -= (*it) * x[it.index()];
-      x[i] = t / c[i];  
+      if (!is_unit) x[i] = t / c[i]; else x[i] = t; 
     }    
   }
 
   template <class TriMatrix, class VecX>
   inline void lower_tri_solve__(const TriMatrix& T, VecX& x, size_t k,
-				row_major, abstract_plain) {
+				row_major, abstract_plain, bool is_unit) {
     typename linalg_traits<TriMatrix>::value_type t;
    
     for (int i = 0; i < k; ++i) {
@@ -189,7 +186,7 @@ namespace gmm {
       typename linalg_traits<VecX>::iterator itx = vect_begin(x);
 
       for (t = x[i]; it != ite; ++it, ++itx) t -= (*it) * (*itx);
-      x[i] = t / c[i];  
+      if (!is_unit) x[i] = t / c[i]; else x[i] = t;
     }
   }
 
@@ -197,7 +194,7 @@ namespace gmm {
 // Triangular Solve:  x <-- T^{-1} * x
 
   template <class TriMatrix, class VecX>
-  void upper_tri_solve(const TriMatrix& T, VecX &x_) {
+  void upper_tri_solve(const TriMatrix& T, VecX &x_, bool is_unit = false) {
     VecX& x = const_cast<VecX&>(x_);
     if ((mat_nrows(T) > vect_size(x)) || (mat_ncols(T) > vect_size(x))
 	|| (mat_nrows(T) != mat_ncols(T)) || is_sparse(x_))
@@ -205,11 +202,12 @@ namespace gmm {
     upper_tri_solve__(T, x, mat_nrows(T), 
 		      typename principal_orientation_type<typename
 		      linalg_traits<TriMatrix>::sub_orientation>::potype(),
-		      typename linalg_traits<TriMatrix>::storage_type());
+		      typename linalg_traits<TriMatrix>::storage_type(),
+		      is_unit);
   }
   
   template <class TriMatrix, class VecX>
-  void lower_tri_solve(const TriMatrix& T, VecX &x_) {
+  void lower_tri_solve(const TriMatrix& T, VecX &x_, bool is_unit = false) {
     VecX& x = const_cast<VecX&>(x_);
     if ((mat_nrows(T) > vect_size(x)) || (mat_ncols(T) > vect_size(x))
 	|| (mat_nrows(T) != mat_ncols(T)) || is_sparse(x_))
@@ -217,11 +215,13 @@ namespace gmm {
     lower_tri_solve__(T, x, mat_nrows(T), 
 		      typename principal_orientation_type<typename
 		      linalg_traits<TriMatrix>::sub_orientation>::potype(),
-		      typename linalg_traits<TriMatrix>::storage_type());
+		      typename linalg_traits<TriMatrix>::storage_type(),
+		      is_unit);
   }
 
   template <class TriMatrix, class VecX>
-  void upper_tri_solve(const TriMatrix& T, VecX &x_, size_t k) {
+  void upper_tri_solve(const TriMatrix& T, VecX &x_, size_t k,
+		       bool is_unit = false) {
     VecX& x = const_cast<VecX&>(x_);
     if ((mat_nrows(T) < k) || (vect_size(x) < k)
 	|| (mat_ncols(T) < k) || is_sparse(x_))
@@ -229,11 +229,13 @@ namespace gmm {
     upper_tri_solve__(T, x, k, 
 		      typename principal_orientation_type<typename
 		      linalg_traits<TriMatrix>::sub_orientation>::potype(),
-		      typename linalg_traits<TriMatrix>::storage_type());
+		      typename linalg_traits<TriMatrix>::storage_type(),
+		      is_unit);
   }
   
   template <class TriMatrix, class VecX>
-  void lower_tri_solve(const TriMatrix& T, VecX &x_, size_t k) {
+  void lower_tri_solve(const TriMatrix& T, VecX &x_, size_t k,
+		       bool is_unit = false) {
     VecX& x = const_cast<VecX&>(x_);
     if ((mat_nrows(T) < k) || (vect_size(x) < k)
 	|| (mat_ncols(T) < k) || is_sparse(x_))
@@ -241,7 +243,8 @@ namespace gmm {
     lower_tri_solve__(T, x, k, 
 		      typename principal_orientation_type<typename
 		      linalg_traits<TriMatrix>::sub_orientation>::potype(),
-		      typename linalg_traits<TriMatrix>::storage_type());
+		      typename linalg_traits<TriMatrix>::storage_type(),
+		      is_unit);
   }
 
 

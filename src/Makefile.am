@@ -72,6 +72,7 @@ include_HEADERS =                      \
 	gmm_precond_cholesky.h         \
 	gmm_precond_mr_approx_inverse.h\
 	gmm_precond_diagonal.h         \
+	gmm_precond_ilu.h              \
 	gmm_given_rotation.h           \
 	gmm_blas.h                     \
 	linkmsg.h

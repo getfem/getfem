@@ -158,6 +158,11 @@ namespace gmm {
   template <class L> inline bool is_col_matrix(const L &) 
   { return _is_col_matrix(typename linalg_traits<L>::sub_orientation()); }
 
+  inline bool is_col_matrix(row_major) { return false; }
+  inline bool is_col_matrix(col_major) { return true; }
+  inline bool is_row_matrix(row_major) { return true; }
+  inline bool is_row_matrix(col_major) { return false; }
+
 
   /* ******************************************************************** */
   /*  types to deal with const object representing a modifiable reference */
