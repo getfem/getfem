@@ -78,43 +78,46 @@ namespace getfem
 
   struct _simplex_poly_integration : public poly_integration
   {
-    scalar_type int_monomial(const bgeot::power_index &power) const
-    {
-      scalar_type res = 1.0;
+    scalar_type int_monomial(const bgeot::power_index &power) const;
+
+    scalar_type int_monomial_on_face(const bgeot::power_index &power, 
+				     short_type f) const;
+
+    _simplex_poly_integration(bgeot::pconvex_structure c)
+      { cvs = c;  int_face_monomials.resize(c->nb_faces()); }
+  };
+
+  scalar_type _simplex_poly_integration::int_monomial
+  (const bgeot::power_index &power) const {
+    scalar_type res = 1.0;
+    short_type fa = 1;
+    bgeot::power_index::const_iterator itm = power.begin(),
+      itme = power.end();
+    for ( ; itm != itme; ++itm)
+      for (int k = 1; k <= *itm; ++k, ++fa)
+	res *= scalar_type(k) / scalar_type(fa);
+    
+    for (int k = 0; k < cvs->dim(); k++) { res /= scalar_type(fa); fa++; }
+    return res;
+  }
+  
+  scalar_type _simplex_poly_integration::int_monomial_on_face
+  (const bgeot::power_index &power, short_type f) const {
+    scalar_type res = 0.0;
+    
+    if (f == 0 || power[f-1] == 0.0) {
+      res = (f == 0) ? sqrt(scalar_type(cvs->dim())) : 1.0;
       short_type fa = 1;
       bgeot::power_index::const_iterator itm = power.begin(),
 	itme = power.end();
       for ( ; itm != itme; ++itm)
 	for (int k = 1; k <= *itm; ++k, ++fa)
 	  res *= scalar_type(k) / scalar_type(fa);
-	
-      for (int k = 0; k < cvs->dim(); k++) { res /= scalar_type(fa); fa++; }
-      return res;
+      
+      for (int k = 1; k < cvs->dim(); k++) { res /= scalar_type(fa); fa++; }
     }
-
-    scalar_type int_monomial_on_face(const bgeot::power_index &power, 
-					       short_type f) const
-    {
-      scalar_type res = 0.0;
-    
-      if (f == 0 || power[f-1] == 0.0)
-      {
-	res = (f == 0) ? sqrt(scalar_type(cvs->dim())) : 1.0;
-	short_type fa = 1;
-	bgeot::power_index::const_iterator itm = power.begin(),
-	  itme = power.end();
-	for ( ; itm != itme; ++itm)
-	  for (int k = 1; k <= *itm; ++k, ++fa)
-	    res *= scalar_type(k) / scalar_type(fa);
-	
-	for (int k = 1; k < cvs->dim(); k++) { res /= scalar_type(fa); fa++; }
-      }
-      return res;
-    }
-
-    _simplex_poly_integration(bgeot::pconvex_structure c)
-      { cvs = c;  int_face_monomials.resize(c->nb_faces()); }
-  };
+    return res;
+  }
 
   static pintegration_method exact_simplex(im_param_list &params) {
     if (params.size() != 1)
@@ -137,35 +140,41 @@ namespace getfem
   {
     ppoly_integration cv1, cv2;
 
-    scalar_type int_monomial(const bgeot::power_index &power) const
-    {
-      bgeot::power_index mi1(cv1->dim()), mi2(cv2->dim());
-      std::copy(power.begin(), power.begin() + cv1->dim(), mi1.begin());
-      std::copy(power.begin() + cv1->dim(), power.end(), mi2.begin());
-      return cv1->int_monomial(mi1) * cv2->int_monomial(mi2);
-    }
+    scalar_type int_monomial(const bgeot::power_index &power) const;
 
     scalar_type int_monomial_on_face(const bgeot::power_index &power, 
-				     short_type f) const
-    {
-      bgeot::power_index mi1(cv1->dim()), mi2(cv2->dim());
-      std::copy(power.begin(), power.begin() + cv1->dim(), mi1.begin());
-      std::copy(power.begin() + cv1->dim(), power.end(), mi2.begin());
-      short_type nfx = cv1->structure()->nb_faces();
-      if (f < nfx)
-	return cv1->int_monomial_on_face(mi1,f) * cv2->int_monomial(mi2);
-      else
-	return cv1->int_monomial(mi1) * cv2->int_monomial_on_face(mi2, f-nfx);
-    }
+				     short_type f) const;
 
-    _plyint_mul_structure(ppoly_integration a, ppoly_integration b)
-    {
-      cv1 = a; cv2 = b;
-      cvs = bgeot::convex_product_structure(cv1->structure(),
-					    cv2->structure());
-      int_face_monomials.resize(cvs->nb_faces());
-    }
+    _plyint_mul_structure(ppoly_integration a, ppoly_integration b);
   };
+
+  scalar_type _plyint_mul_structure::int_monomial
+  (const bgeot::power_index &power) const {
+    bgeot::power_index mi1(cv1->dim()), mi2(cv2->dim());
+    std::copy(power.begin(), power.begin() + cv1->dim(), mi1.begin());
+    std::copy(power.begin() + cv1->dim(), power.end(), mi2.begin());
+    return cv1->int_monomial(mi1) * cv2->int_monomial(mi2);
+  }
+  
+  scalar_type _plyint_mul_structure::int_monomial_on_face
+  (const bgeot::power_index &power, short_type f) const {
+    bgeot::power_index mi1(cv1->dim()), mi2(cv2->dim());
+    std::copy(power.begin(), power.begin() + cv1->dim(), mi1.begin());
+    std::copy(power.begin() + cv1->dim(), power.end(), mi2.begin());
+    short_type nfx = cv1->structure()->nb_faces();
+    if (f < nfx)
+      return cv1->int_monomial_on_face(mi1,f) * cv2->int_monomial(mi2);
+    else
+      return cv1->int_monomial(mi1) * cv2->int_monomial_on_face(mi2, f-nfx);
+  }
+  
+  _plyint_mul_structure::_plyint_mul_structure(ppoly_integration a, 
+					       ppoly_integration b) {
+    cv1 = a; cv2 = b;
+    cvs = bgeot::convex_product_structure(cv1->structure(),
+					  cv2->structure());
+    int_face_monomials.resize(cvs->nb_faces());
+  }
 
   static pintegration_method product_exact(im_param_list &params) {
     if (params.size() != 2)
@@ -350,38 +359,38 @@ namespace getfem
 
   struct _gauss_approx_integration : public approx_integration
   {
-    _gauss_approx_integration(short_type nbpt)
-    {
-      if (nbpt > 32000) DAL_THROW(std::out_of_range, "too much points");
-      
-      cvr = bgeot::simplex_of_reference(1);
-      bgeot::stored_point_tab int_points(nbpt+2);
-      int_coeffs.resize(nbpt+2);
-      repartition.resize(3);
-      repartition[0] = nbpt; 
-      repartition[1] = nbpt + 1;
-      repartition[2] = nbpt + 2; 
-
-      init_legendre(nbpt);
-
-      for (short_type i = 0; i < nbpt; ++i)
-      {
-	int_points[i].resize(1);
-	scalar_type lr = (*Legendres_roots)[nbpt][i];
-	int_points[i][0] = 0.5 + 0.5 * lr;
-	int_coeffs[i] = (1.0 - dal::sqr(lr))
-	  / dal::sqr( (nbpt) * ((*Legendre_polynomials)[nbpt-1].eval(&lr)));
-      }
-      
-      int_points[nbpt].resize(1);
-      int_points[nbpt][0] = 1.0; int_coeffs[nbpt] = 1.0;
-
-      int_points[nbpt+1].resize(1);
-      int_points[nbpt+1][0] = 0.0; int_coeffs[nbpt+1] = 1.0;
-      pint_points = bgeot::store_point_tab(int_points);
-      valid = true;
-    }
+    _gauss_approx_integration(short_type nbpt);
   };
+
+  _gauss_approx_integration::_gauss_approx_integration(short_type nbpt) {
+    if (nbpt > 32000) DAL_THROW(std::out_of_range, "too much points");
+    
+    cvr = bgeot::simplex_of_reference(1);
+    bgeot::stored_point_tab int_points(nbpt+2);
+    int_coeffs.resize(nbpt+2);
+    repartition.resize(3);
+    repartition[0] = nbpt; 
+    repartition[1] = nbpt + 1;
+    repartition[2] = nbpt + 2; 
+    
+    init_legendre(nbpt);
+    
+    for (short_type i = 0; i < nbpt; ++i) {
+      int_points[i].resize(1);
+      scalar_type lr = (*Legendres_roots)[nbpt][i];
+      int_points[i][0] = 0.5 + 0.5 * lr;
+      int_coeffs[i] = (1.0 - dal::sqr(lr))
+	/ dal::sqr( (nbpt) * ((*Legendre_polynomials)[nbpt-1].eval(&lr)));
+    }
+    
+    int_points[nbpt].resize(1);
+    int_points[nbpt][0] = 1.0; int_coeffs[nbpt] = 1.0;
+    
+    int_points[nbpt+1].resize(1);
+    int_points[nbpt+1][0] = 0.0; int_coeffs[nbpt+1] = 1.0;
+    pint_points = bgeot::store_point_tab(int_points);
+    valid = true;
+  }
 
   static pintegration_method gauss1d(im_param_list &params) {
     if (params.size() != 1)
@@ -407,74 +416,76 @@ namespace getfem
 
   struct _Newton_Cotes_approx_integration : public approx_integration
   {
+    void calc_base_func(base_poly &p, short_type K, base_node &c) const;
+    _Newton_Cotes_approx_integration(dim_type nc, short_type k);
+  };
 
-    void calc_base_func(base_poly &p, short_type K, base_node &c)
-      const
-    {
-      dim_type N = dim();
-      base_poly l0(N, 0), l1(N, 0);
-      bgeot::power_index w(N+1);
-      l0.one(); l1.one(); p = l0;
-      for (int nn = 0; nn < N; ++nn) l0 -= base_poly(N, 1, nn);
-      
-      w[0] = K;
-      for (int nn = 1; nn <= N; ++nn)
+  void _Newton_Cotes_approx_integration::calc_base_func
+  (base_poly &p, short_type K, base_node &c) const {
+    dim_type N = dim();
+    base_poly l0(N, 0), l1(N, 0);
+    bgeot::power_index w(N+1);
+    l0.one(); l1.one(); p = l0;
+    for (int nn = 0; nn < N; ++nn) l0 -= base_poly(N, 1, nn);
+    
+    w[0] = K;
+    for (int nn = 1; nn <= N; ++nn)
       { w[nn]=int(floor(0.5+(c[nn-1]*double(K)))); w[0]-=w[nn]; }
+    
+    for (int nn = 0; nn <= N; ++nn)
+      for (int j = 0; j < w[nn]; ++j)
+	if (nn == 0)
+	  p *= (l0 * (scalar_type(K) / scalar_type(j+1))) 
+	    - (l1 * (scalar_type(j) / scalar_type(j+1)));
+	else
+	  p *= (base_poly(N, 1, nn-1) * (scalar_type(K) / scalar_type(j+1))) 
+	    - (l1 * (scalar_type(j) / scalar_type(j+1)));
+  }
+  
+  _Newton_Cotes_approx_integration::_Newton_Cotes_approx_integration
+  (dim_type nc, short_type k)
+    // à simplifier en faisant la fonction qui place une methode sur une face
+    : approx_integration(bgeot::simplex_of_reference(nc)) {
+    size_type R = bgeot::alpha(nc,k);
+    base_poly P;
+    std::stringstream name;
+    name << "IM_EXACT_SIMPLEX(" << int(nc) << ")";
+    ppoly_integration ppi 
+      = int_method_descriptor(name.str())->method.ppi;
+    
+    size_type sum = 0, l;
+    base_node c(nc), c2(nc); 
+    c *= scalar_type(0.0);
+    if (k == 0) c.fill(1.0 / scalar_type(nc+1));
+    
+    for (size_type r = 0; r < R; ++r) {
+      calc_base_func(P, k, c);
+      add_point(c, ppi->int_poly(P));
       
-      for (int nn = 0; nn <= N; ++nn)
-	for (int j = 0; j < w[nn]; ++j)
-	  if (nn == 0)
-	    p *= (l0 * (scalar_type(K) / scalar_type(j+1))) 
-	       - (l1 * (scalar_type(j) / scalar_type(j+1)));
-	  else
-	    p *= (base_poly(N, 1, nn-1) * (scalar_type(K) / scalar_type(j+1))) 
-	       - (l1 * (scalar_type(j) / scalar_type(j+1)));
-    }
-
-    _Newton_Cotes_approx_integration(dim_type nc, short_type k)
-      // à simplifier en faisant la fonction qui place une methode sur une face
-      : approx_integration(bgeot::simplex_of_reference(nc)) {
-      size_type R = bgeot::alpha(nc,k);
-      base_poly P;
-      std::stringstream name;
-      name << "IM_EXACT_SIMPLEX(" << int(nc) << ")";
-      ppoly_integration ppi 
-	= int_method_descriptor(name.str())->method.ppi;
-
-      size_type sum = 0, l;
-      base_node c(nc), c2(nc); 
-      c *= scalar_type(0.0);
-      if (k == 0) c.fill(1.0 / scalar_type(nc+1));
-
-      for (size_type r = 0; r < R; ++r) {
-	calc_base_func(P, k, c);
-	add_point(c, ppi->int_poly(P));
-
-	for (short_type f = 1; f <= nc; ++f)
-	  if (c[f-1] == 0.0)
-	    add_point(c, ppi->int_poly_on_face(P, f), f);
-	if (k == 0) {
-	  for (short_type f = 0; f <= nc; ++f) {
-	    c2.fill(1.0 / scalar_type(nc));
-	    if (f > 0) c2[f-1] = 0.0;
-	    add_point(c2, ppi->int_poly_on_face(P, f), f);
-	  }
-	}
-	else if (sum == k)
-	  add_point(c, ppi->int_poly_on_face(P, 0), 0);
-
-	if (k != 0) {
-	  l = 0; c[l] += 1.0 / scalar_type(k); sum++;
-	  while (sum > k) {
-	    sum -= int(floor(0.5+(c[l] * k)));
-	    c[l] = 0.0; l++; if (l == nc) break;
-	    c[l] += 1.0 / scalar_type(k); sum++;
-	  }
+      for (short_type f = 1; f <= nc; ++f)
+	if (c[f-1] == 0.0)
+	  add_point(c, ppi->int_poly_on_face(P, f), f);
+      if (k == 0) {
+	for (short_type f = 0; f <= nc; ++f) {
+	  c2.fill(1.0 / scalar_type(nc));
+	  if (f > 0) c2[f-1] = 0.0;
+	  add_point(c2, ppi->int_poly_on_face(P, f), f);
 	}
       }
-      valid_method();
+      else if (sum == k)
+	add_point(c, ppi->int_poly_on_face(P, 0), 0);
+      
+      if (k != 0) {
+	l = 0; c[l] += 1.0 / scalar_type(k); sum++;
+	while (sum > k) {
+	  sum -= int(floor(0.5+(c[l] * k)));
+	  c[l] = 0.0; l++; if (l == nc) break;
+	  c[l] += 1.0 / scalar_type(k); sum++;
+	}
+      }
     }
-  };
+    valid_method();
+  }
 
   static pintegration_method Newton_Cotes(im_param_list &params) {
     if (params.size() != 2)
@@ -496,79 +507,76 @@ namespace getfem
 
   struct a_int_pro_integration : public approx_integration
   {
-
-    a_int_pro_integration(papprox_integration a, papprox_integration b)
-    {
-      cvr = bgeot::convex_ref_product(a->ref_convex(), b->ref_convex());
-      size_type n1 = a->nb_points_on_convex();
-      size_type n2 = b->nb_points_on_convex();
-      bgeot::stored_point_tab int_points;
-      int_points.resize(n1 * n2);
-      int_coeffs.resize(n1 * n2);
-      repartition.resize(cvr->structure()->nb_faces()+1);
-      repartition[0] = n1 * n2;
-      for (size_type i1 = 0; i1 < n1; ++i1)
-	for (size_type i2 = 0; i2 < n2; ++i2)
-	{
-	  int_coeffs[i1 + i2 * n1] = a->coeff(i1) * b->coeff(i2);
-	  int_points[i1 + i2 * n1].resize(dim());
-	  std::copy(a->point(i1).begin(), a->point(i1).end(),
-		    int_points[i1 + i2 * n1].begin());
-	  std::copy(b->point(i2).begin(), b->point(i2).end(),
-		    int_points[i1 + i2 * n1].begin() + a->dim());
-	}
-      short_type f = 0;
-      for (short_type f1 = 0; f1 < a->structure()->nb_faces(); ++f1, ++f)
-      {
-	n1 = a->nb_points_on_face(f1);
-	n2 = b->nb_points_on_convex();
-	size_type w = repartition[f];
-	repartition[f+1] = w + n1 * n2;
-	int_points.resize(repartition[f+1]);
-	int_coeffs.resize(repartition[f+1]);
-	for (size_type i1 = 0; i1 < n1; ++i1)
-	  for (size_type i2 = 0; i2 < n2; ++i2)
-	  {
-	    int_coeffs[w + i1 + i2 * n1] = a->coeff_on_face(f1, i1)
-	                                 * b->coeff(i2);
-	    int_points[w + i1 + i2 * n1].resize(dim());
-	    std::copy(a->point_on_face(f1, i1).begin(),
-		      a->point_on_face(f1, i1).end(),
-		      int_points[w + i1 + i2 * n1].begin());
-	    std::copy(b->point(i2).begin(), b->point(i2).end(),
-		      int_points[w + i1 + i2 * n1].begin() + a->dim());
-	  }
-      }
-      for (short_type f2 = 0; f2 < b->structure()->nb_faces(); ++f2, ++f)
-      {
-	n1 = a->nb_points_on_convex();
-	n2 = b->nb_points_on_face(f2);
-	size_type w = repartition[f];
-	repartition[f+1] = w + n1 * n2;
-	int_points.resize(repartition[f+1]);
-	int_coeffs.resize(repartition[f+1]);
-	for (size_type i1 = 0; i1 < n1; ++i1)
-	  for (size_type i2 = 0; i2 < n2; ++i2)
-	  {
-	    int_coeffs[w + i1 + i2 * n1] = a->coeff(i1)
-	                                 * b->coeff_on_face(f2, i2);
-	    int_points[w + i1 + i2 * n1].resize(dim());
-	    std::copy(a->point(i1).begin(), a->point(i1).end(),
-		      int_points[w + i1 + i2 * n1].begin());
-	    std::copy(b->point_on_face(f2, i2).begin(),
-		      b->point_on_face(f2, i2).end(),
-		      int_points[w + i1 + i2 * n1].begin() + a->dim());
-	  }
-      }
-      pint_points = bgeot::store_point_tab(int_points);
-      valid = true;
-    }
+    a_int_pro_integration(papprox_integration a, papprox_integration b);
   };
+
+
+  a_int_pro_integration::a_int_pro_integration(papprox_integration a,
+					       papprox_integration b) {
+    cvr = bgeot::convex_ref_product(a->ref_convex(), b->ref_convex());
+    size_type n1 = a->nb_points_on_convex();
+    size_type n2 = b->nb_points_on_convex();
+    bgeot::stored_point_tab int_points;
+    int_points.resize(n1 * n2);
+    int_coeffs.resize(n1 * n2);
+    repartition.resize(cvr->structure()->nb_faces()+1);
+    repartition[0] = n1 * n2;
+    for (size_type i1 = 0; i1 < n1; ++i1)
+      for (size_type i2 = 0; i2 < n2; ++i2) {
+	int_coeffs[i1 + i2 * n1] = a->coeff(i1) * b->coeff(i2);
+	int_points[i1 + i2 * n1].resize(dim());
+	std::copy(a->point(i1).begin(), a->point(i1).end(),
+		  int_points[i1 + i2 * n1].begin());
+	std::copy(b->point(i2).begin(), b->point(i2).end(),
+		  int_points[i1 + i2 * n1].begin() + a->dim());
+      }
+    short_type f = 0;
+    for (short_type f1 = 0; f1 < a->structure()->nb_faces(); ++f1, ++f) {
+      n1 = a->nb_points_on_face(f1);
+      n2 = b->nb_points_on_convex();
+      size_type w = repartition[f];
+      repartition[f+1] = w + n1 * n2;
+      int_points.resize(repartition[f+1]);
+      int_coeffs.resize(repartition[f+1]);
+      for (size_type i1 = 0; i1 < n1; ++i1)
+	for (size_type i2 = 0; i2 < n2; ++i2) {
+	  int_coeffs[w + i1 + i2 * n1] = a->coeff_on_face(f1, i1)
+	    * b->coeff(i2);
+	  int_points[w + i1 + i2 * n1].resize(dim());
+	  std::copy(a->point_on_face(f1, i1).begin(),
+		    a->point_on_face(f1, i1).end(),
+		    int_points[w + i1 + i2 * n1].begin());
+	  std::copy(b->point(i2).begin(), b->point(i2).end(),
+		    int_points[w + i1 + i2 * n1].begin() + a->dim());
+	}
+    }
+    for (short_type f2 = 0; f2 < b->structure()->nb_faces(); ++f2, ++f) {
+      n1 = a->nb_points_on_convex();
+      n2 = b->nb_points_on_face(f2);
+      size_type w = repartition[f];
+      repartition[f+1] = w + n1 * n2;
+      int_points.resize(repartition[f+1]);
+      int_coeffs.resize(repartition[f+1]);
+      for (size_type i1 = 0; i1 < n1; ++i1)
+	for (size_type i2 = 0; i2 < n2; ++i2) {
+	  int_coeffs[w + i1 + i2 * n1] = a->coeff(i1)
+	    * b->coeff_on_face(f2, i2);
+	  int_points[w + i1 + i2 * n1].resize(dim());
+	  std::copy(a->point(i1).begin(), a->point(i1).end(),
+		    int_points[w + i1 + i2 * n1].begin());
+	  std::copy(b->point_on_face(f2, i2).begin(),
+		    b->point_on_face(f2, i2).end(),
+		    int_points[w + i1 + i2 * n1].begin() + a->dim());
+	}
+    }
+    pint_points = bgeot::store_point_tab(int_points);
+    valid = true;
+  }
 
   static pintegration_method product_approx(im_param_list &params) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
-	  "Bad number of parameters : " << params.size() << " should be 2.");
+       "Bad number of parameters : " << params.size() << " should be 2.");
     if (params[0].type() != 1 || params[1].type() != 1)
       DAL_THROW(failure_error, "Bad type of parameters");
     pintegration_method a = params[0].method();

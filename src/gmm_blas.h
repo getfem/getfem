@@ -74,11 +74,20 @@ namespace gmm {
   // à spécifier suivant le type de la référence
 
 //   template <class V> inline
-//   typename select_return<typename linalg_traits<V>::const_iterator, typename linalg_traits<V>::iterator, const V *>::return_type vect_begin(const V &v) {
-//     return linalg_traits<V>().begin(linalg_cast(v));
-//   }
+//   typename select_return<typename linalg_traits<V>::const_iterator,
+//                          typename linalg_traits<V>::iterator,
+//                          const V *>::return_type vect_begin(const V &v)
+//   { return linalg_traits<V>().begin(linalg_cast(v)); }
+
+//   template <class V> inline
+//   typename select_return<typename linalg_traits<V>::const_iterator,
+//                          typename linalg_traits<V>::iterator,
+//                          V *>::return_type vect_begin(V &v)
+//   { return linalg_traits<V>().begin(linalg_cast(v)); }
 
 
+
+  // le reste est inutile normalement y compris les vect_const_begin ...
 
 
   template <class V>
@@ -1054,7 +1063,7 @@ namespace gmm {
   void mult_ind(const L1& l1, const L2& l2, const L3& l3,
 		L4& l4, abstract_indirect) {
     DAL_THROW(failure_error,
-	  "You have to define the mult(m, v1, v2) for this kind of matrix");
+	  "You have to define gmm::mult(m, v1, v2) for this kind of matrix");
   }
 
 }

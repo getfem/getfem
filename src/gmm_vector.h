@@ -36,7 +36,7 @@
 namespace gmm
 {
   /************************************************************************/
-  /*		Class wsvector: sparse vector.				  */
+  /* Class wsvector: sparse vector optimized for random write operations. */
   /************************************************************************/
 
   template<class T> struct _elt_wsvector {

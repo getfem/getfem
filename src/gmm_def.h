@@ -172,7 +172,7 @@ namespace gmm {
   /* ******************************************************************** */
   /*   Selects a temporary vector type                                    */
   /*   V if V is a valid vector type,                                     */
-  /*   svector if V is a reference on a sparse vector,                    */
+  /*   wsvector if V is a reference on a sparse vector,                   */
   /*   std::vector if V is a reference on a plain vector.                 */
   /* ******************************************************************** */
 
@@ -226,7 +226,7 @@ namespace gmm {
   /* ******************************************************************** */
   /*   Selects a temporary sparse vector type                             */
   /*   V if V is a valid sparse vector type,                              */
-  /*   std::vector if V is a reference or a plain vector                  */
+  /*   wsvector if V is a reference or a plain vector                     */
   /* ******************************************************************** */
 
   template <class R, class S, class V> struct _temporary_sparse_vector;
