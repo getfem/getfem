@@ -86,7 +86,7 @@ int main(void)
     cout << "r = " << r << endl;
     cout << "q = " << q << endl;
     gmm::mult(q, r, qr);
-    gmm::clean(qr, 1E-14);
+    gmm::clean(qr, 1E-13);
     cout << "qr = " << qr << endl;
 
     gmm::add(gmm::scaled(mmt, -1.0), qr);

@@ -50,7 +50,7 @@ namespace gmm {
     magnitude_type mu = gmm::vect_norm2(X);
     gmm::copy(X, V);
     if (mu != magnitude_type(0)) {
-      value_type beta = X[0] + dal::sgn(X[0]) * mu; // with complexes ??
+      value_type beta = X[0] + dal::sgn(X[0]) * mu;
       gmm::scale(V, value_type(1)/beta);
     }
     V[0] = value_type(1);
@@ -126,7 +126,7 @@ namespace gmm {
     gmm::copy(a, a1);
     if (vect) gmm::copy(identity_matrix(), eigvect);
     
-    for (size_type ite = 0; ite < n*100; ++ite) { // trop d'itérations ?
+    for (size_type ite = 0; ite < n*100; ++ite) { // too much iterations ?
       qr_factor(a1, q, r);
       if (vect) { gmm::mult(eigvect, q, a1); gmm::copy(a1, eigvect); }
       gmm::mult(r, q, a1);
@@ -138,7 +138,7 @@ namespace gmm {
       bool ok = true;
       for (size_type i = 0; i < n && ok; ++i) { // to be optimized
         for (size_type j = 0; j < i; ++j)
-	  if (dal::abs(a1(i,j)) > vmax * 1E-12) // critère à revoir ?
+	  if (dal::abs(a1(i,j)) > vmax * 1E-12) // validity of criterion ?
 	    { ok = false; break; }
       }
       if (ok) {
