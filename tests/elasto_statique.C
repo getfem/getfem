@@ -5,9 +5,21 @@
 /**************************************************************************/
 
 #include <getfem_assembling.h>
+#include <getfem_norm.h>
 #include <getfem_regular_meshes.h>
+#include <bgeot_smatrix.h>
 
-#include <linear_systems.h>
+
+using bgeot::base_vector;
+using bgeot::base_node;
+using bgeot::base_matrix;
+using bgeot::scalar_type;
+using bgeot::size_type;
+
+typedef bgeot::smatrix<scalar_type> sparse_matrix_type;
+typedef bgeot::vsvector<scalar_type> linalg_vector;
+
+
 
 /**************************************************************************/
 /*  Definition de la solution test.                                       */
@@ -72,7 +84,7 @@ struct pb_data
   scalar_type LX, LY, LZ, residu;
   int NX, N, K;
 
-  symmetric_sparse_matrix RM; /* matrice de rigidite.                     */
+  sparse_matrix_type RM; /* matrice de rigidite.                     */
   linalg_vector U, B; /* inconnue et second membre.                       */
 
   int iteimpl, integration;
@@ -166,7 +178,7 @@ void pb_data::init(void)
 	un = mesh.convex(j).unit_norm_of_face(i);
 	
 	// if (true)
-	if (abs(un[N-1] - 1.0) < 1.0E-3)
+	if (dal::abs(un[N-1] - 1.0) < 1.0E-3)
 	  mef.add_boundary_elt(0, j, i);
 	else
 	  mef.add_boundary_elt(1, j, i);
@@ -179,9 +191,9 @@ void pb_data::assemble(void)
 {
   int nb_dof = mef.nb_dof(), nb_dof_data = mef_data.nb_dof();
   int nb_dof_data2 = mef_data2.nb_dof();
-  B = linalg_vector(N*nb_dof, 0.0);
-  U = linalg_vector(N*nb_dof, 0.0);
-  RM = symmetric_sparse_matrix(N*nb_dof, N*nb_dof);
+  B = linalg_vector(N*nb_dof); B.fill(0.0);
+  U = linalg_vector(N*nb_dof); U.fill(0.0);
+  RM = sparse_matrix_type(N*nb_dof, N*nb_dof);
   linalg_vector ST1, ST2;
 
   cout << "nombre de ddl de l'element fini : " << nb_dof << endl;
@@ -230,7 +242,7 @@ void pb_data::assemble(void)
 }
 
 void pb_data::solve(void)
-{ precond_cg(RM, U, B, 20000, residu); }
+{ bgeot::cg(RM, U, B, 20000, residu); }
 
 int main(int argc, char *argv[])
 {
@@ -265,7 +277,7 @@ int main(int argc, char *argv[])
     cout << "Calcul de l'erreur\n";
     
     int nbdof = p.mef.nb_dof();
-    linalg_vector V(nbdof*p.N); mtl::copy(p.U, V);
+    linalg_vector V(nbdof*p.N); V = p.U;
     base_vector S;
     
     for (int i = 0; i < nbdof; ++i) {

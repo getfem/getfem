@@ -242,7 +242,6 @@ void lap_pb::solve(void)
 int main(int argc, char *argv[])
 {
   try {
-    cout << "debut du programme" << endl;
     
     lap_pb p;
     dal::bit_vector nn;
