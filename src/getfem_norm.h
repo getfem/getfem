@@ -81,7 +81,7 @@ namespace getfem
       base_matrix G1, G2;
       size_type qdim = mf1.get_qdim(), mdim = m1.dim();
       base_vector val1(qdim), val2(qdim);
-      base_matrix gval1(mdim,qdim), gval2(mdim,qdim);
+      base_matrix gval1(qdim,mdim), gval2(qdim,mdim);
 
       vectors_to_base_matrix(G1,m1.points_of_convex(ms.cv));
       vectors_to_base_matrix(G2,m2.points_of_convex(slmcv));

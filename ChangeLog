@@ -1,5 +1,8 @@
+2004-07-20  julien pommier  <pommier@gmm.insa-tlse.fr>
+	* src/getfem_fem.h etc.: interpolation_grad now stores the
+	gradients in the rows of the matrix, no more in the columns.
+	
 2004-07-05  julien pommier  <pommier@gmm.insa-tlse.fr>
-
 	* src/getfem_export.C: added VTK and OpenDX export of slices,
 	getfem_mesh and mesh_fem objects.
 

@@ -266,9 +266,7 @@ namespace getfem {
       coeff.resize(mf.nb_dof_of_element(cv));
       gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))),
 		coeff);
-      base_matrix gradUt(3,3);
-      ctx.pf()->interpolation_grad(ctx, coeff, gradUt, mf.get_qdim());
-      gmm::copy(gmm::transposed(gradUt),gradU);
+      ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf.get_qdim());
       gmm::mult(gmm::transposed(gradU), gradU, L);
       gmm::add(gradU, L);
       gmm::add(gmm::transposed(gradU), L);
@@ -544,9 +542,7 @@ namespace getfem {
       coeff.resize(mf.nb_dof_of_element(cv));
       gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))),
 		coeff);
-      base_matrix gradPhit(3,3);
-      ctx.pf()->interpolation_grad(ctx, coeff, gradPhit, mf.get_qdim());
-      gmm::copy(gmm::transposed(gradPhit),gradPhi);
+      ctx.pf()->interpolation_grad(ctx, coeff, gradPhi, mf.get_qdim());
 
       gmm::add(gmm::identity_matrix(), gradPhi);
 

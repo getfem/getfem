@@ -101,7 +101,7 @@ namespace getfem
 	size_type dof_t = mf_target.ind_dof_of_element(cv)[j*target_qdim] * 
 	  N*(qdim/target_qdim);
 	ctx.set_ii(j);
-	pf->interpolation_grad(ctx, coeff, grad, qdim);
+	pf->interpolation_grad(ctx, coeff, gmm::transposed(grad), qdim);
 	std::copy(grad.begin(), grad.end(), V.begin() + dof_t);
       }
     }

@@ -114,7 +114,7 @@ namespace getfem
     base_node pt(P);
     base_vector coeff, val(1);
     std::vector<size_type> ind(npt);
-    base_matrix G1, val2(pmf2->linked_mesh().dim(), 1);
+    base_matrix G1, val2(1,pmf2->linked_mesh().dim());
     base_matrix::const_iterator itm = G.begin();
     for (size_type k = 0; k < npt; ++k, itm += P) {
       std::copy(itm, itm + P, pt.begin());
@@ -161,7 +161,7 @@ namespace getfem
 	    if (wg) {
  	      pf->interpolation_grad(ctx, coeff, val2);
 	      for (dim_type n = 0; n < pmf2->linked_mesh().dim(); ++n)
-		M(j + (n+1)*nbgauss, k) = val2(n, 0);
+		M(j + (n+1)*nbgauss, k) = val2(0, n);
 	    }
 	    coeff[nlocdof] = 0.0; cv1_old = cv1;
 	  }

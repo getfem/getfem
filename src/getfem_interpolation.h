@@ -258,7 +258,7 @@ namespace getfem {
 	    // le gradient.
 	    //	  if (PVGRAD) {
 	    // base_matrix grad(mdim, qdim);
-	    // pf_s->interpolation_grad(ctx, coeff, grad, qdim);
+	    // pf_s->interpolation_grad(ctx, coeff, gmm::transposed(grad), qdim);
 	    // std::copy(grad.begin(), grad.end(), V.begin()+dof_t*qdim*mdim);
 	    // }
 	  }

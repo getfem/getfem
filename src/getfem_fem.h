@@ -196,6 +196,8 @@ namespace getfem
      *  and correction of the gradient via the gradient of the geometric
      *  transformation).
      *  This function is essentially used by virtual_link_fem.
+     *  The gradient is stored in the rows of val, which should be
+     *  a 'Qdim' x 'N' matrix.
      */
     template<typename CVEC, typename VMAT> 
     void interpolation_grad(const fem_interpolation_context& c, 
@@ -375,7 +377,7 @@ namespace getfem
 			  const CVEC& coeff, VMAT &val, dim_type Qdim) const {
     size_type Qmult = size_type(Qdim) / target_dim();
     dim_type N = c.N();
-    if (gmm::mat_nrows(val) != N || gmm::mat_ncols(val) != Qdim)
+    if (gmm::mat_ncols(val) != N || gmm::mat_nrows(val) != Qdim)
       DAL_THROW(dimension_error, "dimensions mismatch");
     
     dim_type P = dim();
@@ -405,7 +407,7 @@ namespace getfem
 	      val2(k, r + q*target_dim()) += co * (*it);
 	    }
       }
-      gmm::mult(c.B(), val2, val);
+      gmm::mult(c.B(), val2, gmm::transposed(val));
     } else {
       real_grad_base_value(c, t);
       for (size_type q = 0; q < Qmult; ++q) {
@@ -419,7 +421,7 @@ namespace getfem
 	      else
 		for (size_type i = 0; i < R; ++i)
 		  co += coeff[i*Qmult+q] * c.M()(i, j);	      
-	      val(k, r + q*target_dim()) += co * (*it);
+	      val(r + q*target_dim(), k) += co * (*it);
 	    }
       }
     }

@@ -24,7 +24,6 @@
  * This program is used to check that getfem++ is working. This is also 
  * a good example of use of Getfem++.
 */
-#define GMM_USES_SUPERLU
 
 #include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
 #include <getfem_export.h>   /* export functions (save solution in a file)  */
