@@ -29,8 +29,8 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef __GMM_H
-#define __GMM_H
+#ifndef __GMM_OPT_H
+#define __GMM_OPT_H
 
 namespace gmm {
 
@@ -59,11 +59,11 @@ namespace gmm {
     return T(0);
   }
 
-  template <class T> T mat_inverse(dense_matrix<T> &A) {
+  template <class T> T lu_inverse(const dense_matrix<T> &A_) {
+    dense_matrix<T>& A = const_cast<dense_matrix<T> &>(A_);
     size_type N = mat_nrows(A);
     T *p = &(A(0,0)), det(0);
     if (N <= 3) {
-      cout << "coucou\n";
       switch (N) {
       case 1 : det = *p; *p = T(1) / det; break;
       case 2 : det = (*p) * (*(p+3)) - (*(p+1)) * (*(p+2));
@@ -102,4 +102,4 @@ namespace gmm {
 
 }
 
-#endif //  __GMM_H
+#endif //  __GMM_OPT_H
