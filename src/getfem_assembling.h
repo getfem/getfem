@@ -451,7 +451,7 @@ namespace getfem
 	size_type dof1 = mf.ind_dof_of_element(cv)[i];
 	if (nndof.is_in(dof1) && pf1->dof_types()[i] == lagrange_dof(pf1->dim()))
 	{
-	  cout << "dof : " << i << endl;
+	  // cout << "dof : " << i << endl;
 	  for (size_type j = 0; j < nbd; j++)
 	  {
 	    size_type dof2 = mf.ind_dof_of_element(cv)[j];
