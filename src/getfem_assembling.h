@@ -435,25 +435,31 @@ namespace getfem
     void assembling_Dirichlet_condition(MATRM &RM, VECT1 &B, mesh_fem &mf,
 		  size_type boundary, VECT2 &F, dim_type N)
   { /* Y-a-il un moyen plus performant ? */
+    // Marche uniquement pour des ddl de lagrange.
     size_type cv;
     dal::bit_vector nn = mf.convex_index();
     dal::bit_vector nndof = mf.dof_on_boundary(boundary);
+    pfem pf1;
 
     for (cv << nn; cv != ST_NIL; cv << nn)
     {
-      size_type nbd = mf.nb_dof_of_element(cv);
+      pf1 = mf.fem_of_element(cv);
+      size_type nbd = pf1->nb_dof();
       for (size_type i = 0; i < nbd; i++)
       {
+	
 	size_type dof1 = mf.ind_dof_of_element(cv)[i];
-	if (nndof.is_in(dof1))
+	if (nndof.is_in(dof1) && pf1->dof_types()[i] == lagrange_dof(pf1->dim()))
 	{
+	  cout << "dof : " << i << endl;
 	  for (size_type j = 0; j < nbd; j++)
 	  {
 	    size_type dof2 = mf.ind_dof_of_element(cv)[j];
 	    for (size_type k = 0; k < N; ++k)
 	      for (size_type l = 0; l < N; ++l)
 	      {
-		if (!(nndof.is_in(dof2)))
+		if (!(nndof.is_in(dof2)) 
+		    && pf1->dof_types()[j] == lagrange_dof(pf1->dim()))
 		  B[dof2*N+k] -= RM(dof2*N+k, dof1*N+l) * F[dof1*N+l];
 		RM(dof2*N+k, dof1*N+l) = RM(dof1*N+l, dof2*N+k) = 0;
 	      }

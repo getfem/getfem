@@ -575,12 +575,13 @@ namespace getfem
     _hermite_segment_(void)
     { 
       base_node pt(1);
-      base_poly one(2, 0), x(1, 1, 0); one.one();
+      base_poly one(1, 0), x(1, 1, 0); one.one();
       cvr = bgeot::simplex_of_reference(1);
       init_cvs_node();
       es_degree = 3;
       is_pol = true;
       is_equiv = is_lag = false;
+      is_equiv = true; // a supprimer ...
       _base.resize(4);
       pt[0] = 0.0; add_node(lagrange_dof(1), pt);
       _base[0] = one + x * x * (-one * 3.0  + x * 2.0);
