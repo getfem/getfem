@@ -321,7 +321,7 @@ namespace getfem
   /* extract the mesh_structure on faces */
   static void _structured_mesh_of_faces(bgeot::pconvex_ref cvr, dim_type f, const getfem_mesh &m, bgeot::mesh_structure &facem)
   {
-    cerr << "structured_mesh_of_faces: face " << int(f) << ", le maillage init a " << m.nb_points() << " pts, " << m.nb_convex() << " convexes" << endl;
+    //cerr << "structured_mesh_of_faces: face " << int(f) << ", le maillage init a " << m.nb_points() << " pts, " << m.nb_convex() << " convexes" << endl;
     facem.clear();
     dal::bit_vector on_face;
     bgeot::mesh_point_st_ct::const_iterator b = m.point_structures().begin(), e = m.point_structures().end();
@@ -331,7 +331,7 @@ namespace getfem
           on_face.add(i);
       }
     }
-    cerr << "on_face=" << on_face << endl;
+    //cerr << "on_face=" << on_face << endl;
     dal::bit_vector bv = m.convex_index();
     for (size_type cv = bv.take_first(); cv != size_type(-1); cv << bv) {
       for (size_type ff = 0; ff < m.structure_of_convex(cv)->nb_faces(); ++ff) {
@@ -339,9 +339,9 @@ namespace getfem
         bool allin = true;
         for (size_type i=0; i < ipts.size(); ++i) if (!on_face[ipts[i]]) { allin = false; break; }
         if (allin) {
-          cerr << "ajout de la face " << ff << " du convexe " << cv << ":";
+          /*cerr << "ajout de la face " << ff << " du convexe " << cv << ":";
           for (size_type i=0; i < ipts.size(); ++i) cerr << on_face[ipts[i]] << "/" << ipts[i] << " ";
-          cerr << endl;
+          cerr << endl;*/
           facem.add_convex(m.structure_of_convex(cv)->faces_structure()[ff], ipts.begin());
         }
       }

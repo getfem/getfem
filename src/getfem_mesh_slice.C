@@ -6,6 +6,64 @@ namespace getfem {
   const float slicer::EPS = 1e-13;
 
 
+  /* ---------------------------- extraction of  outer faces of a mesh --------------------- */
+
+  /* identify convex faces by their mesh point ids */
+  struct mesh_faces_by_pts_list_elt  {
+    std::vector<size_type> ptid; // point numbers of faces
+    int cnt; // number of convexes sharing that face
+    int cv, f;
+    bool operator<(const mesh_faces_by_pts_list_elt &e) const {
+      return ptid < e.ptid;
+    }
+    template<typename CONT> 
+    mesh_faces_by_pts_list_elt(size_type _cv, size_type _f, const CONT& p) 
+      : ptid(p.size()), cnt(0), cv(_cv), f(_f)  {
+      if (p.size() == 0) DAL_THROW(dal::internal_error, "internal error");
+      std::partial_sort_copy(p.begin(), p.end(), ptid.begin(), ptid.end());
+    }
+    mesh_faces_by_pts_list_elt() {}
+  };
+  typedef dal::dynamic_tree_sorted<mesh_faces_by_pts_list_elt> mesh_faces_by_pts_list;
+
+  /**
+     returns a list of "exterior" faces of a mesh (i.e. faces which are not shared by two convexes)
+  */
+  void
+  outer_faces_of_mesh(const getfem::getfem_mesh &m, dal::bit_vector cvlst, convex_face_ct& flist) {
+    mesh_faces_by_pts_list lst;
+    dal::bit_vector convex_tested;
+  
+    for (dal::bit_vector::const_iterator it_cv = cvlst.begin(); it_cv != cvlst.end(); ++it_cv) {
+      if (!(*it_cv)) continue;
+
+      size_type ic = it_cv.index();
+      if (m.structure_of_convex(ic)->dim() == m.dim()) {
+	for (size_type f = 0; f < m.structure_of_convex(ic)->nb_faces(); f++) {
+	  size_type idx = lst.add_norepeat(mesh_faces_by_pts_list_elt(ic,f,m.ind_points_of_face_of_convex(ic, f)));
+	  lst[idx].cnt++;
+	}
+      } else { /* les objets de dim inferieure sont considérés comme "exterieurs" 
+		(c'ets plus pratique pour faire des dessins)
+	       */
+	size_type idx = lst.add_norepeat(mesh_faces_by_pts_list_elt(ic,size_type(-1),m.ind_points_of_convex(ic)));
+	lst[idx].cnt++;
+      }
+    }
+
+    size_type fcnt = 0;
+    for (size_type i = 0; i < lst.size(); i++)
+      if (lst[i].cnt == 1) ++fcnt;
+    flist.resize(fcnt); fcnt = 0;
+    for (size_type i = 0; i < lst.size(); i++) if (lst[i].cnt == 1) { 
+      flist[fcnt].cv = lst[i].cv; flist[fcnt].f = lst[i].f; ++fcnt; 
+    }
+  }
+
+
+
+  /* -------------------------------------- slicers --------------------------------------*/
+
   /* nodes : list of nodes (new nodes may be added)
      splxs : list of simplexes (new simplexes may be added)
      splx_in : input: simplexes to take into account, output: list of simplexes inside the slice
@@ -91,6 +149,7 @@ namespace getfem {
       }
     }
   }
+
 
 
   struct sorted_order_aux {
@@ -204,10 +263,15 @@ namespace getfem {
 			     n.begin(), n.end(), slice_node_compare_pt_ref());
       typedef std::map<unsigned long,dal::bit_vector> fmap_t;
       fmap_t fmap;
-      dim_type nface = cvlst[ic].cv_dim-1;        
+      dim_type nface = 0;//cvlst[ic].cv_dim-1;
+      for (size_type j=0; j < cvlst[ic].simplexes.size(); ++j) 
+        if (cvlst[ic].simplexes[j].dim()) 
+          nface = std::max(nface, dim_type(cvlst[ic].simplexes[j].dim()-1));
       fpts.resize(n.size());
+      slice_node::faces_ct fmask((unsigned long)(-1));
+      for (size_type ip = 0; ip < n.size(); ++ip) fmask &= n[ip].faces;
       for (size_type ip = 0; ip < n.size(); ++ip) {
-	slice_node::faces_ct f = n[ip].faces;
+	slice_node::faces_ct f = n[ip].faces & (~fmask);
         dim_type nbits = f.count();
 	//cerr << "  nface = " << int(nface) << ", nbits=" << int(nbits) << endl;
 	//cerr << "  noeud " << ip << ": " << n[ip].pt << ", " << n[ip].pt_ref << ", f=" << n[ip].faces << endl;
@@ -253,7 +317,9 @@ namespace getfem {
         dal::bit_vector &bv = (*it).second;
         size_type pip = bv.take_first();
         for (size_type ip = bv.take_first(); ip != size_type(-1); ip << bv) {
-          m.add_segment(fpts[pip], fpts[ip]); pip = ip;
+	  if (fpts[pip] != fpts[ip])
+	    m.add_segment(fpts[pip], fpts[ip]); 
+	  pip = ip;
 	}
       }
     }
@@ -354,8 +420,34 @@ namespace getfem {
     }
   };
 
+  void mesh_slice::do_slicing(size_type cv, bgeot::pconvex_ref cvr, const slicer *ms, cs_nodes_ct cv_nodes, 
+			      cs_simplexes_ct cv_simplexes, dal::bit_vector& splx_in) {
+    /* do the slices */
+    if (ms) ms->slice(cv_nodes, cv_simplexes, splx_in);
+    
+    /* push the used nodes and simplexes in the final list */         
+    if (splx_in.card()) {
+      std::vector<size_type> nused(cv_nodes.size(), size_type(-1));      
+      cvlst.push_back(convex_slice());
+      cvlst.back().cv_num = cv;
+      cvlst.back().cv_dim = cvr->structure()->dim();
+      for (size_type snum = splx_in.take_first(); snum != size_type(-1); snum << splx_in) {
+	for (size_type i=0; i < cv_simplexes[snum].dim()+1; ++i) {
+	  size_type lnum = cv_simplexes[snum].inodes[i];
+	  if (nused[lnum] == size_type(-1)) {
+	    nused[lnum] = cvlst.back().nodes.size(); cvlst.back().nodes.push_back(cv_nodes[lnum]);
+	    points_cnt++;
+	  }
+	  cv_simplexes[snum].inodes[i] = nused[lnum];
+	}
+	simplex_cnt[cv_simplexes[snum].dim()]++;
+	cvlst.back().simplexes.push_back(cv_simplexes[snum]);
+      }
+    }
+  }
+
   /* of course, nodes created from edge/slice intersection are almost always duplicated */
-  mesh_slice::mesh_slice(const getfem_mesh& m, const slicer& ms, size_type nrefine, 
+  mesh_slice::mesh_slice(const getfem_mesh& m, const slicer* ms, size_type nrefine, 
                          convex_face_ct& in_cvlst, mesh_slice_cv_dof_data_base *def_mf_data) 
     : simplex_cnt(m.dim()+1, size_type(0)), points_cnt(0), _dim(m.dim()) {
     _geotrans_precomp gp;
@@ -396,36 +488,14 @@ namespace getfem {
       else
         cvms = cvm; 
 
-      cerr << "doing convex " << cv << ", face=" << face << ", cvm->nb_convex=" << cvm->nb_convex() 
-           << " =, cvms->nb_convex=" << cvms->nb_convex() << endl;
+      /*cerr << "doing convex " << cv << ", face=" << face << ", cvm->nb_convex=" << cvm->nb_convex() 
+	<< ", cvms->nb_convex=" << cvms->nb_convex() << endl;*/
 
 
       def->apply(m, cvms, gp, cvm_pts, points_on_faces, cv_nodes, cv_simplexes);
 
-
-      /* do the slices */
       dal::bit_vector splx_in; splx_in.add(0, cv_simplexes.size());
-      ms.slice(cv_nodes, cv_simplexes, splx_in);
-
-      /* push the used nodes and simplexes in the final list */         
-      if (splx_in.card()) {
-        std::vector<size_type> nused(cv_nodes.size(), size_type(-1));      
-        cvlst.push_back(convex_slice());
-        cvlst.back().cv_num = cv;
-        cvlst.back().cv_dim = cvr->structure()->dim();
-        for (size_type snum = splx_in.take_first(); snum != size_type(-1); snum << splx_in) {
-          for (size_type i=0; i < cv_simplexes[snum].dim()+1; ++i) {
-            size_type lnum = cv_simplexes[snum].inodes[i];
-            if (nused[lnum] == size_type(-1)) {
-              nused[lnum] = cvlst.back().nodes.size(); cvlst.back().nodes.push_back(cv_nodes[lnum]);
-              points_cnt++;
-            }
-            cv_simplexes[snum].inodes[i] = nused[lnum];
-          }
-          simplex_cnt[cv_simplexes[snum].dim()]++;
-          cvlst.back().simplexes.push_back(cv_simplexes[snum]);
-        }
-      }
+      do_slicing(cv, cvr, ms, cv_nodes, cv_simplexes, splx_in);
     }
     //cerr << *this << endl;
   }

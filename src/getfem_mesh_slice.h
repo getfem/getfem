@@ -8,6 +8,21 @@
 #include <getfem_poly_composite.h>
 
 namespace getfem {
+  struct convex_face  {
+    size_type cv;
+    size_type f;
+    inline bool operator < (const convex_face &e) const
+    {
+      if (cv < e.cv) return true; if (cv > e.cv) return false; 
+      if (f < e.f) return true; else if (f > e.f) return false;
+      return false;
+    }
+    bool is_face() const { return f != size_type(-1); }
+    convex_face(size_type _cv, size_type _f = size_type(-1)) : cv(_cv), f(_f) {}
+    convex_face() : cv(size_type(-1)), f(size_type(-1)) {}
+  };
+  typedef std::vector<convex_face> convex_face_ct;
+  
   struct slice_node {
     typedef std::bitset<32> faces_ct; /// broken for convexes with more than 32 faces
     base_node pt, pt_ref;
@@ -50,8 +65,16 @@ namespace getfem {
   protected:
     bool is_boundary_slice;
     slicer_volume(bool _is_boundary_slice) : is_boundary_slice(_is_boundary_slice) {}
+    static scalar_type trinom(scalar_type a, scalar_type b, scalar_type c) {
+      scalar_type delta = b*b - 4*a*c;
+      if (delta < 0.) return 1./EPS;
+      delta = sqrt(delta);
+      scalar_type s1 = (-b - delta) / (2*a);
+      scalar_type s2 = (-b + delta) / (2*a);
+      if (dal::abs(s1-.5) < dal::abs(s2-.5)) return s1; else return s2;
+    }
   public:
-    void slice(std::deque<slice_node>& nodes, std::deque<slice_simplex>& splxs, dal::bit_vector& splx_in) const;
+    void slice(std::deque<slice_node>& nodes, std::deque<slice_simplex>& splxs, dal::bit_vector& splx_in) const;    
   };
 
   class slicer_half_space : public slicer_volume {
@@ -64,7 +87,6 @@ namespace getfem {
     bool is_in(const base_node& P, bool bound=false) const {
       scalar_type s = 0.;
       for (unsigned i=0; i < P.size(); ++i) s += (P[i] - x0[i])*n[i];
-      //cerr << "slicer_half_space:is_in("<<P<<","<<bound<< "):s=" << s << ", res=" <<((!bound && s <= 0) || s*s <= dal::sqr(EPS*bgeot::vect_norm2_sqr(P))) << endl;
       return ((!bound && s <= 0) || s*s <= dal::sqr(EPS*bgeot::vect_norm2_sqr(P)));
     }
     scalar_type edge_intersect(const base_node& A, const base_node& B) const {
@@ -87,44 +109,37 @@ namespace getfem {
     }
     scalar_type edge_intersect(const base_node& A, const base_node& B) const {
       scalar_type a,b,c; // a*x^2 + b*x + c = 0
-      //A -= x0; B -= x0;
-      a = bgeot::vect_norm2_sqr(B-A);
+      a = bgeot::vect_norm2_sqr(B-A); if (a < EPS) return is_in(A,true) ? 0. : 1./EPS;
       b = 2*bgeot::vect_sp(A-x0,B-A);
       c = bgeot::vect_norm2_sqr(A-x0)-R*R;
-      scalar_type delta = b*b - 4*a*c;
-      //cerr << "sphere: edge_intersect A=" << A << ", B=" << B << ", " << a << "x^2 + " << b << "x + " << c << " = 0 => delta=" << delta << "\n";
-      if (delta < 0.) return 1./EPS;
-      if (a < EPS) return is_in(A) ? 0. : 1./EPS;
-      delta = sqrt(delta);
-      scalar_type s1 = (-b - delta) / (2*a);
-      scalar_type s2 = (-b + delta) / (2*a);
-      //cerr << "\t=> x={" << s1 << "," << s2 << "} ... " << dal::abs(s1-.5) << "; " << dal::abs(s2-.5) << "\n";
-      if (dal::abs(s1-.5) < dal::abs(s2-.5)) return s1; else return s2;
+      return slicer_volume::trinom(a,b,c);
     }
   };
-  /*
+  
   class slicer_cylinder : public slicer_volume {
     base_node x0, d;
-    scalar_type R0, dR;
+    scalar_type R;
   public:
-    slicer_cylinder(base_node _x0, base_node _x1, scalar_type _R0, scalar_type _R1 = _R0) : x0(_x0), d(_x1-_x0), R0(_R0) {
-      scalar_type s = bgeot::vect_norm2(d);
-      dR = (_R1-_R0)/s; d /= s;
+    slicer_cylinder(base_node _x0, base_node _x1, scalar_type _R, bool boundary_slice) : 
+      slicer_volume(boundary_slice), x0(_x0), d(_x1-_x0), R(_R) {
+      d /= bgeot::vect_norm2(d);
     }
     bool is_in(const base_node& P, bool bound = false) const {
       base_node N = P-x0;
       scalar_type axpos = bgeot::vect_sp(d, N);
       scalar_type dist2 = bgeot::vect_norm2_sqr(N) - dal::sqr(axpos);
-      scalar_type R = R0 + axpos * dR;
-      return (R >= 0) && ((!bound && dist2 < R*R) || ((dist2-R*R) < EPS));
+      return (!bound && dist2 < R*R) || (dal::abs(dist2-R*R) < EPS);
     }
     scalar_type edge_intersect(const base_node& A, const base_node& B) const {
-      base_node F=A-x0;
-      base_node D=B-A;
-      scalar_type a = bgeot::vect_norm2_sqr(D) - dal::sqr();
+      base_node F=A-x0; scalar_type Fd = bgeot::vect_sp(F,d);
+      base_node D=B-A;  scalar_type Dd = bgeot::vect_sp(D,d);
+      scalar_type a = bgeot::vect_norm2_sqr(D) - dal::sqr(Dd); if (a < EPS) return is_in(A,true) ? 0. : 1./EPS; assert(a> -EPS);
+      scalar_type b = 2*(bgeot::vect_sp(F,D) - Fd*Dd);
+      scalar_type c = bgeot::vect_norm2_sqr(F) - dal::sqr(Fd) - dal::sqr(R);
+      return slicer_volume::trinom(a,b,c);
     }
   };
-*/
+
   class slicer_union : public slicer {
     slicer *A, *B;
   public:
@@ -148,28 +163,13 @@ namespace getfem {
   };
 
   /** this slicer does nothing! */
-  class slicer_none : public slicer {
+  /*  class slicer_none : public slicer {
   public:
     slicer_none() {}
     void slice(std::deque<slice_node>& nodes, 
 	       std::deque<slice_simplex>& splxs, dal::bit_vector& splx_in) const {}
   };
-
-  struct convex_face  {
-    size_type cv;
-    size_type f;
-    inline bool operator < (const convex_face &e) const
-    {
-      if (cv < e.cv) return true; if (cv > e.cv) return false; 
-      if (f < e.f) return true; else if (f > e.f) return false;
-      return false;
-    }
-    bool is_face() const { return f != size_type(-1); }
-    convex_face(size_type _cv, size_type _f = size_type(-1)) : cv(_cv), f(_f) {}
-    convex_face() : cv(size_type(-1)), f(size_type(-1)) {}
-  };
-  typedef std::vector<convex_face> convex_face_ct;
-  
+  */
 
   class mesh_slice_cv_dof_data_base {
   public:
@@ -212,8 +212,10 @@ namespace getfem {
     size_type points_cnt;
     cvlst_ct cvlst;
     size_type _dim;
+    void do_slicing(size_type cv, bgeot::pconvex_ref cvr, const slicer *ms, cs_nodes_ct cv_nodes, 
+		    cs_simplexes_ct cv_simplexes, dal::bit_vector& splx_in);
   public:
-    mesh_slice(const getfem_mesh& m, const slicer& ms, size_type nrefine, 
+    mesh_slice(const getfem_mesh& m, const slicer* ms, size_type nrefine, 
                convex_face_ct& cvlst, mesh_slice_cv_dof_data_base *def_mf_data=0);
     size_type nb_convex() const { return cvlst.size(); }
     size_type convex_num(size_type ic) const { return cvlst[ic].cv_num; }
