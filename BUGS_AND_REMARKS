@@ -2,7 +2,7 @@
 
 ___________________________________________________________________________
 
-g++ (3.0) has a bug concerning dynamic libraries. No object with a non
+g++ has a bug concerning dynamic libraries. No object with a non
 trivial constructor or destructor can be used.
 ___________________________________________________________________________
 
@@ -20,5 +20,9 @@ first in any application which uses GETFEM (or __USE_STD_IOSTREAM should be
 defined before any standard include file)
 ___________________________________________________________________________
 
-
-
+On SGI, problem with dynamic libraries 
+the use of 
+  -update_registry .libs/so_locations
+doesn't work and should be repalce with
+  -check_registry /usr/lib/so_locations 
+(dans libtool)

@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl -----------------------------------------------
+dnl ------------------------------------------------------------------------
 dnl initialisation
-dnl -----------------------------------------------
+dnl ------------------------------------------------------------------------
 
 dnl ./configure: sh internal 2K buffer overflow on HP-UX 9.xx
 dnl thus, updating cache ./config.cache avoided.

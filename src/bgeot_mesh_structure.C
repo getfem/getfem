@@ -253,7 +253,7 @@ namespace bgeot
   int mesh_structure::read_from_file(STD_NEEDED istream &ist)
   {
     char tmp[100]; 
-    bool tend = false, error = false;
+    bool tend = false;
     dal::dynamic_alloc<size_type> cv_pt;
     dal::dynamic_array<mesh_convex_structure> cv;
     dal::dynamic_array<pconvex_structure> cvs;

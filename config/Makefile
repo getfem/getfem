@@ -13,7 +13,7 @@
 # PARTICULAR PURPOSE.
 
 
-SHELL = /bin/ksh
+SHELL = /bin/sh
 
 srcdir = .
 top_srcdir = ..
@@ -40,11 +40,11 @@ top_builddir = ..
 
 ACLOCAL = aclocal -I config --output=config/aclocal.m4
 AUTOCONF = autoconf -l config
-AUTOMAKE = ${SHELL} /home/gmmpc15/renard/source++/getfem++new/config/missing --run automake-1.6
-AUTOHEADER = ${SHELL} /home/gmmpc15/renard/source++/getfem++new/config/missing --run autoheader
+AUTOMAKE = ${SHELL} /home/gmmpc15/renard/source++/getfem++/config/missing --run automake-1.6
+AUTOHEADER = ${SHELL} /home/gmmpc15/renard/source++/getfem++/config/missing --run autoheader
 
 am__cd = CDPATH="$${ZSH_VERSION+.}$(PATH_SEPARATOR)" && cd
-INSTALL = /home/gmmpc15/renard/source++/getfem++/bin/install -c
+INSTALL = /usr/bin/install -c
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_DATA = ${INSTALL} -m 644
 install_sh_DATA = $(install_sh) -c -m 644
@@ -59,28 +59,28 @@ NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
 host_alias = 
-host_triplet = alphaev67-dec-osf4.0f
+host_triplet = i686-pc-linux-gnu
 
 EXEEXT = 
 OBJEXT = o
 PATH_SEPARATOR = :
-AMTAR = ${SHELL} /home/gmmpc15/renard/source++/getfem++new/config/missing --run tar
+AMTAR = ${SHELL} /home/gmmpc15/renard/source++/getfem++/config/missing --run tar
 AS = @AS@
-AWK = gawk
+AWK = mawk
 CC = gcc
-CXX = cxx
-CXXCPP = cxx -E
+CXX = g++
+CXXCPP = g++ -E
 DEPDIR = .deps
 DLLTOOL = @DLLTOOL@
-ECHO = print -r
+ECHO = echo
 GCJ = @GCJ@
 GCJFLAGS = @GCJFLAGS@
 INSTALL_STRIP_PROGRAM = ${SHELL} $(install_sh) -c -s
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
 LIBTOOL_VERSION_INFO = -version-info 1:0:0
 LN_S = ln -s
-MATLAB_COM_EXT = .mexaxp
-MATLAB_INC_DIR = /tmp_mnt/usr/local/matlab-R12.1/extern/include
+MATLAB_COM_EXT = .mexglx
+MATLAB_INC_DIR = /mnt/opt/matlab/extern/include
 MEX = mex
 OBJDUMP = @OBJDUMP@
 PACKAGE = getfem
@@ -90,7 +90,7 @@ STRIP = strip
 VERSION = 1.0
 am__include = include
 am__quote = 
-install_sh = /home/gmmpc15/renard/source++/getfem++new/config/install-sh
+install_sh = /home/gmmpc15/renard/source++/getfem++/config/install-sh
 EXTRA_DIST = \
 	bootstrap	\
 	config.guess	\
