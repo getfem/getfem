@@ -1045,6 +1045,12 @@ namespace gmm {
 	      vect_begin(l3), vect_end(l3));
   }
   
+  // generic function for add(v1, v2, v3).
+  // Need to be specialized to optimize particular additions.
+  template <class L1, class L2, class L3, class ST1, class ST2, class ST3>
+  inline void add(const L1& l1, const L2& l2, L3& l3, ST1, ST2, ST3)
+  { copy(l2, l3); add(l1, l3, ST1(), ST3()); }
+
   template <class L1, class L2, class L3> inline
   void add(const L1& l1, const L2& l2, L3& l3,
 	   abstract_sparse, abstract_plain, abstract_plain) {
@@ -1054,10 +1060,8 @@ namespace gmm {
   
   template <class L1, class L2, class L3> inline
   void add(const L1& l1, const L2& l2, L3& l3,
-	   abstract_plain, abstract_sparse, abstract_plain) {
-    _add_almost_full(vect_begin(l2), vect_end(l2), vect_begin(l1),
-		     vect_begin(l3), vect_end(l3));
-  }
+	   abstract_plain, abstract_sparse, abstract_plain)
+  { add(l2, l1, l3, abstract_sparse(), abstract_plain(), abstract_plain()); }
   
   template <class L1, class L2, class L3> inline
   void add(const L1& l1, const L2& l2, L3& l3,
@@ -1087,20 +1091,7 @@ namespace gmm {
     for (; it1 != ite1; ++it1) l3[it1.index()] += *it1;
     for (; it2 != ite2; ++it2) l3[it2.index()] += *it2;   
   }
-  
-  template <class L1, class L2, class L3> inline
-  void add(const L1& l1, const L2& l2, L3& l3,
-	   abstract_plain, abstract_sparse, abstract_sparse)
-  { copy(l2, l3); add(l1, l3, abstract_plain(), abstract_sparse()); }
-  template <class L1, class L2, class L3> inline
-  void add(const L1& l1, const L2& l2, L3& l3,
-	   abstract_plain, abstract_plain, abstract_sparse)
-  { copy(l2, l3); add(l1, l3, abstract_plain(), abstract_sparse()); }
-  template <class L1, class L2, class L3> inline
-  void add(const L1&, const L2&, L3&,
-	   abstract_sparse, abstract_plain, abstract_sparse)
-  { copy(l2, l3); add(l1, l3, abstract_sparse(), abstract_sparse());  }
-  
+
   template <class L1, class L2>
   void add(const L1& l1, L2& l2,
 	   abstract_plain, abstract_plain) {
@@ -1247,6 +1238,16 @@ namespace gmm {
   }
 
   template <class L1, class L2, class L3>
+  void mult_by_row(const L1& l1, const L2& l2, L3& l3, abstract_skyline) {
+    clear(l3);
+    size_type nr = mat_nrows(l1);
+    for (size_type i = 0; i < nr; ++i) {
+      typename linalg_traits<L1>::value_type aux = vect_sp(mat_row(l1, i), l2);
+      if (aux != 0) l3[i] = aux;
+    }
+  }
+
+  template <class L1, class L2, class L3>
   void mult_by_row(const L1& l1, const L2& l2, L3& l3, abstract_plain) {
     typename linalg_traits<L3>::iterator
       it = vect_begin(l3), ite = vect_end(l3);
@@ -1264,6 +1265,16 @@ namespace gmm {
 
   template <class L1, class L2, class L3>
   void mult_by_col(const L1& l1, const L2& l2, L3& l3, abstract_sparse) {
+    clear(l3);
+    typename linalg_traits<L2>::const_iterator it = vect_begin(l2),
+      ite = vect_end(l2);
+    for (; it != ite; ++it)
+      if (*it != typename linalg_traits<L2>::value_type(0))
+	add(scaled(mat_col(l1, it.index()), *it), l3);
+  }
+
+  template <class L1, class L2, class L3>
+  void mult_by_col(const L1& l1, const L2& l2, L3& l3, abstract_skyline) {
     clear(l3);
     typename linalg_traits<L2>::const_iterator it = vect_begin(l2),
       ite = vect_end(l2);
@@ -1308,14 +1319,26 @@ namespace gmm {
       copy(temp, l4);
     }
   }
-  
+
   template <class L1, class L2, class L3, class L4> inline
   void mult(const L1& l1, const L2& l2, const L3& l3, const L4& l4)
-  { mult_const(l1, l2, l3, linalg_const_cast(l4)); }
+  { mult_const(l1, l2, l3, linalg_const_cast(l4)); } 
 
   template <class L1, class L2, class L3, class L4>
   void mult_by_row(const L1& l1, const L2& l2, const L3& l3,
 		   L4& l4, abstract_sparse) {
+    copy(l3, l4);
+    size_type nr = mat_nrows(l1);
+    for (size_type i = 0; i < nr; ++i) {
+      typename linalg_traits<L1>::value_type
+	aux = vect_sp(mat_row(l1, i), l2);
+      if (aux != 0) l4[i] += aux;
+    }
+  }
+
+  template <class L1, class L2, class L3, class L4>
+  void mult_by_row(const L1& l1, const L2& l2, const L3& l3,
+		   L4& l4, abstract_skyline) {
     copy(l3, l4);
     size_type nr = mat_nrows(l1);
     for (size_type i = 0; i < nr; ++i) {
@@ -1347,6 +1370,17 @@ namespace gmm {
   template <class L1, class L2, class L3, class L4>
   void mult_by_col(const L1& l1, const L2& l2, const L3& l3, L4& l4,
 		   abstract_sparse) {
+    copy(l3, l4);
+    typename linalg_traits<L2>::const_iterator it = vect_begin(l2),
+      ite = vect_end(l2);
+    for (; it != ite; ++it)
+      if (*it != typename linalg_traits<L2>::value_type(0))
+	add(scaled(mat_col(l1, it.index()), *it), l4);
+  }
+
+  template <class L1, class L2, class L3, class L4>
+  void mult_by_col(const L1& l1, const L2& l2, const L3& l3, L4& l4,
+		   abstract_skyline) {
     copy(l3, l4);
     typename linalg_traits<L2>::const_iterator it = vect_begin(l2),
       ite = vect_end(l2);
