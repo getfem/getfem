@@ -132,10 +132,10 @@ namespace gmm {
 		     rcond,ferr,berr,&mem_usage,info);                     \
   }
 
-  DECL_GSSVX(SuperLU_S,sgssvx,float,float);
-  DECL_GSSVX(SuperLU_C,cgssvx,float,std::complex<float>);
-  DECL_GSSVX(SuperLU_D,dgssvx,double,double);
-  DECL_GSSVX(SuperLU_Z,zgssvx,double,std::complex<double>);
+  DECL_GSSVX(SuperLU_S,sgssvx,float,float)
+  DECL_GSSVX(SuperLU_C,cgssvx,float,std::complex<float>)
+  DECL_GSSVX(SuperLU_D,dgssvx,double,double)
+  DECL_GSSVX(SuperLU_Z,zgssvx,double,std::complex<double>)
 
   /* ********************************************************************* */
   /*   SuperLU solve                                                       */
