@@ -506,24 +506,27 @@ namespace getfem
 	  ftool::get_token(ist, tmp, 1023);
 	  ftool::get_token(ist, tmp, 1023);
 	} else if (!strcmp(tmp,"DOF_ENUMERATION")) {
-	  cerr << "begin dof enumeration" << endl;
+	  //cerr << "begin dof enumeration" << endl;
 	  dal::bit_vector doflst;
 	  dof_structure.clear(); dof_enumeration_made = false;
 	  while (true) {
 	    ftool::get_token(ist, tmp, 1023);
-	    if (strcmp(tmp, "END")==0) { cerr << "end of dof enumeration\n"; break;}
+	    if (strcmp(tmp, "END")==0) { 
+	      //cerr << "end of dof enumeration\n"; 
+	      break;
+	    }
 	    size_type ic = atoi(tmp);
 	    std::vector<size_type> tab;
 	    if (convex_index().is_in(ic) && strlen(tmp) && tmp[strlen(tmp)-1] == ':') {
 	      tab.resize(nb_dof_of_element(ic));
-	      cerr << "convex " << ic << ", tab=";
+	      //cerr << "convex " << ic << ", tab=";
 	      for (size_type i=0; i < fem_of_element(ic)->nb_dof(); i++) {
 		ist >> tab[i];
 		for (size_type q=0; q < size_type(get_qdim())/fem_of_element(ic)->target_dim(); ++q)
 		  doflst.add(tab[i]+q);
-		cerr << tab[i] << ",";
+		//cerr << tab[i] << ",";
 	      }
-	      cerr << endl;
+	      //cerr << endl;
 	      dof_structure.add_convex_noverif(fem_of_element(ic)->structure(), tab.begin(), ic);
 	    } else DAL_THROW(failure_error, "Missing convex or wrong number in dof enumeration: '" 
 			     << tmp << "' [pos=" << ist.tellg() << "]");
