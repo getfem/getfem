@@ -32,8 +32,8 @@
 #ifndef __GETFEM_CONFIG_H
 #define __GETFEM_CONFIG_H
 
-#include <dal_std.h>
-#include <bgeot_config.h>
+#include <bgeot_tensor.h>
+#include <bgeot_vector.h>
 
 /// GEneric Tool for Finite Element Methods.
 namespace getfem
