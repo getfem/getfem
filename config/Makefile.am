@@ -6,4 +6,5 @@ EXTRA_DIST = \
 	ltmain.sh	\
 	depcomp		\
 	missing		\
+	ax_prefix_config_h.m4 \
 	mkinstalldirs
