@@ -64,7 +64,8 @@ struct Chrono {
   void getfem_mesh_level_set_noisy(void) { noisy = true; }
 
 
-  void mesh_level_set::receipt(const MESH_CLEAR &) { clear(); is_adapted_ = false; }
+  void mesh_level_set::receipt(const MESH_CLEAR &)
+  { clear(); is_adapted_ = false; }
   void mesh_level_set::receipt(const MESH_DELETE &) {
     clear(); is_valid_ = false; is_adapted_ = false;
     sup_sender(linked_mesh_->lmsg_sender());
@@ -126,7 +127,8 @@ struct Chrono {
       for (size_type i=0; i < ipts.size(); ++i) {
 	if (ipts[i] >= nb_vertices && !ptdone[ipts[i]]) { 
 	  base_node &P = m.points()[ipts[i]];
-	  //if (cts.card() > 1) cout << "WARNING, projection sur " << cts << endl;
+	  // if (cts.card() > 1)
+	  //   cout << "WARNING, projection sur " << cts << endl;
 	  pure_multi_constraint_projection(list_constraints, P, cts);
 	  // dist(P, new_cts);
 	}
@@ -263,55 +265,20 @@ struct Chrono {
   static getfem_mesh global_mesh; // to visualize the result with Open dx
 
   void mesh_level_set::run_delaunay(std::vector<base_node> &fixed_points,
-				       gmm::dense_matrix<size_type> &simplexes,
-				       std::vector<dal::bit_vector> &/* fixed_points_constraints */) {
-    double t0=ftool::uclock_sec(); if (noisy) cout << "running delaunay with " << fixed_points.size() << " points.." << std::flush;
+				    gmm::dense_matrix<size_type> &simplexes,
+				    std::vector<dal::bit_vector> &
+				    /* fixed_points_constraints */) {
+    double t0=ftool::uclock_sec();
+    if (noisy) cout << "running delaunay with " << fixed_points.size()
+		    << " points.." << std::flush;
     delaunay(fixed_points, simplexes);
-    if (noisy) cout << " -> " << gmm::mat_ncols(simplexes) << " simplexes [" << ftool::uclock_sec()-t0 << "sec]\n";
-//     if (noisy) cout << "Nb simplexes = " << gmm::mat_ncols(simplexes)<< endl;
-//     size_type nt = gmm::mat_ncols(simplexes);
-//     size_type N = gmm::mat_nrows(simplexes)-1;
-//     dal::bit_vector undecimable_pts; undecimable_pts.sup(0,fixed_points.size());
-//     for (size_type i=0; i < nt; ++i) {
-//       bool undecimable = false;
-//       for (unsigned j=0; j < N+1; ++j) {
-// 	const dal::bit_vector &bv = fixed_points_constraints[simplexes(j,i)];
-// 	if (bv.card() > 1 || (bv.card() == 1 && bv.first_true() > N)) { 
-// 	  undecimable = true; break; 
-// 	}
-//       }
-//       if (undecimable) {
-// 	for (unsigned j=0; j < N+1; ++j) 
-// 	  undecimable_pts.add(simplexes(j,i));
-//       }
-//     }
-//     if (noisy) cout << "Decimation possible de " << fixed_points.size()-undecimable_pts.card() << "/" << fixed_points.size() << " points\n";
-//     if (undecimable_pts.card() < fixed_points.size()) {
-//       std::vector<base_node> fp2; fp2.reserve(undecimable_pts.card());
-//       std::vector<dal::bit_vector> fp_cts2; fp_cts2.reserve(undecimable_pts.card());
-//       for (dal::bv_visitor ip(undecimable_pts); !ip.finished(); ++ip) {
-// 	fp2.push_back(fixed_points[ip]);
-// 	fp_cts2.push_back(fixed_points_constraints[ip]);
-//       }
-//       fixed_points.swap(fp2);
-//       fixed_points_constraints.swap(fp_cts2);
-//       if (noisy) cout << "running delaunay with " << fixed_points.size() << " points\n";
-//       delaunay(fixed_points, simplexes);
-//       if (noisy) cout << "Nb simplexes post-decimation = " << gmm::mat_ncols(simplexes)<< endl;
-//     }
-  }
-    
-  static std::string lisible(const std::string &a) {
-    std::string res(a);
-    for (size_type i = 0; i < a.size(); ++i)
-      res[i] = "$-0N+$PZ$B$AD$EC"[int(a[i])];
-    // $ : not possible, N : 0-, P = 0+, Z = 0+-, B = C-, A = C0-,
-    // D = C+, E = C0+, C = C0+-
-    return res;
+    if (noisy) cout << " -> " << gmm::mat_ncols(simplexes)
+		    << " simplexes [" << ftool::uclock_sec()-t0 << "sec]\n";
   }
 
-  static char char_are_compatible(char a, char b) {
-    if (((a & b) & 119) || (a & 2) || (b & 2)) return (a | b);
+  inline static char char_are_compatible(char a, char b) {
+    if (a == '0' || b == '0') return '0';
+    if (a == b) return a;
     return 0;
   }
 
@@ -323,99 +290,47 @@ struct Chrono {
   }
 
   static void string_merge(std::string &a, const std::string &b) {
-    for (size_type i = 0; i < a.size(); ++i) a[i] |= b[i];
-  }
-
-  static void string_modify(std::string &a, const std::string &b, 
-			    const std::string &c) {
-    for (size_type i = 0; i < a.size(); ++i) 
-      if (((b[i] & 1) && (c[i] & 4)) || ((b[i] & 4) && (c[i] & 1)))
-	a[i] |= 8;
-  }
-
-  static void merge_neighbour(dal::bit_vector &visited,
-			      const getfem_mesh &mesh, std::string &zone, 
-			      const std::vector<std::string> &subzones,
-			      size_type i) {
-    visited.add(i);
-    for (size_type f = 0; f < mesh.structure_of_convex(i)->nb_faces(); ++f) {
-      bgeot:: mesh_face_convex_ind_ct ct = neighbour_of_convex(mesh, i, f);
-      if (!ct.empty()) {
-	size_type ncv = *(ct.begin());
-	string_modify(zone, subzones[i], subzones[ncv]);
-	if (!visited[ncv]) {
-// 	  cout << "string " << lisible(subzones[i]) << " and "
-// 	       << lisible(subzones[ncv]) << " are compatible ? "
-// 	       << (string_are_compatible(subzones[i], subzones[ncv])
-// 		   ? "yes" : "no") << endl;
-	  if (string_are_compatible(subzones[i], subzones[ncv])) {
-	    string_merge(zone, subzones[ncv]);
-	    merge_neighbour(visited, mesh, zone, subzones, ncv);
-	  }
-	}
-      }
-    }
+    for (size_type i = 0; i < a.size(); ++i)
+      a[i] = char_are_compatible(a[i], b[i]);
   }
 
   static void merge_zoneset(std::vector<std::string> &zones,
 			    const std::string &z) {
+    cout << "merging " << z << " with ";
+    for (size_type l = 0; l < zones.size(); ++l) cout << zones[l] << ", ";
+    cout << endl;
     size_type i = 0, j = 0, k = size_type(-1);
     for (; i < zones.size(); ++i, ++j) {
       if (i != j) zones[j] = zones[i];
       if (string_are_compatible(zones[j], z)) {
-	if (k == size_type(-1)) { string_merge(zones[j], z); k = j; }
-	else { string_merge(zones[k], z); j--; }
+	if (k == size_type(-1)) k = j; else j--;
+	string_merge(zones[k], z);
       }
     }
     if (k == size_type(-1)) zones.push_back(z); else zones.resize(j);
+    cout << "result : ";
+    for (size_type l = 0; l < zones.size(); ++l) cout << zones[l] << ", ";
+    cout << endl;
   }
 
-  void mesh_level_set::find_zones_of_elements(size_type cv) {
-    /*
-      a level set without  secondary level set cuts the space into 
-      to parts: '+' and '-'
-      a level set with a secondary level set cut the space into 
-      three parts '+' and '-' and '0' which is the half-space where the
-      secondary level set is negative.
-    */
-    // -   : 1
-    // 0   : 2
-    // +   : 4
-    // 0+  : 6
-    // 0-  : 3
-    // 0+- : 7
-    // C   : 8 (touch the level set) 
+  void mesh_level_set::find_zones_of_element(size_type cv,
+					     std::string &prezone) {
     convex_info &cvi = cut_cv[cv];
-    std::vector<std::string> subzones(cvi.pmesh->convex_index().last_true()+1,
-				     std::string(level_sets.size(), char(0)));
+    cvi.zones.resize(0);
     for (dal::bv_visitor i(cvi.pmesh->convex_index()); !i.finished();++i) {
-      
-      base_node barycentre = dal::mean_value(cvi.pmesh->points_of_convex(i));
+      std::string zone = prezone;
       size_type j = 0;
       for (std::set<plevel_set>::const_iterator it = level_sets.begin();
 	   it != level_sets.end(); ++it, ++j) {
-	if ((*it)->has_secondary() &&
-	    ((*it)->mls_of_convex(cv, 1))(barycentre) < 0.)
-	  subzones[i][j] = 2;
-	else if (((*it)->mls_of_convex(cv, 0))(barycentre) < 0.)
-	  subzones[i][j] = 1;
-	else
-	  subzones[i][j] = 4;
+	if (zone[j] == '*' || zone[j] == '0') {
+	  int s = sub_simplex_is_not_crossed_by(cv, *it, i);
+	  zone[j] = (s < 0) ? '-' : ((s > 0) ? '+' : '0');
+	}
       }
+      merge_zoneset(cvi.zones, zone);
     }
-    
-    dal::bit_vector visited;
-    
-    for (dal::bv_visitor i(cvi.pmesh->convex_index()); !i.finished();++i)
-      if (!visited[i]) {
-	visited.add(i);
-	std::string zone = subzones[i];
-	merge_neighbour(visited, *(cvi.pmesh), zone, subzones, i);
-	merge_zoneset(cvi.zones, zone);
-      }
-    cout << "element " << cv << " nb of zones : " << cvi.zones.size() << endl;
-    for (size_type i = 0; i < cvi.zones.size(); ++i)
-      cout << "Zone " << i << " : " << lisible(cvi.zones[i]) << endl;
+    if (noisy) cout << "Number of zones for convex " << cv << " : "
+		    << cvi.zones.size() << endl;
   }
 
 
@@ -576,53 +491,53 @@ struct Chrono {
       for (size_type i = 0; i < gmm::mat_ncols(simplexes); ++i) {
 	size_type j = mesh.add_convex(bgeot::simplex_geotrans(n,1),
 		         gmm::vect_const_begin(gmm::mat_col(simplexes, i)));
-// 	if (mesh.convex_quality_estimate(j) < 1E-18) mesh.sup_convex(j);
-// 	else {
-	std::vector<scalar_type> signs(list_constraints.size());
-	std::vector<size_type> prev_point(list_constraints.size());
-	for (size_type ii = 0; ii <= n; ++ii) {
-	  for (size_type jj = 0; jj < list_constraints.size(); ++jj) {
-	    scalar_type dd =
-	      (*(list_constraints[jj]))(mesh.points_of_convex(j)[ii]);
-	    if (gmm::abs(dd) > 1E-7) {
-	      if (dd * signs[jj] < 0.0) {
-		if (noisy) cout << "Intersection trouvee ... \n";
-		// calcul d'intersection
-		base_node X = mesh.points_of_convex(j)[ii], G;
-		base_node VV = mesh.points_of_convex(j)[prev_point[jj]] - X;
-		if (dd > 0.) gmm::scale(VV, -1.);
-		dd = (*(list_constraints[jj])).grad(X, G);
-		size_type nbit = 0;
-		while (gmm::abs(dd) > 1e-15) {
-		  if (++nbit > 1000) {
-		    if (noisy) cout << "Intersection not found";
-		    assert(false);
-		  }
-		  scalar_type nG = std::max(1E-8, gmm::vect_sp(G, VV));
-		  gmm::add(gmm::scaled(VV, -dd / nG), X);
+ 	if (mesh.convex_quality_estimate(j) < 1E-12) mesh.sup_convex(j);
+ 	else {
+	  std::vector<scalar_type> signs(list_constraints.size());
+	  std::vector<size_type> prev_point(list_constraints.size());
+	  for (size_type ii = 0; ii <= n; ++ii) {
+	    for (size_type jj = 0; jj < list_constraints.size(); ++jj) {
+	      scalar_type dd =
+		(*(list_constraints[jj]))(mesh.points_of_convex(j)[ii]);
+	      if (gmm::abs(dd) > 1E-7) {
+		if (dd * signs[jj] < 0.0) {
+		  if (noisy) cout << "Intersection trouvee ... \n";
+		  // calcul d'intersection
+		  base_node X = mesh.points_of_convex(j)[ii], G;
+		  base_node VV = mesh.points_of_convex(j)[prev_point[jj]] - X;
+		  if (dd > 0.) gmm::scale(VV, -1.);
 		  dd = (*(list_constraints[jj])).grad(X, G);
+		  size_type nbit = 0;
+		  while (gmm::abs(dd) > 1e-15) {
+		    if (++nbit > 1000) {
+		      if (noisy) cout << "Intersection not found";
+		      assert(false);
+		    }
+		    scalar_type nG = std::max(1E-8, gmm::vect_sp(G, VV));
+		    gmm::add(gmm::scaled(VV, -dd / nG), X);
+		    dd = (*(list_constraints[jj])).grad(X, G);
+		  }
+		  size_type kk = mesh_points.add(X);
+		  if (!(retained_points[kk])) {
+		    retained_points.add(kk);
+		    goto delaunay_again;
+		  }
 		}
-		size_type kk = mesh_points.add(X);
-		if (!(retained_points[kk])) {
-		  retained_points.add(kk);
-		  goto delaunay_again;
-		}
+		if (signs[jj] == 0.0) { signs[jj] = dd; prev_point[jj] = ii; }
 	      }
-	      if (signs[jj] == 0.0) { signs[jj] = dd; prev_point[jj] = ii; }
 	    }
 	  }
-	}
-	if (K > 1) {
-	  bgeot::pgeometric_trans pgt2 = bgeot::simplex_geotrans(n, K);
-	  cvpts.resize(pgt2->nb_points());
-	  for (size_type k=0; k < pgt2->nb_points(); ++k) {
-	    cvpts[k] = bgeot::simplex_geotrans(n,1)->transform
-	      (pgt2->convex_ref()->points()[k], mesh.points_of_convex(j));
+	  if (K > 1) {
+	    bgeot::pgeometric_trans pgt2 = bgeot::simplex_geotrans(n, K);
+	    cvpts.resize(pgt2->nb_points());
+	    for (size_type k=0; k < pgt2->nb_points(); ++k) {
+	      cvpts[k] = bgeot::simplex_geotrans(n,1)->transform
+		(pgt2->convex_ref()->points()[k], mesh.points_of_convex(j));
+	    }
+	    mesh.sup_convex(j);
+	    mesh.add_convex_by_points(pgt2, cvpts.begin());
 	  }
-	  mesh.sup_convex(j);
-	  mesh.add_convex_by_points(pgt2, cvpts.begin());
 	}
-//	}
       }
       
       if (noisy) {
@@ -757,15 +672,17 @@ struct Chrono {
     // for each element touched, compute the sub mesh
     //   then compute the adapted integration method
     cut_cv.clear();
+    std::string zone;
     for (dal::bv_visitor cv(linked_mesh().convex_index()); 
 	 !cv.finished(); ++cv) {
       dal::bit_vector prim, sec;
-      find_crossing_level_set(cv, prim, sec);
+      find_crossing_level_set(cv, prim, sec, zone);
+      cout << "zone of element " << cv << " : " << zone << endl;
       if (noisy) cout << "element " << cv << " cut level sets : "
 		      << prim << endl;
       if (prim.card()) {
 	cut_element(cv, prim, sec);
-	find_zones_of_elements(cv);
+	find_zones_of_element(cv, zone);
       }
     }
     if (noisy) {
@@ -787,15 +704,20 @@ struct Chrono {
     convex_info &cvi = cut_cv[cv];
     bgeot::pgeometric_trans pgt2 = cvi.pmesh->trans_of_convex(sub_cv);
 
-    mesher_level_set mls = ls->mls_of_convex(cv);
-    int p = -2;
+    mesher_level_set mls0 = ls->mls_of_convex(cv, 0), mls1(mls0);
+    if (ls->has_secondary()) mls1 = ls->mls_of_convex(cv, 1);
+    int p = 0;
+    scalar_type d2 = 0;
     for (size_type i = 0; i < pgt2->nb_points(); ++i) {
-      scalar_type d = mls(cvi.pmesh->points_of_convex(sub_cv)[i]);
+      scalar_type d = mls0(cvi.pmesh->points_of_convex(sub_cv)[i]);
       int p2 = ( (d < -EPS) ? -1 : ((d > EPS) ? +1 : 0));
-      if (p == -2) p=p2;
-      if (!p2 || p*p2 < 0) return 0;
+      if (p*p2 < 0) return 0;
+      if (p == 0) p = p2;
+      if (gmm::abs(d) > gmm::abs(d2)) d2 = d;
+      if (!p2 && ls->has_secondary() && 
+	  mls1(cvi.pmesh->points_of_convex(sub_cv)[i]) < -EPS) return 0;
     }
-    return p;
+    return (d2 < 0.) ? -1 : ((d2 > 0.) ? 1 : 0);
   }
 
 
@@ -846,22 +768,26 @@ struct Chrono {
 
   void mesh_level_set::find_crossing_level_set(size_type cv,
 					       dal::bit_vector &prim,
-					       dal::bit_vector &sec) {
+					       dal::bit_vector &sec,
+					       std::string &zone) {
     prim.clear(); sec.clear();
+    zone = std::string(level_sets.size(), '*');
     unsigned lsnum = 0, k = 0;
     for (std::set<plevel_set>::const_iterator it = level_sets.begin(); 
 	 it != level_sets.end(); ++it, ++lsnum, ++k) {
       if (noisy) cout << "testing cv " << cv << " with level set "
 		      << k << endl;
-      if (!is_not_crossed_by(cv, *it, 0)) {
+      int s = is_not_crossed_by(cv, *it, 0);
+      if (!s) {
 	if (noisy) cout << "is cut \n";
 	if ((*it)->has_secondary()) {
-	  int s = is_not_crossed_by(cv, *it, 1);
+	  s = is_not_crossed_by(cv, *it, 1);
 	  if (!s) { sec.add(lsnum); prim.add(lsnum); }
-	  else if (s > 0) prim.add(lsnum);
+	  else if (s > 0) prim.add(lsnum); else zone[k] = '0';
 	}
 	else prim.add(lsnum);
       }
+      else zone[k] = (s < 0) ? '-' : '+';
     }
   }
 

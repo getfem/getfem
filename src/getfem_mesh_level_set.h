@@ -55,11 +55,10 @@ namespace getfem {
     struct convex_info {
       pgetfem_mesh pmesh;
       std::vector<std::string> zones;
+      convex_info() : pmesh(0) {}
     };
 
     std::map<size_type, convex_info> cut_cv;
-
-    void find_zones_of_elements(size_type cv);
 
   public :
     bool is_valid() const { return is_valid_; }
@@ -85,8 +84,16 @@ namespace getfem {
     void receipt(const MESH_SWAP_CONVEX &m);
     
     size_type memsize() const {
-      return 
-	sizeof(mesh_level_set);
+      size_type res = sizeof(mesh_level_set)
+	+ level_sets.size() * sizeof(plevel_set);
+      for (std::map<size_type, convex_info>::const_iterator it=cut_cv.begin();
+	   it != cut_cv.end(); ++it) {
+	res += sizeof(convex_info)
+	  + it->second.pmesh->memsize()
+	  + it->second.zones.size()
+	  * (level_sets.size() + sizeof(std::string *) + sizeof(std::string));
+      }
+      return res;
     }
 
     void add_level_set(level_set &ls) {
@@ -112,9 +119,10 @@ namespace getfem {
     int is_not_crossed_by(size_type c, plevel_set ls, unsigned lsnum);
     int sub_simplex_is_not_crossed_by(size_type cv, plevel_set ls,
 				      size_type sub_cv);
+    void find_zones_of_element(size_type cv, std::string &prezone);
     void find_crossing_level_set(size_type cv, 
 				 dal::bit_vector &prim, 
-				 dal::bit_vector &sec);
+				 dal::bit_vector &sec, std::string &zone);
     void run_delaunay(std::vector<base_node> &fixed_points,
 		      gmm::dense_matrix<size_type> &simplexes,
 		      std::vector<dal::bit_vector> &fixed_points_constraints);
