@@ -7,3 +7,5 @@ Newton-Cotes integration formulaes for hight degrees.
 getfem_slices have some missing triangles with complex slices.
 
 Hermite element is still not working.
+
+P0 element should not be used with fem_sum (pb wrt 'all_faces' and dirichlet condition). 

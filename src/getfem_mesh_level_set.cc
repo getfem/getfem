@@ -748,7 +748,7 @@ struct Chrono {
       if (gmm::abs(d0) > gmm::abs(d2)) d2 = d0;
       if (!p2 || p*p2 < 0) cutted = true;
     }
-    if (cutted && d1 < -EPS) { cout << "ooops, je retourne 0" << endl; return 0; }
+    if (cutted && d1 > +EPS) { cout << "ooops, je retourne 0" << endl; return 0; }
     return (d2 < 0.) ? -1 : 1;
   }
 
@@ -814,7 +814,7 @@ struct Chrono {
 	if (level_sets[k]->has_secondary()) {
 	  s = is_not_crossed_by(cv, level_sets[k], 1);
 	  if (!s) { sec.add(lsnum); prim.add(lsnum); }
-	  else if (s > 0) prim.add(lsnum); else zone[k] = '0';
+	  else if (s < 0) prim.add(lsnum); else zone[k] = '0';
 	}
 	else prim.add(lsnum);
       }

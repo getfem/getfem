@@ -56,42 +56,54 @@ namespace getfem
   }
 
   void fem_interpolation_context::base_value(base_tensor& t) const {
-    if (have_pfp()) t=pfp_->val(ii());
-    else pf()->base_value(xref(), t);
+    if (pf()->is_on_real_element())
+      pf()->real_base_value(*this, t);
+    else {
+      if (have_pfp()) t=pfp_->val(ii());
+      else pf()->base_value(xref(), t);
+    }
   }
 
   void fem_interpolation_context::grad_base_value(base_tensor& t) const {
-    if (have_pfp()) {
-      t.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
-    } else {
-      base_tensor u;
-      pf()->grad_base_value(xref(), u);
-      if (u.size()) /* only if the FEM can provide grad_base_value */
-	t.mat_transp_reduction(u, B(), 2);
+    if (pf()->is_on_real_element())
+      pf()->real_grad_base_value(*this, t);
+    else {
+      if (have_pfp()) {
+	t.mat_transp_reduction(pfp_->grad(ii()), B(), 2);
+      } else {
+	base_tensor u;
+	pf()->grad_base_value(xref(), u);
+	if (u.size()) /* only if the FEM can provide grad_base_value */
+	  t.mat_transp_reduction(u, B(), 2);
+      }
     }
   }
 
   void fem_interpolation_context::hess_base_value(base_tensor& t) const {
-    base_tensor tt;
-    if (have_pfp()) {
-      tt = pfp()->hess(ii());
-    } else {
-      pf()->hess_base_value(xref(), tt);
-    }
-    if (tt.size()) { /* only if the FEM can provide grad_base_value */
-      bgeot::multi_index mim(3);
-      mim[2] = gmm::sqr(tt.sizes()[2]); mim[1] = tt.sizes()[1];
-      mim[0] = tt.sizes()[0];
-      tt.adjust_sizes(mim);
-      t.mat_transp_reduction(tt, B3(), 2);
+    if (pf()->is_on_real_element())
+      pf()->real_hess_base_value(*this, t);
+    else {
+      base_tensor tt;
       if (have_pfp()) {
-	tt.mat_transp_reduction(pfp()->grad(ii()), B32(), 2);
+	tt = pfp()->hess(ii());
       } else {
-	base_tensor u;
-	pf()->grad_base_value(xref(), u);
-	tt.mat_transp_reduction(u, B32(), 2);
+	pf()->hess_base_value(xref(), tt);
       }
-      t -= tt;
+      if (tt.size()) { /* only if the FEM can provide grad_base_value */
+	bgeot::multi_index mim(3);
+	mim[2] = gmm::sqr(tt.sizes()[2]); mim[1] = tt.sizes()[1];
+	mim[0] = tt.sizes()[0];
+	tt.adjust_sizes(mim);
+	t.mat_transp_reduction(tt, B3(), 2);
+	if (have_pfp()) {
+	  tt.mat_transp_reduction(pfp()->grad(ii()), B32(), 2);
+	} else {
+	  base_tensor u;
+	  pf()->grad_base_value(xref(), u);
+	  tt.mat_transp_reduction(u, B32(), 2);
+	}
+	t -= tt;
+      }
     }
   }
 
@@ -170,9 +182,10 @@ namespace getfem
     bool linkable;
     coord_type coord_index;
     size_type xfem_index;
+    bool all_faces;
 
     dof_description(void)
-    { linkable = true; coord_index = FIRST; xfem_index = 0; }
+    { linkable = true; all_faces = false; coord_index = FIRST; xfem_index = 0; }
   };
 
   struct dof_description_comp__ {
@@ -192,6 +205,8 @@ namespace getfem
     if (nn < 0) return -1; if (nn > 0) return 1;
     nn = int(m.xfem_index) - int(n.xfem_index);
     if (nn < 0) return -1; if (nn > 0) return 1;
+    nn = int(m.all_faces) - int(n.all_faces);
+    if (nn < 0) return -1; if (nn > 0) return 1;
     return 0;
   }
 
@@ -203,6 +218,21 @@ namespace getfem
     if (n != n_old) {
       dof_d_tab& tab = dal::singleton<dof_d_tab>::instance();
       dof_description l;
+      l.ddl_desc.resize(n);
+      std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), ddl_elem(LAGRANGE));
+      p_old = &(tab[tab.add_norepeat(l)]);
+      n_old = n;
+    }
+    return p_old;
+  } 
+
+  pdof_description lagrange_0_dof(dim_type n) {
+    static dim_type n_old = dim_type(-2);
+    static pdof_description p_old = 0;
+    if (n != n_old) {
+      dof_d_tab& tab = dal::singleton<dof_d_tab>::instance();
+      dof_description l;
+      l.all_faces = true;
       l.ddl_desc.resize(n);
       std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), ddl_elem(LAGRANGE));
       p_old = &(tab[tab.add_norepeat(l)]);
@@ -285,6 +315,7 @@ namespace getfem
   pdof_description global_dof(dim_type n) {
     dof_d_tab& tab = dal::singleton<dof_d_tab>::instance();
     dof_description l;
+    l.all_faces = true;
     l.ddl_desc.resize(n);
     std::fill(l.ddl_desc.begin(), l.ddl_desc.end(),ddl_elem(GLOBAL_DOF));
     return &(tab[tab.add_norepeat(l)]);
@@ -297,6 +328,7 @@ namespace getfem
     l.linkable = a->linkable && b->linkable;
     l.coord_index = std::max(a->coord_index, b->coord_index); // logique ?
     l.xfem_index = a->xfem_index;
+    l.all_faces = a->all_faces || b->all_faces;
     if (a->xfem_index != b->xfem_index)
       DAL_THROW(failure_error, "Invalid product of dof");
     l.ddl_desc.resize(nb1+nb2);
@@ -346,7 +378,7 @@ namespace getfem
   { return a->linkable; }
 
   bool dof_compatibility(pdof_description a, pdof_description b)
-  { return (dof_description_compare(a, b) == 0 && dof_linkable(a)); }
+  { return (dof_linkable(a) && dof_description_compare(a, b) == 0); }
   
   size_type dof_xfem_index(pdof_description a) 
   { return a->xfem_index; }
@@ -366,8 +398,7 @@ namespace getfem
     return true;
   }
 
-  void virtual_fem::add_node(const pdof_description &d, const base_node &pt,
-			     bool all_faces) {
+  void virtual_fem::add_node(const pdof_description &d, const base_node &pt) {
     short_type nb = cv_node.nb_points();
     cv_node.points().resize(nb+1);
     cv_node.points()[nb] = pt;
@@ -375,7 +406,7 @@ namespace getfem
     dof_types_[nb] = d;
     cvs_node.add_point_adaptative(nb, short_type(-1));
     for (short_type f = 0; f < cvs_node.nb_faces(); ++f)
-      if (all_faces || gmm::abs(cvr->is_in_face(f, pt)) < 1.0E-7)
+      if (d->all_faces || gmm::abs(cvr->is_in_face(f, pt)) < 1.0E-7)
 	cvs_node.add_point_adaptative(nb, f);
     pspt_valid = false;
   }
@@ -438,7 +469,7 @@ namespace getfem
     bgeot::pconvex_ref cvn = bgeot::simplex_of_reference(nc, k);
     size_type R = cvn->nb_points();
     for (size_type i = 0; i < R; ++i)
-      add_node(lagrange_dof(nc), cvn->points()[i], (k == 0));
+      add_node(k==0 ? lagrange_0_dof(nc) : lagrange_dof(nc), cvn->points()[i]);
     
     base_.resize(R);
     for (size_type r = 0; r < R; r++) calc_base_func(base_[r], r, k);

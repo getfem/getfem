@@ -89,12 +89,12 @@ namespace getfem
     }
   }
   
-  void Xfem::base_value(const base_node &x, base_tensor &t) const
-  { if (pfb) pfb->base_value(x, t); }
-  void Xfem::grad_base_value(const base_node &x, base_tensor &t) const
-  { if (pfb) pfb->grad_base_value(x, t); }
-  void Xfem::hess_base_value(const base_node &x, base_tensor &t) const
-  { if (pfb) pfb->hess_base_value(x, t); }
+  void Xfem::base_value(const base_node &, base_tensor &) const
+  { DAL_THROW(internal_error, "No base values, real only element.");  }
+  void Xfem::grad_base_value(const base_node &, base_tensor &) const
+  { DAL_THROW(internal_error, "No base values, real only element.");  }
+  void Xfem::hess_base_value(const base_node &, base_tensor &) const
+  { DAL_THROW(internal_error, "No base values, real only element.");  }
 
   void Xfem::real_base_value(const fem_interpolation_context &c,
 			     base_tensor &t) const {
@@ -104,7 +104,13 @@ namespace getfem
     scalar_type a;
     Xfem_func_context ctx(c); 
     base_tensor::iterator it = t.begin();
-    base_tensor tt; c.base_value(tt);
+    fem_interpolation_context c0 = c;
+    if (pfb) {
+      if (c0.have_pfp())
+	c0.set_pfp(fem_precomp(pfb, &c0.pfp()->get_point_tab()));
+      else  c0.set_pf(pfb); 
+    }
+    base_tensor tt; c0.base_value(tt);
     base_tensor::const_iterator itf = tt.begin();
     std::vector<fem_interpolation_context> vc; get_fem_interpolation_context_tab(c, vc);
     for (dim_type q = 0; q < target_dim(); ++q) {
@@ -128,7 +134,13 @@ namespace getfem
     t.adjust_sizes(mi);
     
     Xfem_func_context ctx(c);
-    base_tensor tt; c.grad_base_value(tt);
+    fem_interpolation_context c0 = c;
+    if (pfb) {
+      if (c0.have_pfp())
+	c0.set_pfp(fem_precomp(pfb, &c0.pfp()->get_point_tab()));
+      else  c0.set_pf(pfb); 
+    }
+    base_tensor tt; c0.grad_base_value(tt);
 
     base_tensor::iterator it = t.begin();
     base_tensor::const_iterator itvf = tt.begin();

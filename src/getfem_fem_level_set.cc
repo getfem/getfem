@@ -36,7 +36,7 @@ namespace getfem {
   void fem_level_set::init() {
     cvr = bfem->ref_convex(0);
     dim_ = cvr->structure()->dim();
-    is_equiv = real_element_defined = true;
+    is_equiv = false; real_element_defined = true;
     is_polycomp = is_pol = is_lag = false;
     es_degree = 5; /* humm ... */
     ntarget_dim = bfem->target_dim();
@@ -72,15 +72,15 @@ namespace getfem {
     cout << "done (nb_dof=" << nb_dof(0) << ")\n";
   }
 
-  void fem_level_set::base_value(const base_node &x, 
-				 base_tensor &t) const
-  { bfem->base_value(x, t); }
-  void fem_level_set::grad_base_value(const base_node &x, 
-				      base_tensor &t) const
-  { bfem->grad_base_value(x, t); }
-  void fem_level_set::hess_base_value(const base_node &x, 
-			     base_tensor &t) const
-  { bfem->hess_base_value(x, t); }
+  void fem_level_set::base_value(const base_node &, 
+				 base_tensor &) const
+  { DAL_THROW(internal_error, "No base values, real only element."); }
+  void fem_level_set::grad_base_value(const base_node &, 
+				      base_tensor &) const
+  { DAL_THROW(internal_error, "No base values, real only element."); }
+  void fem_level_set::hess_base_value(const base_node &, 
+			     base_tensor &) const
+  { DAL_THROW(internal_error, "No base values, real only element.");  }
 
   void fem_level_set::real_base_value(const fem_interpolation_context &c,
 				      base_tensor &t) const {
@@ -88,7 +88,11 @@ namespace getfem {
     mi[1] = target_dim(); mi[0] = nb_base(0);
     t.adjust_sizes(mi);
     base_tensor::iterator it = t.begin();
-    base_tensor tt; c.base_value(tt);
+    fem_interpolation_context c0 = c;
+    if (c0.have_pfp())
+      c0.set_pfp(fem_precomp(bfem, &c0.pfp()->get_point_tab()));
+    else  c0.set_pf(bfem); 
+    base_tensor tt; c0.base_value(tt);
     base_tensor::const_iterator itf = tt.begin();
     std::vector<scalar_type> lsval(mls.nb_level_sets());
     for (dal::bv_visitor i(ls_index); !i.finished(); ++i) {
@@ -121,8 +125,11 @@ namespace getfem {
     bgeot::multi_index mi(3);
     mi[2] = c.N(); mi[1] = target_dim(); mi[0] = nb_base(0);
     t.adjust_sizes(mi);
-
-    base_tensor tt; c.grad_base_value(tt);
+    fem_interpolation_context c0 = c;
+    if (c0.have_pfp())
+      c0.set_pfp(fem_precomp(bfem, &c0.pfp()->get_point_tab()));
+    else  c0.set_pf(bfem); 
+    base_tensor tt; c0.grad_base_value(tt);
 
     base_tensor::iterator it = t.begin();
     base_tensor::const_iterator itf = tt.begin();

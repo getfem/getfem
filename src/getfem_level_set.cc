@@ -79,7 +79,7 @@ namespace getfem {
   }
 
   mesher_level_set level_set::mls_of_convex(size_type cv, unsigned lsnum,
-					    bool inverted) {
+					    bool inverted) const {
     std::vector<scalar_type> coeff(mf->nb_dof_of_element(cv));
     for (size_type i = 0; i < coeff.size(); ++i)
       coeff[i] = (!inverted ? scalar_type(1) : scalar_type(-1)) * 

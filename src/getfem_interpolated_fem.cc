@@ -307,7 +307,7 @@ namespace getfem {
     this->add_dependency(mf);
     this->add_dependency(mim);
     is_pol = is_lag = false; es_degree = 5;
-    is_equiv = real_element_defined = true;
+    is_equiv = false; real_element_defined = true;
     gmm::resize(trans, mf.linked_mesh().dim(), mf.linked_mesh().dim());
     ntarget_dim = 1; // An extension for vectorial elements should be easy
     // The detection should be done and the multilication of components

@@ -114,6 +114,7 @@ namespace getfem {
     const fem<base_poly> *pf;
     mutable int initialized;
   public:
+    mesher_level_set() : initialized(0) {}
     template <typename VECT>
     mesher_level_set(pfem pf_, const VECT &coeff_) { init_base(pf_, coeff_); }
     template <typename VECT> void init_base(pfem pf_, const VECT &coeff_);
@@ -724,8 +725,8 @@ namespace getfem {
       bv[id] = (gmm::abs(d) < SEPS);
       return d;
     }
-    scalar_type grad(const base_node &P, base_small_vector &G) const
-      { assert(0); }
+    scalar_type grad(const base_node &, base_small_vector &) const
+    { assert(0); }
     void hess(const base_node &, base_matrix &) const {
       DAL_THROW(to_be_done_error, "Sorry, to be done");
     }

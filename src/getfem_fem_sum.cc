@@ -30,6 +30,7 @@
 #include <getfem_fem_sum.h>
 
 namespace getfem {
+  namespace obsolete {
 
   void fem_sum::update_from_context(void) const {
     dim_ = dim_type(-1);
@@ -222,5 +223,6 @@ namespace getfem {
     return new_fem_sum(mfs_);
   }
   
+  }
 }  /* end of namespace getfem.                                            */
 

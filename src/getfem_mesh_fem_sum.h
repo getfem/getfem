@@ -41,25 +41,13 @@ namespace getfem {
   typedef std::vector<const std::string *> dof_enrichments;
   
   class fem_sum : public virtual_fem {
-    pfem bfem; /* the base FEM which is to be enriched */
-    const mesh_sum &mls;
-    /* dof_ls_enrichment are stored in the parent mesh_fem 
-       the pointer is NULL for non enriched dofs
-     */
-    std::vector< const dof_ls_enrichment* > dofzones;
-    dal::bit_vector ls_index; /* lists only the significant level sets */
+    std::vector<pfem> pfems; /* the fems to be summed */
+    size_type cv;
+    
   public:
-    template <typename IT_LS_ENRICH>
-    fem_sum(IT_LS_ENRICH it,pfem pf, const mesh_sum &mls_) : 
-      bfem(pf), mls(mls_) {
-      if (!(bfem->is_equivalent()))
-	DAL_THROW(to_be_done_error,
-		  "Sorry, fem_sum for non tau-equivalent "
-		  "elements to be done.");
-      
-      dofzones.assign(it, it + bfem->nb_dof(0));
-      init();
-    }
+
+    size_type index_of_global_dof(size_type cv_, size_type j) const;
+    fem_sum(const std::vector<pfem> &pfs, size_type i) : pfems(pfs), cv(i) { init(); }
     void init();
     void valid();
     void base_value(const base_node &x, base_tensor &t) const;
@@ -76,17 +64,14 @@ namespace getfem {
   };
 
 
-  /// Describe an adaptable integration method linked to a mesh.
   class mesh_fem_sum : public mesh_fem {
   protected :
     std::vector<const mesh_fem *> mfs;
 
-    const mesh_sum &mls;
-    const mesh_fem &mf;
+    mutable std::map< std::vector<pfem>, pfem> situations;
     mutable std::vector<pfem> build_methods;
     mutable bool is_adapted;
     void clear_build_methods();
-    void build_method_of_convex(size_type cv);
 
   public :
     void adapt(void);
@@ -103,19 +88,16 @@ namespace getfem {
       return mesh_fem::memsize(); // + ... ;
     }
     
-    mesh_fem_sum(const getfem_mesh &me) : mesh_fem(me) { is_adapted = false; }
+    mesh_fem_sum(getfem_mesh &me) : mesh_fem(me) { is_adapted = false; }
     void set_mesh_fems(const std::vector<const mesh_fem *> &mefs)
     { mfs = mefs; adapt(); }
     void set_mesh_fems(const mesh_fem &mf1, const mesh_fem &mf2)
-    { mfs.clear(); mfs.push_back(mf1); mfs.push_back(mf2);  adapt(); }
+    { mfs.clear(); mfs.push_back(&mf1); mfs.push_back(&mf2);  adapt(); }
     void set_mesh_fems(const mesh_fem &mf1, const mesh_fem &mf2, const mesh_fem &mf3)
-    { mfs.clear(); mfs.push_back(mf1); mfs.push_back(mf2); mfs.push_back(mf3);  adapt(); }
+    { mfs.clear(); mfs.push_back(&mf1); mfs.push_back(&mf2); mfs.push_back(&mf3);  adapt(); }
 
 
     ~mesh_fem_sum() { clear_build_methods(); }
-  private:
-    mesh_fem_sum(const mesh_fem_sum &);
-    mesh_fem_sum & operator=(const mesh_fem_sum &);
   };
 
 

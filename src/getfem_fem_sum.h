@@ -36,6 +36,8 @@
 
 namespace getfem {
 
+  namespace obsolete {
+
   class fem_sum : public virtual_fem, public context_dependencies {
     
   protected :
@@ -89,6 +91,7 @@ namespace getfem {
   inline void del_fem_sum(pfem pf) { dal::del_stored_object(pf); }
 
 
+  }
 }  /* end of namespace getfem.                                            */
 
 #endif

@@ -51,6 +51,7 @@ include_HEADERS =                        \
 	getfem_derivatives.h             \
 	getfem_fem.h                     \
 	getfem_interpolated_fem.h        \
+	getfem_mesh_fem_global_function.h \
 	getfem_fem_sum.h                 \
 	getfem_mesh_fem_sum.h            \
 	getfem_gauss_lobatto_fem_coef.h  \
@@ -153,6 +154,7 @@ SRC =                                    \
 	getfem_integration_composite.cc  \
 	getfem_fem.cc                    \
 	getfem_interpolated_fem.cc       \
+	getfem_mesh_fem_global_function.cc \
 	getfem_fem_sum.cc                \
 	getfem_Xfem.cc                   \
 	getfem_fem_composite.cc          \

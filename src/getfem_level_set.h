@@ -38,7 +38,7 @@
 
 namespace getfem {
 
-  class level_set {
+  class level_set : public context_dependencies {
 
   protected :
     typedef dal::shared_ptr<mesh_fem> pmesh_fem;
@@ -51,7 +51,8 @@ namespace getfem {
     bool with_secondary;
 
   public :
-    
+
+    void update_from_context(void) const { }    
     void reinit(void);
     std::vector<scalar_type> &values(unsigned i = 0)
     { return (i == 0) ? primary_ : secondary_; }
@@ -59,7 +60,7 @@ namespace getfem {
     { return (i == 0) ? primary_ : secondary_; }
 
     mesher_level_set mls_of_convex(size_type cv, unsigned i = 0,
-				   bool inverted = false);
+				   bool inverted = false) const;
     bool has_secondary(void) { return with_secondary; }
     mesh_fem &get_mesh_fem(void) { return *mf; }
     dim_type degree() const { return degree_; }
@@ -69,6 +70,7 @@ namespace getfem {
 	with_secondary(with_secondary_) {
       primary_.resize(mf->nb_dof());
       secondary_.resize(mf->nb_dof());
+      this->add_dependency(*mf);
     }
     
     ~level_set() { sup_mesh_fem(*pmesh, degree_); }
