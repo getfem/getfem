@@ -75,26 +75,31 @@ namespace getfem {
   bool try_projection(const mesher_signed_distance& dist, base_node &X,
 		      bool on_surface) {
     base_small_vector G;
-    scalar_type d = dist.grad(X, G);
-    size_type it(0);
+    scalar_type d = dist.grad(X, G), dmin = gmm::abs(d);
+    size_type iter(0), count_falt(0);
     if (on_surface || d > 0.0)
       while (gmm::abs(d) > 1e-15) {
-	if (++it > 1000) {
-	  cout << "\n\nTry projection failed, 1000 iterations\n\n";
-	  return false; // is there a possibility to detect
+	if (++iter > 1000) {
+	  cout << "\n\nTry projection failed, 1000 iterations\n\n"; exit(1);
+	  return (gmm::abs(d) < 1E-10); // is there a possibility to detect
 	} 	// the impossibility without making 1000 iterations ?
-	scalar_type alpha = -d / std::max(1E-8, gmm::vect_norm2_sqr(G));
-	gmm::add(gmm::scaled(G, alpha), X);
-	scalar_type dn = dist(X);
-	while (gmm::abs(dn) > gmm::abs(d) && gmm::abs(alpha) > 1E-15) {
-	  alpha /= 2;
-	  gmm::add(gmm::scaled(G, -alpha), X);
-	  dn = dist(X);
-	}
-	if (gmm::abs(alpha) < 1E-15) return (gmm::abs(d) < 1E-10);
+	gmm::scale(G, -d / std::max(1E-8, gmm::vect_norm2_sqr(G)));
+	gmm::add(G, X);
+//	scalar_type alpha(1);
+//	scalar_type dn = dist(X);
+// 	while (0 && gmm::abs(dn) > 2. * gmm::abs(d) && alpha > 0.1) {
+// 	  alpha /= 2;
+// 	  gmm::add(gmm::scaled(G, -alpha), X);
+// 	  dn = dist(X);
+// 	}
+//	if (gmm::abs(alpha) < 1E-15) return (gmm::abs(d) < 1E-10);
 	d = dist.grad(X, G);
-// 	cout << "iter " << it << " X = " << X << " dist = " << d << 
-// 	  " grad = " << G << " alpha = " << alpha << endl;
+	if (gmm::abs(d) >= dmin*0.95) ++count_falt;
+	else { count_falt=0; dmin = gmm::abs(d); }
+	if (count_falt > 20) return (gmm::abs(d) < 1E-10);
+//	cout.precision(16);
+//    	cout << "iter " << iter << " X = " << X << " dist = " << d << 
+//    	  " grad = " << G  << endl;
 
       }
     return true;
@@ -118,7 +123,7 @@ namespace getfem {
       { ls[i] = list_constraints[ic]; d[i] = -(ls[i]->grad(X, G[i])); }
     base_node oldX;
     size_type iter = 0;
-    scalar_type residu=0, alpha;
+    scalar_type residu(0), alpha;
     do {
       oldX = X;
       gmm::mult(gmm::transposed(G), G, H);
@@ -1396,7 +1401,7 @@ namespace getfem {
 
   void delaunay(const std::vector<base_node> &pts,
 		gmm::dense_matrix<size_type>& simplexes) {
-    cout << "running delaunay with " << pts.size() << " points\n";
+    // cout << "running delaunay with " << pts.size() << " points\n";
     size_type dim = pts[0].size();   /* points dimension.           */
     if (pts.size() <= dim) { gmm::resize(simplexes, dim+1, 0); return; }
     if (pts.size() == dim+1) {

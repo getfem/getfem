@@ -173,10 +173,23 @@ namespace getfem
     } method;
     integration_method_type im_type;
 
+    void remove(void) {
+      switch (type()) {
+      case IM_EXACT: if (method.ppi) delete method.ppi; break;
+      case IM_APPROX: if (method.pai) delete method.pai; break;
+      case IM_NONE: break;
+      }
+    }
+
   public:
     integration_method_type type(void) const { return im_type; }
     papprox_integration approx_method(void) const { return method.pai; }
     ppoly_integration exact_method(void) const { return method.ppi; }
+
+    void set_approx_method(papprox_integration paii)
+    { remove(); method.pai = paii; im_type = IM_APPROX; }
+    void set_exact_method(ppoly_integration ppii)
+    { remove(); method.ppi = ppii; im_type = IM_EXACT; }
 
     const bgeot::stored_point_tab &integration_points(void) const { 
       if (type() == IM_EXACT)
@@ -202,13 +215,7 @@ namespace getfem
     { method.pai = p; im_type = IM_APPROX; }
 
     integration_method(void) { im_type = IM_NONE; method.pai = 0; }
-    ~integration_method(void) {
-      switch (type()) {
-      case IM_EXACT: if (method.ppi) delete method.ppi; break;
-      case IM_APPROX: if (method.pai) delete method.pai; break;
-      case IM_NONE: break;
-      }
-    }
+    ~integration_method(void) { remove(); }
   };
 
 

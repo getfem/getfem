@@ -30,8 +30,27 @@
 #include <getfem_mesh_im_level_set.h>
 #include <getfem_mesher.h>
 #include <bgeot_kdtree.h>
+#include <asm/msr.h>
 
-
+struct Chrono {
+  unsigned long long tprev;
+  unsigned long long acc;
+  unsigned long long tmax;
+  bool running; unsigned cnt;
+  Chrono() : acc(0), tmax(0), running(false), cnt(0) {}
+  void tic() { rdtscll(tprev); running = true; ++cnt; }
+  double toc() {
+    if (!running) return 0.; running = false;
+    unsigned long long t; rdtscll(t);
+    t -= tprev;
+    acc += t; tmax = std::max(tmax, t);
+    return double(t)/2.8e9;
+  }
+  double total() { return double(acc) / 2.8e9; }
+  double max() { return double(tmax) / 2.8e9; }
+  double mean() { return cnt ? total() / cnt : 0.; }
+  unsigned count() { return cnt; }
+};
 
 namespace getfem {
   static bool noisy = false;
@@ -58,6 +77,8 @@ namespace getfem {
   }
 
   
+  Chrono interpolate_face_chrono;
+
   static void interpolate_face(getfem_mesh &m, dal::bit_vector& ptdone, 
 			       const std::vector<size_type>& ipts,
 			       bgeot::pconvex_structure cvs, 
@@ -89,6 +110,7 @@ namespace getfem {
       for (size_type i=0; i < ipts.size(); ++i) {
 	if (ipts[i] >= nb_vertices && !ptdone[ipts[i]]) { 
 	  base_node &P = m.points()[ipts[i]];
+	  if (cts.card() > 1) cout << "WARNING, projection sur " << cts << endl;
 	  pure_multi_constraint_projection(list_constraints, P, cts);
 	  // dist(P, new_cts);
 	}
@@ -167,9 +189,8 @@ namespace getfem {
 		 (nb_co == n && constraints(i).card() > n)) &&
 		ref_element(points[i]) < 1E-8) {
 	      bool kept = true;
-	      scalar_type d = (nb_co == 0) ? (dmin * 3.)
+	      scalar_type d = (nb_co == 0) ? (dmin * 1.5)
 		: std::min(radius(i)*0.25, dmin);
-	      // if (nb_co == n) d = dmin / 10.; // utile ?
 	      base_node min = points[i], max = min;
 	      for (size_type m = 0; m < n; ++m) { min[m]-=d; max[m]+=d; }
 	      bgeot::kdtree_tab_type inpts;
@@ -229,36 +250,37 @@ namespace getfem {
 				       gmm::dense_matrix<size_type> &simplexes,
 				       std::vector<dal::bit_vector> &fixed_points_constraints) {
     delaunay(fixed_points, simplexes);
-    if (noisy) cout << "Nb simplexes = " << gmm::mat_ncols(simplexes)<< endl;
-    size_type nt = gmm::mat_ncols(simplexes);
-    size_type N = gmm::mat_nrows(simplexes)-1;
-    dal::bit_vector undecimable_pts; undecimable_pts.sup(0,fixed_points.size());
-    for (size_type i=0; i < nt; ++i) {
-      bool undecimable = false;
-      for (unsigned j=0; j < N+1; ++j) {
-	const dal::bit_vector &bv = fixed_points_constraints[simplexes(j,i)];
-	if (bv.card() > 1 || (bv.card() == 1 && bv.first_true() > N)) { 
-	  undecimable = true; break; 
-	}
-      }
-      if (undecimable) {
-	for (unsigned j=0; j < N+1; ++j) 
-	  undecimable_pts.add(simplexes(j,i));
-      }
-    }
-    if (noisy) cout << "Decimation possible de " << fixed_points.size()-undecimable_pts.card() << "/" << fixed_points.size() << " points\n";
-    if (undecimable_pts.card() < fixed_points.size()) {
-      std::vector<base_node> fp2; fp2.reserve(undecimable_pts.card());
-      std::vector<dal::bit_vector> fp_cts2; fp_cts2.reserve(undecimable_pts.card());
-      for (dal::bv_visitor ip(undecimable_pts); !ip.finished(); ++ip) {
-	fp2.push_back(fixed_points[ip]);
-	fp_cts2.push_back(fixed_points_constraints[ip]);
-      }
-      fixed_points.swap(fp2);
-      fixed_points_constraints.swap(fp_cts2);
-      delaunay(fixed_points, simplexes);
-      if (noisy) cout << "Nb simplexes post-decimation = " << gmm::mat_ncols(simplexes)<< endl;
-    }
+//     if (noisy) cout << "Nb simplexes = " << gmm::mat_ncols(simplexes)<< endl;
+//     size_type nt = gmm::mat_ncols(simplexes);
+//     size_type N = gmm::mat_nrows(simplexes)-1;
+//     dal::bit_vector undecimable_pts; undecimable_pts.sup(0,fixed_points.size());
+//     for (size_type i=0; i < nt; ++i) {
+//       bool undecimable = false;
+//       for (unsigned j=0; j < N+1; ++j) {
+// 	const dal::bit_vector &bv = fixed_points_constraints[simplexes(j,i)];
+// 	if (bv.card() > 1 || (bv.card() == 1 && bv.first_true() > N)) { 
+// 	  undecimable = true; break; 
+// 	}
+//       }
+//       if (undecimable) {
+// 	for (unsigned j=0; j < N+1; ++j) 
+// 	  undecimable_pts.add(simplexes(j,i));
+//       }
+//     }
+//     if (noisy) cout << "Decimation possible de " << fixed_points.size()-undecimable_pts.card() << "/" << fixed_points.size() << " points\n";
+//     if (undecimable_pts.card() < fixed_points.size()) {
+//       std::vector<base_node> fp2; fp2.reserve(undecimable_pts.card());
+//       std::vector<dal::bit_vector> fp_cts2; fp_cts2.reserve(undecimable_pts.card());
+//       for (dal::bv_visitor ip(undecimable_pts); !ip.finished(); ++ip) {
+// 	fp2.push_back(fixed_points[ip]);
+// 	fp_cts2.push_back(fixed_points_constraints[ip]);
+//       }
+//       fixed_points.swap(fp2);
+//       fixed_points_constraints.swap(fp_cts2);
+//       if (noisy) cout << "running delaunay with " << fixed_points.size() << " points\n";
+//       delaunay(fixed_points, simplexes);
+//       if (noisy) cout << "Nb simplexes post-decimation = " << gmm::mat_ncols(simplexes)<< endl;
+//     }
   }
 
 
@@ -287,6 +309,7 @@ namespace getfem {
     point_stock mesh_points(list_constraints);
 
     ref_element->register_constraints(list_constraints);
+    size_type nbeltconstraints = list_constraints.size();
     mesher_level_sets.reserve(nbtotls);
     size_type ll = 0;
     for (std::set<plevel_set>::const_iterator it = level_sets.begin();
@@ -333,12 +356,15 @@ namespace getfem {
 	}
 	co.clear(); co_v.resize(0);
 	if ((*ref_element)(P) < geps) {
-	  mesh_points.add(P, 1.E10);
-	  for (size_type k=0; k < list_constraints.size(); ++k) {
+	  bool kept = false;
+	  for (size_type k=list_constraints.size()-1; k != size_type(-1); --k) {
+	    // In reverse order to project on level set before on convex boundaries
 	    gmm::copy(P, Q);
 	    scalar_type d = list_constraints[k]->grad(P, V);
-	    if (gmm::vect_norm2(V)*h0 > gmm::abs(d))
-	      if (try_projection(*(list_constraints[k]), Q, true))
+	    if (gmm::vect_norm2(V)*h0*7 > gmm::abs(d))
+	      if (try_projection(*(list_constraints[k]), Q, true)) {
+		if (k >= nbeltconstraints
+		    && gmm::vect_dist2(P, Q) < h0 * 3.5) kept = true;
 		if (gmm::vect_dist2(P, Q) < h0 / 1.5) {
 		  co.add(k); co_v.push_back(k); 
 		  if ((*ref_element)(Q) < 1E-8) {
@@ -346,10 +372,12 @@ namespace getfem {
 		      curvature_radius_estimate(*(list_constraints[k]), Q);
 		    r0 = std::min(r0, r);
 		    if (r0 < 4.*h0) { h0 = 0.2 * r0; h0_is_ok = false; break; }
-		    mesh_points.add(Q, r);
+		    if (k >= nbeltconstraints || kept) mesh_points.add(Q, r);
 		  }
 		}
+	      }
 	  }
+	  if (kept) mesh_points.add(P, 1.E10);
 	}
 	size_type nb_co = co.card();
 	dal::bit_vector nn;
@@ -409,8 +437,8 @@ namespace getfem {
       for (size_type i = 0; i < gmm::mat_ncols(simplexes); ++i) {
 	size_type j = mesh.add_convex(bgeot::simplex_geotrans(n,1),
 		         gmm::vect_const_begin(gmm::mat_col(simplexes, i)));
-	if (mesh.convex_quality_estimate(j) < 1E-18) mesh.sup_convex(j);
-	else {
+// 	if (mesh.convex_quality_estimate(j) < 1E-18) mesh.sup_convex(j);
+// 	else {
 	  std::vector<scalar_type> signs(list_constraints.size());
 	  std::vector<size_type> prev_point(list_constraints.size());
 	  for (size_type ii = 0; ii <= n; ++ii) {
@@ -455,7 +483,7 @@ namespace getfem {
 	    mesh.sup_convex(j);
 	    mesh.add_convex_by_points(pgt2, cvpts.begin());
 	  }
-	}
+//	}
       }
       
       if (noisy) {
@@ -476,10 +504,13 @@ namespace getfem {
 	    bgeot::ind_ref_mesh_point_ind_ct fpts
 	      = mesh.ind_points_of_face_of_convex(i, f);
 	    ipts.assign(fpts.begin(), fpts.end());
+	    interpolate_face_chrono.tic();
+
 	    interpolate_face(mesh, ptdone, ipts,
 			     mesh.trans_of_convex(i)->structure()
 			     ->faces_structure()[f], fixed_points.size(),
 			     fixed_points_constraints, list_constraints);
+	    interpolate_face_chrono.toc();
 	  }
 	}
       }
@@ -493,28 +524,56 @@ namespace getfem {
 	exp.exporting_mesh_edges();
 	exp.write_mesh();
       }
-      
-      std::vector<base_node> gauss_points;
-      std::vector<scalar_type> gauss_weights;
+    
+      /* 
+       * Step 4 : Building the new integration method.
+       */
+      base_matrix G;
+      bgeot::pgeometric_trans pgt2 = bgeot::simplex_geotrans(n, K);
+      papprox_integration pai = regular_simplex_pim->approx_method();
+      approx_integration new_approx(pgt->convex_ref());
+      base_matrix KK(n,n), CS(n,n);
+      base_matrix pc(pgt2->nb_points(), n); 
       for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i) {
-	base_matrix G;
 	vectors_to_base_matrix(G, mesh.points_of_convex(i));
-	
-	papprox_integration pai = regular_simplex_pim->approx_method();
 	bgeot::geotrans_interpolation_context c(mesh.trans_of_convex(i),
 						pai->point(0), G);
+	scalar_type sign = 0.0;
 	for (size_type j = 0; j < pai->nb_points_on_convex(); ++j) {
 	  c.set_xref(pai->point(j));
-	  gauss_points.push_back(c.xreal());
-	  gauss_weights.push_back(pai->coeff(j) * gmm::abs(c.J()));
+	  pgt2->gradient(pai->point(j), pc);
+	  gmm::mult(G,pc,KK);
+	  scalar_type J = gmm::lu_det(KK);
+	  if (noisy && J * sign < 0) cout << "ATTENTION retrournement de situation en convexe " << i << "sign = " << sign << " J = " << J << " p1 = " << mesh.points_of_convex(i)[0] << " p2 = " << mesh.points_of_convex(i)[1] << " p3 = " << mesh.points_of_convex(i)[2]  << " p4 = " << mesh.points_of_convex(i)[3] << " p5 = " << mesh.points_of_convex(i)[4] << " p6 = " << mesh.points_of_convex(i)[5] << " K = " << int(K) << endl;
+	  if (sign == 0 && gmm::abs(J) > 1E-14) sign = J;
+	  new_approx.add_point(c.xreal(), pai->coeff(j) * gmm::abs(J));
 	}
       }
-      
-      // + test ...
+
+      convex_face_ct border_faces;
+      outer_faces_of_mesh(mesh, border_faces);
+      for (convex_face_ct::const_iterator it = border_faces.begin();
+       it != border_faces.end(); ++it) {
+	vectors_to_base_matrix(G, mesh.points_of_convex(it->cv));
+	bgeot::geotrans_interpolation_context c(mesh.trans_of_convex(it->cv),
+						pai->point(0), G);
+	for (size_type j = 0; j < pai->nb_points_on_face(it->f); ++j) {
+	  c.set_xref(pai->point_on_face(it->f, j));
+	  new_approx.add_point(c.xreal(), pai->coeff_on_face(it->f, j)
+			       * gmm::abs(c.J()), it->f);
+	}
+      }
+      new_approx.valid_method();
+
+      /* 
+       * Step 5 : Test the validity of produced integration method.
+       */
+
       scalar_type wtot(0);
-      if (noisy) cout << "Number of gauss points : " << gauss_weights.size();
-      for (size_type k = 0; k < gauss_weights.size(); ++k)
-	wtot += gauss_weights[k];
+      if (noisy) cout << "Number of gauss points : " << new_approx.nb_points()
+		      << endl;
+      for (size_type k = 0; k <  new_approx.nb_points_on_convex(); ++k)
+	wtot += new_approx.coeff(k);
       base_poly poly = bgeot::one_poly(n);
       scalar_type exactvalue = exactint->exact_method()->int_poly(poly);
       if (noisy) cout.precision(16);
@@ -528,8 +587,15 @@ namespace getfem {
 	h0_is_ok = false;
       }
  
+
+      if (h0_is_ok) {
+	build_methods.push_back(integration_method());
+	build_methods.back().set_approx_method
+	  (new approx_integration(new_approx));
+	cut_im.set_integration_method(cv, &build_methods.back());
+      }
+
       if (h0_is_ok && noisy) { // ajout dans global mesh pour visu
-	base_matrix G;
 	vectors_to_base_matrix(G, linked_mesh().points_of_convex(cv));
 	std::vector<size_type> pts(mesh.nb_points());
 	for (size_type i = 0; i < mesh.nb_points(); ++i)
@@ -542,6 +608,8 @@ namespace getfem {
       }
 
     } while (!h0_is_ok);
+
+    cout << "Interpolate face: " << interpolate_face_chrono.total() << " moyenne: " << interpolate_face_chrono.mean() << "\n";
   }
 
 
@@ -550,6 +618,7 @@ namespace getfem {
     // compute the elements touched by each level set
     // for each element touched, compute the sub mesh
     //   then compute the adapted integration method
+    cut_im.clear(); build_methods.clear();
     for (dal::bv_visitor cv(linked_mesh().convex_index()); 
 	 !cv.finished(); ++cv) {
       dal::bit_vector prim, sec;
@@ -623,6 +692,7 @@ namespace getfem {
       if (noisy) cout << "testing cv " << cv << " with level set "
 		      << k << endl;
       if (is_crossed_by(cv, *it, 0)) {
+	if (noisy) cout << "is cutted \n";
 	prim.add(lsnum);
 	if ((*it)->has_secondary() && is_crossed_by(cv, *it, 1))
 	  sec.add(lsnum);

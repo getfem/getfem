@@ -262,7 +262,7 @@ namespace getfem
 				     scalar_type w,short_type f) {
     if (valid) DAL_THROW(internal_error, 
 			 "Impossible to modify a valid integration method.");
-    if (gmm::abs(w) > 1.0E-12) {
+    if (gmm::abs(w) > 1.0E-15) {
       ++f;
       if (f > cvr->structure()->nb_faces())
 	DAL_THROW(internal_error, "Wrong argument.");

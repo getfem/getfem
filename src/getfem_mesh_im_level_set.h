@@ -50,9 +50,7 @@ namespace getfem {
 
     mesh_im cut_im; /* stores an im only for convexes who are crossed
 		       by a levelset */
-
-    // + set of stored adapted integration methods
-    // + original methods ?
+    std::list<integration_method> build_methods;
 
   public :
 
