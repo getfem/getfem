@@ -110,10 +110,16 @@ namespace gmm
     double get_rhsnorm(void) const { return rhsn; }
     void set_rhsnorm(double r) { rhsn = r; }
     
+    bool converged(double nr)
+    { res = dal::abs(nr); return res < rhsn * resmax; }
+    template <class VECT> bool converged(const VECT &v)
+    { return converged(gmm::vect_norm2(v)); }
+
     bool finished(double nr)
-    { res = dal::abs(nr); return (nit > maxiter || res < rhsn * resmax); }
+    { return (nit > maxiter || converged(nr)); }
     template <class VECT> bool finished(const VECT &v)
     { return finished(gmm::vect_norm2(v)); }
+
 
     void set_name(const std::string &n) { name = n; }
     const std::string &get_name(void) const { return name; }

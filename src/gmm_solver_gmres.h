@@ -104,7 +104,10 @@ namespace gmm {
       s[0] = beta;
       
       size_type i = 0;
-      iteration inner(outer.normb(), restart, outer.tol(), outer.atol()); ??
+      iteration inner = outer;
+      inner.reduce_noisy();
+      inner.set_maxiter(restart);
+      inner.init();
       
       do {
 	size_type k;
