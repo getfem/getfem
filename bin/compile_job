@@ -11,9 +11,9 @@ print `cd ..; cvs checkout getfem++`; print "\n";
 
 print "Making links\n";
 `mkdir -p include`;
-`cd include; ln -sf ../dal/*.h .; ln -sf ../bgeot/*.h .;  ln -sf ../linkmsg/*.h .;  ln -sf ../ftool/*.h .; ln -sf ../getfem/*.h .; ln -sf ../misc/*.h .`; print "\n\n";
+`cd include; ln -sf ../dal/*.h .; ln -sf ../bgeot/*.h .;  ln -sf ../linkmsg/*.h .;  ln -sf ../ftool/*.h .; ln -sf ../getfem/*.h .; ln -sf ../misc/*.h .; ln -sf ../misc/LEDAWIN/*.h .`; print "\n\n";
 `mkdir -p sources`;
-`cd sources; ln -sf ../dal/*.C .; ln -sf ../bgeot/*.C .;  ln -sf ../ftool/*.C .; ln -sf ../getfem/*.C .; ln -sf ../misc/*.C .`; print "\n\n";
+`cd sources; ln -sf ../dal/*.C .; ln -sf ../bgeot/*.C .;  ln -sf ../ftool/*.C .; ln -sf ../getfem/*.C .; ln -sf ../misc/*.C .; ln -sf ../misc/LEDAWIN/*.C .`; print "\n\n";
 
 
 print "Building Makefile\n";
