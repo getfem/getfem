@@ -74,22 +74,20 @@ namespace gmm
     double rhsn;       /* Right hand side norm.                            */
     size_type maxiter; /* Max. number of iterations.                       */
     int noise;         /* if noise > 0 iterations are printed.             */
-    double resmax;/* maximum residu.                                  */
+    double resmax;     /* maximum residu.                                  */
     size_type nit;     /* iteration number.                                */
-    double res;   /* last computed residu.                            */
+    double res;        /* last computed residu.                            */
     std::string name;  /* eventually, name of the method.                  */
+    bool written;
     
   public :
 
-    void init(void) { nit = 0; res = 0.0; }
+    void init(void) { nit = 0; res = 0.0; written = false; }
 
     iteration(double r, int noi = 0, size_type mit = size_type(-1))
       : rhsn(1.0), maxiter(mit), noise(noi), resmax(r), nit(0), res(0.0) {}
 
-    void  operator ++(int) { 
-      nit++; if (noise > 0)
-	cout << name << " iter " << nit << " residu " << res << endl;
-    }
+    void  operator ++(int) {  nit++; written = false; }
     void  operator ++() { (*this)++; }
 
     bool first(void) { return nit == 0; }
@@ -111,12 +109,18 @@ namespace gmm
     void set_rhsnorm(double r) { rhsn = r; }
     
     bool converged(double nr)
-    { res = dal::abs(nr); return res < rhsn * resmax; }
+    { res = dal::abs(nr); return res <= rhsn * resmax; }
     template <class VECT> bool converged(const VECT &v)
     { return converged(gmm::vect_norm2(v)); }
 
-    bool finished(double nr)
-    { return (nit >= maxiter || converged(nr)); }
+    bool finished(double nr) {
+      if (noise > 0 && !written) {
+	cout << name << " iter " << nit << " residu "
+	     << dal::abs(nr) / rhsn << endl;
+	written = true;
+      }
+      return (nit >= maxiter || converged(nr));
+    }
     template <class VECT> bool finished(const VECT &v)
     { return finished(gmm::vect_norm2(v)); }
 

@@ -130,6 +130,10 @@ namespace gmm {
     static void do_clear(this_type &v) { clear_type()(v.origin, v._begin, v._end); }
   };
 
+  template <class PT>
+  std::ostream &operator << (std::ostream &o, const simple_vector_ref<PT>& v)
+  { gmm::write(o,v); return o; }
+
 #ifdef USING_BROKEN_GCC295
   template <class PT> struct linalg_traits<const simple_vector_ref<PT> >
   : public linalg_traits<simple_vector_ref<PT> > {};

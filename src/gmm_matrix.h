@@ -264,6 +264,7 @@ namespace gmm
 
   public :
     typedef typename linalg_traits<MAT>::value_type value_type;
+    typedef typename linalg_traits<MAT>::reference reference;
 
     size_type nrows(void) const { return introw[_nrowblocks-1].max + 1; }
     size_type ncols(void) const { return intcol[_ncolblocks-1].max + 1; }
@@ -277,6 +278,22 @@ namespace gmm
     { return blocks[j*_ncolblocks+i]; }
     void do_clear(void);
     // to be done : read and write access to a component
+    value_type operator() (size_type i, size_type j) const {
+      size_type k, l;
+      for (k = 0; k < _nrowblocks; ++k)
+	if (i >= introw[k].min && i <=  introw[k].max) break;
+      for (l = 0; l < _nrowblocks; ++l)
+	if (j >= introw[l].min && j <=  introw[l].max) break;
+      return (block(k, l))(i - introw[k].min, j - introw[l].min);
+    }
+    reference operator() (size_type i, size_type j) {
+      size_type k, l;
+      for (k = 0; k < _nrowblocks; ++k)
+	if (i >= introw[k].min && i <=  introw[k].max) break;
+      for (l = 0; l < _nrowblocks; ++l)
+	if (j >= introw[l].min && j <=  introw[l].max) break;
+      return (block(k, l))(i - introw[k].min, j - introw[l].min);
+    }
     
     template <class CONT> void resize(const CONT &c1, const CONT &c2);
     template <class CONT> block_matrix(const CONT &c1, const CONT &c2)

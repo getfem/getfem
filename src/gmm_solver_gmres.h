@@ -85,9 +85,10 @@ namespace gmm {
     
     typename number_traits<T>::magnitude_type a, beta;
     typedef std::vector<typename number_traits<T>::magnitude_type> TmpVec;
-    typedef gmm::row_matrix<TmpVec> HMat;
+    typedef gmm::col_matrix<TmpVec> HMat;
 
     HMat H(restart+1, restart);
+    clear(H);
     TmpVec s(restart+1);
     outer.set_rhsnorm(gmm::vect_norm2(b));
 
@@ -113,16 +114,12 @@ namespace gmm {
       size_type i = 0; inner.init();
       
       do {
-	size_type k;
 	gmm::mult(A, KS[i], u);
 	gmm::mult(M, u, KS[i+1]);
-	
-	orthogonalize(KS, mat_row(H, i), i);
-
+	orthogonalize(KS, mat_col(H, i), i);
 	H(i+1, i) = a = gmm::vect_norm2(KS[i+1]);
 	gmm::scale(KS[i+1], 1.0 / a);
-	
-	for (k = 0; k < i; k++)
+	for (size_type k = 0; k < i; k++)
  	  rotations[k].scalar_apply(H(k,i), H(k+1,i));
 	
 	rotations[i] = givens_rotation<T>(H(i,i), H(i+1,i));
@@ -130,12 +127,11 @@ namespace gmm {
 	rotations[i].scalar_apply(s[i], s[i+1]);
 	
 	++inner, ++outer, ++i;
-      } while (! inner.finished(dal::abs(s[i]))); 
-      
-      gmm::upper_tri_solve(gmm::sub_matrix(H, gmm::sub_interval(0, restart),
-					   gmm::sub_interval(0, restart)), s);
-      gmm::combine(KS, s, x, restart);
-      
+      } while (! inner.finished(dal::abs(s[i])));
+
+      gmm::upper_tri_solve(gmm::sub_matrix(H, gmm::sub_interval(0, i),
+					   gmm::sub_interval(0, i)), s);
+      gmm::combine(KS, s, x, i);
       gmm::mult(A, gmm::scaled(x, -1.0), b, w);
       gmm::mult(M, w, r);
       beta = dal::abs(gmm::vect_norm2(r));
