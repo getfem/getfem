@@ -18,12 +18,13 @@ int main(int argc, char **argv) {
     getfem::scalar_type h = .3;
     int K=1;
     int opt = 0;
+    int max_iter = 1000;
     if (argc > 1) { opt = atoi(argv[1]); }
     if (argc > 2) { h = atof(argv[2]); cout << "h = " << h << "\n"; }
     if (argc > 3) { K = atoi(argv[3]); }
+    if (argc > 4) { max_iter = atoi(argv[4]); }
     assert(K>0); assert(h>0.); 
     std::vector<getfem::base_node> fixed;
-    
 
     getfem::mesher_ball D0(base_node(0.,0.),1.);
 
@@ -76,6 +77,38 @@ int main(int argc, char **argv) {
     
     getfem::mesher_torus D15(2.0, 0.5);
 
+    getfem::mesher_cylinder C1(base_node(0.5,0.5,-0.5), base_node(0.,0.,1.),
+			       2.0, 0.2);
+
+    getfem::mesher_cylinder C2(base_node(0.5,0.5,-0.5), base_node(0.,0.,1.),
+			       2.0, 0.65);
+    getfem::mesher_setminus S1(D3, C1);
+    getfem::mesher_intersection D16(S1, C2);
+
+
+    getfem::mesher_ball B15(getfem::base_node(0.,0.,0.),1.2);
+    getfem::mesher_ball B16(getfem::base_node(-2.,-2.,0.),0.7);
+    getfem::mesher_ball B17(getfem::base_node(2.,-2.,0.),0.7);
+    getfem::mesher_ball B18(getfem::base_node(2.,2.,0.),0.7);
+    getfem::mesher_ball B19(getfem::base_node(-2.,2.,0.),0.7);
+    getfem::mesher_cylinder C3(base_node(-2.,-2.,0.), base_node(1.,0.,0.),
+			       4.0, 0.3);
+    getfem::mesher_cylinder C4(base_node(2.,-2.,0.), base_node(0.,1.,0.),
+			       4.0, 0.3);
+    getfem::mesher_cylinder C5(base_node(2.,2.,0.), base_node(-1.,0.,0.),
+			       4.0, 0.3);
+    getfem::mesher_cylinder C6(base_node(-2.,2.,0.), base_node(0.,-1.,0.),
+			       4.0, 0.3);
+    getfem::mesher_cylinder C7(base_node(0.,-2.,0.), base_node(0.,1.,0.),
+			       4.0, 0.3);
+    getfem::mesher_cylinder C8(base_node(-2.,0.,0.), base_node(1.,0.,0.),
+			       4.0, 0.3);
+    getfem::mesher_cylinder C9(base_node(0.,0.,-1.5), base_node(0.,0.,1.),
+			       3.0, 0.3);
+    
+    getfem::mesher_union U1(B15, B16, B17, B18, B19, C3, C4, C5, C6, C7, C8);
+    getfem::mesher_setminus D17(U1, C9);
+
     getfem::mesher_signed_distance *dist = &D0;
     switch (opt) {
     case 0: dist = &D0; break; /* disk */
@@ -105,8 +138,10 @@ int main(int argc, char **argv) {
     case 13: dist = &D13; break; /* moon */
     case 14: dist = &D14; break; /* substraction of two balls */
     case 15: dist = &D15; break; /* torus */
+    case 16: dist = &D16; break; /* cube with a hole */
+    case 17: dist = &D17; break; /* space station */
     }
-    getfem::build_mesh(m, *dist, h, fixed, K, 2);
+    getfem::build_mesh(m, *dist, h, fixed, K, 2, max_iter);
   }
   DAL_STANDARD_CATCH_ERROR;
   return 0;

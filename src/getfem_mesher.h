@@ -69,16 +69,18 @@ namespace getfem {
     virtual bool bounding_box(base_node &bmin, base_node &bmax) const = 0;
     virtual scalar_type operator()(const base_node &P,
 				   dal::bit_vector &bv) const = 0;
-    virtual base_small_vector grad(const base_node &P) const = 0;
+    virtual scalar_type grad(const base_node &P,
+			     base_small_vector &G) const = 0;
     virtual void register_constraints(std::vector<const
 				      mesher_signed_distance*>& list) const=0;
     virtual scalar_type operator()(const base_node &P) const  = 0;
   };
 
   class mesher_half_space : public mesher_signed_distance {
-    base_node x0; base_node n; scalar_type xon;
+    base_node x0; base_small_vector n; scalar_type xon;
   public:
-    mesher_half_space(base_node x0_, base_node n_) : x0(x0_), n(n_)
+    mesher_half_space(const base_node &x0_, const base_small_vector &n_)
+      : x0(x0_), n(n_)
     { n /= gmm::vect_norm2(n); xon = bgeot::vect_sp(x0, n); }
     bool bounding_box(base_node &, base_node &) const
     { return false; }
@@ -94,8 +96,10 @@ namespace getfem {
 				      mesher_signed_distance*>& list) const {
       id = list.size(); list.push_back(this);
     }
-    virtual base_small_vector grad(const base_node &) const {
-      return -1.*n;
+
+    scalar_type grad(const base_node &P, base_small_vector &G) const {
+      G = n; G *= scalar_type(-1); 
+      return xon - bgeot::vect_sp(P,n);
     }
   };
 
@@ -122,15 +126,17 @@ namespace getfem {
 				      mesher_signed_distance*>& list) const {
       id = list.size(); list.push_back(this);
     }
-    virtual base_small_vector grad(const base_node &P) const {
-      base_node v(P); v -= x0;
-      scalar_type norm(0);
-      for ( ; norm == 0.; gmm::fill_random(v)) {
-	gmm::add(gmm::scaled(n, -gmm::vect_sp(v, n)), v);
-	norm = gmm::vect_norm2(v);
+    scalar_type grad(const base_node &P, base_small_vector &G) const {
+      G = P; G -= x0;
+      gmm::add(gmm::scaled(n, -gmm::vect_sp(G, n)), G);
+      scalar_type e = gmm::vect_norm2(G), d = e - R;
+      while (e == scalar_type(0)) {
+	gmm::fill_random(G);
+	gmm::add(gmm::scaled(n, -gmm::vect_sp(G, n)), G);
+	e = gmm::vect_norm2(G);
       }
-      v /= norm;
-      return v;
+      G /= e;
+      return d;
     }
   };
 
@@ -156,11 +162,13 @@ namespace getfem {
 				      mesher_signed_distance*>& list) const {
       id = list.size(); list.push_back(this);
     }
-    virtual base_small_vector grad(const base_node &P) const {
-      base_small_vector g(P - x0);
-      scalar_type d= gmm::vect_norm2(g);
-      if (d != scalar_type(0)) { g /= d; return g; }
-      else { gmm::fill_random(g); g /= gmm::vect_norm2(g); return g; }
+    scalar_type grad(const base_node &P, base_small_vector &G) const {
+      G = P; G -= x0;
+      scalar_type e= gmm::vect_norm2(G), d = e - R;
+      while (e == scalar_type(0))
+	{ gmm::fill_random(G); e = gmm::vect_norm2(G); }
+      G /= e;
+      return d;
     }
   };
 
@@ -201,13 +209,13 @@ namespace getfem {
 	for (int k = 0; k < 2*rmin.size(); ++k) hfs[k](P, bv);
       return d;
     }
-    virtual base_small_vector grad(const base_node &P) const {
+    scalar_type grad(const base_node &P, base_small_vector &G) const {
       unsigned i = 0; scalar_type di = hfs[i](P);
       for (int k = 1; k < 2*rmin.size(); ++k) {
 	scalar_type dk = hfs[k](P);
 	if (dk > di) { i = k; di = dk; }
       }
-      return hfs[i].grad(P);
+      return hfs[i].grad(P, G);
     }
     virtual void register_constraints(std::vector<const
 				      mesher_signed_distance*>& list) const {
@@ -216,77 +224,196 @@ namespace getfem {
     }
   };
 
+  extern const mesher_half_space void_signed_distance;
+
   class mesher_union : public mesher_signed_distance {
-    const mesher_signed_distance &a, &b;
+    std::vector<const mesher_signed_distance *> dists;
+    mutable std::vector<scalar_type> vd;
   public:
-    mesher_union(const mesher_signed_distance& a_,
-		 const mesher_signed_distance &b_) : a(a_), b(b_) {}
+    mesher_union(const mesher_signed_distance &a_,
+		 const mesher_signed_distance &b_,
+		 const mesher_signed_distance &c_ = void_signed_distance,
+		 const mesher_signed_distance &d_ = void_signed_distance,
+		 const mesher_signed_distance &e_ = void_signed_distance,
+		 const mesher_signed_distance &f_ = void_signed_distance,
+		 const mesher_signed_distance &g_ = void_signed_distance,
+		 const mesher_signed_distance &h_ = void_signed_distance,
+		 const mesher_signed_distance &i_ = void_signed_distance,
+		 const mesher_signed_distance &j_ = void_signed_distance,
+		 const mesher_signed_distance &k_ = void_signed_distance,
+		 const mesher_signed_distance &l_ = void_signed_distance,
+		 const mesher_signed_distance &m_ = void_signed_distance,
+		 const mesher_signed_distance &n_ = void_signed_distance,
+		 const mesher_signed_distance &o_ = void_signed_distance,
+		 const mesher_signed_distance &p_ = void_signed_distance,
+		 const mesher_signed_distance &q_ = void_signed_distance,
+		 const mesher_signed_distance &r_ = void_signed_distance,
+		 const mesher_signed_distance &s_ = void_signed_distance,
+		 const mesher_signed_distance &t_ = void_signed_distance) {
+      dists.push_back(&a_); dists.push_back(&b_);
+      size_type nb = 2;
+      if (&c_ != &void_signed_distance) { dists.push_back(&c_); ++nb; }
+      if (&d_ != &void_signed_distance) { dists.push_back(&d_); ++nb; }
+      if (&e_ != &void_signed_distance) { dists.push_back(&e_); ++nb; }
+      if (&f_ != &void_signed_distance) { dists.push_back(&f_); ++nb; }
+      if (&g_ != &void_signed_distance) { dists.push_back(&g_); ++nb; }
+      if (&h_ != &void_signed_distance) { dists.push_back(&h_); ++nb; }
+      if (&i_ != &void_signed_distance) { dists.push_back(&i_); ++nb; }
+      if (&j_ != &void_signed_distance) { dists.push_back(&j_); ++nb; }
+      if (&k_ != &void_signed_distance) { dists.push_back(&k_); ++nb; }
+      if (&l_ != &void_signed_distance) { dists.push_back(&l_); ++nb; }
+      if (&m_ != &void_signed_distance) { dists.push_back(&m_); ++nb; }
+      if (&n_ != &void_signed_distance) { dists.push_back(&n_); ++nb; }
+      if (&o_ != &void_signed_distance) { dists.push_back(&o_); ++nb; }
+      if (&p_ != &void_signed_distance) { dists.push_back(&p_); ++nb; }
+      if (&q_ != &void_signed_distance) { dists.push_back(&q_); ++nb; }
+      if (&r_ != &void_signed_distance) { dists.push_back(&r_); ++nb; }
+      if (&s_ != &void_signed_distance) { dists.push_back(&s_); ++nb; }
+      if (&t_ != &void_signed_distance) { dists.push_back(&t_); ++nb; }
+      vd.resize(nb);
+    }
+    
     bool bounding_box(base_node &bmin, base_node &bmax) const {
       base_node bmin2(bmin.size()), bmax2(bmin.size());
-      bool ba = a.bounding_box(bmin, bmax);
-      bool bb = b.bounding_box(bmin2, bmax2);
-      if (!ba || !bb) return false;
-      for (unsigned i=0; i < bmin.size(); ++i) { 
-        bmin[i] = std::min(bmin[i],bmin2[i]);
-	bmax[i] = std::max(bmax[i],bmax2[i]);
+      bool b = dists[0]->bounding_box(bmin, bmax);
+      if (!b) return false;
+      for (size_type k = 1; k < dists.size(); ++k) {
+	b = dists[k]->bounding_box(bmin2, bmax2);
+	if (!b) return false;
+	for (unsigned i=0; i < bmin.size(); ++i) { 
+	  bmin[i] = std::min(bmin[i],bmin2[i]);
+	  bmax[i] = std::max(bmax[i],bmax2[i]);
+	}
       }
       return true;
     }
-    scalar_type operator()(const base_node &P, dal::bit_vector &bv) const {
-      scalar_type da = a(P), db = b(P);
-      if (da > -SEPS && db > -SEPS) {
-	if (da < SEPS) a(P, bv);
-	if (db < SEPS) b(P, bv);
-      }
-      return std::min(da,db);
+    virtual scalar_type operator()(const base_node &P) const {
+      scalar_type d = (*(dists[0]))(P);
+      for (size_type k = 1; k < dists.size(); ++k)
+	d = std::min(d, (*(dists[k]))(P));
+      return d;
+
     }
-    virtual scalar_type operator()(const base_node &P) const
-    { return std::min(a(P),b(P)); }
+    scalar_type operator()(const base_node &P, dal::bit_vector &bv) const {
+      scalar_type d = vd[0] = (*(dists[0]))(P);
+      bool ok = (d > -SEPS);
+      for (size_type k = 1; k < dists.size(); ++k) {
+	vd[k] = (*(dists[k]))(P); if (vd[k] <= -SEPS) ok = false;
+	d = std::min(d,vd[k]);
+      }
+      for (size_type k = 0; ok && k < dists.size(); ++k) {
+	if (vd[k] < SEPS) (*(dists[k]))(P, bv);
+      }
+      return d;
+    }
     virtual void register_constraints(std::vector<const
 				      mesher_signed_distance*>& list) const {
-      a.register_constraints(list); b.register_constraints(list);
+      for (size_type k = 0; k < dists.size(); ++k)
+	dists[k]->register_constraints(list); 
     }
-    virtual base_small_vector grad(const base_node &P) const {
-      if (a(P) < b(P)) return a.grad(P);
-      else return b.grad(P);
+    scalar_type grad(const base_node &P, base_small_vector &G) const {
+      scalar_type d = (*(dists[0]))(P);
+      size_type i = 0;
+      for (size_type k = 1; k < dists.size(); ++k) {
+	scalar_type d2 = (*(dists[k]))(P);
+	if (d2 < d) { d = d2; i = k; }
+      }
+      return dists[i]->grad(P, G);
     }
   };
 
   class mesher_intersection : public mesher_signed_distance {
-    const mesher_signed_distance &a, &b;
+    std::vector<const mesher_signed_distance *> dists;
+    mutable std::vector<scalar_type> vd;
+
+    // const mesher_signed_distance &a, &b;
   public:
     mesher_intersection(const mesher_signed_distance &a_,
-			const mesher_signed_distance &b_) : a(a_), b(b_) {}
+		 const mesher_signed_distance &b_,
+		 const mesher_signed_distance &c_ = void_signed_distance,
+		 const mesher_signed_distance &d_ = void_signed_distance,
+		 const mesher_signed_distance &e_ = void_signed_distance,
+		 const mesher_signed_distance &f_ = void_signed_distance,
+		 const mesher_signed_distance &g_ = void_signed_distance,
+		 const mesher_signed_distance &h_ = void_signed_distance,
+		 const mesher_signed_distance &i_ = void_signed_distance,
+		 const mesher_signed_distance &j_ = void_signed_distance,
+		 const mesher_signed_distance &k_ = void_signed_distance,
+		 const mesher_signed_distance &l_ = void_signed_distance,
+		 const mesher_signed_distance &m_ = void_signed_distance,
+		 const mesher_signed_distance &n_ = void_signed_distance,
+		 const mesher_signed_distance &o_ = void_signed_distance,
+		 const mesher_signed_distance &p_ = void_signed_distance,
+		 const mesher_signed_distance &q_ = void_signed_distance,
+		 const mesher_signed_distance &r_ = void_signed_distance,
+		 const mesher_signed_distance &s_ = void_signed_distance,
+		 const mesher_signed_distance &t_ = void_signed_distance) {
+      dists.push_back(&a_); dists.push_back(&b_);
+      size_type nb = 2;
+      if (&c_ != &void_signed_distance) { dists.push_back(&c_); ++nb; }
+      if (&d_ != &void_signed_distance) { dists.push_back(&d_); ++nb; }
+      if (&e_ != &void_signed_distance) { dists.push_back(&e_); ++nb; }
+      if (&f_ != &void_signed_distance) { dists.push_back(&f_); ++nb; }
+      if (&g_ != &void_signed_distance) { dists.push_back(&g_); ++nb; }
+      if (&h_ != &void_signed_distance) { dists.push_back(&h_); ++nb; }
+      if (&i_ != &void_signed_distance) { dists.push_back(&i_); ++nb; }
+      if (&j_ != &void_signed_distance) { dists.push_back(&j_); ++nb; }
+      if (&k_ != &void_signed_distance) { dists.push_back(&k_); ++nb; }
+      if (&l_ != &void_signed_distance) { dists.push_back(&l_); ++nb; }
+      if (&m_ != &void_signed_distance) { dists.push_back(&m_); ++nb; }
+      if (&n_ != &void_signed_distance) { dists.push_back(&n_); ++nb; }
+      if (&o_ != &void_signed_distance) { dists.push_back(&o_); ++nb; }
+      if (&p_ != &void_signed_distance) { dists.push_back(&p_); ++nb; }
+      if (&q_ != &void_signed_distance) { dists.push_back(&q_); ++nb; }
+      if (&r_ != &void_signed_distance) { dists.push_back(&r_); ++nb; }
+      if (&s_ != &void_signed_distance) { dists.push_back(&s_); ++nb; }
+      if (&t_ != &void_signed_distance) { dists.push_back(&t_); ++nb; }
+      vd.resize(nb);
+    }
     bool bounding_box(base_node &bmin, base_node &bmax) const {
-      bool ba = a.bounding_box(bmin, bmax);
-      base_node bbmin(bmin.size()), bbmax(bmin.size());
-      bool bb = b.bounding_box(bbmin, bbmax);
-      if (!ba) { bmin = bbmin; bmax = bbmax; }
-      if (ba && bb)
-	for (unsigned k = 0; k < bmin.size(); ++k) {
-	  bmin[k] = std::max(bmin[k], bbmin[k]);
-	  bmax[k] = std::max(std::min(bmax[k], bbmax[k]), bmin[k]);
+      base_node bmin2(bmin.size()), bmax2(bmin.size());
+      bool b = dists[0]->bounding_box(bmin, bmax);
+      for (size_type k = 1; k < dists.size(); ++k) {
+	b = b || dists[k]->bounding_box(bmin2, bmax2);
+	for (unsigned i=0; i < bmin.size(); ++i) { 
+	  bmin[i] = std::max(bmin[i],bmin2[i]);
+	  bmax[i] = std::max(std::min(bmax[i],bmax2[i]), bmin[i]);
 	}
-      return (ba || bb);
+      }
+      return b;
+    }
+    virtual scalar_type operator()(const base_node &P) const {
+      scalar_type d = (*(dists[0]))(P);
+      for (size_type k = 1; k < dists.size(); ++k)
+	d = std::max(d, (*(dists[k]))(P));
+      return d;
+
     }
     scalar_type operator()(const base_node &P, dal::bit_vector &bv) const {
-      scalar_type da = a(P), db = b(P);
-      if (da < SEPS && db < SEPS) {
-	if (da > -SEPS) a(P, bv);
-	if (db > -SEPS) b(P, bv);
+      scalar_type d = vd[0] = (*(dists[0]))(P);
+      bool ok = (d < SEPS);
+      for (size_type k = 1; k < dists.size(); ++k) {
+	vd[k] = (*(dists[k]))(P); if (vd[k] >= SEPS) ok = false;
+	d = std::min(d,vd[k]);
       }
-      return std::max(da,db);
+      for (size_type k = 0; ok && k < dists.size(); ++k) {
+	if (vd[k] > -SEPS) (*(dists[k]))(P, bv);
+      }
+      return d;
     }
-    scalar_type operator()(const base_node &P) const
-    { return std::max(a(P),b(P)); }
     virtual void register_constraints(std::vector<const
 				      mesher_signed_distance*>& list) const {
-      a.register_constraints(list); b.register_constraints(list);
+      for (size_type k = 0; k < dists.size(); ++k)
+	dists[k]->register_constraints(list); 
     }
-    virtual base_small_vector grad(const base_node &P) const {
-      scalar_type da = a(P), db = b(P);
-      if (da > db) return a.grad(P);
-      else return b.grad(P);
+    scalar_type grad(const base_node &P, base_small_vector &G) const {
+      scalar_type d = (*(dists[0]))(P);
+      size_type i = 0;
+      for (size_type k = 1; k < dists.size(); ++k) {
+	scalar_type d2 = (*(dists[k]))(P);
+	if (d2 > d) { d = d2; i = k; }
+      }
+      return dists[i]->grad(P, G);
     }
   };
 
@@ -311,10 +438,10 @@ namespace getfem {
 				      mesher_signed_distance*>& list) const {
       a.register_constraints(list); b.register_constraints(list);
     }
-    virtual base_small_vector grad(const base_node &P) const {
+    scalar_type grad(const base_node &P, base_small_vector &G) const {
       scalar_type da = a(P), db = -b(P);
-      if (da > db) return a.grad(P);
-      else { base_small_vector G(b.grad(P)); G *= -1.; return G; }
+      if (da > db) return a.grad(P, G);
+      else { b.grad(P, G); G *= scalar_type(-1); return db; }
     }
   };
   
@@ -325,9 +452,9 @@ namespace getfem {
     mesher_half_space p1, p2;
     mesher_intersection i1, i2;
   public:
-    mesher_cylinder(const base_node &center, const base_small_vector &no,
+    mesher_cylinder(const base_node &c, const base_small_vector &no,
 		    scalar_type L_, scalar_type R_)
-      : x0(center), n(no/gmm::vect_norm2(no)), L(L_), R(R_), t(x0, n, R_),
+      : x0(c), n(no/gmm::vect_norm2(no)), L(L_), R(R_), t(x0, n, R),
 	p1(x0, n), p2(x0+n*L, -1.0 * n), i1(p1, p2), i2(i1, t) {}
     bool bounding_box(base_node &bmin, base_node &bmax) const {
       base_node x1(x0+n*L);
@@ -342,8 +469,8 @@ namespace getfem {
     virtual scalar_type operator()(const base_node &P,
 				   dal::bit_vector& bv) const
     { return i2(P, bv); }
-    virtual base_small_vector grad(const base_node &P) const
-    { return i2.grad(P); }
+    scalar_type grad(const base_node &P, base_small_vector &G) const
+      { return i2.grad(P, G); }
     virtual void register_constraints(std::vector<const
 				      mesher_signed_distance*>& list) const
     { i2.register_constraints(list); }
@@ -381,7 +508,6 @@ class mesher_ellipse : public mesher_signed_distance { // TODO
       scalar_type delta = eb*eb - 4 * ea * ec;
       assert(delta >= 0);
       scalar_type lambda = (-eb + sqrt(delta)) / (2. * ea);
-      base_node x2 = lambda*P + (1-lambda)*x1;
       return (1.-lambda)*gmm::vect_norm2(v1);
     }
     virtual scalar_type operator()(const base_node &P,
@@ -390,8 +516,8 @@ class mesher_ellipse : public mesher_signed_distance { // TODO
       bv[id] = (dal::abs(d) < SEPS);
       return d;
     }
-    virtual base_small_vector grad(const base_node &P) const
-  { assert(0); }
+    scalar_type grad(const base_node &P, base_small_vector &G) const
+      { assert(0); }
     virtual void register_constraints(std::vector<const
 				      mesher_signed_distance*>& list) const
     { id = list.size(); list.push_back(this); }
@@ -419,14 +545,16 @@ class mesher_ellipse : public mesher_signed_distance { // TODO
       bv[id] = (dal::abs(d) < SEPS);
       return d;
     }
-    virtual base_small_vector grad(const base_node &P) const {
-      base_node G(3);
-      scalar_type x = P[0], y = P[1], z = P[2], c = sqrt(x*x + y*y);
-      if (c == 0.) { 
+    scalar_type grad(const base_node &P, base_small_vector &G) const {
+      G.resize(3);
+      scalar_type x = P[0], y = P[1], z = P[2], c = sqrt(x*x + y*y), d(0);
+      if (c == 0.) {
+	d = R - r;
 	gmm::fill_random(G); G[2] = 0.0; G /= gmm::vect_norm2(G);
       }
       else {
 	scalar_type w = 1. - R / c, e = sqrt(gmm::sqr(c-R) + z*z);
+	d = e - r;
 	if (e == 0.) {
 	  gmm::fill_random(G); G[0] = x; G[1] = y; G /= gmm::vect_norm2(G);
 	}
@@ -434,7 +562,7 @@ class mesher_ellipse : public mesher_signed_distance { // TODO
 	  G[0] = x * w / e; G[1] = y * w / e; G[2] = z / e;
 	}
       }
-      return G;
+      return d;
     }
     virtual void register_constraints(std::vector<const
 				      mesher_signed_distance*>&list) const
@@ -453,7 +581,7 @@ class mesher_ellipse : public mesher_signed_distance { // TODO
   void build_mesh(getfem_mesh &m, const mesher_signed_distance& dist_,
 		  scalar_type h0, const std::vector<base_node> &fixed_points
 		  = std::vector<base_node>(), size_type K = 1, int noise = 1,
-		  size_type iter_max = 1000, scalar_type dist_point_hull = 5,
+		  size_type iter_max = 1000, scalar_type dist_point_hull = 4,
 		  scalar_type boundary_threshold_flatness = 0.11);
 
 

@@ -279,75 +279,106 @@ namespace getfem {
     }
 
     void control_mesh_surface(void) {
-      getfem_mesh m;
-      adapt_mesh(m, 1);
-      std::vector<base_small_vector> normals;
-      dal::bit_vector ii = m.convex_index(), points_to_project;
-      dal::bit_vector flat_bound_elemnts;
-      size_type ic, ipt;
-
-      for (ic << ii; ic != size_type(-1); ic << ii) {
-	scalar_type max_flatness = -2.0;
-	normals.resize(0);
-	for (unsigned f = 0; f <= N; ++f) {
-	  if (bgeot::neighbour_of_convex(m,ic,f).empty()) {
-	    if (quality_of_element(ic) < 1E-8) max_flatness = 1E-8;
-	    else {
-	      base_small_vector n = m.normal_of_face_of_convex(ic, f);
-	      normals.push_back(n / gmm::vect_norm2(n));
-	    }
-	    for (unsigned i = 0; i < N; ++i) {
-	      ipt = m.ind_points_of_face_of_convex(ic, f)[i];
-	      if (pts_attr[ipt]->constraints.card() == 0)
-		points_to_project.add(ipt);
+	getfem_mesh m;
+	adapt_mesh(m, 1);
+	dal::bit_vector ii = m.convex_index(), points_to_project;
+	size_type ic, ipt;	
+	for (ic << ii; ic != size_type(-1); ic << ii) {
+	  for (unsigned f = 0; f <= N; ++f) {
+	    if (bgeot::neighbour_of_convex(m,ic,f).empty()) {
+	      for (unsigned i = 0; i < N; ++i) {
+		ipt = m.ind_points_of_face_of_convex(ic, f)[i];
+		if (pts_attr[ipt]->constraints.card() == 0)
+		  points_to_project.add(ipt);
+	      }
 	    }
 	  }
 	}
+	if (noisy > 1 && points_to_project.card())
+	  cout << "points to project : " << points_to_project << endl;
+	ii = points_to_project;
+	for (ipt << ii; ipt != size_type(-1); ipt << ii)
+	  surface_projection_and_update_constraints(ipt);
+    }
+
+    void suppress_flat_boundary_elements(void) {
+      size_type nb_deleted = 0;
+      do {
+	getfem_mesh m;
+	adapt_mesh(m, 1);
+	std::vector<base_small_vector> normals;
+	dal::bit_vector ii = m.convex_index();
+	dal::bit_vector flat_bound_elemnts;
+	size_type ic;
 	
-	if (noisy > 1 && max_flatness != -2.0)
-	  cout << "flatness of element " << ic << " : " << max_flatness;
-	if (normals.size() >= 2) {
-	  if (noisy > 1) cout << "flatness of element " << ic << " : ";
-	  
-	  for (unsigned i = 1; i < normals.size(); ++i)
-	    for (unsigned j = 0; j < i; ++j) {
-	      scalar_type flatness=1.0-gmm::vect_sp(normals[i], normals[j]);
-	      max_flatness = std::max(max_flatness, flatness);
-	      if (noisy > 1) cout << flatness << " ";
+	for (ic << ii; ic != size_type(-1); ic << ii) {
+	  scalar_type max_flatness = -2.0;
+	  normals.resize(0);
+	  for (unsigned f = 0; f <= N; ++f) {
+	    if (bgeot::neighbour_of_convex(m,ic,f).empty()) {
+	      if (quality_of_element(ic) < 1E-8) max_flatness = 1E-8;
+	      else {
+		base_small_vector n = m.normal_of_face_of_convex(ic, f);
+		normals.push_back(n / gmm::vect_norm2(n));
+	      }
 	    }
+	  }
+	  
+	  if (noisy > 1 && max_flatness != -2.0)
+	    cout << "flatness of element " << ic << " : " << max_flatness;
+	  if (normals.size() >= 2) {
+	    if (noisy > 1) cout << "flatness of element " << ic << " : ";
+	    
+	    for (unsigned i = 1; i < normals.size(); ++i)
+	      for (unsigned j = 0; j < i; ++j) {
+		scalar_type flatness=1.0-gmm::vect_sp(normals[i], normals[j]);
+		max_flatness = std::max(max_flatness, flatness);
+		if (noisy > 1) cout << flatness << " ";
+	      }
+	  }
+	  if (max_flatness < boundary_threshold_flatness
+	      && max_flatness!=-2.0) {
+	    flat_bound_elemnts.add(ic); 
+	    if (noisy > 1) cout << " -> deleting";
+	  }
+	  if ((normals.size() >= 2 || max_flatness != -2.0) && noisy > 1)
+	    cout << endl;
+	  
 	}
-	if (max_flatness < boundary_threshold_flatness && max_flatness!=-2.0) {
-	  flat_bound_elemnts.add(ic); 
-	  if (noisy > 1) cout << " -> deleting";
-	}
-	if ((normals.size() >= 2 || max_flatness != -2.0) && noisy > 1)
-	  cout << endl;
-	
-      }
-      if (noisy > 1 && points_to_project.card())
-	cout << "points to project : " << points_to_project << endl;
-      ii = points_to_project;
-      for (ipt << ii; ipt != size_type(-1); ipt << ii)
-	surface_projection_and_update_constraints(ipt);
-      ii = flat_bound_elemnts;
-      for (ic = ii.take_last(); ic != size_type(-1); ic = ii.take_last())
-	delete_element(ic);
+	ii = flat_bound_elemnts; nb_deleted = flat_bound_elemnts.card();
+	for (ic = ii.take_last(); ic != size_type(-1); ic = ii.take_last())
+	  delete_element(ic);
+      } while (nb_deleted > 0);
     }
     
 
-    void projection(base_node &X) { 
-      scalar_type d = dist(X);
+    void projection(base_node &X) {
+      base_small_vector G;
+      scalar_type d = dist.grad(X, G);
+      size_type it(0);
       if (d > 0.0)
-	while (dal::abs(d) > 1e-10)
-	{ X -= d*dist.grad(X); d = dist(X); }
+	while (dal::abs(d) > 1e-10) {
+	  if (++it > 10000)
+	    DAL_THROW(failure_error, "Object empty, or bad signed distance");
+// 	  cout << "iter " << it << " X = " << X << " dist = " << d << 
+// 	    " grad = " << G << endl;
+	  gmm::add(gmm::scaled(G, -d), X);
+	  d = dist.grad(X, G);
+	}
     }
     
     void surface_projection(base_node &X) { 
-      scalar_type d = dist(X);
-      while (dal::abs(d) > 1e-10) { 
-	base_node G = dist.grad(X);
+      base_small_vector G;
+      scalar_type d = dist.grad(X, G);
+      size_type it(0);
+      while (dal::abs(d) > 1e-10) {
+	if (++it > 10000)
+	    DAL_THROW(failure_error,
+		      "Object empty, or bad signed distance");
+// 	cout << "iter " << it << " X = " << X << " dist = " << d << 
+// 	    " grad = " << G << endl;
 	gmm::add(gmm::scaled(G, -d), X);
-	d = dist(X);
+	d = dist.grad(X, G);
       }
     }
 
@@ -355,10 +386,11 @@ namespace getfem {
     { projection(X); bv.clear(); dist(X,bv); }
 
     void constraint_projection(base_node &X, size_type cnum) {
-      scalar_type d = (*constraints[cnum])(X);
+      base_small_vector G;
+      scalar_type d = constraints[cnum]->grad(X, G);
       while (dal::abs(d) > 1e-10) {
-	X -= d*(*constraints[cnum]).grad(X); 
-	d=(*constraints[cnum])(X);
+	gmm::add(gmm::scaled(G, -d), X);
+	d=constraints[cnum]->grad(X, G);
       }
     }
 
@@ -403,10 +435,12 @@ namespace getfem {
 
     void tangential_displacement(base_small_vector &X,
 				 const dal::bit_vector &cts) {
+      base_small_vector G;
       base_matrix normals(N, cts.card());
       size_type cnt = 0;
       for (dal::bv_visitor ic(cts); !ic.finished(); ++ic) {
-	gmm::copy(constraints[ic]->grad(X), gmm::mat_col(normals, cnt));
+	constraints[ic]->grad(X, G);
+	gmm::copy(G, gmm::mat_col(normals, cnt));
 	for (size_type k=0; k < cnt; ++k) {
 	  gmm::add(gmm::scaled(gmm::mat_col(normals, k),
 			       -gmm::vect_sp(gmm::mat_col(normals,k),
@@ -457,7 +491,8 @@ namespace getfem {
     template <class VECT> void move_carefully(size_type ip, const VECT &VV) {
       base_node V(N); gmm::copy(VV, V);
 //       if (pts_attr[ip]->constraints.card() != 0) {
-// 	base_node grad = dist.grad(pts[ip]);
+// 	base_small_vector grad;
+//      dist.grad(pts[ip], grad);
 // 	scalar_type r = gmm::vect_norm2_sqr(grad);
 // 	gmm::add(gmm::scaled(grad, -gmm::vect_sp(V, grad) / r), V);
 //       }
@@ -557,7 +592,7 @@ namespace getfem {
 	for (unsigned i=0; i < nbpt; ++i) {
 	  if (pts_attr[i]->constraints.card()) {
 	    P = pts[i];
-	    V = dist.grad(P);
+	    dist.grad(P, V);
 	    scalar_type d = gmm::vect_norm2(V);
 	    if (d > 0) {
 	      P += V * (dist_point_hull*h0/d);
@@ -769,12 +804,12 @@ namespace getfem {
 	}
       }
       if (cts.card()) {
-	dal::bit_vector new_cts;
+	// dal::bit_vector new_cts;
 	for (size_type i=0; i < ipts.size(); ++i) {
 	  if (ipts[i] >= pts.size() && !ptdone[ipts[i]]) { 
 	    base_node &P = m.points()[ipts[i]];
 	    multi_constraint_projection(P, cts);
-	    dist(P, new_cts);
+	    // dist(P, new_cts);
 	  }
 	}
       }
@@ -840,7 +875,7 @@ namespace getfem {
 	  cout << endl;
 	}
 	if (count==0 || pts_prev.size() != pts.size()
-	    || (pts_dist_max(pts, pts_prev) > ttol*h0 && count_id >= 4)) {
+	    || (pts_dist_max(pts, pts_prev) > ttol*h0 && count_id >= 5)) {
 	  size_type nbpt = pts.size();
 	  cleanup_points(); /* and copy pts to pts_prev */
 	  if (noisy == 1) cout << "Iter " << count << " ";
@@ -987,18 +1022,39 @@ namespace getfem {
 	// m.write_to_file(s);
 
 	if (((count > 40 && sqrt(maxdp)*deltat < ptol * h0)||count>iter_max)) {
+
+	  {
+	    m.clear();
+	    adapt_mesh(m,K);
+	    m.optimize_structure();
+	    getfem::vtk_export exp("toto1.vtk");
+	    exp.exporting(m);
+	    exp.write_mesh_quality(m);
+	  }
+
+	  control_mesh_surface();
 	  size_type nbpt = pts.size();
-	  add_point_hull();
+	  add_point_hull();	  
 	  delaunay(pts, t);
 	  pts.resize(nbpt);
 	  select_elements(1);
-	  control_mesh_surface();
+	  suppress_flat_boundary_elements();
+
+	  {
+	    m.clear();
+	    adapt_mesh(m,K);
+	    m.optimize_structure();
+	    getfem::vtk_export exp("toto2.vtk");
+	    exp.exporting(m);
+	    exp.write_mesh_quality(m);
+	  }
+
 	  optimize_quality();
 	  
 	  // ajout d'un point au barycentre des elements trop plats : 
 	  for (unsigned cv = 0; cv < gmm::mat_ncols(t); ++cv) {
 	     
-	    if (quality_of_element(cv) < 0.13) {
+	    if (quality_of_element(cv) < 0.05) {
 	      base_node G = pts[t(0,cv)];
 	      for (size_type k=1; k <= N; ++k) G += pts[t(k,cv)];
 	      gmm::scale(G, 1./(N+1));
@@ -1008,12 +1064,23 @@ namespace getfem {
 	  }
 	  
 	  if (pts.size() != nbpt) {
+	    control_mesh_surface();
 	    nbpt = pts.size();
 	    add_point_hull();
 	    delaunay(pts, t);
 	    pts.resize(nbpt);
 	    select_elements(1);
-	    control_mesh_surface();
+	    suppress_flat_boundary_elements();
+
+	    {
+	      m.clear();
+	      adapt_mesh(m,K);
+	      m.optimize_structure();
+	      getfem::vtk_export exp("toto3.vtk");
+	      exp.exporting(m);
+	      exp.write_mesh_quality(m);
+	    }
+	    
 	    optimize_quality();
 	  }
 	  break;
@@ -1027,7 +1094,7 @@ namespace getfem {
       m.write_to_file("toto.mesh");
       
       m.optimize_structure();
-      getfem::vtk_export exp("toto3.vtk");
+      getfem::vtk_export exp("toto4.vtk");
       exp.exporting(m);
       exp.write_mesh_quality(m);
     }
@@ -1036,15 +1103,20 @@ namespace getfem {
   };
 
 
-   void build_mesh(getfem_mesh &m, const mesher_signed_distance& dist_,
-		   scalar_type h0, const std::vector<base_node> &fixed_points,
-		   size_type K, int noise, size_type iter_max,
-		   scalar_type dist_point_hull,
-		  scalar_type boundary_threshold_flatness) {
-     mesher mg(K, dist_, getfem::mvf_constant(1), h0, m, fixed_points, noise,
-	       iter_max, dist_point_hull, boundary_threshold_flatness);
-   }
+  const mesher_half_space void_signed_distance(base_node(0.0, 0.0),
+					       base_small_vector(0.0, 1.0));
 
+
+
+  void build_mesh(getfem_mesh &m, const mesher_signed_distance& dist_,
+		  scalar_type h0, const std::vector<base_node> &fixed_points,
+		  size_type K, int noise, size_type iter_max,
+		  scalar_type dist_point_hull,
+		  scalar_type boundary_threshold_flatness) {
+    mesher mg(K, dist_, getfem::mvf_constant(1), h0, m, fixed_points, noise,
+	      iter_max, dist_point_hull, boundary_threshold_flatness);
+  }
+  
 
   // ******************************************************************
   //    Interface with qhull
