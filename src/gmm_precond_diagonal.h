@@ -30,7 +30,7 @@
 #ifndef GMM_PRECOND_DIAGONAL_H
 #define GMM_PRECOND_DIAGONAL_H
 
-#include <gmm_kernel.h>
+#include <gmm_precond.h>
 
 namespace gmm {
 

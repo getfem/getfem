@@ -64,7 +64,7 @@
 // Y. Renard : Transformed in LDLT for stability reason.
 //             U=LT is stored in csr format. D is stored on the diagonal of U.
 
-#include <gmm_kernel.h>
+#include <gmm_precond.h>
 
 namespace gmm {
 

@@ -57,7 +57,7 @@
  * see P301 of Saad book
  */
 
-#include <gmm_kernel.h>
+#include <gmm_precond.h>
 
 namespace gmm {
 

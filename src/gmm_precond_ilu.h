@@ -60,7 +60,7 @@
 //        object to use in iterative methods. 
 //
 
-#include <gmm_kernel.h>
+#include <gmm_precond.h>
 
 namespace gmm {
 

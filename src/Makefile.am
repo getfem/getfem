@@ -87,6 +87,7 @@ include_HEADERS =                      \
 	gmm_solver_bicgstab.h          \
 	gmm_solver_Schwarz_additive.h  \
 	gmm_superlu_interface.h        \
+	gmm_precond.h                  \
 	gmm_precond_ildlt.h            \
 	gmm_precond_ildltt.h           \
 	gmm_precond_mr_approx_inverse.h\

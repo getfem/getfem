@@ -72,7 +72,7 @@
   ILUT with 5 fill-in and threshold of 1.0e-6 & 0.343612 &  18 \\ \hline
 */
 
-#include <gmm_kernel.h>
+#include <gmm_precond.h>
 
 namespace gmm {
 
