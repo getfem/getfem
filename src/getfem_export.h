@@ -91,11 +91,10 @@ namespace getfem
 	/* interpolation of the solution.                                  */
 	/* faux dans le cas des éléments vectoriel.                        */
 	pt2 = pfe->node_of_dof(i);
+
 	for (size_type k = 0; k < P; ++k) {
-	  for (size_type j = 0; j < nbd1; ++j) {
-	    size_type dof1 = mf.ind_dof_of_element(cv)[j * P + k];
-	    coeff[j] = U[dof1];
-	  }
+	  for (size_type j = 0; j < nbd1 / P; ++j)
+	    coeff[j] = U[mf.ind_dof_of_element(cv)[j*P+k]];
 	  // il faudrait utiliser les fem_precomp pour accelerer.
 	  pf1->interpolation(pt2, G, pgt, coeff, val);
 	  pt3[k] = val[0];
@@ -222,20 +221,20 @@ namespace getfem
     // à corriger
     
     dal::bit_vector nn = mesh.convex_index();
-    U.resize(mef.nb_dof() * P);
+    U.resize(mef.nb_dof());
     std::fill(U.begin(), U.end(), 0.0);
-    std::vector<int> cp(mef.nb_dof());
+    std::vector<int> cp(mef.nb_dof() / P);
     std::fill(cp.begin(), cp.end(), 0);
     size_type l = 0, i;
     for (i << nn; i != size_type(-1); i << nn) {
       size_type nbd = mef.nb_dof_of_element(i);
-      for (size_type j = 0; j < nbd; ++j, ++l) {
-	size_type dof = mef.ind_dof_of_element(i)[j];
-	for (short_type k = 0; k < P; ++k) U[dof*P +k] += vtab[l*P+k];
+      for (size_type j = 0; j < nbd / P; ++j, ++l) {
+	size_type dof = mef.ind_dof_of_element(i)[j*P];
+	for (short_type k = 0; k < P; ++k) U[dof +k] += vtab[l*P+k];
 	(cp[dof])++;
       }
     }
-    for (i = 0; i < mef.nb_dof(); ++i) {
+    for (i = 0; i < mef.nb_dof() / P; ++i) {
       if (cp[i] == 0) DAL_THROW(internal_error, "Internal error");
       for (short_type k = 0; k < P; ++k)
 	U[i*P +k] /= getfem::scalar_type(cp[i]);
