@@ -292,7 +292,7 @@ namespace bgeot
 
   std::string name_of_geometric_trans(pgeometric_trans p) {
     if (_gt_naming_system == 0) init_gt_naming_system();
-    return _gt_naming_system->name_of_method(p);
+    return _gt_naming_system->shorter_name_of_method(p);
   }
 
   /* Fonctions pour la ref. directe.                                     */

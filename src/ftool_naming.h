@@ -103,8 +103,9 @@ namespace ftool
     public :
       
       void add_suffix(std::string name, pfunction pf);
-      std::string name_of_method(pmethod pm);
-    pmethod method(std::string name, size_type &i);
+      std::string normative_name_of_method(pmethod pm) const;
+      std::string shorter_name_of_method(pmethod pm) const;
+      pmethod method(std::string name, size_type &i);
       naming_system(std::string pr) : prefix(pr) {}
       
   };
@@ -117,17 +118,44 @@ namespace ftool
   }
 
   template <class METHOD>
-  std::string naming_system<METHOD>::name_of_method(typename 
-				       naming_system<METHOD>::pmethod pm) {
+  std::string naming_system<METHOD>::normative_name_of_method(typename 
+				 naming_system<METHOD>::pmethod pm)  const {
     typename dal::dynamic_tree_sorted<meth_sto>::const_sorted_iterator
-      it(meth_tab);
-    meth_tab.search_sorted_iterator(meth_sto(pm, ""), it);
+      it = meth_tab.sorted_ge(meth_sto(pm, ""));
     const std::string *p = 0;
-
     if (it.index() == size_type(-1))
       DAL_THROW(dal::failure_error, "Unknown method");
+    while (it.index() != size_type(-1) && (*it).pm == pm)
+      { p = &((*it).name); ++it; }
+    return *p;
+  }
 
-    while ((*it).pm == pm) { p = &((*it).name); ++it; }
+  template <class METHOD>
+  std::string naming_system<METHOD>::shorter_name_of_method(typename 
+				 naming_system<METHOD>::pmethod pm)  const {
+    typename dal::dynamic_tree_sorted<meth_sto>::const_sorted_iterator
+      it = meth_tab.sorted_ge(meth_sto(pm, "")), it2 = it;
+    const std::string *p = 0;
+    size_type s = size_type(-1);
+    if (it.index() == size_type(-1))
+      DAL_THROW(dal::failure_error, "Unknown method");
+    while (it.index() != size_type(-1) && (*it).pm == pm) {
+      if (((*it).name).size() < s) {
+	s = ((*it).name).size();
+	p = &((*it).name); 
+      }
+      ++it;
+    }
+
+    // La boucle qui suit est à supprimer normalement
+    while (it2.index() != size_type(-1) && (*it2).pm == pm) {
+      if (((*it2).name).size() < s) {
+	s = ((*it2).name).size();
+	p = &((*it2).name);
+	DAL_THROW(dal::internal_error, "This loop is not to be suppressed !!");
+      }
+      --it2;
+    }
     
     return *p;
   }
@@ -235,7 +263,8 @@ namespace ftool
 	    ite = params.end();
 	  for (; it != ite; ++it) {
 	    if ((*it).type() == 0) norm_name << (*it).num();
-	    if ((*it).type() == 1) norm_name << name_of_method((*it).method());
+	    if ((*it).type() == 1) 
+	      norm_name << normative_name_of_method((*it).method());
 	    if (it+1 != ite) norm_name << ',';
 	  }
 	  norm_name << ')';

@@ -1728,7 +1728,7 @@ namespace bgeot
 
   std::string name_of_int_method(pintegration_method p) {
     if (_im_naming_system == 0) init_im_naming_system();
-    return _im_naming_system->name_of_method(p);
+    return _im_naming_system->shorter_name_of_method(p);
   }
 
   /* Fonctions pour la ref. directe.                                     */

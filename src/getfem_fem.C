@@ -802,7 +802,7 @@ namespace getfem
 
   std::string name_of_fem(pfem p) {
     if (_fem_naming_system == 0) init_fem_naming_system();
-    return _fem_naming_system->name_of_method(p);
+    return _fem_naming_system->shorter_name_of_method(p);
   }
 
  /* Fonctions pour la ref. directe.                                     */

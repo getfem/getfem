@@ -251,7 +251,7 @@ namespace getfem
 		    << "the same index. loading aborted");
 	ncv.add(ic);
 	ftool::get_token(ist, tmp, 1023);
-	// incorrect
+	
 	bgeot::pgeometric_trans pgt = bgeot::geometric_trans_descriptor(tmp);
 
        

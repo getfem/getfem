@@ -165,9 +165,9 @@ where $K(\overline{x}) = \nabla \tau(\overline{x})$ is a $N \times P$ matrix and
 Pointer on a descriptor of a geometric transformation can be obtained by the following functions defined in the file {\tt bgeot\_geometric\_trans.h}:
 
 \begin{center} \begin{tabular}{|m{0.55\linewidth}|m{0.4\linewidth}|} \hline
-{\tt bgeot::pgeometric\_trans bgeot::simplex\_trans(n, k)} & Description of the simplex transformation of dimension {\tt n} and degree {\tt k} (Most of the time, the degree 1 is used).\\ \hline
-{\tt bgeot::pgeometric\_trans bgeot::parallelepiped\_trans(n, k)} & Description of the parallelepiped transformation of dimension {\tt n} and degree {\tt k}.\\ \hline
-{\tt bgeot::pgeometric\_trans bgeot::prism\_trans(n, k)} & Description of the prism transformation of dimension {\tt n} and degree {\tt k}. \\ \hline
+{\tt "GT\_PK(n,k)"} & Description of the simplex transformation of dimension {\tt n} and degree {\tt k} (Most of the time, the degree 1 is used).\\ \hline
+{\tt "GT\_QK(n,k)"} & Description of the parallelepiped transformation of dimension {\tt n} and degree {\tt k}.\\ \hline
+{\tt "GT\_PRISM(n,k)"} & Description of the prism transformation of dimension {\tt n} and degree {\tt k}. \\ \hline
 {\tt bgeot::pgeometric\_trans bgeot::convex\_product\_trans(pgeometric\_trans a, pgeometric\_trans b)} & Description of the direct product of the two transformations {\tt a} and {\tt b}.\\ \hline
 {\tt bgeot::pgeometric\_trans bgeot::linear\_product\_trans(pgeometric\_trans a, pgeometric\_trans b)} & Description of the direct product of the two transformations {\tt a} and {\tt b} keeping a linear transformation (this is a restriction of he previous function). This allows, for instance, to use exact integrations on regular meshes with parallelograms.\\ \hline
 \end{tabular} \end{center}

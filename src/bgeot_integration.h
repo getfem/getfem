@@ -269,8 +269,8 @@ namespace bgeot
     */
 
    pintegration_method exact_simplex_im(size_type n);
-  pintegration_method exact_parallelepiped_im(size_type n);
-  pintegration_method exact_prism_im(size_type n);
+   pintegration_method exact_parallelepiped_im(size_type n);
+   pintegration_method exact_prism_im(size_type n);
 
    std::string name_of_int_method(pintegration_method p);
 
