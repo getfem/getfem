@@ -13,4 +13,11 @@ ___________________________________________________________________________
 MTL and ITL don't support the -pedantic option from g++
 ___________________________________________________________________________
 
+cxx need the following definition
+#define __USE_STD_IOSTREAM
+which is present in dal_std.h. This means that dal_std.h should be include
+first in any application which uses GETFEM
+___________________________________________________________________________
+
+
 
