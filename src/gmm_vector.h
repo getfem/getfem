@@ -169,7 +169,7 @@ namespace gmm
       if (c >= nbl) out_of_range_error();
 #endif
       const_iterator it = lower_bound(c);
-      if (it != end() && c == it->first) return it->second;
+      if (it != this->end() && c == it->first) return it->second;
       else return T(0);
     }
 
