@@ -553,7 +553,7 @@ namespace dal
   }
 
   template<class T, class COMP, int pks>
-    dynamic_tree_sorted<T, COMP, pks>::size_type
+    typename dynamic_tree_sorted<T, COMP, pks>::size_type
       dynamic_tree_sorted<T, COMP, pks>::search_ge(const T &elt) const 
   {
     const_sorted_iterator it(*this); insert_path(elt, it);
@@ -564,7 +564,7 @@ namespace dal
   }
 
   template<class T, class COMP, int pks>
-    dynamic_tree_sorted<T, COMP, pks>::sorted_iterator
+    typename dynamic_tree_sorted<T, COMP, pks>::sorted_iterator
       dynamic_tree_sorted<T, COMP, pks>::sorted_ge(const T &elt)
   {
     const_sorted_iterator it(*this); insert_path(elt, it);
@@ -575,7 +575,7 @@ namespace dal
   } 
 
   template<class T, class COMP, int pks>
-    dynamic_tree_sorted<T, COMP, pks>::const_sorted_iterator
+    typename dynamic_tree_sorted<T, COMP, pks>::const_sorted_iterator
       dynamic_tree_sorted<T, COMP, pks>::sorted_ge(const T &elt) const
   {
     const_sorted_iterator it(*this); insert_path(elt, it);
@@ -587,7 +587,7 @@ namespace dal
   
 
   template<class T, class COMP, int pks>
-    dynamic_tree_sorted<T, COMP, pks>::size_type
+    typename dynamic_tree_sorted<T, COMP, pks>::size_type
       dynamic_tree_sorted<T, COMP, pks>::memsize(void) const
   {
     return dynamic_tas<T, pks>::memsize() + nodes.memsize()
@@ -640,7 +640,7 @@ namespace dal
   }
 
   template<class T, class COMP, int pks>
-    dynamic_tree_sorted<T, COMP, pks>::size_type
+    typename dynamic_tree_sorted<T, COMP, pks>::size_type
       dynamic_tree_sorted<T, COMP, pks>::add(const T &f)
   {
     const_sorted_iterator it(*this); insert_path(f, it);
@@ -650,7 +650,7 @@ namespace dal
   }
 
   template<class T, class COMP, int pks>
-    dynamic_tree_sorted<T, COMP, pks>::size_type
+    typename dynamic_tree_sorted<T, COMP, pks>::size_type
       dynamic_tree_sorted<T, COMP, pks>::add_norepeat(const T &f,
 						  bool replace, bool *present)
   {

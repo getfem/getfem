@@ -395,7 +395,7 @@ namespace bgeot
 						     const polynomial<T>& P)
   { 
     bool first = true; size_type n = 0;
-    polynomial<T>::const_iterator it = P.begin(), ite = P.end();
+    typename polynomial<T>::const_iterator it = P.begin(), ite = P.end();
     power_index mi(P.dim());
 
     if (it != ite && *it != T(0))

@@ -98,7 +98,8 @@ namespace dal
   { dynamic_array<T,pks>::clear(); fr_tab.clear(); ind_fr_tab.clear(); init();}
 
   template<class T, unsigned char pks>
-    dynamic_alloc<T,pks>::size_type dynamic_alloc<T,pks>::alloc(size_type size)
+    typename dynamic_alloc<T,pks>::size_type
+      dynamic_alloc<T,pks>::alloc(size_type size)
   {
     size_type res = ST_NIL;
     if (size > 0)
