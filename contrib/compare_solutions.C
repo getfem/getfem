@@ -8,6 +8,9 @@
 #include <getfem_export.h>
 #include <getfem_assembling.h>
 
+using std::cout;
+using std::cerr;
+
 typedef getfem::size_type size_type;
 
 void err_msg(void)
