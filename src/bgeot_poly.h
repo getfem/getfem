@@ -204,6 +204,7 @@ namespace bgeot
      * of variables. A Horner scheme is used.
      */
     template <class ITER> T eval(const ITER &it) const;
+
     /// Constructor.
     polynomial(void) : std::vector<T>(1)
       { n = 0; d = 0; (*this)[0] = 0.0; }
@@ -377,11 +378,22 @@ namespace bgeot
     }
   }
 
-
   template<class T> template<class ITER>
     T polynomial<T>::eval(const ITER &it) const {
     power_index mi(dim());
     return horner(mi, dim(), 0, it);
+  }
+
+  template<class ITER>
+    typename std::iterator_traits<ITER>::value_type
+        eval_monomial(const power_index &mi, ITER it) {
+    typename std::iterator_traits<ITER>::value_type res
+      = typename std::iterator_traits<ITER>::value_type(1);
+    power_index::const_iterator mit = mi.begin(), mite = mi.end();
+    for ( ; mit != mite; ++mit, ++it)
+      for (short_type l = 0; l < *mit; ++l)
+	res *= *it;
+    return res;
   }
 
 

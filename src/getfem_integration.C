@@ -450,14 +450,16 @@ namespace getfem
       
       bgeot::vsmatrix<long_scalar_type> M(R, R);
       bgeot::vsvector<long_scalar_type> F(R), U(R);
-      std::vector<base_poly> base(R);
+      // std::vector<base_poly> base(R);
+      std::vector<bgeot::power_index> base(R);
       std::vector<base_node> nodes(R);
-      std::fill(base.begin(), base.end(), base_poly(nc, 0));
+      // std::fill(base.begin(), base.end(), base_poly(nc, 0));
       
       bgeot::power_index pi(nc);
       
       for (size_type r = 0; r < R; ++r, ++pi) {
-	base[r].add_monomial(1.0, pi); nodes[r] = c;
+	// base[r].add_monomial(1.0, pi);
+	base[r] = pi; nodes[r] = c;
 	if (k != 0 && nc > 0) {
 	  l = 0; c[l] += 1.0 / scalar_type(k); sum++;
 	  while (sum > k) {
@@ -469,12 +471,21 @@ namespace getfem
       }
       
       for (size_type r = 0; r < R; ++r) {
-	F[r] = ppi->int_poly(base[r]);
-	for (size_type q = 0; q < R; ++q)
-	  M(r, q) = base[r].eval(nodes[q].begin());
+	// base_poly Q(nc, 0);
+	// Q.add_monomial(1.0, base[r]);
+	F[r] = ppi->int_monomial(base[r]);
+	for (size_type q = 0; q < R; ++q) {
+	  
+	  M(r, q) = bgeot::eval_monomial(base[r], nodes[q].begin());
+	  // M(r, q) = Q.eval(nodes[q].begin());
+
+	}
       }
+
+      // cout.precision(40);
+      // cout << "Mat = " << M << endl;
       
-      bgeot::mat_gauss_solve(M, F, U);
+      bgeot::mat_gauss_solve(M, F, U, 1.0E-15);
       
       for (size_type r = 0; r < R; ++r)
 	add_point(nodes[r], U[r]);

@@ -671,7 +671,7 @@ namespace bgeot
       vlp = tmp(l,l);
 
       if (dal::abs(vlp) < EPS)
-	DAL_THROW(failure_error, "Non invertible matrix");
+	DAL_THROW(failure_error, "Non invertible matrix" << dal::abs(vlp));
 
       for (c = l; c < nbl; c++) tmp(l, c) /= vlp;
       x[l] /= vlp;
@@ -723,7 +723,7 @@ namespace bgeot
       /* triangulation.                                   */
       vlp = tmp(l,l); tmp(l,l) = 1;
       if (dal::abs(vlp) < EPS)
-	DAL_THROW(failure_error, "Non invertible matrix");
+	DAL_THROW(failure_error, "Non invertible matrix : " << dal::abs(vlp));
 	
       for (c = l + 1; c < nbl; c++) tmp(l, c) /= vlp;
       for (c = 0; c < nbl; c++) m(l,c) /= vlp;
