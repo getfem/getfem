@@ -145,7 +145,6 @@ if ($systeme =~ /Linux/)
 }
 else
 {
-  'ar r libaux.a sources/dal*.o sources/bgeot*.o sources/ftool*.o sources/getfem*.o sources/matlabint*.o cxx_repository/*.o; '
   print MAKEFILE "\t", 'ar r libaux.a sources/dal*.o sources/bgeot*.o sources/ftool*.o sources/getfem*.o sources/matlabint*.o cxx_repository/*.o; ', 'ld -shared libaux.a -o ../lib/libgetfem.so', "\n\n";
 }
 
