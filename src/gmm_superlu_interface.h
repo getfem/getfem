@@ -31,7 +31,7 @@
 /* *********************************************************************** */
 
 
-#if defined(GMM_USES_SUPERLU)
+#if defined(GMM_USES_SUPERLU) && !defined(GETFEM_VERSION)
 
 #ifndef GMM_SUPERLU_INTERFACE_H
 #define GMM_SUPERLU_INTERFACE_H

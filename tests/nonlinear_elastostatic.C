@@ -136,9 +136,9 @@ template <typename MODEL_STATE> void
       if (1)
       {
 	double rcond;
-        getfem::SuperLU_solve(MS.reduced_tangent_matrix(), dr,
-                      gmm::scaled(MS.reduced_residu(), value_type(-1)),
-                      rcond);
+        gmm::SuperLU_solve(MS.reduced_tangent_matrix(), dr,
+                           gmm::scaled(MS.reduced_residu(), value_type(-1)),
+                           rcond);
       /*size_type srtm = gmm::mat_nrows(MS.reduced_tangent_matrix());
 	gmm::dense_matrix<double> MM(srtm, srtm);
 	gmm::copy(MS.reduced_tangent_matrix(), MM);

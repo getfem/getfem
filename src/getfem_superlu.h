@@ -4,7 +4,7 @@
 #include <gmm_kernel.h>
 #include <getfem_config.h>
 
-namespace getfem {
+namespace gmm {
   template<typename T>
   void SuperLU_solve(const gmm::csc_matrix<T> &A, T *X_, T *B, double& rcond_, int permc_spec = 3);
   

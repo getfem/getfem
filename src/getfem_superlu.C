@@ -29,7 +29,7 @@ namespace SuperLU_Z {
 
 
 
-namespace getfem {
+namespace gmm {
 
   /*  interface for Create_CompCol_Matrix */
 
@@ -358,6 +358,7 @@ namespace getfem {
     SuperLU_factor<double> *b;
     SuperLU_factor<std::complex<float> > *c;
     SuperLU_factor<std::complex<double> > *d;
+    a = 0; b = 0; c = 0; d = 0;
   }
   /*
   template SuperLU_factor<float>;
