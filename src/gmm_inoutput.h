@@ -70,6 +70,8 @@ namespace gmm {
 
   inline void IOHBTerminate(const char *a) { DAL_THROW(failure_error, a); }
 
+  /* nice memory leak in this function ...
+     fix that oneday, very ugly */
   inline char* substr(const char* S, int pos, int len) {
     int i;
     char *SubS;
@@ -276,8 +278,7 @@ namespace gmm {
     //   IOHBTerminate("Insufficient memory for mat_typen");
     
     if ( (in_file = fopen( filename, "r")) == NULL ) {
-      fprintf(stderr,"Error: Cannot open file: %s\n",filename);
-      return 0;
+      DAL_THROW(dal::failure_error,"Error: Cannot open file: "<<filename);
     }
     
     readHB_header(in_file, Title, Key, Type/*mat_type*/, &Nrow, &Ncol, &Nnzero, Nrhs,
@@ -330,8 +331,7 @@ namespace gmm {
     char line[BUFSIZ];
     
     if ( (in_file = fopen( filename, "r")) == NULL ) {
-      fprintf(stderr,"Error: Cannot open file: %s\n",filename);
-      return 0;
+      DAL_THROW(dal::failure_error, "Error: Cannot open file:"  << filename);
     }
     memset(Type, 0, sizeof Type);
     readHB_header(in_file, Title, Key, Type, &Nrow, &Ncol, &Nnzero, &Nrhs,
@@ -475,10 +475,8 @@ namespace gmm {
       { nvalentries = nz; nrhsentries = M; }
     
     if ( filename != NULL ) {
-      if ( (out_file = fopen( filename, "w")) == NULL ) {
-	fprintf(stderr,"Error: Cannot open file: %s\n",filename);
-	return 0;
-      }
+      if ( (out_file = fopen( filename, "w")) == NULL )
+	DAL_THROW(dal::failure_error,"Error: Cannot open file: " << filename);
     } else out_file = stdout;
     
     if ( Ptrfmt == NULL ) Ptrfmt = "(8I10)";
@@ -568,53 +566,11 @@ namespace gmm {
       
       if ( nvalentries % Valperline != 0 ) fprintf(out_file,"\n");
       
-      /*  If available,  print right hand sides, 
-	  guess vectors and exact solution vectors:  */
-      // acount = 1;
-//       linemod = 0;
-//       if ( Nrhs > 0 ) {
-// 	for (i=0;i<Nrhs;i++) {
-//           for ( j=0;j<nrhsentries;j++ ) {
-//             fprintf(out_file,rformat,rhs[j]);
-//             if ( acount++%Rhsperline == linemod ) fprintf(out_file,"\n");
-//           }
-//           if ( acount%Rhsperline != linemod ) {
-//             fprintf(out_file,"\n");
-//             linemod = (acount-1)%Rhsperline;
-//           }
-//           rhs += nrhsentries;
-//           if ( Rhstype[1] == 'G' ) {
-//             for ( j=0;j<nrhsentries;j++ ) {
-//               fprintf(out_file,rformat,guess[j]);
-//               if ( acount++%Rhsperline == linemod ) fprintf(out_file,"\n");
-//             }
-//             if ( acount%Rhsperline != linemod ) {
-//               fprintf(out_file,"\n");
-//               linemod = (acount-1)%Rhsperline;
-//             }
-//             guess += nrhsentries;
-//           }
-//           if ( Rhstype[2] == 'X' ) {
-//             for ( j=0;j<nrhsentries;j++ ) {
-//               fprintf(out_file,rformat,exact[j]);
-//               if ( acount++%Rhsperline == linemod ) fprintf(out_file,"\n");
-//             }
-//             if ( acount%Rhsperline != linemod ) {
-//               fprintf(out_file,"\n");
-//               linemod = (acount-1)%Rhsperline;
-//             }
-//             exact += nrhsentries;
-//           }
-// 	}
-//       }
-      
     }
     
-    if ( fclose(out_file) != 0){
-      fprintf(stderr,"Error closing file in writeHB_mat_double().\n");
-      return 0;
+    if ( fclose(out_file) != 0) {
+      DAL_THROW(dal::failure_error,"Error closing file in writeHB_mat_double().");
     } else return 1;
-    
   }
 
   // not securized, to be used with "double" or "std::complex<double>"
@@ -647,27 +603,22 @@ namespace gmm {
 
     if (A.pr) { delete[] A.pr; delete[] A.ir; delete[] A.jc; }
     A.nc = N; A.nr = M;
-    A.jc = new size_type[N+1];
-    A.ir = new size_type[nonzeros];
-    if (!(A.jc) || !(A.ir))
-      DAL_THROW(failure_error, "Insufficient memory for rowind.\n");
-    
+    std::auto_ptr<size_type> jc(new size_type[N+1]);
+    std::auto_ptr<size_type> ir(new size_type[nonzeros]);
+    std::auto_ptr<double> pr;
     if ((__is_complex_double(T()) && (Type[0] == 'R' || Type[0] == 'P')) ||
 	(!__is_complex_double(T()) && (Type[0] == 'C' || Type[0] == 'P')))
       DAL_THROW(failure_error, "Bad matrix format");
 
     if (Type[0] == 'C') {
-      A.pr = new double[2*nonzeros];
-      if (!(A.pr)) DAL_THROW(failure_error, "Insufficient memory for val.\n");
-      
+      pr.reset(new double[2*nonzeros]);
     } else {
       if (Type[0] != 'P') { 
-	A.pr = new double[nonzeros];
-	if (!(A.pr))
-	  DAL_THROW(failure_error, "Insufficient memory for val.\n");
+	pr.reset(new double[nonzeros]);
       }
     }
-    readHB_mat_double(filename, A.jc, A.ir, (double *)(A.pr));
+    readHB_mat_double(filename, jc.get(), ir.get(), pr.get());
+    A.jc = jc.release(); A.ir = ir.release(); A.pr = pr.release();
     for (i = 0; i <= N; ++i)       { A.jc[i] += shift; A.jc[i] -= 1; }
     for (i = 0; i < nonzeros; ++i) { A.ir[i] += shift; A.ir[i] -= 1; }
   }
@@ -1027,19 +978,17 @@ typedef char MM_typecode[4];
 
     size_type nnz = A.jc[mat_ncols(A)];
 
-    int *I = new int[nnz], *J = new int[nnz];
+    std::auto_ptr<int> I(new int[nnz]), J(new int[nnz]);
     for (size_type j=0; j < mat_ncols(A); ++j) {      
       for (size_type i = A.jc[j]; i < A.jc[j+1]; ++i) {
-	I[i] = A.ir[i] + 1 - shift;
-	J[i] = j + 1;
+	I.get()[i] = A.ir[i] + 1 - shift;
+	J.get()[i] = j + 1;
       }
     }
 
     mm_write_mtx_crd(filename, mat_nrows(A), mat_ncols(A),
-		     nnz, I, J,
+		     nnz, I.get(), J.get(),
 		     (double *)A.pr, t);
-
-    delete[] I; delete[] J;
   }
   
 
@@ -1097,15 +1046,12 @@ typedef char MM_typecode[4];
     A = Matrix(row, col);
     gmm::clear(A);
     
-    int *I = new int[nz], *J = new int[nz];
-    double *PR = new double[nz];
-    mm_read_mtx_crd_data(fin, row, col, nz, I, J, PR, matcode);
+    std::auto_ptr<int> I(new int[nz]), J(new int[nz]);
+    std::auto_ptr<double> PR(new double[nz]);
+    mm_read_mtx_crd_data(fin, row, col, nz, I.get(), J.get(), PR.get(), matcode);
 
-    for (size_type i = 0; i < size_type(nz); ++i) A(I[i]-1, J[i]-1) = PR[i];
-
-    delete[] I; delete[] J; delete[] PR;
+    for (size_type i = 0; i < size_type(nz); ++i) A(I.get()[i]-1, J.get()[i]-1) = PR.get()[i];
   }
-
 }
 
 
