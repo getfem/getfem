@@ -164,7 +164,8 @@ namespace getfem
     _plyint_mul_structure(ppoly_integration a, ppoly_integration b)
     {
       cv1 = a; cv2 = b;
-      cvs = convex_product_structure(cv1->structure(), cv2->structure());
+      cvs = bgeot::convex_product_structure(cv1->structure(),
+					    cv2->structure());
       int_face_monomials.resize(cvs->nb_faces());
     }
   };
@@ -501,7 +502,7 @@ namespace getfem
 
     a_int_pro_integration(papprox_integration a, papprox_integration b)
     {
-      cvr = convex_ref_product(a->ref_convex(), b->ref_convex());
+      cvr = bgeot::convex_ref_product(a->ref_convex(), b->ref_convex());
       size_type n1 = a->nb_points_on_convex();
       size_type n2 = b->nb_points_on_convex();
       bgeot::stored_point_tab int_points;

@@ -125,8 +125,8 @@ namespace getfem
       if (ind[k] == size_type(-1))
 	DAL_THROW(internal_error, "internal error.");
     }
-    size_type cv2 = __search_in_mjktab(convex_with_points(pmf2->linked_mesh(),
-							  npt, ind.begin()),
+    size_type cv2 = __search_in_mjktab(bgeot::convex_with_points
+				       (pmf2->linked_mesh(), npt, ind.begin()),
 				       npt, pmf2->linked_mesh());
     size_type cv1_old = size_type(-1), cv1;
     std::fill(M.begin(), M.end(), 0.0);
