@@ -197,27 +197,28 @@ if ($systeme =~ /Linux/)
 {
   print "\n\n No Documentation compilation.\n";
   print "\n\n Making links.\n";
+  
 }
 else
 {
-  print "\n\n Documentation compilation.\n";
+  # print "\n\n Documentation compilation.\n";
   # print `cd doc; make;`;
   print "\n\n Making links.\n";
-  print `cd ..; mkdir -p doc; cd doc; ln -sf ../getfem++/doc/basic_doc_getfem++/basic_doc.ps .`;
-  print `cd ../doc; ln -sf ../getfem++/doc/guide_intervention/guide_intervention.ps .`;
-  print `cd ../doc; ln -sf ../getfem++/doc/doc++-doc.ps .`;
-  print `cd ../doc; ln -sf ../getfem++/doc/cvs-doc.ps .`;
-  print `cd ../lib; rm -f *.m; ln -sf ../getfem++/matlabcom/*.m`;
+  # print `cd ..; mkdir -p doc; cd doc; ln -sf ../getfem++/doc/basic_doc_getfem++/basic_doc.ps .`;
+  # print `cd ../doc; ln -sf ../getfem++/doc/guide_intervention/guide_intervention.ps .`;
+  # print `cd ../doc; ln -sf ../getfem++/doc/doc++-doc.ps .`;
+  # print `cd ../doc; ln -sf ../getfem++/doc/cvs-doc.ps .`;
   
-  open F1, "doc/basic_doc_getfem++/html/index.html" or die;
-  open F2, ">../doc/basic_doc.html" or die;
-  while ($ligne = <F1>)
-  {
-    $ligne =~ s/HREF\=\"/HREF\=\"..\/getfem++\/doc\/html\/basic_doc_getfem++\//g;
-    print F2 $ligne;
-  }
-  close F1; close F2; 
+  # open F1, "doc/basic_doc_getfem++/html/index.html" or die;
+  # open F2, ">../doc/basic_doc.html" or die;
+  # while ($ligne = <F1>)
+  # {
+  #   $ligne =~ s/HREF\=\"/HREF\=\"..\/getfem++\/doc\/html\/basic_doc_getfem++\//g;
+  #   print F2 $ligne;
+  # }
+  # close F1; close F2; 
 }
 
+print `cd ../lib; rm -f *.m; ln -sf ../getfem++/matlabcom/*.m`;
 print `cd ..; mkdir -p include; cd include; ln -sf ../getfem++/include/*.h .`;
 print `cd ..; mkdir -p lib; cd lib; ln -sf ../getfem++/sources/*.a .`;
