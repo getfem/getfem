@@ -103,6 +103,8 @@ namespace gmm
       _base_type;
     typedef typename _base_type::tas_iterator tas_iterator;
     typedef typename _base_type::const_tas_iterator const_tas_iterator;
+    typedef typename _base_type::sorted_iterator sorted_iterator;
+    typedef typename _base_type::const_sorted_iterator const_sorted_iterator;
     typedef typename _base_type::size_type size_type;
     typedef T value_type;
 

@@ -1,3 +1,4 @@
+
 /* -*- c++ -*- (enables emacs c++ mode)                                    */
 /* *********************************************************************** */
 /*                                                                         */
@@ -41,11 +42,11 @@ namespace gmm
   struct identity_matrix {};
 
   template <class V1, class V2> inline
-  void mult(identity_matrix, const V1 &v1, V2 &v2) { copy(v1, v2); }
+  void mult(const identity_matrix&, const V1 &v1, V2 &v2) { copy(v1, v2); }
   template <class V1, class V2> inline
-  void mult(identity_matrix, const V1 &v1, const V2 &v2) { copy(v1, v2); }
+  void mult(const identity_matrix&, const V1 &v1, const V2 &v2) { copy(v1, v2); }
   template <class V1, class V2, class V3> inline
-  void mult(identity_matrix, const V1 &v1, const V2 &v2, V3 &v3)
+  void mult(const identity_matrix&, const V1 &v1, const V2 &v2, V3 &v3)
   { add(v1, v2, v3); }
   template <class V1, class V2, class V3> inline
   void mult(const identity_matrix&, const V1 &v1, const V2 &v2, const V3 &v3)
@@ -88,7 +89,8 @@ namespace gmm
     { return li[l][c]; }
 
     void clear_row(size_type i) { clear(li[i]); }
-    void clear() { for (size_type i=0; i < nrows(); ++i) clear_row(i); }
+    void clear_mat() { for (size_type i=0; i < nrows(); ++i) clear_row(i); }
+    void resize(size_type i) { li.resize(i); }
     
     V& row(size_type i) { return li[i]; }
     const V& row(size_type i) const { return li[i]; }
@@ -117,7 +119,7 @@ namespace gmm
     sub_row_type row(this_type &m, size_type i) 
     { return sub_row_type(m.row(i)); }
     const void* origin(const this_type &m) { return &m; }
-    void do_clear(this_type &m) { m.clear(); }
+    void do_clear(this_type &m) { m.clear_mat(); }
   };
 
   /* ******************************************************************** */
@@ -143,7 +145,8 @@ namespace gmm
 
     void clear_col(size_type i) { clear(li[i]); }
     void clear() { for (size_type i=0; i < ncols(); ++i) clear_col(i); }
-    
+    void resize(size_type i) { li.resize(i); }
+
     V& col(size_type i) { return li[i]; }
     const V& col(size_type i) const { return li[i]; }
     

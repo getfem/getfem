@@ -51,22 +51,6 @@ namespace gmm {
     std::vector< std::vector<value_type> > *fi;
   };
 
-//   template <class Matrix1, class Matrix2, class Matrix3, class Vector1>
-//     struct linalg_traits<schwarz_additif_matrix<Matrix1,
-//     Matrix2, Matrix3, Vector1> > {
-//     typedef schwarz_additif_matrix<Matrix1,
-//       Matrix2, Matrix3, Vector1> this_type;
-//     typedef linalg_false is_reference;
-//     typedef abstract_matrix linalg_type;
-//     typedef typename linalg_traits<Vector1>::value_type value_type;
-//     typedef value_type reference_type;
-//     typedef abstract_indirect storage_type;
-//     typedef abstract_null_type sub_orientation;
-//     size_type nrows(const this_type &m) { return mat_nrows(*(m.A)); }
-//     size_type ncols(const this_type &m) { return mat_ncols(*(m.A)); }
-//     const void* origin(const this_type &v) { return &v; }
-//   };
-
   template <class Matrix1, class Matrix2, class Matrix3,
     class Vector1, class Vector2, class Vector3>
   void schwarz_additif(const Matrix1 &A,
@@ -104,7 +88,7 @@ namespace gmm {
     SAM.A = &A; SAM.ml1 = &ml1; SAM.ml2 = &ml2; SAM.cor = &cor;
     SAM.itemax = itemax; SAM.residu = residu; SAM.noisy = noisy;
     SAM.gi = &gi; SAM.fi = &fi;
-    cg(SAM,  u, g,  itemax, residu, noisy - 1);
+    cg(SAM, u, g, A, identity_matrix(), itemax, residu, noisy - 1);
   }
 
   
@@ -153,7 +137,8 @@ namespace gmm {
 		  const std::vector<Vector1> &cor) {
     for (int i = 0; i < fi.size(); ++i) {
       typename Vector1::const_iterator it = cor[i].begin(), ite = cor[i].end();
-      typename std::vector<T>::iterator it2 = fi[i].begin(), ite2 = fi[i].end();
+      typename std::vector<T>::iterator it2 = fi[i].begin(),
+	ite2 = fi[i].end();
       for (; it != ite; ++it, ++it2) *it2 = f[*it]; 
     }
   }
@@ -164,7 +149,8 @@ namespace gmm {
     clear(f);
     for (int i = 0; i < fi.size(); ++i) {
       typename Vector1::const_iterator it = cor[i].begin(), ite = cor[i].end();
-      typename std::vector<T>::const_iterator it2=fi[i].begin(), ite2=fi[i].end();
+      typename std::vector<T>::const_iterator it2=fi[i].begin(),
+	ite2=fi[i].end();
       for (; it != ite; ++it, ++it2) f[*it] += *it2; 
     }
   }
