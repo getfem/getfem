@@ -19,7 +19,7 @@ print TMPF "LX = 1.0\n";
 print TMPF "LY = 1.0\n";
 print TMPF "LZ = 1.0\n";
 print TMPF "INCLINE = 0.0\n";
-print TMPF "FT = 30.0\n";
+print TMPF "FT = 3.0\n";
 print TMPF "MESH_TYPE = 0;\n";
 print TMPF "K = 1;\n";
 print TMPF "KI = 1;\n";
@@ -56,10 +56,10 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
 }
 
 
-
-$NDDLMAX = 41600;
+$NDDLMAX = 10400;
 $PAUSE = 0;
-$SKIP = 2;
+$SKIP = 0;
+$FT = 10.0;
 
 ##########################################################################
 print "   TESTS EN DIMENSION 1, ET ELEMENTS PK                         \n";
@@ -68,7 +68,7 @@ $FEM_TYPE = 0;
 $INTE = 0;
 while ($INTE < 3 && $SKIP < 1) {
 open(RES, ">$tmp_res");
-$K = 1; $N = 1; $FT = 1.0; $NX = 1;
+$K = 1; $N = 1;  $NX = 1;
 while ($NX**$N <= $NDDLMAX) {
   $K = 1;
   print "Test for NX = $NX \t"; print RES $NX**$N;
@@ -118,7 +118,7 @@ $FEM_TYPE = 2;
 $INTE = 0;
 while ($INTE < 3 && $SKIP < 2) {
 open(RES, ">$tmp_res");
-$K = 1; $N = 1; $FT = 1.0; $NX = 1;
+$K = 1; $N = 1; $NX = 1;
 while ($NX**$N <= $NDDLMAX) {
   $K = 1;
   print "Test for NX = $NX \t"; print RES $NX**$N;
@@ -163,15 +163,16 @@ $INTE += 1;
 ##########################################################################
 print "   TESTS EN DIMENSION 2, ET ELEMENTS PK                         \n";
 ##########################################################################
+$NDDLMAX = 41600; $FT = 0.1;
 $FEM_TYPE = 0;
 $INTE = 0;
 while ($INTE < 2 && $SKIP < 3) {
 open(RES, ">$tmp_res");
-$K = 1; $N = 2; $FT = 1.0; $NX = 1;
+$K = 1; $N = 2; $NX = 1;
 while ($NX**$N <= $NDDLMAX) {
   $K = 1;
   print "Test for NX = $NX \t"; print RES $NX**$N;
-  while ((($K * $NX)**$N) * $K <= 4*$NDDLMAX && $K <= 9) {
+  while ((($K * $NX)**$N) * $K <= 2*$NDDLMAX && $K <= 9) {
     start_program("-d N=$N -d NX=$NX -d K=$K -d FT=$FT -d INTEGRATION=$INTE -d FEM_TYPE=$FEM_TYPE");
     print RES "$linferror "; print ".";
     ++$K;
@@ -221,7 +222,7 @@ $K = 1; $N = 2; $FT = 1.0; $NX = 1;
 while ($NX**$N <= $NDDLMAX) {
   $K = 1;
   print "Test for NX = $NX \t"; print RES $NX**$N;
-  while ((($K * $NX)**$N) * $K <= 4*$NDDLMAX && $K <= 9) {
+  while ((($K * $NX)**$N) * $K <= 2*$NDDLMAX && $K <= 9) {
     start_program("-d N=$N -d NX=$NX -d K=$K -d FT=$FT -d INTEGRATION=$INTE -d FEM_TYPE=$FEM_TYPE");
     print RES "$linferror "; print ".";
     ++$K;
