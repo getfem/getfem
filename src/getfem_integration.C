@@ -216,7 +216,7 @@ namespace getfem
 
     std::stringstream name;
     name << "IM_PRODUCT(IM_EXACT_SIMPLEX(" << n-1
-	 << "),IM_EXACT_SIMPLEX(1)";
+	 << "),IM_EXACT_SIMPLEX(1))";
     return int_method_descriptor(name.str());
   }
 
