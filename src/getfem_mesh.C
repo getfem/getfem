@@ -48,21 +48,14 @@ namespace getfem {
     
     bool present;
     size_type i = pts.add_norepeat(pt, false, &present);
-    if (!present) lmsg_sender().send(MESH_ADD_POINT(i));
     return i;
   }
 
-  void getfem_mesh::sup_point(size_type i) {
-    if (!point_is_valid(i))
-    { pts.sup(i); lmsg_sender().send(MESH_SUP_POINT(i)); }
-  }
+  void getfem_mesh::sup_point(size_type i)
+  { if (!point_is_valid(i)) pts.sup(i); }
 
-  void getfem_mesh::swap_points(size_type i, size_type j) {
-    if (i != j) {
-      bgeot::mesh<base_node>::swap_points(i,j);
-      lmsg_sender().send(MESH_SWAP_POINT(i, j));
-    }	 
-  }
+  void getfem_mesh::swap_points(size_type i, size_type j)
+  { if (i != j) bgeot::mesh<base_node>::swap_points(i,j); }
 
   void getfem_mesh::optimize_structure() {
     size_type i, j;
@@ -101,7 +94,7 @@ namespace getfem {
   void getfem_mesh::clear(void) { 
     bgeot::mesh<base_node>::clear();
     gtab.clear(); trans_exists.clear();
-    lmsg_sender().send(MESH_CLEAR());
+    lmsg_sender().send(MESH_CLEAR()); touch();
   }
 
   size_type getfem_mesh::add_segment(size_type a, size_type b) { 
@@ -136,7 +129,7 @@ namespace getfem {
   void getfem_mesh::sup_convex(size_type ic) {
     bgeot::mesh<base_node>::sup_convex(ic);
     trans_exists[ic] = false;
-    lmsg_sender().send(MESH_SUP_CONVEX(ic));
+    lmsg_sender().send(MESH_SUP_CONVEX(ic)); touch();
   }
 
   void getfem_mesh::swap_convex(size_type i, size_type j) {
@@ -144,7 +137,7 @@ namespace getfem {
       bgeot::mesh<base_node>::swap_convex(i,j);
       trans_exists.swap(i, j);
       gtab.swap(i,j);
-      lmsg_sender().send(MESH_SWAP_CONVEX(i, j));
+      lmsg_sender().send(MESH_SWAP_CONVEX(i, j)); touch();
     }
   }
 
@@ -327,8 +320,6 @@ namespace getfem {
       size_type i = add_convex(cv[ic].cstruct, cv_pt.begin() + cv[ic].pts);
       if (i != ic) swap_convex(i, ic);
     }
-
-    lmsg_sender().send(MESH_READ_FROM_FILE(ist));
   }
 
   void getfem_mesh::read_from_file(const std::string &name) { 
@@ -378,7 +369,6 @@ namespace getfem {
     write_convex_to_file_(*this, ost, convex_tab.tas_begin(),
 			              convex_tab.tas_end());
     ost << '\n' << "END MESH STRUCTURE DESCRIPTION" << '\n';
-    lmsg_sender().send(MESH_WRITE_TO_FILE(ost));
   }
 
   void getfem_mesh::write_to_file(const std::string &name) const {

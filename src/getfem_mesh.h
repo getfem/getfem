@@ -51,24 +51,6 @@ namespace getfem {
   { operator int(void) const { return 0; } };
   struct MESH_DELETE  /* clear message for the structure.                  */
   { operator int(void) const { return 1; } };
-  struct MESH_ADD_POINT { /* point addition message.                       */ 
-    size_t ipt;
-    operator int(void) const { return 2; }
-    MESH_ADD_POINT(size_t i) { ipt = i; }
-    MESH_ADD_POINT(void) {}
-  };
-  struct MESH_SUP_POINT { 
-    size_t ipt;
-    operator int(void) const { return 3; }
-    MESH_SUP_POINT(size_t i) { ipt = i; }
-    MESH_SUP_POINT(void) {}
-  };
-  struct MESH_SWAP_POINT { 
-    size_t ipt1, ipt2;
-    operator int(void) const { return 4; }
-    MESH_SWAP_POINT(size_t i, size_t j) { ipt1 = i; ipt2 = j; }
-    MESH_SWAP_POINT(void) {}
-  };
   struct MESH_ADD_CONVEX { 
     size_t icv;
     operator int(void) const { return 5; }
@@ -87,55 +69,6 @@ namespace getfem {
     MESH_SWAP_CONVEX(size_t i, size_t j) { icv1 = i; icv2 = j; }
     MESH_SWAP_CONVEX(void) {}
   };
-  struct MESH_REFINE_CONVEX { 
-    size_t icv, nb;
-    size_t *alist;
-    int mtype;
-    operator int(void) const { return 8; }
-    MESH_REFINE_CONVEX(size_t i, size_t n, size_t *l, int m)
-    { icv = i; nb = n; alist = l; mtype = m; }
-    MESH_REFINE_CONVEX(void) {}
-  };
-  struct MESH_UNREFINE_CONVEX { 
-    size_t icv, nb;
-    size_t *alist;
-    int mtype;
-    operator int(void) const { return 9; }
-    MESH_UNREFINE_CONVEX(size_t i, size_t n, size_t *l, int m)
-    { icv = i; nb = n; alist = l; mtype = m; }
-    MESH_UNREFINE_CONVEX(void) {}
-  };
-  struct MESH_WRITE_TO_FILE { 
-    std::ostream *ost;
-    operator int(void) const { return 10; }
-    MESH_WRITE_TO_FILE(std::ostream &o) { ost = &o; }
-    MESH_WRITE_TO_FILE(void) {}
-  };
-  struct MESH_READ_FROM_FILE { 
-    std::istream *ist;
-    operator int(void)  const { return 11; }
-    MESH_READ_FROM_FILE(std::istream &i) { ist = &i; }
-    MESH_READ_FROM_FILE(void) {}
-  };
-  struct MESH_FEM_CHANGE { 
-    void *ptr;
-    operator int(void)  const { return 12; }
-    MESH_FEM_CHANGE(void *p) : ptr(p) {}
-    MESH_FEM_CHANGE(void) {}
-  };
-  struct MESH_FEM_DELETE { 
-    void *ptr;
-    operator int(void)  const { return 13; }
-    MESH_FEM_DELETE(void *p) : ptr(p) {}
-    MESH_FEM_DELETE(void) {}
-  };
-  struct MESH_FEM_TOUCH { 
-    void *ptr;
-    operator int(void)  const { return 14; }
-    MESH_FEM_TOUCH(void *p) : ptr(p) {}
-    MESH_FEM_TOUCH(void) {}
-  };
-
 
   class getfem_mesh_receiver : public lmsg::virtual_linkmsg_receiver
   {
@@ -145,31 +78,11 @@ namespace getfem {
       { DAL_THROW(internal_error, "internal error");}
       virtual void receipt(const MESH_DELETE          &)
       { DAL_THROW(internal_error, "internal error");}
-      virtual void receipt(const MESH_ADD_POINT       &) 
-      { DAL_THROW(internal_error, "internal error");}
-      virtual void receipt(const MESH_SUP_POINT       &) 
-      { DAL_THROW(internal_error, "internal error");}
-      virtual void receipt(const MESH_SWAP_POINT      &) 
-      { DAL_THROW(internal_error, "internal error");}
       virtual void receipt(const MESH_ADD_CONVEX      &) 
       { DAL_THROW(internal_error, "internal error");}
       virtual void receipt(const MESH_SUP_CONVEX      &) 
       { DAL_THROW(internal_error, "internal error");}
       virtual void receipt(const MESH_SWAP_CONVEX     &)
-      { DAL_THROW(internal_error, "internal error");}
-      virtual void receipt(const MESH_REFINE_CONVEX   &) 
-      { DAL_THROW(internal_error, "internal error");}
-      virtual void receipt(const MESH_UNREFINE_CONVEX &) 
-      { DAL_THROW(internal_error, "internal error");}
-      virtual void receipt(const MESH_WRITE_TO_FILE   &) 
-      { DAL_THROW(internal_error, "internal error");}
-      virtual void receipt(const MESH_READ_FROM_FILE  &) 
-      { DAL_THROW(internal_error, "internal error");}
-      virtual void receipt(const MESH_FEM_CHANGE      &) 
-      { DAL_THROW(internal_error, "internal error");}
-      virtual void receipt(const MESH_FEM_DELETE      &) 
-      { DAL_THROW(internal_error, "internal error");}
-      virtual void receipt(const MESH_FEM_TOUCH       &) 
       { DAL_THROW(internal_error, "internal error");}
 
       virtual ~getfem_mesh_receiver() {}
@@ -253,7 +166,7 @@ namespace getfem {
 	size_type i = bgeot::mesh<base_node>::add_convex(pgt->structure(),
 							 ipts, &present);
 	gtab[i] = pgt; trans_exists[i] = true;
-	if (!present) lmsg_sender().send(MESH_ADD_CONVEX(i));
+	if (!present) { lmsg_sender().send(MESH_ADD_CONVEX(i)); touch(); }
 	return i;
       }
 

@@ -111,6 +111,7 @@ namespace getfem
   void mesh_fem::sup_boundaries_of_convex(size_type c) {
     for (dal::bv_visitor i(valid_boundaries); !i.finished(); ++i)
       boundaries[i].sup_convex(c);
+    touch();
   }
   
   void mesh_fem::swap_boundaries_convex(size_type c1, size_type c2) {
@@ -139,7 +140,6 @@ namespace getfem
   void mesh_fem::receipt(const MESH_CLEAR &) { clear(); }
   void mesh_fem::receipt(const MESH_DELETE &) {
     clear(); is_valid = false;
-    linked_mesh().lmsg_sender().send(MESH_FEM_DELETE((void *)(this)));
     sup_sender(linked_mesh_->lmsg_sender());
   }
   void mesh_fem::receipt(const MESH_SUP_CONVEX &m) { 
@@ -152,27 +152,13 @@ namespace getfem
     f_elems.swap(m.icv1, m.icv2);
     swap_boundaries_convex(m.icv1, m.icv2);
   }
-  void mesh_fem::receipt(const MESH_REFINE_CONVEX &) { 
-    // ajouter la strategie au rafinement / derafinement
-    DAL_THROW(internal_error, "internal error");
-  }
-  void mesh_fem::receipt(const MESH_UNREFINE_CONVEX &) { 
-    // ajouter la strategie au rafinement / derafinement
-    DAL_THROW(internal_error, "internal error");
-  }
-  void mesh_fem::receipt(const MESH_FEM_TOUCH &m) {
-    if (m.ptr == (void *)(this)) { 
-      dof_enumeration_made = false;
-      linked_mesh().lmsg_sender().send(MESH_FEM_CHANGE((void *)(this)));
-    }
-  }
    
   void mesh_fem::set_finite_element(size_type cv, pintfem pif) {
     if (pif == NULL || pif->pf == NULL ) {
       if (fe_convex.is_in(cv)) {
 	fe_convex.sup(cv);
 	dof_enumeration_made = false;
-	linked_mesh().lmsg_sender().send(MESH_FEM_CHANGE((void *)(this)));
+	touch();
       }
     }
     else {
@@ -186,7 +172,7 @@ namespace getfem
 	fe_convex.add(cv);
 	f_elems[cv] = pif;
 	dof_enumeration_made = false;  
-	linked_mesh().lmsg_sender().send(MESH_FEM_CHANGE((void *)(this)));
+	touch();
       }
     }
   }
@@ -443,7 +429,7 @@ namespace getfem
   void mesh_fem::clear(void) {
     fe_convex.clear();
     dof_enumeration_made = false;
-    linked_mesh().lmsg_sender().send(MESH_FEM_CHANGE((void *)(this)));
+    touch();
     dof_structure.clear();
     boundaries.clear();
     valid_boundaries.clear();
@@ -454,17 +440,11 @@ namespace getfem
  
     add_sender(me.lmsg_sender(), *this,
 	   lmsg::mask(MESH_CLEAR()) | lmsg::mask(MESH_SUP_CONVEX()) |
-	   lmsg::mask(MESH_SWAP_CONVEX()) | lmsg::mask(MESH_REFINE_CONVEX()) |
-           lmsg::mask(MESH_UNREFINE_CONVEX()) | lmsg::mask(MESH_FEM_TOUCH()) |
-	       lmsg::mask(MESH_DELETE()));
+	   lmsg::mask(MESH_SWAP_CONVEX()) | lmsg::mask(MESH_DELETE()));
     is_valid = true;
   }
 
-  mesh_fem::~mesh_fem() {
-    if (is_valid) {
-      linked_mesh().lmsg_sender().send(MESH_FEM_DELETE((void *)(this)));
-    }
-  }
+  mesh_fem::~mesh_fem() {}
 
 
   void mesh_fem::read_from_file(std::istream &ist) {
@@ -526,7 +506,7 @@ namespace getfem
 	} else if (!strcmp(tmp,"DOF_ENUMERATION")) {
 	  //cerr << "begin dof enumeration" << '\n';
 	  dal::bit_vector doflst;
-	  dof_structure.clear(); dof_enumeration_made = false;
+	  dof_structure.clear(); dof_enumeration_made = false; touch();
 	  while (true) {
 	    ftool::get_token(ist, tmp, 1023);
 	    if (strcmp(tmp, "END")==0) { 
@@ -556,6 +536,7 @@ namespace getfem
 	  } 
 	  dof_read = true;
 	  this->dof_enumeration_made = true;
+	  touch();
 	  this->nb_total_dof = doflst.card();
 	  ist >> ftool::skip("DOF_ENUMERATION");
 	} else if (strlen(tmp))

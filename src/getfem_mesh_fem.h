@@ -226,7 +226,7 @@ namespace getfem
 
     dim_type get_qdim() const { return Qdim; }
     void     set_qdim(dim_type q) { if (q != Qdim) 
-      { Qdim = q; dof_enumeration_made = false; }}
+      { Qdim = q; dof_enumeration_made = false; touch(); }}
 
     void set_finite_element(size_type cv, pintfem pif);
     /** Set on the convex of index i the finite element method
@@ -331,7 +331,7 @@ namespace getfem
     
     /// Add to the boundary b the face f of the element i.
     void add_boundary_elt(size_type b, size_type c, short_type f)
-      { valid_boundaries.add(b); boundaries[b].add_elt(c, f); }
+      { valid_boundaries.add(b); boundaries[b].add_elt(c, f); touch(); }
     /// Says whether or not element i is on the boundary b. 
     bool is_convex_on_boundary(size_type c, size_type b) const
       { return (valid_boundaries[b] && boundaries[b].cvindex[c]); }
@@ -345,9 +345,9 @@ namespace getfem
     
     void sup_boundaries_of_convex(size_type c);
     void sup_boundary_elt(size_type b, size_type c, short_type f)
-      { if (valid_boundaries[b]) boundaries[b].sup_elt(c,f); }
+      { if (valid_boundaries[b]) boundaries[b].sup_elt(c,f); touch(); }
     void sup_boundary(size_type b)
-      { valid_boundaries.sup(b); boundaries[b].clear(); }
+      { valid_boundaries.sup(b); boundaries[b].clear(); touch(); }
     void swap_boundaries_convex(size_type c1, size_type c2);
 
     /* explicit calls to parent class 
@@ -356,19 +356,9 @@ namespace getfem
     */
     void receipt(const MESH_CLEAR &);
     void receipt(const MESH_DELETE &);
-    void receipt(const MESH_ADD_POINT &m) { getfem_mesh_receiver::receipt(m); }
-    void receipt(const MESH_SUP_POINT &m) { getfem_mesh_receiver::receipt(m); }
-    void receipt(const MESH_SWAP_POINT &m) { getfem_mesh_receiver::receipt(m); }
-    void receipt(const MESH_ADD_CONVEX &m) { getfem_mesh_receiver::receipt(m); }
+    void receipt(const MESH_ADD_CONVEX &m) {getfem_mesh_receiver::receipt(m); }
     void receipt(const MESH_SUP_CONVEX &m);
     void receipt(const MESH_SWAP_CONVEX &m);
-    void receipt(const MESH_REFINE_CONVEX &m);
-    void receipt(const MESH_UNREFINE_CONVEX &m);
-    void receipt(const MESH_WRITE_TO_FILE &m) { getfem_mesh_receiver::receipt(m); }
-    void receipt(const MESH_READ_FROM_FILE &m) { getfem_mesh_receiver::receipt(m); }
-    void receipt(const MESH_FEM_CHANGE &m) { getfem_mesh_receiver::receipt(m); }
-    void receipt(const MESH_FEM_DELETE &m) { getfem_mesh_receiver::receipt(m); }
-    void receipt(const MESH_FEM_TOUCH &m);
     
     size_type memsize() const {
       return dof_structure.memsize() + 

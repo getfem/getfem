@@ -34,6 +34,8 @@
 #include <bgeot_geotrans_inv.h>
 
 /* Inefficient, to be done again as real conf. elements                    */
+/* A refaire, l'élément fini n'est plus supprimé en cas de suppression des */
+/* mesh-fems.                                                              */
 
 namespace getfem
 {
@@ -48,7 +50,7 @@ namespace getfem
     mesh_fem_link_fem_light(void) : pmf1(0), pmf2(0) {}
   };
 
-  class mesh_fem_link_fem : public getfem_mesh_receiver {
+  class mesh_fem_link_fem : public context_dependencies {
  
   protected :
 
@@ -78,33 +80,11 @@ namespace getfem
 
     mesh_fem &mf_interpolated(void) { return *pmf1; }
     mesh_fem &mf_target(void) { return *pmf2; }
-    void receipt(const MESH_ADD_POINT       &m) 
-    { getfem_mesh_receiver::receipt(m); }
-    void receipt(const MESH_SUP_POINT       &m) 
-    { getfem_mesh_receiver::receipt(m); }
-    void receipt(const MESH_SWAP_POINT      &m) 
-    { getfem_mesh_receiver::receipt(m); }
-    void receipt(const MESH_ADD_CONVEX      &m) 
-    { getfem_mesh_receiver::receipt(m); }
-    void receipt(const MESH_WRITE_TO_FILE   &m) 
-    { getfem_mesh_receiver::receipt(m); }
-    void receipt(const MESH_READ_FROM_FILE  &m) 
-    { getfem_mesh_receiver::receipt(m); }
-    void receipt(const MESH_FEM_TOUCH       &m) 
-    { getfem_mesh_receiver::receipt(m); }
-    void receipt(const MESH_CLEAR           &);
-    void receipt(const MESH_DELETE          &);
-    void receipt(const MESH_SUP_CONVEX      &m);
-    void receipt(const MESH_SWAP_CONVEX     &m);
-    void receipt(const MESH_REFINE_CONVEX   &m);
-    void receipt(const MESH_UNREFINE_CONVEX &m);
-    void receipt(const MESH_FEM_DELETE      &m);
-    void receipt(const MESH_FEM_CHANGE      &m);
 
     size_type nb_max_dof_per_element(void);
 
     size_type ind_of_dof(size_type cv, size_type i) {
-      if (to_be_computed) compute();
+      if (to_be_computed || context_changed()) compute();
       if (i >= cv_info_tab[cv].doftab.size())
 	return 0;
       else
@@ -129,7 +109,7 @@ namespace getfem
   
   void mesh_fem_link_fem::mat_trans(base_matrix &M, const base_matrix &G,
 				    bgeot::pgeometric_trans, bool wg) {
-    if (to_be_computed) compute();
+    if (to_be_computed || context_changed()) compute();
     size_type npt = G.ncols(), P = G.nrows();
     base_node pt(P);
     base_vector coeff, val(1);
@@ -201,7 +181,7 @@ namespace getfem
   }
 
   size_type mesh_fem_link_fem::nb_max_dof_per_element(void) {
-    if (to_be_computed) compute();
+    if (to_be_computed || context_changed()) compute();
     return max_dof;
   }
     
@@ -261,48 +241,11 @@ namespace getfem
     }
     to_be_computed = false;
   }
- 
-  void mesh_fem_link_fem::receipt(const MESH_CLEAR &)
-    { to_be_computed = true; }
-  void mesh_fem_link_fem::receipt(const MESH_SUP_CONVEX &)
-    { to_be_computed = true; }
-  void mesh_fem_link_fem::receipt(const MESH_SWAP_CONVEX &)
-    { to_be_computed = true; }
-  void mesh_fem_link_fem::receipt(const MESH_REFINE_CONVEX &) {
-    // ajouter la strategie au rafinement / derafinement
-    DAL_THROW(internal_error, "internal error");
-  }
-  void mesh_fem_link_fem::receipt(const MESH_UNREFINE_CONVEX &){
-    // ajouter la strategie au rafinement / derafinement
-    DAL_THROW(internal_error, "internal error");
-  }
-  void mesh_fem_link_fem::receipt(const MESH_FEM_CHANGE &m) {
-    if (m.ptr == (void *)(pmf1) || m.ptr == (void *)(pmf2))
-      to_be_computed = true;
-    if (m.ptr == (void *)(pmf1))
-      pmf2->linked_mesh().lmsg_sender().send(MESH_FEM_CHANGE((void *)(pmf2)));
-  }
   
   mesh_fem_link_fem::mesh_fem_link_fem(const mesh_fem_link_fem_light &ls)
     : pmf1(ls.pmf1), pmf2(ls.pmf2) { 
     to_be_computed = true;
-    add_sender(pmf1->linked_mesh().lmsg_sender(), *this,
-	       lmsg::mask(MESH_CLEAR()) | lmsg::mask(MESH_SUP_CONVEX()) |
-	       lmsg::mask(MESH_SWAP_CONVEX()) |
-	       lmsg::mask(MESH_REFINE_CONVEX()) |
-	       lmsg::mask(MESH_UNREFINE_CONVEX()) |
-	       lmsg::mask(MESH_FEM_CHANGE()) |
-	       lmsg::mask(MESH_DELETE()) |
-	       lmsg::mask(MESH_FEM_DELETE()));
-    if (&(pmf1->linked_mesh()) != &(pmf2->linked_mesh()))
-      add_sender(pmf2->linked_mesh().lmsg_sender(), *this,
-		 lmsg::mask(MESH_CLEAR()) | lmsg::mask(MESH_SUP_CONVEX()) |
-		 lmsg::mask(MESH_SWAP_CONVEX()) |
-		 lmsg::mask(MESH_REFINE_CONVEX()) |
-		 lmsg::mask(MESH_UNREFINE_CONVEX()) |
-		 lmsg::mask(MESH_FEM_CHANGE()) |
-		 lmsg::mask(MESH_DELETE()) |
-		 lmsg::mask(MESH_FEM_DELETE()));
+    add_dependency(*pmf1); add_dependency(*pmf2);
   }
   
   typedef mesh_fem_link_fem *pmesh_fem_link_fem;
@@ -326,14 +269,6 @@ namespace getfem
     if (mflf_tab != 0) {
       mflf_tab->sup(mesh_fem_link_fem_light(&mf1, &mf2));
     }
-  }
-
-  void mesh_fem_link_fem::receipt(const MESH_FEM_DELETE &) {
-    sup_mf_link_fem(*pmf1, *pmf2);
-  }
-
-  void mesh_fem_link_fem::receipt(const MESH_DELETE &) {
-    sup_mf_link_fem(*pmf1, *pmf2);
   }
 
   struct virtual_link_fem_light_ {
