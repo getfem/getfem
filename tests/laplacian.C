@@ -416,6 +416,7 @@ int main(int argc, char *argv[])
     cout.precision(16);
     cout << "L2 error = " << l2norm << endl
 	 << "H1 error = " << h1norm << endl;
+     
 
     getfem::save_solution(p.datafilename + ".dataelt", p.mef, p.U, 1, p.K);
   }
