@@ -406,7 +406,9 @@ void lap_pb::assemble(void)
     linalg_vector RR(nb_dof), RHaux(nb_dof);
 
     getfem::asm_dirichlet_constraints(HH, RR, mef, mef_data, ST, 0);
-    // gmm::clean(HH, 1e-15);
+    
+    // cout << "HH = " << HH  << endl;
+    gmm::clean(HH, 1e-15);
 
     int nbcols = getfem::Dirichlet_nullspace(HH, NN, RR, Ud);
     cerr << "Number of unknowns : " << nbcols << endl;
