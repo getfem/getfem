@@ -29,6 +29,9 @@ include_HEADERS = \
 	getfem_assembling.h \
 	getfem_config.h \
 	getfem_export.h \
+	getfem_precomp.h \
+	getfem_norm.h \
+	getfem_derivatives.h \
 	getfem_fem.h \
 	getfem_mat_elem.h \
 	getfem_mat_elem_type.h \
@@ -52,6 +55,7 @@ SRC = \
 	getfem_mat_elem.C \
 	getfem_mat_elem_type.C \
 	getfem_mesh.C \
+	getfem_precomp.C \
 	getfem_mesh_fem.C \
 	getfem_regular_meshes.C
 

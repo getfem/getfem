@@ -33,24 +33,6 @@
 
 namespace bgeot
 {
-  
-  void approx_integration::optimize(void)
-  { /* a verifier. */
-    size_type i = 0, j = 0, f;
-
-    for (f = 0; f <= cvs->nb_faces(); ++f)
-    { 
-      for (; i < repartition[f]; ++i)
-      {
-	if (dal::abs(int_coeffs[i]) > 1E-12)
-	{ int_coeffs[j] = int_coeffs[i]; int_points[j] = int_points[i]; ++j; }
-      }
-      repartition[f] = j;
-    }
-    int_coeffs.resize(j);
-    int_points.resize(j);
-  }
-  
 
   /* ********************************************************************* */
   /* method de Gauss.                                                      */
@@ -117,7 +99,7 @@ namespace bgeot
     {
       assert(nbpt > 0);
       cvs = simplex_structure(1);
-      int_points.resize(nbpt+2);
+      stored_point_tab int_points(nbpt+2);
       int_coeffs.resize(nbpt+2);
       repartition.resize(3);
       repartition[0] = nbpt; 
@@ -140,6 +122,7 @@ namespace bgeot
 
       int_points[nbpt+1].resize(1);
       int_points[nbpt+1][0] = 0.0; int_coeffs[nbpt+1] = 1.0;
+      pint_points = store_point_tab(int_points);
 
     }
   };
@@ -164,7 +147,7 @@ namespace bgeot
   }
 
   /* ********************************************************************* */
-  /* integration on simplex                                                */
+  /* integration on simplexes                                              */
   /* ********************************************************************* */
 
   struct _NC_apx_light
@@ -184,7 +167,8 @@ namespace bgeot
   struct _Newton_Cotes_approx_integration : public approx_integration
   {
 
-    void calc_base_func(base_poly &p, size_type i, short_type K) const
+    void calc_base_func(base_poly &p, size_type i, short_type K, base_node &c)
+      const
     {
       dim_type N = dim();
       base_poly l0(N, 0), l1(N, 0);
@@ -194,7 +178,7 @@ namespace bgeot
       
       w[0] = K;
       for (int nn = 1; nn <= N; ++nn)
-      { w[nn]=int(floor(0.5+((int_points[i])[nn-1]*double(K)))); w[0]-=w[nn]; }
+      { w[nn]=int(floor(0.5+(c[nn-1]*double(K)))); w[0]-=w[nn]; }
       
       for (int nn = 0; nn <= N; ++nn)
 	for (int j = 0; j < w[nn]; ++j)
@@ -214,6 +198,7 @@ namespace bgeot
       base_poly P;
       ppoly_integration ppi = simplex_poly_integration(ls.n);
       std::vector<size_type> fa(ls.n+1);
+      stored_point_tab int_points;
       int_points.resize(R + (ls.n+1) * R2);
       int_coeffs.resize(R + (ls.n+1) * R2);
       repartition.resize(ls.n+2);
@@ -232,7 +217,7 @@ namespace bgeot
       for (size_type r = 0; r < R; ++r)
       {
 	int_points[r] = c;
-	calc_base_func(P, r, ls.k);
+	calc_base_func(P, r, ls.k, c);
 	int_coeffs[r] = ppi->int_poly(P);
 
 	for (short_type f = 1; f <= ls.n; ++f)
@@ -268,7 +253,7 @@ namespace bgeot
 	  c[l] += 1.0 / scalar_type(ls.k); sum++;
 	}
       }
-      optimize();
+      pint_points = store_point_tab(int_points);
     }
   };
 
@@ -315,6 +300,7 @@ namespace bgeot
       cvs = convex_product_structure(ls.cv1->structure(), ls.cv2->structure());
       size_type n1 = ls.cv1->nb_points_on_convex();
       size_type n2 = ls.cv2->nb_points_on_convex();
+      stored_point_tab int_points;
       int_points.resize(n1 * n2);
       int_coeffs.resize(n1 * n2);
       repartition.resize(cvs->nb_faces()+1);
@@ -372,6 +358,7 @@ namespace bgeot
 		      int_points[w + i1 + i2 * n1].begin() + ls.cv1->dim());
 	  }
       }
+      pint_points = store_point_tab(int_points);
     }
   };
 

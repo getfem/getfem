@@ -33,7 +33,7 @@
 #define __BGEOT_POLY_INTEGRATION_H
 
 #include <bgeot_poly.h>
-#include <bgeot_convex_structure.h>
+#include <bgeot_convex_ref.h>
 
 namespace bgeot
 {

@@ -31,6 +31,50 @@
 
 namespace bgeot
 {
+  
+  /* ********************************************************************* */
+  /*       Point tab storage.                                              */
+  /* ********************************************************************* */
+
+  int comp_stored_point_tab::operator()(const stored_point_tab &x,
+					const stored_point_tab &y) const {
+    std::vector<base_node>::const_iterator it1 = x.begin(), it2 = y.begin();
+    base_node::const_iterator itn1, itn2, itne;
+    for ( ; it1 != x.end() && it2 != y.end() ; ++it1, ++it2) {
+      if ((*it1).size() < (*it2).size()) return -1;
+      if ((*it1).size() > (*it2).size()) return 1;
+      itn1 = (*it1).begin(); itne = (*it1).end(); itn2 = (*it2).begin();
+      for ( ; itn1 != itne ; ++itn1, ++itn2)
+	if (*itn1 < *itn2) return -1;
+	else if (*itn1 > *itn2) return 1;
+    }
+    if (it2 != y.end()) return -1;
+    if (it1 != x.end()) return 1;
+    return 0;
+  }
+
+  dal::dynamic_tree_sorted<stored_point_tab, comp_stored_point_tab>
+    *_stored_point_tab_tab;
+  bool isinit_stored_point_tab_tab = false;
+
+  pstored_point_tab org_stored_point_tab(size_type n)
+  {
+    static std::vector<pstored_point_tab> *tab;
+    static bool is_init = false;
+    
+    if (!is_init) { tab = new std::vector<pstored_point_tab>(); is_init = true; }
+    while (n >= tab->size())
+    {
+      size_type i = tab->size();
+      stored_point_tab spt;
+      tab->resize(i+1); spt.resize(1); spt[0].resize(i); spt[0].fill(0.0); 
+      (*tab)[i] = store_point_tab(spt);
+    }
+    return (*tab)[n];
+  }
+
+
+
 
   /* simplexes.                                                            */
 

@@ -35,6 +35,45 @@
 
 namespace bgeot
 {
+  
+
+  /* ********************************************************************* */
+  /*       Point tab storage.                                              */
+  /* ********************************************************************* */
+
+  typedef std::vector<base_node> stored_point_tab;
+  typedef const stored_point_tab * pstored_point_tab;
+
+  class comp_stored_point_tab
+    : public std::binary_function<stored_point_tab, stored_point_tab, int>
+  {
+    public :
+    int operator()(const stored_point_tab &x,
+		   const stored_point_tab &y) const;
+  };
+
+  extern dal::dynamic_tree_sorted<stored_point_tab, comp_stored_point_tab>
+    *_stored_point_tab_tab;
+  extern bool isinit_stored_point_tab_tab;
+
+  template<class CONT> pstored_point_tab store_point_tab(const CONT &TAB)
+  { 
+    if (!isinit_stored_point_tab_tab) {
+      _stored_point_tab_tab =
+	new dal::dynamic_tree_sorted<stored_point_tab,
+	                             comp_stored_point_tab>();
+      isinit_stored_point_tab_tab = true;
+    }
+    typename CONT::const_iterator it = TAB.begin(), ite = TAB.end();
+    size_type nb;
+    for (nb = 0; it != ite; ++it, ++nb);
+    stored_point_tab spt; spt.resize(nb);
+    it = TAB.begin(); ite = TAB.end();
+    for (nb = 0; it != ite; ++it, ++nb) spt[nb] = *it;
+    return &((*_stored_point_tab_tab)[_stored_point_tab_tab->add_norepeat(spt)]);
+  }
+
+  pstored_point_tab org_stored_point_tab(size_type n);
 
   /* structures de reference.                                             */
 

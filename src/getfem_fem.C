@@ -196,11 +196,13 @@ namespace getfem
     for (short_type f = 0; f < cvs_node.nb_faces(); ++f)
       if (dal::abs(cvr->is_in_face(f, pt)) < 1.0E-5)
 	cvs_node.add_point_adaptative(nb, f);
+    pspt_valid = false;
   }
 
   void virtual_fem::init_cvs_node(void) {
     cvs_node.init_for_adaptative(cvr->structure());
     cv_node = bgeot::convex<base_node>(&cvs_node);
+    pspt_valid = false;
   }
 
   /* ******************************************************************** */

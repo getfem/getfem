@@ -35,6 +35,7 @@
 #include <bgeot_convex_ref.h>
 #include <bgeot_geometric_trans.h>
 #include <getfem_config.h>
+#include <getfem_precomp.h>
 
 namespace getfem
 {
@@ -120,6 +121,9 @@ namespace getfem
    *   \end{itemize}
    */
 
+  class virtual_fem;
+  typedef const virtual_fem * pfem;
+
   class virtual_fem
   {
     protected :
@@ -127,6 +131,8 @@ namespace getfem
       std::vector<pdof_description> _dof_types;
       bgeot::convex_structure cvs_node;
       bgeot::convex<base_node> cv_node;
+      bgeot::pstored_point_tab pspt;
+      bool pspt_valid;
       bgeot::pconvex_ref cvr; // reference element.
       dim_type ntarget_dim;
       bool is_equiv, is_lag, is_pol;
@@ -163,6 +169,10 @@ namespace getfem
       /// Gives the node corresponding to the dof i.
       const base_node &node_of_dof(size_type i) const
         { return cv_node.points()[i];}
+      bgeot::pstored_point_tab node_tab(void) { 
+	if (pspt_valid) return pspt;
+	return pspt = store_point_tab(cv_node.points());
+      }
       bool is_equivalent(void) const { return is_equiv; }
       bool is_lagrange(void) const { return is_lag; }
       bool is_polynomial(void) const { return is_pol; }
@@ -172,6 +182,9 @@ namespace getfem
         { M.fill(1.0); }
       virtual void interpolation(const base_node &x, const base_matrix &G,
 		    const base_vector coeff, base_node &val) const = 0;
+      virtual void interpolation_grad(const base_node &x, const base_matrix &G,
+			      const base_vector coeff, base_matrix &val) const;
+
       /** Gives the value of all components of the base functions at the
        *  point x of the reference element.
        */
@@ -185,11 +198,13 @@ namespace getfem
        */
       virtual void hess_base_value(const base_node &x, base_tensor &t) const = 0;
 
-      virtual_fem(void)
-      { ntarget_dim = 1; is_equiv = is_pol = is_lag = false; }
+      virtual_fem(void) { 
+	ntarget_dim = 1; is_equiv = is_pol = is_lag = false;
+	pspt_valid = false;
+      }
    };
 
-   typedef const virtual_fem * pfem;
+   
 
 
    template <class FUNC> class fem : public virtual_fem

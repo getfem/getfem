@@ -34,7 +34,6 @@
 #define __BGEOT_APPROX_INTEGRATION_H
 
 #include <dal_tree_sorted.h>
-#include <bgeot_convex_structure.h>
 #include <bgeot_config.h>
 #include <bgeot_poly_integration.h>
 
@@ -52,11 +51,9 @@ namespace bgeot
     protected :
 
       pconvex_structure cvs;
-      std::vector<base_node> int_points;
+      pstored_point_tab pint_points;
       std::vector<scalar_type> int_coeffs;
       std::vector<size_type> repartition;
-
-      void optimize(void);
 
     public :
 
@@ -72,16 +69,16 @@ namespace bgeot
       pconvex_structure structure(void) const { return cvs; }
 
       /// Gives an array of integration nodes.
-      const std::vector<base_node>  &
+      const stored_point_tab  &
         integration_points(void) const
-      { return int_points; }
+      { return *(pint_points); }
       /// Gives the integration node i on the reference element.
       const base_node &point(size_type i) const
-      { return int_points[i]; }
+      { return (*pint_points)[i]; }
       /// Gives the integration node i of the face f.
       const base_node &
 	point_on_face(short_type f, size_type i) const 
-      { return int_points[repartition[f] + i]; }
+      { return (*pint_points)[repartition[f] + i]; }
       /// Gives an array of the integration coefficients.
       const std::vector<scalar_type> &integration_coefficients(void) const
       { return int_coeffs; }

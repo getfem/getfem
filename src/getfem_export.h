@@ -175,6 +175,7 @@ namespace getfem
 	if (ddl_touched[itab[i]])
 	{ // inverser les deux boucles pour gagner du temps ?
 	  // Il faut verifier que le ddl est bien de Lagrange ...
+	  // Il faudrait utiliser les prefem_precomp pour accelerer ...
 	  pt3.fill(0.0);
 	  for (size_type k = 0; k < P; ++k) {
 	    for (size_type j = 0; j < nbd1; ++j) {

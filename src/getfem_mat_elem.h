@@ -80,6 +80,13 @@ namespace getfem
     } method;
     bool is_ppi;
 
+    const bgeot::stored_point_tab &integration_points(void) const { 
+      if (is_ppi)
+	return *(bgeot::org_stored_point_tab(method.pai->structure()->dim()));
+      else 
+	return method.pai->integration_points();
+    }
+
     pintegration_method(bgeot::ppoly_integration p)
     { method.ppi = p; is_ppi = true; }
 

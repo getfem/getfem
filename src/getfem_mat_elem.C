@@ -31,162 +31,10 @@
 
 #include <deque>
 #include <getfem_mat_elem.h>
+#include <getfem_precomp.h>
 
 namespace getfem
 {
-
-  /* ********************************************************************* */
-  /*       Precomputation on geometric transformations.                    */
-  /* ********************************************************************* */
-
-  struct _pre_geot_light
-  {
-    bgeot::pgeometric_trans pgt;
-    pintegration_method ppi;
-    bool operator < (const _pre_geot_light &ls) const
-    {
-      if (pgt < ls.pgt) return true; if (pgt > ls.pgt) return false; 
-      if (ppi.method.ppi < ls.ppi.method.ppi) return true; return false;
-    }
-    _pre_geot_light(bgeot::pgeometric_trans pg, pintegration_method pi)
-    { pgt = pg; ppi = pi; }
-    _pre_geot_light(void) { }
-   
-  };
-
-  class _geotrans_precomp
-  {
-    protected :
-
-      bgeot::pgeometric_trans pgt;
-      pintegration_method ppi;
-      std::vector<base_matrix> pc;
-      std::vector<base_matrix> hpc;
-
-    public :
-
-      inline const base_matrix &grad(size_type i) { return pc[i]; }
-      inline const base_matrix &hessian(size_type i) { return hpc[i]; }
-
-      _geotrans_precomp(const _pre_geot_light &ls)
-      {
-	if (ls.ppi.is_ppi) {
-	  base_poly P;
-	  assert(ls.pgt->basic_structure() == ls.ppi.method.ppi->structure());
-	  assert(ls.pgt->is_linear());
-	  pgt = ls.pgt; ppi = ls.ppi;
-	  pc.resize(1);
-	  hpc.resize(1);
-	  pc[0] = base_matrix(pgt->nb_points() , pgt->structure()->dim());
-	  hpc[0] = base_matrix(pgt->nb_points(),
-			       dal::sqr(pgt->structure()->dim()));
-	  hpc[0].fill(0.0);
-	  for (size_type i = 0; i < pgt->nb_points(); ++i)
-	    for (dim_type n = 0; n < pgt->structure()->dim(); ++n)
-	      { P = pgt->poly_vector()[i]; P.derivative(n); pc[0](i,n)=P[0]; }
-	}
-	else {
-	  base_poly P, Q;
-	  dim_type N = ls.pgt->structure()->dim();
-	  assert(ls.pgt->basic_structure() == ls.ppi.method.pai->structure());
-	  pgt = ls.pgt; ppi = ls.ppi;
-	  pc.resize(ppi.method.pai->nb_points());
-	  hpc.resize(ppi.method.pai->nb_points());
-	  std::fill(pc.begin(), pc.end(),
-		    base_matrix(pgt->nb_points() , N));
-	  std::fill(hpc.begin(), hpc.end(),
-		    base_matrix(dal::sqr(N), pgt->nb_points()));
-	  for (size_type i = 0; i < pgt->nb_points(); ++i)
-	    for (dim_type n = 0; n < N; ++n) {
-	      P = pgt->poly_vector()[i];
-	      P.derivative(n);
-	      for (size_type j = 0; j < ppi.method.pai->nb_points(); ++j)
-		pc[j](i,n) = P.eval(ppi.method.pai->point(j).begin());
-	      for (dim_type m = 0; m <= n; ++m) {
-		Q = P; Q.derivative(m);
-		for (size_type j = 0; j < ppi.method.pai->nb_points(); ++j)
-		  hpc[j](m * N + n, i) = hpc[j](n * N + m, i)
-		    = P.eval(ppi.method.pai->point(j).begin());
-	      }
-	    }
-	}
-      }
-  };
-  
-  typedef _geotrans_precomp * pgeotrans_precomp;
-
-  pgeotrans_precomp geotrans_precomp(bgeot::pgeometric_trans pg,
-				     pintegration_method pi)
-  { 
-    static dal::FONC_TABLE<_pre_geot_light, _geotrans_precomp> *tab;
-    static bool isinit = false;
-    if (!isinit) {
-      tab = new dal::FONC_TABLE<_pre_geot_light, _geotrans_precomp>();
-      isinit = true;
-    }
-    return tab->add(_pre_geot_light(pg, pi));
-  }
-
-  /* ********************************************************************* */
-  /*       Precomputation on fem.                                          */
-  /* ********************************************************************* */
-
-  struct _pre_fem_light
-  {
-    pfem pf;
-    pintegration_method ppi;
-    bool operator < (const _pre_fem_light &ls) const
-    {
-      if (pf < ls.pf) return true; if (pf > ls.pf) return false; 
-      if (ppi.method.ppi < ls.ppi.method.ppi) return true; return false;
-    }
-    _pre_fem_light(pfem pff, pintegration_method pi)
-    { pf = pff; ppi = pi; }
-    _pre_fem_light(void) { }
-   
-  };
-
-  class _fem_precomp
-  {
-    protected :
-      
-      std::vector<base_tensor> c;
-      std::vector<base_tensor> pc;
-      std::vector<base_tensor> hpc;
-
-    public :
-
-      inline const base_tensor &val(size_type i) { return c[i]; }
-      inline const base_tensor &grad(size_type i) { return pc[i]; }
-      inline const base_tensor &hess(size_type i) { return hpc[i]; }
-
-      _fem_precomp(const _pre_fem_light &ls) {
-	assert(!(ls.ppi.is_ppi));
-	assert(ls.pf->basic_structure() == ls.ppi.method.pai->structure());
-	pc.resize(ls.ppi.method.pai->nb_points());
-	hpc.resize(ls.ppi.method.pai->nb_points());
-	c.resize(ls.ppi.method.pai->nb_points());
-	for (size_type i = 0; i < ls.ppi.method.pai->nb_points(); ++i) {
-	  ls.pf->base_value(ls.ppi.method.pai->point(i), c[i]);
-	  ls.pf->grad_base_value(ls.ppi.method.pai->point(i), pc[i]);
-	  ls.pf->hess_base_value(ls.ppi.method.pai->point(i), hpc[i]);
-	}
-      }
-  };
-  
-  typedef _fem_precomp * pfem_precomp;
-
-  pfem_precomp fem_precomp(pfem pf, pintegration_method pi)
-  { 
-    static dal::FONC_TABLE<_pre_fem_light, _fem_precomp> *tab;
-    static bool isinit = false;
-    if (!isinit) {
-      tab = new dal::FONC_TABLE<_pre_fem_light, _fem_precomp>();
-      isinit = true;
-    }
-    return tab->add(_pre_fem_light(pf, pi));
-  }
-
 
   /* ********************************************************************* */
   /*       Elementary matrices computation.                                */
@@ -238,7 +86,7 @@ namespace getfem
     _emelem_comp_structure(const _emelem_comp_light &ls)
     { // optimisable ... !!
       pgt = ls.pgt;
-      pgp = geotrans_precomp(ls.pgt, ls.ppi);
+      pgp = geotrans_precomp(ls.pgt, &(ls.ppi.integration_points()));
       pme = ls.pmt;
       ppi = ls.ppi.method.ppi;
       pai = ls.ppi.method.pai;
@@ -322,7 +170,7 @@ namespace getfem
 	pfp.resize(ls.pmt->size());
 	it = ls.pmt->begin(), ite = ls.pmt->end();
 	for (k = 0; it != ite; ++it, ++k)
-	  pfp[k] = fem_precomp((*it).pfi, pai);
+	  pfp[k] = fem_precomp((*it).pfi, &(pai->integration_points()));
 
 	for (;!mi.finished(sizes);mi.incrementation(sizes)) {
 	  for (short_type hi = 0; hi < nhess; ++hi) {
