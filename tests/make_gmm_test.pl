@@ -4,6 +4,7 @@ eval 'exec perl -S $0 "$@"'
   if 0;
 
 # à ajouter : - les sous-matrices
+#           : - les skyline vectors
 #             - Gerer l'interface Lapack, SuperLU et QD.
 
 $islocal = 0;
@@ -82,10 +83,8 @@ for ($iter = 0; $iter < $nb_iter; ++$iter) {
     print "Parameters for the test:\n";
     print TMPF "\n\n\n";
     print TMPF "int main(void) {\n\n  srand($theseed);\n\n";
-    if ($islocal == 1) {
-      print TMPF "  dal::exception_callback_debug cb;\n";
-      print TMPF "  dal::exception_callback::set_exception_callback(&cb);\n\n";
-    }
+    print TMPF "  dal::exception_callback_debug cb;\n";
+    print TMPF "  dal::exception_callback::set_exception_callback(&cb);\n\n";
     print TMPF "  try {\n\n";
     for ($j = 0; $j < $nb_param; ++$j) {
       $a = rand;
@@ -116,7 +115,7 @@ for ($iter = 0; $iter < $nb_iter; ++$iter) {
 	  while (@sortind)
 	    { push (@sub_index, splice(@sortind , rand @sortind, 1)); }
 	  @sub_index = @sub_index[0..$sizep-1];
-	  sub numerique { $_a <=> $_b; }
+	  sub numerique { $a <=> $b; }
 	  @sub_index = sort numerique @sub_index;
 	  $li= "$li\n    gmm::size_type param_tab$j [$sizep] = {$sub_index[0]";
 	  for ($k = 1; $k < $sizep; ++$k) { $li = "$li , $sub_index[$k]"; }
