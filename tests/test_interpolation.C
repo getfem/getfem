@@ -137,19 +137,61 @@ void build_mesh(getfem_mesh& m, int MESH_TYPE, size_type N, size_type NX, size_t
   }
 }
 
-scalar_type interpolate_check(const mesh_fem &mf1, const mesh_fem& mf2) {
+typedef gmm::col_matrix<gmm::rsvector<scalar_type> > rsc_matrix;
+typedef gmm::row_matrix<gmm::rsvector<scalar_type> > rsr_matrix;
+typedef gmm::col_matrix<gmm::wsvector<scalar_type> > wsc_matrix;
+typedef gmm::row_matrix<gmm::wsvector<scalar_type> > wsr_matrix;
+
+scalar_type interpolate_check(const mesh_fem &mf1, const mesh_fem& mf2, int i, int mat_version) {  
+  static std::auto_ptr<rsc_matrix> rsc12, rsc21;
+  static std::auto_ptr<rsr_matrix> rsr12, rsr21;
+  static std::auto_ptr<wsr_matrix> wsr12, wsr21;
+  static std::auto_ptr<wsc_matrix> wsc12, wsc21;
+
+  if (i == 0) {
+    switch (mat_version) {
+      case 0: break;
+      case 1: 
+        rsc12.reset(new rsc_matrix(mf2.nb_dof(), mf1.nb_dof())); 
+        rsc21.reset(new rsc_matrix(mf1.nb_dof(), mf2.nb_dof())); 
+        getfem::interpolation(mf1, mf2, *rsc12); getfem::interpolation(mf2, mf1, *rsc21);
+        return 0.;
+      case 2: 
+        rsr12.reset(new rsr_matrix(mf2.nb_dof(), mf1.nb_dof())); 
+        rsr21.reset(new rsr_matrix(mf1.nb_dof(), mf2.nb_dof())); 
+        getfem::interpolation(mf1, mf2, *rsr12); getfem::interpolation(mf2, mf1, *rsr21);
+        return 0.;
+      case 3: 
+        wsc12.reset(new wsc_matrix(mf2.nb_dof(), mf1.nb_dof())); 
+        wsc21.reset(new wsc_matrix(mf1.nb_dof(), mf2.nb_dof())); 
+        getfem::interpolation(mf1, mf2, *wsc12); getfem::interpolation(mf2, mf1, *wsc21);
+        return 0.;
+      case 4: 
+        wsr12.reset(new wsr_matrix(mf2.nb_dof(), mf1.nb_dof())); 
+        wsr21.reset(new wsr_matrix(mf1.nb_dof(), mf2.nb_dof())); 
+        getfem::interpolation(mf1, mf2, *wsr12); getfem::interpolation(mf2, mf1, *wsr21);
+        return 0.;
+      default: assert(0);
+    }
+  }
   std::vector<scalar_type> U(mf1.nb_dof()), U2(mf1.nb_dof());
   std::vector<scalar_type> V(mf2.nb_dof());
   for (size_type d=0; d < mf1.nb_dof(); ++d) U[d] = func(mf1.point_of_dof(d));
-  getfem::interpolation(mf1,mf2,U,V);
-  getfem::interpolation(mf2,mf1,V,U2);
+  switch (mat_version) {
+    case 0: getfem::interpolation(mf1,mf2,U,V); getfem::interpolation(mf2,mf1,V,U2);
+      break;
+    case 1: gmm::mult(*(rsc12.get()), U, V);  gmm::mult(*(rsc21.get()), V, U2); break;
+    case 2: gmm::mult(*(rsr12.get()), U, V);  gmm::mult(*(rsr21.get()), V, U2); break;
+    case 3: gmm::mult(*(wsc12.get()), U, V);  gmm::mult(*(wsc21.get()), V, U2); break;
+    case 4: gmm::mult(*(wsr12.get()), U, V);  gmm::mult(*(wsr21.get()), V, U2); break;
+  }
   gmm::add(gmm::scaled(U,-1.),U2);
   return gmm::vect_norminf(U2)/gmm::vect_norminf(U);
 }
 
-void test_same_mesh(size_type N, size_type NX, size_type K, size_type Qdim1=1, size_type Qdim2=1) {
+void test_same_mesh(int mat_version, size_type N, size_type NX, size_type K, size_type Qdim1=1, size_type Qdim2=1) {
   chrono c;
-  cout << "  Interpolation on same simplex mesh,  N=" << N << ", NX=" << setw(3) << NX 
+  cout << "  Same simplex mesh,  N=" << N << ", NX=" << setw(3) << NX 
        << ", P" << K << "<->P" << K+1 << ":"; cout.flush();
   getfem_mesh m;
   build_mesh(m, 0, N, NX, K, false);
@@ -161,18 +203,20 @@ void test_same_mesh(size_type N, size_type NX, size_type K, size_type Qdim1=1, s
   for (int i=0; i<3; ++i) { /* pour amortir/cout de la construction du maillage, et de divers trucs
 			       (ça a un gros impact) */
     c.init().tic();
-    double err2 = interpolate_check(mf1, mf2); 
-    if (i==0) err = err2;
+    double err2 = interpolate_check(mf1, mf2, i, mat_version); 
+    if (i==0 || (mat_version > 0 && i == 1)) err = err2;
     else if (err != err2) DAL_INTERNAL_ERROR("");
-    cout << " " << setw(4) << c.toc().cpu(); cout.flush();
+    printf(" %5.1f ", c.toc().cpu()*1000.); //cout << " " << setw(4) << c.toc().cpu(); 
+    cout.flush();
   }
-  cout << " seconds/interpolation -- rel.err = " << err << "\n";
+  cout << " ms/interpolation -- rel.err = " << err << "\n";
   assert(err < 1e-8);
 }
 
-void test_different_mesh(size_type N, size_type NX, size_type K) {
+
+void test_different_mesh(int mat_version, size_type N, size_type NX, size_type K) {
   chrono c; c.init();
-  cout << "  Interpolation on different linear meshes, N=" << N << ", NX=" << setw(3) << NX 
+  cout << "  Different linear meshes, N=" << N << ", NX=" << setw(3) << NX 
        << ", P" << K << ":"; cout.flush();
   getfem_mesh m1, m2;
   size_type gK=1;
@@ -186,12 +230,13 @@ void test_different_mesh(size_type N, size_type NX, size_type K) {
   for (int i=0; i<3; ++i) { /* pour amortir/cout de la construction du maillage, et de divers trucs
 			       (ça a un gros impact) */
     c.init().tic();
-    double err2 = interpolate_check(mf1, mf2); 
-    if (i==0) err = err2;
+    double err2 = interpolate_check(mf1, mf2, i, mat_version); 
+    if (i==0 || (mat_version > 0 && i == 1)) err = err2;
     else if (err != err2) DAL_INTERNAL_ERROR("");
-    cout << " " << setw(4) << c.toc().cpu(); cout.flush();
+    printf(" %5.1f ", c.toc().cpu()*1000.); //cout << " " << setw(4) << c.toc().cpu(); 
+    cout.flush();
   }
-  cout << " seconds/interpolation -- rel.err = " << err << "\n";
+  cout << " ms/interpolation -- rel.err = " << err << "\n";
   //mf1.write_to_file("toto.mf",true);
 }
 
@@ -200,11 +245,17 @@ int main(int argc, char *argv[]) {
   feenableexcept(FE_DIVBYZERO | FE_INVALID);
 #endif
   if (argc == 2 && strcmp(argv[1],"-quick")==0) quick = true;
-  cout << "Testing interpolation..\n";
-  test_same_mesh(2,quick ? 20 : 80,1);
-  test_same_mesh(2,8,1,2,2);
-  test_same_mesh(2,quick ? 10 : 20,4);
-  test_same_mesh(3,quick ? 5 : 15,1);
-  test_different_mesh(2,quick ? 20 : 80,1);
-  test_different_mesh(3,quick ? 8 : 15,1);
+  for (int mat_version = 0; mat_version < 5; ++mat_version) {
+    const char *msg[] = {"Testing interpolation", 
+                   "Testing stored interpolator in rsc matrix",
+                   "Testing stored interpolator in rsr matrix",
+                   "Testing stored interpolator in wsc matrix",
+                   "Testing stored interpolator in wsr matrix"};
+    cout << msg[mat_version] << "..\n";
+    test_same_mesh(mat_version, 2,quick ? 17 : 80,1);
+    test_same_mesh(mat_version, 2,quick ? 8 : 20,4);
+    test_same_mesh(mat_version, 3,quick ? 5 : 15,1);
+    test_different_mesh(mat_version, 2,quick ? 17 : 80,1);
+    test_different_mesh(mat_version, 3,quick ? 6 : 15,1);
+  }
 }

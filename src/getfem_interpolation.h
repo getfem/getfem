@@ -83,8 +83,39 @@ namespace getfem {
   /*									   */
   /* ********************************************************************* */
 
+  /* ------------------------------ Interface -----------------------------*/
 
   /**
+     interpolation/extrapolation of (mf_source, U) on mf_target.
+     - mf_target must be of lagrange type.
+     - mf_target's qdim should be equal to mf_source qdim, or equal to 1
+     - U.size() >= mf_source.get_qdim()
+     - V.size() >= (mf_target.nb_dof() / mf_target.get_qdim())
+                   * mf_source.get_qdim()
+
+     If both mesh_fem shared the same mesh object, a fast interpolation will be
+     used.
+  */
+  template<typename VECTU, typename VECTV>
+  void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
+		     const VECTU &U, VECTV &V, bool extrapolation = false);
+
+  /**
+     Build the interpolation matrix of mf_source on mf_target: the matrix M is
+     such that (V = M*U) == interpolation(mf_source, mf_target, U, V).
+
+     Useful for repeated interpolations.
+   */
+  template<typename MAT>
+  void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
+		     MAT &M, bool extrapolation = false);
+
+
+
+
+  /* --------------------------- Implementation ---------------------------*/
+
+  /*
      interpolation of a solution on same mesh.
      - &mf_target.linked_mesh() == &mf_source.linked_mesh()
      - mf_target must be of lagrange type.
@@ -93,7 +124,6 @@ namespace getfem {
      - V.size() >= (mf_target.nb_dof() / mf_target.get_qdim())
                    * mf_source.get_qdim()
   */
-
   template<typename VECTU, typename VECTV, typename MAT>
     void interpolation_same_mesh(const mesh_fem &mf_source,
 				 const mesh_fem &mf_target,
@@ -102,13 +132,18 @@ namespace getfem {
     base_matrix G;
     size_type qdim = mf_source.get_qdim();
     base_vector coeff, val(qdim);
-
+    std::vector<size_type> dof_source;
     if (qdim != mf_target.get_qdim() && mf_target.get_qdim() != 1)
       DAL_THROW(failure_error, "Attempt to interpolate a field of dimension "
 		<< qdim << " on a mesh_fem whose Qdim is " << 
 		int(mf_target.get_qdim()));
     size_type qmult = mf_source.get_qdim()/mf_target.get_qdim();
     fem_precomp_pool fppool;
+    dal::bit_vector dof_t_done;
+    
+    dof_t_done.sup(0, mf_target.nb_dof());
+    gmm::clear(M);
+
     /* we should sort convexes by their fem */
     for (dal::bv_visitor cv(mf_source.convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt=mf_source.linked_mesh().trans_of_convex(cv);
@@ -134,8 +169,12 @@ namespace getfem {
       pfem_precomp pfp = fppool(pf_s, pf_t->node_tab());
       fem_interpolation_context ctx(pgt,pfp,size_type(-1),G,cv);
       itdof = mf_target.ind_dof_of_element(cv).begin();
+      dof_source.assign(mf_source.ind_dof_of_element(cv).begin(), 
+                        mf_source.ind_dof_of_element(cv).end());
       for (size_type i = 0; i < nbd_t; ++i, itdof+=mf_target.get_qdim()) {
 	size_type dof_t = *itdof*qmult;
+        if (dof_t_done.is_in(*itdof)) continue;
+        dof_t_done.add(*itdof);
 	/* faux dans le cas des éléments vectoriel.                        */
 	ctx.set_ii(i);
 	if (version == 0) {
@@ -146,10 +185,15 @@ namespace getfem {
 	  base_matrix Mloc(qdim, mf_source.nb_dof_of_element(cv));
 	  pf_s->interpolation(ctx, Mloc, qdim);
 	  for (size_type k=0; k < qdim; ++k) {
-	    gmm::clear(gmm::mat_row(M, dof_t + k));
-	    gmm::copy(gmm::mat_row(M, k),
-		      gmm::sub_vector(gmm::mat_row(M, dof_t+k),
-		      gmm::sub_index(mf_source.ind_dof_of_element(cv))));
+            for (size_type j=0; j < dof_source.size(); ++j) {
+              M(dof_t + k, dof_source[j]) = Mloc(k, j);
+            }
+              /* does not work with col matrices..
+                 gmm::clear(gmm::mat_row(M, dof_t + k));
+                 gmm::copy(gmm::mat_row(Mloc, k),
+                 gmm::sub_vector(gmm::mat_row(M, dof_t+k),
+                 gmm::sub_index(mf_source.ind_dof_of_element(cv))));
+              */
 	  }
 	}
       }
@@ -157,7 +201,7 @@ namespace getfem {
   }
 
   
-  /**
+  /*
      interpolation of a solution on another mesh.
      - mti contains the points where to interpole.
      - the solution should be continuous.
@@ -176,10 +220,13 @@ namespace getfem {
     std::vector<size_type> itab;    
     base_matrix G;
 
+    gmm::clear(M);
+
     /* interpolation */
     dal::bit_vector dof_done; dof_done.add(0, mti.nb_points());
     base_vector val(qdim_s), coeff;
     base_tensor Z;
+    std::vector<size_type> dof_source;
 
     for (dal::bv_visitor cv(mesh.convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt=mesh.trans_of_convex(cv);
@@ -196,10 +243,11 @@ namespace getfem {
 	gmm::copy(gmm::sub_vector(U,
 		  gmm::sub_index(mf_source.ind_dof_of_element(cv))), coeff);
       }
-      
+      dof_source.assign(mf_source.ind_dof_of_element(cv).begin(), 
+                        mf_source.ind_dof_of_element(cv).end());
       for (size_type i = 0; i < itab.size(); ++i) {
 	size_type dof_t = itab[i];
-	if (dof_done[dof_t]) {
+	if (dof_done.is_in(dof_t)) {
 	  dof_done.sup(dof_t);
 	  ctx.set_xref(mti.reference_coords()[dof_t]);
 	  size_type pos = dof_t * qdim_s;
@@ -218,10 +266,13 @@ namespace getfem {
 	    base_matrix Mloc(qdim_s, mf_source.nb_dof_of_element(cv));
 	    pf_s->interpolation(ctx, Mloc, qdim_s);
 	    for (size_type k=0; k < qdim_s; ++k) {
+              for (size_type j=0; j < gmm::mat_ncols(Mloc); ++j)
+                M(pos+k, dof_source[j]) = Mloc(k,j);
+                /* does not work with col matrices
 	      gmm::clear(gmm::mat_row(M, pos+k));
 	      gmm::copy(gmm::mat_row(Mloc, k),
-			gmm::sub_vector(gmm::mat_row(M, pos+k),
-			gmm::sub_index(mf_source.ind_dof_of_element(cv))));
+			gmm::sub_vector(gmm::mat_row(M, pos+k), isrc));
+                */
 	    }
 	  }
 	}
@@ -245,7 +296,7 @@ namespace getfem {
 
 
 
-  /**
+  /*
      interpolation of a solution on another mesh.
      - mf_target must be of lagrange type.
      - the solution should be continuous..
