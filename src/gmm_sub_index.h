@@ -120,6 +120,7 @@ namespace gmm {
 
     size_type size(void) const { return max - min + 1; }
     size_type index(size_type i) const { return min + i; }
+    size_type step(void) const { return 1; }
     size_type rindex(size_type i) const
     { if (i >= min && i <= max) return i - min; return size_type(-1); }
     sub_interval(size_type mi, size_type l) : min(mi), max(mi+l-1) {}
@@ -130,6 +131,7 @@ namespace gmm {
     size_type min, max, N; 
 
     size_type size(void) const { return (max - min) / N + 1; }
+    size_type step(void) const { return N; }
     size_type index(size_type i) const { return min + N * i; }
     size_type rindex(size_type i) const { 
       if (i >= min && i <= max)

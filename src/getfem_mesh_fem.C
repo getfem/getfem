@@ -503,7 +503,8 @@ namespace getfem
 	} else DAL_THROW(failure_error, "Syntax error in file at token" << tmp);
       } else if (strcmp(tmp, "QDIM")==0) {
 	ftool::get_token(ist, tmp, 1023);
-	int q = atoi(tmp); if (q <= 0 || q > 250) DAL_THROW(failure_error, "invalid qdim: "<<q);
+	int q = atoi(tmp);
+	if (q <= 0 || q > 250) DAL_THROW(failure_error, "invalid qdim: "<<q);
 	set_qdim(q);
       } else {
 	DAL_THROW(failure_error, "Syntax error2 in file at token " << tmp);

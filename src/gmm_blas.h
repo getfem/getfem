@@ -32,7 +32,7 @@
 //
 // To be done
 //
-//   . mult : optimisable in certain cases.
+//   . mult : optimisable in some cases.
 //       (more iterators on vector and matrices, avoid repeated tests)
 //
 //   . add : best control on overlapping writing : origins.
@@ -229,7 +229,7 @@ namespace gmm {
 				       abstract_skyline) {
     typename linalg_traits<L>::const_iterator it = vect_begin(l),
       ite = vect_end(l);
-    o << "banded(" << it.index() << ", " << ite.index() - it.index() << ") ";
+    o << "<r+" << it.index() << ">(" << it.index() << ", " << ite.index() - it.index() << ") ";
     if (it != ite) o << " " << cast_char(*it++);
     for (; it != ite; ++it) o << ", " << cast_char(*it);
   }
