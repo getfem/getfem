@@ -84,9 +84,9 @@ Most finite element methods are scalar, which means that $Q = 1$, but GETFEM++ s
 $$ \tau :  \overline{T} \longrightarrow T, $$
 and is supposed to be polynomial (see \cite{dh-to1984} or \cite{BAS_COMP}). The base functions $\overline{\varphi}^i$ defined on the reference element define a set of base function on the real element defined by
 $$ \tilde{\varphi}^i(x) = \overline{\varphi}^i(\overline{x}) = \overline{\varphi}^i(\tau^{-1}(x)), $$
-If the element is said to be equivalent throught the geometric transformation $\tau$ then base functions on the real element are just defined by
+If the element is said to be equivalent throught the geometric transformation $\tau$ (or $\tau$-equivalent) then base functions on the real element are just defined by
 $$\varphi(x) = \tilde{\varphi}^i(x).$$
-This is generally the case for Lagrange element, but not for Hermite elements (when the gradient of the functions are taken into account). When the element is not equivalent throught the geometric transformation (we will just say ``not equivalent'') then GETFEM++ allows to define a matrix $M$ depending on the real element (i.e. on the geometric transformation) such that base functions on the real element are defined by
+This is generally the case for Lagrange element, but not for Hermite elements (when the gradient of the functions are taken into account). When the element is not equivalent throught the geometric transformation then GETFEM++ allows to define a matrix $M$ depending on the real element (i.e. on the geometric transformation) such that base functions on the real element are defined by
 $$ \varphi^i(x) = \sum_{j = 0}^{n_d - 1} M_{ij} \tilde{\varphi}^j(x). $$
 We denote by
 $$ [\overline{\varphi}(\overline{x})] = \vecfour{\overline{\varphi}^0(\overline{x})}{\overline{\varphi}^1(\overline{x})}{...}{\overline{\varphi}^{n_d-1}(\overline{x})}, $$
@@ -114,10 +114,10 @@ Hierarchical Lagrange type & $\phi(a_i) - ...$ & Difference between the value of
 mean type & $\Frac{1}{|T|}\int_T \phi(x) dx$ & Value of the mean value of $\phi$ on the element. Exists also for the restriction on a face.\\ \hline
 \end{tabular}
 \begin{tabular}{|m{3cm}|m{3cm}|m{8cm}|} \hline
-derivative type & $\Frac{\partial}{\partial x_i}\phi(a_i)$ or $\Frac{\partial}{\partial n}\phi(a_i)$ & Value of a derivative of $\phi$ on the node $a_i$. This kind of d.o.f. makes the element not to be equivalent. $\Frac{\partial}{\partial n}\phi(a_i)$ denotes the normal derivative with respect to a face.\\ \hline
+derivative type & $\Frac{\partial}{\partial x_i}\phi(a_i)$ or $\Frac{\partial}{\partial n}\phi(a_i)$ & Value of a derivative of $\phi$ on the node $a_i$. This kind of d.o.f. makes the element not to be $\tau$-equivalent. $\Frac{\partial}{\partial n}\phi(a_i)$ denotes the normal derivative with respect to a face.\\ \hline
 \end{tabular}
 \begin{tabular}{|m{3cm}|m{3cm}|m{8cm}|} \hline
-second derivative type & $\Frac{\partial^2}{\partial x_i\partial x_j}\phi(a_i)$  & Value of a second derivative of $\phi$ on the node $a_i$. This kind of d.o.f. makes also the element not to be equivalent.\\ \hline
+second derivative type & $\Frac{\partial^2}{\partial x_i\partial x_j}\phi(a_i)$  & Value of a second derivative of $\phi$ on the node $a_i$. This kind of d.o.f. makes also the element not to be $\tau$-equivalent.\\ \hline
 \end{tabular}
 
 \end{center}
@@ -195,7 +195,7 @@ For some applications (computation of a gradient for instance) one does not want
 {\tt getfem::ppolyfem getfem::PK\_fem(P, K)} 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
 \small $K$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 1 \le P \le 255$} & $\Frac{(K+P)!}{K! P!}$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($M = Id$)} \\ \hline
 \end{tabular}
 \end{center}
@@ -205,7 +205,7 @@ Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
 {\tt getfem::ppolyfem getfem::PK\_discontinuous\_fem(P, K)} 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
 \small $K$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 1 \le P \le 255$} & $\Frac{(K+P)!}{K! P!}$ & discon-tinuous & No \mbox{($Q = 1$)} & Yes \mbox{($M = Id$)} \\ \hline
 \end{tabular}
 \end{center}$\ $\\[3cm]
@@ -256,7 +256,7 @@ A prism in dimension $P > 1$ is the direct product of a simplex of dimension $P-
 {\tt getfem::ppolyfem getfem::QK\_fem(P, K)} 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
 \small $KP$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 2 \le P \le 255$} & $(K+1)^P$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($M = Id$)} \\ \hline
 \end{tabular}
 \end{center}
@@ -267,7 +267,7 @@ Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
 {\tt getfem::ppolyfem getfem::PK\_prism\_fem(P, K)} 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
 \small $2K$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 2 \le P \le 255$} & \mbox{$(K+1)$} \mbox{$\times \Frac{(K+P-1)!}{K! (P-1)!}$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($M = Id$)} \\ \hline
 \end{tabular}
 \end{center}
@@ -278,7 +278,7 @@ Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
 {\tt getfem::ppolyfem getfem::product\_fem(getfem::PK\_fem(P-1, K$_1$), getfem::PK\_fem(1, K$_2$))} 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
 \small \mbox{$K_1+K_2$}, \tiny \mbox{$0 \le K_1,K_2 \le 255$} & \small $P$, \mbox{$\ 2 \le P \le 255$} & \mbox{$(K_2+1)$} \mbox{$\times \Frac{(K_1+P-1)!}{K_1! (P-1)!}$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($M = Id$)} \\ \hline
 \end{tabular}
 \end{center}
@@ -295,11 +295,11 @@ Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
 
 Base functions on the reference element
 \begin{eqnarray*}
- \bar{\phi}_0 = 2x^3 - 3x^2 + 1,&&\ \ \ \bar{\phi}_1 = -2x^3 + 3x^2+1, \\
- \bar{\phi}_2 = x^3 - 2x^2 + x,&& \ \ \ \bar{\phi}_3 = x^3 - x^2. 
+ \bar{\varphi}_0 = (2x+1)(x-1)^2,&&\ \ \ \bar{\varphi}_1 = x^2(3-2x), \\
+ \bar{\varphi}_2 = x(x-1)^2,&& \ \ \ \bar{\varphi}_3 = x^2(x - 1). 
 \end{eqnarray*}
 
-This element is close to be equivalent but it is not. On the real element the value of the gradient on vertices will be multiplied by the gradient of the geometric transformation, This has to be corrected. The matrix $M$ is not equal to identity but is still diagonal.
+This element is close to be \mbox{$\tau$-equivalent} but it is not. On the real element the value of the gradient on vertices will be multiplied by the gradient of the geometric transformation, This has to be corrected. The matrix $M$ is not equal to identity but is still diagonal.
 
 \begin{center}
 \begin{tabular}{|m{14.18cm}|} \hline 
@@ -307,7 +307,7 @@ This element is close to be equivalent but it is not. On the real element the va
 {\tt getfem::ppolyfem getfem::segment\_Hermite\_fem()}
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
 $3$ & $1$ & $4$ & $C^1$ & No \mbox{($Q = 1$)} & No \\ \hline
 \end{tabular}
 \end{center}
@@ -334,7 +334,7 @@ to be described ...
 {\tt getfem::ppolyfem getfem::PK\_with\_cubic\_bubble\_fem(2, K)} 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
 $3$ & $2$ & $4$ or $7$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \\ \hline
 \end{tabular}
 \end{center}
@@ -355,7 +355,7 @@ to be described ...
 {\tt getfem::ppolyfem getfem::P1\_with\_bubble\_on\_a\_face(2)} 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
 $2$ & $2$ & $4$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \\ \hline
 \end{tabular}
 \end{center}
@@ -376,7 +376,7 @@ to be described ...
 {\tt getfem::ppolyfem getfem::P1\_with\_bubble\_on\_a\_face\_lagrange()} 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
 $2$ & $2$ & $4$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \\ \hline
 \end{tabular}
 \end{center}
@@ -399,7 +399,7 @@ to be described ...
 {\tt getfem::ppolyfem getfem::P1\_non\_conforming\_fem()} 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
 $1$ & $2$ & $3$ & discon-tinuous & No \mbox{($Q = 1$)} & Yes \\ \hline
 \end{tabular}
 \end{center}
@@ -421,7 +421,7 @@ $1$ & $2$ & $3$ & discon-tinuous & No \mbox{($Q = 1$)} & Yes \\ \hline
 Not yet available
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
 $3$ & $2$ & $10$ & $C^0$ & No \mbox{($Q = 1$)} & No \\ \hline
 \end{tabular}
 \end{center}
@@ -443,7 +443,7 @@ Not yet available
 Not yet available
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
 $5$ & $2$ & $21$ & $C^1$ & No \mbox{($Q = 1$)} & No \\ \hline
 \end{tabular}
 \end{center}
@@ -469,7 +469,7 @@ to be described ...
 {\tt getfem::ppolyfem getfem::PK\_with\_cubic\_bubble\_fem(3, K)} 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
 $4$ & $3$ & $5$, $11$ or $21$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \\ \hline
 \end{tabular}
 \end{center}
@@ -490,7 +490,7 @@ to be described ...
 {\tt getfem::ppolyfem getfem::P1\_with\_bubble\_on\_a\_face(3)} 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
-Degree & dimension & d.o.f. number & class & vectorial & equivalence \\ \hline
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
 $3$ & $3$ & $5$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \\ \hline
 \end{tabular}
 \end{center}

@@ -33,6 +33,7 @@
 #define __GETFEM_EXPORT_H
 
 #include <getfem_mesh_fem.h>
+#include <getfem_mat_elem.h>
 #include <bgeot_geotrans_inv.h>
 #include <dal_tree_sorted.h>
 
@@ -73,7 +74,10 @@ namespace getfem
 
       o << "DIM = " << int(pgt->dim()) << endl;
 
-      if (pf1->target_dim() != 1 || !(pf1->is_equivalent()))
+      if (!(pf1->is_equivalent())) 
+	transfert_to_G(G, mf.linked_mesh().points_of_convex(cv));
+
+      if (pf1->target_dim() != 1)
 	DAL_THROW(to_be_done_error, "to be done ... ");
       
       for (size_type i = 0; i < nbd2; ++i)
@@ -90,7 +94,7 @@ namespace getfem
 	o << "  ";
 
 	/* interpolation of the solution.                                  */
-	/* faux dans le cas des éléments non tau-equivalents ou vectoriel. */
+	/* faux dans le cas des éléments vectoriel.                        */
 	pt2 = pfe->node_of_dof(i);
 	for (size_type k = 0; k < P; ++k) {
 	  for (size_type j = 0; j < nbd1; ++j) {
@@ -98,7 +102,7 @@ namespace getfem
 	    coeff[j] = U[dof1*P+k];
 	  }
 	  // il faudrait utiliser les fem_precomp pour accelerer.
-	  pf1->interpolation(pt2, G, coeff, val);
+	  pf1->interpolation(pt2, G, pgt, coeff, val);
 	  pt3[k] = val[0];
 	}
 
@@ -292,18 +296,23 @@ namespace getfem
     nb = mf_target.nb_dof();
     for (size_type i = 0; i < nb; ++i)
       gti.add_point(mf_target.point_of_dof(i));
+    // il faudrait controler que tous les ddl de mf_target sont de
+    // type lagrange
 
     dal::bit_vector nn = mf.convex_index(), ddl_touched;
     ddl_touched.add(0, nb-1);
 
     for (cv << nn; cv != ST_NIL; cv << nn)
     {
+      bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
       // cout << "dealing with convex " << cv << endl;
       nb = gti.points_in_convex(mf.linked_mesh().convex(cv),
 			    mf.linked_mesh().trans_of_convex(cv), ptab, itab);
       // cout << "nb points in this convex " << nb << endl;
       // cout << "convex : " << mf.linked_mesh().convex(cv) << endl;
       pfem pfe = mf.fem_of_element(cv);
+      if (!(pfe->is_equivalent())) 
+	transfert_to_G(G, mf.linked_mesh().points_of_convex(cv));
       size_type nbd1 = pfe->nb_dof();
       coeff.resize(nbd1);
       for (size_type i = 0; i < nb; ++i)
@@ -318,9 +327,8 @@ namespace getfem
 	      size_type dof1 = mf.ind_dof_of_element(cv)[j];
 	      coeff[j] = U[dof1*P+k];
 	    }
-	    pfe->interpolation(ptab[i], G, coeff, val);
+	    pfe->interpolation(ptab[i], G, pgt, coeff, val);
 	    pt3[k] = val[0];
-
 	  }
 	  
 	  // cout << "Résultat : " << pt3 << endl;
@@ -333,6 +341,61 @@ namespace getfem
     if (ddl_touched.card() != 0)
       cerr << "WARNING : in interpolation_solution,"
 	   << " all points have not been touched" << endl;
+  }
+
+
+  /* ********************************************************************* */
+  /*                                                                       */
+  /*  interpolation of a solution on same mesh.                            */
+  /*   - mf_target must be of lagrange type.                               */
+  /*                                                                       */
+  /* ********************************************************************* */
+
+  template<class VECT>
+    void interpolation_solution_same_mesh(mesh_fem &mf, mesh_fem &mf_target,
+					  const VECT &U, VECT &V, dim_type P)
+  {   
+    dim_type N = mf.linked_mesh().dim();
+    dal::bit_vector nn = mf.convex_index();
+    size_type cv;
+    base_node pt2, val(1);
+    base_matrix G;
+    base_vector coeff;
+
+    if ( &(mf.linked_mesh()) != &(mf_target.linked_mesh()))
+      DAL_THROW(failure_error, "Meshes should be the same in this function.");
+
+    for (cv << nn; cv != ST_NIL; cv << nn)
+    {
+      bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
+      pfem pfe = mf_target.fem_of_element(cv);
+      pfem pf1 = mf.fem_of_element(cv);
+      size_type nbd1 = mf.nb_dof_of_element(cv);
+      size_type nbd2 = pfe->nb_dof();
+      coeff.resize(nbd1);
+
+      if (!(pf1->is_equivalent())) 
+	transfert_to_G(G, mf.linked_mesh().points_of_convex(cv));
+
+      if (pf1->target_dim() != 1)
+	DAL_THROW(to_be_done_error, "to be done ... ");
+      
+      for (size_type i = 0; i < nbd2; ++i) {
+	size_type dof1 = mf_target.ind_dof_of_element(cv)[i];
+	/* interpolation of the solution.                                  */
+	/* faux dans le cas des éléments vectoriel.                        */
+	pt2 = pfe->node_of_dof(i);
+	for (size_type k = 0; k < P; ++k) {
+	  for (size_type j = 0; j < nbd1; ++j) {
+	    size_type dof1 = mf.ind_dof_of_element(cv)[j];
+	    coeff[j] = U[dof1*P+k];
+	  }
+	  // il faudrait utiliser les fem_precomp pour accelerer.
+	  pf1->interpolation(pt2, G, pgt, coeff, val);
+	  V[dof1*P + k] = val[0];
+	}
+      }
+    }
   }
 
 

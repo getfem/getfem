@@ -39,6 +39,15 @@
 namespace getfem
 {
 
+  template <class CONT> void transfert_to_G(base_matrix &G, const CONT &a) {
+    size_type P = (*(a.begin())).size(), NP = a.end() - a.begin();
+    G.resize(P, NP);
+    typename CONT::const_iterator it = a.begin(), ite = a.end();
+    base_matrix::iterator itm = G.begin();
+    for (; it != ite; ++it, itm += P)
+      std::copy((*it).begin(), (*it).end(), itm);
+  }
+
   class mat_elem_computation
   {
     protected : 
@@ -52,21 +61,11 @@ namespace getfem
       virtual void compute(base_tensor &t, const base_matrix &a) = 0;
       virtual void compute_on_face(base_tensor &t, const base_matrix &a,
 				   short_type f) = 0;
-      template <class CONT> void set_pa(const CONT &a)
-      {
-	size_type P = (*(a.begin())).size(), NP = a.end() - a.begin();
-	pa.resize(P, NP);
-	typename CONT::const_iterator it = a.begin(), ite = a.end();
-	base_matrix::iterator itm = pa.begin();
-	for (; it != ite; ++it, itm += P)
-	  std::copy((*it).begin(), (*it).end(), itm);
-      }
-
       template <class CONT> void gen_compute(base_tensor &t, const CONT &a)
-      { set_pa(a); compute(t, pa); }
+      { transfert_to_G(pa, a); compute(t, pa); }
       template <class CONT> void gen_compute_on_face(base_tensor &t,
 						 const CONT &a, short_type f)
-      { set_pa(a); compute_on_face(t, pa, f); }
+      { transfert_to_G(pa, a); compute_on_face(t, pa, f); }
   };
 
   typedef mat_elem_computation *pmat_elem_computation;

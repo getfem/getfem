@@ -119,7 +119,7 @@ void lap_pb::init(void)
 		   (mesh, N, org, vtab.begin(), ref.begin()); break;
   case 2 : getfem::parallelepiped_regular_prism_mesh
 		   (mesh, N, org, vtab.begin(), ref.begin()); break;
-  default : DAL_THROW(dal::internal_error, "Unknow type of mesh");
+  default : DAL_THROW(dal::internal_error, "Unknown type of mesh");
   }
 
   mesh.optimize_structure();
@@ -223,7 +223,6 @@ void lap_pb::init(void)
   }
   
   
-
   cout << "Selecting Neumann and Dirichlet boundaries\n";
   nn = mesh.convex_index(N);
   base_vector un;
@@ -234,7 +233,7 @@ void lap_pb::init(void)
         un = mesh.normal_of_face_of_convex(j, i, 0);
 	un /= bgeot::vect_norm2(un);
 
-	// if (true)
+	// if (true) {
 	if (dal::abs(un[N-1] - 1.0) < 1.0E-7) {
 	  mef.add_boundary_elt(0, j, i);
 	  // cout << "ajout bord Dirichlet, cv\t" << j << "\tf " << i << endl;
@@ -374,17 +373,18 @@ int main(int argc, char *argv[])
     total_time += ftool::uclock_sec() - exectime;
     exectime = ftool::uclock_sec();
     
-    int nbdof = p.mef.nb_dof();
-    linalg_vector V(nbdof); V = p.U; 
+    int nbdof = p.mef_data.nb_dof();
+    linalg_vector V(nbdof);
+    interpolation_solution_same_mesh(p.mef, p.mef_data, p.U, V, 1);
     for (int i = 0; i < nbdof; ++i)
-      V[i] -= sol_u(p.mef.point_of_dof(i));
+      V[i] -= sol_u(p.mef_data.point_of_dof(i));
     
-    scalar_type l2norm = getfem::L2_norm(p.mef, V, 1);
+    scalar_type l2norm = getfem::L2_norm(p.mef_data, V, 1);
     cres << l2norm << "\t";
     cres << ftool::uclock_sec() - exectime << "\t";
     total_time += ftool::uclock_sec() - exectime;
     exectime = ftool::uclock_sec();
-    scalar_type h1norm = getfem::H1_norm(p.mef, V, 1);
+    scalar_type h1norm = getfem::H1_norm(p.mef_data, V, 1);
     cres << h1norm << "\t";
     cres << ftool::uclock_sec() - exectime << "\t";
     total_time += ftool::uclock_sec() - exectime;
@@ -395,8 +395,6 @@ int main(int argc, char *argv[])
 	 << "H1 error = " << h1norm << endl;
 
     getfem::save_solution(p.datafilename + ".dataelt", p.mef, p.U, 1, p.K);
-    
-    // cout << "calcul termine" << endl; exit(0);
   }
   DAL_STANDARD_CATCH_ERROR;
   return 0; 

@@ -180,18 +180,20 @@ namespace getfem
       bool is_lagrange(void) const { return is_lag; }
       bool is_polynomial(void) const { return is_pol; }
       short_type estimated_degree(void) const { return es_degree; }
-      virtual void mat_trans(base_matrix &M,
-			     const base_matrix &G /* et + */) const
-        { M.fill(1.0); }
+      virtual void mat_trans(base_matrix &M, const base_matrix &G,
+			     bgeot::pgeometric_trans pgt) const
+      { DAL_THROW(internal_error, "This function should not be called."); }
       virtual void interpolation(const base_node &x, const base_matrix &G,
-		         const base_vector coeff, base_node &val) const = 0;
+			 bgeot::pgeometric_trans pgt, const base_vector coeff,
+			 base_node &val) const = 0;
       virtual void interpolation(pfem_precomp pfp, size_type ii,
-			 const base_matrix &G,
+			 const base_matrix &G, bgeot::pgeometric_trans pgt, 
 			 const base_vector coeff, base_node &val) const;
       virtual void interpolation_grad(const base_node &x, const base_matrix &G,
-			 const base_vector coeff, base_matrix &val) const = 0;
+			 bgeot::pgeometric_trans pgt, const base_vector coeff,
+			 base_matrix &val) const = 0;
       virtual void interpolation_grad(pfem_precomp pfp, size_type ii,
-			 const base_matrix &G,
+			 const base_matrix &G, bgeot::pgeometric_trans pgt, 
 			 const base_vector coeff, base_matrix &val) const;
 
       /** Gives the value of all components of the base functions at the
@@ -228,9 +230,11 @@ namespace getfem
 
      
 
-      void interpolation(const base_node &x, const base_matrix &G,
+      void interpolation(const base_node &x, const base_matrix &G, 
+			 bgeot::pgeometric_trans pgt,
 			 const base_vector coeff, base_node &val) const;
       void interpolation_grad(const base_node &x, const base_matrix &G,
+			      bgeot::pgeometric_trans pgt,
 			      const base_vector coeff, base_matrix &val) const;
       void base_value(const base_node &x, base_tensor &t) const
       {
@@ -281,7 +285,9 @@ namespace getfem
      
    template <class FUNC>
      void fem<FUNC>::interpolation(const base_node &x, const base_matrix &G,
-			       const base_vector coeff, base_node &val) const
+				   bgeot::pgeometric_trans pgt, 
+				   const base_vector coeff,
+				   base_node &val) const
    { // optimisable.   verifier et faire le vectoriel
      base_matrix M;
      if (val.size() != target_dim())
@@ -289,8 +295,10 @@ namespace getfem
      
      size_type R = nb_dof();
 
-     if (!is_equivalent())
-     { if (M.nrows() != R || M.ncols() != R) M.resize(R, R); mat_trans(M, G); }
+     if (!is_equivalent()) { 
+       if (M.nrows() != R || M.ncols() != R) M.resize(R, R);
+       mat_trans(M, G, pgt);
+     }
 
      val.fill(0.0);
      
@@ -310,8 +318,11 @@ namespace getfem
 
 
      template <class FUNC>
-     void fem<FUNC>::interpolation_grad(const base_node &x, const base_matrix &G,
-					const base_vector coeff, base_matrix &val) const
+     void fem<FUNC>::interpolation_grad(const base_node &x,
+					const base_matrix &G,
+					bgeot::pgeometric_trans pgt, 
+					const base_vector coeff,
+					base_matrix &val) const
    { // optimisable.   verifier
      base_matrix M;
      base_tensor t;
@@ -324,8 +335,10 @@ namespace getfem
 
      size_type R = nb_dof();
 
-     if (!is_equivalent())
-     { if (M.nrows() != R || M.ncols() != R) M.resize(R, R); mat_trans(M, G); }
+     if (!is_equivalent()) {
+       if (M.nrows() != R || M.ncols() != R) M.resize(R, R); 
+       mat_trans(M, G, pgt);
+     }
 
      val.fill(0.0);
      

@@ -35,8 +35,8 @@
 namespace getfem
 {
   void virtual_fem::interpolation(pfem_precomp pfp, size_type ii,
-			     const base_matrix &G,
-			     const base_vector coeff, base_node &val) const {
+			    const base_matrix &G, bgeot::pgeometric_trans pgt, 
+			    const base_vector coeff, base_node &val) const {
     // optimisable.   verifier et faire le vectoriel
     base_matrix M;
     if (val.size() != target_dim())
@@ -44,8 +44,10 @@ namespace getfem
     
     size_type R = nb_dof();
 
-    if (!is_equivalent()) // utilité ?
-    { if (M.nrows() != R || M.ncols() != R) M.resize(R, R); mat_trans(M, G); }
+    if (!is_equivalent()) {
+      if (M.nrows() != R || M.ncols() != R) M.resize(R, R);
+      mat_trans(M, G, pgt);
+    }
 
     val.fill(0.0);
     
@@ -64,8 +66,8 @@ namespace getfem
 
 
   void virtual_fem::interpolation_grad(pfem_precomp pfp, size_type ii,
-			     const base_matrix &G,
-			     const base_vector coeff, base_matrix &val) const {
+			    const base_matrix &G, bgeot::pgeometric_trans pgt, 
+			    const base_vector coeff, base_matrix &val) const {
     // optimisable !!   verifier et faire le vectoriel
  
     size_type R = nb_dof();
@@ -85,8 +87,10 @@ namespace getfem
 
     base_tensor::const_iterator it = pfp->grad(ii).begin();
 
-    if (!is_equivalent())
-     { if (M.nrows() != R || M.ncols() != R) M.resize(R, R); mat_trans(M, G); }
+    if (!is_equivalent()) { 
+      if (M.nrows() != R || M.ncols() != R) M.resize(R, R);
+      mat_trans(M, G, pgt);
+    }
 
      val.fill(0.0);
      
@@ -572,6 +576,24 @@ namespace getfem
 
   struct _hermite_segment_ : public fem<base_poly>
   {
+    virtual void mat_trans(base_matrix &M, const base_matrix &G,
+			   bgeot::pgeometric_trans pgt) const
+    { 
+      dim_type P = 1, N = G.nrows();
+      base_matrix K(N, P); // optimisable : eviter l'allocation.
+      M.fill(1.0);
+      pgeotrans_precomp pgp = geotrans_precomp(pgt, node_tab());
+      if (N != 1)
+	DAL_THROW(failure_error, "This element cannot be used for Q > 1");
+      // gradient au pt 0
+      bgeot::mat_product(G, pgp->grad(0), K);
+      M(2,2) = K(0,0);
+      // gradient au pt 1
+      if (!(pgt->is_linear())) bgeot::mat_product(G, pgp->grad(1), K);
+      M(3,3) = K(0,0);
+    }
+
+
     _hermite_segment_(void)
     { 
       base_node pt(1);
@@ -581,7 +603,6 @@ namespace getfem
       es_degree = 3;
       is_pol = true;
       is_equiv = is_lag = false;
-      is_equiv = true; // a supprimer ...
       _base.resize(4);
       pt[0] = 0.0; add_node(lagrange_dof(1), pt);
       _base[0] = one + x * x * (-one * 3.0  + x * 2.0);
@@ -591,6 +612,7 @@ namespace getfem
       _base[2] = x * (one + x * (-one * 2.0 + x));
       pt[0] = 1.0; add_node(derivative_dof(1, 0), pt);
       _base[3] = x * x * (-one + x);
+
     }
   };
 
@@ -645,24 +667,15 @@ namespace getfem
        int i,j;
        _PK_fem P1(_PK_femi_light(l.nc, 1));
 
-       /* barycenter of the convex */
-       pt.fill(1./(l.nc+1));
-       /*
-       for (i=0; i < cv_node.nb_points(); i++) {
-	 pt += cv_node.points()[i] * (1./(float)(cv_node.nb_points()));
-       }
-       */
+       pt.fill(1./(l.nc+1)); /* barycenter of the convex */
 
        add_node(bubble1_dof(l.nc), pt);
        _base.resize(nb_dof());
 
-
        j = nb_dof()-1;
        _base[j] = base_poly(l.nc, 0);
        _base[j].one();
-       for (i=0; i < P1.nb_dof(); i++) {
-	 _base[j] *= P1.base()[i];
-       }
+       for (i=0; i < P1.nb_dof(); i++) _base[j] *= P1.base()[i];
      }
    };
 

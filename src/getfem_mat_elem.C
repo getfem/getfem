@@ -112,7 +112,7 @@ namespace getfem
 	
 	if (!((*it).pfi->is_equivalent())) {
 	  trans_reduction.push_back(k);
-	  trans_reduction_pfi.push_back((*ite).pfi);
+	  trans_reduction_pfi.push_back((*it).pfi);
 	}
 	switch ((*it).t) {
 	case GETFEM__BASE    : break;
@@ -381,13 +381,12 @@ namespace getfem
       {
 	std::deque<short_type>::const_iterator it = trans_reduction.begin(),
 	  ite = trans_reduction.end();
-	std::deque<pfem>::const_iterator
-	  iti = trans_reduction_pfi.begin();
+	std::deque<pfem>::const_iterator iti = trans_reduction_pfi.begin();
 	for ( ; it != ite; ++it, ++iti)
 	{ 
 	  if (t.size(*it) != M.nrows() || t.size(*it) != M.ncols())
 	    M.resize(t.size(*it), t.size(*it));
-	  (*iti)->mat_trans(M, G);
+	  (*iti)->mat_trans(M, G, pgt);
 	  t.mat_reduction(t, M, *it);
 	}
       }
