@@ -90,7 +90,8 @@ namespace dal
       const_reference back(void) const { return *(--(end())); }
       void pop_front(void) { ++_begin; }
 
-      const_reference operator [](size_type ii) const { return *(_begin + ii);}
+    // à changer en const_reference ?
+      value_type operator [](size_type ii) const { return *(_begin + ii);}
       reference operator [](size_type ii) { return *(_begin + ii); }
 
       tab_ref(void) {}
@@ -211,8 +212,8 @@ namespace dal
       tab_ref_index(const ITER &b, const dynamic_array<size_type> &ind)
       { _begin = b; _index = ind; }
 
-
-      const_reference operator [](size_type ii) const
+    // à changer en const_reference ?
+      value_type operator [](size_type ii) const
       { return *(_begin + _index[ii]);}
       reference operator [](size_type ii) { return *(_begin + _index[ii]); }
 
@@ -324,7 +325,8 @@ namespace dal
 			               const ITER_INDEX &ei)
 	: _begin(b), _index_begin(bi), _index_end(ei) {}
 
-      const_reference operator [](size_type ii) const
+    // à changer en const_reference ?
+      value_type operator [](size_type ii) const
       { return *(_begin + _index_begin[ii]);}
       reference operator [](size_type ii)
       { return *(_begin + _index_begin[ii]); }

@@ -408,7 +408,6 @@ namespace gmm
 	  size_type ind = it - begin();
 	  _base_type::resize(nb_stored()+1);
 	  it = begin() + ind;
-	  iterator ite = end() - 1;
 	  for (iterator ite = end() - 1; ite != it; --ite) *ite = *(ite-1);
 	  *it = ev;  // à verifier
 	}
@@ -565,8 +564,8 @@ namespace gmm
       }
     v2.base_resize(i);
     if (i > 0) {
-      typename rsvector<T>::iterator it = v2.begin(), ite = v2.end();
-      for (i = 0; it != ite; ++it, ++i) { it->c = tab[i]; it->e = v1[i]; }
+      typename rsvector<T>::iterator it2 = v2.begin(), ite2 = v2.end();
+      for (i = 0; it2 != ite2; ++it2, ++i) { it2->c = tab[i]; it2->e = v1[i]; }
     }
   }
 
@@ -584,8 +583,8 @@ namespace gmm
       }
     v2.base_resize(i);
     if (i > 0) {
-      typename rsvector<T>::iterator it = v2.begin(), ite = v2.end();
-      for (i = 0; it != ite; ++it, ++i) { it->c = tab[i]; it->e = v1[i]; }
+      typename rsvector<T>::iterator it2 = v2.begin(), ite2 = v2.end();
+      for (i = 0; it2 != ite2; ++it2, ++i) { it2->c = tab[i]; it2->e = v1[i]; }
       std::sort(v2.begin(), v2.end());
     }
   }

@@ -83,7 +83,8 @@ namespace gmm {
     global_to_local(f, fi, cor);
 
     for (int i = 0; i < nb_sub; ++i) {
-      cg(i < ms ? ml1[i] : ml2[i-ms], gi[i], fi[i], itemax, residu, noisy - 1);
+      cg(i < ms ? ml1[i] : ml2[i-ms], gi[i], fi[i], identity_matrix(),
+	 identity_matrix(), itemax, residu, noisy - 1);
     }
 
     vector_type g(nb_dof);
@@ -104,11 +105,13 @@ namespace gmm {
     mult(*(M.A), p, q);
     global_to_local(q, *(M.fi), *(M.cor));
     for (int i = 0; i < (M.ml1)->size(); ++i)
-      cg((*(M.ml1))[i], (*(M.gi))[i], (*(M.fi))[i], M.itemax, M.residu,
+      cg((*(M.ml1))[i], (*(M.gi))[i], (*(M.fi))[i], identity_matrix(),
+	 identity_matrix(), M.itemax, M.residu,
 	 M.noisy-1);
 
     for (int i = 0; i < (M.ml2)->size(); ++i)
-      cg((*(M.ml2))[i],(*(M.gi))[i+ms],(*(M.fi))[i+ms],M.itemax, M.residu,
+      cg((*(M.ml2))[i],(*(M.gi))[i+ms],(*(M.fi))[i+ms], identity_matrix(),
+	 identity_matrix(), M.itemax, M.residu,
 	 M.noisy-1);
 
     local_to_global(q, *(M.gi), *(M.cor));
@@ -123,41 +126,37 @@ namespace gmm {
     mult(*(M.A), p, q);
     global_to_local(q, *(M.fi), *(M.cor));
     for (int i = 0; i < (M.ml1)->size(); ++i)
-      cg((*(M.ml1))[i], (*(M.gi))[i], (*(M.fi))[i], M.itemax, M.residu,
+      cg((*(M.ml1))[i], (*(M.gi))[i], (*(M.fi))[i], identity_matrix(),
+	 identity_matrix(), M.itemax, M.residu,
 	 M.noisy-1);
 
     for (int i = 0; i < (M.ml2)->size(); ++i)
-      cg((*(M.ml2))[i],(*(M.gi))[i+ms],(*(M.fi))[i+ms],M.itemax,M.residu,
+      cg((*(M.ml2))[i],(*(M.gi))[i+ms],(*(M.fi))[i+ms], identity_matrix(),
+	 identity_matrix(), M.itemax,M.residu,
 	 M.noisy-1);
 
     local_to_global(q, *(M.gi), *(M.cor));
     add(p2, q);
   }
 
-  template <class Vector1, class Vector2, class T>
-  void global_to_local(const Vector2 &f,
-	       std::vector<typename plain_vector_type<T>::vector_type > &fi,
-		  const std::vector<Vector1> &cor) {
-    typedef typename plain_vector_type<T>::vector_type vector_type;
+  template <class SUBI, class Vector2, class Vector3>
+  void global_to_local(const Vector2 &f, std::vector<Vector3> &fi,
+		       const std::vector<SUBI> &cor) {
     for (int i = 0; i < fi.size(); ++i) {
-      typename linalg_traits<Vector1>::const_iterator it = cor[i].begin(),
-	ite = cor[i].end();
-      typename linalg_traits<vector_type>::iterator it2 = fi[i].begin();
-      for (; it != ite; ++it, ++it2) *it2 = f[*it]; 
+      typename linalg_traits<Vector3>::iterator it2 = fi[i].begin();
+      for (size_type j = 0, l = cor[i].size(); j < l; ++j, ++it2)
+	*it2 = f[cor[i].index(j)]; 
     }
   }
 
-  template <class Vector1, class Vector2, class T>
-  void local_to_global(Vector2 &f, 
-	  const std::vector<typename plain_vector_type<T>::vector_type > &fi,
-		  const std::vector<Vector1> &cor) {
-    typedef typename plain_vector_type<T>::vector_type vector_type;
+  template <class SUBI, class Vector2, class Vector3>
+  void local_to_global(Vector2 &f, const std::vector<Vector3> &fi,
+		       const std::vector<SUBI> &cor) {
     clear(f);
-    for (int i = 0; i < fi.size(); ++i) {
-      typename linalg_traits<Vector1>::const_iterator it = cor[i].begin(),
-	ite = cor[i].end();
-      typename linalg_traits<vector_type>::const_iterator it2=fi[i].begin();
-      for (; it != ite; ++it, ++it2) f[*it] += *it2; 
+    for (size_type i = 0; i < fi.size(); ++i) {
+      typename linalg_traits<Vector3>::const_iterator it2=fi[i].begin();
+      for (size_type j = 0, l = cor[i].size(); j < l; ++j, ++it2)
+	f[cor[i].index(j)] += *it2;
     }
   }
   
