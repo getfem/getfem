@@ -8,8 +8,11 @@ sub clean_line {
   $_[0] =~ s/\*\///g;
   $_[0] =~ s/^\s*//g;
   $_[0] =~ s/\s*$//g;
+  $_[0] =~ s/=//g;
 }
 
+$year = `date +%Y`;
+chomp $year;
 
 while ($name = $ARGV[0]) {
   shift;
@@ -18,6 +21,7 @@ while ($name = $ARGV[0]) {
 
 # extract information
   $libname = 0; $filename = 0; $date = 0; $author1 = 0; $year1 = 0;
+  $comment1 = ""; $comment2 = ""; $author2=""; $author3=""; $copyauth="";
 
   while ($li = <FILE>) {
 
@@ -38,7 +42,6 @@ while ($name = $ARGV[0]) {
       if (!($li =~ /Date/)) {
 	clean_line($l1);
 	$comment2=$l1;
-	$filename = $name;
       }
     }
     if ($li =~ /Date/ && !$date) {
@@ -50,18 +53,26 @@ while ($name = $ARGV[0]) {
       ($li, $l1) = split(':', $li, 2);
       clean_line($l1);
       $author1 = $l1;
-      $l1=<FILE>;
-      clean_line($l1);
-      $author2 = $l1;
-
       if ($author1 =~ /ulien/)
 	{ $author1 = "Julien Pommier <Julien.Pommier\@insa-toulouse.fr>"; }
       if ($author1 =~ /enard/)
 	{ $author1 = "Yves Renard <Yves.Renard\@insa-toulouse.fr>"; }
+      $l1=<FILE>;
+      clean_line($l1);
+      $author2 = $l1;
       if ($author2 =~ /ulien/)
 	{ $author2 = "Julien Pommier <Julien.Pommier\@insa-toulouse.fr>"; }
       if ($author2 =~ /enard/)
 	{ $author2 = "Yves Renard <Yves.Renard\@insa-toulouse.fr>"; }
+      if ($author2) {
+	$l1=<FILE>;
+	clean_line($l1);
+	$author3 = $l1;
+	if ($author3 =~ /ulien/)
+	  { $author3 = "Julien Pommier <Julien.Pommier\@insa-toulouse.fr>"; }
+	if ($author3 =~ /enard/)
+	  { $author3 = "Yves Renard <Yves.Renard\@insa-toulouse.fr>"; }
+      }
     }
     if ($li =~ /Copyright/ && !$year1) {
       ($li, $l1) = split('\)', $li, 2);
@@ -69,7 +80,6 @@ while ($name = $ARGV[0]) {
       $year1=int($l1);
       ($li, $l2) = split('\-', $l1, 2);
       $year2=int($l2);
-      $year2=2005;
       if ($author1 =~ /ulien/) { $copyauth = "Julien Pommier"; }
       else { $copyauth = "Yves Renard"; }
     }
@@ -84,12 +94,19 @@ while ($name = $ARGV[0]) {
     exit(1);
   }
 
-  if ($author2) { $authors = "Authors : $author1\n//           $author2"; }
+  if ($author3)
+    { $authors = "Authors : $author1\n//           $author2\n//           $author3"; }
+  elsif ($author2)
+    { $authors = "Authors : $author1\n//           $author2"; }
   else { $authors = "Author  : $author1"; }
 
   if ($name =~ /.h/)
     { $enablecpp = "// -*- c++ -*- (enables emacs c++ mode)\n"; }
   else { $enablecpp = ""; }
+
+  $year2=$year;
+  $filename = $name;
+
   open(RES, ">$name".".newhead");
 
   print RES <<
