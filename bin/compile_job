@@ -20,6 +20,7 @@ $ENV{SHELL} = "/usr/bin/tcsh";
 if ($systeme =~ /Linux/)
 {
   $ENV{SYSDEX} = "Linux";
+  $make = "make";
 }
 else
 {
@@ -30,9 +31,9 @@ else
   $ENV{MTPK_DESTROOT} = "/usr/local/texmf/fonts";
   $ENV{MTP_MAPFILE} = "/usr/local/texmf/dvips/psfonts.map";
   $ENV{TEXMFCNF} = "/usr/local/texmf/web2c";
+  $make = "gmake";
 }
 
 print `cd ..; cvs checkout getfem++`; print "\n\n";
-exec "./configure --prefix=$rootlib"; print "\n\n";
-exec "gmake"; print "\n\n";
-exec "gmake install"; print "\n\n";
+exec "./configure --prefix=$rootlib ; $make; $make install"; print "\n\n";
+
