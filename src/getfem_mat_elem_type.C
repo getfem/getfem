@@ -59,9 +59,9 @@ namespace getfem
   {
     mat_elem_type f; f.resize(1); f[0].t = GETFEM__BASE; f[0].pfi = pfi;
     if (pfi->target_dim() == 1)
-    { f.mi.resize(1); f.mi[0] = pfi->nb_dof(); }
+    { f.mi.resize(1); f.mi[0] = pfi->nb_base(); }
     else
-    { f.mi.resize(2); f.mi[0] = pfi->nb_dof(); f.mi[1] = pfi->target_dim(); }
+    { f.mi.resize(2); f.mi[0] = pfi->nb_base(); f.mi[1] = pfi->target_dim(); }
     return add_to_met_tab(f);
   }
 
@@ -70,12 +70,12 @@ namespace getfem
     mat_elem_type f; f.resize(1); f[0].t = GETFEM__GRAD; f[0].pfi = pfi;
     if (pfi->target_dim() == 1)
     { 
-      f.mi.resize(2); f.mi[0] = pfi->nb_dof();
+      f.mi.resize(2); f.mi[0] = pfi->nb_base();
       f.mi[1] = pfi->structure()->dim();
     }
     else
     {
-      f.mi.resize(3); f.mi[0] = pfi->nb_dof();
+      f.mi.resize(3); f.mi[0] = pfi->nb_base();
       f.mi[1] = pfi->target_dim(); f.mi[2] = pfi->structure()->dim();
     }
     return add_to_met_tab(f);
@@ -86,12 +86,12 @@ namespace getfem
     mat_elem_type f; f.resize(1);  f[0].t = GETFEM__HESSIAN; f[0].pfi = pfi;
     if (pfi->target_dim() == 1)
     { 
-      f.mi.resize(2); f.mi[0] = pfi->nb_dof();
+      f.mi.resize(2); f.mi[0] = pfi->nb_base();
       f.mi[1] = dal::sqr(pfi->structure()->dim());
     }
     else
     {
-      f.mi.resize(3); f.mi[0] = pfi->nb_dof();
+      f.mi.resize(3); f.mi[0] = pfi->nb_base();
       f.mi[1] = pfi->target_dim();
       f.mi[2] = dal::sqr(pfi->structure()->dim());
     }

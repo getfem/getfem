@@ -42,16 +42,12 @@ namespace getfem
     if (val.size() != target_dim())
       DAL_THROW(dimension_error, "dimensions mismatch");
     
-    size_type R = nb_dof();
+    size_type R = nb_dof(), RR = nb_base();
 
-    if (!is_equivalent()) {
-      if (M.nrows() != R || M.ncols() != R) M.resize(R, R);
-      mat_trans(M, G, pgt);
-    }
+    if (!is_equivalent()) { M.resize(R, RR); mat_trans(M, G, pgt); }
 
     val.fill(0.0);
-    
-    for (size_type j = 0; j < R; ++j) {
+    for (size_type j = 0; j < RR; ++j) {
       scalar_type co = 0.0;
       if (is_equivalent())
 	co = coeff[j];
@@ -70,7 +66,7 @@ namespace getfem
 			    const base_vector coeff, base_matrix &val) const {
     // optimisable !!   verifier et faire le vectoriel
  
-    size_type R = nb_dof();
+    size_type R = nb_dof(), RR = nb_base();
     base_matrix M;
     size_type P = structure()->dim();
     
@@ -87,13 +83,9 @@ namespace getfem
 
     base_tensor::const_iterator it = pfp->grad(ii).begin();
 
-    if (!is_equivalent()) { 
-      if (M.nrows() != R || M.ncols() != R) M.resize(R, R);
-      mat_trans(M, G, pgt);
-    }
+    if (!is_equivalent()) { M.resize(R, RR); mat_trans(M, G, pgt); }
 
-     val.fill(0.0);
-     
+    val.fill(0.0);
     for (size_type k = 0; k < P; ++k) {
       for (size_type r = 0; r < target_dim(); ++r) {
 	for (size_type j = 0; j < R; ++j, ++it) {
@@ -387,6 +379,9 @@ namespace getfem
     
       is_pol = true;
       is_equiv = fi1->is_equivalent() && fi2->is_equivalent();
+      if (!is_equiv) 
+	DAL_THROW(to_be_done_error, 
+		  "Product of non equivalent elements not available, sorry.");
       is_lag = fi1->is_lagrange() && fi2->is_lagrange();;
       es_degree = fi1->estimated_degree() + fi2->estimated_degree();
       bgeot::convex<base_node> cv 
@@ -402,8 +397,8 @@ namespace getfem
 	  add_node(product_dof(fi1->dof_types()[i], fi2->dof_types()[j]),
 		   cv.points()[r]);
 	  
-      for (j = 0, r = 0; j < fi2->nb_components(); j++)
-	for (i = 0; i < fi1->nb_components(); i++, ++r)
+      for (j = 0, r = 0; j < fi2->nb_base_components(); j++)
+	for (i = 0; i < fi1->nb_base_components(); i++, ++r)
 	  {
 	    _base[r] = fi1->base()[i];
 	    _base[r].direct_product(fi2->base()[j]); 

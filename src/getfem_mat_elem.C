@@ -152,7 +152,7 @@ namespace getfem
 	    size_type ind = *mit; ++mit;
 
 	    if ((*it).pfi->target_dim() > 1)
-	      { ind += (*it).pfi->nb_dof() * (*mit); ++mit; }
+	      { ind += (*it).pfi->nb_base() * (*mit); ++mit; }
 	    Q = ((ppolyfem)((*it).pfi))->base()[ind];
 
 	    switch ((*it).t) {
@@ -192,24 +192,24 @@ namespace getfem
 	      for (k = 0; it != ite; ++it, ++k) { 
 		size_type ind = *mit; ++mit;
 		if ((*it).pfi->target_dim() > 1)
-		  { ind += (*it).pfi->nb_dof() * (*mit); ++mit; }
+		  { ind += (*it).pfi->nb_base() * (*mit); ++mit; }
 		switch ((*it).t) {
 		case GETFEM__BASE    :
 		  V *= (pfp[k]->val(ip))[ind]; break;
 		case GETFEM__GRAD    :
-		  V *= (pfp[k]->grad(ip))[ind + (*it).pfi->nb_dof() *
+		  V *= (pfp[k]->grad(ip))[ind + (*it).pfi->nb_base() *
 			 (*it).pfi->target_dim() * (*mit)];
 		  ++mit; break;
 		case GETFEM__HESSIAN :
 		  if (hi & hc) {
-		    V *= -(pfp[k]->grad(ip))[ind + (*it).pfi->nb_dof() *
+		    V *= -(pfp[k]->grad(ip))[ind + (*it).pfi->nb_base() *
 			   (*it).pfi->target_dim() *
 			   (*mit % ls.pgt->structure()->dim())];
 		    ++mit;
 		  }
 		  else {
 		    V *= (pfp[k]->hess(ip))[ind
-			   + (*it).pfi->nb_dof() * (*it).pfi->target_dim()
+			   + (*it).pfi->nb_base() * (*it).pfi->target_dim()
 			   * (*mit)];
 		    ++mit;
 		  }
@@ -381,15 +381,14 @@ namespace getfem
 	  ite = trans_reduction.end();
 	std::deque<pfem>::const_iterator iti = trans_reduction_pfi.begin();
 	for ( ; it != ite; ++it, ++iti) { 
-	  if (t.size(*it) != M.nrows() || t.size(*it) != M.ncols())
-	    M.resize(t.size(*it), t.size(*it));
+	  if ((*iti)->nb_dof() != M.nrows() || (*iti)->nb_base() != M.ncols())
+	    M.resize((*iti)->nb_dof(), (*iti)->nb_base());
 	  (*iti)->mat_trans(M, G, pgt);
 	  if (M.ncols() == M.nrows())
 	    t.mat_reduction(t, M, *it);
 	  else {
-	    base_tensor aux = t; // Optimisable.
+	    base_tensor aux = t; // Optimisable (avoid copy).
 	    t.mat_reduction(aux, M, *it);
-	    
 	  }
 	}
       }

@@ -246,7 +246,7 @@ namespace getfem
       mi[1] = target_dim(); mi[0] = nb_dof();
       // cout << "mi = " << mi << endl;
       t.adjust_sizes(mi);
-      size_type R = nb_components();
+      size_type R = nb_base_components();
       base_tensor::iterator it = t.begin();
       for (size_type  i = 0; i < R; ++i, ++it) {
 	// cout << "base " << i <<  _base[i] << endl;
@@ -258,7 +258,7 @@ namespace getfem
       dim_type n = dim();
       mi[2] = n; mi[1] = target_dim(); mi[0] = nb_dof();
       t.adjust_sizes(mi);
-      size_type R = nb_components();
+      size_type R = nb_base_components();
       base_tensor::iterator it = t.begin();
       for (dim_type j = 0; j < n; ++j)
 	for (size_type i = 0; i < R; ++i, ++it)
@@ -269,7 +269,7 @@ namespace getfem
       dim_type n = dim();
       mi[3] = n; mi[2] = n; mi[1] = target_dim(); mi[0] = nb_dof();
       t.adjust_sizes(mi);
-      size_type R = nb_components();
+      size_type R = nb_base_components();
       base_tensor::iterator it = t.begin();
       for (dim_type k = 0; k < n; ++k)
 	for (dim_type j = 0; j < n; ++j)
@@ -295,16 +295,12 @@ namespace getfem
     if (val.size() != target_dim())
       DAL_THROW(dimension_error, "dimensions mismatch");
     
-    size_type R = nb_dof();
+    size_type R = nb_dof(), RR = nb_base();
     
-    if (!is_equivalent()) { 
-      if (M.nrows() != R || M.ncols() != R) M.resize(R, R);
-      mat_trans(M, G, pgt);
-    }
+    if (!is_equivalent()) { M.resize(R, RR); mat_trans(M, G, pgt); }
     
     val.fill(0.0);
-    
-    for (size_type j = 0; j < R; ++j) {
+    for (size_type j = 0; j < RR; ++j) {
       scalar_type co = 0.0;
       if (is_equivalent())
 	co = coeff[j];
@@ -334,12 +330,9 @@ namespace getfem
     grad_base_value(x, t);
     base_tensor::iterator it = t.begin();
     
-    size_type R = nb_dof();
+    size_type R = nb_dof(), RR = nb_base();
     
-    if (!is_equivalent()) {
-      if (M.nrows() != R || M.ncols() != R) M.resize(R, R); 
-      mat_trans(M, G, pgt);
-    }
+    if (!is_equivalent()) { M.resize(R, RR); mat_trans(M, G, pgt); }
     
     val.fill(0.0);
     
