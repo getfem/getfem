@@ -16,6 +16,7 @@ include_HEADERS = \
 	bgeot_simplexify.h \
 	bgeot_tensor.h \
 	bgeot_vector.h \
+	bgeot_smatrix.h \
 	dal_algobase.h \
 	dal_alloc.h \
 	dal_basic.h \
