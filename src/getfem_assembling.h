@@ -207,7 +207,7 @@ namespace getfem
 						   VECT &LAMBDA, VECT &MU)
   {
     /* e = strain tensor,
-       M = 2*mu*e(u):e(v) + mu*tr(e(u))*tr(e(v))
+       M = 2*mu*e(u):e(v) + lambda*tr(e(u))*tr(e(v))
     */
     generic_assembly assem("lambda=data$1(#2); mu=data$2(#2);"
 			   "t=comp(vGrad(#1).vGrad(#1).Base(#2));"
