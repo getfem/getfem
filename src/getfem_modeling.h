@@ -689,7 +689,7 @@ namespace getfem {
     virtual mesh_fem &main_mesh_fem(void)
     { return sub_problem.main_mesh_fem(); }
 
-    void changing_rhs(const VECTOR &B__)
+    void set_rhs(const VECTOR &B__)
     { fixing_dimensions(); gmm::copy(B__, B_); }    
     // Constructor defining the rhs
     mdbrick_source_term(mdbrick_abstract<MODEL_STATE> &problem,
@@ -808,7 +808,6 @@ namespace getfem {
   /* ******************************************************************** */
   /*		Mixed linear incompressible condition brick.              */
   /* ******************************************************************** */
-  // TODO : Version with local matrices on the boundary
 
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_linear_incomp : public mdbrick_abstract<MODEL_STATE>  {
@@ -857,7 +856,7 @@ namespace getfem {
       
       if (this->to_be_transferred()) {
 	gmm::sub_interval SUBI(i0+sub_problem.nb_dof(), mf_p.nb_dof());
-	gmm::sub_interval SUBJ(i0, sub_problem.nb_dof());
+	gmm::sub_interval SUBJ(i0, main_mesh_fem().nb_dof());
 	gmm::copy(B, gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBJ));
 	gmm::copy(gmm::transposed(B),
 		  gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBI));
@@ -872,7 +871,7 @@ namespace getfem {
       if (this->to_be_computed()) compute_B();
      
       gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), mf_p.nb_dof());
-      gmm::sub_interval SUBJ(i0, sub_problem.nb_dof());
+      gmm::sub_interval SUBJ(i0, main_mesh_fem().nb_dof());
       gmm::mult(B, gmm::sub_vector(MS.state(), SUBJ),
 		gmm::sub_vector(MS.residu(), SUBI));
       gmm::mult_add(gmm::transposed(B), gmm::sub_vector(MS.state(), SUBI),
@@ -1012,7 +1011,7 @@ namespace getfem {
       if (this->to_be_transferred()) {
 	if (with_multipliers) {
 	  gmm::sub_interval SUBI(i0+sub_problem.nb_dof(), dof_on_bound.card());
-	  gmm::sub_interval SUBJ(i0, sub_problem.nb_dof());
+	  gmm::sub_interval SUBJ(i0, main_mesh_fem().nb_dof());
 	  gmm::copy(G, gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBJ));
 	  gmm::copy(gmm::transposed(G),
 		    gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBI));
@@ -1037,7 +1036,7 @@ namespace getfem {
       }
       if (with_multipliers) {
 	gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), dof_on_bound.card());
-	gmm::sub_interval SUBJ(i0, sub_problem.nb_dof());
+	gmm::sub_interval SUBJ(i0, main_mesh_fem().nb_dof());
 	gmm::mult(G, gmm::sub_vector(MS.state(), SUBJ),
 		  gmm::scaled(CRHS, value_type(-1)),
 		  gmm::sub_vector(MS.residu(), SUBI));
