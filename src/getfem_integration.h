@@ -118,6 +118,8 @@ namespace getfem
         { return cvr->structure()->basic_structure(); }
       bgeot::pconvex_ref ref_convex(void) const { return cvr; }
 
+      const std::vector<size_type> &repart(void) const { return repartition; }
+
       /// Gives an array of integration nodes.
       const bgeot::stored_point_tab  &
         integration_points(void) const

@@ -60,6 +60,7 @@ namespace getfem
 
   struct _emelem_comp_structure : public mat_elem_computation
   {
+
     pgeotrans_precomp pgp;
     ppoly_integration ppi;
     papprox_integration pai;
@@ -105,6 +106,9 @@ namespace getfem
 
     _emelem_comp_structure(const _emelem_comp_light &ls) {
       // optimisable ... !!
+
+       scalar_type exectime = ftool::uclock_sec();
+
       pgt = ls.pgt;
       pgp = geotrans_precomp(ls.pgt, &(ls.ppi->integration_points()));
       pme = ls.pmt;
@@ -298,6 +302,9 @@ namespace getfem
 	}
 
       }
+
+      cout << "First Mat elem computation time : "
+	 << ftool::uclock_sec() - exectime << endl;
 
     }
 
