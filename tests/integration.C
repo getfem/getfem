@@ -6,6 +6,7 @@ int main(void)
   try {
   bgeot::papprox_integration pai;
 
+  
   for (int i = 1; i < 15; ++i)
   {
     pai = bgeot::Gauss_approx_integration(i);
@@ -24,6 +25,7 @@ int main(void)
     cout << endl << endl;
 
   }
+
 
   pai = bgeot::convex_product_approx_integration(
       bgeot::Gauss_approx_integration(2), bgeot::Gauss_approx_integration(2));

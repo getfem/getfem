@@ -139,7 +139,7 @@ void pb_data::init(void)
   /*  CONSTRUCTION DU MAILLAGE.                                          */
   /***********************************************************************/
 
-  cout << "construction du maillage\n";
+  cout << "Mesh generation\n";
 
   base_node org(N); org.fill(0.0);
   std::vector<base_vector> vtab(N);
@@ -152,10 +152,9 @@ void pb_data::init(void)
   getfem::parallelepiped_regular_simplex_mesh(mesh, N, org,
 					     vtab.begin(), ref.begin());
 
-  cout << "Optimisation de la structure\n";
   mesh.optimize_structure();
 
-  cout << "Choix de l'element fini.\n";
+  cout << "Selecting finite element method.\n";
   getfem::pintegration_method ppi;
   nn = mesh.convex_index(N);
   if (integration == 0) ppi = bgeot::simplex_poly_integration(N);
@@ -165,7 +164,7 @@ void pb_data::init(void)
   mef_data.set_finite_element(nn, getfem::PK_fem(N, K), ppi);
   mef_data2.set_finite_element(nn, getfem::PK_fem(N, 0), ppi);
 
-  cout << "Reperage des bord Neumann et Dirichlet\n";
+  cout << "Selecting Neumann and Dirichlet boundaries\n";
   nn = mesh.convex_index(N);
   base_vector un;
   for (j << nn; j >= 0; j << nn)
@@ -196,23 +195,23 @@ void pb_data::assemble(void)
   RM = sparse_matrix_type(N*nb_dof, N*nb_dof);
   linalg_vector ST1, ST2;
 
-  cout << "nombre de ddl de l'element fini : " << nb_dof << endl;
-  cout << "nombre de ddl pour l'elasticite lineaire : " << nb_dof * N << endl;
-
-  cout << "Assemblage de la matrice de rigidite" << endl;
+  // cout << "nombre de ddl de l'element fini : " << nb_dof << endl;
+  cout << "dof number fo linear elasticity : " << nb_dof * N << endl;
+  
+  // cout << "Assemblage de la matrice de rigidite" << endl;
   ST1 = linalg_vector(nb_dof_data2); ST2 = linalg_vector(nb_dof_data2);
   std::fill(ST1.begin(), ST1.end(), lambda);
   std::fill(ST2.begin(), ST2.end(), G);
   assembling_rigidity_matrix_for_linear_elasticity(RM,mef,mef_data2,ST1,ST2);
 
-  cout << "Assemblage du terme source" << endl;
+  // cout << "Assemblage du terme source" << endl;
   ST1 = linalg_vector(nb_dof_data * N);
   for (size_type i = 0; i < nb_dof_data; ++i)
     for (size_type j = 0; j < N; ++j) 
       ST1[i*N+j] = sol_f(mef_data.point_of_dof(i))[j];
   getfem::assembling_volumic_source_term(B, mef, mef_data, ST1, N);
 
-  cout << "Assemblage de la condition de Neumann" << endl;
+  // cout << "Assemblage de la condition de Neumann" << endl;
   ST1 = linalg_vector(nb_dof_data * N);
   getfem::base_node pt(N); getfem::base_vector n(N), v;
   for (size_type i = 0; i < nb_dof_data; ++i)
@@ -233,7 +232,7 @@ void pb_data::assemble(void)
   }
   getfem::assembling_Neumann_condition(B, mef, 1, mef_data, ST1, N);
 
-  cout << "Prise en compte de la condition de Dirichlet" << endl;
+  // cout << "Prise en compte de la condition de Dirichlet" << endl;
   ST1 = linalg_vector(nb_dof * N);
   for (size_type i = 0; i < nb_dof; ++i)
     for (size_type j = 0; j < N; ++j)
@@ -242,23 +241,21 @@ void pb_data::assemble(void)
 }
 
 void pb_data::solve(void)
-{ bgeot::cg(RM, U, B, 20000, residu); }
+{ bgeot::cg(RM, U, B, 20000, residu, false); }
 
 int main(int argc, char *argv[])
 {
   try {
     pb_data p;
     
-    cout << "initialisation ...\n";
+    // cout << "initialisation ...\n";
     p.PBSTFR_PARAM.read_command_line(argc, argv);
     p.init();
-    cout << "Initialisation terminee\n";
     p.mesh.stat();
     p.mesh.write_to_file(p.datafilename + ".mesh" + char(0));
     
-    cout << "Debut de l'assemblage\n";
+    cout << "Assembling\n";
     p.assemble();
-    cout << "Assemblage termine\n";
     
     //   cout << "Matrice de rigidite\n";
     //   for (int i = 0; i < p.RM.nrows(); i++)
@@ -271,10 +268,10 @@ int main(int argc, char *argv[])
     //   }
     //   cout << endl << endl;
     
-    cout << "Resolution\n";
+    cout << "Solving linear system\n";
     p.solve();
     
-    cout << "Calcul de l'erreur\n";
+    cout << "Error computation\n";
     
     int nbdof = p.mef.nb_dof();
     linalg_vector V(nbdof*p.N); V = p.U;
@@ -285,8 +282,8 @@ int main(int argc, char *argv[])
       for (int k = 0; k < p.N; ++k) V[i*p.N + k] -= S[k];
     }
     
-    cout <<  "Error L^2 " << getfem::L2_norm(p.mef, V, p.N) << endl;
-    cout <<  "Error H^1 " << getfem::H1_norm(p.mef, V, p.N) << endl;
+    cout <<  "L2 Error = " << getfem::L2_norm(p.mef, V, p.N) << endl;
+    cout <<  "H1 Error = " << getfem::H1_norm(p.mef, V, p.N) << endl;
   }
   DAL_STANDARD_CATCH_ERROR;
 

@@ -99,13 +99,11 @@ void lap_pb::init(void)
   for (j = 0; j < N; j++)
     sol_K[j] = ((j & 1) == 0) ? FT : -FT;
 
-  cout << "\n\n";
-
   /***********************************************************************/
   /*  CONSTRUCTION DU MAILLAGE.                                          */
   /***********************************************************************/
 
-  cout << "construction du maillage\n";
+  cout << "Mesh generation\n";
 
   base_node org(N); org.fill(0.0);
   std::vector<base_vector> vtab(N);
@@ -118,13 +116,12 @@ void lap_pb::init(void)
   getfem::parallelepiped_regular_simplex_mesh(mesh, N, org,
 					     vtab.begin(), ref.begin());
 
-  cout << "Optimisation de la structure\n";
   mesh.optimize_structure();
 
   // mesh.write_to_file(cout);
 
 
-  cout << "Choix de l'element fini.\n";
+  cout << "Selecting finite element method.\n";
   getfem::pintegration_method ppi;
   nn = mesh.convex_index(N);
   if (mixte) {
@@ -139,13 +136,12 @@ void lap_pb::init(void)
     mef.set_finite_element(nn, getfem::PK_fem(N, K), ppi);
   }
 
-  cout << "Nombre d'elements : " << nn.card() << endl;
   mef_data.set_finite_element(nn, getfem::PK_fem(N, K),
 			      bgeot::simplex_poly_integration(N));
   mef_data2.set_finite_element(nn, getfem::PK_fem(N, 0),
 			       bgeot::simplex_poly_integration(N));
 
-  cout << "Reperage des bord Neumann et Dirichlet\n";
+  cout << "Selecting Neumann and Dirichlet boundaries\n";
   nn = mesh.convex_index(N);
   base_vector un;
   for (j << nn; j >= 0; j << nn)
@@ -186,22 +182,22 @@ void lap_pb::assemble(void)
   RM = sparse_matrix_type(nb_dof, nb_dof);
   linalg_vector ST;
   
-  cout << "nombre de ddl de l'element fini : " << nb_dof << endl;
-  cout << "nombre de ddl de l'element pour les données : " << nb_dof_data
-       << endl;
+  cout << "dof number : " << nb_dof << endl;
+  // cout << "nombre de ddl de l'element pour les données : " << nb_dof_data
+  //       << endl;
 
-  cout << "Assemblage de la matrice de rigidite" << endl;
+  // cout << "Assemblage de la matrice de rigidite" << endl;
   ST = linalg_vector(nb_dof_data2);
   std::fill(ST.begin(), ST.end(), 1.0);
   getfem::assembling_rigidity_matrix_for_laplacian(RM, mef, mef_data2, ST);
   
-  cout << "Assemblage du terme source" << endl;
+  // cout << "Assemblage du terme source" << endl;
   ST = linalg_vector(nb_dof_data);
   for (size_type i = 0; i < nb_dof_data; ++i)
     ST[i] = sol_f(mef_data.point_of_dof(i));
   getfem::assembling_volumic_source_term(B, mef, mef_data, ST, 1);
 
-  cout << "Assemblage de la condition de Neumann" << endl;
+  // cout << "Assemblage de la condition de Neumann" << endl;
   ST = linalg_vector(nb_dof_data);
   getfem::base_node pt(N); getfem::base_vector n(N);
   for (size_type i = 0; i < nb_dof_data; ++i)
@@ -220,10 +216,10 @@ void lap_pb::assemble(void)
   }
   getfem::assembling_Neumann_condition(B, mef, 1, mef_data, ST, 1);
   
-  cout << "Prise en compte de la condition de Dirichlet" << endl;
+  // cout << "Prise en compte de la condition de Dirichlet" << endl;
   dal::bit_vector nn = mef.dof_on_boundary(0);
-  cout << "Number of Dirichlet nodes : " << nn.card() << endl;
-  cout << "Dirichlet nodes : " << nn << endl;
+  // cout << "Number of Dirichlet nodes : " << nn.card() << endl;
+  // cout << "Dirichlet nodes : " << nn << endl;
   ST = linalg_vector(nb_dof);
   for (size_type i = 0; i < nb_dof; ++i)
     ST[i] = sol_u(mef.point_of_dof(i));
@@ -232,7 +228,7 @@ void lap_pb::assemble(void)
 
 void lap_pb::solve(void)
 {
-  bgeot::cg(RM, U, B, 20000, residu);
+  bgeot::cg(RM, U, B, 20000, residu, false);
 }
 
 /**************************************************************************/
@@ -250,10 +246,10 @@ int main(int argc, char *argv[])
     
     exectime = ftool::uclock_sec();
     
-    cout << "initialisation ...\n";
+    // cout << "initialisation ...\n";
     p.PARAM.read_command_line(argc, argv);
     p.init();
-    cout << "Initialisation terminee\n";
+    // cout << "Initialisation terminee\n";
     
     std::ofstream cres((p.datafilename + ".res").c_str());
     
@@ -274,7 +270,7 @@ int main(int argc, char *argv[])
     
     cres << nb_dof << "\t" <<  ftool::uclock_sec() - exectime << "\t";
     
-    cout << "Debut de l'assemblage\n";
+    cout << "Assembling \n";
     exectime = ftool::uclock_sec();
     p.assemble();
     
@@ -292,7 +288,7 @@ int main(int argc, char *argv[])
     //   }
     //   cout << endl << endl;
     
-    cout << "Resolution\n";
+    cout << "Solving the system\n";
     exectime = ftool::uclock_sec();
     p.solve();
     
@@ -316,9 +312,10 @@ int main(int argc, char *argv[])
     total_time += ftool::uclock_sec() - exectime;
     cres << total_time << endl;
     
-    cout << "L2 error = " << l2norm << endl << "H1 error = " << h1norm << endl;
+    cout << "L2 error = " << l2norm << endl
+	 << "H1 error = " << h1norm << endl;
     
-    cout << "calcul termine" << endl; exit(0);
+    // cout << "calcul termine" << endl; exit(0);
   }
   DAL_STANDARD_CATCH_ERROR;
   return 0; 

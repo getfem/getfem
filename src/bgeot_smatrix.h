@@ -434,7 +434,7 @@ namespace bgeot
 
   template < class Matrix, class Vector>
     int cg(const Matrix& A, Vector& x, const Vector& b, int itemax, 
-	   double residu)
+	   double residu, bool noisy = true)
   {
     typedef typename Vector::value_type value_type;
     value_type rho(0), rho_1(0), alpha(0), beta(0);
@@ -444,13 +444,8 @@ namespace bgeot
     rho = vect_sp(r, r);
 
     while (::sqrt(rho) > residu) {
-
-      if (iter == 0)
-	p = r;		  
-      else {
-	beta = rho / rho_1;
-	p = r + p * beta;
-      }
+      if (iter == 0) p = r;		  
+      else { beta = rho / rho_1; p = r + p * beta; }
       
       q = A * p;
       alpha = rho / vect_sp(p, q);
@@ -462,10 +457,9 @@ namespace bgeot
       
       ++iter;
       rho = vect_sp(r, r);
-      cout << "iter " << iter << " residu " << ::sqrt(rho) << endl;
+      if (noisy) cout << "iter " << iter << " residu " << ::sqrt(rho) << endl;
       if (iter >= itemax) return 1;
     }
-    
     return 0;
   }
 
