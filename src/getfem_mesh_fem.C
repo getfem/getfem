@@ -301,7 +301,7 @@ namespace getfem
       }
 
       pfem pf = fem_of_element(cv);
-      size_type nbd = pf->nb_dof(); 
+      size_type nbd = pf->nb_dof(cv); 
       pdof_description andof = already_numerate_dof(pf->dim());
       tab.resize(nbd);
       for (size_type i = 0; i < nbd; i++) {
@@ -519,7 +519,7 @@ namespace getfem
 		tmp[strlen(tmp)-1] == ':') {
 	      tab.resize(nb_dof_of_element(ic));
 	      //cerr << "convex " << ic << ", tab=";
-	      for (size_type i=0; i < fem_of_element(ic)->nb_dof(); i++) {
+	      for (size_type i=0; i < fem_of_element(ic)->nb_dof(ic); i++) {
 		ist >> tab[i];
 		for (size_type q=0; q < size_type(get_qdim())
 		       / fem_of_element(ic)->target_dim(); ++q)

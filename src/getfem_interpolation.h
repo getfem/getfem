@@ -152,8 +152,8 @@ namespace getfem {
       bgeot::pgeometric_trans pgt=mf_source.linked_mesh().trans_of_convex(cv);
       pfem pf_s = mf_source.fem_of_element(cv);
       pfem pf_t = mf_target.fem_of_element(cv);
-      size_type nbd_s = pf_s->nb_dof();
-      size_type nbd_t = pf_t->nb_dof();
+      size_type nbd_s = pf_s->nb_dof(cv);
+      size_type nbd_t = pf_t->nb_dof(cv);
       ref_mesh_dof_ind_ct::iterator itdof;
 
       if (version == 0) {

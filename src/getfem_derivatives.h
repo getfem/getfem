@@ -99,7 +99,7 @@ namespace getfem
       gmm::resize(coeff, mf.nb_dof_of_element(cv));
       gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))), 
 		coeff);
-      for (size_type j = 0; j < pf_target->nb_dof(); ++j) {
+      for (size_type j = 0; j < pf_target->nb_dof(cv); ++j) {
 	size_type dof_t = mf_target.ind_dof_of_element(cv)[j*target_qdim] * 
 	  N*(qdim/target_qdim);
 	ctx.set_ii(j);

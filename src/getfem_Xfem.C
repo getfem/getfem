@@ -38,12 +38,12 @@ namespace getfem
   void Xfem::valid(void) {
     init_cvs_node();
     /* setup nodes of the base fem */
-    for (size_type k = 0; k < pfb->nb_base(); ++k)
+    for (size_type k = 0; k < pfb->nb_base(0); ++k)
       add_node(pfb->dof_types()[k], pfb->node_of_dof(k));
     
     /* setup nodes of the enriched fems */
     for (size_type k = 0; k < nb_func; ++k) {
-      for (size_type j = 0; j < pfe(k)->nb_base(); ++j) {
+      for (size_type j = 0; j < pfe(k)->nb_base(0); ++j) {
 	add_node(xfem_dof(pfe(k)->dof_types()[j], func_indices[k]),
 		 pfe(k)->node_of_dof(j));
       }
@@ -51,7 +51,7 @@ namespace getfem
     is_valid = true;
   }
   
-  size_type Xfem::nb_dof(void) const {
+  size_type Xfem::nb_dof(size_type) const {
     if (!is_valid)
       DAL_THROW(failure_error, "Valid the Xfem element before using it");
     return dof_types_.size();
@@ -111,7 +111,7 @@ namespace getfem
   void Xfem::real_base_value(const fem_interpolation_context &c,
 			     base_tensor &t) const {
     bgeot::multi_index mi(2);
-    mi[1] = target_dim(); mi[0] = nb_base();
+    mi[1] = target_dim(); mi[0] = nb_base(0);
     t.adjust_sizes(mi);
     scalar_type a;
     Xfem_func_context ctx(c); 
@@ -120,14 +120,14 @@ namespace getfem
     base_tensor::const_iterator itf = tt.begin();
     std::vector<fem_interpolation_context> vc; get_fem_interpolation_context_tab(c, vc);
     for (dim_type q = 0; q < target_dim(); ++q) {
-      for (size_type i = 0; i < pfb->nb_base(); ++i, ++itf, ++it)
+      for (size_type i = 0; i < pfb->nb_base(0); ++i, ++itf, ++it)
           *it = *itf;
       for (size_type k = 0; k < nb_func; ++k) {
 	base_tensor val_e; vc[func_pf[k]].base_value(val_e);
 	ctx.pf = pfe(k);
-	for (size_type i = 0; i < pfe(k)->nb_base(); ++i, ++it) {
+	for (size_type i = 0; i < pfe(k)->nb_base(0); ++i, ++it) {
 	  ctx.base_num = i; a = funcs[k]->val(ctx);
-	  *it = val_e[i + q*pfe(k)->nb_base()] * a;
+	  *it = val_e[i + q*pfe(k)->nb_base(0)] * a;
 	}
       }
     }
@@ -136,7 +136,7 @@ namespace getfem
   void Xfem::real_grad_base_value(const fem_interpolation_context &c,
 				  base_tensor &t) const {
     bgeot::multi_index mi(3);
-    mi[2] = c.N(); mi[1] = target_dim(); mi[0] = nb_base();
+    mi[2] = c.N(); mi[1] = target_dim(); mi[0] = nb_base(0);
     t.adjust_sizes(mi);
     
     Xfem_func_context ctx(c);
@@ -153,10 +153,10 @@ namespace getfem
     std::vector<std::vector<scalar_type> > vf(nb_func);
     std::vector<std::vector<base_small_vector> > gvf(nb_func);
     for (size_type f = 0; f < nb_func; ++f) {
-      vf[f].resize(pfe(f)->nb_base());
-      gvf[f].resize(pfe(f)->nb_base());
+      vf[f].resize(pfe(f)->nb_base(0));
+      gvf[f].resize(pfe(f)->nb_base(0));
       ctx.pf = pfe(f);
-      for (ctx.base_num=0; ctx.base_num < pfe(f)->nb_base(); ++ctx.base_num) {
+      for (ctx.base_num=0; ctx.base_num < pfe(f)->nb_base(0); ++ctx.base_num) {
 	vf[f][ctx.base_num] = funcs[f]->val(ctx); 
 	gvf[f][ctx.base_num] = funcs[f]->grad(ctx); 
       }
@@ -167,12 +167,12 @@ namespace getfem
     
     for (dim_type k = 0; k < c.N() ; ++k) {
       for (dim_type q = 0; q < target_dim(); ++q) {
-	for (size_type i = 0; i < pfb->nb_base(); ++i, ++it)
+	for (size_type i = 0; i < pfb->nb_base(0); ++i, ++it)
 	    *it = *itvf++;
 	for (size_type f = 0; f < nb_func; ++f) {
-          size_type posg = pfe(f)->nb_base()*(q + k*target_dim());
-          size_type posv = pfe(f)->nb_base()*q;
-	  for (size_type i = 0; i < pfe(f)->nb_base(); ++i, ++it) {
+          size_type posg = pfe(f)->nb_base(0)*(q + k*target_dim());
+          size_type posv = pfe(f)->nb_base(0)*q;
+	  for (size_type i = 0; i < pfe(f)->nb_base(0); ++i, ++it) {
 	    *it = grad_e[func_pf[f]][i + posg] * vf[f][i];
 	    *it += gvf[f][i][k] * (val_e[func_pf[f]])[i + posv];
 	  }

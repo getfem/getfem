@@ -66,7 +66,7 @@ namespace getfem {
       pfem pfe = classical_fem(pgt, K);
       pfem pf1 = mf.fem_of_element(cv);
       // size_type nbd1 = mf.nb_dof_of_element(cv);
-      size_type nbd2 = pfe->nb_dof();
+      size_type nbd2 = pfe->nb_dof(cv);
 
       o << "DIM = " << int(pgt->dim()) << endl;
 

@@ -711,7 +711,7 @@ namespace getfem {
         do_post_reduction(cv);
         data_base = &fallback_red.out_data[0];
       } else data_base = &(*t.begin());
-      if (t.size() != size_type(tsize)) DAL_INTERNAL_ERROR(""); // sinon on est mal
+      if (t.size() != size_type(tsize)) DAL_INTERNAL_ERROR("");
     }
   };
 

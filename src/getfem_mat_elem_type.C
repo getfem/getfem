@@ -79,9 +79,11 @@ namespace getfem {
     mat_elem_type f; f.resize(1); f[0].t = GETFEM_BASE_; f[0].pfi = pfi;
     f[0].nlt = 0;
     if (pfi->target_dim() == 1)
-    { f.mi.resize(1); f.mi[0] = pfi->nb_base(); }
-    else
-    { f.mi.resize(2); f.mi[0] = pfi->nb_base(); f.mi[1] = pfi->target_dim(); }
+      { f.get_mi().resize(1); f.get_mi()[0] = 1; }
+    else {
+      f.get_mi().resize(2); f.get_mi()[0] = 1;
+      f.get_mi()[1] = pfi->target_dim();
+    }
     return add_to_met_tab(f);
   }
 
@@ -89,12 +91,13 @@ namespace getfem {
     mat_elem_type f; f.resize(1); f[0].t = GETFEM_GRAD_; f[0].pfi = pfi;
     f[0].nlt = 0;
     if (pfi->target_dim() == 1) { 
-      f.mi.resize(2); f.mi[0] = pfi->nb_base();
-      f.mi[1] = pfi->structure()->dim();
+      f.get_mi().resize(2); f.get_mi()[0] = 1;
+      f.get_mi()[1] = pfi->structure()->dim();
     }
     else {
-      f.mi.resize(3); f.mi[0] = pfi->nb_base();
-      f.mi[1] = pfi->target_dim(); f.mi[2] = pfi->structure()->dim();
+      f.get_mi().resize(3); f.get_mi()[0] = 1;
+      f.get_mi()[1] = pfi->target_dim();
+      f.get_mi()[2] = pfi->structure()->dim();
     }
     return add_to_met_tab(f);
   }
@@ -103,42 +106,46 @@ namespace getfem {
     mat_elem_type f; f.resize(1);  f[0].t = GETFEM_HESSIAN_; f[0].pfi = pfi;
     f[0].nlt = 0;
     if (pfi->target_dim() == 1) { 
-      f.mi.resize(2); f.mi[0] = pfi->nb_base();
-      f.mi[1] = dal::sqr(pfi->structure()->dim());
+      f.get_mi().resize(2); f.get_mi()[0] = 1;
+      f.get_mi()[1] = dal::sqr(pfi->structure()->dim());
     }
     else {
-      f.mi.resize(3); f.mi[0] = pfi->nb_base();
-      f.mi[1] = pfi->target_dim();
-      f.mi[2] = dal::sqr(pfi->structure()->dim());
+      f.get_mi().resize(3); f.get_mi()[0] = 1;
+      f.get_mi()[1] = pfi->target_dim();
+      f.get_mi()[2] = dal::sqr(pfi->structure()->dim());
     }
     return add_to_met_tab(f);
   }
 
-  static pmat_elem_type mat_elem_nonlinear_(pnonlinear_elem_term nlt, pfem pfi, unsigned nl_part) {
+  static pmat_elem_type mat_elem_nonlinear_(pnonlinear_elem_term nlt,
+					    pfem pfi, unsigned nl_part) {
     mat_elem_type f; f.resize(1); 
     f[0].t = GETFEM_NONLINEAR_; f[0].nl_part = nl_part;
     f[0].pfi = pfi;
     f[0].nlt = nlt;
     if (nl_part) {
-      f.mi.resize(1); f.mi[0] = 1;
-    } else f.mi = nlt->sizes();
+      f.get_mi().resize(1); f.get_mi()[0] = 1;
+    } else f.get_mi() = nlt->sizes();
     return add_to_met_tab(f);
   }
 
-  pmat_elem_type mat_elem_nonlinear(pnonlinear_elem_term nlt, std::vector<pfem> pfi) {
-    if (pfi.size() == 0) DAL_THROW(dal::dimension_error, "mat_elem_nonlinear with no pfem!");
+  pmat_elem_type mat_elem_nonlinear(pnonlinear_elem_term nlt,
+				    std::vector<pfem> pfi) {
+    if (pfi.size() == 0)
+      DAL_THROW(dal::dimension_error, "mat_elem_nonlinear with no pfem!");
     pmat_elem_type me = mat_elem_nonlinear_(nlt, pfi[0], 0);
-    for (size_type i=1; i < pfi.size(); ++i) me = mat_elem_product(mat_elem_nonlinear_(nlt, pfi[i], i),me);
+    for (size_type i=1; i < pfi.size(); ++i)
+      me = mat_elem_product(mat_elem_nonlinear_(nlt, pfi[i], i),me);
     return me;
   }
 
   pmat_elem_type mat_elem_product(pmat_elem_type a, pmat_elem_type b) {
     mat_elem_type f; f.reserve(a->size() + b->size());
-    f.mi.reserve(a->mi.size() + b->mi.size());
+    f.get_mi().reserve(a->get_mi().size() + b->get_mi().size());
     f.insert(f.end(), (*a).begin(), (*a).end());
     f.insert(f.end(), (*b).begin(), (*b).end());
-    f.mi.insert(f.mi.end(), (*a).mi.begin(), (*a).mi.end());
-    f.mi.insert(f.mi.end(), (*b).mi.begin(), (*b).mi.end());
+    f.get_mi().insert(f.get_mi().end(), (*a).get_mi().begin(), (*a).get_mi().end());
+    f.get_mi().insert(f.get_mi().end(), (*b).get_mi().begin(), (*b).get_mi().end());
 
     /*    mat_elem_type f; f.resize(a->size() + b->size());
 	  f.mi.resize(a->mi.size() + b->mi.size());
@@ -164,6 +171,29 @@ namespace getfem {
     }
     */
     return add_to_met_tab(f);
+  }
+
+  bgeot::multi_index mat_elem_type::sizes(size_type cv) const {
+    bgeot::multi_index mii = mi;
+    for (size_type i = 0, j = 0; i < size(); ++i, ++j) {
+      switch ((*this)[i].t) {
+      case GETFEM_BASE_ :
+	mii[j] = (*this)[i].pfi->nb_base(cv);
+	if ((*this)[i].pfi->target_dim() != 1) ++j;
+	break;
+      case GETFEM_GRAD_ :
+	mii[j] = (*this)[i].pfi->nb_base(cv); ++j;
+	if ((*this)[i].pfi->target_dim() != 1) ++j;
+	break;     
+      case GETFEM_HESSIAN_   :
+	mii[j] = (*this)[i].pfi->nb_base(cv); ++j;
+	if ((*this)[i].pfi->target_dim() != 1) ++j;
+	break;
+      case GETFEM_NONLINEAR_ : j+=(*this)[i].nlt->sizes().size(); --j;
+	break;
+      }
+    }
+    return mii;
   }
 
 

@@ -156,7 +156,7 @@ namespace getfem
       pfem pf = mf.fem_of_element(cv);
       
       bool discontinuous = false;
-      for (unsigned i=0; i < pf->nb_dof(); ++i) {
+      for (unsigned i=0; i < pf->nb_dof(cv); ++i) {
         /* could be a better test for discontinuity .. */
         if (!dof_linkable(pf->dof_types()[i])) { discontinuous = true; break; }
       }
@@ -174,7 +174,7 @@ namespace getfem
     pmf_dof_used.sup(0, pmf->nb_dof());
     for (dal::bv_visitor cv(pmf->convex_index()); !cv.finished(); ++cv) {
       int t = -1;
-      size_type nbd = pmf->fem_of_element(cv)->nb_dof();
+      size_type nbd = pmf->fem_of_element(cv)->nb_dof(cv);
       switch (pmf->fem_of_element(cv)->dim()) {
         case 0: t = VTK_VERTEX; break;
         case 1: 
@@ -458,7 +458,7 @@ namespace getfem
       }
       pfem pf = mf.fem_of_element(cv);      
       bool discontinuous = false;
-      for (unsigned i=0; i < pf->nb_dof(); ++i) {
+      for (unsigned i=0; i < pf->nb_dof(cv); ++i) {
         /* could be a better test for discontinuity .. */
         if (!dof_linkable(pf->dof_types()[i])) { discontinuous = true; break; }
       }

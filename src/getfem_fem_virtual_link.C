@@ -37,171 +37,7 @@
 /* A refaire, l'élément fini n'est plus supprimé en cas de suppression des */
 /* mesh-fems.                                                              */
 
-namespace getfem
-{
-
-
-
-#if 0
-
-
-
-
-  class mesh_fem_link_fem : public context_dependencies {
- 
-  protected :
-
-    struct gauss_pt_info {
-      base_node localcoords;
-      size_type indcv;
-      gauss_pt_info(void) { indcv = size_type(-1); }
-    };
-
-    struct cv_info {
-      std::vector<size_type> indgausstab;
-      std::deque<size_type> doftab;
-    };
-
-    mesh_fem *pmf1, *pmf2; // pmf1 -> mef to interpolated.
-                           // pmf2 -> mef to build.
-    bool to_be_computed;
-    std::vector<gauss_pt_info> gauss_ptab;
-    std::vector<cv_info> cv_info_tab;
-    size_type max_dof;
-
-    void add_dof_to_cv(size_type cv, size_type i);
-    
-    void compute(void);
-
-  public :
-
-    mesh_fem &mf_interpolated(void) { return *pmf1; }
-    mesh_fem &mf_target(void) { return *pmf2; }
-
-    size_type nb_max_dof_per_element(void);
-
-    size_type ind_of_dof(size_type cv, size_type i) {
-      if (to_be_computed || context_changed()) compute();
-      if (i >= cv_info_tab[cv].doftab.size())
-	return 0;
-      else
-	return cv_info_tab[cv].doftab[i];
-    }
-
-    void mat_trans(base_matrix &M, const base_matrix &G,
-		   bgeot::pgeometric_trans pgt, bool wg);
-
-    mesh_fem_link_fem(const mesh_fem_link_fem_light &ls);
-    ~mesh_fem_link_fem();
-
-  };
-
-
-
-
-
-
-
-  class virtual_link_fem : public virtual_fem, public context_dependencies {
-
-  protected :
-    pmesh_fem_link_fem pmflf;
-    papprox_integration pai;
-    bool with_grad;
-    dim_type di;
-    
-    void build_dof(size_type nb) {
-      init_cvs_node();
-      dim_type d = pai->dim();
-      base_node pt(d); pt.fill(0.0);
-      for (size_type k = 0; k < nb; ++k)
-	add_node(already_numerate_dof(d), pt);
-    }
-    
-  public :
-
-    pmesh_fem_link_fem associated_mf_link_fem(void) { return pmflf; }
-    papprox_integration associated_integration(void) { return pai; }
-    bool is_with_grad(void) { return with_grad; }
-
-    virtual size_type nb_dof(void) const {
-      size_type nb = pmflf->nb_max_dof_per_element();
-      if (nb != dof_types_.size()) 
-	(const_cast<virtual_link_fem_ *>(this))->build_dof(nb);
-      return nb;
-    }
-    virtual size_type nb_base(void) const
-      { return pai->nb_points() * (1 + (with_grad ? di : 0)); }
-    virtual void mat_trans(base_matrix &M, const base_matrix &G,
-			   bgeot::pgeometric_trans pgt) const
-      { (pmesh_fem_link_fem(pmflf))->mat_trans(M, G, pgt, with_grad); }
-
-    virtual size_type index_of_already_numerate_dof(size_type cv, size_type i)
-      const { return pmflf->ind_of_dof(cv, i); }
-
-    void base_value(const base_node &x, base_tensor &t) const {
-      const bgeot::stored_point_tab *p = &(pai->integration_points());
-      for (size_type i = 0; i < p->size(); ++i)
-	if (&((*p)[i]) == &x) {
-	  bgeot::multi_index mi(2);
-	  mi[1] = target_dim(); mi[0] = nb_base();
-	  t.adjust_sizes(mi);
-	  std::fill(t.begin(), t.end(), 0.0);
-	  t[i] = 1.0;
-	  return;
-	}
-      DAL_THROW(internal_error,
-	  "You cannot interpolate this element, use the original element.");
-    }
-    void grad_base_value(const base_node &x, base_tensor &t) const {
-      // il faudrait vérifier dans mat_elem que le fait de passer di comme
-      // dimension donne le bon calcul quand des dimensions diferentes 
-      // interviennent.
-      const bgeot::stored_point_tab *p = &(pai->integration_points());
-      for (size_type i = 0; i < p->size(); ++i)
-	if (&((*p)[i]) == &x) { 
-	  bgeot::multi_index mi(3);
-	  mi[2] = di; mi[1] = target_dim(); mi[0] = nb_base();
-	  t.adjust_sizes(mi);
-	  std::fill(t.begin(), t.end(), 0.0);
-	  if (with_grad)
-	    for (dim_type k = 0; k < di; ++k)
-	      t[k * mi[0] + i + pai->nb_points() * (k+1)] = 1.0;
-	  return;
-	}
-      DAL_THROW(internal_error,
-	  "You cannot interpolate this element, use the original element.");
-    }
-    void hess_base_value(const base_node &x, base_tensor &t) const {
-      const bgeot::stored_point_tab *p = &(pai->integration_points());
-      for (size_type i = 0; i < p->size(); ++i)
-	if (&((*p)[i]) == &x) {
-	  bgeot::multi_index mi(4);
-	  mi[2] = di; mi[2] = di; mi[1] = target_dim(); mi[0] = nb_base();
-	  t.adjust_sizes(mi);
-	  std::fill(t.begin(), t.end(), 0.0);
-	  return;
-	}
-      DAL_THROW(internal_error,
-	  "You cannot interpolate this element, use the original element.");
-    }
-    
-    virtual_link_fem_(const virtual_link_fem_light_ &ls)
-      : pmflf(ls.pmflf), pai(ls.pai), with_grad(ls.with_grad) {
-      is_equiv = is_pol = is_lag = false; es_degree = 5;
-      cvr = pai->ref_convex();
-      di = ls.pmflf->mf_target().linked_mesh().dim();
-      real_element_defined = true;
-    }
-
-  };
-
-
-
-
-
-
-  // #if 0
+namespace getfem {
 
   struct mesh_fem_link_fem_light {
     mesh_fem *pmf1, *pmf2;
@@ -306,7 +142,7 @@ namespace getfem
 	  if (pf->target_dim() != 1)
 	    DAL_THROW(internal_error,
 		 "Sorry this method is not defined for vectorial elements.");
-	  size_type nbd = pf->nb_dof();
+	  size_type nbd = pf->nb_dof(cv1);
 	  ref_mesh_dof_ind_ct p = pmf1->ind_dof_of_element(cv1);
 	  for (nlocdof = 0; nlocdof < nbd; ++nlocdof)
 	    if (p[nlocdof] == ndof) break;
@@ -473,7 +309,7 @@ namespace getfem
     papprox_integration associated_integration(void) { return pai; }
     bool is_with_grad(void) { return with_grad; }
 
-    virtual size_type nb_dof(void) const {
+    virtual size_type nb_dof(size_type) const {
       size_type nb = pmflf->nb_max_dof_per_element();
       if (nb != dof_types_.size()) 
 	(const_cast<virtual_link_fem_ *>(this))->build_dof(nb);
@@ -581,7 +417,5 @@ namespace getfem
 			  (*it)->is_with_grad()));
     }
   }
-
-#endif
 
 }  /* end of namespace getfem.                                            */

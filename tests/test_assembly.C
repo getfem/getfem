@@ -152,8 +152,8 @@ namespace getfem {
     for (cv << nn; cv != ST_NIL; cv << nn) {
       nf = mf.faces_of_convex_on_boundary(cv, boundary);
       if (nf.card() > 0) {
-	pf1 =     mf.fem_of_element(cv); nbd1 = pf1->nb_dof();
-	pf2 = mfdata.fem_of_element(cv); nbd2 = pf2->nb_dof();
+	pf1 =     mf.fem_of_element(cv); nbd1 = pf1->nb_dof(cv);
+	pf2 = mfdata.fem_of_element(cv); nbd2 = pf2->nb_dof(cv);
 	pgt = mf.linked_mesh().trans_of_convex(cv);
 	pim = mf.int_method_of_element(cv);
 	if (pf1prec != pf1 || pf2prec != pf2 || pgtprec!=pgt || pimprec != pim) {
@@ -199,8 +199,8 @@ namespace getfem {
 
     for (cv << nn; cv != ST_NIL; cv << nn)
       {
-	pf1 =     mf.fem_of_element(cv); nbd1 = pf1->nb_dof();
-	pf2 = mfdata.fem_of_element(cv); nbd2 = pf2->nb_dof();
+	pf1 =     mf.fem_of_element(cv); nbd1 = pf1->nb_dof(cv);
+	pf2 = mfdata.fem_of_element(cv); nbd2 = pf2->nb_dof(cv);
 	pgt = mf.linked_mesh().trans_of_convex(cv);
 	pim = mf.int_method_of_element(cv);
 	if (pf1prec != pf1 || pf2prec != pf2 || pgtprec != pgt || pimprec != pim)
@@ -245,8 +245,8 @@ namespace getfem {
       {
 	nf = mf1.faces_of_convex_on_boundary(cv, boundary);
 	if (nf.card() > 0) {
-	  pf1 = mf1.fem_of_element(cv); nbd1 = pf1->nb_dof();
-	  pf2 = mf2.fem_of_element(cv); nbd2 = pf2->nb_dof();
+	  pf1 = mf1.fem_of_element(cv); nbd1 = pf1->nb_dof(cv);
+	  pf2 = mf2.fem_of_element(cv); nbd2 = pf2->nb_dof(cv);
 	  pgt = mf1.linked_mesh().trans_of_convex(cv);
 	  pim = mf1.int_method_of_element(cv);
 	  if (pf1prec != pf1 || pf2prec != pf2 || pgtprec != pgt 
@@ -297,8 +297,8 @@ namespace getfem {
 
     for (cv << nn; cv != ST_NIL; cv << nn)
       {
-	pf1 = mf1.fem_of_element(cv); nbd1 = pf1->nb_dof();
-	pf2 = mf2.fem_of_element(cv); nbd2 = pf2->nb_dof();
+	pf1 = mf1.fem_of_element(cv); nbd1 = pf1->nb_dof(cv);
+	pf2 = mf2.fem_of_element(cv); nbd2 = pf2->nb_dof(cv);
 	pgt = mf1.linked_mesh().trans_of_convex(cv);
 	pim = mf1.int_method_of_element(cv);
 	if (pf1prec != pf1 || pf2prec != pf2 || pgtprec != pgt || pimprec != pim)
@@ -352,8 +352,8 @@ namespace getfem {
 	  {
 	    size_type f, nbdof_u, nbdof_d;
 
-	    pf_u = mf_u.fem_of_element(cv); nbdof_u = pf_u->nb_dof();
-	    pf_d = mf_d.fem_of_element(cv); nbdof_d = pf_d->nb_dof();
+	    pf_u = mf_u.fem_of_element(cv); nbdof_u = pf_u->nb_dof(cv);
+	    pf_d = mf_d.fem_of_element(cv); nbdof_d = pf_d->nb_dof(cv);
 	    pgt = mf_u.linked_mesh().trans_of_convex(cv);
 	    pim = mf_u.int_method_of_element(cv);
 	    if (pf_u_prec != pf_u || pf_d_prec != pf_d || pgtprec!=pgt 
@@ -439,7 +439,7 @@ namespace getfem {
     for (cv << nn; cv != ST_NIL; cv << nn)
       {
 	pf1 =     mf.fem_of_element(cv); 
-	pf2 = mfdata.fem_of_element(cv); nbd2 = pf2->nb_dof();
+	pf2 = mfdata.fem_of_element(cv); nbd2 = pf2->nb_dof(cv);
 	pgt = mf.linked_mesh().trans_of_convex(cv);
 	pim = mf.int_method_of_element(cv);
 	if (pf1prec != pf1 || pf2prec != pf2 || pgtprec != pgt || pimprec != pim)
@@ -524,9 +524,9 @@ namespace getfem {
     /* loop over all convexes */
     for (cv << nn; cv != ST_NIL; cv << nn) {
 
-      pf_u = mf_u.fem_of_element(cv); nbdof_u = pf_u->nb_dof();
-      pf_p = mf_p.fem_of_element(cv); nbdof_p = pf_p->nb_dof();
-      pf_d = mf_d.fem_of_element(cv); nbdof_d = pf_d->nb_dof();
+      pf_u = mf_u.fem_of_element(cv); nbdof_u = pf_u->nb_dof(cv);
+      pf_p = mf_p.fem_of_element(cv); nbdof_p = pf_p->nb_dof(cv);
+      pf_d = mf_d.fem_of_element(cv); nbdof_d = pf_d->nb_dof(cv);
       pgt = mf_u.linked_mesh().trans_of_convex(cv);
       pim = mf_u.int_method_of_element(cv);
 
@@ -591,8 +591,8 @@ namespace getfem {
 
     for (cv << nn; cv != ST_NIL; cv << nn)
       {
-	pf1 =     mf.fem_of_element(cv); nbd1 = pf1->nb_dof();
-	pf2 = mfdata.fem_of_element(cv); nbd2 = pf2->nb_dof();
+	pf1 =     mf.fem_of_element(cv); nbd1 = pf1->nb_dof(cv);
+	pf2 = mfdata.fem_of_element(cv); nbd2 = pf2->nb_dof(cv);
 	pgt = mf.linked_mesh().trans_of_convex(cv);
 	pim = mf.int_method_of_element(cv);
 	if (pf1prec != pf1 || pf2prec != pf2 || pgtprec != pgt || pimprec != pim)

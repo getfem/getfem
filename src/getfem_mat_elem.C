@@ -142,9 +142,8 @@ namespace getfem
 	case GETFEM_NONLINEAR_ :
 	  if ((*it).nl_part == 0) {
 	    for (dim_type ii = 1; ii < (*it).nlt->sizes().size(); ++ii) ++k;
-	    if (is_ppi) DAL_THROW(failure_error,
-				  "For nonlinear terms you have to"
-				  " use approximated integration");
+	    if (is_ppi) DAL_THROW(failure_error, "For nonlinear terms you have "
+				  "to use approximated integration");
 	    computed_on_real_element = true;
 	  }
 	  break;
@@ -164,9 +163,10 @@ namespace getfem
 
     void add_elem(base_tensor &t, fem_interpolation_context& ctx,
                   scalar_type J, bool first, bool trans, 
-                  mat_elem_integration_callback *icb) {
+                  mat_elem_integration_callback *icb,
+		  bgeot::multi_index sizes) {
       mat_elem_type::const_iterator it = pme->begin(), ite = pme->end();
-      bgeot::multi_index mi(pme->mi.size()), sizes = pme->mi;
+      //      bgeot::multi_index mi(pme->mi.size());
       bgeot::multi_index::iterator mit = sizes.begin();
       for (size_type k = 0; it != ite; ++it, ++k) {
 	ctx.set_pfp(pfp[k]);
@@ -319,7 +319,7 @@ namespace getfem
       if ((volumic && volume_computed) || (!volumic && faces_computed)) return;
       // scalar_type exectime = ftool::uclock_sec();
 
-      bgeot::multi_index mi(pme->mi.size()), sizes = pme->mi;
+      bgeot::multi_index sizes = pme->sizes(0), mi(sizes.size());
       bgeot::multi_index::iterator mit = sizes.begin(), mite = sizes.end();
       size_type f = 1;
       for ( ; mit != mite; ++mit, ++f) f *= *mit;
@@ -352,7 +352,7 @@ namespace getfem
 
 	  if ((*it).pfi) {
 	    if ((*it).pfi->target_dim() > 1)
-	      { ind += (*it).pfi->nb_base() * (*mit); ++mit; }
+	      { ind += (*it).pfi->nb_base(0) * (*mit); ++mit; }
 	    
 	    Q = ((ppolyfem)((*it).pfi))->base()[ind];
 	  }
@@ -375,7 +375,7 @@ namespace getfem
 	      ind = *mit; ++mit;
 	      
 	      if ((*it).pfi->target_dim() > 1)
-		{ ind += (*it).pfi->nb_base() * (*mit); ++mit; }
+		{ ind += (*it).pfi->nb_base(0) * (*mit); ++mit; }
 	      R = ((ppolyfem)((*it).pfi))->base()[ind];
 	      
 	      switch ((*it).t) {
@@ -405,7 +405,7 @@ namespace getfem
 	  while (ip == nb_pt_l && ind_l < nbf)
 	    { nb_pt_l += pai->nb_points_on_face(ind_l); ind_l++; }
 	  ctx.set_ii(ip); 
-	  add_elem(mref[ind_l], ctx, 1.0, first, false, NULL);
+	  add_elem(mref[ind_l], ctx, 1.0, first, false, NULL, sizes);
 	  first = false;
 	}
       }
@@ -419,6 +419,7 @@ namespace getfem
       dim_type P = dim, N = G.nrows();
       short_type NP = pgt->nb_points();
       fem_interpolation_context ctx(pgp,0,0,G,elt);
+      bgeot::multi_index sizes = pme->sizes(elt);
 
       if (G.ncols() != NP) DAL_THROW(dimension_error, "dimensions mismatch");
       
@@ -470,7 +471,7 @@ namespace getfem
 	    gmm::mult(B, un, up);
 	    J *= bgeot::vect_norm2(up);
 	  }	  
-	  add_elem(t, ctx, J, first, true, icb);
+	  add_elem(t, ctx, J, first, true, icb, sizes);
 	}
       }
 

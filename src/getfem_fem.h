@@ -107,13 +107,15 @@ namespace getfem
     
   public :
     /// Number of degrees of freedom.
-    virtual size_type nb_dof(void) const { return dof_types_.size(); }
-    virtual size_type nb_base(void) const { return nb_dof(); }
+    virtual size_type nb_dof(size_type) const
+    { return dof_types_.size(); }
+    virtual size_type nb_base(size_type cv) const
+    { return nb_dof(cv); }
     /// Number of components (nb_dof() * dimension of the target space).
-    size_type nb_base_components(void) const
-      { return nb_base() * ntarget_dim; }
-    size_type nb_components(void) const
-      { return nb_dof() * ntarget_dim; }
+    size_type nb_base_components(size_type c) const
+      { return nb_base(c) * ntarget_dim; }
+    size_type nb_components(size_type c) const
+      { return nb_dof(c) * ntarget_dim; }
     /// Gives the array of pointer on dof description.
     const std::vector<pdof_description> &dof_types(void) const 
       { return dof_types_; }
@@ -331,7 +333,7 @@ namespace getfem
     size_type Qmult = size_type(Qdim) / target_dim();
     if (gmm::vect_size(val) != Qdim)
       DAL_THROW(dimension_error, "dimensions mismatch");
-    size_type R = nb_dof(), RR = nb_base();
+    size_type R = nb_dof(c.convex_num()), RR = nb_base(c.convex_num());
     
     gmm::clear(val);
     base_tensor Z; real_base_value(c,Z);
@@ -353,7 +355,7 @@ namespace getfem
   void virtual_fem::interpolation(const fem_interpolation_context& c, 
 				  MAT &M, dim_type Qdim) const {
     size_type Qmult = size_type(Qdim) / target_dim();
-    size_type R = nb_dof(), RR = nb_base();
+    size_type R = nb_dof(c.convex_num()), RR = nb_base(c.convex_num());
     if (gmm::mat_nrows(M) != Qdim || gmm::mat_ncols(M) != R*Qmult)
       DAL_THROW(dimension_error, "dimensions mismatch");
     
@@ -383,7 +385,7 @@ namespace getfem
     
     dim_type P = dim();
     base_tensor t;
-    size_type R = nb_dof(), RR = nb_base();      
+    size_type R = nb_dof(c.convex_num()), RR = nb_base(c.convex_num());      
     
     gmm::clear(val);
     if (!is_on_real_element()) { // optimized case
@@ -448,9 +450,9 @@ namespace getfem
     std::vector<FUNC> &base(void) { return base_; }
     void base_value(const base_node &x, base_tensor &t) const {
       bgeot::multi_index mi(2);
-      mi[1] = target_dim(); mi[0] = nb_base();
+      mi[1] = target_dim(); mi[0] = nb_base(0);
       t.adjust_sizes(mi);
-      size_type R = nb_base_components();
+      size_type R = nb_base_components(0);
       base_tensor::iterator it = t.begin();
       for (size_type  i = 0; i < R; ++i, ++it)
 	*it = base_[i].eval(x.begin());
@@ -458,9 +460,9 @@ namespace getfem
     void grad_base_value(const base_node &x, base_tensor &t) const {
       bgeot::multi_index mi(3);
       dim_type n = dim();
-      mi[2] = n; mi[1] = target_dim(); mi[0] = nb_base();
+      mi[2] = n; mi[1] = target_dim(); mi[0] = nb_base(0);
       t.adjust_sizes(mi);
-      size_type R = nb_base_components();
+      size_type R = nb_base_components(0);
       base_tensor::iterator it = t.begin();
       for (dim_type j = 0; j < n; ++j)
 	for (size_type i = 0; i < R; ++i, ++it)
@@ -469,9 +471,9 @@ namespace getfem
     void hess_base_value(const base_node &x, base_tensor &t) const {
       bgeot::multi_index mi(4);
       dim_type n = dim();
-      mi[3] = n; mi[2] = n; mi[1] = target_dim(); mi[0] = nb_base();
+      mi[3] = n; mi[2] = n; mi[1] = target_dim(); mi[0] = nb_base(0);
       t.adjust_sizes(mi);
-      size_type R = nb_base_components();
+      size_type R = nb_base_components(0);
       base_tensor::iterator it = t.begin();
       for (dim_type k = 0; k < n; ++k)
 	for (dim_type j = 0; j < n; ++j)

@@ -686,7 +686,7 @@ namespace getfem
     for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       pf1 = mf.fem_of_element(cv);
       pdof_description ldof = lagrange_dof(pf1->dim());
-      size_type nbd = pf1->nb_dof();
+      size_type nbd = pf1->nb_dof(cv);
       for (size_type i = 0; i < nbd; i++)
       {
 	size_type dof1 = mf.ind_dof_of_element(cv)[i*Q];
@@ -729,7 +729,7 @@ namespace getfem
       pf1 = mf.fem_of_element(*it);
       if (pf1->target_dim() != 1)
 	DAL_THROW(to_be_done_error, "sorry, to be done ... ");
-      size_type nbd = pf1->nb_dof();
+      size_type nbd = pf1->nb_dof(*it);
       for (size_type i = 0; i < nbd * Q; i++) {
 	size_type dof1 = mf.ind_dof_of_element(*it)[i];
 	if (dof == dof1) {

@@ -99,7 +99,7 @@ namespace getfem
 
     void valid(void);
 
-    virtual size_type nb_dof(void) const;
+    virtual size_type nb_dof(size_type) const;
 
     /* ind should be > 0 */
     void add_func(pfem pf, pXfem_func pXf,

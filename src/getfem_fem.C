@@ -53,7 +53,7 @@ namespace getfem
   const base_matrix& fem_interpolation_context::M() const {
     if (!have_pgt() || !have_G() || !have_pf())
       DAL_THROW(dal::failure_error, "cannot compute M");
-    M_.resize(pf_->nb_base(), pf_->nb_dof());
+    M_.resize(pf_->nb_base(convex_num()), pf_->nb_dof(convex_num()));
     pf_->mat_trans(M_,G(),pgt());
     return M_;
   }
@@ -494,13 +494,13 @@ namespace getfem
     ntarget_dim = fi2->target_dim();
     base_.resize(cv.nb_points() * ntarget_dim);
     size_type i, j, r;
-    for (j = 0, r = 0; j < fi2->nb_dof(); ++j)
-      for (i = 0; i < fi1->nb_dof(); ++i, ++r)
+    for (j = 0, r = 0; j < fi2->nb_dof(0); ++j)
+      for (i = 0; i < fi1->nb_dof(0); ++i, ++r)
 	add_node(product_dof(fi1->dof_types()[i], fi2->dof_types()[j]),
 		 cv.points()[r]);
     
-    for (j = 0, r = 0; j < fi2->nb_base_components(); j++)
-      for (i = 0; i < fi1->nb_base_components(); i++, ++r) {
+    for (j = 0, r = 0; j < fi2->nb_base_components(0); j++)
+      for (i = 0; i < fi1->nb_base_components(0); i++, ++r) {
 	base_[r] = fi1->base()[i];
 	base_[r].direct_product(fi2->base()[j]); 
       }
@@ -541,9 +541,9 @@ namespace getfem
     es_degree = fi2->estimated_degree();
     is_lag = false;
     unfreeze_cvs_node();
-    for (size_type i = 0; i < fi2->nb_dof(); ++i) {
+    for (size_type i = 0; i < fi2->nb_dof(0); ++i) {
       bool found = false;
-      for (size_type j = 0; j < fi1->nb_dof(); ++j) {
+      for (size_type j = 0; j < fi1->nb_dof(0); ++j) {
 	if ( dal::lexicographical_less<base_node,
 	     dal::approx_less<scalar_type> >()
 	     (fi2->node_of_dof(i), fi1->node_of_dof(j)) == 0
@@ -555,16 +555,10 @@ namespace getfem
 	add_node(deg_hierarchical_dof(fi2->dof_types()[i], 
 				      fi1->estimated_degree()),
 		 fi2->node_of_dof(i));
-	base_.resize(nb_dof());
-	base_[nb_dof()-1] = (fi2->base())[i];
-	// 	  cout << "adding base : " << base_[nb_dof()-1] << endl;
-	// 	  cout << "point : " << node_of_dof(nb_dof()-1) << endl;
-	// 	  cout << "Nb dof cici = " << nb_dof() << endl;
+	base_.resize(nb_dof(0));
+	base_[nb_dof(0)-1] = (fi2->base())[i];
       }
     }
-    //        cout << "Nb dof = " << nb_dof() << endl;
-    //        for (size_type j = 0; j < nb_dof(); ++j)
-    //  	cout << " base : " << j << " : " << base_[j] << endl;
   }
 
   struct thierach_femi_comp : public fem<polynomial_composite>
@@ -586,9 +580,9 @@ namespace getfem
     is_lag = false;
     hier_raff = fi1->hierarchical_raff() + 1;
     unfreeze_cvs_node();
-    for (size_type i = 0; i < fi2->nb_dof(); ++i) {
+    for (size_type i = 0; i < fi2->nb_dof(0); ++i) {
       bool found = false;
-      for (size_type j = 0; j < fi1->nb_dof(); ++j) {
+      for (size_type j = 0; j < fi1->nb_dof(0); ++j) {
 	if ( dal::lexicographical_less<base_node,
 	     dal::approx_less<scalar_type> >()
 	     (fi2->node_of_dof(i), fi1->node_of_dof(j)) == 0
@@ -599,8 +593,8 @@ namespace getfem
       if (!found) {
 	add_node(raff_hierarchical_dof(fi2->dof_types()[i], hier_raff),
 		 fi2->node_of_dof(i));
-	base_.resize(nb_dof());
-	base_[nb_dof()-1] = (fi2->base())[i];
+	base_.resize(nb_dof(0));
+	base_[nb_dof(0)-1] = (fi2->base())[i];
       }
     }
   }
@@ -782,7 +776,7 @@ namespace getfem
     base_node pt(nc); pt.fill(0.5);
     unfreeze_cvs_node();
     add_node(bubble1_dof(nc), pt);
-    base_.resize(nb_dof());
+    base_.resize(nb_dof(0));
     base_[nc+1] = base_[1]; base_[nc+1] *= scalar_type(1 << nc);
     for (int i = 2; i <= nc; ++i) base_[nc+1] *= base_[i];
     // Le raccord assure la continuite
@@ -816,7 +810,7 @@ namespace getfem
     es_degree = 2;
     base_node pt(2); pt.fill(0.5);
     add_node(lagrange_dof(2), pt);
-    base_.resize(nb_dof());
+    base_.resize(nb_dof(0));
     
     base_poly one(2, 0); one.one();
     base_poly x(2, 1, 0), y(2, 1, 1);
@@ -968,15 +962,15 @@ namespace getfem
 	  base_poly S(1,2); 
 	  S[0] = -alpha * G[d] / (1-alpha);
 	  S[1] = 1. / (1-alpha);
-	  for (size_type j=0; j < nb_base(); ++j) {
+	  for (size_type j=0; j < nb_base(0); ++j) {
 	    base_[j] = bgeot::poly_substitute_var(base_[j],S,d);
 	  }
 	}
       }
-      /*for (size_type j=0; j < nb_base(); ++j) cout << " base[" << j << "]=" << base_[j] << "\n";
+      /*for (size_type j=0; j < nb_base(0); ++j) cout << " base[" << j << "]=" << base_[j] << "\n";
       for (size_type i=0; i < cv_node.nb_points(); ++i) {
         cout << "node=" << cv_node.points()[i] << ":";
-        for (size_type j=0; j < nb_base(); ++j) cout << base_[j].eval(cv_node.points()[i].begin()) << " ";
+        for (size_type j=0; j < nb_base(0); ++j) cout << base_[j].eval(cv_node.points()[i].begin()) << " ";
         cout << "\n";
       }
       */
@@ -1019,12 +1013,12 @@ namespace getfem
     pt.fill(1./(nc+1)); /* barycenter of the convex */
     
     add_node(bubble1_dof(nc), pt);
-    base_.resize(nb_dof());
+    base_.resize(nb_dof(0));
     
-    j = nb_dof() - 1;
+    j = nb_dof(0) - 1;
     base_[j] = base_poly(nc, 0);
     base_[j].one();
-    for (size_type i = 0; i < P1.nb_dof(); i++) base_[j] *= P1.base()[i];
+    for (size_type i = 0; i < P1.nb_dof(0); i++) base_[j] *= P1.base()[i];
     // cout << "buble = " << base_[j] << endl;
   }
 

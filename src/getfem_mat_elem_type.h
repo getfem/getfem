@@ -84,9 +84,13 @@ namespace getfem
    *  is not to be manipulate by itself. Use pmat\_elem\_type and
    *  the functions written to produce those descriptions.
    */ 
-  struct mat_elem_type : public std::vector<constituant>
-  {
+  struct mat_elem_type : public std::vector<constituant> {
+  protected :
     bgeot::multi_index mi;
+  public :
+    bgeot::multi_index sizes(size_type) const;
+    bgeot::multi_index &get_mi(void) { return mi; }
+    const bgeot::multi_index &get_mi(void) const { return mi; }
   };
 
    /** @name functions on elementary matrix descriptions

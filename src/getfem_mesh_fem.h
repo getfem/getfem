@@ -297,7 +297,7 @@ namespace getfem
      */
     size_type nb_dof_of_element(size_type cv) const {
       pfem pf = f_elems[cv]->pf;
-      return pf->nb_dof() * Qdim / pf->target_dim();
+      return pf->nb_dof(cv) * Qdim / pf->target_dim();
     }
     /** Gives the point (base_node)  corresponding to the 
      *          degree of freedom i  of the element of index cv.

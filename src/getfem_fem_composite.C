@@ -66,7 +66,7 @@ namespace getfem
       ppolyfem pf = ppolyfem(pf1);
       p->estimated_degree() = std::max(p->estimated_degree(),
 				       pf->estimated_degree());
-      for (size_type k = 0; k < pf->nb_dof(); ++k) {
+      for (size_type k = 0; k < pf->nb_dof(cv); ++k) {
 	size_type igl = mf.ind_dof_of_element(cv)[k];
 	base_poly fu = pf->base()[k];
 	base[igl].poly_of_subelt(cv) = fu;
