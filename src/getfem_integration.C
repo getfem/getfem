@@ -569,7 +569,7 @@ namespace getfem
 // 	}
 // 	else {
 	  F[r] = ppi->int_monomial(base[r]);
-	  cout << "F[" << r << "] = " << F[r] << endl;
+	  //cout << "F[" << r << "] = " << F[r] << endl;
 // 	}
 	for (size_type q = 0; q < R; ++q) {
 // 	  if (nc == 1) {
@@ -587,18 +587,19 @@ namespace getfem
       
       gmm::lu_solve(M, U, F);
 
+      /*
       if (nc == 1)
 	for (size_type r = 0; r < R; ++r)
 	  cout << "node " << r << " : " << nodes[r] << " poids : " 
 	       << U[r] << endl;
-      
+      */      
       for (size_type r = 0; r < R; ++r)
 	add_point(nodes[r], U[r]);
       
       std::stringstream name2;
       name2 << "IM_NC(" << int(nc-1) << "," << int(k) << ")";
       for (short_type f = 0; f < structure()->nb_faces(); ++f) {
-	cout << "method on face : " << name2.str() << endl;
+	//cout << "method on face : " << name2.str() << endl;
 	add_method_on_face(int_method_descriptor(name2.str()), f);
       }
     }
