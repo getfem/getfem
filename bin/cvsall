@@ -1,0 +1,10 @@
+#!/bin/sh
+
+cd ~/source++/getfem++
+cvsstat
+cd ~/source++/getfem_matlab
+cvsstat
+cd ~/source++/getfem_apps
+cvsstat
+
+

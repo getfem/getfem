@@ -1,4 +1,4 @@
 #!/bin/sh
 
-cvs status | grep "Needs\|Modified"
+cvs status | grep "Needs\|Locally"
 
