@@ -119,7 +119,7 @@ fi
 dnl -----------------------------------------------
 dnl sorties
 dnl -----------------------------------------------
-AC_OUTPUT(\
+AC_CONFIG_FILES(\
 	Makefile \
 	config/Makefile \
 	src/Makefile \
@@ -127,4 +127,5 @@ AC_OUTPUT(\
 	matlabint/Makefile \
 	matlabcom/Makefile \
 	)
+AC_OUTPUT
 
