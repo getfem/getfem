@@ -356,6 +356,15 @@ namespace bgeot
     return geometric_trans_descriptor(name.str());
   }
 
+  static pgeometric_trans linear_qk(gt_param_list &params) {
+    if (params.size() != 1)
+      DAL_THROW(failure_error, 
+	  "Bad number of parameters : " << params.size() << " should be 1.");
+    if (params[0].type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    return parallelepiped_linear_geotrans(n);
+  }
 
 //   pgeometric_trans associated_trans(pconvex_structure cvs)
 //   {
@@ -439,12 +448,14 @@ namespace bgeot
   /* ******************************************************************** */
 
   struct geometric_trans_naming_system : public ftool::naming_system<geometric_trans> {
-    geometric_trans_naming_system() : ftool::naming_system<geometric_trans>("GT") {
+    geometric_trans_naming_system() : 
+      ftool::naming_system<geometric_trans>("GT") {
       add_suffix("PK", PK_gt);
       add_suffix("QK", QK_gt);
       add_suffix("PRISM", prism_gt);
       add_suffix("PRODUCT", product_gt);
       add_suffix("LINEAR_PRODUCT", linear_product_gt);
+      add_suffix("LINEAR_QK", linear_qk);
     }
   };
   

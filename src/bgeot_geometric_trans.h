@@ -240,6 +240,7 @@ namespace bgeot
    * GT_PRISM(N,K)          : Transformation on prisms, dim N, degree K
    * GT_PRODUCT(a,b)        : tensorial product of two transformations
    * GT_LINEAR_PRODUCT(a,b) : Linear tensorial product of two transformations
+   * GT_LINEAR_QK(N) : shortcut for GT_LINEAR_PRODUCT(GT_LINEAR_QK(N-1),GT_PK(1,1))
    */
 
   std::string name_of_geometric_trans(pgeometric_trans p);
