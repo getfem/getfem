@@ -33,7 +33,7 @@
 #include <getfem_integration.h>
 #include <ftool_naming.h>
 #include <gmm.h>
-
+#include <bgeot_permutations.h>
 #include <getfem_im_list.h>
 
 namespace getfem
@@ -373,7 +373,7 @@ namespace getfem
 	  = bgeot::geometric_trans_descriptor(im_desc_tab[i].geotrans_name);
 	dim_type N = pgt->structure()->dim();
 	base_node pt(N);
-	approx_integration *p = new approx_integration(pgt->convex_ref());
+	approx_integration *pai = new approx_integration(pgt->convex_ref());
 	size_type fr = im_desc_tab[i].firstreal;
 	for (size_type j = 0; j < im_desc_tab[i].nb_points; ++j) {
 	  for (dim_type k = 0; k < N; ++k)
@@ -381,41 +381,30 @@ namespace getfem
 	  
 	  switch (im_desc_node_type[im_desc_tab[i].firsttype + j]) {
 	  case 2: {
-	    /* very ugly generation of permutations */
-	    std::vector<size_type> cnt(pt.size()); std::fill(cnt.begin(), cnt.end(), 0);
-	    size_type z=0;
-	    do {
-	      dal::bit_vector bv; bv.clear(); bv.merge_from(cnt);
-	      if (bv.card() == pt.size()) {
-		base_node pt2(pt.size());
-		for (size_type l = 0; l < pt.size(); ++l) pt2[l] = pt[cnt[l]];
-		p->add_point_full_symmetric(pt2, im_desc_real[fr + j * (N+1) + N]);
-	      }
-	      cnt[0]++; z = 0;
-	      while (cnt[z] == pt.size()) {
-		cnt[z++] = 0; if (z == pt.size()) break;
-		cnt[z]++;
-	      }
-	    } while (z < pt.size());
+            base_node pt2(pt.size());
+            for (bgeot::permutation p(pt.size()); !p.finished(); ++p) {
+              p.apply_to(pt,pt2);
+              pai->add_point_full_symmetric(pt2, im_desc_real[fr + j * (N+1) + N]);
+            }
 	  } break;
 	  case 1: {
-	    p->add_point_full_symmetric(pt, im_desc_real[fr + j * (N+1) + N]);
+	    pai->add_point_full_symmetric(pt, im_desc_real[fr + j * (N+1) + N]);
 	  } break;
 	  case 0: {
-	    p->add_point(pt, im_desc_real[fr + j * (N+1) + N]);
+	    pai->add_point(pt, im_desc_real[fr + j * (N+1) + N]);
 	  } break;
 	  default: DAL_INTERNAL_ERROR("");
 	  }
 	}
 
 	for (short_type f = 0; N > 0 && f < pgt->structure()->nb_faces(); ++f)
-	  p->add_method_on_face
+	  pai->add_method_on_face
 	    (int_method_descriptor
 	     (im_desc_face_meth[im_desc_tab[i].firstface + f]), f);
 
-	p->valid_method();
+	pai->valid_method();
         // cerr << "finding " << name << endl;
-	return new integration_method(p);
+	return new integration_method(pai);
       }
     return 0;
   }
