@@ -50,7 +50,7 @@ int main(void)
 
   try {
     char meth[500];
-    cout.precision(16);
+    cout.precision(60);
     
     for (size_type i = 1; i < 15; ++i) {
       sprintf(meth, "IM_GAUSS1D(%d)", int(2*(i - 1)));
