@@ -1,0 +1,125 @@
+dnl Process this file with autoconf to produce a configure script.
+dnl -----------------------------------------------
+dnl initialisation
+dnl -----------------------------------------------
+
+dnl ./configure: sh internal 2K buffer overflow on HP-UX 9.xx
+dnl thus, updating cache ./config.cache avoided.
+define([AC_CACHE_LOAD], )dnl
+define([AC_CACHE_SAVE], )dnl
+
+AC_INIT(config/install-sh)
+AC_PREREQ(2.50)
+AC_ARG_PROGRAM
+AC_CONFIG_AUX_DIR([config])
+
+PACKAGE="getfem"
+MAJOR_VERSION="1"
+MINOR_VERSION="0"
+VERSION=$MAJOR_VERSION.$MINOR_VERSION
+echo "configuring $PACKAGE $VERSION..."
+
+dnl ------------------------------------------------------------------------
+dnl   init automake
+dnl ------------------------------------------------------------------------
+
+AM_INIT_AUTOMAKE($PACKAGE,$VERSION)
+
+ACLOCAL_M4=config/aclocal.m4
+ACLOCAL="aclocal -I config --output=${ACLOCAL_M4}"
+AUTOCONF="autoconf -l config"
+dnl CONFIGURE_DEPENDENCIES="config/aclocal.m4 config/ltconfig config/ltmain.sh"
+dnl AC_SUBST(CONFIGURE_DEPENDENCIES)
+
+dnl -----------------------------------------------
+dnl test du c++
+dnl -----------------------------------------------
+
+USER_CXXFLAGS="$CXXFLAGS"
+AC_PROG_CXX(cxx KCC CC cc++ xlC aCC g++ c++)
+AC_PROG_CXXCPP
+CXXFLAGS="${USER_CXXFLAGS}"
+
+AC_LANG_CPLUSPLUS
+
+case $CXX in
+ cxx)
+ 	here=`pwd`
+ 	cd $srcdir
+        CXXFLAGS="$CXXFLAGS -std strict_ansi -O3"
+dnl 	CXXFLAGS="$CXXFLAGS -ptr `pwd`/cxx_repository -std strict_ansi -O3"
+ 	cd $here
+	;;
+ CC)
+ 	CXXFLAGS="$CXXFLAGS -LANG:std -O3"
+	;;
+ g++ | c++)
+ 	CXXFLAGS="$CXXFLAGS -ftemplate-depth-40 -pedantic -O3"
+	;;
+ *)
+ 	CXXFLAGS="$CXXFLAGS -O3"
+	;;
+esac 
+dnl ------------------------------------------------------------------------
+dnl   init libtools for shared libraries
+dnl ------------------------------------------------------------------------
+
+AC_DISABLE_FAST_INSTALL
+
+AM_ENABLE_STATIC
+
+AM_PROG_LIBTOOL
+
+AC_SUBST(LIBTOOL_VERSION_INFO)
+
+LIBTOOL_VERSION_INFO="-version-info ${MAJOR_VERSION}:${MINOR_VERSION}:0"
+
+dnl AC_CHECK_PROGS(RANLIB, ranlib)
+
+dnl ------------------------------------------------------------------------
+dnl   matlab
+dnl ------------------------------------------------------------------------
+AC_CHECK_PROGS(MEX, mex)
+if test x"$MEX" != x""; then
+   MATLAB_DIR=`mex -v 2>&1 | grep "MATLAB " | awk '{print $4}'|sed -e '2,$d'`
+   MATLAB_INC_DIR=$MATLAB_DIR/extern/include
+   echo "checking for matlab path... " $MATLAB_DIR
+   AC_SUBST(MATLAB_INC_DIR)
+	
+   host_arch=`uname -s`
+   case $host_arch in
+     Linux)
+	MATLAB_COM_EXT=.mexglx
+	;;
+     OSF1)
+	MATLAB_COM_EXT=.mexaxp
+	;;
+     SunOS)
+	MATLAB_COM_EXT=.mexsol
+	;;
+     HP-UX)
+	MATLAB_COM_EXT=.mexhpux
+	;;
+     IRIX64)
+	MATLAB_COM_EXT=.mexsg
+	;;
+     *)
+	echo "checking for mex extension... not found for" $host_arch 
+        stop
+	;;
+   esac
+   echo "checking for mex extension... " $MATLAB_COM_EXT
+   AC_SUBST(MATLAB_COM_EXT)
+fi
+dnl -----------------------------------------------
+dnl sorties
+dnl -----------------------------------------------
+AC_OUTPUT(\
+	Makefile \
+	config/Makefile \
+	src/Makefile \
+	tests/Makefile \
+	matlabint/Makefile \
+	matlabcom/Makefile \
+	)
+

@@ -1,0 +1,20 @@
+A faire pour l'installation automatique :
+-----------------------------------------
+
+
+Verifier ce qui se passe avec make install pour les commandes MATLAB
+Adapter une installation quelque part.
+
+Produire les dépendances automatiques pour les fichiers compilés par mex
+(une phase de compilation a vide) 
+
+Produire le fichier de conf de mex suivant le compilo utilisé.
+
+Configurer le make clean tel qu'il efface les cxx_repository (déjà ok ?)
+
+Dans le make dist, les commandes MATLAB sont-elle inclusent (y compris les .m ?)
+
+
+shell en perl pour creer les fichier .am  (avec gestion automatique du numéro de version).
+
+compilation conditionelle de matlabint et matlabcom
