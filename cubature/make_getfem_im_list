@@ -34,8 +34,8 @@ open(TMPF5, ">$tmp5") or die "Open file impossible : $!\n";
 
 print TMPF1 "  static im_desc im_desc_tab[NB_IM] = {\n";
 print TMPF3 "  static long_scalar_type im_desc_real[NB_IMR] = {\n";
-print TMPF4 "  static char * im_desc_face_meth[NB_IMF] = {\n";
-print TMPF5 "  static char * im_desc_node_type[NB_IMN] = {\n";
+print TMPF4 "  static const char * im_desc_face_meth[NB_IMF] = {\n";
+print TMPF5 "  static size_type im_desc_node_type[NB_IMN] = {\n";
 
 $lss = `ls $ARGV[0]/IM*`;
 $nb_methods = 0;
@@ -96,7 +96,7 @@ while ($lss) {
     if ($nbf) { print TMPF4 "\n"; }
     close(DATAF);
     $nb_methods++;
-    print TMPF1 "    \"$name\", \"$geotrans\", $nb_real, $nb_faces, $nb_int,\n";
+    print TMPF1 "    {\"$name\", \"$geotrans\", $nb_real, $nb_faces, $nb_int},\n";
     $nb_faces += $nbf;
     $nb_real += $nbpt * ($N + 1);
     $nb_int += $nbpt;
@@ -126,8 +126,15 @@ print TMPF2 "
 /* USA.                                                                    */
 /*                                                                         */
 /* *********************************************************************** */
-\n\n 
+\n\n
 namespace getfem {\n\n
+  struct im_desc {
+      const char *method_name;
+      const char *geotrans_name;
+      size_type firstreal;
+      size_type firstface;
+      size_type firsttype;
+  };\n\n
   static const int NB_IM=$nb_methods;\n\n";
 print TMPF1 "  };\n\n  static const int NB_IMR=$nb_real; \n\n";
 print TMPF3 "  };\n\n  static const int NB_IMF=$nb_faces; \n\n";
