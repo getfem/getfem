@@ -30,6 +30,7 @@
 #include <getfem_regular_meshes.h>
 #include <getfem_modeling.h>
 #include <getfem_nonlinear_elasticity.h>
+#include <getfem_superlu.h>
 #include <gmm.h>
 
 /* try to enable the SIGFPE if something evaluates to a Not-a-number
@@ -130,13 +131,18 @@ template <typename MODEL_STATE> void
 				   1E-6*gmm::mat_maxnorm(MS.tangent_matrix()))
 		 ? "" : "not ")
 	     <<  "symmetric. ";
-
+      cout << "Solve.."; cout.flush();
+      double t0 = ftool::uclock_sec();
       if (1)
       {
-	size_type srtm = gmm::mat_nrows(MS.reduced_tangent_matrix());
+	double rcond;
+        getfem::SuperLU_solve(MS.reduced_tangent_matrix(), dr,
+                      gmm::scaled(MS.reduced_residu(), value_type(-1)),
+                      rcond);
+      /*size_type srtm = gmm::mat_nrows(MS.reduced_tangent_matrix());
 	gmm::dense_matrix<double> MM(srtm, srtm);
 	gmm::copy(MS.reduced_tangent_matrix(), MM);
-	gmm::lu_solve(MM, dr, gmm::scaled(MS.reduced_residu(), value_type(-1)));
+	gmm::lu_solve(MM, dr, gmm::scaled(MS.reduced_residu(), value_type(-1)));*/
       }
       else {
 	gmm::ildlt_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
@@ -147,7 +153,7 @@ template <typename MODEL_STATE> void
 	  DAL_WARNING(2,"gmres did not converge!");
       }
       MS.unreduced_solution(dr,d);
-
+      cout << "..done (" << ftool::uclock_sec() - t0 << ")\n";
       VECTOR stateinit(ndof);
       gmm::copy(MS.state(), stateinit);
       
@@ -334,6 +340,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
     default: DAL_THROW(dal::failure_error, "no such law");
   }
 
+  pl->test_derivatives(3, .0001, p);
   if (0) {
     getfem::Ciarlet_Geymonat_hyperelastic_law l;
     cout << "test derivees SaintVenantKirchhoff_hyperelastic_law\n";
@@ -413,9 +420,11 @@ bool elastostatic_problem::solve(plain_vector &U) {
 
   getfem::dx_export exp(datafilename + ".dx",
 			PARAM.int_value("VTK_EXPORT")==1);
-  exp.exporting(mf_u); 
-  exp.begin_series("deformationsteps");
-  exp.write_point_data(mf_u, U, "stepinit");
+  getfem::stored_mesh_slice sl; sl.build(mesh, getfem::slicer_boundary(mesh),8); 
+  exp.exporting(sl,true); exp.exporting_mesh_edges();
+  //exp.begin_series("deformationsteps");
+  exp.write_point_data(mf_u, U, "stepinit"); 
+  exp.serie_add_object("deformationsteps");
 
   for (int step = 0; step < nb_step; ++step) {
     plain_vector DF(F);
@@ -455,8 +464,9 @@ bool elastostatic_problem::solve(plain_vector &U) {
 		  << pl->get_unvalid_flag() << " gauss points");
 
     ELAS.get_solution(MS, U);
-    char s[100]; sprintf(s, "step%d", step+1);
-    exp.write_point_data(mf_u, U, s);
+    //char s[100]; sprintf(s, "step%d", step+1);
+    exp.write_point_data(mf_u, U); //, s);
+    exp.serie_add_object("deformationsteps");
   }
 
   // Solution extraction
