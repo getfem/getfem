@@ -19,7 +19,7 @@ print TMPF "LX = 1.0\n";
 print TMPF "LY = 1.0\n";
 print TMPF "LZ = 1.0\n";
 print TMPF "INCLINE = 0.0\n";
-print TMPF "FT = 10.0\n";
+print TMPF "FT = 30.0\n";
 print TMPF "MESH_TYPE = 0;\n";
 print TMPF "K = 1;\n";
 print TMPF "KI = 1;\n";
@@ -57,7 +57,7 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
 
 $INTE = 0;
 
-$NMAX = 20800;
+$NMAX = 20400;
 
 while ($INTE < 3) {
 
@@ -68,7 +68,7 @@ while ($NX <= $NMAX) {
   $K = 1;
   print "Test for NX = $NX \t";
   print RES 1.0/$NX;
-  while ($K * $NX * $K * $K <= 4*$NMAX && $K <= 9) {
+  while ($K * $NX * $K * $K <= 4*$NMAX && $K <= 12) {
 
     start_program("-d N=$N -d NX=$NX -d K=$K -d FT=$FT -d INTEGRATION=$INTE");
     print RES "$linferror ";
@@ -91,8 +91,15 @@ print GNF "     '$tmp_res' using ((\$1)/5):5,";
 print GNF "     '$tmp_res' using ((\$1)/6):6,";
 print GNF "     '$tmp_res' using ((\$1)/7):7,";
 print GNF "     '$tmp_res' using ((\$1)/8):8,";
-print GNF "     '$tmp_res' using ((\$1)/9):9\n";
+print GNF "     '$tmp_res' using ((\$1)/9):9,";
+print GNF "     '$tmp_res' using ((\$1)/10):10,";
+print GNF "     '$tmp_res' using ((\$1)/11):11,";
+print GNF "     '$tmp_res' using ((\$1)/12):12\n";
 print GNF "pause -1;\n";
+print GNF "set output 'laplacian_$INTE.ps'\n";
+print GNF "set term postscript\n";
+print GNF "replot\n";
+
 close(GNF);
 `gnuplot $tmp_gnuplot`;
 
