@@ -65,7 +65,8 @@ print MAKEFILE "\n\n", '# compiler options :', "\n";
 if ($systeme =~ /Linux/)
 {
   print MAKEFILE "COMP = g++\n";
-  print MAKEFILE "OPTIONS_STANDARD = -ftemplate-depth-40 -pedantic\n";
+  print MAKEFILE "OPTIONS_STANDARD = -ftemplate-depth-40\n";
+  print MAKEFILE "OPTIONS_STRICT = -pedantic\n";
   print MAKEFILE "OPTIONS_DEBUG    = -g\n";
   print MAKEFILE "OPTIONS_OPTIMIZE = -O3\n";
   print MAKEFILE "OPTIONS_BOTH     = -g -O3\n";
@@ -78,7 +79,8 @@ if ($systeme =~ /Linux/)
 else
 {
   print MAKEFILE "COMP = cxx\n";
-  print MAKEFILE "OPTIONS_STANDARD = -ptr $rootlib/cxx_repository -std strict_ansi -std strict_ansi_errors \n";
+  print MAKEFILE "OPTIONS_STANDARD = -ptr $rootlib/cxx_repository\n";
+  print MAKEFILE "OPTIONS_STRICT = -std strict_ansi -std strict_ansi_errors\n";
   print MAKEFILE "OPTIONS_DEBUG    = -g\n";
   print MAKEFILE "OPTIONS_OPTIMIZE = -O3\n";
   print MAKEFILE "OPTIONS_BOTH     = -g3\n";
@@ -128,7 +130,11 @@ while($listeC)
   $fi2 =~ s/\.o/_h/;
 #  $fi2 =~ s/\.o/.h/;
   print MAKEFILE "\n", "sources\/$fi1 : $fi \$($fi2)\n";
-  print MAKEFILE "\t", '$(CPLUS) $(COPT)  -c $(INCLUDES) ', $fi, ' -o $@', "\n";
+  
+  if ($fi1 =~ /linear\_systems/) {
+    print MAKEFILE "\t", '$(CPLUS) $(COPT) -c $(INCLUDES) ', $fi, ' -o $@', "\n"; }
+  else {
+    print MAKEFILE "\t", '$(CPLUS) $(COPT) \$(OPTIONS_STRICT) -c $(INCLUDES) ', $fi, ' -o $@', "\n"; }
 
 }
 
