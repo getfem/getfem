@@ -708,8 +708,13 @@ Matrix-vector or matrix-matrix multiplication . The following operations are val
 \index{GMM! gmm::vect_norm1(V)}
 \index{GMM! gmm::vect_norm2(V)}
 \index{GMM! gmm::vect_inf(V)}
-  for vectors only, \cpp{gmm::vect_norm1(V)} gives the sum of modulous of the components of \cpp{V}.\\
-\cpp{gmm::vect_norm2(V)} is the euclidian norm of \cpp{V} and \cpp{gmm::vect_inf(V)} the infinity norm of \cpp{V}.
+\index{GMM! gmm::mat_norm2(M)}
+  \cpp{gmm::vect_norm1(V)} gives the sum of modulous of the components of \cpp{V}.\\
+\cpp{gmm::vect_norm2(V)} is the euclidian norm of \cpp{V} and \cpp{gmm::vect_inf(V)} the infinity norm of \cpp{V}. \cpp{gmm::mat_norm2(M)} is the euclidian norm of the matrix \cpp{M} (Fröbenius norm).
+
+\subsubsection{trace}
+\index{GMM! gmm::mat_trace(M)}
+\cpp{gmm::mat_trace(M)} gives the trace of the matrix \cpp{M}.
 
 \subsubsection{scalar product} 
 \index{GMM! gmm::vect_sp(V1, V2)}
