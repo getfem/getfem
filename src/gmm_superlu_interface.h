@@ -117,21 +117,23 @@ namespace gmm {
   { SuperLU_Z::zgssv(A, p, q, L, U, B, info); }
 
 #define DECL_GSSVX(NAMESPACE,FNAME,FLOATTYPE,KEYTYPE) \
-  void SuperLU_gssvx(char *fact, char *trans, char *refact,                           \
-		    SuperMatrix *A, NAMESPACE::factor_param_t *factor_params, int *perm_c,      \
-		    int *perm_r, int *etree, char *equed, FLOATTYPE *R, FLOATTYPE *C,\
-		    SuperMatrix *L, SuperMatrix *U, void *work, int lwork,           \
-		    SuperMatrix *B, SuperMatrix *X, FLOATTYPE *recip_pivot_growth,   \
-		    FLOATTYPE *rcond, FLOATTYPE *ferr, FLOATTYPE *berr,              \
-		    int *info, KEYTYPE)                                              \
-  { NAMESPACE::mem_usage_t mem_usage;                                                \
-    NAMESPACE::FNAME(fact,trans,refact,A,factor_params,perm_c,perm_r,                \
-		     etree,equed,R,C,L,U,work,lwork,B,X,recip_pivot_growth,          \
-		     rcond,ferr,berr,&mem_usage,info); }                              
-DECL_GSSVX(SuperLU_S,sgssvx,float,float)
-DECL_GSSVX(SuperLU_C,cgssvx,float,std::complex<float>)
-DECL_GSSVX(SuperLU_D,dgssvx,double,double)
-DECL_GSSVX(SuperLU_Z,zgssvx,double,std::complex<double>)
+  void SuperLU_gssvx(char *fact, char *trans, char *refact,                \
+    SuperMatrix *A, NAMESPACE::factor_param_t *factor_params, int *perm_c, \
+    int *perm_r, int *etree, char *equed, FLOATTYPE *R, FLOATTYPE *C,      \
+    SuperMatrix *L, SuperMatrix *U, void *work, int lwork,                 \
+    SuperMatrix *B, SuperMatrix *X, FLOATTYPE *recip_pivot_growth,         \
+    FLOATTYPE *rcond, FLOATTYPE *ferr, FLOATTYPE *berr,                    \
+		    int *info, KEYTYPE) {                                  \
+    NAMESPACE::mem_usage_t mem_usage;                                      \
+    NAMESPACE::FNAME(fact,trans,refact,A,factor_params,perm_c,perm_r,      \
+		     etree,equed,R,C,L,U,work,lwork,B,X,recip_pivot_growth,\
+		     rcond,ferr,berr,&mem_usage,info);                     \
+  }
+
+  DECL_GSSVX(SuperLU_S,sgssvx,float,float);
+  DECL_GSSVX(SuperLU_C,cgssvx,float,std::complex<float>);
+  DECL_GSSVX(SuperLU_D,dgssvx,double,double);
+  DECL_GSSVX(SuperLU_Z,zgssvx,double,std::complex<double>);
 
   /* ********************************************************************* */
   /*   SuperLU solve                                                       */
@@ -219,17 +221,19 @@ DECL_GSSVX(SuperLU_Z,zgssvx,double,std::complex<double>)
     SuperLU_S::get_perm_c(permc_spec, &SA, &perm_c[n]);
     
     SuperLU_gssvx(fact, istrans, refact, &SA, NULL, &perm_c[n], &perm_r[0], 
-		  &etree[0] /*output*/, equed /* output */, 
-		  &Rscale[0] /* row scale factors (output) */, 
-		  &Cscale[0] /* col scale factors (output) */, 
+		  &etree[0] /* output */, equed /* output         */, 
+		  &Rscale[0] /* row scale factors (output)        */, 
+		  &Cscale[0] /* col scale factors (output)        */, 
 		  &SL /* fact L (output)*/, &SU /* fact U (output)*/, 
-		  NULL /* work */, 
-		  0 /* lwork: superlu auto allocates (input)*/, 
-		  &SB /* rhs */, &SX /* solution */,
-		  &recip_pivot_gross /*reciprocal pivot growth factor max_j( norm(A_j)/norm(U_j) ).*/, 
-		  &rcond /*estimate of the reciprocal condition number of the matrix A after equilibration */,
-		  &ferr[0] /* estimated forward error */,
-		  &berr[0] /* relative backward error */,
+		  NULL /* work                                    */, 
+		  0 /* lwork: superlu auto allocates (input)      */, 
+		  &SB /* rhs */, &SX /* solution                  */,
+		  &recip_pivot_gross /* reciprocal pivot growth   */
+		  /* factor max_j( norm(A_j)/norm(U_j) ).         */,  
+		  &rcond /*estimate of the reciprocal condition   */
+		  /* number of the matrix A after equilibration   */,
+		  &ferr[0] /* estimated forward error             */,
+		  &berr[0] /* relative backward error             */,
 		  &info, T());
     if (info != 0) DAL_THROW(failure_error, "SuperLU solve failed");
     gmm::copy(sol, X);
