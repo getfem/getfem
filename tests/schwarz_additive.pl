@@ -24,10 +24,7 @@ RESIDU = 1E-7;  %
 SOLVER = 1;     % 0 = C.G.
 		% 1 = additive Schwarz with global and local CG
 		% 2 = additive Schwarz with global et local Gmres
-CGRADIENT = 20;
-NSDMX = 4;     % Nomber of sub-domains in x direction
-NSDMY = 4;     % Nomber of sub-domains in y direction
-NSDMZ = 4;     % Nomber of sub-domains in z direction
+SUBDOMSIZE = 0.2;
 OVERLAP = 0.0; % overlap between sub-domains in %
 MESHNAME = '';
 

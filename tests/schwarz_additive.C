@@ -29,11 +29,9 @@ struct pb_data {
   getfem::mesh_fem mef_coarse;
 
   double mu, lambda, rho, gravity;
-  double LX, LY, LZ, residu, overlap;
+  double LX, LY, LZ, residu, overlap, subdomsize;
   int NX, N, NXCOARSE, USECOARSE, K;
   base_vector D;
-
-  std::vector<size_type> nsdm;
 
   general_sparse_matrix RM;   /* stifness matrix.                         */
   linalg_vector U, F;         /* Unknown and right hand side.             */
@@ -43,10 +41,18 @@ struct pb_data {
   void init(ftool::md_param &params);
 
   int solve_cg(void);
+  int solve_cg2(void);
   int solve_schwarz(int);
 
-  int solve(void)
-  { if (solver == 0) return solve_cg(); else return solve_schwarz(solver); }
+  int solve(void) {
+    cout << "solving" << endl;
+    switch (solver) {
+    case 0 : return solve_cg();
+    case 1 : case 2 : return solve_schwarz(solver);
+    case 3 : return solve_cg2();
+    }
+    return 0;
+  }
 
   base_vector vol_force(const base_node &x)
   { base_vector res(x.size()); res[N-1] = -rho*gravity; return res; }
@@ -82,12 +88,7 @@ void pb_data::init(ftool::md_param &params) {
   overlap = params.real_value("OVERLAP", "overlap");
   K = params.int_value("K", "Degree");
   solver = params.int_value("SOLVER", "solver");
-  nsdm.resize(std::max(3, N));
-  nsdm[0] = params.int_value("NSDMX", "Nomber of sub-domains");
-  nsdm[1] = params.int_value("NSDMY", "Nombre of sub-domains");
-  nsdm[2] = params.int_value("NSDMZ", "Nombre of sub-domains");
-  for (int i = 3; i < N; ++i) nsdm[i] = nsdm[2];
-  
+  subdomsize = params.real_value("SUBDOMSIZE", "sub-domains size");  
   std::string meshname(params.string_value("MESHNAME",
 			     "mesh file name"));
   std::cout << "\n\n";
@@ -186,89 +187,52 @@ void pb_data::assemble(void) {
   getfem::assembling_Dirichlet_condition(RM, F, mef, 0, UD);
 }
 
-std::vector<size_type> extract_sub_domain(const getfem::getfem_mesh &mesh,
-      getfem::mesh_fem &mef,const base_vector &min,const base_vector &max) {
-
-  dal::bit_vector mm = mesh.convex_index(), nn;
-  for (size_type i = mm.take_first(); i != size_type(-1); i << mm) {
-    bool in = false;
-    for (size_type j = 0; j < mesh.nb_points_of_convex(i) && !in; ++j) {
-      const base_node *pt = &(mesh.points_of_convex(i)[j]);
-      in = true;
-      for (size_type k = 0; k < pt->size(); ++k)
-	if ((*pt)[k] <  min[k] || (*pt)[k] > max[k])
-	  { in = false; break; }
-    }
-    if (in) {
-      for (size_type j = 0; j < mef.nb_dof_of_element(i); ++j)
-	nn.add(mef.ind_dof_of_element(i)[j]);
-    }
-  }
-  std::vector<size_type> res(nn.card());
-  for (size_type i = nn.take_first(), j = 0; i != size_type(-1); i << nn, ++j)
-    res[j] = i;
-  return res;
-}
-
 int pb_data::solve_cg(void) {
   gmm::iteration iter(residu, 1, 1000000);
-  gmm::ildltt_precond<general_sparse_matrix> P(RM, 10, 1E-7);
+  gmm::ildlt_precond<general_sparse_matrix> P(RM);
   gmm::cg(RM, U, F, gmm::identity_matrix(), P, iter);
   return iter.get_iteration();
 }
 
+int pb_data::solve_cg2(void) {
+  gmm::iteration iter(residu, 1, 1000000);
+  gmm::cg(RM, U, F, gmm::identity_matrix(), gmm::identity_matrix(), iter);
+  return iter.get_iteration();
+}
+
 int pb_data::solve_schwarz(int version) {
-  size_type nsd = 1, nb_dof = gmm::mat_nrows(RM);
-  for (int i = 0; i < N; ++i) nsd *= nsdm[i];
-  std::vector<scalar_type> L(N);
-  L[0] = LX; if (N >= 1) L[1] = LY;
-  for (int i = 2; i < N; ++i) L[i] = LZ;
+
+  size_type nb_dof = mef.nb_dof();
+  std::vector<base_node> pts(nb_dof);
+  for (size_type i = 0; i < nb_dof; ++i) pts[i] = mef.point_of_dof(i);
+
+  std::vector<general_sparse_matrix> vB;
+  gmm::rudimentary_regular_decomposition(pts, subdomsize, overlap, vB);
+
+  size_type nsd = vB.size();
 
   cout << "Nomber of sub-domains = " << nsd + (USECOARSE != 0) << endl;
-
-  std::vector< gmm::sub_index > index_tab(nsd);
-  std::vector<general_sparse_matrix> vB(nsd+1);
-
-  std::vector<size_type> ind(N);
-  std::fill(ind.begin(), ind.end(), 0);
-  for ( size_type n = 0; n < nsd; ++n) {
-
-    base_vector min(N), max(N);
-    for (int i = 0; i < N; ++i) {
-      min[i] = (L[i] / nsdm[i]) * (ind[i] - overlap); 
-      max[i] = (L[i] / nsdm[i]) * (ind[i] + 1.0 + overlap);
-    }
-    std::vector<size_type> sd = extract_sub_domain(mesh, mef, min, max);
-    gmm::resize(vB[n], sd.size(), nb_dof);
-
-    for (size_type i = 0; i < sd.size(); ++i)
-      vB[n](i, sd[i]) = 1.0;
-  
-    for (int i = 0; i < N; ++i) {
-      (ind[i])++;
-      if (ind[i] == nsdm[i]) { ind[i] = 0; } else break;
-    }
-  }
   
   if (USECOARSE) {
+    vB.resize(nsd+1);
     cout << "interpolation coarse mesh\n";
     size_type nb_dof_coarse = mef_coarse.nb_dof();
     gmm::resize(vB[nsd], nb_dof_coarse, nb_dof);
     general_sparse_matrix aux(nb_dof, nb_dof_coarse);
     getfem::interpolation_solution(mef_coarse, mef, aux);
     gmm::copy(gmm::transposed(aux), vB[nsd]);
+    ++nsd;
   }
-  else resize(vB, nsd);
   
   gmm::iteration iter(residu, 1, 1000000);
   switch (version) {
   case 1 :
     return gmm::sequential_additive_schwarz(RM, U, F,
-	      gmm::ildltt_precond<general_sparse_matrix>(10, 1E-7), vB, iter,
+	      gmm::ildlt_precond<general_sparse_matrix>(), vB, iter,
 					gmm::using_cg(), gmm::using_cg());
   case 2 :
     return gmm::sequential_additive_schwarz(RM, U, F,
-	      gmm::ilut_precond<general_sparse_matrix>(10, 1E-7), vB, iter,
+	      gmm::ilu_precond<general_sparse_matrix>(), vB, iter,
 				     gmm::using_gmres(), gmm::using_gmres());
   }
   return 0;

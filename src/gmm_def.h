@@ -715,6 +715,22 @@ namespace gmm {
   template<typename T> inline T default_min(std::complex<T>)
   { return default_min(T()); }
   
+  /* ********************************************************************* */
+  /* Time mesurement.                                                      */
+  /* ********************************************************************* */
+
+
+# ifdef HAVE_SYS_TIMES
+  inline double uclock_sec(void) {
+    static double ttclk = 0.;
+    if (ttclk == 0.) ttclk = sysconf(_SC_CLK_TCK);
+    tms t; times(&t); return double(t.tms_utime) / ttclk;
+  }
+# else
+  inline double uclock_sec(void)
+  { return double(clock())/double(CLOCKS_PER_SEC); }
+# endif
+
 }
 
 #endif //  GMM_DEF_H__

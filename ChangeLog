@@ -1,3 +1,10 @@
+2004-05-14  Yves Renard  <Yves.Renard@gmm.insa-tlse.fr>
+
+	* src/gmm_solvers_Schwarz_additive.h: A sequential version of
+	the domain decomposition / precnditionner is finalized. Gmres,
+	Bicgstag or CG can be used as local or global solvers. Superlu
+	can be used as local solver.
+	
 2004-05-14  julien pommier  <pommier@gmm.insa-tlse.fr>
 
 	* src/gmm_solver_gmres.h: fixed an incorrect computation of the

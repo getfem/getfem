@@ -147,7 +147,9 @@ namespace gmm {
     std::fill(precond1.begin(), precond1.end(), P);
     itebilan = 0;
     
+    if (iter.get_noisy()) cout << "Init pour sub dom ";
     for (size_type i = 0; i < nb_sub; ++i) {
+      if (iter.get_noisy()) cout << i << " " << std::flush;
       Matrix2 Maux(mat_nrows((*vB)[i]), mat_ncols((*vB)[i])),
 	BT(mat_ncols((*vB)[i]), mat_nrows((*vB)[i]));
       
@@ -159,6 +161,7 @@ namespace gmm {
       gmm::resize(fi[i], mat_nrows((*vB)[i]));
       gmm::resize(gi[i], mat_nrows((*vB)[i]));
     }
+    if (iter.get_noisy()) cout << "\n";
   }
 
 
@@ -232,7 +235,11 @@ namespace gmm {
       gmm::mult(gmm::transposed((*(SAM.vB))[i]), SAM.gi[i], g, g);
     }
 
+    double utime = uclock_sec();
     global_solver::solve(SAM, u, g, iter);
+    if (iter.get_noisy() > 0)
+      cout << "Time for global resolution : "
+	   << uclock_sec() - utime << " seconds" << endl;
     return SAM.itebilan;
   }
 

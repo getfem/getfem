@@ -360,12 +360,12 @@ namespace gmm {
     }
 
   template <typename T, typename V1, typename V2> inline
-  void mult(const SuperLU_factor<T>& P, const V1 &v1, V2 &v2) {
+  void mult(const SuperLU_factor<T>& P, const V1 &v1, const V2 &v2) {
     P.solve(v2,v1);
   }
 
   template <typename T, typename V1, typename V2> inline
-  void transposed_mult(const SuperLU_factor<T>& P,const V1 &v1,V2 &v2) {
+  void transposed_mult(const SuperLU_factor<T>& P,const V1 &v1,const V2 &v2) {
     P.solve(v2, v1, SuperLU_factor<T>::LU_TRANSP);
   }
 

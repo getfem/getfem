@@ -32,7 +32,7 @@
 #ifndef GMM_DOMAIN_DECOMP_H__
 #define GMM_DOMAIN_DECOMP_H__
 
-#include <gmm_kernal.h>
+#include <gmm_kernel.h>
 #include <map>
 
 
@@ -49,12 +49,11 @@ namespace gmm {
 					 std::vector<Matrix> &vB) {
     typedef typename linalg_traits<Matrix>::value_type value_type;
     typedef abstract_null_type void_type;
-    typedef map<size_type, void_type> map_type
+    typedef std::map<size_type, void_type> map_type;
 
     size_type nbpts = pts.size();
-    if (!nbpts) { vB.resize(0); return; }
+    if (!nbpts || pts[0].size() == 0) { vB.resize(0); return; }
     int dim = int(pts[0].size());
-    if (dim < 0) { vB.resize(0); return; }
 
     // computation of the global box and the number of sub-domains
     Point pmin = pts[0], pmax = pts[0];
@@ -143,12 +142,13 @@ namespace gmm {
 	{ if (i != effnb) std::swap(subs[i], subs[effnb]); ++effnb; }
     }
 
-    // buils matrices
+    // build matrices
     subs.resize(effnb);
     vB.resize(effnb);
     for (size_type i = 0; i < effnb; ++i) {
       clear(vB[i]); resize(vB[i], subs[i].size(), nbpts);
-      for (map_type::iterator it=subs[i].begin(); it!=subs[i].end(); ++it)
+      size_type j = 0;
+      for (map_type::iterator it=subs[i].begin(); it!=subs[i].end(); ++it, ++j)
 	vB[i](j, it->first) = value_type(1);
     }
   }
@@ -158,23 +158,3 @@ namespace gmm {
 
 
 #endif
-
-
-int main(void) {
-  
-  int N = 2, Nb = 1000000;
-
-  std::vector<getfem::Point> pts(Nb);
-  std::vector<gmm::row_matrix<gmm::rsvector<double> > > vB;
-
-  for (int i = 0; i < Nb; ++i) {
-    pts[i].resize(N);
-    gmm::fill_random(pts[i]);
-    for (int k = 0; k < N; ++k) pts[i][k] = sin(pts[i][k] * M_PI * 0.5);
-  }
-
-  double time = ftool::uclock_sec();
-  gmm::squared_sub_domains(pts, 0.1, 0.1, vB);
-  cout << "time to make sub domains : " << ftool::uclock_sec() - time << endl;
-
-}

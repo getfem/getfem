@@ -14,20 +14,18 @@ D = 0.00;		% Dirichlet condition.
 
 %%%%%   discretisation parameters :        			      %%%%%
 K = 1;         % Degree of the finite element method.
-NX = 10;       % space step.
+NX = 40;       % space step.
 NXCOARSE = 4;  % space step for the coarse mesh.
 USECOARSE = 1; % use a coarse mesh or not.
 
 RESIDU = 1E-7;  %
-SOLVER = 1;     % 0 = C.G.
+SOLVER = 1;     % 0 = C.G. préconditionné ildlt
 		% 1 = additive Schwarz with global and local CG
 		% 2 = additive Schwarz with global et local Gmres
-CGRADIENT = 20;
+		% 3 = C.G. non preconditionné
 
-NSDMX = 4;     % Nomber of sub-domains in x direction
-NSDMY = 4;     % Nomber of sub-domains in y direction
-NSDMZ = 4;     % Nomber of sub-domains in z direction
-OVERLAP = 0.0; % overlap between sub-domains in %
+SUBDOMSIZE = 0.2; % Size of sub-domains.
+OVERLAP = 0.1;    % ratio of overlap between sub-domains
 
 MESHNAME = '';
 
