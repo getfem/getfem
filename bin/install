@@ -21,6 +21,7 @@ print "\n\nMaking links\n";
 `rm -fr sources`;
 `mkdir -p sources`;
 `cd sources; ln -sf ../dal/*.C .; ln -sf ../bgeot/*.C .;  ln -sf ../ftool/*.C .; ln -sf ../getfemlib/*.C .; ln -sf ../misc/*.C .; ln -sf ../misc/LEDAWIN/*.C .; ln -sf ../matlabint/*.C .`; print "\n\n";
+`mkdir -p lib`;
 
 
 #######################################
