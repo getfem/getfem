@@ -654,14 +654,15 @@ namespace bgeot {
     else {
       o << "m={";
       if (idxs.size() == 1) {
-	for (index_type i=0; i < m.size(); ++i) o << m[i] ? 1 : 0;
+	for (index_type i=0; i < m.size(); ++i) o << (m[i] ? 1 : 0);
       } else {
 	for (tensor_ranges_loop l(r); !l.finished(); l.next()) {
 	  if (l.cnt[0] == 0 && l.cnt[1] == 0 && r.size()>2) {
-	    o << "\n   -> (:,:"; for (dim_type i=2; i < r.size(); ++i) o << "," << l.cnt[i]; 
+	    o << "\n   -> (:,:";
+	    for (dim_type i=2; i < r.size(); ++i) o << "," << l.cnt[i]; 
 	    o << ")={";
 	  }
-	  o << m[lpos(l.cnt)] ? 1 : 0;
+	  o << (m[lpos(l.cnt)] ? 1 : 0);
 	  if (l.cnt[0] == r[0]-1) 
 	    if (l.cnt[1] != r[1]-1) o << ","; 
 	    else if (idxs.size() > 2) o << "}";

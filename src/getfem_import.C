@@ -140,7 +140,7 @@ namespace getfem {
 	dal::dynamic_array<base_node> gid_nodes;
 	dal::bit_vector gid_nodes_used;
 	do {
-	  //cerr << "reading coordinates " << int(f.tellg()) << "\n";
+	  //cerr << "reading coordinates " << std::streamoff(f.tellg()) << "\n";
 	  std::string ls;
 	  f >> std::ws;
 	  std::getline(f,ls);
@@ -180,7 +180,7 @@ namespace getfem {
       bgeot::pgeometric_trans pgt = NULL;
       std::vector<size_type> order(nnode); // ordre de GiD cf http://gid.cimne.upc.es/support/gid_11.subst#SEC160
       for (size_type i=0; i < nnode; ++i) order[i]=i;
-      //cerr << "reading elements " << int(f.tellg()) << "\n";
+      //cerr << "reading elements " << std::streamoff(f.tellg()) << "\n";
       switch (eltype) {
       case LIN: {
 	if (nnode == 2) pgt = bgeot::simplex_geotrans(1,1);

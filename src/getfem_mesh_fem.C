@@ -529,7 +529,8 @@ namespace getfem
 					       tab.begin(), ic);
 	    } else DAL_THROW(failure_error, "Missing convex or wrong number "
 			     << "in dof enumeration: '" 
-			     << tmp << "'"); //"[pos="<<int(ist.tellg())<<"]");
+			     << tmp << "' [pos="
+			     << std::streamoff(ist.tellg())<<"]");
 	  } 
 	  dof_read = true;
 	  this->dof_enumeration_made = true;
@@ -537,7 +538,8 @@ namespace getfem
 	  ist >> ftool::skip("DOF_ENUMERATION");
 	} else if (strlen(tmp))
 	  DAL_THROW(failure_error, "Syntax error in file at token '"
-		    << tmp << "'");// "[pos=" << int(ist.tellg()) << "]");
+		    << tmp << "' [pos=" << std::streamoff(ist.tellg())
+							  << "]");
       } else if (strcmp(tmp, "QDIM")==0) {
 	if (dof_read)
 	  DAL_THROW(failure_error, "Can't change QDIM after dof enumeration");
@@ -546,8 +548,8 @@ namespace getfem
 	if (q <= 0 || q > 250) DAL_THROW(failure_error, "invalid qdim: "<<q);
 	set_qdim(q);
       } else if (strlen(tmp)) {
-	DAL_THROW(failure_error, "Unexpected token '" << tmp << "'");
-	// << "' [pos=" << ist.tellg() << "]");
+	DAL_THROW(failure_error, "Unexpected token '" << tmp <<
+		  "' [pos=" << std::streamoff(ist.tellg()) << "]");
       } else if (ist.eof()) {
 	DAL_THROW(failure_error, "Unexpected end of stream "
 		  << "(missing BEGIN MESH_FEM/END MESH_FEM ?)");	

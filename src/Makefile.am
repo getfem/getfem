@@ -70,6 +70,7 @@ include_HEADERS =                      \
 	gmm_dense_Householder.h        \
 	gmm_dense_lu.h                 \
 	gmm_dense_qr.h                 \
+	gmm_dense_sylvester.h          \
 	gmm_tri_solve.h                \
 	gmm_solver_gmres.h             \
 	gmm_solver_idgmres.h           \

@@ -145,7 +145,10 @@ namespace bgeot
   pgeometric_trans parallelepiped_geotrans(size_type n, short_type k);
   pgeometric_trans parallelepiped_linear_geotrans(size_type n);
   pgeometric_trans prism_geotrans(size_type n, short_type k);
-  pgeometric_trans product_geotrans(pgeometric_trans pg1, pgeometric_trans pg2);
+  pgeometric_trans prism_linear_geotrans(size_type n);
+  pgeometric_trans product_geotrans(pgeometric_trans pg1,pgeometric_trans pg2);
+  pgeometric_trans linear_product_geotrans(pgeometric_trans pg1,
+					   pgeometric_trans pg2);
 
   pgeometric_trans geometric_trans_descriptor(std::string name);
   /* List :

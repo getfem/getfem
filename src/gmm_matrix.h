@@ -112,6 +112,8 @@ namespace gmm
     
     V& row(size_type i) { return li[i]; }
     const V& row(size_type i) const { return li[i]; }
+    V& operator[](size_type i) { return li[i]; }
+    const V& operator[](size_type i) const { return li[i]; }
     
     inline size_type nrows(void) const { return li.size(); }
     inline size_type ncols(void) const
@@ -196,6 +198,8 @@ namespace gmm
 
     V& col(size_type i) { return li[i]; }
     const V& col(size_type i) const { return li[i]; }
+    V& operator[](size_type i) { return li[i]; }
+    const V& operator[](size_type i) const { return li[i]; }
 
     typename std::vector<V>::iterator begin(void)
     { return li.begin(); }

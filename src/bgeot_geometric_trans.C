@@ -338,7 +338,9 @@ namespace bgeot
   static std::string name_of_linear_qk_trans(int dim) {
     switch (dim) {
     case 1: return "GT_PK(1,1)";
-    default: return std::string("GT_LINEAR_PRODUCT(") + name_of_linear_qk_trans(dim-1) + std::string(",GT_PK(1,1))");
+    default: return std::string("GT_LINEAR_PRODUCT(")
+			   + name_of_linear_qk_trans(dim-1) 
+			   + std::string(",GT_PK(1,1))");
     }
   }
 
@@ -351,6 +353,26 @@ namespace bgeot
       d = n;
     }
     return pgt;
+  }
+
+  pgeometric_trans prism_linear_geotrans(size_type n) {
+    static pgeometric_trans pgt = 0;
+    static size_type d = size_type(-2);
+    if (d != n) {
+      std::stringstream name;
+      name << "GT_LINEAR_PRODUCT(GT_PK(" << (n-1) << ", 1), GT_PK(1,1))";
+      pgt = geometric_trans_descriptor(name.str());
+      d = n;
+    }
+    return pgt;
+  }
+
+  pgeometric_trans linear_product_geotrans(pgeometric_trans pg1,
+					   pgeometric_trans pg2) {
+    std::stringstream name;
+    name << "GT_LINEAR_PRODUCT(" << name_of_geometric_trans(pg1) << "," 
+	 << name_of_geometric_trans(pg2) << ")";
+    return geometric_trans_descriptor(name.str());
   }
 
   pgeometric_trans prism_geotrans(size_type n, short_type k) {
@@ -366,7 +388,8 @@ namespace bgeot
     return pgt;
   }
 
-  pgeometric_trans product_geotrans(pgeometric_trans pg1, pgeometric_trans pg2) {
+  pgeometric_trans product_geotrans(pgeometric_trans pg1,
+				    pgeometric_trans pg2) {
     static pgeometric_trans pgt = 0;
     static pgeometric_trans _pg1 = 0;
     static pgeometric_trans _pg2 = 0;

@@ -40,7 +40,7 @@
 #include <gmm_dense_lu.h>
 
 #ifdef GETFEM_HAVE_QDLIB
-#  define NO_INLINE
+// #  define NO_INLINE
 #  ifdef GETFEM_QDLIB_USE_QUAD
 #    include <qd.h>
 #  else
