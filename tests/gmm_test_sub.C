@@ -18,39 +18,39 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
   size_type m = gmm::vect_size(v1), n = m/2;
   std::vector<T> v3(n);
 
-  gmm::lu_solve(gmm::sub_matrix(m1, sub_interval(0,n)), v3,
-		gmm::sub_vector(v2,sub_interval(0,n)));
-  gmm::mult(gmm::sub_matrix(m1, sub_interval(0,n)), v3,
-	    gmm::sub_vector(v1, sub_interval(0,n)));
-  gmm::add(gmm::scaled(gmm::sub_vector(v1,sub_interval(0,n)), T(-1)),
-	   gmm::sub_vector(v2, sub_interval(0,n)), v3);
+  gmm::lu_solve(gmm::sub_matrix(m1, gmm::sub_interval(0,n)), v3,
+		gmm::sub_vector(v2, gmm::sub_interval(0,n)));
+  gmm::mult(gmm::sub_matrix(m1, gmm::sub_interval(0,n)), v3,
+	    gmm::sub_vector(v1, gmm::sub_interval(0,n)));
+  gmm::add(gmm::scaled(gmm::sub_vector(v1, gmm::sub_interval(0,n)), T(-1)),
+	   gmm::sub_vector(v2, gmm::sub_interval(0,n)), v3);
   if (gmm::vect_norm2(v3) >= R(prec * 10000.0))
     DAL_THROW(dal::failure_error, "Error too large: "<< gmm::vect_norm2(v3));
 
-  gmm::lu_solve(gmm::sub_matrix(m1, sub_slice(0,n,1)), v3,
-		gmm::sub_vector(v2, sub_slice(0,n,1)));
-  gmm::mult(gmm::sub_matrix(m1, sub_slice(0,n,1)), v3,
-	    gmm::sub_vector(v1, sub_slice(0,n,1)));
-  gmm::add(gmm::scaled(gmm::sub_vector(v1,sub_slice(0,n,1)), T(-1)),
-	   gmm::sub_vector(v2, sub_slice(0,n,1)), v3);
+  gmm::lu_solve(gmm::sub_matrix(m1, gmm::sub_slice(0,n,1)), v3,
+		gmm::sub_vector(v2, gmm::sub_slice(0,n,1)));
+  gmm::mult(gmm::sub_matrix(m1, gmm::sub_slice(0,n,1)), v3,
+	    gmm::sub_vector(v1, gmm::sub_slice(0,n,1)));
+  gmm::add(gmm::scaled(gmm::sub_vector(v1, gmm::sub_slice(0,n,1)), T(-1)),
+	   gmm::sub_vector(v2, gmm::sub_slice(0,n,1)), v3);
   if (gmm::vect_norm2(v3) >= R(prec * 10000.0))
     DAL_THROW(dal::failure_error, "Error too large: "<< gmm::vect_norm2(v3));
 
   
   gmm::copy(gmm::identity_matrix(),
-	    gmm::sub_matrix(gmm::transposed(m1), sub_interval(0,n)));
+	    gmm::sub_matrix(gmm::transposed(m1), gmm::sub_interval(0,n)));
   
   cout << "sub matrix of m1 : "
-       << gmm::sub_matrix(gmm::transposed(m1), sub_interval(0,n)) << endl;
+       << gmm::sub_matrix(gmm::transposed(m1), gmm::sub_interval(0,n)) << endl;
 
-  gmm::mult(gmm::sub_matrix(m1, sub_interval(0,n)),
-	    gmm::sub_vector(v2, sub_interval(0,n)),
-	    gmm::sub_vector(gmm::scaled(v2, T(-1)), sub_interval(0,n)),
-	    gmm::sub_vector(v1, sub_interval(0,n)));
-  if (gmm::vect_norm2(gmm::sub_vector(v1, sub_interval(0,n))))
+  gmm::mult(gmm::sub_matrix(m1, gmm::sub_interval(0,n)),
+	    gmm::sub_vector(v2, gmm::sub_interval(0,n)),
+	    gmm::sub_vector(gmm::scaled(v2, T(-1)), gmm::sub_interval(0,n)),
+	    gmm::sub_vector(v1, gmm::sub_interval(0,n)));
+  if (gmm::vect_norm2(gmm::sub_vector(v1, gmm::sub_interval(0,n)))
       >= R(prec * 1000.0))
     DAL_THROW(dal::failure_error, "Error too large: " 
-	      << gmm::vect_norm2(gmm::sub_vector(v1, sub_interval(0,n))));
+	      << gmm::vect_norm2(gmm::sub_vector(v1, gmm::sub_interval(0,n))));
   
   
 }

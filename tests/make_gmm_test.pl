@@ -163,14 +163,14 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 	    $li="$li\n    gmm::size_type param_t$j [$sizep] = {$sub_index[0]";
 	    for ($k = 1; $k < $sizep; ++$k) { $li = "$li , $sub_index[$k]"; }
 	    $li = "$li};";
-	    $sub1 = "gmm::sub_index(&param_t$j [0], &param_t$j [$sizep]))";
+	    $sub1 = "gmm::sub_index(&param_t$j [0], &param_t$j [$sizep])";
 	  }
 	  if ($b < 0.1) {
 	    $c = int(1.0*($sn-$s+1)*rand);
 	    $sub2 = "gmm::sub_interval($c, $s)";
 	  }
 	  elsif ($b < 0.2) {
-	    $c = int(1.0*($sm-($s*$step+1))*rand);
+	    $c = int(1.0*($sn-($s*$step+1))*rand);
 	    $sub2 = "gmm::sub_slice($c, $s, $step)";
 	  }
 	  elsif ($b < 0.3) {
@@ -183,7 +183,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 	    $li="$li\n    gmm::size_type param_u$j [$sizep] = {$sub_index[0]";
 	    for ($k = 1; $k < $sizep; ++$k) { $li = "$li , $sub_index[$k]"; }
 	    $li = "$li};";
-	    $sub2 = "gmm::sub_index(&param_u$j [0], &param_u$j [$sizep]))";
+	    $sub2 = "gmm::sub_index(&param_u$j [0], &param_u$j [$sizep])";
 	  }
 	  $param_name[$j] = "gmm::sub_matrix(param$j, $sub1, $sub2)";
 	}
