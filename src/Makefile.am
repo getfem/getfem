@@ -38,6 +38,7 @@ include_HEADERS =                      \
 	getfem_norm.h                  \
 	getfem_derivatives.h           \
 	getfem_fem.h                   \
+	getfem_im_list.h               \
 	getfem_mat_elem.h              \
 	getfem_mat_elem_type.h         \
 	getfem_mesh.h                  \

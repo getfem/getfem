@@ -212,11 +212,12 @@ dnl -----------------------------------------------
 AC_CONFIG_FILES(\
 	Makefile \
 	config/Makefile \
+	cubature/Makefile \
 	src/Makefile \
 	tests/Makefile \
 	contrib/Makefile \
-	bin/Makefile
-	getfem-config getfem-config-notinstalled)
+	bin/Makefile \
+getfem-config getfem-config-notinstalled)
 AC_OUTPUT
 chmod +x getfem-config-notinstalled
 chmod +x getfem-config
