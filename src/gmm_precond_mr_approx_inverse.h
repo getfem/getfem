@@ -93,7 +93,7 @@ namespace gmm {
     : M(mat_nrows(A), mat_ncols(A)) {
 
     VVector m(mat_ncols(A)),r(mat_ncols(A)),ei(mat_ncols(A)),Ar(mat_ncols(A)); 
-    value_type alpha = gmm::mat_trace(A) / gmm::sqr(gmm::mat_norm2(A));
+    value_type alpha = mat_trace(A)/ mat_euclidean_norm_sqr(A);
     
     for (size_type i = 0; i < mat_nrows(A); ++i) {
       gmm::clear(m); gmm::clear(ei); 

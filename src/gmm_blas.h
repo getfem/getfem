@@ -594,36 +594,58 @@ namespace gmm {
   template <typename M>
    typename number_traits<typename linalg_traits<M>::value_type>
    ::magnitude_type
-   mat_norm2(const M &m, row_major) {
+   mat_euclidean_norm_sqr(const M &m, row_major) {
     typename number_traits<typename linalg_traits<M>::value_type>
       ::magnitude_type res(0);
     for (size_type i = 0; i < mat_nrows(m); ++i)
       res += vect_norm2_sqr(mat_const_row(m, i));
-    return sqrt(res);
+    return res;
   }
 
   template <typename M>
    typename number_traits<typename linalg_traits<M>::value_type>
    ::magnitude_type
-   mat_norm2(const M &m, col_major) {
+   mat_euclidean_norm_sqr(const M &m, col_major) {
     typename number_traits<typename linalg_traits<M>::value_type>
       ::magnitude_type res(0);
     for (size_type i = 0; i < mat_ncols(m); ++i)
       res += vect_norm2_sqr(mat_const_col(m, i));
-    return sqrt(res);
+    return res;
   }
 
-  template <typename M>
+  template <typename M> inline
    typename number_traits<typename linalg_traits<M>::value_type>
    ::magnitude_type
-   mat_norm2(const M &m) {
-    return mat_norm2(m,
+   mat_euclidean_norm_sqr(const M &m) {
+    return mat_euclidean_norm_sqr(m,
 		     typename principal_orientation_type<typename
 		     linalg_traits<M>::sub_orientation>::potype());
   }
 
+  template <typename M> inline
+   typename number_traits<typename linalg_traits<M>::value_type>
+   ::magnitude_type
+   mat_euclidean_norm(const M &m)
+  { return gmm::sqrt(mat_euclidean_norm_sqr(m)); }
+
   /* ******************************************************************** */
-  /*		Infinity norm                              		  */
+  /*		vector norm1                                    	  */
+  /* ******************************************************************** */
+
+  template <typename V>
+  typename number_traits<typename linalg_traits<V>::value_type>
+  ::magnitude_type
+  vect_norm1(const V &v) {
+    typename linalg_traits<V>::const_iterator
+      it = vect_const_begin(v), ite = vect_const_end(v);
+    typename number_traits<typename linalg_traits<V>::value_type>
+	::magnitude_type res(0);
+    for (; it != ite; ++it) res += gmm::abs(*it);
+    return res;
+  }
+
+  /* ******************************************************************** */
+  /*		vector Infinity norm                              	  */
   /* ******************************************************************** */
 
   template <typename V>
@@ -638,10 +660,123 @@ namespace gmm {
     return res;
   }
 
+  /* ******************************************************************** */
+  /*		matrix norm1                                    	  */
+  /* ******************************************************************** */
+
+  template <typename M>
+   typename number_traits<typename linalg_traits<M>::value_type>
+   ::magnitude_type
+   mat_norm1(const M &m, col_major) {
+    typename number_traits<typename linalg_traits<M>::value_type>
+      ::magnitude_type res(0);
+    for (size_type i = 0; i < mat_ncols(m); ++i)
+      res = std::max(res, vect_norm1(mat_const_col(m,i)));
+    return res;
+  }
+
+  template <typename M>
+   typename number_traits<typename linalg_traits<M>::value_type>
+   ::magnitude_type
+   mat_norm1(const M &m, row_major) {
+    typedef typename linalg_traits<M>::value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
+    typedef typename linalg_traits<M>::storage_type store_type;
+    
+    std::vector<R> aux(mat_ncols(m));
+    for (size_type i = 0; i < mat_nrows(m); ++i) {
+      typedef typename linalg_traits<M>::const_sub_row_type row_type;
+      row_type row = mat_const_row(m, i);
+      typename linalg_traits<row_type>::const_iterator
+	it = vect_const_begin(row), ite = vect_const_end(row);
+      for (size_type k = 0; it != ite; ++it, ++k)
+	aux[index_of_it(it, k, store_type())] += gmm::abs(*it);
+    }
+    return vect_norminf(aux);
+  }
+
+  template <typename M>
+   typename number_traits<typename linalg_traits<M>::value_type>
+   ::magnitude_type
+   mat_norm1(const M &m, col_and_row)
+  { return mat_norm1(m, col_major()); }
+
+  template <typename M>
+   typename number_traits<typename linalg_traits<M>::value_type>
+   ::magnitude_type
+   mat_norm1(const M &m, row_and_col)
+  { return mat_norm1(m, col_major()); }
+
+  template <typename M>
+   typename number_traits<typename linalg_traits<M>::value_type>
+   ::magnitude_type
+   mat_norm1(const M &m) {
+    return mat_norm1(m, typename linalg_traits<M>::sub_orientation());
+  }
+
+
+  /* ******************************************************************** */
+  /*		matrix Infinity norm                              	  */
+  /* ******************************************************************** */
+
   template <typename M>
    typename number_traits<typename linalg_traits<M>::value_type>
    ::magnitude_type
    mat_norminf(const M &m, row_major) {
+    typename number_traits<typename linalg_traits<M>::value_type>
+      ::magnitude_type res(0);
+    for (size_type i = 0; i < mat_nrows(m); ++i)
+      res = std::max(res, vect_norm1(mat_const_row(m,i)));
+    return res;
+  }
+
+  template <typename M>
+   typename number_traits<typename linalg_traits<M>::value_type>
+   ::magnitude_type
+   mat_norminf(const M &m, col_major) {
+    typedef typename linalg_traits<M>::value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
+    typedef typename linalg_traits<M>::storage_type store_type;
+    
+    std::vector<R> aux(mat_nrows(m));
+    for (size_type i = 0; i < mat_ncols(m); ++i) {
+      typedef typename linalg_traits<M>::const_sub_col_type col_type;
+      col_type col = mat_const_col(m, i);
+      typename linalg_traits<col_type>::const_iterator
+	it = vect_const_begin(col), ite = vect_const_end(col);
+      for (size_type k = 0; it != ite; ++it, ++k)
+	aux[index_of_it(it, k, store_type())] += gmm::abs(*it);
+    }
+    return vect_norminf(aux);
+  }
+
+  template <typename M>
+   typename number_traits<typename linalg_traits<M>::value_type>
+   ::magnitude_type
+   mat_norminf(const M &m, col_and_row)
+  { return mat_norminf(m, row_major()); }
+
+  template <typename M>
+   typename number_traits<typename linalg_traits<M>::value_type>
+   ::magnitude_type
+   mat_norminf(const M &m, row_and_col)
+  { return mat_norminf(m, row_major()); }
+
+  template <typename M>
+   typename number_traits<typename linalg_traits<M>::value_type>
+   ::magnitude_type
+   mat_norminf(const M &m) {
+    return mat_norminf(m, typename linalg_traits<M>::sub_orientation());
+  }
+
+  /* ******************************************************************** */
+  /*		Max norm for matrices                              	  */
+  /* ******************************************************************** */
+
+  template <typename M>
+   typename number_traits<typename linalg_traits<M>::value_type>
+   ::magnitude_type
+   mat_maxnorm(const M &m, row_major) {
     typename number_traits<typename linalg_traits<M>::value_type>
       ::magnitude_type res(0);
     for (size_type i = 0; i < mat_nrows(m); ++i)
@@ -652,7 +787,7 @@ namespace gmm {
   template <typename M>
    typename number_traits<typename linalg_traits<M>::value_type>
    ::magnitude_type
-   mat_norminf(const M &m, col_major) {
+   mat_maxnorm(const M &m, col_major) {
     typename number_traits<typename linalg_traits<M>::value_type>
       ::magnitude_type res(0);
     for (size_type i = 0; i < mat_ncols(m); ++i)
@@ -663,27 +798,10 @@ namespace gmm {
   template <typename M>
    typename number_traits<typename linalg_traits<M>::value_type>
    ::magnitude_type
-   mat_norminf(const M &m) {
-    return mat_norminf(m,
+   mat_maxnorm(const M &m) {
+    return mat_maxnorm(m,
 		     typename principal_orientation_type<typename
 		     linalg_traits<M>::sub_orientation>::potype());
-  }
-
-  
-  /* ******************************************************************** */
-  /*		norm1                                    		  */
-  /* ******************************************************************** */
-
-  template <typename V>
-  typename number_traits<typename linalg_traits<V>::value_type>
-  ::magnitude_type
-  vect_norm1(const V &v) {
-    typename linalg_traits<V>::const_iterator
-      it = vect_const_begin(v), ite = vect_const_end(v);
-    typename number_traits<typename linalg_traits<V>::value_type>
-	::magnitude_type res(0);
-    for (; it != ite; ++it) res += gmm::abs(*it);
-    return res;
   }
 
   /* ******************************************************************** */

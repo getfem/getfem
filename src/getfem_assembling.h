@@ -982,7 +982,7 @@ namespace getfem
     typedef typename gmm::number_traits<T>::magnitude_type R;
     typedef typename gmm::temporary_vector<MATD>::vector_type TEMP_VECT;
     R tol = gmm::default_tol(R());
-    R norminfD = gmm::mat_norminf(D);
+    R norminfD = gmm::mat_maxnorm(D);
     size_type nbd = gmm::mat_ncols(D), nbase = 0, nbr = gmm::mat_nrows(D);
     TEMP_VECT aux(nbr), e(nbd), f(nbd);
     dal::dynamic_array<TEMP_VECT> base_img;

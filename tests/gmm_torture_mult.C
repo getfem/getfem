@@ -122,7 +122,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2,
   gmm::add(gmm::scaled(mm1, T(-1)), m1);
   gmm::add(gmm::scaled(mm2, T(-1)), m2);
   
-  R error = gmm::mat_norm2(m1) + gmm::mat_norm2(m2);
+  R error = gmm::mat_euclidean_norm(m1) + gmm::mat_euclidean_norm(m2);
   if (error > prec * R(10000))
     DAL_THROW(gmm::failure_error, "Error too large: "<< error);
 
