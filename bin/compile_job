@@ -150,7 +150,7 @@ else
   while($listeD)
   {
     ($fi, $listeD) = split('\s', $listeD, 2);
-    print AUXFILE 'cxx_repository/', $fi;
+    print AUXFILE 'cxx_repository/', $fi, "\n";
   }
   close(AUXFILE);
   print MAKEFILE "\t", 'ld -shared sources/dal*.o sources/bgeot*.o sources/ftool*.o sources/getfem*.o sources/matlabint*.o -input ldauxfile -o ../lib/libgetfem.so', "\n\n";
