@@ -212,7 +212,7 @@ That's fine with me.
 Kind regards,
 R o n a l d
 
-------------------------------------------------------------------------------
+---------------------------------------------------------------------------
 
 . Le Vendredi 25 Juillet 2003 :
   -----------------------------
@@ -229,3 +229,12 @@ R o n a l d
 	. Nouvelle interfaçage de l'interface MATLAB (un seul mex file).
 	. Graphiques nettement améliorés avec l'interface MATLAB,
 	  coupes, isosurfaces ...
+
+
+
+
+Future version 1.6, avancées :
+----------------------------
+. Support pour le calcul sur des domaines fracturés avec X-fem.
+. GMM : Estimation du conditionement
+. GETFEM : estimation du rayon et de la qualité de éléments
