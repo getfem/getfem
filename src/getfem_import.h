@@ -117,6 +117,7 @@ namespace getfem {
       size_type nnode = 0; 
       dal::dynamic_tree_sorted<size_type> msh_node_2_getfem_node;
       std::vector<size_type> cv_nodes, getfem_cv_nodes;
+      bool nodes_done = false;
       do {
 	if (!f.eof()) f >> std::ws;
 	if (f.eof() || !ftool::read_untill(f, "MESH")) break;
@@ -135,20 +136,54 @@ namespace getfem {
 	else DAL_THROW(dal::failure_error, "unknown element type '"<< selemtype << "'");
 	assert(!f.eof());
 	f >> ftool::skip("COORDINATES");
-	do {
-	  cerr << "reading coordinates " << int(f.tellg()) << "\n";
-	  std::string ls;
-	  f >> std::ws;
-	  std::getline(f,ls);
-	  if (ftool::casecmp(ls, "END COORDINATES", 15)==0) break;
-	  std::stringstream s(ls); 
-	  base_node n(dim);
-	  size_type id;
-	  s >> id;
-	  for (size_type i=0; i < dim; ++i) s >> n[i];
-	  cerr << "ppoint " << id << ", " << n << endl;
-	  msh_node_2_getfem_node.add_to_index(m.add_point(n), id);	  
-	} while (true);
+	if (!nodes_done) {
+	  dal::dynamic_array<base_node> gid_nodes;
+	  dal::bit_vector gid_nodes_used;
+	  do {
+	    cerr << "reading coordinates " << int(f.tellg()) << "\n";
+	    std::string ls;
+	    f >> std::ws;
+	    std::getline(f,ls);
+	    if (ftool::casecmp(ls, "END COORDINATES", 15)==0) break;
+	    std::stringstream s(ls); 
+	    size_type id;
+	    s >> id;
+	    
+	    gid_nodes[id].resize(dim); gid_nodes_used.add(id);
+	    for (size_type i=0; i < dim; ++i) s >> gid_nodes[id][i];
+	    //cerr << "ppoint " << id << ", " << n << endl;
+	  } while (true);
+
+	  if (gid_nodes_used.card() == 0) {
+	    DAL_THROW(dal::failure_error,"no nodes in the mesh!");
+	  }
+
+	  /* suppression of unused dimensions */
+	  std::vector<bool> direction_useless(3,true);
+	  base_node first_pt = gid_nodes[gid_nodes_used.first()];
+	  for (dal::bit_vector::const_iterator it = gid_nodes_used.begin(); 
+	       it != gid_nodes_used.end(); ++it) {
+	    if (*it) {
+	      for (size_type j=0; j < first_pt.size(); ++j) {
+		if (direction_useless[j] && (dal::abs(gid_nodes[it.index()][j]-first_pt[j]) > 1e-13))
+		  direction_useless[j] = false;
+	      }
+	    }
+	  }
+	  size_type dim2=0;
+	  for (size_type j=0; j < dim; ++j) if (!direction_useless[j]) dim2++;
+	  for (dal::bit_vector::const_iterator it = gid_nodes_used.begin(); 
+	       it != gid_nodes_used.end(); ++it) {
+	    if (*it) {
+	      size_type id = it.index();
+
+	      base_node n(dim2);
+	      for (size_type j=0, cnt=0; j < dim; ++j) if (!direction_useless[j]) n[cnt++]=gid_nodes[id][j];
+	      msh_node_2_getfem_node.add_to_index(m.add_point(n), id);
+	    }
+	  }
+	}
+
 	
 	ftool::read_untill(f, "ELEMENTS");
 	bgeot::pgeometric_trans pgt = NULL;
