@@ -370,17 +370,15 @@ namespace getfem
     void to_edges() {} /* to be done, the to_edges of mesh_structure does not handle geotrans */
   };
 
-  template<class ITER>
+
+ template<class ITER>
     size_type getfem_mesh::add_convex_by_points(bgeot::pgeometric_trans pgt,
 					                           ITER ipts)
   {
     short_type nb = pgt->nb_points();
-    static std::vector<size_type> *ind;
-    static bool isinit = false;
-    if (!isinit) { ind = new std::vector<size_type>(); isinit = true; }
-    if (ind->size() != nb) ind->resize(nb);
-    for (short_type i = 0; i < nb; ++ipts, ++i) (*ind)[i] = add_point(*ipts);
-    return add_convex(pgt, ind->begin());
+    std::vector<size_type> ind(nb);
+    for (short_type i = 0; i < nb; ++ipts, ++i) ind[i] = add_point(*ipts);
+    return add_convex(pgt, ind.begin());
   }
 
   template<class ITER>

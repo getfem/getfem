@@ -216,7 +216,7 @@ namespace getfem {
 	size_type dof_t = itab[i];
 	if (dof_done[dof_t]) {
 	  dof_done.sup(dof_t);
-	  ctx.set_xref(mti.reference_coords()[i]);
+	  ctx.set_xref(mti.reference_coords()[dof_t]);
 	  size_type pos = dof_t * qdim_ratio;
 	  if (version == 0) {
 	    pf_s->interpolation(ctx, coeff, val, qdim_s);
@@ -343,21 +343,6 @@ namespace getfem {
       cerr << "WARNING : in interpolation_solution (set of sparse points),"
 	   << dof_done.card() << " points have not been done\n";
   }
-
-
-
-  /* ugly remplacement for "pre-qdim era" interpolation
-   * ( contrib/compare_solutions uses that.. ) */
-  template<class VECT>
-    void interpolation_solution(mesh_fem &mf, const mesh_fem &mf_target,
-				const VECT &U, VECT &V, dim_type P) {
-    if (mf.get_qdim() == 1) {
-      mf.set_qdim(P);
-      interpolation_solution(mf,mf_target,U,V); mf.set_qdim(1);
-    }
-    else interpolation_solution(mf,mf_target,U,V);
-  }
-
 
 }  /* end of namespace getfem.                                             */
 
