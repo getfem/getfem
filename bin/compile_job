@@ -207,6 +207,7 @@ else
   print `cd ../doc; ln -sf ../getfem++/doc/guide_intervention/guide_intervention.ps .`;
   print `cd ../doc; ln -sf ../getfem++/doc/doc++-doc.ps .`;
   print `cd ../doc; ln -sf ../getfem++/doc/cvs-doc.ps .`;
+  print `cd ../lib; rm -f *.m; ln -sf ../getfem++/matlabcom/*.m`;
   
   open F1, "doc/basic_doc_getfem++/html/index.html" or die;
   open F2, ">../doc/basic_doc.html" or die;
