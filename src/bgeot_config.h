@@ -37,10 +37,13 @@
 #include <dal_except.h>
 
 #ifdef HAVE_QDLIB
-#define NO_INLINE
-#include <dd.h>
-#include <qd.h>
-#include <x86.h>
+#  define NO_INLINE
+#  ifdef QDLIB_USE_QUAD
+#    include <qd.h>
+#  else
+#    include <dd.h>
+#  endif
+#  include <x86.h>
 #endif
 
 namespace bgeot
@@ -54,8 +57,13 @@ namespace bgeot
   typedef double long_scalar_type;
   typedef double opt_long_scalar_type;
 #else
+#  ifdef QDLIB_USE_QUAD
   typedef qd_real long_scalar_type;
   typedef qd_real opt_long_scalar_type;
+#  else
+  typedef dd_real long_scalar_type;
+  typedef dd_real opt_long_scalar_type;
+#  endif
 #endif
   using dal::dimension_error;
   using dal::file_not_found_error;

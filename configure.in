@@ -193,7 +193,7 @@ int main() {
 }
   ], [echo "checking if qd library is working...yes"], [ echo "QD library is not working (check config.log)"; exit 1])
   AC_DEFINE_UNQUOTED([HAVE_QDLIB],1,[defined if the qd library was found and is working])
-  if test "x$QD_PREC" = "xQUAD"; then
+  if test "x$QD_PREC" = "xquad"; then
     AC_DEFINE_UNQUOTED([QDLIB_USE_QUAD],1,[defined if quad-doubles are to be used instead of double-double])
   fi;
 fi;
