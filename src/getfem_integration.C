@@ -993,53 +993,53 @@ namespace getfem
   /* Integration on quadrilaterals                                         */
   /* ********************************************************************* */
 
-  static pintegration_method approx_quad(im_param_list &params) {
-    if (params.size() != 1)
-      DAL_THROW(failure_error, 
-	   "Bad number of parameters : " << params.size() << " should be 1.");
-    if (params[0].type() != 0)
-      DAL_THROW(failure_error, "Bad type of parameters");
-    int n = int(::floor(params[0].num() + 0.01));
-    if (n <= 0 || n >= 100 || double(n) != params[0].num())
-      DAL_THROW(failure_error, "Bad parameters");
+//   static pintegration_method approx_quad(im_param_list &params) {
+//     if (params.size() != 1)
+//       DAL_THROW(failure_error, 
+// 	   "Bad number of parameters : " << params.size() << " should be 1.");
+//     if (params[0].type() != 0)
+//       DAL_THROW(failure_error, "Bad type of parameters");
+//     int n = int(::floor(params[0].num() + 0.01));
+//     if (n <= 0 || n >= 100 || double(n) != params[0].num())
+//       DAL_THROW(failure_error, "Bad parameters");
 
-    approx_integration *p
-      = new approx_integration(bgeot::parallelepiped_of_reference(2));
+//     approx_integration *p
+//       = new approx_integration(bgeot::parallelepiped_of_reference(2));
  
-    switch (n) {
-    case 2: 
-      p->add_point(base_vector(0.5+sqrt(1.0/6.0), 0.5),              1.0/3.0);
-      p->add_point(base_vector(0.5-sqrt(1.0/24.0),0.5+sqrt(1.0/8.0)),1.0/3.0);
-      p->add_point(base_vector(0.5-sqrt(1.0/24.0),0.5-sqrt(1.0/8.0)),1.0/3.0);
-      break;
-    case 3:
-      p->add_point(base_vector(0.5 + ::sqrt(1.0/6.0), 0.5), 0.25);
-      p->add_point(base_vector(0.5 - ::sqrt(1.0/6.0), 0.5), 0.25);
-      p->add_point(base_vector(0.5, 0.5 + ::sqrt(1.0/6.0)), 0.25);
-      p->add_point(base_vector(0.5, 0.5 - ::sqrt(1.0/6.0)), 0.25);
-      break;
-    case 5: 
-      p->add_point(base_vector(0.5, 0.5), 2.0/7.0);
-      p->add_point(base_vector(0.5, 0.5 + ::sqrt(14.0/60.0)), 5.0/63.0);
-      p->add_point(base_vector(0.5, 0.5 - ::sqrt(14.0/60.0)), 5.0/63.0);
-      p->add_point(base_vector(0.5 + ::sqrt(3.0/20.0),
-			       0.5 + ::sqrt(3.0/20.0)), 5.0/36.0);
-      p->add_point(base_vector(0.5 - ::sqrt(3.0/20.0),
-			       0.5 + ::sqrt(3.0/20.0)), 5.0/36.0);
-      p->add_point(base_vector(0.5 + ::sqrt(3.0/20.0),
-			       0.5 - ::sqrt(3.0/20.0)), 5.0/36.0);
-      p->add_point(base_vector(0.5 - ::sqrt(3.0/20.0),
-			       0.5 - ::sqrt(3.0/20.0)), 5.0/36.0);
-      break;
-    default : DAL_THROW(failure_error, "Method not implemented");
-    }
-    std::stringstream name;
-    name << "IM_GAUSS1D(" << n << ")";
-    for (short_type f = 0; f < p->structure()->nb_faces(); ++f)
-      p->add_method_on_face(int_method_descriptor(name.str()), f);
-    p->valid_method();
-    return new integration_method(p);
-  }
+//     switch (n) {
+//  case 2: 
+//    p->add_point(base_vector(0.5+sqrt(1.0/6.0), 0.5),              1.0/3.0);
+//    p->add_point(base_vector(0.5-sqrt(1.0/24.0),0.5+sqrt(1.0/8.0)),1.0/3.0);
+//    p->add_point(base_vector(0.5-sqrt(1.0/24.0),0.5-sqrt(1.0/8.0)),1.0/3.0);
+//       break;
+//     case 3:
+//       p->add_point(base_vector(0.5 + ::sqrt(1.0/6.0), 0.5), 0.25);
+//       p->add_point(base_vector(0.5 - ::sqrt(1.0/6.0), 0.5), 0.25);
+//       p->add_point(base_vector(0.5, 0.5 + ::sqrt(1.0/6.0)), 0.25);
+//       p->add_point(base_vector(0.5, 0.5 - ::sqrt(1.0/6.0)), 0.25);
+//       break;
+//     case 5: 
+//       p->add_point(base_vector(0.5, 0.5), 2.0/7.0);
+//       p->add_point(base_vector(0.5, 0.5 + ::sqrt(14.0/60.0)), 5.0/63.0);
+//       p->add_point(base_vector(0.5, 0.5 - ::sqrt(14.0/60.0)), 5.0/63.0);
+//       p->add_point(base_vector(0.5 + ::sqrt(3.0/20.0),
+// 			       0.5 + ::sqrt(3.0/20.0)), 5.0/36.0);
+//       p->add_point(base_vector(0.5 - ::sqrt(3.0/20.0),
+// 			       0.5 + ::sqrt(3.0/20.0)), 5.0/36.0);
+//       p->add_point(base_vector(0.5 + ::sqrt(3.0/20.0),
+// 			       0.5 - ::sqrt(3.0/20.0)), 5.0/36.0);
+//       p->add_point(base_vector(0.5 - ::sqrt(3.0/20.0),
+// 			       0.5 - ::sqrt(3.0/20.0)), 5.0/36.0);
+//       break;
+//     default : DAL_THROW(failure_error, "Method not implemented");
+//     }
+//     std::stringstream name;
+//     name << "IM_GAUSS1D(" << n << ")";
+//     for (short_type f = 0; f < p->structure()->nb_faces(); ++f)
+//       p->add_method_on_face(int_method_descriptor(name.str()), f);
+//     p->valid_method();
+//     return new integration_method(p);
+//   }
 
   /* ********************************************************************* */
   /*                                                                       */
@@ -1052,77 +1052,77 @@ namespace getfem
   /*  Integration on a tetrahedron                                         */
   /* ********************************************************************* */
   
-  static pintegration_method approx_tetra(im_param_list &params) {
-    if (params.size() != 1)
-      DAL_THROW(failure_error, 
-	   "Bad number of parameters : " << params.size() << " should be 1.");
-    if (params[0].type() != 0)
-      DAL_THROW(failure_error, "Bad type of parameters");
-    int n = int(::floor(params[0].num() + 0.01));
-    if (n <= 0 || n >= 100 || double(n) != params[0].num())
-      DAL_THROW(failure_error, "Bad parameters");
-    
-    approx_integration *p = 
-      new approx_integration(bgeot::simplex_of_reference(3));
-    
-    switch (n) {
-    case 1: 
-      p->add_point(base_vector(0.25, 0.25, 0.25), 1.0/6.0);
-      break;
-    case 2:
-      {
-	double c = 0.13819660112501052;       
-	p->add_point(base_vector(c, c, c),           1.0/24.0);
-	p->add_point(base_vector(1 - 3.0 * c, c, c), 1.0/24.0);
-	p->add_point(base_vector(c, 1 - 3.0 * c, c), 1.0/24.0);
-	p->add_point(base_vector(c, c, 1 - 3.0 * c), 1.0/24.0);
-      }
-      break;
-    case 3: 
-      p->add_point(base_vector(0.25, 0.25, 0.25), -4.0/30.0);
-      p->add_point(base_vector(1.0/6.0, 1.0/6.0, 1.0/6.0), 9.0/120.0);
-      p->add_point(base_vector(1.0/2.0, 1.0/6.0, 1.0/6.0), 9.0/120.0);
-      p->add_point(base_vector(1.0/6.0, 1.0/2.0, 1.0/6.0), 9.0/120.0);
-      p->add_point(base_vector(1.0/6.0, 1.0/6.0, 1.0/2.0), 9.0/120.0);
-      break;
-    case 5:  
-      {
-	double b1 = 0.31979362782962991;
-	double b2 = 0.091971078052723033;
-	double c1 = 0.040619116511110275;
-	double c2 = 0.7240867658418309;
-	double d  = 0.056350832689629156;
-	double e  = 0.44364916731037084;
-	double w0 = 0.019753086419753086;
-	double w1 = 0.011511367871045398;
-	double w2 = 0.01198951396316977;
-	double w3 = 0.008818342151675485;
-	p->add_point(base_vector(0.25, 0.25, 0.25), w0);
-	p->add_point(base_vector(b1, b1, b1), w1);
-	p->add_point(base_vector(c1, b1, b1), w1);
-	p->add_point(base_vector(b1, c1, b1), w1);
-	p->add_point(base_vector(b1, b1, c1), w1);
-	p->add_point(base_vector(b2, b2, b2), w2);
-	p->add_point(base_vector(c2, b2, b2), w2);
-	p->add_point(base_vector(b2, c2, b2), w2);
-	p->add_point(base_vector(b2, b2, c2), w2);
-	p->add_point(base_vector(d, d, e), w3);
-	p->add_point(base_vector(d, e, d), w3);
-	p->add_point(base_vector(e, d, d), w3);
-	p->add_point(base_vector(d, e, e), w3);
-	p->add_point(base_vector(e, e, d), w3);    
-	p->add_point(base_vector(e, d, e), w3);
-      }
-      break;
-    default : DAL_THROW(failure_error, "Method not implemented");
-    } 
-    std::stringstream name;
-    name << "IM_TRIANGLE(" << n << ")";
-    for (short_type f = 0; f < p->structure()->nb_faces(); ++f)
-      p->add_method_on_face(int_method_descriptor(name.str()), f);
-    p->valid_method();
-    return new integration_method(p);
-  }
+//   static pintegration_method approx_tetra(im_param_list &params) {
+//     if (params.size() != 1)
+//       DAL_THROW(failure_error, 
+// 	   "Bad number of parameters : " << params.size() << " should be 1.");
+//     if (params[0].type() != 0)
+//       DAL_THROW(failure_error, "Bad type of parameters");
+//     int n = int(::floor(params[0].num() + 0.01));
+//     if (n <= 0 || n >= 100 || double(n) != params[0].num())
+//       DAL_THROW(failure_error, "Bad parameters");
+//
+//     approx_integration *p = 
+//       new approx_integration(bgeot::simplex_of_reference(3));
+//  
+//     switch (n) {
+//     case 1: 
+//       p->add_point(base_vector(0.25, 0.25, 0.25), 1.0/6.0);
+//       break;
+//     case 2:
+//       {
+// 	double c = 0.13819660112501052;       
+// 	p->add_point(base_vector(c, c, c),           1.0/24.0);
+// 	p->add_point(base_vector(1 - 3.0 * c, c, c), 1.0/24.0);
+// 	p->add_point(base_vector(c, 1 - 3.0 * c, c), 1.0/24.0);
+// 	p->add_point(base_vector(c, c, 1 - 3.0 * c), 1.0/24.0);
+//       }
+//       break;
+//     case 3: 
+//       p->add_point(base_vector(0.25, 0.25, 0.25), -4.0/30.0);
+//       p->add_point(base_vector(1.0/6.0, 1.0/6.0, 1.0/6.0), 9.0/120.0);
+//       p->add_point(base_vector(1.0/2.0, 1.0/6.0, 1.0/6.0), 9.0/120.0);
+//       p->add_point(base_vector(1.0/6.0, 1.0/2.0, 1.0/6.0), 9.0/120.0);
+//       p->add_point(base_vector(1.0/6.0, 1.0/6.0, 1.0/2.0), 9.0/120.0);
+//       break;
+//     case 5:  
+//       {
+// 	double b1 = 0.31979362782962991;
+// 	double b2 = 0.091971078052723033;
+// 	double c1 = 0.040619116511110275;
+// 	double c2 = 0.7240867658418309;
+// 	double d  = 0.056350832689629156;
+// 	double e  = 0.44364916731037084;
+// 	double w0 = 0.019753086419753086;
+// 	double w1 = 0.011511367871045398;
+// 	double w2 = 0.01198951396316977;
+// 	double w3 = 0.008818342151675485;
+// 	p->add_point(base_vector(0.25, 0.25, 0.25), w0);
+// 	p->add_point(base_vector(b1, b1, b1), w1);
+// 	p->add_point(base_vector(c1, b1, b1), w1);
+// 	p->add_point(base_vector(b1, c1, b1), w1);
+// 	p->add_point(base_vector(b1, b1, c1), w1);
+// 	p->add_point(base_vector(b2, b2, b2), w2);
+// 	p->add_point(base_vector(c2, b2, b2), w2);
+// 	p->add_point(base_vector(b2, c2, b2), w2);
+// 	p->add_point(base_vector(b2, b2, c2), w2);
+// 	p->add_point(base_vector(d, d, e), w3);
+// 	p->add_point(base_vector(d, e, d), w3);
+// 	p->add_point(base_vector(e, d, d), w3);
+// 	p->add_point(base_vector(d, e, e), w3);
+// 	p->add_point(base_vector(e, e, d), w3);    
+// 	p->add_point(base_vector(e, d, e), w3);
+//       }
+//       break;
+//     default : DAL_THROW(failure_error, "Method not implemented");
+//     } 
+//     std::stringstream name;
+//     name << "IM_TRIANGLE(" << n << ")";
+//     for (short_type f = 0; f < p->structure()->nb_faces(); ++f)
+//       p->add_method_on_face(int_method_descriptor(name.str()), f);
+//     p->valid_method();
+//     return new integration_method(p);
+//   }
 
   /* ******************************************************************** */
   /*    Naming system                                                     */
@@ -1143,9 +1143,9 @@ namespace getfem
     _im_naming_system->add_suffix("NC_PARALLELEPIPED", Newton_Cotes_para);
     _im_naming_system->add_suffix("NC_PRISM", Newton_Cotes_prism);
     _im_naming_system->add_suffix("GAUSS_PARALLELEPIPED", Gauss_paramul);
-    //    _im_naming_system->add_suffix("TRIANGLE", approx_triangle);
-    _im_naming_system->add_suffix("QUAD", approx_quad);
-    _im_naming_system->add_suffix("TETRAHEDRON", approx_tetra);
+    // _im_naming_system->add_suffix("TRIANGLE", approx_triangle);
+    // _im_naming_system->add_suffix("QUAD", approx_quad);
+    // _im_naming_system->add_suffix("TETRAHEDRON", approx_tetra);
     _im_naming_system->add_suffix("STRUCTURED_COMPOSITE",
 				  structured_composite_int_method);
     _im_naming_system->add_generic_function(im_list_integration);

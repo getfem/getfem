@@ -7,3 +7,7 @@ EXTRA_DIST = $(IM_METHODS) getfem_im_list.h make_getfem_im_list
 getfem_im_list.h :  $(IM_METHODS)
 	$(top_srcdir)/cubature/make_getfem_im_list $(top_srcdir)/cubature
 	cp ./getfem_im_list.h ../src/getfem_im_list.h
+
+
+
+CLEANFILES = getfem_im_list.h
