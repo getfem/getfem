@@ -420,8 +420,8 @@ namespace bgeot {
 	  if (ts2.dim(i) != dim(i)) DAL_INTERNAL_ERROR("");
 
       tensor_mask_container new_mask;
-      dal::bit_vector mask_treated1; if (masks().size()) mask_treated1.sup(0,masks().size()-1);
-      dal::bit_vector mask_treated2; if (ts2.masks().size()) mask_treated2.sup(0,ts2.masks().size()-1);
+      dal::bit_vector mask_treated1; mask_treated1.sup(0,masks().size());
+      dal::bit_vector mask_treated2; mask_treated2.sup(0,ts2.masks().size());
       std::vector<const tensor_mask*> lst1, lst2; lst1.reserve(10); lst2.reserve(10);
       for (index_type i = 0; i < ndim(); ++i) {
 	dim_type i1 = index_to_mask_num(i);

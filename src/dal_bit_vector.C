@@ -140,14 +140,18 @@ namespace dal
     return true;
   }
 
-  void bit_vector::add(size_type i, size_type j) { 
-    if (j < i) std::swap(i,j); add(j);
-    std::fill(this->begin()+i, this->begin()+j+1, true);
+  void bit_vector::add(size_type i, size_type nb) { 
+    if (nb) {
+      add(i+nb-1);
+      std::fill(this->begin()+i, this->begin()+(i+nb), true);
+    }
   }
 
-  void bit_vector::sup(size_type i, size_type j) {
-    if (j < i) std::swap(i,j); sup(j);
-    std::fill(this->begin()+i, this->begin()+j+1, false);
+  void bit_vector::sup(size_type i, size_type nb) {
+    if (nb) {
+      sup(i+nb-1);
+      std::fill(this->begin()+i, this->begin()+(i+nb), false);
+    }
   }
 
   std::ostream &operator <<(std::ostream &o, const bit_vector &s) {

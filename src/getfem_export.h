@@ -363,7 +363,7 @@ namespace getfem
     // il faudrait controler que tous les ddl de mf_target sont de
     // type lagrange
     dal::bit_vector nn = mf_source.convex_index(), ddl_touched;
-    ddl_touched.add(0, mf_target.nb_dof()-1);
+    ddl_touched.add(0, mf_target.nb_dof());
 
     for (cv << nn; cv != ST_NIL; cv << nn)
     {
@@ -492,7 +492,7 @@ namespace getfem
     // type lagrange
 
     dal::bit_vector nn = mf.convex_index(), ddl_touched;
-    ddl_touched.add(0, nb-1);
+    ddl_touched.add(0, nb);
 
     for (cv << nn; cv != ST_NIL; cv << nn)
     {

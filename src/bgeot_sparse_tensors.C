@@ -390,7 +390,7 @@ namespace bgeot {
     }
 
     /* find significant indexes (ie remove indexes who only address 1 element) */
-    dal::bit_vector packed_idx; if (ts.ndim()) packed_idx.sup(0,ts.ndim()-1);
+    dal::bit_vector packed_idx; packed_idx.sup(0,ts.ndim());
     for (index_type mi=0; mi < ts.masks().size(); ++mi) {
       if (ts.masks()[mi].card() != 1) {
 	packed_idx.add(mi);

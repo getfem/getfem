@@ -195,7 +195,7 @@ namespace dal
       
       if (r != 0) f++; l++;
       if (f < l)
-	std::fill(bit_container::begin()+f, bit_container::begin()+l, 0);
+	std::fill(dal::bit_container::begin()+f, dal::bit_container::begin()+l, 0);
       
       ilast_false = i2;
     }
@@ -298,9 +298,11 @@ namespace dal
 
       bool is_in(size_type i) const { return (*this)[i]; }
       void add(size_type i) { (*this)[i] = true; }
-      void add(size_type i, size_type j);
+    /** set the interval [i...i+nb-1] to true */
+      void add(size_type i, size_type nb);
       void sup(size_type i) { (*this)[i] = false; }
-      void sup(size_type i, size_type j);
+    /** set the interval [i...i+nb-1] to true */
+      void sup(size_type i, size_type nb);
       int first(void) const { return (card() == 0) ? -1 : int(first_true()); }
       int last(void) const { return (card() == 0) ? -1 : int(last_true()); }
       inline int take_first(void)
