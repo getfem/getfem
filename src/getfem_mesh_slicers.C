@@ -1,0 +1,624 @@
+#include <getfem_mesh_slicers.h>
+#include <getfem_mesh_slice.h>
+#include <bgeot_geotrans_inv.h>
+
+namespace getfem {
+  const float slicer_action::EPS = 1e-13;
+
+  /* -------------------------------------- slicers --------------------------------------*/
+
+  /* boundary extraction */
+  slicer_boundary::slicer_boundary(const getfem_mesh& m, slicer_action &sA, 
+				   const convex_face_ct& cvflst) : A(&sA) {
+    if (m.convex_index().card()==0) return;
+    convex_faces.resize(m.convex_index().last()+1, slice_node::faces_ct(0L));
+    for (size_type i=0; i < cvflst.size(); ++i) 
+      if (cvflst[i].is_face() && cvflst[i].f<32) convex_faces[cvflst[i].cv][cvflst[i].f]=1;
+      else convex_faces[cvflst[i].cv].set();
+    /* set the mask to 1 for all other possible faces of the convexes, which may 
+       appear after slicing the convex, hence they will be part of the "boundary" */
+    for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
+      for (size_type f=m.structure_of_convex(cv)->nb_faces(); f < convex_faces[cv].size(); ++f)
+	convex_faces[cv][f]=1;
+    }
+  }
+
+  bool slicer_boundary::test_bound(const slice_simplex& s, slice_node::faces_ct& fmask, const mesh_slicer::cs_nodes_ct& nodes) const {
+    slice_node::faces_ct f; f.set();
+    for (size_type i=0; i < s.dim()+1; ++i) {
+      f &= nodes[s.inodes[i]].faces;
+    }
+    f &= fmask;
+    return (f.any());
+  }
+
+  void slicer_boundary::exec(mesh_slicer& ms) {
+    if (A) A->exec(ms);
+    if (ms.splx_in.card() == 0) return;
+    slice_node::faces_ct fmask(ms.cv < convex_faces.size() ? convex_faces[ms.cv] : 0);
+    /* quickly check if the convex have any chance to be part of the boundary */
+    if (!convex_faces[ms.cv].any()) { ms.splx_in.clear(); return; }
+
+    for (dal::bv_visitor_c cnt(ms.splx_in); !cnt.finished(); ++cnt) {
+      const slice_simplex& s = ms.simplexes[cnt];
+      if (s.dim() < ms.nodes[0].pt.size()) {
+        if (!test_bound(s, fmask, ms.nodes)) ms.splx_in.sup(cnt);
+      } else if (s.dim() == 2) {
+	ms.sup_simplex(cnt);
+        slice_simplex s2(2);
+        for (size_type j=0; j < 3; ++j) {
+          /* usage of s forbidden in this loop since push_back happens .. */
+	  static unsigned ord[][2] = {{0,1},{1,2},{2,0}}; /* keep orientation of faces */
+          for (size_type k=0; k < 2; ++k) { s2.inodes[k] = ms.simplexes[cnt].inodes[ord[j][k]]; }
+          if (test_bound(s2, fmask, ms.nodes)) {
+            ms.add_simplex(s2, true);
+          }
+        }
+      } else if (s.dim() == 3) {
+        ms.sup_simplex(cnt);
+        slice_simplex s2(3);
+        for (size_type j=0; j < 4; ++j) {
+          /* usage of s forbidden in this loop since push_back happens .. */
+	  static unsigned ord[][3] = {{0,2,1},{1,2,3},{1,3,0},{0,3,2}}; /* keep orientation of faces */
+          for (size_type k=0; k < 3; ++k) { s2.inodes[k] = ms.simplexes[cnt].inodes[ord[j][k]]; } //k + (k<j ? 0 : 1)]; }
+	  /*cerr << " -> testing "; for (size_type iA=0; iA < s2.dim()+1; ++iA) cerr << s2.inodes[iA] << " "; 
+	    cerr << " : " << test_bound(s2, fmask, nodes) << endl;*/
+          if (test_bound(s2, fmask, ms.nodes)) {
+            ms.add_simplex(s2, true);
+          }
+        }
+      } /* simplexes of higher dimension are ignored... */
+    }
+    ms.update_nodes_index();
+  }
+
+  /* apply deformation from a mesh_fem to the nodes */
+  void slicer_apply_deformation::exec(mesh_slicer& ms) {
+    base_vector coeff;
+    base_matrix G;
+    bool ref_pts_changed = false;
+    if (ms.cvr != ms.prev_cvr || defdata->pmf->fem_of_element(ms.cv) != pf) {
+      pf = defdata->pmf->fem_of_element(ms.cv);
+      if (pf->need_G()) bgeot::vectors_to_base_matrix(G, defdata->pmf->linked_mesh().points_of_convex(ms.cv));
+    }
+    /* check that the points are still the same -- or recompute the fem_precomp */
+    bgeot::stored_point_tab ref_pts2; ref_pts2.reserve(ms.nodes_index.card());
+    for (dal::bv_visitor i(ms.nodes_index); !i.finished(); ++i) {
+      ref_pts2.push_back(ms.nodes[i].pt_ref);
+      if (ref_pts2.size() > ref_pts.size() || gmm::vect_dist2_sqr(ref_pts2[i],ref_pts[i])>1e-20) 
+	ref_pts_changed = true;
+    }
+    if (ref_pts2.size() != ref_pts.size()) ref_pts_changed = true;
+    if (ref_pts_changed) {
+      ref_pts.swap(ref_pts2);
+      fprecomp.clear();
+    }
+    pfem_precomp pfp = fprecomp(pf, &ref_pts);
+    
+    defdata->copy(ms.cv, coeff);
+    
+    base_vector val(ms.m.dim());
+    size_type cnt = 0;
+    fem_interpolation_context ctx(ms.pgt, pfp, 0, G, ms.cv);
+    for (dal::bv_visitor i(ms.nodes_index); !i.finished(); ++i, ++cnt) {
+      ms.nodes[i].pt.resize(defdata->pmf->get_qdim());
+      ctx.set_ii(cnt);
+      pf->interpolation(ctx, coeff, val, defdata->pmf->get_qdim());
+      gmm::add(val, ms.nodes[cnt].pt);
+    }
+  }
+
+
+  //static bool check_flat_simplex(mesh_slicer::cs_nodes_ct& /*nodes*/, const slice_simplex /*s*/) {
+    /*base_matrix M(s.dim(),s.dim());
+    for (size_type i=0; i < s.dim(); ++i) {
+      for (size_type j=0; j < s.dim(); ++j) {
+	M(i,j) = nodes[s.inodes[i+1]].pt_ref[j] - nodes[s.inodes[0]].pt_ref[j];
+      }
+    }
+    scalar_type d = gmm::lu_det(M);
+    if (dal::abs(d) < pow(1e-6,s.dim())) {
+      cout.precision(10);
+      cout << "!!Flat (" << d << ") :";
+      for (size_type i=0; i < s.dim()+1; ++i) cout << " " << nodes[s.inodes[i]].pt;
+      cout << "\n";
+      return false;
+      }*/
+  //    return true;
+  //}
+
+  /* 
+     intersects the simplex with the slice, and (recursively)
+     decomposes it into sub-simplices, which are added to the list
+     'splxs'. If orient == 0, then it is the faces of sub-simplices
+     which are added
+
+     assertion: when called, it will always push *at least* one new
+     simplex on the stack.
+
+     remark: s is not reference: on purpose.
+  */
+  void slicer_volume::split_simplex(mesh_slicer& ms,
+				    slice_simplex s, size_type sstart, 
+				    const std::bitset<32> spin, const std::bitset<32> spbin) {
+    scalar_type alpha = 0; size_type iA=0, iB = 0;
+    bool intersection = false;
+    static int level = 0;
+
+    level++;    
+    /*
+      cerr << "split_simplex: level=" << level << " simplex: ";
+      for (iA=0; iA < s.dim()+1 && !intersection; ++iA) 
+      cerr << "node#" << s.inodes[iA] << "=" << nodes[s.inodes[iA]].pt 
+      << ", in=" << pt_in[s.inodes[iA]] << ", bin=" << pt_bin[s.inodes[iA]] << "; "; cerr << endl;
+    */
+    assert(level < 100);
+    for (iA=0; iA < s.dim(); ++iA) {
+      if (spbin[iA]) continue;
+      for (iB=iA+1; iB < s.dim()+1; ++iB) {
+        if (!spbin[iB] && spin[iA] != spin[iB]) {
+          alpha=edge_intersect(s.inodes[iA],s.inodes[iB],ms.nodes);
+          if (alpha >= 1e-8 && alpha <= 1-1e-8) { intersection = true; break; }
+        }
+      }
+      if (intersection) break;
+    }
+    if (intersection) {
+      /* will call split_simplex recursively */
+      const slice_node& A = ms.nodes[s.inodes[iA]]; 
+      const slice_node& B = ms.nodes[s.inodes[iB]]; 
+      slice_node n(A.pt + alpha*(B.pt-A.pt), A.pt_ref + alpha*(B.pt_ref-A.pt_ref));
+      n.faces = A.faces & B.faces;
+      size_type nn = ms.nodes.size();
+      ms.nodes.push_back(n); /* invalidate A and B.. */
+      pt_bin.add(nn); pt_in.add(nn);
+      
+      std::bitset<32> spin2(spin), spbin2(spbin); 
+      std::swap(s.inodes[iA],nn);
+      spin2.set(iA); spbin2.set(iA);
+      split_simplex(ms, s, sstart, spin2, spbin2);
+
+      std::swap(s.inodes[iA],nn); std::swap(s.inodes[iB],nn);
+      spin2 = spin; spbin2 = spbin; spin2.set(iB); spbin2.set(iB);
+      split_simplex(ms, s, sstart, spin2, spbin2);
+
+    } else {
+      /* end of recursion .. */
+      bool all_in = true;
+      for (size_type i=0; i < s.dim()+1; ++i) if (!spin[i]) { all_in = false; break; }
+      //check_flat_simplex(ms.nodes,s);    
+
+      // even simplexes "outside" are pushed, in case of a slicer_complementary op
+      ms.add_simplex(s,(all_in && orient != VOLBOUND) || orient == VOLSPLIT); 
+      if (orient==0) { /* reduce dimension */
+        slice_simplex face(s.dim());
+        for (size_type f=0; f < s.dim()+1; ++f) {
+          all_in = true;
+          for (size_type i=0; i < s.dim(); ++i) {
+            size_type p = i + (i<f?0:1);
+            if (!spbin[p]) { all_in = false; break; }
+            else face.inodes[i] = s.inodes[p];
+          }
+          if (all_in) {
+            /* prevent addition of a face twice */
+            std::sort(face.inodes.begin(), face.inodes.end());
+            if (std::find(ms.simplexes.begin()+sstart, ms.simplexes.end(), face) == ms.simplexes.end()) {
+              ms.add_simplex(face,true);
+            }
+          }
+        }
+      }
+    }
+    level--;
+  }
+
+    /* nodes : list of nodes (new nodes may be added)
+     splxs : list of simplexes (new simplexes may be added)
+     splx_in : input: simplexes to take into account, output: list of simplexes inside the slice
+
+     note that the simplexes in the list may have different dimensions
+  */
+  void slicer_volume::exec(mesh_slicer& ms) {
+    //cerr << "\n----\nslicer_volume::slice : entree, splx_in=" << splx_in << endl;
+    if (ms.splx_in.card() == 0) return;
+    prepare(ms.cv,ms.nodes,ms.nodes_index);
+    for (dal::bv_visitor_c cnt(ms.splx_in); !cnt.finished(); ++cnt) {
+      slice_simplex& s = ms.simplexes[cnt];
+      /*cerr << "\n--------slicer_volume::slice : slicing convex " << cnt << endl;
+      for (size_type i=0; i < s.dim()+1; ++i)
+        cerr << "   * pt[" << i << "]=" << nodes[s.inodes[i]].pt << ", is_in=" << 
+          is_in(nodes[s.inodes[i]].pt) << ", is_bin=" << is_in(nodes[s.inodes[i]].pt,true) << endl;
+      */
+      size_type in_cnt = 0, in_bcnt = 0;
+      std::bitset<32> spin, spbin;
+      for (size_type i=0; i < s.dim()+1; ++i) {
+	if (pt_in.is_in(s.inodes[i])) { ++in_cnt; spin.set(i); }
+        if (pt_bin.is_in(s.inodes[i])) { ++in_bcnt; spbin.set(i); }
+      }
+
+      if (in_cnt == 0) {
+        if (orient != VOLSPLIT) ms.splx_in.sup(cnt);
+      } else if (in_cnt != s.dim()+1 || orient==VOLBOUND) {           /* the simplex crosses the slice boundary */
+        ms.sup_simplex(cnt);
+	split_simplex(ms, s, ms.simplexes.size(), spin, spbin);
+      }
+    }
+
+    /* signalement des points qui se trouvent pile-poil sur la bordure */
+    if (pt_bin.card()) {
+      if (ms.fcnt == dim_type(-1)) DAL_THROW(dal::internal_error, 
+					  "too much {faces}/{slices faces} in the convex " << ms.cv 
+					  << " (nbfaces=" << ms.fcnt << ")");
+      for (dal::bv_visitor cnt(pt_bin); !cnt.finished(); ++cnt) {
+	ms.nodes[cnt].faces.set(ms.fcnt);
+      }
+      ms.fcnt++;
+    }
+    ms.update_nodes_index();
+  }
+
+  slicer_mesh_with_mesh::slicer_mesh_with_mesh(const getfem_mesh& slm_) :  slm(slm_) { 
+    base_node min,max;
+    for (dal::bv_visitor cv(slm.convex_index()); !cv.finished(); ++cv) {
+      bgeot::bounding_box(min,max,slm.points_of_convex(cv),slm.trans_of_convex(cv));
+      tree.add_box(min, max, cv);
+    }
+  }
+
+  void slicer_mesh_with_mesh::exec(mesh_slicer &ms) {
+    /* identify potientially intersecting convexes of slm */
+    base_node min(ms.nodes[0].pt),max(ms.nodes[0].pt);
+    for (size_type i=1; i < ms.nodes.size(); ++i) {
+      for (size_type k=0; k < min.size(); ++k) {
+	min[k] = std::min(min[k], ms.nodes[i].pt[k]);
+	max[k] = std::max(max[k], ms.nodes[i].pt[k]);
+      }
+    }
+    std::vector<size_type> slmcvs;
+    tree.find_intersecting_boxes(min, max, slmcvs);
+    /* save context */
+    mesh_slicer::cs_simplexes_ct simplexes_final(ms.simplexes); 
+    dal::bit_vector splx_in_save(ms.splx_in), 
+      simplex_index_save(ms.simplex_index), nodes_index_save(ms.nodes_index); 
+    size_type scnt0 = ms.simplexes.size();
+    /* loop over candidate convexes of slm */
+    //cout << "slicer_mesh_with_mesh: convex " << ms.cv << ", " << ms.splx_in.card() << " candidates\n";
+    for (size_type i=0; i < slmcvs.size(); ++i) {
+      size_type slmcv = slmcvs[i];
+      dim_type fcnt_save=ms.fcnt;
+      ms.simplexes.resize(scnt0); 
+      ms.splx_in = splx_in_save; ms.simplex_index = simplex_index_save; ms.nodes_index = nodes_index_save;
+      //cout << "test intersection of " << ms.cv << " and " << slmcv << "\n";
+      /* loop over the faces and apply slicer_half_space */
+      for (size_type f=0; f < slm.structure_of_convex(slmcv)->nb_faces(); ++f) {
+	base_node x0,n;
+	if (slm.structure_of_convex(slmcv)->dim() == 3 && slm.dim() == 3) {
+	  x0 = slm.points_of_face_of_convex(slmcv,f)[0];
+	  base_node A = slm.points_of_face_of_convex(slmcv,f)[1] - x0;
+	  base_node B = slm.points_of_face_of_convex(slmcv,f)[2] - x0;
+	  base_node G = dal::mean_value(slm.points_of_convex(slmcv).begin(),slm.points_of_convex(slmcv).end());
+	  n.resize(3);
+	  n[0] = A[1]*B[2] - A[2]*B[1];
+	  n[1] = A[2]*B[0] - A[0]*B[2];
+	  n[2] = A[0]*B[1] - A[1]*B[0];
+	  if (gmm::vect_sp(n,G-x0) > 0) n *= -1.;
+	} else {
+	  size_type ip = slm.structure_of_convex(slmcv)->nb_points_of_face(f) / 2;
+	  x0 = slm.points_of_face_of_convex(slmcv,f)[ip];
+	  n = slm.normal_of_face_of_convex(slmcv,f, x0);
+	}
+	slicer_half_space slf(x0,n,slicer_volume::VOLIN);
+	slf.exec(ms);
+	if (ms.splx_in.card() == 0) break;
+      }
+      if (ms.splx_in.card()) intersection_callback(ms, slmcv);
+      for (dal::bv_visitor is(ms.splx_in); !is.finished(); ++is) {
+	simplexes_final.push_back(ms.simplexes[is]);
+      }
+      ms.fcnt=fcnt_save;
+    }
+    ms.splx_in.clear(); ms.splx_in.add(scnt0, simplexes_final.size()-scnt0); 
+    ms.simplexes.swap(simplexes_final);
+    ms.simplex_index = ms.splx_in;
+    ms.update_nodes_index();
+    /*cout << "convex " << ms.cv << "was sliced into " << ms.splx_in.card() 
+	 << " simplexes, nodes.size=" << ms.nodes.size() 
+	 << ", used nodes=" << ms.nodes_index.card() << "\n";*/
+  }
+
+  /* isosurface computations */
+  void slicer_isovalues::prepare(size_type cv, const mesh_slicer::cs_nodes_ct& nodes, 
+				 const dal::bit_vector& nodes_index) {
+    pt_in.clear(); pt_bin.clear();
+    bgeot::stored_point_tab refpts(nodes.size());
+    Uval.resize(nodes.size());
+    base_vector coeff;
+    base_matrix G;
+    pfem pf = mfU->pmf->fem_of_element(cv);
+    fem_precomp_pool fprecomp;
+    if (pf->need_G()) 
+      bgeot::vectors_to_base_matrix(G, mfU->pmf->linked_mesh().points_of_convex(cv));
+    for (size_type i=0; i < nodes.size(); ++i) refpts[i] = nodes[i].pt_ref;
+    pfem_precomp pfp = fprecomp(pf, &refpts);
+    mfU->copy(cv, coeff);
+    //cerr << "cv=" << cv << ", val=" << val << ", coeff=" << coeff << endl;
+    base_vector v(1); 
+    fem_interpolation_context ctx(mfU->pmf->linked_mesh().trans_of_convex(cv),
+				  pfp, 0, G, cv);
+    for (dal::bv_visitor i(nodes_index); !i.finished(); ++i) {
+      v[0] = 0;
+      ctx.set_ii(i);
+      pf->interpolation(ctx, coeff, v, mfU->pmf->get_qdim());
+      Uval[i] = v[0];
+      // optimisable -- les bit_vectors sont lents..
+      pt_bin[i] = (dal::abs(Uval[i] - val) < EPS * val_scaling);
+      pt_in[i] = (Uval[i] - val < 0); if (orient>0) pt_in[i] = !pt_in[i]; 
+      pt_in[i] = pt_in[i] || pt_bin[i];
+      //cerr << "cv=" << cv << ", node["<< i << "]=" << nodes[i].pt << ", Uval[i]=" << Uval[i] << ", pt_in[i]=" << pt_in[i] << ", pt_bin[i]=" << pt_bin[i] << endl;
+    }
+  }
+
+
+  void slicer_union::exec(mesh_slicer &ms) {
+    dal::bit_vector splx_in_base = ms.splx_in;
+    size_type c = ms.simplexes.size();
+    dim_type fcnt_0 = ms.fcnt;
+    A->exec(ms); 
+    dal::bit_vector splx_inA(ms.splx_in);
+    dim_type fcnt_1 = ms.fcnt;
+
+    dal::bit_vector splx_inB = splx_in_base; splx_inB.add(c, ms.simplexes.size()-c);
+    splx_inB.setminus(splx_inA);
+    for (dal::bv_visitor_c i(splx_inB); !i.finished(); ++i) {
+      if (!ms.simplex_index[i]) splx_inB.sup(i);
+    }
+    //splx_inB &= ms.simplex_index;
+    ms.splx_in = splx_inB;
+    B->exec(ms); splx_inB = ms.splx_in;
+    ms.splx_in |= splx_inA;
+
+    /* 
+       the boring part : making sure that the "slice face" node markers
+       are correctly set
+    */
+    for (unsigned f=fcnt_0; f < fcnt_1; ++f) {
+      for (dal::bv_visitor i(splx_inB); !i.finished(); ++i) {
+	for (unsigned j=0; j < ms.simplexes[i].dim()+1; ++j) {
+	  bool face_boundA = true;
+	  for (unsigned k=0; k < ms.simplexes[i].dim()+1; ++k) {
+	    if (j != k && !ms.nodes[ms.simplexes[i].inodes[k]].faces[f]) {
+	      face_boundA = false; break;
+	    }
+	  }
+	  if (face_boundA) {
+	    /* now we know that the face was on slice A boundary, and
+	       that the convex is inside slice B. The conclusion: the
+	       face is not on a face of A union B.
+	    */
+	    for (unsigned k=0; k < ms.simplexes[i].dim()+1; ++k)
+	      if (j != k) ms.nodes[ms.simplexes[i].inodes[k]].faces[f] = false;	    
+	  }
+	}
+      }
+    }
+    ms.update_nodes_index();
+  }
+
+  void slicer_intersect::exec(mesh_slicer& ms) {
+    A->exec(ms);
+    B->exec(ms);
+  }
+
+  void slicer_complementary::exec(mesh_slicer& ms) {
+    dal::bit_vector splx_inA = ms.splx_in;
+    size_type sz = ms.simplexes.size();
+    A->exec(ms); splx_inA.swap(ms.splx_in);
+    ms.splx_in &= ms.simplex_index;
+    dal::bit_vector bv = ms.splx_in; bv.add(sz, ms.simplexes.size()-sz); bv &= ms.simplex_index;
+    for (dal::bv_visitor_c i(bv); !i.finished(); ++i) {
+      /*cerr << "convex " << cv << ",examining simplex #" << i << ": {";
+      for (size_type j=0; j < simplexes[i].inodes.size(); ++j) cerr << nodes[simplexes[i].inodes[j]].pt << " ";
+      cerr << "}, splx_in=" << splx_in[i] << "splx_inA=" << splx_inA[i] << endl;*/
+      ms.splx_in[i] = !splx_inA.is_in(i);
+    }
+  }
+
+  void slicer_compute_area::exec(mesh_slicer &ms) {
+    for (dal::bv_visitor is(ms.splx_in); !is.finished(); ++is) {
+      const slice_simplex& s = ms.simplexes[is];
+	base_matrix M(s.dim(),s.dim());
+      for (size_type i=0; i < s.dim(); ++i) 
+	for (size_type j=0; j < s.dim(); ++j)
+	  M(i,j) = ms.nodes[s.inodes[i+1]].pt[j] - ms.nodes[s.inodes[0]].pt[j];
+      scalar_type v = dal::abs(gmm::lu_det(M));
+      for (size_type d=2; d <= s.dim(); ++d) v /= d;
+      a += v;
+    }
+  }
+
+  void slicer_build_edges_mesh::exec(mesh_slicer &ms) {
+    for (dal::bv_visitor is(ms.splx_in); !is.finished(); ++is) {
+      const slice_simplex& s = ms.simplexes[is];
+      for (size_type i=0; i < s.dim(); ++i) {
+	for (size_type j=i+1; j <= s.dim(); ++j) {
+	  const slice_node& A = ms.nodes[s.inodes[i]];
+	  const slice_node& B = ms.nodes[s.inodes[j]];
+	  if ((A.faces & B.faces).count() >= unsigned(ms.cv_dim-1)) {
+	    slice_node::faces_ct fmask((1 << ms.cv_nbfaces)-1); fmask.flip();
+	    size_type e = edges_m.add_segment_by_points(A.pt,B.pt);
+	    if (pslice_edges && (((A.faces & B.faces) & fmask).any())) pslice_edges->add(e);
+	  }
+	}
+      }
+    }
+  }
+
+  void slicer_build_mesh::exec(mesh_slicer &ms) {
+    std::vector<size_type> pid(ms.nodes_index.last_true()+1);
+    for (dal::bv_visitor i(ms.nodes_index); !i.finished(); ++i)
+      pid[i] = m.add_point(ms.nodes[i].pt);
+    for (dal::bv_visitor i(ms.splx_in); !i.finished(); ++i) {
+      m.add_convex(bgeot::simplex_geotrans(ms.dim(),1),
+		   dal::index_ref_iterator(pid.begin(),
+					   ms.simplexes[i].inodes.begin()));
+    }
+  }
+
+  
+  /* -------------------- member functions of mesh_slicer -------------- */
+
+  void mesh_slicer::pack() {
+    std::vector<size_type> new_id(nodes.size());
+    size_type ncnt = 0;
+    for (dal::bv_visitor i(nodes_index); !i.finished(); ++i) {
+      if (i != ncnt) {
+	nodes[i].swap(nodes[ncnt]);
+      }
+      new_id[i] = ncnt++;
+    }
+    nodes.resize(ncnt);
+    size_type scnt = 0;
+    for (dal::bv_visitor j(simplex_index); !j.finished(); ++j) {
+      if (j != scnt) { simplexes[scnt] = simplexes[j]; }
+      for (std::vector<size_type>::iterator it = simplexes[scnt].inodes.begin(); 
+	   it != simplexes[scnt].inodes.end(); ++it) {
+	*it = new_id[*it];
+      }
+    }
+    simplexes.resize(scnt);
+  }
+
+  void mesh_slicer::update_nodes_index() {
+    nodes_index.clear();
+    for (dal::bv_visitor j(simplex_index); !j.finished(); ++j) {
+      assert(j < simplexes.size());
+      for (std::vector<size_type>::iterator it = simplexes[j].inodes.begin(); 
+	   it != simplexes[j].inodes.end(); ++it) {
+	assert(*it < nodes.size());
+	nodes_index.add(*it);
+      }
+    }
+  }
+
+  static void flag_points_on_faces(const bgeot::pconvex_ref& cvr, 
+                                   const bgeot::stored_point_tab& pts, 
+                                   std::vector<slice_node::faces_ct>& faces) {
+    if (cvr->structure()->nb_faces() > 32) DAL_THROW(std::out_of_range, "won't work for convexes with more than 32 faces (hardcoded limit)");
+    faces.resize(pts.size());
+    for (size_type i=0; i < pts.size(); ++i) {
+      faces[i].reset();      
+      for (size_type f=0; f < cvr->structure()->nb_faces(); ++f)
+        faces[i][f] = (dal::abs(cvr->is_in_face(f, pts[i])) < 1e-10);
+    }
+  }
+
+  void mesh_slicer::update_cv_data(size_type cv_, size_type f_) {
+    cv = cv_;
+    face = f_;
+    pgt = m.trans_of_convex(cv);
+    prev_cvr = cvr; cvr = pgt->convex_ref();      
+    cv_dim = cvr->structure()->dim();
+    cv_nbfaces = cvr->structure()->nb_faces();
+    fcnt = cvr->structure()->nb_faces();
+  }
+
+  void mesh_slicer::apply_slicers() {
+    simplex_index.clear(); simplex_index.add(0, simplexes.size());
+    splx_in = simplex_index;
+    nodes_index.clear(); nodes_index.add(0, nodes.size());      
+    for (size_type i=0; i < action.size(); ++i) {
+      action[i]->exec(*this);
+      //cout << "simplex_index=" << simplex_index << "\n   splx_in=" << splx_in << "\n";
+      assert(simplex_index.contains(splx_in));
+    }
+  }
+
+  void mesh_slicer::exec(size_type nrefine, convex_face_ct& cvlst) {
+    bgeot::stored_point_tab cvm_pts;
+    const getfem_mesh *cvm = 0;
+    const bgeot::mesh_structure *cvms = 0;
+    bgeot::geotrans_precomp_pool gppool;
+    bgeot::pgeotrans_precomp pgp = 0;
+    std::vector<slice_node::faces_ct> points_on_faces;
+
+    for (convex_face_ct::const_iterator it = cvlst.begin(); it != cvlst.end(); ++it) {
+      update_cv_data((*it).cv,(*it).f);      
+      /* update structure-dependent data */
+      if (prev_cvr != cvr) {
+	cvm = getfem::refined_simplex_mesh_for_convex(cvr, nrefine);
+	cvm_pts.resize(cvm->nb_points());
+	std::copy(cvm->points().begin(), cvm->points().end(), cvm_pts.begin());
+	pgp = gppool(pgt,&cvm_pts);
+	flag_points_on_faces(cvr, cvm_pts, points_on_faces);
+      }
+      if (face < dim_type(-1))
+	cvms = getfem::refined_simplex_mesh_for_convex_faces(cvr, nrefine)[face];
+      else
+	cvms = cvm; 
+
+      /* apply the initial geometric transformation */
+      std::vector<size_type> ptsid(cvm_pts.size()); std::fill(ptsid.begin(), ptsid.end(), size_type(-1));
+      simplexes.resize(cvms->nb_convex());
+      nodes.resize(0);
+      for (size_type snum = 0; snum < cvms->nb_convex(); ++snum) { /* cvms should not contain holes in its convex index.. */
+	simplexes[snum].inodes.resize(cvms->nb_points_of_convex(snum));
+	std::copy(cvms->ind_points_of_convex(snum).begin(),
+		  cvms->ind_points_of_convex(snum).end(), simplexes[snum].inodes.begin());
+	/* store indices of points which are really used , and renumbers them */
+	for (std::vector<size_type>::iterator itp = simplexes[snum].inodes.begin();
+	     itp != simplexes[snum].inodes.end(); ++itp) {
+	  if (ptsid[*itp] == size_type(-1)) {
+	    ptsid[*itp] = nodes.size();
+	    nodes.push_back(slice_node());
+	    nodes.back().pt_ref = cvm_pts[*itp];
+	    nodes.back().faces = points_on_faces[*itp];
+	    nodes.back().pt.resize(m.dim()); nodes.back().pt.fill(0.);
+	    pgp->transform(m.points_of_convex(cv), *itp, nodes.back().pt);
+	  }
+	  *itp = ptsid[*itp];
+	}
+      }
+      apply_slicers();
+    }
+  }
+
+  void mesh_slicer::exec(size_type nrefine) {
+    convex_face_ct lst; lst.reserve(m.convex_index().card());
+    for (dal::bv_visitor ic(m.convex_index()); !ic.finished(); ++ic) 
+      lst.push_back(convex_face(ic));
+    exec(nrefine,lst);
+  }
+  
+  /* apply slice ops to an already stored slice object */
+  void mesh_slicer::exec(const stored_mesh_slice& sl) {
+    if (&sl.linked_mesh() != &m) DAL_THROW(dal::failure_error, "wrong mesh");
+    for (stored_mesh_slice::cvlst_ct::const_iterator it = sl.cvlst.begin(); it != sl.cvlst.end(); ++it) {
+      update_cv_data((*it).cv_num);
+      nodes = (*it).nodes;
+      simplexes = (*it).simplexes;
+      apply_slicers();
+    }
+  }
+  
+  /* apply slice ops to a set of nodes */
+  void mesh_slicer::exec(const std::vector<base_node>& pts) {
+    bgeot::geotrans_inv gti;
+    gti.add_points(pts);
+    dal::dynamic_array<base_node> ptab;
+    dal::dynamic_array<size_type> itab;
+    for (dal::bv_visitor ic(m.convex_index()); !ic.finished(); ++ic) {
+      size_type nb = gti.points_in_convex(m.convex(ic), m.trans_of_convex(ic), ptab, itab);
+      if (!nb) continue;
+      update_cv_data(ic);
+      nodes.resize(0); simplexes.resize(0);
+      for (size_type i=0; i < nb; ++i) {
+	//cerr << "point " << itab[i] << "(" << pts[itab[i]] 
+	//<< ") trouve dans le convex " << ic << " [pt_ref=" << ptab[i] << "]\n";
+	nodes.push_back(slice_node(pts[itab[i]],ptab[i])); nodes.back().faces=0;
+	slice_simplex s(1); s.inodes[0] = nodes.size()-1;
+	simplexes.push_back(s);
+      }
+      apply_slicers();
+    }
+  }
+}

@@ -50,16 +50,16 @@ namespace getfem
     void hess_base_value(const base_node &, base_tensor &) const
     { DAL_THROW(failure_error, "Uninstantied function"); }
 
-    void real_base_value(const fem_interpolation_context &c, 
-			      base_tensor &t) const
+    void real_base_value(const fem_interpolation_context &, 
+			 base_tensor &) const
     { DAL_THROW(failure_error, "Uninstantied function"); } 
     
-    void real_grad_base_value(const fem_interpolation_context &c, 
-			      base_tensor &t) const
+    void real_grad_base_value(const fem_interpolation_context &, 
+			      base_tensor &) const
     { DAL_THROW(failure_error, "Uninstantied function"); }
     
-    void real_hess_base_value(const fem_interpolation_context &c, 
-			      base_tensor &t) const
+    void real_hess_base_value(const fem_interpolation_context &, 
+			      base_tensor &) const
     { DAL_THROW(failure_error, "Uninstantied function"); }
 
     external_data_fem(const bgeot::pconvex_ref cvr_, size_type dim = 1) {

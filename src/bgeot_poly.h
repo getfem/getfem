@@ -397,12 +397,13 @@ namespace bgeot
     T polynomial<T>::eval(const ITER &it) const {
     switch (degree()) {
     case 0: return (*this)[0];
-    case 1: T s = (*this)[0];
+    case 1: { T s = (*this)[0];
       for (size_type i=0; i < dim(); ++i) s += it[i]*(*this)[i+1];
-      return s;
-    default:
+      return s; }
+    default: {
       power_index mi(dim());
       return horner(mi, dim(), 0, it);
+    }
     }
   }
 

@@ -172,6 +172,7 @@ namespace bgeot {
     size_type nbpt = 0; /* nb of points in the convex */
     kdtree_tab_type boxpts;
     bounding_box(min, max, cv.points(), pgt);
+    for (size_type k=0; k < min.size(); ++k) { min[k] -= EPS; max[k] += EPS; }
     gic.init(cv,pgt);
     /* get the points in a box enclosing the convex */
     if (!bruteforce) points_in_box(boxpts, min, max);

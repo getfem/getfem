@@ -59,9 +59,9 @@ namespace bgeot
       if (!have_G() || !have_pgt()) {
 	DAL_THROW(dal::failure_error, "unable to compute B\n");
       } else {
-	size_type N = G().nrows(), P = pgt_->structure()->dim();
-	B_.resize(N, P);
-	base_matrix K(N,P), CS(P,P);
+	size_type P = pgt_->structure()->dim();
+	B_.resize(N(), P);
+	base_matrix K(N(),P), CS(P,P);
 	if (have_pgp()) {
 	  gmm::mult(gmm::transposed(pgp_->grad(ii_)), gmm::transposed(G()), K);
 	} else {
@@ -69,7 +69,7 @@ namespace bgeot
 	  pgt()->gradient(xref(), pc);
 	  gmm::mult(gmm::transposed(pc), gmm::transposed(G()), K);
 	}
-	if (P != N) {
+	if (P != N()) {
 	  gmm::mult(gmm::transposed(K), K, CS);
 	  J_ = ::sqrt(gmm::lu_inverse(CS));
 	  gmm::mult(K, CS, B_);
@@ -84,13 +84,13 @@ namespace bgeot
   const base_matrix& geotrans_interpolation_context::B3() const {
     if (!have_B3()) {
       const base_matrix &BB = B(); 
-      size_type N=gmm::mat_ncols(BB), P=gmm::mat_nrows(BB);
-      B3_.resize(N*N, P*P);
+      size_type N_=gmm::mat_ncols(BB), P=gmm::mat_nrows(BB);
+      B3_.resize(N_*N_, P*P);
       for (short_type i = 0; i < P; ++i)
 	for (short_type j = 0; j < P; ++j)
-	  for (short_type k = 0; k < N; ++k)
-	    for (short_type l = 0; l < N; ++l)
-	      B3_(k + N*l, i + P*j) = BB(k, i) * BB(l, j);
+	  for (short_type k = 0; k < N_; ++k)
+	    for (short_type l = 0; l < N_; ++l)
+	      B3_(k + N_*l, i + P*j) = BB(k, i) * BB(l, j);
     }
     return B3_;
   }
@@ -98,10 +98,10 @@ namespace bgeot
   const base_matrix& geotrans_interpolation_context::B32() const {
     if (!have_B32()) {
       const base_matrix &BB = B(); 
-      size_type N=gmm::mat_ncols(BB), P=gmm::mat_nrows(BB);	
-      B32_.resize(N*N, P);
+      size_type N_=gmm::mat_ncols(BB), P=gmm::mat_nrows(BB);	
+      B32_.resize(N_*N_, P);
       if (!pgt()->is_linear()) {
-	base_matrix B2(P*P, P), Htau(N, P*P);
+	base_matrix B2(P*P, P), Htau(N_, P*P);
 	const base_matrix& BB3 = B3();
 	if (have_pgp()) {
 	  gmm::mult(G(), pgp_->hessian(ii_), Htau);
@@ -111,7 +111,7 @@ namespace bgeot
 	for (short_type i = 0; i < P; ++i)
 	  for (short_type j = 0; j < P; ++j)
 	    for (short_type k = 0; k < P; ++k)
-	      for (short_type l = 0; l < N; ++l)
+	      for (short_type l = 0; l < N_; ++l)
 		B2(i + P*j, k) += Htau(l, i + P*j) * BB(l,k);
 	gmm::mult(BB3, B2, B32_);
       } else gmm::clear(B32_);
@@ -167,12 +167,12 @@ namespace bgeot
     for (size_type i = 0; i < nb_points(); ++i)
       for (dim_type n = 0; n < dim(); ++n) {
 	PP = poly_vector()[i];
-	if (!is_linear()) {
+	//if (!is_linear()) {
 	  PP.derivative(n);
 	  pc(i, n) = PP.eval(x.begin());
-	} else {
+	  /*} else {
 	  pc(i, n) = PP[n+1];
-	}
+	  }*/
       }
   }
 
