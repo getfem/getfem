@@ -262,13 +262,11 @@ void pb_data::solve(void) {
 int main(void) {
   try {
 
-
-
     cout << "***********************************************************\n";
     cout << "*      Dense matrix-vector mult.                          *\n";  
-    cout << "***********************************************************\n\n";
+    cout << "***********************************************************\n";
     {
-      cout << "building the stiffness matrix\n";
+      cout << "\nbuilding the stiffness matrix\n";
       scalar_type exectime = ftool::uclock_sec();
       pb_data p;
       p.init(10 /* NX */ , 3 /* K */);
@@ -285,9 +283,6 @@ int main(void) {
       }
       cout << "10 x Dense matrix-vector mult : "
 	   << ftool::uclock_sec() - exectime << " seconds\n";
-      
-
-
     
       cout << "***********************************************************\n";
       cout << "*      Dense LU decomposition.                            *\n";
