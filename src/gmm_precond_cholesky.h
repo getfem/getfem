@@ -169,7 +169,7 @@ namespace gmm {
   
   template <class Matrix>
   void cholesky_precond<Matrix>::do_cholesky(const Matrix& A, col_major) {
-    size_type Tri_loc, d, g, h, i, j, k, n = A.nrows();
+    size_type Tri_loc, d, g, h, i, j, k, n = mat_nrows(A);
     value_type z;
     Tri_ptr[0] = 0;
     
