@@ -36,22 +36,19 @@
 namespace bgeot
 {
   mc_const_iterator::mc_const_iterator(const mesh_structure &ms,
-				       size_type ip)
-  { 
+				       size_type ip) { 
     p = &ms; const mesh_point *q = &(p->point_structures()[ip]);
     ind_cv = q->first; ind_in_cv = q->ind_in_first;
     pc = &(p->convex()[ind_cv]); 
   }
 	
-  mc_const_iterator &mc_const_iterator::operator ++()
-  { 
+  mc_const_iterator &mc_const_iterator::operator ++() { 
     const mesh_point_link *q = &(p->links()[pc->pts+ind_in_cv]);
     ind_cv = q->next; ind_in_cv = q->ind_in_next;
     pc = &(p->convex()[ind_cv]); return *this;
   }
   
-  dal::bit_vector mesh_structure::convex_index(dim_type n) const
-  {
+  dal::bit_vector mesh_structure::convex_index(dim_type n) const {
     dal::bit_vector res = convex_tab.index();
     dal::bit_vector::iterator it = res.begin(), ite = res.end();
     for ( ; it != ite; ++it)
@@ -75,8 +72,7 @@ namespace bgeot
 
   ind_ref_mesh_point_ind_ct
      mesh_structure::ind_points_of_face_of_convex(size_type ic,
-					      short_type iff) const
-  {
+					      short_type iff) const {
     mesh_point_ind_ct::const_iterator r = point_lists.begin();
     const mesh_convex_structure *q = &(convex_tab[ic]); r += q->pts;
     const convex_ind_ct *p = &(q->cstruct->ind_points_of_face(iff));
@@ -98,14 +94,13 @@ namespace bgeot
   }
 
   void mesh_structure::swap_points(size_type i, size_type j) {
-    cerr << "swapping points " << i << " and " << j << endl;
     if (i != j) {
       mesh_convex_ind_ct ct = convex_to_point(i);
       for ( ; !ct.empty(); ct.pop_front())
-	point_lists[ct.begin().pc->pts + ct.begin().ind_in_cv] = i;
+	point_lists[ct.begin().pc->pts + ct.begin().ind_in_cv] = j;
       ct = convex_to_point(j);
       for ( ; !ct.empty(); ct.pop_front())
-	point_lists[ct.begin().pc->pts + ct.begin().ind_in_cv] = j;
+	point_lists[ct.begin().pc->pts + ct.begin().ind_in_cv] = i;
       points_tab.swap(i,j);
     }			 
   }

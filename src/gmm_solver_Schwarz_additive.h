@@ -57,7 +57,7 @@ namespace gmm {
 
   template <class Matrix1, class Matrix2, class Matrix3, class SUBI,
 	    class Vector2, class Vector3>
-  int schwarz_additif(const Matrix1 &A, Vector3 &u
+  int schwarz_additif(const Matrix1 &A, Vector3 &u,
 		      const std::vector<Matrix2> &ml1,
 		      const std::vector<Matrix3> &ml2,
 		      const std::vector<SUBI> &cor,
