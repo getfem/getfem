@@ -22,6 +22,15 @@ namespace getfem {
     convex_face() : cv(size_type(-1)), f(size_type(-1)) {}
   };
   typedef std::vector<convex_face> convex_face_ct;
+
+  /**
+     returns a list of "exterior" faces of a mesh (i.e. faces which are not shared by two convexes)
+  */
+  void  outer_faces_of_mesh(const getfem::getfem_mesh &m, const dal::bit_vector& cvlst, convex_face_ct& flist);
+
+  /**
+     node data in a slice: contains both real position, and position in the reference convex
+   */
   
   struct slice_node {
     typedef std::bitset<32> faces_ct; /// broken for convexes with more than 32 faces
@@ -31,6 +40,9 @@ namespace getfem {
     slice_node(const base_node& _pt, const base_node& _pt_ref) : pt(_pt), pt_ref(_pt_ref) {}
   };
 
+  /**
+     simplex data in a slice: just a list of slice_node ids.
+   */
   struct slice_simplex {
     std::vector<size_type> inodes;
     size_type dim() const { return inodes.size()-1; }
@@ -40,13 +52,18 @@ namespace getfem {
     bool operator!=(const slice_simplex& o) const { return inodes != o.inodes; }
   };
   
-
+  /**
+     generic slicer class: given a list of slice_simplex/slice_node, it 
+     build a news list of slice_simplex/slice_node
+  */
   class slicer {
   public:
     static const float EPS;
     virtual bool is_in(const base_node& , bool = false) const { return true; }
     virtual scalar_type edge_intersect(const base_node& , const base_node& ) const { return -1.; };
-    virtual void slice(std::deque<slice_node>& nodes, std::deque<slice_simplex>& splxs, dal::bit_vector& splx_in) const = 0;
+    virtual void slice(size_type cv, dim_type& fcnt,
+                       std::deque<slice_node>& nodes, std::deque<slice_simplex>& splxs, 
+                       dal::bit_vector& splx_in) const = 0;
     size_type is_in(const std::deque<slice_node>& nodes, const slice_simplex& s) const {
       size_type in_cnt = 0;
       for (size_type i=0; i < s.dim()+1; ++i)
@@ -59,6 +76,18 @@ namespace getfem {
                        const slice_simplex& s, 
                        size_type sstart, bool reduce_dimension) const;
     virtual ~slicer() {}
+  };
+
+  class slicer_boundary : public slicer {
+    slicer *A;
+    std::vector<slice_node::faces_ct> convex_faces;
+    bool test_bound(const slice_simplex& s, slice_node::faces_ct& fmask, 
+                    const std::deque<slice_node>& nodes) const;
+  public:
+    slicer_boundary(const getfem_mesh& m, slicer *_A, const convex_face_ct& fbound);
+    void slice(size_type cv, dim_type& fcnt,
+	       std::deque<slice_node>& nodes, std::deque<slice_simplex>& splxs, 
+               dal::bit_vector& splx_in) const;
   };
 
   class slicer_volume : public slicer {
@@ -74,7 +103,9 @@ namespace getfem {
       if (dal::abs(s1-.5) < dal::abs(s2-.5)) return s1; else return s2;
     }
   public:
-    void slice(std::deque<slice_node>& nodes, std::deque<slice_simplex>& splxs, dal::bit_vector& splx_in) const;    
+    void slice(size_type cv, dim_type& fcnt,
+	       std::deque<slice_node>& nodes, std::deque<slice_simplex>& splxs, 
+	       dal::bit_vector& splx_in) const;    
   };
 
   class slicer_half_space : public slicer_volume {
@@ -147,8 +178,9 @@ namespace getfem {
     bool is_in(const base_node& P, bool bound) const {
       return (A->is_in(P,bound) || B->is_in(P,bound));
     }
-    void slice(std::deque<slice_node>& nodes, 
-               std::deque<slice_simplex>& splxs, dal::bit_vector& splx_in) const;
+    void slice(size_type cv, dim_type& fcnt,
+	       std::deque<slice_node>& nodes, std::deque<slice_simplex>& splxs, 
+	       dal::bit_vector& splx_in) const;
   };
 
   class slicer_intersect : public slicer {
@@ -158,18 +190,30 @@ namespace getfem {
     bool is_in(const base_node& P, bool bound) const {
       return (A->is_in(P,bound) && B->is_in(P,bound));
     }
-    void slice(std::deque<slice_node>& nodes, 
-               std::deque<slice_simplex>& splxs, dal::bit_vector& splx_in) const;
+    void slice(size_type cv, dim_type& fcnt,
+	       std::deque<slice_node>& nodes, std::deque<slice_simplex>& splxs, 
+	       dal::bit_vector& splx_in) const;
+  };
+
+  class slicer_diff : public slicer {
+    slicer *A, *B;
+  public:
+    slicer_diff(slicer *_A, slicer *_B) : A(_A), B(_B) {}
+    bool is_in(const base_node& P, bool bound) const {
+      return (A->is_in(P,bound) && (!B->is_in(P,bound) || B->is_in(P,true)));
+    }
+    void slice(size_type cv, dim_type& fcnt,
+	       std::deque<slice_node>& nodes, std::deque<slice_simplex>& splxs, 
+	       dal::bit_vector& splx_in) const;    
   };
 
   /** this slicer does nothing! */
-  /*  class slicer_none : public slicer {
+  class slicer_none : public slicer {
   public:
     slicer_none() {}
-    void slice(std::deque<slice_node>& nodes, 
-	       std::deque<slice_simplex>& splxs, dal::bit_vector& splx_in) const {}
+    void slice(size_type /*cv*/, dim_type& /*fcnt*/, std::deque<slice_node>& /*nodes*/, 
+	       std::deque<slice_simplex>& /*splxs*/, dal::bit_vector& /*splx_in*/) const {}
   };
-  */
 
   class mesh_slice_cv_dof_data_base {
   public:
@@ -178,7 +222,7 @@ namespace getfem {
     virtual ~mesh_slice_cv_dof_data_base() {}
   };
 
-  /* 
+  /**
      use this structure to specifiy that the mesh must be deformed 
      (with a mesh_fem and an associated field)
      before the slicing 
@@ -197,17 +241,24 @@ namespace getfem {
     virtual ~mesh_slice_cv_dof_data() {}
   };
   
+  /**
+     mesh slice: a list of nodes/simplexes, which can be seen as a P1 discontinuous
+     mesh_fem on which the interpolation is very fast
+  */
   class mesh_slice {
   public:
     typedef std::deque<slice_node> cs_nodes_ct;
     typedef std::deque<slice_simplex> cs_simplexes_ct;
   private:
     struct convex_slice {
-      size_type cv_num; dim_type cv_dim;
+      size_type cv_num; 
+      dim_type cv_dim;
+      dim_type fcnt, cv_nbfaces; // number of faces of the convex (fcnt also counts the faces created by the slicing of the convex)
       cs_nodes_ct nodes;
       cs_simplexes_ct simplexes;
     };
     typedef std::deque<convex_slice> cvlst_ct;
+    const getfem_mesh& m;
     std::vector<size_type> simplex_cnt; // count simplexes of dimension 0,1,...,dim
     size_type points_cnt;
     cvlst_ct cvlst;
@@ -220,12 +271,12 @@ namespace getfem {
     size_type nb_convex() const { return cvlst.size(); }
     size_type convex_num(size_type ic) const { return cvlst[ic].cv_num; }
     size_type dim() const { return _dim; }
-
+    const getfem_mesh& linked_mesh() const { return m; }
     void nb_simplexes(std::vector<size_type>& c) const { c = simplex_cnt; }
     size_type nb_simplexes(size_type sdim) const { return simplex_cnt[sdim]; }
     size_type nb_points() const { return points_cnt; }
     const std::deque<slice_node>& nodes(size_type ic) const { return cvlst[ic].nodes; }
-    void edges_mesh(getfem_mesh& m) const;
+    void edges_mesh(getfem_mesh &edges_m) const;
     const std::deque<slice_simplex>& simplexes(size_type ic) const { return cvlst[ic].simplexes; }
     size_type memsize() const;
 
