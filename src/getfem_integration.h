@@ -82,6 +82,10 @@ namespace getfem
    *  This class is not to be manipulate by itself. Use papprox\_integration
    *  and the functions written to produce the basic descriptions.
    */
+
+  class integration_method;
+  typedef const integration_method *pintegration_method;
+
   class approx_integration
   {
     protected :
@@ -134,6 +138,7 @@ namespace getfem
       { return int_coeffs[repartition[f] + i]; }
 
       void add_point(base_node pt, scalar_type w, short_type f=short_type(-1));
+      void add_method_on_face(pintegration_method ppi, short_type f);
       void valid_method(void);
 
       approx_integration(void) : valid(false) { }
@@ -193,8 +198,6 @@ namespace getfem
     }
 
   };
-
-  typedef const integration_method *pintegration_method;
 
 
   pintegration_method int_method_descriptor(std::string name);

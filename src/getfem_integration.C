@@ -245,6 +245,38 @@ namespace getfem
     }
   }
 
+  void approx_integration::add_method_on_face(pintegration_method ppi,
+					      short_type f) {
+    papprox_integration pai = ppi->approx_method();
+    if (valid) DAL_THROW(internal_error, 
+			 "Impossible to modify a valid integration method.");
+    if (pai->structure() != structure()->faces_structure()[f])
+      DAL_THROW(internal_error, "structures missmatch");
+    if (ppi->is_exact())
+      DAL_THROW(internal_error, "Impossible with an exact method.");
+    
+    dim_type N = pai->structure()->dim();
+    std::vector<base_node> pts(N);
+    base_node pt(N+1);
+    for (size_type i = 0; i < N; ++i)
+      pts[i] = (cvr->dir_points_of_face(f))[i+1]
+	- (cvr->dir_points_of_face(f))[0];
+
+    base_matrix a(N+1, N), b(N, N), tmp(N, N);
+    for (dim_type i = 0; i < N+1; ++i)
+      for (dim_type j = 0; j < N; ++j)
+	a(i, j) = pts[j][i];
+    bgeot::mat_product_tn(a, a, b);
+    scalar_type det = ::sqrt(dal::abs(bgeot::mat_gauss_det(b, tmp)));
+    for (size_type i = 0; i < pai->nb_points_on_convex(); ++i) {
+      base_node pt = (cvr->dir_points_of_face(f))[0];
+      for (dim_type j = 0; j < N; ++j)
+	pt += pts[j] * (pai->integration_points()[i])[j];
+      add_point(pt, pai->coeff(i) * det, f);
+    }
+  }
+  
+
   void approx_integration::valid_method(void) {
     bgeot::stored_point_tab ptab(int_coeffs.size());
     size_type i = 0;
@@ -713,54 +745,67 @@ namespace getfem
   /*   triangle3 :    Integration on a triangle of order 3 with 4 points   */
   /* ********************************************************************* */
 
-  papprox_integration triangle3_approx_integration(void) {
-    static _particular_approx *p = NULL;
-    if (p == NULL)
-    {
-      std::vector<base_node> ptab(10);
-      std::fill(ptab.begin(), ptab.end(), base_node(2));
-      p = new _particular_approx;
-      p->cvr = bgeot::simplex_of_reference(2);
-      p->repartition.resize(p->cvr->structure()->nb_faces()+1);
-      p->int_coeffs.resize(ptab.size());
-      // volume
-      int i = 0;
-      ptab[  i][0] = 1.0 / 3.0; ptab[i][1] = 1.0 / 3.0;
-      p->int_coeffs[i] = -27.0 / 96.0; 
-      ptab[++i][0] = 1.0 / 5.0; ptab[i][1] = 1.0 / 5.0;
-      p->int_coeffs[i] = 25.0 / 96.0; 
-      ptab[++i][0] = 3.0 / 5.0; ptab[i][1] = 1.0 / 5.0;
-      p->int_coeffs[i] = 25.0 / 96.0; 
-      ptab[++i][0] = 1.0 / 5.0; ptab[i][1] = 3.0 / 5.0;
-      p->int_coeffs[i] = 25.0 / 96.0; 
-      p->repartition[0] = 4;
-      // face 0
-      double a = 0.5 - 0.5/::sqrt(3.0);
-      double b = 0.5 + 0.5/::sqrt(3.0);
-      ptab[++i][0] = a; ptab[i][1] = b;
-      p->int_coeffs[i] = ::sqrt(2.0) * 0.5; 
-      ptab[++i][0] = b; ptab[i][1] = a;
-      p->int_coeffs[i] = ::sqrt(2.0) * 0.5; 
-      p->repartition[1] = p->repartition[0] + 2;
-      // face 1
-      ptab[++i][0] = 0.0; ptab[i][1] = a;
-      p->int_coeffs[i] = 0.5; 
-      ptab[++i][0] = 0.0; ptab[i][1] = b;
-      p->int_coeffs[i] = 0.5; 
-      p->repartition[2] = p->repartition[1] + 2;
-      // face 2
-      ptab[++i][0] = a; ptab[i][1] = 0.0;
-      p->int_coeffs[i] = 0.5; 
-      ptab[++i][0] = b; ptab[i][1] = 0.0;
-      p->int_coeffs[i] = 0.5; 
-      p->repartition[3] = p->repartition[2] + 2;
-
-      p->pint_points = bgeot::store_point_tab(ptab);
-      p->valid = true;
-      
-    }
+  papprox_integration triangle3_approx_integration(void) { 
+    approx_integration *p = 
+      new approx_integration(bgeot::simplex_of_reference(2));
+    p->add_point(base_vector(1.0/3.0, 1.0/3.0), -27.0/96.0);
+    p->add_point(base_vector(1.0/5.0, 1.0/5.0), 25.0/96.0);
+    p->add_point(base_vector(3.0/5.0, 1.0/5.0), 25.0/96.0);
+    p->add_point(base_vector(1.0/5.0, 3.0/5.0), 25.0/96.0);
+    for (short_type f = 0; f < p->structure()->nb_faces(); ++f)
+      p->add_method_on_face(int_method_descriptor("IM_GAUSS1D(3)"), f);
+    p->valid_method();
     return p;
   }
+
+// papprox_integration triangle3_approx_integration(void) { 
+//     static _particular_approx *p = NULL;
+//     if (p == NULL)
+//     {
+//       std::vector<base_node> ptab(10);
+//       std::fill(ptab.begin(), ptab.end(), base_node(2));
+//       p = new _particular_approx;
+//       p->cvr = bgeot::simplex_of_reference(2);
+//       p->repartition.resize(p->cvr->structure()->nb_faces()+1);
+//       p->int_coeffs.resize(ptab.size());
+//       // volume
+//       int i = 0;
+//       ptab[  i][0] = 1.0 / 3.0; ptab[i][1] = 1.0 / 3.0;
+//       p->int_coeffs[i] = -27.0 / 96.0; 
+//       ptab[++i][0] = 1.0 / 5.0; ptab[i][1] = 1.0 / 5.0;
+//       p->int_coeffs[i] = 25.0 / 96.0; 
+//       ptab[++i][0] = 3.0 / 5.0; ptab[i][1] = 1.0 / 5.0;
+//       p->int_coeffs[i] = 25.0 / 96.0; 
+//       ptab[++i][0] = 1.0 / 5.0; ptab[i][1] = 3.0 / 5.0;
+//       p->int_coeffs[i] = 25.0 / 96.0; 
+//       p->repartition[0] = 4;
+//       // face 0
+//       double a = 0.5 - 0.5/::sqrt(3.0);
+//       double b = 0.5 + 0.5/::sqrt(3.0);
+//       ptab[++i][0] = a; ptab[i][1] = b;
+//       p->int_coeffs[i] = ::sqrt(2.0) * 0.5; 
+//       ptab[++i][0] = b; ptab[i][1] = a;
+//       p->int_coeffs[i] = ::sqrt(2.0) * 0.5; 
+//       p->repartition[1] = p->repartition[0] + 2;
+//       // face 1
+//       ptab[++i][0] = 0.0; ptab[i][1] = a;
+//       p->int_coeffs[i] = 0.5; 
+//       ptab[++i][0] = 0.0; ptab[i][1] = b;
+//       p->int_coeffs[i] = 0.5; 
+//       p->repartition[2] = p->repartition[1] + 2;
+//       // face 2
+//       ptab[++i][0] = a; ptab[i][1] = 0.0;
+//       p->int_coeffs[i] = 0.5; 
+//       ptab[++i][0] = b; ptab[i][1] = 0.0;
+//       p->int_coeffs[i] = 0.5; 
+//       p->repartition[3] = p->repartition[2] + 2;
+
+//       p->pint_points = bgeot::store_point_tab(ptab);
+//       p->valid = true;
+      
+//     }
+//     return p;
+//   }
 
 
   /* ********************************************************************* */
@@ -768,136 +813,175 @@ namespace getfem
   /* ********************************************************************* */
 
   papprox_integration triangle4_approx_integration(void) {
-    static _particular_approx *p = NULL;
-    if (p == NULL)
-    {
-      std::vector<base_node> ptab(15);
-      std::fill(ptab.begin(), ptab.end(), base_node(2));
-      p = new _particular_approx;
-      p->cvr = bgeot::simplex_of_reference(2);
-      p->repartition.resize(p->cvr->structure()->nb_faces()+1);
-      p->int_coeffs.resize(ptab.size());
-      // volume
-      int i = 0;
-      double a = 0.445948490915965;
-      double b = 0.091576213509771;
-      double c = 0.111690794839005;
-      double d = 0.054975871827661;
-      ptab[  i][0] = a; ptab[i][1] = a;
-      p->int_coeffs[i] = c; 
-      ptab[++i][0] = 1.0 - 2.0 * a; ptab[i][1] = a;
-      p->int_coeffs[i] = c; 
-      ptab[++i][0] = a; ptab[i][1] = 1.0 - 2.0 * a;
-      p->int_coeffs[i] = c; 
-      ptab[++i][0] = b; ptab[i][1] = b;
-      p->int_coeffs[i] = d; 
-      ptab[++i][0] = 1.0 - 2.0 * b; ptab[i][1] = b;
-      p->int_coeffs[i] = d; 
-      ptab[++i][0] = b; ptab[i][1] = 1.0 - 2.0 * b;
-      p->int_coeffs[i] = d; 
-      p->repartition[0] = 6;
-      // face 0
-      double e = 0.5 - 0.5*::sqrt(3.0 / 5.0);
-      double f = 0.5 + 0.5*::sqrt(3.0 / 5.0);
-      ptab[++i][0] = e; ptab[i][1] = f;
-      p->int_coeffs[i] = ::sqrt(2.0) * 5.0 / 18.0; 
-      ptab[++i][0] = 0.5; ptab[i][1] = 0.5;
-      p->int_coeffs[i] = ::sqrt(2.0) * 8.0 / 18.0; 
-      ptab[++i][0] = f; ptab[i][1] = e;
-      p->int_coeffs[i] = ::sqrt(2.0) * 5.0 / 18.0; 
-      p->repartition[1] = p->repartition[0] + 3;
-      // face 1
-      ptab[++i][0] = 0.0; ptab[i][1] = e;
-      p->int_coeffs[i] = 5.0 / 18.0; 
-      ptab[++i][0] = 0.0; ptab[i][1] = 0.5;
-      p->int_coeffs[i] = 8.0 / 18.0; 
-      ptab[++i][0] = 0.0; ptab[i][1] = f;
-      p->int_coeffs[i] = 5.0 / 18.0; 
-      p->repartition[2] = p->repartition[1] + 3;
-      // face 2
-      ptab[++i][0] = e; ptab[i][1] = 0.0;
-      p->int_coeffs[i] = 5.0 / 18.0; 
-      ptab[++i][0] = 0.5; ptab[i][1] = 0.0;
-      p->int_coeffs[i] = 8.0 / 18.0; 
-      ptab[++i][0] = f; ptab[i][1] = 0.0;
-      p->int_coeffs[i] = 5.0 / 18.0; 
-      p->repartition[3] = p->repartition[2] + 3;
-
-      p->pint_points = bgeot::store_point_tab(ptab);
-      p->valid = true;
-      
-    }
+    approx_integration *p = 
+      new approx_integration(bgeot::simplex_of_reference(2));
+    double a = 0.445948490915965;
+    double b = 0.091576213509771;
+    double c = 0.111690794839005;
+    double d = 0.054975871827661;
+    p->add_point(base_vector(a, a),             c);
+    p->add_point(base_vector(1.0 - 2.0 * a, a), c);
+    p->add_point(base_vector(a, 1.0 - 2.0 * a), c);
+    p->add_point(base_vector(b, b),             d);
+    p->add_point(base_vector(1.0 - 2.0 * b, b), d);
+    p->add_point(base_vector(b, 1.0 - 2.0 * b), d);
+    for (short_type f = 0; f < p->structure()->nb_faces(); ++f)
+      p->add_method_on_face(int_method_descriptor("IM_GAUSS1D(4)"), f);
+    p->valid_method();
     return p;
   }
+
+//   papprox_integration triangle4_approx_integration(void) {
+//     static _particular_approx *p = NULL;
+//     if (p == NULL)
+//     {
+//       std::vector<base_node> ptab(15);
+//       std::fill(ptab.begin(), ptab.end(), base_node(2));
+//       p = new _particular_approx;
+//       p->cvr = bgeot::simplex_of_reference(2);
+//       p->repartition.resize(p->cvr->structure()->nb_faces()+1);
+//       p->int_coeffs.resize(ptab.size());
+//       // volume
+//       int i = 0;
+//       double a = 0.445948490915965;
+//       double b = 0.091576213509771;
+//       double c = 0.111690794839005;
+//       double d = 0.054975871827661;
+//       ptab[  i][0] = a; ptab[i][1] = a;
+//       p->int_coeffs[i] = c; 
+//       ptab[++i][0] = 1.0 - 2.0 * a; ptab[i][1] = a;
+//       p->int_coeffs[i] = c; 
+//       ptab[++i][0] = a; ptab[i][1] = 1.0 - 2.0 * a;
+//       p->int_coeffs[i] = c; 
+//       ptab[++i][0] = b; ptab[i][1] = b;
+//       p->int_coeffs[i] = d; 
+//       ptab[++i][0] = 1.0 - 2.0 * b; ptab[i][1] = b;
+//       p->int_coeffs[i] = d; 
+//       ptab[++i][0] = b; ptab[i][1] = 1.0 - 2.0 * b;
+//       p->int_coeffs[i] = d; 
+//       p->repartition[0] = 6;
+//       // face 0
+//       double e = 0.5 - 0.5*::sqrt(3.0 / 5.0);
+//       double f = 0.5 + 0.5*::sqrt(3.0 / 5.0);
+//       ptab[++i][0] = e; ptab[i][1] = f;
+//       p->int_coeffs[i] = ::sqrt(2.0) * 5.0 / 18.0; 
+//       ptab[++i][0] = 0.5; ptab[i][1] = 0.5;
+//       p->int_coeffs[i] = ::sqrt(2.0) * 8.0 / 18.0; 
+//       ptab[++i][0] = f; ptab[i][1] = e;
+//       p->int_coeffs[i] = ::sqrt(2.0) * 5.0 / 18.0; 
+//       p->repartition[1] = p->repartition[0] + 3;
+//       // face 1
+//       ptab[++i][0] = 0.0; ptab[i][1] = e;
+//       p->int_coeffs[i] = 5.0 / 18.0; 
+//       ptab[++i][0] = 0.0; ptab[i][1] = 0.5;
+//       p->int_coeffs[i] = 8.0 / 18.0; 
+//       ptab[++i][0] = 0.0; ptab[i][1] = f;
+//       p->int_coeffs[i] = 5.0 / 18.0; 
+//       p->repartition[2] = p->repartition[1] + 3;
+//       // face 2
+//       ptab[++i][0] = e; ptab[i][1] = 0.0;
+//       p->int_coeffs[i] = 5.0 / 18.0; 
+//       ptab[++i][0] = 0.5; ptab[i][1] = 0.0;
+//       p->int_coeffs[i] = 8.0 / 18.0; 
+//       ptab[++i][0] = f; ptab[i][1] = 0.0;
+//       p->int_coeffs[i] = 5.0 / 18.0; 
+//       p->repartition[3] = p->repartition[2] + 3;
+
+//       p->pint_points = bgeot::store_point_tab(ptab);
+//       p->valid = true;
+      
+//     }
+//     return p;
+//   }
 
   /* ********************************************************************* */
   /*   triangle5 :    Integration on a triangle of order 5 with 7 points   */
   /* ********************************************************************* */
 
   papprox_integration triangle5_approx_integration(void) {
-    static _particular_approx *p = NULL;
-    if (p == NULL)
-    {
-      std::vector<base_node> ptab(16);
-      std::fill(ptab.begin(), ptab.end(), base_node(2));
-      p = new _particular_approx;
-      p->cvr = bgeot::simplex_of_reference(2);
-      p->repartition.resize(p->cvr->structure()->nb_faces()+1);
-      p->int_coeffs.resize(ptab.size());
-      // volume
-      int i = 0;
-      double a = 0.470142064105115;
-      double b = 0.101286507323456;
-      double c = 0.0661970763942530;
-      double d = 0.0629695902724135;
-      ptab[  i][0] = a; ptab[i][1] = a;
-      p->int_coeffs[i] = c; 
-      ptab[++i][0] = 1.0 - 2.0 * a; ptab[i][1] = a;
-      p->int_coeffs[i] = c; 
-      ptab[++i][0] = a; ptab[i][1] = 1.0 - 2.0 * a;
-      p->int_coeffs[i] = c; 
-      ptab[++i][0] = b; ptab[i][1] = b;
-      p->int_coeffs[i] = d; 
-      ptab[++i][0] = 1.0 - 2.0 * b; ptab[i][1] = b;
-      p->int_coeffs[i] = d; 
-      ptab[++i][0] = b; ptab[i][1] = 1.0 - 2.0 * b;
-      p->int_coeffs[i] = d; 
-      ptab[++i][0] = 1.0 / 3.0; ptab[i][1] = 1.0 / 3.0;
-      p->int_coeffs[i] = 9.0 / 80.0; 
-      p->repartition[0] = 7;
-      // face 0
-      double e = 0.5 - 0.5*::sqrt(3.0 / 5.0);
-      double f = 0.5 + 0.5*::sqrt(3.0 / 5.0);
-      ptab[++i][0] = e; ptab[i][1] = f;
-      p->int_coeffs[i] = ::sqrt(2.0) * 5.0 / 18.0; 
-      ptab[++i][0] = 0.5; ptab[i][1] = 0.5;
-      p->int_coeffs[i] = ::sqrt(2.0) * 8.0 / 18.0; 
-      ptab[++i][0] = f; ptab[i][1] = e;
-      p->int_coeffs[i] = ::sqrt(2.0) * 5.0 / 18.0; 
-      p->repartition[1] = p->repartition[0] + 3;
-      // face 1
-      ptab[++i][0] = 0.0; ptab[i][1] = e;
-      p->int_coeffs[i] = 5.0 / 18.0; 
-      ptab[++i][0] = 0.0; ptab[i][1] = 0.5;
-      p->int_coeffs[i] = 8.0 / 18.0; 
-      ptab[++i][0] = 0.0; ptab[i][1] = f;
-      p->int_coeffs[i] = 5.0 / 18.0; 
-      p->repartition[2] = p->repartition[1] + 3;
-      // face 2
-      ptab[++i][0] = e; ptab[i][1] = 0.0;
-      p->int_coeffs[i] = 5.0 / 18.0; 
-      ptab[++i][0] = 0.5; ptab[i][1] = 0.0;
-      p->int_coeffs[i] = 8.0 / 18.0; 
-      ptab[++i][0] = f; ptab[i][1] = 0.0;
-      p->int_coeffs[i] = 5.0 / 18.0; 
-      p->repartition[3] = p->repartition[2] + 3;
-
-      p->pint_points = bgeot::store_point_tab(ptab);
-      p->valid = true;
-      
-    }
+    approx_integration *p = 
+      new approx_integration(bgeot::simplex_of_reference(2));
+    double a = 0.470142064105115;
+    double b = 0.101286507323456;
+    double c = 0.0661970763942530;
+    double d = 0.0629695902724135;
+    p->add_point(base_vector(a, a),             c);
+    p->add_point(base_vector(1.0 - 2.0 * a, a), c);
+    p->add_point(base_vector(a, 1.0 - 2.0 * a), c);
+    p->add_point(base_vector(b, b),             d);
+    p->add_point(base_vector(1.0 - 2.0 * b, b), d);
+    p->add_point(base_vector(b, 1.0 - 2.0 * b), d);
+    p->add_point(base_vector(1.0/3.0, 1.0/3.0), 9.0/80.0);
+    for (short_type f = 0; f < p->structure()->nb_faces(); ++f)
+      p->add_method_on_face(int_method_descriptor("IM_GAUSS1D(5)"), f);
+    p->valid_method();
     return p;
   }
+
+//   papprox_integration triangle5_approx_integration(void) {
+//     static _particular_approx *p = NULL;
+//     if (p == NULL)
+//     {
+//       std::vector<base_node> ptab(16);
+//       std::fill(ptab.begin(), ptab.end(), base_node(2));
+//       p = new _particular_approx;
+//       p->cvr = bgeot::simplex_of_reference(2);
+//       p->repartition.resize(p->cvr->structure()->nb_faces()+1);
+//       p->int_coeffs.resize(ptab.size());
+//       // volume
+//       int i = 0;
+//       double a = 0.470142064105115;
+//       double b = 0.101286507323456;
+//       double c = 0.0661970763942530;
+//       double d = 0.0629695902724135;
+//       ptab[  i][0] = a; ptab[i][1] = a;
+//       p->int_coeffs[i] = c; 
+//       ptab[++i][0] = 1.0 - 2.0 * a; ptab[i][1] = a;
+//       p->int_coeffs[i] = c; 
+//       ptab[++i][0] = a; ptab[i][1] = 1.0 - 2.0 * a;
+//       p->int_coeffs[i] = c; 
+//       ptab[++i][0] = b; ptab[i][1] = b;
+//       p->int_coeffs[i] = d; 
+//       ptab[++i][0] = 1.0 - 2.0 * b; ptab[i][1] = b;
+//       p->int_coeffs[i] = d; 
+//       ptab[++i][0] = b; ptab[i][1] = 1.0 - 2.0 * b;
+//       p->int_coeffs[i] = d; 
+//       ptab[++i][0] = 1.0 / 3.0; ptab[i][1] = 1.0 / 3.0;
+//       p->int_coeffs[i] = 9.0 / 80.0; 
+//       p->repartition[0] = 7;
+//       // face 0
+//       double e = 0.5 - 0.5*::sqrt(3.0 / 5.0);
+//       double f = 0.5 + 0.5*::sqrt(3.0 / 5.0);
+//       ptab[++i][0] = e; ptab[i][1] = f;
+//       p->int_coeffs[i] = ::sqrt(2.0) * 5.0 / 18.0; 
+//       ptab[++i][0] = 0.5; ptab[i][1] = 0.5;
+//       p->int_coeffs[i] = ::sqrt(2.0) * 8.0 / 18.0; 
+//       ptab[++i][0] = f; ptab[i][1] = e;
+//       p->int_coeffs[i] = ::sqrt(2.0) * 5.0 / 18.0; 
+//       p->repartition[1] = p->repartition[0] + 3;
+//       // face 1
+//       ptab[++i][0] = 0.0; ptab[i][1] = e;
+//       p->int_coeffs[i] = 5.0 / 18.0; 
+//       ptab[++i][0] = 0.0; ptab[i][1] = 0.5;
+//       p->int_coeffs[i] = 8.0 / 18.0; 
+//       ptab[++i][0] = 0.0; ptab[i][1] = f;
+//       p->int_coeffs[i] = 5.0 / 18.0; 
+//       p->repartition[2] = p->repartition[1] + 3;
+//       // face 2
+//       ptab[++i][0] = e; ptab[i][1] = 0.0;
+//       p->int_coeffs[i] = 5.0 / 18.0; 
+//       ptab[++i][0] = 0.5; ptab[i][1] = 0.0;
+//       p->int_coeffs[i] = 8.0 / 18.0; 
+//       ptab[++i][0] = f; ptab[i][1] = 0.0;
+//       p->int_coeffs[i] = 5.0 / 18.0; 
+//       p->repartition[3] = p->repartition[2] + 3;
+
+//       p->pint_points = bgeot::store_point_tab(ptab);
+//       p->valid = true;
+      
+//     }
+//     return p;
+//   }
 
 
   /* ********************************************************************* */
@@ -905,92 +989,117 @@ namespace getfem
   /* ********************************************************************* */
 
   papprox_integration triangle6_approx_integration(void) {
-    static _particular_approx *p = NULL;
-    if (p == NULL)
-    {
-      std::vector<base_node> ptab(24);
-      std::fill(ptab.begin(), ptab.end(), base_node(2));
-      p = new _particular_approx;
-      p->cvr = bgeot::simplex_of_reference(2);
-      p->repartition.resize(p->cvr->structure()->nb_faces()+1);
-      p->int_coeffs.resize(ptab.size());
-      // volume
-      size_type i = 0;
-
-      double a1 = 0.063089104491502;
-      double a2 = 0.249286745170910;
-      double aa = 0.310352451033785;
-      double bb = 0.053145049844816;
-
-      ptab[  i][0] = a1; ptab[i][1] = a1;
-      p->int_coeffs[i] = 0.050844906370206 * 0.5; 
-      ptab[++i][0] = 1.0 - 2.0 * a1; ptab[i][1] = a1;
-      p->int_coeffs[i] = 0.050844906370206 * 0.5; 
-      ptab[++i][0] = a1; ptab[i][1] = 1.0 - 2.0 * a1;
-      p->int_coeffs[i] = 0.050844906370206 * 0.5; 
-      ptab[++i][0] = a2; ptab[i][1] = a2;
-      p->int_coeffs[i] = 0.116786275726378 * 0.5; 
-      ptab[++i][0] = 1.0 - 2.0 * a2; ptab[i][1] = a2;
-      p->int_coeffs[i] = 0.116786275726378 * 0.5; 
-      ptab[++i][0] = a2; ptab[i][1] = 1.0 - 2.0 * a2;
-      p->int_coeffs[i] = 0.116786275726378 * 0.5; 
-      ptab[++i][0] = aa; ptab[i][1] = bb;
-      p->int_coeffs[i] = 0.082851075618374 * 0.5; 
-      ptab[++i][0] = aa; ptab[i][1] = 1.0 - aa - bb;
-      p->int_coeffs[i] = 0.082851075618374 * 0.5; 
-      ptab[++i][0] = bb; ptab[i][1] = aa;
-      p->int_coeffs[i] = 0.082851075618374 * 0.5; 
-      ptab[++i][0] = bb; ptab[i][1] = 1.0 - aa - bb;
-      p->int_coeffs[i] = 0.082851075618374 * 0.5; 
-      ptab[++i][0] = 1.0 - aa - bb; ptab[i][1] = aa;
-      p->int_coeffs[i] = 0.082851075618374 * 0.5; 
-      ptab[++i][0] = 1.0 - aa - bb; ptab[i][1] = bb;
-      p->int_coeffs[i] = 0.082851075618374 * 0.5;
-      p->repartition[0] = 12;
-
-      // face 0
-      double a = 0.5 - 0.4305681557970265;
-      double b = 0.5 - 0.1699905217924280;
-      double c = 0.5 + 0.1699905217924280;
-      double d = 0.5 + 0.4305681557970265;
-      double e = 0.326072577431273;
-      double f = 0.173927422568727;
-      ptab[++i][0] = a; ptab[i][1] = d;
-      p->int_coeffs[i] = ::sqrt(2.0) * f; 
-      ptab[++i][0] = b; ptab[i][1] = c;
-      p->int_coeffs[i] = ::sqrt(2.0) * e; 
-      ptab[++i][0] = c; ptab[i][1] = b;
-      p->int_coeffs[i] = ::sqrt(2.0) * e; 
-      ptab[++i][0] = d; ptab[i][1] = a;
-      p->int_coeffs[i] = ::sqrt(2.0) * f; 
-      p->repartition[1] = p->repartition[0] + 4;
-      // face 1
-      ptab[++i][0] = 0.0; ptab[i][1] = a;
-      p->int_coeffs[i] = f; 
-      ptab[++i][0] = 0.0; ptab[i][1] = b;
-      p->int_coeffs[i] = e; 
-      ptab[++i][0] = 0.0; ptab[i][1] = c;
-      p->int_coeffs[i] = e; 
-      ptab[++i][0] = 0.0; ptab[i][1] = d;
-      p->int_coeffs[i] = f; 
-      p->repartition[2] = p->repartition[1] + 4;
-      // face 2
-      ptab[++i][0] = a; ptab[i][1] = 0.0;
-      p->int_coeffs[i] = f; 
-      ptab[++i][0] = b; ptab[i][1] = 0.0;
-      p->int_coeffs[i] = e; 
-      ptab[++i][0] = c; ptab[i][1] = 0.0;
-      p->int_coeffs[i] = e; 
-      ptab[++i][0] = d; ptab[i][1] = 0.0;
-      p->int_coeffs[i] = f; 
-      p->repartition[3] = p->repartition[2] + 4;
-
-      p->pint_points = bgeot::store_point_tab(ptab);
-      p->valid = true;
-      if (++i != ptab.size()) DAL_THROW(internal_error, "internal error");
-    }
+    approx_integration *p = 
+      new approx_integration(bgeot::simplex_of_reference(2));
+    double a1 = 0.063089104491502;
+    double a2 = 0.249286745170910;
+    double aa = 0.310352451033785;
+    double bb = 0.053145049844816;
+    p->add_point(base_vector(a1, a1),             0.050844906370206 * 0.5);
+    p->add_point(base_vector(1.0 - 2.0 * a1, a1), 0.050844906370206 * 0.5);
+    p->add_point(base_vector(a1, 1.0 - 2.0 * a1), 0.050844906370206 * 0.5);
+    p->add_point(base_vector(a2, a2),             0.116786275726378 * 0.5);
+    p->add_point(base_vector(1.0 - 2.0 * a2, a2), 0.116786275726378 * 0.5);
+    p->add_point(base_vector(a2, 1.0 - 2.0 * a2), 0.116786275726378 * 0.5);
+    p->add_point(base_vector(aa, bb), 0.082851075618374 * 0.5);
+    p->add_point(base_vector(aa, 1.0 - aa - bb), 0.082851075618374 * 0.5);
+    p->add_point(base_vector(bb, aa), 0.082851075618374 * 0.5);
+    p->add_point(base_vector(bb, 1.0 - aa - bb), 0.082851075618374 * 0.5);
+    p->add_point(base_vector(1.0 - aa - bb, aa), 0.082851075618374 * 0.5);
+    p->add_point(base_vector(1.0 - aa - bb, bb), 0.082851075618374 * 0.5);
+    for (short_type f = 0; f < p->structure()->nb_faces(); ++f)
+      p->add_method_on_face(int_method_descriptor("IM_GAUSS1D(6)"), f);
+    p->valid_method();
     return p;
   }
+
+//   papprox_integration triangle6_approx_integration(void) {
+//     static _particular_approx *p = NULL;
+//     if (p == NULL)
+//     {
+//       std::vector<base_node> ptab(24);
+//       std::fill(ptab.begin(), ptab.end(), base_node(2));
+//       p = new _particular_approx;
+//       p->cvr = bgeot::simplex_of_reference(2);
+//       p->repartition.resize(p->cvr->structure()->nb_faces()+1);
+//       p->int_coeffs.resize(ptab.size());
+//       // volume
+//       size_type i = 0;
+
+//       double a1 = 0.063089104491502;
+//       double a2 = 0.249286745170910;
+//       double aa = 0.310352451033785;
+//       double bb = 0.053145049844816;
+
+//       ptab[  i][0] = a1; ptab[i][1] = a1;
+//       p->int_coeffs[i] = 0.050844906370206 * 0.5; 
+//       ptab[++i][0] = 1.0 - 2.0 * a1; ptab[i][1] = a1;
+//       p->int_coeffs[i] = 0.050844906370206 * 0.5; 
+//       ptab[++i][0] = a1; ptab[i][1] = 1.0 - 2.0 * a1;
+//       p->int_coeffs[i] = 0.050844906370206 * 0.5; 
+//       ptab[++i][0] = a2; ptab[i][1] = a2;
+//       p->int_coeffs[i] = 0.116786275726378 * 0.5; 
+//       ptab[++i][0] = 1.0 - 2.0 * a2; ptab[i][1] = a2;
+//       p->int_coeffs[i] = 0.116786275726378 * 0.5; 
+//       ptab[++i][0] = a2; ptab[i][1] = 1.0 - 2.0 * a2;
+//       p->int_coeffs[i] = 0.116786275726378 * 0.5; 
+//       ptab[++i][0] = aa; ptab[i][1] = bb;
+//       p->int_coeffs[i] = 0.082851075618374 * 0.5; 
+//       ptab[++i][0] = aa; ptab[i][1] = 1.0 - aa - bb;
+//       p->int_coeffs[i] = 0.082851075618374 * 0.5; 
+//       ptab[++i][0] = bb; ptab[i][1] = aa;
+//       p->int_coeffs[i] = 0.082851075618374 * 0.5; 
+//       ptab[++i][0] = bb; ptab[i][1] = 1.0 - aa - bb;
+//       p->int_coeffs[i] = 0.082851075618374 * 0.5; 
+//       ptab[++i][0] = 1.0 - aa - bb; ptab[i][1] = aa;
+//       p->int_coeffs[i] = 0.082851075618374 * 0.5; 
+//       ptab[++i][0] = 1.0 - aa - bb; ptab[i][1] = bb;
+//       p->int_coeffs[i] = 0.082851075618374 * 0.5;
+//       p->repartition[0] = 12;
+
+//       // face 0
+//       double a = 0.5 - 0.4305681557970265;
+//       double b = 0.5 - 0.1699905217924280;
+//       double c = 0.5 + 0.1699905217924280;
+//       double d = 0.5 + 0.4305681557970265;
+//       double e = 0.326072577431273;
+//       double f = 0.173927422568727;
+//       ptab[++i][0] = a; ptab[i][1] = d;
+//       p->int_coeffs[i] = ::sqrt(2.0) * f; 
+//       ptab[++i][0] = b; ptab[i][1] = c;
+//       p->int_coeffs[i] = ::sqrt(2.0) * e; 
+//       ptab[++i][0] = c; ptab[i][1] = b;
+//       p->int_coeffs[i] = ::sqrt(2.0) * e; 
+//       ptab[++i][0] = d; ptab[i][1] = a;
+//       p->int_coeffs[i] = ::sqrt(2.0) * f; 
+//       p->repartition[1] = p->repartition[0] + 4;
+//       // face 1
+//       ptab[++i][0] = 0.0; ptab[i][1] = a;
+//       p->int_coeffs[i] = f; 
+//       ptab[++i][0] = 0.0; ptab[i][1] = b;
+//       p->int_coeffs[i] = e; 
+//       ptab[++i][0] = 0.0; ptab[i][1] = c;
+//       p->int_coeffs[i] = e; 
+//       ptab[++i][0] = 0.0; ptab[i][1] = d;
+//       p->int_coeffs[i] = f; 
+//       p->repartition[2] = p->repartition[1] + 4;
+//       // face 2
+//       ptab[++i][0] = a; ptab[i][1] = 0.0;
+//       p->int_coeffs[i] = f; 
+//       ptab[++i][0] = b; ptab[i][1] = 0.0;
+//       p->int_coeffs[i] = e; 
+//       ptab[++i][0] = c; ptab[i][1] = 0.0;
+//       p->int_coeffs[i] = e; 
+//       ptab[++i][0] = d; ptab[i][1] = 0.0;
+//       p->int_coeffs[i] = f; 
+//       p->repartition[3] = p->repartition[2] + 4;
+
+//       p->pint_points = bgeot::store_point_tab(ptab);
+//       p->valid = true;
+//       if (++i != ptab.size()) DAL_THROW(internal_error, "internal error");
+//     }
+//     return p;
+//   }
 
   /* ********************************************************************* */
   /*   triangle7 :    Integration on a triangle of order 7 with 13 points  */
@@ -1403,65 +1512,79 @@ namespace getfem
   /* ********************************************************************* */
 
   papprox_integration tetrahedron3_approx_integration(void) {
-    static _particular_approx *p = NULL;
-    if (p == NULL)
-    {
-      const int NB_PER_VOL = 5;
-      const int NB_PER_FA  = 4;
-      const int NB_FA = 4;
-      const int dim = 3;
-      std::vector<base_node> ptab(NB_PER_VOL + NB_PER_FA * NB_FA);
-      base_vector nullpt(dim); nullpt.fill(0);
-      std::fill(ptab.begin(), ptab.end(), nullpt);
-      p = new _particular_approx;
-      p->cvr = bgeot::simplex_of_reference(dim);
-      p->repartition.resize(NB_FA+1);
-      p->int_coeffs.resize(ptab.size());
-      std::vector<base_node>::iterator itp = ptab.begin();
-      std::vector<scalar_type>::iterator itc = p->int_coeffs.begin(); 
-      // volume
-      *itp++ = base_vector(0.25, 0.25, 0.25);
-      *itc++ = - 4.0 / 30.0;
-      *itp++ = base_vector(1.0 / 6.0, 1.0 / 6.0, 1.0 / 6.0);
-      *itc++ = 9.0 / 120.0; 
-      *itp++ = base_vector(1.0 / 2.0, 1.0 / 6.0, 1.0 / 6.0);
-      *itc++ = 9.0 / 120.0; 
-      *itp++ = base_vector(1.0 / 6.0, 1.0 / 2.0, 1.0 / 6.0);
-      *itc++ = 9.0 / 120.0; 
-      *itp++ = base_vector(1.0 / 6.0, 1.0 / 6.0, 1.0 / 2.0);
-      *itc++ = 9.0 / 120.0; 
-      p->repartition[0] = NB_PER_VOL;
-
-      double a = 1.0 / 3.0;
-      double b = 1.0 / 5.0;
-      double c = 3.0 / 5.0;
-      double surf = ::sqrt(3.0) * 0.5;
-      for (int i = 0; i < NB_FA; ++i) {
-	int i1 = (i < 2) ? 1 : 0;
-	int i2 = (i < 3) ? 2 : 1;
-	(*itp)[i1] = a; (*itp)[i2] = a;
-	if (i == 0) (*itp)[0] = 1.0 - (*itp)[1] - (*itp)[2];
-	*itc++ = -surf * 9.0 / 16.0; ++itp;
-	(*itp)[i1] = b; (*itp)[i2] = b;
-	if (i == 0) (*itp)[0] = 1.0 - (*itp)[1] - (*itp)[2];
-	*itc++ = surf * 25.0 / 48.0; ++itp;
-	(*itp)[i1] = c; (*itp)[i2] = b;
-	if (i == 0) (*itp)[0] = 1.0 - (*itp)[1] - (*itp)[2];
-	*itc++ = surf * 25.0 / 48.0; ++itp;
-	(*itp)[i1] = b; (*itp)[i2] = c;
-	if (i == 0) (*itp)[0] = 1.0 - (*itp)[1] - (*itp)[2];
-	*itc++ = surf * 25.0 / 48.0; ++itp;
-
-	p->repartition[i+1] = p->repartition[i] + NB_PER_FA;
-	surf = 0.5;
-      }
-
-      p->pint_points = bgeot::store_point_tab(ptab);
-      p->valid = true;
-      if (itp != ptab.end()) DAL_THROW(internal_error, "internal error");
-    }
+    approx_integration *p = 
+      new approx_integration(bgeot::simplex_of_reference(3));
+    p->add_point(base_vector(0.25, 0.25, 0.25), -4.0/30.0);
+    p->add_point(base_vector(1.0/6.0, 1.0/6.0, 1.0/6.0), 9.0/120.0);
+    p->add_point(base_vector(1.0/2.0, 1.0/6.0, 1.0/6.0), 9.0/120.0);
+    p->add_point(base_vector(1.0/6.0, 1.0/2.0, 1.0/6.0), 9.0/120.0);
+    p->add_point(base_vector(1.0/6.0, 1.0/6.0, 1.0/2.0), 9.0/120.0);
+    for (short_type f = 0; f < p->structure()->nb_faces(); ++f)
+      p->add_method_on_face(int_method_descriptor("IM_TRIANGLE(3)"), f);
+    p->valid_method();
     return p;
   }
+
+//   papprox_integration tetrahedron3_approx_integration(void) {
+//     static _particular_approx *p = NULL;
+//     if (p == NULL)
+//     {
+//       const int NB_PER_VOL = 5;
+//       const int NB_PER_FA  = 4;
+//       const int NB_FA = 4;
+//       const int dim = 3;
+//       std::vector<base_node> ptab(NB_PER_VOL + NB_PER_FA * NB_FA);
+//       base_vector nullpt(dim); nullpt.fill(0);
+//       std::fill(ptab.begin(), ptab.end(), nullpt);
+//       p = new _particular_approx;
+//       p->cvr = bgeot::simplex_of_reference(dim);
+//       p->repartition.resize(NB_FA+1);
+//       p->int_coeffs.resize(ptab.size());
+//       std::vector<base_node>::iterator itp = ptab.begin();
+//       std::vector<scalar_type>::iterator itc = p->int_coeffs.begin(); 
+//       // volume
+//       *itp++ = base_vector(0.25, 0.25, 0.25);
+//       *itc++ = - 4.0 / 30.0;
+//       *itp++ = base_vector(1.0 / 6.0, 1.0 / 6.0, 1.0 / 6.0);
+//       *itc++ = 9.0 / 120.0; 
+//       *itp++ = base_vector(1.0 / 2.0, 1.0 / 6.0, 1.0 / 6.0);
+//       *itc++ = 9.0 / 120.0; 
+//       *itp++ = base_vector(1.0 / 6.0, 1.0 / 2.0, 1.0 / 6.0);
+//       *itc++ = 9.0 / 120.0; 
+//       *itp++ = base_vector(1.0 / 6.0, 1.0 / 6.0, 1.0 / 2.0);
+//       *itc++ = 9.0 / 120.0; 
+//       p->repartition[0] = NB_PER_VOL;
+
+//       double a = 1.0 / 3.0;
+//       double b = 1.0 / 5.0;
+//       double c = 3.0 / 5.0;
+//       double surf = ::sqrt(3.0) * 0.5;
+//       for (int i = 0; i < NB_FA; ++i) {
+// 	int i1 = (i < 2) ? 1 : 0;
+// 	int i2 = (i < 3) ? 2 : 1;
+// 	(*itp)[i1] = a; (*itp)[i2] = a;
+// 	if (i == 0) (*itp)[0] = 1.0 - (*itp)[1] - (*itp)[2];
+// 	*itc++ = -surf * 9.0 / 16.0; ++itp;
+// 	(*itp)[i1] = b; (*itp)[i2] = b;
+// 	if (i == 0) (*itp)[0] = 1.0 - (*itp)[1] - (*itp)[2];
+// 	*itc++ = surf * 25.0 / 48.0; ++itp;
+// 	(*itp)[i1] = c; (*itp)[i2] = b;
+// 	if (i == 0) (*itp)[0] = 1.0 - (*itp)[1] - (*itp)[2];
+// 	*itc++ = surf * 25.0 / 48.0; ++itp;
+// 	(*itp)[i1] = b; (*itp)[i2] = c;
+// 	if (i == 0) (*itp)[0] = 1.0 - (*itp)[1] - (*itp)[2];
+// 	*itc++ = surf * 25.0 / 48.0; ++itp;
+
+// 	p->repartition[i+1] = p->repartition[i] + NB_PER_FA;
+// 	surf = 0.5;
+//       }
+
+//       p->pint_points = bgeot::store_point_tab(ptab);
+//       p->valid = true;
+//       if (itp != ptab.end()) DAL_THROW(internal_error, "internal error");
+//     }
+//     return p;
+//   }
 
   /* ********************************************************************* */
   /* tetrahedron5 : Integration on a tetrahedron of order 5 with 15 points */

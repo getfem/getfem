@@ -597,7 +597,7 @@ namespace bgeot
   template<class MAT1, class MAT2, class MATR>
     void mat_product_tn(const MAT1 &m1, const MAT2 &m2, MATR &mr) 
   { // mr = trans(m1) * m2; optimisable.
-    if (m1.nrows() != m2.nrows() || mr.nrows() != m1.nrows()
+    if (m1.nrows() != m2.nrows() || mr.nrows() != m1.ncols()
 	  || mr.ncols() != m2.ncols() || ((void *)(&mr) == (void *)(&m1))
 	  || ((void *)(&mr) == (void *)(&m2)))
       DAL_THROW(dimension_error, "dimensions mismatch");

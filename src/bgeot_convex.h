@@ -69,8 +69,8 @@ namespace bgeot
     
     dref_convex_pt_ct dir_points_of_face(short_type i) const {
       return dref_convex_pt_ct(pts.begin(),
-			       ind_dir_points_of_face(i).begin(),
-			       ind_dir_points_of_face(i).end());
+			       cvs->ind_dir_points_of_face(i).begin(),
+			       cvs->ind_dir_points_of_face(i).end());
     }
     pconvex_structure structure(void) const { return cvs; }
     pconvex_structure &structure(void) { return cvs; }
