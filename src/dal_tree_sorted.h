@@ -398,10 +398,12 @@ namespace dal
       { sorted_iterator it(*this); it.end(); return it; }
       const_sorted_iterator sorted_end(void) const
       { const_sorted_iterator it(*this); it.end(); return it; }
-      reverse_sorted_iterator rbegin(void) { return reverse_sorted_iterator(end()); }
+      reverse_sorted_iterator rbegin(void)
+	{ return reverse_sorted_iterator(end()); }
       const_reverse_sorted_iterator rbegin(void) const
       { return const_reverse_sorted_iterator(end()); }
-      reverse_sorted_iterator rend(void) { return reverse_sorted_iterator(begin()); }
+      reverse_sorted_iterator rend(void)
+	{ return reverse_sorted_iterator(begin()); }
       const_reverse_sorted_iterator rend(void) const
       { return const_reverse_sorted_iterator(begin()); }
       sorted_iterator sorted_first(void)
@@ -687,11 +689,11 @@ namespace dal
   {
     const_tas_iterator itb
       = ((const dynamic_tree_sorted<T, COMP, pks> *)(this))->tas_begin();
-    const_tas_iterator end
+    const_tas_iterator ite
       = ((const dynamic_tree_sorted<T, COMP, pks> *)(this))->tas_end();
     const_sorted_iterator it(*this);
     first_node = ST_NIL;
-    while (itb != end)
+    while (itb != ite)
     { insert_path(*itb, it); add_index(itb.index(), it); ++itb; }
   }     
 

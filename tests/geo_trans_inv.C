@@ -7,16 +7,17 @@ using bgeot::scalar_type;
 using bgeot::base_node;
 using bgeot::base_vector;
 
-dim_type N, MESH_TYPE, BASE;
-scalar_type LX, LY, LZ;
-size_type NX, NB_POINTS;
 
-ftool::md_param PARAM;
 
-getfem::getfem_mesh mesh;
 
 int main(int argc, char *argv[])
 {
+  dim_type N, MESH_TYPE, BASE;
+  scalar_type LX, LY, LZ;
+  size_type NX, NB_POINTS;
+  ftool::md_param PARAM;
+  getfem::getfem_mesh mesh;
+  
   try {
 
     PARAM.read_command_line(argc, argv);

@@ -31,16 +31,6 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-//
-//
-//
-//  A TERMINER : modifier les méthodes en tenant compte du fait que
-//               les lignes sont des svector<T>
-//
-
-
-
-
 #ifndef __BGEOT_SMATRIX_H
 #define __BGEOT_SMATRIX_H
 
@@ -51,101 +41,59 @@ namespace bgeot
 
   template<class T> class ref_elt_smatrix;
   
-  template<class T> class smatrix  /* General Sparse Matrix.		*/
+  template<class T> class smatrix  /* General Sparse Matrix.		   */
   {
   public :
 
     typedef size_t size_type;
     typedef T value_type;
     typedef vsvector<T> vector_type;
+    typedef svector<T> _line_type;
 
+    std::vector<_line_type> li; /* array of lines.                         */
     
-    // struct elt_m	       	/* basic element of the matrix.		*/
-//     {
-//       T val;	       	        /* value of the element.	        */
-//       size_type rang;	        /* column number.			*/
-//       elt_m(T v, size_type r) { val = v; rang = r; }
-//       elt_m(size_type r) { rang = r; }
-//       elt_m(void) {}
-//     };
+    /* Initialisation and copy.                                   	   */
     
-//     struct _elt_m_comp
-//     {
-//       int operator() (const elt_m &m, const elt_m &n) const
-// 	{ return (int(m.rang) - int(n.rang)); }
-//     };
+    void init(size_type l, size_type c)
+    { li.resize(l); std::fill(li.begin(), li.end(), svector<T>(c)); }
     
-//     typedef dal::dynamic_tree_sorted<elt_m, _elt_m_comp, 3> _line_m;
+    void resize(size_type l, size_type c)
+    { li.resize(l); for (size_type i=0; i < l; ++i) li[i].resize(c); }
 
-    typedef svector<T> _line_m;
-
-    
-    size_type nbc, nbl;      /* Number of columns and lines.           	*/
-    std::vector<_line_m> li; /* array of lines.                         */
-    
-    /* Initialisation and copy.                                   	*/
-    
-    void init(size_type l, size_type c) { 
-      nbl = l; nbc = c; li.resize(l); 
-      //cerr << "init(" << l << "," << c << ")\n";
-      //for (size_type i=0; i < l; ++i)
-      //li[i] = svector<T>(c);
-      //cerr << "li[0].nbl=" << li[0].size() << endl;
-      std::fill(li.begin(), li.end(), svector<T>(c));
-    }
-    
-    void resize(size_type l, size_type c) {
-      nbc = c; nbl = l;
-      li.resize(l);
-      for (size_type i=0; i < l; ++i)
-	li[i].resize(c);
-    }
-
-    /* read and write operations.                                       */
-    
-    inline _line_m & operator[](size_type i) { return li[i]; }
-    inline const _line_m & operator[](size_type i) const { return li[i]; }
-
+    /* read and write operations.                                          */
+    void out_of_range_error(void) const;
     inline ref_elt_smatrix<T> operator ()(size_type l, size_type c)
     { return ref_elt_smatrix<T>(this, l, c); }
     
-    inline void w(size_type l, size_type c, T e) { 
+    inline void w(size_type l, size_type c, const T &e) {
+      #ifdef __GETFEM_VERIFY
+        if (l >= li.size()) out_of_range_error();
+      #endif
       li[l][c] = e;
     }
-    
-    inline T r(size_type l, size_type c) const { 
+    inline T r(size_type l, size_type c) const {
+      #ifdef __GETFEM_VERIFY
+        if (l >= li.size()) out_of_range_error();
+      #endif
       return li[l][c];
     }
-
-    inline ref_elt_smatrix<T> operator ()(size_type l, size_type c) const
-    { return r(l,c);}
-
+    inline T operator ()(size_type l, size_type c) const { return r(l,c);}
 
     /* Manipulation of lines and columns functions.               	*/
 
     inline void clear_line(size_type i) { li[i].clear(); }
-    void clear() { for (size_type i=0; i < nbl; ++i) clear_line(i); }
+    void clear() { for (size_type i=0; i < nrows(); ++i) clear_line(i); }
 
-    inline _line_m& row(size_type i) { return li[i]; }
-    inline const _line_m& row(size_type i) const { return li[i]; }
+    inline _line_type& row(size_type i) { return li[i]; }
+    inline const _line_type& row(size_type i) const { return li[i]; }
 
     /* Operations algebriques sur les matrices. */
 
-    template<class R> friend R lc_product(const smatrix<R>& m1, size_type i,
-			const smatrix<R>& m2, size_type j);
-    template<class R> friend R partial_lc_product(const smatrix<R>& m1, size_type i,
-				 const smatrix<R>& m2, size_type j, size_type k);
-    template<class R> friend R ll_product(const smatrix<R>& m1, size_type i,
-			 const smatrix<R>& m2, size_type j);
-    template<class R> friend R partial_ll_product(const smatrix<R>& m1, size_type i,
-				 const smatrix<R>& m2, size_type j, size_type k);
+    void l_mul(size_type l, T x) { li[l] *= x; }
 
-    void l_mul(size_type l, T x);
-
-    inline size_type nrows(void) const
-      { return nbl; }
+    inline size_type nrows(void) const { return li.size(); }
     inline size_type ncols(void) const
-      { return nbc; }
+    { return (nrows() == 0) ? 0 : li[0].size(); }
     smatrix<T>& operator *=(T x);
     smatrix<T>& operator /=(T x);
     inline void inv(void)
@@ -158,23 +106,6 @@ namespace bgeot
     bool operator ==(const smatrix<T> &m) const;
     inline bool operator !=(const smatrix<T> &m) const
       { return ( !(m == *this) ); }
-    template<class R> friend smatrix<R> operator +(const smatrix<R> &m);
-    template<class R> friend smatrix<R> operator -(const smatrix<R> &m);
-    template<class R> friend smatrix<R> operator +(const smatrix<R> &m,
-						   const smatrix<R> &n);
-    template<class R> friend smatrix<R> operator -(const smatrix<R> &m,
-						   const smatrix<R> &n);
-    template<class R> friend smatrix<R> operator *(const smatrix<R> &m,
-						   const smatrix<R> &n);
-    template<class R> friend smatrix<R> operator *(const smatrix<R> &m, R x);
-    template<class R> friend smatrix<R> operator *(R x, const smatrix<T> &m);
-    template<class R> friend smatrix<R> operator /(const smatrix<R>& m,
-						   const smatrix<R>& n);
-    template<class R> friend smatrix<R> operator /(const smatrix<R>& m, R x);
-    template<class R> friend smatrix<R> operator /(R x, const smatrix<R>& m);
-
-    template<class R> friend vsvector<R>& operator *=(vsvector<R>& v, 
-						     const smatrix<R>& m);
 
     /* Constructors / Destructor.                                         */
     smatrix(size_type l, size_type c = size_type(-6))
@@ -192,21 +123,24 @@ namespace bgeot
     }
   };
 
-  template<class T> vsvector<T>& operator *=(vsvector<T>& v,const smatrix<T>& m)
-  {	/* a optimiser.							*/
-    if ( (v.size() != m.nbl) || (v.size() != m.nbc) )
-      throw dimension_error
-	("vsvector<T>& smatrix<T>::operator *= dimensions mismatch");
+  template<class T>  void smatrix<T>::out_of_range_error(void) const
+  { DAL_THROW(std::out_of_range, "out of range"); }
+
+
+  template<class T> vsvector<T>& operator *=(vsvector<T>& v,
+					     const smatrix<T>& m) {
+    /* a optimiser.							*/
+    if ( (v.size() != m.nrows()) || (v.size() != m.ncols()) )
+      DAL_THROW(dimension_error, "dimensions mismatch");
     vsvector<T> tmp = v;
-    for (size_type l = 0; l < m.nbl; l++) v(l) = lv_product(m, l, tmp);
+    for (size_type l = 0; l < m.nrows(); l++) v(l) = lv_product(m, l, tmp);
     return v;
   }
   template<class R, class VECT> VECT operator *(const smatrix<R>& m,
-						       const VECT& v)
-  {	/* optimiser l' acces a la matrice.				*/
+						const VECT& v) {
+    /* optimiser l' acces a la matrice.				*/
     if (v.size() != m.ncols())
-      throw dimension_error
-	("vsvector<T>& smatrix<T>::operator *= dimensions mismatch");
+      DAL_THROW(dimension_error, "dimensions mismatch");
     VECT res(m.nrows());
     for (size_type l = 0; l < m.nrows(); l++) res[l] = lv_product(m, l, v);
     return res;
@@ -214,180 +148,134 @@ namespace bgeot
   
   template<class T> T lc_product(const smatrix<T>& m1, size_type i,
 				 const smatrix<T>& m2, size_type j) {
-    typename smatrix<T>::_line_m *t = &(m1.li[i]); _elt_svector<T> *e;
-    T res = T(0);  
-    for (size_type k = t->card()-1; k != size_type(-1); k--)
-      { e = &((*t)[k]); res += e->e*m2.r(e->c, j); }
+    typename smatrix<T>::_line_type::iterator it = m1.row(i).begin(),
+      ite = m1.row(i).end();
+    T res = T(0);
+    for (; it != ite; ++it) res += (it->e) * m2.r(it->c, j);
     return res;
   }
   
   template<class T> T partial_lc_product(const smatrix<T>& m1, size_type i,
-					 const smatrix<T>& m2, size_type j, size_type k)
-  { /* Somme pour l <= k de m1(i,l) * m2(l,j).		*/
-    typename smatrix<T>::_line_m *t = &(m1.li[i]); _elt_svector<T> *e;
-    T res = 0;
-    for (size_type l = t->card()-1; l != size_type(-1); l--)
-      { e =&((*t)[l]); if (e->c <= k) res += e->e * m2.r(e->c, j);}
+					 const smatrix<T>& m2, size_type j,
+					 size_type k) {
+    typename smatrix<T>::_line_type::iterator it = m1.row(i).begin(),
+      ite = m1.row(i).end();
+    T res = T(0);
+    for (; it != ite; ++it) if (it->c <= k) res += (it->e) * m2.r(it->c, j);
     return res;
   }
   
   template<class T> T ll_product(const smatrix<T>& m1, size_type i,
 				 const smatrix<T>& m2, size_type j)
-  { /* Produit de la ligne i de m1 par la ligne j de m2.	*/
-    typename smatrix<T>::_line_m *t = &(m1.li[i]); _elt_svector<T> *e;
-    T res = 0;
-    for (size_type k = t->card()-1; k != size_type(-1); k--)
-      {  e = &((*t)[k]); res += e->e * m2.r(j, e->c); }
-    return res;
-  }
+  { return vect_sp(m1.row(i), m2.row(j)); }
+  
   
   template<class T> T partial_ll_product(const smatrix<T>& m1, size_type i,
-					 const smatrix<T>& m2, size_type j, size_type k)
-  { /* Somme pour l <= k de m1(i,l) * m2(j,l).		*/
-    const typename smatrix<T>::_line_m *t = &(m1.li[i]);
-    const _elt_svector<T> *e;
-    T res = 0;
-    for (size_type l = t->card()-1; l != size_type(-1); l--)
-      { e =&((*t)[l]); if (e->c <= k) res += e->e * m2.r(j, e->c);}
+					 const smatrix<T>& m2, size_type j,
+					 size_type k) {
+    typename smatrix<T>::_line_type::iterator it = m1.row(i).begin(),
+      ite = m1.row(i).end();
+    T res = T(0);
+    for (; it != ite; ++it) if (it->c <= k) res += (it->e) * m2(j, it->c);
     return res;
   }
   
-  template<class T, class VECT> inline T lv_product(const smatrix<T> &m1, size_type i,
-					     const VECT& v)
-  { 
-    return vect_sp(m1.row(i), v);
-  }
+  template<class T, class VECT> inline T lv_product(const smatrix<T> &m1,
+						    size_type i, const VECT& v)
+  { return vect_sp(m1.row(i), v); }
   
-  template<class T> void smatrix<T>::l_mul(size_type l, T x)
-  { for (size_type j = li[l].card() - 1; j != size_type(-1); j--) li[l][j].e *= x; }
-  
- 
-  
-  template<class T> smatrix<T>& smatrix<T>::operator *=(T x)
-  {
-    for (size_type l = 0; l < nbl; l++) l_mul(l, x);
+  template<class T> smatrix<T>& smatrix<T>::operator *=(T x) {
+    for (size_type l = 0; l < nrows(); l++) l_mul(l, x);
     return *this;
   }
 
   template<class T> smatrix<T>& smatrix<T>::operator /=(T x)
-  {
-    for (size_type l = 0; l < nbl; l++)
-      for (size_type j = li[l].card() - 1; j != size_type(-1); j--) li[l][j].e /= x;
-    return *this;
-  }
+  { (*this) *= 1 / x; return *this; }
 
-  template<class T> smatrix<T>& smatrix<T>::operator *=(const smatrix<T> &m)
-  {			/* a optimiser.					*/
+  template<class T> smatrix<T>& smatrix<T>::operator *=(const smatrix<T> &m) {
+   			/* a optimiser.					*/
     size_type l, c, i;	/* traiter le cas ou les deux matrices sont egales. */
-    smatrix<T>::_line_m t;
+    typename smatrix<T>::_line_type t;
     
-    if ( (nbc != m.nbl) || (nbc != m.nbc) )
-      throw dimension_error
-	("smatrix<T>& smatrix<T>::operator *= dimensions mismatch");
-      
+    if ( (ncols() != m.nrows()) || (ncols() != m.ncols()) )
+      DAL_THROW(dimension_error, "dimensions mismatch");
     
-    for (l = 0; l < nbl; l++)
-    {
+    for (l = 0; l < nrows(); l++) {
       t = li[l];
       li[l].clear();
       
-      for (c = 0; c < nbc; c++)
-	{
-	  T aux = 0.0;
-	  for (i = 0; i < t.card(); i++) aux += t[i].e*m.r(t[i].c, c);
-	  this->w(l,c,aux);
-	}
+      for (c = 0; c < ncols(); c++) {
+	T aux = 0.0;
+	typename smatrix<T>::_line_type::iterator it = t.begin(),
+	  ite = t.end();
+	for ( ; it != ite; ++it) aux += (it->e) * m.r(t[i].c, c);
+	this->w(l,c,aux);
+      }
     }
     return *this;
   }
   
-  template<class T> smatrix<T>& smatrix<T>::operator +=(const smatrix<T> &m)
-  { /* a optimiser. */
-    if ( (nbc != m.nbc) || (nbl != m.nbl) )
-      throw dimension_error
-	("smatrix<T>& smatrix<T>::operator += dimensions mismatch");
-      
-    
-    for (size_type l = 0; l < m.nbl; l++)
-      for (size_type j = m.li[l].card() - 1; j != size_type(-1); j--)
-      {
-	_elt_svector<T> *d = &(m.li[l][j]);
-	this->w(l, d->c, this->r(l, d->c) + d->e);
-      }
+  template<class T> smatrix<T>& smatrix<T>::operator +=(const smatrix<T> &m) {
+    if ( (ncols() != m.ncols()) || (nrows() != m.nrows()) )
+      DAL_THROW(dimension_error, "dimensions mismatch");
+    for (size_type l = 0; l < m.nrows(); l++) row(i) += m.row(i);
     return *this;
   }
-
+  
   template<class T> smatrix<T>& smatrix<T>::operator -=(const smatrix<T> &m) {
-    if ( (nbc != m.nbc) || (nbl != m.nbl) )
-      throw dimension_error
-	("smatrix<T>& smatrix<T>::operator -= dimensions mismatch");
-     
-    
-    for (size_type l = 0; l < m.nbl; l++)
-      for (size_type j = m.li[l].card() - 1; j != size_type(-1); j--)
-	{
-	  _elt_svector<T> *d = &(m.li[l][j]);
-	  this->w(l, d->c, this->r(l, d->c) - d->e);
-	} 
+    if ( (ncols() != m.ncols()) || (nrows() != m.nrows()) )
+      DAL_THROW(dimension_error, "dimensions mismatch");
+    for (size_type l = 0; l < m.nrows(); l++) row(i) -= m.row(i);
     return *this;
   }
-
-  template<class T> bool smatrix<T>::operator ==(const smatrix<T> &m) const { 
-    size_type l, j; _elt_svector<T> *d;
-    
-    if ( ( nbc != m.nbc ) || ( nbl != m.nbl ) ) return false;
-    
-    for (l = 0; l < nbl; l++)
-      {
-	for (j = li[l].card() - 1; j != size_type(-1); j--)
-	  { d = &(li[l][j]); if ( d->e != m.r(l,d->c)) return false; }
-	for (j = m.li[l].card() - 1; j != size_type(-1); j--)
-	  { d = &(m.li[l][j]); if (d->e != r(l,d->c)) return false; }
-      }
+  
+  template<class T> bool smatrix<T>::operator ==(const smatrix<T> &m) const {
+    if ( (ncols() != m.ncols()) || (nrows() != m.nrows()) ) return false;
+    for (size_type l = 0; l < m.nrows(); l++)
+      if (row(i) != m.row(i)) return false;
     return true;
   }
   
   template<class T> smatrix<T> operator +(const smatrix<T> &m)
-    { return m; }
+  { return m; }
   template<class T> smatrix<T> operator -(const smatrix<T> &m)
-    { smatrix<T> p = m; p *= -1.0; return p; }
+  { smatrix<T> p = m; p *= -1.0; return p; }
   template<class T> smatrix<T> operator +(const smatrix<T> &m,
 					  const smatrix<T> &n)
-    { smatrix<T> p = m; p += n; return p; }
+  { smatrix<T> p = m; p += n; return p; }
   template<class T> smatrix<T> operator -(const smatrix<T> &m,
 					  const smatrix<T> &n)
-    { smatrix<T> p = m; p -= n; return p; }
+  { smatrix<T> p = m; p -= n; return p; }
   template<class T> smatrix<T> operator *(const smatrix<T> &m,
 					  const smatrix<T> &n) {
-    smatrix<T> p(m.nbl, n.nbc);
-    
-    if (m.nbc != n.nbl)
-      throw dimension_error
-	("smatrix<T> smatrix<T>::operator * dimensions mismatch");
+    smatrix<T> p(m.nrows(), n.ncols());
+    if (m.ncols() != n.nrows())
+      DAL_THROW(dimension_error, "dimensions mismatch");
       
-    
-    for (size_type l = 0; l < m.nbl; l++)
-      for (size_type c = 0; c < n.nbc; c++)
-	p.w(l,c, lc_product(m, l, n, c) );
+    for (size_type l = 0; l < m.nrows(); l++)
+      for (size_type c = 0; c < n.ncols(); c++) {
+	T e = lc_product(m, l, n, c);
+	if (e != T(0)) p.w(l,c, e); 
+      }
     return p;
   }
   template<class T> smatrix<T> operator *(const smatrix<T> &m, T x)
-    { smatrix<T> p = m; p *= x; return p; }
+  { smatrix<T> p = m; p *= x; return p; }
   template<class T> smatrix<T> operator *(T x, const smatrix<T> &m)
-    { smatrix<T> p = m; p *= x; return p; }
+  { smatrix<T> p = m; p *= x; return p; }
   template<class T> smatrix<T> operator /(const smatrix<T>& m,
 					  const smatrix<T>& n)
-    { smatrix<T> p = n; p.inv(); return m * p; }
+  { smatrix<T> p = n; p.inv(); return m * p; }
   template<class T> smatrix<T> operator /(const smatrix<T>& m, T x)
-    { smatrix<T> p = m; p /= x; return p; }
+  { smatrix<T> p = m; p /= x; return p; }
   template<class T> smatrix<T> operator /(T x, const smatrix<T>& m)
-    { smatrix<T> p = m; p.inv(); return p * x; }
+  { smatrix<T> p = m; p.inv(); return p * x; }
   
 
   /*********  intermediary structure for r/w operation.	*******************/
+  
+  template<class T> class ref_elt_smatrix { /* ref. on an matrix element.  */
 
-  template<class T> class ref_elt_smatrix /* ref. on an matrix element.  */
-  { 
     smatrix<T> *pm;
     size_type l,c;
     
@@ -408,16 +296,6 @@ namespace bgeot
       { (*pm).w(l,c,(*pm).r(l,c) * v); return *this; }
     inline ref_elt_smatrix operator =(const ref_elt_smatrix &re)
       { *this = T(re); return *this; }
-    template<class R> friend R operator +(const ref_elt_smatrix<R> &re);
-    template<class R> friend R operator -(const ref_elt_smatrix<R> &re);
-    template<class R> friend R operator +(const ref_elt_smatrix<R> &re, R v);
-    template<class R> friend R operator +(R v, const ref_elt_smatrix<R> &re);
-    template<class R> friend R operator -(const ref_elt_smatrix<R> &re, R v);
-    template<class R> friend R operator -(R v, const ref_elt_smatrix<R> &re);
-    template<class R> friend R operator *(const ref_elt_smatrix<R> &re, R v);
-    template<class R> friend R operator *(R v, const ref_elt_smatrix<R> &re);
-    template<class R> friend R operator /(const ref_elt_smatrix<R> &re, R v);
-    template<class R> friend R operator /(R v, const ref_elt_smatrix<R> &re);
   };  
   
   template<class T> T operator +(const ref_elt_smatrix<T> &re)
@@ -442,7 +320,7 @@ namespace bgeot
     { return v/ T(re); }
   
 
-
+  /*********  generic solver.	*******************/
 
 
   template < class Matrix, class Vector>

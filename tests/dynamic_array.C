@@ -82,12 +82,12 @@ int main(void) {
 	it1 = ((const dal::dynamic_array<int, 4> *)(&t))->begin(),
 	it2 = ((const dal::dynamic_array<int, 4> *)(&t2))->begin(),
 	it3 = ((const dal::dynamic_array<int, 4> *)(&t3))->begin(),
-	ite = ((const dal::dynamic_array<int, 4> *)(&t))->end(),
-	itb = ((const dal::dynamic_array<int, 4> *)(&t))->begin();
+	ite2 = ((const dal::dynamic_array<int, 4> *)(&t))->end(),
+	itb2 = ((const dal::dynamic_array<int, 4> *)(&t))->begin();
       
-      for ( ; it1 != ite; it1++, it2++, it3++)
+      for ( ; it1 != ite2; it1++, it2++, it3++)
       {
-	size_t ind = it1 - itb;
+	size_t ind = it1 - itb2;
 	if 
 	( ( (&(*it1)) != &(t[ind]) ) ||
 	  ( (&(*it2)) != &(t2[ind]) ) ||
@@ -104,12 +104,12 @@ int main(void) {
 	it1 = t.begin(),
 	it2 = t2.begin(),
 	it3 = t3.begin(),
-	ite = t.end(),
-	itb = t.begin();
+	ite2 = t.end(),
+	itb2 = t.begin();
       
-      for ( ; it1 != ite; it1++, it2++, it3++)
+      for ( ; it1 != ite2; it1++, it2++, it3++)
 	{
-	  size_t ind = it1 - itb;
+	  size_t ind = it1 - itb2;
 	  
 	  if 
 	  ( ( (&(*it1)) != &(t[ind]) ) ||
