@@ -308,7 +308,12 @@ On doit tout d'abord initialiser la variable CVSROOT par la commande
 pour csh, o\`u
 \begin{alltt} export CVSROOT=:pserver:nom_login@gmmlinux2.gmm.priv:/var/cvs
 \end{alltt}
-pour bash, o\`u nom\_login est votre nom de login unix sur le site du gmm. cette commande peut \^etre ins\'er\'ee dans votre .cshrc, .bashrc ou autre. 
+pour bash, o\`u nom\_login est votre nom de login unix sur le site du gmm. cette commande peut \^etre ins\'er\'ee dans votre .cshrc, .bashrc ou autre. Puis vous devez créer un fichier {\tt .cvspass} dans votre home directory. Il doit contenir les deux lignes :
+\begin{alltt}
+  /1 :pserver:nom_login@gmmlinux2.gmm.priv:2401/var/cvs AAF2|o@
+  :pserver:nom_login@gmmlinux2.gmm.priv:/var/cvs AAF2|o@
+\end{alltt}
+Enfin demandez l'autorisation à l'ingénieur système pour qu'il vous rajoute sur la liste des personnes ayant droit à acceder aux sources du projet.
 
 \subsection{R\'ecup\'erer une partie des sources}
 D'une mani\`ere g\'en\'erale, r\'ecup\'erer des sources s'op\`ere par la commande
@@ -318,9 +323,9 @@ D'une mani\`ere g\'en\'erale, r\'ecup\'erer des sources s'op\`ere par la command
 o\`u nom\_dir est le nom du r\'epertoire a rapatrier (voir structure des fichiers du projet sous CVS).
 Par exemple la commande
 \begin{alltt}
-  cvs checkout getfem++/dal/test
+  cvs checkout getfem++/dal/
 \end{alltt}
-va cr\'eer dans le r\'epertoire courant la structure de r\'epertoire \begin{alltt} getfem++/dal/test/ \end{alltt} et y mettre les fichier correspondants, c'est \`a dire les programmes de test de la biblioth\`eque dal.
+va cr\'eer dans le r\'epertoire courant la structure de r\'epertoire \begin{alltt} getfem++/dal/ \end{alltt} et y mettre les fichier correspondants, c'est \`a dire les programmes de la biblioth\`eque dal.
 
 \subsection{Plus pratique, les shells d'installation et de mise \`a jour}
 Les shells d'installation et de mise \`a jour regroupent toutes les instructions permettant de r\'ecup\'erer les sources, et d'installer un environnement de compilation et de test. Pour r\'ecup\'erer l'ensemble des shells d'installation, ex\'ecuter la commande
