@@ -814,7 +814,7 @@ namespace getfem
       else {
 	bool good = true;
 	for (size_type j = 0; j < nb_bimg; ++j)
-	  if (dal::abs(gmm::vect_sp(aux, base_img[j])) > T(0))
+	  if (dal::abs(gmm::vect_sp(aux, base_img[j])) > R(0))
 	    { good = false; break; }
 	if (good) {
 	  gmm::copy(e, f);
@@ -858,7 +858,7 @@ namespace getfem
     // Compute a solution in UDD
     gmm::clear(UDD);
     for (size_type i = 0; i < nb_bimg; ++i) {
-      scalar_type c = gmm::vect_sp(base_img[i], UD);
+      T c = gmm::vect_sp(base_img[i], UD);
       gmm::add(gmm::scaled(base_img_inv[i], c), UDD);
     }
     // Orthogonalisation of the basis of the kernel of D.
