@@ -39,6 +39,15 @@
 #include <gmm_kernel.h>
 
 typedef int int_t;
+
+/* because SRC/util.h defines TRUE and FALSE ... */
+#ifdef TRUE
+# undef TRUE
+#endif
+#ifdef FALSE
+# undef FALSE
+#endif
+
 #include "SRC/Cnames.h"
 #include "SRC/supermatrix.h"
 #include "SRC/util.h"
