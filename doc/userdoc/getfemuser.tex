@@ -338,7 +338,11 @@ Once a finite element method is defined on a mesh, it is possible to obtain info
 
 \section{Use standard assembling procedures}
 
-Procedures defined in the file {\tt getfem\_assembling.h} allows to assemble rigidity atrices, mass matrices and boundary conditions for a few amount of classical partial differential equation problems. All the procedures have vectors and matrices template parameters in order to be used with any matrix library (Dense an sparse matrix are defined in {\tt bgeot\_matrix.h} and {\tt bgeot\_smatrix.h} but it is preferable to use a matrix library such as MTL / ITL.). 
+Procedures defined in the file {\tt getfem\_assembling.h} allows to assemble rigidity atrices, mass matrices and boundary conditions for a few amount of classical partial differential equation problems. All the procedures have vectors and matrices template parameters in order to be used with any matrix library (Dense an sparse matrix are defined in {\tt bgeot\_matrix.h} and {\tt bgeot\_smatrix.h} but it is preferable to use a matrix library such as MTL / ITL.).
+
+\subsection{Laplacian problem in arbitrary dimension}
+
+
 
 \begin{center} \begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline
 
