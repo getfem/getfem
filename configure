@@ -2612,7 +2612,7 @@ case $CXX in
 	echo "WARNING : Control that you have at least Compaq C++ V6.3"
  	here=`pwd`
  	cd $srcdir
-	APPSCXXFLAGS="$CXXFLAGS -tweak -O3 -std strict_ansi"
+	APPSCXXFLAGS="$CXXFLAGS -tweak -O3 -std strict_ansi -Wl,-S"
 	CXXFLAGS="$CXXFLAGS -tweak -std strict_ansi -O3"
 	MEX_NEEDS_TWOCOMP=""
  	cd $here

@@ -49,7 +49,7 @@ case $CXX in
  	cd $srcdir
 dnl     il faut utiliser -tweak au lieu des repositories ...
 dnl	APPSCXXFLAGS="$CXXFLAGS -ptr `pwd`/src/cxx_repository -O3 -std strict_ansi"
-	APPSCXXFLAGS="$CXXFLAGS -tweak -O3 -std strict_ansi"
+	APPSCXXFLAGS="$CXXFLAGS -tweak -O3 -std strict_ansi -Wl,-S"
 	CXXFLAGS="$CXXFLAGS -tweak -std strict_ansi -O3"
 dnl 	CXXFLAGS="$CXXFLAGS -ptr `pwd`/cxx_repository -std strict_ansi -O3"
 	MEX_NEEDS_TWOCOMP=""
