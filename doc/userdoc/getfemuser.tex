@@ -10,7 +10,7 @@
 \usepackage{supertabular}
 %\usepackage{fancyheadings}
 %\usepackage{here}
-\usepackage{pslatex}
+%\usepackage{pslatex}
 \usepackage{eepic,epic}
 %\usepackage{pslatex}%{\c c}a serait cens{\'e} corriger le pb de fontes dans les pdfs mais le fichier produit est pas beau
 \usepackage[english]{babel}
@@ -830,24 +830,34 @@ where $U$ is the discrete unknown.\\[0.5cm]
 \W \newcommand{\tildeH}{HH}
 \T \newcommand{\tildeR}{\tilde{R}}
 \W \newcommand{\tildeR}{RR}
+\T \newcommand{\tildeR}{\tilde{N}}
+\W \newcommand{\tildeR}{NN}
 
 
 For the second manner, one should use\\[0.5cm]
 \index{GETFEM!getfem::asm\_dirichlet\_constraints}
 \cpp{getfem::asm\_dirichlet\_constraints($\tildeH$, $\tildeR$, mf\_u, mf\_rh,$H$, $R$, nbound)}.\\[0.5cm]
 See the Dirichlet condition as a general linear constraint that must
-satisfy the solution $u$. Here, $H$ is a (sparse) matrix, with \cpp{mf\_rh.nb\_dof()} columns, and $n_c$ lines, where $n_c$ is the number
+satisfy the solution $u$. This function does the assembly of 
+Dirichlet conditions of type $h(x).u(x) = r(x)$ where h is a small square matrix
+  (of any rank) whose size is equal to \cpp{gf_mesh_fem_get(mf_u,'Qdim')}.
+  This matrix is stored in \cpp{H}, one column per dof in
+  \cpp{mf\_rh}, each column containing the values of the matrix $h$ stored
+  in Fortran order: for example \cpp{Hd(:,j)}$ = [h_{11}(x_j) h_{21}(x_j) h_{12}(x_j) h_{22}(x_j)]$ if $u$ is a 2D vector field.
+  Of course, if the unknown $u$ is a scalar field, \cpp{H} is just a row vector
+
+Here, $H$ is a (sparse) matrix, with \cpp{mf\_rh.nb\_dof()} columns, and $n_c$ lines, where $n_c$ is the number
 of constraints. Hence $u$ must satisfy $Hu=R$, which is expressed on
 $mf\_rh$ (hopefully Lagrangian). This function just assemble these
 constraints into a new linear system $\tildeH u=\tildeR$, doing some
 additional simplification in order to obtain a ``simple'' constraints
 matrix.  \index{GETFEM!getfem::Dirichlet\_nullspace} Then, one should
-call \\[0.5cm]\cpp{getfem::Dirichlet\_nullspace($\tildeH$, NN,
+call \\[0.5cm]\cpp{getfem::Dirichlet\_nullspace($\tildeH$, $\tildeN$,
   $\tildeR$, Ud)},\\[0.5cm] which will return a vector $U_d$ which
-satisfies $MU_d=B$, and an orthogonal basis $NN$ of the kernel of
+satisfies $MU_d=B$, and an orthogonal basis $\tildeN$ of the kernel of
 $\tildeH$. Hence, the discrete system that must be solved is
-\begin{equation*} (NN'[SM]NN) U_{int}=NN'(B-[SM]U_d),\end{equation*}
-and the solution is $U=NN U_{int}+U_d$.
+\begin{equation*} (\tildeN'[SM]\tildeN) U_{int}=\tildeN'(B-[SM]U_d),\end{equation*}
+and the solution is $U=\tildeN U_{int}+U_d$.
 A big advantage of this approach is to be generic, and do not prescribed for the finite element method \cpp{mf\_u} to be of Lagrange type. If \cpp{mf\_u} and 
 \cpp{mf\_d} are different, there is implicitly a projection (with respect to the $L^2$ norm) of the data on the finite element \cpp{mf\_u}.
 
