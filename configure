@@ -2612,16 +2612,20 @@ case $CXX in
  	here=`pwd`
  	cd $srcdir
         CXXFLAGS="$CXXFLAGS -std strict_ansi -O3"
+	MEX_NEEDS_TWOCOMP=""
  	cd $here
 	;;
  CC)
  	CXXFLAGS="$CXXFLAGS -LANG:std -O3"
+	MEX_NEEDS_TWOCOMP="#"
 	;;
  g++ | c++)
  	CXXFLAGS="$CXXFLAGS -ftemplate-depth-40 -pedantic -O3"
+	MEX_NEEDS_TWOCOMP="#"
 	;;
  *)
  	CXXFLAGS="$CXXFLAGS -O3"
+	MEX_NEEDS_TWOCOMP="#"
 	;;
 esac
 
@@ -3798,7 +3802,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 3801 "configure"' > conftest.$ac_ext
+  echo '#line 3805 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -7277,7 +7281,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 7280 "configure"
+#line 7284 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -7375,7 +7379,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 7378 "configure"
+#line 7382 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10478,7 +10482,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10481 "configure"
+#line 10485 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10576,7 +10580,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10579 "configure"
+#line 10583 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13199,7 +13203,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 13202 "configure"
+#line 13206 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13297,7 +13301,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 13300 "configure"
+#line 13304 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -14276,6 +14280,7 @@ if test x"$MEX" != x""; then
    echo "checking for matlab path... " $MATLAB_DIR
 
 
+
    host_arch=`uname -s`
    case $host_arch in
      Linux)
@@ -14904,6 +14909,7 @@ s,@LIBTOOL@,$LIBTOOL,;t t
 s,@LIBTOOL_VERSION_INFO@,$LIBTOOL_VERSION_INFO,;t t
 s,@MEX@,$MEX,;t t
 s,@MATLAB_INC_DIR@,$MATLAB_INC_DIR,;t t
+s,@MEX_NEEDS_TWOCOMP@,$MEX_NEEDS_TWOCOMP,;t t
 s,@MATLAB_COM_EXT@,$MATLAB_COM_EXT,;t t
 CEOF
 

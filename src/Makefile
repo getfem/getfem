@@ -82,6 +82,7 @@ LN_S = ln -s
 MATLAB_COM_EXT = .mexglx
 MATLAB_INC_DIR = /mnt/opt/matlab/extern/include
 MEX = mex
+MEX_NEEDS_TWOCOMP = #
 OBJDUMP = @OBJDUMP@
 PACKAGE = getfem
 RANLIB = ranlib

@@ -48,16 +48,20 @@ case $CXX in
  	cd $srcdir
         CXXFLAGS="$CXXFLAGS -std strict_ansi -O3"
 dnl 	CXXFLAGS="$CXXFLAGS -ptr `pwd`/cxx_repository -std strict_ansi -O3"
+	MEX_NEEDS_TWOCOMP=""
  	cd $here
 	;;
  CC)
  	CXXFLAGS="$CXXFLAGS -LANG:std -O3"
+	MEX_NEEDS_TWOCOMP="#"
 	;;
  g++ | c++)
  	CXXFLAGS="$CXXFLAGS -ftemplate-depth-40 -pedantic -O3"
+	MEX_NEEDS_TWOCOMP="#"
 	;;
  *)
  	CXXFLAGS="$CXXFLAGS -O3"
+	MEX_NEEDS_TWOCOMP="#"
 	;;
 esac 
 dnl ------------------------------------------------------------------------
@@ -85,7 +89,8 @@ if test x"$MEX" != x""; then
    MATLAB_INC_DIR=$MATLAB_DIR/extern/include
    echo "checking for matlab path... " $MATLAB_DIR
    AC_SUBST(MATLAB_INC_DIR)
-	
+   AC_SUBST(MEX_NEEDS_TWOCOMP)
+
    host_arch=`uname -s`
    case $host_arch in
      Linux)
