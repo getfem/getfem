@@ -119,39 +119,6 @@ namespace gmm {
   { SuperLU_Z::zgssv(A, p, q, L, U, B, info); }
 
 
-  /*  interface for get_perm_c */
-
-  void get_perm_c(int sp, SuperMatrix *A, int *p, float)
-  { SuperLU_S::get_perm_c(sp, A, p); }
-  void get_perm_c(int sp, SuperMatrix *A, int *p, double)
-  { SuperLU_D::get_perm_c(sp, A, p); }
-  void get_perm_c(int sp, SuperMatrix *A, int *p, std::complex<float>)
-  { SuperLU_C::get_perm_c(sp, A, p); }
-  void get_perm_c(int sp, SuperMatrix *A, int *p, std::complex<double>)
-  { SuperLU_Z::get_perm_c(sp, A, p); }
-  
-
-  /*  interface for Destroy_SuperNode_Matrix */
-  void Destroy_SuperNode_Matrix(SuperMatrix *A, float)
-  { SuperLU_S::Destroy_SuperNode_Matrix(A); }
-  void Destroy_SuperNode_Matrix(SuperMatrix *A, double)
-  { SuperLU_D::Destroy_SuperNode_Matrix(A); }
-  void Destroy_SuperNode_Matrix(SuperMatrix *A, std::complex<float>)
-  { SuperLU_C::Destroy_SuperNode_Matrix(A); }
-  void Destroy_SuperNode_Matrix(SuperMatrix *A, std::complex<double>)
-  { SuperLU_Z::Destroy_SuperNode_Matrix(A); }
-
-  /*  interface for Destroy_CompCol_Matrix */
-  void Destroy_CompCol_Matrix(SuperMatrix *A, float)
-  { SuperLU_S::Destroy_CompCol_Matrix(A); }
-  void Destroy_CompCol_Matrix(SuperMatrix *A, double)
-  { SuperLU_D::Destroy_CompCol_Matrix(A); }
-  void Destroy_CompCol_Matrix(SuperMatrix *A, std::complex<float>)
-  { SuperLU_C::Destroy_CompCol_Matrix(A); }
-  void Destroy_CompCol_Matrix(SuperMatrix *A, std::complex<double>)
-  { SuperLU_Z::Destroy_CompCol_Matrix(A); }
-  
-
   /* ********************************************************************* */
   /*   SuperLU solve                                                       */
   /* ********************************************************************* */
@@ -171,10 +138,10 @@ namespace gmm {
 
     int m = mat_nrows(A), n = mat_ncols(A), nrhs = 1;
 
-    csr_matrix<T> csc_A(m, n);
+    csc_matrix<T> csc_A(m, n);
     gmm::copy(A, csc_A);
 
-    cout << "csa_A = " << csc_A << endl;
+    //cout << "csa_A = " << csc_A << endl;
 
     std::vector<T> rhs(m);
     gmm::copy(B, rhs);
@@ -194,8 +161,8 @@ namespace gmm {
     cout << "n = " << n << " m = " << m << endl;
     cout << "Ok après Create\n";
     
-    std::vector<int> perm_r(m), perm_c(n);
-    get_perm_c(permc_spec, &SA, &perm_c[0], T());
+    std::vector<int> perm_r(m), perm_c(n+1);
+    SuperLU_S::get_perm_c(permc_spec, &SA, &perm_c[0]);
 
     cout << "Ok après perm\n";
 
@@ -203,9 +170,10 @@ namespace gmm {
     SuperLU_gssv(&SA, &perm_c[0], &perm_r[0], &SL, &SU, &SB, &info, T());
     if (info != 0) DAL_THROW(failure_error, "SuperLU solve failed");
     gmm::copy(rhs, X);
-    
-    Destroy_SuperNode_Matrix(&SL, T()); // fuite de mémoire ... ?
-    Destroy_CompCol_Matrix(&SU, T());
+    SuperLU_S::Destroy_SuperMatrix_Store(&SB);
+    SuperLU_S::Destroy_SuperMatrix_Store(&SA);
+    SuperLU_S::Destroy_SuperNode_Matrix(&SL); // fuite de mémoire ... ?
+    SuperLU_S::Destroy_CompCol_Matrix(&SU);
   }
 
 }

@@ -264,7 +264,7 @@ namespace gmm {
 					     abstract_vector) {
     if (cfill > 0.1) {
       for (size_type i = 0; i < vect_size(l); ++i) 
-	if (dal::random(typename linalg_traits<L>::value_type()) < cfill)
+	if (dal::random() < cfill)
 	  l[i] = dal::random(typename linalg_traits<L>::value_type());
 	else l[i] = 0;
     } else {
