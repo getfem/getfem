@@ -44,6 +44,43 @@ namespace gmm {
 			   const _elt_rsvector<T>& b) const
     { return (dal::abs(a.e) > dal::abs(b.e)); }
   };
+
+
+  /** mixed method to find a zero of a real function G, a priori 
+   * between a and b. If the zero is not between a and b, iterations
+   * of secant are applied. When a convenient interval is found,
+   * iterations of dichotomie and regula falsi are applied.
+   */
+  template <class FUNC>
+  double find_a_zero(const FUNC &G, double a = 0.0, double b = a+1.0) {
+    
+    double c, Ga = G(a), Gb = G(b), Gc, d;
+    d = abs(b - a);
+    for (int i = 0; i < 4; i++) { /* iterations de secante.               */
+      if (d < eps) return (b + a) / 2.0;
+      c = b - Gb * (b - a) / (Gb - Ga); Gc = G(c);
+      a = b; b = c; Ga = Gb; Gb = Gc;
+      d = abs(b - a);
+    }
+    while (Ga * Gb > 0.0) { /* iterations de secante.                     */
+      if (d < eps) return (b + a) / 2.0;
+      c = b - Gb * (b - a) / (Gb - Ga); Gc = G(c);
+      a = b; b = c; Ga = Gb; Gb = Gc;
+      d = abs(b - a);
+    }
+    
+    c = max(a, b); a = min(a, b); b = c;
+    while (d > eps) {
+      c = b - (b - a) * (Gb / (Gb - Ga)); Gc = G(c); /* regula falsi.     */
+      if (c > b) c = b; if (c < a) c = a;
+      if (Gc > 0) { b = c; Gb = Gc; } else { a = c; Ga = Gc; }
+      c = (b + a) / 2.0 ; Gc = G(c); /* Dichotomie.                       */
+      if (Gc > 0) { b = c; Gb = Gc; } else { a = c; Ga = Gc; }
+      d = abs(b - a); c = (b + a) / 2.0; if ((c == a) || (c == b)) d = 0.0;
+    }
+    return (b + a) / 2.0;
+  }
+  
 }
 
 #include <gmm_precond_diagonal.h>
