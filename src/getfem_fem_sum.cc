@@ -63,6 +63,7 @@ namespace getfem {
   
   void fem_sum::init(const std::vector<const mesh_fem *> &mfs_) {
     mfs = mfs_;
+
     const getfem_mesh *pmesh = &(mfs[0]->linked_mesh());
     for (size_type i = 0; i < mfs.size(); ++i) {
       if (&(mfs[i]->linked_mesh()) != pmesh)
@@ -203,14 +204,15 @@ namespace getfem {
   
   fem_sum::fem_sum(const mesh_fem &mef1, const mesh_fem &mef2) {
     std::vector<const mesh_fem *> mfs_(2);
-    mfs[1] = &mef1; mfs[2] = &mef2;
+    mfs_[0] = &mef1; mfs_[1] = &mef2;
+    
     init (mfs_);
   }
   
   fem_sum::fem_sum(const mesh_fem &mef1, const mesh_fem &mef2,
 		   const mesh_fem &mef3) {
     std::vector<const mesh_fem *> mfs_(3);
-    mfs[1] = &mef1; mfs[2] = &mef2; mfs[3] = &mef3;
+    mfs_[0] = &mef1; mfs_[1] = &mef2; mfs_[2] = &mef3;
     init (mfs_);
   }
   

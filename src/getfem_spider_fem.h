@@ -36,17 +36,17 @@
 #define GETFEM_SPIDER_FEM_H__
 
 #include <getfem_interpolated_fem.h>
-#include <getfem_regular_mesh.h>
+#include <getfem_regular_meshes.h>
 
 namespace getfem {
 
 
   struct Xfem_sqrtr : public virtual_Xfem_func {
-    virtual scalar_type val(const Xfem_func_context &c) { ::sqrt(c.xreal[0]); }
+    virtual scalar_type val(const Xfem_func_context &c) { return ::sqrt(c.xreal[0]); }
     virtual base_small_vector grad(const Xfem_func_context &c)
-    { base_small_vector V(2); V[0] = 1. / (2.* ::sqrt(c.xreal[0]));}
+    { base_small_vector V(2); V[0] = 1. / (2.* ::sqrt(c.xreal[0])); return V; }
     virtual base_matrix hess(const Xfem_func_context &c)
-    { base_matrix m(2,2); m(0,0) = -1. / (4.* ::sqrt(c.xreal[0])*c.xreal[0]) }
+    { base_matrix m(2,2); m(0,0) = -1. / (4.* ::sqrt(c.xreal[0])*c.xreal[0]); return m; }
   };
 
   struct interpolated_transformation : public virtual_interpolated_func {
@@ -65,11 +65,11 @@ namespace getfem {
       m(1,0) = -xreal[1] / gmm::sqr(r);
       m(1,0) = xreal[0] / gmm::sqr(r);
     }
-    virtual void hess(const base_node &xreal, base_matrix &) const
+    virtual void hess(const base_node &, base_matrix &) const
     { DAL_THROW(dal::failure_error,"this interpolated_func has no hessian"); }
     
     
-    virtual ~virtual_interpolated_func() {}
+    virtual ~interpolated_transformation() {}
   };
 
 
@@ -77,7 +77,7 @@ namespace getfem {
 
     protected :
 
-      mesh cartesian;
+      getfem_mesh cartesian;
       mesh_fem cartesian_fem;
       pfem Qk;
       Xfem enriched_Qk;
@@ -85,20 +85,20 @@ namespace getfem {
       unsigned Nr, Ntheta, K;
       Xfem_sqrtr Sqrtr;
       interpolated_fem *final_fem;
-      interpolated_transformation it;
+      interpolated_transformation itt;
 
     public :
 
       pfem get_pfem(void) { return final_fem; }
       
-      ~spider_fem() { if (final_fem) delete final_fem; }
+      ~spider_fem () { if (final_fem) delete final_fem; }
       
       spider_fem(scalar_type R_, mesh_fem &target_fem, unsigned Nr_, unsigned Ntheta_,
 	     unsigned K_, base_small_vector translation, scalar_type theta0)
-        : R(R_), Nr(Nr_), Ntheta(Ntheta_), K(K_), final_fem(0) {
+        : cartesian_fem(cartesian), enriched_Qk(0), R(R_), Nr(Nr_), Ntheta(Ntheta_), K(K_), final_fem(0) {
         
-	it.trans = translation;
-	it.theta0 = theta0;
+	itt.trans = translation;
+	itt.theta0 = theta0;
 
         /* make the cartesian mesh */
         bgeot::pgeometric_trans pgt = 
@@ -112,7 +112,7 @@ namespace getfem {
 	cartesian.transformation(M);
 	bgeot::base_small_vector V(2);
 	V[1] = -M_PI;
-	cartesian.translation(V);
+	cartesian.translation(V); 
 
 
 	getfem::convex_face_ct border_faces;
@@ -129,17 +129,17 @@ namespace getfem {
 	std::stringstream Qkname;
 	Qkname << "FEM_QK(2," << K << ")";
 	Qk = fem_descriptor(Qkname.str());
-	enriched_Qk.add_func(Qk, Sqrtr);
+	enriched_Qk.add_func(Qk, &Sqrtr);
 	enriched_Qk.valid();
 
 	
 	std::stringstream ppiname;
-	cartesian_fem.set_finite_element(cartesian.convex_index(), enriched_Qk,
-		 getfem::int_method_descriptor("IM_GAUSS_PARALLELEPIPED(2,20)"));  
+	cartesian_fem.set_finite_element(cartesian.convex_index(),& enriched_Qk,
+					 getfem::int_method_descriptor("IM_TRIANGLE(6)"));//IM_GAUSS_PARALLELEPIPED(2,20)"));  
       
 	dal::bit_vector blocked_dof = cartesian_fem.dof_on_boundary(0);
 
-	final_fem = new interpolated_fem(cartesian_fem, target_fem, &it, blocked_dof);
+	final_fem = new interpolated_fem(cartesian_fem, target_fem, &itt, blocked_dof);
       }
 
   };

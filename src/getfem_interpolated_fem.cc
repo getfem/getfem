@@ -12,7 +12,7 @@
 /*                                                                         */
 /* Copyright (C) 2004  Yves Renard.                                        */
 /*                                                                         */
-/* This file is a part of GETFEM++                                         */
+/* This file is a part of GETFEM++                                          */
 /*                                                                         */
 /* This program is free software; you can redistribute it and/or modify    */
 /* it under the terms of the GNU Lesser General Public License as          */
@@ -75,6 +75,7 @@ namespace getfem {
     size_type i, max_dof = 0;
     if (mf2.convex_index().card() == 0) return;
     for (dal::bv_visitor cv(mf2.convex_index()); !cv.finished(); ++cv) {
+      cout << "cv = " << cv << endl; 
       if (dim_ == dim_type(-1))
 	dim_ = mf2.linked_mesh().structure_of_convex(cv)->dim();
       
@@ -112,8 +113,8 @@ namespace getfem {
 	{ elements[cv].inddof[i] = idof; ind_dof[idof] = i++; }
       for (size_type k = 0; k < pai->nb_points(); ++k) {
 	gausspt_interpolation_data &gpid = elements[cv].gausspt[k];
-	size_type nbd = mf1.fem_of_element(gpid.elt)->nb_dof(gpid.elt);
 	if (gpid.flags) {
+	  size_type nbd = mf1.fem_of_element(gpid.elt)->nb_dof(gpid.elt);
 	  gpid.local_dof.resize(nbd);
 	  for (i = 0; i < nbd; ++i)
 	    gpid.local_dof[i] = ind_dof[mf1.ind_dof_of_element(gpid.elt)[i]];

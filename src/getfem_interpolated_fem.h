@@ -12,7 +12,7 @@
 /*                                                                         */
 /* Copyright (C) 2004  Yves Renard.                                        */
 /*                                                                         */
-/* This file is a part of GETFEM++                                         */
+/* This file is a part of GETFEM++                                          */
 /*                                                                         */
 /* This program is free software; you can redistribute it and/or modify    */
 /* it under the terms of the GNU Lesser General Public License as          */
@@ -136,12 +136,14 @@ namespace getfem {
     void real_hess_base_value(const fem_interpolation_context&, 
 			      base_tensor &) const;
 
+
     interpolated_fem(const mesh_fem &mef1, const mesh_fem &mef2,
 		     pinterpolated_func pif_ = 0,
 		     dal::bit_vector blocked_dof = dal::bit_vector(), bool store_val = true);
   };
-
-
+  
+  
 }  /* end of namespace getfem.                                            */
 
 #endif
+  
