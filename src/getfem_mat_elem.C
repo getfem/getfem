@@ -36,13 +36,11 @@
 
 namespace getfem
 {
-
   /* ********************************************************************* */
   /*       Elementary matrices computation.                                */
   /* ********************************************************************* */
 
-  struct _emelem_comp_light
-  {
+  struct _emelem_comp_light {
     pmat_elem_type pmt;
     pintegration_method ppi;
     bgeot::pgeometric_trans pgt;
@@ -51,8 +49,8 @@ namespace getfem
       if (ppi < ls.ppi) return true; if (ppi > ls.ppi) return false; 
       if (pgt < ls.pgt) return true; return false;
     }
-    _emelem_comp_light(pmat_elem_type pm,
-		   pintegration_method pi, bgeot::pgeometric_trans pg)
+    _emelem_comp_light(pmat_elem_type pm, pintegration_method pi,
+		       bgeot::pgeometric_trans pg)
     { pmt = pm; ppi = pi; pgt = pg; }
     _emelem_comp_light(void) { }
   };
@@ -60,33 +58,25 @@ namespace getfem
 
   struct _emelem_comp_structure : public mat_elem_computation
   {
-
     pgeotrans_precomp pgp;
     ppoly_integration ppi;
     papprox_integration pai;
     bool is_ppi;
     std::vector<base_tensor> mref;
-    std::vector<short_type>  mref_count;
-    std::vector<scalar_type>  mref_coeff;
     std::vector<pfem_precomp> pfp;
-    short_type nbf, nhess; 
-    size_type nint;
-    std::vector< std::vector<short_type> > indv;
+    std::vector<base_tensor> elmt_stored;
+    short_type nbf, dim; 
     base_matrix K, CS, TMP1, B, Htau, M, B2, B3, B32;
-    std::deque<short_type> grad_reduction;
-    std::deque<short_type> hess_reduction;
-    std::deque<short_type> trans_reduction;
+    std::deque<short_type> grad_reduction, hess_reduction, trans_reduction;
     std::deque<pfem> trans_reduction_pfi;
     base_vector un, up;
-    
-    inline size_type indcomp(size_type ip, short_type h, short_type c)
-    { return ip * nhess * 3 + size_type(h) * 3 + size_type(c); }
+    bool faces_computed;
+    bool volume_computed;
+    bool is_linear;
 
     size_type memsize() const {
       size_type sz = sizeof(_emelem_comp_structure) +
 	mref.capacity()*sizeof(base_tensor) +
-	mref_count.capacity()*sizeof(short_type) +
-	mref_coeff.capacity()*sizeof(scalar_type) +
 	grad_reduction.size()*sizeof(short_type) +
 	hess_reduction.size()*sizeof(short_type) +
 	trans_reduction.size()*sizeof(short_type) +
@@ -94,41 +84,136 @@ namespace getfem
 	K.memsize() + CS.memsize()+ TMP1.memsize()+ 
 	B.memsize()+ Htau.memsize()+ M.memsize()+ 
 	B2.memsize()+ B3.memsize()+ B32.memsize() +
-	un.memsize() + up.memsize() +
-	indv.capacity() * sizeof(std::vector<short_type>);
+	un.memsize() + up.memsize();
 
       for (size_type i=0; i < mref.size(); ++i) sz += mref[i].memsize();
-      for (size_type i=0; i < indv.size(); ++i)
-	sz += indv[i].capacity() * sizeof(short_type);
       return sz;
     }
 
 
+    void pre_tensors_for_linear_trans(bool volumic) {
+
+      if ((volumic && volume_computed) || (!volumic && faces_computed)) return;
+      scalar_type exectime = ftool::uclock_sec();
+
+      bgeot::multi_index mi(pme->mi.size()), sizes = pme->mi;
+      bgeot::multi_index::iterator mit = sizes.begin(), mite = sizes.end();
+      size_type f = 1;
+      for ( ; mit != mite; ++mit, ++f) f *= *mit;
+      if (f > 1000000)
+	DAL_WARNING(2, "Warning, very large elementary computations.\n" 
+		    << "Be sure you need to compute this elementary matrix.\n"
+		    << "(sizes = " << sizes << " )\n");
+
+      base_tensor aux(sizes);
+      std::fill(aux.begin(), aux.end(), 0.0);
+      if (volumic) {
+	volume_computed = true;
+	mref[0] = aux;
+      }
+      else {
+	faces_computed = true;
+	std::fill(mref.begin()+1, mref.end(), aux);
+      }
+
+      if (volumic) cout << "precompute volumic\n"; else cout << "precompute faces\n";
+
+      if (is_ppi)
+      {
+	base_poly P(dim, 0), Q;
+	for ( ; !mi.finished(sizes); mi.incrementation(sizes)) {
+	  P.one();
+	  mat_elem_type::const_iterator it = pme->begin(), ite = pme->end(); 
+	  mit = mi.begin();
+	  
+	  for (; it != ite; ++it) {
+	    size_type ind = *mit; ++mit;
+
+	    if ((*it).pfi->target_dim() > 1)
+	      { ind += (*it).pfi->nb_base() * (*mit); ++mit; }
+	    Q = ((ppolyfem)((*it).pfi))->base()[ind];
+
+	    switch ((*it).t) {
+	    case GETFEM__GRAD    : Q.derivative(*mit); ++mit; break;
+	    case GETFEM__HESSIAN :
+	      Q.derivative(*mit % dim); Q.derivative(*mit / dim);
+	      ++mit; break;
+	    case GETFEM__BASE : break;
+	    }
+	    P *= Q;
+
+	  }
+	  if (volumic) mref[0](mi) = ppi->int_poly(P);
+	  for (f = 0; f < nbf && !volumic; ++f)
+	    mref[f+1](mi) = ppi->int_poly_on_face(P, f);
+	}
+      }
+      else
+      { // very very very inefficient ... !!
+
+	// il faudrait faire le calcul par point d'intégration et sommer ...
+	// le calcul par point se fait en calc des produit tensoriel d'ordre 1
+	// à copier sur le futur calcul en transformation non linéaire
+	scalar_type V;
+
+	for ( ; !mi.finished(sizes); mi.incrementation(sizes)) {
+	  size_type ind_l = 0, nb_ptc = pai->nb_points_on_convex(), 
+	    nb_pt_l = nb_ptc, nb_pt_tot =(volumic ? nb_ptc : pai->nb_points());
+	  for (size_type ip = (volumic ? 0:nb_ptc); ip < nb_pt_tot; ++ip) {
+	      while (ip == nb_pt_l
+		     && ind_l < nbf) {
+		nb_pt_l += pai->nb_points_on_face(ind_l);
+		ind_l++;
+	      }
+	      V = 1.0;
+	      
+	      mat_elem_type::const_iterator it = pme->begin(), ite= pme->end();
+	      mit = mi.begin();
+
+	      for (size_type k = 0; it != ite; ++it, ++k) { 
+		size_type ind = *mit; ++mit;
+		if ((*it).pfi->target_dim() > 1)
+		  { ind += (*it).pfi->nb_base() * (*mit); ++mit; }
+		switch ((*it).t) {
+		case GETFEM__BASE    :
+		  V *= (pfp[k]->val(ip))[ind]; break;
+		case GETFEM__GRAD    :
+		  V *= (pfp[k]->grad(ip))[ind + (*it).pfi->nb_base() *
+			 (*it).pfi->target_dim() * (*mit)];
+		  ++mit; break;
+		case GETFEM__HESSIAN :
+		  V *= (pfp[k]->hess(ip))[ind + (*it).pfi->nb_base()
+					  * (*it).pfi->target_dim() * (*mit)];
+		  ++mit; break;
+		}
+	      }
+	      mref[ind_l](mi) += V * pai->coeff(ip);
+	    }
+	}
+      }
+
+      cout << "precompute Mat elem computation time : "
+	 << ftool::uclock_sec() - exectime << endl;
+
+    }
+
     _emelem_comp_structure(const _emelem_comp_light &ls) {
-      // optimisable ... !!
-
-       scalar_type exectime = ftool::uclock_sec();
-
+      
       pgt = ls.pgt;
       pgp = geotrans_precomp(ls.pgt, &(ls.ppi->integration_points()));
       pme = ls.pmt;
       ppi = ls.ppi->method.ppi;
       pai = ls.ppi->method.pai;
       is_ppi = ls.ppi->is_ppi;
-      size_type k;
-
-      // cout << "debut de construction\n";
-      
+      faces_computed = volume_computed = false;
+      is_linear = pgt->is_linear();
       nbf = pgt->structure()->nb_faces();
-      nhess = 1;
-      nint = (is_ppi || pgt->is_linear()) ? nbf + 1 : pai->nb_points();
-
-      mat_elem_type::const_iterator it = ls.pmt->begin(), ite = ls.pmt->end();
+      dim = pgt->structure()->dim();
+      mat_elem_type::const_iterator it = pme->begin(), ite = pme->end();
       
-      for (k = 0; it != ite; ++it, ++k) {
+      for (size_type k = 0; it != ite; ++it, ++k) {
 
-	if (is_ppi && (!((*it).pfi->is_polynomial()) || 
-		       !(pgt->is_linear())))
+	if (is_ppi && (!((*it).pfi->is_polynomial()) || !is_linear))
 	  DAL_THROW(std::invalid_argument, 
 		    "Exact integration not allowed in this context");
 	if((*it).pfi->basic_structure() != pgt->basic_structure())
@@ -143,216 +228,131 @@ namespace getfem
 	case GETFEM__GRAD    : ++k;
 	  if ((*it).pfi->do_grad_reduction()) grad_reduction.push_back(k);
 	  break;
-	case GETFEM__HESSIAN : ++k; hess_reduction.push_back(k);
-	  if (!(pgt->is_linear())) nhess *= 2; break;
+	case GETFEM__HESSIAN : ++k; hess_reduction.push_back(k); break;
 	}
       }
-      
-      bgeot::multi_index mi(ls.pmt->mi.size()), sizes = ls.pmt->mi;
-      bgeot::multi_index::iterator mit = sizes.begin(), mite = sizes.end();
-      base_tensor aux(sizes);
-      std::fill(aux.begin(), aux.end(), 0.0);
-      mref.resize(nhess * nint * 3, aux);
-      mref_count.resize(nhess * nint * 3);
-      mref_coeff.resize(nhess * nint * 3, 1.0);
-      for (k = 1; mit != mite; ++mit, ++k) k *= *mit;
-      if (k * nhess * nint * 3 > 1000000)
-	cerr << "Warning, very large elementary computations.\n"
-	     << "Be sure you need to compute this elementary matrix.\n"
-	     << "(sizes = " << sizes << " times " << nhess*nint*3 << " )\n";
-      //std::fill(mref.begin(), mref.end(), base_tensor(sizes));
-      
-      // for (k = 0; k < nhess; ++k)
-      //	for (size_type j = 0; j < nint; ++j)
-      // mref[indcomp(j, k, 0)] = base_tensor(sizes);
-      
-      if (is_ppi)
-      {
-	base_poly P(ls.pgt->structure()->dim(), 0), Q;
-	for ( ; !mi.finished(sizes); mi.incrementation(sizes)) {
-	  P.one();
-	  it = ls.pmt->begin(), ite = ls.pmt->end();
-	  mit = mi.begin();
-	  short_type hc = 1;
-	  
-	  for (; it != ite; ++it) {
-	    // cout << "P = " << P << endl;
-	    size_type ind = *mit; ++mit;
 
-	    if ((*it).pfi->target_dim() > 1)
-	      { ind += (*it).pfi->nb_base() * (*mit); ++mit; }
-	    Q = ((ppolyfem)((*it).pfi))->base()[ind];
-
-	    switch ((*it).t) {
-	    case GETFEM__BASE    : P *= Q; break;
-	    case GETFEM__GRAD    : Q.derivative(*mit); ++mit; P *= Q; break;
-	    case GETFEM__HESSIAN : 
-	      Q.derivative(*mit % ls.pgt->structure()->dim());
-	      Q.derivative(*mit / ls.pgt->structure()->dim());
-	      ++mit; P *= Q; hc *= 2; break;
-	    }
-
-	  }
-	  mref[indcomp(0, 0, 0)](mi) = ppi->int_poly(P);
-	  for (short_type f = 0; f < ls.pgt->structure()->nb_faces(); ++f)
-	    mref[indcomp(f+1, 0, 0)](mi) = ppi->int_poly_on_face(P, f);
-	}
-	// cout << "mref[0] = " << mref[0] << endl;
-	// cout << "mref[indcomp(1, 0, 0)] = " << mref[indcomp(1, 0, 0)]<< endl;
-      }
-      else
-      { // very very inefficient ...
-	scalar_type V;
-	pfp.resize(ls.pmt->size());
-	it = ls.pmt->begin(), ite = ls.pmt->end();
-	for (k = 0; it != ite; ++it, ++k) {
+      if (!is_ppi) {
+	pfp.resize(pme->size());
+	it = pme->begin(), ite = pme->end();
+	for (size_type k = 0; it != ite; ++it, ++k) {
 	  pfp[k] = fem_precomp((*it).pfi, &(pai->integration_points()));
 	}
-
-	for (;!mi.finished(sizes);mi.incrementation(sizes)) {
-	  for (short_type hi = 0; hi < nhess; ++hi) {
-	    size_type ind_linear_case = 0, nb_pt_linear_case = pai->nb_points_on_convex();
-	    for (size_type ip = 0; ip < pai->nb_points(); ++ip) {
-	      while (ip == nb_pt_linear_case && ind_linear_case < pgt->structure()->nb_faces()) {
-		nb_pt_linear_case += pai->nb_points_on_face(ind_linear_case); ind_linear_case++;
-	      }
-	      V = 1.0;
-	      if (!(pgt->is_linear())) mref_coeff[indcomp(ip, hi, 0)] = pai->coeff(ip);
-	      it = ls.pmt->begin(), ite = ls.pmt->end();
-	      mit = mi.begin();
-	      short_type hc = 1;
-
-	      for (k = 0; it != ite; ++it, ++k) { 
-		size_type ind = *mit; ++mit;
-		if ((*it).pfi->target_dim() > 1)
-		  { ind += (*it).pfi->nb_base() * (*mit); ++mit; }
-		switch ((*it).t) {
-		case GETFEM__BASE    :
-		  V *= (pfp[k]->val(ip))[ind]; break;
-		case GETFEM__GRAD    :
-		  V *= (pfp[k]->grad(ip))[ind + (*it).pfi->nb_base() *
-			 (*it).pfi->target_dim() * (*mit)];
-		  ++mit; break;
-		case GETFEM__HESSIAN :
-		  if (hi & hc) {
-		    V *= -(pfp[k]->grad(ip))[ind + (*it).pfi->nb_base() *
-			   (*it).pfi->target_dim() *
-			   (*mit % ls.pgt->structure()->dim())];
-		    ++mit;
-		  }
-		  else {
-		    V *= (pfp[k]->hess(ip))[ind
-			   + (*it).pfi->nb_base() * (*it).pfi->target_dim()
-			   * (*mit)];
-		    ++mit;
-		  }
-		  hc *= 2; break;
-		}
-	      }
-	      if (pgt->is_linear()) {
-		mref[indcomp(ind_linear_case, 0, 0)](mi) += V * pai->coeff(ip);
-	      }
-	      else
-		mref[indcomp(ip, hi, 0)](mi) = V;
-	    }
-	  }
-	  
-	}
-	// If the geometric transformation is linear, it is possible to
-	// precompute the integrals
-// 	if (pgt->is_linear())
-// 	{
-// 	  mref[indcomp(0, 0, 0)] *= pai->coeff(0);
-// 	  size_type j = 0;
-// 	  for (size_type i = 1; i < pai->nb_points_on_convex(); ++i)
-// 	    mref[indcomp(0, 0, 0)].addmul(pai->coeff(i),
-// 					  mref[indcomp(++j, 0, 0)]);
-// 	  for (short_type f = 0; f < pgt->structure()->nb_faces(); ++f) {
-// 	    mref[indcomp(f+1, 0, 0)] = mref[indcomp(++j, 0, 0)];
-// 	    mref[indcomp(f+1, 0, 0)] *= pai->coeff_on_face(f, 0);
-// 	    for (size_type i = 1; i < pai->nb_points_on_face(f); ++i)
-// 	      mref[indcomp(f+1, 0, 0)].addmul(pai->coeff_on_face(f, i),
-// 					      mref[indcomp(++j, 0, 0)]);
-// 	  }
-// 	  nint = nbf + 1;
-// 	  mref.resize(nint * 3);
-// 	  mref_count.resize(nint * 3);
-// 	  mref_coeff.resize(nint * 3);
-
-// 	  // cout << "mref[0] = " << mref[0] << endl;
-// 	}
+	elmt_stored.resize(pme->size());
       }
-
-      indv.resize(nbf+1);
-      if (pgt->is_linear()) {
-	indv[0].resize(1); indv[0][0] = 0; mref_coeff[indcomp(0, 0, 0)] = 1.0;
-	for (short_type f = 0; f < nbf; ++f) {
-	  indv[f+1].resize(1); indv[f+1][0] = f+1;
-	  mref_coeff[indcomp(f+1, 0, 0)] = 1.0;
-	}
-	// cout << "Un tenseur elem : " << mref[0] << endl;
-      }
-      else {
-	indv[0].resize(pai->nb_points_on_convex());
-	size_type j = 0;
-	for (size_type i = 0; i < indv[0].size(); ++i) indv[0][i] = j++;
-	for (short_type f = 0; f < nbf; ++f) {
-	  indv[f+1].resize(pai->nb_points_on_face(f));
-	  for (size_type i = 0; i < indv[f+1].size(); ++i) indv[f+1][i] = j++;
-	}
-
-      }
-
-      cout << "First Mat elem computation time : "
-	 << ftool::uclock_sec() - exectime << endl;
-
+      if (is_linear) mref.resize(nbf + 1);
     }
 
-
-    inline void compute(base_tensor &t, const base_matrix &G, size_type ir)
+    // compute pour le cas lineaire uniquement pour le moment
+    void compute(base_tensor &t, const base_matrix &G, size_type ir)
     {
-      dim_type P = pgt->structure()->dim(), N = G.nrows();
+      
+      dim_type P = dim, N = G.nrows();
       short_type NP = pgt->nb_points();
       scalar_type J;
       if (G.ncols() != NP) DAL_THROW(dimension_error, "dimensions mismatch");
       
       K.resize(N, P); CS.resize(P, P); TMP1.resize(P, P); B.resize(N, P);
       if (hess_reduction.size() > 0) {
-	B2.resize(P*P, P*P); B3.resize(N*N, P*P); Htau.resize(N, P*P);
-	B32.resize(N*N, P*P); B2.fill(0.0);
+	B2.resize(P*P, P); B3.resize(N*N, P*P); Htau.resize(N, P*P);
+	B32.resize(N*N, P); B2.fill(0.0);
       }
-      std::fill(mref_count.begin(), mref_count.end(), 0);
       if (ir > 0) {
 	un.resize(P); up.resize(N);
 	un = pgt->normals()[ir-1];
       }
-
-      for (size_type ivt = 0; ivt < indv[ir].size(); ++ivt) {
-
-	size_type ip = indv[ir][ivt];
+      
+      if (is_linear) { // linear transformation
+      
+      // if (is_ppi) {
+	
+	pre_tensors_for_linear_trans(ir == 0);
+	base_tensor taux;
+	
 	// on peut simplifier les calculs pour N = P
 	// cout << "mat G : " << G << endl;
-	// cout << "mat grad : " << pgp->grad(ip) << endl;
-	if (pgt->is_linear())
-	  bgeot::mat_product(G, pgp->grad(0), K);
-	else
-	  bgeot::mat_product(G, pgp->grad(ip), K);
+	// cout << "mat grad : " << pgp->grad(ir) << endl;
+	bgeot::mat_product(G, pgp->grad(0), K);
 	bgeot::mat_product_tn(K, K, CS);
 	J = ::sqrt(bgeot::mat_inv_cholesky(CS, TMP1));
 	bgeot::mat_product(K, CS, B);
-
+	
 	if (ir > 0) {
 	  bgeot::mat_vect_product(B, un, up);
 	  J *= bgeot::vect_norm2(up);
 	}
-
+	
+	bool flag = false;
+	t = mref[ir]; t *= J;
+	
 	if (hess_reduction.size() > 0) {
 	  for (short_type i = 0; i < P; ++i)
 	    for (short_type j = 0; j < P; ++j)
 	      for (short_type k = 0; k < N; ++k)
 		for (short_type l = 0; l < N; ++l)
 		  B3(k + N*l, i + P*j) = B(k, i) * B(l, j);
-	  if (!(pgt->is_linear())) {
+	}
+	
+	if (grad_reduction.size() > 0) {
+	  std::deque<short_type>::const_iterator it = grad_reduction.begin(),
+	    ite = grad_reduction.end();
+	  for ( ; it != ite; ++it) {
+	    (flag ? t:taux).mat_transp_reduction(flag ? taux:t, B, *it);
+	    flag = !flag;
+	  }
+	}
+	
+	if (hess_reduction.size() > 0) {
+	  std::deque<short_type>::const_iterator it = hess_reduction.begin(),
+	    ite = hess_reduction.end();
+	  for (short_type l = 1; it != ite; ++it, l *= 2) {
+	    (flag ? t:taux).mat_transp_reduction(flag ? taux:t, B3, *it);
+	    flag = !flag;
+	  }
+	}
+	
+	/* Applying linear transformation for non tau-equivalent elements.   */
+	
+	if (trans_reduction.size() > 0) {
+	  std::deque<short_type>::const_iterator it = trans_reduction.begin(),
+	    ite = trans_reduction.end();
+	  std::deque<pfem>::const_iterator iti = trans_reduction_pfi.begin();
+	  for ( ; it != ite; ++it, ++iti) { 
+	    if ((*iti)->nb_dof() != M.nrows() || (*iti)->nb_base()!=M.ncols())
+	      M.resize((*iti)->nb_base(), (*iti)->nb_dof());
+	    (*iti)->mat_trans(M, G, pgt);
+	    (flag ? t:taux).mat_reduction(flag ? taux:t, M, *it);
+	    flag = !flag;
+	  }
+	}
+	
+	if (flag) t = taux;
+      }
+      else { // non linear transformation
+
+	// cout << "on commnce ...\n";
+
+	bool first = true;
+
+	for (size_type ip=(ir == 0) ? 0 : pai->repart()[ir-1];
+	     ip < pai->repart()[ir]; ++ip, first = false) {
+
+	  bgeot::mat_product(G, pgp->grad(ip), K);
+	  bgeot::mat_product_tn(K, K, CS);
+	  J = ::sqrt(bgeot::mat_inv_cholesky(CS, TMP1));
+	  bgeot::mat_product(K, CS, B);
+	  
+	  if (ir > 0) {
+	    bgeot::mat_vect_product(B, un, up);
+	    J *= bgeot::vect_norm2(up);
+	  }
+
+	  if (hess_reduction.size() > 0) {
+	    for (short_type i = 0; i < P; ++i)
+	      for (short_type j = 0; j < P; ++j)
+		for (short_type k = 0; k < N; ++k)
+		  for (short_type l = 0; l < N; ++l)
+		    B3(k + N*l, i + P*j) = B(k, i) * B(l, j);
 	    bgeot::mat_product(G, pgp->hessian(ip), Htau);
 	    for (short_type i = 0; i < P; ++i)
 	      for (short_type j = 0; j < P; ++j)
@@ -361,75 +361,78 @@ namespace getfem
 		    B2(i + P*j, k) += Htau(l, i + P*j) * B(l,k);
 	    bgeot::mat_product(B3, B2, B32);
 	  }
-	}
 
-	for (short_type hi = 0; hi < nhess; ++hi) {
-	  short_type *p = &(mref_count[indcomp(ip, hi, 0)]);
-	  short_type j, k;
+	  mat_elem_type::const_iterator it = pme->begin(), ite = pme->end();
+	  bgeot::multi_index mi(pme->mi.size()), sizes = pme->mi;
+	  // cout << "sizes : " << sizes << endl;
+	  bgeot::multi_index::iterator mit = sizes.begin();
+	  
+	  for (size_type k = 0; it != ite; ++it, ++k) {
+	    ++mit; if ((*it).pfi->target_dim() > 1) ++mit;
 
-	  if (grad_reduction.size() > 0) {
-	    std::deque<short_type>::const_iterator it = grad_reduction.begin(),
-	      ite = grad_reduction.end();
-	    for ( ; it != ite; ++it) {
-	      j = *p; k = (j < 2) ? j + 1 : 1; *p = k;
-	      mref[indcomp(ip, hi, k)].mat_transp_reduction
-		(mref[indcomp(ip, hi, j)], B, *it);
-	    }
-	  }
-
-	  if (hess_reduction.size() > 0) { // une mise en facteur peut être
-	    // faite ... mais penible à réaliser.
-	    std::deque<short_type>::const_iterator it = hess_reduction.begin(),
-	      ite = hess_reduction.end();
-	    for (short_type l = 1; it != ite; ++it, l *= 2) {
-	      j = *p;  k = (j < 2) ? j + 1 : 1; *p = k;
-	      if (hi & l)
-		mref[indcomp(ip, hi, k)].mat_transp_reduction
-		  (mref[indcomp(ip,hi,j)], B32, *it);
+	    switch ((*it).t) {
+	    case GETFEM__BASE    :
+	      elmt_stored[k] = pfp[k]->val(ip);  break;
+	    case GETFEM__GRAD    :
+	      if ((*it).pfi->do_grad_reduction()) {
+		elmt_stored[k].mat_transp_reduction(pfp[k]->grad(ip), B, 2);
+		*mit++ = N;
+	      }
 	      else
-	        mref[indcomp(ip, hi, k)].mat_transp_reduction
-		  (mref[indcomp(ip,hi,j)], B3, *it);
+		elmt_stored[k] = pfp[k]->grad(ip);
+	      // a verif
+	      break;
+	    case GETFEM__HESSIAN :
+	      base_tensor tt = pfp[k]->hess(ip);
+	      bgeot::multi_index mim(3);
+	      mim[2] = dal::sqr(tt.sizes()[2]); mim[1] = tt.sizes()[1];
+	      mim[0] = tt.sizes()[0];
+	      tt.adjust_sizes(mim);
+	      elmt_stored[k].mat_transp_reduction(tt, B3, 2);
+	      tt.mat_transp_reduction(pfp[k]->grad(ip), B32, 2);
+	      elmt_stored[k] -= tt;
+	      *mit++ = N*N; 
+	      break;
 	    }
 	  }
 	  
-	  if (*p == 0)
-	    { mref[indcomp(ip, hi, 1)] = mref[indcomp(ip, hi, 0)]; *p = 1; }
-	  mref[indcomp(ip, hi, *p)] *= J;
-
-	}
-      }
-
-      bool ini = false;
-      short_type j = mref_count[indcomp(indv[ir][0], 0, 0)];
-      for (size_type ivt = 0; ivt < indv[ir].size(); ++ivt) {
-	for (short_type hi = 0; hi < nhess; ++hi)
-	  if (ini)
-	    t.addmul(mref_coeff[indcomp(indv[ir][ivt], hi, 0)],
-		     mref[indcomp(indv[ir][ivt], hi, j)]);
-	  else {
-	    t = mref[indcomp(indv[ir][ivt], hi, j)];
-	    t *= mref_coeff[indcomp(indv[ir][ivt], hi, 0)];
-	    ini = true;
+	  if (first) {
+	    t.adjust_sizes(sizes);
+	    std::fill(t.begin(), t.end(), 0.0);
 	  }
-      }
+	  base_tensor::iterator pt = t.begin();
+	  std::vector<base_tensor::iterator> pts(pme->size());
 
-      /* Applying linear transformation for non tau-equivalent elements.   */
 
-      if (trans_reduction.size() > 0) {
-	std::deque<short_type>::const_iterator it = trans_reduction.begin(),
-	  ite = trans_reduction.end();
-	std::deque<pfem>::const_iterator iti = trans_reduction_pfi.begin();
-	for ( ; it != ite; ++it, ++iti) { 
-	  if ((*iti)->nb_dof() != M.nrows() || (*iti)->nb_base() != M.ncols())
-	    M.resize((*iti)->nb_base(), (*iti)->nb_dof());
-	  (*iti)->mat_trans(M, G, pgt);
-	  base_tensor aux = t; // Optimisable (avoid copy).
-	  t.mat_reduction(aux, M, *it);
+	  J *= pai->coeff(ip);
+	  scalar_type V = J;
+	  size_type k;
+	  for (k = 0; k < pme->size(); ++k) {
+	    pts[k] = elmt_stored[k].begin();
+	    if (k != 0) V *= *(pts[k]); 
+	    // cout << "tensor " << k << " : " << elmt_stored[k] << endl;
+	  }
+
+	  for (;;) {
+	    *pt += V * (*(pts[0])); pt++; (pts[0])++;
+	    if (pts[0] == elmt_stored[0].end()) {
+	      pts[0] = elmt_stored[0].begin();
+	      for  (k = 1; k < pme->size(); ++k) {
+		(pts[k])++; 
+		if (pts[k] == elmt_stored[k].end())
+		  pts[k] = elmt_stored[k].begin();
+		else break;
+	      }
+	      if (k == pme->size()) break;
+	      V = J;
+	      for  (k = 1; k < pme->size(); ++k) V *= *(pts[k]);
+	    }
+	  }
+	  if (pt != t.end()) DAL_THROW(internal_error, "Internal error");
 	}
       }
-      
     }
-
+    
 
     void compute(base_tensor &t, const base_matrix &G)
     { compute(t, G, 0); }

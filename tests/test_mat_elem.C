@@ -256,10 +256,10 @@ void lap_pb::init(void)
        << getfem::name_of_int_method(ppi) << endl;
 }
 
-void test_mat_elem(const getfem::mesh_fem &mf,
+void test1_mat_elem(const getfem::mesh_fem &mf,
 		   const getfem::mesh_fem &mfdata) { 
   
-  size_type cv, N = mf.linked_mesh().dim();
+  size_type cv;
   dal::bit_vector nn = mf.convex_index();
   bgeot::base_tensor t;
   getfem::pfem pf1, pf2, pf1prec = 0, pf2prec = 0;
@@ -286,8 +286,38 @@ void test_mat_elem(const getfem::mesh_fem &mf,
       pf1prec = pf1; pf2prec = pf2; pgtprec = pgt; pimprec = pim;
     }
     pmec->gen_compute(t, mf.linked_mesh().points_of_convex(cv));
+    // cout << "t = " << t << endl;
+  }
+}
 
-    cout << "t = " << t << endl;
+void test2_mat_elem(const getfem::mesh_fem &mf,
+		   const getfem::mesh_fem &mfdata) { 
+  
+  size_type cv;
+  dal::bit_vector nn = mf.convex_index();
+  bgeot::base_tensor t;
+  getfem::pfem pf1, pf2, pf1prec = 0, pf2prec = 0;
+  getfem::pintegration_method pim, pimprec = 0;
+  bgeot::pgeometric_trans pgt, pgtprec = 0;
+  getfem::pmat_elem_computation pmec = 0;
+  
+  if (&(mf.linked_mesh()) != &(mfdata.linked_mesh()))
+    DAL_THROW(std::invalid_argument,
+	      "This assembling procedure only works on a single mesh");
+  
+  for (cv << nn; cv != size_type(-1); cv << nn) {
+    pf1 =     mf.fem_of_element(cv);
+    pf2 = mfdata.fem_of_element(cv);
+    pgt = mf.linked_mesh().trans_of_convex(cv);
+    pim = mf.int_method_of_element(cv);
+    if (pf1prec != pf1 || pf2prec != pf2 || pgtprec != pgt || pimprec != pim) {
+      getfem::pmat_elem_type pme 
+	= getfem::mat_elem_product(getfem::mat_elem_base(pf1),
+				   getfem::mat_elem_base(pf1));
+      pmec = getfem::mat_elem(pme, pim, pgt);
+      pf1prec = pf1; pf2prec = pf2; pgtprec = pgt; pimprec = pim;
+    }
+    pmec->gen_compute_on_face(t, mf.linked_mesh().points_of_convex(cv), 0);
   }
 }
 
@@ -322,16 +352,14 @@ int main(int argc, char *argv[])
     p.mesh.write_to_file(p.datafilename + ".mesh" + char(0));
     
     exectime = ftool::uclock_sec();
-    // int nb_dof = p.mef.nb_dof();
-    
-    total_time += ftool::uclock_sec() - exectime;
-    
-    exectime = ftool::uclock_sec();
-    test_mat_elem(p.mef, p.mef_data);
-    cout << "Mat elem computation time : "
+    test1_mat_elem(p.mef, p.mef_data);
+    cout << "Mat elem computation time 1 : "
 	 << ftool::uclock_sec() - exectime << endl;
  
-    total_time += ftool::uclock_sec() - exectime;
+    exectime = ftool::uclock_sec();
+    test2_mat_elem(p.mef, p.mef_data);
+    cout << "Mat elem computation time 2 : "
+	 << ftool::uclock_sec() - exectime << endl;
 
   }
   DAL_STANDARD_CATCH_ERROR;
