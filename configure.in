@@ -75,9 +75,8 @@ case $CXX in
  	here=`pwd`
  	cd $srcdir
 dnl     il faut utiliser -tweak au lieu des repositories ...
-dnl	APPSCXXFLAGS="$CXXFLAGS -ptr `pwd`/src/cxx_repository -O3 -std strict_ansi -nopure_cname"
-	APPSCXXFLAGS="$CXXFLAGS -tweak -O3 -std strict_ansi -Wl,-S -nopure_cname"
-	CXXFLAGS="$CXXFLAGS -tweak -std strict_ansi -O3 -Wl,-S -nopure_cname"
+	APPSCXXFLAGS="$CXXFLAGS -tweak -fast -std strict_ansi -Wl,-S -nopure_cname"
+	CXXFLAGS="$CXXFLAGS -tweak -std strict_ansi -fast -Wl,-S -nopure_cname"
 dnl 	CXXFLAGS="$CXXFLAGS -ptr `pwd`/cxx_repository -std strict_ansi -O3"
  	cd $here
 	;;

@@ -14,7 +14,7 @@ check_PROGRAMS = \
 	test_link_fem \
 	test_tree_sorted
 
-DISTCLEANFILES = \
+CLEANFILES = \
 	laplacian.res laplacian.mesh laplacian.dataelt \
 	elasto_statique.mesh test_mesh.mesh
 

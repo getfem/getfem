@@ -4,6 +4,6 @@ EXTRA_DIST = \
 	BUGS_AND_REMARKS \
 	MTL-ITL-LICENSE
 
-DISTCLEANFILES = so_locations
+CLEANFILES = so_locations
 
 
