@@ -69,13 +69,13 @@ namespace bgeot
       #ifdef __GETFEM_VERIFY
         if (l >= li.size()) out_of_range_error();
       #endif
-      li[l][c] = e;
+      li[l].w(c,e) = e;
     }
     inline T r(size_type l, size_type c) const {
       #ifdef __GETFEM_VERIFY
         if (l >= li.size()) out_of_range_error();
       #endif
-      return li[l][c];
+      return li[l].r(c);
     }
     inline T operator ()(size_type l, size_type c) const { return r(l,c);}
 

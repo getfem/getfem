@@ -88,11 +88,11 @@ void lap_pb::init(void)
   char meth[500];
   getfem::pintegration_method ppi;
   switch (integration) {
-  case 0  : sprintf(meth, "IM_EXACT_SIMPLEX(%d)", N); break;
-  case 1  : sprintf(meth, "IM_NC(%d, %d)", N, KI); break;
-  case 2  : sprintf(meth, "IM_GAUSS1D(%d)", KI); break;
+  case 0  : sprintf(meth, "IM_EXACT_SIMPLEX(%d)", int(N)); break;
+  case 1  : sprintf(meth, "IM_NC(%d, %d)", int(N), int(KI)); break;
+  case 2  : sprintf(meth, "IM_GAUSS1D(%d)", int(KI)); break;
   case 3  : sprintf(meth, "IM_STRUCTURED_COMPOSITE(IM_NC(%d, %d), %d)",
-		    N, 2*K, KI); break;
+		    int(N), int(2*K), int(KI)); break;
   case 11 : sprintf(meth, "IM_TRIANGLE(1)"); break;
   case 12 : sprintf(meth, "IM_TRIANGLE(2)"); break;
   case 13 : sprintf(meth, "IM_TRIANGLE(3)"); break;
@@ -108,7 +108,7 @@ void lap_pb::init(void)
   }
   ppi = getfem::int_method_descriptor(meth);
   
-  sprintf(meth, "FEM_PK(%d,%d)", N, K);
+  sprintf(meth, "FEM_PK(%d,%d)", int(N), int(K));
   nn = mesh1.convex_index(N);
   mef1.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
   nn = mesh2.convex_index(N);

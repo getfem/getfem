@@ -30,18 +30,18 @@ LDADD    = ../src/.libs/libgetfem.a -lm @SUPLDFLAGS@
 CXXFLAGS = @APPSCXXFLAGS@
 
 TESTS = \
-	dynamic_array.pl \
-	dynamic_tas.pl \
-	laplacian.pl \
-	elasto_statique.pl  \
-	integration.pl \
-	poly.pl \
-	test_mesh.pl \
-	geo_trans.pl \
-	geo_trans_inv.pl \
-	test_int_set.pl \
-	test_link_fem.pl \
-	test_tree_sorted.pl
+	$(top_srcdir)/tests/dynamic_array.pl \
+	$(top_srcdir)/tests/dynamic_tas.pl \
+	$(top_srcdir)/tests/laplacian.pl \
+	$(top_srcdir)/tests/elasto_statique.pl  \
+	$(top_srcdir)/tests/integration.pl \
+	$(top_srcdir)/tests/poly.pl \
+	$(top_srcdir)/tests/test_mesh.pl \
+	$(top_srcdir)/tests/geo_trans.pl \
+	$(top_srcdir)/tests/geo_trans_inv.pl \
+	$(top_srcdir)/tests/test_int_set.pl \
+	$(top_srcdir)/tests/test_link_fem.pl \
+	$(top_srcdir)/tests/test_tree_sorted.pl
 
 EXTRA_DIST = \
 	$(TESTS) \

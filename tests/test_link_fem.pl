@@ -1,5 +1,7 @@
+$bin_dir = "$ENV{srcdir}/../bin";
 
-$tmp = `../bin/createmp laplacian.param`;
+
+$tmp = `$bin_dir/createmp test.param`;
 # print "TMP = $tmp\n";
 sub catch { `rm -f $tmp`; }
 $SIG{INT} = 'catch';
