@@ -33,22 +33,23 @@
 #define __GETFEM_CONFIG_H
 
 #include <bgeot_tensor.h>
-#include <bgeot_vector.h>
+#include <bgeot_poly.h>
 
 /// GEneric Tool for Finite Element Methods.
 namespace getfem
 {
-
-  static const size_t ST_NIL = size_t(-1);
-  typedef size_t           size_type;
-  typedef dal::uint8_type  dim_type;
-  typedef dal::uint16_type short_type;
-  typedef double scalar_type;
-  typedef bgeot::base_vector base_vector;
-  typedef bgeot::base_matrix base_matrix;
-  typedef bgeot::base_tensor base_tensor;
-  typedef bgeot::base_poly base_poly;
-  typedef bgeot::base_node base_node;
+  using bgeot::ST_NIL;
+  using bgeot::size_type;
+  using bgeot::dim_type;
+  using bgeot::short_type;
+  using bgeot::short_type;
+  using bgeot::scalar_type;
+  
+  using bgeot::base_vector;
+  using bgeot::base_matrix;
+  using bgeot::base_tensor;
+  using bgeot::base_poly;
+  using bgeot::base_node;
 
   using bgeot::dimension_error;
   using bgeot::internal_error;
