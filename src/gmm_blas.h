@@ -645,7 +645,7 @@ namespace gmm {
   template <class L1, class L2> inline
   void copy(const L1& l1, L2& l2, abstract_vector, abstract_vector) {
     if (vect_size(l1) != vect_size(l2))
-      DAL_THROW(dimension_error,"dimensions mismatch");
+      DAL_THROW(dimension_error, "dimensions mismatch");
     copy_vect(l1, l2, typename linalg_traits<L1>::storage_type(),
 	      typename linalg_traits<L2>::storage_type());
   }
@@ -653,7 +653,7 @@ namespace gmm {
   template <class L1, class L2> inline
   void copy(const L1& l1, L2& l2, abstract_matrix, abstract_matrix) {
     if (mat_ncols(l1) != mat_ncols(l2) || mat_nrows(l1) != mat_nrows(l2))
-      DAL_THROW(dimension_error,"dimensions mismatch");
+      DAL_THROW(dimension_error, "dimensions mismatch");
     copy_mat(l1, l2, typename linalg_traits<L1>::sub_orientation(),
 	     typename linalg_traits<L2>::sub_orientation());
   }
