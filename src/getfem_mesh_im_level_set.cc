@@ -28,6 +28,7 @@
 //========================================================================
 
 #include <getfem_mesh_im_level_set.h>
+#include <getfem_mesher.h>
 
 
 namespace getfem {
@@ -49,6 +50,63 @@ namespace getfem {
       return cut_im.int_method_of_element(cv); 
     else return mesh_im::int_method_of_element(cv);
   }
+
+  void mesh_adaptable_im::cut_element(size_type cv) {
+    
+    std::auto_ptr<mesher_signed_distance> ref_element;
+    std::vector<mesher_level_set> mesher_level_sets;
+    std::vector<const mesher_signed_distance *> signed_dits;
+    bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
+    bool found = false;
+    size_type n = pgt->structure()->dim();
+    size_type nbp = pgt->basic_structure()->nb_points();
+    
+    /* Identifying simplexes.                                          */
+
+    if (nbp == n+1 && pgt->basic_structure() == bgeot::simplex_structure(n)) {
+	ref_element.reset(new mesher_simplex_ref(n)); found = true;
+    }
+    
+    /* Identifying parallelepiped.                                     */
+
+    if (!found && nbp == (size_type(1) << n) &&
+	pgt->basic_structure() == bgeot::parallelepiped_structure(n)) {
+      base_node rmin(n), rmax(n);
+      std::fill(rmax.begin(), rmax.end(), scalar_type(1));
+      ref_element.reset(new mesher_rectangle(rmin, rmax)); found = true;
+    }
+
+    /* Identifying prisms.                                             */
+ 
+    if (!found && nbp == 2 * n &&
+	pgt->basic_structure() == bgeot::prism_structure(n))
+      { ref_element.reset(new mesher_prism_ref(n)); found = true; }
+    
+    if (!found) 
+      DAL_THROW(to_be_done_error,
+		"This element is not taken into account. Contact us");
+    
+    signed_dits.push_back(ref_element);
+
+    for (std::set<plevel_set>::const_iterator it = level_sets.begin();
+	 it != level_sets.end(); ++it) {
+      pfem pf = it->get_mesh_fem().fem_of_element(cv);
+      std::vector<scalar_type> coeff(pf->nb_dof(0));
+      for (size_type i = 0; i < coeff.size(); ++i)
+	coeff[i] = /* + - */ it->primary()[it->get_mesh_fem().ind_dof_of_element(cv, i)];
+      mesher_level_sets.push_back(mesher_level_set(pf, coeff));
+      signed_dits.push_back(&mesher_level_sets[mesher_level_sets.size()-1]);
+    }
+
+    mesher_intersection final_dist(signed_dits);
+    getfem_mesh mesh;
+    build_mesh(mesh, final_dist, 1.0); // ...
+    
+      
+    
+
+  }
+
 
   void mesh_im_level_set::adapt(void) {
 

@@ -53,6 +53,8 @@ namespace getfem {
 
     // + set of stored adapted integration methods
     // + original methods ?
+
+    void cut_element(size_type cv);
     
   public :
 
