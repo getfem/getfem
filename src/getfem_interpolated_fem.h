@@ -44,26 +44,14 @@
 
 namespace getfem {
 
-  struct interpolated_func_context {
-    base_node xreal, xref;
-    pfem pf;
-    bgeot::pgeometric_trans pgt;
-    size_type base_num; /* number of the current base function of pf */
-    const base_matrix& G;
-    interpolated_func_context(const fem_interpolation_context &c) :
-      xreal(c.xreal()), xref(c.xref()), pgt(c.pgt()), G(c.G()) {}
-  };
-
-  // Object representing global transfor;ation. To be derived.
+  // Object representing global transformation. To be derived.
 
   struct virtual_interpolated_func {
-    /*
-     */
-    virtual void val(const interpolated_func_context&, base_small_vector &)
+    virtual void val(const base_small_vector&, base_small_vector &)
     { DAL_THROW(dal::failure_error,"this interpolated_func has no value"); }
-    virtual void grad(const interpolated_func_context&, base_matrix &)
+    virtual void grad(const base_small_vector&, base_matrix &)
     { DAL_THROW(dal::failure_error,"this interpolated_func has no gradient"); }
-    virtual void hess(const interpolated_func_context&, base_matrix &)
+    virtual void hess(const base_small_vector&, base_matrix &)
     { DAL_THROW(dal::failure_error,"this interpolated_func has no hessian"); }
     virtual ~virtual_interpolated_func() {}
   };
@@ -87,7 +75,6 @@ namespace getfem {
       base_tensor grad_val; // optional storage of the grad base values
       std::vector<size_type> local_dof; // correspondance between dof of the
                             // mf1 element and dof of the interpolated element.
-      pinterpolated_func *pif;
     };
 
     struct elt_interpolation_data {
@@ -100,9 +87,10 @@ namespace getfem {
                             // to be interpolated.
     const mesh_fem &mf2;    // mesh on which mf1 is interpolated. contains
                             // also the integration method.
-    pinterpolated_func pif; // optional transformation
+    pinterpolated_func *pif; // optional transformation
 
     bool store_values;
+    dal::bit_vector blocked_dof;
 
     // auxiliary variables
     mutable std::vector<elt_interpolation_data> elements;
@@ -147,7 +135,8 @@ namespace getfem {
 			      base_tensor &) const;
 
     interpolated_fem(const mesh_fem &mef1, const mesh_fem &mef2,
-		     pinterpolated_func pif_ = 0, bool store_val = true);
+		     pinterpolated_func pif_ = 0,
+		     dal::bit_vector blocked_dof = dal::bit_vector(), bool store_val = true);
   };
 
 

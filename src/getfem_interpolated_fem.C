@@ -48,6 +48,7 @@ namespace getfem {
   
   bool interpolated_fem::find_a_point(const base_node &pt, base_node &ptr,
 				      size_type &cv) const {
+    if (pif) { base_small_vector ptreal = pt; pif->val(ptreal, pt); }
     if (cv_stored != size_type(-1) && gic.invert(pt, ptr))
       { cv = cv_stored; return true; }
     boxtree.find_boxes_at_point(pt, boxlst);
@@ -230,11 +231,26 @@ namespace getfem {
 	if (gpid.flags & 4) { t = gpid.grad_val; return; }
 	actualize_fictx(pf, cv, gpid.ptref);
 	pf->real_grad_base_value(fictx, taux);
-	for (size_type i = 0; i < pf->nb_dof(cv); ++i)
-	  for (size_type j = 0; j < target_dim(); ++j)
-	    for (size_type k = 0; k < dim(); ++k)
-	      t(gpid.local_dof[i], j, k) = taux(i, j, k);
-	if (store_values) { gpid.grad_val = t; gpid.flags |= 4; }
+
+	if (pif) {
+	  gmm::dense_matrix trans;
+	  pif->grad(c.xreal(), trans);
+	  for (size_type i = 0; i < pf->nb_dof(cv); ++i)
+	    for (size_type j = 0; j < target_dim(); ++j)
+	      for (size_type k = 0; k < dim(); ++k) {
+		scalar_type e(0);
+		for (size_type l = 0; l < dim(); ++l)
+		  e += trans(l, k) * taux(i, j, l);
+		t(gpid.local_dof[i], j, k) = e;
+	      }
+	}
+	else {
+	  for (size_type i = 0; i < pf->nb_dof(cv); ++i)
+	    for (size_type j = 0; j < target_dim(); ++j)
+	      for (size_type k = 0; k < dim(); ++k)
+		t(gpid.local_dof[i], j, k) = taux(i, j, k);
+	  if (store_values) { gpid.grad_val = t; gpid.flags |= 4; }
+	}
       }
     }
     else {
@@ -245,13 +261,28 @@ namespace getfem {
 	pf->real_grad_base_value(fictx, taux);
 	for (size_type i = 0; i < nbdof; ++i)
 	  ind_dof[elements[cv].inddof[i]] = i;
-	for (size_type i = 0; i < pf->nb_dof(cv); ++i)
-	  for (size_type j = 0; j < target_dim(); ++j)
-	    for (size_type k = 0; k < dim(); ++k)
-	      if (ind_dof[mf1.ind_dof_of_element(cv)[i]] != size_type(-1))
-		t(ind_dof[mf1.ind_dof_of_element(cv)[i]],j,k) = taux(i,j,k);
-	for (size_type i = 0; i < nbdof; ++i)
-	  ind_dof[elements[cv].inddof[i]] = size_type(-1);
+	if (pif) {
+	  gmm::dense_matrix trans;
+	  pif->grad(c.xreal(), trans);
+	  for (size_type i = 0; i < pf->nb_dof(cv); ++i)
+	    for (size_type j = 0; j < target_dim(); ++j)
+	      for (size_type k = 0; k < dim(); ++k)
+		if (ind_dof[mf1.ind_dof_of_element(cv)[i]] != size_type(-1)) {
+		  scalar_type e(0);
+		  for (size_type l = 0; l < dim(); ++l)
+		    e += trans(l, k) * taux(i, j, l);
+		  t(ind_dof[mf1.ind_dof_of_element(cv)[i]],j,k) = e;
+		}
+	}
+	else {
+	  for (size_type i = 0; i < pf->nb_dof(cv); ++i)
+	    for (size_type j = 0; j < target_dim(); ++j)
+	      for (size_type k = 0; k < dim(); ++k)
+		if (ind_dof[mf1.ind_dof_of_element(cv)[i]] != size_type(-1))
+		  t(ind_dof[mf1.ind_dof_of_element(cv)[i]],j,k) = taux(i,j,k);
+	}
+	  for (size_type i = 0; i < nbdof; ++i)
+	    ind_dof[elements[cv].inddof[i]] = size_type(-1);
       }
     }
   }
@@ -263,10 +294,10 @@ namespace getfem {
   
   interpolated_fem::interpolated_fem(const mesh_fem &mef1,
 				     const mesh_fem &mef2, 
-				     pinterpolated_func pif_,
+				     pinterpolated_func pif_, dal::bit_vector blocked_dof_
 				     bool store_val)
     : mf1(mef1), mf2(mef2), pif(pif_), store_values(store_val),
-      mi2(2), mi3(3) {
+      mi2(2), mi3(3), blocked_dof(blocked_dof_) {
     this->add_dependency(mef1);
     this->add_dependency(mef2);
     is_pol = is_lag = false; es_degree = 5;

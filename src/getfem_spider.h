@@ -55,19 +55,19 @@ namespace getfem {
     base_small_vector trans;
     scalar_type theta0;
      
-    virtual void val(const interpolated_func_context&c, base_small_vector &v) {
-      base_small_vector w =  c.xreal - trans;
+    virtual void val(const base_small_vector &xreal, base_small_vector &v) {
+      base_small_vector w =  xreal - trans;
       v[0] = gmm::vect_norm2(w);
       v[1] = atan2(w[0], w[1]) - theta0;
     }
-    virtual void grad(const interpolated_func_context&, base_matrix &m) {
-      base_small_vector w =  c.xreal - trans;
+    virtual void grad(const base_small_vector &xreal, base_matrix &m) {
+      base_small_vector w =  xreal - trans;
       scalar_type r = gmm::vect_norm2(w);
       m(0,0) = w[0] / r; m(0,1) = w[1] / r;
-      m(1,0) = -c.real[1] / gmm::sqr(r);
-      m(1,0) = c.real[0] / gmm::sqr(r);
+      m(1,0) = -xreal[1] / gmm::sqr(r);
+      m(1,0) = xreal[0] / gmm::sqr(r);
     }
-    virtual void hess(const interpolated_func_context&, base_matrix &)
+    virtual void hess(const base_small_vector &xreal, base_matrix &)
     { DAL_THROW(dal::failure_error,"this interpolated_func has no hessian"); }
     
     
@@ -75,7 +75,7 @@ namespace getfem {
   };
 
 
-  class spider {
+  class spider_fem {
 
     protected :
 
@@ -90,11 +90,13 @@ namespace getfem {
       interpolated_transformation it;
 
     public :
+
+      pfem get_pfem(void) { return final_fem; }
       
-      ~spider() { if (final_fem) delete final_fem; }
+      ~spider_fem() { if (final_fem) delete final_fem; }
       
-      spider(scalar_type R_, mesh_fem &target_fem, unsigned Nr_, unsigned Ntheta_, unsigned K_,
-	     base_small_vector translation, scalar_type theta0)
+      spider_fem(scalar_type R_, mesh_fem &target_fem, unsigned Nr_, unsigned Ntheta_,
+	     unsigned K_, base_small_vector translation, scalar_type theta0)
         : R(R_), Nr(Nr_), Ntheta(Ntheta_), K(K_), final_fem(0) {
         
 	it.trans = translation;
@@ -113,7 +115,18 @@ namespace getfem {
 	bgeot::base_small_vector V(2);
 	V[1] = -M_PI;
 	cartesian.translation(V);
-	
+
+
+	getfem::convex_face_ct border_faces;
+	getfem::outer_faces_of_mesh(cartesian, border_faces);
+	for (getfem::convex_face_ct::const_iterator it = border_faces.begin();
+	     it != border_faces.end(); ++it) {
+	  base_node un = cartesian.normal_of_face_of_convex(it->cv, it->f);
+	  un /= gmm::vect_norm2(un);
+	  if (un[0] >= 0.8) { // new Neumann face
+	    cartesian_fem.add_boundary_elt(0, it->cv, it->f);
+	  }
+	}
 
 	std::stringstream Qkname;
 	Qkname << "FEM_QK(2," << K << ")";
@@ -124,15 +137,12 @@ namespace getfem {
 	
 	std::stringstream ppiname;
 	cartesian_fem.set_finite_element(cartesian.convex_index(), enriched_Qk,
-					 getfem::int_method_descriptor("IM_GAUSS_PARALLELEPIPED(2,20)"));  
+		 getfem::int_method_descriptor("IM_GAUSS_PARALLELEPIPED(2,20)"));  
       
-	final_fem = new interpolated_fem(cartesian_fem, target_fem, &it);
+	dal::bit_vector blocked_dof = cartesian_fem.dof_on_boundary(0);
+
+	final_fem = new interpolated_fem(cartesian_fem, target_fem, &it, blocked_dof);
       }
-
-
-
-
-
 
   };
 
