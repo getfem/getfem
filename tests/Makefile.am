@@ -6,6 +6,7 @@ check_PROGRAMS = \
 	test_rtree	   \
 	test_interpolation \
 	elastostatic       \
+	helmholtz          \
 	geo_trans          \
 	geo_trans_inv      \
 	integration        \
@@ -13,6 +14,7 @@ check_PROGRAMS = \
 	poly               \
 	schwarz_additive    \
 	speed_test_for_gmm \
+	test_mesh_generation \
 	test_assembly      \
 	test_int_set       \
 	test_link_fem      \
@@ -33,10 +35,12 @@ dynamic_tas_SOURCES = dynamic_tas.C
 test_small_vector_SOURCES = test_small_vector.C
 test_kdtree_SOURCES = test_kdtree.C
 test_rtree_SOURCES = test_rtree.C
+test_mesh_generation_SOURCES = test_mesh_generation.C
 test_assembly_SOURCES = test_assembly.C
 laplacian_SOURCES = laplacian.C
 test_interpolation_SOURCES = test_interpolation.C
 elastostatic_SOURCES = elastostatic.C
+helmholtz_SOURCES = helmholtz.C
 integration_SOURCES = integration.C
 poly_SOURCES = poly.C
 test_mesh_SOURCES = test_mesh.C
