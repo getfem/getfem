@@ -713,7 +713,7 @@ namespace getfem
   /* parallelepiped structures.                                           */
   /* ******************************************************************** */
 
-  static pfem QK_fem(fem_param_list &params) {
+  static pfem QK_fem_(fem_param_list &params, const std::string& fempk, const std::string femqk) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
 	   "Bad number of parameters : " << params.size() << " should be 2.");
@@ -726,11 +726,17 @@ namespace getfem
       DAL_THROW(failure_error, "Bad parameters");
     std::stringstream name;
     if (n == 1)
-      name << "FEM_PK(1," << k << ")";
+      name << fempk << "(1," << k << ")";
     else 
-      name << "FEM_PRODUCT(FEM_QK(" << n-1 << "," << k << "),FEM_PK(1,"
+      name << "FEM_PRODUCT(" << femqk << "(" << n-1 << "," << k << ")," << fempk << "(1,"
 	   << k << "))";
     return fem_descriptor(name.str());
+  }
+  static pfem QK_fem(fem_param_list &params) {
+    return QK_fem_(params, "FEM_PK", "FEM_QK");
+  }
+  static pfem QK_discontinuous_fem(fem_param_list &params) {
+    return QK_fem_(params, "FEM_PK_DISCONTINUOUS", "FEM_QK_DISCONTINUOUS");
   }
 
   
@@ -1059,6 +1065,7 @@ namespace getfem
     _fem_naming_system->add_suffix("HERMITE_SEGMENT", segment_Hermite_fem);
     _fem_naming_system->add_suffix("PK", PK_fem);
     _fem_naming_system->add_suffix("QK", QK_fem);
+    _fem_naming_system->add_suffix("QK_DISCONTINUOUS", QK_discontinuous_fem);
     _fem_naming_system->add_suffix("PK_PRISM", PK_prism_fem);
     _fem_naming_system->add_suffix("PK_DISCONTINUOUS", PK_discontinuous_fem);
     _fem_naming_system->add_suffix("PK_WITH_CUBIC_BUBBLE",
@@ -1090,7 +1097,12 @@ namespace getfem
 
   std::string name_of_fem(pfem p) {
     if (_fem_naming_system == 0) init_fem_naming_system();
-    return _fem_naming_system->shorter_name_of_method(p);
+    try {
+      return _fem_naming_system->shorter_name_of_method(p);
+    } 
+    catch (dal::failure_error&) {
+      return std::string("FEM_UNKNOWN()");
+    }
   }
 
   /* ******************************************************************** */
