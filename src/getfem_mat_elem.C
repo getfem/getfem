@@ -133,7 +133,7 @@ namespace getfem
 	  if (is_ppi)
 	    DAL_THROW(failure_error,
 	       "For nonlinear terms you have to use approximated integration");
-	  computed_on_real_element = false;
+	  computed_on_real_element = true;
 	  break;
 	}
       }
