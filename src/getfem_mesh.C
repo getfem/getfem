@@ -34,15 +34,13 @@
 
 namespace getfem
 {
-  getfem_mesh::getfem_mesh(dim_type NN)
-  {
+  getfem_mesh::getfem_mesh(dim_type NN) {
     dimension = NN; eps_p = 1.0E-10;
     pts.comparator() = dal::lexicographical_less<base_node,
                 dal::approx_less<base_node::value_type> >(1.0E-10);
   }
 
-  size_type getfem_mesh::add_point(const base_node &pt)
-  {
+  size_type getfem_mesh::add_point(const base_node &pt) {
     if (dimension == dim_type(-1)) dimension = pt.size();
     if (pt.size() != dimension)
       throw dimension_error("getfem_mesh::add_point : dimensions mismatch");
@@ -53,23 +51,19 @@ namespace getfem
     return i;
   }
 
-  void getfem_mesh::sup_point(size_type i)
-  {
+  void getfem_mesh::sup_point(size_type i) {
     if (!point_is_valid(i))
     { pts.sup(i); lmsg_sender().send(MESH_SUP_POINT(i)); }
   }
 
-  void getfem_mesh::swap_points(size_type i, size_type j)
-  {
-    if (i != j)
-    {
+  void getfem_mesh::swap_points(size_type i, size_type j) {
+    if (i != j) {
       bgeot::mesh<base_node>::swap_points(i,j);
       lmsg_sender().send(MESH_SWAP_POINT(i, j));
     }	 
   }
 
-  void getfem_mesh::optimize_structure()
-  {
+  void getfem_mesh::optimize_structure() {
     size_type i, j;
     j = nb_convex();
     for (i = 0; i < j; i++)
@@ -102,33 +96,29 @@ namespace getfem
     points().resort();
   }
 
-  void getfem_mesh::clear(void)
-  { 
+  void getfem_mesh::clear(void) { 
     bgeot::mesh<base_node>::clear();
     gtab.clear(); trans_exists.clear();
     lmsg_sender().send(MESH_CLEAR());
   }
 
-  size_type getfem_mesh::add_segment(size_type a, size_type b)
-  { 
+  size_type getfem_mesh::add_segment(size_type a, size_type b) { 
     size_type ipt[2]; ipt[0] = a; ipt[1] = b;
     return add_convex(bgeot::simplex_geotrans(1, 1), &(ipt[0]));
   }
   
   size_type getfem_mesh::add_triangle(size_type a, 
-					   size_type b, size_type c)
-  {
+				      size_type b, size_type c) {
     size_type ipt[3]; ipt[0] = a; ipt[1] = b; ipt[2] = c;
     return add_simplex(2, &(ipt[0]));
   }
-
+  
   size_type getfem_mesh::add_triangle_by_points
     (const base_node &p1, const base_node &p2, const base_node &p3)
   { return add_triangle(add_point(p1), add_point(p2), add_point(p3)); }
   
-  size_type getfem_mesh::add_tetrahedron(size_type a, 
-				       size_type b, size_type c, size_type d)
-  {
+  size_type getfem_mesh::add_tetrahedron(size_type a, size_type b,
+					 size_type c, size_type d) {
     size_type ipt[4]; ipt[0] = a; ipt[1] = b; ipt[2] = c; ipt[3] = d;
     return add_simplex(3, &(ipt[0]));
   }
@@ -136,14 +126,12 @@ namespace getfem
   size_type getfem_mesh::add_tetrahedron_by_points(const base_node &p1,
 						   const base_node &p2,
 						   const base_node &p3,
-						   const base_node &p4)
-  {
+						   const base_node &p4) {
     return add_tetrahedron(add_point(p1), add_point(p2),
 			   add_point(p3), add_point(p4));
   }
 
-  void getfem_mesh::sup_convex(size_type ic)
-  {
+  void getfem_mesh::sup_convex(size_type ic) {
     bgeot::mesh<base_node>::sup_convex(ic);
     trans_exists[ic] = false;
     lmsg_sender().send(MESH_SUP_CONVEX(ic));
@@ -287,8 +275,7 @@ namespace getfem
     lmsg_sender().send(MESH_READ_FROM_FILE(ist));
   }
 
-  void getfem_mesh::read_from_file(const std::string &name)
-  { 
+  void getfem_mesh::read_from_file(const std::string &name) { 
     std::ifstream o(name.c_str());
     if (!o) DAL_THROW(file_not_found_error,
 		      "Mesh file '" << name << "' does not exist");
@@ -319,8 +306,7 @@ namespace getfem
 						  ITER b, ITER e)
   { for ( ; b != e; ++b) ost << "  " << *b; ost << endl; }
 
-  void getfem_mesh::write_to_file(std::ostream &ost) const
-  {
+  void getfem_mesh::write_to_file(std::ostream &ost) const {
     ost << endl << "BEGIN POINTS LIST" << endl << endl;
     bgeot::mesh_point_st_ct::const_iterator b = point_structures().begin();
     bgeot::mesh_point_st_ct::const_iterator e = point_structures().end();
@@ -339,8 +325,7 @@ namespace getfem
   }
 
 
-  void getfem_mesh::write_to_file(const std::string &name) const
-  {
+  void getfem_mesh::write_to_file(const std::string &name) const {
     std::ofstream o(name.c_str());
     if (!o)
       DAL_THROW(failure_error, "impossible to open file '" << name << "'");

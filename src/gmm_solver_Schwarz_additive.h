@@ -57,7 +57,7 @@ namespace gmm {
 
   template <class Matrix1, class Matrix2, class Matrix3, class SUBI,
 	    class Vector2, class Vector3>
-  int schwarz_additif(const Matrix1 &A,
+  int schwarz_additif(const Matrix1 &A, Vector3 &u
 		      const std::vector<Matrix2> &ml1,
 		      const std::vector<Matrix3> &ml2,
 		      const std::vector<SUBI> &cor,
@@ -73,7 +73,7 @@ namespace gmm {
     std::vector<vector_type> fi(nb_sub);
 
     iter.set_rhsnorm(vect_norm2(f));
-    if (iter.get_rhsnorm() == 0.0) { clear(x); return 0; }
+    if (iter.get_rhsnorm() == 0.0) { clear(u); return 0; }
 
     size_type ms = ml1.size();
 
@@ -197,6 +197,8 @@ namespace gmm {
     std::vector<vector_type> cofi(nb_sub);
     std::vector<vector_type> wi(nb_sub);
     iter.set_rhsnorm(vect_norm2(f));
+
+    size_type ms = ml1.size();
 
     for (size_type i = 0; i < nb_sub; ++i) {
       size_type k = i < ms ? mat_nrows(ml1[i]) : mat_nrows(ml2[i-ms]);

@@ -83,26 +83,23 @@ namespace bgeot
     return ind_ref_mesh_point_ind_ct(r, p->begin(), p->end());  
   }
 
-  ref_mesh_point_ind_ct mesh_structure::ind_points_of_convex(size_type ic) const
-  {
+  ref_mesh_point_ind_ct
+  mesh_structure::ind_points_of_convex(size_type ic) const {
     const mesh_convex_structure *q = &(convex_tab[ic]);
     mesh_point_ind_ct::const_iterator r = point_lists.begin();
     r += q->pts;
     return ref_mesh_point_ind_ct(r, r + q->cstruct->nb_points());
   }
 
-  size_type mesh_structure::memsize(void) const
-  {
+  size_type mesh_structure::memsize(void) const {
     return sizeof(mesh_structure) + points_tab.memsize()
       + convex_tab.memsize() + point_lists.memsize()
       + point_links.memsize();
   }
 
-  void mesh_structure::swap_points(size_type i, size_type j)
-  {
+  void mesh_structure::swap_points(size_type i, size_type j) {
     cerr << "swapping points " << i << " and " << j << endl;
-    if (i != j)
-    {
+    if (i != j) {
       mesh_convex_ind_ct ct = convex_to_point(i);
       for ( ; !ct.empty(); ct.pop_front())
 	point_lists[ct.begin().pc->pts + ct.begin().ind_in_cv] = i;
@@ -113,8 +110,7 @@ namespace bgeot
     }			 
   }
 
-  void mesh_structure::sup_convex(size_type ic)
-  {
+  void mesh_structure::sup_convex(size_type ic) {
     // cout << "sup convex" << ic << " !! " << endl;
     mesh_convex_structure *p = &(convex_tab[ic]);
     short_type nb = p->cstruct->nb_points();
