@@ -44,18 +44,7 @@
 \section*{Introduction}
 
 It is often usefull, when one makes numerical experiments, to compare two solutions defined on the same domain but on different meshes (for instance one mesh more refined than the other) and thus to interpolate one solution defined on a certain mesh to another mesh. GETFEM++ bring two programs located on the directory {\tt contrib} to make those operations in any dimension, provided that the solutions are saved with the format defined by the function {\tt save\_solution} of the file {\tt getfem\_export.h}. This format is easy to exploit and depend on the element (triangle, tetrahedron, quadrilateron ...) and the degree of polynomials used to export the solution. Those programs are independent and can be used in various contexts. The interpolation program allows also to interpolate a N dimension solution on N-1 elements to make a section for instance.\\[5cm]
-Copyright (C) 2002\\
-The program GETFEM++ is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; version 2 of the License.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software Foundation,
-Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
+\input{../license.tex}
 \newpage
 
 \section{Data format}
