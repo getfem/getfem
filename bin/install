@@ -35,6 +35,23 @@ while($liste) {
 }
 `mkdir -p lib`;
 
+
+
+#######################################
+#        Compiler detection           #
+#######################################
+
+$CC = $ENV{CC};
+if (! $CC) {
+print "No compiler in CC variable, searching one\n";
+`bin/compilo_CCv`;  if ($? == 0) { print "CC  detected\n"; $CC = "CC";  }
+`bin/compilo_g++v`; if ($? == 0) { print "g++ detected\n"; $CC = "g++"; }
+`cxx -V`; if ($? == 0) { print "cxx detected\n"; $CC = "cxx"; }
+}
+
+if (! $CC) { die "No compiler found, aborting\n"; }
+else { print "$CC is selected.\n\n"; }
+
 #######################################
 #        Building Makefile            #
 #######################################
@@ -50,36 +67,67 @@ print MAKEFILE "\n\n", '# principal paths and options:', "\n";
 print MAKEFILE "INCLUDES_GETFEM = -I$rootlib/include\n";
 print MAKEFILE "GETFEM_LIB = $rootlib/lib/libgetfem.a\n";
 
-if ($systeme =~ /Linux/)
-{
-  print MAKEFILE "COMP = g++\n";
-  print MAKEFILE "OPTIONS_STANDARD = -ftemplate-depth-40\n";
-  print MAKEFILE "OPTIONS_STRICT = -pedantic\n";
+
+if ($CC =~ /CC/) {
+  $rep = `bin/compilo_CCv`;
+  print "compiler version : $rep\n";
+  print MAKEFILE "COMP = CC\n";
+  print MAKEFILE "OPTIONS_STANDARD = \n";
+  print MAKEFILE "OPTIONS_STRICT = -LANG:std \n";
   print MAKEFILE "OPTIONS_DEBUG    = -g\n";
   print MAKEFILE "OPTIONS_OPTIMIZE = -O3\n";
-  print MAKEFILE "OPTIONS_BOTH     = -g -O3\n";
-  print MAKEFILE "INCLUDES_STANDARD = -I/opt/matlab/extern/include \n";
-  print MAKEFILE "INCLUDES_MTL = -I/opt/mtl/include\n";
-  print MAKEFILE "INCLUDES_ITL = -I/opt/mtl/include\n";
-  print MAKEFILE "LIB_X11 = -L/usr/X11R6/lib -lX11\n";
-  $extmatcom = 'mexglx ';
+  print MAKEFILE "OPTIONS_BOTH     = -g3\n";
 }
-else
-{
+elsif ($CC =~ /cxx/) {
+  $rep = `cxx -V`;
+  print "compiler version : $rep\n";
   print MAKEFILE "COMP = cxx\n";
   print MAKEFILE "OPTIONS_STANDARD = -ptr $rootlib/cxx_repository\n";
   print MAKEFILE "OPTIONS_STRICT = -std strict_ansi -std strict_ansi_errors\n";
   print MAKEFILE "OPTIONS_DEBUG    = -g\n";
   print MAKEFILE "OPTIONS_OPTIMIZE = -O3\n";
   print MAKEFILE "OPTIONS_BOTH     = -g3\n";
+}
+elsif ($CC =~ /g\+\+/) {
+  $rep = `bin/compilo_g++v`;
+  print "compiler version : $rep\n";
+  print MAKEFILE "COMP = g++\n";
+  print MAKEFILE "OPTIONS_STANDARD = -ftemplate-depth-40\n";
+  print MAKEFILE "OPTIONS_STRICT = -pedantic\n";
+  print MAKEFILE "OPTIONS_DEBUG    = -g\n";
+  print MAKEFILE "OPTIONS_OPTIMIZE = -O3\n";
+  print MAKEFILE "OPTIONS_BOTH     = -g -O3\n";
+}
+else { 
+  print "unrecognized compiler, default options chosen\n"; 
+  print MAKEFILE "COMP = $CC\n";
+  print MAKEFILE "OPTIONS_STANDARD = \n";
+  print MAKEFILE "OPTIONS_STRICT = \n";
+  print MAKEFILE "OPTIONS_DEBUG    = -g\n";
+  print MAKEFILE "OPTIONS_OPTIMIZE = -O3\n";
+  print MAKEFILE "OPTIONS_BOTH     = -g -03\n";
+
+}
+
+if ($systeme =~ /Linux/)
+{ # les chemins suivant seraient à chercher ...
+  print MAKEFILE "INCLUDES_STANDARD = -I/opt/matlab/extern/include \n";
+  print MAKEFILE "INCLUDES_MTL = -I/opt/mtl/include\n";
+  print MAKEFILE "INCLUDES_ITL = -I/opt/mtl/include\n";
+  print MAKEFILE "LIB_X11 = -L/usr/X11R6/lib -lX11\n";
+  $extmatcom = 'mexglx ';
+}
+elsif ($systeme =~ /OSF/)
+{
   print MAKEFILE "INCLUDES_STANDARD =  -I/usr/local/matlab/extern/include \n";
   print MAKEFILE "INCLUDES_MTL = -I/usr/local/mtl/include\n";
   print MAKEFILE "INCLUDES_ITL = -I/usr/local/mtl/include\n";
   print MAKEFILE "LIB_X11 = -L/usr/X11R6/lib -lX11\n";
   $extmatcom = 'mexaxp ';
 }
+else { die "System unknown ..."; }
 
- print MAKEFILE "CPLUS = \$(COMP) \$(OPTIONS_STANDARD) \$(OPTIONS_OPTIMIZE) \n";
+print MAKEFILE "CPLUS = \$(COMP) \$(OPTIONS_STANDARD) \$(OPTIONS_OPTIMIZE) \n";
 print MAKEFILE "CPLUSDEBUG = \$(COMP) \$(OPTIONS_STANDARD)";
 print MAKEFILE " \$(OPTIONS_DEBUG) \n";
 print MAKEFILE "CPLUSOPTDEBUG = \$(COMP) \$(OPTIONS_STANDARD)";
