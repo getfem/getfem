@@ -1,0 +1,24 @@
+Liste des items a passer en revue pour fabriquer une nouvelle version
+
+
+- Mettre a jour les fichier de la racine :  README, NEWS, INSTALL ...
+
+- Passer les documentations en revue et le actualiser si necessaire
+
+- gmake dist
+
+- Tester la distribution sur differentes plateformes :
+
+  . sur PC avec G++ version 2.95, 3.0 et 3.1
+  . sur dec avec cxx et g++
+  . sur silicon avec CC et g++
+  . sur HP ?
+
+  gmake check    doit fonctionner.
+
+- Eventuellement, annonce : Google, NaNet, labo, mailing list ...
+
+- Faire passer le numero de version au suivant dans la distribution.
+
+
+
