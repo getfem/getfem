@@ -34,7 +34,6 @@
 
 //#include <bgeot_geometric_trans.h>
 #include <getfem_mesh_fem.h>
-#include <getfem_precomp.h>
 
 namespace getfem
 {

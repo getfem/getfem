@@ -154,12 +154,13 @@ namespace getfem
 	      // loop over vector base function components (phi_x, phi_y ...)
 	      for (size_type k = 0; k < nbdof_u; k++) {
 		//		if (m == l) {
+		/*
 		  assert(finite(DATA[dof_d])); 
 		  
 		  assert(p < t.end());
 		  
 		  assert(finite(*p));
-		  
+		*/
 		  size_type dof_u = mf_u.ind_dof_of_element(cv)[k];
 		  B(dof_u*N+l, dof_p) += DATA[dof_d]*(*p);
 		  //		}
