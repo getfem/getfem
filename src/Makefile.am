@@ -1,5 +1,4 @@
 include_HEADERS = \
-	bgeot_approx_integration.h \
 	bgeot_config.h \
 	bgeot_convex.h \
 	bgeot_convex_hull.h \
@@ -12,7 +11,7 @@ include_HEADERS = \
 	bgeot_mesh.h \
 	bgeot_mesh_structure.h \
 	bgeot_poly.h \
-	bgeot_poly_integration.h \
+	bgeot_integration.h \
 	bgeot_simplexify.h \
 	bgeot_tensor.h \
 	bgeot_vector.h \
@@ -42,25 +41,24 @@ include_HEADERS = \
 	linkmsg.h
 
 SRC = \
-	bgeot_approx_integration.C \
 	bgeot_convex_ref.C \
 	bgeot_convex_structure.C \
 	bgeot_geometric_trans.C \
 	bgeot_geotrans_inv.C \
 	bgeot_mesh_structure.C \
 	bgeot_poly.C \
-	bgeot_poly_integration.C \
+	bgeot_integration.C \
 	dal_bit_vector.C \
 	ftool.C \
-	getfem_export.C \
 	getfem_fem.C \
 	getfem_fem_virtual_link.C \
 	getfem_mat_elem.C \
 	getfem_mat_elem_type.C \
-	getfem_mesh.C \
 	getfem_precomp.C \
+	getfem_mesh.C \
 	getfem_mesh_fem.C \
-	getfem_regular_meshes.C
+	getfem_regular_meshes.C \
+	getfem_export.C
 
 lib_LTLIBRARIES = libgetfem.la
 libgetfem_la_SOURCES = $(SRC)

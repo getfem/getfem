@@ -38,7 +38,7 @@ template<class MESH> void test_mesh(MESH &m)
   cout << "Nomber of points : " << m.nb_points() << endl;
   assert(m.nb_points() == 1);
 
-  size_t ic1 = m.add_segment(i2, i3);
+  m.add_segment(i2, i3);
 
   std::vector<POINT> pts(3);
   std::fill(pts.begin(), pts.end(), pt1);
@@ -54,9 +54,9 @@ template<class MESH> void test_mesh(MESH &m)
   cout << "point 1 of convex " << (cv.points())[1] << endl;
   cout << "point 2 of convex " << (cv.points())[2] << endl;
 
-  size_t ic2 = m.add_convex_by_points(bgeot::simplex_trans(2,1), pts.begin());
+  size_t ic2 = m.add_convex_by_points(bgeot::simplex_geotrans(2,1), pts.begin());
 
-  size_t ic3 = m.add_convex_by_points(bgeot::simplex_trans(2,1), pts.begin());
+  size_t ic3 = m.add_convex_by_points(bgeot::simplex_geotrans(2,1), pts.begin());
 
   assert(ic2 == ic3);
 

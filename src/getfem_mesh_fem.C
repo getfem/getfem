@@ -88,18 +88,18 @@ namespace getfem
 
   bool intfem::operator < (const intfem &l) const {
     if (pf < l.pf) return true; if (pf > l.pf) return false; 
-    if (pi.method.ppi < l.pi.method.ppi) return true;
+    if (pi < l.pi) return true;
     return false;
   }
 
-  pintfem give_intfem(pfem ppf, const pintegration_method &ppi)
+  pintfem give_intfem(pfem ppf, const bgeot::pintegration_method ppi)
   {
     static dal::FONC_TABLE<intfem, intfem> *tab;
     static bool isinit = false;
     if (!isinit) {
       tab = new dal::FONC_TABLE<intfem, intfem>(); isinit = true;
     }
-    if (ppf->basic_structure() != ppi.structure())
+    if (ppf->basic_structure() != ppi->structure())
       DAL_THROW(internal_error, 
 		"Incompatibility between fem and integration method");
     return tab->add(intfem(ppf, ppi));
@@ -183,6 +183,11 @@ namespace getfem
   }
 
   void mesh_fem::receipt(const MESH_CLEAR &) { clear(); }
+  void mesh_fem::receipt(const MESH_DELETE &) {
+    clear(); is_valid = false;
+    linked_mesh().lmsg_sender().send(MESH_FEM_DELETE((void *)(this)));
+    sup_sender(_linked_mesh->lmsg_sender());
+  }
   void mesh_fem::receipt(const MESH_SUP_CONVEX &m) { 
     if (fe_convex[m.icv])
       { fe_convex[m.icv] = false; dof_enumeration_made = false; }
@@ -231,7 +236,7 @@ namespace getfem
   }
 
   void mesh_fem::set_finite_element(const dal::bit_vector &cvs, pfem ppf,
-			      const pintegration_method &ppi)
+			      const bgeot::pintegration_method ppi)
   { 
     dal::bit_vector::const_iterator it = cvs.begin(), ite = cvs.end();
     pintfem pif =  give_intfem(ppf, ppi);
@@ -415,13 +420,17 @@ namespace getfem
     add_sender(me.lmsg_sender(), *this,
 	   lmsg::mask(MESH_CLEAR()) | lmsg::mask(MESH_SUP_CONVEX()) |
 	   lmsg::mask(MESH_SWAP_CONVEX()) | lmsg::mask(MESH_REFINE_CONVEX()) |
-           lmsg::mask(MESH_UNREFINE_CONVEX()) | lmsg::mask(MESH_FEM_TOUCH()));
+           lmsg::mask(MESH_UNREFINE_CONVEX()) | lmsg::mask(MESH_FEM_TOUCH()) |
+	       lmsg::mask(MESH_DELETE()));
+    is_valid = true;
   }
 
   mesh_fem::~mesh_fem()
   {
-    linked_mesh().lmsg_sender().send(MESH_FEM_DELETE((void *)(this)));
-    sup_sender(_linked_mesh->lmsg_sender());
+    if (is_valid) {
+      linked_mesh().lmsg_sender().send(MESH_FEM_DELETE((void *)(this)));
+      sup_sender(_linked_mesh->lmsg_sender());
+    }
   }
 
 }  /* end of namespace getfem.                                             */

@@ -86,14 +86,14 @@ namespace getfem
   struct intfem // integrable fem
   {
     pfem pf;
-    pintegration_method pi;
+    bgeot::pintegration_method pi;
     bool operator < (const intfem &l) const;
-    intfem(pfem ppf, pintegration_method ppi) { pf = ppf; pi = ppi; }
+    intfem(pfem ppf, bgeot::pintegration_method ppi) { pf = ppf; pi = ppi; }
     intfem(void) { }
   };
 
   typedef const intfem * pintfem;
-  pintfem give_intfem(pfem ppf, const pintegration_method &ppi);
+  pintfem give_intfem(pfem ppf, const bgeot::pintegration_method ppi);
 
   typedef bgeot::ref_mesh_point_ind_ct ref_mesh_dof_ind_ct;
 
@@ -109,6 +109,7 @@ namespace getfem
       size_type nb_total_dof;
       getfem_mesh *_linked_mesh;
       bool dof_enumeration_made;
+      bool is_valid;
 
     public :
       
@@ -131,7 +132,7 @@ namespace getfem
        *          type pintegration_method.
        */
       void set_finite_element(size_type cv, pfem ppf,
-			      const pintegration_method &ppi)
+			      const bgeot::pintegration_method ppi)
       { set_finite_element(cv, give_intfem(ppf, ppi)); }	
       /** Set on all the convexes of indexes in bv, which is of type
        *          dal::bit\_vector, the finite element method
@@ -139,10 +140,10 @@ namespace getfem
        *          type pintegration_method.
        */
       void set_finite_element(const dal::bit_vector &cvs, pfem ppf,
-			      const pintegration_method &ppi);
+			      const bgeot::pintegration_method ppi);
       pfem fem_of_element(size_type cv) const
       { return  f_elems[cv]->pf; }
-      const pintegration_method &int_method_of_element(size_type cv) const
+      const bgeot::pintegration_method &int_method_of_element(size_type cv) const
       { return  f_elems[cv]->pi; }
       /** Gives an array of the degrees of freedom of the element
        *           of the convex of index i. 
@@ -200,6 +201,7 @@ namespace getfem
       void swap_boundaries_convex(size_type c1, size_type c2);
 
       void receipt(const MESH_CLEAR &);
+      void receipt(const MESH_DELETE &);
       void receipt(const MESH_SUP_CONVEX &m);
       void receipt(const MESH_SWAP_CONVEX &m);
       void receipt(const MESH_REFINE_CONVEX &m);

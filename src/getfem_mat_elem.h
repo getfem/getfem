@@ -72,47 +72,8 @@ namespace getfem
 
   typedef mat_elem_computation *pmat_elem_computation;
 
-  struct pintegration_method
-  {
-    union
-    {
-      bgeot::ppoly_integration ppi;
-      bgeot::papprox_integration pai;
-    } method;
-    bool is_ppi;
-
-    const bgeot::stored_point_tab &integration_points(void) const { 
-      if (is_ppi)
-	return *(bgeot::org_stored_point_tab(method.ppi->structure()->dim()));
-      else 
-	return method.pai->integration_points();
-    }
-
-    bgeot::pconvex_structure structure(void) const { 
-      if (is_ppi) return method.ppi->structure();
-      else return method.pai->structure();
-    }
-
-    pintegration_method(bgeot::ppoly_integration p)
-    { method.ppi = p; is_ppi = true; }
-
-    pintegration_method(bgeot::papprox_integration p)
-    { method.pai = p; is_ppi = false; }
-
-    bool operator >(const pintegration_method& p) const
-    { return method.ppi > p.method.ppi; } 
-    bool operator <(const pintegration_method& p) const
-    { return method.ppi < p.method.ppi; } 
-    bool operator !=(const pintegration_method& p) const
-    { return method.ppi != p.method.ppi; } 
-    bool operator ==(const pintegration_method& p) const
-    { return method.ppi == p.method.ppi; } 
-
-    pintegration_method(void) {}
-
-  };
-
-  pmat_elem_computation mat_elem(pmat_elem_type pm, pintegration_method pi,
+  pmat_elem_computation mat_elem(pmat_elem_type pm, 
+				 bgeot::pintegration_method pi,
 				 bgeot::pgeometric_trans pg);
 
 

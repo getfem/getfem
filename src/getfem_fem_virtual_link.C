@@ -76,6 +76,7 @@ namespace getfem
     mesh_fem &mf_interpolated(void) { return *pmf1; }
     mesh_fem &mf_target(void) { return *pmf2; }
     void receipt(const MESH_CLEAR &);
+    void receipt(const MESH_DELETE &);
     void receipt(const MESH_SUP_CONVEX &m);
     void receipt(const MESH_SWAP_CONVEX &m);
     void receipt(const MESH_REFINE_CONVEX &m);
@@ -193,7 +194,7 @@ namespace getfem
     // cout << "Compute called\n";
     bgeot::geotrans_inv gti;
     dal::bit_vector nn = pmf2->convex_index();
-    pintegration_method pim;
+    bgeot::pintegration_method pim;
     bgeot::pgeometric_trans pgt;
     size_type cv, nbpt, maxgpt = 0;
     dal::dynamic_array<std::deque<size_type> > gauss_to_cv; // + index local
@@ -203,15 +204,15 @@ namespace getfem
     std::fill(cv_info_tab.begin(), cv_info_tab.end(), cv_info());
     for (cv << nn; cv != size_type(-1); cv << nn) {
       pim = pmf2->int_method_of_element(cv);
-      if (pim.is_ppi) 
+      if (pim->is_ppi) 
 	DAL_THROW(internal_error,
 		  "Method only defined for approximate integration.");
-      nbpt = pim.integration_points().size();
+      nbpt = pim->integration_points().size();
       pgt = pmf2->linked_mesh().trans_of_convex(cv);
       cv_info_tab[cv].indgausstab.resize(nbpt);
       for (size_type k = 0; k < nbpt; ++k) {
 	size_type i = gti.add_point_norepeat
-	  (pgt->transform(pim.integration_points()[k],
+	  (pgt->transform(pim->integration_points()[k],
 			  pmf2->linked_mesh().points_of_convex(cv)));
 	// cout << " ind point ajouté : " << i << endl;
 	(gauss_to_cv[i]).push_back(cv);
@@ -274,6 +275,7 @@ namespace getfem
 	       lmsg::mask(MESH_REFINE_CONVEX()) |
 	       lmsg::mask(MESH_UNREFINE_CONVEX()) |
 	       lmsg::mask(MESH_FEM_CHANGE()) |
+	       lmsg::mask(MESH_DELETE()) |
 	       lmsg::mask(MESH_FEM_DELETE()));
     if (&(pmf1->linked_mesh()) != &(pmf2->linked_mesh()))
       add_sender(pmf2->linked_mesh().lmsg_sender(), *this,
@@ -282,6 +284,7 @@ namespace getfem
 		 lmsg::mask(MESH_REFINE_CONVEX()) |
 		 lmsg::mask(MESH_UNREFINE_CONVEX()) |
 		 lmsg::mask(MESH_FEM_CHANGE()) |
+		 lmsg::mask(MESH_DELETE()) |
 		 lmsg::mask(MESH_FEM_DELETE()));
   }
   
@@ -312,6 +315,10 @@ namespace getfem
   }
 
   void mesh_fem_link_fem::receipt(const MESH_FEM_DELETE &) {
+    sup_mf_link_fem(*pmf1, *pmf2);
+  }
+
+  void mesh_fem_link_fem::receipt(const MESH_DELETE &) {
     sup_mf_link_fem(*pmf1, *pmf2);
   }
 
@@ -444,21 +451,21 @@ namespace getfem
   static virtual_link_fem_table *__vlf_tab = 0;
 
   pfem virtual_link_fem(mesh_fem &mf1, mesh_fem &mf2,
-			pintegration_method pim) {
-    if (pim.is_ppi) DAL_THROW(std::invalid_argument,
+			bgeot::pintegration_method pim) {
+    if (pim->is_ppi) DAL_THROW(std::invalid_argument,
 	     "This element is only defined on approximated integration.");
     if (__vlf_tab == 0) __vlf_tab = new virtual_link_fem_table();
     return __vlf_tab->add(_virtual_link_fem_light(mf_link_fem(mf1, mf2),
-						  pim.method.pai, false));
+						  pim->method.pai, false));
   }
 	
   pfem virtual_link_fem_with_gradient(mesh_fem &mf1, mesh_fem &mf2,
-			pintegration_method pim) {
-    if (pim.is_ppi) DAL_THROW(std::invalid_argument,
+			bgeot::pintegration_method pim) {
+    if (pim->is_ppi) DAL_THROW(std::invalid_argument,
 	     "This element is only defined on approximated integration.");
     if (__vlf_tab == 0) __vlf_tab = new virtual_link_fem_table();
     return __vlf_tab->add(_virtual_link_fem_light(mf_link_fem(mf1, mf2),
-						  pim.method.pai, true));
+						  pim->method.pai, true));
   }
 	
   static void sup_virtual_link_fem(pmesh_fem_link_fem pmflf) {

@@ -32,8 +32,8 @@
 #ifndef __GETFEM_FEM_H
 #define __GETFEM_FEM_H
 
-#include <bgeot_convex_ref.h>
 #include <bgeot_geometric_trans.h>
+#include <bgeot_integration.h>
 #include <getfem_config.h>
 #include <getfem_precomp.h>
 #include <getfem_mesh.h>
@@ -371,57 +371,42 @@ namespace getfem
    */
   //@{
   
-  /** Description of the classical finite element Pk on simplex of
-   *   dimension n.
-   */
-  ppolyfem PK_fem(dim_type n, short_type k);
-  /** Description of the classical finite element Qk on parallelepiped of
-   *   dimension n.
-   */
-  ppolyfem QK_fem(dim_type n, short_type k);
-  /// Description of the tensorial product of the two elements *pi1, *pi2.
-  ppolyfem product_fem(ppolyfem pi1, ppolyfem pi2);
-  /** Description of the classical finite element Pk x Pk on prism of
-   *   dimension n.
-   */
-  inline ppolyfem PK_prism_fem(dim_type nc, short_type k) {
-    return product_fem(PK_fem(nc-1, k), PK_fem(1, k));
-  }
-  /// Description of the P1 non conforming finite element on triangles.
-  ppolyfem P1_nonconforming_fem(void);
-  
-  /** Description of a P1 element on a simplex with the adjonction
-   *  of a bubble base fonction on a face.
-   */
-  ppolyfem P1_with_bubble_on_a_face(dim_type n);
-  ppolyfem P1_with_bubble_on_a_face_lagrange(void);
-  
-  /** PK element, where the dofs are not linked with the elements of 
-      the neightbouring elements */
-  ppolyfem PK_discontinuous_fem(dim_type n, short_type k);
-  
-  
-  /** PK element on with a bubble base fonction has been added 
-      (hence it is not a lagrange element)
-  */
-  ppolyfem PK_with_cubic_bubble_fem(dim_type n, short_type k);
-  
-  /** Hermite element on the segment
-   */
-  ppolyfem segment_Hermite_fem(void);
-  
   /** Gives a pointer on the structures describing the more classical fem
    *  of degree k on a geometric convex cvs (coming from the geometric trans).
    */
   pfem classical_fem(bgeot::pgeometric_trans pg, short_type k);
 
+  pfem fem_descriptor(std::string name);
+  /*  List of elements :
+   *  "FEM_PK(N,K)" classical Lagrange element PK on a simplex
+   *  "FEM_PK_DISCONTINUOUS(N,K)" discontinuous Lagrange element PK on simplex
+   *  "FEM_QK(N,K)" classical Lagrange element QK on a parellepiped
+   *  "FEM_PK_PRISM(N,K)" classical Lagrange element PK on a prism
+   *  "FEM_PK_WITH_CUBIC_BUBLE(N,K)" classicla Lagrange element PK on a simplex
+   *                      with an additional volumic bubble function.
+   *  "FEM_PRODUCT(FEM1,FEM2)" tensorial product of two polynomial elements
+   *  "FEM_P1_NONCONFORMING" Nonconforming P1 method on a triangle.
+   *  "FEM_P1_BUBBLE_FACE(N)" P1 methd on a simplex with an additional bubble
+   *                       function on face 0.
+   *  "FEM_P1_BUBBLE_FACE_LAG" P1 methd on a simplex with an additional
+   *                           lagrange dof on face 0.   
+   *  "FEM_HERMITE_SEGMENT" Hermite element on the segment
+   *  
+   *
+   */
+
+   pfem PK_fem(size_type n, short_type k);
+  pfem QK_fem(size_type n, short_type k);
+  pfem PK_prism_fem(size_type n, short_type k);
+
+  std::string name_of_fem(pfem p);
+
   
   class mesh_fem;
-  class pintegration_method;
   pfem virtual_link_fem(mesh_fem &mf1, mesh_fem &mf2,
-			pintegration_method pim);
+			bgeot::pintegration_method pim);
   pfem virtual_link_fem_with_gradient(mesh_fem &mf1, mesh_fem &mf2,
-				      pintegration_method pim);
+				      bgeot::pintegration_method pim);
   
   //@}
   

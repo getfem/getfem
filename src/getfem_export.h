@@ -183,7 +183,7 @@ namespace getfem
 	    pnode[i] = ptab[bgeot::alpha(i, K) - 1];
 	  size_type i = mesh.add_simplex_by_points(DIM, pnode.begin());
 	  mef.set_finite_element(i, getfem::PK_fem(DIM, K),
-				 bgeot::simplex_poly_integration(DIM));
+				 bgeot::exact_simplex_im(DIM));
 	}
 	else if (nbpt == Np) {
 	  std::vector<getfem::base_node> pnode(1 << DIM);
@@ -196,7 +196,7 @@ namespace getfem
 	  }
 	  j = mesh.add_parallelepiped_by_points(DIM, pnode.begin());
 	  mef.set_finite_element(j, getfem::QK_fem(DIM, K),
-				 bgeot::parallelepiped_poly_integration(DIM));
+				 bgeot::exact_parallelepiped_im(DIM));
 	}
 	else if (nbpt == bgeot::alpha(DIM - 1, K) * bgeot::alpha(1, K)) {
 	  std::vector<getfem::base_node> pnode(2*DIM);
@@ -206,7 +206,7 @@ namespace getfem
 	    pnode[i+DIM] = ptab[bgeot::alpha(i, K)-1 + bgeot::alpha(DIM-1, K)];
 	  int i = mesh.add_prism_by_points(DIM, pnode.begin());
 	  mef.set_finite_element(i, getfem::PK_prism_fem(DIM, K),
-				 bgeot::prism_poly_integration(DIM));
+				 bgeot::exact_prism_im(DIM));
 	}
 	else 
 	  DAL_THROW(failure_error, "Unknown element in file " << fi);
@@ -352,8 +352,7 @@ namespace getfem
   template<class VECT>
     void interpolation_solution_same_mesh(mesh_fem &mf, mesh_fem &mf_target,
 					  const VECT &U, VECT &V, dim_type P)
-  {   
-    dim_type N = mf.linked_mesh().dim();
+  {
     dal::bit_vector nn = mf.convex_index();
     size_type cv;
     base_node pt2, val(1);

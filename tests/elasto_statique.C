@@ -15,6 +15,8 @@ using bgeot::base_node;
 using bgeot::base_matrix;
 using bgeot::scalar_type;
 using bgeot::size_type;
+using bgeot::dim_type;
+
 
 typedef bgeot::smatrix<scalar_type> sparse_matrix_type;
 typedef bgeot::vsvector<scalar_type> linalg_vector;
@@ -82,7 +84,7 @@ struct pb_data
 
   scalar_type G, lambda;
   scalar_type LX, LY, LZ, residu;
-  int NX, N, K;
+  size_type NX, N, K;
 
   sparse_matrix_type RM; /* matrice de rigidite.                     */
   linalg_vector U, B; /* inconnue et second membre.                       */
@@ -103,7 +105,7 @@ struct pb_data
 void pb_data::init(void)
 {
   dal::bit_vector nn;
-  int i, j, k, h;
+  size_type i, j, k;
 
   /***********************************************************************/
   /*  LECTURE DES PARAMETRES SUR FICHIER.                                */
@@ -155,19 +157,22 @@ void pb_data::init(void)
   mesh.optimize_structure();
 
   cout << "Selecting finite element method.\n";
-  getfem::pintegration_method ppi;
+  char meth[500];
+  bgeot::pintegration_method ppi;
   nn = mesh.convex_index(N);
-  if (integration == 0) ppi = bgeot::simplex_poly_integration(N);
-  else ppi = bgeot::Newton_Cotes_approx_integration(N,2*K);
-  mef.set_finite_element(nn, getfem::PK_fem(N, K), ppi);
-
-  mef_data.set_finite_element(nn, getfem::PK_fem(N, K), ppi);
-  mef_data2.set_finite_element(nn, getfem::PK_fem(N, 0), ppi);
+  if (integration == 0) sprintf(meth, "IM_EXACT_SIMPLEX(%d)", N);
+  else sprintf(meth, "IM_NC(%d, %d)", N, 2*K);
+  ppi = bgeot::int_method_descriptor(meth);
+  sprintf(meth, "FEM_PK(%d,%d)", N, K);
+  mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
+  mef_data.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
+  sprintf(meth, "FEM_PK(%d,%d)", N, 0);
+  mef_data2.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
 
   cout << "Selecting Neumann and Dirichlet boundaries\n";
   nn = mesh.convex_index(N);
   base_vector un;
-  for (j << nn; j >= 0; j << nn)
+  for (j << nn; j != size_type(-1); j << nn)
   {
     k = mesh.structure_of_convex(j)->nb_faces();
     for (i = 0; i < k; i++)
@@ -189,8 +194,8 @@ void pb_data::init(void)
 
 void pb_data::assemble(void)
 {
-  int nb_dof = mef.nb_dof(), nb_dof_data = mef_data.nb_dof();
-  int nb_dof_data2 = mef_data2.nb_dof();
+  size_type nb_dof = mef.nb_dof(), nb_dof_data = mef_data.nb_dof();
+  size_type nb_dof_data2 = mef_data2.nb_dof();
   B = linalg_vector(N*nb_dof); B.fill(0.0);
   U = linalg_vector(N*nb_dof); U.fill(0.0);
   RM = sparse_matrix_type(N*nb_dof, N*nb_dof);
@@ -223,7 +228,7 @@ void pb_data::assemble(void)
     if (N > 1) {
       if (dal::abs(pt[1]-LY) < 10E-6) n[1] = 1.0;
       else if (dal::abs(pt[1]) < 10E-6) n[1] = -1.0; else n[1] = 0.0;
-      for (int k = 2; k < N; ++k)
+      for (dim_type k = 2; k < N; ++k)
 	if (dal::abs(pt[k]-LZ) < 10E-6) n[k] = 1.0;
 	else if (dal::abs(pt[k]) < 10E-6) n[k] = -1.0; else n[k] = 0.0;
     }
@@ -280,7 +285,7 @@ int main(int argc, char *argv[])
     
     for (int i = 0; i < nbdof; ++i) {
       S = sol_u(p.mef.point_of_dof(i));
-      for (int k = 0; k < p.N; ++k) V[i*p.N + k] -= S[k];
+      for (dim_type k = 0; k < p.N; ++k) V[i*p.N + k] -= S[k];
     }
     
     cout <<  "L2 Error = " << getfem::L2_norm(p.mef, V, p.N) << endl;

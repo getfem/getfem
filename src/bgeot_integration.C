@@ -1,7 +1,7 @@
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Basic GEOmetric Tool  (bgeot)                                */
-/* File    :  bgeot_approx_integration.C : approximated  integration       */
+/* File    :  bgeot_poly_integration.C : exact integration of polynomial   */
 /*               on convexes of reference.                                 */
 /*                                                                         */
 /* Date : December 17, 2000.                                               */
@@ -29,10 +29,202 @@
 /* *********************************************************************** */
 
 
-#include <bgeot_approx_integration.h>
+#include <bgeot_integration.h>
+#include <ftool_naming.h>
 
 namespace bgeot
 {
+
+  typedef ftool::naming_system<integration_method>::param_list im_param_list;
+
+  typedef polynomial<scalar_type> base_poly;
+
+  scalar_type poly_integration::int_poly(const base_poly &P) const
+  {
+    scalar_type res = 0.0;
+    if (P.size() > int_monomials.size())
+    {
+      std::vector<scalar_type>
+	*hum = (std::vector<scalar_type> *)(&int_monomials);
+      size_type i = P.size(), j = int_monomials.size();
+      hum->resize(i);
+      power_index mi(P.dim()); mi[P.dim()-1] = P.degree();
+      for (size_type k = i; k > j; --k, --mi)
+	(*hum)[k-1] = int_monomial(mi);
+    }
+    polynomial<scalar_type>::const_iterator it = P.begin(), ite = P.end();
+    std::vector<scalar_type>::const_iterator itb = int_monomials.begin();
+    for ( ; it != ite; ++it, ++itb) res += (*it) * (*itb);
+    return res;
+  }
+
+  scalar_type
+    poly_integration::int_poly_on_face(const base_poly &P, short_type f) const
+  {
+    scalar_type res = 0.0;
+    std::vector<scalar_type>
+	*hum = (std::vector<scalar_type> *)(&(int_face_monomials[f]));
+    if (P.size() > hum->size())
+    {
+      size_type i = P.size(), j = hum->size();
+      hum->resize(i);
+      power_index mi(P.dim()); mi[P.dim()-1] = P.degree();
+      for (size_type k = i; k > j; --k, --mi)
+	(*hum)[k-1] = int_monomial_on_face(mi, f);
+    }
+    polynomial<scalar_type>::const_iterator it = P.begin(), ite = P.end();
+    std::vector<scalar_type>::const_iterator itb = hum->begin();
+    for ( ; it != ite; ++it, ++itb) res += (*it) * (*itb);
+    return res;
+  }
+
+  /* ******************************************************************** */
+  /* integration on simplex                                               */
+  /* ******************************************************************** */
+
+  struct _simplex_poly_integration : public poly_integration
+  {
+    scalar_type int_monomial(const power_index &power) const
+    {
+      scalar_type res = 1.0;
+      short_type fa = 1;
+      power_index::const_iterator itm = power.begin(), itme = power.end();
+      for ( ; itm != itme; ++itm)
+	for (int k = 1; k <= *itm; ++k, ++fa)
+	  res *= scalar_type(k) / scalar_type(fa);
+	
+      for (int k = 0; k < cvs->dim(); k++) { res /= scalar_type(fa); fa++; }
+      return res;
+    }
+
+    scalar_type int_monomial_on_face(const power_index &power, 
+					       short_type f) const
+    {
+      scalar_type res = 0.0;
+    
+      if (f == 0 || power[f-1] == 0.0)
+      {
+	res = (f == 0) ? sqrt(scalar_type(cvs->dim())) : 1.0;
+	short_type fa = 1;
+	power_index::const_iterator itm = power.begin(), itme = power.end();
+	for ( ; itm != itme; ++itm)
+	  for (int k = 1; k <= *itm; ++k, ++fa)
+	    res *= scalar_type(k) / scalar_type(fa);
+	
+	for (int k = 1; k < cvs->dim(); k++) { res /= scalar_type(fa); fa++; }
+      }
+      return res;
+    }
+
+    _simplex_poly_integration(pconvex_structure c)
+    {
+      cvs = c;
+      int_face_monomials.resize(c->nb_faces());
+    }
+  };
+
+  static pintegration_method exact_simplex(im_param_list &params) {
+    if (params.size() != 1)
+      DAL_THROW(failure_error, 
+	   "Bad number of parameters : " << params.size() << " should be 1.");
+    if (params[0].type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    if (n <= 0 || n >= 100 || double(n) != params[0].num())
+      DAL_THROW(failure_error, "Bad parameters");
+    return new integration_method
+      (new _simplex_poly_integration(simplex_structure(n)));
+  }
+
+  /* ******************************************************************** */
+  /* integration on direct product of convex structures                   */
+  /* ******************************************************************** */
+
+  struct _plyint_mul_structure : public poly_integration
+  {
+    ppoly_integration cv1, cv2;
+
+    scalar_type int_monomial(const power_index &power) const
+    {
+      power_index mi1(cv1->dim()), mi2(cv2->dim());
+      std::copy(power.begin(), power.begin() + cv1->dim(), mi1.begin());
+      std::copy(power.begin() + cv1->dim(), power.end(), mi2.begin());
+      return cv1->int_monomial(mi1) * cv2->int_monomial(mi2);
+    }
+
+    scalar_type int_monomial_on_face(const power_index &power, 
+				     short_type f) const
+    {
+      power_index mi1(cv1->dim()), mi2(cv2->dim());
+      std::copy(power.begin(), power.begin() + cv1->dim(), mi1.begin());
+      std::copy(power.begin() + cv1->dim(), power.end(), mi2.begin());
+      short_type nfx = cv1->structure()->nb_faces();
+      if (f < nfx)
+	return cv1->int_monomial_on_face(mi1,f) * cv2->int_monomial(mi2);
+      else
+	return cv1->int_monomial(mi1) * cv2->int_monomial_on_face(mi2, f-nfx);
+    }
+
+    _plyint_mul_structure(ppoly_integration a, ppoly_integration b)
+    {
+      cv1 = a; cv2 = b;
+      cvs = convex_product_structure(cv1->structure(), cv2->structure());
+      int_face_monomials.resize(cvs->nb_faces());
+    }
+  };
+
+  static pintegration_method product_exact(im_param_list &params) {
+    if (params.size() != 2)
+      DAL_THROW(failure_error, 
+	  "Bad number of parameters : " << params.size() << " should be 2.");
+    if (params[0].type() != 1 || params[1].type() != 1)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    pintegration_method a = params[0].method();
+    pintegration_method b = params[1].method();
+    if (!(a->is_ppi && b->is_ppi))
+      DAL_THROW(failure_error, "Bad parameters");
+    return new integration_method(new _plyint_mul_structure(a->method.ppi,
+							     b->method.ppi));
+  }
+
+  /* ******************************************************************** */
+  /* integration on parallelepiped.                                       */
+  /* ******************************************************************** */
+
+  static pintegration_method exact_parallelepiped(im_param_list &params) {
+    if (params.size() != 1)
+      DAL_THROW(failure_error, 
+	   "Bad number of parameters : " << params.size() << " should be 1.");
+    if (params[0].type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    if (n <= 0 || n >= 100 || double(n) != params[0].num())
+      DAL_THROW(failure_error, "Bad parameters");
+
+    _STRINGSTREAM name;
+    if (n == 1)
+      name << "IM_EXACT_SIMPLEX(1)" << ends;
+    else 
+      name << "IM_PRODUCT(IM_EXACT_PARALLELEPIPED(" << n-1
+	   << "),IM_EXACT_SIMPLEX(1)))" << ends;
+    return int_method_descriptor(name.str());
+  }
+
+  static pintegration_method exact_prism(im_param_list &params) {
+    if (params.size() != 1)
+      DAL_THROW(failure_error, 
+	   "Bad number of parameters : " << params.size() << " should be 1.");
+    if (params[0].type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    if (n <= 1 || n >= 100 || double(n) != params[0].num())
+      DAL_THROW(failure_error, "Bad parameters");
+
+    _STRINGSTREAM name;
+    name << "IM_PRODUCT(IM_EXACT_SIMPLEX(" << n-1
+	 << "),IM_EXACT_SIMPLEX(1)" << ends;
+    return int_method_descriptor(name.str());
+  }
 
   /* ********************************************************************* */
   /* method de Gauss.                                                      */
@@ -93,7 +285,6 @@ namespace bgeot
 
   struct _gauss_approx_integration : public approx_integration
   {
-
     _gauss_approx_integration(short_type nbpt)
     {
       if (nbpt > 32000) DAL_THROW(std::out_of_range, "too much points");
@@ -127,42 +318,27 @@ namespace bgeot
     }
   };
 
-  papprox_integration Gauss_approx_integration(short_type nbpt)
-  {
-    static dal::dynamic_array<papprox_integration> *_gauss;
-    static dal::bit_vector *_gauss_exists;
-    static bool isinit = false;
-    if (!isinit) {
-      _gauss = new dal::dynamic_array<papprox_integration>();
-      _gauss_exists = new dal::bit_vector();
-      isinit = true;
+  static pintegration_method gauss1d(im_param_list &params) {
+    if (params.size() != 1)
+      DAL_THROW(failure_error, 
+	   "Bad number of parameters : " << params.size() << " should be 1.");
+    if (params[0].type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    if (n < 0 || n >= 32000 || double(n) != params[0].num())
+      DAL_THROW(failure_error, "Bad parameters");
+    if (n & 1) {
+      _STRINGSTREAM name;
+      name << "IM_GAUSS1D(" << n-1 << ")" << ends;
+      return int_method_descriptor(name.str());
     }
-
-    if (!((*_gauss_exists)[nbpt]))
-    {
-      (*_gauss)[nbpt] = new _gauss_approx_integration(nbpt);
-      (*_gauss_exists)[nbpt] = true;
-    }
-    return (*_gauss)[nbpt];
+    else
+      return new integration_method(new _gauss_approx_integration(n/2 + 1));
   }
 
   /* ********************************************************************* */
   /* integration on simplexes                                              */
   /* ********************************************************************* */
-
-  struct _NC_apx_light
-  {
-    dim_type n; short_type k;
-    bool operator < (const _NC_apx_light &ls) const
-    {
-      if (n < ls.n) return true; if (n > ls.n) return false; 
-      if (k < ls.k) return true; return false;
-    }
-    _NC_apx_light(dim_type nn, short_type kk) { n = nn; k = kk; }
-    _NC_apx_light(void) { }
-   
-  };
-
 
   struct _Newton_Cotes_approx_integration : public approx_integration
   {
@@ -190,67 +366,70 @@ namespace bgeot
 	       - (l1 * (scalar_type(j) / scalar_type(j+1)));
     }
 
-    _Newton_Cotes_approx_integration(const _NC_apx_light &ls)
+    _Newton_Cotes_approx_integration(dim_type nc, short_type k)
     {
-      cvr = simplex_of_reference(ls.n);
-      size_type R = alpha(ls.n,ls.k);
-      size_type R2 = (ls.n > 0) ? alpha(ls.n-1,ls.k) : 0;
+      cvr = simplex_of_reference(nc);
+      size_type R = alpha(nc,k);
+      size_type R2 = (nc > 0) ? alpha(nc-1,k) : 0;
       base_poly P;
-      ppoly_integration ppi = simplex_poly_integration(ls.n);
-      std::vector<size_type> fa(ls.n+1);
+      _STRINGSTREAM name;
+      name << "IM_EXACT_SIMPLEX(" << int(nc) << ")" << ends;
+      ppoly_integration ppi 
+	= int_method_descriptor(name.str())->method.ppi;
+      std::vector<size_type> fa(nc+1);
       stored_point_tab int_points;
-      int_points.resize(R + (ls.n+1) * R2);
-      int_coeffs.resize(R + (ls.n+1) * R2);
-      repartition.resize(ls.n+2);
+      int_points.resize(R + (nc+1) * R2);
+      int_coeffs.resize(R + (nc+1) * R2);
+      repartition.resize(nc+2);
       repartition[0] = R;
-      for (short_type f = 0; f <= ls.n; ++f)
+      for (short_type f = 0; f <= nc; ++f)
       {
 	fa[f] = repartition[f];
 	repartition[f+1] = repartition[f] + R2;
       }
 
       size_type sum = 0, l;
-      base_node c(ls.n); 
+      base_node c(nc); 
       c *= scalar_type(0.0);
-      if (ls.k == 0) c.fill(1.0 / scalar_type(ls.n+1));
+      if (k == 0) c.fill(1.0 / scalar_type(nc+1));
 
       for (size_type r = 0; r < R; ++r)
       {
 	int_points[r] = c;
-	calc_base_func(P, ls.k, c);
+	calc_base_func(P, k, c);
 	int_coeffs[r] = ppi->int_poly(P);
 
-	for (short_type f = 1; f <= ls.n; ++f)
+	for (short_type f = 1; f <= nc; ++f)
 	  if (c[f-1] == 0.0)
 	  {
 	    int_points[fa[f]] = c;
 	    int_coeffs[fa[f]] = ppi->int_poly_on_face(P, f);
 	    (fa[f])++;
 	  }
-	if (ls.k == 0)
+	if (k == 0)
 	{
-	  for (short_type f = 0; f <= ls.n; ++f)
+	  for (short_type f = 0; f <= nc; ++f)
 	  {
 	    int_points[fa[f]].resize(dim());
-	    int_points[fa[f]].fill(1.0 / scalar_type(ls.n));
+	    int_points[fa[f]].fill(1.0 / scalar_type(nc));
 	    if (f > 0) int_points[fa[f]][f-1] = 0.0;
 	    int_coeffs[fa[f]] = ppi->int_poly_on_face(P, f);
 	  }
 	}
 	else
-	if (sum == ls.k)
+	if (sum == k)
 	{
 	  int_points[fa[0]] = c;
 	  int_coeffs[fa[0]] = ppi->int_poly_on_face(P, 0);
 	  (fa[0])++;
 	}  
 
-	if (ls.k != 0) {
-	  l = 0; c[l] += 1.0 / scalar_type(ls.k); sum++;
-	  while (sum > ls.k) {
-	    sum -= int(floor(0.5+(c[l] * ls.k)));
-	    c[l] = 0.0; l++; if (l == ls.n) break;
-	    c[l] += 1.0 / scalar_type(ls.k); sum++;
+	if (k != 0) {
+	  l = 0; c[l] += 1.0 / scalar_type(k); sum++;
+	  while (sum > k) {
+	    sum -= int(floor(0.5+(c[l] * k)));
+	    c[l] = 0.0; l++; if (l == nc) break;
+	    c[l] += 1.0 / scalar_type(k); sum++;
 	  }
 	}
       }
@@ -258,46 +437,32 @@ namespace bgeot
     }
   };
 
-  papprox_integration Newton_Cotes_approx_integration(dim_type n,
-						      short_type k)
-  { 
-    static dal::FONC_TABLE<_NC_apx_light, _Newton_Cotes_approx_integration> *t;
-    static bool isinit = false;
-    if (!isinit) {
-      t= new dal::FONC_TABLE<_NC_apx_light,_Newton_Cotes_approx_integration>();
-      isinit = true;
-    }
-    return t->add(_NC_apx_light(n, k));
+  static pintegration_method Newton_Cotes(im_param_list &params) {
+    if (params.size() != 2)
+      DAL_THROW(failure_error, 
+          "Bad number of parameters : " << params.size() << " should be 2.");
+    if (params[0].type() != 0 || params[1].type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    int k = int(::floor(params[1].num() + 0.01));
+    if (n <= 0 || n >= 100 || k < 0 || k > 150 ||
+	double(n) != params[0].num() || double(k) != params[1].num())
+      DAL_THROW(failure_error, "Bad parameters");
+    return new integration_method(new _Newton_Cotes_approx_integration(n, k));
   }
-
 
   /* ********************************************************************* */
   /* integration on direct product of convex structures                    */
   /* ********************************************************************* */
-  
-  struct a_int_pro_light
-  {
-    papprox_integration cv1, cv2;
-    bool operator < (const a_int_pro_light &ls) const
-    {
-      if (cv1 < ls.cv1) return true; if (cv1 > ls.cv1) return false; 
-      if (cv2 < ls.cv2) return true; return false;
-    }
-    a_int_pro_light(papprox_integration a, papprox_integration b)
-    { cv1 = a; cv2 = b; }
-    a_int_pro_light(void) { }
-   
-  };
-
 
   struct a_int_pro_integration : public approx_integration
   {
 
-    a_int_pro_integration(const a_int_pro_light &ls)
+    a_int_pro_integration(papprox_integration a, papprox_integration b)
     {
-      cvr = convex_ref_product(ls.cv1->ref_convex(), ls.cv2->ref_convex());
-      size_type n1 = ls.cv1->nb_points_on_convex();
-      size_type n2 = ls.cv2->nb_points_on_convex();
+      cvr = convex_ref_product(a->ref_convex(), b->ref_convex());
+      size_type n1 = a->nb_points_on_convex();
+      size_type n2 = b->nb_points_on_convex();
       stored_point_tab int_points;
       int_points.resize(n1 * n2);
       int_coeffs.resize(n1 * n2);
@@ -306,18 +471,18 @@ namespace bgeot
       for (size_type i1 = 0; i1 < n1; ++i1)
 	for (size_type i2 = 0; i2 < n2; ++i2)
 	{
-	  int_coeffs[i1 + i2 * n1] = ls.cv1->coeff(i1) * ls.cv2->coeff(i2);
+	  int_coeffs[i1 + i2 * n1] = a->coeff(i1) * b->coeff(i2);
 	  int_points[i1 + i2 * n1].resize(dim());
-	  std::copy(ls.cv1->point(i1).begin(), ls.cv1->point(i1).end(),
+	  std::copy(a->point(i1).begin(), a->point(i1).end(),
 		    int_points[i1 + i2 * n1].begin());
-	  std::copy(ls.cv2->point(i2).begin(), ls.cv2->point(i2).end(),
-		    int_points[i1 + i2 * n1].begin() + ls.cv1->dim());
+	  std::copy(b->point(i2).begin(), b->point(i2).end(),
+		    int_points[i1 + i2 * n1].begin() + a->dim());
 	}
       short_type f = 0;
-      for (short_type f1 = 0; f1 < ls.cv1->structure()->nb_faces(); ++f1, ++f)
+      for (short_type f1 = 0; f1 < a->structure()->nb_faces(); ++f1, ++f)
       {
-	n1 = ls.cv1->nb_points_on_face(f1);
-	n2 = ls.cv2->nb_points_on_convex();
+	n1 = a->nb_points_on_face(f1);
+	n2 = b->nb_points_on_convex();
 	size_type w = repartition[f];
 	repartition[f+1] = w + n1 * n2;
 	int_points.resize(repartition[f+1]);
@@ -325,20 +490,20 @@ namespace bgeot
 	for (size_type i1 = 0; i1 < n1; ++i1)
 	  for (size_type i2 = 0; i2 < n2; ++i2)
 	  {
-	    int_coeffs[w + i1 + i2 * n1] = ls.cv1->coeff_on_face(f1, i1)
-	                                 * ls.cv2->coeff(i2);
+	    int_coeffs[w + i1 + i2 * n1] = a->coeff_on_face(f1, i1)
+	                                 * b->coeff(i2);
 	    int_points[w + i1 + i2 * n1].resize(dim());
-	    std::copy(ls.cv1->point_on_face(f1, i1).begin(),
-		      ls.cv1->point_on_face(f1, i1).end(),
+	    std::copy(a->point_on_face(f1, i1).begin(),
+		      a->point_on_face(f1, i1).end(),
 		      int_points[w + i1 + i2 * n1].begin());
-	    std::copy(ls.cv2->point(i2).begin(), ls.cv2->point(i2).end(),
-		      int_points[w + i1 + i2 * n1].begin() + ls.cv1->dim());
+	    std::copy(b->point(i2).begin(), b->point(i2).end(),
+		      int_points[w + i1 + i2 * n1].begin() + a->dim());
 	  }
       }
-      for (short_type f2 = 0; f2 < ls.cv2->structure()->nb_faces(); ++f2, ++f)
+      for (short_type f2 = 0; f2 < b->structure()->nb_faces(); ++f2, ++f)
       {
-	n1 = ls.cv1->nb_points_on_convex();
-	n2 = ls.cv2->nb_points_on_face(f2);
+	n1 = a->nb_points_on_convex();
+	n2 = b->nb_points_on_face(f2);
 	size_type w = repartition[f];
 	repartition[f+1] = w + n1 * n2;
 	int_points.resize(repartition[f+1]);
@@ -346,110 +511,113 @@ namespace bgeot
 	for (size_type i1 = 0; i1 < n1; ++i1)
 	  for (size_type i2 = 0; i2 < n2; ++i2)
 	  {
-	    int_coeffs[w + i1 + i2 * n1] = ls.cv1->coeff(i1)
-	                                 * ls.cv2->coeff_on_face(f2, i2);
+	    int_coeffs[w + i1 + i2 * n1] = a->coeff(i1)
+	                                 * b->coeff_on_face(f2, i2);
 	    int_points[w + i1 + i2 * n1].resize(dim());
-	    std::copy(ls.cv1->point(i1).begin(), ls.cv1->point(i1).end(),
+	    std::copy(a->point(i1).begin(), a->point(i1).end(),
 		      int_points[w + i1 + i2 * n1].begin());
-	    std::copy(ls.cv2->point_on_face(f2, i2).begin(),
-		      ls.cv2->point_on_face(f2, i2).end(),
-		      int_points[w + i1 + i2 * n1].begin() + ls.cv1->dim());
+	    std::copy(b->point_on_face(f2, i2).begin(),
+		      b->point_on_face(f2, i2).end(),
+		      int_points[w + i1 + i2 * n1].begin() + a->dim());
 	  }
       }
       pint_points = store_point_tab(int_points);
     }
   };
 
-  papprox_integration convex_product_approx_integration(papprox_integration a,
-							papprox_integration b)
-  {
-    static dal::FONC_TABLE<a_int_pro_light, a_int_pro_integration> *tab;
-    static bool isinit = false;
-    if (!isinit) {
-      tab = new dal::FONC_TABLE<a_int_pro_light, a_int_pro_integration>();
-      isinit = true;
-    }
-    return tab->add(a_int_pro_light(a, b));
+  static pintegration_method product_approx(im_param_list &params) {
+    if (params.size() != 2)
+      DAL_THROW(failure_error, 
+	  "Bad number of parameters : " << params.size() << " should be 2.");
+    if (params[0].type() != 1 || params[1].type() != 1)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    pintegration_method a = params[0].method();
+    pintegration_method b = params[1].method();
+    if (a->is_ppi || b->is_ppi)
+      DAL_THROW(failure_error, "Bad parameters");
+    return new integration_method(new a_int_pro_integration(a->method.pai,
+							    b->method.pai));
   }
+
+  static pintegration_method product_which(im_param_list &params) {
+    if (params.size() != 2)
+      DAL_THROW(failure_error, 
+	  "Bad number of parameters : " << params.size() << " should be 2.");
+    if (params[0].type() != 1 || params[1].type() != 1)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    pintegration_method a = params[0].method();
+    pintegration_method b = params[1].method();
+    if (a->is_ppi || b->is_ppi) return product_exact(params);
+    else return product_approx(params);
+  }
+
 
   /* ********************************************************************* */
   /* integration on parallelepiped with Newton Cotes formulae              */
   /* ********************************************************************* */
-  
-  struct a_par_Ne_light
-  {
-    dim_type N; short_type K;
-    bool operator < (const a_par_Ne_light &ls) const
-    {
-      if (N < ls.N) return true; if (N > ls.N) return false; 
-      if (K < ls.K) return true; return false;
-    }
-    a_par_Ne_light(dim_type NN, short_type KK) { N = NN; K = KK; }
-    a_par_Ne_light(void) { }
-  };
 
-  struct a_par_Ne
-  {
-    papprox_integration pai;
-    a_par_Ne(const a_par_Ne_light &ls)
-    {
-      papprox_integration aux;
-      pai = aux = Newton_Cotes_approx_integration(1, ls.K);
-      for (int i = 1; i < ls.N; ++i)
-	pai = convex_product_approx_integration(pai, aux);
-    }
-  };
+  static pintegration_method Newton_Cotes_para(im_param_list &params) {
+    if (params.size() != 2)
+      DAL_THROW(failure_error, 
+          "Bad number of parameters : " << params.size() << " should be 2.");
+    if (params[0].type() != 0 || params[1].type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    int k = int(::floor(params[1].num() + 0.01));
+    if (n <= 0 || n >= 100 || k < 0 || k > 150 ||
+	double(n) != params[0].num() || double(k) != params[1].num())
+      DAL_THROW(failure_error, "Bad parameters");
 
-  papprox_integration parallelepiped_Newton_Cotes_approx_integration
-  (dim_type N, short_type K)
-  {
-    static dal::FONC_TABLE<a_par_Ne_light, a_par_Ne> *tab;
-    static bool isinit = false;
-    if (!isinit) {
-      tab = new dal::FONC_TABLE<a_par_Ne_light, a_par_Ne>();
-      isinit = true;
-    }
-    return (tab->add(a_par_Ne_light(N, K)))->pai;
+    _STRINGSTREAM name;
+    if (n == 1)
+      name << "IM_NC(1," << k << ")" << ends;
+    else 
+      name << "IM_PRODUCT(IM_NC_PARALLELEPIPED(" << n-1 << "," << k
+	   << "),IM_NC(1," << k << "))" << ends;
+    return int_method_descriptor(name.str());
+  }
+
+  static pintegration_method Newton_Cotes_prism(im_param_list &params) {
+    if (params.size() != 2)
+      DAL_THROW(failure_error, 
+          "Bad number of parameters : " << params.size() << " should be 2.");
+    if (params[0].type() != 0 || params[1].type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    int k = int(::floor(params[1].num() + 0.01));
+    if (n <= 1 || n >= 100 || k < 0 || k > 150 ||
+	double(n) != params[0].num() || double(k) != params[1].num())
+      DAL_THROW(failure_error, "Bad parameters");
+
+    _STRINGSTREAM name;
+     name << "IM_PRODUCT(IM_NC(" << n-1 << "," << k << "),IM_NC(1,"
+	 << k << "))" << ends;
+    return int_method_descriptor(name.str());
   }
 
   /* ********************************************************************* */
   /* integration on parallelepiped with Gauss formulae                     */
   /* ********************************************************************* */
-  
-  struct a_par_Gauss_light
-  {
-    dim_type N; short_type K;
-    bool operator < (const a_par_Gauss_light &ls) const
-    {
-      if (N < ls.N) return true; if (N > ls.N) return false; 
-      if (K < ls.K) return true; return false;
-    }
-    a_par_Gauss_light(dim_type NN, short_type KK) { N = NN; K = KK;}
-    a_par_Gauss_light(void) { }
-  };
 
-  struct a_par_Gauss
-  {
-    papprox_integration pai;
-    a_par_Gauss(const a_par_Gauss_light &ls)
-    {
-      papprox_integration aux;
-      pai = aux = Gauss_approx_integration(ls.K);
-      for (int i = 1; i < ls.N; ++i)
-	pai = convex_product_approx_integration(pai, aux);
-    }
-  };
+  static pintegration_method Gauss_paramul(im_param_list &params) {
+    if (params.size() != 2)
+      DAL_THROW(failure_error, 
+          "Bad number of parameters : " << params.size() << " should be 2.");
+    if (params[0].type() != 0 || params[1].type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    int k = int(::floor(params[1].num() + 0.01));
+    if (n <= 0 || n >= 100 || k < 0 || k > 150 ||
+	double(n) != params[0].num() || double(k) != params[1].num())
+      DAL_THROW(failure_error, "Bad parameters");
 
-  papprox_integration parallelepiped_Gauss_approx_integration
-  (dim_type N, short_type K)
-  {
-    static dal::FONC_TABLE<a_par_Gauss_light, a_par_Gauss> *tab;
-    static bool isinit = false;
-    if (!isinit) {
-      tab = new dal::FONC_TABLE<a_par_Gauss_light, a_par_Gauss>();
-      isinit = true;
-    }
-    return (tab->add(a_par_Gauss_light(N, K)))->pai;
+    _STRINGSTREAM name;
+    if (n == 1)
+      name << "IM_GAUSS1D(" << k << ")" << ends;
+    else 
+      name << "IM_PRODUCT(IM_GAUSS_PARALLELEPIPED(" << n-1 << "," << k
+	   << "),IM_GAUSS1D(" << k << "))" << ends;
+    return int_method_descriptor(name.str());
   }
 
   /* ********************************************************************* */
@@ -993,6 +1161,46 @@ namespace bgeot
     return p;
   }
 
+  static pintegration_method approx_triangle(im_param_list &params) {
+    if (params.size() <= 0 || params.size()>=2)
+      DAL_THROW(failure_error, 
+	   "Bad number of parameters : " << params.size() << " should be 1.");
+    if (params[0].type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    if (n <= 0 || n >= 100 || double(n) != params[0].num())
+      DAL_THROW(failure_error, "Bad parameters");
+    int variante = 0;
+    if (params.size() == 2) {
+      variante = int(::floor(params[1].num() + 0.01));
+      if (variante != 2 || n != 2 || 
+	  double(variante) != params[1].num())
+	DAL_THROW(failure_error, "Bad parameters");
+    }
+    switch (n) {
+    case 1: return new integration_method(triangle1_approx_integration());
+      break;
+    case 2:
+      if (variante == 0)
+	return new integration_method(triangle2_approx_integration());
+      else 
+	return new integration_method(triangle2bis_approx_integration());
+      break;
+    case 3: return new integration_method(triangle3_approx_integration());
+      break;
+    case 4: return new integration_method(triangle4_approx_integration());
+      break;
+    case 5: return new integration_method(triangle5_approx_integration());
+      break;
+    case 6: return new integration_method(triangle6_approx_integration());
+      break;
+    case 7: return new integration_method(triangle7_approx_integration());
+      break;
+    default : DAL_THROW(failure_error, "Bad parameters");
+    }
+  }
+
+
   /* ********************************************************************* */
   /* quad2 : Integration on quadrilaterals of order 2 with 3 points        */
   /* ********************************************************************* */
@@ -1162,6 +1370,25 @@ namespace bgeot
     return p;
   }
 
+  static pintegration_method approx_quad(im_param_list &params) {
+    if (params.size() != 1)
+      DAL_THROW(failure_error, 
+	   "Bad number of parameters : " << params.size() << " should be 1.");
+    if (params[0].type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    if (n <= 0 || n >= 100 || double(n) != params[0].num())
+      DAL_THROW(failure_error, "Bad parameters");
+    switch (n) {
+    case 2: return new integration_method(quad2_approx_integration());
+      break;
+    case 3: return new integration_method(quad3_approx_integration());
+      break;
+    case 5: return new integration_method(quad5_approx_integration());
+      break;
+    default : DAL_THROW(failure_error, "Bad parameters");
+    }
+  }
 
   /* ********************************************************************* */
   /*                                                                       */
@@ -1447,6 +1674,99 @@ namespace bgeot
       if (itp != ptab.end()) DAL_THROW(internal_error, "internal error");
     }
     return p;
+  }
+
+  static pintegration_method approx_tetra(im_param_list &params) {
+    if (params.size() != 1)
+      DAL_THROW(failure_error, 
+	   "Bad number of parameters : " << params.size() << " should be 1.");
+    if (params[0].type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    if (n <= 0 || n >= 100 || double(n) != params[0].num())
+      DAL_THROW(failure_error, "Bad parameters");
+    switch (n) {
+    case 1: return new integration_method(tetrahedron1_approx_integration());
+      break;
+    case 2: return new integration_method(tetrahedron2_approx_integration());
+      break;
+    case 3: return new integration_method(tetrahedron3_approx_integration());
+      break;
+    case 5: return new integration_method(tetrahedron5_approx_integration());
+      break;
+    default : DAL_THROW(failure_error, "Bad parameters");
+    }
+  }
+
+  /* ******************************************************************** */
+  /*    Naming system                                                     */
+  /* ******************************************************************** */
+
+  static ftool::naming_system<integration_method> *_im_naming_system = 0;
+  
+  static void init_im_naming_system(void) {
+    _im_naming_system = new ftool::naming_system<integration_method>("IM");
+    _im_naming_system->add_suffix("EXACT_SIMPLEX", exact_simplex);
+    _im_naming_system->add_suffix("PRODUCT", product_which);
+    _im_naming_system->add_suffix("EXACT_PARALLELEPIPED",exact_parallelepiped);
+    _im_naming_system->add_suffix("EXACT_PRISM", exact_prism);
+    _im_naming_system->add_suffix("GAUSS1D", gauss1d);
+    _im_naming_system->add_suffix("NC", Newton_Cotes);
+    _im_naming_system->add_suffix("NC_PARALLELEPIPED", Newton_Cotes_para);
+    _im_naming_system->add_suffix("NC_PRISM", Newton_Cotes_prism);
+    _im_naming_system->add_suffix("GAUSS_PARALLELEPIPED", Gauss_paramul);
+    _im_naming_system->add_suffix("TRIANGLE", approx_triangle);
+    _im_naming_system->add_suffix("QUAD", approx_quad);
+    _im_naming_system->add_suffix("TETRAHEDRON", approx_tetra);
+  }
+  
+  pintegration_method int_method_descriptor(std::string name) {
+    if (_im_naming_system == 0) init_im_naming_system();
+    size_type i = 0;
+    return _im_naming_system->method(name, i);
+  }
+
+  std::string name_of_int_method(pintegration_method p) {
+    if (_im_naming_system == 0) init_im_naming_system();
+    return _im_naming_system->name_of_method(p);
+  }
+
+  /* Fonctions pour la ref. directe.                                     */
+  
+  pintegration_method exact_simplex_im(size_type n) {
+    static pintegration_method pim = 0;
+    static size_type d = size_type(-2);
+    if (d != n) {
+      _STRINGSTREAM name;
+      name << "IM_EXACT_SIMPLEX(" << n << ")" << ends;
+      pim = int_method_descriptor(name.str());
+      d = n;
+    }
+    return pim;
+  }
+
+  pintegration_method exact_parallelepiped_im(size_type n) {
+    static pintegration_method pim = 0;
+    static size_type d = size_type(-2);
+    if (d != n) {
+      _STRINGSTREAM name;
+      name << "IM_EXACT_PARALLELEPIPED(" << n << ")" << ends;
+      pim = int_method_descriptor(name.str());
+      d = n;
+    }
+    return pim;
+  }
+
+  pintegration_method exact_prism_im(size_type n) {
+    static pintegration_method pim = 0;
+    static size_type d = size_type(-2);
+    if (d != n) {
+      _STRINGSTREAM name;
+      name << "IM_EXACT_PRISM(" << n << ")" << ends;
+      pim = int_method_descriptor(name.str());
+      d = n;
+    }
+    return pim;
   }
 
 

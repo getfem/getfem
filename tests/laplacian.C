@@ -16,6 +16,7 @@ using bgeot::base_vector;
 using bgeot::base_node;
 using bgeot::scalar_type;
 using bgeot::size_type;
+using bgeot::dim_type;
 
 typedef bgeot::smatrix<scalar_type> sparse_matrix_type;
 typedef bgeot::vsvector<scalar_type> linalg_vector;
@@ -51,7 +52,8 @@ struct lap_pb
   getfem::mesh_fem mef_data2;
 
   scalar_type LX, LY, LZ, incline, residu;
-  int NX, N, K, fem_type;
+  size_type N;
+  int NX, K, fem_type;
 
   sparse_matrix_type RM;   /* rigidity matrix.                            */
   linalg_vector U, B; /* inconnue et second membre.                       */
@@ -70,7 +72,6 @@ struct lap_pb
 void lap_pb::init(void)
 {
   dal::bit_vector nn;
-  size_type i, j, k;
 
   /***********************************************************************/
   /* READING PARAMETER FILE                                              */
@@ -93,7 +94,7 @@ void lap_pb::init(void)
   scalar_type FT = PARAM.real_value("FT", "parameter for exact solution");
 
   sol_K = base_vector(N);
-  for (j = 0; j < N; j++)
+  for (dim_type j = 0; j < N; j++)
     sol_K[j] = ((j & 1) == 0) ? FT : -FT;
 
   /***********************************************************************/
@@ -105,7 +106,7 @@ void lap_pb::init(void)
   base_node org(N); org.fill(0.0);
   std::vector<base_vector> vtab(N);
   std::vector<size_type> ref(N); std::fill(ref.begin(), ref.end(), NX);
-  for (i = 0; i < N; i++)
+  for (dim_type i = 0; i < N; i++)
   { 
     vtab[i] = base_vector(N); vtab[i].fill(0.0);
     (vtab[i])[i] = ((i == 0) ? LX : ((i == 1) ? LY : LZ)) / scalar_type(NX);
@@ -139,13 +140,14 @@ void lap_pb::init(void)
   default : DAL_THROW(dal::internal_error, "Unknown finite element method");
   }
 
-  getfem::pintegration_method ppi;
+  bgeot::pintegration_method ppi;
+  char meth[500];
   nn = mesh.convex_index(N);
   switch (integration) {
   case 0 :
     switch (mesh_type) { 
-    case 0 : ppi = bgeot::simplex_poly_integration(N); break;
-    case 1 : ppi = bgeot::parallelepiped_poly_integration(N); break;
+    case 0 : sprintf(meth, "IM_EXACT_SIMPLEX(%d)", N); break;
+    case 1 : sprintf(meth, "IM_EXACT_PARALLELEPIPED(%d)", N); break;
     default : DAL_THROW(dal::internal_error, 
     "Exact integration not allowed in this context");
     }
@@ -153,62 +155,64 @@ void lap_pb::init(void)
   case 1 :
     switch (mesh_type) { 
     case 0 : 
-      ppi = bgeot::Newton_Cotes_approx_integration(N,2*K);
+      sprintf(meth, "IM_NC(%d,%d)", N, 2*K);
       break;
     case 1 : 
-      ppi = bgeot::parallelepiped_Newton_Cotes_approx_integration(N, 2*K);
+      sprintf(meth, "IM_NC_PARALLELEPIPED(%d,%d)", N, 2*K);
       break;
     case 2 :
-      ppi = bgeot::prism_Newton_Cotes_approx_integration(N, 2*K);
+      sprintf(meth, "IM_NC_PRISM(%d,%d)", N, 2*K);
       break;
     }
     break;
   case 2 :
     if (mesh_type == 1)
-      ppi = bgeot::parallelepiped_Gauss_approx_integration(N, K+1);
+      sprintf(meth, "IM_GAUSS_PARALLELEPIPED(%d,%d)", N, 2*K);
     else
       DAL_THROW(dal::internal_error,
 		"Product of 1D Gauss only for parallelepipeds");
     break;
-  case 11 : ppi = bgeot::triangle1_approx_integration(); break;
-  case 12 : ppi = bgeot::triangle2_approx_integration(); break;
-  case 13 : ppi = bgeot::triangle3_approx_integration(); break;
-  case 14 : ppi = bgeot::triangle4_approx_integration(); break;
-  case 15 : ppi = bgeot::triangle5_approx_integration(); break;
-  case 16 : ppi = bgeot::triangle6_approx_integration(); break;
-  case 17 : ppi = bgeot::triangle7_approx_integration(); break;
-  case 21 : ppi = bgeot::tetrahedron1_approx_integration(); break;
-  case 22 : ppi = bgeot::tetrahedron2_approx_integration(); break;
-  case 23 : ppi = bgeot::tetrahedron3_approx_integration(); break;
-  case 25 : ppi = bgeot::tetrahedron5_approx_integration(); break;
-  case 32 : ppi = bgeot::quad2_approx_integration(); break;
-  case 33 : ppi = bgeot::quad3_approx_integration(); break;
-  case 35 : ppi = bgeot::quad5_approx_integration(); break;
+  case 11 : sprintf(meth, "IM_TRIANGLE(1)"); break;
+  case 12 : sprintf(meth, "IM_TRIANGLE(2)"); break;
+  case 13 : sprintf(meth, "IM_TRIANGLE(3)"); break;
+  case 14 : sprintf(meth, "IM_TRIANGLE(4)"); break;
+  case 15 : sprintf(meth, "IM_TRIANGLE(5)"); break;
+  case 16 : sprintf(meth, "IM_TRIANGLE(6)"); break;
+  case 17 : sprintf(meth, "IM_TRIANGLE(7)"); break;
+  case 21 : sprintf(meth, "IM_TETRAHEDRON(1)"); break;
+  case 22 : sprintf(meth, "IM_TETRAHEDRON(2)"); break;
+  case 23 : sprintf(meth, "IM_TETRAHEDRON(3)"); break;
+  case 25 : sprintf(meth, "IM_TETRAHEDRON(5)"); break;
+  case 32 : sprintf(meth, "IM_QUAD(2)"); break;
+  case 33 : sprintf(meth, "IM_QUAD(3)"); break;
+  case 35 : sprintf(meth, "IM_QUAD(5)"); break;
   default : DAL_THROW(std::logic_error, "Undefined integration method");
   }
+  ppi = bgeot::int_method_descriptor(meth);
 
   switch (mesh_type) {
-  case 0 : 
-    mef.set_finite_element(nn, getfem::PK_fem(N, K), ppi);
-    mef_data.set_finite_element(nn, getfem::PK_fem(N, K),
-				bgeot::simplex_poly_integration(N));
-    mef_data2.set_finite_element(nn, getfem::PK_fem(N, 0),
-				 bgeot::simplex_poly_integration(N));
+  case 0 :
+    sprintf(meth, "FEM_PK(%d,%d)", N, K);
+    mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
+    mef_data.set_finite_element(nn, getfem::fem_descriptor(meth),
+				bgeot::exact_simplex_im(N));
+    sprintf(meth, "FEM_PK(%d,%d)", N, 0);
+    mef_data2.set_finite_element(nn, getfem::fem_descriptor(meth),
+				 bgeot::exact_simplex_im(N));
     break;
-  case 1 : 
-    mef.set_finite_element(nn, getfem::QK_fem(N, K), ppi); 
-    mef_data.set_finite_element(nn, getfem::QK_fem(N, K), ppi);
-    mef_data2.set_finite_element(nn, getfem::QK_fem(N, 0),  ppi);
+  case 1 :
+    sprintf(meth, "FEM_QK(%d,%d)", N, K);
+    mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi); 
+    mef_data.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
+    sprintf(meth, "FEM_QK(%d,%d)", N, 0);
+    mef_data2.set_finite_element(nn, getfem::fem_descriptor(meth),  ppi);
     break;
-  case 2 : 
-    mef.set_finite_element(nn, getfem::product_fem(getfem::PK_fem(N-1, K),
-						   getfem::PK_fem(1, K)), ppi);
-    mef_data.set_finite_element(nn,
-				getfem::product_fem(getfem::PK_fem(N-1, K),
-						 getfem::PK_fem(1, K)), ppi);
-    mef_data2.set_finite_element(nn, 
-				 getfem::product_fem(getfem::PK_fem(N-1, 0),
-						  getfem::PK_fem(1, 0)), ppi);
+  case 2 :
+    sprintf(meth, "FEM_PK_PRISM(%d,%d)", N, K);
+    mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
+    mef_data.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
+    sprintf(meth, "FEM_PK_PRISM(%d,%d)", N, 0);
+    mef_data2.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
     break;
   }
 
@@ -217,18 +221,19 @@ void lap_pb::init(void)
   case 0 : break;
 
   case 1 :
-    mef.set_finite_element(nn, getfem::segment_Hermite_fem(), ppi);
+    sprintf(meth, "FEM_HERMITE_SEGMENT");
+    mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
     break;
   
   }
   
-  
   cout << "Selecting Neumann and Dirichlet boundaries\n";
   nn = mesh.convex_index(N);
   base_vector un;
+  size_type j;
   for (j << nn; j != size_type(-1); j << nn) {
-    k = mesh.structure_of_convex(j)->nb_faces();
-    for (i = 0; i < k; i++) {
+    size_type k = mesh.structure_of_convex(j)->nb_faces();
+    for (size_type i = 0; i < k; i++) {
       if (bgeot::neighbour_of_convex(mesh, j, i).empty()) {
         un = mesh.normal_of_face_of_convex(j, i, 0);
 	un /= bgeot::vect_norm2(un);
@@ -249,8 +254,8 @@ void lap_pb::init(void)
 
 void lap_pb::assemble(void)
 {
-  int nb_dof = mef.nb_dof(), nb_dof_data = mef_data.nb_dof();
-  int nb_dof_data2 = mef_data2.nb_dof();
+  size_type nb_dof = mef.nb_dof(), nb_dof_data = mef_data.nb_dof();
+  size_type nb_dof_data2 = mef_data2.nb_dof();
   B = linalg_vector(nb_dof); B.fill(0.0);
   U = linalg_vector(nb_dof); U.fill(0.0); 
   RM = sparse_matrix_type(nb_dof, nb_dof);

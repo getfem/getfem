@@ -31,9 +31,13 @@
 #include <getfem_fem.h>
 #include <dal_tree_sorted.h>
 #include <dal_algobase.h>
+#include <ftool_naming.h>
 
 namespace getfem
 {
+  typedef ftool::naming_system<virtual_fem>::param_list fem_param_list;
+
+
   void virtual_fem::interpolation(pfem_precomp pfp, size_type ii,
 			    const base_matrix &G, bgeot::pgeometric_trans pgt, 
 			    const base_vector coeff, base_node &val) const {
@@ -325,18 +329,6 @@ namespace getfem
   /*	PK class.                                                         */
   /* ******************************************************************** */
 
-  struct _PK_femi_light
-  {
-    dim_type nc; short_type K;
-    bool operator < (const _PK_femi_light &l) const
-    {
-      if (nc < l.nc) return true; if (nc > l.nc) return false; 
-      if (K < l.K) return true; return false;
-    }
-    _PK_femi_light(dim_type n, short_type k) { nc = n; K = k; }
-    _PK_femi_light(void) { }
-  };
-
   class _PK_fem : public fem<base_poly>
   {
     public :
@@ -370,52 +362,46 @@ namespace getfem
 	}
       }
 
-     _PK_fem(const _PK_femi_light &ls)
+     _PK_fem(dim_type nc, short_type k)
      {
-       cvr = bgeot::simplex_of_reference(ls.nc);
+       cvr = bgeot::simplex_of_reference(nc);
        is_equiv = is_pol = is_lag = true;
-       es_degree = ls.K;
+       es_degree = k;
        
        init_cvs_node();
-       bgeot::pconvex_ref cvn = bgeot::simplex_of_reference(ls.nc, ls.K);
+       bgeot::pconvex_ref cvn = bgeot::simplex_of_reference(nc, k);
        size_type R = cvn->nb_points();
        for (size_type i = 0; i < R; ++i)
-	 add_node(lagrange_dof(ls.nc), cvn->points()[i]);
+	 add_node(lagrange_dof(nc), cvn->points()[i]);
 
        _base.resize(R);
-       for (size_type r = 0; r < R; r++) calc_base_func(_base[r], r, ls.K);
+       for (size_type r = 0; r < R; r++) calc_base_func(_base[r], r, k);
      }
   };
 
-  ppolyfem PK_fem(dim_type n, short_type k)
-  {
-    static dal::FONC_TABLE<_PK_femi_light, _PK_fem> *tab = 0;
-    if (tab == 0) tab = new dal::FONC_TABLE<_PK_femi_light, _PK_fem>();
-    return tab->add(_PK_femi_light(n, k));
+  static pfem PK_fem(fem_param_list &params) {
+    if (params.size() != 2)
+      DAL_THROW(failure_error, 
+	   "Bad number of parameters : " << params.size() << " should be 2.");
+    if (params[0].type() != 0 || params[1].type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    int k = int(::floor(params[1].num() + 0.01));
+    if (n <= 0 || n >= 100 || k < 0 || k > 150 ||
+	double(n) != params[0].num() || double(k) != params[1].num())
+      DAL_THROW(failure_error, "Bad parameters");
+    return new _PK_fem(n, k);
   }
+
 
   /* ******************************************************************** */
   /*	Tensorial product of fem (for polynomial fem).                    */
   /* ******************************************************************** */
 
-  struct _pr_fem_int_light
-  {
-    ppolyfem fi1, fi2;
-    bool operator < (const _pr_fem_int_light &ls) const
-    {
-      if (fi1 < ls.fi1) return true; if (fi1 > ls.fi1) return false; 
-      if (fi2 < ls.fi2) return true; return false;
-    }
-    _pr_fem_int_light(ppolyfem a, ppolyfem b)
-    { fi1 = a; fi2 = b; }
-    _pr_fem_int_light(void) { }
-  };
-
   struct tproduct_femi : public fem<base_poly>
   { 
-    tproduct_femi(const _pr_fem_int_light &ls)
+    tproduct_femi(ppolyfem fi1, ppolyfem fi2)
     {
-      ppolyfem fi1 = ls.fi1, fi2 = ls.fi2;
       if (fi2->target_dim() != 1) std::swap(fi1, fi2);
       if (fi2->target_dim() != 1) 
 	DAL_THROW(dimension_error, "dimensions mismatch");
@@ -449,48 +435,68 @@ namespace getfem
     }
   };
 
-  ppolyfem product_fem(ppolyfem fex, ppolyfem fey) {
-    static dal::FONC_TABLE<_pr_fem_int_light, tproduct_femi> *tab = 0;
-    if (tab==0) tab = new dal::FONC_TABLE<_pr_fem_int_light, tproduct_femi>();
-    return tab->add(_pr_fem_int_light(fex, fey));
+  static pfem product_fem(fem_param_list &params) {
+    if (params.size() != 2)
+      DAL_THROW(failure_error, 
+	  "Bad number of parameters : " << params.size() << " should be 2.");
+    if (params[0].type() != 1 || params[1].type() != 1)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    pfem pf1 = params[0].method();
+    pfem pf2 = params[1].method();
+    if (!(pf1->is_polynomial() && pf2->is_polynomial()))
+      DAL_THROW(failure_error, "Bad parameters");
+    return new tproduct_femi(ppolyfem(pf1), ppolyfem(pf2));
   }
+
 
   /* ******************************************************************** */
   /* parallelepiped structures.                                           */
   /* ******************************************************************** */
 
-  struct _QK_femi
-  {
-    dim_type nc; short_type K; ppolyfem pf;
-    bool operator < (const _QK_femi &l) const
-    {
-      if (nc < l.nc) return true; if (nc > l.nc) return false; 
-      if (K < l.K) return true; return false;
-    }
-    _QK_femi(dim_type n, short_type k) { nc = n; K = k; }
-    _QK_femi(void) { }
-  };
-
-  ppolyfem QK_fem(dim_type n, short_type k)
-  {
-    static dal::dynamic_tree_sorted<_QK_femi> *tab;
-    static bool isinit = false;
-    if (!isinit) {
-      tab = new dal::dynamic_tree_sorted<_QK_femi>();
-      isinit = true;
-    }
-    if (n <= 1) return PK_fem(n, k);
-    _QK_femi fi(n, k);
-    size_type i = tab->search(fi);
-    if (i == size_type(-1))
-    {
-      fi.pf = product_fem(QK_fem(n-1, k), PK_fem(1, k));
-      i = tab->add(fi);
-    }
-    return (*tab)[i].pf;
+  static pfem QK_fem(fem_param_list &params) {
+    if (params.size() != 2)
+      DAL_THROW(failure_error, 
+	   "Bad number of parameters : " << params.size() << " should be 2.");
+    if (params[0].type() != 0 || params[1].type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    int k = int(::floor(params[1].num() + 0.01));
+    if (n <= 0 || n >= 100 || k < 0 || k > 150 ||
+	double(n) != params[0].num() || double(k) != params[1].num())
+      DAL_THROW(failure_error, "Bad parameters");
+    _STRINGSTREAM name;
+    if (n == 1)
+      name << "FEM_PK(1," << k << ")" << ends;
+    else 
+      name << "FEM_PRODUCT(FEM_QK(" << n-1 << "," << k << "),FEM_PK(1,"
+	   << k << "))" << ends;
+    return fem_descriptor(name.str());
   }
 
+  
+  /* ******************************************************************** */
+  /* prims structures.                                                    */
+  /* ******************************************************************** */
 
+  static pfem PK_prism_fem(fem_param_list &params) {
+    if (params.size() != 2)
+      DAL_THROW(failure_error, 
+	   "Bad number of parameters : " << params.size() << " should be 2.");
+    if (params[0].type() != 0 || params[1].type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    int k = int(::floor(params[1].num() + 0.01));
+    if (n <= 1 || n >= 100 || k < 0 || k > 150 ||
+	double(n) != params[0].num() || double(k) != params[1].num())
+      DAL_THROW(failure_error, "Bad parameters");
+    _STRINGSTREAM name;
+    if (n == 2)
+      name << "FEM_QK(1," << k << ")" << ends;
+    else 
+      name << "FEM_PRODUCT(FEM_PK(" << n-1 << "," << k << "),FEM_PK(1,"
+	   << k << "))" << ends;
+    return fem_descriptor(name.str());
+  }
 
   /* ******************************************************************** */
   /*	P1 NON CONFORMING (dim 2)                                         */
@@ -521,14 +527,10 @@ namespace getfem
     }
   };
 
-  ppolyfem P1_nonconforming_fem(void) {
-    static _P1_nonconforming_fem *p;
-    static bool isinit = false;
-    if (!isinit) {
-      p = new _P1_nonconforming_fem();
-      isinit = true;
-    }
-    return p;
+   static pfem P1_nonconforming_fem(fem_param_list &params) {
+    if (params.size() != 0)
+      DAL_THROW(failure_error, "Bad number of parameters");
+    return new _P1_nonconforming_fem();
   }
 
    /* ******************************************************************** */
@@ -539,7 +541,7 @@ namespace getfem
    {
      public :
     
-     _P1_wabbfoaf(dim_type nc) : _PK_fem(_PK_femi_light(nc, 1))
+     _P1_wabbfoaf(dim_type nc) : _PK_fem(nc, 1)
      {
        is_lag = false; es_degree = 2;
        base_node pt(nc); pt.fill(0.5);
@@ -551,23 +553,18 @@ namespace getfem
        // des possibilités de raccord avec du P2 existent mais il faudrait
        // modifier qlq chose (transformer les fct de base P1) 
      }
-   };  
-  
-  ppolyfem P1_with_bubble_on_a_face(dim_type nc)
-  { 
-    static dal::dynamic_array<ppolyfem, 2> *tab;
-    static dal::bit_vector *exists;
-    static bool isinit = false;
-    if (!isinit) {
-      tab = new dal::dynamic_array<ppolyfem, 2>();
-      exists = new dal::bit_vector();
-      isinit = true;
-    }
-    if (nc <= 1)
-      DAL_THROW(dimension_error, "dimensions mismatch");
-    if (!(*exists)[nc])
-      { (*exists)[nc] = true; (*tab)[nc]= new _P1_wabbfoaf(nc); }
-    return (*tab)[nc];
+   };
+
+    static pfem P1_with_bubble_on_a_face(fem_param_list &params) {
+    if (params.size() != 1)
+      DAL_THROW(failure_error, 
+	   "Bad number of parameters : " << params.size() << " should be 2.");
+    if (params[0].type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    if (n <= 1 || n >= 100 || double(n) != params[0].num())
+      DAL_THROW(failure_error, "Bad parameters");
+    return new _P1_wabbfoaf(n);
   }
 
 
@@ -577,7 +574,7 @@ namespace getfem
 
   struct _P1_wabbfoafla : public _PK_fem
   { // idem elt prec mais avec raccord lagrange. A faire en dim. quelconque ..
-    _P1_wabbfoafla(void) : _PK_fem(_PK_femi_light(2, 1))
+    _P1_wabbfoafla(void) : _PK_fem(2, 1)
     {
       es_degree = 2;
       base_node pt(2); pt.fill(0.5);
@@ -594,18 +591,14 @@ namespace getfem
     }
   };
   
-
-  ppolyfem P1_with_bubble_on_a_face_lagrange(void)
-  { 
-    static bool _P1_wabbfoafla_exists = false;
-    static _P1_wabbfoafla *elt;
-    if (!_P1_wabbfoafla_exists)
-    { _P1_wabbfoafla_exists = true; elt = new _P1_wabbfoafla; }
-    return elt;
+  static pfem P1_with_bubble_on_a_face_lagrange(fem_param_list &params) {
+    if (params.size() != 0)
+      DAL_THROW(failure_error, "Bad number of parameters");
+    return new _P1_wabbfoafla;
   }
 
   /* ******************************************************************** */
-  /*	Hemite element on the segment                                     */
+  /*	Hremite element on the segment                                    */
   /* ******************************************************************** */
 
   struct _hermite_segment_ : public fem<base_poly>
@@ -650,12 +643,10 @@ namespace getfem
     }
   };
 
-  ppolyfem segment_Hermite_fem(void)
-  { 
-    static bool exists = false;
-    static _hermite_segment_ *elt;
-    if (!exists) { exists = true; elt = new _hermite_segment_; }
-    return elt;
+  static pfem segment_Hermite_fem(fem_param_list &params) {
+    if (params.size() != 0)
+      DAL_THROW(failure_error, "Bad number of parameters");
+    return new _hermite_segment_;
   }
 
   /* ******************************************************************** */
@@ -663,22 +654,27 @@ namespace getfem
   /* ******************************************************************** */
 
   
-  struct _PK_discont : public _PK_fem
-   {
-     public :
+  struct _PK_discont : public _PK_fem {
+  public :
     
-     _PK_discont(const _PK_femi_light &l) : _PK_fem(l)
-     {
-       std::fill(_dof_types.begin(), _dof_types.end(),
-		 lagrange_nonconforming_dof(l.nc));
-     }
-   };  
-
-  ppolyfem PK_discontinuous_fem(dim_type n, short_type k)
-  {
-    static dal::FONC_TABLE<_PK_femi_light, _PK_discont> *tab = 0;
-    if (tab == 0) tab = new dal::FONC_TABLE<_PK_femi_light, _PK_discont>();
-    return tab->add(_PK_femi_light(n, k));
+    _PK_discont(dim_type nc, short_type k) : _PK_fem(nc, k) {
+      std::fill(_dof_types.begin(), _dof_types.end(),
+		lagrange_nonconforming_dof(nc));
+    }
+  };
+  
+  static pfem PK_discontinuous_fem(fem_param_list &params) {
+    if (params.size() != 2)
+      DAL_THROW(failure_error, 
+	   "Bad number of parameters : " << params.size() << " should be 2.");
+    if (params[0].type() != 0 || params[1].type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    int k = int(::floor(params[1].num() + 0.01));
+    if (n <= 0 || n >= 100 || k < 0 || k > 150 ||
+	double(n) != params[0].num() || double(k) != params[1].num())
+      DAL_THROW(failure_error, "Bad parameters");
+    return new _PK_discont(n, k);
   }
 
 
@@ -690,35 +686,39 @@ namespace getfem
    {
      public :
     
-     _PK_with_cubic_bubble(const _PK_femi_light &l) : _PK_fem(l)
+     _PK_with_cubic_bubble(dim_type nc, short_type k) : _PK_fem(nc, k)
      {
-       is_lag = false; es_degree = l.nc+1;
-       base_node pt(l.nc); 
+       is_lag = false; es_degree = nc+1;
+       base_node pt(nc); 
        size_type j;
-       _PK_fem P1(_PK_femi_light(l.nc, 1));
+       _PK_fem P1(nc, 1);
 
-       pt.fill(1./(l.nc+1)); /* barycenter of the convex */
+       pt.fill(1./(nc+1)); /* barycenter of the convex */
 
-       add_node(bubble1_dof(l.nc), pt);
+       add_node(bubble1_dof(nc), pt);
        _base.resize(nb_dof());
 
        j = nb_dof() - 1;
-       _base[j] = base_poly(l.nc, 0);
+       _base[j] = base_poly(nc, 0);
        _base[j].one();
        for (size_type i = 0; i < P1.nb_dof(); i++) _base[j] *= P1.base()[i];
      }
    };
 
-  ppolyfem PK_with_cubic_bubble_fem(dim_type n, short_type k)
-  {
-    static dal::FONC_TABLE<_PK_femi_light, _PK_with_cubic_bubble> *tab = 0;
+  static pfem PK_with_cubic_bubble(fem_param_list &params) {
+    if (params.size() != 2)
+      DAL_THROW(failure_error, 
+	   "Bad number of parameters : " << params.size() << " should be 2.");
+    if (params[0].type() != 0 || params[1].type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    int k = int(::floor(params[1].num() + 0.01));
     if (k >= n+1) DAL_THROW(dimension_error, "dimensions mismatch");
-    if (tab == 0)
-      tab = new dal::FONC_TABLE<_PK_femi_light, _PK_with_cubic_bubble>();
-    return tab->add(_PK_femi_light(n, k));
+    if (n <= 0 || n >= 100 || k < 0 || k > 150 ||
+	double(n) != params[0].num() || double(k) != params[1].num())
+      DAL_THROW(failure_error, "Bad parameters");
+    return new _PK_with_cubic_bubble(n, k);
   }
-
-
 
   /* ******************************************************************** */
   /*	classical fem                                                     */
@@ -726,32 +726,123 @@ namespace getfem
 
   pfem classical_fem(bgeot::pgeometric_trans pgt, short_type k)
   {
+    static bgeot::pgeometric_trans pgt_last = 0;
+    static short_type k_last = short_type(-1);
+    static pfem fm_last = 0;
+    bool found = false;
+
+    if (pgt_last == pgt && k_last == k)
+      return fm_last;
+
+
     size_type n = pgt->structure()->dim();
     size_type nbp = pgt->basic_structure()->nb_points();
+    _STRINGSTREAM name;
 
     /* Identifying P1-simplexes.                                          */
 
     if (nbp == n+1)
       if (pgt->basic_structure() == bgeot::simplex_structure(n))
-    	return PK_fem(n, k);
+    	{ name << "FEM_PK("; found = true; }
     
     /* Identifying Q1-parallelepiped.                                     */
 
-    if (nbp == (size_type(1) << n))
+    if (!found && nbp == (size_type(1) << n))
       if (pgt->basic_structure() == bgeot::parallelepiped_structure(n))
-    	return QK_fem(n, k);
+    	{ name << "FEM_QK("; found = true; }
 
     /* Identifying Q1-prisms.                                             */
  
-    if (nbp == 2 * n)
+    if (!found && nbp == 2 * n)
       if (pgt->basic_structure() == bgeot::prism_structure(n))
-     	return PK_prism_fem(n, k);
+     	{ name << "FEM_PK_PRISM("; found = true; }
      
     // To be completed
+
+    if (found) {
+      name << int(n) << ',' << int(k) << ')' << ends;
+      fm_last = fem_descriptor(name.str());
+      pgt_last = pgt;
+      k_last = k;
+      return fm_last;
+    }
  
     DAL_THROW(to_be_done_error,
 	      "This element is not taken into account. Contact us");
     return NULL;
   }
 
+  
+  /* ******************************************************************** */
+  /*    Naming system                                                     */
+  /* ******************************************************************** */
+
+  static ftool::naming_system<virtual_fem> *_fem_naming_system = 0;
+  
+  static void init_fem_naming_system(void) {
+    _fem_naming_system = new ftool::naming_system<virtual_fem>("FEM");
+    _fem_naming_system->add_suffix("HERMITE_SEGMENT", segment_Hermite_fem);
+    _fem_naming_system->add_suffix("PK", PK_fem);
+    _fem_naming_system->add_suffix("QK", QK_fem);
+    _fem_naming_system->add_suffix("PK_PRISM", PK_prism_fem);
+    _fem_naming_system->add_suffix("PK_DISCONTINUOUS", PK_discontinuous_fem);
+    _fem_naming_system->add_suffix("PK_WITH_CUBIC_BUBLE",PK_with_cubic_bubble);
+    _fem_naming_system->add_suffix("PRODUCT", product_fem);
+    _fem_naming_system->add_suffix("P1_NONCONFORMING", P1_nonconforming_fem);
+    _fem_naming_system->add_suffix("P1_BUBBLE_FACE", P1_with_bubble_on_a_face);
+    _fem_naming_system->add_suffix("P1_BUBBLE_FACE_LAG",
+				   P1_with_bubble_on_a_face_lagrange);
+  }
+  
+  pfem fem_descriptor(std::string name) {
+    if (_fem_naming_system == 0) init_fem_naming_system();
+    size_type i = 0;
+    return _fem_naming_system->method(name, i);
+  }
+
+  std::string name_of_fem(pfem p) {
+    if (_fem_naming_system == 0) init_fem_naming_system();
+    return _fem_naming_system->name_of_method(p);
+  }
+
+ /* Fonctions pour la ref. directe.                                     */
+  
+  pfem PK_fem(size_type n, short_type k) {
+    static pfem pf = 0;
+    static size_type d = size_type(-2);
+    static short_type r = short_type(-2);
+    if (d != n || r != k) {
+      _STRINGSTREAM name;
+      name << "FEM_PK(" << n << "," << k << ")" << ends;
+      pf = fem_descriptor(name.str());
+      d = n; r = k;
+    }
+    return pf;
+  }
+
+  pfem QK_fem(size_type n, short_type k) {
+    static pfem pf = 0;
+    static size_type d = size_type(-2);
+    static short_type r = short_type(-2);
+    if (d != n || r != k) {
+      _STRINGSTREAM name;
+      name << "FEM_QK(" << n << "," << k << ")" << ends;
+      pf = fem_descriptor(name.str());
+      d = n; r = k;
+    }
+    return pf;
+  }
+
+  pfem PK_prism_fem(size_type n, short_type k) {
+    static pfem pf = 0;
+    static size_type d = size_type(-2);
+    static short_type r = short_type(-2);
+    if (d != n || r != k) {
+      _STRINGSTREAM name;
+      name << "FEM_PK_PRISM(" << n << "," << k << ")" << ends;
+      pf = fem_descriptor(name.str());
+      d = n; r = k;
+    }
+    return pf;
+  }
 }  /* end of namespace getfem.                                            */

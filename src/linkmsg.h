@@ -74,15 +74,16 @@ namespace lmsg
 
   template<class RECEIVER> class linkmsg_sender : public virtual_linkmsg_sender
   {
-    public :
+  public :
       
-      typedef int msg_id_type;
-      typedef size_t size_type;
-
-    protected :
-
-      dal::dynamic_tas<RECEIVER *, 3> receivers;
-      dal::dynamic_array<mask, 3> masks;
+    typedef int msg_id_type;
+    typedef size_t size_type;
+    
+  protected :
+    
+    typedef dal::dynamic_tas<RECEIVER *, 3> RECEIVERTAB;
+    RECEIVERTAB receivers;
+    dal::dynamic_array<mask, 3> masks;
 
     public :
 
@@ -97,23 +98,28 @@ namespace lmsg
   template<class RECEIVER>
     void linkmsg_sender<RECEIVER>::sup_receiver(void *p)
   {
-    for (int i = receivers.card() - 1; i >= 0; --i)
-      if (receivers[i] == p) receivers.sup(i);
-    receivers.compact();
+    typename RECEIVERTAB::tas_iterator it = receivers.tas_begin(),
+      ite = receivers.tas_end();
+    for (; it != ite; ++it)
+      if (*it == p) receivers.sup(it.index());
   }
 
   template<class RECEIVER> template<class T> 
     void linkmsg_sender<RECEIVER>::send(const T &msg) const
   {
-    for (int i = receivers.card() - 1; i >= 0; --i)
-      if ((masks[i])[int(msg)]) receivers[i]->receipt(msg);
+    typename RECEIVERTAB::const_tas_iterator it = receivers.tas_begin(),
+      ite = receivers.tas_end();
+    for (; it != ite; ++it)
+      if ((masks[it.index()])[int(msg)]) (*it)->receipt(msg);
   }
 
   template<class RECEIVER>
      linkmsg_sender<RECEIVER>::~linkmsg_sender()
   {
-    for (int i = receivers.card() - 1; i >= 0; --i)
-      receivers[i]->out_sender(*this);
+    typename RECEIVERTAB::tas_iterator it = receivers.tas_begin(),
+      ite = receivers.tas_end();
+    for (; it != ite; ++it)
+      (*it)->out_sender(*this);
   }
 
   /* ******************************************************************** */

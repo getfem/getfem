@@ -49,45 +49,47 @@ namespace getfem
 
   struct MESH_CLEAR  /* clear message for the structure.                   */
   { operator int(void) const { return 0; } };
+  struct MESH_DELETE  /* clear message for the structure.                   */
+  { operator int(void) const { return 1; } };
   struct MESH_ADD_POINT /* point suppression message.                      */
   { 
     size_t ipt;
-    operator int(void) const { return 1; }
+    operator int(void) const { return 2; }
     MESH_ADD_POINT(size_t i) { ipt = i; }
     MESH_ADD_POINT(void) {}
   };
   struct MESH_SUP_POINT
   { 
     size_t ipt;
-    operator int(void) const { return 2; }
+    operator int(void) const { return 3; }
     MESH_SUP_POINT(size_t i) { ipt = i; }
     MESH_SUP_POINT(void) {}
   };
   struct MESH_SWAP_POINT
   { 
     size_t ipt1, ipt2;
-    operator int(void) const { return 3; }
+    operator int(void) const { return 4; }
     MESH_SWAP_POINT(size_t i, size_t j) { ipt1 = i; ipt2 = j; }
     MESH_SWAP_POINT(void) {}
   };
   struct MESH_ADD_CONVEX
   { 
     size_t icv;
-    operator int(void) const { return 4; }
+    operator int(void) const { return 5; }
     MESH_ADD_CONVEX(size_t i) { icv = i; }
     MESH_ADD_CONVEX(void) {}
   };
   struct MESH_SUP_CONVEX
   { 
     size_t icv;
-    operator int(void) const { return 5; }
+    operator int(void) const { return 6; }
     MESH_SUP_CONVEX(size_t i) { icv = i; }
     MESH_SUP_CONVEX(void) {}
   };
   struct MESH_SWAP_CONVEX
   { 
     size_t icv1, icv2;
-    operator int(void) const { return 6; }
+    operator int(void) const { return 7; }
     MESH_SWAP_CONVEX(size_t i, size_t j) { icv1 = i; icv2 = j; }
     MESH_SWAP_CONVEX(void) {}
   };
@@ -96,7 +98,7 @@ namespace getfem
     size_t icv, nb;
     size_t *alist;
     int mtype;
-    operator int(void) const { return 7; }
+    operator int(void) const { return 8; }
     MESH_REFINE_CONVEX(size_t i, size_t n, size_t *l, int m)
     { icv = i; nb = n; alist = l; mtype = m; }
     MESH_REFINE_CONVEX(void) {}
@@ -106,7 +108,7 @@ namespace getfem
     size_t icv, nb;
     size_t *alist;
     int mtype;
-    operator int(void) const { return 8; }
+    operator int(void) const { return 9; }
     MESH_UNREFINE_CONVEX(size_t i, size_t n, size_t *l, int m)
     { icv = i; nb = n; alist = l; mtype = m; }
     MESH_UNREFINE_CONVEX(void) {}
@@ -114,35 +116,35 @@ namespace getfem
   struct MESH_WRITE_TO_FILE
   { 
     std::ostream *ost;
-    operator int(void) const { return 9; }
+    operator int(void) const { return 10; }
     MESH_WRITE_TO_FILE(std::ostream &o) { ost = &o; }
     MESH_WRITE_TO_FILE(void) {}
   };
   struct MESH_READ_FROM_FILE
   { 
     std::istream *ist;
-    operator int(void)  const { return 10; }
+    operator int(void)  const { return 11; }
     MESH_READ_FROM_FILE(std::istream &i) { ist = &i; }
     MESH_READ_FROM_FILE(void) {}
   };
   struct MESH_FEM_CHANGE
   { 
     void *ptr;
-    operator int(void)  const { return 11; }
+    operator int(void)  const { return 12; }
     MESH_FEM_CHANGE(void *p) : ptr(p) {}
     MESH_FEM_CHANGE(void) {}
   };
   struct MESH_FEM_DELETE
   { 
     void *ptr;
-    operator int(void)  const { return 12; }
+    operator int(void)  const { return 13; }
     MESH_FEM_DELETE(void *p) : ptr(p) {}
     MESH_FEM_DELETE(void) {}
   };
   struct MESH_FEM_TOUCH
   { 
     void *ptr;
-    operator int(void)  const { return 13; }
+    operator int(void)  const { return 14; }
     MESH_FEM_TOUCH(void *p) : ptr(p) {}
     MESH_FEM_TOUCH(void) {}
   };
@@ -153,6 +155,8 @@ namespace getfem
     public :
 
       virtual void receipt(const MESH_CLEAR           &)
+      { DAL_THROW(internal_error, "internal error");}
+      virtual void receipt(const MESH_DELETE          &)
       { DAL_THROW(internal_error, "internal error");}
       virtual void receipt(const MESH_ADD_POINT       &) 
       { DAL_THROW(internal_error, "internal error");}
@@ -277,7 +281,7 @@ namespace getfem
        */
       template<class ITER>
 	size_type add_simplex(dim_type dim, ITER ipts)
-      { return add_convex(bgeot::simplex_trans(dim, 1), ipts); }
+      { return add_convex(bgeot::simplex_geotrans(dim, 1), ipts); }
       /** Add a simplex of dimension dim to the mesh. 
        *          "it" is an iterator on a list of points of type base\_node.
        *          Return the index of the convex in the mesh.
@@ -359,6 +363,7 @@ namespace getfem
       int read_from_file(const std::string &name);
       int read_from_file(std::istream &ist);
      
+    ~getfem_mesh() { lmsg_sender().send(MESH_DELETE()); }
   };
 
   template<class ITER>
@@ -377,17 +382,17 @@ namespace getfem
   template<class ITER>
    size_type getfem_mesh::add_simplex_by_points(dim_type dim, ITER ipts)
   {
-    return add_convex_by_points(bgeot::simplex_trans(dim, 1), ipts);
+    return add_convex_by_points(bgeot::simplex_geotrans(dim, 1), ipts);
   }
 
   template<class ITER>
     size_type getfem_mesh::add_parallelepiped(dim_type dim, const ITER &ipts)
-  { return add_convex(bgeot::parallelepiped_trans(dim, 1), ipts); }
+  { return add_convex(bgeot::parallelepiped_geotrans(dim, 1), ipts); }
 
   template<class ITER>
     size_type getfem_mesh::add_parallelepiped_by_points
     (dim_type dim, const ITER &pts)
-  { return add_convex_by_points(bgeot::parallelepiped_trans(dim, 1), pts); }
+  { return add_convex_by_points(bgeot::parallelepiped_geotrans(dim, 1), pts); }
 
   template<class ITER>
     size_type getfem_mesh::add_parallelepiped_by_vectors
@@ -415,7 +420,7 @@ namespace getfem
   template<class ITER>
     size_type getfem_mesh::add_prism_by_points
     (dim_type dim, const ITER &pts)
-  { return add_convex_by_points(bgeot::prism_trans(dim, 1), pts); }
+  { return add_convex_by_points(bgeot::prism_geotrans(dim, 1), pts); }
 
 }  /* end of namespace getfem.                                             */
 

@@ -30,6 +30,7 @@
 
 
 #include <ftool.h>
+#include <ctype.h>
 #include <limits.h>
 #include <unistd.h>
 #include <time.h>
@@ -640,4 +641,5 @@ namespace ftool
       }
   }
   
+
 }

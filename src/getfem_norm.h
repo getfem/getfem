@@ -47,7 +47,7 @@ namespace getfem
     dal::dynamic_array<base_vector, 2> vval;
     base_tensor t;
     pfem pf1, pf1prec = NULL;
-    pintegration_method pim, pimprec = (bgeot::papprox_integration)(NULL);
+    bgeot::pintegration_method pim, pimprec = 0;
 
     bgeot::pgeometric_trans pgt, pgtprec = NULL;
     pmat_elem_type pme; pmat_elem_computation pmec = 0;
@@ -91,7 +91,7 @@ namespace getfem
     dal::dynamic_array<base_vector, 2> vval;
     base_tensor t;
     pfem pf1, pf1prec = NULL;
-    pintegration_method pim, pimprec = (bgeot::papprox_integration)(NULL);
+    bgeot::pintegration_method pim, pimprec = 0;
     bgeot::pgeometric_trans pgt, pgtprec = NULL;
     pmat_elem_type pme; pmat_elem_computation pmec = 0;
 

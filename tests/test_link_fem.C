@@ -14,6 +14,7 @@ using bgeot::base_vector;
 using bgeot::base_node;
 using bgeot::scalar_type;
 using bgeot::size_type;
+using bgeot::dim_type;
 
 typedef bgeot::smatrix<scalar_type> sparse_matrix_type;
 typedef bgeot::vsvector<scalar_type> linalg_vector;
@@ -40,7 +41,6 @@ struct lap_pb
 void lap_pb::init(void)
 {
   dal::bit_vector nn;
-  size_type i, j, k;
 
   /***********************************************************************/
   /* READING PARAMETER FILE                                              */
@@ -66,7 +66,7 @@ void lap_pb::init(void)
   std::vector<base_vector> vtab(N);
   std::vector<size_type> ref(N);
   std::fill(ref.begin(), ref.end(), NX1);
-  for (i = 0; i < N; i++)
+  for (dim_type i = 0; i < N; i++)
   { 
     vtab[i] = base_vector(N); vtab[i].fill(0.0);
     (vtab[i])[i] = ((i == 0) ? LX : ((i == 1) ? LY : LZ)) / scalar_type(NX1);
@@ -76,7 +76,7 @@ void lap_pb::init(void)
   mesh1.optimize_structure();
 
   std::fill(ref.begin(), ref.end(), NX2);
-  for (i = 0; i < N; i++)
+  for (dim_type i = 0; i < N; i++)
   { 
     vtab[i] = base_vector(N); vtab[i].fill(0.0);
     (vtab[i])[i] = ((i == 0) ? LX : ((i == 1) ? LY : LZ)) / scalar_type(NX2);
@@ -85,29 +85,32 @@ void lap_pb::init(void)
 					      vtab.begin(), ref.begin());
   mesh2.optimize_structure();
   cout << "Selecting finite element method.\n";
-
-  getfem::pintegration_method ppi;
+  char meth[500];
+  bgeot::pintegration_method ppi;
   switch (integration) {
-  case 0  : ppi = bgeot::simplex_poly_integration(N); break;
-  case 1  : ppi = bgeot::Newton_Cotes_approx_integration(N,KI); break;
-  case 2  : ppi = bgeot::Gauss_approx_integration((KI+1)/2);  break;
-  case 11 : ppi = bgeot::triangle1_approx_integration(); break;
-  case 12 : ppi = bgeot::triangle2_approx_integration(); break;
-  case 13 : ppi = bgeot::triangle3_approx_integration(); break;
-  case 14 : ppi = bgeot::triangle4_approx_integration(); break;
-  case 15 : ppi = bgeot::triangle5_approx_integration(); break;
-  case 16 : ppi = bgeot::triangle6_approx_integration(); break;
-  case 17 : ppi = bgeot::triangle7_approx_integration(); break;
-  case 21 : ppi = bgeot::tetrahedron1_approx_integration(); break;
-  case 22 : ppi = bgeot::tetrahedron2_approx_integration(); break;
-  case 23 : ppi = bgeot::tetrahedron3_approx_integration(); break;
-  case 25 : ppi = bgeot::tetrahedron5_approx_integration(); break;
+  case 0  : sprintf(meth, "IM_EXACT_SIMPLEX(%d)", N); break;
+  case 1  : sprintf(meth, "IM_NC(%d, %d)", N, KI); break;
+  case 2  : sprintf(meth, "IM_GAUSS1D(%d)", N); break;
+  case 11 : sprintf(meth, "IM_TRIANGLE(1)"); break;
+  case 12 : sprintf(meth, "IM_TRIANGLE(2)"); break;
+  case 13 : sprintf(meth, "IM_TRIANGLE(3)"); break;
+  case 14 : sprintf(meth, "IM_TRIANGLE(4)"); break;
+  case 15 : sprintf(meth, "IM_TRIANGLE(5)"); break;
+  case 16 : sprintf(meth, "IM_TRIANGLE(6)"); break;
+  case 17 : sprintf(meth, "IM_TRIANGLE(7)"); break;
+  case 21 : sprintf(meth, "IM_TETRAHEDRON(1)"); break;
+  case 22 : sprintf(meth, "IM_TETRAHEDRON(2)"); break;
+  case 23 : sprintf(meth, "IM_TETRAHEDRON(3)"); break;
+  case 25 : sprintf(meth, "IM_TETRAHEDRON(5)"); break;
   default : DAL_THROW(std::logic_error, "Undefined integration method");
   }
+  ppi = bgeot::int_method_descriptor(meth);
+  
+  sprintf(meth, "FEM_PK(%d,%d)", N, K);
   nn = mesh1.convex_index(N);
-  mef1.set_finite_element(nn, getfem::PK_fem(N, K), ppi);
+  mef1.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
   nn = mesh2.convex_index(N);
-  mef2.set_finite_element(nn, getfem::PK_fem(N, K), ppi);
+  mef2.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
   nn = mesh1.convex_index(N);
   meflink.set_finite_element(nn, getfem::virtual_link_fem(mef2, meflink, ppi),
 			     ppi);
@@ -129,9 +132,9 @@ void lap_pb::assemble(void)
 
   cout << "Matrice de masse\n";
   sum = 0.0;
-  for (int i = 0; i < RM1.nrows(); i++) { 
+  for (size_type i = 0; i < RM1.nrows(); i++) { 
     cout << "ligne " << i << " [ ";
-    for (int l = 0; l < RM1.nrows(); l++)
+    for (size_type l = 0; l < RM1.nrows(); l++)
       if (RM1(i, l) != 0.0) {
 	cout << "(" << l << "," << RM1(i, l) << ")  ";
 	sum += RM1(i, l);
@@ -146,9 +149,9 @@ void lap_pb::assemble(void)
   
   cout << "Matrice de masse\n";
   sum = 0.0; diff = 0.0;
-  for (int i = 0; i < RM2.nrows(); i++) { 
+  for (size_type i = 0; i < RM2.nrows(); i++) { 
     cout << "ligne " << i << " [ ";
-    for (int l = 0; l < RM2.nrows(); l++) {
+    for (size_type l = 0; l < RM2.nrows(); l++) {
       diff += dal::abs(RM2(i, l) - RM1(i, l));
       if (RM2(i, l) != 0.0) {
 	cout << "(" << l << "," << RM2(i, l) << ")  ";
@@ -170,7 +173,7 @@ void lap_pb::assemble(void)
 int main(int argc, char *argv[])
 {
   try {
-    
+
     lap_pb p;
     
     cout << "initialisation ...\n";

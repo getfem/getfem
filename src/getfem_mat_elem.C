@@ -43,17 +43,16 @@ namespace getfem
   struct _emelem_comp_light
   {
     pmat_elem_type pmt;
-    pintegration_method ppi;
+    bgeot::pintegration_method ppi;
     bgeot::pgeometric_trans pgt;
     bool operator < (const _emelem_comp_light &ls) const
     {
       if (pmt < ls.pmt) return true; if (pmt > ls.pmt) return false; 
-      if (ppi.method.ppi < ls.ppi.method.ppi) return true;
-      if (ppi.method.ppi > ls.ppi.method.ppi) return false; 
+      if (ppi < ls.ppi) return true; if (ppi > ls.ppi) return false; 
       if (pgt < ls.pgt) return true; return false;
     }
     _emelem_comp_light(pmat_elem_type pm,
-		   pintegration_method pi, bgeot::pgeometric_trans pg)
+		   bgeot::pintegration_method pi, bgeot::pgeometric_trans pg)
     { pmt = pm; ppi = pi; pgt = pg; }
     _emelem_comp_light(void) { }
   };
@@ -86,11 +85,11 @@ namespace getfem
     _emelem_comp_structure(const _emelem_comp_light &ls)
     { // optimisable ... !!
       pgt = ls.pgt;
-      pgp = geotrans_precomp(ls.pgt, &(ls.ppi.integration_points()));
+      pgp = geotrans_precomp(ls.pgt, &(ls.ppi->integration_points()));
       pme = ls.pmt;
-      ppi = ls.ppi.method.ppi;
-      pai = ls.ppi.method.pai;
-      is_ppi = ls.ppi.is_ppi;
+      ppi = ls.ppi->method.ppi;
+      pai = ls.ppi->method.pai;
+      is_ppi = ls.ppi->is_ppi;
       size_type k;
 
       // cout << "debut de construction\n";
@@ -405,7 +404,7 @@ namespace getfem
   static dal::FONC_TABLE<_emelem_comp_light, _emelem_comp_structure>
     *_tab__mat_elet = 0;
   
-  pmat_elem_computation mat_elem(pmat_elem_type pm, pintegration_method pi,
+  pmat_elem_computation mat_elem(pmat_elem_type pm, bgeot::pintegration_method pi,
 				 bgeot::pgeometric_trans pg)
   { 
     if (_tab__mat_elet == 0)

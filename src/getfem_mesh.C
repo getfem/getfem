@@ -110,9 +110,8 @@ namespace getfem
 
   size_type getfem_mesh::add_segment(size_type a, size_type b)
   { 
-    static bgeot::pgeometric_trans cs = bgeot::simplex_trans(1, 1);
     size_type ipt[2]; ipt[0] = a; ipt[1] = b;
-    return add_convex(cs, &(ipt[0]));
+    return add_convex(bgeot::simplex_geotrans(1, 1), &(ipt[0]));
   }
   
   size_type getfem_mesh::add_triangle(size_type a, 
@@ -186,7 +185,8 @@ namespace getfem
     size_type i;
     for (i << nn; i != size_type(-1); i << nn)
       if (!(trans_exists[i])) {
-	gtab[i] = bgeot::associated_trans(structure_of_convex(i));
+	DAL_THROW(internal_error, "A refaire ...");
+	//	gtab[i] = bgeot::associated_trans(structure_of_convex(i));
 	trans_exists[i] = true;
       }
 

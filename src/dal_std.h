@@ -73,8 +73,10 @@
 
 #if (!defined(__GNUC__) || __GNUC__ < 3)
 # include <strstream>
+# define _STRINGSTREAM std::strstream
 #else
-# include <sstream> 
+# include <sstream>
+# define _STRINGSTREAM std::stringstream
 #endif
 using std::endl;
 using std::cout;

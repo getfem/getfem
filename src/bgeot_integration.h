@@ -1,9 +1,7 @@
-/* -*- c++ -*- (enables emacs c++ mode)                                    */
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Basic GEOmetric Tool  (bgeot)                                */
-/* File    :  bgeot_approx_integration.h : approximated  integration       */
-/*               on convexes of reference                                  */
+/* File    :  bgeot_integration.h : exact and approximative integration.   */
 /*                                                                         */
 /* Date : December 17, 2000.                                               */
 /* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
@@ -30,18 +28,54 @@
 /* *********************************************************************** */
 
 
-#ifndef __BGEOT_APPROX_INTEGRATION_H
-#define __BGEOT_APPROX_INTEGRATION_H
+#ifndef __BGEOT_INTEGRATION_H
+#define __BGEOT_INTEGRATION_H
 
-#include <dal_tree_sorted.h>
-#include <bgeot_poly_integration.h>
+#include <bgeot_poly.h>
 #include <bgeot_convex_ref.h>
-
+#include <dal_tree_sorted.h>
 
 namespace bgeot
 {
+  /** Description of an exact integration of polynomials.
+   *  This class is not to be manipulate by itself. Use ppoly_integration and
+   *  the functions written to produce the basic descriptions.
+   */
+  class poly_integration
+  {
+    protected :
 
-  /** Description of an approximate integration of polynomials of
+      pconvex_structure cvs;
+
+      std::vector<scalar_type> int_monomials;
+      std::vector< std::vector<scalar_type> > int_face_monomials;
+
+    public :
+
+      /// Dimension of convex of reference.
+      dim_type dim(void) const { return cvs->dim(); }
+      /// {Structure of convex of reference.  
+      pconvex_structure structure(void) const { return cvs; }
+
+      virtual scalar_type int_monomial(const power_index &power) const = 0;
+      virtual scalar_type int_monomial_on_face(const power_index &power, 
+					       short_type f) const = 0;
+
+      /// Evaluate the integral of the polynomial P on the reference element.
+      scalar_type int_poly(const polynomial<scalar_type> &P) const;
+      /** Evaluate the integral of the polynomial P on the face f of the
+       *    reference element.
+       */
+      scalar_type int_poly_on_face(const polynomial<scalar_type> &P,
+				   short_type f) const;
+
+      virtual ~poly_integration() {}
+
+  };
+
+  typedef const poly_integration *ppoly_integration;
+
+   /** Description of an approximate integration of polynomials of
    *  several variables on a reference element.
    *  This class is not to be manipulate by itself. Use papprox\_integration
    *  and the functions written to produce the basic descriptions.
@@ -167,7 +201,80 @@ namespace bgeot
 
   //@}
 
-}  /* end of namespace bgeot.                                              */
+
+  struct integration_method
+  {
+    union
+    {
+      ppoly_integration ppi;
+      papprox_integration pai;
+    } method;
+    bool is_ppi;
+
+    const stored_point_tab &integration_points(void) const { 
+      if (is_ppi)
+	return *(org_stored_point_tab(method.ppi->structure()->dim()));
+      else 
+	return method.pai->integration_points();
+    }
+
+    pconvex_structure structure(void) const { 
+      if (is_ppi) return method.ppi->structure();
+      else return method.pai->structure();
+    }
+
+    integration_method(ppoly_integration p)
+    { method.ppi = p; is_ppi = true; }
+
+    integration_method(papprox_integration p)
+    { method.pai = p; is_ppi = false; }
+
+    bool operator >(const integration_method& p) const
+    { return method.ppi > p.method.ppi; } 
+    bool operator <(const integration_method& p) const
+    { return method.ppi < p.method.ppi; } 
+    bool operator !=(const integration_method& p) const
+    { return method.ppi != p.method.ppi; } 
+    bool operator ==(const integration_method& p) const
+    { return method.ppi == p.method.ppi; } 
+
+    integration_method(void) { method.pai = 0; }
+    ~integration_method(void) {
+      if (method.pai != 0)
+	if (is_ppi) delete method.ppi; else delete method.pai;
+    }
+
+  };
+
+  typedef const integration_method *pintegration_method;
 
 
-#endif /* __BGEOT_APPROX_INTEGRATION_H                                     */
+   pintegration_method int_method_descriptor(std::string name);
+   /* List :
+    * IM_EXACT_SIMPLEX(n)        : exact integration on simplexes.
+    * IM_PRODUCT(a, b)           : product of two integration methods
+    * IM_EXACT_PARALLELEPIPED(n) : exact integration on parallelepipeds
+    * IM_EXACT_PRISM(n)          : exact integration on prisms
+    * IM_GAUSS1D(K)       : Gauss method on the segment, order K
+    * IM_NC(N,K)          : Newton-Cotes approximative integration 
+    *                       on simplexes, order K
+    * IM_NC_PARALLELEPIPED(N,K) :  product of Newton-Cotes integration 
+    *                              on parallelepipeds
+    * IM_NC_PRISM(N,K)    : product of Newton-Cotes integration on prisms
+    * IM_GAUSS_PARALLELEPIPED(N,K) :  product of Gauss1D integration
+    *                                 on parallelepipeds
+    * IM_TRIANGLE(K)      : Gauss methods on triangles (K=1..7)
+    * IM_QUAD(K)          : Gauss methods on quadrilaterons (K=2, 3 or 5)
+    * IM_TETRAHEDRON(K)   : Gauss methods on tetrahedrons (K=1, 2, 3 or 5)
+    */
+
+   pintegration_method exact_simplex_im(size_type n);
+  pintegration_method exact_parallelepiped_im(size_type n);
+  pintegration_method exact_prism_im(size_type n);
+
+   std::string name_of_int_method(pintegration_method p);
+
+}  /* end of namespace bgeot.                                             */
+
+
+#endif /* __BGEOT_INTEGRATION_H                                           */

@@ -139,24 +139,21 @@ namespace bgeot
   //@{
 
   typedef const geometric_trans *pgeometric_trans;
-   
-  /// Gives the classical transformation of degree r in dimension n.
-  pgeometric_trans simplex_trans(dim_type n, short_type r);
-  /// Gives the tensorial product of transformations *pgt1 and *pgt2.
-  pgeometric_trans convex_product_trans(pgeometric_trans, pgeometric_trans);
-  /** Gives a product of transformations *pgt1 and *pgt2 which
-   *          remains linear if *pgt1 and *pgt2 are.
+
+  pgeometric_trans simplex_geotrans(size_type n, short_type k);
+  pgeometric_trans parallelepiped_geotrans(size_type n, short_type k);
+  pgeometric_trans prism_geotrans(size_type n, short_type k);
+
+  pgeometric_trans geometric_trans_descriptor(std::string name);
+  /* List :
+   * GT_PK(N,K)   : Transformation on simplexes, dim N, degree K
+   * GT_QK(N,K)   : Transformation on parallelepipeds, dim N, degree K
+   * GT_PRISM(N,K)          : Transformation on prisms, dim N, degree K
+   * GT_PRODUCT(a,b)        : tensorial product of two transformations
+   * GT_LINEAR_PRODUCT(a,b) : Linear tensorial product of two transformations
    */
-  pgeometric_trans parallelepiped_trans(dim_type n, short_type r);
-  inline pgeometric_trans prism_trans(dim_type n, short_type r) {
-    return convex_product_trans(simplex_trans(n-1, r), simplex_trans(1, r));
-  }
 
-  pgeometric_trans associated_trans(pconvex_structure cvs);
-
-  pgeometric_trans linear_product_trans(pgeometric_trans, pgeometric_trans);
-
-
+  std::string name_of_geometric_trans(pgeometric_trans p);
 
   /* norm of returned vector is the ratio between the face surface on
      the reel element and the face surface on the reference element 
