@@ -434,7 +434,7 @@ namespace getfem
       for (size_type i = 0; i < nb; ++i)
       {
 	size_type dof_t = itab[i];
-	size_type nrep  = qdim / pf_s->get_target_dim();
+	size_type nrep  = qdim / pf_s->target_dim();
 	if (ddl_touched[dof_t])
 	{ // inverser les deux boucles pour gagner du temps ?
 	  // Il faut verifier que le ddl est bien de Lagrange ...
