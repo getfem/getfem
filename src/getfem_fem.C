@@ -943,7 +943,6 @@ namespace getfem
  
     DAL_THROW(to_be_done_error,
 	      "This element is not taken into account. Contact us");
-    return NULL;
   }
 
   

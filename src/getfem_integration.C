@@ -1617,6 +1617,8 @@ namespace getfem
   /* ******************************************************************** */
   /*    Naming system                                                     */
   /* ******************************************************************** */
+  
+  pintegration_method structured_composite_int_method(im_param_list &);
 
   static ftool::naming_system<integration_method> *_im_naming_system = 0;
   
@@ -1634,6 +1636,8 @@ namespace getfem
     _im_naming_system->add_suffix("TRIANGLE", approx_triangle);
     _im_naming_system->add_suffix("QUAD", approx_quad);
     _im_naming_system->add_suffix("TETRAHEDRON", approx_tetra);
+    _im_naming_system->add_suffix("STRUCTURED_COMPOSITE",
+				  structured_composite_int_method);
   }
   
   pintegration_method int_method_descriptor(std::string name) {

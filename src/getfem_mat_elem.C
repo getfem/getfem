@@ -300,8 +300,7 @@ namespace getfem
 	B32.resize(N*N, P*P); B2.fill(0.0);
       }
       std::fill(mref_count.begin(), mref_count.end(), 0);
-      if (ir > 0)
-      {
+      if (ir > 0) {
 	un.resize(P); up.resize(N);
 	un = pgt->normals()[ir-1];
       }
@@ -320,8 +319,7 @@ namespace getfem
 	J = ::sqrt(bgeot::mat_inv_cholesky(CS, TMP1));
 	bgeot::mat_product(K, CS, B);
 
-	if (ir > 0)
-	{
+	if (ir > 0) {
 	  bgeot::mat_vect_product(B, un, up);
 	  J *= bgeot::vect_norm2(up);
 	}
@@ -347,8 +345,7 @@ namespace getfem
 	  short_type *p = &(mref_count[indcomp(ip, hi, 0)]);
 	  short_type j, k;
 
-	  if (grad_reduction.size() > 0)
-	  {
+	  if (grad_reduction.size() > 0) {
 	    std::deque<short_type>::const_iterator it = grad_reduction.begin(),
 	      ite = grad_reduction.end();
 	    for ( ; it != ite; ++it) {

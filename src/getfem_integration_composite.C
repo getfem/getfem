@@ -31,6 +31,7 @@
 #include <getfem_poly_composite.h>
 #include <getfem_integration.h>
 #include <getfem_mesh_fem.h>
+#include <ftool_naming.h>
 
 namespace getfem
 { 
@@ -38,18 +39,23 @@ namespace getfem
 						  bgeot::pconvex_ref cr) {
     dal::bit_vector nn = mf.convex_index();
     approx_integration *p = new approx_integration(cr);
+    mesh_precomposite mp(mf.linked_mesh());
+
     for (size_type cv = nn.take_first(); cv != size_type(-1); cv << nn) {
+
       pintegration_method pim = mf.int_method_of_element(cv);
       bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
-      if (pim->is_exact() || !(pgt->is_linear()))
+      if (pim->is_exact() || !(pgt->is_linear())) {
+	delete p;
 	DAL_THROW(failure_error,
 		  "Approx integration and linear transformation only.");
+      }
       papprox_integration pai = pim->approx_method();
       
       for (size_type j = 0; j < pai->nb_points_on_convex(); ++j) {
 	base_node pt = pgt->transform(pim->integration_points()[j],
 				      mf.linked_mesh().points_of_convex(cv));
-	p->add_point(pt, pai->coeff(j));
+	p->add_point(pt, pai->coeff(j) * mp.det[cv]);
       }
       for (short_type f = 0; f < pgt->structure()->nb_faces(); ++f) {
 
@@ -66,11 +72,13 @@ namespace getfem
 	    { f2 = f3; break;}
 	}
 	if (f2 != short_type(-1)) {
+	  scalar_type coeff_mul
+	    = bgeot::vect_norm2(mp.gtrans[cv]*pgt->normals()[f]) * mp.det[cv];
 	  for (size_type j = 0; j < pai->nb_points_on_face(f); ++j) {
 	    base_node pt = pgt->transform
 	      (pai->point_on_face(f, j), 
 	       mf.linked_mesh().points_of_convex(cv));
-	    p->add_point(pt, pai->coeff_on_face(f, j), f2);
+	    p->add_point(pt, pai->coeff_on_face(f, j) * coeff_mul, f2);
 	  }
 	}
 
@@ -79,6 +87,32 @@ namespace getfem
     }
     p->valid_method();
     return p;
+  }
+
+  typedef ftool::naming_system<integration_method>::param_list im_param_list;
+
+  pintegration_method structured_composite_int_method(im_param_list &params) {
+    if (params.size() != 2)
+      DAL_THROW(failure_error, 
+	  "Bad number of parameters : " << params.size() << " should be 2.");
+    if (params[0].type() != 1 || params[1].type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    pintegration_method pim = params[0].method();
+    int k = int(::floor(params[1].num() + 0.01));
+    if (pim->is_exact() || k <= 0 || k > 150 || double(k) != params[1].num())
+      DAL_THROW(failure_error, "Bad parameters");
+
+    pgetfem_mesh pm;
+    pmesh_precomposite pmp;
+
+    structured_mesh_for_convex(pim->approx_method()->ref_convex(), k, pm, pmp);
+
+    mesh_fem mf(*pm);
+    mf.set_finite_element(pm->convex_index(),
+			  classical_fem(pm->trans_of_convex(0), 0), pim);
+
+    return new integration_method
+      (composite_approx_int_method(mf, pim->approx_method()->ref_convex()));
   }
   
 }  /* end of namespace getfem.                                            */

@@ -429,6 +429,8 @@ namespace getfem
     (dim_type dim, const ITER &pts)
   { return add_convex_by_points(bgeot::prism_geotrans(dim, 1), pts); }
 
+  typedef getfem_mesh *pgetfem_mesh;
+
 }  /* end of namespace getfem.                                             */
 
 

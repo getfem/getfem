@@ -55,7 +55,6 @@ namespace getfem
     std::vector<pdof_description> dofd(mf.nb_dof());
     
     for (size_type cv = nn.take_first(); cv != size_type(-1); cv << nn) {
-      bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
       pfem pf1 = mf.fem_of_element(cv);
       if (!(pf1->is_equivalent() && pf1->is_polynomial())) {
 	delete p;
@@ -67,7 +66,6 @@ namespace getfem
       for (size_type k = 0; k < pf->nb_dof(); ++k) {
 	size_type igl = mf.ind_dof_of_element(cv)[k];
 	base_poly fu = pf->base()[k];
-	// transformation de fu
 	base[igl].poly_of_subelt(cv) = fu;
 	dofd[igl] = pf->dof_types()[k];
       }

@@ -47,6 +47,7 @@ namespace getfem
     const getfem_mesh *mesh;
     PTAB vertexes;
     std::vector<base_matrix> gtrans;
+    std::vector<scalar_type> det;
     std::vector<base_node> orgs;
     mutable std::vector<bool> elt;
     
@@ -58,6 +59,8 @@ namespace getfem
     
     mesh_precomposite(const getfem_mesh &m);
   };
+
+  typedef const mesh_precomposite *pmesh_precomposite;
 
   class polynomial_composite {
 
@@ -118,6 +121,10 @@ namespace getfem
     }
     DAL_THROW(internal_error, "Element not found in composite polynomial.");
   }
+
+  void structured_mesh_for_convex(bgeot::pconvex_ref cvr, short_type k,
+				  pgetfem_mesh &pm, pmesh_precomposite &pmp);
+
   
 }  /* end of namespace getfem.                                            */
 

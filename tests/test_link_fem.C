@@ -91,6 +91,8 @@ void lap_pb::init(void)
   case 0  : sprintf(meth, "IM_EXACT_SIMPLEX(%d)", N); break;
   case 1  : sprintf(meth, "IM_NC(%d, %d)", N, KI); break;
   case 2  : sprintf(meth, "IM_GAUSS1D(%d)", N); break;
+  case 3  : sprintf(meth, "IM_STRUCTURED_COMPOSITE(IM_NC(%d, %d), %d)",
+		    N, 2*K, KI); break;
   case 11 : sprintf(meth, "IM_TRIANGLE(1)"); break;
   case 12 : sprintf(meth, "IM_TRIANGLE(2)"); break;
   case 13 : sprintf(meth, "IM_TRIANGLE(3)"); break;
