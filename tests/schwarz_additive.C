@@ -16,103 +16,79 @@ using bgeot::base_node;
 using bgeot::size_type;
 using bgeot::scalar_type;
 
-typedef gmm::rsvector<scalar_type>     sparse_vector;
-typedef gmm::row_matrix<sparse_vector> general_sparse_matrix;
-typedef gmm::row_matrix<sparse_vector> symmetric_sparse_matrix;
-typedef std::vector<scalar_type>       linalg_vector;
-
+typedef gmm::row_matrix<gmm::rsvector<scalar_type> > general_sparse_matrix;
+typedef std::vector<scalar_type>                     linalg_vector;
 
 
 struct pb_data {
   getfem::getfem_mesh mesh;
   getfem::getfem_mesh mesh_coarse;
-  getfem::mesh_fem mef_coarse;
 
   getfem::mesh_fem mef;
   getfem::mesh_fem mef_data;
+  getfem::mesh_fem mef_coarse;
 
-  double PG, mu, lambda, rho;
+  double mu, lambda, rho, gravity;
   double LX, LY, LZ, residu, overlap;
-  int NX, N, NXCOARSE, USECOARSE;
-  int K;     /* finite element degree.                                    */
+  int NX, N, NXCOARSE, USECOARSE, K;
   base_vector D;
 
   std::vector<size_type> nsdm;
 
-  symmetric_sparse_matrix RM; /* stifness matrix.                         */
+  general_sparse_matrix RM;   /* stifness matrix.                         */
   linalg_vector U, F;         /* Unknown and right hand side.             */
   int solver;
 
-  std::string datafilename;
-
   void assemble(void);
-  void init(void);
+  void init(ftool::md_param &params);
 
   int solve_cg(void);
   int solve_schwarz(int);
 
-  int solve(void) {
-    switch (solver) {
-    case 0 : return solve_cg();  
-    case 1 : return solve_schwarz(1); 
-    case 2 : return solve_schwarz(2); 
-    }
-    return -1;
-  }
+  int solve(void)
+  { if (solver == 0) return solve_cg(); else return solve_schwarz(solver); }
 
-  pb_data(void) : mef_coarse(mesh_coarse), mef(mesh), mef_data(mesh) {}
+  base_vector vol_force(const base_node &x)
+  { base_vector res(x.size()); res[N-1] = -rho*gravity; return res; }
+
+  pb_data(void) : mef(mesh), mef_data(mesh), mef_coarse(mesh_coarse)  {}
 };
 
 ftool::md_param PBSTFR_PARAM;
-double gravity = 9.81, prho = 1.0;
 
-
-base_vector second_membre(const base_node &x) {
-  int N = x.size();
-  base_vector res(N);
-  double z = 0; for (int i = 0; i < N-1; i++) z += x[i];
-  res.fill(0.0); res[N-1] = -prho*gravity;
-  return res;
-}
-
-void pb_data::init(void) {
-  dal::bit_vector nn;
-  int i, j, k;
+void pb_data::init(ftool::md_param &params) {
 
   /***********************************************************************/
   /*  READING PARAMETER FILE.                                            */
   /***********************************************************************/
   
   /* parametres physiques */
-  N = PBSTFR_PARAM.int_value("N", "Dimension");
-  mu = PBSTFR_PARAM.real_value("MU", "Stiffness parameter mu");
-  PG = PBSTFR_PARAM.real_value("PG", "G");
-  prho = rho = PBSTFR_PARAM.real_value("RHO", "RHO");
-  gravity = PG * rho;
-  lambda = PBSTFR_PARAM.real_value("LAMBDA", "lambda");
+  N = params.int_value("N", "Dimension");
+  mu = params.real_value("MU", "Stiffness parameter mu");
+  gravity = params.real_value("PG", "G");
+  rho = params.real_value("RHO", "RHO");
+  lambda = params.real_value("LAMBDA", "lambda");
   D.resize(N); D.fill(0.0);
-  D[N-1] = PBSTFR_PARAM.real_value("D", "Dirichlet condition");
+  D[N-1] = params.real_value("D", "Dirichlet condition");
   
   /* parametres numeriques */
-  LX = PBSTFR_PARAM.real_value("LX", "Size in X");
-  LY = PBSTFR_PARAM.real_value("LY", "Size in Y");
-  LZ = PBSTFR_PARAM.real_value("LZ", "Size in Y");
-  NX = PBSTFR_PARAM.int_value("NX", "Nomber of space step ");
-  NXCOARSE = PBSTFR_PARAM.int_value("NXCOARSE", "Nombre of space step ");
-  USECOARSE = PBSTFR_PARAM.int_value("USECOARSE", "Coarser mesh or not");
-  residu = PBSTFR_PARAM.real_value("RESIDU", "residu");
-  overlap = PBSTFR_PARAM.real_value("OVERLAP", "overlap");
-  K = PBSTFR_PARAM.int_value("K", "Degree");
-  solver = PBSTFR_PARAM.int_value("SOLVER", "solver");
+  LX = params.real_value("LX", "Size in X");
+  LY = params.real_value("LY", "Size in Y");
+  LZ = params.real_value("LZ", "Size in Y");
+  NX = params.int_value("NX", "Nomber of space step ");
+  NXCOARSE = params.int_value("NXCOARSE", "Nombre of space step ");
+  USECOARSE = params.int_value("USECOARSE", "Coarser mesh or not");
+  residu = params.real_value("RESIDU", "residu");
+  overlap = params.real_value("OVERLAP", "overlap");
+  K = params.int_value("K", "Degree");
+  solver = params.int_value("SOLVER", "solver");
   nsdm.resize(std::max(3, N));
-  nsdm[0] = PBSTFR_PARAM.int_value("NSDMX", "Nomber of sub-domains");
-  nsdm[1] = PBSTFR_PARAM.int_value("NSDMY", "Nombre of sub-domains");
-  nsdm[2] = PBSTFR_PARAM.int_value("NSDMZ", "Nombre of sub-domains");
+  nsdm[0] = params.int_value("NSDMX", "Nomber of sub-domains");
+  nsdm[1] = params.int_value("NSDMY", "Nombre of sub-domains");
+  nsdm[2] = params.int_value("NSDMZ", "Nombre of sub-domains");
   for (int i = 3; i < N; ++i) nsdm[i] = nsdm[2];
   
-  datafilename = std::string(PBSTFR_PARAM.string_value("ROOTFILENAME",
-			     "file name"));
-  std::string meshname(PBSTFR_PARAM.string_value("MESHNAME",
+  std::string meshname(params.string_value("MESHNAME",
 			     "mesh file name"));
   std::cout << "\n\n";
 
@@ -129,8 +105,7 @@ void pb_data::init(void) {
     base_node org(N); org.fill(0.0);
     std::vector<bgeot::base_small_vector> vtab(N);
     std::vector<size_type> ref(N); std::fill(ref.begin(), ref.end(), NX);
-    for (i = 0; i < N; i++)
-    { 
+    for (int i = 0; i < N; i++) { 
       vtab[i] = bgeot::base_small_vector(N); vtab[i].fill(0.0);
       (vtab[i])[i] = ((i == 0) ? LX : ((i == 1) ? LY : LZ)) / scalar_type(NX);
     }
@@ -138,14 +113,11 @@ void pb_data::init(void) {
 						&(vtab[0]), &(ref[0]));
   }
 
-
-
-  {
+  if (USECOARSE) { // coarse mesh
     base_node org(N); org.fill(0.0);
     std::vector<bgeot::base_small_vector> vtab(N);
     std::vector<size_type> ref(N); std::fill(ref.begin(), ref.end(), NXCOARSE);
-    for (i = 0; i < N; i++)
-    { 
+    for (int i = 0; i < N; i++) { 
       vtab[i] = bgeot::base_small_vector(N); vtab[i].fill(0.0);
       (vtab[i])[i] = 
 	((i == 0) ? LX : ((i == 1) ? LY : LZ)) / scalar_type(NXCOARSE);
@@ -157,7 +129,7 @@ void pb_data::init(void) {
   mesh.trans_of_convex(0);
   mesh.optimize_structure();
 
-  nn = mesh.convex_index(N);
+  dal::bit_vector nn = mesh.convex_index(N);
   char method[500];
   sprintf(method, "IM_EXACT_SIMPLEX(%d)", N);
   getfem::pintegration_method ppi = getfem::int_method_descriptor(method);
@@ -166,21 +138,19 @@ void pb_data::init(void) {
   mef.set_finite_element(nn, getfem::fem_descriptor(method), ppi);
   mef_coarse.set_finite_element(mesh_coarse.convex_index(N),
 				getfem::fem_descriptor(method), ppi);
-  sprintf(method, "FEM_PK(%d, %d)", N, K);
   mef_data.set_finite_element(nn, getfem::fem_descriptor(method), ppi);
   mef.set_qdim(N);
   mef_coarse.set_qdim(N);
 
   nn = mesh.convex_index(N);
   base_vector un(N);
-  for (j << nn; j >= 0; j << nn) {
-    k = mesh.structure_of_convex(j)->nb_faces();
-    for (i = 0; i < k; i++) {
+  for (int j = nn.take_first(); j >= 0; j << nn) {
+    int k = mesh.structure_of_convex(j)->nb_faces();
+    for (int i = 0; i < k; i++) {
       if (bgeot::neighbour_of_convex(mesh, j, i).empty()) {
 	gmm::copy(mesh.normal_of_face_of_convex(j, i, 0), un);
 	un /= bgeot::vect_norm2(un);	
-	if (dal::abs(un[N-1] - 1.0) < 1.0E-3)
-	  mef.add_boundary_elt(0, j, i);
+	if (dal::abs(un[N-1] - 1.0) < 1.0E-3) mef.add_boundary_elt(0, j, i);
       }
     }
   }
@@ -192,11 +162,9 @@ void pb_data::assemble(void) {
   size_type nb_dof_data = mef_data.nb_dof();
   dal::bit_vector ddlD = mef.dof_on_boundary(0);
  
-  F = linalg_vector(nb_dof);
-  gmm::clear(F);
-  U = linalg_vector(nb_dof);
-  gmm::clear(U);
-  RM = symmetric_sparse_matrix(nb_dof, nb_dof);
+  F.resize(nb_dof); gmm::clear(F);
+  U.resize(nb_dof); gmm::clear(U);
+  gmm::resize(RM, nb_dof, nb_dof);
 
   std::cout << "Assembly of stiffness matrix" << endl;
 
@@ -209,39 +177,36 @@ void pb_data::assemble(void) {
   linalg_vector STF(N * nb_dof_data);
   for (size_type j = 0; j < nb_dof_data; j++)
     for (int k = 0; k < N; k++)
-      STF[j*N + k] = (second_membre(mef_data.point_of_dof(j)))[k];
+      STF[j*N + k] = (vol_force(mef_data.point_of_dof(j)))[k];
   getfem::asm_source_term(F, mef, mef_data, STF);
   
   linalg_vector UD(nb_dof);
   for (size_type j = 0; j < nb_dof/N; j++)
     for (size_type k = 0; k < size_type(N); k++) UD[j*N + k] = D[k];
-
   getfem::assembling_Dirichlet_condition(RM, F, mef, 0, UD);
 }
 
 std::vector<size_type> extract_sub_domain(const getfem::getfem_mesh &mesh,
-					  getfem::mesh_fem &mef,
-					  const base_vector &min,
-					  const base_vector &max) {
-  size_type i, j;
-  const base_node *pt;
+      getfem::mesh_fem &mef,const base_vector &min,const base_vector &max) {
+
   dal::bit_vector mm = mesh.convex_index(), nn;
-  for (i << mm; i != size_type(-1); i << mm) {
+  for (size_type i = mm.take_first(); i != size_type(-1); i << mm) {
     bool in = false;
-    for (j = 0; j < mesh.nb_points_of_convex(i) && !in; ++j) {
-      pt = &(mesh.points_of_convex(i)[j]);
+    for (size_type j = 0; j < mesh.nb_points_of_convex(i) && !in; ++j) {
+      const base_node *pt = &(mesh.points_of_convex(i)[j]);
       in = true;
       for (size_type k = 0; k < pt->size(); ++k)
 	if ((*pt)[k] <  min[k] || (*pt)[k] > max[k])
 	  { in = false; break; }
     }
     if (in) {
-      for (j = 0; j < mef.nb_dof_of_element(i); ++j)
+      for (size_type j = 0; j < mef.nb_dof_of_element(i); ++j)
 	nn.add(mef.ind_dof_of_element(i)[j]);
     }
   }
   std::vector<size_type> res(nn.card());
-  for (i << nn, j = 0; i != size_type(-1); i << nn, ++j) res[j] = i;
+  for (size_type i = nn.take_first(), j = 0; i != size_type(-1); i << nn, ++j)
+    res[j] = i;
   return res;
 }
 
@@ -306,28 +271,26 @@ int pb_data::solve_schwarz(int version) {
 	      gmm::ilut_precond<general_sparse_matrix>(10, 1E-7), vB, iter,
 				     gmm::using_gmres(), gmm::using_gmres());
   }
-
   return 0;
 }
 
   
-class exception_cb : public dal::exception_callback  {
-   public:
+struct exception_cb : public dal::exception_callback  {
    virtual void callback(const std::string& msg)
    { cerr << msg << endl; *(int *)(0) = 0; } 
 };
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
    exception_cb cb;
    dal::exception_callback::set_exception_callback(&cb);
 
   try {
+    ftool::md_param params;
     pb_data p;
     
     std::cout << "initialization ...\n";
-    PBSTFR_PARAM.read_command_line(argc, argv);
-    p.init();
+    params.read_command_line(argc, argv);
+    p.init(params);
     p.mesh.stat();
     
     p.assemble();
@@ -335,12 +298,10 @@ int main(int argc, char *argv[])
     double rutime = ftool::uclock_sec();
     int itebilan = p.solve();
     std::cout << "resolution time : " << ftool::uclock_sec() - rutime << endl;
-
     cout << "itebilan = " << itebilan << endl;
 
     gmm::mult(p.RM, gmm::scaled(p.U, -1.0), p.F, p.F);
     cout << "final residu : " << gmm::vect_norm2(p.F) << endl;
-
   }
   DAL_STANDARD_CATCH_ERROR;
   return 0;

@@ -61,7 +61,6 @@ namespace gmm {
     gmm::dense_matrix<T> H(restart+1, restart);
 
     mult(M,b,r);
-    cout << "norm(r)=" << gmm::vect_norm2(r) << "\n";
     outer.set_rhsnorm(gmm::vect_norm2(r));
     if (outer.get_rhsnorm() == 0.0) { clear(x); return; }
     
@@ -103,7 +102,6 @@ namespace gmm {
       gmm::mult(A, gmm::scaled(x, -T(1)), b, w);
       gmm::mult(M, w, r);
       beta = gmm::vect_norm2(r);
-      cout << "beta = " << beta << ", " << outer.get_rhsnorm() << ", " << outer.get_resmax() << "\n";
     }
   }
 
