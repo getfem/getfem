@@ -497,6 +497,6 @@ echo
 for i in $(ls $srcdir/tests/meshes/*.mesh); do
 	j="tests/meshes/"$(basename $i)
 	if test ! -L $j && test ! -f $j; then
-		ln -s $i $j
+		ln -s ../../$i $j
 	fi
 done
