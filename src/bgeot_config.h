@@ -32,7 +32,7 @@
 #ifndef __BGEOT_CONFIG_H
 #define __BGEOT_CONFIG_H
 
-#include <dal_std.h>
+#include <dal_except.h>
 
 namespace bgeot
 {

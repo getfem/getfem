@@ -29,7 +29,7 @@
 /* Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.         */
 /*                                                                         */
 /* *********************************************************************** */
-#include <dal_std.h>
+#include <dal_except.h>
 
 namespace dal {
   static exception_callback *exc_cback = 0;
