@@ -43,7 +43,11 @@ SUPLDFLAGS=""
 
 AC_LANG_CPLUSPLUS
 
-
+if test "x$prefix" = "xNONE"; then
+  GFPREFIX=/usr/local;
+else
+  GFPREFIX="$prefix";
+fi;
 
 dnl AC_CXX_FULL_SPECIALIZATION_SYNTAX (c)Luc Maisonobe v 1.1.1.1 (2001/07/26)     0.5.41 
 dnl with some modification to test partial specialization
@@ -150,9 +154,9 @@ AC_SUBST([LIBTOOL_DEPS])
 
 dnl -----------------------------QD TESTS--------------------------------
 AC_ARG_WITH(qd-lib-dir, [  --with-qd-lib-dir       directory in which the libqd.a can be found],
-	QDLIB="$withval/libqd.a")
+	QDLIB="$withval/libqd.a",QDLIB="$GFPREFIX/lib/libqd.a")
 AC_ARG_WITH(qd-include-dir, [  --with-include-dir      directory in which the qd.h header can be found],
-	QDINC="-I $withval")
+	QDINC="-I $withval",QDINC="-I $GFPREFIX/include")
 AC_ARG_ENABLE(qd,
  [  --enable-qd             enable the use of the qd library (double-double precision, usefull for high order FEMs)],
  [ if   test "x$enableval" = "xyes" ; then
@@ -160,9 +164,10 @@ AC_ARG_ENABLE(qd,
    fi
  ], [useQDlib="no"])
 if test "x$useQDlib" = "xyes" ; then  
-  LIBS="$LIBS $QDLIB"
+  LIBS="$LIBS $QDLIB -lm"
   CXXFLAGS="$CXXFLAGS $QDINC"
   AC_TRY_RUN([
+#define NO_INLINE
 #include <qd.h>
 #include <dd.h>
 #include <x86.h>

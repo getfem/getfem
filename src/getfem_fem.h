@@ -188,7 +188,7 @@ namespace getfem
     virtual void hess_base_value(const base_node &x, base_tensor &t) const = 0;
     
     virtual size_type index_of_already_numerate_dof(size_type, size_type) const
-      { DAL_THROW(internal_error, "internal error."); return 0; }
+      { DAL_THROW(internal_error, "internal error."); }
     bool do_grad_reduction(void) const { return do_grad; }
 
     virtual_fem(void) { 

@@ -37,6 +37,7 @@
 #include <dal_except.h>
 
 #ifdef HAVE_QDLIB
+#define NO_INLINE
 #include <dd.h>
 #include <x86.h>
 #endif
