@@ -150,20 +150,26 @@ namespace getfem
 	  size_type dof_p = mf_p.ind_dof_of_element(cv)[j];
 	  for (size_type l = 0; l < N; l++) {
 	    // loop over derivation directions (d/dx, d/dy ..)
-	    for (size_type m = 0; m < N; m++) {
+	    //	    for (size_type m = 0; m < N; m++) {
 	      // loop over vector base function components (phi_x, phi_y ...)
 	      for (size_type k = 0; k < nbdof_u; k++) {
-		if (m == l) {
+		//		if (m == l) {
+		  assert(finite(DATA[dof_d])); 
+		  
+		  assert(p < t.end());
+		  
+		  assert(finite(*p));
 		  
 		  size_type dof_u = mf_u.ind_dof_of_element(cv)[k];
-		  B(dof_u*N+m, dof_p) += DATA[dof_d]*(*p);
-		}
+		  B(dof_u*N+l, dof_p) += DATA[dof_d]*(*p);
+		  //		}
 		p++;
 	      }
-	    }
+	      //	    }
 	  } 
 	}
       }
+      assert(p == t.end());
     }
   }
 
@@ -306,7 +312,7 @@ namespace getfem
 		for (int ii=0; ii < N; ii++) {
 		  for (int jj=0; jj < N; jj++) {
 		    /* get Q[ii][jj] for the degree of freedom 'dof_d' */
-		    scalar_type data = Q[(j*N+ii) + N*N*(dof_d)];
+		    scalar_type data = Q[(jj*N+ii) + N*N*(dof_d)];
 
 		    M(dof_i*N+ii, dof_j*N+jj) += data* (*p);
 		  }
