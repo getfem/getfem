@@ -10,7 +10,7 @@
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 1995-2002  Yves Renard.                                   */
+/* Copyright (C) 1995-2005  Yves Renard.                                   */
 /*                                                                         */
 /* This file is a part of GETFEM++                                         */
 /*                                                                         */
@@ -41,17 +41,36 @@
   #define __USE_STD_IOSTREAM
 #endif
 
+#ifndef __USE_BSD
+  #define __USE_BSD
+#endif
+
 /* ********************************************************************** */
-/*	C++ Standard Headers.						  */
+/*	Compilers detection.						  */
 /* ********************************************************************** */
-/*
- essai raté pour sun CC 5.0 ...
+
+/* for sun CC 5.0 ...
 #if defined(__SUNPRO_CC) && __SUNPRO_CC >= 0x500
 # include <stdcomp.h>
 # undef _RWSTD_NO_CLASS_PARTIAL_SPEC
 # undef _RWSTD_NO_NAMESPACE
 #endif 
 */
+/* for VISUAL C++ ...
+   #if defined(_MSC_VER) //  && !defined(__MWERKS__)
+   #define _GETFEM_MSVCPP_ _MSC_VER
+   #endif
+*/
+
+#if defined(__GNUC__)
+#  if (__GNUC__ < 3)
+#    error : PLEASE UPDATE g++ TO AT LEAST 3.0 VERSION
+#  endif
+#endif
+
+/* ********************************************************************** */
+/*	C++ Standard Headers.						  */
+/* ********************************************************************** */
 #include <stdlib.h>
 #include <stddef.h>
 #include <math.h>
@@ -61,16 +80,11 @@
 #include <iostream>
 //#include <ios> essai
 #include <fstream>
+#include <ctime>
 
 /* ********************************************************************** */
 /*	S.T.L. Headers.						          */
 /* ********************************************************************** */
-
-#if defined(__GNUC__)
-#  if (__GNUC__ < 3)
-#    error : PLEASE UPDATE g++ TO AT LEAST 3.0 VERSION
-#  endif
-#endif
 
 // #include <cstdlib>  CC de SGI ne reconnait pas ce header.
 #include <exception>
@@ -84,56 +98,9 @@
 #include <complex>
 #include <limits>
 #include <sstream>
-#include <ctime>
 
-using std::endl;
-using std::cout;
-using std::cerr;
-using std::ends;
-using std::cin;
-
-/* ********************************************************************** */
-/*	S.T.L. Reverse iterator definition.				  */
-/* ********************************************************************** */
-
-/* for VISUAL C++
-   #if defined(_MSC_VER) //  && !defined(__MWERKS__)
-   #define _GETFEM_MSVCPP_ _MSC_VER
-   #endif
-*/
-
-/** Dynamic Array Library. \\
- *   The Dynamic Array Library (dal) is a library of containers
- *   and algorithms on containers. Thoses containers are initialy adapted
- *   to store data for meshes, but they are also of larger
- *   interest. The library is build on a container which is \\ \\
- *   dal::dynamic\_array$<$T$>$. \\ \\
- *   This container is very similar to std::vector$<$T$>$ of the Standard
- *   Template Library. The major difference
- *   is that memory is allocated by block and
- *   the allocation is automatic when an acces to a non existing element 
- *   is called. \\ \\
- *   Others containers like dal::dynamic\_tas$<$T$>$ or
- *   dal::dynamic\_tree\_sorted$<$T$>$ allow to add or delete elements
- *   in an array. Particularily, dal::dynamic\_tree\_sorted$<$T$>$ combines
- *   the random access of an array and the logarithmic search and insertion
- *   in a balanced sorted tree. \\ \\
- *   The file dal_std.h loads the very standard c++ header files and solve
- *    as much
- *     as possible the incompatibility between differents
- *     configurations. \\ \\
- *     - It assures the existence of the functions \\ \\
- *       template$<$typename T$>$ std::abs(T) \\
- *       template$<$typename T$>$ std::sqr(T) \\ \\
- *     - It defines fixed size type of integers : \\ \\
- *       int8\_type; uint8\_type; \\
- *       int16\_type; uint16\_type; \\
- *       int32\_type; uint32\_type; \\ \\
- *     - The macro
- *       {\tt GETFEM_VERIFY -CODE }
- *       allows to switch on or off verifications on libraries,
- *       such as verification of range on arrays, on vectors ...
- */
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
 
 /* ********************************************************************** */
 /*	Math functions.                     			          */
@@ -180,7 +147,7 @@ namespace dal
 }
 
 
-#ifndef M_PI   
+#ifndef M_PI
 # define	M_E		2.7182818284590452354       /* e          */
 # define	M_LOG2E		1.4426950408889634074       /* 1/ln(2)    */
 # define	M_LOG10E	0.43429448190325182765      /* 1/ln(10)   */
@@ -194,7 +161,9 @@ namespace dal
 # define	M_2_SQRTPI	1.12837916709551257390      /* 2/sqrt(pi) */
 # define	M_SQRT2		1.41421356237309504880      /* sqrt(2)    */
 # define	M_SQRT1_2	0.70710678118654752440      /* sqrt(2)/2  */
+#endif 
 
+#ifndef M_PIl
 # define M_PIl       3.1415926535897932384626433832795029L  /* pi         */
 # define M_PI_2l     1.5707963267948966192313216916397514L  /* pi/2       */
 # define M_PI_4l     0.7853981633974483096156608458198757L  /* pi/4       */

@@ -9,7 +9,7 @@
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 1999-2002  Yves Renard.                                   */
+/* Copyright (C) 1999-2005  Yves Renard.                                   */
 /*                                                                         */
 /* This file is a part of GETFEM++                                         */
 /*                                                                         */
