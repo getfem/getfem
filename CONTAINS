@@ -1,14 +1,10 @@
 Root directory of GETFEM++
 
-dal/            C++ sources of dal library
-bgeot/          C++ sources of bgeot library
-ftool/          C++ sources of ftool library
-linkmsg/        C++ sources of linkmsg library
-misc/           C++ sources of misc library
-getfem/         C++ sources of getfem library
+src/            C++ sources of getfem library
 tests/          tests programs
 doc/            Latex doc provided by sources commentaries
 bin/            perl scripts
+config/         config files
 MODIFS          historic of the modifications
 LICENSE         license information
 CONTAINS        this file

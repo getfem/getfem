@@ -7,7 +7,9 @@ trivial constructor or destructor can be used.
 ___________________________________________________________________________
 
 with cxx (dec compiler) the difficulty to build dynamic libraries is to be
-sure that all the template implementations are linked.
+sure that all the template implementations are linked. the problem is here
+also for static library, the cxx_repository is needed to link application
+programs ...
 ___________________________________________________________________________
 
 MTL and ITL don't support the -pedantic option from g++

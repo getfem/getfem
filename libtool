@@ -41,7 +41,7 @@ available_tags=" CXX GCJ"
 
 # ### BEGIN LIBTOOL CONFIG
 
-# Libtool was configured on host gmmlinux2:
+# Libtool was configured on host gmmpc15:
 
 # Shell to use when invoking shell scripts.
 SHELL="/bin/sh"
@@ -5864,7 +5864,7 @@ build_old_libs=`case $build_libtool_libs in yes) echo no;; *) echo yes;; esac`
 # End:
 # ### BEGIN LIBTOOL TAG CONFIG: CXX
 
-# Libtool was configured on host gmmlinux2:
+# Libtool was configured on host gmmpc15:
 
 # Shell to use when invoking shell scripts.
 SHELL="/bin/sh"
@@ -6024,11 +6024,11 @@ striplib="strip --strip-unneeded"
 
 # Dependencies to place before the objects being linked to create a
 # shared library.
-predep_objects="/usr/lib/crti.o /usr/lib/gcc-lib/i386-linux/2.95.4/crtbeginS.o"
+predep_objects="/usr/lib/crti.o /usr/lib/gcc-lib/i386-linux/2.95.2/crtbeginS.o"
 
 # Dependencies to place after the objects being linked to create a
 # shared library.
-postdep_objects="/usr/lib/gcc-lib/i386-linux/2.95.4/crtendS.o /usr/lib/crtn.o"
+postdep_objects="/usr/lib/gcc-lib/i386-linux/2.95.2/crtendS.o /usr/lib/crtn.o"
 
 # Dependencies to place before the objects being linked to create a
 # shared library.
@@ -6040,7 +6040,7 @@ postdeps="-lstdc++ -lm -lgcc -lc -lgcc"
 
 # The library search path used internally by the compiler when linking
 # a shared library.
-compiler_lib_search_path="-L/usr/lib/gcc-lib/i386-linux/2.95.4"
+compiler_lib_search_path="-L/usr/lib/gcc-lib/i386-linux/2.95.2"
 
 # Method to check whether dependent libraries are shared objects.
 deplibs_check_method="file_magic ELF [0-9][0-9]*-bit [LM]SB (shared object|dynamic lib )"
@@ -6138,7 +6138,7 @@ include_expsyms=""
 
 # ### BEGIN LIBTOOL TAG CONFIG: GCJ
 
-# Libtool was configured on host gmmlinux2:
+# Libtool was configured on host gmmpc15:
 
 # Shell to use when invoking shell scripts.
 SHELL="/bin/sh"
