@@ -262,6 +262,8 @@ namespace getfem
   typedef dal::dynamic_tree_sorted<edge_list_elt> edge_list;
   
 
+  void mesh_edge_list_convex(const getfem_mesh &m, size_type i, 
+			     int face, edge_list &el);
   void mesh_edges_list(const getfem_mesh &m, edge_list &el);
 
 
