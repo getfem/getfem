@@ -321,7 +321,8 @@ namespace gmm {
     typename linalg_traits<V1>::value_type
     vect_sp(const V1 &v1, const V2 &v2) {
     if (vect_size(v1) != vect_size(v2))
-      DAL_THROW(dimension_error,"dimensions mismatch");
+      DAL_THROW(dimension_error,"dimensions mismatch "
+		<< vect_size(v1) << " and " << vect_size(v2));
     return vect_sp(v1, v2,
 		   typename linalg_traits<V1>::storage_type(), 
 		   typename linalg_traits<V2>::storage_type());

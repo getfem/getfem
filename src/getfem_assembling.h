@@ -979,12 +979,12 @@ namespace getfem
 	      for (size_type l = 0; l < Q; ++l)
 	      {
 		if (!(dof == dof2))
-		  B[dof2+k] -= RM(dof2+k, dof1+l) * F[dof1+l];
+		  B[dof2+k] -= RM(dof2+k, dof1+l) * dof_val;
 		RM(dof2+k, dof1+l) = RM(dof1+l, dof2+k) = 0;
 	      }
 	  }
 	  for (size_type k = 0; k < Q; ++k)
-	  { RM(dof1+k, dof1+k) = 1; B[dof1+k] = F[dof1+k]; }
+	  { RM(dof1+k, dof1+k) = 1; B[dof1+k] = dof_val; }
 	}
       }
     }
