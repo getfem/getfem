@@ -518,7 +518,7 @@ namespace gmm {
     const_iterator end(void) const { return const_iterator(pr+n, ir+n); }
     
     value_type operator[](size_type i) const
-    { return typename linalg_traits<this_type>::access(pr, begin(), end(),i); }
+    { return linalg_traits<this_type>::access(pr, begin(), end(),i); }
   };
 
   template <typename PT1, typename PT2, int shift>
