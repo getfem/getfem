@@ -335,8 +335,8 @@ namespace getfem
 	      ite = grad_reduction.end();
 	    for ( ; it != ite; ++it) {
 	      j = *p; k = (j < 2) ? j + 1 : 1; *p = k;
-	      mref[indcomp(ip, hi, k)].mat_transp_reduction(mref[indcomp(ip, hi, j)],
-						     B, *it);
+	      mref[indcomp(ip, hi, k)].mat_transp_reduction
+		(mref[indcomp(ip, hi, j)], B, *it);
 	    }
 	  }
 
@@ -347,11 +347,11 @@ namespace getfem
 	    for (short_type l = 1; it != ite; ++it, l *= 2) {
 	      j = *p;  k = (j < 2) ? j + 1 : 1; *p = k;
 	      if (hi & l)
-		mref[indcomp(ip, hi, k)].mat_transp_reduction(mref[indcomp(ip,hi,j)],
-						       B32, *it);
+		mref[indcomp(ip, hi, k)].mat_transp_reduction
+		  (mref[indcomp(ip,hi,j)], B32, *it);
 	      else
-	        mref[indcomp(ip, hi, k)].mat_transp_reduction(mref[indcomp(ip,hi,j)],
-						       B3, *it);
+	        mref[indcomp(ip, hi, k)].mat_transp_reduction
+		  (mref[indcomp(ip,hi,j)], B3, *it);
 	    }
 	  }
 	  
@@ -402,17 +402,18 @@ namespace getfem
 
   };
 
+  static dal::FONC_TABLE<_emelem_comp_light, _emelem_comp_structure>
+    *_tab__mat_elet = 0;
+  
   pmat_elem_computation mat_elem(pmat_elem_type pm, pintegration_method pi,
 				 bgeot::pgeometric_trans pg)
   { 
-    static dal::FONC_TABLE<_emelem_comp_light, _emelem_comp_structure> *tab;
-    static bool isinit = false;
-    if (!isinit) {
-      tab = new dal::FONC_TABLE<_emelem_comp_light, _emelem_comp_structure>();
-      isinit = true;
-    }
-    return tab->add(_emelem_comp_light(pm, pi, pg));
+    if (_tab__mat_elet == 0)
+      _tab__mat_elet = 
+	new dal::FONC_TABLE<_emelem_comp_light, _emelem_comp_structure>();
+    return _tab__mat_elet->add(_emelem_comp_light(pm, pi, pg));
   }
+
 
 }  /* end of namespace getfem.                                            */
 

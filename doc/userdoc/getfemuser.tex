@@ -20,9 +20,6 @@
 \textwidth 17.6cm
 \headheight 1.0cm
 
-% principal notations
-
-
 
 \begin{document}
 
@@ -290,7 +287,7 @@ It is possible to specify element by element the finite element method, so that 
 To select a particular finite element method on a given element, one can use \\[0.5cm]
 {\tt mef.set\_finite\_element(i, ppf, ppi); }\\[0.5cm]
 where {\tt i} is the index of the element, {\tt ppf} is the descriptor of the finite element method, and {\tt ppi} is the descriptor of the integration method. The list of all available descriptors of finite element methods is in the file {\tt getfem\_fem.h}. A short description is also given in \cite{BAS_COMP}. The list of all available descriptors of integration methods is in the file {\tt bgeot\_poly\_integration.h} for exact integration methods and in the file {\tt bgeot\_approx\_integration.h} for approximate integration methods. \\[0.5cm]
-A non exhautive list of finite element methods is given by
+A non exhautive list (see \cite{FEM_LIST} for exhaustive lists) of finite element methods is given by
 \input{../kernel/getfemelemfem.tex}
 A list of exact integration methods is given by
 \input{../kernel/getfemelemint.tex}
@@ -348,7 +345,7 @@ Once a finite element method is defined on a mesh, it is possible to obtain info
 \end{tabular} \end{center}
 
 
-\section{Use standard assembling procedures}
+\section{Standard assembling procedures}
 
 Procedures defined in the file {\tt getfem\_assembling.h} allow to assemble rigidity matrices, mass matrices and boundary conditions for a few amount of classical partial differential equation problems. All the procedures have vectors and matrices template parameters in order to be used with any matrix library (Dense and sparse matrix are defined in {\tt bgeot\_matrix.h} and {\tt bgeot\_smatrix.h} but it is preferable to use a matrix library such as MTL / ITL.).
 
@@ -405,6 +402,33 @@ To be done ... (please read \cite{BAS_COMP}).
 
 Basically, It is sufficient to describe an element on the reference element, i.e. to describe each base function of each degree of freedom. Vectorial elements and non-equivalent elements are partially supported ... (supported by the finite element kernel but not by assembling procedures). To be done ... please read \cite{BAS_COMP} for more details and see the file {\tt getfem\_fem.C} for practical implementation.
 
+\section{Finite element methods defined on two different meshes}
+
+A special finite element method is defined in {\tt getfem\_fem.h} which is not a real finite element method but allows to interpolate a finite element method defined on another mesh. When an assembling procedure has different finite element methods as arguments, the mesh on which those methods are defined should be the same. If you need to assemble a matrix with finite element methods defined on different meshes, you may use the finite element methods\\[0.5cm]
+{\tt getfem::virtual\_link\_fem(getfem::mesh\_fem mf1, getfem::mesh\_fem mf2,} \\ {\tt \mbox{}\hspace{12em} getfem::pintegration\_method pim) }\\[0.2cm]
+or\\[0.2cm]
+{\tt getfem::virtual\_link\_fem\_with\_gradient(getfem::mesh\_fem mf1, getfem::mesh\_fem mf2,} \\ {\tt \mbox{}\hspace{12em} getfem::pintegration\_method pim) }\\[0.5cm]
+Because each base function of the finite element method has to be interpolated, such a computation can be very slow. The first method does not interpolate the gradient, so that you cannot use assembling procedures where the gradient is needed (rigidity matrices for instance). The interpolation of the gradient is a very heavy procedure. It is highly preferable to use the first method if you need not the gradient.\\[0.5cm]
+
+The interpolation is made on each Gauss point of the integration method {\tt pim}, so that you have to use this integration method in the assembling procedure.\\[0.5cm]
+
+For instance if you need to compute the mass matrix between to different finite element methods defined on two different meshes, this is an example of code which interpole the second f.e.m. on the mesh of the first f.e.m., assuming that {\tt mf1} and {\tt mf2} describe the two finite element methods and {\tt pim} is the chosen integration method.\\[0.5cm]
+{\tt
+  getfem::mesh\_fem mf\_interpole(mf1.linked\_mesh());\\[0.2cm]
+  getfem::pfem pf = getfem::virtual\_link\_fem(mf2, mf\_interpole, pim);\\[0.2cm]
+  dal::bit\_vector nn = mf1.convex\_index();\\[0.2cm]
+  mf\_interpole.set\_finite\_element(nn, pf, pim);\\[0.2cm]
+  getfem::mass\_matrix(RM1, mf1, mf\_interpole, 1);\\[0.2cm]
+}
+
+The object defined to build the interpolation will be destroyed when the object {\tt mf\_interpole} will be destroyed. The information stored by this element can be important.
+
+\subsection{mixed methods with different meshes}
+  to be described ...
+\subsection{mortar methods}
+  to be described ...
+
+
 \section{Compute $L^2$ and $H^1$ norms}
 
 The file {\tt getfem\_norm.h} defines the functions to compute $L^2$ and $H^1$ norms of a solution. The following functions compute the different norms\\[0.5cm]
@@ -431,7 +455,7 @@ To view a solution, two perl scripts are provided (in the directory {\tt bin/} o
 {\tt dr2dgnuplot filename S}\\[0.5cm]
 Both scripts use Gnuplot to draw the solution and thus you need to have a working distribution of Gnuplot installed on your system. {\tt S} is a coefficient to zoom the solution. {\tt sc2dgnuplot} draw a scalar solution and {\tt dr2dgnuplot} a vectorial solution. See also the matlab interface for more elaborated draw procedures.
 
-\section{Interpolate on different meshes}
+\section{Interpolation on different meshes}
 
 The file {\tt getfem\_export.h} defines the following function to interpolate a solution from a mesh and a finite element method  to another mesh and another Lagrange finite element method.\\[0.5cm]
 {\tt getfem::interpolation\_solution(mef1, mef2, U, V, Q); }\\[0.5cm]
@@ -493,9 +517,14 @@ The program {\tt elastostatic} is built in a same way and compute the solution o
   G. {\sc Dhatt, and  G. Touzot}
   {\it The Finite Element Method Displayed}, 
  J. Wiley \& Sons,  New York, 1984.
+
 \bibitem{BAS_COMP}
   Y. {\sc Renard},
   {\it Elementary Computations in GETFEM++}, 2002.
-\end{thebibliography}
 
+\bibitem{FEM_LIST}
+  Y. {\sc Renard},
+  {\it Description of Finite Element and Integration Methods in GETFEM++}, 2002.
+
+\end{thebibliography}
 \end{document}

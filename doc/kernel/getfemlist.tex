@@ -86,14 +86,15 @@ and is supposed to be polynomial (see \cite{dh-to1984} or \cite{BAS_COMP}). The 
 $$ \tilde{\varphi}^i(x) = \overline{\varphi}^i(\overline{x}) = \overline{\varphi}^i(\tau^{-1}(x)), $$
 If the element is said to be equivalent throught the geometric transformation $\tau$ (or $\tau$-equivalent) then base functions on the real element are just defined by
 $$\varphi(x) = \tilde{\varphi}^i(x).$$
-This is generally the case for Lagrange element, but not for Hermite elements (when the gradient of the functions are taken into account). When the element is not equivalent throught the geometric transformation then GETFEM++ allows to define a matrix $M$ depending on the real element (i.e. on the geometric transformation) such that base functions on the real element are defined by
-$$ \varphi^i(x) = \sum_{j = 0}^{n_d - 1} M_{ij} \tilde{\varphi}^j(x). $$
+This is generally the case for Lagrange element, but not for Hermite elements (when the gradient of the functions is taken into account). When the element is not equivalent throught the geometric transformation then GETFEM++ allows to define a matrix $\tilde{M}$ depending on the real element (i.e. on the geometric transformation) such that base functions on the real element are defined by
+$$ \varphi^i(x) = \sum_{j = 0}^{n_d - 1} \tilde{M}_{ij} \tilde{\varphi}^j(x). $$
+Most of the time, the matrix $\tilde{M}$ is a square matrix, but for special elements a non-square matrix can be defined.
 We denote by
 $$ [\overline{\varphi}(\overline{x})] = \vecfour{\overline{\varphi}^0(\overline{x})}{\overline{\varphi}^1(\overline{x})}{...}{\overline{\varphi}^{n_d-1}(\overline{x})}, $$
 the $n_d \times Q$ matrix, such that when a function is defined by
 $$ f(x) = \sum_{i = 0}^{n_d - 1} \alpha_i \varphi^i(x), $$
 one has
-$$ \fbox{$\hspace{1em} f(\tau(\overline{x})) = \alpha^T M [\overline{\varphi}(\overline{x})],\hspace{1em}$} $$
+$$ \hspace{1em} f(\tau(\overline{x})) = \alpha^T \tilde{M} [\overline{\varphi}(\overline{x})],\hspace{1em} $$
 where $\alpha$ is the vector of components $\alpha_i$.
 
 \subsubsection{Different types of d.o.f.}
@@ -111,7 +112,7 @@ Lagrange type & $\phi(a_i)$ & Value of $\phi$ on the node $a_i$. The most simple
 Hierarchical Lagrange type & $\phi(a_i) - ...$ & Difference between the value of $\phi$ on the node $a_i$ and the value of some other base functions. This is generally the bubble functions type of d.o.f . \\ \hline
 \end{tabular}
 \begin{tabular}{|m{3cm}|m{3cm}|m{8cm}|} \hline
-mean type & $\Frac{1}{|T|}\int_T \phi(x) dx$ & Value of the mean value of $\phi$ on the element. Exists also for the restriction on a face.\\ \hline
+mean type & $\Frac{1}{|T|}\ds \int_T \phi(x) dx$ & Value of the mean value of $\phi$ on the element. Exists also for the restriction on a face.\\ \hline
 \end{tabular}
 \begin{tabular}{|m{3cm}|m{3cm}|m{8cm}|} \hline
 derivative type & $\Frac{\partial}{\partial x_i}\phi(a_i)$ or $\Frac{\partial}{\partial n}\phi(a_i)$ & Value of a derivative of $\phi$ on the node $a_i$. This kind of d.o.f. makes the element not to be $\tau$-equivalent. $\Frac{\partial}{\partial n}\phi(a_i)$ denotes the normal derivative with respect to a face.\\ \hline
@@ -196,7 +197,7 @@ For some applications (computation of a gradient for instance) one does not want
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
-\small $K$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 1 \le P \le 255$} & $\Frac{(K+P)!}{K! P!}$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($M = Id$)} \\ \hline
+\small $K$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 1 \le P \le 255$} & $\Frac{(K+P)!}{K! P!}$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)} \\ \hline
 \end{tabular}
 \end{center}
 \begin{center}
@@ -206,7 +207,7 @@ Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
-\small $K$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 1 \le P \le 255$} & $\Frac{(K+P)!}{K! P!}$ & discon-tinuous & No \mbox{($Q = 1$)} & Yes \mbox{($M = Id$)} \\ \hline
+\small $K$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 1 \le P \le 255$} & $\Frac{(K+P)!}{K! P!}$ & discon-tinuous & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)} \\ \hline
 \end{tabular}
 \end{center}$\ $\\[3cm]
 
@@ -257,7 +258,7 @@ A prism in dimension $P > 1$ is the direct product of a simplex of dimension $P-
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
-\small $KP$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 2 \le P \le 255$} & $(K+1)^P$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($M = Id$)} \\ \hline
+\small $KP$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 2 \le P \le 255$} & $(K+1)^P$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)} \\ \hline
 \end{tabular}
 \end{center}
 
@@ -268,7 +269,7 @@ Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
-\small $2K$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 2 \le P \le 255$} & \mbox{$(K+1)$} \mbox{$\times \Frac{(K+P-1)!}{K! (P-1)!}$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($M = Id$)} \\ \hline
+\small $2K$, \mbox{$0 \le K \le 255$} & \small $P$, \mbox{$\ 2 \le P \le 255$} & \mbox{$(K+1)$} \mbox{$\times \Frac{(K+P-1)!}{K! (P-1)!}$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)} \\ \hline
 \end{tabular}
 \end{center}
 
@@ -279,7 +280,7 @@ Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
-\small \mbox{$K_1+K_2$}, \tiny \mbox{$0 \le K_1,K_2 \le 255$} & \small $P$, \mbox{$\ 2 \le P \le 255$} & \mbox{$(K_2+1)$} \mbox{$\times \Frac{(K_1+P-1)!}{K_1! (P-1)!}$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($M = Id$)} \\ \hline
+\small \mbox{$K_1+K_2$}, \tiny \mbox{$0 \le K_1,K_2 \le 255$} & \small $P$, \mbox{$\ 2 \le P \le 255$} & \mbox{$(K_2+1)$} \mbox{$\times \Frac{(K_1+P-1)!}{K_1! (P-1)!}$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)} \\ \hline
 \end{tabular}
 \end{center}
 
@@ -299,7 +300,7 @@ Base functions on the reference element
  \bar{\varphi}_2 = x(x-1)^2,&& \ \ \ \bar{\varphi}_3 = x^2(x - 1). 
 \end{eqnarray*}
 
-This element is close to be \mbox{$\tau$-equivalent} but it is not. On the real element the value of the gradient on vertices will be multiplied by the gradient of the geometric transformation, This has to be corrected. The matrix $M$ is not equal to identity but is still diagonal.
+This element is close to be \mbox{$\tau$-equivalent} but it is not. On the real element the value of the gradient on vertices will be multiplied by the gradient of the geometric transformation, This has to be corrected. The matrix $\tilde{M}$ is not equal to identity but is still diagonal.
 
 \begin{center}
 \begin{tabular}{|m{14.18cm}|} \hline 
@@ -519,7 +520,31 @@ $3$ & $3$ & $5$ & $C^0$ & No \mbox{($Q = 1$)} & Yes \\ \hline
 
 \subsection{Tensorial product of elements}
 
-to be done ...
+to be described ...
+
+\subsection{Interpolation of elements on different meshes}
+
+\begin{figure}[H]
+  \begin{center}
+    \includegraphics[width=5cm,angle=0]{getfemlist_virtual_fem.eps}
+  \end{center}
+  \caption{ \it Element which intepolates a finite element method defined on another mesh. The element has as many d.o.f. as the union of d.o.f. of triangles of the other mesh having an intersection with it. The interpolation is made on Gauss points of the integration method.} 
+  \label{fig:virtual_fem}
+\end{figure}
+
+to be described ...
+
+\begin{center}
+\begin{tabular}{|m{14.18cm}|} \hline 
+{ \bf Element which intepolates an element defined on another mesh}\\
+  {\tt getfem::virtual\_link\_fem(getfem::mesh\_fem mf1, getfem::mesh\_fem mf2,} \\ {\tt \mbox{}\hspace{12em} getfem::pintegration\_method pim) }
+  {\tt getfem::virtual\_link\_fem\_with\_gradient(getfem::mesh\_fem mf1, } \\ {\tt \hspace{5em} getfem::mesh\_fem mf2, \mbox{}getfem::pintegration\_method pim) }
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} \\ \hline
+undefined & arbitrary & variable & variable & No & No \\ \hline
+\end{tabular}
+\end{center}
 
 \subsection{What really means arbitrary geometric transformation}
 

@@ -179,17 +179,17 @@ $$ \overline{\varphi}^i : \overline{T} \subset \Reel^P \longrightarrow \Reel^Q, 
 Denoting
 $$ \tilde{\varphi}^i(x) = \overline{\varphi}^i(\overline{x}) = \overline{\varphi}^i(\tau^{-1}(x)), $$
 a linear transformation is allowed for the real base function
-$$ \varphi^i(x) = \sum_{j = 0}^{n_d - 1} M_{ij} \tilde{\varphi}^j(x), $$
-where $M$ is a $n_d \times n_d$ matrix possibly depending on the geometric transformation (i.e. on the real element).
+$$ \varphi^i(x) = \sum_{j = 0}^{n_d - 1} \tilde{M}_{ij} \tilde{\varphi}^j(x), $$
+where $\tilde{M}$ is a $n_d \times n_d$ matrix (for some elements, an extension with a non square matrix $\tilde{M}$ is defined) possibly depending on the geometric transformation (i.e. on the real element). For basic elements as Lagrange elements this matrix is the identity matrix. In this case, we will say that the element is $\tau$-equivalent.
 We denote
 $$ [\overline{\varphi}(\overline{x})] = \vecfour{\overline{\varphi}^0(\overline{x})}{\overline{\varphi}^1(\overline{x})}{...}{\overline{\varphi}^{n_d-1}(\overline{x})}, $$
 the $n_d \times Q$ matrix, such that when a function is defined by
 $$ f(x) = \sum_{i = 0}^{n_d - 1} \alpha_i \varphi^i(x), $$
 one has
-$$ \fbox{$\hspace{1em} f(\tau(\overline{x})) = \alpha^T M [\overline{\varphi}(\overline{x})],\hspace{1em}$} $$
+$$ \fbox{$\hspace{1em} f(\tau(\overline{x})) = \alpha^T \tilde{M} [\overline{\varphi}(\overline{x})],\hspace{1em}$} $$
 where $\alpha$ is the vector of components $\alpha_i$.
 
-A certain number of description of classical finite element method are defined in the file {\tt getfem\_fem.h}. More classical ones are the following:
+A certain number of description of classical finite element method are defined in the file {\tt getfem\_fem.h}. More classical ones are the following (see \cite{FEM_LIST} for an exhaustive list):
 
 \input{getfemelemfem.tex}
 
@@ -205,11 +205,9 @@ In the file {\tt bgeot\_poly\_integration.h} the following functions are defined
 
 Even though a description of exact integration method exists on parallelepipeds or prisms, most of the time the geometric transformations on such elements are not linear and the exact integration cannot be used.
 
-In the file {\tt bgeot\_approx\_integration.h} the following functions are defined
-
+Description of approximated integation methods can be found in file {\tt bgeot\_approx\_integration.h}. Some examples (see \cite{FEM_LIST} for an exhaustive list):
 \input{getfemeleminta.tex}
 
-Other methods can be easily defined.
 
 \section{Mathematical description of basic calculus}
 
@@ -270,7 +268,7 @@ Those two tensor can be computed once on the whole reference element if the geom
 \end{itemize}
 The reductions are to be made on each integration point if the geometric transformation is non-linear. Once those reductions are done, an addition of all the tensor resulting of those reductions is made (with a factor equal to the load of each integration point if the geometric transformation is non-linear).
 
-If the finite element is non-affine equivalent, a supplementary reduction of the resulting tensor with the matrix $M$ has to be made.
+If the finite element is non-$\tau$-equivalent, a supplementary reduction of the resulting tensor with the matrix $\tilde{M}$ has to be made.
 
 \section{Elementary matrices description}
 
@@ -381,7 +379,11 @@ where $\phi^i$ are the base functions of the $P_1$ finite element method, and $\
   G. {\sc Dhatt, and  G. Touzot}
   {\it The Finite Element Method Displayed}, 
  J. Wiley \& Sons,  New York, 1984.
+
+\bibitem{FEM_LIST}
+  Y. {\sc Renard},
+  {\it Description of Finite Element and Integration Methods in GETFEM++}, 2002.
+
+
 \end{thebibliography}
-
-
 \end{document}
