@@ -425,7 +425,7 @@ namespace getfem
     if (mf_p.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     // generic_assembly assem("M$1(#1,#2)+=comp(vGrad(#1).Base(#2))(:,i,i,:);");
-    generic_assembly assem("M$1(#1,#2)+=comp(Base(#1).vGrad(#2))(:,:,i,i);");
+    generic_assembly assem("M$1(#1,#2)-=comp(Base(#1).vGrad(#2))(:,:,i,i);");
     assem.push_mf(mf_p);
     assem.push_mf(mf_u);
     assem.push_mat(B);

@@ -982,6 +982,9 @@ namespace getfem {
 
 # define MDBRICK_LINEAR_INCOMP 239898
 
+  // for nearly incompressible elasticity, p = -lambda div u
+  // sigma = 2 mu epsilon(u) -p I
+
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_linear_incomp : public mdbrick_abstract<MODEL_STATE>  {
     
@@ -1570,7 +1573,7 @@ namespace getfem {
     // mtype alpha, alpha_min=mtype(1)/mtype(20);
     mtype alpha, alpha_min=mtype(1)/mtype(10000);
     mtype alpha_mult=mtype(3)/mtype(5);
-    // mtype alpha_max_ratio=mtype(2)/mtype(2);
+    mtype alpha_max_ratio=mtype(2)/mtype(1);
     dal::bit_vector mixvar;
     gmm::iteration iter_linsolv0 = iter;
     iter_linsolv0.set_maxiter(10000);
@@ -1693,7 +1696,8 @@ namespace getfem {
 	  act_res_new = MS.reduced_residu_norm();
 	  // cout << " : " << act_res_new;
 	  if (act_res_new <= act_res / mtype(2)) break;
-	  if (k > 0 && act_res_new > previous_res) {
+	  if (k > 0 && act_res_new > previous_res
+	      && previous_res < alpha_max_ratio * act_res) {
 	    alpha /= alpha_mult;
 	    gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
 	    act_res_new = previous_res; break;
@@ -1704,7 +1708,7 @@ namespace getfem {
 
 	// Something should be done to detect oscillating behaviors ...
 	// alpha_max_ratio += (mtype(1)-alpha_max_ratio) / mtype(30);
-	// alpha_min *= mtype(1) - mtype(1)/mtype(30);
+	alpha_min *= mtype(1) - mtype(1)/mtype(30);
       }
       act_res = act_res_new; ++iter;
       

@@ -265,7 +265,7 @@ namespace getfem {
       this->update_from_context();
       mf_u = this->mesh_fems[num_fem];
       d = mf_u->linked_mesh().dim();
-      r = value_type(100);
+      r = value_type(1);
       alpha = value_type(1);
       gmm::resize(BN, nbc, mf_u->nb_dof());
       gmm::resize(BT, nbc*(d-1), mf_u->nb_dof());
