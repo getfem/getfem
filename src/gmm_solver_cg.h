@@ -76,26 +76,26 @@ namespace gmm {
     T rho, rho_1(0), a;
     temp_vector p(vect_size(x)), q(vect_size(x)), r(vect_size(x)),
       z(vect_size(x));
-    iter.set_rhsnorm(gmm::sqrt(gmm::abs(vect_sp(PS, b, b))));
+    iter.set_rhsnorm(gmm::sqrt(gmm::abs(vect_hp(PS, b, b))));
 
     if (iter.get_rhsnorm() == 0.0)
       clear(x);
     else {
       mult(A, scaled(x, T(-1)), b, r);
       mult(P, r, z);
-      rho = vect_sp(PS, r, z); // faut-il utiliser le produit hermitien en 
-      copy(z, p);              //  complexe ?
+      rho = vect_hp(PS, z, r);
+      copy(z, p);
 
       while (!iter.finished_vect(r)) {
 
 	if (!iter.first()) { 
 	  mult(P, r, z);
-	  rho = vect_sp(PS, r, z);
+	  rho = vect_hp(PS, z, r);
 	  add(z, scaled(p, rho / rho_1), p);
 	}
 	
 	mult(A, p, q);
-	a = rho / vect_sp(PS, p, q);	
+	a = rho / vect_hp(PS, q, p);	
 	add(scaled(p, a), x);
 	add(scaled(q, -a), r);
 	rho_1 = rho;

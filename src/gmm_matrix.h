@@ -94,6 +94,10 @@ namespace gmm
   typename linalg_traits<V1>::value_type
   vect_sp(const identity_matrix &, const V1 &v1, const V2 &v2)
   { return vect_sp(v1, v2); }
+  template <typename V1, typename V2> inline
+  typename linalg_traits<V1>::value_type
+  vect_hp(const identity_matrix &, const V1 &v1, const V2 &v2)
+  { return vect_hp(v1, v2); }
   template<typename M> inline bool is_identity(const M&) { return false; }
   inline bool is_identity(const identity_matrix&) { return true; }
 

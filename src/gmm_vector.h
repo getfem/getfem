@@ -102,7 +102,7 @@ namespace gmm
   T operator /(T v, const ref_elt_vector<T, V> &re) { return v/ T(re); }
   template<typename T, typename V> inline
   typename number_traits<T>::magnitude_type
-  abs(const ref_elt_vector<T, V> &re) { return abs(T(re)); }
+  abs(const ref_elt_vector<T, V> &re) { return gmm::abs(T(re)); }
   template<typename T, typename V> inline
   T sqr(const ref_elt_vector<T, V> &re) { return sqr(T(re)); }
   template<typename T, typename V> inline

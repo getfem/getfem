@@ -85,51 +85,49 @@ namespace gmm {
     R norm_r = gmm::vect_norm2(r);
     iter.set_rhsnorm(gmm::vect_norm2(b));
 
-    if (iter.get_rhsnorm() == 0.0)
-      clear(x);
-    else {
-      while (!iter.finished(norm_r)) {
-	
-	rho_1 = gmm::vect_sp(rtilde, r);
-	if (rho_1 == T(0))
+    if (iter.get_rhsnorm() == 0.0) { clear(x); return; }
+    
+    while (!iter.finished(norm_r)) {
+      
+      rho_1 = gmm::vect_sp(rtilde, r);
+      if (rho_1 == T(0))
+	DAL_THROW(failure_error, "Bicgstab failed to converge");
+      
+      if (iter.first())
+	gmm::copy(r, p);
+      else {
+	if (omega == T(0))
 	  DAL_THROW(failure_error, "Bicgstab failed to converge");
 	
-	if (iter.first())
-	  gmm::copy(r, p);
-	else {
-	  if (omega == T(0))
-	    DAL_THROW(failure_error, "Bicgstab failed to converge");
-	  
-	  beta = (rho_1 / rho_2) * (alpha / omega);
-	  
-	  gmm::add(gmm::scaled(v, -omega), p); // is it ok ? 
-	  gmm::add(r, gmm::scaled(p, beta), p);      
-	}
-	gmm::mult(M, p, phat);
-	gmm::mult(A, phat, v);	
-	alpha = rho_1 / gmm::vect_sp(v, rtilde);
-	gmm::add(r, gmm::scaled(v, -alpha), s);
+	beta = (rho_1 / rho_2) * (alpha / omega);
 	
-	if (iter.finished_vect(s)) {
-	  gmm::add(gmm::scaled(phat, alpha), x); 
-	  break;
-	}
-	
-	gmm::mult(M, s, shat);	
-	gmm::mult(A, shat, t);	
-	omega = gmm::vect_sp(t, s) / gmm::vect_sp(t, t);
-	
-	gmm::add(gmm::scaled(phat, alpha), x); 
-	gmm::add(gmm::scaled(shat, omega), x);
-	gmm::add(s, gmm::scaled(t, -omega), r); 
-	norm_r = gmm::vect_norm2(r);
-	rho_2 = rho_1;
-	
-	++iter;
+	gmm::add(gmm::scaled(v, -omega), p); // is it ok ? 
+	gmm::add(r, gmm::scaled(p, beta), p);      
       }
+      gmm::mult(M, p, phat);
+      gmm::mult(A, phat, v);	
+      alpha = rho_1 / gmm::vect_sp(v, rtilde);
+      gmm::add(r, gmm::scaled(v, -alpha), s);
+      
+      if (iter.finished_vect(s)) {
+	gmm::add(gmm::scaled(phat, alpha), x);
+	break;
+      }
+      
+      gmm::mult(M, s, shat);	
+      gmm::mult(A, shat, t);	
+      omega = gmm::vect_sp(t, s) / gmm::vect_sp(t, t);
+      
+      gmm::add(gmm::scaled(phat, alpha), x); 
+      gmm::add(gmm::scaled(shat, omega), x);
+      gmm::add(s, gmm::scaled(t, -omega), r); 
+      norm_r = gmm::vect_norm2(r);
+      rho_2 = rho_1;
+      
+      ++iter;
     }
   }
-
+  
   template <typename Matrix, typename Vector, typename VectorB,
 	    typename Preconditioner>
   void bicgstab(const Matrix& A, const Vector& x, const VectorB& b,

@@ -279,10 +279,10 @@ namespace gmm {
 	{ v[l-k] = w[l-k] = A(l, k-1); A(l, k-1) = A(k-1, l) = T(0); }
       house_vector(v);
       R norm = vect_norm2_sqr(v);
-      A(k-1, k) = gmm::conj(A(k, k-1) = w[0] - T(2)*v[0]*vect_hp(v, w)/norm);
+      A(k-1, k) = gmm::conj(A(k, k-1) = w[0] - T(2)*v[0]*vect_hp(w, v)/norm);
 
       gmm::mult(sub_matrix(A, SUBI), gmm::scaled(v, T(-2) / norm), p);
-      gmm::add(p, gmm::scaled(v, -vect_hp(p, v) / norm), w);
+      gmm::add(p, gmm::scaled(v, -vect_hp(v, p) / norm), w);
       rank_two_update(sub_matrix(A, SUBI), v, w);
       // it should be possible to compute only the upper or lower part
 

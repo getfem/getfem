@@ -547,7 +547,13 @@ namespace gmm {
   template <typename V1, typename V2>
   inline typename linalg_traits<V1>::value_type
   vect_hp(const V1 &v1, const V2 &v2)
-  { return vect_sp(conjugated(v1), v2); }
+  { return vect_sp(v1, conjugated(v2)); }
+
+  template <typename MATSP, typename V1, typename V2> inline
+  typename linalg_traits<V1>::value_type
+    vect_hp(const MATSP &ps, const V1 &v1, const V2 &v2) {
+    return vect_sp(ps, v1, gmm::conjugated(v2));
+  }
 
   /* ******************************************************************** */
   /*		Trace of a matrix                             		  */

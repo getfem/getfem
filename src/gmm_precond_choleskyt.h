@@ -43,6 +43,8 @@ namespace gmm {
   class choleskyt_precond  {
   public :
     typedef typename linalg_traits<Matrix>::value_type value_type;
+    typedef typename number_traits<value_type>::magnitude_type magnitude_type;
+    
     typedef rsvector<value_type> svector;
 
     row_matrix<svector> U;
@@ -58,9 +60,7 @@ namespace gmm {
   public:
     choleskyt_precond(const Matrix& A, int k_, double eps_) 
       : U(mat_nrows(A),mat_ncols(A)),
-	indiag(std::min(mat_nrows(A), mat_ncols(A))),
-	K(k_), eps(eps_)
-    {
+	indiag(std::min(mat_nrows(A), mat_ncols(A))), K(k_), eps(eps_) {
       if (!is_sparse(A))
 	DAL_THROW(failure_error,
 		  "Matrix should be sparse for incomplete cholesky");
@@ -72,11 +72,14 @@ namespace gmm {
 
   template<typename Matrix> template<typename M> 
   void choleskyt_precond<Matrix>::do_choleskyt(const M& A,row_major,int _try) {
-    svector w(mat_ncols(A));
+    magnitude_type prec = default_tol(magnitude_type());
+    magnitude_type modmax(0);
+    size_type n = mat_nrows(A);
+    svector w(n);
     value_type tmp;
 
     gmm::clear(U);
-    for (size_type i = 0; i < mat_nrows(A); ++i) {
+    for (size_type i = 0; i < n; ++i) {
       gmm::copy(mat_const_row(A, i), w);
       double norm_row = gmm::vect_norm2(w);
 
@@ -87,7 +90,7 @@ namespace gmm {
       for (size_type krow = 0, k; krow < w.nb_stored(); ++krow) {
 	typename svector::iterator wk = w.begin() + krow;
 	if ((k = wk->c) >= i) break;
-	tmp = (wk->e);
+	tmp = wk->e;
 	if (gmm::abs(tmp) < eps * norm_row) { w.sup(k); --krow; } 
 	else { wk->e += tmp; gmm::add(scaled(mat_row(U, k), -tmp), w); }
       }
@@ -105,6 +108,14 @@ namespace gmm {
 	}
       }
 
+      modmax = std::max(modmax, gmm::abs(tmp));
+      if (gmm::real(tmp) <= magnitude_type(0)
+	  || gmm::abs(gmm::imag(tmp)) > prec * modmax)
+	DAL_WARNING(2, "Pivot " << i << " is not convenient: " << tmp
+		    << "\nBe sure your matrix is real symmetric or "
+		    << "complex hermitian");
+
+
       indiag[i] = value_type(1) / tmp;
       gmm::clean(w, eps * norm_row);
       gmm::scale(w, indiag[i]);
@@ -117,12 +128,12 @@ namespace gmm {
 
   template<typename Matrix> 
   void choleskyt_precond<Matrix>::do_choleskyt(const Matrix& A, col_major)
-  { do_choleskyt(gmm::transposed(A), row_major()); }
+  { do_choleskyt(gmm::conjugated(A), row_major()); }
 
   template <typename Matrix, typename V1, typename V2> inline
   void mult(const choleskyt_precond<Matrix>& P, const V1 &v1, V2 &v2) {
     gmm::copy(v1, v2);
-    gmm::lower_tri_solve(gmm::transposed(P.U), v2, true);
+    gmm::lower_tri_solve(gmm::conjugated(P.U), v2, true);
     for (size_type i = 0; i < P.indiag.size(); ++i) v2[i] *= P.indiag[i];
     gmm::upper_tri_solve(P.U, v2, true);
   }
@@ -134,7 +145,7 @@ namespace gmm {
   template <typename Matrix, typename V1, typename V2> inline
   void left_mult(const choleskyt_precond<Matrix>& P, const V1 &v1, V2 &v2) {
     copy(v1, v2);
-    gmm::lower_tri_solve(gmm::transposed(P.U), v2, true);
+    gmm::lower_tri_solve(gmm::conjugated(P.U), v2, true);
     for (size_type i = 0; i < P.indiag.size(); ++i) v2[i] *= P.indiag[i];
   }
 
@@ -153,7 +164,7 @@ namespace gmm {
   template <typename Matrix, typename V1, typename V2> inline
   void transposed_right_mult(const choleskyt_precond<Matrix>& P, const V1 &v1,
 			     V2 &v2)
-  { copy(v1, v2); gmm::lower_tri_solve(gmm::transposed(P.U), v2, true); }
+  { copy(v1, v2); gmm::lower_tri_solve(gmm::conjugated(P.U), v2, true); }
 
 }
 

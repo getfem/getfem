@@ -134,7 +134,7 @@ namespace gmm
       return (nit >= maxiter || converged(nr));
     }
     template <typename VECT> bool finished_vect(const VECT &v)
-    { return finished(gmm::vect_norm2(v)); }
+    { return finished(double(gmm::vect_norm2(v))); }
 
 
     void set_name(const std::string &n) { name = n; }

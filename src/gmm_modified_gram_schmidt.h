@@ -89,7 +89,7 @@ namespace gmm {
     VecHi& Hi = const_cast<VecHi&>(_Hi);
     
     for (size_t k = 0; k <= i; k++) {
-      Hi[k] = gmm::vect_hp(V[k], V[i+1]);
+      Hi[k] = gmm::vect_hp(V[i+1], V[k]);
       gmm::add(gmm::scaled(V[k], -Hi[k]), V[i+1]);
     }
   }
