@@ -36,6 +36,8 @@
 #include <bgeot_geometric_trans.h>
 #include <getfem_config.h>
 #include <getfem_precomp.h>
+#include <getfem_mesh.h>
+#include <deque>
 
 namespace getfem
 {
@@ -243,7 +245,7 @@ namespace getfem
 			    const base_vector coeff, base_matrix &val) const;
     void base_value(const base_node &x, base_tensor &t) const {
       bgeot::multi_index mi(2);
-      mi[1] = target_dim(); mi[0] = nb_dof();
+      mi[1] = target_dim(); mi[0] = nb_base();
       // cout << "mi = " << mi << endl;
       t.adjust_sizes(mi);
       size_type R = nb_base_components();
@@ -256,7 +258,7 @@ namespace getfem
     void grad_base_value(const base_node &x, base_tensor &t) const {
       bgeot::multi_index mi(3);
       dim_type n = dim();
-      mi[2] = n; mi[1] = target_dim(); mi[0] = nb_dof();
+      mi[2] = n; mi[1] = target_dim(); mi[0] = nb_base();
       t.adjust_sizes(mi);
       size_type R = nb_base_components();
       base_tensor::iterator it = t.begin();
@@ -267,7 +269,7 @@ namespace getfem
     void hess_base_value(const base_node &x, base_tensor &t) const {
       bgeot::multi_index mi(4);
       dim_type n = dim();
-      mi[3] = n; mi[2] = n; mi[1] = target_dim(); mi[0] = nb_dof();
+      mi[3] = n; mi[2] = n; mi[1] = target_dim(); mi[0] = nb_base();
       t.adjust_sizes(mi);
       size_type R = nb_base_components();
       base_tensor::iterator it = t.begin();
@@ -338,7 +340,7 @@ namespace getfem
     
     for (size_type k = 0; k < x.size(); ++k)
       for (size_type r = 0; r < target_dim(); ++r)
-	for (size_type j = 0; j < R; ++j, ++it) {
+	for (size_type j = 0; j < RR; ++j, ++it) {
 	  scalar_type co = 0.0;
 	  if (is_equivalent())
 	    co = coeff[j];
@@ -400,6 +402,57 @@ namespace getfem
   pfem classical_fem(bgeot::pgeometric_trans pg, short_type k);
   
   //@}
+
+  /* ******************************************************************** */
+  /*	virtual_link_fem : a virtual fem describing a fem defined on      */
+  /* another mesh.                                                        */
+  /* ******************************************************************** */
+
+  class mesh_fem;
+
+  class mesh_fem_link_fem : public getfem_mesh_receiver {
+ 
+  protected :
+
+    struct gauss_pt_info {
+      base_node localcoords;
+      size_type indcv;
+      gauss_pt_info(void) { indcv = size_type(-1); }
+    };
+
+    struct cv_info {
+      std::vector<size_type> indgausstab;
+      std::deque<size_type> doftab;
+    };
+
+    mesh_fem *pmf1, *pmf2; // pmf1 -> mef to interpolated.
+                           // pmf2 -> mef to build.
+    bool to_be_computed;
+    bool valid;
+    std::vector<gauss_pt_info> gauss_ptab;
+    std::vector<cv_info> cv_info_tab;
+
+    void add_dof_to_cv(size_type cv, size_type i);
+    
+    void compute(void);
+
+  public :
+    void receipt(const MESH_CLEAR &);
+    void receipt(const MESH_SUP_CONVEX &m);
+    void receipt(const MESH_SWAP_CONVEX &m);
+    void receipt(const MESH_REFINE_CONVEX &m);
+    void receipt(const MESH_UNREFINE_CONVEX &m);
+    void receipt(const MESH_FEM_DELETE &m);
+    void receipt(const MESH_FEM_CHANGE &m);
+
+    mesh_fem_link_fem(mesh_fem &mf1, mesh_fem &mf2);
+    ~mesh_fem_link_fem();
+
+  };
+
+  class pintegration_method;
+  pfem virtual_link_fem(mesh_fem_link_fem, pintegration_method pim);
+
   
 }  /* end of namespace getfem.                                            */
 

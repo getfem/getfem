@@ -46,6 +46,7 @@ SRC = \
 	bgeot_convex_ref.C \
 	bgeot_convex_structure.C \
 	bgeot_geometric_trans.C \
+	bgeot_geotrans_inv.C \
 	bgeot_mesh_structure.C \
 	bgeot_poly.C \
 	bgeot_poly_integration.C \
@@ -53,6 +54,7 @@ SRC = \
 	ftool.C \
 	getfem_export.C \
 	getfem_fem.C \
+	getfem_fem_virtual_link.C \
 	getfem_mat_elem.C \
 	getfem_mat_elem_type.C \
 	getfem_mesh.C \

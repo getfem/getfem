@@ -119,7 +119,20 @@ namespace bgeot
       const std::vector< base_vector > &normals(void) const
       { return cvr->normals(); }
 
+      template<class CONT> base_node transform(const base_node &pt,
+					       const CONT &PTAB) const;
   };
+
+  template<class CONT>
+    base_node geometric_trans::transform(const base_node &pt,
+					 const CONT &ptab) const {
+    base_node P(ptab[0].size()); P.fill(0.0);
+    size_type k = nb_points();
+    for (size_type l = 0; l < k; ++l)
+      P.addmul(poly_vector()[l].eval(pt.begin()),ptab[l]);
+    return P;
+  }
+
 
   /** @name functions on geometric transformations
    */

@@ -83,13 +83,8 @@ namespace getfem
       for (size_type i = 0; i < nbd2; ++i)
       {
 	/* point corresponding to the i th node.                           */
-	const base_node *ppt = &(pfe->node_of_dof(i));
-	pt1.fill(0.0);
-	for (size_type j = 0; j < nbpt; ++j)
-	{
-	  pt1.addmul(pgt->poly_vector()[j].eval(ppt->begin()),
-		   mf.linked_mesh().points_of_convex(cv)[j]);
-	}
+	pt1 = pgt->transform(pfe->node_of_dof(i),
+			     mf.linked_mesh().points_of_convex(cv));
 	for (size_type j = 0; j < N; ++j) o << pt1[j] << " ";
 	o << "  ";
 

@@ -125,6 +125,28 @@ namespace getfem
     MESH_READ_FROM_FILE(std::istream &i) { ist = &i; }
     MESH_READ_FROM_FILE(void) {}
   };
+  struct MESH_FEM_CHANGE
+  { 
+    void *ptr;
+    operator int(void)  const { return 11; }
+    MESH_FEM_CHANGE(void *p) : ptr(p) {}
+    MESH_FEM_CHANGE(void) {}
+  };
+  struct MESH_FEM_DELETE
+  { 
+    void *ptr;
+    operator int(void)  const { return 12; }
+    MESH_FEM_DELETE(void *p) : ptr(p) {}
+    MESH_FEM_DELETE(void) {}
+  };
+  struct MESH_FEM_TOUCH
+  { 
+    void *ptr;
+    operator int(void)  const { return 13; }
+    MESH_FEM_TOUCH(void *p) : ptr(p) {}
+    MESH_FEM_TOUCH(void) {}
+  };
+
 
   class getfem_mesh_receiver : public lmsg::virtual_linkmsg_receiver
   {
@@ -151,6 +173,12 @@ namespace getfem
       virtual void receipt(const MESH_WRITE_TO_FILE   &) 
       { DAL_THROW(internal_error, "internal error");}
       virtual void receipt(const MESH_READ_FROM_FILE  &) 
+      { DAL_THROW(internal_error, "internal error");}
+      virtual void receipt(const MESH_FEM_CHANGE      &) 
+      { DAL_THROW(internal_error, "internal error");}
+      virtual void receipt(const MESH_FEM_DELETE      &) 
+      { DAL_THROW(internal_error, "internal error");}
+      virtual void receipt(const MESH_FEM_TOUCH       &) 
       { DAL_THROW(internal_error, "internal error");}
   };
 

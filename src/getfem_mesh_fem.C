@@ -183,44 +183,50 @@ namespace getfem
   }
 
   void mesh_fem::receipt(const MESH_CLEAR &) { clear(); }
-  void mesh_fem::receipt(const MESH_SUP_CONVEX &m)
-  { 
+  void mesh_fem::receipt(const MESH_SUP_CONVEX &m) { 
     if (fe_convex[m.icv])
       { fe_convex[m.icv] = false; dof_enumeration_made = false; }
     sup_boundaries_of_convex(m.icv);
   }
-  void mesh_fem::receipt(const MESH_SWAP_CONVEX &m)
-  { 
+  void mesh_fem::receipt(const MESH_SWAP_CONVEX &m) { 
     fe_convex.swap(m.icv1, m.icv2);
     f_elems.swap(m.icv1, m.icv2);
     swap_boundaries_convex(m.icv1, m.icv2);
   }
-  void mesh_fem::receipt(const MESH_REFINE_CONVEX &m)
-  { 
+  void mesh_fem::receipt(const MESH_REFINE_CONVEX &m) { 
     // ajouter la strategie au rafinement / derafinement
     DAL_THROW(internal_error, "internal error");
   }
-  void mesh_fem::receipt(const MESH_UNREFINE_CONVEX &m)
-  { 
+  void mesh_fem::receipt(const MESH_UNREFINE_CONVEX &m) { 
     // ajouter la strategie au rafinement / derafinement
     DAL_THROW(internal_error, "internal error");
+  }
+  void mesh_fem::receipt(const MESH_FEM_TOUCH &m) {
+    if (m.ptr == (void *)(this)) { 
+      dof_enumeration_made = false;
+      linked_mesh().lmsg_sender().send(MESH_FEM_CHANGE((void *)(this)));
+    }
   }
    
-  void mesh_fem::set_finite_element(size_type cv, pintfem pif)
-  {
-    if (pif == NULL || pif->pf == NULL )
-    {
-      if (fe_convex.is_in(cv))
-      { fe_convex.sup(cv); dof_enumeration_made = false; }
+  void mesh_fem::set_finite_element(size_type cv, pintfem pif) {
+    if (pif == NULL || pif->pf == NULL ) {
+      if (fe_convex.is_in(cv)) {
+	fe_convex.sup(cv);
+	dof_enumeration_made = false;
+	linked_mesh().lmsg_sender().send(MESH_FEM_CHANGE((void *)(this)));
+      }
     }
-    else
-    {
+    else {
       if (_linked_mesh->structure_of_convex(cv)->basic_structure() 
-	     != pif->pf->basic_structure())
+	  != pif->pf->basic_structure())
 	DAL_THROW(internal_error,
 		  "Incompatibility between fem and mesh element");
-      if (!fe_convex.is_in(cv) || f_elems[cv] != pif)
-      { fe_convex.add(cv); f_elems[cv] = pif; dof_enumeration_made = false; }
+      if (!fe_convex.is_in(cv) || f_elems[cv] != pif) {
+	fe_convex.add(cv);
+	f_elems[cv] = pif;
+	dof_enumeration_made = false;  
+	linked_mesh().lmsg_sender().send(MESH_FEM_CHANGE((void *)(this)));
+      }
     }
   }
 
@@ -232,29 +238,10 @@ namespace getfem
     for ( ; it != ite; ++it) if (*it) set_finite_element(it.index(), pif);
   }
 
-  base_node mesh_fem::point_of_dof(size_type cv, size_type i) const
-  {
-    pfem pf = f_elems[cv]->pf;
-    bgeot::pgeometric_trans pgt = _linked_mesh->trans_of_convex(cv);
-    // cout << "pgt = " << pgt << endl;
-    const base_node *pt = &(pf->node_of_dof(i));
-    // cout << "pt = " << *pt << endl;
-    // cout << "dim = " << int(_linked_mesh->dim()) << endl;
-    base_node P(_linked_mesh->dim()); P.fill(0.0);
-    // cout << "P = " << P << endl;
-    size_type k = pgt->nb_points();
-    // cout << "k = " << k << endl;
-    // cout << "taille de pgt->poly_vector() : " << pgt->poly_vector().size() << endl;
-    for (size_type l = 0; l < k; ++l)
-    {
-      // cout << "eval " << l << endl;
-      // cout << " de " << pgt->poly_vector()[l] << endl;
-      P.addmul(pgt->poly_vector()[l].eval(pt->begin()),
-	       _linked_mesh->points_of_convex(cv)[l]);
-      
-    }
-    // cout << "fin du calcul du pt\n";
-    return P;
+  base_node mesh_fem::point_of_dof(size_type cv, size_type i) const {
+    return linked_mesh().trans_of_convex(cv)->transform
+      (fem_of_element(cv)->node_of_dof(i),
+       linked_mesh().points_of_convex(cv));
   }
 
   base_node mesh_fem::point_of_dof(size_type d) const
@@ -406,7 +393,9 @@ namespace getfem
 
   void mesh_fem::clear(void)
   {
-    fe_convex.clear(); dof_enumeration_made = false;
+    fe_convex.clear();
+    dof_enumeration_made = false;
+    linked_mesh().lmsg_sender().send(MESH_FEM_CHANGE((void *)(this)));
     bgeot::mesh_structure::clear();
     boundaries.clear();
     valid_boundaries.clear();
@@ -419,11 +408,12 @@ namespace getfem
     add_sender(me.lmsg_sender(), *this,
 	   lmsg::mask(MESH_CLEAR()) | lmsg::mask(MESH_SUP_CONVEX()) |
 	   lmsg::mask(MESH_SWAP_CONVEX()) | lmsg::mask(MESH_REFINE_CONVEX()) |
-           lmsg::mask(MESH_UNREFINE_CONVEX()));
+           lmsg::mask(MESH_UNREFINE_CONVEX()) | lmsg::mask(MESH_FEM_TOUCH()));
   }
 
   mesh_fem::~mesh_fem(void)
   {
+    linked_mesh().lmsg_sender().send(MESH_FEM_DELETE((void *)(this)));
     sup_sender(_linked_mesh->lmsg_sender());
   }
 

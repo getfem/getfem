@@ -121,7 +121,7 @@ namespace getfem
       { return fe_convex; }
       
       /// Gives a pointer to the linked mesh of type getfem\_mesh.
-      const getfem_mesh &linked_mesh(void) const { return *_linked_mesh; }
+      getfem_mesh &linked_mesh(void) const { return *_linked_mesh; }
       /** Set on the convex of index i the integrable finite element method
        *          with the description pif which is of type pintfem.
        */
@@ -204,6 +204,7 @@ namespace getfem
       void receipt(const MESH_SWAP_CONVEX &m);
       void receipt(const MESH_REFINE_CONVEX &m);
       void receipt(const MESH_UNREFINE_CONVEX &m);
+      void receipt(const MESH_FEM_TOUCH &m);
       
       mesh_fem(getfem_mesh &me); 
       ~mesh_fem(void);
