@@ -658,6 +658,8 @@ namespace gmm
     size_type index(void) const { return shift; }
 
     slvector_const_iterator(void) {}
+    slvector_const_iterator(const slvector_iterator<T>& iter)
+      : it(iter.it), shift(iter.shift) {}
     slvector_const_iterator(const base_iterator &iter, size_type s)
       : it(iter), shift(s) {}
   };
@@ -698,7 +700,7 @@ namespace gmm
 #   ifdef __GETFEM_VERIFY
       if (c >= _size) out_of_range_error();
 #   endif
-      if (c < shift || c > shift + data.size()) return T(0);
+      if (c < shift || c >= shift + data.size()) return T(0);
       return data[c - shift];
     }
 
@@ -707,8 +709,8 @@ namespace gmm
     void clear(void) { data.resize(0); shift = 0; }
     void clean(double eps);
 
-    slvector(void) : data(), shift(0), _size(0) {}
-    explicit slvector(size_type l) : data(), shift(0), _size(l) {}
+    slvector(void) : data(0), shift(0), _size(0) {}
+    explicit slvector(size_type l) : data(0), shift(0), _size(l) {}
     slvector(size_type l, size_type d, size_type s)
       : data(d), shift(d), _size(l) {}
 
@@ -721,26 +723,27 @@ namespace gmm
   }
 
   template<class T>  void slvector<T>::w(size_type c, const T &e) {
+    // cout << "vecteur avant : " << *this << " ajout à l'indice " << c << " de " << e << endl;
 #   ifdef __GETFEM_VERIFY
       if (c >= _size) out_of_range_error();
 #   endif
+      size_type s = data.size();
       if (c < shift) { // à verifier
-	data.resize(data.size() + shift - c); shift = c;
+	data.resize(s + shift - c); 
 	typename std::vector<T>::iterator it = data.begin(), ite = data.end();
 	typename std::vector<T>::iterator it2 = ite - 1,
-	  it3 = ite - shift + c -1;
+	  it3 = ite - shift + c - 1;
 	for (; it3 != it; --it3, --it2) *it2 = *it3;
 	std::fill(it, it + shift - c, T(0));
+	shift = c;
       }
-      else if (c > shift + data.size()) {
-	size_type s = data.size();
-	if (s) {
-	  data.resize(c - shift);
-	  std::fill(data.begin() + s, data.end(), T(0));
-	}
-	else { data.resize(1); shift = c; }
+      else if (c >= shift + s && s) {
+	data.resize(c - shift + 1);
+	std::fill(data.begin() + s, data.end(), T(0));
       }
+      else { data.resize(1); shift = c; }
       data[c - shift] = e;
+      // cout << "résultat : " << *this << endl;
     }
 
   template<class T>  void slvector<T>::out_of_range_error(void) const

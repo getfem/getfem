@@ -229,7 +229,7 @@ namespace gmm {
 				       abstract_skyline) {
     typename linalg_traits<L>::const_iterator it = vect_begin(l),
       ite = vect_end(l);
-    o << "banded(" << it.index() << ", " << ite.index()-1 << ") ";
+    o << "banded(" << it.index() << ", " << ite.index() - it.index() << ") ";
     if (it != ite) o << " " << cast_char(*it++);
     for (; it != ite; ++it) o << ", " << cast_char(*it);
   }
@@ -866,7 +866,7 @@ namespace gmm {
 	l2[i] = *it;
   }
 
-  template <class L1, class L2>
+  template <class L1, class L2> // à optimiser ...
   void copy_vect(const L1& l1, L2& l2,
 		 abstract_plain, abstract_skyline) {
     clear(l2);
