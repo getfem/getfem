@@ -571,8 +571,9 @@ namespace getfem
     //    the kernel
     //  . Compute the ctes / D.
     //  . Optimization (suppress temporary ...). 
+    //  . Verify sizes of data
 
-    // Build an orthogonal base of the kernel of D in G, give
+    // Build an orthogonal basis of the kernel of D in G, gives
     // the solution of minimal norm of D*U = UD in UDD and
     // return the dimension of the kernel. The function is based
     // on a Gramm-Schmidt algorithm.
@@ -596,7 +597,7 @@ namespace getfem
       else {
 	bool good = true;
 	for (size_type j = 0; j < nb_bimg; ++j)
-	  if (dal::abs(bgeot::vect_sp(aux, base_img[j])) > 1.0E-6)
+	  if (dal::abs(bgeot::vect_sp(aux, base_img[j])) > 1.0E-16)
 	    { good = false; break; }
 	if (good) {
 	  scalar_type n = bgeot::vect_norm2(aux);
