@@ -240,36 +240,6 @@ namespace getfem
     
   }
 
-  /* ********************************************************************* */
-  /*                                                                       */
-  /*  Gives the list of edges of a mesh.                                   */
-  /*                                                                       */
-  /* ********************************************************************* */
-
-  struct edge_list_elt  {
-    size_type i, j;
-    size_type cv;
-    inline bool operator < (const edge_list_elt &e) const
-    {
-      if (i < e.i) return true; if (i > e.i) return false; 
-      if (j < e.j) return true; else if (j > e.j) return false;
-      if (cv < e.cv) return true; return false;
-    }
-    edge_list_elt(size_type ii, size_type jj, size_type ic = 0) : cv(ic)
-    { i = std::min(ii, jj); j = std::max(ii, jj); }
-    edge_list_elt(void) {}
-  };
-
-  typedef dal::dynamic_tree_sorted<edge_list_elt> edge_list;
-  
-
-  void mesh_edge_list_convex(const getfem_mesh &m, size_type i, 
-			     edge_list &el, bool merge_convex = true);
-  void mesh_edges_list(const getfem_mesh &m, edge_list &el, 
-		       bool merge_convex = true);
-
-
-
 
   /* ********************************************************************* */
   /*                                                                       */

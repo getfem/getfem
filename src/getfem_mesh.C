@@ -242,8 +242,7 @@ namespace getfem
     if (!ftool::read_untill(ist, "BEGIN MESH STRUCTURE DESCRIPTION"))
       DAL_THROW(failure_error, "This seems not to be a mesh file");
 
-    while (!tend)
-    {
+    while (!tend) {
       tend = !ftool::get_token(ist, tmp, 1023);
       if (!strcmp(tmp, "END"))
       { tend = true; }
@@ -266,12 +265,15 @@ namespace getfem
 	cv[ic].pts = cv_pt.alloc(nb);
 	for (size_type i = 0; i < nb; i++)
 	{
-	  ftool::get_token(ist, tmp, 1023);
+	  ftool::get_token(ist, tmp, 1023);	  
 	  cv_pt[cv[ic].pts+i] = dal::abs(atoi(tmp));
 	}
       }
-      else
-      { DAL_THROW(failure_error, "Syntax error reading a mesh file"); }
+      else { 
+	DAL_THROW(failure_error, "Syntax error reading a mesh file at pos " 
+		  << ist.tellg() << "(expecting 'CONVEX' or 'END', found '" 
+		  << tmp << "')"); 
+      }
     }
 
     for (ic << ncv; ic != size_type(-1); ic << ncv) {
