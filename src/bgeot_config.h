@@ -59,6 +59,15 @@ namespace bgeot
   inline base_poly one_var_poly(short_type n, short_type k)
     { return base_poly(n, 1, k); }
 
+  class dimension_error : public std::logic_error {
+  public:
+    dimension_error(const std::string& what_arg): std::logic_error (what_arg) { }
+  };
+
+  class internal_error : public std::logic_error {
+  public:
+    internal_error(const std::string& what_arg): std::logic_error (what_arg) { }
+  };
 
 }  /* end of namespace bgeot.                                             */
 

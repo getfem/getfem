@@ -72,11 +72,17 @@ namespace getfem
     base_matrix M;
     size_type P = structure()->dim();
     
+
     if (val.nrows() != target_dim() ||
 	val.ncols() != P ||
-	ii >= R ||
+	ii >= pfp->get_point_tab()->size() ||
 	coeff.size() != R)
       throw dimension_error("virtual_fem::interpolation_grad: dimension mismatch");
+
+    if (pfp->get_pfem() != this) {
+      throw internal_error("virtual_fem::interpolation_grad: internal error");
+    }
+
     base_tensor::const_iterator it = pfp->grad(ii).begin();
 
     if (!is_equivalent())
@@ -94,6 +100,7 @@ namespace getfem
 	  else
 	    for (size_type i = 0; i < R; ++i)
 	      co += coeff[i] * M(i, j);
+	  assert(it-pfp->grad(ii).begin() < pfp->grad(ii).size());
 	  val(r,k) += co * (*it);
 	} 
       }

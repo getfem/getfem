@@ -115,7 +115,8 @@ namespace getfem
    
   };
 
-  _fem_precomp::_fem_precomp(const _pre_fem_light &ls) {
+  _fem_precomp::_fem_precomp(const _pre_fem_light &ls) : pf(ls.pf), pspt(ls.pspt) {
+
     dim_type N = ls.pf->structure()->dim();
     pc.resize(ls.pspt->size());
     hpc.resize(ls.pspt->size());

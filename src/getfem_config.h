@@ -50,6 +50,8 @@ namespace getfem
   typedef bgeot::base_poly base_poly;
   typedef bgeot::base_node base_node;
 
+  using bgeot::dimension_error;
+  using bgeot::internal_error;
 }  /* end of namespace getfem.                                             */
 
 

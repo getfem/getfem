@@ -81,12 +81,16 @@ namespace getfem
       std::vector<base_tensor> c;
       std::vector<base_tensor> pc;
       std::vector<base_tensor> hpc;
+      pfem pf;
+      bgeot::pstored_point_tab pspt;
 
     public :
 
       inline const base_tensor &val(size_type i) const { return c[i]; }
       inline const base_tensor &grad(size_type i) const { return pc[i]; }
       inline const base_tensor &hess(size_type i) const { return hpc[i]; }
+      inline pfem get_pfem() const { return pf; }
+      inline bgeot::pstored_point_tab get_point_tab() const { return pspt; }
 
       _fem_precomp(const _pre_fem_light &ls);
   };

@@ -71,13 +71,11 @@ namespace getfem
 
       pgt = mf.linked_mesh().trans_of_convex(cv);
       if (pf_targetold != pf_target) {
-	cerr << "geotrans " << (*pf_target->node_tab())[0] << endl;
         pgp = geotrans_precomp(pgt, pf_target->node_tab());
       }
       pf_targetold = pf_target;
 
       if (pf_old != pf) {
-	cerr << "fem " << (*pf_target->node_tab())[0] << endl;
 	pfp = fem_precomp(pf, pf_target->node_tab());
       }
       pf_old = pf;
@@ -94,9 +92,9 @@ namespace getfem
 	for (size_type i = 0; i < N; ++i)
 	  a(i,j) = mf.linked_mesh().points_of_convex(cv)[j][i];
       
-      coeff.resize(pf_target->nb_dof());
-      val.resize(pf_target->target_dim(), P);
-      B1.resize(pf_target->target_dim(), N);
+      coeff.resize(pf->nb_dof());
+      val.resize(pf->target_dim(), P);
+      B1.resize(pf->target_dim(), N);
       
       for (size_type j = 0; j < pf_target->nb_dof(); ++j) {
 	if (!pgt->is_linear() || j == 0) {
@@ -114,9 +112,9 @@ namespace getfem
 
 	assert(pf_target->target_dim() == 1); // !!
 	for (size_type q = 0; q < Q; ++q) {
-	  for (size_type l = 0; l < pf_target->nb_dof(); ++l)
+	  for (size_type l = 0; l < pf->nb_dof(); ++l)
 	    coeff[l] = U[mf.ind_dof_of_element(cv)[l] * Q + q ];
-	  pf_target->interpolation_grad(pfp, j, G, coeff, val);
+	  pf->interpolation_grad(pfp, j, G, coeff, val);
 	  bgeot::mat_product(val, B0, B1);
 
 	  for (size_type l = 0; l < N; ++l)
