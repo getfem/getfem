@@ -360,7 +360,7 @@ namespace getfem {
 
   template<typename MAT>
   void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
-		     MAT &M, bool extrapolation = false) {
+		     MAT &M, bool extrapolation) {
     if (mf_source.nb_dof() != gmm::mat_ncols(M)
 	|| (gmm::mat_nrows(M) % mf_target.nb_dof()) != 0
 	|| gmm::mat_nrows(M) == 0)
@@ -372,7 +372,6 @@ namespace getfem {
     else 
       interpolation(mf_source, mf_target, U, V, M, 1, extrapolation);
   }
-
 
   // Deprecated functions (for version 1.6 -> 1.7)
 

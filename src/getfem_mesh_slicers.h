@@ -248,7 +248,7 @@ namespace getfem {
     }
     void split_simplex(mesh_slicer &ms,
                        slice_simplex s, /* s is NOT a reference, it is on purpose (push_back in the function)*/
-                       size_type sstart, const std::bitset<32> spin, const std::bitset<32> spbin);
+                       size_type sstart, std::bitset<32> spin, std::bitset<32> spbin);
   public:
     void exec(mesh_slicer &ms);
   };

@@ -39,7 +39,7 @@ namespace getfem
    * VTK export 
    * ------------------------------------------------------------- */
 
-  struct gf2vtk_dof_mapping : public std::vector<std::vector<size_type> > {};
+  struct gf2vtk_dof_mapping : public std::vector<std::vector<unsigned> > {};
 
   static const std::vector<unsigned> &getfem_to_vtk_dof_mapping(int t) {
     gf2vtk_dof_mapping &dm = dal::singleton<gf2vtk_dof_mapping>::instance();

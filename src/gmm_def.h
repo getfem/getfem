@@ -656,118 +656,6 @@ namespace gmm {
   { return same_porigin(linalg_origin(l1), linalg_origin(l2)); }
 
 
-  /* ********************************************************************* */
-  /* Set to begin end set to end for iterators on non-const sparse vectors.*/
-  /* ********************************************************************* */
-
-  template <typename IT, typename ORG, typename VECT> inline
-  void set_to_begin(IT &it, ORG o, VECT *, linalg_false)
-  { it = vect_begin(*o); }
-
-  template <typename IT, typename ORG, typename VECT> inline
-  void set_to_begin(IT &it, ORG o, const VECT *, linalg_false) 
-  { it = vect_const_begin(*o); }
-
-  template <typename IT, typename ORG, typename VECT> inline
-  void set_to_end(IT &it, ORG o, VECT *, linalg_false)
-  { it = vect_end(*o); }
-  
-  template <typename IT, typename ORG, typename VECT> inline
-  void set_to_end(IT &it, ORG o, const VECT *, linalg_false)
-  { it = vect_const_end(*o); }
-
-
-  template <typename IT, typename ORG, typename VECT> inline
-  void set_to_begin(IT &, ORG, VECT *, linalg_const) { }
-
-  template <typename IT, typename ORG, typename VECT> inline
-  void set_to_begin(IT &, ORG, const VECT *, linalg_const) { }
-
-  template <typename IT, typename ORG, typename VECT> inline
-  void set_to_end(IT &, ORG, VECT *, linalg_const) { }
-  
-  template <typename IT, typename ORG, typename VECT> inline
-  void set_to_end(IT &, ORG, const VECT *, linalg_const) { }
-
-
-  template <typename IT, typename ORG, typename VECT> inline
-  void set_to_begin(IT &, ORG, VECT *v, linalg_modifiable) { 
-    if (is_sparse(*v))
-      DAL_THROW(internal_error, "internal_error");  
-  }
-
-  template <typename IT, typename ORG, typename VECT> inline
-  void set_to_begin(IT &, ORG, const VECT *v, linalg_modifiable) {
-    if (is_sparse(*v))
-      DAL_THROW(internal_error, "internal_error");
-  }
-
-  template <typename IT, typename ORG, typename VECT> inline
-  void set_to_end(IT &, ORG, VECT *v, linalg_modifiable) {
-    if (is_sparse(*v))
-      DAL_THROW(internal_error, "internal_error"); 
-  }
-  
-  template <typename IT, typename ORG, typename VECT> inline
-  void set_to_end(IT &, ORG, const VECT *v, linalg_modifiable) {
-    if (is_sparse(*v))
-      DAL_THROW(internal_error, "internal_error");
-  }
-
-  /* ******************************************************************** */
-  /*		General index for certain algorithms.         		  */
-  /* ******************************************************************** */
-
-  template<class IT> 
-  size_type index_of_it(const IT &it, size_type, abstract_sparse)
-  { return it.index(); }
-  template<class IT> 
-  size_type index_of_it(const IT &it, size_type, abstract_skyline)
-  { return it.index(); }
-  template<class IT> 
-  size_type index_of_it(const IT &, size_type k, abstract_dense)
-  { return k; }
-
-  /* ********************************************************************* */
-  /* Numeric limits.                                                       */
-  /* ********************************************************************* */
-  
-  template<typename T> inline T default_tol(T) {
-    using namespace std;
-    static T tol(10);
-    if (tol == T(10)) {
-      if (numeric_limits<T>::is_specialized)
-	tol = numeric_limits<T>::epsilon();
-      else {
-	int i=sizeof(T)/4; while(i-- > 0) tol*=T(1E-8); 
-	DAL_WARNING(1, "The numeric type " << typeid(T).name()
-		    << " has no numeric_limits defined !!\n"
-		    << "Taking " << tol << " as default tolerance");
-      }
-    }
-    return tol;
-  }
-  template<typename T> inline T default_tol(std::complex<T>)
-  { return default_tol(T()); }
-
-    template<typename T> inline T default_min(T) {
-    using namespace std;
-    static T mi(10);
-    if (mi == T(10)) {
-      if (numeric_limits<T>::is_specialized)
-	mi = std::numeric_limits<T>::min();
-      else {
-	mi = T(0);
-	DAL_WARNING(1, "The numeric type " << typeid(T).name()
-		    << " has no numeric_limits defined !!\n"
-		    << "Taking 0 as default minimum");
-      }
-    }
-    return mi;
-  }
-  template<typename T> inline T default_min(std::complex<T>)
-  { return default_min(T()); }
-
   /* ******************************************************************** */
   /*		Miscellaneous                           		  */
   /* ******************************************************************** */
@@ -927,6 +815,119 @@ namespace gmm {
   mat_const_col(const MAT &m, size_type i)
   { return linalg_traits<MAT>::col(mat_col_const_begin(m) + i); }
   
+  /* ********************************************************************* */
+  /* Set to begin end set to end for iterators on non-const sparse vectors.*/
+  /* ********************************************************************* */
+
+  template <typename IT, typename ORG, typename VECT> inline
+  void set_to_begin(IT &it, ORG o, VECT *, linalg_false)
+  { it = vect_begin(*o); }
+
+  template <typename IT, typename ORG, typename VECT> inline
+  void set_to_begin(IT &it, ORG o, const VECT *, linalg_false) 
+  { it = vect_const_begin(*o); }
+
+  template <typename IT, typename ORG, typename VECT> inline
+  void set_to_end(IT &it, ORG o, VECT *, linalg_false)
+  { it = vect_end(*o); }
+  
+  template <typename IT, typename ORG, typename VECT> inline
+  void set_to_end(IT &it, ORG o, const VECT *, linalg_false)
+  { it = vect_const_end(*o); }
+
+
+  template <typename IT, typename ORG, typename VECT> inline
+  void set_to_begin(IT &, ORG, VECT *, linalg_const) { }
+
+  template <typename IT, typename ORG, typename VECT> inline
+  void set_to_begin(IT &, ORG, const VECT *, linalg_const) { }
+
+  template <typename IT, typename ORG, typename VECT> inline
+  void set_to_end(IT &, ORG, VECT *, linalg_const) { }
+  
+  template <typename IT, typename ORG, typename VECT> inline
+  void set_to_end(IT &, ORG, const VECT *, linalg_const) { }
+
+
+  template <typename IT, typename ORG, typename VECT> inline
+  void set_to_begin(IT &, ORG, VECT *v, linalg_modifiable) { 
+    if (is_sparse(*v))
+      DAL_THROW(internal_error, "internal_error");  
+  }
+
+  template <typename IT, typename ORG, typename VECT> inline
+  void set_to_begin(IT &, ORG, const VECT *v, linalg_modifiable) {
+    if (is_sparse(*v))
+      DAL_THROW(internal_error, "internal_error");
+  }
+
+  template <typename IT, typename ORG, typename VECT> inline
+  void set_to_end(IT &, ORG, VECT *v, linalg_modifiable) {
+    if (is_sparse(*v))
+      DAL_THROW(internal_error, "internal_error"); 
+  }
+  
+  template <typename IT, typename ORG, typename VECT> inline
+  void set_to_end(IT &, ORG, const VECT *v, linalg_modifiable) {
+    if (is_sparse(*v))
+      DAL_THROW(internal_error, "internal_error");
+  }
+
+  /* ******************************************************************** */
+  /*		General index for certain algorithms.         		  */
+  /* ******************************************************************** */
+
+  template<class IT> 
+  size_type index_of_it(const IT &it, size_type, abstract_sparse)
+  { return it.index(); }
+  template<class IT> 
+  size_type index_of_it(const IT &it, size_type, abstract_skyline)
+  { return it.index(); }
+  template<class IT> 
+  size_type index_of_it(const IT &, size_type k, abstract_dense)
+  { return k; }
+
+  /* ********************************************************************* */
+  /* Numeric limits.                                                       */
+  /* ********************************************************************* */
+  
+  template<typename T> inline T default_tol(T) {
+    using namespace std;
+    static T tol(10);
+    if (tol == T(10)) {
+      if (numeric_limits<T>::is_specialized)
+	tol = numeric_limits<T>::epsilon();
+      else {
+	int i=sizeof(T)/4; while(i-- > 0) tol*=T(1E-8); 
+	DAL_WARNING(1, "The numeric type " << typeid(T).name()
+		    << " has no numeric_limits defined !!\n"
+		    << "Taking " << tol << " as default tolerance");
+      }
+    }
+    return tol;
+  }
+  template<typename T> inline T default_tol(std::complex<T>)
+  { return default_tol(T()); }
+
+    template<typename T> inline T default_min(T) {
+    using namespace std;
+    static T mi(10);
+    if (mi == T(10)) {
+      if (numeric_limits<T>::is_specialized)
+	mi = std::numeric_limits<T>::min();
+      else {
+	mi = T(0);
+	DAL_WARNING(1, "The numeric type " << typeid(T).name()
+		    << " has no numeric_limits defined !!\n"
+		    << "Taking 0 as default minimum");
+      }
+    }
+    return mi;
+  }
+  template<typename T> inline T default_min(std::complex<T>)
+  { return default_min(T()); }
+
+
 
   /* ******************************************************************** */
   /*		Write                                   		  */

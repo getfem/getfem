@@ -60,22 +60,23 @@ namespace getfem {
   typedef const virtual_interpolated_func *pinterpolated_func;
 
 
+  struct gausspt_interpolation_data {
+    size_type elt;        // element of mf1 under this gauss point
+    size_type flags;      // flags & 1 : there is an element or not
+    // flags & 2 : base_val is stored
+    // flags & 4 : grad_val is stored
+    base_node ptref;      // coords on reference element of mf1 element
+    base_tensor base_val; // optional storage of the base values
+    base_tensor grad_val; // optional storage of the grad base values
+    std::vector<size_type> local_dof; // correspondance between dof of the
+    // mf1 element and dof of the interpolated element.
+  };
 
   class interpolated_fem : public virtual_fem, public context_dependencies {
     
   protected :
 
-    struct gausspt_interpolation_data {
-      size_type elt;        // element of mf1 under this gauss point
-      size_type flags;      // flags & 1 : there is an element or not
-                            // flags & 2 : base_val is stored
-                            // flags & 4 : grad_val is stored
-      base_node ptref;      // coords on reference element of mf1 element
-      base_tensor base_val; // optional storage of the base values
-      base_tensor grad_val; // optional storage of the grad base values
-      std::vector<size_type> local_dof; // correspondance between dof of the
-                            // mf1 element and dof of the interpolated element.
-    };
+
 
     struct elt_interpolation_data {
       size_type nb_dof;

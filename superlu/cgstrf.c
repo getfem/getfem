@@ -21,6 +21,9 @@
 
 #include "csp_defs.h"
 
+void    countnz (const int, int *, int *, int *, GlobalLU_t *);
+void    fixupL (const int, const int *, GlobalLU_t *);
+
 void
 cgstrf (superlu_options_t *options, SuperMatrix *A, float drop_tol,
         int relax, int panel_size, int *etree, void *work, int lwork,

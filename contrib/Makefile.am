@@ -1,5 +1,4 @@
 bin_PROGRAMS = \
-	getfem_import_export \
 	compare_solutions \
 	interpole_solution \
 	draw_mesh_doedges

@@ -156,7 +156,7 @@ namespace getfem {
   */
   void slicer_volume::split_simplex(mesh_slicer& ms,
 				    slice_simplex s, size_type sstart, 
-				    const std::bitset<32> spin, const std::bitset<32> spbin) {
+				    std::bitset<32> spin, std::bitset<32> spbin) {
     scalar_type alpha = 0; size_type iA=0, iB = 0;
     bool intersection = false;
     static int level = 0;

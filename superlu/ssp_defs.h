@@ -137,9 +137,6 @@ sCreate_SuperNode_Matrix(SuperMatrix *, int, int, int, float *,
 extern void
 sCopy_Dense_Matrix(int, int, float *, int, float *, int);
 
-extern void    countnz (const int, int *, int *, int *, GlobalLU_t *);
-extern void    fixupL (const int, const int *, GlobalLU_t *);
-
 extern void    sallocateA (int, int, float **, int **, int **);
 extern void    sgstrf (superlu_options_t*, SuperMatrix*, float, 
                        int, int, int*, void *, int, int *, int *, 
@@ -216,15 +213,11 @@ extern void    sCompRow_to_CompCol(int, int, int, float*, int*, int*,
 		                   float **, int **, int **);
 extern void    sfill (float *, int, float);
 extern void    sinf_norm_error (int, SuperMatrix *, float *);
-extern void    PrintPerf (SuperMatrix *, SuperMatrix *, mem_usage_t *,
-			 float, float, float *, float *, char *);
 
 /* Routines for debugging */
 extern void    sPrint_CompCol_Matrix(char *, SuperMatrix *);
 extern void    sPrint_SuperNode_Matrix(char *, SuperMatrix *);
 extern void    sPrint_Dense_Matrix(char *, SuperMatrix *);
-extern void    print_lu_col(char *, int, int, int *, GlobalLU_t *);
-extern void    check_tempv(int, float *);
 
 #ifdef __cplusplus
   }

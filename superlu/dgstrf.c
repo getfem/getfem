@@ -21,6 +21,9 @@
 
 #include "dsp_defs.h"
 
+void countnz (const int, int *, int *, int *, GlobalLU_t *);
+void fixupL (const int, const int *, GlobalLU_t *);
+
 void
 dgstrf (superlu_options_t *options, SuperMatrix *A, double drop_tol,
         int relax, int panel_size, int *etree, void *work, int lwork,

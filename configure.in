@@ -93,7 +93,7 @@ case $CXX in
 dnl     il faut utiliser -tweak au lieu des repositories ...
 	CXXFLAGS="$CXXFLAGS -tweak -std strict_ansi -fast -Wl,-S -nopure_cname"
 dnl 	CXXFLAGS="$CXXFLAGS -ptr `pwd`/cxx_repository -std strict_ansi -O3"
-	CFLAGS="$CFLAGS -fast -Wl,-S -nopure_cname"
+	CFLAGS="$CFLAGS -fast -Wl,-S"
  	cd $here
 	;;
  CC)
