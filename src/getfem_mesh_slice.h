@@ -74,7 +74,7 @@ namespace getfem {
 	and the slice must share the same mesh, of course)
     */
     template<typename V1, typename V2> void 
-    interpolate(const getfem::mesh_fem &mf, const V1& U, V2& V) {
+    interpolate(const getfem::mesh_fem &mf, const V1& U, V2& V) const {
       bgeot::stored_point_tab refpts;
       base_vector coeff;
       base_matrix G;

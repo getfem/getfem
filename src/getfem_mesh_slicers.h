@@ -433,6 +433,16 @@ namespace getfem {
     void exec(mesh_slicer &ms);
   };    
 
+  /**
+     contract or expand each convex with respect to its gravity center
+  */
+  class slicer_explode : public slicer_action {
+    scalar_type coef; /* < 1 => contraction, > 1 -> expansion */
+  public:
+    slicer_explode(scalar_type c) : coef(c) {}
+    void exec(mesh_slicer &ms);
+  };
+
   /** 
       this slicer does nothing! 
   */

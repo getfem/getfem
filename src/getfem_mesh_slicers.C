@@ -464,7 +464,20 @@ namespace getfem {
     }
   }
 
-  
+  void slicer_explode::exec(mesh_slicer &ms) {
+    if (ms.nodes_index.card() == 0) return;    
+
+    base_node G;
+    if (ms.face < dim_type(-1))
+      G = dal::mean_value(ms.m.points_of_face_of_convex(ms.cv, ms.face).begin(), 
+			  ms.m.points_of_face_of_convex(ms.cv, ms.face).end());
+    else
+      G = dal::mean_value(ms.m.points_of_convex(ms.cv).begin(), 
+			  ms.m.points_of_convex(ms.cv).end());    
+    for (dal::bv_visitor i(ms.nodes_index); !i.finished(); ++i)
+      ms.nodes[i].pt = G + coef*(ms.nodes[i].pt - G);
+  }
+
   /* -------------------- member functions of mesh_slicer -------------- */
 
   void mesh_slicer::pack() {
