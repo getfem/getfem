@@ -114,6 +114,13 @@ print MAKEFILE "\n", 'test : ',  "\$(lib_objects) ", $listetests, "\n\n";
 print MAKEFILE "\n", 'dotest : ',  "test \n";
 print MAKEFILE "\t", $listedotest, "\n";
 
+if (exists(matlabcom))
+{
+
+$listeC = `ls matlabcom/\*.C`;
+
+}
+
 print MAKEFILE "\n\nclean :\n";
 print MAKEFILE "\t \/bin\/rm -f sources\/\*.o sources\/\*.a\n";
 
