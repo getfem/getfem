@@ -443,18 +443,32 @@ namespace gmm {
   /*		Standard access and clear objects             		   */
   /* ********************************************************************* */
 
+  
   template <class IT, class CIT> struct dense_access {
-
+    
     typedef typename std::iterator_traits<IT>::value_type value_type;
-    typedef value_type &reference;
+    typedef typename std::iterator_traits<IT>::reference reference;
+    typedef typename std::iterator_traits<CIT>::pointer const_pointer;
+
+    typedef typename select_return<const value_type &, reference,
+			 const_pointer>::return_type const_reference;
   
     reference operator()(const void *, const IT &_begin,
 			 const IT &, size_type i)
     { return _begin[i]; }
-    value_type operator()(const void *, const CIT &_begin,
-			 const CIT &, size_type i)
+    const_reference operator()(const void *, const CIT &_begin,
+			       const CIT &, size_type i)
     { return _begin[i]; }
   };
+
+  template <class IT> struct dense_access<IT, IT> {
+    typedef typename std::iterator_traits<IT>::value_type value_type;
+  
+    value_type operator()(const void *, const IT &_begin,
+			 const IT &, size_type i)
+    { return _begin[i]; }
+  };
+
 
   template <class IT> struct dense_clear {
     typedef typename std::iterator_traits<IT>::value_type value_type;

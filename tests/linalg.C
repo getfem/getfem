@@ -19,6 +19,7 @@
 /* *********************************************************************** */
 #include <gmm.h>
 #include <gmm_inoutput.h>
+#include <ftool.h>
 
 void test_gauss_det() {
   gmm::dense_matrix<double> m(5,5);
@@ -45,14 +46,62 @@ void const_ref_test(const M1 &m1, const M2 &m2) {
  					   gmm::sub_slice(1, 2, 3))) << endl;
 }
 
+void test_qr(void) {
+  int nn = 16;
+  gmm::dense_matrix<double> mm(nn,nn), r(nn, nn), q(nn, nn),
+    qr(nn, nn), mmt(nn, nn);
+  std::vector<std::complex<double> > eig(nn);
+  gmm::fill_random(mm);
+
+//   cout << "[" << endl;
+//   for (int i = 0; i < nn; ++i) {
+//     for (int j = 0; j < nn; ++j)
+//       cout << " " << mm(i,j);
+//     if (i != nn-1) cout << " ; \n";
+//   }
+//   cout << "]" << endl;
+  
+  double exectime = ftool::uclock_sec();
+  power_qr_algorithm(mm, eig, q);
+  cout << "time to compute power QR : " << ftool::uclock_sec() - exectime;
+  cout << "\neigenvalues : " << eig << endl;
+  cout << "eigenvectors : " << q << endl;
+  
+  exectime = ftool::uclock_sec();
+  implicit_qr_algorithm(mm, eig, q);
+  cout << "time to compute implicit QR : " << ftool::uclock_sec()-exectime;
+  cout << "\neigenvalues : " << eig << endl;
+  cout << "eigenvectors : " << q << endl;
+  
+  // getchar();
+  
+  gmm::mult(mm, gmm::transposed(mm), mmt);
+  cout << "mmt = " << mmt << endl;
+  
+  gmm::qr_factor(mm, q, r);
+  cout << "r = " << r << endl;
+  cout << "q = " << q << endl;
+  gmm::mult(q, r, qr);
+  gmm::clean(qr, 1E-13);
+  cout << "qr = " << qr << endl;
+  
+  gmm::add(gmm::scaled(mm, -1.0), qr);
+  
+  if (gmm::mat_norm2(qr) > 1E-10) 
+    DAL_THROW(dal::failure_error, "Error on QR factorisation.");
+}
 
 int main(void)
 {
+  dal::exception_callback_debug cb;
+  dal::exception_callback::set_exception_callback(&cb);
+
   try {
 
     cout.precision(16);
 
     test_gauss_det();
+    test_qr();
 
     gmm::dense_matrix<double> m(10, 10);
     std::vector<double> y(10), x(10), b(10);
@@ -65,39 +114,18 @@ int main(void)
       j = (j + 6) % 10; k = (k + 15) % 31;
       x[i] = 10.0 * double(i - 5 + ((i >= 5) ? 1 : 0));
     }
+
     gmm::mult(m, x, b);
     
     cout << "m = " << m << endl;
     cout << "x = " << x << endl;
     cout << "b = " << b << endl;
 
-
     cout << "/***********************************************************/\n";
     cout << "/*                   Test of QR algorithms                 */\n";
     cout << "/***********************************************************/\n";
 
-    gmm::dense_matrix<double> r(10, 10), q(10, 10), qr(10, 10), mmt(10, 10);
     
-    gmm::mult(m, gmm::transposed(m), mmt);
-    cout.precision(8);
-    cout << "mmt = " << mmt << endl;
-    
-    gmm::qr_factor(mmt, q, r);
-    cout << "r = " << r << endl;
-    cout << "q = " << q << endl;
-    gmm::mult(q, r, qr);
-    gmm::clean(qr, 1E-13);
-    cout << "qr = " << qr << endl;
-
-    gmm::add(gmm::scaled(mmt, -1.0), qr);
-
-    if (gmm::mat_norm2(qr) > 1E-10) 
-      DAL_THROW(dal::failure_error, "write error on matrix m2.");
-
-    qr_method(mmt, y, q);
-
-    cout << "eigenvalues : " << y << endl;
-    cout << "eigenvectors : " << q << endl;
 
     cout << "/***********************************************************/\n";
     cout << "/*                   Test of dense_matrix                  */\n";

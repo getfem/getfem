@@ -252,6 +252,72 @@ R o n a l d
     and of course a certain number of bugs fixed.
 
 
+. Lundi 15 septembre :
+----------------------
+Annonce faite  au groupe de travail
+
+
+  GMM++ : Une bibliothèque matricielle générique en C++
+
+  Cette bibliothèque est principalement dévolue à  être un cadre générique
+  pour developper des méthodes matricielles. Elle  est fortement  inspirée
+  de MTL/ITL tout en se voulant plus facile d'utilisation et plus complète
+  sur les opérations de base. Type de matrices supportées :
+  - matrices pleines
+  - matrices ligne de ciel
+  - matrices creuses
+
+  opérations basiques :
+  - addition de vecteurs ou de matrices
+  - multiplication matrice x vecteur ou matrice x matrice
+  - accés aux sous matrice en lecture ou écriture quel que soit
+    le type de matrice
+
+  Sont inclus les solveurs  iteratifs  classiques  qui  proviennent de ITL
+  (CG, GMRES, BICGSTAB, QMR ... ) avec  des  préconditionneurs  classiques
+  (Cholesky incomplet, ILU, ILUT ... ).
+
+  La performance est tout à fait comparable à MTL, un peu supérieure  pour
+  certains solveurs qui ont été optimisés.
+
+  Des entrées/sorties sont disponibles dans des formats standards.
+
+  Cette  bibliothèque  est  disponible  à l'addresse suivante sous license
+  domaine public LGPL
+
+  http://www.gmm.insa-tlse.fr/getfem/gmm.html
+
+  Une documentation (sommaire) est fournie.
+  Nous  sommes  bien  sûr ouverts à toute remarque ou collaboration sur le
+  sujet.
+
+Annonce faite à NaNet :
+
+  GMM++ 1.5 Available for Download
+
+  This generic matrix library is built as an interface for already existing
+  class of vectors and matrices. It provides also predefined type of dense,
+  skyline and sparse matrices. It is largely inspired from MTL/ITL but we
+  hope a little bit simpler to use. matrix x matrix multiplication works
+  for any type of matrices (even with mixed types). 
+
+  An important extension is the possibility to access to sub-matrices for
+  read or write operations with any kind of interfaced matrix.
+
+  Linear solvers has been imported from ITL (CG, BICGSTAB, GMRES, QMR,
+  dense LU, ...) with classical preconditionners (Incomplete cholesky,
+  ILU, ILUT ...)
+
+  The performance is comparable with the one of MTL, slightly better on
+  some solvers we optimized. 
+
+  Inpout / output with standard formats is also provided. 
+
+  This library is available under LGPL licenseand may be downloaded at:
+
+  http://www.gmm.insa-tlse.fr/getfem/gmm.html
+
+  A short documentation exists. 
 
 
 Future version 1.6, avancées :
