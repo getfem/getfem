@@ -84,8 +84,8 @@ namespace getfem {
     const mesher_signed_distance& dist;
     const mesher_virtual_function& edge_len;
     scalar_type h0, dist_point_hull, boundary_threshold_flatness;
-    size_type N, K, iter_max;
-    int noisy;
+    size_type N, K, iter_max, iter_wtcc;
+    int prefind, noisy;
     base_node bounding_box_min, bounding_box_max;
     base_vector L, L0;
 
@@ -106,9 +106,11 @@ namespace getfem {
 	   const mesher_virtual_function& edge_len_, 
 	   scalar_type h0_,
 	   getfem_mesh &m, const std::vector<base_node> &fixed_points,
-	   int noise, size_type itm, scalar_type dph, scalar_type btf)
+	   int noise, size_type itm, int pref,
+	   scalar_type dph, scalar_type btf)
       : dist(dist_), edge_len(edge_len_), dist_point_hull(dph),
-	boundary_threshold_flatness(btf), iter_max(itm), noisy(noise) {
+	boundary_threshold_flatness(btf), iter_max(itm), prefind(pref),
+	noisy(noise) {
       K=K_; h0=h0_;
       ptol = 0.0025;
       ttol = .1;
@@ -294,11 +296,14 @@ namespace getfem {
 	    }
 	  }
 	}
-	if (noisy > 1 && points_to_project.card())
-	  cout << "points to project : " << points_to_project << endl;
-	ii = points_to_project;
-	for (ipt << ii; ipt != size_type(-1); ipt << ii)
-	  surface_projection_and_update_constraints(ipt);
+	if (points_to_project.card()) {
+	  iter_wtcc = 0;
+	  if (noisy > 1)
+	    cout << "points to project : " << points_to_project << endl;
+	  ii = points_to_project;
+	  for (ipt << ii; ipt != size_type(-1); ipt << ii)
+	    surface_projection_and_update_constraints(ipt);
+	}
     }
 
     void suppress_flat_boundary_elements(void) {
@@ -483,8 +488,10 @@ namespace getfem {
 	cout << "Point #" << ip << " has been upgraded from " 
 	     << cts << " to " << new_cts << endl;
       }
-      if (new_cts != cts)
+      if (new_cts != cts) {
 	pts_attr[ip] = get_attr(pts_attr[ip]->fixed, new_cts);
+	iter_wtcc = 0;
+      }
       
     }
     
@@ -558,8 +565,7 @@ namespace getfem {
 	}
 
 	dal::bit_vector co;
-	// if (dist(P) < 0) {  
-	if (false) {
+	if ((prefind == 1 && dist(P) < 0) || prefind == 2) {
 	  for (size_type k = 0; k < constraints.size() && co.card() < N; ++k) {
 	    gmm::copy(P, Q);
 	    if (gmm::abs((*(constraints[k]))(Q)) < h0) {
@@ -865,10 +871,11 @@ namespace getfem {
       std::vector<base_node> pts2(pts.size(),base_node(N));
       size_type count = 0, count_id = 0;
       bool pt_changed = false;
+      iter_wtcc = 0;
 
       do {
 	if (noisy > 1) {
-	  cout << "Iter " << count;
+	  cout << "Iter " << count << " / " << count + iter_max - iter_wtcc;
 	  if (count && pts_prev.size() == pts.size())
 	    cout << ", dist_max since last delaunay ="
 		 << pts_dist_max(pts, pts_prev) << ", tol=" << ttol*h0;
@@ -1013,7 +1020,10 @@ namespace getfem {
 	if (noisy > 1) 
 	  cout << ", maxdp = " << maxdp << ", ptol = "
 	       << ptol << " CV=" << sqrt(maxdp)*deltat/h0 << "\n";
-	++count;
+	++count; ++iter_wtcc;
+
+	// if (iter_wtcc == 100) control_mesh_surface();
+
 	// m.clear();
 	// for (size_type i=0; i < t.size()/(N+1); ++i)
 	//  m.add_convex_by_points(bgeot::simplex_geotrans(N,1),
@@ -1021,7 +1031,8 @@ namespace getfem {
 	// char s[50]; sprintf(s, "toto%02d.mesh", count);
 	// m.write_to_file(s);
 
-	if (((count > 40 && sqrt(maxdp)*deltat < ptol * h0)||count>iter_max)) {
+	if ( (count > 40 && sqrt(maxdp)*deltat < ptol * h0)
+	     || iter_wtcc>iter_max || count > 10000) {
 
 	  {
 	    m.clear();
@@ -1110,11 +1121,11 @@ namespace getfem {
 
   void build_mesh(getfem_mesh &m, const mesher_signed_distance& dist_,
 		  scalar_type h0, const std::vector<base_node> &fixed_points,
-		  size_type K, int noise, size_type iter_max,
+		  size_type K, int noise, size_type iter_max, int prefind,
 		  scalar_type dist_point_hull,
 		  scalar_type boundary_threshold_flatness) {
     mesher mg(K, dist_, getfem::mvf_constant(1), h0, m, fixed_points, noise,
-	      iter_max, dist_point_hull, boundary_threshold_flatness);
+	      iter_max, prefind, dist_point_hull, boundary_threshold_flatness);
   }
   
 

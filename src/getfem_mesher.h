@@ -371,10 +371,10 @@ namespace getfem {
       vd.resize(nb);
     }
     bool bounding_box(base_node &bmin, base_node &bmax) const {
-      base_node bmin2(bmin.size()), bmax2(bmin.size());
+      base_node bmin2, bmax2;
       bool b = dists[0]->bounding_box(bmin, bmax);
       for (size_type k = 1; k < dists.size(); ++k) {
-	b = b || dists[k]->bounding_box(bmin2, bmax2);
+	b = dists[k]->bounding_box(bmin2, bmax2) || b;
 	for (unsigned i=0; i < bmin.size(); ++i) { 
 	  bmin[i] = std::max(bmin[i],bmin2[i]);
 	  bmax[i] = std::max(std::min(bmax[i],bmax2[i]), bmin[i]);
@@ -581,7 +581,8 @@ class mesher_ellipse : public mesher_signed_distance { // TODO
   void build_mesh(getfem_mesh &m, const mesher_signed_distance& dist_,
 		  scalar_type h0, const std::vector<base_node> &fixed_points
 		  = std::vector<base_node>(), size_type K = 1, int noise = 1,
-		  size_type iter_max = 1000, scalar_type dist_point_hull = 4,
+		  size_type iter_max = 500, int prefind = 1,
+		  scalar_type dist_point_hull = 4,
 		  scalar_type boundary_threshold_flatness = 0.11);
 
 

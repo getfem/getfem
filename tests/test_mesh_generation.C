@@ -19,10 +19,12 @@ int main(int argc, char **argv) {
     int K=1;
     int opt = 0;
     int max_iter = 1000;
+    int prefind = 1;
     if (argc > 1) { opt = atoi(argv[1]); }
     if (argc > 2) { h = atof(argv[2]); cout << "h = " << h << "\n"; }
     if (argc > 3) { K = atoi(argv[3]); }
     if (argc > 4) { max_iter = atoi(argv[4]); }
+    if (argc > 5) { prefind = atoi(argv[5]); }
     assert(K>0); assert(h>0.); 
     std::vector<getfem::base_node> fixed;
 
@@ -141,7 +143,7 @@ int main(int argc, char **argv) {
     case 16: dist = &D16; break; /* cube with a hole */
     case 17: dist = &D17; break; /* space station */
     }
-    getfem::build_mesh(m, *dist, h, fixed, K, 2, max_iter);
+    getfem::build_mesh(m, *dist, h, fixed, K, 2, max_iter, prefind);
   }
   DAL_STANDARD_CATCH_ERROR;
   return 0;

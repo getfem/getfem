@@ -162,9 +162,13 @@ namespace dal
   }
 
   std::ostream &operator <<(std::ostream &o, const bit_vector &s) {
+    bool first = true;
     o << "[";
-    for (bv_visitor i(s); !i.finished(); ++i)
-      o << " " << bit_vector::size_type(i);
+    for (bv_visitor i(s); !i.finished(); ++i) {
+      if (!first) o << " ";
+      o << bit_vector::size_type(i);
+      first = false;
+    }
     o << "]";
     return o;
   }
