@@ -141,6 +141,7 @@ void lap_pb::init(void)
     if (mesh_type != 0)
       DAL_THROW(dal::internal_error,
 		"This element is only defined on simplexes");
+    break;
   default : DAL_THROW(dal::internal_error, "Unknown finite element method");
   }
 
@@ -193,10 +194,11 @@ void lap_pb::init(void)
   default : DAL_THROW(std::logic_error, "Undefined integration method");
   }
   ppi = bgeot::int_method_descriptor(meth);
-
+  getfem::pfem pfprinc = 0;
   switch (mesh_type) {
   case 0 :
     sprintf(meth, "FEM_PK(%d,%d)", N, K);
+    pfprinc = getfem::fem_descriptor(meth);
     mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
     mef_data.set_finite_element(nn, getfem::fem_descriptor(meth),
 				bgeot::exact_simplex_im(N));
@@ -206,6 +208,7 @@ void lap_pb::init(void)
     break;
   case 1 :
     sprintf(meth, "FEM_QK(%d,%d)", N, K);
+    pfprinc = getfem::fem_descriptor(meth);
     mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi); 
     mef_data.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
     sprintf(meth, "FEM_QK(%d,%d)", N, 0);
@@ -213,6 +216,7 @@ void lap_pb::init(void)
     break;
   case 2 :
     sprintf(meth, "FEM_PK_PRISM(%d,%d)", N, K);
+    pfprinc = getfem::fem_descriptor(meth);
     mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
     mef_data.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
     sprintf(meth, "FEM_PK_PRISM(%d,%d)", N, 0);
@@ -226,15 +230,21 @@ void lap_pb::init(void)
 
   case 1 :
     sprintf(meth, "FEM_HERMITE_SEGMENT");
+    pfprinc = getfem::fem_descriptor(meth);
     mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
     break;
     
   case 2 :
     sprintf(meth, "FEM_P2K_HIERARCHICAL(%d, %d)", N, K);
+    pfprinc = getfem::fem_descriptor(meth);
     mef.set_finite_element(nn, getfem::fem_descriptor(meth), ppi);
+    break;
   
   }
   
+  cout << "Name of principal finite element method : "
+       << getfem::name_of_fem(pfprinc) << endl;
+
   cout << "Selecting Neumann and Dirichlet boundaries\n";
   nn = mesh.convex_index(N);
   base_vector un;

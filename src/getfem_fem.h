@@ -142,6 +142,7 @@ namespace getfem
     
     void add_node(const pdof_description &d, const base_node &pt) ;
     void init_cvs_node(void);
+    void unfreeze_cvs_node(void);
     
   public :
     /// Number of degrees of freedom.
@@ -232,6 +233,24 @@ namespace getfem
       ntarget_dim = 1; is_equiv = is_pol = is_lag = false;
       pspt_valid = false; do_grad = true;
     }
+
+    virtual_fem &operator =(const virtual_fem &f) {
+      _dof_types = f._dof_types;
+      cvs_node = f.cvs_node;
+      cv_node = f.cv_node;
+      cv_node.structure() = &(cvs_node);
+      pspt = 0;
+      pspt_valid = false;
+      cvr = f.cvr;
+      ntarget_dim = f.ntarget_dim;
+      is_equiv = f.is_equiv;
+      is_lag = f.is_lag;
+      is_pol = f.is_pol;
+      do_grad = f.do_grad;
+      es_degree = f.es_degree;
+      return *this;
+    }
+    virtual_fem(const virtual_fem &f) { *this = f; }
 
     virtual ~virtual_fem() {}
 

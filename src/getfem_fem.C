@@ -349,6 +349,11 @@ namespace getfem
     pspt_valid = false;
   }
 
+  void virtual_fem::unfreeze_cvs_node(void) {
+    cv_node.structure() = &cvs_node;
+    pspt_valid = false;
+  }
+
   /* ******************************************************************** */
   /*	PK class.                                                         */
   /* ******************************************************************** */
@@ -489,6 +494,7 @@ namespace getfem
 	    "Sorry, no hierachical construction for non tau-equivalent fem.");
       es_degree = fi2->estimated_degree();
       is_lag = false;
+      unfreeze_cvs_node();
       for (size_type i = 0; i < fi2->nb_dof(); ++i) {
 	bool found = false;
 	for (size_type j = 0; j < fi1->nb_dof(); ++j) {
@@ -500,10 +506,17 @@ namespace getfem
 	  add_node(hierarchical_dof(fi2->dof_types()[i], 
 				    fi1->estimated_degree()),
 		   fi2->node_of_dof(i));
+	  // verifer que la copie se fait bien ...
 	  _base.resize(nb_dof());
 	  _base[nb_dof()-1] = (fi2->base())[i];
+	  cout << "adding base : " << _base[nb_dof()-1] << endl;
+	  cout << "point : " << node_of_dof(nb_dof()-1) << endl;
+	  cout << "Nb dof cici = " << nb_dof() << endl;
 	}
       }
+      cout << "Nb dof = " << nb_dof() << endl;
+      for (size_type j = 0; j < nb_dof(); ++j)
+	cout << " base : " << j << " : " << _base[j] << endl;
     }
   };
 
@@ -641,6 +654,7 @@ namespace getfem
      {
        is_lag = false; es_degree = 2;
        base_node pt(nc); pt.fill(0.5);
+       unfreeze_cvs_node();
        add_node(bubble1_dof(nc), pt);
        _base.resize(nb_dof());
        _base[nc+1] = _base[1]; _base[nc+1] *= scalar_type(1 << nc);
@@ -672,6 +686,7 @@ namespace getfem
   { // idem elt prec mais avec raccord lagrange. A faire en dim. quelconque ..
     _P1_wabbfoafla(void) : _PK_fem(2, 1)
     {
+      unfreeze_cvs_node();
       es_degree = 2;
       base_node pt(2); pt.fill(0.5);
       add_node(lagrange_dof(2), pt);
@@ -784,6 +799,7 @@ namespace getfem
     
      _PK_with_cubic_bubble(dim_type nc, short_type k) : _PK_fem(nc, k)
      {
+       unfreeze_cvs_node();
        is_lag = false; es_degree = nc+1;
        base_node pt(nc); 
        size_type j;
@@ -896,7 +912,8 @@ namespace getfem
   pfem fem_descriptor(std::string name) {
     if (_fem_naming_system == 0) init_fem_naming_system();
     size_type i = 0;
-    return _fem_naming_system->method(name, i);
+    pfem res = _fem_naming_system->method(name, i);
+    return res;
   }
 
   std::string name_of_fem(pfem p) {

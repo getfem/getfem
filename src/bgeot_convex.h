@@ -1,3 +1,4 @@
+/* -*- c++ -*- (enables emacs c++ mode)                                    */
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Basic GEOmetric Tool  (bgeot)                                */
@@ -35,64 +36,61 @@
 
 namespace bgeot
 {
-
-  template<class PT, class PT_TAB = std::vector<PT> > class convex
-  {
-    public :
-
-      typedef PT point_type;
-      typedef PT_TAB point_tab_type;
-      typedef typename PT_TAB::size_type size_type;
-
-      typedef dal::tab_ref_index_ref< typename PT_TAB::const_iterator,
-                         convex_ind_ct::const_iterator> ref_convex_pt_ct;
-
-      typedef dal::tab_ref_index_ref< typename PT_TAB::const_iterator,
-                    ref_convex_ind_ct::const_iterator> dref_convex_pt_ct;
-
-    protected :
-
-      pconvex_structure cvs;
-      PT_TAB pts;
-      
-    public :
-
-      ref_convex_pt_ct point_of_face(short_type i) const
-      { 
-	return ref_convex_pt_ct(pts.begin(), faces[i].begin(),
-				             faces[i].end() );
-      }
-    
-      ref_convex_pt_ct dir_points(void) const
-      { 
-	return ref_convex_pt_ct(pts.begin(), _dir_points.begin(),
-				             _dir_points.end() );
-      }
   
-      dref_convex_pt_ct dir_points_of_face(short_type i) const
-      {
-	return dref_convex_pt_ct(pts.begin(),
-	  ind_dir_points_of_face(i).begin(), ind_dir_points_of_face(i).end());
-      }
-      pconvex_structure structure(void) const { return cvs; }
-      const PT_TAB &points(void) const { return pts; }
-      PT_TAB &points(void) { return pts; }
-      short_type nb_points(void) const { return cvs->nb_points(); }
-      
-      void translate(const typename PT::vector_type &v);
-      template <class CONT> void base_of_orthogonal(CONT &tab);
-      convex(void) { }
-      convex(pconvex_structure c, const PT_TAB &t) : cvs(c), pts(t) {}
-      convex(pconvex_structure c) : cvs(c) {}
+  template<class PT, class PT_TAB = std::vector<PT> > class convex {
+  public :
+    
+    typedef PT point_type;
+    typedef PT_TAB point_tab_type;
+    typedef typename PT_TAB::size_type size_type;
+    
+    typedef dal::tab_ref_index_ref< typename PT_TAB::const_iterator,
+      convex_ind_ct::const_iterator> ref_convex_pt_ct;
+    
+    typedef dal::tab_ref_index_ref< typename PT_TAB::const_iterator,
+      ref_convex_ind_ct::const_iterator> dref_convex_pt_ct;
+    
+  protected :
+    
+    pconvex_structure cvs;
+    PT_TAB pts;
+    
+  public :
+    
+    ref_convex_pt_ct point_of_face(short_type i) const { 
+      return ref_convex_pt_ct(pts.begin(), faces[i].begin(),
+			      faces[i].end() );
+    }
+    
+    ref_convex_pt_ct dir_points(void) const { 
+      return ref_convex_pt_ct(pts.begin(), _dir_points.begin(),
+			      _dir_points.end() );
+    }
+    
+    dref_convex_pt_ct dir_points_of_face(short_type i) const {
+      return dref_convex_pt_ct(pts.begin(),
+			       ind_dir_points_of_face(i).begin(),
+			       ind_dir_points_of_face(i).end());
+    }
+    pconvex_structure structure(void) const { return cvs; }
+    pconvex_structure &structure(void) { return cvs; }
+    const PT_TAB &points(void) const { return pts; }
+    PT_TAB &points(void) { return pts; }
+    short_type nb_points(void) const { return cvs->nb_points(); }
+    
+    void translate(const typename PT::vector_type &v);
+    template <class CONT> void base_of_orthogonal(CONT &tab);
+    convex(void) { }
+    convex(pconvex_structure c, const PT_TAB &t) : cvs(c), pts(t) {}
+    convex(pconvex_structure c) : cvs(c) {}
   };
 
   template<class PT, class PT_TAB>
-    void convex<PT, PT_TAB>::translate(const typename PT::vector_type &v)
-  {
+    void convex<PT, PT_TAB>::translate(const typename PT::vector_type &v) {
     typename PT_TAB::iterator b = pts.begin(), e = pts.end();
     for ( ; b != e ; ++b) *b += v;
   }
-
+  
   template<class PT, class PT_TAB> template<class CONT>
     void convex<PT, PT_TAB>::base_of_orthogonal(CONT &tab)
   { /* programmation a revoir. */
@@ -104,8 +102,7 @@ namespace bgeot
     ref_convex_ind_ct dptf = cv->ind_dir_points_of_face(f);
     int can_b = 0;
     
-    for (int i = 0; i < n-1; i++)
-    {
+    for (int i = 0; i < n-1; i++) {
       _vect[i]  = (points())[dptf[i+1]]; _vect[i] -= (points())[dptf[0]];
       
       for (j = 0; j < i; j++)
@@ -115,8 +112,7 @@ namespace bgeot
       _vect[i] /= vect_norm2(_vect[i]);
     }
     
-    for (int i = n; i < N; i++)
-    {
+    for (int i = n; i < N; i++) {
       _vect[i] = _vect[0];
       vect_random(_vect[i]);
       for (j = 0; j < i; j++)
