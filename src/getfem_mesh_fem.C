@@ -203,8 +203,9 @@ namespace getfem
       if (_linked_mesh->structure_of_convex(cv)->basic_structure() 
 	  != pif->pf->basic_structure() || 
 	  (pif->pf->target_dim() != Qdim && pif->pf->target_dim() != 1))
-	DAL_THROW(internal_error,
-		  "Incompatibility between fem and mesh element");
+	DAL_THROW(std::logic_error,
+		  "Incompatibility between fem " << name_of_fem(pif->pf) << 
+		  " and mesh element " << name_of_geometric_trans(_linked_mesh->trans_of_convex(cv)));
       if (!fe_convex.is_in(cv) || f_elems[cv] != pif) {
 	fe_convex.add(cv);
 	f_elems[cv] = pif;
