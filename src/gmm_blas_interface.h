@@ -186,7 +186,7 @@ namespace gmm {
 # define dot_p1(base_type) const std::vector<base_type > &x
 # define dot_trans1(base_type)
 # define dot_p1_s(base_type)                                               \
-         const scaled_vector_const_ref<std::vector<base_type > > &x_
+    const scaled_vector_const_ref<std::vector<base_type >, base_type > &x_
 # define dot_trans1_s(base_type)                                           \
          std::vector<base_type > &x =                                      \
          const_cast<std::vector<base_type > &>(*(linalg_origin(x_)));      \
@@ -195,7 +195,7 @@ namespace gmm {
 # define dot_p2(base_type) const std::vector<base_type > &y
 # define dot_trans2(base_type)
 # define dot_p2_s(base_type)                                               \
-         const scaled_vector_const_ref<std::vector<base_type > > &y_
+    const scaled_vector_const_ref<std::vector<base_type >, base_type > &y_
 # define dot_trans2_s(base_type)                                           \
          std::vector<base_type > &y =                                      \
          const_cast<std::vector<base_type > &>(*(linalg_origin(y_)));      \
@@ -241,7 +241,7 @@ namespace gmm {
 # define dotc_p1(base_type) const std::vector<base_type > &x
 # define dotc_trans1(base_type)
 # define dotc_p1_s(base_type)                                              \
-         const scaled_vector_const_ref<std::vector<base_type > > &x_
+    const scaled_vector_const_ref<std::vector<base_type >, base_type > &x_
 # define dotc_trans1_s(base_type)                                          \
          std::vector<base_type > &x =                                      \
          const_cast<std::vector<base_type > &>(*(linalg_origin(x_)));      \
@@ -250,7 +250,7 @@ namespace gmm {
 # define dotc_p2(base_type) const std::vector<base_type > &y
 # define dotc_trans2(base_type)
 # define dotc_p2_s(base_type)                                              \
-         const scaled_vector_const_ref<std::vector<base_type > > &y_
+    const scaled_vector_const_ref<std::vector<base_type >, base_type > &y_
 # define dotc_trans2_s(base_type)                                          \
          std::vector<base_type > &y =                                      \
          const_cast<std::vector<base_type > &>(*(linalg_origin(y_)));      \
@@ -302,7 +302,7 @@ namespace gmm {
 # define axpy_p1(base_type) const std::vector<base_type > &x
 # define axpy_trans1(base_type) base_type a(1)
 # define axpy_p1_s(base_type)                                              \
-         const scaled_vector_const_ref<std::vector<base_type > > &x_
+    const scaled_vector_const_ref<std::vector<base_type >, base_type > &x_
 # define axpy_trans1_s(base_type)                                          \
          std::vector<base_type > &x =                                      \
          const_cast<std::vector<base_type > &>(*(linalg_origin(x_)));      \
@@ -355,7 +355,7 @@ namespace gmm {
 # define gemv_p2_n(base_type)  const std::vector<base_type > &x
 # define gemv_trans2_n(base_type) base_type alpha(1)
 # define gemv_p2_s(base_type)                                              \
-         const scaled_vector_const_ref<std::vector<base_type > > &x_
+    const scaled_vector_const_ref<std::vector<base_type >, base_type > &x_
 # define gemv_trans2_s(base_type) std::vector<base_type > &x =             \
          const_cast<std::vector<base_type > &>(*(linalg_origin(x_)));      \
          base_type alpha(x_.r)

@@ -77,14 +77,10 @@ namespace gmm {
     template<typename VECT1, typename VECT2>
     void add_updt_vectors(const VECT1 &deltak, const VECT2 &gammak) {
       size_type N = vect_size(deltak), k = delta.size();
-      cout << "k = " << k << endl; 
-      cout << "N = " << N << endl; 
-      getchar();
       VECTOR Y(N);
       hmult(gammak, Y);
       delta.resize(k+1); gamma.resize(k+1); Hgamma.resize(k+1);
       alpha.resize(k+1); beta.resize(k+1);
-      getchar();
       resize(delta[k], N); resize(gamma[k], N); resize(Hgamma[k], N); 
       gmm::copy(deltak, delta[k]);
       gmm::copy(gammak, gamma[k]);
@@ -111,26 +107,26 @@ namespace gmm {
     bfgs_invhessian<VECTOR> invhessian;
     VECTOR r(vect_size(x)), d(vect_size(x)), y(vect_size(x)), r2(vect_size(x));
     grad(x, r);
-    R lambda;
+    R lambda(0.001);
     
     while (! iter.finished_vect(r)) {
 
       invhessian.hmult(r, d); gmm::scale(d, T(-1));
       
-
       // Wolfe Line search
       R lambda_min(0), lambda_max(0);
-      T val = f(x), derivative = gmm::vect_sp(r, d);    
-      R m1 = 0.3, m2 = 0.6;
-
+      T valx = f(x), derivative = gmm::vect_sp(r, d), valy;    
+      R m1 = 0.25, m2 = m1+0.01;
       bool unbounded = true, blocked = false;
-      lambda = 1;
+      
+      // lambda = 0.001;
       
       for(;;) {
 	add(x, scaled(d, lambda), y);
 	
 	cout << "[d|=" << gmm::vect_norminf(d) << ", f(x) = " << f(x) << ", iter=" << iter.get_iteration() << ", lambda=" << lambda << ", f(y)=" << f(y) << "\n";
-	if (f(y) <= val + m1 * lambda * derivative) {
+	valy = f(y);
+	if (valy <= valx + m1 * lambda * derivative) {
 	  grad(y, r2);
 	  T derivative2 = gmm::vect_sp(r2, d);
 	  if (derivative2 >= m2*derivative) break;
@@ -140,18 +136,20 @@ namespace gmm {
 	  lambda_max = lambda;
 	  unbounded = false;
 	}
-	if (unbounded) lambda *= T(2);
-	else  lambda = (lambda_max + lambda_min) / T(2);
-	if (lambda < R(1E-6)) { blocked = true; break; }
+	if (unbounded) lambda *= R(2);
+	else  lambda = (lambda_max + lambda_min) / R(2);
+	if (lambda < R(1E-6)) { blocked = true; lambda = 0.001; break; }
       }
 
       // Rank two update
       ++iter;
-      gmm::add(scaled(r2, T(-1)), r);
-      if (iter.get_iteration() % restart == 0 || blocked)
-	invhessian.restart();
+      gmm::add(scaled(r2, -1), r);
+      if (iter.get_iteration() % restart == 0 || blocked) {
+	invhessian.restart(); // lambda = 0.01;
+      }
       else
-	invhessian.add_updt_vectors(gmm::scaled(d, lambda), gmm::scaled(r, T(-1)));
+	invhessian.add_updt_vectors(gmm::scaled(d, lambda),
+				    gmm::scaled(r, -1));
       copy(r2, r); copy(y, x);
     }
 
