@@ -496,13 +496,19 @@ namespace bgeot
     return v;
   }
 
-  /// Gives $\displaystyle (\sum_{i=0..(n-1)} (v_i)^2)^{1/2}$.
-  template<class VEC> double vect_norm2(const VEC &v)
+  /// Gives $\displaystyle (\sum_{i=0..(n-1)} (v_i)^2)$.
+  template<class VEC> double vect_norm2_sqr(const VEC &v)
   {
     typename VEC::const_iterator d1 = v.begin(), e = v.end();
     double res = 0.0;
     while (d1 != e) res += dal::sqr((double)dal::abs(*d1++));
-    return sqrt(res);
+    return res;
+  }
+
+  /// Gives $\displaystyle (\sum_{i=0..(n-1)} (v_i)^2)^{1/2}$.
+  template<class VEC> double vect_norm2(const VEC &v)
+  {
+    return sqrt(vect_norm2_sqr(v));
   }
 
   /// Gives $\displaystyle \sup_{i=0..(n-1)} |v_i|$.
@@ -525,15 +531,20 @@ namespace bgeot
     return res;
   }
 
-  /// Gives $\displaystyle (\sum_{i=0..(n-1)} |v_i - w_i|^2)^{1/2}$.
-  template<class VEC> double vect_dist2(const VEC &v, const VEC &w)
+  /// Gives $\displaystyle (\sum_{i=0..(n-1)} |v_i - w_i|^2)$.
+  template<class VEC> double vect_dist2_sqr(const VEC &v, const VEC &w)
   {
     typename VEC::const_iterator d1 = v.begin(), e = v.end();
     typename VEC::const_iterator d2 = w.begin();
     double res = 0;
     if (v.size() != w.size()) DAL_THROW(dimension_error,"dimensions mismatch");
     while (d1 != e) res += dal::sqr((double)dal::abs(*d1++ - *d2++));
-    return sqrt(res);
+    return res;
+  }
+
+  /// Gives $\displaystyle (\sum_{i=0..(n-1)} |v_i - w_i|^2)^{1/2}$.
+  template<class VEC> double vect_dist2(const VEC &v, const VEC &w) {
+    return sqrt(vect_dist2_sqr(v,w));
   }
 
   /// Gives $\displaystyle \sup_{i=0..(n-1)} |v_i - w_i|$.
