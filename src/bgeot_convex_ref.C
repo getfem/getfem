@@ -170,7 +170,7 @@ namespace bgeot
     _product_ref(const _product_ref_light &ls)
     { 
       cvr1 = ls.cvr1; cvr2 = ls.cvr2;
-      *((convex<base_node> *)(this)) = convex_product(*(ls.cvr1), *(ls.cvr2));
+      *((convex<base_node> *)(this)) = convex_direct_product(*(ls.cvr1), *(ls.cvr2));
       _normals.resize(cvs->nb_faces());
       base_vector null(cvs->dim()); null.fill(0.0);
       std::fill(_normals.begin(), _normals.end(), null);

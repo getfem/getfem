@@ -308,8 +308,8 @@ namespace getfem
       is_equiv = fi1->is_equivalent() && fi2->is_equivalent();
       is_lag = fi1->is_lagrange() && fi2->is_lagrange();;
       es_degree = fi1->estimated_degree() + fi2->estimated_degree();
-      bgeot::convex<base_node> cv = bgeot::convex_product(fi1->node_convex(),
-							  fi2->node_convex());
+      bgeot::convex<base_node> cv = bgeot::convex_direct_product(fi1->node_convex(),
+								 fi2->node_convex());
       cvr = bgeot::convex_ref_product(fi1->ref_convex(), fi2->ref_convex());
       init_cvs_node();
       
