@@ -2063,13 +2063,10 @@ namespace gmm {
     mult(l1, temp, l3);
   }
 
-  
-
   template <typename L1, typename L2, typename L3>
   void mult_spec(const L1& l1, const L2& l2, L3& l3, rcmult) {
     if (is_sparse(l1) || is_sparse(l2)) {
-      DAL_WARNING(3,
-		  "Inefficient row matrix - col matrix mult for "
+      DAL_WARNING(3, "Inefficient row matrix - col matrix mult for "
 		  "sparse matrices, using temporary");
       mult_row_col_with_temp(l1, l2, l3, 
 			     typename principal_orientation_type<typename
@@ -2095,8 +2092,6 @@ namespace gmm {
   void mult_spec(const L1& l1, const L2& l2, L3& l3, r_mult) {
     mult_spec(l1, l2, l3,r_mult(),typename linalg_traits<L1>::storage_type());
   }
-
-
 
   template <typename L1, typename L2, typename L3>
   void mult_spec(const L1& l1, const L2& l2, L3& l3, r_mult, abstract_dense) {

@@ -334,6 +334,43 @@ namespace gmm {
     while (p > 0 && sdiag[p-1] != T(0)) --p;
   }
 
+  /* ********************************************************************* */
+  /*    2x2 blocks reduction for Schur vectors                             */
+  /* ********************************************************************* */
+
+  template <typename MATH, typename MATQ, typename Ttol>
+  void block2x2_reduction(MATH &H, MATQ &Q, Ttol tol) {
+    typedef typename linalg_traits<MATH>::value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
+
+    size_type n = mat_nrows(H), nq = mat_nrows(Q);
+    sub_interval SUBQ(0, nq), SUBL(0, 2);
+    std::vector<T> v(2), w(std::max(n, nq)); v[0] = T(1);
+    if (n < 2) return;
+    tol *= Ttol(2);
+    Ttol tol_i = tol * gmm::abs(H(0,0)), tol_cplx = tol_i;
+    for (size_type i = 0; i < n-1; ++i) {
+      tol_i = (gmm::abs(H(i,i))+gmm::abs(H(i+1,i+1)))*tol;
+      tol_cplx = std::max(tol_cplx, tol_i);
+      
+      if (gmm::abs(H(i+1,i)) >= tol_i) { // 2x2 block detected
+	T tr = (H(i+1, i+1) - H(i,i)) / T(2);
+	T delta = tr*tr + H(i,i+1)*H(i+1, i);
+
+	if (is_complex(T()) || gmm::real(delta) >= R(0)) {
+	  sub_interval SUBI(i, 2);
+	  T theta = (tr - gmm::sqrt(delta)) / H(i+1,i);
+	  R a = gmm::abs(theta);
+	  v[1] = (a == R(0)) ? T(-1)
+	    : gmm::conj(theta) * (R(1) - gmm::sqrt(a*a + R(1)) / a);
+	  row_house_update(sub_matrix(H, SUBI), v, sub_vector(w, SUBL));
+	  col_house_update(sub_matrix(H, SUBI), v, sub_vector(w, SUBL));
+	  col_house_update(sub_matrix(Q, SUBQ, SUBI), v, sub_vector(w, SUBQ));
+	}
+	++i;
+      }
+    }
+  }
 
   /* ********************************************************************* */
   /*    Basic qr algorithm.                                                */
@@ -372,6 +409,7 @@ namespace gmm {
       qr_stop_criterion(A1, p, q, tol);
       if (++ite > n*1000) DAL_THROW(failure_error, "QR algorithm failed");
     }
+    if (compvect) block2x2_reduction(A1, Q, tol);
     extract_eig(A1, eigval, tol); 
   }
 
@@ -474,7 +512,7 @@ namespace gmm {
 
     /* Double shift QR step.                                               */
     sub_interval SUBQ(0, nq);
-    for (size_type k = m-1; k < n-2; ++k) {
+    for (size_type k = (m == 0) ? 0 : m-1; k < n-2; ++k) {
       v[0] = v1; v[1] = v2; v[2] = v3;
       house_vector(v);
       size_type r = std::min(k+4, n), q = (k==0) ? 0 : k-1;
@@ -498,8 +536,6 @@ namespace gmm {
     if (compute_Q)
       col_house_update(sub_matrix(Q, SUBQ, SUBI), v, sub_vector(w, SUBQ));
   }
-    
-
 
   /* ********************************************************************* */
   /*    Implicit QR algorithm.                                             */
@@ -518,16 +554,17 @@ namespace gmm {
     MAT2 &Q = const_cast<MAT2 &>(Q_);
     typedef typename linalg_traits<MAT1>::value_type value_type;
 
-    size_type n = mat_nrows(A), q = 0, q_old, p, ite = 0, its = 0;
+    size_type n(mat_nrows(A)), q(0), q_old, p(0), ite(0), its(0);
     dense_matrix<value_type> H(n,n);
+    sub_interval SUBK(0,0);
 
     gmm::copy(A, H);
     Hessenberg_reduction(H, Q, compvect);
     qr_stop_criterion(H, p, q, tol);
-
+    
     while (q < n) {
-      sub_interval SUBI(p, n-p-q), SUBJ(0, mat_ncols(Q)), SUBK(p, n-p-q);
-      if (!compvect) SUBK = sub_interval(0,0);
+      sub_interval SUBI(p, n-p-q), SUBJ(0, mat_ncols(Q));
+      if (compvect) SUBK = SUBI;
 //       Francis_qr_step(sub_matrix(H, SUBI),
 // 		      sub_matrix(Q, SUBJ, SUBK), compvect);
       Wilkinson_double_shift_qr_step(sub_matrix(H, SUBI), 
@@ -540,6 +577,7 @@ namespace gmm {
       ++its;
       if (++ite > n*100) DAL_THROW(failure_error, "QR algorithm failed");
     }
+    if (compvect) block2x2_reduction(H, Q, tol);
     extract_eig(H, eigval, tol);
   }
 

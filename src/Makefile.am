@@ -62,6 +62,7 @@ include_HEADERS =                       \
 	getfem_regular_meshes.h         \
 	getfem_modeling.h               \
 	getfem_nonlinear_elasticity.h   \
+	getfem_plasticity.h             \
 	gmm.h                           \
 	gmm_matrix.h                    \
 	gmm_iter_solvers.h              \

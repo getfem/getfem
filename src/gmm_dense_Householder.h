@@ -153,12 +153,9 @@ namespace gmm {
     typedef typename number_traits<T>::magnitude_type R;
     
     R mu = vect_norm2(V), abs_v0 = gmm::abs(V[0]);
-    T beta;
-    if (mu != R(0)) {
-      if (abs_v0 != R(0)) beta = (abs_v0 / V[0]) / (abs_v0 + mu);
-      else beta = T(R(1) / mu);
-      gmm::scale(V, beta);
-    }
+    if (mu != R(0))
+      gmm::scale(V, (abs_v0 == R(0)) ? T(R(1) / mu)
+		 : ((abs_v0 / V[0]) / (abs_v0 + mu)));
     if (gmm::real(V[vect_size(V)-1]) * R(0) != R(0)) gmm::clear(V);
     V[0] = T(1);
   }
@@ -169,14 +166,10 @@ namespace gmm {
     typedef typename number_traits<T>::magnitude_type R;
 
     size_type m = vect_size(V);
-    
     R mu = vect_norm2(V), abs_v0 = gmm::abs(V[m-1]);
-    if (mu != R(0)) {
-      T beta;
-      if (abs_v0 != R(0)) beta = abs_v0 / (V[m-1] * (abs_v0 + mu));
-      else beta = T(R(1) / mu);
-      gmm::scale(V, beta);
-    }
+    if (mu != R(0))
+      gmm::scale(V, (abs_v0 == R(0)) ? T(R(1) / mu)
+		 : ((abs_v0 / V[m-1]) / (abs_v0 + mu)));
     if (gmm::real(V[0]) * R(0) != R(0)) gmm::clear(V);
     V[m-1] = T(1);
   }
@@ -204,7 +197,8 @@ namespace gmm {
     typedef typename linalg_traits<MAT>::value_type value_type;
     typedef typename number_traits<value_type>::magnitude_type magnitude_type;
     
-    gmm::mult(A, scaled(V, value_type(magnitude_type(-2) / vect_norm2_sqr(V))), W);
+    gmm::mult(A,
+	      scaled(V, value_type(magnitude_type(-2)/vect_norm2_sqr(V))), W);
     rank_one_update(A, W, V);
   }
 
@@ -227,7 +221,7 @@ namespace gmm {
       house_vector(v);
       row_house_update(sub_matrix(A, SUBI, SUBJ), v, sub_vector(w, SUBJ));
       col_house_update(sub_matrix(A, SUBK, SUBI), v, w);
-      // is it possible to "unified" the two on the common part of the matrix?
+      // is it possible to "unify" the two on the common part of the matrix?
       if (compute_Q) col_house_update(sub_matrix(Q, SUBK, SUBI), v, w);
     }
   }

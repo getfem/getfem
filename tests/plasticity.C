@@ -31,8 +31,6 @@
 #include <getfem_regular_meshes.h>
 #include <getfem_modeling.h>
 #include <getfem_plasticity.h>
-#include <gmm.h>
-//include <bgeot_mesh.h>
 
 /* try to enable the SIGFPE if something evaluates to a Not-a-number
  * of infinity during computations
