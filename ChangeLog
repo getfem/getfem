@@ -1,3 +1,11 @@
+2004-05-14  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/gmm_solver_gmres.h: fixed an incorrect computation of the
+	residu in gmres in cases where a preconditioner was used.
+
+	* src/gmm_vector.h: fixed a bug in the constructor of slvector
+	(thanks to li zhipeng).
+	
 2004-04-02  julien pommier  <pommier@gmm.insa-tlse.fr>
 
 	* tests/elastostatic.C tests/laplacian.C: now take into account
