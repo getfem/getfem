@@ -929,7 +929,7 @@ namespace gmm {
     std::copy(vect_const_begin(l1), vect_const_end(l1), vect_begin(l2));
   }
 
-  template <typename L1, typename L2> inline // à optimiser ?
+  template <typename L1, typename L2> inline // to be optimised ?
   void copy_vect(const L1 &l1, L2 &l2, abstract_skyline, abstract_skyline) {
     typename linalg_traits<L1>::const_iterator it1 = vect_const_begin(l1),
       ite1 = vect_const_end(l1);
@@ -941,16 +941,24 @@ namespace gmm {
       typename linalg_traits<L2>::iterator it2 = vect_begin(l2), 
 	ite2 = vect_end(l2);
       while (*(ite1-1) == typename linalg_traits<L1>::value_type(0)) ite1--;
-      
-      ptrdiff_t m = it1.index() - it2.index();
-      if (m >= 0 && ite1.index() <= ite2.index())
-	std::copy(it1, ite1, it2 + m);
+
+      if (it2 == ite2) {
+	l2[it1.index()] = *it1; ++it1;
+	l2[ite1.index()-1] = *(ite1-1); --ite1;
+	if (it1 < ite1)
+	  { it2 = vect_begin(l2); ++it2; std::copy(it1, ite1, it2); }
+      }
       else {
-	if (m < 0) l2[it1.index()] = *it1;
-	if (ite1.index() > ite2.index()) l2[ite1.index()-1] = *(ite1-1);
-	it2 = vect_begin(l2); ite2 = vect_end(l2);
-	m = it1.index() - it2.index();
-	std::copy(it1, ite1, it2 + m);
+	ptrdiff_t m = it1.index() - it2.index();
+	if (m >= 0 && ite1.index() <= ite2.index())
+	  std::copy(it1, ite1, it2 + m);
+	else {
+	  if (m < 0) l2[it1.index()] = *it1;
+	  if (ite1.index() > ite2.index()) l2[ite1.index()-1] = *(ite1-1);
+	  it2 = vect_begin(l2); ite2 = vect_end(l2);
+	  m = it1.index() - it2.index();
+	  std::copy(it1, ite1, it2 + m);
+	}
       }
     }
   }

@@ -310,7 +310,7 @@ namespace bgeot
     a.resize(P, pgt->nb_points());
     for (size_type j = 0; j < pgt->nb_points(); ++j) // à optimiser !!
       for (size_type i = 0; i < P; ++i) { 
-        a(i,j) = cv.points()[j][i];
+        this->a(i,j) = cv.points()[j][i];
       }
     if (pgt->is_linear()) {
       // On peut éviter ce calcul en faisant appel à un pre-geotrans
@@ -318,7 +318,7 @@ namespace bgeot
         // on peut aussi l'optimiser en ne faisant pas appel à derivative().
       for (size_type i = 0; i < pgt->nb_points(); ++i) {
         for (dim_type n = 0; n < N; ++n) { 
-          PO = pgt->poly_vector()[i]; PO.derivative(n); pc(i,n) = PO[0]; 
+          PO = pgt->poly_vector()[i]; PO.derivative(n); this->pc(i,n) = PO[0]; 
         }
       }
       // computation of the pseudo inverse

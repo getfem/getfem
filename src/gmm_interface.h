@@ -202,7 +202,7 @@ namespace gmm {
     static const_iterator end(const this_type &v) { return v.end(); }
     static origin_type* origin(this_type &v) { return &v; }
     static const origin_type* origin(const this_type &v) { return &v; }
-    static void clear(origin_type* o, const iterator &it, const iterator &ite)
+    static void clear(origin_type*, const iterator &it, const iterator &ite)
     { std::fill(it, ite, value_type(0)); }
     static void do_clear(this_type &v) { std::fill(v.begin(), v.end(), T(0)); }
     static value_type access(const origin_type *, const const_iterator &it,
@@ -273,7 +273,7 @@ namespace gmm {
     static const_iterator end(const this_type &v) { return v.end(); }
     static origin_type* origin(this_type &v) { return v.origin; }
     static const origin_type* origin(const this_type &v) { return v.origin; }
-    static void clear(origin_type* o, const iterator &it, const iterator &ite)
+    static void clear(origin_type*, const iterator &it, const iterator &ite)
     { std::fill(it, ite, value_type(0)); }
     static inline void do_clear(this_type &v)
     { std::fill(v.begin(), v.end(), value_type(0)); }
@@ -338,7 +338,7 @@ namespace gmm {
     static const_iterator end(const this_type &v) { return v.end(); }
     static origin_type* origin(this_type &v) { return v.origin; }
     static const origin_type* origin(const this_type &v) { return v.origin; }
-    static void clear(origin_type* o, const iterator &it, const iterator &ite)
+    static void clear(origin_type*, const iterator &it, const iterator &ite)
     { std::fill(it, ite, value_type(0)); }
     static void do_clear(this_type &v)
     { std::fill(v.begin(), v.end(), value_type(0)); }
@@ -404,7 +404,7 @@ namespace gmm {
     static const_iterator end(const this_type &v) { return v.end(); }
     static origin_type* origin(this_type &v) { return v.origin; }
     static const origin_type* origin(const this_type &v) { return v.origin; }
-    static void clear(origin_type* o, const iterator &it, const iterator &ite)
+    static void clear(origin_type*, const iterator &it, const iterator &ite)
     { std::fill(it, ite, value_type(0)); }
     static void do_clear(this_type &v)
     { std::fill(v.begin(), v.end(), value_type(0)); }

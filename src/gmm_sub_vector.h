@@ -426,10 +426,10 @@ namespace gmm {
     static void do_clear(this_type &v) { clear(v.origin, begin(v), end(v)); }
     static value_type access(const origin_type *o, const const_iterator &it,
 			     const const_iterator &ite, size_type i)
-    { return linalg_traits<V>::access(o, it.it, ite.it, it.si.index(i)); }
+    { return linalg_traits<V>::access(o, it.itb, ite.itb, it.si.index(i)); }
     static reference access(origin_type *o, const iterator &it,
 			    const iterator &ite, size_type i)
-    { return linalg_traits<V>::access(o, it.it, ite.it, it.si.index(i)); }
+    { return linalg_traits<V>::access(o, it.itb, ite.itb, it.si.index(i)); }
   };
 
   template <typename PT, typename SUBI> std::ostream &operator <<

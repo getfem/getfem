@@ -29,7 +29,7 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-
+#include <gmm_condest.h>
 #include <getfem_mesh.h>
 #include <getfem_precomp.h>
 #include <getfem_mat_elem.h> // --- FIXME --- : included only for transfert_to_G ...
@@ -251,7 +251,7 @@ namespace getfem
 	}
       } else if (strlen(tmp)) {
 	DAL_THROW(failure_error, "Syntax error in file, at token '" << tmp
-		  << "', pos=" << ist.tellg());
+		  << "',"); // " pos=" << ist.tellg());
       } else if (ist.eof()) {
 	DAL_THROW(failure_error, "Unexpected end of stream");	
       }
@@ -295,11 +295,12 @@ namespace getfem
 	}
       }
       else if (strlen(tmp)) {
-	DAL_THROW(failure_error, "Syntax error reading a mesh file at pos " 
-		  << ist.tellg() << "(expecting 'CONVEX' or 'END', found '" 
-		  << tmp << "')"); 
+	DAL_THROW(failure_error, "Syntax error reading a mesh file "
+		  // << " at pos " << ist.tellg()
+		  << "(expecting 'CONVEX' or 'END', found '" << tmp << "')"); 
       } else if (ist.eof()) {
-	DAL_THROW(failure_error, "Unexpected end of stream (missing BEGIN MESH/END MESH ?)");
+	DAL_THROW(failure_error, "Unexpected end of stream "
+		  << "(missing BEGIN MESH/END MESH ?)");
       }
     }
 

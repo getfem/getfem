@@ -3,7 +3,7 @@
 #define GETFEM_MESH_SLICES_H
 
 #include <bitset>
-#include <gmm.h>
+#include <gmm_kernel.h>
 #include <getfem_mesh.h>
 #include <getfem_fem.h>
 #include <getfem_poly_composite.h>

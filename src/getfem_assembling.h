@@ -35,7 +35,7 @@
 #define __GETFEM_ASSEMBLING_H
 
 #include <getfem_mesh_fem.h>
-#include <gmm.h>
+#include <gmm_kernel.h>
 #include <getfem_assembling_tensors.h>
 namespace getfem
 {

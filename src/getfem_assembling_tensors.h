@@ -3,7 +3,7 @@
 #ifndef __GETFEM_ASSEMBLING_TENSORS_H
 #define __GETFEM_ASSEMBLING_TENSORS_H
 
-#include <gmm.h>
+#include <gmm_kernel.h>
 #include <getfem_mesh_fem.h>
 #include <bgeot_sparse_tensors.h>
 #include <numeric>

@@ -98,6 +98,7 @@ namespace lmsg
     virtual ~linkmsg_sender();
     const linkmsg_sender& operator =(const linkmsg_sender &) {
       DAL_THROW(dal::internal_error, "The copy of this object doesn't work");
+      return *this;
     }
     linkmsg_sender(const linkmsg_sender &v) { *this = v; }
   };

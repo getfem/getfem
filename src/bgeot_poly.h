@@ -151,7 +151,7 @@ namespace bgeot
    *     \subsubsection*{Horner scheme to evaluate polynomials}
    *        To do ...
    */
-  template<class T> class polynomial : public std::vector<T> {
+  template<typename T> class polynomial : public std::vector<T> {
   protected :
     
     short_type n, d;
@@ -210,12 +210,12 @@ namespace bgeot
     /// Makes P = 1.
     void one(void) { change_degree(0); (*this)[0] = T(1); }
     void clear(void) { change_degree(0); (*this)[0] = T(0); }
-    template <class ITER> T horner(power_index &mi, short_type k,
+    template <typename ITER> T horner(power_index &mi, short_type k,
 				   short_type de, const ITER &it) const;
     /** Evaluate the polynomial. "it" is an iterator pointing to the list
      * of variables. A Horner scheme is used.
      */
-    template <class ITER> T eval(const ITER &it) const;
+    template <typename ITER> T eval(const ITER &it) const;
 
     /// Constructor.
     polynomial(void) : std::vector<T>(1)
@@ -234,7 +234,7 @@ namespace bgeot
   };
   
   
-  template<class T> short_type polynomial<T>::real_degree(void) const {
+  template<typename T> short_type polynomial<T>::real_degree(void) const {
     const_iterator it = this->end() - 1, ite = this->begin() - 1;
     size_type l = this->size();
     for ( ; it != ite; --it, --l) { if (*it != T(0)) break; }
@@ -243,13 +243,13 @@ namespace bgeot
     return dd;
   }
   
-  template<class T> void polynomial<T>::change_degree(short_type dd) {
-    resize(alpha(n,dd));
+  template<typename T> void polynomial<T>::change_degree(short_type dd) {
+    this->resize(alpha(n,dd));
     if (dd > d) std::fill(this->begin() + alpha(n,d), this->end(), T(0));
     d = dd;
   }
   
-  template<class T>
+  template<typename T>
   void polynomial<T>::add_monomial(const T &coeff, const power_index &power) {
     size_type i = power.global_index();
     if (n != power.size()) DAL_THROW(dimension_error, "dimensions mismatch");
@@ -257,7 +257,7 @@ namespace bgeot
     ((*this)[i]) += coeff;
   }
   
-  template<class T> 
+  template<typename T> 
   polynomial<T> &polynomial<T>::operator +=(const polynomial &Q) {
     if (Q.dim() != dim())
       DAL_THROW(dimension_error, "dimensions mismatch");
@@ -269,7 +269,7 @@ namespace bgeot
     return *this;
   }
   
-  template<class T> 
+  template<typename T> 
   polynomial<T> &polynomial<T>::operator -=(const polynomial &Q) {
     if (Q.dim() != dim() || dim() == 0)
       DAL_THROW(dimension_error, "dimensions mismatch");
@@ -281,7 +281,7 @@ namespace bgeot
     return *this;
   }
   
-  template<class T> 
+  template<typename T> 
   polynomial<T> polynomial<T>::operator -(void) const {
     polynomial<T> Q = *this;
     iterator itq = Q.begin(), ite = Q.end();
@@ -289,7 +289,7 @@ namespace bgeot
     return Q;
   }
   
-  template<class T>
+  template<typename T>
   polynomial<T> &polynomial<T>::operator *=(const polynomial &Q) {
     if (Q.dim() != dim())
       DAL_THROW(dimension_error, "dimensions mismatch");
@@ -322,7 +322,7 @@ namespace bgeot
     return *this;
   }
 
-  template<class T>
+  template<typename T>
     void polynomial<T>::direct_product(const polynomial &Q) { 
     polynomial aux = *this;
 
@@ -346,21 +346,21 @@ namespace bgeot
       }
   }
 
-  template<class T>
+  template<typename T>
     polynomial<T> &polynomial<T>::operator *=(const T &e) {
     iterator it = this->begin(), ite = this->end();
     for ( ; it != ite; ++it) (*it) *= e;
     return *this;
   }
 
-  template<class T>
+  template<typename T>
     polynomial<T> &polynomial<T>::operator /=(const T &e) {
     iterator it = this->begin(), ite = this->end();
     for ( ; it != ite; ++it) (*it) /= e;
     return *this;
   }
 
-  template<class T>
+  template<typename T>
     void polynomial<T>::derivative(short_type k) {
     if (k >= n)
       DAL_THROW(std::out_of_range, "index out of range");
@@ -375,7 +375,7 @@ namespace bgeot
      if (d > 0) change_degree(d-1);
   }
 
-  template<class T> template<class ITER>
+  template<typename T> template<typename ITER>
     T polynomial<T>::horner(power_index &mi, short_type k, short_type de,
 			    const ITER &it) const {
     if (k == 0)
@@ -389,13 +389,13 @@ namespace bgeot
     }
   }
 
-  template<class T> template<class ITER>
+  template<typename T> template<typename ITER>
     T polynomial<T>::eval(const ITER &it) const {
     power_index mi(dim());
     return horner(mi, dim(), 0, it);
   }
 
-  template<class ITER>
+  template<typename ITER>
     typename std::iterator_traits<ITER>::value_type
         eval_monomial(const power_index &mi, ITER it) {
     typename std::iterator_traits<ITER>::value_type res
@@ -409,7 +409,7 @@ namespace bgeot
 
 
   /// Print P to the output stream o. for instance cout $<<$ P;
-  template<class T>  std::ostream &operator <<(std::ostream &o,
+  template<typename T>  std::ostream &operator <<(std::ostream &o,
 						     const polynomial<T>& P) { 
     bool first = true; size_type n = 0;
     typename polynomial<T>::const_iterator it = P.begin(), ite = P.end();

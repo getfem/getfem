@@ -34,7 +34,7 @@
 #define __BGEOT_VECTOR_H
 
 #include <bgeot_config.h>
-#include <gmm.h>
+#include <gmm_kernel.h>
 
 namespace bgeot
 {

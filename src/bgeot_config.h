@@ -35,8 +35,9 @@
 #define __BGEOT_CONFIG_H
 
 #include <getfem_arch_config.h>
-
 #include <dal_except.h>
+#include <gmm_kernel.h>
+#include <gmm_dense_lu.h>
 
 #ifdef GETFEM_HAVE_QDLIB
 #  define NO_INLINE
