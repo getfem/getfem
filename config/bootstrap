@@ -1,0 +1,8 @@
+#!/bin/sh
+aclocal -I config --output=config/aclocal.m4
+cp -f config/aclocal.m4 .
+cp -f config/install.sh .
+autoconf --include config
+automake --gnu --verbose `find . -name Makefile.am | sed -e 's/\.am//g'`
+
+
