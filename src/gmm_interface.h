@@ -318,8 +318,9 @@ namespace gmm {
   struct tab_ref_reg_spaced_with_origin : public dal::tab_ref_reg_spaced<IT> {
     typedef  tab_ref_reg_spaced_with_origin<IT, V> this_type;
     typedef typename linalg_traits<this_type>::porigin_type porigin_type;
-    typedef typename dal::tab_ref_reg_spaced<IT>::iterator iterator;
-    typedef typename dal::tab_ref_reg_spaced<IT>::const_iterator const_iterator;
+   // two lines below added for aCC, and removed because sgi CC didn't like that ..
+    //typedef typename dal::tab_ref_reg_spaced<IT>::iterator iterator;
+    //typedef typename dal::tab_ref_reg_spaced<IT>::const_iterator const_iterator;
 
 
     porigin_type origin;
