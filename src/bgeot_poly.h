@@ -365,7 +365,7 @@ namespace bgeot
   }
 
   template<typename T>
-    void polynomial<T>::derivative(short_type k) {
+  inline void polynomial<T>::derivative(short_type k) {
     if (k >= n)
       DAL_THROW(std::out_of_range, "index out of range");
     
@@ -379,9 +379,9 @@ namespace bgeot
      if (d > 0) change_degree(d-1);
   }
 
-  template<typename T> template<typename ITER>
-    T polynomial<T>::horner(power_index &mi, short_type k, short_type de,
-			    const ITER &it) const {
+   template<typename T> template<typename ITER>
+  inline T polynomial<T>::horner(power_index &mi, short_type k, 
+				 short_type de, const ITER &it) const {
     if (k == 0)
       return (*this)[mi.global_index()];
     else {
@@ -395,8 +395,15 @@ namespace bgeot
 
   template<typename T> template<typename ITER>
     T polynomial<T>::eval(const ITER &it) const {
-    power_index mi(dim());
-    return horner(mi, dim(), 0, it);
+    switch (degree()) {
+    case 0: return (*this)[0];
+    case 1: T s = (*this)[0];
+      for (size_type i=0; i < dim(); ++i) s += it[i]*(*this)[i+1];
+      return s;
+    default:
+      power_index mi(dim());
+      return horner(mi, dim(), 0, it);
+    }
   }
 
   template<typename ITER>
