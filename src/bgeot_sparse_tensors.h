@@ -33,7 +33,7 @@
 #include <bgeot_config.h>
 #include <dal_except.h>
 #include <dal_bit_vector.h>
-#include <gmm.h> // pour les i/o sur les vecteurs c'est bien commode
+//#include <gmm.h> // pour les i/o sur les vecteurs c'est bien commode
 #include <iostream>
 
 namespace bgeot {
