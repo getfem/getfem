@@ -1,4 +1,9 @@
 2004-06-18  Yves Renard  <Yves.Renard@gmm.insa-tlse.fr>
+	* src/getfem_fem.h : Now a dof has to be on the boundary if
+	his corresponding shape function is non-zero on that boundary
+	(a P0 node is on each boundary).
+
+2004-06-18  Yves Renard  <Yves.Renard@gmm.insa-tlse.fr>
 	* src/getfem_context.h : New structure to deal with interdependency
 	of objects.
 

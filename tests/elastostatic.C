@@ -278,6 +278,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
 					  F, DIRICHLET_BOUNDARY_NUM);
 
   // Generic solve.
+  cout << "Number of variables : " << final_model.nb_dof() << endl;
   getfem::standard_model_state MS;
   gmm::iteration iter(residu, 1, 40000);
   getfem::standard_solve(MS, final_model, iter);

@@ -38,9 +38,11 @@
 
 namespace getfem {
 
+  typedef long ctx_ident_type;
+
   class context_dependencies {
   public :
-    typedef long ident_type;
+    typedef ctx_ident_type ident_type;
     static ident_type new_ident(void);
     static ident_type current_ident(void);
 

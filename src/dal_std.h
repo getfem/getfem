@@ -296,17 +296,16 @@ typedef unsigned char uint8_type;
 # error "impossible to build a 32bits integer"
 #endif
 
-  // utiliser long long dans le futur ...
 #if INT_MAX == 9223372036854775807L || INT_MAX == 9223372036854775807
   typedef signed int    int64_type;
   typedef unsigned int uint64_type;
 #elif LONG_MAX == 9223372036854775807L || LONG_MAX == 9223372036854775807
   typedef signed long int    int64_type;
   typedef unsigned long int uint64_type;
-#else
-
-  // try with long long ...
-
+  // utiliser long long dans le futur.
+  // #elif LLONG_MAX == 9223372036854775807LL || LLONG_MAX == 9223372036854775807L || LLONG_MAX == 9223372036854775807
+  // typedef signed long long int int64_type;
+  // typedef unsigned long long int uint64_type;
 #endif
 
 #ifdef __GNUC__
