@@ -318,6 +318,35 @@ namespace getfem
     }
   }
 
+  /* extract the mesh_structure on faces */
+  static void _structured_mesh_of_faces(bgeot::pconvex_ref cvr, dim_type f, const getfem_mesh &m, bgeot::mesh_structure &facem)
+  {
+    cerr << "structured_mesh_of_faces: face " << int(f) << ", le maillage init a " << m.nb_points() << " pts, " << m.nb_convex() << " convexes" << endl;
+    facem.clear();
+    dal::bit_vector on_face;
+    bgeot::mesh_point_st_ct::const_iterator b = m.point_structures().begin(), e = m.point_structures().end();
+    for (size_type i = 0; b != e; ++b, ++i) {
+      if ((*b).is_valid()) {
+        if (cvr->is_in_face(f, m.points()[i]) < 1e-12)
+          on_face.add(i);
+      }
+    }
+    cerr << "on_face=" << on_face << endl;
+    dal::bit_vector bv = m.convex_index();
+    for (size_type cv = bv.take_first(); cv != size_type(-1); cv << bv) {
+      for (size_type ff = 0; ff < m.structure_of_convex(cv)->nb_faces(); ++ff) {
+        bgeot::ind_ref_mesh_point_ind_ct ipts = m.ind_points_of_face_of_convex(cv,ff);
+        bool allin = true;
+        for (size_type i=0; i < ipts.size(); ++i) if (!on_face[ipts[i]]) { allin = false; break; }
+        if (allin) {
+          cerr << "ajout de la face " << ff << " du convexe " << cv << ":";
+          for (size_type i=0; i < ipts.size(); ++i) cerr << on_face[ipts[i]] << "/" << ipts[i] << " ";
+          cerr << endl;
+          facem.add_convex(m.structure_of_convex(cv)->faces_structure()[ff], ipts.begin());
+        }
+      }
+    }
+  }
 
 
   struct __str_mesh_cv {
@@ -325,6 +354,8 @@ namespace getfem
     short_type n;
     bool simplex_mesh; /* true if the convex has been splited into simplexes, which were refined */
     getfem_mesh *pm;
+    std::vector<bgeot::mesh_structure *> pfacem; /* array of mesh_structures for faces */
+    dal::bit_vector nodes_on_edges;
     mesh_precomposite *pmp;
     bool operator < (const __str_mesh_cv &ls) const {
       if (cvs < ls.cvs) return true; if (cvs > ls.cvs) return false; 
@@ -344,7 +375,8 @@ namespace getfem
    * TODO: move it into another file and separate the pmesh_precomposite part ?
    **/
   void structured_mesh_for_convex(bgeot::pconvex_ref cvr, short_type k,
-				  pgetfem_mesh &pm, pmesh_precomposite &pmp, bool force_simplexification) {
+				  pgetfem_mesh &pm, pmesh_precomposite &pmp, 
+                                  bool force_simplexification) {
     size_type n = cvr->structure()->dim();
     size_type nbp = cvr->structure()->basic_structure()->nb_points();
     
@@ -372,16 +404,34 @@ namespace getfem
       } else {
 	_structured_mesh_for_convex(cvr->structure(), 0, 0, k, smc.pm);
       }
+      smc.pfacem.resize(cvr->structure()->nb_faces());
+      for (dim_type f=0; f < cvr->structure()->nb_faces(); ++f) {
+        smc.pfacem[f] = new bgeot::mesh_structure();
+        _structured_mesh_of_faces(cvr, f, *smc.pm, *smc.pfacem[f]);
+      }
+
       smc.pmp = new mesh_precomposite(*(smc.pm));
       iss = __str_mesh_cv_tab->add(smc);
-    }   
+    }
     pm  = (*__str_mesh_cv_tab)[iss].pm;
     pmp = (*__str_mesh_cv_tab)[iss].pmp;
   }
 
-  const getfem_mesh *refined_simplex_mesh_for_convex(bgeot::pconvex_ref cvr, short_type k) {
-    pgetfem_mesh pm; pmesh_precomposite pmp;
+  const getfem_mesh *
+  refined_simplex_mesh_for_convex(bgeot::pconvex_ref cvr, 
+                                  short_type k) {
+    pgetfem_mesh pm; pmesh_precomposite pmp; 
     structured_mesh_for_convex(cvr,k,pm,pmp,true);
     return pm;
   }
+
+  const std::vector<bgeot::mesh_structure*>& 
+  refined_simplex_mesh_for_convex_faces(bgeot::pconvex_ref cvr, 
+                                  short_type k) {
+    __str_mesh_cv smc(cvr->structure()->basic_structure(), k, true);    
+    size_type iss = __str_mesh_cv_tab->search(smc);
+    if (iss == size_type(-1)) DAL_THROW(dal::internal_error, "call refined_simplex_mesh_for_convex first (or fix me)");
+    return (*__str_mesh_cv_tab)[iss].pfacem;
+  }
+
 }  /* end of namespace getfem.                                            */
