@@ -12,7 +12,8 @@ check_PROGRAMS = \
 	geo_trans_inv \
 	test_int_set \
 	test_link_fem \
-	test_tree_sorted
+	test_tree_sorted \
+	test_mat_elem
 
 CLEANFILES = \
 	laplacian.res laplacian.mesh laplacian.dataelt \
@@ -33,6 +34,7 @@ geo_trans_inv_SOURCES = geo_trans_inv.C
 test_int_set_SOURCES = test_int_set.C
 test_link_fem_SOURCES = test_link_fem.C
 test_tree_sorted_SOURCES = test_tree_sorted.C
+test_mat_elem_SOURCES = test_mat_elem.C
 
 INCLUDES = -I$(top_srcdir)/src
 LDADD    = ../src/.libs/libgetfem.a -lm @SUPLDFLAGS@
@@ -69,6 +71,7 @@ EXTRA_DIST = \
 	test_int_set.pl \
 	test_link_fem.pl \
 	test_tree_sorted.pl \
+	test_mat_elem.pl \
 	laplacian.param \
 	elasto_statique.param \
 	test_link_fem.param \
