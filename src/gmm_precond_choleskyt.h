@@ -90,7 +90,10 @@ namespace gmm {
 	else { wk->e += a; gmm::add(scaled(mat_row(U, k), -a), w); }
       }
 
-      indiag[i] = 1.0 / w[i];
+      if ((a = w[i]) == value_type(0))
+      { DAL_WARNING(2, "pivot " << i << " is zero"); a = 1.0; }
+
+      indiag[i] = 1.0 / a;
       gmm::clean(w, eps * norm_row);
       gmm::scale(w, indiag[i]);
       std::sort(w.begin(), w.end(), _elt_rsvector_value_less<value_type>());

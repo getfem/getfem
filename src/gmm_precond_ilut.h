@@ -115,6 +115,7 @@ namespace gmm {
   void ilut_precond<Matrix>::do_ilut(const M& A, row_major) {
     std::vector<value_type> indiag(mat_nrows(A));
     svector w(mat_ncols(A));
+    value_type tmp;
 
     for (size_type i = 0; i < mat_nrows(A); ++i) {
       gmm::copy(mat_const_row(A, i), w);
@@ -128,12 +129,15 @@ namespace gmm {
       for (size_type krow = 0, k; krow < w.nb_stored(); ++krow) {
 	typename svector::iterator wk = w.begin() + krow;
 	if ((k = wk->c) >= i) break;
-	value_type tmp = (wk->e) * indiag[k];
+	tmp = (wk->e) * indiag[k];
 	if (dal::abs(tmp) < eps * norm_row) { w.sup(k); --krow; } 
 	else { wk->e += tmp; gmm::add(scaled(mat_row(U, k), -tmp), w); }
       }
       
-      indiag[i] = 1.0 / w[i];
+      if ((tmp = w[i]) == value_type(0))
+      { DAL_WARNING(2, "pivot " << i << " is zero"); tmp = 1.0; }
+
+      indiag[i] = 1.0 / tmp;
       U(i,i) = w[i]; gmm::clean(w, eps * norm_row); w[i] = 0.0;
       std::sort(w.begin(), w.end(), _elt_rsvector_value_less<value_type>());
       typename svector::const_iterator wit = w.begin(), wite = w.end();
