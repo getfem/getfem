@@ -312,7 +312,7 @@ namespace getfem
       scalar_type J;
       if (G.ncols() != NP) DAL_THROW(dimension_error, "dimensions mismatch");
       
-      K.resize(N, P); CS.resize(P, P); TMP1.resize(P, P); B.resize(N, P);
+      K.resize(N, P); CS.resize(P, P); TMP1.resize(P, P); B.resize(P, N);
       if (hess_reduction.size() > 0) {
 	B2.resize(P*P, P); B3.resize(N*N, P*P); Htau.resize(N, P*P);
 	B32.resize(N*N, P); B2.fill(0.0);
@@ -328,14 +328,16 @@ namespace getfem
 	
 	pre_tensors_for_linear_trans(ir == 0);
 	
-	
-	// on peut simplifier les calculs pour N = P
-	// cout << "mat G : " << G << endl;
-	// cout << "mat grad : " << pgp->grad(ir) << endl;
-	bgeot::mat_product(G, pgp->grad(0), K);
-	bgeot::mat_product_tn(K, K, CS);
-	J = ::sqrt(bgeot::mat_inv_cholesky(CS, TMP1));
-	bgeot::mat_product(K, CS, B);
+	// computation of the pseudo inverse
+ 	bgeot::mat_product_tt(pgp->grad(0), G, K);
+	if (P != N) {
+	  bgeot::mat_product_nt(K, K, CS);
+	  J = ::sqrt(bgeot::mat_inv_cholesky(CS, TMP1));
+	  bgeot::mat_product_tn(K, CS, B);
+	}
+	else {
+	  J = dal::abs(bgeot::mat_gauss_inverse(K, TMP1)); B = K;
+	}
 	
 	if (ir > 0) {
 	  bgeot::mat_vect_product(B, un, up);
@@ -378,10 +380,16 @@ namespace getfem
 	for (size_type ip=(ir == 0) ? 0 : pai->repart()[ir-1];
 	     ip < pai->repart()[ir]; ++ip, first = false) {
 
-	  bgeot::mat_product(G, pgp->grad(ip), K);
-	  bgeot::mat_product_tn(K, K, CS);
-	  J = ::sqrt(bgeot::mat_inv_cholesky(CS, TMP1));
-	  bgeot::mat_product(K, CS, B);
+	  // computation of the pseudo inverse
+	  bgeot::mat_product_tt(pgp->grad(ip), G, K);
+	  if (P != N) {
+	    bgeot::mat_product_nt(K, K, CS);
+	    J = ::sqrt(bgeot::mat_inv_cholesky(CS, TMP1));
+	    bgeot::mat_product_tn(K, CS, B);
+	  }
+	  else {
+  	    J = dal::abs(bgeot::mat_gauss_inverse(K, TMP1)); B = K;
+  	  }
 	  
 	  if (ir > 0) {
 	    bgeot::mat_vect_product(B, un, up);
