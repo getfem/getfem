@@ -177,12 +177,13 @@ namespace gmm {
     typedef typename number_traits<T>::magnitude_type R;
     
     R mu = vect_norm2(V), abs_v0 = gmm::abs(V[0]);
+    T beta;
     if (mu != R(0)) {
-      T beta;
-      if (abs_v0 != R(0)) beta = abs_v0 / (V[0] * (abs_v0 + mu));
+      if (abs_v0 != R(0)) beta = (abs_v0 / V[0]) / (abs_v0 + mu);
       else beta = T(R(1) / mu);
       gmm::scale(V, beta);
     }
+    if (gmm::real(V[vect_size(V)-1]) * R(0) != R(0)) gmm::clear(V);
     V[0] = T(1);
   }
 
@@ -200,6 +201,7 @@ namespace gmm {
       else beta = T(R(1) / mu);
       gmm::scale(V, beta);
     }
+    if (gmm::real(V[0]) * R(0) != R(0)) gmm::clear(V);
     V[m-1] = T(1);
   }
   
@@ -264,9 +266,7 @@ namespace gmm {
     MAT1 &A = const_cast<MAT1 &>(AA); MAT2 &Q = const_cast<MAT2 &>(QQ);
     typedef typename linalg_traits<MAT1>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
-    // to be optimized
 
-    if (compute_q) gmm::copy(identity_matrix(), Q);
     size_type n = mat_nrows(A); if (n < 2) return;
     std::vector<T> v(n), p(n), w(n), ww(n);
     sub_interval SUBK(0,n);

@@ -187,7 +187,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     print TMPF "  dal::exception_callback_debug cb;\n";
     print TMPF "  dal::exception_callback::set_exception_callback(&cb);\n";
     print TMPF "  dal::set_warning_level(1);\n\n";
-    print TMPF "  for (int iter = 0; iter < 100; ++iter) {\n\n";
+    print TMPF "  for (int iter = 0; iter < 100000; ++iter) {\n\n";
     print TMPF "    try {\n\n";
     for ($j = 0; $j < $nb_param; ++$j) {
       $a = rand(); $b = rand();
@@ -314,9 +314,10 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
       }
 #      print "$li ($param_name[$j])\n";
     }
-    print TMPF "    \n\n      test_procedure($param_name[0]";
+    print TMPF "    \n\n      bool ret = test_procedure($param_name[0]";
     for ($j = 1; $j < $nb_param; ++$j) { print TMPF ", $param_name[$j]"; }
-    print TMPF ");\n\n";
+    print TMPF ");\n";
+    print TMPF "      if (ret) return 0;\n\n";
     print TMPF "    }\n";
     print TMPF "    DAL_STANDARD_CATCH_ERROR;\n";
     print TMPF "  }\n";

@@ -117,7 +117,12 @@ namespace gmm
   T conj(const ref_elt_vector<T, V> &re) { return gmm::conj(T(re)); }
   template<typename T, typename V> std::ostream &operator <<
   (std::ostream &o, const ref_elt_vector<T, V> &re) { o << T(re); return o; }
-  
+  template<typename T, typename V> inline
+  typename number_traits<T>::magnitude_type
+  real(const ref_elt_vector<T, V> &re) { return gmm::real(T(re)); }
+  template<typename T, typename V> inline
+  typename number_traits<T>::magnitude_type
+  imag(const ref_elt_vector<T, V> &re) { return gmm::imag(T(re)); }
 
   
 

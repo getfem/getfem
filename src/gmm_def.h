@@ -320,7 +320,7 @@ namespace gmm {
   std::complex<T> conj_product(std::complex<T> a, std::complex<T> b)
   { return std::conj(a) * b; } // to be optimized ?
 
-  template <typename T> inline bool is_complex(T a) { return false; }
+  template <typename T> inline bool is_complex(T) { return false; }
   template <typename T> inline bool is_complex(std::complex<T> a)
   { return true; }
 
@@ -676,7 +676,7 @@ namespace gmm {
   }
 
   /* ********************************************************************* */
-  /* Default tolerance.                                                    */
+  /* Numeric limits.                                                       */
   /* ********************************************************************* */
   
   template<typename T> inline T default_tol(T) {
@@ -696,6 +696,24 @@ namespace gmm {
   }
   template<typename T> inline T default_tol(std::complex<T>)
   { return default_tol(T()); }
+
+    template<typename T> inline T default_min(T) {
+    using namespace std;
+    static T mi(10);
+    if (mi == T(10)) {
+      if (numeric_limits<T>::is_specialized)
+	mi = numeric_limits<T>::min();
+      else {
+	mi = T(0);
+	DAL_WARNING(1, "The numeric type " << typeid(T).name()
+		    << " has no numeric_limits defined !!\n"
+		    << "Taking 0 has default minimum");
+      }
+    }
+    return mi;
+  }
+  template<typename T> inline T default_min(std::complex<T>)
+  { return default_min(T()); }
 
   
 }

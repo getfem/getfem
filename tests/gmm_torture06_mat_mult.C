@@ -8,13 +8,15 @@
 using gmm::size_type;
 
 template <typename MAT1, typename MAT2, typename MAT3>
-void test_procedure(const MAT1 &_m1, const MAT2 &_m2, const MAT3 &_m3) {
+bool test_procedure(const MAT1 &_m1, const MAT2 &_m2, const MAT3 &_m3) {
   MAT1  &m1 = const_cast<MAT1  &>(_m1);
   MAT2  &m2 = const_cast<MAT2  &>(_m2);
   MAT3  &m3 = const_cast<MAT3  &>(_m3);
   typedef typename gmm::linalg_traits<MAT1>::value_type T;
   typedef typename gmm::number_traits<T>::magnitude_type R;
   R prec = gmm::default_tol(R());
+  static size_type nb_iter(0);
+  ++nb_iter;
 
   size_type k = gmm::mat_nrows(m1);
   size_type l = std::max(gmm::mat_ncols(m1), gmm::mat_nrows(m2));
@@ -82,5 +84,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2, const MAT3 &_m3) {
     if (!(error <= prec * R(10000)))
       DAL_THROW(gmm::failure_error, "Error too large: " << error);
   }
+  if (nb_iter == 100) return true;
+  return false;
   
 }

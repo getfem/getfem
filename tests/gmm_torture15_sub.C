@@ -12,7 +12,7 @@ using gmm::size_type;
 bool print_debug = false;
 
 template <typename MAT1, typename VECT1, typename VECT2>
-void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
+bool test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
   VECT1 &v1 = const_cast<VECT1 &>(_v1);
   VECT2 &v2 = const_cast<VECT2 &>(_v2);
   MAT1  &m1 = const_cast<MAT1  &>(_m1);
@@ -20,6 +20,8 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
   typedef typename gmm::number_traits<T>::magnitude_type R;
   R prec = gmm::default_tol(R());
   R error, det, cond;
+  static  size_type nb_iter(0);
+  ++nb_iter;
 
   size_type m = gmm::vect_size(v1), n = m/2;
   std::vector<T> v3(n);
@@ -66,5 +68,6 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
   if (!((error = gmm::vect_norm2(v1)) <= prec * R(2000)))
     DAL_THROW(gmm::failure_error, "Error too large: " << error);
   
-  
+  if (nb_iter == 200) return true;
+  return false;
 }

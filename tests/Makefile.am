@@ -59,31 +59,31 @@ TESTS = \
 	$(top_srcdir)/tests/test_tree_sorted.pl
 
 EXTRA_DIST = \
-	dynamic_array.pl                \
-	dynamic_tas.pl                  \
-	test_assembly.pl                \
-	laplacian.pl                    \
-	elasto_statique.pl              \
-	integration.pl                  \
-	poly.pl                         \
-	test_mesh.pl                    \
-	geo_trans.pl                    \
-	geo_trans_inv.pl                \
-	speed_test_for_gmm.pl           \
-	test_int_set.pl                 \
-	test_link_fem.pl                \
-	test_tree_sorted.pl             \
-	test_mat_elem.pl                \
-	laplacian.param                 \
-	elasto_statique.param           \
-	test_link_fem.param             \
-	geo_trans_inv.param             \
-	make_gmm_test.pl                \
-	gmm_torture_sub.C               \
-	gmm_torture_mult.C              \
-	gmm_torture_mat_mult.C          \
-	gmm_torture_qr.C                \
-	gmm_torture_iterative_solvers.C \
-	gmm_torture_lusolve.C
+	dynamic_array.pl                  \
+	dynamic_tas.pl                    \
+	test_assembly.pl                  \
+	laplacian.pl                      \
+	elasto_statique.pl                \
+	integration.pl                    \
+	poly.pl                           \
+	test_mesh.pl                      \
+	geo_trans.pl                      \
+	geo_trans_inv.pl                  \
+	speed_test_for_gmm.pl             \
+	test_int_set.pl                   \
+	test_link_fem.pl                  \
+	test_tree_sorted.pl               \
+	test_mat_elem.pl                  \
+	laplacian.param                   \
+	elasto_statique.param             \
+	test_link_fem.param               \
+	geo_trans_inv.param               \
+	make_gmm_test.pl                  \
+	gmm_torture01_lusolve.C           \
+	gmm_torture05_mult.C              \
+	gmm_torture06_mat_mult.C          \
+	gmm_torture10_qr.C                \
+	gmm_torture15_sub.C               \
+	gmm_torture20_iterative_solvers.C
 
 TESTS_ENVIRONMENT = perl

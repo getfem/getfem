@@ -12,13 +12,14 @@ using gmm::size_type;
 bool print_debug = false;
 
 template <typename MAT1, typename VECT1, typename VECT2>
-void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
+bool test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
   VECT1 &v1 = const_cast<VECT1 &>(_v1);
   VECT2 &v2 = const_cast<VECT2 &>(_v2);
   MAT1  &m1 = const_cast<MAT1  &>(_m1);
   typedef typename gmm::linalg_traits<MAT1>::value_type T;
   typedef typename gmm::number_traits<T>::magnitude_type R;
   R prec = gmm::default_tol(R());
+  static size_type nb_iter = 0;
 
   size_type m = gmm::mat_nrows(m1);
   std::vector<T> v3(m);
@@ -31,6 +32,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     DAL_THROW(gmm::failure_error, "Inconsistent condition number: " << cond);
 
   if (prec * cond < R(1)/R(10000) && det != R(0)) {
+    ++nb_iter;
 
     gmm::lu_solve(m1, v1, v2);
     gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
@@ -47,5 +49,8 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
     error = gmm::vect_norm2(v3);
     if (!(error <= prec * cond * R(20000)))
       DAL_THROW(gmm::failure_error, "Error too large: "<< error);
+
+    if (nb_iter == 200) return true;
   }
+  return false;
 }

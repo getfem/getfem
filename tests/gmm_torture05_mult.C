@@ -125,7 +125,7 @@ template<typename VECT> void test_vect_swap(VECT &V, gmm::linalg_false) {
 
 template <typename MAT1 , typename MAT2, typename VECT1, typename VECT2,
 	  typename VECT3, typename VECT4>
-void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2, 
+bool test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2, 
 		    const MAT2 &_m2, const VECT3 &_v3, const VECT4 &_v4) {
   VECT1 &v1 = const_cast<VECT1 &>(_v1);
   VECT2 &v2 = const_cast<VECT2 &>(_v2);
@@ -136,6 +136,8 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2,
   typedef typename gmm::linalg_traits<MAT1>::value_type T;
   typedef typename gmm::number_traits<T>::magnitude_type R;
   R prec = gmm::default_tol(R());
+  static size_type nb_iter(0);
+  ++nb_iter;
 
   test_procedure2(m1, v1, v2, m2, v3, v4);
 
@@ -225,7 +227,9 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2,
 
   test_mat_swap(m1, typename gmm::linalg_traits<MAT1>::is_reference());
   test_vect_swap(v1, typename gmm::linalg_traits<VECT1>::is_reference());
-
+  
+  if (nb_iter == 200) return true;
+  return false;
 }
 
 
