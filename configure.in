@@ -19,8 +19,8 @@ PACKAGE="getfem++"
 MAJOR_VERSION="1"
 MINOR_VERSION="7"
 PATCH_VERSION="0"
-VERSION=$MAJOR_VERSION.$MINOR_VERSION-`date +%Y%m%d`
-dnl VERSION=$MAJOR_VERSION.$MINOR_VERSION
+dnl VERSION=$MAJOR_VERSION.$MINOR_VERSION-`date +%Y%m%d`
+VERSION=$MAJOR_VERSION.$MINOR_VERSION
 AC_DEFINE_UNQUOTED([MAJOR_VERSION],$MAJOR_VERSION,[getfem major version number])
 AC_DEFINE_UNQUOTED([MINOR_VERSION],$MINOR_VERSION,[getfem minor version number])
 AC_DEFINE_UNQUOTED([PATCH_VERSION],$PATCH_VERSION,[getfem patch number (sub minor version)])
@@ -501,14 +501,14 @@ echo "the --with-blas=<lib> option, or the BLAS_LIBS environment variable"
 echo 'for example: ./configure BLAS_LIBS="-L/usr/lib/atlas/sse2 -lblas"'
 echo
 
-if test -z $(echo $srcdir | grep "^/"); then
+if test -z ""`echo $srcdir | grep "^/"`; then
   addpathm="../../"
 else
   addpathm=""
 fi
 
-for i in $(ls $srcdir/tests/meshes/*.mesh); do
-	j="tests/meshes/"$(basename $i)
+for i in `ls $srcdir/tests/meshes/*.mesh`; do
+	j="tests/meshes/"`basename $i`
 	if test ! -L $j && test ! -f $j; then
 		ln -s $addpathm$i $j
 	fi
