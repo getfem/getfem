@@ -123,7 +123,7 @@
 
 \section*{Introduction}
 
-The \gf project is centered around the development of a generic and efficient elementary computations C++ library for finite element methods. The goal is to build a library which allows to compute any elementary matrix (even for mixed methods) on the largest class of methods and elements and for arbitrary dimension. It offers a complete separation between integration methods (exact or approximated), geometric transformations (linear or not) and finite element methods of arbitrary degrees. It allows to write finite element code which are independent of the particular method, and thus to test easily various finite element method on the same problem.
+The \gf project focuses on the development of a generic and efficient elementary computations C++ library for finite element methods. The goal is to build a library which allows to compute any elementary matrix (even for mixed methods) on the largest class of methods and elements and for arbitrary dimension. It offers a complete separation between integration methods (exact or approximated), geometric transformations (linear or not) and finite element methods of arbitrary degrees. It allows to write finite element code which are independent of the particular method, and thus to test easily various finite element method on the same problem.
 
  Moreover, the library includes other tools for computation with finite element such as assembling methods for classical PDEs, interpolation methods, computation of norms, mesh operations, boundary conditions ... This library allows to build finite elements codes which are completely independent of the dimension, the particular method or element. Examples are provided.\\[2cm]
 \htmlonly{\\\\\\}
@@ -403,7 +403,7 @@ The following is an example of how to load a mesh and extract information on it.
 \section{Select finite element and integration methods}
 
 \index{GETFEM!getfem::mesh\_fem}
-In order to define a complete finite element procedure on a mesh, the structure \cpp{getfem::mesh\_fem} is defined in the file \cpp{getfem\_mesh\_fem.h}. Basically, this structure describe the finite element method on each element of the mesh, and can store information about boundary structure. It is possible to have an arbitrary number of finite element description for a single mesh. This is particularly necessary for mixed methods, but also to describe different data on the same mesh. One can instantiate a \cpp{getfem::mesh\_fem} object as follows\\[0.5cm]
+In order to define a complete finite element procedure on a mesh, the structure \cpp{getfem::mesh\_fem} is defined in the file \cpp{getfem\_mesh\_fem.h}. Basically, this structure describes the finite element method on each element of the mesh, and can store information about boundary structure. It is possible to have an arbitrary number of finite element description for a single mesh. This is particularly necessary for mixed methods, but also to describe different data on the same mesh. One can instantiate a \cpp{getfem::mesh\_fem} object as follows\\[0.5cm]
 \cpp{getfem::mesh\_fem mef(mesh); }\\[0.5cm]
 where \cpp{mesh} is an already existing mesh. The structure will be linked to this mesh and will react when modifications will be done on it. \\[0.5cm]
 It is possible to specify element by element the finite element method, so that element of mixed types can be treated, even if the dimensions are different. For usual elements, the connection between two elements is done when the two elements are compatibles (same degrees of freedom on the common face). A numeration of the degrees of freedom is automatically done with a Cuthill Mc Kee like algorithm. You have to keep in mind that there is absolutely no connection between the numeration of vertices of the mesh and the numeration of the degrees of freedom. Every \cpp{getfem::mesh\_fem} object has its own numeration. \\[0.5cm]
@@ -597,7 +597,7 @@ In order to assemble source term, Neumann and Dirichlet conditions, same functio
 
 \subsection{Stokes Problem with mixed finite element method}
 
-to be done ... (see the file \filename{getfem\_assembling.h}).
+to be described ... (see the file \filename{getfem\_assembling.h} and the MATLAB interface).
  
 \subsection{Assembling a mass matrix}
 
@@ -712,7 +712,7 @@ To be done ... please read \cite{BASCOMP} for more details and see the file \fil
 
 \section{Incorporate new approximated integration methods in \gf }
 
-In \gf version 1.5 and later, a perl script automatically incorporates new cubature methods from a description file. You can see in the directory {\tt cubature} such description files (with extension {\tt.IM}) . For instance for {\tt IM_TETRAHEDRON(5)} the following file describes the method:
+A perl script automatically incorporates new cubature methods from a description file. You can see in the directory {\tt cubature} such description files (with extension {\tt.IM}) . For instance for {\tt IM_TETRAHEDRON(5)} the following file describes the method:
 
 \begin{alltt}
 NAME = IM_TETRAHEDRON(5)
@@ -745,7 +745,7 @@ The file format is inspired from \cite{EncyclopCubature}.
 
 \section{Support for Xfem methods}
 \index{GETFEM!Xfem}
-Xfem are finite element method with a particuar enrichment with non-polynomials functions (see \cite{Xfem} for instance). The file {\tt getfem_Xfem.h} gives a support for this kind of method (version 1.5 and later). Any ($\tau$-equivalent) valid finite element method can be extended. If {\tt pf} is a valid descriptor of a finite element method, one can build a Xfem with the declaration
+Xfem are finite element method with a particuar enrichment with non-polynomials functions (see \cite{Xfem} for instance). The file {\tt getfem_Xfem.h} gives a support for this kind of method. Any ($\tau$-equivalent) valid finite element method can be extended. If {\tt pf} is a valid descriptor of a finite element method, one can build a Xfem with the declaration
 \begin{alltt}
   Xfem  xf(pf);
 \end{alltt}
