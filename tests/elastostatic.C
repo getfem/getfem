@@ -238,9 +238,8 @@ void elastostatic_problem::assembly(void)
   cout << "Assembling source term" << endl;
   std::vector<scalar_type> F(nb_dof_rhs * N);
   for (size_type i = 0; i < nb_dof_rhs; ++i)
-    for (size_type j = 0; j < N; ++j)
-      gmm::copy(sol_f(mf_rhs.point_of_dof(i)),
-		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
+    gmm::copy(sol_f(mf_rhs.point_of_dof(i)),
+	      gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
   getfem::asm_source_term(B, mf_u, mf_rhs, F);
   
   cout << "Assembling Neumann condition" << endl;
