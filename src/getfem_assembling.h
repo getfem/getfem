@@ -591,7 +591,6 @@ namespace getfem
     // the solution of minimal norm of D*U = UD in UDD and
     // return the dimension of the kernel. The function is based
     // on a Gramm-Schmidt algorithm.
-
     typedef typename gmm::temporary_vector<MATD>::vector_type TEMP_VECT;
     size_type nbd = mat_ncols(D), nbase = 0, nbr = mat_nrows(D);
     TEMP_VECT aux(nbr), e(nbd), f(nbd);
@@ -606,7 +605,9 @@ namespace getfem
       gmm::clear(e); e[i] = 1.0; gmm::copy(e, f);
       gmm::mult(D, e, aux);
       if (gmm::vect_norm2(aux) < 1.0E-8) { //à scaler sur l'ensemble de D ...
-	G(nbase++, i) = 1.0; nn[i] = true;
+	//	cerr << "nbase=" << nbase << " i =" << i;
+	G(i, nbase++) = 1.0; nn[i] = true;
+	//	cerr << "-> G=" << G(i,nbase-1) << "\n";
       }
       else {
 	bool good = true;
@@ -618,7 +619,6 @@ namespace getfem
 	  gmm::scale(f, 1.0 / n); gmm::scale(aux, 1.0 / n);
 	  base_img_inv[nb_bimg] = TEMP_VECT(nbd);
 	  gmm::copy(f, base_img_inv[nb_bimg]);
-	  //	  cerr << "ajout de " << aux << "\n";
 	  gmm::clean(aux, 1.0E-18);
 	  base_img[nb_bimg] = TEMP_VECT(nbr);
 	  gmm::copy(aux, base_img[nb_bimg++]);
@@ -651,10 +651,8 @@ namespace getfem
 	  gmm::copy(f, base_img_inv[nb_bimg]);
 	  base_img[nb_bimg] = TEMP_VECT(nbr);
 	  gmm::copy(aux, base_img[nb_bimg++]);
-	  //	  cerr << "ajout de " << aux << "\n";
 	}
       }
-
     // Compute a solution in UDD
     gmm::clear(UDD);
     for (size_type i = 0; i < nb_bimg; ++i) {
@@ -670,18 +668,16 @@ namespace getfem
 	  gmm::add(gmm::scaled(gmm::mat_col(G,j), -c), gmm::mat_col(G,i));
       }
     }
-
     // projection of UDD on the orthogonal to the kernel.
     for (size_type j = nb_triv_base; j < nbase; ++j) {
       scalar_type c = gmm::vect_sp(gmm::mat_col(G,j), UDD);
       if (c != 0.)
 	gmm::add(gmm::scaled(gmm::mat_col(G,j), -c), UDD);
     }
-
     // Test ...
     gmm::mult(D, UDD, gmm::scaled(UD, -1.0), aux);
     if (gmm::vect_norm2(aux) > 1.0E-12)
-      cerr << "Dirichlet condition not well inverted\n";
+      cerr << "Dirichlet condition not well inverted: residu=" << gmm::vect_norm2(aux) << "\n";
 
     return nbase;
   }

@@ -151,7 +151,7 @@ namespace gmm
     
     inline size_type ncols(void) const { return li.size(); }
     inline size_type nrows(void) const
-    { return (nrows() == 0) ? 0 : li[0].size(); }
+    { return (ncols() == 0) ? 0 : li[0].size(); }
   };
 
   template <class V> struct linalg_traits<col_matrix<V> > {

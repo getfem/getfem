@@ -64,10 +64,11 @@ namespace gmm
     typedef value_type&         reference;
     typedef size_t              size_type;
     typedef ptrdiff_t           difference_type;
-    typedef std::bidirectional_iterator_tag iterator_category;
+    typedef std::forward_iterator_tag iterator_category;
 
     reference operator *() const { return (base_it_type::operator*()).e; }
     pointer operator->() const { return &(operator*()); }
+    
     size_type index(void) const { return (base_it_type::operator*()).c; }
     wsvector_iterator(void) {}
     wsvector_iterator(const base_it_type &it) : base_it_type(it) {}
@@ -83,7 +84,7 @@ namespace gmm
     typedef const value_type&   reference;
     typedef size_t              size_type;
     typedef ptrdiff_t           difference_type;
-    typedef std::bidirectional_iterator_tag iterator_category;
+    typedef std::forward_iterator_tag iterator_category;
     
     reference operator *() const { return (base_it_type::operator*()).e; }
     pointer operator->() const { return &(operator*()); }

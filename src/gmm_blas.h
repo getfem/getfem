@@ -179,7 +179,7 @@ namespace gmm {
   /*		Write                                   		  */
   /* ******************************************************************** */
 
-  template <class L> void write(const L &l, std::ostream &o)
+  template <class L> void write(std::ostream &o, const L &l)
   { write(o, l, typename linalg_traits<L>::linalg_type()); }
 
   template <class L> inline void write(std::ostream &o, const L &l,
@@ -469,7 +469,7 @@ namespace gmm {
   template <class L> void clean(L &l, double seuil, abstract_sparse) {
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
     for (; it != ite; ++it)
-      if (modulus(*it) < seuil)
+      if (modulus(*it) < seuil && it.index() != size_type(-1))
 	l[it.index()] = typename linalg_traits<L>::value_type(0);
   }
 

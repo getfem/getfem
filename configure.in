@@ -36,7 +36,7 @@ dnl test du c++
 dnl -----------------------------------------------
 
 USER_CXXFLAGS="$CXXFLAGS"
-AC_PROG_CXX(cxx KCC CC cc++ xlC aCC g++ c++)
+AC_PROG_CXX(cxx KCC CC cc++ xlC aCC g++ c++ icc)
 AC_PROG_CXXCPP
 CXXFLAGS="${USER_CXXFLAGS}"
 SUPLDFLAGS=""
@@ -66,6 +66,11 @@ dnl 	CXXFLAGS="$CXXFLAGS -ptr `pwd`/cxx_repository -std strict_ansi -O3"
  	APPSCXXFLAGS="$CXXFLAGS -ftemplate-depth-40 -pedantic -O3 -Wall -W -Wtraditional -Wshadow -Wpointer-arith -Wcast-qual -Wwrite-strings -Wconversion -Wmissing-prototypes -Wredundant-decls"
  	CXXFLAGS="$CXXFLAGS -ftemplate-depth-40 -pedantic -O3 -Wall -W -Wtraditional -Wshadow -Wpointer-arith -Wcast-qual -Wwrite-strings -Wconversion -Wmissing-prototypes -Wredundant-decls"
 	MEX_NEEDS_TWOCOMP="#"
+	;;
+ icc | icpc)
+dnl -tpp6 is for pentiumII and more
+dnl -Xc is for ansi conformance
+	CXXFLAGS="$CXXFLAGS -O3 -tpp6 -KPIC"
 	;;
  *)
  	APPSCXXFLAGS="$CXXFLAGS -O3"
