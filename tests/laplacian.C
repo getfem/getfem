@@ -436,7 +436,7 @@ void lap_pb::solve(void) {
   // gmm::diagonal_precond<sparse_matrix_type> P(SM);
   // gmm::mr_approx_inverse_precond<sparse_matrix_type> P(SM, 10, 10E-17);
   gmm::cholesky_precond<sparse_matrix_type> P(SM);
-  // gmm::choleskyt_precond<sparse_matrix_type> P(SM, 0, 1E-9);
+  // gmm::choleskyt_precond<sparse_matrix_type> P(SM, 50, 1E-9);
   // gmm::ilu_precond<sparse_matrix_type> P(SM);
   cout << "Time to compute preconditionner : "
        << ftool::uclock_sec() - time << " seconds\n";

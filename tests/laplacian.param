@@ -28,7 +28,7 @@ INTEGRATION = 16;       % 0 = exact integration.
 			% 11, 12, 13, 14, 15, 16, 17 triangle(n-10)
 			% 21, 22, 23, 25 tetrahedron(n-20)
 			% 32, 33, 35 quadrilateral(n-30)
-NX = 4;            	% space step.
+NX = 50;            	% space step.
 RESIDU = 1E-9;     	% residu for conjugate gradient.
 GENERIC_DIRICHLET = 0;  % Generic Dirichlet condition for non-lagrangian elts.
 

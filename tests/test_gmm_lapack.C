@@ -22,7 +22,7 @@
 // g++ -I ../../src -O3 ../../tests/test_gmm_lapack.C -o test_gmm_lapack -llapack -lblas -lg2c
 
 // à compiler avec la ligne de commande pour atlas
-// g++ -I ../../src -O3 ../../tests/test_gmm_lapack.C -o test_gmm_lapack /usr/lib/atlas/libblas.a -latlas
+// g++ -I ../../src -O3 ../../tests/test_gmm_lapack.C -o test_gmm_lapack /usr/lib/atlas/liblapack.a /usr/lib/atlas/libblas.a -latlas  -lg2c
 
 // options d'optimisations avec g++ :
 //  -funroll-all-loops -ffast-math -fstrict-aliasing -fomit-frame-pointer
@@ -40,9 +40,9 @@ template<class MAT> void my_mult(const MAT &A, const MAT &B, MAT &C) {
 }
 
 template <class T> void test_with(T) {
-  size_type n = 3;
+  size_type n = 5;
 
-  gmm::dense_matrix<T> A(n, n), B(n, n), C(n, n);
+  gmm::dense_matrix<T> A(n+2, n), B(n+2, n), C(n, n);
   std::vector<T> x(n), y(n), z(n);
   
   gmm::fill_random(A);
@@ -52,12 +52,15 @@ template <class T> void test_with(T) {
   
   
   double exectime = ftool::uclock_sec();
-  for (size_type i = 0; i < 1000000; ++i)
-    gmm::lu_inverse(A);
+  qr_factor(A, B, C);
+  cout << "Q = " << B << endl;
+  cout << "R = " << C << endl;
   
+
   // my_mult(A, B, C);
   cout << "cpu time = " << ftool::uclock_sec() - exectime << endl;
-  cout << "col(A,2) = " << gmm::mat_const_col(A,2) << endl;
+  // cout << "col(B,2) = " << gmm::mat_const_col(B,2) << endl;
+  // cout << "col(C,2) = " << gmm::mat_const_col(C,2) << endl;
   
 }
 
@@ -76,10 +79,10 @@ int main(void)
 
   try {
     
-    test_with(float());
+//    test_with(float());
     test_with(double());
-    test_with(std::complex<float>());
-    test_with(std::complex<double>());
+//     test_with(std::complex<float>());
+//     test_with(std::complex<double>());
     
   }
   DAL_STANDARD_CATCH_ERROR;

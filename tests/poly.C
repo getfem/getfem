@@ -19,8 +19,6 @@
 /* *********************************************************************** */
 #include <bgeot_poly.h>
 
-typedef bgeot::polynomial<double> base_poly;
-
 int main(void)
 {
   try {
@@ -74,7 +72,7 @@ int main(void)
       cout << "degree=" << p.degree() << ", global_index(p)=" << p.global_index() << "\n";      
     }
 
-    base_poly S(1,2); S[0] = -2; S[1] = 3; S[2] = 1;
+    bgeot::polynomial<double> S(1,2); S[0] = -2; S[1] = 3; S[2] = 1;
     cout << "P=" << P << ", S=" << S << " \n";
     cout << "P(S,x)=" << bgeot::poly_substitute_var(P,S,0) << "\n";
   }

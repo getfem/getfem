@@ -321,8 +321,9 @@ Annonce faite à NaNet :
 
 
 Future version 1.6, avancées :
-----------------------------
-. Support pour le calcul sur des domaines fracturés avec X-fem.
+------------------------------
 . GMM : Estimation du conditionnement, factorisation qr et méthode qr,
-        conjugated, Tests dans les complexes. 
-. GETFEM : estimation du rayon et de la qualité de éléments
+        conjugated, Tests dans les complexes. interface LAPACK.
+. GETFEM : estimation du rayon et de la qualité de éléments, bugs fixés dans
+        les methodes d'integrations, + de méthodes. Xfem élargi. suport pour
+        les domaines 2D fracturés avec xfem.
