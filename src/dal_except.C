@@ -2,12 +2,12 @@
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Dynamic Array Library (dal)                                  */
-/* File    :  dal_std.C                                                    */
+/* File    :  dal_except.C                                                 */
 /*     									   */
 /*                                                                         */
-/* Date : June 01, 1995.                                                   */
+/* Date : September 01, 2002.                                              */
 /* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
-/* Author : Julien Pommier, pommier@gmm.insa-tlse.fr                       */
+/*          Julien Pommier, pommier@gmm.insa-tlse.fr                       */
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */

@@ -427,7 +427,7 @@ int main(int argc, char *argv[])
     size_type nbdof = p.mef_data.nb_dof();
     linalg_vector V(nbdof);
     scalar_type linfnorm = 0.0;
-    interpolation_solution_same_mesh(p.mef, p.mef_data, p.U, V, 1);
+    getfem::interpolation_solution_same_mesh(p.mef, p.mef_data, p.U, V, 1);
     for (size_type i = 0; i < nbdof; ++i) {
       V[i] -= sol_u(p.mef_data.point_of_dof(i));
 //       cout << "i = " << i << " V[i] = " <<  V[i]

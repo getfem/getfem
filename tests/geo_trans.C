@@ -19,7 +19,7 @@ int main(void)
 	 << bgeot::name_of_geometric_trans(p1) << endl;
 
     cout << "Name of the product of the two : " 
-	 << bgeot::name_of_geometric_trans(product_geotrans(p1, p2)) << endl;
+	 << bgeot::name_of_geometric_trans(bgeot::product_geotrans(p1, p2)) << endl;
 
 
     bgeot::pgeometric_trans pai;

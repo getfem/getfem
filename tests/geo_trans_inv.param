@@ -3,7 +3,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%% mesh parameters :	        				      %%%%%
-N = 3;                  % dimension of the domain.
+N = 2;                  % dimension of the domain.
 LX = 1.0;		% size in X.
 LY = 1.0;	        % size in Y.
 LZ = 1.0;		% size in Z.
@@ -12,6 +12,6 @@ LZ = 1.0;		% size in Z.
 MESH_TYPE = 2;          % 0 = simplexes
 			% 1 = parallelepipeds
 			% 2 = prisms
-NX = 5;            	% space step.
-NB_POINTS = 1000;        % Number of points
+NX = 10;          	% space step.
+NB_POINTS = 1000;       % Number of points
 BASE = 10;              % Base used. 

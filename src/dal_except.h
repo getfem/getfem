@@ -5,7 +5,7 @@
 /* File    :  dal_except.h : Exceptions.                                   */
 /*     									   */
 /*                                                                         */
-/* Date : June 01, 1995.                                                   */
+/* Date : September 01, 2002.                                              */
 /* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
 /*          Julien Pommier, Julien.pommier@gmm.insa-tlse.fr                */
 /*                                                                         */
