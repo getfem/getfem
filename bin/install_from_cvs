@@ -25,6 +25,7 @@ $ENV{CVSROOT} = ":pserver:renard\@gmmlinux2.gmm.priv:\/var\/cvs";
 
 print "loading getfem++ from cvs\n\n";
 
+print `cd ..; cvs checkout getfem++/bin`; print "\n\n";
 print `cd ..; cvs checkout getfem++/dal`; print "\n\n";
 print `cd ..; cvs checkout getfem++/bgeot`; print "\n\n";
 print `cd ..; cvs checkout getfem++/linkmsg`; print "\n\n";

@@ -114,7 +114,7 @@ while($listeC)
 }
 
 print MAKEFILE "\n\n", '# Compilation of test programs : ',  "\n";
-$listeC = `ls programs/\*.C`;
+$listeC = `ls tests/\*.C`;
 $listeC =~ s/\@//g;
 $listetests = "";
 while($listeC)
@@ -122,16 +122,16 @@ while($listeC)
   ($fi, $listeC) = split('\s', $listeC, 2);
   $fi1 = $fi; $fi1 =~ s/\.C//;
   while ($fi1 =~ /\//) { ($fi2, $fi1) = split('\/', $fi1, 2); }
-  $listetests = $listetests." "."programs\/$fi1";
+  $listetests = $listetests." "."tests\/$fi1";
   $fi2 = $fi1;
   $fi2 =~ s/\.o/_h/;
 #  $fi2 =~ s/\.o/.h/;
-  print MAKEFILE "\n", "programs\/$fi1 : $fi \$(GETFEM_LIB) .\/sources\/*.o \n";
-  print MAKEFILE "\t", '$(CPLUS) $(COPT) $(INCLUDES) ./sources/*.o ', $fi, " -o programs\/$fi1", ' $(LIB) ', "\n";
+  print MAKEFILE "\n", "tests\/$fi1 : $fi \$(GETFEM_LIB) .\/sources\/*.o \n";
+  print MAKEFILE "\t", '$(CPLUS) $(COPT) $(INCLUDES) ./sources/*.o ', $fi, " -o tests\/$fi1", ' $(LIB) ', "\n";
 
 }
 
-$listedotest = "echo \"beginning tests\" ; cd programs ; " . `cd programs ; ls *.dotest`
+$listedotest = "echo \"beginning tests\" ; cd tests ; " . `cd tests ; ls *.dotest`
                                              . "echo \"tests finished\"";
 $listedotest =~ s/\n/ ; /g;
 
