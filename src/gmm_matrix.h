@@ -666,7 +666,7 @@ namespace gmm
     void swap(csr_matrix<T, shift> &m) { std::swap(*this, m); }
    
     value_type operator()(size_type i, size_type j) const
-    { return mat_col(*this, j)[i]; }
+    { return mat_row(*this, i)[j]; }
   };
   
   template <typename T, int shift> template <typename Matrix>

@@ -262,15 +262,18 @@ namespace gmm {
   void qr_stop_criterion(MAT &A, size_type &p, size_type &q, Ttol tol) {
     typedef typename linalg_traits<MAT>::value_type value_type;
     size_type n = mat_nrows(A);
-    for (size_type i = 1; i < n-q; ++i)
-      if (gmm::abs(A(i,i-1)) < (gmm::abs(A(i,i))+ gmm::abs(A(i-1,i-1)))*tol)
-	A(i,i-1) = value_type(0);
-
-    while ((q < n-1 && A(n-1-q, n-2-q) == value_type(0)) ||
-	   (q < n-2 && A(n-2-q, n-3-q) == value_type(0))) ++q;
-    if (q >= n-2) q = n;
-    p = n-q; if (p) --p; if (p) --p;
-    while (p > 0 && A(p,p-1) != value_type(0)) --p;
+    if (n <= 2) { q = n; p = 0; }
+    else {
+      for (size_type i = 1; i < n-q; ++i)
+	if (gmm::abs(A(i,i-1)) < (gmm::abs(A(i,i))+ gmm::abs(A(i-1,i-1)))*tol)
+	  A(i,i-1) = value_type(0);
+      
+      while ((q < n-1 && A(n-1-q, n-2-q) == value_type(0)) ||
+	     (q < n-2 && A(n-2-q, n-3-q) == value_type(0))) ++q;
+      if (q >= n-2) q = n;
+      p = n-q; if (p) --p; if (p) --p;
+      while (p > 0 && A(p,p-1) != value_type(0)) --p;
+    }
   }
   
   template <typename MAT, typename Ttol> inline
@@ -279,14 +282,17 @@ namespace gmm {
     typedef typename linalg_traits<MAT>::value_type value_type;
     MAT& A = const_cast<MAT&>(AA);
     size_type n = mat_nrows(A);
-    for (size_type i = 1; i < n-q; ++i)
-      if (gmm::abs(A(i,i-1)) < (gmm::abs(A(i,i))+ gmm::abs(A(i-1,i-1)))*tol)
-	A(i,i-1) = value_type(0);
-
-    while (q < n-1 && A(n-1-q, n-2-q) == value_type(0)) ++q;
-    if (q >= n-1) q = n;
-    p = n-q; if (p) --p; if (p) --p;
-    while (p > 0 && A(p,p-1) != value_type(0)) --p;
+    if (n <= 1) { q = n; p = 0; }
+    else {
+      for (size_type i = 1; i < n-q; ++i)
+	if (gmm::abs(A(i,i-1)) < (gmm::abs(A(i,i))+ gmm::abs(A(i-1,i-1)))*tol)
+	  A(i,i-1) = value_type(0);
+      
+      while (q < n-1 && A(n-1-q, n-2-q) == value_type(0)) ++q;
+      if (q >= n-1) q = n;
+      p = n-q; if (p) --p; if (p) --p;
+      while (p > 0 && A(p,p-1) != value_type(0)) --p;
+    }
   }
 
 

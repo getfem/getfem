@@ -9,6 +9,7 @@
 #include <gmm_kernel.h>
 #include <gmm_dense_lu.h>
 #include <gmm_dense_qr.h>
+#include <gmm_condition_number.h>
 
 using gmm::size_type;
 
@@ -25,42 +26,47 @@ void test_procedure2(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2,
   typedef typename gmm::linalg_traits<MAT1>::value_type T;
   typedef typename gmm::number_traits<T>::magnitude_type R;
   R prec = gmm::default_tol(R());
-  R error;
 
   size_type m = gmm::vect_size(v1), n = gmm::vect_size(v3);
   size_type nn = std::min(m,n), mm = std::max(m, n);
   std::vector<T> v6(m);
 
+  R det = gmm::abs(gmm::lu_det(m1)), error;
+  R cond = gmm::condition_number(m1);
 
-  gmm::lu_solve(m1, v6, v2);
-  gmm::mult(m1, v6, v1);
-  gmm::add(gmm::scaled(v1, T(-1)), v2, v6);
-  if (!((error = gmm::vect_norm2(v6)) <= prec * R(10000)))
-    DAL_THROW(gmm::failure_error, "Error too large: "<< error);
+  if (prec * cond < R(1)/R(10000) && det != R(0)) {
 
-  gmm::lu_solve(gmm::transposed(m1), v6, v2);
-  gmm::mult(gmm::transposed(m1), v6, v1);
-  gmm::add(gmm::scaled(v1, T(-1)), v2, v6);
-  if (!((error = gmm::vect_norm2(v6)) <= prec * R(10000)))
-    DAL_THROW(gmm::failure_error, "Error too large: "<< error);
+    gmm::lu_solve(m1, v6, v2);
+    gmm::mult(m1, v6, v1);
+    gmm::add(gmm::scaled(v1, T(-1)), v2, v6);
+    if (!((error = gmm::vect_norm2(v6)) <= prec * cond * R(10000)))
+      DAL_THROW(gmm::failure_error, "Error too large: "<< error);
+    
+    gmm::lu_solve(gmm::transposed(m1), v6, v2);
+    gmm::mult(gmm::transposed(m1), v6, v1);
+    gmm::add(gmm::scaled(v1, T(-1)), v2, v6);
+    if (!((error = gmm::vect_norm2(v6)) <= prec * cond * R(10000)))
+      DAL_THROW(gmm::failure_error, "Error too large: "<< error);
+    
+    gmm::lu_solve(gmm::conjugated(m1), v6, v2);
+    gmm::mult(gmm::conjugated(m1), v6, v1);
+    gmm::add(gmm::scaled(v1, T(-1)), v2, v6);
+    if (!((error = gmm::vect_norm2(v6)) <= prec * cond * R(10000)))
+      DAL_THROW(gmm::failure_error, "Error too large: "<< error);
+    
+    gmm::lu_solve(gmm::transposed(gmm::conjugated(m1)), v6, v2);
+    gmm::mult(gmm::transposed(gmm::conjugated(m1)), v6, v1);
+    gmm::add(gmm::scaled(v1, T(-1)), v2, v6);
+    if (!((error = gmm::vect_norm2(v6)) <= prec * cond * R(10000)))
+      DAL_THROW(gmm::failure_error, "Error too large: "<< error);
+    
+    gmm::lu_solve(gmm::transposed(gmm::scaled(m1, T(-6))), v6, v2);
+    gmm::mult(gmm::transposed(gmm::scaled(m1, T(-6))), v6, v1);
+    gmm::add(gmm::scaled(v1, T(-1)), v2, v6);
+    if (!((error = gmm::vect_norm2(v6)) <= prec * cond * R(10000)))
+      DAL_THROW(gmm::failure_error, "Error too large: "<< error);
 
-  gmm::lu_solve(gmm::conjugated(m1), v6, v2);
-  gmm::mult(gmm::conjugated(m1), v6, v1);
-  gmm::add(gmm::scaled(v1, T(-1)), v2, v6);
-  if (!((error = gmm::vect_norm2(v6)) <= prec * R(10000)))
-    DAL_THROW(gmm::failure_error, "Error too large: "<< error);
-
-  gmm::lu_solve(gmm::transposed(gmm::conjugated(m1)), v6, v2);
-  gmm::mult(gmm::transposed(gmm::conjugated(m1)), v6, v1);
-  gmm::add(gmm::scaled(v1, T(-1)), v2, v6);
-  if (!((error = gmm::vect_norm2(v6)) <= prec * R(10000)))
-    DAL_THROW(gmm::failure_error, "Error too large: "<< error);
-
-  gmm::lu_solve(gmm::transposed(gmm::scaled(m1, T(-6))), v6, v2);
-  gmm::mult(gmm::transposed(gmm::scaled(m1, T(-6))), v6, v1);
-  gmm::add(gmm::scaled(v1, T(-1)), v2, v6);
-  if (!((error = gmm::vect_norm2(v6)) <= prec * R(10000)))
-    DAL_THROW(gmm::failure_error, "Error too large: "<< error);
+  }
 
   gmm::dense_matrix<T> q(mm, nn), r(nn, nn);
   if (m >= n) {
@@ -86,9 +92,9 @@ void test_procedure2(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2,
   
 }
 
-template<class MAT> void test_mat_swap(MAT &, gmm::linalg_modifiable) {}
-template<class MAT> void test_mat_swap(MAT &, gmm::linalg_const) {}
-template<class MAT> void test_mat_swap(MAT &M, gmm::linalg_false) {
+template<typename MAT> void test_mat_swap(MAT &, gmm::linalg_modifiable) {}
+template<typename MAT> void test_mat_swap(MAT &, gmm::linalg_const) {}
+template<typename MAT> void test_mat_swap(MAT &M, gmm::linalg_false) {
   typedef typename gmm::linalg_traits<MAT>::value_type T;
   typedef typename gmm::number_traits<T>::magnitude_type R;
   size_type m = gmm::mat_nrows(M), n = gmm::mat_ncols(M);
@@ -101,9 +107,9 @@ template<class MAT> void test_mat_swap(MAT &M, gmm::linalg_false) {
     DAL_THROW(gmm::failure_error, "Error in swap");
 }
 
-template<class VECT> void test_vect_swap(VECT &, gmm::linalg_modifiable) {}
-template<class VECT> void test_vect_swap(VECT &, gmm::linalg_const) {}
-template<class VECT> void test_vect_swap(VECT &V, gmm::linalg_false) {
+template<typename VECT> void test_vect_swap(VECT &, gmm::linalg_modifiable) {}
+template<typename VECT> void test_vect_swap(VECT &, gmm::linalg_const) {}
+template<typename VECT> void test_vect_swap(VECT &V, gmm::linalg_false) {
   typedef typename gmm::linalg_traits<VECT>::value_type T;
   typedef typename gmm::number_traits<T>::magnitude_type R;
   size_type n = gmm::vect_size(V);

@@ -24,7 +24,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
   std::vector<T> v3(m);
 
   R det = gmm::abs(gmm::lu_det(m1)), error;
-  R cond = gmm::condest(m1);
+  R cond = gmm::condition_number(m1);
 
   if (print_debug) cout << "cond = " << cond << " det = " << det << endl;
   if (det == R(0) && cond < R(1) / prec && cond != R(0))

@@ -218,16 +218,16 @@ namespace gmm
   };
 
   template<typename T>  void wsvector<T>::clean(double eps) {
-    iterator it = this->begin(), itf = ++it, ite = this->end();
-    for ( ; it != ite; ++itf)
-      { if (gmm::abs(it->second) <= eps) { erase(it); it = itf; } else ++it; }
+    iterator it = this->begin(), itf = it, ite = this->end();
+    while (it != ite) {
+      ++itf; if (gmm::abs(it->second) <= eps) erase(it); it = itf;
+    }
   }
 
   template<typename T>  void wsvector<T>::resize(size_type n) {
     if (n < nbl) {
-      iterator it = this->begin(), itf = ++it, ite = this->end();
-      for ( ; it != ite; ++itf)
-	{ if (it->first >= n) { erase(it); it = itf; } else ++it; }
+      iterator it = this->begin(), itf = it, ite = this->end();
+      while (it != ite) { ++itf; if (it->first >= n) erase(it); it = itf; }
     }
     nbl = n;
   }
