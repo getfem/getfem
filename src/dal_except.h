@@ -192,8 +192,8 @@ namespace dal {
   } 
 
   // Warning levels : 0 always printed
-  //                  1 very important
-  //                  2 important
+  //                  1 very important : specify a possible error in the code.
+  //                  2 important : specify a default of optimization for inst.
   //                  3 remark
 
   

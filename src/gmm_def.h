@@ -568,13 +568,13 @@ namespace gmm {
   /* ******************************************************************** */
 
   template<class IT> 
-  size_type index_of_it(const IT &it, size_type k, abstract_sparse)
+  size_type index_of_it(const IT &it, size_type, abstract_sparse)
   { return it.index(); }
   template<class IT> 
-  size_type index_of_it(const IT &it, size_type k, abstract_skyline)
+  size_type index_of_it(const IT &it, size_type, abstract_skyline)
   { return it.index(); }
   template<class IT> 
-  size_type index_of_it(const IT &it, size_type k, abstract_dense)
+  size_type index_of_it(const IT &, size_type k, abstract_dense)
   { return k; }
 
   /* ******************************************************************** */

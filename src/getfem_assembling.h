@@ -228,9 +228,9 @@ namespace getfem
   */
   template<class MAT, class VECT>
     void asm_stiffness_matrix_for_linear_elasticity_Hooke(MAT &RM,
-							 const mesh_fem &mf, 
-							 const mesh_fem &mfdata, 
-							 const VECT &H)
+							  const mesh_fem &mf, 
+							  const mesh_fem &mfdata, 
+							  const VECT &H)
   {
     /* e = strain tensor,
        M = a_{i,j,k,l}e_{i,j}(u)e_{k,l}(v)
@@ -260,7 +260,7 @@ namespace getfem
 			   "t=comp(vGrad(#1).vGrad(#1).Base(#3));"
 			   "e=(t{:,2,3,:,5,6,:}+t{:,3,2,:,5,6,:}+t{:,2,3,:,6,5,:}+t{:,3,2,:,6,5,:})/4;"
 			   "M$1(#1,#1) += sym(e(:,i,j,:,i,j,k).visc(k));"          // visc*D(u):D(v)
-			   "M$2(#1,#2) += comp(vGrad(#1).Base(#2))(:,i,i,:);"); // p.div v
+			   "M$2(#1,#2) += comp(vGrad(#1).Base(#2))(:,i,i,:);");    // p.div v
     assem.push_mf(mf_u);
     assem.push_mf(mf_p);
     assem.push_mf(mf_d);

@@ -19,8 +19,8 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
   R prec = gmm::default_tol(R());
 
   gmm::clean(v1, 0.01);
-  for (size_type i = 0; i < vect_size(v1); ++i)
-    if (gmm::abs(v1[i]) < R(1) / R(100))
+  for (size_type i = 0; i < gmm::vect_size(v1); ++i)
+    if (v1[i] != T(0) && gmm::abs(v1[i]) < R(1) / R(101))
       DAL_THROW(gmm::failure_error, "Error in clean");
 
   static int nexpe = 0;

@@ -201,14 +201,14 @@ namespace gmm {
     typedef std::complex<TA> T;
     size_type n = mat_nrows(A);
     tol *= Ttol(2);
-    Ttol tol_cplx = tol * Ttol(10);
+    Ttol tol_cplx = tol * Ttol(1000);
     for (size_type i = 0; i < n; ++i)
       if ((i == n-1) ||
 	  gmm::abs(A(i+1,i)) < (gmm::abs(A(i,i))+gmm::abs(A(i+1,i+1)))*tol) {
 	if (gmm::abs(std::imag(A(i,i))) > tol_cplx*gmm::abs(std::real(A(i,i))))
 	  DAL_WARNING(3, "A complex eigenvalue has been detected : "
 		      << T(A(i,i)) << " : "  << gmm::abs(std::imag(A(i,i)))
-		      / gmm::abs(std::real(A(i,i))) << " : " << tol);
+		      / gmm::abs(std::real(A(i,i))) << " : " << tol_cplx);
 	V[i] = std::real(A(i,i));
       }
       else {
@@ -516,9 +516,9 @@ namespace gmm {
   /*    Implicit symmetric QR step with Wilkinson Shift.                   */
   /* ********************************************************************* */
 
-  template <typename MAT1, typename MAT2> 
+  template <typename MAT1, typename MAT2, typename Ttol> 
     void symmetric_Wilkinson_qr_step(const MAT1& MM, const MAT2 &ZZ,
-				     bool compute_z) {
+				     bool compute_z, Ttol tol) {
     MAT1& M = const_cast<MAT1&>(MM); MAT2& Z = const_cast<MAT2&>(ZZ);
     typedef typename linalg_traits<MAT1>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
@@ -526,10 +526,13 @@ namespace gmm {
 
     size_type n = mat_nrows(M);
     T d = (M(n-2, n-2) - M(n-1, n-1)) / T(2);
-    if (gmm::imag(d) != R(0))
-      DAL_WARNING(2, "Please, be sure that your matrix is hermitian");
-    T e = gmm::sqr(M(n-1, n-2));
-    T mu = M(n-1, n-1) - e / (d + T(gmm::sgn(gmm::real(d)))*gmm::sqrt(d*d + e));
+    if (gmm::abs(gmm::imag(d))
+	> (gmm::abs(M(n-2, n-2)) + gmm::abs(M(n-1, n-1))) * tol * R(1000))
+      DAL_WARNING(2, "Please, be sure that your matrix is hermitian\n"
+		  "value found on the diagonal :" << d);
+    R rd = gmm::real(d);
+    R e = gmm::abs_sqr(M(n-1, n-2));
+    T mu = M(n-1, n-1) - T(e / (d + gmm::sgn(rd)*gmm::sqrt(rd*rd+e)));
     T x = M(0,0) - mu, z = M(1, 0), c, s;
 
     for (size_type k = 1; k < n; ++k) {
@@ -592,10 +595,11 @@ namespace gmm {
       sub_interval SUBI(p, n-p-q), SUBJ(0, mat_ncols(eigvect)), SUBK(p, n-p-q);
       if (!compvect) SUBK = sub_interval(0,0);
       symmetric_Wilkinson_qr_step(sub_matrix(T, SUBI), 
-				  sub_matrix(eigvect, SUBJ, SUBK), compvect);
+				  sub_matrix(eigvect, SUBJ, SUBK),
+				  compvect, tol);
       
-      // symmetric_qr_stop_criterion(T, p, q, tol);
-      qr_stop_criterion(T, p, q, tol);
+      symmetric_qr_stop_criterion(T, p, q, tol);
+      // qr_stop_criterion(T, p, q, tol);
       if (++ite > n*100) DAL_THROW(failure_error, "QR algorithm failed. "
 				   "Probably, your matrix is not real "
 				   "symmetric or complex hermitian"

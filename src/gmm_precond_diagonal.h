@@ -83,13 +83,18 @@ namespace gmm {
     mult(P, v1, v2);
   }
   
+  // # define DIAG_LEFT_MULT_SQRT
+  
   template <typename Matrix, typename V1, typename V2> inline
   void left_mult(const diagonal_precond<Matrix>& P, const V1 &v1, V2 &v2) {
     if (P.diag.size() != vect_size(v2))
       DAL_THROW(dimension_error, "dimensions mismatch");
     copy(v1, v2);
-    for (size_type i = 0; i < P.diag.size(); ++i) 
-      v2[i] *= gmm::sqrt(P.diag[i]);
+#   ifdef DIAG_LEFT_MULT_SQRT
+    for (size_type i= 0; i < P.diag.size(); ++i) v2[i] *= gmm::sqrt(P.diag[i]);
+#   else
+    for (size_type i= 0; i < P.diag.size(); ++i) v2[i] *= P.diag[i];
+#   endif
   }
 
   template <typename Matrix, typename V1, typename V2> inline
@@ -104,8 +109,9 @@ namespace gmm {
     if (P.diag.size() != vect_size(v2))
       DAL_THROW(dimension_error, "dimensions mismatch");
     copy(v1, v2);
-    for (size_type i = 0; i < P.diag.size(); ++i)
-	v2[i] *= gmm::sqrt(P.diag[i]);
+#   ifdef DIAG_LEFT_MULT_SQRT    
+    for (size_type i= 0; i < P.diag.size(); ++i) v2[i] *= gmm::sqrt(P.diag[i]);
+#   endif
   }
 
   template <typename Matrix, typename V1, typename V2> inline

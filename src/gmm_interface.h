@@ -104,26 +104,26 @@ namespace gmm {
   };
 
   template <typename IT, typename ORG, typename PT> inline
-  void set_to_begin(IT it, ORG o, simple_vector_ref<PT> *, linalg_modifiable) {
+  void set_to_begin(IT &it, ORG o, simple_vector_ref<PT> *,linalg_modifiable) {
     typedef typename linalg_traits<simple_vector_ref<PT> >::V_reference ref_t;
     set_to_begin(it, o, PT(), ref_t());
   }
 
   template <typename IT, typename ORG, typename PT> inline
-  void set_to_begin(IT it, ORG o, const simple_vector_ref<PT> *,
+  void set_to_begin(IT &it, ORG o, const simple_vector_ref<PT> *,
 		    linalg_modifiable) {
     typedef typename linalg_traits<simple_vector_ref<PT> >::V_reference ref_t;
     set_to_begin(it, o, PT(), ref_t());
   }
 
   template <typename IT, typename ORG, typename PT> inline
-  void set_to_end(IT it, ORG o, simple_vector_ref<PT> *, linalg_modifiable) {
+  void set_to_end(IT &it, ORG o, simple_vector_ref<PT> *, linalg_modifiable) {
     typedef typename linalg_traits<simple_vector_ref<PT> >::V_reference ref_t;
     set_to_end(it, o, PT(), ref_t());
   }
 
   template <typename IT, typename ORG, typename PT> inline
-  void set_to_end(IT it, ORG o, const simple_vector_ref<PT> *,
+  void set_to_end(IT &it, ORG o, const simple_vector_ref<PT> *,
 		  linalg_modifiable) {
     typedef typename linalg_traits<simple_vector_ref<PT> >::V_reference ref_t;
     set_to_end(it, o, PT(), ref_t());

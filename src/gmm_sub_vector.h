@@ -85,45 +85,6 @@ namespace gmm {
   void  sparse_sub_vector_iterator<IT, MIT, SUBI>::backward(void)
   { while(itb!=itbe && index()==size_type(-1)) --itb; }
 
-
-  template <typename IT, typename MIT, typename SUBI, typename ORG,
-	    typename VECT> inline
-  void set_to_begin(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
-		    ORG o, VECT *, linalg_modifiable) {
-    typedef typename linalg_traits<VECT>::V_reference ref_t;
-    set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV(), ref_t());
-    set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV(), ref_t());
-    it.forward();
-  }
-  template <typename IT, typename MIT, typename SUBI, typename ORG,
-	    typename VECT> inline
-  void set_to_begin(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
-		    ORG o, const VECT *, linalg_modifiable) {
-    typedef typename linalg_traits<VECT>::V_reference ref_t;
-    set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV(), ref_t());
-    set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV(), ref_t());
-    it.forward();
-  }
-  
-  template <typename IT, typename MIT, typename SUBI, typename ORG,
-	    typename VECT> inline
-  void set_to_end(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
-		    ORG o, VECT *, linalg_modifiable) {
-    typedef typename linalg_traits<VECT>::V_reference ref_t;
-    set_to_end(it.itb, o, typename linalg_traits<VECT>::pV(), ref_t());
-    set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV(), ref_t());
-    it.forward();
-  }
-  template <typename IT, typename MIT, typename SUBI, typename ORG,
-	    typename VECT> inline
-  void set_to_end(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
-		    ORG o, const VECT *, linalg_modifiable) {
-    typedef typename linalg_traits<VECT>::V_reference ref_t;
-    set_to_end(it.itb, o, typename linalg_traits<VECT>::pV(), ref_t());
-    set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV(), ref_t());
-    it.forward();
-  }
-  
   template <typename PT, typename SUBI> struct sparse_sub_vector {
     typedef sparse_sub_vector<PT, SUBI> this_type;
     typedef typename std::iterator_traits<PT>::value_type V;
@@ -152,6 +113,51 @@ namespace gmm {
     sparse_sub_vector(const sparse_sub_vector<CPT, SUBI> &cr)
       : _begin(cr._begin),_end(cr._end),origin(cr.origin), si(cr.si) {} 
   };
+
+  template <typename IT, typename MIT, typename SUBI, typename ORG,
+	    typename PT> inline
+  void set_to_begin(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
+		    ORG o, sparse_sub_vector<PT, SUBI> *,
+		    linalg_modifiable) {
+    typedef sparse_sub_vector<PT, SUBI> VECT;
+    typedef typename linalg_traits<VECT>::V_reference ref_t;
+    set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV(), ref_t());
+    set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV(), ref_t());
+    it.forward();
+  }
+  template <typename IT, typename MIT, typename SUBI, typename ORG,
+	    typename PT> inline
+  void set_to_begin(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
+		    ORG o, const sparse_sub_vector<PT, SUBI> *, 
+		    linalg_modifiable) {
+    typedef sparse_sub_vector<PT, SUBI> VECT;
+    typedef typename linalg_traits<VECT>::V_reference ref_t;
+    set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV(), ref_t());
+    set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV(), ref_t());
+    it.forward();
+  }
+  
+  template <typename IT, typename MIT, typename SUBI, typename ORG,
+	    typename PT> inline
+  void set_to_end(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
+		    ORG o, sparse_sub_vector<PT, SUBI> *, linalg_modifiable) {
+    typedef sparse_sub_vector<PT, SUBI> VECT;
+    typedef typename linalg_traits<VECT>::V_reference ref_t;
+    set_to_end(it.itb, o, typename linalg_traits<VECT>::pV(), ref_t());
+    set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV(), ref_t());
+    it.forward();
+  }
+  template <typename IT, typename MIT, typename SUBI, typename ORG,
+	    typename PT> inline
+  void set_to_end(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
+		    ORG o, const sparse_sub_vector<PT, SUBI> *,
+		  linalg_modifiable) {
+    typedef sparse_sub_vector<PT, SUBI> VECT;
+    typedef typename linalg_traits<VECT>::V_reference ref_t;
+    set_to_end(it.itb, o, typename linalg_traits<VECT>::pV(), ref_t());
+    set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV(), ref_t());
+    it.forward();
+  }
 
   template <typename PT, typename SUBI>
   struct linalg_traits<sparse_sub_vector<PT, SUBI> > {
@@ -301,49 +307,6 @@ namespace gmm {
     }
   }
 
-  template <typename IT, typename MIT, typename SUBI, typename ORG,
-	    typename VECT> inline
-  void set_to_begin(skyline_sub_vector_iterator<IT, MIT, SUBI> &it,
-		    ORG o, VECT *, linalg_modifiable) {
-    typedef typename linalg_traits<VECT>::V_reference ref_t;
-    IT itbe = it.itb;
-    set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV(), ref_t());
-    set_to_end(itbe, o, typename linalg_traits<VECT>::pV(), ref_t());
-    update_for_sub_skyline(it.itb, itbe, it.si);
-  }
-  template <typename IT, typename MIT, typename SUBI, typename ORG,
-	    typename VECT> inline
-  void set_to_begin(skyline_sub_vector_iterator<IT, MIT, SUBI> &it,
-		    ORG o, const VECT *, linalg_modifiable) {
-    typedef typename linalg_traits<VECT>::V_reference ref_t;
-    IT itbe = it.itb;
-    set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV(), ref_t());
-    set_to_end(itbe, o, typename linalg_traits<VECT>::pV(), ref_t());
-    update_for_sub_skyline(it.itb, itbe, it.si);
-  }
-  
-  template <typename IT, typename MIT, typename SUBI, typename ORG,
-	    typename VECT> inline
-  void set_to_end(skyline_sub_vector_iterator<IT, MIT, SUBI> &it,
-		    ORG o, VECT *, linalg_modifiable) {
-    typedef typename linalg_traits<VECT>::V_reference ref_t;
-    IT itb = it.itb;
-    set_to_begin(itb, o, typename linalg_traits<VECT>::pV(), ref_t());
-    set_to_end(it.itb, o, typename linalg_traits<VECT>::pV(), ref_t());
-    update_for_sub_skyline(itb, it.itb, it.si);
-  }
-  template <typename IT, typename MIT, typename SUBI, typename ORG,
-	    typename VECT> inline
-  void set_to_end(skyline_sub_vector_iterator<IT, MIT, SUBI> &it,
-		    ORG o, const VECT *, linalg_modifiable) {
-    typedef typename linalg_traits<VECT>::V_reference ref_t;
-    IT itb = it.itb;
-    set_to_begin(itb, o, typename linalg_traits<VECT>::pV(), ref_t());
-    set_to_end(it.itb, o, typename linalg_traits<VECT>::pV(), ref_t());
-    update_for_sub_skyline(itb, it.itb, it.si);   
-  }
-
-
   template <typename PT, typename SUBI> struct skyline_sub_vector {
     typedef skyline_sub_vector<PT, SUBI> this_type;
     typedef typename std::iterator_traits<PT>::value_type V;
@@ -376,6 +339,57 @@ namespace gmm {
     skyline_sub_vector(const skyline_sub_vector<pV, SUBI> &cr)
       : _begin(cr._begin),_end(cr._end),origin(cr.origin), si(cr.si) {}
   };
+
+  template <typename IT, typename MIT, typename SUBI, typename ORG,
+	    typename PT> inline
+  void set_to_begin(skyline_sub_vector_iterator<IT, MIT, SUBI> &it,
+		    ORG o, skyline_sub_vector<PT, SUBI> *,
+		    linalg_modifiable) {
+    typedef skyline_sub_vector<PT, SUBI> VECT;
+    typedef typename linalg_traits<VECT>::V_reference ref_t;
+    IT itbe = it.itb;
+    set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV(), ref_t());
+    set_to_end(itbe, o, typename linalg_traits<VECT>::pV(), ref_t());
+    update_for_sub_skyline(it.itb, itbe, it.si);
+  }
+  template <typename IT, typename MIT, typename SUBI, typename ORG,
+	    typename PT> inline
+  void set_to_begin(skyline_sub_vector_iterator<IT, MIT, SUBI> &it,
+		    ORG o, const skyline_sub_vector<PT, SUBI> *,
+		    linalg_modifiable) {
+    typedef skyline_sub_vector<PT, SUBI> VECT;
+    typedef typename linalg_traits<VECT>::V_reference ref_t;
+    IT itbe = it.itb;
+    set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV(), ref_t());
+    set_to_end(itbe, o, typename linalg_traits<VECT>::pV(), ref_t());
+    update_for_sub_skyline(it.itb, itbe, it.si);
+  }
+  
+  template <typename IT, typename MIT, typename SUBI, typename ORG,
+	    typename PT> inline
+  void set_to_end(skyline_sub_vector_iterator<IT, MIT, SUBI> &it,
+		    ORG o, skyline_sub_vector<PT, SUBI> *,
+		  linalg_modifiable) {
+    typedef skyline_sub_vector<PT, SUBI> VECT;
+    typedef typename linalg_traits<VECT>::V_reference ref_t;
+    IT itb = it.itb;
+    set_to_begin(itb, o, typename linalg_traits<VECT>::pV(), ref_t());
+    set_to_end(it.itb, o, typename linalg_traits<VECT>::pV(), ref_t());
+    update_for_sub_skyline(itb, it.itb, it.si);
+  }
+  template <typename IT, typename MIT, typename SUBI, typename ORG,
+	    typename PT> inline
+  void set_to_end(skyline_sub_vector_iterator<IT, MIT, SUBI> &it,
+		    ORG o, const skyline_sub_vector<PT, SUBI> *,
+		  linalg_modifiable) {
+    typedef skyline_sub_vector<PT, SUBI> VECT;
+    typedef typename linalg_traits<VECT>::V_reference ref_t;
+    IT itb = it.itb;
+    set_to_begin(itb, o, typename linalg_traits<VECT>::pV(), ref_t());
+    set_to_end(it.itb, o, typename linalg_traits<VECT>::pV(), ref_t());
+    update_for_sub_skyline(itb, it.itb, it.si);   
+  }
+
 
   template <typename PT, typename SUBI>
   struct linalg_traits<skyline_sub_vector<PT, SUBI> > {

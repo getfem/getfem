@@ -320,12 +320,12 @@ namespace gmm {
   }
 
   template <typename V> inline
-  void resize(V &v, size_type n, linalg_modifiable) {
+  void resize(V &, size_type , linalg_modifiable) {
     DAL_THROW(failure_error, "You cannot resize a reference");
   }
 
   template <typename V> inline
-  void resize(V &v, size_type n, linalg_const) {
+  void resize(V &, size_type , linalg_const) {
     DAL_THROW(failure_error, "You cannot resize a reference");
   }
 
@@ -341,12 +341,12 @@ namespace gmm {
   }
 
   template <typename M> inline
-  void resize(M &v, size_type m, size_type n, linalg_modifiable) {
+  void resize(M &, size_type, size_type, linalg_modifiable) {
     DAL_THROW(failure_error, "You cannot resize a reference");
   }
 
   template <typename M> inline
-  void resize(M &v, size_type m, size_type n, linalg_const) {
+  void resize(M &, size_type, size_type, linalg_const) {
     DAL_THROW(failure_error, "You cannot resize a reference");
   }
 
@@ -362,12 +362,12 @@ namespace gmm {
   }
 
   template <typename M> inline
-  void reshape(M &v, size_type m, size_type n, linalg_modifiable) {
+  void reshape(M &, size_type, size_type, linalg_modifiable) {
     DAL_THROW(failure_error, "You cannot reshape a reference");
   }
 
   template <typename M> inline
-  void reshape(M &v, size_type m, size_type n, linalg_const) {
+  void reshape(M &, size_type, size_type, linalg_const) {
     DAL_THROW(failure_error, "You cannot reshape a reference");
   }
 
@@ -640,11 +640,12 @@ namespace gmm {
   typename number_traits<typename linalg_traits<V>::value_type>
   ::magnitude_type
   vect_norm2_sqr(const V &v) {
+    typedef typename linalg_traits<V>::value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
     typename linalg_traits<V>::const_iterator
       it = vect_const_begin(v), ite = vect_const_end(v);
-    typename number_traits<typename linalg_traits<V>::value_type>
-      ::magnitude_type res(0);
-    for (; it != ite; ++it) res += gmm::sqr(gmm::abs(*it));
+    R res(0);
+    for (; it != ite; ++it) res += gmm::abs_sqr(*it);
     return res;
   }
 
@@ -653,6 +654,51 @@ namespace gmm {
    ::magnitude_type
    vect_norm2(const V &v)
   { return sqrt(vect_norm2_sqr(v)); }
+
+
+  
+  template <typename V1, typename V2> inline
+   typename number_traits<typename linalg_traits<V1>::value_type>
+   ::magnitude_type
+  vect_dist2_sqr(const V1 &v1, const V2 &v2) { // not fully optimized 
+    typedef typename linalg_traits<V1>::value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
+    typename linalg_traits<V1>::const_iterator
+      it1 = vect_const_begin(v1), ite1 = vect_const_end(v1);
+    typename linalg_traits<V2>::const_iterator
+      it2 = vect_const_begin(v2), ite2 = vect_const_end(v2);
+    size_type k1(0), k2(0);
+    R res(0);
+    while (it1 != ite1 && it2 != ite2) {
+      size_type i1 = index_of_it(it1, k1,
+				 typename linalg_traits<V1>::storage_type());
+      size_type i2 = index_of_it(it2, k2,
+				 typename linalg_traits<V2>::storage_type());
+
+      if (i1 == i2) {
+	res += gmm::abs_sqr(*it2 - *it1); ++it1; ++k1; ++it2; ++k2;
+      }
+      else if (i1 < i2) {
+	res += gmm::abs_sqr(*it1); ++it1; ++k1; 
+      }
+      else  {
+	res += gmm::abs_sqr(*it2); ++it2; ++k2; 
+      }
+    }
+    while (it1 != ite1) { res += gmm::abs_sqr(*it1); ++it1; }
+    while (it2 != ite2) { res += gmm::abs_sqr(*it2); ++it2; }
+    return res;
+  }
+ 
+
+  template <typename V1, typename V2> inline
+   typename number_traits<typename linalg_traits<V1>::value_type>
+   ::magnitude_type
+  vect_dist2(const V1 &v1, const V2 &v2)
+  { return sqrt(vect_dist2_sqr(v1, v2)); }
+  
+
+
 
   template <typename M>
    typename number_traits<typename linalg_traits<M>::value_type>
@@ -1277,7 +1323,9 @@ namespace gmm {
 
   template <typename L1, typename L2> inline
     void add_spec(const L1& l1, L2& l2, abstract_matrix) {
-    if (mat_nrows(l1) != mat_nrows(l2) || mat_ncols(l1) != mat_ncols(l2))
+    size_type m = mat_nrows(l1), n = mat_ncols(l1);
+    if (m == 0 || n == 0) return;
+    if (m != mat_nrows(l2) || n != mat_ncols(l2))
       DAL_THROW(dimension_error, "dimensions mismatch");
     add(l1, l2, typename linalg_traits<L1>::sub_orientation(),
 	typename linalg_traits<L2>::sub_orientation());
@@ -1938,9 +1986,11 @@ namespace gmm {
   template <typename L1, typename L2, typename L3>
   void mult_dispatch(const L1& l1, const L2& l2, L3& l3, abstract_matrix) {
     typedef typename temporary_matrix<L3>::matrix_type temp_mat_type;
+    size_type m = mat_nrows(l1), n = mat_ncols(l1), k = mat_ncols(l2);
+    if (m == 0 || k == 0) return;
+    if (n == 0) { gmm::clear(l3); return; }
 
-    if (mat_ncols(l1) != mat_nrows(l2) || mat_nrows(l1) != mat_nrows(l3)
-	|| mat_ncols(l2) != mat_ncols(l3))
+    if (n != mat_nrows(l2) || m != mat_nrows(l3) || k != mat_ncols(l3))
       DAL_THROW(dimension_error,"dimensions mismatch");
 
     if (same_origin(l2, l3) || same_origin(l1, l3)) {

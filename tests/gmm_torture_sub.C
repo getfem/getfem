@@ -5,6 +5,7 @@
 
 #include <gmm_kernel.h>
 #include <gmm_dense_lu.h>
+#include <gmm_condition_number.h>
 
 using gmm::size_type;
 
@@ -16,34 +17,34 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
   typedef typename gmm::linalg_traits<MAT1>::value_type T;
   typedef typename gmm::number_traits<T>::magnitude_type R;
   R prec = gmm::default_tol(R());
-  R error, det;
+  R error, det, cond;
 
   size_type m = gmm::vect_size(v1), n = m/2;
   std::vector<T> v3(n);
 
   det = gmm::abs(gmm::lu_det(gmm::sub_matrix(m1, gmm::sub_interval(0,n))));
-  det = std::min(det, R(1));
-  if (det > prec * R(10000)) {
+  cond = gmm::condition_number(gmm::sub_matrix(m1, gmm::sub_interval(0,n)));
+  if (prec * cond < R(1)/R(10000) && det != R(0)) {
     gmm::lu_solve(gmm::sub_matrix(m1, gmm::sub_interval(0,n)), v3,
 		  gmm::sub_vector(v2, gmm::sub_interval(0,n)));
     gmm::mult(gmm::sub_matrix(m1, gmm::sub_interval(0,n)), v3,
 	      gmm::sub_vector(v1, gmm::sub_interval(0,n)));
     gmm::add(gmm::scaled(gmm::sub_vector(v1, gmm::sub_interval(0,n)), T(-1)),
 	     gmm::sub_vector(v2, gmm::sub_interval(0,n)), v3);
-    if (!((error = gmm::vect_norm2(v3)) <= prec * R(20000) / det))
+    if (!((error = gmm::vect_norm2(v3)) <= prec * R(20000) * cond))
       DAL_THROW(gmm::failure_error, "Error too large: "<< error);
   }
 
   det = gmm::abs(gmm::lu_det(gmm::sub_matrix(m1, gmm::sub_slice(0,n,1))));
-  det = std::min(det, R(1));
-  if (det > prec * R(10000)) {
+  cond = gmm::condition_number(gmm::sub_matrix(m1, gmm::sub_slice(0,n,1)));
+  if (prec * cond < R(1)/R(10000) && det != R(0)) {
     gmm::lu_solve(gmm::sub_matrix(m1, gmm::sub_slice(0,n,1)), v3,
 		  gmm::sub_vector(v2, gmm::sub_slice(0,n,1)));
     gmm::mult(gmm::sub_matrix(m1, gmm::sub_slice(0,n,1)), v3,
 	      gmm::sub_vector(v1, gmm::sub_slice(0,n,1)));
     gmm::add(gmm::scaled(gmm::sub_vector(v1, gmm::sub_slice(0,n,1)), T(-1)),
 	     gmm::sub_vector(v2, gmm::sub_slice(0,n,1)), v3);
-    if (!((error = gmm::vect_norm2(v3)) <= prec * R(20000) / det))
+    if (!((error = gmm::vect_norm2(v3)) <= prec * R(20000) * cond))
       DAL_THROW(gmm::failure_error, "Error too large: "<< error);
   }
   
