@@ -48,7 +48,7 @@ namespace getfem
   /* ********************************************************************* */
 
   template<class VECT>
-    void save_solution(const std::string &filename, mesh_fem &mf,
+    void save_solution(const std::string &filename, const mesh_fem &mf,
 		       const VECT &U, short_type K)
   { // a corriger
     dim_type N = mf.linked_mesh().dim();
@@ -239,12 +239,14 @@ namespace getfem
     
   }
 
-  /* ********************************************************************* */
-  /*                                                                       */
-  /*  interpolation of a solution on same mesh.                            */
-  /*   - mf_target must be of lagrange type.                               */
-  /*                                                                       */
-  /* ********************************************************************* */
+  /**
+     interpolation of a solution on same mesh.
+     - &mf_target.linked_mesh() == &mf_source.linked_mesh()
+     - mf_target must be of lagrange type.
+     - mf_target's qdim should be equal to mf_source qdim, or equal to 1
+     - U.size() >= mf_source.get_qdim()
+     - V.size() >= (mf_target.nb_dof() / mf_target.get_qdim()) * mf_source.get_qdim()
+  */
 
   template<class VECT>
     void interpolation_solution_same_mesh(const mesh_fem &mf_source,
@@ -258,10 +260,11 @@ namespace getfem
     if ( &(mf_source.linked_mesh()) != &(mf_target.linked_mesh()))
       DAL_THROW(failure_error, "Meshes should be the same in this function.");
 
-    if (qdim != mf_target.get_qdim())
+    if (qdim != mf_target.get_qdim() && mf_target.get_qdim() != 1)
       DAL_THROW(failure_error, "Attempt to interpolate a field of dimension " << 
 		qdim << " on a mesh_fem whose Qdim is " << 
 		int(mf_target.get_qdim()));
+    size_type qmult = mf_source.get_qdim()/mf_target.get_qdim();
 
     for (dal::bv_visitor cv(mf_source.convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt = mf_source.linked_mesh().trans_of_convex(cv);
@@ -278,10 +281,10 @@ namespace getfem
 	DAL_THROW(to_be_done_error, "vector FEM interpolation still to be done ... ");
       
       for (size_type i = 0; i < nbd_t; ++i) {
-	size_type dof_t = mf_target.ind_dof_of_element(cv)[i*qdim];
+	size_type dof_t = mf_target.ind_dof_of_element(cv)[i*qdim]*qmult;
 	/* interpolation of the solution.                                  */
 	/* faux dans le cas des éléments vectoriel.                        */
-	for (size_type k = 0; k < qdim; ++k) {
+	for (size_type k = 0; k < qdim*qmult; ++k) {
 	  for (size_type j = 0; j < nbd_s; ++j) {
 	    size_type dof_s = mf_source.ind_dof_of_element(cv)[j*qdim+k];
 	    coeff[j] = U[dof_s];
@@ -294,16 +297,12 @@ namespace getfem
     }
   }
 
-  /* ********************************************************************* */
-  /*                                                                       */
-  /*  interpolation of a solution on another mesh.                         */
-  /*   - mf_target must be of lagrange type.                               */
-  /*   - the solution must be continuous.                                  */
-  /*                                                                       */
-  /* ********************************************************************* */
 
-
-
+  /**
+     interpolation of a solution on another mesh.
+     - mf_target must be of lagrange type.
+     - the solution should be continuous..
+   */
   template<class VECT>
     void interpolation_solution(const mesh_fem &mf_source, const mesh_fem &mf_target,
 				const VECT &U, VECT &V) {
@@ -320,10 +319,11 @@ namespace getfem
       return;
     }
     size_type qdim = mf_source.get_qdim();
-    if (qdim != mf_target.get_qdim())
+    if (qdim != mf_target.get_qdim() && mf_target.get_qdim() != 1)
       DAL_THROW(failure_error, "Attempt to interpolate a field of dimension " << 
 		qdim << " on a mesh_fem whose Qdim is " << 
 		int(mf_target.get_qdim()));
+    size_type qmult1 = mf_source.get_qdim()/mf_target.get_qdim();
 
     dal::bit_vector tdof_added; 
 
@@ -337,15 +337,15 @@ namespace getfem
     */
     for (dal::bv_visitor cv(mf_target.convex_index()); !cv.finished(); ++cv) {
       pfem pf_t = mf_target.fem_of_element(cv);
-      size_type qmult = mf_target.get_qdim() / pf_t->target_dim();
+      size_type qmult2 = mf_target.get_qdim() / pf_t->target_dim();
       
       if (pf_t->target_dim() != 1) DAL_THROW(failure_error, "still some work to do on vector FEMs!");
       
       for (size_type j=0; j < pf_t->nb_dof(); ++j) {
-        size_type dof_t = mf_target.ind_dof_of_element(cv)[j*qmult];
+        size_type dof_t = mf_target.ind_dof_of_element(cv)[j*qmult2];
         if (!tdof_added[dof_t]) {
           gti.add_point(mf_target.point_of_dof(dof_t));
-          gti_pt_2_target_dof.push_back(std::pair<size_type,size_type>(dof_t,qmult));
+          gti_pt_2_target_dof.push_back(std::pair<size_type,size_type>(dof_t,qmult2));
           tdof_added.add(dof_t);
         }
       }
@@ -353,6 +353,7 @@ namespace getfem
     // il faudrait controler que tous les ddl de mf_target sont de
     // type lagrange
     dal::bit_vector ddl_touched; ddl_touched.add(0, mf_target.nb_dof());
+    
 
     for (dal::bv_visitor cv(mf_source.convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt=mf_source.linked_mesh().trans_of_convex(cv);
@@ -371,32 +372,33 @@ namespace getfem
 	if (ddl_touched[dof_t])
 	{ // inverser les deux boucles pour gagner du temps ?
 	  // Il faut verifier que le ddl est bien de Lagrange ...
-	  for (size_type k = 0; k < nrep; ++k) {
+	  for (size_type k = 0; k < nrep*qmult1; ++k) {
 	    for (size_type j = 0; j < nbd_s; ++j) {
 	      size_type dof_s = mf_source.ind_dof_of_element(cv)[j*nrep+k];
 	      coeff[j] = U[dof_s];
 	    }
 	    pf_s->interpolation(ptab[i], G, pgt, coeff, val);
-	    V[dof_t + k] = val[0];
-	    ddl_touched.sup(dof_t+k);
+	    V[dof_t*qmult1 + k] = val[0];
+	    ddl_touched.sup(dof_t+(k/qmult1));
 	  }
 	}
       }
     }
-    // cout << "ddl untouched : " << ddl_touched << endl;
-    if (ddl_touched.card() != 0)
-      cerr << "WARNING : in interpolation_solution,"
-	   << " all points have not been touched" << endl;
+    if (ddl_touched.card() != 0) {
+      cerr << "WARNING : in interpolation_solution (different meshes),"
+	   << ddl_touched.card() << " dof of the target mesh_fem have not been touched\n";
+      for (dal::bv_visitor d(ddl_touched); !d.finished(); ++d) {
+        cerr << "ddl_touched[" << d << "]=" << mf_target.point_of_dof(d) << "\n";
+      }
+    }
   }
 
-  /* ********************************************************************* */
-  /*                                                                       */
-  /*  interpolation of a solution on a set of points.                      */
-  /*                                                                       */
-  /* ********************************************************************* */
-
+  /** 
+      interpolation of a solution on a set of sparse points filled in the provided 
+      geotrans_inv object
+   */
   template<class VECT>
-    void interpolation_solution(mesh_fem &mf_source, bgeot::geotrans_inv &gti,
+    void interpolation_solution(const mesh_fem &mf_source, bgeot::geotrans_inv &gti,
 				const VECT &U, VECT &V) {
     base_node val(1);
     dal::dynamic_array<base_node> ptab;
@@ -440,15 +442,21 @@ namespace getfem
       }
     }
     if (ddl_touched.card() != 0)
-      cerr << "WARNING : in interpolation_solution,"
-	   << " all points have not been touched" << endl;
+      cerr << "WARNING : in interpolation_solution (set of sparse points),"
+	   << ddl_touched.card() << " points have not been touched\n";
   }
 
 
 
+  /* ugly remplacement for "pre-qdim era" interpolation ( contrib/compare_solutions uses that.. ) */
+  template<class VECT>
+    void interpolation_solution(mesh_fem &mf, const mesh_fem &mf_target,
+				const VECT &U, VECT &V, dim_type P) {
+    if (mf.get_qdim() == 1) { mf.set_qdim(P); interpolation_solution(mf,mf_target,U,V); mf.set_qdim(1); }
+    else interpolation_solution(mf,mf_target,U,V);
+  }
 
-
-
+#if 0 // VIRER TOUT CA DES QUE POSSIBLE
   /*
     OLD INTERPOLATION 
   */
@@ -495,16 +503,7 @@ namespace getfem
     }
   }
 
-  /* ********************************************************************* */
-  /*                                                                       */
-  /*  interpolation of a solution on another mesh.                         */
-  /*   - mf_target must be of lagrange type.                               */
-  /*   - the solution must be continuous.                                  */
-  /*                                                                       */
-  /* ********************************************************************* */
-
-
-
+  /* A VIRER */
   template<class VECT>
     void interpolation_solution(mesh_fem &mf, mesh_fem &mf_target,
 				const VECT &U, VECT &V, dim_type P)
@@ -560,11 +559,15 @@ namespace getfem
       }
     }
     // cout << "ddl untouched : " << ddl_touched << endl;
-    if (ddl_touched.card() != 0)
+    if (ddl_touched.card() != 0) {
       cerr << "WARNING : in interpolation_solution,"
-	   << " all points have not been touched" << endl;
+	   << ddl_touched.card() << " dof of the target mesh_fem have not been touched\n";
+      for (dal::bv_visitor d(ddl_touched); !d.finished(); ++d) {
+        cerr << "ddl_touched[" << d << "]=" << mf_target.point_of_dof(d) << "\n";
+      }
+    }
   }
-
+#endif // A VIRER
 
   void classical_mesh_fem(mesh_fem& mf, short_type K);
 }  /* end of namespace getfem.                                             */
