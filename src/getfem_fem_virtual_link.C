@@ -76,14 +76,28 @@ namespace getfem
 
     mesh_fem &mf_interpolated(void) { return *pmf1; }
     mesh_fem &mf_target(void) { return *pmf2; }
-    void receipt(const MESH_CLEAR &);
-    void receipt(const MESH_DELETE &);
-    void receipt(const MESH_SUP_CONVEX &m);
-    void receipt(const MESH_SWAP_CONVEX &m);
-    void receipt(const MESH_REFINE_CONVEX &m);
+    void receipt(const MESH_ADD_POINT       &m) 
+    { getfem_mesh_receiver::receipt(m); }
+    void receipt(const MESH_SUP_POINT       &m) 
+    { getfem_mesh_receiver::receipt(m); }
+    void receipt(const MESH_SWAP_POINT      &m) 
+    { getfem_mesh_receiver::receipt(m); }
+    void receipt(const MESH_ADD_CONVEX      &m) 
+    { getfem_mesh_receiver::receipt(m); }
+    void receipt(const MESH_WRITE_TO_FILE   &m) 
+    { getfem_mesh_receiver::receipt(m); }
+    void receipt(const MESH_READ_FROM_FILE  &m) 
+    { getfem_mesh_receiver::receipt(m); }
+    void receipt(const MESH_FEM_TOUCH       &m) 
+    { getfem_mesh_receiver::receipt(m); }
+    void receipt(const MESH_CLEAR           &);
+    void receipt(const MESH_DELETE          &);
+    void receipt(const MESH_SUP_CONVEX      &m);
+    void receipt(const MESH_SWAP_CONVEX     &m);
+    void receipt(const MESH_REFINE_CONVEX   &m);
     void receipt(const MESH_UNREFINE_CONVEX &m);
-    void receipt(const MESH_FEM_DELETE &m);
-    void receipt(const MESH_FEM_CHANGE &m);
+    void receipt(const MESH_FEM_DELETE      &m);
+    void receipt(const MESH_FEM_CHANGE      &m);
 
     size_type nb_max_dof_per_element(void);
 
