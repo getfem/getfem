@@ -1,7 +1,10 @@
 
 
 
-all : doc.ps
+all : doc.tex
+
+doc.tex : ../include/*.h
+	./do_doc++
 
 
 doc.ps : doc.tex
