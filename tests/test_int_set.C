@@ -17,7 +17,127 @@
 /* USA.                                                                    */
 /*                                                                         */
 /* *********************************************************************** */
+#include <ftool.h>
 #include <dal_bit_vector.h>
+#include <deque>
+typedef size_t size_type;
+
+
+void test_speed_part(dal::bit_vector& bv, std::vector<bool>& vb, std::deque<bool>& db) {
+  double t0;
+  t0=ftool::uclock_sec();
+  size_type cnt=0, oldcnt;
+  for (size_type i=0; i < vb.size(); ++i) {
+    cnt += bv[i] ? 1 : 0;
+  }
+  cerr << "bit_vector   [random_access] : " << ftool::uclock_sec()-t0 << endl; t0 = ftool::uclock_sec();
+
+  oldcnt=cnt; cnt = 0;
+  for (size_type i=0; i < vb.size(); ++i) {
+    cnt += vb[i] ? 1 : 0;
+  }
+  cerr << "vector<bool> [random_access] : " << ftool::uclock_sec()-t0 << endl; t0 = ftool::uclock_sec(); assert(oldcnt == cnt);
+
+  oldcnt=cnt; cnt = 0;
+  for (size_type i=0; i < db.size(); ++i) {
+    cnt += db[i] ? 1 : 0;
+  }
+  cerr << "deque <bool> [random_access] : " << ftool::uclock_sec()-t0 << endl; t0 = ftool::uclock_sec(); assert(oldcnt == cnt);
+
+  oldcnt=cnt; cnt = 0;
+  for (dal::bit_vector::const_iterator it = bv.begin(); it != bv.end(); ++it) {
+    cnt += (*it) ? 1 : 0;
+  }
+  cerr << "bit_vector   [const_iterator]: " << ftool::uclock_sec()-t0 << endl; t0 = ftool::uclock_sec(); assert(oldcnt == cnt);
+
+  oldcnt=cnt; cnt = 0;
+  for (dal::bv_visitor i(bv); !i.finished(); ++i) {
+    cnt ++; 
+  }
+  cerr << "bit_vector   [bv_visitor]: " << ftool::uclock_sec()-t0 << endl; t0 = ftool::uclock_sec();  assert(oldcnt == cnt);
+
+  oldcnt=cnt; cnt = 0;
+  for (size_type i = bv.take_first(); i != size_type(-1); i << bv) {
+    cnt ++; 
+  }
+  cerr << "bit_vector   [operator <<  ] : " << ftool::uclock_sec()-t0 << endl; t0 = ftool::uclock_sec(); assert(oldcnt == cnt);
+
+  oldcnt=cnt; cnt = 0;
+  for (std::vector<bool>::const_iterator it = vb.begin(); it != vb.end(); ++it) {
+    cnt += (*it) ? 1 : 0;
+  }
+  cerr << "vector<bool> [const_iterator]: " << ftool::uclock_sec()-t0 << endl; t0 = ftool::uclock_sec(); assert(oldcnt == cnt);
+
+  oldcnt=cnt; cnt = 0;
+  for (std::deque<bool>::const_iterator it = db.begin(); it != db.end(); ++it) {
+    cnt += (*it) ? 1 : 0;
+  }
+  cerr << "deque <bool> [const_iterator]: " << ftool::uclock_sec()-t0 << endl; t0 = ftool::uclock_sec(); assert(oldcnt == cnt);
+}
+
+void test_speed() {
+  size_type N = 1000000;
+  dal::bit_vector   bv; bv.add(0,N);
+  std::vector<bool> vb(N,true);
+  std::deque<bool> db(N,true);
+
+  dal::bit_vector   bv2;
+  std::vector<bool> vb2;
+  std::deque<bool> db2;
+  double t0 = ftool::uclock_sec();
+  for (size_type i=0; i < N; ++i) bv2[i] = 1;
+  cerr << "bit_vector   [push_back]: " << ftool::uclock_sec()-t0 << endl; t0 = ftool::uclock_sec();
+  for (size_type i=0; i < N; ++i) vb2.push_back(true);
+  cerr << "vector<bool> [push_back]: " << ftool::uclock_sec()-t0 << endl; t0 = ftool::uclock_sec();
+  for (size_type i=0; i < N; ++i) db2.push_back(true);
+  cerr << "deque<bool>  [push_back]: " << ftool::uclock_sec()-t0 << endl; t0 = ftool::uclock_sec();
+
+
+  cerr << "---- full vector ----" << endl;
+  test_speed_part(bv,vb,db);
+
+  bv.sup(0,N);
+  std::fill(vb.begin(),vb.end(),false);
+  std::fill(db.begin(),db.end(),false);
+  
+  cerr << "---- empty vector ----" << endl;
+  test_speed_part(bv,vb,db);
+  
+  for (size_type i=0; i < N; ++i) {
+    bool b = (rand() % 2);
+    bv[i] = vb[i] = db[i] = b;
+  }
+
+  cerr << "---- random vector (50% true) ----" << endl;
+  test_speed_part(bv,vb,db);
+
+  for (size_type i=0; i < N; ++i) {
+    bool b = (rand() % 16) ? 0 : 1;
+    bv[i] = vb[i] = db[i] = b;
+  }
+
+  cerr << "---- random vector (6% true) ----" << endl;
+  test_speed_part(bv,vb,db);
+
+  for (size_type i=0; i < N; ++i) {
+    bool b = (rand() % 100) ? 0 : 1;
+    bv[i] = vb[i] = db[i] = b;
+  }
+
+  cerr << "---- random vector (1% true) ----" << endl;
+  test_speed_part(bv,vb,db);
+
+  for (size_type i=0; i < N; ++i) {
+    bool b = (rand() % 1000) ? 0 : 1;
+    bv[i] = vb[i] = db[i] = b;
+  }
+
+  cerr << "---- random vector (0.1% true) ----" << endl;
+  test_speed_part(bv,vb,db);
+
+
+}
+
 
 
 int main(void)
@@ -146,9 +266,9 @@ int main(void)
   nn.add(2048);
   cout << nn << endl;
 
+  test_speed();
+
   }
   DAL_STANDARD_CATCH_ERROR;
-
   return 0;
-
 }
