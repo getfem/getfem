@@ -1,3 +1,5 @@
+SUBDIRS = meshes
+
 if QHULL
 optprog = test_mesh_generation
 else
@@ -30,7 +32,8 @@ check_PROGRAMS = \
 	test_mesh          \
 	test_tree_sorted   \
 	$(optprog) \
-	plasticity
+	plasticity         \
+	dynamic_friction
 
 CLEANFILES = \
 	laplacian.res laplacian.mesh laplacian.dataelt \
@@ -67,6 +70,7 @@ if QHULL
 test_mesh_generation_SOURCES = test_mesh_generation.C 
 endif
 #test_fem_SOURCES = test_fem.C
+dynamic_friction_SOURCES = dynamic_friction.C
 
 INCLUDES = -I$(top_srcdir)/src -I../src
 LDADD    = ../src/libgetfem.la -lm @SUPLDFLAGS@
@@ -87,7 +91,8 @@ TESTS = \
 	$(top_srcdir)/tests/laplacian.pl          \
 	$(top_srcdir)/tests/elastostatic.pl       \
 	$(top_srcdir)/tests/nonlinear_elastostatic.pl       \
-	$(top_srcdir)/tests/plasticity.pl       \
+	$(top_srcdir)/tests/dynamic_friction.pl   \
+	$(top_srcdir)/tests/plasticity.pl         \
 	$(top_srcdir)/tests/helmholtz.pl          \
 	$(top_srcdir)/tests/integration.pl        \
 	$(top_srcdir)/tests/poly.pl               \
@@ -129,6 +134,8 @@ EXTRA_DIST = \
 	schwarz_additive.param            \
 	elastostatic.param                \
 	nonlinear_elastostatic.pl         \
+	dynamic_friction.pl               \
+	dynamic_friction.param            \
 	plasticity.pl                     \
 	nonlinear_elastostatic.param      \
 	test_interpolated_fem.param       \

@@ -19,13 +19,11 @@
 /* *********************************************************************** */
 
 /**
- * Linear Elastostatic problem.
+ * Small deformation plasticity problem.
  *
  * This program is used to check that getfem++ is working. This is also 
  * a good example of use of Getfem++.
 */
-
-//define GMM_USES_SUPERLU
 
 #include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
 #include <getfem_regular_meshes.h>
@@ -251,7 +249,7 @@ bool plasticity_problem::solve(plain_vector &U) {
     PLAS.compute_constraints(MS);
     
     // Get the solution and save it
-    PLAS.get_solution(MS, U);
+    gmm::copy(PLAS.get_solution(MS), U);
     std::ofstream f(uname.c_str(),std::ios_base::app); f.precision(16);
     f << t[nb] << "\n";
     for(size_type i=0;i<gmm::vect_size(U);++i) 

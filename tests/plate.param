@@ -10,7 +10,7 @@ LZ = 1.0;		% size in Z.
 % LAMBDA = 107.0;   	% Lamé coefficient.
 MU = 1.0;	        % Lamé coefficient.
 LAMBDA = 0.0;   	% Lamé coefficient.
-EPSILON = 0.000001;        % thickness of the plate
+EPSILON = 0.0001;        % thickness of the plate
 
 PRESSURE = 100.0;       % pressure on the top surface of the plate
 			%  (will be multiplied by EPSILON^3.
@@ -24,24 +24,24 @@ SYMMETRIZED = 1;
 
 %%%%% parameters for quadrangles
 
-% MESH_TYPE = 'GT_LINEAR_QK(2)'; % linear rectangles
+MESH_TYPE = 'GT_LINEAR_QK(2)'; % linear rectangles
 
-% MESH_TYPE = 'GT_QK(2,1)'; % linear rectangles
-% FEM_TYPE_UT = 'FEM_QK(2,1)';
-% FEM_TYPE_U3 = 'FEM_QK(2,1)';
-% FEM_TYPE_THETA= 'FEM_QK(2,2)';
-% INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,10)';
-% INTEGRATION_CT = 'IM_GAUSS_PARALLELEPIPED(2,10)';
+MESH_TYPE = 'GT_QK(2,1)'; % linear rectangles
+FEM_TYPE_UT = 'FEM_QK(2,1)';
+FEM_TYPE_U3 = 'FEM_QK(2,1)';
+FEM_TYPE_THETA= 'FEM_QK(2,2)';
+INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,10)';
+INTEGRATION_CT = 'IM_GAUSS_PARALLELEPIPED(2,10)';
 
 %%%%% parameters for triangles
 
-MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
-FEM_TYPE_UT = 'FEM_PK(2,1)';
-FEM_TYPE_U3 = 'FEM_PK(2,1)';
-% FEM_TYPE_THETA = 'FEM_PK(2,2)';
-FEM_TYPE_THETA = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 1)';
-INTEGRATION = 'IM_TRIANGLE(6)';
-INTEGRATION_CT = 'IM_TRIANGLE(6)';
+% MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
+% FEM_TYPE_UT = 'FEM_PK(2,1)';
+% FEM_TYPE_U3 = 'FEM_PK(2,1)';
+% % FEM_TYPE_THETA = 'FEM_PK(2,2)';
+% FEM_TYPE_THETA = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 1)';
+% INTEGRATION = 'IM_TRIANGLE(6)';
+% INTEGRATION_CT = 'IM_TRIANGLE(6)';
 
 %%%%% Other parameters
 

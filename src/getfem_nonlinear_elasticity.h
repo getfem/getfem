@@ -84,7 +84,6 @@ namespace getfem {
       gmm::scale(DE,h);
       gmm::add(E,DE,E2);
 
-      cout << "h = " << h << "\n";
       base_matrix sigma1(N,N), sigma2(N,N);
       getfem::base_tensor tdsigma(N,N,N,N);
       base_matrix dsigma(N,N);
@@ -394,6 +393,10 @@ namespace getfem {
     typedef typename MODEL_STATE::vector_type VECTOR;
     typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
     typedef typename MODEL_STATE::value_type value_type;
+    typedef typename gmm::sub_vector_type<VECTOR *,
+				 gmm::sub_interval>::vector_type SUBVECTOR;
+
+    gmm::sub_interval SUBU;
     const abstract_hyperelastic_law &AHL;
     mesh_fem &mf_u;
     mesh_fem &mf_data;
@@ -420,12 +423,9 @@ namespace getfem {
 
       gmm::sub_interval SUBI(i0, this->nb_dof());
       gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBI));
-      double t0 = ftool::uclock_sec();
       asm_nonlinear_elasticity_tangent_matrix
 	(gmm::sub_matrix(MS.tangent_matrix(), SUBI), mf_u,
 	 gmm::sub_vector(MS.state(), SUBI), mf_data, PARAMS,  AHL);
-      cout << "asm_nonlinear_elasticity_tangent_matrix : t=" << ftool::uclock_sec() - t0 << "\n";
-      //cout << "mdbrick_nonlinear_elasticity returns " << MS.tangent_matrix() << "\n";
     }
     virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
 				size_type = 0) {
@@ -454,9 +454,9 @@ namespace getfem {
       gmm::copy(PARAMS, PARAMS_);
     }
 
-    template<typename VECT> void get_solution(MODEL_STATE &MS, VECT &V) {
-      gmm::sub_interval SUBI(this->first_index(), this->nb_dof());
-      gmm::copy(gmm::sub_vector(MS.state(), SUBI), V);
+    SUBVECTOR get_solution(MODEL_STATE &MS) {
+      SUBU = gmm::sub_interval (this->first_index(), this->nb_dof());
+      return gmm::sub_vector(MS.state(), SUBU);
     }
 
     void init_(void) {
@@ -552,8 +552,6 @@ namespace getfem {
 
     incomp_nonlinear_term<VECT1> ntermk(mf_u, U, 0);
     incomp_nonlinear_term<VECT1> ntermb(mf_u, U, 2);
-    double t0 = ftool::uclock_sec();
-    cout << "INCOMPREESSSIBLITY ASSEMBLY\n";
     getfem::generic_assembly
       assem("P=data(#2);"
 	    "t=comp(NonLin$1(#1).vGrad(#1).Base(#2));"
@@ -579,7 +577,6 @@ namespace getfem {
     assem.push_mat(B);
     assem.push_data(P);
     assem.volumic_assembly();
-    cout << "asm_nonlinear_incomp_tangent_matrix : t=" << ftool::uclock_sec() - t0 << "\n";
   }
 
 

@@ -64,6 +64,8 @@ include_HEADERS =                       \
 	getfem_norm.h         	        \
 	getfem_regular_meshes.h         \
 	getfem_modeling.h               \
+	getfem_linearized_plates.h      \
+	getfem_Coulomb_friction.h       \
 	getfem_nonlinear_elasticity.h   \
 	getfem_superlu.h		\
 	getfem_plasticity.h             \

@@ -1,3 +1,8 @@
+2005-01-03  Yves Renard  <Yves.Renard@insa-toulouse.fr>
+
+	* src/getfem_Coulomb_friction.h a model brick for the contact
+	and the Coulomb friction conditions for small conformal displacement.
+
 2004-12-10  Yves Renard  <Yves.Renard@insa-toulouse.fr>
 
 	* src/getfem_mat_elem_type.h adding the unit normal to a boundary

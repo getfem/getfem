@@ -80,7 +80,7 @@ void do_test(const SOLVER &solver, const MAT &m1, VECT1 &v1,
 
   typedef typename gmm::linalg_traits<MAT>::value_type T;
   typedef typename gmm::number_traits<T>::magnitude_type R;
-  R prec = gmm::default_tol(R()), error;
+  R prec = gmm::default_tol(R()), error(0);
   size_type m = gmm::mat_nrows(m1);
   std::vector<T> v3(m);
 

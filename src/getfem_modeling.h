@@ -72,6 +72,7 @@
 /* MDBRICK_SMALL_DEF_PLASTICITY  556433                                    */
 /* MDBRICK_LINEAR_PLATE          897523                                    */
 /* MDBRICK_MIXED_LINEAR_PLATE    213456                                    */
+/* MDBRICK_COULOMB_FRICTION      434245                                    */
 /*                                                                         */
 /***************************************************************************/
 
@@ -86,6 +87,7 @@
 #include <gmm_precond_ildlt.h>
 #include <gmm_precond_ilu.h>
 #include <gmm_precond_ilut.h>
+#include <gmm_precond_ilutp.h>
 #include <gmm_superlu_interface.h>
 #include <gmm_dense_qr.h>
 
@@ -149,6 +151,7 @@ namespace getfem {
       else gmm::copy(U_reduced, U);
     }
     void compute_reduced_system();
+    void compute_reduced_residu();
     VECTOR &residu(void) { return residu_; }
     long ident(void) { return ident_; }
     void touch(void) { ident_ = context_dependencies::new_ident(); }
@@ -180,6 +183,20 @@ namespace getfem {
     gmm::copy(gmm::transposed(NS), NST);
     gmm::mult(NST, tangent_matrix(), SMaux);
     gmm::mult(SMaux, NS, SM);
+  }
+
+  template<typename T_MATRIX, typename C_MATRIX, typename VECTOR>
+  void model_state<T_MATRIX, C_MATRIX, VECTOR>::compute_reduced_residu() {
+    // The call to Dirichlet nullspace should be avoided -> we just need Ud
+    if (gmm::mat_nrows(constraints_matrix()) == 0) return;
+    size_type ndof = gmm::mat_ncols(tangent_matrix());
+    gmm::resize(NS, ndof, ndof);
+    size_type nbcols=Dirichlet_nullspace(constraints_matrix(),
+					 NS, constraints_rhs(), Ud);
+    gmm::resize(NS, ndof, nbcols);
+    VECTOR RHaux(ndof);
+    gmm::mult(tangent_matrix(), Ud, residu(), RHaux);
+    gmm::mult(gmm::transposed(NS), RHaux, reduced_residu_);
   }
 
   template<typename T_MATRIX, typename C_MATRIX, typename VECTOR>
@@ -333,8 +350,7 @@ namespace getfem {
     //                     copied again if it is stored.
     void react(MODEL_STATE &MS, size_type i0, bool modified) {
       this->context_check();
-      to_transfer = to_transfer || modified || (ident_ms != MS.ident())
-	|| to_compute;
+      to_transfer = to_transfer || modified || (ident_ms != MS.ident());
       ident_ms = MS.ident();
       MS_i0 = i0;
     }
@@ -342,7 +358,7 @@ namespace getfem {
     bool to_be_computed(void) { return to_compute; }
     bool to_be_transferred(void) { return to_transfer; }
     void force_recompute(void) { to_compute = to_transfer = true; }
-    void computed(void) { to_compute = false; }
+    void computed(void) { to_compute = false; to_transfer = true; }
     void transferred(void) { to_transfer = false; }
     size_type first_index(void) { return MS_i0; }
 
@@ -382,12 +398,17 @@ namespace getfem {
     typedef typename MODEL_STATE::vector_type VECTOR;
     typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
     typedef typename MODEL_STATE::value_type value_type;
+    typedef typename gmm::sub_vector_type<VECTOR *,
+				 gmm::sub_interval>::vector_type SUBVECTOR;
+
+    gmm::sub_interval SUBU;
     mesh_fem &mf_u;
     mesh_fem &mf_data;
     VECTOR coeffs_;
     bool homogeneous, laplacian;
     bool matrix_stored;
     T_MATRIX K;
+    
 
     void compute_K(void);
 
@@ -426,9 +447,9 @@ namespace getfem {
       this->force_recompute();
     }
 
-    template<typename VECT> void get_solution(MODEL_STATE &MS, VECT &V) {
-      gmm::sub_interval SUBI(this->first_index(), this->nb_dof());
-      gmm::copy(gmm::sub_vector(MS.state(), SUBI), V);
+    SUBVECTOR get_solution(MODEL_STATE &MS) {
+      SUBU = gmm::sub_interval (this->first_index(), this->nb_dof());
+      return gmm::sub_vector(MS.state(), SUBU);
     }
 
     void init_(void) {
@@ -524,6 +545,10 @@ namespace getfem {
     typedef typename MODEL_STATE::vector_type VECTOR;
     typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
     typedef typename MODEL_STATE::value_type value_type;
+    typedef typename gmm::sub_vector_type<VECTOR *,
+				 gmm::sub_interval>::vector_type SUBVECTOR;
+
+    gmm::sub_interval SUBU;
     mesh_fem &mf_u;
     mesh_fem &mf_data;
     VECTOR lambda_, mu_;
@@ -542,6 +567,9 @@ namespace getfem {
     virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
 				size_type = 0);
 
+    const T_MATRIX &stiffness_matrix(void)
+    { if (this->to_be_computed()) compute_K(); return K; }
+
     void set_Lame_coeff(value_type lambdai, value_type mui) {
       homogeneous = true;
       gmm::resize(lambda_, 1); lambda_[0] = lambdai;
@@ -556,9 +584,9 @@ namespace getfem {
       this->force_recompute();
     }
 
-    template<typename VECT> void get_solution(MODEL_STATE &MS, VECT &V) {
-      gmm::sub_interval SUBI(this->first_index(), this->nb_dof());
-      gmm::copy(gmm::sub_vector(MS.state(), SUBI), V);
+    SUBVECTOR get_solution(MODEL_STATE &MS) {
+      SUBU = gmm::sub_interval (this->first_index(), this->nb_dof());
+      return gmm::sub_vector(MS.state(), SUBU);
     }
 
     void init_(void) {
@@ -641,8 +669,6 @@ namespace getfem {
 
   /* TODO : arbitrary elasticity tensor */
 
-
-  
   /* ******************************************************************** */
   /*		Helmholtz brick.                                          */
   /* ******************************************************************** */
@@ -656,6 +682,10 @@ namespace getfem {
     typedef typename MODEL_STATE::vector_type VECTOR;
     typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
     typedef typename MODEL_STATE::value_type value_type;
+    typedef typename gmm::sub_vector_type<VECTOR *,
+				 gmm::sub_interval>::vector_type SUBVECTOR;
+
+    gmm::sub_interval SUBU;
     mesh_fem &mf_u;
     mesh_fem &mf_data;
     VECTOR wave_number;
@@ -732,9 +762,9 @@ namespace getfem {
       this->force_recompute();
     }
 
-    template<typename VECT> void get_solution(MODEL_STATE &MS, VECT &V) {
-      gmm::sub_interval SUBI(this->first_index(), this->nb_dof());
-      gmm::copy(gmm::sub_vector(MS.state(), SUBI), V);
+    SUBVECTOR get_solution(MODEL_STATE &MS) {
+      SUBU = gmm::sub_interval (this->first_index(), this->nb_dof());
+      return gmm::sub_vector(MS.state(), SUBU);
     }
 
     void init_(void) {
@@ -802,6 +832,11 @@ namespace getfem {
     }
 
   public :
+
+    const VECTOR &source_term(void) {
+      if (this->to_be_computed()) {compute_F();}
+      return F_;
+    }
 
     virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0)
     { sub_problem.mixed_variables(b, i0); }
@@ -1290,7 +1325,221 @@ namespace getfem {
     }
     
   };
+
+  /* ******************************************************************** */
+  /*	                 Constraint brick.                                */
+  /* ******************************************************************** */
+
+  template<typename MODEL_STATE = standard_model_state>
+  class mdbrick_constraint : public mdbrick_abstract<MODEL_STATE>  {
+    
+    typedef typename MODEL_STATE::vector_type VECTOR;
+    typedef typename MODEL_STATE::constraints_matrix_type C_MATRIX;
+    typedef typename MODEL_STATE::value_type value_type;
+    typedef typename gmm::number_traits<value_type>::magnitude_type R;
+
+    mdbrick_abstract<MODEL_STATE> &sub_problem;
+    C_MATRIX G;
+    VECTOR CRHS;
+    size_type num_fem;
+    bool with_multipliers;
+
+  public :
+
+    virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0) {
+      sub_problem.mixed_variables(b, i0);
+      if (with_multipliers) b.add(i0+sub_problem.nb_dof(), gmm::mat_nrows(G));
+    }
+    virtual size_type nb_dof(void)
+    { return sub_problem.nb_dof()+(with_multipliers ? gmm::mat_nrows(G) : 0); }
+    
+    virtual size_type nb_constraints(void) {
+      if (with_multipliers) return sub_problem.nb_constraints();
+      return sub_problem.nb_constraints() + gmm::mat_nrows(G);
+    }
+    virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
+				    size_type j0 = 0, bool modified = false) {
+
+      mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
+      size_type i1 = this->mesh_fem_positions[num_fem];
+      size_type nbd = mf_u.nb_dof();
+
+      sub_problem.compute_tangent_matrix(MS, i0, j0, modified);
+      react(MS, i0, modified);
+       
+      if (this->to_be_transferred()) {
+	if (with_multipliers) {
+	  gmm::sub_interval SUBI(i0+sub_problem.nb_dof(), gmm::mat_nrows(G));
+	  gmm::sub_interval SUBJ(i0+i1, nbd);
+	  gmm::copy(G, gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBJ));
+	  gmm::copy(gmm::transposed(G),
+		    gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBI));
+	}
+	else {	  
+	  size_type ncs = sub_problem.nb_constraints();
+	  gmm::sub_interval SUBI(j0+ncs,gmm::mat_nrows(G)), SUBJ(i0+i1, nbd);
+	  gmm::copy(G, gmm::sub_matrix(MS.constraints_matrix(), SUBI, SUBJ));
+	}
+	this->transferred();
+      }
+    }
+    virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
+				size_type j0 = 0) {
+      mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
+      size_type i1 = this->mesh_fem_positions[num_fem];
+      size_type nbd = mf_u.nb_dof();
+
+      sub_problem.compute_residu(MS, i0, j0);
+      if (with_multipliers) {
+
+	gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), gmm::mat_nrows(G));
+	gmm::sub_interval SUBJ(i0+i1, nbd);
+	
+	gmm::mult(G, gmm::sub_vector(MS.state(), SUBJ),
+		  gmm::scaled(CRHS, value_type(-1)),
+		  gmm::sub_vector(MS.residu(), SUBI));
+
+	gmm::mult_add(gmm::transposed(G), gmm::sub_vector(MS.state(), SUBI),
+		      gmm::sub_vector(MS.residu(), SUBJ));
+      }
+      else {
+
+	size_type ncs = sub_problem.nb_constraints();
+	gmm::sub_interval SUBI(j0+ncs,gmm::mat_nrows(G)), SUBJ(i0+i1, nbd);
+	gmm::mult(G, gmm::scaled(gmm::sub_vector(MS.state(), SUBJ), 
+				 value_type(-1)),
+		  CRHS, gmm::sub_vector(MS.constraints_rhs(), SUBI));
+      }
+    }
+
+    template <class MAT, class VEC>
+    void set_constraints(const MAT &G_, const VEC &RHS) {
+      mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
+      gmm::resize(G, gmm::mat_nrows(G_), mf_u.nb_dof());
+      gmm::resize(CRHS, gmm::mat_nrows(G_));
+      gmm::copy(G_, G); gmm::copy(RHS, CRHS);
+    }
+
+    void init_(void) {
+      this->add_sub_brick(sub_problem);
+      this->proper_is_coercive_ = !with_multipliers;
+      this->update_from_context();
+    }
+
+    template <class MAT, class VEC>
+    mdbrick_constraint(mdbrick_abstract<MODEL_STATE> &problem,
+		       const MAT &G_, const VEC &RHS,		       
+		       size_type num_fem_=0, 
+		       bool with_mult = false)
+      : sub_problem(problem), num_fem(num_fem_), with_multipliers(with_mult)
+    { init_(); set_constraints(G_, RHS); }
+    
+  };
   
+  /* ******************************************************************** */
+  /*  dynamic brick : not stabilized, could change a lot in the futur     */
+  /* ******************************************************************** */
+
+  template<typename MODEL_STATE = standard_model_state>
+  class mdbrick_dynamic : public mdbrick_abstract<MODEL_STATE>  {
+    
+    typedef typename MODEL_STATE::vector_type VECTOR;
+    typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
+    typedef typename MODEL_STATE::value_type value_type;
+
+    mdbrick_abstract<MODEL_STATE> &sub_problem;
+    mesh_fem &mf_data, *mf_u;
+    VECTOR RHO_, DF;
+    T_MATRIX M_;
+    size_type num_fem;
+    value_type Mcoef, Kcoef;
+    gmm::unsorted_sub_index SUBS;
+    std::vector<size_type> ind;
+    bool have_subs;
+
+    void compute_M(void) {
+      gmm::clear(M_); gmm::resize(M_, mf_u->nb_dof(), mf_u->nb_dof());
+      asm_mass_matrix_param(M_, *mf_u, mf_data, RHO_);
+      if (have_subs) {
+	gmm::sub_interval SUBI(0, mf_u->nb_dof());
+	gmm::clear(gmm::sub_matrix(M_, SUBS, SUBI));
+	gmm::clear(gmm::sub_matrix(M_, SUBI, SUBS));	
+      }
+      this->computed();
+    }
+
+  public :
+
+    virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0)
+    { sub_problem.mixed_variables(b, i0); }
+    virtual size_type nb_constraints(void)
+    { return sub_problem.nb_constraints(); }
+    virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
+					size_type j0=0, bool modified=false) {
+      sub_problem.compute_tangent_matrix(MS, i0, j0, true);
+      react(MS, i0, modified);
+      if (this->to_be_computed()) { compute_M(); }
+      gmm::sub_interval
+	SUBI(i0+this->mesh_fem_positions[num_fem], mf_u->nb_dof());
+      gmm::scale(gmm::sub_matrix(MS.tangent_matrix(), SUBI), Kcoef);
+      gmm::add(gmm::scaled(M_, Mcoef),
+	       gmm::sub_matrix(MS.tangent_matrix(), SUBI));
+    }
+    virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
+				size_type j0 = 0) {
+      sub_problem.compute_residu(MS, i0, j0);
+      gmm::sub_interval
+	SUBI(i0+this->mesh_fem_positions[num_fem], mf_u->nb_dof());
+      gmm::scale(gmm::sub_vector(MS.residu(), SUBI), Kcoef);
+      gmm::add(gmm::scaled(DF, -value_type(1)),
+	       gmm::sub_vector(MS.residu(), SUBI));
+      gmm::mult_add(M_, gmm::scaled(gmm::sub_vector(MS.state(), SUBI), Mcoef),
+		    gmm::sub_vector(MS.residu(), SUBI));
+    }
+
+    void set_dynamic_coeff(value_type a, value_type b) { Mcoef=a; Kcoef=b; }
+    template <class VEC> void set_DF(const VEC &DF_) { gmm::copy(DF_, DF); }
+
+    const T_MATRIX &mass_matrix(void) const { return M_; }
+
+    void init(void) {
+      this->add_dependency(mf_data);
+      this->add_sub_brick(sub_problem);
+      this->update_from_context();
+      mf_u = this->mesh_fems[num_fem];
+      gmm::resize(RHO_, mf_data.nb_dof());
+      gmm::resize(DF, mf_u->nb_dof());
+      Mcoef = Kcoef = value_type(1);
+      have_subs = false;
+    }
+
+    void no_mass_on_boundary(size_type b) {
+      dal::bit_vector bv = mf_u->dof_on_boundary(b);
+      for (dal::bv_visitor i(bv); !i.finished(); ++i)
+	ind.push_back(i);
+      SUBS = gmm::unsorted_sub_index(ind);
+      have_subs = true;
+      if (mf_u->nb_dof() == gmm::mat_nrows(M_)) {
+	gmm::sub_interval SUBI(0, mf_u->nb_dof());
+	gmm::clear(gmm::sub_matrix(M_, SUBS, SUBI));
+	gmm::clear(gmm::sub_matrix(M_, SUBI, SUBS));
+      }
+      else compute_M();
+    }
+
+    template <class VEC>
+    mdbrick_dynamic(mdbrick_abstract<MODEL_STATE> &problem, mesh_fem &mf_data_,
+		    const VEC &RHO__, size_type num_fem_=0)
+      : sub_problem(problem), mf_data(mf_data_), num_fem(num_fem_)
+    { init(); gmm::copy(RHO__, RHO_); compute_M(); }
+
+    mdbrick_dynamic(mdbrick_abstract<MODEL_STATE> &problem, mesh_fem &mf_data_,
+		    value_type RHO__, size_type num_fem_=0)
+      : sub_problem(problem), mf_data(mf_data_), num_fem(num_fem_)
+    { init(); std::fill(RHO_.begin(), RHO_.end(), RHO__); compute_M(); }
+
+  };
+
   /* ******************************************************************** */
   /*		Generic solvers.                                          */
   /* ******************************************************************** */
@@ -1313,8 +1562,8 @@ namespace getfem {
     size_type dim = problem.dim();
 
     bool is_linear = problem.is_linear();
-    mtype alpha, alpha_min=mtype(1)/mtype(100000);
-    mtype alpha_mult=mtype(3)/mtype(4), alpha_max_ratio(1);
+    mtype alpha, alpha_min=mtype(1)/mtype(20);
+    mtype alpha_mult=mtype(3)/mtype(4), alpha_max_ratio(1.5);
     dal::bit_vector mixvar;
     gmm::iteration iter_linsolv0 = iter;
     iter_linsolv0.set_maxiter(10000);
@@ -1328,9 +1577,12 @@ namespace getfem {
     problem.compute_residu(MS);
     problem.compute_tangent_matrix(MS);
 
-    // cout << "M = " << MS.constraints_matrix() << endl;
+    // cout << "CM = " << MS.constraints_matrix() << endl;
 
     MS.compute_reduced_system();
+
+    // cout << "RTM = " << MS.reduced_tangent_matrix() << endl;
+    
     
     mtype act_res = MS.reduced_residu_norm(), act_res_new(0);
 
@@ -1357,7 +1609,7 @@ namespace getfem {
 //       std::vector<value_type> eigval(nreddof);
 //       gmm::copy(MS.reduced_tangent_matrix(), MM);
 //       gmm::symmetric_qr_algorithm(MM, eigval, Q);
-//       //     std::sort(eigval.begin(), eigval.end(), Esort);
+//       std::sort(eigval.begin(), eigval.end());
 //       cout << "eival = " << eigval << endl;
 //       cout << "vectp : " << gmm::mat_col(Q, nreddof-1) << endl;
 //       cout << "vectp : " << gmm::mat_col(Q, nreddof-2) << endl;
@@ -1382,7 +1634,7 @@ namespace getfem {
 	SuperLU_solve(MS.reduced_tangent_matrix(), dr,
 		      gmm::scaled(MS.reduced_residu(), value_type(-1)),
 		      rcond);
-	cout << "condition number: " << 1.0/rcond << endl;
+	if (iter.get_noisy()) cout << "condition number: " << 1.0/rcond<< endl;
       }
       else {
 	if (problem.is_coercive()) {
@@ -1400,7 +1652,8 @@ namespace getfem {
 		       300, iter_linsolv);
 	  }
 	  else {
-	    gmm::ilu_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
+	    gmm::ilut_precond<T_MATRIX> P(MS.reduced_tangent_matrix(),
+					   20, 1E-10);
 	    // gmm::identity_matrix P;
 	    gmm::gmres(MS.reduced_tangent_matrix(), dr, 
 		       gmm::scaled(MS.reduced_residu(),  value_type(-1)),
@@ -1423,8 +1676,8 @@ namespace getfem {
 	for (alpha = mtype(1); alpha >= alpha_min; alpha *= alpha_mult) {
 	  gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
 	  problem.compute_residu(MS);
-	  MS.compute_reduced_system(); // The whole reduced system do not
-	  // have to be computed, only the RHS. To be adapted.
+	  MS.compute_reduced_residu();
+	  // Call to Dirichlet nullspace should be avoided -> we just need Ud
 	  act_res_new = MS.reduced_residu_norm();
 	  if (act_res_new <= act_res * alpha_max_ratio) break;
 	}

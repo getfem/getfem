@@ -101,6 +101,10 @@ namespace getfem {
     typedef typename MODEL_STATE::vector_type VECTOR;
     typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
     typedef typename MODEL_STATE::value_type value_type;
+    typedef typename gmm::sub_vector_type<VECTOR *,
+			    gmm::sub_interval>::vector_type SUBVECTOR;
+
+    gmm::sub_interval SUBU;
     mesh_fem &mf_ut;
     mesh_fem &mf_u3;
     mesh_fem &mf_theta;
@@ -198,24 +202,23 @@ namespace getfem {
 		     E/(value_type(2)*(value_type(1)+nu)));
     }
 
-    template<typename VECT> void get_solution(MODEL_STATE &MS, VECT &V) {
-      gmm::sub_interval SUBI(this->first_index(), this->nb_dof());
-      gmm::copy(gmm::sub_vector(MS.state(), SUBI), V);
+    SUBVECTOR get_solution(MODEL_STATE &MS) {
+      SUBU = gmm::sub_interval(this->first_index(), this->nb_dof());
+      return gmm::sub_vector(MS.state(), SUBU);
     }
-
-    template<typename VECT> void get_ut(MODEL_STATE &MS, VECT &V) {
-      gmm::sub_interval SUBI(this->first_index(), mf_ut.nb_dof());
-      gmm::copy(gmm::sub_vector(MS.state(), SUBI), V);
+    SUBVECTOR get_ut(MODEL_STATE &MS) {
+      SUBU = gmm::sub_interval(this->first_index(), mf_ut.nb_dof());
+      return gmm::sub_vector(MS.state(), SUBU);
     }
-    template<typename VECT> void get_u3(MODEL_STATE &MS, VECT &V) {
-      gmm::sub_interval SUBI(this->first_index() + mf_ut.nb_dof(),
+    SUBVECTOR get_u3(MODEL_STATE &MS) {
+      SUBU = gmm::sub_interval(this->first_index() + mf_ut.nb_dof(),
 			     mf_u3.nb_dof());
-      gmm::copy(gmm::sub_vector(MS.state(), SUBI), V);
+      return gmm::sub_vector(MS.state(), SUBU);
     }
-    template<typename VECT> void get_theta(MODEL_STATE &MS, VECT &V) {
-      gmm::sub_interval SUBI(this->first_index() + mf_ut.nb_dof()
+    SUBVECTOR get_theta(MODEL_STATE &MS) {
+      SUBU = gmm::sub_interval(this->first_index() + mf_ut.nb_dof()
 			     + mf_u3.nb_dof(), mf_theta.nb_dof());
-      gmm::copy(gmm::sub_vector(MS.state(), SUBI), V);
+      return gmm::sub_vector(MS.state(), SUBU);
     }
 
     void init_(void) {
@@ -316,6 +319,11 @@ namespace getfem {
     typedef typename MODEL_STATE::vector_type VECTOR;
     typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
     typedef typename MODEL_STATE::value_type value_type;
+    typedef typename gmm::sub_vector_type<VECTOR *,
+			      gmm::sub_interval>::vector_type SUBVECTOR;
+
+    gmm::sub_interval SUBU;
+
     mesh_fem &mf_ut;
     mesh_fem &mf_u3;
     mesh_fem &mf_theta;
@@ -409,7 +417,6 @@ namespace getfem {
       bv.add(i0+ mf_ut.nb_dof() + mf_u3.nb_dof()+mf_theta.nb_dof(),
 	     mf_u3.nb_dof()*2);
     }
-    //    virtual size_type nb_constraints(void) { return 1; } 
     virtual size_type nb_constraints(void) { return 0; }
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
 					size_type j0= 0, bool modified = false) {
@@ -426,10 +433,6 @@ namespace getfem {
 	this->transferred();
       }
       if (!matrix_stored) gmm::clear(K);
-      gmm::clear(gmm::sub_matrix(MS.constraints_matrix(),
-				 gmm::sub_interval(j0, 1),
-				 gmm::sub_interval(i0,  mf_ut.nb_dof()
-						   + 3 * mf_u3.nb_dof() + mf_theta.nb_dof())));
     }
     virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
 				size_type = 0) {
@@ -472,23 +475,23 @@ namespace getfem {
 		     E/(value_type(2)*(value_type(1)+nu)));
     }
 
-    template<typename VECT> void get_solution(MODEL_STATE &MS, VECT &V) {
-      gmm::sub_interval SUBI(this->first_index(), this->nb_dof());
-      gmm::copy(gmm::sub_vector(MS.state(), SUBI), V);
+    SUBVECTOR get_solution(MODEL_STATE &MS) {
+      SUBU = gmm::sub_interval(this->first_index(), this->nb_dof());
+      return gmm::sub_vector(MS.state(), SUBU);
     }
-    template<typename VECT> void get_ut(MODEL_STATE &MS, VECT &V) {
-      gmm::sub_interval SUBI(this->first_index(), mf_ut.nb_dof());
-      gmm::copy(gmm::sub_vector(MS.state(), SUBI), V);
+    SUBVECTOR get_ut(MODEL_STATE &MS) {
+      SUBU = gmm::sub_interval(this->first_index(), mf_ut.nb_dof());
+      return gmm::sub_vector(MS.state(), SUBU);
     }
-    template<typename VECT> void get_u3(MODEL_STATE &MS, VECT &V) {
-      gmm::sub_interval SUBI(this->first_index() + mf_ut.nb_dof(),
+    SUBVECTOR get_u3(MODEL_STATE &MS) {
+      SUBU = gmm::sub_interval(this->first_index() + mf_ut.nb_dof(),
 			     mf_u3.nb_dof());
-      gmm::copy(gmm::sub_vector(MS.state(), SUBI), V);
+      return gmm::sub_vector(MS.state(), SUBU);
     }
-    template<typename VECT> void get_theta(MODEL_STATE &MS, VECT &V) {
-      gmm::sub_interval SUBI(this->first_index() + mf_ut.nb_dof()
+    SUBVECTOR get_theta(MODEL_STATE &MS) {
+      SUBU = gmm::sub_interval(this->first_index() + mf_ut.nb_dof()
 			     + mf_u3.nb_dof(), mf_theta.nb_dof());
-      gmm::copy(gmm::sub_vector(MS.state(), SUBI), V);
+      return gmm::sub_vector(MS.state(), SUBU);
     }
 
     void init_(void) {

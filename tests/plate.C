@@ -285,9 +285,9 @@ bool plate_problem::solve(plain_vector &U) {
   getfem::mdbrick_plate_source_term<> VOL_F(*ELAS, mf_rhs, F);
   
   getfem::mdbrick_plate_simple_support<> SIMPLE
-    (VOL_F, mf_rhs, SIMPLY_FIXED_BOUNDARY_NUM);
+    (VOL_F, mf_rhs, SIMPLY_FIXED_BOUNDARY_NUM, 0, 1);
 
-  getfem::mdbrick_plate_closing<> final_model(SIMPLE);
+  getfem::mdbrick_plate_closing<> final_model(SIMPLE, 0, 1);
   
 
   // Generic solve.
@@ -298,7 +298,8 @@ bool plate_problem::solve(plain_vector &U) {
 
 
   gmm::resize(U, mf_u3.nb_dof());
-  if (mixed) ELAS2.get_u3(MS, U); else ELAS1.get_u3(MS, U);
+  if (mixed) gmm::copy(ELAS2.get_u3(MS), U);
+  else gmm::copy(ELAS1.get_u3(MS), U);
   
   if (PARAM.int_value("VTK_EXPORT")) {
     cout << "export to " << datafilename + ".vtk" << "..\n";
@@ -316,8 +317,8 @@ bool plate_problem::solve(plain_vector &U) {
 
   // Solution extraction
   gmm::resize(U, ELAS->nb_dof());
-  if (mixed) ELAS2.get_solution(MS, U);
-  else ELAS1.get_solution(MS, U);
+  if (mixed) gmm::copy(ELAS2.get_solution(MS), U);
+  else gmm::copy(ELAS1.get_solution(MS), U);
 
   return (iter.converged());
 }

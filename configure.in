@@ -457,6 +457,7 @@ AC_CONFIG_FILES(\
         superlu/Makefile \
 	src/Makefile \
 	tests/Makefile \
+	tests/meshes/Makefile \
 	contrib/Makefile \
 	bin/Makefile \
 getfem-config getfem-config-notinstalled gmm-config)

@@ -385,6 +385,10 @@ namespace getfem {
       typedef typename MODEL_STATE::vector_type VECTOR;
       typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
       typedef typename MODEL_STATE::value_type value_type;
+      typedef typename gmm::sub_vector_type<VECTOR *,
+				 gmm::sub_interval>::vector_type SUBVECTOR;
+
+      gmm::sub_interval SUBU;
       mesh_fem &mf_u;
       mesh_fem &mf_data;
       VECTOR lambda_, mu_;
@@ -418,9 +422,9 @@ namespace getfem {
       virtual void mixed_variables(dal::bit_vector &, size_type = 0) {}
       virtual size_type nb_constraints(void) { return 0; }
       
-      template<typename VECT> void get_solution(MODEL_STATE &MS, VECT &V) {
-	gmm::sub_interval SUBI(this->first_index(), this->nb_dof());
-	gmm::copy(gmm::sub_vector(MS.state(), SUBI), V);
+      SUBVECTOR get_solution(MODEL_STATE &MS) {
+	SUBU = gmm::sub_interval (this->first_index(), this->nb_dof());
+	return gmm::sub_vector(MS.state(), SUBU);
       }
       
       void get_proj(std::vector<std::vector<scalar_type> > &p) {

@@ -466,14 +466,14 @@ bool elastostatic_problem::solve(plain_vector &U) {
 		  "of the transformation is negative on "
 		  << pl->get_unvalid_flag() << " gauss points");
 
-    ELAS.get_solution(MS, U);
+    gmm::copy(ELAS.get_solution(MS), U);
     //char s[100]; sprintf(s, "step%d", step+1);
     exp.write_point_data(mf_u, U); //, s);
     exp.serie_add_object("deformationsteps");
   }
 
   // Solution extraction
-  ELAS.get_solution(MS, U);
+  gmm::copy(ELAS.get_solution(MS), U);
 
   if (law_num == 3) delete pINCOMP;
   
