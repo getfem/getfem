@@ -41,7 +41,7 @@ namespace bgeot {
     geotrans_precomp_pool *pool;
     bool operator < (const pre_geot_light_ &ls) const
     {
-      if (pgt < ls.pgt) return true; if (pgt > ls.pgt) return false; 
+      if (pgt < ls.pgt) return true; if (ls.pgt < pgt) return false; 
       if (pspt < ls.pspt) return true; return false;
     }
     pre_geot_light_(bgeot::pgeometric_trans pg, 

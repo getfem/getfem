@@ -36,34 +36,32 @@
 namespace dal {
 
   // Pointer to an object with the dependencies
-  struct pstatic_stored_object {
-    const static_stored_object *p;
+  struct enr_static_stored_object {
+    pstatic_stored_object p;
     bool valid;
     int permanence; // 0 = not deletable object
                     // 1 = preferable not to delete it
                     // 2 = standard
                     // 3 = delete it if memory is necessary
-    std::map<const static_stored_object *, bool> dependent_object;
-    std::map<const static_stored_object *, bool> dependencies;
-    pstatic_stored_object(const static_stored_object *o, int perma)
+    std::map<pstatic_stored_object, bool> dependent_object;
+    std::map<pstatic_stored_object, bool> dependencies;
+    enr_static_stored_object(pstatic_stored_object o, int perma)
       : p(o), valid(true), permanence(perma) {}
-    pstatic_stored_object(void) : p(0), valid(true), permanence(2) {}
-    
+    enr_static_stored_object(void) : p(0), valid(true), permanence(2) {}
   };
   
   // Pointer to a key with a coherent order
-  struct pstatic_stored_object_key {
-    const static_stored_object_key *p;
-    bool operator < (const pstatic_stored_object_key &o) const
+  struct enr_static_stored_object_key {
+    pstatic_stored_object_key p;
+    bool operator < (const enr_static_stored_object_key &o) const
     { return (*p) < (*(o.p)); }
-    pstatic_stored_object_key(const static_stored_object_key *o) : p(o) {}
+    enr_static_stored_object_key(pstatic_stored_object_key o) : p(o) {}
   };
 
   // Storing array types
-  typedef std::map<pstatic_stored_object_key, pstatic_stored_object>
+  typedef std::map<enr_static_stored_object_key, enr_static_stored_object>
   stored_object_tab;
-  typedef std::map<const static_stored_object *,
-		   const static_stored_object_key *> 
+  typedef std::map<pstatic_stored_object, pstatic_stored_object_key> 
   stored_key_tab;
   
   // Storing array
@@ -71,33 +69,30 @@ namespace dal {
   static stored_key_tab stored_keys;
   
   // Gives a pointer to a key of an object from its pointer
-  static inline const static_stored_object_key *
-  key_of_object(const static_stored_object *o) {
-    stored_key_tab::iterator it = stored_keys.lower_bound(o);
+  pstatic_stored_object_key key_of_stored_object(pstatic_stored_object o) {
+    stored_key_tab::iterator it = stored_keys.find(o);
     if (it != stored_keys.end()) return it->second;
     return 0;
   }
 
   // Gives a pointer to an object from a key pointer
-  const static_stored_object *
-  search_stored_object(const static_stored_object_key *k) {
+  pstatic_stored_object search_stored_object(pstatic_stored_object_key k) {
     stored_object_tab::iterator it
-      = stored_objects.lower_bound(pstatic_stored_object_key(k));
+      = stored_objects.find(enr_static_stored_object_key(k));
     if (it != stored_objects.end()) return it->second.p;
     return 0;
   }
 
   // Gives an iterator on stored object from a pointer object
   static inline stored_object_tab::iterator 
-  iterator_of_object(const static_stored_object *o) {
-    const static_stored_object_key *k = key_of_object(o);
-    if (k) return stored_objects.lower_bound(pstatic_stored_object_key(k));
+  iterator_of_object(pstatic_stored_object o) {
+    pstatic_stored_object_key k = key_of_stored_object(o);
+    if (k) return stored_objects.find(enr_static_stored_object_key(k));
     return stored_objects.end();
   }
 
   // Add a dependency, object o1 will depend on object o2
-  void add_dependency(const static_stored_object *o1,
-		      const static_stored_object *o2) {
+  void add_dependency(pstatic_stored_object o1, pstatic_stored_object o2) {
     stored_object_tab::iterator it1 = iterator_of_object(o1);
     stored_object_tab::iterator it2 = iterator_of_object(o2);
     if (it1 != stored_objects.end() && it2 != stored_objects.end()) {
@@ -107,8 +102,7 @@ namespace dal {
   }
 
   // remove a dependency
-  void del_dependency(const static_stored_object *o1,
-		      const static_stored_object *o2) {
+  void del_dependency(pstatic_stored_object o1, pstatic_stored_object o2) {
     stored_object_tab::iterator it1 = iterator_of_object(o1);
     stored_object_tab::iterator it2 = iterator_of_object(o2);
     if (it1 != stored_objects.end() && it2 != stored_objects.end()) {
@@ -118,38 +112,40 @@ namespace dal {
   }
 
   // Add an object with two optional dependencies
-  void add_stored_object(const static_stored_object_key *k,
-			 const static_stored_object *o,
+  void add_stored_object(pstatic_stored_object_key k, pstatic_stored_object o,
 			 int permanence,
-			 const static_stored_object *dep1,
-			 const static_stored_object *dep2) {
+			 pstatic_stored_object dep1,
+			 pstatic_stored_object dep2,
+			 pstatic_stored_object dep3) {
+    if (stored_keys.find(o) != stored_keys.end())
+      DAL_THROW(failure_error, "This object has already been stored, "
+		"possibly with another key");
     stored_keys[o] = k;
-    stored_objects[pstatic_stored_object_key(k)]
-      = pstatic_stored_object(o, permanence);
+    stored_objects[enr_static_stored_object_key(k)]
+      = enr_static_stored_object(o, permanence);
     if (dep1) add_dependency(o, dep1);
     if (dep2) add_dependency(o, dep2);
+    if (dep3) add_dependency(o, dep3);
   }
 
   // Only delete the object but not the dependencies
-  static void basic_delete(std::list<const static_stored_object *> &to_delete){
-    std::list<const static_stored_object *>::iterator it;
+  static void basic_delete(std::list<pstatic_stored_object> &to_delete){
+    std::list<pstatic_stored_object>::iterator it;
     for (it = to_delete.begin(); it != to_delete.end(); ++it) {
-      const static_stored_object_key *k = key_of_object(*it);
-      stored_object_tab::iterator ito = stored_objects.lower_bound(k);
+      pstatic_stored_object_key k = key_of_stored_object(*it);
+      stored_object_tab::iterator ito = stored_objects.find(k);
       if (k) stored_keys.erase(*it);
       if (ito != stored_objects.end()) {
 	delete ito->first.p;
-	delete ito->second.p;
 	stored_objects.erase(ito);
       }
     }
   }
-
   
   // Delete a list of objects and their dependencies
-  void del_stored_objects(std::list<const static_stored_object *> &to_delete) {
-    std::list<const static_stored_object *>::iterator it;
-    std::map<const static_stored_object *, bool>::iterator itd;
+  void del_stored_objects(std::list<pstatic_stored_object> &to_delete) {
+    std::list<pstatic_stored_object>::iterator it;
+    std::map<pstatic_stored_object, bool>::iterator itd;
     for (it = to_delete.begin(); it != to_delete.end(); ++it) {
       if (*it) {
 	stored_object_tab::iterator ito = iterator_of_object(*it);
@@ -174,8 +170,8 @@ namespace dal {
   }
 
   // Delete an object and its dependencies
-  void del_stored_object(const static_stored_object *o) {
-    std::list<const static_stored_object *> to_delete;
+  void del_stored_object(pstatic_stored_object o) {
+    std::list<pstatic_stored_object> to_delete;
     to_delete.push_back(o);
     del_stored_objects(to_delete);
   }
@@ -183,7 +179,7 @@ namespace dal {
   // Delete all the object whose permanence is greater or equal to perm
   void del_stored_objects(int perm) {
     if (perm == 0) ++perm;
-    std::list<const static_stored_object *> to_delete;
+    std::list<pstatic_stored_object> to_delete;
     stored_object_tab::iterator it;
     for (it = stored_objects.begin(); it != stored_objects.end(); ++it)
       if (it->second.permanence >= perm)

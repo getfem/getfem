@@ -54,9 +54,9 @@ namespace getfem {
        using inline reduction during the integration */
     bool prefer_comp_on_real_element; 
     bool operator < (const emelem_comp_light_ &ls) const {
-      if (pmt < ls.pmt) return true; if (pmt > ls.pmt) return false; 
-      if (ppi < ls.ppi) return true; if (ppi > ls.ppi) return false; 
-      if (pgt < ls.pgt) return true; if (pgt > ls.pgt) return false;
+      if (pmt < ls.pmt) return true; if (ls.pmt < pmt) return false; 
+      if (ppi < ls.ppi) return true; if (ls.ppi < ppi) return false; 
+      if (pgt < ls.pgt) return true; if (ls.pgt < pgt) return false;
       if (prefer_comp_on_real_element < ls.prefer_comp_on_real_element) return true;
       return false;
     }

@@ -32,6 +32,7 @@
 #define DAL_STATIC_STORED_OBJECTS_H__
 
 #include <dal_except.h>
+#include <getfem_boost/intrusive_ptr.hpp>
 
 namespace dal {
 
@@ -58,14 +59,16 @@ namespace dal {
   // add_stored_object(new your_object_key(parameters), 
   //                   new your_object(parameters),
   //                   dependence)
+  // Boost intrusive pointer are used
+
 
 
   class static_stored_object_key {
   protected :
-    virtual bool compare(const static_stored_object_key &o) const {
+    virtual bool compare(const static_stored_object_key &) const {
       DAL_THROW(failure_error, "This method should not be called");
     }
-    
+
   public :
     bool operator < (const static_stored_object_key &o) const {
       // comparaison des noms d'objet
@@ -78,43 +81,64 @@ namespace dal {
     virtual ~static_stored_object_key() {}
     
   };
+
+  typedef const static_stored_object_key *pstatic_stored_object_key;
   
   class static_stored_object {
+    mutable long pointer_ref_count_;
     
     
   public :
+    static_stored_object(void) : pointer_ref_count_(0) {}
     virtual ~static_stored_object() {}
+    friend void intrusive_ptr_add_ref(const static_stored_object *o);
+    friend void intrusive_ptr_release(const static_stored_object *o);
   };
 
+  typedef boost::intrusive_ptr<const static_stored_object>
+  pstatic_stored_object;
+
+  template<class T> boost::intrusive_ptr<const T>
+  stored_cast(pstatic_stored_object o) {
+    return boost::intrusive_ptr<const T>(dynamic_cast<const T *>(o.get()));
+  }
+
+  inline void intrusive_ptr_add_ref(const static_stored_object *o)
+  { o->pointer_ref_count_++; }
+
+  inline void intrusive_ptr_release(const static_stored_object *o)
+  { if (--(o->pointer_ref_count_) == 0) delete o; }
+
+
   /** Gives a pointer to an object from a key pointer. */
-  const static_stored_object *
-  search_stored_object(const static_stored_object_key *k);
+  pstatic_stored_object search_stored_object(pstatic_stored_object_key k);
 
   /** Gives a pointer to an object from a key reference. */
-  inline const static_stored_object *
+  inline pstatic_stored_object
   search_stored_object(const static_stored_object_key &k)
   { return search_stored_object(&k); }
 
   /** Add a dependency, object o1 will depend on object o2. */
-  void add_dependency(const static_stored_object *o1,
-		      const static_stored_object *o2);
+  void add_dependency(pstatic_stored_object o1, pstatic_stored_object o2);
 
   /** remove a dependency. */
-  void del_dependency(const static_stored_object *o1,
-		      const static_stored_object *o2);
+  void del_dependency(pstatic_stored_object o1, pstatic_stored_object o2);
 
   /** Add an object with two optional dependencies. */
-  void add_stored_object(const static_stored_object_key *k,
-			 const static_stored_object *o,
+  void add_stored_object(pstatic_stored_object_key k, pstatic_stored_object o,
 			 int permanence = 2,
-			 const static_stored_object *dep1 = 0,
-			 const static_stored_object *dep2 = 0);
+			 pstatic_stored_object dep1 = 0,
+			 pstatic_stored_object dep2 = 0,
+			 pstatic_stored_object dep3 = 0);
 
-  /** Delete an object and its dependencies. */
-  void del_stored_object(const static_stored_object *o);
+  /** Delete an object and the object which depend on it. */
+  void del_stored_object(pstatic_stored_object o);
   
   /** Delete all the object whose permanence is greater or equal to perm. */
   void del_stored_objects(int perm);
+
+  /** Gives a pointer to a key of an object from its pointer. */
+  pstatic_stored_object_key key_of_stored_object(pstatic_stored_object o);
 
 }
 

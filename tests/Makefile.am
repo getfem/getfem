@@ -1,9 +1,9 @@
 SUBDIRS = meshes
 
 if QHULL
-optprog = test_mesh_generation 	test_mesh_im_level_set
+optprogs = test_mesh_generation 	test_mesh_im_level_set
 else
-optprog =
+optprogs =
 endif
 
 check_PROGRAMS =                 \
@@ -32,7 +32,7 @@ check_PROGRAMS =                 \
 	plate                    \
 	nonlinear_elastostatic   \
 	schwarz_additive         \
-	$(optprog)               \
+	$(optprogs)              \
 	plasticity               \
 	navier_stokes            \
 	dynamic_friction

@@ -34,12 +34,9 @@
 
 #include <bgeot_convex.h>
 
-namespace bgeot
-{
+namespace bgeot {
 
-  /** 
-      Point tab storage.
-  */
+  /** Point tab storage. */
   typedef std::vector<base_node> stored_point_tab;
   typedef const stored_point_tab * pstored_point_tab;
 
@@ -84,7 +81,8 @@ namespace bgeot
        degree k, this is a pointer to the correspounding convex_ref of
        degree 1.
    */
-  class convex_of_reference : public convex<base_node> {
+  class convex_of_reference : public dal::static_stored_object, 
+			      public convex<base_node> {
   protected :     
     std::vector<base_small_vector> normals_;
     mutable mesh_structure *psimplexified_convex;
@@ -96,10 +94,10 @@ namespace bgeot
     virtual scalar_type is_in_face(short_type, const base_node &) const =0;
     const std::vector<base_small_vector> &normals(void) const
     { return normals_; }
-    virtual ~convex_of_reference() {}
 
     /* returns a mesh structure composed of simplexes whose union
-       is the reference convex. All simplexes have the same (direct) orientation.
+       is the reference convex. All simplexes have the same (direct)
+       orientation.
     */
     const mesh_structure* simplexified_convex() const;
     const convex_of_reference* basic_convex_ref() const
@@ -108,7 +106,7 @@ namespace bgeot
     { basic_convex_ref_ = cvr; }
   };
 
-  typedef const convex_of_reference * pconvex_ref;
+  typedef boost::intrusive_ptr<const convex_of_reference> pconvex_ref;
   
   /* these are the public functions for obtaining a convex of reference */
 

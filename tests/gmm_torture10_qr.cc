@@ -9,7 +9,7 @@
 
 
 using gmm::size_type;
-bool print_debug = true;
+bool print_debug = false;
 
 // template <typename MAT, typename T> void print_for_matlab(const MAT &m, T) { 
 //   cout.precision(16);

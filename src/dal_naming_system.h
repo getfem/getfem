@@ -27,17 +27,18 @@
 //
 //========================================================================
 
-#ifndef FTOOL_NAMING_H
-#define FTOOL_NAMING_H
+#ifndef DAL_NAMING_SYSTEM_H
+#define DAL_NAMING_SYSTEM_H
 
 #include <stdio.h>
-#include <dal_tree_sorted.h>
 #include <ctype.h>
 #include <deque>
+#include <map>
+#include <dal_static_stored_objects.h>
 
 
-namespace ftool
-{
+namespace dal {
+
   /* ********************************************************************* */
   /*                                                                       */
   /*   Naming system                                                       */
@@ -47,12 +48,13 @@ namespace ftool
   /** This class associates a name to a method descriptor and store
    *  method descriptors. Methods may have parameters such as integer or
    *  other methods.
+   *  The class METHOD have to derive from dal::static_stored_object
    */
   template <class METHOD> class naming_system {
 
   public :
 
-    typedef const METHOD *pmethod;
+    typedef boost::intrusive_ptr<const METHOD> pmethod;
     
     struct parameter {
       int type_; // 0 = numeric value, 1 = pointer on another method.
@@ -74,36 +76,22 @@ namespace ftool
   protected :
     
     std::string prefix;
-    dal::dynamic_tree_sorted<std::string> suffixes;
-    dal::dynamic_array<pfunction> functions;
-    dal::dynamic_array<pgenfunction> genfunctions;
+    dynamic_tree_sorted<std::string> suffixes;
+    dynamic_array<pfunction> functions;
+    dynamic_array<pgenfunction> genfunctions;
+    std::map<std::string, std::string> shorter_names;
+    std::map<std::string, std::string> aliases;
     int nb_genfunctions;
     
-    struct meth_sto {
-      pmethod pm;
+    struct method_key : public static_stored_object_key {
       std::string name;
       
-      bool operator < (const meth_sto &l) const {
-	if (pm < l.pm) return true; return false;
+      virtual bool compare(const static_stored_object_key &oo) const {
+	const method_key &o = dynamic_cast<const method_key &>(oo);
+	if (name < o.name) return true; else return false;
       }
-      meth_sto(void) {}
-      meth_sto(pmethod p, std::string n) : pm(p), name(n) {} 
+      method_key(const std::string &name_) : name(name_) {}
     };
-    
-    dal::dynamic_tree_sorted<meth_sto> meth_tab;
-    
-    struct meth_sto_bn {
-      pmethod pm;
-      std::string name;
-      
-      bool operator < (const meth_sto_bn &l) const {
-	if (name < l.name) return true; return false;
-      }
-      meth_sto_bn(void) {}
-      meth_sto_bn(pmethod p, std::string n) : pm(p), name(n) {} 
-    };
-    
-    dal::dynamic_tree_sorted<meth_sto_bn> meth_tab_bn;
     
     int mns_lexem(std::string s, size_type i, size_type &lenght);
     
@@ -133,46 +121,22 @@ namespace ftool
   template <class METHOD>
   std::string naming_system<METHOD>::normative_name_of_method(typename 
 			         naming_system<METHOD>::pmethod pm)  const {
-    typename dal::dynamic_tree_sorted<meth_sto>::const_sorted_iterator
-      it = meth_tab.sorted_ge(meth_sto(pm, ""));
-    const std::string *p = 0;
-    if (it.index() == size_type(-1))
-      DAL_THROW(dal::failure_error, "Unknown method");
-    while (it.index() != size_type(-1) && (*it).pm == pm)
-      { p = &((*it).name); ++it; }
-    return *p;
+    pstatic_stored_object_key k = key_of_stored_object(pm);
+    if (!k) DAL_THROW(failure_error, "Unknown method");
+    return (dynamic_cast<const method_key *>(k))->name;
   }
   
   template <class METHOD> std::string
   naming_system<METHOD>::shorter_name_of_method(typename
-			        naming_system<METHOD>::pmethod pm)  const {
-    typename dal::dynamic_tree_sorted<meth_sto>::const_sorted_iterator
-      it = meth_tab.sorted_ge(meth_sto(pm, "")), it2 = it;
-    const std::string *p = 0;
-    size_type s = size_type(-1);
-    if (it.index() == size_type(-1))
-      return "UNKNOWN"; //DAL_THROW(dal::failure_error, "Unknown method");
-    while (it.index() != size_type(-1) && (*it).pm == pm) {
-      if (((*it).name).size() < s) {
-	s = ((*it).name).size();
-	p = &((*it).name); 
-      }
-      ++it;
-    }
-    
-    // La boucle qui suit est à supprimer normalement
-    while (it2.index() != size_type(-1) && (*it2).pm == pm) {
-      if (((*it2).name).size() < s) {
-	s = ((*it2).name).size();
-	p = &((*it2).name);
-	DAL_THROW(dal::internal_error, "This loop is not to be suppressed !!");
-      }
-      --it2;
-    }
-    if (p) return *p;
-    else return "UNKNOWN";
+			        naming_system<METHOD>::pmethod pm)  const { 
+    pstatic_stored_object_key k = key_of_stored_object(pm);
+    if (!k)  return "UNKNOWN";
+    const std::string &name((dynamic_cast<const method_key *>(k))->name);
+    std::map<std::string, std::string>::const_iterator
+      it = shorter_names.find(name);
+    if (it != shorter_names.end()) return it->second;
+    return name;
   }
-  
   
   /* 0 = end of the string
      1 = espace
@@ -202,7 +166,7 @@ namespace ftool
     if (c == '(') return 4;
     if (c == ')') return 5;
     if (c == ',') return 6;
-    DAL_THROW(dal::failure_error, "Invalid character on position " << i
+    DAL_THROW(failure_error, "Invalid character on position " << i
 	      << " of the string : " << s);
   }
   
@@ -264,7 +228,7 @@ namespace ftool
 	break;
       }
       if (error) 
-	DAL_THROW(dal::failure_error,
+	DAL_THROW(failure_error,
 	     "Syntax error on position " << i << " of the string : " << name);
       if (isend) {
 	std::stringstream norm_name;
@@ -281,22 +245,35 @@ namespace ftool
 	  }
 	  norm_name << ')';
 	}
-	std::string nname = norm_name.str();
-	size_type j = meth_tab_bn.search(meth_sto_bn(0, nname));
-	if (j == size_type(-1)) {
-	  pm = 0;
-	  for (int k = 0; k < nb_genfunctions && pm == 0; ++k) {
-	    pm = (*(genfunctions[k]))(nname);
-	  }
-	  if (!pm) {
-	    if (ind_suff == size_type(-1))
-	      DAL_THROW(dal::failure_error, "Unknown method : " << nname);
-	    pm = (*(functions[ind_suff]))(params);
-	  }
-	  j = meth_tab_bn.add(meth_sto_bn(pm, nname));
-	  meth_tab.add(meth_sto(pm, nname));
+	method_key nname(norm_name.str());
+	if (aliases.find(norm_name.str()) != aliases.end())
+	  nname.name = aliases[norm_name.str()];
+	pstatic_stored_object o = search_stored_object(nname);
+	if (o) return stored_cast<METHOD>(o);
+	pm = 0;
+	for (int k = 0; k < nb_genfunctions && pm == 0; ++k) {
+	  pm = (*(genfunctions[k]))(nname.name);
 	}
-	return meth_tab_bn[j].pm;
+	if (!pm) {
+	  if (ind_suff == size_type(-1))
+	    DAL_THROW(failure_error, "Unknown method : " << nname.name);
+	  pm = (*(functions[ind_suff]))(params);
+	}
+	
+	pstatic_stored_object_key k = key_of_stored_object(pm);
+	if (!k) add_stored_object(new method_key(nname), pm, 0);
+	else {
+	  std::string normname((dynamic_cast<const method_key *>(k))->name);
+	  aliases[nname.name] = normname;
+	  if (nname.name.size() < normname.size()) {
+	    if (shorter_names.find(normname) != shorter_names.end()) {
+	      if (nname.name.size() < shorter_names[normname].size())
+		shorter_names[normname] = nname.name;
+	    }
+	    else shorter_names[normname] = nname.name;
+	  }
+	}
+	return pm;
       }
     }
     

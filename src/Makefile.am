@@ -1,12 +1,29 @@
 include_HEADERS =                        \
+	getfem_boost/workaround.hpp      \
+	getfem_boost/intrusive_ptr.hpp   \
+	dal_algobase.h                   \
+	dal_singleton.h		         \
+	dal_alloc.h                      \
+	dal_shared_ptr.h                 \
+	dal_basic.h                      \
+	dal_bit_vector.h                 \
+	dal_fonc_tables.h                \
+	dal_static_stored_objects.h      \
+	dal_naming_system.h              \
+	dal_ref.h                        \
+	dal_std.h                        \
+	dal_except.h                     \
+	dal_backtrace.h		         \
+	dal_tas.h                        \
+	dal_tree_sorted.h                \
 	bgeot_config.h                   \
 	bgeot_imbricated_box.h	         \
 	bgeot_permutations.h             \
+	bgeot_convex_structure.h         \
 	bgeot_convex.h                   \
 	bgeot_convex_hull.h              \
 	bgeot_convex_intersect.h         \
 	bgeot_convex_ref.h               \
-	bgeot_convex_structure.h         \
 	bgeot_geometric_trans.h          \
 	bgeot_geotrans_inv.h             \
 	bgeot_kdtree.h		         \
@@ -21,20 +38,6 @@ include_HEADERS =                        \
 	bgeot_tensor.h                   \
 	bgeot_vector.h                   \
 	bgeot_comma_init.h	         \
-	dal_algobase.h                   \
-	dal_singleton.h		         \
-	dal_alloc.h                      \
-	dal_shared_ptr.h                 \
-	dal_basic.h                      \
-	dal_bit_vector.h                 \
-	dal_fonc_tables.h                \
-	dal_static_stored_objects.h      \
-	dal_ref.h                        \
-	dal_std.h                        \
-	dal_except.h                     \
-	dal_backtrace.h		         \
-	dal_tas.h                        \
-	dal_tree_sorted.h                \
 	ftool.h                          \
 	ftool_naming.h                   \
 	getfem_arch_config.h             \
@@ -129,8 +132,8 @@ SRC =                                    \
 	dal_bit_vector.cc                \
 	dal_singleton.cc		 \
 	dal_static_stored_objects.cc     \
-	bgeot_convex_ref.cc              \
 	bgeot_convex_structure.cc        \
+	bgeot_convex_ref.cc              \
 	bgeot_geometric_trans.cc         \
 	bgeot_geotrans_inv.cc            \
 	bgeot_imbricated_box.cc          \

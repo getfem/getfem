@@ -352,7 +352,7 @@ namespace getfem
     dal::bit_vector nodes_on_edges;
     mesh_precomposite *pmp;
     bool operator < (const str_mesh_cv__ &ls) const {
-      if (cvs < ls.cvs) return true; if (cvs > ls.cvs) return false; 
+      if (cvs < ls.cvs) return true; if (ls.cvs < cvs) return false; 
       if (n < ls.n) return true; return false;
     }
     str_mesh_cv__(void) : pm(0), pmp(0) {}

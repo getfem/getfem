@@ -86,7 +86,7 @@ namespace bgeot
    *   \subsubsection*{Inverse transformation and pseudo-inverse}
    *     to do ...
    */
-  class geometric_trans {
+  class geometric_trans : public dal::static_stored_object {
   protected :
     
     bool is_lin;
@@ -138,7 +138,7 @@ namespace bgeot
     return P;
   }
 
-  typedef const geometric_trans *pgeometric_trans;
+  typedef boost::intrusive_ptr<const geometric_trans> pgeometric_trans;
 
   template<class CONT>
   void bounding_box(base_node& min, base_node& max, 
@@ -228,7 +228,8 @@ namespace bgeot
   pgeometric_trans parallelepiped_linear_geotrans(size_type n);
   pgeometric_trans prism_geotrans(size_type n, short_type k);
   pgeometric_trans prism_linear_geotrans(size_type n);
-  pgeometric_trans product_geotrans(pgeometric_trans pg1,pgeometric_trans pg2);
+  pgeometric_trans product_geotrans(pgeometric_trans pg1,
+				    pgeometric_trans pg2);
   pgeometric_trans linear_product_geotrans(pgeometric_trans pg1,
 					   pgeometric_trans pg2);
 
@@ -239,23 +240,24 @@ namespace bgeot
    * GT_PRISM(N,K)          : Transformation on prisms, dim N, degree K
    * GT_PRODUCT(a,b)        : tensorial product of two transformations
    * GT_LINEAR_PRODUCT(a,b) : Linear tensorial product of two transformations
-   * GT_LINEAR_QK(N) : shortcut for GT_LINEAR_PRODUCT(GT_LINEAR_QK(N-1),GT_PK(1,1))
+   * GT_LINEAR_QK(N) : shortcut for GT_LINEAR_PRODUCT(GT_LINEAR_QK(N-1),
+   *                                                  GT_PK(1,1))
    */
 
   std::string name_of_geometric_trans(pgeometric_trans p);
 
   /** norm of returned vector is the ratio between the face surface on
-     the reel element and the face surface on the reference element 
-     IT IS NOT UNITARY
-
-     pt is the position of the evaluation point on the reference element
-  */
+   *  the reel element and the face surface on the reference element 
+   *  IT IS NOT UNITARY
+   *
+   *  pt is the position of the evaluation point on the reference element
+   */
   base_small_vector compute_normal(const geotrans_interpolation_context& c,
 				   size_type face);
 
   /** return the local basis (i.e. the norm in the first column, and the
-    tangent vectors in the other columns 
-  */
+   *  tangent vectors in the other columns 
+   */
   base_matrix 
   compute_local_basis(const geotrans_interpolation_context& c,
 		      size_type face);

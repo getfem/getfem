@@ -39,6 +39,7 @@
 #include <bgeot_tensor.h>
 #include <bgeot_poly.h>
 #include <dal_fonc_tables.h>
+#include <dal_static_stored_objects.h>
 
 namespace bgeot {
 
@@ -48,7 +49,7 @@ namespace bgeot {
   class convex_structure;
 
   /// Pointer on a convex structure description. 
-  typedef const convex_structure * pconvex_structure;
+  typedef boost::intrusive_ptr<const convex_structure> pconvex_structure;
   ///
   typedef std::vector<pconvex_structure>        convex_structure_faces_ct;
   typedef std::vector<short_type>               convex_ind_ct;
@@ -62,8 +63,7 @@ namespace bgeot {
    *       that there is no need for having more than one convex structure
    *       for the same type of convex. 
    */
-  class convex_structure
-  {
+  class convex_structure : public dal::static_stored_object {
     protected :
 
       dim_type Nc;

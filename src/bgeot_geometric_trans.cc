@@ -30,19 +30,11 @@
 
 #include <dal_singleton.h>
 #include <dal_tree_sorted.h>
-#include <ftool_naming.h>
+#include <dal_naming_system.h>
 #include <bgeot_geometric_trans.h>
 #include <bgeot_precomp.h>
 
-namespace bgeot
-{
-  /* a quick hack for deallocation of allocated fem on program termination
-     (avoid false leak alerts from valgrind) */
-  struct cleanup_allocated_geotrans : public dal::ptr_collection<geometric_trans> {};
-  static pgeometric_trans remember_for_cleanup(geometric_trans *p) {
-    dal::singleton<cleanup_allocated_geotrans>::instance().push_back(p);
-    return p;
-  }
+namespace bgeot {
 
   const base_node& geotrans_interpolation_context::xref() const { 
     if (!have_xref()) 
@@ -179,7 +171,7 @@ namespace bgeot
     xref_(xref__), G_(&G__), pgt_(pgt__), pgp_(0), ii_(size_type(-1)), J_(-1) {}
  
 
-  typedef ftool::naming_system<geometric_trans>::param_list gt_param_list;
+  typedef dal::naming_system<geometric_trans>::param_list gt_param_list;
 
   base_node geometric_trans::transform(const base_node &pt, 
 				       const base_matrix &G) const {
@@ -213,10 +205,8 @@ namespace bgeot
   /* transformation on simplex.                                           */
   /* ******************************************************************** */
 
-  struct simplex_trans_ : public geometric_trans
-  {
-    void calc_base_func(base_poly &p, size_type i, short_type K) const
-    {
+  struct simplex_trans_ : public geometric_trans {
+    void calc_base_func(base_poly &p, size_type i, short_type K) const {
       dim_type N = dim();
       base_poly l0(N, 0), l1(N, 0);
       power_index w(N+1);
@@ -239,8 +229,7 @@ namespace bgeot
 	       - (l1 * (scalar_type(j) / scalar_type(j+1)));
     }
 
-    simplex_trans_(dim_type nc, short_type k)
-    {
+    simplex_trans_(dim_type nc, short_type k) {
       cvr = simplex_of_reference(nc, k);
       size_type R = cvr->structure()->nb_points();
       is_lin = (k == 1);
@@ -260,25 +249,22 @@ namespace bgeot
     if (n < 0 || n >= 100 || k < 0 || k > 150 ||
 	double(n) != params[0].num() || double(k) != params[1].num())
       DAL_THROW(failure_error, "Bad parameters");
-    return remember_for_cleanup(new simplex_trans_(n, k));
+    return new simplex_trans_(n, k);
   }
 
   /* ******************************************************************** */
   /* direct product transformation                                        */
   /* ******************************************************************** */
 
-  struct cv_pr_t_ : public geometric_trans
-  {
-    cv_pr_t_(pgeometric_trans a, pgeometric_trans b)
-    {
+  struct cv_pr_t_ : public geometric_trans {
+    cv_pr_t_(pgeometric_trans a, pgeometric_trans b) {
       cvr = convex_ref_product(a->convex_ref(), b->convex_ref());
       is_lin = false;
 
       size_type n1 = a->nb_points(), n2 = b->nb_points();
       trans.resize(n1 * n2);
       for (size_type i1 = 0; i1 < n1; ++i1)
-	for (size_type i2 = 0; i2 < n2; ++i2)
-	{
+	for (size_type i2 = 0; i2 < n2; ++i2) {
 	  trans[i1 + i2 * n1] = a->poly_vector()[i1];
 	  trans[i1 + i2 * n1].direct_product(b->poly_vector()[i2]);
 	}
@@ -293,17 +279,15 @@ namespace bgeot
       DAL_THROW(failure_error, "Bad type of parameters");
     pgeometric_trans a = params[0].method();
     pgeometric_trans b = params[1].method();
-    return remember_for_cleanup(new cv_pr_t_(a, b));
+    return new cv_pr_t_(a, b);
   }
 
   /* ******************************************************************** */
   /* linear direct product transformation.                                */
   /* ******************************************************************** */
 
-  struct cv_pr_tl_ : public geometric_trans
-  {
-    cv_pr_tl_(pgeometric_trans a, pgeometric_trans b)
-    {
+  struct cv_pr_tl_ : public geometric_trans {
+    cv_pr_tl_(pgeometric_trans a, pgeometric_trans b) {
       if (!(a->is_linear() && b->is_linear()))
 	DAL_THROW(not_linear_error, 
 		  "linear product of non-linear transformations");
@@ -331,7 +315,7 @@ namespace bgeot
       DAL_THROW(failure_error, "Bad type of parameters");
     pgeometric_trans a = params[0].method();
     pgeometric_trans b = params[1].method();
-    return remember_for_cleanup(new cv_pr_tl_(a, b));
+    return new cv_pr_tl_(a, b);
   }
 
   /* ******************************************************************** */
@@ -386,26 +370,6 @@ namespace bgeot
     int n = int(::floor(params[0].num() + 0.01));
     return parallelepiped_linear_geotrans(n);
   }
-
-//   pgeometric_trans associated_trans(pconvex_structure cvs)
-//   {
-//     DAL::THROW(internal_error, "Obsolete function");
-//     size_type n = cvs->dim(), nbp = cvs->nb_points();
-//     if (nbp == n+1 && cvs == bgeot::simplex_structure(n))
-//       return simplex_trans(n, 1);
-
-//     if (nbp == (size_type(1) << n) && cvs==bgeot::parallelepiped_structure(n))
-//       return parallelepiped_trans(n, 1);
-
-//     if (nbp == 2 * n && cvs == bgeot::prism_structure(n))
-// 	return prism_trans(n, 1);
-    
-//     // To be completed
-    
-//     DAL_THROW(to_be_done_error, 
-// 	      "This element is not taken into account. Contact us");   
-//     return NULL;
-//   }
 
   /* norm of returned vector is the ratio between the face surface on
      the reel element and the face surface on the reference element 
@@ -468,9 +432,10 @@ namespace bgeot
   /*    Naming system                                                     */
   /* ******************************************************************** */
 
-  struct geometric_trans_naming_system : public ftool::naming_system<geometric_trans> {
+  struct geometric_trans_naming_system
+    : public dal::naming_system<geometric_trans> {
     geometric_trans_naming_system() : 
-      ftool::naming_system<geometric_trans>("GT") {
+      dal::naming_system<geometric_trans>("GT") {
       add_suffix("PK", PK_gt);
       add_suffix("QK", QK_gt);
       add_suffix("PRISM", prism_gt);

@@ -83,9 +83,9 @@ namespace getfem {
     }; 
 
     const mesh_fem &mf;    // mf represents the original finite element method
-                            // to be interpolated.
+                           // to be interpolated.
     const mesh_im &mim;    // mesh on which mf1 is interpolated. contains
-                            // also the integration method.
+                           // also the integration method.
     pinterpolated_func pif; // optional transformation
 
     bool store_values;

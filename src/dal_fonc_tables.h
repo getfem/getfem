@@ -72,7 +72,8 @@ namespace dal
       { return light_table_; }
     const bit_vector &index(void) const { return light_table_.index(); }
     ~FONC_TABLE(void) { 
-      for (dal::bv_visitor i(light_table_.index()); !i.finished(); ++i) delete desc_table[i];
+      for (dal::bv_visitor i(light_table_.index()); !i.finished(); ++i)
+	delete desc_table[i];
     }
   };
   

@@ -12,8 +12,9 @@
 #include <getfem_regular_meshes.h>
 #include <getfem_export.h>
 #include <gmm.h>
-
+#ifdef GMM_USES_MPI
 #include <mpi++.h>
+#endif
 
 using bgeot::base_vector;
 using bgeot::base_node;
