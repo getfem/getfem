@@ -85,7 +85,7 @@ $CC = $ENV{CC};
 if (! $CC) {
 print "No compiler in CC variable, searching one\n";
 `c++ -v`;     if ($? == 0) { print "a c++ is  detected\n"; $CC = "c++"; }
-`bin/compilo_g++v`; if ($? == 0) { print "g++ detected\n"; $CC = "g++"; }
+`bin/compilo_g++v g++`; if ($? == 0) { print "g++ detected\n"; $CC = "g++"; }
 `bin/compilo_CCv`;  if ($? == 0) { print "CC  detected\n"; $CC = "CC";  }
 `cxx -V`;           if ($? == 0) { print "cxx detected\n"; $CC = "cxx"; }
 }
@@ -156,11 +156,7 @@ elsif ($CC =~ /cxx/) {
   print MAKEFILE "OPTIONS_BOTH     = -g3\n";
 }
 elsif (($CC =~ /g\+\+/) || ($CC =~ /gcc/)) {
-  `$CC -v >& __tmp`;
-  $rep = `cat __tmp | grep version`;
-  `rm -f __tmp`;
-  # print "rep mauvais = $rep\n";
-  # $rep = `bin/compilo_g++v`;
+  $rep = `bin/compilo_g++v $CC`;
   print "compiler version : $rep\n";
   print MAKEFILE "COMP = $CC\n";
   print MAKEFILE "OPTIONS_STANDARD = -ftemplate-depth-40\n";
