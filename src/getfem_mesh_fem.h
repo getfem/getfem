@@ -224,6 +224,10 @@ namespace getfem
     
     mesh_fem(getfem_mesh &me); 
     virtual ~mesh_fem();
+    void read_from_file(std::istream &ist);
+    void read_from_file(const std::string &name);
+    void write_to_file(std::ostream &ost) const;
+    void write_to_file(const std::string &name) const;
   };
   
 }  /* end of namespace getfem.                                             */

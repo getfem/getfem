@@ -402,6 +402,84 @@ namespace getfem
     }
   }
 
+
+  void mesh_fem::read_from_file(std::istream &ist) {
+    dal::bit_vector npt;
+    dal::dynamic_array<double> tmpv;
+    char tmp[1024];
+    bool te = false, please_get = true;
+
+    ist.precision(16);
+    clear();
+    ist.seekg(0);
+    ftool::read_untill(ist, "BEGIN MESH_FEM");
+
+    while (!te)
+    {
+      if (please_get) ftool::get_token(ist, tmp, 1023); else please_get = true;
+
+      if (!strcmp(tmp, "END"))
+      { te = true; }
+      else if (!strcmp(tmp, "CONVEX"))
+      {
+	ftool::get_token(ist, tmp, 1023);
+	size_type ic = atoi(tmp);
+	if (!linked_mesh().convex_index().is_in(ic)) {
+	  DAL_THROW(failure_error, "Convex " << ic << " does not exist, are you sure "
+		    "that the mesh attached to this object is right one ?");
+	}
+	
+	ftool::get_token(ist, tmp, 1023);
+	getfem::pfem fem = getfem::fem_descriptor(tmp);
+	if (!fem) DAL_THROW(failure_error, "could not create the FEM '" << tmp << "'");
+
+	ftool::get_token(ist, tmp, 1023);
+	getfem::pintegration_method pfi = getfem::int_method_descriptor(tmp);
+	if (!pfi) DAL_THROW(failure_error, "could not create the integration method '" << tmp << "'");
+	
+	dal::bit_vector bv; bv.add(ic);
+	set_finite_element(bv, fem, pfi);
+      }
+      else
+	DAL_THROW(failure_error, "Syntax error in file.");
+    }
+  }
+
+  void mesh_fem::read_from_file(const std::string &name)
+  { 
+    std::ifstream o(name.c_str());
+    if (!o) DAL_THROW(file_not_found_error,
+		      "Mesh_fem file '" << name << "' does not exist");
+    read_from_file(o);
+    o.close();
+  }
+
+  void mesh_fem::write_to_file(std::ostream &ost) const
+  {
+    ost << endl << "BEGIN MESH_FEM" << endl << endl;
+    dal::bit_vector bv = convex_index();
+    size_type cv;
+    for (cv << bv; cv != size_type(-1); cv << bv) {
+      ost << " CONVEX " << cv;
+      ost << " " << name_of_fem(fem_of_element(cv));
+      ost << " " << name_of_int_method(int_method_of_element(cv));
+      ost << endl;
+    }
+    ost << "END MESH_FEM" << endl;
+  }
+
+  void mesh_fem::write_to_file(const std::string &name) const
+  {
+    std::ofstream o(name.c_str());
+    if (!o)
+      DAL_THROW(failure_error, "impossible to open file '" << name << "'");
+    o << "% GETFEM MESH_FEM FILE " << endl;
+    o << "% GETFEM VERSION " << __GETFEM_VERSION << "."
+      << __GETFEM_REVISION << endl << endl << endl;
+    write_to_file(o);
+    o.close();
+  }
+
 }  /* end of namespace getfem.                                             */
 
 
