@@ -379,12 +379,12 @@ namespace gmm {
   struct _temporary_matrix { typedef abstract_null_type matrix_type; };
   template <typename V, typename L>
   struct _temporary_matrix<linalg_true, abstract_sparse, L, V> {
-    typedef typename linalg_traits<V>::value_type T
+    typedef typename linalg_traits<V>::value_type T;
     typedef row_matrix<wsvector<T> > matrix_type;
   };
   template <typename V, typename L>
   struct _temporary_matrix<linalg_true, abstract_skyline, L, V> {
-    typedef typename linalg_traits<V>::value_type T
+    typedef typename linalg_traits<V>::value_type T;
     typedef row_matrix<slvector<T> > matrix_type;
   };
   template <typename V, typename L>
