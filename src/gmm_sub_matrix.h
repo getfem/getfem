@@ -151,22 +151,22 @@ namespace gmm {
     typedef gen_sub_row_matrix_iterator<PT, SUBI1, SUBI2> row_iterator;
     typedef gen_sub_row_matrix_access<PT, SUBI1, SUBI2> access_type;
     typedef row_major sub_orientation;
-    size_type nrows(const this_type &m) { return m.nrows(); }
-    size_type ncols(const this_type &m) { return m.ncols(); }
-    const_sub_row_type row(const const_row_iterator &it)
-    { return const_sub_row_type(linalg_traits<M>().row(*it), *(it.psi2)); }
-    sub_row_type row(const row_iterator &it)
-    { return sub_row_type(linalg_traits<M>().row(*it), *(it.psi2)); }
-    const_row_iterator row_begin(const this_type &m)
+    static size_type nrows(const this_type &m) { return m.nrows(); }
+    static size_type ncols(const this_type &m) { return m.ncols(); }
+    static const_sub_row_type row(const const_row_iterator &it)
+    { return const_sub_row_type(linalg_traits<M>::row(*it), *(it.psi2)); }
+    static sub_row_type row(const row_iterator &it)
+    { return sub_row_type(linalg_traits<M>::row(*it), *(it.psi2)); }
+    static const_row_iterator row_begin(const this_type &m)
     { return const_row_iterator(m._begin, *(m.psi1), *(m.psi2), 0); }
-    row_iterator row_begin(this_type &m)
+    static row_iterator row_begin(this_type &m)
     { return row_iterator(m._begin, *(m.psi1), *(m.psi2), 0); }
-    const_row_iterator row_end(const this_type &m)
+    static const_row_iterator row_end(const this_type &m)
     { return const_row_iterator(m._begin, *(m.psi1), *(m.psi2),  m.nrows()); }
-    row_iterator row_end(this_type &m)
+    static row_iterator row_end(this_type &m)
     { return row_iterator(m._begin, *(m.psi1), *(m.psi2), m.nrows()); }    
-    const void* origin(const this_type &m) { return m.origin; }
-    void do_clear(this_type &m) {
+    static const void* origin(const this_type &m) { return m.origin; }
+    static void do_clear(this_type &m) {
       row_iterator it = mat_row_begin(m), ite = mat_row_end(m);
       for (; it != ite; ++it) clear(row(it));
     }
@@ -298,22 +298,22 @@ namespace gmm {
     typedef gen_sub_col_matrix_iterator<PT, SUBI1, SUBI2> col_iterator;
     typedef gen_sub_col_matrix_access<PT, SUBI1, SUBI2> access_type;
     typedef col_major sub_orientation;
-    size_type nrows(const this_type &m) { return m.nrows(); }
-    size_type ncols(const this_type &m) { return m.ncols(); }
-    const_sub_col_type col(const const_col_iterator &it)
-    { return const_sub_col_type(linalg_traits<M>().col(*it), *(it.psi1)); }
-    sub_col_type col(const col_iterator &it)
-    { return sub_col_type(linalg_traits<M>().col(*it), *(it.psi1)); }
-    const_col_iterator col_begin(const this_type &m)
+    static size_type nrows(const this_type &m) { return m.nrows(); }
+    static size_type ncols(const this_type &m) { return m.ncols(); }
+    static const_sub_col_type col(const const_col_iterator &it)
+    { return const_sub_col_type(linalg_traits<M>::col(*it), *(it.psi1)); }
+    static sub_col_type col(const col_iterator &it)
+    { return sub_col_type(linalg_traits<M>::col(*it), *(it.psi1)); }
+    static const_col_iterator col_begin(const this_type &m)
     { return const_col_iterator(m._begin, *(m.psi1), *(m.psi2), 0); }
-    col_iterator col_begin(this_type &m)
+    static col_iterator col_begin(this_type &m)
     { return col_iterator(m._begin, *(m.psi1), *(m.psi2), 0); }
-    const_col_iterator col_end(const this_type &m)
+    static const_col_iterator col_end(const this_type &m)
     { return const_col_iterator(m._begin, *(m.psi1), *(m.psi2),  m.ncols()); }
-    col_iterator col_end(this_type &m)
+    static col_iterator col_end(this_type &m)
     { return col_iterator(m._begin, *(m.psi1), *(m.psi2), m.ncols()); }    
-    const void* origin(const this_type &m) { return m.origin; }
-    void do_clear(this_type &m) {
+    static const void* origin(const this_type &m) { return m.origin; }
+    static void do_clear(this_type &m) {
       col_iterator it = mat_col_begin(m), ite = mat_col_end(m);
       for (; it != ite; ++it) clear(col(it));
     }

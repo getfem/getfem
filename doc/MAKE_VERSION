@@ -20,6 +20,7 @@ Liste des items a passer en revue pour fabriquer une nouvelle version
 - Eventuellement, annonce : Google, NaNet, labo, mailing list ...
    http://www.engr.usask.ca/~macphed/finite/fe_resources/fe_resources.html
    http://gersoo.free.fr/calsci/calsci.html
+   http://www.oonumerics.org/oon/
 
 - Faire passer le numero de version au suivant dans la distribution et
   dans dal_std.h, mettre à jour la page WEB.

@@ -154,17 +154,17 @@ namespace gmm {
     typedef abstract_sparse storage_type;
     typedef sparse_sub_vector_access<PT, SUBI> access_type;
     typedef sparse_sub_vector_clear<PT, SUBI> clear_type;
-    size_type size(const this_type &v) { return v.size(); }
-    iterator begin(this_type &v)
+    static size_type size(const this_type &v) { return v.size(); }
+    static iterator begin(this_type &v)
     { return iterator(v._begin, v._end, *(v.psi)); }
-    const_iterator begin(const this_type &v)
+    static const_iterator begin(const this_type &v)
     { return const_iterator(v._begin, v._end, *(v.psi)); }
-    iterator end(this_type &v)
+    static iterator end(this_type &v)
     { return iterator(v._end, v._end, *(v.psi)); }
-    const_iterator end(const this_type &v)
+    static const_iterator end(const this_type &v)
     { return const_iterator(v._end, v._end, *(v.psi)); }
-    const void* origin(const this_type &v) { return v.origin; }
-    void do_clear(this_type &v) { clear_type()(v.origin, begin(v), end(v)); }
+    static const void* origin(const this_type &v) { return v.origin; }
+    static void do_clear(this_type &v) { clear_type()(v.origin, begin(v), end(v)); }
   };
 
   template <class PT, class SUBI> std::ostream &operator <<

@@ -137,18 +137,18 @@ namespace gmm
     typedef abstract_null_type const_col_iterator;
     typedef row_major sub_orientation;
     typedef row_matrix_access<V> access_type;
-    size_type nrows(const this_type &m) { return m.nrows(); }
-    size_type ncols(const this_type &m) { return m.ncols(); }
-    row_iterator row_begin(this_type &m) { return m.begin(); }
-    row_iterator row_end(this_type &m) { return m.end(); }
-    const_row_iterator row_begin(const this_type &m) { return m.begin(); }
-    const_row_iterator row_end(const this_type &m) { return m.end(); }
-    const_sub_row_type row(const const_row_iterator &it)
+    static size_type nrows(const this_type &m) { return m.nrows(); }
+    static size_type ncols(const this_type &m) { return m.ncols(); }
+    static row_iterator row_begin(this_type &m) { return m.begin(); }
+    static row_iterator row_end(this_type &m) { return m.end(); }
+    static const_row_iterator row_begin(const this_type &m) { return m.begin(); }
+    static const_row_iterator row_end(const this_type &m) { return m.end(); }
+    static const_sub_row_type row(const const_row_iterator &it)
     { return const_sub_row_type(*it); }
-    sub_row_type row(const row_iterator &it) 
+    static sub_row_type row(const row_iterator &it) 
     { return sub_row_type(*it); }
-    const void* origin(const this_type &m) { return &m; }
-    void do_clear(this_type &m) { m.clear_mat(); }
+    static const void* origin(const this_type &m) { return &m; }
+    static void do_clear(this_type &m) { m.clear_mat(); }
   };
 
   // for GCC 2.95
@@ -228,18 +228,18 @@ namespace gmm
     typedef abstract_null_type const_row_iterator;
     typedef col_major sub_orientation;
     typedef col_matrix_access<V> access_type;
-    size_type nrows(const this_type &m) { return m.nrows(); }
-    size_type ncols(const this_type &m) { return m.ncols(); }
-    col_iterator col_begin(this_type &m) { return m.begin(); }
-    col_iterator col_end(this_type &m) { return m.end(); }
-    const_col_iterator col_begin(const this_type &m) { return m.begin(); }
-    const_col_iterator col_end(const this_type &m) { return m.end(); }
-    const_sub_col_type col(const const_col_iterator &it)
+    static size_type nrows(const this_type &m) { return m.nrows(); }
+    static size_type ncols(const this_type &m) { return m.ncols(); }
+    static col_iterator col_begin(this_type &m) { return m.begin(); }
+    static col_iterator col_end(this_type &m) { return m.end(); }
+    static const_col_iterator col_begin(const this_type &m) { return m.begin(); }
+    static const_col_iterator col_end(const this_type &m) { return m.end(); }
+    static const_sub_col_type col(const const_col_iterator &it)
     { return const_sub_col_type(*it); }
-    sub_col_type col(const col_iterator &it) 
+    static sub_col_type col(const col_iterator &it) 
     { return sub_col_type(*it); }
-    const void* origin(const this_type &m) { return &m; }
-    void do_clear(this_type &m) { m.clear_mat(); }
+    static const void* origin(const this_type &m) { return &m; }
+    static void do_clear(this_type &m) { m.clear_mat(); }
   };
 
   template<class V> std::ostream &operator <<
@@ -300,10 +300,10 @@ namespace gmm
     typedef abstract_null_type const_col_iterator; // to be done ...
     typedef abstract_null_type sub_orientation; // to be done ...
     typedef abstract_null_type access_type; // to be done ...
-    size_type nrows(const this_type &m) { return m.nrows(); }
-    size_type ncols(const this_type &m) { return m.ncols(); }
-    const void* origin(const this_type &m) { return &m; }
-    void do_clear(this_type &m) { m.do_clear(); }
+    static size_type nrows(const this_type &m) { return m.nrows(); }
+    static size_type ncols(const this_type &m) { return m.ncols(); }
+    static const void* origin(const this_type &m) { return &m; }
+    static void do_clear(this_type &m) { m.do_clear(); }
   };
 
   template <class MAT> void block_matrix<MAT>::do_clear(void) { 

@@ -90,19 +90,19 @@ namespace gmm {
             linalg_traits<M>::row_iterator, PT>::return_type col_iterator;
     typedef col_major sub_orientation;
     typedef transposed_row_matrix_access<PT> access_type;
-    size_type ncols(const this_type &v) { return v._end - v._begin; }
-    size_type nrows(const this_type &v)
+    static size_type ncols(const this_type &v) { return v._end - v._begin; }
+    static size_type nrows(const this_type &v)
     { return (ncols(v) == 0) ? 0 : vect_size(mat_col(v, 0)); }
-    const_sub_col_type col(const const_col_iterator &it)
-    { return linalg_traits<M>().row(it); }
-    sub_col_type col(const col_iterator &it)
-    { return linalg_traits<M>().row(it); }
-    col_iterator col_begin(this_type &m) { return m._begin; }
-    col_iterator col_end(this_type &m) { return m._end; }
-    const_col_iterator col_begin(const this_type &m) { return m._begin; }
-    const_col_iterator col_end(const this_type &m) { return m._end; }
-    const void* origin(const this_type &v) { return v.origin; }
-    void do_clear(this_type &v);
+    static const_sub_col_type col(const const_col_iterator &it)
+    { return linalg_traits<M>::row(it); }
+    static sub_col_type col(const col_iterator &it)
+    { return linalg_traits<M>::row(it); }
+    static col_iterator col_begin(this_type &m) { return m._begin; }
+    static col_iterator col_end(this_type &m) { return m._end; }
+    static const_col_iterator col_begin(const this_type &m) { return m._begin; }
+    static const_col_iterator col_end(const this_type &m) { return m._end; }
+    static const void* origin(const this_type &v) { return v.origin; }
+    static void do_clear(this_type &v);
   };
   
   template <class PT> 
@@ -172,19 +172,19 @@ namespace gmm {
             linalg_traits<M>::col_iterator, PT>::return_type row_iterator;
     typedef row_major sub_orientation;
     typedef transposed_col_matrix_access<PT> access_type;
-    size_type nrows(const this_type &v) { return v._end - v._begin; }
-    size_type ncols(const this_type &v)
+    static size_type nrows(const this_type &v) { return v._end - v._begin; }
+    static size_type ncols(const this_type &v)
     { return (nrows(v) == 0) ? 0 : vect_size(mat_row(v, 0)); }
-    const_sub_row_type row(const const_row_iterator &it)
-    { return linalg_traits<M>().col(it); }
-    sub_row_type row(const row_iterator &it)
-    { return linalg_traits<M>().col(it); }
-    row_iterator row_begin(this_type &m) { return m._begin; }
-    row_iterator row_end(this_type &m) { return m._end; }
-    const_row_iterator row_begin(const this_type &m) { return m._begin; }
-    const_row_iterator row_end(const this_type &m) { return m._end; }
-    const void* origin(const this_type &m) { return m.origin; }
-    void do_clear(this_type &m);
+    static const_sub_row_type row(const const_row_iterator &it)
+    { return linalg_traits<M>::col(it); }
+    static sub_row_type row(const row_iterator &it)
+    { return linalg_traits<M>::col(it); }
+    static row_iterator row_begin(this_type &m) { return m._begin; }
+    static row_iterator row_end(this_type &m) { return m._end; }
+    static const_row_iterator row_begin(const this_type &m) { return m._begin; }
+    static const_row_iterator row_end(const this_type &m) { return m._end; }
+    static const void* origin(const this_type &m) { return m.origin; }
+    static void do_clear(this_type &m);
   };
 
   template <class PT> 

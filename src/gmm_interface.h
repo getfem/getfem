@@ -116,13 +116,13 @@ namespace gmm {
     typedef typename linalg_traits<V>::storage_type storage_type;
     typedef typename linalg_traits<V>::access_type access_type;
     typedef typename linalg_traits<V>::clear_type  clear_type;
-    size_type size(const this_type &v) { return v._size; }
-    iterator begin(this_type &v) { return v._begin; }
-    const_iterator begin(const this_type &v) { return v._begin; }
-    iterator end(this_type &v) { return v._end; }
-    const_iterator end(const this_type &v) { return v._end; }
-    const void* origin(const this_type &v) { return v.origin; }
-    void do_clear(this_type &v) { clear_type()(v.origin, v._begin, v._end); }
+    static size_type size(const this_type &v) { return v._size; }
+    static iterator begin(this_type &v) { return v._begin; }
+    static const_iterator begin(const this_type &v) { return v._begin; }
+    static iterator end(this_type &v) { return v._end; }
+    static const_iterator end(const this_type &v) { return v._end; }
+    static const void* origin(const this_type &v) { return v.origin; }
+    static void do_clear(this_type &v) { clear_type()(v.origin, v._begin, v._end); }
   };
 
   // for GCC 2.95
@@ -146,13 +146,13 @@ namespace gmm {
     typedef abstract_plain storage_type;
     typedef plain_access<this_type> access_type;
     typedef plain_clear<this_type> clear_type;
-    size_type size(const this_type &v) { return v.size(); }
-    iterator begin(this_type &v) { return v.begin(); }
-    const_iterator begin(const this_type &v) { return v.begin(); }
-    iterator end(this_type &v) { return v.end(); }
-    const_iterator end(const this_type &v) { return v.end(); }
-    const void* origin(const this_type &v) { return &v; }
-    void do_clear(this_type &v) { clear_type()(origin(v), begin(v), end(v)); }
+    static size_type size(const this_type &v) { return v.size(); }
+    static iterator begin(this_type &v) { return v.begin(); }
+    static const_iterator begin(const this_type &v) { return v.begin(); }
+    static iterator end(this_type &v) { return v.end(); }
+    static const_iterator end(const this_type &v) { return v.end(); }
+    static const void* origin(const this_type &v) { return &v; }
+    static void do_clear(this_type &v) { clear_type()(origin(v), begin(v), end(v)); }
   };
 }
 namespace std {
@@ -200,13 +200,13 @@ namespace gmm {
     typedef abstract_plain storage_type;
     typedef plain_access<this_type> access_type;
     typedef plain_clear<this_type> clear_type;
-    size_type size(const this_type &v) { return v.size(); }
-    iterator begin(this_type &v) { return v.begin(); }
-    const_iterator begin(const this_type &v) { return v.begin(); }
-    iterator end(this_type &v) { return v.end(); }
-    const_iterator end(const this_type &v) { return v.end(); }
-    const void* origin(const this_type &v) { return v.origin; }
-    void do_clear(this_type &v) { clear_type()(v.origin, v.begin(), v.end()); }
+    static size_type size(const this_type &v) { return v.size(); }
+    static iterator begin(this_type &v) { return v.begin(); }
+    static const_iterator begin(const this_type &v) { return v.begin(); }
+    static iterator end(this_type &v) { return v.end(); }
+    static const_iterator end(const this_type &v) { return v.end(); }
+    static const void* origin(const this_type &v) { return v.origin; }
+    static void do_clear(this_type &v) { clear_type()(v.origin, v.begin(), v.end()); }
   };
 
   template <class IT> std::ostream &operator <<
@@ -252,13 +252,13 @@ namespace gmm {
     typedef abstract_plain storage_type;
     typedef plain_access<this_type> access_type;
     typedef plain_clear<this_type> clear_type;
-    size_type size(const this_type &v) { return v.size(); }
-    iterator begin(this_type &v) { return v.begin(); }
-    const_iterator begin(const this_type &v) { return v.begin(); }
-    iterator end(this_type &v) { return v.end(); }
-    const_iterator end(const this_type &v) { return v.end(); }
-    const void* origin(const this_type &v) { return v.origin; }
-    void do_clear(this_type &v) { clear_type()(v.origin, v.begin(), v.end()); }
+    static size_type size(const this_type &v) { return v.size(); }
+    static iterator begin(this_type &v) { return v.begin(); }
+    static const_iterator begin(const this_type &v) { return v.begin(); }
+    static iterator end(this_type &v) { return v.end(); }
+    static const_iterator end(const this_type &v) { return v.end(); }
+    static const void* origin(const this_type &v) { return v.origin; }
+    static void do_clear(this_type &v) { clear_type()(v.origin, v.begin(), v.end()); }
   };
   
   template <class IT> std::ostream &operator <<
@@ -305,13 +305,13 @@ namespace gmm {
     typedef abstract_plain storage_type;
     typedef plain_access<this_type> access_type;
     typedef plain_clear<this_type> clear_type;
-    size_type size(const this_type &v) { return v.size(); }
-    iterator begin(this_type &v) { return v.begin(); }
-    const_iterator begin(const this_type &v) { return v.begin(); }
-    iterator end(this_type &v) { return v.end(); }
-    const_iterator end(const this_type &v) { return v.end(); }
-    const void* origin(const this_type &v) { return v.origin; }
-    void do_clear(this_type &v) { clear_type()(v.origin, v.begin(), v.end()); }
+    static size_type size(const this_type &v) { return v.size(); }
+    static iterator begin(this_type &v) { return v.begin(); }
+    static const_iterator begin(const this_type &v) { return v.begin(); }
+    static iterator end(this_type &v) { return v.end(); }
+    static const_iterator end(const this_type &v) { return v.end(); }
+    static const void* origin(const this_type &v) { return v.origin; }
+    static void do_clear(this_type &v) { clear_type()(v.origin, v.begin(), v.end()); }
   };
 
   template <class IT, class ITINDEX> std::ostream &operator <<
@@ -340,13 +340,13 @@ namespace gmm {
     typedef abstract_plain storage_type;
     typedef plain_access<this_type> access_type;
     typedef plain_clear<this_type> clear_type;
-    size_type size(const this_type &v) { return v.size(); }
-    iterator begin(this_type &v) { return v.begin(); }
-    const_iterator begin(const this_type &v) { return v.begin(); }
-    iterator end(this_type &v) { return v.end(); }
-    const_iterator end(const this_type &v) { return v.end(); }
-    const void* origin(const this_type &v) { return &v; }
-    void do_clear(this_type &v) { clear_type()(origin(v), begin(v), end(v)); }
+    static size_type size(const this_type &v) { return v.size(); }
+    static iterator begin(this_type &v) { return v.begin(); }
+    static const_iterator begin(const this_type &v) { return v.begin(); }
+    static iterator end(this_type &v) { return v.end(); }
+    static const_iterator end(const this_type &v) { return v.end(); }
+    static const void* origin(const this_type &v) { return &v; }
+    static void do_clear(this_type &v) { clear_type()(origin(v), begin(v), end(v)); }
   };
 
   // for GCC 2.95
@@ -364,13 +364,13 @@ namespace gmm {
     typedef abstract_plain storage_type;
     typedef plain_access<this_type> access_type;
     typedef plain_clear<this_type> clear_type;
-    size_type size(const this_type &v) { return v.size(); }
-    iterator begin(this_type &v) { return v.begin(); }
-    const_iterator begin(const this_type &v) { return v.begin(); }
-    iterator end(this_type &v) { return v.end(); }
-    const_iterator end(const this_type &v) { return v.end(); }
-    const void* origin(const this_type &v) { return &v; }
-    void do_clear(this_type &v) { clear_type()(origin(v), begin(v), end(v)); }
+    static size_type size(const this_type &v) { return v.size(); }
+    static iterator begin(this_type &v) { return v.begin(); }
+    static const_iterator begin(const this_type &v) { return v.begin(); }
+    static iterator end(this_type &v) { return v.end(); }
+    static const_iterator end(const this_type &v) { return v.end(); }
+    static const void* origin(const this_type &v) { return &v; }
+    static void do_clear(this_type &v) { clear_type()(origin(v), begin(v), end(v)); }
   };
 
   // for GCC 2.95
@@ -388,13 +388,13 @@ namespace gmm {
     typedef typename linalg_traits<VECT>::storage_type storage_type;
     typedef plain_access<this_type> access_type;
     typedef plain_clear<this_type> clear_type;
-    size_type size(const this_type &v) { return v.size(); }
-    iterator begin(this_type &v) { return vect_begin(v); }
-    const_iterator begin(const this_type &v) { return vect_begin(v); }
-    iterator end(this_type &v) { return vect_end(v); }
-    const_iterator end(const this_type &v) { return vect_end(v); }
-    const void* origin(const this_type &v) { return &v; }
-    void do_clear(this_type &v) { clear_type()(origin(v), begin(v), end(v)); }
+    static size_type size(const this_type &v) { return v.size(); }
+    static iterator begin(this_type &v) { return vect_begin(v); }
+    static const_iterator begin(const this_type &v) { return vect_begin(v); }
+    static iterator end(this_type &v) { return vect_end(v); }
+    static const_iterator end(const this_type &v) { return vect_end(v); }
+    static const void* origin(const this_type &v) { return &v; }
+    static void do_clear(this_type &v) { clear_type()(origin(v), begin(v), end(v)); }
   };
 
   // for GCC 2.95
@@ -480,34 +480,34 @@ namespace gmm {
             typename this_type::iterator> const_col_iterator;
     typedef col_and_row sub_orientation;
     typedef bgeot_fsmatrix_access<T, N> access_type;
-    size_type nrows(const this_type &m) { return N; }
-    size_type ncols(const this_type &m) { return N; } 
-    const_sub_row_type row(const const_row_iterator &it)
+    static size_type nrows(const this_type &m) { return N; }
+    static size_type ncols(const this_type &m) { return N; } 
+    static const_sub_row_type row(const const_row_iterator &it)
     { return const_sub_row_type(it.it, it.it + N * N, N, it.origin);  }
-    const_sub_col_type col(const const_col_iterator &it)
+    static const_sub_col_type col(const const_col_iterator &it)
     { return const_sub_col_type(it.it, it.it + N, it.origin); }
-    sub_row_type row(const row_iterator &it) 
+    static sub_row_type row(const row_iterator &it) 
     { return sub_row_type(it.it, it.it + N * N, it.nrows, it.origin); }
-    sub_col_type col(const col_iterator &it)
+    static sub_col_type col(const col_iterator &it)
     { return sub_col_type(it.it, it.it + N, it.origin); }
-    row_iterator row_begin(this_type &m)
+    static row_iterator row_begin(this_type &m)
     { return row_iterator(m.begin(), 1, N, N, &m); }
-    row_iterator row_end(this_type &m)
+    static row_iterator row_end(this_type &m)
     { return row_iterator(m.begin() + N, 1, N, N, &m); }
-    const_row_iterator row_begin(const this_type &m)
+    static const_row_iterator row_begin(const this_type &m)
     { return const_row_iterator(m.begin(), 1, N, N, &m); }
-    const_row_iterator row_end(const this_type &m)
+    static const_row_iterator row_end(const this_type &m)
     { return const_row_iterator(m.begin() + N, 1, N, N, &m); }
-    col_iterator col_begin(this_type &m)
+    static col_iterator col_begin(this_type &m)
     { return col_iterator(m.begin(), N, N, N, &m); }
-    col_iterator col_end(this_type &m)
+    static col_iterator col_end(this_type &m)
     { return col_iterator(m.end(), N, N, N, &m); }
-    const_col_iterator col_begin(const this_type &m)
+    static const_col_iterator col_begin(const this_type &m)
     { return const_col_iterator(m.begin(), N, N, N, &m); }
-    const_col_iterator col_end(const this_type &m)
+    static const_col_iterator col_end(const this_type &m)
     { return const_col_iterator(m.end(), N, N, N, &m); }
-    const void* origin(const this_type &m) { return &m; }
-    void do_clear(this_type &m);
+    static const void* origin(const this_type &m) { return &m; }
+    static void do_clear(this_type &m);
   };
   template <class T, int N>
   void linalg_traits<bgeot::fsmatrix<T, N> >::do_clear(this_type &m)
@@ -550,40 +550,40 @@ namespace gmm {
 	    typename this_type::iterator> const_col_iterator;
     typedef col_and_row sub_orientation;
     typedef bgeot_vsmatrix_access<T> access_type;
-    size_type nrows(const this_type &m) { return m.nrows(); }
-    size_type ncols(const this_type &m) { return m.ncols(); }
-    const_sub_row_type row(const const_row_iterator &it) {
+    static size_type nrows(const this_type &m) { return m.nrows(); }
+    static size_type ncols(const this_type &m) { return m.ncols(); }
+    static const_sub_row_type row(const const_row_iterator &it) {
       return const_sub_row_type(it.it, it.it + it.ncols * it.nrows,
 				it.nrows, it.origin); 
     }
-    const_sub_col_type col(const const_col_iterator &it)
+    static const_sub_col_type col(const const_col_iterator &it)
     { return const_sub_col_type(it.it, it.it + it.nrows, it.origin); }
-    sub_row_type row(const row_iterator &it) {
+    static sub_row_type row(const row_iterator &it) {
       return sub_row_type(it.it, it.it + it.ncols * it.nrows,
 			  it.nrows, it.origin);
     }
-    sub_col_type col(const col_iterator &it)
+    static sub_col_type col(const col_iterator &it)
     { return sub_col_type(it.it, it.it + it.nrows, it.origin); }
-    row_iterator row_begin(this_type &m)
+    static row_iterator row_begin(this_type &m)
     { return row_iterator(m.begin(), 1, m.nrows(), m.ncols(), &m); }
-    row_iterator row_end(this_type &m)
+    static row_iterator row_end(this_type &m)
     { return row_iterator(m.begin()+m.nrows(), 1, m.nrows(), m.ncols(), &m); }
-    const_row_iterator row_begin(const this_type &m)
+    static const_row_iterator row_begin(const this_type &m)
     { return const_row_iterator(m.begin(), 1, m.nrows(), m.ncols(), &m); }
-    const_row_iterator row_end(const this_type &m) {
+    static const_row_iterator row_end(const this_type &m) {
       return const_row_iterator(m.begin()+m.nrows(), 1, m.nrows(),
 				m.ncols(), &m);
     }
-    col_iterator col_begin(this_type &m)
+    static col_iterator col_begin(this_type &m)
     { return col_iterator(m.begin(), m.nrows(), m.nrows(), m.ncols(), &m); }
-    col_iterator col_end(this_type &m)
+    static col_iterator col_end(this_type &m)
     { return col_iterator(m.end(), m.nrows(), m.nrows(), m.ncols(), &m); }
-    const_col_iterator col_begin(const this_type &m)
+    static const_col_iterator col_begin(const this_type &m)
     { return const_col_iterator(m.begin(),m.nrows(),m.nrows(),m.ncols(),&m); }
-    const_col_iterator col_end(const this_type &m)
+    static const_col_iterator col_end(const this_type &m)
     { return const_col_iterator(m.end(), m.nrows(),m.nrows(),m.ncols(), &m); }
-    const void* origin(const this_type &m) { return &m; }
-    void do_clear(this_type &m) { m.fill(value_type(0)); }
+    static const void* origin(const this_type &m) { return &m; }
+    static void do_clear(this_type &m) { m.fill(value_type(0)); }
   };
 
   // for GCC 2.95
@@ -677,12 +677,12 @@ namespace gmm {
     typedef abstract_sparse storage_type;
     typedef cs_vector_access<PT1, PT2, shift> access_type;
     typedef abstract_null_type clear_type;
-    size_type size(const this_type &v) { return v.size(); }
-    iterator begin(this_type &v) { return v.begin(); }
-    const_iterator begin(const this_type &v) { return v.begin(); }
-    iterator end(this_type &v) { return v.end(); }
-    const_iterator end(const this_type &v) { return v.end(); }
-    const void* origin(const this_type &v) { return v.pr; }
+    static size_type size(const this_type &v) { return v.size(); }
+    static iterator begin(this_type &v) { return v.begin(); }
+    static const_iterator begin(const this_type &v) { return v.begin(); }
+    static iterator end(this_type &v) { return v.end(); }
+    static const_iterator end(const this_type &v) { return v.end(); }
+    static const void* origin(const this_type &v) { return v.pr; }
   };
 
   template <class PT1, class PT2, int shift>
@@ -788,18 +788,18 @@ namespace gmm {
     typedef col_iterator const_col_iterator;
     typedef csc_matrix_access<PT1, PT2, PT3, shift> access_type;
     typedef col_major sub_orientation;
-    size_type nrows(const this_type &m) { return m.nrows(); }
-    size_type ncols(const this_type &m) { return m.ncols(); }
-    const_col_iterator col_begin(const this_type &m)
+    static size_type nrows(const this_type &m) { return m.nrows(); }
+    static size_type ncols(const this_type &m) { return m.ncols(); }
+    static const_col_iterator col_begin(const this_type &m)
     { return const_col_iterator(m.pr, m.ir, m.jc, m.nr, m.pr); }
-    const_col_iterator col_end(const this_type &m)
+    static const_col_iterator col_end(const this_type &m)
     { return const_col_iterator(m.pr, m.ir, m.jc + m.nc, m.nr, m.pr); }
-    const_sub_col_type col(const const_col_iterator &it) {
+    static const_sub_col_type col(const const_col_iterator &it) {
       return const_sub_col_type(it.pr + *(it.jc) - shift,
 	     it.ir + *(it.jc) - shift, *(it.jc + 1) - *(it.jc), it.n);
     }
-    const void* origin(const this_type &m) { return m.pr; }
-    void do_clear(this_type &m) { m.do_clear(); }
+    static const void* origin(const this_type &m) { return m.pr; }
+    static void do_clear(this_type &m) { m.do_clear(); }
   };
 
    // for GCC 2.95
@@ -867,18 +867,18 @@ namespace gmm {
 				       shift>  row_iterator;
     typedef row_iterator const_row_iterator;
     typedef row_major sub_orientation;
-    size_type nrows(const this_type &m) { return m.nrows(); }
-    size_type ncols(const this_type &m) { return m.ncols(); }
-    const_row_iterator row_begin(const this_type &m)
+    static size_type nrows(const this_type &m) { return m.nrows(); }
+    static size_type ncols(const this_type &m) { return m.ncols(); }
+    static const_row_iterator row_begin(const this_type &m)
     { return const_row_iterator(m.pr, m.ir, m.jc, m.nc, m.pr); }
-    const_row_iterator row_end(const this_type &m)
+    static const_row_iterator row_end(const this_type &m)
     { return const_row_iterator(m.pr, m.ir, m.jc + m.nr, m.nc, m.pr); }
-    const_sub_row_type row(const const_row_iterator &it) {
+    static const_sub_row_type row(const const_row_iterator &it) {
       return const_sub_row_type(it.pr + *(it.jc) - shift,
 	     it.ir + *(it.jc) - shift, *(it.jc + 1) - *(it.jc), it.n);
     }
-    const void* origin(const this_type &m) { return m.pr; }
-    void do_clear(this_type &m) { m.do_clear(); }
+    static const void* origin(const this_type &m) { return m.pr; }
+    static void do_clear(this_type &m) { m.do_clear(); }
   };
 
   template <class PT1, class PT2, class PT3, int shift>

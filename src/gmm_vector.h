@@ -255,13 +255,13 @@ namespace gmm
     typedef abstract_sparse storage_type;
     typedef wsvector_access<T> access_type;
     typedef wsvector_clear<T> clear_type;
-    size_type size(const this_type &v) { return v.size(); }
-    iterator begin(this_type &v) { return v.tas_begin(); }
-    const_iterator begin(const this_type &v) { return v.tas_begin(); }
-    iterator end(this_type &v) { return v.tas_end(); }
-    const_iterator end(const this_type &v) { return v.tas_end(); }
-    const void* origin(const this_type &v) { return &v; }
-    void do_clear(this_type &v) { clear_type()(origin(v), begin(v), end(v)); }
+    static size_type size(const this_type &v) { return v.size(); }
+    static iterator begin(this_type &v) { return v.tas_begin(); }
+    static const_iterator begin(const this_type &v) { return v.tas_begin(); }
+    static iterator end(this_type &v) { return v.tas_end(); }
+    static const_iterator end(const this_type &v) { return v.tas_end(); }
+    static const void* origin(const this_type &v) { return &v; }
+    static void do_clear(this_type &v) { clear_type()(origin(v), begin(v), end(v)); }
   };
 
   template<class T> std::ostream &operator <<
@@ -521,14 +521,14 @@ namespace gmm
     typedef abstract_sparse storage_type;
     typedef rsvector_access<T> access_type;
     typedef rsvector_clear<T> clear_type;
-    size_type size(const this_type &v) { return v.size(); }
-    iterator begin(this_type &v) { return iterator(v.begin()); }
-    const_iterator begin(const this_type &v)
+    static size_type size(const this_type &v) { return v.size(); }
+    static iterator begin(this_type &v) { return iterator(v.begin()); }
+    static const_iterator begin(const this_type &v)
     { return const_iterator(v.begin()); }
-    iterator end(this_type &v) { return iterator(v.end()); }
-    const_iterator end(const this_type &v) { return const_iterator(v.end()); }
-    const void* origin(const this_type &v) { return &v; }
-    void do_clear(this_type &v) { clear_type()(origin(v), begin(v), end(v)); }
+    static iterator end(this_type &v) { return iterator(v.end()); }
+    static const_iterator end(const this_type &v) { return const_iterator(v.end()); }
+    static const void* origin(const this_type &v) { return &v; }
+    static void do_clear(this_type &v) { clear_type()(origin(v), begin(v), end(v)); }
   };
 
   template<class T> std::ostream &operator <<
