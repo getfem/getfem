@@ -1,8 +1,39 @@
-#include <getfem_mesh.h>
+/* *********************************************************************** */
+/*                                                                         */
+/* Library :  GEneric Tool for Finite Element Methods (getfem)             */
+/* File    :  getfem_.                       */
+/*     									   */
+/*                                                                         */
+/* Date : May 1, 2004.                                                     */
+/* Author : Julien Pommier, Julien.Pommier@insa-toulouse.fr                */
+/*          Yves Renard, Yves.Renard@insa-toulouse.fr                      */
+/*                                                                         */
+/* *********************************************************************** */
+/*                                                                         */
+/* Copyright (C) 2004    Julien Pommier, Yves Renard.                      */
+/*                                                                         */
+/* This file is a part of GETFEM++                                         */
+/*                                                                         */
+/* This program is free software; you can redistribute it and/or modify    */
+/* it under the terms of the GNU Lesser General Public License as          */
+/* published by the Free Software Foundation; version 2.1 of the License.  */
+/*                                                                         */
+/* This program is distributed in the hope that it will be useful,         */
+/* but WITHOUT ANY WARRANTY; without even the implied warranty of          */
+/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           */
+/* GNU Lesser General Public License for more details.                     */
+/*                                                                         */
+/* You should have received a copy of the GNU Lesser General Public        */
+/* License along with this program; if not, write to the Free Software     */
+/* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,  */
+/* USA.                                                                    */
+/*                                                                         */
+/* *********************************************************************** */
+
+#include <test_mesh_generation.h>
 #ifdef GETFEM_HAVE_FEENABLEEXCEPT
 #  include <fenv.h>
 #endif
-#include <gmm_condition_number.h>
 extern "C"
 {
 #include <qhull/qhull.h>
@@ -15,31 +46,9 @@ extern "C"
 #include <qhull/stat.h>
 }
 
-#include <bgeot_comma_init.h>
-#include <gmm_solver_bfgs.h>
-#include <getfem_export.h>
-#include <bgeot_kdtree.h>
-#include <typeinfo>
-
-
 int ORIGINAL = 1;
 
 namespace getfem {
-  /*template <typename MAT> 
-  typename number_traits<typename 
-  linalg_traits<MAT>::value_type>::magnitude_type
-  Frobenius_condition_number(const MAT& M) { 
-    typedef typename linalg_traits<MAT>::value_type T;
-    typedef typename number_traits<T>::magnitude_type R;
-    size_type m = gmm::mat_nrows(M), n = gmm::mat_ncols(M);
-    dense_matrix<T> B(std::min(m,n), std::min(m,n));
-    if (m < n) gmm::mult(M,gmm::conjugated(M),B);
-    else       gmm::mult(gmm::conjugated(M),M,B);
-    R trB = gmm::abs(gmm::mat_trace(B));
-    gmm::lu_inverse(B);
-    return sqrt(trB*gmm::abs(gmm::mat_trace(B)));
-  }
-  */
 
   template <typename MAT, typename MAT2> void
   Frobenius_condition_number_sqr_gradient(const MAT& M, MAT2& G) { 
@@ -101,173 +110,6 @@ namespace getfem {
       cerr << "qhull internal warning (main): did not free " << totlong << 
         " bytes of long memory (" << curlong << " pieces)\n";
   }
-
-  class mesher_virtual_function {
-  public:
-    virtual scalar_type operator()(const base_node &P) const = 0;
-    virtual ~mesher_virtual_function() {}
-  };
-
-  class mvf_constant : public mesher_virtual_function {
-    scalar_type c;
-  public: 
-    mvf_constant(scalar_type c_) : c(c_) {}
-    scalar_type operator()(const base_node &) const { return c; }
-  };
-#define SEPS 1e-5
-  class mesher_signed_distance : public mesher_virtual_function {
-  protected:
-    mutable size_type id;
-  public:
-    mesher_signed_distance() : id(size_type(-1)) {}
-    virtual void bounding_box(base_node &bmin, base_node &bmax) const = 0;
-    virtual scalar_type operator()(const base_node &P, dal::bit_vector &bv) const = 0;
-    virtual base_small_vector grad(const base_node &P) const = 0;
-    virtual void register_constraints(std::vector<const mesher_signed_distance*>& list) const = 0;
-    scalar_type operator()(const base_node &P) const {
-      dal::bit_vector bv;
-      return (*this)(P,bv);
-    }
-  };
-
-  class mesher_half_space : public mesher_signed_distance {
-    base_node x0; base_node n;
-  public:
-    mesher_half_space(base_node x0_, base_node n_) : x0(x0_), n(n_) { n /= gmm::vect_norm2(n); }
-    void bounding_box(base_node &, base_node &) const { 
-      /* to be done ... */
-    }
-    virtual scalar_type operator()(const base_node &P, dal::bit_vector &bv) const {
-      scalar_type d = bgeot::vect_sp(x0-P,n);
-      bv[id] = (dal::abs(d) < SEPS);
-      return d;
-    }
-    virtual void register_constraints(std::vector<const mesher_signed_distance*>& list) const {
-      id = list.size(); list.push_back(this);
-    }
-    virtual base_small_vector grad(const base_node &) const {
-      return -1.*n;
-    }
-  };
-
-
-  class mesher_sphere : public mesher_signed_distance {
-    base_node x0; scalar_type R;
-  public:
-    mesher_sphere(base_node x0_, scalar_type R_) : x0(x0_), R(R_) {}
-    void bounding_box(base_node &bmin, base_node &bmax) const { 
-      bmin = bmax = x0; 
-      for (size_type i=0; i < x0.size(); ++i) { bmin[i] -= R; bmax[i] += R; }
-    }
-    virtual scalar_type operator()(const base_node &P, dal::bit_vector &bv) const {
-      scalar_type d = bgeot::vect_dist2(P,x0)-R;
-      bv[id] = (dal::abs(d) < SEPS);
-      return d;
-    }
-    virtual void register_constraints(std::vector<const mesher_signed_distance*>& list) const {
-      id = list.size(); list.push_back(this);
-    }
-    virtual base_small_vector grad(const base_node &P) const {
-      base_small_vector g(P - x0);
-      return g/gmm::vect_norm2(g);
-    }
-  };
-
-  class mesher_rectangle : public mesher_signed_distance {
-    base_node rmin, rmax;
-  public:
-    mesher_rectangle(base_node rmin_, base_node rmax_) : rmin(rmin_), rmax(rmax_) {}
-    void bounding_box(base_node &bmin, base_node &bmax) const {
-      bmin = rmin; bmax = rmax; 
-    }
-    virtual scalar_type operator()(const base_node &P, dal::bit_vector &) const {
-      size_type N = rmin.size();
-      scalar_type d = -1000000000000.;
-      for (size_type i=0; i < N; ++i) {
-	d = std::max(d, rmin[i] - P[i]);
-	d = std::max(d, P[i] - rmax[i]);
-      }
-      return d;
-      if (d > 0) { /* handle distance to the vertices */
-	for (size_type i=1; i < pow(3,N); ++i) {
-	  base_node Q(rmin);
-	  for (size_type m=i,k=0; m; ++k,m/=3) { 
-	    if (m % 3 == 0) Q[k] = P[k];
-	    else if (m % 3 == 1) Q[k] = rmax[k]; 
-	  }
-	  d = std::min(d, bgeot::vect_dist2(P,Q));
-	}
-      }
-      return d;
-    }
-    virtual base_small_vector grad(const base_node &) const { assert(0); }
-    virtual void register_constraints(std::vector<const mesher_signed_distance*>&) const { cout << "to be done\n"; assert(0); }
-  };
-
-  class mesher_union : public mesher_signed_distance {
-    const mesher_signed_distance &a, &b;
-  public:
-    mesher_union(const mesher_signed_distance& a_, const mesher_signed_distance &b_) : a(a_), b(b_) {}
-    void bounding_box(base_node &bmin, base_node &bmax) const {
-      base_node bmin2, bmax2;
-      a.bounding_box(bmin,bmax);b.bounding_box(bmin2,bmax2);
-      for (size_type i=0; i < bmin.size(); ++i) { 
-        bmin[i] = std::min(bmin[i],bmin2[i]);bmax[i] = std::max(bmax[i],bmax2[i]);
-      }
-    }
-    scalar_type operator()(const base_node &P, dal::bit_vector &bv) const {
-      return std::min(a(P,bv),b(P,bv));
-    }
-    virtual void register_constraints(std::vector<const mesher_signed_distance*>& list) const {
-      a.register_constraints(list); b.register_constraints(list);
-    }
-    virtual base_small_vector grad(const base_node &P) const {
-      if (a(P) < b(P)) return a.grad(P);
-      else return b.grad(P);
-    }
-  };
-
-  class mesher_intersection : public mesher_signed_distance {
-    const mesher_signed_distance &a, &b;
-  public:
-    mesher_intersection(const mesher_signed_distance& a_, const mesher_signed_distance &b_) : a(a_), b(b_) {}
-    void bounding_box(base_node &bmin, base_node &bmax) const {
-      a.bounding_box(bmin,bmax);b.bounding_box(bmin,bmax);
-      /* TODO */
-    }
-    scalar_type operator()(const base_node &P, dal::bit_vector &bv) const {
-      return std::max(a(P,bv),b(P,bv));
-    }
-    virtual void register_constraints(std::vector<const mesher_signed_distance*>& list) const {
-      a.register_constraints(list); b.register_constraints(list);
-    }
-    virtual base_small_vector grad(const base_node &P) const {
-      scalar_type da = a(P), db = b(P);
-      if (da > db) return a.grad(P);
-      else return b.grad(P);
-    }
-  };
-  
-  class mesher_cylinder : public mesher_signed_distance {
-  public:
-    mesher_cylinder() {}
-    void bounding_box(base_node &bmin, base_node &bmax) const {
-      bmin = base_node(3); bmax = base_node(3); 
-      for (size_type i=0; i < 3; ++i) { bmin[i] = -1.; bmax[i] = 1.; }
-    }
-    virtual scalar_type operator()(const base_node &P, dal::bit_vector& ) const {
-      scalar_type d1 = sqrt(dal::sqr(P[0])+dal::sqr(P[1])) - 1;
-      scalar_type d2 = -1 - P[2];
-      scalar_type d3 = P[2] - 1;
-      scalar_type d = std::max(std::max(d1,d2),d3);
-      if (d1 > 0 && d2 > 0) d = sqrt(dal::sqr(d1)+dal::sqr(d2));
-      else if (d1 > 0 && d3 > 0) d = sqrt(dal::sqr(d1)+dal::sqr(d3));
-      return d;
-    }
-    virtual base_small_vector grad(const base_node &) const { assert(0); }
-    virtual void register_constraints(std::vector<const mesher_signed_distance*>&) const { assert(0); }
-  };
-
 
 #define REVC 0.
   scalar_type force(scalar_type l, scalar_type l0) { 
@@ -429,11 +271,10 @@ namespace getfem {
        for (unsigned i=0; i < pts.size(); ++i) {
    	if (pts_attr[i]->constraints.card() || pts_attr[i]->fixed) 
     	  for (size_type k=0; k < N; ++k) {
-//    	    grad[i*N+k] = 0;
+    	    grad[i*N+k] = 0;
 //	    cout << " " << grad[i*N+k];
     	  }
        }
-       cout << endl;
       gmm::scale(grad, scalar_type(1) / scalar_type(N * N));
       
     }
@@ -499,11 +340,11 @@ namespace getfem {
       cout << "Initial quality: " << fbcond_cost_function(X)/nbt << "\n";
       cout << "best element : " << sqrt(best_element) << " worst element : "
 	   << sqrt(worst_element) << endl;
-      gmm::iteration iter; iter.set_noisy(2); iter.set_maxiter(1000);
+      gmm::iteration iter; iter.set_noisy(1); iter.set_maxiter(400);
       iter.set_resmax(1E-7);
       gmm::bfgs(fbcond_cost_function_object(*this), 
 		fbcond_cost_function_derivative_object(*this),
-		X, 10, iter, 0, 0.001, float(gmm::mat_ncols(t)));
+		X, 20, iter, 0, 0.001, float(gmm::mat_ncols(t)));
 
       cout << "Final quality: " << fbcond_cost_function(X)/nbt << "\n";
       cout << "best element : " << sqrt(best_element) << " worst element : "
@@ -869,26 +710,33 @@ namespace getfem {
 	pts2.resize(pts.size());
 	std::copy(pts.begin(),pts.end(),pts2.begin());
 	if (ORIGINAL == 1) {
-	  for (dal::bv_visitor ie(edges_mesh.convex_index()); !ie.finished(); ++ie) {
-	    size_type iA = edges_mesh.ind_points_of_convex(ie)[0];
-	    size_type iB = edges_mesh.ind_points_of_convex(ie)[1];
-	    base_node bar = pts2[iB]-pts2[iA];
-	    //scalar_type F = L0[ie] - L[ie];
-	    scalar_type F = std::max(L0[ie]-L[ie], 0.);
-	    //scalar_type F = (L0[ie] > L[ie]) ? L0[ie] - L[ie] : 1./L[ie] - 1/L0[ie];
-	    //if (dal::abs(F) > 1) F = F / dal::abs(F);
-	    if (F) {
-	      base_node Fbar = (bar)*(F/L[ie]);
-
-	      if (!pts_attr[iA]->on_bounding_box && !pts_attr[iB]->on_bounding_box) {
-		if (!pts_attr[iA]->fixed) pts[iA] -= deltat*Fbar; 
-		if (!pts_attr[iB]->fixed) pts[iB] += deltat*Fbar;
+	  
+	  if ((count % 2) == 0 || count < 1000) {
+	    for (dal::bv_visitor ie(edges_mesh.convex_index()); !ie.finished(); ++ie) {
+	      size_type iA = edges_mesh.ind_points_of_convex(ie)[0];
+	      size_type iB = edges_mesh.ind_points_of_convex(ie)[1];
+	      base_node bar = pts2[iB]-pts2[iA];
+	      //scalar_type F = L0[ie] - L[ie];
+	      scalar_type F = std::max(L0[ie]-L[ie], 0.);
+	      //scalar_type F = (L0[ie] > L[ie]) ? L0[ie] - L[ie] : 1./L[ie] - 1/L0[ie];
+	      //if (dal::abs(F) > 1) F = F / dal::abs(F);
+	      if (F) {
+		base_node Fbar = (bar)*(F/L[ie]);
+		
+		if (!pts_attr[iA]->on_bounding_box && !pts_attr[iB]->on_bounding_box) {
+		  if (!pts_attr[iA]->fixed) pts[iA] -= deltat*Fbar; 
+		  if (!pts_attr[iB]->fixed) pts[iB] += deltat*Fbar;
+		}
 	      }
 	    }
+	    for (size_type ip=0; ip < pts.size(); ++ip) {
+	      if (!pts_attr[ip]->on_bounding_box)
+		project_and_update_constraints(ip);
+	    }
+	    
 	  }
-	  for (size_type ip=0; ip < pts.size(); ++ip) {
-	    if (!pts_attr[ip]->on_bounding_box)
-	      project_and_update_constraints(ip);
+	  else {
+	    optimize_quality();
 	  }
         } else if (ORIGINAL == 2) {
           scalar_type desth = bgeot::equilateral_simplex_of_reference(N)->points()[N][N-1] * L0mult * pow(sL/sL0, 1./N);
@@ -1002,23 +850,36 @@ namespace getfem {
 	  m.write_to_file(s);
 	}
 	//getchar();
-      } while ((count < 40 || sqrt(maxdp)*deltat > ptol * h0) && count < 100);
-      delaunay(pts, t);
-      select_elements(1);
-      
-      m.optimize_structure();
-      {
-        getfem::vtk_export exp("toto1.vtk");
-	exp.exporting(m);
-        exp.write_mesh_quality(m);
-      }
-
-      optimize_quality();
+      } while ((count < 40 || sqrt(maxdp)*deltat > ptol * h0) && count < 2000);
+      // delaunay(pts, t);
+      // select_elements(1);
 
       { m.clear();
 	build_simplex_mesh(m,K);
 	m.write_to_file("toto.mesh");
       }
+
+      m.optimize_structure();
+      {
+        getfem::vtk_export exp("toto2.vtk");
+	exp.exporting(m);
+        exp.write_mesh_quality(m);
+      }
+
+      delaunay(pts, t);
+      select_elements(1);
+      { m.clear();
+	build_simplex_mesh(m,K);
+	m.write_to_file("toto.mesh");
+      }
+
+      m.optimize_structure();
+      {
+        getfem::vtk_export exp("toto3.vtk");
+	exp.exporting(m);
+        exp.write_mesh_quality(m);
+      }
+
       cout << "mesh done! (" << count << " iter, method = " << (ORIGINAL ? "ORIGINAL" : "NEWTON") << ")\n";
       base_vector simplex_q; simplex_q.reserve(m.convex_index().card());
       for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
@@ -1121,12 +982,6 @@ namespace getfem {
 	  }
 	  */
 	}
-      }
-      m.optimize_structure();
-      {
-        getfem::vtk_export exp("toto2.vtk");
-	exp.exporting(m);
-        exp.write_mesh_quality(m);
       }
     }
 

@@ -62,7 +62,7 @@ test_norm_SOURCES = test_norm.C
 schwarz_additive_SOURCES = schwarz_additive.C
 plasticity_SOURCES = plasticity.C
 if QHULL
-test_mesh_generation_SOURCES = test_mesh_generation.C
+test_mesh_generation_SOURCES = test_mesh_generation.C test_mesh_generation.h
 endif
 #test_fem_SOURCES = test_fem.C
 
