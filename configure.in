@@ -8,12 +8,11 @@ dnl thus, updating cache ./config.cache avoided.
 define([AC_CACHE_LOAD], )dnl
 define([AC_CACHE_SAVE], )dnl
 
-AC_INIT(config/install-sh)
+AC_INIT(install-sh)
 AM_CONFIG_HEADER(config.h)
 AX_PREFIX_CONFIG_H(src/getfem_arch_config.h,GETFEM) 
 AC_PREREQ(2.56)
 AC_ARG_PROGRAM
-AC_CONFIG_AUX_DIR([config])
 
 PACKAGE="getfem++"
 MAJOR_VERSION="2"
@@ -32,12 +31,6 @@ dnl   init automake
 dnl ------------------------------------------------------------------------
 
 AM_INIT_AUTOMAKE($PACKAGE,$VERSION)
-
-ACLOCAL_M4=config/aclocal.m4
-CLOCAL="aclocal -I config --output=${ACLOCAL_M4}"
-AUTOCONF="autoconf -I config"
-dnl CONFIGURE_DEPENDENCIES="config/aclocal.m4 config/ltconfig config/ltmain.sh"
-dnl AC_SUBST(CONFIGURE_DEPENDENCIES)
 
 dnl -----------------------------------------------
 dnl test du c++
@@ -462,7 +455,7 @@ dnl sorties
 dnl -----------------------------------------------
 AC_CONFIG_FILES(\
 	Makefile \
-	config/Makefile \
+	m4/Makefile \
 	cubature/Makefile \
         superlu/Makefile \
 	src/Makefile \
