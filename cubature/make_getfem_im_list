@@ -52,6 +52,7 @@ while ($lss) {
   if (!($li=~/NAME=/))
     { die "Impossible to read $filename : no NAME found\n"; }
   ($a, $name) = split('=', $li, 2);
+  $name = `echo "$name" | tr [a-z] [A-Z]`;
   print "Reading $name\n";
   read_line;
   if (!($li=~/N=/)) { die "Impossible to read $filename : no N found\n"; }
