@@ -41,7 +41,7 @@
 namespace gmm {
       
   /* ******************************************************************** */
-  /*		Sequential Schwarz Additive method                        */
+  /*		Sequential Additive Schwarz method                        */
   /* ******************************************************************** */
   /* ref : Domain decomposition algorithms for the p-version finite       */
   /*       element method for elliptic problems, Luca F. Pavarino,        */
@@ -49,8 +49,12 @@ namespace gmm {
   /* ******************************************************************** */
 
   /* ******************************************************************** */
-  /*		Schwarz Additive interfaced local solvers                 */
+  /*		Additive Schwarz interfaced local solvers                 */
   /* ******************************************************************** */
+
+  struct using_cg {};
+  struct using_gmres {};
+  struct using_bicgstab {};
   
   template <class Matrix1, class Precond> struct sa_local_cg {
     typedef typename linalg_traits<Matrix1>::value_type value_type;
@@ -74,12 +78,14 @@ namespace gmm {
     typedef typename linalg_traits<Matrix1>::value_type value_type;
     typedef std::vector<value_type> vector_type;
 
-    void solve(const Matrix1 &A, vector_type &x, const vector_type &b,
+    static void solve(const Matrix1 &A, vector_type &x, const vector_type &b,
 	       const Precond &P, iteration &iter)
       { bicgstab(A, x, b, P, iter); }
   };
 
 #ifdef GMM_USES_SUPERLU
+
+  struct using_superlu {};
 
   /* If you want to use SuperLU as local solver, you have to use
    * the class SuperLU_factor<value_type> has the preconditioner
@@ -98,7 +104,7 @@ namespace gmm {
 #endif
   
   /* ******************************************************************** */
-  /*		Schwarz Additive Linear system                            */
+  /*		Additive Schwarz Linear system                            */
   /* ******************************************************************** */
 
   template <typename Matrix1, typename Matrix2, typename Precond,
@@ -127,7 +133,7 @@ namespace gmm {
   };
 
   /* ******************************************************************** */
-  /*		Schwarz Additive interfaced global solvers                */
+  /*		Additive Schwarz interfaced global solvers                */
   /* ******************************************************************** */
 
   template <typename Matrix1, typename Matrix2, typename Precond,
@@ -169,13 +175,13 @@ namespace gmm {
  
 
   /* ******************************************************************** */
-  /*		Schwarz Additive algorithm                                */
+  /*		Additive Schwarz algorithm                                */
   /* ******************************************************************** */
 
   template <typename Matrix1, typename Matrix2,
 	    typename Vector2, typename Vector3, typename Precond,
 	    typename local_solver, typename global_solver>
-  int sequential_schwarz_additif(const Matrix1 &A, Vector3 &uu,
+  int sequential_additive_schwarz(const Matrix1 &A, Vector3 &uu,
 				 const Vector2 &f, 
 				 const Precond &P,
 				 const std::vector<Matrix2> &vB,
@@ -267,69 +273,89 @@ namespace gmm {
   /*		Predefined versions.                                      */
   /* ******************************************************************** */
 
-  template <typename Matrix1, typename Matrix2,
-	    typename Vector2, typename Vector3, typename Precond>
-  int sequential_schwarz_additif_cg(const Matrix1 &A, Vector3 &u,
-				    const Vector2 &f, 
-				    const Precond &P,
-				    const std::vector<Matrix2> &vB,
-				    iteration &iter) {
-    return sequential_schwarz_additif(A, u, f, P, vB, iter,
-				      sa_local_cg<Matrix1, Precond>(),
-				      sa_global_cg<Matrix1, Matrix2, Precond,
-				      sa_local_cg<Matrix1, Precond> >());
+  template <typename Matrix1, typename Matrix2, typename Vector2,
+	    typename Vector3, typename Precond, typename local_solver>
+  int sequential_additive_schwarz_pr(const Matrix1 &A, Vector3 &u,
+      const Vector2 &f, const Precond &P, const std::vector<Matrix2> &vB,
+      iteration &iter, const local_solver& LS, const using_cg&) {
+    return sequential_additive_schwarz(A, u, f, P, vB, iter, LS,
+		   sa_global_cg<Matrix1, Matrix2, Precond, local_solver>());
   }
 
-  template <typename Matrix1, typename Matrix2,
-	    typename Vector2, typename Vector3, typename Precond>
-  int sequential_schwarz_additif_gmres(const Matrix1 &A, Vector3 &u,
-				       const Vector2 &f, 
-				       const Precond &P,
-				       const std::vector<Matrix2> &vB,
-				       iteration &iter) {
-    return sequential_schwarz_additif(A, u, f, P, vB, iter,
-				      sa_local_gmres<Matrix1, Precond>(),
-				      sa_global_gmres<Matrix1, Matrix2,
-				      Precond,
-				      sa_local_gmres<Matrix1, Precond> >());
+  template <typename Matrix1, typename Matrix2, typename Vector2,
+	    typename Vector3, typename Precond, typename local_solver>
+  int sequential_additive_schwarz_pr(const Matrix1 &A, Vector3 &u,
+      const Vector2 &f, const Precond &P, const std::vector<Matrix2> &vB,
+      iteration &iter, const local_solver& LS, const using_gmres&) {
+    return sequential_additive_schwarz(A, u, f, P, vB, iter, LS,
+	        sa_global_gmres<Matrix1, Matrix2, Precond, local_solver>());
+  }
+
+  template <typename Matrix1, typename Matrix2, typename Vector2,
+	    typename Vector3, typename Precond, typename local_solver>
+  int sequential_additive_schwarz_pr(const Matrix1 &A, Vector3 &u,
+      const Vector2 &f, const Precond &P, const std::vector<Matrix2> &vB,
+      iteration &iter, const local_solver& LS, const using_bicgstab&) {
+    return sequential_additive_schwarz(A, u, f, P, vB, iter, LS,
+	     sa_global_bicgstab<Matrix1, Matrix2, Precond, local_solver>());
+  }
+
+#ifdef GMM_USES_SUPERLU
+    template <typename Matrix1, typename Matrix2, typename Vector2,
+	    typename Vector3, typename Precond, typename local_solver>
+  int sequential_additive_schwarz_pr(const Matrix1 &A, Vector3 &u,
+      const Vector2 &f, const Precond &P, const std::vector<Matrix2> &vB,
+      iteration &iter, const local_solver& LS, const using_superlu&) {
+      DAL_THROW(failure_error,
+      "You cannot use SuperLU as global solver in additive Schwarz meethod");
+      return 0;
+  }
+#endif
+
+  template <typename Matrix1, typename Matrix2, typename Vector2,
+	    typename Vector3, typename Precond, typename global_solver>
+  int sequential_additive_schwarz(const Matrix1 &A, Vector3 &u,
+      const Vector2 &f, const Precond &P, const std::vector<Matrix2> &vB,
+      iteration &iter, const using_gmres&, const global_solver& GS) {
+    return sequential_additive_schwarz_pr(A, u, f, P, vB, iter,
+			  sa_local_gmres<Matrix1, Precond>(), GS);
+  }
+
+  template <typename Matrix1, typename Matrix2, typename Vector2,
+	    typename Vector3, typename Precond, typename global_solver>
+  int sequential_additive_schwarz(const Matrix1 &A, Vector3 &u,
+      const Vector2 &f, const Precond &P, const std::vector<Matrix2> &vB,
+      iteration &iter, const using_cg&, const global_solver& GS) {
+    return sequential_additive_schwarz_pr(A, u, f, P, vB, iter,
+			  sa_local_cg<Matrix1, Precond>(), GS);
+  }
+
+  template <typename Matrix1, typename Matrix2, typename Vector2,
+	    typename Vector3, typename Precond, typename global_solver>
+  int sequential_additive_schwarz(const Matrix1 &A, Vector3 &u,
+      const Vector2 &f, const Precond &P, const std::vector<Matrix2> &vB,
+      iteration &iter, const using_bicgstab&, const global_solver& GS) {
+    return sequential_additive_schwarz_pr(A, u, f, P, vB, iter,
+			  sa_local_bicgstab<Matrix1, Precond>(), GS);
   }
 
 #ifdef GMM_USES_SUPERLU
 
-  template <typename Matrix1, typename Matrix2,
-	    typename Vector2, typename Vector3>
-  int sequential_schwarz_additif_cg_superlu(const Matrix1 &A, Vector3 &u,
-					 const Vector2 &f, 
-					 const std::vector<Matrix2> &vB,
-					 iteration &iter) {
+  template <typename Matrix1, typename Matrix2, typename Vector2,
+	    typename Vector3, typename Precond, typename global_solver>
+  int sequential_additive_schwarz(const Matrix1 &A, Vector3 &u,
+      const Vector2 &f, const Precond &P, const std::vector<Matrix2> &vB,
+      iteration &iter, const using_superlu&, const global_solver& GS) {
     typedef typename linalg_traits<Matrix1>::value_type value_type;
-    return sequential_schwarz_additif(A, u, f, SuperLU_factor<value_type>(),
-				      vB, iter, sa_local_superlu<Matrix1,
-				      SuperLU_factor<value_type> >(),
-				      sa_global_cg<Matrix1, Matrix2,
-				      SuperLU_factor<value_type>,
-				      sa_local_superlu<Matrix1,
-				      SuperLU_factor<value_type> > >());
+    return sequential_additive_schwarz_pr(A, u, f,SuperLU_factor<value_type>(),
+	  vB, iter, sa_local_superlu<Matrix1, SuperLU_factor<value_type> >(),
+	  GS);
   }
-
-  template <typename Matrix1, typename Matrix2,
-	    typename Vector2, typename Vector3>
-  int sequential_schwarz_additif_gmres_superlu(const Matrix1 &A, Vector3 &u,
-					    const Vector2 &f, 
-					    const std::vector<Matrix2> &vB,
-					    iteration &iter) {
-    typedef typename linalg_traits<Matrix1>::value_type value_type;
-    return sequential_schwarz_additif(A, u, f, SuperLU_factor<value_type>(),
-				      vB, iter, sa_local_superlu<Matrix1,
-				      SuperLU_factor<value_type> >(),
-				      sa_global_gmres<Matrix1, Matrix2,
-				      SuperLU_factor<value_type>,
-				      sa_local_superlu<Matrix1,
-				      SuperLU_factor<value_type> > >());
-  }
-
 
 #endif
+
+
+
 
 
 
