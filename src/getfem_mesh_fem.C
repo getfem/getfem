@@ -128,22 +128,7 @@ namespace getfem
     return (valid_boundaries[b]) ? boundaries[b].faces_of_convex(c)
       : *without;
   }
-
-  base_vector mesh_fem::normal_of_face_of_convex(size_type ic, short_type f, const base_node &pt) const
-  {
-    size_type N  = linked_mesh().dim();
-    bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(ic);
-    base_matrix S(N,pgt->nb_points());
-    
-    for (size_type i=0; i < pgt->nb_points(); i++) {
-      std::copy(linked_mesh().points_of_convex(ic)[i].begin(), 
-		linked_mesh().points_of_convex(ic)[i].end(),
-		S.begin()+i*N);
-    }
-
-    return compute_normal(S, f, pgt, pt);
-  }
-
+  
   void mesh_fem::sup_boundaries_of_convex(size_type c)
   {
     dal::bit_vector::iterator it = valid_boundaries.begin(),

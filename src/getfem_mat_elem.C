@@ -415,49 +415,5 @@ namespace getfem
     return tab->add(_emelem_comp_light(pm, pi, pg));
   }
 
-
-  /* norm of returned vector is the ratio between the face surface on
-     the reel element and the face surface on the reference element 
-     IT IS NOT UNITARY
-
-     pt is the position of the evaluation point on the reference element
-  */
-  base_vector compute_normal(const base_matrix &G, size_type ir, bgeot::pgeometric_trans pgt, const base_node &pt)
-    {
-      dim_type P = pgt->structure()->dim(), N = G.nrows();
-      short_type NP = pgt->nb_points();
-      base_matrix K(N,P), CS(P,P), B(N,P), Grad(pgt->nb_points(),P), TMP1(P,P);
-      base_vector un, up;
-      base_poly Poly;
-
-      if (G.ncols() != NP)
-	DAL_THROW(dimension_error, "dimensions mismatch");
-
-      un.resize(P); up.resize(N);
-      un = pgt->normals()[ir];
-      //cout << "un=" << un << endl;
-
-      for (size_type i = 0; i < pgt->nb_points(); ++i)
-	{
-	  for (dim_type n = 0; n < N; ++n) {
-	    Poly = pgt->poly_vector()[i];
-	    Poly.derivative(n);
-	    Grad(i,n) = Poly.eval(pt.begin());
-	  }
-	}
-
-
-      // on peut simplifier les calculs pour N = P
-      // cout << "mat G : " << G << endl;
-      // cout << "mat grad : " << Grad << endl;
-      bgeot::mat_product(G, Grad, K);
-      bgeot::mat_product_tn(K, K, CS);
-      bgeot::mat_inv_cholesky(CS, TMP1);
-      bgeot::mat_product(K, CS, B);
-      bgeot::mat_vect_product(B, un, up);
-
-      return up;
-    }
-
 }  /* end of namespace getfem.                                            */
 

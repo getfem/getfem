@@ -80,7 +80,6 @@ namespace bgeot
       short_type nb_points(void) const { return cvs->nb_points(); }
       
       void translate(const typename PT::vector_type &v);
-      typename PT::vector_type unit_norm_of_face(int f);
       template <class CONT> void base_of_orthogonal(CONT &tab);
       convex(void) { }
       convex(pconvex_structure c, const PT_TAB &t) : pts(t), cvs(c) {}
@@ -92,50 +91,6 @@ namespace bgeot
   {
     typename PT_TAB::iterator b = pts.begin(), e = pts.end();
     for ( ; b != e ; ++b) *b += v;
-  }
-
-  template<class PT, class PT_TAB>
-    typename PT::vector_type convex<PT, PT_TAB>::unit_norm_of_face(int f)
-  { /* programmation a revoir. utiliser la transformation geometrique */
-    typename PT::vector_type res;
-    pconvex_structure cv = structure();
-    dim_type n = cv->dim();
-
-    dal::dynamic_array<typename PT::vector_type> _vect;
-    vsvector<double> A(n), B(n);
-    vsmatrix<double> _mat(n,n);
-    
-    
-   
-    convex_ind_ct     dpt  = cv->ind_dir_points();
-    ref_convex_ind_ct dptf = cv->ind_dir_points_of_face(f);
-
-    size_type dir = dpt[0], dir_i = 0;
-    bool dir_founded = false;
-
-    while(!dir_founded)
-    {
-      dir_founded = true;
-      for (dim_type i = 0; i < n; i++)
-	if (dir == dptf[i]) { dir = dpt[++dir_i]; dir_founded = false; break; }
-    }
-    
-    vector_from( (points())[dptf[0]], (points())[dir], _vect[0]);
-    for (int i = 1; i < n; i++)
-      vector_from( (points())[dptf[0]], (points())[dptf[i]], _vect[i]);
-    
-    for (int i = 0; i < n; i++)
-      for (int j = 0; j <= i; j++)
-	_mat(j,i) = _mat(i,j) = vect_sp(_vect[i], _vect[j]);
-    
-    A.fill(0.0); A[0] = -1.0;
-    mat_decomposition_llt(_mat); /* _mat est detruite                     */
-    mat_solve_llt(_mat, A, B);
-    res = _vect[0]; res *= B[0];
-    for (int i = 1; i < n; i++)
-      { _vect[i] *= B[i]; res += _vect[i]; }
-    res /= vect_norm2(res);
-    return res;
   }
 
   template<class PT, class PT_TAB> template<class CONT>

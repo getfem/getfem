@@ -131,28 +131,27 @@ namespace getfem
     public :
 
       virtual void receipt(const MESH_CLEAR           &)
-      { throw internal_error("getfem_mesh_receiver::receipt: internal error");}
+      { DAL_THROW(internal_error, "internal error");}
       virtual void receipt(const MESH_ADD_POINT       &) 
-      { throw internal_error("getfem_mesh_receiver::receipt: internal error");}
+      { DAL_THROW(internal_error, "internal error");}
       virtual void receipt(const MESH_SUP_POINT       &) 
-      { throw internal_error("getfem_mesh_receiver::receipt: internal error");}
+      { DAL_THROW(internal_error, "internal error");}
       virtual void receipt(const MESH_SWAP_POINT      &) 
-      { throw internal_error("getfem_mesh_receiver::receipt: internal error");}
+      { DAL_THROW(internal_error, "internal error");}
       virtual void receipt(const MESH_ADD_CONVEX      &) 
-      { throw internal_error("getfem_mesh_receiver::receipt: internal error");}
+      { DAL_THROW(internal_error, "internal error");}
       virtual void receipt(const MESH_SUP_CONVEX      &) 
-      { throw internal_error("getfem_mesh_receiver::receipt: internal error");}
+      { DAL_THROW(internal_error, "internal error");}
       virtual void receipt(const MESH_SWAP_CONVEX     &)
-      { throw internal_error("getfem_mesh_receiver::receipt: internal error");}
+      { DAL_THROW(internal_error, "internal error");}
       virtual void receipt(const MESH_REFINE_CONVEX   &) 
-      { throw internal_error("getfem_mesh_receiver::receipt: internal error");}
+      { DAL_THROW(internal_error, "internal error");}
       virtual void receipt(const MESH_UNREFINE_CONVEX &) 
-      { throw internal_error("getfem_mesh_receiver::receipt: internal error");}
+      { DAL_THROW(internal_error, "internal error");}
       virtual void receipt(const MESH_WRITE_TO_FILE   &) 
-      { throw internal_error("getfem_mesh_receiver::receipt: internal error");}
+      { DAL_THROW(internal_error, "internal error");}
       virtual void receipt(const MESH_READ_FROM_FILE  &) 
-      { throw internal_error("getfem_mesh_receiver::receipt: internal error");}
-
+      { DAL_THROW(internal_error, "internal error");}
   };
 
   /* refinement methods are :                                              */
@@ -214,7 +213,7 @@ namespace getfem
       bgeot::pgeometric_trans trans_of_convex(size_type ic) const
       { 
 	if (!(trans_exists[ic]))
-	  throw(internal_error("trans_of_convex : internal error"));
+	  DAL_THROW(internal_error, "internal error");
 	return gtab[ic]; 
       }
 
@@ -311,6 +310,13 @@ namespace getfem
        *          in the whole structure.
        */
       void swap_convex(size_type i, size_type j);
+
+      /* returns the normal of face 'f' evaluated at the point 'pt'       */
+      /* (pt is a position in the reference convex)                       */
+      base_vector normal_of_face_of_convex(size_type ic, short_type f,
+					   const base_node &pt) const;
+      base_vector normal_of_face_of_convex(size_type ic, short_type f,
+					   size_type n) const;
 
       void translation(base_vector);
       void transformation(base_matrix);

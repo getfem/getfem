@@ -15,7 +15,7 @@ MESH_TYPE = 0;          % 0 = simplexes
 			% 2 = prisms
 INCLINE = 0.0;          % Incline of the mesh.
 K = 1;                  % Finite element degree.
-INTEGRATION = 0;        % 0 = exact integration.
+INTEGRATION = 1;        % 0 = exact integration.
 			% 1 = Newton Cotes of degree 2 * K
 			% 2 = Product of 1D Gauss for parallelepipeds.
 			% 11, 12, 13, 14, 15, 16, 17 triangle(n-10)

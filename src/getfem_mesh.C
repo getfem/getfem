@@ -156,6 +156,29 @@ namespace getfem
     }
   }
 
+  base_vector getfem_mesh::normal_of_face_of_convex(size_type ic, short_type f,
+						 const base_node &pt) const {
+    size_type N  = dim();
+    bgeot::pgeometric_trans pgt = trans_of_convex(ic);
+    base_matrix S(N,pgt->nb_points());
+    
+    for (size_type i=0; i < pgt->nb_points(); i++) {
+      std::copy(points_of_convex(ic)[i].begin(), 
+		points_of_convex(ic)[i].end(), S.begin()+i*N);
+    }
+    
+    return bgeot::compute_normal(S, f, pgt, pt);
+  }
+
+
+  base_vector getfem_mesh::normal_of_face_of_convex(size_type ic, short_type f,
+						    size_type n) const {
+    bgeot::pgeometric_trans pgt = trans_of_convex(ic);
+    base_node pt = pgt->geometric_nodes()
+      [pgt->structure()->ind_points_of_face(f)[n]];
+    return normal_of_face_of_convex(ic, f, pt);
+  }
+
   int getfem_mesh::read_from_file(STD_NEEDED istream &ist) {
    
     int r = bgeot::mesh<base_node>::read_from_file(ist);

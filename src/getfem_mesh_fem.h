@@ -187,12 +187,10 @@ namespace getfem
       const dal::bit_vector &convex_on_boundary(size_type b) const;
       const dal::bit_vector &faces_of_convex_on_boundary(size_type c,
 							 size_type b) const;
-      
-      const dal::bit_vector &get_valid_boundaries() const /* returns the list of boundary numbers  [JP] */
-	{ return valid_boundaries; }
 
-      /* returns the normal of face 'f' evaluated at the point 'pt' (pt is a position in the reference convex) */
-      base_vector normal_of_face_of_convex(size_type ic, short_type f, const base_node &pt) const;
+      /* returns the list of boundary numbers  [JP] */
+      const dal::bit_vector &get_valid_boundaries() const 
+	{ return valid_boundaries; }
 
       void sup_boundaries_of_convex(size_type c);
       void sup_boundary_elt(size_type b, size_type c, short_type f)

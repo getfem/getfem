@@ -1,3 +1,4 @@
+/* -*- c++ -*- (enables emacs c++ mode)                                    */
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Basic GEOmetric Tool  (bgeot)                                */
@@ -141,6 +142,17 @@ namespace bgeot
   pgeometric_trans associated_trans(pconvex_structure cvs);
 
   pgeometric_trans linear_product_trans(pgeometric_trans, pgeometric_trans);
+
+
+
+  /* norm of returned vector is the ratio between the face surface on
+     the reel element and the face surface on the reference element 
+     IT IS NOT UNITARY
+
+     pt is the position of the evaluation point on the reference element
+  */
+  base_vector compute_normal(const base_matrix &G, size_type ir,
+			     pgeometric_trans pgt, const base_node &pt);
 
    //@}
 

@@ -111,7 +111,7 @@ void lap_pb::init(void)
     vtab[i] = base_vector(N); vtab[i].fill(0.0);
     (vtab[i])[i] = ((i == 0) ? LX : ((i == 1) ? LY : LZ)) / scalar_type(NX);
   }
-  vtab[N-1][0] = incline * LX / scalar_type(NX);
+  if (N > 1) vtab[N-1][0] = incline * LX / scalar_type(NX);
 
   switch (mesh_type) {
   case 0 : getfem::parallelepiped_regular_simplex_mesh
@@ -218,10 +218,9 @@ void lap_pb::init(void)
     k = mesh.structure_of_convex(j)->nb_faces();
     for (i = 0; i < k; i++) {
       if (bgeot::neighbour_of_convex(mesh, j, i).empty()) {
-	cout << "cv " << j << endl;
-	un = mesh.convex(j).unit_norm_of_face(i);
-	cout << "un =  " << un << endl;
-	
+        un = mesh.normal_of_face_of_convex(j, i, 0);
+	un /= bgeot::vect_norm2(un);
+
 	// if (true)
 	if (dal::abs(un[N-1] - 1.0) < 1.0E-7) {
 	  mef.add_boundary_elt(0, j, i);
@@ -273,10 +272,11 @@ void lap_pb::assemble(void)
     getfem::pfem pf = mef_data.fem_of_element(j);
     for (size_type i = 0; i < k; ++i) {
       if (bgeot::neighbour_of_convex(mesh, j, i).empty()) {
-	un = mesh.convex(j).unit_norm_of_face(i);
 	
 	for (size_type l = 0; l < pf->structure()->nb_points_of_face(i); ++l) {
 	  size_type n = pf->structure()->ind_points_of_face(i)[l];
+	  un = mesh.normal_of_face_of_convex(j, i, pf->node_of_dof(n));
+	  un /= bgeot::vect_norm2(un);
 	  size_type dof = mef_data.ind_dof_of_element(j)[n];
 	  ST[dof] = bgeot::vect_sp(sol_grad(mef_data.point_of_dof(dof)), un);
 	}

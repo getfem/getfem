@@ -118,7 +118,8 @@ namespace bgeot
   /** Print the details of the convex structure cvs to the output stream o.
    *   For debuging purpose.
    */
-  STD_NEEDED ostream &operator <<(STD_NEEDED ostream &o, const convex_structure &cv);
+  STD_NEEDED ostream &operator << (STD_NEEDED ostream &o,
+				   const convex_structure &cv);
 
   /// Gives a pointer on the structures of a simplex of dimension d.
   pconvex_structure simplex_structure(dim_type d);

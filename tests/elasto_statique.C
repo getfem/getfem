@@ -174,7 +174,8 @@ void pb_data::init(void)
     {
       if (bgeot::neighbour_of_convex(mesh, j, i).empty())
       {
-	un = mesh.convex(j).unit_norm_of_face(i);
+	un = mesh.normal_of_face_of_convex(j, i, 0);
+	un /= bgeot::vect_norm2(un);
 	
 	// if (true)
 	if (dal::abs(un[N-1] - 1.0) < 1.0E-3)
