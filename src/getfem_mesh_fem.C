@@ -276,15 +276,16 @@ namespace getfem
     dal::bit_vector nn = fe_convex;
     std::queue<int> pile;
     dal::dynamic_tree_sorted<fem_dof, dof_comp_, 10> dof_sort;
-
-    size_type cv;
+    dal::bit_vector encountered_global_dof;
+    dal::dynamic_array<size_type> ind_global_dof;
     std::vector<size_type> tab;
+    size_type cv;
     fem_dof fd;
-
-    // cout << "\n\nEntering enumerate_dof\n\n\n\n\n";
 
     cv = nn.take_first();
     dof_structure.clear();
+    encountered_global_dof.clear();
+
 
     while (cv != ST_NIL) {
       /* ajout des voisins dans la pile.                                  */
@@ -302,7 +303,7 @@ namespace getfem
 
       pfem pf = fem_of_element(cv);
       size_type nbd = pf->nb_dof(cv); 
-      pdof_description andof = already_numerate_dof(pf->dim());
+      pdof_description andof = global_dof(pf->dim());
       tab.resize(nbd);
       for (size_type i = 0; i < nbd; i++) {
 	fd.P = linked_mesh().trans_of_convex(cv)->transform
@@ -312,14 +313,12 @@ namespace getfem
 	size_type j = 0, j_old = 0;
 	if (fd.pnd == andof) {
 	  // cout << "detecting a specialdof\n";
-	  j = pf->index_of_already_numerate_dof(cv, i);
-	  if (dof_sort.index_valid(j)) {
-	    if (dof_sort[j].pnd != andof)
-	      DAL_THROW(internal_error,
-	      "Conflict between an already numerate dof and an existing dof.");
+	  size_type num = pf->index_of_global_dof(cv, i);
+	  if (!(encountered_global_dof[num])) {
+	    ind_global_dof[num] = dof_sort.add(fd);
+	    encountered_global_dof[num] = true;
 	  }
-	  else
-	    dof_sort.add_to_index(j, fd);
+	  j = ind_global_dof[num];
 	  tab[i] = j;
 	} else if (pf->target_dim() == 1 && Qdim != 1) {
 	  pdof_description paux = fd.pnd;

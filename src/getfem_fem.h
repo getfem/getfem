@@ -40,8 +40,7 @@
 #include <getfem_precomp.h>
 #include <deque>
 
-namespace getfem
-{
+namespace getfem {
   /************************************************************************/
   /*	Class for description of an interpolation dof.                    */
   /************************************************************************/
@@ -63,7 +62,7 @@ namespace getfem
   /// Description of a unique dof of mean value type.
   pdof_description mean_value_dof(dim_type);
   
-  pdof_description already_numerate_dof(dim_type);
+  pdof_description global_dof(dim_type);
   /// Product description of the descriptions *pnd1 and *pnd2.
   pdof_description product_dof(pdof_description, pdof_description);
 
@@ -250,7 +249,7 @@ namespace getfem
     virtual void real_hess_base_value(const fem_interpolation_context &c, 
 				      base_tensor &t) const;
     
-    virtual size_type index_of_already_numerate_dof(size_type, size_type) const
+    virtual size_type index_of_global_dof(size_type, size_type) const
       { DAL_THROW(internal_error, "internal error."); }
 
     virtual_fem(void) { 

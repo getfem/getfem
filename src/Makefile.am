@@ -141,6 +141,7 @@ SRC =                                   \
 	getfem_integration_composite.C  \
 	getfem_fem.C                    \
 	getfem_interpolated_fem.C       \
+	getfem_fem_sum.C                \
 	getfem_Xfem.C                   \
 	getfem_fem_composite.C          \
 	getfem_mat_elem.C               \

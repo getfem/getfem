@@ -63,14 +63,13 @@ namespace getfem {
     return false;
   }
   
-  void interpolated_fem::build_fem(void) const {
+  void interpolated_fem::update_from_context(void) const {
     fictx_cv = cv_stored = size_type(-1);
     dim_ = dim_type(-1);
     build_rtree();
     elements = std::vector<elt_interpolation_data>(mf2.convex_index().card());
     base_node gpt;
     ind_dof.resize(mf1.nb_dof());
-    dofnum.resize(mf1.nb_dof());
     dal::bit_vector alldofs;
     size_type i, max_dof = 0;
     if (mf2.convex_index().card() == 0) return;
@@ -119,9 +118,6 @@ namespace getfem {
       }
       alldofs |= dofs;
     }
-    i = 0;
-    for (dal::bv_visitor idof(alldofs); !idof.finished(); ++idof)
-      dofnum[idof] = i++;
     std::fill(ind_dof.begin(), ind_dof.end(), size_type(-1));
     
     base_node P(dim());
@@ -131,15 +127,15 @@ namespace getfem {
     pspt_valid = false;
     dof_types_.resize(max_dof);
     std::fill(dof_types_.begin(), dof_types_.end(),
-	      already_numerate_dof(dim()));
+	      global_dof(dim()));
   }
 
   size_type interpolated_fem::nb_dof(size_type cv) const
-  { if (context_changed()) build_fem(); return elements[cv].nb_dof; }
+  { context_check(); return elements[cv].nb_dof; }
   
-  size_type interpolated_fem::index_of_already_numerate_dof
+  size_type interpolated_fem::index_of_global_dof
   (size_type cv, size_type i) const
-  { return dofnum[elements[cv].inddof[i]]; }
+  { return elements[cv].inddof[i]; }
   
   bgeot::pconvex_ref interpolated_fem::ref_convex(size_type cv) const
   { return mf2.fem_of_element(cv)->ref_convex(cv); }
@@ -272,7 +268,7 @@ namespace getfem {
     this->add_dependency(mef2);
     is_pol = is_lag = false; es_degree = 5;
     is_equiv = real_element_defined = true;
-    build_fem();
+    update_from_context();
     ntarget_dim = 1; // An extension for vectorial elements should be easy
     // The detection should be done and the multilication of components
     // for scalar elements interpolated.

@@ -35,36 +35,59 @@
 
 namespace getfem {
 
-  typedef context_dependencies::ident_type ident_type;
-
-  static ident_type current_id(0);
+  static long current_id(0);
   
-  ident_type context_dependencies::new_ident(void)
+  long context_dependencies::new_ident(void)
   { return ++current_id; }
-
-  ident_type context_dependencies::current_ident(void)
-  { return current_id; }
-
-  void context_dependencies::add_dependency(const context_dependencies &cd) {
-    std::list<dependency>::iterator it = dependencies.begin(),
-      ite = dependencies.end();
-    for (; it != ite; ++it) { if (it->first == &cd) return; }
-    dependencies.push_back(dependency(&cd, cd.ident()));
+  
+  void context_dependencies::sup_dependent_
+  (const context_dependencies &cd) const {
+    size_type s = dependent.size();
+    iterator_list it1 = dependent.begin(), it2 = it1, ite = dependent.end();
+    for (; it1 != ite; ++it1)
+      { *it2 = *it1; if (*it2 != &cd) ++it2; else --s; }
+    dependent.resize(s);
+  }
+  
+  void context_dependencies::sup_dependency_
+  (const context_dependencies &cd) const {
+    size_type s = dependent.size();
+    iterator_list it1=dependencies.begin(), it2=it1, ite=dependencies.end();
+    for (; it1 != ite; ++it1)
+      { *it2 = *it1; if (*it2 != &cd) ++it2; else --s; }
+    dependencies.resize(s);
   }
 
-  bool context_dependencies::context_changed(void) const {
-    std::list<dependency>::iterator it = dependencies.begin(),
-      ite = dependencies.end();
-    if (c_ident_ == current_ident()) return false;
-    bool b = false;
-    for (; it != ite; ++it)
-      if (it->first->context_changed()
-	  || it->first->ident() != it->second) {
-	b = true; it->second = it->first->ident();
-      }
-    if (b) ident_ = new_ident();
-    c_ident_ = current_ident();
-    return b;
+  void context_dependencies::invalid_context(void) const {
+    if (state != CONTEXT_INVALID) {
+      state = CONTEXT_INVALID;
+      iterator_list it = dependent.begin(), ite = dependent.end();
+      for (; it != ite; ++it) (*it)->invalid_context();
+    }
+  }
+  
+  void context_dependencies::context_check(void) const {
+    if (state == CONTEXT_CHANGED) {
+      state = CONTEXT_NORMAL;
+      iterator_list it = dependencies.begin(), ite = dependencies.end();
+      for (; it != ite; ++it) (*it)->context_check();
+      update_from_context();
+    }
+    else if (state == CONTEXT_INVALID)
+      DAL_THROW(failure_error, "Invalid context");
+  }
+  
+  void context_dependencies::touch(void) const {
+    iterator_list it = dependent.begin(), ite = dependent.end();
+    for (; it != ite; ++it) (*it)->change_context();
+  }
+  
+  context_dependencies::~context_dependencies() {
+    invalid_context();
+    iterator_list it = dependencies.begin(), ite = dependencies.end();
+    for (; it != ite; ++it) (*it)->sup_dependent_(*this);
+    it = dependent.begin(), ite = dependent.end();
+    for (; it != ite; ++it) (*it)->sup_dependency_(*this);
   }
   
 }

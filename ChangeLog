@@ -1,3 +1,13 @@
+2004-11-03  Yves Renard  <Yves.Renard@insa-toulouse.fr>
+
+	* src/getfem_fem_sum.h introduction of a fem wich make the direct sum
+	  of two fems..
+
+2004-11-03  Yves Renard  <Yves.Renard@insa-toulouse.fr>
+
+	* src/getfem_fem_virtual_link.h replaced by getfem_interpolated_fem.h
+	  redefinition of the interpolation of a fem with real element fems.
+
 2004-10-19  Yves Renard  <Yves.Renard@insa-toulouse.fr>
 
 	* src/gmm_precond_ilutp.h: New preconditionner, incomplete LU with

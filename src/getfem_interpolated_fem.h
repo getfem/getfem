@@ -3,7 +3,7 @@
 /*                                                                         */
 /* Library : GEneric Tool for Finite Element Methods (getfem)              */
 /* File    : getfem_interpolated_fem.h : definition of a finite element    */
-/*           method which interpoles a fem on a different mesh.            */
+/*           method which interpolates a fem on a different mesh.          */
 /*                                                                         */
 /* Date : October 29, 2004.                                                */
 /* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
@@ -77,7 +77,7 @@ namespace getfem {
     mutable std::vector<elt_interpolation_data> elements;
     mutable bgeot::rtree boxtree; // Tree containing the bounding box
                                   // of mf1 elements
-    mutable std::vector<size_type> dofnum, ind_dof;
+    mutable std::vector<size_type> ind_dof;
     mutable size_type cv_stored;
     mutable bgeot::rtree::pbox_set boxlst;
     mutable bgeot::geotrans_inv_convex gic;
@@ -94,15 +94,14 @@ namespace getfem {
     bool find_a_point(const base_node &pt, base_node &ptr,
 		      size_type &cv) const;
 
-    void build_fem(void) const;
+    void update_from_context(void) const;
     inline void actualize_fictx(pfem pf, size_type cv,
 				const base_node &ptr) const;
 
   public :
 
     virtual size_type nb_dof(size_type cv) const;
-    virtual size_type index_of_already_numerate_dof(size_type cv,
-						    size_type i) const;
+    virtual size_type index_of_global_dof(size_type cv, size_type i) const;
     virtual bgeot::pconvex_ref ref_convex(size_type cv) const;
     virtual const bgeot::convex<base_node> &node_convex(size_type cv) const;
     virtual bgeot::pstored_point_tab node_tab(size_type) const;

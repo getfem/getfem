@@ -101,7 +101,7 @@ namespace getfem {
     T_MATRIX tangent_matrix_;
     C_MATRIX constraints_matrix_;
     VECTOR state_, residu_, constraints_rhs_;
-    ctx_ident_type ident_;
+    long ident_;
     
     T_MATRIX SM;
     gmm::col_matrix<gmm::rsvector<value_type> > NS; /* constraints nullspace */
@@ -140,7 +140,7 @@ namespace getfem {
     }
     void compute_reduced_system();
     VECTOR &residu(void) { return residu_; }
-    ctx_ident_type ident(void) { return ident_; }
+    long ident(void) { return ident_; }
     void touch(void) { ident_ = context_dependencies::new_ident(); }
     void adapt_sizes(mdbrick_abstract<model_state> &problem);
     model_state(void) { touch(); }
@@ -217,16 +217,18 @@ namespace getfem {
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_abstract : public context_dependencies {
   protected :
-    bool to_compute, to_transfer;
+    mutable bool to_compute, to_transfer;
     size_type MS_i0;
-    ctx_ident_type ident_ms;
+    long ident_ms;
+
+    void update_from_context(void) const { to_compute = true; }
 
     // to_be_computed : the context has changed (or it is the first call).
     // to_be_transferred : the structure MODEL_STATE has changed, the 
     //                     tangent matrix or constraints system has to be
     //                     copied again if it is stored.
     void react(MODEL_STATE &MS, size_type i0, bool modified) {
-      if (this->context_changed()) to_compute = true;
+      this->context_check();
       to_transfer = to_transfer || modified || (ident_ms != MS.ident())
 	|| to_compute;
       ident_ms = MS.ident();
@@ -882,7 +884,8 @@ namespace getfem {
     virtual bool is_symmetric(void) { return sub_problem.is_symmetric(); }
     virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0) {
       sub_problem.mixed_variables(b, i0);
-      if (this->context_changed()) {
+      this->context_check();
+      if (this->to_be_computed()) {
 	this->force_recompute();
 	compute_B();
       }
@@ -1055,8 +1058,9 @@ namespace getfem {
     virtual bool is_symmetric(void) { return sub_problem.is_symmetric(); }
     virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0) {
       sub_problem.mixed_variables(b, i0);
+      this->context_check();
       if (with_multipliers) {
-	if (this->context_changed()) {
+	if (this->to_be_computed()) {
 	  fixing_dimensions();
 	  this->force_recompute();
 	  compute_constraints(ASMDIR_BUILDH + ASMDIR_BUILDR);
@@ -1065,8 +1069,9 @@ namespace getfem {
       }
     }
     virtual size_type nb_dof(void) {
+      this->context_check();
       if (with_multipliers) {
-	if (this->context_changed()) {
+	if (this->to_be_computed()) {
 	  fixing_dimensions();
 	  this->force_recompute();
 	  compute_constraints(ASMDIR_BUILDH + ASMDIR_BUILDR);
@@ -1078,7 +1083,8 @@ namespace getfem {
     
     virtual size_type nb_constraints(void) {
       if (with_multipliers) return sub_problem.nb_constraints();
-      if (this->context_changed()) {
+      this->context_check();
+      if (this->to_be_conputed()) {
 	fixing_dimensions();
 	this->force_recompute();
 	compute_constraints(ASMDIR_BUILDH + ASMDIR_BUILDR);
@@ -1147,7 +1153,8 @@ namespace getfem {
     { return sub_problem.main_mesh_fem(); }
 
     void set_rhs(const VECTOR &B__) {
-      if (this->context_changed()) {
+      this->context_check();
+      if (this->to_be_computed()) {
 	fixing_dimensions(); gmm::copy(B__, B_);
 	compute_constraints(ASMDIR_BUILDH + ASMDIR_BUILDR);
       }

@@ -211,7 +211,8 @@ namespace getfem
   public :
     
     typedef base_node point_type;
-    
+    void update_from_context(void) const {}
+
     /** Gives in a structure dal::bit\_vector all convexes of the
      *          mesh where a finite element is defined.
      */

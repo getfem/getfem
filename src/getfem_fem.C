@@ -154,7 +154,7 @@ namespace getfem
   /* ******************************************************************** */
 
   enum ddl_type { LAGRANGE, NORM_DERIVATIVE, DERIVATIVE, MEAN_VALUE, BUBBLE1, 
-		  LAGRANGE_NONCONFORMING, ALREADY_NUMERATE};
+		  LAGRANGE_NONCONFORMING, GLOBAL_DOF};
 
   enum coord_type { NORMAL = -2, TANGENTIAL = -1, FIRST = 0, SECOND, THIRD };
 
@@ -289,11 +289,11 @@ namespace getfem
     return &(tab[tab.add_norepeat(l)]);
   }
 
-  pdof_description already_numerate_dof(dim_type n) {
+  pdof_description global_dof(dim_type n) {
     dof_d_tab& tab = dal::singleton<dof_d_tab>::instance();
     dof_description l;
     l.ddl_desc.resize(n);
-    std::fill(l.ddl_desc.begin(), l.ddl_desc.end(),ddl_elem(ALREADY_NUMERATE));
+    std::fill(l.ddl_desc.begin(), l.ddl_desc.end(),ddl_elem(GLOBAL_DOF));
     return &(tab[tab.add_norepeat(l)]);
   }
 

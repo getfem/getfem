@@ -126,6 +126,7 @@ namespace getfem {
       double eps(void) const { return eps_p; }
       const msg_sender &lmsg_sender(void) const { return lkmsg; }
       msg_sender &lmsg_sender(void) { return lkmsg; }
+      void update_from_context(void) const {}
 
       /** Add the point pt to the mesh and return the index of the
        *          point. If the point is to close to an existing point, the
