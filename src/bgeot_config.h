@@ -59,16 +59,19 @@ namespace bgeot
 #ifndef GETFEM_HAVE_QDLIB
   typedef double long_scalar_type;
   typedef double opt_long_scalar_type;
+# define LONG_SCALAR_ATOF(st) (atof(st))
 # define LONG_SCALAR_EPS 1E-16
 # define LONG_SCAL(xx) long_scalar_type(xx)
 #else
 #  ifdef GETFEM_QDLIB_USE_QUAD
   typedef qd_real long_scalar_type;
   typedef qd_real opt_long_scalar_type;
+# define LONG_SCALAR_ATOF(st) (long_scalar_type(st))
 # define LONG_SCALAR_EPS 1E-64
 #  else
   typedef dd_real long_scalar_type;
   typedef dd_real opt_long_scalar_type;
+# define LONG_SCALAR_ATOF(st) (long_scalar_type(st))
 # define LONG_SCALAR_EPS 1E-32
 #  endif
 #  define LONG_SCAL(xx) long_scalar_type(#xx) /* string assignment to preserve the precision */

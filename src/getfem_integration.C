@@ -374,21 +374,28 @@ namespace getfem
 	size_type fr = im_desc_tab[i].firstreal;
 	for (size_type j = 0; j < im_desc_tab[i].nb_points; ++j) {
 	  for (dim_type k = 0; k < N; ++k)
-	    pt[k] = im_desc_real[fr + j * (N+1) + k];
+	    pt[k] = atof(im_desc_real[fr+j*(N+1)+k]);
+	  // pt[k] = LONG_SCALAR_ATOF(im_desc_real[fr+j*(N+1)+k]);
 	  
 	  switch (im_desc_node_type[im_desc_tab[i].firsttype + j]) {
 	  case 2: {
             base_node pt2(pt.size());
             for (bgeot::permutation p(pt.size()); !p.finished(); ++p) {
               p.apply_to(pt,pt2);
-              pai->add_point_full_symmetric(pt2, im_desc_real[fr + j * (N+1) + N]);
+              pai->add_point_full_symmetric(pt2, 
+					    atof(im_desc_real[fr+j*(N+1)+N]));
+	      // pai->add_point_full_symmetric(pt2,
+	      //	        LONG_SCALAR_ATOF(im_desc_real[fr+j*(N+1)+N]));
             }
 	  } break;
 	  case 1: {
-	    pai->add_point_full_symmetric(pt, im_desc_real[fr + j * (N+1) + N]);
+	    pai->add_point_full_symmetric(pt,atof(im_desc_real[fr+j*(N+1)+N]));
+	    // pai->add_point_full_symmetric(pt,
+	    //                   LONG_SCALAR_ATOF(im_desc_real[fr+j*(N+1)+N]));
 	  } break;
 	  case 0: {
-	    pai->add_point(pt, im_desc_real[fr + j * (N+1) + N]);
+	    pai->add_point(pt, atof(im_desc_real[fr+j*(N+1)+N]));
+	    // pai->add_point(pt,LONG_SCALAR_ATOF(im_desc_real[fr+j*(N+1)+N]));
 	  } break;
 	  default: DAL_INTERNAL_ERROR("");
 	  }
