@@ -68,51 +68,64 @@ template <class MAT, class T> void print_for_matlab(const MAT &m,
   cout << "]" << endl;
 }
 
-template <class MAT> void print_for_matlab(const MAT &m)
+template <class MAT> inline void print_for_matlab(const MAT &m)
 { print_for_matlab(m, gmm::linalg_traits<MAT>::value_type()); }
 
-void test_qr(void) {
+template <class T> inline T real_or_complex(double a, double b, T)
+{ return a; }
+template <class T> inline std::complex<T>
+real_or_complex(double a, double b, std::complex<T>)
+{ return std::complex<T>(a, b); }
 
-  int nn = 15;
-  gmm::dense_matrix<double> mm(nn,nn);
-  gmm::fill_random(mm);
 
-  cout << "/***********************************************************/\n";
-  cout << "/*                   Test of QR algorithms (complex)       */\n";
-  cout << "/***********************************************************/\n";
+template <class MAT>  void test_qr(const MAT &m) {
+  typedef typename gmm::linalg_traits<MAT>::value_type value_type;
+  typedef typename gmm::number_traits<value_type>::magnitude_type
+    magnitude_type;
+
+  cout   << "/***********************************************************/\n";
+  if (gmm::is_complex(value_type()))
+    cout << "/*                   Test of QR algorithms (complex)       */\n";
+  else
+    cout << "/*                   Test of QR algorithms (real)          */\n";
+  cout   << "/***********************************************************/\n";
  
-  std::vector<std::complex<double> > cv(nn), eigc(nn);
-  gmm::dense_matrix<std::complex<double> > cm(nn,nn), cq(nn,nn),
-    cr(nn,nn), ca(nn,nn);
+  int nn = gmm::mat_nrows(m);
+  MAT cm(nn,nn), cq(nn,nn), cr(nn,nn), ca(nn,nn);
+  std::vector<value_type> cv(nn);
+  std::vector<std::complex<magnitude_type> > eigc(nn);
 
-  gmm::fill_random(cv);
-  gmm::copy(mm, cm); // gmm::fill_random(cm);
-  print_for_matlab(cm);
-
-
-  cout.precision(6);
-  cout << "cm = " << cm << endl;
-
+  /* Test on QR factorisation.                                             */
+  gmm::fill_random(cm);
+  // print_for_matlab(cm);
   gmm::qr_factor(cm, cq, cr);
   gmm::mult(cq, cr, ca);
-  cout << "ca = " << ca << endl;
   gmm::add(gmm::scaled(cm, -1.0), ca);
-
   if (gmm::mat_norm2(ca) > 1E-10) 
-    DAL_THROW(dal::failure_error, "Error on complex QR factorisation.");
+    DAL_THROW(dal::failure_error, "Error on QR factorisation.");
+
+  /* Test on LU.                                                           */
+  gmm::fill_random(cm);
+  gmm::copy(cm, cq);
+  gmm::lu_inverse(cq);
+  gmm::mult(cm, cq, ca);
+  gmm::copy(gmm::identity_matrix(), cq);
+  gmm::add(gmm::scaled(cq, -1.0), ca);
+  if (gmm::mat_norm2(ca) > 1E-10) 
+    DAL_THROW(dal::failure_error, "Error on LU factorisation.");
 
   double exectime = ftool::uclock_sec();
+  cout.precision(6);
   rudimentary_qr_algorithm(cm, eigc, cq);
   cout << "time to compute rudimentary QR : " << ftool::uclock_sec()-exectime;
   cout << "\neigenvalues : " << eigc << endl;
   cout << "eigenvectors : " << cq << endl;
 
-  gmm::fill_random(cm);
-  print_for_matlab(cm);
-  cout.precision(6);
+  // print_for_matlab(cm);
   exectime = ftool::uclock_sec();
   implicit_qr_algorithm(cm, eigc, cq);
-  cout << "time to compute implicit complex QR : " << ftool::uclock_sec()-exectime;
+  cout << "time to compute implicit QR : "
+       << ftool::uclock_sec()-exectime;
   cout << "\neigenvalues : " << eigc << endl;
   cout << "eigenvectors : " << cq << endl;
 
@@ -121,102 +134,31 @@ void test_qr(void) {
   gmm::lu_inverse(cr);
   gmm::copy(gmm::identity_matrix(), cm);
   std::fill(cv.begin(), cv.end(), 1.0);
-  if (nn > 0) cv[0] = cm(0,0) = std::complex<double>(0.0);
-  if (nn > 1) cv[1] = cm(1,1) = std::complex<double>(0.0);
-  if (nn > 2) cv[2] = cm(2,2) = std::complex<double>(0.0, 0.1);
-  if (nn > 3) cv[3] = cm(3,3) = std::complex<double>(0.0, -0.1);
-  if (nn > 4) cv[4] = cm(4,4) = std::complex<double>(-2.0, 3.0);
-  if (nn > 5) cv[5] = cm(5,5) = std::complex<double>(-2.0, 3.0);
-  if (nn > 6) cv[6] = cm(6,6) = std::complex<double>(-2.0, 3.0);
-  if (nn > 7) cv[7] = cm(7,7) = std::complex<double>(1000.0, 1.0);
+  if (nn > 0) cv[0] = cm(0,0) = real_or_complex(   0.0,  0.0, value_type());
+  if (nn > 1) cv[1] = cm(1,1) = real_or_complex(   0.0,  0.0, value_type());
+  if (nn > 2) cv[2] = cm(2,2) = real_or_complex(   0.0, -0.1, value_type());
+  if (nn > 3) cv[3] = cm(3,3) = real_or_complex(   0.0,  0.1, value_type());
+  if (nn > 4) cv[4] = cm(4,4) = real_or_complex(  -2.0,  3.0, value_type());
+  if (nn > 5) cv[5] = cm(5,5) = real_or_complex(  -2.0,  3.0, value_type());
+  if (nn > 6) cv[6] = cm(6,6) = real_or_complex(  -2.0,  3.0, value_type());
+  if (nn > 7) cv[7] = cm(7,7) = real_or_complex(1000.0,  1.0, value_type());
   gmm::mult(cq, cm, ca); 
   gmm::mult(ca, cr, cm);
-  cout << "With predetermined eigenvalues\n";
-  print_for_matlab(cm);
-  cout.precision(6);
+  cout << "\neigenvalues to be computed : " << cv << endl;
   exectime = ftool::uclock_sec();
   implicit_qr_algorithm(cm, eigc, cq);
-  cout << "time to compute implicit complex QR : " << ftool::uclock_sec()-exectime;
-  // gmm::clean(eigc, 1E-10); cout << "\neigenvalues : " << eigc << endl;
+  cout << "time to compute implicit QR : "
+       << ftool::uclock_sec()-exectime;
+  gmm::clean(eigc, 1E-10); cout << "\neigenvalues found : " << eigc << endl;
   // gmm::clean(cq, 1E-10); cout << "eigenvectors : " << cq << endl;
   for (int l = 0; l < nn; ++l) {
     bool found = false;
      for (int k = 0; k < nn; ++k)
        if (dal::abs(eigc[l] - cv[k]) < 1E-8)
 	 { cv[k] = -1.123236; found = true; break; }
-     if (found = false)
-       DAL_THROW(dal::failure_error, "Error on complex QR algorithm.");
+     if (found == false)
+       DAL_THROW(dal::failure_error, "Error on QR algorithm.");
   }
-
-  gmm::fill_random(cm);
-  gmm::copy(cm, cq);
-  gmm::lu_inverse(cq);
-  gmm::mult(cm, cq, ca);
-  gmm::copy(gmm::identity_matrix(), cq);
-  gmm::add(gmm::scaled(cq, -1.0), ca);
-  if (gmm::mat_norm2(ca) > 1E-10) 
-    DAL_THROW(dal::failure_error, "Error on complex LU factorisation.");
-  
-
-
-  cout << "/***********************************************************/\n";
-  cout << "/*                   Test of QR algorithms (real)          */\n";
-  cout << "/***********************************************************/\n";
-
-  
-  gmm::dense_matrix<double> r(nn, nn), q(nn, nn),
-    qr(nn, nn), mmt(nn, nn);
-  
-  print_for_matlab(cm);
-  cout.precision(8);
-  exectime = ftool::uclock_sec();
-//   rudimentary_qr_algorithm(mm, eigc, q);
-//   cout << "time to compute rudimentary QR : " << ftool::uclock_sec() - exectime;
-//   cout << "\neigenvalues : " << eigc << endl;
-//   cout << "eigenvectors : " << q << endl;
-  
-//   exectime = ftool::uclock_sec();
-//   implicit_qr_algorithm(mm, eigc, q);
-//   cout << "time to compute implicit QR : " << ftool::uclock_sec()-exectime;
-//   cout << "\neigenvalues : " << eigc << endl;
-//   cout << "eigenvectors : " << q << endl;
-  
-  // getchar();
-  
-  gmm::qr_factor(mm, q, r);
-  // gmm::clean(r, 1E-13);
-  // cout << "r = " << r << endl;
-  // cout << "q = " << q << endl;
-  gmm::mult(q, r, qr);
-  gmm::add(gmm::scaled(mm, -1.0), qr);
-  
-  if (gmm::mat_norm2(qr) > 1E-10) 
-    DAL_THROW(dal::failure_error, "Error on QR factorisation.");
-
-  gmm::mult(mm, gmm::transposed(mm), mmt);
-  print_for_matlab(cm);
-  cout.precision(8);
-  std::vector<double> eig(nn);
-
-  exectime = ftool::uclock_sec();
-  symmetric_qr_algorithm(mmt, eig, q);
-  cout << "time to compute symmetric QR : " << ftool::uclock_sec()-exectime;
-  cout << "\neigval = " << eig << endl;
-  
-
-  implicit_qr_algorithm(mmt, eig, q);
-  cout << "\neigval(par impl qr) = " << eig << endl;
-  // getchar();
-
-
-  gmm::copy(mm, q);
-  gmm::lu_inverse(q);
-  gmm::mult(mm, q, r);
-  gmm::copy(gmm::identity_matrix(), q);
-  gmm::add(gmm::scaled(q, -1.0), r);
-  if (gmm::mat_norm2(r) > 1E-10) 
-    DAL_THROW(dal::failure_error, "Error on real LU factorisation.");
-
 
 }
 
@@ -230,7 +172,9 @@ int main(void)
     cout.precision(16);
 
     test_gauss_det();
-    test_qr();
+    
+    test_qr(gmm::dense_matrix<double>(8,8));
+    test_qr(gmm::row_matrix<std::vector<std::complex<long double> > >(8,8));
 
     gmm::dense_matrix<double> m(10, 10);
     std::vector<double> y(10), x(10), b(10);

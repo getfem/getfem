@@ -266,10 +266,14 @@ namespace gmm {
   template <class T> struct number_traits<std::complex<T> >
   { typedef T magnitude_type; };
 
-  template <class T> T conj_product(T a, T b) { return a * b; }
-  template <class T> std::complex<T> conj_product(const std::complex<T> &a,
-						  const std::complex<T> &b)
+  template <class T> inline T conj_product(T a, T b) { return a * b; }
+  template <class T> inline std::complex<T> conj_product(std::complex<T> a,
+							 std::complex<T> b)
   { return a * std::conj(b); } // to be optimized
+
+  template <class T> inline bool is_complex(T a) { return false; }
+  template <class T> inline bool is_complex(std::complex<T> a) { return true;}
+  
 
   /* ******************************************************************** */
   /*		Basic vectors used                         		  */

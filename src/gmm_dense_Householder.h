@@ -91,12 +91,9 @@ namespace gmm {
   }
   
   template <class Matrix, class VecX, class VecY>
-  inline void rank_one_update(const Matrix &A_, const VecX& x,
+  inline void rank_one_update(const Matrix &AA, const VecX& x,
 			      const VecY& y) {
-    Matrix& A = const_cast<Matrix&>(A_);
-    if (is_sparse(A))
-      DAL_THROW(failure_error,
-		"Sorry, rank one update for sparse matrices does not exist");
+    Matrix& A = const_cast<Matrix&>(AA);
     rank_one_update(A, x, y, typename principal_orientation_type<typename
 		    linalg_traits<Matrix>::sub_orientation>::potype());
   }
@@ -129,16 +126,21 @@ namespace gmm {
   template <class MAT, class VECT1, class VECT2> inline
     void row_house_update(const MAT &AA, const VECT1 &V, const VECT2 &WW) {
     VECT2 &W = const_cast<VECT2 &>(WW); MAT &A = const_cast<MAT &>(AA);
+    typedef typename linalg_traits<MAT>::value_type value_type;
+    typedef typename number_traits<value_type>::magnitude_type magnitude_type;
 
-    gmm::mult(conjugated(transposed(A)), scaled(V, -2.0/vect_norm2_sqr(V)), W);
+    gmm::mult(conjugated(transposed(A)),
+	      scaled(V, magnitude_type(-2.0)/vect_norm2_sqr(V)), W);
     rank_one_update(A, V, W);
   }
 
   template <class MAT, class VECT1, class VECT2> inline
     void col_house_update(const MAT &AA, const VECT1 &V, const VECT2 &WW) {
     VECT2 &W = const_cast<VECT2 &>(WW); MAT &A = const_cast<MAT &>(AA);
+    typedef typename linalg_traits<MAT>::value_type value_type;
+    typedef typename number_traits<value_type>::magnitude_type magnitude_type;
     
-    gmm::mult(A, scaled(V, -2.0 / vect_norm2_sqr(V)), W);
+    gmm::mult(A, scaled(V, magnitude_type(-2.0) / vect_norm2_sqr(V)), W);
     rank_one_update(A, W, V);
   }
 
@@ -148,7 +150,7 @@ namespace gmm {
 
   template <class MAT1, class MAT2>
     void Hessenberg_reduction(const MAT1& AA, const MAT2 &QQ, bool compute_Q){
-    MAT1& A = const_cast<MAT1&>(AA); MAT1& Q = const_cast<MAT2&>(QQ);
+    MAT1& A = const_cast<MAT1&>(AA); MAT2& Q = const_cast<MAT2&>(QQ);
     typedef typename linalg_traits<MAT1>::value_type value_type;
     size_type n = mat_nrows(A);
     std::vector<value_type> v(n), w(n);
@@ -225,7 +227,7 @@ namespace gmm {
       sub_interval SUBI(k, n-k);
       v.resize(n-k); p.resize(n-k); w.resize(n-k); 
       for (size_type l = k; l < n; ++l) 
-	{ v[l-k] = A(l, k-1); A(l, k-1)=0.0; A(k-1, l)=0.0; }
+	{ v[l-k]=A(l, k-1); A(l, k-1)=value_type(0); A(k-1, l)=value_type(0); }
       magnitude_type norm_x = -vect_norm2(v) * dal::sgn(v[0]);
       house_vector(v);
       magnitude_type norm = vect_norm2_sqr(v);

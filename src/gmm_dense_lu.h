@@ -71,6 +71,7 @@ namespace gmm {
   template <class DenseMatrix, class Pvector>
   size_type lu_factor(DenseMatrix& A, Pvector& ipvt) {
     typedef typename linalg_traits<DenseMatrix>::value_type value_type;
+    typedef typename number_traits<value_type>::magnitude_type magnitude_type;
     size_type info = 0, i, j, jp, M = A.nrows(), N = A.ncols();
     size_type NN = std::min(M-1, N-1);
     std::vector<value_type> c(M), r(N);
@@ -80,12 +81,12 @@ namespace gmm {
       
     if (M || N) {
       for (j = 0; j < NN; ++j) {
-	double max = dal::abs(A(j,j)); jp = j;
+	magnitude_type max = dal::abs(A(j,j)); jp = j;
 	for (i = j+1; i < M; ++i)		   /* find pivot.          */
 	  if (dal::abs(A(i,j)) > max) { jp = i; max = dal::abs(A(i,j)); }
 	ipvt[j] = jp + 1;
 	
-	if (max == value_type(0)) { info = j + 1; break; }
+	if (max == magnitude_type(0)) { info = j + 1; break; }
         if (jp != j) for (i = 0; i < N; ++i) std::swap(A(jp, i), A(j, i));
 	
         for (i = j+1; i < M; ++i) { A(i, j) /= A(j,j); c[i-j-1] = -A(i, j); }

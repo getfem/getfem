@@ -46,7 +46,8 @@ namespace gmm {
   /* ********************************************************************* */
   
   template <class MAT1, class MAT2, class MAT3>
-    void qr_factor(const MAT1 &A, MAT2 &Q, MAT3 &R) { 
+    void qr_factor(const MAT1 &A, const MAT2 &QQ, const MAT3 &RR) { 
+    MAT2 &Q = const_cast<MAT2 &>(QQ); MAT3 &R = const_cast<MAT3 &>(RR); 
     typedef typename linalg_traits<MAT1>::value_type value_type;
     typedef std::vector<value_type> temp_vector;
 
@@ -87,11 +88,22 @@ namespace gmm {
     tol *= 2.0;
     for (size_type i = 0; i < n; ++i) {
       if ((i < n-1) &&
-	  dal::abs(A(i+1,i)) >= (dal::abs(A(i,i))+dal::abs(A(i+1,i+1)))*tol &&
-	  dal::sqr(A(i,i) + A(i+1, i+1))
-	  - 4.0 * (A(i,i) * A(i+1, i+1) - A(i,i+1) * A(i+1, i)) < TA(0))
-	DAL_WARNING(2, "A complex eigenvalue has been detected");
-      V[i] = TV(A(i,i));
+	  dal::abs(A(i+1,i)) >= (dal::abs(A(i,i))+dal::abs(A(i+1,i+1)))*tol) {
+	TA tr = A(i,i) + A(i+1, i+1);
+	TA det = A(i,i)*A(i+1, i+1) - A(i,i+1)*A(i+1, i);
+	TA delta = tr*tr - TA(4.0) * det;
+	if (delta < TA(0)) {
+	  DAL_WARNING(2, "A complex eigenvalue has been detected");
+	  V[i] = V[i+1] = tr / TA(2.0);
+	}
+	else {
+	  V[i  ] = TA(tr + sqrt(delta))/ TA(2.0);
+	  V[i+1] = TA(tr -  sqrt(delta))/ TA(2.0);
+	}
+	++i;
+      }
+      else
+	V[i] = TV(A(i,i));
     }
   }
 
@@ -107,14 +119,14 @@ namespace gmm {
       else {
 	TA tr = A(i,i) + A(i+1, i+1);
 	TA det = A(i,i)*A(i+1, i+1) - A(i,i+1)*A(i+1, i);
-	TA delta = tr*tr - 4.0 * det;
+	TA delta = tr*tr - TA(4.0) * det;
 	if (delta < TA(0)) {
-	  V[i] = std::complex<TV>(tr / 2.0, sqrt(-delta) / 2.0);
-	  V[i+1] = std::complex<TV>(tr / 2.0, -sqrt(-delta) / 2.0);
+	  V[i] = std::complex<TV>(tr / TA(2.0), sqrt(-delta) / TA(2.0));
+	  V[i+1] = std::complex<TV>(tr / TA(2.0), -sqrt(-delta) / TA(2.0));
 	}
 	else {
-	  V[i]   = std::complex<TV>(A(i,i));
-	  V[i+1] = std::complex<TV>(A(i+1, i+1));
+	  V[i  ] = TA(tr + sqrt(delta)) / TA(2.0);
+	  V[i+1] = TA(tr -  sqrt(delta)) / TA(2.0);
 	}
 	++i;
       }
@@ -137,9 +149,9 @@ namespace gmm {
       else {
 	std::complex<TA> tr = A(i,i) + A(i+1, i+1);
 	std::complex<TA> det = A(i,i)*A(i+1, i+1) - A(i,i+1)*A(i+1, i);
-	std::complex<TA> delta = tr*tr - 4.0 * det;
-	V[i] = (tr + sqrt(delta)) / 2.0;
-	V[i+1] = (tr - sqrt(delta)) / 2.0;
+	std::complex<TA> delta = tr*tr - TA(4.0) * det;
+	V[i] = (tr + sqrt(delta)) / TA(2.0);
+	V[i+1] = (tr - sqrt(delta)) / TA(2.0);
 	++i;
       }
   }
@@ -219,8 +231,12 @@ namespace gmm {
   // eigval has to be a complex vector if A has complex eigeinvalues.
   // Very slow method. Use implicit_qr_method instead.
   template <class MAT1, class VECT, class MAT2>
-    void rudimentary_qr_algorithm(const MAT1 &A, VECT &eigval, MAT2 &eigvect,
-		      double tol = 1E-12, bool compvect = true) {
+    void rudimentary_qr_algorithm(const MAT1 &A, const VECT &eigval_,
+				  const MAT2 &eigvect_, double tol = 1E-12,
+				  bool compvect = true) {
+    VECT &eigval = const_cast<VECT &>(eigval_);
+    MAT2 &eigvect = const_cast<MAT2 &>(eigvect_);
+
     typedef typename linalg_traits<MAT1>::value_type value_type;
 
     size_type n = mat_nrows(A), p, q, ite = 0;
@@ -254,7 +270,7 @@ namespace gmm {
 
   template <class MAT1, class MAT2>
     void Francis_qr_step(const MAT1& HH, const MAT2 &QQ, bool compute_Q) {
-    MAT1& H = const_cast<MAT1&>(HH); MAT1& Q = const_cast<MAT2&>(QQ);
+    MAT1& H = const_cast<MAT1&>(HH); MAT2& Q = const_cast<MAT2&>(QQ);
     typedef typename linalg_traits<MAT1>::value_type value_type;
     size_type n = mat_nrows(H); 
     
@@ -297,8 +313,11 @@ namespace gmm {
   // eigval has to be a complex vector if A has complex eigeinvalues.
   // complexity about 10n^3, 25n^3 if eigenvectors are computed
   template <class MAT1, class VECT, class MAT2>
-    void implicit_qr_algorithm(const MAT1 &A, VECT &eigval, MAT2 &eigvect,
+    void implicit_qr_algorithm(const MAT1 &A, const VECT &eigval_,
+			       const MAT2 &eigvect_,
 			       double tol = 1E-12, bool compvect = true) {
+    VECT &eigval = const_cast<VECT &>(eigval_);
+    MAT2 &eigvect = const_cast<MAT2 &>(eigvect_);
     typedef typename linalg_traits<MAT1>::value_type value_type;
 
     size_type n = mat_nrows(A), q = 0, p;
@@ -338,7 +357,7 @@ namespace gmm {
 
   template <class MAT1, class MAT2>
     void Wilkinson_qr_step(const MAT1& TT, const MAT2 &ZZ, bool compute_z) {
-    MAT1& T = const_cast<MAT1&>(TT); MAT1& Z = const_cast<MAT2&>(ZZ);
+    MAT1& T = const_cast<MAT1&>(TT); MAT2& Z = const_cast<MAT2&>(ZZ);
     typedef typename linalg_traits<MAT1>::value_type value_type;
     
     size_type n = mat_nrows(T);
@@ -390,8 +409,11 @@ namespace gmm {
   // eigval has to be a complex vector if A has complex eigeinvalues.
   // complexity about 4n^3/3, 9n^3 if eigenvectors are computed
   template <class MAT1, class VECT, class MAT2>
-  void symmetric_qr_algorithm(const MAT1 &A, VECT &eigval, MAT2 &eigvect,
-			      double tol = 1E-12, bool compvect = true) {
+  void symmetric_qr_algorithm(const MAT1 &A, const VECT &eigval_,
+			      const MAT2 &eigvect_, double tol = 1E-12,
+			      bool compvect = true) {
+    VECT &eigval = const_cast<VECT &>(eigval_);
+    MAT2 &eigvect = const_cast<MAT2 &>(eigvect_);
     typedef typename linalg_traits<MAT1>::value_type value_type;
 
     size_type n = mat_nrows(A), q = 0, p, ite = 0;
