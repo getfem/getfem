@@ -41,12 +41,21 @@
 namespace getfem
 {
 
-  enum constituant_type { GETFEM_BASE_, GETFEM_GRAD_, GETFEM_HESSIAN_ };
+  enum constituant_type
+    { GETFEM_BASE_, GETFEM_GRAD_, GETFEM_HESSIAN_, GETFEM_NONLINEAR_ };
 
-  struct constituant
-  {
+  class nonlinear_elem_term {
+    public :
+      virtual dim_type dim(void) const = 0;
+      virtual dim_type size(dim_type i)  const = 0;
+      virtual void compute(fem_interpolation_context& ctx,
+			   base_tensor &t)  const = 0;
+  };
+
+  struct constituant {
     constituant_type t;
     pfem pfi;
+    const nonlinear_elem_term *nlt;
   };
 
   /** Description of an elementary matrix.  This class 
@@ -65,20 +74,24 @@ namespace getfem
   typedef const mat_elem_type * pmat_elem_type;
   
   /** Gives a pointer to the structure describing the elementary matrix
-   *   which compute the integral of the basic functions described by pi.
-   *    pi is of type bgeot::pfem\_interpolation.
+   *   which compute the integral of the basic functions described by pfi.
+   *    pfi is of type bgeot::pfem\_interpolation.
    */
   pmat_elem_type mat_elem_base(pfem pfi);
   /** Gives a pointer to the structure describing the elementary matrix
    *   which compute the integral of the gradient of the basic functions
-   *    described by pi. pi is of type bgeot::pfem\_interpolation.
+   *    described by pfi. pfi is of type bgeot::pfem\_interpolation.
    */
   pmat_elem_type mat_elem_grad(pfem pfi);
   /** Gives a pointer to the structure describing the elementary matrix
    *   which compute the integral of the hessian of the basic functions
-   *    described by pi. pi is of type bgeot::pfem\_interpolation. 
+   *    described by pfi. pfi is of type bgeot::pfem\_interpolation. 
    */
   pmat_elem_type mat_elem_hessian(pfem pfi);
+  /** Gives a pointer to the structure describing the elementary matrix
+   *   which compute the integral of a nonlinear term.
+   */
+  pmat_elem_type mat_elem_nonlinear(const nonlinear_elem_term &);
   /** Gives a pointer to the structure describing the elementary matrix
    *   which compute the integral of product of the integrals described by
    *   *pet1 and *pet2.

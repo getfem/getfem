@@ -128,6 +128,13 @@ namespace getfem
 	  if (!((*it).pfi->is_on_real_element())) grad_reduction.push_back(k);
 	  break;
 	case GETFEM_HESSIAN_ : ++k; hess_reduction.push_back(k); break;
+	case GETFEM_NONLINEAR_ :
+	  for (dim_type ii = 1; ii < (*it).nlt->dim(); ++ii) ++k;
+	  if (is_ppi)
+	    DAL_THROW(failure_error,
+	       "For nonlinear terms you have to use approximated integration");
+	  computed_on_real_element = false;
+	  break;
 	}
       }
 
@@ -142,12 +149,11 @@ namespace getfem
       if (!computed_on_real_element) mref.resize(nbf + 1);
     }
 
-    void add_elem(base_tensor &t, fem_interpolation_context& ctx, scalar_type J,
-		  bool first, bool trans = true) {
+    void add_elem(base_tensor &t, fem_interpolation_context& ctx,
+		  scalar_type J, bool first, bool trans = true) {
       mat_elem_type::const_iterator it = pme->begin(), ite = pme->end();
       bgeot::multi_index mi(pme->mi.size()), sizes = pme->mi;
       bgeot::multi_index::iterator mit = sizes.begin();
-      //fem_interpolation_context ctx(pgp,0,ip,G,elt);
       for (size_type k = 0; it != ite; ++it, ++k) {
 	ctx.set_pfp(pfp[k]);
 	++mit; if ((*it).pfi->target_dim() > 1) ++mit;
@@ -155,13 +161,10 @@ namespace getfem
 	switch ((*it).t) {
 	case GETFEM_BASE_    :
 	  (*it).pfi->real_base_value(ctx, elmt_stored[k]);
-	  //(*it).pfi->real_base_value(pgp, pfp[k], ip, G, elmt_stored[k], elt);
 	  break;
 	case GETFEM_GRAD_    :
 	  if (trans) {
 	    (*it).pfi->real_grad_base_value(ctx, elmt_stored[k]);
-	    //(*it).pfi->real_grad_base_value(pgp, pfp[k], ip, G, B, 
-	    //elmt_stored[k], elt);
 	    *mit++ = ctx.N();
 	  }
 	  else
@@ -170,8 +173,6 @@ namespace getfem
 	case GETFEM_HESSIAN_ :
 	  if (trans) {
 	    (*it).pfi->real_hess_base_value(ctx, elmt_stored[k]);
-	    //(*it).pfi->real_hess_base_value(pgp, pfp[k], ip, G, B3, 
-	    //B32, elmt_stored[k], elt);
 	    *mit++ = dal::sqr(ctx.N());
 	  }
 	  else {
@@ -182,6 +183,10 @@ namespace getfem
 	    tt.adjust_sizes(mim);
 	    elmt_stored[k] = tt;
 	  }
+	  break;
+	case GETFEM_NONLINEAR_ :
+	  (*it).nlt->compute(ctx, elmt_stored[k]);
+	  for (dim_type ii = 1; ii < (*it).nlt->dim(); ++ii) ++mit;
 	  break;
 	}
       }
@@ -261,6 +266,8 @@ namespace getfem
 	    Q.derivative(*mit % dim); Q.derivative(*mit / dim);
 	    ++mit; break;
 	  case GETFEM_BASE_ : break;
+	  case GETFEM_NONLINEAR_ :
+	    DAL_THROW(failure_error, "No nonlinear term allowed here");
 	  }
 	  ++it;
 
@@ -280,6 +287,8 @@ namespace getfem
 		R.derivative(*mit % dim); R.derivative(*mit / dim);
 		++mit; break;
 	      case GETFEM_BASE_ : break;
+	      case GETFEM_NONLINEAR_ :
+		DAL_THROW(failure_error, "No nonlinear term allowed here");
 	      }
 	      P *= R;   
 	    }
