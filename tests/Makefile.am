@@ -21,7 +21,8 @@ check_PROGRAMS = \
 	test_slice         \
 	test_norm	   \
 	test_mesh          \
-	test_tree_sorted
+	test_tree_sorted   \
+	plasticity
 
 CLEANFILES = \
 	laplacian.res laplacian.mesh laplacian.dataelt \
@@ -38,7 +39,6 @@ test_assembly_SOURCES = test_assembly.C
 laplacian_SOURCES = laplacian.C
 test_interpolation_SOURCES = test_interpolation.C
 elastostatic_SOURCES = elastostatic.C
-nonlinear_elastostatic_SOURCES = nonlinear_elastostatic.C
 helmholtz_SOURCES = helmholtz.C
 integration_SOURCES = integration.C
 poly_SOURCES = poly.C
@@ -52,10 +52,15 @@ test_mat_elem_SOURCES = test_mat_elem.C
 test_slice_SOURCES = test_slice.C
 test_norm_SOURCES = test_norm.C
 schwarz_additive_SOURCES = schwarz_additive.C
+plasticity_SOURCES = plasticity.C
 #test_fem_SOURCES = test_fem.C
 
 INCLUDES = -I$(top_srcdir)/src -I../src
 LDADD    = ../src/libgetfem.la -lm @SUPLDFLAGS@
+
+
+plasticity_LDADD = ../src/libgetfem.la -lm @SUPLDFLAGS@ $(HOME)/source++/SuperLU/superlu.a -lblas -lg2c
+plasticity_INCLUDES = $(INCLUDES) -I$(HOME)/source++/SuperLU/
 
 TESTS = \
 	$(top_srcdir)/tests/dynamic_array.pl      \
@@ -106,7 +111,6 @@ EXTRA_DIST = \
 	schwarz_additive.pl               \
 	schwarz_additive.param            \
 	elastostatic.param                \
-	nonlinear_elastostatic.param                \
 	test_link_fem.param               \
 	geo_trans_inv.param               \
 	make_gmm_test.pl                  \

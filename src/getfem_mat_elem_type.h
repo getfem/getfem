@@ -62,7 +62,7 @@ namespace getfem
     public :
       virtual const bgeot::multi_index &sizes() const = 0;
       virtual void compute(fem_interpolation_context& /*ctx*/,
-			   base_tensor &/*output*/) {}
+			   base_tensor &/*output*/) = 0;
       virtual void prepare(fem_interpolation_context& /*ctx*/,
 			   size_type /*nl_part*/) {}
     virtual ~nonlinear_elem_term();

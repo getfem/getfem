@@ -517,6 +517,149 @@ namespace getfem {
   /* TODO : arbitrary elasticity tensor */
 
 
+
+
+  /* ******************************************************************** */
+  /*		Plasticity bricks.                                        */
+  /* ******************************************************************** */
+
+  /* TODO :
+       - non-homogeneous case
+       - saved_proj useful?
+  */
+  
+  template<typename MODEL_STATE = standard_model_state> 
+  class mdbrick_plasticity : public mdbrick_abstract<MODEL_STATE> {
+    
+    typedef typename MODEL_STATE::vector_type VECTOR;
+    typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
+    typedef typename MODEL_STATE::value_type value_type;
+    mesh_fem &mf_u;
+    mesh_fem &mf_data;
+    VECTOR lambda_, mu_;
+    bool homogeneous;
+    value_type stress_threshold, VM_max, TOL;
+    size_type N, flag_hyp;
+    
+    std::vector<std::vector<scalar_type> > sigma_bar;
+    std::vector<std::vector<scalar_type> > saved_proj;
+
+    VM_projection VM_1;
+
+    bool save_constraints;
+
+  public:
+    
+    virtual void mixed_variables(dal::bit_vector &, size_type = 0) {}
+    virtual bool is_linear(void) { return false; }
+    virtual bool is_coercive(void) { return false; } // means we use LU factorisation instead of conjugate gradient
+    virtual size_type nb_dof(void) { return mf_u.nb_dof(); }
+    virtual size_type nb_constraints(void) { return 0; }
+    void set_save_constraints(bool b) { save_constraints = b; }
+    
+    template<typename VECT> void get_solution(MODEL_STATE &MS, VECT &V) {
+      gmm::sub_interval SUBI(this->first_index(), nb_dof());
+      gmm::copy(gmm::sub_vector(MS.state(), SUBI), V);
+    }
+
+    void get_proj(std::vector<std::vector<scalar_type> > &p) {
+      gmm::resize(p,gmm::vect_size(saved_proj));
+      for (size_type cv=0;cv<gmm::vect_size(saved_proj);++cv) {
+	gmm::resize(p[cv],gmm::vect_size(saved_proj[cv]));
+	gmm::copy(saved_proj[cv], p[cv]);
+      }
+    }
+
+    virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0, size_type = 0, bool = false) {
+
+      gmm::sub_interval SUBI(i0, nb_dof());      
+      T_MATRIX K;
+      gmm::clear(K);
+      gmm::resize(K, nb_dof(), nb_dof());
+      VECTOR lambda(mf_data.nb_dof()), mu(mf_data.nb_dof());
+
+      
+      plasticity_projection_base gradproj_base(mf_u, MS.state(), stress_threshold,
+					       TOL, lambda_[0], mu_[0], &VM_1,
+					       sigma_bar, saved_proj,1,flag_hyp, save_constraints);
+      plasticity_projection gradproj(&gradproj_base);
+      
+      for (size_type i=0;i<mf_data.nb_dof();++i) {
+	lambda[i]=lambda_[0];
+	mu[i]=mu_[0];
+      }
+	
+      /* Calculate the actual matrix */
+      asm_lhs_for_plasticity(K, mf_u, mf_data, lambda, mu, &gradproj);
+      gmm::copy(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI));
+    }
+    
+    virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
+				size_type = 0) {
+      gmm::sub_interval SUBI(i0, nb_dof());        
+      VECTOR K;
+ 
+      /* Initialise K correctly */
+      gmm::clear(K);
+      gmm::resize(K, nb_dof());
+      plasticity_projection_base proj_base(mf_u, MS.state(), stress_threshold,
+						TOL, lambda_[0], mu_[0], &VM_1, sigma_bar,
+						//saved_proj,0,flag_hyp, true);
+						saved_proj,0,flag_hyp, save_constraints);
+      plasticity_projection proj(&proj_base);
+	
+      /* Calculate the actual matrix */
+      asm_rhs_for_plasticity(K, mf_u, &proj);
+      gmm::copy(K, gmm::sub_vector(MS.residu(), SUBI));
+    }
+
+    virtual mesh_fem &main_mesh_fem(void) { return mf_u; }
+    
+    void set_Lame_coeff(value_type lambdai, value_type mui) {
+      homogeneous = true;
+      gmm::resize(lambda_, 1); lambda_[0] = lambdai;
+      gmm::resize(mu_, 1); mu_[0] = mui;
+    }
+    
+    void set_Lame_coeff(const VECTOR &lambdai, const VECTOR &mui) {
+      homogeneous = false;
+      gmm::resize(lambda_, mf_data.nb_dof()); gmm::copy(lambdai, lambda_);
+      gmm::resize(mu_, mf_data.nb_dof()); gmm::copy(mui, mu_);
+    }
+
+    // constructor for a homogeneous material (constant lambda and mu)
+    mdbrick_plasticity(mesh_fem &mf_u_, mesh_fem &mf_data_,
+		       value_type lambdai, value_type mui, value_type stress_threshold_,
+		       value_type VM_max_, value_type TOL_, size_type flag_hyp_,
+		       std::vector<std::vector<scalar_type> > sigma_b)
+      : mf_u(mf_u_), mf_data(mf_data_) {
+      set_Lame_coeff(lambdai, mui);
+      N = mf_data.linked_mesh().dim();
+      stress_threshold = stress_threshold_;
+      VM_max = VM_max_;
+      TOL = TOL_;
+      flag_hyp = flag_hyp_;
+      this->add_dependency(mf_u); this->add_dependency(mf_data);
+      set_save_constraints(false);
+    }
+    
+    // constructor for a non-homogeneous material
+    mdbrick_plasticity(mesh_fem &mf_u_, mesh_fem &mf_data_,
+		       const VECTOR &lambdai, const VECTOR &mui, value_type stress_treshhold_,
+		       value_type VM_max_, value_type TOL_, size_type flag_hyp_ ,
+		       std::vector<std::vector<scalar_type> > sigma_b)
+      : mf_u(mf_u_), mf_data(mf_data_) {
+      set_Lame_coeff(lambdai, mui);
+      N = mf_data.linked_mesh().dim();
+      stress_treshold = stress_treshold_;
+      VM_max = VM_max_;
+      TOL = TOL_;
+      flag_hyp = flag_hyp_;
+      this->add_dependency(mf_u); this->add_dependency(mf_data);
+      set_save_constraints(false);
+    }
+  };
+  
   /* ******************************************************************** */
   /*		Helmholtz brick.                                          */
   /* ******************************************************************** */
@@ -652,6 +795,7 @@ namespace getfem {
 		  " You have to change the rhs in that case.");
       gmm::resize(F_, sub_problem.main_mesh_fem().nb_dof());
       gmm::clear(F_);
+      
       asm_source_term(F_, sub_problem.main_mesh_fem(),mf_data, B_,boundary);
       this->computed();
     }
@@ -667,7 +811,7 @@ namespace getfem {
     }
 
   public :
-    
+
     virtual bool is_linear(void) { return sub_problem.is_linear(); }
     virtual bool is_coercive(void) { return sub_problem.is_coercive(); }
     virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0)
@@ -682,9 +826,11 @@ namespace getfem {
 				size_type j0 = 0) {
       sub_problem.compute_residu(MS, i0, j0);
       react(MS, i0, false);
-      if (this->to_be_computed()) compute_F();
+      if (this->to_be_computed()) {compute_F();}
+      
       gmm::add(gmm::scaled(F_, value_type(-1)), gmm::sub_vector(MS.residu(),
 	       gmm::sub_interval(i0, sub_problem.main_mesh_fem().nb_dof())));
+
     }
     virtual mesh_fem &main_mesh_fem(void)
     { return sub_problem.main_mesh_fem(); }
@@ -958,13 +1104,14 @@ namespace getfem {
       gmm::sub_index SUBI(ind);
       if (version & ASMDIR_BUILDH) 
 	gmm::copy(gmm::sub_matrix(M, SUBI, gmm::sub_interval(0, nd)), G);
+
       gmm::resize(CRHS, nb_const);
       gmm::copy(gmm::sub_vector(V, SUBI), CRHS);
       this->computed();
     }
 
   public :
-    
+
     virtual bool is_linear(void)   { return sub_problem.is_linear(); }
     virtual bool is_coercive(void) 
     { return (!with_multipliers && sub_problem.is_coercive()); }
@@ -1003,12 +1150,17 @@ namespace getfem {
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
 				    size_type j0 = 0, bool modified = false) {
       sub_problem.compute_tangent_matrix(MS, i0, j0, modified);
+      cout << "dans dirichlet::compute_tangent_matrix()\n";
       react(MS, i0, modified);
+       
       if (this->to_be_computed()) {
 	fixing_dimensions();
 	compute_constraints(ASMDIR_BUILDH + ASMDIR_BUILDR);
+	
+	cout << "dirichlet : computed\n";
       }
       if (this->to_be_transferred()) {
+	cout << "dirrichlet : transfered\n";
 	if (with_multipliers) {
 	  gmm::sub_interval SUBI(i0+sub_problem.nb_dof(), dof_on_bound.card());
 	  gmm::sub_interval SUBJ(i0, main_mesh_fem().nb_dof());
@@ -1018,6 +1170,8 @@ namespace getfem {
 	  gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBI));
 	}
 	else {
+	  cout << "dirrichlet : !with_mutlipliers\n";
+	  
 	  size_type nd = sub_problem.main_mesh_fem().nb_dof();
 	  size_type ncs = sub_problem.nb_constraints();
 	  gmm::sub_interval SUBI(j0+ncs,nb_const), SUBJ(i0, nd);
@@ -1029,12 +1183,14 @@ namespace getfem {
     virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
 				size_type j0 = 0) {
       sub_problem.compute_residu(MS, i0, j0);
+
       react(MS, i0, false);
       if (this->to_be_computed()) {
 	fixing_dimensions();
 	compute_constraints(ASMDIR_BUILDH + ASMDIR_BUILDR);
       }
       if (with_multipliers) {
+
 	gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), dof_on_bound.card());
 	gmm::sub_interval SUBJ(i0, main_mesh_fem().nb_dof());
 	gmm::mult(G, gmm::sub_vector(MS.state(), SUBJ),
@@ -1045,6 +1201,7 @@ namespace getfem {
 		      gmm::sub_vector(MS.residu(), SUBJ));
       }
       else {
+
 	size_type nd = sub_problem.main_mesh_fem().nb_dof();
 	size_type ncs = sub_problem.nb_constraints();
 	gmm::sub_interval SUBI(j0+ncs,nb_const), SUBJ(i0, nd);
@@ -1112,6 +1269,7 @@ namespace getfem {
     //        max residu.
 
     size_type ndof = problem.nb_dof();
+
     bool is_linear = problem.is_linear();
     mtype alpha, alpha_min=mtype(1)/mtype(32), alpha_mult=mtype(3)/mtype(4);
     mtype alpha_max_ratio(1);
@@ -1120,12 +1278,17 @@ namespace getfem {
     iter_linsolv0.set_maxiter(10000);
     if (!is_linear) { iter_linsolv0.reduce_noisy(); iter_linsolv0.set_resmax(iter.get_resmax()/100000.0); }
 
+
     MS.adapt_sizes(problem); // to be sure it is ok, but should be done before
     problem.compute_residu(MS);
     problem.compute_tangent_matrix(MS);
+
     MS.compute_reduced_system();
+    
     mtype act_res = MS.reduced_residu_norm(), act_res_new(0);
+
     while (is_linear || !iter.finished(act_res)) {
+    
       gmm::iteration iter_linsolv = iter_linsolv0;
       VECTOR d(ndof), dr(gmm::vect_size(MS.reduced_residu()));
 
@@ -1139,6 +1302,7 @@ namespace getfem {
 	   <<  "symmetric. ";
 
 #ifdef GMM_USES_SUPERLU
+	  
       double rcond;
       SuperLU_solve(MS.reduced_tangent_matrix(), dr,
 		    gmm::scaled(MS.reduced_residu(), value_type(-1)),
@@ -1154,13 +1318,15 @@ namespace getfem {
 	problem.mixed_variables(mixvar);
 	if (mixvar.card() == 0) {
 	  gmm::ilu_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
+	  
 	  gmm::gmres(MS.reduced_tangent_matrix(), dr, 
 		     gmm::scaled(MS.reduced_residu(),  value_type(-1)), P,
 		     300, iter_linsolv);
 	}
 	else {
 	  cout << "there is " << mixvar.card() << " mixed variables\n";
-	  gmm::identity_matrix P;
+	  gmm::ilut_precond<T_MATRIX> P(MS.reduced_tangent_matrix(),100,1E-10);
+	  // gmm::identity_matrix P;
 	  gmm::gmres(MS.reduced_tangent_matrix(), dr, 
 		     gmm::scaled(MS.reduced_residu(),  value_type(-1)),
 		     P, 300, iter_linsolv);
@@ -1186,9 +1352,9 @@ namespace getfem {
 	  act_res_new = MS.reduced_residu_norm();
 	  if (act_res_new <= act_res * alpha_max_ratio) break;
 	}
-	cout << "alpha = " << alpha << "\n";
       }
       act_res = act_res_new; ++iter;
+
       if (iter.get_noisy()) cout << "alpha = " << alpha << " ";
     }
 

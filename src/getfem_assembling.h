@@ -35,6 +35,8 @@
 #define GETFEM_ASSEMBLING_H__
 
 #include <getfem_assembling_tensors.h>
+#include <getfem_plasticity.h>
+
 namespace getfem
 {
   /**
@@ -365,6 +367,47 @@ namespace getfem
     assem.push_mf(mfdata);
     assem.push_data(H);
     assem.push_mat(RM);
+    assem.volumic_assembly();
+  }
+
+  /** 
+     Right hand side vector for plasticity 
+  */
+  template<typename VECT> 
+  void asm_rhs_for_plasticity(VECT &V, const getfem::mesh_fem &mf, nonlinear_elem_term *plast)
+  {
+    if (mf.get_qdim() != mf.linked_mesh().dim()) DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
+    getfem::generic_assembly assem("t=comp(NonLin(#1).vGrad(#1));"
+				   "e=(t{:,:,:,4,5}+t{:,:,:,5,4})/2;"
+				 "V(#1) += e(i,j,:,i,j)");
+    assem.push_mf(mf);
+    assem.push_nonlinear_term(plast);
+    assem.push_vec(V);
+    assem.volumic_assembly();
+  }
+
+  /** 
+      Left hand side matrix for plasticity
+  */
+  template<typename MAT,typename VECT> 
+  void asm_lhs_for_plasticity(MAT &H, 
+			      const getfem::mesh_fem &mf,
+			      const getfem::mesh_fem &mfdata,
+			      const VECT &LAMBDA, const VECT &MU, 
+			      nonlinear_elem_term *gradplast)
+  {
+    if (mf.get_qdim() != mf.linked_mesh().dim()) DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
+    getfem::generic_assembly assem("lambda=data$1(#2); mu=data$2(#2);"
+				   "t=comp(NonLin(#1).vGrad(#1).vGrad(#1).Base(#2));"
+				   "e=(t{:,:,:,:,:,6,7,:,9,10,:}+t{:,:,:,:,:,7,6,:,9,10,:}+t{:,:,:,:,:,6,7,:,10,9,:}+t{:,:,:,:,:,7,6,:,10,9,:})/4;"
+				   "M(#1,#1)+= sym(2*e(i,j,k,l,:,k,l,:,i,j,m).mu(m)+e(i,j,k,k,:,l,l,:,i,j,m).lambda(m))");
+    
+    assem.push_mf(mf);
+    assem.push_mf(mfdata);
+    assem.push_data(LAMBDA);
+    assem.push_data(MU);
+    assem.push_nonlinear_term(gradplast);
+    assem.push_mat(H);
     assem.volumic_assembly();
   }
 
