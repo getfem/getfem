@@ -65,6 +65,7 @@ EXEEXT = @EXEEXT@
 OBJEXT = @OBJEXT@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 AMTAR = @AMTAR@
+APPSCXXFLAGS = @APPSCXXFLAGS@
 AS = @AS@
 AWK = @AWK@
 CC = @CC@
@@ -97,6 +98,7 @@ dynamic_tas_SOURCES = dynamic_tas.C
 
 INCLUDES = -I$(top_srcdir)/src
 LDADD = ../src/.libs/libgetfm.a -lm
+CXXFLAGS = @APPSCXXFLAGS@
 
 TESTS = check.pl
 TESTS_ENVIRONMENT = perl
@@ -132,7 +134,6 @@ LTCXXCOMPILE = $(LIBTOOL) --mode=compile $(CXX) $(DEFS) \
 CXXLD = $(CXX)
 CXXLINK = $(LIBTOOL) --mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-CXXFLAGS = @CXXFLAGS@
 DIST_SOURCES = $(dynamic_array_SOURCES) $(dynamic_tas_SOURCES)
 DIST_COMMON = Makefile.am Makefile.in
 SOURCES = $(dynamic_array_SOURCES) $(dynamic_tas_SOURCES)

@@ -46,8 +46,9 @@ case $CXX in
  cxx)
  	here=`pwd`
  	cd $srcdir
-dnl     CXXFLAGS="$CXXFLAGS -std strict_ansi -O3"
- 	CXXFLAGS="$CXXFLAGS -ptr `pwd`/cxx_repository -std strict_ansi -O3"
+	APPSCXXFLAGS="$CXXFLAGS -ptr `pwd`/src/cxx_repository -O3"
+	CXXFLAGS="$CXXFLAGS -std strict_ansi -O3"
+dnl 	CXXFLAGS="$CXXFLAGS -ptr `pwd`/cxx_repository -std strict_ansi -O3"
 	MEX_NEEDS_TWOCOMP=""
  	cd $here
 	;;
@@ -63,7 +64,11 @@ dnl     CXXFLAGS="$CXXFLAGS -std strict_ansi -O3"
  	CXXFLAGS="$CXXFLAGS -O3"
 	MEX_NEEDS_TWOCOMP="#"
 	;;
-esac 
+esac
+
+AC_SUBST(APPSCXXFLAGS)
+
+
 dnl ------------------------------------------------------------------------
 dnl   init libtools for shared libraries
 dnl ------------------------------------------------------------------------
