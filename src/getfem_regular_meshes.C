@@ -49,7 +49,8 @@ namespace getfem
     {
       a.fill(0.0);
       for (dim_type n = 0; n < N; ++n)
-	a.addmul(pararef.points()[i][n], ivect[n]);
+	gmm::add(gmm::scaled(ivect[n],pararef.points()[i][n]),a);
+	//a.addmul(pararef.points()[i][n], ivect[n]);
       pararef.points()[i] = a;
     }
 
@@ -70,7 +71,8 @@ namespace getfem
     while (tab[N-1] != iref[N-1])
     {
       for (a = org, i = 0; i < N; i++) 
-	a.addmul(scalar_type(tab[i]), ivect[i]);
+	gmm::add(gmm::scaled(ivect[i],scalar_type(tab[i])),a);
+        //a.addmul(scalar_type(tab[i]), ivect[i]);
 
       for (i = 0; i < nbpt; i++)
 	tab3[i] = me.add_point(a + pararef.points()[i]);
@@ -129,7 +131,8 @@ namespace getfem
     {
       a.fill(0.0);
       for (dim_type n = 0; n < N; ++n)
-	a.addmul(pararef.points()[i][n], ivect[n]);
+	gmm::add(gmm::scaled(ivect[n],pararef.points()[i][n]),a);
+	//a.addmul(pararef.points()[i][n], ivect[n]);
       pararef.points()[i] = a;
     }
 
@@ -139,7 +142,8 @@ namespace getfem
     while (tab[N-1] != iref[N-1])
     {
       for (a = org, i = 0; i < N; i++) 
-	a.addmul(scalar_type(tab[i]), ivect[i]);
+	gmm::add(gmm::scaled(ivect[i], scalar_type(tab[i])),a);
+	//a.addmul(scalar_type(tab[i]), ivect[i]);
 
       for (i = 0; i < nbpt; i++)
 	tab3[i] = me.add_point(a + pararef.points()[i]);
