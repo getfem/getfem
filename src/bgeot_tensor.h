@@ -66,6 +66,10 @@ namespace bgeot
     multi_index(size_t n) : std::vector<short_type>(n)
     { std::fill(begin(), end(), 0); }
     
+    multi_index(size_type i, size_type j)
+      : std::vector<short_type>(2) {
+      (*this)[0] = i; (*this)[1] = j; 
+    } 
     multi_index(size_type i, size_type j, size_type k, size_type l)
       : std::vector<short_type>(4) {
       (*this)[0] = i; (*this)[1] = j; (*this)[2] = k; (*this)[3] = l; 
