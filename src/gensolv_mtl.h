@@ -64,9 +64,9 @@ namespace gensolv
   template<class T> T dot(const mtl::dense1D<T> &x,
 			  const mtl::dense1D<T> &y)
     { return mtl::dot(x, y); }
-  // template<class T> void copy(const mtl::dense1D<T> &x,
-  //                             const mtl::dense1D<T> &y)
-  // { mtl::copy(x, y); }
+  template<class T> void copy(const mtl::dense1D<T> &x,
+                               const mtl::dense1D<T> &y)
+    { mtl::copy(x, y); }
   template<class T> void add_mult(mtl::dense1D<T> &x, T a,
 				  const mtl::dense1D<T> &y)
   { mtl::add(x, mtl::scaled(y, a), x); }

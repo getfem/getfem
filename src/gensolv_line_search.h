@@ -95,12 +95,12 @@ namespace gensolv
       int i, j;
       while (dal::abs(t[0] - t[3]) > PREC)
       {
-	if (noisy > 0) cout << t[0] << " : " << t[1] << " : " << t[2]
+	if (noisy > 0) std::cout << t[0] << " : " << t[1] << " : " << t[2]
 			    << " : " << t[3] << endl << "  " << u[0]
 			    << " : " << u[1] << " : " << u[2] << " : "
 			    << u[3] << endl;
 	for (j = 0, i = 0; j < 4; ++j) if (u[j] < u[i]) i = j;
-	if (noisy > 0) cout << "i = " << i << endl;
+	if (noisy > 0) std::cout << "i = " << i << endl;
 	switch (i)
 	{
           case 0 : t[3] = t[1]; u[3] = u[1]; t[1] = t[0]; u[1] = u[0];
