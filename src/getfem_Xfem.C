@@ -48,13 +48,14 @@ namespace getfem
     for (size_type k = 0; k < pfi->nb_base(); ++k)
       add_node(pfi->dof_types()[k], pfi->node_of_dof(k));
     
-      for (size_type k = 0; k < nb_func; ++k) {
-	for (size_type j = 0; j < pfi->nb_base(); ++j) {
-	  add_node(xfem_dof(pfi->dof_types()[j], func_indices[k]),
-		   pfi->node_of_dof(j));
-	}
+    for (size_type k = 0; k < nb_func; ++k) {
+      for (size_type j = 0; j < pfi->nb_base(); ++j) {
+	add_node(xfem_dof(pfi->dof_types()[j], func_indices[k]),
+		 pfi->node_of_dof(j));
       }
-      is_valid = true;
+    }
+    cout << "valid ok\n";
+    is_valid = true;
   }
   
   size_type Xfem::nb_dof(void) const {

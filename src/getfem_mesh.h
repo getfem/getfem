@@ -234,6 +234,8 @@ namespace getfem
       size_type add_point(const base_node &pt);
       /// Gives the number of points in the mesh.
       size_type nb_points(void) const { return pts.card(); }
+      /// points index
+      const dal::bit_vector &points_index(void) const { return pts.index(); }
       /// Delete the point of index i from the mesh.
       void sup_point(size_type i);
       /// Swap the indexes of points of index i and j in the whole structure.

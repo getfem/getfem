@@ -260,6 +260,7 @@ namespace getfem
     }
     ind_ref_mesh_dof_ind_ct
     ind_dof_of_face_of_element(size_type cv, short_type f) const {
+      if (!dof_enumeration_made) enumerate_dof();
       return ind_ref_mesh_dof_ind_ct
 	(dof_structure.ind_points_of_face_of_convex(cv, f),
 	 Qdim /fem_of_element(cv)->target_dim());
