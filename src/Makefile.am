@@ -71,6 +71,7 @@ include_HEADERS =                      \
 	gmm_dense_qr.h                 \
 	gmm_tri_solve.h                \
 	gmm_solver_gmres.h             \
+	gmm_solver_idgmres.h           \
 	gmm_solver_qmr.h               \
 	gmm_solver_cheby.h             \
 	gmm_solver_bicgstab.h          \

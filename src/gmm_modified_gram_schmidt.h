@@ -54,39 +54,63 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-#ifndef GMM_MODIFIED_GRAM_SCHMIDT_ORTHOGONALIZATION_H
-#define GMM_MODIFIED_GRAM_SCHMIDT_ORTHOGONALIZATION_H
+#ifndef GMM_MODIFIED_GRAM_SCHMIDT_H
+#define GMM_MODIFIED_GRAM_SCHMIDT_H
 
 #include <gmm_solvers.h>
 
 namespace gmm {
 
-  template <class Vec>
+  template <class T>
   class modified_gram_schmidt {
   protected:
-    std::vector<Vec> V;
+    typedef dense_matrix<T> MAT;
+    MAT M;
 
   public:
 
-    modified_gram_schmidt(int restart, size_t s) 
-      : V(restart+1, Vec(s)) { }
-    const Vec& operator[](size_t i) const { return V[i]; }
-    Vec& operator[](size_t i) { return V[i]; }
+    modified_gram_schmidt(int restart, size_t s) : M(s, restart+1) {}
+
+    typename linalg_traits<MAT>::const_sub_col_type
+      operator[](size_t i) const { return mat_const_col(M, i); }
+
+    typename linalg_traits<MAT>::sub_col_type
+      operator[](size_t i) { return mat_col(M, i); }
+
+    inline size_type nrows(void) const { return M.nrows(); }
+    inline size_type ncols(void) const { return M.ncols(); }
+    MAT &mat(void) { return M; }
+    const MAT &mat(void) const { return M; }
     
   };
 
-  template <class Vec, class VecHi>
-  void orthogonalize(modified_gram_schmidt<Vec>& V,const VecHi& _Hi,size_t i) {
+  template <class T, class VecHi> inline
+  void orthogonalize(modified_gram_schmidt<T>& V, const VecHi& _Hi, size_t i) {
     VecHi& Hi = const_cast<VecHi&>(_Hi);
     
     for (size_t k = 0; k <= i; k++) {
-      Hi[k] = gmm::vect_sp(V[i+1], V[k]);
+      Hi[k] = gmm::vect_hp(V[k], V[i+1]);
       gmm::add(gmm::scaled(V[k], -Hi[k]), V[i+1]);
     }
   }
+
+  template <class T, class VecHi>
+  void orthogonalize_with_refinment(modified_gram_schmidt<T>& V,
+				    const VecHi& _Hi, size_t i) {
+    VecHi& Hi = const_cast<VecHi&>(_Hi);
+    orthogonalize(V, _Hi, i);
+    
+    sub_interval SUBI(0, V.nrows()), SUBJ(0, i+1);
+    std::vector<T> corr(i+1);
+    gmm::mult(conjugated(transposed(sub_matrix(V.mat(), SUBI, SUBJ))),
+	      V[i+1], corr);
+    gmm::mult(sub_matrix(V.mat(), SUBI, SUBJ),
+	      scaled(corr, T(-1)), V[i+1],V[i+1]);
+    gmm::add(corr, sub_vector(Hi, SUBJ));
+  }
   
-  template <class Vec, class VecS, class VecX>
-  void combine(modified_gram_schmidt<Vec>& V, const VecS& s,VecX& x,size_t i)
+  template <class T, class VecS, class VecX>
+  void combine(modified_gram_schmidt<T>& V, const VecS& s, VecX& x, size_t i)
   { for (size_t j = 0; j < i; ++j) gmm::add(gmm::scaled(V[j], s[j]), x); }
 }
 

@@ -101,7 +101,7 @@ namespace gmm {
 
 
   /** estimation of the condition number 
-   * (using impicit_qr_method => dense matrix only)
+   * (using symmetric_qr_algorithm => dense matrix only)
    */
 
   template <typename MAT> 

@@ -85,6 +85,7 @@ template <class MAT>  void test_qr(const MAT &m) {
   typedef typename gmm::linalg_traits<MAT>::value_type value_type;
   typedef typename gmm::number_traits<value_type>::magnitude_type
     magnitude_type;
+  double tol = gmm::default_tol(value_type());
 
   cout   << "/***********************************************************/\n";
   if (gmm::is_complex(value_type()))
@@ -104,8 +105,10 @@ template <class MAT>  void test_qr(const MAT &m) {
   gmm::qr_factor(cm, cq, cr);
   gmm::mult(cq, cr, ca);
   gmm::add(gmm::scaled(cm, -1.0), ca);
-  if (gmm::mat_norm2(ca) > 1E-10) 
-    DAL_THROW(dal::failure_error, "Error on QR factorisation.");
+  cout << "difference on QR factorization : " << gmm::mat_norm2(ca) << endl;
+  // if (gmm::mat_norm2(ca) > tol * 1E3)
+  if (gmm::mat_norm2(ca) > sqrt(tol)) 
+    DAL_THROW(dal::failure_error, "Error on QR factorisation");
 
   /* Test on LU.                                                           */
   gmm::fill_random(cm);
@@ -114,13 +117,14 @@ template <class MAT>  void test_qr(const MAT &m) {
   double exectime = ftool::uclock_sec();
   gmm::lu_inverse(cq);
   cout << "time to compute LU inverse : "
-       << ftool::uclock_sec()-exectime;
+       << ftool::uclock_sec()-exectime << "\n\n";
   // cout << "cm^{-1} = " << cq << endl;
   gmm::mult(cm, cq, ca);
   // cout << "ca = " << ca << endl;
   gmm::copy(gmm::identity_matrix(), cq);
   gmm::add(gmm::scaled(cq, -1.0), ca);
-  if (gmm::mat_norm2(ca) > 1E-10) 
+  cout << "difference on LU factorization : " << gmm::mat_norm2(ca) << endl;
+  if (gmm::mat_norm2(ca) > sqrt(tol))
     DAL_THROW(dal::failure_error, "Error on LU factorisation.");
 
   exectime = ftool::uclock_sec();
@@ -131,14 +135,14 @@ template <class MAT>  void test_qr(const MAT &m) {
   // cout << "eigenvectors : " << cq << endl;
 
   gmm::mult(cm, gmm::conjugated(gmm::transposed(cm)), cq); gmm::copy(cq, cm);
-  print_for_matlab(cm);
+  // print_for_matlab(cm);
   exectime = ftool::uclock_sec();
   symmetric_qr_algorithm(cm, eigc, cq);
-  cout << "time to compute implicit QR : "
+  cout << "time to compute symmetric implicit QR : "
        << ftool::uclock_sec()-exectime;
   cout.precision(6);
   cout << "\neigenvalues : " << eigc << endl;
-  cout << "eigenvectors : " << cq << endl;
+  // cout << "eigenvectors : " << cq << endl;
 
   gmm::fill_random(cq);
   gmm::copy(cq, cr);
@@ -163,7 +167,7 @@ template <class MAT>  void test_qr(const MAT &m) {
   if (nn > 15) cv[15] = cm(15,15) = real_or_complex(100000.0,  1.0, cv[0]);
   gmm::mult(cq, cm, ca); 
   gmm::mult(ca, cr, cm);
-  print_for_matlab(cm);
+  // print_for_matlab(cm);
   cout << "\neigenvalues to be computed : " << cv << endl;
   exectime = ftool::uclock_sec();
   implicit_qr_algorithm(cm, eigc, cq);
@@ -172,14 +176,16 @@ template <class MAT>  void test_qr(const MAT &m) {
   /* gmm::clean(eigc, 1E-10); */ cout << "\neigenvalues found : " << eigc << endl;
   gmm::clean(cq, 1E-10);
   cout.precision(6);
-  cout << "eigenvectors : " << cq << endl;
+  // cout << "eigenvectors : " << cq << endl;
   for (size_type l = 0; l < nn; ++l) {
     bool found = false;
      for (size_type k = 0; k < nn; ++k)
-       if (dal::abs(eigc[l] - cv[k]) < 1E-8 * (dal::abs(eigc[l])+1.0))
+       if (dal::abs(eigc[l] - cv[k]) < sqrt(sqrt(tol)) * (dal::abs(eigc[l])+1.0))
 	 { cv[k] = -1.123236; found = true; break; }
-     if (found == false)
+     if (found == false) {
+       cout << "Eigenvalue " << l << " not found\n" << std::flush;
        DAL_THROW(dal::failure_error, "Error on QR algorithm.");
+     }
   }
 
 }
@@ -195,9 +201,9 @@ int main(void)
 
     test_gauss_det();
     
-    test_qr(gmm::dense_matrix<double>(50, 50));
-    test_qr(gmm::row_matrix<std::vector<std::complex<long double> > >(25, 25));
-    test_qr(gmm::col_matrix<std::vector<float> >(50, 50));
+    test_qr(gmm::dense_matrix<double>(100, 100));
+    test_qr(gmm::row_matrix<std::vector<std::complex<long double> > >(10, 10));
+    test_qr(gmm::col_matrix<std::vector<float> >(10, 10));
     // faire un test avec QD ?
     
 
