@@ -97,8 +97,10 @@ namespace getfem {
 	gpid.flags = find_a_point(gpt, gpid.ptref, gpid.elt) ? 1 : 0;
 	if (gpid.flags && last_cv != gpid.elt) {
 	  size_type nbd = mf1.fem_of_element(gpid.elt)->nb_dof(gpid.elt);
-	  for (i = 0; i < nbd; ++i)
-	    dofs.add(mf1.ind_dof_of_element(gpid.elt)[i]);
+	  for (i = 0; i < nbd; ++i) {
+	    size_type idof = mf1.ind_dof_of_element(gpid.elt)[i];
+	    if (!(blocked_dof[idof])) dofs.add(idof);
+	  }
 	  last_cv = gpid.elt;
 	}
       }
@@ -191,8 +193,9 @@ namespace getfem {
 	actualize_fictx(pf, cv, gpid.ptref);
 	pf->real_base_value(fictx, taux);
 	for (size_type i = 0; i < pf->nb_dof(cv); ++i)
-	  for (size_type j = 0; j < target_dim(); ++j)
-	    t(gpid.local_dof[i],j) = taux(i, j);
+	  if (gpid.local_dof[i] != size_type(-1))
+	    for (size_type j = 0; j < target_dim(); ++j)
+	      t(gpid.local_dof[i],j) = taux(i, j);
 	if (store_values) { gpid.base_val = t; gpid.flags |= 2; }
       }
     }
@@ -235,19 +238,21 @@ namespace getfem {
 	if (pif) {
 	  pif->grad(c.xreal(), trans);
 	  for (size_type i = 0; i < pf->nb_dof(cv); ++i)
-	    for (size_type j = 0; j < target_dim(); ++j)
-	      for (size_type k = 0; k < dim(); ++k) {
-		scalar_type e(0);
-		for (size_type l = 0; l < dim(); ++l)
-		  e += trans(l, k) * taux(i, j, l);
-		t(gpid.local_dof[i], j, k) = e;
-	      }
+	    if (gpid.local_dof[i] != size_type(-1))
+	      for (size_type j = 0; j < target_dim(); ++j)
+		for (size_type k = 0; k < dim(); ++k) {
+		  scalar_type e(0);
+		  for (size_type l = 0; l < dim(); ++l)
+		    e += trans(l, k) * taux(i, j, l);
+		  t(gpid.local_dof[i], j, k) = e;
+		}
 	}
 	else {
 	  for (size_type i = 0; i < pf->nb_dof(cv); ++i)
-	    for (size_type j = 0; j < target_dim(); ++j)
-	      for (size_type k = 0; k < dim(); ++k)
-		t(gpid.local_dof[i], j, k) = taux(i, j, k);
+	    if (gpid.local_dof[i] != size_type(-1))
+	      for (size_type j = 0; j < target_dim(); ++j)
+		for (size_type k = 0; k < dim(); ++k)
+		  t(gpid.local_dof[i], j, k) = taux(i, j, k);
 	  if (store_values) { gpid.grad_val = t; gpid.flags |= 4; }
 	}
       }
