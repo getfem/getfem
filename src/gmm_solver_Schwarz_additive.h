@@ -56,15 +56,17 @@ namespace gmm {
     std::vector<vector_type> *fi;
   };
 
-  template <class Matrix1, class Matrix2, class Matrix3,
-    class SUBI, class Vector2, class Vector3>
+  template <class Matrix1, class Matrix2, class Matrix3, class Matrix4,
+	    class Matrix5, class SUBI, class Vector2, class Vector3>
   int schwarz_additif(const Matrix1 &A,
-		       Vector3 &u,
-		       const std::vector<Matrix2> &ml1,
-		       const std::vector<Matrix3> &ml2,
-		       const std::vector<SUBI> &cor,
-		       const Vector2 &f,
-		       int itemax,  double residu, int noisy = 1) {
+		      Vector3 &u,
+		      const std::vector<Matrix2> &ml1,
+		      const std::vector<Matrix4> &mco1, 
+		      const std::vector<Matrix3> &ml2,
+		      const std::vector<Matrix5> &mco2, 
+		      const std::vector<SUBI> &cor,
+		      const Vector2 &f,
+		      int itemax,  double residu, int noisy = 1) {
 
     typedef typename linalg_traits<Matrix2>::value_type value_type;
     typedef typename plain_vector_type<value_type>::vector_type vector_type;
@@ -89,12 +91,12 @@ namespace gmm {
 
     for (size_type i = 0; i < ms; ++i) {
       itebilan = std::max(itebilan,
-			  cg(ml1[i], gi[i], fi[i], identity_matrix(),
-			     identity_matrix(), itemax, residu, noisy - 1));
+		gmm::constrained_cg(ml1[i], mco1[i], gi[i], fi[i],
+			       identity_matrix(), itemax, residu, noisy - 1));
     }
     for (size_type i = 0; i < ml2.size(); ++i) {
       itebilan = std::max(itebilan,
-			  cg(ml2[i], gi[i+ms], fi[i+ms], identity_matrix(),
+		gmm::constrained_cg(ml2[i], mco2[i], gi[i+ms], fi[i+ms],
 			     identity_matrix(), itemax, residu, noisy - 1));
     }
 

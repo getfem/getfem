@@ -54,6 +54,7 @@
 /*                                                                         */
 /* *********************************************************************** */
 
+// a unifier avec cg
 
 #ifndef __GMM_SOLVER_CCG_H
 #define __GMM_SOLVER_CCG_H
@@ -70,7 +71,7 @@ void pseudo_inverse(const CMatrix C, CINVMatrix CINV, VectorX&)
   // optimisable : copie de la ligne, precalcul de C * trans(C).
 
   typedef VectorX TmpVec;
-  typedef typename linalg_traits<VectorX>::size_type size_type;
+  typedef size_t size_type;
   typedef typename linalg_traits<VectorX>::value_type value_type;
 
   TmpVec d(mat_nrows(C)), e(mat_nrows(C)), l(mat_ncols(C));
@@ -121,20 +122,27 @@ void pseudo_inverse(const CMatrix C, CINVMatrix CINV, VectorX&)
 }
 
 template < class Matrix, class CMatrix, class VectorX, class VectorB, 
-           class Preconditioner, class Iteration >
+           class Preconditioner >
 int constrained_cg(const Matrix& A, const CMatrix& C, VectorX& x,
-		   const VectorB& b, const Preconditioner& M, Iteration& iter)
+		   const VectorB& b, const Preconditioner& M,
+		   int itemax, double residu, int noisy)
 {
-  typedef VectorX TmpVec;
-  typedef typename linalg_traits<VectorX>::size_type size_type;
+  typedef typename temporary_plain_vector<VectorX>::vector_type TmpVec;
+  typedef typename temporary_plain_vector<typename
+    linalg_traits<CMatrix>::sub_row_type>::vector_type TmpCVec;
+  typedef row_matrix<TmpCVec> TmpCmat;
+  
+  typedef size_t size_type;
   typedef typename linalg_traits<VectorX>::value_type value_type;
-  value_type rho = 1.0, rho_1, lambda, gamma;
+  value_type rho = 1.0, rho_1, lambda, gamma, norm_b = vect_norm2(b);
   TmpVec p(vect_size(x)), q(vect_size(x)), q2(vect_size(x)),
     r(vect_size(x)), old_z(vect_size(x)), z(vect_size(x)), memox(vect_size(x));
   std::vector<bool> satured(mat_nrows(C));
   clear(p);
+  int iter = 0;
 
-  CMatrix CINV(mat_nrows(C), mat_ncols(C)); // if the matrix is plain, set to zero ..
+  TmpCmat CINV(mat_nrows(C), mat_ncols(C));
+  clear(CINV);
   pseudo_inverse(C, CINV, x);
 
   while(true)
@@ -145,15 +153,14 @@ int constrained_cg(const Matrix& A, const CMatrix& C, VectorX& x,
     mult(A, scaled(x, -1.0), b, r);
     mult(M, r, z); // ...
     bool transition = false;
-    for (size_type i = 0; i < mat_nrows(C); ++i)
-    {
+    for (size_type i = 0; i < mat_nrows(C); ++i) {
       value_type al = vect_sp(mat_row(C, i), x);
       if (al >= -1.0E-15)
       {
 	if (!satured[i]) { satured[i] = true; transition = true; }
 	value_type bb = vect_sp(mat_row(CINV, i), z);
 	if (bb > 0.0)
-	  add(itl::scaled(mat_row(C, i), -bb), z);
+	  add(scaled(mat_row(C, i), -bb), z);
  
 /* 	bb = itl::dot(mtl::rows(CINV)[i], r); */
 /* 	if (bb > 0.0) // itl::add(r, itl::scaled(mtl::rows(C)[i], -bb), r); */
@@ -168,8 +175,12 @@ int constrained_cg(const Matrix& A, const CMatrix& C, VectorX& x,
     // rho_1 = rho; rho = itl::dot(r, r);
     rho_1 = rho; rho = vect_sp(z, z); // ...
     // std::cout << "norm of residu : " << rho << endl; getchar();
-    if (iter.finished(z)) break; if (transition) std::cout << "transition\n";
-    if (transition || iter.first()) gamma = 0.0;
+
+
+    if (sqrt(dal::abs(rho)) < residu * norm_b) break;
+
+    if (noisy && transition) std::cout << "transition\n";
+    if (transition || (iter == 0)) gamma = 0.0;
     else
       // gamma = std::max(0.0, (rho - itl::dot(old_r, r) ) / rho_1);
       // gamma = rho / rho_1;
@@ -178,7 +189,7 @@ int constrained_cg(const Matrix& A, const CMatrix& C, VectorX& x,
     // itl::add(r, itl::scaled(p, gamma), p);
     add(z, scaled(p, gamma), p); // ...
  
-    ++iter;
+    if (++iter >= itemax) return -1;
     // one dimensionnal optimization
     mult(A, p, q2);
     mult(M, q2, q);
@@ -186,16 +197,23 @@ int constrained_cg(const Matrix& A, const CMatrix& C, VectorX& x,
     for (size_type i = 0; i < mat_nrows(C); ++i)
       if (!satured[i])
       {
-	scalar_type bb = vect_sp(mat_row(C, i), p);
+	value_type bb = vect_sp(mat_row(C, i), p);
 	if (bb > 0.0)
 	  lambda = std::min(lambda, -vect_sp(mat_row(C, i), x) / bb);
       }
     add(x, scaled(p, lambda), x);
     add(memox, scaled(x, -1.0), memox);
-    cout << "residu sur x = " << ::sqrt(vect_sp(memox, memox)) << endl;
+    if (noisy > 0)  cout << "iter " << iter << " residu "
+			 << sqrt(dal::abs(rho)) / norm_b << endl;
     
   }
-  return iter.error_code();
+  return iter;
 }
+
+}
+
+
+
+
 
 #endif //  __GMM_SOLVER_CCG_H

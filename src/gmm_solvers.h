@@ -35,6 +35,7 @@
 
 #include <gmm_solver_cg.h>
 #include <gmm_solver_bicgstab.h>
+#include <gmm_solver_constrained_cg.h>
 #include <gmm_solver_Schwarz_additive.h>
 
 

@@ -158,7 +158,7 @@ namespace gmm {
     static size_type ncols(const this_type &m) { return m.ncols(); }
     static const_sub_row_type row(const const_row_iterator &it)
     { return const_sub_row_type(linalg_traits<M>::row(*it), it.si2); }
-    static sub_row_type row(row_iterator &it)
+    static sub_row_type row(const row_iterator &it)
     { return sub_row_type(linalg_traits<M>::row(*it), it.si2); }
     static const_row_iterator row_begin(const this_type &m)
     { return const_row_iterator(m._begin, m.si1, m.si2, 0); }

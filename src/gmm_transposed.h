@@ -76,7 +76,7 @@ namespace gmm {
   template <class PT> struct linalg_traits<transposed_row_ref<PT> > {
     typedef transposed_row_ref<PT> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
-    typedef typename which_reference<PT>::is_reference is_reference;
+    typedef linalg_const is_reference;
     typedef abstract_matrix linalg_type;
     typedef typename linalg_traits<M>::value_type value_type;
     typedef typename select_return<value_type,
@@ -99,7 +99,7 @@ namespace gmm {
     { return (ncols(v) == 0) ? 0 : vect_size(const_mat_col(v, 0)); }
     static const_sub_col_type col(const const_col_iterator &it)
     { return linalg_traits<M>::row(it); }
-    static sub_col_type col(const col_iterator &it)
+    static sub_col_type col(col_iterator &it)
     { return linalg_traits<M>::row(it); }
     static col_iterator col_begin(this_type &m) { return m._begin; }
     static col_iterator col_end(this_type &m) { return m._end; }

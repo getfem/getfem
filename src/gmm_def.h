@@ -85,7 +85,7 @@ namespace gmm {
   template<> struct principal_orientation_type<col_and_row>
   { typedef col_major potype; };
 
-  template <class V> struct linalg_traits;
+  template <class V> struct linalg_traits {};
 
   template <class PT, class V> struct vect_ref_type;
   template <class P, class V> struct vect_ref_type<P *, V> {
