@@ -43,6 +43,7 @@ namespace bgeot
     if (y.size() != s) DAL_THROW(dimension_error, "dimension error");
     
     base_node::const_iterator itx=x.begin(), itex=x.end(), ity=y.begin();
+    int ret = 0;
     for (; itx != itex; ++itx, ++ity) {
       long a = long(sfloor((*itx) * c1)), b = long(sfloor((*ity) * c1));
       if ((dal::abs(a) > scalar_type(base))
@@ -50,8 +51,9 @@ namespace bgeot
 	exp_max++; c_max /= scalar_type(base);
 	return (*this)(x,y);
       }
-      if (a < b) return -1; else if (a > b) return 1;
+      if (a < b) ret = -1; else if (a > b) ret = 1;
     }
+    if (ret) return ret;
     
     for (int e = exp_max; e >= exp_min; --e, c1 *= scalar_type(base),
 	   c2 *= scalar_type(base)) {
