@@ -261,8 +261,8 @@ namespace getfem
 
 
   /** 
-     Stiffness matrix for linear elasticity, with Lamé coefficients
-  */
+   *  Stiffness matrix for linear elasticity, with Lamé coefficients
+   */
   template<class MAT, class VECT>
     void asm_stiffness_matrix_for_linear_elasticity(const MAT &RM_,
 					   const mesh_fem &mf, 
@@ -683,7 +683,8 @@ namespace getfem
 	else {
 	  R n = gmm::vect_norm2(aux);
 	  gmm::scale(f, T(R(1)/n)); gmm::scale(aux, T(R(1)/n));
-	  gmm::clean(f, tol*gmm::vect_norminf(f)); gmm::clean(aux, tol*gmm::vect_norminf(aux));
+	  gmm::clean(f, tol*gmm::vect_norminf(f));
+	  gmm::clean(aux, tol*gmm::vect_norminf(aux));
 	  base_img_inv[nb_bimg] = TEMP_VECT(nbd);
 	  gmm::copy(f, base_img_inv[nb_bimg]);
 	  base_img[nb_bimg] = TEMP_VECT(nbr);
