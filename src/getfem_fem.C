@@ -34,6 +34,9 @@
 #include <dal_algobase.h>
 #include <ftool_naming.h>
 
+/* do not read this file ! */
+#include <getfem_gauss_lobatto_fem_coef.h>
+#include <getfem_integration.h> /* for gauss-lobatto points */
 namespace getfem
 {
   typedef ftool::naming_system<virtual_fem>::param_list fem_param_list;
@@ -840,8 +843,54 @@ namespace getfem
     return new P1_wabbfoafla_;
   }
 
+
   /* ******************************************************************** */
-  /*	Hremite element on the segment                                    */
+  /*	PK Gauss-Lobatto element on the segment                           */
+  /* ******************************************************************** */
+
+  class PK_GL_fem_ : public fem<base_poly> {
+  public :
+    PK_GL_fem_(unsigned k);
+  };
+  
+  PK_GL_fem_::PK_GL_fem_(unsigned k) {
+    cvr = bgeot::simplex_of_reference(1);
+    is_equiv = is_pol = is_lag = true;
+    es_degree = k;
+    
+    if (k >= fem_coeff_gausslob_max_k || !fem_coeff_gausslob[k]) 
+      DAL_THROW(dal::failure_error, "try another degree");
+    
+    init_cvs_node();
+    std::stringstream sstr; sstr << "IM_GAUSSLOBATTO1D(" << k*2-1 << ")";
+    pintegration_method gl_im = int_method_descriptor(sstr.str());
+    for (size_type i = 0; i < k+1; ++i) {
+      add_node(lagrange_dof(1), gl_im->approx_method()->point(i));
+    }
+    base_.resize(k+1);
+    const double *coefs = fem_coeff_gausslob[k];
+    for (size_type r = 0; r < k+1; r++) {
+      base_[r] = base_poly(1,k);
+      std::copy(coefs, coefs+k+1, base_[r].begin());
+      coefs += k+1;
+      //cerr << "base_[" << r << "]=" << base_[r] << " @ " << gl_im->approx_method()->point(r) << "\n";
+    }
+  }
+
+  static pfem PK_GL_fem(fem_param_list &params) {
+    if (params.size() != 1)
+      DAL_THROW(failure_error, 
+	   "Bad number of parameters : " << params.size() << " should be 1.");
+    if (params[0].type() != 0)
+      DAL_THROW(failure_error, "Bad type of parameters");
+    int k = int(::floor(params[0].num() + 0.01));
+    return new PK_GL_fem_(k);
+  }
+
+
+
+  /* ******************************************************************** */
+  /*	Hermite element on the segment                                    */
   /* ******************************************************************** */
 
   struct hermite_segment__ : public fem<base_poly> {
@@ -1088,6 +1137,7 @@ namespace getfem
 				   PK_composite_hierarch_fem);
     fem_naming_system_->add_suffix("PK_FULL_HIERARCHICAL_COMPOSITE",
 				   PK_composite_full_hierarch_fem);
+    fem_naming_system_->add_suffix("PK_GAUSSLOBATTO1D", PK_GL_fem);
   }
   
   pfem fem_descriptor(std::string name) {

@@ -158,6 +158,7 @@ void elastostatic_problem::init(void)
   /* scale the unit mesh to [LX,LY,..] and incline it */
   mesh.transformation(M);
 
+  datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   scalar_type FT = PARAM.real_value("FT", "parameter for exact solution");
   residu = PARAM.real_value("RESIDU"); if (residu == 0.) residu = 1e-10;
   gmm::resize(sol_K, N, N);
@@ -368,6 +369,13 @@ int main(int argc, char *argv[]) {
     p.assembly();
     if (!p.solve()) DAL_THROW(dal::failure_error, "Solve procedure has failed");
     p.compute_error();
+    if (p.PARAM.int_value("VTK_EXPORT")) {
+      cout << "export to " << p.datafilename + ".vtk" << "..\n";
+      getfem::vtk_export exp(p.datafilename + ".vtk", p.PARAM.int_value("VTK_EXPORT")==1);
+      exp.write_dataset(p.mf_u, p.U, "elastostatic_displacement");
+      cout << "export done, you can view the data file with (for example)\n"
+	"mayavi -d elastostatic.vtk -f ExtractVectorNorm -f WarpVector -m BandedSurfaceMap -m Outline\n";
+    }
     // getfem::save_solution(p.datafilename + ".dataelt", p.mf_u, p.U, p.K);
   }
   DAL_STANDARD_CATCH_ERROR;

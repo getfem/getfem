@@ -12,7 +12,7 @@ MU = 1.0;	        % Lamé coefficient.
 LAMBDA = 1.0;   	% Lamé coefficient.
 INCLINE = 0;            % Incline of the mesh.
 
-FT = 0.1;               % parameter for the exact solution.
+FT = 1;               % parameter for the exact solution.
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
@@ -54,4 +54,4 @@ GENERIC_DIRICHLET = 0;  % Generic Dirichlet condition for non-lagrangian elts.
 
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'elastostatic';     % Root of data files.
-
+VTK_EXPORT = 2 % export solution to a .vtk file ?

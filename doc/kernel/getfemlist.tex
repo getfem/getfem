@@ -409,6 +409,25 @@ It is important to use a corresponding composite integration method.
 
 \subsection{Specific elements in dimension 1}
 
+The 1D GaussLobatto $P_K$ element is similar to the classical $P_K$ fem on the segment, but
+the nodes are given by the Gauss-Lobatto-Legendre quadrature rule of
+order $2K-1$. This FEM is known to lead to better conditioned linear
+systems, and can be used with the correspounding quadrature to perform
+mass-lumping (on segments or parallelepipeds).
+
+The polynomials coefficients have been pre-computed with Maple (they require the inversion of an ill-conditionned system), hence they are only available for the following values of $K$: $1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,24,32$. Note that for $K=1$ and $K=2$, this is the classical $P1$ and $P2$ fem.
+
+\begin{center}
+\begin{tabular}{|m{16.11cm}|} \hline 
+{\bf GaussLobatto $P_K$ element on the segment}\\
+{\tt "FEM\_PK\_GAUSSLOBATTO1D(K)"}
+\end{tabular} \\ \vspace{-1pt} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.2cm}|m{2cm}|m{2cm}|m{1.8cm}|} \hline 
+Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial\\ \hline
+$K$ & $1$ & $K+1$ & $C^0$ & No \mbox{($Q = 1$)} & Yes & Yes\\ \hline
+\end{tabular}
+\end{center}
+
 \begin{figure}[H]
   \begin{center}
     \includegraphics[width=5cm,angle=0]{getfemlist_segment_hermite.eps}
@@ -708,8 +727,7 @@ to be described ...
 
 \subsection{Gauss Integration methods on dimension 1}
 
-use {\tt "IM\_GAUSS1D(K)"} to have the Gauss-Legendre integration on the segment of order {\tt K} (with {\tt K}/2 + 1 points), and {\tt "IM\_GAUSSLOBATTO1D(K)"} to have the Gauss-Lobatto-Legendre integration on the segment of order {\tt K} (with {\tt K}/2 + 1 points).
-
+use {\tt "IM\_GAUSS1D(K)"} to have the Gauss-Legendre integration on the segment of order {\tt K} (with {\tt K}/2 + 1 points), and {\tt "IM\_GAUSSLOBATTO1D(K)"} to have the Gauss-Lobatto-Legendre integration on the segment of order {\tt K} (with {\tt K}/2 + 1 points). The latter integration method is only available for odd values of $K$. The Gauss-Lobatto integration method can be used in conjunction with {\tt "FEM\_PK\_GAUSSLOBATTO1D(K/2)"} to perform mass-lumping.
 
 to be described ...
 

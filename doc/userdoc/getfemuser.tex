@@ -271,15 +271,16 @@ For instance, to build a mesh with tetrahedrons for a unit cube with $10\times10
 \begin{cppcode}
   getfem::getfem\_mesh mesh; \\
   bgeot::base\_node org(0.0, 0.0, 0.0); \\
-  std::vector<bgeot::base\_vector> vect(3); \\
-  vect[0] = bgeot::base\_vector(1.0, 0.0, 0.0); \\
-  vect[1] = bgeot::base\_vector(0.0, 1.0, 0.0); \\
-  vect[2] = bgeot::base\_vector(0.0, 0.0, 1.0); \\
+  std::vector<bgeot::base\_small\_vector> vect(3); \\
+  vect[0] = bgeot::base\_small\_vector(1.0, 0.0, 0.0); \\
+  vect[1] = bgeot::base\_small\_vector(0.0, 1.0, 0.0); \\
+  vect[2] = bgeot::base\_small\_vector(0.0, 0.0, 1.0); \\
   std::vector<int> ref(3); \\
   ref[0] = ref[1] = ref[2] = 10; \\
   getfem::parallelepiped\_regular\_simplex\_mesh(mesh, 3, org, vect.begin(), ref.begin()); 
 \end{cppcode}
 
+Remark: \cpp{base\_node} and \cpp{base\_small\_vector} are almost identical, they are both ``small'' vector classes (they cannot store more than 16 elements), used to describe geometrical points, and geometrical vectors. Their memory footprint is lower than a \cpp{std::vector}.
 
 \subsection{How to get information from a mesh}
 
@@ -326,7 +327,7 @@ Here is a list of functions to get information from an existing mesh. The list i
 
   \cpp{mesh.trans\_of\_convex(i)} & geometric transformation of the element of index \cpp{i}. return a \cpp{bgeot::pgeometric\_trans} (see \cite{BASCOMP} for more details).  \\ \hline
 
-  \cpp{mesh.normal\_of\_face\_of\_convex(ic, f, pt)} & gives a \cpp{bgeot::base\_vector} representing an outward normal to the element at the face of local index \cpp{f} at the point of local coordinates (coordinates in the element of reference) \cpp{pt}. The point \cpp{pt} has no influence if the geometric transformation is linear. This is not a unit normal, the norm of the resulting vector is the ratio between the surface of the face of the reference element and the the surface of the face of the real element. \\ \hline
+  \cpp{mesh.normal\_of\_face\_of\_convex(ic, f, pt)} & gives a \cpp{bgeot::base\_small\_vector} representing an outward normal to the element at the face of local index \cpp{f} at the point of local coordinates (coordinates in the element of reference) \cpp{pt}. The point \cpp{pt} has no influence if the geometric transformation is linear. This is not a unit normal, the norm of the resulting vector is the ratio between the surface of the face of the reference element and the the surface of the face of the real element. \\ \hline
 
   \cpp{mesh.convex\_quality\_estimate(ic)} & gives an rought estimate of the quality of element \cpp{ic}. \\ \hline
 

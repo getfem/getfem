@@ -1,3 +1,9 @@
+2004-02-26  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/getfem_fem.C (getfem): correction the wrong quadrature rules
+	for IM_GAUSSLOBATTO1D. Addition of a new fem:
+	FEM_PK_GAUSSLOBATTO1D. Integration points are now sorted.
+
 2004-02-09  julien pommier  <pommier@gmm.insa-tlse.fr>
 
 	* src/getfem_fem.[Ch] src/getfem_precomp.[Ch],

@@ -341,14 +341,21 @@ namespace getfem
       add_point(pt, pai->coeff(i) * det, f);
     }
   }
-  
 
   void approx_integration::valid_method(void) {
     bgeot::stored_point_tab ptab(int_coeffs.size());
+    std::vector<scalar_type> int_coeffs2(int_coeffs);
     size_type i = 0;
-    for (short_type f = 0; f <= cvr->structure()->nb_faces(); ++f)
-      for (size_type j = 0; j < pt_to_store[f].size(); ++j)
-	{ ptab[i++] = pt_to_store[f][j]; }
+    for (short_type f = 0; f <= cvr->structure()->nb_faces(); ++f) {
+      size_type j = i;
+      for (PT_TAB::const_sorted_iterator it = pt_to_store[f].sorted_begin();
+	   it != pt_to_store[f].sorted_end(); ++it) {
+	int_coeffs[i] = int_coeffs2[j+it.index()];
+	ptab[i++] = *it;
+      }
+      //for (size_type j = 0; j < pt_to_store[f].size(); ++j)
+      //{ ptab[i++] = pt_to_store[f][j]; }
+    }
     if (i != int_coeffs.size()) DAL_THROW(internal_error, "internal error.");
     pint_points = bgeot::store_point_tab(ptab);
     pt_to_store = std::vector<PT_TAB>();

@@ -361,7 +361,7 @@ namespace getfem
   void getfem_mesh::write_to_file(const std::string &name) const {
     std::ofstream o(name.c_str());
     if (!o)
-      DAL_THROW(failure_error, "impossible to open file '" << name << "'");
+      DAL_THROW(failure_error, "impossible to write to file '" << name << "'");
     o << "% GETFEM MESH FILE " << '\n';
     o << "% GETFEM VERSION " << GETFEM_VERSION << '\n' << '\n' << '\n';
     write_to_file(o);

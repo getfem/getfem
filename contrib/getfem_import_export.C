@@ -237,7 +237,7 @@ namespace getfem {
     */
     {
       bgeot::geotrans_precomp_pool gppool;
-      bgeot::pgeotrans_precomp pgp;
+      bgeot::pgeotrans_precomp pgp = 0;
       bgeot::stored_point_tab pts, cvm_pts;
       for (size_type i=0; i < em->cvlist.size(); ++i) {
 	size_type cv = em->cvlist[i];
