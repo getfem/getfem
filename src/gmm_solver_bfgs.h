@@ -108,7 +108,8 @@ namespace gmm {
 
   template <typename FUNCTION, typename DERIVATIVE, typename VECTOR> 
   void bfgs(FUNCTION f, DERIVATIVE grad, VECTOR &x,
-	    int restart, iteration& iter, int version = 0, double lambda_init=0.001) {
+	    int restart, iteration& iter, int version = 0,
+	    float lambda_init=0.001, float print_norm=1.0) {
 
     typedef typename linalg_traits<VECTOR>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
@@ -118,7 +119,7 @@ namespace gmm {
     grad(x, r);
     R lambda = lambda_init, valx = f(x), valy;
     
-    if (iter.get_noisy() >= 1) cout << "value " << valx << " ";
+    if (iter.get_noisy() >= 1) cout << "value " << valx / print_norm << " ";
     while (! iter.finished_vect(r)) {
 
       invhessian.hmult(r, d); gmm::scale(d, T(-1));
@@ -133,7 +134,7 @@ namespace gmm {
 	valy = f(y);
 	if (iter.get_noisy() >= 2) {
 	  cout << "Wolfe line search, lambda = " << lambda 
-	       << " value = " << f(y) << endl;
+	       << " value = " << valy /print_norm << endl;
 	}
 	if (valy <= valx + m1 * lambda * derivative) {
 	  grad(y, r2); grad_computed = true;
@@ -148,7 +149,8 @@ namespace gmm {
 	if (unbounded) lambda *= R(10);
 	else  lambda = (lambda_max + lambda_min) / R(2);
 	if (valy <= R(2)*valx &&
-	    (lambda < R(1E-7) || lambda_max - lambda_min < R(1E-7)))
+	    (lambda < R(lambda_init*1E-7) ||
+	     (!unbounded && lambda_max-lambda_min < R(lambda_init*1E-7))))
 	{ blocked = true; lambda = lambda_init; break; }
       }
 
@@ -156,10 +158,12 @@ namespace gmm {
       ++iter;
       if (!grad_computed) grad(y, r2);
       gmm::add(scaled(r2, -1), r);
-      if (iter.get_iteration() % restart == 0 || blocked) invhessian.restart();
+      if (iter.get_iteration() % restart == 0 || blocked)
+      { if (iter.get_noisy() >= 1) cout << "Restart\n"; invhessian.restart(); }
       else invhessian.update(gmm::scaled(d,lambda), gmm::scaled(r,-1));
       copy(r2, r); copy(y, x); valx = valy;
-      if (iter.get_noisy() >= 1) cout << "BFGS value " << valx << "\t";
+      if (iter.get_noisy() >= 1)
+	cout << "BFGS value " << valx/print_norm << "\t";
     }
 
   }

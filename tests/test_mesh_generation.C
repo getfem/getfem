@@ -401,7 +401,7 @@ namespace getfem {
 	  best_element = std::min(best_element, qual / (N*N));
 	}
       }
-      return cost / scalar_type(nbt * N * N);
+      return cost / scalar_type(N * N);
     }
 
     void fbcond_cost_function_derivative(const base_vector& c, base_vector &grad) {
@@ -434,7 +434,7 @@ namespace getfem {
     	  }
        }
        cout << endl;
-      gmm::scale(grad, scalar_type(1) / scalar_type(nbt * N * N));
+      gmm::scale(grad, scalar_type(1) / scalar_type(N * N));
       
     }
 
@@ -452,6 +452,7 @@ namespace getfem {
 
     void optimize_quality() {
 
+      size_type nbt = gmm::mat_ncols(t);
 
 //       pts_attr[0] = pts_attr[1] = pts_attr[2] = pts_attr[3]
 // 	= get_attr(true, dal::bit_vector(), false);
@@ -473,7 +474,7 @@ namespace getfem {
 	dal::copy_n(pts[i].const_begin(), N, X.begin() + i*N);
 
       base_matrix S(N,N), SW(N,N);
-      for (unsigned i=0; i < gmm::mat_ncols(t); ++i) {
+      for (unsigned i=0; i < nbt; ++i) {
 	for (size_type j=0; j < N; ++j) {
 	  for (size_type k=0; k < N; ++k) {
 	    S(k,j) = X[t(j+1,i)*N+k] - X[t(0,i)*N+k];
@@ -487,23 +488,24 @@ namespace getfem {
 	    }
 	  }
 	}
-	if (dal::abs(lu_det(S)) < 1e-10) cout << "oulala " << i << ", " << dal::abs(lu_det(S)) << "\n";
+	if (dal::abs(lu_det(S)) < 1e-10)
+	  cout << "oulala " << i << ", " << dal::abs(lu_det(S)) << "\n";
 	gmm::mult(S,W,SW);
 	
 	assert(gmm::lu_det(S) >= 0);
 	assert(gmm::lu_det(SW) >= 0);
       }
       
-      cout << "Initial quality: " << fbcond_cost_function(X) << "\n";
+      cout << "Initial quality: " << fbcond_cost_function(X)/nbt << "\n";
       cout << "best element : " << sqrt(best_element) << " worst element : "
 	   << sqrt(worst_element) << endl;
       gmm::iteration iter; iter.set_noisy(2); iter.set_maxiter(1000);
       iter.set_resmax(1E-7);
       gmm::bfgs(fbcond_cost_function_object(*this), 
 		fbcond_cost_function_derivative_object(*this),
-		X, 50, iter, 0, 5.0);
+		X, 10, iter, 0, 0.001, float(gmm::mat_ncols(t)));
 
-      cout << "Final quality: " << fbcond_cost_function(X) << "\n";
+      cout << "Final quality: " << fbcond_cost_function(X)/nbt << "\n";
       cout << "best element : " << sqrt(best_element) << " worst element : "
 	   << sqrt(worst_element) << endl;
 
