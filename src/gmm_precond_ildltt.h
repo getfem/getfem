@@ -155,13 +155,10 @@ namespace gmm {
 
   template <typename Matrix>
   struct choleskyt_precond : public ildltt_precond<Matrix> {
-    choleskyt_precond(const Matrix& A) : ildltt_precond<Matrix>(A) {}
+    choleskyt_precond(const Matrix& A, int k_, double eps_)
+      : ildltt_precond<Matrix>(A, k_, eps_) {}
     choleskyt_precond(void) {}
   };
-
-  template<typename Matrix> 
-  void choleskyt_precond<Matrix>::do_choleskyt(const Matrix& A, col_major)
-  { do_choleskyt(gmm::conjugated(A), row_major()); }
 
   template <typename Matrix, typename V1, typename V2> inline
   void mult(const choleskyt_precond<Matrix>& P, const V1 &v1, V2 &v2) {
