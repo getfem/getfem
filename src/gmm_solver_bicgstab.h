@@ -107,7 +107,7 @@ namespace gmm {
 	alpha = rho_1 / gmm::vect_sp(v, rtilde);
 	gmm::add(r, gmm::scaled(v, -alpha), s);
 	
-	if (iter.finished(s)) {
+	if (iter.finished_vect(s)) {
 	  gmm::add(gmm::scaled(phat, alpha), x); 
 	  break;
 	}

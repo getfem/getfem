@@ -32,6 +32,7 @@
 
 #include <getfem_integration.h>
 #include <ftool_naming.h>
+// #include <gmm.h>
 
 namespace getfem
 {
@@ -485,7 +486,9 @@ namespace getfem
       // cout.precision(40);
       // cout << "Mat = " << M << endl;
       
-      bgeot::mat_gauss_solve(M, F, U, 1.0E-15);
+      // gmm::iteration iter(1E-20, 1, 4000);
+      // gmm::gmres(M, U, F, gmm::identity_matrix(), gmm::mat_nrows(M), iter);
+      bgeot::mat_gauss_solve(M, F, U, LONG_SCALAR_EPS * 100);
       
       for (size_type r = 0; r < R; ++r)
 	add_point(nodes[r], U[r]);

@@ -14,7 +14,7 @@ MESH_TYPE = 0;          % 0 = simplexes
 			% 1 = parallelepipeds
 			% 2 = prisms
 INCLINE = 0;            % Incline of the mesh.
-K = 10;                 % Finite element degree.
+K = 12;                 % Finite element degree.
 FEM_TYPE = 0;           % Finite element method
 			% 0 = classical Lagrange element
 			% 1 = Hermite element on the segment
@@ -28,7 +28,7 @@ INTEGRATION = 1;        % 0 = exact integration.
 			% 11, 12, 13, 14, 15, 16, 17 triangle(n-10)
 			% 21, 22, 23, 25 tetrahedron(n-20)
 			% 32, 33, 35 quadrilateral(n-30)
-NX = 10;            	% space step.
+NX = 2;            	% space step.
 RESIDU = 1E-9;     	% residu for conjugate gradient.
 GENERIC_DIRICHLET = 0;  % Generic Dirichlet condition for non-lagrangian elts.
 

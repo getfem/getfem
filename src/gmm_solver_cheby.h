@@ -105,7 +105,7 @@ void cheby(const Matrix &A, Vector &x, const VectorB &b,
   c = (eigmax - eigmin) / 2.0;
   d = (eigmax + eigmin) / 2.0;
 
-  while ( ! iter.finished(r) ) {
+  while ( ! iter.finished_vect(r) ) {
     gmm::mult(M, r, z);         
 
     if ( iter.first() ) {

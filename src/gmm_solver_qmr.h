@@ -120,7 +120,7 @@ namespace gmm {
   
     value_type gamma = 1.0, eta = -1.0, theta = 0.0;
   
-    while (! iter.finished(r)) {
+    while (! iter.finished_vect(r)) {
     
       if (rho == 0.0 || xi == 0.0)
 	DAL_THROW(failure_error, "QMR failed to converge");

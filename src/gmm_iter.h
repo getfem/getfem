@@ -122,7 +122,7 @@ namespace gmm
       }
       return (nit >= maxiter || converged(nr));
     }
-    template <class VECT> bool finished(const VECT &v)
+    template <class VECT> bool finished_vect(const VECT &v)
     { return finished(gmm::vect_norm2(v)); }
 
 
