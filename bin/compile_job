@@ -7,9 +7,9 @@ $systeme = `uname -s`; chomp($systeme); $systeme .= `uname -r`;chomp($systeme);
 $getfem_lib = "libgetfem.a";
 
 print "Checkout for files\n";
-print `cd ..; cvs -d :pserver:renard\@gmmlinux2.gmm.priv:\/var\/cvs checkout getfem++`; print "\n";
+print `cd ..; cvs -d :pserver:renard\@gmmlinux2.gmm.priv:\/var\/cvs checkout getfem++`;
 
-print "Making links\n";
+print "\n\nMaking links\n";
 `mkdir -p include`;
 `cd include; ln -sf ../dal/*.h .; ln -sf ../bgeot/*.h .;  ln -sf ../linkmsg/*.h .;  ln -sf ../ftool/*.h .; ln -sf ../getfem/*.h .; ln -sf ../misc/*.h .; ln -sf ../misc/LEDAWIN/*.h .`; print "\n\n";
 `mkdir -p sources`;
