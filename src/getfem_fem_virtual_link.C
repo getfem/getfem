@@ -91,31 +91,49 @@ namespace getfem
     }
 
     void mat_trans(base_matrix &M, const base_matrix &G,
-			   bgeot::pgeometric_trans pgt) const
-    { 
-      size_type npt = G.ncols(), P = G.nrows();
-      base_node pt(P);
-      std::vector<size_type> ind(npt);
-      base_matrix::const_iterator itm = G.begin();
-      for (size_type k = 0; k < npt; ++k, itm += P) {
-	std::copy(itm, itm + P, pt.begin());
-	ind[k] = pmf1->linked_mesh().points().search(P);
-	if (ind[k] == size_type(-1))
-	  DAL_THROW(internal_error, "internal error.");
-      }
-      // 1 - retrouver le num de convexe
-      // 2 - interpoler les fct de base des dof du cv et porter les coeff dans
-      //     la matrice M
-
-      // ...
-
-      DAL_THROW(to_be_done_error, "To be finished.");
-    }
+		   bgeot::pgeometric_trans pgt);
 
     mesh_fem_link_fem(const mesh_fem_link_fem_light &ls);
     ~mesh_fem_link_fem();
 
   };
+
+  template<class T> size_type __search_in_mjktab(const T &tab, size_type nbpt,
+				    const getfem_mesh &m) {
+    typename T::const_iterator it = tab.begin(), ite = tab.end();
+    for (; it != ite; ++it)
+      if (m.nb_points_of_convex(*it) == nbpt) return *it;
+      DAL_THROW(internal_error, "internal error.");
+  }
+  
+  void mesh_fem_link_fem::mat_trans(base_matrix &M, const base_matrix &G,
+				    bgeot::pgeometric_trans pgt) {
+    if (to_be_computed) compute();
+    size_type npt = G.ncols(), P = G.nrows();
+    base_node pt(P);
+    std::vector<size_type> ind(npt);
+    base_matrix::const_iterator itm = G.begin();
+    for (size_type k = 0; k < npt; ++k, itm += P) {
+      std::copy(itm, itm + P, pt.begin());
+      ind[k] = pmf1->linked_mesh().points().search(P);
+      if (ind[k] == size_type(-1))
+	DAL_THROW(internal_error, "internal error.");
+    }
+    size_type cv = __search_in_mjktab(convex_with_points(pmf1->linked_mesh(),
+							 npt, ind.begin()),
+				      npt, pmf1->linked_mesh());
+    std::fill(M.begin(), M.end(), 0.0);
+    
+    
+    // 2 - interpoler les fct de base des dof du cv et porter les coeff dans
+    //     la matrice M
+    
+    // ...
+    
+    DAL_THROW(to_be_done_error, "To be finished.");
+  }
+
+
 
   void mesh_fem_link_fem::add_dof_to_cv(size_type cv, size_type i) {
     std::deque<size_type> *p = &(cv_info_tab[cv].doftab);
@@ -297,7 +315,7 @@ namespace getfem
     virtual size_type nb_base(void) const { return pai->nb_points(); }
     virtual void mat_trans(base_matrix &M, const base_matrix &G,
 			   bgeot::pgeometric_trans pgt) const
-      { pmflf->mat_trans(M, G, pgt); }
+      { (pmesh_fem_link_fem(pmflf))->mat_trans(M, G, pgt); }
 
     virtual size_type index_of_already_numerate_dof(size_type cv, size_type i)
       const { return pmflf->ind_of_dof(cv, i); }
