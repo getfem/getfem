@@ -27,6 +27,7 @@ if ($systeme =~ /Linux/)
   print MAKEFILE "INCLUDES_MTL = -I/opt/getfem/include\n";
   print MAKEFILE "INCLUDES_ITL = -I/opt/getfem/include\n";
   print MAKEFILE "LIB_X11 = -L/usr/X11R6/lib -lX11\n";
+  $extmatcom = '.mexglx ';
 }
 else
 {
@@ -41,6 +42,7 @@ else
   print MAKEFILE "INCLUDES_MTL = -I/usr/local/getfem/include\n";
   print MAKEFILE "INCLUDES_ITL = -I/usr/local/getfem/include\n";
   print MAKEFILE "LIB_X11 = -L/usr/X11R6/lib -lX11\n";
+  $extmatcom = '.mexaxp ';
 }
 
 print MAKEFILE "CPLUS = \$(COMP) \$(OPTIONS_STANDARD) \$(OPTIONS_OPTIMIZE) \n";
@@ -48,7 +50,7 @@ print MAKEFILE "CPLUSDEBUG = \$(COMP) \$(OPTIONS_STANDARD)";
 print MAKEFILE " \$(OPTIONS_DEBUG) \n";
 print MAKEFILE "CPLUSOPTDEBUG = \$(COMP) \$(OPTIONS_STANDARD)";
 print MAKEFILE " \$(OPTIONS_BOTH) \n";
-print MAKEFILE "INCLUDES = -I ./include \$(INCLUDES_STANDARD) \$(INCLUDES_GETFEM) \$(INCLUDES_MTL)";
+print MAKEFILE "INCLUDES = -I./include \$(INCLUDES_STANDARD) \$(INCLUDES_GETFEM) \$(INCLUDES_MTL)";
 print MAKEFILE " \$(INCLUDES_ITL) -I$rootlib\/include \n\n\n";
 print MAKEFILE "LIB = \$(GETFEM_LIB) \$(LIB_X11) -lm\n";
 
@@ -114,10 +116,31 @@ print MAKEFILE "\n", 'test : ',  "\$(lib_objects) ", $listetests, "\n\n";
 print MAKEFILE "\n", 'dotest : ',  "test \n";
 print MAKEFILE "\t", $listedotest, "\n";
 
-if (exists(matlabcom))
+if (-d "matlabcom")
 {
+  $listeC = `ls matlabcom/\*.C`;
+  $listeC =~ s/\@//g;
+  $listeB = $listeC;
+  $listeB =~ s/.C/$extmatcom/g;
+  $listeB =~ s/\n/ /g;
+  $listeB =~ s/matlabcom\//lib\//g;
+  print MAKEFILE "\n\n", 'matlabcom : lib/libgetfem.so ', $listeB, "\n\n";
+  print MAKEFILE 'lib/libgetfem.so : ', " \$(GETFEM_LIB) .\/sources\/*.o \n";
+  print MAKEFILE "\t ld", ' -shared sources/dal*.o sources/bgeot*.o sources/ftool*.o sources/getfem*.o sources/matlabint*.o -o lib/libgetfem.so', "\n\n";
+# il faut moduler ça si tout n'est pas chargé ...
 
-$listeC = `ls matlabcom/\*.C`;
+# il faudrait faire proprement les dépendences des Mex files.
+  while($listeC)
+  {
+    ($fi, $listeC) = split('\s', $listeC, 2);
+    $fi1 = $fi;
+    $fi1 =~ s/\.C/$extmatcom/g;
+    $fi1 =~ s/matlabcom\//lib\//g;
+    print MAKEFILE "\n", "$fi1 : $fi \$(GETFEM_LIB) .\/sources\/*.o \n";
+    print MAKEFILE "\t", 'cd lib; mex -O $(INCLUDES) libgetfem.so ';
+    $fi1 =~ s/lib\///g;
+    print MAKEFILE "..\/$fi -o $fi1\n";
+  }
 
 }
 
