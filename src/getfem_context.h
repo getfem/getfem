@@ -88,8 +88,7 @@ namespace getfem {
     // the context is modified.
     virtual void update_from_context(void) const = 0;
 
-    void add_dependency(const context_dependencies &cd)
-    { dependencies.push_back(&cd);cd.dependent.push_back(this);touched=false; }
+    void add_dependency(const context_dependencies &cd);
     void sup_dependency(const context_dependencies &cd)
     { cd.sup_dependent_(*this); sup_dependency_(cd); }
     bool context_valid(void) const { return (state != CONTEXT_INVALID); }

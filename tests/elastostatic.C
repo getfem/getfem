@@ -255,11 +255,11 @@ bool elastostatic_problem::solve(plain_vector &U) {
   getfem::mdbrick_isotropic_linearized_elasticity<>
     ELAS(mf_u, mf_coef, mixed_pressure ? 0.0 : lambda, mu);
 
-  getfem::mdbrick_abstract<> *pINCOMP = &ELAS;
-  if (mixed_pressure)
-    pINCOMP = new getfem::mdbrick_linear_incomp<>(ELAS, mf_p, mf_coef,
-						  1.0/lambda);
-  
+  getfem::mdbrick_linear_incomp<> INCOMP(ELAS, mf_p, mf_coef, 1.0/lambda);
+
+  getfem::mdbrick_abstract<> *pINCOMP;
+  if (mixed_pressure) pINCOMP = &INCOMP; else pINCOMP = &ELAS;
+
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs * N);
   for (size_type i = 0; i < nb_dof_rhs; ++i)
@@ -308,7 +308,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
 
   // Solution extraction
   ELAS.get_solution(MS, U);
-  
+
   return (iter.converged());
 }
   
