@@ -55,7 +55,7 @@ namespace gmm {
     vector_type v(vsz), tmp(vsz), tmp2(vsz2); fill_random(v);
     magnitude_type e = vect_norm2(v), e0 = 0, pert = 1E-1;
     while (dal::abs(e-e0) > 1e-6 * e0) {
-      e0=e;
+      e0 = e;
       if (d == 0)
 	mult(B,v,tmp);
       else if (d > 0)
@@ -75,7 +75,8 @@ namespace gmm {
     else return sqrt(e);
  }
 
- /* estimation of the condition number (using lu_inverse => dense matrix only)*/
+  /** estimation of the condition number 
+   * (using lu_inverse => dense matrix only) */
   template <typename MAT> 
   typename number_traits<typename
   linalg_traits<MAT>::value_type>::magnitude_type
@@ -93,10 +94,8 @@ namespace gmm {
       mult(M,transposed(M), B);
 
     gmm::lu_inverse(B);
-    if (d == 0)
-      return norm_lin2_est(M) * norm_lin2_est(B);
-    else 
-      return norm_lin2_est(M) * sqrt(norm_lin2_est(B));
+    return  norm_lin2_est(M) 
+      * ((d == 0) ? norm_lin2_est(B) : sqrt(norm_lin2_est(B)));
   }
 }
 
