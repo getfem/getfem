@@ -74,7 +74,7 @@ namespace bgeot
       { }
   };
 
-  #define STANDARD_CATCH_ERROR   catch(std::logic_error e) \
+  #define BGEOT_STANDARD_CATCH_ERROR   catch(std::logic_error e) \
   { \
     cerr << "=============================================================\n";\
     cerr << "               An error has been detected !!!                \n";\
