@@ -60,9 +60,6 @@
 //  been reached. The method finished() checks the convergence
 //  The first() method is used to determine the first iteration of the loop.
 
-// A ajouter dans solver.h
-// corriger les algos existants
-
 #ifndef __GMM_ITER_H
 #define __GMM_ITER_H
 
@@ -75,6 +72,7 @@ namespace gmm
     size_type maxiter; /* Max. number of iterations.                       */
     int noise;         /* if noise > 0 iterations are printed.             */
     double resmax;     /* maximum residu.                                  */
+    double resminreach, resadd;
     size_type nit;     /* iteration number.                                */
     double res;        /* last computed residu.                            */
     std::string name;  /* eventually, name of the method.                  */
@@ -82,12 +80,13 @@ namespace gmm
     
   public :
 
-    void init(void) { nit = 0; res = 0.0; written = false; }
+    void init(void) 
+    { nit = 0; res = 0.0; written = false; resminreach = 1E50; resadd = 0.0; }
 
     iteration(double r = 1.0E-8, int noi = 0, size_type mit = size_type(-1))
-      : rhsn(1.0), maxiter(mit), noise(noi), resmax(r), nit(0), res(0.0) {}
+      : rhsn(1.0), maxiter(mit), noise(noi), resmax(r) { init(); }
 
-    void  operator ++(int) {  nit++; written = false; }
+    void  operator ++(int) {  nit++; written = false; resadd += res; }
     void  operator ++() { (*this)++; }
 
     bool first(void) { return nit == 0; }
@@ -109,15 +108,25 @@ namespace gmm
     void set_rhsnorm(double r) { rhsn = r; }
     
     bool converged(void) { return res <= rhsn * resmax; }
-    bool converged(double nr)
-    { res = dal::abs(nr); return converged(); }
+    bool converged(double nr) { 
+      res = dal::abs(nr); resminreach = std::min(resminreach, res);
+      return converged();
+    }
     template <class VECT> bool converged(const VECT &v)
     { return converged(gmm::vect_norm2(v)); }
 
     bool finished(double nr) {
       if (noise > 0 && !written) {
+	double a = (rhsn == 0) ? 1.0 : rhsn;
+	converged(nr);
 	cout << name << " iter " << nit << " residu "
-	     << dal::abs(nr) / rhsn << endl;
+	     << dal::abs(nr) / a;
+	if (nit % 100 == 0) {
+	  cout << " (residu min " << resminreach / a << " mean val "
+	       << resadd / (100.0 * a) << " )";
+	  resadd = 0.0;
+	}
+	cout <<  endl;
 	written = true;
       }
       return (nit >= maxiter || converged(nr));
@@ -130,7 +139,6 @@ namespace gmm
     const std::string &get_name(void) const { return name; }
 
   };
-  
 
 }
 

@@ -79,8 +79,8 @@ int main(int argc, char *argv[])
 	for ( ; it != ite; ++it, ++it2)
 	  { *it -= *it2; errin = std::max(errin, dal::abs(*it)); }
 	cout <<  "Computation of norms\n";
-	getfem::scalar_type errl2 = getfem::L2_norm(mef2, U1, P1);
-	getfem::scalar_type errh1 = getfem::H1_semi_norm(mef2, U1, P1);
+	getfem::scalar_type errl2 = getfem::asm_L2_norm(mef2, U1);
+	getfem::scalar_type errh1 = getfem::asm_H1_semi_norm(mef2, U1);
 	cout <<  "L^2     Error : " << errl2 << endl;
 	cout <<  "H^1     Error : " << sqrt(errh1*errh1 + errl2*errl2) << endl;
 	cout <<  "L^infty Error : " << errin << endl;
@@ -100,8 +100,8 @@ int main(int argc, char *argv[])
       for ( ; it != ite; ++it, ++it2)
 	{ *it -= *it2; errin = std::max(errin, dal::abs(*it)); }
       
-      getfem::scalar_type errl2 = getfem::L2_norm(mef2, U3, P1);
-      getfem::scalar_type errh1 = getfem::H1_semi_norm(mef2, U3, P1);
+      getfem::scalar_type errl2 = getfem::asm_L2_norm(mef2, U3);
+      getfem::scalar_type errh1 = getfem::asm_H1_semi_norm(mef2, U3);
       cout <<  "L^2     Error : " << errl2 << endl;
       cout <<  "H^1     Error : " << sqrt(errh1*errh1 + errl2*errl2) << endl;
       cout <<  "L^infty Error : " << errin << endl;
@@ -117,8 +117,8 @@ int main(int argc, char *argv[])
       for ( ; it != ite; ++it, ++it2)
 	{ *it -= *it2; errin = std::max(errin, dal::abs(*it)); }
       
-      getfem::scalar_type errl2 = getfem::L2_norm(mef1, U3, P1);
-      getfem::scalar_type errh1 = getfem::H1_semi_norm(mef1, U3, P1);
+      getfem::scalar_type errl2 = getfem::asm_L2_norm(mef1, U3);
+      getfem::scalar_type errh1 = getfem::asm_H1_semi_norm(mef1, U3);
       cout <<  "L^2     Error : " << errl2 << endl;
       cout <<  "H^1     Error : " << sqrt(errh1*errh1 + errl2*errl2) << endl;
       cout <<  "L^infty Error : " << errin << endl;
