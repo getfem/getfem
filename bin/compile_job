@@ -134,7 +134,7 @@ while($listeC)
   if ($fi1 =~ /linear\_systems/) {
     print MAKEFILE "\t", '$(CPLUS) $(COPT) -c $(INCLUDES) ', $fi, ' -o $@', "\n"; }
   else {
-    print MAKEFILE "\t", '$(CPLUS) $(COPT) \$(OPTIONS_STRICT) -c $(INCLUDES) ', $fi, ' -o $@', "\n"; }
+    print MAKEFILE "\t", '$(CPLUS) $(COPT) $(OPTIONS_STRICT) -c $(INCLUDES) ', $fi, ' -o $@', "\n"; }
 
 }
 
