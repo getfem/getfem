@@ -127,8 +127,9 @@ namespace bgeot
 	std::fill(points().begin(), points().end(), null);
 	for (size_type i = 1; i <= ls.N; ++i)
 	  _normals[i][i-1] = -1.0;
-	std::fill(_normals[0].begin(), _normals[0].end(),
-		  scalar_type(1.0)/sqrt(scalar_type(ls.N)));
+	if (ls.N > 0)
+	  std::fill(_normals[0].begin(), _normals[0].end(),
+		    scalar_type(1.0)/sqrt(scalar_type(ls.N)));
 	base_node c(ls.N);  c.fill(0.0);
 	
 	if (ls.K == 0)

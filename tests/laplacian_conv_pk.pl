@@ -57,8 +57,8 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
 
 
 $NDDLMAX = 10400;
-$PAUSE = 1;
-$SKIP = 2;
+$PAUSE = 0;
+$SKIP = 0;
 $FT = 10.0;
 
 ##########################################################################
