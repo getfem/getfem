@@ -922,24 +922,31 @@ namespace getfem
   struct _PK_discont : public _PK_fem {
   public :
     
-    _PK_discont(dim_type nc, short_type k) : _PK_fem(nc, k) {
+    _PK_discont(dim_type nc, short_type k, scalar_type alpha=0.) : _PK_fem(nc, k) {
       std::fill(_dof_types.begin(), _dof_types.end(),
 		lagrange_nonconforming_dof(nc));
+      base_node G = cv_node.points()[0];
+      for (size_type i=0; i < cv_node.nb_points(); ++i) G += cv_node.points()[i];
+      G /= scalar_type(cv_node.nb_points());
+      for (size_type i=0; i < cv_node.nb_points(); ++i) 
+	cv_node.points()[i] = (1-alpha)*cv_node.points()[i] + alpha*G;
     }
   };
   
   static pfem PK_discontinuous_fem(fem_param_list &params) {
-    if (params.size() != 2)
+    if (params.size() != 2 && params.size() != 3)
       DAL_THROW(failure_error, 
-	   "Bad number of parameters : " << params.size() << " should be 2.");
+	   "Bad number of parameters : " << params.size() << " should be 2 or 3.");
     if (params[0].type() != 0 || params[1].type() != 0)
       DAL_THROW(failure_error, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     int k = int(::floor(params[1].num() + 0.01));
+    scalar_type alpha = 0.;
+    if (params.size() == 3) alpha = params[2].num();
     if (n <= 0 || n >= 100 || k < 0 || k > 150 ||
-	double(n) != params[0].num() || double(k) != params[1].num())
+	double(n) != params[0].num() || double(k) != params[1].num() || alpha < 0 || alpha >= 1)
       DAL_THROW(failure_error, "Bad parameters");
-    return new _PK_discont(n, k);
+    return new _PK_discont(n, k, alpha);
   }
 
 
