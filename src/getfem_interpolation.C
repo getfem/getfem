@@ -52,11 +52,12 @@ namespace getfem {
 
 
     for (size_type j = nn.take_first(); j != size_type(-1); j << nn) {
-       pts_cvx[j].clear();
+      pts_cvx[j].clear();
       bgeot::pgeometric_trans pgt = mesh.trans_of_convex(j);
       bounding_box(min, max, mesh.points_of_convex(j), pgt);
       for (size_type k=0; k < min.size(); ++k) { min[k]-=EPS; max[k]+=EPS; }
       gic.init(mesh.convex(j), pgt);
+      points_in_box(boxpts, min, max);
       for (size_type l = 0; l < boxpts.size(); ++l) {
 	bool gicisin = gic.invert(boxpts[l].n, pt_ref, EPS);
 	bool toadd = projection || gicisin;
