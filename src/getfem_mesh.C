@@ -154,7 +154,7 @@ namespace getfem
       std::copy(points_of_convex(ic)[i].begin(), 
 		points_of_convex(ic)[i].end(), S.begin()+i*N);
     }
-    
+    /* too slow ... */
     return bgeot::compute_normal(S, f, pgt, pt);
   }
 

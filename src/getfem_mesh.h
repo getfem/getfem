@@ -351,7 +351,7 @@ namespace getfem
 
       /* returns the normal of face 'f' evaluated at the point 'pt'       */
       /* (pt is a position in the reference convex)                       */
-      /* pt should of course by on the face, except if the geometric
+      /* pt should of course be on the face, except if the geometric
          transformation is linear */
       base_small_vector normal_of_face_of_convex(size_type ic, short_type f,
 						 const base_node &pt) const;
@@ -449,15 +449,13 @@ namespace getfem
   */
   struct convex_face  {
     size_type cv;
-    size_type f;
-    /*
+    size_type f;    
     inline bool operator < (const convex_face &e) const
     {
       if (cv < e.cv) return true; if (cv > e.cv) return false; 
       if (f < e.f) return true; else if (f > e.f) return false;
       return false;
     }
-    */
     bool is_face() const { return f != size_type(-1); }
     convex_face(size_type cv_, size_type f_ = size_type(-1)) : cv(cv_), f(f_) {}
     convex_face() : cv(size_type(-1)), f(size_type(-1)) {}
