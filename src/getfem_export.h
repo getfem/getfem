@@ -43,6 +43,9 @@ namespace getfem {
   /*                                                                       */
   /* ********************************************************************* */
 
+  /** Semi-obsoleted function: In general, it is preferable to avoid this
+      function, and directly save the mesh_fem (mf.write_to_file) in one file,
+      and the fields in another file. */
   template<typename VECT>
     void save_solution(const std::string &filename, const mesh_fem &mf,
 		       const VECT &U, short_type K)
@@ -96,6 +99,7 @@ namespace getfem {
     o.close();
   }
 
+  /** Semi-obsoleted function */
   template<typename VECT>
     void load_solution(const std::string &fi, getfem_mesh &mesh,
 		       mesh_fem &mef, VECT &U, short_type &K) {
@@ -229,9 +233,6 @@ namespace getfem {
   }
 
 
-  /* this function has nothing to do here .. */
-  // void classical_mesh_fem(mesh_fem& mf, short_type K) IS_DEPRECATED;
-
   /** 
       export class to VTK ( http://www.kitware.com/vtk.html ) file format 
       (not the XML format, but the old format)
@@ -239,47 +240,77 @@ namespace getfem {
       A vtk_export can store multiple scalar/vector fields.
   */
   class vtk_export {
+  protected:
     std::ostream &os;
     char header[256]; // hard limit in vtk
     bool ascii;
-    bool header_done, mesh_structure_done;
     const stored_mesh_slice *psl;
-    std::auto_ptr<stored_mesh_slice> owned_psl;
+    std::auto_ptr<mesh_fem> pmf;
+    dal::bit_vector pmf_dof_used;
+    std::vector<unsigned> pmf_cell_type;
     std::ofstream real_os;
+    dim_type dim_;
     bool reverse_endian;
+    enum { EMPTY, HEADER_WRITTEN, STRUCTURE_WRITTEN, IN_CELL_DATA, IN_POINT_DATA } state;
   public:
+    typedef enum { VTK_VERTEX = 1, VTK_LINE = 3, VTK_QUADRATIC_EDGE = 21, 
+                   VTK_TRIANGLE = 5, VTK_QUADRATIC_TRIANGLE = 22, 
+                   VTK_PIXEL = 8, VTK_QUAD = 9, VTK_QUADRATIC_QUAD = 23,
+                   VTK_TETRA = 10, VTK_QUADRATIC_TETRA = 24, 
+                   VTK_WEDGE = 13, /*VTK_QUADRATIC_WEDGE = 26,*/
+                   VTK_VOXEL = 11, VTK_HEXAHEDRON = 12, VTK_QUADRATIC_HEXAHEDRON = 25 } vtk_cell_type;
     vtk_export(const std::string& fname, bool ascii_ = false);
     vtk_export(std::ostream &os_, bool ascii_ = false);
-    /** choose the mesh that will be exported -- if you are juste calling 
-       write_dataset(mf), you are not required to call this function */
-    void set_mesh(const getfem_mesh &m, unsigned nrefine=1);
-    /** if you do want to export a mesh slice instead of a whole mesh,
-       use set_slice instead of set_mesh */
-    void set_slice(const stored_mesh_slice& sl);
+
+    
+    void exporting(const getfem_mesh& m);
+    void exporting(const mesh_fem& mf);
+    void exporting(const stored_mesh_slice& sl);
+
     /** the header is the second line of text in the exported file,
-       you can put whatever you want */
+       you can put whatever you want -- call this before any write_dataset or write_mesh */
     void set_header(const std::string& s);
-    /** append a new scalar or vector field defined on mf to the .vtk file. 
+    void write_mesh();
+    /** append a new scalar or vector field defined on mf to the .vtk file.  If
+        you are exporting a slice, or if mf != get_exported_mesh_fem(), U will
+        be interpolated on the slice, or on get_exported_mesh_fem().
+
         NO SPACE ALLOWED in 'name' */
-    template<class VECT> void write_dataset(const getfem::mesh_fem &mf, const VECT& U0, const std::string& name);
-    /** append a new scalar or vector field to .vtk file. The Uslice
-     vector is the field interpolated on the exported mesh_slice 
-     NO SPACE ALLOWED in 'name' */
-    template<class VECT> void write_dataset(const VECT& U, const std::string& name);
+    template<class VECT> void write_point_data(const getfem::mesh_fem &mf, const VECT& U0, const std::string& name);
+    /** append a new scalar or vector field to .vtk file. The Uslice vector is
+        the field interpolated on the exported mesh_slice This function should
+        not be used if you are not exporting a slice!  NO SPACE ALLOWED in
+        'name' */
+    template<class VECT> void write_sliced_point_data(const VECT& Uslice, const std::string& name);
+    /** export data which is constant over each element. You should not use
+        this function if you are exporting a slice.  U should have
+        convex_index().card() elements.  */
+    
+    template<class VECT> void write_cell_data(const VECT& U, const std::string& name); 
     /** export a data_set correspounding to measures of quality for each convex
-        of the mesh */
-    void write_mesh_quality(const getfem_mesh &m, unsigned nrefine=1);
+        of the supplied mesh (which should have the same number of convex than
+        the one used in the vtk_export)
+
+        If a slice is being exported, the convex quality is written as
+        point_data (TO IMPROVE ONEDAY), if a mesh/mesh_fem is being exported,
+        it is written as cell_data
+    */
+    void write_mesh_quality(const getfem_mesh &m);
     void write_normals();
-    const stored_mesh_slice& get_slice() const;
+    const stored_mesh_slice& get_exported_slice() const;
+    const mesh_fem& get_exported_mesh_fem() const;
   private:
     void init();
     void check_header();
-    void write_mesh_structure();
-    void check_mesh(const getfem_mesh &m);
+    void write_mesh_structure_from_slice();
+    void write_mesh_structure_from_mesh_fem();
+    void switch_to_cell_data();
+    void switch_to_point_data();
     template<class T> void write_val(T v);
     template<class V> void write_vec(V p);
     template<class IT> void write_3x3tensor(IT p);
     void write_separ();
+    template<class VECT> void write_dataset_(const VECT& U, const std::string& name, bool cell_data=false); 
   };
 
   template<class T> void vtk_export::write_val(T v) {
@@ -295,19 +326,19 @@ namespace getfem {
 
   template<class IT> void vtk_export::write_vec(IT p) {
     float v[3];
-    for (size_type i=0; i < psl->dim(); ++i) {
+    for (size_type i=0; i < dim_; ++i) {
       v[i] = p[i];
     }
-    for (size_type i=psl->dim(); i < 3; ++i) v[i] = 0.0f;
+    for (size_type i=dim_; i < 3; ++i) v[i] = 0.0f;
     write_val(v[0]);write_val(v[1]);write_val(v[2]);
   }
 
   template<class IT> void vtk_export::write_3x3tensor(IT p) {
     float v[3][3];
     memset(v, 0, sizeof v);
-    for (size_type i=0; i < psl->dim(); ++i) {
-      for (size_type j=0; j < psl->dim(); ++j)
-        v[i][j] = p[i + j*psl->dim()];
+    for (size_type i=0; i < dim_; ++i) {
+      for (size_type j=0; j < dim_; ++j)
+        v[i][j] = p[i + j*dim_];
     }
     for (size_type i=0; i < 3; ++i) {
       for (size_type j=0; j < 3; ++j) {
@@ -318,44 +349,216 @@ namespace getfem {
   }
 
   template<class VECT>
-  void vtk_export::write_dataset(const getfem::mesh_fem &mf, const VECT& U,
-				 const std::string& name) {
-    set_mesh(mf.linked_mesh());
-    size_type Q = (U.size() / mf.nb_dof())*mf.get_qdim();
-    std::vector<scalar_type> Uslice(Q*psl->nb_points());
-    psl->interpolate(mf, U, Uslice);
-    write_dataset(Uslice,name);
+  void vtk_export::write_point_data(const getfem::mesh_fem &mf, const VECT& U,
+                                 const std::string& name) {
+    size_type Q = (gmm::vect_size(U) / mf.nb_dof())*mf.get_qdim();
+    if (psl) {
+      std::vector<scalar_type> Uslice(Q*psl->nb_points());
+      psl->interpolate(mf, U, Uslice);
+      write_dataset_(Uslice,name);
+    } else {
+      std::vector<scalar_type> V(pmf->nb_dof() * Q);
+      if (&mf != &(*pmf)) {
+        interpolation(mf, *pmf, U, V);
+      } else gmm::copy(U,V);
+      size_type cnt = 0;
+      for (dal::bv_visitor d(pmf_dof_used); !d.finished(); ++d, ++cnt) {
+        if (cnt != d)
+          for (size_type q=0; q < Q; ++q) {
+            V[cnt*Q + q] = V[d*Q + q];
+          }
+      }
+      V.resize(Q*pmf_dof_used.card());
+      write_dataset_(V, name);
+    }
   }
-  
+
   template<class VECT>
-  void vtk_export::write_dataset(const VECT& Uslice, const std::string& name) {
-    write_mesh_structure();
-    size_type Q = Uslice.size() / psl->nb_points();
+  void vtk_export::write_cell_data(const VECT& U, const std::string& name) {
+    write_dataset_(U, name, true);
+  }
+
+  template<class VECT>
+  void vtk_export::write_sliced_point_data(const VECT& U, const std::string& name) {
+    write_dataset_(U, name, false);
+  }
+
+  template<class VECT>
+  void vtk_export::write_dataset_(const VECT& U, const std::string& name, bool cell_data) {
+    write_mesh();
+    size_type nb_val = 0;
+    if (cell_data) {
+      switch_to_cell_data(); 
+      nb_val = psl ? psl->linked_mesh().convex_index().card() 
+        : pmf->linked_mesh().convex_index().card(); 
+    } else {
+      switch_to_point_data();
+      nb_val = psl ? psl->nb_points() : pmf_dof_used.card();
+    }
+    size_type Q = gmm::vect_size(U) / nb_val;
+    if (gmm::vect_size(U) != nb_val*Q) 
+      DAL_THROW(dal::failure_error, "inconsistency in the size of the dataset: " 
+                << gmm::vect_size(U) << " != " << nb_val << "*" << Q);
     write_separ();
     if (Q == 1) {
-      os << "SCALARS " << name << " float\n";
+      os << "SCALARS " << name << " float 1\n";
       os << "LOOKUP_TABLE default\n";
-      for (size_type i=0; i < psl->nb_points(); ++i) {
-	write_val(float(Uslice[i]));
+      for (size_type i=0; i < nb_val; ++i) {
+	write_val(float(U[i]));
       }
     } else if (Q <= 3) {
       os << "VECTORS " << name << " float\n";
-      for (size_type i=0; i < psl->nb_points(); ++i) {
-	write_vec(Uslice.begin() + i*Q);
+      for (size_type i=0; i < nb_val; ++i) {
+	write_vec(U.begin() + i*Q);
       }
-    } else if (Q == dal::sqr(psl->dim())) {
+    } else if (Q == dal::sqr(dim_)) {
       /* tensors : coef are supposed to be stored in FORTRAN order 
          in the VTK file, they are written with C (row major) order
        */
       os << "TENSORS " << name << " float\n";
-      for (size_type i=0; i < psl->nb_points(); ++i) {
-        write_3x3tensor(Uslice.begin() + i*Q);
+      for (size_type i=0; i < nb_val; ++i) {
+        write_3x3tensor(U.begin() + i*Q);
       }
     } else DAL_THROW(dal::dimension_error,
 		     "vtk does not accept vectors of dimension > 3");
     write_separ();
   }
-}  /* end of namespace getfem.                                             */
+
+  class dx_export {
+    std::ostream &os;
+    char header[256]; 
+    bool ascii;
+    const stored_mesh_slice *psl;
+    std::auto_ptr<mesh_fem> pmf;
+    dal::bit_vector pmf_dof_used;
+    std::vector<unsigned> pmf_cell_type;
+    std::fstream real_os;
+    dim_type dim_, connections_dim;
+    
+    struct log_names {
+      unsigned count;
+      std::list<std::string> names;
+      log_names() : count(0) {}
+      void add(const std::string &s) { ++count; names.push_back(s); }
+    };
+    enum { MESHES, SCALAR_FIELDS, VECTOR_FIELDS, TENSOR_FIELDS, NB_LOG };
+    std::vector<log_names> log;
+    enum { EMPTY, HEADER_WRITTEN, STRUCTURE_WRITTEN } state;
+  public:
+    dx_export(const std::string& fname, bool ascii_ = false, bool append_ = false);
+    dx_export(std::ostream &os_, bool ascii_ = false);
+    ~dx_export();
+    void exporting(const getfem_mesh& m, const char *name = 0);
+    void exporting(const mesh_fem& mf, const char *name = 0);
+    void exporting(const stored_mesh_slice& sl, const char *name = 0);
+
+    /** the header is the second line of text in the exported file,
+       you can put whatever you want -- call this before any write_dataset or write_mesh */
+    void set_header(const std::string& s);
+    void write_mesh();
+    template<class VECT> void write_point_data(const getfem::mesh_fem &mf, const VECT& U0, const std::string& name);
+    template<class VECT> void write_sliced_point_data(const VECT& Uslice, const std::string& name);
+    template<class VECT> void write_cell_data(const VECT& U, const std::string& name); 
+    void write_mesh_quality(const getfem_mesh &m);
+    void write_normals();
+    const stored_mesh_slice& get_exported_slice() const;
+    const mesh_fem& get_exported_mesh_fem() const;
+
+  private:
+    void init();
+    void write_separ();
+    template<class T> void write_val(T v) {
+      if (ascii) os << " " << v;
+      else os.write((char*)&v, sizeof(T));
+    }
+    static const char* endianness() {
+      static int i=0x12345678;
+      char *p = (char*)&i;
+      if (*p == 0x12) return "msb";
+      else if (*p == 0x78) return "lsb";
+      else return "this is very strange..";
+    }
+    std::string name_of_pts_array() { return log[MESHES].names.back() + std::string("_pts"); }
+    std::string name_of_conn_array() { return log[MESHES].names.back() + std::string("_conn"); }
+    void check_header();
+    const char *dxname_of_convex_structure(bgeot::pconvex_structure cvs);
+    void write_convex_attributes(bgeot::pconvex_structure cvs);
+    void write_mesh_structure_from_slice();
+    void write_mesh_structure_from_mesh_fem();
+    template<class VECT> void write_dataset_(const VECT& U, const std::string& name, bool cell_data=false);
+  };
+
+
+  template<class VECT>
+  void dx_export::write_point_data(const getfem::mesh_fem &mf, const VECT& U,
+                                   const std::string& name) {
+    size_type Q = (gmm::vect_size(U) / mf.nb_dof())*mf.get_qdim();
+    if (psl) {
+      std::vector<scalar_type> Uslice(Q*psl->nb_points());
+      psl->interpolate(mf, U, Uslice);
+      write_dataset_(Uslice,name);
+    } else {
+      std::vector<scalar_type> V(pmf->nb_dof() * Q);
+      if (&mf != &(*pmf)) {
+        interpolation(mf, *pmf, U, V);
+      } else gmm::copy(U,V);
+      size_type cnt = 0;
+      for (dal::bv_visitor d(pmf_dof_used); !d.finished(); ++d, ++cnt) {
+        if (cnt != d)
+          for (size_type q=0; q < Q; ++q) {
+            V[cnt*Q + q] = V[d*Q + q];
+          }
+      }
+      V.resize(Q*pmf_dof_used.card());
+      write_dataset_(V, name);
+    }
+  }
+
+  template<class VECT>
+  void dx_export::write_sliced_point_data(const VECT& U, const std::string& name) {
+    write_dataset_(U, name, false);
+  }
+
+  template<class VECT> void dx_export::write_dataset_(const VECT& U, const std::string& name, bool cell_data) {
+    write_mesh();
+    size_type nb_val = 0;
+    if (cell_data) {
+      nb_val = psl ? psl->linked_mesh().convex_index().card() 
+        : pmf->linked_mesh().convex_index().card(); 
+    } else {
+      nb_val = psl ? psl->nb_points() : pmf_dof_used.card();
+    }
+    size_type Q = gmm::vect_size(U) / nb_val;
+    if (gmm::vect_size(U) != nb_val*Q) 
+      DAL_THROW(dal::failure_error, "inconsistency in the size of the dataset: " 
+                << gmm::vect_size(U) << " != " << nb_val << "*" << Q);
+
+    os << "object \"" << name << "_data\" class array type float rank ";
+    if (Q == 1) { os << "0"; log[SCALAR_FIELDS].add(name); } /* scalar data */
+    else if (Q == 4) { os << "2 shape 2 2"; log[TENSOR_FIELDS].add(name); } /* or 2x2 tensor data */
+    else if (Q == 9) { os << "2 shape 3 3"; log[TENSOR_FIELDS].add(name); } /* or 2x2 tensor data */
+    else { os << "1 shape " << Q; log[VECTOR_FIELDS].add(name); } /* fallback: vector data */
+    os << " items " << nb_val;
+    if (!ascii) os << " " << endianness() << " binary";
+    os << " data follows" << endl;
+    for (size_type i=0; i < nb_val*Q; ++i) { 
+      write_val(float(U[i])); 
+      if (((i+1) % (Q > 1 ? Q : 10)) == 0) write_separ();
+    }
+    write_separ();
+
+    if (!cell_data)
+      os << "attribute \"dep\" string \"positions\"\n";
+    else os << "attribute \"dep\" string \"connections\"\n";
+    os << "\n";
+    /* write footer */
+    os << "object \"" << name << "\" class field\n"
+       << "component \"positions\" value \"" << name_of_pts_array() << "\"\n"
+       << "component \"connections\" value \"" << name_of_conn_array() << "\"\n"
+       << "component \"data\" value \"" << name << "_data\"\n";
+  }
+
+}  /* end of namespace getfem. */
 
 
 #endif /* GETFEM_EXPORT_H__  */

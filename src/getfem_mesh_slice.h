@@ -30,6 +30,11 @@ namespace getfem {
     friend class mesh_slicer;
   public:
     stored_mesh_slice() : poriginal_mesh(0), points_cnt(0), dim_(size_type(-1)) { }
+    stored_mesh_slice(const getfem::getfem_mesh& m, size_type nrefine = 1) 
+      : poriginal_mesh(0), points_cnt(0), dim_(size_type(-1)) { 
+      this->build(m, slicer_none(), nrefine);
+    }
+      ;
     virtual ~stored_mesh_slice() {}
     size_type nb_convex() const { return cvlst.size(); }
     size_type convex_num(size_type ic) const { return cvlst[ic].cv_num; }

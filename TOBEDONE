@@ -44,3 +44,5 @@ faire la doc pour les mesh_slice
 faire la doc pour vtk_export
 
 getfem_mesh::clear() ne libere pas la mémoire
+
+mesh_fem::point_of_dof est très lent sur des PGT(2,4) par ex. (appel a geometric_trans::transform)

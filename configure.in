@@ -137,7 +137,7 @@ dnl	SUPLDFLAGS="-rdynamic" # -rdynamic for backtraces
 	echo "Using INTEL icc"
 dnl -tpp6 is for pentiumII and more
 dnl -Xc is for ansi conformance
-	CXXFLAGS="$CXXFLAGS -O3 -tpp6"
+	CXXFLAGS="$CXXFLAGS -O3 -tpp6 -Xc -ansi"
 	;;
  *)
 	echo "Using a unknown compiler"
@@ -208,6 +208,25 @@ int main() {
   fi;
 fi;
 dnl -----------------------------END QD TESTS--------------------------------
+
+dnl ------------------------------QHULL TEST--------------------------------
+useQHULL="no"
+AC_ARG_ENABLE(qhull,
+ [  --enable-qhull             enable the use of the qhull library (required for generation of non regular meshes)],
+ [ if   test "x$enableval" = "xyes" ; then useQHULL="yes"; fi], [useQHULL="test"])
+if test "x$useQHULL" = "x$no"; then
+  echo "libqhull explicitly disabled";
+else
+  AC_CHECK_LIB(qhull, qh_new_qhull)
+  AC_CHECK_HEADERS(qhull/qhull.h,[useQHULL="yes"],
+[
+  if test "x$useQHULL" = "$yes"; then
+    AC_MSG_ERROR([header files qhull/qhull.h not found. Use --disable-qhull flag]);
+  fi;
+])
+fi;
+dnl -----------------------------END OF QHULL TEST--------------------------
+
 
 dnl ------------------------------LAPACK TEST--------------------------------
 dnl -----------------------------END OF LAPACK TEST--------------------------
@@ -284,4 +303,9 @@ echo "(by default, only the static one will be built)"
 if test "x$useQDlib" = "xyes" ; then  
   echo "Using the QD library:"
   echo "   high precision (${QD_PREC}-double precision) polynomials and integration methods are enabled";
+fi;
+if test "x$useQHULL" = "xyes"; then
+  echo "Using the qhull library for delaunay triangulations."
+else
+  echo "Not using the qhull library. Mesh generation will be disabled."
 fi;

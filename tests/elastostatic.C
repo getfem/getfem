@@ -314,7 +314,8 @@ int main(int argc, char *argv[]) {
       cout << "export to " << p.datafilename + ".vtk" << "..\n";
       getfem::vtk_export exp(p.datafilename + ".vtk",
 			     p.PARAM.int_value("VTK_EXPORT")==1);
-      exp.write_dataset(p.mf_u, U, "elastostatic_displacement");
+      exp.exporting(p.mf_u); 
+      exp.write_point_data(p.mf_u, U, "elastostatic_displacement");
       cout << "export done, you can view the data file with (for example)\n"
 	"mayavi -d elastostatic.vtk -f ExtractVectorNorm -f "
 	"WarpVector -m BandedSurfaceMap -m Outline\n";

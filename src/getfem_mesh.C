@@ -397,7 +397,7 @@ namespace getfem {
       base_matrix Gr(N,N);
       base_matrix G(N,N+1); 
       vectors_to_base_matrix(G, bgeot::equilateral_simplex_of_reference(N)->points());
-      cout << "equilateral_simplex_of_reference: G[" << N << "]=" << G << "\n";
+      //cout << "equilateral_simplex_of_reference: G[" << N << "]=" << G << "\n";
       gmm::mult(G, bgeot::geotrans_precomp(pgt, &pgt->convex_ref()->points())->grad(0), Gr);
       gmm::lu_inverse(Gr);
       pbm[N-1].swap(Gr);

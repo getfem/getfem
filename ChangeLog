@@ -1,3 +1,8 @@
+2004-07-05  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/getfem_export.C: added VTK and OpenDX export of slices,
+	getfem_mesh and mesh_fem objects.
+
 2004-06-25 
 	* src/gmm_real_part.h : added the functions gmm::real_part and
 	gmm::imag_part.
