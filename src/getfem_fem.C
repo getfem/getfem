@@ -39,8 +39,10 @@ namespace getfem
   typedef ftool::naming_system<virtual_fem>::param_list fem_param_list;
 
   void virtual_fem::interpolation(pfem_precomp pfp, size_type ii,
-			    const base_matrix &G, bgeot::pgeometric_trans pgt, 
-			    const base_vector &coeff, base_node &val, dim_type Qdim) const {
+				  const base_matrix &G,
+				  bgeot::pgeometric_trans pgt, 
+				  const base_vector &coeff, base_node &val,
+				  dim_type Qdim) const {
     // optimisable.   verifier et faire le vectoriel
     base_matrix M;
     size_type Qmult = size_type(Qdim) / target_dim();
@@ -66,48 +68,6 @@ namespace getfem
       } 
     }
   }
-
-
-//   void virtual_fem::interpolation_grad(pfem_precomp pfp, size_type ii,
-// 			    const base_matrix &G, bgeot::pgeometric_trans pgt, 
-// 			    const base_vector &coeff, base_matrix &val) const {
-//     // optimisable !!   verifier et faire le vectoriel
- 
-//     size_type R = nb_dof(), RR = nb_base();
-//     base_matrix M;
-//     size_type P = structure()->dim();
-    
-
-//     if (val.nrows() != target_dim() ||
-// 	val.ncols() != P ||
-// 	ii >= pfp->get_point_tab()->size() ||
-// 	coeff.size() != R)
-//       DAL_THROW(dimension_error, "dimension mismatch");
-
-//     if (pfp->get_pfem() != this)
-//       DAL_THROW(internal_error, "internal error");
-   
-
-//     base_tensor::const_iterator it = pfp->grad(ii).begin();
-
-//     if (!is_equivalent()) { M.resize(RR, R); mat_trans(M, G, pgt); }
-
-//     val.fill(0.0);
-//     for (size_type k = 0; k < P; ++k) {
-//       for (size_type r = 0; r < target_dim(); ++r) {
-// 	for (size_type j = 0; j < RR; ++j, ++it) {
-	  
-// 	  scalar_type co = 0.0;
-// 	  if (is_equivalent())
-// 	    co = coeff[j];
-// 	  else
-// 	    for (size_type i = 0; i < R; ++i)
-// 	      co += coeff[i] * M(i, j);
-// 	  val(r,k) += co * (*it);
-// 	} 
-//       }
-//     }
-//   }
 
   void virtual_fem::interpolation_grad(const base_node &x,
 				       const base_matrix &G,

@@ -39,7 +39,18 @@ namespace bgeot
 {
   typedef ftool::naming_system<geometric_trans>::param_list gt_param_list;
 
-
+  base_node geometric_trans::transform(const base_node &pt, 
+				       const base_matrix &G) const {
+    size_type N = G.nrows(), k = nb_points();
+    base_node P(N); P.fill(0.0);
+    base_matrix::const_iterator git = G.begin();
+    for (size_type l = 0; l < k; ++l) {
+      scalar_type a = poly_vector()[l].eval(pt.begin());
+      base_node::iterator pit = P.begin(), pite = P.end();
+      for (; pit != pite; ++git, ++pit) *pit += a * (*git);
+    }
+    return P;
+  }
 
   /* ******************************************************************** */
   /* transformation on simplex.                                           */

@@ -9,7 +9,7 @@
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 2002-03  Yves Renard.                                     */
+/* Copyright (C) 2002-2003  Yves Renard.                                   */
 /*                                                                         */
 /* This file is a part of GETFEM++                                         */
 /*                                                                         */
@@ -399,7 +399,7 @@ namespace getfem
     void interpolation(pfem_precomp, size_type,
 		       const base_matrix &,
 		       bgeot::pgeometric_trans, 
-		       const base_vector &, base_node &) const {
+		       const base_vector &, base_node &, dim_type=1) const {
       DAL_THROW(internal_error,
 	  "You cannot interpolate this element, use the original element.");
     }

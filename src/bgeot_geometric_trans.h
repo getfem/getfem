@@ -89,40 +89,40 @@ namespace bgeot
    *   \subsubsection*{Inverse transformation and pseudo-inverse}
    *     to do ...
    */
-  class geometric_trans
-  {
-    protected :
-
-      bool is_lin;
-      pconvex_ref cvr;
-      std::vector<base_poly> trans;
-
-    public :
-
-      /// Dimension of the reference element.
-      dim_type dim(void) const { return cvr->structure()->dim(); }
-      /// True if the transformation is linear (affine in fact).
-      bool is_linear(void) const { return is_lin; }
-      /// Number of geometric nodes.
-      size_type nb_points(void) const { return cvr->nb_points(); }
-      /// Pointer on the convex of reference.
-      pconvex_ref convex_ref(void) const { return cvr; }
-      /// Structure of the reference element.
-      pconvex_structure structure(void) const { return cvr->structure(); }
-      /// Basic structure of the reference element.
-      pconvex_structure basic_structure(void) const
-      { return cvr->structure()->basic_structure(); }
-      /// Gives the vector of polynomials representing the transformation.
-      const std::vector<base_poly> &poly_vector(void) const { return trans; }
-      /// Gives the array of geometric nodes.
-      const std::vector<base_node> &geometric_nodes(void) const
-      { return cvr->points(); }
-      /// Gives the array of the normals to faces.
-      const std::vector< base_vector > &normals(void) const
-      { return cvr->normals(); }
-
-      template<class CONT> base_node transform(const base_node &pt,
-					       const CONT &PTAB) const;
+  class geometric_trans {
+  protected :
+    
+    bool is_lin;
+    pconvex_ref cvr;
+    std::vector<base_poly> trans;
+    
+  public :
+    
+    /// Dimension of the reference element.
+    dim_type dim(void) const { return cvr->structure()->dim(); }
+    /// True if the transformation is linear (affine in fact).
+    bool is_linear(void) const { return is_lin; }
+    /// Number of geometric nodes.
+    size_type nb_points(void) const { return cvr->nb_points(); }
+    /// Pointer on the convex of reference.
+    pconvex_ref convex_ref(void) const { return cvr; }
+    /// Structure of the reference element.
+    pconvex_structure structure(void) const { return cvr->structure(); }
+    /// Basic structure of the reference element.
+    pconvex_structure basic_structure(void) const
+    { return cvr->structure()->basic_structure(); }
+    /// Gives the vector of polynomials representing the transformation.
+    const std::vector<base_poly> &poly_vector(void) const { return trans; }
+    /// Gives the array of geometric nodes.
+    const std::vector<base_node> &geometric_nodes(void) const
+    { return cvr->points(); }
+    /// Gives the array of the normals to faces.
+    const std::vector<base_vector> &normals(void) const
+    { return cvr->normals(); }
+    
+    template<class CONT> base_node transform(const base_node &pt,
+					     const CONT &PTAB) const;
+    base_node transform(const base_node &pt, const base_matrix &G) const;
   };
 
   template<class CONT>
@@ -134,7 +134,6 @@ namespace bgeot
       P.addmul(poly_vector()[l].eval(pt.begin()),ptab[l]);
     return P;
   }
-
 
   /** @name functions on geometric transformations
    */

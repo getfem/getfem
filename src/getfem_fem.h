@@ -154,42 +154,66 @@ namespace getfem
     virtual void mat_trans(base_matrix &, const base_matrix &,
 			   bgeot::pgeometric_trans) const
       { DAL_THROW(internal_error, "This function should not be called."); }
+    /** Function which interpolates in a arbitrary point x given on the
+     *  reference element. coeff is the vector of coefficient relatively to
+     *  the shape functions. G and pgt represent the geometric transformation
+     *  for non-equivalent elements.
+     *  This method take all cases into account (non tau-equivalent element)
+     */
     virtual void interpolation(const base_node &x, const base_matrix &G,
 			       bgeot::pgeometric_trans pgt,
 			       const base_vector &coeff, 
 			       base_node &val) const = 0;
+    /** Function which interpolates in the ii th point of pfp. coeff is the
+     *  vector of coefficient relatively to the shape functions. G and pgt
+     *  represent the geometric transformation for non-equivalent elements.
+     *  Qdim take into account a vectorisation of the element.
+     *  This method take all cases into account (non tau-equivalent element)
+     */
     virtual void interpolation(pfem_precomp pfp, size_type ii,
 			       const base_matrix &G,
 			       bgeot::pgeometric_trans pgt, 
 			       const base_vector &coeff, 
 			       base_node &val, dim_type Qdim=1) const;
-//     virtual void interpolation_grad(const base_node &x, 
-//                                     const base_matrix &G,
-// 				    bgeot::pgeometric_trans pgt,
-// 				    const base_vector &coeff,
-// 				    base_matrix &val) const;
-   // function used by virtual_link_fem. Interpolates completely the gradient 
+    //     virtual void interpolation_grad(const base_node &x, 
+    //                                     const base_matrix &G,
+    // 				    bgeot::pgeometric_trans pgt,
+    // 				    const base_vector &coeff,
+    // 				    base_matrix &val) const;
+    /** Function which interpolates the gradient in a arbitrary point x
+     *  given on the reference element. coeff is the vector of coefficient
+     *  relatively to the shape functions. G and pgt
+     *  represent the geometric transformation for non-equivalent elements.
+     *  Qdim take into account a vectorisation of the element.
+     *  This method take all cases into account (non tau-equivalent element
+     *  and correction of the gradient via the gradient of the geometric
+     *  transformation).
+     *  This function is essentially used by virtual_link_fem.
+     */
     virtual void interpolation_grad(const base_node &x,
-					     const base_matrix &G,
-					     bgeot::pgeometric_trans pgt,
-					     const base_vector &coeff,
-					     base_matrix &val) const;
-//     virtual void interpolation_grad(pfem_precomp pfp, size_type ii,
-// 				    const base_matrix &G,
-// 				    bgeot::pgeometric_trans pgt, 
-// 				    const base_vector &coeff,
-// 				    base_matrix &val) const;
+				    const base_matrix &G,
+				    bgeot::pgeometric_trans pgt,
+				    const base_vector &coeff,
+				    base_matrix &val) const;
+    //     virtual void interpolation_grad(pfem_precomp pfp, size_type ii,
+    // 				    const base_matrix &G,
+    // 				    bgeot::pgeometric_trans pgt, 
+    // 				    const base_vector &coeff,
+    // 				    base_matrix &val) const;
 
     /** Gives the value of all components of the base functions at the
-     *  point x of the reference element.
+     *  point x of the reference element. Basic function used essentially
+     *  by fem_precomp.
      */
     virtual void base_value(const base_node &x, base_tensor &t) const = 0;
     /** Gives the value of all gradients (on ref. element) of the components
      *  of the base functions at the point x of the reference element.
+     *  Basic function used essentially by fem_precomp.
      */
     virtual void grad_base_value(const base_node &x, base_tensor &t) const = 0;
     /** Gives the value of all hessians (on ref. element) of the components
      *  of the base functions at the point x of the reference element.
+     *  Basic function used essentially by fem_precomp.
      */
     virtual void hess_base_value(const base_node &x, base_tensor &t) const = 0;
     /** Gives the value of all components of the base functions at the point
@@ -223,7 +247,6 @@ namespace getfem
 				      const base_matrix &B3,
 				      const base_matrix &B32,
 				      base_tensor &t) const;
-
 
     
     virtual size_type index_of_already_numerate_dof(size_type, size_type) const
