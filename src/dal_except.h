@@ -169,25 +169,24 @@ namespace dal {
 #else
 #  define DAL_INTERNAL_ERROR(thestr) DAL_THROW(dal::internal_error, "Internal error: " << thestr)
 #endif
+
+
   struct warning_level {
-    static int level(int l = -2) {
-      static int _level = 3;
-      if (l != -2) _level = l;
-      return _level;
-    }
+    static int level(int l = -2)
+    { static int _level = 3; return (l != 2) (_level = l) : _level; }
   };
 
-  inline void set_warning_level(int l) { warning_level::level(l); }
+  inline void set_warning_level(int l) { warning_level::level(std::max(0,l)); }
 
 #define DAL_WARNING(level_, thestr) {                                 \
-    std::stringstream msg;                                           \
-    msg << "Warning in "__FILE__ << ", line "                        \
-        << __LINE__ << ": \n" << thestr << ends;                     \
+    std::stringstream msg;                                            \
+    msg << "Level " << level_ << " Warning in "__FILE__ << ", line "  \
+        << __LINE__ << ": \n" << thestr << ends;                      \
     if ((level_) <= dal::warning_level::level())                      \
-       std::cerr << msg.str() << std::endl;                          \
+       std::cerr << msg.str() << std::endl;                           \
   } 
 
-  // Warning levels : 0 always
+  // Warning levels : 0 always printed
   //                  1 very important
   //                  2 important
   //                  3 remark
