@@ -1,9 +1,9 @@
 #!/usr/bin/perl
 
 `rm -f doc.tex`;
-`cp doc++.files doc++_opt.files`;
+`cp getfem_doc.files doc++_opt.files`;
 open F, "doc++ --tex -o doc1.tex |" or die; print $_ while (<F>); close F;
-open F, "doc++ --dir html |" or die; print $_ while (<F>); close F;
+open F, "doc++ --dir html2 |" or die; print $_ while (<F>); close F;
 
 open(F1, "doc1.tex") or die "Open file impossible : $!\n";
 open(F2, ">doc.tex") or die "Open file impossible : $!\n";
@@ -27,7 +27,7 @@ open F, "dvips -o -p1 doc |" or die; print $_ while (<F>); close F;
 open F, "pstops \"2:0L@.7(21cm,0)+1L@.7(21cm,14.85cm)\" doc.ps doc2.ps |" or die; print $_ while (<F>); close F;
 open F, "pstops \"2:0,1LL\@1(21cm,29.7cm)\" doc2.ps doc3.ps |" or die; print $_ while (<F>); close F;
 `rm -f doc.ps doc2.ps`;
-`mv doc3.ps basic_doc.ps`;
+`mv doc3.ps getfem_doc.ps`;
 
 
 `rm -f doc1.tex doc.tex doc.log doc.aux doc.cls` 
