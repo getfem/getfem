@@ -40,27 +40,31 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
     }
     if ($_ =~ /error has been detected/) {
       $er = 1;
-      print "=============================================================\n";
+      print "============================================\n";
       print $_, <F>;
     }
-  
-    # print $_;
+ # 
+ #   print $_;
   }
   `laplacien $tmp $def`;
   if ($?) { `rm -f $tmp`; exit(1); }
 }
 
 start_program("");
+start_program("-d N=1 -d NX=10");
 start_program("-d N=3 -d NX=5");
 start_program("-d N=3 -d INTEGRATION=25 -d NX=5");
 start_program("-d K=2 -d NX=5");
 start_program("-d K=2 -d NX=5");
-start_program("-d INTEGRATION=12 -d NX=10");
-start_program("-d INTEGRATION=15 -d NX=10");
-start_program("-d INTEGRATION=17 -d NX=10");
-start_program("-d INTEGRATION=1  -d MESH_TYPE=1 -d NX=10");
-start_program("-d INTEGRATION=33 -d MESH_TYPE=1 -d NX=10");
-start_program("-d INTEGRATION=35 -d MESH_TYPE=1 -d NX=10");
+start_program("-d INTEGRATION=12");
+start_program("-d INTEGRATION=15");
+start_program("-d INTEGRATION=17");
+start_program("-d INTEGRATION=1  -d MESH_TYPE=1");
+start_program("-d INTEGRATION=33 -d MESH_TYPE=1");
+start_program("-d INTEGRATION=35 -d MESH_TYPE=1");
+start_program("-d N=3 -d INTEGRATION=1 -d MESH_TYPE=2 -d NX=5 -d FT=0.01");
+start_program("-d INTEGRATION=2 -d MESH_TYPE=1 -d INCLINE=0.5");
+
 
 `rm -f $tmp`;
 if ($er == 1) { exit(1); }

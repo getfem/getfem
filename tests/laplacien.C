@@ -70,15 +70,13 @@ struct lap_pb
 void lap_pb::init(void)
 {
   dal::bit_vector nn;
-  int i, j, k, h;
+  size_type i, j, k, h;
 
   /***********************************************************************/
-  /*  LECTURE DES PARAMETRES SUR FICHIER.                                */
+  /* READING PARAMETER FILE                                              */
   /***********************************************************************/
   
-  /* parametres physiques */
   N = PARAM.int_value("N", "Domaine dimension");
-  /* parametres numeriques */
   LX = PARAM.real_value("LX", "Size in X");
   LY = PARAM.real_value("LY", "Size in Y");
   LZ = PARAM.real_value("LZ", "Size in Y");
@@ -92,7 +90,6 @@ void lap_pb::init(void)
 			     "File name for saving"));
 
   scalar_type FT = PARAM.real_value("FT", "parameter for exact solution");
-
   char *dds = PARAM.string_value("MIXTEHYBRID", "Use nonconformaing P1 ? ");
   mixte = (strcmp("N", dds) && strcmp("n", dds));
 
@@ -101,7 +98,7 @@ void lap_pb::init(void)
     sol_K[j] = ((j & 1) == 0) ? FT : -FT;
 
   /***********************************************************************/
-  /*  CONSTRUCTION DU MAILLAGE.                                          */
+  /*  BUILD MESH.                                                        */
   /***********************************************************************/
 
   cout << "Mesh generation\n";
@@ -114,7 +111,7 @@ void lap_pb::init(void)
     vtab[i] = base_vector(N); vtab[i].fill(0.0);
     (vtab[i])[i] = ((i == 0) ? LX : ((i == 1) ? LY : LZ)) / scalar_type(NX);
   }
-  vtab[N-1][0] = incline * LX;
+  vtab[N-1][0] = incline * LX / scalar_type(NX);
 
   switch (mesh_type) {
   case 0 : getfem::parallelepiped_regular_simplex_mesh
@@ -127,8 +124,6 @@ void lap_pb::init(void)
   }
 
   mesh.optimize_structure();
-
-  // mesh.write_to_file(cout);
 
   if (mesh_type == 2 && N <= 1) mesh_type = 0;
 
@@ -219,31 +214,23 @@ void lap_pb::init(void)
   cout << "Selecting Neumann and Dirichlet boundaries\n";
   nn = mesh.convex_index(N);
   base_vector un;
-  for (j << nn; j >= 0; j << nn)
-  {
+  for (j << nn; j != size_type(-1); j << nn) {
     k = mesh.structure_of_convex(j)->nb_faces();
-    for (i = 0; i < k; i++)
-    {
-      if (bgeot::neighbour_of_convex(mesh, j, i).empty())
-      {
+    for (i = 0; i < k; i++) {
+      if (bgeot::neighbour_of_convex(mesh, j, i).empty()) {
+	cout << "cv " << j << endl;
 	un = mesh.convex(j).unit_norm_of_face(i);
+	cout << "un =  " << un << endl;
 	
-	cout << "normale = " << un << endl;
 	// if (true)
-	if (dal::abs(un[N-1] - 1.0) < 1.0E-3)
-	{
+	if (dal::abs(un[N-1] - 1.0) < 1.0E-7) {
 	  mef.add_boundary_elt(0, j, i);
-// 	  cout << "ajout d'un bord Dirichlet : convexe\t" << j << "\tface "
-// 	       << i << endl;
-
+	  // cout << "ajout bord Dirichlet, cv\t" << j << "\tf " << i << endl;
 	}
-	else
-	{
+	else {
 	  mef.add_boundary_elt(1, j, i);
-//	  cout << "ajout d'un bord Neumann   : convexe\t" << j << "\tface "
-// 	       << i << endl;
+	  // cout << "ajout bord Neumann, cv\t" << j << "\tf " << i << endl;
 	}
-// 	  }
       }
     }
   }
@@ -275,26 +262,31 @@ void lap_pb::assemble(void)
 
   cout << "Assembling Neumann condition" << endl;
   ST = linalg_vector(nb_dof_data);
-  getfem::base_node pt(N); getfem::base_vector n(N);
-  for (size_type i = 0; i < nb_dof_data; ++i)
-  {
-    pt = mef_data.point_of_dof(i);
-    if (dal::abs(pt[0]-LX) < 10E-6) n[0] = 1.0; // pas terrible ... !!
-      else if (dal::abs(pt[0]) < 10E-6) n[0] = -1.0; else n[0] = 0.0;
-    if (N > 1) {
-      if (dal::abs(pt[1]-LY) < 10E-6) n[1] = 1.0;
-      else if (dal::abs(pt[1]) < 10E-6) n[1] = -1.0; else n[1] = 0.0;
-      for (int k = 2; k < N; ++k)
-	if (dal::abs(pt[k]-LZ) < 10E-6) n[k] = 1.0;
-	else if (dal::abs(pt[k]) < 10E-6) n[k] = -1.0; else n[k] = 0.0;
+  getfem::base_node pt(N);
+
+  dal::bit_vector nn = mesh.convex_index(N);
+  base_vector un;
+  size_type j;
+  for (j << nn; j != size_type(-1); j << nn)
+  { // Ne tiens pas compte des coins ...
+    size_type k = mesh.structure_of_convex(j)->nb_faces();
+    getfem::pfem pf = mef_data.fem_of_element(j);
+    for (size_type i = 0; i < k; ++i) {
+      if (bgeot::neighbour_of_convex(mesh, j, i).empty()) {
+	un = mesh.convex(j).unit_norm_of_face(i);
+	
+	for (size_type l = 0; l < pf->structure()->nb_points_of_face(i); ++l) {
+	  size_type n = pf->structure()->ind_points_of_face(i)[l];
+	  size_type dof = mef_data.ind_dof_of_element(j)[n];
+	  ST[dof] = bgeot::vect_sp(sol_grad(mef_data.point_of_dof(dof)), un);
+	}
+      }
     }
-    if (bgeot::vect_norm2(n) > 1.0) n /= bgeot::vect_norm2(n);
-    ST[i] = bgeot::vect_sp(sol_grad(pt), n);
   }
   getfem::assembling_Neumann_condition(B, mef, 1, mef_data, ST, 1);
   
   cout << "take Dirichlet condition into account" << endl;
-  dal::bit_vector nn = mef.dof_on_boundary(0);
+  // nn = mef.dof_on_boundary(0);
   // cout << "Number of Dirichlet nodes : " << nn.card() << endl;
   // cout << "Dirichlet nodes : " << nn << endl;
   ST = linalg_vector(nb_dof);

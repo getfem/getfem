@@ -1,2 +1,2 @@
-SUBDIRS = config src tests contrib
+SUBDIRS = config src tests contrib bin
 

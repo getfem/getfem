@@ -321,7 +321,7 @@ typedef unsigned char uint8_type;
   #define DAL_STANDARD_CATCH_ERROR   catch(std::logic_error e) \
   { \
     cerr << "============================================\n";\
-    cerr << "||     An error has been detected !!!      |\n";\
+    cerr << "|      An error has been detected !!!      |\n";\
     cerr << "============================================\n";\
     cerr << e.what() << endl << endl;\
     exit(1);\

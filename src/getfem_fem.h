@@ -131,8 +131,8 @@ namespace getfem
       std::vector<pdof_description> _dof_types;
       bgeot::convex_structure cvs_node;
       bgeot::convex<base_node> cv_node;
-    mutable bgeot::pstored_point_tab pspt;
-    mutable bool pspt_valid;
+      mutable bgeot::pstored_point_tab pspt;
+      mutable bool pspt_valid;
       bgeot::pconvex_ref cvr; // reference element.
       dim_type ntarget_dim;
       bool is_equiv, is_lag, is_pol;
