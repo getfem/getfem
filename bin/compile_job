@@ -36,8 +36,8 @@ if ($systeme =~ /Linux/)
   print MAKEFILE "OPTIONS_OPTIMIZE = -O3\n";
   print MAKEFILE "OPTIONS_BOTH     = -g -O3\n";
   print MAKEFILE "INCLUDES_STANDARD = \n";
-  print MAKEFILE "INCLUDES_MTL = -I/home/gmmpc15/renard/source++/mtl\n";
-  print MAKEFILE "INCLUDES_ITL = -I/home/gmmpc15/renard/source++/itl\n";
+  print MAKEFILE "INCLUDES_MTL = -I/opt/include/\n";
+  print MAKEFILE "INCLUDES_ITL = -I/opt/include/\n";
   print MAKEFILE "LIB_X11 = -L/usr/X11R6/lib -lX11\n";
 }
 else
@@ -48,8 +48,8 @@ else
   print MAKEFILE "OPTIONS_OPTIMIZE = -O3\n";
   print MAKEFILE "OPTIONS_BOTH     = -g3\n";
   print MAKEFILE "INCLUDES_STANDARD = \n";
-  print MAKEFILE "INCLUDES_MTL = -I/tmp_mnt/mnt-home/gmmpc15/renard/source++/mtl\n";
-  print MAKEFILE "INCLUDES_ITL = -I/tmp_mnt/mnt-home/gmmpc15/renard/source++/itl\n";
+  print MAKEFILE "INCLUDES_MTL = -I/usr/local/getfem/include\n";
+  print MAKEFILE "INCLUDES_ITL = -I/usr/local/getfem/include\n";
   print MAKEFILE "LIB_X11 = -L/usr/X11R6/lib -lX11\n";
 }
 
@@ -111,9 +111,15 @@ open F, "make |" or die; print $_ while (<F>); close F;
 
 
 # fabrication de la doc.
-
-print "\n\n Documentation compilation.\n";
-print `cd doc; do_doc++;`;
+if ($systeme =~ /Linux/)
+{
+  print "\n\n No Documentation compilation.\n";
+}
+else
+{
+  print "\n\n Documentation compilation.\n";
+  print `cd doc; do_doc++;`;
+}
 
 # faire les liens 'lequels ?)
 
