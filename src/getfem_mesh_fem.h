@@ -114,8 +114,8 @@ namespace getfem
     typedef size_t size_type;
     typedef tab_scal_to_vect_iterator<CONT> iterator;
     typedef iterator                          const_iterator;
-    typedef dal::reverse_iter<const_iterator> const_reverse_iterator;
-    typedef dal::reverse_iter<iterator> reverse_iterator;
+    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+    typedef std::reverse_iterator<iterator> reverse_iterator;
 
 
   protected :

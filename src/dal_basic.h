@@ -201,8 +201,8 @@ namespace dal
     typedef std::vector<pointer> pointer_array;
     typedef dna_iterator<T, pks> iterator;
     typedef dna_const_iterator<T, pks> const_iterator;
-    typedef dal::reverse_iter<const_iterator> const_reverse_iterator;
-    typedef dal::reverse_iter<iterator> reverse_iterator;
+    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+    typedef std::reverse_iterator<iterator> reverse_iterator;
     
   protected :
     

@@ -81,7 +81,7 @@ namespace getfem {
     short_type nbf, dim; 
     std::deque<short_type> grad_reduction, hess_reduction, trans_reduction;
     std::deque<pfem> trans_reduction_pfi;
-    base_small_vector un, up, upunit;
+    base_small_vector un, up;
     bool faces_computed;
     bool volume_computed;
     bool is_linear;
@@ -159,6 +159,7 @@ namespace getfem {
 	for (size_type k = 0; it != ite; ++it, ++k)
 	  if ((*it).pfi)
 	    pfp[k] = fem_precomp((*it).pfi, &(pai->integration_points()));
+	  else pfp[k] = 0;
 	elmt_stored.resize(pme->size());
       }
       if (!computed_on_real_element) mref.resize(nbf + 1);
@@ -172,7 +173,7 @@ namespace getfem {
 
       bgeot::multi_index::iterator mit = sizes.begin();
       for (size_type k = 0; it != ite; ++it, ++k) {
-	ctx.set_pfp(pfp[k]);
+	if (pfp[k]) ctx.set_pfp(pfp[k]);
 	++mit; if ((*it).pfi && (*it).pfi->target_dim() > 1) ++mit;
 	
 	switch ((*it).t) {
@@ -206,11 +207,8 @@ namespace getfem {
 	  { 
 	    bgeot::multi_index sz(1); sz[0] = ctx.N();
 	    elmt_stored[k].adjust_sizes(sz);
-	    scalar_type no = gmm::vect_norm2(up);
-	    upunit = up;
-	    if (no != scalar_type(0)) up /= no;
 	  }
-	  std::copy(upunit.begin(), upunit.end(), elmt_stored[k].begin());
+	  std::copy(up.begin(), up.end(), elmt_stored[k].begin());
 	  break;
 	case GETFEM_NONLINEAR_ :
 	  if ((*it).nl_part != 0) { /* for auxiliary fem of the nonlinear_term, */
@@ -441,10 +439,8 @@ namespace getfem {
       bgeot::multi_index sizes = pme->sizes(elt);
 
       if (G.ncols() != NP) DAL_THROW(dimension_error, "dimensions mismatch");
-      
-      up.resize(N); gmm::clear(up);
       if (ir > 0) {
-	un.resize(P);
+	up.resize(N); un.resize(P);
 	un = pgt->normals()[ir-1];
       }
       base_tensor taux;
@@ -456,7 +452,8 @@ namespace getfem {
 	scalar_type J=ctx.J();
 	if (ir > 0) {
 	  gmm::mult(B, un, up);
-	  J *= bgeot::vect_norm2(up);
+	  scalar_type nup = bgeot::vect_norm2(up);
+	  J *= nup; up /= nup;
 	}
      
 	t = mref[ir]; t *= J;
@@ -489,7 +486,8 @@ namespace getfem {
 	  scalar_type J = ctx.J();
 	  if (ir > 0) {
 	    gmm::mult(B, un, up);
-	    J *= bgeot::vect_norm2(up);
+	    scalar_type nup = bgeot::vect_norm2(up);
+	    J *= nup; up /= nup;
 	  }	  
 	  add_elem(t, ctx, J, first, true, icb, sizes);
 	}
@@ -546,7 +544,8 @@ namespace getfem {
 				 bgeot::pgeometric_trans pg, 
                                  bool prefer_comp_on_real_element) { 
     return dal::singleton<emelem_comp_light_FUNC_TABLE>
-      ::instance().add(emelem_comp_light_(pm, pi, pg, prefer_comp_on_real_element));
+      ::instance().add(emelem_comp_light_(pm, pi, pg,
+					  prefer_comp_on_real_element));
   }
 
   /* remove all occurences of pm from the emelem_comp_light_FUNC_TABLE */

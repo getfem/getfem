@@ -18,7 +18,7 @@ PRESSURE = 100.0;       % pressure on the top surface of the plate
 
 NX = 10;
 RESIDU = 1E-9;     	% residu for conjugate gradient.
-MESH_NOISED = 1;        % Set to one if you want to "shake" the mesh
+MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
 MIXED = 1;
 SYMMETRIZED = 1;
 
@@ -28,8 +28,8 @@ SYMMETRIZED = 1;
 
 % MESH_TYPE = 'GT_QK(2,1)'; % linear rectangles
 % FEM_TYPE_UT = 'FEM_QK(2,1)';
-% FEM_TYPE_U3 = 'FEM_QK(2,2)';
-% FEM_TYPE_THETA= 'FEM_QK(2,1)';
+% FEM_TYPE_U3 = 'FEM_QK(2,1)';
+% FEM_TYPE_THETA= 'FEM_QK(2,2)';
 % INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,10)';
 % INTEGRATION_CT = 'IM_GAUSS_PARALLELEPIPED(2,10)';
 
@@ -38,7 +38,8 @@ SYMMETRIZED = 1;
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 FEM_TYPE_UT = 'FEM_PK(2,1)';
 FEM_TYPE_U3 = 'FEM_PK(2,1)';
-FEM_TYPE_THETA= 'FEM_PK(2,2)';
+% FEM_TYPE_THETA = 'FEM_PK(2,2)';
+FEM_TYPE_THETA = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 1)';
 INTEGRATION = 'IM_TRIANGLE(6)';
 INTEGRATION_CT = 'IM_TRIANGLE(6)';
 

@@ -1951,7 +1951,7 @@ namespace gmm {
   DEFMU__<row_major  , col_major  , col_major  > { typedef rcmult t; };
   DEFMU__<row_major  , col_major  , col_and_row> { typedef rcmult t; };
   DEFMU__<row_major  , col_major  , row_and_col> { typedef rcmult t; };
-  DEFMU__<row_major  , col_and_row, row_major  > { typedef rcmult t; };
+  DEFMU__<row_major  , col_and_row, row_major  > { typedef r_mult t; };
   DEFMU__<row_major  , col_and_row, col_major  > { typedef rcmult t; };
   DEFMU__<row_major  , col_and_row, col_and_row> { typedef rcmult t; };
   DEFMU__<row_major  , col_and_row, row_and_col> { typedef rcmult t; };

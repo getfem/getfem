@@ -215,8 +215,8 @@ namespace dal
 	--icard;
       }
 
-      typedef dal::reverse_iter<const_iterator> const_reverse_iterator;
-      typedef dal::reverse_iter<iterator> reverse_iterator;
+      typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+      typedef std::reverse_iterator<iterator> reverse_iterator;
       size_type size(void) const 
       { return std::max(ilast_true, ilast_false)+1;}
       

@@ -1,3 +1,8 @@
+2004-12-10  Yves Renard  <Yves.Renard@insa-toulouse.fr>
+
+	* src/getfem_mat_elem_type.h adding the unit normal to a boundary
+	available for elementary computations.
+
 2004-12-08  julien pommier  <pommier@gmm.insa-tlse.fr>
 
 	* superlu/BLAS.c configure.in: added a f2c-ed BLAS, used when no

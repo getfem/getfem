@@ -69,13 +69,9 @@ namespace getfem {
 			   "t1=comp(Grad(#1).Grad(#1).Base(#3));"
 			   "M$1(#1,#1)+=sym(t1(:,i,:,i,j).mu(j));"
 			   // "t2=comp(vBase(#2).vBase(#2).Base(#3));"
-			   "t2=comp(Base(#1).vBase(#2).vBase(#2).Base(#3));"
-			   // pas beau, pour utiliser la méthode
-			   // d'intégration de #1 (ne marche pas en element
-			   // non de lagrange
-			   // "M$4(#2,#2)+=sym(t2(:,i,:,i,j).mu(j));"
-			   "M$4(#2,#2)+=sym(t2(k,:,i,:,i,j).mu(j));"
-			   // pas beau suite
+			   "t2=comp(#1,vBase(#2).vBase(#2).Base(#3));"
+			   "M$4(#2,#2)+=sym(t2(:,i,:,i,j).mu(j));"
+			   // "M$4(#2,#2)+=sym(t2(k,:,i,:,i,j).mu(j));"
 			   "t3=comp(Grad(#1).vBase(#2).Base(#3));"
 			   "M$2(#1,#2)+=t3(:,i,:,i,j).mu(j);"
 			   "M$3(#1,#2)+=t3(:,i,:,i,j).mu(j);"
@@ -277,7 +273,7 @@ namespace getfem {
 
   template<class MAT>
   void asm_coupling_psitheta(const MAT &RM, const mesh_fem &mf_u3,
-			    const mesh_fem &mf_theta) {
+			     const mesh_fem &mf_theta) {
     
     if (mf_u3.get_qdim() != 1 || mf_theta.get_qdim() != 2)
       DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
@@ -289,22 +285,22 @@ namespace getfem {
     assem.volumic_assembly();
   }
 
-//   template<class MAT> void affiche_moi_valp(const MAT &M) {
-//     size_type nrows = gmm::mat_nrows(M);
-//     size_type ncols = gmm::mat_ncols(M);
-//     size_type nreddof = std::min(nrows, ncols);
-//     gmm::dense_matrix<double> MM(nreddof, nreddof);
-//     if (nrows < ncols)
-//       gmm::mult(M, gmm::transposed(M), MM);
-//     else if (nrows > ncols)
-//       gmm::mult(gmm::transposed(M), M, MM);
-//     else 
-//       gmm::copy(M, MM);
-//     std::vector<double> eigval(nreddof);
-//     gmm::symmetric_qr_algorithm(MM, eigval);
-//     //     std::sort(eigval.begin(), eigval.end(), Esort);
-//     cout << "eival = " << eigval << endl;
-//   }
+  //   template<class MAT> void affiche_moi_valp(const MAT &M) {
+  //     size_type nrows = gmm::mat_nrows(M);
+  //     size_type ncols = gmm::mat_ncols(M);
+  //     size_type nreddof = std::min(nrows, ncols);
+  //     gmm::dense_matrix<double> MM(nreddof, nreddof);
+  //     if (nrows < ncols)
+  //       gmm::mult(M, gmm::transposed(M), MM);
+  //     else if (nrows > ncols)
+  //       gmm::mult(gmm::transposed(M), M, MM);
+  //     else 
+  //       gmm::copy(M, MM);
+  //     std::vector<double> eigval(nreddof);
+  //     gmm::symmetric_qr_algorithm(MM, eigval);
+  //     //     std::sort(eigval.begin(), eigval.end(), Esort);
+  //     cout << "eival = " << eigval << endl;
+  //   }
 
 
   /* ******************************************************************** */
@@ -355,23 +351,23 @@ namespace getfem {
       
       asm_stiffness_matrix_for_linear_elasticity
 	(gmm::sub_matrix(K, I3), mf_theta, mf_data, lambda, mu);
-//       gmm::scale(gmm::sub_matrix(K, I3),
-//  		 value_type(2) * epsilon * epsilon * epsilon / value_type(3));
+      //       gmm::scale(gmm::sub_matrix(K, I3),
+      //  		 value_type(2) * epsilon * epsilon * epsilon / value_type(3));
       
       
       asm_coupling_u3theta(gmm::sub_matrix(K, I2, I3), mf_u3, mf_theta);
       gmm::scale(gmm::sub_matrix(K, I2, I3),
 		 value_type(2) * epsilon * epsilon * epsilon / value_type(3));
 
-//       cout << "\n\nval p de I2 I3 ";
-//       affiche_moi_valp(gmm::sub_matrix(K, I2, I3));
+      //       cout << "\n\nval p de I2 I3 ";
+      //       affiche_moi_valp(gmm::sub_matrix(K, I2, I3));
 
 
       asm_coupling_psitheta(gmm::sub_matrix(K, I4, I3), mf_u3, mf_theta);
       gmm::scale(gmm::sub_matrix(K, I4, I3), epsilon*epsilon/value_type(3));
 
-//       cout << "\n\nval p de I4 I3 ";
-//       affiche_moi_valp(gmm::sub_matrix(K, I4, I3));
+      //       cout << "\n\nval p de I4 I3 ";
+      //       affiche_moi_valp(gmm::sub_matrix(K, I4, I3));
      
 
       asm_coupling_psitheta(gmm::transposed(gmm::sub_matrix(K, I3, I4)),
@@ -391,7 +387,7 @@ namespace getfem {
 	asm_coupling_u3theta(gmm::transposed(gmm::sub_matrix(K, I3, I2)),
 			     mf_u3, mf_theta);
 	gmm::scale(gmm::sub_matrix(K, I3, I2),
-		 value_type(2) * epsilon * epsilon * epsilon / value_type(3));
+		   value_type(2) * epsilon * epsilon * epsilon / value_type(3));
 
 	asm_stiffness_matrix_for_homogeneous_laplacian
 	  (gmm::sub_matrix(K, I2, I5), mf_u3);
@@ -411,12 +407,12 @@ namespace getfem {
   public :
     virtual void mixed_variables(dal::bit_vector &bv, size_type i0 = 0) {
       bv.add(i0+ mf_ut.nb_dof() + mf_u3.nb_dof()+mf_theta.nb_dof(),
-	    mf_u3.nb_dof()*2);
+	     mf_u3.nb_dof()*2);
     }
     //    virtual size_type nb_constraints(void) { return 1; } 
     virtual size_type nb_constraints(void) { return 0; }
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
-				   size_type j0= 0, bool modified = false) {
+					size_type j0= 0, bool modified = false) {
       if (modified && !matrix_stored) 
 	DAL_THROW(failure_error, "The residu will not be consistant. "
 		  "Use this brick with the stiffness matrix stored option");
@@ -433,12 +429,10 @@ namespace getfem {
       gmm::clear(gmm::sub_matrix(MS.constraints_matrix(),
 				 gmm::sub_interval(j0, 1),
 				 gmm::sub_interval(i0,  mf_ut.nb_dof()
-			  + 3 * mf_u3.nb_dof() + mf_theta.nb_dof())));
-//       MS.constraints_matrix()(j0, i0 + mf_ut.nb_dof() + mf_u3.nb_dof()
-// 			      + mf_theta.nb_dof()) = value_type(1);
+						   + 3 * mf_u3.nb_dof() + mf_theta.nb_dof())));
     }
     virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
-				size_type j0= 0) {
+				size_type = 0) {
       react(MS, i0, false);
       gmm::sub_interval SUBI(i0, this->nb_dof());
       if (this->to_be_computed()) { 
@@ -457,9 +451,6 @@ namespace getfem {
 		  gmm::sub_vector(MS.state(), SUBI),
 		  gmm::sub_vector(MS.residu(), SUBI));
       }
-//       (MS.constraints_rhs())[j0] = -(MS.state())[i0 + mf_ut.nb_dof()
-// 					     + mf_u3.nb_dof()
-// 					     + mf_theta.nb_dof()];
     }
 
     void set_Lame_coeff(value_type lambdai, value_type mui) {
@@ -595,7 +586,6 @@ namespace getfem {
 	(problem, mf_data, Bt, bound, num_fem);
       VECTOR Bn(n);
       gmm::copy(gmm::sub_vector(B, gmm::sub_slice(2, n, 3)), Bn);
-      cout << "Bn = " << Bn << endl;
       if (!mixed || symmetrized)
 	sub_problem = u3_part = new mdbrick_source_term<MODEL_STATE>
 	  (*ut_part, mf_data, Bn, bound, num_fem+1);
@@ -707,9 +697,9 @@ namespace getfem {
     { sub_problem->compute_residu(MS, i0, j0); }
 
     mdbrick_plate_clamped_support(mdbrick_abstract<MODEL_STATE> &problem,
-				 mesh_fem &mf_data, size_type bound,
-				 size_type num_fem = 0,
-				 bool with_mult = false)
+				  mesh_fem &mf_data, size_type bound,
+				  size_type num_fem = 0,
+				  bool with_mult = false)
       : ut_part(problem, mf_data, bound, num_fem, with_mult),
 	u3_part(ut_part, mf_data, bound, num_fem+1, with_mult),
 	theta_part(u3_part, mf_data, bound, num_fem+2, with_mult),
@@ -755,72 +745,62 @@ namespace getfem {
   /*		Free edges condition for mixed plate model brick.         */
   /* ******************************************************************** */
 
+  template<class VEC>
+  void asm_constraint_on_theta(const VEC &V, const mesh_fem &mf_theta,
+			       size_type boundary) {
+    generic_assembly assem("t=comp(vBase(#1).Normal());"
+			   "V(#1)+= t(:,2,1) - t(:,1,2);");
+    assem.push_mf(mf_theta);
+    assem.push_vec(const_cast<VEC &>(V));
+    assem.boundary_assembly(boundary);
+  }
+
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_plate_closing: public mdbrick_abstract<MODEL_STATE> {
-
+ 
+    typedef typename MODEL_STATE::vector_type VECTOR;
+    typedef typename MODEL_STATE::constraints_matrix_type C_MATRIX;
+    typedef typename MODEL_STATE::value_type value_type;
+    typedef typename gmm::number_traits<value_type>::magnitude_type R;
+    
     mdbrick_abstract<MODEL_STATE> *sub_problem;
+    mesh_fem *mf_theta;
+    gmm::row_matrix<gmm::rsvector<value_type> > CO;
+    size_type num_fem;
+    bool mixed, symmetrized, allclamped, with_multipliers;
 
-  public :
-
-    virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0)
-    { sub_problem->mixed_variables(b, i0); }
-    virtual size_type nb_constraints(void) 
-    { return sub_problem->nb_constraints(); }
-    virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
-					size_type j0 = 0, bool modified=false)
-    { sub_problem->compute_tangent_matrix(MS, i0, j0, modified); }
-    virtual void compute_residu(MODEL_STATE &MS, size_type i0=0,
-				size_type j0=0)
-    { sub_problem->compute_residu(MS, i0, j0); }
-
-    mdbrick_plate_closing(mdbrick_abstract<MODEL_STATE> &problem,
-			  size_type num_fem = 0)
-      : sub_problem(&problem) {
-
-      bool mixed = false, symmetrized = false;
-      if (problem.get_mesh_fem_info(num_fem).brick_ident
-	  == MDBRICK_LINEAR_PLATE)
-	{ mixed = false; symmetrized = false; } 
-      else if (problem.get_mesh_fem_info(num_fem).brick_ident 
-	       == MDBRICK_MIXED_LINEAR_PLATE) {
-	mixed=true;
-	symmetrized = ((problem.get_mesh_fem_info(num_fem).info) & 2);
-      }
-      else DAL_THROW(failure_error,
-		     "This brick should only be applied to a plate problem");
-      if ((!(problem.get_mesh_fem_info(num_fem).info & 1))
-	  || (num_fem + (mixed ? 4 : 2) >= problem.nb_mesh_fems()))
-	DAL_THROW(failure_error, "The mesh_fem number is not correct");
-
-
-      this->add_sub_brick(problem);
-      this->update_from_context();
-
-      
+    void compute_constraints(void) {
+      if (!mixed) {  allclamped = false; gmm::resize(CO, 0, 0); return; }
+      allclamped = true;
       std::vector<size_type> cv_nums;
       std::vector<short_type> face_nums;
-
-      getfem_mesh *mesh = &((this->mesh_fems[num_fem])->linked_mesh());
-
+      
+      getfem_mesh *mesh = &(mf_theta->linked_mesh());
+    
       getfem::convex_face_ct border_faces;
       getfem::outer_faces_of_mesh(*mesh, border_faces);
       dal::bit_vector vb = (this->mesh_fems[num_fem])->get_valid_boundaries();
-
+      
       for (getfem::convex_face_ct::const_iterator it = border_faces.begin();
 	   it != border_faces.end(); ++it) {
 	bool add = true;
-	cout << "face " << it->f << " of cv " << it->cv << "boundaries : ";
+	// cout << "face " << it->f << " of cv " << it->cv << "boundaries : ";
 	for (dal::bv_visitor i(vb); !i.finished(); ++i) {
 	  if ((this->mesh_fems[num_fem])->is_face_on_boundary(i,it->cv,it->f)) {
-	    cout << i << endl;
+	    // cout << i << endl;
 	    bound_cond_type bct = this->boundary_type(num_fem, i);
 	    if (bct != MDBRICK_UNDEFINED && bct != MDBRICK_NEUMANN) add = false;
+	    if (bct != MDBRICK_CLAMPED_SUPPORT) allclamped = false;
 	  }
 	}
 	
-	if (add) { cv_nums.push_back(it->cv); face_nums.push_back(it->f); cout << " adding"; }
-	cout << endl;
+	if (add) {
+	  cv_nums.push_back(it->cv); face_nums.push_back(it->f); allclamped = false;
+	  // cout << " adding";
+	}
+	// cout << endl;
       }
+      cout << "allclamped = " << allclamped << endl;
 
       std::vector<size_type> comp_conns(cv_nums.size(), size_type(-1)); 
       size_type nbmax = mesh->points().ind_last() + 1, p1, p2;
@@ -861,7 +841,155 @@ namespace getfem {
       }
 
       cout << "Number of comp conn : " << comp_conn << endl;
-      
+      if (comp_conn < 2) {
+	gmm::resize(CO, 0, 0);
+      }
+      else {
+	vb = mf_theta->get_valid_boundaries();
+	size_type boundary = vb.first_false();
+	gmm::resize(CO, comp_conn, mf_theta->nb_dof());
+	for (size_type k = 0; k < comp_conn; ++k) {
+	  for (size_type i = 0; i < comp_conns.size(); ++i)
+	    if (comp_conns[i] == k)
+	      mf_theta->add_boundary_elt(boundary, cv_nums[i], face_nums[i]);
+
+	  std::vector<value_type> V(mf_theta->nb_dof());
+	  asm_constraint_on_theta(V, *mf_theta, boundary);
+	  gmm::copy(V, gmm::mat_row(CO, k));
+	  mf_theta->sup_boundary(boundary);
+	}
+	
+      }
+      this->computed();
+    }
+
+  public :
+
+    virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0) {
+      this->context_check(); if (this->to_be_computed()) compute_constraints();
+      sub_problem->mixed_variables(b, i0);
+      if (with_multipliers)
+	b.add(i0+sub_problem->nb_dof(), gmm::mat_nrows(CO)+(allclamped ? 1:0));
+    }
+    virtual size_type nb_constraints(void)  {
+      this->context_check(); if (this->to_be_computed()) compute_constraints();
+      if (with_multipliers)
+	return sub_problem->nb_constraints();
+      else 
+	return sub_problem->nb_constraints() 
+	  + gmm::mat_nrows(CO) + (allclamped ? 1:0);
+    }
+    virtual size_type nb_dof(void) {
+      this->context_check(); if (this->to_be_computed()) compute_constraints();
+      if (with_multipliers)
+	return sub_problem->nb_dof() + gmm::mat_nrows(CO) + (allclamped ? 1:0);
+      return sub_problem->nb_dof();
+    }
+
+    virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
+					size_type j0=0, bool modified=false) {
+      sub_problem->compute_tangent_matrix(MS, i0, j0, modified);
+      react(MS, i0, modified);
+      if (this->to_be_computed()) compute_constraints();
+      if (this->to_be_transferred()) {
+	gmm::sub_interval SUBJ(i0+this->mesh_fem_positions[num_fem+2],
+			       mf_theta->nb_dof());
+	size_type nbd = sub_problem->nb_dof();
+	if (with_multipliers) {
+	  if (gmm::mat_nrows(CO) > 0) {
+	    gmm::sub_interval SUBI(i0+nbd, gmm::mat_nrows(CO));
+	    gmm::copy(CO, gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBJ));
+	    gmm::copy(gmm::transposed(CO),
+		      gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBI));
+	  }
+	  if (allclamped) {
+	    size_type i = i0 + nbd + gmm::mat_nrows(CO);
+	    size_type j = i0 + this->mesh_fem_positions[num_fem+3];
+	    MS.tangent_matrix()(i, j) = value_type(1);
+	    MS.tangent_matrix()(j, i) = value_type(1);
+	  }
+	}
+	else {
+	  size_type ncs = sub_problem->nb_constraints();
+	  if (gmm::mat_nrows(CO) > 0) {
+	    gmm::sub_interval SUBI(j0 + ncs, gmm::mat_nrows(CO));
+	    gmm::copy(CO,gmm::sub_matrix(MS.constraints_matrix(),SUBI,SUBJ));
+	  }
+	  if (allclamped) {
+	    MS.constraints_matrix()(j0+ncs+gmm::mat_nrows(CO),
+				    i0 + this->mesh_fem_positions[num_fem+3])
+	      = value_type(1);
+	  }
+	}
+	this->transferred();
+      }
+    }
+    virtual void compute_residu(MODEL_STATE &MS, size_type i0=0,
+				size_type j0=0) {
+      sub_problem->compute_residu(MS, i0, j0);
+      react(MS, i0, false);
+      if (this->to_be_computed()) compute_constraints();
+      gmm::sub_interval SUBJ(i0+this->mesh_fem_positions[num_fem+2],
+			       mf_theta->nb_dof());
+      if (with_multipliers) {
+	  size_type nbd = sub_problem->nb_dof();
+	if (gmm::mat_nrows(CO) > 0) {
+	  gmm::sub_interval SUBI(i0 + nbd, gmm::mat_nrows(CO));
+	  gmm::mult(CO, gmm::sub_vector(MS.state(), SUBJ),
+		    gmm::sub_vector(MS.residu(), SUBI));
+	  gmm::mult_add(gmm::transposed(CO), gmm::sub_vector(MS.state(), SUBI),
+			gmm::sub_vector(MS.residu(), SUBJ));
+	}
+	if (allclamped) {
+	  size_type i = i0 + nbd + gmm::mat_nrows(CO);
+	  size_type j = i0 + this->mesh_fem_positions[num_fem+3];
+	  MS.residu()[i] = MS.state()[j];
+	  MS.residu()[j] += MS.state()[i];
+	}
+      }
+      else {
+	size_type ncs = sub_problem->nb_constraints();
+	if (gmm::mat_nrows(CO) > 0) {
+	  gmm::sub_interval SUBI(j0+ncs,gmm::mat_nrows(CO));
+	  gmm::mult(CO, gmm::scaled(gmm::sub_vector(MS.state(), SUBJ), 
+				    value_type(-1)),
+		    gmm::sub_vector(MS.constraints_rhs(), SUBI));
+	}
+	if (allclamped) {
+	  (MS.constraints_rhs())[j0+ncs+gmm::mat_nrows(CO)] =
+	    -(MS.state())[i0 + this->mesh_fem_positions[num_fem+3]];
+	}
+      }
+    }
+
+    mdbrick_plate_closing(mdbrick_abstract<MODEL_STATE> &problem,
+			  size_type num_fem_ = 0, int with_mult = -1)
+      : sub_problem(&problem), num_fem(num_fem_),
+	with_multipliers(with_mult!=0) {
+
+      if (with_mult == -1)
+	with_multipliers = (sub_problem->nb_constraints() == 0);
+
+      mixed = false; symmetrized = false;
+      if (problem.get_mesh_fem_info(num_fem).brick_ident
+	  == MDBRICK_LINEAR_PLATE)
+	{ mixed = false; symmetrized = false; } 
+      else if (problem.get_mesh_fem_info(num_fem).brick_ident 
+	       == MDBRICK_MIXED_LINEAR_PLATE) {
+	mixed=true;
+	symmetrized = ((problem.get_mesh_fem_info(num_fem).info) & 2);
+      }
+      else DAL_THROW(failure_error,
+		     "This brick should only be applied to a plate problem");
+      if ((!(problem.get_mesh_fem_info(num_fem).info & 1))
+	  || (num_fem + (mixed ? 4 : 2) >= problem.nb_mesh_fems()))
+	DAL_THROW(failure_error, "The mesh_fem number is not correct");
+
+
+      this->add_sub_brick(problem);
+      this->update_from_context();
+      mf_theta = this->mesh_fems[num_fem+2];
+      compute_constraints();
     }
     
   };

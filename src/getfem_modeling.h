@@ -1328,7 +1328,7 @@ namespace getfem {
     problem.compute_residu(MS);
     problem.compute_tangent_matrix(MS);
 
-    // cout << "M = " << MS.tangent_matrix() << endl;
+    // cout << "M = " << MS.constraints_matrix() << endl; getchar();
 
     MS.compute_reduced_system();
     

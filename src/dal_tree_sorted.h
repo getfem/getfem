@@ -326,8 +326,8 @@ namespace dal
       typedef int8_type short_type;
       typedef tsa_iterator<T, COMP, pks> sorted_iterator;
       typedef const_tsa_iterator<T, COMP, pks> const_sorted_iterator;
-      typedef dal::reverse_iter<const_iterator> const_reverse_sorted_iterator;
-      typedef dal::reverse_iter<iterator> reverse_sorted_iterator;
+      typedef std::reverse_iterator<const_iterator> const_reverse_sorted_iterator;
+      typedef std::reverse_iterator<iterator> reverse_sorted_iterator;
       
     protected :
 

@@ -84,6 +84,7 @@
 #include <complex>
 #include <limits>
 #include <sstream>
+#include <ctime>
 
 using std::endl;
 using std::cout;
@@ -95,14 +96,11 @@ using std::cin;
 /*	S.T.L. Reverse iterator definition.				  */
 /* ********************************************************************** */
 
-#if defined(_MSC_VER) && !defined(__MWERKS__)
-#define _GETFEM_MSVCPP_ _MSC_VER
-#endif
-#if !defined ( _GETFEM_MSVCPP_ )
-#define GETFEM_REVERSE_ITER 1
-#else
-#define GETFEM_REVERSE_ITER 0
-#endif
+/* for VISUAL C++
+   #if defined(_MSC_VER) //  && !defined(__MWERKS__)
+   #define _GETFEM_MSVCPP_ _MSC_VER
+   #endif
+*/
 
 /** Dynamic Array Library. \\
  *   The Dynamic Array Library (dal) is a library of containers
@@ -136,49 +134,6 @@ using std::cin;
  *       allows to switch on or off verifications on libraries,
  *       such as verification of range on arrays, on vectors ...
  */
-namespace dal
-{
-
-#if GETFEM_REVERSE_ITER
-  template <typename Iter>
-    class reverse_iter : public std::reverse_iterator<Iter>
-  {
-    typedef std::reverse_iterator<Iter> super; 
-#else
-  template <typename Iter>
-    class reverse_iter : public std::reverse_iterator<Iter,
-                                           typename Iter::value_type,
-                           typename Iter::reference, typename Iter::pointer>
-  {
-    typedef std::reverse_iterator<Iter, typename Iter::value_type,
-      typename Iter::reference, typename Iter::pointer> super; 
-#endif
-  public:
-    typedef typename super::value_type value_type;
-
-#if defined(_GETFEM_MSVCPP_)
-    typedef typename super::distance_type difference_type;
-    typedef difference_type distance_type;
-    typedef typename super::reference_type reference;
-#else
-    typedef typename super::difference_type difference_type;
-    typedef typename super::reference reference;
-#endif
-
-    typedef typename super::iterator_category iterator_category;
-
-    inline reverse_iter() {}
-
-    inline reverse_iter(const reverse_iter& x) : super(x) { }    
-
-    inline explicit reverse_iter(Iter x) : super(x) {}
-
-#if GETFEM_REVERSE_ITER
-  };
-#else
-  };
-#endif
-}
 
 /* ********************************************************************** */
 /*	Math functions.                     			          */
@@ -254,7 +209,7 @@ namespace dal {
   /*       Clock functions.                                              */
   /* ******************************************************************* */
   
-# ifdef HAVE_SYS_TIMES
+# if  defined(HAVE_SYS_TIMES)
   inline double uclock_sec(void) {
     static double ttclk = 0.;
     if (ttclk == 0.) ttclk = sysconf(_SC_CLK_TCK);

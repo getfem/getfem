@@ -66,8 +66,8 @@ namespace dal
 	                                                       difference_type;
       typedef ITER                            iterator;
       typedef ITER                            const_iterator;
-      typedef dal::reverse_iter<const_iterator> const_reverse_iterator;
-      typedef dal::reverse_iter<iterator> reverse_iterator;
+      typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+      typedef std::reverse_iterator<iterator> reverse_iterator;
       typedef size_t size_type;
     
       bool empty(void) const { return begin_ == end_; }
@@ -175,8 +175,8 @@ namespace dal
 //       typedef size_t size_type; 
 //       typedef tab_ref_index_iterator_<ITER> iterator;
 //       typedef iterator                          const_iterator;
-//       typedef dal::reverse_iter<const_iterator> const_reverse_iterator;
-//       typedef dal::reverse_iter<iterator> reverse_iterator;
+//       typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+//       typedef std::reverse_iterator<iterator> reverse_iterator;
     
 //     protected :
 
@@ -296,8 +296,8 @@ namespace dal
     typedef size_t                                size_type;
     typedef tab_ref_index_ref_iterator_<ITER, ITER_INDEX>   iterator;
     typedef iterator                              const_iterator;
-    typedef dal::reverse_iter<const_iterator>     const_reverse_iterator;
-    typedef dal::reverse_iter<iterator>           reverse_iterator;
+    typedef std::reverse_iterator<const_iterator>     const_reverse_iterator;
+    typedef std::reverse_iterator<iterator>           reverse_iterator;
     
   protected :
 
@@ -409,8 +409,8 @@ namespace dal
       typedef size_t size_type;
       typedef tab_ref_reg_spaced_iterator_<ITER> iterator;
       typedef iterator                          const_iterator;
-      typedef dal::reverse_iter<const_iterator> const_reverse_iterator;
-      typedef dal::reverse_iter<iterator> reverse_iterator;
+      typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+      typedef std::reverse_iterator<iterator> reverse_iterator;
     
     protected :
 
