@@ -447,6 +447,13 @@ bool elastostatic_problem::solve(plain_vector &U) {
     // getfem::standard_solve(MS, final_model, iter);
     getfem::nl_solve(MS, final_model, iter);
 
+    pl->reset_unvalid_flag();
+    final_model.compute_residu(MS);
+    if (pl->get_unvalid_flag()) 
+      DAL_WARNING(1, "The solution is not completely valid, the determinant "
+		  "of the transformation is negative on "
+		  << pl->get_unvalid_flag() << " gauss points");
+
     ELAS.get_solution(MS, U);
     char s[100]; sprintf(s, "step%d", step+1);
     exp.write_point_data(mf_u, U, s);

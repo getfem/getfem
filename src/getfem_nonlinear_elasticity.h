@@ -39,53 +39,58 @@
 namespace getfem {
 
   struct abstract_hyperelastic_law {
+    mutable int uvflag;
     size_type nb_params_;
-    virtual scalar_type strain_energy(const base_matrix &L,
+    void reset_unvalid_flag(void) const { uvflag = 0; }
+    void inc_unvalid_flag(void) const { uvflag++; }
+    int get_unvalid_flag(void) const { return uvflag; }
+
+    virtual scalar_type strain_energy(const base_matrix &E,
 				      const base_vector &params) const = 0;
-    virtual void sigma(const base_matrix &L, base_matrix &result,
+    virtual void sigma(const base_matrix &E, base_matrix &result,
 		       const base_vector &params) const = 0;
 	// the result of grad_sigma has to be completely symmetric.
-    virtual void grad_sigma(const base_matrix &L, base_tensor &result, 
+    virtual void grad_sigma(const base_matrix &E, base_tensor &result, 
 			    const base_vector &params) const = 0;
     size_type nb_params(void) const { return nb_params_; }
     abstract_hyperelastic_law() { nb_params_ = 0; }
     virtual ~abstract_hyperelastic_law() {}
-    static void random_L(base_matrix &L) {
-      size_type N = gmm::mat_nrows(L);
+    static void random_E(base_matrix &E) {
+      size_type N = gmm::mat_nrows(E);
       base_matrix Phi(N,N); gmm::fill_random(Phi);
-      gmm::mult(gmm::transposed(Phi),Phi,L);
-      gmm::scale(L,-1.); gmm::add(gmm::identity_matrix(),L); 
-      gmm::scale(L,-0.5);
+      gmm::mult(gmm::transposed(Phi),Phi,E);
+      gmm::scale(E,-1.); gmm::add(gmm::identity_matrix(),E); 
+      gmm::scale(E,-0.5);
     }
     void test_derivatives(size_type N, scalar_type h,
 			  const base_vector& param) const {
-      base_matrix L(N,N), L2(N,N), DL(N,N); 
-      random_L(L); random_L(DL);
-      gmm::scale(DL,h);
-      gmm::add(L,DL,L2);
+      base_matrix E(N,N), E2(N,N), DE(N,N); 
+      random_E(E); random_E(DE);
+      gmm::scale(DE,h);
+      gmm::add(E,DE,E2);
 
       cout << "h = " << h << "\n";
       base_matrix sigma1(N,N), sigma2(N,N);
       getfem::base_tensor tdsigma(N,N,N,N);
       base_matrix dsigma(N,N);
-      gmm::copy(L,L2); gmm::add(DL,L2);
-      sigma(L, sigma1, param); sigma(L2, sigma2, param);
+      gmm::copy(E,E2); gmm::add(DE,E2);
+      sigma(E, sigma1, param); sigma(E2, sigma2, param);
 
-      scalar_type d = strain_energy(L2, param) - strain_energy(L, param);
+      scalar_type d = strain_energy(E2, param) - strain_energy(E, param);
       scalar_type d2 = 0;
       for (size_type i=0; i < N; ++i) 
-	for (size_type j=0; j < N; ++j) d2 += sigma1(i,j)*DL(i,j);
+	for (size_type j=0; j < N; ++j) d2 += sigma1(i,j)*DE(i,j);
       if (dal::abs(d-d2) > h*1e-5) 
 	cout << "wrong derivative of strain_energy, d=" << d
 	     << ", d2=" << d2 << "\n";
 
-      grad_sigma(L,tdsigma,param);
+      grad_sigma(E,tdsigma,param);
       for (size_type i=0; i < N; ++i) {
 	for (size_type j=0; j < N; ++j) {
 	  dsigma(i,j) = 0;
 	  for (size_type k=0; k < N; ++k) {
 	    for (size_type m=0; m < N; ++m) {
-	      dsigma(i,j) += tdsigma(i,j,k,m)*DL(k,m);
+	      dsigma(i,j) += tdsigma(i,j,k,m)*DE(k,m);
 	    }
 	  }
 	  sigma2(i,j) -= sigma1(i,j);
@@ -116,23 +121,23 @@ namespace getfem {
 
   struct SaintVenant_Kirchhoff_hyperelastic_law : 
     public abstract_hyperelastic_law {
-    /* W = lambda*0.5*trace(L)^2 + mu*tr(L^2) */
-    virtual scalar_type strain_energy(const base_matrix &L,
+    /* W = lambda*0.5*trace(E)^2 + mu*tr(E^2) */
+    virtual scalar_type strain_energy(const base_matrix &E,
 				      const base_vector &params) const {
-      return gmm::sqr(gmm::mat_trace(L)) * params[0] / scalar_type(2)
-	+ gmm::mat_euclidean_norm_sqr(L) * params[1];
+      return gmm::sqr(gmm::mat_trace(E)) * params[0] / scalar_type(2)
+	+ gmm::mat_euclidean_norm_sqr(E) * params[1];
     }
-    /* sigma = lambda*trace(L) + 2 mu * L */
-    virtual void sigma(const base_matrix &L, base_matrix &result,
+    /* sigma = lambda*trace(E) + 2 mu * E */
+    virtual void sigma(const base_matrix &E, base_matrix &result,
 		       const base_vector &params) const {
       gmm::copy(gmm::identity_matrix(), result);
-      gmm::scale(result, params[0] * gmm::mat_trace(L));
-      gmm::add(gmm::scaled(L, 2 * params[1]), result);
+      gmm::scale(result, params[0] * gmm::mat_trace(E));
+      gmm::add(gmm::scaled(E, 2 * params[1]), result);
     }
-    virtual void grad_sigma(const base_matrix &L, base_tensor &result,
+    virtual void grad_sigma(const base_matrix &E, base_tensor &result,
 			    const base_vector &params) const {
       std::fill(result.begin(), result.end(), scalar_type(0));
-      size_type N = gmm::mat_nrows(L);
+      size_type N = gmm::mat_nrows(E);
       for (size_type i = 0; i < N; ++i)
 	for (size_type l = 0; l < N; ++l) {
 	  result(i, i, l, l) = params[0];
@@ -145,26 +150,26 @@ namespace getfem {
   };
 
   struct Mooney_Rivlin_hyperelastic_law : public abstract_hyperelastic_law {
-    virtual scalar_type strain_energy(const base_matrix &L,
+    virtual scalar_type strain_energy(const base_matrix &E,
 				      const base_vector &params) const {
       scalar_type C1 = params[0], C2 = params[1];
       return scalar_type(2) *
-	(gmm::mat_trace(L) * (C1 + scalar_type(2)*C2)
-	 + C2*(gmm::sqr(gmm::mat_trace(L)) - gmm::mat_euclidean_norm_sqr(L)));
+	(gmm::mat_trace(E) * (C1 + scalar_type(2)*C2)
+	 + C2*(gmm::sqr(gmm::mat_trace(E)) - gmm::mat_euclidean_norm_sqr(E)));
     }
-    virtual void sigma(const base_matrix &L, base_matrix &result,
+    virtual void sigma(const base_matrix &E, base_matrix &result,
 		       const base_vector &params) const {
       scalar_type C12 = scalar_type(2) * params[0];
       scalar_type C24 = scalar_type(4) * params[1];
       gmm::copy(gmm::identity_matrix(), result);
-      gmm::scale(result, C24*(gmm::mat_trace(L)+scalar_type(1)) + C12);
-      gmm::add(gmm::scaled(L, -C24), result);
+      gmm::scale(result, C24*(gmm::mat_trace(E)+scalar_type(1)) + C12);
+      gmm::add(gmm::scaled(E, -C24), result);
     }
-    virtual void grad_sigma(const base_matrix &L, base_tensor &result,
+    virtual void grad_sigma(const base_matrix &E, base_tensor &result,
 			    const base_vector &params) const {
       scalar_type C22 = scalar_type(2) * params[1];
       std::fill(result.begin(), result.end(), scalar_type(0));
-      size_type N = gmm::mat_nrows(L);
+      size_type N = gmm::mat_nrows(E);
       for (size_type i = 0; i < N; ++i)
 	for (size_type l = 0; l < N; ++l) {
 	  result(i, i, l, l) = scalar_type(2) * C22;
@@ -178,9 +183,9 @@ namespace getfem {
   struct Ciarlet_Geymonat_hyperelastic_law : public abstract_hyperelastic_law {
     // parameters are lambda=params[0], mu=params[1], gamma'(1)=params[2]
     // The parameters gamma'(1) has to verify gamma'(1) in ]-lambda/2-mu, -mu[
-    virtual scalar_type strain_energy(const base_matrix &L,
+    virtual scalar_type strain_energy(const base_matrix &E,
 				      const base_vector &params) const {
-      size_type N = gmm::mat_nrows(L);
+      size_type N = gmm::mat_nrows(E);
       scalar_type a = params[1] + params[2] / scalar_type(2);
       scalar_type b = -(params[1] + params[2]) / scalar_type(2);
       scalar_type c = params[0]/scalar_type(4)  - b;
@@ -188,7 +193,7 @@ namespace getfem {
       //scalar_type d = params[0] - scalar_type(2)*params[2] - scalar_type(4)*b;
       scalar_type e = -(scalar_type(3)*(a+b) + c);
       base_matrix C(N, N);
-      gmm::copy(gmm::scaled(L, scalar_type(2)), C);
+      gmm::copy(gmm::scaled(E, scalar_type(2)), C);
       gmm::add(gmm::identity_matrix(), C);
       scalar_type det = gmm::lu_det(C);
       return a * gmm::mat_trace(C)
@@ -196,9 +201,9 @@ namespace getfem {
 	       gmm::mat_euclidean_norm_sqr(C))/scalar_type(2)
 	+ c * det - d * log(det) / scalar_type(2) + e;
     }
-    virtual void sigma(const base_matrix &L, base_matrix &result,
+    virtual void sigma(const base_matrix &E, base_matrix &result,
 		       const base_vector &params) const {
-      size_type N = gmm::mat_nrows(L);
+      size_type N = gmm::mat_nrows(E);
       scalar_type a = params[1] + params[2] / scalar_type(2);
       scalar_type b = -(params[1] + params[2]) / scalar_type(2);
       scalar_type c = params[0]/scalar_type(4)  - b;
@@ -206,7 +211,7 @@ namespace getfem {
       //d=params[0] - scalar_type(2)*params[2] - scalar_type(4)*b;
       base_matrix C(N, N);
       assert(dal::abs(2*a+4*b+2*c-d)<1e-5);
-      gmm::copy(gmm::scaled(L, scalar_type(2)), C);
+      gmm::copy(gmm::scaled(E, scalar_type(2)), C);
       gmm::add(gmm::identity_matrix(), C);
       gmm::copy(gmm::identity_matrix(), result);
       gmm::scale(result, scalar_type(2) * (a + b * gmm::mat_trace(C)));
@@ -214,15 +219,15 @@ namespace getfem {
       scalar_type det = gmm::lu_inverse(C);
       gmm::add(gmm::scaled(C, scalar_type(2) * c * det - d), result);
     }
-    virtual void grad_sigma(const base_matrix &L, base_tensor &result,
+    virtual void grad_sigma(const base_matrix &E, base_tensor &result,
 			    const base_vector &params) const {
-      size_type N = gmm::mat_nrows(L);
+      size_type N = gmm::mat_nrows(E);
       scalar_type b2 = -(params[1] + params[2]); // b * 2
       scalar_type c = (params[0]  - 2*b2) / scalar_type(4);
       //scalar_type d = params[0] - scalar_type(2)*params[2] - 2*b2;
       scalar_type d = params[0]/scalar_type(2) + params[1]; 
       base_matrix C(N, N);
-      gmm::copy(gmm::scaled(L, scalar_type(2)), C);
+      gmm::copy(gmm::scaled(E, scalar_type(2)), C);
       gmm::add(gmm::identity_matrix(), C);
       scalar_type det = gmm::lu_inverse(C);
       std::fill(result.begin(), result.end(), scalar_type(0));
@@ -252,7 +257,7 @@ namespace getfem {
     size_type N;
     const abstract_hyperelastic_law &AHL;
     base_vector params, coeff;
-    base_matrix L, Sigma, gradU;
+    base_matrix E, Sigma, gradU;
     base_tensor tt;
     bgeot::multi_index sizes_;
     int version;
@@ -264,7 +269,7 @@ namespace getfem {
 			      int version_) 
       : mf(mf_), U(U_), mf_data(mf_data_), PARAMS(PARAMS_), 
 	N(mf_.get_qdim()), AHL(AHL_), params(AHL_.nb_params()),
-	L(N, N), Sigma(N, N), gradU(N, N), tt(N, N, N, N), sizes_(N, N, N, N),
+	E(N, N), Sigma(N, N), gradU(N, N), tt(N, N, N, N), sizes_(N, N, N, N),
 	version(version_)
     { if (version == 1) sizes_.resize(2); }
     const bgeot::multi_index &sizes() const {  return sizes_; }
@@ -275,19 +280,19 @@ namespace getfem {
       gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))),
 		coeff);
       ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf.get_qdim());
-      gmm::mult(gmm::transposed(gradU), gradU, L);
-      gmm::add(gradU, L);
-      gmm::add(gmm::transposed(gradU), L);
-      gmm::scale(L, scalar_type(0.5));
+      gmm::mult(gmm::transposed(gradU), gradU, E);
+      gmm::add(gradU, E);
+      gmm::add(gmm::transposed(gradU), E);
+      gmm::scale(E, scalar_type(0.5));
       gmm::add(gmm::identity_matrix(), gradU);
 
 
-      AHL.sigma(L, Sigma, params);
+      AHL.sigma(E, Sigma, params);
 
-      //cout << "nonlinear_elem_term::compute(version=" << version << ", cv = " << cv << ") -> \n" << "   L=" << L << "\n   E=" << gradU << "\n   Sigma=" << Sigma << "\n";
+      //cout << "nonlinear_elem_term::compute(version=" << version << ", cv = " << cv << ") -> \n" << "   E=" << E << "\n   E=" << gradU << "\n   Sigma=" << Sigma << "\n";
 
       if (version == 0) {	  
-	AHL.grad_sigma(L, tt, params);
+	AHL.grad_sigma(E, tt, params);
 
 
 	/*
@@ -328,11 +333,10 @@ namespace getfem {
 		t(n, m, k, l) = aux;
 	      }
 	// cout << "sym = " << check_symmetry(t) << "\n";
-        if (check_symmetry(t) != 1)
-	  cout << "sym = " << check_symmetry(t) << "\n"  << "t=" << t << "\n";
+        // if (check_symmetry(t) != 1)
+	//  cout << "sym = " << check_symmetry(t) << "\n"  << "t=" << t << "\n";
       } else {
-	// scalar_type J = gmm::lu_det(gradU);
-        // if (J < 0) gmm::scale(gradU, -1000);
+        if (gmm::lu_det(gradU) < 0) AHL.inc_unvalid_flag();
 
 	for (size_type i = 0; i < N; ++i)
 	  for (size_type j = 0; j < N; ++j) {
