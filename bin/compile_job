@@ -42,7 +42,7 @@ print `cd ..; cvs -d :pserver:renard\@gmmlinux2.gmm.priv:\/var\/cvs checkout get
 
 print "\n\nMaking links\n";
 `mkdir -p include`;
-`cd include; ln -sf ../dal/*.h .; ln -sf ../bgeot/*.h .;  ln -sf ../linkmsg/*.h .;  ln -sf ../ftool/*.h .; ln -sf ../getfemlib/*.h .; ln -sf ../misc/*.h .; ln -sf ../misc/LEDAWIN/*.h .; ln -sf ../matlabint/*.h .`; print "\n\n";
+`cd include; ln -sf ../dal/*.h .; ln -sf ../bgeot/*.h .;  ln -sf ../linkmsg/*.h .;  ln -sf ../ftool/*.h .; ln -sf ../getfemlib/*.h .; ln -sf ../misc/*.h .; ln -sf ../misc/LEDAWIN/*.h .; ln -sf ../matlabint/*.h .; ln -sf ../gensolv/*.h .`; print "\n\n";
 `mkdir -p sources`;
 `cd sources; ln -sf ../dal/*.C .; ln -sf ../bgeot/*.C .;  ln -sf ../ftool/*.C .; ln -sf ../getfemlib/*.C .; ln -sf ../misc/*.C .; ln -sf ../misc/LEDAWIN/*.C .; ln -sf ../matlabint/*.C .`; print "\n\n";
 
