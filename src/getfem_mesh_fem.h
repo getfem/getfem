@@ -334,7 +334,7 @@ namespace getfem
 	f_elems.memsize() + fe_convex.memsize();
     }
     
-    mesh_fem(getfem_mesh &me, dim_type Q = 1); 
+    mesh_fem(getfem_mesh &me, dim_type Q = 1);
     virtual ~mesh_fem();
     void read_from_file(std::istream &ist);
     void read_from_file(const std::string &name);

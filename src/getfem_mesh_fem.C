@@ -464,17 +464,20 @@ namespace getfem
 	ftool::get_token(ist, tmp, 1023);
 	size_type ic = atoi(tmp);
 	if (!linked_mesh().convex_index().is_in(ic)) {
-	  DAL_THROW(failure_error, "Convex " << ic << " does not exist, are you sure "
+	  DAL_THROW(failure_error, "Convex " << ic <<
+		    " does not exist, are you sure "
 		    "that the mesh attached to this object is right one ?");
 	}
 	
 	ftool::get_token(ist, tmp, 1023);
 	getfem::pfem fem = getfem::fem_descriptor(tmp);
-	if (!fem) DAL_THROW(failure_error, "could not create the FEM '" << tmp << "'");
+	if (!fem) DAL_THROW(failure_error, "could not create the FEM '" 
+			    << tmp << "'");
 
 	ftool::get_token(ist, tmp, 1023);
 	getfem::pintegration_method pfi = getfem::int_method_descriptor(tmp);
-	if (!pfi) DAL_THROW(failure_error, "could not create the integration method '" << tmp << "'");
+	if (!pfi) DAL_THROW(failure_error,
+	  "could not create the integration method '" << tmp << "'");
 	
 	dal::bit_vector bv; bv.add(ic);
 	set_finite_element(bv, fem, pfi);
