@@ -450,12 +450,12 @@ dnl AC_CHECK_PROGS(RANLIB, ranlib)
 
 dnl ------------ for distclean of meshes ---------------------
 j="tests/meshes/disc_P2_h4.mesh"
-if test -L $j || ! -f $j; then
-  DISTCLEANMESHES=""
+if test -L $j || test ! -f $j; then
+  DISTCLEANMESH="";
 else
-  DISTCLEANMESHES="#"
-fi
-AC_SUBST(DISTCLEANMESHES)
+  DISTCLEANMESH="#";
+fi;
+AC_SUBST(DISTCLEANMESH)
 
 dnl -----------------------------------------------
 dnl sorties
