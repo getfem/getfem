@@ -175,7 +175,7 @@ namespace getfem {
       }
       mti.rewind();
       do {
-	typename VEC::iterator it = v.begin();
+	typename gmm::linalg_traits<VEC>::iterator it = gmm::vect_begin(v);
 	for (dim_type i = 0; i < mti.ndim(); ++i) it+=str[i][mti.index(i)];
 	*it += mti.p(0);
       } while (mti.qnext1());
@@ -235,17 +235,17 @@ namespace getfem {
   };
 
   template< typename VEC > class asm_data : public base_asm_data {
-    VEC &v;
+    const VEC &v;
   public:
-    asm_data(VEC *v_) : v(*v_) {}
+    asm_data(const VEC *v_) : v(*v_) {}
     size_type vect_size() const {
       return gmm::vect_size(v); 
     }
     /* used to transfert the data for the current convex to the mti of ATN_tensor_from_dofs_data */
     void copy_with_mti(const std::vector<tensor_strides> &str, multi_tensor_iterator &mti) const {
-      typename VEC::const_iterator it;
+      typename gmm::linalg_traits<VEC>::const_iterator it;
       do {
-        it = v.begin();
+        it = gmm::vect_const_begin(v);
 	for (dim_type i = 0; i < mti.ndim(); ++i) it+=str[i][mti.index(i)];
 	mti.p(0) = *it;
       } while (mti.qnext1());
@@ -475,15 +475,22 @@ namespace getfem {
     void push_nonlinear_term(const nonlinear_elem_term *net) {
       innonlin.push_back(net);
     }
-    template< typename VEC > void push_data(VEC& d) { 
+    template< typename VEC > void push_data(const VEC& d) { 
       indata.push_back(new asm_data<VEC>(&d)); 
     }
     template< typename VEC > void push_vec(VEC& v) { 
-      asm_vec<VEC> *pv = new asm_vec<VEC>(&v);
+      asm_vec<VEC> *pv = new asm_vec<VEC>(&(gmm::linalg_cast(v)));
       outvec.push_back(pv);
     }
+    template< typename VEC > void push_vec(const VEC& v) { 
+      asm_vec<VEC> *pv = new asm_vec<VEC>(&(gmm::linalg_cast(v)));
+      outvec.push_back(pv);
+    }
+    template< typename MAT > void push_mat(const MAT& m) { 
+      outmat.push_back(new asm_mat<MAT>(&(gmm::linalg_cast(m)))); 
+    }
     template< typename MAT > void push_mat(MAT& m) { 
-      outmat.push_back(new asm_mat<MAT>(&m)); 
+      outmat.push_back(new asm_mat<MAT>(&(gmm::linalg_cast(m)))); 
     }
 
     void set_vec_factory(base_vec_factory *fact) { vec_fact = fact; }
