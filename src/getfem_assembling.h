@@ -349,7 +349,8 @@ namespace getfem
 						  const mesh_im &mim, 
 						  const mesh_fem &mf,
 						  const mesh_fem &mfdata,
-						  const VECT &LAMBDA,const VECT &MU) {
+						  const VECT &LAMBDA,
+						  const VECT &MU) {
     MAT &RM = const_cast<MAT &>(RM_);
     if (mfdata.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
@@ -366,8 +367,9 @@ namespace getfem
 			   //"e=(t{:,2,3,:,5,6,:}+t{:,3,2,:,5,6,:})*0.5;"
 			   /*"M(#1,#1)+= sym(2*e(:,i,j,:,i,j,k).mu(k)"
                              " + e(:,i,i,:,j,j,k).lambda(k))");*/
-                           "M(#1,#1)+= sym(t(:,i,j,:,i,j,k).mu(k)+t(:,j,i,:,i,j,k).mu(k)"
-			   " + t(:,i,i,:,j,j,k).lambda(k))");
+                           "M(#1,#1)+= sym(t(:,i,j,:,i,j,k).mu(k)"
+			   "+ t(:,j,i,:,i,j,k).mu(k)"
+			   "+ t(:,i,i,:,j,j,k).lambda(k))");
     assem.push_mi(mim);
     assem.push_mf(mf);
     assem.push_mf(mfdata);
@@ -466,11 +468,12 @@ namespace getfem
 
 
   /**
-     assembly of $\int_\Omega a(x)\nabla u.\nabla v$ , where $a(x)$ is scalar.
-  */
+   * assembly of $\int_\Omega a(x)\nabla u.\nabla v$ , where $a(x)$ is scalar.
+   */
   template<typename MAT, typename VECT>
   void asm_stiffness_matrix_for_laplacian(MAT &M, 
-					  const mesh_im &mim, const mesh_fem &mf,
+					  const mesh_im &mim,
+					  const mesh_fem &mf,
 					  const mesh_fem &mfdata,
 					  const VECT &A) {
     if (mfdata.get_qdim() != 1)
@@ -478,6 +481,31 @@ namespace getfem
     generic_assembly
       assem("a=data$1(#2); M$1(#1,#1)+="
 	    "sym(comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j))");
+    //generic_assembly assem("a=data$1(#2); M$1(#1,#1)"
+    //        "+=comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j)");
+    assem.push_mi(mim);
+    assem.push_mf(mf);
+    assem.push_mf(mfdata);
+    assem.push_data(A);
+    assem.push_mat(M);
+    assem.volumic_assembly();
+  }
+
+  /**
+   * assembly of $\int_\Omega a(x)\nabla u_i.\nabla v_i$,
+   * where $a(x)$ is scalar.
+   */
+  template<typename MAT, typename VECT>
+  void asm_stiffness_matrix_for_vectorial_laplacian(MAT &M, 
+						    const mesh_im &mim,
+						    const mesh_fem &mf,
+						    const mesh_fem &mfdata,
+						    const VECT &A) {
+    if (mfdata.get_qdim() != 1)
+      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    generic_assembly
+      assem("a=data$1(#2); M$1(#1,#1)+="
+	    "sym(comp(vGrad(#1).vGrad(#1).Base(#2))(:,:,i,:,:,i,j).a(j))");
     //generic_assembly assem("a=data$1(#2); M$1(#1,#1)"
     //        "+=comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j)");
     assem.push_mi(mim);

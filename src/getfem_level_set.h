@@ -40,7 +40,7 @@ namespace getfem {
 
   
   class level_set {
-
+    
   public :
     struct mf_key {
       getfem_mesh *pmesh;

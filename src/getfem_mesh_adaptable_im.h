@@ -55,16 +55,16 @@ namespace getfem {
 
     void adapt(void);
 
-    void clear(void); // to be adapted
+    void clear(void); // to be modified
 
     void add_level_set(level_set &ls) { level_sets.insert(&ls); }
     void sup_level_set(level_set &ls) { level_sets.erase(&ls); }
     
     void receipt(const MESH_CLEAR &);
     void receipt(const MESH_DELETE &);
-    // void receipt(const MESH_ADD_CONVEX &m)  // to be adapted ?
-    // void receipt(const MESH_SUP_CONVEX &m)  // to be adapted ?
-    // void receipt(const MESH_SWAP_CONVEX &m) // to be adapted ?
+    // void receipt(const MESH_ADD_CONVEX &m)  // to be modified ?
+    // void receipt(const MESH_SUP_CONVEX &m)  // to be modified ?
+    // void receipt(const MESH_SWAP_CONVEX &m) // to be modified ?
     
     size_type memsize() const {
       return mesh_im::memsize(); // + ... ;

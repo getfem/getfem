@@ -19,7 +19,7 @@
 /* *********************************************************************** */
 
 /**
- * Navier_Stokes problem.
+ * Navier Stokes problem.
  *
  * This program is used to check that getfem++ is working. This is also 
  * a good example of use of Getfem++.
@@ -43,7 +43,7 @@ using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
-using bgeot::base_matrix; /* small dense matrix. */
+using bgeot::base_matrix; /* small dense matrices. */
 
 /* definition of some matrix/vector types. These ones are built
  * using the predefined types in Gmm++
@@ -177,7 +177,7 @@ void navier_stokes_problem::init(void) {
 
 base_small_vector sol_f(const base_small_vector &P) {
   base_small_vector res(P.size());
-  res[P.size()-1] = -1.0;
+  res[P.size()-1] = -0.01;
   return res;
 }
 
