@@ -123,10 +123,27 @@ int main(void)
 
     gmm::col_matrix<gmm::wsvector<double> > m5(10, 10);
     gmm::copy(m3, m5);
-    cout << "m3 = " << m5 << endl;
+    cout << "m5 = " << m5 << endl;
     cout << "transposed(m5) = " << gmm::transposed(m5) << endl;
     gmm::clear(y2);
     gmm::bicgstab(m5, y2, b, gmm::identity_matrix(), 1000, 1E-16, 0);
+    cout << "y2 = " << y2 << endl;
+    gmm::add(gmm::scaled(x, -1.0), y2);
+    error = gmm::vect_norm2(y2);
+    cout << "Error : " << error << endl;
+    if (error > 1.0E-10)
+      DAL_THROW(dal::failure_error, "computation error too large : " << error);
+
+    cout << "/***********************************************************/\n";
+    cout << "/*             Test of row_matrix<slvector>                */\n";
+    cout << "/***********************************************************/\n";
+
+    gmm::row_matrix<gmm::slvector<double> > m5bis(10, 10);
+    gmm::copy(m3, m5bis);
+    cout << "m5bis = " << m5bis << endl;
+    cout << "transposed(m5bis) = " << gmm::transposed(m5bis) << endl;
+    gmm::clear(y2);
+    gmm::bicgstab(m5bis, y2, b, gmm::identity_matrix(), 1000, 1E-16, 0);
     cout << "y2 = " << y2 << endl;
     gmm::add(gmm::scaled(x, -1.0), y2);
     error = gmm::vect_norm2(y2);
