@@ -96,6 +96,7 @@ while ($lss) {
   if ($nbf) { print TMPF4 "\n"; }
   close(DATAF);
   $nb_methods++;
+  chop($name);
   print TMPF1 "    {\"$name\", \"$geotrans\", $nbpt, $nb_real, $nb_faces, $nb_int},\n";
   $nb_faces += $nbf;
   $nb_real += $nbpt * ($N + 1);
