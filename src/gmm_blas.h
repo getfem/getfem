@@ -1323,7 +1323,6 @@ namespace gmm {
   template <typename L1, typename L2> inline
     void add_spec(const L1& l1, L2& l2, abstract_matrix) {
     size_type m = mat_nrows(l1), n = mat_ncols(l1);
-    if (m == 0 || n == 0) return;
     if (m != mat_nrows(l2) || n != mat_ncols(l2))
       DAL_THROW(dimension_error, "dimensions mismatch");
     add(l1, l2, typename linalg_traits<L1>::sub_orientation(),
@@ -1977,7 +1976,6 @@ namespace gmm {
   void mult_dispatch(const L1& l1, const L2& l2, L3& l3, abstract_matrix) {
     typedef typename temporary_matrix<L3>::matrix_type temp_mat_type;
     size_type m = mat_nrows(l1), n = mat_ncols(l1), k = mat_ncols(l2);
-    if (m == 0 || k == 0) return;
     if (n == 0) { gmm::clear(l3); return; }
 
     if (n != mat_nrows(l2) || m != mat_nrows(l3) || k != mat_ncols(l3))

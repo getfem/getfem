@@ -190,10 +190,11 @@ namespace gmm {
     iterator _begin, _end;
     const origin_type *origin;
     value_type r;
+    size_type nr, nc;
 
     scaled_row_matrix_const_ref(const M &m, value_type rr)
-      : _begin(mat_row_begin(m)), 
-      _end(mat_row_end(m)), origin(linalg_origin(m)), r(rr) {}
+      : _begin(mat_row_begin(m)), _end(mat_row_end(m)),
+	origin(linalg_origin(m)), r(rr), nr(mat_ncols(m)), nc(mat_nrows(m)) {}
 
     value_type operator()(size_type i, size_type j) const
     { return r * linalg_traits<M>::access(_begin+i, j); }
@@ -218,9 +219,9 @@ namespace gmm {
     typedef abstract_null_type col_iterator;
     typedef row_major sub_orientation;
     static size_type nrows(const this_type &m)
-    { return (m._end == m._begin) ? 0 : m._end - m._begin; }
+    { return m.nr; }
     static size_type ncols(const this_type &m)
-    { return (m._end == m._begin) ? 0 : vect_size(mat_row(m, 0)); }
+    { return m.nc; }
     static const_sub_row_type row(const const_row_iterator &it)
     { return scaled(linalg_traits<M>::row(it.it), it.r); }
     static const_row_iterator row_begin(const this_type &m)
@@ -289,10 +290,11 @@ namespace gmm {
     iterator _begin, _end;
     const origin_type *origin;
     value_type r;
+    size_type nr, nc;
 
     scaled_col_matrix_const_ref(const M &m, value_type rr)
-      : _begin(mat_col_begin(m)), 
-      _end(mat_col_end(m)), origin(linalg_origin(m)), r(rr) {}
+      : _begin(mat_col_begin(m)), _end(mat_col_end(m)),
+	origin(linalg_origin(m)), r(rr), nr(mat_nrows(m)), nc(mat_ncols(m)) {}
 
     value_type operator()(size_type i, size_type j) const
     { return r * linalg_traits<M>::access(_begin+j, i); }
@@ -317,9 +319,9 @@ namespace gmm {
     typedef abstract_null_type row_iterator;
     typedef col_major sub_orientation;
     static size_type ncols(const this_type &m)
-    { return (m._end == m._begin) ? 0 : m._end - m._begin; }
+    { return m.nc; }
     static size_type nrows(const this_type &m)
-    { return (m._end == m._begin) ? 0 : vect_size(mat_col(m, 0)); }
+    { return m.nr; }
     static const_sub_col_type col(const const_col_iterator &it)
     { return scaled(linalg_traits<M>::col(it.it), it.r); }
     static const_col_iterator col_begin(const this_type &m)

@@ -338,11 +338,9 @@ namespace gmm {
     : public linalg_traits<gen_sub_col_matrix<PT, SUBI1, SUBI2> > {};
 #endif
 
-
   /* ******************************************************************** */
   /*		sub matrices                                              */
   /* ******************************************************************** */
-
   
   template <typename PT, typename SUBI1, typename SUBI2, typename ST>
   struct _sub_matrix_type {
@@ -368,8 +366,7 @@ namespace gmm {
     M *>::return_type
   sub_matrix(M &m, const SUBI1 &si1, const SUBI2 &si2) {
 #   ifdef GMM_VERIFY
-    if ((si1.last() > mat_nrows(m) || si2.last() > mat_ncols(m))
-	&& si1.last() != 0 && si2.last() != 0)
+    if (si1.last() > mat_nrows(m) || si2.last() > mat_ncols(m))
       DAL_THROW(dimension_error, "sub matrix too large");
 #   endif
     return typename select_return<typename sub_matrix_type<const M *, SUBI1,
@@ -383,8 +380,7 @@ namespace gmm {
     const M *>::return_type
   sub_matrix(const M &m, const SUBI1 &si1, const SUBI2 &si2) {
 #   ifdef GMM_VERIFY
-    if ((si1.last() > mat_nrows(m) || si2.last() > mat_ncols(m))
-	&& si1.last() != 0 && si2.last() != 0)
+    if (si1.last() > mat_nrows(m) || si2.last() > mat_ncols(m))
       DAL_THROW(dimension_error, "sub matrix too large");
 #   endif
 
@@ -399,8 +395,7 @@ namespace gmm {
     M *>::return_type
   sub_matrix(M &m, const SUBI1 &si1) {
 #   ifdef GMM_VERIFY
-    if ((si1.last() > mat_nrows(m) || si1.last() > mat_ncols(m))
-	&& si1.last() != 0 && si1.last() != 0)
+    if (si1.last() > mat_nrows(m) || si1.last() > mat_ncols(m))
       DAL_THROW(dimension_error, "sub matrix too large");
 #   endif
     return typename select_return<typename sub_matrix_type<const M *, SUBI1,
@@ -414,8 +409,7 @@ namespace gmm {
     const M *>::return_type
   sub_matrix(const M &m, const SUBI1 &si1) {
 #   ifdef GMM_VERIFY
-    if ((si1.last() > mat_nrows(m) || si1.last() > mat_ncols(m))
-	&& si1.last() != 0 && si1.last() != 0)
+    if (si1.last() > mat_nrows(m) || si1.last() > mat_ncols(m))
       DAL_THROW(dimension_error, "sub matrix too large");
 #   endif
     return typename select_return<typename sub_matrix_type<const M *, SUBI1,

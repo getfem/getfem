@@ -185,10 +185,11 @@ namespace gmm {
 
     iterator _begin, _end;
     const origin_type *origin;
+    size_type nr, nc;
 
     conjugated_row_matrix_const_ref(const M &m)
-      : _begin(mat_row_begin(m)), 
-      _end(mat_row_end(m)), origin(linalg_origin(m)) {}
+      : _begin(mat_row_begin(m)), _end(mat_row_end(m)),
+	origin(linalg_origin(m)), nr(mat_ncols(m)), nc(mat_nrows(m)) {}
 
     value_type operator()(size_type i, size_type j) const
     { return gmm::conj(linalg_traits<M>::access(_begin+j, i)); }
@@ -213,10 +214,8 @@ namespace gmm {
     typedef abstract_null_type const_row_iterator;
     typedef abstract_null_type row_iterator;
     typedef col_major sub_orientation;
-    static inline size_type ncols(const this_type &m)
-    { return (m._end == m._begin) ? 0 : m._end - m._begin; }
-    static inline size_type nrows(const this_type &m)
-    { return (m._end == m._begin) ? 0 : vect_size(mat_col(m, 0)); }
+    static inline size_type ncols(const this_type &m) { return m.nc; }
+    static inline size_type nrows(const this_type &m) { return m.nr; }
     static inline const_sub_col_type col(const const_col_iterator &it)
     { return conjugated(linalg_traits<M>::row(it.it)); }
     static inline const_col_iterator col_begin(const this_type &m)
@@ -283,10 +282,11 @@ namespace gmm {
 
     iterator _begin, _end;
     const origin_type *origin;
+    size_type nr, nc;
 
-    conjugated_col_matrix_const_ref(const M &m) : _begin(mat_col_begin(m)), 
-						  _end(mat_col_end(m)),
-						  origin(linalg_origin(m)) {}
+    conjugated_col_matrix_const_ref(const M &m)
+      : _begin(mat_col_begin(m)), _end(mat_col_end(m)),
+	origin(linalg_origin(m)), nr(mat_ncols(m)), nc(mat_nrows(m)) {}
 
     value_type operator()(size_type i, size_type j) const
     { return gmm::conj(linalg_traits<M>::access(_begin+i, j)); }
@@ -311,10 +311,8 @@ namespace gmm {
     typedef abstract_null_type const_col_iterator;
     typedef abstract_null_type col_iterator;
     typedef row_major sub_orientation;
-    static inline size_type nrows(const this_type &m) 
-    { return (m._end == m._begin) ? 0 : m._end - m._begin; }
-    static inline size_type ncols(const this_type &m)
-    {  return (m._end == m._begin) ? 0 : vect_size(mat_row(m, 0)); }
+    static inline size_type nrows(const this_type &m) { return m.nr; }
+    static inline size_type ncols(const this_type &m) { return m.nc; }
     static inline const_sub_row_type row(const const_row_iterator &it)
     { return conjugated(linalg_traits<M>::col(it.it)); }
     static inline const_row_iterator row_begin(const this_type &m)

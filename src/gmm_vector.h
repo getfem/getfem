@@ -109,12 +109,12 @@ namespace gmm
   typename number_traits<T>::magnitude_type
   abs(const ref_elt_vector<T, V> &re) { return gmm::abs(T(re)); }
   template<typename T, typename V> inline
-  T sqr(const ref_elt_vector<T, V> &re) { return sqr(T(re)); }
+  T sqr(const ref_elt_vector<T, V> &re) { return gmm::sqr(T(re)); }
   template<typename T, typename V> inline
   typename number_traits<T>::magnitude_type
-  abs_sqr(const ref_elt_vector<T, V> &re) { return abs_sqr(T(re)); }
+  abs_sqr(const ref_elt_vector<T, V> &re) { return gmm::abs_sqr(T(re)); }
   template<typename T, typename V> inline
-  T conj(const ref_elt_vector<T, V> &re) { return conj(T(re)); }
+  T conj(const ref_elt_vector<T, V> &re) { return gmm::conj(T(re)); }
   template<typename T, typename V> std::ostream &operator <<
   (std::ostream &o, const ref_elt_vector<T, V> &re) { o << T(re); return o; }
   

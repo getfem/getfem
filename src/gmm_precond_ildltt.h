@@ -93,10 +93,16 @@ namespace gmm {
       for (size_type krow = 0, k; krow < w.nb_stored(); ++krow) {
 	typename svector::iterator wk = w.begin() + krow;
 	if ((k = wk->c) >= i) break;
-	tmp = wk->e;
-	if (gmm::abs(tmp) < eps * norm_row) { w.sup(k); --krow; } 
-	else
-	  {  /* wk->e += tmp; */  gmm::add(scaled(mat_row(U, k), -tmp), w); }
+
+	// tmp = wk->e;
+	// if (gmm::abs(tmp) < eps * norm_row) { w.sup(k); --krow; } 
+	// else
+	//  {  /* wk->e += tmp; */  gmm::add(scaled(mat_row(U, k), -tmp), w); }
+	
+	tmp = gmm::conj(U(k, i)) / indiag[k]; // not completely satisfactory ...
+	// il faudrait construire L aussi pour iterer sur les éléments
+	//  non nuls  ... le threshold ne sert plus à rien ...
+	gmm::add(scaled(mat_row(U, k), -tmp), w);
       }
       tmp = w[i];
 

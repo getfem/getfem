@@ -110,21 +110,20 @@ namespace gmm
   template<typename V> class row_matrix {
   protected :
     std::vector<V> li; /* array of rows.                                   */
+    size_type nc;
     
   public :
     
     typedef typename linalg_traits<V>::reference reference;
     typedef typename linalg_traits<V>::value_type value_type;
     
-    row_matrix(size_type r, size_type c) : li(r)
-    { for (size_type i = 0; i < r; ++i) li[i] = V(c); }
-    row_matrix(void) {}
-    reference operator ()(size_type l, size_type c)
+    row_matrix(size_type r, size_type c) : li(r, V(c)), nc(c) {}
+    row_matrix(void) : nc(0) {}
+    reference operator ()(size_type l, size_type c) 
     { return li[l][c]; }
     value_type operator ()(size_type l, size_type c) const
     { return li[l][c]; }
 
-    void clear_row(size_type i) { clear(li[i]); }
     void clear_mat();
     void resize(size_type m, size_type n);
 
@@ -144,20 +143,20 @@ namespace gmm
     const V& operator[](size_type i) const { return li[i]; }
     
     inline size_type nrows(void) const { return li.size(); }
-    inline size_type ncols(void) const
-    { return (nrows() == 0) ? 0 : vect_size(li[0]); }
+    inline size_type ncols(void) const { return nc;        }
 
-    void swap(row_matrix<V> &m) { std::swap(li, m.li); }
+    void swap(row_matrix<V> &m) { std::swap(li, m.li); std::swap(nc, m.nc); }
   };
 
   template<typename V> void row_matrix<V>::resize(size_type m, size_type n) {
     li.resize(m);
     for (size_type i=0; i < m; ++i) gmm::resize(li[i], n);
+    nc = n;
   }
 
 
   template<typename V> void row_matrix<V>::clear_mat()
-  { for (size_type i=0; i < nrows(); ++i) clear_row(i); }
+  { for (size_type i=0; i < nrows(); ++i) clear(li[i]); }
 
   template <typename V> struct linalg_traits<row_matrix<V> > {
     typedef row_matrix<V> this_type;
@@ -218,21 +217,20 @@ namespace gmm
   template<typename V> class col_matrix {
   protected :
     std::vector<V> li; /* array of columns.                               */
+    size_type nr;
     
   public :
     
     typedef typename linalg_traits<V>::reference reference;
     typedef typename linalg_traits<V>::value_type value_type;
     
-    col_matrix(size_type r, size_type c) : li(c)
-    { for (size_type i = 0; i < c; ++i) li[i] = V(r); }
-    col_matrix(void) {}
+    col_matrix(size_type r, size_type c) : li(c, V(r)), nr(r) { }
+    col_matrix(void) : nr(0) {}
     reference operator ()(size_type l, size_type c)
     { return li[c][l]; }
     value_type operator ()(size_type l, size_type c) const
     { return li[c][l]; }
 
-    void clear_col(size_type i) { clear(li[i]); }
     void clear_mat();
     void resize(size_type, size_type);
 
@@ -251,19 +249,19 @@ namespace gmm
     { return li.end(); }
     
     inline size_type ncols(void) const { return li.size(); }
-    inline size_type nrows(void) const
-    { return (ncols() == 0) ? 0 : vect_size(li[0]); }
+    inline size_type nrows(void) const { return nr; }
 
-    void swap(col_matrix<V> &m) { std::swap(li, m.li); }
+    void swap(col_matrix<V> &m) { std::swap(li, m.li); std::swap(nr, m.nr); }
   };
 
   template<typename V> void col_matrix<V>::resize(size_type m, size_type n) {
     li.resize(n);
     for (size_type i=0; i < n; ++i) gmm::resize(li[i], m);
+    nr = m;
   }
 
   template<typename V> void col_matrix<V>::clear_mat()
-  { for (size_type i=0; i < ncols(); ++i) clear_col(i); }
+  { for (size_type i=0; i < ncols(); ++i)  clear(li[i]); }
 
   template <typename V> struct linalg_traits<col_matrix<V> > {
     typedef col_matrix<V> this_type;
@@ -563,8 +561,7 @@ namespace gmm
     : nc(nnc), nr(nnr) {
     pr = new T[1];  ir = new IND_TYPE[1];
     jc = new IND_TYPE[nc+1];
-    for (size_type j = 0; j < nc; ++j) jc[j] = shift;
-    jc[nc] = shift;
+    for (size_type j = 0; j <= nc; ++j) jc[j] = shift;
   }
 
   template <typename T, int shift>
