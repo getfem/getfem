@@ -314,7 +314,7 @@ namespace gmm {
   template <typename IT, typename MIT, typename SUBI, typename VECT> inline
   void set_to_begin(skyline_sub_vector_iterator<IT, MIT, SUBI> &it,
 		    const void *o, VECT *) {
-    IT itbe;
+    IT itbe = it.itb;
     set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV());
     set_to_end(itbe, o, typename linalg_traits<VECT>::pV());
     update_for_sub_skyline(it.itb, itbe, it.si);
@@ -322,7 +322,7 @@ namespace gmm {
   template <typename IT, typename MIT, typename SUBI, typename VECT> inline
   void set_to_begin(skyline_sub_vector_iterator<IT, MIT, SUBI> &it,
 		    const void *o, const VECT *) {
-    IT itbe;
+    IT itbe = it.itb;
     set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV());
     set_to_end(itbe, o, typename linalg_traits<VECT>::pV());
     update_for_sub_skyline(it.itb, itbe, it.si);
@@ -331,7 +331,7 @@ namespace gmm {
   template <typename IT, typename MIT, typename SUBI, typename VECT> inline
   void set_to_end(skyline_sub_vector_iterator<IT, MIT, SUBI> &it,
 		    const void *o, VECT *) {
-    IT itb;
+    IT itb = it.itb;
     set_to_begin(itb, o, typename linalg_traits<VECT>::pV());
     set_to_end(it.itb, o, typename linalg_traits<VECT>::pV());
     update_for_sub_skyline(itb, it.itb, it.si);
@@ -339,7 +339,7 @@ namespace gmm {
   template <typename IT, typename MIT, typename SUBI, typename VECT> inline
   void set_to_end(skyline_sub_vector_iterator<IT, MIT, SUBI> &it,
 		    const void *o, const VECT *) {
-    IT itb;
+    IT itb = it.itb;
     set_to_begin(itb, o, typename linalg_traits<VECT>::pV());
     set_to_end(it.itb, o, typename linalg_traits<VECT>::pV());
     update_for_sub_skyline(itb, it.itb, it.si);   
