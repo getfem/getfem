@@ -32,6 +32,8 @@
 #include <bgeot_kdtree.h>
 #include <asm/msr.h>
 
+#ifdef DEBUG_LS
+
 struct Chrono {
   unsigned long long tprev;
   unsigned long long acc;
@@ -51,6 +53,8 @@ struct Chrono {
   double mean() { return cnt ? total() / cnt : 0.; }
   unsigned count() { return cnt; }
 };
+
+#endif
 
 namespace getfem {
   static bool noisy = false;
@@ -76,8 +80,9 @@ namespace getfem {
     else return mesh_im::int_method_of_element(cv);
   }
 
-  
+#ifdef DEBUG_LS
   Chrono interpolate_face_chrono;
+#endif
 
   static void interpolate_face(getfem_mesh &m, dal::bit_vector& ptdone, 
 			       const std::vector<size_type>& ipts,
@@ -504,13 +509,17 @@ namespace getfem {
 	    bgeot::ind_ref_mesh_point_ind_ct fpts
 	      = mesh.ind_points_of_face_of_convex(i, f);
 	    ipts.assign(fpts.begin(), fpts.end());
+#ifdef DEBUG_LS
 	    interpolate_face_chrono.tic();
+#endif
 
 	    interpolate_face(mesh, ptdone, ipts,
 			     mesh.trans_of_convex(i)->structure()
 			     ->faces_structure()[f], fixed_points.size(),
 			     fixed_points_constraints, list_constraints);
+#ifdef DEBUG_LS
 	    interpolate_face_chrono.toc();
+#endif
 	  }
 	}
       }
@@ -609,7 +618,9 @@ namespace getfem {
 
     } while (!h0_is_ok);
 
+#ifdef DEBUG_LS
     cout << "Interpolate face: " << interpolate_face_chrono.total() << " moyenne: " << interpolate_face_chrono.mean() << "\n";
+#endif
   }
 
 

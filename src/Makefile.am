@@ -28,6 +28,7 @@ include_HEADERS =                        \
 	dal_basic.h                      \
 	dal_bit_vector.h                 \
 	dal_fonc_tables.h                \
+	dal_static_stored_objects.h      \
 	dal_ref.h                        \
 	dal_std.h                        \
 	dal_except.h                     \
@@ -127,6 +128,7 @@ SRC =                                    \
 	dal_backtrace.cc                 \
 	dal_bit_vector.cc                \
 	dal_singleton.cc		 \
+	dal_static_stored_objects.cc     \
 	bgeot_convex_ref.cc              \
 	bgeot_convex_structure.cc        \
 	bgeot_geometric_trans.cc         \
