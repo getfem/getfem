@@ -79,7 +79,7 @@ namespace gmm {
     std::vector<value_type> Tri_val;
     std::vector<size_type> Tri_ind, Tri_ptr;
  
-    void do_cholesky(const Matrix& A, row_major);
+    template<class M> void do_cholesky(const M& A, row_major);
     void do_cholesky(const Matrix& A, col_major);
 
   public:
@@ -96,33 +96,26 @@ namespace gmm {
     }
   };
 
-  template <class Matrix>
-  void cholesky_precond<Matrix>::do_cholesky(const Matrix& A, row_major) {
-    size_type Tri_loc = 0, n = mat_nrows(A), d, g, h, i, j, k, at;
+  template <class Matrix> template<class M>
+  void cholesky_precond<Matrix>::do_cholesky(const M& A, row_major) {
+    size_type Tri_loc = 0, n = mat_nrows(A), d, g, h, i, j, k;
     value_type z;
     Tri_ptr[0] = 0;
     
     for (int count = 0; count < 2; ++count) {
       if (count) { Tri_val.resize(Tri_loc); Tri_ind.resize(Tri_loc); }
-      for (at = 0, Tri_loc = 0, i = 0; i < n; ++i) {
-	typedef typename linalg_traits<Matrix>::const_sub_row_type row_type;
+      for (Tri_loc = 0, i = 0; i < n; ++i) {
+	typedef typename linalg_traits<M>::const_sub_row_type row_type;
 	row_type row = mat_const_row(A, i);
         typename linalg_traits<row_type>::const_iterator
 	  it = vect_const_begin(row), ite = vect_const_end(row);
 	
 	for (; it != ite; ++it)
 	  if (it.index() >= i) {
-	    if (count) { 
-	      Tri_val[Tri_loc] = *it; Tri_ind[Tri_loc]=it.index();
-	      for (j = Tri_loc; j > at; --j)
-		if (Tri_ind[j] < Tri_ind[j-1]) {
-		  std::swap(Tri_ind[j], Tri_ind[j-1]);
-		  std::swap(Tri_val[j], Tri_val[j-1]);
-		} else break;
-	    }
+	    if (count) { Tri_val[Tri_loc] = *it; Tri_ind[Tri_loc]=it.index(); }
 	    ++Tri_loc;
 	  }
-	if (count) at = Tri_ptr[i+1] = Tri_loc;
+	Tri_ptr[i+1] = Tri_loc;
       }
     }
     

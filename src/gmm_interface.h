@@ -96,7 +96,8 @@ namespace gmm {
     size_type _size;
 
     simple_vector_ref(ref_V v)
-      : _begin(vect_begin(const_cast<V&>(v))), _end(vect_end(const_cast<V&>(v))), 
+      : _begin(vect_begin(const_cast<V&>(v))), 
+	_end(vect_end(const_cast<V&>(v))), 
 	origin(linalg_origin(const_cast<V&>(v))),
 	_size(vect_size(v)) {}
 
@@ -127,7 +128,8 @@ namespace gmm {
     static iterator end(this_type &v) { return v._end; }
     static const_iterator end(const this_type &v) { return v._end; }
     static const void* origin(const this_type &v) { return v.origin; }
-    static void do_clear(this_type &v) { clear_type()(v.origin, v._begin, v._end); }
+    static void do_clear(this_type &v)
+    { clear_type()(v.origin, v._begin, v._end); }
   };
 
   template <class PT>

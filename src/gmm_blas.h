@@ -418,8 +418,8 @@ namespace gmm {
   typename linalg_traits<V1>::value_type
   vect_sp_with_mat(const MATSP &ps, const V1 &v1, const V2 &v2,
 		   abstract_null_type) {
-    typename temporary_vector<V1>::vector_type w(mat_nrows());
-    cerr << "Warning, a temporary is used in scalar product\n";
+    typename temporary_vector<V1>::vector_type w(mat_nrows(ps));
+    DAL_WARNING(2, "Warning, a temporary is used in scalar product\n");
     mult(ps, v1, w); 
     return vect_sp(w, v2);
   }
@@ -523,7 +523,19 @@ namespace gmm {
   template <class V1, class V2> inline
     typename linalg_traits<V1>::value_type
     vect_sp(const V1 &v1, const V2 &v2,abstract_sparse,abstract_sparse) {
-    return _vect_sp_sparse(vect_const_begin(v1), vect_const_end(v1), v2);
+
+    typename linalg_traits<V1>::const_iterator it1 = vect_const_begin(v1),
+      ite1 = vect_const_end(v1);
+    typename linalg_traits<V2>::const_iterator it2 = vect_const_begin(v2),
+      ite2 = vect_const_end(v2);
+    typedef typename linalg_traits<V1>::value_type value_type;
+    value_type res(0);
+    while (it1 != ite1 && it2 != ite2) {
+      if (it1.index() == it2.index())
+	{ res += conj_product(*it1, value_type(*it2)); ++it1; ++it2; }
+      else if (it1.index() < it2.index()) ++it1; else ++it2;
+    }
+    return res;
   }
 
   /* ******************************************************************** */
@@ -651,15 +663,16 @@ namespace gmm {
   template <class L> void clean(L &l, double seuil, abstract_skyline) {
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
     for (; it != ite; ++it)
-      if (dal::abs(*it) < seuil)
-	*it = typename linalg_traits<L>::value_type(0);
+      if (dal::abs(*it) < seuil) *it= typename linalg_traits<L>::value_type(0);
   }
 
   template <class L> void clean(L &l, double seuil, abstract_sparse) {
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
     for (; it != ite; ++it)
-      if (dal::abs(*it) < seuil)
+      if (dal::abs(*it) < seuil) {
 	l[it.index()] = typename linalg_traits<L>::value_type(0);
+	it = vect_begin(l); ite = vect_end(l);
+      }
   }
 
   template <class L> inline void clean(L &l, double seuil, abstract_matrix) {
@@ -686,7 +699,7 @@ namespace gmm {
     if ((const void *)(&l1) != (const void *)(&l2)) {
       #ifdef __GETFEM_VERIFY
         if (linalg_origin(l1) == linalg_origin(l2))
-	  cerr << "Warning : a conflict is possible in copy\n";
+	  DAL_WARNING(2, "Warning : a conflict is possible in copy\n");
       #endif
       copy(l1, l2, typename linalg_traits<L1>::linalg_type(),
 	   typename linalg_traits<L2>::linalg_type());
@@ -1392,7 +1405,7 @@ namespace gmm {
 		linalg_traits<L1>::sub_orientation>::potype());
     else {
       #ifdef __GETFEM_VERIFY
-        cerr << "Warning, A temporary is used for mult\n";
+        DAL_WARNING(2, "Warning, A temporary is used for mult\n");
       #endif
       typename temporary_vector<L3>::vector_type temp(vect_size(l3));
       mult_spec(l1,l2,l3, temp, typename principal_orientation_type<typename
@@ -1692,7 +1705,7 @@ namespace gmm {
   void mult_spec(const L1& l1, const L2& l2, L3& l3, c_mult, abstract_sparse) {
     // optimizable
     clear(l3);
-    size_type nn = mat_ncols(l3), mm = mat_ncols(l1);
+    size_type nn = mat_ncols(l3);
     for (size_type i = 0; i < nn; ++i) {
       typename linalg_traits<L2>::const_sub_col_type rc2=mat_const_col(l2, i);
       typename linalg_traits<typename linalg_traits<L2>::const_sub_col_type>::

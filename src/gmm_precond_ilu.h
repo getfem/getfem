@@ -79,7 +79,7 @@ namespace gmm {
     std::vector<value_type> L_val, U_val;
     std::vector<size_type> L_ind, U_ind, L_ptr, U_ptr;
  
-    void do_ilu(const Matrix& A, row_major);
+    template<class M> void do_ilu(const M& A, row_major);
     void do_ilu(const Matrix& A, col_major);
 
   public:
@@ -88,7 +88,7 @@ namespace gmm {
     size_type ncols(void) const { return mat_ncols(U); }
     
     ilu_precond(const Matrix& A) :
-      L_ptr(mat_nrows(A)+1), U_ptr(mat_nrows(A)+1), invert(false) { 
+      invert(false), L_ptr(mat_nrows(A)+1), U_ptr(mat_nrows(A)+1) { 
       if (!is_sparse(A))
 	DAL_THROW(failure_error,
 		  "Matrix should be sparse for incomplete ilu");
@@ -97,9 +97,9 @@ namespace gmm {
     }
   };
 
-  template <class Matrix>
-  void ilu_precond<Matrix>::do_ilu(const Matrix& A, row_major) {
-    size_type L_loc = 0, U_loc = 0, n = mat_nrows(A), L_at, U_at, i, j;
+  template <class Matrix> template <class M>
+  void ilu_precond<Matrix>::do_ilu(const M& A, row_major) {
+    size_type L_loc = 0, U_loc = 0, n = mat_nrows(A), i, j;
     L_ptr[0] = 0; U_ptr[0] = 0;
 
     for (int count = 0; count < 2; ++count) {
@@ -107,37 +107,23 @@ namespace gmm {
 	L_val.resize(L_loc); L_ind.resize(L_loc);
 	U_val.resize(U_loc); U_ind.resize(U_loc);
       }
-      L_at = U_at = L_loc = U_loc = 0;
+      L_loc = U_loc = 0;
       for (i = 0; i < n; ++i) {
-	typedef typename linalg_traits<Matrix>::const_sub_row_type row_type;
+	typedef typename linalg_traits<M>::const_sub_row_type row_type;
 	row_type row = mat_const_row(A, i);
 	typename linalg_traits<row_type>::const_iterator
 	  it = vect_const_begin(row), ite = vect_const_end(row);
 	for (; it != ite; ++it) {
 	  if (it.index() < i) {
-	    if (count) {
-	      L_val[L_loc] = *it; L_ind[L_loc] = it.index();
-	      for (j = L_loc; j > L_at; --j)
-		if (L_ind[j] < L_ind[j-1]) {
-		  std::swap(L_ind[j], L_ind[j-1]);
-		  std::swap(L_val[j], L_val[j-1]);
-		} else break;
-	    }
+	    if (count) { L_val[L_loc] = *it; L_ind[L_loc] = it.index(); }
 	    L_loc++;
 	  }
 	  else {
-	    if (count) {
-	      U_val[U_loc] = *it; U_ind[U_loc] = it.index();
-	      for (j = U_loc; j > U_at; --j)
-		if (U_ind[j] < U_ind[j-1]) {
-		  std::swap(U_ind[j], U_ind[j-1]);
-		  std::swap(U_val[j], U_val[j-1]);
-		} else break;
-	    }
+	    if (count) { U_val[U_loc] = *it; U_ind[U_loc] = it.index(); }
 	    U_loc++;
 	  }
 	}
-	if (count) { L_at = L_ptr[i+1] = L_loc; U_at = U_ptr[i+1] = U_loc; }
+        L_ptr[i+1] = L_loc; U_ptr[i+1] = U_loc;
       }
     }
     
