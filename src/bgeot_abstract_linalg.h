@@ -1065,7 +1065,7 @@ namespace bgeot {
     IT3 it = it3;
     for (; it != ite3; ++it, ++it2) *it = *it2;
     for (; it1 != ite1; ++it1)
-      if (it.index() != size_type(-1)) *(it3 + it1.index()) += *it1;
+      if (it1.index() != size_type(-1)) *(it3 + it1.index()) += *it1;
   }
 
   template <class IT1, class IT2, class IT3> inline
@@ -1074,9 +1074,9 @@ namespace bgeot {
     IT3 it = it3;
     for (; it != ite3; ++it) *it = 0;
     for (; it1 != ite1; ++it1)
-      if (it.index() != size_type(-1)) *(it3 + it1.index()) = *it1;
+      if (it1.index() != size_type(-1)) *(it3 + it1.index()) = *it1;
     for (; it2 != ite2; ++it2)
-      if (it.index() != size_type(-1)) *(it3 + it2.index()) += *it2;    
+      if (it2.index() != size_type(-1)) *(it3 + it2.index()) += *it2;    
   }
   
   template <class L1, class L2, class L3> inline
@@ -1160,7 +1160,7 @@ namespace bgeot {
     typename linalg_traits<L1>::const_iterator
       it1 = vect_begin(l1), ite1 = vect_end(l1);
     for (; it1 != ite1; ++it1) 
-      if (it.index() != size_type(-1)) l2[it1.index()] += *it1;
+      if (it1.index() != size_type(-1)) l2[it1.index()] += *it1;
   }
   
   template <class L1, class L2> inline
@@ -1169,7 +1169,7 @@ namespace bgeot {
     typename linalg_traits<L1>::const_iterator
       it1 = vect_begin(l1), ite1 = vect_end(l1);
     for (; it1 != ite1; ++it1) 
-      if (it.index() != size_type(-1)) l2[it1.index()] += *it1;
+      if (it1.index() != size_type(-1)) l2[it1.index()] += *it1;
   }
   
   template <class L1, class L2> inline

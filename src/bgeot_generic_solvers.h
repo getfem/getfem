@@ -50,29 +50,24 @@ namespace bgeot {
     typename linalg_traits<Vector>::value_type rho(0), rho_1(0), a(0), beta(0);
     temp_vector p(vect_size(x)), q(vect_size(x)), r(vect_size(x));
     int iter = 0;
-    cout << "0\n";
-    cout << "nrows = " << mat_nrows(A) << "ncols = " << mat_ncols(A)
-	 << "sx = " << vect_size(x) << "sb = " << vect_size(b) << "sr = " << vect_size(r) << "sscal(x) = " << vect_size(scaled(x, -1.0)) << endl;
     mult(A, scaled(x, -1.0), b, r);
-    cout << "01\n";
 
     rho = vect_sp(PS, r, r);
     
     while (sqrt(rho) > residu) {
 
-      cout << "1\n";
       if (iter == 0) copy(r, p);		  
       else { beta = rho / rho_1; add(r, scaled(p, beta), p); }
-cout << "2\n";
+
       mult(A, p, q);
-cout << "3\n";
+
       a = rho / vect_sp(PS, p, q);
-cout << "4\n";
+
       add(scaled(p, a), x);
       add(scaled(q, -a), r);
-cout << "5\n";
+
       rho_1 = rho; rho = vect_sp(PS, r, r);
-cout << "6\n";
+
       if (++iter >= itemax) return 1;
       if (noisy > 0) cout << "iter " << iter << " residu " << sqrt(rho)<< endl;
     }
