@@ -137,7 +137,7 @@ namespace gmm {
     std::vector<value_type> c(M), r(N);
     
     if (ipvt.size() < NN) DAL_THROW(failure_error, "IPVT too small");
-    for (size_type i = 0; i < NN; ++i) ipvt[i] = i;
+    for (i = 0; i < NN; ++i) ipvt[i] = i;
       
     if (M || N) {
       for (j = 0; j < NN; ++j) {
