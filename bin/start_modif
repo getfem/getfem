@@ -107,7 +107,7 @@ while($listeC)
 
 }
 
-print MAKEFILE "\n", 'test :', $listetests, "\n";
+print MAKEFILE "\n", 'test :',  \$(lib_objects) $listetests, "\n";
 print MAKEFILE "\t", $listetestsex, "\n";
 
 print MAKEFILE "\n\nclean :\n";
