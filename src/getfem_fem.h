@@ -248,6 +248,13 @@ namespace getfem
     void interpolation(const base_node &x, const base_matrix &G, 
 		       bgeot::pgeometric_trans pgt,
 		       const base_vector coeff, base_node &val) const;
+    void interpolation_grad(pfem_precomp pfp, size_type ii,
+			    const base_matrix &G,
+			    bgeot::pgeometric_trans pgt, 
+			    const base_vector coeff,
+			    base_matrix &val) const { 
+      virtual_fem::interpolation_grad(pfp,ii,G,pgt,coeff,val); 
+    }
     void interpolation_grad(const base_node &x, const base_matrix &G,
 			    bgeot::pgeometric_trans pgt,
 			    const base_vector coeff, base_matrix &val) const;
