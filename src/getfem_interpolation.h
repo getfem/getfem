@@ -57,7 +57,6 @@ namespace getfem {
     std::vector<base_node> ref_coords;
     std::vector<double> dist;
     std::vector<size_type> cvx_pts;
-    double EPS;
 
   public :
 
