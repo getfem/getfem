@@ -159,7 +159,7 @@ namespace getfem
 
   dal::bit_vector mesh_fem::dof_on_boundary(size_type b) const
   {
-    if (!dof_enumeration_made) enumerate_dof();
+    if (!dof_enumeration_made) ((mesh_fem *)(this))->enumerate_dof();
     dal::bit_vector res;
     if (valid_boundaries[b])
     {
