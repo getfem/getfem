@@ -31,8 +31,6 @@ print TMPF "GENERIC_DIRICHLET = 0;\n";
 print TMPF "\n\n";
 close(TMPF);
 
-$linferror = 0.0;
-
 sub start_program # (N, K, NX, OPTION, SOLVER)
 {
   my $def   = $_[0];
@@ -53,7 +51,7 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
       print "============================================\n";
       print $_, <F>;
     }
-    print $_;
+    if ($AFFICH) { print $_; }
   }
 }
 
@@ -61,9 +59,10 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
 # $NDDLMAX = 20800;
 $NDDLMAX = 4800;
 $PAUSE = 0;
-$SKIP = 3;
-$FT = 30.0;
+$SKIP = 0;
+$FT = 20.0;
 $GENDIR = 0;
+$AFFICH = 0;
 
 @Ks=(1, 2, 3, 4, 6, 9, 12, 15, 18, 24);
 

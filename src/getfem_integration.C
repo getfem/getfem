@@ -94,7 +94,7 @@ namespace getfem
 
   long_scalar_type _simplex_poly_integration::int_monomial
   (const bgeot::power_index &power) const {
-    long_scalar_type res = 1.0;
+    long_scalar_type res = LONG_SCAL(1);
     short_type fa = 1;
     bgeot::power_index::const_iterator itm = power.begin(),
       itme = power.end();
@@ -108,10 +108,10 @@ namespace getfem
   
   long_scalar_type _simplex_poly_integration::int_monomial_on_face
   (const bgeot::power_index &power, short_type f) const {
-    long_scalar_type res = 0.0;
+    long_scalar_type res = LONG_SCAL(0);
     
     if (f == 0 || power[f-1] == 0.0) {
-      res = (f == 0) ? sqrt(long_scalar_type(cvs->dim())) : long_scalar_type(1.0);
+      res = (f == 0) ? sqrt(long_scalar_type(cvs->dim())) : LONG_SCAL(1);
       short_type fa = 1;
       bgeot::power_index::const_iterator itm = power.begin(),
 	itme = power.end();
@@ -446,20 +446,17 @@ namespace getfem
       ppoly_integration ppi = int_method_descriptor(name.str())->method.ppi;
       
       size_type sum = 0, l;
-      c *= scalar_type(0.0);
+      c.fill(scalar_type(0.0));
       if (k == 0) c.fill(1.0 / scalar_type(nc+1));
       
       bgeot::vsmatrix<long_scalar_type> M(R, R);
       bgeot::vsvector<long_scalar_type> F(R), U(R);
-      // std::vector<base_poly> base(R);
       std::vector<bgeot::power_index> base(R);
       std::vector<base_node> nodes(R);
-      // std::fill(base.begin(), base.end(), base_poly(nc, 0));
       
       bgeot::power_index pi(nc);
       
       for (size_type r = 0; r < R; ++r, ++pi) {
-	// base[r].add_monomial(1.0, pi);
 	base[r] = pi; nodes[r] = c;
 	if (k != 0 && nc > 0) {
 	  l = 0; c[l] += 1.0 / scalar_type(k); sum++;
@@ -472,23 +469,22 @@ namespace getfem
       }
       
       for (size_type r = 0; r < R; ++r) {
-	// base_poly Q(nc, 0);
-	// Q.add_monomial(1.0, base[r]);
 	F[r] = ppi->int_monomial(base[r]);
+	cout << "F[" << r << "] = " << F[r] << endl;
 	for (size_type q = 0; q < R; ++q) {
-	  
 	  M(r, q) = bgeot::eval_monomial(base[r], nodes[q].begin());
-	  // M(r, q) = Q.eval(nodes[q].begin());
-
 	}
       }
-
-      // cout.precision(40);
-      // cout << "Mat = " << M << endl;
       
       // gmm::iteration iter(1E-20, 1, 4000);
       // gmm::gmres(M, U, F, gmm::identity_matrix(), gmm::mat_nrows(M), iter);
       bgeot::mat_gauss_solve(M, F, U, LONG_SCALAR_EPS * 100);
+      // bgeot::mat_gauss_solve(M, F, U, 1E-15);
+
+      if (nc == 1)
+	for (size_type r = 0; r < R; ++r)
+	  cout << "node " << r << " : " << nodes[r] << " poids : " 
+	       << U[r]<< endl;
       
       for (size_type r = 0; r < R; ++r)
 	add_point(nodes[r], U[r]);
