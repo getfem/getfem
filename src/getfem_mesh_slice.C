@@ -77,7 +77,7 @@ namespace getfem {
     }
   }
 
-  bool slicer_boundary::test_bound(const slice_simplex& s, slice_node::faces_ct& fmask, const std::deque<slice_node>& nodes) const {
+  bool slicer_boundary::test_bound(const slice_simplex& s, slice_node::faces_ct& fmask, const mesh_slice::cs_nodes_ct& nodes) const {
     slice_node::faces_ct f; f.set();
     for (size_type i=0; i < s.dim()+1; ++i) {
       f &= nodes[s.inodes[i]].faces;
@@ -87,8 +87,8 @@ namespace getfem {
   }
 
   void slicer_boundary::slice(size_type cv, dim_type& fcnt,
-                              std::deque<slice_node>& nodes, 
-                              std::deque<slice_simplex>& splxs, 
+                              mesh_slice::cs_nodes_ct& nodes, 
+                              mesh_slice::cs_simplexes_ct& splxs, 
                               dal::bit_vector& splx_in) {
     A->slice(cv, fcnt, nodes, splxs, splx_in);
     if (splx_in.card() == 0) return;
@@ -99,7 +99,7 @@ namespace getfem {
 
     dal::bit_vector bv = splx_in;
     for (size_type cnt=bv.take_first(); cnt != size_type(-1); cnt << bv) {
-      slice_simplex& s = splxs[cnt]; 
+      const slice_simplex& s = splxs[cnt]; 
       /*cerr << "slicer_boundary::slice, cnt= " << cnt << ", fmask=" << fmask << endl;
       for (size_type iA=0; iA < s.dim()+1; ++iA) 
 	cerr << " node#" << s.inodes[iA] << "=" << nodes[s.inodes[iA]].pt << ", f=" << nodes[s.inodes[iA]].faces << endl;
@@ -111,7 +111,8 @@ namespace getfem {
 	splx_in.sup(cnt);
         slice_simplex s2(3);
         for (size_type j=0; j < 4; ++j) {
-          for (size_type k=0; k < 3; ++k) s2.inodes[k] = s.inodes[k + (k<j ? 0 : 1)];
+          /* usage of s forbidden in this loop since push_back happens .. */
+          for (size_type k=0; k < 3; ++k) { s2.inodes[k] = splxs[cnt].inodes[k + (k<j ? 0 : 1)]; }
 	  /*cerr << " -> testing "; for (size_type iA=0; iA < s2.dim()+1; ++iA) cerr << s2.inodes[iA] << " "; 
 	    cerr << " : " << test_bound(s2, fmask, nodes) << endl;*/
           if (test_bound(s2, fmask, nodes)) {
@@ -122,7 +123,7 @@ namespace getfem {
     }
   }
 
-  void slicer_isovalues::prepare(size_type cv, const std::deque<slice_node>& nodes) 
+  void slicer_isovalues::prepare(size_type cv, const mesh_slice::cs_nodes_ct& nodes) 
   {
     pt_in.clear(); pt_bin.clear();
     bgeot::stored_point_tab refpts(nodes.size());
@@ -155,18 +156,19 @@ namespace getfem {
 
      assertion: when called, it will always push *at least* one new simplex on the stack
   */
-  void slicer_volume::split_simplex(std::deque<slice_node>& nodes, 
-				    std::deque<slice_simplex>& splxs, dal::bit_vector& splx_in, 
-				    const slice_simplex& s, size_type sstart) {
+  void slicer_volume::split_simplex(mesh_slice::cs_nodes_ct& nodes, 
+				    mesh_slice::cs_simplexes_ct& splxs, dal::bit_vector& splx_in, 
+				    const slice_simplex s, size_type sstart) {
     scalar_type alpha = 0; size_type iA=0, iB = 0;
     bool intersection = false;
     static int level = 0;
 
     level++;    
-    /*cerr << "split_simplex: level=" << level << " simplex: ";
-    for (iA=0; iA < s.dim()+1 && !intersection; ++iA) 
+    /*
+      cerr << "split_simplex: level=" << level << " simplex: ";
+      for (iA=0; iA < s.dim()+1 && !intersection; ++iA) 
       cerr << "node#" << s.inodes[iA] << "=" << nodes[s.inodes[iA]].pt 
-           << ", in=" << pt_in[s.inodes[iA]] << ", bin=" << pt_bin[s.inodes[iA]] << "; "; cerr << endl;
+      << ", in=" << pt_in[s.inodes[iA]] << ", bin=" << pt_bin[s.inodes[iA]] << "; "; cerr << endl;
     */
     assert(level < 100);
     for (iA=0; iA < s.dim()+1; ++iA) {
@@ -204,7 +206,7 @@ namespace getfem {
       for (size_type i=0; i < s.dim()+1; ++i) if (!pt_in[s.inodes[i]]) all_in = false;
       //cerr << " -> no intersection , all_in=" << all_in << endl;
       splxs.push_back(s); // even simplexes "outside" are pushed, in case of a slicer_complementary op
-      if (all_in && !orient) splx_in.add(splxs.size()-1);
+      if (all_in && orient != 0) splx_in.add(splxs.size()-1);
       if (orient==0) { /* reduce dimension */
         slice_simplex face(s.dim());
         for (size_type f=0; f < s.dim()+1; ++f) {
@@ -235,10 +237,10 @@ namespace getfem {
      note that the simplexes in the list may have different dimensions
   */
   void slicer_volume::slice(size_type cv, dim_type& fcnt,
-                            std::deque<slice_node>& nodes, 
-                            std::deque<slice_simplex>& splxs, dal::bit_vector& splx_in) {
+                            mesh_slice::cs_nodes_ct& nodes, 
+                            mesh_slice::cs_simplexes_ct& splxs, dal::bit_vector& splx_in) {
     /*size_type cnt=0;
-    for (std::deque<slice_simplex>::iterator it = splxs.begin();
+    for (mesh_slice::cs_simplexes_ct::iterator it = splxs.begin();
          it != splxs.end(); ++it, ++cnt) {    
       if (!splx_in[cnt]) continue;
     */
@@ -284,7 +286,7 @@ namespace getfem {
   }
 
   void slicer_union::slice(size_type cv, dim_type& fcnt,
-                           std::deque<slice_node>& nodes, std::deque<slice_simplex>& splxs, 
+                           mesh_slice::cs_nodes_ct& nodes, mesh_slice::cs_simplexes_ct& splxs, 
                            dal::bit_vector& splx_in) {
     dal::bit_vector splx_inA = splx_in;
     A->slice(cv,fcnt,nodes,splxs,splx_inA);
@@ -293,14 +295,14 @@ namespace getfem {
   }
 
   void slicer_intersect::slice(size_type cv, dim_type& fcnt,
-			       std::deque<slice_node>& nodes, std::deque<slice_simplex>& splxs, 
+			       mesh_slice::cs_nodes_ct& nodes, mesh_slice::cs_simplexes_ct& splxs, 
                                dal::bit_vector& splx_in) {
     A->slice(cv,fcnt,nodes,splxs,splx_in);
     B->slice(cv,fcnt,nodes,splxs,splx_in);
   }
 
   void slicer_complementary::slice(size_type cv, dim_type& fcnt,
-                                   std::deque<slice_node>& nodes, std::deque<slice_simplex>& splxs, 
+                                   mesh_slice::cs_nodes_ct& nodes, mesh_slice::cs_simplexes_ct& splxs, 
                                    dal::bit_vector& splx_in) {
     dal::bit_vector splx_inA = splx_in;
     size_type sz = splxs.size();
@@ -535,33 +537,51 @@ namespace getfem {
     /* do the slices */
     if (ms) ms->slice(cv, fcnt, cv_nodes, cv_simplexes, splx_in);
     
-    /* push the used nodes and simplexes in the final list */         
-    if (splx_in.card()) {
-      std::vector<size_type> nused(cv_nodes.size(), size_type(-1));      
+    set_convex(size_type(-1), cv, cvr, cv_nodes, cv_simplexes, fcnt, splx_in);
+  }
+
+  size_type mesh_slice::set_convex(size_type pos, size_type cv, bgeot::pconvex_ref cvr, 
+                                   cs_nodes_ct cv_nodes, cs_simplexes_ct cv_simplexes, 
+                                   dim_type fcnt, dal::bit_vector& splx_in) {
+    /* push the used nodes and simplexes in the final list */
+    if (splx_in.card() == 0) return size_type(-1);
+    std::vector<size_type> nused(cv_nodes.size(), size_type(-1));
+    convex_slice *sc = 0;
+    if (pos == size_type(-1)) {
+      pos = cvlst.size();
       cvlst.push_back(convex_slice());
-      cvlst.back().cv_num = cv;
-      cvlst.back().cv_dim = cvr->structure()->dim();
-      cvlst.back().cv_nbfaces = cvr->structure()->nb_faces();
-      cvlst.back().fcnt = fcnt;
-      for (size_type snum = splx_in.take_first(); snum != size_type(-1); snum << splx_in) {
-	for (size_type i=0; i < cv_simplexes[snum].dim()+1; ++i) {
-	  size_type lnum = cv_simplexes[snum].inodes[i];
-	  if (nused[lnum] == size_type(-1)) {
-	    nused[lnum] = cvlst.back().nodes.size(); cvlst.back().nodes.push_back(cv_nodes[lnum]);
-	    points_cnt++;
-	  }
-	  cv_simplexes[snum].inodes[i] = nused[lnum];
-	}
-	simplex_cnt[cv_simplexes[snum].dim()]++;
-	cvlst.back().simplexes.push_back(cv_simplexes[snum]);
-      }
+      sc = &cvlst.back();
+      sc->cv_num = cv;
+      sc->cv_dim = cvr->structure()->dim();
+      sc->cv_nbfaces = cvr->structure()->nb_faces();
+      sc->fcnt = fcnt;
+    } else {
+      sc = &cvlst[pos];
+      assert(sc->cv_num == cv);
     }
+    for (size_type snum = splx_in.take_first(); snum != size_type(-1); snum << splx_in) {
+      for (size_type i=0; i < cv_simplexes[snum].dim()+1; ++i) {
+        size_type lnum = cv_simplexes[snum].inodes[i];
+        if (nused[lnum] == size_type(-1)) {
+          nused[lnum] = sc->nodes.size(); sc->nodes.push_back(cv_nodes[lnum]);
+          points_cnt++;
+        }
+        cv_simplexes[snum].inodes[i] = nused[lnum];
+      }
+      simplex_cnt[cv_simplexes[snum].dim()]++;
+      sc->simplexes.push_back(cv_simplexes[snum]);
+    }
+    return pos;
+  }
+
+  mesh_slice::mesh_slice(const getfem_mesh& m_) :
+    m(m_), simplex_cnt(m.dim()+1, size_type(0)), points_cnt(0), _dim(m.dim()) {
   }
 
   /* of course, nodes created from edge/slice intersection are almost always duplicated */
-  mesh_slice::mesh_slice(const getfem_mesh& _m, slicer* ms, size_type nrefine, 
+  mesh_slice::mesh_slice(const getfem_mesh& m_, slicer* ms, size_type nrefine, 
                          convex_face_ct& in_cvlst, mesh_slice_cv_dof_data_base *def_mf_data) 
-    : m(_m), simplex_cnt(m.dim()+1, size_type(0)), points_cnt(0), _dim(m.dim()) {
+    : m(m_), simplex_cnt(m.dim()+1, size_type(0)), points_cnt(0), _dim(m.dim()) {
     _geotrans_precomp gp;
     bgeot::stored_point_tab cvm_pts;
     bgeot::pconvex_ref prev_cvr = 0;
