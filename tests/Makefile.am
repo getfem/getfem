@@ -44,7 +44,7 @@ TESTS = \
 	$(top_srcdir)/tests/dynamic_array.pl \
 	$(top_srcdir)/tests/dynamic_tas.pl \
 	$(top_srcdir)/tests/test_mat_elem.pl \
-	$(top_srcdir)/tests/assembly.pl \
+	$(top_srcdir)/tests/test_assembly.pl \
 	$(top_srcdir)/tests/laplacian.pl \
 	$(top_srcdir)/tests/elasto_statique.pl  \
 	$(top_srcdir)/tests/integration.pl \
@@ -60,7 +60,7 @@ TESTS = \
 EXTRA_DIST = \
 	dynamic_array.pl \
 	dynamic_tas.pl \
-	assembly.pl \
+	test_assembly.pl \
 	laplacian.pl \
 	elasto_statique.pl  \
 	integration.pl \
