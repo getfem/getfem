@@ -937,24 +937,46 @@ But you can define your own model state type with arbitrary types of sparse matr
 \subsection{Example of a complete Poisson problem}
 (to be documented)
 \subsection{Predefined solvers}
-Of course, for many problems, it will be more convenient to mae a specific solver. Even so, a certain number of generic solvers are available to test your models quickly. ...
+Of course, for many problems, it will be more convenient to make a specific solver. Even so, a certain number of generic solvers are available to test your models quickly. ...
 (to be documented)
 \subsection{Linearized elasticity brick}
 (to be documented)
+
 \subsection{Qu term brick}
 (to be documented)
 \subsection{Helmholtz brick}
 (to be documented)
 \subsection{Small displacement plasticity brick}
-(to be documented)
+This brick modelize small-displacement quasi-static plasticity problems.
+
+Plasticity happens when you stress an object too much, so that even when you remove the charge, constraints remain 'trapped' into the object. When a stress is applied to an object, if the stress is small enough, the displacements stay elastic. If that stress gets greater than a constant value called stress threshold (intrinsic to the object), then the displacements become plastic.
+
+Quasi-static means that we do not take inertia into account, but that the algorithm used needs some kind of a time representation. It is not possible to put the charge on the model at once, as it will render false results. Instead, we have to put the charge only a bit at a time, and calculate the deformation each time,  hence the 'quasi-static' name. For instance, if you wish to put a 100N/m charge on your object, you should put it by small steps (20,40,60,80,100 is ok). We have to use that method to keep the consistency of the problem.
+
+
+A brick behaves like a black-box, that is defined by its constructor. A constructor is something like \cpp{getfem::mdbrick_plasticity<> PLAS(mf_u, mf_coef, lambda, mu, stress_threshold, TOL, flag_hyp);} where :
+\begin{itemize}
+\item mf_u and mf_coef are 2 meshes that define the geometry and the finite elements method of the problem (type : \cpp{getfem::mesh_fem})
+\item lambda and mu are Lame coefficients that define the problem (type : if the problem is homogeneous, \cpp{scalar_type}. If not, \cpp{gmm::vector<scalar_type>}. Its size must be equal to the number of degree of freedom of the system.)
+\item stress_threshold is the 'elasticity limit' : if constraints are below that limit, the problem is an elasticity problem. Else, it is a plasticity one. (type : \cpp{scalar_type})
+\item TOL is a small number that defines what is zero. (type : \cpp{scalar_type})
+\item flag_hyp is zero if the problem is 3D or '2D plane'. Other cases are not implemented, yet. (type : \cpp{size_type})
+\end{itemize}
+
+
+Using that constructor, you can build the problem like with any other bricks, adding the Volumic, Neumann and Dirichlet bricks as usual (look at elastostatic.C and plasticity.C for exemples), and call the solver with \cpp{getfem::standard_solve(MS, final_model, iter);}.
+
+
+Once it's done, you need to know what the results are. 
+You can know the displacement using \cpp{PLAS.get_solution(MS, U);} where MS is defined by \cpp{getfem::standard_model_state MS(final_model);}, and U the displacement vector.
+
+
+To get the constraints, you can use \cpp{PLAS.compute_constraints(MS);} followed by \cpp{PLAS.get_proj(proj);}, where proj is a \cpp{std::vector<std::vector<scalar_type> >}.
+
 \subsection{Contact and friction conditions brick}
 (to be documented)
 \subsection{Large strain elasticity brick}
 (to be documented)
-
-
-
-
 
 
 \section{Catch errors}

@@ -28,9 +28,9 @@
 #define GMM_USES_SUPERLU
 
 #include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
-#include <getfem_export.h>   /* export functions (save solution in a file)  */
 #include <getfem_regular_meshes.h>
 #include <getfem_modeling.h>
+#include <getfem_plasticity.h>
 #include <gmm.h>
 
 /* try to enable the SIGFPE if something evaluates to a Not-a-number
@@ -97,8 +97,10 @@ base_matrix sol_sigma(const base_node &x) {
       res(i,j)=0.;   
     }
   }
-  res(0,0)=0;res(1,0)=-330.; //cas de la force qui va vers le bas
-  return res;
+  res(0,0)=0;
+  res(1,0)=-330.; //cas de la force qui va vers le bas
+  //res(0,0)=-1000;
+ return res;
 }
 
 /*
@@ -115,7 +117,7 @@ struct plasticity_problem {
 
   scalar_type residu;        /* max residu for the iterative solvers         */
 
-  scalar_type stress_threshold, VM_max, TOL, flag_hyp;
+  scalar_type stress_threshold, TOL, flag_hyp;
   std::vector<std::vector<scalar_type> > sigma_b;
 
   std::string datafilename;
@@ -234,7 +236,6 @@ void plasticity_problem::init(void)
  
   //PARTIE RELATIVE A LA PLASTICITE  
   stress_threshold = PARAM.real_value("STRESS_THRESHOLD", "plasticity stress_threshold");
-  VM_max = PARAM.real_value("VM_max","maximal Von Mises value in elasticity");
   TOL=PARAM.real_value("TOL", "TOL to define what is zero");
   flag_hyp=PARAM.int_value("FLAG_HYP");
 }
@@ -249,9 +250,10 @@ bool plasticity_problem::solve(plain_vector &U) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   size_type N = mesh.dim();
 
-  getfem::mdbrick_plasticity<> PLAS(mf_u, mf_coef, lambda,mu, stress_threshold, VM_max, TOL, size_type(flag_hyp), sigma_b);
+  getfem::mdbrick_plasticity<> PLAS(mf_u, mf_coef, lambda,mu, stress_threshold, TOL, size_type(flag_hyp));
+
   const size_type Nb_t=1;
-  scalar_type t[Nb_t]={0.5};
+  scalar_type t[Nb_t]={0.9032};
 
   std::string uname(datafilename+".U");
   std::ofstream f0(uname.c_str()); f0.precision(16);
@@ -320,10 +322,8 @@ bool plasticity_problem::solve(plain_vector &U) {
 
     gmm::iteration iter(TOL,2,40000);
     getfem::standard_solve(MS, final_model, iter);
-    PLAS.set_save_constraints(true);
-    PLAS.compute_residu(MS);
-    PLAS.set_save_constraints(false);
-    cout << "Fin iteration\n";
+
+    PLAS.compute_constraints(MS);
     
     // Get the solution and save it
     PLAS.get_solution(MS, U);
@@ -370,20 +370,9 @@ int main(int argc, char *argv[]) {
     cout << "Resultats dans fichier : "<<p.datafilename<<".* \n";
     p.mf_u.write_to_file(p.datafilename + ".meshfem",true);
     scalar_type t[2]={p.mu,p.lambda};
-    vecsave(p.datafilename+".coef", std::vector<scalar_type>(t, t+2));
-    
-    if (p.PARAM.int_value("VTK_EXPORT")) {
-      cout << "export to " << p.datafilename + ".vtk" << "..\n";
-      getfem::vtk_export exp(p.datafilename + ".vtk",
-			     p.PARAM.int_value("VTK_EXPORT")==1);
-      exp.exporting(p.mf_u); 
-      exp.write_point_data(p.mf_u, U, "elastostatic_displacement");
-      cout << "export done, you can view the data file with (for example)\n"
-	"mayavi -d elastostatic.vtk -f ExtractVectorNorm -f "
-	"WarpVector -m BandedSurfaceMap -m Outline\n";
-    }
+    vecsave(p.datafilename+".coef", std::vector<scalar_type>(t, t+2));    
   }
   DAL_STANDARD_CATCH_ERROR;
-
+  
   return 0; 
 }
