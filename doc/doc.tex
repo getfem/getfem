@@ -227,7 +227,13 @@ $\;$\\[3cm]\thispagestyle{empty}
 
 {\begin{center} \Large Basic documentation of \\[2cm]
 
- \Huge \bf GETFEM++ \end{center}} \newpage
+\Huge \bf GETFEM++ \end{center}} \newpage
+
+\noindent Copyright (C) 2001.\\ \\
+This is a part of GETFEM++.\\ \\
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as  published by the Free Software Foundation; version 2 of the License.\\ \\
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.\\ \\
+You should have received a copy of the GNU General Public License  along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.\\ \\
 
 \tableofcontents
 
@@ -235,18 +241,18 @@ $\;$\\[3cm]\thispagestyle{empty}
    The Dynamic Array Library (dal) is a library of containers
    and algorithms on containers. Thoses containers are initialy adapted
    to store data for meshes, but they are also of larger
-   interest. The library is build on a container wich is \\ \\
+   interest. The library is build on a container which is \\ \\
    dal::dynamic\_array$<$T$>$. \\ \\
    This container is very similar to std::vector$<$T$>$ of the Standard
    Template Library. The major difference
-   is that memory is allocated by block with dal::dynamic\_array$<$T$>$ and
+   is that memory is allocated by block and
    the allocation is automatic when an acces to a non existing element 
    is called. \\ \\
    Others containers like dal::dynamic\_tas$<$T$>$ or
    dal::dynamic\_tree\_sorted$<$T$>$ allow to add or delete elements
    in an array. Particularily, dal::dynamic\_tree\_sorted$<$T$>$ combines
-   the random access of an array and the logarithmic search in a balanced
-   sorted tree.
+   the random access of an array and the logarithmic search and insertion
+   in a balanced sorted tree.
    \end{librarydescription}
    \begin{filedescription}{ Dynamic Array Library }{ Incompatibility resolutions }
         { dal\_std.h }
@@ -779,9 +785,7 @@ $\;$\\[3cm]\thispagestyle{empty}
  { Gives a pointer on the structures of a prism of dimension d.
    i.e. the direct product of a simplex of dimension d-1 and a segment.}
   
- \end{classmembersdescription}
-   \end{functionsdescription} 
-  \end{filedescription} 
+  \end{classmembersdescription} \end{functionsdescription} \end{filedescription} 
  \begin{filedescription}{ Basic GEOmetric Tool }
              { Basic description of Finite Element Interpolation }
              { bgeot\_fem\_interpolation.h }
@@ -977,8 +981,8 @@ $\;$\\[3cm]\thispagestyle{empty}
      \end{array} $$
      which should be a diffeomorphism between $\overline{T}$ and $T$. It
      is assumed that there exists a polynomial vector
-     $$ \underline{\cal N}(\overline{x}) = {\cal N}_i(\overline{x}),
-        \ \ i = 0 .. n_g-1, $$
+     $$ \underline{\cal N}(\overline{x})
+        = \left({\cal N}_i(\overline{x})\right)_i, \ \ i = 0 .. n_g-1, $$
      defined on $\overline{T}$ of size $n_g$, such that the transformation
      $\tau$ can be written
      $$ \tau(\overline{x}) = \sum_{i = 0}^{n_g-1} {\cal N}_i(\overline{x})
@@ -1003,5 +1007,402 @@ $\;$\\[3cm]\thispagestyle{empty}
        matrix.
    \comitem{Inverse transformation and pseudo-inverse}
   \end{fileinfocomp} \end{filedescription} 
+ \begin{filedescription}{ Basic GEOmetric Tool }
+             { Exact integration of polynomials. }
+             { bgeot\_poly\_integration.h }
+    \begin{filepresentation}
+      This unit deals with the exact integration of polynomials of
+      several variables on a reference element.
+    \end{filepresentation}
+  
+ \begin{classdescription}{poly\_integration}
+   \begin{classdeclaration}
+   \classdecl{poly\_integration pi;}{undefined class.}
+   \end{classdeclaration}
+   \classdesc{ Description of an exact integration of polynomials.
+       This class 
+       is not to be manipulate by itself. Use ppoly\_integration and
+       the functions written to produce the basic descriptions.  }
+    \begin{classmembersdescription} 
+ \classmember{dim()}
+        {const method}{Dimension of reference convex.}
+  
+ \classmember{structure()}
+        {const method}{Structure of reference convex.}
+  
+ \classmember{int\_poly(P)}{const method}
+   { Evaluate the integral of the polynomial P on the reference
+     element.}
+  
+ \classmember{int\_poly\_on\_face(P, f)}{const method}
+  { Evaluate the integral of the polynomial P on the face f of the
+    reference element.}
+  
+ \end{classmembersdescription} \end{classdescription}
+ \begin{functionsdescription}{ Functions on poly integration}
+  \begin{classmembersdescription} 
+ \classmember{simplex\_poly\_integration(n)}{function}
+  { Give the exact integration method on a simplex of dimension n.}
+  
+ \classmember{convex\_product\_poly\_integration(ppi1, ppi2)}
+  {function}
+  { Give the exact integration method corresponding to the tensorial
+    product of *pp1 and *pp2.}
+  
+ \classmember{parallelepiped\_poly\_integration(n)}{function}
+  { Give the exact integration method on a parallelepiped of dimension n.}
+  
+ \classmember{parallelepiped\_poly\_integration(n)}{function}
+  { Give the exact integration method on a prism of dimension n.}
+  
+  \end{classmembersdescription} \end{functionsdescription} \end{filedescription} 
+ \begin{filedescription}{ Basic GEOmetric Tool }
+             { Approximate integration of polynomials. }
+             { bgeot\_approx\_integration.h }
+    \begin{filepresentation}
+      This unit deals with the approximate integration of polynomials of
+      several variables on a reference element.
+    \end{filepresentation}
+  
+ \begin{classdescription}{approx\_integration}
+   \begin{classdeclaration}
+   \classdecl{approx\_integration pi;}{undefined class.}
+   \end{classdeclaration}
+   \classdesc{ Description of an approximate integration of polynomials.
+       This class 
+       is not to be manipulate by itself. Use papprox\_integration and
+       the functions written to produce the basic descriptions.  }
+    \begin{classmembersdescription} 
+ \classmember{dim()}
+        {const method}{Dimension of reference convex.}
+  
+ \classmember{nb\_points\_on\_convex()}{const method}
+      {Number of integration nodes on the reference element.}
+  
+ \classmember{nb\_points\_on\_face(f)}{const method}
+      {Number of integration nodes on the face f of the 
+       reference element.}
+  
+ \classmember{structure()}{const method}
+      {Structure of the reference element.}
+  
+ \classmember{integration\_points()}{const method}
+      {Gives an array of integration nodes.}
+  
+ \classmember{point(i)}{const method}
+      {Gives the integration node i on the reference element.}
+  
+ \classmember{point\_on\_face(f, i)}{const method}
+      {Gives the integration node i of the face f.}
+  
+ \classmember{integration\_coefficients()}{const method}
+      {Gives an array of the integration coefficients.}
+  
+ \classmember{coeff(i)}{const method}
+      {Gives the integration coefficient corresponding to node i.}
+  
+ \classmember{coeff\_on\_face(f,i)}{const method}
+      {Gives the integration coefficient corresponding to
+       node i of face f.}
+  
+ \end{classmembersdescription} \end{classdescription}
+ \begin{functionsdescription}{ Functions on poly integration}
+  \begin{classmembersdescription} 
+ \classmember{Gauss\_approx\_integration(nbpt)}{function}
+  { Give the Gauss approximate integration method in dimension 1 with
+    nbpt integration nodes.}
+  
+ \classmember{Newton\_Cotes\_approx\_integration(n,k)}{function}
+  { Give the Newton Cotes approximate integration method in simplex of
+    dimension n
+    and of degree k (corresponds to lagrange interpolation).}
+  
+ \classmember{convex\_product\_approx\_integration(pai1, pai2)}
+  {function}
+  { Give the approximate integration method corresponding to the
+    tensorial product of *pai1 and *pai2.}
+  
+  \end{classmembersdescription} \end{functionsdescription} \end{filedescription} 
+ \begin{librarydescription}{ GEneric Tool for Finite Element Methods }
+   The Getfem library is ...
+   \\ \\
+  \end{librarydescription} 
+ \begin{filedescription}{ GEneric Tool for Finite Element Methods }
+             { Description of a complete finite element method on a
+               element }
+             { getfem\_fem.h }
+    \begin{filepresentation}
+      This unit deals with the description of a finite element method
+      being the set of a interpolation method, a geometric transformation
+      and a integration method.
+    \end{filepresentation}
+   
+ \begin{classdescription}{fem}
+   \begin{classdeclaration}
+   \classdecl{fem F;}{undefined fem structure.}
+   \end{classdeclaration}
+   \classdesc{ Description of a finite element method.  This class 
+       is not to be manipulate by itself. Use pfem and
+       the functions written to produce those descriptions.  }
+    \begin{classmembersdescription} 
+ \end{classmembersdescription} \end{classdescription}
+ \begin{functionsdescription}{ Functions on fem descriptions }
+  \begin{classmembersdescription} 
+ \classmember{fem\_exact\_integration(pf, pg, pi)}{function}
+ { Gives a pointer on the structures describing the finite element method
+   determined by the interpolation method pf of type
+   bgeot::pfem\_interpolation, the geometric transformation pg of type 
+   bgeot::pgeometric\_trans and the integration method pi of type 
+   bgeot::ppoly\_integration. }
+  
+ \classmember{fem\_approx\_integration(pf, pg, pi)}{function}
+ { Gives a pointer on the structures describing the finite element method
+   determined by the interpolation method pf of type
+   bgeot::pfem\_interpolation, the geometric transformation pg of type 
+   bgeot::pgeometric\_trans and the integration method pi of type 
+   bgeot::papprox\_integration. }
+  
+ \classmember{fem\_exact\_linear\_PK(n, k)}{function}
+ { Gives a pointer on the structures describing the classical P$_K$ 
+   finite element method of degree K on the simplex of dimension n,
+   with linear geometric transformation and exact integration. }
+  
+ \classmember{fem\_P1\_nonconforming()}{function}
+ { Gives a pointer on the structures describing the non conforming P$_1$ 
+   finite element method on the triangle,
+   with linear geometric transformation and exact integration. }
+  
+  \end{classmembersdescription} \end{functionsdescription} \end{filedescription} 
+ \begin{filedescription}{ GEneric Tool for Finite Element Methods }
+             { Description of an elementary matrix. }
+             { getfem\_mat\_elem\_type.h }
+    \begin{filepresentation}
+      This unit deals with the description of elementary matrices.
+    \end{filepresentation}
+   
+ \begin{classdescription}{mat\_elem\_type}
+   \begin{classdeclaration}
+   \classdecl{mat\_elem\_type met;}{undefined structure.}
+   \end{classdeclaration}
+   \classdesc{ Description of an elementary matrix.  This class 
+       is not to be manipulate by itself. Use pmat\_elem\_type and
+       the functions written to produce those descriptions.  }
+    \begin{classmembersdescription} 
+ \end{classmembersdescription} \end{classdescription}
+ \begin{functionsdescription}{ Functions on elementary matrix descriptions }
+  \begin{classmembersdescription} 
+ \classmember{mat\_elem\_base(pi)}{function}
+ { Gives a pointer on the structures describing the elementary matrix
+   which compute the integral of the basic functions described by pi.
+    pi is of type bgeot::pfem\_interpolation. }
+  
+ \classmember{mat\_elem\_grad(pi)}{function}
+ { Gives a pointer on the structures describing the elementary matrix
+   which compute the integral of the gradient of the basic functions
+    described by pi. pi is of type bgeot::pfem\_interpolation. }
+  
+ \classmember{mat\_elem\_hessian(pi)}{function}
+ { Gives a pointer on the structures describing the elementary matrix
+   which compute the integral of the hessian of the basic functions
+    described by pi. pi is of type bgeot::pfem\_interpolation. }
+  
+ \classmember{mat\_elem\_product(pet1, pet2)}{function}
+ { Gives a pointer on the structures describing the elementary matrix
+   which compute the integral of product of the integrals described by
+   *pet1 and *pet2. }
+  
+  \end{classmembersdescription} \end{functionsdescription} \end{filedescription} 
+ \begin{filedescription}{ GEneric Tool for Finite Element Methods }
+             { Meshes for computation }
+             { getfem\_mesh.h }
+    \begin{filepresentation}
+      This unit define the principal class of meshes for the computation
+      of pde problems.
+    \end{filepresentation}
+  
+ \begin{classdescription}{getfem\_mesh}
+   \begin{classdeclaration}
+   \classdecl{getfem\_mesh  M(n);}{ mesh in dimension n .}
+   \classdecl{getfem\_mesh  M;}{ mesh with undefined dimension.
+      The first point added to the mesh defines the dimension. }
+   \end{classdeclaration}
+   \classdesc{Describe a mesh for the computation of pde problems. This
+      mesh is able to be link with classes which define computation
+      methods. }
+    \begin{classmembersdescription} 
+ \classmember{add\_point(pt)}{method}
+        { Add the point pt to the mesh and return the index of the
+          point. If the point is to close to an existing point, the
+          function do not add the point and return the index of the
+          already existing point. pt should be of type base\_node.}
+  
+ \classmember{nb\_points()}{const method}
+        { Gives the number of points in the mesh. }
+  
+ \classmember{sup\_point(i)}{method}
+        { Delete the point of index i from the mesh. }
+  
+ \classmember{swap\_points(i, j)}{method}
+        { Swap the indexes of points of index i and j in the whole
+          structure. }
+  
+ \classmember{search\_points(pt)}{const method}
+        { Search if the point pt is in (or approximatively in)
+          the mesh, and return the index of the point, or
+          size\_type(-1) if not found. }
+  
+ \classmember{add\_convex(cv)}{method}
+        { Add a convex to the mesh. cv is of type 
+          bgeot::convex$<$base\_node, PT\_TAB$>$. Return the index
+          of the convex in the mesh. }
+  
+ \classmember{add\_convex(cvs, it)}{method}
+        { Add a convex to the mesh. cvs is of type 
+          bgeot::convex\_structure and "it" is an iterator on a list
+          of indexes of points. Return the index
+          of the convex in the mesh.}
+  
+ \classmember{add\_convex\_by\_points(cvs, it)}{method}
+        { Add a convex to the mesh. cvs is of type 
+          bgeot::convex\_structure and "it" is an iterator on a list
+          of points of type base\_node. Return the index
+          of the convex in the mesh.}
+  
+ \classmember{add\_simplex(dim, it)}{method}
+        { Add a simplex of dimension dim to the mesh. 
+          "it" is an iterator on a list of indexes of the points.
+          Return the index of the convex in the mesh.}
+  
+ \classmember{add\_simplex\_by\_points(dim, it)}{method}
+        { Add a simplex of dimension dim to the mesh. 
+          "it" is an iterator on a list of points of type base\_node.
+          Return the index of the convex in the mesh.}
+  
+ \classmember{add\_parallelepiped(dim, it)}{method}
+        { Add a parallelepiped of dimension dim to the mesh. 
+          "it" is an iterator on a list of indexes of the points.
+          Return the index of the convex in the mesh.}
+  
+ \classmember{add\_parallelepiped\_by\_points(dim, it)}{method}
+        { Add a parallelepiped of dimension dim to the mesh. 
+          "it" is an iterator on a list of points of type base\_node.
+          Return the index of the convex in the mesh.}
+  
+ \classmember{add\_parallelepiped\_by\_points(dim, orh, it)}
+        {method}{ Add a parallelepiped of dimension dim to the
+          mesh. org is the point of type base\_node representing
+          the origine and "it" is an iterator on a list of
+          vectors of type base\_vector.
+          Return the index of the convex in the mesh.}
+  
+ \classmember{sup\_convex(i)}{method}
+        { Delete the convex of index i from the mesh.}
+  
+ \classmember{swap\_convex(i,j)}{method}
+        { Swap the indexes of the convex of indexes i and j 
+          in the whole structure.}
+  
+  \end{classmembersdescription} \end{classdescription} 
+  \end{filedescription} 
+ \begin{filedescription}{ GEneric Tool for Finite Element Methods }
+             { Description of a finite element method on a mesh}
+             { getfem\_mesh\_fem.h }
+    \begin{filepresentation}
+      This unit define the structure which describe a finite element
+      method linked to a particular mesh of type getfem\_mesh.
+    \end{filepresentation}
+  
+ \begin{classdescription}{boundary\_description}
+   \begin{classdeclaration}
+   \classdecl{boundary\_description  b;}{ Boudary with no element.}
+   \end{classdeclaration}
+   \classdesc{Describe a boundary as a list of faces of elements. }
+    \begin{classmembersdescription} 
+ \classmember{add\_elt(i, f)}{method}
+        { Add a boudary element from the face f of the convex of index
+          i of the mesh.}
+  
+ \classmember{sup\_elt(i, f)}{method}
+        { Delete a boudary element which is the face f of the convex of 
+          index i of the mesh.}
+  
+ \classmember{sup\_convex(i)}{method}
+        { Delete all boudary element linked with the convex of 
+          index i of the mesh.}
+  
+ \classmember{faces\_of\_convex(i)}{const method}
+        { Gives in a structure dal::bit\_vector all the faces of convex
+          of index i in the boundary.}
+  
+  \end{classmembersdescription} \end{classdescription} 
+ \begin{classdescription}{mesh\_fem}
+   \begin{classdeclaration}
+   \classdecl{mesh\_fem  mf(me);}{ Fem descritpion linked to the mesh me.}
+   \end{classdeclaration}
+   \classdesc{Describe a finite element method linked to a mesh. }
+    \begin{classmembersdescription} 
+ \classmember{convex\_index()}{const method}
+        { Gives in a structure dal::bit\_vector all convexes of the
+          mesh where a finite element is defined.}
+  
+ \classmember{linked\_mesh()}{const method}
+        { Gives a pointer to the linked mesh of type getfem\_mesh.}
+  
+ \classmember{set\_finite\_element(i, pf)}{method}
+        { Set on the convex of index i the finite element method
+          with the description pf which is of type pfem.}
+  
+ \classmember{set\_finite\_element(bv, pf)}{method}
+        { Set on all the convexes of indexes in bv, which is of type
+          dal::bit\_vector, the finite element method
+          with the description pf which is of type pfem.}
+  
+ \classmember{mat\_elem(pm, t, i)}{method}
+        { Compute the elementary matrix of type pm (pmat\_elem\_type)
+           on convex of index i. The result is in t (base\_tensor). }
+  
+ \classmember{mat\_elem\_on\_face(pm, t, i, f)}{method}
+        { Compute the elementary matrix of type pm (pmat\_elem\_type)
+           on the face f of the convex of index i.
+           The result is in t (base\_tensor). }
+  
+ \classmember{mat\_elem(me, t, i)}{method}
+        { Compute the elementary matrix ofclassical type me
+          (classical\_mat\_elem)
+           on convex of index i. The result is in t (base\_tensor). }
+  
+ \classmember{mat\_elem\_on\_face(me, t, i)}{method}
+        { Compute the elementary matrix of classical type me
+          (classical\_mat\_elem)
+           on the face f of the convex of index i.
+           The result is in t (base\_tensor). }
+  
+ \classmember{ind\_dof\_of\_element(i)}{method}
+        { Gives an array of the degrees of freedom of the element
+           of the convex of index i. }
+  
+ \classmember{nb\_dof\_of\_element(i)}{method}
+        { Gives the number of  degrees of freedom of the element
+           of the convex of index i. }
+  
+ \classmember{point\_of\_dof(cv, i)}{const method}
+        { Gives the point (base\_node)  cooresponding to the 
+          degree of freedom i  of the element of index cv. }
+  
+ \classmember{point\_of\_dof(i)}{const method}
+        { Gives the point (base\_node)  cooresponding to the 
+          degree of freedom with global index i. }
+  
+ \classmember{nb\_dof()}{method}
+        { Gives the total number of degrees of freedom. }
+  
+ \classmember{add\_boudary\_elt(b, i, f)}{method}
+        { Add to the boundary b the face f of the element i. }
+  
+ \classmember{is\_convex\_on\_boudary(i, b)}{method}
+        { Says whether or not element i is on the boundary b. }
+  
+  \end{classmembersdescription} \end{classdescription} 
+  \end{filedescription} 
 
 \end{document}
