@@ -52,7 +52,7 @@ namespace gmm {
   // tol_vp : tolerance on the ritz values.
 
   template < class Mat, class Vec, class VecB, class Precond, class Basis >
-  void gmres(const Mat &A, Vec &x, const VecB &b, const Precond &M,
+  void idgmres(const Mat &A, Vec &x, const VecB &b, const Precond &M,
 	     int restart, int p, int k, double tol_vp,
 	     iteration &outer, Basis& KS) {
 
@@ -123,7 +123,7 @@ namespace gmm {
 
 
   template < class Mat, class Vec, class VecB, class Precond >
-  void gmres(const Mat &A, Vec &x, const VecB &b,
+  void idgmres(const Mat &A, Vec &x, const VecB &b,
 	     const Precond &M, int restart, iteration& outer) {
     typedef typename linalg_traits<Mat>::value_type T;
     modified_gram_schmidt<T> orth(restart, vect_size(x));
