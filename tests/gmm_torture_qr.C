@@ -2,6 +2,9 @@
 // SQUARED_MATRIX_PARAM
 // ENDPARAM;
 
+#include <gmm_kernel.h>
+#include <gmm_dense_lu.h>
+#include <gmm_dense_qr.h>
 
 using gmm::size_type;
 
@@ -170,9 +173,10 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
 
   for (size_type l = 0; l < m; ++l) {
     bool found = false;
-     for (size_type k = 0; k < m; ++k)
-       if (gmm::abs(eigc[l] - cv[k]) < sqrt(sqrt(tol))*(gmm::abs(eigc[l])+1.0))
-	 { cv[k] = -1.123236; found = true; break; }
+     for (size_type kk = 0; kk < m; ++kk)
+       if (gmm::abs(eigc[l] - cv[kk]) <
+	   sqrt(sqrt(prec))*(gmm::abs(eigc[l])+1.0))
+	 { cv[kk] = -1.123236; found = true; break; }
      if (found == false) {
        cerr << "Eigenvalue " << l << " not found\n" << std::flush;
        DAL_THROW(gmm::failure_error, "Error on QR algorithm.");
@@ -226,9 +230,10 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2) {
 
   for (size_type l = 0; l < m; ++l) {
     bool found = false;
-     for (size_type k = 0; k < m; ++k)
-       if (gmm::abs(eigcr[l]-cvr[k])< sqrt(sqrt(tol))*(gmm::abs(eigcr[l])+1.0))
-	 { cvr[k] = -1.123236; found = true; break; }
+     for (size_type kk = 0; kk < m; ++kk)
+       if (gmm::abs(eigcr[l]-cvr[kk]) <
+	   sqrt(sqrt(prec))*(gmm::abs(eigcr[l])+1.0))
+	 { cvr[kk] = -1.123236; found = true; break; }
      if (found == false) {
        cerr << "Eigenvalue " << l << " not found\n" << std::flush;
        DAL_THROW(gmm::failure_error, "Error on QR algorithm.");

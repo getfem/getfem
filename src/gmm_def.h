@@ -492,20 +492,51 @@ namespace gmm {
   /* ********************************************************************* */
 
   template <typename IT, typename ORG, typename VECT> inline
-  void set_to_begin(IT &it, ORG o, VECT *)
+  void set_to_begin(IT &it, ORG o, VECT *, linalg_false)
   { it = vect_begin(*o); }
 
   template <typename IT, typename ORG, typename VECT> inline
-  void set_to_begin(IT &it, ORG o, const VECT *) 
+  void set_to_begin(IT &it, ORG o, const VECT *, linalg_false) 
   { it = vect_const_begin(*o); }
 
   template <typename IT, typename ORG, typename VECT> inline
-  void set_to_end(IT &it, ORG o, VECT *)
+  void set_to_end(IT &it, ORG o, VECT *, linalg_false)
   { it = vect_end(*o); }
   
   template <typename IT, typename ORG, typename VECT> inline
-  void set_to_end(IT &it, ORG o, const VECT *)
+  void set_to_end(IT &it, ORG o, const VECT *, linalg_false)
   { it = vect_const_end(*o); }
+
+
+  template <typename IT, typename ORG, typename VECT> inline
+  void set_to_begin(IT &, ORG, VECT *, linalg_const) { }
+
+  template <typename IT, typename ORG, typename VECT> inline
+  void set_to_begin(IT &, ORG, const VECT *, linalg_const) { }
+
+  template <typename IT, typename ORG, typename VECT> inline
+  void set_to_end(IT &, ORG, VECT *, linalg_const) { }
+  
+  template <typename IT, typename ORG, typename VECT> inline
+  void set_to_end(IT &, ORG, const VECT *, linalg_const) { }
+
+
+  template <typename IT, typename ORG, typename VECT> inline
+  void set_to_begin(IT &, ORG, VECT *, linalg_modifiable)
+  { DAL_THROW(internal_error, "internal_error"); }
+
+  template <typename IT, typename ORG, typename VECT> inline
+  void set_to_begin(IT &, ORG, const VECT *, linalg_modifiable) 
+  { DAL_THROW(internal_error, "internal_error"); }
+
+  template <typename IT, typename ORG, typename VECT> inline
+  void set_to_end(IT &, ORG, VECT *, linalg_modifiable)
+  { DAL_THROW(internal_error, "internal_error"); }
+  
+  template <typename IT, typename ORG, typename VECT> inline
+  void set_to_end(IT &, ORG, const VECT *, linalg_modifiable)
+  { DAL_THROW(internal_error, "internal_error"); }
+
 
   /* ********************************************************************* */
   /*   Comparison of origins.                                              */

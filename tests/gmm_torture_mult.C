@@ -86,8 +86,12 @@ void test_procedure2(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2,
 
 template <typename MAT1 , typename MAT2, typename VECT1, typename VECT2,
 	  typename VECT3, typename VECT4>
-void test_procedure(const MAT1 &_m1, const VECT1 &v1, const VECT2 &v2, 
-		    const MAT2 &_m2, const VECT3 &v3, const VECT4 &v4) {
+void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2, 
+		    const MAT2 &_m2, const VECT3 &_v3, const VECT4 &_v4) {
+  VECT1 &v1 = const_cast<VECT1 &>(_v1);
+  VECT2 &v2 = const_cast<VECT2 &>(_v2);
+  VECT3 &v3 = const_cast<VECT3 &>(_v3);
+  VECT4 &v4 = const_cast<VECT4 &>(_v4);
   MAT1  &m1 = const_cast<MAT1  &>(_m1);
   MAT2  &m2 = const_cast<MAT2  &>(_m2);
   typedef typename gmm::linalg_traits<MAT1>::value_type T;
@@ -104,10 +108,13 @@ void test_procedure(const MAT1 &_m1, const VECT1 &v1, const VECT2 &v2,
   test_procedure2(mm1, v1, v2, mm2, v3, v4);
 
   size_type mm = m / 2, nn = n / 2;
-  test_procedure2(gmm::sub_matrix(mm1, gmm::sub_interval(0, mm),
-				  gmm::sub_interval(0, mm)), v1, v2,
-		  gmm::sub_matrix(mm2, gmm::sub_interval(0, mm),
-				  gmm::sub_interval(0, nn)), v3, v4);
+  gmm::sub_interval SUBI(0, mm), SUBJ(0, nn); 
+  test_procedure2(gmm::sub_matrix(mm1, SUBI),
+		  gmm::sub_vector(v1, SUBI),
+		  gmm::sub_vector(v2, SUBI),
+		  gmm::sub_matrix(mm2, SUBI, SUBJ),
+		  gmm::sub_vector(v3, SUBJ),
+		  gmm::sub_vector(v4, SUBJ));
 
   gmm::add(gmm::scaled(mm1, T(-1)), m1);
   gmm::add(gmm::scaled(mm2, T(-1)), m2);

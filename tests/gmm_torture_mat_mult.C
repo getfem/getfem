@@ -3,6 +3,7 @@
 // RECTANGULAR_MATRIX_PARAM;
 // ENDPARAM;
 
+#include <gmm_kernel.h>
 
 using gmm::size_type;
 

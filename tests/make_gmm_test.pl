@@ -103,7 +103,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     open(DATAF, $org_name) or die "Open input file impossible : $!\n";
     open(TMPF, ">$dest_name") or die "Open output file impossible : $!\n";
 
-    print TMPF "#include<gmm.h>\n\n\n";
+    print TMPF "\n\n";
 
     if ($with_qd) {
       print TMPF "#define NO_INLINE\n";
@@ -164,7 +164,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     while ($li = <DATAF>) { print TMPF $li; }
     $sizep = int($size_max*rand());
     $theseed = int(10000.0*rand());
-    print "Parameters for the test:\n";
+#    print "Parameters for the test:\n";
     print TMPF "\n\n\n";
     print TMPF "int main(void) {\n\n";
     if ($with_qd) {
@@ -297,7 +297,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 	}
 	$sizep = $s;
       }
-      print "$li ($param_name[$j])\n";
+#      print "$li ($param_name[$j])\n";
     }
     print TMPF "    \n\n    test_procedure($param_name[0]";
     for ($j = 1; $j < $nb_param; ++$j) { print TMPF ", $param_name[$j]"; }

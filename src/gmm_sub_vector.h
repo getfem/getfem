@@ -89,34 +89,38 @@ namespace gmm {
   template <typename IT, typename MIT, typename SUBI, typename ORG,
 	    typename VECT> inline
   void set_to_begin(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
-		    ORG o, VECT *) {
-    set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV());
-    set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV());
+		    ORG o, VECT *, linalg_modifiable) {
+    typedef typename linalg_traits<VECT>::V_reference ref_t;
+    set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV(), ref_t());
+    set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV(), ref_t());
     it.forward();
   }
   template <typename IT, typename MIT, typename SUBI, typename ORG,
 	    typename VECT> inline
   void set_to_begin(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
-		    ORG o, const VECT *) {
-    set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV());
-    set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV());
+		    ORG o, const VECT *, linalg_modifiable) {
+    typedef typename linalg_traits<VECT>::V_reference ref_t;
+    set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV(), ref_t());
+    set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV(), ref_t());
     it.forward();
   }
   
   template <typename IT, typename MIT, typename SUBI, typename ORG,
 	    typename VECT> inline
   void set_to_end(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
-		    ORG o, VECT *) {
-    set_to_end(it.itb, o, typename linalg_traits<VECT>::pV());
-    set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV());
+		    ORG o, VECT *, linalg_modifiable) {
+    typedef typename linalg_traits<VECT>::V_reference ref_t;
+    set_to_end(it.itb, o, typename linalg_traits<VECT>::pV(), ref_t());
+    set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV(), ref_t());
     it.forward();
   }
   template <typename IT, typename MIT, typename SUBI, typename ORG,
 	    typename VECT> inline
   void set_to_end(sparse_sub_vector_iterator<IT, MIT, SUBI> &it,
-		    ORG o, const VECT *) {
-    set_to_end(it.itb, o, typename linalg_traits<VECT>::pV());
-    set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV());
+		    ORG o, const VECT *, linalg_modifiable) {
+    typedef typename linalg_traits<VECT>::V_reference ref_t;
+    set_to_end(it.itb, o, typename linalg_traits<VECT>::pV(), ref_t());
+    set_to_end(it.itbe, o, typename linalg_traits<VECT>::pV(), ref_t());
     it.forward();
   }
   
@@ -155,6 +159,7 @@ namespace gmm {
     typedef this_type * pthis_type;
     typedef PT pV;
     typedef typename std::iterator_traits<PT>::value_type V;
+    typedef typename linalg_traits<V>::is_reference V_reference;
     typedef typename linalg_traits<V>::origin_type origin_type;
     typedef typename select_ref<const origin_type *, origin_type *,
 			        PT>::ref_type porigin_type;
@@ -176,14 +181,14 @@ namespace gmm {
       iterator it;
       it.itb = v._begin; it.itbe = v._end; it.si = v.si;
       if (!is_const_reference(is_reference()))
-	set_to_begin(it, v.origin, pthis_type());
+	set_to_begin(it, v.origin, pthis_type(), is_reference());
       else it.forward();
       return it;
     }
     static const_iterator begin(const this_type &v) {
       const_iterator it; it.itb = v._begin; it.itbe = v._end; it.si = v.si;
       if (!is_const_reference(is_reference()))
-	{ set_to_begin(it, v.origin, pthis_type()); }
+	{ set_to_begin(it, v.origin, pthis_type(), is_reference()); }
       else it.forward();
       return it;
     }
@@ -191,14 +196,14 @@ namespace gmm {
       iterator it;
       it.itb = v._end; it.itbe = v._end; it.si = v.si;
       if (!is_const_reference(is_reference()))
-	set_to_end(it, v.origin, pthis_type());
+	set_to_end(it, v.origin, pthis_type(), is_reference());
       else it.forward();
       return it;
     }
     static const_iterator end(const this_type &v) {
       const_iterator it; it.itb = v._end; it.itbe = v._end; it.si = v.si;
       if (!is_const_reference(is_reference()))
-	set_to_end(it, v.origin, pthis_type());
+	set_to_end(it, v.origin, pthis_type(), is_reference());
       else it.forward();
       return it;
     }
@@ -299,38 +304,42 @@ namespace gmm {
   template <typename IT, typename MIT, typename SUBI, typename ORG,
 	    typename VECT> inline
   void set_to_begin(skyline_sub_vector_iterator<IT, MIT, SUBI> &it,
-		    ORG o, VECT *) {
+		    ORG o, VECT *, linalg_modifiable) {
+    typedef typename linalg_traits<VECT>::V_reference ref_t;
     IT itbe = it.itb;
-    set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV());
-    set_to_end(itbe, o, typename linalg_traits<VECT>::pV());
+    set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV(), ref_t());
+    set_to_end(itbe, o, typename linalg_traits<VECT>::pV(), ref_t());
     update_for_sub_skyline(it.itb, itbe, it.si);
   }
   template <typename IT, typename MIT, typename SUBI, typename ORG,
 	    typename VECT> inline
   void set_to_begin(skyline_sub_vector_iterator<IT, MIT, SUBI> &it,
-		    ORG o, const VECT *) {
+		    ORG o, const VECT *, linalg_modifiable) {
+    typedef typename linalg_traits<VECT>::V_reference ref_t;
     IT itbe = it.itb;
-    set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV());
-    set_to_end(itbe, o, typename linalg_traits<VECT>::pV());
+    set_to_begin(it.itb, o, typename linalg_traits<VECT>::pV(), ref_t());
+    set_to_end(itbe, o, typename linalg_traits<VECT>::pV(), ref_t());
     update_for_sub_skyline(it.itb, itbe, it.si);
   }
   
   template <typename IT, typename MIT, typename SUBI, typename ORG,
 	    typename VECT> inline
   void set_to_end(skyline_sub_vector_iterator<IT, MIT, SUBI> &it,
-		    ORG o, VECT *) {
+		    ORG o, VECT *, linalg_modifiable) {
+    typedef typename linalg_traits<VECT>::V_reference ref_t;
     IT itb = it.itb;
-    set_to_begin(itb, o, typename linalg_traits<VECT>::pV());
-    set_to_end(it.itb, o, typename linalg_traits<VECT>::pV());
+    set_to_begin(itb, o, typename linalg_traits<VECT>::pV(), ref_t());
+    set_to_end(it.itb, o, typename linalg_traits<VECT>::pV(), ref_t());
     update_for_sub_skyline(itb, it.itb, it.si);
   }
   template <typename IT, typename MIT, typename SUBI, typename ORG,
 	    typename VECT> inline
   void set_to_end(skyline_sub_vector_iterator<IT, MIT, SUBI> &it,
-		    ORG o, const VECT *) {
+		    ORG o, const VECT *, linalg_modifiable) {
+    typedef typename linalg_traits<VECT>::V_reference ref_t;
     IT itb = it.itb;
-    set_to_begin(itb, o, typename linalg_traits<VECT>::pV());
-    set_to_end(it.itb, o, typename linalg_traits<VECT>::pV());
+    set_to_begin(itb, o, typename linalg_traits<VECT>::pV(), ref_t());
+    set_to_end(it.itb, o, typename linalg_traits<VECT>::pV(), ref_t());
     update_for_sub_skyline(itb, it.itb, it.si);   
   }
 
@@ -373,6 +382,7 @@ namespace gmm {
     typedef skyline_sub_vector<PT, SUBI> this_type;
     typedef this_type *pthis_type;
     typedef typename std::iterator_traits<PT>::value_type V;
+    typedef typename linalg_traits<V>::is_reference V_reference;
     typedef typename linalg_traits<V>::origin_type origin_type;
     typedef typename select_ref<const origin_type *, origin_type *,
 			        PT>::ref_type porigin_type;
@@ -397,26 +407,26 @@ namespace gmm {
       iterator it;
       it.itb = v._begin; it.si = v.si;
       if (!is_const_reference(is_reference()))
-	set_to_begin(it, v.origin, pthis_type());
+	set_to_begin(it, v.origin, pthis_type(), is_reference());
       return it;
     }
     static const_iterator begin(const this_type &v) {
       const_iterator it; it.itb = v._begin; it.si = v.si;
       if (!is_const_reference(is_reference()))
-	{ set_to_begin(it, v.origin, pthis_type()); }
+	{ set_to_begin(it, v.origin, pthis_type(), is_reference()); }
       return it;
     }
     static iterator end(this_type &v) {
       iterator it;
       it.itb = v._end; it.si = v.si;
       if (!is_const_reference(is_reference()))
-	set_to_end(it, v.origin, pthis_type());
+	set_to_end(it, v.origin, pthis_type(), is_reference());
       return it;
     }
     static const_iterator end(const this_type &v) {
       const_iterator it; it.itb = v._end; it.si = v.si;
       if (!is_const_reference(is_reference()))
-	set_to_end(it, v.origin, pthis_type());
+	set_to_end(it, v.origin, pthis_type(), is_reference());
       return it;
     }
     static origin_type* origin(this_type &v) { return v.origin; }

@@ -103,27 +103,39 @@ namespace gmm {
   };
 
   template <typename IT, typename ORG, typename PT> inline
-  void set_to_begin(IT it, ORG o, simple_vector_ref<PT> *)
-  { set_to_begin(it, o, PT()); }
+  void set_to_begin(IT it, ORG o, simple_vector_ref<PT> *, linalg_modifiable) {
+    typedef typename linalg_traits<simple_vector_ref<PT> >::V_reference ref_t;
+    set_to_begin(it, o, PT(), ref_t());
+  }
 
   template <typename IT, typename ORG, typename PT> inline
-  void set_to_begin(IT it, ORG o, const simple_vector_ref<PT> *)
-  { set_to_begin(it, o, PT()); }
+  void set_to_begin(IT it, ORG o, const simple_vector_ref<PT> *,
+		    linalg_modifiable) {
+    typedef typename linalg_traits<simple_vector_ref<PT> >::V_reference ref_t;
+    set_to_begin(it, o, PT(), ref_t());
+  }
 
   template <typename IT, typename ORG, typename PT> inline
-  void set_to_end(IT it, ORG o, simple_vector_ref<PT> *)
-  { set_to_end(it, o, PT()); }
+  void set_to_end(IT it, ORG o, simple_vector_ref<PT> *, linalg_modifiable) {
+    typedef typename linalg_traits<simple_vector_ref<PT> >::V_reference ref_t;
+    set_to_end(it, o, PT(), ref_t());
+  }
 
   template <typename IT, typename ORG, typename PT> inline
-  void set_to_end(IT it, ORG o, const simple_vector_ref<PT> *)
-  { set_to_end(it, o, PT()); }
+  void set_to_end(IT it, ORG o, const simple_vector_ref<PT> *,
+		  linalg_modifiable) {
+    typedef typename linalg_traits<simple_vector_ref<PT> >::V_reference ref_t;
+    set_to_end(it, o, PT(), ref_t());
+  }
 
 
   template <typename PT> struct linalg_traits<simple_vector_ref<PT> > {
     typedef simple_vector_ref<PT> this_type;
+    typedef this_type *pthis_type;
     typedef typename std::iterator_traits<PT>::value_type V;
     typedef typename linalg_traits<V>::origin_type origin_type;
     typedef V *pV;
+    typedef typename linalg_traits<V>::is_reference V_reference;
     typedef typename which_reference<PT>::is_reference is_reference;
     typedef abstract_vector linalg_type;
     typedef typename linalg_traits<V>::value_type value_type;
@@ -138,23 +150,23 @@ namespace gmm {
     static size_type size(const this_type &v) { return v._size; }
     static inline iterator begin(this_type &v) {
       iterator it = v._begin;
-      if (!is_const_reference(is_reference()))
-	  set_to_begin(it, v.origin, pV()); return it;
+      set_to_begin(it, v.origin, pthis_type(), is_reference()); 
+      return it;
     }
     static inline const_iterator begin(const this_type &v) {
       const_iterator it = v._begin;
-      if (!is_const_reference(is_reference()))
-	  set_to_begin(it, v.origin, pV()); return it;
+      set_to_begin(it, v.origin, pthis_type(), is_reference());
+      return it;
     }
     static inline iterator end(this_type &v) {
       iterator it = v._end;
-      if (!is_const_reference(is_reference()))
-	  set_to_end(it, v.origin, pV()); return it;
+      set_to_end(it, v.origin, pthis_type(), is_reference());
+      return it;
     }
     static inline const_iterator end(const this_type &v) {
       const_iterator it = v._end;
-      if (!is_const_reference(is_reference()))
-	  set_to_end(it, v.origin, pV()); return it;
+      set_to_end(it, v.origin, pthis_type(), is_reference());
+      return it;
     }
     static origin_type* origin(this_type &v) { return v.origin; }
     static const origin_type* origin(const this_type &v) { return v.origin; }
@@ -485,7 +497,7 @@ namespace gmm {
     typedef typename std::iterator_traits<PT1>::reference  reference;
     typedef size_t        size_type;
     typedef ptrdiff_t     difference_type;
-    typedef std::forward_iterator_tag iterator_category;
+    typedef std::bidirectional_iterator_tag iterator_category;
     typedef cs_vector_ref_iterator<PT1, PT2, shift> iterator;
     
     cs_vector_ref_iterator(void) {}
@@ -494,6 +506,8 @@ namespace gmm {
     inline size_type index(void) const { return (*ir) - shift; }
     iterator &operator ++() { ++pr; ++ir; return *this; }
     iterator operator ++(int) { iterator tmp = *this; ++(*this); return tmp; }
+    iterator &operator --() { --pr; --ir; return *this; }
+    iterator operator --(int) { iterator tmp = *this; --(*this); return tmp; }
     
     reference operator  *() const { return *pr; }
     pointer   operator ->() const { return pr; }

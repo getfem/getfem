@@ -4,6 +4,9 @@
 // ENDPARAM;
 
 
+#include <gmm_kernel.h>
+#include <gmm_dense_lu.h>
+
 using gmm::size_type;
 
 template <typename MAT1, typename VECT1, typename VECT2>

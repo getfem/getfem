@@ -77,13 +77,13 @@ namespace gmm {
 
   template <typename V> inline
   typename select_return<typename linalg_traits<V>::const_iterator,
-    typename linalg_traits<V>::iterator, V *>::return_type
+           typename linalg_traits<V>::iterator, V *>::return_type
   vect_begin(V &v)
   { return linalg_traits<V>::begin(linalg_cast(v)); }
 
   template <typename V> inline
   typename select_return<typename linalg_traits<V>::const_iterator,
-    typename linalg_traits<V>::iterator, const V *>::return_type
+	   typename linalg_traits<V>::iterator, const V *>::return_type
   vect_begin(const V &v)
   { return linalg_traits<V>::begin(linalg_cast(v)); }
 
@@ -459,7 +459,8 @@ namespace gmm {
   template <typename V1, typename V2> inline
     typename linalg_traits<V1>::value_type
     vect_sp(const V1 &v1, const V2 &v2, abstract_dense, abstract_dense) {
-    return _vect_sp_dense(vect_const_begin(v1), vect_const_end(v1), vect_const_begin(v2));
+    return _vect_sp_dense(vect_const_begin(v1), vect_const_end(v1),
+			  vect_const_begin(v2));
   }
 
   template <typename V1, typename V2> inline
@@ -492,7 +493,7 @@ namespace gmm {
     size_type l = std::max(it1.index(), it2.index());
 
     if (l < n) {
-      size_type m = it1.index() - l, p = it2.index() - l, q = m + n - l;
+      size_type m = l - it1.index(), p = l - it2.index(), q = m + n - l;
       return _vect_sp_dense(it1+m, it1+q, it2 + p);
     }
     return T(0);
@@ -1540,9 +1541,7 @@ namespace gmm {
       mult_spec(l1, l2, l3, l4, typename principal_orientation_type<typename
 		linalg_traits<L1>::sub_orientation>::potype());
     else {
-      #ifdef GMM_VERIFY
-        DAL_WARNING(2, "Warning, A temporary is used for mult\n");
-      #endif
+      DAL_WARNING(2, "Warning, A temporary is used for mult\n");
       typename temporary_vector<L4>::vector_type temp(vect_size(l3));
       mult_spec(l1,l2,l3, temp, typename principal_orientation_type<typename
 		linalg_traits<L1>::sub_orientation>::potype());
@@ -1726,26 +1725,26 @@ namespace gmm {
 
   template <typename L1, typename L2, typename L3>
   void mult_dispatch(const L1& l1, const L2& l2, L3& l3, abstract_matrix) {
+    typedef typename temporary_matrix<L3>::matrix_type temp_mat_type;
+
     if (mat_ncols(l1) != mat_nrows(l2) || mat_nrows(l1) != mat_nrows(l3)
 	|| mat_ncols(l2) != mat_ncols(l3))
       DAL_THROW(dimension_error,"dimensions mismatch");
-    if (!same_origin(l2, l3))
+
+    if (same_origin(l2, l3) || same_origin(l1, l3)) {
+      DAL_WARNING(2, "A temporary is used for mult");
+      temp_mat_type temp(mat_nrows(l3), mat_ncols(l3));
+      mult_spec(l1, l2, temp, typename mult_t<
+		typename linalg_traits<L1>::sub_orientation,
+		typename linalg_traits<L2>::sub_orientation,
+		typename linalg_traits<temp_mat_type>::sub_orientation>::t());
+      copy(temp, l3);
+    }
+    else
       mult_spec(l1, l2, l3, typename mult_t<
 		typename linalg_traits<L1>::sub_orientation,
 		typename linalg_traits<L2>::sub_orientation,
 		typename linalg_traits<L3>::sub_orientation>::t());
-    else {
-      #ifdef GMM_VERIFY
-        DAL_WARNING(2, "A temporary is used for mult");
-      #endif
-      typename temporary_matrix<L3>::matrix_type
-	temp(mat_nrows(l3), mat_ncols(l3));
-      mult_spec(l1, l2, temp, typename mult_t<
-		typename linalg_traits<L1>::sub_orientation,
-		typename linalg_traits<L2>::sub_orientation,
-		typename linalg_traits<L3>::sub_orientation>::t());
-      copy(temp, l3);
-    }
   }
 
   // Completely generic but inefficient
