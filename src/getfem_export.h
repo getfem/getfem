@@ -553,11 +553,8 @@ namespace getfem
     for (cv << nn; cv != ST_NIL; cv << nn)
     {
       bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
-      //cout << "dealing with convex " << cv << " remaining " << nn.card() << endl;
       nb = gti.points_in_convex(mf.linked_mesh().convex(cv),
-			    mf.linked_mesh().trans_of_convex(cv), ptab, itab);
-      //cout << "nb points in this convex " << nb << endl;
-      // cout << "convex : " << mf.linked_mesh().convex(cv) << endl;
+				pgt, ptab, itab);
       pfem pfe = mf.fem_of_element(cv);
       if (pfe->need_G()) 
 	transfert_to_G(G, mf.linked_mesh().points_of_convex(cv));
@@ -565,7 +562,6 @@ namespace getfem
       coeff.resize(nbd1);
       for (size_type i = 0; i < nb; ++i)
       {
-	// cout << "dealing with ddl : " << itab[i] << "  coords : " << mf_target.point_of_dof(itab[i]) << " internal coords : " << ptab[i] << endl;
 	if (ddl_touched[itab[i]])
 	{ // inverser les deux boucles pour gagner du temps ?
 	  // Il faut verifier que le ddl est bien de Lagrange ...
@@ -578,8 +574,6 @@ namespace getfem
 	    pfe->interpolation(ptab[i], G, pgt, coeff, val);
 	    pt3[k] = val[0];
 	  }
-	  
-	  // cout << "Résultat : " << pt3 << endl;
 	  for (size_type j = 0; j < P; ++j) V[itab[i]*P+j] = pt3[j];
 	  ddl_touched.sup(itab[i]);
 	}
