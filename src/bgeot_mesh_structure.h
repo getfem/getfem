@@ -148,6 +148,7 @@ namespace bgeot
     
     value_type front(void) const { return *_begin; }
     void pop_front(void) { ++_begin; }
+    size_type size() { size_type n=0; for (iterator i = begin(); i != end(); ++i) ++n; return n; }
   };
   
   /* ********************************************************************* */
@@ -228,6 +229,10 @@ namespace bgeot
     template<class ITER> 
       bool is_convex_face_has_points(size_type ic, size_type face_num,
 				     short_type nb, ITER pit) const;
+
+    /**
+       return a container of the (global) point number for face f or convex ic
+    */
     ind_ref_mesh_point_ind_ct ind_points_of_face_of_convex(size_type ic,
 							   short_type f) const;
     
