@@ -1,8 +1,8 @@
 #!/usr/bin/perl
 
-
 $fis = `cd $ARGV[0]; ls *.h`;
 $nb_file = 0;
+
 
 while($fis)
 {

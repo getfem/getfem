@@ -1,6 +1,5 @@
 #!/usr/bin/perl
 
-
 $rootlib = `pwd`; chomp($rootlib);
 $machine = `uname -m`; chomp($machine);
 $systeme = `uname -s`; chomp($systeme); $systeme .= `uname -r`;chomp($systeme);
