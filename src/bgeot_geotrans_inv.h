@@ -200,7 +200,7 @@ namespace bgeot
       // cout << "fini ... " << endl;
       
     }
-    else { // partie non testée
+    else { 
       for (size_type i = 0; i < N; ++i)
 	{ scalar_type e = (max[i]-min[i]) * 0.2;  min[i] -= e; max[i] += e; }
       size_type nbib = points_in_box(pts, min, max);
