@@ -319,8 +319,10 @@ namespace gmm {
       Create_Dense_Matrix(&SB, m, 1, &rhs[0], m);
       Create_Dense_Matrix(&SX, m, 1, &sol[0], m);
 
-      if (info != 0)
+      if (info != 0) {
+	cout << "Mat = " << csc_A << endl;
 	DAL_THROW(failure_error, "SuperLU solve failed: info=" << info);
+      }
       is_init = true;
     }
     
@@ -354,8 +356,9 @@ namespace gmm {
 		    &ferr[0] /* estimated forward error             */,
 		    &berr[0] /* relative backward error             */,
 		    &stat, &info, T());
-      if (info != 0)
+      if (info != 0) {
 	DAL_THROW(failure_error, "SuperLU solve failed: info=" << info);
+      }
       gmm::copy(sol, X);
     }
 

@@ -67,6 +67,7 @@ namespace gmm {
     mult(A, scaled(x, -T(1)), b, w);
     mult(M, w, r);
     beta = gmm::vect_norm2(r);
+    int blocked = 0;
 
     iteration inner = outer;
     inner.reduce_noisy();
@@ -95,13 +96,16 @@ namespace gmm {
 	Apply_Givens_rotation_left(s[i], s[i+1], c_rot[i], s_rot[i]);
 	
 	++inner, ++outer, ++i;
-      } while (! inner.finished(gmm::abs(s[i]))); 
+      } while (! inner.finished(gmm::abs(s[i])));
+
+      if (int(inner.get_iteration()) < restart -1) ++blocked;
 
       gmm::upper_tri_solve(H, s, i, false);
       gmm::combine(KS, s, x, i);
       gmm::mult(A, gmm::scaled(x, -T(1)), b, w);
       gmm::mult(M, w, r);
       beta = gmm::vect_norm2(r);
+      if (blocked > 10) { cout << "Gmres is blocked, exiting\n"; break; }
     }
   }
 

@@ -279,7 +279,7 @@ namespace gmm {
       itebilan = std::max(itebilan, M.iter.get_iteration());
     }
     localtoglobal(M.gi, q, *(M.vB));
-    cout << "itebloc = " << itebilan << endl;
+    if (M.iter.get_noisy() > 0) cout << "itebloc = " << itebilan << endl;
     M.itebilan += itebilan;
     M.iter.set_resmax((M.iter.get_resmax() + M.residu) * 0.5);
   }
@@ -381,7 +381,7 @@ namespace gmm {
   template <typename Matrix1, typename Matrix2, typename Vector2,
 	    typename Vector3, typename Precond, typename global_solver>
   int sequential_additive_schwarz(const Matrix1 &A, Vector3 &u,
-      const Vector2 &f, const Precond &P, const std::vector<Matrix2> &vB,
+      const Vector2 &f, const Precond &, const std::vector<Matrix2> &vB,
       iteration &iter, const using_superlu&, const global_solver& GS) {
     typedef typename linalg_traits<Matrix1>::value_type value_type;
     return sequential_additive_schwarz_pr(A, u, f,SuperLU_factor<value_type>(),
