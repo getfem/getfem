@@ -4,6 +4,20 @@
 using bgeot::size_type;
 using bgeot::dim_type;
 using bgeot::short_type;
+
+/* ugly remplacement for "pre-qdim era" interpolation
+ * ( contrib/compare_solutions uses that.. ) */
+template<class VECT>
+void interpolation_solution(getfem::mesh_fem &mf, const getfem::mesh_fem &mf_target,
+			    const VECT &U, VECT &V, dim_type P) {
+  if (mf.get_qdim() == 1) {
+    mf.set_qdim(P);
+    getfem::interpolation_solution(mf,mf_target,U,V); mf.set_qdim(1);
+  }
+  else getfem::interpolation_solution(mf,mf_target,U,V);
+}
+
+
 void err_msg(void)
 {
   cerr << "Bad format for arguments of command compare_solutions\n";
@@ -92,7 +106,7 @@ int main(int argc, char *argv[])
 	   << " on the mesh of " << fi2 << endl;
       U3.resize(mef2.nb_dof() * P1);
       getfem::scalar_type errin = 0.0;
-      getfem::interpolation_solution(mef1, mef2, U1, U3, P1);
+      interpolation_solution(mef1, mef2, U1, U3, P1);
       std::vector<getfem::scalar_type>::iterator it=U3.begin(), ite = U3.end();
       std::vector<getfem::scalar_type>::iterator it2 = U2.begin();
       for ( ; it != ite; ++it, ++it2)
@@ -109,7 +123,7 @@ int main(int argc, char *argv[])
 	   << " on the mesh of " << fi1 << endl;
       U3.resize(mef1.nb_dof()*P1);
       getfem::scalar_type errin = 0.0;
-      getfem::interpolation_solution(mef2, mef1, U2, U3, P1);
+      interpolation_solution(mef2, mef1, U2, U3, P1);
       std::vector<getfem::scalar_type>::iterator it = U3.begin(), ite=U3.end();
       std::vector<getfem::scalar_type>::iterator it2 = U1.begin();
       for ( ; it != ite; ++it, ++it2)
