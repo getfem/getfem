@@ -35,7 +35,6 @@
 
 #include <bgeot_config.h>
 #include <gmm.h>
-#include <gmm_interface_bgeot.h>
 
 namespace bgeot
 {
@@ -248,5 +247,6 @@ namespace bgeot
 
 }  /* end of namespace bgeot.                                           */
 
+#include <gmm_interface_bgeot.h>
 
 #endif  /* __BGEOT_VECTOR_H */

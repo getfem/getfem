@@ -32,7 +32,7 @@
 #ifndef __GMM_INOUTPUT_H
 #define __GMM_INOUTPUT_H
 
-#include <cstdio>
+#include <stdio.h>
 
 namespace gmm {
   
