@@ -1,0 +1,368 @@
+/* The W3C Core Styles Copyright (c) 1998 W3C (mit, inria, Keio), All Rights
+Reserved. W3C liability, trademark, document use and software licensing rules
+apply. See http://www.w3.org/Consortium/Legal/ipr-notice.html
+
+This stylesheet has been served in a form to avoid known bugs in your user
+agent's css implementation. Copying and serving this stylesheet to other
+agents may lead to unexpected results. Please refer to its address rather than
+copy it. */
+
+
+
+
+
+	/* begin body type */	/* 1 - humanist sans a */
+
+a.matlab {
+/*	background:	#FF0;*/
+	}
+
+body	{	
+	font-size:	1em;
+	font-weight:	normal;
+	word-spacing:	normal;
+	letter-spacing:	normal;
+	text-transform:	none;
+/*font-family:	Verdana, Myriad Web, Syntax, sans-serif;*/
+	font-size-adjust:	.58;
+	}	
+
+p, blockquote, ul, ol, dl, dd, li, dir, menu	{	
+	/* inherit from body */	
+	}	
+
+small	{	
+	font-size:	.92em;
+	}	
+
+big	{	
+	font-size:	1.17em;
+	}	
+
+pre	{	
+	font-family:	'Monotype.com', Courier New, monospace;
+	}	
+
+ol li	{	
+	list-style-type:	decimal;
+	}	
+
+ol ol li	{	
+	list-style-type:	lower-alpha;
+	}	
+
+ol ol ol li	{	
+	list-style-type:	lower-roman;
+	}	
+
+table, tbody, tr, td	{	
+	font-size:	1em;
+	word-spacing:	normal;
+	letter-spacing:	normal;
+	text-transform:	none;
+	font-family:	Verdana, Myriad Web, Syntax, sans-serif;
+	font-size-adjust:	.58;
+	}	
+
+	/* end body type */	
+
+
+
+
+	/* begin header type */	/* 1 - humanist sans a */
+		
+h1	{	
+	font-family:	Tahoma, Verdana, Myriad Web, Syntax, sans-serif;
+	font-size-adjust:	.53;
+	font-size:	2em;
+	font-weight:	500;
+	font-style:	normal;
+	text-decoration:	none;
+	word-spacing:	normal;
+	letter-spacing:	normal;
+	text-transform:	none;
+	}	
+		
+h2	{	
+	font-family:	Tahoma, Verdana, Myriad Web, Syntax, sans-serif;
+	font-size-adjust:	.53;
+	font-size:	1.75em;
+	font-weight:	500;
+	font-style:	normal;
+	text-decoration:	none;
+	word-spacing:	normal;
+	letter-spacing:	normal;
+	text-transform:	none;
+	}	
+		
+h3	{	
+	font-family:	Tahoma, Verdana, Myriad Web, Syntax, sans-serif;
+	font-size-adjust:	.53;
+	font-size:	1.58em;
+	font-weight:	600;
+	font-style:	normal;
+	text-decoration:	none;
+	word-spacing:	normal;
+	letter-spacing:	normal;
+	text-transform:	none;
+	}	
+		
+h4	{	
+	font-family:	Tahoma, Verdana, Myriad Web, Syntax, sans-serif;
+	font-size-adjust:	.53;
+	font-size:	1.33em;
+	font-weight:	600;
+	font-style:	normal;
+	text-decoration:	none;
+	word-spacing:	normal;
+	letter-spacing:	normal;
+	text-transform:	none;
+	}	
+		
+h5, dt	{	
+	font-family:	Tahoma, Verdana, Myriad Web, Syntax, sans-serif;
+	font-size-adjust:	.53;
+	font-size:	1.17em;
+	font-weight:	600;
+	font-style:	normal;
+	text-decoration:	none;
+	word-spacing:	normal;
+	letter-spacing:	normal;
+	text-transform:	none;
+	}	
+		
+h6	{	
+	font-family:	Tahoma, Verdana, Myriad Web, Syntax, sans-serif;
+	font-size-adjust:	.53;
+	font-size:	1em;
+	font-weight:	700;
+	font-style:	normal;
+	text-decoration:	none;
+	word-spacing:	normal;
+	letter-spacing:	normal;
+	text-transform:	none;
+	}	
+		
+tfoot, thead	{	
+	font-size:	1em;
+	word-spacing:	normal;
+	letter-spacing:	normal;
+	text-transform:	none;
+	font-family:	Verdana, Myriad Web, Syntax, sans-serif;
+	font-size-adjust:	.53;
+	}	
+		
+th	{	
+	vertical-align:	baseline;
+	font-size:	1em;
+	font-weight:	bold;
+	word-spacing:	normal;
+	letter-spacing:	normal;
+	text-transform:	none;
+	font-family:	Verdana, Myriad Web, Syntax, sans-serif;
+	font-size-adjust:	.53;
+	}	
+		
+hr	{	
+	visibility:	hidden;
+	}	
+		
+	/* end header type */	
+
+
+
+
+	/* begin affordances */	/* 1 - blue orange */
+		
+a, address, blockquote, body, cite, code, dd, del, dfn,		
+div, dl, dt, em, form, h1, h2, h3, h4, h5, h6, iframe, img, kbd,		
+li, object, ol, p, q, samp, small, span, strong, sub, sup, ul, var, 		
+applet, big, center, dir, font, hr, menu, pre,		
+abbr, acronym, bdo, button, fieldset, ins, label	{	
+	word-spacing:	normal;
+	letter-spacing:	normal;
+	text-transform:	none;
+	text-decoration:	none;
+	border-color:	#036;
+	border-style:	none;
+	}	
+		
+body	{	
+	color:	black;
+	background:	#FFE;
+	}	
+		
+em	{	
+	font-style:	normal;
+	font-weight:	bold;
+	color:	black;
+	}	
+		
+strong	{	
+	font-style:	italic;
+	background:	white;
+	font-weight:	bold;
+	color:	black;
+	}	
+		
+em strong, strong em	{	
+	text-transform:	uppercase;
+	font-style:	normal;
+	font-weight:	bolder;
+	color:	black;
+	}	
+
+b	{
+	font-weight:	bold;
+	}
+	
+i	{
+	font-style:	italic;
+	}
+		
+.warning	{	
+	text-transform:	none;
+	font-style:	normal;
+	font-weight:	bolder;
+	background:	yellow;
+	color:	black;
+	}	
+		
+del	{	
+	text-decoration:	line-through;
+	background:	#F66;
+	}	
+		
+ins	{	
+	text-decoration:	none;
+	background:	yellow;
+	}	
+		
+var, cite, dfn, .note	{	
+	font-style:	italic;
+	}	
+		
+address	{	
+	font-style:	normal;
+	letter-spacing:	.1em;
+	}	
+		
+acronym	{	
+	font-variant:	small-caps;
+	letter-spacing:	0.1em;
+	}	
+		
+h1, h2, h3, h4, h5, h6, dt, th, thead, tfoot	{	
+	color:	#036;
+	}	
+		
+hr	{	
+	color:	#036;
+	}	
+		
+#colophon	{	
+	display:	none;
+	}	
+		
+col, colgroup, table, tbody, td, tr	{	
+	color:	black;
+	text-decoration:	none;
+	border-color:	black;
+	border-style:	none;
+	}	
+		
+a:link	{	
+	text-decoration:	none;
+	font-weight:	bold;
+	color:	#008;
+	}	
+		
+a:visited	{	
+	text-decoration:	none;
+	font-weight:	bold;
+	color:	#006;
+	}	
+		
+a:active	{	
+	text-decoration:	none;
+	font-weight:	bold;
+	color:	#008;
+	}	
+		
+a:hover	{	
+	text-decoration:	none;
+	color:	#00F;
+	background:	#FE5;
+	}	
+		
+a.offsite	{	
+	text-decoration:	underline;
+	font-weight:	normal;
+	color:	#C30;
+	}	
+		
+	/* end affordances */	
+
+
+
+	/* begin body box */	/* 1 - 'em-based symmetric a' */
+
+tt	{
+	font-family:	'Monotype.com', Courier New, monospace;
+	font-weight: normal;
+	font-size: 1em;
+	}
+
+
+body	{
+	margin-top:	1.58em;
+	margin-left:	1.58em;
+	margin-right:	1ex;
+	margin-bottom:	1.58em;
+	padding-top:	0;
+	padding-left:	0;
+	padding-right:	0;
+	padding-bottom:	0;
+	border-top:	0;
+	border-left:	0;
+	border-bottom:	0;
+	border-right:	0;
+	width:	auto;
+	}
+	/* end body box */
+
+.cppcode {
+	border: solid;
+	border-width:1px;
+	border-color:#888;
+	width: auto;
+	margin:3px;
+	margin-left: 5%;
+	color:#000;
+	background:#ccc;
+	}
+
+.inlinecppcode {
+	color:#600;
+	}
+
+.mlabcode {
+	border: solid;
+	border-width:1px;
+	border-color:#888;
+	width: auto;
+	margin-left: 5%;
+	color:#000;
+	background:#ccc;
+	}
+
+.inlinemlabcode {
+	color:#600;
+	}
+
+table 	{
+	border: solid;
+	border-width:1px;
+	border-color:#888;
+	background:#eee;	
+	}
