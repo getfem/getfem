@@ -55,9 +55,9 @@ namespace bgeot
   {
     public:
 
-      typedef typename std::vector<T>::size_type size_type;
-      typedef typename std::vector<T>::iterator iterator;
-      typedef typename std::vector<T>::const_iterator const_iterator;
+    typedef typename std::vector<T>::size_type size_type;
+    typedef typename std::vector<T>::iterator iterator;
+    typedef typename std::vector<T>::const_iterator const_iterator;
 
       void out_of_range_error(void) const;
 
@@ -97,7 +97,7 @@ namespace bgeot
 
   template<class T> vsvector<T>::vsvector(T a0, T a1)
     : std::vector<T>(size_type(2))
-  { iterator p = this->begin(); *p++ = a0; *p++ = a1; }
+  { typename vsvector<T>::iterator p = this->begin(); *p++ = a0; *p++ = a1; }
   template<class T> vsvector<T>::vsvector(T a0, T a1, T a2)
     : std::vector<T>(size_type(3)) 
   { iterator p = this->begin(); *p++ = a0; *p++ = a1; *p++ = a2;}

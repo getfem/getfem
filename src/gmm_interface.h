@@ -318,10 +318,6 @@ namespace gmm {
   struct tab_ref_reg_spaced_with_origin : public dal::tab_ref_reg_spaced<IT> {
     typedef  tab_ref_reg_spaced_with_origin<IT, V> this_type;
     typedef typename linalg_traits<this_type>::porigin_type porigin_type;
-   // two lines below added for aCC, removed because dec cxx & intel icc didn't like that ..
-    //typedef typename dal::tab_ref_reg_spaced<IT>::iterator iterator;
-    //typedef typename dal::tab_ref_reg_spaced<IT>::const_iterator const_iterator;
-
 
     porigin_type origin;
     
@@ -389,10 +385,6 @@ namespace gmm {
     : public dal::tab_ref_index_ref<IT, ITINDEX> {
     typedef tab_ref_index_ref_with_origin<IT, ITINDEX, V> this_type;
     typedef typename linalg_traits<this_type>::porigin_type porigin_type;
-    // two lines below added for the braindead HP aCC
-    // removed because intel icc 8.0 does not like them
-    //    typedef typename dal::tab_ref_index_ref<IT, ITINDEX>::iterator iterator;
-    //typedef typename dal::tab_ref_index_ref<IT, ITINDEX>::const_iterator const_iterator;
 
     porigin_type origin;
 
