@@ -83,7 +83,7 @@ namespace bgeot
       if (isin) pt[nb++] = it.index();
     }
     return nb;
-    
+  }    
     /* The following is a version with a partition, avoiding default */
     /* of the simple search, but which is slower .. in the mean.     */
     /* 	size_type s = min.size(), i; */
@@ -129,6 +129,76 @@ namespace bgeot
     /* 	  { cbox[i] = boxmin[i]; ++i; cbox[i] += c[i]; } */
     /* 	} */
     
+
+
+  
+  bool geotrans_inv_convex::invert_lin(const base_node& n, base_node& n_ref) {
+    base_node y(n); for (size_type i=0; i < P; ++i) y[i] -= a(i,0);
+    mat_vect_product(B0, y, n_ref); // n_ref = B0 * y;
+    if (pgt->convex_ref()->is_in(n_ref) < EPS) {
+      if (N == P) return true;
+      else {
+        y -= grad * n_ref;
+        if (vect_norm2(y) < EPS) return true;
+      }
+    }
+    return false;
+  }
+
+  bool geotrans_inv_convex::invert_nonlin(const base_node& n, base_node& x) {
+    base_node xn, y;
+    
+    /* find an initial guess */
+    x = pgt->geometric_nodes()[0]; y = cvpts[0];  
+    scalar_type d = vect_dist2_sqr(y, n);
+    for (size_type j = 1; j < pgt->nb_points(); ++j) { 
+      scalar_type d2 = vect_dist2_sqr(cvpts[j], n);
+      if (d2 < d)
+        { d = d2; x = pgt->geometric_nodes()[j]; y = cvpts[j]; }
+    }
+    base_node rn(n); rn -= y; 
+    scalar_type res = vect_norm2(rn);
+    unsigned cnt = 1000;
+    while (res > EPS && --cnt) {
+      /* compute gradient */
+      for (size_type k = 0; k < pgt->nb_points(); ++k) {
+        for (dim_type nn = 0; nn < N; ++nn) {
+          PO = pgt->poly_vector()[k];
+          PO.derivative(nn);
+          pc(k,nn) = PO.eval(x.begin());
+        }
+      }
+      
+      // computation of the pseudo inverse (it should be possible not
+      //  to compute it at each iteration).
+      bgeot::mat_product(a, pc, grad);
+      if (N != P) {
+        bgeot::mat_product_tn(grad, grad, CS);
+        bgeot::mat_inv_cholesky(CS, TMP1);
+        bgeot::mat_product_tt(CS, grad, B0);
+      } else {
+        bgeot::mat_gauss_inverse(grad, TMP1); B0 = grad;
+      }
+      xn = x;
+      mat_vect_product(B0, rn, x); // x = B0 * rn;
+      x += xn;
+      y.fill(0.0);
+      for (size_type k = 0; k < pgt->nb_points(); ++k)
+        y.addmul(pgt->poly_vector()[k].eval(x.begin()),
+                 cvpts[k]);
+      // cout << "Point : " << x << " : " << y << " ptab : " << ptab[i] << endl; getchar();
+      rn = n; rn -= y; res = vect_dist2(x, xn);
+    }
+    if (cnt == 0) 
+      DAL_THROW(dal::failure_error, 
+                "inversion of non-linear geometric transformation "
+                "failed (too much iterations)");
+    
+    // Test un peu sevère peut-être en ce qui concerne rn.
+    if (pgt->convex_ref()->is_in(x) < EPS
+        && (N == P || vect_norm2(rn) < EPS))
+      return true;
+    return false;
   }
 
 }  /* end of namespace bgeot.                                             */

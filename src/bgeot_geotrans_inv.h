@@ -58,6 +58,9 @@ namespace bgeot
     }
   };
 
+  /**
+     handles the geometric inversion for a given (supposedly quite large) set of points
+  */
   class geotrans_inv
   {
     protected :
@@ -93,9 +96,23 @@ namespace bgeot
 
       /** Search all the points in the convex cv, which is the transformation
        *  of the convex cref via the geometric transformation pgt.
+       *
        *  IMPORTANT : It is assumed that the whole convex is include in the
-       *     minmax box of its nodes times a factor 1.2. If the transformation
-       *     is linear, the factor is 1.0.
+       *  minmax box of its nodes times a factor 1.2. If the transformation is
+       *  linear, the factor is 1.0.
+       *
+       *  @param cv the convex points (as given by getfem_mesh::convex(ic))
+       *
+       *  @param pgt the geometric trans (as given by
+       *  getfem_mesh::trans_of_convex(ic))
+       *
+       *  @param pftab container for the coordinates of points in the reference
+       *  convex (should be of size nb_points())
+       *
+       *  @param itab the indices of points found in the convex
+       *
+       *  @return the number of points in the convex (i.e. the size of itab,
+       *  and pftab)
        */
       template<class TAB, class CONT1, class CONT2>
       size_type points_in_convex(const convex<base_node, TAB> &cv,
@@ -108,6 +125,7 @@ namespace bgeot
 
 
 
+  /* TODO: virer le code de cette fonction et faire des appels à geotrans_inv_convex */
   template<class TAB, class CONT1, class CONT2>
   size_type geotrans_inv::points_in_convex(const convex<base_node, TAB> &cv,
 					   pgeometric_trans pgt,
@@ -134,7 +152,7 @@ namespace bgeot
     if (pgt->is_linear()) {
       for (size_type i = 0; i < N; ++i) { min[i] -= EPS; max[i] += EPS; }
       // cout << "boxmin = " << min << " boxmax = " << max << endl;
-      
+            
       size_type nbib = points_in_box(pts, min, max);
       // pts= ptab.index();
       
@@ -162,16 +180,20 @@ namespace bgeot
 	// cout << "point : " << ptab[i] << endl;
 	y = ptab[pts[l]]; y -= cv.points()[0];
 	mat_vect_product(B0, y, x); // x = B0 * y;
-	if (pgt->convex_ref()->is_in(x) < EPS)
+	if (pgt->convex_ref()->is_in(x) < EPS) {
 	  if (N == P) {
 	    // cout << "enregistré en " << nbpt << " : " << x << endl;
-	    pftab[nbpt] = x; itab[nbpt++] = pts[l];
+	    pftab[nbpt] = x; 
+            itab[nbpt++] = pts[l];
 	  }
 	  else {
 	    y -= grad * x;
-	    if (vect_norm2(y) < EPS)
-	      { pftab[nbpt] = x; itab[nbpt++] = pts[l]; }
+	    if (vect_norm2(y) < EPS) { 
+              pftab[nbpt] = x; 
+              itab[nbpt++] = pts[l]; 
+            }
 	  }
+        }
       }
       // cout << "fini ... " << endl;
       
@@ -233,6 +255,85 @@ namespace bgeot
     }
     return nbpt;
   }
+
+
+
+  /** 
+      does the inversion of the geometric transformation for a given convex
+  */
+  class geotrans_inv_convex {
+    size_type N, P;
+    base_poly PO;
+    base_matrix a, pc, grad, TMP1, B0, CS;
+    pgeometric_trans pgt;
+    std::vector<base_node> cvpts; /* used only for non-linear geotrans -- we should use the matrix a instead... */
+    scalar_type EPS;
+  public:
+    geotrans_inv_convex(scalar_type e=10e-12) : pgt(0), EPS(e) {};
+    template<class TAB> geotrans_inv_convex(const convex<base_node, TAB> &cv, pgeometric_trans pgt_, 
+                                            scalar_type e=10e-12) {
+      EPS=e; init(cv,pgt_);
+    };
+    template<class TAB> void init(const convex<base_node, TAB> &cv, pgeometric_trans pgt_);
+    
+    /**
+       given the node on the real element, returns the node
+       on the reference element (even if it is outside of the reference convex)
+       @return true if the n is inside the convex
+       @param n node on the real element 
+       @param n_ref computed node on the reference convex
+    */
+    bool invert(const base_node& n, base_node& n_ref) {
+      n_ref.resize(pgt->structure()->dim());
+      if (pgt->is_linear()) {
+        return invert_lin(n, n_ref);
+      } else return invert_nonlin(n, n_ref);
+    }
+  private:
+    bool invert_lin(const base_node& n, base_node& n_ref);
+    bool invert_nonlin(const base_node& n, base_node& n_ref);
+  };
+
+  template<class TAB> void geotrans_inv_convex::init(const convex<base_node, TAB> &cv, pgeometric_trans pgt_) {
+    pgt = pgt_;
+    N = pgt->structure()->dim();
+    if (!cv.points().size()) DAL_INTERNAL_ERROR("");
+    P = cv.points()[0].size();
+    pc.resize(pgt->nb_points() , N);
+    grad.resize(P,N); TMP1.resize(N,N); B0.resize(N,P); CS.resize(N,N);
+    a.resize(P, pgt->nb_points());
+    for (size_type j = 0; j < pgt->nb_points(); ++j) // à optimiser !!
+      for (size_type i = 0; i < P; ++i) { 
+        a(i,j) = cv.points()[j][i];
+      }
+    if (pgt->is_linear()) {
+      // On peut éviter ce calcul en faisant appel à un pre-geotrans
+      // ou en stockant le calcul qui est toujours le même.
+        // on peut aussi l'optimiser en ne faisant pas appel à derivative().
+      for (size_type i = 0; i < pgt->nb_points(); ++i) {
+        for (dim_type n = 0; n < N; ++n) { 
+          PO = pgt->poly_vector()[i]; PO.derivative(n); pc(i,n) = PO[0]; 
+        }
+      }
+      // computation of the pseudo inverse
+      bgeot::mat_product(a, pc, grad);
+      if (N != P) {
+        bgeot::mat_product_tn(grad, grad, CS);
+        bgeot::mat_inv_cholesky(CS, TMP1);
+        bgeot::mat_product_tt(CS, grad, B0);
+        }
+      else {
+        // L'inversion peut être optimisée par le non calcul global de B0
+        // et la resolution d'un système linéaire.
+        bgeot::mat_gauss_inverse(grad, TMP1); B0 = grad;
+      }
+    } else {
+      cvpts.resize(cv.nb_points());
+      for (size_type j = 0; j < pgt->nb_points(); ++j) // à optimiser !!
+        cvpts[j] = cv.points()[j];
+    }
+  }
+    
   
 
 }  /* end of namespace bgeot.                                             */
