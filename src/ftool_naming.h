@@ -173,8 +173,8 @@ namespace ftool
       }
       --it2;
     }
-    
-    return *p;
+    if (p) return *p;
+    else return "UNKNOWN";
   }
   
   
