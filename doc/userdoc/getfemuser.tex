@@ -904,7 +904,59 @@ where \cpp{mef1}  is a variable of type \cpp{getfem::mesh\_fem} and describes th
 (version 1.7) If you need to make more than one interpolation between the same finite element methods, it is better to use the function
 \cpp{getfem::interpolation\_solution(mef1, mef2, M); }\\[0.5cm]
 where \cpp{M} is a row matrix which will be filled with the linear map representing the interpolation (i.e. such that \cpp{V = MU}). The matrix should have the right dimensions (i.e. \cpp{mef2.nb\_dof()} x \cpp{mef1.nb\_dof()}).
- 
+
+
+
+\section{The model bricks}
+(Future version 1.7) Althought it is possible to use assembly procedures on their own to make your finite element programs, it is now possible to use predefined bricks to build up very quickly a certain number of models.
+
+\subsection{The model state variable}
+The model state object is an object which stores the state of the system and the tangent system with eventual constraints. There are two predefined model state type:
+\begin{alltt}
+  getfem::standard_model_state
+  getfem::standard_complex_model_state
+\end{alltt}
+The second one is for models with complex degrees of freedom like Helmholtz problem. These two predefined model state type are built with the following predefined sparse matrix and plain vectors:
+\begin{alltt}
+  getfem::modeling_standard_sparse_matrix (gmm::col_matrix<gmm::rsvector<double> >)
+  getfem::modeling_standard_plain_vector (std::vector<double>)
+  getfem::modeling_standard_complex_sparse_matrix (gmm::col_matrix<gmm::rsvector<std::complex<double> > >)
+  getfem::modeling_standard_complex_plain_vector (std::vector<std::complex<double> >)
+\end{alltt}
+But you can define your own model state type with arbitrary types of sparse matrices and plain vector (see the file {\tt getfem_modeling.h})
+
+\subsection{Basic properties of a brick}
+(to be documented)
+
+\subsection{Poisson brick (Laplacian)}
+(to be documented)
+\subsection{Source term brick}
+(to be documented)
+\subsection{Dirichlet condition brick}
+(to be documented)
+\subsection{Example of a complete Poisson problem}
+(to be documented)
+\subsection{Predefined solvers}
+Of course, for many problems, it will be more convenient to mae a specific solver. Even so, a certain number of generic solvers are available to test your models quickly. ...
+(to be documented)
+\subsection{Linearized elasticity brick}
+(to be documented)
+\subsection{Qu term brick}
+(to be documented)
+\subsection{Helmholtz brick}
+(to be documented)
+\subsection{Small displacement plasticity brick}
+(to be documented)
+\subsection{Contact and friction conditions brick}
+(to be documented)
+\subsection{Large strain elasticity brick}
+(to be documented)
+
+
+
+
+
+
 \section{Catch errors}
 \index{errors}
 

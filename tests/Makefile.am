@@ -6,6 +6,7 @@ check_PROGRAMS = \
 	test_rtree	   \
 	test_interpolation \
 	elastostatic       \
+	nonlinear_elastostatic   \
 	helmholtz          \
 	geo_trans          \
 	geo_trans_inv      \

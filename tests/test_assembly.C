@@ -1235,7 +1235,7 @@ struct dummy_nonlin : public getfem::nonlinear_elem_term {
   dummy_nonlin(size_type N) : sizes_(2) { sizes_[0] = sizes_[1] = N; }
   const bgeot::multi_index &sizes() const { return sizes_; }
   virtual void compute(getfem::fem_interpolation_context& /*ctx*/,
-		       bgeot::base_tensor &t) const {
+		       bgeot::base_tensor &t) {
     t.adjust_sizes(sizes_); std::fill(t.begin(), t.end(), 0.);
     t[j*sizes_[0]+i] = 1.0;
   }
@@ -1317,6 +1317,7 @@ int main(int argc, char *argv[])
      getfem::mesh_fem mfq(m); 
      mfq.set_qdim(m.dim());
      init_mesh_fem(mfq,false,false);  
+     test_nonlin(mfq);
      test_nonlin(mfq);
 
      getfem::mesh_fem mfd(m); 
