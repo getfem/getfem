@@ -97,7 +97,7 @@ dynamic_array_SOURCES = dynamic_array.C
 dynamic_tas_SOURCES = dynamic_tas.C 
 
 INCLUDES = -I$(top_srcdir)/src
-LDADD = ../src/.libs/libgetfm.a -lm
+LDADD = ../src/.libs/libgetfem.a -lm
 CXXFLAGS = @APPSCXXFLAGS@
 
 TESTS = check.pl
@@ -109,12 +109,12 @@ check_PROGRAMS = dynamic_array$(EXEEXT) dynamic_tas$(EXEEXT)
 am_dynamic_array_OBJECTS = dynamic_array.$(OBJEXT)
 dynamic_array_OBJECTS = $(am_dynamic_array_OBJECTS)
 dynamic_array_LDADD = $(LDADD)
-dynamic_array_DEPENDENCIES = ../src/.libs/libgetfm.a
+dynamic_array_DEPENDENCIES = ../src/.libs/libgetfem.a
 dynamic_array_LDFLAGS =
 am_dynamic_tas_OBJECTS = dynamic_tas.$(OBJEXT)
 dynamic_tas_OBJECTS = $(am_dynamic_tas_OBJECTS)
 dynamic_tas_LDADD = $(LDADD)
-dynamic_tas_DEPENDENCIES = ../src/.libs/libgetfm.a
+dynamic_tas_DEPENDENCIES = ../src/.libs/libgetfem.a
 dynamic_tas_LDFLAGS =
 
 DEFS = @DEFS@

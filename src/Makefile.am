@@ -61,7 +61,7 @@ SRC = \
 	getfem_mesh_fem.C \
 	getfem_regular_meshes.C
 
-lib_LTLIBRARIES = libgetfm.la
+lib_LTLIBRARIES = libgetfem.la
 libgetfm_la_SOURCES = $(SRC)
 libgetfm_la_LDFLAGS = ${LIBTOOL_VERSION_INFO}
 

@@ -5,7 +5,7 @@ dynamic_array_SOURCES = dynamic_array.C
 dynamic_tas_SOURCES = dynamic_tas.C 
 
 INCLUDES = -I$(top_srcdir)/src
-LDADD    = ../src/.libs/libgetfm.a -lm
+LDADD    = ../src/.libs/libgetfem.a -lm
 CXXFLAGS = @APPSCXXFLAGS@
 
 TESTS             = check.pl

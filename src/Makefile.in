@@ -154,7 +154,7 @@ SRC = \
 	getfem_regular_meshes.C
 
 
-lib_LTLIBRARIES = libgetfm.la
+lib_LTLIBRARIES = libgetfem.la
 libgetfm_la_SOURCES = $(SRC)
 libgetfm_la_LDFLAGS = ${LIBTOOL_VERSION_INFO}
 subdir = ./src
@@ -162,15 +162,10 @@ mkinstalldirs = $(SHELL) $(top_srcdir)/config/mkinstalldirs
 CONFIG_CLEAN_FILES =
 LTLIBRARIES = $(lib_LTLIBRARIES)
 
-libgetfm_la_LIBADD =
-am__objects_1 = bgeot_approx_integration.lo bgeot_convex_ref.lo \
-	bgeot_convex_structure.lo bgeot_geometric_trans.lo \
-	bgeot_mesh_structure.lo bgeot_poly.lo bgeot_poly_integration.lo \
-	dal_bit_vector.lo ftool.lo getfem_export.lo getfem_fem.lo \
-	getfem_mat_elem.lo getfem_mat_elem_type.lo getfem_mesh.lo \
-	getfem_mesh_fem.lo getfem_regular_meshes.lo
-am_libgetfm_la_OBJECTS = $(am__objects_1)
-libgetfm_la_OBJECTS = $(am_libgetfm_la_OBJECTS)
+libgetfem_la_LDFLAGS =
+libgetfem_la_LIBADD =
+libgetfem_la_SOURCES = libgetfem.la.c
+libgetfem_la_OBJECTS = libgetfem.la.lo
 
 DEFS = @DEFS@
 DEFAULT_INCLUDES =  -I. -I$(srcdir)
@@ -179,40 +174,25 @@ LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 depcomp = $(SHELL) $(top_srcdir)/config/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/bgeot_approx_integration.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/bgeot_convex_ref.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/bgeot_convex_structure.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/bgeot_geometric_trans.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/bgeot_mesh_structure.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/bgeot_poly.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/bgeot_poly_integration.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/dal_bit_vector.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ftool.Plo ./$(DEPDIR)/getfem_export.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/getfem_fem.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/getfem_mat_elem.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/getfem_mat_elem_type.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/getfem_mesh.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/getfem_mesh_fem.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/getfem_regular_meshes.Plo
-CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
-LTCXXCOMPILE = $(LIBTOOL) --mode=compile $(CXX) $(DEFS) \
-	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
-	$(AM_CXXFLAGS) $(CXXFLAGS)
-CXXLD = $(CXX)
-CXXLINK = $(LIBTOOL) --mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/libgetfem.la.Plo
+COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) \
+	$(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+CCLD = $(CC)
+LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-CXXFLAGS = @CXXFLAGS@
-DIST_SOURCES = $(libgetfm_la_SOURCES)
+CFLAGS = @CFLAGS@
+DIST_SOURCES = libgetfem.la.c
 HEADERS = $(include_HEADERS)
 
 DIST_COMMON = $(include_HEADERS) Makefile.am Makefile.in
-SOURCES = $(libgetfm_la_SOURCES)
+SOURCES = libgetfem.la.c
 
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .C .lo .o .obj
+.SUFFIXES: .c .lo .o .obj
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -249,8 +229,8 @@ uninstall-libLTLIBRARIES:
 
 clean-libLTLIBRARIES:
 	-test -z "$(lib_LTLIBRARIES)" || rm -f $(lib_LTLIBRARIES)
-libgetfm.la: $(libgetfm_la_OBJECTS) $(libgetfm_la_DEPENDENCIES) 
-	$(CXXLINK) -rpath $(libdir) $(libgetfm_la_LDFLAGS) $(libgetfm_la_OBJECTS) $(libgetfm_la_LIBADD) $(LIBS)
+libgetfem.la: $(libgetfem_la_OBJECTS) $(libgetfem_la_DEPENDENCIES) 
+	$(LINK) -rpath $(libdir) $(libgetfem_la_LDFLAGS) $(libgetfem_la_OBJECTS) $(libgetfem_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT) core *.core
@@ -258,44 +238,29 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bgeot_approx_integration.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bgeot_convex_ref.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bgeot_convex_structure.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bgeot_geometric_trans.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bgeot_mesh_structure.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bgeot_poly.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bgeot_poly_integration.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dal_bit_vector.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ftool.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/getfem_export.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/getfem_fem.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/getfem_mat_elem.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/getfem_mat_elem_type.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/getfem_mesh.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/getfem_mesh_fem.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/getfem_regular_meshes.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgetfem.la.Plo@am__quote@
 
 distclean-depend:
 	-rm -rf ./$(DEPDIR)
 
-.C.o:
+.c.o:
 @AMDEP_TRUE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@	depfile='$(DEPDIR)/$*.Po' tmpdepfile='$(DEPDIR)/$*.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@	$(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(CXXCOMPILE) -c -o $@ `test -f $< || echo '$(srcdir)/'`$<
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(COMPILE) -c `test -f $< || echo '$(srcdir)/'`$<
 
-.C.obj:
+.c.obj:
 @AMDEP_TRUE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@	depfile='$(DEPDIR)/$*.Po' tmpdepfile='$(DEPDIR)/$*.TPo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@	$(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(CXXCOMPILE) -c -o $@ `cygpath -w $<`
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(COMPILE) -c `cygpath -w $<`
 
-.C.lo:
+.c.lo:
 @AMDEP_TRUE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@	depfile='$(DEPDIR)/$*.Plo' tmpdepfile='$(DEPDIR)/$*.TPlo' @AMDEPBACKSLASH@
-@AMDEP_TRUE@	$(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-	$(LTCXXCOMPILE) -c -o $@ `test -f $< || echo '$(srcdir)/'`$<
-CXXDEPMODE = @CXXDEPMODE@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(LTCOMPILE) -c -o $@ `test -f $< || echo '$(srcdir)/'`$<
+CCDEPMODE = @CCDEPMODE@
 uninstall-info-am:
 includeHEADERS_INSTALL = $(INSTALL_HEADER)
 install-includeHEADERS: $(include_HEADERS)
