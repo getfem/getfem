@@ -9,7 +9,7 @@
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 2002  Yves Renard.                                        */
+/* Copyright (C) 2002-03  Yves Renard.                                     */
 /*                                                                         */
 /* This file is a part of GETFEM++                                         */
 /*                                                                         */
@@ -32,6 +32,8 @@
 #include <getfem_fem.h>
 #include <getfem_mesh_fem.h>
 #include <bgeot_geotrans_inv.h>
+
+/* Inefficient, to be done again as real conf. elements                    */
 
 namespace getfem
 {
@@ -177,9 +179,10 @@ namespace getfem
 			      coeff, val);
 	    M(j, k) = val[0];
 	    if (wg) {
-	      pf->complete_interpolation_grad(gauss_ptab[indg].localcoords, G1,
-				      pmf1->linked_mesh().trans_of_convex(cv1),
-				      coeff, val2);
+// a refaire !!!
+// 	      pf->complete_interpolation_grad(gauss_ptab[indg].localcoords, G1,
+// 				      pmf1->linked_mesh().trans_of_convex(cv1),
+// 				      coeff, val2);
 	      for (dim_type n = 0; n < pmf2->linked_mesh().dim(); ++n)
 		M(j + (n+1)*nbgauss, k) = val2(0, n);
 	    }
@@ -401,20 +404,20 @@ namespace getfem
       DAL_THROW(internal_error,
 	  "You cannot interpolate this element, use the original element.");
     }
-    void interpolation_grad(const base_node &, const base_matrix &,
-			    bgeot::pgeometric_trans,
-			    const base_vector &, base_matrix &) const {
-      DAL_THROW(internal_error,
-	  "You cannot interpolate this element, use the original element.");
-    }
-    virtual void interpolation_grad(pfem_precomp , size_type ,
-				    const base_matrix &,
-				    bgeot::pgeometric_trans , 
-				    const base_vector &,
-				    base_matrix &) const {
-      DAL_THROW(internal_error,
-		"You cannot interpolate this element, use the original element.");
-    }
+//     void interpolation_grad(const base_node &, const base_matrix &,
+// 			    bgeot::pgeometric_trans,
+// 			    const base_vector &, base_matrix &) const {
+//       DAL_THROW(internal_error,
+// 	  "You cannot interpolate this element, use the original element.");
+//     }
+//     virtual void interpolation_grad(pfem_precomp , size_type ,
+// 				    const base_matrix &,
+// 				    bgeot::pgeometric_trans , 
+// 				    const base_vector &,
+// 				    base_matrix &) const {
+//       DAL_THROW(internal_error,
+// 	  "You cannot interpolate this element, use the original element.");
+//     }
 
     void base_value(const base_node &x, base_tensor &t) const {
       const bgeot::stored_point_tab *p = &(pai->integration_points());
@@ -468,7 +471,7 @@ namespace getfem
       is_equiv = is_pol = is_lag = false; es_degree = 5;
       cvr = pai->ref_convex();
       di = ls.pmflf->mf_target().linked_mesh().dim();
-      do_grad = false;
+      real_element_defined = true;
     }
 
   };

@@ -68,81 +68,131 @@ namespace getfem
   }
 
 
-  void virtual_fem::interpolation_grad(pfem_precomp pfp, size_type ii,
-			    const base_matrix &G, bgeot::pgeometric_trans pgt, 
-			    const base_vector &coeff, base_matrix &val) const {
-    // optimisable !!   verifier et faire le vectoriel
+//   void virtual_fem::interpolation_grad(pfem_precomp pfp, size_type ii,
+// 			    const base_matrix &G, bgeot::pgeometric_trans pgt, 
+// 			    const base_vector &coeff, base_matrix &val) const {
+//     // optimisable !!   verifier et faire le vectoriel
  
-    size_type R = nb_dof(), RR = nb_base();
-    base_matrix M;
-    size_type P = structure()->dim();
+//     size_type R = nb_dof(), RR = nb_base();
+//     base_matrix M;
+//     size_type P = structure()->dim();
     
 
-    if (val.nrows() != target_dim() ||
-	val.ncols() != P ||
-	ii >= pfp->get_point_tab()->size() ||
-	coeff.size() != R)
-      DAL_THROW(dimension_error, "dimension mismatch");
+//     if (val.nrows() != target_dim() ||
+// 	val.ncols() != P ||
+// 	ii >= pfp->get_point_tab()->size() ||
+// 	coeff.size() != R)
+//       DAL_THROW(dimension_error, "dimension mismatch");
 
-    if (pfp->get_pfem() != this)
-      DAL_THROW(internal_error, "internal error");
+//     if (pfp->get_pfem() != this)
+//       DAL_THROW(internal_error, "internal error");
    
 
-    base_tensor::const_iterator it = pfp->grad(ii).begin();
+//     base_tensor::const_iterator it = pfp->grad(ii).begin();
 
-    if (!is_equivalent()) { M.resize(RR, R); mat_trans(M, G, pgt); }
+//     if (!is_equivalent()) { M.resize(RR, R); mat_trans(M, G, pgt); }
 
-    val.fill(0.0);
-    for (size_type k = 0; k < P; ++k) {
-      for (size_type r = 0; r < target_dim(); ++r) {
-	for (size_type j = 0; j < RR; ++j, ++it) {
+//     val.fill(0.0);
+//     for (size_type k = 0; k < P; ++k) {
+//       for (size_type r = 0; r < target_dim(); ++r) {
+// 	for (size_type j = 0; j < RR; ++j, ++it) {
 	  
-	  scalar_type co = 0.0;
-	  if (is_equivalent())
-	    co = coeff[j];
-	  else
-	    for (size_type i = 0; i < R; ++i)
-	      co += coeff[i] * M(i, j);
-	  val(r,k) += co * (*it);
-	} 
-      }
-    }
-  }
+// 	  scalar_type co = 0.0;
+// 	  if (is_equivalent())
+// 	    co = coeff[j];
+// 	  else
+// 	    for (size_type i = 0; i < R; ++i)
+// 	      co += coeff[i] * M(i, j);
+// 	  val(r,k) += co * (*it);
+// 	} 
+//       }
+//     }
+//   }
 
-  void virtual_fem::complete_interpolation_grad(const base_node &x,
-						const base_matrix &G,
-						bgeot::pgeometric_trans pgt,
-						const base_vector &coeff,
-						base_matrix &val) const {
-    dim_type N = G.nrows();
-    dim_type P = dim();
-    size_type npt = G.ncols();
-    base_matrix pc(npt , P);
-    base_matrix grad(N, P), TMP1(P,P), B0(P,N), CS(P,P);
-    base_matrix val2(target_dim(), P);
-    base_poly PP;
+//   void virtual_fem::complete_interpolation_grad(const base_node &x,
+// 						const base_matrix &G,
+// 						bgeot::pgeometric_trans pgt,
+// 						const base_vector &coeff,
+// 						base_matrix &val) const {
+//     dim_type N = G.nrows();
+//     dim_type P = dim();
+//     size_type npt = G.ncols();
+//     base_matrix pc(npt , P);
+//     base_matrix grad(N, P), TMP1(P,P), B0(P,N), CS(P,P);
+//     base_matrix val2(target_dim(), P);
+//     base_poly PP;
 
-    for (size_type i = 0; i < npt; ++i)
-      for (dim_type n = 0; n < P; ++n) {
-	PP = pgt->poly_vector()[i];
-	PP.derivative(n);
-	pc(i, n) = PP.eval(x.begin());
-      }
+//     for (size_type i = 0; i < npt; ++i)
+//       for (dim_type n = 0; n < P; ++n) {
+// 	PP = pgt->poly_vector()[i];
+// 	PP.derivative(n);
+// 	pc(i, n) = PP.eval(x.begin());
+//       }
       
-    bgeot::mat_product(G, pc, grad);
-    if (P != N) {
-      bgeot::mat_product_tn(grad, grad, CS);
-      bgeot::mat_inv_cholesky(CS, TMP1);
-      bgeot::mat_product_tt(CS, grad, B0);
-    }
-    else {
-      bgeot::mat_gauss_inverse(grad, TMP1);
-      B0 = grad;
-    }
+//     bgeot::mat_product(G, pc, grad);
+//     if (P != N) {
+//       bgeot::mat_product_tn(grad, grad, CS);
+//       bgeot::mat_inv_cholesky(CS, TMP1);
+//       bgeot::mat_product_tt(CS, grad, B0);
+//     }
+//     else {
+//       bgeot::mat_gauss_inverse(grad, TMP1);
+//       B0 = grad;
+//     }
 
-    interpolation_grad(x, G, pgt, coeff, val2);
-    bgeot::mat_product(val2, B0, val);
+//     interpolation_grad(x, G, pgt, coeff, val2);
+//     bgeot::mat_product(val2, B0, val);
+//   }
+
+
+  void virtual_fem::real_base_value(pgeotrans_precomp, pfem_precomp pfp,
+				    size_type ip, const base_matrix &,
+				    base_tensor &t) const
+  { t =  pfp->val(ip); }
+  void virtual_fem::real_grad_base_value(pgeotrans_precomp,
+					 pfem_precomp pfp,
+					 size_type ip, const base_matrix &,
+					 const base_matrix &B,
+					 base_tensor &t) const
+  { t.mat_transp_reduction(pfp->grad(ip), B, 2); }
+  void virtual_fem::real_hess_base_value(pgeotrans_precomp,
+					 pfem_precomp pfp,
+					 size_type ip, const base_matrix &,
+					 const base_matrix &B3,
+					 const base_matrix &B32,
+					 base_tensor &t) const {
+    base_tensor tt = pfp->hess(ip);
+    bgeot::multi_index mim(3);
+    mim[2] = dal::sqr(tt.sizes()[2]); mim[1] = tt.sizes()[1];
+    mim[0] = tt.sizes()[0];
+    tt.adjust_sizes(mim);
+    t.mat_transp_reduction(tt, B3, 2);
+    tt.mat_transp_reduction(pfp->grad(ip), B32, 2);
+    t -= tt;
   }
+  
+  
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
   /* ******************************************************************** */
@@ -172,15 +222,18 @@ namespace getfem
     std::vector<ddl_elem> ddl_desc;
     bool linkable;
     coord_type coord_index;
+    size_type xfem_index;
 
     dof_description(void)
-    { linkable = true; coord_index = FIRST; }
+    { linkable = true; coord_index = FIRST; xfem_index = 0; }
   };
 
   struct __dof_description_comp {
     int operator()(const dof_description &m, const dof_description &n) const;
   };
 
+  // ATTENTION : en cas de modif, changer aussi dof_description_compare,
+  //             product_dof, et dof_hierarchical_compatibility.
   int __dof_description_comp::operator()(const dof_description &m,
 					 const dof_description &n) const { 
     int nn = dal::lexicographical_less<std::vector<ddl_elem> >()
@@ -189,6 +242,8 @@ namespace getfem
     nn = int(m.linkable) - int(n.linkable);
     if (nn < 0) return -1; if (nn > 0) return 1;
     nn = int(m.coord_index) - int(n.coord_index);
+    if (nn < 0) return -1; if (nn > 0) return 1;
+    nn = int(m.xfem_index) - int(n.xfem_index);
     if (nn < 0) return -1; if (nn > 0) return 1;
     return 0;
   }
@@ -227,6 +282,13 @@ namespace getfem
     size_type i = _dof_d_tab->add_norepeat(l);
     return &((*_dof_d_tab)[i]);
   }
+
+  pdof_description xfem_dof(pdof_description p, size_type ind) {
+    init_tab(); dof_description l = *p; l.xfem_index = ind;
+    size_type i = _dof_d_tab->add_norepeat(l);
+    return &((*_dof_d_tab)[i]);
+  }
+
 
   pdof_description to_coord_dof(pdof_description p, dim_type ct) {
     init_tab();
@@ -306,6 +368,9 @@ namespace getfem
     dof_description l;
     l.linkable = a->linkable && b->linkable;
     l.coord_index = std::max(a->coord_index, b->coord_index); // logique ?
+    l.xfem_index = a->xfem_index;
+    if (a->xfem_index != b->xfem_index)
+      DAL_THROW(failure_error, "Invalid product of dof");
     l.ddl_desc.resize(nb1+nb2);
     std::copy(a->ddl_desc.begin(), a->ddl_desc.end(), l.ddl_desc.begin());
     std::copy(b->ddl_desc.begin(), b->ddl_desc.end(), l.ddl_desc.begin()+nb1);
@@ -328,10 +393,14 @@ namespace getfem
     return &((*_dof_d_tab)[ii]);
   }
 
+  // ATTENTION : en cas de modif, changer aussi
+  //             __dof_description_comp::operator,
+  //             product_dof, et dof_hierarchical_compatibility.
   int dof_description_compare(pdof_description a, pdof_description b) {
     int nn;
     if ((nn = int(a->coord_index) - int(b->coord_index)) != 0) return nn;
     if ((nn = int(a->linkable) - int(b->linkable)) != 0) return nn;
+    if ((nn = int(a->xfem_index) - int(b->xfem_index)) != 0) return nn;
     std::vector<ddl_elem>::const_iterator
       ita = a->ddl_desc.begin(), itae = a->ddl_desc.end(),
       itb = b->ddl_desc.begin(), itbe = b->ddl_desc.end();
@@ -356,6 +425,7 @@ namespace getfem
   { 
     if (a->coord_index != b->coord_index) return false;
     if (a->linkable != b->linkable) return false;
+    if (a->xfem_index != b->xfem_index) return false;
     std::vector<ddl_elem>::const_iterator
       ita = a->ddl_desc.begin(), itae = a->ddl_desc.end(),
       itb = b->ddl_desc.begin(), itbe = b->ddl_desc.end();

@@ -9,7 +9,7 @@
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 2000-2002  Yves Renard.                                   */
+/* Copyright (C) 2000-2003  Yves Renard.                                   */
 /*                                                                         */
 /* This file is a part of GETFEM++                                         */
 /*                                                                         */
@@ -73,6 +73,7 @@ namespace getfem
     bool faces_computed;
     bool volume_computed;
     bool is_linear;
+    bool computed_on_real_element;
 
     size_type memsize() const {
       size_type sz = sizeof(_emelem_comp_structure) +
@@ -100,13 +101,16 @@ namespace getfem
       is_ppi = ls.ppi->is_ppi;
       faces_computed = volume_computed = false;
       is_linear = pgt->is_linear();
+      computed_on_real_element = !is_linear;
       nbf = pgt->structure()->nb_faces();
       dim = pgt->structure()->dim();
       mat_elem_type::const_iterator it = pme->begin(), ite = pme->end();
       
       for (size_type k = 0; it != ite; ++it, ++k) {
 
-	if (is_ppi && (!((*it).pfi->is_polynomial()) || !is_linear))
+	if ((*it).pfi->is_on_real_element()) computed_on_real_element = true;
+	if (is_ppi && (!((*it).pfi->is_polynomial()) || !is_linear 
+		       || computed_on_real_element))
 	  DAL_THROW(std::invalid_argument, 
 		    "Exact integration not allowed in this context");
 	if((*it).pfi->basic_structure() != pgt->basic_structure())
@@ -119,7 +123,7 @@ namespace getfem
 	switch ((*it).t) {
 	case GETFEM__BASE    : break;
 	case GETFEM__GRAD    : ++k;
-	  if ((*it).pfi->do_grad_reduction()) grad_reduction.push_back(k);
+	  if (!((*it).pfi->is_on_real_element())) grad_reduction.push_back(k);
 	  break;
 	case GETFEM__HESSIAN : ++k; hess_reduction.push_back(k); break;
 	}
@@ -133,11 +137,11 @@ namespace getfem
 	}
 	elmt_stored.resize(pme->size());
       }
-      if (is_linear) mref.resize(nbf + 1);
+      if (!computed_on_real_element) mref.resize(nbf + 1);
     }
 
-    void add_elem(base_tensor &t, size_type ip, scalar_type J, 
-		  dim_type N, bool first, bool trans = true) {
+    void add_elem(base_tensor &t, const base_matrix &G, size_type ip,
+		  scalar_type J, dim_type N, bool first, bool trans = true) {
       mat_elem_type::const_iterator it = pme->begin(), ite = pme->end();
       bgeot::multi_index mi(pme->mi.size()), sizes = pme->mi;
       bgeot::multi_index::iterator mit = sizes.begin();
@@ -147,29 +151,29 @@ namespace getfem
 	
 	switch ((*it).t) {
 	case GETFEM__BASE    :
-	  elmt_stored[k] = pfp[k]->val(ip);  break;
+	  (*it).pfi->real_base_value(pgp, pfp[k], ip, G, elmt_stored[k]);
+	  break;
 	case GETFEM__GRAD    :
-	  if ((*it).pfi->do_grad_reduction() && trans) {
-	    elmt_stored[k].mat_transp_reduction(pfp[k]->grad(ip), B, 2);
+	  if (trans) {
+	    (*it).pfi->real_grad_base_value(pgp, pfp[k], ip, G, B, 
+					    elmt_stored[k]);
 	    *mit++ = N;
 	  }
 	  else
 	    elmt_stored[k] = pfp[k]->grad(ip);
-	  // a verif
 	  break;
 	case GETFEM__HESSIAN :
-	  base_tensor tt = pfp[k]->hess(ip);
-	  bgeot::multi_index mim(3);
-	  mim[2] = dal::sqr(tt.sizes()[2]); mim[1] = tt.sizes()[1];
-	  mim[0] = tt.sizes()[0];
-	  tt.adjust_sizes(mim);
 	  if (trans) {
-	    elmt_stored[k].mat_transp_reduction(tt, B3, 2);
-	    tt.mat_transp_reduction(pfp[k]->grad(ip), B32, 2);
-	    elmt_stored[k] -= tt;
-	    *mit++ = N*N; 
+	    (*it).pfi->real_hess_base_value(pgp, pfp[k], ip, G, B3, 
+					    B32, elmt_stored[k]);
+	    *mit++ = N*N;
 	  }
 	  else {
+	    base_tensor tt = pfp[k]->hess(ip);
+	    bgeot::multi_index mim(3);
+	    mim[2] = dal::sqr(tt.sizes()[2]); mim[1] = tt.sizes()[1];
+	    mim[0] = tt.sizes()[0];
+	    tt.adjust_sizes(mim);
 	    elmt_stored[k] = tt;
 	  }
 	  break;
@@ -294,7 +298,7 @@ namespace getfem
 	for (size_type ip = (volumic ? 0:nb_ptc); ip < nb_pt_tot; ++ip) {
 	  while (ip == nb_pt_l && ind_l < nbf)
 	    { nb_pt_l += pai->nb_points_on_face(ind_l); ind_l++; }
-	  add_elem(mref[ind_l], ip, 1.0, 0, first, false); first = false;
+	  add_elem(mref[ind_l], B, ip, 1.0, 0, first, false); first = false;
 	}
       }
       // cout << "precompute Mat elem computation time : "
@@ -302,9 +306,7 @@ namespace getfem
     }
 
 
-    void compute(base_tensor &t, const base_matrix &G, size_type ir)
-    {
-      
+    void compute(base_tensor &t, const base_matrix &G, size_type ir) {
       dim_type P = dim, N = G.nrows();
       short_type NP = pgt->nb_points();
       scalar_type J;
@@ -322,9 +324,7 @@ namespace getfem
       base_tensor taux;
       bool flag = false;
 
-      if (is_linear) { // linear transformation
-      
-      // if (is_ppi) {
+      if (!computed_on_real_element) {
 	
 	pre_tensors_for_linear_trans(ir == 0);
 	
@@ -371,9 +371,7 @@ namespace getfem
 	}
 	
       }
-      else { // non linear transformation
-
-	// cout << "on commnce ...\n";
+      else { // non linear transformation and methods defined on real elements
 
 	bool first = true;
 
@@ -405,7 +403,7 @@ namespace getfem
 	    bgeot::mat_product(B3, B2, B32);
 	  }
 
-	  add_elem(t, ip, J, N, first);
+	  add_elem(t, G,  ip, J, N, first);
 	}
       }
 
@@ -427,7 +425,6 @@ namespace getfem
       if (flag) t = taux;
     }
     
-
     void compute(base_tensor &t, const base_matrix &G)
     { compute(t, G, 0); }
 

@@ -67,7 +67,9 @@ namespace getfem
   pdof_description product_dof(pdof_description, pdof_description);
 
   pdof_description to_coord_dof(pdof_description p, dim_type ct);
-  
+
+  pdof_description xfem_dof(pdof_description p, size_type ind);
+
   /** Gives a total order on the dof description compatible with the
    *   identification.
    */
@@ -96,14 +98,14 @@ namespace getfem
     mutable bool pspt_valid;
     bgeot::pconvex_ref cvr; // reference element.
     dim_type ntarget_dim;
-    bool is_equiv, is_lag, is_pol, do_grad, is_polycomp;
+    bool is_equiv, is_lag, is_pol, is_polycomp, real_element_defined;
     short_type es_degree, hier_raff;
     
   public :
     /// Number of degrees of freedom.
     virtual size_type nb_dof(void) const { return _dof_types.size(); }
-    /// Number of components (nb_dof() * dimension of the target space).
     virtual size_type nb_base(void) const { return nb_dof(); }
+    /// Number of components (nb_dof() * dimension of the target space).
     size_type nb_base_components(void) const
       { return nb_base() * ntarget_dim; }
     size_type nb_components(void) const
@@ -138,6 +140,7 @@ namespace getfem
       }
       return pspt;
     }
+    bool is_on_real_element(void) const { return real_element_defined; }
     bool is_equivalent(void) const { return is_equiv; }
     bool is_lagrange(void) const { return is_lag; }
     bool is_polynomial(void) const { return is_pol; }
@@ -160,41 +163,74 @@ namespace getfem
 			       bgeot::pgeometric_trans pgt, 
 			       const base_vector &coeff, 
 			       base_node &val, dim_type Qdim=1) const;
-    virtual void interpolation_grad(const base_node &x, const base_matrix &G,
-				    bgeot::pgeometric_trans pgt,
-				    const base_vector &coeff,
-				    base_matrix &val) const = 0;
-    virtual void complete_interpolation_grad(const base_node &x,
-					     const base_matrix &G,
-					     bgeot::pgeometric_trans pgt,
-					     const base_vector &coeff,
-					     base_matrix &val) const;
-    virtual void interpolation_grad(pfem_precomp pfp, size_type ii,
-				    const base_matrix &G,
-				    bgeot::pgeometric_trans pgt, 
-				    const base_vector &coeff,
-				    base_matrix &val) const;
+//     virtual void interpolation_grad(const base_node &x, 
+//                                     const base_matrix &G,
+// 				    bgeot::pgeometric_trans pgt,
+// 				    const base_vector &coeff,
+// 				    base_matrix &val) const = 0;
+//     virtual void complete_interpolation_grad(const base_node &x,
+// 					     const base_matrix &G,
+// 					     bgeot::pgeometric_trans pgt,
+// 					     const base_vector &coeff,
+// 					     base_matrix &val) const;
+//     virtual void interpolation_grad(pfem_precomp pfp, size_type ii,
+// 				    const base_matrix &G,
+// 				    bgeot::pgeometric_trans pgt, 
+// 				    const base_vector &coeff,
+// 				    base_matrix &val) const;
 
     /** Gives the value of all components of the base functions at the
      *  point x of the reference element.
      */
     virtual void base_value(const base_node &x, base_tensor &t) const = 0;
-    /** Gives the value of all gradients of the components of the
-     *  base functions at the point x of the reference element.
+    /** Gives the value of all gradients (on ref. element) of the components
+     *  of the base functions at the point x of the reference element.
      */
     virtual void grad_base_value(const base_node &x, base_tensor &t) const = 0;
-    /** Gives the value of all hessians of the components of the base
-     *  functions at the point x of the reference element.
+    /** Gives the value of all hessians (on ref. element) of the components
+     *  of the base functions at the point x of the reference element.
      */
     virtual void hess_base_value(const base_node &x, base_tensor &t) const = 0;
+    /** Gives the value of all components of the base functions at the point
+     *  ii of the pgp possibly using information on pfp and G.
+     *  Used by elementary computations.
+     *  Matrix M for non tau-equivalent elements not taken into account.
+     */
+    virtual void real_base_value(pgeotrans_precomp pgp, pfem_precomp pfp,
+				 size_type ii, const base_matrix &G,
+				 base_tensor &t) const;
+    /** Gives the value of all gradients on the real element of the components
+     *  of the base functions at the point ii of the pgp possibly using
+     *  information on pfp, G and B. B is the matrix wich transforms the
+     *  gradient on the reference element to the gradient on the real element.
+     *  Used by elementary computations.
+     *  Matrix M for non tau-equivalent elements not taken into account.
+     */
+    virtual void real_grad_base_value(pgeotrans_precomp pgp, pfem_precomp pfp,
+				      size_type ii, const base_matrix &G,
+				      const base_matrix &B,
+				      base_tensor &t) const;
+    /** Gives the value of all hessians on the real element of the components
+     *  of the base functions at the point ii of the pgp possibly using
+     *  information on pfp, G, B2 and B32. B2 and B32 are the matrices used
+     *  to transform a Hessian on reference element to a Hessian on real
+     *  element. Used by elementary computations.
+     *  Matrix M for non tau-equivalent elements not taken into account.
+     */
+    virtual void real_hess_base_value(pgeotrans_precomp pgp, pfem_precomp pfp,
+				      size_type ii, const base_matrix &G,
+				      const base_matrix &B3,
+				      const base_matrix &B32,
+				      base_tensor &t) const;
+
+
     
     virtual size_type index_of_already_numerate_dof(size_type, size_type) const
       { DAL_THROW(internal_error, "internal error."); }
-    bool do_grad_reduction(void) const { return do_grad; }
 
     virtual_fem(void) { 
       ntarget_dim = 1; is_equiv = is_pol = is_polycomp = is_lag = false;
-      pspt_valid = false; do_grad = true; hier_raff = 0; 
+      pspt_valid = false; hier_raff = 0; real_element_defined = false; 
     }
 
     void add_node(const pdof_description &d, const base_node &pt) ;
@@ -214,7 +250,7 @@ namespace getfem
       is_lag = f.is_lag;
       is_pol = f.is_pol;
       is_polycomp = f.is_polycomp;
-      do_grad = f.do_grad;
+      real_element_defined = f.real_element_defined;
       es_degree = f.es_degree;
       hier_raff = f.hier_raff;
       return *this;
@@ -227,10 +263,8 @@ namespace getfem
   
   
   
-  template <class FUNC> class fem : public virtual_fem
-  {
+  template <class FUNC> class fem : public virtual_fem {
   protected :
-    
     std::vector<FUNC> _base;
     
   public :
@@ -250,16 +284,16 @@ namespace getfem
     void interpolation(const base_node &x, const base_matrix &G, 
 		       bgeot::pgeometric_trans pgt,
 		       const base_vector &coeff, base_node &val) const;
-    void interpolation_grad(pfem_precomp pfp, size_type ii,
-			    const base_matrix &G,
-			    bgeot::pgeometric_trans pgt, 
-			    const base_vector &coeff,
-			    base_matrix &val) const { 
-      virtual_fem::interpolation_grad(pfp,ii,G,pgt,coeff,val); 
-    }
-    void interpolation_grad(const base_node &x, const base_matrix &G,
-			    bgeot::pgeometric_trans pgt,
-			    const base_vector &coeff, base_matrix &val) const;
+//     void interpolation_grad(pfem_precomp pfp, size_type ii,
+// 			    const base_matrix &G,
+// 			    bgeot::pgeometric_trans pgt, 
+// 			    const base_vector &coeff,
+// 			    base_matrix &val) const { 
+//       virtual_fem::interpolation_grad(pfp,ii,G,pgt,coeff,val); 
+//     }
+//     void interpolation_grad(const base_node &x, const base_matrix &G,
+// 			    bgeot::pgeometric_trans pgt,
+// 			    const base_vector &coeff, base_matrix &val) const;
     void base_value(const base_node &x, base_tensor &t) const {
       bgeot::multi_index mi(2);
       mi[1] = target_dim(); mi[0] = nb_base();
@@ -334,41 +368,41 @@ namespace getfem
   }
   
   
-  template <class FUNC>
-  void fem<FUNC>::interpolation_grad(const base_node &x,
-				     const base_matrix &G,
-				     bgeot::pgeometric_trans pgt, 
-				     const base_vector &coeff,
-				     base_matrix &val) const { 
-    // optimisable.   verifier
-    base_matrix M;
-    base_tensor t;
+//   template <class FUNC>
+//   void fem<FUNC>::interpolation_grad(const base_node &x,
+// 				     const base_matrix &G,
+// 				     bgeot::pgeometric_trans pgt, 
+// 				     const base_vector &coeff,
+// 				     base_matrix &val) const { 
+//     // optimisable.   verifier
+//     base_matrix M;
+//     base_tensor t;
     
-    if (val.nrows() != target_dim() || val.ncols() != x.size())
-      DAL_THROW(dimension_error, "dimensions mismatch");
+//     if (val.nrows() != target_dim() || val.ncols() != x.size())
+//       DAL_THROW(dimension_error, "dimensions mismatch");
     
-    grad_base_value(x, t);
-    base_tensor::iterator it = t.begin();
+//     grad_base_value(x, t);
+//     base_tensor::iterator it = t.begin();
     
-    size_type R = nb_dof(), RR = nb_base();
+//     size_type R = nb_dof(), RR = nb_base();
     
-    if (!is_equivalent()) { M.resize(RR, R); mat_trans(M, G, pgt); }
+//     if (!is_equivalent()) { M.resize(RR, R); mat_trans(M, G, pgt); }
     
-    val.fill(0.0);
+//     val.fill(0.0);
     
-    for (size_type k = 0; k < x.size(); ++k)
-      for (size_type r = 0; r < target_dim(); ++r)
-	for (size_type j = 0; j < RR; ++j, ++it) {
-	  scalar_type co = 0.0;
-	  if (is_equivalent())
-	    co = coeff[j];
-	  else
-	    for (size_type i = 0; i < R; ++i)
-	      co += coeff[i] * M(i, j);
+//     for (size_type k = 0; k < x.size(); ++k)
+//       for (size_type r = 0; r < target_dim(); ++r)
+// 	for (size_type j = 0; j < RR; ++j, ++it) {
+// 	  scalar_type co = 0.0;
+// 	  if (is_equivalent())
+// 	    co = coeff[j];
+// 	  else
+// 	    for (size_type i = 0; i < R; ++i)
+// 	      co += coeff[i] * M(i, j);
 	  
-	  val(r,k) += co * (*it);
-	} 
-  }
+// 	  val(r,k) += co * (*it);
+// 	} 
+//   }
   
   /** Gives a pointer on the structures describing the more classical fem
    *  of degree k on a geometric convex cvs (coming from the geometric trans).
