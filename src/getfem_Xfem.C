@@ -84,25 +84,25 @@ namespace getfem
 			   bgeot::pgeometric_trans pgt,
 			   const base_vector &coeff, base_node &val) const {
     base_node val2(val.size());
-    cerr << "coucou Xfem::interpolation(x=" << x << ", G=" << G << endl;
+    //cerr << "coucou Xfem::interpolation(x=" << x << ", G=" << G << endl;
     base_node xreal = pgt->transform(x, G);
-    cerr << "xreal = " << xreal << endl;
+    //cerr << "xreal = " << xreal << endl;
     size_type nbb = pfi->nb_base();
     pfi->interpolation(x, G, pgt, coeff, val);
-    cerr << "val = " << val[0] << endl;
+    //cerr << "val = " << val[0] << endl;
     base_vector coeff2(nbb);
     for (size_type i = 0; i < nb_func; ++i) {
       scalar_type a = (*(funcs[i]))(xreal);
-      cerr << "i = " << i << " a = " << a << endl;
+      //cerr << "i = " << i << " a = " << a << endl;
       for (size_type j = 0; j != nbb; ++j) {
 	coeff2[j] = coeff[(i+1) * nbb + j] * a;
       }
-      cerr << "coeff2 = " << coeff2 << endl;
+      //cerr << "coeff2 = " << coeff2 << endl;
       pfi->interpolation(x, G, pgt, coeff2, val2);
-      cerr << "val2 = " << val2[0] << endl;
+      //cerr << "val2 = " << val2[0] << endl;
       val += val2;
     }
-    cerr << "val finale = " << val << endl;
+    //cerr << "val finale = " << val << endl;
   }
   
   // take into account the fact that the pfp is the same for pfi and
