@@ -184,7 +184,28 @@ namespace getfem {
     }
   } 
 
-  template<typename MODEL_STATE>
+
+  typedef gmm::rsvector<scalar_type> modeling_standard_sparse_vector;
+  typedef gmm::col_matrix<modeling_standard_sparse_vector>
+                                    modeling_standard_sparse_matrix;
+  typedef std::vector<scalar_type> modeling_standard_plain_vector;
+
+  typedef gmm::rsvector<complex_type> modeling_standard_complex_sparse_vector;
+  typedef gmm::col_matrix<modeling_standard_complex_sparse_vector>
+                                    modeling_standard_complex_sparse_matrix;
+  typedef std::vector<complex_type> modeling_standard_complex_plain_vector;
+
+  typedef model_state<modeling_standard_sparse_matrix,
+		      modeling_standard_sparse_matrix,
+		      modeling_standard_plain_vector > standard_model_state;
+
+  typedef model_state<modeling_standard_complex_sparse_matrix,
+		      modeling_standard_complex_sparse_matrix,
+		      modeling_standard_complex_plain_vector >
+    standard_complex_model_state;
+
+
+  template<typename MODEL_STATE = standard_model_state>
   class mdbrick_abstract : public context_dependencies {
   protected :
     bool to_compute, to_transfer;
@@ -226,25 +247,6 @@ namespace getfem {
 			      MS_i0(0), ident_ms(-1) { }
     virtual ~mdbrick_abstract() {}
   };
-
-  typedef gmm::rsvector<scalar_type> modeling_standard_sparse_vector;
-  typedef gmm::col_matrix<modeling_standard_sparse_vector>
-                                    modeling_standard_sparse_matrix;
-  typedef std::vector<scalar_type> modeling_standard_plain_vector;
-
-  typedef gmm::rsvector<complex_type> modeling_standard_complex_sparse_vector;
-  typedef gmm::col_matrix<modeling_standard_complex_sparse_vector>
-                                    modeling_standard_complex_sparse_matrix;
-  typedef std::vector<complex_type> modeling_standard_complex_plain_vector;
-
-  typedef model_state<modeling_standard_sparse_matrix,
-		      modeling_standard_sparse_matrix,
-		      modeling_standard_plain_vector > standard_model_state;
-
-  typedef model_state<modeling_standard_complex_sparse_matrix,
-		      modeling_standard_complex_sparse_matrix,
-		      modeling_standard_complex_plain_vector >
-    standard_complex_model_state;
 
   /* ******************************************************************** */
   /*		general scalar elliptic brick.                            */
@@ -654,7 +656,7 @@ namespace getfem {
       gmm::resize(F_, sub_problem.main_mesh_fem().nb_dof());
       gmm::clear(F_);
       
-      asm_source_term(F_, sub_problem.main_mesh_fem(),mf_data, B_,boundary);
+      asm_source_term(F_, main_mesh_fem(), mf_data, B_, boundary);
       this->computed();
     }
 
@@ -694,7 +696,7 @@ namespace getfem {
     { return sub_problem.main_mesh_fem(); }
 
     void set_rhs(const VECTOR &B__)
-    { fixing_dimensions(); gmm::copy(B__, B_); }    
+    { fixing_dimensions(); gmm::copy(B__, B_); force_recompute(); }    
     // Constructor defining the rhs
     mdbrick_source_term(mdbrick_abstract<MODEL_STATE> &problem,
 		       mesh_fem &mf_data_, const VECTOR &B__,
@@ -1065,7 +1067,7 @@ namespace getfem {
     virtual mesh_fem &main_mesh_fem(void)
     { return sub_problem.main_mesh_fem(); }
 
-    void changing_rhs(const VECTOR &B__) {
+    void set_rhs(const VECTOR &B__) {
       if (this->context_changed()) {
 	fixing_dimensions(); gmm::copy(B__, B_);
 	compute_constraints(ASMDIR_BUILDH + ASMDIR_BUILDR);
@@ -1123,7 +1125,7 @@ namespace getfem {
     size_type ndof = problem.nb_dof();
 
     bool is_linear = problem.is_linear();
-    mtype alpha, alpha_min=mtype(0)/mtype(32), alpha_mult=mtype(3)/mtype(4);
+    mtype alpha, alpha_min=mtype(1)/mtype(256), alpha_mult=mtype(3)/mtype(4);
     mtype alpha_max_ratio(1);
     dal::bit_vector mixvar;
     gmm::iteration iter_linsolv0 = iter;
@@ -1177,8 +1179,8 @@ namespace getfem {
 	}
 	else {
 	  cout << "there is " << mixvar.card() << " mixed variables\n";
-	  gmm::ilut_precond<T_MATRIX> P(MS.reduced_tangent_matrix(),100,1E-10);
-	  // gmm::identity_matrix P;
+	  //gmm::ilut_precond<T_MATRIX> P(MS.reduced_tangent_matrix(),100,1E-10);
+	  gmm::identity_matrix P;
 	  gmm::gmres(MS.reduced_tangent_matrix(), dr, 
 		     gmm::scaled(MS.reduced_residu(),  value_type(-1)),
 		     P, 300, iter_linsolv);

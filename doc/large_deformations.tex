@@ -37,15 +37,15 @@ is frequently used instead of $\TL$.
 $i_1,i_2,i_3$ are the invariants of orders $1,2$ and $3$:
 \begin{align}
   i_1(\TL) &= \Trace\TL &i_1(\TC) &= 2\Trace\TL + 3\\
-  i_2(\TL) &= \frac{\Trace\TL^2 - (\Trace\TL)^2}{2}\quad& i_2(\TC)&=4i_2(\TL)+4i_1(\TL)+3\\
+  i_2(\TL) &= \frac{(\Trace\TL)^2 - \Trace\TL^2}{2}\quad& i_2(\TC)&=4i_2(\TL)+4i_1(\TL)+3\\
   i_3(\TL) &= \Det\TL &i_3(\TC) &= 8i_3(\TL) + 4i_2(\TL) + 2i_1(\TL) + 1
 \end{align}
 Their derivatives in the direction $H$ are:
 \begin{align}
   \frac{\partial i_1}{\partial\TL} &= I:H &= \Trace H\\
-  \frac{\partial i_2}{\partial\TL} &= (i_1(\TL)I - \TL):H &= \Trace \TL:\Trace H - \TL:H\\
+  \frac{\partial i_2}{\partial\TL} &= (i_1(\TL)I - \TL^T):H &= \Trace \TL:\Trace H - \TL^T:H\\
   \frac{\partial i_3}{\partial\TL} &= (i_2(\TL)I - i_1(\TL)\TL + \TL^2):H \\
-                  &= i_3(\TL)(L^{-1}):H
+                  &= i_3(\TL)(L^{-T}):H
 \end{align}
 and
 \begin{align}

@@ -24,6 +24,7 @@
  * This program is used to check that getfem++ is working. This is also 
  * a good example of use of Getfem++.
 */
+#define GMM_USES_SUPERLU
 
 #include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
 #include <getfem_export.h>   /* export functions (save solution in a file)  */
@@ -78,7 +79,7 @@ struct elastostatic_problem {
 };
 
 void test(scalar_type a, scalar_type b, scalar_type c) {
-  getfem::Hooke_hyperelastic_law AHL;
+  getfem::SaintVenantKirchhoff_hyperelastic_law AHL;
   base_matrix L(3,3), L2(3,3), gradU(3,3), gradU2(3,3), dgradU(3,3), Sigma(3,3), Sigma2(3,3), NL(3,3), NL2(3,3),A(3,3),B(3,3);
   getfem::base_tensor dNL(3,3,3,3), tt(3,3,3,3);
   base_vector params(2);
@@ -330,8 +331,8 @@ void elastostatic_problem::init(void) {
   const char *data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name == 0) {
     if (!pf_u->is_lagrange()) {
-      DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM "
-		<< data_fem_name << ". In that case you need to set "
+      DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM"
+		". In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
     }
     mf_rhs.set_finite_element(mesh.convex_index(), pf_u, ppi);
@@ -356,8 +357,8 @@ void elastostatic_problem::init(void) {
     assert(it->f != size_type(-1));
     base_node un = mesh.normal_of_face_of_convex(it->cv, it->f);
     un /= gmm::vect_norm2(un);
-    if (dal::abs(un[N-1] - 1.0) < 1.0E-7) { // new Neumann face
-      mf_u.add_boundary_elt(NEUMANN_BOUNDARY_NUM, it->cv, it->f);
+    if (dal::abs(un[N-1] - 1.0) < 1.0E-7) { 
+      mf_u.add_boundary_elt(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
     } else if (dal::abs(un[N-1] + 1.0) < 1.0E-7) {
       mf_u.add_boundary_elt(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
     }
@@ -371,12 +372,34 @@ void elastostatic_problem::init(void) {
 bool elastostatic_problem::solve(plain_vector &U) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   size_type N = mesh.dim();
-
+  size_type law_num = PARAM.int_value("LAW");
   // Linearized elasticity brick.
-  getfem::Hooke_hyperelastic_law l;
+  base_vector p(3); p[0] = p1; p[1] = p2; p[2] = p3;
+  /*cout << "test Hooke\n";
+  getfem::SaintVenantKirchhoff_hyperelastic_law lh;
+  lh.test_derivatives(3, 0.0001, p);
+  cout << "test ciralet\n";
+  getfem::Ciarlet_Geymonat_hyperelastic_law l;
+  l.test_derivatives(3, 0.1, p);
+  l.test_derivatives(3, 0.01, p);
+  l.test_derivatives(3, 0.001, p);
+  l.test_derivatives(3, 0.0001, p);
+  l.test_derivatives(3, 0.00001, p);
+  l.test_derivatives(3, 0.000001, p);
+  l.test_derivatives(3, 0.0000001, p);
+  */
+  getfem::abstract_hyperelastic_law *pl = 0;
+  switch (law_num) {
+    case 0:
+    case 1: pl = new getfem::SaintVenantKirchhoff_hyperelastic_law(); break;
+    case 2: pl = new getfem::Ciarlet_Geymonat_hyperelastic_law(); break;
+    case 3: pl = new getfem::Mooney_Rivlin_hyperelastic_law(); break;
+    default: DAL_THROW(dal::failure_error, "no such law");
+  }
 
   if (0) {
-    cout << "test derivees Hooke_hyperelastic_law\n";
+    getfem::Ciarlet_Geymonat_hyperelastic_law l;
+    cout << "test derivees SaintVenantKirchhoff_hyperelastic_law\n";
     base_vector param(2); param[0] = 1.; param[1] = .7423;
     for (size_type itest = 0; itest < 100; ++itest) {
       base_matrix L(3,3), L2(3,3); 
@@ -409,41 +432,68 @@ bool elastostatic_problem::solve(plain_vector &U) {
   }
 
   //getfem::Mooney_Rivlin_hyperelastic_law l;
-  getfem::mdbrick_nonlinear_elasticity<>  ELAS(l, mf_u, mf_coef, p1, p2);
+  p.resize(pl->nb_params());
+  getfem::mdbrick_nonlinear_elasticity<>  ELAS(*pl, mf_u, mf_coef, p);
 
-  getfem::mdbrick_nonlinear_incomp<>  INCOMP(ELAS, mf_p);
+  getfem::mdbrick_abstract<> *pINCOMP = &ELAS;
+  switch (law_num) {
+    case 1: 
+    case 3: pINCOMP = new getfem::mdbrick_nonlinear_incomp<>(ELAS, mf_p);
+  }
 
   // Defining the volumic source term.
-  base_vector f(N); 
-  f[0] = PARAM.real_value("FORCEX","Amplitude of the force");
-  f[1] = PARAM.real_value("FORCEY","Amplitude of the force");
+  base_vector f(N);
+  f[0] = PARAM.real_value("FORCEX","Amplitude of the gravity");
+  f[1] = PARAM.real_value("FORCEY","Amplitude of the gravity");
   if (N>2)
-    f[2] = PARAM.real_value("FORCEZ","Amplitude of the force");
+    f[2] = PARAM.real_value("FORCEZ","Amplitude of the gravity");
   plain_vector F(nb_dof_rhs * N);
-  for (size_type i = 0; i < nb_dof_rhs; ++i)
-      gmm::copy(f, gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
-  
+  for (size_type i = 0; i < nb_dof_rhs; ++i) {
+    gmm::copy(f, gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
+  }
   // Volumic source term brick.
   int nb_step = PARAM.int_value("NBSTEP");
 
 
-  getfem::mdbrick_source_term<> VOL_F(INCOMP, mf_rhs, F);
+  getfem::mdbrick_source_term<> VOL_F(*pINCOMP, mf_rhs, F);
+
+  plain_vector F2(nb_dof_rhs * N);
+  gmm::clear(F2);
+
+  
   getfem::mdbrick_Dirichlet<> final_model(VOL_F, mf_rhs,
-					  F, DIRICHLET_BOUNDARY_NUM,
+					  F2, DIRICHLET_BOUNDARY_NUM,
 					  PARAM.int_value("USE_MULTIPLIERS"));
 
   // Generic solve.
   getfem::standard_model_state MS(final_model);
   size_type maxit = PARAM.int_value("MAXITER"); 
   gmm::iteration iter;
-
+  
   for (int step = 0; step < nb_step; ++step) {
     plain_vector DF(F);
 
     gmm::copy(gmm::scaled(F, (step+1.)/(scalar_type)nb_step), DF);
     VOL_F.set_rhs(DF);
+
+    if (N>2) {
+      scalar_type torsion = PARAM.real_value("TORSION","Amplitude of the torsion");
+      torsion *= (step+1)/scalar_type(nb_step);
+      scalar_type extension = PARAM.real_value("EXTENSION","Amplitude of the extension");
+      base_node G(N); G[0] = G[1] = 0.5;
+      for (size_type i = 0; i < nb_dof_rhs; ++i) {
+	const base_node P = mf_rhs.point_of_dof(i) - G;
+	scalar_type r = sqrt(P[0]*P[0]+P[1]*P[1]),
+	  theta = atan2(P[1],P[0]);    
+	F2[i*N+0] = r*cos(theta + (torsion*P[2])) - P[0]; 
+	F2[i*N+1] = r*sin(theta + (torsion*P[2])) - P[1]; 
+	F2[i*N+2] = extension * P[2];
+      }
+    }
+    final_model.set_rhs(F2);
+
     cout << "step " << step << ", number of variables : " << final_model.nb_dof() << endl;
-    iter = gmm::iteration(residu, 1, maxit ? maxit : 40000);
+    iter = gmm::iteration(residu, PARAM.int_value("NOISY"), maxit ? maxit : 40000);
     cout << "|U0| = " << gmm::vect_norm2(MS.state()) << "\n";
     getfem::standard_solve(MS, final_model, iter);
   }
