@@ -42,11 +42,14 @@
 namespace bgeot
 {
 
-  /* ******************************************************************** */
-  /*	  fonction qui a partir d'un liste de points donne l'env. convexe */
-  /*      de dimension egale a celle des points.                          */
-  /* ******************************************************************** */
- 
+  /**
+    fonction qui a partir d'un liste de points donne l'env. convexe
+    de dimension egale a celle des points. 
+    Principe: toutes les arêtes possible sont mises dans le maillage,
+    puis tous les simplexes possibles sont construits. Pour chaque simplexe,
+    on elimine l'ensemble des arête qui croisent le simplexe.
+   */
+    
   template<class PT_TAB>
     void convex_hull(mesh_structure &cv, const PT_TAB &point_list, size_type N,
 		                                                  double EPS)
@@ -85,9 +88,10 @@ namespace bgeot
 	    A(i,j) = A(j,i) = vect_sp(vect_list[i], vect_list[j]);
 	}
 
-	double s = mat_gauss_det(A);
-	mat_inv_cholesky(A);
+	//double s = mat_gauss_det(A);
+	double s = mat_inv_cholesky(A);
 
+	/* if the simplex is not flat .. */
 	if (dal::abs(s) > EPS)
 	{
    
@@ -106,6 +110,7 @@ namespace bgeot
 	    for (j = 0; j < N+1; j++)
 	      if (simplex[j] == i1 || simplex[j] == i2) ico++;
 	    
+	    // if the edge does not belong to the simplex..
 	    if (ico < 2)
 	    {
 	      typename PT::vector_type D0
@@ -158,6 +163,7 @@ namespace bgeot
 
 		a = vect_norm2(d0); b = vect_norm2(dV);
 
+		// remove the edge if it crosses the simplex
 		if (!( (a < EPS && b > 1.0 - EPS)
 		    || (a > 1.0 - EPS && b > 1.0 - EPS)
 		    || (a > 1.0 - EPS && b < EPS) ))
