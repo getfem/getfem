@@ -154,9 +154,9 @@ namespace dal
     }
   }
 
-  bool bit_vector::contains(const dal::bit_vector& other) {
+  bool bit_vector::contains(const dal::bit_vector& other) const {
     for (dal::bv_visitor i(other); !i.finished(); ++i) {
-      if (!(*this)[i]) return false;
+      if (!this->is_in(i)) return false;
     }
     return true;
   }
