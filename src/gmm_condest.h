@@ -37,9 +37,9 @@
 
 namespace gmm {
 
-  /** estimation of the magnitude of the largest eigenvalue 
-   *  works also with non-square matrices
-   */
+//  /** estimation of the magnitude of the largest eigenvalue 
+//   *  works also with non-square matrices
+//   */
 //   template <typename MAT> 
 //   typename number_traits<typename
 //   linalg_traits<MAT>::value_type>::magnitude_type
@@ -75,9 +75,9 @@ namespace gmm {
 //     else return sqrt(e);
 //  }
 
-  /** estimation of the condition number 
-   * (using lu_inverse => dense matrix only)
-   */
+//  /** estimation of the condition number 
+//   * (using lu_inverse => dense matrix only)
+//   */
 //   template <typename MAT> 
 //   typename number_traits<typename
 //   linalg_traits<MAT>::value_type>::magnitude_type
@@ -108,8 +108,10 @@ namespace gmm {
   typename number_traits<typename 
   linalg_traits<MAT>::value_type>::magnitude_type
   condest(const MAT& M, 
-	  typename number_traits<typename linalg_traits<MAT>::value_type>::magnitude_type& emin,
-	  typename number_traits<typename linalg_traits<MAT>::value_type>::magnitude_type& emax) {
+	  typename number_traits<typename
+	  linalg_traits<MAT>::value_type>::magnitude_type& emin,
+	  typename number_traits<typename
+	  linalg_traits<MAT>::value_type>::magnitude_type& emax) {
     typedef typename linalg_traits<MAT>::value_type value_type;
     typedef typename number_traits<value_type>::magnitude_type magnitude_type;
 
@@ -118,12 +120,11 @@ namespace gmm {
     
     dense_matrix<value_type> B(vsz, vsz);
     std::vector<magnitude_type> eig(vsz);
-    if (d >= 0) mult(transposed(M), M, B); else mult(M,transposed(M), B);
+    if (d >= 0) mult(transposed(M), M, B); else mult(M, transposed(M), B);
     
     gmm::symmetric_qr_algorithm(B, eig);
     
-    emin = dal::abs(eig[0]);
-    emax = dal::abs(eig[0]);
+    emin = emax = dal::abs(eig[0]);
     for (int i = 1; i < vsz; ++i)
       { emin = std::min(emin, eig[i]); emax = std::max(emax, eig[i]); } 
     
@@ -134,7 +135,8 @@ namespace gmm {
   typename number_traits<typename 
   linalg_traits<MAT>::value_type>::magnitude_type
   condest(const MAT& M) { 
-    typename number_traits<typename linalg_traits<MAT>::value_type>::magnitude_type emax,emin;
+    typename number_traits<typename
+      linalg_traits<MAT>::value_type>::magnitude_type emax, emin;
     return condest(M,emax,emin);
   }
 }
