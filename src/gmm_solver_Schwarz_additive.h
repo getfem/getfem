@@ -90,9 +90,11 @@ namespace gmm {
     global_to_local(f, fi, cor);
 
     for (size_type i = 0; i < ms; ++i) {
+      // cout << "mco1[" << i << "] = " << mco1[i] << endl;
       itebilan = std::max(itebilan,
 		gmm::constrained_cg(ml1[i], mco1[i], gi[i], fi[i],
 			       identity_matrix(), itemax, residu, noisy - 1));
+      // cout << "gi[" << i << "] = " << gi[i] << endl;
     }
     for (size_type i = 0; i < ml2.size(); ++i) {
       itebilan = std::max(itebilan,

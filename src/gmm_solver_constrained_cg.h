@@ -54,7 +54,7 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-// a unifier avec cg
+// to be unified with cg, preconditionning does not work
 
 #ifndef __GMM_SOLVER_CCG_H
 #define __GMM_SOLVER_CCG_H
@@ -62,7 +62,7 @@
 namespace gmm {
 
 template <class CMatrix, class CINVMatrix, class VectorX>
-void pseudo_inverse(const CMatrix &C, CINVMatrix CINV, VectorX&)
+void pseudo_inverse(const CMatrix &C, CINVMatrix &CINV, VectorX&)
 {
   // compute the pseudo inverse of the non-square matrix C such
   // CINV = inv(C * trans(C)) * C.
@@ -74,51 +74,38 @@ void pseudo_inverse(const CMatrix &C, CINVMatrix CINV, VectorX&)
   typedef size_t size_type;
   typedef typename linalg_traits<VectorX>::value_type value_type;
 
-  TmpVec d(mat_nrows(C)), e(mat_nrows(C)), l(mat_ncols(C));
-  TmpVec p(mat_nrows(C)), q(mat_nrows(C)), r(mat_nrows(C));
+  size_type nr = mat_nrows(C), nc = mat_ncols(C);
+
+  TmpVec d(nr), e(nr), l(nc), p(nr), q(nr), r(nr);
   value_type rho, rho_1, alpha;
   clear(d);
+  clear(CINV);
 
-  for (size_type i = 0; i < mat_nrows(C); ++i)
-  {
+  for (size_type i = 0; i < nr; ++i) {
     d[i] = 1.0; rho = 1.0;
-    std::fill(e.begin(), e.end(), 0.0);
-    copy(d, r); gmm::copy(d, p);
+    clear(e);
+    copy(d, r);
+    copy(d, p);
     
     while (rho >= 1E-38) /* conjugate gradient to compute e               */
     {                    /* which is the i nd row of inv(C * trans(C))    */
       mult(gmm::transposed(C), p, l);
       mult(C, l, q);	  
       alpha = rho / vect_sp(p, q);
-      add(e, scaled(p, alpha), e);  
-      add(r, scaled(q, -alpha), r); 
+      add(scaled(p, alpha), e);  
+      add(scaled(q, -alpha), r); 
       rho_1 = rho;
       rho = vect_sp(r, r);
       add(r, scaled(p, rho / rho_1), p);
     }
     
     mult(transposed(C), e, l); /* l is the i nd row of CINV     */
-    for (size_type j = 0; j < mat_ncols(C); ++j) /* copy of the row       */
-      if (dal::abs(l[j]) >  1E-15) {
-	CINV(i, j) = l[j];
-	// std::cout << "i = " << i << " j = " << j << " : " << l[j] << endl;
-      }
+    cout << "l = " << l << endl;
+    clean(l, 1E-15);
+    copy(l, mat_row(CINV, i));
 
    d[i] = 0.0;
   }
-
-/*   for (size_type i = 0; i < C.nrows(); i++) */
-/*   {  */
-/*     std::cout << "ligne " << i << " [ "; */
-/*     for (size_type j = 0; j < C.nrows(); j++) */
-/*     { */
-/*       double al = mtl::dot(C[j], CINV[i]); */
-/*       if (al != 0.0) */
-/* 	std::cout << "(" << j << "," << al << ")  "; */
-/*     } */
-/*     std::cout << "]" << endl; */
-/*   } */
-
 }
 
 template < class Matrix, class CMatrix, class VectorX, class VectorB, 
@@ -128,7 +115,7 @@ int constrained_cg(const Matrix& A, const CMatrix& C, VectorX& x,
 		   int itemax, double residu, int noisy)
 {
   typedef typename temporary_plain_vector<VectorX>::vector_type TmpVec;
-  typedef typename temporary_plain_vector<typename
+  typedef typename temporary_vector<typename
     linalg_traits<CMatrix>::sub_row_type>::vector_type TmpCVec;
   typedef row_matrix<TmpCVec> TmpCmat;
   
@@ -142,8 +129,9 @@ int constrained_cg(const Matrix& A, const CMatrix& C, VectorX& x,
   int iter = 0;
 
   TmpCmat CINV(mat_nrows(C), mat_ncols(C));
-  clear(CINV);
   pseudo_inverse(C, CINV, x);
+
+  // cout << "C = " << C << " CINV = " << CINV << endl;
 
   while(true)
   {
@@ -159,8 +147,7 @@ int constrained_cg(const Matrix& A, const CMatrix& C, VectorX& x,
       {
 	if (!satured[i]) { satured[i] = true; transition = true; }
 	value_type bb = vect_sp(mat_row(CINV, i), z);
-	if (bb > 0.0)
-	  add(scaled(mat_row(C, i), -bb), z);
+	if (bb > 0.0) add(scaled(mat_row(C, i), -bb), z);
  
 /* 	bb = itl::dot(mtl::rows(CINV)[i], r); */
 /* 	if (bb > 0.0) // itl::add(r, itl::scaled(mtl::rows(C)[i], -bb), r); */
