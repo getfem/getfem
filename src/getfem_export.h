@@ -92,6 +92,7 @@ namespace getfem
 	    size_type dof1 = mf.ind_dof_of_element(cv)[j];
 	    coeff[j] = U[dof1*P+k];
 	  }
+	  // il faudrait utiliser les fem_precomp pour accelerer.
 	  pf1->interpolation(pt2, G, coeff, val);
 	  pt3[k] = val[0];
 	}
@@ -175,7 +176,6 @@ namespace getfem
 	if (ddl_touched[itab[i]])
 	{ // inverser les deux boucles pour gagner du temps ?
 	  // Il faut verifier que le ddl est bien de Lagrange ...
-	  // Il faudrait utiliser les prefem_precomp pour accelerer ...
 	  pt3.fill(0.0);
 	  for (size_type k = 0; k < P; ++k) {
 	    for (size_type j = 0; j < nbd1; ++j) {

@@ -181,9 +181,15 @@ namespace getfem
 			     const base_matrix &G /* et + */) const
         { M.fill(1.0); }
       virtual void interpolation(const base_node &x, const base_matrix &G,
-		    const base_vector coeff, base_node &val) const = 0;
+		         const base_vector coeff, base_node &val) const = 0;
+      virtual void interpolation(pfem_precomp pfp, size_type ii,
+			 const base_matrix &G,
+			 const base_vector coeff, base_node &val) const;
       virtual void interpolation_grad(const base_node &x, const base_matrix &G,
-			      const base_vector coeff, base_matrix &val) const;
+			 const base_vector coeff, base_matrix &val) const = 0;
+      virtual void interpolation_grad(pfem_precomp pfp, size_type ii,
+			 const base_matrix &G,
+			 const base_vector coeff, base_matrix &val) const;
 
       /** Gives the value of all components of the base functions at the
        *  point x of the reference element.
@@ -204,8 +210,7 @@ namespace getfem
       }
    };
 
-   
-
+  
 
    template <class FUNC> class fem : public virtual_fem
    {

@@ -108,8 +108,7 @@ namespace getfem
 	for (size_type q = 0; q < Q; ++q) {
 	  for (size_type l = 0; l < pf_target->nb_dof(); ++l)
 	    coeff[l] = U[mf.ind_dof_of_element(cv)[l] * Q + q ];
-	  pf_target->interpolation_grad(pf_target->node_of_dof(j),
-					G, coeff, val);
+	  pf_target->interpolation_grad(pfp, j, G, coeff, val);
 	  bgeot::mat_product(val, B0, B1);
 
 	  for (size_type l = 0; l < N; ++l)

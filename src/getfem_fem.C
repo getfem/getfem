@@ -34,6 +34,68 @@
 
 namespace getfem
 {
+  void virtual_fem::interpolation(pfem_precomp pfp, size_type ii,
+			     const base_matrix &G,
+			     const base_vector coeff, base_node &val) const {
+    // optimisable.   verifier et faire le vectoriel
+    base_matrix M;
+    assert(val.size() == target_dim());
+    
+    
+    size_type R = nb_dof();
+
+    if (!is_equivalent()) // utilité ?
+    { if (M.nrows() != R || M.ncols() != R) M.resize(R, R); mat_trans(M, G); }
+
+    val.fill(0.0);
+    
+    for (size_type j = 0; j < R; ++j) {
+      scalar_type co = 0.0;
+      if (is_equivalent())
+	co = coeff[j];
+      else
+	for (size_type i = 0; i < R; ++i)
+	  co += coeff[i] * M(i, j);
+      
+      for (size_type r = 0; r < target_dim(); ++r)
+	val[r] += co * pfp->val(ii)[j + r*R];
+    } 
+  }
+
+
+  void virtual_fem::interpolation_grad(pfem_precomp pfp, size_type ii,
+			     const base_matrix &G,
+			     const base_vector coeff, base_matrix &val) const {
+    // optimisable !!   verifier et faire le vectoriel
+    base_matrix M;
+    size_type P = structure()->dim();
+    assert(val.size() == target_dim());
+    
+    base_tensor::const_iterator it = pfp->grad(ii).begin();
+
+    size_type R = nb_dof();
+
+    if (!is_equivalent())
+     { if (M.nrows() != R || M.ncols() != R) M.resize(R, R); mat_trans(M, G); }
+
+     val.fill(0.0);
+     
+     for (size_type k = 0; k < P; ++k)
+       for (size_type r = 0; r < target_dim(); ++r)
+	 for (size_type j = 0; j < R; ++j, ++it) {
+	   scalar_type co = 0.0;
+	   if (is_equivalent())
+	     co = coeff[j];
+	   else
+	     for (size_type i = 0; i < R; ++i)
+	       co += coeff[i] * M(i, j);
+     
+	     val(r,k) += co * (*it);
+     } 
+
+  }
+
+
   /* ******************************************************************** */
   /*	Class for description of an interpolation dof.                    */
   /* ******************************************************************** */
