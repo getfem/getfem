@@ -438,8 +438,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
     iter = gmm::iteration(residu, PARAM.int_value("NOISY"), maxit ? maxit : 40000);
     cout << "|U0| = " << gmm::vect_norm2(MS.state()) << "\n";
 
-    // getfem::standard_solve(MS, final_model, iter);
-    getfem::nl_solve(MS, final_model, iter);
+    getfem::standard_solve(MS, final_model, iter);
+    // getfem::nl_solve(MS, final_model, iter);
 
     ELAS.get_solution(MS, U);
     char s[100]; sprintf(s, "step%d", step+1);
