@@ -84,6 +84,7 @@ EXTRA_DIST = \
 	geo_trans_inv.param \
 	gmm_test_sub.C \
 	gmm_test_mult.C \
+	gmm_test_mat_mult.C \
 	gmm_test_lusolve.C
 
 TESTS_ENVIRONMENT = perl

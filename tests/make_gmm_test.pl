@@ -3,35 +3,71 @@
 eval 'exec perl -S $0 "$@"'
   if 0;
 
+#usage make_gmm_test.pl 100 toto.C with_lapack with_qd
+
+# à ajouter : - les matrices csr et csc (et les interfaces ?)
+#             - Test interface Lapack -> restreindre au seules matrices denses
+#             - Tests avec QD -> ajouter dd_real et qd_real.
+#             - Quand les vecteurs ou les matrices sont creux,
+#               les intialiser au moins une fois sur deux réellement creux.
+
 sub numerique { $a <=> $b; }
 
-# à ajouter : - les matrices csr et csc
-#             - Gerer l'interface Lapack, SuperLU et QD.
-#             - Quand les vecteurs ou les matrices sont creuses,
-#             - les intialiser au moins une fois sur deux réellement creuses.
-#             - test complet sur les mult matriciels (dans gmm_test_mult.C)
 
+$nb_iter = 1;                # number of iterations on each test
 $islocal = 0;
-
-if ($ARGV[0] eq "") { $nb_iter = 1; } else { $nb_iter = int($ARGV[0]); }
-if ($nb_iter == 0) { $nb_iter = 1; }
-$srcdir = $ENV{srcdir};
+$with_qd = 0;                # test also with dd_real and qd_real
+$with_lapack = 0;            # link with lapack
+$srcdir = $ENV{srcdir};      # source directory
 if ($srcdir eq "") {
   $srcdir="../../tests";
   print "WARNING : no srcdir, taking $srcdir\n";
   $islocal = 1;
 }
-$inc_dir = "$srcdir/../src";
+$inc_dir = "$srcdir/../src"; # include directory
+$tests_to_be_done = `ls $srcdir/gmm_test*.C`;  # list of tests
 
-print "Gmm tests : Making $nb_iter execution(s) of each test\n";
+while(@ARGV) {               # read optional parameters
+  $param = $ARGV[0];
+  $val = int(1 * $param);
+  if ($param =~ /.C/) {
+    $tests_to_be_done = $param;
+  }
+  elsif ($param eq "with_qd") {
+    $with_qd = 1;
+  }
+  elsif ($param eq "with_lapack") {
+    $with_lapack = 1;
+  }
+  elsif ($val != 0) {
+    $nb_iter = $val;
+  }
+  else {
+    print "Unrecognized parameter: $param\n";
+    print "valid parameters are:\n";
+    print ". the number of iterations on each test\n";
+    print ". with_qd : test also with dd_real and qd_real\n";
+    print ". with_lapack : link with lapack\n";
+    print ". source name of a test procedure\n";
+    exit(1);
+  }
+  shift @ARGV;
+}
+
+$nb_test = 0;                # number of test procedures
+$tests_list = $tests_to_be_done;
+while ($tests_list)
+  { ($org_name, $tests_list) = split('\s', $tests_list, 2); ++$nb_test; }
+
+print "Gmm tests : Making $nb_iter execution";
+if ($nb_iter > 1) { print "s"; }
+if ($nb_test == 1) { print " of $tests_to_be_done\n"; }
+else { print " of each test\n"; }
 
 for ($iter = 1; $iter <= $nb_iter; ++$iter) {
-
-  if ($ARGV[1] eq "") {  $tests_to_be_done = `ls $srcdir/gmm_test*.C`; }
-  else {  $tests_to_be_done = $ARGV[1]; }
-
-  while ($tests_to_be_done) {
-    ($org_name, $tests_to_be_done) = split('\s', $tests_to_be_done, 2);
+  $tests_list = $tests_to_be_done;
+  while ($tests_list) {
+    ($org_name, $tests_list) = split('\s', $tests_list, 2);
 
     print "\nTest $iter for $org_name\n";
     $d = $org_name;
@@ -173,7 +209,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 	    $sub2 = "gmm::sub_interval($c, $s)";
 	  }
 	  elsif ($b < 0.2) {
-	    $step = $sizep; if ($step == 0) { ++$step; }
+	    $step = $s; if ($step == 0) { ++$step; }
 	    $step = int(1.0*int($sn/$step - 1)*rand) + 1;
 	    $c = int(1.0*($sn-($s*$step+1))*rand);
 	    $sub2 = "gmm::sub_slice($c, $s, $step)";
@@ -185,8 +221,8 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 	      { push (@sub_index, splice(@sortind , rand @sortind, 1)); }
 	    @sub_index = @sub_index[0..$s-1];
 	    @sub_index = sort numerique @sub_index;
-	    $li="$li\n    gmm::size_type param_u$j [$sizep] = {$sub_index[0]";
-	    for ($k = 1; $k < $sizep; ++$k) { $li = "$li , $sub_index[$k]"; }
+	    $li="$li\n    gmm::size_type param_u$j [$s] = {$sub_index[0]";
+	    for ($k = 1; $k < $s; ++$k) { $li = "$li , $sub_index[$k]"; }
 	    $li = "$li};";
 	    $sub2 = "gmm::sub_index(&param_u$j [0], &param_u$j [$sizep])";
 	  }
@@ -210,11 +246,17 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     close(TMPF);
 
     `rm -f $root_name`;
-    print `make $root_name CPPFLAGS=\"-I$inc_dir -I../src\"`;
+    if (with_lapack) {
+      print `make $root_name CPPFLAGS=\"-I$inc_dir -I../src -lblas -llapack -lg2c -DGMM_USES_LAPACK\"`;
+    }
+    else {
+      print `make $root_name CPPFLAGS=\"-I$inc_dir -I../src\"`;
+    }
+
     if ($? != 0) {
       print "\n******************************************************\n";
       print "* Compilation error, please submit this bug to\n";
-      print "* Yves.Renard\@gmm.insa-tlse.fr, with the file\n";
+      print "* Yves.Renard\@gmm.insa-toulouse.fr, with the file\n";
       print "* $dest_name\n";
       print "* produced in directory \"tests\".\n";
       print "******************************************************\n";
@@ -224,7 +266,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     if ($? != 0) {
       print "\n******************************************************\n";
       print "* Execution error, please submit this bug to\n";
-      print "* Yves.Renard\@gmm.insa-tlse.fr, with the file\n";
+      print "* Yves.Renard\@gmm.insa-toulouse.fr, with the file\n";
       print "* $dest_name\n";
       print "* produced in directory \"tests\".\n";
       print "******************************************************\n";
