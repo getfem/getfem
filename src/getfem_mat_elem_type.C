@@ -33,19 +33,16 @@
 #include <getfem_mat_elem_type.h>
 #include <dal_tree_sorted.h>
 
-namespace getfem
-{
+namespace getfem {
 
-  bool operator < (const constituant &m, const constituant &n)
-  {
+  bool operator < (const constituant &m, const constituant &n) {
     if (m.t < n.t) return true; if (m.t > n.t) return false;
     if (m.pfi < n.pfi) return true; if (m.pfi > n.pfi) return false;
     if (m.nlt < n.nlt) return true; if (m.nlt > n.nlt) return false;
     return false;
   }
 
-  static pmat_elem_type add_to_met_tab(const mat_elem_type &f)
-  {
+  static pmat_elem_type add_to_met_tab(const mat_elem_type &f) {
     static dal::dynamic_tree_sorted<mat_elem_type,
       dal::lexicographical_less<mat_elem_type> > *tab;
     static bool isinit = false;
@@ -57,8 +54,7 @@ namespace getfem
     return &((*tab)[tab->add_norepeat(f)]);
   }
 
-  pmat_elem_type mat_elem_base(pfem pfi)
-  {
+  pmat_elem_type mat_elem_base(pfem pfi) {
     mat_elem_type f; f.resize(1); f[0].t = GETFEM_BASE_; f[0].pfi = pfi;
     f[0].nlt = 0;
     if (pfi->target_dim() == 1)
@@ -68,34 +64,28 @@ namespace getfem
     return add_to_met_tab(f);
   }
 
-  pmat_elem_type mat_elem_grad(pfem pfi)
-  {
+  pmat_elem_type mat_elem_grad(pfem pfi) {
     mat_elem_type f; f.resize(1); f[0].t = GETFEM_GRAD_; f[0].pfi = pfi;
     f[0].nlt = 0;
-    if (pfi->target_dim() == 1)
-    { 
+    if (pfi->target_dim() == 1) { 
       f.mi.resize(2); f.mi[0] = pfi->nb_base();
       f.mi[1] = pfi->structure()->dim();
     }
-    else
-    {
+    else {
       f.mi.resize(3); f.mi[0] = pfi->nb_base();
       f.mi[1] = pfi->target_dim(); f.mi[2] = pfi->structure()->dim();
     }
     return add_to_met_tab(f);
   }
 
-  pmat_elem_type mat_elem_hessian(pfem pfi)
-  {
+  pmat_elem_type mat_elem_hessian(pfem pfi) {
     mat_elem_type f; f.resize(1);  f[0].t = GETFEM_HESSIAN_; f[0].pfi = pfi;
     f[0].nlt = 0;
-    if (pfi->target_dim() == 1)
-    { 
+    if (pfi->target_dim() == 1) { 
       f.mi.resize(2); f.mi[0] = pfi->nb_base();
       f.mi[1] = dal::sqr(pfi->structure()->dim());
     }
-    else
-    {
+    else {
       f.mi.resize(3); f.mi[0] = pfi->nb_base();
       f.mi[1] = pfi->target_dim();
       f.mi[2] = dal::sqr(pfi->structure()->dim());
@@ -103,17 +93,16 @@ namespace getfem
     return add_to_met_tab(f);
   }
 
-  pmat_elem_type mat_elem_grad(const nonlinear_elem_term &nlt)
-  {
-    mat_elem_type f; f.resize(1); f[0].t = GETFEM_NONLINEAR_; f[0].pfi = 0;
+  pmat_elem_type mat_elem_grad(const nonlinear_elem_term &nlt) {
+    mat_elem_type f; f.resize(1); f[0].t = GETFEM_NONLINEAR_;
+    f[0].pfi = nlt.pfi(0);
     f[0].nlt = &nlt;
     f.mi.resize(nlt.dim());
     for (dim_type i = 0; i < nlt.dim(); ++i) f.mi[i] = nlt.size(i);
     return add_to_met_tab(f);
   }
 
-  pmat_elem_type mat_elem_product(pmat_elem_type a, pmat_elem_type b)
-  {
+  pmat_elem_type mat_elem_product(pmat_elem_type a, pmat_elem_type b) {
     mat_elem_type f; f.resize(a->size() + b->size());
     f.mi.resize(a->mi.size() + b->mi.size());
     mat_elem_type::const_iterator ita = a->begin(), itae = a->end();
@@ -122,8 +111,7 @@ namespace getfem
     bgeot::multi_index::const_iterator itma = a->mi.begin();
     bgeot::multi_index::const_iterator itmb = b->mi.begin(), *itm;
     bgeot::multi_index::iterator itmf = f.mi.begin();
-    for( ;  ita != itae || itb != itbe; ++itf )
-    {
+    for( ;  ita != itae || itb != itbe; ++itf ) {
       if (ita == itae)      { it = itb; ++itb; itm = &(itmb); }
       else                  { it = ita; ++ita; itm = &(itma); }
      

@@ -50,6 +50,8 @@ namespace getfem
       virtual dim_type size(dim_type i)  const = 0;
       virtual void compute(fem_interpolation_context& ctx,
 			   base_tensor &t)  const = 0;
+      virtual size_type nb_pfi(void) const { return 0; };
+      virtual pfem pfi(size_type i) const { return 0; };
   };
 
   struct constituant {

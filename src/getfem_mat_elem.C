@@ -110,17 +110,19 @@ namespace getfem
       
       for (size_type k = 0; it != ite; ++it, ++k) {
 
-	if ((*it).pfi->is_on_real_element()) computed_on_real_element = true;
-	if (is_ppi && (!((*it).pfi->is_polynomial()) || !is_linear 
-		       || computed_on_real_element))
-	  DAL_THROW(std::invalid_argument, 
-		    "Exact integration not allowed in this context");
-	if((*it).pfi->basic_structure() != pgt->basic_structure())
-	  DAL_THROW(std::invalid_argument, "incorrect computation");
-	
-	if (!((*it).pfi->is_equivalent())) {
-	  trans_reduction.push_back(k);
-	  trans_reduction_pfi.push_back((*it).pfi);
+	if ((*it).pfi) {
+	  if ((*it).pfi->is_on_real_element()) computed_on_real_element = true;
+	  if (is_ppi && (!((*it).pfi->is_polynomial()) || !is_linear 
+			 || computed_on_real_element))
+	    DAL_THROW(std::invalid_argument, 
+		      "Exact integration not allowed in this context");
+	  if((*it).pfi->basic_structure() != pgt->basic_structure())
+	    DAL_THROW(std::invalid_argument, "incorrect computation");
+	  
+	  if (!((*it).pfi->is_equivalent())) {
+	    trans_reduction.push_back(k);
+	    trans_reduction_pfi.push_back((*it).pfi);
+	  }
 	}
 	switch ((*it).t) {
 	case GETFEM_BASE_    : break;
@@ -141,9 +143,9 @@ namespace getfem
       if (!is_ppi) {
 	pfp.resize(pme->size());
 	it = pme->begin(), ite = pme->end();
-	for (size_type k = 0; it != ite; ++it, ++k) {
-	  pfp[k] = fem_precomp((*it).pfi, &(pai->integration_points()));
-	}
+	for (size_type k = 0; it != ite; ++it, ++k)
+	  if ((*it).pfi)
+	    pfp[k] = fem_precomp((*it).pfi, &(pai->integration_points()));
 	elmt_stored.resize(pme->size());
       }
       if (!computed_on_real_element) mref.resize(nbf + 1);
@@ -156,7 +158,7 @@ namespace getfem
       bgeot::multi_index::iterator mit = sizes.begin();
       for (size_type k = 0; it != ite; ++it, ++k) {
 	ctx.set_pfp(pfp[k]);
-	++mit; if ((*it).pfi->target_dim() > 1) ++mit;
+	++mit; if ((*it).pfi && (*it).pfi->target_dim() > 1) ++mit;
 	
 	switch ((*it).t) {
 	case GETFEM_BASE_    :
@@ -256,9 +258,12 @@ namespace getfem
 
 	  ind = *mit; ++mit;
 
-	  if ((*it).pfi->target_dim() > 1)
-	    { ind += (*it).pfi->nb_base() * (*mit); ++mit; }
-	  Q = ((ppolyfem)((*it).pfi))->base()[ind];
+	  if ((*it).pfi) {
+	    if ((*it).pfi->target_dim() > 1)
+	      { ind += (*it).pfi->nb_base() * (*mit); ++mit; }
+	    
+	    Q = ((ppolyfem)((*it).pfi))->base()[ind];
+	  }
 
 	  switch ((*it).t) {
 	  case GETFEM_GRAD_    : Q.derivative(*mit); ++mit; break;
