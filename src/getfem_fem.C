@@ -41,19 +41,19 @@ namespace getfem
   void virtual_fem::interpolation(pfem_precomp pfp, size_type ii,
 				  const base_matrix &G,
 				  bgeot::pgeometric_trans pgt, 
-				  const base_vector &coeff, base_node &val,
+				  const base_vector &coeff, base_vector &val,
 				  dim_type Qdim) const {
     // optimisable.   verifier et faire le vectoriel
     base_matrix M;
     size_type Qmult = size_type(Qdim) / target_dim();
     if (val.size() != Qdim)
       DAL_THROW(dimension_error, "dimensions mismatch");
-    
     size_type R = nb_dof(), RR = nb_base();
 
     if (!is_equivalent()) { M.resize(RR, R); mat_trans(M, G, pgt); }
 
     val.fill(0.0);
+    const base_tensor &Z = pfp->val(ii);
     for (size_type j = 0; j < RR; ++j) {
       for (size_type q = 0; q < Qmult; ++q) {
 	scalar_type co = 0.0;
@@ -64,7 +64,7 @@ namespace getfem
 	    co += coeff[i*Qmult+q] * M(i, j);
       
 	for (size_type r = 0; r < target_dim(); ++r)
-	  val[r*Qmult+q] += co * pfp->val(ii)[j + r*R];
+	  val[r*Qmult+q] += co * Z[j + r*R];
       } 
     }
   }
@@ -782,11 +782,11 @@ namespace getfem
     base_poly one(2, 0), x(2, 1, 0), y(2, 1, 1); one.one();
     p->base().resize(3);
 
-    p->add_node(lagrange_dof(2), base_vector(0.5, 0.5));
+    p->add_node(lagrange_dof(2), base_small_vector(0.5, 0.5));
     p->base()[0] = x * 2.0 + y * 2.0 - one;
-    p->add_node(lagrange_dof(2), base_vector(0.0, 0.5));
+    p->add_node(lagrange_dof(2), base_small_vector(0.0, 0.5));
     p->base()[1] = one - x * 2.0;
-    p->add_node(lagrange_dof(2), base_vector(0.5, 0.0));
+    p->add_node(lagrange_dof(2), base_small_vector(0.5, 0.0));
     p->base()[2] = one - y * 2.0;
 
     return p;

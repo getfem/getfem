@@ -9,7 +9,7 @@ define([AC_CACHE_LOAD], )dnl
 define([AC_CACHE_SAVE], )dnl
 
 AC_INIT(config/install-sh)
-AC_CONFIG_HEADER(config.h)
+AM_CONFIG_HEADER(config.h)
 AX_PREFIX_CONFIG_H(src/getfem_arch_config.h,GETFEM) 
 AC_PREREQ(2.56)
 AC_ARG_PROGRAM
@@ -110,7 +110,7 @@ dnl             CXXFLAGS="$CXXFLAGS -LANG:std  -O3 -ansiW "
 	CXXFLAGS="$CXXFLAGS -AA -fast"	
 	;;
 	
- g++* | c++)
+ *g++* | c++)
 	GCCVER=`$CXX --version | head -1 | cut -d ' ' -f3`
 	echo "Using the GNU g++ compiler $GCCVER"
 	case $GCCVER in
@@ -121,7 +121,8 @@ dnl             CXXFLAGS="$CXXFLAGS -LANG:std  -O3 -ansiW "
 		WSHADOW="-Wshadow"
 		;;
 	esac
- 	CXXFLAGS="$CXXFLAGS -ftemplate-depth-40 -pedantic -O3 -Wall -W $WSHADOW -Wpointer-arith -Wcast-qual -Wwrite-strings -Wconversion -Wredundant-decls"
+ 	CXXFLAGS="$CXXFLAGS -fmessage-length=0 -ftemplate-depth-40 -pedantic -O3 -Wall -W $WSHADOW -Wpointer-arith -Wcast-qual -Wwrite-strings -Wconversion -Wredundant-decls"
+	SUPLDFLAGS="-rdynamic" # -rdynamic for backtraces
 	;;
  icc | icpc)
 	echo "Using INTEL icc"
@@ -199,6 +200,41 @@ fi;
 dnl -----------------------------END QD TESTS--------------------------------
 
 AC_CHECK_HEADERS(sys/times.h)
+AC_CHECK_HEADERS(cxxabi.h)
+dnl ---------------------------- CHECK FOR __PRETTY_FUNCTION__ MACRO --------
+AC_CACHE_CHECK([for __PRETTY_FUNCTION__], ac_have_pretty_function, [
+        AC_TRY_COMPILE(
+                [],
+                [ const char *s = __PRETTY_FUNCTION__; ],
+                [ ac_have_pretty_function="yes" ],
+                [ ac_have_pretty_function=="no"  ])])
+if test "x$ac_have_pretty_function" = "xyes"; then
+        AC_DEFINE_UNQUOTED(HAVE_PRETTY_FUNCTION,1,[gcc style __PRETTY_FUNCTION__ macro])
+fi;     
+
+dnl ---------------------------- CHECK FOR GLIBC BACKTRACE availability -----
+AC_CACHE_CHECK([for execinfo.h and backtrace], ac_have_backtrace, [
+        AC_TRY_COMPILE(
+                [ #include <execinfo.h>       
+                ],
+                [ void* trace[256]; int n = backtrace(trace, 256); ],
+                [ ac_have_backtrace="yes" ],
+                [ ac_have_backtrace="no"  ])])
+if test "x$ac_have_backtrace" = "xyes"; then
+        AC_DEFINE_UNQUOTED(HAVE_BACKTRACE,1,[glibc backtrace function])
+fi;     
+
+dnl ---------------------------- CHECK FOR feenableexcept -----
+AC_CACHE_CHECK([for fenv.h and feenableexcept], ac_have_feenableexcept, [
+        AC_TRY_COMPILE(
+                [ #include <fenv.h>       
+                ],
+                [ feenableexcept(FE_DIVBYZERO | FE_INVALID); ],
+                [ ac_have_feenableexcept="yes" ],
+                [ ac_have_feenableexcept=="no"  ])])
+if test "x$ac_have_feenableexcept" = "xyes"; then
+        AC_DEFINE_UNQUOTED(HAVE_FEENABLEEXCEPT,1,[glibc floating point exceptions control])
+fi;
 
 BUILDER=`whoami`
 AC_SUBST(BUILDER)

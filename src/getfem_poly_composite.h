@@ -34,7 +34,7 @@
 #define __GETFEM_POLY_COMPOSITE_H
 
 #include <bgeot_poly.h>
-#include <bgeot_geotrans_inv.h>
+#include <bgeot_imbricated_box.h>
 #include <getfem_mesh.h>
 
 namespace getfem

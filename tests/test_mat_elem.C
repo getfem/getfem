@@ -29,6 +29,7 @@
 #include <getfem_regular_meshes.h>
 
 using bgeot::base_vector;
+using bgeot::base_small_vector;
 using bgeot::base_node;
 using bgeot::scalar_type;
 using bgeot::size_type;
@@ -87,11 +88,11 @@ void lap_pb::init(void)
   cout << "Mesh generation\n";
 
   base_node org(N); org.fill(0.0);
-  std::vector<base_vector> vtab(N);
+  std::vector<base_small_vector> vtab(N);
   std::vector<size_type> ref(N); std::fill(ref.begin(), ref.end(), NX);
   for (dim_type i = 0; i < N; i++)
   { 
-    vtab[i] = base_vector(N); vtab[i].fill(0.0);
+    vtab[i] = base_small_vector(N); vtab[i].fill(0.0);
     (vtab[i])[i] = ((i == 0) ? LX : ((i == 1) ? LY : LZ)) / scalar_type(NX);
   }
   if (N > 1) vtab[N-1][0] = incline * LX / scalar_type(NX);

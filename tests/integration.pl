@@ -9,6 +9,6 @@ while (<F>) {
     print $_, <F>;
   }
 }
+close(F); if ($?) { exit(1); }
 if ($er == 1) { exit(1); }
-`./integration`;
-if ($?) { exit(1); }
+

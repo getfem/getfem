@@ -35,6 +35,7 @@
 
 #include <bgeot_config.h>
 #include <gmm_kernel.h>
+#include <bgeot_small_vector.h>
 
 namespace bgeot
 {
@@ -62,13 +63,13 @@ namespace bgeot
 
       #ifdef GETFEM_VERIFY
       inline const T& operator [](size_type l) const
-      { if (l>=this->size()) out_of_range_error(); return *(this->begin()+l); }
+    { if (l>=this->size()) out_of_range_error(); return *(this->begin()+l); }
       inline T& operator [](size_type l)
-      { if (l>=this->size()) out_of_range_error(); return *(this->begin()+l); }
+    { if (l>=this->size()) out_of_range_error(); return *(this->begin()+l); }
       #endif
 
       void fill(const T &);
-      void addmul(const T &, const vsvector<T>&);
+      void addmul(const T &, const vsvector<T>&)  IS_DEPRECATED;
 
       /// Add vector w to current vector.
       vsvector<T>& operator +=(const vsvector<T>& w);
@@ -108,9 +109,11 @@ namespace bgeot
   template<class T>  void vsvector<T>::out_of_range_error(void) const
   { DAL_THROW(std::out_of_range, "out of range"); }
 
-
+  /*
+    deprecated ?
+  */
   template<class T>  void vsvector<T>::addmul(const T &a, const vsvector<T> &v)
-  {                             
+  { 
     typename vsvector<T>::iterator d1 = this->begin(), e = this->end();
     const_iterator d2 = v.begin();
     if ( v.size() != this->size())
@@ -228,7 +231,9 @@ namespace bgeot
   //@}
 
   typedef vsvector<scalar_type> base_vector;
-  typedef PT<base_vector> base_node;
+  typedef small_vector<scalar_type> base_small_vector;
+  //typedef vsvector<scalar_type> base_small_vector;
+  typedef base_small_vector base_node;
 
   /*  template<class T>
     vsvector<T> operator *(const gmm::dense_matrix<T>& m, const vsvector<T>& v)
@@ -244,8 +249,19 @@ namespace bgeot
   */
   typedef gmm::dense_matrix<scalar_type> base_matrix;
 
-
+  template <class VEC_CONT> void vectors_to_base_matrix(base_matrix &G, const VEC_CONT &a) {
+    size_type P = (*(a.begin())).size(), NP = a.end() - a.begin();
+    G.resize(P, NP);
+    typename VEC_CONT::const_iterator it = a.begin(), ite = a.end();
+    base_matrix::iterator itm = G.begin();
+    for (; it != ite; ++it, itm += P)
+      std::copy((*it).begin(), (*it).end(), itm);
+  }
 }  /* end of namespace bgeot.                                           */
+
+namespace std {
+  inline void swap(bgeot::base_node& a, bgeot::base_node& b) { a.swap(b); }
+}
 
 #include <gmm_interface_bgeot.h>
 

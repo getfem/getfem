@@ -32,14 +32,12 @@
 #include <gmm_condition_number.h>
 #include <getfem_mesh.h>
 #include <getfem_precomp.h>
-#include <getfem_mat_elem.h> // --- FIXME --- :
-                             // included only for transfert_to_G ...
 namespace getfem
 {
   getfem_mesh::getfem_mesh(dim_type NN) {
     dimension = NN; eps_p = 1.0E-10;
     pts.comparator() = dal::lexicographical_less<base_node,
-                dal::approx_less<base_node::value_type> >(1.0E-10);
+                dal::approx_less<base_node::value_type> >(eps_p);
   }
 
   size_type getfem_mesh::add_point(const base_node &pt) {
@@ -80,7 +78,7 @@ namespace getfem
       }
   }
 
-  void getfem_mesh::translation(base_vector V)
+  void getfem_mesh::translation(base_small_vector V)
   {
     for (dal::bv_visitor i(points().index()); !i.finished(); ++i)
       points()[i] += V;
@@ -89,7 +87,7 @@ namespace getfem
 
   void getfem_mesh::transformation(base_matrix M)
   {
-    base_vector w(M.nrows());
+    base_small_vector w(M.nrows());
     for (dal::bv_visitor i(points().index()); !i.finished(); ++i) {
       w = points()[i]; gmm::mult(M,w,points()[i]);
     }
@@ -146,8 +144,8 @@ namespace getfem
     }
   }
 
-  base_vector getfem_mesh::normal_of_face_of_convex(size_type ic, short_type f,
-						 const base_node &pt) const {
+  base_small_vector getfem_mesh::normal_of_face_of_convex(size_type ic, short_type f,
+							  const base_node &pt) const {
     size_type N  = dim();
     bgeot::pgeometric_trans pgt = trans_of_convex(ic);
     base_matrix S(N,pgt->nb_points());
@@ -161,8 +159,8 @@ namespace getfem
   }
 
 
-  base_vector getfem_mesh::normal_of_face_of_convex(size_type ic, short_type f,
-						    size_type n) const {
+  base_small_vector getfem_mesh::normal_of_face_of_convex(size_type ic, short_type f,
+							  size_type n) const {
     bgeot::pgeometric_trans pgt = trans_of_convex(ic);
     base_node pt = pgt->geometric_nodes()
       [pgt->structure()->ind_points_of_face(f)[n]];
@@ -172,13 +170,13 @@ namespace getfem
 
   scalar_type  getfem_mesh::convex_quality_estimate(size_type ic) const { 
     base_matrix G;
-    transfert_to_G(G, points_of_convex(ic));
+    bgeot::vectors_to_base_matrix(G, points_of_convex(ic));
     return getfem::convex_quality_estimate(trans_of_convex(ic), G);
   }
 
   scalar_type  getfem_mesh::convex_radius_estimate(size_type ic) const { 
     base_matrix G;
-    transfert_to_G(G, points_of_convex(ic));
+    bgeot::vectors_to_base_matrix(G, points_of_convex(ic));
     return getfem::convex_radius_estimate(trans_of_convex(ic), G);
   }
   
@@ -373,6 +371,13 @@ namespace getfem
     o.close();
   }
 
+  size_type getfem_mesh::memsize() const {
+    return bgeot::mesh<base_node>::memsize() + 
+      (pts.index().last_true()+1)*dim()*sizeof(scalar_type)+
+      sizeof(getfem_mesh) - sizeof(bgeot::mesh<base_node>)
+      +trans_exists.memsize() + gtab.memsize();
+  }
+    
   /* TODO : use the geotrans from an "equilateral" reference element to the real element 
      check if the sign of the determinants does change (=> very very bad quality of the convex)
   */

@@ -28,6 +28,7 @@
 #include <getfem_regular_meshes.h>
 #include <gmm.h>
 
+using bgeot::base_small_vector;
 using bgeot::base_vector;
 using bgeot::base_node;
 using bgeot::base_matrix;
@@ -43,18 +44,18 @@ typedef std::vector<scalar_type> linalg_vector;
 /*  Definition de la solution test.                                       */
 /**************************************************************************/
 
-dal::dynamic_array<base_vector> sol_K;
+dal::dynamic_array<base_small_vector> sol_K;
 scalar_type sol_lambda, sol_G;
 
-base_vector sol_u(const base_vector &x) {
-  int N = x.size(); base_vector res(N);
+base_small_vector sol_u(const base_node &x) {
+  int N = x.size(); base_small_vector res(N);
   for (int i = 0; i < N; ++i) res[i] = sin(bgeot::vect_sp(sol_K[i], x));
   return res;
 }
 
-base_vector sol_f(const base_vector &x) {
+base_small_vector sol_f(const base_node &x) {
   int N = x.size();
-  base_vector res(N);
+  base_small_vector res(N);
   for (int i = 0; i < N; i++) {
     res[i] = ( sol_G * bgeot::vect_sp(sol_K[i], sol_K[i]) )
                   * sin(bgeot::vect_sp(sol_K[i], x));
@@ -65,7 +66,7 @@ base_vector sol_f(const base_vector &x) {
   return res;
 }
 
-base_matrix sol_sigma(const base_vector &x) {
+base_matrix sol_sigma(const base_node &x) {
   int N = x.size();
   base_matrix res(N,N);
   for (int i = 0; i < N; i++)
@@ -131,7 +132,7 @@ void pb_data::init(size_type NNX, size_type KK) {
   residu = 10E-9;
   K = KK;
   for (i = 0; i < N; i++) {
-    sol_K[i] = base_vector(N);
+    sol_K[i] = base_small_vector(N);
     for (j = 0; j < N; j++)  sol_K[i][j] = (i == j) ? 0.1 : -0.1;
   }
   sol_lambda = lambda; sol_G = G;
@@ -142,10 +143,10 @@ void pb_data::init(size_type NNX, size_type KK) {
 
   // cout << "Mesh generation\n";
   base_node org(N); org.fill(0.0);
-  std::vector<base_vector> vtab(N);
+  std::vector<base_small_vector> vtab(N);
   std::vector<size_type> ref(N); std::fill(ref.begin(), ref.end(), NX);
   for (i = 0; i < N; i++) { 
-    vtab[i] = base_vector(N); vtab[i].fill(0.0);
+    vtab[i] = base_small_vector(N); vtab[i].fill(0.0);
     (vtab[i])[i] = ((i == 0) ? LX : ((i == 1) ? LY : LZ)) / scalar_type(NX);
   }
   
@@ -171,7 +172,7 @@ void pb_data::init(size_type NNX, size_type KK) {
   
   // cout << "Selecting Neumann and Dirichlet boundaries\n";
   nn = mesh.convex_index(N);
-  base_vector un;
+  base_small_vector un;
   for (j << nn; j != size_type(-1); j << nn) {
     k = mesh.structure_of_convex(j)->nb_faces();
     for (i = 0; i < k; i++) {
@@ -225,7 +226,7 @@ void pb_data::assemble(void)
   getfem::base_node pt(N);
   for (size_type nb = 1; nb <= 2*N; ++nb) {
     dal::bit_vector nn = mesh.convex_index(N);
-    getfem::base_vector un, v(N);
+    getfem::base_small_vector un, v(N);
     size_type j;
      for (j << nn; j != size_type(-1); j << nn) {
       getfem::pfem pf = mef_data.fem_of_element(j);

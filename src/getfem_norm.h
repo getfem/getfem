@@ -35,7 +35,7 @@
 #define __GETFEM_NORM_H
 
 #include <getfem_mesh_fem.h>
-
+#include <getfem_mat_elem.h>
 namespace getfem
 {
 

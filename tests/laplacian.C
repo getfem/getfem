@@ -31,6 +31,7 @@
 
 
 using bgeot::base_vector;
+using bgeot::base_small_vector;
 using bgeot::base_node;
 using bgeot::scalar_type;
 using bgeot::size_type;
@@ -45,18 +46,18 @@ typedef std::vector<scalar_type> linalg_vector;
 /*  exact solution                                                        */
 /**************************************************************************/
 
-base_vector sol_K;
+base_small_vector sol_K;
 
 scalar_type sol_u(const base_node &x)
-{ return sin(bgeot::vect_sp(sol_K, base_vector(x))); }
+{ return sin(gmm::vect_sp(sol_K, x)); }
 
-scalar_type sol_f(const base_vector &x)
-{ return bgeot::vect_sp(sol_K, sol_K) * sin(bgeot::vect_sp(sol_K, x)); }
+scalar_type sol_f(const base_node &x)
+{ return gmm::vect_sp(sol_K, sol_K) * sin(gmm::vect_sp(sol_K, x)); }
 
-base_vector sol_grad(const base_vector &x)
+base_small_vector sol_grad(const base_node &x)
 {
-  base_vector res = sol_K;
-  res *= cos(bgeot::vect_sp(sol_K, x));
+  base_small_vector res = sol_K;
+  res *= cos(gmm::vect_sp(sol_K, x));
   return res;
 }
 
@@ -122,7 +123,7 @@ void lap_pb::init(void)
 
   scalar_type FT = PARAM.real_value("FT", "parameter for exact solution");
 
-  sol_K = base_vector(N);
+  sol_K = base_small_vector(N);
   for (dim_type j = 0; j < N; j++)
     sol_K[j] = ((j & 1) == 0) ? FT : -FT;
 
@@ -133,11 +134,11 @@ void lap_pb::init(void)
   cout << "Mesh generation\n";
 
   base_node org(N); org.fill(0.0);
-  std::vector<base_vector> vtab(N);
+  std::vector<base_small_vector> vtab(N);
   std::vector<size_type> ref(N); std::fill(ref.begin(), ref.end(), NX);
   for (dim_type i = 0; i < N; i++)
   { 
-    vtab[i] = base_vector(N); vtab[i].fill(0.0);
+    vtab[i] = base_small_vector(N); vtab[i].fill(0.0);
     (vtab[i])[i] = ((i == 0) ? LX : ((i == 1) ? LY : LZ)) / scalar_type(NX);
   }
   if (N > 1) vtab[N-1][0] = incline * LX / scalar_type(NX);
@@ -310,7 +311,7 @@ void lap_pb::init(void)
 //   }
   cout << "Selecting Neumann and Dirichlet boundaries\n";
   nn = mesh.convex_index(N);
-  base_vector un;
+  base_small_vector un;
   size_type j;
   for (j << nn; j != size_type(-1); j << nn) {
     size_type k = mesh.structure_of_convex(j)->nb_faces();
@@ -369,7 +370,7 @@ void lap_pb::assemble(void)
 
   for (size_type nb = 1; nb <= 2*N; ++nb) {
     dal::bit_vector nn = mesh.convex_index(N);
-    base_vector un;
+    base_small_vector un;
     size_type j;
     for (j << nn; j != size_type(-1); j << nn) {
       getfem::pfem pf = mef_data.fem_of_element(j);
@@ -414,7 +415,7 @@ void lap_pb::assemble(void)
 
     int nbcols = getfem::Dirichlet_nullspace(HH, NN, RR, Ud);
     // cerr << "Number of unknowns : " << nbcols << endl;
-    NN.resize(nbcols);
+    gmm::resize(NN,gmm::mat_ncols(HH),nbcols); //NN.resize(nbcols);
 
     gmm::mult(SM, Ud, gmm::scaled(B, -1.0), RHaux);
     B = linalg_vector(nbcols);

@@ -83,9 +83,9 @@ namespace getfem
   // contributions.
   void Xfem::interpolation(const base_node &x, const base_matrix &G,
 			   bgeot::pgeometric_trans pgt,
-			   const base_vector &coeff, base_node &val) const {
+			   const base_vector &coeff, base_vector &val) const {
     Xfem_func_context ctx(pgt,x,G);
-    base_node val2(val.size());
+    base_vector val2(val.size());
     pfb->interpolation(x, G, pgt, coeff, val);
     base_vector coeff2;
     for (size_type k = 0, dofcnt = pfb->nb_base(); k < nb_func; ++k) {
@@ -112,9 +112,9 @@ namespace getfem
 			   const base_matrix &G,
 			   bgeot::pgeometric_trans pgt, 
 			   const base_vector &coeff, 
-			   base_node &val, dim_type Qdim) const {
+			   base_vector &val, dim_type Qdim) const {
     size_type Qmult = size_type(Qdim) / target_dim();
-    base_node val2(val.size());
+    base_vector val2(val.size());
     Xfem_func_context ctx(pgt,(*(pfp->get_point_tab()))[ii],G);
     pfb->interpolation(pfp, ii, G, pgt, coeff, val, Qdim);
     base_vector coeff2;
@@ -139,7 +139,7 @@ namespace getfem
 				const base_vector &coeff,
 				base_matrix &val) const {
     base_matrix val2(val.nrows(), val.ncols());
-    base_node val3(ntarget_dim);
+    base_vector val3(ntarget_dim);
     Xfem_func_context ctx(pgt,x,G);
     pfb->interpolation_grad(x, G, pgt, coeff, val);
     base_vector coeff2;
@@ -162,7 +162,7 @@ namespace getfem
       for (size_type q = 0; q < G.nrows(); ++q) {
 	for (size_type j = 0; j != pfe(k)->nb_base(); ++j, ++dofcnt) {
 	  ctx.base_num = j;
-	  base_vector v = funcs[k]->grad(ctx);
+	  base_small_vector v = funcs[k]->grad(ctx);
 	  coeff2[j] = coeff[dofcnt] * v[q];
 	}
 	pfe(k)->interpolation(x, G, pgt, coeff2, val3);
@@ -230,7 +230,7 @@ namespace getfem
       grad_e[i].mat_transp_reduction(vpfp[i]->grad(ii), B, 2);
     }
     std::vector<std::vector<scalar_type> > vf(nb_func);
-    std::vector<std::vector<base_vector> > gvf(nb_func);
+    std::vector<std::vector<base_small_vector> > gvf(nb_func);
     for (size_type f = 0; f < nb_func; ++f) {
       vf[f].resize(pfe(f)->nb_base());
       gvf[f].resize(pfe(f)->nb_base());

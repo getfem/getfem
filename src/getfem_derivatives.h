@@ -79,7 +79,7 @@ namespace getfem
 	DAL_THROW(std::invalid_argument, 
 		  "finite element target not convenient");
       
-      transfert_to_G(G, mf.linked_mesh().points_of_convex(cv));
+      bgeot::vectors_to_base_matrix(G, mf.linked_mesh().points_of_convex(cv));
 
       pgt = mf.linked_mesh().trans_of_convex(cv);
       if (pf_targetold != pf_target) {
@@ -172,7 +172,7 @@ namespace getfem
 // 	DAL_THROW(std::invalid_argument, 
 // 		  "finite element target not convenient");
 //       if (!(pf->is_equivalent())) 
-// 	transfert_to_G(G, mf.linked_mesh().points_of_convex(cv));
+// 	bgeot::vectors_to_base_matrix(G, mf.linked_mesh().points_of_convex(cv));
 
 //       pgt = mf.linked_mesh().trans_of_convex(cv);
 //       if (pf_targetold != pf_target) {
@@ -190,7 +190,7 @@ namespace getfem
 //       base_matrix grad(N, P), TMP1(P,P), B0(P,N), B1(1, N), CS(P,P);
       
 //       /* TODO: prendre des iterateurs pour faire la copie */
-//       // utiliser transfert_to_G ?
+//       // utiliser bgeot::vectors_to_base_matrix ?
 //       for (size_type j = 0; j < pgt->nb_points(); ++j) // à optimiser !!
 // 	for (size_type i = 0; i < N; ++i)
 // 	  a(i,j) = mf.linked_mesh().points_of_convex(cv)[j][i];

@@ -160,15 +160,15 @@ namespace getfem
       break;
     case 2 :
       {
-	base_node A,B,C,D;
+	base_node A(2),B(2),C(2),D(2);
 	for (short_type i = 0; i < k; ++i) {
 	  scalar_type a = i * h, b = (i+1) * h;
 	  for (short_type l = 0; l+i < k; ++l) {
 	    scalar_type c = l * h, d = (l+1) * h;
-	    bgeot::sc(A) = a,c;
-	    bgeot::sc(B) = b,c;
-	    bgeot::sc(C) = a,d;
-	    bgeot::sc(D) = b,d;
+	    A[0] = a; A[1] = c;
+	    B[0] = b; B[1] = c;
+	    C[0] = a; C[1] = d;
+	    D[0] = b; D[1] = d;
 	    if (opt_gt) { 
 	      A = opt_gt->transform(A, *opt_gt_pts); 
 	      B = opt_gt->transform(B, *opt_gt_pts); 

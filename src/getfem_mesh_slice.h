@@ -4,9 +4,7 @@
 
 #include <bitset>
 #include <gmm_kernel.h>
-#include <getfem_mesh.h>
-#include <getfem_fem.h>
-#include <getfem_poly_composite.h>
+#include <getfem_mesh_fem.h>
 #include <memory> // auto_ptr for g++ 2.95
 
 namespace getfem {
@@ -151,14 +149,15 @@ namespace getfem {
       bgeot::stored_point_tab refpts;
       base_vector coeff;
       base_matrix G;
-      base_node val(mf.get_qdim());
+      base_vector val(mf.get_qdim());
       typename V2::iterator out = V.begin();
       for (size_type i=0; i < nb_convex(); ++i) {
         size_type cv = convex_num(i);
         refpts.resize(nodes(i).size());
         for (size_type j=0; j < refpts.size(); ++j) refpts[j] = nodes(i)[j].pt_ref;
         pfem pf = mf.fem_of_element(cv);
-	if (pf->need_G())transfert_to_G(G, mf.linked_mesh().points_of_convex(cv));
+	if (pf->need_G()) 
+	  bgeot::vectors_to_base_matrix(G, mf.linked_mesh().points_of_convex(cv));
         fem_precomp_not_stored(pf, &refpts, fprecomp);
         
         ref_mesh_dof_ind_ct dof = mf.ind_dof_of_element(cv);
@@ -461,7 +460,7 @@ namespace getfem {
 	       mesh_slice::cs_simplexes_ct& /*splxs*/, dal::bit_vector& /*splx_in*/) {}
   };
   
-
+  std::ostream& operator<<(std::ostream& o, const mesh_slice& m);
 }
 
 #endif /*GETFEM_MESH_SLICES_H*/

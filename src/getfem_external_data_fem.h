@@ -46,14 +46,14 @@ namespace getfem
     
     void interpolation(const base_node &, const base_matrix &,
 		       bgeot::pgeometric_trans ,
-		       const base_vector &, base_node &) const
+		       const base_vector &, base_vector &) const
     { DAL_THROW(failure_error, "Uninstantied function"); }
     
     void interpolation(pfem_precomp , size_type ,
 		       const base_matrix &,
 		       bgeot::pgeometric_trans , 
 		       const base_vector &, 
-		       base_node &, dim_type=1) const
+		       base_vector &, dim_type=1) const
     { DAL_THROW(failure_error, "Uninstantied function"); }
 
     void interpolation_grad(const base_node &, const base_matrix &,

@@ -39,16 +39,6 @@
 
 namespace getfem
 {
-
-  template <class CONT> void transfert_to_G(base_matrix &G, const CONT &a) {
-    size_type P = (*(a.begin())).size(), NP = a.end() - a.begin();
-    G.resize(P, NP);
-    typename CONT::const_iterator it = a.begin(), ite = a.end();
-    base_matrix::iterator itm = G.begin();
-    for (; it != ite; ++it, itm += P)
-      std::copy((*it).begin(), (*it).end(), itm);
-  }
-
   class mat_elem_computation
   {
     protected : 
@@ -65,11 +55,11 @@ namespace getfem
 				   short_type f, size_type elt) = 0;
       template <class CONT>
 	void gen_compute(base_tensor &t, const CONT &a,  size_type elt)
-      { transfert_to_G(pa, a); compute(t, pa,elt); }
+      { bgeot::vectors_to_base_matrix(pa, a); compute(t, pa,elt); }
       template <class CONT>
 	void gen_compute_on_face(base_tensor &t,
 				 const CONT &a, short_type f, size_type elt)
-      { transfert_to_G(pa, a); compute_on_face(t, pa, f, elt); }
+      { bgeot::vectors_to_base_matrix(pa, a); compute_on_face(t, pa, f, elt); }
 
       virtual ~mat_elem_computation() {}
       virtual size_type memsize() const = 0;

@@ -34,8 +34,6 @@
 #ifndef __GETFEM_ASSEMBLING_H
 #define __GETFEM_ASSEMBLING_H
 
-#include <getfem_mesh_fem.h>
-#include <gmm_kernel.h>
 #include <getfem_assembling_tensors.h>
 namespace getfem
 {
@@ -173,19 +171,34 @@ namespace getfem
     (fortran style)
 
     Works for both volumic assembly and boundary assembly
-   */
+  */
   template<class MAT, class VECT>
     void asm_qu_term(MAT &M, 
 		     const mesh_fem &mf_u, 
-		     const mesh_fem &mf_d, const VECT &Q, size_type boundary=size_type(-1))
+		     const mesh_fem &mf_d, const VECT &Q, 
+		     size_type boundary=size_type(-1))
   {
     generic_assembly assem;
     if (mf_u.get_qdim() == 1)
       assem.set("Q=data$1(#2);"
 		"M(#1,#1)+=comp(Base(#1).Base(#1).Base(#2))(:,:,k).Q(k);");
-    else
-      assem.set("Q=data$1(qdim(#1),qdim(#1),#2);"
-		"M(#1,#1)+=comp(vBase(#1).vBase(#1).Base(#2))(:,i,:,j,k).Q(i,j,k);");
+    else {
+      /* detect the symmetricity of Q (in that case the symmetricity of the final
+	 matrix will be ensured, and computations will be slightly speed up */
+      bool Q_symmetric = true;
+      size_type q = mf_u.get_qdim();
+      for (size_type k=0; k < mf_d.nb_dof(); ++k)
+	for (size_type i=1; i < q; ++i)
+	  for (size_type j=0; j < i; ++j)
+	    if (Q[k*q*q+i*q+j] != Q[k*q*q+j*q+i]) { Q_symmetric = false; goto bye; }
+    bye:
+      if (Q_symmetric)
+	assem.set("Q=data$1(qdim(#1),qdim(#1),#2);"
+		  "M(#1,#1)+=sym(comp(vBase(#1).vBase(#1).Base(#2))(:,i,:,j,k).Q(i,j,k));");
+      else
+	assem.set("Q=data$1(qdim(#1),qdim(#1),#2);"
+		  "M(#1,#1)+=comp(vBase(#1).vBase(#1).Base(#2))(:,i,:,j,k).Q(i,j,k);");
+    }
     assem.push_mf(mf_u);
     assem.push_mf(mf_d);
     assem.push_data(Q);
@@ -312,7 +325,7 @@ namespace getfem
   /* ********************************************************************* */
   /*	Stiffness matrix for laplacian.                                     */
   /* ********************************************************************* */
-
+#if 0
   template<class MAT, class VECT>
     void assembling_stiffness_matrix_for_laplacian(MAT &RM, const mesh_fem &mf,
 						  const mesh_fem &mfdata, const VECT &A)
@@ -525,7 +538,7 @@ namespace getfem
       if (p != t.end()) DAL_THROW(dal::internal_error, "internal error"); 
     }
   }
-
+#endif
 
   /* 
      new version, which takes into account the qdim dimension of the mesh_fem 
@@ -626,6 +639,7 @@ namespace getfem
   }
 
   /* old version, pre-Qdim */
+#if 0
   template<class MAT, class VECT>
   void assembling_dirichlet_constraints(MAT &M, VECT &B, const mesh_fem &mf_u,
 					size_type boundary,
@@ -847,7 +861,7 @@ namespace getfem
   /* ********************************************************************* */
   /*	Dirichlet Condition.                                               */
   /* ********************************************************************* */
-
+#endif
   template<class MATRM, class VECT1, class VECT2>
     void assembling_Dirichlet_condition(MATRM &RM, VECT1 &B,
 					const mesh_fem &mf,
@@ -857,7 +871,7 @@ namespace getfem
     size_type Q=mf.get_qdim();
     dal::bit_vector nndof = mf.dof_on_boundary(boundary);
     pfem pf1;
-
+    cerr << "TODO: renommer ou virer assembling_Dirichlet_condition\n";
     for (dal::bv_visitor cv(mf.convex_index()); !cv.finished(); ++cv) {
       pf1 = mf.fem_of_element(cv);
       pdof_description ldof = lagrange_dof(pf1->dim());
@@ -920,7 +934,7 @@ namespace getfem
     }
   }
 
-
+#if 0
   template<class MATRM, class VECT1, class VECT2>
     void old_assembling_Dirichlet_condition(MATRM &RM, VECT1 &B,
 					const mesh_fem &mf,
@@ -960,7 +974,7 @@ namespace getfem
       }
     }
   }
-
+#endif
 
   template<class MATD, class MATG, class VECT>
   size_type Dirichlet_nullspace(const MATD &D, MATG &G,
@@ -990,7 +1004,7 @@ namespace getfem
     size_type nb_bimg = 0;
 
     if (!(gmm::is_col_matrix(D)))
-      DAL_WARNING(3,
+      DAL_WARNING(2,
 		  "Dirichlet_nullspace is inefficient when D is a row matrix");
     // First, detection of null columns of D, and already orthogonals 
     // vectors of the image of D.
@@ -1000,7 +1014,7 @@ namespace getfem
       gmm::mult(D, e, aux);
       R n = gmm::vect_norm2(aux);
 
-      if (n < norminfD*tol) {
+      if (n < 1e-8) { //norminfD*tol) {
 	G(i, nbase++) = T(1); nn[i] = true;
       }
       else {
@@ -1175,7 +1189,7 @@ namespace getfem
   /* ********************************************************************* */
   /*	Neumann Condition.                                                 */
   /* ********************************************************************* */
-
+#if 0
   template<class VECT1, class VECT2>
     void assembling_Neumann_condition(VECT1 &B, const mesh_fem &mf,
 				      size_type boundary, const mesh_fem &mfdata, const VECT2 &F, dim_type N)
@@ -1240,7 +1254,7 @@ namespace getfem
       }
     }
   }
-
+#endif
   
 }  /* end of namespace getfem.                                             */
 

@@ -1,5 +1,5 @@
 #include <getfem_assembling_tensors.h>
-
+#include <getfem_mat_elem.h>
 namespace getfem {
   size_type vdim_specif_list::nb_mf() const { 
     return std::count_if(begin(),end(),std::mem_fun_ref(&vdim_specif::is_mf_ref));

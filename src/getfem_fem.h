@@ -167,7 +167,7 @@ namespace getfem
     virtual void interpolation(const base_node &x, const base_matrix &G,
 			       bgeot::pgeometric_trans pgt,
 			       const base_vector &coeff, 
-			       base_node &val) const = 0;
+			       base_vector &val) const = 0;
     /** Function which interpolates in the ii th point of pfp. coeff is the
      *  vector of coefficient relatively to the shape functions. G and pgt
      *  represent the geometric transformation for non-equivalent elements.
@@ -178,7 +178,7 @@ namespace getfem
 			       const base_matrix &G,
 			       bgeot::pgeometric_trans pgt, 
 			       const base_vector &coeff, 
-			       base_node &val, dim_type Qdim=1) const;
+			       base_vector &val, dim_type Qdim=1) const;
     /** Function which interpolates the gradient in a arbitrary point x
      *  given on the reference element. coeff is the vector of coefficient
      *  relatively to the shape functions. G and pgt
@@ -302,12 +302,12 @@ namespace getfem
 			       const base_matrix &G,
 			       bgeot::pgeometric_trans pgt, 
 			       const base_vector &coeff, 
-			       base_node &val, dim_type Qdim=1) const { 
+			       base_vector &val, dim_type Qdim=1) const { 
       virtual_fem::interpolation(pfp,ii,G,pgt,coeff,val,Qdim); 
     }
     void interpolation(const base_node &x, const base_matrix &G, 
 		       bgeot::pgeometric_trans pgt,
-		       const base_vector &coeff, base_node &val) const;
+		       const base_vector &coeff, base_vector &val) const;
 
     void base_value(const base_node &x, base_tensor &t) const {
       bgeot::multi_index mi(2);
@@ -355,7 +355,7 @@ namespace getfem
   void fem<FUNC>::interpolation(const base_node &x, const base_matrix &G,
 				bgeot::pgeometric_trans pgt, 
 				const base_vector &coeff,
-				base_node &val) const { 
+				base_vector &val) const { 
     // optimisable.   verifier et faire le vectoriel
     base_matrix M;
     if (val.size() != target_dim())

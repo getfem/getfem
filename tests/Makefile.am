@@ -1,6 +1,9 @@
 check_PROGRAMS = \
 	dynamic_array      \
 	dynamic_tas        \
+	test_small_vector  \
+	test_kdtree	   \
+	test_interpolation \
 	elasto_statique    \
 	geo_trans          \
 	geo_trans_inv      \
@@ -12,6 +15,7 @@ check_PROGRAMS = \
 	test_int_set       \
 	test_link_fem      \
 	test_mat_elem      \
+	test_slice         \
 	test_mesh          \
 	test_tree_sorted
 
@@ -23,8 +27,11 @@ CLEANFILES = \
 
 dynamic_array_SOURCES = dynamic_array.C 
 dynamic_tas_SOURCES = dynamic_tas.C 
+test_small_vector_SOURCES = test_small_vector.C
+test_kdtree_SOURCES = test_kdtree.C
 test_assembly_SOURCES = test_assembly.C
 laplacian_SOURCES = laplacian.C
+test_interpolation_SOURCES = test_interpolation.C
 elasto_statique_SOURCES = elasto_statique.C
 integration_SOURCES = integration.C
 poly_SOURCES = poly.C
@@ -36,6 +43,8 @@ test_int_set_SOURCES = test_int_set.C
 test_link_fem_SOURCES = test_link_fem.C
 test_tree_sorted_SOURCES = test_tree_sorted.C
 test_mat_elem_SOURCES = test_mat_elem.C
+test_slice_SOURCES = test_slice.C
+#test_fem_SOURCES = test_fem.C
 
 INCLUDES = -I$(top_srcdir)/src -I../src
 LDADD    = ../src/libgetfem.la -lm @SUPLDFLAGS@
@@ -43,6 +52,9 @@ LDADD    = ../src/libgetfem.la -lm @SUPLDFLAGS@
 TESTS = \
 	$(top_srcdir)/tests/dynamic_array.pl      \
 	$(top_srcdir)/tests/dynamic_tas.pl        \
+	$(top_srcdir)/tests/test_small_vector.pl  \
+	$(top_srcdir)/tests/test_kdtree.pl        \
+	$(top_srcdir)/tests/test_interpolation.pl \
 	$(top_srcdir)/tests/test_mat_elem.pl      \
 	$(top_srcdir)/tests/test_assembly.pl      \
 	$(top_srcdir)/tests/laplacian.pl          \
@@ -55,12 +67,16 @@ TESTS = \
 	$(top_srcdir)/tests/speed_test_for_gmm.pl \
 	$(top_srcdir)/tests/test_int_set.pl       \
 	$(top_srcdir)/tests/test_link_fem.pl      \
-	$(top_srcdir)/tests/make_gmm_test.pl      \
-	$(top_srcdir)/tests/test_tree_sorted.pl
+	$(top_srcdir)/tests/test_slice.pl         \
+	$(top_srcdir)/tests/test_tree_sorted.pl   \
+	$(top_srcdir)/tests/make_gmm_test.pl     
 
 EXTRA_DIST = \
 	dynamic_array.pl                  \
 	dynamic_tas.pl                    \
+	test_small_vector.pl		  \
+	test_kdtree.pl                    \
+	test_interpolation.pl             \
 	test_assembly.pl                  \
 	laplacian.pl                      \
 	elasto_statique.pl                \
@@ -72,6 +88,7 @@ EXTRA_DIST = \
 	speed_test_for_gmm.pl             \
 	test_int_set.pl                   \
 	test_link_fem.pl                  \
+	test_slice.pl			  \
 	test_tree_sorted.pl               \
 	test_mat_elem.pl                  \
 	laplacian.param                   \

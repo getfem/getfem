@@ -23,9 +23,6 @@ using bgeot::size_type;
 
 int main(void)
 {
-  unsigned short old_cw;
-  x86_fix_start(&old_cw);
-
   try {
     
 

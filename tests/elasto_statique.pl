@@ -37,8 +37,8 @@ while (<F>) {
     print $_, <F>;
   }
 }
+close(F); if ($?) { `rm -f $tmp`; exit(1); }
 if ($er == 1) { `rm -f $tmp`; exit(1); }
-`./elasto_statique $tmp`;
 `rm -f $tmp`;
-if ($?) { exit(1); }
+
 

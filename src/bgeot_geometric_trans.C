@@ -247,12 +247,12 @@ namespace bgeot
      
      pt is the position of the evaluation point on the reference element
   */
-  base_vector compute_normal(const base_matrix &G, size_type ir,
-			     pgeometric_trans pgt, const base_node &pt) {
+  base_small_vector compute_normal(const base_matrix &G, size_type ir,
+				   pgeometric_trans pgt, const base_node &pt) {
     dim_type P = pgt->structure()->dim(), N = G.nrows();
     short_type NP = pgt->nb_points();
     base_matrix K(N,P), CS(P,P), B(N,P), Grad(pgt->nb_points(),P);
-    base_vector un, up;
+    base_small_vector un, up;
     base_poly Poly;
     
     if (G.ncols() != NP) DAL_THROW(dimension_error, "dimensions mismatch");

@@ -117,7 +117,7 @@ namespace bgeot
     const std::vector<base_node> &geometric_nodes(void) const
     { return cvr->points(); }
     /// Gives the array of the normals to faces.
-    const std::vector<base_vector> &normals(void) const
+    const std::vector<base_small_vector> &normals(void) const
     { return cvr->normals(); }
     
     template<class CONT> base_node transform(const base_node &pt,
@@ -167,8 +167,8 @@ namespace bgeot
 
      pt is the position of the evaluation point on the reference element
   */
-  base_vector compute_normal(const base_matrix &G, size_type ir,
-			     pgeometric_trans pgt, const base_node &pt);
+  base_small_vector compute_normal(const base_matrix &G, size_type ir,
+				   pgeometric_trans pgt, const base_node &pt);
 
    //@}
 

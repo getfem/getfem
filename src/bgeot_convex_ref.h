@@ -83,14 +83,14 @@ namespace bgeot
 
   class convex_of_reference : public convex<base_node> {
   protected :     
-    std::vector<base_vector> _normals;
+    std::vector<base_small_vector> _normals;
     mutable mesh_structure *psimplexified_convex;
     convex_of_reference *_basic_convex_ref;
   public :
     convex_of_reference() : convex<base_node>(), psimplexified_convex(0), _basic_convex_ref(0) {}
     virtual scalar_type is_in(const base_node &) const = 0;
     virtual scalar_type is_in_face(short_type, const base_node &) const =0;
-    const std::vector<base_vector> &normals(void) const { return _normals; }
+    const std::vector<base_small_vector> &normals(void) const { return _normals; }
     virtual ~convex_of_reference() {}
 
     /* returns a mesh structure composed of simplexes whose union

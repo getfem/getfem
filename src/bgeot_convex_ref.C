@@ -246,7 +246,7 @@ namespace bgeot
     *((convex<base_node> *)(this)) 
       = convex_direct_product(*(ls.cvr1), *(ls.cvr2));
     _normals.resize(cvs->nb_faces());
-    base_vector null(cvs->dim()); null.fill(0.0);
+    base_small_vector null(cvs->dim()); null.fill(0.0);
     std::fill(_normals.begin(), _normals.end(), null);
     for (size_type r = 0; r < cvr1->structure()->nb_faces(); r++)
       std::copy(cvr1->normals()[r].begin(), cvr1->normals()[r].end(),

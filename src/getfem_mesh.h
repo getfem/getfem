@@ -351,15 +351,15 @@ namespace getfem
 
       /* returns the normal of face 'f' evaluated at the point 'pt'       */
       /* (pt is a position in the reference convex)                       */
-      base_vector normal_of_face_of_convex(size_type ic, short_type f,
-					   const base_node &pt) const;
-      base_vector normal_of_face_of_convex(size_type ic, short_type f,
-					   size_type n) const;
+      base_small_vector normal_of_face_of_convex(size_type ic, short_type f,
+						 const base_node &pt) const;
+      base_small_vector normal_of_face_of_convex(size_type ic, short_type f,
+						 size_type n) const;
 
       scalar_type convex_quality_estimate(size_type ic) const;
       scalar_type convex_radius_estimate(size_type ic) const;
       scalar_type minimal_convex_radius_estimate() const;
-      void translation(base_vector);
+      void translation(base_small_vector);
       void transformation(base_matrix);
   
       void optimize_structure(void);
@@ -370,14 +370,8 @@ namespace getfem
       void read_from_file(const std::string &name);
       void read_from_file(std::istream &ist);
       void copy_from(const getfem_mesh& m); /* might be the copy constructor */
-    size_type memsize() const {
-      return bgeot::mesh<base_node>::memsize() + 
-	(pts.index().last_true()+1)*dim()*sizeof(scalar_type)+
-	sizeof(getfem_mesh) - sizeof(bgeot::mesh<base_node>)
-	+trans_exists.memsize() + gtab.memsize();
-    }
-    
-    ~getfem_mesh() { lmsg_sender().send(MESH_DELETE()); }
+      size_type memsize() const;
+      ~getfem_mesh() { lmsg_sender().send(MESH_DELETE()); }
   };
 
   template<class ITER>

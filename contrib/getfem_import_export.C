@@ -337,7 +337,7 @@ namespace getfem {
       _fem_precomp fp;
       bgeot::stored_point_tab pts, cv_pts, cvm_pts;
       base_vector coeff;
-      base_node val(Q);
+      base_vector val(Q);
       pfem fem = 0, femprec = 0;
       getfem::base_matrix G;
       size_type pcnt = 0;
@@ -352,7 +352,7 @@ namespace getfem {
 	if (!fem->is_equivalent()) {
 	  cv_pts.resize(m.nb_points_of_convex(cv));
 	  std::copy(m.points_of_convex(cv).begin(),m.points_of_convex(cv).end(),cv_pts.begin());
-	  getfem::transfert_to_G(G, cv_pts);
+	  bgeot::vectors_to_base_matrix(G, cv_pts);
 	}
 	else G.clear();
 

@@ -69,7 +69,7 @@ namespace getfem
     base_matrix K, CS, B, Htau, M, B2, B3, B32;
     std::deque<short_type> grad_reduction, hess_reduction, trans_reduction;
     std::deque<pfem> trans_reduction_pfi;
-    base_vector un, up;
+    base_small_vector un, up;
     bool faces_computed;
     bool volume_computed;
     bool is_linear;

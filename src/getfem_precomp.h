@@ -5,12 +5,12 @@
 /* File    :  getfem_precomp.h : pre-computations.                         */
 /*     									   */
 /*                                                                         */
-/* Date : June 17, 2002.                                                   */
+/* Date : 2004/01/11.                                                      */
 /* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
-/*                                                                         */
+/*          Julien Pommier, pommier@gmm.insa-tlse.fr                       */
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 2002  Yves Renard.                                        */
+/* Copyright (C) 2002-2004 Yves Renard, Julien Pommier.                    */
 /*                                                                         */
 /* This file is a part of GETFEM++                                         */
 /*                                                                         */
@@ -182,18 +182,46 @@ namespace getfem
      returned.
      @param pf a pointer to the fem object.
      @param pspt a pointer to a list of points in the reference convex.CAUTION:
-     this array must not be destroyed as long as the fem_precomp is used!!
+     this array must not be destroyed as long as the fem_precomp is used!!. 
+
+     Moreover pspt is supposed to identify uniquely the set of
+     points. This means that you should NOT alter its content at any
+     time after using this function.
   */
   pfem_precomp fem_precomp(pfem pf, bgeot::pstored_point_tab pspt);
 
   /**
-     fills a _fem_precomp object.
+     fills a fem-precomputation object
      @param pf a pointer to the fem object.
      @param pspt a pointer to a list of points in the reference convex.CAUTION:
      this array must not be destroyed as long as the fem_precomp is used!!
    */
   void fem_precomp_not_stored(pfem pf, bgeot::pstored_point_tab pspt,
 			      _fem_precomp& fp);
+
+  /**
+     handles a pool (i.e. a set) of fem_precomp. The difference with
+     the global fem_precomp function is that these fem_precomp objects
+     are freed when the fem_precomp_pool is destroyed (they can eat
+     much memory). An example of use can be found in the
+     interpolation_solution functions of getfem_export.h
+
+     @param pf a pointer to the fem object.
+     @param pspt a pointer to a list of points in the reference convex.CAUTION:
+     this array must not be destroyed as long as the fem_precomp is used!!
+
+     Moreover pspt is supposed to identify uniquely the set of
+     points. This means that you should NOT alter its content until
+     the fem_precomp_pool is destroyed.
+  */
+  class fem_precomp_pool_private;
+  class fem_precomp_pool {
+    fem_precomp_pool_private * p;
+  public:
+    fem_precomp_pool();
+    ~fem_precomp_pool();
+    pfem_precomp operator()(pfem pf, bgeot::pstored_point_tab pspt);
+  };
 }  /* end of namespace getfem.                                            */
 
 #endif

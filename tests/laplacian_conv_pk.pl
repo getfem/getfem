@@ -39,7 +39,7 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
 
   # print ("def = $def\n");
 
-  open F, "./laplacian $tmp $def 2>&1 |" or die;
+  open F, "./laplacian $tmp $def 2>&1 |" or die "./laplcian not found";
   while (<F>) {
     if ($_ =~ /Linfty error/) {
       ($a, $b) = split('=', $_);
@@ -60,7 +60,7 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
 $NDDLMAX = 4800;
 $PAUSE = 0;
 $SKIP = 2;
-$GRAPHONLY=1;
+$GRAPHONLY=0;
 $FT = 20.0;
 $GENDIR = 0;
 $AFFICH = 0;
@@ -163,13 +163,64 @@ $INTE += 1;
 }
 
 ##########################################################################
+print "   TESTS EN DIMENSION 2, ET ELEMENTS QK                        \n";
+##########################################################################
+@Ks=(1, 2);
+$NDDLMAX = 4000; $FT = 10.0;
+$FEM_TYPE = 0;
+$INTE = 2;
+while ($SKIP < 3) {
+if (!($GRAPHONLY)) {
+open(RES, ">laplacian_2D_$INTE.res");
+$K = 1; $N = 2; $NX = 1;
+while ($NX**$N <= $NDDLMAX) {
+  print "Test for NX = $NX \t"; print RES $NX**$N;
+  foreach $K (@Ks) {
+    if ((($K * $NX)**$N) * $K <= 2*$NDDLMAX) {
+      start_program("-d MESH_TYPE=1 -d N=$N -d NX=$NX -d K=$K -d FT=$FT -d INTEGRATION=$INTE -d FEM_TYPE=$FEM_TYPE");
+      print RES "$linferror "; print ".";
+    }
+  }
+  print RES "\n"; print "\n";
+  $NX = int($NX * 2.001);
+}
+close(RES);
+}
+
+open(GNF, ">$tmp_gnuplot");
+print GNF "set data style line\n";
+print GNF "set logscale\n";
+print GNF "set xlabel 'number of dof'\n";
+print GNF "set ylabel 'L-infinity error'\n";
+print GNF "plot ";
+$first = 0; $rank = 2;
+foreach $K (@Ks) {
+  if ($first) { print GNF ", "; }
+  $KK = $K * $K;
+  print GNF " 'laplacian_2D_$INTE.res' using ((\$1)*$KK):$rank title 'QK(2,$K)'";
+  $first = 1; ++$rank;
+}
+print GNF "\n";
+if ($PAUSE) { print GNF "pause -1;\n"; }
+print GNF "set output 'laplacian_2D_$INTE.ps'\n";
+print GNF "set term postscript color\n";
+print GNF "replot\n";
+
+close(GNF);
+`gnuplot $tmp_gnuplot`;
+
+$INTE += 1;
+}
+
+
+##########################################################################
 print "   TESTS EN DIMENSION 2, ET ELEMENTS PK                        \n";
 ##########################################################################
 @Ks=(1, 2, 3, 4, 6, 9, 12, 15);
 $NDDLMAX = 100000; $FT = 10.0;
 $FEM_TYPE = 0;
 $INTE = 0;
-while ($INTE < 2 && $SKIP < 3) {
+while ($INTE < 2 && $SKIP < 4) {
 if (!($GRAPHONLY)) {
 open(RES, ">laplacian_2D_$INTE.res");
 $K = 1; $N = 2; $NX = 1;
@@ -221,7 +272,7 @@ $FEM_TYPE = 2;
 $INTE = 0;
 $GENDIR = 1;
 
-while ($INTE < 2 && $SKIP < 3) {
+while ($INTE < 2 && $SKIP < 5) {
 if (!($GRAPHONLY)) {
 open(RES, ">laplacian_2D_hier_$INTE.res");
 $K = 1; $N = 2; $NX = 1;
@@ -272,7 +323,7 @@ print "   TESTS EN DIMENSION 3, ET ELEMENTS PK                        \n";
 $NDDLMAX = 100000; $FT = 2.0;
 $FEM_TYPE = 0;
 $INTE = 1;
-while ($INTE < 2 && $SKIP < 4) {
+while ($INTE < 2 && $SKIP < 5) {
 if (!($GRAPHONLY)) {
 open(RES, ">laplacian_3D_$INTE.res");
 $K = 1; $N = 3; $NX = 1;
@@ -321,7 +372,7 @@ print "   TESTS EN DIMENSION 4, ET ELEMENTS PK                        \n";
 @Ks=(1, 2, 3, 4, 6);
 $FEM_TYPE = 0;
 $INTE = 1;
-while ($INTE < 2 && $SKIP < 4) {
+while ($INTE < 2 && $SKIP < 6) {
 if (!($GRAPHONLY)) {
 open(RES, ">laplacian_4D_$INTE.res");
 $K = 1; $N = 4; $NX = 1;

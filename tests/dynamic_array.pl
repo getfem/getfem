@@ -9,7 +9,7 @@ while (<F>) {
     print $_, <F>;
   }
 }
+close(F); if ($?) { exit(1); }
 if ($er == 1) { exit(1); }
-`./dynamic_array`;
-if ($?) { exit(1); }
+
 

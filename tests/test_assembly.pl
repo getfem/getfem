@@ -18,6 +18,7 @@ sub start_program
  # 
  #   print $_;
   }
+  close(F); if ($?) { exit(1); }
 }
 
 start_program("-d NX=8 -d NDIM=2");

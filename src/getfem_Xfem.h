@@ -75,7 +75,7 @@ namespace getfem
     /* 
     */
     virtual scalar_type val(const Xfem_func_context&) { DAL_THROW(dal::failure_error,"this Xfem_func has no value"); }
-    virtual base_vector grad(const Xfem_func_context&) { DAL_THROW(dal::failure_error,"this Xfem_func has no gradient"); }
+    virtual base_small_vector grad(const Xfem_func_context&) { DAL_THROW(dal::failure_error,"this Xfem_func has no gradient"); }
     virtual base_matrix hess(const Xfem_func_context&) { DAL_THROW(dal::failure_error,"this Xfem_func has no hessian"); }
     virtual ~virtual_Xfem_func() {}
   };
@@ -108,13 +108,13 @@ namespace getfem
     
     void interpolation(const base_node &x, const base_matrix &G,
 		       bgeot::pgeometric_trans pgt,
-		       const base_vector &coeff, base_node &val) const;
+		       const base_vector &coeff, base_vector &val) const;
 
     void interpolation(pfem_precomp pfp, size_type ii,
 		       const base_matrix &G,
 		       bgeot::pgeometric_trans pgt, 
 		       const base_vector &coeff, 
-		       base_node &val, dim_type Qdim=1) const;
+		       base_vector &val, dim_type Qdim=1) const;
 
     virtual void interpolation_grad(const base_node &x,
 				    const base_matrix &G,

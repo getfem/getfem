@@ -46,7 +46,7 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
  # 
  #   print $_;
   }
-  `./test_mat_elem $tmp $def`;
+  close(F);
   if ($?) { `rm -f $tmp`; exit(1); }
 }
 

@@ -47,8 +47,7 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
  # 
  #   print $_;
   }
-  `./laplacian $tmp $def`;
-  if ($?) { `rm -f $tmp`; exit(1); }
+  close(F); if ($?) { `rm -f $tmp`; exit(1); }
 }
 
 start_program("");

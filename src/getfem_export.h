@@ -4,12 +4,12 @@
 /* Library :  GEneric Tool for Finite Element Methods (getfem)             */
 /* File    :  getfem_export.h : export and import data.                    */
 /*     									   */
-/* Date : October 2, 2001.                                                 */
+/* Date : 2004/01/12.                                                      */
 /* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
-/*                                                                         */
+/*          Julien Pommier, pommier@gmm.insa-tlse.fr                       */
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 2001-2002  Yves Renard.                                   */
+/* Copyright (C) 2001-2004  Yves Renard, Julien Pommier.                   */
 /*                                                                         */
 /* This file is a part of GETFEM++                                         */
 /*                                                                         */
@@ -34,7 +34,7 @@
 #define __GETFEM_EXPORT_H
 
 #include <getfem_mesh_fem.h>
-#include <getfem_mat_elem.h>
+//#include <getfem_mat_elem.h>
 #include <bgeot_geotrans_inv.h>
 #include <dal_tree_sorted.h>
 
@@ -55,9 +55,9 @@ namespace getfem
     dim_type P = mf.get_qdim();
     std::ofstream o(filename.c_str());
     if (!o) DAL_THROW(internal_error, "impossible to open file");
-    base_node pt1(N), pt2, pt3(P), val(1);
+    base_node pt1(N), pt2, pt3(P);
     base_matrix G;
-    base_vector coeff;
+    base_vector coeff, val(1);
 
     o << "% GETFEM++ DATA FILE\nBEGIN DATA ELEMENT\nN = " << int(N)
       << "\nP = " << int(P) << "\nK = " << K << endl << endl;
@@ -73,7 +73,7 @@ namespace getfem
       o << "DIM = " << int(pgt->dim()) << endl;
 
       if (pf1->need_G()) 
-	transfert_to_G(G, mf.linked_mesh().points_of_convex(cv));
+	bgeot::vectors_to_base_matrix(G, mf.linked_mesh().points_of_convex(cv));
 
       if (pf1->target_dim() != 1)
 	DAL_THROW(to_be_done_error, "to be done ... ");
@@ -253,10 +253,9 @@ namespace getfem
 					  const mesh_fem &mf_target,
 					  const VECT &U, VECT &V)
   {
-    base_node val(1);
     base_matrix G;
-    base_vector coeff;
     size_type qdim = mf_source.get_qdim();
+    base_vector coeff, val(qdim);
     if ( &(mf_source.linked_mesh()) != &(mf_target.linked_mesh()))
       DAL_THROW(failure_error, "Meshes should be the same in this function.");
 
@@ -265,34 +264,33 @@ namespace getfem
 		qdim << " on a mesh_fem whose Qdim is " << 
 		int(mf_target.get_qdim()));
     size_type qmult = mf_source.get_qdim()/mf_target.get_qdim();
-
+    fem_precomp_pool fppool;
+    /* we should sort convex by their fem */
     for (dal::bv_visitor cv(mf_source.convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt = mf_source.linked_mesh().trans_of_convex(cv);
       pfem pf_s = mf_source.fem_of_element(cv);
       pfem pf_t = mf_target.fem_of_element(cv);
       size_type nbd_s = pf_s->nb_dof();
       size_type nbd_t = pf_t->nb_dof();
-      coeff.resize(nbd_s);
-
+      coeff.resize(nbd_s*qdim);
+      ref_mesh_dof_ind_ct::iterator itdof;
+      itdof = mf_source.ind_dof_of_element(cv).begin();
+      for (size_type k = 0; k < mf_source.nb_dof_of_element(cv); ++k, ++itdof)
+	coeff[k] = U[*itdof];
       if (pf_s->need_G()) 
-	transfert_to_G(G, mf_source.linked_mesh().points_of_convex(cv));
+	bgeot::vectors_to_base_matrix(G, mf_source.linked_mesh().points_of_convex(cv));
 
       if (pf_s->target_dim() != 1 || pf_t->target_dim() != 1)
 	DAL_THROW(to_be_done_error, "vector FEM interpolation still to be done ... ");
-      
-      for (size_type i = 0; i < nbd_t; ++i) {
-	size_type dof_t = mf_target.ind_dof_of_element(cv)[i*qdim]*qmult;
-	/* interpolation of the solution.                                  */
+      pfem_precomp pfp = fppool(pf_s, pf_t->node_tab());
+
+      itdof = mf_target.ind_dof_of_element(cv).begin();
+      for (size_type i = 0; i < nbd_t; ++i, itdof+=mf_target.get_qdim()) {
+	size_type dof_t = *itdof*qmult;
 	/* faux dans le cas des éléments vectoriel.                        */
-	for (size_type k = 0; k < qdim*qmult; ++k) {
-	  for (size_type j = 0; j < nbd_s; ++j) {
-	    size_type dof_s = mf_source.ind_dof_of_element(cv)[j*qdim+k];
-	    coeff[j] = U[dof_s];
-	  }
-	  // il faudrait utiliser les fem_precomp pour accelerer.
-	  pf_s->interpolation(pf_t->node_of_dof(i), G, pgt, coeff, val);
-	  V[dof_t + k] = val[0];
-	}
+	pf_s->interpolation(pfp, i, G, pgt, coeff, val, qdim);
+	for (size_type k=0; k < qdim; ++k) 
+	  V[dof_t + k] = val[k];
       }
     }
   }
@@ -306,80 +304,73 @@ namespace getfem
   template<class VECT>
     void interpolation_solution(const mesh_fem &mf_source, const mesh_fem &mf_target,
 				const VECT &U, VECT &V) {
-    base_node val(1);
     bgeot::geotrans_inv gti;
     dal::dynamic_array<base_node> ptab;
-    dal::dynamic_array<size_type> itab;
-    base_vector coeff;
+    dal::dynamic_array<size_type> itab;    
+    std::vector<base_vector> coeff;
     base_matrix G;
-
+    base_vector val(1);
     
     if (&mf_source.linked_mesh() == &mf_target.linked_mesh()) {
       interpolation_solution_same_mesh(mf_source, mf_target, U, V);
       return;
     }
-    size_type qdim = mf_source.get_qdim();
-    if (qdim != mf_target.get_qdim() && mf_target.get_qdim() != 1)
+    size_type qdim_s = mf_source.get_qdim();
+    size_type qdim_t = mf_target.get_qdim();
+    if (qdim_s != qdim_t && qdim_t != 1)
       DAL_THROW(failure_error, "Attempt to interpolate a field of dimension " << 
-		qdim << " on a mesh_fem whose Qdim is " << 
-		int(mf_target.get_qdim()));
-    size_type qmult1 = mf_source.get_qdim()/mf_target.get_qdim();
-
-    dal::bit_vector tdof_added; 
-
-    /* stocke des paires <indice, repetition> */
-    std::deque<std::pair<size_type,size_type> > gti_pt_2_target_dof;
-
-    /* stockage de tous les points dans le gti,
-       et remplissage du tableau gti_pt_2_target_dof pour
-       pouvoir retrouver le numéro du ddl à partir de son indice
-       dans la liste de points de gti 
-    */
-    for (dal::bv_visitor cv(mf_target.convex_index()); !cv.finished(); ++cv) {
-      pfem pf_t = mf_target.fem_of_element(cv);
-      size_type qmult2 = mf_target.get_qdim() / pf_t->target_dim();
-      
-      if (pf_t->target_dim() != 1) DAL_THROW(failure_error, "still some work to do on vector FEMs!");
-      
-      for (size_type j=0; j < pf_t->nb_dof(); ++j) {
-        size_type dof_t = mf_target.ind_dof_of_element(cv)[j*qmult2];
-        if (!tdof_added[dof_t]) {
-          gti.add_point(mf_target.point_of_dof(dof_t));
-          gti_pt_2_target_dof.push_back(std::pair<size_type,size_type>(dof_t,qmult2));
-          tdof_added.add(dof_t);
-        }
+		qdim_s << " on a mesh_fem whose Qdim is " << qdim_t);
+    /* initialisation of the geotrans_inv */
+    {
+      dal::bit_vector dof_done; dof_done.sup(0,mf_target.nb_dof());
+      /* store all dof nodes into the geotrans_inv */
+      for (dal::bv_visitor cv(mf_target.convex_index()); !cv.finished(); ++cv) {
+	pfem pf_t = mf_target.fem_of_element(cv);
+	if (pf_t->target_dim() != 1) DAL_THROW(failure_error, "still some work to do on vector FEMs!");  
+	for (size_type j=0; j < pf_t->nb_dof(); ++j) {
+	  size_type dof_t = mf_target.ind_dof_of_element(cv)[j*qdim_t];
+	  if (!dof_done[dof_t]) {
+	    // TODO: add a function in getfem_fem for inquiry about the lagrangitude of a dof ..
+	    //if (dof_is_lagrange(pf_t->dof_types()[j])) {
+	    gti.add_point_with_id(mf_target.point_of_dof(dof_t), dof_t);
+	    dof_done.add(dof_t);
+	    //} else DAL_WARNING(1, "ignoring non lagrange dof\n");
+	  }
+	}
       }
     }
-    // il faudrait controler que tous les ddl de mf_target sont de
-    // type lagrange
+
+    /* interpolation */
     dal::bit_vector ddl_touched; ddl_touched.add(0, mf_target.nb_dof());
-    
 
     for (dal::bv_visitor cv(mf_source.convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt=mf_source.linked_mesh().trans_of_convex(cv);
       size_type nb = gti.points_in_convex(mf_source.linked_mesh().convex(cv),
 					  pgt, ptab, itab);
+      if (!nb) continue;
       pfem pf_s = mf_source.fem_of_element(cv);
-      if (pf_s->need_G()) 
-	transfert_to_G(G, mf_source.linked_mesh().points_of_convex(cv));
       size_type nbd_s = pf_s->nb_dof();
-      coeff.resize(nbd_s);
-      for (size_type i = 0; i < nb; ++i)
-      {
-	size_type dof_t = gti_pt_2_target_dof[itab[i]].first;
-	size_type nrep  = gti_pt_2_target_dof[itab[i]].second;
-	assert(nrep>0);
-	if (ddl_touched[dof_t])
-	{ // inverser les deux boucles pour gagner du temps ?
-	  // Il faut verifier que le ddl est bien de Lagrange ...
-	  for (size_type k = 0; k < nrep*qmult1; ++k) {
-	    for (size_type j = 0; j < nbd_s; ++j) {
-	      size_type dof_s = mf_source.ind_dof_of_element(cv)[j*nrep+k];
-	      coeff[j] = U[dof_s];
+      size_type mult_s = qdim_s / pf_s->target_dim();
+      val.resize(pf_s->target_dim());
+
+      /* prepare coefficients for interpolation */
+      coeff.resize(mult_s);
+      for (size_type k=0; k < mult_s; ++k) coeff[k].resize(nbd_s);
+      ref_mesh_dof_ind_ct::iterator itdof = mf_source.ind_dof_of_element(cv).begin();
+      for (size_type j=0; j < nbd_s; ++j) 
+	for (size_type k=0; k < mult_s; ++k) { coeff[k][j] = U[*itdof]; ++itdof; }
+      if (pf_s->need_G()) 
+	bgeot::vectors_to_base_matrix(G, mf_source.linked_mesh().points_of_convex(cv));
+
+      for (size_type i = 0; i < nb; ++i) {
+	size_type dof_t = itab[i];
+	if (ddl_touched[dof_t]) {
+	  ddl_touched.sup(dof_t, qdim_t);
+	  for (size_type k = 0, pos=(dof_t*qdim_s)/qdim_t; k < mult_s; ++k) {
+	    pf_s->interpolation(ptab[i], G, pgt, coeff[k], val);
+	    for (size_type l = 0; l < pf_s->target_dim(); ++l) {
+	      V[pos++] = val[l];
 	    }
-	    pf_s->interpolation(ptab[i], G, pgt, coeff, val);
-	    V[dof_t*qmult1 + k] = val[0];
-	    ddl_touched.sup(dof_t+(k/qmult1));
 	  }
 	}
       }
@@ -400,7 +391,7 @@ namespace getfem
   template<class VECT>
     void interpolation_solution(const mesh_fem &mf_source, bgeot::geotrans_inv &gti,
 				const VECT &U, VECT &V) {
-    base_node val(1);
+    base_vector val(1);
     dal::dynamic_array<base_node> ptab;
     dal::dynamic_array<size_type> itab;
     base_vector coeff;
@@ -414,10 +405,11 @@ namespace getfem
       bgeot::pgeometric_trans pgt=mf_source.linked_mesh().trans_of_convex(cv);
       size_type nb = gti.points_in_convex(mf_source.linked_mesh().convex(cv),
 					  pgt, ptab, itab);
+      if (nb == 0) continue;
       pfem pf_s = mf_source.fem_of_element(cv);
 
       if (pf_s->need_G())
-	transfert_to_G(G, mf_source.linked_mesh().points_of_convex(cv));
+	bgeot::vectors_to_base_matrix(G, mf_source.linked_mesh().points_of_convex(cv));
       // cerr << "is_equiv:" << pf_s->is_equivalent() << ",inerp: G=" << G << ",nrow=" << G.nrows() << ", ncols=" << G.ncols() << endl;
       size_type nbd_s = pf_s->nb_dof();
       coeff.resize(nbd_s);
@@ -464,9 +456,9 @@ namespace getfem
     void interpolation_solution_same_mesh(mesh_fem &mf, mesh_fem &mf_target,
 					  const VECT &U, VECT &V, dim_type P)
   {
-    base_node pt2, val(1);
+    base_node pt2;
     base_matrix G;
-    base_vector coeff;
+    base_vector coeff, val(1);
 
     if ( &(mf.linked_mesh()) != &(mf_target.linked_mesh()))
       DAL_THROW(failure_error, "Meshes should be the same in this function.");
@@ -480,7 +472,7 @@ namespace getfem
       coeff.resize(nbd1);
 
       if (pf1->need_G()) 
-	transfert_to_G(G, mf.linked_mesh().points_of_convex(cv));
+	bgeot::vectors_to_base_matrix(G, mf.linked_mesh().points_of_convex(cv));
 
       if (pf1->target_dim() != 1)
 	DAL_THROW(to_be_done_error, "to be done ... ");
@@ -509,7 +501,8 @@ namespace getfem
 				const VECT &U, VECT &V, dim_type P)
   {
     size_type nb;
-    base_node pt3(P), val(1);
+    base_node pt3(P);
+    base_vector val(1);
     bgeot::geotrans_inv gti;
     dal::dynamic_array<base_node> ptab;
     dal::dynamic_array<size_type> itab;
@@ -536,7 +529,7 @@ namespace getfem
 				pgt, ptab, itab);
       pfem pfe = mf.fem_of_element(cv);
       if (pfe->need_G()) 
-	transfert_to_G(G, mf.linked_mesh().points_of_convex(cv));
+	bgeot::vectors_to_base_matrix(G, mf.linked_mesh().points_of_convex(cv));
       size_type nbd1 = pfe->nb_dof();
       coeff.resize(nbd1);
       for (size_type i = 0; i < nb; ++i)

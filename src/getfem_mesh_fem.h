@@ -45,8 +45,6 @@
 
 #include <getfem_mesh.h>
 #include <getfem_fem.h>
-#include <getfem_mat_elem.h>
-
 namespace getfem
 {
 

@@ -30,6 +30,7 @@
 #include <gmm.h>
 
 using bgeot::base_vector;
+using bgeot::base_small_vector;
 using bgeot::base_node;
 using bgeot::scalar_type;
 using bgeot::size_type;
@@ -83,12 +84,12 @@ void lap_pb::init(void)
   cout << "Mesh generation\n";
 
   base_node org(N); org.fill(0.0);
-  std::vector<base_vector> vtab(N);
+  std::vector<base_small_vector> vtab(N);
   std::vector<size_type> ref(N);
   std::fill(ref.begin(), ref.end(), NX1);
   for (dim_type i = 0; i < N; i++)
   { 
-    vtab[i] = base_vector(N); vtab[i].fill(0.0);
+    vtab[i] = base_small_vector(N); vtab[i].fill(0.0);
     (vtab[i])[i] = ((i == 0) ? LX : ((i == 1) ? LY : LZ)) / scalar_type(NX1);
   }
   getfem::parallelepiped_regular_simplex_mesh(mesh1, N, org,
@@ -98,7 +99,7 @@ void lap_pb::init(void)
   std::fill(ref.begin(), ref.end(), NX2);
   for (dim_type i = 0; i < N; i++)
   { 
-    vtab[i] = base_vector(N); vtab[i].fill(0.0);
+    vtab[i] = base_small_vector(N); vtab[i].fill(0.0);
     (vtab[i])[i] = ((i == 0) ? LX : ((i == 1) ? LY : LZ)) / scalar_type(NX2);
   }
   getfem::parallelepiped_regular_simplex_mesh(mesh2, N, org,
@@ -156,12 +157,14 @@ void lap_pb::assemble(void)
   sum = 0.0;
   for (size_type i = 0; i < RM1.nrows(); i++) { 
     cout << "ligne " << i << " [ ";
+    scalar_type slig = 0;
     for (size_type l = 0; l < RM1.nrows(); l++)
       if (RM1(i, l) != 0.0) {
 	cout << "(" << l << "," << RM1(i, l) << ")  ";
-	sum += RM1(i, l);
+	slig += RM1(i, l);
       }
-    cout << "]" << endl;
+    sum += slig;
+    cout << "] -> sum(line)=" << slig << endl;
   }
   cout << endl << " sum: " << sum << endl << endl;
 
@@ -173,17 +176,19 @@ void lap_pb::assemble(void)
   sum = 0.0; diff = 0.0;
   for (size_type i = 0; i < RM2.nrows(); i++) { 
     cout << "ligne " << i << " [ ";
+    scalar_type slig = 0;
     for (size_type l = 0; l < RM2.nrows(); l++) {
       diff += dal::abs(RM2(i, l) - RM1(i, l));
       if (RM2(i, l) != 0.0) {
 	cout << "(" << l << "," << RM2(i, l) << ")  ";
-	sum += RM2(i, l);
+	slig = slig + RM2(i, l);
       }
     }
-    cout << "]" << endl;
+    sum += slig;
+    cout << "] -> sum(line)=" << slig << endl;
   }
   cout << endl << " sum: " << sum << endl << endl;
-  cout << endl << " diff: " << diff << endl << endl;
+  cout << endl << " diff: " << diff << "max_norm=" << gmm::mat_maxnorm(RM1) << endl << endl;
 
   
 }
@@ -194,6 +199,7 @@ void lap_pb::assemble(void)
 
 int main(int argc, char *argv[])
 {
+  int j;
   try {
 
     lap_pb p;

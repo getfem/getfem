@@ -35,7 +35,7 @@
 namespace getfem
 {
   void _parallelepiped_regular_simplex_mesh(getfem_mesh &me, dim_type N,
-    const base_node &org, const base_vector *ivect, const size_type *iref)
+    const base_node &org, const base_small_vector *ivect, const size_type *iref)
   {
     bgeot::mesh_structure cvt, sl;
     bgeot::convex<base_node>
@@ -95,7 +95,7 @@ namespace getfem
 
 
   void _parallelepiped_regular_prism_mesh(getfem_mesh &me, dim_type N,
-    const base_node &org, const base_vector *ivect, const size_type *iref)
+    const base_node &org, const base_small_vector *ivect, const size_type *iref)
   {
     getfem_mesh aux;
     _parallelepiped_regular_simplex_mesh(aux, N-1, org, ivect, iref);
@@ -118,7 +118,7 @@ namespace getfem
 
 
   void _parallelepiped_regular_mesh(getfem_mesh &me, dim_type N,
-                                    const base_node &org, const base_vector *ivect, const size_type *iref, bool linear_gt)
+                                    const base_node &org, const base_small_vector *ivect, const size_type *iref, bool linear_gt)
   {
     bgeot::convex<base_node>
       pararef = *(bgeot::parallelepiped_of_reference(N));

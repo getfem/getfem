@@ -11,12 +11,12 @@ LZ = 1.0;		% size in Z.
 %%%%%   discretisation parameters  :                     	      %%%%%
 K = 1;                  % Finite element degree.
 KI = 2;                 % Integration degree
-INTEGRATION = 15;       % 0 = exact integration.
+INTEGRATION = 17;       % 0 = exact integration.
 			% 1 = Newton Cotes of degree KI
 			% 2 = Gauss for segment of degree KI
 			% 3 = composite with Newton cotes, order 2*K, KI decomp
 			% 11, 12, 13, 14, 15, 16, 17 triangle(n-10)
 			% 21, 22, 23, 25 tetrahedron(n-20)
-NX1 = 7;            	% space step for mesh1.
-NX2 = 6;            	% space step for mesh2.
+NX1 = 3;            	% space step for mesh1.
+NX2 = 4;            	% space step for mesh2.
 

@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 using bgeot::base_vector;
+using bgeot::base_small_vector;
 using bgeot::base_node;
 using bgeot::scalar_type;
 using bgeot::size_type;
@@ -713,10 +714,10 @@ namespace getfem {
 void gen_mesh(getfem::getfem_mesh& mesh) {
   cout << "Mesh generation, N=" << param.NX << " Ndim=" << param.Ndim << endl;
   base_node org(param.Ndim); org.fill(0.0);
-  std::vector<base_vector> vtab(param.Ndim);
+  std::vector<base_small_vector> vtab(param.Ndim);
   std::vector<size_type> ref(param.Ndim); std::fill(ref.begin(), ref.end(), param.NX);
   for (size_type i = 0; i < param.Ndim; i++) { 
-    vtab[i] = base_vector(param.Ndim); vtab[i].fill(0.0);
+    vtab[i] = base_small_vector(param.Ndim); vtab[i].fill(0.0);
     (vtab[i])[i] = 1. / scalar_type(param.NX);
   }
   switch (param.mesh_type) {

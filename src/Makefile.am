@@ -1,6 +1,9 @@
 include_HEADERS =                      \
 	getfem_arch_config.h	       \
 	bgeot_config.h                 \
+	bgeot_small_vector.h           \
+	bgeot_kdtree.h		       \
+	bgeot_imbricated_box.h	       \
 	bgeot_convex.h                 \
 	bgeot_convex_hull.h            \
 	bgeot_convex_intersect.h       \
@@ -24,6 +27,7 @@ include_HEADERS =                      \
 	dal_ref.h                      \
 	dal_std.h                      \
 	dal_except.h                   \
+	dal_backtrace.h		       \
 	dal_tas.h                      \
 	dal_tree_sorted.h              \
 	ftool.h                        \
@@ -92,7 +96,11 @@ include_HEADERS =                      \
 	linkmsg.h
 
 SRC =                                  \
+	dal_backtrace.C                \
 	dal_bit_vector.C               \
+	bgeot_small_vector.C           \
+	bgeot_kdtree.C		       \
+	bgeot_imbricated_box.C         \
 	bgeot_convex_ref.C             \
 	bgeot_convex_structure.C       \
 	bgeot_geometric_trans.C        \

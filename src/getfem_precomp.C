@@ -73,7 +73,7 @@ namespace getfem
 
   void _geotrans_precomp::init_val() const {
     c.clear();  
-    c.resize(pspt->size(), base_node(pgt->nb_points()));
+    c.resize(pspt->size(), base_vector(pgt->nb_points()));
     for (size_type i = 0; i < pgt->nb_points(); ++i) {
       for (size_type j = 0; j < pspt->size(); ++j) {
 	c[j][i] = pgt->poly_vector()[i].eval((*pspt)[j].begin());
@@ -216,10 +216,20 @@ namespace getfem
     return tab->add(_pre_fem_light(pf, pspt));
   }
 
+  
   void fem_precomp_not_stored(pfem pf, bgeot::pstored_point_tab pspt,
 			      _fem_precomp& fp) {
     fp.assign(_pre_fem_light(pf,pspt));
   }
+  
 
+  /* fem_precomp_pool */
+  class fem_precomp_pool_private : 
+    public dal::FONC_TABLE<_pre_fem_light, _fem_precomp> {};
+  fem_precomp_pool::fem_precomp_pool() : p(new fem_precomp_pool_private()) {}
+  fem_precomp_pool::~fem_precomp_pool() { delete p; }
+  pfem_precomp fem_precomp_pool::operator()(pfem pf, bgeot::pstored_point_tab pspt) {
+    return p->add(_pre_fem_light(pf, pspt));
+  }  
 }  /* end of namespace getfem.                                            */
 

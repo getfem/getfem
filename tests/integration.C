@@ -21,8 +21,12 @@
 #include <getfem_integration.h>
 #include <bgeot_comma_init.h>
 #include <getfem_mesh_fem.h>
+#include <getfem_mat_elem.h>
 #include <iomanip>
 #include <map>
+#ifdef GETFEM_HAVE_FEENABLEEXCEPT
+#  include <fenv.h>
+#endif
 
 using getfem::size_type;
 using bgeot::base_tensor;
@@ -67,7 +71,7 @@ static void check_method(const std::string& im_name, getfem::pintegration_method
   getfem::getfem_mesh m; 
   getfem::mesh_fem mf1(m);
   getfem::mesh_fem mf2(m);
-  assert(ppi); assert(pgt);
+  assert(ppi!=0); assert(pgt!=0);
   cout << "checking " << im_name << "...\n" << std::flush; 
   m.add_convex_by_points(pgt, pgt->convex_ref()->points().begin());
   mf1.set_finite_element(m.convex_index(),getfem::classical_fem(pgt,k/2),ppi);
@@ -81,9 +85,11 @@ static void check_method(const std::string& im_name, getfem::pintegration_method
   mc.im_names.push_back(im_name);
 }
 
-static void check_im_order(const std::string& s, size_type expected_pk=size_type(-1), size_type expected_qk=size_type(-1)) {
+static void check_im_order(const std::string& s/*, size_type expected_pk=size_type(-1), size_type expected_qk=size_type(-1)*/) {
   getfem::pintegration_method ppi = getfem::int_method_descriptor(s);
   size_type pk = 10000, qk = 10000;
+  size_type pts_on_boundary = 0;
+  size_type pts_outside = 0;
   if (!ppi->is_exact()) {
     size_type dim = ppi->approx_method()->dim();
     for (bgeot::power_index idx(dim); idx.degree() <= pk; ++idx) {
@@ -112,14 +118,25 @@ static void check_im_order(const std::string& s, size_type expected_pk=size_type
 	qk = std::min<size_type>(qk, *std::max_element(idx.begin(),idx.end()));
       }
     }
+    for (size_type i=0; i < ppi->approx_method()->nb_points_on_convex(); ++i) {
+      const base_node& P = ppi->approx_method()->point(i);
+      if (ppi->approx_method()->ref_convex()->is_in(P) > 1e-8) pts_outside++;
+      for (size_type f = 0; f < ppi->approx_method()->structure()->nb_faces(); ++f) {
+	if (dal::abs(ppi->approx_method()->ref_convex()->is_in_face(f,P)) < 1e-8) {
+	  pts_on_boundary++; break;
+	}
+      }
+    }
   }
   cout << std::setw(70) << getfem::name_of_int_method(ppi) << ", PK DEGREE=" << std::setw(2) << pk-1 
-       << ", QK DEGREE=" << std::setw(2) << qk-1 << "\n";
+       << ", QK DEGREE=" << std::setw(2) << qk-1;
+  if (pts_on_boundary || pts_outside) cout << " CAUTION: uses " << pts_on_boundary << " points on the convex boundary, and " << pts_outside << " points outside the convex";
+  cout << "\n";
 }
 
 const std::vector<size_type>& TRIANGLE_D() { 
   static std::vector<size_type> i_d;
-  if (i_d.size() == 0) bgeot::sc(i_d) += 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 13;
+  if (i_d.size() == 0) bgeot::sc(i_d) += 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 17, 19;
   return i_d;
 }
 const std::vector<size_type>& TETRA_D() { 
@@ -269,7 +286,7 @@ static void check_methods() {
 	sprintf(s,"IM_PRODUCT(IM_TRIANGLE(6),IM_GAUSS1D(6))");
 	ppi = getfem::int_method_descriptor(s);
 	check_method(s, getfem::int_method_descriptor(s), k,
-		     bgeot::prism_geotrans(d,k));
+		     bgeot::prism_geotrans(d,std::max<size_type>(k,1)));
       }
     }
   }
@@ -356,16 +373,13 @@ static void print_some_methods() {
 
   sprintf(meth, "IM_TRIANGLE(3)");
   print_method(getfem::int_method_descriptor(meth));
-
-  sprintf(meth, "IM_TETRAHEDRON(3)");
-  print_method(getfem::int_method_descriptor(meth));
-
-  sprintf(meth, "IM_HEXAHEDRON(9)");
-  print_method(getfem::int_method_descriptor(meth));
 }
 
 int main(int argc, char **argv)
 {
+#ifdef GETFEM_HAVE_FEENABLEEXCEPT
+  feenableexcept(FE_DIVBYZERO | FE_INVALID);
+#endif
   exception_cb cb;
   dal::exception_callback::set_exception_callback(&cb);
 

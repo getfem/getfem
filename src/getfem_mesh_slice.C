@@ -1,6 +1,6 @@
-#include <map>
 #include <getfem_mesh_fem.h>
 #include <getfem_mesh_slice.h>
+#include <bgeot_geotrans_inv.h>
 
 namespace getfem {
   const float slicer::EPS = 1e-13;
@@ -137,12 +137,12 @@ namespace getfem {
     base_matrix G;
     pfem pf = mfU->pmf->fem_of_element(cv);
     _fem_precomp fprecomp;
-    if (pf->need_G())transfert_to_G(G, mfU->pmf->linked_mesh().points_of_convex(cv));
+    if (pf->need_G()) bgeot::vectors_to_base_matrix(G, mfU->pmf->linked_mesh().points_of_convex(cv));
     for (size_type i=0; i < nodes.size(); ++i) refpts[i] = nodes[i].pt_ref;
     fem_precomp_not_stored(pf, &refpts, fprecomp);
     mfU->copy(cv, coeff);
     //cerr << "cv=" << cv << ", val=" << val << ", coeff=" << coeff << endl;
-    base_node v(1); 
+    base_vector v(1); 
     for (size_type i=0; i < nodes.size(); ++i) {
       v[0] = 0;
       pf->interpolation(&fprecomp, i,
@@ -365,85 +365,7 @@ namespace getfem {
       }
     }
   }
-#if 0
-  void mesh_slice::edges_mesh(getfem_mesh &edges_m) const {
-    cs_nodes_ct n;
-    std::vector<size_type> fpts;
-    std::vector<dim_type> bits;
-    std::vector<dim_type> cnt;
-    for (size_type ic = 0; ic < cvlst.size(); ++ic) {
-      //cerr << "mesh_slice::edges_mesh: examen du convexe " << ic << " (" << nodes(ic).size() << " nodes, " << simplexes(ic).size() << " simplexes" << endl;
-      n.resize(nodes(ic).size());
-      /* the trick is here: the nodes are sorted according to their
-	 reference point. Since the edges of the reference convex are
-	 assumed to be straight, the edges points will be also
-	 sorted */
-      std::partial_sort_copy(cvlst[ic].nodes.begin(), cvlst[ic].nodes.end(), 
-			     n.begin(), n.end(), slice_node_compare_pt_ref());
-      typedef std::map<unsigned long,dal::bit_vector> fmap_t;
-      fmap_t fmap;
-      dim_type nface = cvlst[ic].cv_dim-1;
-      /*for (size_type j=0; j < cvlst[ic].simplexes.size(); ++j) 
-        if (cvlst[ic].simplexes[j].dim()) 
-	nface = std::max(nface, dim_type(cvlst[ic].simplexes[j].dim()-1));*/
-      fpts.resize(n.size());
-      slice_node::faces_ct fmask((unsigned long)(-1));
-      for (size_type ip = 0; ip < n.size(); ++ip) fmask &= n[ip].faces;      
-      for (size_type ip = 0; ip < n.size(); ++ip) {
-	slice_node::faces_ct f = n[ip].faces & (~fmask);
-        dim_type nbits = f.count();
-	/*cerr << "  nface = " << int(nface) << ", nbits=" << int(nbits) << endl;
-	  cerr << "  noeud " << ip << ": " << n[ip].pt << ", " << n[ip].pt_ref << ", f=" << n[ip].faces << endl;*/
-        if (nface <= nbits) { /* not sure that is the right test for
-				 dimension > 3 .. */
-          /* add the point to the mesh */
-          fpts[ip] = edges_m.add_point(n[ip].pt);
 
-          /* now generate all combinations of (cvlst[ic].cv_dim-1)
-	     bits in the f.count() that are set in f .. */
-
-          /* build list of faces */
-          bits.clear(); 
-	  for (dim_type bcnt = 0; f.any(); ++bcnt) { 
-	    if (f[0]) bits.push_back(bcnt); 
-	    f >>= 1; 
-	  }
-	  //cerr << "   bits="; std::copy(bits.begin(), bits.end(), std::ostream_iterator<size_type>(cerr," ")); cerr << endl;
-	  
-          /* init counter */
-          cnt.resize(nface+1); 
-	  for (size_type i=0; i < nface; ++i) cnt[i] = i; 
-	  cnt[nface] = nbits+1;
-	  //cerr << "    cnt="; std::copy(cnt.begin(), cnt.end(), std::ostream_iterator<size_type>(cerr," ")); cerr << endl;
-	  
-          while (cnt[nface-1] != nbits) {
-            f.reset(); for (size_type i=0; i < nface; ++i) f[bits[cnt[i]]] = 1;
-	    //cerr << "        ---> f <= " << f << endl;
-            if (int(f.count()) == nface) {
-	      //cerr << "    f=" << f << "-> ajout du noeud sur la face " << f << endl;
-              fmap[f.to_ulong()].add(ip);
-            }
-            /* next combination */
-            for (dim_type i=0, pcnt=0; i < nface; ++i) {
-              if (++cnt[i] < cnt[i+1]) break; else cnt[i] = pcnt;
-              pcnt = cnt[i]+1;
-            }
-	    //cerr << "    cnt="; std::copy(cnt.begin(), cnt.end(), std::ostream_iterator<size_type>(cerr," ")); cerr << endl;
-          }
-        }
-      }
-      for (fmap_t::iterator it = fmap.begin(); it != fmap.end(); ++it) {
-        dal::bit_vector &bv = (*it).second;
-        size_type pip = bv.take_first();
-        for (size_type ip = bv.take_first(); ip != size_type(-1); ip << bv) {
-	  if (fpts[pip] != fpts[ip])
-	    edges_m.add_segment(fpts[pip], fpts[ip]); 
-	  pip = ip;
-	}
-      }
-    }
-  }
-#endif
   static void flag_points_on_faces(const bgeot::pconvex_ref& cvr, 
                                    const bgeot::stored_point_tab& pts, 
                                    std::vector<slice_node::faces_ct>& faces) {
@@ -496,7 +418,7 @@ namespace getfem {
       if (defdata) {
         if (force_update || defdata->pmf->fem_of_element(cv) != pf) {
           pf = defdata->pmf->fem_of_element(cv);
-	  if (pf->need_G())transfert_to_G(G, defdata->pmf->linked_mesh().points_of_convex(cv));
+	  if (pf->need_G()) bgeot::vectors_to_base_matrix(G, defdata->pmf->linked_mesh().points_of_convex(cv));
           fem_precomp_not_stored(pf, &refpts, fprecomp);
         }
         defdata->copy(cv, coeff);
@@ -518,6 +440,7 @@ namespace getfem {
         std::copy(cvms->ind_points_of_convex(snum).begin(),
                   cvms->ind_points_of_convex(snum).end(), cv_simplexes[snum].inodes.begin());
         /* store indices of points which are really used , and renumbers them */
+	base_vector val(m.dim());
         for (std::vector<size_type>::iterator itp = cv_simplexes[snum].inodes.begin();
              itp != cv_simplexes[snum].inodes.end(); ++itp) {
           if (ptsid[*itp] == size_type(-1)) {
@@ -527,10 +450,11 @@ namespace getfem {
             cv_nodes[pcnt].faces = points_on_faces[*itp];
             cv_nodes[pcnt].pt.resize(m.dim()); cv_nodes[pcnt].pt.fill(0.);
             if (defdata) {
-              cv_nodes[pcnt].pt.resize(defdata->pmf->get_qdim());
+              cv_nodes[pcnt].pt.resize(defdata->pmf->get_qdim());	      
               pf->interpolation(&fprecomp, *itp,
                                 G, m.trans_of_convex(cv),
-                                coeff, cv_nodes[pcnt].pt, defdata->pmf->get_qdim());
+                                coeff, val, defdata->pmf->get_qdim());
+	      std::copy(val.begin(), val.end(), cv_nodes[pcnt].pt.begin());
             }
             gp.transform(m.points_of_convex(cv), *itp, cv_nodes[pcnt].pt);
             pcnt++;
@@ -539,7 +463,7 @@ namespace getfem {
         }
       }
     }
-  };
+  }; /* mesh_slice_pre_deform  */
 
   void mesh_slice::do_slicing(size_type cv, bgeot::pconvex_ref cvr, slicer *ms, cs_nodes_ct cv_nodes, 
 			      cs_simplexes_ct cv_simplexes, dal::bit_vector& splx_in) {
@@ -574,6 +498,10 @@ namespace getfem {
         size_type lnum = cv_simplexes[snum].inodes[i];
         if (nused[lnum] == size_type(-1)) {
           nused[lnum] = sc->nodes.size(); sc->nodes.push_back(cv_nodes[lnum]);
+	  for (size_type k=0; k < sc->nodes.back().pt_ref.size(); ++k) {
+	    assert(!isnan(sc->nodes.back().pt[k]));
+	    assert(!isnan(sc->nodes.back().pt_ref[k]));
+	  }
           points_cnt++;
         }
         cv_simplexes[snum].inodes[i] = nused[lnum];
@@ -629,8 +557,9 @@ namespace getfem {
         cvms = getfem::refined_simplex_mesh_for_convex_faces(cvr, nrefine)[face];
       else
         cvms = cvm; 
+      /* apply the geometric transformation and an optional mesh_fem deformation */
       def->apply(m, cvms, gp, cvm_pts, points_on_faces, cv_nodes, cv_simplexes);
-
+      /* and now do the slicing */
       dal::bit_vector splx_in; splx_in.add(0, cv_simplexes.size());
       do_slicing(cv, cvr, ms, cv_nodes, cv_simplexes, splx_in);
     }
@@ -731,12 +660,19 @@ namespace getfem {
     size_type sz = sizeof(mesh_slice);
     for (cvlst_ct::const_iterator it = cvlst.begin(); it != cvlst.end(); ++it) {
       sz += sizeof(size_type);
-      for (size_type i=0; i < it->nodes.size(); ++i) 
+      cerr << "memsize: convex " << it->cv_num << "\n";
+      for (size_type i=0; i < it->nodes.size(); ++i) {
+	cerr << "  point " << i << ": size+= " << sizeof(slice_node) << "+" <<  
+          it->nodes[i].pt.memsize() << "+" << it->nodes[i].pt_ref.memsize() << "-" << sizeof(it->nodes[i].pt)*2 << "\n";
         sz += sizeof(slice_node) + 
           (it->nodes[i].pt.memsize()+it->nodes[i].pt_ref.memsize()) - sizeof(it->nodes[i].pt)*2;
-      for (size_type i=0; i < it->simplexes.size(); ++i) 
+      }
+      for (size_type i=0; i < it->simplexes.size(); ++i) {
+	cerr << "  simplex " << i << ": size+= " << sizeof(slice_simplex) << "+" << 
+          it->simplexes[i].inodes.size()*sizeof(size_type) << "\n";
         sz += sizeof(slice_simplex) + 
           it->simplexes[i].inodes.size()*sizeof(size_type);
+      }
     }
     return sz;
   }
