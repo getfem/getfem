@@ -61,6 +61,7 @@ namespace gmm {
       do_choleskyt(A, typename principal_orientation_type<typename
 	      linalg_traits<Matrix>::sub_orientation>::potype());
     }
+    choleskyt_precond(void) {}
   };
 
   template<class Matrix> template<class M> 

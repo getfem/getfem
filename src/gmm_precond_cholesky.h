@@ -94,6 +94,7 @@ namespace gmm {
       do_cholesky(A, typename principal_orientation_type<typename
 		  linalg_traits<Matrix>::sub_orientation>::potype());
     }
+    cholesky_precond(void) {}
   };
 
   template <class Matrix> template<class M>

@@ -40,6 +40,8 @@ namespace gmm {
 
     diagonal_precond(const Matrix &M) : diag(mat_nrows(M))
     { for (size_type i = 0; i < mat_nrows(M); ++i) diag[i] = 1.0 / M(i, i); }
+
+    diagonal_precond(void) {}
   };
 
   template <class Matrix, class V2> inline

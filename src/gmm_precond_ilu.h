@@ -95,6 +95,8 @@ namespace gmm {
       do_ilu(A, typename principal_orientation_type<typename
 	     linalg_traits<Matrix>::sub_orientation>::potype());
     }
+
+    ilu_precond(void) {}
   };
 
   template <class Matrix> template <class M>

@@ -36,6 +36,27 @@
 #include <gmm_dense_lu.h>
 
 #include <gmm_iter.h>
+
+
+namespace gmm {
+
+  // Needed by ilut and choleskyt
+  template<class T> struct _elt_rsvector_value_less {
+    inline bool operator()(const _elt_rsvector<T>& a, 
+			   const _elt_rsvector<T>& b) const
+    { return (dal::abs(a.e) > dal::abs(b.e)); }
+  };
+}
+
+#include <gmm_precond_diagonal.h>
+#include <gmm_precond_cholesky.h>
+#include <gmm_precond_choleskyt.h>
+#include <gmm_precond_mr_approx_inverse.h>
+#include <gmm_precond_ilu.h>
+#include <gmm_precond_ilut.h>
+
+
+
 #include <gmm_solver_cg.h>
 #include <gmm_solver_bicgstab.h>
 #include <gmm_solver_qmr.h>
@@ -47,23 +68,6 @@
 #include <gmm_tri_solve.h>
 #include <gmm_solver_gmres.h>
 
-namespace gmm {
-
-  // Needed by ilut and choleskyt
-  template<class T> struct _elt_rsvector_value_less {
-    inline bool operator()(const _elt_rsvector<T>& a, 
-			   const _elt_rsvector<T>& b) const
-    { return (dal::abs(a.e) > dal::abs(b.e)); }
-  };
-  
-}
-
-#include <gmm_precond_diagonal.h>
-#include <gmm_precond_cholesky.h>
-#include <gmm_precond_choleskyt.h>
-#include <gmm_precond_mr_approx_inverse.h>
-#include <gmm_precond_ilu.h>
-#include <gmm_precond_ilut.h>
 
 
 #endif //  __GMM_SOLVERS_H

@@ -40,6 +40,9 @@ namespace gmm {
   /*		Schwartz Additive method                                  */
   /* ******************************************************************** */
 
+
+  #define PRECOND choleskyt
+
   template <class Matrix1, class Matrix2, class Matrix3, class SUBI>
   struct schwarz_additif_matrix {
     typedef typename linalg_traits<Matrix2>::value_type value_type;
@@ -53,6 +56,10 @@ namespace gmm {
     mutable size_t itebilan;
     std::vector<vector_type> *gi;
     std::vector<vector_type> *fi;
+    
+    std::vector<PRECOND<Matrix2> > *precond1;
+    std::vector<PRECOND<Matrix3> > *precond2;
+
   };
 
   template <class Matrix1, class Matrix2, class Matrix3, class SUBI,
@@ -71,6 +78,14 @@ namespace gmm {
     size_t itebilan = 0;
     std::vector<vector_type> gi(nb_sub);
     std::vector<vector_type> fi(nb_sub);
+    
+    std::vector<PRECOND<Matrix2> > precond1(ml1.size());
+    std::vector<PRECOND<Matrix3> > precond2(ml2.size());
+
+    for (size_type i = 0; i < ml1.size(); ++i)
+      precond1[i] = PRECOND<Matrix2>(ml1[i], 10, 1E-7);
+    for (size_type i = 0; i < ml2.size(); ++i)
+      precond2[i] = PRECOND<Matrix2>(ml2[i], 10, 1E-7);
 
     iter.set_rhsnorm(vect_norm2(f));
     if (iter.get_rhsnorm() == 0.0) { clear(u); return 0; }
@@ -91,13 +106,13 @@ namespace gmm {
 
     for (size_type i = 0; i < ms; ++i) {
       iter2.init();
-      cg(ml1[i], gi[i], fi[i], identity_matrix(), identity_matrix(), iter2);
+      cg(ml1[i], gi[i], fi[i], identity_matrix(), precond1[i], iter2);
       itebilan = std::max(itebilan, iter2.get_iteration());
     }
     for (size_type i = 0; i < ml2.size(); ++i) {
       iter2.init();
       cg(ml2[i], gi[i+ms], fi[i+ms],
-	 identity_matrix(), identity_matrix(), iter2);
+	 identity_matrix(), precond2[i], iter2);
       itebilan = std::max(itebilan, iter2.get_iteration());
     }
 
@@ -106,6 +121,7 @@ namespace gmm {
     
     schwarz_additif_matrix<Matrix1, Matrix2, Matrix3, SUBI> SAM;
     SAM.A = &A; SAM.ml1 = &ml1; SAM.ml2 = &ml2; SAM.cor = &cor;
+    SAM.precond1 = &precond1; SAM.precond2 = &precond2; 
     iter2.init();
     SAM.iter = iter2;
     SAM.residu = iter.get_resmax();
@@ -128,13 +144,13 @@ namespace gmm {
     global_to_local(q, *(M.fi), *(M.cor));
     for (size_type i = 0; i < (M.ml1)->size(); ++i) {
       M.iter.init();
-      cg((*(M.ml1))[i], (*(M.gi))[i], (*(M.fi))[i], identity_matrix(), M.iter);
+      cg((*(M.ml1))[i], (*(M.gi))[i], (*(M.fi))[i], (*precond1)[i], M.iter);
       itebilan = std::max(itebilan, M.iter.get_iteration());
     }
 
     for (size_type i = 0; i < (M.ml2)->size(); ++i) {
       M.iter.init();
-      cg((*(M.ml2))[i],(*(M.gi))[i+ms], (*(M.fi))[i+ms], identity_matrix(),
+      cg((*(M.ml2))[i],(*(M.gi))[i+ms], (*(M.fi))[i+ms], (*precond2)[i],
 	 M.iter);
       itebilan = std::max(itebilan, M.iter.get_iteration());
     }
