@@ -1,3 +1,4 @@
+/* -*- c++ -*- (enables emacs c++ mode)                                    */
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Generic Matrix Methods  (gmm)                                */
@@ -44,6 +45,7 @@ namespace gmm {
     typedef rsvector<value_type> svector;
 
     row_matrix<svector> U;
+    std::vector<value_type> indiag;
 
   protected:
     int K;
@@ -54,10 +56,13 @@ namespace gmm {
 
   public:
     choleskyt_precond(const Matrix& A, int k_, double eps_) 
-      : U(mat_nrows(A), mat_ncols(A)), K(k_), eps(eps_) {
+      : U(mat_nrows(A),mat_ncols(A)),
+	indiag(std::min(mat_nrows(A), mat_ncols(A))),
+	K(k_), eps(eps_)
+    {
       if (!is_sparse(A))
 	DAL_THROW(failure_error,
-		  "Matrix should be sparse for incomplete ilu");
+		  "Matrix should be sparse for incomplete cholesky");
       do_choleskyt(A, typename principal_orientation_type<typename
 	      linalg_traits<Matrix>::sub_orientation>::potype());
     }
@@ -66,7 +71,6 @@ namespace gmm {
 
   template<class Matrix> template<class M> 
   void choleskyt_precond<Matrix>::do_choleskyt(const M& A, row_major) {
-    std::vector<value_type> indiag(mat_nrows(A));
     svector w(mat_ncols(A));
     value_type a;
 
@@ -81,25 +85,18 @@ namespace gmm {
       for (size_type krow = 0, k; krow < w.nb_stored(); ++krow) {
 	typename svector::iterator wk = w.begin() + krow;
 	if ((k = wk->c) >= i) break;
-	a = (wk->e) / indiag[k];
+	a = (wk->e);
 	if (dal::abs(a) < eps * norm_row) { w.sup(k); --krow; } 
 	else { wk->e += a; gmm::add(scaled(mat_row(U, k), -a), w); }
       }
 
-      if ((a = w[i]) <= 0) {
-	DAL_WARNING(2, "negative value found for pivot " << i << " : " << a);
-	a = 1.0;
-      }
-      else a = sqrt(a);
-
-      U(i,i) = a; gmm::clean(w, eps * norm_row); gmm::scale(w, 1.0 / a);
+      indiag[i] = 1.0 / w[i];
+      gmm::clean(w, eps * norm_row);
+      gmm::scale(w, indiag[i]);
       std::sort(w.begin(), w.end(), _elt_rsvector_value_less<value_type>());
       typename svector::const_iterator wit = w.begin(), wite = w.end();
-      size_type nnu = 0;
-      for (; wit != wite; ++wit)
+      for (size_type nnu = 0; wit != wite; ++wit)
 	if (wit->c > i) { if (nnu < nU+K) U(i, wit->c) = wit->e; ++nnu; }
-      
-      indiag[i] = U(i,i);
     }
   }
 
@@ -110,8 +107,9 @@ namespace gmm {
   template <class Matrix, class V1, class V2> inline
   void mult(const choleskyt_precond<Matrix>& P, const V1 &v1, V2 &v2) {
     gmm::copy(v1, v2);
-    gmm::lower_tri_solve(gmm::transposed(P.U), v2);
-    gmm::upper_tri_solve(P.U, v2);
+    gmm::lower_tri_solve(gmm::transposed(P.U), v2, true);
+    for (size_type i = 0; i < P.indiag.size(); ++i) v2[i] *= P.indiag[i];
+    gmm::upper_tri_solve(P.U, v2, true);
   }
 
   template <class Matrix, class V1, class V2> inline
@@ -119,22 +117,28 @@ namespace gmm {
   { mult(P, v1, v2); }
 
   template <class Matrix, class V1, class V2> inline
-  void left_mult(const choleskyt_precond<Matrix>& P, const V1 &v1, V2 &v2)
-  { copy(v1, v2); gmm::lower_tri_solve(gmm::transposed(P.U), v2); }
+  void left_mult(const choleskyt_precond<Matrix>& P, const V1 &v1, V2 &v2) {
+    copy(v1, v2);
+    gmm::lower_tri_solve(gmm::transposed(P.U), v2, true);
+    for (size_type i = 0; i < P.indiag.size(); ++i) v2[i] *= P.indiag[i];
+  }
 
   template <class Matrix, class V1, class V2> inline
   void right_mult(const choleskyt_precond<Matrix>& P, const V1 &v1, V2 &v2)
-  { copy(v1, v2); gmm::upper_tri_solve(P.U, v2); }
+  { copy(v1, v2); gmm::upper_tri_solve(P.U, v2, true); }
 
   template <class Matrix, class V1, class V2> inline
   void transposed_left_mult(const choleskyt_precond<Matrix>& P, const V1 &v1,
-			    V2 &v2) 
-  { copy(v1, v2); gmm::upper_tri_solve(P.U, v2); }
+			    V2 &v2) {
+    copy(v1, v2);
+    gmm::upper_tri_solve(P.U, v2, true);
+    for (size_type i = 0; i < P.indiag.size(); ++i) v2[i] *= P.indiag[i];
+  }
 
   template <class Matrix, class V1, class V2> inline
   void transposed_right_mult(const choleskyt_precond<Matrix>& P, const V1 &v1,
 			     V2 &v2)
-  { copy(v1, v2); gmm::lower_tri_solve(gmm::transposed(P.U), v2); }
+  { copy(v1, v2); gmm::lower_tri_solve(gmm::transposed(P.U), v2, true); }
 
 }
 

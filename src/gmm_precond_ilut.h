@@ -128,11 +128,12 @@ namespace gmm {
       for (size_type krow = 0, k; krow < w.nb_stored(); ++krow) {
 	typename svector::iterator wk = w.begin() + krow;
 	if ((k = wk->c) >= i) break;
-	value_type tmp = (wk->e) / indiag[k];
+	value_type tmp = (wk->e) * indiag[k];
 	if (dal::abs(tmp) < eps * norm_row) { w.sup(k); --krow; } 
 	else { wk->e += tmp; gmm::add(scaled(mat_row(U, k), -tmp), w); }
       }
       
+      indiag[i] = 1.0 / w[i];
       U(i,i) = w[i]; gmm::clean(w, eps * norm_row); w[i] = 0.0;
       std::sort(w.begin(), w.end(), _elt_rsvector_value_less<value_type>());
       typename svector::const_iterator wit = w.begin(), wite = w.end();
@@ -140,8 +141,6 @@ namespace gmm {
       for (; wit != wite; ++wit)
 	if (wit->c < i) { if (nnl < nL+K) L(i, wit->c) = wit->e; ++nnl; }
 	else            { if (nnu < nU+K) U(i, wit->c) = wit->e; ++nnu; }
-      
-      indiag[i] = U(i,i);
     }
   }
 
