@@ -226,7 +226,7 @@ $\;$\\[3cm]\thispagestyle{empty}
 
 \begin{figure}[H]
 \begin{center}
-  { \sc Getfem++  / Getfemlab }
+  { \sc Getfem++  / Getfem }
 \end{center}
 \end{figure}
 $\;$\\[1cm]
@@ -243,7 +243,7 @@ $\;$\\[1cm]
 
 
 \section{Introduction}
-  Merci de participer au projet {\sc Getfem++ / Getfemlab}. Ce projet a pour vocation la r\'ealisation d'un code interfac\'e avec MATLAB dans le domaine du calcul scientifique des EDP. Il s'ins\`ere dans le cadre de la formation en calcul scientifique du d\'epartement de G\'enie Math\'ematique et Mod\'elisation de l'INSA de Toulouse et du laboratoire MIP (math\'ematiques pour l'Industrie et la Physique).\\[0.4cm]
+  Merci de participer au projet {\sc Getfem++ / Getfem}. Ce projet a pour vocation la r\'ealisation d'un code interfac\'e avec MATLAB dans le domaine du calcul scientifique des EDP. Il s'ins\`ere dans le cadre de la formation en calcul scientifique du d\'epartement de G\'enie Math\'ematique et Mod\'elisation de l'INSA de Toulouse et du laboratoire MIP (math\'ematiques pour l'Industrie et la Physique).\\[0.4cm]
 Ce guide a pour objectif de vous faciliter l'intervention sur le projet. Comme toutes les parties du projet, il est r\'evisable, et toute initiative visant \`a son am\'elioration est la bienvenue (r\'epertoire getfem++/doc/guide\_intervention/).
 
 \newpage
@@ -267,8 +267,8 @@ Les diff\'erentes biblioth\`eques :
   \item MISC : Partie du projet recevant les algorithmes r\'ecents et non organis\'es en biblioth\`eques. Les algorithmes de r\'esolutions sont pour le moment rangés ici. Certaines parties de cet ensemble de fichiers sont destin\'es à dispara\^\i tre. \\[0.2cm]
 \end{itemize}
 
-\section{Futur organigramme simplifi\'e de GETFEMLAB}
-GETFEMLAB repr\'esentera une sur-couche de GETFEM++ compos\'ee de sources C - C++ faisant interface \`a des commandes MATLAB et de sources MATLAB.
+\section{Futur organigramme simplifi\'e de GETFEM}
+GETFEM repr\'esentera une sur-couche de GETFEM++ compos\'ee de sources C - C++ faisant interface \`a des commandes MATLAB et de sources MATLAB.
 
 \begin{center}
 \includegraphics[width=17cm,angle=0]{getfemlab_orga.eps}
@@ -299,13 +299,7 @@ On doit tout d'abord initialiser la variable CVSROOT par la commande
 pour csh, o\`u
 \begin{alltt} export CVSROOT=:pserver:nom_login@gmmlinux2.gmm.priv:/var/cvs
 \end{alltt}
-pour bash, o\`u nom\_login est votre nom de login unix sur le site du gmm. cette commande peut \^etre ins\'er\'ee dans votre .cshrc, .bashrc ou autre.\\
-Pour le premier accès effectuer alors les commandes suivantes :
-\begin{alltt}
-  touch ~/.cvspass
-  cvs login
-\end{alltt}
-puis entrer son login habituel (lorsque l'on est sûr de ne plus vouloir accéder à CVS, on peut effectuer une commande ``cvs logout'').
+pour bash, o\`u nom\_login est votre nom de login unix sur le site du gmm. cette commande peut \^etre ins\'er\'ee dans votre .cshrc, .bashrc ou autre. 
 
 \subsection{R\'ecup\'erer une partie des sources}
 D'une mani\`ere g\'en\'erale, r\'ecup\'erer des sources s'op\`ere par la commande
@@ -332,7 +326,7 @@ et taper
   bin/startftool, bin/startlinkmsg, bin/startmisc,
   bin/startmatlab_interface, ou bin/startgetfemlab
 \end{alltt}
-ces shells chargent l'int\'egralit\'e des biblioth\`eques consid\'er\'ees et pr\'eparent un makefile pour compiler celles-ci, ainsi que les programmes de test qui lui sont li\'es. Vous pouvez encha\^\i ner plusieurs shells si vous voulez intervenir sur plusieurs biblioth\`eques dans la m\^eme session, ou si vous voulez tester les modifications apport\'ees dans des biblioth\`eques autre que celle que vous modifiez.\\[0.4cm]
+ces shells chargent l'int\'egralit\'e des biblioth\`eques consid\'er\'ees et pr\'eparent un makefile pour compiler celles-ci, ainsi que les programmes de test qui lui sont li\'es. Vous pouvez encha\^\i ner plusieurs shells si vous voulez intervenir sur plusieurs biblioth\`eques dans la m\^eme session, ou si vous n'allez tester les modifications apport\'ees dans des biblioth\`eques autre que celle que vous modifiez.\\[0.4cm]
 
 Une fois les modifications apport\'ees, il faut passer \`a une phase de test, i.e. compilation et lancement des programmes de tests. Si la partie que vous avez modifi\'ee n'a pas de programme de test correspondant, cr\'eez-en un, en essayant de tester toutes les fonctionnalit\'es.\\[0.4cm]
 
@@ -352,7 +346,7 @@ D'une mani\`ere g\'en\'erale, ne gardez pas trop longtemps ouverte une session. 
   bin/startbgeot
   xemacs bgeot/bgeot_poly.h (+ modifications)
   make
-  make dotest
+  make test
   cvs commit -m "la modification que j'ai apport\'ee concerne ..."
   cd ..
   /bin/rm -r getfem++
@@ -397,7 +391,6 @@ L\`a aussi, il faut valider l'op\'eration par un
      \item Ne pas oublier de commenter les sources, et de les documenter (voir section suivante)
      \item Dans les biblioth\`eques, \`a tout fichier .C doit correspondre un fichier .h m\^eme succinct.
      \item respecter la mise en forme des fichiers sources telle qu'elle existe actuellement.
-     \item pour toute modification, ou nouveau module, un programme de test est souhaitable. Ce programme doit tester les fonctionnalités de la librairie et est à mettre dans le répertoire test/ de la librairie concernée. Il faut alors rédiger un shell avec extension .dotest qui sera automatiquement exécuté.
    \end{itemize}
    \`a compl\'eter
 
