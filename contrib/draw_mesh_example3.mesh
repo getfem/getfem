@@ -1,6 +1,5 @@
 % GETFEM MESH FILE 
-% GETFEM VERSION 1.0
-% Yves.Renard@gmm.insa-tlse.fr 
+% GETFEM VERSION 1.2
 
 
 
@@ -130,118 +129,107 @@ BEGIN POINTS LIST
 
 END POINTS LIST
 
-
-BEGIN CONVEX STRUCTURE DESCRIPTION
-
-CONVEX 0	= SIMPLEX 0
-CONVEX 1	= SIMPLEX 1
-CONVEX 2	= PRODUCT 1 	1
-CONVEX 3	= PRODUCT -1 	-1
-CONVEX 5	= PRODUCT -1 	-1
-
-END CONVEX STRUCTURE DESCRIPTION
-
 BEGIN MESH STRUCTURE DESCRIPTION
 
-CONVEX 0    2      0  1  2  3
-CONVEX 1    2      1  4  3  5
-CONVEX 2    2      4  6  5  7
-CONVEX 3    2      6  8  7  9
-CONVEX 4    2      8  10  9  11
-CONVEX 5    2      10  12  11  13
-CONVEX 6    2      12  14  13  15
-CONVEX 7    2      14  16  15  17
-CONVEX 8    2      16  18  17  19
-CONVEX 9    2      18  20  19  21
-CONVEX 10    2      2  3  22  23
-CONVEX 11    2      3  5  23  24
-CONVEX 12    2      5  7  24  25
-CONVEX 13    2      7  9  25  26
-CONVEX 14    2      9  11  26  27
-CONVEX 15    2      11  13  27  28
-CONVEX 16    2      13  15  28  29
-CONVEX 17    2      15  17  29  30
-CONVEX 18    2      17  19  30  31
-CONVEX 19    2      19  21  31  32
-CONVEX 20    2      22  23  33  34
-CONVEX 21    2      23  24  34  35
-CONVEX 22    2      24  25  35  36
-CONVEX 23    2      25  26  36  37
-CONVEX 24    2      26  27  37  38
-CONVEX 25    2      27  28  38  39
-CONVEX 26    2      28  29  39  40
-CONVEX 27    2      29  30  40  41
-CONVEX 28    2      30  31  41  42
-CONVEX 29    2      31  32  42  43
-CONVEX 30    2      33  34  44  45
-CONVEX 31    2      34  35  45  46
-CONVEX 32    2      35  36  46  47
-CONVEX 33    2      36  37  47  48
-CONVEX 34    2      37  38  48  49
-CONVEX 35    2      38  39  49  50
-CONVEX 36    2      39  40  50  51
-CONVEX 37    2      40  41  51  52
-CONVEX 38    2      41  42  52  53
-CONVEX 39    2      42  43  53  54
-CONVEX 40    2      44  45  55  56
-CONVEX 41    2      45  46  56  57
-CONVEX 42    2      46  47  57  58
-CONVEX 43    2      47  48  58  59
-CONVEX 44    2      48  49  59  60
-CONVEX 45    2      49  50  60  61
-CONVEX 46    2      50  51  61  62
-CONVEX 47    2      51  52  62  63
-CONVEX 48    2      52  53  63  64
-CONVEX 49    2      53  54  64  65
-CONVEX 50    2      55  56  66  67
-CONVEX 51    2      56  57  67  68
-CONVEX 52    2      57  58  68  69
-CONVEX 53    2      58  59  69  70
-CONVEX 54    2      59  60  70  71
-CONVEX 55    2      60  61  71  72
-CONVEX 56    2      61  62  72  73
-CONVEX 57    2      62  63  73  74
-CONVEX 58    2      63  64  74  75
-CONVEX 59    2      64  65  75  76
-CONVEX 60    2      66  67  77  78
-CONVEX 61    2      67  68  78  79
-CONVEX 62    2      68  69  79  80
-CONVEX 63    2      69  70  80  81
-CONVEX 64    2      70  71  81  82
-CONVEX 65    2      71  72  82  83
-CONVEX 66    2      72  73  83  84
-CONVEX 67    2      73  74  84  85
-CONVEX 68    2      74  75  85  86
-CONVEX 69    2      75  76  86  87
-CONVEX 70    2      77  78  88  89
-CONVEX 71    2      78  79  89  90
-CONVEX 72    2      79  80  90  91
-CONVEX 73    2      80  81  91  92
-CONVEX 74    2      81  82  92  93
-CONVEX 75    2      82  83  93  94
-CONVEX 76    2      83  84  94  95
-CONVEX 77    2      84  85  95  96
-CONVEX 78    2      85  86  96  97
-CONVEX 79    2      86  87  97  98
-CONVEX 80    2      88  89  99  100
-CONVEX 81    2      89  90  100  101
-CONVEX 82    2      90  91  101  102
-CONVEX 83    2      91  92  102  103
-CONVEX 84    2      92  93  103  104
-CONVEX 85    2      93  94  104  105
-CONVEX 86    2      94  95  105  106
-CONVEX 87    2      95  96  106  107
-CONVEX 88    2      96  97  107  108
-CONVEX 89    2      97  98  108  109
-CONVEX 90    2      99  100  110  111
-CONVEX 91    2      100  101  111  112
-CONVEX 92    2      101  102  112  113
-CONVEX 93    2      102  103  113  114
-CONVEX 94    2      103  104  114  115
-CONVEX 95    2      104  105  115  116
-CONVEX 96    2      105  106  116  117
-CONVEX 97    2      106  107  117  118
-CONVEX 98    2      107  108  118  119
-CONVEX 99    2      108  109  119  120
+CONVEX 0    GT_QK(2,1)      0  1  2  3
+CONVEX 1    GT_QK(2,1)      1  4  3  5
+CONVEX 2    GT_QK(2,1)      4  6  5  7
+CONVEX 3    GT_QK(2,1)      6  8  7  9
+CONVEX 4    GT_QK(2,1)      8  10  9  11
+CONVEX 5    GT_QK(2,1)      10  12  11  13
+CONVEX 6    GT_QK(2,1)      12  14  13  15
+CONVEX 7    GT_QK(2,1)      14  16  15  17
+CONVEX 8    GT_QK(2,1)      16  18  17  19
+CONVEX 9    GT_QK(2,1)      18  20  19  21
+CONVEX 10    GT_QK(2,1)      2  3  22  23
+CONVEX 11    GT_QK(2,1)      3  5  23  24
+CONVEX 12    GT_QK(2,1)      5  7  24  25
+CONVEX 13    GT_QK(2,1)      7  9  25  26
+CONVEX 14    GT_QK(2,1)      9  11  26  27
+CONVEX 15    GT_QK(2,1)      11  13  27  28
+CONVEX 16    GT_QK(2,1)      13  15  28  29
+CONVEX 17    GT_QK(2,1)      15  17  29  30
+CONVEX 18    GT_QK(2,1)      17  19  30  31
+CONVEX 19    GT_QK(2,1)      19  21  31  32
+CONVEX 20    GT_QK(2,1)      22  23  33  34
+CONVEX 21    GT_QK(2,1)      23  24  34  35
+CONVEX 22    GT_QK(2,1)      24  25  35  36
+CONVEX 23    GT_QK(2,1)      25  26  36  37
+CONVEX 24    GT_QK(2,1)      26  27  37  38
+CONVEX 25    GT_QK(2,1)      27  28  38  39
+CONVEX 26    GT_QK(2,1)      28  29  39  40
+CONVEX 27    GT_QK(2,1)      29  30  40  41
+CONVEX 28    GT_QK(2,1)      30  31  41  42
+CONVEX 29    GT_QK(2,1)      31  32  42  43
+CONVEX 30    GT_QK(2,1)      33  34  44  45
+CONVEX 31    GT_QK(2,1)      34  35  45  46
+CONVEX 32    GT_QK(2,1)      35  36  46  47
+CONVEX 33    GT_QK(2,1)      36  37  47  48
+CONVEX 34    GT_QK(2,1)      37  38  48  49
+CONVEX 35    GT_QK(2,1)      38  39  49  50
+CONVEX 36    GT_QK(2,1)      39  40  50  51
+CONVEX 37    GT_QK(2,1)      40  41  51  52
+CONVEX 38    GT_QK(2,1)      41  42  52  53
+CONVEX 39    GT_QK(2,1)      42  43  53  54
+CONVEX 40    GT_QK(2,1)      44  45  55  56
+CONVEX 41    GT_QK(2,1)      45  46  56  57
+CONVEX 42    GT_QK(2,1)      46  47  57  58
+CONVEX 43    GT_QK(2,1)      47  48  58  59
+CONVEX 44    GT_QK(2,1)      48  49  59  60
+CONVEX 45    GT_QK(2,1)      49  50  60  61
+CONVEX 46    GT_QK(2,1)      50  51  61  62
+CONVEX 47    GT_QK(2,1)      51  52  62  63
+CONVEX 48    GT_QK(2,1)      52  53  63  64
+CONVEX 49    GT_QK(2,1)      53  54  64  65
+CONVEX 50    GT_QK(2,1)      55  56  66  67
+CONVEX 51    GT_QK(2,1)      56  57  67  68
+CONVEX 52    GT_QK(2,1)      57  58  68  69
+CONVEX 53    GT_QK(2,1)      58  59  69  70
+CONVEX 54    GT_QK(2,1)      59  60  70  71
+CONVEX 55    GT_QK(2,1)      60  61  71  72
+CONVEX 56    GT_QK(2,1)      61  62  72  73
+CONVEX 57    GT_QK(2,1)      62  63  73  74
+CONVEX 58    GT_QK(2,1)      63  64  74  75
+CONVEX 59    GT_QK(2,1)      64  65  75  76
+CONVEX 60    GT_QK(2,1)      66  67  77  78
+CONVEX 61    GT_QK(2,1)      67  68  78  79
+CONVEX 62    GT_QK(2,1)      68  69  79  80
+CONVEX 63    GT_QK(2,1)      69  70  80  81
+CONVEX 64    GT_QK(2,1)      70  71  81  82
+CONVEX 65    GT_QK(2,1)      71  72  82  83
+CONVEX 66    GT_QK(2,1)      72  73  83  84
+CONVEX 67    GT_QK(2,1)      73  74  84  85
+CONVEX 68    GT_QK(2,1)      74  75  85  86
+CONVEX 69    GT_QK(2,1)      75  76  86  87
+CONVEX 70    GT_QK(2,1)      77  78  88  89
+CONVEX 71    GT_QK(2,1)      78  79  89  90
+CONVEX 72    GT_QK(2,1)      79  80  90  91
+CONVEX 73    GT_QK(2,1)      80  81  91  92
+CONVEX 74    GT_QK(2,1)      81  82  92  93
+CONVEX 75    GT_QK(2,1)      82  83  93  94
+CONVEX 76    GT_QK(2,1)      83  84  94  95
+CONVEX 77    GT_QK(2,1)      84  85  95  96
+CONVEX 78    GT_QK(2,1)      85  86  96  97
+CONVEX 79    GT_QK(2,1)      86  87  97  98
+CONVEX 80    GT_QK(2,1)      88  89  99  100
+CONVEX 81    GT_QK(2,1)      89  90  100  101
+CONVEX 82    GT_QK(2,1)      90  91  101  102
+CONVEX 83    GT_QK(2,1)      91  92  102  103
+CONVEX 84    GT_QK(2,1)      92  93  103  104
+CONVEX 85    GT_QK(2,1)      93  94  104  105
+CONVEX 86    GT_QK(2,1)      94  95  105  106
+CONVEX 87    GT_QK(2,1)      95  96  106  107
+CONVEX 88    GT_QK(2,1)      96  97  107  108
+CONVEX 89    GT_QK(2,1)      97  98  108  109
+CONVEX 90    GT_QK(2,1)      99  100  110  111
+CONVEX 91    GT_QK(2,1)      100  101  111  112
+CONVEX 92    GT_QK(2,1)      101  102  112  113
+CONVEX 93    GT_QK(2,1)      102  103  113  114
+CONVEX 94    GT_QK(2,1)      103  104  114  115
+CONVEX 95    GT_QK(2,1)      104  105  115  116
+CONVEX 96    GT_QK(2,1)      105  106  116  117
+CONVEX 97    GT_QK(2,1)      106  107  117  118
+CONVEX 98    GT_QK(2,1)      107  108  118  119
+CONVEX 99    GT_QK(2,1)      108  109  119  120
 
 END MESH STRUCTURE DESCRIPTION

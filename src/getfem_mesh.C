@@ -194,6 +194,7 @@ namespace getfem
     char tmp[1024];
     bool te = false, please_get = true;
 
+    ist.precision(16);
     clear();
     ist.seekg(0);
     ftool::read_untill(ist, "BEGIN POINTS LIST");
