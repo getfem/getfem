@@ -162,10 +162,11 @@ namespace getfem {
         splx_in.sup(cnt);
       } else if (in_cnt != s.dim()+1 || is_boundary_slice) {           /* the simplex crosses the slice boundary */
         splx_in.sup(cnt);
-        size_type l = splxs.size();//, n = nodes.size();
+        //size_type l = splxs.size();//, n = nodes.size();
         //cerr << "slicer_volume::slice : convex " << cnt << " will be splited" << endl;
-	split_simplex(nodes, pt_in, pt_bin, splxs, s, splxs.size(), is_boundary_slice);
-        splx_in.add(l,splxs.size()-l);
+	split_simplex(nodes, pt_in, pt_bin, splxs, splx_in, slice_simplex(s), splxs.size(), is_boundary_slice);
+        splxs[cnt] = splxs.back(); splxs.pop_back(); splx_in.swap(cnt,splxs.size()); // replace the sliced simplex by one of its slices
+        //splx_in.add(l,splxs.size()-l);
       }
     }
 
@@ -200,21 +201,15 @@ namespace getfem {
   void slicer_complementary::slice(size_type cv, dim_type& fcnt,
                                    std::deque<slice_node>& nodes, std::deque<slice_simplex>& splxs, 
                                    dal::bit_vector& splx_in) const {
-    dal::bit_vector idx = splx_in;
-    for (size_type cnt = idx.take_first(); cnt != size_type(-1); cnt << idx) {
-      size_type in_cnt = A->is_in(nodes,splxs[cnt],BOUND|OUT);
-      if (in_cnt == splxs[cnt].dim()+1) {
-        continue;
-      } else {
-        splx_in.sup(cnt);
-        if (in_cnt != 0) {
-          dal::bit_vector bv; bv.add(cnt);
-          size_type sz = splxs.size();
-          A->slice(cv, fcnt, nodes, splxs, bv);
-          for (size_type i=sz; i < splxs.size(); ++i)
-            if (A->is_in(nodes,splxs[i],BOUND|OUT) == splxs[i].dim()+1) splx_in.add(i);
-        }
-      }
+    dal::bit_vector splx_inA = splx_in;
+    size_type sz = splxs.size();
+    A->slice(cv, fcnt, nodes, splxs, splx_inA);
+    dal::bit_vector bv = splx_in; bv.add(sz, splxs.size()-sz);
+    for (size_type i=bv.take_first(); i != size_type(-1); i << bv) {
+      /*cerr << "convex " << cv << ",examining simplex #" << i << ": {";
+      for (size_type j=0; j < splxs[i].inodes.size(); ++j) cerr << nodes[splxs[i].inodes[j]].pt << " ";
+      cerr << "}, splx_in=" << splx_in[i] << "splx_inA=" << splx_inA[i] << endl;*/
+      splx_in[i] = !splx_inA[i];
     }
   }
 
@@ -230,13 +225,15 @@ namespace getfem {
     std::sort(order.begin(), order.end(), sorted_order_aux(w));
   }
 
-  /* intersects the simplex with the slice, and (recusively) decomposes it
+  /* intersects the simplex with the slice, and (recursively) decomposes it
      into sub-simplices, which are added to the list 'splxs' 
      if 'reduce_dimension' is true, then it is the faces of 
      sub-simplices which are added
+
+     assertion: when called, it will always push *at least* one new simplex on the stack
   */
   void slicer::split_simplex(std::deque<slice_node>& nodes, dal::bit_vector& pt_in, dal::bit_vector& pt_bin,
-                             std::deque<slice_simplex>& splxs, 
+                             std::deque<slice_simplex>& splxs, dal::bit_vector& splx_in, 
                              const slice_simplex& s, size_type sstart, bool reduce_dimension) const {
     scalar_type alpha = 0; size_type iA=0, iB = 0;
     bool intersection = false;
@@ -274,21 +271,20 @@ namespace getfem {
       slice_simplex s1(s.dim()+1); 
       for (size_type k=0; k < s.dim()+1; k++)
         s1.inodes[k] = (k != iA) ? s.inodes[k] : nn;
-      split_simplex(nodes,pt_in,pt_bin,splxs,s1,sstart, reduce_dimension);
+      split_simplex(nodes,pt_in,pt_bin,splxs,splx_in,s1,sstart, reduce_dimension);
       for (size_type k=0; k < s.dim()+1; k++)
         s1.inodes[k] = (k != iB) ? s.inodes[k] : nn;
-      split_simplex(nodes,pt_in,pt_bin,splxs,s1,sstart, reduce_dimension);
+      split_simplex(nodes,pt_in,pt_bin,splxs,splx_in,s1,sstart, reduce_dimension);
     } else {
-      if (!reduce_dimension) {
-        bool all_in = true;
-        for (size_type i=0; i < s.dim()+1; ++i) if (!pt_in[s.inodes[i]]) all_in = false;
-        //cerr << " -> no intersection , all_in=" << all_in << endl;
-        if (all_in)
-          splxs.push_back(s);
-      } else {
+      bool all_in = true;
+      for (size_type i=0; i < s.dim()+1; ++i) if (!pt_in[s.inodes[i]]) all_in = false;
+      //cerr << " -> no intersection , all_in=" << all_in << endl;
+      splxs.push_back(s); // even simplexes "outside" are pushed, in case of a slicer_complementary op
+      if (all_in && !reduce_dimension) splx_in.add(splxs.size()-1);
+      if (reduce_dimension) {
         slice_simplex face(s.dim());
         for (size_type f=0; f < s.dim()+1; ++f) {
-          bool all_in = true;
+          all_in = true;
           for (size_type i=0; i < s.dim(); ++i) {
             size_type p = s.inodes[i + (i<f?0:1)];
             if (!pt_bin[p]) { all_in = false; break; }
@@ -298,7 +294,7 @@ namespace getfem {
             /* prevent addition of a face twice */
             std::sort(face.inodes.begin(), face.inodes.end());
             if (std::find(splxs.begin()+sstart, splxs.end(), face) == splxs.end()) {
-              splxs.push_back(face);
+              splxs.push_back(face); splx_in.add(splxs.size()-1);
             }
           }
         }

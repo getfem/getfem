@@ -87,7 +87,7 @@ namespace getfem {
     }
     void split_simplex(std::deque<slice_node>& nodes, 
                        dal::bit_vector& pt_in, dal::bit_vector& pt_bin,
-                       std::deque<slice_simplex>& splxs, 
+                       std::deque<slice_simplex>& splxs, dal::bit_vector& splx_in,
                        const slice_simplex& s, 
                        size_type sstart, bool reduce_dimension) const;
     virtual ~slicer() {}
@@ -300,6 +300,7 @@ namespace getfem {
     size_type nb_simplexes(size_type sdim) const { return simplex_cnt[sdim]; }
     size_type nb_points() const { return points_cnt; }
     const std::deque<slice_node>& nodes(size_type ic) const { return cvlst[ic].nodes; }
+    std::deque<slice_node>& nodes(size_type ic) { return cvlst[ic].nodes; }
     void edges_mesh(getfem_mesh &edges_m) const;
     const std::deque<slice_simplex>& simplexes(size_type ic) const { return cvlst[ic].simplexes; }
     size_type memsize() const;
