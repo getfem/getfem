@@ -702,6 +702,7 @@ namespace getfem {
 				 gmm::sub_interval>::vector_type SUBVECTOR;
 
     gmm::sub_interval SUBU;
+    mesh_im &mim;
     mesh_fem &mf_u;
     mesh_fem &mf_data;
     VECTOR rho_;
@@ -742,22 +743,24 @@ namespace getfem {
 
     void init_(void) {
       this->add_dependency(mf_data);
+      this->add_proper_mesh_im(mim);
       this->add_proper_mesh_fem(mf_u, MDBRICK_MASS_MATRIX);
       this->update_from_context();
     }
 
     // constructor for a homogeneous material (constant lambda and mu)
     mdbrick_mass_matrix
-    (mesh_fem &mf_u_, mesh_fem &mf_data_,
+    (mesh_im &mim_, mesh_fem &mf_u_, mesh_fem &mf_data_,
      value_type rhoi, bool mat_stored = false)
-      : mf_u(mf_u_), mf_data(mf_data_), matrix_stored(mat_stored)
+      : mim(mim_), mf_u(mf_u_), mf_data(mf_data_), matrix_stored(mat_stored)
     { set_rho(rhoi); init_(); }
 
     // constructor for a non-homogeneous material
     mdbrick_mass_matrix
-    (mesh_fem &mf_u_, mesh_fem &mf_data_,
+    (mesh_im &mim_, mesh_fem &mf_u_, mesh_fem &mf_data_,
      const VECTOR &rhoi, bool mat_stored = false)
-      : mf_u(mf_u_), mf_data(mf_data_),	matrix_stored(mat_stored)
+      : mim(mim_), mf_u(mf_u_), mf_data(mf_data_),
+	matrix_stored(mat_stored)
     { set_rho(rhoi); init_(); }
   };
 
@@ -770,7 +773,7 @@ namespace getfem {
       std::fill(rho.begin(), rho.end(), value_type(rho_[0]));
     }
     else { gmm::copy(rho_, rho); }
-    asm_mass_matrix_param(K, mf_u, mf_data, rho);
+    asm_mass_matrix_param(K, mim, mf_u, mf_data, rho);
     this->computed();
   }
 

@@ -126,7 +126,7 @@ void navier_stokes_problem::init(void) {
   getfem::pintegration_method ppi = 
     getfem::int_method_descriptor(INTEGRATION); 
 
-  mim.set_finite_element(mesh.convex_index(), ppi);
+  mim.set_integration_method(mesh.convex_index(), ppi);
   mf_u.set_finite_element(mesh.convex_index(), pf_u);
   mf_p.set_finite_element(mesh.convex_index(),
 			  getfem::fem_descriptor(FEM_TYPE_P));
@@ -162,10 +162,11 @@ void navier_stokes_problem::init(void) {
     assert(it->f != size_type(-1));
     base_node un = mesh.normal_of_face_of_convex(it->cv, it->f);
     un /= gmm::vect_norm2(un);
-    if (dal::abs(un[N-1] - 1.0) < 1.0E-7) { // new Neumann face
-      mf_u.add_boundary_elt(NEUMANN_BOUNDARY_NUM, it->cv, it->f);
+    if (0) {
+    // if (dal::abs(un[N-1] - 1.0) < 1.0E-7) { // new Neumann face
+      mesh.add_face_to_set(NEUMANN_BOUNDARY_NUM, it->cv, it->f);
     } else {
-      mf_u.add_boundary_elt(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
+      mesh.add_face_to_set(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
     }
   }
 }
