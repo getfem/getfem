@@ -11,7 +11,7 @@ print "Making links for includes files\n";
 
 print "Making links for test progams\n";
 `mkdir -p programs`;
-`ln -sf dal/test/* programs/`; print "\n\n";
+`ln -sf dal/test/*.C programs/`; print "\n\n";
 
 print "Building Makefile\n";
 
