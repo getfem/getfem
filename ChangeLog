@@ -1,3 +1,7 @@
+2004-06-25 
+	* src/gmm_real_part.h : added the functions gmm::real_part and
+	gmm::imag_part.
+
 2004-06-18  Yves Renard  <Yves.Renard@gmm.insa-tlse.fr>
 	* src/getfem_fem.h : Now a dof has to be on the boundary if
 	his corresponding shape function is non-zero on that boundary
@@ -11,6 +15,10 @@
 	* src/getfem_modeling.h : New structures defining elementary
 	bricks to build complete models: linearized elasticity, boundary
 	conditions ...
+
+2004-06-17  julien pommier  <pommier@gmm.insa-tlse.fr> 
+        * src/gmm_matrix.h: fixed the swap() method for csc_matrix and 
+        csr_matrix. 
 
 2004-06-04  Yves Renard  <Yves.Renard@gmm.insa-tlse.fr>
 	* src/gmm_sub_index.h : the sturcture unsorted_sub_index is
