@@ -323,6 +323,21 @@ typedef unsigned char uint8_type;
 
 #endif
 
+#ifdef __GNUC__
+/* 
+   g++ can issue a warning at each usage of a function declared with this special attribute 
+   (also works with typedefs and variable declarations)
+*/
+# define IS_DEPRECATED __attribute__ ((__deprecated__))
+/*
+   the specified function is inlined at any optimization level 
+*/
+# define ALWAYS_INLINE __attribute__((always_inline))
+#else
+# define IS_DEPRECATED
+# define ALWAYS_INLINE
+#endif
+
   /* Pour forcer l'instanciation dans libgetfem de tous les
      type qu'on est suceptible d' afficher. Si il en manque un (c'est
      le cas pour unsigned et float) dans libgetfem.so qui est utilise
