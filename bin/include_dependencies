@@ -29,6 +29,7 @@ while($fis)
   $tabprior[$nb_file] = 1;
   close(FICHIER);
   $nb_file++;
+
 }
 
 $maxprior = 1;
