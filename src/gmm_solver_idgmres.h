@@ -102,8 +102,8 @@ namespace gmm {
 	gmm::copy(mat_col(H, i), mat_col(Hess1, i));
 	
 
-	for (size_type k = 0; k < i; k++)
-	  Apply_Givens_rotation_left(H(k,i), H(k+1,i), c_rot[k], s_rot[k]);
+	for (size_type l = 0; l < i; l++)
+	  Apply_Givens_rotation_left(H(l,i), H(l+1,i), c_rot[l], s_rot[l]);
 	
 	Givens_rotation(H(i,i), H(i+1,i), c_rot[i], s_rot[i]);
 	Apply_Givens_rotation_left(H(i,i), H(i+1,i), c_rot[i], s_rot[i]);
