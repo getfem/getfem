@@ -287,7 +287,14 @@ where {\tt mesh} is an already existing mesh. The structure will be linked to th
 It is possible to specify element by element the finite element method, so that element of mixed types can be treated, even if the dimensions are different. For usual elements, the connection between two elements is done when the two elements are compatibles (same degrees of freedom on the common face). A numeration of the degrees of freedom is automatically done with a Cuthill Mc Kee like algorithm. You have to keep in mind that there is absolutely no connection between the numeration of vertices of the mesh and the numeration of the degrees of freedom. Every {\tt getfem::mesh\_fem} object has its own numeration. \\[0.5cm]
 To select a particular finite element method on a given element, one can use \\[0.5cm]
 {\tt mef.set\_finite\_element(i, ppf, ppi); }\\[0.5cm]
-where {\tt i} is the index of the element, {\tt ppf} is the descriptor of the finite element method, and {\tt ppi} is the descriptor of the integration method. The list of all available descriptors of finite element methods is in the file {\tt getfem\_fem.h}. A short description is also given in \cite{BAS_COMP}. The list of all available descriptors of integration methods is in the file {\tt bgeot\_poly\_integration.h} for exact integration methods and in the file {\tt bgeot\_approx\_integration.h} for approximate integration methods.\\[0.5cm]
+where {\tt i} is the index of the element, {\tt ppf} is the descriptor of the finite element method, and {\tt ppi} is the descriptor of the integration method. The list of all available descriptors of finite element methods is in the file {\tt getfem\_fem.h}. A short description is also given in \cite{BAS_COMP}. The list of all available descriptors of integration methods is in the file {\tt bgeot\_poly\_integration.h} for exact integration methods and in the file {\tt bgeot\_approx\_integration.h} for approximate integration methods. \\[0.5cm]
+A non exhautive list of finite element methods is given by
+\input{../kernel/getfemelemfem.tex}
+A list of exact integration methods is given by
+\input{../kernel/getfemelemint.tex}
+A list of approximated integration methods is given by
+\input{../kernel/getfemeleminta.tex}
+
 For instance if one needs to have a description of a $P_1$ finite element method on a triangle with an exact integration, the way set it is\\[0.5cm]
 {\tt mef.set\_finite\_element(i, getfem::PK\_fem(2, 1), bgeot::simplex\_poly\_integration(2)); }\\[0.5cm]
 where {\tt i} is still the index of the triangle. It is also possible to select a particular method directly on a set of element, passing to {\tt mef.set\_finite\_element} a {\tt dal::bit\_vector} instead of a single index. For instance\\[0.5cm]
@@ -414,10 +421,10 @@ where {\tt mef1} is a variable of type {\tt getfem::mesh\_fem} and describes the
 The file {\tt getfem\_export.h} defines the following function to save a solution in a file\\[0.5cm]
 {\tt getfem::save\_solution(filename, mef, U, Q, K); }\\[0.5cm]
 where {\tt filename} is of type {\tt std::string}, {\tt mef}  is a variable of type {\tt getfem::mesh\_fem} and describes the finite element method on which the solution is defined, {\tt U} is a vector representing the solution and should be of size {\tt Q * mef.nb\_dof()} and {\tt K} is the degree of the standard lagrange element used to save the solution. The solution is interpolated on each element on the more classical lagrange element of degree {\tt K} defined on this element.\\[0.5cm]
-To view a solution, two perl shells are provided (in the directory {\tt bin/}) but work only for 2D domains and are very basic.\\[0.5cm]
+To view a solution, two perl scripts are provided (in the directory {\tt bin/}) but work only for 2D domains and are very basic.\\[0.5cm]
 {\tt sc2dgnuplot filename}\\[0.5cm]
 {\tt dr2dgnuplot filename S}\\[0.5cm]
-Both shells use Gnuplot to draw the solution and thus you need to have a working distribution of Gnuplot installed on your system. {\tt S} is a coefficient to zoom the solution. {\tt sc2dgnuplot} draw a scalar solution and {\tt dr2dgnuplot} a vectorial solution. See also the matlab interface for more elaborated draw procedures.
+Both scripts use Gnuplot to draw the solution and thus you need to have a working distribution of Gnuplot installed on your system. {\tt S} is a coefficient to zoom the solution. {\tt sc2dgnuplot} draw a scalar solution and {\tt dr2dgnuplot} a vectorial solution. See also the matlab interface for more elaborated draw procedures.
 
 \section{Interpolate on different meshes}
 
