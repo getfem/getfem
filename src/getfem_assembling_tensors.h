@@ -230,29 +230,26 @@ namespace getfem {
   class base_asm_data {
   public:
     virtual size_type vect_size() const = 0;
-    virtual const scalar_type *get_data_ptr() const = 0;
+    virtual void copy_with_mti(const std::vector<tensor_strides> &, multi_tensor_iterator &) const = 0;
     virtual ~base_asm_data() {}
   };
 
   template< typename VEC > class asm_data : public base_asm_data {
     VEC &v;
-    scalar_type *ptr;
-    std::auto_ptr<std::vector<scalar_type> > v_copy;
   public:
-    asm_data(VEC *v_) : v(*v_) {
-      ptr = &v[0];
-      for (size_type i=0; i < vect_size(); ++i) {
-	if (&v[i] != &ptr[i]) { 
-	  DAL_WARNING(2, "non-contiguous assembly data, doing a temporary copy");
-	  v_copy.reset(new std::vector<scalar_type>(v.begin(),v.end()));
-	  ptr = &v[0];
-	}
-      }
-    }
+    asm_data(VEC *v_) : v(*v_) {}
     size_type vect_size() const {
       return gmm::vect_size(v); 
     }
-    const scalar_type *get_data_ptr() const { return ptr; }
+    /* used to transfert the data for the current convex to the mti of ATN_tensor_from_dofs_data */
+    void copy_with_mti(const std::vector<tensor_strides> &str, multi_tensor_iterator &mti) const {
+      typename VEC::const_iterator it;
+      do {
+        it = v.begin();
+	for (dim_type i = 0; i < mti.ndim(); ++i) it+=str[i][mti.index(i)];
+	mti.p(0) = *it;
+      } while (mti.qnext1());
+    }
   };
 
   class base_asm_vec {

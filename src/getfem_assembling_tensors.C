@@ -447,20 +447,13 @@ namespace getfem {
 
   /* extract data for each dof of the convex */
   class ATN_tensor_from_dofs_data : public ATN_tensor_w_data {
-    const scalar_type* global_array;
-    //tensor_strides global_strides;
+    const base_asm_data *basm; //scalar_type* global_array;
     vdim_specif_list vdim;
     multi_tensor_iterator mti;
   public:
-    ATN_tensor_from_dofs_data(const scalar_type *data_begin,
+    ATN_tensor_from_dofs_data(const base_asm_data *basm_, 
 			      const vdim_specif_list& d) :
-      global_array(data_begin), vdim(d) {
-      /*
-	global_strides.resize(vdim.size()+1);
-	global_strides[0] = 1;
-	for (size_type i=0; i < vdim.size(); ++i) 
-	global_strides[i+1] = global_strides[i]*vdim[i].dim;
-      */
+      basm(basm_), vdim(d) {
     }
     void check_shape_update(size_type cv, dim_type) {
       shape_updated_ = false;
@@ -490,11 +483,7 @@ namespace getfem {
       vdim.build_strides_for_cv(cv, r, str);
       assert(r == ranges());
       mti.rewind();
-      do {
-	const scalar_type* it = global_array;
-	for (dim_type i = 0; i < mti.ndim(); ++i) it+=str[i][mti.index(i)];
-	mti.p(0) = *it;
-      } while (mti.qnext1());
+      basm->copy_with_mti(str, mti);
     }
   };
   
@@ -805,7 +794,7 @@ namespace getfem {
       ASM_THROW_PARSE_ERROR("invalid size for data argument " << datanum+1 << 
 			    " real size is " << indata[datanum]->vect_size() << 
 			    " expected size is " << sz.nbelt());
-    return record(new ATN_tensor_from_dofs_data(indata[datanum]->get_data_ptr(), sz));
+    return record(new ATN_tensor_from_dofs_data(indata[datanum], sz));
   }
 
   std::pair<ATN_tensor*, std::string> generic_assembly::do_red_ops(ATN_tensor* t) {
