@@ -360,7 +360,7 @@ namespace getfem {
       }
       gmm::dense_matrix<size_type> simplexes;
       delaunay(fixed_points, simplexes);
-      if (noisy) cout << "Nb simplexes = " << gmm::mat_ncols(simplexes) << endl;
+      if (noisy) cout << "Nb simplexes = " << gmm::mat_ncols(simplexes)<< endl;
       getfem_mesh mesh;
       for (size_type i = 0; i <  fixed_points.size(); ++i) {
 	size_type j = mesh.add_point(fixed_points[i], false);
@@ -369,7 +369,7 @@ namespace getfem {
       std::vector<base_node> cvpts;
       for (size_type i = 0; i < gmm::mat_ncols(simplexes); ++i) {
 	size_type j = mesh.add_convex(bgeot::simplex_geotrans(n,1),
-				      gmm::vect_const_begin(gmm::mat_col(simplexes, i)));
+		         gmm::vect_const_begin(gmm::mat_col(simplexes, i)));
 	if (mesh.convex_quality_estimate(j) < 1E-18) mesh.sup_convex(j);
 	else {
 	  std::vector<scalar_type> signs(list_constraints.size());
@@ -388,8 +388,10 @@ namespace getfem {
 		  dd = (*(list_constraints[jj])).grad(X, G);
 		  size_type nbit = 0;
 		  while (gmm::abs(dd) > 1e-15) {
-		    if (++nbit > 1000)
-		      { if (noisy) cout << "Intersection not found"; assert(false);}
+		    if (++nbit > 1000) {
+		      if (noisy) cout << "Intersection not found";
+		      assert(false);
+		    }
 		    scalar_type nG = std::max(1E-8, gmm::vect_sp(G, VV));
 		    gmm::add(gmm::scaled(VV, -dd / nG), X);
 		    dd = (*(list_constraints[jj])).grad(X, G);
@@ -418,7 +420,6 @@ namespace getfem {
       }
       
       if (noisy) {
-	cout << "storing mesh" << endl;
 	getfem::stored_mesh_slice sl;
 	sl.build(mesh, getfem::slicer_none(), 1);
 	char s[512]; sprintf(s, "totobefore%d.dx", cv);
@@ -426,7 +427,6 @@ namespace getfem {
 	exp.exporting(sl);
 	exp.exporting_mesh_edges();
 	exp.write_mesh();
-	cout << "end of storing mesh" << endl;
       }
       
       if (K > 1) { // à ne faire que sur les convexes concernés ..
@@ -438,15 +438,16 @@ namespace getfem {
 	      = mesh.ind_points_of_face_of_convex(i, f);
 	    ipts.assign(fpts.begin(), fpts.end());
 	    interpolate_face(mesh, ptdone, ipts,
-			     mesh.trans_of_convex(i)->structure()->faces_structure()[f],
-			     fixed_points.size(), fixed_points_constraints, list_constraints);
+			     mesh.trans_of_convex(i)->structure()
+			     ->faces_structure()[f], fixed_points.size(),
+			     fixed_points_constraints, list_constraints);
 	  }
 	}
       }
       
       if (noisy) {
 	getfem::stored_mesh_slice sl;
-	sl.build(mesh, getfem::slicer_none(), 12); //getfem::slicer_noneexplode(0.8), 8);
+	sl.build(mesh, getfem::slicer_none(), 12);
 	char s[512]; sprintf(s, "toto%d.dx", cv);
 	getfem::dx_export exp(s);
 	exp.exporting(sl);
@@ -461,10 +462,10 @@ namespace getfem {
 	vectors_to_base_matrix(G, mesh.points_of_convex(i));
 	
 	papprox_integration pai = regular_simplex_pim->approx_method();
+	bgeot::geotrans_interpolation_context c(mesh.trans_of_convex(i),
+						pai->point(0), G);
 	for (size_type j = 0; j < pai->nb_points_on_convex(); ++j) {
-	  bgeot::geotrans_interpolation_context c(mesh.trans_of_convex(i), pai->point(j), G); // sortir de la boucle et faire des chgt de points
-	  // base_matrix B = c.B(); // for J to be computed;
-	  // cout << "adding Gauss point " << c.xreal() << " with weight " << pai->coeff(j) * c.J() << "(J = " << c.J() << ")\n";
+	  c.set_xref(pai->point(j));
 	  gauss_points.push_back(c.xreal());
 	  gauss_weights.push_back(pai->coeff(j) * gmm::abs(c.J()));
 	}
@@ -473,11 +474,13 @@ namespace getfem {
       // + test ...
       scalar_type wtot(0);
       if (noisy) cout << "Number of gauss points : " << gauss_weights.size();
-      for (size_type k = 0; k < gauss_weights.size(); ++k) wtot += gauss_weights[k];
+      for (size_type k = 0; k < gauss_weights.size(); ++k)
+	wtot += gauss_weights[k];
       base_poly poly = bgeot::one_poly(n);
       scalar_type exactvalue = exactint->exact_method()->int_poly(poly);
       if (noisy) cout.precision(16);
-      if (noisy) cout << "The Result : " << wtot << " compared to " << exactvalue << endl; 
+      if (noisy) cout << "The Result : " << wtot << " compared to "
+		      << exactvalue << endl; 
       
       if (gmm::abs(wtot-exactvalue) > 1E-7){
 	if (noisy) cout << "PAS BON NON PLUS\n"; if (noisy) getchar();
@@ -512,11 +515,12 @@ namespace getfem {
 	 !cv.finished(); ++cv) {
       dal::bit_vector prim, sec;
       find_crossing_level_set(cv, prim, sec);
-      if (noisy) cout << "element " << cv << " cutted level sets : " << prim << endl;
+      if (noisy) cout << "element " << cv << " cutted level sets : "
+		      << prim << endl;
       if (prim.card()) cut_element(cv, prim, sec);
     }
     getfem::stored_mesh_slice sl;
-    sl.build(global_mesh, getfem::slicer_none(), 6); //getfem::slicer_noneexplode(0.8), 8);
+    sl.build(global_mesh, getfem::slicer_none(), 6);
     getfem::dx_export exp("totoglob.dx");
     exp.exporting(sl);
     exp.exporting_mesh_edges();
@@ -575,10 +579,12 @@ namespace getfem {
     unsigned lsnum = 0, k = 0;
     for (std::set<plevel_set>::const_iterator it = level_sets.begin(); 
 	 it != level_sets.end(); ++it, ++lsnum, ++k) {
-      if (noisy) cout << "testing cv " << cv << " with level set " << k << endl;
+      if (noisy) cout << "testing cv " << cv << " with level set "
+		      << k << endl;
       if (is_crossed_by(cv, *it, 0)) {
 	prim.add(lsnum);
-	if ((*it)->has_secondary() && is_crossed_by(cv, *it, 1)) sec.add(lsnum);
+	if ((*it)->has_secondary() && is_crossed_by(cv, *it, 1))
+	  sec.add(lsnum);
       }
     }
   }

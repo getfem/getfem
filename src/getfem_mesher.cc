@@ -63,29 +63,6 @@ namespace getfem {
       }
     return true;
   }
-
-//   bool pure_multi_constraint_projection
-//   (const std::vector<const mesher_signed_distance*> &list_constraints,
-//    base_node &X, const dal::bit_vector &cts) {
-//     base_node oldX;
-//     size_type cnt = 0;
-//     do {     
-//       oldX = X;
-//       for (dal::bv_visitor ic(cts); !ic.finished(); ++ic)
-// 	try_projection(*(list_constraints[ic]), X, true);
-//       ++cnt;
-//     } while (cts.card() && gmm::vect_dist2(oldX,X) > 1e-14 && cnt < 1000);
-//     if (cnt >= 1000) return false;
-//     if (cts.card()) {
-//       dal::bit_vector ct2;
-//       for (dal::bv_visitor ic(cts); !ic.finished(); ++ic)
-// 	if (gmm::abs((*(list_constraints[ic]))(X)) < SEPS)
-// 	  ct2.add(ic);
-//       return ct2.contains(cts);
-//     }
-//     return true;
-//   }
-
   
   // Try to find an intersection of a set of signed distance d_i.
   // Newton method on v solution to d_i(X+Gv) = 0, where the column of
@@ -123,11 +100,12 @@ namespace getfem {
 	gmm::add(dd, X);
 	for (i = 0; i < nbco; ++i) d[i] = -(ls[i]->grad(X, G[i]));
 	alpha = 1.;
-	while (iter > 0 && gmm::vect_norm2(d) > residu && alpha > 1E-15) {
-	  alpha /= 2.;
-	  gmm::add(gmm::scaled(dd, -alpha), X);
-	  for (i = 0; i < nbco; ++i) d[i] = -(ls[i]->grad(X, G[i]));
-	}
+	if (iter > 0)
+	  while (gmm::vect_norm2(d) > residu && alpha > 1E-15) {
+	    alpha /= 2.;
+	    gmm::add(gmm::scaled(dd, -alpha), X);
+	    for (i = 0; i < nbco; ++i) d[i] = -(ls[i]->grad(X, G[i]));
+	  }
 	if (alpha < 1E-15) break;
       }
       for (i = 0; i < nbco; ++i) d[i] = -(ls[i]->grad(X, G[i]));
