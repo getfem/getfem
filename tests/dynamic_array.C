@@ -18,8 +18,8 @@ int main(void) {
     dal::dynamic_array<int, 4> t;
 
     try {
-      t[-5] = 8;
-      std::strstream msg;
+      t[(unsigned)-5] = 8;
+      std::stringstream msg;
       msg << "dynamic_array.C : negative index does not produce an error\0"; 
       throw dal::internal_error(msg.str()); 
     }
@@ -130,5 +130,5 @@ int main(void) {
 
     return 0;
   }
-  BGEOT_STANDARD_CATCH_ERROR;
+  DAL_STANDARD_CATCH_ERROR;
 }
