@@ -14,8 +14,8 @@ FRICTION_COEF = 0.0;    % Friction coefficient.
 PG = 9810; 		% gravitation constante (on earth) (mm/s^2).
 %PG = 1000000; 		% gravitation constante (on jupiter !) (mm/s^2).
 RHO = 6e-6;     	% "realistic" density for steel
-T = 0.1;
-DT = 0.0001;             % Time step
+T = 0.3;
+DT = 0.001;             % Time step
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
@@ -26,10 +26,11 @@ MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
 RESIDU = 1E-9;     	% residu for Newton.
 NOISY = 0;
 
-SCHEME = 4; % 0 = theta-method, 1 = Newmark, 2 = middle point
+SCHEME = 6; % 0 = theta-method, 1 = Newmark, 2 = middle point
             % 3 = middle point with modified contact forces
 	    % 4 = Paoli-Schatzman scheme (contact only)
 	    % 5 = modified Paoli-Schatzman scheme
+	    % 6 = KLR 
 	    
 THETA = 1.0;
 BETA = 1.0;
@@ -85,4 +86,4 @@ MESHNAME='meshes/disc_P2_h4.mesh';
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'dynamic_friction';     % Root of data files.
 DX_EXPORT = 1; % export solution to an OpenDX file ?
-DT_EXPORT = 0.001; % Time step for the export
+DT_EXPORT = 0.002; % Time step for the export

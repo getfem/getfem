@@ -127,7 +127,7 @@ namespace getfem {
       sub_problem.mixed_variables(b, i0);
       b.add(i0 + sub_problem.nb_dof(), gmm::mat_nrows(BN)+gmm::mat_nrows(BT));
     }
-    
+
     virtual size_type nb_constraints(void)
     { return sub_problem.nb_constraints(); }
 
@@ -283,6 +283,9 @@ namespace getfem {
     value_type get_r(void) const { return r; }
     template <class VEC> void set_WT(const VEC &WT_) { gmm::copy(WT_, WT); }
     template <class VEC> void set_WN(const VEC &WN_) { gmm::copy(WN_, WN); }
+
+    VECTOR &get_gap(void) { return gap; }
+    const VECTOR &get_gap(void) const { return gap; }
 
     SUBVECTOR get_LN(MODEL_STATE &MS) {
       SUBN = gmm::sub_interval(this->first_index() + sub_problem.nb_dof(),
