@@ -345,6 +345,13 @@ struct Chrono {
   }
 
   void mesh_level_set::find_zones_of_elements(size_type cv) {
+    /*
+      a level set without  secondary level set cuts the space into 
+      to parts: '+' and '-'
+      a level set with a secondary level set cut the space into 
+      three parts '+' and '-' and '0' which is the half-space where the
+      secondary level set is negative.
+      
     // -   : 1
     // 0   : 2
     // +   : 4
