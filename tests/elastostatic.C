@@ -111,10 +111,10 @@ struct elastostatic_problem {
   sparse_matrix_type SM;     /* stiffness matrix.                            */
   std::vector<scalar_type> U, B;      /* main unknown, and right hand side   */
 
-  std::vector<scalar_type> Ud; /* reduced sol. for generic Dirichlet condition. */
-  col_sparse_matrix_type NS; /* Dirichlet NullSpace 
-			      * (used if gen_dirichlet is true)
-			      */
+  std::vector<scalar_type> Ud; /* reduced solution                           */
+  col_sparse_matrix_type NS;   /* and  Dirichlet NullSpace
+				* (used if gen_dirichlet is true)
+				*/
   std::string datafilename;
   ftool::md_param PARAM;
 
