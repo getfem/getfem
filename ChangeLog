@@ -1,0 +1,3782 @@
+2003-03-11 12:15  pommier
+
+	* config/depcomp: passage au depcomp d'automake 1.7.2 qui gere les
+	dependances de cxx
+
+2003-03-10 18:23  renard
+
+	* doc/: MAILING_LIST: [no log message]
+
+2003-03-10 11:05  pommier
+
+	* configure.in: [no log message]
+
+2003-03-10 08:57  renard
+
+	* doc/kernel/getfemelem.tex, doc/kernel/getfemlist.tex,
+	doc/userdoc/getfemuser.tex, src/bgeot_config.h,
+	tests/laplacian_conv_pk.pl: [no log message]
+
+2003-03-07 17:52  pommier
+
+	* src/bgeot_convex_structure.C: ajout de l'init de QD
+
+2003-03-07 17:16  renard
+
+	* configure.in, src/bgeot_config.h, src/getfem_fem.h,
+	tests/laplacian_conv_pk.pl: [no log message]
+
+2003-03-07 15:57  renard
+
+	* src/bgeot_convex_ref.C, tests/laplacian_conv_pk.pl,
+	doc/MAILING_LIST: [no log message]
+
+2003-03-07 15:17  pommier
+
+	* configure.in, contrib/Makefile.am, src/bgeot_config.h,
+	src/bgeot_geotrans_inv.h, src/bgeot_poly.h, src/dal_std.h,
+	src/getfem_fem.C, src/getfem_fem.h, src/getfem_integration.C,
+	src/getfem_integration.h, tests/Makefile.am: ajout du support de la
+	librairie QD
+
+2003-03-07 15:16  pommier
+
+	* doc/userdoc/: getfemuser.tex, getfemuser.css, next.gif,
+	previous.gif, up.gif, Makefile: htmlization de getfemuser
+
+2003-03-07 15:15  pommier
+
+	* doc/HISTORY: [no log message]
+
+2003-03-07 13:05  renard
+
+	* src/getfem_integration.C, tests/laplacian_conv_pk.pl: [no log
+	message]
+
+2003-03-07 12:54  renard
+
+	* src/bgeot_config.h, src/bgeot_convex_ref.C, src/getfem_config.h,
+	src/getfem_integration.C, tests/integration.C,
+	tests/laplacian_conv_pk.pl: [no log message]
+
+2003-03-07 08:27  renard
+
+	* doc/HISTORY: [no log message]
+
+2003-03-06 17:24  renard
+
+	* doc/HISTORY, tests/laplacian_conv_pk.pl: [no log message]
+
+2003-03-06 09:09  renard
+
+	* src/getfem_assembling.h, tests/elasto_statique.C,
+	tests/elasto_statique.param, tests/laplacian.C,
+	tests/laplacian.param, tests/laplacian_conv_pk.pl: [no log message]
+
+2003-03-05 17:31  renard
+
+	* tests/laplacian_conv_pk.pl: [no log message]
+
+2003-03-05 16:18  renard
+
+	* src/gmm_blas.h, src/gmm_scaled.h, tests/laplacian_conv_pk.pl: [no
+	log message]
+
+2003-03-05 10:22  renard
+
+	* doc/HISTORY, doc/MAKE_VERSION, tests/laplacian_conv_pk.pl,
+	tests/test_mat_elem.param: [no log message]
+
+2003-03-03 18:57  renard
+
+	* tests/laplacian.C: [no log message]
+
+2003-03-03 18:45  pommier
+
+	* contrib/: compare_solutions.C, draw_mesh_doedges.C,
+	interpole_solution.C: [no log message]
+
+2003-03-03 18:23  pommier
+
+	* src/: gmm_iter.h, gmm_modified_gram_schmidt.h, gmm_tri_solve.h,
+	gmm_solver_gmres.h, gmm_solver_qmr.h, gmm_solver_cheby.h,
+	gmm_given_rotation.h: [no log message]
+
+2003-03-03 18:19  pommier
+
+	* MTL-ITL-LICENSE, configure.in: [no log message]
+
+2003-03-03 18:16  pommier
+
+	* src/Makefile.am, src/bgeot_convex_ref.C,
+	src/bgeot_convex_structure.C, src/bgeot_mesh_structure.C,
+	src/bgeot_mesh_structure.h, src/bgeot_sparse_tensors.h,
+	src/bgeot_vector.h, src/getfem_assembling.h,
+	src/getfem_assembling_tensors.C, src/getfem_assembling_tensors.h,
+	src/getfem_derivatives.h, src/getfem_export.C, src/getfem_export.h,
+	src/getfem_import.h, src/getfem_integration.h,
+	src/getfem_mat_elem.C, src/getfem_mesh.C, src/getfem_mesh_fem.C,
+	src/getfem_norm.h, src/gmm_blas.h, src/gmm_def.h,
+	src/gmm_interface.h, src/gmm_matrix.h, src/gmm_scaled.h,
+	src/gmm_solver_Schwarz_additive.h, src/gmm_solver_bicgstab.h,
+	src/gmm_solver_cg.h, src/gmm_solver_constrained_cg.h,
+	src/gmm_solvers.h, src/gmm_sub_matrix.h, src/gmm_sub_vector.h,
+	src/gmm_transposed.h, src/linkmsg.h, Makefile.am, configure.in:
+	mise a jour version
+
+2003-03-03 18:14  pommier
+
+	* tests/: Makefile.am, assembly.pl, elasto_statique.C,
+	elasto_statique.param, elasto_statique.pl, geo_trans_inv.pl,
+	laplacian.C, laplacian.param, laplacian.pl, laplacian_conv_pk.pl,
+	linalg.C, test_assembly.C, test_assembly.pl, test_link_fem.pl,
+	test_mat_elem.C, test_mat_elem.param, test_mat_elem.pl:
+	Actualisation branche
+
+2003-03-03 17:31  pommier
+
+	* configure.in: v1.5
+
+2003-03-03 15:17  renard
+
+	* tests/: Makefile.am, assembly.pl, test_assembly.pl: [no log
+	message]
+
+2003-03-03 14:24  renard
+
+	* tests/: laplacian.param, laplacian_conv_pk.pl: [no log message]
+
+2003-03-03 11:06  renard
+
+	* tests/: elasto_statique.pl, geo_trans_inv.pl, laplacian.C,
+	laplacian.param, laplacian.pl, laplacian_conv_pk.pl,
+	test_link_fem.pl, test_mat_elem.pl: test de conv du laplacien
+
+2003-02-28 16:43  renard
+
+	* tests/laplacian.C, tests/laplacian_conv_pk.pl,
+	src/getfem_mat_elem.C: [no log message]
+
+2003-02-28 13:27  renard
+
+	* src/getfem_mat_elem.C, tests/test_mat_elem.param: petite
+	optimisation pour le calcul exact
+
+2003-02-28 13:01  renard
+
+	* src/getfem_mat_elem.C: correction bug mineur
+
+2003-02-28 12:56  renard
+
+	* src/getfem_mat_elem.C: optimisation calcul des matrices
+	elementaires
+
+2003-02-28 12:22  renard
+
+	* src/getfem_mat_elem.C, tests/Makefile.am, tests/test_mat_elem.C,
+	tests/test_mat_elem.param: optimisation calcul des matrices
+	elementaires
+
+2003-02-28 10:28  renard
+
+	* src/getfem_mat_elem2.C: [no log message]
+
+2003-02-28 10:27  renard
+
+	* src/: getfem_integration.h, getfem_mat_elem.C: peu sur...
+
+2003-02-28 10:23  renard
+
+	* tests/: laplacian.param, test_mat_elem.C, test_mat_elem.param,
+	test_mat_elem.pl: [no log message]
+
+2003-02-28 10:12  renard
+
+	* src/getfem_export.h: [no log message]
+
+2003-02-28 10:08  renard
+
+	* src/getfem_mat_elem2.C, tests/laplacian.param: [no log message]
+
+2003-02-27 10:23  renard
+
+	* tests/Makefile.am: [no log message]
+
+2003-02-25 15:21  renard
+
+	* src/getfem_mat_elem.C: [no log message]
+
+2003-02-25 14:47  pommier
+
+	* configure.in: virage du Wshadow pour gcc 2.95
+
+2003-02-25 14:39  pommier
+
+	* configure.in: virage du Wshadow pour gcc 2.95
+
+2003-02-24 16:59  pommier
+
+	* src/getfem_assembling.h: correction warning
+
+2003-02-22 15:43  pommier
+
+	* src/getfem_mat_elem.C: suppression code redondant
+
+2003-02-22 15:42  pommier
+
+	* configure.in: reparation du configure
+
+2003-02-20 14:10  pommier
+
+	* configure.in: modif
+
+2003-02-20 11:23  renard
+
+	* configure.in, bin/test_dist: [no log message]
+
+2003-02-20 10:27  renard
+
+	* src/gmm_blas.h, src/gmm_transposed.h, tests/linalg.C: correction
+	bug mineur
+
+2003-02-19 19:40  renard
+
+	* src/: gmm_blas.h, gmm_def.h, gmm_sub_matrix.h: [no log message]
+
+2003-02-19 16:54  renard
+
+	* tests/linalg.C: correction non surcharge des fonctions avec const
+	: debut
+
+2003-02-19 16:51  renard
+
+	* configure.in, src/gmm_blas.h, src/gmm_def.h,
+	src/gmm_sub_matrix.h: correction non surcharge des fonctions avec
+	const : debut
+
+2003-02-19 13:11  renard
+
+	* configure.in, src/gmm_def.h: bug correction
+
+2003-02-19 12:19  pommier
+
+	* src/bgeot_sparse_tensors.h: je vire gmm.h
+
+2003-02-19 09:44  renard
+
+	* configure.in, src/gmm_blas.h, src/gmm_interface.h,
+	src/gmm_iter.h, src/gmm_matrix.h, src/gmm_scaled.h,
+	src/gmm_solver_Schwarz_additive.h, src/gmm_sub_matrix.h,
+	src/gmm_sub_vector.h, src/gmm_transposed.h, tests/linalg.C: Les
+	iterator des ref constantes deviennent abstract_null_type
+
+2003-02-18 19:22  pommier
+
+	* src/getfem_derivatives.h: comp_gradient plus souple
+
+2003-02-17 18:53  renard
+
+	* configure.in: [no log message]
+
+2003-02-17 18:36  renard
+
+	* src/bgeot_mesh_structure.C, src/gmm_solver_Schwarz_additive.h,
+	tests/laplacian.C: correction bug swap_point
+
+2003-02-17 17:57  renard
+
+	* src/: bgeot_mesh_structure.C, getfem_mesh.C,
+	gmm_solver_Schwarz_additive.h: correction bug
+
+2003-02-17 16:22  pommier
+
+	* src/bgeot_mesh_structure.C: correction optimize_structure
+
+2003-02-17 16:21  pommier
+
+	* src/: getfem_mesh.C, getfem_mesh_fem.C: bugfixes lecture fichers
+
+2003-02-17 13:39  battaia
+
+	* TOBEDONE: Test
+
+2003-02-14 14:16  renard
+
+	* src/: gmm_solver_Schwarz_additive.h, gmm_solver_constrained_cg.h:
+	[no log message]
+
+2003-02-14 10:09  renard
+
+	* src/gmm_solver_Schwarz_additive.h: [no log message]
+
+2003-02-13 19:39  renard
+
+	* Makefile.am, configure.in, tests/Makefile.am: fast option pour
+	cxx
+
+2003-02-13 18:25  renard
+
+	* Makefile.am, bin/test_dist, tests/Makefile.am: distclean files
+
+2003-02-13 17:37  renard
+
+	* bin/test_dist: [no log message]
+
+2003-02-13 14:19  renard
+
+	* bin/test_dist: [no log message]
+
+2003-02-13 14:07  renard
+
+	* bin/test_dist: [no log message]
+
+2003-02-13 13:45  renard
+
+	* bin/test_dist, doc/userdoc/getfemuser.tex: [no log message]
+
+2003-02-13 13:10  renard
+
+	* bin/test_dist: creation
+
+2003-02-13 10:49  renard
+
+	* tests/: elasto_statique.param, elasto_statique.pl: [no log
+	message]
+
+2003-02-13 10:38  renard
+
+	* doc/userdoc/getfemuser.tex: [no log message]
+
+2003-02-13 10:14  renard
+
+	* doc/userdoc/getfemuser.tex: [no log message]
+
+2003-02-13 09:24  renard
+
+	* doc/userdoc/getfemuser.tex, src/bgeot_convex_ref.C,
+	src/getfem_assembling_tensors.h, tests/test_assembly.C: [no log
+	message]
+
+2003-02-12 19:12  renard
+
+	* doc/MAKE_VERSION, src/bgeot_convex_ref.C,
+	src/gmm_solver_Schwarz_additive.h: [no log message]
+
+2003-02-12 18:34  renard
+
+	* contrib/compare_solutions.C, contrib/interpole_solution.C,
+	doc/MAKE_VERSION, src/getfem_export.h: [no log message]
+
+2003-02-12 17:49  renard
+
+	* doc/userdoc/Makefile, doc/userdoc/getfemuser.tex, src/gmm_iter.h,
+	src/gmm_solver_cheby.h, src/gmm_solver_gmres.h: [no log message]
+
+2003-02-12 16:01  renard
+
+	* doc/userdoc/getfemuser.tex: [no log message]
+
+2003-02-12 13:21  renard
+
+	* src/: Makefile.am, gmm_solver_cheby.h, gmm_solver_gmres.h,
+	gmm_solver_qmr.h, gmm_solvers.h: ajout de qmr
+
+2003-02-12 09:30  renard
+
+	* src/: gmm_modified_gram_schmidt.h, gmm_solver_gmres.h,
+	gmm_tri_solve.h: correction gmres
+
+2003-02-11 19:41  renard
+
+	* src/: gmm_interface.h, gmm_iter.h, gmm_matrix.h,
+	gmm_solver_gmres.h: correction gmres
+
+2003-02-11 18:13  pommier
+
+	* src/bgeot_convex_structure.C, tests/test_assembly.C: [no log
+	message]
+
+2003-02-11 16:32  pommier
+
+	* src/getfem_assembling_tensors.C: bugfix du bugfix
+
+2003-02-11 16:21  pommier
+
+	* src/getfem_assembling_tensors.C: bugfix
+
+2003-02-11 15:52  pommier
+
+	* src/: getfem_export.h, getfem_norm.h: getfem_norm obsolete
+
+2003-02-11 14:25  renard
+
+	* src/: gmm_iter.h, gmm_modified_gram_schmidt.h,
+	gmm_solver_gmres.h, gmm_tri_solve.h: corrections dans gmres
+
+2003-02-11 09:56  renard
+
+	* src/: gmm_solver_gmres.h: correction dans gmres
+
+2003-02-10 19:09  renard
+
+	* src/: Makefile.am, gmm_modified_gram_schmidt.h,
+	gmm_solver_gmres.h, gmm_solvers.h, gmm_tri_solve.h: ajout de gmres
+
+2003-02-10 16:06  renard
+
+	* MTL-ITL-LICENSE, Makefile.am: [no log message]
+
+2003-02-10 15:58  pommier
+
+	* src/getfem_assembling_tensors.C, src/getfem_assembling_tensors.h,
+	src/gmm_modified_gram_schmidt.h, tests/elasto_statique.C,
+	tests/laplacian.C, tests/linalg.C: [no log message]
+
+2003-02-10 15:24  renard
+
+	* src/: gmm_iter.h, gmm_solver_gmres.h: [no log message]
+
+2003-02-10 15:18  renard
+
+	* src/: gmm_given_rotation.h, gmm_iter.h: [no log message]
+
+2003-02-10 14:05  renard
+
+	* src/gmm_solver_gmres.h: [no log message]
+
+2003-02-10 13:50  renard
+
+	* src/: gmm_modified_gram_schmidt.h, gmm_solver_gmres.h,
+	gmm_solvers.h, Makefile.am: [no log message]
+
+2003-02-10 13:39  renard
+
+	* src/: Makefile.am, gmm_modified_gram_schmidt.h, gmm_solver_cg.h,
+	gmm_solvers.h: addition de gmm_modified_gram_schmidt.h
+
+2003-02-10 10:27  renard
+
+	* src/gmm_iter.h, src/gmm_solver_Schwarz_additive.h,
+	src/gmm_solver_bicgstab.h, src/gmm_solver_cg.h,
+	src/gmm_solver_constrained_cg.h, src/gmm_solvers.h,
+	tests/elasto_statique.C, tests/laplacian.C: introduction du concept
+	d'iteration dans GMM
+
+2003-02-10 09:29  renard
+
+	* src/: Makefile.am, gmm_iter.h: [no log message]
+
+2003-02-07 14:58  renard
+
+	* src/getfem_export.h: correction save_solution
+
+2003-02-07 14:42  renard
+
+	* src/: getfem_assembling.h, getfem_import.h: Erreur in
+	add_Dirichlet_dof
+
+2003-02-07 14:04  renard
+
+	* doc/userdoc/getfemuser.tex, src/bgeot_mesh_structure.C,
+	src/getfem_export.h, src/gmm_solver_Schwarz_additive.h,
+	src/gmm_solver_constrained_cg.h: [no log message]
+
+2003-02-07 13:47  pommier
+
+	* contrib/draw_mesh_doedges.C, src/bgeot_mesh_structure.C,
+	src/bgeot_mesh_structure.h, src/getfem_export.C,
+	src/getfem_export.h, src/getfem_mesh.C: depl. de egdes de
+	getfem_export vers bgeot::mesh_structure
+
+2003-02-06 19:51  khenous
+
+	* src/gmm_matrix.h: [no log message]
+
+2003-02-06 18:06  khenous
+
+	* src/: bgeot_vector.h, getfem_import.h, gmm_matrix.h, linkmsg.h:
+	[no log message]
+
+2003-02-06 16:04  pommier
+
+	* src/getfem_import.h: reduction de dimension pur l'import gid
+
+2003-02-05 18:35  renard
+
+	* src/gmm_interface.h: [no log message]
+
+2003-02-05 18:17  renard
+
+	* doc/userdoc/getfemuser.tex, src/getfem_assembling.h,
+	src/gmm_blas.h: [no log message]
+
+2003-02-05 17:17  pommier
+
+	* src/getfem_assembling.h: add_Dirichlet_dof
+
+2003-02-05 09:36  renard
+
+	* doc/kernel/getfemelem.tex, doc/kernel/getfemlist.tex,
+	doc/userdoc/getfemuser.tex, tests/elasto_statique.C,
+	tests/elasto_statique.param, tests/elasto_statique.pl,
+	tests/laplacian.C, tests/laplacian.param: [no log message]
+
+2003-02-04 17:22  renard
+
+	* doc/userdoc/getfemuser.tex: [no log message]
+
+2003-02-04 17:05  renard
+
+	* doc/userdoc/: getfem_logo.eps, getfemlogo.eps,
+	getfemuser_elem.eps, getfemuser_elem.fig, getfemuser_elemf.eps,
+	getfemuser_elemf.fig, getfemuserelem.eps, getfemuserelem.fig,
+	getfemuserelemf.eps, getfemuserelemf.fig, underscore.sty:
+	changement dans userdoc
+
+2003-02-04 11:43  pommier
+
+	* src/getfem_import.h: portage bugfix tetra avec geotrans non lin
+	depuis HEAD
+
+2003-02-04 11:41  pommier
+
+	* src/getfem_export.C: portage bugfix de la recherche d'arete
+	depuis la branche HEAD
+
+2003-02-04 11:34  pommier
+
+	* src/: getfem_export.C, getfem_import.h: fix import/export
+
+2003-02-03 17:27  renard
+
+	* src/linkmsg.h: essai
+
+2003-02-03 17:06  renard
+
+	* doc/MAKE_VERSION: [no log message]
+
+2003-02-03 15:45  pommier
+
+	* src/: bgeot_sparse_tensors.C, ftool_naming.h: nettoyage
+
+2003-02-03 15:39  pommier
+
+	* src/: getfem_export.C, getfem_import.h: bugfixes
+
+2003-02-03 11:29  pommier
+
+	* src/: Makefile.am, getfem_import.h: ajout importation de
+	maillages de GiD
+
+2003-02-03 11:28  pommier
+
+	* configure.in: ajout de LD=CC pour le compilo SGI
+
+2003-02-03 11:27  pommier
+
+	* src/getfem_fem_virtual_link.C: suppress warning sgi/CC
+
+2003-02-03 11:26  pommier
+
+	* config/ltmain.sh: update libtool
+
+2003-02-03 11:25  pommier
+
+	* bin/cvsstat: simplif cvsstat
+
+2003-02-03 11:25  pommier
+
+	* src/: ftool.C, ftool.h: ajout de qqes fonctions
+
+2003-02-03 11:24  pommier
+
+	* src/getfem_export.C: correction bug sur la recherche d'aretes
+
+2003-01-31 16:05  pommier
+
+	* configure.in: [no log message]
+
+2003-01-30 18:29  pommier
+
+	* src/getfem_import.h: ajout de getfem_import.h
+
+2003-01-30 14:46  pommier
+
+	* src/getfem_fem.h: [no log message]
+
+2003-01-30 14:39  pommier
+
+	* configure.in, src/ftool_naming.h: [no log message]
+
+2003-01-30 13:53  renard
+
+	* src/gmm_def.h: [no log message]
+
+2003-01-30 13:39  pommier
+
+	* configure.in, src/dal_algobase.h, src/dal_std.h,
+	src/dal_tree_sorted.h, src/getfem_fem.h, src/getfem_mesh_fem.h,
+	src/gmm_blas.h, src/gmm_def.h, src/gmm_interface.h,
+	src/gmm_matrix.h, src/gmm_scaled.h, src/gmm_sub_matrix.h,
+	src/gmm_sub_vector.h, src/gmm_transposed.h, src/gmm_vector.h,
+	tests/linalg.C: compatibilite aCC
+
+2003-01-30 11:13  renard
+
+	* src/getfem_fem_virtual_link.C: [no log message]
+
+2003-01-29 17:33  pommier
+
+	* src/: dal_tree_sorted.h, gmm_sub_vector.h: [no log message]
+
+2003-01-29 15:35  pommier
+
+	* src/: bgeot_convex.h, bgeot_matrix.h, bgeot_poly.h,
+	bgeot_tensor.h, bgeot_vector.h, dal_tree_sorted.h,
+	getfem_assembling_tensors.h, getfem_mesh_fem.h,
+	getfem_regular_meshes.C, gmm_blas.h, gmm_def.h, gmm_interface.h,
+	gmm_matrix.h, gmm_scaled.h, gmm_sub_vector.h, gmm_vector.h,
+	linkmsg.h: [no log message]
+
+2003-01-29 14:16  pommier
+
+	* configure.in, src/bgeot_convex_structure.C,
+	src/bgeot_sparse_tensors.C, src/dal_basic.h,
+	src/getfem_assembling.h, src/getfem_mesh_fem.C, tests/assembly.pl,
+	tests/elasto_statique.C, tests/laplacian.C, tests/test_assembly.C,
+	tests/test_link_fem.C: bugfixes divers
+
+2003-01-28 13:30  pommier
+
+	* configure.in, src/getfem_assembling.h, src/getfem_mesh.h,
+	src/gmm_def.h, src/gmm_interface.h, src/gmm_vector.h,
+	tests/test_assembly.C: [no log message]
+
+2003-01-27 12:47  renard
+
+	* src/: gmm_solver_Schwarz_additive.h, gmm_solver_constrained_cg.h:
+	[no log message]
+
+2003-01-24 19:19  pommier
+
+	* doc/userdoc/getfemuser.tex, src/Makefile.am,
+	src/bgeot_sparse_tensors.C, src/bgeot_sparse_tensors.h,
+	src/getfem_assembling.h, src/getfem_assembling_tensors.C,
+	src/getfem_assembling_tensors.h, src/getfem_derivatives.h,
+	src/getfem_export.h, src/getfem_mat_elem.C, src/getfem_mesh_fem.C,
+	src/getfem_mesh_fem.h, tests/Makefile.am, tests/assembly.pl,
+	tests/test_assembly.C: ajout nouvel assemblage -- tenseur creux
+
+2003-01-24 19:17  pommier
+
+	* src/: gmm_blas.h, gmm_interface.h, gmm_scaled.h,
+	gmm_sub_vector.h, gmm_transposed.h: modif gmm pour le compilo
+	mipspro
+
+2003-01-24 19:16  pommier
+
+	* configure.in: test sgi
+
+2003-01-24 19:14  pommier
+
+	* tests/: laplacian.C, dynamic_array.C: RaS
+
+2003-01-24 15:52  renard
+
+	* src/: bgeot_vector.h, gmm_solver_constrained_cg.h: [no log
+	message]
+
+2003-01-24 15:46  renard
+
+	* src/gmm_blas.h: [no log message]
+
+2003-01-24 14:49  renard
+
+	* src/: gmm_def.h, gmm_solver_Schwarz_additive.h,
+	gmm_solver_constrained_cg.h, gmm_solvers.h, gmm_sub_matrix.h,
+	gmm_transposed.h: [no log message]
+
+2003-01-24 10:27  renard
+
+	* src/: Makefile.am, gmm_solver_constrained_cg.h: [no log message]
+
+2003-01-23 13:38  renard
+
+	* src/gmm_interface.h: [no log message]
+
+2003-01-23 11:06  renard
+
+	* src/: gmm_interface.h, gmm_sub_matrix.h: [no log message]
+
+2003-01-22 17:50  khenous
+
+	* src/gmm_scaled.h: [no log message]
+
+2003-01-14 14:15  pommier
+
+	* src/gmm_blas.h: fix bug copy sur sparse vec
+
+2003-01-10 13:29  pommier
+
+	* config/bootstrap: le config arrive enfin à se relancer tout seul
+	!
+
+2003-01-07 17:13  pommier
+
+	* src/getfem_mat_elem.C: [no log message]
+
+2003-01-07 16:51  pommier
+
+	* src/dal_except.h: [no log message]
+
+2002-12-18 15:49  pommier
+
+	* src/getfem_fem_composite.C: correction du champ is_lagrange
+
+2002-12-18 14:58  renard
+
+	* src/: dal_except.h, gmm_blas.h: [no log message]
+
+2002-12-18 14:48  renard
+
+	* src/gmm_blas.h, src/gmm_interface.h, src/gmm_sub_matrix.h,
+	src/gmm_sub_vector.h, src/gmm_transposed.h, tests/linalg.C: [no log
+	message]
+
+2002-12-17 15:19  pommier
+
+	* src/dal_except.h: [no log message]
+
+2002-12-17 14:27  renard
+
+	* src/: dal_except.h, gmm_blas.h: [no log message]
+
+2002-12-17 13:11  renard
+
+	* src/: dal_except.h, gmm_blas.h: [no log message]
+
+2002-12-16 19:08  renard
+
+	* src/: gmm_blas.h, gmm_sub_index.h: [no log message]
+
+2002-12-16 13:04  renard
+
+	* src/: getfem_mesh_fem.C, gmm_blas.h, gmm_sub_index.h,
+	gmm_sub_vector.h: [no log message]
+
+2002-12-11 17:52  renard
+
+	* src/: gmm_blas.h, gmm_vector.h: [no log message]
+
+2002-12-11 13:03  renard
+
+	* src/gmm_blas.h, src/gmm_vector.h, tests/linalg.C: [no log
+	message]
+
+2002-12-11 10:58  renard
+
+	* src/gmm_blas.h: [no log message]
+
+2002-12-11 10:14  renard
+
+	* src/gmm_blas.h: [no log message]
+
+2002-12-11 09:34  renard
+
+	* src/: getfem_mesh_fem.C, getfem_mesh_fem.h: [no log message]
+
+2002-12-10 17:28  renard
+
+	* src/: gmm_sub_matrix.h, gmm_sub_vector.h: [no log message]
+
+2002-12-09 15:14  renard
+
+	* src/gmm_blas.h: [no log message]
+
+2002-12-09 12:26  renard
+
+	* src/dal_bit_vector.C, src/dal_bit_vector.h, src/dal_std.h,
+	src/gmm_blas.h, src/gmm_def.h, src/gmm_scaled.h, src/gmm_vector.h,
+	tests/laplacian.C: [no log message]
+
+2002-12-06 17:55  renard
+
+	* src/Makefile.am: [no log message]
+
+2002-12-06 17:55  pommier
+
+	* src/dal_except.C: [no log message]
+
+2002-12-06 17:51  pommier
+
+	* src/: dal_std.h, dal_except.C: [no log message]
+
+2002-12-06 17:11  renard
+
+	* src/: dal_bit_vector.C, dal_except.C, dal_except.h: [no log
+	message]
+
+2002-12-06 15:26  renard
+
+	* src/: gmm_scaled.h, gmm_sub_index.h, gmm_transposed.h: [no log
+	message]
+
+2002-12-04 13:38  renard
+
+	* src/Makefile.am, src/gmm.h, src/gmm_blas.h, src/gmm_def.h,
+	src/gmm_interface.h, src/gmm_solver_Schwarz_additive.h,
+	src/gmm_solver_cg.h, src/gmm_sub_index.h, src/gmm_sub_matrix.h,
+	src/gmm_sub_vector.h, tests/linalg.C: Sub index dans gmm modifies
+
+2002-11-29 16:57  renard
+
+	* src/: gmm_blas.h, gmm_scaled.h: [no log message]
+
+2002-11-29 13:09  renard
+
+	* doc/MAKE_VERSION, src/gmm_interface.h, src/gmm_matrix.h,
+	src/gmm_sub_matrix.h, src/gmm_sub_vector.h, src/gmm_transposed.h,
+	src/gmm_vector.h: [no log message]
+
+2002-11-27 11:28  renard
+
+	* src/getfem_poly_composite.C, src/gmm_scaled.h,
+	src/gmm_solver_Schwarz_additive.h, src/gmm_solver_bicgstab.h,
+	src/gmm_solver_cg.h, tests/elasto_statique.C, tests/laplacian.C:
+	[no log message]
+
+2002-11-26 20:06  pommier
+
+	* src/getfem_assembling.h: correction sale bug dans
+	'assembling_qu_term'
+
+2002-11-26 18:29  renard
+
+	* bin/ar_cxx: at_cxx
+
+2002-11-26 17:08  renard
+
+	* src/gmm_interface.h: [no log message]
+
+2002-11-26 16:44  renard
+
+	* bin/ranlib_cxx: [no log message]
+
+2002-11-26 15:53  pommier
+
+	* src/: getfem_mesh_fem.C, getfem_mesh_fem.h: bug qdim
+
+2002-11-22 09:57  renard
+
+	* doc/interpole/Makefile: [no log message]
+
+2002-11-22 09:51  renard
+
+	* doc/: license.tex, interpole/getfem_interpole.tex,
+	kernel/getfemelem.tex, kernel/getfemlist.tex,
+	userdoc/getfemuser.tex: [no log message]
+
+2002-11-21 13:59  pommier
+
+	* src/: getfem_mesh_fem.C, getfem_mesh_fem.h: fin de l'ajout de
+	Qdim à mesh_fem
+
+2002-11-21 11:52  renard
+
+	* src/: getfem_mesh_fem.C, getfem_mesh_fem.h: [no log message]
+
+2002-11-20 17:54  pommier
+
+	* src/: ftool.h, getfem_fem.C, getfem_fem.h, getfem_mesh_fem.C,
+	getfem_mesh_fem.h: ajout de Qdim à mesh_fem + bugfix ftool
+
+2002-11-19 18:00  renard
+
+	* bin/Makefile.am, src/gmm_blas.h,
+	src/gmm_solver_Schwarz_additive.h, src/gmm_solver_cg.h: [no log
+	message]
+
+2002-11-19 14:10  khenous
+
+	* src/getfem_assembling.h: [no log message]
+
+2002-11-13 11:16  khenous
+
+	* src/gmm_matrix.h: [no log message]
+
+2002-11-13 10:10  renard
+
+	* src/: bgeot_vector.h, dal_tas.h, gmm_interface.h, gmm_matrix.h,
+	gmm_scaled.h, gmm_sub_vector.h, gmm_transposed.h: [no log message]
+
+2002-11-12 18:59  renard
+
+	* bin/ranlib_cxx: ajout ranlib_cxx
+
+2002-11-12 14:13  renard
+
+	* src/: gmm_blas.h, gmm_def.h, gmm_interface.h,
+	gmm_solver_bicgstab.h, gmm_vector.h: [no log message]
+
+2002-11-12 13:21  pommier
+
+	* src/: gmm_blas.h, gmm_interface.h, gmm_vector.h: bugfix
+
+2002-11-12 11:40  renard
+
+	* src/: gmm_interface.h, gmm_scaled.h, gmm_transposed.h,
+	gmm_vector.h: [no log message]
+
+2002-11-12 10:42  renard
+
+	* src/: dal_ref.h, gmm_solver_Schwarz_additive.h, gmm_vector.h: [no
+	log message]
+
+2002-11-12 09:55  renard
+
+	* COPYING, src/Makefile.am, src/bgeot_config.h, src/bgeot_convex.h,
+	src/bgeot_convex_hull.h, src/bgeot_convex_intersect.h,
+	src/bgeot_convex_ref.C, src/bgeot_convex_ref.h,
+	src/bgeot_convex_structure.C, src/bgeot_convex_structure.h,
+	src/bgeot_geometric_trans.C, src/bgeot_geometric_trans.h,
+	src/bgeot_geotrans_inv.C, src/bgeot_geotrans_inv.h,
+	src/bgeot_matrix.h, src/bgeot_mesh.h, src/bgeot_mesh_structure.C,
+	src/bgeot_mesh_structure.h, src/bgeot_poly.C, src/bgeot_poly.h,
+	src/bgeot_simplexify.h, src/bgeot_tensor.h, src/bgeot_vector.h,
+	src/dal_algobase.h, src/dal_alloc.h, src/dal_basic.h,
+	src/dal_bit_vector.C, src/dal_bit_vector.h, src/dal_except.C,
+	src/dal_except.h, src/dal_fonc_tables.h, src/dal_ref.h,
+	src/dal_std.h, src/dal_tas.h, src/dal_tree_sorted.h, src/ftool.C,
+	src/ftool.h, src/ftool_naming.h, src/getfem_assembling.h,
+	src/getfem_config.h, src/getfem_derivatives.h, src/getfem_export.C,
+	src/getfem_export.h, src/getfem_fem.C, src/getfem_fem.h,
+	src/getfem_fem_composite.C, src/getfem_fem_virtual_link.C,
+	src/getfem_integration.C, src/getfem_integration.h,
+	src/getfem_integration_composite.C, src/getfem_mat_elem.C,
+	src/getfem_mat_elem.h, src/getfem_mat_elem_type.C,
+	src/getfem_mat_elem_type.h, src/getfem_mesh.C, src/getfem_mesh.h,
+	src/getfem_mesh_fem.C, src/getfem_mesh_fem.h, src/getfem_norm.h,
+	src/getfem_poly_composite.C, src/getfem_poly_composite.h,
+	src/getfem_precomp.C, src/getfem_precomp.h,
+	src/getfem_regular_meshes.C, src/getfem_regular_meshes.h,
+	src/gmm.h, src/gmm_blas.h, src/gmm_def.h, src/gmm_interface.h,
+	src/gmm_matrix.h, src/gmm_solver_Schwarz_additive.h,
+	src/gmm_solver_bicgstab.h, src/gmm_solver_cg.h, src/gmm_solvers.h,
+	src/gmm_sub_matrix.h, src/gmm_sub_vector.h, src/gmm_vector.h,
+	src/linkmsg.h, tests/Makefile.am, tests/dynamic_array.C,
+	tests/dynamic_tas.C, tests/elasto_statique.C, tests/geo_trans.C,
+	tests/geo_trans_inv.C, tests/integration.C, tests/laplacian.C,
+	tests/linalg.C, tests/poly.C, tests/test_int_set.C,
+	tests/test_link_fem.C, tests/test_mesh.C, tests/test_tree_sorted.C:
+	[no log message]
+
+2002-11-08 13:44  renard
+
+	* src/: dal_ref.h, gmm_interface.h: [no log message]
+
+2002-11-08 11:42  pommier
+
+	* src/dal_basic.h: petite optimisation de operator=()
+
+2002-11-08 11:42  pommier
+
+	* src/getfem_mesh_fem.C: ajout des boundaries dans la sauvegarde
+	des mesh_fem
+
+2002-11-07 17:55  renard
+
+	* src/: gmm_blas.h, gmm_interface.h, gmm_sub_matrix.h: [no log
+	message]
+
+2002-11-07 17:38  pommier
+
+	* src/: getfem_mesh_fem.C, getfem_mesh_fem.h: ajout de la
+	sauvegarde des mesh_fem
+
+2002-11-07 14:05  renard
+
+	* src/: gmm_blas.h, gmm_interface.h, gmm_sub_matrix.h,
+	gmm_sub_vector.h, gmm_vector.h: [no log message]
+
+2002-11-07 13:51  renard
+
+	* src/: getfem_fem.C, getfem_integration.C, gmm_blas.h, gmm_def.h,
+	gmm_vector.h: [no log message]
+
+2002-11-07 12:38  renard
+
+	* src/: getfem_mesh.C, gmm_blas.h, gmm_def.h, gmm_matrix.h,
+	gmm_solver_cg.h, gmm_sub_matrix.h, gmm_sub_vector.h: [no log
+	message]
+
+2002-11-06 13:13  renard
+
+	* src/: gmm_sub_matrix.h, gmm_sub_vector.h: [no log message]
+
+2002-11-05 16:57  khenous
+
+	* src/: Makefile.am, dal_ref.h, gmm_blas.h, gmm_matrix.h,
+	gmm_solver_bicgstab.h, gmm_solvers.h, gmm_sub_matrix.h,
+	gmm_sub_vector.h: [no log message]
+
+2002-11-04 20:00  renard
+
+	* src/gmm_blas.h, src/gmm_interface.h, src/gmm_sub_matrix.h,
+	src/gmm_sub_vector.h, tests/linalg.C: [no log message]
+
+2002-11-04 19:22  pommier
+
+	* configure.in, src/getfem_assembling.h, src/gmm_blas.h,
+	src/gmm_matrix.h, src/gmm_vector.h: [no log message]
+
+2002-11-04 15:56  renard
+
+	* src/gmm_interface.h: [no log message]
+
+2002-11-04 14:59  renard
+
+	* src/gmm_blas.h, src/gmm_def.h, src/gmm_interface.h,
+	src/gmm_matrix.h, src/gmm_sub_matrix.h, src/gmm_sub_vector.h,
+	tests/linalg.C: [no log message]
+
+2002-10-31 08:49  renard
+
+	* doc/MAKE_VERSION, src/Makefile.am, src/gmm_blas.h,
+	src/gmm_matrix.h, src/gmm_solver_Schwarz_additive.h,
+	src/gmm_solver_cg.h, src/gmm_vector.h, tests/laplacian.param: [no
+	log message]
+
+2002-10-29 14:08  renard
+
+	* src/gmm.h, src/gmm_interface.h, src/gmm_matrix.h,
+	src/gmm_solver_Schwarz_additive.h, src/gmm_solver_cg.h,
+	src/gmm_solvers.h, src/gmm_sub_matrix.h, src/gmm_sub_vector.h,
+	src/gmm_vector.h, tests/dynamic_array.C, tests/linalg.C: [no log
+	message]
+
+2002-10-29 10:32  renard
+
+	* tests/: elasto_statique.C, laplacian.C: [no log message]
+
+2002-10-29 10:28  renard
+
+	* src/gmm.h: [no log message]
+
+2002-10-29 10:21  renard
+
+	* src/getfem_assembling.h, src/gmm.h, src/gmm_def.h,
+	src/gmm_interface.h, src/gmm_matrix.h, src/gmm_vector.h,
+	tests/elasto_statique.C, tests/laplacian.C, tests/linalg.C: [no log
+	message]
+
+2002-10-28 17:53  renard
+
+	* src/getfem_assembling.h, src/gmm.h, src/gmm_def.h,
+	tests/elasto_statique.C, tests/laplacian.C, tests/test_link_fem.C:
+	[no log message]
+
+2002-10-28 17:00  renard
+
+	* src/: Makefile.am, bgeot_abstract_linalg.h,
+	bgeot_generic_solvers.h, bgeot_linalg_interface.h,
+	getfem_fem_virtual_link.C: [no log message]
+
+2002-10-28 16:32  renard
+
+	* src/: Makefile.am, bgeot_abstract_linalg.h,
+	bgeot_generic_solvers.h, bgeot_linalg_interface.h, bgeot_smatrix.h,
+	bgeot_svector.h, gmm.h, gmm_def.h, gmm_interface.h, gmm_matrix.h,
+	gmm_solver_Schwarz_additive.h, gmm_solver_cg.h, gmm_solvers.h,
+	gmm_sub_matrix.h, gmm_sub_vector.h, gmm_vector.h: [no log message]
+
+2002-10-25 14:11  renard
+
+	* src/: bgeot_abstract_linalg.h, bgeot_generic_solvers.h: [no log
+	message]
+
+2002-10-25 13:36  renard
+
+	* src/bgeot_abstract_linalg.h: [no log message]
+
+2002-10-25 13:23  renard
+
+	* src/Makefile.am, src/bgeot_abstract_linalg.h,
+	src/bgeot_generic_solvers.h, src/bgeot_linalg_interface.h,
+	src/bgeot_smatrix.h, src/bgeot_svector.h, src/dal_ref.h,
+	src/getfem_assembling.h, tests/laplacian.C, tests/linalg.C: [no log
+	message]
+
+2002-10-18 13:50  renard
+
+	* tests/: elasto_statique.C, linalg.C: [no log message]
+
+2002-10-18 13:34  renard
+
+	* src/Makefile.am, src/bgeot_abstract_linalg.h,
+	src/bgeot_generic_solvers.h, tests/elasto_statique.C,
+	tests/laplacian.C, tests/linalg.C: [no log message]
+
+2002-10-18 12:53  renard
+
+	* src/bgeot_abstract_linalg.h, src/bgeot_smatrix.h,
+	src/bgeot_svector.h, tests/elasto_statique.C, tests/laplacian.C,
+	tests/linalg.C: [no log message]
+
+2002-10-17 14:02  renard
+
+	* src/bgeot_abstract_linalg.h, src/bgeot_svector.h,
+	src/bgeot_vector.h, tests/linalg.C: [no log message]
+
+2002-10-17 12:13  pommier
+
+	* src/: dal_except.C, dal_except.h: passage du callback en fonc
+	virtuelle pure
+
+2002-10-17 12:11  pommier
+
+	* src/bgeot_svector.h: correction commentaire mal fermé
+
+2002-10-15 16:46  renard
+
+	* src/bgeot_abstract_linalg.h, src/bgeot_smatrix.h,
+	src/bgeot_svector.h, tests/linalg.C: [no log message]
+
+2002-10-15 09:22  renard
+
+	* src/bgeot_abstract_linalg.h, tests/linalg.C: [no log message]
+
+2002-10-14 18:59  renard
+
+	* src/bgeot_abstract_linalg.h, tests/linalg.C: [no log message]
+
+2002-10-14 18:54  renard
+
+	* src/bgeot_abstract_linalg.h, src/bgeot_svector.h, tests/linalg.C:
+	[no log message]
+
+2002-10-14 16:17  renard
+
+	* src/bgeot_abstract_linalg.h: [no log message]
+
+2002-10-14 15:49  renard
+
+	* src/bgeot_abstract_linalg.h, tests/dynamic_array.C,
+	tests/linalg.C: [no log message]
+
+2002-10-14 14:25  renard
+
+	* tests/: Makefile.am, linalg.C, linalg.pl: [no log message]
+
+2002-10-14 14:09  renard
+
+	* bin/dr2dgnuplot, bin/sc2dgnuplot, src/bgeot_abstract_linalg.h,
+	tests/dynamic_array.C: [no log message]
+
+2002-10-14 13:25  pommier
+
+	* src/: dal_except.C, dal_std.h: getfem/matlab fonctionne
+	correctement sur linux et alpha/cxx
+
+2002-10-14 09:45  renard
+
+	* src/: Makefile.am, bgeot_abstract_linalg.h: [no log message]
+
+2002-10-11 11:18  renard
+
+	* tests/laplacian.pl: [no log message]
+
+2002-10-10 16:34  pommier
+
+	* src/getfem_assembling.h: filtrage du bruit pour
+	assembling_qu_term
+
+2002-10-10 15:42  pommier
+
+	* src/: bgeot_convex_ref.h, dal_ref.h: c++ mode
+
+2002-10-10 13:26  renard
+
+	* src/: bgeot_smatrix.h: [no log message]
+
+2002-10-10 13:23  renard
+
+	* tests/: Makefile.am, elasto_statique.C, elasto_statique.pl,
+	geo_trans_inv.pl, integration.C, laplacian.C, laplacian.pl,
+	test_link_fem.C, test_link_fem.pl: [no log message]
+
+2002-10-10 11:03  renard
+
+	* src/dal_ref.h, tests/integration.C: [no log message]
+
+2002-10-09 18:26  renard
+
+	* src/bgeot_vector.h, tests/elasto_statique.C, tests/integration.C,
+	tests/laplacian.C: [no log message]
+
+2002-10-09 17:09  renard
+
+	* configure.in, src/bgeot_smatrix.h, src/bgeot_svector.h,
+	src/dal_tree_sorted.h, tests/dynamic_array.C,
+	tests/geo_trans_inv.C, tests/test_link_fem.param: [no log message]
+
+2002-10-08 12:50  renard
+
+	* src/getfem_assembling.h: [no log message]
+
+2002-10-08 11:35  pommier
+
+	* src/: bgeot_smatrix.h, bgeot_svector.h, getfem_assembling.h: [no
+	log message]
+
+2002-10-08 10:34  renard
+
+	* src/: bgeot_smatrix.h, bgeot_svector.h, getfem_assembling.h: [no
+	log message]
+
+2002-10-08 10:21  pommier
+
+	* src/bgeot_svector.h: ajout svector
+
+2002-10-07 19:49  pommier
+
+	* src/: bgeot_smatrix.h, dal_except.h, getfem_assembling.h:
+	dirichlet
+
+2002-10-07 15:09  renard
+
+	* src/getfem_assembling.h: [no log message]
+
+2002-10-07 09:35  renard
+
+	* src/: bgeot_mesh.h, getfem_assembling.h: [no log message]
+
+2002-10-04 17:11  pommier
+
+	* src/: getfem_assembling.h, getfem_export.h:
+	assembling_dirichlet_constraint <- ca marche
+
+2002-10-04 15:07  renard
+
+	* src/getfem_assembling.h: [no log message]
+
+2002-10-04 12:30  renard
+
+	* configure.in, doc/HISTORY: [no log message]
+
+2002-10-03 13:05  renard
+
+	* tests/dynamic_array.C: [no log message]
+
+2002-10-03 11:14  khenous
+
+	* bin/cvsstat: [no log message]
+
+2002-09-27 13:59  renard
+
+	* bin/getfempath, src/dal_std.h: [no log message]
+
+2002-09-27 12:51  renard
+
+	* bin/getfempath: [no log message]
+
+2002-09-27 12:48  renard
+
+	* bin/: do_archive, getfempath: [no log message]
+
+2002-09-27 11:19  renard
+
+	* doc/kernel/getfemlist.tex, src/getfem_export.C,
+	src/getfem_export.h: [no log message]
+
+2002-09-25 16:42  renard
+
+	* src/: bgeot_matrix.h, getfem_integration.C, getfem_integration.h:
+	[no log message]
+
+2002-09-25 13:31  renard
+
+	* configure.in, src/bgeot_geotrans_inv.h, src/bgeot_matrix.h,
+	src/dal_alloc.h, src/dal_tree_sorted.h, src/ftool.C, src/ftool.h,
+	src/getfem_mesh.h, src/getfem_mesh_fem.C: [no log message]
+
+2002-09-24 14:05  renard
+
+	* tests/geo_trans_inv.C: [no log message]
+
+2002-09-24 13:16  renard
+
+	* doc/MAKE_VERSION, src/dal_std.h: [no log message]
+
+2002-09-24 12:34  renard
+
+	* doc/: MAKE_VERSION, kernel/getfemelem.tex, kernel/getfemlist.tex:
+	[no log message]
+
+2002-09-23 14:08  renard
+
+	* doc/: kernel/Makefile, kernel/getfemelem.tex, userdoc/Makefile:
+	[no log message]
+
+2002-09-23 13:16  renard
+
+	* configure.in, doc/kernel/getfemlist.tex,
+	doc/userdoc/getfemuser.tex: [no log message]
+
+2002-09-20 16:38  renard
+
+	* src/dal_std.h: [no log message]
+
+2002-09-20 14:25  renard
+
+	* src/: bgeot_poly.h, dal_std.h: [no log message]
+
+2002-09-20 14:04  renard
+
+	* src/dal_basic.h, src/dal_std.h, tests/geo_trans_inv.C: [no log
+	message]
+
+2002-09-20 13:35  renard
+
+	* src/dal_std.h, tests/geo_trans_inv.C: [no log message]
+
+2002-09-20 12:53  renard
+
+	* doc/kernel/getfemlist_intmethod_triangle2_comp.eps,
+	doc/kernel/getfemlist_intmethod_triangle2_comp.fig,
+	doc/kernel/getfemlist_triangle_P1comp.eps,
+	doc/kernel/getfemlist_triangle_P1comp.fig,
+	doc/kernel/getfemlist_triangle_P1comp_hier.eps,
+	doc/kernel/getfemlist_triangle_P1comp_hier.fig,
+	src/getfem_poly_composite.C: [no log message]
+
+2002-09-17 17:29  renard
+
+	* doc/kernel/: getfemlist.tex,
+	getfemlist_intmethod_triangle2_comp.eps,
+	getfemlist_intmethod_triangle2_comp.fig: [no log message]
+
+2002-09-17 17:17  renard
+
+	* doc/: kernel/getfemlist.tex, userdoc/getfemuser.tex: [no log
+	message]
+
+2002-09-17 17:05  renard
+
+	* doc/kernel/: getfemlist.tex,
+	getfemlist_intmethod_triangle2_comp.eps,
+	getfemlist_intmethod_triangle2_comp.fig: [no log message]
+
+2002-09-17 16:40  renard
+
+	* doc/kernel/: getfemelem.tex, getfemlist.tex,
+	getfemlist_segment_hier.eps, getfemlist_segment_hier.fig,
+	getfemlist_symbols.eps, getfemlist_symbols.fig,
+	getfemlist_triangle_P1comp.eps, getfemlist_triangle_P1comp.fig,
+	getfemlist_triangle_P1comp_hier.eps,
+	getfemlist_triangle_P1comp_hier.fig: [no log message]
+
+2002-09-16 13:49  renard
+
+	* tests/Makefile.am: [no log message]
+
+2002-09-16 13:45  renard
+
+	* tests/geo_trans_inv.param: [no log message]
+
+2002-09-16 13:32  renard
+
+	* src/dal_except.C, src/dal_except.h, src/dal_std.h,
+	tests/geo_trans.C, tests/geo_trans_inv.param, tests/laplacian.C,
+	src/bgeot_config.h: [no log message]
+
+2002-09-16 13:26  renard
+
+	* src/: dal_except.C, dal_except.h, dal_std.C, dal_std.h,
+	Makefile.am, dal_algobase.h: [no log message]
+
+2002-09-13 18:20  renard
+
+	* tests/geo_trans_inv.C: [no log message]
+
+2002-09-13 11:42  renard
+
+	* doc/kernel/getfemlist.tex, src/getfem_fem_virtual_link.C,
+	src/getfem_integration.C: [no log message]
+
+2002-09-13 11:13  renard
+
+	* tests/: Makefile.am, geo_trans_inv.pl: [no log message]
+
+2002-09-13 10:55  renard
+
+	* contrib/Makefile.am, tests/geo_trans_inv.C: [no log message]
+
+2002-09-13 10:18  renard
+
+	* bin/cvsall, src/getfem_poly_composite.C: [no log message]
+
+2002-09-13 09:49  renard
+
+	* bin/cvsall: [no log message]
+
+2002-09-13 09:42  renard
+
+	* bin/cvsall: [no log message]
+
+2002-09-13 09:27  renard
+
+	* doc/: MAKE_VERSION, kernel/persdf.tex: [no log message]
+
+2002-09-12 16:56  renard
+
+	* doc/: kernel/Makefile, kernel/getfemelem.tex,
+	kernel/getfemlist.tex, kernel/persdf.tex, userdoc/getfemuser.tex,
+	userdoc/persdf.tex: [no log message]
+
+2002-09-12 16:47  pommier
+
+	* doc/kernel/getfemelem.tex: [no log message]
+
+2002-09-12 15:00  pommier
+
+	* src/: Makefile.am, dal_std.C, dal_std.h, getfem_derivatives.h,
+	getfem_export.h, getfem_norm.h: [no log message]
+
+2002-09-09 18:33  renard
+
+	* src/bgeot_geotrans_inv.C, src/bgeot_geotrans_inv.h,
+	tests/geo_trans_inv.C, tests/geo_trans_inv.param: [no log message]
+
+2002-09-09 14:24  renard
+
+	* doc/kernel/Makefile, doc/userdoc/Makefile,
+	src/bgeot_geotrans_inv.C, src/bgeot_geotrans_inv.h,
+	src/getfem_fem.C, tests/geo_trans_inv.C, tests/geo_trans_inv.param:
+	[no log message]
+
+2002-09-09 14:19  renard
+
+	* doc/kernel/getfemelem.tex: [no log message]
+
+2002-09-09 12:34  renard
+
+	* tests/: geo_trans_inv.C, geo_trans_inv.param: [no log message]
+
+2002-09-09 12:30  renard
+
+	* tests/: Makefile.am, geo_trans_inv.C, geo_trans_inv.pl: [no log
+	message]
+
+2002-08-31 08:52  renard
+
+	* src/bgeot_vector.h, src/getfem_fem.C, src/getfem_fem.h,
+	src/getfem_fem_composite.C, src/getfem_integration.C,
+	tests/integration.C, tests/laplacian.C: [no log message]
+
+2002-08-31 07:17  renard
+
+	* src/getfem_integration.C: [no log message]
+
+2002-08-30 20:20  renard
+
+	* src/bgeot_convex.h, src/bgeot_matrix.h, src/getfem_integration.C,
+	src/getfem_integration.h, tests/integration.C: [no log message]
+
+2002-08-30 19:07  pommier
+
+	* src/: getfem_poly_composite.C, getfem_poly_composite.h: [no log
+	message]
+
+2002-08-30 16:15  pommier
+
+	* src/getfem_fem.C, src/getfem_fem.h, src/getfem_fem_composite.C,
+	src/getfem_poly_composite.h, tests/laplacian.param: suppression des
+	dynamic_cast pour matlab
+
+2002-08-30 14:27  renard
+
+	* src/getfem_integration.C: [no log message]
+
+2002-08-30 14:16  renard
+
+	* doc/kernel/getfemlist.tex,
+	doc/kernel/getfemlist_intmethod_triangle2.eps,
+	doc/kernel/getfemlist_intmethod_triangle2.fig,
+	src/getfem_integration.C,
+	doc/kernel/getfemlist_intmethod_quad5.eps,
+	doc/kernel/getfemlist_intmethod_quad5.fig: [no log message]
+
+2002-08-30 13:38  renard
+
+	* tests/: laplacian.C, laplacian.param: [no log message]
+
+2002-08-30 11:11  renard
+
+	* doc/kernel/getfemlist.tex, src/getfem_fem_composite.C,
+	tests/laplacian.C: [no log message]
+
+2002-08-30 10:34  renard
+
+	* src/getfem_fem.C, src/getfem_fem_composite.C, tests/laplacian.C:
+	[no log message]
+
+2002-08-28 19:23  renard
+
+	* bin/cvsall, src/bgeot_poly.h, src/getfem_poly_composite.C,
+	src/getfem_poly_composite.h, src/getfem_precomp.C,
+	tests/laplacian.C, tests/laplacian.param: [no log message]
+
+2002-08-28 12:53  renard
+
+	* src/getfem_integration.C, tests/integration.C, tests/laplacian.C:
+	[no log message]
+
+2002-08-28 12:02  renard
+
+	* configure.in, src/getfem_integration_composite.C,
+	src/getfem_poly_composite.C, tests/integration.C,
+	tests/laplacian.C, tests/laplacian.param, tests/laplacian.pl,
+	tests/test_link_fem.C, tests/test_link_fem.param,
+	tests/test_link_fem.pl: [no log message]
+
+2002-08-27 15:10  renard
+
+	* src/getfem_fem.C, src/getfem_fem.h, tests/dynamic_array.C: [no
+	log message]
+
+2002-08-27 14:37  renard
+
+	* src/: dal_std.h, getfem_fem.C, getfem_fem.h,
+	getfem_integration.h: [no log message]
+
+2002-08-27 11:08  renard
+
+	* src/getfem_fem.C, src/getfem_fem_composite.C,
+	src/getfem_integration_composite.C, tests/test_link_fem.param: [no
+	log message]
+
+2002-08-27 10:54  renard
+
+	* src/getfem_fem.C, src/getfem_fem_composite.C,
+	src/getfem_integration.C, src/getfem_integration_composite.C,
+	src/getfem_mat_elem.C, src/getfem_mesh.h,
+	src/getfem_poly_composite.C, src/getfem_poly_composite.h,
+	tests/test_link_fem.C, tests/test_link_fem.param: [no log message]
+
+2002-08-27 09:00  renard
+
+	* src/: Makefile.am, getfem_fem.C, getfem_fem.h,
+	getfem_fem_composite.C, getfem_integration.C,
+	getfem_poly_composite.C, getfem_poly_composite.h: [no log message]
+
+2002-08-26 16:23  renard
+
+	* tests/laplacian.pl: [no log message]
+
+2002-08-26 16:17  renard
+
+	* tests/: laplacian.pl: [no log message]
+
+2002-08-26 16:09  renard
+
+	* src/getfem_fem.C, tests/laplacian.pl: [no log message]
+
+2002-08-26 15:41  renard
+
+	* src/: Makefile.am, getfem_fem.C, getfem_integration.h,
+	getfem_integration_composite.C: [no log message]
+
+2002-08-26 15:20  pommier
+
+	* src/: getfem_export.C, getfem_export.h, getfem_integration.C,
+	getfem_integration.h: [no log message]
+
+2002-08-26 12:37  renard
+
+	* src/: getfem_poly_composite.C, getfem_integration.C: [no log
+	message]
+
+2002-08-26 12:33  renard
+
+	* src/: Makefile.am, getfem_integration.C, getfem_poly_composite.C,
+	getfem_poly_composite.h: [no log message]
+
+2002-08-26 12:14  renard
+
+	* doc/kernel/getfemelem.tex, doc/kernel/getfemlist.tex,
+	doc/userdoc/getfemuser.tex, src/Makefile.am,
+	src/bgeot_integration.C, src/bgeot_integration.h, src/bgeot_mesh.h,
+	src/bgeot_poly.h, src/dal_algobase.h, src/getfem_assembling.h,
+	src/getfem_export.h, src/getfem_fem.C, src/getfem_fem.h,
+	src/getfem_fem_virtual_link.C, src/getfem_integration.C,
+	src/getfem_integration.h, src/getfem_mat_elem.C,
+	src/getfem_mat_elem.h, src/getfem_mat_elem_type.h,
+	src/getfem_mesh_fem.C, src/getfem_mesh_fem.h, src/getfem_norm.h,
+	src/getfem_poly_composite.C, src/getfem_poly_composite.h,
+	src/getfem_regular_meshes.C, tests/elasto_statique.C,
+	tests/integration.C, tests/laplacian.C, tests/test_link_fem.C: [no
+	log message]
+
+2002-08-23 17:58  renard
+
+	* src/bgeot_poly.h, src/getfem_fem.C, tests/laplacian.C: [no log
+	message]
+
+2002-08-23 17:02  renard
+
+	* tests/laplacian.C: [no log message]
+
+2002-08-23 14:55  renard
+
+	* src/getfem_fem.C: [no log message]
+
+2002-08-23 14:41  renard
+
+	* src/bgeot_convex.h, src/bgeot_convex_structure.h,
+	src/getfem_fem.C, src/getfem_fem.h, src/getfem_mesh.h,
+	tests/laplacian.C: [no log message]
+
+2002-08-23 11:06  renard
+
+	* src/getfem_assembling.h, src/getfem_fem.C, src/getfem_fem.h,
+	tests/laplacian.C, tests/laplacian.param: [no log message]
+
+2002-08-22 18:26  renard
+
+	* bin/cvsstat, src/dal_alloc.h, src/getfem_mesh_fem.h: [no log
+	message]
+
+2002-08-22 15:19  renard
+
+	* bin/: cvsall, cvsstat: [no log message]
+
+2002-08-22 14:28  renard
+
+	* src/dal_basic.h: [no log message]
+
+2002-08-22 14:24  renard
+
+	* src/dal_bit_vector.h: [no log message]
+
+2002-08-22 14:20  renard
+
+	* src/dal_bit_vector.h: [no log message]
+
+2002-08-22 13:58  renard
+
+	* bin/cvsstat, doc/HISTORY, src/dal_basic.h, src/dal_bit_vector.h,
+	src/dal_tas.h, src/dal_tree_sorted.h, src/getfem_mesh_fem.C,
+	src/linkmsg.h: [no log message]
+
+2002-08-21 16:38  renard
+
+	* src/: bgeot_geometric_trans.C, bgeot_integration.C,
+	ftool_naming.h, getfem_fem.C, dal_std.h: [no log message]
+
+2002-08-21 16:30  renard
+
+	* configure.in, doc/HISTORY, src/Makefile.am,
+	src/bgeot_mesh_structure.C, src/bgeot_mesh_structure.h,
+	src/dal_std.h, src/dal_tas.h, src/getfem_mesh_fem.C,
+	src/getfem_mesh_fem.h, tests/geo_trans.C: [no log message]
+
+2002-08-21 14:52  pommier
+
+	* configure.in, src/bgeot_mesh_structure.C: correction de
+	local_ind_of_convex_point
+
+2002-08-20 18:42  pommier
+
+	* src/: bgeot_mesh.h, bgeot_tensor.h, bgeot_vector.h,
+	dal_bit_vector.h, getfem_mat_elem.C, getfem_mat_elem.h,
+	getfem_mesh.h, getfem_mesh_fem.h: ajout de memsize()
+
+2002-08-20 17:33  renard
+
+	* configure.in, doc/MAKE_VERSION, src/dal_std.h: [no log message]
+
+2002-08-20 17:26  renard
+
+	* src/ftool_naming.h: [no log message]
+
+2002-08-20 16:52  renard
+
+	* src/getfem_mesh.C: [no log message]
+
+2002-08-20 16:48  renard
+
+	* contrib/: draw_mesh_example1.mesh, draw_mesh_example2.mesh,
+	draw_mesh_example3.mesh, draw_mesh_example4.mesh,
+	draw_mesh_example5.mesh, draw_mesh_example6.mesh: [no log message]
+
+2002-08-20 16:29  renard
+
+	* src/: getfem_mesh.C, getfem_mesh.h: [no log message]
+
+2002-08-20 16:20  pommier
+
+	* src/: bgeot_geometric_trans.C, bgeot_geometric_trans.h,
+	getfem_mesh.C: product_geotrans + bugfix sauvegarde maillages
+
+2002-08-20 15:28  renard
+
+	* src/getfem_mesh.C: [no log message]
+
+2002-08-20 12:13  renard
+
+	* doc/kernel/getfemlist_triangle_hermite.eps,
+	doc/kernel/getfemlist_triangle_hermite.fig, src/ftool.C: docs
+
+2002-08-20 12:08  renard
+
+	* doc/kernel/getfemelem.tex, doc/kernel/getfemelemfem.tex,
+	doc/kernel/getfemelemint.tex, doc/kernel/getfemeleminta.tex,
+	doc/kernel/getfemlist.tex, doc/userdoc/getfemuser.tex,
+	src/getfem_fem.C, src/getfem_fem.h: docs
+
+2002-08-20 10:49  renard
+
+	* doc/kernel/getfemelem.tex, doc/kernel/getfemelemfem.tex,
+	doc/kernel/getfemelemint.tex, doc/kernel/getfemeleminta.tex,
+	src/bgeot_geometric_trans.C, src/bgeot_integration.C,
+	src/bgeot_integration.h, src/ftool_naming.h, src/getfem_fem.C,
+	src/getfem_mesh.C: save_mesh corrigee
+
+2002-08-19 19:57  renard
+
+	* src/ftool.C: [no log message]
+
+2002-08-19 19:51  renard
+
+	* bin/mesh_matlab_to_getfem, src/linkmsg.h: [no log message]
+
+2002-08-19 19:46  renard
+
+	* src/: bgeot_convex_structure.C, bgeot_convex_structure.h,
+	bgeot_mesh.h, bgeot_mesh_structure.C, bgeot_mesh_structure.h,
+	dal_std.h, getfem_mesh.C: [no log message]
+
+2002-08-19 19:07  pommier
+
+	* configure.in, src/getfem_fem.h, src/getfem_fem_virtual_link.C,
+	src/getfem_mesh_fem.C, src/linkmsg.h: linkmsg
+
+2002-08-19 17:41  renard
+
+	* doc/kernel/getfemelemfem.tex, doc/kernel/getfemelemint.tex,
+	doc/kernel/getfemeleminta.tex, src/Makefile.am,
+	src/bgeot_approx_integration.C, src/bgeot_approx_integration.h,
+	src/bgeot_geometric_trans.C, src/bgeot_geometric_trans.h,
+	src/bgeot_integration.C, src/bgeot_integration.h,
+	src/bgeot_poly_integration.C, src/bgeot_poly_integration.h,
+	src/dal_std.h, src/ftool.C, src/ftool_naming.h,
+	src/getfem_assembling.h, src/getfem_export.h, src/getfem_fem.C,
+	src/getfem_fem.h, src/getfem_fem_virtual_link.C,
+	src/getfem_mat_elem.C, src/getfem_mat_elem.h,
+	src/getfem_mat_elem_type.h, src/getfem_mesh.C, src/getfem_mesh.h,
+	src/getfem_mesh_fem.C, src/getfem_mesh_fem.h, src/getfem_norm.h,
+	src/getfem_regular_meshes.C, src/linkmsg.h, tests/dynamic_array.pl,
+	tests/elasto_statique.C, tests/elasto_statique.pl,
+	tests/geo_trans.C, tests/integration.C, tests/laplacian.C,
+	tests/test_link_fem.C, tests/test_mesh.C: [no log message]
+
+2002-08-16 18:39  pommier
+
+	* src/getfem_derivatives.h: enleve un warning de compil
+
+2002-08-16 17:24  renard
+
+	* src/bgeot_vector.h: [no log message]
+
+2002-08-16 17:02  renard
+
+	* src/: getfem_assembling.h, getfem_export.C, getfem_export.h,
+	getfem_norm.h: [no log message]
+
+2002-08-16 15:53  renard
+
+	* configure.in, src/bgeot_approx_integration.C, src/bgeot_convex.h,
+	src/bgeot_convex_hull.h, src/bgeot_convex_structure.C,
+	src/bgeot_geometric_trans.C, src/bgeot_geotrans_inv.C,
+	src/bgeot_mesh_structure.C, src/bgeot_simplexify.h,
+	src/dal_bit_vector.C, src/dal_ref.h, src/dal_std.h,
+	src/dal_tree_sorted.h, src/ftool.C, src/getfem_export.C,
+	src/getfem_fem.C, src/getfem_fem.h, src/getfem_fem_virtual_link.C,
+	src/getfem_mat_elem.h, src/getfem_mesh.C, src/getfem_mesh.h,
+	src/getfem_mesh_fem.C, src/getfem_mesh_fem.h,
+	src/getfem_regular_meshes.C, src/linkmsg.h: [no log message]
+
+2002-08-16 14:33  pommier
+
+	* src/dal_std.h: bugfix compil
+
+2002-08-16 14:04  pommier
+
+	* src/dal_std.h: utilisation de sstream ou strstream selon la
+	version de gcc
+
+2002-08-16 13:40  renard
+
+	* configure.in, src/bgeot_approx_integration.C,
+	src/bgeot_convex_ref.h, src/bgeot_mesh_structure.C,
+	src/bgeot_mesh_structure.h, src/bgeot_poly_integration.h,
+	src/dal_bit_vector.h, src/dal_std.h, src/getfem_export.C,
+	src/getfem_export.h: [no log message]
+
+2002-08-15 19:46  pommier
+
+	* src/: getfem_export.C, getfem_export.h: made the function
+	mesh_edge_list_convex public and added a face number parameter
+
+2002-08-14 17:47  pommier
+
+	* src/: getfem_export.h, getfem_mesh.C: changement des
+	std::string.data() en string.c_str()
+
+2002-08-13 16:39  renard
+
+	* doc/kernel/getfemelem.tex, doc/kernel/getfemelemfem.tex,
+	doc/kernel/getfemeleminta.tex, doc/kernel/getfemlist.tex,
+	doc/userdoc/getfemuser.tex, src/getfem_mat_elem.C: [no log message]
+
+2002-08-13 12:47  renard
+
+	* src/bgeot_mesh_structure.C, src/bgeot_mesh_structure.h,
+	src/getfem_mesh_fem.C, tests/test_link_fem.param: [no log message]
+
+2002-08-13 11:46  renard
+
+	* src/bgeot_approx_integration.C, src/bgeot_geotrans_inv.h,
+	src/bgeot_mesh_structure.h, src/bgeot_poly.C, src/bgeot_tensor.h,
+	src/getfem_assembling.h, src/getfem_fem.C, src/getfem_fem.h,
+	src/getfem_fem_virtual_link.C, src/getfem_mat_elem.C,
+	src/getfem_mesh_fem.C, tests/test_link_fem.C,
+	tests/test_link_fem.param, tests/test_link_fem.pl: [no log message]
+
+2002-08-12 17:12  renard
+
+	* tests/: Makefile.am, test_link_fem.C, test_link_fem.param,
+	test_link_fem.pl: [no log message]
+
+2002-08-12 13:15  renard
+
+	* doc/MAKE_VERSION, src/getfem_derivatives.h, src/getfem_fem.C,
+	src/getfem_fem.h, src/getfem_fem_virtual_link.C,
+	src/getfem_mat_elem.C, src/getfem_mesh_fem.C: [no log message]
+
+2002-08-10 14:08  renard
+
+	* src/getfem_fem_virtual_link.C: [no log message]
+
+2002-08-10 13:56  renard
+
+	* src/getfem_fem_virtual_link.C: [no log message]
+
+2002-08-10 13:49  renard
+
+	* doc/guide_intervention/getfem_orga.eps,
+	doc/guide_intervention/getfem_orga.fig,
+	doc/guide_intervention/getfemlab_orga.eps,
+	doc/guide_intervention/getfemlab_orga.fig,
+	doc/guide_intervention/guide_intervention.tex,
+	src/bgeot_approx_integration.C, src/bgeot_approx_integration.h,
+	src/bgeot_convex_ref.h, src/bgeot_convex_structure.C,
+	src/dal_fonc_tables.h, src/dal_tas.h, src/dal_tree_sorted.h,
+	src/getfem_assembling.h, src/getfem_fem.C, src/getfem_fem.h,
+	src/getfem_fem_virtual_link.C, src/getfem_mesh_fem.C,
+	src/getfem_precomp.C, tests/laplacian.pl: [no log message]
+
+2002-08-09 16:52  renard
+
+	* src/: Makefile.am, bgeot_geometric_trans.h, bgeot_geotrans_inv.C,
+	bgeot_geotrans_inv.h, getfem_export.h, getfem_fem.h,
+	getfem_fem_virtual_link.C, getfem_mesh.h, getfem_mesh_fem.C,
+	getfem_mesh_fem.h: [no log message]
+
+2002-08-08 18:30  renard
+
+	* src/: getfem_fem.C, getfem_fem.h, getfem_mat_elem.C,
+	getfem_mat_elem_type.C: [no log message]
+
+2002-08-08 17:21  renard
+
+	* src/: bgeot_tensor.h, getfem_assembling.h, getfem_fem.h,
+	getfem_mat_elem.C, getfem_mat_elem_type.h: [no log message]
+
+2002-08-08 11:00  renard
+
+	* doc/kernel/: getfemlist.tex, getfemlist_segment_bubble.eps,
+	getfemlist_segment_bubble.fig: [no log message]
+
+2002-08-08 10:55  renard
+
+	* doc/kernel/: getfemlist_segment_bubble.eps,
+	getfemlist_segment_bubble.fig,
+	getfemlist_tetrahedron_P1_bubble_face.eps,
+	getfemlist_tetrahedron_P1_bubble_face.fig: [no log message]
+
+2002-08-03 14:11  renard
+
+	* src/getfem_derivatives.h: [no log message]
+
+2002-08-03 13:55  renard
+
+	* doc/kernel/getfemlist.tex, src/getfem_export.h, src/getfem_fem.C,
+	src/getfem_fem.h, src/getfem_mat_elem.C, src/getfem_mat_elem.h,
+	tests/laplacian.C, tests/laplacian.param: [no log message]
+
+2002-08-02 18:28  renard
+
+	* src/getfem_assembling.h: [no log message]
+
+2002-08-02 18:22  renard
+
+	* src/: getfem_assembling.h, getfem_fem.C: [no log message]
+
+2002-08-02 17:45  renard
+
+	* doc/kernel/Makefile, doc/kernel/getfemelemfem.tex,
+	doc/kernel/getfemelemint.tex, doc/kernel/getfemeleminta.tex,
+	doc/kernel/getfemlist.tex, doc/kernel/getfemlist_extrans.eps,
+	doc/kernel/getfemlist_extrans.fig,
+	doc/kernel/getfemlist_symbols.eps,
+	doc/kernel/getfemlist_symbols.fig, doc/userdoc/getfemuser.tex,
+	src/bgeot_poly.h, src/getfem_fem.C, src/getfem_fem.h,
+	tests/laplacian.C, tests/laplacian.param, tests/laplacian.pl: [no
+	log message]
+
+2002-08-01 17:52  renard
+
+	* doc/kernel/: getfemeleminta.tex, getfemlist.tex,
+	getfemlist_cube_Q1.eps, getfemlist_cube_Q1.fig,
+	getfemlist_cube_Q3.eps, getfemlist_cube_Q3.fig,
+	getfemlist_extrans.eps, getfemlist_extrans.fig,
+	getfemlist_intmethod_quad2.eps, getfemlist_intmethod_quad2.fig,
+	getfemlist_intmethod_quad3.eps, getfemlist_intmethod_quad3.fig,
+	getfemlist_intmethod_quad5.eps, getfemlist_intmethod_quad5.fig,
+	getfemlist_intmethod_tetrahedron1.eps,
+	getfemlist_intmethod_tetrahedron1.fig,
+	getfemlist_intmethod_tetrahedron2.eps,
+	getfemlist_intmethod_tetrahedron2.fig,
+	getfemlist_intmethod_tetrahedron3.eps,
+	getfemlist_intmethod_tetrahedron3.fig,
+	getfemlist_intmethod_tetrahedron5.eps,
+	getfemlist_intmethod_tetrahedron5.fig,
+	getfemlist_intmethod_triangle1.eps,
+	getfemlist_intmethod_triangle1.fig,
+	getfemlist_intmethod_triangle2.eps,
+	getfemlist_intmethod_triangle2.fig,
+	getfemlist_intmethod_triangle3.eps,
+	getfemlist_intmethod_triangle3.fig,
+	getfemlist_intmethod_triangle4.eps,
+	getfemlist_intmethod_triangle4.fig,
+	getfemlist_intmethod_triangle5.eps,
+	getfemlist_intmethod_triangle5.fig,
+	getfemlist_intmethod_triangle6.eps,
+	getfemlist_intmethod_triangle6.fig,
+	getfemlist_intmethod_triangle7.eps,
+	getfemlist_intmethod_triangle7.fig, getfemlist_prism_P1.eps,
+	getfemlist_prism_P1.fig, getfemlist_prism_P2_P1.eps,
+	getfemlist_prism_P2_P1.fig, getfemlist_prism_P3.eps,
+	getfemlist_prism_P3.fig, getfemlist_quad_Q1.eps,
+	getfemlist_quad_Q1.fig, getfemlist_quad_Q3.eps,
+	getfemlist_quad_Q3.fig, getfemlist_segment_hermite.eps,
+	getfemlist_segment_hermite.fig, getfemlist_symbols.eps,
+	getfemlist_symbols.fig, getfemlist_tetrahedron_P1_bubble.eps,
+	getfemlist_tetrahedron_P1_bubble.fig,
+	getfemlist_tetrahedron_P2_bubble.eps,
+	getfemlist_tetrahedron_P2_bubble.fig,
+	getfemlist_tetrahedron_P3_bubble.eps,
+	getfemlist_tetrahedron_P3_bubble.fig,
+	getfemlist_triangle_P1_bubble.eps,
+	getfemlist_triangle_P1_bubble.fig,
+	getfemlist_triangle_P1_bubble_face.eps,
+	getfemlist_triangle_P1_bubble_face.fig,
+	getfemlist_triangle_P1_non_conforming.eps,
+	getfemlist_triangle_P1_non_conforming.fig,
+	getfemlist_triangle_P1_with_P2_face.eps,
+	getfemlist_triangle_P1_with_P2_face.fig,
+	getfemlist_triangle_P2_bubble.eps,
+	getfemlist_triangle_P2_bubble.fig, getfemlist_triangle_hermite.eps,
+	getfemlist_triangle_hermite.fig: [no log message]
+
+2002-08-01 14:43  renard
+
+	* bin/extract_mlabcom: [no log message]
+
+2002-08-01 14:31  renard
+
+	* bin/: extract_latex, extract_mlabcom: [no log message]
+
+2002-08-01 14:14  renard
+
+	* doc/kernel/getfemlist.tex, doc/kernel/getfemlist_argyris.eps,
+	doc/kernel/getfemlist_argyris.fig,
+	doc/kernel/getfemlist_triangle_P1.eps,
+	doc/kernel/getfemlist_triangle_P1.fig, src/bgeot_poly.C,
+	src/bgeot_poly.h, src/dal_std.h, tests/poly.C: [no log message]
+
+2002-07-31 19:44  renard
+
+	* doc/kernel/: Makefile, getfemlist.tex, getfemlist_segment_Pk.eps,
+	getfemlist_segment_Pk.fig, getfemlist_tetrahedron_P1.eps,
+	getfemlist_tetrahedron_P1.fig, getfemlist_tetrahedron_P2.eps,
+	getfemlist_tetrahedron_P2.fig, getfemlist_tetrahedron_P4.eps,
+	getfemlist_tetrahedron_P4.fig, getfemlist_triangle_P1.eps,
+	getfemlist_triangle_P1.fig, getfemlist_triangle_P2.eps,
+	getfemlist_triangle_P2.fig, getfemlist_triangle_P3.eps,
+	getfemlist_triangle_P3.fig, getfemlist_triangle_P6.eps,
+	getfemlist_triangle_P6.fig: [no log message]
+
+2002-07-31 18:31  renard
+
+	* doc/kernel/: getfemlist.tex, getfemlist_segment_Pk.eps,
+	getfemlist_segment_Pk.fig: [no log message]
+
+2002-07-31 18:20  renard
+
+	* doc/: interpole/Makefile, kernel/getfemlist.tex,
+	kernel/getfemlist_symbols.eps, kernel/getfemlist_symbols.fig,
+	userdoc/Makefile: [no log message]
+
+2002-07-31 16:56  pommier
+
+	* src/dal_std.h: [no log message]
+
+2002-07-31 16:15  renard
+
+	* doc/kernel/: getfemlist.tex, getfemlist_tetrahedron_P2.eps,
+	getfemlist_tetrahedron_P2.fig, getfemlist_tetrahedron_P4.eps,
+	getfemlist_tetrahedron_P4.fig: [no log message]
+
+2002-07-31 16:06  renard
+
+	* doc/kernel/: getfemlist.tex, getfemlist_tetrahedron_P1.eps,
+	getfemlist_tetrahedron_P1.fig, getfemlist_tetrahedron_P2.eps,
+	getfemlist_tetrahedron_P2.fig, getfemlist_tretrahedron_P1.eps,
+	getfemlist_tretrahedron_P1.fig, getfemlist_tretrahedron_P2.eps,
+	getfemlist_tretrahedron_P2.fig: [no log message]
+
+2002-07-31 15:05  renard
+
+	* doc/kernel/: getfemlist_tretrahedron_P2.eps,
+	getfemlist_tretrahedron_P2.fig: [no log message]
+
+2002-07-31 15:01  renard
+
+	* doc/kernel/: Makefile, getfemlist_tretrahedron_P1.eps,
+	getfemlist_tretrahedron_P1.fig, getfemlist_triangle_P1.eps,
+	getfemlist_triangle_P1.fig, getfemlist_triangle_P2.eps,
+	getfemlist_triangle_P2.fig, getfemlist_triangle_P3.eps,
+	getfemlist_triangle_P3.fig, getfemlist_triangle_P6.eps,
+	getfemlist_triangle_P6.fig: [no log message]
+
+2002-07-31 13:27  renard
+
+	* doc/: interpole/Makefile, kernel/Makefile, userdoc/Makefile: [no
+	log message]
+
+2002-07-31 13:18  renard
+
+	* doc/interpole/: Makefile, getfem_interpole.tex: [no log message]
+
+2002-07-31 13:15  renard
+
+	* doc/: kernel/Makefile, kernel/getfemlist.tex,
+	kernel/getfemlist_argyris.eps, kernel/getfemlist_argyris.fig,
+	kernel/getfemlist_symbols.eps, kernel/getfemlist_symbols.fig,
+	userdoc/Makefile, userdoc/getfemuser.tex: [no log message]
+
+2002-07-31 09:37  renard
+
+	* src/getfem_export.h: [no log message]
+
+2002-07-31 08:54  renard
+
+	* src/bgeot_poly.C, tests/laplacian.param: [no log message]
+
+2002-07-29 19:17  renard
+
+	* doc/HISTORY: [no log message]
+
+2002-07-29 18:49  renard
+
+	* doc/: HISTORY, kernel/getfemelem.tex, userdoc/getfemuser.tex: [no
+	log message]
+
+2002-07-19 08:45  renard
+
+	* bin/: dr2dgnuplot, sc2dgnuplot: [no log message]
+
+2002-07-18 15:30  renard
+
+	* BUGS_AND_REMARKS, bin/dr2dgnuplot, bin/sc2dgnuplot: [no log
+	message]
+
+2002-07-18 11:27  renard
+
+	* README, configure.in, contrib/Makefile.am,
+	contrib/interpole_solution.C, doc/MAKE_VERSION,
+	src/bgeot_smatrix.h, src/getfem_export.h, tests/Makefile.am,
+	tests/elasto_statique.C, tests/laplacian.C, tests/test_mesh.C: [no
+	log message]
+
+2002-07-18 08:35  renard
+
+	* doc/MAKE_VERSION: [no log message]
+
+2002-07-18 08:25  renard
+
+	* doc/interpole/getfem_interpole.tex: [no log message]
+
+2002-07-17 12:14  renard
+
+	* contrib/compare_solutions.C, contrib/interpole_solution.C,
+	doc/interpole/getfem_interpole.tex, src/getfem_export.h: [no log
+	message]
+
+2002-07-17 11:08  renard
+
+	* doc/interpole/getfem_interpole.tex, src/getfem_export.h: [no log
+	message]
+
+2002-07-17 10:56  renard
+
+	* contrib/compare_solutions.C, contrib/interpole_solution.C,
+	doc/interpole/getfem_interpole.tex, doc/kernel/getfemelem.tex,
+	doc/userdoc/getfemuser.tex, src/bgeot_config.h, src/dal_algobase.h,
+	src/dal_std.h, src/getfem_config.h, src/getfem_export.h,
+	src/getfem_mesh.C: [no log message]
+
+2002-07-16 14:05  renard
+
+	* doc/interpole/: getfem_interpole.tex, getfem_logo.eps: Initial
+	revision
+
+2002-07-16 14:05  renard
+
+	* doc/interpole/: getfem_interpole.tex, getfem_logo.eps: [no log
+	message]
+
+2002-07-16 09:39  renard
+
+	* doc/getfem_presentation/: getfem_presentation.tex,
+	getfem_presentation_press.eps, getfem_presentation_sat.eps: Initial
+	revision
+
+2002-07-16 09:39  renard
+
+	* doc/getfem_presentation/: getfem_presentation.tex,
+	getfem_presentation_press.eps, getfem_presentation_sat.eps:
+	presentation
+
+2002-07-16 09:39  renard
+
+	* doc/: getfem_presentation.tex, getfem_presentation_press.eps,
+	getfem_presentation_sat.eps: [no log message]
+
+2002-07-16 09:35  renard
+
+	* doc/: getfem_logo.eps, getfem_logo.fig, getfem_logo2.fig,
+	getfemlab_logo.eps, getfemlab_logo.fig, matlab_logo.gif,
+	matlab_logo2.gif: [no log message]
+
+2002-07-16 09:30  renard
+
+	* doc/guide_intervention/: files_structure.eps,
+	files_structure.fig, files_structure2.eps, files_structure2.fig,
+	guide_intervention.tex: [no log message]
+
+2002-07-15 13:58  renard
+
+	* CHANGES, INSTALL, Makefile.am, TOBEDONE,
+	doc/getfem_presentation.tex: [no log message]
+
+2002-07-15 13:40  renard
+
+	* doc/: getfem_presentation.tex, getfem_presentation_press.eps,
+	getfem_presentation_sat.eps, kernel/getfemelemfem.tex,
+	kernel/getfemeleminta.tex, userdoc/getfemuser.tex: [no log message]
+
+2002-07-15 10:12  renard
+
+	* doc/kernel/: getfemelem.tex, getfemeleminta.tex: [no log message]
+
+2002-07-15 10:07  renard
+
+	* doc/kernel/: getfemelem.tex, getfemelemfem.tex,
+	getfemelemint.tex: [no log message]
+
+2002-07-15 10:02  renard
+
+	* contrib/draw_mesh: [no log message]
+
+2002-07-15 09:11  renard
+
+	* bin/dr2dgnuplot, bin/sc2dgnuplot, doc/userdoc/getfemuser.tex,
+	doc/userdoc/getfemuser_elemf.eps, doc/userdoc/getfemuser_elemf.fig,
+	src/getfem_derivatives.h, src/getfem_export.h, src/getfem_norm.h,
+	tests/laplacian.C: [no log message]
+
+2002-07-12 16:51  renard
+
+	* doc/userdoc/getfemuser.tex: [no log message]
+
+2002-07-12 14:21  renard
+
+	* src/bgeot_mesh_structure.C: [no log message]
+
+2002-07-12 11:18  renard
+
+	* bin/Makefile.am, contrib/Makefile.am, src/Makefile.am,
+	tests/Makefile.am: [no log message]
+
+2002-07-12 10:06  renard
+
+	* bin/Makefile.am, doc/userdoc/getfemuser.tex,
+	tests/laplacian.param: [no log message]
+
+2002-07-12 09:59  renard
+
+	* bin/: install, install_old: [no log message]
+
+2002-07-11 12:46  renard
+
+	* src/dal_std.h: [no log message]
+
+2002-07-10 19:16  renard
+
+	* src/bgeot_smatrix.h: [no log message]
+
+2002-07-10 18:40  renard
+
+	* src/: bgeot_convex.h, bgeot_convex_structure.C,
+	bgeot_convex_structure.h, bgeot_matrix.h, bgeot_mesh.h,
+	bgeot_mesh_structure.C, bgeot_mesh_structure.h, bgeot_poly.h,
+	bgeot_simplexify.h, bgeot_tensor.h, bgeot_vector.h, dal_basic.h,
+	dal_bit_vector.C, dal_bit_vector.h, dal_std.h, dal_tree_sorted.h,
+	ftool.C, ftool.h, getfem_export.h, getfem_mesh.C, getfem_mesh.h:
+	[no log message]
+
+2002-07-10 18:16  renard
+
+	* doc/userdoc/getfemuser.tex, src/bgeot_poly.h, src/dal_alloc.h,
+	src/dal_tree_sorted.h: [no log message]
+
+2002-07-10 09:52  renard
+
+	* doc/userdoc/getfemuser.tex: [no log message]
+
+2002-07-09 14:29  renard
+
+	* doc/userdoc/getfemuser.tex, doc/userdoc/getfemuser_elemf.eps,
+	doc/userdoc/getfemuser_elemf.fig, src/getfem_fem.C,
+	src/getfem_mesh.h: [no log message]
+
+2002-07-09 11:37  renard
+
+	* doc/userdoc/: getfemuser.tex, getfemuser_elemf.eps,
+	getfemuser_elemf.fig: [no log message]
+
+2002-07-08 11:00  renard
+
+	* contrib/: draw_mesh, draw_mesh_doedges.C: [no log message]
+
+2002-07-03 17:15  renard
+
+	* configure.in, contrib/Makefile.am, contrib/draw_mesh,
+	contrib/draw_mesh_doedges.C, contrib/draw_mesh_example1.mesh,
+	contrib/draw_mesh_example2.mesh, contrib/draw_mesh_example3.mesh,
+	contrib/draw_mesh_example4.mesh, contrib/draw_mesh_example5.mesh,
+	contrib/draw_mesh_example6.mesh, src/bgeot_geometric_trans.C,
+	src/dal_std.h, src/getfem_mesh.C, tests/laplacian.param: [no log
+	message]
+
+2002-07-03 16:16  renard
+
+	* tests/Makefile.am: [no log message]
+
+2002-07-03 15:45  renard
+
+	* contrib/: Makefile.am, draw_mesh_doedges.C: [no log message]
+
+2002-07-03 15:17  renard
+
+	* doc/userdoc/: getfem_logo.eps, getfemuser.tex,
+	getfemuser_elem.eps, getfemuser_elem.fig: Initial revision
+
+2002-07-03 15:17  renard
+
+	* doc/userdoc/: getfem_logo.eps, getfemuser.tex,
+	getfemuser_elem.eps, getfemuser_elem.fig: user doc
+
+2002-07-03 15:15  renard
+
+	* BUGS_AND_REMARKS, CONTAINS, Makefile.am, README,
+	contrib/compare_solutions.C, contrib/interpole_solution.C,
+	doc/kernel/getfem_logo.eps, doc/kernel/getfemelem.tex: [no log
+	message]
+
+2002-07-03 10:22  renard
+
+	* tests/: laplacian.C, laplacian.param, laplacian.pl, laplacien.C,
+	laplacien.param, laplacien.pl: [no log message]
+
+2002-07-01 12:33  renard
+
+	* doc/kernel/: getfem_logo.eps, getfemelem.tex,
+	getfemelem_elem.eps, getfemelem_elem.fig, getfemelem_trans.eps,
+	getfemelem_trans.fig: Initial revision
+
+2002-07-01 12:33  renard
+
+	* doc/kernel/: getfem_logo.eps, getfemelem.tex,
+	getfemelem_elem.eps, getfemelem_elem.fig, getfemelem_trans.eps,
+	getfemelem_trans.fig: kernel doc
+
+2002-07-01 10:50  renard
+
+	* doc/getfem_logo2.fig: [no log message]
+
+2002-06-28 15:22  renard
+
+	* configure.in: [no log message]
+
+2002-06-27 17:19  renard
+
+	* src/: bgeot_approx_integration.C, ftool.C, ftool.h, getfem_fem.h:
+	[no log message]
+
+2002-06-27 13:30  renard
+
+	* bin/Makefile.am, src/bgeot_approx_integration.C,
+	src/bgeot_convex_ref.C, src/bgeot_convex_structure.C,
+	src/bgeot_mesh_structure.C, src/bgeot_mesh_structure.h,
+	src/bgeot_tensor.h, src/dal_basic.h, src/getfem_fem.C,
+	src/getfem_mat_elem.C: [no log message]
+
+2002-06-27 13:18  renard
+
+	* tests/elasto_statique.dotest: [no log message]
+
+2002-06-27 09:50  renard
+
+	* src/getfem_mat_elem.h: [no log message]
+
+2002-06-27 09:41  renard
+
+	* src/bgeot_convex.h, src/bgeot_convex_structure.h,
+	src/bgeot_geometric_trans.C, src/bgeot_geometric_trans.h,
+	src/getfem_mat_elem.C, src/getfem_mesh.C, src/getfem_mesh.h,
+	src/getfem_mesh_fem.C, src/getfem_mesh_fem.h,
+	tests/elasto_statique.C, tests/laplacien.C, tests/laplacien.param,
+	tests/laplacien.pl: [no log message]
+
+2002-06-27 08:19  renard
+
+	* Makefile.am, configure.in, src/dal_std.h, src/getfem_fem.h,
+	tests/laplacien.C, tests/laplacien.param, tests/laplacien.pl: [no
+	log message]
+
+2002-06-27 07:59  renard
+
+	* bin/Makefile.am: [no log message]
+
+2002-06-26 16:54  renard
+
+	* src/getfem_regular_meshes.C, src/getfem_regular_meshes.h,
+	tests/laplacien.C, tests/laplacien.param, tests/laplacien.pl: [no
+	log message]
+
+2002-06-26 13:10  renard
+
+	* src/bgeot_approx_integration.C, src/bgeot_approx_integration.h,
+	src/bgeot_geometric_trans.C, src/getfem_mat_elem.C,
+	tests/laplacien.C, tests/laplacien.param: [no log message]
+
+2002-06-25 19:19  renard
+
+	* src/getfem_assembling.h, src/getfem_regular_meshes.C,
+	tests/laplacien.C, tests/laplacien.param, tests/laplacien.pl: [no
+	log message]
+
+2002-06-25 18:55  renard
+
+	* Makefile.am, src/bgeot_approx_integration.C,
+	src/bgeot_approx_integration.h, src/bgeot_convex.h,
+	src/bgeot_convex_structure.C, src/bgeot_geometric_trans.C,
+	src/bgeot_smatrix.h, src/dal_std.h, src/dal_tree_sorted.h,
+	src/getfem_assembling.h, src/getfem_fem.C, src/getfem_fem.h,
+	src/getfem_mat_elem.C, src/getfem_mesh_fem.C, src/getfem_precomp.C,
+	src/getfem_regular_meshes.C, src/getfem_regular_meshes.h,
+	tests/dynamic_array.pl, tests/dynamic_tas.pl,
+	tests/elasto_statique.C, tests/elasto_statique.pl,
+	tests/geo_trans.pl, tests/integration.pl, tests/laplacien.C,
+	tests/laplacien.param, tests/laplacien.pl, tests/poly.pl,
+	tests/test_mesh.pl, tests/test_tree_sorted.pl: Des bugs en moins
+
+2002-06-24 09:39  renard
+
+	* src/bgeot_approx_integration.C, src/bgeot_approx_integration.h,
+	src/bgeot_geometric_trans.C, src/bgeot_matrix.h,
+	src/bgeot_vector.h, src/dal_basic.h, src/dal_std.h,
+	src/dal_tree_sorted.h, src/getfem_mat_elem.h,
+	src/getfem_mesh_fem.C, src/getfem_precomp.C, tests/Makefile.am,
+	tests/dynamic_array.C, tests/elasto_statique.C,
+	tests/elasto_statique.param, tests/laplacien.C,
+	tests/laplacien.param, tests/test_tree_sorted.C: [no log message]
+
+2002-06-21 18:22  renard
+
+	* src/bgeot_approx_integration.h, tests/integration.C: [no log
+	message]
+
+2002-06-21 18:00  renard
+
+	* src/: bgeot_approx_integration.C, bgeot_approx_integration.h: [no
+	log message]
+
+2002-06-21 10:36  renard
+
+	* src/bgeot_smatrix.h, tests/dynamic_array.C,
+	tests/dynamic_array.pl, tests/dynamic_tas.C, tests/dynamic_tas.pl,
+	tests/elasto_statique.C, tests/elasto_statique.pl,
+	tests/geo_trans.pl, tests/integration.C, tests/integration.pl,
+	tests/laplacien.C, tests/laplacien.pl, tests/poly.pl,
+	tests/test_int_set.pl, tests/test_mesh.pl,
+	tests/test_tree_sorted.pl: [no log message]
+
+2002-06-20 18:54  pommier
+
+	* src/bgeot_poly.h, src/bgeot_smatrix.h,
+	src/getfem_regular_meshes.h, tests/elasto_statique.C,
+	tests/laplacien.C, tests/laplacien.pl: [no log message]
+
+2002-06-20 17:35  renard
+
+	* tests/: dynamic_array.pl, dynamic_tas.pl, elasto_statique.pl,
+	geo_trans.pl, integration.pl, laplacien.pl, poly.pl,
+	test_int_set.pl, test_mesh.pl, test_tree_sorted.pl: [no log
+	message]
+
+2002-06-20 17:28  renard
+
+	* tests/: Makefile.am, dynamic_array.C, geo_trans.C, integration.C,
+	poly.C, test_int_set.C, test_mesh.C, test_tree_sorted.C: [no log
+	message]
+
+2002-06-20 17:13  renard
+
+	* tests/: Makefile.am, dynamic_array.C, integration.C, test_mesh.C,
+	test_tree_sorted.C: [no log message]
+
+2002-06-20 16:50  renard
+
+	* tests/: Makefile.am, elasto_statique.C, elasto_statique.param,
+	elasto_statique_prisme.C, laplacien.C: [no log message]
+
+2002-06-20 16:33  renard
+
+	* src/bgeot_smatrix.h, tests/Makefile.am, tests/dynamic_array.C,
+	tests/elasto_statique.C, tests/elasto_statique.param,
+	tests/laplacien.C, tests/laplacien.param: [no log message]
+
+2002-06-20 14:16  renard
+
+	* src/: Makefile.am, bgeot_smatrix.h: [no log message]
+
+2002-06-20 13:57  renard
+
+	* src/: ftool.C, ftool.h: [no log message]
+
+2002-06-20 11:28  pommier
+
+	* tests/dynamic_array.C: [no log message]
+
+2002-06-20 11:15  pommier
+
+	* contrib/Makefile.am, src/bgeot_config.h, src/dal_std.h,
+	src/getfem_config.h: [no log message]
+
+2002-06-20 10:35  renard
+
+	* src/getfem_mesh_fem.C: [no log message]
+
+2002-06-20 10:14  renard
+
+	* src/bgeot_config.h, tests/dynamic_array.C: [no log message]
+
+2002-06-20 10:06  renard
+
+	* src/bgeot_config.h, tests/dynamic_array.C: [no log message]
+
+2002-06-20 09:36  renard
+
+	* src/getfem_config.h: [no log message]
+
+2002-06-20 09:28  renard
+
+	* src/getfem_config.h: [no log message]
+
+2002-06-20 09:22  renard
+
+	* src/bgeot_config.h: [no log message]
+
+2002-06-20 09:16  renard
+
+	* src/: bgeot_config.h, bgeot_geometric_trans.C, bgeot_poly.h,
+	bgeot_vector.h: [no log message]
+
+2002-06-20 09:11  renard
+
+	* src/: bgeot_config.h, bgeot_convex_structure.h, bgeot_poly.h,
+	bgeot_vector.h: [no log message]
+
+2002-06-19 19:21  renard
+
+	* src/bgeot_approx_integration.C, src/bgeot_config.h,
+	src/bgeot_convex.h, src/bgeot_convex_ref.C,
+	src/bgeot_convex_structure.C, src/bgeot_geometric_trans.C,
+	src/bgeot_geometric_trans.h, src/bgeot_geotrans_inv.h,
+	src/bgeot_matrix.h, src/bgeot_poly.C, src/bgeot_poly.h,
+	src/bgeot_tensor.h, src/bgeot_vector.h, src/dal_alloc.h,
+	src/dal_basic.h, src/dal_std.h, src/dal_tree_sorted.h,
+	src/getfem_assembling.h, src/getfem_config.h,
+	src/getfem_derivatives.h, src/getfem_export.h, src/getfem_fem.C,
+	src/getfem_fem.h, src/getfem_mat_elem.C, src/getfem_mesh.C,
+	src/getfem_mesh.h, src/getfem_mesh_fem.C, src/getfem_precomp.C,
+	tests/dynamic_array.C: [no log message]
+
+2002-06-19 17:56  pommier
+
+	* src/: bgeot_config.h, getfem_config.h, getfem_derivatives.h,
+	getfem_fem.C, getfem_precomp.C, getfem_precomp.h: les derivees
+	marchent!
+
+2002-06-19 15:27  pommier
+
+	* src/: getfem_derivatives.h, getfem_fem.C, getfem_fem.h,
+	getfem_precomp.C: [no log message]
+
+2002-06-19 13:30  pommier
+
+	* src/: getfem_mat_elem.h, getfem_precomp.C: [no log message]
+
+2002-06-19 11:39  renard
+
+	* src/dal_basic.h, src/dal_std.h, tests/dynamic_array.C: [no log
+	message]
+
+2002-06-19 11:28  renard
+
+	* src/dal_std.h, tests/dynamic_array.C: [no log message]
+
+2002-06-18 18:30  renard
+
+	* src/: dal_alloc.h, dal_basic.h, dal_std.h, dal_tree_sorted.h: [no
+	log message]
+
+2002-06-18 18:05  renard
+
+	* src/: getfem_derivatives.h, getfem_precomp.C: [no log message]
+
+2002-06-18 17:00  pommier
+
+	* src/: getfem_assembling.h, getfem_derivatives.h,
+	getfem_precomp.C: blah
+
+2002-06-18 14:34  pommier
+
+	* src/: dal_bit_vector.C, dal_bit_vector.h, getfem_derivatives.h,
+	getfem_fem.h: [no log message]
+
+2002-06-17 17:48  renard
+
+	* src/: getfem_derivatives.h, getfem_export.h, getfem_fem.C,
+	getfem_fem.h: changing in precomputation storage
+
+2002-06-17 17:25  renard
+
+	* contrib/compare_solutions.C, src/Makefile.am,
+	src/bgeot_approx_integration.C, src/bgeot_approx_integration.h,
+	src/bgeot_convex_ref.C, src/bgeot_convex_ref.h,
+	src/bgeot_poly_integration.h, src/getfem_derivatives.C,
+	src/getfem_derivatives.h, src/getfem_export.h, src/getfem_fem.C,
+	src/getfem_fem.h, src/getfem_mat_elem.C, src/getfem_mat_elem.h,
+	src/getfem_precomp.C, src/getfem_precomp.h: changing in
+	precomputation storage
+
+2002-06-17 13:20  renard
+
+	* src/: getfem_derivatives.C, getfem_derivatives.h, getfem_fem.h,
+	getfem_mat_elem.C: [no log message]
+
+2002-06-17 11:55  pommier
+
+	* contrib/compare_solutions.C, src/getfem_derivatives.C,
+	src/getfem_derivatives.h, src/getfem_fem.h: getfem_derivatives
+
+2002-06-14 16:06  pommier
+
+	* src/getfem_norm.h: [no log message]
+
+2002-06-14 16:06  pommier
+
+	* src/getfem_assembling.h: add getfem_norm
+
+2002-06-14 13:29  renard
+
+	* src/getfem_export.h: [no log message]
+
+2002-06-13 12:58  pommier
+
+	* src/getfem_assembling.h: correction bug assemblage pour stockes
+
+2002-06-13 12:58  pommier
+
+	* src/getfem_fem.C, src/bgeot_convex_ref.C, configure.in: [no log
+	message]
+
+2002-06-13 12:57  pommier
+
+	* src/getfem_mesh_fem.h: ajout de get_boundaries
+
+2002-05-27 18:27  renard
+
+	* src/: bgeot_approx_integration.C, bgeot_approx_integration.h,
+	bgeot_config.h, bgeot_convex.h, bgeot_convex_hull.h,
+	bgeot_convex_intersect.h, bgeot_convex_ref.C, bgeot_convex_ref.h,
+	bgeot_convex_structure.C, bgeot_convex_structure.h,
+	bgeot_geometric_trans.C, bgeot_geometric_trans.h,
+	bgeot_geotrans_inv.h, bgeot_matrix.h, bgeot_mesh.h,
+	bgeot_mesh_structure.C, bgeot_mesh_structure.h, bgeot_poly.C,
+	bgeot_poly.h, bgeot_poly_integration.C, bgeot_poly_integration.h,
+	bgeot_simplexify.h, bgeot_tensor.h, bgeot_vector.h, dal_algobase.h,
+	dal_alloc.h, dal_basic.h, dal_bit_vector.C, dal_bit_vector.h,
+	dal_fonc_tables.h, dal_ref.h, dal_std.h, dal_tas.h,
+	dal_tree_sorted.h, ftool.C, ftool.h, getfem_assembling.h,
+	getfem_config.h, getfem_export.C, getfem_export.h, getfem_fem.C,
+	getfem_fem.h, getfem_mat_elem.C, getfem_mat_elem.h,
+	getfem_mat_elem_type.C, getfem_mat_elem_type.h, getfem_mesh.C,
+	getfem_mesh.h, getfem_mesh_fem.C, getfem_mesh_fem.h,
+	getfem_regular_meshes.C, getfem_regular_meshes.h, linkmsg.h: [no
+	log message]
+
+2002-05-27 18:03  renard
+
+	* Makefile.in, aclocal.m4, configure, install-sh, libtool,
+	bin/mesh_matlab_to_getfem, config/Makefile.in, config/aclocal.m4,
+	config/install-sh, contrib/Makefile.in, src/Makefile.in,
+	tests/Makefile.in: [no log message]
+
+2002-05-24 14:32  renard
+
+	* src/getfem_mesh_fem.C: [no log message]
+
+2002-05-24 14:24  renard
+
+	* src/getfem_mesh_fem.C: [no log message]
+
+2002-05-24 10:10  khenous
+
+	* contrib/: Makefile.am, Makefile.in, compare_solutions.C,
+	interpole_solution.C: [no log message]
+
+2002-05-24 10:06  khenous
+
+	* contrib/: compare_solutions.C, interpole_solution.C: [no log
+	message]
+
+2002-05-24 10:04  renard
+
+	* src/Makefile.in: [no log message]
+
+2002-05-24 10:00  khenous
+
+	* src/Makefile.am: [no log message]
+
+2002-05-22 17:38  renard
+
+	* Makefile.am, Makefile.in, configure, configure.in: [no log
+	message]
+
+2002-05-22 14:39  renard
+
+	* src/: gensolv_function.h, gensolv_gauss_seidel.h,
+	gensolv_line_search.h, gensolv_mtl.h, gensolv_quasi_newton.h,
+	gensolv_secant.h: [no log message]
+
+2002-05-22 14:20  renard
+
+	* contrib/: Makefile.am, Makefile.in: [no log message]
+
+2002-05-22 11:36  renard
+
+	* contrib/Makefile.am: [no log message]
+
+2002-05-22 11:32  renard
+
+	* Makefile.am, libtool: [no log message]
+
+2002-05-22 11:27  renard
+
+	* contrib/: Makefile.am, Makefile.in, compare_solutions.C,
+	interpole_solution.C: Initial revision
+
+2002-05-22 11:27  renard
+
+	* contrib/: Makefile.am, Makefile.in, compare_solutions.C,
+	interpole_solution.C: interpolation
+
+2002-05-22 11:24  renard
+
+	* src/getfem_assembling.h: [no log message]
+
+2002-05-22 09:26  renard
+
+	* src/: bgeot_approx_integration.h, bgeot_config.h,
+	bgeot_convex_hull.h: [no log message]
+
+2002-05-21 16:20  renard
+
+	* src/getfem_export.h: [no log message]
+
+2002-05-21 11:30  renard
+
+	* src/: getfem_mesh_fem.C: [no log message]
+
+2002-05-21 11:04  renard
+
+	* libtool, src/getfem_mesh.C, src/getfem_mesh.h,
+	src/getfem_mesh_fem.C: [no log message]
+
+2002-05-21 09:53  renard
+
+	* libtool, src/getfem_export.h, src/getfem_mesh.h: [no log message]
+
+2002-05-14 10:59  renard
+
+	* configure, configure.in: [no log message]
+
+2002-05-14 09:55  renard
+
+	* configure, configure.in: [no log message]
+
+2002-05-14 09:19  renard
+
+	* configure.in, libtool, configure: [no log message]
+
+2002-05-07 13:35  renard
+
+	* BUGS_AND_REMARKS: [no log message]
+
+2002-05-07 13:26  renard
+
+	* configure, configure.in: [no log message]
+
+2002-05-07 13:19  renard
+
+	* BUGS_AND_REMARKS, configure, configure.in: [no log message]
+
+2002-05-07 13:12  renard
+
+	* configure, configure.in: [no log message]
+
+2002-05-07 13:08  renard
+
+	* configure, configure.in, src/Makefile.am, src/Makefile.in: [no
+	log message]
+
+2002-05-07 13:05  renard
+
+	* configure, configure.in: [no log message]
+
+2002-05-07 11:39  renard
+
+	* src/Makefile.am, src/Makefile.in, tests/Makefile.am,
+	tests/Makefile.in: [no log message]
+
+2002-05-06 16:52  renard
+
+	* configure, configure.in: [no log message]
+
+2002-05-06 13:53  renard
+
+	* configure, configure.in: [no log message]
+
+2002-05-06 13:48  renard
+
+	* tests/dynamic_array.C, configure, configure.in: [no log message]
+
+2002-05-06 13:45  renard
+
+	* tests/: dynamic_array.C: [no log message]
+
+2002-05-06 08:55  renard
+
+	* Makefile.in, configure, configure.in, config/Makefile.in,
+	src/Makefile.in, tests/Makefile.am, tests/Makefile.in: [no log
+	message]
+
+2002-05-03 16:26  pommier
+
+	* src/: getfem_fem.C, getfem_fem.h: fem for stockes
+
+2002-05-03 08:28  renard
+
+	* bin/compile_job: [no log message]
+
+2002-05-02 10:57  renard
+
+	* bin/compile_job: [no log message]
+
+2002-05-02 10:51  renard
+
+	* bin/: compile_job: [no log message]
+
+2002-04-30 10:56  renard
+
+	* AUTHORS, BUGS_AND_REMARKS, CONTAINS, Makefile.in, configure,
+	configure.in, libtool: [no log message]
+
+2002-04-29 19:29  pommier
+
+	* Makefile.in, configure, libtool, config/Makefile.in,
+	src/Makefile.in, tests/Makefile.in: [no log message]
+
+2002-04-29 16:39  pommier
+
+	* Makefile.am, Makefile.in, configure.in, libtool: [no log message]
+
+2002-04-29 15:25  khenous
+
+	* src/: gensolv_line_search.h, gensolv_mtl.h: [no log message]
+
+2002-04-29 15:07  khenous
+
+	* libtool, src/gensolv_function.h, src/gensolv_mtl.h,
+	src/gensolv_quasi_newton.h: [no log message]
+
+2002-04-26 09:48  renard
+
+	* bin/compile_job: [no log message]
+
+2002-04-25 14:59  renard
+
+	* src/getfem_assembling.h, src/getfem_export.h, src/getfem_fem.h,
+	Makefile.am, Makefile.in, TOBEDONE, configure, configure.in: [no
+	log message]
+
+2002-04-25 11:22  renard
+
+	* configure.in: [no log message]
+
+2002-04-25 10:08  renard
+
+	* bin/compile_job: [no log message]
+
+2002-04-25 09:42  renard
+
+	* bin/compile_job: [no log message]
+
+2002-04-25 09:37  renard
+
+	* TOBEDONE: [no log message]
+
+2002-04-25 09:31  renard
+
+	* bin/compile_job: [no log message]
+
+2002-04-25 09:26  renard
+
+	* Makefile.in, bin/compile_job: [no log message]
+
+2002-04-25 09:23  renard
+
+	* bin/compile_job, config/Makefile, src/Makefile, tests/Makefile:
+	[no log message]
+
+2002-04-24 17:00  renard
+
+	* configure, configure.in: [no log message]
+
+2002-04-24 16:02  renard
+
+	* tests/Makefile.am: [no log message]
+
+2002-04-24 15:52  renard
+
+	* tests/Makefile.in: [no log message]
+
+2002-04-24 15:48  renard
+
+	* TOBEDONE, configure, configure.in, config/Makefile,
+	config/Makefile.in, src/Makefile, src/Makefile.in, tests/Makefile,
+	Makefile.in: [no log message]
+
+2002-04-23 13:36  renard
+
+	* BUGS_AND_REMARKS, configure.in, install-sh, config/Makefile,
+	config/bootstrap, src/bgeot_mesh_structure.C: [no log message]
+
+2002-04-23 10:17  renard
+
+	* configure.orig, libtool, bin/configure.orig, tests/Makefile: [no
+	log message]
+
+2002-04-23 10:04  renard
+
+	* src/: Makefile, Makefile.am, Makefile.in,
+	bgeot_approx_integration.C, bgeot_approx_integration.h,
+	bgeot_config.h, bgeot_convex.h, bgeot_convex_hull.h,
+	bgeot_convex_intersect.h, bgeot_convex_ref.C, bgeot_convex_ref.h,
+	bgeot_convex_structure.C, bgeot_convex_structure.h,
+	bgeot_geometric_trans.C, bgeot_geometric_trans.h,
+	bgeot_geotrans_inv.h, bgeot_matrix.h, bgeot_mesh.h,
+	bgeot_mesh_structure.C, bgeot_mesh_structure.h, bgeot_poly.C,
+	bgeot_poly.h, bgeot_poly_integration.C, bgeot_poly_integration.h,
+	bgeot_simplexify.h, bgeot_tensor.h, bgeot_vector.h, dal_algobase.h,
+	dal_alloc.h, dal_basic.h, dal_bit_vector.C, dal_bit_vector.h,
+	dal_fonc_tables.h, dal_ref.h, dal_std.h, dal_tas.h,
+	dal_tree_sorted.h, ftool.C, ftool.h, gensolv_function.h,
+	gensolv_gauss_seidel.h, gensolv_line_search.h, gensolv_mtl.h,
+	gensolv_quasi_newton.h, gensolv_secant.h, getfem_assembling.h,
+	getfem_config.h, getfem_export.C, getfem_export.h, getfem_fem.C,
+	getfem_fem.h, getfem_mat_elem.C, getfem_mat_elem.h,
+	getfem_mat_elem_type.C, getfem_mat_elem_type.h, getfem_mesh.C,
+	getfem_mesh.h, getfem_mesh_fem.C, getfem_mesh_fem.h,
+	getfem_regular_meshes.C, getfem_regular_meshes.h, linkmsg.h:
+	Initial revision
+
+2002-04-23 10:04  renard
+
+	* src/: Makefile, Makefile.am, Makefile.in,
+	bgeot_approx_integration.C, bgeot_approx_integration.h,
+	bgeot_config.h, bgeot_convex.h, bgeot_convex_hull.h,
+	bgeot_convex_intersect.h, bgeot_convex_ref.C, bgeot_convex_ref.h,
+	bgeot_convex_structure.C, bgeot_convex_structure.h,
+	bgeot_geometric_trans.C, bgeot_geometric_trans.h,
+	bgeot_geotrans_inv.h, bgeot_matrix.h, bgeot_mesh.h,
+	bgeot_mesh_structure.C, bgeot_mesh_structure.h, bgeot_poly.C,
+	bgeot_poly.h, bgeot_poly_integration.C, bgeot_poly_integration.h,
+	bgeot_simplexify.h, bgeot_tensor.h, bgeot_vector.h, dal_algobase.h,
+	dal_alloc.h, dal_basic.h, dal_bit_vector.C, dal_bit_vector.h,
+	dal_fonc_tables.h, dal_ref.h, dal_std.h, dal_tas.h,
+	dal_tree_sorted.h, ftool.C, ftool.h, gensolv_function.h,
+	gensolv_gauss_seidel.h, gensolv_line_search.h, gensolv_mtl.h,
+	gensolv_quasi_newton.h, gensolv_secant.h, getfem_assembling.h,
+	getfem_config.h, getfem_export.C, getfem_export.h, getfem_fem.C,
+	getfem_fem.h, getfem_mat_elem.C, getfem_mat_elem.h,
+	getfem_mat_elem_type.C, getfem_mat_elem_type.h, getfem_mesh.C,
+	getfem_mesh.h, getfem_mesh_fem.C, getfem_mesh_fem.h,
+	getfem_regular_meshes.C, getfem_regular_meshes.h, linkmsg.h:
+	sources regroupes
+
+2002-04-23 09:55  renard
+
+	* config/: Makefile, Makefile.am, Makefile.in, aclocal.m4,
+	bootstrap, config.guess, config.sub, depcomp, install-sh,
+	ltmain.sh, missing, mkinstalldirs: Initial revision
+
+2002-04-23 09:55  renard
+
+	* config/: Makefile, Makefile.am, Makefile.in, aclocal.m4,
+	bootstrap, config.guess, config.sub, depcomp, install-sh,
+	ltmain.sh, missing, mkinstalldirs: config files
+
+2002-04-23 09:51  renard
+
+	* AUTHORS, COPYING, INSTALL, LICENSE, Makefile.am, NEWS, TOBEDONE,
+	aclocal.m4, configure, configure.in, install-sh, libtool,
+	tests/Makefile, tests/dynamic_array.C, tests/dynamic_tas.C: [no log
+	message]
+
+2002-04-16 17:05  renard
+
+	* configure, configure.orig, tests/Makefile, tests/laplacien.param:
+	[no log message]
+
+2002-04-05 10:45  renard
+
+	* doc/: cvs-doc.ps, doc++-doc.ps: [no log message]
+
+2002-04-05 10:40  renard
+
+	* doc/guide_intervention/guide_intervention.tex: [no log message]
+
+2002-04-04 13:31  renard
+
+	* bin/: all_files_dependencies, createmp, file_dependencies,
+	install: [no log message]
+
+2002-04-04 11:36  renard
+
+	* configure, bin/all_file_dependencies, bin/all_files_dependencies:
+	[no log message]
+
+2002-04-03 17:38  renard
+
+	* configure, bin/do_archive, bin/install: [no log message]
+
+2002-04-03 13:37  renard
+
+	* configure, bin/all_file_dependencies, bin/all_files_dependencies,
+	bin/createmp, bin/do_archive, bin/file_dependencies, bin/install:
+	[no log message]
+
+2002-04-03 11:08  renard
+
+	* configure, bin/do_archive, bin/install: [no log message]
+
+2002-04-02 19:07  renard
+
+	* configure, bin/all_file_dependencies, bin/all_files_dependencies,
+	bin/build_makefile, bin/createmp, bin/dr2dgnuplot,
+	bin/file_dependencies, bin/include_dependencies, bin/install: [no
+	log message]
+
+2002-04-02 18:16  renard
+
+	* bin/: compilo_g++v, install: [no log message]
+
+2002-04-02 18:03  pommier
+
+	* bin/install: [no log message]
+
+2002-04-02 15:45  pommier
+
+	* bin/: all_file_dependencies, all_files_dependencies: [no log
+	message]
+
+2002-04-02 14:11  renard
+
+	* doc/guide_intervention/: files_structure.eps,
+	files_structure.fig, guide_intervention.tex: [no log message]
+
+2002-04-02 14:01  renard
+
+	* bin/: do_archive, install: [no log message]
+
+2002-04-02 13:43  renard
+
+	* bin/do_archive: [no log message]
+
+2002-04-02 13:33  renard
+
+	* README, configure, bin/all_files_dependencies,
+	bin/file_dependencies, bin/install, bin/install_from_cvs,
+	bin/start_modif, bin/startbgeot, bin/startdal, bin/startdoc,
+	bin/startftool, bin/startgensolv, bin/startgetfemlib,
+	bin/startlinkmsg, bin/startmatlabcom, bin/startmatlabint,
+	bin/startmisc, bin/compile_job, bin/compile_job_new: [no log
+	message]
+
+2002-04-02 10:48  renard
+
+	* README, configure: [no log message]
+
+2002-03-29 16:33  renard
+
+	* bin/: compilo_mexv, install: [no log message]
+
+2002-03-29 16:09  renard
+
+	* bin/: compilo_mexv, install: [no log message]
+
+2002-03-29 15:32  renard
+
+	* bin/install: [no log message]
+
+2002-03-29 13:59  renard
+
+	* bin/: install, compilov: [no log message]
+
+2002-03-29 09:27  renard
+
+	* bin/compilov: [no log message]
+
+2002-03-29 09:06  renard
+
+	* bin/: compilo_CCv, compilo_g++v, compilov: [no log message]
+
+2002-03-29 08:55  renard
+
+	* bin/compilov: [no log message]
+
+2002-03-28 17:59  renard
+
+	* bin/compilov: [no log message]
+
+2002-03-28 17:36  renard
+
+	* bin/compilov, doc/getfem_logo.eps, doc/getfem_logo.fig: [no log
+	message]
+
+2002-03-26 14:54  pommier
+
+	* bin/install: [no log message]
+
+2002-03-26 11:11  renard
+
+	* bin/install: [no log message]
+
+2002-03-26 10:52  renard
+
+	* bin/install: [no log message]
+
+2002-03-26 10:14  renard
+
+	* bin/install: [no log message]
+
+2002-03-26 10:03  renard
+
+	* bin/install: [no log message]
+
+2002-03-26 10:00  renard
+
+	* bin/install: [no log message]
+
+2002-03-22 15:21  renard
+
+	* bin/install: [no log message]
+
+2002-03-22 13:55  renard
+
+	* bin/install: [no log message]
+
+2002-03-22 13:43  renard
+
+	* bin/: install: [no log message]
+
+2002-03-22 13:29  renard
+
+	* bin/compile_job_new: [no log message]
+
+2002-03-22 09:51  renard
+
+	* BUGS_AND_REMARKS: [no log message]
+
+2002-03-22 09:40  renard
+
+	* BUGS_AND_REMARKS: [no log message]
+
+2002-03-21 14:22  renard
+
+	* bin/install: [no log message]
+
+2002-03-21 14:15  renard
+
+	* bin/: install: [no log message]
+
+2002-03-21 14:11  renard
+
+	* bin/: install, install_from_cvs: [no log message]
+
+2002-03-21 13:56  renard
+
+	* tests/laplacien.param: [no log message]
+
+2002-03-21 13:30  renard
+
+	* tests/Makefile: [no log message]
+
+2002-03-21 13:08  renard
+
+	* tests/Makefile: [no log message]
+
+2002-03-21 11:23  renard
+
+	* bin/: compile_job, start_modif: [no log message]
+
+2002-03-21 11:19  renard
+
+	* bin/compile_job: [no log message]
+
+2002-03-21 10:27  renard
+
+	* BUGS_AND_REMARKS: [no log message]
+
+2002-03-20 17:32  pommier
+
+	* bin/start_modif: minor bugfixes
+
+2002-03-19 16:19  renard
+
+	* tests/: Makefile, dynamic_array.C, dynamic_tas.C,
+	elasto_statique.C, elasto_statique.dotest, elasto_statique.param,
+	elasto_statique_prisme.C, geo_trans.C, integration.C, laplacien.C,
+	laplacien.param, poly.C, test_int_set.C, test_mesh.C,
+	test_tree_sorted.C: Initial revision
+
+2002-03-19 16:19  renard
+
+	* tests/: Makefile, dynamic_array.C, dynamic_tas.C,
+	elasto_statique.C, elasto_statique.dotest, elasto_statique.param,
+	elasto_statique_prisme.C, geo_trans.C, integration.C, laplacien.C,
+	laplacien.param, poly.C, test_int_set.C, test_mesh.C,
+	test_tree_sorted.C: Test directory
+
+2001-12-20 09:14  renard
+
+	* bin/: compile_job, startgensolv: [no log message]
+
+2001-12-20 09:07  renard
+
+	* doc/cvs-rudiments.txt: [no log message]
+
+2001-12-06 12:57  renard
+
+	* bin/: build_makefile, file_dependencies: [no log message]
+
+2001-12-06 11:13  renard
+
+	* bin/: all_file_dependencies, all_files_dependencies,
+	file_dependencies: [no log message]
+
+2001-12-06 10:17  renard
+
+	* bin/all_file_dependencies: [no log message]
+
+2001-12-06 09:29  renard
+
+	* bin/: dependencies, dependencies_new, file_dependencies,
+	include_dependencies: [no log message]
+
+2001-12-06 09:18  renard
+
+	* bin/: compile_job, file_dependencies, start_modif: [no log
+	message]
+
+2001-12-06 07:44  renard
+
+	* bin/sc2dgnuplot: [no log message]
+
+2001-11-29 17:05  renard
+
+	* bin/: createmp, dr2dgnuplot, sc2dgnuplot: [no log message]
+
+2001-11-28 17:34  renard
+
+	* bin/createmp: [no log message]
+
+2001-11-19 18:19  renard
+
+	* bin/: compile_job, start_modif: [no log message]
+
+2001-10-24 17:12  renard
+
+	* bin/start_modif: [no log message]
+
+2001-10-24 13:30  renard
+
+	* bin/compile_job: [no log message]
+
+2001-10-24 09:10  renard
+
+	* doc/: basic_doc_getfem/doc++title.tex,
+	basic_doc_getfem++/doc++title.tex: [no log message]
+
+2001-10-16 15:01  renard
+
+	* bin/compile_job: [no log message]
+
+2001-10-16 14:42  renard
+
+	* bin/: compile_job: [no log message]
+
+2001-10-16 09:33  renard
+
+	* bin/compile_job: [no log message]
+
+2001-10-16 09:28  renard
+
+	* bin/compile_job: [no log message]
+
+2001-10-11 13:35  renard
+
+	* bin/compile_job, doc/do_doc++, doc/do_getfem_doc, doc/doc++.conf,
+	doc/doc++.files, doc/doc++title.tex, doc/getfem_doc.files,
+	doc/basic_doc_getfem/do_doc++, doc/basic_doc_getfem/doc++.conf,
+	doc/basic_doc_getfem/doc++.files,
+	doc/basic_doc_getfem/doc++title.tex,
+	doc/basic_doc_getfem++/doc++.conf,
+	doc/basic_doc_getfem++/doc++.files: [no log message]
+
+2001-10-11 13:14  renard
+
+	* doc/: basic_doc_getfem/do_doc++, basic_doc_getfem/doc++.conf,
+	basic_doc_getfem/doc++.files, basic_doc_getfem/doc++title.tex,
+	basic_doc_getfem++/do_doc++, basic_doc_getfem++/doc++.conf,
+	basic_doc_getfem++/doc++.files, basic_doc_getfem++/doc++title.tex:
+	Initial revision
+
+2001-10-11 13:14  renard
+
+	* doc/: basic_doc_getfem/do_doc++, basic_doc_getfem/doc++.conf,
+	basic_doc_getfem/doc++.files, basic_doc_getfem/doc++title.tex,
+	basic_doc_getfem++/do_doc++, basic_doc_getfem++/doc++.conf,
+	basic_doc_getfem++/doc++.files, basic_doc_getfem++/doc++title.tex:
+	[no log message]
+
+2001-10-09 16:34  renard
+
+	* bin/compile_job, doc/doc++.conf: [no log message]
+
+2001-10-09 15:56  renard
+
+	* doc/guide_intervention/guide_intervention.tex: [no log message]
+
+2001-10-09 15:17  renard
+
+	* doc/: do_doc++, do_getfem_doc, doc++.conf, getfem_doc.files: [no
+	log message]
+
+2001-10-03 13:38  renard
+
+	* doc/doc++.files: [no log message]
+
+2001-10-02 17:19  renard
+
+	* bin/sc2dgnuplot: [no log message]
+
+2001-10-02 14:55  renard
+
+	* bin/: dr2dgnuplot, dr2dgnuplot_nonconforme, sc2dgnuplot: [no log
+	message]
+
+2001-09-27 14:01  renard
+
+	* bin/compile_job: [no log message]
+
+2001-09-27 13:54  renard
+
+	* bin/compile_job: [no log message]
+
+2001-09-27 13:44  renard
+
+	* bin/: compile_job: [no log message]
+
+2001-09-27 13:40  renard
+
+	* bin/: compile_job: [no log message]
+
+2001-09-27 10:03  renard
+
+	* bin/compile_job: [no log message]
+
+2001-09-27 09:57  renard
+
+	* bin/: compile_job: [no log message]
+
+2001-09-27 09:38  renard
+
+	* bin/: compile_job: [no log message]
+
+2001-09-27 09:33  renard
+
+	* bin/: compile_job: [no log message]
+
+2001-09-27 09:17  renard
+
+	* bin/compile_job: [no log message]
+
+2001-09-27 09:09  renard
+
+	* bin/: compile_job, start_modif: [no log message]
+
+2001-09-27 08:49  renard
+
+	* bin/: compile_job, start_modif: [no log message]
+
+2001-09-26 18:01  renard
+
+	* bin/: start_modif, startmatlabcom: [no log message]
+
+2001-09-26 17:51  renard
+
+	* doc/guide_intervention/: files_structure.eps,
+	files_structure.fig, guide_intervention.tex: [no log message]
+
+2001-09-25 17:39  renard
+
+	* bin/: startmatlabint, compile_job: [no log message]
+
+2001-09-25 16:09  renard
+
+	* doc/BUGS: [no log message]
+
+2001-09-25 10:22  renard
+
+	* doc/: doc++.files, guide_intervention/guide_intervention.tex: [no
+	log message]
+
+2001-09-25 10:15  renard
+
+	* bin/: startgetfem, startgetfemlib, compile_job: [no log message]
+
+2001-09-25 10:05  renard
+
+	* doc/guide_intervention/: getfem_orga.eps, getfem_orga.fig,
+	getfemlab_orga.eps, getfemlab_orga.fig, guide_intervention.tex: [no
+	log message]
+
+2001-09-24 18:10  renard
+
+	* doc/guide_intervention/: getfemlab_orga.eps, getfemlab_orga.fig,
+	guide_intervention.tex: [no log message]
+
+2001-09-07 14:40  renard
+
+	* bin/mesh_matlab_to_getfem: minor changes
+
+2001-09-07 12:53  renard
+
+	* bin/: mesh_matlab_to_getfem, sc2dgnuplot: minor changes
+
+2001-09-06 17:00  renard
+
+	* doc/guide_intervention/guide_intervention.tex: minor changes
+
+2001-09-05 17:37  renard
+
+	* bin/compile_job: minor changes
+
+2001-09-04 17:05  renard
+
+	* doc/guide_intervention/guide_intervention.tex: minor changes
+
+2001-09-04 16:48  renard
+
+	* bin/start_modif, doc/guide_intervention/guide_intervention.tex:
+	minor changes
+
+2001-09-04 16:12  renard
+
+	* bin/start_modif: minor changes
+
+2001-09-04 16:02  renard
+
+	* bin/: startbgeot, startdal, startftool, startgetfem,
+	startlinkmsg, startmisc: minor changes
+
+2001-09-04 15:10  renard
+
+	* bin/start_modif: minor changes
+
+2001-09-03 15:48  renard
+
+	* bin/start_modif: minor changes
+
+2001-09-03 10:02  renard
+
+	* bin/compile_job: minor changes
+
+2001-08-30 13:46  renard
+
+	* bin/compile_job: minor change
+
+2001-08-30 09:46  renard
+
+	* bin/compile_job: minor changes
+
+2001-08-29 11:39  renard
+
+	* bin/compile_job: minor changes
+
+2001-08-28 15:27  renard
+
+	* doc/doc++.conf: minor changes
+
+2001-08-27 16:09  renard
+
+	* doc/doc++title.tex: minor changes
+
+2001-08-27 15:38  renard
+
+	* bin/compile_job: minor changes
+
+2001-08-27 15:35  renard
+
+	* bin/compile_job: minor changes
+
+2001-08-27 15:21  renard
+
+	* bin/compile_job: minor changes
+
+2001-08-27 14:52  renard
+
+	* doc/Makefile, doc/do_doc++, doc/guide_intervention/Makefile,
+	doc/guide_intervention/guide_intervention.ps,
+	doc/guide_intervention/guide_intervention.tex, doc/cvs-doc.ps,
+	doc/doc++-doc.ps, bin/compile_job: minor changes
+
+2001-08-27 11:59  renard
+
+	* bin/: start_modif: minor changes
+
+2001-08-27 11:55  renard
+
+	* bin/: start_modif: minor changes
+
+2001-08-27 11:49  renard
+
+	* bin/compile_job: test
+
+2001-08-27 11:37  renard
+
+	* bin/: start_modif: minor changes
+
+2001-08-27 11:33  renard
+
+	* bin/start_modif: minor changes
+
+2001-08-27 11:20  renard
+
+	* bin/: start_modif: minor changes
+
+2001-08-27 11:12  renard
+
+	* doc/: guide_intervention/guide_intervention.tex, Makefile: minor
+	changes
+
+2001-08-27 11:06  renard
+
+	* doc/Makefile, doc/do_doc++, doc/doc++.conf, doc/doc++title.tex,
+	bin/compile_job: minor changes
+
+2001-08-27 10:28  renard
+
+	* doc/: Makefile, doc.tex: minor changes
+
+2001-08-27 10:25  renard
+
+	* doc/: Makefile, do_doc, doc.cls, doc.ps, entete.tex, macro.tex:
+	minor changes
+
+2001-08-24 16:50  renard
+
+	* doc/: do_doc++, doc++.files: minor changes
+
+2001-08-24 16:20  renard
+
+	* doc/doc++.files: minor changes
+
+2001-08-24 15:53  renard
+
+	* bin/compile_job: minor changes
+
+2001-08-24 15:42  renard
+
+	* bin/compile_job: minor changes
+
+2001-08-24 15:32  renard
+
+	* bin/compile_job: minor changes
+
+2001-08-24 12:24  renard
+
+	* bin/: compile_job: minor changes
+
+2001-08-24 09:50  renard
+
+	* doc/: do_doc++, doc++.conf, doc++.files: doc++ file
+
+2001-08-07 17:20  renard
+
+	* doc/: getfemlab_logo.eps, getfemlab_logo.fig: minor changes
+
+2001-08-07 15:35  renard
+
+	* doc/guide_intervention/guide_intervention.ps: minor changes
+
+2001-08-07 15:35  renard
+
+	* doc/doc.ps: [no log message]
+
+2001-08-07 15:32  renard
+
+	* doc/: do_doc, doc.tex, Makefile: minor changes
+
+2001-08-06 10:02  renard
+
+	* doc/: do_doc, doc.tex: minor changes
+
+2001-08-06 09:56  renard
+
+	* doc/do_doc: minor changes
+
+2001-08-06 09:35  renard
+
+	* doc/do_doc: minor changes
+
+2001-08-06 09:29  renard
+
+	* bin/extract_latex, bin/startdoc, doc/macro.tex: minor changes
+
+2001-08-03 16:03  renard
+
+	* doc/guide_intervention/guide_intervention.tex: minor changes
+
+2001-08-03 15:50  renard
+
+	* doc/guide_intervention/Makefile: minor changes
+
+2001-08-03 15:47  renard
+
+	* doc/guide_intervention/: Makefile, files_structure.eps,
+	files_structure.fig, guide_intervention.tex,
+	guide_intervention_pg.eps, guide_intervention_pg.fig: minor changes
+
+2001-08-03 14:53  renard
+
+	* bin/startdoc: [no log message]
+
+2001-08-03 14:52  renard
+
+	* doc/guide_intervention/: files_structure.eps,
+	files_structure.fig, getfem_orga.eps, getfem_orga.fig,
+	getfemlab_orga.eps, getfemlab_orga.fig, guide_intervention.tex,
+	guide_intervention_pg.eps, guide_intervention_pg.fig: Initial
+	revision
+
+2001-08-03 14:52  renard
+
+	* doc/guide_intervention/: files_structure.eps,
+	files_structure.fig, getfem_orga.eps, getfem_orga.fig,
+	getfemlab_orga.eps, getfemlab_orga.fig, guide_intervention.tex,
+	guide_intervention_pg.eps, guide_intervention_pg.fig: minor changes
+
+2001-08-03 14:47  renard
+
+	* bin/startdoc: minor changes
+
+2001-08-03 14:46  renard
+
+	* bin/startdoc: adding startdoc
+
+2001-08-03 11:11  renard
+
+	* bin/: startbgeot, startdal, startftool, startlinkmsg, startmisc:
+	adding startmisc
+
+2001-08-02 14:33  renard
+
+	* CHANGES, CONTAINS, LICENSE, MODIFS: minor changes
+
+2001-08-02 14:14  renard
+
+	* bin/compile_job: [no log message]
+
+2001-08-02 14:09  renard
+
+	* bin/compile_job: [no log message]
+
+2001-08-02 13:53  renard
+
+	* bin/compile_job: [no log message]
+
+2001-08-02 13:39  renard
+
+	* bin/compile_job: [no log message]
+
+2001-07-26 17:25  renard
+
+	* doc/: do_doc, doc.cls, doc.tex, entete.tex, getfem_logo.eps,
+	macro.tex, getfem_logo.fig, getfemlab_logo.eps, getfemlab_logo.fig,
+	matlab_logo.gif, matlab_logo2.gif: Initial revision
+
+2001-07-26 17:25  renard
+
+	* doc/: do_doc, doc.cls, doc.tex, entete.tex, getfem_logo.eps,
+	macro.tex, getfem_logo.fig, getfemlab_logo.eps, getfemlab_logo.fig,
+	matlab_logo.gif, matlab_logo2.gif: import des doc de getfem++
+
+2001-07-26 17:22  renard
+
+	* bin/: compile_job: minor changes
+
+2001-07-26 15:56  renard
+
+	* bin/compile_job: [no log message]
+
+2001-07-26 15:47  renard
+
+	* bin/start_modif: minor modification
+
+2001-07-26 15:27  renard
+
+	* bin/start_modif: minor modification
+
+2001-07-26 15:09  renard
+
+	* bin/start_modif: minor modification
+
+2001-07-26 15:04  renard
+
+	* bin/: startftool, startlinkmsg: adding startftool
+
+2001-07-26 15:00  renard
+
+	* bin/: startdal, startlinkmsg: adding startlinkmsg
+
+2001-07-26 14:31  renard
+
+	* bin/start_modif: minor modifications
+
+2001-07-26 14:17  renard
+
+	* bin/: include_dependencies, start_modif: minor modification
+
+2001-07-26 13:44  renard
+
+	* bin/: include_dependencies, start_modif: [no log message]
+
+2001-07-25 17:15  renard
+
+	* bin/: startgetfem, startbgeot, startdal: [no log message]
+
+2001-07-25 17:10  renard
+
+	* bin/: start_modif, startbgeot: [no log message]
+
+2001-07-25 16:58  renard
+
+	* bin/: include_dependencies, start_modif: [no log message]
+
+2001-07-25 16:53  renard
+
+	* bin/include_dependencies: [no log message]
+
+2001-07-25 16:49  renard
+
+	* bin/: include_dependencies, start_modif, startdal: [no log
+	message]
+
+2001-07-25 16:36  renard
+
+	* bin/start_modif: [no log message]
+
+2001-07-25 16:33  renard
+
+	* bin/: start_modif, include_dependencies, startdal: [no log
+	message]
+
+2001-07-25 15:51  renard
+
+	* bin/: include_dependencies, startdal: [no log message]
+
+2001-07-25 15:42  renard
+
+	* bin/startdal: [no log message]
+
+2001-07-25 15:17  renard
+
+	* bin/: dependencies, dependencies_new, dr2dgnuplot, extract_latex,
+	makeheadfile, mesh2points, dr2dgnuplot_nonconforme: Initial
+	revision
+
+2001-07-25 15:17  renard
+
+	* bin/: dependencies, dependencies_new, dr2dgnuplot, extract_latex,
+	makeheadfile, mesh2points, dr2dgnuplot_nonconforme: perl scripts
+
