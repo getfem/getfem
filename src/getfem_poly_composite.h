@@ -125,7 +125,7 @@ namespace getfem
 	--it2; i2 = it2.index();
       }
     }
-    DAL_THROW(internal_error, "Element not found in composite polynomial.");
+    DAL_THROW(internal_error, "Element not found in composite polynomial: " << pt);
   }
 
   void structured_mesh_for_convex(bgeot::pconvex_ref cvr, short_type k,

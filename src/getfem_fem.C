@@ -607,12 +607,10 @@ namespace getfem
     pfem pf1 = params[0].method();
     pfem pf2 = params[1].method();
 
-    if (dynamic_cast<ppolyfem>(pf1) && dynamic_cast<ppolyfem>(pf2))
-      return new thierach_femi(dynamic_cast<ppolyfem>(pf1),
-			       dynamic_cast<ppolyfem>(pf2));
-    if (dynamic_cast<ppolycompfem>(pf1) && dynamic_cast<ppolycompfem>(pf2))
-      return new thierach_femi_comp(dynamic_cast<ppolycompfem>(pf1),
-				    dynamic_cast<ppolycompfem>(pf2));
+    if (pf1->is_polynomial() && pf2->is_polynomial())
+      return new thierach_femi(ppolyfem(pf1),ppolyfem(pf2));
+    if (pf1->is_polynomialcomp() && pf2->is_polynomialcomp())
+     return new thierach_femi_comp(ppolycompfem(pf1),ppolycompfem(pf2));
     DAL_THROW(failure_error, "Bad parameters");
   }
 

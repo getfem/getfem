@@ -46,7 +46,7 @@ namespace getfem
     fem<polynomial_composite> *p = new fem<polynomial_composite>;
 
     p->ref_convex() = cr;
-    p->is_equivalent() = true;
+    p->is_polynomialcomp() = p->is_equivalent() = true;
     p->is_polynomial() = p->is_lagrange() = false;
     p->estimated_degree() = 0;
     p->init_cvs_node();

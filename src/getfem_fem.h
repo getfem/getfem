@@ -92,7 +92,7 @@ namespace getfem
     mutable bool pspt_valid;
     bgeot::pconvex_ref cvr; // reference element.
     dim_type ntarget_dim;
-    bool is_equiv, is_lag, is_pol, do_grad;
+    bool is_equiv, is_lag, is_pol, do_grad, is_polycomp;
     short_type es_degree, hier_raff;
     
   public :
@@ -137,6 +137,8 @@ namespace getfem
     bool is_equivalent(void) const { return is_equiv; }
     bool is_lagrange(void) const { return is_lag; }
     bool is_polynomial(void) const { return is_pol; }
+    bool is_polynomialcomp(void) const { return is_polycomp; }
+    bool &is_polynomialcomp(void) { return is_polycomp; }
     bool &is_equivalent(void) { return is_equiv; }
     bool &is_lagrange(void) { return is_lag; }
     bool &is_polynomial(void) { return is_pol; }
@@ -186,8 +188,8 @@ namespace getfem
     bool do_grad_reduction(void) const { return do_grad; }
 
     virtual_fem(void) { 
-      ntarget_dim = 1; is_equiv = is_pol = is_lag = false;
-      pspt_valid = false; do_grad = true; hier_raff = 0;
+      ntarget_dim = 1; is_equiv = is_pol = is_polycomp = is_lag = false;
+      pspt_valid = false; do_grad = true; hier_raff = 0; 
     }
 
     void add_node(const pdof_description &d, const base_node &pt) ;
@@ -206,6 +208,7 @@ namespace getfem
       is_equiv = f.is_equiv;
       is_lag = f.is_lag;
       is_pol = f.is_pol;
+      is_polycomp = f.is_polycomp;
       do_grad = f.do_grad;
       es_degree = f.es_degree;
       hier_raff = f.hier_raff;
