@@ -108,7 +108,7 @@ namespace gmm {
     { return (v._end == v._begin) ? 0 : vect_size(mat_const_col(v, 0)); }
     static const_sub_col_type col(const const_col_iterator &it)
     { return linalg_traits<M>::row(it); }
-    static sub_col_type col(col_iterator &it)
+    static sub_col_type col(const col_iterator &it)
     { return linalg_traits<M>::row(it); }
     static col_iterator col_begin(this_type &m) { return m._begin; }
     static col_iterator col_end(this_type &m) { return m._end; }
@@ -205,7 +205,7 @@ namespace gmm {
     { return (v._end == v._begin) ? 0 : vect_size(mat_const_row(v, 0)); }
     static const_sub_row_type row(const const_row_iterator &it)
     { return linalg_traits<M>::col(it); }
-    static sub_row_type row(row_iterator &it)
+    static sub_row_type row(const row_iterator &it)
     { return linalg_traits<M>::col(it); }
     static row_iterator row_begin(this_type &m) { return m._begin; }
     static row_iterator row_end(this_type &m) { return m._end; }

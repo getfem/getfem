@@ -1262,8 +1262,8 @@ namespace gmm {
   template <class L1, class L2, class L3> inline
   void add(const L1& l1, const L2& l2, L3& l3,
 	   abstract_sparse, abstract_dense, abstract_dense) {
-    _add_almost_full(vect_const_begin(l1), vect_const_end(l1), vect_const_begin(l2),
-		     vect_begin(l3), vect_end(l3));
+    _add_almost_full(vect_const_begin(l1), vect_const_end(l1),
+		     vect_const_begin(l2), vect_begin(l3), vect_end(l3));
   }
   
   template <class L1, class L2, class L3> inline
@@ -1310,25 +1310,29 @@ namespace gmm {
   }
 
   template <class L1, class L2>
-  void add(const L1& l1, L2& l2,
-	   abstract_dense, abstract_skyline) {
-    typename linalg_traits<L1>::const_iterator it1 = vect_const_begin(l1),
-      ite1 = vect_const_end(l1); 
-    size_type i1 = 0, ie1 = ite1 - it1;
-    while (it1 != ite1 && *it1 == typename linalg_traits<L1>::value_type(0))
-      { ++it1; ++i1; }
-    if (ite1 - it1 > 0) {
-      typename linalg_traits<L2>::const_iterator
-	it2 = vect_const_begin(l2), ite2 = vect_const_end(l2);
-      while (*(ite1-1) == typename linalg_traits<L1>::value_type(0))
-	{ ite1--; --ie1; }
-      
-      if (i1 < it2.index()) l2[it1.index()] = *it1; 
-      if (ie1 > ite2.index()) l2[ie1 - 1] = *(ite1 - 1);
-      it2 = vect_const_begin(l2);
-      ptrdiff_t m = i1 - it2.index();
-      it2 += m;
-      for (; it1 != ite1; ++it1, ++it2) *it2 += *it1;
+  void add(const L1& l1, L2& l2, abstract_dense, abstract_skyline) {
+    typedef typename linalg_traits<L1>::const_iterator const_l1_iterator;
+    typedef typename linalg_traits<L2>::iterator l2_iterator;
+    typedef typename linalg_traits<L1>::value_type T;
+
+    const_l1_iterator it1 = vect_const_begin(l1), ite1 = vect_const_end(l1); 
+    size_type i1 = 0, ie1 = vect_size(l1);
+    while (it1 != ite1 && *it1 == T(0)) { ++it1; ++i1; }
+    if (it1 != ite1) {
+      l2_iterator it2 = vect_begin(l2), ite2 = vect_end(l2);
+      while (ie1 && *(ite1-1) == T(0)) { ite1--; --ie1; }
+
+      if (it2 == ite2 || i1 < it2.index()) {
+	l2[i1] = *it1; ++i1; ++it1;
+	if (it1 == ite1) return;
+	it2 = vect_begin(l2); ite2 = vect_end(l2);
+      }
+      if (ie1 > ite2.index()) {
+	--ite1; l2[ie1 - 1] = *ite1;
+	it2 = vect_begin(l2);
+      }
+      it2 += i1 - it2.index();
+      for (; it1 != ite1; ++it1, ++it2) { *it2 += *it1; }
     }
   }
 
@@ -1382,19 +1386,29 @@ namespace gmm {
   template <class L1, class L2>
   void add(const L1& l1, L2& l2,
 	   abstract_skyline, abstract_skyline) {
-    typename linalg_traits<L1>::const_iterator
-      it1 = vect_const_begin(l1), ite1 = vect_const_end(l1);
-    
-    while (it1 != ite1 && *it1 == typename linalg_traits<L1>::value_type(0))
-      ++it1;
-    if (ite1 - it1 > 0) {
-      typename linalg_traits<L2>::iterator
-	it2 = vect_begin(l2), ite2 = vect_end(l2);
-      while (*(ite1-1) == typename linalg_traits<L1>::value_type(0)) ite1--;
+    typedef typename linalg_traits<L1>::const_iterator const_l1_iterator;
+    typedef typename linalg_traits<L2>::iterator l2_iterator;
+    typedef typename linalg_traits<L1>::value_type T;
 
-      if (it1.index() < it2.index()) l2[it1.index()] = *it1; 
-      if (ite1.index() > ite2.index()) l2[ite1.index() - 1] = *(ite1 - 1);
-      it2 = vect_begin(l2);
+
+
+
+    const_l1_iterator it1 = vect_const_begin(l1), ite1 = vect_const_end(l1);
+    
+    while (it1 != ite1 && *it1 == T(0)) ++it1;
+    if (ite1 != it1) {
+      l2_iterator it2 = vect_begin(l2), ite2 = vect_end(l2);
+      while (*(ite1-1) == T(0)) ite1--;
+
+      if (it2 == ite2 || it1.index() < it2.index()) {
+	l2[it1.index()] = *it1; ++it1;
+	if (it1 == ite1) return;
+	it2 = vect_begin(l2); ite2 = vect_end(l2);
+      }
+      if (ite1.index() > ite2.index()) {
+	l2[ite1.index() - 1] = *(ite1 - 1);
+	it2 = vect_begin(l2);
+      }
       ptrdiff_t m = it1.index() - it2.index();
       it2 += m;
       for (; it1 != ite1; ++it1, ++it2) *it2 += *it1;

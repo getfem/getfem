@@ -297,10 +297,31 @@ namespace gmm {
 				&i) : it(i.it), N(i.N), id(i.id) {}
   };
 
+  template <class IT, class MIT, class VECT> inline
+  void set_to_begin(skyline_sub_vector_iterator<IT, MIT> &it,
+		    const void *o, VECT *)
+  { set_to_begin(it.it, o, typename linalg_traits<VECT>::pV()); }
+
+  template <class IT, class MIT, class VECT> inline
+  void set_to_begin(skyline_sub_vector_iterator<IT, MIT> &it,
+		    const void *o, const VECT *)
+  { set_to_begin(it.it, o, typename linalg_traits<VECT>::pV()); }
+  
+  template <class IT, class MIT, class VECT> inline
+  void set_to_end(skyline_sub_vector_iterator<IT, MIT> &it,
+		    const void *o, VECT *)
+  { set_to_end(it.it, o, typename linalg_traits<VECT>::pV()); }
+
+  template <class IT, class MIT, class VECT> inline
+  void set_to_end(skyline_sub_vector_iterator<IT, MIT> &it,
+		    const void *o, const VECT *)
+  { set_to_end(it.it, o, typename linalg_traits<VECT>::V()); }
+
+
   template <class PT, class SUBI> struct skyline_sub_vector {
     typedef skyline_sub_vector<PT, SUBI> this_type;
     typedef typename std::iterator_traits<PT>::value_type V;
-    typedef V * CPT;
+    typedef V * pV;
     typedef typename select_return<typename linalg_traits<V>::const_iterator,
             typename linalg_traits<V>::iterator, PT>::return_type iterator;
     typedef typename linalg_traits<this_type>::reference reference;
@@ -322,7 +343,7 @@ namespace gmm {
 	_end(vect_end(const_cast<V &>(v))),
 	origin(linalg_origin(const_cast<V &>(v))), si(s) {}
     skyline_sub_vector() {}
-    skyline_sub_vector(const skyline_sub_vector<CPT, SUBI> &cr)
+    skyline_sub_vector(const skyline_sub_vector<pV, SUBI> &cr)
       : _begin(cr._begin),_end(cr._end),origin(cr.origin), si(cr.si) {}
   };
 
@@ -350,14 +371,16 @@ namespace gmm {
     typedef typename linalg_traits<this_type>::value_type value_type;
     typedef typename linalg_traits<this_type>::access_type access_type;
     
-    void operator()(const void */*o*/,const iterator &_begin,const iterator &_end)
+    void operator()(const void *,const iterator &_begin,const iterator &_end)
       { std::fill(_begin, _end, value_type(0)); }
   };
 
   template <class PT, class SUBI>
   struct linalg_traits<skyline_sub_vector<PT, SUBI> > {
     typedef skyline_sub_vector<PT, SUBI> this_type;
+    typedef this_type *pthis_type;
     typedef typename std::iterator_traits<PT>::value_type V;
+    typedef V * pV;
     typedef typename which_reference<PT>::is_reference is_reference;
     typedef abstract_vector linalg_type;
     typedef typename linalg_traits<V>::value_type value_type;
@@ -375,52 +398,72 @@ namespace gmm {
     typedef skyline_sub_vector_clear<PT, SUBI> clear_type;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator end(this_type &v) {
+      iterator b, e; b.it = v._begin; e.it = v._end;
+      if (!is_const_reference(is_reference())) {
+	set_to_begin(b, v.origin, pthis_type());
+	set_to_end(e, v.origin, pthis_type());
+      }
       size_type i;
-      if (v.si.max < v._end.index()) {
-	i = v.si.max - v._begin.index();
-	size_type j = (v._begin.index() + i - v.si.min) / v.si.step();
-	return iterator(v._begin + i, v.si.step(), j);
+      if (v.si.max < e.it.index()) {
+	i = v.si.max - b.it.index();
+	size_type j = (b.it.index() + i - v.si.min) / v.si.step();
+	return iterator(b.it + i, v.si.step(), j);
       }
       else {
-	i = (v.si.max + v.si.step() * v._end.index()
-	     - v._end.index()) % v.si.step();
-	size_type j = (v._end.index() + i - v.si.min) / v.si.step();
-	return iterator(v._end + i, v.si.step(), j);
+	i = (v.si.max + v.si.step() * e.it.index()
+	     - e.it.index()) % v.si.step();
+	size_type j = (e.it.index() + i - v.si.min) / v.si.step();
+	return iterator(e.it + i, v.si.step(), j);
       }
     }
     static const_iterator end(const this_type &v) {
+      const_iterator b, e; b.it = v._begin; e.it = v._end;
+      if (!is_const_reference(is_reference())) {
+	set_to_begin(b, v.origin, pthis_type());
+	set_to_end(e, v.origin, pthis_type());
+      }
       size_type i;
-      if (v.si.max < v._end.index()) {
-	i = v.si.max - v._begin.index();
-	size_type j = (v._begin.index() + i - v.si.min) / v.si.step();
-	return const_iterator(v._begin + i, v.si.step(), j);
+      if (v.si.max < e.it.index()) {
+	i = v.si.max - b.it.index();
+	size_type j = (b.it.index() + i - v.si.min) / v.si.step();
+	return const_iterator(b.it + i, v.si.step(), j);
       }
       else {
-	i = (v.si.max + v.si.step() * v._end.index()
-	     - v._end.index()) % v.si.step();
-	size_type j = (v._end.index() + i - v.si.min) / v.si.step();
-	return const_iterator(v._end + i, v.si.step(), j);
+	i = (v.si.max + v.si.step() * e.it.index()
+	     - e.it.index()) % v.si.step();
+	size_type j = (e.it.index() + i - v.si.min) / v.si.step();
+	return const_iterator(e.it + i, v.si.step(), j);
       }
     }
     static iterator begin(this_type &v) {
+      iterator b, e; b.it = v._begin; e.it = v._end;
+      if (!is_const_reference(is_reference())) {
+	set_to_begin(b, v.origin, pthis_type());
+	set_to_end(e, v.origin, pthis_type());
+      }
       size_type i;
-      if (v.si.min >= v._end.index()) return end(v);
-      if (v.si.min > v._begin.index()) i = v.si.min - v._begin.index();
-      else i = (v.si.min + v.si.step() * v._begin.index()
-		- v._begin.index()) % v.si.step();
-      if (v._begin.index() + i + v.si.step() > v.si.max) return end(v);
-      size_type j = (v._begin.index() + i - v.si.min) / v.si.step();
-      return iterator(v._begin + i, v.si.step(), j);
+      if (v.si.min >= e.it.index()) return end(v);
+      if (v.si.min > b.it.index()) i = v.si.min - b.it.index();
+      else i = (v.si.min + v.si.step() * b.it.index()
+		- b.it.index()) % v.si.step();
+      if (b.it.index() + i + v.si.step() > v.si.max) return end(v);
+      size_type j = (b.it.index() + i - v.si.min) / v.si.step();
+      return iterator(b.it + i, v.si.step(), j);
     }
     static const_iterator begin(const this_type &v) {
+      const_iterator b, e; b.it = v._begin; e.it = v._end;
+      if (!is_const_reference(is_reference())) {
+	set_to_begin(b, v.origin, pthis_type());
+	set_to_end(e, v.origin, pthis_type());
+      }
       size_type i;
-      if (v.si.min >= v._end.index()) return end(v);
-      if (v.si.min > v._begin.index()) i = v.si.min - v._begin.index();
-      else i = (v.si.min + v.si.step() * v._begin.index()
-		- v._begin.index()) % v.si.step();
-      if (v._begin.index() + i + v.si.step() > v.si.max) return end(v);
-      size_type j = (v._begin.index() + i - v.si.min) / v.si.step();
-      return const_iterator(v._begin+i, v.si.step(), j);
+      if (v.si.min >= e.it.index()) return end(v);
+      if (v.si.min > b.it.index()) i = v.si.min - b.it.index();
+      else i = (v.si.min + v.si.step() * b.it.index()
+		- b.it.index()) % v.si.step();
+      if (b.it.index() + i + v.si.step() > v.si.max) return end(v);
+      size_type j = (b.it.index() + i - v.si.min) / v.si.step();
+      return const_iterator(b.it+i, v.si.step(), j);
     }
     static const void* origin(const this_type &v) { return v.origin; }
     static void do_clear(this_type &v)

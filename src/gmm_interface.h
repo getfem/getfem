@@ -224,7 +224,8 @@ namespace gmm {
     tab_ref_with_origin(const IT &b, const IT &e, const void *p)
       : dal::tab_ref<IT>(b,e), origin(p) {}
     template <class V> tab_ref_with_origin(const V &v, const sub_interval &si)
-      : dal::tab_ref<IT>(vect_begin(const_cast<V&>(v))+si.min, vect_begin(const_cast<V&>(v))+si.max),
+      : dal::tab_ref<IT>(vect_begin(const_cast<V&>(v))+si.min,
+			 vect_begin(const_cast<V&>(v))+si.max),
         origin(linalg_origin(const_cast<V&>(v))) {}
     template <class V> tab_ref_with_origin(V &v, const sub_interval &si)
       : dal::tab_ref<IT>(vect_begin(const_cast<V&>(v))+si.min, vect_begin(const_cast<V&>(v))+si.max),

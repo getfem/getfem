@@ -241,10 +241,10 @@ namespace gmm {
     typedef typename linalg_traits<this_type>::col_iterator iterator;
     
     reference operator()(const iterator &itcol, size_type i)
-    { return access_type()(*itcol, itcol.si2.index(i)); }
+    { return access_type()(*itcol, itcol.si1.index(i)); }
 
     value_type operator()(const const_iter &itcol, size_type i)
-    { return access_type()(*itcol, itcol.si2.index(i)); }
+    { return access_type()(*itcol, itcol.si1.index(i)); }
   };
 
   template <class PT, class SUBI1, class SUBI2>
