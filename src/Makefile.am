@@ -105,6 +105,7 @@ include_HEADERS =                       \
 	gmm_precond_ilu.h               \
 	gmm_precond_ilut.h              \
 	gmm_blas.h                      \
+	gmm_blas_interface.h            \
 	gmm_lapack_interface.h          \
 	gmm_condition_number.h          \
 	gmm_opt.h                       \
