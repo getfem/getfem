@@ -59,8 +59,9 @@ MESHNAME='meshes/disc_P2_h4.mesh';
 % MESHNAME='disc_P2_h1.mesh';
 % MESHNAME='disc_P2_h0.5.mesh';
 % MESHNAME='disc_P2_h0.3.mesh';
-ROOTFILENAME = 'elastostatic';     % Root of data files.
-VTK_EXPORT = 2 % export solution to a .vtk file ?
+ROOTFILENAME = 'dynamic_friction';     % Root of data files.
+DBX_EXPORT = 0 % export solution to a .vtk file ?
+
 
 ;
 close(TMPF);
