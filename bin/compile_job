@@ -32,10 +32,7 @@ else
   $ENV{TEXMFCNF} = "/usr/local/texmf/web2c";
 }
 
-print `bin/install_form_cvs`;
-
-# Il faut ajouter la fabrication de la librairie dynamique et des commandes
-# matlab.
-
-print `make`;
-print `make matlabcom`;
+print `cd ..; cvs checkout getfem++`; print "\n\n";
+print `./configure --prefix=$rootlib`;print "\n\n";
+print `gmake`; print "\n\n";
+print `gmake install`; print "\n\n";
