@@ -505,7 +505,7 @@ namespace getfem {
       }
       // constructor for a non-homogeneous material(constant stress_threshold)
       mdbrick_plasticity(mesh_fem &mf_u_, mesh_fem &mf_data_,
-			 const VECTOR &lambdai, const VECTOR &mui, value_type stress_treshhold,
+			 const VECTOR &lambdai, const VECTOR &mui, value_type stress_threshold,
 			 value_type TOL_, size_type flag_hyp_)
       : mf_u(mf_u_), mf_data(mf_data_) {
 	set_Lame_coeff(lambdai, mui);
@@ -517,7 +517,7 @@ namespace getfem {
       }
       // constructor for a non-homogeneous material(constant lambda and mu)
       mdbrick_plasticity(mesh_fem &mf_u_, mesh_fem &mf_data_,
-			 value_type lambdai, value_type mui, const VECTOR &stress_treshhold,
+			 value_type lambdai, value_type mui, const VECTOR &stress_threshold,
 			 value_type TOL_, size_type flag_hyp_)
       : mf_u(mf_u_), mf_data(mf_data_) {
 	set_Lame_coeff(lambdai, mui);
@@ -529,7 +529,7 @@ namespace getfem {
       }
       // constructor for a non-homogeneous material(constant lambda and mu)
       mdbrick_plasticity(mesh_fem &mf_u_, mesh_fem &mf_data_,
-			 const VECTOR &lambdai, const VECTOR &mui, const VECTOR &stress_treshhold,
+			 const VECTOR &lambdai, const VECTOR &mui, const VECTOR &stress_threshold,
 			 value_type TOL_, size_type flag_hyp_)
       : mf_u(mf_u_), mf_data(mf_data_) {
 	set_Lame_coeff(lambdai, mui);

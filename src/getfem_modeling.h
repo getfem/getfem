@@ -696,7 +696,7 @@ namespace getfem {
     { return sub_problem.main_mesh_fem(); }
 
     void set_rhs(const VECTOR &B__)
-    { fixing_dimensions(); gmm::copy(B__, B_); force_recompute(); }    
+    { fixing_dimensions(); gmm::copy(B__, B_); this->force_recompute(); }    
     // Constructor defining the rhs
     mdbrick_source_term(mdbrick_abstract<MODEL_STATE> &problem,
 		       mesh_fem &mf_data_, const VECTOR &B__,
