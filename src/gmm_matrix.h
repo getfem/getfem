@@ -332,7 +332,7 @@ namespace gmm
   template <class M1, class M2>
   void copy(const block_matrix<M1> &m1, M2 &m2) {
     for (size_type j = 0, l = 0; j < m1.ncolblocks(); ++j)
-      for (size_type i = 0, k = 0; i < m1.nrowblocks(); ++i)
+      for (size_type i = 0; i < m1.nrowblocks(); ++i)
 	copy(m1.block(i,j), sub_matrix(m2, m1.subrowinterval(i), 
 				       m1.subcolinterval(j)));
   }

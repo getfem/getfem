@@ -53,7 +53,7 @@ namespace bgeot
   { *result = *first; copy(++first, bgeot_count<N-1>(), ++result); }
 
   template <class InIter, class OutIter> inline
-    void copy(InIter first, bgeot_count<0>, OutIter result)
+    void copy(InIter, bgeot_count<0>, OutIter)
   { }
   
   template <int N, class OutIter, class T> inline
@@ -69,7 +69,7 @@ namespace bgeot
   { *result += *first * a; addmul(++first, bgeot_count<N-1>(), ++result, a); }
 
   template <class InIter, class OutIter, class T> inline 
-    void addmul(InIter first, bgeot_count<0>, OutIter result, const T& a)
+    void addmul(InIter, bgeot_count<0>, OutIter result, const T& a)
   { }
 
   template <int N, class OutIter, class T> inline
@@ -85,7 +85,7 @@ namespace bgeot
   { *first /= a; overegal(++first, bgeot_count<N-1>(), a); }
 
   template <class OutIter, class T> inline
-    void overegal(OutIter first, bgeot_count<0>, const T& a)
+    void overegal(OutIter, bgeot_count<0>, const T& a)
   { }
 
   template <int N, class InIter, class OutIter> inline
@@ -93,7 +93,7 @@ namespace bgeot
   { *result += *first; plusegal(++first, bgeot_count<N-1>(), ++result); }
 
   template <class InIter, class OutIter> inline 
-    void plusegal(InIter first, bgeot_count<0>, OutIter result)
+    void plusegal(InIter, bgeot_count<0>, OutIter)
   { }
 
   template <int N, class InIter, class OutIter> inline
@@ -101,7 +101,7 @@ namespace bgeot
   { *result -= *first; minusegal(++first, bgeot_count<N-1>(), ++result); }
 
   template <class InIter, class OutIter> inline 
-    void minusegal(InIter first, bgeot_count<0>, OutIter result)
+    void minusegal(InIter , bgeot_count<0>, OutIter)
   { }
 
   template <int N, class InIter, class OutIter> inline
@@ -123,7 +123,7 @@ namespace bgeot
   }
 
   template <class InIter, class OutIter> inline 
-    void vectsp(InIter first, bgeot_count<0>, OutIter result, double& res)
+    void vectsp(InIter, bgeot_count<0>, OutIter, double&)
   { }
 
 

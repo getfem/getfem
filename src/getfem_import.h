@@ -93,7 +93,13 @@ namespace getfem {
       }
       f.close();
     }
-    catch (std::ios_base::failure& exc) {
+    catch (
+#ifdef USING_BROKEN_GCC295
+	   std::logic_error &exc
+#else
+	   std::ios_base::failure& exc
+#endif
+) {
       m.clear();
       DAL_THROW(dal::failure_error, "error while reading gmsh file \"" << filename << "\" : " << exc.what());
     }
@@ -145,7 +151,7 @@ namespace getfem {
 	    f >> std::ws;
 	    std::getline(f,ls);
 	    if (ftool::casecmp(ls, "END COORDINATES", 15)==0) break;
-	    std::stringstream s(ls); 
+	    std::stringstream s; s << ls; 
 	    size_type id;
 	    s >> id;
 	    
@@ -246,7 +252,7 @@ namespace getfem {
 	  f >> std::ws;
 	  std::getline(f,ls);
 	  if (ftool::casecmp(ls, "END ELEMENTS", 12)==0) break;
-	  std::stringstream s(ls); 
+	  std::stringstream s; s << ls; 
 	  size_type cv_id;
 	  s >> cv_id;
 	  cv_nodes.resize(nnode);
@@ -275,7 +281,13 @@ namespace getfem {
       m.clear();
       throw exc;
     }
-    catch (std::ios_base::failure& exc) {
+    catch (
+#ifdef USING_BROKEN_GCC295
+	   std::logic_error &exc
+#else
+	   std::ios_base::failure& exc
+#endif
+) {
       m.clear();
       DAL_THROW(dal::failure_error, "error while reading GiD mesh file \"" << filename << "\" : " << exc.what());
     }
