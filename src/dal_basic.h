@@ -376,5 +376,20 @@ namespace dal
     void swap(const dynamic_array<T,pks> &x, const dynamic_array<T,pks> &y)
   { x.swap(y); }
 
+
+  /** 
+      a very simple pointer collection
+      which destroys the content of its pointers 
+  */
+  template<class T> class ptr_collection : public std::vector<T*> {
+  public:
+    typedef typename std::vector<T*>::size_type size_type;
+    typedef typename std::vector<T*>::iterator iterator;
+    typedef typename std::vector<T*>::const_iterator const_iterator;
+    ptr_collection() : std::vector<T*>() {}
+    ptr_collection(size_type sz) : std::vector<T*>(sz) { std::fill(begin(),end(),0); }
+    ~ptr_collection() { for (iterator i=begin(); i != end(); ++i) { delete *i; *i = 0; } }
+  };
+
 }
 #endif /* __DAL_BASIC_H  */
