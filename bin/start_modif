@@ -19,7 +19,7 @@ if ($systeme =~ /Linux/)
   print MAKEFILE "INCLUDES_GETFEM = -I/opt/getfem/include\n";
   print MAKEFILE "GETFEM_LIB = /opt/getfem/lib/libgetfem.a\n";
   print MAKEFILE "COMP = g++\n";
-  print MAKEFILE "OPTIONS_STANDARD = -ainsi -ftemplate-depth-40\n";
+  print MAKEFILE "OPTIONS_STANDARD = -ftemplate-depth-40 -pedantic\n";
   print MAKEFILE "OPTIONS_DEBUG    = -g\n";
   print MAKEFILE "OPTIONS_OPTIMIZE = -O3\n";
   print MAKEFILE "OPTIONS_BOTH     = -g -O3\n";
@@ -34,7 +34,7 @@ else
   print MAKEFILE "INCLUDES_GETFEM = -I/usr/local/getfem/include\n";
   print MAKEFILE "GETFEM_LIB = /usr/local/getfem/lib/libgetfem.a\n";
   print MAKEFILE "COMP = cxx\n";
-  print MAKEFILE "OPTIONS_STANDARD = -ptr $rootlib/cxx_repository\n";
+  print MAKEFILE "OPTIONS_STANDARD = -ptr $rootlib/cxx_repository -std strict_ansi -std strict_ansi_errors\n";
   print MAKEFILE "OPTIONS_DEBUG    = -g\n";
   print MAKEFILE "OPTIONS_OPTIMIZE = -O3\n";
   print MAKEFILE "OPTIONS_BOTH     = -g3\n";
