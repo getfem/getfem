@@ -7,6 +7,7 @@
 
 #include <getfem_export.h>
 #include <getfem_assembling.h>
+#include <getfem_norm.h>
 
 using std::cout;
 using std::cerr;

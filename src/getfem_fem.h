@@ -207,6 +207,8 @@ namespace getfem
 
       void interpolation(const base_node &x, const base_matrix &G,
 			 const base_vector coeff, base_node &val) const;
+      void interpolation_grad(const base_node &x, const base_matrix &G,
+			      const base_vector coeff, base_node &val) const;
       void base_value(const base_node &x, base_tensor &t) const
       {
 	bgeot::multi_index mi(2);
@@ -255,7 +257,7 @@ namespace getfem
      void fem<FUNC>::interpolation(const base_node &x, const base_matrix &G,
 				   const base_vector coeff, base_node &val) const
    { // optimisable.   verifier et faire le vectoriel
-     static base_matrix M;
+     base_matrix M;
      #ifdef __GETFEM_VERIFY
        assert(val.size() == target_dim());
      #endif
@@ -280,6 +282,42 @@ namespace getfem
 	 val[r] += co * base()[j + r*R].eval(x.begin());
      } 
    }
+
+
+     template <class FUNC>
+     void fem<FUNC>::interpolation_grad(const base_node &x, const base_matrix &G,
+					const base_vector coeff, base_matrix &val) const
+   { // optimisable.   verifier
+     base_matrix M;
+     base_tensor t;
+     #ifdef __GETFEM_VERIFY
+       assert(val.nrows() == target_dim() && val.ncols() == x.size());
+     #endif
+    
+     grad_base_value(x, t);
+     base_tensor::iterator it = t.begin();
+
+     size_type R = nb_dof();
+
+     if (!is_equivalent())
+     { if (M.nrows() != R || M.ncols() != R) M.resize(R, R); mat_trans(M, G); }
+
+     val.fill(0.0);
+     
+     for (size_type k = 0; k < x.size(); ++k)
+       for (size_type r = 0; r < target_dim(); ++r)
+	 for (size_type j = 0; j < R; ++j, ++it) {
+	   scalar_type co = 0.0;
+	   if (is_equivalent())
+	     co = coeff[j];
+	   else
+	     for (size_type i = 0; i < R; ++i)
+	       co += coeff[i] * M(i, j);
+     
+	     val(r,k) += co * (*it);
+     } 
+   }
+
 
    /** @name functions on convex structures
     */
