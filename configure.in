@@ -163,7 +163,6 @@ AC_ARG_ENABLE(dd,
 AC_ARG_ENABLE(qd,
  [  --enable-qd             enable the use of the qd library (some computation will be done with quad-double precision, usefull for high order FEMs)],
  [ if   test "x$enableval" = "xyes" ; then useQDlib="yes"; QD_PREC="quad"; fi], [if test "x$useQDlib" = "xyes"; then useQDlib="yes"; else useQDlib="no"; fi])
-echo "Qd : ${QD_PREC} ${useQDlib}"
 if test "x$useQDlib" = "xyes" ; then  
   LIBS="$LIBS $QDLIB -lm"
   CXXFLAGS="$CXXFLAGS $QDINC"
