@@ -3,9 +3,12 @@
 eval 'exec perl -S $0 "$@"'
   if 0;
 
-# à ajouter : - les sous-matrices
-#           : - les skyline vectors
+sub numerique { $a <=> $b; }
+
+# à ajouter : - les matrices csr et csc
 #             - Gerer l'interface Lapack, SuperLU et QD.
+#             - Quand les vecteurs ou les matrices sont creuses,
+#             - les intialiser au moins une fois sur deux réellement creuses.
 
 $islocal = 0;
 
@@ -65,7 +68,8 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     $VECTOR_TYPES[1] = "std::vector<$TYPE> ";
     $VECTOR_TYPES[2] = "gmm::rsvector<$TYPE> ";
     $VECTOR_TYPES[3] = "gmm::wsvector<$TYPE> ";
-    $NB_VECTOR_TYPES = 4.0;
+    $VECTOR_TYPES[4] = "gmm::slvector<$TYPE> ";
+    $NB_VECTOR_TYPES = 5.0;
 
     $MATRIX_TYPES[0] = "gmm::dense_matrix<$TYPE> ";
     $MATRIX_TYPES[1] = "gmm::dense_matrix<$TYPE> ";
@@ -75,7 +79,9 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     $MATRIX_TYPES[5] = "gmm::col_matrix<gmm::rsvector<$TYPE> > ";
     $MATRIX_TYPES[6] = "gmm::row_matrix<gmm::wsvector<$TYPE> > ";
     $MATRIX_TYPES[7] = "gmm::col_matrix<gmm::wsvector<$TYPE> > ";
-    $NB_MATRIX_TYPES = 8.0;
+    $MATRIX_TYPES[8] = "gmm::row_matrix<gmm::slvector<$TYPE> > ";
+    $MATRIX_TYPES[9] = "gmm::col_matrix<gmm::slvector<$TYPE> > ";
+    $NB_MATRIX_TYPES = 10.0;
 
     while ($li = <DATAF>) { print TMPF $li; }
     $sizep = int($size_max*rand);
@@ -87,7 +93,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
     print TMPF "  dal::exception_callback::set_exception_callback(&cb);\n\n";
     print TMPF "  try {\n\n";
     for ($j = 0; $j < $nb_param; ++$j) {
-      $a = rand;
+      $a = rand; $b = rand;
       $sizepp = $sizep + int(50.0*rand);
       $step = $sizep; if ($step == 0) { ++$step; }
       $step = int(1.0*int($sizepp/$step - 1)*rand) + 1;
@@ -115,7 +121,6 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 	  while (@sortind)
 	    { push (@sub_index, splice(@sortind , rand @sortind, 1)); }
 	  @sub_index = @sub_index[0..$sizep-1];
-	  sub numerique { $a <=> $b; }
 	  @sub_index = sort numerique @sub_index;
 	  $li= "$li\n    gmm::size_type param_tab$j [$sizep] = {$sub_index[0]";
 	  for ($k = 1; $k < $sizep; ++$k) { $li = "$li , $sub_index[$k]"; }
@@ -129,18 +134,62 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 	}
 	print TMPF "$li\n    gmm::fill_random(param$j);\n";
       }
-      elsif ($param[$j] == 3) { # rectangular matrices
-	$s = int($size_max*rand);
-	$lt = $MATRIX_TYPES[int($NB_MATRIX_TYPES * rand)];
-	$li = "    $lt param$j($sizep, $s);";
-	print TMPF "$li\n    gmm::fill_random(param$j);\n";
-	$sizep = $s; $param_name[$j] = "param$j";
-      }
-      elsif ($param[$j] == 4) { # squared matrices
-	$lt = $MATRIX_TYPES[int($NB_MATRIX_TYPES * rand)];
-	$li = "    $lt param$j($sizep, $sizep);";
-	print TMPF "$li\n    gmm::fill_random(param$j);\n";
+      elsif ($param[$j] == 3 || $param[$j] == 4) { # matrices
+	$sm = $sizep; if ($a < 0.3) { $sm = $sizep + int(50.0*rand); }
+	$s = $sizep; if ($param[$j] == 3) { $s = int($size_max*rand); }
+	$sn = $s; if ($b < 0.3) { $sn = $s + int(50.0*rand); }
 	$param_name[$j] = "param$j";
+	$lt = $MATRIX_TYPES[int($NB_MATRIX_TYPES * rand)];
+	$li = "    $lt param$j($sm, $sn);";
+	
+	if ($a < 0.3 || $b < 0.3) {
+	  $sub1 = "gmm::sub_interval(0, $sizep)";
+	  $sub2 = "gmm::sub_interval(0, $s)";
+	  if ($a < 0.1) {
+	    $c = int(1.0*($sm-$sizep+1)*rand);
+	    $sub1 = "gmm::sub_interval($c, $sizep)";
+	  }
+	  elsif ($a < 0.2) {
+	    $c = int(1.0*($sm-($sizep*$step+1))*rand);
+	    $sub1 = "gmm::sub_slice($c, $sizep, $step)";
+	  }
+	  elsif ($a < 0.3) {
+	    @sub_index = ();
+	    @sortind = 0 .. ($sm-1);
+	    while (@sortind)
+	      { push (@sub_index, splice(@sortind , rand @sortind, 1)); }
+	    @sub_index = @sub_index[0..$sizep-1];
+	    @sub_index = sort numerique @sub_index;
+	    $li="$li\n    gmm::size_type param_t$j [$sizep] = {$sub_index[0]";
+	    for ($k = 1; $k < $sizep; ++$k) { $li = "$li , $sub_index[$k]"; }
+	    $li = "$li};";
+	    $sub1 = "gmm::sub_index(&param_t$j [0], &param_t$j [$sizep]))";
+	  }
+	  if ($b < 0.1) {
+	    $c = int(1.0*($sn-$s+1)*rand);
+	    $sub2 = "gmm::sub_interval($c, $s)";
+	  }
+	  elsif ($b < 0.2) {
+	    $c = int(1.0*($sm-($s*$step+1))*rand);
+	    $sub2 = "gmm::sub_slice($c, $s, $step)";
+	  }
+	  elsif ($b < 0.3) {
+	    @sub_index = ();
+	    @sortind = 0 .. ($sn-1);
+	    while (@sortind)
+	      { push (@sub_index, splice(@sortind , rand @sortind, 1)); }
+	    @sub_index = @sub_index[0..$s-1];
+	    @sub_index = sort numerique @sub_index;
+	    $li="$li\n    gmm::size_type param_u$j [$sizep] = {$sub_index[0]";
+	    for ($k = 1; $k < $sizep; ++$k) { $li = "$li , $sub_index[$k]"; }
+	    $li = "$li};";
+	    $sub2 = "gmm::sub_index(&param_u$j [0], &param_u$j [$sizep]))";
+	  }
+	  $param_name[$j] = "gmm::sub_matrix(param$j, $sub1, $sub2)";
+	}
+
+	print TMPF "$li\n    gmm::fill_random(param$j);\n";
+	$sizep = $s;
       }
       print "$li ($param_name[$j])\n";
     }
