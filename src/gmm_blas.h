@@ -2031,21 +2031,44 @@ namespace gmm {
   // row x col matrix-matrix mult
 
   template <typename L1, typename L2, typename L3>
+  void mult_row_col_with_temp(const L1& l1, const L2& l2, L3& l3, col_major) {
+    typedef typename temporary_col_matrix<L1>::matrix_type temp_col_mat;
+    temp_col_mat temp(mat_nrows(l1), mat_ncols(l1));
+    copy(l1, temp);
+    mult(temp, l2, l3);
+  }
+
+  template <typename L1, typename L2, typename L3>
+  void mult_row_col_with_temp(const L1& l1, const L2& l2, L3& l3, row_major) {
+    typedef typename temporary_row_matrix<L2>::matrix_type temp_row_mat;
+    temp_row_mat temp(mat_nrows(l2), mat_ncols(l2));
+    copy(l2, temp);
+    mult(l1, temp, l3);
+  }
+
+  
+
+  template <typename L1, typename L2, typename L3>
   void mult_spec(const L1& l1, const L2& l2, L3& l3, rcmult) {
-
-    if (is_sparse(l1) || is_sparse(l2))
+    if (is_sparse(l1) || is_sparse(l2)) {
       DAL_WARNING(3,
-	  "Inefficient row matrix - col matrix mult for sparse matrices");
-
-    typename linalg_traits<L2>::const_col_iterator
-      it2b = linalg_traits<L2>::col_begin(l2), it2,
-      ite = linalg_traits<L2>::col_end(l2);
-    size_type i,j, k = mat_nrows(l1);
-
-    for (i = 0; i < k; ++i) {
-      typename linalg_traits<L1>::const_sub_row_type r1 = mat_const_row(l1, i);
-      for (it2 = it2b, j = 0; it2 != ite; ++it2, ++j)
-	l3(i,j) = vect_sp(r1, linalg_traits<L2>::col(it2));
+		  "Inefficient row matrix - col matrix mult for "
+		  "sparse matrices, using temporary");
+      mult_row_col_with_temp(l1, l2, l3, 
+			     typename principal_orientation_type<typename
+			     linalg_traits<L3>::sub_orientation>::potype());
+    }
+    else {
+      typename linalg_traits<L2>::const_col_iterator
+	it2b = linalg_traits<L2>::col_begin(l2), it2,
+	ite = linalg_traits<L2>::col_end(l2);
+      size_type i,j, k = mat_nrows(l1);
+      
+      for (i = 0; i < k; ++i) {
+	typename linalg_traits<L1>::const_sub_row_type r1=mat_const_row(l1, i);
+	for (it2 = it2b, j = 0; it2 != ite; ++it2, ++j)
+	  l3(i,j) = vect_sp(r1, linalg_traits<L2>::col(it2));
+      }
     }
   }
 

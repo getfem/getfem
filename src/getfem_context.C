@@ -37,20 +37,26 @@ namespace getfem {
 
   typedef context_dependencies::ident_type ident_type;
 
-  static ident_type context_dependencies::new_ident(void)
-  { static ident_type current_id(0); return ++current_id; }
-
+  static ident_type current_id(0);
   
+  ident_type context_dependencies::new_ident(void)
+  { return ++current_id; }
+
+  ident_type context_dependencies::current_ident(void)
+  { return current_id; }
+
   bool context_dependencies::context_changed(void) const {
-    std::list<dependency>::const_iterator it = dependencies.begin(),
+    std::list<dependency>::iterator it = dependencies.begin(),
       ite = dependencies.end();
+    if (c_ident == current_ident()) return false;
     bool b = false;
     for (; it != ite; ++it)
-      if (*(it->first).context_changed()
-	  || *(it->first).ident() != it->second || ) {
-	b = true; it->second = *(it->first).ident();
+      if (it->first->context_changed()
+	  || it->first->ident() != it->second) {
+	b = true; it->second = it->first->ident();
       }
-    if (b) ident_ = new_ident();
+    if (b) touch();
+    c_ident = current_ident();
     return b;
   }
   

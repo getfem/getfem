@@ -34,7 +34,7 @@
 #define GMM_IDGMRES_H
 
 #include <gmm_kernel.h>
-#include <gmm_precond_diagonal.h>
+#include <gmm_iter.h>
 #include <gmm_dense_sylvester.h>
 
 namespace gmm {

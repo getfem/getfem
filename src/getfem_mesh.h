@@ -37,10 +37,9 @@
 #include <bgeot_mesh.h>
 #include <bgeot_geotrans_inv.h>
 #include <linkmsg.h>
-#include <getfem_config.h>
+#include <getfem_context.h>
 
-namespace getfem
-{
+namespace getfem {
 
   /* ********************************************************************* */
   /*								   	   */

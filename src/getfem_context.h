@@ -42,19 +42,24 @@ namespace getfem {
   public :
     typedef long ident_type;
     static ident_type new_ident(void);
+    static ident_type current_ident(void);
 
   protected :
-    typedef std::pair<context_dependencies *, long> dependency;
-    ident_type ident_;
-    std::list<dependency> dependencies;
+    typedef std::pair<const context_dependencies *, long> dependency;
+    mutable ident_type ident_, c_ident_;
+    mutable std::list<dependency> dependencies;
 
   public :
     ident_type ident(void) const { return ident_; }
-
+    
     void add_dependency(const context_dependencies &cd)
-    { dependencies.push(dependency(&cd, cd.ident())); }
+    { dependencies.push_back(dependency(&cd, cd.ident())); }
     
     bool context_changed(void) const;
+
+    void touch(void) { c_ident_ = ident_ = new_ident(); }
+
+    context_dependencies() { touch(); }
 
   };
 

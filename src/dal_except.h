@@ -204,7 +204,7 @@ namespace dal {
   //                  1 very important : specify a possible error in the code.
   //                  2 important : specify a default of optimization for inst.
   //                  3 remark
-
+  //                  4 ignored by default.
   
 } /* end of namespace dal.                                                */
 

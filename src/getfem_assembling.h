@@ -93,25 +93,28 @@ namespace getfem
   template<class VEC>
   scalar_type asm_H1_norm(const mesh_fem &mf, const VEC &U,
 			  const dal::bit_vector &cvlst) {
-    return sqrt(dal::sqr(asm_L2_norm(mf,U,cvlst))+dal::sqr(asm_H1_semi_norm(mf,U,cvlst)));
+    return sqrt(dal::sqr(asm_L2_norm(mf,U,cvlst))
+		+dal::sqr(asm_H1_semi_norm(mf,U,cvlst)));
   }
   
 
   /** 
-      generic mass matrix assembly (on the whole mesh or on the specified boundary) 
+      generic mass matrix assembly (on the whole mesh or on the specified
+      boundary) 
   */
   template<class MAT>
-  void asm_mass_matrix(MAT &M, const mesh_fem &mf_u1, size_type boundary=size_type(-1)) {
+  void asm_mass_matrix(MAT &M, const mesh_fem &mf_u1,
+		       size_type boundary=size_type(-1)) {
     asm_mass_matrix(M,mf_u1,mf_u1, boundary);
   }
 
   /** 
-      generic mass matrix assembly (on the whole mesh or on the specified boundary) 
+      generic mass matrix assembly (on the whole mesh or on the specified
+      boundary) 
   */
   template<class MAT>
   void asm_mass_matrix(MAT &M, const mesh_fem &mf_u1, const mesh_fem &mf_u2,
-		       size_type boundary=size_type(-1))
-  {
+		       size_type boundary=size_type(-1)) {
     generic_assembly assem;
     if (&mf_u1 != &mf_u2)
       if (mf_u1.get_qdim() == 1 && mf_u2.get_qdim() == 1)
@@ -137,10 +140,12 @@ namespace getfem
   */
   template<class VECT1, class VECT2>
     void asm_source_term(VECT1 &B, const mesh_fem &mf,
-			 const mesh_fem &mfdata, const VECT2 &F, size_type boundary=size_type(-1))
+			 const mesh_fem &mfdata, const VECT2 &F,
+			 size_type boundary=size_type(-1))
   {
     if (mfdata.get_qdim() != 1)
-      DAL_THROW(std::invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+      DAL_THROW(std::invalid_argument,
+		"invalid data mesh fem (Qdim=1 required)");
     generic_assembly assem;
     if (mf.get_qdim() == 1)
       assem.set("F=data(#2); V(#1)+=comp(Base(#1).Base(#2))(:,j).F(j);");
@@ -169,7 +174,7 @@ namespace getfem
        Q1_22 Q2_22 ..... Qn_22
     if  N = 2, and mf_d has n/N degree of freedom
 
-    Q is a vector, so the matrice is assumed to be stored by columns
+    Q is a vector, so the matrix is assumed to be stored by columns
     (fortran style)
 
     Works for both volumic assembly and boundary assembly
@@ -178,23 +183,25 @@ namespace getfem
     void asm_qu_term(MAT &M, 
 		     const mesh_fem &mf_u, 
 		     const mesh_fem &mf_d, const VECT &Q, 
-		     size_type boundary=size_type(-1))
-  {
+		     size_type boundary=size_type(-1)) {
     if (mf_d.get_qdim() != 1)
-      DAL_THROW(std::invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+      DAL_THROW(std::invalid_argument,
+		"invalid data mesh fem (Qdim=1 required)");
     generic_assembly assem;
     if (mf_u.get_qdim() == 1)
       assem.set("Q=data$1(#2);"
 		"M(#1,#1)+=comp(Base(#1).Base(#1).Base(#2))(:,:,k).Q(k);");
     else {
-      /* detect the symmetricity of Q (in that case the symmetricity of the final
-	 matrix will be ensured, and computations will be slightly speed up */
+      /* detect the symmetricity of Q (in that case the symmetricity of
+       * the final matrix will be ensured, and computations will be
+       * slightly speed up */
       bool Q_symmetric = true;
       size_type q = mf_u.get_qdim();
       for (size_type k=0; k < mf_d.nb_dof(); ++k)
 	for (size_type i=1; i < q; ++i)
 	  for (size_type j=0; j < i; ++j)
-	    if (Q[k*q*q+i*q+j] != Q[k*q*q+j*q+i]) { Q_symmetric = false; goto bye; }
+	    if (Q[k*q*q+i*q+j] != Q[k*q*q+j*q+i])
+	      { Q_symmetric = false; goto bye; }
     bye:
       if (Q_symmetric)
 	assem.set("Q=data$1(qdim(#1),qdim(#1),#2);"
@@ -218,13 +225,16 @@ namespace getfem
      Stiffness matrix for linear elasticity, with Lamé coefficients
   */
   template<class MAT, class VECT>
-    void asm_stiffness_matrix_for_linear_elasticity(MAT &RM,
-						   const mesh_fem &mf, 
-						   const mesh_fem &mfdata, 
-						   const VECT &LAMBDA, const VECT &MU)
+    void asm_stiffness_matrix_for_linear_elasticity(const MAT &RM_,
+					   const mesh_fem &mf, 
+					   const mesh_fem &mfdata, 
+					   const VECT &LAMBDA, const VECT &MU)
   {
+    MAT &RM = const_cast<MAT &>(RM_);
     if (mfdata.get_qdim() != 1)
-      DAL_THROW(std::invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+      DAL_THROW(std::invalid_argument,
+		"invalid data mesh fem (Qdim=1 required)");
+   
     if (mf.get_qdim() != mf.linked_mesh().dim()) DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
     /* e = strain tensor,
        M = 2*mu*e(u):e(v) + lambda*tr(e(u))*tr(e(v))
@@ -357,7 +367,8 @@ namespace getfem
   template<class MAT, class VECT>
   void asm_dirichlet_constraints(MAT &M, VECT &B, const mesh_fem &mf_u,
 				 const mesh_fem &mf_rh,
-				 const VECT &H, const VECT &R, size_type boundary) {
+				 const VECT &H, const VECT &R,
+				 size_type boundary) {
     dal::bit_vector nf;
     pfem pf_u, pf_rh;
     
@@ -366,9 +377,9 @@ namespace getfem
     asm_qu_term(M, mf_u, mf_rh, H, boundary);
     asm_source_term(B, mf_u, mf_rh, R, boundary);
 
-    /* step 2 : simplification of simple dirichlet conditions 
-     */
-    for (dal::bv_visitor cv(mf_u.convex_index()); !cv.finished(); ++cv) {
+    /* step 2 : simplification of simple dirichlet conditions */
+    dal::bit_vector bv = mf_u.convex_on_boundary(boundary);
+    for (dal::bv_visitor cv(bv); !cv.finished(); ++cv) {
       nf = mf_u.faces_of_convex_on_boundary(cv, boundary);
       /* don't try anything with vector elements */
       if (mf_u.fem_of_element(cv)->target_dim() != 1) continue;
@@ -394,12 +405,13 @@ namespace getfem
 		=> then the previous was not useful for this dofs (introducing
 		a mass matrix which is not diagonal in the constraints matrix)
 		-> the constraint is simplified:
-		we replace \int{(H_j.psi_j)*phi_i}=\int{R_j.psi_j}  (sum over j)
+		we replace \int{(H_j.psi_j)*phi_i}=\int{R_j.psi_j} (sum over j)
 		with             H_j*phi_i = R_j     
 	      */
 	      if (tdof_u == tdof_rh &&
 		  bgeot::vect_dist2_sqr(pf_u->node_convex().points()[ind_u], 
-					pf_rh->node_convex().points()[ind_rh]) < 1.0E-14) {
+					pf_rh->node_convex().points()[ind_rh])
+		  < 1.0E-14) {
 		/* the dof might be "duplicated" */
 		for (size_type q = 0; q < Q; ++q) {
 		  size_type dof_u = mf_u.ind_dof_of_element(cv)[ind_u*Q + q];
@@ -413,7 +425,7 @@ namespace getfem
 		  size_type dof_rh = mf_rh.ind_dof_of_element(cv)[ind_rh];
 		  /* set the "simplified" row */
 		  for (unsigned jj=0; jj < Q; jj++) {
-		    size_type dof_u2 = mf_u.ind_dof_of_element(cv)[ind_u*Q + jj];		    
+		    size_type dof_u2 = mf_u.ind_dof_of_element(cv)[ind_u*Q+jj];
 		    M(dof_u, dof_u2) = H[(jj*Q+q) + Q*Q*(dof_rh)];
 		  }
 		  B[dof_u] = R[dof_rh*Q+q];
@@ -436,11 +448,9 @@ namespace getfem
     size_type N = mf_rh.nb_dof(), Q=mf_u.get_qdim();
     VECT H(dal::sqr(mf_u.get_qdim())*N); gmm::clear(H);
     
-    for (size_type i=0; i < N; ++i) {
-      for (size_type q=0; q < Q; ++q) {
-	H[i*Q*Q+q*Q+q]=1;
-      }
-    }
+    for (size_type i=0; i < N; ++i)
+      for (size_type q=0; q < Q; ++q)  H[i*Q*Q+q*Q+q]=1;
+   
     asm_dirichlet_constraints(M, B, mf_u, mf_rh, H, R, boundary);
   }
 
@@ -725,7 +735,7 @@ namespace getfem
 
 //     return nbase;
 //   }
-    
+
 }  /* end of namespace getfem.                                             */
 
 

@@ -61,8 +61,7 @@
 #define GMM_SOLVER_CCG_H__
 
 #include <gmm_kernel.h>
-#include <gmm_precond_diagonal.h>
-
+#include <gmm_iter.h>
 
 namespace gmm {
 

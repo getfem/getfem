@@ -65,8 +65,7 @@
 
 #include <gmm_kernel.h>
 
-namespace gmm
-{
+namespace gmm {
 
   class iteration {
   protected :

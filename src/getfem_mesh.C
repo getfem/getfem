@@ -33,8 +33,8 @@
 #include <gmm_condition_number.h>
 #include <getfem_mesh.h>
 #include <bgeot_precomp.h>
-namespace getfem
-{
+namespace getfem {
+
   getfem_mesh::getfem_mesh(dim_type NN) {
     dimension = NN; eps_p = 1.0E-10;
     pts.comparator() = dal::lexicographical_less<base_node,

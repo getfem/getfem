@@ -346,12 +346,14 @@ namespace gmm {
   { typedef std::vector<T> vector_type; };
 
   template <typename T> class wsvector;
+  template <typename T> class rsvector;
   template<typename T> struct sparse_vector_type 
   { typedef wsvector<T> vector_type; };
 
   template <typename T> class slvector;
   template <typename T> class dense_matrix;
   template <typename VECT> class row_matrix;
+  template <typename VECT> class col_matrix;
   
 
   /* ******************************************************************** */
@@ -425,6 +427,58 @@ namespace gmm {
 				       typename linalg_traits<V>::linalg_type,
 				       V>::matrix_type matrix_type;
   };
+
+  
+  template <typename S, typename L, typename V>
+  struct temporary_col_matrix_ { typedef abstract_null_type matrix_type; };
+  template <typename V, typename L>
+  struct temporary_col_matrix_<abstract_sparse, L, V> {
+    typedef typename linalg_traits<V>::value_type T;
+    typedef col_matrix<wsvector<T> > matrix_type;
+  };
+  template <typename V, typename L>
+  struct temporary_col_matrix_<abstract_skyline, L, V> {
+    typedef typename linalg_traits<V>::value_type T;
+    typedef col_matrix<slvector<T> > matrix_type;
+  };
+  template <typename V, typename L>
+  struct temporary_col_matrix_<abstract_dense, L, V>
+  { typedef dense_matrix<typename linalg_traits<V>::value_type> matrix_type; };
+
+  template <typename V> struct temporary_col_matrix {
+    typedef typename temporary_col_matrix_<
+      typename linalg_traits<V>::storage_type,
+      typename linalg_traits<V>::linalg_type,
+      V>::matrix_type matrix_type;
+  };
+
+
+
+
+  template <typename S, typename L, typename V>
+  struct temporary_row_matrix_ { typedef abstract_null_type matrix_type; };
+  template <typename V, typename L>
+  struct temporary_row_matrix_<abstract_sparse, L, V> {
+    typedef typename linalg_traits<V>::value_type T;
+    typedef row_matrix<wsvector<T> > matrix_type;
+  };
+  template <typename V, typename L>
+  struct temporary_row_matrix_<abstract_skyline, L, V> {
+    typedef typename linalg_traits<V>::value_type T;
+    typedef row_matrix<slvector<T> > matrix_type;
+  };
+  template <typename V, typename L>
+  struct temporary_row_matrix_<abstract_dense, L, V>
+  { typedef dense_matrix<typename linalg_traits<V>::value_type> matrix_type; };
+
+  template <typename V> struct temporary_row_matrix {
+    typedef typename temporary_row_matrix_<
+      typename linalg_traits<V>::storage_type,
+      typename linalg_traits<V>::linalg_type,
+      V>::matrix_type matrix_type;
+  };
+
+
 
   /* ******************************************************************** */
   /*   Selects a temporary dense vector type                              */

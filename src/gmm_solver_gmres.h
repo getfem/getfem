@@ -33,7 +33,8 @@
 #define GMM_KRYLOV_GMRES_H
 
 #include <gmm_kernel.h>
-#include <gmm_precond_diagonal.h>
+#include <gmm_iter.h>
+#include <gmm_modified_gram_schmidt.h>
 
 namespace gmm {
 

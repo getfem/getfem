@@ -35,8 +35,11 @@
 #define GMM_SOLVERS_SCHWARZ_ADDITIVE_H__
 
 #include <gmm_kernel.h>
-#include <gmm_precond_diagonal.h>
 #include <gmm_superlu_interface.h>
+#include <gmm_solver_cg.h>
+#include <gmm_solver_gmres.h>
+#include <gmm_solver_bicgstab.h>
+#include <gmm_solver_qmr.h>
 
 namespace gmm {
       
