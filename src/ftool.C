@@ -52,7 +52,7 @@ namespace ftool
   { return double(clock())/double(CLOCKS_PER_SEC); }
 #endif
 
-  bool read_untill(std::istream &ist, const char *st)
+  bool read_until(std::istream &ist, const char *st)
   {
     int i = 0, l = strlen(st); char c;
     while (!ist.eof() && i < l)
