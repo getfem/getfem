@@ -41,5 +41,7 @@ $ENV{CVSROOT} = ":pserver:renard\@gmmlinux2.gmm.priv:\/var\/cvs";
 #######################################
 
 print `cd ..; cvs checkout getfem++`; print "\n\n";
-exec "./configure --prefix=$rootlib ; $make; $make install"; print "\n\n";
+print `cd ..; cvs checkout getfem_matlab`; print "\n\n";
+
+exec "./configure --prefix=$rootlib ; $make; $make install; cd ../getfem_matlab; ./configure --prefix=$rootlib ; $make; $make install"; print "\n\n";
 
