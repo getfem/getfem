@@ -144,8 +144,8 @@ dnl	SUPLDFLAGS="-rdynamic" # -rdynamic for backtraces
 	echo "Using INTEL icc"
 dnl -tpp6 is for pentiumII and more
 dnl -Xc is for ansi conformance
-	CXXFLAGS="$CXXFLAGS -O3 -tpp6 -Xc -ansi"
-        CFLAGS="$CFLAGS -O3 -tpp6 -Xc -ansi"
+	CXXFLAGS="$CXXFLAGS -O3 -Xc -ansi"
+        CFLAGS="$CFLAGS -O3 -Xc -ansi"
 	;;
  *)
 	echo "Using a unknown compiler"
