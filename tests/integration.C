@@ -3,6 +3,7 @@
 
 int main(void)
 {
+  try {
   bgeot::papprox_integration pai;
 
   for (int i = 1; i < 15; ++i)
@@ -55,4 +56,9 @@ int main(void)
       cout << endl << endl;
     }
   }
+  }
+  DAL_STANDARD_CATCH_ERROR;
+
+  return 0;
+
 }

@@ -25,9 +25,18 @@ INCLUDES = -I$(top_srcdir)/src
 LDADD    = ../src/.libs/libgetfem.a -lm
 CXXFLAGS = @APPSCXXFLAGS@
 
-TESTS = dynamic_array.pl \
+TESTS = \
+	dynamic_array.pl \
 	dynamic_tas.pl \
+	laplacien.pl \
+	elasto_statique.pl  \
+	integration.pl \
+	poly.pl \
+	test_mesh.pl \
+	geo_trans.pl \
+	test_int_set.pl \
 	test_tree_sorted.pl
+
 TESTS_ENVIRONMENT = perl
 
 

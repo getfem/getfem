@@ -13,6 +13,7 @@ typedef bgeot::PT<vsvect> vspoint;
 
 template<class MESH> void test_mesh(MESH &m)
 {
+  
   typedef typename MESH::point_type POINT;
   typedef typename MESH::vector_type VECT;
   
@@ -84,10 +85,12 @@ template<class MESH> void test_mesh(MESH &m)
 
 int main(void)
 {
+  try {
   getfem::getfem_mesh m1;
 
   test_mesh(m1);
-
+  }
+  DAL_STANDARD_CATCH_ERROR;
   return 0;
 }
 

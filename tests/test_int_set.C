@@ -3,7 +3,7 @@
 
 int main(void)
 {
-
+  try {
   dal::bit_vector nn;
 
   cout << "cardinal : " << nn.card() << endl; assert(nn.card() == 0);
@@ -126,6 +126,9 @@ int main(void)
   cout << nn << endl;
   nn.add(2048);
   cout << nn << endl;
+
+  }
+  DAL_STANDARD_CATCH_ERROR;
 
   return 0;
 

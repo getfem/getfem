@@ -129,6 +129,5 @@ int main(void) {
   }
   DAL_STANDARD_CATCH_ERROR;
 
-  cout << "Dynamic_array test ok\n";
   return 0;
 }

@@ -87,7 +87,6 @@ int main(void)
   }
   DAL_STANDARD_CATCH_ERROR;
 
-  cout << "Test_tree_sorted test ok\n";
   return 0;
 
 }

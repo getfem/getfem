@@ -3,6 +3,7 @@
 
 int main(void)
 {
+  try {
   bgeot::polynomial<double> P(2,2), Q(2,2);
   P[2] = 1.0;
   Q[3] = 2.0;
@@ -28,4 +29,8 @@ int main(void)
   double tab[3]; tab[0] = 1.0; tab[1] = 2.0; tab[2] = -1.0;
 
   cout << "P(1.0, 2.0) = " << P.eval(&(tab[0])) << endl;
+  }
+  DAL_STANDARD_CATCH_ERROR;
+
+  return 0;
 }
