@@ -15,7 +15,7 @@ PG = 9810; 		% constante de gravitation (sur terre) (en mm/s^2).
 %PG = 1000000; 		% constante de gravitation (sur jupiter !) (em mm/s^2).
 RHO = 6e-6;     	% densite massique "realiste" pour l'acier
 T = 0.05;
-DT = 0.001;            % Time step
+DT = 0.0001;            % Time step
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
@@ -26,12 +26,12 @@ MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
 RESIDU = 1E-15;     	% residu for conjugate gradient.
 NOISY = 0;
 
-SCHEME = 1; % 0 = theta-method, 1 = Newmark, 2 = middle point
+SCHEME = 3; % 0 = theta-method, 1 = Newmark, 2 = middle point
             % 3 = middle point with modified contact forces
 THETA = 1.0;
 BETA = 1.0;
 GAMMA=0.5;
-NOCONTACT_MASS = 0;     % Suppress or not the mass of contact nodes
+NOCONTACT_MASS = 1;     % Suppress or not the mass of contact nodes
 PERIODICITY=0;          % Periodic condition
 DT_ADAPT = 0;           % Time step adaptation regarding the energy
 R = 100.0;              % Augmentation parameter
