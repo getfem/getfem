@@ -1,3 +1,12 @@
+2004-06-04  Yves Renard  <Yves.Renard@gmm.insa-tlse.fr>
+	* src/gmm_sub_index.h : the sturcture unsorted_sub_index is
+	defined to represent a non-sorted sub-vector or sub-matrix, for
+	instance a permutation of a vector.
+	All linalg_traits have been modified, a new component called
+	index_sorted has been added. The algorithms in gmm_blas.h have been
+	modified to take into account the fact that a sparse index can be
+	unsorted.
+
 2004-06-01  Yves Renard  <Yves.Renard@gmm.insa-tlse.fr>
 	* src/getfem_export.h : the interpolation function has been moved
 	in the new file src/getfem_interpolation.h. An option for the

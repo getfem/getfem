@@ -64,11 +64,11 @@ namespace gmm {
 
   template <typename V, typename W> struct linalg_and
   { typedef linalg_false bool_type; };
-  struct linalg_and<linalg_true, linalg_true>
+  template <> struct linalg_and<linalg_true, linalg_true>
   { typedef linalg_true bool_type; };
   template <typename V, typename W> struct linalg_or
   { typedef linalg_true bool_type; };
-  struct linalg_and<linalg_false, linalg_false>
+  template <> struct linalg_and<linalg_false, linalg_false>
   { typedef linalg_false bool_type; };
 
   struct linalg_const {};       // A reference is either linalg_const,

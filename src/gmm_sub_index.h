@@ -82,19 +82,25 @@ namespace gmm {
 
   struct sub_index {
 
+    size_type first_, last_;
     typedef basic_index base_type;
     typedef base_type::const_iterator const_iterator;
 
     pbasic_index ind;
     mutable pbasic_index rind;
 
+    void comp_extr(void) {
+      std::vector<size_t>::const_iterator it = ind->begin(), ite = ind->end();
+      if (it != ite) { first_=last_= *it; ++it; } else { first_=last_= 0; }
+      for (; it != ite; ++it) 
+	{ first_ = std::min(first_, *it); last_ = std::max(last_, *it); }
+    }
+
     inline void test_rind(void) const
       { if (!rind) rind = index_generator::create_rindex(ind); }
     size_type size(void) const { return ind->size(); }
-    size_type first(void) const
-    { return (ind->size() == 0) ? size_type(0) : (*ind)[0]; }
-    size_type last(void) const 
-    { return (ind->size() == 0) ? size_type(0) : (*ind)[ind->size()-1]+1; }
+    size_type first(void) const { return first_; }
+    size_type last(void) const { return last_; }
     size_type index(size_type i) const { return (*ind)[i]; }
     size_type rindex(size_type i) const {
       test_rind();
@@ -108,9 +114,10 @@ namespace gmm {
 
     sub_index() : ind(0), rind(0) {}
     template <typename IT> sub_index(IT it, IT ite)
-      : ind(index_generator::create_index(it, ite)), rind(0) {}
+      : ind(index_generator::create_index(it, ite)), rind(0) { comp_extr(); }
     template <typename CONT> sub_index(const CONT &c)
-      : ind(index_generator::create_index(c.begin(), c.end())), rind(0) {}
+      : ind(index_generator::create_index(c.begin(), c.end())), rind(0)
+        { comp_extr(); }
     ~sub_index()
       { index_generator::unattach(rind); index_generator::unattach(ind); }
     sub_index(const sub_index &si) : ind(si.ind), rind(si.rind)
@@ -128,6 +135,7 @@ namespace gmm {
       : sub_index(it, ite) {}
     template <typename CONT> unsorted_sub_index(const CONT &c)
       : sub_index(c) {}
+    unsorted_sub_index() {}
     unsorted_sub_index(const unsorted_sub_index &si) : sub_index(si) {}
     unsorted_sub_index &operator =(const unsorted_sub_index &si)
     { sub_index::operator =(si); return *this; }
@@ -159,7 +167,7 @@ namespace gmm {
   { o << "sub_interval(" << si.min << ", " << si.size() << ")"; return o; }
 
   struct sub_slice {
-    size_type min, max, N; 
+    size_type min, max, N;
 
     size_type size(void) const { return (max - min) / N; }
     size_type first(void) const { return min; }
@@ -183,7 +191,7 @@ namespace gmm {
 
   template<class SUBI> struct index_is_sorted
   {  typedef linalg_true bool_type; };
-  struct index_is_sorted<unsorted_sub_index>
+  template<> struct index_is_sorted<unsorted_sub_index>
   {  typedef linalg_false bool_type; };
 
 }

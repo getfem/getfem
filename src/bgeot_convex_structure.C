@@ -222,8 +222,6 @@ namespace bgeot
     dal::dynamic_array<polygon_structure_> polygon;
   };
   
-  static dal::bit_vector *ind_polygon_ = 0;
-
   pconvex_structure polygon_structure(short_type nbt)
   {
     polygon_structure_data &psd = dal::singleton<polygon_structure_data>::instance();
