@@ -98,14 +98,18 @@ namespace gmm {
 	++inner, ++outer, ++i;
       } while (! inner.finished(gmm::abs(s[i])));
 
-      if (int(inner.get_iteration()) < restart -1) ++blocked;
+      if (int(inner.get_iteration()) < restart -1)
+	++blocked else blocked = 0;
 
       gmm::upper_tri_solve(H, s, i, false);
       gmm::combine(KS, s, x, i);
       gmm::mult(A, gmm::scaled(x, -T(1)), b, w);
       gmm::mult(M, w, r);
       beta = gmm::vect_norm2(r);
-      if (blocked > 10) { cout << "Gmres is blocked, exiting\n"; break; }
+      if (blocked > 10) {
+	if (iter.get_noisy()) cout << "Gmres is blocked, exiting\n";
+	break;
+      }
     }
   }
 
