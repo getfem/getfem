@@ -89,7 +89,7 @@ namespace getfem
     value_type operator [](int i) { return *(this + i); }
 
     bool operator ==(const iterator &i) const
-      { return (it == i.it) && (ii = i.ii); }
+      { return (it == i.it) && (ii == i.ii); }
     bool operator !=(const iterator &i) const { return !(i == *this); }
     bool operator < (const iterator &i) const
       { return (it < i.it) && (ii < i.ii); }
@@ -261,6 +261,13 @@ namespace getfem
       return ind_ref_mesh_dof_ind_ct(dof_structure.ind_points_of_face_of_convex(cv, f),
 				     Qdim /fem_of_element(cv)->target_dim());
     }
+
+    bgeot::ref_mesh_point_ind_ct
+    ind_dof_of_element_old(size_type ic) const {
+      if (!dof_enumeration_made) enumerate_dof();
+      return dof_structure.ind_points_of_convex(ic);
+    }
+
     /** Gives the number of  degrees of freedom of the element
      *           of the convex of index i. 
      */

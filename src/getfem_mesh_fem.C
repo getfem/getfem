@@ -258,7 +258,7 @@ namespace getfem
     for (size_type i = d; i != d - Qdim && i != size_type(-1); --i) {
       size_type j = dof_structure.first_convex_of_point(i);
       if (j != size_type(-1))
-	return dof_structure.ind_in_first_convex_of_point(i);
+	return (dof_structure.ind_in_first_convex_of_point(i) * Qdim / f_elems[j]->pf->target_dim());
     }
     return size_type(-1);
   }
@@ -291,12 +291,14 @@ namespace getfem
 	  if (nn.is_in(*it)) { nn.sup(*it); pile.push(*it); }
       }
 
-      size_type nbd = nb_dof_of_element(cv);
       pfem pf = fem_of_element(cv);
+      size_type nbd = pf->nb_dof(); 
       pdof_description andof = already_numerate_dof(pf->dim());
       tab.resize(nbd);
       for (size_type i = 0; i < nbd; i++) {
-	fd.P = point_of_dof(cv, i); // optimisable ...
+	fd.P = linked_mesh().trans_of_convex(cv)->transform
+	  (pf->node_of_dof(i), linked_mesh().points_of_convex(cv));
+	//point_of_dof(cv,i); 
 	fd.pnd = pf->dof_types()[i];
 	size_type j = 0, j_old = 0;
 	if (fd.pnd == andof) {
@@ -309,36 +311,31 @@ namespace getfem
 	  }
 	  else
 	    dof_sort.add_to_index(j, fd);
-	}
-	else {
-	  if (pf->target_dim() == 1 && Qdim != 1) {
-
-	    pdof_description paux = fd.pnd;
+	  tab[i] = j;
+	} else if (pf->target_dim() == 1 && Qdim != 1) {
+	  pdof_description paux = fd.pnd;
+	  
+	  for (size_type k = 0; k < Qdim; ++k) {
+	    fd.pnd = to_coord_dof(paux, k);
 	    
-	    for (size_type k = 0; k < Qdim; ++k) {
-	      fd.pnd = to_coord_dof(paux, k);
-	      
-	      if (dof_linkable(fd.pnd))
-		j = dof_sort.add_norepeat(fd);
+	    if (dof_linkable(fd.pnd))
+	      j = dof_sort.add_norepeat(fd);
 	      else
 		j = dof_sort.add(fd);
-	      if (k == 0)
-		tab[i] = j;
-	      else if (j != j_old + 1)
-		dof_sort.swap(j, j_old+1);
-	      j_old = j;
+	    if (k == 0)
+	      tab[i] = j;
+	    else if (j != j_old + 1) {
+	      dof_sort.swap(j, j_old+1);
 	    }
-	    
+	    j_old = j;
 	  }
-	  else {
-	    if (dof_linkable(fd.pnd))
+	} else {
+	  if (dof_linkable(fd.pnd))
 	    j = dof_sort.add_norepeat(fd);
 	  else
 	    j = dof_sort.add(fd);
-	  }
 	  tab[i] = j;
 	}
-
       }
       
       dof_structure.add_convex_noverif(pf->structure(), tab.begin(), cv);
@@ -523,7 +520,7 @@ namespace getfem
   void mesh_fem::write_to_file(std::ostream &ost) const
   {
     ost << endl << "BEGIN MESH_FEM" << endl << endl;
-    ost << "QDIM " << get_qdim() << endl;
+    ost << "QDIM " << size_type(get_qdim()) << endl;
     dal::bit_vector bv = convex_index();
     size_type cv;
     for (cv << bv; cv != size_type(-1); cv << bv) {
