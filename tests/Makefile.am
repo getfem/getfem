@@ -1,3 +1,9 @@
+if QHULL
+optprog = test_mesh_generation
+else
+optprog =
+endif
+
 check_PROGRAMS = \
 	dynamic_array      \
 	dynamic_tas        \
@@ -22,6 +28,7 @@ check_PROGRAMS = \
 	test_norm	   \
 	test_mesh          \
 	test_tree_sorted   \
+	$(optprog) \
 	plasticity
 
 CLEANFILES = \
@@ -54,6 +61,9 @@ test_slice_SOURCES = test_slice.C
 test_norm_SOURCES = test_norm.C
 schwarz_additive_SOURCES = schwarz_additive.C
 plasticity_SOURCES = plasticity.C
+if QHULL
+test_mesh_generation_SOURCES = test_mesh_generation.C
+endif
 #test_fem_SOURCES = test_fem.C
 
 INCLUDES = -I$(top_srcdir)/src -I../src
