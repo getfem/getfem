@@ -309,7 +309,7 @@ int main(void)
     cout << "transposed(m5) = " << gmm::transposed(m5) << endl;
     gmm::clear(y2);
     iter.init();
-    iter.set_noisy(2);
+    // iter.set_noisy(2);
     gmm::gmres(m5, y2, b, P, 5, iter);
     cout << "y2 = " << y2 << endl;
     gmm::add(gmm::scaled(x, -1.0), y2);

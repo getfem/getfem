@@ -282,13 +282,13 @@ namespace gmm {
 
   template <class T> void Givens_rotation(T a, T b, T &c, T &s) {
     typedef typename number_traits<T>::magnitude_type R;
-    R aa = dal::abs(a), bb = dal::abs(b), q;
+    R aa = dal::abs(a), bb = dal::abs(b);
     if (bb == R(0)) { c = T(1); s = T(0); return; }
     if (aa == R(0)) { c = T(0); s = b / bb; return; }
     if (bb > aa)
-      { q = sqrt(R(1)+dal::abs_sqr(a/b)); c = (a/bb) / q; s = -(b/bb) / q; }
+      { T t = -a/b; s = T(R(1) / (sqrt(R(1)+dal::abs_sqr(t)))); c = s * t; }
     else
-      { q = sqrt(R(1)+dal::abs_sqr(b/a)); c = -(a/aa) / q; s = (b/aa) / q; }
+      { T t = -b/a; c = T(R(1) / (sqrt(R(1)+dal::abs_sqr(t)))); s = c * t; }
   }
 
   template <class T> inline
