@@ -131,8 +131,8 @@ namespace getfem
       std::vector<pdof_description> _dof_types;
       bgeot::convex_structure cvs_node;
       bgeot::convex<base_node> cv_node;
-      bgeot::pstored_point_tab pspt;
-      bool pspt_valid;
+    mutable bgeot::pstored_point_tab pspt;
+    mutable bool pspt_valid;
       bgeot::pconvex_ref cvr; // reference element.
       dim_type ntarget_dim;
       bool is_equiv, is_lag, is_pol;
@@ -169,9 +169,11 @@ namespace getfem
       /// Gives the node corresponding to the dof i.
       const base_node &node_of_dof(size_type i) const
         { return cv_node.points()[i];}
-      bgeot::pstored_point_tab node_tab(void) { 
+      bgeot::pstored_point_tab node_tab(void) const { 
 	if (pspt_valid) return pspt;
-	return pspt = store_point_tab(cv_node.points());
+	/*const_cast<pfem>(this)->*/pspt = store_point_tab(cv_node.points());
+	pspt_valid = true;
+	return pspt;
       }
       bool is_equivalent(void) const { return is_equiv; }
       bool is_lagrange(void) const { return is_lag; }

@@ -182,10 +182,10 @@ namespace dal
 
     protected :
 
-      size_type ifirst_true, ilast_true;
-      size_type ifirst_false, ilast_false;
-      size_type icard;
-      bool icard_valid;
+      mutable size_type ifirst_true, ilast_true;
+      mutable size_type ifirst_false, ilast_false;
+      mutable size_type icard;
+      mutable bool icard_valid;
 
       void fill_false(size_type i1, size_type i2);
  

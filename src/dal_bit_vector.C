@@ -112,46 +112,40 @@ namespace dal
   {
     if (!icard_valid)
     {
-      size_type *pcard = (size_type *)&icard;
-      bool *pvalid = (bool *)&icard_valid;
       const_iterator itb = begin(), ite = end();
-      *pcard = 0;
-      while (itb != ite) { if (*itb) ++(*pcard); ++itb; }
-      *pvalid = true;
+      icard = 0;
+      while (itb != ite) { if (*itb) ++icard; ++itb; }
+      icard_valid = true;
     }
     return icard;
   }
 
   bit_vector::size_type bit_vector::first_true(void) const
   {
-    size_type *p = (size_type *)&ifirst_true;
-    const_iterator itx = begin(), ite = end(); itx += *p;
-    while (itx != ite && !*itx ) { ++itx; ++(*p); }
-    return *p;
+    const_iterator itx = begin(), ite = end(); itx += ifirst_true;
+    while (itx != ite && !*itx ) { ++itx; ++(ifirst_true); }
+    return ifirst_true;
   }
   
   bit_vector::size_type bit_vector::first_false(void) const
   {
-    size_type *p = (size_type *)&ifirst_false;
-    const_iterator itx = begin(), ite = end(); itx += *p;
-    while (itx != ite && *itx) { ++itx; ++(*p); }
-    return *p;
+    const_iterator itx = begin(), ite = end(); itx += ifirst_false;
+    while (itx != ite && *itx) { ++itx; ++(ifirst_false); }
+    return ifirst_false;
   }
 
   bit_vector::size_type bit_vector::last_true(void) const
   {
-    size_type *p = (size_type *)&ilast_true;
-    const_iterator itb = begin(), itx = itb; itx += *p;
-    while (itx != itb && !*itx) { --itx; --(*p); }
-    return *p;
+    const_iterator itb = begin(), itx = itb; itx += ilast_true;
+    while (itx != itb && !*itx) { --itx; --(ilast_true); }
+    return ilast_true;
   }
   
   bit_vector::size_type bit_vector::last_false(void) const
   {
-    size_type *p = (size_type *)&ilast_false;
-    const_iterator itb = begin(), itx = itb; itx += *p;
-    while (itx != itb && *itx) { --itx; --(*p); }
-    return *p;
+    const_iterator itb = begin(), itx = itb; itx += ilast_false;
+    while (itx != itb && *itx) { --itx; --(ilast_false); }
+    return ilast_false;
   }
   
   bit_vector &bit_vector::operator |=(const bit_vector &bv)

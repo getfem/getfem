@@ -32,6 +32,7 @@
 #ifndef __GETFEM_DERIVATIVES_H
 #define __GETFEM_DERIVATIVES_H
 
+//#include <bgeot_geometric_trans.h>
 #include <getfem_mesh_fem.h>
 #include <getfem_precomp.h>
 
@@ -48,7 +49,9 @@ namespace getfem
   {
     size_type cv;
     size_type N = mf.linked_mesh().dim();
-    assert(mf.linked_mesh() == mf_target.linked_mesh());
+
+    assert(&mf.linked_mesh() == &mf_target.linked_mesh());
+
     base_matrix G, val;
     base_vector coeff;
  
@@ -57,7 +60,7 @@ namespace getfem
     pgeotrans_precomp pgp;
     pfem_precomp pfp;
     pfem pf, pf_target, pf_old = NULL, pf_targetold = NULL;
-    pgeometric_trans pgt;
+    bgeot::pgeometric_trans pgt;
 
     for (cv << nn; cv != ST_NIL; cv << nn) {
       pf = mf.fem_of_element(cv);
@@ -93,7 +96,7 @@ namespace getfem
       for (size_type j = 0; j < pf_target->nb_dof(); ++j) {
 	if (!pgt->is_linear() || j == 0) {
 	  // computation of the pseudo inverse
-	  bgeot::mat_product(a, pgp(j), grad);
+	  bgeot::mat_product(a, pgp->grad(j), grad);
 	  if (P != N) {
 	    bgeot::mat_product_tn(grad, grad, CS);
 	    bgeot::mat_inv_cholesky(CS, TMP1);
