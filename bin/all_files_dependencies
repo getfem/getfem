@@ -40,19 +40,22 @@ sub file_dep
   my $i = is_present($fname);
   if ($i != -1) { return $i; }
   $i = add_fname($fname);
-  my $j; my $k;
+  my $j;
+  my $k;
+  my $rep;
 
 
   add_dependencie($i, $cname);
-  open F, "bin/file_dependencies $cname |";
-  while (<F>)
-  {
-    chomp $_; $j = file_dep($_, "include\/$_"); 
-    for ($k = 0; $k < $tabnbf[$j]; $k++)
-      { add_dependencie($i, $tabdep[$j][$k]); }
+  chomp $rep;
+  $rep = `bin/file_dependencies $cname`;
+  while ($rep) {
+    ($li, $rep) = split('\s', $rep, 2);
+    $j = file_dep($li, "include\/$li"); 
+    for ($k = 0; $k < $tabnbf[$j]; $k++) {
+      add_dependencie($i, $tabdep[$j][$k]);
+    }
   }
-  close F;
-
+  
   $fi2 = $fname; $fi2 =~ s/\./_/g;
   print "$fi2 = ";
   for ($k = 0; $k < $tabnbf[$i]; $k++) { print "$tabdep[$i][$k] "; }
