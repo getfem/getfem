@@ -321,7 +321,7 @@ namespace gmm {
   { return std::conj(a) * b; } // to be optimized ?
 
   template <typename T> inline bool is_complex(T) { return false; }
-  template <typename T> inline bool is_complex(std::complex<T> a)
+  template <typename T> inline bool is_complex(std::complex<T> )
   { return true; }
 
 # define magnitude_of_linalg(M) typename number_traits<typename \

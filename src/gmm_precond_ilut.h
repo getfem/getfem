@@ -131,8 +131,9 @@ namespace gmm {
 
       size_type nL = 0, nU = 0;
       if (is_sparse(A)) {
-	typename linalg_traits<svector>::iterator it = vect_begin(w);
-	for (; it != vect_end(w); ++it) if (i > it.index()) nL++;
+	typename linalg_traits<svector>::iterator it = vect_begin(w),
+	  ite = vect_end(w);
+	for (; it != ite; ++it) if (i > it.index()) nL++;
 	nU = w.nb_stored() - nL - 1;
       }
 

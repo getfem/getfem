@@ -10,7 +10,7 @@
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 2002  Yves Renard, Michel Fournie.                        */
+/* Copyright (C) 2002-2004  Yves Renard, Michel Fournié.                   */
 /*                                                                         */
 /* This file is a part of GMM++                                            */
 /*                                                                         */
@@ -42,9 +42,154 @@ namespace gmm {
   /* ******************************************************************** */
   /*		Schwartz Additive method                                  */
   /* ******************************************************************** */
+  /* ref : Domain decomposition algorithms for the p-version finite       */
+  /*       element method for elliptic problems, Luca F. Pavarino,        */
+  /*       PhD thesis, Courant Institute of Mathematical Sciences, 1992.  */
+  /* ******************************************************************** */
+
+  #define PRECOND ildltt_precond
+
+  template <typename Matrix1, typename Matrix2>
+  struct schwarz_additif_mat {
+    typedef typename linalg_traits<Matrix2>::value_type value_type;
+    typedef typename dense_vector_type<value_type>::vector_type vector_type; 
+    const Matrix1 *A;
+    const std::vector<Matrix2> *vB;
+    const std::vector<Matrix2> *vAloc;
+
+    mutable iteration iter;
+    double residu;
+    mutable size_t itebilan;
+    std::vector<vector_type> *gi;
+    std::vector<vector_type> *fi;
+    
+    std::vector<PRECOND<Matrix2> > *precond1;
+
+    schwarz_additif_mat(const Matrix1 &A_, const std::vector<Matrix2> &vB_,
+			const std::vector<Matrix2> &vA_, iteration iter_,
+			double residu_, size_t itebilan_, 
+			std::vector<vector_type> &gi_,
+			std::vector<vector_type> &fi_,
+			std::vector<PRECOND<Matrix2> > &precond_)
+      : A(&A_), vB(&vB_),  vAloc(&vA_), iter(iter_),
+	residu(residu_), itebilan(itebilan_), gi(&gi_), fi(&fi_),
+	precond1(&precond_) {}
+  };
+
+  template <typename Matrix1, typename Matrix2,
+	    typename Vector2, typename Vector3>
+  int generic_schwarz_additif(const Matrix1 &A, Vector3 &u,
+			      const std::vector<Matrix2> &vB,
+			      const Vector2 &f, iteration &iter) {
+
+    typedef typename linalg_traits<Matrix2>::value_type value_type;
+    typedef typename dense_vector_type<value_type>::vector_type vector_type;
+
+    iter.set_rhsnorm(vect_norm2(f));
+    if (iter.get_rhsnorm() == 0.0) { clear(u); return 0; }
+    iteration iter2 = iter; iter2.reduce_noisy();
+
+    size_type nb_sub = vB.size(), nb_dof = f.size(), itebilan = 0;
+    std::vector<Matrix2> vAloc(nb_sub);
+    std::vector<vector_type> gi(nb_sub);
+    std::vector<vector_type> fi(nb_sub);
+    std::vector<PRECOND<Matrix2> > precond1(nb_sub);
+    vector_type g(nb_dof);
+
+    for (size_type i = 0; i < nb_sub; ++i) {
+      Matrix2 Maux(mat_nrows(vB[i]), mat_ncols(vB[i])),
+	BT(mat_ncols(vB[i]), mat_nrows(vB[i]));
+      
+      gmm::copy(gmm::transposed(vB[i]), BT);
+      gmm::resize(vAloc[i], mat_nrows(vB[i]), mat_nrows(vB[i]));      
+      gmm::mult(vB[i], A, Maux);
+      gmm::mult(Maux, BT, vAloc[i]);
+
+      precond1[i] = PRECOND<Matrix2>(vAloc[i], 10, 1E-7);
+      gmm::resize(fi[i], mat_nrows(vB[i]));
+      gmm::resize(gi[i], mat_nrows(vB[i]));
+      gmm::mult(vB[i], f, fi[i]);
+      iter2.init();
+      cg(vAloc[i], gi[i], fi[i], identity_matrix(), precond1[i], iter2);
+      itebilan = std::max(itebilan, iter2.get_iteration());
+    }
+    localtoglobal(gi, g, vB);
+
+    iter2.init();
+    schwarz_additif_mat<Matrix1, Matrix2>
+      SAM(A, vB, vAloc, iter2, iter.get_resmax(), itebilan, gi, fi, precond1);
+    cg(SAM, u, g, A, identity_matrix(), iter);
+
+    return SAM.itebilan;
+  }
+  
+  template <typename Matrix1, typename Matrix2,
+	    typename Vector2, typename Vector3>
+  void mult(const schwarz_additif_mat<Matrix1, Matrix2> &M,
+	    const Vector2 &p, Vector3 &q) {
+
+    size_type itebilan = 0, nb_sub = M.fi->size();
+    mult(*(M.A), p, q);
+    globaltolocal(q, *(M.fi), *(M.vB));
+    for (size_type i = 0; i < nb_sub; ++i) {
+      M.iter.init();
+      cg((*(M.vAloc))[i], (*(M.gi))[i],(*(M.fi))[i],(*(M.precond1))[i],M.iter);
+      itebilan = std::max(itebilan, M.iter.get_iteration());
+    }
+    localtoglobal(*(M.gi), q, *(M.vB));
+    cout << "itebloc = " << itebilan << endl;
+    M.itebilan += itebilan;
+    M.iter.set_resmax((M.iter.get_resmax() + M.residu) * 0.5);
+  }
+
+  template <typename Matrix1, typename Matrix2, typename Vector2,
+	    typename Vector3, typename Vector4>
+  void mult(const schwarz_additif_mat<Matrix1, Matrix2> &M,
+	    const Vector2 &p, const Vector3 &p2, Vector4 &q)
+  { mult(M, p, q); add(p2, q); }
+
+  template <typename Matrix2, typename Vector2, typename Vector3>
+  void globaltolocal(const Vector2 &f, std::vector<Vector3> &fi,
+		       const std::vector<Matrix2> &vB) {
+    for (size_type i = 0; i < fi.size(); ++i) gmm::mult(vB[i], f, fi[i]);
+  }
+
+  template <typename Matrix2, typename Vector2, typename Vector3>
+  void localtoglobal(const std::vector<Vector3> &fi, Vector2 &f, 
+		     const std::vector<Matrix2> &vB) {
+    gmm::clear(f);
+    for (size_type i = 0; i < fi.size(); ++i)
+      gmm::mult(gmm::transposed(vB[i]), fi[i], f, f);
+  }
 
 
-  #define PRECOND choleskyt_precond
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  /* ******************************************************************** */
+  /*		Old version, obsolete.                                    */
+  /* ******************************************************************** */
 
   template <typename Matrix1, typename Matrix2, typename Matrix3,
 	    typename SUBI>
@@ -89,7 +234,7 @@ namespace gmm {
     for (size_type i = 0; i < ml1.size(); ++i)
       precond1[i] = PRECOND<Matrix2>(ml1[i], 10, 1E-7);
     for (size_type i = 0; i < ml2.size(); ++i)
-      precond2[i] = PRECOND<Matrix2>(ml2[i], 10, 1E-7);
+      precond2[i] = PRECOND<Matrix3>(ml2[i], 10, 1E-7);
 
     iter.set_rhsnorm(vect_norm2(f));
     if (iter.get_rhsnorm() == 0.0) { clear(u); return 0; }
@@ -194,172 +339,7 @@ namespace gmm {
     }
   }
 
-  template <typename SUBI, typename Vector2, typename Vector3>
-  void small_local_to_global(const std::vector<Vector3> &fi, Vector2 &f, 
-		       const std::vector<SUBI> &cor, size_type i) {
-    clear(f);
-    typename linalg_traits<Vector3>::const_iterator it2=fi[i].begin();
-    for (size_type j = 0, l = cor[i].size(); j < l; ++j, ++it2) {
-      f[cor[i].index(j)] = *it2;
-    }
-  }
-  
-  // CO global constraint matrix (CO * U <= cof)
-  // f  RHS
 
-  template <typename Matrix1, typename Matrix2, typename Matrix3,
-	    typename Matrix4, typename Matrix5, typename Matrix6,
-	    typename SUBI,    typename Vector2, typename Vector3,
-	    typename Vector4, typename Vector5>
-  int schwarz_with_constraints(const Matrix1 &A,
-			       Vector3 &u, const Matrix4 &CO,
-			       const std::vector<Matrix2> &ml1,
-			       const std::vector<Matrix6> &mco1, 
-			       const std::vector<Matrix3> &ml2,
-			       const std::vector<Matrix5> &mco2, 
-			       const std::vector<SUBI> &cor,
-			       const Vector2 &f,
-			       const Vector4 &cof,
-			       const std::vector<Vector5> &cofi,
-			       iteration &iter) {
-
-    typedef typename linalg_traits<Matrix2>::value_type value_type;
-    typedef typename dense_vector_type<value_type>::vector_type vector_type;
-    
-    size_type nb_sub = ml1.size() + ml2.size();
-    size_t itebilan = 0;
-    std::vector<vector_type> gi(nb_sub);
-    std::vector<vector_type> fi(nb_sub);
-    std::vector<vector_type> ui(nb_sub);
-    std::vector<vector_type> wi(nb_sub);
-    iter.set_rhsnorm(vect_norm2(f));
-
-    size_type ms = ml1.size();
-
-    for (size_type i = 0; i < nb_sub; ++i) {
-      size_type k = i < ms ? mat_nrows(ml1[i]) : mat_nrows(ml2[i-ms]);
-      size_type l = i < ms ? mat_nrows(mco1[i]) : mat_nrows(mco2[i]); 
-      ui[i] = vector_type(k);   fi[i] = vector_type(k);
-      gi[i] = vector_type(k);   wi[i] = vector_type(k);
-    }
-
-    vector_type w(vect_size(u));
-    global_to_local(f, fi, cor);
-    // global_to_local(cof, cofi, cor); // pas bon, il faudrait un cor pour les contraintes ...
-
-    iteration iter2 = iter;
-    iter2.reduce_noisy();
-
-    for (;;) {
-
-      // Step 1
-      gmm::mult(A, u, w);
-      global_to_local(w, wi, cor);
-      global_to_local(u, ui, cor);
-      
-      for (size_type i = 0; i < nb_sub; ++i) {
-	gmm::add(fi[i], gmm::scaled(wi[i], -1.0), wi[i]);
-	clear(gi[i]);
-      }
-      
-      for (size_type i = 0; i < ms; ++i) {
-	iter2.init();
-	vector_type cofloc(mat_nrows(mco1[i]));
-	if (mat_nrows(mco1[i]) > 0) 
-	  gmm::mult(mco1[i], gmm::scaled(ui[i], -1.0), cofi[i], cofloc);
-	constrained_cg(ml1[i], mco1[i], gi[i], wi[i], cofloc,
-		       identity_matrix(), identity_matrix(), iter2);
-	itebilan = std::max(itebilan, iter2.get_iteration());
-      }
-      
-      for (size_type i = 0; i < ml2.size(); ++i) {
-	iter2.init();
-	vector_type cofloc(mat_nrows(mco2[i]));
-	gmm::mult(mco2[i], gmm::scaled(ui[i+ms], -1.0), cofi[i+ms], cofloc); 
-	constrained_cg(ml2[i], mco2[i], gi[i+ms], wi[i+ms], cofloc,
-		       identity_matrix(), identity_matrix(), iter2);
-	itebilan = std::max(itebilan, iter2.get_iteration());
-      }
-      
-      // Step 2
-
-      gmm::row_matrix<std::vector<value_type> > global_sm(nb_sub, nb_sub);
-      gmm::col_matrix<std::vector<value_type> > 
-	global_CO1(mat_nrows(CO), nb_sub);
-      gmm::row_matrix<std::vector<value_type> > 
-	global_CO2(mat_nrows(CO), nb_sub);
-      std::vector<value_type> global_cof(mat_nrows(CO));
-      std::vector<value_type> global_f(nb_sub), alpha(nb_sub);
-      std::vector<gmm::wsvector<value_type> > Gi(nb_sub);
-      gmm::wsvector<value_type> W(vect_size(u));
-      for (size_type i = 0; i < nb_sub; ++i) {
-	Gi[i] = gmm::wsvector<value_type>(vect_size(u));
-	small_local_to_global(gi, Gi[i], cor, i);
-      } // to be optimized (passer à des produits locaux)
-      
-      for (size_type i = 0; i < nb_sub; ++i) {
-	if (mat_nrows(CO) > 0) {
-	  gmm::mult(CO, Gi[i], gmm::mat_col(global_CO1, i));
-	  gmm::mult(CO, u, cof, global_cof);
-	}
-	gmm::mult(A, Gi[i], W);
-	global_f[i] = gmm::vect_sp(f, Gi[i]) - gmm::vect_sp(w, Gi[i]) ;
-	for (size_type j = 0; j <= i; ++j)
-	  global_sm(i,j) = global_sm(j,i) = gmm::vect_sp(W, Gi[j]);
-      } // to be optimized (symmetrie et produits locaux)
-
-      cout << "global_sm = " << global_sm << endl;
-
-      if (mat_nrows(CO) > 0) gmm::copy(global_CO1, global_CO2);
-      
-      
-      size_type nbconst = 0;
-      for (size_type i = 0; i < mat_nrows(CO); ++i) {
-	if (gmm::vect_norm2(mat_row(global_CO2, i)) > 1E-10)
-	  nbconst++;
-      }
-      gmm::row_matrix<std::vector<value_type> > 
-	global_CO3(nbconst, nb_sub);
-      std::vector<value_type> global_cof2(nbconst);
-      for (size_type i = 0, k = 0; i < mat_nrows(CO); ++i) {
-	if (gmm::vect_norm2(mat_row(global_CO2, i)) > 1E-10) {
-	  global_cof2[k] = global_cof[i];
-	  copy(mat_row(global_CO2, i), mat_row(global_CO3, ++k));
-	}
-      }
-     
-      iteration iter3 = iter;
-      iter3.reduce_noisy();
-      iter3.init();
-      gmm::clear(alpha);
-
-//        global_CO3(nbconst, 0) = -1.0; global_cof2[nbconst] = -10.0;
-//        alpha[0] = 10;
-
-      cout << "global_CO3 = " << global_CO3 << endl;
-
-      constrained_cg(global_sm, global_CO3, alpha, global_f, global_cof2,
- 		     identity_matrix(), identity_matrix(), iter3);
-      value_type res = 0, sum_alphai = 0;
-      for (size_type i = 0; i < nb_sub; ++i) {
-	cout << "alpha[" << i << "] = " << alpha[i] << endl;
-	// cout << "u[" << i << "] = " << Gi[i] << endl;
-	if (alpha[i] < 0)
-	  cout << "WARNING : alpha[" << i << "] = " << alpha[i] << endl;
-	res += alpha[i] * vect_norm2(Gi[i]);
-	sum_alphai += alpha[i];
-	gmm::add(u, gmm::scaled(Gi[i], alpha[i]), u);
-      }
-      cout << "sum alpha_i = " << sum_alphai << endl;
-
-      ++iter;
-      if (iter.finished(res)) break;
-    }
-
-    return itebilan;
-  }
-
-  
 }
 
 

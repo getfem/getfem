@@ -86,21 +86,22 @@ namespace gmm {
 
       size_type nU = 0;
       if (is_sparse(A)) {
-	typename linalg_traits<svector>::iterator it = vect_begin(w);
-	for (; it != vect_end(w); ++it) if (i < it.index()) nU++;
+	typename linalg_traits<svector>::iterator it = vect_begin(w),
+	  ite = vect_end(w);
+	for (; it != ite; ++it) if (i < it.index()) nU++;
       }
 
       for (size_type krow = 0, k; krow < w.nb_stored(); ++krow) {
 	typename svector::iterator wk = w.begin() + krow;
 	if ((k = wk->c) >= i) break;
-	if (is_complex(A)) {
-	  tmp = gmm::conj(U(k, i)) / indiag[k]; // not completely satisfactory ..
-	  gmm::add(scaled(mat_row(U, k), -tmp), w);
-	}
-	else {
+ 	if (gmm::is_complex(wk->e)) {
+ 	  tmp = gmm::conj(U(k, i))/indiag[k]; // not completely satisfactory ..
+ 	  gmm::add(scaled(mat_row(U, k), -tmp), w);
+ 	}
+ 	else {
 	  tmp = wk->e;
 	  if (gmm::abs(tmp) < eps * norm_row) { w.sup(k); --krow; } 
-	  else { /* wk->e += tmp; */ gmm::add(scaled(mat_row(U, k), -tmp), w); }
+	  else { wk->e += tmp; gmm::add(scaled(mat_row(U, k), -tmp), w); }
 	}
       }
       tmp = w[i];

@@ -1,3 +1,8 @@
+2004-03-26  Yves Renard  <Yves.Renard@gmm.insa-tlse.fr>
+
+	* src/gmm_precond_ildltt.h: fix bug which slowed the ildltt from
+	a factor of about 50.
+
 2004-03-11  julien pommier  <pommier@gmm.insa-tlse.fr>
 
 	* src/getfem_fem.C (getfem): added a classical_discontinuous_fem
