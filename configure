@@ -14243,7 +14243,7 @@ LIBTOOL='$(SHELL) $(top_builddir)/libtool'
 LIBTOOL_VERSION_INFO="-version-info ${MAJOR_VERSION}:${MINOR_VERSION}:0"
 
 
-ac_config_files="$ac_config_files Makefile config/Makefile src/Makefile tests/Makefile"
+ac_config_files="$ac_config_files Makefile config/Makefile src/Makefile tests/Makefile contrib/Makefile"
 
 
 
@@ -14710,6 +14710,7 @@ do
   "config/Makefile" ) CONFIG_FILES="$CONFIG_FILES config/Makefile" ;;
   "src/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
   "tests/Makefile" ) CONFIG_FILES="$CONFIG_FILES tests/Makefile" ;;
+  "contrib/Makefile" ) CONFIG_FILES="$CONFIG_FILES contrib/Makefile" ;;
   "depfiles" ) CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}

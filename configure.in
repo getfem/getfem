@@ -99,6 +99,7 @@ AC_CONFIG_FILES(\
 	config/Makefile \
 	src/Makefile \
 	tests/Makefile \
+	contrib/Makefile \
 	)
 AC_OUTPUT
 
