@@ -51,8 +51,8 @@ namespace bgeot
       init = true;
     }
     if (n >= STORED || d >= STORED)
-      throw internal_error
-	("bgeot::alpha : internal error");
+      DAL_THROW(internal_error,
+		"alpha called with n = " << n << " and d = " << d);
 
     return M(d, n);
   }
