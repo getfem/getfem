@@ -57,6 +57,7 @@ SRC = \
 	getfem_integration_composite.C \
 	getfem_fem.C \
 	getfem_fem_virtual_link.C \
+	getfem_fem_composite.C \
 	getfem_mat_elem.C \
 	getfem_mat_elem_type.C \
 	getfem_precomp.C \

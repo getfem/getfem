@@ -669,7 +669,6 @@ namespace getfem
     friend papprox_integration triangle4_approx_integration(void);
     friend papprox_integration triangle5_approx_integration(void);
     friend papprox_integration triangle6_approx_integration(void);
-    friend papprox_integration triangle7_approx_integration(void);
     friend papprox_integration quad2_approx_integration(void);
     friend papprox_integration quad3_approx_integration(void);    
     friend papprox_integration quad5_approx_integration(void);
@@ -1021,99 +1020,53 @@ namespace getfem
   /*   triangle7 :    Integration on a triangle of order 7 with 13 points  */
   /* ********************************************************************* */
 
-  papprox_integration triangle7_approx_integration(void) {
-    static _particular_approx *p = NULL;
-    if (p == NULL)
-    {
-      std::vector<base_node> ptab(25);
-      std::fill(ptab.begin(), ptab.end(), base_node(2));
-      p = new _particular_approx;
-      p->cvr = bgeot::simplex_of_reference(2);
-      p->repartition.resize(p->cvr->structure()->nb_faces()+1);
-      p->int_coeffs.resize(ptab.size());
-      // volume
-      size_type i = 0;
-      double r1  = 0.0651301029022;
-      double r2  = 0.8697397941956;
-      double r4  = 0.3128654960049;
-      double r5  = 0.6384441885698;
-      double r6  = 0.0486903154253;
-      double r10 = 0.2603459660790;
-      double r11 = 0.4793080678419;
-      double r13 = 0.3333333333333;
-      double w1  = 0.0533472356088;
-      double w4  = 0.0771137608903;
-      double w10 = 0.1756152574332;
-      double w13 = -0.1495700444677;
-      ptab[  i][0] = r1; ptab[i][1] = r1;
-      p->int_coeffs[i] = w1 * 0.5; 
-      ptab[++i][0] = r2; ptab[i][1] = r1;
-      p->int_coeffs[i] = w1 * 0.5; 
-      ptab[++i][0] = r1; ptab[i][1] = r2;
-      p->int_coeffs[i] = w1 * 0.5; 
-      ptab[++i][0] = r4; ptab[i][1] = r6;
-      p->int_coeffs[i] = w4 * 0.5; 
-      ptab[++i][0] = r5; ptab[i][1] = r4;
-      p->int_coeffs[i] = w4 * 0.5; 
-      ptab[++i][0] = r6; ptab[i][1] = r5;
-      p->int_coeffs[i] = w4 * 0.5; 
-      ptab[++i][0] = r5; ptab[i][1] = r6;
-      p->int_coeffs[i] = w4 * 0.5; 
-      ptab[++i][0] = r4; ptab[i][1] = r5;
-      p->int_coeffs[i] = w4 * 0.5; 
-      ptab[++i][0] = r6; ptab[i][1] = r4;
-      p->int_coeffs[i] = w4 * 0.5; 
-      ptab[++i][0] = r10; ptab[i][1] = r10;
-      p->int_coeffs[i] = w10 * 0.5; 
-      ptab[++i][0] = r11; ptab[i][1] = r10;
-      p->int_coeffs[i] = w10 * 0.5; 
-      ptab[++i][0] = r10; ptab[i][1] = r11;
-      p->int_coeffs[i] = w10 * 0.5; 
-      ptab[++i][0] = r13; ptab[i][1] = r13;
-      p->int_coeffs[i] = w13 * 0.5; 
-      p->repartition[0] = 13;
-      // face 0
-      double a = 0.5 - 0.4305681557970265;
-      double b = 0.5 - 0.1699905217924280;
-      double c = 0.5 + 0.1699905217924280;
-      double d = 0.5 + 0.4305681557970265;
-      double e = 0.326072577431273;
-      double f = 0.173927422568727;
-      ptab[++i][0] = a; ptab[i][1] = d;
-      p->int_coeffs[i] = ::sqrt(2.0) * f; 
-      ptab[++i][0] = b; ptab[i][1] = c;
-      p->int_coeffs[i] = ::sqrt(2.0) * e; 
-      ptab[++i][0] = c; ptab[i][1] = b;
-      p->int_coeffs[i] = ::sqrt(2.0) * e; 
-      ptab[++i][0] = d; ptab[i][1] = a;
-      p->int_coeffs[i] = ::sqrt(2.0) * f; 
-      p->repartition[1] = p->repartition[0] + 4;
-      // face 1
-      ptab[++i][0] = 0.0; ptab[i][1] = a;
-      p->int_coeffs[i] = f; 
-      ptab[++i][0] = 0.0; ptab[i][1] = b;
-      p->int_coeffs[i] = e; 
-      ptab[++i][0] = 0.0; ptab[i][1] = c;
-      p->int_coeffs[i] = e; 
-      ptab[++i][0] = 0.0; ptab[i][1] = d;
-      p->int_coeffs[i] = f; 
-      p->repartition[2] = p->repartition[1] + 4;
-      // face 2
-      ptab[++i][0] = a; ptab[i][1] = 0.0;
-      p->int_coeffs[i] = f; 
-      ptab[++i][0] = b; ptab[i][1] = 0.0;
-      p->int_coeffs[i] = e; 
-      ptab[++i][0] = c; ptab[i][1] = 0.0;
-      p->int_coeffs[i] = e; 
-      ptab[++i][0] = d; ptab[i][1] = 0.0;
-      p->int_coeffs[i] = f; 
-      p->repartition[3] = p->repartition[2] + 4;
-
-      p->pint_points = bgeot::store_point_tab(ptab);
-      p->valid = true;
-      if (++i != ptab.size()) DAL_THROW(internal_error, "internal error");
-
-    }
+  static papprox_integration triangle7_approx_integration(void) {
+    approx_integration *p
+      = new approx_integration(bgeot::simplex_of_reference(2));
+    double r1  = 0.0651301029022;
+    double r2  = 0.8697397941956;
+    double r4  = 0.3128654960049;
+    double r5  = 0.6384441885698;
+    double r6  = 0.0486903154253;
+    double r10 = 0.2603459660790;
+    double r11 = 0.4793080678419;
+    double r13 = 0.3333333333333;
+    double w1  = 0.0533472356088;
+    double w4  = 0.0771137608903;
+    double w10 = 0.1756152574332;
+    double w13 = -0.1495700444677;
+    p->add_point(base_vector(r1, r1),   w1  * 0.5);
+    p->add_point(base_vector(r2, r1),   w1  * 0.5);
+    p->add_point(base_vector(r1, r2),   w1  * 0.5);
+    p->add_point(base_vector(r4, r6),   w4  * 0.5);
+    p->add_point(base_vector(r5, r4),   w4  * 0.5);
+    p->add_point(base_vector(r6, r5),   w4  * 0.5);
+    p->add_point(base_vector(r5, r6),   w4  * 0.5);
+    p->add_point(base_vector(r4, r5),   w4  * 0.5);
+    p->add_point(base_vector(r6, r4),   w4  * 0.5);
+    p->add_point(base_vector(r10, r10), w10 * 0.5);
+    p->add_point(base_vector(r11, r10), w10 * 0.5);
+    p->add_point(base_vector(r10, r11), w10 * 0.5);
+    p->add_point(base_vector(r13, r13), w13 * 0.5);
+    double a = 0.5 - 0.4305681557970265;
+    double b = 0.5 - 0.1699905217924280;
+    double c = 0.5 + 0.1699905217924280;
+    double d = 0.5 + 0.4305681557970265;
+    double e = 0.326072577431273;
+    double f = 0.173927422568727;
+    p->add_point(base_vector(a, d), ::sqrt(2.0) * f, 0);
+    p->add_point(base_vector(b, c), ::sqrt(2.0) * e, 0);
+    p->add_point(base_vector(c, b), ::sqrt(2.0) * e, 0);
+    p->add_point(base_vector(d, a), ::sqrt(2.0) * f, 0);
+    p->add_point(base_vector(0.0, a), f, 1);
+    p->add_point(base_vector(0.0, b), e, 1);
+    p->add_point(base_vector(0.0, c), e, 1);
+    p->add_point(base_vector(0.0, d), f, 1);
+    p->add_point(base_vector(a, 0.0), f, 2);
+    p->add_point(base_vector(b, 0.0), e, 2);
+    p->add_point(base_vector(c, 0.0), e, 2);
+    p->add_point(base_vector(d, 0.0), f, 2);
+    p->valid_method();
     return p;
   }
 

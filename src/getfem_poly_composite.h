@@ -48,7 +48,7 @@ namespace getfem
     PTAB vertexes;
     std::vector<base_matrix> gtrans;
     std::vector<base_node> orgs;
-    std::vector<bool> elt;
+    mutable std::vector<bool> elt;
     
     const getfem_mesh &linked_mesh(void) const { return *mesh; }
     size_type nb_convex(void) const { return gtrans.size(); }
@@ -69,6 +69,9 @@ namespace getfem
     
     template <class ITER> scalar_type eval(const ITER &it) const;
     void derivative(short_type k);
+    base_poly &poly_of_subelt(size_type l) { return polytab[l]; }
+    const base_poly &poly_of_subelt(size_type l) const { return polytab[l]; }
+    
 
     polynomial_composite(void) {}
     polynomial_composite(const mesh_precomposite &m)
@@ -78,47 +81,43 @@ namespace getfem
 
   template <class ITER>
   scalar_type polynomial_composite::eval(const ITER &it) const {
-    dim_type N = mp->dim();
-    base_node pt(N), p0;
-    std::copy(it, it + N, pt.begin());
+    base_node pt(mp->dim()), p0;
+    std::copy(it, it + mp->dim(), pt.begin());
     std::fill(mp->elt.begin(), mp->elt.end(), true);
-    size_type i = size_type(-1);
     
     mesh_precomposite::PTAB::const_sorted_iterator
       it1 = mp->vertexes.sorted_ge(pt), it2 = it1;    
     size_type i1 = it1.index(), i2 = it2.index();
-    --it2;
+    if (i2 != size_type(-1)) { --it2; i2 = it2.index(); }
 
     while (i1 != size_type(-1) || i2 != size_type(-1)) {
       if (i1 != size_type(-1)) {
-	size_type ii1 = md->linked_mesh().convex_to_point(i1)[0];
-	if (mp->elt[ii1]) {
-	  mp->elt[ii1] = false;
-	  p0 = pt; p0 -= md->orgs[ii1];
-	  p0 *= md->gtrans[ii1];
-	  if (md->trans_of_convex(ii1).convex_ref()->is_in(p0) < 1E-10)
-	    { i = ii1; break; }
+	size_type ii = mp->linked_mesh().first_convex_of_point(i1);
+	if (ii == size_type(-1)) DAL_THROW(internal_error, "internal error.");
+	if (mp->elt[ii]) {
+	  mp->elt[ii] = false;
+	  p0 = pt; p0 -= mp->orgs[ii];
+	  p0 *= mp->gtrans[ii];
+	  if (mp->trans_of_convex(ii)->convex_ref()->is_in(p0) < 1E-10)
+	    return  polytab[ii].eval(p0.begin());
 	}
 	++it1; i1 = it1.index();
       }
       if (i2 != size_type(-1)) {
-	size_type ii2 = md->linked_mesh().convex_to_point(i2)[0];
-	if (mp->elt[ii2]) {
-	  mp->elt[ii2] = false;
-	  p0 = pt; p0 -= md->orgs[ii2];
-	  p0 *= md->gtrans[ii2];
-	  if (md->trans_of_convex(ii2).convex_ref()->is_in(p0) < 1E-10)
-	    { i = ii2; break; }
+	size_type ii = mp->linked_mesh().first_convex_of_point(i2);
+	if (ii == size_type(-1)) DAL_THROW(internal_error, "internal error.");
+	if (mp->elt[ii]) {
+	  mp->elt[ii] = false;
+	  p0 = pt; p0 -= mp->orgs[ii];
+	  p0 *= mp->gtrans[ii];
+	  if (mp->trans_of_convex(ii)->convex_ref()->is_in(p0) < 1E-10)
+	    return  polytab[ii].eval(p0.begin());
 	}
 	--it2; i2 = it2.index();
       }
     }
-    if (i == size_type(-1))
-      DAL_THROW(internal_error, "Element not found in composite polynomial.");
-    polytab[i].eval(it);
+    DAL_THROW(internal_error, "Element not found in composite polynomial.");
   }
-
-
   
 }  /* end of namespace getfem.                                            */
 

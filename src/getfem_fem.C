@@ -670,35 +670,25 @@ namespace getfem
   /*	P1 NON CONFORMING (dim 2)                                         */
   /* ******************************************************************** */
 
-  struct _P1_nonconforming_fem : public fem<base_poly>
-  {
-    _P1_nonconforming_fem(void)
-    {
-      is_equiv = is_pol = is_lag = true;
-      es_degree = 1;
-      cvr = bgeot::simplex_of_reference(2);
-      _base.resize(3);
-      _base[0] = base_poly(2, 0);
-      _base[0].one(); _base[1] = _base[2] = _base[0];
-      init_cvs_node();
-      base_node pt(2);
-      pt[0] = pt[1] = 0.5;
-      add_node(lagrange_dof(2), pt);
-      _base[0] *= -1.0;
-      _base[0] += (base_poly(2, 1, 0)*2.0) + (base_poly(2, 1, 1)*2.0);
-      pt[0] = 0.0; pt[1] = 0.5;
-      add_node(lagrange_dof(2), pt);
-      _base[1] -= base_poly(2, 1, 0) * 2.0;
-      pt[0] = 0.5; pt[1] = 0.0;
-      add_node(lagrange_dof(2), pt);
-      _base[2] -= base_poly(2, 1, 1) * 2.0;
-    }
-  };
-
    static pfem P1_nonconforming_fem(fem_param_list &params) {
     if (params.size() != 0)
       DAL_THROW(failure_error, "Bad number of parameters");
-    return new _P1_nonconforming_fem();
+    fem<base_poly> *p = new fem<base_poly>;
+    p->ref_convex() = bgeot::simplex_of_reference(2);
+    p->is_equivalent() = p->is_polynomial() = p->is_lagrange() = true;
+    p->estimated_degree() = 1;
+    p->init_cvs_node();
+    base_poly one(2, 0), x(2, 1, 0), y(2, 1, 1); one.one();
+    p->base().resize(3);
+
+    p->add_node(lagrange_dof(2), base_vector(0.5, 0.5));
+    p->base()[0] = x * 2.0 + y * 2.0 - one;
+    p->add_node(lagrange_dof(2), base_vector(0.0, 0.5));
+    p->base()[1] = one - x * 2.0;
+    p->add_node(lagrange_dof(2), base_vector(0.5, 0.0));
+    p->base()[2] = one - y * 2.0;
+
+    return p;
   }
 
    /* ******************************************************************** */

@@ -1,7 +1,7 @@
 /* *********************************************************************** */
 /*                                                                         */
 /* Library : GEneric Tool for Finite Element Methods (getfem)              */
-/* File    : getfem_poly_composite.C : polynomials by parts                */
+/* File    : getfem_fem_composite.C : composite fem                        */
 /*                                                                         */
 /* Date : August 26, 2002.                                                 */
 /* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
@@ -29,54 +29,55 @@
 
 
 #include <getfem_poly_composite.h>
+#include <getfem_integration.h>
+#include <getfem_mesh_fem.h>
 
 namespace getfem
 { 
-  mesh_precomposite::mesh_precomposite(const getfem_mesh &m) {
-    mesh = &m;
-    elt.resize(m.nb_convex());
-    orgs.resize(m.nb_convex());
-    gtrans.resize(m.nb_convex());
-    dal::bit_vector nn = m.points().index();
-    size_type i;
-    for (i = 0; i <= nn.last_true(); ++i) {
-      vertexes.add(m.points()[i]);
-    }
-    nn = m.convex_index();
-    for (i << nn; i != size_type(-1); i << nn) {
-      
-      bgeot::pgeometric_trans pgt = m.trans_of_convex(i);
-      size_type N = pgt->structure()->dim();
-      size_type P = m.dim();
-      if (!(pgt->is_linear()) || N != P) 
-	DAL_THROW(internal_error, "Bad geometric transformations.");
-      
-      base_poly PO;
-      base_matrix a(P, pgt->nb_points());
-      base_matrix pc(pgt->nb_points() , N);
-      base_matrix grad(P, N), TMP1(N,N), B0(N, P);
-      
-      for (size_type j = 0; j < pgt->nb_points(); ++j)
-	for (size_type k = 0; k < P; ++k)
-	  a(i,j) = (m.points_of_convex(i)[j])[i];
-      
-      for (size_type k = 0; k < pgt->nb_points(); ++k)
-	for (dim_type n = 0; n < N; ++n)
-	  { PO = pgt->poly_vector()[k]; PO.derivative(n); pc(k,n) = PO[0]; }
-      bgeot::mat_product(a, pc, grad);
-      bgeot::mat_gauss_inverse(grad, TMP1); B0 = grad;
-      gtrans[i] = B0;
-      orgs[i] = m.points_of_convex(i)[0];
-    }
-  }
+  typedef const fem<polynomial_composite> * ppolycompfem;
 
-  void polynomial_composite::derivative(short_type k) {
-    std::vector<bgeot::base_poly>::iterator it = polytab.begin();
-    std::vector<bgeot::base_poly>::iterator ite = polytab.end();
-    for ( ; it != ite; ++it) {
-      
-      it->derivative(k);
+  ppolycompfem composite_fe_method(const mesh_precomposite &mp, 
+				   const mesh_fem &mf, bgeot::pconvex_ref cr) {
+    
+    if (&(mf.linked_mesh()) != &(mp.linked_mesh()))
+      DAL_THROW(failure_error, "Meshes are different.");
+    dal::bit_vector nn = mf.convex_index();
+    fem<polynomial_composite> *p = new fem<polynomial_composite>;
+
+    p->ref_convex() = cr;
+    p->is_equivalent() = true;
+    p->is_polynomial() = p->is_lagrange() = false;
+    p->estimated_degree() = 0;
+    p->init_cvs_node();
+
+    std::vector<polynomial_composite> base(mf.nb_dof());
+    std::fill(base.begin(), base.end(), polynomial_composite(mp));
+    std::vector<pdof_description> dofd(mf.nb_dof());
+    
+    for (size_type cv = nn.take_first(); cv != size_type(-1); cv << nn) {
+      bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
+      pfem pf1 = mf.fem_of_element(cv);
+      if (!(pf1->is_equivalent() && pf1->is_polynomial())) {
+	delete p;
+	DAL_THROW(failure_error, "Only for polynomial and equivalent fem.");
+      }
+      ppolyfem pf = ppolyfem(pf1);
+      p->estimated_degree() = std::max(p->estimated_degree(),
+				       pf->estimated_degree());
+      for (size_type k = 0; k < pf->nb_dof(); ++k) {
+	size_type igl = mf.ind_dof_of_element(cv)[k];
+	base_poly fu = pf->base()[k];
+	// transformation de fu
+	base[igl].poly_of_subelt(cv) = fu;
+	dofd[igl] = pf->dof_types()[k];
+      }
     }
+    p->base().resize(mf.nb_dof());
+    for (size_type k = 0; k < mf.nb_dof(); ++k) {  
+      p->add_node(dofd[k], mf.point_of_dof(k));
+      p->base()[k] = base[k];
+    }
+    return p;
   }
   
 }  /* end of namespace getfem.                                            */

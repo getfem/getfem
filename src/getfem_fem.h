@@ -139,10 +139,6 @@ namespace getfem
     bool is_equiv, is_lag, is_pol, do_grad;
     short_type es_degree;
     
-    void add_node(const pdof_description &d, const base_node &pt) ;
-    void init_cvs_node(void);
-    void unfreeze_cvs_node(void);
-    
   public :
     /// Number of degrees of freedom.
     virtual size_type nb_dof(void) const { return _dof_types.size(); }
@@ -166,8 +162,8 @@ namespace getfem
     bgeot::pconvex_structure basic_structure(void) const
       { return cvr->structure(); }
     /// Gives the convex of the reference element.
-    bgeot::pconvex_ref ref_convex(void) const
-      { return cvr; }
+    bgeot::pconvex_ref ref_convex(void) const { return cvr; }
+    bgeot::pconvex_ref &ref_convex(void) { return cvr; }
     /// Gives the convex representing the nodes on the reference element.
     const bgeot::convex<base_node> &node_convex(void) const
       { return cv_node; }
@@ -184,7 +180,11 @@ namespace getfem
     bool is_equivalent(void) const { return is_equiv; }
     bool is_lagrange(void) const { return is_lag; }
     bool is_polynomial(void) const { return is_pol; }
+    bool &is_equivalent(void) { return is_equiv; }
+    bool &is_lagrange(void) { return is_lag; }
+    bool &is_polynomial(void) { return is_pol; }
     short_type estimated_degree(void) const { return es_degree; }
+    short_type &estimated_degree(void) { return es_degree; }
     virtual void mat_trans(base_matrix &, const base_matrix &,
 			   bgeot::pgeometric_trans) const
       { DAL_THROW(internal_error, "This function should not be called."); }
@@ -233,6 +233,10 @@ namespace getfem
       pspt_valid = false; do_grad = true;
     }
 
+    void add_node(const pdof_description &d, const base_node &pt) ;
+    void init_cvs_node(void);
+    void unfreeze_cvs_node(void);
+
     virtual_fem &operator =(const virtual_fem &f) {
       _dof_types = f._dof_types;
       cvs_node = f.cvs_node;
@@ -267,6 +271,7 @@ namespace getfem
     
     /// Gives the array of basic functions (components).
     const std::vector<FUNC> &base(void) const { return _base; }
+    std::vector<FUNC> &base(void) { return _base; }
     
     void interpolation(const base_node &x, const base_matrix &G, 
 		       bgeot::pgeometric_trans pgt,
@@ -317,6 +322,7 @@ namespace getfem
   };
   
   typedef const fem<base_poly> * ppolyfem;
+  typedef const fem<polynomial_composite> * ppolycompfem;
   
   template <class FUNC>
   void fem<FUNC>::interpolation(const base_node &x, const base_matrix &G,
