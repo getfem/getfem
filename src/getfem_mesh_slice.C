@@ -90,7 +90,7 @@ namespace getfem {
     A->slice(cv, fcnt, nodes, splxs, splx_in);
     if (splx_in.card() == 0) return;
     slice_node::faces_ct fmask(cv < convex_faces.size() ? convex_faces[cv] : 0);
-    //cerr << "slicer_boundary::slice(cv=" << cv << ")\n";
+    //cerr << "slicer_boundary::slice(cv=" << cv << ", fmask=" << fmask << ")\n";
     /* quickly check if the convex have any chance to be part of the boundary */
     if (!convex_faces[cv].any()) { splx_in.clear(); return; }
 
@@ -101,11 +101,22 @@ namespace getfem {
       for (size_type iA=0; iA < s.dim()+1; ++iA) 
 	cerr << " node#" << s.inodes[iA] << "=" << nodes[s.inodes[iA]].pt << ", f=" << nodes[s.inodes[iA]].faces << endl;
       */
-      if (s.dim() < 3) {
+      if (s.dim() < nodes[0].pt.size()) {
 	//cerr << " -> splx_in[cnt]=" << test_bound(s, fmask, nodes) << endl;
         if (!test_bound(s, fmask, nodes)) splx_in.sup(cnt);
-      } else if (s.dim() == 3) {
+      } else if (s.dim() == 2) {
 	splx_in.sup(cnt);
+        slice_simplex s2(2);
+        for (size_type j=0; j < 3; ++j) {
+          /* usage of s forbidden in this loop since push_back happens .. */
+	  static unsigned ord[][2] = {{0,1},{1,2},{2,0}}; /* keep orientation of faces */
+          for (size_type k=0; k < 2; ++k) { s2.inodes[k] = splxs[cnt].inodes[ord[j][k]]; }
+          if (test_bound(s2, fmask, nodes)) {
+            splx_in.add(splxs.size()); splxs.push_back(s2); 
+          }
+        }
+      } else if (s.dim() == 3) {
+        splx_in.sup(cnt);
         slice_simplex s2(3);
         for (size_type j=0; j < 4; ++j) {
           /* usage of s forbidden in this loop since push_back happens .. */
