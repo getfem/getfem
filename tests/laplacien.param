@@ -4,7 +4,7 @@
 
 %%%%% parametres physiques :					      %%%%%
 
-N = 2;                  % dimension du probleme.
+N = 1;                  % dimension du probleme.
 LX = 1.0;		% taille en X.
 LY = 1.0;	        % taille en Y.
 LZ = 1.0;		% taille en Z.
