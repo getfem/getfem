@@ -39,6 +39,9 @@
 #include <getfem_assembling_tensors.h>
 namespace getfem
 {
+  /**
+     compute $\|U\|_2$
+  */
   template<class VEC>
   scalar_type asm_L2_norm(const mesh_fem &mf, const VEC &U) {
     return asm_L2_norm(mf,U,mf.convex_index());
@@ -59,6 +62,9 @@ namespace getfem
     return sqrt(v[0]);
   }
 
+  /**
+     compute $\|\nabla U\|_2$
+   */
   template<class VEC>
   scalar_type asm_H1_semi_norm(const mesh_fem &mf, const VEC &U) {
     return asm_H1_semi_norm(mf,U,mf.convex_index());
@@ -79,6 +85,9 @@ namespace getfem
     return sqrt(v[0]);
   }
 
+  /** 
+      compute the H1 norm of U.
+  */
   template<class VEC>
   scalar_type asm_H1_norm(const mesh_fem &mf, const VEC &U) {
     return asm_H1_norm(mf,U,mf.convex_index());
@@ -90,11 +99,17 @@ namespace getfem
   }
   
 
-  /* generic mass matrix assembly (on the whole mesh or on the specified boundary) */
+  /** 
+      generic mass matrix assembly (on the whole mesh or on the specified boundary) 
+  */
   template<class MAT>
   void asm_mass_matrix(MAT &M, const mesh_fem &mf_u1, size_type boundary=size_type(-1)) {
     asm_mass_matrix(M,mf_u1,mf_u1, boundary);
   }
+
+  /** 
+      generic mass matrix assembly (on the whole mesh or on the specified boundary) 
+  */
   template<class MAT>
   void asm_mass_matrix(MAT &M, const mesh_fem &mf_u1, const mesh_fem &mf_u2,
 		       size_type boundary=size_type(-1))
@@ -113,7 +128,7 @@ namespace getfem
   }
 
 
-  /* 
+  /**
      source term (for both volumic sources and boundary (neumann) sources  
   */
   template<class VECT1, class VECT2>
@@ -135,7 +150,7 @@ namespace getfem
   }
 
 
-  /*
+  /**
     assembles $\int{qu.v}$
 
     (if $u$ is a vector field of size $N$, $q$ is a square matrix $N\timesN$
@@ -176,7 +191,7 @@ namespace getfem
   }
 
 
-  /* 
+  /** 
      Stiffness matrix for linear elasticity, with Lamé coefficients
   */
   template<class MAT, class VECT>
@@ -201,7 +216,7 @@ namespace getfem
     assem.volumic_assembly();
   }
 
-  /* 
+  /** 
      Stiffness matrix for linear elasticity, with a general Hooke  tensor 
   */
   template<class MAT, class VECT>
@@ -224,9 +239,10 @@ namespace getfem
     assem.volumic_assembly();
   }
 
-  /* two-in-one assembly of stokes equation:
-     linear elasticty part and p.div(v) term are assembled at the
-     same time. */
+  /** two-in-one assembly of stokes equation:
+      linear elasticty part and p.div(v) term are assembled at the
+      same time. 
+  */
   template<class MAT, class VECT>
     void asm_stokes(MAT &K, MAT &B, 
 		    const mesh_fem &mf_u,
@@ -247,6 +263,9 @@ namespace getfem
     assem.volumic_assembly();
   }
 
+  /**
+     assembly of $\int_\Omega a(x)\nabla u.\nabla v$ , where $a(x)$ is scalar.
+  */
   template<class MAT, class VECT>
     void asm_stiffness_matrix_for_laplacian(MAT &RM, const mesh_fem &mf,
 					   const mesh_fem &mfdata, VECT &A)
@@ -259,6 +278,22 @@ namespace getfem
     assem.push_mat(RM);
     assem.volumic_assembly();
   }
+
+  /**
+     assembly of $\int_\Omega A(x)\nabla u.\nabla v$ , where $A(x)$ is a matrix.
+  */
+  template<class MAT, class VECT>
+    void asm_stiffness_matrix_for_laplacian_anisotropic(MAT &RM, const mesh_fem &mf,
+							const mesh_fem &mfdata, VECT &A)
+  {
+    generic_assembly assem("a=data$1(#2,mdim(#1),mdim(#1)); M$1(#1,#1)+=comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,j,k).a(k,j,i)");
+    assem.push_mf(mf);
+    assem.push_mf(mfdata);
+    assem.push_data(A);
+    assem.push_mat(RM);
+    assem.volumic_assembly();
+  }
+
 
   /* ********************************************************************* */
   /*                                                                       */
