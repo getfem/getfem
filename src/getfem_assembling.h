@@ -478,7 +478,66 @@ namespace getfem
 
   template<class MATRM, class MESH_FEM>
     inline void mass_matrix(MATRM &M, const MESH_FEM &mf, dim_type N)
-    { mass_matrix(M, mf, mf, N); }
+  { mass_matrix(M, mf, mf, N); }
+
+  template<class MATRM, class MESH_FEM>
+  void mass_matrix_on_boundary(MATRM &M, const MESH_FEM &mf1,
+		    const MESH_FEM &mf2, size_type boundary, dim_type N)
+  {
+    size_type cv, nbd1, nbd2, f;
+    dal::bit_vector nn = mf1.convex_index(), nf;
+    base_tensor t;
+    pfem pf1, pf1prec = 0, pf2, pf2prec = 0;
+    pintegration_method pim, pimprec = 0;
+    bgeot::pgeometric_trans pgt, pgtprec = NULL;
+    pmat_elem_type pme; pmat_elem_computation pmec = 0;
+    // M(0,0) = 1.0;  ??
+
+    if (&(mf1.linked_mesh()) != &(mf2.linked_mesh()))
+      DAL_THROW(std::invalid_argument,
+		"This assembling procedure only works on a single mesh");
+
+    for (cv << nn; cv != ST_NIL; cv << nn)
+    {
+      nf = mf1.faces_of_convex_on_boundary(cv, boundary);
+      if (nf.card() > 0) {
+	pf1 = mf1.fem_of_element(cv); nbd1 = pf1->nb_dof();
+	pf2 = mf2.fem_of_element(cv); nbd2 = pf2->nb_dof();
+	pgt = mf1.linked_mesh().trans_of_convex(cv);
+	pim = mf1.int_method_of_element(cv);
+	if (pf1prec != pf1 || pf2prec != pf2 || pgtprec != pgt 
+	    || pimprec != pim) {
+	  pme = mat_elem_product(mat_elem_base(pf1), mat_elem_base(pf2));
+	  pmec = mat_elem(pme, pim, pgt);
+	  pf1prec = pf1; pf2prec = pf2; pgtprec = pgt; pimprec = pim;
+	}
+
+	for (f << nf; f != ST_NIL; f << nf) {
+
+	  pmec->gen_compute_on_face(t, mf1.linked_mesh().points_of_convex(cv),
+				    f);
+	  
+	  base_tensor::iterator p = t.begin();
+	  for (size_type i = 0; i < nbd2; i++) {
+	    size_type dof2 = mf2.ind_dof_of_element(cv)[i];
+	    // cout << "cv = " << cv << " dof2 = " << dof2 << endl;
+	    for (size_type j = 0; j < nbd1; j++, ++p) {
+	      size_type dof1 = mf1.ind_dof_of_element(cv)[j];
+	      // cout << "dof1 = " << dof1 << " dof2 = " << dof2 << endl;
+	      for (size_type k = 0; k < N; k++)
+		M(dof1*N + k, dof2*N + k) += (*p);
+	    }
+	  }
+	  if (p != t.end()) DAL_THROW(dal::internal_error, "internal error"); 
+	}
+      }
+    }
+  }
+
+  template<class MATRM, class MESH_FEM>
+  inline void mass_matrix_on_boundary(MATRM &M, const MESH_FEM &mf,
+				      size_type boundary, dim_type N)
+  { mass_matrix_on_boundary(M, mf, mf, boundary, N); }
 
 
   /* ********************************************************************* */
