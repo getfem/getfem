@@ -36,8 +36,235 @@
 
 #include <getfem_mesh_fem.h>
 #include <gmm.h>
+#include <getfem_assembling_tensors.h>
 namespace getfem
 {
+  template<class VEC>
+  scalar_type asm_L2_norm(const mesh_fem &mf, const VEC &U) {
+    asm_L2_norm(mf,U,mf.convex_index());
+  }
+  template<class VEC>
+  scalar_type asm_L2_norm(const mesh_fem &mf, const VEC &U,
+			  const dal::bit_vector &cvlst) {
+    generic_assembly assem;    
+    if (mf.get_qdim() == 1)
+      assem.set("u=data(#1); V()+=u(i).u(j).comp(Base(#1).Base(#1))(i,j)");
+    else
+      assem.set("u=data(#1); V()+=u(i).u(j).comp(vBase(#1).vBase(#1))(i,k,j,k)");
+    assem.push_mf(mf);
+    assem.push_data(U);
+    bgeot::vsvector<scalar_type> v(1);
+    assem.push_vec(v);
+    assem.volumic_assembly(cvlst);
+    return sqrt(v[0]);
+  }
+
+  template<class VEC>
+  scalar_type asm_H1_semi_norm(const mesh_fem &mf, const VEC &U) {
+    asm_H1_semi_norm(mf,U,mf.convex_index());
+  }
+  template<class VEC>
+  scalar_type asm_H1_semi_norm(const mesh_fem &mf, const VEC &U,
+			       const dal::bit_vector &cvlst) {
+    generic_assembly assem;    
+    if (mf.get_qdim() == 1)
+      assem.set("u=data(#1); V()+=u(i).u(j).comp(Grad(#1).Grad(#1))(i,d,j,d)");
+    else
+      assem.set("u=data(#1); V()+=u(i).u(j).comp(vGrad(#1).vGrad(#1))(i,k,d,j,k,d)");
+    assem.push_mf(mf);
+    assem.push_data(U);
+    bgeot::vsvector<scalar_type> v(1);
+    assem.push_vec(v);
+    assem.volumic_assembly(cvlst);
+    return sqrt(v[0]);
+  }
+
+  template<class VEC>
+  scalar_type asm_H1_norm(const mesh_fem &mf, const VEC &U) {
+    asm_H1_norm(mf,U,mf.convex_index());
+  }
+  template<class VEC>
+  scalar_type asm_H1_norm(const mesh_fem &mf, const VEC &U,
+			  const dal::bit_vector &cvlst) {
+    /*    generic_assembly assem;    
+    if (mf.get_qdim() == 1)
+      assem.set("u=data(#1); V()+=u(i).u(j).(comp(Base(#1).Base(#1))+comp(Grad(#1).Grad(#1))(:,d,:,d))(i,j)");
+    else
+      assem.set("u=data(#1); V()+=u(i).u(j).(sym(comp(vBase(#1).vBase(#1))(:,k,:,k)+comp(vGrad(#1).vGrad(#1))(:,k,d,:,k,d)))(i,j)");
+    assem.push_mf(mf);
+    assem.push_data(U);
+    bgeot::vsvector<scalar_type> v(1);
+    assem.push_vec(v);
+    assem.volumic_assembly(cvlst);*/
+    return sqrt(dal::sqr(asm_L2_norm(mf,U,cvlst))+dal::sqr(asm_H1_semi_norm(mf,U,cvlst)));
+  }
+  
+
+  /* generic mass matrix assembly (on the whole mesh or on the specified boundary) */
+  template<class MAT>
+  void asm_mass_matrix(MAT &M, const mesh_fem &mf_u1, const mesh_fem &mf_u2,
+		       size_type boundary=size_type(-1))
+  {
+    generic_assembly assem;
+    if (mf_u1.get_qdim() == 1 && mf_u2.get_qdim() == 1)
+      assem.set("M(#1,#2)+=comp(Base(#1).Base(#2))");
+    else
+      assem.set("M(#1,#2)+=comp(vBase(#1).vBase(#2))(:,i,:,i);");
+    assem.push_mf(mf_u1);
+    assem.push_mf(mf_u2);
+    assem.push_mat(M);
+    if (boundary==size_type(-1)) 
+      assem.volumic_assembly();
+    else assem.boundary_assembly(boundary);
+  }
+
+
+  /* 
+     source term (for both volumic sources and boundary (neumann) sources  
+  */
+  template<class VECT1, class VECT2>
+    void asm_source_term(VECT1 &B, const mesh_fem &mf,
+			 const mesh_fem &mfdata, VECT2 &F, size_type boundary=size_type(-1))
+  {
+    generic_assembly assem;
+    if (mf.get_qdim() == 1)
+      assem.set("F=data(#2); V(#1)+=comp(Base(#1).Base(#2))(:,j).F(j);");
+    else
+      assem.set("F=data(qdim(#1),#2); V(#1)+=comp(vBase(#1).Base(#2))(:,i,j).F(i,j);");
+    assem.push_mf(mf);
+    assem.push_mf(mfdata);
+    assem.push_data(F);
+    assem.push_vec(B);
+    if (boundary == size_type(-1))
+      assem.volumic_assembly();
+    else assem.boundary_assembly(boundary);
+  }
+
+
+  /*
+    assembles $\int{qu.v}$
+
+    (if $u$ is a vector field of size $N$, $q$ is a square matrix $N\timesN$
+    used by assem_general_boundary_conditions
+
+    convention: Q is of the form 
+       Q1_11 Q2_11 ..... Qn_11
+       Q1_21 Q2_21 ..... Qn_21
+       Q1_12 Q2_12 ..... Qn_12
+       Q1_22 Q2_22 ..... Qn_22
+    if  N = 2, and mf_d has n/N degree of freedom
+
+    Q is a vector, so the matrice is assumed to be stored by columns
+    (fortran style)
+
+    Works for both volumic assembly and boundary assembly
+   */
+  template<class MAT, class VECT>
+    void asm_qu_term(MAT &M, 
+		     const mesh_fem &mf_u, 
+		     const mesh_fem &mf_d, const VECT &Q, size_type boundary=size_type(-1))
+  {
+    generic_assembly assem;
+    if (mf_u.get_qdim() == 1)
+      assem.set("Q=data$1(#2);"
+		"M(#1,#1)+=comp(Base(#1).Base(#1).Base(#2))(:,:,k).Q(k);");
+    else
+      assem.set("Q=data$1(qdim(#1),qdim(#1),#2);"
+		"M(#1,#1)+=comp(vBase(#1).vBase(#1).Base(#2))(:,i,:,j,k).Q(i,j,k);");
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_d);
+    assem.push_data(Q);
+    assem.push_mat(M);
+    if (boundary == size_type(-1))
+      assem.volumic_assembly();
+    else
+      assem.boundary_assembly(boundary);
+  }
+
+
+  /* 
+     Stiffness matrix for linear elasticity, with Lamé coefficients
+  */
+  template<class MAT, class VECT>
+    void asm_rigidity_matrix_for_linear_elasticity(MAT &RM,
+						   mesh_fem &mf, 
+						   mesh_fem &mfdata, 
+						   VECT &LAMBDA, VECT &MU)
+  {
+    /* e = strain tensor,
+       M = 2*mu*e(u):e(v) + mu*tr(e(u))*tr(e(v))
+    */
+    generic_assembly assem("lambda=data$1(#2); mu=data$2(#2);"
+			   "t=comp(vGrad(#1).vGrad(#1).Base(#2));"
+			   "e=(t{:,2,3,:,5,6,:}+t{:,3,2,:,5,6,:}+t{:,2,3,:,6,5,:}+t{:,3,2,:,6,5,:})/4;"
+			   "M(#1,#1)+= sym(2*e(:,i,j,:,i,j,k).mu(k) + e(:,i,i,:,j,j,k).lambda(k))");
+
+    assem.push_mf(mf);
+    assem.push_mf(mfdata);
+    assem.push_data(LAMBDA);
+    assem.push_data(MU);
+    assem.push_mat(RM);
+    assem.volumic_assembly();
+  }
+
+  /* 
+     Rigidity matrix for linear elasticity, with a general Hooke  tensor 
+  */
+  template<class MAT, class VECT>
+    void asm_rigidity_matrix_for_linear_elasticity_Hooke(MAT &RM,
+							 mesh_fem &mf, 
+							 mesh_fem &mfdata, 
+							 VECT &H)
+  {
+    /* e = strain tensor,
+       M = a_{i,j,k,l}e_{i,j}(u)e_{k,l}(v)
+    */
+    generic_assembly assem("a=data$1(qdim(#1),qdim(#1),qdim(#1),qdim(#1),#2);"
+			   "t=comp(vGrad(#1).vGrad(#1).Base(#2));"
+			   "e=(t{:,2,3,:,5,6,:}+t{:,3,2,:,5,6,:}+t{:,2,3,:,6,5,:}+t{:,3,2,:,6,5,:})/4;"
+			   "M(#1,#1)+= sym(e(:,i,j,:,k,l,p).a(i,j,k,l,p))");
+    assem.push_mf(mf);
+    assem.push_mf(mfdata);
+    assem.push_data(H);
+    assem.push_mat(RM);
+    assem.volumic_assembly();
+  }
+
+  /* two-in-one assembly of stokes equation:
+     linear elasticty part and p.div(v) term are assembled at the
+     same time. */
+  template<class MAT, class VECT>
+    void asm_stokes(MAT &K, MAT &B, 
+		    const mesh_fem &mf_u,
+		    const mesh_fem &mf_p,
+		    const mesh_fem &mf_d, VECT &viscos)
+  {
+    generic_assembly assem("visc=data$1(#3); "
+			   "t=comp(vGrad(#1).vGrad(#1).Base(#3));"
+			   "e=(t{:,2,3,:,5,6,:}+t{:,3,2,:,5,6,:}+t{:,2,3,:,6,5,:}+t{:,3,2,:,6,5,:})/4;"
+			   "M$1(#1,#1) += sym(e(:,i,j,:,i,j,k).visc(k));"          // visc*D(u):D(v)
+			   "M$2(#1,#2) += comp(vGrad(#1).Base(#2))(:,i,i,:);"); // p.div v
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_p);
+    assem.push_mf(mf_d);
+    assem.push_data(viscos);
+    assem.push_mat(K);
+    assem.push_mat(B);
+    assem.volumic_assembly();
+  }
+
+  template<class MAT, class VECT>
+    void asm_rigidity_matrix_for_laplacian(MAT &RM, const mesh_fem &mf,
+					   const mesh_fem &mfdata, VECT &A)
+  {
+    generic_assembly assem("a=data$1(#2); M$1(#1,#1)+=sym(comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j))");
+    //generic_assembly assem("a=data$1(#2); M$1(#1,#1)+=comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j)");
+    assem.push_mf(mf);
+    assem.push_mf(mfdata);
+    assem.push_data(A);
+    assem.push_mat(RM);
+    assem.volumic_assembly();
+  }
 
   /* ********************************************************************* */
   /*                                                                       */
@@ -102,10 +329,10 @@ namespace getfem
     }
   }
 
+
   /* ********************************************************************* */
   /*	assembling of the term p.div(v) in Stockes mixed FEM.              */
   /* ********************************************************************* */
-
   template<class MAT, class VECT>
     void assembling_mixed_pressure_term(MAT &B,
 					const mesh_fem &mf_u,
@@ -183,11 +410,9 @@ namespace getfem
     }
   }
 
-
   /* ********************************************************************* */
   /*	Rigidity matrix for linear elasticity.                             */
   /* ********************************************************************* */
-
   template<class MAT, class VECT>
     void assembling_rigidity_matrix_for_linear_elasticity(MAT &RM,
 							  const mesh_fem &mf, 
@@ -267,22 +492,7 @@ namespace getfem
     }
   }
 
-  /*
-    assembles $\int_boundary{qu.v}$
 
-    (if $u$ is a vector field of size $N$, $q$ is a square matrix $N\timesN$
-    used by assem_general_boundary_conditions
-
-    convention: Q is of the form 
-       Q1_11 Q2_11 ..... Qn_11
-       Q1_21 Q2_21 ..... Qn_21
-       Q1_12 Q2_12 ..... Qn_12
-       Q1_22 Q2_22 ..... Qn_22
-    if  N = 2, and mf_d has n/N degree of freedom
-
-    Q is a vector, so the matrice is assumed to be stored by columns
-    (fortran style)
-   */
   template<class MAT, class VECT>
   void assembling_boundary_qu_term(MAT &M, 
 				   const mesh_fem &mf_u, size_type boundary, 
@@ -351,7 +561,7 @@ namespace getfem
 		       the assembling of dirichlet conditions against
 		       hierarchical FEMS ...
 		    */
-		    if (data != 0. && vmax != .0) {// && (*p)/vmax > 1e-5) {
+		    if (data != 0.) {// && vmax != .0 && (*p)/vmax > 1e-5) {
 		      /*
 			cerr << "QU : adding " << data << "*" << (*p) << " at dof_i=" << 
 			dof_i << "*" << N << "+" << ii << ", dof_j=" << dof_i << "*" << 
@@ -372,6 +582,90 @@ namespace getfem
   }
 
 
+
+  /* 
+     new version, which takes into account the qdim dimension of the mesh_fem 
+
+     size(H) = Qdim(mf_u)^2 * nb_dof(mf_rh);
+     size(R) = Qdim(mf_u)   * nb_dof(mf_rh);
+
+     this function is able to "simplify" the dirichlet constraints (see below)
+   */
+  template<class MAT, class VECT>
+  void asm_dirichlet_constraints(MAT &M, VECT &B, const mesh_fem &mf_u,
+				 const mesh_fem &mf_rh,
+				 const VECT &H, const VECT &R, size_type boundary) {
+    size_type cv;
+    dal::bit_vector nn = mf_u.convex_index(), nf;
+    pfem pf_u, pf_rh;
+    
+    if (mf_rh.get_qdim() != 1) DAL_THROW(std::invalid_argument, "invalid data mesh fem for dirichlet");
+    asm_qu_term(M, mf_u, mf_rh, H, boundary);
+    asm_source_term(B, mf_u, mf_rh, R, boundary);
+
+    /* step 2 : simplification of simple dirichlet conditions 
+     */
+    for (cv << nn; cv != ST_NIL; cv << nn) {
+      nf = mf_u.faces_of_convex_on_boundary(cv, boundary);
+      /* don't try anything with vector elements */
+      if (mf_u.fem_of_element(cv)->target_dim() != 1) continue;
+      if (nf.card() > 0) {
+	pf_u = mf_u.fem_of_element(cv); 
+	pf_rh = mf_rh.fem_of_element(cv); 
+	size_type f;
+	for (f << nf; f != ST_NIL; f << nf) {
+	  bgeot::pconvex_structure cvs_u = pf_u->structure();
+	  bgeot::pconvex_structure cvs_rh = pf_rh->structure();
+	  for (size_type i = 0; i < cvs_u->nb_points_of_face(f); ++i) {
+
+	    size_type Q = mf_u.get_qdim();  ///pf_u->target_dim() (==1)
+
+	    size_type ind_u = cvs_u->ind_points_of_face(f)[i];
+	    pdof_description tdof_u = pf_u->dof_types()[ind_u];
+	    
+	    for (size_type j = 0; j < cvs_rh->nb_points_of_face(f); ++j) {
+	      size_type ind_rh = cvs_rh->ind_points_of_face(f)[j];
+	      pdof_description tdof_rh = pf_rh->dof_types()[ind_rh];
+	      /*
+		same kind of dof and same location of dof ? 
+		=> then the previous was not useful for this dofs (introducing
+		a mass matrix which is not diagonal in the constraints matrix)
+		-> the constraint is simplified:
+		we replace \int{(H_j.psi_j)*phi_i}=\int{R_j.psi_j}  (sum over j)
+		with             H_j*phi_i = R_j     
+	      */
+	      if (tdof_u == tdof_rh &&
+		  bgeot::vect_dist2(pf_u->node_convex().points()[ind_u], 
+				    pf_rh->node_convex().points()[ind_rh]) < 1.0E-7) {
+		// to be optimized (square root ..!)
+
+		/* the dof might be "duplicated" */
+		for (size_type q = 0; q < Q; ++q) {
+		  size_type dof_u = mf_u.ind_dof_of_element(cv)[ind_u*Q + q];
+
+		  /* "erase" the row */
+		  for (size_type k = 0; k < mf_u.nb_dof_of_element(cv); ++k) {
+		    size_type dof_k = mf_u.ind_dof_of_element(cv)[k];
+		    M(dof_u, dof_k) = 0.0;
+		  }
+
+		  size_type dof_rh = mf_rh.ind_dof_of_element(cv)[ind_rh];
+		  /* set the "simplified" row */
+		  for (int jj=0; jj < Q; jj++) {
+		    size_type dof_u2 = mf_u.ind_dof_of_element(cv)[ind_u*Q + jj];		    
+		    M(dof_u, dof_u2) = H[(jj*Q+q) + Q*Q*(dof_rh)];
+		  }
+		  B[dof_u] = R[dof_rh*Q+q];
+		}
+	      }      
+	    }
+	  }
+	}
+      }
+    }
+  }
+
+  /* old version, pre-Qdim */
   template<class MAT, class VECT>
   void assembling_dirichlet_constraints(MAT &M, VECT &B, const mesh_fem &mf_u,
 					size_type boundary,
@@ -384,7 +678,6 @@ namespace getfem
     
     assembling_boundary_qu_term(M, mf_u, boundary, mf_rh, H, N);
     assembling_Neumann_condition(B, mf_u, boundary, mf_rh, R, N);
-
     for (cv << nn; cv != ST_NIL; cv << nn) {
       nf = mf_u.faces_of_convex_on_boundary(cv, boundary);
       if (nf.card() > 0) {
@@ -546,10 +839,9 @@ namespace getfem
   { mass_matrix_on_boundary(M, mf, mf, boundary, N); }
 
 
-  /* ********************************************************************* */
-  /*	volumic source term.                                               */
-  /* ********************************************************************* */
-
+  /* ********************************************************************* 
+     volumic source term
+     ********************************************************************* */
   template<class VECT1, class VECT2>
     void assembling_volumic_source_term(VECT1 &B, const mesh_fem &mf,
 					const mesh_fem &mfdata, const VECT2 &F, dim_type N)

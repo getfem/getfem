@@ -234,6 +234,12 @@ namespace getfem
 			ind_in_first_convex_of_dof(d));
   }
 
+  dim_type mesh_fem::dof_qdim(size_type d) const {
+    if (!dof_enumeration_made) enumerate_dof();
+    size_type tdim = f_elems[first_convex_of_dof(d)]->pf->target_dim();
+    return ind_in_first_convex_of_dof(d) % (Qdim / tdim);
+  }
+
   struct _dof_comp { 
     dal::approx_less<scalar_type> comp;
     int operator()(const fem_dof& m, const fem_dof& n) const { 

@@ -290,6 +290,8 @@ namespace getfem
      *          degree of freedom with global index i.
      */
     base_node point_of_dof(size_type d) const;
+    /* Gives the dof component number (0<= x <Qdim) */
+    dim_type dof_qdim(size_type d) const;
     size_type first_convex_of_dof(size_type d) const;
     size_type ind_in_first_convex_of_dof(size_type d) const;
     void enumerate_dof(void) const;

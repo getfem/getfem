@@ -13,6 +13,7 @@ include_HEADERS =                      \
 	bgeot_poly.h                   \
 	bgeot_simplexify.h             \
 	bgeot_tensor.h                 \
+	bgeot_sparse_tensors.h         \
 	bgeot_vector.h                 \
 	dal_algobase.h                 \
 	dal_alloc.h                    \
@@ -29,6 +30,7 @@ include_HEADERS =                      \
 	getfem_integration.h           \
 	getfem_poly_composite.h        \
 	getfem_assembling.h            \
+	getfem_assembling_tensors.h    \
 	getfem_config.h                \
 	getfem_export.h                \
 	getfem_precomp.h               \
@@ -65,6 +67,7 @@ SRC =                                  \
 	bgeot_geometric_trans.C        \
 	bgeot_geotrans_inv.C           \
 	bgeot_mesh_structure.C         \
+	bgeot_sparse_tensors.C         \
 	bgeot_poly.C                   \
 	ftool.C                        \
 	getfem_mesh_fem.C              \
@@ -79,7 +82,8 @@ SRC =                                  \
 	getfem_precomp.C               \
 	getfem_mesh.C                  \
 	getfem_regular_meshes.C        \
-	getfem_export.C
+	getfem_export.C                \
+	getfem_assembling_tensors.C
 
 lib_LTLIBRARIES = libgetfem.la
 libgetfem_la_SOURCES = $(SRC)

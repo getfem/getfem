@@ -9,23 +9,21 @@
 \usepackage{fancyheadings}
 \usepackage{here}
 \usepackage{eepic,epic}
+%\usepackage{pslatex}%{\c c}a serait cens{\'e} corriger le pb de fontes dans les pdfs mais le fichier produit est pas beau
 \usepackage[english]{babel}
 \usepackage[dvips,pageanchor=true,hyperindex=true,pagebackref=true,pdfhighlight=/O,pdfauthor={Yves Renard}]{hyperref}%pour le pdf
-
 \input{persdf}
-
 \oddsidemargin -0.9cm
 \evensidemargin -0.9cm
 \topmargin -1cm
 \textheight 22.5cm
 \textwidth 17.6cm
 \headheight 1.0cm
-
-
+\usepackage{underscore}
 \begin{document}
 
 \begin{center}
-  \includegraphics[width=10cm,angle=0]{getfem_logo.eps}\\[0.2cm]
+  \includegraphics[width=10cm,angle=0]{getfemlogo.eps}\\[0.2cm]
   a Generic Finite Element library in C++ \\[0.5cm]
   {\LARGE Documentation, part \Huge 2} \\[0.5cm]
   \fbox{\Huge \sc Short User Documentation} \\[0.5cm]
@@ -114,7 +112,7 @@ The order of the points in the array of point is not important for simplexes. Fo
 
 \begin{figure}[htb] \label{fig:elem}
   \begin{center}
-    \includegraphics[width=15cm,angle=0]{getfemuser_elem.eps}
+    \includegraphics[width=15cm,angle=0]{getfemuserelem.eps}
   \end{center}
   \caption{ \it vertex numeration for usual elements }
 \end{figure}
@@ -194,7 +192,7 @@ Here is a list of functions to get information from an existing mesh. The list i
 
   {\tt mesh.optimize\_structure()} & compact the structure. \\ \hline
 
-  {\tt mesh.trans\_of\_convex(i)} & geometric transformation of the element of index {\tt i}. return a {\tt bgeot::pgeometric\_trans} (see \cite{BAS_COMP} for more details).  \\ \hline
+  {\tt mesh.trans\_of\_convex(i)} & geometric transformation of the element of index {\tt i}. return a {\tt bgeot::pgeometric\_trans} (see \cite{BASCOMP} for more details).  \\ \hline
 
   {\tt mesh.normal\_of\_face\_of\_convex(ic, f, pt)} & gives a {\tt bgeot::base\_vector} representing an outward normal to the element at the face of local index {\tt f} at the point of local coordinates (coordinates in the element of reference) {\tt pt}. The point {\tt pt} has no influence if the geometric transformation is linear. This is not a unit normal, the norm of the resulting vector is the ratio between the surface of the face of the reference element and the the surface of the face of the real element. \\ \hline
 
@@ -212,7 +210,7 @@ This operator takes the first index such that {\tt nn[i] == true} and remove it 
 The numeration of faces on usual elements is given in figure \ref{fig:elemf}.
 \begin{figure}[htb] \label{fig:elemf}
   \begin{center}
-    \includegraphics[width=15cm,angle=0]{getfemuser_elemf.eps}
+    \includegraphics[width=15cm,angle=0]{getfemuserelemf.eps}
   \end{center}
   \caption{ \it faces numeration for usual elements }
 \end{figure}
@@ -277,7 +275,7 @@ where {\tt mesh} is an already existing mesh. The structure will be linked to th
 It is possible to specify element by element the finite element method, so that element of mixed types can be treated, even if the dimensions are different. For usual elements, the connection between two elements is done when the two elements are compatibles (same degrees of freedom on the common face). A numeration of the degrees of freedom is automatically done with a Cuthill Mc Kee like algorithm. You have to keep in mind that there is absolutely no connection between the numeration of vertices of the mesh and the numeration of the degrees of freedom. Every {\tt getfem::mesh\_fem} object has its own numeration. \\[0.5cm]
 To select a particular finite element method on a given element, one can use \\[0.5cm]
 {\tt mef.set\_finite\_element(i, ppf, ppi); }\\[0.5cm]
-where {\tt i} is the index of the element, {\tt ppf} is the descriptor of the finite element method, and {\tt ppi} is the descriptor of the integration method. The list of all available descriptors of finite element methods is in the file {\tt getfem\_fem.h}. A short description is also given in \cite{BAS_COMP}. The list of all available descriptors of integration methods is in the file {\tt getfem\_integration.h}. \\[0.5cm]
+where {\tt i} is the index of the element, {\tt ppf} is the descriptor of the finite element method, and {\tt ppi} is the descriptor of the integration method. The list of all available descriptors of finite element methods is in the file {\tt getfem\_fem.h}. A short description is also given in \cite{BASCOMP}. The list of all available descriptors of integration methods is in the file {\tt getfem\_integration.h}. \\[0.5cm]
 Descriptors for finite element methods and integration methods are available thanks to the two follofing functions\\[0.5cm]
 {\tt ppf = getfem::fem\_descriptor("name of method"); \\
   ppi = getfem::int\_method\_descriptor("name of method");
@@ -287,7 +285,7 @@ A name of a method can be retrieved thanks to the following functions\\[0.5cm]
 {\tt std::string femname = getfem::name\_of\_fem(ppf); \\
   std::string im\_name = getfem::name\_of\_int\_method(ppi);
 }\\[0.5cm]
-A non exhautive list (see \cite{FEM_LIST} for exhaustive lists) of finite element methods is given by
+A non exhautive list (see \cite{FEMLIST} for exhaustive lists) of finite element methods is given by
 \input{../kernel/getfemelemfem.tex}
 Examples of exact integration methods:
 \input{../kernel/getfemelemint.tex}
@@ -299,6 +297,17 @@ For instance if one needs to have a description of a $P_1$ finite element method
 where {\tt i} is still the index of the triangle. It is also possible to select a particular method directly on a set of element, passing to {\tt mef.set\_finite\_element} a {\tt dal::bit\_vector} instead of a single index. For instance\\[0.5cm]
 {\tt mef.set\_finite\_element(mesh.convex\_index(), getfem::fem\_descriptor("FEM\_PK(2, 1)"),\\$\mbox{}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ $ getfem::int\_method\_descriptor("IM\_EXACT\_SIMPLEX(2)")); }\\[0.5cm]
 select the method on all the elements of the mesh.
+
+If the target dimension $Q$ is set to a value different of $1$ (see
+\cite{FEMLIST} for the definition of the target dimension $Q$), the
+scalar FEMs (such as $P_k$ fems etc.) are automatically
+``vectorized'', i.e. each scalar degree of freedom is duplicated $Q$
+times, from the {\tt mesh\_fem} object point of vue. To sum it up,
+\begin{itemize}
+\item if the fem of the $ith$ element is a real vector FEMs, {\tt mef.get\_qdim() == mef.fem\_of\_element(i)->target\_dim()} and {\tt
+    mef.nb\_dof\_of\_element(i) == mef.fem\_of\_element(i).nb\_dof()}.
+\item if the fem has a {\tt target\_dim} equal to $1$, {\tt mef.nb\_dof\_of\_element(i) == mef.get\_qdim()*mef.fem\_of\_element(i).nb\_dof()}.
+\end{itemize}
 
 Once a finite element method is defined on a mesh, it is possible to obtain information on it with the following methods (the list is not exhaustive).\\[0.5cm]
 \begin{center} \begin{tabular}{|m{0.4\linewidth}|m{0.55\linewidth}|} \hline
@@ -359,27 +368,32 @@ An assembling procedure is defined to solve the problem
 \end{eqnarray*}
 where $\Omega$ is an open domain of arbitrary dimension, $\Gamma_{_D}$ and $\Gamma_{_N}$ are parts of the boundary of $\Omega$, $u(x)$ is the unknown, $a(x)$ is a given coefficient, $f(x)$ is a given source term, $U(x)$ the prescribed value of $u(x)$ on $\Gamma_{_D}$ and $F(x)$ is the prescribed normal derivative of $u(x)$ on $\Gamma_{_N}$.
 The function to be called to assemble the rigidity matrix is\\[0.5cm]
-{\tt getfem::assembling\_rigidity\_matrix\_for\_laplacian(RM, mef1, mef2, A);} \\[0.5cm]
-where {\tt RM} is a matrix of any type having the right dimension (i.e. {\tt me1.nb\_dof()}), {\tt mef1} is a variable of type {\tt getfem::mesh\_fem} and should define the finite element method for the solution, {\tt mef2}  is a variable of type {\tt getfem::mesh\_fem} (possibly equal to {\tt mef1}) describing the finite element method on which the coefficient $a(x)$ is defined, and {\tt A} is the vector of the values of this coefficient on each degree of freedom of {\tt mef2}. It is important to pay attention to the fact that the integration methods used to compute the elementary matrices is the ones declared in {\tt mef1}. This integration methods have to be chosen of sufficient order. The order has to be determined considering the degrees of element in {\tt mef1}, in {\tt mef2} and the geometric transformations for non-linear cases. Integration methods defined in {\tt mef2} are ignored.\\[0.5cm]
+{\tt getfem::asm\_rigidity\_matrix\_for\_laplacian(RM, mef1, mef2, A);} \\[0.5cm]
+where {\tt RM} is a matrix of any type having the right dimension (i.e. {\tt me1.nb\_dof()}), {\tt mef1} is a variable of type {\tt getfem::mesh\_fem} and should define the finite element method for the solution, {\tt mef2}  is a variable of type {\tt getfem::mesh\_fem} (possibly equal to {\tt mef1}) describing the finite element method on which the coefficient $a(x)$ is defined, and {\tt A} is the vector of the values of this coefficient on each degree of freedom of {\tt mef2}. Both should use the same mesh. It is important to pay attention to the fact that the integration methods used to compute the elementary matrices is the ones declared in {\tt mef1}. This integration methods have to be chosen of sufficient order. The order has to be determined considering the degrees of element in {\tt mef1}, in {\tt mef2} and the geometric transformations for non-linear cases. Integration methods defined in {\tt mef2} are ignored.\\[0.5cm]
 To assemble the source term, the  function to be called is\\[0.5cm]
-{\tt getfem::assembling\_volumic\_source\_term(B, mef1, mef2, V, N);} \\[0.5cm]
-where {\tt B} is a vector of any type having the right dimension (still {\tt me1.nb\_dof()}), {\tt mef2}  is a variable of type {\tt getfem::mesh\_fem} (possibly equal to {\tt mef1}) describing the finite element method on which $f(x)$ is defined, {\tt V} is the vector of the values of $f(x)$ on each degree of freedom of {\tt mef2}, and {\tt N} should be {\tt 1} here because it is a scalar problem.\\[0.5cm]
-For the Neumann condition on $\Gamma_{_N}$, it is possible to call\\[0.5cm]
-{\tt getfem::assembling\_Neumann\_condition(B, mef1, nbound, mef2, V, N);} \\[0.5cm]
-where {\tt nbound} is the index of the boundary in {\tt mef1} (see previous section or how to describe a boundary) where the Neumann condition is applied, {\tt mef2}  is a variable of type {\tt getfem::mesh\_fem} describing the finite element method on which $F(x)$ is defined, {\tt V} is the vector of the values of $F(x)$ on each degree of freedom of {\tt mef2}, and {\tt N} should still be {\tt 1}.\\[0.5cm]
+{\tt getfem::asm\_source\_term(B, mef1, mef2, V);} \\[0.5cm]
+where {\tt B} is a vector of any type having the right dimension (still {\tt me1.nb\_dof()}), {\tt mef2}  is a variable of type {\tt getfem::mesh\_fem} (possibly equal to {\tt mef1}) describing the finite element method on which $f(x)$ is defined, {\tt V} is the vector of the values of $f(x)$ on each degree of freedom of {\tt mef2}.\\[0.5cm]
+For the Neumann condition on $\Gamma_{_N}$, the same function\\[0.5cm]
+{\tt getfem::asm\_source\_term(B, mef1, mef2, V, nbound);} \\[0.5cm]
+is use again, but an additionnal argument has been added: {\tt nbound} is the index of the boundary in {\tt mef1} (see previous section or how to describe a boundary) where the Neumann condition is applied. Hence the assembly is done on the indicated boundary, and no more on the whole domain. {\tt mef2}  is a variable of type {\tt getfem::mesh\_fem} describing the finite element method on which $F(x)$ is defined, {\tt V} is the vector of the values of $F(x)$ on each degree of freedom of {\tt mef2}.\\[0.5cm]
 there is two manner to take into account the Dirichlet condition on $\Gamma_{_D}$, changing the linear system or explicitly reduce to the kernel of the Dirichlet condition. For the first manner, the following function is defined \\[0.5cm]
 {\tt getfem::assembling\_Dirichlet\_condition(RM, B, mef1, nbound, V, N);} \\[0.5cm]
-where {\tt nbound} is the index of the boundary in {\tt mef1} where the Dirichlet condition is applied, {\tt V} is the vector of the values of $U(x)$ on each degree of freedom of {\tt mef1} and {\tt N} should be {\tt 1}. This operation should be the last one because it transform the rigidity matrix {\tt RM}. It works only for Lagrange elements. For the second manner ... to be completed ...
-
-At the end, one obtains the discrete system
+where {\tt nbound} is the index of the boundary in {\tt mef1} where the Dirichlet condition is applied, {\tt V} is the vector of the values of $U(x)$ on each degree of freedom of {\tt mef1} and {\tt N} should be {\tt 1}. This operation should be the last one because it transform the rigidity matrix {\tt RM}. It works only for Lagrange elements. At the end, one obtains the discrete system
 $$ [RM] U = B, $$
 where $U$ is the discrete unknown.\\[0.5cm]
+
+For the second manner, one should use\\[0.5cm]
+{\tt getfem::asm\_dirichlet\_constraints($\tilde{H}$, $\tilde{R}$, mf\_u, mf\_rh,$H$, $R$, nbound)}. See the Dirichlet condition as a general linear constraint that must satisfy the solution $u$. Here, $H$ is a (sparse) matrix, with {\tt mf\_rh.nb\_dof()} columns, and $n_c$ lines, where $n_c$ is the number of constraints. Hence $u$ must satisfy $Hu=R$, which is expressed on $mf\_rh$ (hopefully lagragian). This function just assemble these constraints into a new linear system $\tilde{H}u=\tilde{R}$, doing some additionnal simplification in order to obtain a ``simple'' constraints matrix.
+Then, one should call {\tt getfem::treat\_Dirichlet\_condition($\tilde{H}$, N, $\tilde{R}$, Ud)}, which will return a vector $U_d$ which satisfies $MU_d=B$, and an orthogonal basis $N$ of the kernel of $\tilde{H}$. Hence, the discrete system that must be solved is 
+$$ (N'[RM]N) U_{int}=N'(B-[RM]U_d),$$
+and the solution is $U=N.U_{int}+U_d$.
+
 
 \subsection{Linear Elasticity problem}
 
 the following function assembles the rigidity matrix for linear elasticity\\[0.5cm]
 {\tt getfem::assembling\_rigidity\_matrix\_for\_linear\_elasticity(RM, mef1, mef2, LAMBDA, MU); } \\[0.5cm]
-where {\tt RM} is a matrix of any type having the right dimension (i.e. here {\tt N * me1.nb\_dof()}, N is the dimension of the domain), {\tt mef1} is a variable of type {\tt getfem::mesh\_fem} and should define the finite element method for the solution, {\tt mef2}  is a variable of type {\tt getfem::mesh\_fem} (possibly equal to {\tt mef1}) describing the finite element method on which the Lamé coefficient are defined, {\tt LAMBDA} and {\tt MU} are vectors of the values of Lamé coefficients on each degree of freedom of {\tt mef2}. It is important to pay attention to the fact that the integration methods used to compute the elementary matrices is the ones declared in {\tt mef1} and must be of sufficient order.\\[0.5cm]
+where {\tt RM} is a matrix of any type having the right dimension (i.e. here {\tt N * me1.nb\_dof()}, N is the dimension of the domain), {\tt mef1} is a variable of type {\tt getfem::mesh\_fem} and should define the finite element method for the solution, {\tt mef2}  is a variable of type {\tt getfem::mesh\_fem} (possibly equal to {\tt mef1}) describing the finite element method on which the Lam{\'e} coefficient are defined, {\tt LAMBDA} and {\tt MU} are vectors of the values of Lam{\'e} coefficients on each degree of freedom of {\tt mef2}. It is important to pay attention to the fact that the integration methods used to compute the elementary matrices is the ones declared in {\tt mef1} and must be of sufficient order.\\[0.5cm]
 
 In order to assemble source term, Neumann and Dirichlet conditions, same functions as in previous section can be used, except the fact that parameter {\tt N} as to be equal to the dimension of the domain (because linear elasticity problem is vectorial)
 
@@ -394,13 +408,108 @@ The following function allows to assemble a mass matrix for a finite element met
 where {\tt M} is a matrix of any type having the right dimension (i.e. here {\tt N * me1.nb\_dof()}), {\tt mef} is a variable of type {\tt getfem::mesh\_fem} and should define the finite element method, and N when it is used for vectorial problems.
 
 
-\section{Compute arbitrary elementary matrices}
+\section{Compute arbitrary elementary matrices - generic assembly procedures}
+As it can be seen in the file {\tt getfem_assembling.h}, all the
+previous assembly procedures use a {\tt generic_assembly} object and
+provide it an adequate description of what must be done. For example, 
+the assembly of a volumic source term for a scalar FEM is done with the following excerpt of code:
+\begin{alltt}
+  generic_assembly assem;
+  assem.push_mf(mf);
+  assem.push_mf(mfdata);
+  assem.push_data(F);
+  assem.push_vec(B);
+  assem.set("Z=data(#2); V(#1)+=comp(Base(#1).Base(#2))(:,j).Z(j);");
+  assem.volumic_assembly();
+\end{alltt}
+The first instructions declare the object, and set the data that it will use: the two {\tt mesh\_fem} objects, the input data {\tt F}, and the destination vector {\tt B}.
 
-To be done ... (please read \cite{BAS_COMP}).
+The input data is the vector $F$, defined on {\tt mfdata}. One want to
+evaluate $\sum_{j}f_j(\int_\Omega\phi^i\psi^j)$. The instruction must be seen as
+something that will be executed for each convex of the mesh. The terms
+{\tt\#1} and {\tt\#2} refer to the first {\tt mesh\_fem} and the second one
+(i.e. {\tt mf} and {\tt mfdata}).  The instruction {\tt Z=data(\#2);}
+which means that for each convex, the ``tensor'' {\tt Z} will extract
+the values of the first data argument provided with {\tt push\_data},
+at indexes corresponding to the degrees of freedom of the convex. The
+part {\tt V(\#1)+=\ldots} means that the result of the next expression will be
+stored in the output vector (provided with {\tt push\_vec}). Here
+again, {\tt \#1} means that we will write the result at indexes
+corresponding to the degrees of freedom of the current convex. The
+left hand side {\tt comp(Base(\#1).Base(\#2))(:,j).Z(j)} contains
+two operations. The first one is a computation of a tensor on the
+convex: {\tt comp(Base(\#1).Base(\#2))} is evaluated as a
+2-dimensions tensor, $\int\phi^i\psi^j$, for all degrees of freedom $i$ of {\tt
+  mf} and $j$ of {\tt mfdata} attached to the current convex. The next
+part is a reduction operation, {\tt C(:,j).Z(j)}: each named index
+(here $j$) is summed, i.e. the result is $\sum_jc_{i,j}z_j$.
+
+An other example is the assembly of the rigidity matrix for a vector laplacian:
+\begin{alltt}
+  generic_assembly assem;
+  assem.push_mf(mf);
+  assem.push_mf(mfdata);
+  assem.push_data(A);
+  assem.push_mat(RM);
+  assem.set("a=data$1(#2);"
+            "M$1(#1,#1)+=sym(comp(vGrad(#1).vGrad(#1).Base(#2))(:,j,k,:,j,k,p).a(p))");
+  assem.volumic_assembly();
+\end{alltt}
+Now the output is written in a sparse matrix, inserted with {\tt assem.push_mat(RM)}. The {\tt \$1} in {\tt M\$1(\#1,\#1)} just indicates that we refer to the first matrix ``pushed'' (it is optionnal, but if the assembly requires two matrices, the second one must be refered this way). The {\tt sym} function ensure that the result is symmetric (if this is not done, some round-off errors may cancel the symmetricity). Next, the {\tt comp} part evaluates a 7-dimensions tensor, 
+$$\int\partial_k\varphi^{i}_{j}\partial_l\varphi^m_n\psi^p,$$
+where $\varphi^i_j$ is a $jth$ component of the $ith$ base function of {\tt mf} and $\psi^p$ is a (scalar) base function of the second {\tt mesh_fem}. Since we want to assemble
+$$\int a(x).\nabla\phi^i.\nabla\phi^j,\quad\text{with}\quad a(x)=\sum_pa^p\psi^p(x),$$
+the reduction is:
+$$\sum_{j,k,p}\left(\int\partial_k\varphi^{i}_{j}\partial_k\varphi^m_j\psi^p\right)a^p$$
+In the {\tt
+  comp} function, {\tt vGrad} was used instead of {\tt Grad} since we
+said that we were assembling a {\em vector} laplacian: that is why
+each {\tt vGrad} part has three dimensions (dof number, component
+number, and derivative number). For a scalar laplacian, we could have
+used {\tt comp(Grad(\#1).Grad(\#1).Base(\#2))(:,k,:,k,p).a(p)}. But the
+vector form has the advantage to work in both vector and scalar case.
+
+The last instruction, {\tt assem.volumic_assembly()}, does evaluates
+the expression on each convex. For an assembly over a boundary just
+call {\tt assem.boundary_assembly(boundary_num)}.
+
+The third and last example shows assembly of a linear elasticity with a complete Hooke tensor:
+\begin{alltt}
+ assem.set("h=data\$1(qdim(\#1),qdim(\#1),qdim(\#1),qdim(\#1),\#2);"
+           "t=comp(vGrad(\#1).vGrad(\#1).Base(\#2));"
+           "e=(t\{:,2,3,:,5,6,:\}+t\{:,3,2,:,5,6,:\}+t\{:,2,3,:,6,5,:\}+t\{:,3,2,:,6,5,:\})/4;"
+           "M(\#1,\#1)+= sym(e(:,j,k,:,m,n,p).h(j,k,m,n,p))");
+\end{alltt}
+The original equations are:
+$$\int\varepsilon(\varphi^i):\sigma(\phi^j),\quad\text{with}\quad
+\sigma(u)_{ij}=\sum_{kl}h_{ijkl}(x)\varepsilon_{kl}(u)$$
+where $h$ is the Hooke tensor.
+Since we assume it is not constant, $h$ is given on the second {\tt
+  mesh_fem}: $h_{ijkl}(x)=\sum_ph_{ijkl}^p\psi^p$.  Hence the first line
+declares that the first data ``pushed'' is indeed a five-dimensions
+tensor, the first fourth ones beeing all equal to the target dimension
+of the first {\tt mesh_fem}, and the last one beeing equal to the
+number of degrees of freedom of the second {\tt mesh_fem}.  The {\tt
+  comp} part still compute the same 7-dimensions tensor than for the
+vector laplacian case.  From this tensor, one evaluate
+$\varepsilon(\varphi^i)_{jk}\varepsilon(\phi^l)_{mn}\psi^p$ via permutations, and finally the
+expression is reduced against the hook tensor.
+
+{\bf others operations}
+
+Slices may be mixed with reduction operations {\tt t(:,4,i,i)} takes a slice at index 4 of the second dimension, and reduces the diagonal of dimension 3 and 4. {\em Please note that index numbers for slices start at 1 and not 0 !!} 
+
+{\tt mdim(\#2)} is evaluated as the mesh dimension associated to the second {\tt mesh_fem}, while {\tt qdim(\#2)} is the target dimension of the {\tt mesh_fem}.
+
+The diagonal of a tensor can be obtained with {\tt t\{:,:,3,3\}} (which is stricly equivalent to {\tt t\{1,2,3,3\}}: the colon is just here to improve the readability). This is the same operator than for permutation operations. Note that {\tt t\{:,:,1,1\}} or {\tt t\{:,:,4,4\}} are not valid operations. 
+
+The {\tt print} command can be used to see the tensor: {\tt "print comp(Base(\#1));"} will print the integrals of the base functions for each convex.
+
+If there is more than one data array, output array  or output sparse matrix, one can use {\tt data\$2, data\$3, V\$2, M\$2,}\ldots
 
 \section{Incorporate new finite element methods in GETFEM++}
 
-Basically, It is sufficient to describe an element on the reference element, i.e. to describe each base function of each degree of freedom. Vectorial elements and non-equivalent elements are partially supported ... (supported by the finite element kernel but not by assembling procedures). To be done ... please read \cite{BAS_COMP} for more details and see the file {\tt getfem\_fem.C} for practical implementation.
+Basically, It is sufficient to describe an element on the reference element, i.e. to describe each base function of each degree of freedom. Vectorial elements and non-equivalent elements are partially supported ... (supported by the finite element kernel but not by assembling procedures). To be done ... please read \cite{BASCOMP} for more details and see the file {\tt getfem\_fem.C} for practical implementation.
 
 \section{Finite element methods defined on two different meshes}
 
@@ -483,7 +592,7 @@ The program {\tt laplacian} is provided in the directory {\tt tests} of GETFEM++
 The file {\tt laplacian.param} is the parameter file. You can edit it and test various situation. The following parameter can be changed\\[0.5cm]
 \begin{center} \begin{tabular}{|m{0.2\linewidth}|m{0.75\linewidth}|} \hline
 
-  {\tt N} & Dimension of the domain, $1 \le {\tt N} \le 255$ for parellepipedic elements, mesh generation limited to ${\tt N} \le 4$ for simplexes and ${\tt N} \le 5$ for prisms.  \\ \hline
+  {\tt N} & Dimension of the domain, $1 \leq {\tt N} \leq 255$ for parellepipedic elements, mesh generation limited to ${\tt N} \leq 4$ for simplexes and ${\tt N} \leq 5$ for prisms.  \\ \hline
 
   {\tt LX, LY} and {\tt LZ} &  Sizes of the domain. \\ \hline
 
@@ -518,11 +627,11 @@ The program {\tt elastostatic} is built in a same way and compute the solution o
   {\it The Finite Element Method Displayed}, 
  J. Wiley \& Sons,  New York, 1984.
 
-\bibitem{BAS_COMP}
+\bibitem{BASCOMP}
   Y. {\sc Renard},
   {\it Elementary Computations in GETFEM++}, 2002.
 
-\bibitem{FEM_LIST}
+\bibitem{FEMLIST}
   Y. {\sc Renard},
   {\it Description of Finite Element and Integration Methods in GETFEM++}, 2002.
 

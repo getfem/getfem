@@ -40,11 +40,100 @@ namespace getfem
   /*
     mf_target should be a lagrange discontinous element
     does not work with vectorial elements. ... to be done ...
-  */
 
+    mf_target is supposed to have the same Qdim than mf
+  */
   template<class VECT>
   void compute_gradient(mesh_fem &mf, mesh_fem &mf_target,
-			const VECT &U, VECT &V, dim_type Q)
+			const VECT &U, VECT &V)
+  {
+    size_type cv;
+    size_type N = mf.linked_mesh().dim();
+    size_type qdim = mf.get_qdim();
+    if (&mf.linked_mesh() != &mf_target.linked_mesh())
+      DAL_THROW(std::invalid_argument, "meshes are different.");
+
+    if (mf_target.get_qdim() != mf.get_qdim()) {
+      DAL_THROW(std::invalid_argument, "invalid Qdim for gradient");
+    }
+
+    base_matrix G, val;
+    base_vector coeff;
+ 
+    dal::bit_vector nn = mf.convex_index();
+      
+    pgeotrans_precomp pgp = NULL;
+    pfem_precomp pfp = NULL;
+    pfem pf, pf_target, pf_old = NULL, pf_targetold = NULL;
+    bgeot::pgeometric_trans pgt;
+
+    for (cv << nn; cv != ST_NIL; cv << nn) {
+      pf = mf.fem_of_element(cv);
+      pf_target = mf_target.fem_of_element(cv);
+      if (!(pf_target->is_equivalent()) || !(pf_target->is_lagrange()))
+	DAL_THROW(std::invalid_argument, 
+		  "finite element target not convenient");
+      if (!(pf->is_equivalent())) 
+	transfert_to_G(G, mf.linked_mesh().points_of_convex(cv));
+
+      pgt = mf.linked_mesh().trans_of_convex(cv);
+      if (pf_targetold != pf_target) {
+        pgp = geotrans_precomp(pgt, pf_target->node_tab());
+      }
+      pf_targetold = pf_target;
+
+      if (pf_old != pf) {
+	pfp = fem_precomp(pf, pf_target->node_tab());
+      }
+      pf_old = pf;
+
+      size_type P = pgt->structure()->dim(); /* dimension of the convex.*/
+      base_matrix a(N, pgt->nb_points());
+      base_matrix grad(N, P), TMP1(P,P), B0(P,N), B1(1, N), CS(P,P);
+      
+      /* TODO: prendre des iterateurs pour faire la copie */
+      // utiliser transfert_to_G ?
+      for (size_type j = 0; j < pgt->nb_points(); ++j) // à optimiser !!
+	for (size_type i = 0; i < N; ++i)
+	  a(i,j) = mf.linked_mesh().points_of_convex(cv)[j][i];
+      
+      coeff.resize(pf->nb_dof());
+      val.resize(pf->target_dim(), P);
+      B1.resize(pf->target_dim(), N);
+      
+      for (size_type j = 0; j < pf_target->nb_dof(); ++j) {
+	if (!pgt->is_linear() || j == 0) {
+	  // computation of the pseudo inverse
+	  bgeot::mat_product(a, pgp->grad(j), grad);
+	  if (P != N) {
+	    bgeot::mat_product_tn(grad, grad, CS);
+	    bgeot::mat_inv_cholesky(CS, TMP1);
+	    bgeot::mat_product_tt(CS, grad, B0);
+	  }
+	  else {
+	    bgeot::mat_gauss_inverse(grad, TMP1); B0 = grad;
+	  }
+	}
+
+	if (pf_target->target_dim() != 1)
+	  DAL_THROW(to_be_done_error, "vectorial gradient, to be done ... ");
+
+	for (size_type q = 0; q < qdim; ++q) {
+	  for (size_type l = 0; l < pf->nb_dof(); ++l)
+	    coeff[l] = U[mf.ind_dof_of_element(cv)[l*qdim] + q ];
+	  pf->interpolation_grad(pfp, j, G, pgt, coeff, val);
+	  bgeot::mat_product(val, B0, B1);
+
+	  for (size_type l = 0; l < N; ++l)
+	    V[mf_target.ind_dof_of_element(cv)[j*qdim+q]*N+l] = B1(0, l);
+	}
+      }
+    }
+  }
+
+  template<class VECT>
+  void compute_gradient_old(mesh_fem &mf, mesh_fem &mf_target,
+			    const VECT &U, VECT &V, dim_type Q)
   {
     size_type cv;
     size_type N = mf.linked_mesh().dim();

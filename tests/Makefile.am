@@ -1,6 +1,7 @@
 check_PROGRAMS = \
 	dynamic_array \
 	dynamic_tas \
+	test_assembly \
 	laplacian \
 	elasto_statique  \
 	integration \
@@ -15,6 +16,7 @@ check_PROGRAMS = \
 
 dynamic_array_SOURCES = dynamic_array.C 
 dynamic_tas_SOURCES = dynamic_tas.C 
+test_assembly_SOURCES = test_assembly.C
 laplacian_SOURCES = laplacian.C
 elasto_statique_SOURCES = elasto_statique.C
 integration_SOURCES = integration.C
@@ -34,6 +36,7 @@ CXXFLAGS = @APPSCXXFLAGS@
 TESTS = \
 	$(top_srcdir)/tests/dynamic_array.pl \
 	$(top_srcdir)/tests/dynamic_tas.pl \
+	$(top_srcdir)/tests/assembly.pl \
 	$(top_srcdir)/tests/laplacian.pl \
 	$(top_srcdir)/tests/elasto_statique.pl  \
 	$(top_srcdir)/tests/integration.pl \
@@ -49,6 +52,7 @@ TESTS = \
 EXTRA_DIST = \
 	dynamic_array.pl \
 	dynamic_tas.pl \
+	assembly.pl \
 	laplacian.pl \
 	elasto_statique.pl  \
 	integration.pl \

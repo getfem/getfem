@@ -279,6 +279,167 @@ namespace getfem
   /* ********************************************************************* */
 
   template<class VECT>
+    void interpolation_solution_same_mesh(mesh_fem &mf_source, mesh_fem &mf_target,
+					  const VECT &U, VECT &V)
+  {
+    dal::bit_vector nn = mf_source.convex_index();
+    size_type cv;
+    base_node val(1);
+    base_matrix G;
+    base_vector coeff;
+    size_type qdim = mf_source.get_qdim();
+    if ( &(mf_source.linked_mesh()) != &(mf_target.linked_mesh()))
+      DAL_THROW(failure_error, "Meshes should be the same in this function.");
+
+    if (qdim != mf_target.get_qdim())
+      DAL_THROW(failure_error, "Attempt to interpolate a field of dimension " << 
+		qdim << " on a mesh_fem whose Qdim is " << 
+		mf_target.get_qdim());
+
+    for (cv << nn; cv != ST_NIL; cv << nn) {
+      bgeot::pgeometric_trans pgt = mf_source.linked_mesh().trans_of_convex(cv);
+      pfem pf_s = mf_source.fem_of_element(cv);
+      pfem pf_t = mf_target.fem_of_element(cv);
+      size_type nbd_s = pf_s->nb_dof();
+      size_type nbd_t = pf_t->nb_dof();
+      coeff.resize(nbd_s);
+
+      if (!(pf_s->is_equivalent())) 
+	transfert_to_G(G, mf_source.linked_mesh().points_of_convex(cv));
+
+      if (pf_s->target_dim() != 1 || pf_t->target_dim() != 1)
+	DAL_THROW(to_be_done_error, "vector FEM interpolation still to be done ... ");
+      
+      for (size_type i = 0; i < nbd_t; ++i) {
+	size_type dof_t = mf_target.ind_dof_of_element(cv)[i*qdim];
+	/* interpolation of the solution.                                  */
+	/* faux dans le cas des éléments vectoriel.                        */
+	for (size_type k = 0; k < qdim; ++k) {
+	  for (size_type j = 0; j < nbd_s; ++j) {
+	    size_type dof_s = mf_source.ind_dof_of_element(cv)[j*qdim+k];
+	    coeff[j] = U[dof_s];
+	  }
+	  // il faudrait utiliser les fem_precomp pour accelerer.
+	  pf_s->interpolation(pf_t->node_of_dof(i), G, pgt, coeff, val);
+	  V[dof_t + k] = val[0];
+	}
+      }
+    }
+  }
+
+  /* ********************************************************************* */
+  /*                                                                       */
+  /*  interpolation of a solution on another mesh.                         */
+  /*   - mf_target must be of lagrange type.                               */
+  /*   - the solution must be continuous.                                  */
+  /*                                                                       */
+  /* ********************************************************************* */
+
+
+
+  template<class VECT>
+    void interpolation_solution(mesh_fem &mf_source, mesh_fem &mf_target,
+				const VECT &U, VECT &V)
+  {
+    size_type cv;
+    base_node val(1);
+    bgeot::geotrans_inv gti;
+    dal::dynamic_array<base_node> ptab;
+    dal::dynamic_array<size_type> itab;
+    base_vector coeff;
+    base_matrix G;
+
+    
+    if (&mf_source.linked_mesh() == &mf_target.linked_mesh()) {
+      interpolation_solution_same_mesh(mf_source, mf_target, U, V);
+      return;
+    }
+    size_type qdim = mf_source.get_qdim();
+    if (qdim != mf_target.get_qdim())
+      DAL_THROW(failure_error, "Attempt to interpolate a field of dimension " << 
+		qdim << " on a mesh_fem whose Qdim is " << 
+		mf_target.get_qdim());
+
+    dal::bit_vector tdof_added; 
+
+    /* stocke des paires <indice, repetition> */
+    std::deque<std::pair<size_type,size_type> > gti_pt_2_target_dof;
+
+    /* stockage de tous les points dans le gti,
+       et remplissage du tableau gti_pt_2_target_dof pour
+       pouvoir retrouver le numéro du ddl à partir de son indice
+       dans la liste de points de gti 
+    */
+    for (dal::bit_vector::const_iterator it = mf_target.convex_index().begin();
+	 it != mf_target.convex_index().end(); ++it) {
+      if (*it) {
+	pfem pf_t = mf_target.fem_of_element(it.index());
+	size_type qmult = mf_target.get_qdim() / pf_t->target_dim();
+	
+	if (pf_t->target_dim() != 1) DAL_THROW(failure_error, "still some work to do on vector FEMs!");
+
+	for (size_type j=0; j < pf_t->nb_dof(); ++j) {
+	  size_type dof_t = mf_target.ind_dof_of_element(it.index())[j*qmult];
+	  if (!tdof_added[dof_t]) {
+	    gti.add_point(mf_target.point_of_dof(dof_t));
+	    gti_pt_2_target_dof.push_back(std::pair<size_type,size_type>(dof_t,qmult));
+	    tdof_added.add(dof_t);
+	  }
+	}
+      }
+    }
+    // il faudrait controler que tous les ddl de mf_target sont de
+    // type lagrange
+    dal::bit_vector nn = mf_source.convex_index(), ddl_touched;
+    ddl_touched.add(0, mf_target.nb_dof()-1);
+
+    for (cv << nn; cv != ST_NIL; cv << nn)
+    {
+      bgeot::pgeometric_trans pgt = mf_source.linked_mesh().trans_of_convex(cv);
+      //cout << "dealing with convex " << cv << " remaining " << nn.card() << endl;
+      size_type nb = gti.points_in_convex(mf_source.linked_mesh().convex(cv),
+					  pgt, ptab, itab);
+      //cout << "nb points in this convex " << nb << endl;
+      // cout << "convex : " << mf_source.linked_mesh().convex(cv) << endl;
+      pfem pf_s = mf_source.fem_of_element(cv);
+      if (!(pf_s->is_equivalent())) 
+	transfert_to_G(G, mf_source.linked_mesh().points_of_convex(cv));
+      size_type nbd_s = pf_s->nb_dof();
+      coeff.resize(nbd_s);
+      for (size_type i = 0; i < nb; ++i)
+      {
+	size_type dof_t = gti_pt_2_target_dof[itab[i]].first;
+	size_type nrep  = gti_pt_2_target_dof[itab[i]].second;
+	assert(nrep>0);
+	// cout << "dealing with ddl : " << itab[i] << "  coords : " << mf_target.point_of_dof(itab[i]) << " internal coords : " << ptab[i] << endl;
+	if (ddl_touched[dof_t])
+	{ // inverser les deux boucles pour gagner du temps ?
+	  // Il faut verifier que le ddl est bien de Lagrange ...
+	  for (size_type k = 0; k < nrep; ++k) {
+	    for (size_type j = 0; j < nbd_s; ++j) {
+	      size_type dof_s = mf_source.ind_dof_of_element(cv)[j*nrep+k];
+	      coeff[j] = U[dof_s];
+	      //cerr << "dof_s=" << dof_s << " dof_t=" << dof_t << " k=" << k << " i=" << i << endl;
+	    }
+	    pf_s->interpolation(ptab[i], G, pgt, coeff, val);
+	    V[dof_t + k] = val[0];
+	    ddl_touched.sup(dof_t+k);
+	  }
+	}
+      }
+    }
+    // cout << "ddl untouched : " << ddl_touched << endl;
+    if (ddl_touched.card() != 0)
+      cerr << "WARNING : in interpolation_solution,"
+	   << " all points have not been touched" << endl;
+  }
+
+
+
+  /*
+    OLD INTERPOLATION 
+  */
+  template<class VECT>
     void interpolation_solution_same_mesh(mesh_fem &mf, mesh_fem &mf_target,
 					  const VECT &U, VECT &V, dim_type P)
   {
