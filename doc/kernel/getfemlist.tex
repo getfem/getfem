@@ -66,7 +66,7 @@ Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 \section{Finite element methods}
 
-all finite element methods defined in getfem++ are interfaced in the file {\tt getfem\_fem.h}.
+all finite element methods defined in GETFEM++ are interfaced in the file {\tt getfem\_fem.h}.
 
 \subsection{Finite element methods description}
 
@@ -94,33 +94,35 @@ where $\alpha$ is the vector of components $\alpha_i$.
   \caption{ \it Symbols representing degree of freedom types}
 \end{figure}
 
-\subsection{Basic Lagrange elements on simplexes}
-
-
-
 % a chaque élément : 
 % dessin des ddl avec code
 % nb de ddl, degre, equivalence via la transformation géometrique, vectoriel ou non, analyse du raccord
 
-\begin{figure}[H] \label{fig:segment_pk}
+\subsection{Classical ``$P_K$'' Lagrange elements on simplexes}
+
+It is possible to define a classical ``$P_K$'' Lagrange element of arbitrary dimension and arbitrary degree. This element has only degrees of freedom which corresponds to the value of the function on a node. The grid of node is the so-called Lagrange grid. Figures \ref{fig:segmentpk}, \ref{fig:trianglepk} and \ref{fig:tetrahedronpk} show examples in dimension 1, 2 and 3.
+
+\begin{figure}[H] 
   \begin{center} 
     \includegraphics[width=14cm,angle=0]{getfemlist_segment_Pk.eps}
-    \caption{ \it Examples of standard Lagrange element on a segment.}
+    \caption{ \it Examples of classical $P_K$ Lagrange element on a segment.} \label{fig:segmentpk}
   \end{center}
 \end{figure}
 
 
-\begin{figure}[H] \label{fig:triangle_pk}
+\begin{figure}[H]
   \begin{center} \begin{tabular}{m{7cm}m{7cm}}
     \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P1.eps} & \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P2.eps} \\
     $P_1$ element, 3 d.o.f., $C^0$ & $P_2$ element, 6 d.o.f., $C^0$ \\ \\
     \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P3.eps} & \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P6.eps} \\
     $P_3$ element, 10 d.o.f., $C^0$ & $P_6$ element, 28 d.o.f., $C^0$
   \end{tabular} \end{center}
-  \caption{ \it Examples of standard Lagrange element on a triangle.}
+  \caption{ \it Examples of classical $P_K$ Lagrange element on a triangle.} \label{fig:trianglepk}
 \end{figure}
 
-\begin{figure}[H] \label{fig:tetrahedron_pk}
+The number of degree of freedom for a classical ``$P_K$'' Lagrange element in dimension $N$ and degree $K$ is $\Frac{(N+S)!}{N!S!}$. For instance, in dimension 2 ($N = 2$), this value is $\Frac{(N+1) (N+2)}{2}$, in dimension 3 ($N = 2$), this value is $\Frac{(N+1) (N+2) (N+3)}{6}$ ...
+
+\begin{figure}[H]
   \begin{center}
     \begin{tabular}{m{7cm}m{7cm}}
       \includegraphics[width=5cm,angle=0]{getfemlist_tetrahedron_P1.eps} & \includegraphics[width=5cm,angle=0]{getfemlist_tetrahedron_P2.eps} \\
@@ -129,37 +131,71 @@ where $\alpha$ is the vector of components $\alpha_i$.
      \includegraphics[width=5cm,angle=0]{getfemlist_tetrahedron_P4.eps} \\
      $P_4$ element, 35 d.o.f., $C^0$
   \end{center}
-  \caption{ \it Examples of standard Lagrange element on a tetrahedron.}
+  \caption{ \it Examples of classical $P_K$ Lagrange element on a tetrahedron.} \label{fig:tetrahedronpk}
 \end{figure}
 
-\subsection{Basic Lagrange elements on other geometries}
+The particular way selected in GETFEM++ to numerate the nodes are also shown in figures \ref{fig:segmentpk}, \ref{fig:trianglepk} and \ref{fig:tetrahedronpk}. Using another numeration, let 
+$$ i_0, i_1, ... i_N, $$
+be somme indexes such that
+$$ 0 \le i_0, i_1, ... i_N \le K, $$
+$$ \sum_{n = 0}^{N} i_n = K.$$
+Then, the coordinate of a node could be defined as
+$$ a_{i_0, i_1, ... i_N} = \sum_{n = 0}^{N} \Frac{i_n}{K}P_n, $$
+where $P_0, P_1, ... P_N$ are the vertexes of the simplex.
+Then each base function, corresponding of each node $a_{i_0, i_1, ... i_N}$ is defined as
+$$ \phi_{i_0, i_1, ... i_N} = \prod_{n = 0}^{N} \prod_{j=0}^{i_n-1} \left(\Frac{K \lambda_n - j}{j+1}\right).$$
+where $\lambda_n$ is the barycentric coordinate, i.e. the polynomial of order 1 whose value is $1$ on the vertex $P_n$ and whose value is $0$ on the other vetices. On the reference element, one has
+$$ \lambda_n = x_n, \ \ 0 \le n < N, $$
+$$ \lambda_N = 1 - x_0 - x_1 - ... - x_{N-1}. $$
+
+When between two elements of the same order (even with different dimensions), the degrees of freedom of a common face are linked, the element is of class $C^0$. This mean that the global polynomial is continuous. If you try to link elements of different orders, you will get some trouble with the unlinked degrees of freedom. This is not automatically supported by GETFEM++, so you will have to support it (add constraints on this degrees of freedom).\\[0.5cm] 
+
+For some applications (computation of a gradient for instance) one does not want the degrees of freedom of a common face to be linked. This is why there are two versions of the classical ``$P_K$'' Lagrange element. The function\\[0.5cm]
+{\tt getfem::ppolyfem getfem::PK\_fem(N, K)}\\[0.5cm]
+return the description of the linkable element, and\\[0.5cm]
+ {\tt getfem::ppolyfem getfem::PK\_discontinuous\_fem(N, K)}\\[0.5cm]
+return the description of the unlinkable element.
+
+\subsection{Classical Lagrange elements on other geometries}
+
+to be done ...
 
 \subsection{Specific elements in dimension 1}
 
+to be done ...
 
 \subsection{Specific elements in dimension 2}
 
-\begin{figure}[H] \label{fig:triangle_p1_bubble}
+\begin{figure}[H]
   \begin{center}
     \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P1_bubble.eps}
   \end{center}
-  \caption{ \it$P_1$ Lagrange element on a triangle with additional bubble function, 4 d.o.f., $C^0$}
+  \caption{ \it$P_1$ Lagrange element on a triangle with additional bubble function, 4 d.o.f., $C^0$} 
+  \label{fig:triangle_p1_bubble}
 \end{figure}
 
+to be described ...
 
-\begin{figure}[H] \label{fig:argyris}
+\begin{figure}[H]
   \begin{center}
     \includegraphics[width=6cm,angle=0]{getfemlist_argyris.eps}
   \end{center}
   \caption{ \it Argyris element, $P_5$, 21 d.o.f., $C^1$}
+  \label{fig:argyris}
 \end{figure}
 to be done ...
 
 \subsection{Specific elements in dimension 3}
 
+to be done ...
 
 \subsection{Tensorial product of elements}
 
+to be done ...
+
+\subsection{What really means arbitrary geometric transformation}
+
+(graphics ...)
 
 \section{Integration methods}
 
@@ -181,16 +217,28 @@ Other methods can be easily defined.
 
 \subsection{Exact Integration methods}
 
+to be done ...
+
 \subsection{Newton cotes Integration methods}
+to be done ...
+
 
 \subsection{Gauss Integration methods on dimension 1}
 
+to be done ...
+
 \subsection{Gauss Integration methods on dimension 2}
+
+to be done ...
 
 \subsection{Gauss Integration methods on dimension 3}
 
+to be done ...
+
 \subsection{Direct product of integration methods}
 
+
+to be done ...
 
 \begin{thebibliography}{99}
 % \bibliographystyle{apalike}
