@@ -1,5 +1,37 @@
+Short Installation procedure
+============================
+
+Basically, to install GETFEM++ you need to:
+
+1. Optionally set the CXX environment variable to your compiler.
+  csh:
+    setenv CXX KCC   (or g++ or SGI's CC ...)
+  sh:
+    CXX=KCC
+    export CXX
+  ksh:
+    export CXX=KCC
+
+2.  Run the configure script
+
+./configure [options]
+
+3. Make the compilation
+
+gmake
+
+5. Optionally test the compilation
+
+gmake check
+
+4. Make the instalation
+
+gmake install
+
+
 Basic Installation
 ==================
+
 
    These are generic installation instructions.
 
