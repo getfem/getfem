@@ -337,6 +337,48 @@ namespace gmm {
     : public  linalg_traits<tab_ref_index_ref_with_origin<IT, ITINDEX> > {};
 #endif
 
+  template<class ITER, class MIT> struct dense_compressed_iterator {
+    typedef ITER value_type;
+    typedef ITER *pointer;
+    typedef ITER &reference;
+    typedef ptrdiff_t difference_type;
+    typedef std::random_access_iterator_tag iterator_category;
+    typedef size_t size_type;
+    typedef dense_compressed_iterator<ITER, MIT> iterator;
+
+    ITER it;
+    size_type N, nrows, ncols;
+    const void *origin;
+    
+    iterator operator ++(int) { iterator tmp = *this; it += N; return tmp; }
+    iterator operator --(int) { iterator tmp = *this; it -= N; return tmp; }
+    iterator &operator ++()   { it += N; return *this; }
+    iterator &operator --()   { it -= N; return *this; }
+    iterator &operator +=(difference_type i) { it += i * N; return *this; }
+    iterator &operator -=(difference_type i) { it -= i * N; return *this; }
+    iterator operator +(difference_type i) const 
+    { iterator itt = *this; return (itt += i); }
+    iterator operator -(difference_type i) const
+    { iterator itt = *this; return (itt -= i); }
+    difference_type operator -(const iterator &i) const
+    { return (it - i.it) / N; }
+
+    ITER operator *() const { return it; }
+    ITER operator [](int ii) const { return it + ii * N; }
+
+    bool operator ==(const iterator &i) const { return (it == i.it); }
+    bool operator !=(const iterator &i) const { return !(i == *this); }
+    bool operator < (const iterator &i) const { return (it < i.it); }
+
+    dense_compressed_iterator(void) {}
+    dense_compressed_iterator(const dense_compressed_iterator<MIT, MIT> &ii)
+    : it(ii.it), N(ii.N), nrows(ii.nrows),ncols(ii.ncols),origin(ii.origin) {}
+    dense_compressed_iterator(const ITER &iter, size_type n, size_type r,
+			      size_type c, const void *o)
+      : it(iter), N(n), nrows(r), ncols(c), origin(o) { }
+    
+  };
+
   /* ******************************************************************** */
   /*	    Read only reference on a compressed sparse vector             */
   /* ******************************************************************** */

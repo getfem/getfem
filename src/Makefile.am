@@ -60,6 +60,7 @@ include_HEADERS =                      \
 	gmm_sub_vector.h               \
 	gmm_sub_matrix.h               \
 	gmm_interface.h                \
+	gmm_interface_bgeot.h          \
 	gmm_solver_cg.h                \
 	gmm_solver_constrained_cg.h    \
 	gmm_modified_gram_schmidt.h    \

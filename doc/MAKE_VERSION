@@ -50,3 +50,9 @@ Liste des items a passer en revue pour fabriquer une nouvelle version
   automake
     config.guess install-sh  config.sub missing  depcomp mkinstalldirs
 
+
+- Particularité des compilateurs :
+
+aCC : N'aime pas les template définis sur des types non prédéclarés (comme
+      bgeot::vsvector dans gmm_interface. Inclure bgeot_vector.h pour
+      faire les tests. 
