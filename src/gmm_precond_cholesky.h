@@ -203,7 +203,7 @@ namespace gmm {
 
   template <class Matrix, class V1, class V2> inline
   void mult(const cholesky_precond<Matrix>& P, const V1 &v1, V2 &v2) {
-    if (P.nrows() != vect_size(v2))
+    if (P.nrows() != vect_size(v1) || P.ncols() != vect_size(v2))
       DAL_THROW(dimension_error, "dimensions mismatch");
    
     ... à continuer .. avec les tri_solve
