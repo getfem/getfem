@@ -45,6 +45,7 @@ include_HEADERS =                      \
 	getfem_mat_elem_type.h         \
 	getfem_mesh.h                  \
 	getfem_mesh_fem.h              \
+	getfem_mesh_slice.h	       \
 	getfem_regular_meshes.h        \
 	gmm.h                          \
 	gmm_matrix.h                   \
@@ -93,6 +94,7 @@ SRC =                                  \
 	getfem_mat_elem_type.C         \
 	getfem_precomp.C               \
 	getfem_mesh.C                  \
+	getfem_mesh_slice.C	       \
 	getfem_regular_meshes.C        \
 	getfem_export.C                \
 	getfem_assembling_tensors.C
