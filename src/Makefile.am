@@ -8,7 +8,6 @@ include_HEADERS =                      \
 	bgeot_convex_structure.h       \
 	bgeot_geometric_trans.h        \
 	bgeot_geotrans_inv.h           \
-	bgeot_matrix.h                 \
 	bgeot_mesh.h                   \
 	bgeot_mesh_structure.h         \
 	bgeot_poly.h                   \

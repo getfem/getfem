@@ -131,18 +131,15 @@ namespace gmm {
     iter.set_rhsnorm(sqrt(vect_sp(PS, b, b)));
     if (iter.get_rhsnorm() == 0.0) iter.set_rhsnorm(1.0);
    
-
     TmpCmat CINV(mat_nrows(C), mat_ncols(C));
     pseudo_inverse(C, CINV, PS, x);
-    
-    // cout << "C = " << C << " CINV = " << CINV << endl;
     
     while(true) {
       // computation of residu
       copy(z, old_z);
       copy(x, memox);
       mult(A, scaled(x, -1.0), b, r);
-      mult(M, r, z); // ...
+      mult(M, r, z); // preconditionner not coherent
       bool transition = false;
       for (size_type i = 0; i < mat_nrows(C); ++i) {
 	value_type al = vect_sp(mat_row(C, i), x) - f[i];
@@ -156,27 +153,20 @@ namespace gmm {
       }
     
       // descent direction
-      // rho_1 = rho; rho = itl::dot(r, r);
-      rho_1 = rho; rho = vect_sp(PS, z, z); // ...
-      // std::cout << "norm of residu : " << rho << endl; getchar();
-      
+      rho_1 = rho; rho = vect_sp(PS, r, z); // ...
       
       if (iter.finished(rho)) break;
       
       if (iter.get_noisy() > 0 && transition) std::cout << "transition\n";
       if (transition || iter.first()) gamma = 0.0;
-      else
-	// gamma = std::max(0.0, (rho - itl::dot(old_r, r) ) / rho_1);
-	// gamma = rho / rho_1;
-	gamma = std::max(0.0, (rho - vect_sp(PS, old_z, z) ) / rho_1); // ...
+      else gamma = std::max(0.0, (rho - vect_sp(PS, old_z, z) ) / rho_1);
       // std::cout << "gamma = " << gamma << endl;
       // itl::add(r, itl::scaled(p, gamma), p);
       add(z, scaled(p, gamma), p); // ...
       
       ++iter;
       // one dimensionnal optimization
-      mult(A, p, q2);
-      mult(M, q2, q);
+      mult(A, p, q);
       lambda = rho / vect_sp(PS, q, p);
       for (size_type i = 0; i < mat_nrows(C); ++i)
 	if (!satured[i]) {
