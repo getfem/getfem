@@ -82,7 +82,8 @@ namespace getfem {
     model_state(void) { ident_ = context_dependencies::new_ident(); }
   };
 
-  template<typename MODEL_STATE> class mdbrick_abstract {
+  template<typename MODEL_STATE>
+  class mdbrick_abstract : public context_dependencies {
   public :
     virtual size_type nb_dof(void) = 0;
     virtual size_type nb_constraints(void) = 0;
@@ -129,7 +130,7 @@ namespace getfem {
     virtual void constraints_system(MODEL_STATE &, size_type = 0,
 				    size_type = 0) {}
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0) {
-      if (ident_ms != MS.ident()) {
+      if (ident_ms != MS.ident() || mdbrick_abstract<MODEL_STATE>::context_changed()) {
 	gmm::sub_interval SUBI(i0, nb_dof());
 	asm_stiffness_matrix_for_linear_elasticity
 	  (gmm::sub_matrix(MS.tangent_matrix(), SUBI), mf_u, mf_data, 
@@ -165,6 +166,7 @@ namespace getfem {
       gmm::resize(mu_, mf_data_.nb_dof());
       std::fill(gmm::vect_begin(lambda_), gmm::vect_end(lambda_), lambdai);
       std::fill(gmm::vect_begin(mu_), gmm::vect_end(mu_), mui);
+      mdbrick_abstract<MODEL_STATE>::add_dependency(mf_u); mdbrick_abstract<MODEL_STATE>::add_dependency(mf_data); 
     }
 
   };
@@ -233,6 +235,7 @@ namespace getfem {
       : sub_problem(problem), mf_data(mf_data_), boundary(bound), ident_ms(-1){
       fixing_dimensions();
       gmm::clear(B_);
+      add_dependency(mf_data); add_dependency(sub_problem.main_mesh_fem());
     }
 
     // Constructor defining the rhs
@@ -242,6 +245,7 @@ namespace getfem {
       : sub_problem(problem), mf_data(mf_data_), boundary(bound), ident_ms(-1){
       fixing_dimensions();
       gmm::copy(B__, B_);
+      add_dependency(mf_data); add_dependency(sub_problem.main_mesh_fem());
     }
 
   };
@@ -345,6 +349,7 @@ namespace getfem {
 	ident_ms(-1) {
       gmm::resize(B_, mf_data_.nb_dof()); gmm::clear(B_); 
       compute_constraints();
+      add_dependency(mf_data); add_dependency(sub_problem.main_mesh_fem());
     }
 
     // Constructor defining the rhs
@@ -356,6 +361,7 @@ namespace getfem {
       gmm::resize(B_, mf_data_.nb_dof()
 	    * sub_problem.main_mesh_fem().get_qdim()); gmm::copy(B__, B_); 
       compute_constraints();
+      add_dependency(mf_data); add_dependency(sub_problem.main_mesh_fem());
     }
     
   };
