@@ -47,30 +47,32 @@ namespace gmm {
   template <typename FUNC, typename T>
   T find_root(const FUNC &G, T a = T(0), T b = T(1),
 	      T tol = gmm::default_tol(T())) {
-    
     T c, Ga = G(a), Gb = G(b), Gc, d;
-    d = abs(b - a);
+    d = gmm::abs(b - a);
+#if 0
     for (int i = 0; i < 4; i++) { /* secant iterations.                   */
       if (d < tol) return (b + a) / 2.0;
       c = b - Gb * (b - a) / (Gb - Ga); Gc = G(c);
       a = b; b = c; Ga = Gb; Gb = Gc;
-      d = abs(b - a);
+      d = gmm::abs(b - a);
     }
+#endif
     while (Ga * Gb > 0.0) { /* secant iterations.                         */
       if (d < tol) return (b + a) / 2.0;
       c = b - Gb * (b - a) / (Gb - Ga); Gc = G(c);
       a = b; b = c; Ga = Gb; Gb = Gc;
-      d = abs(b - a);
+      d = gmm::abs(b - a);
     }
     
-    c = max(a, b); a = min(a, b); b = c;
+    c = std::max(a, b); a = std::min(a, b); b = c;
     while (d > tol) {
-      c = b - (b - a) * (Gb / (Gb - Ga)); Gc = G(c); /* regula falsi.     */
-      if (c > b) c = b; if (c < a) c = a;
-      if (Gc > 0) { b = c; Gb = Gc; } else { a = c; Ga = Gc; }
+      c = b - (b - a) * (Gb / (Gb - Ga)); /* regula falsi.     */
+      if (c > b) c = b; if (c < a) c = a; 
+      Gc = G(c);
+      if (Gc*Gb > 0) { b = c; Gb = Gc; } else { a = c; Ga = Gc; }
       c = (b + a) / 2.0 ; Gc = G(c); /* Dichotomie.                       */
-      if (Gc > 0) { b = c; Gb = Gc; } else { a = c; Ga = Gc; }
-      d = abs(b - a); c = (b + a) / 2.0; if ((c == a) || (c == b)) d = 0.0;
+      if (Gc*Gb > 0) { b = c; Gb = Gc; } else { a = c; Ga = Gc; }
+      d = gmm::abs(b - a); c = (b + a) / 2.0; if ((c == a) || (c == b)) d = 0.0;
     }
     return (b + a) / 2.0;
   }
