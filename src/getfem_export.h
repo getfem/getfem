@@ -51,7 +51,7 @@ namespace getfem
 		       const VECT &U, dim_type P, short_type K)
   { 
     dim_type N = mf.linked_mesh().dim();
-    std::ofstream o((filename + char(0)).data());
+    std::ofstream o(filename.c_str());
     if (!o) DAL_THROW(internal_error, "impossible to open file");
     dal::bit_vector nn = mf.convex_index();
     size_type cv;
@@ -113,7 +113,7 @@ namespace getfem
   template<class VECT>
     void load_solution(const std::string &fi, getfem_mesh &mesh,
 		       mesh_fem &mef, VECT &U, dim_type &P, short_type &K) {
-    std::ifstream ist((fi + char(0)).data());
+    std::ifstream ist(fi.c_str());
     size_type token, DIM, Np, N;
     char tmp[100], c;
     bool error = false, began = false;
