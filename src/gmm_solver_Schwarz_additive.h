@@ -50,24 +50,21 @@ namespace gmm {
   template <typename Matrix1, typename Matrix2, typename Precond>
   struct schwadd_mat{
     typedef typename linalg_traits<Matrix2>::value_type value_type;
-    typedef typename dense_vector_type<value_type>::vector_type vector_type; 
-    const Matrix1 *A;
-    const std::vector<Matrix2> *vB;
-    const std::vector<Matrix2> *vAloc;
+    typedef typename dense_vector_type<value_type>::vector_type vector_type;
 
+    const Matrix1 *A;
+    const std::vector<Matrix2> *vB, *vAloc;
     mutable iteration iter;
     double residu;
-    mutable size_t itebilan;
-    std::vector<vector_type> *gi;
-    std::vector<vector_type> *fi;
-    
-    std::vector<Precond> *precond1;
+    mutable size_type itebilan;
+    std::vector<vector_type> *gi, *fi;
+    const std::vector<Precond> *precond1;
 
     schwadd_mat(const Matrix1 &A_, const std::vector<Matrix2> &vB_,
 		const std::vector<Matrix2> &vA_, iteration iter_,
-		double residu_, size_t itebilan_, 
+		double residu_, size_type itebilan_, 
 		std::vector<vector_type> &gi_, std::vector<vector_type> &fi_,
-		std::vector<Precond> &precond_)
+		const std::vector<Precond> &precond_)
       : A(&A_), vB(&vB_),  vAloc(&vA_), iter(iter_),
 	residu(residu_), itebilan(itebilan_), gi(&gi_), fi(&fi_),
 	precond1(&precond_) {}
@@ -93,7 +90,9 @@ namespace gmm {
     std::vector<Precond> precond1(nb_sub, P);
     vector_type g(nb_dof);
 
+    cout << "precalcul\n";
     for (size_type i = 0; i < nb_sub; ++i) {
+      cout << " " << i << std::flush;
       Matrix2 Maux(mat_nrows(vB[i]), mat_ncols(vB[i])),
 	BT(mat_ncols(vB[i]), mat_nrows(vB[i]));
       
@@ -111,8 +110,8 @@ namespace gmm {
       itebilan = std::max(itebilan, iter2.get_iteration());
       gmm::mult(gmm::transposed(vB[i]), gi[i], g, g);
     }
+    cout << "fin precalcul\n";
 
-    iter2.init();
     schwadd_mat<Matrix1, Matrix2, Precond>
       SAM(A, vB, vAloc, iter2, iter.get_resmax(), itebilan, gi, fi, precond1);
     cg(SAM, u, g, A, identity_matrix(), iter);

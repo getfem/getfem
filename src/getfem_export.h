@@ -72,7 +72,7 @@ namespace getfem
       o << "DIM = " << int(pgt->dim()) << endl;
 
       if (pf1->need_G()) 
-	bgeot::vectors_to_base_matrix(G, mf.linked_mesh().points_of_convex(cv));
+	bgeot::vectors_to_base_matrix(G,mf.linked_mesh().points_of_convex(cv));
 
       if (pf1->target_dim() != 1)
 	DAL_THROW(to_be_done_error, "to be done ... ");
@@ -295,7 +295,8 @@ namespace getfem
      - the solution should be continuous..
    */
   template<class VECT>
-    void interpolation_solution(const mesh_fem &mf_source, const mesh_fem &mf_target,
+    void interpolation_solution(const mesh_fem &mf_source,
+				const mesh_fem &mf_target,
 				const VECT &U, VECT &V) {
     bgeot::geotrans_inv gti;
     dal::dynamic_array<base_node> ptab;
@@ -309,19 +310,21 @@ namespace getfem
     size_type qdim_s = mf_source.get_qdim();
     size_type qdim_t = mf_target.get_qdim();
     if (qdim_s != qdim_t && qdim_t != 1)
-      DAL_THROW(failure_error, "Attempt to interpolate a field of dimension " << 
-		qdim_s << " on a mesh_fem whose Qdim is " << qdim_t);
+      DAL_THROW(failure_error, "Attempt to interpolate a field of dimension "
+		<< qdim_s << " on a mesh_fem whose Qdim is " << qdim_t);
     /* initialisation of the geotrans_inv */
     {
       dal::bit_vector dof_done; dof_done.sup(0,mf_target.nb_dof());
       /* store all dof nodes into the geotrans_inv */
-      for (dal::bv_visitor cv(mf_target.convex_index()); !cv.finished(); ++cv) {
+      for (dal::bv_visitor cv(mf_target.convex_index()); !cv.finished();++cv) {
 	pfem pf_t = mf_target.fem_of_element(cv);
-	if (pf_t->target_dim() != 1) DAL_THROW(failure_error, "still some work to do on vector FEMs!");  
+	if (pf_t->target_dim() != 1)
+	  DAL_THROW(failure_error, "still some work to do on vector FEMs!");  
 	for (size_type j=0; j < pf_t->nb_dof(); ++j) {
 	  size_type dof_t = mf_target.ind_dof_of_element(cv)[j*qdim_t];
 	  if (!dof_done[dof_t]) {
-	    // TODO: add a function in getfem_fem for inquiry about the lagrangitude of a dof ..
+	    // TODO: add a function in getfem_fem for inquiry about
+	    // the lagrangitude of a dof ..
 	    //if (dof_is_lagrange(pf_t->dof_types()[j])) {
 	    gti.add_point_with_id(mf_target.point_of_dof(dof_t), dof_t);
 	    dof_done.add(dof_t);
@@ -504,7 +507,8 @@ namespace getfem
   }
 
   template<class VECT>
-  void vtk_export::write_dataset(const getfem::mesh_fem &mf, const VECT& U, const std::string& name) {
+  void vtk_export::write_dataset(const getfem::mesh_fem &mf, const VECT& U,
+				 const std::string& name) {
     set_mesh(mf.linked_mesh());
     size_type Q = (U.size() / mf.nb_dof())*mf.get_qdim();
     std::vector<scalar_type> Uslice(Q*psl->nb_points());
@@ -528,7 +532,8 @@ namespace getfem
       for (size_type i=0; i < psl->nb_points(); ++i) {
 	write_vec(Uslice.begin() + i*Q);
       }
-    } else DAL_THROW(dal::dimension_error, "vtk does not accept vectors of dimension > 3");
+    } else DAL_THROW(dal::dimension_error,
+		     "vtk does not accept vectors of dimension > 3");
     write_separ();
   }
 }  /* end of namespace getfem.                                             */
