@@ -105,7 +105,8 @@ namespace gmm {
     template <typename T, int shift> void read(csc_matrix<T, shift>& A);
     template <typename MAT> void read(MAT &M);
     /* save the matrix */
-    template <typename T, int shift> void write(const char *filename, const csc_matrix<T, shift>& A);
+    template <typename T, int shift> static void write(const char *filename, const csc_matrix<T, shift>& A);
+    template <typename MAT> static void write(const char *filename, const MAT& A);
   private:
     FILE *f;
     char Title[73], Key[9], Rhstype[4], Type[4];
@@ -288,8 +289,7 @@ namespace gmm {
 
   template <typename MAT> void 
   HarwellBoeing_IO::read(MAT &M) {
-    csc_matrix<typename MAT::value_type> csc;
-    cout << "Unefficient HB read!\n";
+    csc_matrix<typename gmm::linalg_traits<MAT>::value_type> csc;
     read(csc); 
     resize(M, mat_nrows(csc), mat_ncols(csc));
     copy(csc, M);
@@ -439,6 +439,15 @@ namespace gmm {
 		       0, 0, 0, 0, "GETFEM++ CSC MATRIX", "CSCMAT",
 		       t, 0, 0, 0, 0, "F", shift);
   }
+
+  template <typename MAT> void
+  HarwellBoeing_IO::write(const char *filename, const MAT& A) {
+    gmm::csc_matrix<typename gmm::linalg_traits<MAT>::value_type> 
+      tmp(gmm::mat_nrows(A), gmm::mat_ncols(A));
+    gmm::copy(A,tmp); 
+    HarwellBoeing_IO::write(filename, tmp);
+  }
+  
 
   /** save a "double" or "std::complex<double>" matrix into a HarwellBoeing file */
   template <typename T, int shift> inline void
@@ -817,8 +826,10 @@ namespace gmm {
     /* read opened file */
     template <typename Matrix> void read(Matrix &A);
     /* write a matrix */
-    template <typename T, int shift> void 
+    template <typename T, int shift> static void 
     write(const char *filename, const csc_matrix<T, shift>& A);  
+    template <typename MAT> static void 
+    write(const char *filename, const MAT& A);  
   };
 
   /** load a matrix-market file */
@@ -883,7 +894,7 @@ namespace gmm {
     
     if (is_complex_double__(T())) std::copy(&(t2[0]), &(t2[0])+4, &(t[0]));
     else std::copy(&(t1[0]), &(t1[0])+4, &(t[0]));
-    nz = A.jc[mat_ncols(A)];
+    size_type nz = A.jc[mat_ncols(A)];
     std::vector<int> I(nz), J(nz);
     for (size_type j=0; j < mat_ncols(A); ++j) {      
       for (size_type i = A.jc[j]; i < A.jc[j+1]; ++i) {
@@ -893,6 +904,13 @@ namespace gmm {
     }
     mm_write_mtx_crd(filename, mat_nrows(A), mat_ncols(A),
 		     nz, &I[0], &J[0], (double *)A.pr, t);
+  }
+  template <typename MAT> void
+  MatrixMarket_IO::write(const char *filename, const MAT& A) {
+    gmm::csc_matrix<typename gmm::linalg_traits<MAT>::value_type> 
+      tmp(gmm::mat_nrows(A), gmm::mat_ncols(A));
+    gmm::copy(A,tmp); 
+    MatrixMarket_IO::write(filename, tmp);
   }
   
 }

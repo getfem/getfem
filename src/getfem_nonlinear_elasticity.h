@@ -35,19 +35,33 @@
 #define GETFEM_NONLINEAR_ELASTICITY_H__
 
 #include <getfem_assembling_tensors.h>
+
 namespace getfem {
  
   struct abstract_hyperelastic_law {
     size_type nb_params_;
     virtual void sigma(const base_matrix &L, base_matrix &result,
 		       base_vector &params) const = 0;
-    // the result of grad_sigma has to be completely symmetric.
+	// the result of grad_sigma has to be completely symmetric.
     virtual void grad_sigma(const base_matrix &L, base_tensor &result, 
 			    base_vector &params) const = 0;
     size_type nb_params(void) const { return nb_params_; }
     abstract_hyperelastic_law() { nb_params_ = 0; }
     virtual ~abstract_hyperelastic_law() {}
   };
+
+  int check_symmetry(const base_tensor &t) {
+    int flags = 7; size_type N = 3;
+    for (size_type n = 0; n < N; ++n)
+      for (size_type m = 0; m < N; ++m)
+	for (size_type l = 0; l < N; ++l)
+	  for (size_type k = 0; k < N; ++k) {
+	    if (dal::abs(t(n,m,l,k) - t(l,k,n,m))>1e-10) flags &= (~1); 
+	    if (dal::abs(t(n,m,l,k) - t(m,n,l,k))>1e-10) flags &= (~2); 
+	    if (dal::abs(t(n,m,l,k) - t(n,m,k,l))>1e-10) flags &= (~4);
+	  }
+    return flags;
+  }
 
   struct Hooke_hyperelastic_law : public abstract_hyperelastic_law {
     /* sigma = lambda*trace(L) + 2 mu * L */
@@ -67,6 +81,7 @@ namespace getfem {
 	  result(i, l, i, l) += params[1];
 	  result(i, l, l, i) += params[1];
 	}
+      assert(check_symmetry(result) == 7);
     }
     Hooke_hyperelastic_law(void) { nb_params_ = 2; }
   };
@@ -86,9 +101,9 @@ namespace getfem {
       size_type N = gmm::mat_nrows(L);
       for (size_type i = 0; i < N; ++i)
 	for (size_type l = 0; l < N; ++l) {
-	  result(i, i, l, l) = scalar_type(4) * C2;
-	  result(i, l, i, l) -= scalar_type(1);
-	  result(i, l, l, i) -= scalar_type(1);
+	  result(i, i, l, l) = 4.0 * C2;
+	  result(i, l, i, l) -= 1.0;
+	  result(i, l, l, i) -= 1.0;
 	}
     }
     Mooney_Rivlin_hyperelastic_law(void) { nb_params_ = 2; }
@@ -103,7 +118,7 @@ namespace getfem {
     size_type N;
     const abstract_hyperelastic_law &AHL;
     base_vector params, coeff;
-    base_matrix L, B, gradU;
+    base_matrix L, Sigma, gradU;
     base_tensor tt;
     bgeot::multi_index sizes_;
     int version;
@@ -115,7 +130,7 @@ namespace getfem {
 			      int version_) 
       : mf(mf_), U(U_), mf_data(mf_data_), PARAMS(PARAMS_), 
 	N(mf_.get_qdim()), AHL(AHL_), params(AHL_.nb_params()),
-	L(N, N), B(N, N), gradU(N, N), tt(N, N, N, N), sizes_(N, N, N, N),
+	L(N, N), Sigma(N, N), gradU(N, N), tt(N, N, N, N), sizes_(N, N, N, N),
 	version(version_)
     { if (version == 1) sizes_.resize(2); }
     const bgeot::multi_index &sizes() const {  return sizes_; }
@@ -125,60 +140,75 @@ namespace getfem {
       coeff.resize(mf.nb_dof_of_element(cv));
       gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))),
 		coeff);
-      ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf.get_qdim());
-
+      base_matrix gradUt(3,3);
+      ctx.pf()->interpolation_grad(ctx, coeff, gradUt, mf.get_qdim());
+      gmm::copy(gmm::transposed(gradUt),gradU);
       gmm::mult(gmm::transposed(gradU), gradU, L);
       gmm::add(gradU, L);
       gmm::add(gmm::transposed(gradU), L);
-      gmm::scale(L, scalar_type(1) / scalar_type(2));
+      gmm::scale(L, scalar_type(0.5));
       gmm::add(gmm::identity_matrix(), gradU);
 
-      AHL.sigma(L, B, params);
+
+      AHL.sigma(L, Sigma, params);
+
+      //cout << "nonlinear_elem_term::compute(version=" << version << ", cv = " << cv << ") -> \n" << "   L=" << L << "\n   E=" << gradU << "\n   Sigma=" << Sigma << "\n";
 
       if (version == 0) {	  
 	AHL.grad_sigma(L, tt, params);
-	
-// 	for (size_type n = 0; n < N; ++n)
-// 	  for (size_type m = 0; m < N; ++m)
-// 	    for (size_type l = 0; l < N; ++l)
-// 	      for (size_type k = 0; k < N; ++k) {
-// 		// scalar_type aux = (k == l) ? B(m, l) : scalar_type(0);
-// 		scalar_type aux(0);
-// 		for (size_type j = 0; j < N; ++j)
-// 		  for (size_type i = 0; i < N; ++i) {
-// 		    aux += gradU(n ,j) * gradU(k, i) * tt(j, m, i, l);
-// 		  }
-// 		t(n, m, k, l) = aux;
-// 	      }
+
+
+	/*
+	  for (size_type n = 0; n < N; ++n)
+	    for (size_type m = 0; m <= n; ++m)
+	        for (size_type k = 0; k <= m; ++k)
+		      for (size_type l = 0; l <= k; ++l) {
+		      // scalar_type aux = (k == l) ? B(m, l) : scalar_type(0);
+		      scalar_type aux(0);
+
+		      for (size_type j = 0; j < N; ++j)
+		        for (size_type i = 0; i < N; ++i) {
+			    aux += gradU(n ,j) * gradU(k, i) * tt(j, m, i, l);
+
+			      }
+			      t(n, m, k, l) = t(m, n, k, l) = t(n, m, l, k) = aux;
+			      t(m, n, l, k) = t(k, l, m, n) = t(l, k, m, n) = aux;
+			      t(k, l, n, m) = t(l, k, n, m) = aux;
+			            }
+
+				    for (size_type n = 0; n < N; ++n)
+				      for (size_type m = 0; m < N; ++m)
+				          for (size_type l = 0; l < N; ++l) {
+					        t(n, m, n, l) += B(m, l);
+						      // t(n, m, l, m) += B(n, l) * 0.5;
+						          }
+	*/
 	
 	for (size_type n = 0; n < N; ++n)
-	  for (size_type m = 0; m <= n; ++m)
-	    for (size_type k = 0; k <= m; ++k)
-	      for (size_type l = 0; l <= k; ++l) {
-		// scalar_type aux = (k == l) ? B(m, l) : scalar_type(0);
-		scalar_type aux(0);
+	  for (size_type m = 0; m < N; ++m)
+	    for (size_type l = 0; l < N; ++l)
+	      for (size_type k = 0; k < N; ++k) {
+		//scalar_type aux = (k == l) ? Sigma(m, l) : 0.0;
+		//scalar_type aux = (m == l) ? Sigma(k,n) : 0.0;
+		scalar_type aux = (k == n) ? Sigma(m,l) : 0.0;
 		for (size_type j = 0; j < N; ++j)
 		  for (size_type i = 0; i < N; ++i) {
 		    aux += gradU(n ,j) * gradU(k, i) * tt(j, m, i, l);
+		    //aux += gradU(n ,i) * gradU(j, k) * tt(i,m,j,l);
 		  }
-		t(n, m, k, l) = t(m, n, k, l) = t(n, m, l, k) = aux;
-		t(m, n, l, k) = t(k, l, m, n) = t(l, k, m, n) = aux;
-		t(k, l, n, m) = t(l, k, n, m) = aux;
+		t(n, m, k, l) = aux;
 	      }
-
- 	for (size_type n = 0; n < N; ++n)
- 	  for (size_type m = 0; m < N; ++m)
- 	    for (size_type l = 0; l < N; ++l) {
- 	      t(n, m, n, l) += B(m, l);
- 	      // t(n, m, l, m) += B(n, l) * 0.5;
- 	    }
-
+	/*cout << "sym = " << check_symmetry(t) << "\n";
+	  if (check_symmetry(t) != 7) cout << "t=" << t << "\n";*/
       } else {
+	scalar_type J = gmm::lu_det(gradU);
+	if (J < 0) gmm::scale(gradU, 1e10);
+
 	for (size_type i = 0; i < N; ++i)
 	  for (size_type j = 0; j < N; ++j) {
 	    scalar_type aux(0);
 	    for (size_type k = 0; k < N; ++k)
-	      aux += gradU(i, k) * B(k, j);
+	      aux += gradU(i, k) * Sigma(k, j);
 	    t(i,j) = aux;
 	  }
       }
@@ -186,11 +216,13 @@ namespace getfem {
     virtual void prepare(fem_interpolation_context& ctx, size_type ) {
       size_type cv = ctx.convex_num();
       size_type nb = AHL.nb_params();
+
       coeff.resize(mf_data.nb_dof_of_element(cv)*nb);
       for (size_type i = 0; i < mf_data.nb_dof_of_element(cv); ++i)
 	for (size_type k = 0; k < nb; ++k)
 	  coeff[i * nb + k] = PARAMS[mf_data.ind_dof_of_element(cv)[i]*nb+k];
       ctx.pf()->interpolation(ctx, coeff, params, nb);
+      //cout << "nonlinear_elem_term::prepare(cv = " << cv << ") -> params=" << params << "\n";
     } 
     
   };
@@ -212,7 +244,7 @@ namespace getfem {
     getfem::generic_assembly
       assem("t=comp(NonLin(#1,#2).vGrad(#1).vGrad(#1));"
 	    "M(#1,#1)+= sym(t(i,j,k,l,:,i,j,:,k,l))");
-    // "M(#1,#1)+= t(i,j,k,l,:,i,j,:,k,l)");
+
     assem.push_mf(mf);
     assem.push_mf(mf_data);
     assem.push_nonlinear_term(&nterm);
@@ -271,6 +303,7 @@ namespace getfem {
     virtual size_type nb_constraints(void) { return 0; }
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
 					size_type = 0, bool modified = false) {
+      //cout << "mdbrick_nonlinear_elasticity::compute_tangent_matrix\n";
       react(MS, i0, modified);
       size_type nb = AHL.nb_params();
       VECTOR PARAMS(mf_data.nb_dof() * nb);
@@ -287,6 +320,7 @@ namespace getfem {
       asm_nonlinear_elasticity_tangent_matrix
 	(gmm::sub_matrix(MS.tangent_matrix(), SUBI), mf_u,
 	 gmm::sub_vector(MS.state(), SUBI), mf_data, PARAMS,  AHL);
+      //cout << "mdbrick_nonlinear_elasticity returns " << MS.tangent_matrix() << "\n";
     }
     virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
 				size_type = 0) {
@@ -306,6 +340,7 @@ namespace getfem {
       asm_nonlinear_elasticity_rhs(gmm::sub_vector(MS.residu(), SUBI), mf_u,
 				   gmm::sub_vector(MS.state(), SUBI), 
 				   mf_data, PARAMS, AHL);
+      //cout << "mdbrick_nonlinear_elasticity::compute_residu -> " << gmm::vect_norm2(MS.residu()) << "\n";
     }
     virtual mesh_fem &main_mesh_fem(void) { return mf_u; }
 

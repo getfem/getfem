@@ -101,7 +101,7 @@ namespace getfem {
     ctx_ident_type ident_;
     
     T_MATRIX SM;
-    gmm::col_matrix< gmm::rsvector<value_type> > NS;
+    gmm::col_matrix< gmm::rsvector<value_type> > NS; /* nullspace of constraints */
     VECTOR reduced_residu_, Ud;
   public :
 
@@ -690,8 +690,7 @@ namespace getfem {
     { return sub_problem.main_mesh_fem(); }
 
     void changing_rhs(const VECTOR &B__)
-    { fixing_dimensions(); gmm::copy(B__, B_); }
-
+    { fixing_dimensions(); gmm::copy(B__, B_); }    
     // Constructor defining the rhs
     mdbrick_source_term(mdbrick_abstract<MODEL_STATE> &problem,
 		       mesh_fem &mf_data_, const VECTOR &B__,
@@ -1042,6 +1041,7 @@ namespace getfem {
 	gmm::mult(G, gmm::sub_vector(MS.state(), SUBJ),
 		  gmm::scaled(CRHS, value_type(-1)),
 		  gmm::sub_vector(MS.residu(), SUBI));
+
 	gmm::mult_add(gmm::transposed(G), gmm::sub_vector(MS.state(), SUBI),
 		      gmm::sub_vector(MS.residu(), SUBJ));
       }
@@ -1099,7 +1099,6 @@ namespace getfem {
   /* ******************************************************************** */
 
   // faire une version avec using_cg, using_gmres ... (appelée par celle-ci)
-
   template <typename MODEL_STATE> void
   standard_solve(MODEL_STATE &MS, mdbrick_abstract<MODEL_STATE> &problem,
 	gmm::iteration &iter) {
@@ -1115,11 +1114,12 @@ namespace getfem {
 
     size_type ndof = problem.nb_dof();
     bool is_linear = problem.is_linear();
-    mtype alpha, alpha_min=mtype(1)/mtype(16), alpha_mult=mtype(3)/mtype(4);
-    mtype alpha_max_ratio(2);
+    mtype alpha, alpha_min=mtype(1)/mtype(32), alpha_mult=mtype(3)/mtype(4);
+    mtype alpha_max_ratio(1);
     dal::bit_vector mixvar;
     gmm::iteration iter_linsolv0 = iter;
-    if (!is_linear) { iter_linsolv0.reduce_noisy(); }
+    iter_linsolv0.set_maxiter(10000);
+    if (!is_linear) { iter_linsolv0.reduce_noisy(); iter_linsolv0.set_resmax(iter.get_resmax()/100000.0); }
 
     MS.adapt_sizes(problem); // to be sure it is ok, but should be done before
     problem.compute_residu(MS);
@@ -1150,6 +1150,7 @@ namespace getfem {
 	gmm::cg(MS.reduced_tangent_matrix(), dr, 
 		gmm::scaled(MS.reduced_residu(), value_type(-1)),
 		P, iter_linsolv);
+	if (!iter_linsolv.converged()) DAL_WARNING(2,"cg did not converge!");
       } else {
 	problem.mixed_variables(mixvar);
 	if (mixvar.card() == 0) {
@@ -1165,10 +1166,11 @@ namespace getfem {
 		     gmm::scaled(MS.reduced_residu(),  value_type(-1)),
 		     P, 300, iter_linsolv);
 	}
+	if (!iter_linsolv.converged()) DAL_WARNING(2,"gmres did not converge!");
       }
 #endif
       MS.unreduced_solution(dr,d);
-      
+
       if (is_linear) {
 	gmm::add(d, MS.state());
 	return;
@@ -1185,6 +1187,7 @@ namespace getfem {
 	  act_res_new = MS.reduced_residu_norm();
 	  if (act_res_new <= act_res * alpha_max_ratio) break;
 	}
+	cout << "alpha = " << alpha << "\n";
       }
       act_res = act_res_new; ++iter;
       if (iter.get_noisy()) cout << "alpha = " << alpha << " ";
