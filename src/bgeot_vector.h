@@ -77,7 +77,7 @@ namespace bgeot
   { *first *= a; timeegal(++first, bgeot_count<N-1>(), a); }
 
   template <class OutIter, class T> inline
-    void timeegal(OutIter first, bgeot_count<0>, const T& a)
+    void timeegal(OutIter, bgeot_count<0>, const T&)
   { }
 
   template <int N, class OutIter, class T> inline
@@ -112,7 +112,7 @@ namespace bgeot
   }
 
   template <class InIter, class OutIter> inline 
-    bool egalegal(InIter first, bgeot_count<0>, OutIter result)
+    bool egalegal(InIter, bgeot_count<0>, OutIter)
   { return true; }
 
   template <int N, class InIter, class OutIter> inline

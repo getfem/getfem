@@ -62,7 +62,7 @@
 namespace gmm {
 
 template <class CMatrix, class CINVMatrix, class VectorX>
-void pseudo_inverse(const CMatrix C, CINVMatrix CINV, VectorX&)
+void pseudo_inverse(const CMatrix &C, CINVMatrix CINV, VectorX&)
 {
   // compute the pseudo inverse of the non-square matrix C such
   // CINV = inv(C * trans(C)) * C.
@@ -77,7 +77,7 @@ void pseudo_inverse(const CMatrix C, CINVMatrix CINV, VectorX&)
   TmpVec d(mat_nrows(C)), e(mat_nrows(C)), l(mat_ncols(C));
   TmpVec p(mat_nrows(C)), q(mat_nrows(C)), r(mat_nrows(C));
   value_type rho, rho_1, alpha;
-  clear(C);
+  clear(d);
 
   for (size_type i = 0; i < mat_nrows(C); ++i)
   {
