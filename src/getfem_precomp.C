@@ -54,21 +54,40 @@ namespace getfem
     { pgt = pg; pspt = ps; }
     _pre_geot_light(void) { }
    
-  };
+  };  
 
   _geotrans_precomp::_geotrans_precomp(const _pre_geot_light &ls) {
-    base_poly P, Q;
-    dim_type N = ls.pgt->structure()->dim();
+    assign(ls);
+  }
+
+  _geotrans_precomp::_geotrans_precomp() {
+    pgt = 0; pspt = 0;
+  }
+
+  void _geotrans_precomp::assign(const _pre_geot_light &ls) {
+    c.clear();
+    pc.clear();
+    hpc.clear();
     pgt = ls.pgt; pspt = ls.pspt;
-    pc.resize(pspt->size());
-    hpc.resize(pspt->size());
-    std::fill(pc.begin(), pc.end(),
-	      base_matrix(pgt->nb_points() , N));
-    std::fill(hpc.begin(), hpc.end(),
-	      base_matrix(dal::sqr(N), pgt->nb_points()));
-    for (size_type i = 0; i < pgt->nb_points(); ++i)
+  }
+
+  void _geotrans_precomp::init_val() const {
+    c.clear();  
+    c.resize(pspt->size(), base_node(pgt->nb_points()));
+    for (size_type i = 0; i < pgt->nb_points(); ++i) {
+      for (size_type j = 0; j < pspt->size(); ++j) {
+	c[j][i] = pgt->poly_vector()[i].eval((*pspt)[j].begin());
+      }
+    }
+  }
+
+  void _geotrans_precomp::init_grad() const {
+    dim_type N = pgt->structure()->dim();
+    pc.clear(); 
+    pc.resize(pspt->size(), base_matrix(pgt->nb_points() , N)); 
+    for (size_type i = 0; i < pgt->nb_points(); ++i) {
       for (dim_type n = 0; n < N; ++n) {
-	P = pgt->poly_vector()[i];
+	base_poly P = pgt->poly_vector()[i];
 	P.derivative(n);
 	for (size_type j = 0; j < pspt->size(); ++j) {
 	  if ((*pspt)[j].size() != N)
@@ -78,6 +97,19 @@ namespace getfem
 		      << " mismatch the element");
 	  pc[j](i,n) = P.eval((*pspt)[j].begin());
 	}
+      }
+    }
+  }
+
+  void _geotrans_precomp::init_hess() const {
+    base_poly P, Q;
+    dim_type N = pgt->structure()->dim();
+    hpc.clear();
+    hpc.resize(pspt->size(), base_matrix(dal::sqr(N), pgt->nb_points()));
+    for (size_type i = 0; i < pgt->nb_points(); ++i) {
+      for (dim_type n = 0; n < N; ++n) {
+	P = pgt->poly_vector()[i];
+	P.derivative(n);
 	for (dim_type m = 0; m <= n; ++m) {
 	  Q = P; Q.derivative(m);
 	  for (size_type j = 0; j < pspt->size(); ++j)
@@ -85,7 +117,7 @@ namespace getfem
 	      = P.eval((*pspt)[j].begin());
 	}
       }
-    
+    }
   }
 
   pgeotrans_precomp geotrans_precomp(bgeot::pgeometric_trans pg,
@@ -98,6 +130,12 @@ namespace getfem
       isinit = true;
     }
     return tab->add(_pre_geot_light(pg, pspt));
+  }
+  
+  void geotrans_precomp_not_stored(bgeot::pgeometric_trans pg,
+				   bgeot::pstored_point_tab pspt,
+				   _geotrans_precomp& gp) {
+    gp.assign(_pre_geot_light(pg, pspt));
   }
 
   /* ********************************************************************* */
@@ -119,26 +157,38 @@ namespace getfem
    
   };
 
-  _fem_precomp::_fem_precomp(const _pre_fem_light &ls)
-    : pf(ls.pf), pspt(ls.pspt) {
-    dim_type N = ls.pf->structure()->dim();
-    size_type npt = ls.pspt->size();
-    // cout << "Dimension = " << N << endl;
-    pc.resize(npt);
-    hpc.resize(npt);
-    c.resize(npt);
-    // cout << "taille : " << npt << endl;
-    for (size_type i = 0; i < npt; ++i) {
-      if ((*ls.pspt)[i].size() != N)
+  void _fem_precomp::assign(const _pre_fem_light &ls) {
+    c.clear();
+    pc.clear();
+    hpc.clear();
+    pf = ls.pf; pspt = ls.pspt;
+    for (size_type i = 0; i < pspt->size(); ++i)
+      if ((*pspt)[i].size() != pf->structure()->dim())
 	DAL_THROW(dimension_error, "dimensions mismatch");
-      ls.pf->base_value((*(ls.pspt))[i], c[i]);
-      ls.pf->grad_base_value((*(ls.pspt))[i], pc[i]);
-      ls.pf->hess_base_value((*(ls.pspt))[i], hpc[i]);
-      // cout << "---------------------------------------------------------\n";
-      // cout << "point " << (*ls.pspt)[i] << " value : " << c[i] << " grad : " << pc[i] << endl;
-    }
   }
+
+  _fem_precomp::_fem_precomp(const _pre_fem_light &ls) { assign(ls); }
+
+  _fem_precomp::_fem_precomp() : pf(0), pspt(0) {}
   
+  void _fem_precomp::init_val() const {
+    c.resize(pspt->size());
+    for (size_type i = 0; i < pspt->size(); ++i) 
+      pf->base_value((*pspt)[i], c[i]);
+  }
+
+  void _fem_precomp::init_grad() const {
+    pc.resize(pspt->size());
+    for (size_type i = 0; i < pspt->size(); ++i)
+      pf->grad_base_value((*pspt)[i], pc[i]);
+  }
+
+  void _fem_precomp::init_hess() const {
+    hpc.resize(pspt->size());
+    for (size_type i = 0; i < pspt->size(); ++i)
+      pf->hess_base_value((*pspt)[i], hpc[i]);
+  }
+
   typedef const _fem_precomp * pfem_precomp;
 
   pfem_precomp fem_precomp(pfem pf, bgeot::pstored_point_tab pspt)
@@ -150,6 +200,10 @@ namespace getfem
       isinit = true;
     }
     return tab->add(_pre_fem_light(pf, pspt));
+  }
+
+  void fem_precomp_not_stored(pfem pf, bgeot::pstored_point_tab pspt, _fem_precomp& fp) {
+    fp.assign(_pre_fem_light(pf,pspt));
   }
 
 }  /* end of namespace getfem.                                            */
