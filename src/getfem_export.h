@@ -441,7 +441,7 @@ namespace getfem
   }
 
   /* this function has nothing to do here .. */
-  void classical_mesh_fem(mesh_fem& mf, short_type K);
+  void classical_mesh_fem(mesh_fem& mf, short_type K) IS_DEPRECATED;
 
   /** 
       export class to VTK ( http://www.kitware.com/vtk.html ) file format 
@@ -470,12 +470,16 @@ namespace getfem
     /** the header is the second line of text in the exported file,
        you can put whatever you want */
     void set_header(const std::string& s);
-    /** append a new scalar or vector field defined on mf to the .vtk file. */
+    /** append a new scalar or vector field defined on mf to the .vtk file. 
+        NO SPACE ALLOWED in 'name' */
     template<class VECT> void write_dataset(const getfem::mesh_fem &mf, const VECT& U0, const std::string& name);
     /** append a new scalar or vector field to .vtk file. The Uslice
-     vector is the field interpolated on the exported mesh_slice */
+     vector is the field interpolated on the exported mesh_slice 
+     NO SPACE ALLOWED in 'name' */
     template<class VECT> void write_dataset(const VECT& U, const std::string& name);
-
+    /** export a data_set correspounding to measures of quality for each convex
+        of the mesh */
+    void write_mesh_quality(const getfem_mesh &m, unsigned nrefine=1);
     const stored_mesh_slice& get_slice() const;
   private:
     void init();

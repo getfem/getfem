@@ -152,7 +152,17 @@ namespace getfem
     mesh_structure_done = true;
   }
 
-
+  void vtk_export::write_mesh_quality(const getfem_mesh &m, unsigned nrefine) {
+    set_mesh(m,nrefine);
+    mesh_fem mf(const_cast<getfem_mesh&>(m),1); mf.set_classical_finite_element(0);
+    std::vector<scalar_type> q(mf.nb_dof());
+    for (size_type d=0; d < mf.nb_dof(); ++d) {
+      q[d] = m.convex_quality_estimate(mf.first_convex_of_dof(d));
+    }
+    std::vector<scalar_type> Uslice(psl->nb_points());
+    psl->interpolate(mf, q, Uslice);
+    write_dataset(Uslice, "convex_quality");
+  }
 }  /* end of namespace getfem.                                             */
 
 
