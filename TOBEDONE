@@ -14,7 +14,7 @@ Configurer le make clean tel qu'il efface les cxx_repository (déjà ok ?)
 
 shell en perl pour creer les fichier .am  (avec gestion automatique du numéro de version).
 
-compilation conditionelle de matlabint et matlabcom
+compilation conditionelle de matlabint et matlabcom et de misc
 
 corriger le fait que des fonctions ont été ajoutées dans matlabint pour 
 satisfaire le link avec cxx. Cela ne doit plus être nécessaire.

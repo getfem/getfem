@@ -53,18 +53,24 @@ namespace getfem
     assert(o != NULL);
     dal::bit_vector nn = mf.convex_index();
     size_type cv;
-    base_node pt1(N), pt2, pt3(P);
+    base_node pt1(N), pt2, pt3(P), val(1);
+    base_matrix G;
+    base_vector coeff;
 
     o << "% GETFEM++ DATA FILE\nDATA BY ELEMENT\nN = " << int(N) << "\nP = ";
     o << int(P) << "\nK = " << K << endl;
     o.precision(14);
     for (cv << nn; cv != ST_NIL; cv << nn)
     {
-      bgeot::pgeometric_trans pgt = mf.pgeo_trans(cv);
+      bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
       pfem pfe = classical_fem(pgt, K);
+      pfem pf1 = mf.fem_of_element(cv);
       size_type nbd1 = mf.nb_dof_of_element(cv);
       size_type nbd2 = pfe->nb_dof();
       size_type nbpt = pgt->nb_points();
+      coeff.resize(nbd1);
+      assert(pf1->target_dim() == 1);
+      assert(pf1->is_equivalent());
       for (size_type i = 0; i < nbd2; ++i)
       {
 	/* point corresponding to the i th node.                           */
@@ -79,15 +85,17 @@ namespace getfem
 	o << "  ";
 
 	/* interpolation of the solution.                                  */
-	/* faux dans le cas des éléments non tau-equivalents.              */
+	/* faux dans le cas des éléments non tau-equivalents ou vectoriel. */
 	pt2 = pfe->node_of_dof(i);
-	pt3.fill(0.0);
-	for (size_type j = 0; j < nbd1; ++j)
-	{
-	  size_type dof1 = mf.ind_dof_of_element(cv)[j];
-	  for (size_type k = 0; k < P; ++k)
-	    pt3[k] += U[dof1*P+k] * mf.base_of_dof(cv, j).eval(pt2.begin());
+	for (size_type k = 0; k < P; ++k) {
+	  for (size_type j = 0; j < nbd1; ++j) {
+	    size_type dof1 = mf.ind_dof_of_element(cv)[j];
+	    coeff[j] = U[dof1*P+k];
+	  }
+	  pf1->interpolation(pt2, G, coeff, val);
+	  pt3[k] = val[0];
 	}
+
 	for (size_type j = 0; j < P; ++j) o << pt3[j] << " ";
 	o << endl;
       }

@@ -14306,7 +14306,7 @@ if test x"$MEX" != x""; then
    echo "checking for mex extension... " $MATLAB_COM_EXT
 
 fi
-ac_config_files="$ac_config_files Makefile config/Makefile src/Makefile tests/Makefile matlabint/Makefile matlabcom/Makefile"
+ac_config_files="$ac_config_files Makefile config/Makefile src/Makefile tests/Makefile misc/Makefile matlabint/Makefile matlabcom/Makefile"
 
 
 
@@ -14773,6 +14773,7 @@ do
   "config/Makefile" ) CONFIG_FILES="$CONFIG_FILES config/Makefile" ;;
   "src/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
   "tests/Makefile" ) CONFIG_FILES="$CONFIG_FILES tests/Makefile" ;;
+  "misc/Makefile" ) CONFIG_FILES="$CONFIG_FILES misc/Makefile" ;;
   "matlabint/Makefile" ) CONFIG_FILES="$CONFIG_FILES matlabint/Makefile" ;;
   "matlabcom/Makefile" ) CONFIG_FILES="$CONFIG_FILES matlabcom/Makefile" ;;
   "depfiles" ) CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;

@@ -171,7 +171,7 @@ namespace getfem
 			     const base_matrix &G /* et + */) const
         { M.fill(1.0); }
       virtual void interpolation(const base_node &x, const base_matrix &G,
-		    const base_vector coeff, base_node &val) = 0;
+		    const base_vector coeff, base_node &val) const = 0;
       /** Gives the value of all components of the base functions at the
        *  point x of the reference element.
        */
@@ -206,7 +206,7 @@ namespace getfem
      
 
       void interpolation(const base_node &x, const base_matrix &G,
-			 const base_vector coeff, base_node &val);
+			 const base_vector coeff, base_node &val) const;
       void base_value(const base_node &x, base_tensor &t) const
       {
 	bgeot::multi_index mi(2);
@@ -253,7 +253,7 @@ namespace getfem
      
    template <class FUNC>
      void fem<FUNC>::interpolation(const base_node &x, const base_matrix &G,
-				   const base_vector coeff, base_node &val)
+				   const base_vector coeff, base_node &val) const
    { // optimisable.   verifier et faire le vectoriel
      static base_matrix M;
      #ifdef __GETFEM_VERIFY

@@ -124,6 +124,7 @@ AC_CONFIG_FILES(\
 	config/Makefile \
 	src/Makefile \
 	tests/Makefile \
+	misc/Makefile \
 	matlabint/Makefile \
 	matlabcom/Makefile \
 	)

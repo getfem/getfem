@@ -339,7 +339,7 @@ namespace getfem
 
     for (cv << nn; cv != ST_NIL; cv << nn)
     {
-      pf1 = mf.fem_of_element(cv); nbd1 = pf1->nb_dof();
+      pf1 = mf.fem_of_element(cv);
       pgt = mf.linked_mesh().trans_of_convex(cv);
       pim = mf.int_method_of_element(cv);
       if (pf1prec != pf1 || pgtprec != pgt || pimprec != pim)
