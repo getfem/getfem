@@ -91,14 +91,12 @@ print MAKEFILE "\n\n", '# Compilation of test programs : ',  "\n";
 $listeC = `ls programs/\*.C`;
 $listeC =~ s/\@//g;
 $listetests = "";
-$listetestsex = "echo \"beginning tests\"";
 while($listeC)
 {
   ($fi, $listeC) = split('\s', $listeC, 2);
   $fi1 = $fi; $fi1 =~ s/\.C//;
   while ($fi1 =~ /\//) { ($fi2, $fi1) = split('\/', $fi1, 2); }
   $listetests = $listetests." "."programs\/$fi1";
-  $listetestsex = $listetestsex."; "."programs\/$fi1";
   $fi2 = $fi1;
   $fi2 =~ s/\.o/_h/;
 #  $fi2 =~ s/\.o/.h/;
@@ -107,8 +105,14 @@ while($listeC)
 
 }
 
-print MAKEFILE "\n", 'test : ',  "\$(lib_objects) ", $listetests, "\n";
-print MAKEFILE "\t", $listetestsex, "\n";
+$listedotest = "echo \"beginning tests\" ; " . `ls programs/\*.dotest`
+                                             . "echo \"tests finished\"";
+$listedotest =~ s/\n/ ; /g;
+
+
+print MAKEFILE "\n", 'test : ',  "\$(lib_objects) ", $listetests, "\n\n";
+print MAKEFILE "\n", 'dotest : ',  "test \n";
+print MAKEFILE "\t", $listedotest, "\n";
 
 print MAKEFILE "\n\nclean :\n";
 print MAKEFILE "\t \/bin\/rm -f sources\/\*.o sources\/\*.a\n";
