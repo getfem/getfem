@@ -3,7 +3,7 @@
 #include <getfem_regular_meshes.h>
 #include <getfem_mat_elem.h>
 #include <gmm.h>
-#ifdef HAVE_SYS_TIMES
+#ifdef GETFEM_HAVE_SYS_TIMES
 # include <sys/times.h>
 #endif
 #include <unistd.h>

@@ -1,7 +1,9 @@
 #include <getfem_export.h>
 #include <getfem_regular_meshes.h>
 #include <ftool.h>
-#include <sys/times.h>
+#ifdef GETFEM_HAVE_SYS_TIMES
+#  include <sys/times.h>
+#endif
 #include <unistd.h>
 #include <iomanip>
 #ifdef GETFEM_HAVE_FEENABLEEXCEPT
@@ -20,6 +22,7 @@ using std::setw;
 
 bool quick = false;
 
+#ifdef GETFEM_HAVE_SYS_TIMES
 struct chrono {
   struct ::tms t;
   ::clock_t t_elapsed;
@@ -41,6 +44,22 @@ public:
   float elapsed() const { return elapsed_; }
   float system() const { return system_; }
 };
+#else
+struct chrono {
+  float t,cpu_;
+public:
+  chrono() { }
+  chrono& init() { cpu_=0; return *this; }
+  void tic() { t = ::clock()/float(CLOCKS_PER_SEC); }
+  chrono& toc() {
+    float t2 = ::clock()/float(CLOCKS_PER_SEC);
+    cpu_ += t2 - t; t = t2; return *this;
+  }
+  float cpu() const { return cpu_; }
+  float elapsed() const { return cpu_; }
+  float system() const { return 0.; }
+};
+#endif
 
 scalar_type func(const base_node& x) {
   return sin(x[0])*cos(x[1]+x[0]/3.);

@@ -4,7 +4,9 @@
 #endif
 */
 #include <getfem_mesh.h>
-#include <sys/times.h>
+#ifdef GETFEM_HAVE_SYS_TIMES
+#  include <sys/times.h>
+#endif
 #include <valarray>
 #include <bgeot_small_vector.h>
 #include <unistd.h>
@@ -14,6 +16,7 @@
 
 bool quick = false;
 
+#ifdef GETFEM_HAVE_SYS_TIMES
 struct chrono {
   struct ::tms t;
   ::clock_t t_elapsed;
@@ -35,7 +38,22 @@ public:
   float elapsed() const { return elapsed_; }
   float system() const { return system_; }
 };
-
+#else
+struct chrono {
+  float t,cpu_;
+public:
+  chrono() { }
+  chrono& init() { cpu_=0; return *this; }
+  void tic() { t = ::clock()/float(CLOCKS_PER_SEC); }
+  chrono& toc() {
+    float t2 = ::clock()/float(CLOCKS_PER_SEC);
+    cpu_ += t2 - t; t = t2; return *this;
+  }
+  float cpu() const { return cpu_; }
+  float elapsed() const { return cpu_; }
+  float system() const { return 0.; }
+};
+#endif
 #define REFCNT
 
 namespace test {
