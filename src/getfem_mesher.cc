@@ -32,6 +32,94 @@
 
 namespace getfem {
 
+  //
+  // Exported functions
+  //
+
+  bool try_projection(const mesher_signed_distance& dist, base_node &X,
+		      bool on_surface) {
+    base_small_vector G(X.size());
+    scalar_type d = dist.grad(X, G);
+    size_type it(0);
+    if (on_surface || d > 0.0)
+      while (gmm::abs(d) > 1e-15) {
+	// cout << "iter " << it << " X = " << X << " dist = " << d << 
+	//  	   " grad = " << G << endl;
+	if (++it > 1000) {
+	  cout << "try projection failed, 1000 iterations\n";
+	  return false; // is there a possibility to detect
+	} 	// the impossibility without making 1000 iterations ?
+	scalar_type nG = std::max(1E-8, gmm::vect_norm2_sqr(G));
+	gmm::add(gmm::scaled(G, -d / nG), X);
+	d = dist.grad(X, G);
+      }
+    return true;
+  }
+
+  bool pure_multi_constraint_projection
+  (const std::vector<const mesher_signed_distance*> &list_constraints,
+   base_node &X, const dal::bit_vector &cts) {
+    base_node oldX; // Pour améliorer la convergence : sur relaxation ou
+    // CG sur somme au carré des level sets ...?
+    size_type cnt = 0;
+    do {     
+      oldX = X;
+      for (dal::bv_visitor ic(cts); !ic.finished(); ++ic)
+	try_projection(*(list_constraints[ic]), X, true);
+      ++cnt;
+    } while (cts.card() && gmm::vect_dist2(oldX,X) > 1e-14 && cnt < 1000);
+    if (cnt >= 1000) return false;
+    if (cts.card()) {
+      dal::bit_vector ct2;
+      for (dal::bv_visitor ic(cts); !ic.finished(); ++ic)
+	if (gmm::abs((*(list_constraints[ic]))(X)) < SEPS)
+	  ct2.add(ic);
+      return ct2.contains(cts);
+    }
+    return true;
+  }
+
+
+  // return the eigenvalue of maximal abolute value for a
+  // symmetric base_matrix
+  static scalar_type max_vp(const base_matrix& M) {
+    size_type m = mat_nrows(M);
+    if (!is_hermitian(M)) DAL_THROW(failure_error, "Matrix is not symmetric");
+    std::vector<scalar_type> eig(m);
+    gmm::symmetric_qr_algorithm(M, eig);
+    scalar_type emax(0);
+    for (size_type i = 0; i < m; ++i) emax = std::max(emax, gmm::abs(eig[i]));
+    return emax;
+  }
+
+  scalar_type curvature_radius_estimate(const mesher_signed_distance &dist,
+					base_node X) {
+    base_small_vector V;
+    base_matrix H;
+    dist.grad(X, V);
+    dist.hess(X, H);
+    return gmm::vect_norm2(V) / std::max(1E-10, max_vp(H));
+  }
+
+  scalar_type min_curvature_radius_estimate
+  (const std::vector<const mesher_signed_distance*> &list_constraints,
+   base_node &X, const dal::bit_vector &cts, size_type hide_first) {
+    scalar_type r0 = 1E+10;
+    for (dal::bv_visitor j(cts); !j.finished(); ++j) 
+      if (j >= hide_first) {
+      scalar_type r
+	= curvature_radius_estimate(*(list_constraints[j]), X);
+      r0 = std::min(r, r0);
+    }
+    return r0;
+  }
+
+
+  //
+  // local functions
+  //
+
+
   template <typename MAT, typename MAT2> void
   Frobenius_condition_number_sqr_gradient(const MAT& M, MAT2& G) { 
     typedef typename gmm::linalg_traits<MAT>::value_type T;
@@ -354,8 +442,11 @@ namespace getfem {
     }
     
 
+    bool try_projection(base_node &X)
+    { return getfem::try_projection(dist, X); }
+
     void projection(base_node &X) {
-      base_small_vector G;
+      base_small_vector G(X.size());
       scalar_type d = dist.grad(X, G);
       size_type it(0);
       if (d > 0.0)
@@ -364,7 +455,7 @@ namespace getfem {
 	    DAL_THROW(failure_error, "Object empty, or bad signed distance");
 // 	  cout << "iter " << it << " X = " << X << " dist = " << d << 
 // 	    " grad = " << G << endl;
-	  gmm::add(gmm::scaled(G, -d), X);
+	  gmm::add(gmm::scaled(G, -d / gmm::vect_norm2_sqr(G)), X);
 	  d = dist.grad(X, G);
 	}
     }
@@ -379,7 +470,7 @@ namespace getfem {
 		      "Object empty, or bad signed distance");
 // 	cout << "iter " << it << " X = " << X << " dist = " << d << 
 // 	    " grad = " << G << endl;
-	gmm::add(gmm::scaled(G, -d), X);
+	gmm::add(gmm::scaled(G, -d / gmm::vect_norm2_sqr(G)), X);
 	d = dist.grad(X, G);
       }
     }
@@ -391,7 +482,7 @@ namespace getfem {
       base_small_vector G;
       scalar_type d = constraints[cnum]->grad(X, G);
       while (gmm::abs(d) > 1e-10) {
-	gmm::add(gmm::scaled(G, -d), X);
+	gmm::add(gmm::scaled(G, -d / gmm::vect_norm2_sqr(G)), X);
 	d=constraints[cnum]->grad(X, G);
       }
     }
@@ -527,6 +618,8 @@ namespace getfem {
       size_type nbpt = 1;
       std::vector<size_type> gridnx(N);
       getfem_mesh m;
+      base_node eff_boxmin(N), eff_boxmax(N);
+      bool eff_box_init = false;
 
       for (size_type i=0; i < N; ++i) 
 	h0 = std::min(h0, bounding_box_max[i] - bounding_box_min[i]);
@@ -568,7 +661,7 @@ namespace getfem {
 	    if (gmm::abs((*(constraints[k]))(Q)) < h0) {
 	      constraint_projection(Q, k);
 	      if (dist(Q) > -geps && 
-		  gmm::vect_dist2(P, Q) < h0 / scalar_type(2)) co.add(k);
+		  (gmm::vect_dist2(P, Q) < h0 / scalar_type(2))) co.add(k);
 	    }
 	  }
 	}
@@ -578,12 +671,28 @@ namespace getfem {
 	  if (!ok || gmm::abs(dist(Q)) > geps) { gmm::copy(P, Q); co.clear(); }
 	}
 
+	if (prefind == 3) {
+	  try_projection(Q);
+	}
+
 	if (dist(Q) < geps) {
 	  if (m.search_point(Q) == size_type(-1)) {
+	    cout << "adding point : " << Q << endl;
+	    if (!eff_box_init)
+	      { eff_boxmin = eff_boxmax = Q; eff_box_init = true; }
+	    else for (size_type k = 0; k < N; ++k) {
+	      eff_boxmin[k] = std::min(eff_boxmin[k], Q[k]);
+	      eff_boxmax[k] = std::max(eff_boxmax[k], Q[k]);
+	    }
 	    m.add_point(Q); pts.push_back(Q);
 	    pts_attr.push_back(get_attr(false, co));
 	  }
 	}
+      }
+      cout << "effective bounding box : " << eff_boxmin << " : " << eff_boxmax << endl;
+      if (prefind == 3) {
+	h0 = std::min(h0, gmm::vect_dist2(eff_boxmin, eff_boxmax)
+		      / scalar_type(2));
       }
     }
 
@@ -1041,6 +1150,8 @@ namespace getfem {
 	// char s[50]; sprintf(s, "toto%02d.mesh", count);
 	// m.write_to_file(s);
 
+	cout << "iter : " << count << endl;
+
 	if ( (count > 40 && sqrt(maxdp)*deltat < ptol * h0)
 	     || iter_wtcc>iter_max || count > 10000) {
 
@@ -1058,7 +1169,7 @@ namespace getfem {
 	  add_point_hull();	  
 	  delaunay(pts, t);
 	  pts.resize(nbpt);
-	  select_elements(1);
+	  select_elements((prefind == 3) ? 0 : 1);
 	  suppress_flat_boundary_elements();
 
 	  {
@@ -1070,19 +1181,21 @@ namespace getfem {
 	    exp.write_mesh_quality(m);
 	  }
 
-	  optimize_quality();
+	  if (prefind != 3) optimize_quality();
 	  
 	  // ajout d'un point au barycentre des elements trop plats : 
-	  for (unsigned cv = 0; cv < gmm::mat_ncols(t); ++cv) {
-	     
-	    if (quality_of_element(cv) < 0.05) {
-	      base_node G = pts[t(0,cv)];
-	      for (size_type k=1; k <= N; ++k) G += pts[t(k,cv)];
-	      gmm::scale(G, 1./(N+1));
-	      pts.push_back(G);
-	      pts_attr.push_back(get_attr(false, dal::bit_vector()));
+	  
+	  if (prefind != 3)
+	    for (unsigned cv = 0; cv < gmm::mat_ncols(t); ++cv) {
+	      
+	      if (quality_of_element(cv) < 0.05) {
+		base_node G = pts[t(0,cv)];
+		for (size_type k=1; k <= N; ++k) G += pts[t(k,cv)];
+		gmm::scale(G, 1./(N+1));
+		pts.push_back(G);
+		pts_attr.push_back(get_attr(false, dal::bit_vector()));
+	      }
 	    }
-	  }
 	  
 	  if (pts.size() != nbpt) {
 	    control_mesh_surface();
@@ -1090,7 +1203,7 @@ namespace getfem {
 	    add_point_hull();
 	    delaunay(pts, t);
 	    pts.resize(nbpt);
-	    select_elements(1);
+	    select_elements((prefind == 3) ? 0 : 1);
 	    suppress_flat_boundary_elements();
 
 	    {
@@ -1102,7 +1215,7 @@ namespace getfem {
 	      exp.write_mesh_quality(m);
 	    }
 	    
-	    optimize_quality();
+	    if (prefind != 3) optimize_quality();
 	  }
 	  break;
 	}
@@ -1178,29 +1291,35 @@ namespace getfem {
   //    Interface with qhull
   // ******************************************************************
 
-#ifndef GETFEM_HAVE_QHULL_QHULL_H
+# ifndef GETFEM_HAVE_QHULL_QHULL_H
   void delaunay(const std::vector<base_node> &,
 		gmm::dense_matrix<size_type>&) {
     DAL_THROW(failure_error, "Qhull header files not installed. "
 	      "Install qhull library and reinstall Getfem++ library.");
   }
-#else
+# else
 
-extern "C" {
-#include <qhull/qhull.h>
-#include <qhull/mem.h>
-#include <qhull/qset.h>
-#include <qhull/geom.h>
-#include <qhull/merge.h>
-#include <qhull/poly.h>
-#include <qhull/io.h>
-#include <qhull/stat.h>
-}
+  extern "C" {
+# include <qhull/qhull.h>
+# include <qhull/mem.h>
+# include <qhull/qset.h>
+# include <qhull/geom.h>
+# include <qhull/merge.h>
+# include <qhull/poly.h>
+# include <qhull/io.h>
+# include <qhull/stat.h>
+  }
 
   void delaunay(const std::vector<base_node> &pts,
 		gmm::dense_matrix<size_type>& simplexes) {
-    if (pts.size() == 0) return;
-    int dim = pts[0].size();   /* points dimension.           */
+    cout << "running delaunay with " << pts.size() << " points\n";
+    size_type dim = pts[0].size();   /* points dimension.           */
+    if (pts.size() <= dim) { gmm::resize(simplexes, dim+1, 0); return; }
+    if (pts.size() == dim+1) {
+      gmm::resize(simplexes, dim+1, 1);
+      for (size_type i=0; i <= dim; ++i) simplexes(i, 0) = i;
+      return;
+    }
     std::vector<coordT> Pts(dim * pts.size());
     for (size_type i=0; i < pts.size(); ++i)
       gmm::copy(pts[i], gmm::sub_vector(Pts, gmm::sub_interval(i*dim, dim)));

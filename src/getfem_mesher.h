@@ -59,7 +59,7 @@ namespace getfem {
   // should satisfy that dist(P) is less than the euclidean distance from
   // P to the boundary and more than 1/sqrt(N) time this distance.
 
-#define SEPS 1e-5
+#define SEPS 1e-8
 
   class mesher_signed_distance : public mesher_virtual_function {
   protected:
@@ -71,6 +71,7 @@ namespace getfem {
 				   dal::bit_vector &bv) const = 0;
     virtual scalar_type grad(const base_node &P,
 			     base_small_vector &G) const = 0;
+    virtual void hess(const base_node &P, base_matrix &H) const = 0;
     virtual void register_constraints(std::vector<const
 				      mesher_signed_distance*>& list) const=0;
     virtual scalar_type operator()(const base_node &P) const  = 0;
@@ -100,6 +101,10 @@ namespace getfem {
       G = n; G *= scalar_type(-1); 
       return xon - bgeot::vect_sp(P,n);
     }
+    void hess(const base_node &P, base_matrix &H) const {
+      gmm::resize(H, P.size(), P.size()); gmm::clear(H);
+    }
+
   };
 
   class mesher_level_set : public mesher_signed_distance {
@@ -127,14 +132,24 @@ namespace getfem {
       id = list.size(); list.push_back(this);
     }
     scalar_type grad(const base_node &P, base_small_vector &G) const {
+      gmm::resize(G, P.size()); gmm::clear(G);
       pf->grad_base_value(P, t);
       base_tensor::iterator it = t.begin();
-      gmm::resize(G, P.size()); gmm::clear(G);
       for (size_type i = 0; i < P.size(); ++i)
 	for (size_type j = 0; j < coeff.size(); ++j)
 	  G[i] += coeff[j] * (*it++);
       return (*this)(P);
     }
+    void hess(const base_node &P, base_matrix &H) const {
+      gmm::resize(H, P.size(), P.size()); gmm::clear(H);
+      pf->hess_base_value(P, t);
+      base_tensor::iterator it = t.begin();
+      for (size_type i = 0; i < P.size(); ++i)
+	for (size_type j = 0; j < P.size(); ++j)
+	  for (size_type k = 0; k < coeff.size(); ++k)
+	    H(i,j) += coeff[k] * (*it++);
+    }
+
   };
 
 
@@ -173,6 +188,9 @@ namespace getfem {
       G /= e;
       return d;
     }
+    void hess(const base_node &, base_matrix &) const {
+      DAL_THROW(to_be_done_error, "Sorry, to be done");
+    }
   };
 
 
@@ -204,6 +222,9 @@ namespace getfem {
 	{ gmm::fill_random(G); e = gmm::vect_norm2(G); }
       G /= e;
       return d;
+    }
+    void hess(const base_node &, base_matrix &) const {
+      DAL_THROW(to_be_done_error, "Sorry, to be done");
     }
   };
 
@@ -251,6 +272,9 @@ namespace getfem {
 	if (dk > di) { i = k; di = dk; }
       }
       return hfs[i].grad(P, G);
+    }
+    void hess(const base_node &P, base_matrix &H) const {
+      gmm::resize(H, P.size(), P.size()); gmm::clear(H);
     }
     virtual void register_constraints(std::vector<const
 				      mesher_signed_distance*>& list) const {
@@ -304,6 +328,9 @@ namespace getfem {
 	if (dk > di) { i = k; di = dk; }
       }
       return hfs[i].grad(P, G);
+    }
+    void hess(const base_node &P, base_matrix &H) const {
+      gmm::resize(H, P.size(), P.size()); gmm::clear(H);
     }
     virtual void register_constraints(std::vector<const
 				      mesher_signed_distance*>& list) const
@@ -360,6 +387,9 @@ namespace getfem {
 	if (dk > di) { i = k; di = dk; }
       }
       return hfs[i].grad(P, G);
+    }
+    void hess(const base_node &P, base_matrix &H) const {
+      gmm::resize(H, P.size(), P.size()); gmm::clear(H);
     }
     virtual void register_constraints(std::vector<const
 				      mesher_signed_distance*>& list) const
@@ -462,6 +492,15 @@ namespace getfem {
 	if (d2 < d) { d = d2; i = k; }
       }
       return dists[i]->grad(P, G);
+    }
+    void hess(const base_node &P, base_matrix &H) const {
+      scalar_type d = (*(dists[0]))(P);
+      size_type i = 0;
+      for (size_type k = 1; k < dists.size(); ++k) {
+	scalar_type d2 = (*(dists[k]))(P);
+	if (d2 < d) { d = d2; i = k; }
+      }
+      dists[i]->hess(P, H);
     }
   };
 
@@ -566,6 +605,15 @@ namespace getfem {
       }
       return dists[i]->grad(P, G);
     }
+    void hess(const base_node &P, base_matrix &H) const {
+      scalar_type d = (*(dists[0]))(P);
+      size_type i = 0;
+      for (size_type k = 1; k < dists.size(); ++k) {
+	scalar_type d2 = (*(dists[k]))(P);
+	if (d2 > d) { d = d2; i = k; }
+      }
+      dists[i]->hess(P, H);
+    }
   };
 
   class mesher_setminus : public mesher_signed_distance {
@@ -594,6 +642,12 @@ namespace getfem {
       if (da > db) return a.grad(P, G);
       else { b.grad(P, G); G *= scalar_type(-1); return db; }
     }
+    void hess(const base_node &P, base_matrix &H) const {
+      scalar_type da = a(P), db = -b(P);
+      if (da > db) a.hess(P, H);
+      else { b.hess(P, H); gmm::scale(H, scalar_type(-1)); }
+    }
+
   };
   
   class mesher_cylinder : public mesher_signed_distance {
@@ -622,15 +676,18 @@ namespace getfem {
     { return i2(P, bv); }
     scalar_type grad(const base_node &P, base_small_vector &G) const
       { return i2.grad(P, G); }
+    void hess(const base_node &, base_matrix &) const {
+      DAL_THROW(to_be_done_error, "Sorry, to be done");
+    }
     virtual void register_constraints(std::vector<const
 				      mesher_signed_distance*>& list) const
     { i2.register_constraints(list); }
   };
 
 
-class mesher_ellipse : public mesher_signed_distance { // TODO
-  base_node x0; base_small_vector n, t;
-  scalar_type r, R, a;
+  class mesher_ellipse : public mesher_signed_distance { // TODO
+    base_node x0; base_small_vector n, t;
+    scalar_type r, R, a;
   public:
     mesher_ellipse(const base_node &center, const base_small_vector &no,
 		    scalar_type r_, scalar_type R_)
@@ -669,6 +726,9 @@ class mesher_ellipse : public mesher_signed_distance { // TODO
     }
     scalar_type grad(const base_node &P, base_small_vector &G) const
       { assert(0); }
+    void hess(const base_node &, base_matrix &) const {
+      DAL_THROW(to_be_done_error, "Sorry, to be done");
+    }
     virtual void register_constraints(std::vector<const
 				      mesher_signed_distance*>& list) const
     { id = list.size(); list.push_back(this); }
@@ -715,6 +775,9 @@ class mesher_ellipse : public mesher_signed_distance { // TODO
       }
       return d;
     }
+    void hess(const base_node &, base_matrix &) const {
+      DAL_THROW(to_be_done_error, "Sorry, to be done");
+    }
     virtual void register_constraints(std::vector<const
 				      mesher_signed_distance*>&list) const
     { id = list.size(); list.push_back(this); }
@@ -736,6 +799,17 @@ class mesher_ellipse : public mesher_signed_distance { // TODO
 		  scalar_type dist_point_hull = 4,
 		  scalar_type boundary_threshold_flatness = 0.11);
 
+  // exported functions
+  bool try_projection(const mesher_signed_distance& dist, base_node &X,
+		      bool on_surface = false);
+  bool pure_multi_constraint_projection
+  (const std::vector<const mesher_signed_distance*> &list_constraints,
+   base_node &X, const dal::bit_vector &cts);
+  scalar_type curvature_radius_estimate(const mesher_signed_distance &dist,
+					base_node X);
+  scalar_type min_curvature_radius_estimate
+  (const std::vector<const mesher_signed_distance*> &list_constraints,
+   base_node &X, const dal::bit_vector &cts, size_type hide_first = 0);
 
 }
 

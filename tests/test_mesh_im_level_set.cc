@@ -22,10 +22,10 @@ int main(int argc, char **argv) {
   feenableexcept(FE_DIVBYZERO | FE_INVALID);
 #endif
   try {
-    getfem::getfem_mesh m; m.read_from_file("disc_2D_degree3.mesh");
+    getfem::getfem_mesh m; m.read_from_file("meshes/disc_2D_degree3.mesh");
     getfem::mesh_fem mf(m);
-    getfem::mesh_im_level_set  mim(m, getfem::int_method_descriptor("IM_TRIANGLE(6)"));
-    getfem::level_set ls(m, 4);
+    getfem::mesh_im_level_set  mim(m, getfem::int_method_descriptor("IM_TRIANGLE(7)"));
+    getfem::level_set ls(m, 2);
     const getfem::mesh_fem &lsmf = ls.get_mesh_fem();
     scalar_type R=.4;
     for (unsigned i=0; i < lsmf.nb_dof(); ++i) {

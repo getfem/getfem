@@ -70,7 +70,7 @@ namespace bgeot {
       pts.push_back(index_node_pair(i, n));
     }
     size_type nb_points() const { return pts.size(); }
-    const kdtree_tab_type points() const { return pts; }
+    const kdtree_tab_type &points() const { return pts; }
     /* fills ipts with the indexes of points in the box 
        [min,max] */
     void points_in_box(kdtree_tab_type &inpts,

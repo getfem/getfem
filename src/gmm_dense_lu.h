@@ -181,10 +181,13 @@ namespace gmm {
 
   template <typename DenseMatrixLU, typename Pvector>
   typename linalg_traits<DenseMatrixLU>::value_type
-  lu_det(const DenseMatrixLU& LU, const Pvector&) {
-    typename linalg_traits<DenseMatrixLU>::value_type det(1);
+  lu_det(const DenseMatrixLU& LU, const Pvector &pvector) {
+    typedef typename linalg_traits<DenseMatrixLU>::value_type T;
+    T det(1);
     for (size_type j = 0; j < std::min(mat_nrows(LU), mat_ncols(LU)); ++j)
       det *= LU(j,j);
+    for(size_type i = 0; i < pvector.size(); ++i)
+      if (i != size_type(pvector[i]-1)) { det = -det; }
     return det;
   }
 

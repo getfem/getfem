@@ -9,7 +9,7 @@
 
 
 using gmm::size_type;
-bool print_debug = false;
+bool print_debug = true;
 
 // template <typename MAT, typename T> void print_for_matlab(const MAT &m, T) { 
 //   cout.precision(16);
@@ -170,10 +170,24 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_) {
   // Test for implicit_qr_algorithm
   //
 
+  
+
   m = gmm::mat_nrows(m2);
   gmm::dense_matrix<T> cq(m, m), cr(m, m), ca(m, m);  
   std::vector<T> cv(m);
   std::vector<std::complex<R> > eigc(m), cvc(m);
+
+
+  gmm::fill_random(ca);
+  std::complex<R> det1(gmm::lu_det(ca)), det2(1);
+  implicit_qr_algorithm(ca, eigc, cq);
+  for (size_type i = 0; i < m; ++i) det2 *= eigc[i];
+  if (gmm::abs(det1 - det2) > (gmm::abs(det1)+gmm::abs(det2))/R(100))
+    DAL_THROW(gmm::failure_error, "Error in QR or det. det lu: " << det1
+	      << " det qr: " << det2);
+  if (print_debug)
+    cout << "det lu = " << det1 << "  det qr = " << det2 << endl;
+
   if (m > 0) do {
     gmm::fill_random(cq);
   } while (gmm::abs(gmm::lu_det(cq)) < sqrt(prec)
@@ -207,7 +221,7 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_) {
   
   implicit_qr_algorithm(ca, eigc, cq);
   gmm::copy(cv, cvc);
-
+  
   sort_eval(cvc);
   sort_eval(eigc);
   error = gmm::vect_dist2(cvc, eigc);
