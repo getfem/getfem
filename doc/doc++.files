@@ -1,0 +1,13 @@
+../dal/dal_std.h
+../dal/dal_basic.h
+../bgeot/bgeot_poly.h
+../bgeot/bgeot_vector.h
+../bgeot/bgeot_convex_structure.h
+../bgeot/bgeot_fem_interpolation.h
+../bgeot/bgeot_geometric_trans.h
+ ../bgeot/bgeot_approx_integration.h
+../getfem/getfem_config.h
+../getfem/getfem_fem.h
+../getfem/getfem_mat_elem_type.h
+ ../getfem/getfem_mesh.h
+ ../getfem/getfem_mesh_fem.h
