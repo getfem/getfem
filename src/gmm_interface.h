@@ -464,10 +464,16 @@ namespace gmm {
   template <class T, int N> struct bgeot_fsmatrix_access {
     typedef typename linalg_traits<bgeot::fsmatrix<T, N> >::reference
             reference;
+    typedef typename linalg_traits<bgeot::fsmatrix<T, N> >::value_type
+            value_type;
     typedef typename linalg_traits<bgeot::fsmatrix<T, N> >::col_iterator
             iterator;
+    typedef typename linalg_traits<bgeot::fsmatrix<T, N> >::const_col_iterator
+            const_iterator;
     
     reference operator()(const iterator &itcol, size_type j)
+    { return (*itcol)[j]; }
+    value_type operator()(const const_iterator &itcol, size_type j)
     { return (*itcol)[j]; }
   };
 
@@ -537,10 +543,18 @@ namespace gmm {
 #endif
 
   template <class T> struct bgeot_vsmatrix_access {
-    typedef typename linalg_traits<bgeot::vsmatrix<T> >::reference reference;
-    typedef typename linalg_traits<bgeot::vsmatrix<T> >::col_iterator iterator;
+    typedef typename linalg_traits<bgeot::vsmatrix<T> >::reference
+            reference;
+    typedef typename linalg_traits<bgeot::vsmatrix<T> >::value_type
+            value_type;
+    typedef typename linalg_traits<bgeot::vsmatrix<T> >::col_iterator
+            iterator;
+    typedef typename linalg_traits<bgeot::vsmatrix<T> >::const_col_iterator
+            const_iterator;
     
     reference operator()(const iterator &itcol, size_type j)
+    { return (*itcol)[j]; }
+    value_type operator()(const const_iterator &itcol, size_type j)
     { return (*itcol)[j]; }
   };
 
@@ -690,8 +704,8 @@ namespace gmm {
     typedef typename std::iterator_traits<PT1>::value_type value_type;
     typedef typename std::iterator_traits<PT1>::value_type reference;
     typedef cs_vector_ref_iterator<typename const_pointer<PT1>::pointer,
-	    typename const_pointer<PT2>::pointer, shift>  iterator;
-    typedef iterator const_iterator;
+	    typename const_pointer<PT2>::pointer, shift>  const_iterator;
+    typedef abstract_null_type iterator;
     typedef abstract_sparse storage_type;
     typedef cs_vector_access<PT1, PT2, shift> access_type;
     typedef abstract_null_type clear_type;
@@ -777,7 +791,7 @@ namespace gmm {
   struct csc_matrix_access {
     typedef csc_matrix_ref<PT1, PT2, PT3, shift> this_type;
     typedef typename linalg_traits<this_type>::reference reference;
-    typedef typename linalg_traits<this_type>::col_iterator iterator;
+    typedef typename linalg_traits<this_type>::const_col_iterator iterator;
     
     reference operator()(const iterator &itcol, size_type j)
     { return linalg_traits<this_type>().col(itcol)[j]; }
@@ -795,15 +809,14 @@ namespace gmm {
     typedef abstract_null_type const_sub_row_type;
     typedef abstract_null_type row_iterator;
     typedef abstract_null_type const_row_iterator;
-    typedef cs_vector_ref<typename const_pointer<PT1>::pointer,
-	    typename const_pointer<PT2>::pointer, shift> sub_col_type;
+    typedef abstract_null_type sub_col_type;
     typedef cs_vector_ref<typename const_pointer<PT1>::pointer,
             typename const_pointer<PT2>::pointer, shift> const_sub_col_type;
     typedef sparse_compressed_iterator<typename const_pointer<PT1>::pointer,
 				       typename const_pointer<PT2>::pointer,
 				       typename const_pointer<PT3>::pointer,
-				       shift>  col_iterator;
-    typedef col_iterator const_col_iterator;
+				       shift>  const_col_iterator;
+    typedef abstract_null_type col_iterator;
     typedef csc_matrix_access<PT1, PT2, PT3, shift> access_type;
     typedef col_major sub_orientation;
     static size_type nrows(const this_type &m) { return m.nrows(); }
@@ -859,7 +872,7 @@ namespace gmm {
   struct csr_matrix_access {
     typedef csr_matrix_ref<PT1, PT2, PT3, shift> this_type;
     typedef typename linalg_traits<this_type>::reference reference;
-    typedef typename linalg_traits<this_type>::row_iterator iterator;
+    typedef typename linalg_traits<this_type>::const_row_iterator iterator;
     
     reference operator()(const iterator &itrow, size_type i)
     { return linalg_traits<this_type>::row(itrow)[i]; }
@@ -877,14 +890,15 @@ namespace gmm {
     typedef abstract_null_type const_sub_col_type;
     typedef abstract_null_type col_iterator;
     typedef abstract_null_type const_col_iterator;
+    typedef abstract_null_type sub_row_type;
     typedef cs_vector_ref<typename const_pointer<PT1>::pointer,
-      typename const_pointer<PT2>::pointer, shift> sub_row_type;
-    typedef sub_row_type const_sub_row_type;
+			  typename const_pointer<PT2>::pointer, shift>
+            const_sub_row_type;
     typedef sparse_compressed_iterator<typename const_pointer<PT1>::pointer,
 				       typename const_pointer<PT2>::pointer,
 				       typename const_pointer<PT3>::pointer,
-				       shift>  row_iterator;
-    typedef row_iterator const_row_iterator;
+				       shift>  const_row_iterator;
+    typedef abstract_null_type row_iterator;
     typedef row_major sub_orientation;
     static size_type nrows(const this_type &m) { return m.nrows(); }
     static size_type ncols(const this_type &m) { return m.ncols(); }

@@ -84,7 +84,7 @@ namespace gmm
 
     void init(void) { nit = 0; res = 0.0; written = false; }
 
-    iteration(double r, int noi = 0, size_type mit = size_type(-1))
+    iteration(double r = 1.0E-8, int noi = 0, size_type mit = size_type(-1))
       : rhsn(1.0), maxiter(mit), noise(noi), resmax(r), nit(0), res(0.0) {}
 
     void  operator ++(int) {  nit++; written = false; }

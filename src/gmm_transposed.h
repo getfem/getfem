@@ -44,7 +44,9 @@ namespace gmm {
     typedef typename std::iterator_traits<PT>::value_type M;
     typedef M * CPT;
     typedef typename std::iterator_traits<PT>::reference ref_M;
-    typedef typename linalg_traits<this_type>::col_iterator iterator;
+    typedef typename select_return<typename linalg_traits<this_type>
+            ::const_col_iterator, typename linalg_traits<this_type>
+            ::col_iterator, PT>::return_type iterator;
     typedef typename linalg_traits<this_type>::reference reference;
     typedef typename linalg_traits<M>::access_type access_type;
 
@@ -66,11 +68,17 @@ namespace gmm {
     typedef transposed_row_ref<PT> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
     typedef typename linalg_traits<this_type>::reference reference;
-    typedef typename linalg_traits<this_type>::col_iterator iterator;
+    typedef typename linalg_traits<this_type>::value_type value_type;
     typedef typename linalg_traits<M>::access_type access_type;
+    typedef typename linalg_traits<this_type>::const_col_iterator const_iter;
+    typedef typename linalg_traits<this_type>::col_iterator iterator;
     
     reference operator()(const iterator &itcol, size_type i)
     { return access_type()(itcol, i); }
+
+    value_type operator()(const const_iter &itcol, size_type i)
+    { return access_type()(itcol, i); }
+
   };
 
   template <class PT> struct linalg_traits<transposed_row_ref<PT> > {
@@ -87,10 +95,10 @@ namespace gmm {
     typedef abstract_null_type row_iterator;
     typedef abstract_null_type const_row_iterator;
     typedef typename linalg_traits<M>::const_sub_row_type const_sub_col_type;
-    typedef typename select_return<const_sub_col_type, typename
+    typedef typename select_return<abstract_null_type, typename
             linalg_traits<M>::sub_row_type, PT>::return_type sub_col_type;
     typedef typename linalg_traits<M>::const_row_iterator const_col_iterator;
-    typedef typename select_return<const_col_iterator, typename
+    typedef typename select_return<abstract_null_type, typename
             linalg_traits<M>::row_iterator, PT>::return_type col_iterator;
     typedef col_major sub_orientation;
     typedef transposed_row_matrix_access<PT> access_type;
@@ -132,7 +140,9 @@ namespace gmm {
     typedef typename std::iterator_traits<PT>::value_type M;
     typedef M * CPT;
     typedef typename std::iterator_traits<PT>::reference ref_M;
-    typedef typename linalg_traits<this_type>::row_iterator iterator;
+    typedef typename select_return<typename linalg_traits<this_type>
+            ::const_row_iterator, typename linalg_traits<this_type>
+            ::row_iterator, PT>::return_type iterator;
     typedef typename linalg_traits<this_type>::reference reference;
     typedef typename linalg_traits<M>::access_type access_type;
     
@@ -154,11 +164,17 @@ namespace gmm {
     typedef transposed_col_ref<PT> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
     typedef typename linalg_traits<this_type>::reference reference;
-    typedef typename linalg_traits<this_type>::row_iterator iterator;
+    typedef typename linalg_traits<this_type>::value_type value_type;   
     typedef typename linalg_traits<M>::access_type access_type;
+    typedef typename linalg_traits<this_type>::const_row_iterator const_iter;
+    typedef typename linalg_traits<this_type>::row_iterator iterator;
     
-    reference operator()(const iterator &itcol, size_type j)
-    { return access_type()(itcol, j); }
+    reference operator()(const iterator &itrow, size_type i)
+    { return access_type()(itrow, i); }
+
+    value_type operator()(const const_iter &itrow, size_type i)
+    { return access_type()(itrow, i); }
+    
   };
 
   template <class PT> struct linalg_traits<transposed_col_ref<PT> > {
@@ -175,10 +191,10 @@ namespace gmm {
     typedef abstract_null_type col_iterator;
     typedef abstract_null_type const_col_iterator;
     typedef typename linalg_traits<M>::const_sub_col_type const_sub_row_type;
-    typedef typename select_return<const_sub_row_type, typename
+    typedef typename select_return<abstract_null_type, typename
             linalg_traits<M>::sub_col_type, PT>::return_type sub_row_type;
     typedef typename linalg_traits<M>::const_col_iterator const_row_iterator;
-    typedef typename select_return<const_row_iterator, typename
+    typedef typename select_return<abstract_null_type, typename
             linalg_traits<M>::col_iterator, PT>::return_type row_iterator;
     typedef row_major sub_orientation;
     typedef transposed_col_matrix_access<PT> access_type;

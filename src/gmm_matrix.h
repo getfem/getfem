@@ -115,8 +115,13 @@ namespace gmm
   template <class V> struct row_matrix_access {
     typedef typename linalg_traits<row_matrix<V> >::reference reference;
     typedef typename linalg_traits<row_matrix<V> >::row_iterator iterator;
+    typedef typename linalg_traits<row_matrix<V> >::value_type value_type;
+    typedef typename linalg_traits<row_matrix<V> >::const_row_iterator
+          const_iterator;
     
     reference operator()(const iterator &itrow, size_type j)
+    { return (*itrow)[j]; }
+    value_type operator()(const const_iterator &itrow, size_type j)
     { return (*itrow)[j]; }
   };
 
@@ -207,9 +212,14 @@ namespace gmm
   template <class V> struct col_matrix_access {
     typedef typename linalg_traits<col_matrix<V> >::reference reference;
     typedef typename linalg_traits<col_matrix<V> >::col_iterator iterator;
+    typedef typename linalg_traits<col_matrix<V> >::value_type value_type;
+    typedef typename linalg_traits<col_matrix<V> >::const_col_iterator
+          const_iterator;
     
-    reference operator()(const iterator &itcol, size_type i)
-    { return (*itcol)[i]; }
+    reference operator()(const iterator &itcol, size_type j)
+    { return (*itcol)[j]; }
+    value_type operator()(const const_iterator &itcol, size_type j)
+    { return (*itcol)[j]; }
   };
 
   template <class V> struct linalg_traits<col_matrix<V> > {

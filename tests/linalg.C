@@ -20,6 +20,22 @@
 #include <bgeot_matrix.h>
 #include <gmm.h>
 
+template <class M1, class M2> 
+void const_ref_test(const M1 &m1, const M2 &m2) {
+
+  cout << "/***********************************************************/\n";
+  cout << "/*      Const references test.                             */\n";
+  cout << "/***********************************************************/\n";
+
+  cout << gmm::transposed(gmm::sub_matrix(m1, gmm::sub_interval(0, 2),
+					  gmm::sub_interval(2, 2))) << endl;
+  cout << gmm::sub_matrix(gmm::transposed
+			  (gmm::sub_matrix(m2,gmm::sub_interval(2, 3),
+					   gmm::sub_slice(1, 2, 3))),
+			  gmm::sub_interval(1, 2)) << endl;
+}
+
+
 int main(void)
 {
   try {
@@ -329,6 +345,13 @@ int main(void)
     if (error > 1.0E-10)
       DAL_THROW(dal::failure_error, "computation error too large : " << error);
     
+
+    /***********************************************************/
+    /*    Const references test.                               */
+    /***********************************************************/
+
+    const_ref_test(m9, m5);
+
 
   }
   DAL_STANDARD_CATCH_ERROR;

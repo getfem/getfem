@@ -73,11 +73,17 @@ namespace gmm {
     typedef gen_sub_row_matrix<PT, SUBI1, SUBI2> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
     typedef typename linalg_traits<this_type>::reference reference;
+    typedef typename linalg_traits<this_type>::value_type value_type;
     typedef typename linalg_traits<M>::access_type access_type;
+    typedef typename linalg_traits<this_type>::const_row_iterator const_iter;
     typedef typename linalg_traits<this_type>::row_iterator iterator;
     
     reference operator()(const iterator &itrow, size_type i)
     { return access_type()(*itrow, itrow.si2.index(i)); }
+
+    value_type operator()(const const_iter &itrow, size_type i)
+    { return access_type()(*itrow, itrow.si2.index(i)); }
+    
   };
 
   template <class PT, class SUBI1, class SUBI2>
@@ -85,7 +91,9 @@ namespace gmm {
     typedef gen_sub_row_matrix<PT, SUBI1, SUBI2> this_type;
     typedef typename modifiable_pointer<PT>::pointer MPT;
     typedef typename std::iterator_traits<PT>::value_type M;
-    typedef typename linalg_traits<M>::row_iterator ITER;
+    typedef typename select_return<typename linalg_traits<M>
+            ::const_row_iterator, typename linalg_traits<M>::row_iterator,
+	    PT>::return_type ITER;
     typedef ITER value_type;
     typedef ITER *pointer;
     typedef ITER &reference;
@@ -146,12 +154,14 @@ namespace gmm {
     typedef typename sub_vector_type<const typename
             linalg_traits<M>::const_sub_row_type *, SUBI2>::vector_type
             const_sub_row_type;
-    typedef typename select_return<const_sub_row_type, 
+    typedef typename select_return<abstract_null_type, 
             typename sub_vector_type<typename linalg_traits<M>::sub_row_type *,
 	    SUBI2>::vector_type, PT>::return_type sub_row_type;
     typedef gen_sub_row_matrix_iterator<typename const_pointer<PT>::pointer,
 	    SUBI1, SUBI2> const_row_iterator;
-    typedef gen_sub_row_matrix_iterator<PT, SUBI1, SUBI2> row_iterator;
+    typedef typename select_return<abstract_null_type, 
+	    gen_sub_row_matrix_iterator<PT, SUBI1, SUBI2>, PT>::return_type
+            row_iterator;
     typedef gen_sub_row_matrix_access<PT, SUBI1, SUBI2> access_type;
     typedef row_major sub_orientation;
     static size_type nrows(const this_type &m) { return m.nrows(); }
@@ -225,11 +235,16 @@ namespace gmm {
     typedef gen_sub_col_matrix<PT, SUBI1, SUBI2> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
     typedef typename linalg_traits<this_type>::reference reference;
+    typedef typename linalg_traits<this_type>::value_type value_type;
     typedef typename linalg_traits<M>::access_type access_type;
+    typedef typename linalg_traits<this_type>::const_col_iterator const_iter;
     typedef typename linalg_traits<this_type>::col_iterator iterator;
     
     reference operator()(const iterator &itcol, size_type i)
-    { return access_type()(*itcol, itcol.si1.index(i)); }
+    { return access_type()(*itcol, itcol.si2.index(i)); }
+
+    value_type operator()(const const_iter &itcol, size_type i)
+    { return access_type()(*itcol, itcol.si2.index(i)); }
   };
 
   template <class PT, class SUBI1, class SUBI2>
@@ -237,7 +252,9 @@ namespace gmm {
     typedef gen_sub_col_matrix<PT, SUBI1, SUBI2> this_type;
     typedef typename modifiable_pointer<PT>::pointer MPT;
     typedef typename std::iterator_traits<PT>::value_type M;
-    typedef typename linalg_traits<M>::col_iterator ITER;
+    typedef typename select_return<typename linalg_traits<M>
+            ::const_col_iterator, typename linalg_traits<M>::col_iterator,
+	    PT>::return_type ITER;
     typedef ITER value_type;
     typedef ITER *pointer;
     typedef ITER &reference;
@@ -297,12 +314,14 @@ namespace gmm {
     typedef typename sub_vector_type<const typename
             linalg_traits<M>::const_sub_col_type *, SUBI1>::vector_type
             const_sub_col_type;
-    typedef typename select_return<const_sub_col_type, 
+    typedef typename select_return<abstract_null_type, 
             typename sub_vector_type<typename linalg_traits<M>::sub_col_type *,
 	    SUBI1>::vector_type, PT>::return_type sub_col_type;
     typedef gen_sub_col_matrix_iterator<typename const_pointer<PT>::pointer,
 	    SUBI1, SUBI2> const_col_iterator;
-    typedef gen_sub_col_matrix_iterator<PT, SUBI1, SUBI2> col_iterator;
+    typedef typename select_return<abstract_null_type, 
+	    gen_sub_col_matrix_iterator<PT, SUBI1, SUBI2>, PT>::return_type
+            col_iterator;
     typedef gen_sub_col_matrix_access<PT, SUBI1, SUBI2> access_type;
     typedef col_major sub_orientation;
     static size_type nrows(const this_type &m) { return m.nrows(); }
@@ -377,7 +396,7 @@ namespace gmm {
   sub_matrix(const M &m, const SUBI1 &si1, const SUBI2 &si2) {
     return typename select_return<typename sub_matrix_type<const M *, SUBI1,
       SUBI2>::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI2>
-      ::matrix_type, M *>::return_type(linalg_cast(m), si1, si2);
+      ::matrix_type, const M *>::return_type(linalg_cast(m), si1, si2);
   }
 
   template <class M, class SUBI1>  inline
@@ -397,7 +416,7 @@ namespace gmm {
   sub_matrix(const M &m, const SUBI1 &si1) {
     return typename select_return<typename sub_matrix_type<const M *, SUBI1,
       SUBI1>::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI1>
-      ::matrix_type, M *>::return_type(linalg_cast(m), si1, si1);
+      ::matrix_type, const M *>::return_type(linalg_cast(m), si1, si1);
   }
   
 

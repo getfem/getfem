@@ -122,7 +122,7 @@ namespace gmm {
   void mult(const schwarz_additif_matrix<Matrix1, Matrix2, Matrix3, SUBI> &M,
 	    const Vector2 &p, Vector3 &q) {
 
-    int itebilan = 0;
+    size_type itebilan = 0;
     size_type ms = (M.ml1)->size();
     mult(*(M.A), p, q);
     global_to_local(q, *(M.fi), *(M.cor));

@@ -150,8 +150,9 @@ namespace gmm {
             linalg_traits<V>::reference, PT>::return_type reference;
     typedef typename select_return<typename linalg_traits<V>::const_iterator,
 	    typename linalg_traits<V>::iterator, PT>::return_type pre_iterator;
-    typedef sparse_sub_vector_iterator<pre_iterator, pre_iterator, SUBI>
-            iterator;
+    typedef typename select_return<abstract_null_type, 
+	    sparse_sub_vector_iterator<pre_iterator, pre_iterator, SUBI>,
+	    PT>::return_type iterator;
     typedef sparse_sub_vector_iterator<typename linalg_traits<V>
             ::const_iterator, pre_iterator, SUBI> const_iterator;
     typedef abstract_sparse storage_type;
@@ -294,8 +295,9 @@ namespace gmm {
             linalg_traits<V>::reference, PT>::return_type reference;
     typedef typename select_return<typename linalg_traits<V>::const_iterator,
 	    typename linalg_traits<V>::iterator, PT>::return_type pre_iterator;
-    typedef skyline_sub_vector_iterator<pre_iterator, pre_iterator>
-            iterator;
+    typedef typename select_return<abstract_null_type, 
+	    skyline_sub_vector_iterator<pre_iterator, pre_iterator>,
+	    PT>::return_type iterator;
     typedef skyline_sub_vector_iterator<typename linalg_traits<V>
             ::const_iterator, pre_iterator> const_iterator;
     typedef abstract_skyline storage_type;
@@ -333,7 +335,7 @@ namespace gmm {
   /************************************************************************/
 
   template <class PT, class SUBI, class st_type> struct svrt_ir {
-    typedef abstract_null_type return_type;
+    typedef abstract_null_type vector_type;
   };
 
   template <class PT>

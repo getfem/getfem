@@ -107,7 +107,7 @@ namespace gmm {
   template <class V> struct scaled_vector_const_access {
     typedef scaled_vector_const_ref<V> this_type;
     typedef typename linalg_traits<V>::value_type value_type;
-    typedef typename linalg_traits<this_type>::iterator iterator;
+    typedef typename linalg_traits<this_type>::const_iterator iterator;
     
     value_type operator()(const void *o, const iterator &_begin,
 			  const iterator &_end, size_type i) {
@@ -122,9 +122,9 @@ namespace gmm {
     typedef abstract_vector linalg_type;
     typedef typename linalg_traits<V>::value_type value_type;
     typedef value_type reference;
+    typedef abstract_null_type iterator;
     typedef scaled_const_iterator<typename linalg_traits<V>::const_iterator>
-            iterator;
-    typedef iterator const_iterator;
+            const_iterator;
     typedef typename linalg_traits<V>::storage_type storage_type;
     typedef scaled_vector_const_access<V> access_type;
     typedef abstract_null_type clear_type;
@@ -309,7 +309,7 @@ namespace gmm {
 
   template <class M> struct scaled_col_matrix_access {
     typedef scaled_col_matrix_const_ref<M> this_type;
-    typedef typename linalg_traits<this_type>::col_iterator iterator;
+    typedef typename linalg_traits<this_type>::const_col_iterator iterator;
     typedef typename linalg_traits<M>::value_type value_type;
     typedef typename linalg_traits<M>::access_type access_type;
     
@@ -325,9 +325,9 @@ namespace gmm {
     typedef value_type reference;
     typedef typename linalg_traits<M>::storage_type storage_type;
     typedef typename linalg_traits<M>::const_sub_col_type vector_type;
-    typedef scaled_vector_const_ref<vector_type> sub_col_type;
+    typedef abstract_null_type sub_col_type;
     typedef scaled_vector_const_ref<vector_type> const_sub_col_type;
-    typedef scaled_col_const_iterator<M> col_iterator;
+    typedef abstract_null_type  col_iterator;
     typedef scaled_col_const_iterator<M> const_col_iterator;
     typedef abstract_null_type const_sub_row_type;
     typedef abstract_null_type sub_row_type;

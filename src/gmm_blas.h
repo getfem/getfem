@@ -116,13 +116,12 @@ namespace gmm {
   typename select_return<typename linalg_traits<M>::const_row_iterator,
                          typename linalg_traits<M>::row_iterator,
                          M *>::return_type
-  mat_row_begin(M &v)
-  { return linalg_traits<M>::row_begin(linalg_cast(v)); }
+  mat_row_begin(M &m)
+  { return linalg_traits<M>::row_begin(linalg_cast(m)); }
   
-  template <class M> inline
-  typename linalg_traits<M>::const_row_iterator
-  mat_row_const_begin(const M &v)
-  { return linalg_traits<M>::row_begin(v); }
+  template <class M> inline typename linalg_traits<M>::const_row_iterator
+  mat_row_const_begin(const M &m)
+  { return linalg_traits<M>::row_begin(m); }
 
   template <class M> inline
   typename select_return<typename linalg_traits<M>::const_row_iterator,
