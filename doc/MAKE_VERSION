@@ -18,7 +18,7 @@ Liste des items a passer en revue pour fabriquer une nouvelle version
 
 - gmake dist
 
-- Eventuellement, annonce : Google, NaNet, labo, mailing list ...
+- Eventuellement, annonce : Google, NaNet, SMAI, labo, mailing list ...
    http://www.engr.usask.ca/~macphed/finite/fe_resources/fe_resources.html
    http://gersoo.free.fr/calsci/calsci.html
    http://www.oonumerics.org/oon/
@@ -42,6 +42,3 @@ Liste des items a passer en revue pour fabriquer une nouvelle version
 
   cvs update -j STABLE-1_2-BRANCH toto.C
 
-
-
-- contacter les gens d'OPENFEM ?

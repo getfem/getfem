@@ -21,14 +21,14 @@ FEM_TYPE = 0;           % Finite element method
 			% 2 = Hierarchical PK on simplexes (K = 2^i)
 			% 3 = Hierarchical P1 with K divisions
 KI = 1; 		% Parameter for integration method
-INTEGRATION = 0;        % 0 = exact integration.
+INTEGRATION = 17;       % 0 = exact integration.
 			% 1 = Newton Cotes of degree 2 * K
 			% 2 = Product of 1D Gauss for parallelepipeds ok deg KI
 			% 3 = Composite Gauss of degree 2 with KI divisions
 			% 11, 12, 13, 14, 15, 16, 17 triangle(n-10)
 			% 21, 22, 23, 25 tetrahedron(n-20)
 			% 32, 33, 35 quadrilateral(n-30)
-NX = 20;            	% space step.
+NX = 1;            	% space step.
 RESIDU = 1E-9;     	% residu for conjugate gradient.
 
 %%%%%   saving parameters                                             %%%%%

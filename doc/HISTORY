@@ -30,6 +30,154 @@ Historique :
   hierarchiques en degrés et en raffinement. Méthodes d'intégration 
   composites.
 
+. Le Lundi 03 Mars 2003 :
+  -----------------------
+  Version 1.4 de GETFEM++. Compliance à différent compilateurs renforcée,
+  correction des intégrales élémentaires, gain en mémoire et en efficacité,
+  interface Matlab complètement fonctionnelle, avec interface objet.
+  Librairie Matricielle GMM introduite. Doc Matlab finalisée par Julien.
+  Doc utilisateur complétée pour la partie matricielle.
+
+  Liste de diffusion : Jean-Marc Sac-Epée <jmse@poncelet.univ-metz.fr>
+  annonce officielle à NaNet :
+
+	
+	subject : GETFEM++ a C++ package for generic finite element
+	          methods interfaced with MATLAB
+
+	GETFEM++ 1.4 Available for Download
+
+	The GETFEM++ project is centred around the development of a
+  	generic and efficient C++ library for elementary computations
+	for finite element methods. The goal is to build a library
+	allowing the computation of any elementary matrix (even for
+	mixed methods) on the largest class of methods and elements
+	and for arbitrary dimension (1 <= n <= 255). It offers a complete
+	separation between integration methods (exact or approximated),
+	geometric transformations (linear or not) and finite element
+	methods of arbitrary degrees.
+
+ 	Examples of available finite element methods : Pk on simplices
+	in arbitray degrees and dimensions, Qk on parallelepipeds,
+	P1, P2 with bubble functions, hierarchical elements ...
+
+ 	To define a new finite element method, it is sufficient to
+	describe it on the reference element (mainly, to define base	
+	functions). Extensions are provided for Hermite elements,
+	non polynomials and vectorial elements.
+
+ 	Moreover, the library includes other tools for computation
+	with finite element such as assembly methods for classical
+	PDEs, interpolation methods, computation of norms, mesh
+	operations, boundary conditions ... This library allows to
+	build finite elements codes which are completely independent
+	of the dimension, the particular method or element. Examples
+	are provided.
+
+	It is possible to obtain mass matrices (or other type of
+	matrices) for finite element method defined on two different
+	meshes, allowing mortar methods or certain mixed methods.
+
+	A MATLAB interface to this library is available and fully
+	documented.
+
+	The release of GETFEM++ is under the LGPL license and may
+	be downloaded at:
+	http://www.gmm.insa-tlse.fr/getfem
+
+
+  annonce faite au labo :
+
+
+	La librairie GETFEM++ (version 1.4) est maintenant téléchargeable
+	à l'adresse
+
+	http://www.gmm.insa-tlse.fr/getfem/
+	sous license LGPL. Des documentations et des exemples sont fournis
+	sur le site.
+
+	Il s'agit d'une librairie C++ interfacée avec MATLAB qui permet
+	de faire les calculs élémentaires nécessaires aux codes éléments
+	finis et ce de manière générique :
+	- calcul de matrices élémentaires quelconques
+	- dimension arbitraire (1 <= n <= 255)
+	- degre arbitraire
+	- transformation géometrique arbitraire.
+
+	Des méthodes d'intérêt général sont fournies : gestion de maillage,
+	interpolation en degré quelconque, calcul de normes L2 ou H1 entre
+	deux solutions sur deux maillages differents ...
+
+	De plus des méthodes d'assemblage des matrices de rigidité et de
+	masse pour des problèmes standard sont fournies (problème de
+	Poisson, élasticité linéarisée, problème de Stockes en éléments
+	mixtes). Celles-ci sont totalement indépendante de l'élément
+	utilisé ce qui permet de tester facilement différents éléments
+
+	Pour définir un nouvel élément fini, il suffit de la décrire sur
+	l'élément de référence. Son utilisation est ensuite possible dans
+	toutes les routine d'assemblage pré-existantes, ce qui permet un
+	test rapide de nouveaux éléments.
+
+	Éléments déjà définis : Pk sur des simplexes (dimension et degrés
+	arbitraires), Qk sur des parallélépipèdes, Éléments produits sur
+	les prismes, P1 ou P2 avec fonction bulle, Pk discontinus sur des
+	simplexes, éléments hierarchiques ...
+
+	L'intérêt d'un tel package est qu'il peut s'étendre très facilement
+	à de nouvelles méthodes et de nouvelles applications. Toute
+	collaboration ou remarque sera la bienvenue.
+
+
+   mail envoyé à 
+       maday@ann.jussieu.fr, pironneau@ann.jussieu.fr,
+       Patrick.Letallec@polytechnique.fr, jean-marie.thomas@univ-pau.fr
+
+
+	Getfem++, une bibliothèque elements finis domaine public
+
+
+	GETFEM++ est un noyau élément fini en C++ permettant le calcul
+	de matrice élémentaires arbitraire sur des  élément  finis  de
+	degré arbitraire, en dimension arbitraire.
+	Une séparation complète est faite entre méthode élément  fini,
+	méthode d'intégration et transformation géométrique. Les trois
+	pouvant se définir simplement sur l'élément de  référence (qui
+	est aussi arbitraire : simplexes, prismes, parallélépipèdes en
+	dimension 1 <= n <= 255). Un  certain nombre  d'éléments  sont
+	déjà disponibles (PK,  QK,  éléments  hierarchiques).  Il  est
+	facile d'intégrer de nouveaux éléments finis.
+
+	De plus des méthodes d'assemblage des matrices de  rigidité et
+	de masse pour des problèmes standard sont  fournies  (problème
+	de Poisson, élasticité  linéarisée,  problème  de  Stockes  en
+	dimension quelconque).  Celles-ci sont totalement indépendante
+	de  l'élément  utilisé  ce  qui  permet  de  tester facilement
+	différents éléments.
+
+	Des  fonctionnalités  permettent  de  calculer  des intégrales
+	élémentaires  entre  deux  maillages incompatibles (surfacique
+	ou volumique).  Ce  qui  peut  permettre de faire des élements
+	de type mortar ou certaines méthodes mixte.
+
+	Cette  librairie  peut facilement servir de bases dans un code
+	élément fini plus intégré.  Toute  collaboration  ou  remarque
+	sera  la  bienvenue.  GETFEM++  est  un package libre de droit
+	distribué sous LGPL sur le site
+
+	http://www.gmm.insa-tlse.fr/getfem
+
+	et qui est developpée à l'INSA de Toulouse. Des documentations
+	et des exemples sont fournis.
+	Une interface avec MATLAB a été developpée.
+
+
+
+
+
+. Vers la version 1.5 : 8 x précision pour certains calcul élémentaires
+
+
 
 ------------------------------------------
 
@@ -43,74 +191,3 @@ http://www.ann.jussieu.fr/~perronne
 
 . CALFEM
 http://www.byggmek.lth.se/Calfem/
-
-
-------------------------------------------
-
-courant aout : annonce NaNet. texte possible :
-(attendre adresse définitive du site WEB)
-
-subject : GETFEM++ a package for generic finite element methods
-
-GETFEM++ 1.2 Available for Download
-
-The GETFEM++ project is centred around the development of a generic and efficient C++ library for elementary computations for finite element methods. The goal is to build a library which allows to compute any elementary matrix (even for mixed methods) on the largest class of methods and elements and for arbitrary dimension (1 <= n <= 255). It offers a complete separation between integration methods (exact or approximated), geometric transformations (linear or not) and finite element methods of arbitray degrees.
-
- Examples of available finite element method : Pk on simplexes in arbitray degrees and dimensions, Qk on parallelepipeds, P1, P2 with bubble functions ... 
-
- To define a new finite element method, it is sufficient to describe it on the reference element (mainly, to define base functions). Extensions are provided for Hermite elements, non polynomials and vectorial elements.
-
- Moreover, the library includes other tools for computation with finite element such as assembling methods for classical PDEs, interpolation methods, computation of norms, mesh operations, boundary conditions ... This library allows t build finite elements codes which are completely independent of the dimension, the particular method or element. Examples are provided.
-
-It is possible to obtain mass matrices (or other type of matrices) for finite element method defined on two different meshes, allowing mortar methods or certain mixed methods.
-
-A MATLAB interface to this library is in preparation and will be soon accessible (Oct. 2002 probably).
-
- 
-
-The release of GETFEM++ is under the GPL license and may be downloaded at:
-
-   http://www.gmm.insa-tlse.fr/~renard/getfem/index.html
-   (corriger l'adresse)
-
-------------------------------------------
-courant aout : annonce labo. texte possible :
-(attendre adresse définitive du site WEB)
-
-
-
-
-La librairie GETFEM++ (version 1.1) est maintenant téléchargeable à l'adresse
-
-http://www.gmm.insa-tlse.fr/~renard/getfem/index.html
-(corriger l'adresse)
-sous license GPL (Gnu Public License).
-
-Cette bibliothèque permet de faire les calculs élémentaires nécessaires aux codes éléments finis et ce de manière générique :
-- calcul de matrices élémentaires quelconques
-- dimension arbitraire (1 <= n <= 255)
-- degree arbitraire
-- transformation géometrique arbitraire.
-
-De plus des méthodes d'assemblage des matrices de rigidité et de masse pour des problèmes standard sont fournies (problème de Poisson, élasticité linéarisée, problème de Stockes). Celles-ci sont totalement indépendante de l'élément utilisé ce qui permet de tester facilement différents éléments.
-
-Pour définir un nouvel élément fini, il suffit de la décrire sur l'élément de référence. Son utilisation est ensuite possible dans toutes les routine d'assemblage pré-existantes, ce qui permet un test rapide de nouveaux éléments.
-
-Éléments déjà définis : Pk sur des simplexes (dimension et degrés arbitraires), Qk sur des parallélépipèdes, Éléments produits sur les prismes, P1 ou P2 avec fonction bulle, Pk discontinus sur des simplexes ...
-
-L'intérêt d'un tel package est qu'il peut s'étendre très facilement à de nouvelles méthodes et de nouvelles applications. Toute collaboration ou remarque sera la bienvenue.
-
-------------------------------------------
-courant aout : Inria ?. texte possible :
-(attendre adresse définitive du site WEB)
-
-GETFEM++, noyau élément fini en C++ permettant le calcul de matrice élémentaires arbitraire sur des élément finis de degré arbitraire, en dimension arbitraire.
-Une séparation complète est faite entre méthode élément fini, méthode d'intégration et transformation géométrique. Les trois pouvant se définir simplement sur l'élément de référence (qui est aussi arbitraire : simplexes, prismes, parallélépipèdes en dimension 1 <= n <= 255).
-
-http://www.gmm.insa-tlse.fr/~renard/getfem/index.html
-(corriger l'adresse)
-
-De plus des méthodes d'assemblage des matrices de rigidité et de masse pour des problèmes standard sont fournies (problème de Poisson, élasticité linéarisée, problème de Stockes en dimension quelconque). Celles-ci sont totalement indépendante de l'élément utilisé ce qui permet de tester facilement différents éléments.
-
-Cette librairie peut s'intégrer facilement dans un code élément fini ...
- Toute collaboration sera la bienvenue. GETFEM++ est un package libre de droit distribué sous GPL (Gnu Public License).

@@ -55,25 +55,25 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
   }
 }
 
+
+
+$NDDLMAX = 10400;
+$PAUSE = 0;
+
+##########################################################################
+print "   TESTS EN DIMENSION 1, ET ELEMENTS PK                         \n";
+##########################################################################
+$FEM_TYPE = 0;
 $INTE = 0;
-
-$NMAX = 20400;
-
 while ($INTE < 3) {
-
 open(RES, ">$tmp_res");
 $K = 1; $N = 1; $FT = 1.0; $NX = 1;
-while ($NX <= $NMAX) {
-
+while ($NX**$N <= $NDDLMAX) {
   $K = 1;
-  print "Test for NX = $NX \t";
-  print RES 1.0/$NX;
-  while ($K * $NX * $K * $K <= 4*$NMAX && $K <= 12) {
-
-    start_program("-d N=$N -d NX=$NX -d K=$K -d FT=$FT -d INTEGRATION=$INTE");
-    print RES "$linferror ";
-    print ".";
-
+  print "Test for NX = $NX \t"; print RES $NX**$N;
+  while ((($K * $NX)**$N) * $K * $K <= 4*$NDDLMAX && $K <= 12) {
+    start_program("-d N=$N -d NX=$NX -d K=$K -d FT=$FT -d INTEGRATION=$INTE -d FEM_TYPE=$FEM_TYPE");
+    print RES "$linferror "; print ".";
     ++$K;
   }
   print RES "\n"; print "\n";
@@ -84,27 +84,196 @@ close(RES);
 open(GNF, ">$tmp_gnuplot");
 print GNF "set data style line\n";
 print GNF "set logscale\n";
-print GNF "plot '$tmp_res' using (\$1):2,";
-print GNF "     '$tmp_res' using ((\$1)/2):3,";
-print GNF "     '$tmp_res' using ((\$1)/4):4,";
-print GNF "     '$tmp_res' using ((\$1)/5):5,";
-print GNF "     '$tmp_res' using ((\$1)/6):6,";
-print GNF "     '$tmp_res' using ((\$1)/7):7,";
-print GNF "     '$tmp_res' using ((\$1)/8):8,";
-print GNF "     '$tmp_res' using ((\$1)/9):9,";
-print GNF "     '$tmp_res' using ((\$1)/10):10,";
-print GNF "     '$tmp_res' using ((\$1)/11):11,";
-print GNF "     '$tmp_res' using ((\$1)/12):12\n";
-print GNF "pause -1;\n";
-print GNF "set output 'laplacian_$INTE.ps'\n";
-print GNF "set term postscript\n";
+print GNF "set xlabel 'number of dof'\n";
+print GNF "set ylabel 'L-infinity error'\n";
+print GNF "plot '$tmp_res' using (\$1):2 title 'PK(1,1)',";
+print GNF "     '$tmp_res' using ((\$1)*2):3 title 'PK(1,2)',";
+print GNF "     '$tmp_res' using ((\$1)*3):4 title 'PK(1,3)',";
+print GNF "     '$tmp_res' using ((\$1)*4):5 title 'PK(1,4)',";
+print GNF "     '$tmp_res' using ((\$1)*5):6 title 'PK(1,5)',";
+print GNF "     '$tmp_res' using ((\$1)*6):7 title 'PK(1,6)',";
+print GNF "     '$tmp_res' using ((\$1)*7):8 title 'PK(1,7)',";
+print GNF "     '$tmp_res' using ((\$1)*8):9 title 'PK(1,8)',";
+print GNF "     '$tmp_res' using ((\$1)*9):10 title 'PK(1,9)',";
+print GNF "     '$tmp_res' using ((\$1)*10):11 title 'PK(1,10)',";
+print GNF "     '$tmp_res' using ((\$1)*11):12 title 'PK(1,11)',";
+print GNF "     '$tmp_res' using ((\$1)*12):13 title 'PK(1,12)'\n";
+if ($PAUSE) { print GNF "pause -1;\n"; }
+print GNF "set output 'laplacian_1D_$INTE.ps'\n";
+print GNF "set term postscript color\n";
 print GNF "replot\n";
 
 close(GNF);
 `gnuplot $tmp_gnuplot`;
 
-$INTE += 2;
+$INTE += 1;
 }
+
+
+##########################################################################
+print "   TESTS EN DIMENSION 1, ET ELEMENTS PK HIERARCHIQUES           \n";
+##########################################################################
+$FEM_TYPE = 2;
+$INTE = 0;
+while ($INTE < 3) {
+open(RES, ">$tmp_res");
+$K = 1; $N = 1; $FT = 1.0; $NX = 1;
+while ($NX**$N <= $NDDLMAX) {
+  $K = 1;
+  print "Test for NX = $NX \t"; print RES $NX**$N;
+  while ((($K * $NX)**$N) * $K * $K <= 4*$NDDLMAX && $K <= 12) {
+    start_program("-d N=$N -d NX=$NX -d K=$K -d FT=$FT -d INTEGRATION=$INTE -d FEM_TYPE=$FEM_TYPE");
+    print RES "$linferror "; print ".";
+    ++$K;
+  }
+  print RES "\n"; print "\n";
+  if ($NX >= 5) { $NX = int($NX * 2); } else { ++$NX; }
+}
+close(RES);
+
+open(GNF, ">$tmp_gnuplot");
+print GNF "set data style line\n";
+print GNF "set logscale\n";
+print GNF "set xlabel 'number of dof'\n";
+print GNF "set ylabel 'L-infinity error'\n";
+print GNF "plot '$tmp_res' using (\$1):2 title 'PK(1,1)',";
+print GNF "     '$tmp_res' using ((\$1)*2):3 title 'PK(1,2)',";
+print GNF "     '$tmp_res' using ((\$1)*3):4 title 'PK(1,3)',";
+print GNF "     '$tmp_res' using ((\$1)*4):5 title 'PK(1,4)',";
+print GNF "     '$tmp_res' using ((\$1)*5):6 title 'PK(1,5)',";
+print GNF "     '$tmp_res' using ((\$1)*6):7 title 'PK(1,6)',";
+print GNF "     '$tmp_res' using ((\$1)*7):8 title 'PK(1,7)',";
+print GNF "     '$tmp_res' using ((\$1)*8):9 title 'PK(1,8)',";
+print GNF "     '$tmp_res' using ((\$1)*9):10 title 'PK(1,9)',";
+print GNF "     '$tmp_res' using ((\$1)*10):11 title 'PK(1,10)',";
+print GNF "     '$tmp_res' using ((\$1)*11):12 title 'PK(1,11)',";
+print GNF "     '$tmp_res' using ((\$1)*12):13 title 'PK(1,12)'\n";
+if ($PAUSE) { print GNF "pause -1;\n"; }
+print GNF "set output 'laplacian_1D_hier_$INTE.ps'\n";
+print GNF "set term postscript color\n";
+print GNF "replot\n";
+
+close(GNF);
+`gnuplot $tmp_gnuplot`;
+
+$INTE += 1;
+}
+
+##########################################################################
+print "   TESTS EN DIMENSION 2, ET ELEMENTS PK                         \n";
+##########################################################################
+$FEM_TYPE = 0;
+$INTE = 0;
+while ($INTE < 2) {
+open(RES, ">$tmp_res");
+$K = 1; $N = 2; $FT = 1.0; $NX = 1;
+while ($NX**$N <= $NDDLMAX) {
+  $K = 1;
+  print "Test for NX = $NX \t"; print RES $NX**$N;
+  while ((($K * $NX)**$N) * $K * $K <= 4*$NDDLMAX && $K <= 12) {
+    start_program("-d N=$N -d NX=$NX -d K=$K -d FT=$FT -d INTEGRATION=$INTE -d FEM_TYPE=$FEM_TYPE");
+    print RES "$linferror "; print ".";
+    ++$K;
+  }
+  print RES "\n"; print "\n";
+  if ($NX >= 5) { $NX = int($NX * 2); } else { ++$NX; }
+}
+close(RES);
+
+open(GNF, ">$tmp_gnuplot");
+print GNF "set data style line\n";
+print GNF "set logscale\n";
+print GNF "set xlabel 'number of dof'\n";
+print GNF "set ylabel 'L-infinity error'\n";
+print GNF "plot '$tmp_res' using (\$1):2 title 'PK(2,1)',";
+print GNF "     '$tmp_res' using ((\$1)*4):3 title 'PK(2,2)',";
+print GNF "     '$tmp_res' using ((\$1)*9):4 title 'PK(2,3)',";
+print GNF "     '$tmp_res' using ((\$1)*16):5 title 'PK(2,4)',";
+print GNF "     '$tmp_res' using ((\$1)*25):6 title 'PK(2,5)',";
+print GNF "     '$tmp_res' using ((\$1)*36):7 title 'PK(2,6)',";
+print GNF "     '$tmp_res' using ((\$1)*49):8 title 'PK(2,7)',";
+print GNF "     '$tmp_res' using ((\$1)*64):9 title 'PK(2,8)',";
+print GNF "     '$tmp_res' using ((\$1)*81):10 title 'PK(2,9)',";
+print GNF "     '$tmp_res' using ((\$1)*100):11 title 'PK(2,10)',";
+print GNF "     '$tmp_res' using ((\$1)*121):12 title 'PK(2,11)',";
+print GNF "     '$tmp_res' using ((\$1)*144):13 title 'PK(2,12)'\n";
+if ($PAUSE) { print GNF "pause -1;\n"; }
+print GNF "set output 'laplacian_2D_$INTE.ps'\n";
+print GNF "set term postscript color\n";
+print GNF "replot\n";
+
+close(GNF);
+`gnuplot $tmp_gnuplot`;
+
+$INTE += 1;
+}
+
+
+##########################################################################
+print "   TESTS EN DIMENSION 2, ET ELEMENTS PK HIERARCHIQUES           \n";
+##########################################################################
+$FEM_TYPE = 2;
+$INTE = 0;
+while ($INTE < 2) {
+open(RES, ">$tmp_res");
+$K = 1; $N = 2; $FT = 1.0; $NX = 1;
+while ($NX**$N <= $NDDLMAX) {
+  $K = 1;
+  print "Test for NX = $NX \t"; print RES $NX**$N;
+  while ((($K * $NX)**$N) * $K * $K <= 4*$NDDLMAX && $K <= 12) {
+    start_program("-d N=$N -d NX=$NX -d K=$K -d FT=$FT -d INTEGRATION=$INTE -d FEM_TYPE=$FEM_TYPE");
+    print RES "$linferror "; print ".";
+    ++$K;
+  }
+  print RES "\n"; print "\n";
+  if ($NX >= 5) { $NX = int($NX * 2); } else { ++$NX; }
+}
+close(RES);
+
+open(GNF, ">$tmp_gnuplot");
+print GNF "set data style line\n";
+print GNF "set logscale\n";
+print GNF "set xlabel 'number of dof'\n";
+print GNF "set ylabel 'L-infinity error'\n";
+print GNF "plot '$tmp_res' using (\$1):2 title 'PK(2,1)',";
+print GNF "     '$tmp_res' using ((\$1)*4):3 title 'PK(2,2)',";
+print GNF "     '$tmp_res' using ((\$1)*9):4 title 'PK(2,3)',";
+print GNF "     '$tmp_res' using ((\$1)*16):5 title 'PK(2,4)',";
+print GNF "     '$tmp_res' using ((\$1)*25):6 title 'PK(2,5)',";
+print GNF "     '$tmp_res' using ((\$1)*36):7 title 'PK(2,6)',";
+print GNF "     '$tmp_res' using ((\$1)*49):8 title 'PK(2,7)',";
+print GNF "     '$tmp_res' using ((\$1)*64):9 title 'PK(2,8)',";
+print GNF "     '$tmp_res' using ((\$1)*81):10 title 'PK(2,9)',";
+print GNF "     '$tmp_res' using ((\$1)*100):11 title 'PK(2,10)',";
+print GNF "     '$tmp_res' using ((\$1)*121):12 title 'PK(2,11)',";
+print GNF "     '$tmp_res' using ((\$1)*144):13 title 'PK(2,12)'\n";
+if ($PAUSE) { print GNF "pause -1;\n"; }
+print GNF "set output 'laplacian_2D_hier_$INTE.ps'\n";
+print GNF "set term postscript color\n";
+print GNF "replot\n";
+
+close(GNF);
+`gnuplot $tmp_gnuplot`;
+
+$INTE += 1;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 `rm -f $tmp $tmp_res $tmp_gnuplot`;
 
