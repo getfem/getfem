@@ -354,7 +354,8 @@ namespace getfem {
     }
   }
 
-  void import_mesh(std::ifstream& f, const std::string& format, getfem_mesh& m) {
+  void import_mesh(std::ifstream& f, const std::string& format,
+		   getfem_mesh& m) {
     if (ftool::casecmp(format,"gmsh")==0)
       import_gmsh_msh_file(f,m);
     else if (ftool::casecmp(format,"gid")==0)
@@ -363,7 +364,21 @@ namespace getfem {
       import_am_fmt_file(f,m);
     else if (ftool::casecmp(format,"emc2_mesh")==0)
       import_emc2_mesh_file(f,m);
-    else DAL_THROW(dal::failure_error, "can't import " << format << " mesh type : unknown mesh type");
+    else DAL_THROW(dal::failure_error, "cannot import "
+		   << format << " mesh type : unknown mesh type");
   }
+
+  void import_mesh(const std::string& filename, getfem_mesh& mesh) {
+    if (filename.compare(0,4,"gid:")==0)
+      getfem::import_mesh(filename.substr(4), "gid", mesh);
+    else if (filename.compare(0,5,"gmsh:") == 0) 
+      getfem::import_mesh(filename.substr(5), "gmsh", mesh);
+    else if (filename.compare(0,7,"am_fmt:") == 0) 
+      getfem::import_mesh(filename.substr(7), "am_fmt", mesh);
+    else if (filename.compare(0,10,"emc2_mesh:") == 0)
+      getfem::import_mesh(filename.substr(10), "emc2_mesh", mesh);
+    else mesh.read_from_file(filename);
+  }
+
 }
 
