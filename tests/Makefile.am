@@ -79,6 +79,7 @@ EXTRA_DIST = \
 	elasto_statique.param \
 	test_link_fem.param \
 	geo_trans_inv.param \
+	make_gmm_test.pl \
 	gmm_test_sub.C \
 	gmm_test_mult.C \
 	gmm_test_mat_mult.C \
