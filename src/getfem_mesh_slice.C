@@ -194,7 +194,7 @@ namespace getfem {
     std::vector<dim_type> bits;
     std::vector<dim_type> cnt;
     for (size_type ic = 0; ic < cvlst.size(); ++ic) {
-      //cerr << "examen du convexe " << ic << " (" << nodes(ic).size << " nodes, " << simplexes(ic).size() << " simplexes" << endl;
+      //cerr << "examen du convexe " << ic << " (" << nodes(ic).size() << " nodes, " << simplexes(ic).size() << " simplexes" << endl;
       n.resize(nodes(ic).size());
       /* the trick is here: the nodes are sorted according to their
 	 reference point. Since the edges of the reference convex are
@@ -209,7 +209,8 @@ namespace getfem {
       for (size_type ip = 0; ip < n.size(); ++ip) {
 	slice_node::faces_ct f = n[ip].faces;
         dim_type nbits = f.count();
-	//cerr << "  noeud " << ;
+	//cerr << "  nface = " << int(nface) << ", nbits=" << int(nbits) << endl;
+	//cerr << "  noeud " << ip << ": " << n[ip].pt << ", " << n[ip].pt_ref << ", f=" << n[ip].faces << endl;
         if (nface <= nbits) { /* not sure that is the right test for
 				 dimension > 3 .. */
           /* add the point to the mesh */
@@ -224,14 +225,19 @@ namespace getfem {
 	    if (f[0]) bits.push_back(bcnt); 
 	    f >>= 1; 
 	  }
+	  //cerr << "   bits="; std::copy(bits.begin(), bits.end(), std::ostream_iterator<size_type>(cerr," ")); cerr << endl;
+	  
           /* init counter */
           cnt.resize(nface+1); 
 	  for (size_type i=0; i < nface; ++i) cnt[i] = i; 
 	  cnt[nface] = nbits+1;
+	  //cerr << "    cnt="; std::copy(cnt.begin(), cnt.end(), std::ostream_iterator<size_type>(cerr," ")); cerr << endl;
 	  
           while (cnt[nface-1] != nbits) {
-            f.reset(); for (size_type i=0; i < cnt.size(); ++i) f[bits[cnt[i]]] = 1;
-            if (cvlst[ic].cv_dim-1 == int(f.count())) {
+            f.reset(); for (size_type i=0; i < nface; ++i) f[bits[cnt[i]]] = 1;
+	    //cerr << "        ---> f <= " << f << endl;
+            if (int(f.count()) == nface) {
+	      //cerr << "    -> ajout du noeud sur la face " << f << endl;
               fmap[f.to_ulong()].add(ip);
             }
             /* next combination */
@@ -239,14 +245,16 @@ namespace getfem {
               if (++cnt[i] < cnt[i+1]) break; else cnt[i] = pcnt;
               pcnt = cnt[i]+1;
             }
+	    //cerr << "    cnt="; std::copy(cnt.begin(), cnt.end(), std::ostream_iterator<size_type>(cerr," ")); cerr << endl;
           }
         }
       }
       for (fmap_t::iterator it = fmap.begin(); it != fmap.end(); ++it) {
         dal::bit_vector &bv = (*it).second;
         size_type pip = bv.take_first();
-        for (size_type ip = bv.take_first(); ip != size_type(-1); ip << bv)
-          m.add_segment(fpts[pip], fpts[ip]);
+        for (size_type ip = bv.take_first(); ip != size_type(-1); ip << bv) {
+          m.add_segment(fpts[pip], fpts[ip]); pip = ip;
+	}
       }
     }
   }
