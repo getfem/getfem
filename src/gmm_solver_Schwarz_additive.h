@@ -50,7 +50,7 @@ namespace gmm {
     const std::vector<SUBI> *cor;
     mutable iteration iter;
     double residu;
-    mutable int itebilan;
+    mutable size_t itebilan;
     std::vector<vector_type> *gi;
     std::vector<vector_type> *fi;
   };
@@ -72,11 +72,9 @@ namespace gmm {
     typedef typename plain_vector_type<value_type>::vector_type vector_type;
 
     size_type nb_sub = ml1.size() + ml2.size();
-    int itebilan = 0;
+    size_t itebilan = 0;
     std::vector<vector_type> gi(nb_sub);
     std::vector<vector_type> fi(nb_sub);
-
-    residu /= nb_sub; // utile ?
 
     size_type ms = ml1.size();
 

@@ -246,24 +246,17 @@ namespace bgeot
 
   pconvex_ref convex_ref_product(pconvex_ref a, pconvex_ref b)
   { 
-    static dal::FONC_TABLE<_product_ref_light, _product_ref> *tab;
-    static bool isinit = false;
-    if (!isinit) {
-      tab = new dal::FONC_TABLE<_product_ref_light, _product_ref>();
-      isinit = true;
-    }
+    static dal::FONC_TABLE<_product_ref_light, _product_ref> *tab = 0;
+    if (!tab) tab = new dal::FONC_TABLE<_product_ref_light, _product_ref>();
     return tab->add(_product_ref_light(a, b));
   }
 
   pconvex_ref parallelepiped_of_reference(dim_type nc)
   {
-    static dal::dynamic_array<pconvex_ref> *ptab;
+    static dal::dynamic_array<pconvex_ref> *ptab = 0;
     static dim_type ncd = 1;
-    static bool isinit = false;
-    if (!isinit) {
-      ptab = new dal::dynamic_array<pconvex_ref>();
-      isinit = true;
-    }
+    if (ptab) ptab = new dal::dynamic_array<pconvex_ref>();
+     
 
     if (nc <= 1) return simplex_of_reference(nc);
     if (nc > ncd)

@@ -8,10 +8,11 @@ Liste des items a passer en revue pour fabriquer une nouvelle version
 
 - Tester la distribution sur differentes plateformes :
 
-  . sur PC avec G++ version 2.95, et 3.2
+  . sur PC avec G++ version 2.95, et 3.2 et Intel compiler 7.0
   . sur dec avec cxx et g++
-  . sur silicon avec CC et g++
-  . sur HP avec CC
+  . sur silicon avec CC et g++ (sur callmip)
+  . sur HP avec aCC  (sur telline)
+  . sur SUN avec CC (sur aurore ?)
 
   gmake check    doit fonctionner.
 
