@@ -135,7 +135,7 @@ int main(int argc, char **argv) {
 	 h, fixed, K);
     } break;
     case 15: { /* torus */
-      getfem::build_mesh(m, getfem::mesher_torus(2.0, 0.5), h, fixed, K);
+      getfem::build_mesh(m, getfem::mesher_torus(2.0, 3.0), h, fixed, K);
     } break;
   }
   }

@@ -1,6 +1,5 @@
 #include <gmm.h>
 
-
 // scalar product working also for matrices (to be done in GMM++ ...
 template<class VAR> 
 typename gmm::linalg_traits<VAR>::value_type
@@ -23,7 +22,6 @@ local_sp(const VAR &X, const VAR &Y, gmm::abstract_matrix) {
 }
 
 
-
 // Make a test of the gradient around X.
 template <class FUNC, class GRAD, class VAR> 
 void test_grad_at(FUNC f, GRAD grad, const VAR &X) {
@@ -37,11 +35,13 @@ void test_grad_at(FUNC f, GRAD grad, const VAR &X) {
 
   R eps(1), max_ratio(1), ecart, ecart_old, min_ecart(1);
   gmm::fill_random(Z);
+  cout << "Z = " << Z << endl;
   T derdir = local_sp(G, Z), estimate_derdir;
   for (int i = 0; i < 10; ++i, eps /= R(10)) {
     gmm::add(gmm::scaled(Z, eps), X, Y);
     estimate_derdir = (f(Y) - valx) / eps;
     ecart = gmm::abs(derdir - estimate_derdir);
+    cout << "\n derdir = " << derdir << " estimate_derdir = " << estimate_derdir << endl;
     min_ecart = std::min(ecart, min_ecart);
     // The goal is of course to obtain a clear decreasing sequence
     cout << " " << ecart;
@@ -124,11 +124,53 @@ struct grad2 {
   }
 };
 
+typedef std::vector<double> base_node;
+typedef double scalar_type;
+
+struct func3 {
+  scalar_type operator()(const base_node &P) const {
+    scalar_type R = 2.0, r = 0.5;
+
+    scalar_type x = P[0], y = P[1], z = P[2];
+    scalar_type c = sqrt(x*x + y*y);
+    if (c == 0.) return R - r;
+    return sqrt(gmm::sqr(c-R) + z*z) - r;
+  }
+};
+
+
+struct grad3 {
+  void operator()(const base_node &P, base_node &G) const {
+    //    double R = 2.0, r = 0.5;
+    //    double x = P[0], y = P[1], z= P[2];
+    //     G[0] = (-sqrt(x*x+y*y)+R)*x/sqrt(x*x+y*y)
+    //            /sqrt(x*x+R*R+y*y-2.0*sqrt(x*x+y*y)*R+z*z);
+    //     G[1] = -(-sqrt(x*x+y*y)+R)*y/sqrt(x*x+y*y)
+    //            /sqrt(x*x+R*R+y*y-2.0*sqrt(x*x+y*y)*R+z*z);
+    //     G[2] = 1/(sqrt(x*x+R*R+y*y-2.0*sqrt(x*x+y*y)*R+z*z))*z;
+    gmm::clear(G); 
+    scalar_type R = 2.0, r = 0.5;
+    scalar_type x = P[0], y = P[1], z = P[2];
+    scalar_type c = sqrt(x*x + y*y);
+    if (c == 0.) return;
+    scalar_type w = 1. - R / c;
+    scalar_type e = sqrt(gmm::sqr(c-R) + z*z);
+    if (e == 0) return;
+    G[0] = x * w / e;
+    G[1] = y * w / e;
+    G[2] = z / e;
+  }
+};
+
 int main(void) {
 
 
-  test_grad(func(), grad(), DM(10, 10));
+  // test_grad(func(), grad(), DM(10, 10));
   
+  base_node PP(3);
+  gmm::fill_random(PP);
+
+  test_grad(func3(), grad3(), PP);
 
   return 0;
 }
