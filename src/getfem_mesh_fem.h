@@ -44,8 +44,8 @@
 #include <getfem_mesh.h>
 #include <getfem_fem.h>
 
-#undef DEPRECATED
-#define DEPRECATED
+#undef IS_DEPRECATED
+#define IS_DEPRECATED
 
 namespace getfem
 {
