@@ -29,9 +29,9 @@
 
 
 #include <dal_static_stored_objects.h>
+#include <dal_singleton.h>
 #include <map>
 #include <list>
-
 
 namespace dal {
 
@@ -64,12 +64,9 @@ namespace dal {
   typedef std::map<pstatic_stored_object, pstatic_stored_object_key> 
   stored_key_tab;
   
-  // Storing array
-  static stored_object_tab stored_objects;
-  static stored_key_tab stored_keys;
-  
   // Gives a pointer to a key of an object from its pointer
   pstatic_stored_object_key key_of_stored_object(pstatic_stored_object o) {
+    stored_key_tab& stored_keys = dal::singleton<stored_key_tab>::instance();
     stored_key_tab::iterator it = stored_keys.find(o);
     if (it != stored_keys.end()) return it->second;
     return 0;
@@ -77,6 +74,8 @@ namespace dal {
 
   // Gives a pointer to an object from a key pointer
   pstatic_stored_object search_stored_object(pstatic_stored_object_key k) {
+    stored_object_tab& stored_objects
+      = dal::singleton<stored_object_tab>::instance();
     stored_object_tab::iterator it
       = stored_objects.find(enr_static_stored_object_key(k));
     if (it != stored_objects.end()) return it->second.p;
@@ -86,6 +85,8 @@ namespace dal {
   // Gives an iterator on stored object from a pointer object
   static inline stored_object_tab::iterator 
   iterator_of_object(pstatic_stored_object o) {
+    stored_object_tab& stored_objects
+      = dal::singleton<stored_object_tab>::instance();
     pstatic_stored_object_key k = key_of_stored_object(o);
     if (k) return stored_objects.find(enr_static_stored_object_key(k));
     return stored_objects.end();
@@ -93,6 +94,8 @@ namespace dal {
 
   // Add a dependency, object o1 will depend on object o2
   void add_dependency(pstatic_stored_object o1, pstatic_stored_object o2) {
+    stored_object_tab& stored_objects
+      = dal::singleton<stored_object_tab>::instance();
     stored_object_tab::iterator it1 = iterator_of_object(o1);
     stored_object_tab::iterator it2 = iterator_of_object(o2);
     if (it1 != stored_objects.end() && it2 != stored_objects.end()) {
@@ -103,6 +106,8 @@ namespace dal {
 
   // remove a dependency
   void del_dependency(pstatic_stored_object o1, pstatic_stored_object o2) {
+    stored_object_tab& stored_objects
+      = dal::singleton<stored_object_tab>::instance();
     stored_object_tab::iterator it1 = iterator_of_object(o1);
     stored_object_tab::iterator it2 = iterator_of_object(o2);
     if (it1 != stored_objects.end() && it2 != stored_objects.end()) {
@@ -117,6 +122,9 @@ namespace dal {
 			 pstatic_stored_object dep1,
 			 pstatic_stored_object dep2,
 			 pstatic_stored_object dep3) {
+    stored_object_tab& stored_objects
+      = dal::singleton<stored_object_tab>::instance();
+    stored_key_tab& stored_keys = dal::singleton<stored_key_tab>::instance();
     if (stored_keys.find(o) != stored_keys.end())
       DAL_THROW(failure_error, "This object has already been stored, "
 		"possibly with another key");
@@ -130,6 +138,9 @@ namespace dal {
 
   // Only delete the object but not the dependencies
   static void basic_delete(std::list<pstatic_stored_object> &to_delete){
+    stored_object_tab& stored_objects
+      = dal::singleton<stored_object_tab>::instance();
+    stored_key_tab& stored_keys = dal::singleton<stored_key_tab>::instance();
     std::list<pstatic_stored_object>::iterator it;
     for (it = to_delete.begin(); it != to_delete.end(); ++it) {
       pstatic_stored_object_key k = key_of_stored_object(*it);
@@ -144,6 +155,8 @@ namespace dal {
   
   // Delete a list of objects and their dependencies
   void del_stored_objects(std::list<pstatic_stored_object> &to_delete) {
+    stored_object_tab& stored_objects
+      = dal::singleton<stored_object_tab>::instance();
     std::list<pstatic_stored_object>::iterator it;
     std::map<pstatic_stored_object, bool>::iterator itd;
     for (it = to_delete.begin(); it != to_delete.end(); ++it) {
@@ -178,6 +191,8 @@ namespace dal {
   
   // Delete all the object whose permanence is greater or equal to perm
   void del_stored_objects(int perm) {
+    stored_object_tab& stored_objects
+      = dal::singleton<stored_object_tab>::instance();
     if (perm == 0) ++perm;
     std::list<pstatic_stored_object> to_delete;
     stored_object_tab::iterator it;

@@ -53,7 +53,8 @@ namespace bgeot {
 
   void convex_structure::init_for_adaptative(pconvex_structure cvs) {
     *this = *(cvs->basic_structure());
-    std::fill(faces_struct.begin(),faces_struct.end(),pconvex_structure(NULL));
+    std::fill(faces_struct.begin(),faces_struct.end(),
+	      (const convex_structure *)(0));
     std::fill(faces.begin(),faces.end(), convex_ind_ct());
      dir_points_ = convex_ind_ct();
     nbpt = 0;
@@ -130,7 +131,7 @@ namespace bgeot {
     else
       for (int i = 0; i < p->nbf; i++) { 
 	p->dir_points_[i] = i;
-	p->faces_struct[i] = simplex_structure(nc-1);
+	p->faces_struct[i] = simplex_structure(nc-1).get();
 	p->faces[i].resize(nc);
 	for (int j = 0; j < nc; j++)
 	  (p->faces[i])[j] = (j >= i) ? (j + 1) : j;
@@ -151,14 +152,14 @@ namespace bgeot {
     
     K_simplex_structure_(dim_type NN, short_type KK) {
       Nc = NN; nbpt = alpha(Nc, KK); nbf = Nc+1;
-      basic_pcvs = simplex_structure(NN);
+      basic_pcvs = simplex_structure(NN).get();
       faces_struct.resize(nbf);
       faces.resize(nbf);
       dir_points_.resize(Nc+1);
       
       for (int i = 0; i < nbf; i++) { 
 	if (KK > 0) {
-	  faces_struct[i] = simplex_structure(Nc-1, KK); 
+	  faces_struct[i] = simplex_structure(Nc-1, KK).get(); 
 	  faces[i].resize(faces_struct[i]->nb_points());
 	}
 	else {
@@ -225,12 +226,12 @@ namespace bgeot {
     polygon_structure_ *p = new polygon_structure_;
     p->Nc = 2; p->nbpt = nbt; p->nbf = nbt;
     p->basic_pcvs = p;
-    p->faces_struct = std::vector<pconvex_structure>(p->nbf);
+    p->faces_struct = std::vector<const convex_structure *>(p->nbf);
     p->faces = std::vector< std::vector<short_type> >(p->nbf);
     p->dir_points_ = std::vector<short_type>(p->Nc + 1);
     
     for (int i = 0; i < p->nbf; i++) { 
-      p->faces_struct[i] = simplex_structure(1);
+      p->faces_struct[i] = simplex_structure(1).get();
       p->faces[i] = std::vector<short_type>(2);
       for (int j = 0; j < 2; j++)
 	(p->faces[i])[j] = ((i+j) % nbt);
@@ -269,10 +270,10 @@ namespace bgeot {
       nbf = cv1->nb_faces() + cv2->nb_faces();
       if (cv1->basic_structure() != cv1 || cv2->basic_structure() != cv2)
 	basic_pcvs = convex_product_structure(cv1->basic_structure(),
-					      cv2->basic_structure());
+					      cv2->basic_structure()).get();
       else
 	basic_pcvs = this;
-      faces_struct = std::vector<pconvex_structure>(nbf);
+      faces_struct = std::vector<const convex_structure *>(nbf);
       faces = std::vector< std::vector<short_type> >(nbf);
 
       if (cv1->ind_dir_points().size() && cv2->ind_dir_points().size()) {
@@ -288,11 +289,11 @@ namespace bgeot {
 
       for (int i = 0; i < cv1->nb_faces(); i++) { 
 	if (cv1->nb_points_of_face(i) == 1)
-	  faces_struct[i] = cv2;
+	  faces_struct[i] = cv2.get();
 	else
 	  faces_struct[i]
 	    = (cv1->faces_structure()[i] == NULL) ? NULL
-	    : convex_product_structure(cv1->faces_structure()[i], cv2);
+	    : convex_product_structure(cv1->faces_structure()[i], cv2).get();
 
 	faces[i] = std::vector<short_type>(cv1->nb_points_of_face(i)
 					      * cv2->nb_points());
@@ -306,11 +307,11 @@ namespace bgeot {
       for (int i = 0; i < cv2->nb_faces(); i++) { 
 	int k = cv1->nb_faces();
 	if (cv2->nb_points_of_face(i) == 1)
-	  faces_struct[i+k] = cv1;
+	  faces_struct[i+k] = cv1.get();
 	else
 	  faces_struct[i+k]
 	    = (cv2->faces_structure()[i] == NULL) ? NULL
-	    : convex_product_structure(cv1, cv2->faces_structure()[i]);
+	    : convex_product_structure(cv1, cv2->faces_structure()[i]).get();
 
 	faces[i+k] = std::vector<short_type>(cv2->nb_points_of_face(i)
 					      * cv1->nb_points());
@@ -384,14 +385,18 @@ namespace bgeot {
     p->faces_struct.resize(nf);
     p->faces.resize(nf);
     for (size_type j = 0; j < nf; ++j) {
-      p->faces_struct[j]
-	= generic_dummy_structure(nc == 0 ? 0 : nc-1, n, nc == 0 ? 1 : nc);
+      if (nc == 0) p->faces_struct[j] = p;
+      else p->faces_struct[j] = generic_dummy_structure(nc-1, n, nc).get();
       p->faces[j].resize(n);
       for (size_type k = 0; k < n; ++k) p->faces[j][k] = k;
     }
     p->dir_points_.resize(0);
     p->basic_pcvs = p;
-    dal::add_stored_object(new convex_structure_key(2, nc, n, nf), p, 0);
+    if (nc == 0)
+      dal::add_stored_object(new convex_structure_key(2, nc, n, nf), p, 0);
+    else
+      dal::add_stored_object(new convex_structure_key(2, nc, n, nf), p, 0,
+			     generic_dummy_structure(nc-1, n, nc));
     return p;
   }
 

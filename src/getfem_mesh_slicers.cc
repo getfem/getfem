@@ -35,7 +35,7 @@
 namespace getfem {
   const float slicer_action::EPS = 1e-13;
 
-  /* -------------------------------------- slicers --------------------------------------*/
+  /* ------------------------------ slicers ------------------------------- */
 
   slicer_none& slicer_none::static_instance() {
     return dal::singleton<slicer_none>::instance();

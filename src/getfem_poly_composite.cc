@@ -140,8 +140,9 @@ namespace getfem
      All simplexes have the same orientation as the original simplex.
    */
   static void structured_mesh_for_simplex_(bgeot::pconvex_structure cvs, 
-					   bgeot::pgeometric_trans opt_gt, const std::vector<base_node> *opt_gt_pts,
-					   short_type k, pgetfem_mesh &pm) {
+				      bgeot::pgeometric_trans opt_gt,
+				      const std::vector<base_node> *opt_gt_pts,
+				      short_type k, pgetfem_mesh &pm) {
     scalar_type h = 1./k;
     switch (cvs->dim()) {
     case 1 :
@@ -393,6 +394,7 @@ namespace getfem
       smc.pm = new getfem_mesh();
       
       if (force_simplexification) {
+	cout << "cvr = " << int(cvr->structure()->dim()) << " : " << cvr->structure()->nb_points() << endl;
 	const bgeot::mesh_structure* splx_mesh = cvr->basic_convex_ref()->simplexified_convex();
 	/* splx_mesh is correctly oriented */
 	for (size_type ic=0; ic < splx_mesh->nb_convex(); ++ic) {

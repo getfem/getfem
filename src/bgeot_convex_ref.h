@@ -81,12 +81,17 @@ namespace bgeot {
        degree k, this is a pointer to the correspounding convex_ref of
        degree 1.
    */
+
+  class convex_of_reference;
+  typedef boost::intrusive_ptr<const convex_of_reference> pconvex_ref;
+  
+  
   class convex_of_reference : public dal::static_stored_object, 
 			      public convex<base_node> {
   protected :     
     std::vector<base_small_vector> normals_;
     mutable mesh_structure *psimplexified_convex;
-    convex_of_reference *basic_convex_ref_;
+    mutable const convex_of_reference *basic_convex_ref_;
   public :
     convex_of_reference() : convex<base_node>(), psimplexified_convex(0),
 			    basic_convex_ref_(0) {}
@@ -100,13 +105,12 @@ namespace bgeot {
        orientation.
     */
     const mesh_structure* simplexified_convex() const;
-    const convex_of_reference* basic_convex_ref() const
+    pconvex_ref basic_convex_ref() const
     { return basic_convex_ref_; }
-    void attach_basic_convex_ref(convex_of_reference* cvr)
-    { basic_convex_ref_ = cvr; }
+    void attach_basic_convex_ref(pconvex_ref cvr) const
+    { basic_convex_ref_ = cvr.get(); }
   };
 
-  typedef boost::intrusive_ptr<const convex_of_reference> pconvex_ref;
   
   /* these are the public functions for obtaining a convex of reference */
 

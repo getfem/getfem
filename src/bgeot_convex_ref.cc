@@ -76,7 +76,7 @@ namespace bgeot {
   /* should be called on the basic_convex_ref */
   const mesh_structure*
   convex_of_reference::simplexified_convex() const {    
-    if (psimplexified_convex == NULL) {
+    if (psimplexified_convex == 0) {
       psimplexified_convex = new mesh_structure();
       dal::singleton<cleanup_simplexified_convexes>::instance().push_back(psimplexified_convex);
       if (this != basic_convex_ref()) 
@@ -187,6 +187,9 @@ namespace bgeot {
     pconvex_ref p = new K_simplex_of_ref_(nc, K);
     dal::add_stored_object(new convex_of_reference_key(0, nc, K), p, 0,
 			   p->structure());
+    pconvex_ref p1 = simplex_of_reference(nc, 1);
+    p->attach_basic_convex_ref(p1);
+    if (p != p1) add_dependency(p, p1); 
     return p;
   }
 
@@ -260,6 +263,10 @@ namespace bgeot {
     dal::add_stored_object(new product_ref_key_(a, b), p, 0, a, b,
 			   convex_product_structure(a->structure(),
 						    b->structure()));
+    pconvex_ref p1 = convex_ref_product(a->basic_convex_ref(),
+					b->basic_convex_ref());
+    p->attach_basic_convex_ref(p1);
+    if (p != p1) add_dependency(p, p1); 
     return p;
   }
 
@@ -321,6 +328,7 @@ namespace bgeot {
   };
 
   pconvex_ref equilateral_simplex_of_reference(dim_type nc) {
+    if (nc <= 1) return simplex_of_reference(nc);
     dal::pstatic_stored_object o
       = dal::search_stored_object(convex_of_reference_key(1, nc));
     if (o) return dal::stored_cast<convex_of_reference>(o);

@@ -51,7 +51,7 @@ namespace bgeot {
   /// Pointer on a convex structure description. 
   typedef boost::intrusive_ptr<const convex_structure> pconvex_structure;
   ///
-  typedef std::vector<pconvex_structure>        convex_structure_faces_ct;
+  typedef std::vector<const convex_structure *> convex_structure_faces_ct;
   typedef std::vector<short_type>               convex_ind_ct;
   typedef dal::tab_ref_index_ref< convex_ind_ct::const_iterator,
 	         convex_ind_ct::const_iterator> ref_convex_ind_ct;
@@ -71,7 +71,7 @@ namespace bgeot {
       convex_structure_faces_ct  faces_struct;
       std::vector<convex_ind_ct> faces;
       convex_ind_ct              dir_points_;
-      pconvex_structure basic_pcvs;
+      const convex_structure *basic_pcvs;
       pconvex_structure prod_a, prod_b; /* only filled for product convex structures */
     public :
 
