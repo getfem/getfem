@@ -687,6 +687,8 @@ The integration methods are of two kinds. Exact integrations of polynomials and 
 }\\[0.5cm]
 where {\tt "name of method"} is a string to be choosen among the existing methods.
 
+The program \texttt{integration} located in the \texttt{tests} directory lists and checks the degree of each integration method.
+
 \subsection{Exact Integration methods}
 
 The list of available Exact integration methods is the following
@@ -917,7 +919,8 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{3cm}m{3cm}} x & y  \end{tab
 &&&{\tt \small "IM\_TRIANGLE(13)"}\cite{EncyclopCubature} \hspace{7em} \mbox{37 points, order 13}\hspace{7em}
 \end{tabular}
 
-Others methods: \texttt{IM_TRIANGLE(8)},\texttt{IM_TRIANGLE(9)},\texttt{IM_TRIANGLE(10)}
+Others methods are \texttt{IM\_TRIANGLE(8)} (16 points),\texttt{IM\_TRIANGLE(9)} (19 points),\texttt{IM\_TRIANGLE(10)} (25 points).
+
 \begin{tabular}{|m{2.5cm}|m{6cm}|m{1.2cm}|m{5.5cm}|}
   \hline& & &\\ 
   \includegraphics[width=2.5cm,angle=0]{getfemlist_intmethod_quad2.eps} & 
@@ -956,8 +959,8 @@ Others methods: \texttt{IM_TRIANGLE(8)},\texttt{IM_TRIANGLE(9)},\texttt{IM_TRIAN
   { \small
     \begin{tabular}{m{3cm}m{3cm}}
       1/2 & 1/2 \\ \\
-      1/2  & $1/2 \pm \sqrt{7/30}$ \\ \\
-      $1/2\pm\sqrt{3/20}$ & $1/2\pm\sqrt{3/20}$ 
+      $1/2 \pm \sqrt{7/30}$ & 1/2\\ \\
+      $1/2\pm\sqrt{1/12}$ & $1/2\pm\sqrt{3/20}$ 
     \end{tabular}
     }
   & 
@@ -969,7 +972,9 @@ Others methods: \texttt{IM_TRIANGLE(8)},\texttt{IM_TRIANGLE(9)},\texttt{IM_TRIAN
   & {\tt \small "IM\_QUAD(5)"} \hspace{9em} 7 points, order 5. \\ \hline
 \end{tabular}  
 
-Others methods: \texttt{IM_QUAD(7)}, \texttt{IM_QUAD(9)}, \texttt{IM_QUAD(17)}.
+Others methods: \texttt{IM\_QUAD(7)} (12 points), \texttt{IM\_QUAD(9)} (20 points), \texttt{IM\_QUAD(17)} (70 points). There is also the \texttt{IM\_GAUSS\_PARALLELEPIPED(n,k)} which is a direct product of 1D gauss integrations.
+
+\textbf{Important note:} do not forget that \texttt{IM\_QUAD(k)} is exact for polynomials up to degree $k$, and that a $Q_k$ polynomial has a degree of $2*k$. For example, \texttt{IM\_QUAD(7)} cannot integrate the product of two $Q_{2}$ polynomials. On the other hand, \texttt{IM\_GAUSS\_PARALLELEPIPED(2,4)} can integrate exactly that product\ldots
 
 \subsection{Gauss Integration methods on dimension 3}
 
@@ -1090,10 +1095,24 @@ graphic & coordinates \hspace{5em} \begin{tabular}{m{1.7cm}m{1.7cm}m{1.7cm}} x &
   \\ \hline
 \end{tabular}
 
+Others methods are:
+\begin{center}
+  \begin{tabular}{|lll|}
+    \hline name & convex type & nb of points\\
+    \hline \texttt{IM\_TETRAHEDRON(6)} & 3D simplex & 24\\
+    \texttt{IM\_TETRAHEDRON(8)} & 3D simplex & 43\\
+    \texttt{IM\_SIMPLEX4D(3)}   & 4D simplex & 6\\
+    \texttt{IM\_HEXAHEDRON(5)}  & 3D parallelepipeded & 14\\
+    \texttt{IM\_HEXAHEDRON(9)}  & 3D parallelepipeded & 58\\
+    \texttt{IM\_HEXAHEDRON(11)}  & 3D parallelepipeded & 90\\
+    \texttt{IM\_CUBE4D(5)}      & 4D parallelepipeded & 24\\
+    \texttt{IM\_CUBE4D(9)}      & 4D parallelepipeded & 145\\
+    \hline
+  \end{tabular}
+\end{center}
 \subsection{Direct product of integration methods}
+use {\tt "IM\_PRODUCT(IM1, IM2)"} ... for quadrilateral or prisms ... Consider using \texttt{IM\_GAUSS\_PARALLELEPIPED(2,k)}, which is an alias to \texttt{IM\_PRODUCT(IM\_GAUSS1D(2,k),IM\_GAUSS1D(2,k))} instead of the \texttt{IM\_QUAD} integrations.
 
-use {\tt "IM\_PRODUCT(IM1, IM2)"} ... for quadrilateral or prisms ...
- 
 to be described ...
 
 \subsection{Composite integration methods}
