@@ -585,7 +585,7 @@ namespace getfem
 	}
       }
       
-      gmm::lu_solve(M, F, U);
+      gmm::lu_solve(M, U, F);
 
       if (nc == 1)
 	for (size_type r = 0; r < R; ++r)

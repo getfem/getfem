@@ -149,7 +149,7 @@ namespace gmm {
   //
   template <class DenseMatrix, class VectorB, class VectorX, class Pvector>
   void lu_solve(const DenseMatrix &LU, const Pvector& pvector, 
-		const VectorB &b, VectorX &x) {
+		VectorX &x, const VectorB &b) {
     copy(b, x);
     /* use the permutation vector to modify the starting vector            */
     /*  to account for the permutations in LU.                             */
@@ -163,17 +163,17 @@ namespace gmm {
   }
 
   template <class DenseMatrix, class VectorB, class VectorX>
-  void lu_solve(const DenseMatrix &A, const VectorB &b, VectorX &x) {
+  void lu_solve(const DenseMatrix &A, VectorX &x, const VectorB &b) {
     DenseMatrix B(mat_nrows(A), mat_ncols(A));
     std::vector<size_type> ipvt(mat_nrows(A));
     gmm::copy(A, B);
     lu_factor(B, ipvt);
-    lu_solve(B, ipvt, b, x);
+    lu_solve(B, ipvt, x, b);
   }
   
   template <class DenseMatrix, class VectorB, class VectorX, class Pvector>
   void lu_solve_transposed(const DenseMatrix &LU, const Pvector& pvector, 
-			   const VectorB &b, VectorX &x) {
+			   VectorX &x, const VectorB &b) {
     copy(b, x);
     /* use the permutation vector to modify the starting vector            */
     /*  to account for the permutations in LU.                             */
@@ -198,7 +198,7 @@ namespace gmm {
     std::vector<value_type> result(pvector.size());
     for(size_type i = 0; i < pvector.size(); ++i) {
       tmp[i] = 1.0;
-      lu_solve(LU, pvector, tmp, result);
+      lu_solve(LU, pvector, result, tmp);
       copy(result, mat_col(AInv, i));
       tmp[i] = 0.0;
     }
@@ -212,7 +212,7 @@ namespace gmm {
     std::vector<value_type> result(pvector.size());
     for(size_type i = 0; i < pvector.size(); ++i) {
       tmp[i] = 1.0;
-      lu_solve_transposed(LU, pvector, tmp, result);
+      lu_solve_transposed(LU, pvector, result, tmp);
       copy(result, mat_row(AInv, i));
       tmp[i] = 0.0;
     }
