@@ -116,7 +116,7 @@ namespace getfem
       
       nbf = pgt->structure()->nb_faces();
       nhess = 1;
-      nint = is_ppi ? nbf + 1 : pai->nb_points();
+      nint = (is_ppi || pgt->is_linear()) ? nbf + 1 : pai->nb_points();
 
       mat_elem_type::const_iterator it = ls.pmt->begin(), ite = ls.pmt->end();
       
@@ -143,21 +143,23 @@ namespace getfem
 	}
       }
       
-      mref.resize(nhess * nint * 3);
-      mref_count.resize(nhess * nint * 3);
-      mref_coeff.resize(nhess * nint * 3);
       bgeot::multi_index mi(ls.pmt->mi.size()), sizes = ls.pmt->mi;
       bgeot::multi_index::iterator mit = sizes.begin(), mite = sizes.end();
+      base_tensor aux(sizes);
+      std::fill(aux.begin(), aux.end(), 0.0);
+      mref.resize(nhess * nint * 3, aux);
+      mref_count.resize(nhess * nint * 3);
+      mref_coeff.resize(nhess * nint * 3, 1.0);
       for (k = 1; mit != mite; ++mit, ++k) k *= *mit;
       if (k * nhess * nint * 3 > 1000000)
 	cerr << "Warning, very large elementary computations.\n"
 	     << "Be sure you need to compute this elementary matrix.\n"
 	     << "(sizes = " << sizes << " times " << nhess*nint*3 << " )\n";
-      std::fill(mref.begin(), mref.end(), base_tensor(sizes));
+      //std::fill(mref.begin(), mref.end(), base_tensor(sizes));
       
-      for (k = 0; k < nhess; ++k)
-	for (size_type j = 0; j < nint; ++j)
-	  mref[indcomp(j, k, 0)] = base_tensor(sizes);
+      // for (k = 0; k < nhess; ++k)
+      //	for (size_type j = 0; j < nint; ++j)
+      // mref[indcomp(j, k, 0)] = base_tensor(sizes);
       
       if (is_ppi)
       {
@@ -194,7 +196,7 @@ namespace getfem
 	// cout << "mref[indcomp(1, 0, 0)] = " << mref[indcomp(1, 0, 0)]<< endl;
       }
       else
-      { // very inefficient ...
+      { // very very inefficient ...
 	scalar_type V;
 	pfp.resize(ls.pmt->size());
 	it = ls.pmt->begin(), ite = ls.pmt->end();
@@ -204,8 +206,13 @@ namespace getfem
 
 	for (;!mi.finished(sizes);mi.incrementation(sizes)) {
 	  for (short_type hi = 0; hi < nhess; ++hi) {
-	    for (size_type ip = 0; ip < nint; ++ip) {
-	      V = 1.0; mref_coeff[indcomp(ip, hi, 0)] = pai->coeff(ip);
+	    size_type ind_linear_case = 0, nb_pt_linear_case = pai->nb_points_on_convex();
+	    for (size_type ip = 0; ip < pai->nb_points(); ++ip) {
+	      while (ip == nb_pt_linear_case && ind_linear_case < pgt->structure()->nb_faces()) {
+		nb_pt_linear_case += pai->nb_points_on_face(ind_linear_case); ind_linear_case++;
+	      }
+	      V = 1.0;
+	      if (!(pgt->is_linear())) mref_coeff[indcomp(ip, hi, 0)] = pai->coeff(ip);
 	      it = ls.pmt->begin(), ite = ls.pmt->end();
 	      mit = mi.begin();
 	      short_type hc = 1;
@@ -237,34 +244,38 @@ namespace getfem
 		  hc *= 2; break;
 		}
 	      }
-	      mref[indcomp(ip, hi, 0)](mi) = V;
+	      if (pgt->is_linear()) {
+		mref[indcomp(ind_linear_case, 0, 0)](mi) += V * pai->coeff(ip);
+	      }
+	      else
+		mref[indcomp(ip, hi, 0)](mi) = V;
 	    }
 	  }
 	  
 	}
 	// If the geometric transformation is linear, it is possible to
 	// precompute the integrals
-	if (pgt->is_linear())
-	{
-	  mref[indcomp(0, 0, 0)] *= pai->coeff(0);
-	  size_type j = 0;
-	  for (size_type i = 1; i < pai->nb_points_on_convex(); ++i)
-	    mref[indcomp(0, 0, 0)].addmul(pai->coeff(i),
-					  mref[indcomp(++j, 0, 0)]);
-	  for (short_type f = 0; f < pgt->structure()->nb_faces(); ++f) {
-	    mref[indcomp(f+1, 0, 0)] = mref[indcomp(++j, 0, 0)];
-	    mref[indcomp(f+1, 0, 0)] *= pai->coeff_on_face(f, 0);
-	    for (size_type i = 1; i < pai->nb_points_on_face(f); ++i)
-	      mref[indcomp(f+1, 0, 0)].addmul(pai->coeff_on_face(f, i),
-					      mref[indcomp(++j, 0, 0)]);
-	  }
-	  nint = nbf + 1;
-	  mref.resize(nint * 3);
-	  mref_count.resize(nint * 3);
-	  mref_coeff.resize(nint * 3);
+// 	if (pgt->is_linear())
+// 	{
+// 	  mref[indcomp(0, 0, 0)] *= pai->coeff(0);
+// 	  size_type j = 0;
+// 	  for (size_type i = 1; i < pai->nb_points_on_convex(); ++i)
+// 	    mref[indcomp(0, 0, 0)].addmul(pai->coeff(i),
+// 					  mref[indcomp(++j, 0, 0)]);
+// 	  for (short_type f = 0; f < pgt->structure()->nb_faces(); ++f) {
+// 	    mref[indcomp(f+1, 0, 0)] = mref[indcomp(++j, 0, 0)];
+// 	    mref[indcomp(f+1, 0, 0)] *= pai->coeff_on_face(f, 0);
+// 	    for (size_type i = 1; i < pai->nb_points_on_face(f); ++i)
+// 	      mref[indcomp(f+1, 0, 0)].addmul(pai->coeff_on_face(f, i),
+// 					      mref[indcomp(++j, 0, 0)]);
+// 	  }
+// 	  nint = nbf + 1;
+// 	  mref.resize(nint * 3);
+// 	  mref_count.resize(nint * 3);
+// 	  mref_coeff.resize(nint * 3);
 
-	  // cout << "mref[0] = " << mref[0] << endl;
-	}
+// 	  // cout << "mref[0] = " << mref[0] << endl;
+// 	}
       }
 
       indv.resize(nbf+1);
