@@ -295,7 +295,7 @@ void lap_pb::init(void)
   if (pfprinc->is_polynomial()) {
     cout << "basis of the principal finite element method : " << endl;
     for (size_type l = 0; l < pfprinc->nb_dof(); ++l) {
-      cout << "base " << l << " : " << (((const getfem::ppolyfem)(pfprinc))->base())[l] << endl;
+      cout << "base " << l << " : " << (((getfem::ppolyfem)(pfprinc))->base())[l] << endl;
     }
   }
   cout << "Selecting Neumann and Dirichlet boundaries\n";
