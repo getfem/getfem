@@ -14,6 +14,7 @@ print TMPF "INCLINE = 0.0;\n";
 print TMPF "MESH_NOISE = 0.0;\n";
 print TMPF "FT = 0.1;\n";
 print TMPF "MESH_TYPE = 'GT_PK(2,1)';\n";
+print TMPF "MIXED_PRESSURE=0;\n";
 print TMPF "INTEGRATION = 'IM_TRIANGLE(4)';\n";
 print TMPF "NX = 5;\n";
 print TMPF "RESIDU = 1E-9;\n";

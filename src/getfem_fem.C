@@ -953,22 +953,26 @@ namespace getfem
   struct PK_discont_ : public PK_fem_ {
   public :
     
-    PK_discont_(dim_type nc, short_type k, scalar_type alpha=0.) : PK_fem_(nc, k) {
+    PK_discont_(dim_type nc, short_type k, scalar_type alpha=0.)
+      : PK_fem_(nc, k) {
       std::fill(dof_types_.begin(), dof_types_.end(),
 		lagrange_nonconforming_dof(nc));
-      base_node G = cv_node.points()[0];
-      for (size_type i=0; i < cv_node.nb_points(); ++i) G += cv_node.points()[i];
-      G /= scalar_type(cv_node.nb_points());
+
+      if (alpha != 0.) {
+	base_node G = 
+	  dal::mean_value(cv_node.points().begin(), cv_node.points().end());
       for (size_type i=0; i < cv_node.nb_points(); ++i) 
 	cv_node.points()[i] = (1-alpha)*cv_node.points()[i] + alpha*G;
-      //cout << "creation of PK_discont(" << int(nc) << "," << k << "," << alpha << "\n";
-      for (size_type d = 0; d < nc; ++d) {
-        base_poly S(1,2); 
-        S[0] = -alpha * G[d] / (1-alpha);
-        S[1] = 1. / (1-alpha);
-        for (size_type j=0; j < nb_base(); ++j) {
-          base_[j] = bgeot::poly_substitute_var(base_[j],S,d);
-        }
+      // cout << "creation of PK_discont(" << int(nc) << "," << k
+      //      << "," << alpha << ")\n";
+	for (size_type d = 0; d < nc; ++d) {
+	  base_poly S(1,2); 
+	  S[0] = -alpha * G[d] / (1-alpha);
+	  S[1] = 1. / (1-alpha);
+	  for (size_type j=0; j < nb_base(); ++j) {
+	    base_[j] = bgeot::poly_substitute_var(base_[j],S,d);
+	  }
+	}
       }
       /*for (size_type j=0; j < nb_base(); ++j) cout << " base[" << j << "]=" << base_[j] << "\n";
       for (size_type i=0; i < cv_node.nb_points(); ++i) {

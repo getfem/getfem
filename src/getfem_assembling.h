@@ -168,6 +168,28 @@ namespace getfem
     else assem.boundary_assembly(boundary);
   }
 
+  /** 
+   *  generic mass matrix assembly with an additional parameter
+   *  (on the whole mesh or on the specified boundary) 
+   */
+  template<typename MAT, typename VECT>
+  void asm_mass_matrix(MAT &M, const mesh_fem &mf_u, const mesh_fem &mfdata,
+		       const VECT &F, size_type boundary=size_type(-1)) {
+    generic_assembly assem;
+    if (mf_u.get_qdim() == 1)
+      assem.set("F=data(#2);"
+		"M(#1,#1)+=sym(comp(Base(#1).Base(#1).Base(#2))(:,:,i).F(i))");
+    else
+      assem.set("F=data(#2);"
+	 "M(#1,#1)+=sym(comp(vBase(#1).vBase(#1).Base(#2))(:,i,:,i,j).F(j));");
+    assem.push_mf(mf_u);
+    assem.push_mf(mfdata);
+    assem.push_data(F);
+    assem.push_mat(M);
+    if (boundary==size_type(-1)) 
+      assem.volumic_assembly();
+    else assem.boundary_assembly(boundary);
+  }
 
   /*  source term (for both volumic sources and boundary (neumann) sources.
    *  real version.

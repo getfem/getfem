@@ -202,9 +202,12 @@ namespace getfem {
       size_type nb_c = mf_c.nb_dof_of_element(cv);
       if (child(0).tensor().dim(0) != nb_r ||
 	  child(0).tensor().dim(1) != nb_c) {
-	ASM_THROW_TENSOR_ERROR("size mismatch for sparse matrix output: tensor dimension is " << 
-			       child(0).ranges() << ", while the elementary matrix for convex " << cv << 
-			       " should have " << nb_r << "x" << nb_c << " elements");
+	ASM_THROW_TENSOR_ERROR("size mismatch for sparse matrix output:"
+			       " tensor dimension is " << 
+			       child(0).ranges()
+			       << ", while the elementary matrix for convex "
+			       << cv << " should have " << nb_r << "x"
+			       << nb_c << " elements");
       }
       std::vector<size_type> cvdof_r(nb_r);
       std::vector<size_type> cvdof_c(nb_c);

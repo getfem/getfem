@@ -1154,18 +1154,32 @@ The following additional methods are available on this brick:
   model state variable MS and put it in the vector V. \hline
 \end{ctableau}
 
-\subsection{linear incompressibility brick}
-This brick allows to add a linear incompressibility condition in a problem of type\\
-$$ \mbox{div}(u) = 0, $$
+\subsection{linear incompressibility (or nearly incompressibility) brick}
+This brick allows to add a linear incompressibility condition (or a nearly incompressible condition) in a problem of type\\
+$$ \mbox{div}(u) = 0,\ \ (or \mbox{div}(u) = \varepsilon p)$$
 
 For this, multipliers representing the pressure are introduced in a mixed formulation.
 
-The constructor is:
+The constructor for the incompessibility condition is:
 \begin{alltt}
   getfem::mdbrick_linear_incomp<MODEL_STATE> brick(problem, mf_p);
 \end{alltt}
 
 where  \cpp{problem} is the problem on which the incompressibility condition is applied, \cpp{mf_p} is the finite element description for the pressure (be aware that the LBB inf-sup condition has to be satisfied between the \cpp{main_mesh_fem()} and \cpp{mf_p}.
+
+For the nearly incompressibility condition, the constructor is:
+\begin{alltt}
+  getfem::mdbrick_linear_incomp<MODEL_STATE> brick(problem, mf_p, mf_data, epsilon);
+\end{alltt}
+where \cpp{mf_data} is the finite element description on which the penalization parameter is descibed and \cpp{epsilon} is either a (small) real or a vector of type \cpp{gmm::vector<scalar_type>}. In nearly incompressible homogeneous linearized elasticity, one has $\varepsilon = 1 / \lambda$ where $\lambda$ is one of the Lam\'e coefficient.\\
+
+The following additional methods are available on this brick:
+\begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
+  \cpp{brick.set_coeff(epsilon)} & with \cpp{epsilon} either a real or
+  a vector of type \cpp{MODEL_STATE::vector_type}, set the penalization
+  parameter in the nearly incompressible case.  \hline
+\end{ctableau}
+~\\
 
 For instance, the following program defines a Stokes problem with a source term and an homogeneous Dirichlet condition on boundary 0. \cpp{mf_u}, \cpp{mf_data} and \cpp{mf_p} have to be valid finite element description on the same mesh.
 
@@ -1194,6 +1208,7 @@ For instance, the following program defines a Stokes problem with a source term 
   stokes.get_solution(MS, U);
 \end{cppcode}
 
+A example for a nearly incompressibility condition can be found in the program \cpp{elastostatic.C} in tests directory.
 
 \subsection{Small displacement plasticity brick}
 This brick modelizes small-displacement quasi-static plasticity problems. It is defined in \cpp{getfem_plasticity.h}

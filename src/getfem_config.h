@@ -35,6 +35,7 @@
 
 #include <bgeot_tensor.h>
 #include <bgeot_poly.h>
+#include <getfem_superlu.h>
 
 /// GEneric Tool for Finite Element Methods.
 namespace getfem

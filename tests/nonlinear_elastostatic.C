@@ -368,7 +368,9 @@ bool elastostatic_problem::solve(plain_vector &U) {
 	  }
 	  sigma2(i,j) -= sigma1(i,j);
 	  if (dal::abs(dsigma(i,j) - sigma2(i,j)) > 1e-13) {
-	    cout << "erreur derivees i=" << i << ", j=" << j << ", dsigma=" << dsigma(i,j) << ", var sigma = " << sigma2(i,j) << "\n";
+	    cout << "erreur derivees i=" << i << ", j=" << j
+		 << ", dsigma=" << dsigma(i,j)
+		 << ", var sigma = " << sigma2(i,j) << "\n";
 	  }
 	}
       }
@@ -453,8 +455,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
     iter = gmm::iteration(residu, PARAM.int_value("NOISY"), maxit ? maxit : 40000);
     cout << "|U0| = " << gmm::vect_norm2(MS.state()) << "\n";
 
-    // getfem::standard_solve(MS, final_model, iter);
-    getfem::nl_solve(MS, final_model, iter);
+    getfem::standard_solve(MS, final_model, iter);
+    // getfem::nl_solve(MS, final_model, iter);
 
     pl->reset_unvalid_flag();
     final_model.compute_residu(MS);

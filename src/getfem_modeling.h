@@ -77,6 +77,7 @@
 #include <gmm_precond_ilu.h>
 #include <gmm_precond_ilut.h>
 #include <gmm_superlu_interface.h>
+#include <gmm_dense_qr.h>
 
 namespace getfem {
 
@@ -149,6 +150,7 @@ namespace getfem {
 
   template<typename T_MATRIX, typename C_MATRIX, typename VECTOR>
   void model_state<T_MATRIX, C_MATRIX, VECTOR>::compute_reduced_system() {
+
     if (gmm::mat_nrows(constraints_matrix()) == 0) return;
     size_type ndof = gmm::mat_ncols(tangent_matrix());
     gmm::resize(NS, ndof, ndof);
@@ -832,15 +834,25 @@ namespace getfem {
     typedef typename gmm::number_traits<value_type>::magnitude_type R;
 
     mdbrick_abstract<MODEL_STATE> &sub_problem;
-    mesh_fem &mf_p;
-    T_MATRIX B;
+    mesh_fem &mf_p, &mf_data;
+    T_MATRIX B, M;
+    bool penalized, homogeneous;
+    VECTOR epsilon_; // penalization coefficient if any.
+   
 
     void compute_B() {
       mesh_fem &mf_u = sub_problem.main_mesh_fem();
       size_type nd = mf_u.nb_dof(), ndd = mf_p.nb_dof();
-      gmm::clear(B);
-      gmm::resize(B, ndd, nd);
+      gmm::clear(B); gmm::resize(B, ndd, nd);
       asm_stokes_B(B, mf_u, mf_p);
+      if (penalized) {
+	VECTOR epsilon(mf_data.nb_dof());
+	if (homogeneous) std::fill(epsilon.begin(), epsilon.end(),epsilon_[0]);
+	else gmm::copy(epsilon_, epsilon);
+	gmm::clear(M); gmm::resize(M, ndd, ndd);
+	asm_mass_matrix(M, mf_p, mf_data, epsilon);
+	gmm::scale(M, value_type(-1));
+      }
       this->computed();
     }
 
@@ -876,7 +888,10 @@ namespace getfem {
 	gmm::copy(B, gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBJ));
 	gmm::copy(gmm::transposed(B),
 		  gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBI));
-	gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBI));
+	if (penalized)
+	  gmm::copy(M, gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBI));
+	else
+	  gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBI));
 	this->transferred();
       }
     }
@@ -896,21 +911,53 @@ namespace getfem {
     virtual mesh_fem &main_mesh_fem(void)
     { return sub_problem.main_mesh_fem(); }
 
-    // Constructor which does not define the rhs
+
+     void set_coeff(value_type epsiloni) {
+      homogeneous = true;
+      gmm::resize(epsilon_, 1); epsilon_[0] = epsiloni;
+      this->force_recompute();
+    }
+
+    void set_coeff(const VECTOR &epsiloni) {
+      homogeneous = false;
+      gmm::resize(epsilon_, mf_data.nb_dof()); gmm::copy(epsiloni, epsilon_);
+      this->force_recompute();
+    }
+
+    // Constructor for the incompressibility condition
     mdbrick_linear_incomp(mdbrick_abstract<MODEL_STATE> &problem,
 		      mesh_fem &mf_p_)
-      : sub_problem(problem), mf_p(mf_p_) {
+      : sub_problem(problem), mf_p(mf_p_), mf_data(mf_p_), penalized(false) {
       this->add_dependency(mf_p);
       this->add_dependency(sub_problem.main_mesh_fem());
       compute_B();
     }
+
+    // Constructor for the nearly incompressibility condition
+    mdbrick_linear_incomp(mdbrick_abstract<MODEL_STATE> &problem,
+		      mesh_fem &mf_p_, mesh_fem &mf_data_, value_type epsilon)
+      : sub_problem(problem), mf_p(mf_p_), mf_data(mf_data_), penalized(true) {
+      this->add_dependency(mf_p);
+      this->add_dependency(sub_problem.main_mesh_fem());
+      set_coeff(epsilon);
+      compute_B();
+    }
+    mdbrick_linear_incomp(mdbrick_abstract<MODEL_STATE> &problem,
+			  mesh_fem &mf_p_, mesh_fem &mf_data_,
+			  const VECTOR& epsilon)
+      : sub_problem(problem), mf_p(mf_p_), mf_data(mf_data_), penalized(true) {
+      this->add_dependency(mf_p);
+      this->add_dependency(sub_problem.main_mesh_fem());
+      set_coeff(epsilon);
+      compute_B();
+    }
+
   };
 
 
   /* ******************************************************************** */
   /*		Dirichlet condition bricks.                               */
   /* ******************************************************************** */
-  // TODO : Version with local matrices on the boundary
 
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_Dirichlet : public mdbrick_abstract<MODEL_STATE>  {
@@ -1121,6 +1168,8 @@ namespace getfem {
   /*		Generic solvers.                                          */
   /* ******************************************************************** */
 
+  bool Esort(double x, double y) { return gmm::abs(x) < gmm::abs(y); }
+
   // faire une version avec using_cg, using_gmres ... (appelée par celle-ci)
   template <typename MODEL_STATE> void
   standard_solve(MODEL_STATE &MS, mdbrick_abstract<MODEL_STATE> &problem,
@@ -1136,10 +1185,11 @@ namespace getfem {
     //        max residu.
 
     size_type ndof = problem.nb_dof();
+    size_type dim = problem.main_mesh_fem().linked_mesh().dim();
 
     bool is_linear = problem.is_linear();
-    mtype alpha, alpha_min=mtype(1)/mtype(100000), alpha_mult=mtype(3)/mtype(4);
-    mtype alpha_max_ratio(1);
+    mtype alpha, alpha_min=mtype(1)/mtype(100000);
+    mtype alpha_mult=mtype(3)/mtype(4), alpha_max_ratio(1);
     dal::bit_vector mixvar;
     gmm::iteration iter_linsolv0 = iter;
     iter_linsolv0.set_maxiter(10000);
@@ -1159,54 +1209,70 @@ namespace getfem {
 
     while (is_linear || !iter.finished(act_res)) {
     
+      size_type nreddof = gmm::vect_size(MS.reduced_residu());
       gmm::iteration iter_linsolv = iter_linsolv0;
-      VECTOR d(ndof), dr(gmm::vect_size(MS.reduced_residu()));
+      VECTOR d(ndof), dr(nreddof);
 
       if (!(iter.first())) {
 	problem.compute_tangent_matrix(MS);
 	MS.compute_reduced_system();
       }
+
 //       if (iter.get_noisy())
 // 	cout << "tangent matrix is "
 // 	   << (gmm::is_symmetric(MS.tangent_matrix(),
 //             1E-6 * gmm::mat_maxnorm(MS.tangent_matrix())) ? "" : "not ")
 // 	   <<  "symmetric. ";
 
-#ifdef GMM_USES_SUPERLU
-	  
-      double rcond;
-      SuperLU_solve(MS.reduced_tangent_matrix(), dr,
-		    gmm::scaled(MS.reduced_residu(), value_type(-1)),
-		    rcond);
-#else
-      if (problem.is_coercive()) {
-	gmm::ildlt_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
-	gmm::cg(MS.reduced_tangent_matrix(), dr, 
-		gmm::scaled(MS.reduced_residu(), value_type(-1)),
-		P, iter_linsolv);
-	if (!iter_linsolv.converged()) DAL_WARNING(2,"cg did not converge!");
-      } else {
+//       gmm::dense_matrix<value_type> MM(nreddof, nreddof);
+//       std::vector<value_type> eigval(nreddof);
+//       gmm::copy(MS.reduced_tangent_matrix(), MM);
+//       gmm::symmetric_qr_algorithm(MM, eigval);
+//       std::sort(eigval.begin(), eigval.end(), Esort);
+//       cout << "eival = " << eigval << endl;
+
+      if (iter.get_noisy()) {
 	problem.mixed_variables(mixvar);
-	if (mixvar.card() == 0) {
-	  gmm::ilu_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
-	  
-	  gmm::gmres(MS.reduced_tangent_matrix(), dr, 
-		     gmm::scaled(MS.reduced_residu(),  value_type(-1)), P,
-		     300, iter_linsolv);
-	}
-	else {
-	  if (iter.get_noisy())
-	    cout << "there is " << mixvar.card() << " mixed variables\n";
-	  // gmm::ilut_precond<T_MATRIX> P(MS.reduced_tangent_matrix(),100,1E-10);
-	  gmm::ilu_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
-	  // gmm::identity_matrix P;
-	  gmm::gmres(MS.reduced_tangent_matrix(), dr, 
-		     gmm::scaled(MS.reduced_residu(),  value_type(-1)),
-		     P, 300, iter_linsolv);
-	}
-	if (!iter_linsolv.converged()) DAL_WARNING(2,"gmres did not converge!");
+	cout << "there is " << mixvar.card() << " mixed variables\n";
       }
-#endif
+
+      // if (0) {
+      if ((ndof < 200000 && dim <= 2) || (ndof < 10000 && dim <= 3)
+       || (ndof < 1000)) {
+	
+	// cout << "M = " << MS.reduced_tangent_matrix() << endl;
+	// cout << "L = " << MS.reduced_residu() << endl;
+	double rcond;
+	SuperLU_solve(MS.reduced_tangent_matrix(), dr,
+		      gmm::scaled(MS.reduced_residu(), value_type(-1)),
+		      rcond);
+	cout << "condition number: " << 1.0/rcond << endl;
+      }
+      else {
+	if (problem.is_coercive()) {
+	  gmm::ildlt_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
+	  gmm::cg(MS.reduced_tangent_matrix(), dr, 
+		  gmm::scaled(MS.reduced_residu(), value_type(-1)),
+		  P, iter_linsolv);
+	  if (!iter_linsolv.converged()) DAL_WARNING(2,"cg did not converge!");
+	} else {
+	  if (mixvar.card() == 0) {
+	    gmm::ilu_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
+	    
+	    gmm::gmres(MS.reduced_tangent_matrix(), dr, 
+		       gmm::scaled(MS.reduced_residu(),  value_type(-1)), P,
+		       300, iter_linsolv);
+	  }
+	  else {
+	    gmm::ilu_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
+	    // gmm::identity_matrix P;
+	    gmm::gmres(MS.reduced_tangent_matrix(), dr, 
+		       gmm::scaled(MS.reduced_residu(),  value_type(-1)),
+		       P, 300, iter_linsolv);
+	  }
+	  if (!iter_linsolv.converged()) DAL_WARNING(2,"gmres did not converge!");
+	}
+      }
       MS.unreduced_solution(dr,d);
 
       if (is_linear) {

@@ -57,11 +57,12 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 /**************************************************************************/
 
 gmm::row_matrix<base_small_vector> sol_K;
-scalar_type sol_lambda, sol_mu;
+static scalar_type sol_lambda, sol_mu, alph = 0.3;
 
 base_small_vector sol_u(const base_node &x) {
   int N = x.size(); base_small_vector res(N);
-  for (int i = 0; i < N; ++i) res[i] = sin(gmm::vect_sp(sol_K.row(i), x));
+  for (int i = 0; i < N; ++i)
+    res[i] = alph * sin(gmm::vect_sp(sol_K.row(i), x));
   return res;
 }
 
@@ -69,10 +70,10 @@ base_small_vector sol_f(const base_node &x) {
   int N = x.size();
   base_small_vector res(N);
   for (int i = 0; i < N; i++) {
-    res[i] = ( sol_mu * gmm::vect_sp(sol_K.row(i), sol_K.row(i)) )
+    res[i] = alph * ( sol_mu * gmm::vect_sp(sol_K.row(i), sol_K.row(i)) )
                   * sin(gmm::vect_sp(sol_K.row(i), x));
     for (int j = 0; j < N; j++)
-      res[i] += ( (sol_lambda + sol_mu) * sol_K(j,j) * sol_K(j,i))
+      res[i] += alph * ( (sol_lambda + sol_mu) * sol_K(j,j) * sol_K(j,i))
 	          * sin(gmm::vect_sp(sol_K.row(j), x));
   }
   return res;
@@ -83,13 +84,13 @@ base_matrix sol_sigma(const base_node &x) {
   base_matrix res(N,N);
   for (int i = 0; i < N; i++)
     for (int j = 0; j <= i; j++) {
-      res(j,i) = res(i,j) = sol_mu *
+      res(j,i) = res(i,j) = alph * sol_mu *
 	( sol_K(i,j) * cos(gmm::vect_sp(sol_K.row(i), x))
        +  sol_K(j,i) * cos(gmm::vect_sp(sol_K.row(j), x))
 	);
       if (i == j)
 	for (int k = 0; k < N; k++)
-	  res(i,j) += sol_lambda * sol_K(k,k)
+	  res(i,j) += alph * sol_lambda * sol_K(k,k)
 	                         * cos(gmm::vect_sp(sol_K.row(k), x));
     }
   return res;
@@ -104,10 +105,12 @@ struct elastostatic_problem {
   getfem::getfem_mesh mesh;  /* the mesh */
   getfem::mesh_fem mf_u;     /* main mesh_fem, for the elastostatic solution */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
+  getfem::mesh_fem mf_p;     /* mesh_fem for the pressure for mixed form     */
   getfem::mesh_fem mf_coef;  /* mesh_fem used to represent pde coefficients  */
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
 
   scalar_type residu;        /* max residu for the iterative solvers         */
+  bool mixed_pressure;
 
   std::string datafilename;
   ftool::md_param PARAM;
@@ -115,7 +118,8 @@ struct elastostatic_problem {
   bool solve(plain_vector &U);
   void init(void);
   void compute_error(plain_vector &U);
-  elastostatic_problem(void) : mf_u(mesh), mf_rhs(mesh), mf_coef(mesh) {}
+  elastostatic_problem(void) : mf_u(mesh), mf_rhs(mesh), mf_p(mesh),
+			       mf_coef(mesh) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
@@ -150,6 +154,7 @@ void elastostatic_problem::init(void) {
   /* scale the unit mesh to [LX,LY,..] and incline it */
   mesh.transformation(M);
 
+
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   scalar_type FT = PARAM.real_value("FT", "parameter for exact solution");
   residu = PARAM.real_value("RESIDU"); if (residu == 0.) residu = 1e-10;
@@ -170,6 +175,14 @@ void elastostatic_problem::init(void) {
     getfem::int_method_descriptor(INTEGRATION);
 
   mf_u.set_finite_element(mesh.convex_index(), pf_u, ppi);
+  
+  mixed_pressure =
+    (PARAM.int_value("MIXED_PRESSURE","Mixed version or not.") != 0);
+  if (mixed_pressure) {
+    const char *FEM_TYPE_P  = PARAM.string_value("FEM_TYPE_P","FEM name P");
+    mf_p.set_finite_element(mesh.convex_index(),
+			    getfem::fem_descriptor(FEM_TYPE_P), ppi);
+  }
 
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
@@ -202,7 +215,7 @@ void elastostatic_problem::init(void) {
     assert(it->f != size_type(-1));
     base_node un = mesh.normal_of_face_of_convex(it->cv, it->f);
     un /= gmm::vect_norm2(un);
-    if (dal::abs(un[N-1] - 1.0) < 1.0E-7) { // new Neumann face
+    if (dal::abs(un[N-1] - 1.0) >= 1.0E-7) { // new Neumann face
       mf_u.add_boundary_elt(NEUMANN_BOUNDARY_NUM, it->cv, it->f);
     } else {
       mf_u.add_boundary_elt(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
@@ -235,9 +248,17 @@ bool elastostatic_problem::solve(plain_vector &U) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   size_type N = mesh.dim();
 
+  if (mixed_pressure) cout << "Number of dof for P: " << mf_p.nb_dof() << endl;
+  cout << "Number of dof for u: " << mf_u.nb_dof() << endl;
+
   // Linearized elasticity brick.
   getfem::mdbrick_isotropic_linearized_elasticity<>
-    ELAS(mf_u, mf_coef, lambda, mu);
+    ELAS(mf_u, mf_coef, mixed_pressure ? 0.0 : lambda, mu);
+
+  getfem::mdbrick_abstract<> *pINCOMP = &ELAS;
+  if (mixed_pressure)
+    pINCOMP = new getfem::mdbrick_linear_incomp<>(ELAS, mf_p, mf_coef,
+						  1.0/lambda);
   
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs * N);
@@ -246,7 +267,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
 		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
   
   // Volumic source term brick.
-  getfem::mdbrick_source_term<> VOL_F(ELAS, mf_rhs, F);
+  getfem::mdbrick_source_term<> VOL_F(*pINCOMP, mf_rhs, F);
 
   // Defining the Neumann condition right hand side.
   base_small_vector un(N), v(N);
@@ -280,7 +301,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
 					  F, DIRICHLET_BOUNDARY_NUM);
 
   // Generic solve.
-  cout << "Number of variables : " << final_model.nb_dof() << endl;
+  cout << "Total number of variables : " << final_model.nb_dof() << endl;
   getfem::standard_model_state MS(final_model);
   gmm::iteration iter(residu, 1, 40000);
   getfem::standard_solve(MS, final_model, iter);
