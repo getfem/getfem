@@ -137,7 +137,7 @@ namespace getfem
     bgeot::pconvex_ref cvr; // reference element.
     dim_type ntarget_dim;
     bool is_equiv, is_lag, is_pol, do_grad;
-    short_type es_degree;
+    short_type es_degree, hier_raff;
     
   public :
     /// Number of degrees of freedom.
@@ -151,6 +151,7 @@ namespace getfem
     /// Gives the array of pointer on dof description.
     const std::vector<pdof_description> &dof_types(void) const 
       { return _dof_types; }
+    short_type hierarchical_raff(void) const { return hier_raff; }
     /// dimension of the reference element.
     dim_type dim(void) const { return cvr->structure()->dim(); }
     /// dimension of the target space.
@@ -230,7 +231,7 @@ namespace getfem
 
     virtual_fem(void) { 
       ntarget_dim = 1; is_equiv = is_pol = is_lag = false;
-      pspt_valid = false; do_grad = true;
+      pspt_valid = false; do_grad = true; hier_raff = 0;
     }
 
     void add_node(const pdof_description &d, const base_node &pt) ;
@@ -251,6 +252,7 @@ namespace getfem
       is_pol = f.is_pol;
       do_grad = f.do_grad;
       es_degree = f.es_degree;
+      hier_raff = f.hier_raff;
       return *this;
     }
     virtual_fem(const virtual_fem &f) { *this = f; }
@@ -401,20 +403,29 @@ namespace getfem
 
   pfem fem_descriptor(std::string name);
   /*  List of elements :
-   *  "FEM_PK(N,K)" classical Lagrange element PK on a simplex
-   *  "FEM_PK_DISCONTINUOUS(N,K)" discontinuous Lagrange element PK on simplex
-   *  "FEM_QK(N,K)" classical Lagrange element QK on a parellepiped
-   *  "FEM_PK_PRISM(N,K)" classical Lagrange element PK on a prism
-   *  "FEM_PK_WITH_CUBIC_BUBBLE(N,K)" classical Lagrange element PK on a
-   *                      simplex with an additional volumic bubble function.
-   *  "FEM_PRODUCT(FEM1,FEM2)" tensorial product of two polynomial elements
-   *  "FEM_P1_NONCONFORMING" Nonconforming P1 method on a triangle.
-   *  "FEM_P1_BUBBLE_FACE(N)" P1 methd on a simplex with an additional bubble
-   *                       function on face 0.
-   *  "FEM_P1_BUBBLE_FACE_LAG" P1 methd on a simplex with an additional
-   *                           lagrange dof on face 0.   
-   *  "FEM_HERMITE_SEGMENT" Hermite element on the segment
-   *  
+   *  "FEM_PK(N,K)"                      : classical Lagrange element PK on a
+   *                                       simplex
+   *  "FEM_PK_DISCONTINUOUS(N,K)"        : discontinuous Lagrange element PK
+   *                                       on simplex
+   *  "FEM_QK(N,K)"                      : classical Lagrange element QK on a
+   *                                       parellepiped
+   *  "FEM_PK_PRISM(N,K)"                : classical Lagrange element PK on a
+   *                                       prism
+   *  "FEM_PK_WITH_CUBIC_BUBBLE(N,K)"    : classical Lagrange element PK on a
+   *                                       simplex with an additional volumic
+   *                                       bubble function.
+   *  "FEM_PRODUCT(FEM1,FEM2)"           : tensorial product of two polynomial
+   *                                       elements
+   *  "FEM_P1_NONCONFORMING"             : Nonconforming P1 method on a
+   *                                       triangle.
+   *  "FEM_P1_BUBBLE_FACE(N)"            : P1 methd on a simplex with an
+   *                                       additional bubble function on
+   *                                       face 0.
+   *  "FEM_P1_BUBBLE_FACE_LAG"           : P1 methd on a simplex with an
+   *                                     : additional lagrange dof on face 0.
+   *  "FEM_HERMITE_SEGMENT"              : Hermite element on the segment
+   *  "FEM_STRUCTURED_COMPOSITE(FEM, K)" : Composite fem on a grid with
+   *                                       K divisions
    *
    */
 

@@ -199,21 +199,26 @@ namespace getfem
 
   pintegration_method int_method_descriptor(std::string name);
   /* List :
-   * IM_EXACT_SIMPLEX(n)        : exact integration on simplexes.
-   * IM_PRODUCT(a, b)           : product of two integration methods
-   * IM_EXACT_PARALLELEPIPED(n) : exact integration on parallelepipeds
-   * IM_EXACT_PRISM(n)          : exact integration on prisms
-   * IM_GAUSS1D(K)       : Gauss method on the segment, order K
-   * IM_NC(N,K)          : Newton-Cotes approximative integration 
-   *                       on simplexes, order K
-   * IM_NC_PARALLELEPIPED(N,K) :  product of Newton-Cotes integration 
-   *                              on parallelepipeds
-   * IM_NC_PRISM(N,K)    : product of Newton-Cotes integration on prisms
-   * IM_GAUSS_PARALLELEPIPED(N,K) :  product of Gauss1D integration
-   *                                 on parallelepipeds
-   * IM_TRIANGLE(K)      : Gauss methods on triangles (K=1..7)
-   * IM_QUAD(K)          : Gauss methods on quadrilaterons (K=2, 3 or 5)
-   * IM_TETRAHEDRON(K)   : Gauss methods on tetrahedrons (K=1, 2, 3 or 5)
+   * "IM_EXACT_SIMPLEX(n)"             : exact integration on simplexes.
+   * "IM_PRODUCT(IM1, IM2)"            : product of two integration methods
+   * "IM_EXACT_PARALLELEPIPED(n)"      : exact integration on parallelepipeds
+   * "IM_EXACT_PRISM(n)"               : exact integration on prisms
+   * "IM_GAUSS1D(K)"                   : Gauss method on the segment, order K
+   * "IM_NC(N,K)"                      : Newton-Cotes approximative 
+   *                                     integration on simplexes, order K
+   * "IM_NC_PARALLELEPIPED(N,K)"       : product of Newton-Cotes integration 
+   *                                     on parallelepipeds
+   * "IM_NC_PRISM(N,K)"                : product of Newton-Cotes integration
+   *                                     on prisms
+   * "IM_GAUSS_PARALLELEPIPED(N,K)"    : product of Gauss1D integration
+   *                                     on parallelepipeds
+   * "IM_TRIANGLE(K)"                  : Gauss methods on triangles (K=1..7)
+   * "IM_QUAD(K)"                      : Gauss methods on quadrilaterons
+   *                                     (K=2, 3 or 5)
+   * "IM_TETRAHEDRON(K)"               : Gauss methods on tetrahedrons
+   *                                     (K=1, 2, 3 or 5)
+   * "IM_STRUCTURED_COMPOSITE(IM1, K)" : Composite method on a grid with
+   *                                     K divisions
    */
   
   pintegration_method exact_simplex_im(size_type n);

@@ -54,6 +54,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <iostream>
+#include <ios>
 #include <fstream>
 #include <ctype.h>
 #include <assert.h>
@@ -333,26 +334,37 @@ typedef unsigned char uint8_type;
     cerr << "============================================\n";\
     cerr << "|  A bad allocation has been detected !!!  |\n";\
     cerr << "============================================\n";\
+    exit(1);\
   }\
   catch(std::bad_typeid) { \
     cerr << "============================================\n";\
     cerr << "|  A bad typeid     has been detected !!!  |\n";\
     cerr << "============================================\n";\
+    exit(1);\
   } \
   catch(std::bad_exception) { \
     cerr << "============================================\n";\
     cerr << "|  A bad exception  has been detected !!!  |\n";\
     cerr << "============================================\n";\
+    exit(1);\
+  } \
+  catch(std::bad_cast) { \
+    cerr << "============================================\n";\
+    cerr << "|    A bad cast  has been detected !!!     |\n";\
+    cerr << "============================================\n";\
+    exit(1);\
   } \
   catch(...) {\
     cerr << "============================================\n";\
     cerr << "|  An unknown error has been detected !!!  |\n";\
     cerr << "============================================\n";\
+    exit(1);\
   }
-//   catch(ios_base::failure) {  a mettre plus tard
+//   catch(ios_base::failure) { 
 //     cerr << "============================================\n";
-//     cerr << "|  A ios_base::failure has been detected !!!|\n";
+//     cerr << "| A ios_base::failure has been detected !!!|\n";
 //     cerr << "============================================\n";
+//     exit(1);
 //   } 
 
 #define DAL_THROW(type, thestr) { \

@@ -152,12 +152,15 @@ namespace getfem
   struct ddl_elem {
     ddl_type t;
     dal::int16_type hier_degree;
+    short_type hier_raff;
     bool operator < (const ddl_elem &l) const {
       if (t < l.t) return true; if (t > l.t) return false; 
-      if (hier_degree < l.hier_degree) return true; return false;
+      if (hier_degree < l.hier_degree) return true; 
+      if (hier_degree > l.hier_degree) return false;
+      if (hier_raff < l.hier_raff) return true; return false;
     }
-    ddl_elem(ddl_type s = LAGRANGE, dal::int16_type k = -1)
-      : t(s), hier_degree(k) {}
+    ddl_elem(ddl_type s = LAGRANGE, dal::int16_type k = -1, short_type l = 0)
+      : t(s), hier_degree(k), hier_raff(l) {}
   };
 
   struct dof_description
@@ -215,12 +218,22 @@ namespace getfem
     return p_old;
   }
 
-  pdof_description hierarchical_dof(pdof_description p, int deg)
+  pdof_description deg_hierarchical_dof(pdof_description p, int deg)
   {
     init_tab();
     dof_description l = *p;
     for (size_type i = 0; i < l.ddl_desc.size(); ++i)
       l.ddl_desc[i].hier_degree = deg;
+    size_type i = _dof_d_tab->add_norepeat(l);
+    return &((*_dof_d_tab)[i]);
+  }
+  
+  pdof_description raff_hierarchical_dof(pdof_description p, short_type deg)
+  {
+    init_tab();
+    dof_description l = *p;
+    for (size_type i = 0; i < l.ddl_desc.size(); ++i)
+      l.ddl_desc[i].hier_raff = deg;
     size_type i = _dof_d_tab->add_norepeat(l);
     return &((*_dof_d_tab)[i]);
   }
@@ -298,12 +311,20 @@ namespace getfem
     std::copy(a->ddl_desc.begin(), a->ddl_desc.end(), l.ddl_desc.begin());
     std::copy(b->ddl_desc.begin(), b->ddl_desc.end(), l.ddl_desc.begin()+nb1);
     
-    dal::int16_type deg = -1;
-    for (size_type i = 0; i < l.ddl_desc.size(); ++i)
-      deg = std::max(deg, l.ddl_desc[i].hier_degree);
-    for (size_type i = 0; i < l.ddl_desc.size(); ++i)
-      l.ddl_desc[i].hier_degree = deg;
-
+    {
+      dal::int16_type deg = -1;
+      for (size_type i = 0; i < l.ddl_desc.size(); ++i)
+	deg = std::max(deg, l.ddl_desc[i].hier_degree);
+      for (size_type i = 0; i < l.ddl_desc.size(); ++i)
+	l.ddl_desc[i].hier_degree = deg;
+    }
+    { 
+      short_type deg = 0;
+      for (size_type i = 0; i < l.ddl_desc.size(); ++i)
+	deg = std::max(deg, l.ddl_desc[i].hier_raff);
+      for (size_type i = 0; i < l.ddl_desc.size(); ++i)
+	l.ddl_desc[i].hier_raff = deg;
+    }
     size_type ii = (*_dof_d_tab).add_norepeat(l);
     return &((*_dof_d_tab)[ii]);
   }
@@ -523,8 +544,8 @@ namespace getfem
 	    { found = true; break; }
 	}
 	if (!found) {
-	  add_node(hierarchical_dof(fi2->dof_types()[i], 
-				    fi1->estimated_degree()),
+	  add_node(deg_hierarchical_dof(fi2->dof_types()[i], 
+					fi1->estimated_degree()),
 		   fi2->node_of_dof(i));
 	  _base.resize(nb_dof());
 	  _base[nb_dof()-1] = (fi2->base())[i];
@@ -539,6 +560,45 @@ namespace getfem
     }
   };
 
+
+  struct thierach_femi_comp : public fem<polynomial_composite>
+  { 
+    thierach_femi_comp(ppolycompfem fi1, ppolycompfem fi2)
+      : fem<polynomial_composite>(*fi1)
+    {
+      if (fi2->target_dim() != fi1->target_dim())
+	DAL_THROW(dimension_error, "dimensions mismatch.");
+      if (fi2->basic_structure() != fi1->basic_structure())
+	DAL_THROW(failure_error, "Incompatible elements.");
+      if (!(fi1->is_equivalent() && fi2->is_equivalent()))
+	DAL_THROW(to_be_done_error,
+	    "Sorry, no hierachical construction for non tau-equivalent fem.");
+      es_degree = std::max(fi2->estimated_degree(), fi1->estimated_degree());
+      
+      is_lag = false;
+      hier_raff = fi1->hierarchical_raff() + 1;
+      unfreeze_cvs_node();
+      for (size_type i = 0; i < fi2->nb_dof(); ++i) {
+	bool found = false;
+	for (size_type j = 0; j < fi1->nb_dof(); ++j) {
+	  if ( dal::lexicographical_less<base_node,
+	       dal::approx_less<scalar_type> >()
+	       (fi2->node_of_dof(i), fi1->node_of_dof(j)) == 0
+	      && dof_hierarchical_compatibility(fi2->dof_types()[i],
+						fi1->dof_types()[j]))
+	    { found = true; break; }
+	}
+	if (!found) {
+	  add_node(raff_hierarchical_dof(fi2->dof_types()[i], hier_raff),
+		   fi2->node_of_dof(i));
+	  _base.resize(nb_dof());
+	  _base[nb_dof()-1] = (fi2->base())[i];
+	}
+      }
+    }
+  };
+
+
   static pfem gen_hierarchical_fem(fem_param_list &params) {
     if (params.size() != 2)
       DAL_THROW(failure_error, 
@@ -547,9 +607,15 @@ namespace getfem
       DAL_THROW(failure_error, "Bad type of parameters");
     pfem pf1 = params[0].method();
     pfem pf2 = params[1].method();
-    if (!(pf1->is_polynomial() && pf2->is_polynomial()))
-      DAL_THROW(failure_error, "Bad parameters");
-    return new thierach_femi(ppolyfem(pf1), ppolyfem(pf2));
+    try {
+      return new thierach_femi(dynamic_cast<ppolyfem>(pf1),
+			       dynamic_cast<ppolyfem>(pf2));
+    } catch (const std::bad_cast &) {}
+    try {
+      return new thierach_femi_comp(dynamic_cast<ppolycompfem>(pf1),
+				    dynamic_cast<ppolycompfem>(pf2));
+    } catch (const std::bad_cast &) {}
+    DAL_THROW(failure_error, "Bad parameters");
   }
 
   /* ******************************************************************** */
