@@ -420,7 +420,10 @@ namespace bgeot
 	else if (*it < T(0)) o << "-";
 	if (dal::abs(*it)!=T(1)) o << dal::abs(*it);
 	for (short_type j = 0; j < P.dim(); ++j)
-	  if (mi[j] != 0) { o << "x_" << j; if (mi[j]>1) o << "^" << mi[j]; }
+	  if (mi[j] != 0) {
+	    o << "x"; if (P.dim() > 1) o << "_" << j; 
+	    if (mi[j]>1) o << "^" << mi[j];
+	  }
 	first = false; ++n;
       }
     }

@@ -135,7 +135,8 @@ void lap_pb::init(void)
     if (N != 1 || mesh_type != 0)
       DAL_THROW(dal::internal_error,
 		"This element is only defined on segments");
-    K = 3;
+    // K = 3;
+    K = 1;
     break;
   case 2 : 
     if (mesh_type != 0)
@@ -396,11 +397,16 @@ int main(int argc, char *argv[])
     total_time += ftool::uclock_sec() - exectime;
     exectime = ftool::uclock_sec();
     
-    int nbdof = p.mef_data.nb_dof();
+    size_type nbdof = p.mef_data.nb_dof();
     linalg_vector V(nbdof);
+    scalar_type linfnorm = 0.0;
     interpolation_solution_same_mesh(p.mef, p.mef_data, p.U, V, 1);
-    for (int i = 0; i < nbdof; ++i)
+    for (size_type i = 0; i < nbdof; ++i) {
       V[i] -= sol_u(p.mef_data.point_of_dof(i));
+      cout << "i = " << i << " V[i] = " <<  V[i]
+	   << " point of dof : " << p.mef_data.point_of_dof(i) << endl;
+      linfnorm = std::max(linfnorm, dal::abs(V[i]));
+    }
     
     scalar_type l2norm = getfem::L2_norm(p.mef_data, V, 1);
     cres << l2norm << "\t";
@@ -415,7 +421,8 @@ int main(int argc, char *argv[])
 
     cout.precision(16);
     cout << "L2 error = " << l2norm << endl
-	 << "H1 error = " << h1norm << endl;
+	 << "H1 error = " << h1norm << endl
+	 << "Linfty error = " << linfnorm << endl;
      
 
     getfem::save_solution(p.datafilename + ".dataelt", p.mef, p.U, 1, p.K);

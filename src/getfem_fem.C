@@ -524,7 +524,6 @@ namespace getfem
 	  add_node(hierarchical_dof(fi2->dof_types()[i], 
 				    fi1->estimated_degree()),
 		   fi2->node_of_dof(i));
-	  // verifer que la copie se fait bien ...
 	  _base.resize(nb_dof());
 	  _base[nb_dof()-1] = (fi2->base())[i];
 // 	  cout << "adding base : " << _base[nb_dof()-1] << endl;
@@ -532,9 +531,9 @@ namespace getfem
 // 	  cout << "Nb dof cici = " << nb_dof() << endl;
 	}
       }
-       cout << "Nb dof = " << nb_dof() << endl;
-       for (size_type j = 0; j < nb_dof(); ++j)
- 	cout << " base : " << j << " : " << _base[j] << endl;
+//        cout << "Nb dof = " << nb_dof() << endl;
+//        for (size_type j = 0; j < nb_dof(); ++j)
+//  	cout << " base : " << j << " : " << _base[j] << endl;
     }
   };
 
@@ -744,6 +743,7 @@ namespace getfem
       // gradient au pt 0
       bgeot::mat_product(G, pgp->grad(0), K);
       M(2,2) = K(0,0);
+      cout << "K(0,0) = " << K(0,0) << endl;
       // gradient au pt 1
       if (!(pgt->is_linear())) bgeot::mat_product(G, pgp->grad(1), K);
       M(3,3) = K(0,0);
@@ -758,17 +758,28 @@ namespace getfem
       init_cvs_node();
       es_degree = 3;
       is_pol = true;
-      is_equiv = is_lag = false;
-      _base.resize(4);
+      is_lag = false;
+      // is_equiv = false;
+      is_equiv = true;
+       _base.resize(4);
+      
       pt[0] = 0.0; add_node(lagrange_dof(1), pt);
-      _base[0] = one + x * x * (-one * 3.0  + x * 2.0);
+      // _base[0] = one + x * x * (-one * 3.0  + x * 2.0);
+      _base[0] = one - x;
       pt[0] = 1.0; add_node(lagrange_dof(1), pt);
-      _base[1] = x * x * (one * 3.0 - x * 2.0);
-      pt[0] = 0.0; add_node(derivative_dof(1, 0), pt);
+      // _base[1] = x * x * (one * 3.0 - x * 2.0);
+      _base[1] = x;
+      // pt[0] = 0.0; add_node(derivative_dof(1, 0), pt);
+      pt[0] = 0.1; add_node(lagrange_nonconforming_dof(1), pt);
       _base[2] = x * (one + x * (-one * 2.0 + x));
-      pt[0] = 1.0; add_node(derivative_dof(1, 0), pt);
+      // pt[0] = 1.0; add_node(derivative_dof(1, 0), pt);
+      pt[0] = 0.9; add_node(lagrange_nonconforming_dof(1), pt);
       _base[3] = x * x * (-one + x);
 
+      cout << "base(0) = " << _base[0] << endl;
+      cout << "base(1) = " << _base[1] << endl;
+       cout << "base(2) = " << _base[2] << endl;
+       cout << "base(3) = " << _base[3] << endl;
     }
   };
 
