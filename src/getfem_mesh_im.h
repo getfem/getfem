@@ -2,15 +2,15 @@
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  GEneric Tool for Finite Element Methods (getfem)             */
-/* File    :  getfem_mesh_fem.h : Finite element methods on convex meshes. */
+/* File    :  getfem_mesh_im.h : Integration methods on convex meshes.     */
 /*     									   */
 /*                                                                         */
-/* Date : December 21, 1999.                                               */
+/* Date : January 26, 2005.                                                */
 /* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 1999-2002  Yves Renard.                                   */
+/* Copyright (C) 2005  Yves Renard.                                        */
 /*                                                                         */
 /* This file is a part of GETFEM++                                         */
 /*                                                                         */
@@ -31,149 +31,22 @@
 /* *********************************************************************** */
 
 
-#ifndef GETFEM_MESH_FEM_H__
-#define GETFEM_MESH_FEM_H__
-
-/* *********************************************************************** */
-/*									   */
-/* Ameliorations :                                                         */
-/*    - faire un vrai Cutill-Mc Kee pour la numerotation des ddl.          */
-/*                                                                         */
-/* *********************************************************************** */
+#ifndef GETFEM_MESH_IM_H__
+#define GETFEM_MESH_IM_H__
 
 #include <getfem_mesh.h>
-#include <getfem_fem.h>
-namespace getfem
-{
+#include <getfem_integration.h>
+#include <getfem_precomp.h>
 
-  template <class CONT> struct tab_scal_to_vect_iterator {
+namespace getfem {
 
-    typedef typename CONT::const_iterator ITER;
-    typedef typename std::iterator_traits<ITER>::value_type value_type;
-    typedef typename std::iterator_traits<ITER>::pointer    pointer;
-    typedef typename std::iterator_traits<ITER>::reference  reference;
-    typedef typename std::iterator_traits<ITER>::difference_type
-                                                            difference_type;
-    typedef typename std::iterator_traits<ITER>::iterator_category
-                                                            iterator_category;
-    typedef size_t size_type;
-    typedef tab_scal_to_vect_iterator<CONT> iterator;
-
-    ITER it;
-    dim_type N;
-    dim_type ii;
-
-    iterator &operator ++()
-      { ++ii; if (ii == N) { ii = 0; ++it; } return *this; }
-    iterator &operator --() 
-      { if (ii == 0) { ii = N-1; --it; } else --ii; return *this; }
-    iterator operator ++(int) { iterator tmp = *this; ++(*this); return tmp; }
-    iterator operator --(int) { iterator tmp = *this; --(*this); return tmp; }
-   
-    iterator &operator +=(difference_type i)
-      { it += (i+ii)/N; ii = (ii + i) % N; return *this; }
-    iterator &operator -=(difference_type i)
-      { it -= (i+N-ii-1)/N; ii = (ii - i + N * i) % N; return *this; }
-    iterator operator +(difference_type i) const 
-    { iterator itt = *this; return (itt += i); }
-    iterator operator -(difference_type i) const
-    { iterator itt = *this; return (itt -= i); }
-    difference_type operator -(const iterator &i) const
-    { return (it - i.it) * N + ii - i.ii; }
-
-    value_type operator *() const { return (*it) + ii; }
-    value_type operator [](int i) { return *(this + i); }
-
-    bool operator ==(const iterator &i) const
-      { return (it == i.it) && (ii == i.ii); }
-    bool operator !=(const iterator &i) const { return !(i == *this); }
-    bool operator < (const iterator &i) const
-      { return (it < i.it) && (ii < i.ii); }
-
-    tab_scal_to_vect_iterator(void) {}
-    tab_scal_to_vect_iterator(const ITER &iter, dim_type n, dim_type i)
-      : it(iter), N(n), ii(i) { }
-
-  };
-
-  /*
-    structure for iteration over the dofs when Qdim != 1 and target_dim == 1
-  */
-  template <class CONT> class tab_scal_to_vect {
-  public :
-    typedef typename CONT::const_iterator ITER;
-    typedef typename std::iterator_traits<ITER>::value_type value_type;
-    typedef typename std::iterator_traits<ITER>::pointer    pointer;
-    typedef typename std::iterator_traits<ITER>::pointer    const_pointer;
-    typedef typename std::iterator_traits<ITER>::reference  reference;
-    typedef typename std::iterator_traits<ITER>::reference  const_reference;
-    typedef typename std::iterator_traits<ITER>::difference_type
-            difference_type;
-    typedef size_t size_type;
-    typedef tab_scal_to_vect_iterator<CONT> iterator;
-    typedef iterator                          const_iterator;
-    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
-    typedef std::reverse_iterator<iterator> reverse_iterator;
-
-
-  protected :
-    CONT c;
-    dim_type N;
-    
-  public :
-
-    bool empty(void) const { return c.empty(); }
-    size_type size(void) const { return c.size() * N; }
-
-    const_iterator begin(void) const { return iterator(c.begin(), N, 0); }
-    const_iterator end(void) const { return iterator(c.end(), N, 0); }
-    const_reverse_iterator rbegin(void) const
-      { return const_reverse_iterator(end()); }
-    const_reverse_iterator rend(void) const
-      { return const_reverse_iterator(begin()); }
-    
-    value_type front(void) const { return *begin(); }
-    value_type back(void) const { return *(--(end())); }
-
-    tab_scal_to_vect(void) {}
-    tab_scal_to_vect(const CONT &cc, dim_type n) : c(cc), N(n) {}
-    
-    value_type operator [](size_type ii) const { return *(begin() + ii);}
-  };
-
-
-
-  struct fem_dof {
-    base_node P;
-    pdof_description pnd;
-  };
-
-  struct intfem  { // integrable fem
-    pfem pf;
-    pintegration_method pi;
-    bool operator < (const intfem &l) const;
-    intfem(pfem ppf, pintegration_method ppi) { pf = ppf; pi = ppi; }
-    intfem(void) { }
-  };
-  
-  typedef const intfem * pintfem;
-  pintfem give_intfem(pfem ppf, pintegration_method ppi);
-  
-  typedef tab_scal_to_vect<bgeot::ref_mesh_point_ind_ct> ref_mesh_dof_ind_ct;
-  typedef tab_scal_to_vect<bgeot::ind_ref_mesh_point_ind_ct> 
-    ind_ref_mesh_dof_ind_ct;
-  /// Describe a finite element method linked to a mesh.
-  class mesh_fem : public getfem_mesh_receiver, public context_dependencies {
+  /// Describe an integration method linked to a mesh.
+  class mesh_im : public getfem_mesh_receiver, public context_dependencies {
   protected :
     
-    dal::dynamic_array<pintfem> f_elems;
-    dal::bit_vector fe_convex;
+    dal::dynamic_array<pintegration_method> ims;
+    dal::bit_vector im_convexes;
     getfem_mesh *linked_mesh_;
-    mutable bgeot::mesh_structure dof_structure;
-    mutable bool dof_enumeration_made;
-    mutable size_type nb_total_dof;
-    bool is_valid;
-    dim_type Qdim; /* this is the "global" target_dim */
     
   public :
     
@@ -181,22 +54,18 @@ namespace getfem
     void update_from_context(void) const {}
 
     /** Gives in a structure dal::bit\_vector all convexes of the
-     *          mesh where a finite element is defined.
+     *          mesh where an integration method is defined.
      */
     inline const dal::bit_vector &convex_index(void) const
-      { return fe_convex; }
+    { return im_convexes; }
+
+    // ------- continuer ici
     
     /// Gives a reference to the linked mesh of type getfem\_mesh.
     getfem_mesh &linked_mesh(void) const { return *linked_mesh_; }
-
-    dim_type get_qdim() const { return Qdim; }
-    void     set_qdim(dim_type q) { if (q != Qdim) 
-      { Qdim = q; dof_enumeration_made = false; touch(); }}
-
-    /** Set on the convex of index i the integrable finite element method
-     *          with the description pif which is of type pintfem.
+    /** Set the integration method on the convex of index i
      */
-    void set_finite_element(size_type cv, pintfem pif);
+    void set_integration_method(size_type cv, pintegration_method pim);
     /** Set on the convex of index i the finite element method
      *          with the description pf which is of type pfem and ppi of
      *          type pintegration_method.
@@ -233,12 +102,12 @@ namespace getfem
     
     /** return the fem associated with an element (in no fem is
 	associated, the function will crash! use the convex_index() of
-	the mesh_fem to check that a fem is associated to a given
+	the mesh_im to check that a fem is associated to a given
 	convex) */
     pfem fem_of_element(size_type cv) const
-      { return  f_elems[cv]->pf; }
+      { return  ims[cv]->pf; }
     pintegration_method int_method_of_element(size_type cv) const
-      { return  f_elems[cv]->pi; }
+      { return  ims[cv]->pi; }
     /** Gives an array of the degrees of freedom of the element
      *           of the convex of index i. 
      */
@@ -256,7 +125,7 @@ namespace getfem
 	 Qdim /fem_of_element(cv)->target_dim());
     }
     size_type nb_dof_of_face_of_element(size_type cv, short_type f) const {
-      pfem pf = f_elems[cv]->pf;
+      pfem pf = ims[cv]->pf;
       return dof_structure.structure_of_convex(cv)->nb_points_of_face(f)
 	* Qdim / pf->target_dim();
     }
@@ -265,14 +134,14 @@ namespace getfem
      *           of the convex of index i. 
      */
     size_type nb_dof_of_element(size_type cv) const {
-      pfem pf = f_elems[cv]->pf;
+      pfem pf = ims[cv]->pf;
       return pf->nb_dof(cv) * Qdim / pf->target_dim();
     }
     /** Gives the point (base_node)  corresponding to the 
      *          degree of freedom i  of the element of index cv.
      */
     const base_node &reference_point_of_dof(size_type cv,size_type i) const {
-      pfem pf = f_elems[cv]->pf;
+      pfem pf = ims[cv]->pf;
       return pf->node_of_dof(cv, i * pf->target_dim() / Qdim);
     }
     /** Gives the point (base_node) corresponding to the degree of freedom
@@ -340,12 +209,12 @@ namespace getfem
     
     size_type memsize() const {
       return dof_structure.memsize() + 
-	sizeof(mesh_fem) - sizeof(bgeot::mesh_structure) +
-	f_elems.memsize() + fe_convex.memsize();
+	sizeof(mesh_im) - sizeof(bgeot::mesh_structure) +
+	ims.memsize() + im_convexes.memsize();
     }
     
-    mesh_fem(getfem_mesh &me, dim_type Q = 1);
-    virtual ~mesh_fem();
+    mesh_im(getfem_mesh &me, dim_type Q = 1);
+    virtual ~mesh_im();
     void read_from_file(std::istream &ist);
     void read_from_file(const std::string &name);
     void write_to_file(std::ostream &ost) const;
@@ -355,4 +224,4 @@ namespace getfem
 }  /* end of namespace getfem.                                             */
 
 
-#endif /* GETFEM_MESH_FEM_H__  */
+#endif /* GETFEM_MESH_IM_H__  */

@@ -59,6 +59,7 @@ include_HEADERS =                       \
 	getfem_mat_elem_type.h          \
 	getfem_mesh.h                   \
 	getfem_mesh_fem.h               \
+	getfem_mesh_im.h                \
 	getfem_mesh_slicers.h	        \
 	getfem_mesh_slice.h	        \
 	getfem_norm.h         	        \
