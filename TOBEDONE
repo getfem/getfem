@@ -39,3 +39,8 @@ methodes d'integration + FEM sur les points de Fekete (qui maximisent vandermond
 * http://citeseer.nj.nec.com/taylor98fekete.html (avec une liste de pts)
 * http://math1.unice.fr/~rpas/jcp04.pdf
 * http://epubs.siam.org/sam-bin/dbq/article/33724
+
+faire la doc pour les mesh_slice 
+faire la doc pour vtk_export
+
+getfem_mesh::clear() ne libere pas la mémoire

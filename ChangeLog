@@ -1,13 +1,20 @@
+2004-04-02  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* tests/elastostatic.C tests/laplacian.C: now take into account
+	the GENERIC_DIRICHLET parameter
+
 2004-03-31  Yves Renard  <Yves.Renard@gmm.insa-tlse.fr>
 
-	* src/getfem_fem.h and src/getfem_import.h: ajout d'une methode*	       qui donne la matrice d'interpolation au lieu d'interpoler avec
-	des coefficients particuliers.
+	* src/getfem_fem.h and src/getfem_import.h: added a method giving
+	an interpolation matrix, useful for repeated interpolations of one
+	field onto another.
 
 2004-03-31  Yves Renard  <Yves.Renard@gmm.insa-tlse.fr>
 
-	* src/gmm_superlu_interface.h: passage de la version 2.0 à 3.0 de
-	SuperLU. Introduction d'un objet stockant la decomposition LU et
-	permettant de faire des résolutions ultérieures.
+	* src/gmm_superlu_interface.h: The superlu interface is now
+	uptodate with the lastest release of superlu (v.3.0).  A new
+	structure was introduced for storing an LU decomposition and doing
+	tri_solves later.
 
 2004-03-26  Yves Renard  <Yves.Renard@gmm.insa-tlse.fr>
 
