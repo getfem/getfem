@@ -212,6 +212,7 @@ namespace getfem
       typedef lmsg::linkmsg_sender<getfem_mesh_receiver> msg_sender;
 
     protected :
+    /* if a new field is added here, do NOT forget to add it in the copy_from method! */
 
       double eps_p;  /* infinity distance under wich two points are equal. */
       msg_sender lkmsg; /* gestionnaire de msg.                            */
@@ -368,7 +369,7 @@ namespace getfem
       void write_to_file(std::ostream &ost) const;
       void read_from_file(const std::string &name);
       void read_from_file(std::istream &ist);
-    
+      void copy_from(const getfem_mesh& m); /* might be the copy constructor */
     size_type memsize() const {
       return bgeot::mesh<base_node>::memsize() + 
 	(pts.index().last_true()+1)*dim()*sizeof(scalar_type)+
@@ -439,13 +440,11 @@ namespace getfem
 
   /** rough estimate of the maximum value of the condition 
    * number of the jacobian of the geometric transformation */
-  scalar_type convex_quality_estimate(bgeot::pgeometric_trans pgt,
-				      const base_matrix& pts);
+  scalar_type convex_quality_estimate(bgeot::pgeometric_trans pgt, const base_matrix& pts);
 
   /** rough estimate of the radius of the convex using the largest eigenvalue
    * of the jacobian of the geometric transformation */
-  scalar_type convex_radius_estimate(bgeot::pgeometric_trans pgt,
-				     const base_matrix& pts);
+  scalar_type convex_radius_estimate(bgeot::pgeometric_trans pgt, const base_matrix& pts);
   
 }  /* end of namespace getfem.                                             */
 

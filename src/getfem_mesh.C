@@ -31,9 +31,8 @@
 
 
 #include <getfem_mesh.h>
-#include <getfem_mat_elem.h>
 #include <getfem_precomp.h>
-
+#include <getfem_mat_elem.h> // --- FIXME --- : included only for transfert_to_G ...
 namespace getfem
 {
   getfem_mesh::getfem_mesh(dim_type NN) {
@@ -196,6 +195,15 @@ namespace getfem
     return r;
   }
 
+  void getfem_mesh::copy_from(const getfem_mesh& m) {
+    clear();
+    bgeot::mesh<base_node>::operator=(m);
+    eps_p = m.eps_p;
+    gtab = m.gtab;
+    trans_exists = m.trans_exists; 
+    /* --- TODO --- : send an appropriate message to the mesh_fem using this mesh */
+  }
+
   struct mesh_convex_structure_loc
   {
     bgeot::pgeometric_trans cstruct;
@@ -212,7 +220,7 @@ namespace getfem
     ist.precision(16);
     clear();
     ist.seekg(0);ist.clear();
-    ftool::read_untill(ist, "BEGIN POINTS LIST");
+    ftool::read_until(ist, "BEGIN POINTS LIST");
 
     while (!te)
     {
@@ -261,7 +269,7 @@ namespace getfem
     size_type ic;
     
     ist.seekg(0);
-    if (!ftool::read_untill(ist, "BEGIN MESH STRUCTURE DESCRIPTION"))
+    if (!ftool::read_until(ist, "BEGIN MESH STRUCTURE DESCRIPTION"))
       DAL_THROW(failure_error, "This seems not to be a mesh file");
 
     while (!tend) {
@@ -331,17 +339,17 @@ namespace getfem
 	  << "    ";
       _write_tab_to_file(ost, ms.ind_points_of_convex(i).begin(),
 			 ms.ind_points_of_convex(i).end()  );
-      ost << endl;
+      ost << '\n';
     }
   }
 
   template<class ITER> static void _write_point_to_file(std::ostream &ost,
 						  ITER b, ITER e)
-  { for ( ; b != e; ++b) ost << "  " << *b; ost << endl; }
+  { for ( ; b != e; ++b) ost << "  " << *b; ost << '\n'; }
 
   void getfem_mesh::write_to_file(std::ostream &ost) const {
     ost.precision(40);
-    ost << endl << "BEGIN POINTS LIST" << endl << endl;
+    ost << '\n' << "BEGIN POINTS LIST" << '\n' << '\n';
     bgeot::mesh_point_st_ct::const_iterator b = point_structures().begin();
     bgeot::mesh_point_st_ct::const_iterator e = point_structures().end();
     for (size_type i = 0; b != e; ++b, ++i)
@@ -349,12 +357,12 @@ namespace getfem
 	ost << "  POINT  " << i;
 	_write_point_to_file(ost, points()[i].begin(), points()[i].end());
       }
-    ost << endl << "END POINTS LIST" << endl << endl << endl;
+    ost << '\n' << "END POINTS LIST" << '\n' << '\n' << '\n';
     
-    ost << endl << "BEGIN MESH STRUCTURE DESCRIPTION" << endl << endl;
+    ost << '\n' << "BEGIN MESH STRUCTURE DESCRIPTION" << '\n' << '\n';
     _write_convex_to_file(*this, ost, convex_tab.tas_begin(),
 			              convex_tab.tas_end());
-    ost << endl << "END MESH STRUCTURE DESCRIPTION" << endl;
+    ost << '\n' << "END MESH STRUCTURE DESCRIPTION" << '\n';
     lmsg_sender().send(MESH_WRITE_TO_FILE(ost));
   }
 
@@ -362,12 +370,15 @@ namespace getfem
     std::ofstream o(name.c_str());
     if (!o)
       DAL_THROW(failure_error, "impossible to open file '" << name << "'");
-    o << "% GETFEM MESH FILE " << endl;
-    o << "% GETFEM VERSION " << GETFEM_VERSION << endl << endl << endl;
+    o << "% GETFEM MESH FILE " << '\n';
+    o << "% GETFEM VERSION " << GETFEM_VERSION << '\n' << '\n' << '\n';
     write_to_file(o);
     o.close();
   }
 
+  /* TODO : use the geotrans from an "equilateral" reference element to the real element 
+     check if the sign of the determinants does change (=> very very bad quality of the convex)
+  */
   scalar_type convex_quality_estimate(bgeot::pgeometric_trans pgt,
 				      const base_matrix& G) {
     static bgeot::pgeometric_trans pgt_old = 0;
@@ -378,7 +389,7 @@ namespace getfem
 
     size_type n = (pgt->is_linear()) ? 1 : pgt->nb_points();
     scalar_type q = 1;
-    base_matrix K(pgp->grad(0).nrows(), G.ncols());
+    base_matrix K(pgp->grad(0).ncols(),G.nrows());
     for (size_type ip=0; ip < n; ++ip) {
       gmm::mult(gmm::transposed(pgp->grad(ip)), gmm::transposed(G), K);
       q = std::max(q, gmm::condest(K));
@@ -393,14 +404,14 @@ namespace getfem
     if (pgt_old != pgt) {
       pgt_old=pgt; pgp=geotrans_precomp(pgt, &pgt->convex_ref()->points());
     }
-    dim_type N = pgp->grad(0).nrows();
-
+    size_type N = G.nrows();
     size_type n = (pgt->is_linear()) ? 1 : pgt->nb_points();
     scalar_type q = 0;
-    base_matrix K(N, G.ncols());
+    base_matrix K(pgp->grad(0).ncols(),G.nrows());
     for (size_type ip=0; ip < n; ++ip) {
       gmm::mult(gmm::transposed(pgp->grad(ip)), gmm::transposed(G), K);
-      q = std::max(q, gmm::norm_lin2_est(K));
+      scalar_type emax,emin; gmm::condest(K,emax,emin);
+      q = std::max(q, emax);
     }
     return q * sqrt(scalar_type(N)) / scalar_type(N);
   }
