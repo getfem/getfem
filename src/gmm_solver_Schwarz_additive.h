@@ -102,7 +102,7 @@ namespace gmm {
 
   template <typename Matrix1, typename Matrix2, typename Precond,
 	    typename local_solver>
-  struct schwadd_mat{
+  struct add_schwarz_mat{
     typedef typename linalg_traits<Matrix1>::value_type value_type;
 
     const Matrix1 *A;
@@ -118,15 +118,15 @@ namespace gmm {
     void init(const Matrix1 &A_, const std::vector<Matrix2> &vB_,
 	      iteration iter_, const Precond &P, double residu_);
 
-    schwadd_mat(void) {}
-    schwadd_mat(const Matrix1 &A_, const std::vector<Matrix2> &vB_,
+    add_schwarz_mat(void) {}
+    add_schwarz_mat(const Matrix1 &A_, const std::vector<Matrix2> &vB_,
 		iteration iter_, const Precond &P, double residu_)
     { init(A_, vB_, iter_, P, residu_); }
   };
 
   template <typename Matrix1, typename Matrix2, typename Precond,
 	    typename local_solver>
-  void schwadd_mat<Matrix1, Matrix2, Precond, local_solver>::init(
+  void add_schwarz_mat<Matrix1, Matrix2, Precond, local_solver>::init(
        const Matrix1 &A_, const std::vector<Matrix2> &vB_,
        iteration iter_, const Precond &P, double residu_) {
 
@@ -165,26 +165,26 @@ namespace gmm {
 
   template <typename Matrix1, typename Matrix2, typename Precond,
 	    typename local_solver, typename Vect>
-  void SA_global_solve(using_cg, const schwadd_mat<Matrix1, Matrix2, Precond,
-		  local_solver> &ASM, Vect &x, const Vect &b, iteration &iter)
+  void SA_global_solve(using_cg, const add_schwarz_mat<Matrix1, Matrix2,
+	Precond, local_solver> &ASM, Vect &x, const Vect &b, iteration &iter)
   { cg(ASM, x, b, *(ASM.A),  identity_matrix(), iter); }
 
   template <typename Matrix1, typename Matrix2, typename Precond,
 	    typename local_solver, typename Vect>
-  void SA_global_solve(using_gmres, const schwadd_mat<Matrix1, Matrix2,
+  void SA_global_solve(using_gmres, const add_schwarz_mat<Matrix1, Matrix2,
 	Precond, local_solver> &ASM, Vect &x, const Vect &b, iteration &iter)
   { gmres(ASM, x, b, identity_matrix(), 100, iter); }
 
   template <typename Matrix1, typename Matrix2, typename Precond,
 	    typename local_solver, typename Vect>
-  void SA_global_solve(using_bicgstab, const schwadd_mat<Matrix1, Matrix2,
+  void SA_global_solve(using_bicgstab, const add_schwarz_mat<Matrix1, Matrix2,
 	 Precond, local_solver> &ASM, Vect &x, const Vect &b, iteration &iter)
   { bicgstab(ASM, x, b, identity_matrix(), 100, iter); }
 
 #ifdef GMM_USES_SUPERLU
   template <typename Matrix1, typename Matrix2, typename Precond,
 	    typename local_solver, typename Vect>
-  void SA_global_solve(using_superlu, const schwadd_mat<Matrix1, Matrix2,
+  void SA_global_solve(using_superlu, const add_schwarz_mat<Matrix1, Matrix2,
 	    Precond, local_solver> &, Vect &, const Vect &, iteration &) {
     DAL_THROW(failure_error,
      "You cannot use SuperLU as global solver in additive Schwarz meethod");
@@ -202,7 +202,7 @@ namespace gmm {
 	    typename Vector2, typename Vector3, typename Precond,
 	    typename local_solver, typename global_solver>
   int sequential_additive_schwarz(
-    schwadd_mat<Matrix1, Matrix2, Precond, local_solver> &ASM, Vector3 &u,
+    add_schwarz_mat<Matrix1, Matrix2, Precond, local_solver> &ASM, Vector3 &u,
     const Vector2 &f, iteration &iter, const global_solver&) {
 
     typedef typename linalg_traits<Matrix1>::value_type value_type;
@@ -241,7 +241,7 @@ namespace gmm {
     iter2.set_maxiter(size_type(-1));
     // iter2.set_resmax(iter.get_resmax() / 100.0);
 
-    schwadd_mat<Matrix1, Matrix2, Precond, local_solver>
+    add_schwarz_mat<Matrix1, Matrix2, Precond, local_solver>
       ASM(A, vB, iter2, P, iter.get_resmax());
 
     return sequential_additive_schwarz(ASM, u, f, iter, GS);
@@ -249,7 +249,7 @@ namespace gmm {
   
   template <typename Matrix1, typename Matrix2, typename Precond,
 	    typename Vector2, typename Vector3, typename local_solver>
-  void mult(const schwadd_mat<Matrix1, Matrix2, Precond, local_solver> &M,
+  void mult(const add_schwarz_mat<Matrix1, Matrix2, Precond, local_solver> &M,
 	    const Vector2 &p, Vector3 &q) {
     size_type itebilan = 0;
     mult(*(M.A), p, q);
@@ -269,7 +269,7 @@ namespace gmm {
   template <typename Matrix1, typename Matrix2, typename Precond,
 	    typename Vector2, typename Vector3, typename Vector4,
 	    typename local_solver>
-  void mult(const schwadd_mat<Matrix1, Matrix2, Precond, local_solver> &M,
+  void mult(const add_schwarz_mat<Matrix1, Matrix2, Precond, local_solver> &M,
 	    const Vector2 &p, const Vector3 &p2, Vector4 &q)
   { mult(M, p, q); add(p2, q); }
 
@@ -384,7 +384,7 @@ namespace gmm {
       // solving linear system for the global Newton method
       NS.compute_tangent_matrix(M, u);
 
-      schwadd_mat<Matrix1, Matrix2, Precond, local_solver>
+      add_schwarz_mat<Matrix1, Matrix2, Precond, local_solver>
 	ASM(M, NS.get_vB(), iter2, P, iter.get_resmax());
 
       SA_global_solve(global_solver(), ASM, d, rhs, iter);
