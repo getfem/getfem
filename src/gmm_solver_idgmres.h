@@ -62,7 +62,43 @@ namespace gmm {
     { return (gmm::abs(a.first) > gmm::abs(b.first)); }
   }
 
-  template < typename Mat, typename Vec, typename VecB, typename Precond, typename Basis >
+  struct idgmres_state {
+    size_type m, tb_deb, tb_def, p, k, nb_want, nb_unwant;
+    size_type nb_nolong, tb_deftot, tb_defwant, conv, nb_un, fin;
+    bool ok;
+
+    idgmres_state(size_type mm, size_type pp, size_type kk)
+      : m(mm), tb_deb(1), tb_def(0), p(pp), k(kk), nb_want(0),
+	nb_unwant(0), nb_nolong(0), tb_deftot(0), tb_defwant(0),
+	conv(0), nb_un(0), fin(0), ok(false); {}
+  }
+
+
+  template <typename CONT, typename IND>
+  apply_permutation(CONT &cont, const IND &ind) {
+    size_type m = ind.end() - ind.begin();
+    std::vector<bool> sorted(m, false);
+    
+    for (size_type l = 0; l < m; ++l)
+      if (!sorted[l] && ind[l] != l) {
+
+	typeid(cont[0]) aux = cont[l];
+	k = ind[l];
+	cont[l] = cont[k];
+	sorted[l] = true;
+	
+	for(k2 = ind[k]; k2 != l; k2 = ind[k]) {
+	  cont[k] = cont[k2];
+	  sorted[k] = true;
+	  k = k2;
+	}
+	cont[k] = aux;
+      }
+  }
+
+
+  template < typename Mat, typename Vec, typename VecB, typename Precond,
+	     typename Basis >
   void idgmres(const Mat &A, Vec &x, const VecB &b, const Precond &M,
 	     size_type m, size_type p, size_type k, double tol_vp,
 	     iteration &outer, Basis& KS) {
@@ -71,6 +107,7 @@ namespace gmm {
     typedef typename number_traits<T>::magnitude_type R;
     
     R a, beta;
+    idgmres_state st(m, p, k);
 
     std::vector<T> w(vect_size(x)), r(vect_size(x)), u(vect_size(x));
     std::vector<T> c_rot(m+1), s_rot(m+1), s(m+1);
@@ -80,9 +117,6 @@ namespace gmm {
       Hobl(m+1, m), W(vect_size(x), m+1);
 
     gmm::clear(H);
-   
-    size_type tb_def = 0, tb_deb = 1, fin;
-    bool ok = false;
 
     outer.set_rhsnorm(gmm::vect_norm2(b));
     if (outer.get_rhsnorm() == 0.0) { clear(x); return; }
@@ -103,8 +137,8 @@ namespace gmm {
       s[0] = beta;
       gmm::copy(s, gamma);
 
-      inner.set_maxiter(m - tb_deb + 1);
-      size_type i = tb_deb - 1; inner.init();
+      inner.set_maxiter(m - st.tb_deb + 1);
+      size_type i = st.tb_deb - 1; inner.init();
       
       do {
 	mult(A, KS[i], u);
@@ -151,7 +185,7 @@ namespace gmm {
       // être confondus
       // Quand on aura vérifié que ça marche, il faudra utiliser gam à la 
       // place de ztest.
-      if (tb_def < p) {
+      if (st.tb_def < p) {
         T nss = H(m,m-1) / ztest[m];
 	nss /= gmm::abs(nss); // ns à calculer plus tard aussi
 	gmm::copy(KS.mat(), W); gmm::copy(scaled(r, nss /beta), mat_col(W, m));
@@ -167,147 +201,19 @@ namespace gmm {
 	/* **************************************************************** */
 
 	// Computation of the Ritz eigenpairs.
-
-	dense_matrix<T> evect(m-tb_def, m-tb_def);
 	std::vector<std::complex<R> > eval(m);
-	std::vector<R> ritznew(m, T(-1));
-	
-	// dense_matrix<T> evect_lock(tb_def, tb_def);
+	dense_matrix<T> YB(m-st.tb_def, m-st.tb_def);
+	std::vector<char> pure(m-st.tb_def, 0);
+	gmm::clear(YB);
 
-	sub_interval SUB1(tb_def, m-tb_def);
-	implicit_qr_algorithm(sub_matrix(Hobl, SUB1, SUB1),
-			      sub_vector(eval, SUB1), evect);
-	sub_interval SUB2(0, tb_def);
-	implicit_qr_algorithm(sub_matrix(Hobl, SUB2, SUB2),
-			      sub_vector(eval, SUB2), /* evect_lock */);
+	select_eval(Hobl, eval, YB, pure, st);
 
-	for (size_type l = tb_def; l < m; ++l)
-	  ritznew[l] = gmm::abs(evect(m-tb_def-1, l-tb_def) * Hobl(m, m-1));
-	
-	std::vector< std::pair<T, size_type> > eval_sort(m);
-	for (size_type l = 0; l < m; ++l)
-	  eval_sort[l] = std::pair<T, size_type>(eval[l], l);
-	std::sort(eval_sort.begin(), eval_sort.end(), compare_vp());
-
-	std::vector<bool> kept(m, false);
-	std::fill(kept.begin(), kept.begin()+tb_def, true);
-	
-	
-	//	Which are the eigenvalues that converged ?
-	//
-	//	nb_want is the number of eigenvalues of 
-	//	Hess(tb_def+1:n,tb_def+1:n) that converged and are WANTED
-	//
-	//	nb_unwant is the number of eigenvalues of 
-	//	Hess(tb_def+1:n,tb_def+1:n) that converged and are UNWANTED
-	//
-	//	nb_nolong is the number of eigenvalues of 
-	//	Hess(1:tb_def,1:tb_def) that are NO LONGER WANTED. 
-	//
-	//	tb_deftot is the number of the deflated eigenvalues
-	//	that is tb_def + nb_want + nb_unwant
-	//
-	//	tb_defwant is the number of the wanted deflated eigenvalues
-	//	that is tb_def + nb_want - nb_nolong
-
-	dense_matrix<T> YB(m-tb_def, m-tb_def);
-	std::vector<size_type> pure(m-tb_def, 0);
-	
-	size_type nb_want = 0, nb_unwant = 0, nb_nolong = 0, j;
-
-	for (j = 0, ind = 0; j < m-p; ++j) {
-	  if (ritznew[eval_sort[j].second] == R(-1)) {
-	    if (std::imag(eval_sort[j].first) != R(0)) {
-	      nb_nolong += 2; ++j; //  à adapter dans le cas complexe ...
-	    } 
-	    else nb_nolong++;
-	  }
-	  else {
-	    if (ritznew[eval_sort[j].second]
-		< tol_vp * gmm::abs(eval_sort[j].first)) {
-	      
-	      for (size_type l = 0, l < m-tb_def; ++l)
-		YB(l, ind) = std::real(evect(l, eval_sort[j].second));
-	      kept[eval_sort[j].second] = true;
-	      ++j; ++nb_unwant; ind++;
-	      
-	      if (std::imag(eval_sort[j].first) != R(0)) {
-		for (size_type l = 0, l < m-tb_def; ++l)
-		  YB(l, ind) = std::imag(evect(l, eval_sort[j].second));
-		pure[ind-1] = 1;
-		pure[ind] = 2;
-		
-		kept[eval_sort[j].second] = true;
-		
-		nb_unwant++;
-		++ind;
-	      }
-	    }
-	  }
-	}
-
-
-	for (; j < m; ++j) {
-	  if (ritznew[eval_sort[j].second] != R(-1)) {
-
-	      for (size_type l = 0, l < m-tb_def; ++l)
-		YB(l, ind) = std::real(evect(l, eval_sort[j].second));
-	      pure[ind] = 1;
-	      ++ind;
-	      kept[eval_sort[j].second] = true;
-	      ++nb_want;
-
-	    if (ritznew[eval_sort[j].second]
-		< tol_vp * gmm::abs(eval_sort[j].first)) {
-		for (size_type l = 0, l < m-tb_def; ++l)
-		  YB(l, ind) = std::imag(evect(l, eval_sort[j].second));
-		pure[ind] = 2;
-		
-		j++;
-		kept[eval_sort[j].second] = true;
-		
-		nb_want++;
-		++ind;	      
-	    }
-	  }
-	}
-      
-	std::vector<T> shift(m - tb_def - nb_want - nb_unwant);
-	for (size_type j = 0, i = 0; j < m; ++j)
-	  if (!kept[j]) shift[i++] = eval[j];
-
-	// conv (nb_want+nb_unwant) is the number of eigenpairs that
-	//   have just converged.
-	// tb_deftot is the total number of eigenpairs that have converged.
-
-	size_type conv = ind;
-	size_type tb_deftot = tb_def + conv;
-	size_type tb_defwant = tb_def + nb_want - nb_nolong;
-
-	sub_interval SUBYB(0, conv);
-
-	if ( tb_defwant >= p ) { // An invariant subspace has been found.
-
-	  nb_unwant = 0;
-	  nb_want = p + nb_nolong - tb_def;
-	  tb_defwant = p;
-
-	  if ( pure[conv - nb_want + 1] == 2 ) {
-	    ++nb_want; tb_defwant = ++p; // il faudrait que ce soit un p local
-	  }
-	  
-	  SUBYB = sub_interval(conv - nb_want, nb_want);
-	  // YB = YB(:, conv - nb_want + 1 : conv); // On laisse en suspend ..
-	  // pure = pure( conv - nb_want + 1 : conv,1); // On laisse suspend ..
-	  conv = nb_want;
-	  tb_deftot = tb_def + conv;
-	  ok = true;
-	}
-	if (conv != 0) {
+	if (st.conv != 0) {
 	  // DEFLATION using the QR Factorization of YB
 	  
-	  T alpha = Lock(W, Hobl, sub_matrix(YB,  sub_interval(0, m-tb_def)),
-			 (tb_defwant < p)); 
+	  T alpha = Lock(W, Hobl,
+			 sub_matrix(YB,  sub_interval(0, m-st.tb_def)),
+			 (st.tb_defwant < p)); 
 	  // ns *= alpha; // à calculer plus tard ??
 	  //  V(:,m+1) = alpha*V(:, m+1); ça devait servir à qlq chose ...
 
@@ -315,10 +221,10 @@ namespace gmm {
 	  //       Clean the portions below the diagonal corresponding
 	  //       to the lock Schur vectors
 
-	  for (size_type j = tb_def; j < tb_deftot; ++j) {
-	    if ( pure[j-tb_def] == 0)
+	  for (size_type j = st.tb_def; j < st.tb_deftot; ++j) {
+	    if ( pure[j-st.tb_def] == 0)
 	      gmm::clear(sub_vector(mat_col(Hobl,j), sub_interval(j+1,m-j+1)));
-	    else if (pure(j-tb_def) == 1) {
+	    else if (pure(j-st.tb_def) == 1) {
 	      gmm::clear(sub_matrix(Hobl, sub_interval(j+2,m-j),
 				    sub_interval(j, 2))); 
 	      ++j;
@@ -326,10 +232,10 @@ namespace gmm {
 	    else DAL_THROW(internal_error, "internal error");
 	  }
 	  
-	  if (!ok) {
+	  if (!st.ok) {
 
 	    // attention si m = 0;
-	    size_type mm = std::min(k+nb_unwant+nb_nolong, m-1);
+	    size_type mm = std::min(k+st.nb_unwant+st.nb_nolong, m-1);
 
 	    if (eval_sort[m-mm-1].second != R(0)
 		&& eval_sort[m-mm-1].second == -eval_sort[m-mm].second) ++mm;
@@ -341,159 +247,29 @@ namespace gmm {
 	    apply_shift_to_Arnoldi_factorization(W, Hobl, shifts, mm,
 						 m-mm, true);
 
-	    fin = mm;
+	    st.fin = mm;
 	  }
 	  else
-	    fin = tb_deftot;
+	    st.fin = st.tb_deftot;
 
 
 	  /* ************************************************************** */
 	  /*  Purge                                                         */
 	  /* ************************************************************** */
 
-	  if (nb_nolong + nb_unwant > 0) {
+	  if (st.nb_nolong + st.nb_unwant > 0) {
 
-	    ... La suite est à mettre dans une fonctions ...;
+	    std::vector<std::complex<R> > eval(m);
+	    dense_matrix<T> YB(st.fin, st.tb_deftot);
+	    std::vector<char> pure(st.tb_deftot, 0);
+	    gmm::clear(YB);
+	    st.nb_un = st.nb_nolong + st.nb_unwant;
+	    
+	    select_eval_for_purging(Hobl, eval, YB, pure, st);
+	    
+	    T alpha = Lock(W, Hobl, YB, false);
 
-	// Computation of the Ritz eigenpairs.
-
-	dense_matrix<T> evect(m-tb_def, m-tb_def);
-	std::vector<std::complex<R> > eval(m);
-	std::vector<R> ritznew(m, T(-1));
-	
-	// dense_matrix<T> evect_lock(tb_def, tb_def);
-
-	sub_interval SUB1(tb_def, m-tb_def);
-	implicit_qr_algorithm(sub_matrix(Hobl, SUB1, SUB1),
-			      sub_vector(eval, SUB1), evect);
-	sub_interval SUB2(0, tb_def);
-	implicit_qr_algorithm(sub_matrix(Hobl, SUB2, SUB2),
-			      sub_vector(eval, SUB2), /* evect_lock */);
-
-	for (size_type l = tb_def; l < m; ++l)
-	  ritznew[l] = gmm::abs(evect(m-tb_def-1, l-tb_def) * Hobl(m, m-1));
-	
-	std::vector< std::pair<T, size_type> > eval_sort(m);
-	for (size_type l = 0; l < m; ++l)
-	  eval_sort[l] = std::pair<T, size_type>(eval[l], l);
-	std::sort(eval_sort.begin(), eval_sort.end(), compare_vp());
-
-	std::vector<bool> kept(m, false);
-	std::fill(kept.begin(), kept.begin()+tb_def, true);
-	
-	
-	//	Which are the eigenvalues that converged ?
-	//
-	//	nb_want is the number of eigenvalues of 
-	//	Hess(tb_def+1:n,tb_def+1:n) that converged and are WANTED
-	//
-	//	nb_unwant is the number of eigenvalues of 
-	//	Hess(tb_def+1:n,tb_def+1:n) that converged and are UNWANTED
-	//
-	//	nb_nolong is the number of eigenvalues of 
-	//	Hess(1:tb_def,1:tb_def) that are NO LONGER WANTED. 
-	//
-	//	tb_deftot is the number of the deflated eigenvalues
-	//	that is tb_def + nb_want + nb_unwant
-	//
-	//	tb_defwant is the number of the wanted deflated eigenvalues
-	//	that is tb_def + nb_want - nb_nolong
-
-	dense_matrix<T> YB(m-tb_def, m-tb_def);
-	std::vector<size_type> pure(m-tb_def, 0);
-	
-	size_type nb_want = 0, nb_unwant = 0, nb_nolong = 0, j;
-
-	for (j = 0, ind = 0; j < m-p; ++j) {
-	  if (ritznew[eval_sort[j].second] == R(-1)) {
-	    if (std::imag(eval_sort[j].first) != R(0)) {
-	      nb_nolong += 2; ++j; //  à adapter dans le cas complexe ...
-	    } 
-	    else nb_nolong++;
-	  }
-	  else {
-	    if (ritznew[eval_sort[j].second]
-		< tol_vp * gmm::abs(eval_sort[j].first)) {
-	      
-	      for (size_type l = 0, l < m-tb_def; ++l)
-		YB(l, ind) = std::real(evect(l, eval_sort[j].second));
-	      kept[eval_sort[j].second] = true;
-	      ++j; ++nb_unwant; ind++;
-	      
-	      if (std::imag(eval_sort[j].first) != R(0)) {
-		for (size_type l = 0, l < m-tb_def; ++l)
-		  YB(l, ind) = std::imag(evect(l, eval_sort[j].second));
-		pure[ind-1] = 1;
-		pure[ind] = 2;
-		
-		kept[eval_sort[j].second] = true;
-		
-		nb_unwant++;
-		++ind;
-	      }
-	    }
-	  }
-	}
-
-
-	for (; j < m; ++j) {
-	  if (ritznew[eval_sort[j].second] != R(-1)) {
-
-	      for (size_type l = 0, l < m-tb_def; ++l)
-		YB(l, ind) = std::real(evect(l, eval_sort[j].second));
-	      pure[ind] = 1;
-	      ++ind;
-	      kept[eval_sort[j].second] = true;
-	      ++nb_want;
-
-	    if (ritznew[eval_sort[j].second]
-		< tol_vp * gmm::abs(eval_sort[j].first)) {
-		for (size_type l = 0, l < m-tb_def; ++l)
-		  YB(l, ind) = std::imag(evect(l, eval_sort[j].second));
-		pure[ind] = 2;
-		
-		j++;
-		kept[eval_sort[j].second] = true;
-		
-		nb_want++;
-		++ind;	      
-	    }
-	  }
-	}
-      
-	std::vector<T> shift(m - tb_def - nb_want - nb_unwant);
-	for (size_type j = 0, i = 0; j < m; ++j)
-	  if (!kept[j]) shift[i++] = eval[j];
-
-	// conv (nb_want+nb_unwant) is the number of eigenpairs that
-	//   have just converged.
-	// tb_deftot is the total number of eigenpairs that have converged.
-
-	size_type conv = ind;
-	size_type tb_deftot = tb_def + conv;
-	size_type tb_defwant = tb_def + nb_want - nb_nolong;
-
-	sub_interval SUBYB(0, conv);
-
-	if ( tb_defwant >= p ) { // An invariant subspace has been found.
-
-	  nb_unwant = 0;
-	  nb_want = p + nb_nolong - tb_def;
-	  tb_defwant = p;
-
-	  if ( pure[conv - nb_want + 1] == 2 ) {
-	    ++nb_want; tb_defwant = ++p; // il faudrait que ce soit un p local
-	  }
-	  
-	  SUBYB = sub_interval(conv - nb_want, nb_want);
-	  // YB = YB(:, conv - nb_want + 1 : conv); // On laisse en suspend ..
-	  // pure = pure( conv - nb_want + 1 : conv,1); // On laisse suspend ..
-	  conv = nb_want;
-	  tb_deftot = tb_def + conv;
-	  ok = true;
-	}
-
-
+	    
 
 	  }
 
@@ -526,9 +302,9 @@ namespace gmm {
 	      const MATYB &YB, bool restore, T &ns) {
 
     size_type m = mat_ncols(W)-1, m_tb_def = mat_nrows(YB);
-    size_type tb_def = m - m_tb_def, conv = mat_ncols(YB);
-    size_type tb_deftot = tb_def + conv;
-    sub_interval SUB1(tb_def, m_tb_def), SUBI(0, m);
+    size_type st.tb_def = m - m_tb_def, st.conv = mat_ncols(YB);
+    size_type st.tb_deftot = st.tb_def + st.conv;
+    sub_interval SUB1(st.tb_def, m_tb_def), SUBI(0, m);
     T alpha(1);
 
     if (m != mat_nrows(H) || m+1 != mat_ncols(H) || m < mat_nrows(YB))
@@ -536,7 +312,7 @@ namespace gmm {
     
     // DEFLATION using the QR Factorization of YB
 	  
-    dense_matrix<T> QR(m_tb_def, conv);
+    dense_matrix<T> QR(m_tb_def, st.conv);
     gmmm::copy(YB, QR);
     qr_factor(QR);
 
@@ -549,47 +325,47 @@ namespace gmm {
     if (restore) {
       
       // verifier quand m = 0 ...
-      gmm::dense_matrix tab_p(m - tb_deftot, m - tb_deftot);
+      gmm::dense_matrix tab_p(m - st.tb_deftot, m - st.tb_deftot);
       gmm::copy(identity_matrix(), tab_p);
       
-      for (size_type j = m-1; j >= tb_deftot+2; --j) {
+      for (size_type j = m-1; j >= st.tb_deftot+2; --j) {
 	
 	size_type jm = j-1;
-	std::vector<T> v(jm - tb_deftot);
-	sub_interval SUBtot(tb_deftot, jm - tb_deftot);
-	sub_interval SUBtot2(tb_deftot, m - tb_deftot);
+	std::vector<T> v(jm - st.tb_deftot);
+	sub_interval SUBtot(st.tb_deftot, jm - st.tb_deftot);
+	sub_interval SUBtot2(st.tb_deftot, m - st.tb_deftot);
 	gmm::copy(sub_vector(mat_row(H, j), SUBtot), v);
 	house_vector_last(v);
 	w.resize(m);
 	col_house_update(sub_matrix(H, SUBI, SUBtot), v, w);
-	w.resize(m - tb_deftot);
+	w.resize(m - st.tb_deftot);
 	row_house_update(sub_matrix(H, SUBtot, SUBtot2), v, w);
 	gmm::clear(sub_vector(mat_row(H, j),
-			      sub_interval(tb_deftot, j - 1 - tb_deftot)));
-	w.resize(m - tb_deftot);
-	col_house_update(sub_matrix(tab_p, sub_interval(0, m-tb_deftot),
-				    sub_interval(0, jm-tb_deftot)), v, w);
+			      sub_interval(st.tb_deftot, j-1-st.tb_deftot)));
+	w.resize(m - st.tb_deftot);
+	col_house_update(sub_matrix(tab_p, sub_interval(0, m-st.tb_deftot),
+				    sub_interval(0, jm-st.tb_deftot)), v, w);
 	w.resize(n);
 	col_house_update(sub_matrix(W, sub_interval(0, n), SUBtot), v, w);
       }
       
       //       restore positive subdiagonal elements
       
-      std::vector<T> d(m-tb_deftot); d[0] = T(1);
+      std::vector<T> d(m-st.tb_deftot); d[0] = T(1);
       
       // We compute d[i+1] in order 
-      // (d[i+1] * H(tb_deftot+i+1,tb_deftoti)) / d[i] 
-      // be equal to |H(tb_deftot+i+1,tb_deftot+i))|.
-      for (size_type j = 0; j+1 < m-tb_deftot; ++j) {
-	T e = H(tb_deftot+j, tb_deftot+j-1);
+      // (d[i+1] * H(st.tb_deftot+i+1,st.tb_deftoti)) / d[i] 
+      // be equal to |H(st.tb_deftot+i+1,st.tb_deftot+i))|.
+      for (size_type j = 0; j+1 < m-st.tb_deftot; ++j) {
+	T e = H(st.tb_deftot+j, st.tb_deftot+j-1);
 	d[j+1] = (e == T(0)) ? T(1) :  d[j] * gmm::abs(e) / e;
-	scale(sub_vector(mat_row(H, tb_deftot+j+1),
-			 sub_interval(tb_deftot, m-tb_deftot)), d[j+1]);
-	scale(mat_col(H, tb_deftot+j+1), T(1) / d[j+1]);
-	scale(mat_col(W, tb_deftot+j+1), T(1) / d[j+1]);
+	scale(sub_vector(mat_row(H, st.tb_deftot+j+1),
+			 sub_interval(st.tb_deftot, m-st.tb_deftot)), d[j+1]);
+	scale(mat_col(H, st.tb_deftot+j+1), T(1) / d[j+1]);
+	scale(mat_col(W, st.tb_deftot+j+1), T(1) / d[j+1]);
       }
 
-      alpha = tab_p(m-tb_deftot-1, m-tb_deftot-1) / d[m-tb_deftot-1];
+      alpha = tab_p(m-st.tb_deftot-1, m-st.tb_deftot-1) / d[m-st.tb_deftot-1];
       alpha /= gmm::abs(alpha);
       scale(mat_col(W, m), alpha);
 	    
@@ -779,159 +555,213 @@ namespace gmm {
 
 
 
-  template<blzbla>
-    void select_eval(...) {
+  template<typename MAT, typename EVAL, typename PURE>
+  void select_eval(const MAT &Hobl, EVAL &eval, MAT &YB, PURE &pure,
+		   idgmres_state &st) {
 
-  	// Computation of the Ritz eigenpairs.
+    typedef typename linalg_traits<MAT>::value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
+    size_type m = st.m;
 
-	dense_matrix<T> evect(m-tb_def, m-tb_def);
-	std::vector<std::complex<R> > eval(m);
-	std::vector<R> ritznew(m, T(-1));
+    // Computation of the Ritz eigenpairs.
+    
+    col_matrix< std::vector<T> > evect(m-st.tb_def, m-st.tb_def);
+    // std::vector<std::complex<R> > eval(m);
+    std::vector<R> ritznew(m, T(-1));
 	
-	// dense_matrix<T> evect_lock(tb_def, tb_def);
+    // dense_matrix<T> evect_lock(st.tb_def, st.tb_def);
+    
+    sub_interval SUB1(st.tb_def, m-st.tb_def);
+    implicit_qr_algorithm(sub_matrix(Hobl, SUB1),
+			  sub_vector(eval, SUB1), evect);
+    sub_interval SUB2(0, st.tb_def);
+    implicit_qr_algorithm(sub_matrix(Hobl, SUB2),
+			  sub_vector(eval, SUB2), /* evect_lock */);
+    
+    for (size_type l = st.tb_def; l < m; ++l)
+      ritznew[l] = gmm::abs(evect(m-st.tb_def-1, l-st.tb_def) * Hobl(m, m-1));
+    
+    std::vector< std::pair<T, size_type> > eval_sort(m);
+    for (size_type l = 0; l < m; ++l)
+      eval_sort[l] = std::pair<T, size_type>(eval[l], l);
+    std::sort(eval_sort.begin(), eval_sort.end(), compare_vp());
+    
+    std::vector<size_type> index(m);
+    for (size_type l = 0; l < m; ++l) index[l] = eval_sort[l].second;
+    
+    std::vector<bool> kept(m, false);
+    std::fill(kept.begin(), kept.begin()+st.tb_def, true);
 
-	sub_interval SUB1(tb_def, m-tb_def);
-	implicit_qr_algorithm(sub_matrix(Hobl, SUB1, SUB1),
-			      sub_vector(eval, SUB1), evect);
-	sub_interval SUB2(0, tb_def);
-	implicit_qr_algorithm(sub_matrix(Hobl, SUB2, SUB2),
-			      sub_vector(eval, SUB2), /* evect_lock */);
+    apply_permutation(eval, index);
+    apply_permutation(evect, index);
+    apply_permutation(ritznew, index);
+    apply_permutation(kept, index);
 
-	for (size_type l = tb_def; l < m; ++l)
-	  ritznew[l] = gmm::abs(evect(m-tb_def-1, l-tb_def) * Hobl(m, m-1));
-	
-	std::vector< std::pair<T, size_type> > eval_sort(m);
-	for (size_type l = 0; l < m; ++l)
-	  eval_sort[l] = std::pair<T, size_type>(eval[l], l);
-	std::sort(eval_sort.begin(), eval_sort.end(), compare_vp());
-
-	std::vector<bool> kept(m, false);
-	std::fill(kept.begin(), kept.begin()+tb_def, true);
-	
-	
-	//	Which are the eigenvalues that converged ?
-	//
-	//	nb_want is the number of eigenvalues of 
-	//	Hess(tb_def+1:n,tb_def+1:n) that converged and are WANTED
-	//
-	//	nb_unwant is the number of eigenvalues of 
-	//	Hess(tb_def+1:n,tb_def+1:n) that converged and are UNWANTED
-	//
-	//	nb_nolong is the number of eigenvalues of 
-	//	Hess(1:tb_def,1:tb_def) that are NO LONGER WANTED. 
-	//
-	//	tb_deftot is the number of the deflated eigenvalues
-	//	that is tb_def + nb_want + nb_unwant
-	//
-	//	tb_defwant is the number of the wanted deflated eigenvalues
-	//	that is tb_def + nb_want - nb_nolong
-
-	dense_matrix<T> YB(m-tb_def, m-tb_def);
-	std::vector<size_type> pure(m-tb_def, 0);
-	
-	size_type nb_want = 0, nb_unwant = 0, nb_nolong = 0, j;
-
-	for (j = 0, ind = 0; j < m-p; ++j) {
-	  if (ritznew[eval_sort[j].second] == R(-1)) {
-	    if (std::imag(eval_sort[j].first) != R(0)) {
-	      nb_nolong += 2; ++j; //  à adapter dans le cas complexe ...
-	    } 
-	    else nb_nolong++;
-	  }
-	  else {
-	    if (ritznew[eval_sort[j].second]
-		< tol_vp * gmm::abs(eval_sort[j].first)) {
-	      
-	      for (size_type l = 0, l < m-tb_def; ++l)
-		YB(l, ind) = std::real(evect(l, eval_sort[j].second));
-	      kept[eval_sort[j].second] = true;
-	      ++j; ++nb_unwant; ind++;
-	      
-	      if (std::imag(eval_sort[j].first) != R(0)) {
-		for (size_type l = 0, l < m-tb_def; ++l)
-		  YB(l, ind) = std::imag(evect(l, eval_sort[j].second));
-		pure[ind-1] = 1;
-		pure[ind] = 2;
-		
-		kept[eval_sort[j].second] = true;
-		
-		nb_unwant++;
-		++ind;
-	      }
-	    }
-	  }
-	}
-
-
-	for (; j < m; ++j) {
-	  if (ritznew[eval_sort[j].second] != R(-1)) {
-
-	      for (size_type l = 0, l < m-tb_def; ++l)
-		YB(l, ind) = std::real(evect(l, eval_sort[j].second));
-	      pure[ind] = 1;
-	      ++ind;
-	      kept[eval_sort[j].second] = true;
-	      ++nb_want;
-
-	    if (ritznew[eval_sort[j].second]
-		< tol_vp * gmm::abs(eval_sort[j].first)) {
-		for (size_type l = 0, l < m-tb_def; ++l)
-		  YB(l, ind) = std::imag(evect(l, eval_sort[j].second));
-		pure[ind] = 2;
-		
-		j++;
-		kept[eval_sort[j].second] = true;
-		
-		nb_want++;
-		++ind;	      
-	    }
-	  }
-	}
-      
-	std::vector<T> shift(m - tb_def - nb_want - nb_unwant);
-	for (size_type j = 0, i = 0; j < m; ++j)
-	  if (!kept[j]) shift[i++] = eval[j];
-
-	// conv (nb_want+nb_unwant) is the number of eigenpairs that
-	//   have just converged.
-	// tb_deftot is the total number of eigenpairs that have converged.
-
-	size_type conv = ind;
-	size_type tb_deftot = tb_def + conv;
-	size_type tb_defwant = tb_def + nb_want - nb_nolong;
-
-	sub_interval SUBYB(0, conv);
-
-	if ( tb_defwant >= p ) { // An invariant subspace has been found.
-
-	  nb_unwant = 0;
-	  nb_want = p + nb_nolong - tb_def;
-	  tb_defwant = p;
-
-	  if ( pure[conv - nb_want + 1] == 2 ) {
-	    ++nb_want; tb_defwant = ++p; // il faudrait que ce soit un p local
-	  }
+    //	Which are the eigenvalues that converged ?
+    //
+    //	nb_want is the number of eigenvalues of 
+    //	Hess(tb_def+1:n,tb_def+1:n) that converged and are WANTED
+    //
+    //	nb_unwant is the number of eigenvalues of 
+    //	Hess(tb_def+1:n,tb_def+1:n) that converged and are UNWANTED
+    //
+    //	nb_nolong is the number of eigenvalues of 
+    //	Hess(1:tb_def,1:tb_def) that are NO LONGER WANTED. 
+    //
+    //	tb_deftot is the number of the deflated eigenvalues
+    //	that is tb_def + nb_want + nb_unwant
+    //
+    //	tb_defwant is the number of the wanted deflated eigenvalues
+    //	that is tb_def + nb_want - nb_nolong
+    
+    st.nb_want = 0, st.nb_unwant = 0, st.nb_nolong = 0;
+    size_type j, ind;
+    
+    for (j = 0, ind = 0; j < m-p; ++j) {
+      if (ritznew[j] == R(-1)) {
+	if (std::imag(eval[j]) != R(0)) {
+	  st.nb_nolong += 2; ++j; //  à adapter dans le cas complexe ...
+	} 
+	else st.nb_nolong++;
+      }
+      else {
+	if (ritznew[j]
+	    < tol_vp * gmm::abs(eval[j])) {
 	  
-	  SUBYB = sub_interval(conv - nb_want, nb_want);
-	  // YB = YB(:, conv - nb_want + 1 : conv); // On laisse en suspend ..
-	  // pure = pure( conv - nb_want + 1 : conv,1); // On laisse suspend ..
-	  conv = nb_want;
-	  tb_deftot = tb_def + conv;
-	  ok = true;
+	  for (size_type l = 0, l < m-st.tb_def; ++l)
+	    YB(l, ind) = std::real(evect(l, j));
+	  kept[j] = true;
+	  ++j; ++st.nb_unwant; ind++;
+	  
+	  if (std::imag(eval[j]) != R(0)) {
+	    for (size_type l = 0, l < m-st.tb_def; ++l)
+	      YB(l, ind) = std::imag(evect(l, j));
+	    pure[ind-1] = 1;
+	    pure[ind] = 2;
+	    
+	    kept[j] = true;
+	    
+	    st.nb_unwant++;
+	    ++ind;
+	  }
 	}
+      }
+    }
+    
+    
+    for (; j < m; ++j) {
+      if (ritznew[j] != R(-1)) {
 
+	for (size_type l = 0, l < m-st.tb_def; ++l)
+	  YB(l, ind) = std::real(evect(l, j));
+	pure[ind] = 1;
+	++ind;
+	kept[j] = true;
+	++st.nb_want;
+	
+	if (ritznew[j]
+	    < tol_vp * gmm::abs(eval[j])) {
+	  for (size_type l = 0, l < m-st.tb_def; ++l)
+	    YB(l, ind) = std::imag(evect(l, j));
+	  pure[ind] = 2;
+	  
+	  j++;
+	  kept[j] = true;
+	  
+	  st.nb_want++;
+	  ++ind;	      
+	}
+      }
+    }
+    
+    std::vector<T> shift(m - st.tb_def - st.nb_want - st.nb_unwant);
+    for (size_type j = 0, i = 0; j < m; ++j)
+      if (!kept[j]) shift[i++] = eval[j];
+    
+    // st.conv (st.nb_want+st.nb_unwant) is the number of eigenpairs that
+    //   have just converged.
+    // st.tb_deftot is the total number of eigenpairs that have converged.
+    
+    size_type st.conv = ind;
+    size_type st.tb_deftot = st.tb_def + st.conv;
+    size_type st.tb_defwant = st.tb_def + st.nb_want - st.nb_nolong;
+    
+    sub_interval SUBYB(0, st.conv);
+    
+    if ( st.tb_defwant >= p ) { // An invariant subspace has been found.
+      
+      st.nb_unwant = 0;
+      st.nb_want = p + st.nb_nolong - st.tb_def;
+      st.tb_defwant = p;
+      
+      if ( pure[st.conv - st.nb_want + 1] == 2 ) {
+	++st.nb_want; st.tb_defwant = ++p;// il faudrait que ce soit un p local
+      }
+      
+      SUBYB = sub_interval(st.conv - st.nb_want, st.nb_want);
+      // YB = YB(:, st.conv-st.nb_want+1 : st.conv); // On laisse en suspend ..
+      // pure = pure(st.conv-st.nb_want+1 : st.conv,1); // On laisse suspend ..
+      st.conv = st.nb_want;
+      st.tb_deftot = st.tb_def + st.conv;
+      st.ok = true;
+    }
+    
   }
 
 
 
+  template<typename MAT, typename EVAL, typename PURE>
+  void select_eval_for_purging(const MAT &Hobl, EVAL &eval, MAT &YB,
+			       PURE &pure, idgmres_state &st) {
 
+    typedef typename linalg_traits<MAT>::value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
+    size_type m = st.m;
 
+    // Computation of the Ritz eigenpairs.
+    
+    col_matrix< std::vector<T> > evect(st.tb_deftot, st.tb_deftot);
+    
+    sub_interval SUB1(0, st.tb_deftot);
+    implicit_qr_algorithm(sub_matrix(Hobl, SUB1),
+			  sub_vector(eval, SUB1), evect);
+    std::fill(eval.begin() + st.tb_deftot, eval.end(), std::complex<R>(0));
+    
+    std::vector< std::pair<T, size_type> > eval_sort(m);
+    for (size_type l = 0; l < m; ++l)
+      eval_sort[l] = std::pair<T, size_type>(eval[l], l);
+    std::sort(eval_sort.begin(), eval_sort.end(), compare_vp());
 
+    std::vector<bool> sorted(m);
+    std::fill(sorted.begin(), sorted.end(), false);
+    
+    std::vector<size_type> ind(m);
+    for (size_type l = 0; l < m; ++l) ind[l] = eval_sort[l].second;
+    
+    std::vector<bool> kept(m, false);
+    std::fill(kept.begin(), kept.begin()+st.tb_def, true);
 
-
-
-
-
+    apply_permutation(eval, ind);
+    apply_permutation(evect, ind);
+    
+    size_type j;
+    for (j = 0; j < st.tb_deftot; ++j) {
+	  
+      for (size_type l = 0, l < st.tb_deftot; ++l)
+	YB(l, j) = std::real(evect(l, j));
+      
+      if (std::imag(eval[j]) != R(0)) {
+	for (size_type l = 0, l < m-st.tb_def; ++l)
+	  YB(l, j+1) = std::imag(evect(l, j));
+	pure[j] = 1;
+	pure[j+1] = 2;
+	
+	j += 2;
+      }
+      else ++j;
+    }
+  }
+  
 
 
 
