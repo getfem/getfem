@@ -497,8 +497,8 @@ struct Chrono {
 	co.clear(); co_v.resize(0);
 	if ((*ref_element)(P) < geps) {
 	  bool kept = false;
-	  for (size_type k=list_constraints.size()-1; k != size_type(-1); --k) {
-	    // In reverse order to project on level set before on convex boundaries
+	  for (size_type k=list_constraints.size()-1; k!=size_type(-1); --k) {
+	    // Rerversed to project on level set before on convex boundaries
 	    gmm::copy(P, Q);
 	    scalar_type d = list_constraints[k]->grad(P, V);
 	    if (gmm::vect_norm2(V)*h0*7 > gmm::abs(d))

@@ -387,16 +387,16 @@ void friction_problem::solve(void) {
   cout << "Total number of variables: " << PERIODIC.nb_dof() << endl;
   getfem::standard_model_state MS(PERIODIC);
 
-  plain_vector WT(mf_u.nb_dof()), DF(mf_u.nb_dof()), HSPEED(mf_u.nb_dof());
+  plain_vector WT(mf_u.nb_dof()), WN(mf_u.nb_dof());
+  plain_vector DF(mf_u.nb_dof()), HSPEED(mf_u.nb_dof());
   plain_vector U2(mf_u.nb_dof());
   plain_vector U0(mf_u.nb_dof()), V0(mf_u.nb_dof()), A0(mf_u.nb_dof());
   plain_vector U1(mf_u.nb_dof()), V1(mf_u.nb_dof()), A1(mf_u.nb_dof());
-  plain_vector Vdemi(mf_u.nb_dof()), V_demi(mf_u.nb_dof()), Vmi(mf_u.nb_dof());
-  plain_vector UU1(N), VV1(N), LLN1(N), ACC(mf_u.nb_dof());
+  plain_vector Udemi(mf_u.nb_dof()), Vdemi(mf_u.nb_dof());
   plain_vector LT0(gmm::mat_nrows(BT)), LN0(gmm::mat_nrows(BN));
   plain_vector LT1(gmm::mat_nrows(BT)), LN1(gmm::mat_nrows(BN));
-  scalar_type a(1), b(1), dt0 = dt, t(0), t_export(dtexport), alpha(0);
-  scalar_type J_friction0(0), J_friction1(0);
+  scalar_type a(1), b(1), dt0 = dt, t(0), t_export(dtexport), beta_(0);
+  scalar_type alpha_(0), J_friction0(0), J_friction1(0);
   plain_vector one(mf_u.nb_dof());
   std::fill(one.begin(), one.end(), 1.0);
 
@@ -449,69 +449,85 @@ void friction_problem::solve(void) {
     exp->serie_add_object("deformationsteps");
   }
   
-  std::ofstream Houari1("iter", std::ios::out);   
-  std::ofstream Houari2("nrj", std::ios::out);
-  std::ofstream Houari3("vts", std::ios::out);
-  std::ofstream Houari4("FN0", std::ios::out);
-  std::ofstream Houari5("depl", std::ios::out);
+  std::ofstream output1((datafilename + "_iter.txt").c_str());   
+  std::ofstream output2((datafilename + "_energy.txt").c_str());
+  std::ofstream output3((datafilename + "_velocity.txt").c_str());
+  std::ofstream output4((datafilename + "_normalstress.txt").c_str());
+  std::ofstream output5((datafilename + "_displacement.txt").c_str());
   
   
-
   while (t <= T) {
 
     switch (scheme) { // complementary left hand side and velocity complement
     case 0 :
-      a = 1./(dt*dt*theta*theta); b = 1.; alpha = 1./(theta*dt);
+      a = 1./(dt*dt*theta*theta); b = 1.; beta_ = 1./(theta*dt); alpha_ = 1.;
       gmm::add(gmm::scaled(U0, a), gmm::scaled(V0, dt*a), U1);
       gmm::add(gmm::scaled(A0, (1.-theta)/theta), U1);
       gmm::mult(DYNAMIC.mass_matrix(), U1, DF);
       gmm::add(gmm::scaled(U0, -1.), gmm::scaled(V0, -dt*(1.-theta)), WT);
+      gmm::clear(WN);
       break;
     case 1 :
-      a = 2./(dt*dt*beta); b = 1.; alpha = 2.*gamma/(beta*dt);
+      a = 2./(dt*dt*beta); b = 1.; beta_ = 2.*gamma/(beta*dt); alpha_ = 1.;
       gmm::add(gmm::scaled(U0, a), gmm::scaled(V0, a*dt), U1);
       gmm::add(gmm::scaled(A0, (1.-beta)/beta), U1);
       gmm::mult(DYNAMIC.mass_matrix(), U1, DF);
       gmm::add(gmm::scaled(U0, -1.),
 	       gmm::scaled(V0, dt*(beta*0.5/gamma -1.)), WT);
       gmm::add(gmm::scaled(A0, dt*dt*0.5*(beta-gamma)/gamma), WT);
+      gmm::clear(WN);
       break;
     case 2 :
-      a = 4./(dt*dt); b = 1.; alpha = 2./dt;
+      a = 4./(dt*dt); b = 1.; beta_ = 2./dt; alpha_ = 1.;
       gmm::add(gmm::scaled(U0, a), gmm::scaled(V0, 2./dt), U1);
       gmm::mult(DYNAMIC.mass_matrix(), U1, DF);
       gmm::copy(gmm::scaled(U0, -1.), WT);
+      gmm::clear(WN);
       break;
     case 3 : // for the friction, it should be better to take the average 
       // for the contact forces to define the friction threshold
-      a = 2./(dt*dt); b = 1.;  alpha = 1./dt;
+      a = 2./(dt*dt); b = 1.;  beta_ = 1./dt; alpha_ = 1.;
       gmm::add(gmm::scaled(U0, a), gmm::scaled(V0, 2./dt), U1);
       gmm::mult(DYNAMIC.mass_matrix(), U1, DF);
       gmm::mult_add(gmm::transposed(BT), gmm::scaled(LN0, (1.-theta)), DF);
       gmm::copy(gmm::scaled(U0, -1.), WT);
+      gmm::clear(WN);
       break;
     case 4 : // Paoli-Schatzman scheme DF --> F^n
-      gmm::mult(ELAS.stiffness_matrix(), gmm::scaled(U1, -1.),  VOL_F.source_term(), A1);
+      gmm::mult(ELAS.stiffness_matrix(), gmm::scaled(U1, -1.),
+		VOL_F.source_term(), A1);
       iter.init();
       gmm::cg(DYNAMIC.mass_matrix(), DF, A1, gmm::identity_matrix(), iter);
       break;
     case 5:
-     
-      
+      a = 4./(dt*dt); b = 1.; beta_ = 1./(2.*dt); alpha_ = 1./(1.+restit);
+      if (t == 0)
+	gmm::add(gmm::scaled(V0, dt), U0, U1); // + terme d'orde supérieur ...
+      gmm::add(gmm::scaled(U1, 2.*a), gmm::scaled(U0, -a), U2);
+      gmm::mult(DYNAMIC.mass_matrix(), U2, DF);
+      gmm::add(gmm::scaled(U1, -2.), gmm::scaled(U0, -1.), U2);
+      gmm::mult_add(ELAS.stiffness_matrix(), U2, DF);
+      gmm::add(gmm::scaled(VOL_F.source_term(), 3.), DF);
+      gmm::copy(gmm::scaled(U0, -1.), WT);
+      gmm::copy(gmm::scaled(U0, restit), WN);
       break;
     }
 
 
-    if (scheme  != 4 && scheme  != 5) {
-      gmm::add(gmm::scaled(HSPEED, -1./alpha), WT);
-      
-      FRICTION.set_WT(WT); FRICTION.set_r(r); FRICTION.set_alpha(alpha); 
+    if (scheme  != 4) {
+      gmm::add(gmm::scaled(HSPEED, -1./beta_), WT);
+      FRICTION.set_WN(WN); 
+      FRICTION.set_WT(WT); FRICTION.set_r(r); FRICTION.set_beta(beta_);
+      FRICTION.set_alpha(alpha_); 
       DYNAMIC.set_dynamic_coeff(a, b);
       DYNAMIC.set_DF(DF);
       
       iter.init();
       getfem::standard_solve(MS, PERIODIC, iter);
-      gmm::copy(ELAS.get_solution(MS), U1); 
+      if (scheme  == 5)
+	gmm::copy(ELAS.get_solution(MS), U2);
+      else
+	gmm::copy(ELAS.get_solution(MS), U1);
       gmm::copy(FRICTION.get_LN(MS), LN1);
       gmm::copy(FRICTION.get_LT(MS), LT1);
     }
@@ -555,70 +571,31 @@ void friction_problem::solve(void) {
       if (t == 0)
 	gmm::add(gmm::scaled(V0, dt), U0, U1); // + terme d'orde supérieur ...
       
-      /* calcul de la force normal */
-      gmm::add(U0,gmm::scaled(U1, -2.), ACC);
-      gmm::add(U2, ACC);
-      gmm::add(DF, gmm::scaled(ACC, -1./(dt*dt)), ACC);
-      gmm::mult(DYNAMIC.mass_matrix(), ACC, ACC);
-      gmm::mult(BN, ACC, LN1);
-
       gmm::add(gmm::scaled(DF, dt*dt), gmm::scaled(U0, restit-1.), U2);
       gmm::add(gmm::scaled(U1, 2.), U2);
       gmm::scale(U2, 1./(1.+restit));
       gmm::mult(BN, U2, BU);
       for (size_type i = 0; i < gmm::mat_nrows(BN); ++i)
 	AA[i] = (std::min(BU[i], gap[i]) - BU[i]) / BBT(i,i);
-      gmm::mult(gmm::transposed(BN), AA, U2, U2);
+      gmm::mult_add(gmm::transposed(BN), AA, U2);
       gmm::scale(U2, 1.+restit);
       gmm::add(gmm::scaled(U0, -restit), U2);
       gmm::add(gmm::scaled(U2, 1./(2.*dt)), gmm::scaled(U0, -1./(2.*dt)), V1);
       
+      /* calcul de la force normal */
+      gmm::add(U0, gmm::scaled(U1, -2.), A0);
+      gmm::add(U2, A0);
+      gmm::scale(A0, -1./(dt*dt));
+      gmm::add(DF, A0);
+      gmm::mult(DYNAMIC.mass_matrix(), A0, A1);
+      gmm::mult(BN, A1, LN1);
+
       break;
     case 5:
-      gmm::add(gmm::scaled(U1, 2.), U0, A0);
-      gmm::add(gmm::scaled(U1, -2.), U0, A1);
-      gmm::mult(DYNAMIC.mass_matrix(), A1, A1);
-      gmm::mult(ELAS.stiffness_matrix(), A0, A0);
-      gmm::mult(gmm::transposed(BN), LN0, DF);
-      gmm::mult(gmm::transposed(BT), LT0, DF, DF);
-      gmm::add(VOL_F.source_term(), DF, DF);
-      gmm::add(gmm::scaled(A0, 1./(dt*dt)), DF, DF);
-      gmm::add(gmm::scaled(A1, 0.25), DF, DF);
-      
-      gmm::add(U2, gmm::scaled(U1, -1.), Vdemi);
-      gmm::copy(gmm::scaled(Vdemi, 1./(2*dt*dt)), Vdemi);
-      gmm::add(U1, gmm::scaled(U0, -1.), V_demi);
-      gmm::copy(gmm::scaled(V_demi, 1./(2*dt*dt)), V_demi);
-      gmm::add(Vdemi, V_demi, Vmi);
-
-      
-     
-
-      if (t == 0)
-	gmm::add(gmm::scaled(V0, dt), U0, U1); // + terme d'orde supérieur ...
-      sparse_matrix DMM(mf_u.nb_dof(), mf_u.nb_dof());
-      iter.init();
-      gmm::add(gmm::scaled(DYNAMIC.mass_matrix(), 1./(dt*dt)), 
-	       gmm::scaled(ELAS.stiffness_matrix(), 0.25), DMM); 
-      gmm::cg(DMM, U2, DF, gmm::identity_matrix(), iter);
-      
-      gmm::add(gmm::scaled(U0, restit), U2);
-      gmm::scale(U2, 1./(1.+restit));
-      gmm::mult(BN, U2, BU);
-      gmm::add(gmm::scaled(BU, (1.+restit)/(dt*dt)), LN0, BU);
-      
-      for (size_type i = 0; i < gmm::mat_nrows(BN); ++i)
-	AA[i] = (std::min(BU[i], gap[i]) - BU[i]) / BBT(i,i);
-      gmm::add(AA, LN0);
-      
-      r = gmm::vect_norm2(LN0);
-      if (r <= 0){
-	for (size_type i = 0; i < gmm::mat_nrows(BN); ++i) 
-	  LT0[i] = 0;
-      }
-      else{
-       	gmm::mult(BN, gmm::scaled(Vmi, r/gmm::vect_norm2(Vmi)), LT0);
-      }
+      gmm::scale(LN1, 1./4.);
+      gmm::scale(LT1, 1./4.);
+      gmm::add(gmm::scaled(U2, 0.5), gmm::scaled(U1, 0.5), Udemi);
+      gmm::add(gmm::scaled(U2, 1./dt), gmm::scaled(U1, -1./dt), Vdemi);
       break;
     }
     
@@ -629,7 +606,13 @@ void friction_problem::solve(void) {
 //       cout << "Contact pressure : " << LN1 << endl;
 //     }
 
-    scalar_type J1 = 0.5*gmm::vect_sp(ELAS.stiffness_matrix(), U1, U1)
+    scalar_type J1;
+    if (scheme == 5)
+      J1 = 0.5*gmm::vect_sp(ELAS.stiffness_matrix(), Udemi, Udemi)
+      + 0.5 * gmm::vect_sp(DYNAMIC.mass_matrix(), Vdemi, Vdemi)
+      - gmm::vect_sp(VOL_F.source_term(), Udemi);
+    else
+      J1 = 0.5*gmm::vect_sp(ELAS.stiffness_matrix(), U1, U1)
       + 0.5 * gmm::vect_sp(DYNAMIC.mass_matrix(), V1, V1)
       - gmm::vect_sp(VOL_F.source_term(), U1);
 
@@ -663,21 +646,16 @@ void friction_problem::solve(void) {
 	   << " (st " << nbst << ", sl " << nbsl << ")" << endl;
       dt = std::min(2.*dt, dt0);
 
+      plain_vector UU1(N), VV1(N), LLN1(N);
       gmm::copy(gmm::sub_vector(U1, gmm::sub_interval(0,N)), UU1);
       gmm::copy(gmm::sub_vector(V1, gmm::sub_interval(0,N)), VV1);
       gmm::copy(gmm::sub_vector(LN1, gmm::sub_interval(0,N)), LLN1);
       
-      scalar_type FN0 = gmm::vect_norm2(LLN1);
-      scalar_type depl = gmm::vect_norm2(UU1);
-      scalar_type Vts = gmm::vect_norm2(VV1);
-      scalar_type time_iteration = t/dt;
-      
-      
-      Houari1 << time_iteration << "\n";
-      Houari2 << J1 << "\n";
-      Houari3 << Vts << "\n";
-      Houari4 << FN0 << "\n";
-      Houari5 << depl << "\n";
+      output1 << t/dt << "\n";
+      output2 << J1 << "\n";
+      output3 << gmm::vect_norm2(VV1) << "\n";
+      output4 << gmm::vect_norm2(LLN1) << "\n";
+      output5 <<  gmm::vect_norm2(UU1) << "\n";
       
       gmm::copy(U1, U0); gmm::copy(V1, V0); gmm::copy(A1, A0); J0 = J1;
       gmm::copy(LN1, LN0); gmm::copy(LT1, LT0); J_friction0 = J_friction1;

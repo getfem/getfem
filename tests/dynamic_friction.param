@@ -10,12 +10,12 @@ LZ = 30.0;		% size in Z.
 %LAMBDA = 11500;   	% Lamé coefficient.
 MU = 5;
 LAMBDA = 10;
-FRICTION_COEF = 0.3;    % Friction coefficient.
+FRICTION_COEF = 0.0;    % Friction coefficient.
 PG = 9810; 		% gravitation constante (on earth) (mm/s^2).
 %PG = 1000000; 		% gravitation constante (on jupiter !) (mm/s^2).
 RHO = 6e-6;     	% "realistic" density for steel
-T = 0.4;
-DT = 0.0001;            % Time step
+T = 0.1;
+DT = 0.0001;             % Time step
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
@@ -26,7 +26,7 @@ MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
 RESIDU = 1E-9;     	% residu for Newton.
 NOISY = 0;
 
-SCHEME = 5; % 0 = theta-method, 1 = Newmark, 2 = middle point
+SCHEME = 4; % 0 = theta-method, 1 = Newmark, 2 = middle point
             % 3 = middle point with modified contact forces
 	    % 4 = Paoli-Schatzman scheme (contact only)
 	    % 5 = modified Paoli-Schatzman scheme
@@ -34,7 +34,7 @@ SCHEME = 5; % 0 = theta-method, 1 = Newmark, 2 = middle point
 THETA = 1.0;
 BETA = 1.0;
 GAMMA=0.5;
-RESTIT = -1.0;           % Restitution coefficient for Paoli-Schatzman scheme
+RESTIT = 1.1;           % Restitution coefficient for Paoli-Schatzman scheme
 NOCONTACT_MASS = 0;     % Suppress or not the mass of contact nodes
 PERIODICITY=0;          % Periodic condition
 DT_ADAPT = 0;           % Time step adaptation regarding the energy

@@ -59,8 +59,8 @@ namespace getfem {
     size_type num_fem;
 
     T_MATRIX BN, BT;
-    VECTOR gap, threshold, WT, friction_coef, RLN, RLT;
-    value_type r, alpha;
+    VECTOR gap, threshold, WT, WN, friction_coef, RLN, RLT;
+    value_type r, alpha, beta;
     size_type d;
 
     mesh_fem *mf_u;
@@ -108,14 +108,16 @@ namespace getfem {
       SUBT = gmm::sub_interval(i0 + sub_problem.nb_dof() + gmm::mat_nrows(BN),
 			       gmm::mat_nrows(BT));
       gmm::add(gmm::sub_vector(MS.state(), SUBN), gmm::scaled(gap, r), RLN);
-      gmm::mult_add(BN, gmm::scaled(gmm::sub_vector(MS.state(), SUBU), -r),
+      gmm::mult_add(BN, gmm::scaled(WN, -r*alpha), RLN);
+      gmm::mult_add(BN, gmm::scaled(gmm::sub_vector(MS.state(), SUBU),
+				    -r*alpha),
 		    RLN);
       if (!contact_only) {
-	gmm::mult(BT, gmm::scaled(WT, -r*alpha),
+	gmm::mult(BT, gmm::scaled(WT, -r*beta),
 		    gmm::sub_vector(MS.state(), SUBT), RLT);
 	if (!stationary)
 	  gmm::mult_add(BT, gmm::scaled(gmm::sub_vector(MS.state(), SUBU),
-					-r*alpha), RLT);
+					-r*beta), RLT);
       }
     }
 
@@ -142,7 +144,7 @@ namespace getfem {
       react(MS, i0, modified);
       precomp(MS, i0);
             
-      gmm::copy(gmm::scaled(BN, value_type(-1)),
+      gmm::copy(gmm::scaled(BN, -alpha),
 		gmm::sub_matrix(MS.tangent_matrix(), SUBN, SUBU));
       gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBN));
       for (size_type i=0; i < nb_contact_nodes(); ++i) {
@@ -165,7 +167,7 @@ namespace getfem {
 	  
 	  ball_projection_grad(gmm::sub_vector(RLT, SUBI), th, pg);
 	  if (!stationary)
-	    gmm::mult(gmm::scaled(pg, -value_type(alpha)), 
+	    gmm::mult(gmm::scaled(pg, -beta), 
 		      gmm::sub_matrix(BT, SUBI,
 				   gmm::sub_interval(0, gmm::mat_ncols(BT))),
 		      gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBU));
@@ -190,12 +192,12 @@ namespace getfem {
 						  SUBN, SUBU)), tmp);
 	gmm::copy(tmp, gmm::sub_matrix(MS.tangent_matrix(), SUBU, SUBN));
 	gmm::resize(tmp, mf_u->nb_dof(), mf_u->nb_dof());
-	gmm::mult(gmm::transposed(gmm::scaled(BN,-r)),
+	gmm::mult(gmm::transposed(gmm::scaled(BN,-r*alpha)),
 		  gmm::sub_matrix(MS.tangent_matrix(), SUBN, SUBU), tmp);
 	gmm::add(tmp, gmm::sub_matrix(MS.tangent_matrix(), SUBU));
 	
 	if (!contact_only) {
-	  gmm::mult(gmm::transposed(gmm::scaled(BT,-r)),
+	  gmm::mult(gmm::transposed(gmm::scaled(BT,-r*beta)),
 		    gmm::sub_matrix(MS.tangent_matrix(), SUBT, SUBU), tmp);
 	  gmm::add(tmp, gmm::sub_matrix(MS.tangent_matrix(), SUBU));
 	  gmm::resize(tmp, mf_u->nb_dof(), gmm::mat_nrows(BT));
@@ -264,19 +266,23 @@ namespace getfem {
       mf_u = this->mesh_fems[num_fem];
       d = mf_u->linked_mesh().dim();
       r = value_type(1);
+      beta = value_type(1);
       alpha = value_type(1);
       gmm::resize(BN, nbc, mf_u->nb_dof());
       gmm::resize(BT, nbc*(d-1), mf_u->nb_dof());
       gmm::resize(gap, nbc); gmm::resize(friction_coef, nbc);
       gmm::resize(threshold, nbc); gmm::resize(WT, mf_u->nb_dof());
+      gmm::resize(WN, mf_u->nb_dof());
     }
 
     void set_stationary(bool b) { stationary = b; }
+    void set_beta(value_type al) { beta = al; }
     void set_alpha(value_type al) { alpha = al; }
 
     void set_r(value_type r_) { r = r_; }
     value_type get_r(void) const { return r; }
     template <class VEC> void set_WT(const VEC &WT_) { gmm::copy(WT_, WT); }
+    template <class VEC> void set_WN(const VEC &WN_) { gmm::copy(WN_, WN); }
 
     SUBVECTOR get_LN(MODEL_STATE &MS) {
       SUBN = gmm::sub_interval(this->first_index() + sub_problem.nb_dof(),
