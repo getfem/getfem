@@ -32,7 +32,7 @@
 #include <dal_singleton.h>
 #include <getfem_mat_elem_type.h>
 #include <dal_tree_sorted.h>
-
+#include <getfem_mat_elem.h> /* for mat_elem_forget_mat_elem_type */
 namespace getfem {
 
   bool operator < (const constituant &m, const constituant &n) {
@@ -48,6 +48,31 @@ namespace getfem {
   static pmat_elem_type add_to_met_tab(const mat_elem_type &f) {
     mat_elem_type_tab &tab = dal::singleton<mat_elem_type_tab>::instance();
     return &(tab[tab.add_norepeat(f)]);
+  }
+
+  /* on destruction, all occurences of the nonlinear term are removed
+     from the mat_elem_type cache; */
+  nonlinear_elem_term::~nonlinear_elem_term() {
+    mat_elem_type_tab &tab = dal::singleton<mat_elem_type_tab>::instance();
+    for (dal::bv_visitor_c i(tab.index()); !i.finished(); ++i) {
+      for (size_type j=0; i < tab[i].size(); ++j) {
+	if (tab[i][j].t == GETFEM_NONLINEAR_ && tab[i][j].nlt == this) {
+	  /* remove all mat_elem structures pointing to the mat_elem_type */
+	  mat_elem_forget_mat_elem_type(&tab[i]); 
+	  tab.sup(i);
+	  break;
+	}
+      }
+    }
+    /*
+    for (mat_elem_type_tab::sorted_iterator it = tab.begin(); it != tab.end();) {
+      mat_elem_type_tab::sorted_iterator itnext = it+1;
+      if ((*it).t = GETFEM_NONLINEAR_ && ((*it).nlt == this)) {
+	mat_elem_forget_mat_elem_type(&(*it)); 
+	tab.sup((*it).index());
+      }
+      it = itnext;
+    }*/
   }
 
   pmat_elem_type mat_elem_base(pfem pfi) {

@@ -421,7 +421,7 @@ namespace getfem {
   /* main class for generic assembly */
   class generic_assembly : public asm_tokenizer {
     std::deque<const mesh_fem *> mftab;/* list of the mesh_fem used in the computation */
-    std::deque<const nonlinear_elem_term*> innonlin;  /* alternatives to base, grad, hess in comp() for non-linear computations) */
+    std::deque<pnonlinear_elem_term> innonlin;  /* alternatives to base, grad, hess in comp() for non-linear computations) */
     std::deque<base_asm_data*> indata;              /* data sources */
     std::deque<base_asm_vec*> outvec;               /* vectors in which is done the assembly */
     std::deque<base_asm_mat*> outmat;               /* matrices in which is done the assembly */
@@ -467,12 +467,12 @@ namespace getfem {
 
     void set(const std::string& s_) { set_str(s_); }
     const std::deque<const mesh_fem*>& mf() const { return mftab; }
-    const std::deque<const nonlinear_elem_term *> nonlin() const { return innonlin; }
+    const std::deque<pnonlinear_elem_term> nonlin() const { return innonlin; }
     const std::deque<base_asm_data*>& data() const { return indata; }
     const std::deque<base_asm_vec*>& vec() const { return outvec; }
     const std::deque<base_asm_mat*>& mat() const { return outmat; }
     void push_mf(const mesh_fem& mf_) { mftab.push_back(&mf_); }
-    void push_nonlinear_term(const nonlinear_elem_term *net) {
+    void push_nonlinear_term(pnonlinear_elem_term net) {
       innonlin.push_back(net);
     }
     template< typename VEC > void push_data(const VEC& d) { 

@@ -48,6 +48,16 @@ namespace gmm
     template <class MAT> void build_with(const MAT &) {}
   };
 
+  template <typename M> inline
+  void add(const identity_matrix&, M &v1) {
+    size_type n = std::min(gmm::mat_nrows(v1), gmm::mat_ncols(v1));
+    for (size_type i = 0; i < n; ++i)
+      v1(i,i) += typename linalg_traits<M>::value_type(1);
+  }
+  template <typename M> inline
+  void add(const identity_matrix &I, const M &v1)
+  { add(I, linalg_const_cast(v1)); }
+
   template <typename V1, typename V2> inline
   void mult(const identity_matrix&, const V1 &v1, V2 &v2)
   { copy(v1, v2); }

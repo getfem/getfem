@@ -49,7 +49,8 @@ namespace getfem
      abstract class for integration of non-linear terms into the mat_elem computations
      the nonlinear term is added into the mat_elem_type via mat_elem_nonlinear
 
-     The lifetime of this object should be the whole lifetime of the program.. do not destroy it!
+     When this object is destroyed, its destructor will remove all
+     references to it from its internal structures.
      
      The object must depend on one pfem (and may depend on other optional pfem)
 
@@ -61,12 +62,13 @@ namespace getfem
     public :
       virtual const bgeot::multi_index &sizes() const = 0;
       virtual void compute(fem_interpolation_context& /*ctx*/,
-			   base_tensor &/*output*/) const {}
-      virtual void prepare(fem_interpolation_context& /*ctx*/, size_type /*nl_part*/) const {}
-      virtual ~nonlinear_elem_term() {}
+			   base_tensor &/*output*/) {}
+      virtual void prepare(fem_interpolation_context& /*ctx*/,
+			   size_type /*nl_part*/) {}
+    virtual ~nonlinear_elem_term();
   };
 
-  typedef const nonlinear_elem_term *pnonlinear_elem_term;
+  typedef nonlinear_elem_term *pnonlinear_elem_term;
 
   struct constituant {
     constituant_type t;
@@ -75,7 +77,7 @@ namespace getfem
 			 more than one pfem, it will be splitted into one "constituant" per fem
 			 for (nl_part = 0), the mat_elem_* computations will call nlt->compute,
 			 for (nl_part != 0) they will cal nlt->prepare(ctx,nl_part) */
-    const nonlinear_elem_term *nlt;
+    pnonlinear_elem_term nlt;
   };
 
   /** Description of an elementary matrix.  This class 

@@ -1,3 +1,4 @@
+/* -*- c++ -*- (enables emacs c++ mode)                                    */
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  GEneric Tool for Finite Element Methods (getfem)             */
@@ -72,6 +73,7 @@ namespace getfem
 				 bgeot::pgeometric_trans pg);
 
   size_type stored_mat_elem_memsize();
+  void mat_elem_forget_mat_elem_type(pmat_elem_type pm);
 }  /* end of namespace getfem.                                             */
 
 

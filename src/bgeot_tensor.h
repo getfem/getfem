@@ -46,31 +46,37 @@ namespace bgeot
   typedef size_t size_type;
   typedef dal::uint16_type short_type;
 
-  class multi_index : public std::vector<short_type>
-  {
-    public :
+  class multi_index : public std::vector<short_type> {
+  public :
+    
+    void incrementation(const multi_index &m)
+    { /* a compiler ... */
+      iterator it = begin(), ite = end();
+      const_iterator itm = m.begin();
+      
+      ++(*it);
+      while (*it >= *itm && it != (ite-1)) { *it = 0; ++it; ++itm; ++(*it);}
+    }
+    
+    void reset(void) { std::fill(begin(), end(), 0); }
+    
+    inline bool finished(const multi_index &m)
+    { return ((*this)[size()-1] >= m[size()-1]); }
+    
+    multi_index(size_t n) : std::vector<short_type>(n)
+    { std::fill(begin(), end(), 0); }
+    
+    multi_index(size_type i, size_type j, size_type k, size_type l)
+      : std::vector<short_type>(4) {
+      (*this)[0] = i; (*this)[1] = j; (*this)[2] = k; (*this)[3] = l; 
+    } 
 
-      void incrementation(const multi_index &m)
-      { /* a compiler ... */
-	iterator it = begin(), ite = end();
-	const_iterator itm = m.begin();
-	
-	++(*it);
-	while (*it >= *itm && it != (ite-1)) { *it = 0; ++it; ++itm; ++(*it);}
-      }
-
-      void reset(void) { std::fill(begin(), end(), 0); }
-
-      inline bool finished(const multi_index &m)
-      { return ((*this)[size()-1] >= m[size()-1]); }
-
-      multi_index(size_t n) : std::vector<short_type>(n)
-      { std::fill(begin(), end(), 0); }
-
-      multi_index(void) {}
-
-    size_type memsize() const { return std::vector<short_type>::capacity()*sizeof(short_type) + 
-				  sizeof(multi_index); }
+    multi_index(void) {}
+    
+    size_type memsize() const {
+      return std::vector<short_type>::capacity()*sizeof(short_type) + 
+	sizeof(multi_index);
+    }
   };
 
   inline std::ostream &operator <<(std::ostream &o,
@@ -116,8 +122,44 @@ namespace bgeot
 	return *(this->begin() + d);
       }
 
-      template<class CONT> inline T& operator ()(const CONT &c)
-      {
+      inline T& operator ()(size_type i, size_type j, size_type k,
+			    size_type l) {
+	if (order() != 4)
+	  DAL_THROW(std::out_of_range, "Bad tensor order");
+	size_type d = coeff[0]*i + coeff[1]*j + coeff[2]*k + coeff[3]*l;
+	if (d >= size()) DAL_THROW(std::out_of_range, "index out of range");
+	return *(this->begin() + d);
+      }
+    
+      inline T& operator ()(size_type i, size_type j) {
+	if (order() != 2)
+	  DAL_THROW(std::out_of_range, "Bad tensor order");
+	size_type d = coeff[0]*i + coeff[1]*j;
+	if (d >= size()) DAL_THROW(std::out_of_range, "index out of range");
+	return *(this->begin() + d);
+      }
+
+      inline const T& operator ()(size_type i, size_type j, size_type k,
+			    size_type l) const {
+	if (order() != 4)
+	  DAL_THROW(std::out_of_range, "Bad tensor order");
+	size_type d = coeff[0]*i + coeff[1]*j + coeff[2]*k + coeff[3]*l;
+	if (d >= size()) DAL_THROW(std::out_of_range, "index out of range");
+	return *(this->begin() + d);
+      }
+    
+      inline const T& operator ()(size_type i, size_type j) const {
+	if (order() != 2)
+	  DAL_THROW(std::out_of_range, "Bad tensor order");
+	size_type d = coeff[0]*i + coeff[1]*j;
+	if (d >= size()) DAL_THROW(std::out_of_range, "index out of range");
+	return *(this->begin() + d);
+      }
+
+
+    
+
+      template<class CONT> inline T& operator ()(const CONT &c) {
 	typename CONT::const_iterator it = c.begin();
 	multi_index::iterator q = coeff.begin(), e = coeff.end();
 	size_type d = 0;
@@ -149,8 +191,10 @@ namespace bgeot
 	  init(mi);
       }
 
-      tensor(const multi_index &c) { init(c); }
-      tensor(void) {}
+    tensor(const multi_index &c) { init(c); }
+    tensor(size_type i, size_type j, size_type k, size_type l)
+    { init(multi_index(i, j, k, l)); }
+    tensor(void) {}
 
       void mat_transp_reduction(const tensor &t, const gmm::dense_matrix<T> &m, int ni);
 

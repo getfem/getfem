@@ -197,6 +197,7 @@ namespace getfem
 	    bgeot::multi_index sz(1); sz[0] = 1;
 	    elmt_stored[k].adjust_sizes(sz); t[0] = 1.;
 	  } else {
+	    elmt_stored[k].adjust_sizes((*it).nlt->sizes());
 	    (*it).nlt->compute(ctx, elmt_stored[k]);
 	    for (dim_type ii = 1; ii < (*it).nlt->sizes().size(); ++ii) ++mit;
 	  }
@@ -420,9 +421,12 @@ namespace getfem
 
   };
   
+  struct emelem_comp_light_FUNC_TABLE : 
+    public dal::FONC_TABLE<emelem_comp_light_, emelem_comp_structure_> { };
+
   size_type stored_mat_elem_memsize() {
-    const dal::FONC_TABLE<emelem_comp_light_, emelem_comp_structure_>& f = 
-      dal::singleton<dal::FONC_TABLE<emelem_comp_light_, emelem_comp_structure_> >::const_instance();
+    const emelem_comp_light_FUNC_TABLE & f = 
+      dal::singleton<emelem_comp_light_FUNC_TABLE>::const_instance();
     size_type sz = 0;
     for (dal::bv_visitor i(f.index()); !i.finished(); ++i) {
       sz += f.table()[i]->memsize();
@@ -432,9 +436,17 @@ namespace getfem
 
   pmat_elem_computation mat_elem(pmat_elem_type pm, pintegration_method pi,
 				 bgeot::pgeometric_trans pg) { 
-    return dal::singleton<dal::FONC_TABLE<emelem_comp_light_, emelem_comp_structure_> >
+    return dal::singleton<emelem_comp_light_FUNC_TABLE>
       ::instance().add(emelem_comp_light_(pm, pi, pg));
   }
 
+  /* remove all occurences of pm from the emelem_comp_light_FUNC_TABLE */
+  void mat_elem_forget_mat_elem_type(pmat_elem_type pm) {
+    emelem_comp_light_FUNC_TABLE& f = 
+      dal::singleton<emelem_comp_light_FUNC_TABLE>::instance();
+    for (dal::bv_visitor_c i(f.index()); !i.finished(); ++i) { 
+      if (f.light_table()[i].pmt == pm) f.sup(f.light_table()[i]);
+    }
+  }
 }  /* end of namespace getfem.                                            */
 
