@@ -11,14 +11,14 @@ print F ' \Huge \bf GETFEM++ \end{center}} \newpage', "\n\n";
 print F '\tableofcontents', "\n\n";
 close F;
 
-`extract_latex < ../dal/dal_std.h >> doc.tex`;
-`extract_latex < ../dal/dal_basic.h >> doc.tex`;
-`extract_latex < ../dal/dal_algobase.h >> doc.tex`;
-`extract_latex < ../bgeot/bgeot_poly.h >> doc.tex`;
-`extract_latex < ../bgeot/bgeot_vector.h >> doc.tex`;
-`extract_latex < ../bgeot/bgeot_convex_structure.h >> doc.tex`;
-`extract_latex < ../bgeot/bgeot_fem_interpolation.h >> doc.tex`;
-`extract_latex < ../bgeot/bgeot_geometric_trans.h >> doc.tex`;
+`../bin/extract_latex < ../dal/dal_std.h >> doc.tex`;
+`../bin/extract_latex < ../dal/dal_basic.h >> doc.tex`;
+`../bin/extract_latex < ../dal/dal_algobase.h >> doc.tex`;
+`../bin/extract_latex < ../bgeot/bgeot_poly.h >> doc.tex`;
+`../bin/extract_latex < ../bgeot/bgeot_vector.h >> doc.tex`;
+`../bin/extract_latex < ../bgeot/bgeot_convex_structure.h >> doc.tex`;
+`../bin/extract_latex < ../bgeot/bgeot_fem_interpolation.h >> doc.tex`;
+`../bin/extract_latex < ../bgeot/bgeot_geometric_trans.h >> doc.tex`;
 
 open F, ">>doc.tex" or die;
 print F "\n", '\end{document}', "\n";
