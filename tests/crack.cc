@@ -231,23 +231,9 @@ void sol_ref_infinite_plane(scalar_type nu, scalar_type E, scalar_type sigma,
   assert(!isnan(U[1]));
 }
 
-gmm::row_matrix<base_small_vector> sol_K;
-static scalar_type sol_lambda, sol_mu;
-
-base_small_vector sol_u(const base_node &x) {
-  int N = x.size(); base_small_vector res(N);
-  return res;
-}
-
 base_small_vector sol_f(const base_node &x) {
   int N = x.size();
   base_small_vector res(N); //res[N-1] = (x[1] < 0 ? -1.0 : 0);
-  return res;
-}
-
-base_matrix sol_sigma(const base_node &x) {
-  int N = x.size();
-  base_matrix res(N,N);
   return res;
 }
 
@@ -312,10 +298,10 @@ struct exact_solution {
   }
 };
 
+/**************************************************************************/
+/*  Structure for the crack problem.                                      */
+/**************************************************************************/
 
-/*
- * structure for the crack problem
- */
 struct crack_problem {
 
   enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
@@ -348,7 +334,6 @@ struct crack_problem {
 
   bool solve(plain_vector &U);
   void init(void);
-  void compute_error(plain_vector &U);
   crack_problem(void) : mls(mesh), mim(mls), mf_pre_u(mesh),
 			mfls_u(mls, mf_pre_u), mf_sing_u(mesh), mf_u_sum(mesh),
 			mf_rhs(mesh), mf_p(mesh), mf_coef(mesh),
@@ -386,7 +371,6 @@ void crack_problem::init(void) {
 
   mu = PARAM.real_value("MU", "Lamé coefficient mu");
   lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
-  sol_lambda = lambda; sol_mu = mu;
   mf_u().set_qdim(N);
 
   /* set the finite element on the mf_u */
@@ -447,24 +431,7 @@ void crack_problem::init(void) {
       mesh.add_face_to_set(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
   }
 
-  exact_sol.init(1, sol_lambda, sol_mu, ls);
-}
-
-/* compute the error with respect to the exact solution */
-void crack_problem::compute_error(plain_vector &U) {
-  size_type N = mesh.dim();
-  std::vector<scalar_type> V(mf_rhs.nb_dof()*N);
-  getfem::interpolation(mf_u(), mf_rhs, U, V);
-  for (size_type i = 0; i < mf_rhs.nb_dof(); ++i) {
-    gmm::add(gmm::scaled(sol_u(mf_rhs.point_of_dof(i)), -1.0),
-	     gmm::sub_vector(V, gmm::sub_interval(i*N, N)));
-  }
-  cout.precision(16);
-  mf_rhs.set_qdim(N);
-  cout << "L2 error = " << getfem::asm_L2_norm(mim, mf_rhs, V) << endl
-       << "H1 error = " << getfem::asm_H1_norm(mim, mf_rhs, V) << endl
-       << "Linfty error = " << gmm::vect_norminf(V) << endl;
-  mf_rhs.set_qdim(1);
+  exact_sol.init(1, lambda, mu, ls);
 }
 
 /**************************************************************************/
@@ -518,24 +485,8 @@ bool crack_problem::solve(plain_vector &U) {
   getfem::mdbrick_source_term<> VOL_F(*pINCOMP, mf_rhs, F);
 
   // Defining the Neumann condition right hand side.
-  base_small_vector un(N), v(N);
-  for (dal::bv_visitor cv(mesh.convexes_in_set(NEUMANN_BOUNDARY_NUM));
-       !cv.finished(); ++cv) {
-    getfem::pfem pf = mf_rhs.fem_of_element(cv);
-    getfem::mesh_cvf_set::face_bitset fb = 
-      mesh.faces_of_convex_in_set(NEUMANN_BOUNDARY_NUM, cv);
-    for (unsigned f = 0; f < MAX_FACES_PER_CV; ++f) if (fb[f]) {
-      for (size_type l = 0; l< pf->structure(cv)->nb_points_of_face(f); ++l) {
-	size_type n = pf->structure(cv)->ind_points_of_face(f)[l];
-	un = mesh.normal_of_face_of_convex(cv, f, pf->node_of_dof(cv, n));
-	un /= gmm::vect_norm2(un);
-	size_type dof = mf_rhs.ind_dof_of_element(cv)[n];
-	gmm::mult(sol_sigma(mf_rhs.point_of_dof(dof)), un, v);
-	gmm::copy(v, gmm::sub_vector(F, gmm::sub_interval(dof*N, N)));
-      }
-    }
-  }
-
+  gmm::clear(F);
+ 
   // Neumann condition brick.
   getfem::mdbrick_source_term<> NEUMANN(VOL_F, mf_rhs, F,NEUMANN_BOUNDARY_NUM);
   
@@ -585,7 +536,6 @@ int main(int argc, char *argv[]) {
     p.mesh.write_to_file(p.datafilename + ".mesh");
     plain_vector U(p.mf_u().nb_dof());
     if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
-    //p.compute_error(U);
     if (p.PARAM.int_value("VTK_EXPORT")) {
       getfem::getfem_mesh mcut;
       p.mls.global_cut_mesh(mcut);

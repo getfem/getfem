@@ -61,7 +61,7 @@ namespace getfem {
 					 base_tensor &) const
   { DAL_THROW(internal_error, "No hess values, real only element."); }
   
-  void global_function_fem::real_base_value(const fem_interpolation_context& c, 
+  void global_function_fem::real_base_value(const fem_interpolation_context& c,
 					 base_tensor &t) const {
     mib.resize(2); mib[0] = 1; mib[1] = functions.size();
     t.adjust_sizes(mib);
@@ -215,6 +215,9 @@ namespace getfem {
     virtual scalar_type val(const fem_interpolation_context& c) const {
       update_mls(c.convex_num());
       scalar_type x = mls1(c.xref()), y = mls0(c.xref());
+//       cout << "Xreal = " << c.xreal()
+//            << " f(" << x << ", " << y << ", " << l << ") = "
+// 	      << sing_function(x, y, l) << endl;
       return sing_function(x, y, l);
     }
 
