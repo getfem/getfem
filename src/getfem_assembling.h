@@ -344,8 +344,14 @@ namespace getfem
 		    /* we filter out noise since this matrix can be used 
 		       as a constraints matrix for dirichlet conditions,
 		       noise may lead to 'fictive' dirichlet condition
-		       (this is the case for ex. with laplace/PK(1,4)) */
-		    if (data != 0. && vmax != .0 && (*p)/vmax > 1e-5) {
+		       (this is the case for ex. with laplace/PK(1,4)) 
+
+		       NON NON ET NON !!
+		       finaly we DON'T FILTER NOISE since it breaks 
+		       the assembling of dirichlet conditions against
+		       hierarchical FEMS ...
+		    */
+		    if (data != 0. && vmax != .0) {// && (*p)/vmax > 1e-5) {
 		      /*
 			cerr << "QU : adding " << data << "*" << (*p) << " at dof_i=" << 
 			dof_i << "*" << N << "+" << ii << ", dof_j=" << dof_i << "*" << 
