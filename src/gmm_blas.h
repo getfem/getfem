@@ -1112,16 +1112,30 @@ namespace gmm {
   }
 
   template <class L1, class L2, class L3> inline
-  void mult_spec(const L1& l1, const L2& l2, L3& l3, row_major)
-  { mult_by_row(l1, l2, l3, typename linalg_traits<L3>::storage_type()); }
-
-  template <class L1, class L2, class L3> inline
-  void mult_spec(const L1& l1, const L2& l2, L3& l3, col_major) {
+  void mult_by_col(const L1& l1, const L2& l2, L3& l3, abstract_plain) {
     clear(l3);
     size_type nc = mat_ncols(l1);
     for (size_type i = 0; i < nc; ++i)
       add(scaled(mat_col(l1, i), l2[i]), l3);
   }
+
+  template <class L1, class L2, class L3> inline
+  void mult_by_col(const L1& l1, const L2& l2, L3& l3, abstract_sparse) {
+    clear(l3);
+    typename linalg_traits<L2>::const_iterator it = vect_begin(l2),
+      ite = vect_end(l2);
+    for (; it != ite; ++it)
+      if (*it != typename linalg_traits<L2>::value_type(0))
+	add(scaled(mat_col(l1, it.index()), *it), l3);
+  }
+
+  template <class L1, class L2, class L3> inline
+  void mult_spec(const L1& l1, const L2& l2, L3& l3, row_major)
+  { mult_by_row(l1, l2, l3, typename linalg_traits<L3>::storage_type()); }
+
+  template <class L1, class L2, class L3> inline
+  void mult_spec(const L1& l1, const L2& l2, L3& l3, col_major)
+  { mult_by_col(l1, l2, l3, typename linalg_traits<L2>::storage_type()); }
 
   template <class L1, class L2, class L3> inline
   void mult_spec(const L1& l1, const L2& l2, L3& l3, abstract_null_type)
@@ -1185,16 +1199,32 @@ namespace gmm {
   }
 
   template <class L1, class L2, class L3, class L4> inline
-  void mult_spec(const L1& l1, const L2& l2, const L3& l3, L4& l4, row_major)
-  { mult_by_row(l1, l2, l3, l4, typename linalg_traits<L4>::storage_type()); }
-
-  template <class L1, class L2, class L3, class L4> inline
-  void mult_spec(const L1& l1, const L2& l2, const L3& l3, L4& l4, col_major) {
+  void mult_by_col(const L1& l1, const L2& l2, const L3& l3, L4& l4,
+		   abstract_plain) {
     copy(l3, l4);
     size_type nc = mat_ncols(l1);
     for (size_type i = 0; i < nc; ++i)
       add(scaled(mat_col(l1, i), l2[i]), l4);
   }
+
+  template <class L1, class L2, class L3, class L4> inline
+  void mult_by_col(const L1& l1, const L2& l2, const L3& l3, L4& l4,
+		   abstract_sparse) {
+    copy(l3, l4);
+    typename linalg_traits<L2>::const_iterator it = vect_begin(l2),
+      ite = vect_end(l2);
+    for (; it != ite; ++it)
+      if (*it != typename linalg_traits<L2>::value_type(0))
+	add(scaled(mat_col(l1, it.index()), *it), l4);
+  }
+
+  template <class L1, class L2, class L3, class L4> inline
+  void mult_spec(const L1& l1, const L2& l2, const L3& l3, L4& l4, row_major)
+  { mult_by_row(l1, l2, l3, l4, typename linalg_traits<L4>::storage_type()); }
+
+  template <class L1, class L2, class L3, class L4> inline
+  void mult_spec(const L1& l1, const L2& l2, const L3& l3, L4& l4, col_major)
+  { mult_by_col(l1, l2, l3, l4, typename linalg_traits<L2>::storage_type()); }
 
   template <class L1, class L2, class L3, class L4> inline
   void mult_spec(const L1& l1, const L2& l2, const L3& l3,

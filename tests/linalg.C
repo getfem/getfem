@@ -7,7 +7,7 @@ int main(void)
   try {
     std::vector<std::complex<float> > cc(10);
     gmm::clear(cc);
-    cout << "cc = "; gmm::write(cc, cout); cout << endl;
+    cout << "cc = "; gmm::write(cout, cc); cout << endl;
 
     std::vector<double> v(10), w(10);
     gmm::clear(v);
@@ -15,17 +15,17 @@ int main(void)
     std::fill(v.begin(), v.end(), 1.0);
     gmm::copy(v, w);
     
-    cout << "w = "; gmm::write(w, cout); cout << endl;
+    cout << "w = "; gmm::write(cout, w); cout << endl;
 
     bgeot::fsvector<double, 10> x;
 
     gmm::copy(v, x);
 
-    cout << "x = "; gmm::write(x, cout); cout << endl;
+    cout << "x = "; gmm::write(cout, x); cout << endl;
 
     gmm::add(v, w, x);
 
-    cout << "x = "; gmm::write(x, cout); cout << endl;
+    cout << "x = "; gmm::write(cout, x); cout << endl;
 
     // cout << "sp = " << gmm::vect_sp(v, w) << endl;
 
@@ -34,11 +34,11 @@ int main(void)
 
     gmm::add(v, z, x);
 
-    cout << "x = "; gmm::write(x, cout); cout << endl;
+    cout << "x = "; gmm::write(cout, x); cout << endl;
 
     gmm::copy(z, x);
     
-    cout << "x = "; gmm::write(x, cout); cout << endl;
+    cout << "x = "; gmm::write(cout, x); cout << endl;
 
     bgeot::vsmatrix<double> m(10, 10);
     gmm::clear(m); m(3, 2) = 1.0;
@@ -52,18 +52,18 @@ int main(void)
     
     gmm::copy(m, gmm::transposed(n));
     gmm::copy(gmm::transposed(m), n);
-    cout << "m = "; gmm::write(m, cout); cout << endl;
-    cout << "n = "; gmm::write(n, cout); cout << endl;
+    cout << "m = "; gmm::write(cout, m); cout << endl;
+    cout << "n = "; gmm::write(cout, n); cout << endl;
 
-    cout << "x = "; gmm::write(x, cout); cout << endl;
+    cout << "x = "; gmm::write(cout, x); cout << endl;
     gmm::add(gmm::scaled(z, 10.0), x);
-    cout << "x = "; gmm::write(x, cout); cout << endl;
+    cout << "x = "; gmm::write(cout, x); cout << endl;
     gmm::add(gmm::scaled(v, -10.0), x);
-    cout << "x = "; gmm::write(x, cout); cout << endl;
+    cout << "x = "; gmm::write(cout, x); cout << endl;
 
     gmm::mult(gmm::transposed(m), x, x);
 
-    cout << "x = "; gmm::write(x, cout); cout << endl;
+    cout << "x = "; gmm::write(cout, x); cout << endl;
 
     gmm::clear(x);
     std::vector<size_t> index(3); index[0] = 2; index[1] = 8; index[2] = 3;
@@ -71,14 +71,14 @@ int main(void)
     gmm::sub_index si1(index.begin(), index.end(), x.size(), x);
     
     gmm::copy(zz, gmm::sub_vector(x, si1));
-    cout << "x = "; gmm::write(x, cout); cout << endl;
+    cout << "x = "; gmm::write(cout, x); cout << endl;
 
     std::vector<size_t> index2(2); index2[0] = 1; index2[2] = 0;
     std::vector<double> zzz(2); zzz[0] = 5; zzz[1] = 6;
     gmm::sub_index si2(index2.begin(), index2.end(), 3, x);
     
     gmm::copy(zzz, gmm::sub_vector(gmm::sub_vector(x, si1), si2));
-    cout << "x = "; gmm::write(x, cout); cout << endl;
+    cout << "x = "; gmm::write(cout, x); cout << endl;
 
 
     std::vector<size_t> index3(3); index3[0] = 2; index3[1] = 4; index3[2] = 3;
@@ -88,7 +88,7 @@ int main(void)
     cout << "mm(0,0) = " << gmm::sub_matrix(m, si3)(0,0) << endl;
 
     gmm::copy(gmm::sub_matrix(m, si3), mm);
-    cout << "mm = "; gmm::write(mm, cout); cout << endl;
+    cout << "mm = "; gmm::write(cout, mm); cout << endl;
    
 
   }

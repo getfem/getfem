@@ -732,12 +732,64 @@ namespace gmm {
     size_type nrows(const this_type &m) { return m.nrows(); }
     size_type ncols(const this_type &m) { return m.ncols(); }
     const_sub_col_type col(const this_type &m, size_type i) {
-      return const_sub_col_type(m.pr + m.jc[i]-shift, m.ir + m.jc[i] - shift,
+      return const_sub_col_type(m.pr + m.jc[i] - shift, m.ir + m.jc[i] - shift,
 				m.jc[i+1] - m.jc[i], m.nr);
     }
     const void* origin(const this_type &m) { return m.pr; }
     void do_clear(this_type &m) { m.do_clear(); }
   };
+
+
+  template <class PT1, class PT2, class PT3, int shift = 0>
+  struct csr_matrix_ref {
+    PT1 pr;
+    PT2 ir;
+    PT3 jc;
+    size_type nc, nr;
+    
+    typedef typename std::iterator_traits<PT1>::value_type value_type;
+    typedef typename std::iterator_traits<PT1>::reference access_type;
+    csr_matrix_ref(PT1 pt1, PT2 pt2, PT3 pt3, size_type nrr, size_type ncc)
+      : pr(pt1), ir(pt2), jc(pt3), nc(ncc), nr(nrr) {}
+    csr_matrix_ref(void) {}
+
+    // void do_clear(void) ... to be done
+    
+    size_type nrows(void) const { return nr; }
+    size_type ncols(void) const { return nc; }
+   
+    // access_type operator()(size_type i, size_type j) // to be done
+    //  { return mat_col(*this, j)[i]; }
+    value_type operator()(size_type i, size_type j) const
+      { return mat_col(*this, i)[j]; }
+  };
+  
+  template <class PT1, class PT2, class PT3, int shift>
+    struct linalg_traits<csr_matrix_ref<PT1, PT2, PT3, shift> > {
+    typedef csr_matrix_ref<PT1, PT2, PT3, shift> this_type;
+    typedef linalg_true is_reference;
+    typedef abstract_matrix linalg_type;
+    typedef typename std::iterator_traits<PT1>::value_type value_type;
+    typedef typename std::iterator_traits<PT1>::value_type reference_type;
+    typedef abstract_sparse storage_type;
+    typedef abstract_null_type sub_col_type;
+    typedef abstract_null_type const_sub_col_type;
+    typedef cs_vector_ref<typename const_pointer<PT1>::pointer,
+      typename const_pointer<PT2>::pointer, shift> sub_row_type;
+    typedef cs_vector_ref<typename const_pointer<PT1>::pointer,
+      typename const_pointer<PT2>::pointer, shift> const_sub_row_type;
+    typedef row_major sub_orientation;
+    size_type nrows(const this_type &m) { return m.nrows(); }
+    size_type ncols(const this_type &m) { return m.ncols(); }
+    const_sub_row_type row(const this_type &m, size_type i) {
+      return const_sub_row_type(m.pr + m.jc[i] - shift, m.ir + m.jc[i] - shift,
+				m.jc[i+1] - m.jc[i], m.nc);
+    }
+    const void* origin(const this_type &m) { return m.pr; }
+    void do_clear(this_type &m) { m.do_clear(); }
+  };
+
+
 
 }
 

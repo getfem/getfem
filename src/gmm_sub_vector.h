@@ -65,14 +65,14 @@ namespace gmm {
 
   template <class IT>
   void sub_index::init(IT it, IT ite, size_type n, abstract_sparse) {
-      rind.resize(n); std::fill(rind.begin(), rind.end(), size_type(-1));
+      rind.resize(n); std::fill(rind.begin(), rind.end(), size_t(-1));
       for (size_type i = 0; it != ite; ++it, ++i) rind[*it] = i;
       ind.resize(ite - it); std::fill(it, ite, ind.begin());
   }
 
   template <class IT>
   void sub_index::init(IT it, IT ite, size_type n, abstract_plain)
-  { ind.resize(ite - it); std::fill(it, ite, ind.begin()); }
+  { ind.resize(ite - it); std::copy(it, ite, ind.begin()); }
 
 
   struct sub_interval {
@@ -190,12 +190,12 @@ namespace gmm {
 
   template <class PT, class SUBI, class st_type> struct svrt_ir;
 
-  template <class PT, class SUBI>
-  struct svrt_ir<PT, SUBI, abstract_plain> {
+  template <class PT>
+  struct svrt_ir<PT, sub_index, abstract_plain> {
     typedef typename std::iterator_traits<PT>::value_type V;
     typedef typename vect_ref_type<PT,  V>::iterator iterator;
     typedef tab_ref_index_ref_with_origin<iterator,
-      typename SUBI::iterator> vector_type;
+      sub_index::const_iterator> vector_type;
   }; 
 
   template <class PT>

@@ -44,7 +44,7 @@ namespace gmm {
     PT pm;
     
     typedef typename std::iterator_traits<PT>::value_type M;
-    typedef typename std::iterator_traits<PT>::reference_type ref_M;
+    typedef typename std::iterator_traits<PT>::reference ref_M;
     typedef typename linalg_traits<M>::value_type value_type;
     typedef typename mat_ref_type<PT,  M>::access_type access_type;
     
@@ -69,7 +69,7 @@ namespace gmm {
     typedef abstract_matrix linalg_type;
     typedef typename linalg_traits<M>::value_type value_type;
     typedef typename linalg_traits<M>::reference_type reference_type;
-    typedef abstract_sparse storage_type;
+    typedef typename linalg_traits<M>::storage_type storage_type;
     typedef abstract_null_type sub_col_type;
     typedef abstract_null_type const_sub_col_type;
     typedef typename sub_vector_type<typename linalg_traits<M>
@@ -80,10 +80,10 @@ namespace gmm {
     size_type nrows(const this_type &m) { return m.nrows(); }
     size_type ncols(const this_type &m) { return m.ncols(); }
     const_sub_row_type row(const this_type &m, size_type i) { 
-      return const_sub_row_type(mat_row(m.deref(),m.psi2->index(i)),*(m.psi1));
+      return sub_vector(mat_const_row(m.deref(),m.psi2->index(i)),*(m.psi1));
     }
     sub_row_type row(this_type &m, size_type i)
-    { return sub_row_type(mat_row(m.deref(), m.psi2->index(i)), *(m.psi1)); }
+    { return sub_vector(mat_row(m.deref(), m.psi2->index(i)), *(m.psi1)); }
     const void* origin(const this_type &m) { return linalg_origin(m.deref()); }
     void do_clear(this_type &m)
     { for (size_type i = 0; i < nrows(m); ++i) clear(row(m,i)); }
@@ -97,7 +97,7 @@ namespace gmm {
     typedef abstract_matrix linalg_type;
     typedef typename linalg_traits<M>::value_type value_type;
     typedef typename linalg_traits<M>::reference_type reference_type;
-    typedef abstract_sparse storage_type;
+    typedef typename linalg_traits<M>::storage_type storage_type;
     typedef abstract_null_type sub_row_type;
     typedef abstract_null_type const_sub_row_type;
     typedef typename sub_vector_type<typename linalg_traits<M>
@@ -107,11 +107,10 @@ namespace gmm {
     typedef col_major sub_orientation;
     size_type nrows(const this_type &m) { return m.nrows(); }
     size_type ncols(const this_type &m) { return m.ncols(); }
-    const_sub_col_type col(const this_type &m, size_type i) { 
-      return const_sub_col_type(mat_col(m.deref(),m.psi1->index(i)),*(m.psi2));
-    }
+    const_sub_col_type col(const this_type &m, size_type i)
+    { return sub_vector(mat_const_col(m.deref(),m.psi1->index(i)),*(m.psi2)); }
     sub_col_type col(this_type &m, size_type i)
-    { return sub_col_type(mat_col(m.deref(), m.psi1->index(i)), *(m.psi2)); }
+    { return sub_vector(mat_col(m.deref(), m.psi1->index(i)), *(m.psi2)); }
     const void* origin(const this_type &m) { return linalg_origin(m.deref()); }
     void do_clear(this_type &m)
     { for (size_type i = 0; i < ncols(m); ++i) clear(col(m,i)); }
@@ -133,25 +132,26 @@ namespace gmm {
   template <class M, class SUBI1, class SUBI2>  inline
   typename sub_matrix_type<M *, SUBI1, SUBI2>::matrix_type
   sub_matrix(M &m, const SUBI1 &si1, const SUBI2 &si2) {
-    return sub_matrix_type<M *, SUBI1, SUBI2>::matrix_type(m, si1, si2);
+    return
+      typename sub_matrix_type<M *, SUBI1, SUBI2>::matrix_type(m, si1, si2);
   }
 
   template <class M, class SUBI1>  inline
   typename sub_matrix_type<M *, SUBI1, SUBI1>::matrix_type
   sub_matrix(M &m, const SUBI1 &si1) {
-    return sub_matrix_type<M *, SUBI1, SUBI1>::matrix_type(m, si1, si1);
+    return typename sub_matrix_type<M *, SUBI1, SUBI1>::matrix_type(m, si1, si1);
   }
 
   template <class M, class SUBI1, class SUBI2>  inline
   typename sub_matrix_type<const M *, SUBI1, SUBI2>::matrix_type
   sub_matrix(const M &m, const SUBI1 &si1, const SUBI2 &si2) {
-    return sub_matrix_type<const M *, SUBI1, SUBI2>::matrix_type(m, si1, si2);
+    return typename sub_matrix_type<const M *, SUBI1, SUBI2>::matrix_type(m, si1, si2);
   }
 
   template <class M, class SUBI1>  inline
   typename sub_matrix_type<const M *, SUBI1, SUBI1>::matrix_type
   sub_matrix(const M &m, const SUBI1 &si1) {
-    return sub_matrix_type<const M *, SUBI1, SUBI1>::matrix_type(m, si1, si1);
+    return typename sub_matrix_type<const M *, SUBI1, SUBI1>::matrix_type(m, si1, si1);
   }
 
 }
