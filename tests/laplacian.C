@@ -39,11 +39,9 @@
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector;  /* special class for small (dim < 16) vectors */
-using bgeot::base_node;   /* class for geometrical nodes (derived from
-			   * base_small_vector )                               */
+using bgeot::base_node;   /* geometrical nodes (derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
-using bgeot::dim_type;    /* = unsigned char */
 
 /* definition of some matrix/vector types. These ones are built
    using the predefined types in Gmm++ */
@@ -57,24 +55,19 @@ typedef gmm::col_matrix<sparse_vector_type> col_sparse_matrix_type;
 
 base_small_vector sol_K; /* a coefficient */
 /* exact solution */
-scalar_type sol_u(const base_node &x)
-{ return sin(gmm::vect_sp(sol_K, x)); }
+scalar_type sol_u(const base_node &x) { return sin(gmm::vect_sp(sol_K, x)); }
 /* righ hand side */
 scalar_type sol_f(const base_node &x)
 { return gmm::vect_sp(sol_K, sol_K) * sin(gmm::vect_sp(sol_K, x)); }
 /* gradient of the exact solution */
 base_small_vector sol_grad(const base_node &x)
-{
-  base_small_vector res = sol_K;
-  res *= cos(gmm::vect_sp(sol_K, x));
-  return res;
-}
+{ return sol_K * cos(gmm::vect_sp(sol_K, x)); }
 
 /*
   structure for the Laplacian problem
 */
-struct lap_pb
-{
+struct laplacian_problem {
+
   enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
   getfem::getfem_mesh mesh;  /* the mesh */
   getfem::mesh_fem mf_u;     /* the main mesh_fem, for the Laplacian solution */
@@ -98,13 +91,13 @@ struct lap_pb
   bool solve(void);
   void init(void);
   void compute_error();
-  lap_pb(void) : mf_u(mesh), mf_rhs(mesh), mf_coef(mesh) {}
+  laplacian_problem(void) : mf_u(mesh), mf_rhs(mesh), mf_coef(mesh) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
  * and integration methods and selects the boundaries.
  */
-void lap_pb::init(void)
+void laplacian_problem::init(void)
 {
   const char *MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
   const char *FEM_TYPE = PARAM.string_value("FEM_TYPE","FEM name");
@@ -137,7 +130,7 @@ void lap_pb::init(void)
   scalar_type FT = PARAM.real_value("FT", "parameter for exact solution");
   residu = PARAM.real_value("RESIDU"); if (residu == 0.) residu = 1e-10;
   sol_K = base_small_vector(N);
-  for (dim_type j = 0; j < N; j++)
+  for (size_type j = 0; j < N; j++)
     sol_K[j] = ((j & 1) == 0) ? FT : -FT;
 
   /* set the finite element on the mf_u */
@@ -187,7 +180,7 @@ void lap_pb::init(void)
   }
 }
 
-void lap_pb::assembly(void)
+void laplacian_problem::assembly(void)
 {
   size_type nb_dof = mf_u.nb_dof();
   size_type nb_dof_rhs = mf_rhs.nb_dof();
@@ -248,7 +241,7 @@ void lap_pb::assembly(void)
 				      mf_rhs, F, DIRICHLET_BOUNDARY_NUM);    
     gmm::clean(H, 1e-15);
     int nbcols = getfem::Dirichlet_nullspace(H, NS, R, Ud);
-    // cerr << "Number of irreductible unknowns : " << nbcols << endl;
+    // cout << "Number of irreductible unknowns : " << nbcols << endl;
     gmm::resize(NS,gmm::mat_ncols(H),nbcols);
 
     gmm::mult(SM, Ud, gmm::scaled(B, -1.0), RHaux);
@@ -264,7 +257,7 @@ void lap_pb::assembly(void)
   }
 }
 
-bool lap_pb::solve(void) {
+bool laplacian_problem::solve(void) {
   cout << "Compute preconditionner\n";
   double time = ftool::uclock_sec();
   gmm::iteration iter(residu, 1, 40000);
@@ -295,7 +288,7 @@ bool lap_pb::solve(void) {
 }
 
 /* compute the error with respect to the exact solution */
-void lap_pb::compute_error() {
+void laplacian_problem::compute_error() {
   std::vector<scalar_type> V(mf_rhs.nb_dof()), W(mf_rhs.nb_dof());
   getfem::interpolation_solution(mf_u, mf_rhs, U, V);
   for (size_type i = 0; i < mf_rhs.nb_dof(); ++i) {
@@ -313,26 +306,23 @@ void lap_pb::compute_error() {
 
 int main(int argc, char *argv[]) {
   dal::exception_callback_debug cb;
-  dal::exception_callback::set_exception_callback(&cb);
+  dal::exception_callback::set_exception_callback(&cb); // In order to debug ...
 
 #ifdef GETFEM_HAVE_FEENABLEEXCEPT /* trap SIGFPE */
   feenableexcept(FE_DIVBYZERO | FE_INVALID);
 #endif
+
   try {    
-    lap_pb p;
-    scalar_type exectime = ftool::uclock_sec(), total_time = 0.0;
-    
-    cout << "initialisation ...\n";
+    laplacian_problem p;
     p.PARAM.read_command_line(argc, argv);
     p.init();
     p.mesh.write_to_file(p.datafilename + ".mesh");
     p.assembly();
-    if (!p.solve()) {
-      cerr << "Solve procedure has failed\n";
-    }
+    if (!p.solve()) DAL_THROW(dal::failure_error, "Solve procedure has failed");
     p.compute_error();
     // getfem::save_solution(p.datafilename + ".dataelt", p.mf_u, p.U, p.K);
   }
   DAL_STANDARD_CATCH_ERROR;
+
   return 0; 
 }

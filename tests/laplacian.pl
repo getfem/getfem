@@ -31,7 +31,7 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
 {
   my $def   = $_[0];
 
-  print ("def = $def\n");
+  # print ("def = $def\n");
 
   open F, "./laplacian $tmp $def 2>&1 |" or die;
   while (<F>) {
@@ -45,8 +45,7 @@ sub start_program # (N, K, NX, OPTION, SOLVER)
       print "============================================\n";
       print $_, <F>;
     }
- # 
-    print $_;
+ # print $_;
   }
   close(F); if ($?) { `rm -f $tmp`; exit(1); }
 }
