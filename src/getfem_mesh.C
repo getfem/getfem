@@ -75,14 +75,13 @@ namespace getfem
     for (i = 0; i < j; i++)
       if (!convex_tab.index_valid(i))
 	swap_convex(i, convex_tab.ind_last());
-
-    for (i = 0, j = (points_tab.end()-points_tab.begin())-1; 
-	 i < j && j != ST_NIL; ++i, --j)
-    {
-      while (i < j && j != ST_NIL && points_tab[i].first != ST_NIL) ++i;
-      while (i < j && j != ST_NIL && points_tab[j].first == ST_NIL) --j;
-      if (i < j && j != ST_NIL ) swap_points(i, j);
-    }
+    if (points().size())
+      for (i = 0, j = points().size()-1; 
+	   i < j && j != ST_NIL; ++i, --j) {
+	while (i < j && j != ST_NIL && points().index()[i]) ++i;
+	while (i < j && j != ST_NIL && !(points().index()[j])) --j;
+	if (i < j && j != ST_NIL ) swap_points(i, j);
+      }
   }
 
   void getfem_mesh::translation(base_vector V)
@@ -197,7 +196,7 @@ namespace getfem
 
     ist.precision(16);
     clear();
-    ist.seekg(0);
+    ist.seekg(0);ist.clear();
     ftool::read_untill(ist, "BEGIN POINTS LIST");
 
     while (!te)
@@ -227,9 +226,11 @@ namespace getfem
 	for (size_type i = 0; i < d; i++) v[i] = tmpv[i];
 	size_type ipl = add_point(v);
 	if (ip != ipl) swap_points(ip, ipl);
+      } else if (strlen(tmp)) {
+	DAL_THROW(failure_error, "Syntax error in file, at token '" << tmp << "', pos=" << ist.tellg());
+      } else if (ist.eof()) {
+	DAL_THROW(failure_error, "Unexpected end of stream");	
       }
-      else
-	DAL_THROW(failure_error, "Syntax error in file.");
     }
 
     bool tend = false;
@@ -269,10 +270,12 @@ namespace getfem
 	  cv_pt[cv[ic].pts+i] = dal::abs(atoi(tmp));
 	}
       }
-      else { 
+      else if (strlen(tmp)) {
 	DAL_THROW(failure_error, "Syntax error reading a mesh file at pos " 
 		  << ist.tellg() << "(expecting 'CONVEX' or 'END', found '" 
 		  << tmp << "')"); 
+      } else if (ist.eof()) {
+	DAL_THROW(failure_error, "Unexpected end of stream");	
       }
     }
 

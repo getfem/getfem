@@ -457,13 +457,12 @@ namespace getfem
 
     ist.precision(16);
     clear();
-    ist.seekg(0);
+    ist.seekg(0);ist.clear();
     ftool::read_untill(ist, "BEGIN MESH_FEM");
 
     while (true)
     {
-      ftool::get_token(ist, tmp, 1023);
-
+      ist >> std::ws; ftool::get_token(ist, tmp, 1023);
       if (strcmp(tmp, "END")==0) {
 	break;
       } else if (strcmp(tmp, "CONVEX")==0) {
@@ -506,14 +505,18 @@ namespace getfem
 	  }
 	  ftool::get_token(ist, tmp, 1023);
 	  ftool::get_token(ist, tmp, 1023);
-	} else DAL_THROW(failure_error, "Syntax error in file at token" << tmp);
+	} else if (strlen(tmp)) DAL_THROW(failure_error, "Syntax error in file at token '" << tmp << "' [pos=" << ist.tellg() << "]");
+      } else if (ist.eof()) {
+	DAL_THROW(failure_error, "Unexpected end of stream");	
       } else if (strcmp(tmp, "QDIM")==0) {
 	ftool::get_token(ist, tmp, 1023);
 	int q = atoi(tmp);
 	if (q <= 0 || q > 250) DAL_THROW(failure_error, "invalid qdim: "<<q);
 	set_qdim(q);
-      } else {
-	DAL_THROW(failure_error, "Syntax error2 in file at token " << tmp);
+      } else if (strlen(tmp)) {
+	DAL_THROW(failure_error, "Unexpected token '" << tmp << "' [pos=" << ist.tellg() << "]");
+      } else if (ist.eof()) {
+	DAL_THROW(failure_error, "Unexpected end of stream");	
       }
     }
   }
