@@ -35,7 +35,6 @@
 #define GETFEM_LINEARIZED_PLATES_H__
 
 #include <getfem_modeling.h>
-#include <getfem_assembling_tensors.h>
 
 namespace getfem {
 
@@ -223,6 +222,12 @@ namespace getfem {
     }
 
     void init_(void) {
+      if (mf_ut.get_qdim() != 2)
+	DAL_THROW(failure_error, "Qdim of mf_ut should be 2.");
+      if (mf_u3.get_qdim() != 1)
+	DAL_THROW(failure_error, "Qdim of mf_ut should be 1.");
+      if (mf_theta.get_qdim() != 2)
+	DAL_THROW(failure_error, "Qdim of mf_theta should be 2.");
       this->add_proper_mesh_fem(mf_ut, MDBRICK_LINEAR_PLATE, 1);
       this->add_proper_mesh_fem(mf_u3, MDBRICK_LINEAR_PLATE, 0);
       this->add_proper_mesh_fem(mf_theta, MDBRICK_LINEAR_PLATE, 0);
@@ -433,6 +438,12 @@ namespace getfem {
 
     void init_(void) {
       size_type info = 1 + (symmetrized ? 2 : 0);
+      if (mf_ut.get_qdim() != 2)
+	DAL_THROW(failure_error, "Qdim of mf_ut should be 2.");
+      if (mf_u3.get_qdim() != 1)
+	DAL_THROW(failure_error, "Qdim of mf_ut should be 1.");
+      if (mf_theta.get_qdim() != 2)
+	DAL_THROW(failure_error, "Qdim of mf_theta should be 2.");
       this->add_proper_mesh_fem(mf_ut, MDBRICK_MIXED_LINEAR_PLATE, info );
       this->add_proper_mesh_fem(mf_u3, MDBRICK_MIXED_LINEAR_PLATE, 0);
       this->add_proper_mesh_fem(mf_theta, MDBRICK_MIXED_LINEAR_PLATE, 0); 
@@ -464,10 +475,208 @@ namespace getfem {
   };
 
 
-
   /* ******************************************************************** */
   /*		plate source term model brick.                            */
   /* ******************************************************************** */
+
+  template<typename MODEL_STATE = standard_model_state>
+  class mdbrick_plate_source_term : public mdbrick_abstract<MODEL_STATE>  {
+    
+    typedef typename MODEL_STATE::vector_type VECTOR;
+    typedef typename MODEL_STATE::value_type value_type;
+
+    mdbrick_source_term<MODEL_STATE> *ut_part,*u3_part,*phi_part,*sub_problem;
+
+  public :
+
+    virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0)
+    { sub_problem->mixed_variables(b, i0); }
+    virtual size_type nb_constraints(void) 
+    { return sub_problem->nb_constraints(); }
+    virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
+					size_type j0 = 0, bool modified=false)
+    { sub_problem->compute_tangent_matrix(MS, i0, j0, modified); }
+    virtual void compute_residu(MODEL_STATE &MS, size_type i0=0,size_type j0=0)
+    { sub_problem->compute_residu(MS, i0, j0); }
+
+    mdbrick_plate_source_term(mdbrick_abstract<MODEL_STATE> &problem,
+			      mesh_fem &mf_data, const VECTOR &B,
+			      size_type bound = size_type(-1),
+			      size_type num_fem = 0) {
+      phi_part = u3_part = 0;
+      bool mixed = false, symmetrized = false;
+      if (problem.get_mesh_fem_info(num_fem).brick_ident
+	  == MDBRICK_LINEAR_PLATE)
+	{ mixed = false; symmetrized = false; } 
+      else if (problem.get_mesh_fem_info(num_fem).brick_ident 
+	       == MDBRICK_MIXED_LINEAR_PLATE) {
+	mixed=true;
+	symmetrized = ((problem.get_mesh_fem_info(num_fem).info) & 2);
+      }
+      else DAL_THROW(failure_error,
+		     "This brick should only be applied to a plate problem");
+      if ((!(problem.get_mesh_fem_info(num_fem).info & 1))
+	  || (num_fem + (mixed ? 4 : 2) >= problem.nb_mesh_fems()))
+	DAL_THROW(failure_error, "The mesh_fem number is not correct");
+
+      size_type n = gmm::vect_size(B) / 3;
+      VECTOR Bt(2*n);
+      gmm::copy(gmm::sub_vector(B, gmm::sub_slice(0, n, 3)),
+		gmm::sub_vector(Bt, gmm::sub_slice(0, n, 2)));
+      gmm::copy(gmm::sub_vector(B, gmm::sub_slice(1, n, 3)),
+		gmm::sub_vector(Bt, gmm::sub_slice(1, n, 2)));
+      ut_part = sub_problem = new mdbrick_source_term<MODEL_STATE>
+	(problem, mf_data, Bt, bound, num_fem);
+      VECTOR Bn(n);
+      gmm::copy(gmm::sub_vector(B, gmm::sub_slice(2, n, 3)), Bn);
+      if (!mixed || symmetrized)
+	sub_problem = u3_part = new mdbrick_source_term<MODEL_STATE>
+	  (*ut_part, mf_data, Bn, bound, num_fem+1);
+      
+      if (mixed)
+	sub_problem = phi_part = new mdbrick_source_term<MODEL_STATE>
+	  (*sub_problem, mf_data, Bn, bound, num_fem+4);
+
+      this->add_sub_brick(*sub_problem);
+      this->update_from_context();
+    }
+
+    ~mdbrick_plate_source_term() {
+      if (u3_part) delete u3_part;
+      if (phi_part) delete phi_part;
+    }
+    
+  };
+
+
+
+  /* ******************************************************************** */
+  /*		Simple support condition for plate model brick.           */
+  /* ******************************************************************** */
+
+  template<typename MODEL_STATE = standard_model_state>
+  class mdbrick_plate_simple_support : public mdbrick_abstract<MODEL_STATE>  {
+    
+    mdbrick_Dirichlet<MODEL_STATE> *ut_part, *u3_part;
+    mdbrick_Dirichlet<MODEL_STATE> *phi_part, *sub_problem;
+
+  public :
+
+    virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0)
+    { sub_problem->mixed_variables(b, i0); }
+    virtual size_type nb_constraints(void) 
+    { return sub_problem->nb_constraints(); }
+    virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
+					size_type j0 = 0, bool modified=false)
+    { sub_problem->compute_tangent_matrix(MS, i0, j0, modified); }
+    virtual void compute_residu(MODEL_STATE &MS, size_type i0=0,size_type j0=0)
+    { sub_problem->compute_residu(MS, i0, j0); }
+
+    mdbrick_plate_simple_support(mdbrick_abstract<MODEL_STATE> &problem,
+				 mesh_fem &mf_data, size_type bound,
+				 size_type num_fem = 0,
+				 bool with_mult = false) : phi_part(0) {
+      ut_part = new  mdbrick_Dirichlet<MODEL_STATE>
+	(problem, mf_data, bound, num_fem, with_mult);
+      u3_part = new  mdbrick_Dirichlet<MODEL_STATE>
+	(*ut_part, mf_data, bound, num_fem+1, with_mult);
+      bool mixed = false, symmetrized = false;
+      if (problem.get_mesh_fem_info(num_fem).brick_ident
+	  == MDBRICK_LINEAR_PLATE)
+	{ mixed = false; symmetrized = false; } 
+      else if (problem.get_mesh_fem_info(num_fem).brick_ident 
+	       == MDBRICK_MIXED_LINEAR_PLATE) {
+	mixed=true;
+	symmetrized = ((problem.get_mesh_fem_info(num_fem).info) & 2);
+      }
+      else DAL_THROW(failure_error,
+		     "This brick should only be applied to a plate problem");
+      if ((!(problem.get_mesh_fem_info(num_fem).info & 1))
+	  || (num_fem + (mixed ? 4 : 2) >= problem.nb_mesh_fems()))
+	DAL_THROW(failure_error, "The mesh_fem number is not correct");
+
+      if (mixed)
+	sub_problem = phi_part = new  mdbrick_Dirichlet<MODEL_STATE>
+	  (*u3_part, mf_data, bound, num_fem+4, with_mult);
+      else sub_problem = u3_part;
+      this->add_sub_brick(*sub_problem);
+      this->update_from_context();
+    }
+
+    virtual ~mdbrick_plate_simple_support() {
+      delete ut_part; delete u3_part;
+      if (phi_part) delete phi_part;
+    }
+    
+  };
+
+
+
+  /* ******************************************************************** */
+  /*		Clamped condition for plate model brick.                  */
+  /* ******************************************************************** */
+
+  template<typename MODEL_STATE = standard_model_state>
+  class mdbrick_plate_clamped_support : public mdbrick_abstract<MODEL_STATE>  {
+    
+    mdbrick_Dirichlet<MODEL_STATE> ut_part, u3_part, theta_part;
+    mdbrick_Dirichlet<MODEL_STATE> *phi_part, *sub_problem;
+
+  public :
+
+    virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0)
+    { sub_problem->mixed_variables(b, i0); }
+    virtual size_type nb_constraints(void) 
+    { return sub_problem->nb_constraints(); }
+    virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
+					size_type j0 = 0, bool modified=false)
+    { sub_problem->compute_tangent_matrix(MS, i0, j0, modified); }
+    virtual void compute_residu(MODEL_STATE &MS, size_type i0=0,size_type j0=0)
+    { sub_problem->compute_residu(MS, i0, j0); }
+
+    mdbrick_plate_clamped_support(mdbrick_abstract<MODEL_STATE> &problem,
+				 mesh_fem &mf_data, size_type bound,
+				 size_type num_fem = 0,
+				 bool with_mult = false)
+      : ut_part(problem, mf_data, bound, num_fem, with_mult),
+	u3_part(ut_part, mf_data, bound, num_fem+1, with_mult),
+	theta_part(u3_part, mf_data, bound, num_fem+2, with_mult),
+	phi_part(0) {
+
+      bool mixed = false, symmetrized = false;
+      if (problem.get_mesh_fem_info(num_fem).brick_ident
+	  == MDBRICK_LINEAR_PLATE)
+	{ mixed = false; symmetrized = false; } 
+      else if (problem.get_mesh_fem_info(num_fem).brick_ident 
+	       == MDBRICK_MIXED_LINEAR_PLATE) {
+	mixed=true;
+	symmetrized = ((problem.get_mesh_fem_info(num_fem).info) & 2);
+      }
+      else DAL_THROW(failure_error,
+		     "This brick should only be applied to a plate problem");
+      if ((!(problem.get_mesh_fem_info(num_fem).info & 1))
+	  || (num_fem + (mixed ? 4 : 2) >= problem.nb_mesh_fems()))
+	DAL_THROW(failure_error, "The mesh_fem number is not correct");
+
+      if (mixed) {
+	sub_problem = phi_part = new  mdbrick_Dirichlet<MODEL_STATE>
+	  (theta_part, mf_data, bound, num_fem+4, with_mult);
+	this->add_sub_brick(*phi_part);
+      }
+      else { 
+	this->add_sub_brick(theta_part);
+	sub_problem = &theta_part;
+      }
+      this->update_from_context();
+    }
+
+    ~mdbrick_plate_clamped_support() { if (phi_part) delete phi_part; }
+    
+  };
+
+
+
+
 
 
 

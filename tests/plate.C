@@ -183,6 +183,7 @@ void plate_problem::init(void) {
     un /= gmm::vect_norm2(un);
     if (dal::abs(un[1]) <= 1.0E-7) { // new Neumann face
       mf_ut.add_boundary_elt(SIMPLY_FIXED_BOUNDARY_NUM, it->cv, it->f);
+      mf_theta.add_boundary_elt(SIMPLY_FIXED_BOUNDARY_NUM, it->cv, it->f);
       mf_u3.add_boundary_elt(SIMPLY_FIXED_BOUNDARY_NUM, it->cv, it->f);
     }
   }
@@ -276,31 +277,16 @@ bool plate_problem::solve(plain_vector &U) {
   getfem::mdbrick_mixed_isotropic_linearized_plate<>
     ELAS2(mf_ut, mf_u3, mf_theta, mf_coef, lambda, mu, epsilon, symmetrized);
 
-  plain_vector F(nb_dof_rhs, pressure);
-  getfem::mdbrick_source_term<> VOL_F__(ELAS2, mf_rhs, F, size_type(-1), 4);
-  gmm::clear(F);
-  getfem::mdbrick_Dirichlet<> DIRICHLET_PHI_(VOL_F__, mf_rhs,
-				    F, SIMPLY_FIXED_BOUNDARY_NUM, 4);
-
-  if (mixed) ELAS = &DIRICHLET_PHI_; else ELAS = &ELAS1;
+  if (mixed) ELAS = &ELAS2; else ELAS = &ELAS1;
 
   // Defining the surface source term.
-  std::fill(F.begin(), F.end(), pressure);
-  getfem::mdbrick_source_term<> VOL_F_(*ELAS, mf_rhs, F, size_type(-1), 1);
-
-  getfem::mdbrick_abstract<> *VOL_F;
-  if (mixed && !symmetrized) VOL_F = ELAS; else VOL_F = &VOL_F_;
+  plain_vector F(nb_dof_rhs * 3);
+  for (size_type i = 0; i < nb_dof_rhs; ++i) F[3*i+2] = pressure;
+  getfem::mdbrick_plate_source_term<> VOL_F(*ELAS, mf_rhs, F);
   
-  // Defining the Dirichlet condition value.for ut
-  gmm::clear(F);
-  getfem::mdbrick_Dirichlet<> DIRICHLET_U3(*VOL_F, mf_rhs,
-					   F, SIMPLY_FIXED_BOUNDARY_NUM, 1);
 
-  // Defining the Dirichlet condition value.for ut
-  plain_vector F2(nb_dof_rhs * 2);
-  gmm::clear(F2);
-  getfem::mdbrick_Dirichlet<> final_model(DIRICHLET_U3, mf_rhs,
-					  F2, SIMPLY_FIXED_BOUNDARY_NUM);
+  getfem::mdbrick_plate_simple_support<> final_model
+    (VOL_F, mf_rhs, SIMPLY_FIXED_BOUNDARY_NUM);
 
   // Generic solve.
   cout << "Total number of variables : " << final_model.nb_dof() << endl;

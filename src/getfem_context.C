@@ -51,7 +51,7 @@ namespace getfem {
   
   void context_dependencies::sup_dependency_
   (const context_dependencies &cd) const {
-    size_type s = dependent.size();
+    size_type s = dependencies.size();
     iterator_list it1=dependencies.begin(), it2=it1, ite=dependencies.end();
     for (; it1 != ite; ++it1)
       { *it2 = *it1; if (*it2 != &cd) ++it2; else --s; }
@@ -94,7 +94,7 @@ namespace getfem {
       for (; it != ite; ++it) (*it)->change_context();
     }
   }
-  
+ 
   context_dependencies::~context_dependencies() {
 //     cout << "destruction de " << this << endl;
 //     cout << "state = " << state << endl;
@@ -104,7 +104,8 @@ namespace getfem {
     iterator_list it = dependencies.begin(), ite = dependencies.end();
     for (; it != ite; ++it) (*it)->sup_dependent_(*this);
     it = dependent.begin(), ite = dependent.end();
-    for (; it != ite; ++it) (*it)->sup_dependency_(*this);
+    for (; it != ite; ++it)
+      (*it)->sup_dependency_(*this);
   }
   
 }

@@ -79,6 +79,7 @@
 #ifndef GETFEM_MODELING_H__
 #define GETFEM_MODELING_H__
 
+#include <getfem_assembling_tensors.h>
 #include <getfem_assembling.h>
 #include <gmm_solver_cg.h>
 #include <gmm_solver_gmres.h>
@@ -225,16 +226,21 @@ namespace getfem {
 
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_abstract : public context_dependencies {
-  protected :
-    mutable bool to_compute, to_transfer;
-    size_type MS_i0;
-    long ident_ms;
 
+  public :
     struct mesh_fem_info_ {
       size_type brick_ident;
       size_type info;
       mesh_fem_info_(size_type id, size_type in) : brick_ident(id), info(in) {}
     };
+
+  protected :
+
+    mutable bool to_compute, to_transfer;
+    size_type MS_i0;
+    long ident_ms;
+
+    
 
     std::vector<mdbrick_abstract *> sub_bricks;
     mutable std::vector<mesh_fem *> mesh_fems;
@@ -307,6 +313,11 @@ namespace getfem {
     size_type first_index(void) { return MS_i0; }
 
   public :
+
+    mesh_fem_info_ &get_mesh_fem_info(size_type i)
+    { return mesh_fems_info[i]; }
+    mesh_fem &get_mesh_fem(size_type i) { return *(mesh_fems[i]); }
+    size_type nb_mesh_fems(void) { return mesh_fems.size(); }
 
     dim_type dim(void) { return mesh_fems[0]->linked_mesh().dim(); }
     virtual size_type nb_dof(void) { return nb_total_dof; }
@@ -1047,10 +1058,8 @@ namespace getfem {
     C_MATRIX G;
     VECTOR CRHS;
     size_type boundary, nb_const, num_fem;
-    dal::bit_vector dof_on_bound;
     bool with_H, with_multipliers;
     gmm::sub_index SUB_CT;
-    std::vector<size_type> ind_ct;
     size_type i1, nbd;
 
     void fixing_dimensions(void) {
@@ -1075,6 +1084,7 @@ namespace getfem {
 
       if (!with_H) {
 	gmm::resize(H_, dal::sqr(Q) * ndd);
+	gmm::clear(H_);
 	for (size_type i=0; i < ndd; ++i)
 	  for (size_type q=0; q < Q; ++q)  H_[i*Q*Q+q*Q+q] = value_type(1);
       }
@@ -1083,12 +1093,11 @@ namespace getfem {
 
       if (!with_H) gmm::resize(H_, 0);
 
-      R tol=gmm::mat_maxnorm(M)*gmm::default_tol(value_type())*R(100);
       if (version & ASMDIR_BUILDH) {
+	R tol=gmm::mat_maxnorm(M)*gmm::default_tol(value_type())*R(100);
 	gmm::clean(M, tol);
-	ind_ct.resize(0);
-	dof_on_bound = mf_u.dof_on_boundary(boundary);
-	dal::bit_vector nn = dof_on_bound;
+	std::vector<size_type> ind_ct;
+	dal::bit_vector nn = mf_u.dof_on_boundary(boundary);
 	// The following filter is not sufficient for an arbitrary matrix field
 	// H for the multipliers version. To be ameliorated.
 	for (size_type i = nn.take_first(); i != size_type(-1); i << nn)
@@ -1153,7 +1162,7 @@ namespace getfem {
       }
       if (this->to_be_transferred()) {
 	if (with_multipliers) {
-	  gmm::sub_interval SUBI(i0+sub_problem.nb_dof(), dof_on_bound.card());
+	  gmm::sub_interval SUBI(i0+sub_problem.nb_dof(), nb_const);
 	  gmm::sub_interval SUBJ(i0+i1, nbd);
 	  gmm::copy(G, gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBJ));
 	  gmm::copy(gmm::transposed(G),
@@ -1179,7 +1188,7 @@ namespace getfem {
       }
       if (with_multipliers) {
 
-	gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), dof_on_bound.card());
+	gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), nb_const);
 	gmm::sub_interval SUBJ(i0+i1, nbd);
 	
 	gmm::mult(G, gmm::sub_vector(MS.state(), SUBJ),
@@ -1276,6 +1285,8 @@ namespace getfem {
     MS.adapt_sizes(problem); // to be sure it is ok, but should be done before
     problem.compute_residu(MS);
     problem.compute_tangent_matrix(MS);
+
+    // cout << "M = " << MS.tangent_matrix() << endl;
 
     MS.compute_reduced_system();
     

@@ -1,3 +1,7 @@
+2004-11-25  Yves Renard  <Yves.Renard@insa-toulouse.fr>
+
+	* src/getfem_linearized_plate.h linearized plate brick
+
 2004-11-03  Yves Renard  <Yves.Renard@insa-toulouse.fr>
 
 	* src/getfem_fem_sum.h introduction of a fem wich make the direct sum
