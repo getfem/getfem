@@ -1,0 +1,20 @@
+#!/usr/bin/perl
+
+print "loading and install for modifications the D.A.L. library\n\n";
+
+print "loading files from cvs\n";
+`cd ..; cvs checkout getfem++/dal`; print "\n\n";
+
+print "Making links for includes files\n";
+`mkdir -p include`;
+`ln -sf dal/*.h include/`; print "\n\n";
+
+print "Making links for test progams\n";
+`mkdir -p programs`;
+`ln -sf dal/test/* programs/`; print "\n\n";
+
+print "Building Makefile\n";
+
+
+
+
