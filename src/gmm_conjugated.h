@@ -208,7 +208,7 @@ namespace gmm {
     typedef typename linalg_traits<M>::access_type access_type;
     
     value_type operator()(const iterator &itrow, size_type i)
-    { return std::conj(access_type(itrow.it, i)); }
+    { return std::conj(access_type()(itrow.it, i)); }
   };
 
   template <class M>

@@ -35,71 +35,35 @@
 
 namespace gmm {
 
+  // pas vraiment des estimations en l'état ...
+
   /** estimation of the magnitude of the largest eigenvalue 
    *  works also with non-square matrices
    */
-//   template <typename MAT> 
-//   typename number_traits<typename
-//   linalg_traits<MAT>::value_type>::magnitude_type
-//   norm_lin2_est(const MAT& M) {
-//     typedef typename number_traits<typename
-//       linalg_traits<MAT>::value_type>::magnitude_type magnitude_type;
-//     typedef typename linalg_traits<MAT>::value_type value_type;
-//     typedef typename temporary_dense_vector<MAT>::vector_type vector_type;
+  template <typename MAT> 
+  typename number_traits<typename
+  linalg_traits<MAT>::value_type>::magnitude_type
+  norm_lin2_est(const MAT& M) {
+    typedef typename linalg_traits<MAT>::value_type value_type;
+    typedef typename number_traits<value_type>::magnitude_type magnitude_type;
     
-//     int d = mat_nrows(M) - mat_ncols(M);
-//     int vsz = std::min(mat_nrows(M), mat_ncols(M));
-//     int vsz2 = std::max(mat_nrows(M), mat_ncols(M));
-//     vector_type v(vsz), tmp(vsz), tmp2(vsz2); fill_random(v);
-//     magnitude_type e = vect_norm2(v), e0 = 0, pert = 1E-1;
-//     while (dal::abs(e-e0) > 1e-6 * e0) {
-//       e0 = e;
-//       if (d == 0)
-// 	mult(B,v,tmp);
-//       else if (d > 0)
-// 	{ mult(B,v,tmp2); mult(transposed(B),tmp2,tmp); }
-//       else 
-// 	{ mult(transposed(B),v,tmp2); mult(B,tmp2,tmp); }
-      
-//       e = vect_norm2(tmp);
-//       scale(tmp, 1.0 / e);
-//       copy(tmp,v);
-//       clear(tmp); fill_random(tmp, 0.05);
-//       add(scaled(tmp, pert), v);
-//       pert /= 10.0;
-//     }
-//     if (d == 0)
-//       return e;
-//     else return sqrt(e);
-//  }
+    int d = mat_nrows(M) - mat_ncols(M);
+    int vsz = std::min(mat_nrows(M), mat_ncols(M));
+    
+    dense_matrix<value_type> B(vsz, vsz);
+    std::vector<magnitude_type> eig(vsz);
+    if (d >= 0) mult(transposed(M), M, B); else mult(M,transposed(M), B);
+    
+    gmm::symmetric_qr_algorithm(B, eig);
+    
+    magnitude_type emax = dal::abs(eig[0]);
+    for (int i = 1; i < vsz; ++i) emax = std::max(emax, eig[i]); 
+    
+    return sqrt(emax);
+  }
 
   /** estimation of the condition number 
-   * (using lu_inverse => dense matrix only)
-   */
-//   template <typename MAT> 
-//   typename number_traits<typename
-//   linalg_traits<MAT>::value_type>::magnitude_type
-//   condest(const MAT& M) {
-//     typedef typename linalg_traits<MAT>::value_type value_type;
-    
-//     int d = mat_nrows(M) - mat_ncols(M);
-//     int vsz = std::min(mat_nrows(M), mat_ncols(M));
-//     dense_matrix<value_type> B(vsz, vsz);
-//     if (d == 0)
-//       copy(M, B);
-//     else if (d > 0)
-//       mult(transposed(M), M, B);
-//     else 
-//       mult(M,transposed(M), B);
-
-//     gmm::lu_inverse(B);
-//     return  norm_lin2_est(M) 
-//       * ((d == 0) ? norm_lin2_est(B) : sqrt(norm_lin2_est(B)));
-//   }
-
-
-  /** estimation of the condition number 
-   * (using impicit_qr_method => dense matrix only)
+   * (using impicit_qr_algorithm => dense matrix only)
    */
 
   template <typename MAT> 
@@ -116,10 +80,10 @@ namespace gmm {
     std::vector<magnitude_type> eig(vsz);
     if (d >= 0) mult(transposed(M), M, B); else mult(M,transposed(M), B);
     
-    gmm::implicit_qr_method(B, eig);
+    gmm::symmetric_qr_algorithm(B, eig);
     
     magnitude_type emin = dal::abs(eig[0]), emax = dal::abs(eig[0]);
-    for (size_type i = 1; n < vsz; ++i)
+    for (int i = 1; i < vsz; ++i)
       { emin = std::min(emin, eig[i]); emax = std::max(emax, eig[i]); } 
     
     return sqrt(emax / emin);

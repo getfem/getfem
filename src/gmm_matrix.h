@@ -55,10 +55,12 @@ namespace gmm
   template <class V1, class V2, class V3> inline
   void mult(const identity_matrix&, const V1 &v1, const V2 &v2, const V3 &v3)
   { add(v1, v2, v3); }
-  template <class M> void copy(const identity_matrix&, M &m) {
+  template <class M> void copy_ident(const identity_matrix&, M &m) {
     size_type i = 0, n = std::max(mat_nrows(m), mat_ncols(m)); clear(m);
     for (; i < n; ++i) m(i,i) = typename linalg_traits<M>::value_type(1);
-  } 
+  }
+  template <class M> inline void copy(const identity_matrix&, M &m)
+  { copy_ident(identity_matrix(), m); } 
   template <class M> inline void copy(const identity_matrix &, const M &m)
   { copy_ident(identity_matrix(), linalg_const_cast(m)); }
   template <class V1, class V2> inline

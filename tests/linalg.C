@@ -17,9 +17,12 @@
 /* USA.                                                                    */
 /*                                                                         */
 /* *********************************************************************** */
+#include <ftool.h>
 #include <gmm.h>
 #include <gmm_inoutput.h>
-#include <ftool.h>
+
+
+using gmm::size_type;
 
 void test_gauss_det() {
   gmm::dense_matrix<double> m(5,5);
@@ -49,8 +52,8 @@ void const_ref_test(const M1 &m1, const M2 &m2) {
 template <class MAT, class T> void print_for_matlab(const MAT &m, T) { 
   cout.precision(16);
   cout << "[ ";
-  for (int i = 0; i < gmm::mat_nrows(m); ++i) {
-    for (int j = 0; j < gmm::mat_ncols(m); ++j) cout << " " << m(i,j);
+  for (size_type i = 0; i < gmm::mat_nrows(m); ++i) {
+    for (size_type j = 0; j < gmm::mat_ncols(m); ++j) cout << " " << m(i,j);
     if (i != gmm::mat_nrows(m)-1) cout << " ; \n";
   }
   cout << " ]" << endl;
@@ -60,8 +63,8 @@ template <class MAT, class T> void print_for_matlab(const MAT &m,
 						    std::complex<T>) { 
   cout.precision(16);
   cout << "[ ";
-  for (int i = 0; i < gmm::mat_nrows(m); ++i) {
-    for (int j = 0; j < gmm::mat_ncols(m); ++j)
+  for (size_type i = 0; i < gmm::mat_nrows(m); ++i) {
+    for (size_type j = 0; j < gmm::mat_ncols(m); ++j)
       cout << " (" << m(i,j).real() << "+" << m(i,j).imag() << "*i)" ;
     if (i != gmm::mat_nrows(m)-1) cout << " ; \n";
   }
@@ -90,7 +93,7 @@ template <class MAT>  void test_qr(const MAT &m) {
     cout << "/*                   Test of QR algorithms (real)          */\n";
   cout   << "/***********************************************************/\n";
  
-  int nn = gmm::mat_nrows(m);
+  size_type nn = gmm::mat_nrows(m);
   MAT cm(nn,nn), cq(nn,nn), cr(nn,nn), ca(nn,nn);
   std::vector<value_type> cv(nn);
   std::vector<std::complex<magnitude_type> > eigc(nn);
@@ -107,28 +110,30 @@ template <class MAT>  void test_qr(const MAT &m) {
   /* Test on LU.                                                           */
   gmm::fill_random(cm);
   gmm::copy(cm, cq);
-  cout << "cm = " << cm << endl;
+  // cout << "cm = " << cm << endl;
   gmm::lu_inverse(cq);
-  cout << "cm^{-1} = " << cq << endl;
+  // cout << "cm^{-1} = " << cq << endl;
   gmm::mult(cm, cq, ca);
-  cout << "ca = " << ca << endl;
+  // cout << "ca = " << ca << endl;
   gmm::copy(gmm::identity_matrix(), cq);
   gmm::add(gmm::scaled(cq, -1.0), ca);
   if (gmm::mat_norm2(ca) > 1E-10) 
     DAL_THROW(dal::failure_error, "Error on LU factorisation.");
 
   double exectime = ftool::uclock_sec();
-  cout.precision(6);
-  rudimentary_qr_algorithm(cm, eigc, cq);
-  cout << "time to compute rudimentary QR : " << ftool::uclock_sec()-exectime;
-  cout << "\neigenvalues : " << eigc << endl;
-  cout << "eigenvectors : " << cq << endl;
+  // cout.precision(6);
+  // rudimentary_qr_algorithm(cm, eigc, cq);
+  // cout << "time to compute rudimentary QR : "<<ftool::uclock_sec()-exectime;
+  // cout << "\neigenvalues : " << eigc << endl;
+  // cout << "eigenvectors : " << cq << endl;
 
-  // print_for_matlab(cm);
+  gmm::mult(cm, gmm::conjugated(gmm::transposed(cm)), cq); gmm::copy(cq, cm);
+  print_for_matlab(cm);
   exectime = ftool::uclock_sec();
-  implicit_qr_algorithm(cm, eigc, cq);
+  symmetric_qr_algorithm(cm, eigc, cq);
   cout << "time to compute implicit QR : "
        << ftool::uclock_sec()-exectime;
+  cout.precision(6);
   cout << "\neigenvalues : " << eigc << endl;
   cout << "eigenvectors : " << cq << endl;
 
@@ -162,10 +167,12 @@ template <class MAT>  void test_qr(const MAT &m) {
   cout << "time to compute implicit QR : "
        << ftool::uclock_sec()-exectime;
   /* gmm::clean(eigc, 1E-10); */ cout << "\neigenvalues found : " << eigc << endl;
-  // gmm::clean(cq, 1E-10); cout << "eigenvectors : " << cq << endl;
-  for (int l = 0; l < nn; ++l) {
+  gmm::clean(cq, 1E-10);
+  cout.precision(6);
+  cout << "eigenvectors : " << cq << endl;
+  for (size_type l = 0; l < nn; ++l) {
     bool found = false;
-     for (int k = 0; k < nn; ++k)
+     for (size_type k = 0; k < nn; ++k)
        if (dal::abs(eigc[l] - cv[k]) < 1E-8 * (dal::abs(eigc[l])+1.0))
 	 { cv[k] = -1.123236; found = true; break; }
      if (found == false)
@@ -185,26 +192,26 @@ int main(void)
 
     test_gauss_det();
     
-    test_qr(gmm::dense_matrix<double>(10,10));
-    test_qr(gmm::row_matrix<std::vector<std::complex<long double> > >(10,10));
+    test_qr(gmm::dense_matrix<double>(8, 8));
+    test_qr(gmm::row_matrix<std::vector<std::complex<long double> > >(6, 6));
 
     gmm::dense_matrix<double> m(10, 10);
     std::vector<double> y(10), x(10), b(10);
     gmm::copy(gmm::identity_matrix(), m);
-    int j = 5, k = 12;
-    for (int i = 0; i < 10; ++i) { 
+    size_type j = 5, k = 12;
+    for (size_type i = 0; i < 10; ++i) { 
       m(i, j) = double(k);
       j = (j + 6) % 10; k = (k + 15) % 31; 
       m(i, j) = double(k);
       j = (j + 6) % 10; k = (k + 15) % 31;
-      x[i] = 10.0 * double(i - 5 + ((i >= 5) ? 1 : 0));
+      x[i] = 10.0 * double(int(i) - 5 + ((i >= 5) ? 1 : 0));
     }
 
     gmm::mult(m, x, b);
-    
     cout << "m = " << m << endl;
     cout << "x = " << x << endl;
     cout << "b = " << b << endl;
+
 
     cout << "/***********************************************************/\n";
     cout << "/*                   Test of dense_matrix                  */\n";
@@ -302,7 +309,8 @@ int main(void)
     cout << "transposed(m5) = " << gmm::transposed(m5) << endl;
     gmm::clear(y2);
     iter.init();
-    gmm::bicgstab(m5, y2, b, gmm::identity_matrix(), iter);
+    iter.set_noisy(2);
+    gmm::gmres(m5, y2, b, P, 5, iter);
     cout << "y2 = " << y2 << endl;
     gmm::add(gmm::scaled(x, -1.0), y2);
     error = gmm::vect_norm2(y2);

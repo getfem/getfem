@@ -439,11 +439,13 @@ namespace getfem
 
   /** rough estimate of the maximum value of the condition 
    * number of the jacobian of the geometric transformation */
-  scalar_type convex_quality_estimate(bgeot::pgeometric_trans pgt, const base_matrix& pts);
+  scalar_type convex_quality_estimate(bgeot::pgeometric_trans pgt,
+				      const base_matrix& pts);
 
   /** rough estimate of the radius of the convex using the largest eigenvalue
    * of the jacobian of the geometric transformation */
-  scalar_type convex_radius_estimate(bgeot::pgeometric_trans pgt, const base_matrix& pts);
+  scalar_type convex_radius_estimate(bgeot::pgeometric_trans pgt,
+				     const base_matrix& pts);
   
 }  /* end of namespace getfem.                                             */
 

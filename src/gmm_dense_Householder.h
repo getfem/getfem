@@ -57,10 +57,10 @@ namespace gmm {
 #   ifdef USING_BROKEN_GCC295
       typedef typename linalg_traits<Matrix>::value_type T;
       for (; it != ite; ++it, ++ity)
-	const_cast<T &>(*it) += conj_product(*itx, *ity);
+	const_cast<T &>(*it) += conj_product(*ity, *itx);
 #   else
       value_type tx = *itx;
-      for (; it != ite; ++it, ++ity) *it += conj_product(tx, *ity);
+      for (; it != ite; ++it, ++ity) *it += conj_product(*ity, tx);
 #   endif
     }
   }
@@ -82,10 +82,10 @@ namespace gmm {
 #   ifdef USING_BROKEN_GCC295
       typedef typename linalg_traits<Matrix>::value_type T;
       for (; it != ite; ++it, ++itx)
-	const_cast<T &>(*it) += conj_product(*itx, *ity);
+	const_cast<T &>(*it) += conj_product(*ity, *itx);
 #   else
       value_type ty = *ity;
-      for (; it != ite; ++it, ++itx) *it += conj_product(*itx, ty); 
+      for (; it != ite; ++it, ++itx) *it += conj_product(ty, *itx); 
 #   endif
     }
   }
@@ -95,6 +95,76 @@ namespace gmm {
 			      const VecY& y) {
     Matrix& A = const_cast<Matrix&>(AA);
     rank_one_update(A, x, y, typename principal_orientation_type<typename
+		    linalg_traits<Matrix>::sub_orientation>::potype());
+  }
+
+  /* ********************************************************************* */
+  /*    Rank two update  (complex and real version)                        */
+  /* ********************************************************************* */
+
+  template <class Matrix, class VecX, class VecY>
+  inline void rank_two_update(Matrix &A, const VecX& x,
+			      const VecY& y, row_major) {
+    typedef typename linalg_traits<Matrix>::value_type value_type;
+    size_type N = mat_nrows(A);
+    if (N > vect_size(x) || mat_ncols(A) > vect_size(y))
+      DAL_THROW(dimension_error,"dimensions mismatch");
+    typename linalg_traits<VecX>::const_iterator itx1 = vect_const_begin(x);
+    typename linalg_traits<VecY>::const_iterator ity2 = vect_const_begin(y);
+    for (size_type i = 0; i < N; ++i, ++itx1, ++ity2) {
+      typedef typename linalg_traits<Matrix>::sub_row_type row_type;
+      row_type row = mat_row(A, i);
+      typename linalg_traits<row_type>::iterator
+	it = vect_begin(row), ite = vect_end(row);
+      typename linalg_traits<VecX>::const_iterator itx2 = vect_const_begin(x);
+      typename linalg_traits<VecY>::const_iterator ity1 = vect_const_begin(y);
+#   ifdef USING_BROKEN_GCC295
+      typedef typename linalg_traits<Matrix>::value_type T;
+      for (; it != ite; ++it, ++ity1, ++itx2)
+	const_cast<T &>(*it) += conj_product(*ity1, *itx1)
+	                      + conj_product(*itx2, *ity2);
+#   else
+      value_type tx = *itx1, ty = *ity2;
+      for (; it != ite; ++it, ++ity1, ++itx2)
+	*it += conj_product(*ity1, tx) + conj_product(*itx2, ty);
+#   endif
+    }
+  }
+
+  template <class Matrix, class VecX, class VecY>
+  inline void rank_two_update(Matrix &A, const VecX& x,
+			      const VecY& y, col_major) {
+    typedef typename linalg_traits<Matrix>::value_type value_type;
+    size_type M = mat_ncols(A);
+    if (mat_nrows(A) > vect_size(x) || M > vect_size(y))
+      DAL_THROW(dimension_error,"dimensions mismatch");
+    typename linalg_traits<VecX>::const_iterator itx2 = vect_const_begin(x);
+    typename linalg_traits<VecY>::const_iterator ity1 = vect_const_begin(y);
+    for (size_type i = 0; i < M; ++i, ++ity1, ++itx2) {
+      typedef typename linalg_traits<Matrix>::sub_col_type col_type;
+      col_type col = mat_col(A, i);
+      typename linalg_traits<col_type>::iterator
+	it = vect_begin(col), ite = vect_end(col);
+      typename linalg_traits<VecX>::const_iterator itx1 = vect_const_begin(x);
+      typename linalg_traits<VecY>::const_iterator ity2 = vect_const_begin(y);
+#   ifdef USING_BROKEN_GCC295
+      typedef typename linalg_traits<Matrix>::value_type T;
+      for (; it != ite; ++it, ++itx1, ++ity2)
+	const_cast<T &>(*it) += conj_product(*ity1, *itx1)
+	                      + conj_product(*itx2, *ity2);
+#   else
+      value_type ty = *ity1, tx = *itx2;
+      for (; it != ite; ++it, ++itx1, ++ity2)
+	*it += conj_product(ty, *itx1) + conj_product(tx, *ity2); 
+#   endif
+    }
+  }
+  
+  template <class Matrix, class VecX, class VecY>
+  inline void rank_two_update(const Matrix &AA, const VecX& x,
+			      const VecY& y) {
+    Matrix& A = const_cast<Matrix&>(AA);
+    rank_two_update(A, x, y, typename principal_orientation_type<typename
 		    linalg_traits<Matrix>::sub_orientation>::potype());
   }
 
@@ -155,8 +225,9 @@ namespace gmm {
     size_type n = mat_nrows(A);
     std::vector<value_type> v(n), w(n);
     if (compute_Q) gmm::copy(identity_matrix(), Q);
+    sub_interval SUBK(0,n);
     for (size_type k = 1; k < n-1; ++k) {
-      sub_interval SUBI(k, n-k), SUBJ(k-1,n-k+1), SUBK(0,n);
+      sub_interval SUBI(k, n-k), SUBJ(k-1,n-k+1);
       v.resize(n-k);
       for (size_type j = k; j < n; ++j) v[j-k] = A(j, k-1);
       house_vector(v);
@@ -164,50 +235,6 @@ namespace gmm {
       col_house_update(sub_matrix(A, SUBK, SUBI), v, w);
       if (compute_Q) col_house_update(sub_matrix(Q, SUBK, SUBI), v, w);
     }
-  }
-
-  /* ********************************************************************* */
-  /*    Givens rotations                                                   */
-  /* ********************************************************************* */
-
-  template <class T> void Givens_rotation(T a, T b, T &c, T &s) {
-    if (b == T(0)) { c = T(1); s = T(0); return; }
-    if (dal::abs(b) > dal::abs(a))
-      { T tau = -a/b; s = T(1) / sqrt(1+tau*tau); c = s*tau; }
-    else
-      { T tau = -b/a; c = T(1) / sqrt(1+tau*tau); s = c*tau; }
-  }
-
-  template <class T> inline void Apply_Givens_rotation(T &x, T &y, T c, T s)
-  { T t1=x, t2=y; x = c*t1 - s*t2; y = c*t2 + s*t1; }
-
-  template <class T>
-  void Givens_rotation(std::complex<T> a, std::complex<T> b,
-		       std::complex<T> &c, std::complex<T> &s) {
-    T aa = dal::abs(a);
-    if (aa == T(0)) { c = std::complex<T>(0); s = std::complex<T>(1); return; }
-    T norm = ::sqrt(dal::abs_sqr(a) + dal::abs_sqr(b));
-    c = std::complex<T>(aa / norm);
-    s = a/aa * std::conj(b)/norm;
-  }
-
-  template <class T> inline
-  void Apply_Givens_rotation(std::complex<T> &x, std::complex<T> &y,
-			     std::complex<T>  c, std::complex<T>  s)
-  { std::complex<T> t1=x, t2=y; x = c*t1 - s*t2; y = c*t2 + std::conj(s)*t1; }
-
-  template <class MAT, class T>
-  void row_rot(const MAT &AA, T c, T s, size_type i, size_type k) {
-    MAT &A = const_cast<MAT &>(AA); // can be specialized for row matrices
-    for (size_type j = 0; j < mat_ncols(A); ++j)
-      Apply_Givens_rotation(A(i,j), A(k,j), c, s);
-  }
-
-  template <class MAT, class T>
-  void col_rot(const MAT &AA, T c, T s, size_type i, size_type k) {
-    MAT &A = const_cast<MAT &>(AA); // can be specialized for column matrices
-    for (size_type j = 0; j < mat_nrows(A); ++j)
-      Apply_Givens_rotation(A(j,i), A(j,k), c, s);
   }
 
   /* ********************************************************************* */
@@ -222,26 +249,68 @@ namespace gmm {
     typedef typename number_traits<value_type>::magnitude_type magnitude_type;
 
     size_type n = mat_nrows(A); 
-    std::vector<value_type> v(n), p(n), w(n);
-    for (size_type k = 1; k < n-1; ++k) { // A pas mal optimiser ...
+
+    dense_matrix<value_type> aux3(n,n); gmm::copy(A, aux3);
+
+    std::vector<value_type> v(n), p(n), w(n), ww(n);
+    sub_interval SUBK(0,n);
+
+    if (compute_q) gmm::copy(identity_matrix(), Q);
+
+    for (size_type k = 1; k < n-1; ++k) { // not optimized ...
       sub_interval SUBI(k, n-k);
       v.resize(n-k); p.resize(n-k); w.resize(n-k); 
       for (size_type l = k; l < n; ++l) 
-	{ v[l-k]=A(l, k-1); A(l, k-1)=value_type(0); A(k-1, l)=value_type(0); }
-      magnitude_type norm_x = -vect_norm2(v) * dal::sgn(v[0]);
+	{ v[l-k] = w[l-k] = A(l, k-1); A(l, k-1) = A(k-1, l) = value_type(0); }
       house_vector(v);
       magnitude_type norm = vect_norm2_sqr(v);
-      A(k, k-1) = A(k-1, k) = norm_x;
-      gmm::mult(sub_matrix(A, SUBI), v, p);
-      gmm::scale(p, value_type(2) / norm);
-      gmm::add(gmm::scaled(p, value_type(-1)),
-	       gmm::scaled(v, vect_sp(p, v) / norm), w);
-      rank_one_update(sub_matrix(A, SUBI), v, w);
-      rank_one_update(sub_matrix(A, SUBI), w, v);
-      // + act de Q ...
-      if (compute_q)
-	cout << "WARNING : Q not computed in Householder_tridiagonalization\n";
+      A(k, k-1) = w[0] - value_type(2) * v[0] * vect_hp(v, w) / norm;
+      A(k-1, k) = dal::conj(A(k, k-1));
+
+      gmm::mult(sub_matrix(A, SUBI), gmm::scaled(v, value_type(-2) / norm), p);
+      gmm::add(p, gmm::scaled(v, -vect_hp(p, v) / norm), w);
+      rank_two_update(sub_matrix(A, SUBI), v, w);
+      // it is possible toi compute only the upper or lower part
+
+      if (compute_q) col_house_update(sub_matrix(Q, SUBK, SUBI), v, ww);
     }
+  }
+
+  /* ********************************************************************* */
+  /*    Real and complex Givens rotations                                  */
+  /* ********************************************************************* */
+
+  template <class T> void Givens_rotation(T a, T b, T &c, T &s) {
+    typedef typename number_traits<T>::magnitude_type R;
+    R aa = dal::abs(a), bb = dal::abs(b), q;
+    if (bb == R(0)) { c = T(1); s = T(0); return; }
+    if (aa == R(0)) { c = T(0); s = b / bb; return; }
+    if (bb > aa)
+      { q = sqrt(R(1)+dal::abs_sqr(a/b)); c = (a/bb) / q; s = -(b/bb) / q; }
+    else
+      { q = sqrt(R(1)+dal::abs_sqr(b/a)); c = -(a/aa) / q; s = (b/aa) / q; }
+  }
+
+  template <class T> inline
+  void Apply_Givens_rotation_left(T &x, T &y, T c, T s)
+  { T t1=x, t2=y; x = dal::conj(c)*t1 - dal::conj(s)*t2; y = c*t2 + s*t1; }
+
+  template <class T> inline
+  void Apply_Givens_rotation_right(T &x, T &y, T c, T s)
+  { T t1=x, t2=y; x = c*t1 - s*t2; y = dal::conj(c)*t2 + dal::conj(s)*t1; }
+
+  template <class MAT, class T>
+  void row_rot(const MAT &AA, T c, T s, size_type i, size_type k) {
+    MAT &A = const_cast<MAT &>(AA); // can be specialized for row matrices
+    for (size_type j = 0; j < mat_ncols(A); ++j)
+      Apply_Givens_rotation_left(A(i,j), A(k,j), c, s);
+  }
+
+  template <class MAT, class T>
+  void col_rot(const MAT &AA, T c, T s, size_type i, size_type k) {
+    MAT &A = const_cast<MAT &>(AA); // can be specialized for column matrices
+    for (size_type j = 0; j < mat_nrows(A); ++j)
+      Apply_Givens_rotation_right(A(j,i), A(j,k), c, s);
   }
 
 }

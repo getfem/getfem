@@ -31,6 +31,7 @@
 
 
 #include <getfem_mesh.h>
+#include <getfem_mat_elem.h>
 #include <getfem_precomp.h>
 
 namespace getfem
@@ -176,13 +177,13 @@ namespace getfem
   scalar_type  getfem_mesh::convex_quality_estimate(size_type ic) const { 
     base_matrix G;
     transfert_to_G(G, points_of_convex(ic));
-    return convex_quality_estimate(trans_of_convex(ic), G);
+    return getfem::convex_quality_estimate(trans_of_convex(ic), G);
   }
 
   scalar_type  getfem_mesh::convex_radius_estimate(size_type ic) const { 
     base_matrix G;
     transfert_to_G(G, points_of_convex(ic));
-    return convex_radius_estimate(trans_of_convex(ic), G);
+    return getfem::convex_radius_estimate(trans_of_convex(ic), G);
   }
   
   scalar_type getfem_mesh::minimal_convex_radius_estimate() const {
@@ -375,7 +376,7 @@ namespace getfem
       pgt_old=pgt; pgp=geotrans_precomp(pgt, &pgt->convex_ref()->points());
     }
 
-    n = (pgt->is_linear()) ? 1 : pgt->nb_points();
+    size_type n = (pgt->is_linear()) ? 1 : pgt->nb_points();
     scalar_type q = 1;
     base_matrix K(pgp->grad(0).nrows(), G.ncols());
     for (size_type ip=0; ip < n; ++ip) {
@@ -394,14 +395,14 @@ namespace getfem
     }
     dim_type N = pgp->grad(0).nrows();
 
-    n = (pgt->is_linear()) ? 1 : pgt->nb_points();
+    size_type n = (pgt->is_linear()) ? 1 : pgt->nb_points();
     scalar_type q = 0;
     base_matrix K(N, G.ncols());
     for (size_type ip=0; ip < n; ++ip) {
       gmm::mult(gmm::transposed(pgp->grad(ip)), gmm::transposed(G), K);
       q = std::max(q, gmm::norm_lin2_est(K));
     }
-    return q * sqrt(N) / N;
+    return q * sqrt(scalar_type(N)) / scalar_type(N);
   }
 
 }  /* end of namespace getfem.                                             */

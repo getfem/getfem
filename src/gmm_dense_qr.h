@@ -37,8 +37,6 @@
 #ifndef GMM_DENSE_QR_H
 #define GMM_DENSE_QR_H
 
-#include "gmm_dense_lu.h"
-
 namespace gmm {
 
 
@@ -46,17 +44,10 @@ namespace gmm {
   /* Default tolerance.                                                    */
   /* ********************************************************************* */
   
-  template<class T> double default_tol(T) { return 2E-16; }
-  template<> double default_tol(float) { return 2E-8; }
-  template<> double default_tol(long double) {
-    return (sizeof(long double) == sizeof(double)) ? default_tol(double())
-      : 2E-24;
-  }
-  template<> double default_tol(std::complex<float>)
-  { return default_tol(float()); }
-  template<> double default_tol(std::complex<long double>)
-  { return default_tol((long double)(0)); }  
-
+  template<class T> inline double default_tol(T)
+  { int i=sizeof(T)/4; double tol(2); while(i-- > 0) tol*=1E-8; return tol; }
+  template<class T> inline double default_tol(std::complex<T>)
+  { return default_tol(T()); }
 
   /* ********************************************************************* */
   /* QR factorization using Householder method (complex and real version). */
@@ -249,7 +240,8 @@ namespace gmm {
   // Very slow method. Use implicit_qr_method instead.
   template <class MAT1, class VECT, class MAT2>
     void rudimentary_qr_algorithm(const MAT1 &A, const VECT &eigval_,
-				  const MAT2 &eigvect_, double tol = gmm::default_tol(typename linalg_traits<MAT1>::value_type()),
+				  const MAT2 &eigvect_, double tol =
+		 gmm::default_tol(typename linalg_traits<MAT1>::value_type()),
 				  bool compvect = true) {
     VECT &eigval = const_cast<VECT &>(eigval_);
     MAT2 &eigvect = const_cast<MAT2 &>(eigvect_);
@@ -276,7 +268,8 @@ namespace gmm {
 
   template <class MAT1, class VECT>
     void rudimentary_qr_algorithm(const MAT1 &a, VECT &eigval,
-				  double tol = gmm::default_tol(typename linalg_traits<MAT1>::value_type())) {
+				  double tol = gmm::default_tol(typename
+				  linalg_traits<MAT1>::value_type())) {
     dense_matrix<typename linalg_traits<MAT1>::value_type> m(0,0);
     rudimentary_qr_algorithm(a, eigval, m, tol, false); 
   }
@@ -289,16 +282,18 @@ namespace gmm {
     void Francis_qr_step(const MAT1& HH, const MAT2 &QQ, bool compute_Q) {
     MAT1& H = const_cast<MAT1&>(HH); MAT2& Q = const_cast<MAT2&>(QQ);
     typedef typename linalg_traits<MAT1>::value_type value_type;
-    size_type n = mat_nrows(H); 
+    size_type n = mat_nrows(H), nq = mat_nrows(Q); 
     
-    std::vector<value_type> v(3), w(n);
-    if (compute_Q) gmm::copy(identity_matrix(), Q);
+    std::vector<value_type> v(3), w(std::max(n, nq));
 
     value_type s = H(n-2, n-2) + H(n-1, n-1);
     value_type t = H(n-2, n-2) * H(n-1, n-1) - H(n-2, n-1) * H(n-1, n-2);
     value_type x = H(0, 0) * H(0, 0) + H(0,1) * H(1, 0) - s * H(0,0) + t;
     value_type y = H(1,0) * (H(0,0) + H(1,1) - s);
     value_type z = H(1, 0) * H(2, 1);
+
+    sub_interval SUBQ(0, nq);
+
     for (size_type k = 0; k < n - 2; ++k) {
       v[0] = x; v[1] = y; v[2] = z;
       house_vector(v);
@@ -307,8 +302,9 @@ namespace gmm {
       
       row_house_update(sub_matrix(H, SUBI, SUBK),  v, sub_vector(w, SUBK));
       col_house_update(sub_matrix(H, SUBJ, SUBI),  v, sub_vector(w, SUBJ));
+      
       if (compute_Q)
-       	col_house_update(sub_matrix(Q, SUBJ, SUBI),  v, sub_vector(w, SUBJ));
+       	col_house_update(sub_matrix(Q, SUBQ, SUBI),  v, sub_vector(w, SUBQ));
 
       x = H(k+1, k); y = H(k+2, k);
       if (k < n-3) z = H(k+3, k);
@@ -318,8 +314,9 @@ namespace gmm {
     v[0] = x; v[1] = y;
     house_vector(v);
     row_house_update(sub_matrix(H, SUBI, SUBK), v, sub_vector(w, SUBL));
-    col_house_update(sub_matrix(H, SUBJ, SUBI), v, w);
-    if (compute_Q) col_house_update(sub_matrix(Q, SUBJ, SUBI), v, w);
+    col_house_update(sub_matrix(H, SUBJ, SUBI), v, sub_vector(w, SUBJ));
+    if (compute_Q)
+      col_house_update(sub_matrix(Q, SUBQ, SUBI), v, sub_vector(w, SUBQ));
   }
 
   /* ********************************************************************* */
@@ -333,41 +330,37 @@ namespace gmm {
   template <class MAT1, class VECT, class MAT2>
     void implicit_qr_algorithm(const MAT1 &A, const VECT &eigval_,
 			       const MAT2 &eigvect_,
-			       double tol = gmm::default_tol(typename linalg_traits<MAT1>::value_type()), bool compvect = true) {
+			       double tol = gmm::default_tol(typename
+		   linalg_traits<MAT1>::value_type()), bool compvect = true) {
     VECT &eigval = const_cast<VECT &>(eigval_);
     MAT2 &eigvect = const_cast<MAT2 &>(eigvect_);
     typedef typename linalg_traits<MAT1>::value_type value_type;
 
     size_type n = mat_nrows(A), q = 0, p, ite = 0;
-    dense_matrix<value_type> Z(n,n), B(n,n), H(n,n);
+    dense_matrix<value_type> H(n,n);
 
+    // double exectime = ftool::uclock_sec();
     gmm::copy(A, H);
     Hessenberg_reduction(H, eigvect, compvect);
+    // cout << "Hessemberg QR : " << ftool::uclock_sec()-exectime << " sec.\n";
     stop_criterion(H, p, q, tol);
 
     while (q < n) {
       sub_interval SUBI(p, n-p-q), SUBJ(0,n);
       Francis_qr_step(sub_matrix(H, SUBI),
-		      sub_matrix(Z, SUBI), compvect);
-//		      sub_matrix(eigvect, SUBJ, SUBI), compvect);
-
-      if (compvect) {
-	gmm::mult(sub_matrix(eigvect, SUBJ, SUBI),
-		  sub_matrix(Z, SUBI), sub_matrix(B, SUBJ, SUBI));
-	gmm::copy(sub_matrix(B, SUBJ, SUBI), sub_matrix(eigvect, SUBJ, SUBI));
-      }
+		      sub_matrix(eigvect, SUBJ, SUBI), compvect);
 
       stop_criterion(H, p, q, tol);
       if (++ite > n*1000) DAL_THROW(failure_error, "QR algorithm failed");
     }
-    // clean(H, 1E-12); cout << "H = " << H << endl;
     extract_eig(H, eigval, tol);
   }
 
 
   template <class MAT1, class VECT>
     void implicit_qr_algorithm(const MAT1 &a, VECT &eigval, 
-			       double tol = default_tol(typename linalg_traits<MAT1>::value_type())) {
+			       double tol = gmm::default_tol(typename 
+			       linalg_traits<MAT1>::value_type())) {
     dense_matrix<typename linalg_traits<MAT1>::value_type> m(0,0);
     implicit_qr_algorithm(a, eigval, m, tol, false); 
   }
@@ -380,6 +373,7 @@ namespace gmm {
     void Wilkinson_qr_step(const MAT1& TT, const MAT2 &ZZ, bool compute_z) {
     MAT1& T = const_cast<MAT1&>(TT); MAT2& Z = const_cast<MAT2&>(ZZ);
     typedef typename linalg_traits<MAT1>::value_type value_type;
+    // to be optimized (use a real tridiag matrix).
     
     size_type n = mat_nrows(T);
     value_type d = (T(n-2, n-2) - T(n-1, n-1)) / value_type(2);
@@ -391,33 +385,33 @@ namespace gmm {
 
     for (size_type k = 1; k < n; ++k) {
       Givens_rotation(x, z, c, s);
-      cout << "x = " << x << " z = " << z << " c = " << c
-	   << " s = " << s << endl;
 
-      if (k > 2)
-      Apply_Givens_rotation(T(k-1,k-3), T(k,k-3), c, s);
-      if (k > 1)
-      Apply_Givens_rotation(T(k-1,k-2), T(k,k-2), c, s);
-      Apply_Givens_rotation(T(k-1,k-1), T(k,k-1), c, s);
-      Apply_Givens_rotation(T(k-1,k  ), T(k,k  ), c, s);
-      if (k < n-1)
-      Apply_Givens_rotation(T(k-1,k+1), T(k,k+1), c, s);
-      if (k < n-2)
-      Apply_Givens_rotation(T(k-1,k+2), T(k,k+2), c, s);
+      // value_type a = x, b = z;
+      // Apply_Givens_rotation_left(a, b, c, s);
+      // cout << "a = " << a << " b = " << b << endl;
+      // cout << "x = " << x << " z = " << z << " c = " << c
+      //   << " s = " << s << endl;
 
-      if (k > 2)
-      Apply_Givens_rotation(T(k-3,k-1), T(k-3,k), c, s);
-      if (k > 1)
-      Apply_Givens_rotation(T(k-2,k-1), T(k-2,k), c, s);
-      Apply_Givens_rotation(T(k-1,k-1), T(k-1,k), c, s);
-      Apply_Givens_rotation(T(k  ,k-1), T(k,k)  , c, s);
-      if (k < n-1)
-      Apply_Givens_rotation(T(k+1,k-1), T(k+1,k), c, s);
-      if (k < n-2)
-      Apply_Givens_rotation(T(k+2,k-1), T(k+2,k), c, s);
+      // if (k > 2) Apply_Givens_rotation_left(T(k-1,k-3), T(k,k-3), c, s);
+      if (k > 1) Apply_Givens_rotation_left(T(k-1,k-2), T(k,k-2), c, s);
+      Apply_Givens_rotation_left(T(k-1,k-1), T(k,k-1), c, s);
+      Apply_Givens_rotation_left(T(k-1,k  ), T(k,k  ), c, s);
+      if (k < n-1) Apply_Givens_rotation_left(T(k-1,k+1), T(k,k+1), c, s);
+      // if (k < n-2) Apply_Givens_rotation_left(T(k-1,k+2), T(k,k+2), c, s);
+
+      // if (k > 2) Apply_Givens_rotation_right(T(k-3,k-1), T(k-3,k), c, s);
+      if (k > 1) Apply_Givens_rotation_right(T(k-2,k-1), T(k-2,k), c, s);
+      Apply_Givens_rotation_right(T(k-1,k-1), T(k-1,k), c, s);
+      Apply_Givens_rotation_right(T(k  ,k-1), T(k,k)  , c, s);
+      if (k < n-1) Apply_Givens_rotation_right(T(k+1,k-1), T(k+1,k), c, s);
+      // if (k < n-2) Apply_Givens_rotation_right(T(k+2,k-1), T(k+2,k), c, s);
 
       if (compute_z) col_rot(Z, c, s, k-1, k);
       if (k < n-1) { x = T(k, k-1); z = T(k+1, k-1); }
+
+      // cout.precision(6); gmm::clean(T, 1E-12);
+      // cout << "T = " << T << endl; if (is_complex(value_type())) getchar();
+
     }
 
   }
@@ -431,7 +425,8 @@ namespace gmm {
   // complexity about 4n^3/3, 9n^3 if eigenvectors are computed
   template <class MAT1, class VECT, class MAT2>
   void symmetric_qr_algorithm(const MAT1 &A, const VECT &eigval_,
-			      const MAT2 &eigvect_, double tol = gmm::default_tol(typename linalg_traits<MAT1>::value_type()),
+			      const MAT2 &eigvect_, double tol =
+		 gmm::default_tol(typename linalg_traits<MAT1>::value_type()),
 			      bool compvect = true) {
     VECT &eigval = const_cast<VECT &>(eigval_);
     MAT2 &eigvect = const_cast<MAT2 &>(eigvect_);
@@ -441,13 +436,28 @@ namespace gmm {
     dense_matrix<value_type> T(n,n);
     gmm::copy(A, T);
     Householder_tridiagonalization(T, eigvect, compvect);
+
+//     dense_matrix<value_type> aux1(n,n), aux2(n,n);
+//     gmm::mult(eigvect, T, aux1);
+//     gmm::mult(aux1, conjugated(transposed(eigvect)), aux2);
+//     gmm::add(scaled(A, -1), aux2);
+//     cout << "Ca donne : " << mat_norm2(aux2) << endl;
+
     symmetric_stop_criterion(T, p, q, tol);
 
     while (q < n) {
       // cout << "q = " << q << " T = " << T << endl;
-      sub_interval SUBI(p, n-p-q);
+      sub_interval SUBI(p, n-p-q), SUBJ(0,n);
       Wilkinson_qr_step(sub_matrix(T, SUBI), 
-			sub_matrix(eigvect, SUBI), compvect);
+			sub_matrix(eigvect, SUBJ, SUBI), compvect);
+
+//     gmm::mult(eigvect, T, aux1);
+//     gmm::mult(aux1, conjugated(transposed(eigvect)), aux2);
+//     gmm::add(scaled(A, -1), aux2);
+//     cout << "Ca donne 2 : " << mat_norm2(aux2) << endl;
+//     if (is_complex(value_type())) getchar();
+      
+
       symmetric_stop_criterion(T, p, q, tol);
       if (++ite > n*1000) DAL_THROW(failure_error, "QR algorithm failed");
     }
@@ -457,7 +467,8 @@ namespace gmm {
 
   template <class MAT1, class VECT>
     void symmetric_qr_algorithm(const MAT1 &a, VECT &eigval, 
-			       double tol = gmm::default_tol(typename linalg_traits<MAT1>::value_type())) {
+				double tol = gmm::default_tol(typename
+				linalg_traits<MAT1>::value_type())) {
     dense_matrix<typename linalg_traits<MAT1>::value_type> m(0,0);
     symmetric_qr_algorithm(a, eigval, m, tol, false);
   }
