@@ -33,13 +33,81 @@
 
 namespace gmm {
 
+  /* ******************************************************************** */
+  /*		reverse indexes                             		  */
+  /* ******************************************************************** */
+
+  struct sub_index {
+
+    typedef std::vector<size_t> base_type;
+    typedef base_type::const_iterator const_iterator;
+
+    std::vector<size_t> ind;
+    std::vector<size_t> rind;
+
+    size_type size(void) const { return ind.size(); }
+    size_type index(size_type i) const { return ind[i]; }
+    size_type rindex(size_type i) const { return rind[i]; }
+   
+    const_iterator  begin(void) const { return  ind.begin(); }
+    const_iterator    end(void) const { return  ind.end();   }
+    const_iterator rbegin(void) const { return rind.begin(); }
+    const_iterator   rend(void) const { return rind.end();   }
+
+    sub_index(void) {}
+    template <class IT> void init(IT, IT, size_type, abstract_sparse);
+    template <class IT> void init(IT, IT, size_type, abstract_plain);
+    template <class IT, class L> sub_index(IT it, IT ite,
+					       size_type n, const L &)
+    { init(it, ite, n, typename linalg_traits<L>::storage_type()); }
+
+  };
+
+  template <class IT>
+  void sub_index::init(IT it, IT ite, size_type n, abstract_sparse) {
+      rind.resize(n); std::fill(rind.begin(), rind.end(), size_type(-1));
+      for (size_type i = 0; it != ite; ++it, ++i) rind[*it] = i;
+      ind.resize(ite - it); std::fill(it, ite, ind.begin());
+  }
+
+  template <class IT>
+  void sub_index::init(IT it, IT ite, size_type n, abstract_plain)
+  { ind.resize(ite - it); std::fill(it, ite, ind.begin()); }
+
+
+  struct sub_interval {
+    size_type min, max; 
+
+    size_type size(void) const { return max - min; }
+    size_type index(size_type i) const { return min + i; }
+    size_type rindex(size_type i) const
+    { if (i >= min && i <= max) return i - min; return size_type(-1); }
+    sub_interval(size_type mi, size_type ma) : min(mi), max(ma) {}
+    sub_interval() {}
+  };
+
+  struct sub_slice {
+    size_type min, max, N; 
+
+    size_type size(void) const { return (max - min) / N; }
+    size_type index(size_type i) const { return min + N * i; }
+    size_type rindex(size_type i) const { 
+      if (i >= min && i <= max)
+	{ size_type j = (i - min); if (j % N == 0) return j / N; }
+      return size_type(-1);
+    }
+    sub_slice(size_type mi, size_type ma, size_type n)
+      : min(mi), max(ma), N(n) {}
+    sub_slice(void) {}
+  };
+
   /* ********************************************************************* */
   /*		sparse sub-vectors                                         */
   /* ********************************************************************* */
 
-  template <class IT> struct sparse_sub_vector_iterator {
+  template <class IT, class SUBI> struct sparse_sub_vector_iterator {
 
-    const reverse_index *_r_i;
+    const SUBI *psi;
     IT itb;
 
     typedef std::iterator_traits<IT>                traits_type;
@@ -49,159 +117,183 @@ namespace gmm {
     typedef typename traits_type::difference_type   difference_type;
     typedef std::forward_iterator_tag               iterator_category;
     typedef size_t                                  size_type;
-    typedef sparse_sub_vector_iterator<IT>          iterator;
+    typedef sparse_sub_vector_iterator<IT, SUBI>    iterator;
 
     size_type index(void) const { return (*_r_i)[itb.index()]; }
     iterator &operator ++() { ++itb; return *this; }
     iterator operator ++(int) { iterator tmp = *this; ++(*this); return tmp; }
     reference operator *() const {
       static value_type zero(0);
-      if (index() == size_type(-1)) return zero; else return *itb;
+      return (index() == size_type(-1)) ? zero : *it;
     }
 
     bool operator ==(const iterator &i) const { return itb == i.itb; }
     bool operator !=(const iterator &i) const { return !(i == *this); }
-    bool operator < (const iterator &i) const { return itb < i.itb; }
 
     sparse_sub_vector_iterator(void) {}
-    sparse_sub_vector_iterator(const IT &it, const reverse_index &ri)
-      : itb(it), _r_i(&ri) {}
-    
+    sparse_sub_vector_iterator(const IT &it, const SUBI &si)
+      : itb(it), psi(&si) {}
   };
 
-  template <class PT, class IT> class sparse_sub_vector {
+  template <class PT, class SUBI> class sparse_sub_vector {
   protected :
-    const reverse_index *_r_i;
-    IT begin, end;
-    PT v;
+    const SUBI *psi;
+    PT pv;
 
   public :
     typedef typename std::iterator_traits<PT>::value_type V;
-    typedef typename std::iterator_traits<PT>::reference ref_V;
+    typedef typename std::iterator_traits<PT>::reference_type ref_V;
     typedef typename linalg_traits<V>::value_type value_type;
     typedef typename vect_ref_type<PT,  V>::access_type access_type;
-    size_type size(void) const { return end - begin; }
-    const reverse_index &rindex(void) const { return *_r_i; }
-    ref_V deref(void) const { return *v; }
-    access_type operator[](size_type i) { return (*v)[begin[i]]; }
-    value_type operator[](size_type i) const { return (*v)[begin[i]]; }
+    size_type size(void) const { si->size(); }
+    const SUBI &sindex(void) const { return *psi; }
+    ref_V deref(void) const { return *pv; }
+    access_type operator[](size_type i) { return (*pv)[psi->index(i)]; }
+    value_type operator[](size_type i) const { return (*pv)[psi->index(i)]; }
 
-    sparse_sub_vector(ref_V w, const IT &b,
-		      const IT &e, const reverse_index &ri)
-      : _r_i(&ri), begin(b), end(e), v(&w) {}
+    sparse_sub_vector(ref_V w, const SUBI &si) : psi(&si), pv(&w) {}
     sparse_sub_vector() {}
   };
 
-  template <class PT, class IT>
-  struct linalg_traits<sparse_sub_vector<PT, IT> > {
-    typedef sparse_sub_vector<PT, IT> this_type;
+  template <class PT, class SUBI>
+  struct linalg_traits<sparse_sub_vector<PT, SUBI> > {
+    typedef sparse_sub_vector<PT, SUBI> this_type;
     typedef typename std::iterator_traits<PT>::value_type V;
     typedef linalg_true is_reference;
     typedef abstract_vector linalg_type;
     typedef typename linalg_traits<V>::value_type value_type;
     typedef typename linalg_traits<V>::reference_type reference_type;
-    typedef sparse_sub_vector_iterator<typename vect_ref_type<PT,  V>::iterator>
-    iterator;
+    typedef sparse_sub_vector_iterator<typename vect_ref_type<PT,  V>::iterator,
+	    SUBI> iterator;
     typedef sparse_sub_vector_iterator<typename linalg_traits<V>
-    ::const_iterator> const_iterator;
+    ::const_iterator, SUBI> const_iterator;
     typedef abstract_sparse storage_type;
     size_type size(const this_type &v) { return v.size(); }
     iterator begin(this_type &v)
-      { return iterator(vect_begin(v.deref()), v.rindex()); }
+      { return iterator(vect_begin(v.deref()), v.sindex()); }
     const_iterator const_begin(const this_type &v)
-      { return const_iterator(vect_begin(v.deref()), v.rindex()); }
+      { return const_iterator(vect_begin(v.deref()), v.sindex()); }
     iterator end(this_type &v)
-      { return iterator(vect_end(v.deref()), v.rindex()); }
+      { return iterator(vect_end(v.deref()), v.sindex()); }
     const_iterator const_end(const this_type &v)
-      { return const_iterator(vect_end(v.deref()), v.rindex()); }
+      { return const_iterator(vect_end(v.deref()), v.sindex()); }
     const void* origin(const this_type &v) { return linalg_origin(v.deref()); }
-    void do_clear(this_type &v) { std::fill(begin(), end(), value_type(0)); }
+    void do_clear(this_type &v) { std::fill(begin(v), end(v), value_type(0)); }
   };
 
   /* ******************************************************************** */
-  /*		sub vector with an array of indexes.                      */
+  /*		sub vector.                                               */
   /* ******************************************************************** */
+  /* sub_vector_type<PT, SUBI>::vector_type is the sub vector type        */
+  /* returned by sub_vector(v, sub_index)                                 */
+  /************************************************************************/
 
-  template <class PT, class IT, class st_type> struct svrt_ir;
+  template <class PT, class SUBI, class st_type> struct svrt_ir;
 
-  template <class PT, class IT>
-  struct svrt_ir<PT, IT, abstract_plain> {
+  template <class PT, class SUBI>
+  struct svrt_ir<PT, SUBI, abstract_plain> {
     typedef typename std::iterator_traits<PT>::value_type V;
     typedef typename vect_ref_type<PT,  V>::iterator iterator;
-    typedef tab_ref_index_ref_with_origin<iterator, IT> vector_type;
+    typedef tab_ref_index_ref_with_origin<iterator,
+      typename SUBI::iterator> vector_type;
   }; 
 
-  template <class PT, class IT>
-  struct svrt_ir<PT, IT, abstract_sparse> {
-    typedef sparse_sub_vector<PT, IT> vector_type;
+  template <class PT>
+  struct svrt_ir<PT, sub_interval, abstract_plain> {
+    typedef typename std::iterator_traits<PT>::value_type V;
+    typedef typename vect_ref_type<PT,  V>::iterator iterator;
+    typedef tab_ref_with_origin<iterator> vector_type;
+  }; 
+
+  template <class PT>
+  struct svrt_ir<PT, sub_slice, abstract_plain> {
+    typedef typename std::iterator_traits<PT>::value_type V;
+    typedef typename vect_ref_type<PT,  V>::iterator iterator;
+    typedef tab_ref_reg_spaced_with_origin<iterator> vector_type;
+  }; 
+
+  template <class PT, class SUBI>
+  struct svrt_ir<PT, SUBI, abstract_sparse> {
+    typedef sparse_sub_vector<PT, SUBI> vector_type;
   };
 
-  template <class PT, class IT>
+  // -------------- Principal interface ------------------------
+  template <class PT, class SUBI>
   struct sub_vector_type {
     typedef typename std::iterator_traits<PT>::value_type V;
-    typedef typename svrt_ir<PT, IT,
+    typedef typename svrt_ir<PT, SUBI,
       typename linalg_traits<V>::storage_type>::vector_type vector_type;
   };
   
-  template <class V, class IT> inline
-  typename sub_vector_type<const V *, IT>::vector_type
-  sub_vector(const V &v, const IT &it, const IT &e) {
-    return sub_vector_stc(v, it, e,
-			  typename linalg_traits<V>::storage_type());
+  template <class V, class SUBI> inline
+  typename sub_vector_type<const V *, SUBI>::vector_type
+  sub_vector(const V &v, const SUBI &si) {
+    return sub_vector_stc(v, si, typename linalg_traits<V>::storage_type());
   }
 
-  template <class V, class IT>  inline
-  typename sub_vector_type<V *, IT>::vector_type
-  sub_vector(V &v, const IT &it, const IT &e) {
-    return sub_vector_st(v, it, e,
-			 typename linalg_traits<V>::storage_type());
+  template <class V, class SUBI>  inline
+  typename sub_vector_type<V *, SUBI>::vector_type
+  sub_vector(V &v, const SUBI &si) {
+    return sub_vector_st(v, si, typename linalg_traits<V>::storage_type());
+  }
+  // -----------------------------------------------------------
+
+  template <class V> inline
+  typename sub_vector_type<const V *, sub_index>::vector_type
+  sub_vector_stc(const V &v, const sub_index &si, abstract_plain) {
+    return  typename sub_vector_type<const V *, sub_index >
+      ::vector_type(vect_begin(v), si.begin(), si.end(), linalg_origin(v));
   }
 
-  template <class V, class IT> inline
-  typename sub_vector_type<const V *, IT>::vector_type
-  sub_vector(const V &v, const IT &it, const IT &e, 
-	     const reverse_index &rindex) {
-    return sub_vector_stc(v, it, e, 
-			  typename linalg_traits<V>::storage_type(), &rindex);
+  template <class V> inline
+  typename sub_vector_type<V *, sub_index>::vector_type
+  sub_vector_st(V &v, const sub_index &si, abstract_plain) {
+    return  typename sub_vector_type<V *, sub_index>
+      ::vector_type(vect_begin(v), si.begin(), si.end(), linalg_origin(v));
   }
 
-  template <class V, class IT>  inline
-  typename sub_vector_type<V *, IT>::vector_type
-  sub_vector(V &v, const IT &it, const IT &e, const reverse_index &rindex) {
-    return sub_vector_st(v, it, e, 
-			 typename linalg_traits<V>::storage_type(), &rindex);
+  template <class V> inline
+  typename sub_vector_type<const V *, sub_interval>::vector_type
+  sub_vector_stc(const V &v, const sub_interval &si, abstract_plain) {
+    return  typename sub_vector_type<const V *, sub_interval>
+      ::vector_type(vect_begin(v), v.begin() + si.min, v.begin() + si.max+1,
+		    linalg_origin(v));
   }
 
-  template <class V, class IT> inline
-  typename sub_vector_type<const V *, IT>::vector_type
-  sub_vector_stc(const V &v, const IT &it, const IT &e,
-		 abstract_plain, const reverse_index * = 0) {
-    return  typename sub_vector_type<const V *, IT>
-      ::vector_type(vect_begin(v), it, e, linalg_origin(v));
+  template <class V> inline
+  typename sub_vector_type<V *, sub_interval>::vector_type
+  sub_vector_st(V &v, const sub_interval &si, abstract_plain) {
+    return  typename sub_vector_type<V *, sub_interval>
+      ::vector_type(vect_begin(v), v.begin() + si.min, v.begin() + si.max+1,
+		    linalg_origin(v));
   }
 
-  template <class V, class IT> inline
-  typename sub_vector_type<const V *, IT>::vector_type
-  sub_vector_stc(const V &v, const IT &it, const IT &e,
-		 abstract_sparse, const reverse_index *rindex = 0) {
-    return typename sub_vector_type<const V *, IT>
-      ::vector_type(v, it, e, *rindex);
+  template <class V> inline
+  typename sub_vector_type<const V *, sub_slice>::vector_type
+  sub_vector_stc(const V &v, const sub_slice &si, abstract_plain) {
+    return  typename sub_vector_type<const V *, sub_slice>
+      ::vector_type(vect_begin(v), v.begin() + si.min, v.begin() + si.max+1,
+		    si.N, linalg_origin(v));
   }
 
-  template <class V, class IT> inline
-  typename sub_vector_type<V *, IT>::vector_type
-  sub_vector_st(V &v, const IT &it, const IT &e,
-		abstract_plain, const reverse_index * = 0) {
-    return typename sub_vector_type<V *, IT>
-      ::vector_type(vect_begin(v), it, e, linalg_origin(v));
+  template <class V> inline
+  typename sub_vector_type<V *, sub_slice>::vector_type
+  sub_vector_st(V &v, const sub_slice &si, abstract_plain) {
+    return  typename sub_vector_type<V *, sub_slice>
+      ::vector_type(vect_begin(v), v.begin() + si.min, v.begin() + si.max+1,
+		    si.N, linalg_origin(v));
   }
 
-  template <class V, class IT> inline
-  typename sub_vector_type<V *, IT>::vector_type
-  sub_vector_st(V &v, const IT &it, const IT &e,
-		abstract_sparse, const reverse_index *rindex = 0) {
-    return typename sub_vector_type<V *, IT>
-      ::vector_type(v, it, e, *rindex);
+  template <class V, class SUBI> inline
+  typename sub_vector_type<const V *, SUBI>::vector_type
+  sub_vector_stc(const V &v, const SUBI &si, abstract_sparse) {
+    return typename sub_vector_type<const V *, SUBI>::vector_type(v, si);
+  }
+
+  template <class V, class SUBI> inline
+  typename sub_vector_type<V *, SUBI>::vector_type
+  sub_vector_st(V &v, const SUBI &si, abstract_sparse) {
+    return typename sub_vector_type<V *, SUBI>::vector_type(v, si);
   }
 
 }

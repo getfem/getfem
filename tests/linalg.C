@@ -67,29 +67,27 @@ int main(void)
 
     gmm::clear(x);
     std::vector<size_t> index(3); index[0] = 2; index[1] = 8; index[2] = 3;
-    std::vector<double> zz(3); zz[0] = 1; zz[1] = 2; zz[2] = 3; 
+    std::vector<double> zz(3); zz[0] = 1; zz[1] = 2; zz[2] = 3;
+    gmm::sub_index si1(index.begin(), index.end(), x.size(), x);
     
-    gmm::copy(zz, gmm::sub_vector(x, index.begin(), index.end()));
+    gmm::copy(zz, gmm::sub_vector(x, si1));
     cout << "x = "; gmm::write(x, cout); cout << endl;
 
     std::vector<size_t> index2(2); index2[0] = 1; index2[2] = 0;
-    std::vector<double> zzz(2); zzz[0] = 5; zzz[1] = 6; 
+    std::vector<double> zzz(2); zzz[0] = 5; zzz[1] = 6;
+    gmm::sub_index si2(index2.begin(), index2.end(), 3, x);
     
-    gmm::copy(zzz, gmm::sub_vector(gmm::sub_vector(x, index.begin(),
-							 index.end()),
-				       index2.begin(), index2.end()));
+    gmm::copy(zzz, gmm::sub_vector(gmm::sub_vector(x, si1), si2));
     cout << "x = "; gmm::write(x, cout); cout << endl;
 
 
     std::vector<size_t> index3(3); index3[0] = 2; index3[1] = 4; index3[2] = 3;
-    gmm::reverse_index ri(index3.begin(), index3.end(), 10, m);
+    gmm::sub_index si3(index3.begin(), index3.end(), 10, m);
     bgeot::vsmatrix<double> mm(3,3);
 
-    cout << "mm(0,0) = " << gmm::sub_matrix(m, index3.begin(), index3.end(),
-		 index3.begin(), index3.end(),ri,ri)(0,0) << endl;
+    cout << "mm(0,0) = " << gmm::sub_matrix(m, si3)(0,0) << endl;
 
-    gmm::copy(gmm::sub_matrix(m, index3.begin(), index3.end(),
-				  index3.begin(), index3.end(),ri,ri), mm);
+    gmm::copy(gmm::sub_matrix(m, si3), mm);
     cout << "mm = "; gmm::write(mm, cout); cout << endl;
    
 

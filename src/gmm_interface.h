@@ -31,7 +31,13 @@
 #ifndef __GMM_INTERFACE_H
 #define __GMM_INTERFACE_H
 
-#include <bgeot_matrix.h>
+namespace bgeot {
+  template <class T, int N> class fsvector;
+  template <class T> class vsvector;
+  template <class VECT> class PT;
+  template <class T, int N> class fsmatrix;
+  template <class T> class vsmatrix;
+}
 
 namespace gmm {
 
@@ -474,6 +480,8 @@ namespace gmm {
     void do_clear(this_type &v) { v.fill(T(0)); }
   };
 
+  
+
   template <class T> struct linalg_traits<bgeot::vsvector<T> > {
     typedef bgeot::vsvector<T> this_type;
     typedef linalg_false is_reference;
@@ -491,6 +499,8 @@ namespace gmm {
     const void* origin(const this_type &v) { return &v; }
     void do_clear(this_type &v) { v.fill(T(0)); }
   };
+
+  
 
   template <class VECT> struct linalg_traits<bgeot::PT<VECT> > {
     typedef bgeot::PT<VECT> this_type;
@@ -511,6 +521,8 @@ namespace gmm {
     const void* origin(const this_type &v) { return &v; }
     void do_clear(this_type &v) { v.fill(T(0)); }
   };
+
+  
 
   template <class T, int N> struct linalg_traits<bgeot::fsmatrix<T, N> > {
     typedef bgeot::fsmatrix<T, N> this_type;
@@ -550,6 +562,8 @@ namespace gmm {
     const void* origin(const this_type &v) { return &v; }
     void do_clear(this_type &v) { v.clear(); }
   };
+
+ 
 
   template <class T> struct linalg_traits<bgeot::vsmatrix<T> > {
     typedef bgeot::vsmatrix<T> this_type;
@@ -592,6 +606,137 @@ namespace gmm {
     }
     const void* origin(const this_type &v) { return &v; }
     void do_clear(this_type &v) { v.clear(); }
+  };
+
+
+  /* ******************************************************************** */
+  /*		Reference on a compressed sparse column matrix            */
+  /* ******************************************************************** */
+
+  template <class PT1, class PT2, int shift = 0>
+  struct cs_vector_ref_iterator {
+    PT1 pr;
+    PT2 ir;
+
+    typedef typename std::iterator_traits<PT1>::value_type value_type;
+    typedef PT1 pointer;
+    typedef typename std::iterator_traits<PT1>::reference  reference;
+    typedef size_t        size_type;
+    typedef ptrdiff_t     difference_type;
+    typedef std::forward_iterator_tag iterator_category;
+    typedef cs_vector_ref_iterator<PT1, PT2> iterator;
+    
+    cs_vector_ref_iterator(void) {}
+    cs_vector_ref_iterator(PT1 p1, PT2 p2) : pr(p1), ir(p2) {}
+
+    inline size_type index(void) const { return (*ir) - shift; }
+    iterator &operator ++() { ++pr; ++ir; return *this; }
+    iterator operator ++(int) { iterator tmp = *this; ++(*this); return tmp; }
+    
+    reference operator  *() const { return *pr; }
+    pointer   operator ->() const { return pr; }
+    
+    bool operator ==(const iterator &i) const { return (i.pr==pr);}
+    bool operator !=(const iterator &i) const { return (i.pr!=pr);}
+  };
+    
+  // read only reference on a compressed sparse vector
+  template <class PT1, class PT2, int shift = 0> struct cs_vector_ref {
+    PT1 pr;
+    PT2 ir;
+    size_type n, _size;
+    
+    typedef typename std::iterator_traits<PT1>::value_type value_type;
+    typedef cs_vector_ref_iterator<PT1, PT2, shift>  iterator;
+    typedef cs_vector_ref_iterator<typename const_pointer<PT1>::pointer,
+      typename const_pointer<PT2>::pointer, shift> const_iterator;
+
+    cs_vector_ref(PT1 pt1, PT2 pt2, size_type nnz, size_type ns)
+      : pr(pt1), ir(pt2), n(nnz), _size(ns) {}
+    cs_vector_ref(void) {}
+
+    size_type size(void) const { return _size; }
+    
+    iterator begin(void) { return iterator(pr, ir); }
+    const_iterator begin(void) const { return const_iterator(pr, ir); }
+    iterator end(void) { return iterator(pr+n, ir+n); }
+    const_iterator end(void) const { return const_iterator(pr+n, ir+n); }
+    
+    value_type operator[](size_type i) const {
+      static value_type zero(0);
+      if (n == 0) return zero;
+      PT2 p = std::lower_bound(ir, ir+n, i+shift);
+      return (*p == i+shift) ? *p : zero;
+    }
+  };
+
+  template <class PT1, class PT2, int shift>
+  struct linalg_traits<cs_vector_ref<PT1, PT2, shift> > {
+    typedef cs_vector_ref<PT1, PT2, shift> this_type;
+    typedef linalg_true is_reference;
+    typedef abstract_vector linalg_type;
+    typedef typename std::iterator_traits<PT1>::value_type value_type;
+    typedef typename std::iterator_traits<PT1>::value_type reference_type;
+    typedef cs_vector_ref_iterator<PT1, PT2, shift>  iterator;
+    typedef cs_vector_ref_iterator<typename const_pointer<PT1>::pointer,
+      typename const_pointer<PT2>::pointer, shift> const_iterator;
+    typedef abstract_sparse storage_type;
+    size_type size(const this_type &v) { return v.size(); }
+    iterator begin(this_type &v) { return v.begin(); }
+    const_iterator const_begin(const this_type &v) { return v.begin(); }
+    iterator end(this_type &v) { return v.end(); }
+    const_iterator const_end(const this_type &v) { return v.end(); }
+    const void* origin(const this_type &v) { return v.pr; }
+  };
+
+
+  template <class PT1, class PT2, class PT3, int shift = 0>
+  struct csc_matrix_ref {
+    PT1 pr;
+    PT2 ir;
+    PT3 jc;
+    size_type nc, nr;
+    
+    typedef typename std::iterator_traits<PT1>::value_type value_type;
+    typedef typename std::iterator_traits<PT1>::reference access_type;
+    csc_matrix_ref(PT1 pt1, PT2 pt2, PT3 pt3, size_type nrr, size_type ncc)
+      : pr(pt1), ir(pt2), jc(pt3), nc(ncc), nr(nrr) {}
+    csc_matrix_ref(void) {}
+
+    // void do_clear(void) ... to be done
+    
+    size_type nrows(void) const { return nr; }
+    size_type ncols(void) const { return nc; }
+   
+    // access_type operator()(size_type i, size_type j) // to be done
+    //  { return mat_col(*this, j)[i]; }
+    value_type operator()(size_type i, size_type j) const
+      { return mat_col(*this, j)[i]; }
+  };
+  
+  template <class PT1, class PT2, class PT3, int shift>
+    struct linalg_traits<csc_matrix_ref<PT1, PT2, PT3, shift> > {
+    typedef csc_matrix_ref<PT1, PT2, PT3, shift> this_type;
+    typedef linalg_true is_reference;
+    typedef abstract_matrix linalg_type;
+    typedef typename std::iterator_traits<PT1>::value_type value_type;
+    typedef typename std::iterator_traits<PT1>::value_type reference_type;
+    typedef abstract_sparse storage_type;
+    typedef abstract_null_type sub_row_type;
+    typedef abstract_null_type const_sub_row_type;
+    typedef cs_vector_ref<typename const_pointer<PT1>::pointer,
+      typename const_pointer<PT2>::pointer, shift> sub_col_type;
+    typedef cs_vector_ref<typename const_pointer<PT1>::pointer,
+      typename const_pointer<PT2>::pointer, shift> const_sub_col_type;
+    typedef col_major sub_orientation;
+    size_type nrows(const this_type &m) { return m.nrows(); }
+    size_type ncols(const this_type &m) { return m.ncols(); }
+    const_sub_col_type col(const this_type &m, size_type i) {
+      return const_sub_col_type(m.pr + m.jc[i]-shift, m.ir + m.jc[i] - shift,
+				m.jc[i+1] - m.jc[i], m.nr);
+    }
+    const void* origin(const this_type &m) { return m.pr; }
+    void do_clear(this_type &m) { m.do_clear(); }
   };
 
 }

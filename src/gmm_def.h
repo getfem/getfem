@@ -103,8 +103,12 @@ namespace gmm {
     typedef typename linalg_traits<V>::value_type access_type;
   };
   
- 
-
+  template <class PT> struct const_pointer;
+  template <class P> struct const_pointer<P *>
+  { typedef const P* pointer; };
+  template <class P> struct const_pointer<const P *>
+  { typedef const P* pointer; };
+  
   /* ******************************************************************** */
   /*		Operations on scalars                         		  */
   /* ******************************************************************** */
@@ -124,42 +128,6 @@ namespace gmm {
   { return dal::abs(a); }
   template <class T> T modulus(const std::complex<T> &a)
   { return std::abs(a); }
-
-
-  /* ******************************************************************** */
-  /*		reverse indexes                             		  */
-  /* ******************************************************************** */
-
-  class reverse_index : public std::vector<size_t> {
-  public :
-    typedef std::vector<size_t> base_type;
-    typedef base_type::value_type value_type;
-    typedef base_type::iterator iterator;
-    typedef base_type::const_iterator const_iterator;
-    typedef base_type::reverse_iterator reverse_iterator;
-    typedef base_type::const_reverse_iterator const_reverse_iterator;
-    typedef base_type::pointer pointer;
-    typedef base_type::const_pointer const_pointer;
-    typedef base_type::reference reference;
-    typedef base_type::const_reference const_reference;
-    typedef base_type::size_type size_type;
-    typedef base_type::difference_type difference_type;
-    
-    reverse_index(void) {}
-    template <class IT> void init(IT it, IT ite, size_type n,
-				  abstract_sparse = abstract_sparse());
-    template <class IT> void init(IT, IT, size_type, abstract_plain) { }
-
-    template <class IT, class L> reverse_index(IT it, IT ite,
-					       size_type n, const L &)
-    { init(it, ite, n, typename linalg_traits<L>::storage_type()); }
-  };
-
-  template <class IT>
-  void reverse_index::init(IT it, IT ite, size_type n, abstract_sparse) {
-      resize(n); std::fill(begin(), end(), size_type(-1));
-      for (size_type i = 0; it != ite; ++it, ++i) (*this)[*it] = i;
-  }
 
   /* ******************************************************************** */
   /*   Selects a temporary vector type                                    */

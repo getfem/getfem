@@ -1,4 +1,3 @@
-
 /* -*- c++ -*- (enables emacs c++ mode)                                    */
 /* *********************************************************************** */
 /*                                                                         */
@@ -176,6 +175,124 @@ namespace gmm
     const void* origin(const this_type &m) { return &m; }
     void do_clear(this_type &m) { m.clear(); }
   };
+
+
+  /* ******************************************************************** */
+  /*		Block matrix                                		  */
+  /* ******************************************************************** */
+
+  template <class MAT> class block_matrix {
+  protected :
+    std::vector<MAT> blocks;
+    size_type _nrowblocks;
+    size_type _ncolblocks;
+    std::vector<sub_interval> introw, intcol;
+
+  public :
+    typedef typename linalg_traits<MAT>::value_type value_type;
+
+    size_type nrows(void) const { return introw[_nrowblocks-1].max + 1; }
+    size_type ncols(void) const { return intcol[_ncolblocks-1].max + 1; }
+    size_type nrowblocks(void) const { return _nrowblocks; }
+    size_type ncolblocks(void) const { return _ncolblocks; }
+    const sub_interval &subrowinterval(size_type i) const { return introw[i]; }
+    const sub_interval &subcolinterval(size_type i) const { return intcol[i]; }
+    const MAT &block(size_type i, size_type j) const 
+    { return blocks[j*_ncolblocks+i]; }
+    MAT &block(size_type i, size_type j)
+    { return blocks[j*_ncolblocks+i]; }
+    void do_clear(void);
+    // to be done : read and write access to a component
+    
+    template <class CONT> void resize(const CONT &c1, const CONT &c2 = c1);
+    template <class CONT> block_matrix(const CONT &c1, const CONT &c2 = c1)
+    { resize(c1, c2); }
+    block_matrix(void) {}
+
+  };
+
+  template <class MAT> struct linalg_traits<block_matrix<MAT> > {
+    typedef block_matrix<MAT> this_type;
+    typedef linalg_false is_reference;
+    typedef abstract_matrix linalg_type;
+    typedef typename linalg_traits<MAT>::value_type value_type;
+    typedef typename linalg_traits<MAT>::reference_type reference_type;
+    typedef typename linalg_traits<MAT>::abstract_storage storage_type;
+    typedef abstract_null_type sub_row_type; // to be done ...
+    typedef abstract_null_type const_sub_row_type; // to be done ...
+    typedef abstract_null_type sub_col_type; // to be done ...
+    typedef abstract_null_type const_sub_col_type; // to be done ...
+    typedef abstract_null_type sub_orientation; // to be done ...
+    size_type nrows(const this_type &m) { return m.nrows(); }
+    size_type ncols(const this_type &m) { return m.ncols(); }
+    const void* origin(const this_type &m) { return &m; }
+    void do_clear(this_type &m) { m.do_clear(); }
+  };
+
+  template <class MAT> void block_matrix<MAT>::do_clear(void) { 
+    for (size_type j = 0, l = 0; j < _ncolblocks; ++j)
+      for (size_type i = 0, k = 0; i < _nrowblocks; ++i)
+	clear(block(i,j));
+  }
+
+  template <class MAT> template <class CONT>
+  void block_matrix<MAT>::resize(const CONT &c1, const CONT &c2) {
+    _nrowblocks = c1.size(); _ncolblocks = c2.size();
+    blocks.resize(_nrowblocks * _ncolblocks);
+    for (size_type j = 0, l = 0; j < _ncolblocks; ++j) {
+      intcol = sub_interval(l, l+c2[j]-1); l += c2[j];
+      for (size_type i = 0, k = 0; i < _nrowblocks; ++i) {
+	if (j == 0) { introw = sub_interval(k, k+c1[j]-1); k += c1[i]; }
+	block(i, j) = MAT(c1[i], c2[j]);
+      }
+    }
+  }
+  
+  template <class MAT, class V1, class V2>
+  void mult(const block_matrix<MAT> &m, const V1 &v1, V2 &v2) {
+    clear(v2);
+    for (size_type i = 0; i < m.nrowblocks() ; ++i)
+      for (size_type j = 0; j < m.ncolblocks() ; ++j)
+	mult(m.block(i,j),
+	     sub_vector(v1, m.subcolinterval(j)),
+	     sub_vector(v2, m.subrowinterval(i)),
+	     sub_vector(v2, m.subrowinterval(i)));
+  }
+
+  template <class MAT, class V1, class V2, class V3>
+  void mult(const block_matrix<MAT> &m, const V1 &v1, const V2 &v2, V3 &v3) {
+    for (size_type i = 0; i < m.nrowblocks() ; ++i)
+      for (size_type j = 0; j < m.ncolblocks() ; ++j)
+	if (j == 0)
+	  mult(m.block(i,j),
+	       sub_vector(v1, m.subcolinterval(j)),
+	       sub_vector(v2, m.subrowinterval(i)),
+	       sub_vector(v3, m.subrowinterval(i)));
+	else
+	  mult(m.block(i,j),
+	       sub_vector(v1, m.subcolinterval(j)),
+	       sub_vector(v3, m.subrowinterval(i)),
+	       sub_vector(v3, m.subrowinterval(i)));
+    
+  }
+
+  template <class MAT, class V1, class V2>
+  void mult(const block_matrix<MAT> &m, const V1 &v1, const V2 &v2)
+  { mult_const(m, v1, v2, typename linalg_traits<V2>::is_reference()); }
+
+  template <class MAT, class V1, class V2>
+  void mult_const(const block_matrix<MAT> &m, const V1 &v1, const V2 &v2, 
+	     linalg_true)
+  { mult(m, v1, const_cast<V2 &>(v2)); }
+
+  template <class MAT, class V1, class V2, class V3>
+  void mult(const block_matrix<MAT> &m, const V1 &v1, const V2 &v2, const V3 &v3)
+  { mult_const(m, v1, v2, v3, typename linalg_traits<V3>::is_reference()); }
+
+  template <class MAT, class V1, class V2, class V3>
+  void mult_const(const block_matrix<MAT> &m, const V1 &v1, const V2 &v2,
+	     const V3 &v3, linalg_true)
+  { mult(m, v1, v2, const_cast<V3 &>(v3)); }
 
 
 }

@@ -42,8 +42,6 @@
 //       on a jamais de -1 ?
 //
 
-// Inspired from M.T.L. (http://www.osl.iu.edu/research/mtl)
-
 #ifndef __GMM_BLAS_H
 #define __GMM_BLAS_H
 
@@ -343,7 +341,7 @@ namespace gmm {
   typename linalg_traits<V1>::value_type
   vect_sp_with_mat(const MATSP &ps, const V1 &v1, const V2 &v2,
 		   abstract_null_type) {
-    V1 w(mat_nrows());
+    typename temporary_vector<V1>::vector_type w(mat_nrows());
     cerr << "Warning, a temporary is used in scalar product\n";
     mult(ps, v1, w); 
     return vect_sp(w, v2);
@@ -1147,7 +1145,7 @@ namespace gmm {
       #ifdef __GETFEM_VERIFY
         cerr << "Warning, A temporary is used for mult\n";
       #endif
-      L3 temp(vect_size(l3));
+      typename temporary_vector<L3>::vector_type temp(vect_size(l3));
       mult_spec(l1,l2,l3, temp, typename principal_orientation_type<typename
 		linalg_traits<L1>::sub_orientation>::potype());
       copy(temp, l4);
