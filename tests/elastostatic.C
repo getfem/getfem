@@ -94,7 +94,7 @@ base_matrix sol_sigma(const base_node &x) {
 }
 
 /*
-  structure for the Elastostatic problem
+  structure for the elastostatic problem
 */
 struct elastostatic_problem {
 
