@@ -36,6 +36,8 @@
 //         column pivoting (See Yousef Saad, Iterative Methods for
 //         sparse linear systems, PWS Publishing Company, section 10.4.4
 
+// TODO : store the permutation by cycles to avoid the temporary vector
+
 #include <gmm_precond_ilut.h>
 
 namespace gmm {
@@ -97,7 +99,7 @@ namespace gmm {
     svector w(mat_ncols(A));
     
     T tmp;
-    gmm::clear(L);
+    gmm::clear(L); gmm::clear(U);
     R prec = default_tol(R()); 
     R max_pivot = gmm::abs(A(0,0)) * prec;
 

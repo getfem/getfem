@@ -171,16 +171,6 @@ namespace gmm {
     }
     U = tm_type(&(Tri_val[0]), &(Tri_ind[0]), &(Tri_ptr[0]),
 			n, mat_ncols(A));
-
-//     gmm::dense_matrix<T> AA(n, n), B(n, n), C(n, n);
-//     gmm::copy(U, AA);
-//     for (i = 0; i < n; ++i)
-//       { B(i, i) = D(i); AA(i, i) = T(1); }
-//     gmm::mult(gmm::conjugated(AA), B, C);
-//     gmm::mult(C, AA, B);
-//     cout << "B of ildlt = " << B << endl;
-//     gmm::add(gmm::scaled(A, T(-1)), B);
-//     cout << "B of ildlt res = " << B << endl;
   }
   
   template <typename Matrix>

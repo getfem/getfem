@@ -565,7 +565,7 @@ namespace gmm
   /******* Optimized operations for rsvector<T> ****************************/
 
   template <typename T> inline void copy(const rsvector<T> &v1,
-					 rsvector<T> &v2) {
+ 					 rsvector<T> &v2) {
     if (vect_size(v1) != vect_size(v2))
       DAL_THROW(dimension_error,"dimensions mismatch");
     v2 = v1;

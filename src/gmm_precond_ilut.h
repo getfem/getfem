@@ -125,7 +125,7 @@ namespace gmm {
     size_type n = mat_nrows(A);
     if (n == 0) return;
     std::vector<T> indiag(n);
-    svector w(mat_ncols(A));
+    svector w(mat_ncols(A)), wL(mat_ncols(A)), wU(mat_ncols(A));
     T tmp;
     gmm::clear(U); gmm::clear(L);
     R prec = default_tol(R()); 
@@ -163,11 +163,15 @@ namespace gmm {
       std::sort(w.begin(), w.end(), elt_rsvector_value_less_<T>());
       typename svector::const_iterator wit = w.begin(), wite = w.end();
       size_type nnl = 0, nnu = 0;
-      for (; wit != wite; ++wit) // copy to be optimized ...
-	if (wit->c < i) { if (nnl < nL+K) L(i, wit->c) = wit->e; ++nnl; }
-	else { if (nnu < nU+K) U(i, wit->c) = wit->e; ++nnu; }
+      wL.base_resize(nL+K); wU.base_resize(nU+K);
+      typename svector::iterator witL = wL.begin(), witU = wU.begin();
+      for (; wit != wite; ++wit) 
+	if (wit->c < i) { if (nnl < nL+K) { *witL++ = *wit; ++nnl; } }
+	else { if (nnu < nU+K) { *witU++ = *wit; ++nnu; } }
+      wL.base_resize(nnl); wU.base_resize(nnu);
+      std::sort(wL.begin(), wL.end()); gmm::copy(wL, L.row(i));
+      std::sort(wU.begin(), wU.end()); gmm::copy(wU, U.row(i));
     }
-
   }
 
   template<typename Matrix> 

@@ -122,21 +122,8 @@ namespace gmm {
       std::sort(w.begin(), w.end(), elt_rsvector_value_less_<T>());
       typename svector::const_iterator wit = w.begin(), wite = w.end();
       for (size_type nnu = 0; wit != wite; ++wit)  // copy to be optimized ...
-	if (wit->c > i) { if (nnu < nU+K) U(i, wit->c) = wit->e; ++nnu; }
+	if (wit->c > i) { if (nnu < nU+K) { U(i, wit->c) = wit->e; ++nnu; } }
     }
-
-//     gmm::dense_matrix<T> AA(n, n), B(n, n), C(n, n);
-//     gmm::copy(U, AA);
-//     for (size_type i = 0; i < n; ++i)
-//       { B(i, i) = T(1)/T(indiag[i]); AA(i, i) = T(1); }
-//     gmm::mult(gmm::conjugated(AA), B, C);
-//     gmm::mult(C, AA, B);
-//     cout << "A = " << A << endl;
-//     cout << "U = " << U << endl;
-//     cout << "B of ildltt = " << B << endl;
-//     gmm::add(gmm::scaled(A, T(-1)), B);
-//     cout << "B of ildltt res = " << B << endl;
-
   }
 
   template<typename Matrix> 
