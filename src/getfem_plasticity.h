@@ -79,33 +79,34 @@ namespace getfem {
       virtual void compute_type_proj(const base_matrix& tau,
 				     scalar_type stress_threshold,
 				     base_matrix& proj,
-				     size_type flag_proj)  const
-      {
-      
+				     size_type flag_proj)  const {
+	
 	/* be sure that flag_proj has a correct value */
-	if(flag_proj!=0 && flag_proj!=1) DAL_THROW(dal::failure_error, "wrong value for the projection flag, must be 0 or 1 ");
+	if(flag_proj!=0 && flag_proj!=1)
+	  DAL_THROW(failure_error,
+		    "wrong value for the projection flag, must be 0 or 1 ");
       
 	/* be sure that stress_threshold has a correct value */
 	if(!(stress_threshold>=0.))
-	  DAL_THROW(dal::failure_error, "s is not a positive number "
+	  DAL_THROW(failure_error, "s is not a positive number "
 		    << stress_threshold << ". You need to set "
 		    << "s as a positive number");
-
-	size_type size_of_tau=gmm::mat_nrows(tau);
- 
+	
+	size_type tausize = gmm::mat_nrows(tau);
+	size_type projsize = (flag_proj == 0) ? tausize : gmm::sqr(tausize);
 	scalar_type normtaud;
 
 	/* calculate tau_m*Id */
-	base_matrix taumId(size_of_tau,size_of_tau);
+	base_matrix taumId(tausize, tausize);
 	tau_m_Id(tau, taumId); 
 
 	// calcul du deviateur de tau, taud
-	base_matrix taud(size_of_tau,size_of_tau);
+	base_matrix taud(tausize,tausize);
 	gmm::add(gmm::scaled(taumId, scalar_type(-1)), tau, taud);
 
 	/* plane constraints */    
 	if(flag_hyp==1){  // To be done ...
-	  if(size_of_tau/=2)
+	  if(tausize/=2)
 	    DAL_THROW(failure_error,
 	     "wrong value for CALCULATION HYPOTHESIS, must be /=1 SINCE n/=2");
 	  // we form the 3D tau tensor considering that tau(3,j)=tau(i,3)=0
@@ -115,83 +116,76 @@ namespace getfem {
 	  base_matrix taud_aux(3,3);
 	  tau_d(tau_aux, taud_aux);            
 	  normtaud=gmm::mat_euclidean_norm(taud_aux);  
-	} else {
-	  normtaud=gmm::mat_euclidean_norm(taud);  
-	}
-    
-	/* we dimentionate and initialize the projection matrix or its derivative */
-	switch(flag_proj) {
-	case 0:
-	  gmm::resize(proj,size_of_tau,size_of_tau);
-	  gmm::copy(tau, proj);
-	  break;
-	case 1:
-	  gmm::resize(proj,size_of_tau*size_of_tau, size_of_tau*size_of_tau);
-	  gmm::copy(gmm::identity_matrix(), proj);
-	  break;
-	}
-
-	if(normtaud > stress_threshold) {
-	    switch(flag_proj) {
-	    case 0:
-	      gmm::copy(gmm::scaled(taud, stress_threshold/normtaud),proj);
-	      gmm::add(taumId,proj);
-	      break;
-	    case 1:
-	      base_matrix Igrad(size_of_tau*size_of_tau,size_of_tau*size_of_tau);
-	      gmm::copy(gmm::identity_matrix(),Igrad); 
-	      base_matrix Igrad2(size_of_tau*size_of_tau,size_of_tau*size_of_tau);
-	      gmm::clear(Igrad2);
-        
-	      // on construit le vecteur [1 0 0 1  0 0 1...] qui va etre copie dans certaines colonnes de Igrad(*)Igrad
-	      base_vector aux(size_of_tau*size_of_tau);
-	      gmm::clear(aux);
-	      // boucle sur le vecteur aux pour placer les 1
-	      for(size_type i=0;i<size_of_tau;++i)
-		for(size_type j=0;j<size_of_tau;++j)
-		  if(i==j) aux[j*size_of_tau+i]=1.;
-
-	      // on copie aux dans les colonnes de Igrad(*)Igrad qu'il faut
-	      for(size_type i=0;i<size_of_tau;++i)
-		for(size_type j=0;j<size_of_tau;++j)
-		  if(i==j)  gmm::copy(aux, gmm::mat_col(Igrad2,j*size_of_tau+i)); 
-
-	      //calcul de Id_grad
-	      base_matrix Id_grad(size_of_tau*size_of_tau,size_of_tau*size_of_tau);
-	      gmm::copy(gmm::scaled(Igrad2,-1./size_of_tau),Id_grad);
-	      gmm::add(Igrad,Id_grad);         
-
-
-	      //calcul de ngrad(*)ngrad
-	      base_matrix ngrad2(size_of_tau*size_of_tau,size_of_tau*size_of_tau);
-	      // calcul de la normale n
-	      base_matrix un(size_of_tau,size_of_tau);
-	      gmm::copy(gmm::scaled(taud,1./normtaud),un);  
-
-	      // on copie la normale dasn un vecteur colonne range dans l'ordre du fortran
-	      std::copy(un.begin(),un.end(),aux.begin());
+	} 
+	else normtaud=gmm::mat_euclidean_norm(taud);  
 	
-	      // boucle sur les colonnes de ngrad(*)ngrad
-	      for(size_type j=0;j<size_of_tau*size_of_tau;++j)
-		gmm::copy(gmm::scaled(aux,aux[j]), gmm::mat_col(ngrad2,j));
-         
- 
-	      //calcul final du gradient de la projection
-	      // NB : proj contient l'identite au depart (proj=Igrad)
-	      gmm::add(gmm::scaled(ngrad2,-1.),proj);
-	      base_matrix aux2(size_of_tau*size_of_tau,size_of_tau*size_of_tau);
-	      gmm::copy(gmm::scaled(proj,stress_threshold/normtaud),aux2);
-	      gmm::mult(aux2,Id_grad,proj);
-	      gmm::add(gmm::scaled(Igrad2,1./size_of_tau),proj);
+    
+	/* dimension and initialization of proj matrix or its derivative */
+	gmm::resize(proj, projsize, projsize);
 
-	      break;
-	    }    
+	if(normtaud <= stress_threshold) {
+	  switch(flag_proj) {
+	  case 0: gmm::copy(tau, proj); break;
+	  case 1: gmm::copy(gmm::identity_matrix(), proj); break;
 	  }
+	}
+	else {
+	  switch(flag_proj) {
+	  case 0:
+	    gmm::copy(gmm::scaled(taud, stress_threshold/normtaud),proj);
+	    gmm::add(taumId,proj);
+	    break;
+	  case 1:
+	    base_matrix Igrad(projsize, projsize);
+	    gmm::copy(gmm::identity_matrix(),Igrad); 
+	    base_matrix Igrad2(projsize, projsize);
+	    
+	    // build vector[1 0 0 1  0 0 1...] to be copied in certain
+	    // columns of Igrad(*)Igrad
+	    base_vector aux(projsize);
+	    for(size_type i=0; i < tausize; ++i)
+	      aux[i*tausize + i] = scalar_type(1);
+	    
+	    // Copy in a selection of columns of Igrad(*)Igrad
+	    for(size_type i=0; i < tausize; ++i)
+	      gmm::copy(aux, gmm::mat_col(Igrad2, i*tausize + i)); 
+	    
+	    // Compute Id_grad
+	    base_matrix Id_grad(projsize, projsize);
+	    scalar_type rr = scalar_type(1)/scalar_type(tausize);
+	    gmm::copy(gmm::scaled(Igrad2, -rr), Id_grad);
+	    gmm::add(Igrad, Id_grad);         
+	    
+	    
+	    // Compute ngrad(*)ngrad
+	    base_matrix ngrad2(projsize, projsize);
+	    // Compute the normal n
+	    base_matrix un(tausize, tausize);
+	    gmm::copy(gmm::scaled(taud, 1./normtaud),un);  
+	    
+	    // Copy of the normal in a column vector in the Fortran order
+	    std::copy(un.begin(), un.end(), aux.begin());
+	    
+	    // Loop on the columns of ngrad(*)ngrad
+	    for(size_type j=0; j < projsize; ++j)
+	      gmm::copy(gmm::scaled(aux,aux[j]), gmm::mat_col(ngrad2,j));
+	    
+	    
+	    // Final computation of the projection gradient
+	    gmm::copy(gmm::identity_matrix(), proj);
+	    gmm::add(gmm::scaled(ngrad2, scalar_type(-1)), proj);
+	    base_matrix aux2(projsize, projsize);
+	    gmm::copy(gmm::scaled(proj, stress_threshold/normtaud),aux2);
+	    gmm::mult(aux2,Id_grad,proj);
+	    gmm::add(gmm::scaled(Igrad2, rr),proj);
+	    break;
+	  }    
+	}
       }
     VM_projection(size_type flag_hyp_ = 0) : type_proj(flag_hyp_) {}
   };
   
-  // calculate the projection of D*e + sigma_bar_ on a Gauss point
+  // Compute the projection of D*e + sigma_bar_ on a Gauss point.
   class plasticity_projection : public getfem::nonlinear_elem_term {
   protected:
     base_vector params, coeff;
@@ -209,7 +203,6 @@ namespace getfem {
     std::vector<std::vector<scalar_type> > &saved_proj_;
  
     const size_type flag_proj;
-  
     bool fill_sigma_bar;
   
   public:  
@@ -244,7 +237,7 @@ namespace getfem {
       /*                      true when called from compute_constraints */
 
       if (mf.get_qdim() != N)
-	DAL_THROW(dal::failure_error, "wrong qdim for the mesh_fem");      
+	DAL_THROW(failure_error, "wrong qdim for the mesh_fem");      
       if (flag_proj==0) sizes_.resize(2);
     
       sigma_bar_.resize(mf.linked_mesh().convex_index().last_true()+1);    
@@ -265,7 +258,8 @@ namespace getfem {
       getfem::pfem pf = ctx.pf();
       coeff.resize(mf.nb_dof_of_element(cv));
       base_matrix gradU(N, N), sigma(N,N);
-      gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))), coeff);
+      gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf.ind_dof_of_element(cv))),
+		coeff);
       pf->interpolation_grad(ctx, coeff, gradU, mf.get_qdim());
       
       scalar_type ltrace_eps;
@@ -293,7 +287,8 @@ namespace getfem {
       base_matrix tau_star(N,N), gradproj(N,N), proj;
       t_proj->compute_type_proj(sigma, params[2], proj, flag_proj);
 
-      // we fill sigma_bar only when called from compute_constraints (ie, when fill_sigma_bar is set)
+      // we fill sigma_bar only when called from compute_constraints
+      // (ie, when fill_sigma_bar is set)
       if (fill_sigma_bar && flag_proj==0) {
 
 	for (size_type i=0; i < N; ++i)
@@ -432,13 +427,12 @@ namespace getfem {
       }
       
       void get_proj(std::vector<std::vector<scalar_type> > &p) {
-	gmm::resize(p,gmm::vect_size(saved_proj));
-	for (size_type cv=0;cv<gmm::vect_size(saved_proj);++cv) {
-	  gmm::resize(p[cv],gmm::vect_size(saved_proj[cv]));
+	gmm::resize(p, gmm::vect_size(saved_proj));
+	for (size_type cv=0; cv < gmm::vect_size(saved_proj); ++cv) {
+	  gmm::resize(p[cv], gmm::vect_size(saved_proj[cv]));
 	  gmm::copy(saved_proj[cv], p[cv]);
 	}
       }
-
       
       virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
 					  size_type = 0, bool = false) {
@@ -451,11 +445,8 @@ namespace getfem {
 	fill_coeff(lambda, mu, stress_threshold);
 	
 	plasticity_projection gradproj(mf_u, mf_data, MS.state(),
-				       stress_threshold,
-				       lambda, mu, &t_proj,
-				       sigma_bar, saved_proj,
-				       1, false);
-	
+				       stress_threshold, lambda, mu, &t_proj,
+				       sigma_bar, saved_proj, 1, false);
 	
 	/* Calculate the actual matrix */
 	asm_lhs_for_plasticity(K, mf_u, mf_data, lambda, mu, &gradproj);
@@ -470,12 +461,11 @@ namespace getfem {
 
 	gmm::sub_interval SUBI(i0, nb_dof());        
 	VECTOR K(nb_dof());
-	plasticity_projection proj(mf_u,  mf_data, MS.state(),
-					     stress_threshold,
-					     lambda, mu, &t_proj, sigma_bar,
-					     saved_proj, 0, false);
+	plasticity_projection proj(mf_u, mf_data, MS.state(), stress_threshold,
+				   lambda, mu, &t_proj, sigma_bar,
+				   saved_proj, 0, false);
 	
-	/* Calculate the actual matrix */
+	/* Calculate the actual vector */
 	asm_rhs_for_plasticity(K, mf_u, mf_data, &proj);
 	gmm::copy(K, gmm::sub_vector(MS.residu(), SUBI));
       }
@@ -486,12 +476,11 @@ namespace getfem {
 	fill_coeff(lambda, mu, stress_threshold);
 	VECTOR K(nb_dof());
 	
-	plasticity_projection proj(mf_u,  mf_data, MS.state(),
-					     stress_threshold,
-					     lambda, mu, &t_proj, sigma_bar,
-					     saved_proj, 0, true);
+	plasticity_projection proj(mf_u, mf_data, MS.state(), stress_threshold,
+				   lambda, mu, &t_proj, sigma_bar,
+				   saved_proj, 0, true);
 	
-	/* Calculate the actual matrix */
+	/* Calculate the actual vector */
 	asm_rhs_for_plasticity(K, mf_u, mf_data, &proj);
       }
 
@@ -516,7 +505,8 @@ namespace getfem {
 	gmm::copy(stress_threshold, stress_threshold_);
       }
 
-      // constructor for a homogeneous material (constant lambda and mu)(constant stress_threshold)
+      // constructor for a homogeneous material (constant lambda, mu and
+      // stress_threshold)
       mdbrick_plasticity(mesh_fem &mf_u_, mesh_fem &mf_data_,
 			 value_type lambdai, value_type mui,
 			 value_type stress_threshold,
@@ -526,7 +516,7 @@ namespace getfem {
 	N = mf_data.linked_mesh().dim();
 	this->add_dependency(mf_u); this->add_dependency(mf_data);
       }
-      // constructor for a non-homogeneous material(constant lambda and mu)
+      // constructor for a non-homogeneous material
       mdbrick_plasticity(mesh_fem &mf_u_, mesh_fem &mf_data_,
 			 const VECTOR &lambdai, const VECTOR &mui,
 			 const VECTOR &stress_threshold,

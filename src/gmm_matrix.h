@@ -486,7 +486,7 @@ namespace gmm
     typedef unsigned int IND_TYPE;
 
     T *pr;         // values.
-    IND_TYPE *ir; // row indexes.
+    IND_TYPE *ir; // row indices.
     IND_TYPE *jc; // column repartition on pr and ir.
     size_type nc, nr;
 
@@ -632,7 +632,7 @@ namespace gmm
     typedef unsigned int IND_TYPE;
 
     T *pr;        // values.
-    IND_TYPE *ir; // row indexes.
+    IND_TYPE *ir; // col indices.
     IND_TYPE *jc; // row repartition on pr and ir.
     size_type nc, nr;
 
