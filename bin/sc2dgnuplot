@@ -1,7 +1,13 @@
 #!/usr/bin/perl
 
+$tmp1 = `createmp dr2dgnplot_tmp`;
+$tmp2 = `createmp dr2dgnplot_tmp`;
+
+sub catch { `rm -f $tmp1 $tmp2`; }
+$SIG{INT} = 'catch';
+
 open(DATAF, $ARGV[0]) or die "Open file impossible : $!\n";
-open(TMPF, ">_tmp") or die "Open file impossible : $!\n";
+open(TMPF, ">$tmp1") or die "Open file impossible : $!\n";
 
 $li = <DATAF>;$li = <DATAF>;$li = <DATAF>;$li = <DATAF>;$li = <DATAF>;
 
@@ -41,13 +47,13 @@ while ($li = <DATAF>)
 close(DATAF);
 close(TMPF);
 
-open(GNF, ">_tmp2") or die "Open file impossible : $!\n";
+open(GNF, ">$tmp2") or die "Open file impossible : $!\n";
 print GNF "set data style line \n";
-print GNF "splot \'_tmp\' title \'solution\'\n";
+print GNF "splot \'$tm1p\' title \'solution\'\n";
 print GNF "pause -1\n";
 print GNF "set term postscript\n";
 print GNF "set output \'$ARGV[0].ps\'\n";
 print GNF "replot\n";
 close(GNF);
-`gnuplot _tmp2`;
-`rm -f _tmp _tmp2`;
+`gnuplot $tmp2`;
+`rm -f $tmp1 $tmp2`;

@@ -1,22 +1,11 @@
 #!/usr/bin/perl
+# Create a temporary file with a unique name.
+# if the environement variable TMPDIR exists it creates the temporary inside.
 
-$prefix = $ARGV[0];
-if ($prefix eq "") { $prefix = "_temporary"; }
+if ($ARGV[0] eq "") { $prefix = "_tempfile"; } else { $prefix = $ARGV[0]; }
 $count = int(1000 * rand);
-
-$tmpdir = $ENV{TMPDIR};
-if ($tmpdir eq "") { $tmpdir = "/tmp"; }
-$tmpdir =~ s/$\///;
+if ($ENV{TMPDIR} eq "") { $tmpdir = "/tmp"; } else { $tmpdir = $ENV{TMPDIR} }
 if (substr($tmpdir, length($tmpdir)-1, 1) eq "/")
   { $tmpdir = substr($tmpdir, 0, length($tmpdir)-1); }
-
-$name = $tmpdir."/".$prefix."\_$count";
-$i = 1;
-while (-f $name)
-{
-  $name = $tmpdir."/".$prefix."\_$count";
-  ++$count;
-}
-
-`touch $name`;
-print $name;
+do { $name = $tmpdir."/".$prefix."\_$count"; ++$count; } while (-f $name);
+`touch $name`; print $name;
