@@ -1,0 +1,51 @@
+#!/usr/bin/perl
+ 
+
+#######################################
+#       System identification         #
+#######################################
+
+$rootlib = `pwd`; chomp($rootlib);
+$machine = `uname -m`; chomp($machine);
+$systeme = `uname -s`; chomp($systeme); $systeme .= `uname -r`;chomp($systeme);
+$getfem_lib = "libgetfem.a";
+
+
+#######################################
+# Environnement variables for shell   #
+#######################################
+
+$ENV{PATH} = "/bin:/usr/dt/bin:.:/usr/ucb:/sbin:/usr/bin:/usr/sbin:/etc:/usr/etc:/usr/lib:/usr/ccs/bin:/usr/local/bin:/usr/local/opt/bin:/usr/bin/X11:/usr/local/opt/sbin:/usr/bin:/usr/local/bin:/usr/bin/X11:/usr/dt/bin:/usr/local/texmf/bin/alpha_osf1:opt/bin:/opt/matlab/bin:/usr/local/matlab/bin";
+$ENV{SHELL} = "/usr/bin/tcsh";
+if ($systeme =~ /Linux/)
+{
+  $ENV{SYSDEX} = "Linux";
+}
+else
+{
+  $ENV{SYSDEX} = "OSF1";
+  $ENV{TEXMF} = "/usr/local/texmf";
+  $ENV{TEXMFUPD} = "/usr/local";
+  $ENV{LU_TEXENV} = "=1";
+  $ENV{MTPK_DESTROOT} = "/usr/local/texmf/fonts";
+  $ENV{MTP_MAPFILE} = "/usr/local/texmf/dvips/psfonts.map";
+  $ENV{TEXMFCNF} = "/usr/local/texmf/web2c";
+}
+
+
+`mkdir -p temp`;
+
+print "loading getfem++ from cvs\n\n";
+
+print `cd temp; cvs checkout getfem++/bin`; print "\n\n";
+print `cd temp; cvs checkout getfem++/dal`; print "\n\n";
+print `cd temp; cvs checkout getfem++/bgeot`; print "\n\n";
+print `cd temp; cvs checkout getfem++/linkmsg`; print "\n\n";
+print `cd temp; cvs checkout getfem++/ftool`; print "\n\n";
+print `cd temp; cvs checkout getfem++/getfemlib`; print "\n\n";
+print `cd temp; cvs checkout getfem++/doc`; print "\n\n";
+
+`rm -f getfem++-1.0.tar.gz`;
+`mv temp/getfem++ temp/getfem++-1.0`;
+`cd temp; tar cvf ../getfem++-1.0.tar getfem++-1.0`;
+`gzip getfem++-1.0.tar`;
