@@ -41,7 +41,7 @@ print "Doing archive for the date : $mois/$mjour/$annee\n";
 
 
 print "loading getfem++ from cvs\n\n";
-
+$annee += 1;
 print `cd temp; cvs export -D $mois/$mjour/$annee getfem++`; print "\n\n";
 `rm -fr temp/getfem++/misc`;
 `rm -fr temp/getfem++/gensolv`;
