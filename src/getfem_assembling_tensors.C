@@ -1149,9 +1149,9 @@ namespace getfem {
     for (dal::bit_vector::const_iterator it = candidates.begin(); 
 	 it != candidates.end(); ++it) {
       if (*it) {
-	if (m.convec_index().is_in(it.index()) {
+	if (m.convex_index().is_in(it.index())) {
 	  for (size_type i=0; i < mftab.size(); ++i)
-	    if (!mftab[i].convex_index().is_in(it.index()))
+	    if (!mftab[i]->convex_index().is_in(it.index()))
 	      ASM_THROW_ERROR("the convex " << it.index() << " has no FEM for the #" << i+1 << " mesh_fem");	  
 	  cvorder.push_back(it.index());
 	} else {
