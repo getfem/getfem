@@ -36,7 +36,7 @@ test_link_fem_SOURCES = test_link_fem.C
 test_tree_sorted_SOURCES = test_tree_sorted.C
 test_mat_elem_SOURCES = test_mat_elem.C
 
-INCLUDES = -I$(top_srcdir)/src
+INCLUDES = -I$(top_srcdir)/src -I../src
 LDADD    = ../src/.libs/libgetfem.a -lm @SUPLDFLAGS@
 AM_CXXFLAGS = @APPSCXXFLAGS@
 
