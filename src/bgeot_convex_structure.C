@@ -276,6 +276,7 @@ namespace bgeot
     cv_pr_structure_(const cv_pr_light_ &ls)
     {
       Nc = ls.cv1->dim() + ls.cv2->dim();
+      prod_a = ls.cv1; prod_b = ls.cv2;
       nbpt = ls.cv1->nb_points() * ls.cv2->nb_points();
       nbf = ls.cv1->nb_faces() + ls.cv2->nb_faces();
       if (ls.cv1->basic_structure() != ls.cv1

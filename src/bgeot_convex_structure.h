@@ -72,7 +72,7 @@ namespace bgeot
       std::vector<convex_ind_ct> faces;
       convex_ind_ct              dir_points_;
       pconvex_structure basic_pcvs;
-
+      pconvex_structure prod_a, prod_b; /* only filled for product convex structures */
     public :
 
       /// Number of faces.
@@ -111,7 +111,12 @@ namespace bgeot
 
       void init_for_adaptative(pconvex_structure cvs);
       void add_point_adaptative(short_type i, short_type f);
-
+      bool is_product(pconvex_structure *pprod1=0, pconvex_structure *pprod2=0) const {
+	if (pprod1) *pprod1 = prod_a;
+	if (pprod2) *pprod2 = prod_b;
+	return prod_a ? true : false;
+      }
+    convex_structure() { prod_a = prod_b = 0; }
   };
 
   /** @name functions on convex structures
