@@ -1,0 +1,18 @@
+#!/bin/sh
+
+if test $# -lt 1; then
+ echo usage : test_dist getfem++-1.4 machine login
+fi
+
+
+if test $# -lt 3; then 
+  u = $(whoami)
+else
+  u = $3
+fi
+
+echo you are $u
+
+
+scp $1.tar.gz $u@$2:
+ssh $u@$2 "/bin/sh -c 'rm -rf temp_dist && mkdir -f temp_dist && cd temp_dist && zcat ../$1.tar.gz | tar xvf - && cd $1 && (which gmake; if test \$\? -ne 0; then make distcheck; else gmake distcheck)'"
