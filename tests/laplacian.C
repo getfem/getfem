@@ -30,6 +30,7 @@
 #include <getfem_regular_meshes.h>
 #include <gmm.h>
 
+
 /* try to enable the SIGFPE if something evaluates to a Not-a-number
  * of infinity during computations
  */

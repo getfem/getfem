@@ -396,6 +396,19 @@ namespace getfem
     assem.volumic_assembly();
   }
 
+  template<typename MAT, typename VECT>
+    void asm_stokes_B(MAT &B, 
+		      const mesh_fem &mf_u,
+		      const mesh_fem &mf_p) {
+    if (mf_d.get_qdim() != 1)
+      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    generic_assembly assem("M$1(#1,#2)+=comp(vGrad(#1).Base(#2))(:,i,i,:);");
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_p);
+    assem.push_mat(B);
+    assem.volumic_assembly();
+  }
+
   /**
      assembly of $\int_\Omega a(x)\nabla u.\nabla v$ , where $a(x)$ is scalar.
   */

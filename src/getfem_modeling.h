@@ -808,6 +808,94 @@ namespace getfem {
 
 
   /* ******************************************************************** */
+  /*		Mixed linear incompressible condition brick.              */
+  /* ******************************************************************** */
+  // TODO : Version with local matrices on the boundary
+
+  template<typename MODEL_STATE = standard_model_state>
+  class mdbrick_linear_incomp : public mdbrick_abstract<MODEL_STATE>  {
+    
+    typedef typename MODEL_STATE::vector_type VECTOR;
+    typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
+    typedef typename MODEL_STATE::value_type value_type;
+    typedef typename gmm::number_traits<value_type>::magnitude_type R;
+
+    mdbrick_abstract<MODEL_STATE> &sub_problem;
+    mesh_fem &mf_p;
+    T_MATRIX B;
+
+    void compute_B() {
+      mesh_fem &mf_u = sub_problem.main_mesh_fem();
+      size_type Q = mf_u.get_qdim();
+      size_type nd = mf_u.nb_dof(), ndd = mf_p.nb_dof(), ndv = mf_data.nb_dof();
+      gmm::resize(B, ndd, nd);
+      asm_stokes_B(B, mf_u, mf_p);
+      this->computed();
+    }
+
+  public :
+    
+    virtual bool is_linear(void)   { return sub_problem.is_linear(); }
+    virtual bool is_coercive(void) { return false; }
+    virtual void mixed_variables(dal::bit_vector &b) {
+      sub_problem.mixed_variables(b);
+      if (this->context_changed()) {
+	this->force_recompute();
+	compute_B();
+      }
+      b.add(sub_problem.nb_dof(), mf_p.nb_dof());
+    }
+    virtual size_type nb_dof(void) {
+      return sub_problem.nb_dof() + mf_p.nb_dof();
+    }
+    
+    virtual size_type nb_constraints(void) {
+      return sub_problem.nb_constraints();
+    }
+    virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
+				    size_type j0 = 0, bool modified = false) {
+      sub_problem.compute_tangent_matrix(MS, i0, j0, modified);
+      react(MS, i0, modified);
+      if (this->to_be_computed()) compute_B();
+      
+      if (this->to_be_transferred()) {
+	gmm::sub_interval SUBI(i0+sub_problem.nb_dof(), mf_p.nb_dof());
+	gmm::sub_interval SUBJ(i0, sub_problem.nb_dof());
+	gmm::copy(B, gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBJ));
+	gmm::copy(gmm::transposed(B),
+		  gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBI));
+	gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBI));
+	this->transferred();
+      }
+    }
+    virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
+				size_type j0 = 0) {
+      sub_problem.compute_residu(MS, i0, j0);
+      react(MS, i0, false);
+      if (this->to_be_computed()) compute_B();
+     
+      gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), dof_on_bound.card());
+      gmm::sub_interval SUBJ(i0, sub_problem.nb_dof());
+      gmm::mult(B, gmm::sub_vector(MS.state(), SUBJ),
+		gmm::sub_vector(MS.residu(), SUBI));
+      gmm::mult_add(gmm::transposed(B), gmm::sub_vector(MS.state(), SUBI),
+		    gmm::sub_vector(MS.residu(), SUBJ));
+    }
+    virtual mesh_fem &main_mesh_fem(void)
+    { return sub_problem.main_mesh_fem(); }
+
+    // Constructor which does not define the rhs
+    mdbrick_linear_incomp(mdbrick_abstract<MODEL_STATE> &problem,
+		      mesh_fem &mf_p_)
+      : sub_problem(problem), mf_p(mf_p_) {
+      this->add_dependency(mf_p);
+      this->add_dependency(sub_problem.main_mesh_fem());
+      compute_B();
+    }
+  };
+
+
+  /* ******************************************************************** */
   /*		Dirichlet condition bricks.                               */
   /* ******************************************************************** */
   // TODO : Version with local matrices on the boundary
@@ -931,6 +1019,7 @@ namespace getfem {
 	  gmm::copy(G, gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBJ));
 	  gmm::copy(gmm::transposed(G),
 		    gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBI));
+	  gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBI));
 	}
 	else {
 	  size_type nd = sub_problem.main_mesh_fem().nb_dof();
