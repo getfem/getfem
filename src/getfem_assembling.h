@@ -139,7 +139,7 @@ namespace getfem
   */
   template<class VECT1, class VECT2>
     void asm_source_term(VECT1 &B, const mesh_fem &mf,
-			 const mesh_fem &mfdata, VECT2 &F, size_type boundary=size_type(-1))
+			 const mesh_fem &mfdata, const VECT2 &F, size_type boundary=size_type(-1))
   {
     generic_assembly assem;
     if (mf.get_qdim() == 1)
@@ -202,10 +202,11 @@ namespace getfem
   */
   template<class MAT, class VECT>
     void asm_stiffness_matrix_for_linear_elasticity(MAT &RM,
-						   mesh_fem &mf, 
-						   mesh_fem &mfdata, 
-						   VECT &LAMBDA, VECT &MU)
+						   const mesh_fem &mf, 
+						   const mesh_fem &mfdata, 
+						   const VECT &LAMBDA, const VECT &MU)
   {
+    if (mf.get_qdim() != mf.linked_mesh().dim()) DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
     /* e = strain tensor,
        M = 2*mu*e(u):e(v) + lambda*tr(e(u))*tr(e(v))
     */
@@ -227,9 +228,9 @@ namespace getfem
   */
   template<class MAT, class VECT>
     void asm_stiffness_matrix_for_linear_elasticity_Hooke(MAT &RM,
-							 mesh_fem &mf, 
-							 mesh_fem &mfdata, 
-							 VECT &H)
+							 const mesh_fem &mf, 
+							 const mesh_fem &mfdata, 
+							 const VECT &H)
   {
     /* e = strain tensor,
        M = a_{i,j,k,l}e_{i,j}(u)e_{k,l}(v)
@@ -253,7 +254,7 @@ namespace getfem
     void asm_stokes(MAT &K, MAT &B, 
 		    const mesh_fem &mf_u,
 		    const mesh_fem &mf_p,
-		    const mesh_fem &mf_d, VECT &viscos)
+		    const mesh_fem &mf_d, const VECT &viscos)
   {
     generic_assembly assem("visc=data$1(#3); "
 			   "t=comp(vGrad(#1).vGrad(#1).Base(#3));"
@@ -274,7 +275,7 @@ namespace getfem
   */
   template<class MAT, class VECT>
     void asm_stiffness_matrix_for_laplacian(MAT &M, const mesh_fem &mf,
-					   const mesh_fem &mfdata, VECT &A)
+					   const mesh_fem &mfdata, const VECT &A)
   {
     generic_assembly assem("a=data$1(#2); M$1(#1,#1)+=sym(comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j))");
     //generic_assembly assem("a=data$1(#2); M$1(#1,#1)+=comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j)");
@@ -291,7 +292,7 @@ namespace getfem
   template<class MAT, class VECT>
     void asm_stiffness_matrix_for_scalar_elliptic(MAT &M, const mesh_fem &mf,
 						  const mesh_fem &mfdata,
-						  VECT &A)
+						  const VECT &A)
   {
     generic_assembly assem("a=data$1(mdim(#1),mdim(#1),#2); M$1(#1,#1)+=comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,j,k).a(j,i,k)");
     assem.push_mf(mf);
@@ -677,10 +678,8 @@ namespace getfem
 		with             H_j*phi_i = R_j     
 	      */
 	      if (tdof_u == tdof_rh &&
-		  bgeot::vect_dist2(pf_u->node_convex().points()[ind_u], 
-				    pf_rh->node_convex().points()[ind_rh]) < 1.0E-7) {
-		// to be optimized (square root ..!)
-
+		  bgeot::vect_dist2_sqr(pf_u->node_convex().points()[ind_u], 
+					pf_rh->node_convex().points()[ind_rh]) < 1.0E-14) {
 		/* the dof might be "duplicated" */
 		for (size_type q = 0; q < Q; ++q) {
 		  size_type dof_u = mf_u.ind_dof_of_element(cv)[ind_u*Q + q];
