@@ -167,6 +167,9 @@ namespace bgeot {
     small_vector() : id(0) {}
     small_vector(size_type n) : id(allocate(n)) {}
     small_vector(const small_vector<T>& v) : static_block_allocator(), id(allocator().inc_ref(v.id)) {}
+    explicit small_vector(const std::vector<T>& v) : id(allocate(v.size())) { 
+      std::copy(v.begin(),v.end(),begin());
+    }
     ~small_vector() { allocator().dec_ref(id); }
 
     small_vector(T v1, T v2) : id(allocate(2)) 
