@@ -31,6 +31,9 @@ while ($li = <DATAF>)
     if ($c == 3)  { # P1
       print TMPF "$cov[0]\n$cov[1]\n$cov[2]\n$cov[0]\n\n";
     }
+    elsif ($c == 4) {  # Q1
+      print TMPF "$cov[0]\n$cov[1]\n$cov[3]\n$cov[2]\n$cov[0]\n\n";
+    }
     elsif ($c == 6) {  # P2
       print TMPF "$cov[0]\n$cov[1]\n$cov[2]\n$cov[4]\n$cov[5]\n";
       print TMPF "$cov[3]\n$cov[0]\n\n";
