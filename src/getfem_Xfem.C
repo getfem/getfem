@@ -84,7 +84,7 @@ namespace getfem
 			   bgeot::pgeometric_trans pgt,
 			   const base_vector &coeff, base_node &val) const {
     base_node val2(val.size());
-    cerr << "coucou Xfem::interpolation(x=" << x << ", G=" << G << endl;
+    // cerr << "coucou Xfem::interpolation(x=" << x << ", G=" << G << endl;
     base_node xreal = pgt->transform(x, G);
     size_type nbb = pfi->nb_base();
     pfi->interpolation(x, G, pgt, coeff, val);
@@ -245,8 +245,8 @@ namespace getfem
       DAL_THROW(to_be_done_error,
 		"Sorry, Xfem for non tau-equivalent elements to be done.");
     cvr = pfi->ref_convex();
-    real_element_defined = is_equiv = true; 
-    is_polycomp = is_pol = is_lag = false;
+    real_element_defined = true;
+    is_equiv = is_polycomp = is_pol = is_lag = false;
     es_degree = 5;
     ntarget_dim = pfi->target_dim();
   }
