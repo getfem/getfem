@@ -593,7 +593,7 @@ namespace getfem {
 	push_back_mfcomp_dimensions(cv,mfcomp[i], d, rng, tref); 
 	assert(tref.ndim() == rng.size() && d == rng.size());
 	if (mfcomp[i].reduction.size() == 0) 
-	  mfcomp[i].reduction.insert(0, tref.ndim(), ' ');
+	  mfcomp[i].reduction.insert(size_type(0), tref.ndim(), ' ');
 	if (mfcomp[i].op != mf_comp::DATA) /* should already have the correct base */
           tref.set_base(icb.tensor_bases[i]);
         tref.update_idx2mask();

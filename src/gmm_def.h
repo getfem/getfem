@@ -628,6 +628,35 @@ namespace gmm {
   };
 
   /* ********************************************************************* */
+  /*  Definition & Comparison of origins.                                  */
+  /* ********************************************************************* */
+
+  template <typename L> 
+  typename select_return<const typename linalg_traits<L>::origin_type *,
+			 typename linalg_traits<L>::origin_type *,
+			 L *>::return_type
+  linalg_origin(L &l)
+  { return linalg_traits<L>::origin(linalg_cast(l)); }
+
+  template <typename L> 
+  typename select_return<const typename linalg_traits<L>::origin_type *,
+			 typename linalg_traits<L>::origin_type *,
+			 const L *>::return_type
+  linalg_origin(const L &l)
+  { return linalg_traits<L>::origin(linalg_cast(l)); }
+
+  template <typename PT1, typename PT2>
+  bool same_porigin(PT1, PT2) { return false; }
+
+  template <typename PT>
+  bool same_porigin(PT pt1, PT pt2) { return (pt1 == pt2); }
+
+  template <typename L1, typename L2>
+  bool same_origin(const L1 &l1, const L2 &l2)
+  { return same_porigin(linalg_origin(l1), linalg_origin(l2)); }
+
+
+  /* ********************************************************************* */
   /* Set to begin end set to end for iterators on non-const sparse vectors.*/
   /* ********************************************************************* */
 
@@ -684,35 +713,6 @@ namespace gmm {
     if (is_sparse(*v))
       DAL_THROW(internal_error, "internal_error");
   }
-
-
-  /* ********************************************************************* */
-  /*  Definition & Comparison of origins.                                  */
-  /* ********************************************************************* */
-
-  template <typename L> 
-  typename select_return<const typename linalg_traits<L>::origin_type *,
-			 typename linalg_traits<L>::origin_type *,
-			 L *>::return_type
-  linalg_origin(L &l)
-  { return linalg_traits<L>::origin(linalg_cast(l)); }
-
-  template <typename L> 
-  typename select_return<const typename linalg_traits<L>::origin_type *,
-			 typename linalg_traits<L>::origin_type *,
-			 const L *>::return_type
-  linalg_origin(const L &l)
-  { return linalg_traits<L>::origin(linalg_cast(l)); }
-
-  template <typename PT1, typename PT2>
-  bool same_porigin(PT1, PT2) { return false; }
-
-  template <typename PT>
-  bool same_porigin(PT pt1, PT pt2) { return (pt1 == pt2); }
-
-  template <typename L1, typename L2>
-  bool same_origin(const L1 &l1, const L2 &l2)
-  { return same_porigin(linalg_origin(l1), linalg_origin(l2)); }
 
   /* ******************************************************************** */
   /*		General index for certain algorithms.         		  */
