@@ -47,6 +47,7 @@
 
 #include <gmm_precond_diagonal.h>
 #include <gmm_precond_cholesky.h>
+#include <gmm_precond_mr_approx_inverse.h>
 
 
 #endif //  __GMM_SOLVERS_H

@@ -531,9 +531,9 @@ namespace gmm {
   /* ******************************************************************** */
   
    template <class M>
-   typename linalg_traits<V>::value_type
+   typename linalg_traits<M>::value_type
    mat_trace(const M &m) {
-     typename linalg_traits<V>::value_type res(0);
+     typename linalg_traits<M>::value_type res(0);
      for (size_type i = 0; i < std::max(mat_nrows(m), mat_ncols(m)); ++i)
        res += m(i,i);
      return res;
@@ -559,10 +559,10 @@ namespace gmm {
    typename number_traits<typename linalg_traits<M>::value_type>
    ::magnitude_type
    mat_norm2(const M &m, row_major) {
-    typename number_traits<typename linalg_traits<V>::value_type>
+    typename number_traits<typename linalg_traits<M>::value_type>
       ::magnitude_type res(0);
     for (size_type i = 0; i < mat_nrows(m); ++i) {
-      typedef typename linalg_traits<Matrix>::const_sub_row_type row_type;
+      typedef typename linalg_traits<M>::const_sub_row_type row_type;
       row_type row = mat_const_row(m, i);
       typename linalg_traits<row_type>::const_iterator
 	it = vect_const_begin(row), ite = vect_const_end(row);
@@ -575,10 +575,10 @@ namespace gmm {
    typename number_traits<typename linalg_traits<M>::value_type>
    ::magnitude_type
    mat_norm2(const M &m, col_major) {
-    typename number_traits<typename linalg_traits<V>::value_type>
+    typename number_traits<typename linalg_traits<M>::value_type>
       ::magnitude_type res(0);
     for (size_type i = 0; i < mat_ncols(m); ++i) {
-      typedef typename linalg_traits<Matrix>::const_sub_col_type col_type;
+      typedef typename linalg_traits<M>::const_sub_col_type col_type;
       col_type col = mat_const_col(m, i);
       typename linalg_traits<col_type>::const_iterator
 	it = vect_const_begin(col), ite = vect_const_end(col);
@@ -591,9 +591,9 @@ namespace gmm {
    typename number_traits<typename linalg_traits<M>::value_type>
    ::magnitude_type
    mat_norm2(const M &m) {
-    return mat_norm2(M,
+    return mat_norm2(m,
 		     typename principal_orientation_type<typename
-		     linalg_traits<Matrix>::sub_orientation>::potype());
+		     linalg_traits<M>::sub_orientation>::potype());
   }
 
   /* ******************************************************************** */

@@ -96,26 +96,23 @@ namespace gmm {
 							 value_type threshold)
     : M(mat_nrows(A), mat_ncols(A)) {
 
-    size_type nrows = mat_nrows(A), ncols = mat_ncols(A), i;
-    VVector m(ncols), r(ncols), ei(ncols), Ar(ncols); 
+    VVector m(mat_ncols(A)),r(mat_ncols(A)),ei(mat_ncols(A)),Ar(mat_ncols(A)); 
     value_type alpha = gmm::mat_trace(A) / dal::sqr(gmm::mat_norm2(A));
     
-    for (i = 0; i < nrows; ++i) {
+    for (size_type i = 0; i < mat_nrows(A); ++i) {
       gmm::clear(m); gmm::clear(ei); 
       m[i] = alpha;
       ei[i] = value_type(1);
       
-      for (size_type iter_i = 0; iter_i < iter_n; ++iter_i) {
-	gmm::mult(A, mtl::scaled(m, -1.0), r);
+      for (size_type j = 0; j < nb_it; ++j) {
+	gmm::mult(A, gmm::scaled(m, -1.0), r);
 	gmm::add(ei, r);
 	gmm::mult(A, r, Ar);
-	value_type beta = vect_sp(r, Ar) / vect_sp(Ar, Ar);
-	gmm::add(gmm::scaled(r, beta), m);
+	gmm::add(gmm::scaled(r, vect_sp(r, Ar) / vect_sp(Ar, Ar)), m);
 	gmm::clean(m, threshold * gmm::vect_norm2(m));
       }
       gmm::copy(m, M.col(i));
     }
-    
   }
 }
 
