@@ -40,7 +40,10 @@ namespace gmm {
 
   struct basic_index : public std::vector<size_t> {
     
-    mutable int nb_ref;
+    mutable size_type nb_ref;
+    // size_type key1; faire la somme des composantes
+    // const basic_index *rind; rindex s'il existe
+    
 
     size_t operator[](size_type i) const {
       return (i < size()) ? std::vector<size_t>::operator[](i) : size_type(-1);

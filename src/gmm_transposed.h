@@ -99,7 +99,8 @@ namespace gmm {
     { return linalg_traits<M>::row(it); }
     static col_iterator col_begin(this_type &m) { return m._begin; }
     static col_iterator col_end(this_type &m) { return m._end; }
-    static const_col_iterator col_begin(const this_type &m) { return m._begin; }
+    static const_col_iterator col_begin(const this_type &m)
+    { return m._begin; }
     static const_col_iterator col_end(const this_type &m) { return m._end; }
     static const void* origin(const this_type &v) { return v.origin; }
     static void do_clear(this_type &v);
