@@ -2,7 +2,6 @@
 
 
 $rootlib = `pwd`; chomp($rootlib);
-
 $machine = `uname -m`; chomp($machine);
 $systeme = `uname -s`; chomp($systeme); $systeme .= `uname -r`;chomp($systeme);
 $getfem_lib = "libgetfem.a";
@@ -123,8 +122,12 @@ else
 }
 
 # faire les liens 'lequels ?)
-
+ 
 print "\n\n Making links.\n";
 print `cd ..; mkdir -p include; cd include; ln -sf ../getfem++/include/*.h .`;
 print `cd ..; mkdir -p lib; cd lib; ln -sf ../getfem++/sources/*.a .`;
+print `cd ..; mkdir -p doc; cd doc; ln -sf ../getfem++/doc/basic_doc.ps .`;
+print `cd ../doc; ln -sf ../getfem++/doc/guide_intervention/guide_intervention.ps .`;
+print `cd ../doc; ln -sf ../getfem++/doc/doc++-doc.ps .`;
+print `cd ../doc; ln -sf ../getfem++/doc/cvs-doc.ps .`;
 
