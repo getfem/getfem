@@ -116,7 +116,7 @@ namespace gmm
     { return converged(gmm::vect_norm2(v)); }
 
     bool finished(double nr)
-    { return (nit > maxiter || converged(nr)); }
+    { return (nit >= maxiter || converged(nr)); }
     template <class VECT> bool finished(const VECT &v)
     { return finished(gmm::vect_norm2(v)); }
 

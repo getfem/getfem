@@ -63,23 +63,16 @@ namespace gmm {
 
   template <class Vec>
   class modified_gram_schmidt {
+  protected:
+    std::vector<Vec> V;
+
   public:
 
-    template <class Size>
-    modified_gram_schmidt(int restart, const Size& s) 
-      : V(restart+1) { do_initialize(s); }
-    
+    modified_gram_schmidt(int restart, size_t s) 
+      : V(restart+1, Vec(s)) { }
     const Vec& operator[](size_t i) const { return V[i]; }
-
     Vec& operator[](size_t i) { return V[i]; }
     
-  protected:
-  
-    template <class Size>
-    void do_initialize(const Size& s)
-    { std::fill(V.begin(), V.end(), Vec(s)); }
-    
-    std::vector<Vec> V;
   };
 
   template <class Vec, class VecHi, class Size>

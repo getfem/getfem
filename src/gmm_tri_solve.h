@@ -65,7 +65,7 @@ namespace gmm {
   inline void upper_tri_solve__(const TriMatrix& T, VecX& x,
 				col_major, abstract_sparse) {
     typename linalg_traits<TriMatrix>::value_type x_j;
-    for (int j = int(mat_ncols(T)) - 1; j > 0; --j) {
+    for (int j = int(mat_ncols(T)) - 1; j >= 0; --j) {
       typedef typename linalg_traits<TriMatrix>::const_sub_col_type COL;
       COL c = mat_const_col(T, j);
       typename linalg_traits<COL>::const_iterator 
@@ -80,7 +80,7 @@ namespace gmm {
   inline void upper_tri_solve__(const TriMatrix& T, VecX& x,
 				col_major, abstract_plain) {
     typename linalg_traits<TriMatrix>::value_type x_j;
-    for (int j = int(mat_ncols(T)) - 1; j > 0; --j) {
+    for (int j = int(mat_ncols(T)) - 1; j >= 0; --j) {
       typedef typename linalg_traits<TriMatrix>::const_sub_col_type COL;
       COL c = mat_const_col(T, j);
       typename linalg_traits<COL>::const_iterator
@@ -127,14 +127,14 @@ namespace gmm {
 				row_major, abstract_sparse) {
     typename linalg_traits<TriMatrix>::value_type t;
    
-    for (int i = int(mat_nrows(T)) - 1; i > 0; --i) {
+    for (int i = int(mat_nrows(T)) - 1; i >= 0; --i) {
       typedef typename linalg_traits<TriMatrix>::const_sub_row_type ROW;
       ROW c = mat_const_row(T, i);
       typename linalg_traits<ROW>::const_iterator 
 	it = vect_const_begin(c), ite = vect_const_end(c);
 
       for (t = x[i]; it != ite; ++it)
-	if (it.index() != i) t -= (*ite) * x[it.index()];
+	if (it.index() != i) t -= (*it) * x[it.index()];
       x[i] = t / c[i];      
     }    
   }
@@ -144,15 +144,15 @@ namespace gmm {
 				row_major, abstract_plain) {
     typename linalg_traits<TriMatrix>::value_type t;
    
-    for (int i = int(mat_nrows(T)) - 1; i > 0; --i) {
+    for (int i = int(mat_nrows(T)) - 1; i >= 0; --i) {
       typedef typename linalg_traits<TriMatrix>::const_sub_row_type ROW;
       ROW c = mat_const_row(T, i);
       typename linalg_traits<ROW>::const_iterator 
 	it = vect_const_begin(c) + (i + 1), ite = vect_const_end(c);
       typename linalg_traits<VecX>::iterator itx = vect_begin(x) + (i+1);
       
-      for (t = x[i]; it != ite; ++it, itx++) t -= (*ite) * (*itx);
-      x[i] = t / c[i];      
+      for (t = x[i]; it != ite; ++it, ++itx) t -= (*it) * (*itx);
+      x[i] = t / c[i];    
     }    
   }
 
@@ -168,7 +168,7 @@ namespace gmm {
 	it = vect_const_begin(c), ite = vect_const_end(c);
 
       for (t = x[i]; it != ite; ++it)
-	if (it.index() != i) t -= (*ite) * x[it.index()];
+	if (it.index() != i) t -= (*it) * x[it.index()];
       x[i] = t / c[i];  
     }    
   }
@@ -185,7 +185,7 @@ namespace gmm {
 	it = vect_const_begin(c), ite = it + i;
       typename linalg_traits<VecX>::iterator itx = vect_begin(x);
 
-      for (t = x[i]; it != ite; ++it, ++itx) t -= (*ite) * (*itx);
+      for (t = x[i]; it != ite; ++it, ++itx) t -= (*it) * (*itx);
       x[i] = t / c[i];  
     }    
   }

@@ -79,12 +79,12 @@ namespace gmm {
     typedef typename linalg_traits<Vector>::value_type T;
     typedef size_t size_type;
     
-    typedef std::vector<T> TmpVec;
+   
     typedef typename temporary_vector<Vector>::vector_type internal_vector;
-    
     internal_vector w(vect_size(x)), r(vect_size(x)), u(vect_size(x));
     
-    typedef typename number_traits<T>::magnitude_type Real;
+    typename number_traits<T>::magnitude_type a, beta;
+    typedef std::vector<typename number_traits<T>::magnitude_type> TmpVec;
     typedef gmm::row_matrix<TmpVec> HMat;
 
     HMat H(restart+1, restart);
@@ -98,19 +98,19 @@ namespace gmm {
     mult(A, scaled(x, -1.0), b, w);
     
     mult(M, w, r);
-    Real beta = dal::abs(gmm::vect_norm2(r));
+    beta = dal::abs(gmm::vect_norm2(r));
+
+    iteration inner = outer;
+    inner.reduce_noisy();
+    inner.set_maxiter(restart);
     
     while (! outer.finished(beta)) {
       
-      gmm::copy(gmm::scaled(r, 1./beta), KS[0]);
+      gmm::copy(gmm::scaled(r, 1.0/beta), KS[0]);
       gmm::clear(s);
       s[0] = beta;
       
-      size_type i = 0;
-      iteration inner = outer;
-      inner.reduce_noisy();
-      inner.set_maxiter(restart);
-      inner.init();
+      size_type i = 0; inner.init();
       
       do {
 	size_type k;
@@ -118,10 +118,9 @@ namespace gmm {
 	gmm::mult(M, u, KS[i+1]);
 	
 	orthogonalize(KS, mat_row(H, i), i);
-	
-	Real H_ip1_i = gmm::vect_norm2(KS[i+1]);
-	H(i+1, i) = H_ip1_i;
-	gmm::scale(KS[i+1], 1./H_ip1_i);
+
+	H(i+1, i) = a = gmm::vect_norm2(KS[i+1]);
+	gmm::scale(KS[i+1], 1.0 / a);
 	
 	for (k = 0; k < i; k++)
  	  rotations[k].scalar_apply(H(k,i), H(k+1,i));
@@ -131,14 +130,11 @@ namespace gmm {
 	rotations[i].scalar_apply(s[i], s[i+1]);
 	
 	++inner, ++outer, ++i;
-	
       } while (! inner.finished(dal::abs(s[i]))); 
       
-      // i ou i+1 ?
-      gmm::upper_tri_solve(gmm::sub_matrix(H, gmm::sub_interval(0, i+1),
-					   gmm::sub_interval(0, i+1)), s);
-
-      gmm::combine(KS, s, x, i);
+      gmm::upper_tri_solve(gmm::sub_matrix(H, gmm::sub_interval(0, restart),
+					   gmm::sub_interval(0, restart)), s);
+      gmm::combine(KS, s, x, restart);
       
       gmm::mult(A, gmm::scaled(x, -1.0), b, w);
       gmm::mult(M, w, r);
