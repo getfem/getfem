@@ -7,14 +7,15 @@ print "loading files from cvs\n";
 
 print "Making links for includes files\n";
 `mkdir -p include`;
-`ln -sf dal/*.h include/`; print "\n\n";
+`cd include; ln -sf ../dal/*.h .`; print "\n\n";
+
+print "Making links for C sources \n";
+`mkdir -p sources`;
+`cd sources; ln -sf ../dal/*.C .`; print "\n\n";
 
 print "Making links for test progams\n";
 `mkdir -p programs`;
-`ln -sf dal/test/*.C programs/`; print "\n\n";
+`cd programs; ln -sf ../dal/test/*.C .`; print "\n\n";
 
-print "Building Makefile\n";
-
-
-
+`bin/start_modif`;
 

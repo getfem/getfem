@@ -6,6 +6,7 @@ $nb_file = 0;
 while($fis)
 {
   ($fi, $fis) = split('\s', $fis, 2);
+  $fi =~ s/\@//g;
   $tabfil[$nb_file] = $fi;
   open(FICHIER, $ARGV[0].'/'.$fi) or die "Open file impossible : $!\n";
   $nb_dep = 0;
@@ -61,7 +62,7 @@ foreach $k (0..$maxprior)
       print $f1, " =";
       foreach $j (0..$tabnbdep[$i]-1)
       { $f1 = $tabdep[$i][$j]; $f1 =~ s/\./_/g; print " \$(", $f1, ")"; }
-      print $tabfil[$i], "\n";
+      print " ", $tabfil[$i], "\n";
     }
   }
 }
