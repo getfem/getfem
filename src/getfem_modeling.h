@@ -549,66 +549,92 @@ namespace getfem {
     typedef typename MODEL_STATE::value_type value_type;
     typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
     typedef typename MODEL_STATE::constraints_matrix_type C_MATRIX;
+    typedef typename gmm::number_traits<value_type>::magnitude_type mtype;
+
+    // TODO : take iter into account for the Newton. compute a consistent 
+    //        max residu.
+    //        detect the presence of multipliers before using a preconditioner
 
     size_type ndof = problem.nb_dof(), nc = problem.nb_constraints();
-    
+    bool is_linear = problem.is_linear();
+    mtype alpha, alpha_min=mtype(1)/mtype(16), alpha_mult=mtype(3)/mtype(4);
+    mtype alpha_max_ratio(2);
+
     MS.adapt_sizes(problem);
-    gmm::fill_random(MS.state());
-
-    problem.compute_tangent_matrix(MS);
+    if (!is_linear) gmm::fill_random(MS.state());
     problem.compute_residu(MS);
-    assert(problem.is_linear());
+    mtype act_res = gmm::vect_norm2(MS.residu()), act_res_new(0);
 
-    VECTOR d(ndof);
-
-    if (nc > 0) { // Take the constraints into account if any.
- 
-      gmm::col_matrix< gmm::rsvector<value_type> > NS(ndof, ndof);
-      VECTOR Ud(ndof);
+    while(act_res > iter.get_resmax()) {
       
-      size_type nbcols=getfem::Dirichlet_nullspace(MS.constraints_matrix(),
-						NS, MS.constraints_rhs(), Ud);
-      VECTOR dr(nbcols), f(nbcols);
-      gmm::resize(NS, ndof, nbcols);
-      T_MATRIX SM(nbcols, nbcols);
-      if (nbcols != ndof) {
-	VECTOR RHaux(ndof);
-	gmm::mult(MS.tangent_matrix(), Ud, MS.residu(), RHaux);
-	gmm::mult(gmm::transposed(NS), gmm::scaled(RHaux, value_type(-1)), f);
-	T_MATRIX SMaux(nbcols, ndof);
-	gmm::col_matrix< gmm::rsvector<value_type> >
-	  NST(gmm::mat_ncols(NS), gmm::mat_nrows(NS));
-	gmm::copy(gmm::transposed(NS), NST);
-	gmm::mult(NST, MS.tangent_matrix(), SMaux);
-	gmm::mult(SMaux, NS, SM);
-      }
-      else gmm::copy(MS.tangent_matrix(), SM);
+      problem.compute_tangent_matrix(MS);
       
-      gmm::clear(dr);
-      if (problem.is_coercive()) {
-	gmm::ildlt_precond<T_MATRIX> P(SM);
-	gmm::cg(SM, dr, f, P, iter);
-      } else {
-	gmm::ilu_precond<T_MATRIX> P(SM);
-	gmm::gmres(SM, dr, f, P, 100, iter);
+      VECTOR d(ndof);
+      
+      if (nc > 0) { // Take the constraints into account if any.
+	
+	gmm::col_matrix< gmm::rsvector<value_type> > NS(ndof, ndof);
+	VECTOR Ud(ndof);
+	
+	size_type nbcols=getfem::Dirichlet_nullspace(MS.constraints_matrix(),
+					        NS, MS.constraints_rhs(), Ud);
+	VECTOR dr(nbcols), f(nbcols);
+	gmm::resize(NS, ndof, nbcols);
+	T_MATRIX SM(nbcols, nbcols);
+	if (nbcols != ndof) {
+	  VECTOR RHaux(ndof);
+	  gmm::mult(MS.tangent_matrix(), Ud, MS.residu(), RHaux);
+	  gmm::mult(gmm::transposed(NS), gmm::scaled(RHaux, value_type(-1)),f);
+	  T_MATRIX SMaux(nbcols, ndof);
+	  gmm::col_matrix< gmm::rsvector<value_type> >
+	    NST(gmm::mat_ncols(NS), gmm::mat_nrows(NS));
+	  gmm::copy(gmm::transposed(NS), NST);
+	  gmm::mult(NST, MS.tangent_matrix(), SMaux);
+	  gmm::mult(SMaux, NS, SM);
+	}
+	else gmm::copy(MS.tangent_matrix(), SM);
+	
+	gmm::clear(dr);
+	if (problem.is_coercive()) {
+	  gmm::ildlt_precond<T_MATRIX> P(SM);
+	  gmm::cg(SM, dr, f, P, iter);
+	} else {
+	  gmm::ilu_precond<T_MATRIX> P(SM);
+	  gmm::gmres(SM, dr, f, P, 100, iter);
+	}
+	gmm::mult(NS, dr, Ud, d);
       }
-      gmm::mult(NS, dr, Ud, d);
-    }
-    else {
-      gmm::clear(d);
-      if (problem.is_coercive()) {
-	gmm::ildlt_precond<T_MATRIX> P(MS.tangent_matrix());
-	gmm::cg(MS.tangent_matrix(), d,
-		gmm::scaled(MS.residu(), value_type(-1)), P, iter);
-      } else {
-	gmm::identity_matrix P;
-	// gmm::ilu_precond<T_MATRIX> P(MS.tangent_matrix());
-	gmm::gmres(MS.tangent_matrix(), d,
-		   gmm::scaled(MS.residu(), value_type(-1)), P, 100, iter);
+      else {
+	gmm::clear(d);
+	if (problem.is_coercive()) {
+	  gmm::ildlt_precond<T_MATRIX> P(MS.tangent_matrix());
+	  gmm::cg(MS.tangent_matrix(), d,
+		  gmm::scaled(MS.residu(), value_type(-1)), P, iter);
+	} else {
+	  gmm::identity_matrix P;
+	  // gmm::ilu_precond<T_MATRIX> P(MS.tangent_matrix());
+	  gmm::gmres(MS.tangent_matrix(), d,
+		     gmm::scaled(MS.residu(), value_type(-1)), P, 100, iter);
+	}
       }
+      
+      if (is_linear) {
+	gmm::add(d, MS.state());
+	return;
+      }
+      else { // line search for the non-linear case.
+	VECTOR stateinit(ndof);
+	gmm::copy(MS.state(), stateinit);
+       
+	for (alpha = mtype(1); alpha >= alpha_min; alpha *= alpha_mult) {
+	  gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
+	  problem.compute_residu(MS);
+	  act_res_new = gmm::vect_norm2(MS.state());
+	  if (act_res_new <= act_res * alpha_max_ratio) break;
+	}
+      }
+      act_res = act_res_new;
     }
-    
-    gmm::add(d, MS.state());
   }
 
 

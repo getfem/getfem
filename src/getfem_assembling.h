@@ -373,6 +373,7 @@ namespace getfem
 	       +2 : build R
 	       +4 : simplify
 	       (for instance version = 7 do everything).
+     TODO : a version without H ?
    */
   template<class MAT, class VECT>
   void asm_dirichlet_constraints(MAT &M, VECT &B, const mesh_fem &mf_u,
