@@ -199,8 +199,8 @@ void plasticity_problem::init(void)
   const char *data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name == 0) {
     if (!pf_u->is_lagrange()) {
-      DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM "
-		<< data_fem_name << ". In that case you need to set "
+      DAL_THROW(dal::failure_error, "You are using a non-lagrange FEM. "
+		<< "In that case you need to set "
 		<< "DATA_FEM_TYPE in the .param file");
     }
     mf_rhs.set_finite_element(mesh.convex_index(), pf_u, ppi);
