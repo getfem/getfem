@@ -413,30 +413,15 @@ namespace bgeot
     bool first = true; size_type n = 0;
     typename polynomial<T>::const_iterator it = P.begin(), ite = P.end();
     power_index mi(P.dim());
-
-    
-    
-    cout << "coiucou\n";
-    cout << "toto = " << double(*it) << endl;
-    cout << "toto2 = " << *it << endl;
-    cout << "coiucou6\n";
-
-
     if (it != ite && *it != T(0))
       { o << *it; first = false; ++it; ++n; ++mi; }
-    cout << "coiucou5\n";
     for ( ; it != ite ; ++it, ++mi ) {
       if (*it != T(0)) {
 	if (!first) { if (*it < T(0)) o << " - "; else o << " + "; }
 	else if (*it < T(0)) o << "-";
-
-	cout << "coiucou4" << endl;
-
 	if (dal::abs(*it)!=T(1)) o << dal::abs(*it);
-	cout << "coiucou3\n";
 	for (short_type j = 0; j < P.dim(); ++j)
 	  if (mi[j] != 0) {
-	    cout << "coiucou2\n";
             if (P.dim() <= 3) o << "xyz"[j];
             else o << "x_" << j; 
 	    if (mi[j] > 1) o << "^" << mi[j];
