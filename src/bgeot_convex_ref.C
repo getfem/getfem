@@ -76,19 +76,22 @@ namespace bgeot
     return (*tab)[n];
   }
 
-
-  const mesh_structure&
-  convex_of_reference::simplexified_convex() const {
+  /* should be called on the basic_convex_ref */
+  const mesh_structure*
+  convex_of_reference::simplexified_convex() const {    
     if (psimplexified_convex == NULL) {
       psimplexified_convex = new mesh_structure();
+      if (this != basic_convex_ref()) 
+	DAL_THROW(to_be_done_error, "always use simplexified_convex on the basic_convex_ref() [this=" << nb_points() << ", basic=" << basic_convex_ref()->nb_points());
       mesh_structure ms;
       std::vector<size_type> ipts(nb_points());
       for (size_type i=0; i < ipts.size(); ++i) ipts[i] = i;
       ms.add_convex(structure(), ipts.begin());
       ms.to_edges();
-      bgeot::simplexify(ms,*psimplexified_convex, points(), std::max(structure()->dim(),dim_type(1)), 1e-12);
+      bgeot::simplexify(ms,*psimplexified_convex, points(), 
+			std::max(structure()->dim(),dim_type(1)), 1e-12);
     }
-    return *psimplexified_convex;
+    return psimplexified_convex;
   }
 
   /* simplexes.                                                            */
@@ -177,7 +180,11 @@ namespace bgeot
       tab = new dal::FONC_TABLE<_K_simplex_ref_light, _K_simplex_of_ref>();
       isinit = true;
     }
-    return tab->add(_K_simplex_ref_light(nc, k));
+    bgeot::convex_of_reference * p1 = tab->add(_K_simplex_ref_light(nc, 1));
+    bgeot::convex_of_reference * pk = tab->add(_K_simplex_ref_light(nc, k));
+    p1->attach_basic_convex_ref(p1);
+    pk->attach_basic_convex_ref(p1);
+    return pk;
   }
 
 
@@ -233,6 +240,8 @@ namespace bgeot
   
   
   _product_ref::_product_ref(const _product_ref_light &ls) { 
+    if (ls.cvr1->structure()->dim() < ls.cvr2->structure()->dim())
+      DAL_WARNING(1, "Illegal convex : swap your operands: dim(cv1)=" << int(ls.cvr1->structure()->dim()) << " < dim(cv2)=" << int(ls.cvr2->structure()->dim()));
     cvr1 = ls.cvr1; cvr2 = ls.cvr2;
     *((convex<base_node> *)(this)) 
       = convex_direct_product(*(ls.cvr1), *(ls.cvr2));
@@ -252,7 +261,11 @@ namespace bgeot
   pconvex_ref convex_ref_product(pconvex_ref a, pconvex_ref b) { 
     static dal::FONC_TABLE<_product_ref_light, _product_ref> *tab = 0;
     if (!tab) tab = new dal::FONC_TABLE<_product_ref_light, _product_ref>();
-    return tab->add(_product_ref_light(a, b));
+    bgeot::convex_of_reference *bprod = tab->add(_product_ref_light(a->basic_convex_ref(), b->basic_convex_ref()));
+    bgeot::convex_of_reference *prod = tab->add(_product_ref_light(a, b));
+    bprod->attach_basic_convex_ref(bprod);
+    prod->attach_basic_convex_ref(bprod);
+    return prod;
   }
 
   pconvex_ref parallelepiped_of_reference(dim_type nc) {
