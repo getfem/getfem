@@ -208,9 +208,9 @@ namespace dal
   template <class T> inline T sgn(std::complex<T> a)
   { return (a.real() / dal::abs(a) < T(0.1)) ? sgn(a.imag()) : sgn(a.real()); }
   inline double random() { return double(rand())/(RAND_MAX+1.0); }
-  template <class T> inline T random(T) { return random(); }
+  template <class T> inline T random(T) { return random() * T(2) - T(1); }
   template <class T> inline std::complex<T> random(std::complex<T>)
-  { return std::complex<T>(random(), random()); }
+  { return std::complex<T>(random(T()), random(T())); }
   template <class T> inline T irandom(T max) { return T(random() * max); }
 }
 

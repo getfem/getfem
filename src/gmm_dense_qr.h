@@ -320,8 +320,9 @@ namespace gmm {
     MAT2 &eigvect = const_cast<MAT2 &>(eigvect_);
     typedef typename linalg_traits<MAT1>::value_type value_type;
 
-    size_type n = mat_nrows(A), q = 0, p;
+    size_type n = mat_nrows(A), q = 0, p, ite = 0;
     dense_matrix<value_type> Z(n,n), B(n,n), H(n,n);
+
     gmm::copy(A, H);
     Hessenberg_reduction(H, eigvect, compvect);
     stop_criterion(H, p, q, tol);
@@ -331,12 +332,15 @@ namespace gmm {
       Francis_qr_step(sub_matrix(H, SUBI),
 		      sub_matrix(Z, SUBI), compvect);
 //		      sub_matrix(eigvect, SUBJ, SUBI), compvect);
-       if (compvect) {
- 	gmm::mult(sub_matrix(eigvect, SUBJ, SUBI),
- 		  sub_matrix(Z, SUBI), sub_matrix(B, SUBJ, SUBI));
- 	gmm::copy(sub_matrix(B, SUBJ, SUBI), sub_matrix(eigvect, SUBJ, SUBI));
-       }
+
+      if (compvect) {
+	gmm::mult(sub_matrix(eigvect, SUBJ, SUBI),
+		  sub_matrix(Z, SUBI), sub_matrix(B, SUBJ, SUBI));
+	gmm::copy(sub_matrix(B, SUBJ, SUBI), sub_matrix(eigvect, SUBJ, SUBI));
+      }
+
       stop_criterion(H, p, q, tol);
+      if (++ite > n*1000) DAL_THROW(failure_error, "QR algorithm failed");
     }
     clean(H, 1E-12); cout << "H = " << H << endl;
     extract_eig(H, eigval, tol);
@@ -419,7 +423,7 @@ namespace gmm {
     size_type n = mat_nrows(A), q = 0, p, ite = 0;
     dense_matrix<value_type> T(n,n);
     gmm::copy(A, T);
-    Householder_tridiagonalisation(T, eigvect, compvect);
+    Householder_tridiagonalization(T, eigvect, compvect);
     symmetric_stop_criterion(T, p, q, tol);
 
     while (q < n) {

@@ -272,7 +272,7 @@ namespace gmm {
   { return a * std::conj(b); } // to be optimized
 
   template <class T> inline bool is_complex(T a) { return false; }
-  template <class T> inline bool is_complex(std::complex<T> a) { return true;}
+  template <class T> inline bool is_complex(std::complex<T> a) { return true; }
   
 
   /* ******************************************************************** */
@@ -447,7 +447,6 @@ namespace gmm {
   /*		Standard access and clear objects             		   */
   /* ********************************************************************* */
 
-  
   template <class IT, class CIT> struct dense_access {
     
     typedef typename std::iterator_traits<IT>::value_type value_type;

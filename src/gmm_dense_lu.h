@@ -107,8 +107,6 @@ namespace gmm {
   void lu_solve(const DenseMatrix &LU, const Pvector& pvector, 
 		VectorX &x, const VectorB &b) {
     copy(b, x);
-    /* use the permutation vector to modify the starting vector            */
-    /*  to account for the permutations in LU.                             */
     for(size_type i = 0; i < pvector.size(); ++i) {
       size_type perm = pvector[i]-1;     // permutations stored in 1's offset
       if(i != perm) std::swap(x[i], x[perm]);
@@ -133,13 +131,14 @@ namespace gmm {
     copy(b, x);
     /* use the permutation vector to modify the starting vector            */
     /*  to account for the permutations in LU.                             */
-    for(size_type i = 0; i < pvector.size(); ++i) {
-      size_type perm = pvector[i]-1;       // permutations stored in 1's offset
-      if(i != perm) std::swap(x[i], x[perm]);
-    }
     /* solve  Ax = b  ->  LUx = b  ->  Ux = L^-1 b.                        */
     lower_tri_solve(transposed(LU), x, false);
     upper_tri_solve(transposed(LU), x, true);
+    for(size_type i = pvector.size(); i > 0; --i) {
+      size_type perm = pvector[i-1]-1;    // permutations stored in 1's offset
+      if(i-1 != perm) std::swap(x[i-1], x[perm]);
+    }
+
   }
 
 
@@ -153,10 +152,10 @@ namespace gmm {
     std::vector<value_type> tmp(pvector.size(), value_type(0));
     std::vector<value_type> result(pvector.size());
     for(size_type i = 0; i < pvector.size(); ++i) {
-      tmp[i] = 1.0;
+      tmp[i] = value_type(1);
       lu_solve(LU, pvector, result, tmp);
       copy(result, mat_col(AInv, i));
-      tmp[i] = 0.0;
+      tmp[i] = value_type(0);
     }
   }
 
@@ -167,10 +166,10 @@ namespace gmm {
     std::vector<value_type> tmp(pvector.size(), value_type(0));
     std::vector<value_type> result(pvector.size());
     for(size_type i = 0; i < pvector.size(); ++i) {
-      tmp[i] = 1.0;
+      tmp[i] = value_type(1);
       lu_solve_transposed(LU, pvector, result, tmp);
       copy(result, mat_row(AInv, i));
-      tmp[i] = 0.0;
+      tmp[i] = value_type(0);
     }
   }
   

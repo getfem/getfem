@@ -211,11 +211,11 @@ namespace gmm {
   }
 
   /* ********************************************************************* */
-  /*    Householder tridiagonalisation for symmetric matrices              */
+  /*    Householder tridiagonalization for symmetric matrices              */
   /* ********************************************************************* */
 
   template <class MAT1, class MAT2> 
-  void Householder_tridiagonalisation(const MAT1 &AA, const MAT2 &QQ,
+  void Householder_tridiagonalization(const MAT1 &AA, const MAT2 &QQ,
 				     bool compute_q) {
     MAT1 &A = const_cast<MAT1 &>(AA); MAT2 &Q = const_cast<MAT2 &>(QQ);
     typedef typename linalg_traits<MAT1>::value_type value_type;
@@ -240,7 +240,7 @@ namespace gmm {
       rank_one_update(sub_matrix(A, SUBI), w, v);
       // + act de Q ...
       if (compute_q)
-	cout << "WARNING : Q not computed in Householder_tridiagonalisation\n";
+	cout << "WARNING : Q not computed in Householder_tridiagonalization\n";
     }
   }
 

@@ -107,8 +107,11 @@ template <class MAT>  void test_qr(const MAT &m) {
   /* Test on LU.                                                           */
   gmm::fill_random(cm);
   gmm::copy(cm, cq);
+  cout << "cm = " << cm << endl;
   gmm::lu_inverse(cq);
+  cout << "cm^{-1} = " << cq << endl;
   gmm::mult(cm, cq, ca);
+  cout << "ca = " << ca << endl;
   gmm::copy(gmm::identity_matrix(), cq);
   gmm::add(gmm::scaled(cq, -1.0), ca);
   if (gmm::mat_norm2(ca) > 1E-10) 
