@@ -61,8 +61,8 @@ namespace getfem
     std::copy(ivect, ivect+N, vect.begin());
     std::vector<size_type> ref(N);
     std::copy(iref, iref+N, ref.begin());
-    _parallelepiped_regular_simplex_mesh(me, N, org, vect.begin(),
-					 ref.begin());
+    _parallelepiped_regular_simplex_mesh(me, N, org, &(vect[0]),
+					 &(ref[0]));
   } 
 
 }  /* end of namespace getfem.                                             */

@@ -353,7 +353,7 @@ namespace bgeot
     void polynomial<T>::derivative(short_type k)
   {
     if (k >= n)
-      throw out_of_range
+      throw std::out_of_range
 	("polynomial<T>::derivative : index out of range");
     
      iterator it = begin(), ite = end();

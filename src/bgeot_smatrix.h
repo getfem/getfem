@@ -50,7 +50,6 @@ namespace bgeot
     typedef T value_type;
     typedef vsvector<T> vector_type;
 
-  protected:
     
     struct elt_m	       	/* basic element of the matrix.		*/
     {
@@ -68,6 +67,8 @@ namespace bgeot
     };
     
     typedef dal::dynamic_tree_sorted<elt_m, _elt_m_comp, 3> _line_m;
+
+  protected:
     
     size_type nbc, nbl;      /* Number of columns and lines.           	*/
     std::vector<_line_m> li; /* array of lines.                         */
@@ -80,6 +81,9 @@ namespace bgeot
     
     /* read and write operations.                                       */
     
+    inline _line_m & operator[](size_type i) { return li[i]; }
+    inline const _line_m & operator[](size_type i) const { return li[i]; }
+
     inline ref_elt_smatrix<T> operator ()(size_type l, size_type c)
     { return ref_elt_smatrix<T>(this, l, c); }
     
@@ -159,8 +163,8 @@ namespace bgeot
     smatrix(void) { init(1, 1); }
 
     /* Fonctions diverses. */
-    template<class R> friend ostream& operator << (ostream& o,
-						   const smatrix<R>& m) { 
+    template<class R> friend std::ostream& operator << (std::ostream& o,
+							const smatrix<R>& m) { 
       mat_out(o,m);
       size_type i,j;
       for (i = 0,  j = 0 ; i < m.nrows(); i++) j += m.li[i].card();

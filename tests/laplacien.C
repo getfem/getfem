@@ -255,7 +255,7 @@ int main(int argc, char *argv[])
     p.init();
     cout << "Initialisation terminee\n";
     
-    ofstream cres((p.datafilename + ".res" + char(0)).begin());
+    std::ofstream cres((p.datafilename + ".res").c_str());
     
     cres << p.N << "\t" <<  p.K << "\t" << p.NX << "\t";
     cres << ftool::uclock_sec() - exectime << "  ";
@@ -316,7 +316,7 @@ int main(int argc, char *argv[])
     total_time += ftool::uclock_sec() - exectime;
     cres << total_time << endl;
     
-    cout << "Erreur L2 : " << l2norm << endl << "Erreur H1 : " << h1norm << endl;
+    cout << "L2 error = " << l2norm << endl << "H1 error = " << h1norm << endl;
     
     cout << "calcul termine" << endl; exit(0);
   }

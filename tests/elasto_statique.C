@@ -91,7 +91,7 @@ struct pb_data
 
   ftool::md_param PBSTFR_PARAM;
 
-  string datafilename;
+  std::string datafilename;
 
   void init();
   void assemble(void);
@@ -124,8 +124,8 @@ void pb_data::init(void)
   residu = PBSTFR_PARAM.real_value("RESIDU", "Valeur pour test d'arret");
   K = PBSTFR_PARAM.int_value("K", "Degre de l'element fini de Lagrange");
 
-  datafilename = string(PBSTFR_PARAM.string_value("ROOTFILENAME",
-			     "Nom du fichier de sauvegarde sans extension"));
+  datafilename = std::string(PBSTFR_PARAM.string_value("ROOTFILENAME",
+						       "Nom du fichier de sauvegarde sans extension"));
   scalar_type FT = PBSTFR_PARAM.real_value("FT", "parametre pour solution exacte");
   for (i = 0; i < N; i++)
   {
