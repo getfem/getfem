@@ -102,7 +102,7 @@ namespace gmm {
       gmm::mult(vB[i], A, Maux);
       gmm::mult(Maux, BT, vAloc[i]);
 
-      P.init_with(vAloc[i]);
+      precond1[i].build_with(vAloc[i]);
       gmm::resize(fi[i], mat_nrows(vB[i]));
       gmm::resize(gi[i], mat_nrows(vB[i]));
       gmm::mult(vB[i], f, fi[i]);
