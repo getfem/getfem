@@ -294,7 +294,7 @@ namespace bgeot
 
   /*********  intermediary structure for r/w operation.	*******************/
   
-  /* revoir cette stratégie pour l'interfacage générique de abstrct_linalg
+  /* revoir cette stratégie pour l'interfacage générique de abstrct_linalg */
 
   template<class T> class ref_elt_svector { /* ref. on an matrix element.  */
 
