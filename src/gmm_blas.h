@@ -215,7 +215,7 @@ namespace gmm {
   { linalg_traits<L>::do_clear(l); }
 
   template <class L> inline void clear(const L &l)
-  { clear(linalg_cast(l)); }
+  { linalg_traits<L>::do_clear(linalg_cast(l)); }
 
   /* ******************************************************************** */
   /*		Write                                   		  */
