@@ -67,6 +67,8 @@ namespace getfem
       if (!(pf_target->is_equivalent()) || !(pf_target->is_lagrange()))
 	DAL_THROW(std::invalid_argument, 
 		  "finite element target not convenient");
+      if (!(pf->is_equivalent())) 
+	transfert_to_G(G, mf.linked_mesh().points_of_convex(cv));
 
       pgt = mf.linked_mesh().trans_of_convex(cv);
       if (pf_targetold != pf_target) {
@@ -114,7 +116,7 @@ namespace getfem
 	for (size_type q = 0; q < Q; ++q) {
 	  for (size_type l = 0; l < pf->nb_dof(); ++l)
 	    coeff[l] = U[mf.ind_dof_of_element(cv)[l] * Q + q ];
-	  pf->interpolation_grad(pfp, j, G, coeff, val);
+	  pf->interpolation_grad(pfp, j, G, pgt, coeff, val);
 	  bgeot::mat_product(val, B0, B1);
 
 	  for (size_type l = 0; l < N; ++l)
