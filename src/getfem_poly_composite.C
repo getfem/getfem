@@ -42,10 +42,10 @@ namespace getfem
     for (i = 0; i <= nn.last_true(); ++i) {
       vertexes.add(m.points()[i]);
     }
-    dal::bit_vector nn = m.convex_index();
+    nn = m.convex_index();
     for (i << nn; i != size_type(-1); i << nn) {
       
-      pgeometric_trans pgt = m.trans_of_convex(i);
+      bgeot::pgeometric_trans pgt = m.trans_of_convex(i);
       size_type N = pgt->structure()->dim();
       size_type P = m.dim();
       if (!(pgt->is_linear()) || N != P) 
@@ -57,12 +57,12 @@ namespace getfem
       base_matrix grad(P, N), TMP1(N,N), B0(N, P);
       
       for (size_type j = 0; j < pgt->nb_points(); ++j)
-	for (size_type i = 0; i < P; ++i)
-	  a(i,j) = cv.points()[j][i];
+	for (size_type k = 0; k < P; ++k)
+	  a(i,j) = (m.points_of_convex(i)[j])[i];
       
-      for (i = 0; i < pgt->nb_points(); ++i)
+      for (size_type k = 0; k < pgt->nb_points(); ++k)
 	for (dim_type n = 0; n < N; ++n)
-	  { PO = pgt->poly_vector()[i]; PO.derivative(n); pc(i,n) = PO[0]; }
+	  { PO = pgt->poly_vector()[k]; PO.derivative(n); pc(k,n) = PO[0]; }
       bgeot::mat_product(a, pc, grad);
       bgeot::mat_gauss_inverse(grad, TMP1); B0 = grad;
       gtrans[i] = B0;
@@ -71,7 +71,7 @@ namespace getfem
   }
 
   void polynomial_composite::derivative(short_type k) {
-    std::vector<bgeot::base_poly>::iterator it = polytab.begin(),
+    std::vector<bgeot::base_poly>::iterator it = polytab.begin();
     std::vector<bgeot::base_poly>::iterator ite = polytab.end();
     for ( ; it != ite; ++it) it->derivative(k);
   }

@@ -697,24 +697,18 @@ namespace getfem
   static papprox_integration triangle2_approx_integration(void) {
     approx_integration *p
       = new approx_integration(bgeot::simplex_of_reference(2));
-    cout << "ok 1\n";
     p->add_point(base_vector(1.0/6.0, 1.0/6.0), 1.0/6.0);
-    cout << "ok 1bis\n";
     p->add_point(base_vector(2.0/3.0, 1.0/6.0), 1.0/6.0);
-    cout << "ok 1.3\n";
     p->add_point(base_vector(1.0/6.0, 2.0/3.0), 1.0/6.0);
-    cout << "ok 1.4\n";
     double a = 0.5 - 0.5/::sqrt(3.0);
     double b = 0.5 + 0.5/::sqrt(3.0);
-    p->add_point(base_vector(a  , b), ::sqrt(2.0) * 0.5, 0);cout << "ok 1.3\n";
-    p->add_point(base_vector(b  , a), ::sqrt(2.0) * 0.5, 0);cout << "ok 1.3\n";
-    p->add_point(base_vector(0.0, a), 0.5              , 1);cout << "ok 1.3\n";
-    p->add_point(base_vector(0.0, b), 0.5              , 1);cout << "ok 1.3\n";
-    p->add_point(base_vector(a, 0.0), 0.5              , 2);cout << "ok 1.3\n";
-    p->add_point(base_vector(b, 0.0), 0.5              , 2);cout << "ok 1.3\n";
-    cout << "ok 2\n";
+    p->add_point(base_vector(a  , b), ::sqrt(2.0) * 0.5, 0);
+    p->add_point(base_vector(b  , a), ::sqrt(2.0) * 0.5, 0);
+    p->add_point(base_vector(0.0, a), 0.5              , 1);
+    p->add_point(base_vector(0.0, b), 0.5              , 1);
+    p->add_point(base_vector(a, 0.0), 0.5              , 2);
+    p->add_point(base_vector(b, 0.0), 0.5              , 2);
     p->valid_method();
-    cout << "ok 3\n";
     return p;
   }
 
@@ -723,7 +717,8 @@ namespace getfem
   /* ********************************************************************* */
 
   static papprox_integration triangle2bis_approx_integration(void) {
-    approx_integration *p = new approx_integration(bgeot::simplex_of_reference(2));
+    approx_integration *p = 
+      new approx_integration(bgeot::simplex_of_reference(2));
     p->add_point(base_vector(1.0/2.0, 1.0/2.0), 1.0/6.0);
     p->add_point(base_vector(0.0    , 1.0/2.0), 1.0/6.0);
     p->add_point(base_vector(1.0/2.0, 0.0    ), 1.0/6.0);
