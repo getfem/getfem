@@ -16,13 +16,13 @@ sub add_fname
 }
 
 
-open F, "file_dependencies $ARGV[0] |" or die;
+open F, "bin/file_dependencies $ARGV[0] |" or die;
 while (<F>) { chomp $_; add_fname($_); } close F;
 
 while ($nb_scaned < $nb_file)
 {
   # print "scanning $tabdep[$nb_scaned]\n";
-  open F, "file_dependencies  include\/$tabdep[$nb_scaned++] |" or die;
+  open F, "bin/file_dependencies  include\/$tabdep[$nb_scaned++] |" or die;
   while (<F>) { chomp $_; add_fname($_); }
   close F;
 }

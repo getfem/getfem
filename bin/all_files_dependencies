@@ -3,12 +3,18 @@
 $nb_file = 0;
 $nb_scaned = 0;
 
-sub add_fname
-{
+
+sub is_present {
   my $fname = $_[0];
   my $i;
   for ($i = 0; $i < $nb_file; $i++)
-  { if ($tabname[$i] eq $fname) { return $i; } }
+    { if ($tabname[$i] eq $fname) { return $i; } }
+  return -1;
+}
+
+sub add_fname
+{
+  my $fname = $_[0];
   $tabname[$nb_file] = $fname;
   $tabnbf[$nb_file] = 0;
   return $nb_file++;
@@ -28,20 +34,22 @@ sub file_dep
 {
   my $fname = $_[0];
   my $cname = $_[1];
-  my $i = add_fname($fname);
+  my $i = is_present($fname);
+  if ($i != -1) { return $i; }
+  $i = add_fname($fname);
   my $j; my $k;
-  if ($i != $nb_file - 1) { return $i; }
+
 
   add_dependencie($i, $cname);
   open F, "bin/file_dependencies $cname |";
   while (<F>)
-  { 
+  {
     chomp $_; $j = file_dep($_, "include\/$_"); 
     for ($k = 0; $k < $tabnbf[$j]; $k++)
       { add_dependencie($i, $tabdep[$j][$k]); }
   }
   close F;
-  
+
   $fi2 = $fname; $fi2 =~ s/\./_/g;
   print "$fi2 = ";
   for ($k = 0; $k < $tabnbf[$i]; $k++) { print "$tabdep[$i][$k] "; }
@@ -50,16 +58,20 @@ sub file_dep
 }
 
 
-$fis = `cd include; ls *.h`;
+$fis = `cd include; ls *.h`; $fis =~ s/\@//g;
 while($fis)
-{ ($fi, $fis) = split('\s', $fis, 2); file_dep($fi, "include\/$fi"); }
+{
+  ($fi, $fis) = split('\s', $fis, 2);
 
-$fis = `cd sources; ls *.C`;
+  file_dep($fi, "include\/$fi");
+}
+
+$fis = `cd sources; ls *.C`; $fis =~ s/\@//g;
 while($fis)
 { ($fi, $fis) = split('\s', $fis, 2); file_dep($fi, "sources\/$fi"); }
 
 if (-d "matlabcom") {
-  $fis = `cd matlabcom; ls *.C`;
+  $fis = `cd matlabcom; ls *.C`; $fis =~ s/\@//g;
   while($fis)
     { ($fi, $fis) = split('\s', $fis, 2); file_dep($fi, "matlabcom\/$fi"); }
 }
