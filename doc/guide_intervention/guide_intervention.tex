@@ -299,7 +299,13 @@ On doit tout d'abord initialiser la variable CVSROOT par la commande
 pour csh, o\`u
 \begin{alltt} export CVSROOT=:pserver:nom_login@gmmlinux2.gmm.priv:/var/cvs
 \end{alltt}
-pour bash, o\`u nom\_login est votre nom de login unix sur le site du gmm. cette commande peut \^etre ins\'er\'ee dans votre .cshrc, .bashrc ou autre. 
+pour bash, o\`u nom\_login est votre nom de login unix sur le site du gmm. cette commande peut \^etre ins\'er\'ee dans votre .cshrc, .bashrc ou autre.\\
+Pour le premier accès effectuer alors les commandes suivantes :
+\begin{alltt}
+  touch ~/.cvspass
+  cvs login
+\end{alltt}
+puis entrer son login habituel (lorsque l'on est sûr de ne plus vouloir accéder à CVS, on peut effectuer une commande ``cvs logout'').
 
 \subsection{R\'ecup\'erer une partie des sources}
 D'une mani\`ere g\'en\'erale, r\'ecup\'erer des sources s'op\`ere par la commande
