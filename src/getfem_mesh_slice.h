@@ -7,6 +7,7 @@
 #include <getfem_mesh.h>
 #include <getfem_fem.h>
 #include <getfem_poly_composite.h>
+#include <memory> // auto_ptr for g++ 2.95
 
 namespace getfem {
 
