@@ -3,14 +3,6 @@ A faire pour l'installation automatique :
 
 
 ============================================================================
-TITRE : Fonctions supplémentaires dans matlabint
-----------------------------------------------------------------------------
-corriger le fait que des fonctions ont été ajoutées dans matlabint pour 
-satisfaire le link avec cxx. Cela ne doit plus être nécessaire.
-============================================================================
-
-
-============================================================================
 TITRE : Raffinement de maillage
 ----------------------------------------------------------------------------
 Description : Ecrire  une  procédure  de  raffinement  de  maillage  la plus
@@ -42,3 +34,8 @@ Bilan :
 http://www.gnu.org/directory/science/visual/xd3d.html <- ajouter export
 
 external_data_fem : gerer les fonctions à valeur vectorielle
+
+methodes d'integration + FEM sur les points de Fekete (qui maximisent vandermonde, equivalents des points de gauss-lobatto sur les simplexes - refs:
+* http://citeseer.nj.nec.com/taylor98fekete.html (avec une liste de pts)
+* http://math1.unice.fr/~rpas/jcp04.pdf
+* http://epubs.siam.org/sam-bin/dbq/article/33724
