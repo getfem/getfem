@@ -207,6 +207,7 @@ namespace gmm {
   /*    Householder updates  (complex and real version)                    */
   /* ********************************************************************* */
 
+  // multiply A to the left by the reflector stored in V. W is a temporary.
   template <class MAT, class VECT1, class VECT2> inline
     void row_house_update(const MAT &AA, const VECT1 &V, const VECT2 &WW) {
     VECT2 &W = const_cast<VECT2 &>(WW); MAT &A = const_cast<MAT &>(AA);
@@ -218,6 +219,7 @@ namespace gmm {
     rank_one_update(A, V, W);
   }
 
+  // multiply A to the right by the reflector stored in V. W is a temporary.
   template <class MAT, class VECT1, class VECT2> inline
     void col_house_update(const MAT &AA, const VECT1 &V, const VECT2 &WW) {
     VECT2 &W = const_cast<VECT2 &>(WW); MAT &A = const_cast<MAT &>(AA);

@@ -148,7 +148,8 @@ namespace gmm {
       // Quand on aura vérifié que ça marche, il faudra utiliser gam à la 
       // place de ztest.
       if (tb_def < p) {
-	ns = dal::sgn(ztest[m]);
+	T ns = H(m,m-1) / ztest[m];
+	ns /= dal::abs(ns);
 	gmm::copy(KS.mat(), W); gmm::copy(scaled(r, ns / beta), mat_col(W, m));
 	
 	// Computation of the oblique matrix
@@ -206,7 +207,7 @@ namespace gmm {
 	//	that is tb_def + nb_want - nb_nolong
 
 	dense_matrix<T> YB(m-tb_def, m-tb_def);
-	std::vector<T> pure(m-tb_def, T(0));
+	std::vector<int> pure(m-tb_def, 0);
 	
 	size_type nb_want = 0, nb_unwant = 0, nb_nolong = 0, j;
 
@@ -229,8 +230,8 @@ namespace gmm {
 	      if (std::imag(eval_sort[j].first) != R(0)) {
 		for (size_type l = 0, l < m-tb_def; ++l)
 		  YB(l, ind) = std::imag(evect(l, eval_sort[j].second));
-		pure[ind-1] = T(1);
-		pure[ind] = T(2);
+		pure[ind-1] = 1;
+		pure[ind] = 2;
 		
 		kept[eval_sort[j].second] = true;
 		
@@ -247,7 +248,7 @@ namespace gmm {
 
 	      for (size_type l = 0, l < m-tb_def; ++l)
 		YB(l, ind) = std::real(evect(l, eval_sort[j].second));
-	      pure[ind] = T(1);
+	      pure[ind] = 1;
 	      ++ind;
 	      kept[eval_sort[j].second] = true;
 	      ++nb_want;
@@ -256,7 +257,7 @@ namespace gmm {
 		< tol_vp * dal::abs(eval_sort[j].first)) {
 		for (size_type l = 0, l < m-tb_def; ++l)
 		  YB(l, ind) = std::imag(evect(l, eval_sort[j].second));
-		pure[ind] = T(2);
+		pure[ind] = 2;
 		
 		j++;
 		kept[eval_sort[j].second] = true;
@@ -271,7 +272,8 @@ namespace gmm {
 	for (size_type j = 0, i = 0; j < m; ++j)
 	  if (!kept[j]) shift[i++] = eval[j];
 
-	// conv is the number of eigenpairs that have just converged.
+	// conv (nb_want+nb_unwant) is the number of eigenpairs that
+	//   have just converged.
 	// tb_deftot is the total number of eigenpairs that have converged.
 
 	int conv = ind;
@@ -280,14 +282,14 @@ namespace gmm {
 
 	sub_interval SUBYB(0, conv);
 
-	if ( tb_defwant >= p ) { // trop gros, on diminue ...
+	if ( tb_defwant >= p ) { // An invariant subspace has been found.
 
 	  nb_unwant = 0;
 	  nb_want = p + nb_nolong - tb_def;
 	  tb_defwant = p;
 
-	  if ( pure(conv - nb_want + 1) == 2 ) {
-	    ++nb_want; tb_defwant = ++p;
+	  if ( pure[conv - nb_want + 1] == 2 ) {
+	    ++nb_want; tb_defwant = ++p; // il faudrait que ce soit un p local
 	  }
 	  
 	  SUBYB = sub_interval(conv - nb_want, nb_want);
@@ -298,117 +300,308 @@ namespace gmm {
 	  ok = 1;
 	}
 	if (conv != 0) {
-
 	  // DEFLATION using the QR Factorization of YB
 	  
-	  dense_matrix<T> Q(m-tb_def, m-tb_def), R(m-tb_def, SUBYB.size());
-	  gmmm::copy(sub_matrix(YB, sub_interval(0, m-tb_def), SUBYB), R);
-	  qr_factorization(R, Q);
+	  T alpha = Lock(W, Hobl, sub_matrix(YB,  sub_interval(0, m-tb_def)),
+			 (tb_defwant < p)); 
+	  ns *= alpha;
+	  //  V(:,m+1) = alpha*V(:, m+1); ça devait servir à qlq chose ...
 
-	  // ça va raler dans la suite, il faut faire la fonction qui applique
-	  // les reflecteurs à une matrice.
-	  gmm::mult(conjugated(Q), sub_matrix(Hobl, SUB1), 
-		    sub_matrix(Hobl, SUB1));
 
-	  gmm::mult(sub_matrix(Hobl, SUBI, SUB1), Q,
-		    sub_matrix(Hobl, SUBI, SUB1));
-
-	  gmm::mult(sub_matrix(W, sub_interval(0, n), SUB1), Q,
-		    sub_matrix(W, sub_interval(0, n), SUB1));
-
-	  //       Restore to the initial block hessenberg form
-
-	  if ( tb_defwant < p ) {
-
-	    gmm::dense_matrix tab_p(m - tb_deftot, m - tb_deftot);
-	    gmm::copy(identity_matrix(), tab_p);
-
-	    for (size_type j = m-1; j >= tb_deftot+2; --j) {
-
-	      size_type jm = j-1;
-	      std::vector<T> v(jm - tb_deftot);
-	      sub_interval SUBtot(tb_deftot, jm - tb_deftot);
-	      sub_interval SUBtot2(tb_deftot, m - tb_deftot);
-	      gmm::copy(sub_vector(mat_col(Hobl, j), SUBtot, v));
-	      house_vector_last(v);
-	      w.resize(m);
-	      col_house_update(sub_matrix(Hobl, SUBI, SUBtot), v, w);
-	      w.resize(m - tb_deftot);
-	      row_house_update(sub_matrix(Hobl, SUBtot, SUBtot2), v, w);
-	      gmm::clear(sub_vector(mat_col(Hobl, j),
-			 sub_interval(tb_deftot+1, j - 2 - tb_deftot)));
-	      w.resize(m - tb_deftot);
-	      col_house_update(sub_matrix(tab_p, sub_interval(0, m-tb_deftot),
-			       sub_interval(0, jm-tb_deftot)), v, w);
-	      w.resize(n);
-	      col_house_update(sub_matrix(W, sub_interval(0, n), SUBtot), v,w);
-
-	    }
-
-	    //       restore positive subdiagonal elements
-
-	    std::vector<T> d(m-tb_deftot); d[0] = T(1);
-	    
-	    for (size_type j = 0; j < m-tb_deftot; ++j) {
-	      T e = Hobl(tb_deftot+j, tb_deftot+j-1);
-	      d[j+1] = (e == T(0)) ? T(1) :  d[j] * dal::abs(e) / e;
-	      scale(sub_vector(mat_row(Hobl, tb_deftot+j),
-			       sub_interval(tb_deftot, m-tb_deftot), d[j]));
-	      scale(mat_col(Hobl, tb_deftot+j), T(1) / d[j]);
-	      scale(mat_col(W, tb_deftot+j), T(1) / d[j]);
-	    }
-
-	    ........
-	    
-	    if (tab_p(m-tb_deftot, m-tb_deftot) ...
-		* d(m-tb_deftot) == - 1),
-					  W(:,m+1) = - W(:, m+1);
-	    V(:,m+1) = - V(:, m+1);
-	    ns = ns * -1;
-	    end;
-	    
-	  }
-	  
 	  //       Clean the portions below the diagonal corresponding
 	  //       to the lock Schur vectors
 
-	  j = tb_def + 1;
-	  while ( j <= tb_deftot ){
-	    if ( pure(j-tb_def) == 0) {
-	      Hess1(j+1:m+1,j) = zeros(m-j+1,1);
-	      j = j + 1;
-	      elseif ( pure(j-tb_def) == 1 ) {
-		Hess1(j+2:m+1,j:j+1) = zeros(m-j,2);
-		j = j + 2;
-	      }
+	  for (size_type j = tb_def; j < tb_deftot; ++j) {
+	    if ( pure[j-tb_def] == 0)
+	      gmm::clear(sub_vector(mat_col(Hobl,j), sub_interval(j+1,m-j+1)));
+	    else if (pure(j-tb_def) == 1) {
+	      gmm::clear(sub_matrix(Hobl, sub_interval(j+2,m-j),
+				    sub_interval(j, 2))); 
+	      ++j;
 	    }
-	    
+	    else DAL_THROW(internal_error, "internal error");
 	  }
+	    
 	  
 
 
 
 
+
+
+
+
+
+	}
+	
       }
-
-
-      
-
-
-
-
-
-      
     }
   }
-
+  
 
   template < class Mat, class Vec, class VecB, class Precond >
-  void idgmres(const Mat &A, Vec &x, const VecB &b,
-	     const Precond &M, int m, iteration& outer) {
+    void idgmres(const Mat &A, Vec &x, const VecB &b,
+		 const Precond &M, int m, iteration& outer) {
     typedef typename linalg_traits<Mat>::value_type T;
     modified_gram_schmidt<T> orth(m, vect_size(x));
     gmres(A, x, b, M, m, outer, orth); 
+  }
+
+
+  // Lock stage of an implicit restarted Arnoldi process.
+  // 1- QR factorization of YB through Householder matrices
+  //    Q(Rl) = YB
+  //     (0 )
+  // 2- Update of the Arnoldi factorization.
+  //    H <- Q*HQ,  W <- WQ
+  // 3- Restore the Hessemberg form of H.
+
+  template <class T, class MATYB>
+    void Lock(gmm::dense_matrix<T> &W, gmm::dense_matrix<T> &H,
+	      const MATYB &YB, bool restore, T &ns) {
+
+    size_type m = mat_ncols(W)-1, m_tb_def = mat_nrows(YB);
+    size_type tb_def = m - m_tb_def, conv = mat_ncols(YB);
+    size_type tb_deftot = tb_def + conv;
+    sub_interval SUB1(tb_def, m_tb_def), SUBI(0, m);
+    T alpha(1);
+
+    if (m != mat_nrows(H) || m+1 != mat_ncols(H) || m < mat_nrows(YB))
+      DAL_THROW(dimension_error, "dimensions mismatch");
+    
+    // DEFLATION using the QR Factorization of YB
+	  
+    dense_matrix<T> QR(m_tb_def, conv);
+    gmmm::copy(YB, QR);
+    qr_factor(QR);
+
+    apply_house_left(QR, sub_matrix(H, SUB1));
+    apply_house_right(QR, sub_matrix(H, SUBI, SUB1));
+    apply_house_right(QR, sub_matrix(W, sub_interval(0, n), SUB1));
+    
+    //       Restore to the initial block hessenberg form
+    
+    if (restore) {
+      
+      // verifier quand m = 0 ...
+      gmm::dense_matrix tab_p(m - tb_deftot, m - tb_deftot);
+      gmm::copy(identity_matrix(), tab_p);
+      
+      for (size_type j = m-1; j >= tb_deftot+2; --j) {
+	
+	size_type jm = j-1;
+	std::vector<T> v(jm - tb_deftot);
+	sub_interval SUBtot(tb_deftot, jm - tb_deftot);
+	sub_interval SUBtot2(tb_deftot, m - tb_deftot);
+	gmm::copy(sub_vector(mat_row(H, j), SUBtot), v);
+	house_vector_last(v);
+	w.resize(m);
+	col_house_update(sub_matrix(H, SUBI, SUBtot), v, w);
+	w.resize(m - tb_deftot);
+	row_house_update(sub_matrix(H, SUBtot, SUBtot2), v, w);
+	gmm::clear(sub_vector(mat_row(H, j),
+			      sub_interval(tb_deftot, j - 1 - tb_deftot)));
+	w.resize(m - tb_deftot);
+	col_house_update(sub_matrix(tab_p, sub_interval(0, m-tb_deftot),
+				    sub_interval(0, jm-tb_deftot)), v, w);
+	w.resize(n);
+	col_house_update(sub_matrix(W, sub_interval(0, n), SUBtot), v, w);
+      }
+      
+      //       restore positive subdiagonal elements
+      
+      std::vector<T> d(m-tb_deftot); d[0] = T(1);
+      
+      // We compute d[i+1] in order 
+      // (d[i+1] * H(tb_deftot+i+1,tb_deftoti)) / d[i] 
+      // be equal to |H(tb_deftot+i+1,tb_deftot+i))|.
+      for (size_type j = 0; j+1 < m-tb_deftot; ++j) {
+	T e = H(tb_deftot+j, tb_deftot+j-1);
+	d[j+1] = (e == T(0)) ? T(1) :  d[j] * dal::abs(e) / e;
+	scale(sub_vector(mat_row(H, tb_deftot+j+1),
+			 sub_interval(tb_deftot, m-tb_deftot)), d[j+1]);
+	scale(mat_col(H, tb_deftot+j+1), T(1) / d[j+1]);
+	scale(mat_col(W, tb_deftot+j+1), T(1) / d[j+1]);
+      }
+
+      alpha = tab_p(m-tb_deftot-1, m-tb_deftot-1) / d[m-tb_deftot-1];
+      alpha /= dal::abs(alpha);
+      scale(mat_col(W, m), alpha);
+	    
+    }
+	 
+    return alpha;
+  }
+
+
+
+
+
+
+
+
+  // Apply p implicit shifts to the Arnoldi factorization
+  // AV = VH+H(k+p+1,k+p) V(:,k+p+1) e_{k+p}*
+  // and produces the following new Arnoldi factorization
+  // A(VQ) = (VQ)(Q*HQ)+H(k+p+1,k+p) V(:,k+p+1) e_{k+p}* Q
+  // where only the first k columns are relevant.
+  //
+  // Dan Sorensen and Richard J. Radke, 11/95
+  template<class T, class C>
+    apply_shift_to_Arnoldi_factorization(dense_matrix<T> V, dense_matrix<T> H,
+					 std::vector<C> Lambda, int &k,int p) {
+
+
+    size_type k1 = 0, num = 0, kend = k+p, kp1 = k + 1;
+    bool mark = false;
+    T c, s, x, y, z;
+
+    dense_matrix<T> q(1, kend);
+    gmm::clear(q); q(0,kend-1) = T(1);
+    std::vector<T> hv(3), w(std::max(kend, mat_nrows(V)));
+
+    for(size_type jj = 0; jj < p; ++jj) {
+      //     compute and apply a bulge chase sweep initiated by the
+      //     implicit shift held in w(jj)
+   
+      if (abs(Lambda[jj].real()) == 0.0) {
+	//       apply a real shift using 2 by 2 Givens rotations
+
+	for (size_type k1 = 0, k2 = 0; k2 != kend-1; k1 = k2+1) {
+	  k2 = k1;
+	  while (h(k2+1, k2) != T(0) && k2 < kend-1) ++k2;
+
+	  Givens_rotation(H(k1, k1) - Lambda[jj], H(k1+1, k1), c, s);
+	  
+	  for (i = k1; i <= k2; ++i) {
+            if (i > k1) Givens_rotation(H(i, i-1), H(i+1, i-1), c, s);
+            
+	    // Ne pas oublier de nettoyer H(i+1,i-1) (le mettre à zéro).
+	    // Vérifier qu'au final H(i+1,i) est bien un réel positif.
+
+            // apply rotation from left to rows of H
+	    row_rot(sub_matrix(H, sub_interval(i,2), sub_interval(i, kend-i)),
+		    c, s, 0, 0);
+	    
+	    // apply rotation from right to columns of H
+            size_type ip2 = std::min(i+2, kend);
+            col_rot(sub_matrix(H, sub_interval(0, ip2), sub_interval(i, 2))
+		    c, s, 0, 0);
+            
+            // apply rotation from right to columns of V
+	    col_rot(V, c, s, i, i+1);
+            
+            // accumulate e'  Q so residual can be updated k+p
+	    Apply_Givens_rotation_left(q(0,i), q(0,i+1), c, s);
+	    // peut être que nous utilisons G au lieu de G* et que
+	    // nous allons trop loin en k2.
+	  }
+	}
+	
+	num = num + 1;
+      }
+      else {
+      
+	// Apply a double complex shift using 3 by 3 Householder 
+	// transformations
+      
+	if (jj == p || mark)
+	  mark = false;     // skip application of conjugate shift
+	else {
+	  num = num + 2;    // mark that a complex conjugate
+	  mark = true;      // pair has been applied
+
+	  // Indices de fin de boucle à surveiller... de près !
+	  for (size_type k1 = 0, k3 = 0; k3 != kend-2; k1 = k3+1) {
+	    k3 = k1;
+	    while (h(k3+1, k3) != T(0) && k3 < kend-2) ++k3;
+	    size_type k2 = k1+1;
+
+
+            x = H(k1,k1) * H(k1,k1) + H(k1,k2) * H(k2,k1)
+	      - 2.0*Lambda[jj].real() * H(k1,k1) + dal::abs_sqr(Lambda[jj]);
+	    y = H(k2,k1) * (H(k1,k1) + H(k2,k2) - 2.0*Lambda[jj].real());
+	    z = H(k2+1,k2) * H(k2,k1);
+
+	    for (size_type i = k1; i <= k3; ++i) {
+	      if (i > k1) {
+		x = H(i, i-1);
+		y = H(i+1, i-1);
+		z = H(i+2, i-1);
+		// Ne pas oublier de nettoyer H(i+1,i-1) et H(i+2,i-1) 
+		// (les mettre à zéro).
+	      }
+
+	      hv[0] = x; hv[1] = y; hv[2] = z;
+	      house_vector(v);
+
+	      // Vérifier qu'au final H(i+1,i) est bien un réel positif
+
+	      // apply transformation from left to rows of H
+	      w.resize(kend-i);
+	      row_house_update(sub_matrix(H, sub_interval(i, 2),
+					  sub_interval(i, kend-i)), v, w);
+               
+	      // apply transformation from right to columns of H
+               
+	      size_type ip3 = std::min(kend, i + 3);
+	      w.resize(ip3);
+              col_house_update(sub_matrix(H, sub_interval(0, ip3),
+					  sub_interval(i, 2)), v, w);
+               
+	      // apply transformation from right to columns of V
+	      
+	      w.resize(mat_nrows(V));
+	      col_house_update(sub_matrix(V, sub_interval(0, mat_nrows(V)),
+					  sub_interval(i, 2)), v, w);
+               
+	      // accumulate e' Q so residual can be updated  k+p
+
+	      w.resize(1);
+	      col_house_update(sub_matrix(q, sub_interval(0,1),
+					  sub_interval(i,2)), v, w);
+               
+	    }
+	  }
+         
+	  //           clean up step with Givens rotation
+
+	  i = kend-2;
+	  c = x; s = y;
+	  if (i > k1) Givens_rotation(H(i, i-1), H(i+1, i-1), c, s);
+            
+	  // Ne pas oublier de nettoyer H(i+1,i-1) (le mettre à zéro).
+	  // Vérifier qu'au final H(i+1,i) est bien un réel positif.
+
+	  // apply rotation from left to rows of H
+	  row_rot(sub_matrix(H, sub_interval(i,2), sub_interval(i, kend-i)),
+		    c, s, 0, 0);
+	    
+	  // apply rotation from right to columns of H
+	  size_type ip2 = std::min(i+2, kend);
+	  col_rot(sub_matrix(H, sub_interval(0, ip2), sub_interval(i, 2))
+		  c, s, 0, 0);
+            
+	  // apply rotation from right to columns of V
+	  col_rot(V, c, s, i, i+1);
+            
+	  // accumulate e'  Q so residual can be updated k+p
+	  Apply_Givens_rotation_left(q(0,i), q(0,i+1), c, s);
+
+	}
+      }
+    }
+
+    //  update residual and store in the k+1 -st column of v
+
+    k = kend - num;
+    scale(mat_col(V, kend), q(0, k));
+    
+    if (k < mat_nrows(H))
+	   //   v(:,k+1) = v(:,kend+1) + v(:,k+1)*h(k+1,k);
+	   //   v(:,k+1) = v(:,kend+1) ;
+      gmm::add(scaled(mat_col(V, kend), H(kend, kend-1)), 
+	       scaled(mat_col(V, k), H(k, k-1)), mat_col(V, k));
   }
 
 }

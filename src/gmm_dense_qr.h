@@ -75,25 +75,46 @@ namespace gmm {
     }
   }
 
+  
+  // QR comes from QR_factor(QR) where the upper triangular part stands for R
+  // and the lower part contains the Householder reflectors.
+  // A <- AQ
   template <class MAT1, class MAT2>
-  void qr_factor(const MAT1 &_A, const MAT1 &_Q) { 
-    MAT1 &A = const_cast<MAT1 &>(_A); MAT2 &Q = const_cast<MAT2 &>(_Q);
+  void apply_house_right(const MAT1 &QR, const MAT1 &_A) { 
+    MAT2 &A = const_cast<MAT2 &>(_A);
     typedef typename linalg_traits<MAT1>::value_type T;
-    qr_factor(A);
-    size_type m = mat_nrows(Q), n = mat_ncols(Q);
-    if (m != mat_nrows(A)) DAL_THROW(dimension_error, "dimensions mismatch");
-    std::vector<T> V(m), W(n);
+    size_type m = mat_nrows(QR), n = mat_ncols(QR);
+    if (m != mat_ncols(A)) DAL_THROW(dimension_error, "dimensions mismatch");
+    std::vector<T> V(m), W(mat_nrows(A));
     V[0] = T(1);
-    gmm::copy(identity_matrix(), Q);
-    for (size_type j = n-1; j != size_type(-1); --j) {
-      V.resize(m-j); W.resize(n-j);
-      for (size_type i = j+1; i < m; ++i) V(i-j) = A(i, j);
-      row_house_update(sub_matrix(Q, sub_interval(j, m-j),
-				  sub_interval(j, n-j)), V, W);
+    for (size_type j = 0; j < n; ++j) {
+      V.resize(m-j);
+      for (size_type i = j+1; i < m; ++i) V(i-j) = QR(i, j);
+      col_house_update(sub_matrix(A, sub_interval(0, mat_nrows(A)),
+				  sub_interval(j, m-j)), V, W);
     }
   }
 
-  
+  // QR comes from QR_factor(QR) where the upper triangular part stands for R
+  // and the lower part contains the Householder reflectors.
+  // A <- Q*A
+  template <class MAT1, class MAT2>
+  void apply_house_left(const MAT1 &QR, const MAT1 &_A) { 
+    MAT2 &A = const_cast<MAT2 &>(_A);
+    typedef typename linalg_traits<MAT1>::value_type T;
+    size_type m = mat_nrows(QR), n = mat_ncols(QR);
+    if (m != mat_nrows(A)) DAL_THROW(dimension_error, "dimensions mismatch");
+    std::vector<T> V(m), W(mat_ncols(A));
+    V[0] = T(1);
+    for (size_type j = 0; j < n; ++j) {
+      V.resize(m-j);
+      for (size_type i = j+1; i < m; ++i) V(i-j) = QR(i, j);
+      row_house_update(sub_matrix(A, sub_interval(j, m-j),
+				  sub_interval(0, mat_ncols(A))), V, W);
+    }
+  }  
+
+  // Compute the QR factorization, where Q is assembled.
   template <class MAT1, class MAT2, class MAT3>
     void qr_factor(const MAT1 &A, const MAT2 &QQ, const MAT3 &RR) { 
     MAT2 &Q = const_cast<MAT2 &>(QQ); MAT3 &R = const_cast<MAT3 &>(RR); 

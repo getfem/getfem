@@ -141,6 +141,7 @@ namespace gmm {
     void sgetri_(...); void dgetri_(...); void cgetri_(...); void zgetri_(...);
     void sgeqrf_(...); void dgeqrf_(...); void cgeqrf_(...); void zgeqrf_(...);
     void sorgqr_(...); void dorgqr_(...); void cungqr_(...); void zungqr_(...);
+    void sormqr_(...); void dormqr_(...); void cunmqr_(...); void zunmqr_(...);
     void  sgees_(...); void  dgees_(...); void  cgees_(...);  void zgees_(...);
     void  sgeev_(...); void  dgeev_(...); void  cgeev_(...);  void zgeev_(...);
   }
@@ -816,27 +817,6 @@ namespace gmm {
   geqrf_interface(cgeqrf_, BLAS_C);
   geqrf_interface(zgeqrf_, BLAS_Z);
 
-
-# define geqrf_interface1(lapack_name1, lapack_name2, base_type) inline    \
-  void qr_factor(dense_matrix<base_type > &A, dense_matrix<base_type > &Q){\
-    int m(mat_nrows(A)), n(mat_ncols(A)), info, lwork(-1); base_type work1;\
-    std::vector<base_type > tau(n);                                        \
-    lapack_name1(&m, &n, &A(0,0), &m, &tau[0], &work1  , &lwork, &info);   \
-    lwork = int(dal::real(work1));                                         \
-    std::vector<base_type > work(lwork);                                   \
-    lapack_name1(&m, &n, &A(0,0), &m, &tau[0], &work[0], &lwork, &info);   \
-    if (info) DAL_THROW(failure_error, "QR factorization failed");         \
-    gmm::copy(A, Q);                                                       \
-    lapack_name2(&m, &n, &n, &Q(0,0), &m, &tau[0], &work[0],&lwork,&info); \
-  }
-
-  geqrf_interface1(sgeqrf_, sorgqr_, BLAS_S);
-  geqrf_interface1(dgeqrf_, dorgqr_, BLAS_D);
-  geqrf_interface1(cgeqrf_, cungqr_, BLAS_C);
-  geqrf_interface1(zgeqrf_, zungqr_, BLAS_Z);
-
-
-
 # define geqrf_interface2(lapack_name1, lapack_name2, base_type) inline    \
   void qr_factor(const dense_matrix<base_type > &A,                        \
        dense_matrix<base_type > &Q, dense_matrix<base_type > &R) {         \
@@ -860,6 +840,24 @@ namespace gmm {
   geqrf_interface2(cgeqrf_, cungqr_, BLAS_C);
   geqrf_interface2(zgeqrf_, zungqr_, BLAS_Z);
 
+
+  // To be done, tau is to be computed ...
+  // # define ormqr_interface(lapack_name, base_type) inline      
+  //   void apply_house_right(const dense_matrix<base_type > &QR, 
+  // 			 dense_matrix<base_type > &A){          
+  
+  //     int m(mat_nrows(A)), n(mat_ncols(A)), k(mat_ncols(QR));
+  //     int lda = (mat_nrows(QR)), info;
+  //     char side = 'R', trans = 'N';
+  
+  //     lapack_name(&side, &trans, &m, &n, &k, &QR(0,0), &lda, 
+  //   }
+  
+  //   ormqr_interface(sormqr_, BLAS_S);
+  //   ormqr_interface(dormqr_, BLAS_D);
+  //   ormqr_interface(cunmqr_, BLAS_C);
+  //   ormqr_interface(zunmqr_, BLAS_Z);
+  
   /* ********************************************************************* */
   /* QR algorithm for eigenvalues search.                                  */
   /* ********************************************************************* */
