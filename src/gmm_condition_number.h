@@ -90,7 +90,7 @@ namespace gmm {
   template <typename MAT> 
   typename number_traits<typename 
   linalg_traits<MAT>::value_type>::magnitude_type
-  Frobenius_condition_number(const MAT& M) { 
+  Frobenius_condition_number_sqr(const MAT& M) { 
     typedef typename linalg_traits<MAT>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
     size_type m = mat_nrows(M), n = mat_ncols(M);
@@ -99,8 +99,14 @@ namespace gmm {
     else       mult(gmm::conjugated(M),M,B);
     R trB = abs(mat_trace(B));
     lu_inverse(B);
-    return sqrt(trB*abs(mat_trace(B)));
+    return trB*abs(mat_trace(B));
   }
+
+  template <typename MAT> 
+  typename number_traits<typename 
+  linalg_traits<MAT>::value_type>::magnitude_type
+  Frobenius_condition_number(const MAT& M)
+  { return sqrt(Frobenius_condition_number_sqr(M)); }
 
   /** estimation of the condition number (to be done ...)
    * (using symmetric_qr_algorithm => dense matrices only)

@@ -46,7 +46,7 @@ namespace getfem {
     
     size_type n = mat_ncols(M);
     gmm::dense_matrix<T> B(n,n), C(n,n);
-    gmm::mult(M,gmm::transposed(M),B);
+    gmm::mult(gmm::transposed(M), M, B);
     R trB = gmm::mat_trace(B);
     gmm::lu_inverse(B);
     R trBinv = gmm::mat_trace(B);
@@ -1069,9 +1069,9 @@ namespace getfem {
 		      const bgeot::mesh_structure &edges_mesh) {
       const bgeot::mesh_convex_ind_ct edges = edges_mesh.convex_to_point(ip);
       if (edges.empty()) return;
-      size_type N = pts[0].size();
-      base_matrix H(N,N);
-      base_node B(N); gmm::clear(B);
+      size_type NN = pts[0].size();
+      base_matrix H(NN,NN);
+      base_node B(NN); gmm::clear(B);
       scalar_type J = 0;
       scalar_type mL0 = 0;
       size_type nedges = 0;
@@ -1093,15 +1093,15 @@ namespace getfem {
 	maxdl = std::min(maxdl, dal::abs(n-l0));
 	//cout << "ie = " << *ie << ", n = " << n << ", L0=" << l0 << "\n";
 	if (n > 1e-10) {
-	  /*for (size_type i=0; i < N; ++i) {
+	  /*for (size_type i=0; i < NN; ++i) {
 	    H(i,i) += -F/n;
-	    for (size_type j=0; j < N; ++j) {
+	    for (size_type j=0; j < NN; ++j) {
 	    H(i,j) += (l0/n3)*(X[i]*X[j]);
 	    }
 	    }*/
-	  for (size_type i=0; i < N; ++i) {
+	  for (size_type i=0; i < NN; ++i) {
 	    H(i,i) += F*DF/n;
-	    for (size_type j=0; j < N; ++j) {
+	    for (size_type j=0; j < NN; ++j) {
 	      H(i,j) += (((DF*DF+F*HF)*n - F*DF)/n3)*(X[i]*X[j]);
 	    }
 	  }
@@ -1110,7 +1110,7 @@ namespace getfem {
       }
       if (bv_edges.card() == 0) return;
       mL0 /= nedges;
-      base_node V(N), X(N);
+      base_node V(NN), X(NN);
       //gmm::copy(B,V);
       tangential_displacement(B, pts_attr[ip]->constraints);
       gmm::scale(B,100*deltat);

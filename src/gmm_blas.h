@@ -6,11 +6,11 @@
 /*                         (and others ...)                                */
 /*     									   */
 /* Date : October 13, 2002.                                                */
-/* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
+/* Author : Yves Renard, Yves.Renard@insa-toulouse.fr                      */
 /*                                                                         */
 /* *********************************************************************** */
 /*                                                                         */
-/* Copyright (C) 2002  Yves Renard.                                        */
+/* Copyright (C) 2002-2004  Yves Renard.                                   */
 /*                                                                         */
 /* This file is a part of GMM++                                            */
 /*                                                                         */

@@ -259,6 +259,7 @@ else
   fi;
 ])
 fi;
+AM_CONDITIONAL(QHULL, test x$useQHULL = xyes)
 dnl -----------------------------END OF QHULL TEST--------------------------
 
 

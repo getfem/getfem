@@ -1,3 +1,14 @@
+2004-09-15  Yves Renard  <Yves.Renard@insa-toulouse.fr>
+
+	* src/gmm_solver_bfgs.h: A BFGS and a DFP algorithm for
+	unconstrained optimization.
+
+2004-09-15  Julien Pommier  <pommier@insa-toulouse.fr>
+
+	* src/gmm_blas.h: 
+	gmm now handles (valid) operations mixing complex and scalars
+	(e.g. multiplication of a complex vector with a real matrix)
+
 2004-08-27  julien pommier  <pommier@gmm.insa-tlse.fr>
 
 	* src/getfem_fem.h, src/getfem_interpolation.h: added hability to

@@ -96,6 +96,8 @@ namespace gmm {
 #include <gmm_modified_gram_schmidt.h>
 #include <gmm_tri_solve.h>
 #include <gmm_solver_gmres.h>
+#include <gmm_solver_bfgs.h>
+
 // #include <gmm_solver_idgmres.h>
 
 
