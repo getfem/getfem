@@ -66,6 +66,8 @@ Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 \section{Finite element methods}
 
+all finite element methods defined in getfem++ are interfaced in the file {\tt getfem\_fem.h}.
+
 \subsection{Finite element methods description}
 
 A finite element method is defined on a reference element $\overline{T} \subset \Reel^P$ by a set of $n_d$ nodes $a^i$ and corresponding base functions 
@@ -83,12 +85,6 @@ one has
 $$ \fbox{$\hspace{1em} f(\tau(\overline{x})) = \alpha^T M [\overline{\varphi}(\overline{x})],\hspace{1em}$} $$
 where $\alpha$ is the vector of components $\alpha_i$.
 
-A certain number of description of classical finite element method are defined in the file {\tt getfem\_fem.h}. More classical ones are the following:
-
-\input{getfemelemfem.tex}
-
-One can see in the file {\tt getfem\_fem.C} how to define a new finite element method. Basically, the only thing to do is to give the base functions on the reference element and the corresponding nodes.
-
 \subsubsection{graphical codification of d.o.f.}
 
 \begin{figure}[H] \label{fig:symbols}
@@ -100,59 +96,46 @@ One can see in the file {\tt getfem\_fem.C} how to define a new finite element m
 
 \subsection{Basic Lagrange elements on simplexes}
 
-a chaque élément : 
-dessin des ddl avec code
-nb de ddl, degre, equivalence via la transformation géometrique, vectoriel ou non, analyse du raccord
+% a chaque élément : 
+% dessin des ddl avec code
+% nb de ddl, degre, equivalence via la transformation géometrique, vectoriel ou non, analyse du raccord
+
+
+\begin{figure}[H] \label{fig:symbols}
+  \begin{center} \begin{tabular}{m{7cm}m{7cm}}
+    \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P1.eps} & \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P2.eps} \\
+    $P_1$ element, 3 d.o.f., $C^0$ & $P_2$ element, 6 d.o.f., $C^0$ \\ \\
+    \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P3.eps} & \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P6.eps} \\
+    $P_3$ element, 10 d.o.f., $C^0$ & $P_6$ element, 28 d.o.f., $C^0$
+  \end{tabular} \end{center}
+  \caption{ \it Examples of standard Lagrange element on a triangle.}
+\end{figure}
+
+\begin{figure}[H] \label{fig:symbols}
+  \begin{center}
+    \begin{tabular}{m{7cm}m{7cm}}
+      \includegraphics[width=5cm,angle=0]{getfemlist_tetrahedron_P1.eps} & \includegraphics[width=5cm,angle=0]{getfemlist_tetrahedron_P2.eps} \\
+      $P_1$ element, 4 d.o.f., $C^0$, & $P_2$ element, 10 d.o.f., $C^0$
+    \end{tabular}
+     \includegraphics[width=5cm,angle=0]{getfemlist_tetrahedron_P4.eps} \\
+     $P_4$ element, 35 d.o.f., $C^0$
+  \end{center}
+  \caption{ \it Examples of standard Lagrange element on a tetrahedron.}
+\end{figure}
 
 \subsection{Basic Lagrange elements on other geometries}
-
-\begin{figure}[H] \label{fig:symbols}
-  \begin{center}
-    \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P1.eps}
-  \end{center}
-  \caption{ \it$P_1$ standard Lagrange element on a triangle, 3 d.o.f., $C^0$}
-\end{figure}
-
-\begin{figure}[H] \label{fig:symbols}
-  \begin{center}
-    \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P2.eps}
-  \end{center}
-  \caption{ \it$P_2$ standard Lagrange element on a triangle, 6 d.o.f., $C^0$}
-\end{figure}
-
-\begin{figure}[H] \label{fig:symbols}
-  \begin{center}
-    \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P3.eps}
-  \end{center}
-  \caption{ \it$P_3$ standard Lagrange element on a triangle, 10 d.o.f., $C^0$}
-\end{figure}
-
-\begin{figure}[H] \label{fig:symbols}
-  \begin{center}
-    \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P6.eps}
-  \end{center}
-  \caption{ \it$P_6$ standard Lagrange element on a triangle, 28 d.o.f., $C^0$}
-\end{figure}
-
-\begin{figure}[H] \label{fig:symbols}
-  \begin{center}
-    \includegraphics[width=5cm,angle=0]{getfemlist_tetrahedron_P1.eps}
-  \end{center}
-  \caption{ \it$P_1$ standard Lagrange element on a tetrahedron, 4 d.o.f., $C^0$}
-\end{figure}
-
-\begin{figure}[H] \label{fig:symbols}
-  \begin{center}
-    \includegraphics[width=5cm,angle=0]{getfemlist_tetrahedron_P2.eps}
-  \end{center}
-  \caption{ \it$P_2$ standard Lagrange element on a tetrahedron, 10 d.o.f., $C^0$}
-\end{figure}
-
 
 \subsection{Specific elements in dimension 1}
 
 
 \subsection{Specific elements in dimension 2}
+
+\begin{figure}[H] \label{fig:symbols}
+  \begin{center}
+    \includegraphics[width=5cm,angle=0]{getfemlist_triangle_P1_bubble.eps}
+  \end{center}
+  \caption{ \it$P_1$ Lagrange element on a triangle with additional bubble function, 4 d.o.f., $C^0$}
+\end{figure}
 
 
 \begin{figure}[H] \label{fig:symbols}
@@ -161,6 +144,7 @@ nb de ddl, degre, equivalence via la transformation géometrique, vectoriel ou no
   \end{center}
   \caption{ \it Argyris element, $P_5$, 21 d.o.f., $C^1$}
 \end{figure}
+to be done ...
 
 \subsection{Specific elements in dimension 3}
 
