@@ -62,10 +62,11 @@ namespace gmm {
     size_type m = mat_nrows(A), n = mat_ncols(A);
     if (m < n) DAL_THROW(dimension_error, "dimensions mismatch");
     dense_matrix<value_type> *MWORK;
+    std::auto_ptr< dense_matrix<value_type> > auto_MWORK;
     if (m == n)
       { gmm::copy(A, R); MWORK = &R; }
     else
-      { MWORK = new dense_matrix<value_type>(m,n); gmm::copy(A, *MWORK); }
+      { MWORK = new dense_matrix<value_type>(m,n); auto_MWORK.reset(MWORK); gmm::copy(A, *MWORK); }
     gmm::copy(identity_matrix(), Q);
     
     std::vector<value_type> W(m);
@@ -84,14 +85,13 @@ namespace gmm {
     }
 
     for (size_type j = n-1; j != size_type(-1); --j) {
-      sub_interval SUBI(j, m-j);
-      row_house_update(sub_matrix(Q, SUBI), 
-		       sub_vector(mat_col(VV,j), SUBI), sub_vector(W, SUBI));
+      sub_interval SUBI(j, m-j), SUBJ(j, n-j);
+      row_house_update(sub_matrix(Q, SUBI, SUBJ), 
+		       sub_vector(mat_col(VV,j), SUBI), sub_vector(W, SUBJ));
     }
     
     if (m != n) {
       gmm::copy(sub_matrix(*MWORK, sub_interval(0, n), sub_interval(0, n)), R);
-      delete MWORK;
     }
 
   }
