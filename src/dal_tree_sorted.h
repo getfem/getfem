@@ -122,6 +122,7 @@ namespace dal
   {
     #ifdef __GETFEM_VERIFY
       assert(depth>0); assert(depth<_DEPTHMAX_); assert(index() != ST_NIL);
+      // internal error
     #endif
     path[depth] = p->left_elt(_index()); dir[depth++] = -1;
   }
@@ -131,6 +132,7 @@ namespace dal
   { 
     #ifdef __GETFEM_VERIFY
       assert(depth>0); assert(depth<_DEPTHMAX_); assert(index()!=ST_NIL);
+      // internal error
     #endif
     path[depth] = p->right_elt(_index()); dir[depth++] = 1;
   }
@@ -248,6 +250,7 @@ namespace dal
   {
     #ifdef __GETFEM_VERIFY
       assert(depth>0); assert(depth<_DEPTHMAX_); assert(index()!=ST_NIL);
+      // internal error
     #endif
     path[depth] = p->left_elt(_index()); dir[depth++] = -1;
   }
@@ -257,6 +260,7 @@ namespace dal
   { 
     #ifdef __GETFEM_VERIFY
       assert(depth>0); assert(depth<_DEPTHMAX_); assert(index()!=ST_NIL);
+      // internal error
     #endif
     path[depth] = p->right_elt(_index()); dir[depth++] = 1;
   }
@@ -344,15 +348,16 @@ namespace dal
 	  if (i == ST_NIL) return 0;
 	  int l = verify_balance(nodes[i].l);
 	  int r = verify_balance(nodes[i].r);
-	  assert(short_type(r - l) ==  nodes[i].eq);
-	  assert(nodes[i].eq <= 1 && nodes[i].eq>=-1);
+	    assert(short_type(r - l) ==  nodes[i].eq);   // internal error
+	    assert(nodes[i].eq <= 1 && nodes[i].eq>=-1); // internal error
 	  return std::max(l,r) + 1;
 	}
 
       #endif
 
       void insert_path(const T &elt, const_sorted_iterator &it) const;
-      void search_sorted_iterator(const T &elt, const_sorted_iterator &it) const;
+      void search_sorted_iterator(const T &elt, 
+				  const_sorted_iterator &it) const;
       void find_sorted_iterator(size_type i, const_sorted_iterator &it) const;
       COMP &comparator(void) { return compar; }
       const COMP &comparator(void) const { return compar; }
@@ -494,15 +499,15 @@ namespace dal
                                       else return rotate_right_left(i);
       case  0 : case -1 : case 1 : return i;
     #ifdef __GETFEM_VERIFY
-      default : assert(dal::abs(pn->eq) <= 2); exit(1);
+      default : assert(dal::abs(pn->eq) <= 2); exit(1); // internal error
     #endif
     }
     return ST_NIL;
   }
 
   template<class T, class COMP, int pks>
-    void dynamic_tree_sorted<T, COMP, pks>::search_sorted_iterator(const T &elt,
-						    const_sorted_iterator &it) const
+   void dynamic_tree_sorted<T, COMP, pks>::search_sorted_iterator(const T &elt,
+					     const_sorted_iterator &it) const
   {
     it.root();
     while (it.index() != ST_NIL)
@@ -680,7 +685,7 @@ namespace dal
     size_type f, ni = i, ic;
     short_type dir;
     #ifdef __GETFEM_VERIFY
-      assert(i != ST_NIL);
+      assert(i != ST_NIL); // internal error
     #endif
     tree_elt *pni = &(nodes[i]), *pnc;
 
@@ -736,9 +741,10 @@ namespace dal
   template<class T, class COMP, int pks>
     void dynamic_tree_sorted<T, COMP, pks>::sup(size_type i)
   {
-    #ifdef __GETFEM_VERIFY
-      assert(i != ST_NIL);
-    #endif
+    if (i >= INT_MAX)
+      throw std::out_of_range(
+	 "dynamic_tree_sorted<T, COMP, pks>::sup : index out of range");
+
     const_sorted_iterator it(*this); find_sorted_iterator(i, it);
     if (it.index() != ST_NIL)
     { sup_index(i, it); dynamic_tas<T, pks>::sup(i); }
@@ -747,6 +753,10 @@ namespace dal
   template<class T, class COMP, int pks>
     void dynamic_tree_sorted<T, COMP, pks>::swap(size_type i, size_type j)
   {
+    if (i >= INT_MAX || j >= INT_MAX)
+      throw std::out_of_range(
+	 "dynamic_tree_sorted<T, COMP, pks>::swap : index out of range");
+
     if (i != j)
     {
       const_sorted_iterator it1(*this), it2(*this); it1.end(); it2.end();

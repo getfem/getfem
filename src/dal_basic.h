@@ -1,3 +1,4 @@
+/* -*- c++ -*- (enables emacs c++ mode)                                    */
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Dynamic Array Library (dal)                                  */
@@ -339,11 +340,12 @@ namespace dal
   template<class T, unsigned char pks> dynamic_array<T,pks>::reference
     dynamic_array<T,pks>::operator [](size_type ii)
   {
-    #ifdef __GETFEM_VERIFY
-      assert(ii != size_type(-1));
-    #endif
     if (ii >= last_accessed)
     {
+      if (ii >= INT_MAX)
+	throw std::out_of_range(
+	   "dynamic_array<T,pks>::operator [] : index out of range");
+
       last_accessed = ii + 1;
       if (ii >= last_ind)
       {
