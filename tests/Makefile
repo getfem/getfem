@@ -13,7 +13,7 @@
 # PARTICULAR PURPOSE.
 
 
-SHELL = /bin/ksh
+SHELL = /bin/sh
 
 srcdir = .
 top_srcdir = ..
@@ -40,11 +40,11 @@ top_builddir = ..
 
 ACLOCAL = aclocal -I config --output=config/aclocal.m4
 AUTOCONF = autoconf -l config
-AUTOMAKE = ${SHELL} /home/gmmpc15/renard/source++/getfem++new/config/missing --run automake-1.6
-AUTOHEADER = ${SHELL} /home/gmmpc15/renard/source++/getfem++new/config/missing --run autoheader
+AUTOMAKE = ${SHELL} /home/gmmpc15/renard/source++/getfem++/config/missing --run automake-1.6
+AUTOHEADER = ${SHELL} /home/gmmpc15/renard/source++/getfem++/config/missing --run autoheader
 
 am__cd = CDPATH="$${ZSH_VERSION+.}$(PATH_SEPARATOR)" && cd
-INSTALL = /home/gmmpc15/renard/source++/getfem++/bin/install -c
+INSTALL = /usr/bin/install -c
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_DATA = ${INSTALL} -m 644
 install_sh_DATA = $(install_sh) -c -m 644
@@ -59,28 +59,28 @@ NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
 host_alias = 
-host_triplet = alphaev67-dec-osf4.0f
+host_triplet = i686-pc-linux-gnu
 
 EXEEXT = 
 OBJEXT = o
 PATH_SEPARATOR = :
-AMTAR = ${SHELL} /home/gmmpc15/renard/source++/getfem++new/config/missing --run tar
+AMTAR = ${SHELL} /home/gmmpc15/renard/source++/getfem++/config/missing --run tar
 AS = @AS@
-AWK = gawk
+AWK = mawk
 CC = gcc
-CXX = cxx
-CXXCPP = cxx -E
+CXX = g++
+CXXCPP = g++ -E
 DEPDIR = .deps
 DLLTOOL = @DLLTOOL@
-ECHO = print -r
+ECHO = echo
 GCJ = @GCJ@
 GCJFLAGS = @GCJFLAGS@
 INSTALL_STRIP_PROGRAM = ${SHELL} $(install_sh) -c -s
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
 LIBTOOL_VERSION_INFO = -version-info 1:0:0
 LN_S = ln -s
-MATLAB_COM_EXT = .mexaxp
-MATLAB_INC_DIR = /tmp_mnt/usr/local/matlab-R12.1/extern/include
+MATLAB_COM_EXT = .mexglx
+MATLAB_INC_DIR = /mnt/opt/matlab/extern/include
 MEX = mex
 OBJDUMP = @OBJDUMP@
 PACKAGE = getfem
@@ -90,7 +90,7 @@ STRIP = strip
 VERSION = 1.0
 am__include = include
 am__quote = 
-install_sh = /home/gmmpc15/renard/source++/getfem++new/config/install-sh
+install_sh = /home/gmmpc15/renard/source++/getfem++/config/install-sh
 check_PROGRAMS = \
 	dynamic_array \
 	dynamic_tas
@@ -118,7 +118,7 @@ dynamic_tas_LDADD = $(LDADD)
 dynamic_tas_DEPENDENCIES = ../src/.libs/libgetfm.a
 dynamic_tas_LDFLAGS =
 
-DEFS = -DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE=\"getfem\" -DVERSION=\"1.0\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_UNISTD_H=1 -DHAVE_DLFCN_H=1 
+DEFS = -DPACKAGE_NAME=\"\" -DPACKAGE_TARNAME=\"\" -DPACKAGE_VERSION=\"\" -DPACKAGE_STRING=\"\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE=\"getfem\" -DVERSION=\"1.0\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_DLFCN_H=1 
 DEFAULT_INCLUDES =  -I. -I$(srcdir)
 CPPFLAGS = 
 LDFLAGS = 
@@ -135,7 +135,7 @@ LTCXXCOMPILE = $(LIBTOOL) --mode=compile $(CXX) $(DEFS) \
 CXXLD = $(CXX)
 CXXLINK = $(LIBTOOL) --mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-CXXFLAGS =  -std strict_ansi -O3
+CXXFLAGS =  -ftemplate-depth-40 -pedantic -O3
 DIST_SOURCES = $(dynamic_array_SOURCES) $(dynamic_tas_SOURCES)
 DIST_COMMON = Makefile.am Makefile.in
 SOURCES = $(dynamic_array_SOURCES) $(dynamic_tas_SOURCES)
@@ -197,7 +197,7 @@ distclean-depend:
 	depfile='$(DEPDIR)/$*.Plo' tmpdepfile='$(DEPDIR)/$*.TPlo' \
 	$(CXXDEPMODE) $(depcomp) \
 	$(LTCXXCOMPILE) -c -o $@ `test -f $< || echo '$(srcdir)/'`$<
-CXXDEPMODE = depmode=none
+CXXDEPMODE = depmode=gcc
 uninstall-info-am:
 
 ETAGS = etags
