@@ -47,7 +47,7 @@ namespace getfem {
     
     size_type nb_node; 
     f >> nb_node;
-    cerr << "reading nodes..[nb=" << nb_node << "]\n";
+    //cerr << "reading nodes..[nb=" << nb_node << "]\n";
     dal::dynamic_tree_sorted<size_type> msh_node_2_getfem_node;
     for (size_type node_cnt=0; node_cnt < nb_node; ++node_cnt) {
       size_type node_id;
