@@ -128,17 +128,17 @@ namespace gmm {
     typedef typename linalg_traits<V>::storage_type storage_type;
     typedef scaled_vector_const_access<V> access_type;
     typedef abstract_null_type clear_type;
-    size_type size(const this_type &v) { return v._size; }
-    iterator begin(this_type &v)
+    static size_type size(const this_type &v) { return v._size; }
+    static iterator begin(this_type &v)
     { return iterator(v._begin, v.r); }
-    const_iterator begin(const this_type &v)
+    static const_iterator begin(const this_type &v)
     { return const_iterator(v._begin, v.r); }
-    iterator end(this_type &v)
+    static iterator end(this_type &v)
     { return iterator(v._end, v.r); }
-    const_iterator end(const this_type &v)
+    static const_iterator end(const this_type &v)
     { return const_iterator(v._end, v.r); }
-    const void* origin(const this_type &v) { return v.origin; }
-    void do_clear(this_type &v) { clear_type()(v.origin, v._begin, v._end); }
+    static const void* origin(const this_type &v) { return v.origin; }
+    static void do_clear(this_type &v) { clear_type()(v.origin, v._begin, v._end); }
   };
 
   // for GCC 2.95
