@@ -105,7 +105,6 @@ namespace getfem
     mf.set_finite_element(pm->convex_index(), pf);
     const virtual_fem *p = composite_fe_method(*pmp, mf, pf->ref_convex(0));
     dependencies.push_back(p->ref_convex(0));
-    dependencies.push_back(p->node_convex(0).structure());
     dependencies.push_back(p->node_tab(0));
     return p;
   }

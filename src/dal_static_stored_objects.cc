@@ -74,6 +74,12 @@ namespace dal {
     return 0;
   }
 
+  // Test if an object is stored.
+  bool exists_stored_object(pstatic_stored_object o) {
+    stored_key_tab& stored_keys = dal::singleton<stored_key_tab>::instance();
+    return (stored_keys.find(o) != stored_keys.end());
+  }
+
   // Gives a pointer to an object from a key pointer
   pstatic_stored_object search_stored_object(pstatic_stored_object_key k) {
     stored_object_tab& stored_objects
@@ -91,8 +97,10 @@ namespace dal {
       = dal::singleton<stored_object_tab>::instance();
     pstatic_stored_object_key k = key_of_stored_object(o);
     if (k) {
-      stored_object_tab::iterator it = stored_objects.find(enr_static_stored_object_key(k));
-      if (it == stored_objects.end()) DAL_THROW(internal_error, "Object has key but cannot be found");
+      stored_object_tab::iterator it
+	= stored_objects.find(enr_static_stored_object_key(k));
+      if (it == stored_objects.end())
+	DAL_THROW(internal_error, "Object has key but cannot be found");
       return it;
     }
     return stored_objects.end();
@@ -101,11 +109,13 @@ namespace dal {
   // Test the validity of arrays
   void test_stored_objects(void) {
     stored_key_tab& stored_keys = dal::singleton<stored_key_tab>::instance();
-    for (stored_key_tab::iterator it = stored_keys.begin(); it != stored_keys.end(); ++it)
+    for (stored_key_tab::iterator it = stored_keys.begin();
+	 it != stored_keys.end(); ++it)
       iterator_of_object(it->first);
     stored_object_tab& stored_objects
       = dal::singleton<stored_object_tab>::instance();
-    for (stored_object_tab::iterator it = stored_objects.begin(); it != stored_objects.end(); ++it)
+    for (stored_object_tab::iterator it = stored_objects.begin();
+	 it != stored_objects.end(); ++it)
       if (iterator_of_object(it->second.p) == stored_objects.end())
 	DAL_THROW(internal_error, "Object has key but cannot be found");
   }
@@ -119,6 +129,15 @@ namespace dal {
     if (it1 != stored_objects.end() && it2 != stored_objects.end()) {
       it2->second.dependent_object.insert(o1);
       it1->second.dependencies.insert(o2);
+    }
+    else {
+      cerr << "Problem adding dependency between " << o1 << " of type "
+	   << typeid(*o1).name() << " and " << o2 << " of type "
+	   << typeid(*o2).name() << ". ";
+      if (it1 == stored_objects.end()) cerr << "First object does non exist.";
+      if (it2 == stored_objects.end()) cerr << "Second object does non exist.";
+      cerr << endl;
+      DAL_THROW(failure_error, "Add_dependency : Inexistent object");
     }
   }
 

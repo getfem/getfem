@@ -72,8 +72,10 @@ namespace getfem {
     bool has_secondary(void) { return with_secondary; }
     mesh_fem &get_mesh_fem(void) { return *mf; }
     dim_type degree() const { return degree_; }
-    level_set(getfem_mesh &mesh, dim_type o = dim_type(1), bool with_secondary_ = false)
-      : pmesh(&mesh), degree_(o), mf(add_mesh_fem(mesh, o)), with_secondary(with_secondary_) {
+    level_set(getfem_mesh &mesh, dim_type deg = dim_type(1),
+	      bool with_secondary_ = false)
+      : pmesh(&mesh), degree_(deg), mf(add_mesh_fem(mesh, deg)),
+	with_secondary(with_secondary_) {
       primary_.resize(mf->nb_dof());
       secondary_.resize(mf->nb_dof());
     }

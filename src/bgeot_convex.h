@@ -162,14 +162,28 @@ namespace bgeot {
 	     convex_product_structure(cv1.structure(), cv2.structure()), tab);
   }
 
+  struct special_convex_structure_key_ : virtual public dal::static_stored_object_key {
+    pconvex_structure p;
+    virtual bool compare(const static_stored_object_key &oo) const {
+      const special_convex_structure_key_ &o
+	= dynamic_cast<const special_convex_structure_key_ &>(oo);
+      if (p < o.p) return true;  return false;
+    }
+    special_convex_structure_key_(pconvex_structure pp) : p(pp) {}
+  };
+
   template<class PT, class PT_TAB1, class PT_TAB2>
     convex<PT> convex_direct_product(const convex<PT, PT_TAB1> &cv1,
-				     const convex<PT, PT_TAB2> &cv2)
-  {
+				     const convex<PT, PT_TAB2> &cv2) {
     if (cv1.nb_points() == 0 || cv2.nb_points() == 0)
       throw std::invalid_argument(
 		     "convex_direct_product : null convex product");
-
+    if (!dal::exists_stored_object(cv1.structure()))
+      dal::add_stored_object(new special_convex_structure_key_(cv1.structure()),
+			     cv1.structure(), dal::AUTODELETE_STATIC_OBJECT);
+    if (!dal::exists_stored_object(cv2.structure()))
+      dal::add_stored_object(new special_convex_structure_key_(cv2.structure()),
+			     cv2.structure(), dal::AUTODELETE_STATIC_OBJECT);
     convex<PT> r(convex_product_structure(cv1.structure(), cv2.structure()));
     r.points().resize(r.nb_points());
     std::fill(r.points().begin(), r.points().end(), PT(r.structure()->dim()));
@@ -203,28 +217,6 @@ namespace bgeot {
       for (it2 = it1; it2 != it1e; ++it2) *it++ = *it2;
     return r;
   }
-
-  /* structures de reference.                                             */
-
-//   template<class PT> convex<PT> simplex_of_reference(dim_type nc)
-//   {
-//     convex<PT> res(simplex_structure(nc));
-//     res.points().resize(nc+1);
-//     PT null(nc); null.fill(0.0);
-//     std::fill(res.points().begin(), res.points().end(), null);
-//     for (int i = 1; i <= nc; ++i) (res.points()[i])[i-1] = 1.0;
-//     return res;
-//   }
-
-//   template<class PT> 
-//     convex<PT> parallelepiped_of_reference(dim_type nc)
-//   { /* optimisable. */
-//     if (nc == 1) return simplex_of_reference<PT>(1);
-//     else
-//       return convex_direct_product<PT>(parallelepiped_of_reference<PT>(nc-1),
-// 				          simplex_of_reference<PT>(1));
-//   }
-
 
 }  /* end of namespace bgeot.                                             */
 

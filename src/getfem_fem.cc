@@ -458,7 +458,6 @@ namespace getfem
       DAL_THROW(failure_error, "Bad parameters");
     virtual_fem *p = new PK_fem_(n, k);
     dependencies.push_back(p->ref_convex(0));
-    dependencies.push_back(p->node_convex(0).structure());
     dependencies.push_back(p->node_tab(0));
     return p;
   }
@@ -484,6 +483,7 @@ namespace getfem
 		"Product of non equivalent elements not available, sorry.");
     is_lag = fi1->is_lagrange() && fi2->is_lagrange();;
     es_degree = fi1->estimated_degree() + fi2->estimated_degree();
+    
     bgeot::convex<base_node> cv 
       = bgeot::convex_direct_product(fi1->node_convex(0), fi2->node_convex(0));
     cvr = bgeot::convex_ref_product(fi1->ref_convex(0), fi2->ref_convex(0));
@@ -519,7 +519,6 @@ namespace getfem
     virtual_fem *p = new tproduct_femi(ppolyfem(pf1.get()),
 				       ppolyfem(pf2.get()));
     dependencies.push_back(p->ref_convex(0));
-    dependencies.push_back(p->node_convex(0).structure());
     dependencies.push_back(p->node_tab(0));
     return p;
   }
@@ -618,7 +617,6 @@ namespace getfem
       virtual_fem *p = new thierach_femi_comp(ppolycompfem(pf1.get()),
 					      ppolycompfem(pf2.get()));
       dependencies.push_back(p->ref_convex(0));
-      dependencies.push_back(p->node_convex(0).structure());
       dependencies.push_back(p->node_tab(0));
       return p;
     }
@@ -778,7 +776,6 @@ namespace getfem
     p->add_node(lagrange_dof(2), base_small_vector(0.5, 0.0));
     p->base()[2] = one - y * 2.0;
     dependencies.push_back(p->ref_convex(0));
-    dependencies.push_back(p->node_convex(0).structure());
     dependencies.push_back(p->node_tab(0));
 
     return p;
@@ -817,7 +814,6 @@ namespace getfem
       DAL_THROW(failure_error, "Bad parameters");
     virtual_fem *p = new P1_wabbfoaf_(n);
     dependencies.push_back(p->ref_convex(0));
-    dependencies.push_back(p->node_convex(0).structure());
     dependencies.push_back(p->node_tab(0));
     return p;
   }
@@ -853,7 +849,6 @@ namespace getfem
       DAL_THROW(failure_error, "Bad number of parameters");
     virtual_fem *p = new P1_wabbfoafla_;
     dependencies.push_back(p->ref_convex(0));
-    dependencies.push_back(p->node_convex(0).structure());
     dependencies.push_back(p->node_tab(0));
     return p;
   }
@@ -903,7 +898,6 @@ namespace getfem
     int k = int(::floor(params[0].num() + 0.01));
     virtual_fem *p = new PK_GL_fem_(k);
     dependencies.push_back(p->ref_convex(0));
-    dependencies.push_back(p->node_convex(0).structure());
     dependencies.push_back(p->node_tab(0));
     return p;
   }
@@ -975,7 +969,6 @@ namespace getfem
       DAL_THROW(failure_error, "Bad number of parameters");
     virtual_fem *p = new hermite_segment__;
     dependencies.push_back(p->ref_convex(0));
-    dependencies.push_back(p->node_convex(0).structure());
     dependencies.push_back(p->node_tab(0));
     return p;
   }
@@ -1027,7 +1020,6 @@ namespace getfem
       DAL_THROW(failure_error, "Bad parameters");
     virtual_fem *p = new PK_discont_(n, k, alpha);
     dependencies.push_back(p->ref_convex(0));
-    dependencies.push_back(p->node_convex(0).structure());
     dependencies.push_back(p->node_tab(0));
     return p;
   }
@@ -1076,7 +1068,6 @@ namespace getfem
       DAL_THROW(failure_error, "Bad parameters");
     virtual_fem *p = new PK_with_cubic_bubble_(n, k);
     dependencies.push_back(p->ref_convex(0));
-    dependencies.push_back(p->node_convex(0).structure());
     dependencies.push_back(p->node_tab(0));
     return p;
   }
@@ -1281,7 +1272,9 @@ namespace getfem
       = dal::search_stored_object(pre_fem_key_(pf, pspt));
     if (o) return dal::stored_cast<fem_precomp_>(o);
     pfem_precomp p = new fem_precomp_(pf, pspt);
-    dal::add_stored_object(new pre_fem_key_(pf, pspt), p, pf, pspt);
+    dal::add_stored_object(new pre_fem_key_(pf, pspt), p, pspt,
+			   dal::AUTODELETE_STATIC_OBJECT);
+    if (dal::exists_stored_object(pf)) dal::add_dependency(p, pf);
     return p;
     
   }

@@ -50,7 +50,7 @@ namespace getfem {
 
     mesh_im cut_im; /* stores an im only for convexes who are crossed
 		       by a levelset */
-    std::list<integration_method> build_methods;
+    std::vector<pintegration_method> build_methods;
 
   public :
 
@@ -60,6 +60,11 @@ namespace getfem {
 
     void add_level_set(level_set &ls) { level_sets.insert(&ls); }
     void sup_level_set(level_set &ls) { level_sets.erase(&ls); }
+    void set_simplex_im(pintegration_method reg,
+			pintegration_method sing = 0) {
+      regular_simplex_pim = reg;
+      singular_simplex_pim = (sing == 0) ? reg : sing;
+    }
     
     void receipt(const MESH_CLEAR &);
     void receipt(const MESH_DELETE &);
@@ -71,7 +76,7 @@ namespace getfem {
       return mesh_im::memsize(); // + ... ;
     }
     
-    mesh_im_level_set(getfem_mesh &me, pintegration_method reg,
+    mesh_im_level_set(getfem_mesh &me, pintegration_method reg = 0,
 		      pintegration_method sing = 0);
 
     virtual pintegration_method int_method_of_element(size_type cv) 

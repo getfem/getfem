@@ -290,6 +290,18 @@ namespace getfem {
 //     }
   }
 
+  // Key type for static storing
+  class special_imls_key : virtual public dal::static_stored_object_key {
+    papprox_integration p;
+  public :
+    virtual bool compare(const static_stored_object_key &oo) const {
+      const special_imls_key &o
+	= dynamic_cast<const special_imls_key &>(oo);
+      if (p < o.p) return true; return false; 
+    }
+    special_imls_key(papprox_integration pp) : p(pp) {}
+  };
+
 
   void mesh_im_level_set::cut_element(size_type cv,
 				      const dal::bit_vector &primary,
@@ -591,10 +603,12 @@ namespace getfem {
  
 
       if (h0_is_ok) {
-	build_methods.push_back(integration_method());
-	build_methods.back().set_approx_method
-	  (new approx_integration(new_approx));
-	cut_im.set_integration_method(cv, &build_methods.back());
+	approx_integration *pa = new approx_integration(new_approx);
+	pintegration_method pim = new integration_method(pa);
+	dal::add_stored_object(new special_imls_key(pa), pim,
+			       pa->ref_convex(), &(pa->integration_points()));
+	build_methods.push_back(pim);
+	cut_im.set_integration_method(cv, pim);
       }
 
       if (h0_is_ok && noisy) { // ajout dans global mesh pour visu
@@ -622,7 +636,10 @@ namespace getfem {
     // compute the elements touched by each level set
     // for each element touched, compute the sub mesh
     //   then compute the adapted integration method
-    cut_im.clear(); build_methods.clear();
+    cut_im.clear();
+    for (size_type i = 0; i < build_methods.size(); ++i)
+      del_stored_object(build_methods[i]);
+    build_methods.clear();
     for (dal::bv_visitor cv(linked_mesh().convex_index()); 
 	 !cv.finished(); ++cv) {
       dal::bit_vector prim, sec;

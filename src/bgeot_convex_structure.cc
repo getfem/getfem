@@ -337,8 +337,10 @@ namespace bgeot {
     pconvex_structure p = new cv_pr_structure_(a, b);
     dal::add_stored_object(new cv_pr_key_(a, b), p, a, b,
 			   dal::PERMANENT_STATIC_OBJECT);
-    for (size_type k = 0; k < p->nb_faces(); ++k)
-      dal::add_dependency(p, p->faces_structure()[k]);
+    for (size_type k = 0; k < p->nb_faces(); ++k) {
+      if (exists_stored_object(p->faces_structure()[k]))
+	dal::add_dependency(p, p->faces_structure()[k]);
+    }
     return p;
   }
 

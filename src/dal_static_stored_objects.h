@@ -125,8 +125,8 @@ namespace dal {
   search_stored_object(const static_stored_object_key &k)
   { return search_stored_object(&k); }
 
-  /** Test the validity of arrays (for debugging). */
-  void test_stored_objects(void);
+  /** Test if an object is stored. */
+  bool exists_stored_object(pstatic_stored_object o);
 
   /** Add a dependency, object o1 will depend on object o2. */
   void add_dependency(pstatic_stored_object o1, pstatic_stored_object o2);
