@@ -88,7 +88,6 @@ namespace gmm {
     typedef gmm::col_matrix<TmpVec> HMat;
 
     HMat H(restart+1, restart);
-    clear(H);
     TmpVec s(restart+1);
     outer.set_rhsnorm(gmm::vect_norm2(b));
 
@@ -129,8 +128,7 @@ namespace gmm {
 	++inner, ++outer, ++i;
       } while (! inner.finished(dal::abs(s[i])));
 
-      gmm::upper_tri_solve(gmm::sub_matrix(H, gmm::sub_interval(0, i),
-					   gmm::sub_interval(0, i)), s);
+      gmm::upper_tri_solve(H, s, i);
       gmm::combine(KS, s, x, i);
       gmm::mult(A, gmm::scaled(x, -1.0), b, w);
       gmm::mult(M, w, r);
@@ -142,7 +140,8 @@ namespace gmm {
   template < class Matrix, class Vector, class VectorB, class Preconditioner >
   void gmres(const Matrix &A, Vector &x, const VectorB &b,
 	     const Preconditioner &M, int restart, iteration& outer) {
-    modified_gram_schmidt<Vector> orth(restart, vect_size(x));
+    modified_gram_schmidt<typename 
+      temporary_plain_vector<Vector>::vector_type> orth(restart, vect_size(x));
     gmres(A, x, b, M, restart, outer, orth); 
   }
 

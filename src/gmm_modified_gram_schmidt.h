@@ -75,21 +75,19 @@ namespace gmm {
     
   };
 
-  template <class Vec, class VecHi, class Size>
-  void orthogonalize(modified_gram_schmidt<Vec>& V, const VecHi& _Hi, Size i) {
+  template <class Vec, class VecHi>
+  void orthogonalize(modified_gram_schmidt<Vec>& V,const VecHi& _Hi,size_t i) {
     VecHi& Hi = const_cast<VecHi&>(_Hi);
     
-    for (Size k = 0; k <= i; k++) {
+    for (size_t k = 0; k <= i; k++) {
       Hi[k] = gmm::vect_sp(V[i+1], V[k]);
       gmm::add(gmm::scaled(V[k], -Hi[k]), V[i+1]);
     }
   }
   
-  template <class Vec, class VecS, class VecX, class Size>
-  void combine(modified_gram_schmidt<Vec>& V, const VecS& s, VecX& x, Size i) {
-    for (Size j = 0; j < i; ++j)
-      gmm::add(gmm::scaled(V[j], s[j]), x);
-  }
+  template <class Vec, class VecS, class VecX>
+  void combine(modified_gram_schmidt<Vec>& V, const VecS& s,VecX& x,size_t i)
+  { for (size_t j = 0; j < i; ++j) gmm::add(gmm::scaled(V[j], s[j]), x); }
 }
 
 #endif
