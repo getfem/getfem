@@ -11,7 +11,7 @@ print TMPF "LY = 1.0;\n";
 print TMPF "LZ = 1.0;\n";
 print TMPF "MESH_TYPE = 0;\n";
 print TMPF "NX = 10;\n";
-print TMPF "NB_POINTS = 1000;\n";
+print TMPF "NB_POINTS = 100;\n";
 print TMPF "BASE = 10;\n";
 print TMPF "\n\n";
 close(TMPF);
