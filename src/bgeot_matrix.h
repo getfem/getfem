@@ -576,7 +576,8 @@ namespace bgeot
     void mat_product_tt(const MAT1 &m1, const MAT2 &m2, MATR &mr) 
   { // mr = transp(m1) * trans(m2); optimisable.
     if (m1.nrows() != m2.ncols() || mr.nrows() != m1.ncols()
-	  || mr.ncols() != m2.nrows() || ((void *)(&mr) == (void *)(&m1))
+	  || mr.ncols() != m2.nrows()
+	  || ((const void *)(&mr) == (const void *)(&m1))
 	  || ((const void *)(&mr) == (const void *)(&m2)))
       DAL_THROW(dimension_error, "dimensions mismatch");
 

@@ -49,8 +49,8 @@ namespace getfem
 
       bgeot::pconvex_structure cvs;
 
-      std::vector<scalar_type> int_monomials;
-      std::vector< std::vector<scalar_type> > int_face_monomials;
+      mutable std::vector<scalar_type> int_monomials;
+      mutable std::vector< std::vector<scalar_type> > int_face_monomials;
 
     public :
 

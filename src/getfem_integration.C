@@ -41,8 +41,7 @@ namespace getfem
     scalar_type res = 0.0;
     if (P.size() > int_monomials.size())
     {
-      std::vector<scalar_type>
-	*hum = (std::vector<scalar_type> *)(&int_monomials);
+      std::vector<scalar_type> *hum = &int_monomials;
       size_type i = P.size(), j = int_monomials.size();
       hum->resize(i);
       bgeot::power_index mi(P.dim()); mi[P.dim()-1] = P.degree();
@@ -59,10 +58,8 @@ namespace getfem
     poly_integration::int_poly_on_face(const base_poly &P, short_type f) const
   {
     scalar_type res = 0.0;
-    std::vector<scalar_type>
-	*hum = (std::vector<scalar_type> *)(&(int_face_monomials[f]));
-    if (P.size() > hum->size())
-    {
+    std::vector<scalar_type> *hum = &(int_face_monomials[f]);
+    if (P.size() > hum->size()) {
       size_type i = P.size(), j = hum->size();
       hum->resize(i);
       bgeot::power_index mi(P.dim()); mi[P.dim()-1] = P.degree();
@@ -272,7 +269,7 @@ namespace getfem
     bgeot::mat_product_tn(a, a, b);
     scalar_type det = ::sqrt(dal::abs(bgeot::mat_gauss_det(b, tmp)));
     for (size_type i = 0; i < pai->nb_points_on_convex(); ++i) {
-      base_node pt = (cvr->dir_points_of_face(f))[0];
+      pt = (cvr->dir_points_of_face(f))[0];
       for (dim_type j = 0; j < N; ++j)
 	pt += pts[j] * (pai->integration_points()[i])[j];
       add_point(pt, pai->coeff(i) * det, f);
@@ -300,7 +297,7 @@ namespace getfem
 
   static dal::dynamic_array<base_poly> *Legendre_polynomials;
   static dal::dynamic_array< std::vector<scalar_type> > *Legendres_roots;
-  static void init_legendre(short_type d)
+  static void init_legendre(short_type de)
   {
     static int nb_lp = -1;
 
@@ -315,7 +312,7 @@ namespace getfem
       (*Legendres_roots)[1][0] = 0.0;
       nb_lp = 1;
     }
-    while (nb_lp < d)
+    while (nb_lp < de)
     {
       ++nb_lp;
       (*Legendre_polynomials)[nb_lp] =
