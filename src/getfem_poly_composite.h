@@ -29,8 +29,8 @@
 /* *********************************************************************** */
 
 
-#ifndef __GETFEM_POLY_COMPOSIT_H
-#define __GETFEM_POLY_COMPOSIT_H
+#ifndef __GETFEM_POLY_COMPOSITE_H
+#define __GETFEM_POLY_COMPOSITE_H
 
 #include <bgeot_poly.h>
 #include <bgeot_geotrans_inv.h>

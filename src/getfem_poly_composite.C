@@ -28,9 +28,6 @@
 /* *********************************************************************** */
 
 
-#ifndef __GETFEM_POLY_COMPOSIT_H
-#define __GETFEM_POLY_COMPOSIT_H
-
 #include <getfem_poly_composite.h>
 
 namespace getfem
@@ -80,6 +77,3 @@ namespace getfem
   }
   
 }  /* end of namespace getfem.                                            */
-
-
-#endif

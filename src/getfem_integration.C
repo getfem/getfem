@@ -230,21 +230,17 @@ namespace getfem
     ++f;
     if (f > cvr->structure()->nb_faces())
       DAL_THROW(internal_error, "Wrong argument.");
-    cout << " 0.0 " << f << " \n";
     size_type i = pt_to_store[f].search(pt);
     if (i == size_type(-1)) {
       i = pt_to_store[f].add(pt);
-      int_coeffs.resize(int_coeffs.size() + 1); cout << " 0.1 \n";
-      for (size_type j = f; j < cvr->structure()->nb_faces(); ++j)
+      int_coeffs.resize(int_coeffs.size() + 1); 
+      for (size_type j = f; j <= cvr->structure()->nb_faces(); ++j)
 	repartition[j] += 1;
-      cout << " 0.1 \n";
       for (size_type j = repartition[f]; j < int_coeffs.size(); ++j)
 	int_coeffs[j] = int_coeffs[j-1];
-      cout << " 0.1 \n";
-      cout << "repartition[f] = " << repartition[f] << endl;
       int_coeffs[repartition[f]-1] = 0.0;
-    }cout << " 0.1 \n";
-    int_coeffs[((f == 0) ? 0 : repartition[f-1]) + i] += w;cout << " 0.1 \n";
+    }
+    int_coeffs[((f == 0) ? 0 : repartition[f-1]) + i] += w;
   }
 
   void approx_integration::valid_method(void) {
@@ -252,7 +248,7 @@ namespace getfem
     size_type i = 0;
     for (short_type f = 0; f <= cvr->structure()->nb_faces(); ++f)
       for (size_type j = 0; j < pt_to_store[f].size(); ++j)
-	{ ptab[i++] = pt_to_store[f][j]; cout << " dim = " << ptab[i-1] << endl; }
+	{ ptab[i++] = pt_to_store[f][j]; }
     if (i != int_coeffs.size()) DAL_THROW(internal_error, "internal error.");
     pint_points = bgeot::store_point_tab(ptab);
     pt_to_store = std::vector<PT_TAB>();
