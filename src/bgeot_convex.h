@@ -60,13 +60,13 @@ namespace bgeot
   public :
     
     ref_convex_pt_ct point_of_face(short_type i) const { 
-      return ref_convex_pt_ct(pts.begin(), faces[i].begin(),
-			      faces[i].end() );
+      return ref_convex_pt_ct(pts.begin(), cvs->faces[i].begin(),
+			      cvs->faces[i].end() );
     }
     
     ref_convex_pt_ct dir_points(void) const { 
-      return ref_convex_pt_ct(pts.begin(), _dir_points.begin(),
-			      _dir_points.end() );
+      return ref_convex_pt_ct(pts.begin(), cvs->_dir_points.begin(),
+			      cvs->_dir_points.end() );
     }
     
     dref_convex_pt_ct dir_points_of_face(short_type i) const {
@@ -81,7 +81,7 @@ namespace bgeot
     short_type nb_points(void) const { return cvs->nb_points(); }
     
     void translate(const typename PT::vector_type &v);
-    template <class CONT> void base_of_orthogonal(CONT &tab);
+    //template <class CONT> void base_of_orthogonal(CONT &tab);
     convex(void) { }
     convex(pconvex_structure c, const PT_TAB &t) : cvs(c), pts(t) {}
     convex(pconvex_structure c) : cvs(c) {}
@@ -92,15 +92,16 @@ namespace bgeot
     typename PT_TAB::iterator b = pts.begin(), e = pts.end();
     for ( ; b != e ; ++b) *b += v;
   }
-  
+
+  /*  
   template<class PT, class PT_TAB> template<class CONT>
     void convex<PT, PT_TAB>::base_of_orthogonal(CONT &tab)
-  { /* programmation a revoir. */
+  { // programmation a revoir.
     int N = (points())[0].size();
+    pconvex_structure cv = structure();
     int n = cv->dim();
     dal::dynamic_array<typename PT::vector_type> _vect;
     vsvector<double> A(N), B(N);
-    pconvex_structure cv = structure();
     ref_convex_ind_ct dptf = cv->ind_dir_points_of_face(f);
     int can_b = 0;
     
@@ -129,6 +130,7 @@ namespace bgeot
     }
     for (int i = n; i < N; i++) tab[i-n] = _vect[i];
   }
+  */
 
   template<class PT, class PT_TAB>
     std::ostream &operator <<(std::ostream &o, const convex<PT, PT_TAB> &cv)
@@ -207,24 +209,24 @@ namespace bgeot
 
   /* structures de reference.                                             */
 
-  template<class PT> convex<PT> simplex_of_reference(dim_type nc)
-  {
-    convex<PT> res(simplex_structure(nc));
-    res.points().resize(nc+1);
-    PT null(nc); null.fill(0.0);
-    std::fill(res.points().begin(), res.points().end(), null);
-    for (int i = 1; i <= nc; ++i) (res.points()[i])[i-1] = 1.0;
-    return res;
-  }
+//   template<class PT> convex<PT> simplex_of_reference(dim_type nc)
+//   {
+//     convex<PT> res(simplex_structure(nc));
+//     res.points().resize(nc+1);
+//     PT null(nc); null.fill(0.0);
+//     std::fill(res.points().begin(), res.points().end(), null);
+//     for (int i = 1; i <= nc; ++i) (res.points()[i])[i-1] = 1.0;
+//     return res;
+//   }
 
-  template<class PT> 
-    convex<PT> parallelepiped_of_reference(dim_type nc)
-  { /* optimisable. */
-    if (nc == 1) return simplex_of_reference<PT>(1);
-    else
-      return convex_direct_product<PT>(parallelepiped_of_reference<PT>(nc-1),
-				          simplex_of_reference<PT>(1));
-  }
+//   template<class PT> 
+//     convex<PT> parallelepiped_of_reference(dim_type nc)
+//   { /* optimisable. */
+//     if (nc == 1) return simplex_of_reference<PT>(1);
+//     else
+//       return convex_direct_product<PT>(parallelepiped_of_reference<PT>(nc-1),
+// 				          simplex_of_reference<PT>(1));
+//   }
 
 
 }  /* end of namespace bgeot.                                             */

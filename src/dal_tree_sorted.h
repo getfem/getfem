@@ -400,13 +400,13 @@ namespace dal
       const_sorted_iterator sorted_end(void) const
       { const_sorted_iterator it(*this); it.end(); return it; }
       reverse_sorted_iterator rbegin(void)
-	{ return reverse_sorted_iterator(end()); }
+	{ return reverse_sorted_iterator(this->end()); }
       const_reverse_sorted_iterator rbegin(void) const
-      { return const_reverse_sorted_iterator(end()); }
+      { return const_reverse_sorted_iterator(this->end()); }
       reverse_sorted_iterator rend(void)
-	{ return reverse_sorted_iterator(begin()); }
+	{ return reverse_sorted_iterator(this->begin()); }
       const_reverse_sorted_iterator rend(void) const
-      { return const_reverse_sorted_iterator(begin()); }
+      { return const_reverse_sorted_iterator(this->begin()); }
       sorted_iterator sorted_first(void)
       { sorted_iterator it(*this); it.first(); return it; }
       const_sorted_iterator sorted_first(void) const
@@ -603,9 +603,9 @@ namespace dal
   template<class T, class COMP, int pks>
     void dynamic_tree_sorted<T, COMP, pks>::compact(void)
   { 
-    if (!empty())
-      while (ind.last_true() >= ind.card())
-	swap(ind.first_false(), ind.last_true());
+    if (!this->empty())
+      while (this->ind.last_true() >= this->ind.card())
+	swap(this->ind.first_false(), this->ind.last_true());
   }
 
   template<class T, class COMP, int pks>
@@ -657,8 +657,8 @@ namespace dal
 
   template<class T, class COMP, int pks> void
       dynamic_tree_sorted<T, COMP, pks>::add_to_index(size_type i,const T &f) {
-    if (!(index_valid(i) && compar(f, (*this)[i]) == 0)) {
-      if (index_valid(i)) sup(i);
+    if (!(this->index_valid(i) && compar(f, (*this)[i]) == 0)) {
+      if (this->index_valid(i)) sup(i);
       dynamic_tas<T,pks>::add_to_index(i, f);
       const_sorted_iterator it(*this); insert_path(f, it);
       add_index(i, it);
@@ -778,8 +778,8 @@ namespace dal
     {
       const_sorted_iterator it1(*this), it2(*this); it1.end(); it2.end();
 
-      if (index_valid(i)) find_sorted_iterator(i, it1);
-      if (index_valid(j)) find_sorted_iterator(j, it2);
+      if (this->index_valid(i)) find_sorted_iterator(i, it1);
+      if (this->index_valid(j)) find_sorted_iterator(j, it2);
 
       short_type dir1 = it1.direction(), dir2 = it2.direction();
       it1.up(); it2.up(); 
@@ -790,7 +790,7 @@ namespace dal
       if (first_node==i) first_node=j; else if (first_node==j) first_node=i;
       
       std::swap(nodes[i], nodes[j]);
-      ((dynamic_tas<T> *)(this))->swap(i,j);
+      dynamic_tas<T>::swap(i,j);
     }
   }
 
@@ -839,22 +839,22 @@ namespace dal
              : dts_type(less_index<T,TAB,COMP>(t, cp)) { }
 
       void change_tab(TAB &t, COMP cp = COMP())
-      {  comparator() = less_index<T,TAB,COMP>(t, cp); }
+      {  this->comparator() = less_index<T,TAB,COMP>(t, cp); }
 
       size_type search(const T &elt) const
       { 
-	compar.search_elt = &elt;
+	this->compar.search_elt = &elt;
 	return dts_type::search(ST_NIL);
       }
       size_type search_ge(const T &elt) const
       {
-	compar.search_elt = &elt;
+	this->compar.search_elt = &elt;
 	return dts_type::search_ge(ST_NIL);
       }
       size_type add(size_type i)
       {
 	typename dts_type::const_sorted_iterator it(*this); (*this)[i] = i;
-	ind[i] = true; insert_path(i, it); add_index(i, it); return i;
+	this->ind[i] = true; insert_path(i, it); add_index(i, it); return i;
       }
 
   };

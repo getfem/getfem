@@ -39,7 +39,7 @@ namespace getfem
   {
     bgeot::mesh_structure cvt, sl;
     bgeot::convex<base_node>
-      pararef = bgeot::parallelepiped_of_reference<base_node>(N);
+      pararef = *(bgeot::parallelepiped_of_reference(N));
     base_node a = org;
     size_type i, nbpt = pararef.nb_points();
 
@@ -124,7 +124,7 @@ namespace getfem
     const base_node &org, const base_vector *ivect, const size_type *iref)
   {
     bgeot::convex<base_node>
-      pararef = bgeot::parallelepiped_of_reference<base_node>(N);
+      pararef = *(bgeot::parallelepiped_of_reference(N));
     base_node a = org;
     size_type i, nbpt = pararef.nb_points();
 

@@ -327,7 +327,7 @@ namespace getfem
     void receipt(const MESH_SWAP_CONVEX &m);
     void receipt(const MESH_REFINE_CONVEX &m);
     void receipt(const MESH_UNREFINE_CONVEX &m);
-    void receipt(const MESH_FEM_TOUCH &m);
+    virtual void receipt(const MESH_FEM_TOUCH &m);
     
     size_type memsize() const {
       return dof_structure.memsize() + 

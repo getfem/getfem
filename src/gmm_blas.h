@@ -425,7 +425,7 @@ namespace gmm {
   template <class MATSP, class V1, class V2> inline
   typename linalg_traits<V1>::value_type
   vect_sp_with_mat(const MATSP &ps, const V1 &v1,const V2 &v2,col_and_row)
-  { return vect_sp_with_mat(ps, v1, v2, column_major()); }
+  { return vect_sp_with_mat(ps, v1, v2, col_major()); }
 
   template <class MATSP, class V1, class V2>
   typename linalg_traits<V1>::value_type
@@ -1586,7 +1586,7 @@ namespace gmm {
 
     for (i = 0; i < k; ++i) {
       typename linalg_traits<L1>::const_sub_row_type r1 = mat_const_row(l1, i);
-      for (it2 = it2b, j = 0; it2 != ite2; ++it2, ++j)
+      for (it2 = it2b, j = 0; it2 != ite; ++it2, ++j)
 	l3(i,j) = vect_sp(r1, linalg_traits<L2>::col(it2));
     }
   }

@@ -74,7 +74,7 @@ namespace gmm {
       { return difference_type(it - i.it); }
     
     value_type operator  *() const { return (*it) * r; }
-    value_type operator [](size_type ii) const { return it[in+ii] * r; }
+    value_type operator [](size_type ii) const { return it[ii] * r; }
     
     bool operator ==(const scaled_const_iterator &i) const
       { return (i.it == it); }

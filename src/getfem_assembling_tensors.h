@@ -275,10 +275,10 @@ namespace getfem {
   public:
     base_asm_vec* create_vec(size_type sz) {
       asm_vec<VEC> v(new VEC(sz));
-      push_back(v); return &back();
+      push_back(v); return &this->back();
     }
     ~vec_factory() { 
-      for (size_type i=0; i < size(); ++i) {
+      for (size_type i=0; i < this->size(); ++i) {
 	delete (*this)[i].vec();
       }
     }
@@ -314,10 +314,10 @@ namespace getfem {
   template< typename MAT > class mat_factory : public base_mat_factory, private std::deque<asm_mat<MAT> > {
   public:
     base_asm_mat* create_mat(size_type m, size_type n) { 
-      push_back(asm_mat<MAT>(new MAT(m, n))); return &back();
+      push_back(asm_mat<MAT>(new MAT(m, n))); return &this->back();
     }
     ~mat_factory() { 
-      for (size_type i=0; i < size(); ++i) {
+      for (size_type i=0; i < this->size(); ++i) {
 	delete ((*this)[i]).mat(); 
       }
     }

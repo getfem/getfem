@@ -222,8 +222,8 @@ namespace bgeot
   
   
   template<class T> short_type polynomial<T>::real_degree(void) const {
-    const_iterator it = end() - 1, ite = begin() - 1;
-    size_type l = size();
+    const_iterator it = this->end() - 1, ite = this->begin() - 1;
+    size_type l = this->size();
     for ( ; it != ite; --it, --l) { if (*it != T(0)) break; }
     short_type dd = degree();
     while (dd > 0 && alpha(n, dd-1) > l) --dd;
@@ -240,7 +240,7 @@ namespace bgeot
   void polynomial<T>::add_monomial(const T &coeff, const power_index &power) {
     size_type i = power.global_index();
     if (n != power.size()) DAL_THROW(dimension_error, "dimensions mismatch");
-    if (i >= size()) { change_degree(power.degree()); }
+    if (i >= this->size()) { change_degree(power.degree()); }
     ((*this)[i]) += coeff;
   }
   
@@ -250,7 +250,7 @@ namespace bgeot
       DAL_THROW(dimension_error, "dimensions mismatch");
     
     if (Q.degree() > degree()) change_degree(Q.degree());
-    iterator it = begin();
+    iterator it = this->begin();
     const_iterator itq = Q.begin(), ite = Q.end();
     for ( ; itq != ite; ++itq, ++it) *it += *itq;
     return *this;
@@ -262,7 +262,7 @@ namespace bgeot
       DAL_THROW(dimension_error, "dimensions mismatch");
     
     if (Q.degree() > degree()) change_degree(Q.degree());
-    iterator it = begin();
+    iterator it = this->begin();
     const_iterator itq = Q.begin(), ite = Q.end();
     for ( ; itq != ite; ++itq, ++it) *it -= *itq;
     return *this;
@@ -331,14 +331,14 @@ namespace bgeot
 
   template<class T>
     polynomial<T> &polynomial<T>::operator *=(const T &e) {
-    iterator it = begin(), ite = end();
+    iterator it = this->begin(), ite = this->end();
     for ( ; it != ite; ++it) (*it) *= e;
     return *this;
   }
 
   template<class T>
     polynomial<T> &polynomial<T>::operator /=(const T &e) {
-    iterator it = begin(), ite = end();
+    iterator it = this->begin(), ite = this->end();
     for ( ; it != ite; ++it) (*it) /= e;
     return *this;
   }
@@ -348,7 +348,7 @@ namespace bgeot
     if (k >= n)
       DAL_THROW(std::out_of_range, "index out of range");
     
-     iterator it = begin(), ite = end();
+     iterator it = this->begin(), ite = this->end();
      power_index mi(dim());
      for ( ; it != ite; ++it, ++mi) {
        if ((*it) != T(0) && mi[k] > 0)

@@ -206,7 +206,7 @@ namespace gmm
 
     inline T operator [](size_type c) const { return r(c); }
     
-    size_type nb_stored(void) const { return card(); }
+    size_type nb_stored(void) const { return this->card(); }
     size_type size(void) const { return nbl; }
 
     /* Constructeurs */
@@ -217,7 +217,7 @@ namespace gmm
   };
 
   template<class T>  void wsvector<T>::clean(double eps) {
-    tas_iterator it = tas_begin(), ite = tas_end();
+    tas_iterator it = this->tas_begin(), ite = this->tas_end();
     for ( ; it != ite; ++it)
       if (dal::abs((*it).e) <= eps) sup(it.index());
   }
@@ -391,9 +391,9 @@ namespace gmm
   template <class T> void rsvector<T>::sup(size_type j) {
     if (nb_stored() != 0) {
       _elt_rsvector<T> ev(j);
-      iterator it = std::lower_bound(begin(), end(), ev);
-      if (it != end() && it->c == j) {
-	for (iterator ite = end() - 1; it != ite; ++it) *it = *(it+1);
+      iterator it = std::lower_bound(this->begin(), this->end(), ev);
+      if (it != this->end() && it->c == j) {
+	for (iterator ite = this->end() - 1; it != ite; ++it) *it = *(it+1);
 	_base_type::resize(nb_stored()-1);
       }
     }
@@ -408,16 +408,16 @@ namespace gmm
       _elt_rsvector<T> ev(c, e);
       if (nb_stored() == 0) {
 	_base_type::resize(1);
-	*(begin()) = ev;
+	*(this->begin()) = ev;
       }
       else {
-	iterator it = std::lower_bound(begin(), end(), ev);
-	if (it != end() && it->c == c) it->e = e;
+	iterator it = std::lower_bound(this->begin(), this->end(), ev);
+	if (it != this->end() && it->c == c) it->e = e;
 	else {
-	  size_type ind = it - begin();
+	  size_type ind = it - this->begin();
 	  _base_type::resize(nb_stored()+1);
-	  it = begin() + ind;
-	  for (iterator ite = end() - 1; ite != it; --ite) *ite = *(ite-1);
+	  it = this->begin() + ind;
+	  for (iterator ite = this->end() - 1; ite != it; --ite) *ite = *(ite-1);
 	  *it = ev;  // à verifier
 	}
       }
@@ -430,8 +430,8 @@ namespace gmm
 #   endif
     if (nb_stored() != 0) {
       _elt_rsvector<T> ev(c);
-      const_iterator it = std::lower_bound(begin(), end(), ev);
-      if (it != end() && it->c == c) return it->e;
+      const_iterator it = std::lower_bound(this->begin(), this->end(), ev);
+      if (it != this->end() && it->c == c) return it->e;
     }
     return T(0);
   }
@@ -509,11 +509,11 @@ namespace gmm
   template <class V, class T> 
   void copy_rsvector(const V &v1, rsvector<T> &v2, abstract_plain) {
     cout << "routine à verifier\n";
-    typename linalg_traits<V>::const_iterator it = vect_begin(v1),
-      ite = vect_end(v1);
+    typename linalg_traits<V>::const_iterator it = vect_const_begin(v1),
+      ite = vect_const_end(v1);
     std::vector<size_type> tab(100);
     size_type i = 0, j = 0;
-    for (; it != _end; ++it, ++j)
+    for (; it != ite; ++it, ++j)
       if ((*it) != typename linalg_traits<V>::value_type(0)) {
 	tab[i++] = j;
 	if (i >= tab.size()) tab.resize(i + 100);

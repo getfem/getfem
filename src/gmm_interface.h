@@ -663,10 +663,9 @@ namespace gmm {
   cs_vector_access<PT1, PT2, shift>::operator()(const void *,
                           const const_iterator &b,
 			  const const_iterator &e, size_type i) {
-    static value_type zero(0);
-    if (n == 0) return zero;
+    if (b.ir == e.ir) return value_type(0);
     PT2 p = std::lower_bound(b.ir, e.ir, i+shift);
-    return (p != b.ir && *p == i+shift) ? b.pr[p-b.ir] : zero;
+    return (p != b.ir && *p == i+shift) ? b.pr[p-b.ir] : value_type(0);
   }
 
   template <class PT1, class PT2, int shift>

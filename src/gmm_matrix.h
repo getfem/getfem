@@ -208,7 +208,7 @@ namespace gmm
     typedef typename linalg_traits<col_matrix<V> >::col_iterator iterator;
     
     reference operator()(const iterator &itcol, size_type i)
-    { return (*itcol)[j]; }
+    { return (*itcol)[i]; }
   };
 
   template <class V> struct linalg_traits<col_matrix<V> > {

@@ -189,6 +189,7 @@ namespace gmm {
 
     IT it;
     int N;
+    size_type id;
 
     typedef std::iterator_traits<IT>                traits_type;
     typedef typename traits_type::value_type        value_type;
@@ -199,14 +200,14 @@ namespace gmm {
     typedef size_t                                  size_type;
     typedef skyline_sub_vector_iterator<IT, MIT>    iterator;
 
-    size_type index(void) const { return si.rindex(itb.index()); }
+    size_type index(void) const { return id; }
     
-    iterator &operator ++() { it += N; return *this; }
+    iterator &operator ++() { it += N; id++; return *this; }
     iterator operator ++(int) { iterator tmp = *this; ++(*this); return tmp; }
-    iterator &operator --() { it -= N; return *this; }
+    iterator &operator --() { it -= N; id--; return *this; }
     iterator operator --(int) { iterator tmp = *this; --(*this); return tmp; }
-    iterator &operator +=(difference_type i) { it += N * i; return *this; }
-    iterator &operator -=(difference_type i) { it -= N * i; return *this; }
+    iterator &operator +=(difference_type i) { it += N * i; id += i; return *this; }
+    iterator &operator -=(difference_type i) { it -= N * i; id -= i; return *this; }
     iterator operator +(difference_type i) const
     { iterator ii = *this; return (ii += i); }
     iterator operator -(difference_type i) const
@@ -221,9 +222,9 @@ namespace gmm {
     bool operator !=(const iterator &i) const { return !(i == *this); }
     bool operator < (const iterator &i) const { return it  < i.it;    }
     skyline_sub_vector_iterator(void) {}
-    skyline_sub_vector_iterator(const IT &i, int NN) : it(i), N(NN) { }
+    skyline_sub_vector_iterator(const IT &i, int NN, size_type j) : it(i), N(NN), id(j) { }
     skyline_sub_vector_iterator(const skyline_sub_vector_iterator<MIT, MIT>
-				&i) : it(i.it), N(i.N) {}
+				&i) : it(i.it), N(i.N), id(i.id) {}
   };
 
   template <class PT, class SUBI> struct skyline_sub_vector {
@@ -301,13 +302,13 @@ namespace gmm {
     typedef skyline_sub_vector_clear<PT, SUBI> clear_type;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v)
-    { return iterator(v._begin, v.si.step()); }
+    { return iterator(v._begin, v.si.step(), v._begin->index()); }
     static const_iterator begin(const this_type &v)
-    { return const_iterator(v._begin, v.si.step()); }
+    { return const_iterator(v._begin, v.si.step(), v._begin->index()); }
     static iterator end(this_type &v)
-    { return iterator(v._end, v.si.step()); }
+    { return iterator(v._end, v.si.step(), v._end->index()); }
     static const_iterator end(const this_type &v)
-    { return const_iterator(v._end, v.si.step()); }
+    { return const_iterator(v._end, v.si.step(), v._end->index()); }
     static const void* origin(const this_type &v) { return v.origin; }
     static void do_clear(this_type &v)
       { clear_type()(v.origin, begin(v), end(v)); }

@@ -168,8 +168,9 @@ namespace lmsg
     ~virtual_linkmsg_receiver()
       { _sup_sender(NULL, senders.tas_begin(), senders.tas_end()); }
     const virtual_linkmsg_receiver& operator =(const
-					       virtual_linkmsg_receiver &) {
+					       virtual_linkmsg_receiver &t) {
       DAL_THROW(dal::internal_error, "The copy of this object doesn't work");
+      return *this;
     }
     virtual_linkmsg_receiver(const virtual_linkmsg_receiver &v) { *this = v; }
   };

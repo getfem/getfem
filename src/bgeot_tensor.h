@@ -113,7 +113,7 @@ namespace bgeot
 	    ++qv;
           #endif
 	}
-	return *(begin() + d);
+	return *(this->begin() + d);
       }
 
       template<class CONT> inline T& operator ()(const CONT &c)
@@ -124,7 +124,7 @@ namespace bgeot
 	for ( ; q != e; ++q, ++it) d += (*q) * (*it);
 	
 	if (d >= size()) DAL_THROW(std::out_of_range, "index out of range");
-	return *(begin() + d);
+	return *(this->begin() + d);
       }
 
       inline size_type size(void) const { return vsvector<T>::size(); }
@@ -183,7 +183,7 @@ namespace bgeot
     if (tmp->size() < dimt) tmp->resize(dimt);
     adjust_sizes(*mi);
     const_iterator pft = t.begin();
-    iterator pf = begin();
+    iterator pf = this->begin();
     size_type dd  =   coeff[ni]*(  sizes()[ni]-1)-1, co  =   coeff[ni];
     size_type ddt = t.coeff[ni]*(t.sizes()[ni]-1)-1, cot = t.coeff[ni];
     std::fill(mi->begin(), mi->end(), 0);
@@ -226,7 +226,7 @@ namespace bgeot
     if (tmp->size() < dimt) tmp->resize(dimt);
     adjust_sizes(*mi);
     const_iterator pft = t.begin();
-    iterator pf = begin();
+    iterator pf = this->begin();
     size_type dd  =   coeff[ni]*(  sizes()[ni]-1)-1, co  =   coeff[ni];
     size_type ddt = t.coeff[ni]*(t.sizes()[ni]-1)-1, cot = t.coeff[ni];
     std::fill(mi->begin(), mi->end(), 0);

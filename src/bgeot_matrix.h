@@ -55,16 +55,16 @@ namespace bgeot
       inline const T& operator ()(size_type l, size_type c) const
       {
         #ifdef __GETFEM_VERIFY
-	if (l >= N || c >= N) out_of_range_error();
+	if (l >= N || c >= N) this->out_of_range_error();
         #endif
-	return *(begin() + c*N+l);
+	return *(this->begin() + c*N+l);
       }
       inline T& operator ()(size_type l, size_type c)
       {
         #ifdef __GETFEM_VERIFY
-	if (l >= N || c >= N) out_of_range_error();
+	if (l >= N || c >= N) this->out_of_range_error();
         #endif
-        return *(begin() + c*N+l);
+        return *(this->begin() + c*N+l);
       }
 
       void clear_line(size_type i);
@@ -87,17 +87,17 @@ namespace bgeot
   template<class T, int N> void fsmatrix<T,N>::fill(T a, T b)
   { 
     fsvector<T,N*N>::fill(b);
-    iterator p = begin(), e = end();
+    iterator p = this->begin(), e = this->end();
     while (p < e) { *p = a; p += N+1; }
   }
 
   template<class T, int N> void fsmatrix<T,N>::clear_line(size_type i)
-  { iterator p = begin()+i, e = end(); while (p < e) { *p = T(0); p += N; } }
+  { iterator p = this->begin()+i, e = this->end(); while (p < e) { *p = T(0); p += N; } }
 
   template<class T, int N>
     void fsmatrix<T,N>::line_exchange(size_type i, size_type j)
   {
-    iterator p1 = begin(), e = end(), p2 = p1; p1 += i; p2 += j;
+    iterator p1 = this->begin(), e = this->end(), p2 = p1; p1 += i; p2 += j;
     while (p1 < e) { std::swap(*p1, *p2); p1 += N; p2 += N; }
   }
 
@@ -105,23 +105,23 @@ namespace bgeot
   {
     for (size_type l = 0; l < N; l++)
     {
-      iterator p1 = begin()+l+l*N, e = end(), p2 = p1; p1 += N; p2++;
+      iterator p1 = this->begin()+l+l*N, e = this->end(), p2 = p1; p1 += N; p2++;
       while (p1 < e) { std::swap(*p1, *p2); p1 += N; p2++; }
     }
   }
 
   template<class T, int N> void fsmatrix<T,N>::l_mul(size_type i, const T &x)
-  { iterator p = begin()+i, e = end(); while (p1 < e) { *p *= x; p += N; } }
+  { iterator p = this->begin()+i, e = this->end(); while (p < e) { *p *= x; p += N; } }
 
   template<class T, int N>
     fsmatrix<T,N>& fsmatrix<T,N>::operator *=(const fsmatrix<T,N>& m)
   {
-    if (begin() != m.begin())
+    if (this->begin() != m.begin())
     {
       fsvector<T,N> tmp;
       for (size_type l = 0; l < N; l++)
       {
-	iterator p1 = begin()+l, e = end(), p2 = tmp.begin(), te = tmp.end();
+	iterator p1 = this->begin()+l, e = this->end(), p2 = tmp.begin(), te = tmp.end();
 	const_iterator p3 = p1;
 	while (p3 < e) { *p2++ = *p3; p3 += N; }
 	for (size_type c = 0; c < N; c++)
@@ -138,8 +138,8 @@ namespace bgeot
       fsmatrix<T,N> q = *this;
       for (size_type l = 0; l < N; l++)
       {
-	iterator p1 = begin() + l, e = q.end(), p2, p3;
-	for (c = 0; c < N; c++)
+	iterator p1 = this->begin() + l, e = q.end(), p2, p3;
+	for (size_type c = 0; c < N; c++)
 	{
 	  *p1 = T(0);
 	  p2 = q.begin()+l; p3 = q.begin() + N * c;
@@ -224,20 +224,20 @@ namespace bgeot
       inline const T& operator ()(size_type l, size_type c) const
       {
         #ifdef __GETFEM_VERIFY
-	if (l >= nbl || c >= nbc) out_of_range_error();
+	if (l >= nbl || c >= nbc) this->out_of_range_error();
         #endif
-	return *(begin() + c*nbl+l);
+	return *(this->begin() + c*nbl+l);
       }
       inline T& operator ()(size_type l, size_type c)
       {
         #ifdef __GETFEM_VERIFY
-	if (l >= nbl || c >= nbc) out_of_range_error();
+	if (l >= nbl || c >= nbc) this->out_of_range_error();
         #endif
-	return *(begin() + c*nbl+l);
+	return *(this->begin() + c*nbl+l);
       }
 
       void resize(size_type l, size_type c)
-      { if (c * l != size()) vsvector<T>::resize(c*l); nbl = l; nbc = c; }
+      { if (c * l != this->size()) vsvector<T>::resize(c*l); nbl = l; nbc = c; }
       void clear_line(size_type i); 
       void line_exchange(size_type, size_type);
       void transpose(void);
@@ -269,16 +269,16 @@ namespace bgeot
   template<class T> void vsmatrix<T>::fill(T a, T b)
   { 
     vsvector<T>::fill(b);
-    iterator p = begin(), e = end();
+    iterator p = this->begin(), e = this->end();
     while (p < e) { *p = a; p += nbl+1; }
   }
 
   template<class T> void vsmatrix<T>::clear_line(size_type i)
-  { iterator p = begin()+i, e = end(); while (p < e) { *p = T(0); p += nbl; } }
+  { iterator p = this->begin()+i, e = this->end(); while (p < e) { *p = T(0); p += nbl; } }
 
   template<class T> void vsmatrix<T>::line_exchange(size_type i, size_type j)
   {
-    iterator p1 = begin(), e = end(), p2 = p1; p1 += i; p2 += j;
+    iterator p1 = this->begin(), e = this->end(), p2 = p1; p1 += i; p2 += j;
     while (p1 < e) { std::swap(*p1, *p2); p1 += nbl; p2 += nbl; }
   }
 
@@ -288,7 +288,7 @@ namespace bgeot
     {
       for (size_type l = 0; l < this->nbl; l++)
       {
-	iterator p1 = begin()+l+l*nbl, e = end(), p2 = p1; p1 += nbl; p2++;
+	iterator p1 = this->begin()+l+l*nbl, e = this->end(), p2 = p1; p1 += nbl; p2++;
 	while (p1 < e) { std::swap(*p1, *p2); p1 += nbl; p2++; }
       }
     }
@@ -303,19 +303,19 @@ namespace bgeot
   }
 
   template<class T> void vsmatrix<T>::l_mul(size_type i, const T &x)
-  { iterator p = begin()+i, e = end(); while (p1 < e) { *p *= x; p += nbl; } }
+  { iterator p = this->begin()+i, e = this->end(); while (p < e) { *p *= x; p += nbl; } }
 
   template<class T>  vsmatrix<T>& vsmatrix<T>::operator *=(const vsmatrix<T>& m)
   {
     if (nbc != m.nbl || nbc != m.nbc)
       DAL_THROW(dimension_error, "dimensions mismatch");
     
-    if (begin() != m.begin())
+    if (this->begin() != m.begin())
     {
       vsvector<T> tmp(nbc);
       for (size_type l = 0; l < nbl; l++)
       {
-	iterator p1 = begin()+l, e = end(), p2 = tmp.begin(), te = tmp.end();
+	iterator p1 = this->begin()+l, e = this->end(), p2 = tmp.begin(), te = tmp.end();
 	const_iterator p3 = p1;
 	while (p3 < e) { *p2++ = *p3; p3 += nbl; }
 	for (size_type c = 0; c < nbc; c++)
@@ -332,7 +332,7 @@ namespace bgeot
       vsmatrix<T> q = *this;
       for (size_type l = 0; l < nbl; l++)
       {
-	iterator p1 = begin() + l, e = q.end(), p2, p3;
+	iterator p1 = this->begin() + l, e = q.end(), p2, p3;
 	for (size_type c = 0; c < nbc; c++)
 	{
 	  *p1 = T(0);
@@ -396,8 +396,8 @@ namespace bgeot
     typename vsmatrix<T>::iterator p1 = res.begin();
     typename vsmatrix<T>::const_iterator p2, p3, e;
     
-    for (typename vsmatrix<T>::size_type c = 0; c < p.ncols(); c++)
-      for (typename vsmatrix<T>::size_type l = 0; l < p.nrows(); l++, p1++)
+    for (typename vsmatrix<T>::size_type c = 0; c < res.ncols(); c++)
+      for (typename vsmatrix<T>::size_type l = 0; l < res.nrows(); l++, p1++)
       {
 	*p1 = T(0);
 	p2 = m.begin() + l; e = m.end(); p3 = n.begin() + c * n.nrows();

@@ -320,9 +320,9 @@ namespace bgeot
 
       #ifdef __GETFEM_VERIFY
       inline const T& operator [](size_type l) const
-      { if (l >= size()) out_of_range_error(); return *(begin()+l); }
+      { if (l >= this->size()) out_of_range_error(); return *(this->begin()+l); }
       inline T& operator [](size_type l)
-      { if (l >= size()) out_of_range_error(); return *(begin()+l); }
+      { if (l >= this->size()) out_of_range_error(); return *(this->begin()+l); }
       #endif
 
       void fill(const T &);
@@ -354,13 +354,13 @@ namespace bgeot
 
   template<class T> vsvector<T>::vsvector(T a0, T a1)
     : std::vector<T>(size_type(2))
-  { iterator p = begin(); *p++ = a0; *p++ = a1; }
+  { iterator p = this->begin(); *p++ = a0; *p++ = a1; }
   template<class T> vsvector<T>::vsvector(T a0, T a1, T a2)
     : std::vector<T>(size_type(3)) 
-  { iterator p = begin(); *p++ = a0; *p++ = a1; *p++ = a2;}
+  { iterator p = this->begin(); *p++ = a0; *p++ = a1; *p++ = a2;}
   template<class T> vsvector<T>::vsvector(T a0, T a1, T a2, T a3)
     : std::vector<T>(size_type(4))
-  { iterator p = begin(); *p++ = a0; *p++ = a1; *p++ = a2; *p++ = a3;}
+  { iterator p = this->begin(); *p++ = a0; *p++ = a1; *p++ = a2; *p++ = a3;}
   
 
   template<class T>  void vsvector<T>::out_of_range_error(void) const
@@ -369,7 +369,7 @@ namespace bgeot
 
   template<class T>  void vsvector<T>::addmul(const T &a, const vsvector<T> &v)
   {                             
-    typename vsvector<T>::iterator d1 = begin(), e = end();
+    typename vsvector<T>::iterator d1 = this->begin(), e = this->end();
     const_iterator d2 = v.begin();
     if ( v.size() != this->size())
       DAL_THROW(dimension_error, "dimensions mismatch");
@@ -377,36 +377,36 @@ namespace bgeot
   }
 
   template<class T>  void vsvector<T>::fill(const T &x)
-  { std::fill(begin(), end(), x); }
+  { std::fill(this->begin(), this->end(), x); }
  
   template<class T>  vsvector<T>& vsvector<T>::operator *=(const T &x)
   {
-    typename vsvector<T>::iterator d = begin(), e = end();
+    typename vsvector<T>::iterator d = this->begin(), e = this->end();
     while (d != e) *d++ *= x;
     return *this;
   }
 
   template<class T>  vsvector<T>& vsvector<T>::operator /=(const T &x)
   {
-    typename vsvector<T>::iterator d = begin(), e = end();
+    typename vsvector<T>::iterator d = this->begin(), e = this->end();
     while (d != e) *d++ /= x;
     return *this;
   }
 
   template<class T> vsvector<T>& vsvector<T>::operator +=(const vsvector<T>& w)
   {                             
-    typename vsvector<T>::iterator d1 = begin(), e = end();
+    typename vsvector<T>::iterator d1 = this->begin(), e = this->end();
     typename vsvector<T>::const_iterator d2 = w.begin();
-    if (size() != w.size()) DAL_THROW(dimension_error, "dimensions mismatch");
+    if (this->size() != w.size()) DAL_THROW(dimension_error, "dimensions mismatch");
     while (d1 != e) *d1++ += (*d2++);
     return *this;
   }
 
   template<class T> vsvector<T>& vsvector<T>::operator -=(const vsvector<T>& w)
   {    
-    typename vsvector<T>::iterator d1 = begin(), e = end();
+    typename vsvector<T>::iterator d1 = this->begin(), e = this->end();
     typename vsvector<T>::const_iterator d2 = w.begin();
-    if (size() != w.size()) DAL_THROW(dimension_error, "dimensions mismatch");
+    if (this->size() != w.size()) DAL_THROW(dimension_error, "dimensions mismatch");
 
     while (d1 != e) *d1++ -= (*d2++);
     return *this;
