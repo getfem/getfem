@@ -310,6 +310,15 @@ namespace getfem
    ppolyfem P1_with_bubble_on_a_face(dim_type n);
    ppolyfem P1_with_bubble_on_a_face_lagrange(void);
 
+  /* PK element, where the dofs are not linked with the elements of 
+     the neightbouring elements */
+   ppolyfem PK_discontinuous_fem(dim_type n, short_type k);
+
+
+   /* PK element on with a bubble base fonction has been added 
+      (hence it is not a lagrange element)
+   */
+   ppolyfem PK_with_cubic_bubble_fem(dim_type n, short_type k);
 
    /** Gives a pointer on the structures describing the more classical fem
    *  of degree k on a geometric convex cvs (coming from the geometric trans).

@@ -38,7 +38,7 @@ namespace getfem
   /*	Class for description of an interpolation dof.                    */
   /* ******************************************************************** */
 
-  enum ddl_type { LAGRANGE, NORM_DERIVATIVE, DERIVATIVE, MEAN_VALUE, BUBBLE1 };
+  enum ddl_type { LAGRANGE, NORM_DERIVATIVE, DERIVATIVE, MEAN_VALUE, BUBBLE1, LAGRANGE_NONCONFORMING };
 
   struct dof_description
   {
@@ -84,6 +84,16 @@ namespace getfem
   {
     init_tab();
     dof_description l;
+    l.ddl_desc.resize(n);
+    std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), LAGRANGE);
+    size_type i = _dof_d_tab->add_norepeat(l);
+    return &((*_dof_d_tab)[i]);
+  }
+
+  pdof_description lagrange_nonconforming_dof(dim_type n)
+  {
+    init_tab();
+    dof_description l; l.linkable = false;
     l.ddl_desc.resize(n);
     std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), LAGRANGE);
     size_type i = _dof_d_tab->add_norepeat(l);
@@ -365,6 +375,8 @@ namespace getfem
     return (*tab)[i].pf;
   }
 
+
+
   /* ******************************************************************** */
   /*	P1 NON CONFORMING (dim 2)                                         */
   /* ******************************************************************** */
@@ -474,6 +486,86 @@ namespace getfem
     { _P1_wabbfoafla_exists = true; elt = new _P1_wabbfoafla; }
     return elt;
   }
+
+
+
+  /* ******************************************************************** */
+  /*	DISCONTINUOUS PK                                                  */
+  /* ******************************************************************** */
+
+  
+  struct _PK_discont : public _PK_fem
+   {
+     public :
+    
+     _PK_discont(const _PK_femi_light &l) : _PK_fem(l)
+     {
+       std::fill(_dof_types.begin(), _dof_types.end(), lagrange_nonconforming_dof(l.nc));
+     }
+   };  
+
+  ppolyfem PK_discontinuous_fem(dim_type n, short_type k)
+  {
+    static dal::FONC_TABLE<_PK_femi_light, _PK_discont> *tab;
+    static bool isinit = false;
+    if (!isinit) {
+      tab = new dal::FONC_TABLE<_PK_femi_light, _PK_discont>();
+      isinit = true;
+    }
+    return tab->add(_PK_femi_light(n, k));
+  }
+
+
+  /* ******************************************************************** */
+  /*	PK element with a bubble base fonction                            */
+  /* ******************************************************************** */
+  
+   struct _PK_with_cubic_bubble : public _PK_fem
+   {
+     public :
+    
+     _PK_with_cubic_bubble(const _PK_femi_light &l) : _PK_fem(l)
+     {
+       is_lag = false; es_degree = l.nc+1;
+       base_node pt(l.nc); 
+       int i,j;
+       _PK_fem P1(_PK_femi_light(l.nc, 1));
+
+       /* barycenter of the convex */
+       pt.fill(1./(l.nc+1));
+       /*
+       for (i=0; i < cv_node.nb_points(); i++) {
+	 pt += cv_node.points()[i] * (1./(float)(cv_node.nb_points()));
+       }
+       */
+
+       add_node(bubble1_dof(l.nc), pt);
+       _base.resize(nb_dof());
+
+
+       j = nb_dof()-1;
+       _base[j] = base_poly(l.nc, 0);
+       _base[j].one();
+       for (i=0; i < P1.nb_dof(); i++) {
+	 _base[j] *= P1.base()[i];
+       }
+     }
+   };
+
+  ppolyfem PK_with_cubic_bubble_fem(dim_type n, short_type k)
+  {
+    static dal::FONC_TABLE<_PK_femi_light, _PK_with_cubic_bubble> *tab;
+    static bool isinit = false;
+
+    assert(k<n+1);
+    if (!isinit) {
+      tab = new dal::FONC_TABLE<_PK_femi_light, _PK_with_cubic_bubble>();
+      isinit = true;
+    }
+    return tab->add(_PK_femi_light(n, k));
+  }
+
+
 
   /* ******************************************************************** */
   /*	classical fem                                                     */
