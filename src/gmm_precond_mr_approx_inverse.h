@@ -75,6 +75,8 @@ namespace gmm {
 
     mr_approx_inverse_precond(const Matrix& A, size_type nb_it,
 			      magnitude_type threshold);
+
+    const MMatrix &approx_inverse(void) const { return M; }
   };
 
   template <typename Matrix, typename V1, typename V2> inline
@@ -84,31 +86,32 @@ namespace gmm {
   template <typename Matrix, typename V1, typename V2> inline
   void transposed_mult(const mr_approx_inverse_precond<Matrix>& P,
 		       const V1 &v1,V2 &v2)
-  { mult(gmm::transposed(P.M), v1, v2); }
+  { mult(gmm::conjugated(P.M), v1, v2); }
 
   template <typename Matrix>
   mr_approx_inverse_precond<Matrix>::
   mr_approx_inverse_precond(const Matrix& A, size_type nb_it,
 			    magnitude_type threshold)
     : M(mat_nrows(A), mat_ncols(A)) {
-
+    typedef value_type T;
+    typedef magnitude_type R;
     VVector m(mat_ncols(A)),r(mat_ncols(A)),ei(mat_ncols(A)),Ar(mat_ncols(A)); 
-    value_type alpha = mat_trace(A)/ mat_euclidean_norm_sqr(A);
-    if (alpha == value_type(0)) alpha = value_type(1);
+    T alpha = mat_trace(A)/ mat_euclidean_norm_sqr(A);
+    if (alpha == T(0)) alpha = T(1);
     
     for (size_type i = 0; i < mat_nrows(A); ++i) {
       gmm::clear(m); gmm::clear(ei); 
       m[i] = alpha;
-      ei[i] = value_type(1);
+      ei[i] = T(1);
       
       for (size_type j = 0; j < nb_it; ++j) {
-	gmm::mult(A, gmm::scaled(m, -1.0), r);
+	gmm::mult(A, gmm::scaled(m, T(-1)), r);
 	gmm::add(ei, r);
 	gmm::mult(A, r, Ar);
 	gmm::add(gmm::scaled(r, vect_sp(r, Ar) / vect_sp(Ar, Ar)), m);
 	gmm::clean(m, threshold * gmm::vect_norm2(m));
       }
-      if (gmm::vect_norm2(m) == magnitude_type(0)) m[i] = alpha;
+      if (gmm::vect_norm2(m) == R(0)) m[i] = alpha;
       gmm::copy(m, M.col(i));
     }
   }

@@ -90,14 +90,20 @@ namespace gmm {
     while (!iter.finished(norm_r)) {
       
       rho_1 = gmm::vect_sp(rtilde, r);
-      if (rho_1 == T(0))
-	DAL_THROW(failure_error, "Bicgstab failed to converge");
+      if (rho_1 == T(0)) {
+	if (iter.get_maxiter() == size_type(-1)) 
+	  { DAL_THROW(failure_error, "Bicgstab failed to converge"); }
+	else { DAL_WARNING(1, "Bicgstab failed to converge"); return; }
+      }
       
       if (iter.first())
 	gmm::copy(r, p);
       else {
-	if (omega == T(0))
-	  DAL_THROW(failure_error, "Bicgstab failed to converge");
+	if (omega == T(0)) {
+	  if (iter.get_maxiter() == size_type(-1))
+	    { DAL_THROW(failure_error, "Bicgstab failed to converge"); }
+	  else { DAL_WARNING(1, "Bicgstab failed to converge"); return; }
+	}
 	
 	beta = (rho_1 / rho_2) * (alpha / omega);
 	

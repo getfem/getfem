@@ -101,9 +101,10 @@ namespace gmm {
     typedef typename number_traits<T>::magnitude_type R;
 
     size_type L_loc = 0, U_loc = 0, n = mat_nrows(A), i, j, k;
+    if (n == 0) return;
     L_ptr[0] = 0; U_ptr[0] = 0;
-    R max_pivot = gmm::abs(A(0,0));
     R prec = default_tol(R());
+    R max_pivot = gmm::abs(A(0,0)) * prec;
 
 
     for (int count = 0; count < 2; ++count) {
@@ -117,21 +118,20 @@ namespace gmm {
 	row_type row = mat_const_row(A, i);
 	typename linalg_traits<row_type>::const_iterator
 	  it = vect_const_begin(row), ite = vect_const_end(row);
-	bool first_U = true;
+	
+	if (count) { U_val[U_loc] = T(0); U_ind[U_loc] = i; }
+	++U_loc; // diagonal element
+	
 	for (k = 0; it != ite; ++it, ++k) {
 	  j = index_of_it(it, k, store_type());
 	  if (j < i) {
 	    if (count) { L_val[L_loc] = *it; L_ind[L_loc] = j; }
 	    L_loc++;
 	  }
+	  else if (i == j) {
+	    if (count) U_val[U_loc-1] = *it;
+	  }
 	  else {
-	    if (first_U) {
-	      if (j != i) {
-		if (count) { U_val[U_loc] = T(0); U_ind[U_loc] = i; }
-		U_loc++;
-	      }
-	      first_U = false;
-	    }
 	    if (count) { U_val[U_loc] = *it; U_ind[U_loc] = j; }
 	    U_loc++;
 	  }
@@ -149,11 +149,12 @@ namespace gmm {
     for (i = 1; i < n; i++) {
 
       pn = U_ptr[i];
-      if (gmm::abs(U_val[pn]) <= max_pivot * prec) {
+      if (gmm::abs(U_val[pn]) <= max_pivot) {
 	U_val[pn] = T(1);
 	DAL_WARNING(2, "pivot " << i << " is too small");
       }
-      max_pivot = std::max(max_pivot, gmm::abs(U_val[pn]));
+      max_pivot = std::max(max_pivot,
+			   std::min(gmm::abs(U_val[pn]) * prec, R(1)));
 
       for (j = L_ptr[i]; j < L_ptr[i+1]; j++) {
 	pn = U_ptr[L_ind[j]];

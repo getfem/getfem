@@ -49,13 +49,13 @@ namespace gmm {
     typedef rsvector<value_type> svector;
 
     row_matrix<svector> U;
-    std::vector<value_type> indiag;
+    std::vector<magnitude_type> indiag;
 
   protected:
     int K;
     double eps;    
 
-    template<typename M> void do_ildltt(const M&, row_major, int = 0);
+    template<typename M> void do_ildltt(const M&, row_major);
     void do_ildltt(const Matrix&, col_major);
 
   public:
@@ -69,16 +69,15 @@ namespace gmm {
   };
 
   template<typename Matrix> template<typename M> 
-  void ildltt_precond<Matrix>::do_ildltt(const M& A,row_major,int _try) {
+  void ildltt_precond<Matrix>::do_ildltt(const M& A,row_major) {
     typedef value_type T;
     typedef typename number_traits<T>::magnitude_type R;
 
     size_type n = mat_nrows(A);
+    if (n == 0) return;
     svector w(n);
-    T tmp;   
-    R max_pivot = gmm::abs(A(0,0));
-    R prec = default_tol(R());
-
+    T tmp;
+    R prec = default_tol(R()), max_pivot = gmm::abs(A(0,0)) * prec;
 
     gmm::clear(U);
     for (size_type i = 0; i < n; ++i) {
@@ -96,26 +95,36 @@ namespace gmm {
 	if ((k = wk->c) >= i) break;
 	tmp = wk->e;
 	if (gmm::abs(tmp) < eps * norm_row) { w.sup(k); --krow; } 
-	else { wk->e += tmp; gmm::add(scaled(mat_row(U, k), -tmp), w); }
+	else
+	  {  /* wk->e += tmp; */  gmm::add(scaled(mat_row(U, k), -tmp), w); }
       }
       tmp = w[i];
 
-      if (gmm::abs(tmp) <= max_pivot * prec) {
-	DAL_WARNING(2, "pivot " << i << " is too small");
-	tmp = T(1);
-	if (_try <= 10 && i > 0)
-	  { ++K; eps /= 2.0; do_ildltt(A, row_major(), ++_try); return; }
-      }
+      if (gmm::abs(gmm::real(tmp)) <= max_pivot)
+	{ DAL_WARNING(2, "pivot " << i << " is too small"); tmp = T(1); }
 
-      max_pivot = std::max(max_pivot, gmm::abs(tmp));
-      indiag[i] = T(1) / tmp;
+      max_pivot = std::max(max_pivot, std::min(gmm::abs(tmp) * prec, R(1)));
+      indiag[i] = R(1) / gmm::real(tmp);
       gmm::clean(w, eps * norm_row);
-      gmm::scale(w, indiag[i]);
+      gmm::scale(w, T(indiag[i]));
       std::sort(w.begin(), w.end(), _elt_rsvector_value_less<T>());
       typename svector::const_iterator wit = w.begin(), wite = w.end();
-      for (size_type nnu = 0; wit != wite; ++wit)
+      for (size_type nnu = 0; wit != wite; ++wit)  // copy to be optimized ...
 	if (wit->c > i) { if (nnu < nU+K) U(i, wit->c) = wit->e; ++nnu; }
     }
+
+//     gmm::dense_matrix<T> AA(n, n), B(n, n), C(n, n);
+//     gmm::copy(U, AA);
+//     for (size_type i = 0; i < n; ++i)
+//       { B(i, i) = T(1)/T(indiag[i]); AA(i, i) = T(1); }
+//     gmm::mult(gmm::conjugated(AA), B, C);
+//     gmm::mult(C, AA, B);
+//     cout << "A = " << A << endl;
+//     cout << "U = " << U << endl;
+//     cout << "B of ildltt = " << B << endl;
+//     gmm::add(gmm::scaled(A, T(-1)), B);
+//     cout << "B of ildltt res = " << B << endl;
+
   }
 
   template<typename Matrix> 

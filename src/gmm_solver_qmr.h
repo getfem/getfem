@@ -103,7 +103,9 @@ namespace gmm {
     while (! iter.finished_vect(r)) {
     
       if (rho == R(0) || xi == R(0))
-	DAL_THROW(failure_error, "QMR failed to converge");
+	if (iter.get_maxiter() == size_type(-1)) 
+	  { DAL_THROW(failure_error, "QMR failed to converge"); }
+	else { DAL_WARNING(1, "QMR failed to converge"); return; }
 
       gmm::copy(gmm::scaled(v_tld, T(R(1)/rho)), v);
       gmm::scale(y, T(R(1)/rho));
@@ -112,7 +114,10 @@ namespace gmm {
       gmm::scale(z, T(R(1)/xi));
 
       delta = gmm::vect_sp(z, y);
-      if (delta == T(0)) DAL_THROW(failure_error, "QMR failed to converge");
+      if (delta == T(0)) 
+	if (iter.get_maxiter() == size_type(-1)) 
+	  { DAL_THROW(failure_error, "QMR failed to converge"); }
+	else { DAL_WARNING(1, "QMR failed to converge"); return; }
 
       gmm::right_mult(M1, y, y_tld);		
       gmm::transposed_left_mult(M1, z, z_tld);
@@ -128,10 +133,16 @@ namespace gmm {
       gmm::mult(A, p, p_tld);
 
       ep = gmm::vect_sp(q, p_tld);
-      if (ep == T(0)) DAL_THROW(failure_error, "QMR failed to converge");
+      if (ep == T(0)) 
+	if (iter.get_maxiter() == size_type(-1)) 
+	  { DAL_THROW(failure_error, "QMR failed to converge"); }
+	else { DAL_WARNING(1, "QMR failed to converge"); return; }
 
       beta = ep / delta;
-      if (beta == T(0)) DAL_THROW(failure_error, "QMR failed to converge");
+      if (beta == T(0))
+	if (iter.get_maxiter() == size_type(-1)) 
+	  { DAL_THROW(failure_error, "QMR failed to converge"); }
+	else { DAL_WARNING(1, "QMR failed to converge"); return; }
 
       gmm::add(p_tld, gmm::scaled(v, -beta), v_tld);
       gmm::left_mult(M1, v_tld, y);
@@ -151,8 +162,11 @@ namespace gmm {
       theta = rho / (gamma_1 * beta);
       gamma = T(1) / gmm::sqrt(T(1) + gmm::sqr(theta));
 
-      if (gamma == T(0)) DAL_THROW(failure_error, "QMR failed to converge");
-
+      if (gamma == T(0)) 
+	if (iter.get_maxiter() == size_type(-1)) 
+	  { DAL_THROW(failure_error, "QMR failed to converge"); }
+	else { DAL_WARNING(1, "QMR failed to converge"); return; }
+      
       eta = -eta * T(rho_1) * gmm::sqr(gamma) / (beta * gmm::sqr(gamma_1));
 
       if (iter.first()) {

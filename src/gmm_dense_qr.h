@@ -148,18 +148,25 @@ namespace gmm {
 	    typename MAT, typename VECT>
   void extract_eig(const MAT &A, VECT &V, Ttol tol, TA, TV) {
     size_type n = mat_nrows(A);
+    if (n == 0) return;
     tol *= Ttol(2);
+    Ttol tol_i = tol * gmm::abs(A(0,0)), tol_cplx = tol_i;
     for (size_type i = 0; i < n; ++i) {
-      if ((i < n-1) &&
-	  gmm::abs(A(i+1,i)) >= (gmm::abs(A(i,i))+gmm::abs(A(i+1,i+1)))*tol) {
+      if (i < n-1) {
+	tol_i = (gmm::abs(A(i,i))+gmm::abs(A(i+1,i+1)))*tol;
+	tol_cplx = std::max(tol_cplx, tol_i);
+      }
+      if ((i < n-1) && gmm::abs(A(i+1,i)) >= tol_i) {
 	TA tr = A(i,i) + A(i+1, i+1);
 	TA det = A(i,i)*A(i+1, i+1) - A(i,i+1)*A(i+1, i);
 	TA delta = tr*tr - TA(4) * det;
-	if (delta < TA(0)) {
-	  DAL_WARNING(1, "A complex eigenvalue has been detected");
+	if (delta < -tol_cplx) {
+	  DAL_WARNING(1, "A complex eigenvalue has been detected : "
+		      << std::complex<TA>(tr/TA(2), gmm::sqrt(-delta)/TA(2)));
 	  V[i] = V[i+1] = tr / TA(2);
 	}
 	else {
+	  delta = std::max(TA(0), delta);
 	  V[i  ] = TA(tr + gmm::sqrt(delta))/ TA(2);
 	  V[i+1] = TA(tr -  gmm::sqrt(delta))/ TA(2);
 	}
@@ -200,12 +207,16 @@ namespace gmm {
   void extract_eig(const MAT &A, VECT &V, Ttol tol, std::complex<TA>, TV) {
     typedef std::complex<TA> T;
     size_type n = mat_nrows(A);
+    if (n == 0) return;
     tol *= Ttol(2);
-    Ttol tol_cplx = tol * Ttol(1000);
-    for (size_type i = 0; i < n; ++i)
-      if ((i == n-1) ||
-	  gmm::abs(A(i+1,i)) < (gmm::abs(A(i,i))+gmm::abs(A(i+1,i+1)))*tol) {
-	if (gmm::abs(std::imag(A(i,i))) > tol_cplx*gmm::abs(std::real(A(i,i))))
+    Ttol tol_i = tol * gmm::abs(A(0,0)), tol_cplx = tol_i;
+    for (size_type i = 0; i < n; ++i) {
+      if (i < n-1) {
+	tol_i = (gmm::abs(A(i,i))+gmm::abs(A(i+1,i+1)))*tol;
+	tol_cplx = std::max(tol_cplx, tol_i);
+      }
+      if ((i == n-1) || gmm::abs(A(i+1,i)) < tol_i) {
+	if (gmm::abs(std::imag(A(i,i))) > tol_cplx)
 	  DAL_WARNING(1, "A complex eigenvalue has been detected : "
 		      << T(A(i,i)) << " : "  << gmm::abs(std::imag(A(i,i)))
 		      / gmm::abs(std::real(A(i,i))) << " : " << tol_cplx);
@@ -217,14 +228,15 @@ namespace gmm {
 	T delta = tr*tr - TA(4) * det;
 	T a1 = (tr + gmm::sqrt(delta)) / TA(2);
 	T a2 = (tr - gmm::sqrt(delta)) / TA(2);
-	if (gmm::abs(std::imag(a1)) > tol_cplx * gmm::abs(std::real(a1)))
+	if (gmm::abs(std::imag(a1)) > tol_cplx)
 	  DAL_WARNING(1, "A complex eigenvalue has been detected : " << a1);
-	if (gmm::abs(std::imag(a2)) > tol_cplx * gmm::abs(std::real(a2)))
+	if (gmm::abs(std::imag(a2)) > tol_cplx)
 	  DAL_WARNING(1, "A complex eigenvalue has been detected : " << a2);
 
 	V[i] = std::real(a1); V[i+1] = std::real(a2);
 	++i;
       }
+    }
   }
 
   template <typename TA, typename TV, typename Ttol,
@@ -516,9 +528,9 @@ namespace gmm {
   /*    Implicit symmetric QR step with Wilkinson Shift.                   */
   /* ********************************************************************* */
 
-  template <typename MAT1, typename MAT2, typename Ttol> 
+  template <typename MAT1, typename MAT2> 
     void symmetric_Wilkinson_qr_step(const MAT1& MM, const MAT2 &ZZ,
-				     bool compute_z, Ttol tol) {
+				     bool compute_z) {
     MAT1& M = const_cast<MAT1&>(MM); MAT2& Z = const_cast<MAT2&>(ZZ);
     typedef typename linalg_traits<MAT1>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
@@ -526,10 +538,6 @@ namespace gmm {
 
     size_type n = mat_nrows(M);
     T d = (M(n-2, n-2) - M(n-1, n-1)) / T(2);
-    if (gmm::abs(gmm::imag(d))
-	> (gmm::abs(M(n-2, n-2)) + gmm::abs(M(n-1, n-1))) * tol * R(1000))
-      DAL_WARNING(1, "Please, be sure that your matrix is hermitian\n"
-		  "value found on the diagonal :" << d);
     R rd = gmm::real(d);
     R e = gmm::abs_sqr(M(n-1, n-2));
     T mu = M(n-1, n-1) - T(e / (d + gmm::sgn(rd)*gmm::sqrt(rd*rd+e)));
@@ -596,7 +604,7 @@ namespace gmm {
       if (!compvect) SUBK = sub_interval(0,0);
       symmetric_Wilkinson_qr_step(sub_matrix(T, SUBI), 
 				  sub_matrix(eigvect, SUBJ, SUBK),
-				  compvect, tol);
+				  compvect);
       
       symmetric_qr_stop_criterion(T, p, q, tol);
       // qr_stop_criterion(T, p, q, tol);
