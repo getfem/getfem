@@ -24,7 +24,7 @@
  *
  * This program is used to check that getfem++ is working. This is also 
  * a good example of use of Getfem++.
-*/
+ */
 
 #include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
 #include <getfem_export.h>   /* export functions (save solution in a file)  */
@@ -181,9 +181,10 @@ scalar_type nu_;
 base_small_vector sol_f(const base_small_vector &P, scalar_type t) {
   base_small_vector res(P.size());
   scalar_type x = P[0], y = P[1];
-  res[0] = -16.*y*x*x+16.*y*x+8.*x*x-8.*x+32.*nu_*t*y-16.*nu_*t+8.*t*x*x-8.*t*x;
-  res[1] =  16.*x*y*y-16.*y*x-8.*y*y+8.*y-32.*nu_*t*x+16.*nu_*t+8.*t*y*y-8.*t*y;
-
+  res[0] = -16.*y*x*x+16.*y*x+8.*x*x-8.*x+32.*nu_*t*y
+           -16.*nu_*t+8.*t*x*x-8.*t*x;
+  res[1] =  16.*x*y*y-16.*y*x-8.*y*y+8.*y-32.*nu_*t*x
+           +16.*nu_*t+8.*t*y*y-8.*t*y;
   return res;
 }
 
