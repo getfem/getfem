@@ -6,10 +6,10 @@
 # 0) Faire le maillage avec PDETOOL et l'exporter dans les variables p,e et t
 # 1) Sauvegarde du maillage avec les comandes :
 #    fid = fopen('mesh_nodes', 'w');
-#    fprintf(fid, "%f %f\n", p);
+#    fprintf(fid, '%f %f\n', p);
 #    fclose(fid);
 #    fid = fopen('mesh_triangles', 'w');
-#    fprintf(fid, "%d %d %d %d\n", t);
+#    fprintf(fid, '%d %d %d %d\n', t);
 #    fclose(fid);
 # 2) utiliser ce shell
 #    bin/mesh_matlab_to_getfem mesh_nodes mesh_triangles
