@@ -63,18 +63,22 @@ namespace bgeot
 	B_.resize(N(), P);
 	base_matrix K(N(),P), CS(P,P);
 	if (have_pgp()) {
-	  gmm::mult(gmm::transposed(pgp_->grad(ii_)), gmm::transposed(G()), K);
+	  const base_matrix& gr = pgp_->grad(ii_);
+	  //gmm::mult(gmm::transposed(pgp_->grad(ii_)), gmm::transposed(G()), K);/*O*/
+	  gmm::mult(G(), pgp_->grad(ii_), K);
 	} else {
 	  base_matrix pc(pgt()->nb_points(), P); 
 	  pgt()->gradient(xref(), pc);
-	  gmm::mult(gmm::transposed(pc), gmm::transposed(G()), K);
+	  //gmm::mult(gmm::transposed(pc), gmm::transposed(G()), K);/*O*/
+	  gmm::mult(G(),pc,K);
 	}
 	if (P != N()) {
-	  gmm::mult(gmm::transposed(K), K, CS);
+	  gmm::mult(gmm::transposed(K), K, CS);/*O*/
 	  J_ = ::sqrt(gmm::lu_inverse(CS));
-	  gmm::mult(K, CS, B_);
+	  gmm::mult(K, CS, B_);/*O*/
 	} else {
-	  J_ = dal::abs(gmm::lu_inverse(K)); B_.swap(K);
+	  //J_ = dal::abs(gmm::lu_inverse(K)); B_.swap(K); /*O*/
+	  J_ = dal::abs(gmm::lu_inverse(K)); gmm::copy(gmm::transposed(K), B_);
 	}
       }
     }
@@ -84,7 +88,7 @@ namespace bgeot
   const base_matrix& geotrans_interpolation_context::B3() const {
     if (!have_B3()) {
       const base_matrix &BB = B(); 
-      size_type N_=gmm::mat_ncols(BB), P=gmm::mat_nrows(BB);
+      size_type P=gmm::mat_ncols(BB), N_=gmm::mat_nrows(BB);
       B3_.resize(N_*N_, P*P);
       for (short_type i = 0; i < P; ++i)
 	for (short_type j = 0; j < P; ++j)
@@ -98,7 +102,7 @@ namespace bgeot
   const base_matrix& geotrans_interpolation_context::B32() const {
     if (!have_B32()) {
       const base_matrix &BB = B(); 
-      size_type N_=gmm::mat_ncols(BB), P=gmm::mat_nrows(BB);	
+      size_type P=gmm::mat_ncols(BB), N_=gmm::mat_nrows(BB);	
       B32_.resize(N_*N_, P);
       if (!pgt()->is_linear()) {
 	base_matrix B2(P*P, P), Htau(N_, P*P);
@@ -374,11 +378,53 @@ namespace bgeot
   base_small_vector compute_normal(const geotrans_interpolation_context& c,
 				   size_type face) {
     if (c.G().ncols() != c.pgt()->nb_points()) DAL_THROW(dimension_error, "dimensions mismatch");
-    base_small_vector un = c.pgt()->normals()[face];
-    base_small_vector up(c.N());
-    gmm::mult(c.B(), un, up);
-    return up;
+    base_small_vector up = c.pgt()->normals()[face];
+    base_small_vector un(c.N());
+    gmm::mult(c.B(), up, un);
+    return un;
   }
+
+  /*
+    return the local basis (i.e. the norm in the first column, and the
+    tangent vectors in the other columns 
+  */
+  base_matrix 
+  compute_local_basis(const geotrans_interpolation_context& c,
+		      size_type face) {
+    if (c.G().ncols() != c.pgt()->nb_points()) DAL_THROW(dimension_error, "dimensions mismatch");
+    base_small_vector up = c.pgt()->normals()[face];
+    base_small_vector un(c.N());
+    size_type P = c.pgt()->structure()->dim();
+
+    base_matrix baseP(P, P);
+    gmm::copy(gmm::identity_matrix(), baseP);
+    size_type i0 = 0;
+    for (size_type i=1; i < P; ++i) 
+      if (gmm::abs(up[i])>gmm::abs(up[i0])) i0=i;
+    if (i0) gmm::copy(gmm::mat_col(baseP, 0), gmm::mat_col(baseP, i0));
+    gmm::copy(up, gmm::mat_col(baseP, 0));
+
+    base_matrix baseN(c.N(), P);
+    gmm::mult(c.B(), baseP, baseN);
+
+    /* modified gram-schmidt */
+    for (size_type k=0; k < P; ++k) {
+      for (size_type l=0; l < k; ++l) {
+	gmm::add(gmm::scaled(gmm::mat_col(baseN,l), 
+			     -gmm::vect_sp(gmm::mat_col(baseN,l),gmm::mat_col(baseN,k))), 
+		 gmm::mat_col(baseN,k));
+      }
+      gmm::scale(gmm::mat_col(baseN,k), 1./gmm::vect_norm2(gmm::mat_col(baseN,k)));
+    }
+    /* TODO: for cases where P < N,
+       complete the basis */
+    /* ensure that the baseN is direct */
+    if (c.N() == P && c.N()>1 && gmm::lu_det(baseN) < 0) {
+      gmm::scale(gmm::mat_col(baseN,1),-1.);
+    }
+    return baseN;
+  }
+
 
   /* ******************************************************************** */
   /*    Naming system                                                     */

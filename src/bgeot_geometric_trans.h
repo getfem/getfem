@@ -95,7 +95,6 @@ namespace bgeot
     bool is_lin;
     pconvex_ref cvr;
     std::vector<base_poly> trans;
-    
   public :
     
     /// Dimension of the reference element.
@@ -241,7 +240,7 @@ namespace bgeot
 
   std::string name_of_geometric_trans(pgeometric_trans p);
 
-  /* norm of returned vector is the ratio between the face surface on
+  /** norm of returned vector is the ratio between the face surface on
      the reel element and the face surface on the reference element 
      IT IS NOT UNITARY
 
@@ -250,7 +249,13 @@ namespace bgeot
   base_small_vector compute_normal(const geotrans_interpolation_context& c,
 				   size_type face);
 
-   //@}
+  /** return the local basis (i.e. the norm in the first column, and the
+    tangent vectors in the other columns 
+  */
+  base_matrix 
+  compute_local_basis(const geotrans_interpolation_context& c,
+		      size_type face);
+    //@}
 
 }  /* end of namespace bgeot.                                             */
 
