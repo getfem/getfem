@@ -1,0 +1,74 @@
+#!/usr/bin/perl
+
+# extract information
+
+
+
+while ($name = $ARGV[0])
+{
+  shift;
+  open(FILE, "$name");
+
+  while ($li = <FILE>)
+  {
+    $li =~ s/atofem/getfem/g;
+    $li =~ s/ATOFEM/GETFEM/g;
+    $li =~ s/A TOol for Finite Elements Methods \(getfem\) version 1\.0      /GEneric Tool for Finite Elements Methods \(getfem\) version 1\.0/g;
+    if ($li =~ /Library :/) { $l1 = $li; }
+    if ($li =~ /File    :/) { $l2 = $li; $l3 = <FILE>; }
+    if ($li =~ /Date :/) { $l4 = $li; }
+    if ($li =~ /Last modification :/) { $l5 = $li; }
+    if ($li =~ /Author :/) { $l6 = $li; }
+    if ($li =~ /^#/) { last; }
+  }
+
+
+# do the head
+
+  open(RES, ">$name".".newhead");
+
+  print RES "/***************************************************************************/\n";
+  print RES "/*                                                                         */\n";
+  print RES $l1;
+  print RES $l2;
+  print RES $l3;
+  print RES "/*                                                                         */\n";
+  print RES $l4;
+  print RES $l5;
+  print RES $l6;
+  print RES "/*                                                                         */\n";
+  print RES "/***************************************************************************/\n";
+  print RES "/*                                                                         */\n";
+  print RES "/* Copyright (C) 2001  Yves Renard.                                        */\n";
+  print RES "/*                                                                         */\n";
+  print RES "/* This file is a part of GETFEM++                                         */\n";
+  print RES "/*                                                                         */\n";
+  print RES "/* This program is free software; you can redistribute it and/or modify    */\n";
+  print RES "/* it under the terms of the GNU General Public License as published by    */\n";
+  print RES "/* the Free Software Foundation; version 2 of the License.                 */\n";
+  print RES "/*                                                                         */\n";
+  print RES "/* This program is distributed in the hope that it will be useful,         */\n";
+  print RES "/* but WITHOUT ANY WARRANTY; without even the implied warranty of          */\n";
+  print RES "/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           */\n";
+  print RES "/* GNU General Public License for more details.                            */\n";
+  print RES "/*                                                                         */\n";
+  print RES "/* You should have received a copy of the GNU General Public License       */\n";
+  print RES "/* along with this program; if not, write to the Free Software Foundation, */\n";
+  print RES "/* Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.         */\n";
+  print RES "/*                                                                         */\n";
+  print RES "/***************************************************************************/\n";
+  print RES "\n\n";
+
+  print RES "$li";
+  while ($li = <FILE>)
+  { 
+    $li =~ s/atofem/getfem/g;
+    $li =~ s/ATOFEM/GETFEM/g;
+    print RES "$li";
+  }
+  close(RES);
+  close(FILE);
+
+  `mv -f $name.newhead $name`;
+
+}

@@ -1,0 +1,70 @@
+#!/usr/bin/perl
+# extract latex from C++ files
+# Latex code should be in C++ commentaries (i.e. in a line beginning with \\)
+# between +LATEX and -LATEX
+# only one commentary per line is allowed and one session +LATEX and -LATEX
+
+$comment = 0;
+# 0 = reading code.
+# 1 = reading commentary /* */ on more than one line.
+# 2 = reading one line commentary.
+
+$etat = 0;
+# 0 = reading commentary.
+# 1 = reading Latex.
+# 2 = end of reading Latex.
+
+while ($ligne = <STDIN>)
+{
+  chomp($ligne);
+  if ($comment == 0) # extraction des commentaires
+  {
+    if ($ligne =~ /\/\//)
+    { $comment = 2; ($f1, $ligne) = split('\/\/', " " . $ligne, 2); }
+    if ($ligne =~ /\/\*/)
+    { $comment = 1; ($f1, $ligne) = split('\/\*', " " . $ligne, 2); }
+  }
+  if ($comment == 1)
+  {
+    if ($ligne =~ /\*\//)
+    { $comment = 2; ($ligne, $f1) = split('\*\/', " " . $ligne, 2); }
+  }
+
+  if ($comment > 0)   # lecture du texte LATEX
+  {
+    if ($etat == 0)
+    { 
+      if ($ligne =~ /\+LATEX/)
+      { $etat = 1; ($f1, $ligne) = split('\+LATEX', " " . $ligne, 2); }
+    }
+    if ($etat == 1)
+    {
+      if ($ligne =~ /\-LATEX/)
+      { $etat = 2; ($ligne, $f1) = split('\-LATEX', " " . $ligne, 2); }
+    }
+    if ($etat > 0)
+    {
+      $ligne =~ s/\+FUNCTION/\\begin{functiondescription}/;
+      $ligne =~ s/\-FUNCTION/\\end{functiondescription}/;
+      $ligne =~ s/\+FILE/\\begin{filedescription}/;
+      $ligne =~ s/\-FILE/\\end{filedescription}/;
+      $ligne =~ s/\+LIBRARY/\\begin{librarydescription}/;
+      $ligne =~ s/\-LIBRARY/\\end{librarydescription}/;
+      $ligne =~ s/\+INFOCOMP/\\begin{fileinfocomp}/;
+      $ligne =~ s/\-INFOCOMP/\\end{fileinfocomp}/;
+      $ligne =~ s/\+PRESENTATION/\\begin{filepresentation}/;
+      $ligne =~ s/\-PRESENTATION/\\end{filepresentation}/;
+      $ligne =~ s/\+CLASSMEMBERS/\\begin{classmembersdescription}/;
+      $ligne =~ s/\-CLASSMEMBERS/\\end{classmembersdescription}/;
+      $ligne =~ s/\+CLASSDECL/\\begin{classdeclaration}/;
+      $ligne =~ s/\-CLASSDECL/\\end{classdeclaration}/;
+      $ligne =~ s/\+CLASS/\\begin{classdescription}/;
+      $ligne =~ s/\-CLASS/\\end{classdescription}/;
+      $ligne =~ s/\+EXAMPLE/\\begin{pexample}/;
+      $ligne =~ s/\-EXAMPLE/\\end{pexample}/;
+      print $ligne, "\n";
+    }
+    if ($etat == 2) { $etat = 0; }
+  }
+  if ($comment == 2) { $comment = 0; }
+}

@@ -1,0 +1,67 @@
+#!/usr/bin/perl
+
+$fis = `cd $ARGV[0]; ls *.h`;
+$nb_file = 0;
+
+while($fis)
+{
+  ($fi, $fis) = split('\s', $fis, 2);
+  $tabfil[$nb_file] = $fi;
+  open(FICHIER, $ARGV[0].'/'.$fi) or die "Open file impossible : $!\n";
+  $nb_dep = 0;
+  while ($line = <FICHIER>)
+  {
+    if ($line =~ /^([ ])*#include/)
+    {
+      ($f1, $f2) = split('#include', $line, 2);
+      if ($line =~ /</)
+      { ($f1, $f2) = split('<', $f2, 2); ($f2, $f1) =  split('>', $f2, 2); }
+      else
+      { ($f1, $f2) = split('\"', $f2, 2); ($f2, $f1) =  split('\"', $f2, 2); }
+      if ($f2 =~ /getfem/)
+      {
+	while ($f2 =~ /\//) { ($f1, $f2) = split('\/', $f2, 2); }
+	$tabdep[$nb_file][$nb_dep++] = $f2;
+      }
+    }
+  }
+  $tabnbdep[$nb_file] = $nb_dep;
+  $tabprior[$nb_file] = 1;
+  close(FICHIER);
+  $nb_file++;
+}
+
+$maxprior = 1;
+foreach $l (0..$nb_file-1) # tri pas efficace du tout
+{
+  foreach $i (0..$nb_file-1)
+  {
+    $tabprior[$i] = 1;
+    foreach $j (0..$tabnbdep[$i]-1)
+    {
+      foreach $k (0..$nb_file-1)
+      {
+	if ($tabfil[$k] eq $tabdep[$i][$j]) { $tabprior[$i] += $tabprior[$k]; }
+      }
+    }
+    if ($maxprior < $tabprior[$i]) { $maxprior = $tabprior[$i]; }
+  }
+}
+
+
+foreach $k (0..$maxprior)
+{
+  foreach $i (0..$nb_file-1)
+  {
+    if ($tabprior[$i] == $k)
+    {
+      $f1 = $tabfil[$i];
+      # $f1 =~ s/\./_/g;
+      print ' $(', $ARGV[1], ')/', $f1, " : ";
+      foreach $j (0..$tabnbdep[$i]-1)
+      { $f1 = $tabdep[$i][$j]; print ' $(', $ARGV[1], ')/',$f1, " "; }
+      # print ' $(', $ARGV[1], ')/', $tabfil[$i], "\n";
+      print "\n\n";
+    }
+  }
+}

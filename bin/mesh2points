@@ -1,0 +1,23 @@
+#!/usr/bin/perl
+# extract the list of points from a file a redirect it on the standard output
+
+while ($ligne = <STDIN>)
+{
+  if ($ligne =~ /BEGIN POINTS LIST/) { last; }
+}
+
+while ($ligne = <STDIN>)
+{
+  if ($ligne =~ /END POINTS LIST/) { last; }
+  if ($ligne =~ /POINT/)
+  {
+    ($f1, $f2, $f3) = split(' ', $ligne, 3);
+    print $f2;
+    while($f3)
+    {
+      ($f1, $f3) = split(' ', $f3, 2);
+      print "\t", $f1;
+    }
+    print "\n";
+  }
+}
