@@ -123,4 +123,7 @@ else
 
 # faire les liens 'lequels ?)
 
-print "\n\n Links to be added too.\n";
+print "\n\n Making links.\n";
+print `cd ..; mkdir -p include; cd include; ln -sf ../getfem++/include/*.h .`;
+print `cd ..; mkdir -p lib; cd lib; ln -sf ../getfem++/sources/*.a .`;
+
