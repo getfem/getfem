@@ -36,7 +36,7 @@
 #define __BGEOT_POLY_H
 
 #include <vector>
-#include <dal_std.h>
+#include <bgeot_config.h>
 
 /// Basic GEOmetric Tool.
 namespace bgeot

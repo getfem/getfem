@@ -33,7 +33,6 @@
 #ifndef __BGEOT_VECTOR_H
 #define __BGEOT_VECTOR_H
 
-#include <dal_std.h>
 #include <bgeot_config.h>
 #include <vector>
 

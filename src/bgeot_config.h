@@ -32,6 +32,8 @@
 #ifndef __BGEOT_CONFIG_H
 #define __BGEOT_CONFIG_H
 
+#include <dal_std.h>
+
 namespace bgeot
 {
   static const size_t ST_NIL = size_t(-1);
