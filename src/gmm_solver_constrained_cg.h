@@ -63,8 +63,8 @@
 namespace gmm {
 
   template <class CMatrix, class CINVMatrix, class Matps, class VectorX>
-  void pseudo_inverse(const CMatrix &C, CINVMatrix &CINV, const Matps& PS,
-		      VectorX&) {
+  void pseudo_inverse(const CMatrix &C, CINVMatrix &CINV,
+		      const Matps& /* PS */, VectorX&) {
     // compute the pseudo inverse of the non-square matrix C such
     // CINV = inv(C * trans(C)) * C.
     // based on a conjugate gradient method.
@@ -148,12 +148,7 @@ namespace gmm {
 	  if (!satured[i]) { satured[i] = true; transition = true; }
 	  value_type bb = vect_sp(mat_row(CINV, i), z);
 	  if (bb > 0.0) add(scaled(mat_row(C, i), -bb), z);
-	  
-	  /* 	bb = itl::dot(mtl::rows(CINV)[i], r); */
-/* 	if (bb > 0.0) // itl::add(r, itl::scaled(mtl::rows(C)[i], -bb), r); */
-/* 	  add_vect_sparse__(r, mtl::rows(C)[i].begin(), */
-/* 			       mtl::rows(C)[i].end(), -bb); */
-			  }
+	}
 	else
 	  satured[i] = false;
       }
@@ -194,9 +189,5 @@ namespace gmm {
   }
   
 }
-
-
-
-
 
 #endif //  __GMM_SOLVER_CCG_H
