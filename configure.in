@@ -25,9 +25,9 @@ dnl ------------------------------------------------------------------------
 
 AM_INIT_AUTOMAKE($PACKAGE,$VERSION)
 
-ACLOCAL_M4=config/aclocal.m4
-ACLOCAL="aclocal -I config --output=${ACLOCAL_M4}"
-AUTOCONF="autoconf -l config"
+dnl ACLOCAL_M4=config/aclocal.m4
+dnl ACLOCAL="aclocal -I config --output=${ACLOCAL_M4}"
+dnl AUTOCONF="autoconf -l config"
 dnl CONFIGURE_DEPENDENCIES="config/aclocal.m4 config/ltconfig config/ltmain.sh"
 dnl AC_SUBST(CONFIGURE_DEPENDENCIES)
 
