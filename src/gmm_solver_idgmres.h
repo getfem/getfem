@@ -73,6 +73,11 @@ namespace gmm {
 	conv(0), nb_un(0), fin(0), ok(false); {}
   }
 
+    idgmres_state(size_type mm, size_type pp, size_type kk)
+      : m(mm), tb_deb(1), tb_def(0), p(pp), k(kk), nb_want(0),
+	nb_unwant(0), nb_nolong(0), tb_deftot(0), tb_defwant(0),
+	conv(0), nb_un(0), fin(0), ok(false); {}
+  
 
   template <typename CONT, typename IND>
   apply_permutation(CONT &cont, const IND &ind) {
@@ -213,6 +218,7 @@ namespace gmm {
 	  
 	  T alpha = Lock(W, Hobl,
 			 sub_matrix(YB,  sub_interval(0, m-st.tb_def)),
+			 sub_interval(st.tb_def, m-st.tb_def), 
 			 (st.tb_defwant < p)); 
 	  // ns *= alpha; // à calculer plus tard ??
 	  //  V(:,m+1) = alpha*V(:, m+1); ça devait servir à qlq chose ...
@@ -267,7 +273,7 @@ namespace gmm {
 	    
 	    select_eval_for_purging(Hobl, eval, YB, pure, st);
 	    
-	    T alpha = Lock(W, Hobl, YB, false);
+	    T alpha = Lock(W, Hobl, YB, sub_interval(0, st.fin), ok);
 
 	    
 
@@ -299,51 +305,55 @@ namespace gmm {
 
   template <typename T, typename MATYB>
     void Lock(gmm::dense_matrix<T> &W, gmm::dense_matrix<T> &H,
-	      const MATYB &YB, bool restore, T &ns) {
+	      const MATYB &YB, const sub_interval SUB,
+	      bool restore, T &ns) {
 
-    size_type m = mat_ncols(W)-1, m_tb_def = mat_nrows(YB);
-    size_type st.tb_def = m - m_tb_def, st.conv = mat_ncols(YB);
-    size_type st.tb_deftot = st.tb_def + st.conv;
-    sub_interval SUB1(st.tb_def, m_tb_def), SUBI(0, m);
+    size_type n = mat_nrows(W), m = mat_ncols(W) - 1;
+    size_type ncols = mat_ncols(YB), nrows = mat_nrows(YB);
+    size_type begin = min(SUB); end = max(SUB) - 1;
+    sub_interval SUBR(0, nrows), SUBC(0, ncols);
     T alpha(1);
 
-    if (m != mat_nrows(H) || m+1 != mat_ncols(H) || m < mat_nrows(YB))
+    if ( ((end-begin) != ncols) || (m != mat_nrows(H)) 
+	|| (m+1 != mat_ncols(H)) )
       DAL_THROW(dimension_error, "dimensions mismatch");
     
     // DEFLATION using the QR Factorization of YB
 	  
-    dense_matrix<T> QR(m_tb_def, st.conv);
-    gmmm::copy(YB, QR);
-    qr_factor(QR);
+    dense_matrix<T> QR(n_rows, n_rows);
+    gmmm::copy(YB, sub_matrix(QR, SUBR, SUBC));
+    gmm::clear(submatrix(QR, SUBR, sub_interval(ncols, nrows-ncols)));
+    qr_factor(QR); 
 
-    apply_house_left(QR, sub_matrix(H, SUB1));
-    apply_house_right(QR, sub_matrix(H, SUBI, SUB1));
-    apply_house_right(QR, sub_matrix(W, sub_interval(0, n), SUB1));
+
+    apply_house_left(QR, sub_matrix(H, SUB));
+    apply_house_right(QR, sub_matrix(H, SUBR, SUB));
+    apply_house_right(QR, sub_matrix(W, sub_interval(0, n), SUB));
     
     //       Restore to the initial block hessenberg form
     
     if (restore) {
       
       // verifier quand m = 0 ...
-      gmm::dense_matrix tab_p(m - st.tb_deftot, m - st.tb_deftot);
+      gmm::dense_matrix tab_p(end - st.tb_deftot, end - st.tb_deftot);
       gmm::copy(identity_matrix(), tab_p);
       
-      for (size_type j = m-1; j >= st.tb_deftot+2; --j) {
+      for (size_type j = end-1; j >= st.tb_deftot+2; --j) {
 	
 	size_type jm = j-1;
 	std::vector<T> v(jm - st.tb_deftot);
 	sub_interval SUBtot(st.tb_deftot, jm - st.tb_deftot);
-	sub_interval SUBtot2(st.tb_deftot, m - st.tb_deftot);
+	sub_interval SUBtot2(st.tb_deftot, end - st.tb_deftot);
 	gmm::copy(sub_vector(mat_row(H, j), SUBtot), v);
 	house_vector_last(v);
-	w.resize(m);
+	w.resize(end);
 	col_house_update(sub_matrix(H, SUBI, SUBtot), v, w);
-	w.resize(m - st.tb_deftot);
+	w.resize(end - st.tb_deftot);
 	row_house_update(sub_matrix(H, SUBtot, SUBtot2), v, w);
 	gmm::clear(sub_vector(mat_row(H, j),
 			      sub_interval(st.tb_deftot, j-1-st.tb_deftot)));
-	w.resize(m - st.tb_deftot);
-	col_house_update(sub_matrix(tab_p, sub_interval(0, m-st.tb_deftot),
+	w.resize(end - st.tb_deftot);
+	col_house_update(sub_matrix(tab_p, sub_interval(0, end-st.tb_deftot),
 				    sub_interval(0, jm-st.tb_deftot)), v, w);
 	w.resize(n);
 	col_house_update(sub_matrix(W, sub_interval(0, n), SUBtot), v, w);
@@ -351,12 +361,12 @@ namespace gmm {
       
       //       restore positive subdiagonal elements
       
-      std::vector<T> d(m-st.tb_deftot); d[0] = T(1);
+      std::vector<T> d(fin-st.tb_deftot); d[0] = T(1);
       
       // We compute d[i+1] in order 
       // (d[i+1] * H(st.tb_deftot+i+1,st.tb_deftoti)) / d[i] 
       // be equal to |H(st.tb_deftot+i+1,st.tb_deftot+i))|.
-      for (size_type j = 0; j+1 < m-st.tb_deftot; ++j) {
+      for (size_type j = 0; j+1 < end-st.tb_deftot; ++j) {
 	T e = H(st.tb_deftot+j, st.tb_deftot+j-1);
 	d[j+1] = (e == T(0)) ? T(1) :  d[j] * gmm::abs(e) / e;
 	scale(sub_vector(mat_row(H, st.tb_deftot+j+1),
@@ -365,7 +375,7 @@ namespace gmm {
 	scale(mat_col(W, st.tb_deftot+j+1), T(1) / d[j+1]);
       }
 
-      alpha = tab_p(m-st.tb_deftot-1, m-st.tb_deftot-1) / d[m-st.tb_deftot-1];
+      alpha = tab_p(end-st.tb_deftot-1, end-st.tb_deftot-1) / d[end-st.tb_deftot-1];
       alpha /= gmm::abs(alpha);
       scale(mat_col(W, m), alpha);
 	    
