@@ -230,16 +230,18 @@ namespace getfem
 	      if (k > 2 && ci+cj+ck < k-2) {
 		t[7] = pm->add_point(H);
 	      }
-	      pm->add_tetrahedron(t[1], t[2], t[4], t[0]);
+	      /**
+		 Note that the orientation of each tetrahedron is the same
+	      */
+	      pm->add_tetrahedron(t[0], t[1], t[2], t[4]);
 	      if (k > 1 && ci+cj+ck < k-1) {
 		pm->add_tetrahedron(t[1], t[2], t[4], t[5]);
-		pm->add_tetrahedron(t[6], t[2], t[4], t[5]);
-		pm->add_tetrahedron(t[1], t[2], t[4], t[5]);
-		pm->add_tetrahedron(t[2], t[5], t[3], t[1]);
+		pm->add_tetrahedron(t[6], t[4], t[2], t[5]);
+		pm->add_tetrahedron(t[2], t[3], t[5], t[1]);
 		pm->add_tetrahedron(t[2], t[5], t[3], t[6]);
 	      }
 	      if (k > 2 && ci+cj+ck < k-2) {
-		pm->add_tetrahedron(t[3], t[5], t[6], t[7]);
+		pm->add_tetrahedron(t[3], t[5], t[7], t[6]);
 	      }
 	    }
 	  }
