@@ -50,6 +50,101 @@
 namespace getfem
 {
 
+  template <class CONT> struct tab_scal_to_vect_iterator {
+
+    typedef typename CONT::const_iterator ITER;
+    typedef typename std::iterator_traits<ITER>::value_type value_type;
+    typedef typename std::iterator_traits<ITER>::pointer    pointer;
+    typedef typename std::iterator_traits<ITER>::reference  reference;
+    typedef typename std::iterator_traits<ITER>::difference_type
+                                                            difference_type;
+    typedef typename std::iterator_traits<ITER>::iterator_category
+                                                            iterator_category;
+    typedef size_t size_type;
+    typedef tab_scal_to_vect_iterator<CONT> iterator;
+
+    ITER it;
+    dim_type N;
+    dim_type ii;
+
+    iterator &operator ++()
+      { ++ii; if (ii == N) { ii = 0; ++it; } return *this; }
+    iterator &operator --() 
+      { if (ii == 0) { ii = N-1; --it; } else --ii; return *this; }
+    iterator operator ++(int) { iterator tmp = *this; ++(*this) return tmp; }
+    iterator operator --(int) { iterator tmp = *this; --(*this) return tmp; }
+   
+    iterator &operator +=(difference_type i)
+      { it += (i+ii)/N; ii = (ii + i) % N; return *this; }
+    iterator &operator -=(difference_type i)
+      { it -= (i+N-ii-1)/N; ii = (ii - i + N * i) % N; return *this; }
+    iterator operator +(difference_type i) const 
+    { iterator itt = *this; return (itt += i); }
+    iterator operator -(difference_type i) const
+    { iterator itt = *this; return (itt -= i); }
+    difference_type operator -(const iterator &i) const
+    { return (it - i.it) * N + ii - i.ii; }
+
+    value_type operator *() const { return (*it) + ii; }
+    value_type operator [](int i) { return *(this + i); }
+
+    bool operator ==(const iterator &i) const
+      { return (it == i.it) && (ii = i.ii); }
+    bool operator !=(const iterator &i) const { return !(i == *this); }
+    bool operator < (const iterator &i) const
+      { return (it < i.it) && (ii < i.ii); }
+
+    tab_scal_to_vect_iterator(void) {}
+    tab_scal_to_vect_iterator(const ITER &iter, dim_type n, dim_type i)
+      : it(iter), N(n), ii(i) { }
+
+  };
+
+
+  template <class CONT> class tab_scal_to_vect {
+  public :
+    typedef typename CONT::const_iterator ITER;
+    typedef typename std::iterator_traits<ITER>::value_type value_type;
+    typedef typename std::iterator_traits<ITER>::pointer    pointer;
+    typedef typename std::iterator_traits<ITER>::pointer    const_pointer;
+    typedef typename std::iterator_traits<ITER>::reference  reference;
+    typedef typename std::iterator_traits<ITER>::reference  const_reference;
+    typedef typename std::iterator_traits<ITER>::difference_type
+            difference_type;
+    typedef size_t size_type;
+    typedef tab_scal_to_vect_iterator<CONT> iterator;
+    typedef iterator                          const_iterator;
+    typedef dal::reverse_iter<const_iterator> const_reverse_iterator;
+    typedef dal::reverse_iter<iterator> reverse_iterator;
+
+
+  protected :
+    CONT c;
+    dim_type N;
+    
+  public :
+
+    bool empty(void) const { return c.empty(); }
+    size_type size(void) const { return c.size() * N; }
+
+    const_iterator begin(void) const { return iterator(c.begin(), N, 0); }
+    const_iterator end(void) const { return iterator(c.end(), N, 0); }
+    const_reverse_iterator rbegin(void) const
+      { return const_reverse_iterator(end()); }
+    const_reverse_iterator rend(void) const
+      { return const_reverse_iterator(begin()); }
+    
+    value_type front(void) const { return *begin(); }
+    value_type back(void) const { return *(--(end())); }
+
+    tab_scal_to_vect(void) {}
+    tab_scal_to_vect(const CONT &cc, dim_type n) : c(cc), N(n) {}
+    
+    value_type operator [](size_type ii) const { return *(begin() + ii);}
+  }
+
+
+
   struct fem_dof {
     base_node P;
     pdof_description pnd;
@@ -149,24 +244,32 @@ namespace getfem
     /** Gives an array of the degrees of freedom of the element
      *           of the convex of index i. 
      */
-    ref_mesh_dof_ind_ct ind_dof_of_element(size_type ic) const {
+    tab_scal_to_vect<ref_mesh_dof_ind_ct>
+      ind_dof_of_element(size_type ic) const {
       if (!dof_enumeration_made) enumerate_dof();
-      return dof_structure.ind_points_of_convex(ic);
+      return tab_scal_to_vect<ref_mesh_dof_ind_ct>
+	(dof_structure.ind_points_of_convex(ic),
+	 Qdim /fem_of_element(ic)->target_dim());
     }
-    bgeot::ind_ref_mesh_point_ind_ct 
-    ind_dof_of_face_of_element(size_type cv, short_type f)
-      { return dof_structure.ind_points_of_face_of_convex(cv, f); }
+    tab_scal_to_vect<bgeot::ind_ref_mesh_point_ind_ct>
+    ind_dof_of_face_of_element(size_type cv, short_type f) const {
+      return tab_scal_to_vect<bgeot::ind_ref_mesh_point_ind_ct>
+	(dof_structure.ind_points_of_face_of_convex(cv, f),
+	 Qdim /fem_of_element(ic)->target_dim());
+    }
     /** Gives the number of  degrees of freedom of the element
      *           of the convex of index i. 
      */
     size_type nb_dof_of_element(size_type cv) const {
-      return f_elems[cv]->pf->nb_dof();
+      pfem pf = f_elems[cv]->pf;
+      return pf->nb_dof() * Qdim / pf->target_dim();
     }
     /** Gives the point (base_node)  corresponding to the 
      *          degree of freedom i  of the element of index cv.
      */
     const base_node &reference_point_of_dof(size_type cv,size_type i) const {
-      return f_elems[cv]->pf->node_of_dof(i);
+      pfem pf = f_elems[cv]->pf;
+      return pf->node_of_dof(i * pf->target_dim() / Qdim);
     }
     /** Gives the point (base_node) corresponding to the degree of freedom
      *  i of the element of index cv in the element of reference.
@@ -176,12 +279,8 @@ namespace getfem
      *          degree of freedom with global index i.
      */
     base_node point_of_dof(size_type d) const;
-    size_type first_convex_of_dof(size_type d) const
-      { return dof_structure.first_convex_of_point(d); }
-    size_type ind_in_first_convex_of_dof(size_type d) const {
-      if (!dof_enumeration_made) enumerate_dof(); 
-      return dof_structure.ind_in_first_convex_of_point(d);
-    }
+    size_type first_convex_of_dof(size_type d) const;
+    size_type ind_in_first_convex_of_dof(size_type d) const;
     void enumerate_dof(void) const;
     /// Gives the total number of degrees of freedom.
     size_type nb_dof(void) const

@@ -151,8 +151,10 @@ namespace getfem
 		= dof_structure.structure_of_convex(it.index())->
 		nb_points_of_face(itf.index());
 	      for (size_type i = 0; i < nbb; ++i)
-		res.add(dof_structure.ind_points_of_face_of_convex(it.index(),
-							     itf.index())[i]);
+		for (size_type ll = 0; ll < (Qdim / fem_of_element(it.index())->target_dim()); ++ll)
+		  res.add((Qdim / fem_of_element(it.index())->target_dim())
+		     * dof_structure.ind_points_of_face_of_convex(it.index(),
+						       itf.index())[i] + ll);
 	    }
 	}
     }
@@ -220,15 +222,16 @@ namespace getfem
   }
   
   base_node mesh_fem::point_of_dof(size_type cv, size_type i) const {
+    pfem pf = f_elems[cv]->pf;
     return linked_mesh().trans_of_convex(cv)->transform
-      (fem_of_element(cv)->node_of_dof(i),
+      (pf->node_of_dof(i * pf->target_dim() / Qdim),
        linked_mesh().points_of_convex(cv));
   }
 
   base_node mesh_fem::point_of_dof(size_type d) const { 
     if (!dof_enumeration_made) enumerate_dof();
-    return point_of_dof(dof_structure.first_convex_of_point(d),
-			dof_structure.ind_in_first_convex_of_point(d));
+    return point_of_dof(first_convex_of_dof(d),
+			ind_in_first_convex_of_dof(d));
   }
 
   struct _dof_comp { 
@@ -242,6 +245,24 @@ namespace getfem
     _dof_comp(double e = 1.0E-10) : comp(e) { }
   };
   
+
+  size_type mesh_fem::first_convex_of_dof(size_type d) const {
+    for (size_type i = d; i != d - Qdim + 1 && i != size_type(-1); --i) {
+      size_type j = dof_structure.first_convex_of_point(i);
+      if (j != size_type(-1)) return j;
+    }
+    return size_type(-1);
+  }
+
+  size_type mesh_fem::ind_in_first_convex_of_dof(size_type d) const {
+    for (size_type i = d; i != d - Qdim + 1 && i != size_type(-1); --i) {
+      size_type j = dof_structure.first_convex_of_point(i);
+      if (j != size_type(-1))
+	return dof_structure.ind_in_first_convex_of_point(i);
+    }
+    return size_type(-1);
+  }
+
   void mesh_fem::enumerate_dof(void) const {
     dal::bit_vector nn = fe_convex;
     std::queue<int> pile;
