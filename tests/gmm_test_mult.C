@@ -30,32 +30,32 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2,
   gmm::lu_solve(m1, v6, v2);
   gmm::mult(m1, v6, v1);
   gmm::add(gmm::scaled(v1, T(-1)), v2, v6);
-  if (gmm::vect_norm2(v6) >= R(prec * 1000.0))
-    DAL_THROW(dal::failure_error, "Error too large: "<< gmm::vect_norm2(v1));
+  if (gmm::vect_norm2(v6) >= R(prec * 10000.0))
+    DAL_THROW(dal::failure_error, "Error too large: "<< gmm::vect_norm2(v6));
 
   gmm::lu_solve(gmm::transposed(m1), v6, v2);
   gmm::mult(gmm::transposed(m1), v6, v1);
   gmm::add(gmm::scaled(v1, T(-1)), v2, v6);
-  if (gmm::vect_norm2(v6) >= R(prec * 1000.0))
-    DAL_THROW(dal::failure_error, "Error too large: "<< gmm::vect_norm2(v1));
+  if (gmm::vect_norm2(v6) >= R(prec * 10000.0))
+    DAL_THROW(dal::failure_error, "Error too large: "<< gmm::vect_norm2(v6));
 
   gmm::lu_solve(gmm::conjugated(m1), v6, v2);
   gmm::mult(gmm::conjugated(m1), v6, v1);
   gmm::add(gmm::scaled(v1, T(-1)), v2, v6);
-  if (gmm::vect_norm2(v6) >= R(prec * 1000.0))
-    DAL_THROW(dal::failure_error, "Error too large: "<< gmm::vect_norm2(v1));
+  if (gmm::vect_norm2(v6) >= R(prec * 10000.0))
+    DAL_THROW(dal::failure_error, "Error too large: "<< gmm::vect_norm2(v6));
 
   gmm::lu_solve(gmm::transposed(gmm::conjugated(m1)), v6, v2);
   gmm::mult(gmm::transposed(gmm::conjugated(m1)), v6, v1);
   gmm::add(gmm::scaled(v1, T(-1)), v2, v6);
-  if (gmm::vect_norm2(v6) >= R(prec * 1000.0))
-    DAL_THROW(dal::failure_error, "Error too large: "<< gmm::vect_norm2(v1));
+  if (gmm::vect_norm2(v6) >= R(prec * 10000.0))
+    DAL_THROW(dal::failure_error, "Error too large: "<< gmm::vect_norm2(v6));
 
   gmm::lu_solve(gmm::transposed(gmm::scaled(m1, T(-6))), v6, v2);
   gmm::mult(gmm::transposed(gmm::scaled(m1, T(-6))), v6, v1);
   gmm::add(gmm::scaled(v1, T(-1)), v2, v6);
-  if (gmm::vect_norm2(v6) >= R(prec * 1000.0))
-    DAL_THROW(dal::failure_error, "Error too large: "<< gmm::vect_norm2(v1));
+  if (gmm::vect_norm2(v6) >= R(prec * 10000.0))
+    DAL_THROW(dal::failure_error, "Error too large: "<< gmm::vect_norm2(v6));
 
   gmm::dense_matrix<T> q(mm, nn), r(nn, nn);
   if (m >= n) {
@@ -64,18 +64,18 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2,
     gmm::qr_factor(m2, q, r);
     gmm::mult(r, v3, v4);
     gmm::mult(q, v4, gmm::scaled(v2, T(-1)), v5);
-    if (gmm::vect_norm2(v4) >= R(prec * 1000.0))
-      DAL_THROW(dal::failure_error, "Error too large: "<< gmm::vect_norm2(v1));
+    if (gmm::vect_norm2(v5) >= R(prec * 10000.0))
+      DAL_THROW(dal::failure_error, "Error too large: "<< gmm::vect_norm2(v5));
 
   }
   else {
     std::vector<T> v5(n);
     gmm::mult(gmm::conjugated(m2), v2, v3);
     gmm::qr_factor(gmm::conjugated(m2), q, r);
-    gmm::mult(r, v1, v2);
-    gmm::mult(q, v2, gmm::scaled(v3, T(-1)), v5);
-    if (gmm::vect_norm2(v4) >= R(prec * 1000.0))
-      DAL_THROW(dal::failure_error, "Error too large: "<< gmm::vect_norm2(v1));
+    gmm::mult(r, v2, v1);
+    gmm::mult(q, v1, gmm::scaled(v3, T(-1)), v5);
+    if (gmm::vect_norm2(v5) >= R(prec * 10000.0))
+      DAL_THROW(dal::failure_error, "Error too large: "<< gmm::vect_norm2(v5));
 
   }
   

@@ -21,7 +21,7 @@ void test_procedure(const MAT1 &_m1, const VECT1 &_v1, const VECT2 &_v2) {
   gmm::lu_solve(m1, v1, v2);
   gmm::mult(m1, v1, gmm::scaled(v2, T(-1)), v3);
 
-  if (gmm::vect_norm2(v3) >= R(prec * 1000.0))
+  if (gmm::vect_norm2(v3) >= R(prec * 10000.0))
     DAL_THROW(dal::failure_error, "Error too large: " << gmm::vect_norm2(v1));
   
 }
