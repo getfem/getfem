@@ -46,12 +46,10 @@ namespace getfem
 
   class nonlinear_elem_term {
     public :
-      virtual dim_type dim(void) const = 0;
-      virtual dim_type size(dim_type i)  const = 0;
+      virtual const bgeot::multi_index &sizes() const = 0;
       virtual void compute(fem_interpolation_context& ctx,
 			   base_tensor &t)  const = 0;
-      virtual size_type nb_pfi(void) const { return 0; };
-      virtual pfem pfi(size_type i) const { return 0; };
+      virtual ~nonlinear_elem_term() {}
   };
 
   struct constituant {
@@ -93,7 +91,7 @@ namespace getfem
   /** Gives a pointer to the structure describing the elementary matrix
    *   which compute the integral of a nonlinear term.
    */
-  pmat_elem_type mat_elem_nonlinear(const nonlinear_elem_term &);
+  pmat_elem_type mat_elem_nonlinear(const nonlinear_elem_term &, pfem pfi);
   /** Gives a pointer to the structure describing the elementary matrix
    *   which compute the integral of product of the integrals described by
    *   *pet1 and *pet2.

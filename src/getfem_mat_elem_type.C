@@ -93,12 +93,11 @@ namespace getfem {
     return add_to_met_tab(f);
   }
 
-  pmat_elem_type mat_elem_grad(const nonlinear_elem_term &nlt) {
+  pmat_elem_type mat_elem_nonlinear(const nonlinear_elem_term &nlt, pfem pfi) {
     mat_elem_type f; f.resize(1); f[0].t = GETFEM_NONLINEAR_;
-    f[0].pfi = nlt.pfi(0);
+    f[0].pfi = pfi;
     f[0].nlt = &nlt;
-    f.mi.resize(nlt.dim());
-    for (dim_type i = 0; i < nlt.dim(); ++i) f.mi[i] = nlt.size(i);
+    f.mi = nlt.sizes();
     return add_to_met_tab(f);
   }
 

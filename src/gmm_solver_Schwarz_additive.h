@@ -36,11 +36,12 @@
 
 #include <gmm_kernel.h>
 #include <gmm_precond_diagonal.h>
+#include <gmm_superlu_interface.h>
 
 namespace gmm {
       
   /* ******************************************************************** */
-  /*		Schwarz Additive method                                  */
+  /*		Schwarz Additive method                                   */
   /* ******************************************************************** */
   /* ref : Domain decomposition algorithms for the p-version finite       */
   /*       element method for elliptic problems, Luca F. Pavarino,        */
@@ -59,22 +60,34 @@ namespace gmm {
     mutable size_type itebilan;
     std::vector<vector_type> *gi, *fi;
     const std::vector<Precond> *precond1;
+    bool superlu;
+#ifdef GMM_USES_SUPERLU
+    std::vector<SuperLU_factor<value_type> > *SuperLU_mat;
+#endif
 
     schwadd_mat(const Matrix1 &A_, const std::vector<Matrix2> &vB_,
 		const std::vector<Matrix2> &vA_, iteration iter_,
 		double residu_, size_type itebilan_, 
 		std::vector<vector_type> &gi_, std::vector<vector_type> &fi_,
-		const std::vector<Precond> &precond_)
+		const std::vector<Precond> &precond_, bool su_
+#ifdef GMM_USES_SUPERLU
+		, std::vector<SuperLU_factor<value_type> > &Smat
+#endif
+		)
       : A(&A_), vB(&vB_),  vAloc(&vA_), iter(iter_),
 	residu(residu_), itebilan(itebilan_), gi(&gi_), fi(&fi_),
-	precond1(&precond_) {}
+	precond1(&precond_), superlu(su_)
+#ifdef GMM_USES_SUPERLU
+	, SuperLU_mat(&Smat)
+#endif
+    {}
   };
 
   template <typename Matrix1, typename Matrix2,
 	    typename Vector2, typename Vector3, typename Precond>
   int generic_schwarz_additif(const Matrix1 &A, Vector3 &u, const Vector2 &f, 
 			      const Precond &P, const std::vector<Matrix2> &vB,
-			      iteration &iter) {
+			      iteration &iter, bool superlu = true) {
 
     typedef typename linalg_traits<Matrix2>::value_type value_type;
     typedef typename dense_vector_type<value_type>::vector_type vector_type;
@@ -89,6 +102,9 @@ namespace gmm {
     std::vector<vector_type> fi(nb_sub);
     std::vector<Precond> precond1(nb_sub, P);
     vector_type g(nb_dof);
+#ifdef GMM_USES_SUPERLU
+    std::vector<SuperLU_factor<value_type> > SuperLU_mat(nb_sub);
+#endif
 
     cout << "precalcul\n";
     for (size_type i = 0; i < nb_sub; ++i) {
@@ -101,7 +117,13 @@ namespace gmm {
       gmm::mult(vB[i], A, Maux);
       gmm::mult(Maux, BT, vAloc[i]);
 
-      precond1[i].build_with(vAloc[i]);
+#ifdef GMM_USES_SUPERLU
+      if (superlu)
+	SuperLU_mat[i].build_with(vAloc[i]);
+      else
+#endif
+	precond1[i].build_with(vAloc[i]);
+
       gmm::resize(fi[i], mat_nrows(vB[i]));
       gmm::resize(gi[i], mat_nrows(vB[i]));
       gmm::mult(vB[i], f, fi[i]);
@@ -113,7 +135,12 @@ namespace gmm {
     cout << "fin precalcul\n";
 
     schwadd_mat<Matrix1, Matrix2, Precond>
-      SAM(A, vB, vAloc, iter2, iter.get_resmax(), itebilan, gi, fi, precond1);
+      SAM(A, vB, vAloc, iter2, iter.get_resmax(), itebilan, gi, fi, precond1,
+	  superlu
+#ifdef GMM_USES_SUPERLU   
+      , SuperLU_mat
+#endif
+	  );
     cg(SAM, u, g, A, identity_matrix(), iter);
 
     return SAM.itebilan;
@@ -128,9 +155,25 @@ namespace gmm {
     mult(*(M.A), p, q);
     globaltolocal(q, *(M.fi), *(M.vB));
     for (size_type i = 0; i < nb_sub; ++i) {
-      M.iter.init();
-      cg((*(M.vAloc))[i], (*(M.gi))[i],(*(M.fi))[i],(*(M.precond1))[i],M.iter);
-      itebilan = std::max(itebilan, M.iter.get_iteration());
+#ifdef GMM_USES_SUPERLU
+      if (M.superlu) {
+	
+	(*(M.SuperLU_mat))[i].solve((*(M.gi))[i], (*(M.fi))[i]);
+
+// 	std::vector<double> aux((*(M.gi))[i].size());
+// 	gmm::mult((*(M.vAloc))[i], (*(M.gi))[i], gmm::scaled((*(M.fi))[i], -1.0), aux);
+// 	cout << "residu local " << i << " : " << gmm::vect_norm2(aux) << endl;
+
+	itebilan = 1;
+      }
+      else {
+#endif
+       M.iter.init();
+       cg((*(M.vAloc))[i],(*(M.gi))[i],(*(M.fi))[i],(*(M.precond1))[i],M.iter);
+       itebilan = std::max(itebilan, M.iter.get_iteration());
+#ifdef GMM_USES_SUPERLU
+      }
+#endif
     }
     localtoglobal(*(M.gi), q, *(M.vB));
     cout << "itebloc = " << itebilan << endl;
