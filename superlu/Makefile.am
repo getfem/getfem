@@ -1,4 +1,4 @@
-include_HEADERS=\
+noinst_HEADERS=\
 	Cnames.h  colamd.h  csp_defs.h  dcomplex.h \
 	dsp_defs.h  scomplex.h  ssp_defs.h  supermatrix.h \
 	util.h  zsp_defs.h
