@@ -51,7 +51,7 @@ namespace bgeot
 	exp_max++; c_max /= scalar_type(base);
 	return (*this)(x,y);
       }
-      if (a < b) ret = -1; else if (a > b) ret = 1;
+      if (ret == 0) { if (a < b) ret = -1; else if (a > b) ret = 1; }
     }
     if (ret) return ret;
     
