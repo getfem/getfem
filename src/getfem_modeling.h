@@ -1328,8 +1328,8 @@ namespace getfem {
       mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
       i1 = this->mesh_fem_positions[num_fem];
       nbd = mf_u.nb_dof();
-      size_type Q = mf_u.get_qdim();
-      size_type nd = mf_u.nb_dof(), ndd = mf_data.nb_dof();
+      // size_type Q = mf_u.get_qdim();
+      size_type nd = mf_u.nb_dof(); //  ndd = mf_data.nb_dof();
       gmm::row_matrix<gmm::rsvector<value_type> > M(nd, nd);
       VECTOR V(nd);
 
@@ -1342,7 +1342,6 @@ namespace getfem {
 	asm_dirichlet_constraints(M, V, *(this->mesh_ims[0]), mf_u, mf_data,mf_data,
 				  H_, B_, boundary, version);
       }
-      //cout <<"M[0,0] = "<<M[0,0]<<" and M[0,1] ="<<M[0,1]<<" and M[1,0] = "<<M[1,0];
 
       if (version & ASMDIR_BUILDH) {
 	R tol=gmm::mat_maxnorm(M)*gmm::default_tol(value_type())*R(100);

@@ -66,30 +66,35 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 scalar_type sint2(scalar_type x, scalar_type y) {
   scalar_type r = sqrt(x*x+y*y);
   if (r == 0) return 0;
-  else return (y<0 ? -1:1) * sqrt(gmm::abs(r-x)/(2*r)); // sometimes (gcc3.3.2 -O3), r-x < 0 ....
+  else return (y<0 ? -1:1) * sqrt(gmm::abs(r-x)/(2*r));
+  // sometimes (gcc3.3.2 -O3), r-x < 0 ....
 }
 scalar_type cost2(scalar_type x, scalar_type y) {
   scalar_type r = sqrt(x*x+y*y);
   if (r == 0) return 0;
   else return sqrt(gmm::abs(r+x)/(2*r));
 }
-/* analytical solution for a semi-infinite crack [-inf,a] in an infinite plane submitted to +sigma above the crack
+/* analytical solution for a semi-infinite crack [-inf,a] in an
+   infinite plane submitted to +sigma above the crack
    and -sigma under the crack. (The crack is directed along the x axis).
    
    nu and E are the poisson ratio and young modulus
-
+   
    solution taken from "an extended finite elt method with high order
    elts for curved cracks", Stazi, Budyn,Chessa, Belytschko
 */
 
-void elasticite2lame(const scalar_type young_modulus, const scalar_type poisson_ratio, 
+void elasticite2lame(const scalar_type young_modulus,
+		     const scalar_type poisson_ratio, 
 		     scalar_type& lambda, scalar_type& mu) {
   mu = young_modulus/(2*(1+poisson_ratio));
   lambda = 2*mu*poisson_ratio/(1-poisson_ratio);
 }
 
-void sol_ref_infinite_plane(scalar_type nu, scalar_type E, scalar_type sigma, scalar_type a,
-			    scalar_type xx, scalar_type y, base_small_vector& U, int mode, base_matrix *pgrad) {
+void sol_ref_infinite_plane(scalar_type nu, scalar_type E, scalar_type sigma,
+			    scalar_type a, scalar_type xx, scalar_type y,
+			    base_small_vector& U, int mode,
+			    base_matrix *pgrad) {
   scalar_type x  = xx-a; /* the eq are given relatively to the crack tip */
   //scalar_type KI = sigma*sqrt(M_PI*a);
   scalar_type r = std::max(sqrt(x*x+y*y),1e-16);
@@ -98,7 +103,7 @@ void sol_ref_infinite_plane(scalar_type nu, scalar_type E, scalar_type sigma, sc
   scalar_type theta = atan2(y,x);
   scalar_type s2 = sin(theta/2); //sint2(x,y);
   scalar_type c2 = cos(theta/2); //cost2(x,y);
-  // scalar_type c3 = cos(3*theta/2); //4*c2*c2*c2 - 3*c2; /* cos(3*theta/2) */
+  // scalar_type c3 = cos(3*theta/2); //4*c2*c2*c2-3*c2; /* cos(3*theta/2) */
   // scalar_type s3 = sin(3*theta/2); //4*s2*c2*c2-s2;  /* sin(3*theta/2) */
 
   scalar_type lambda, mu;
@@ -113,50 +118,83 @@ void sol_ref_infinite_plane(scalar_type nu, scalar_type E, scalar_type sigma, sc
     U[0] = sqrtr/sqrt(2*M_PI) * C * c2 * (A + B*cost);
     U[1] = sqrtr/sqrt(2*M_PI) * C * s2 * (A + B*cost);
     if (pgrad) {
-      (*pgrad)(0,0) = C/(2.*sqrt(2*M_PI)*sqrtr) * (cost*c2*A-cost*cost*c2*B+sint*s2*A+sint*s2*B*cost+2*c2*B);
-      (*pgrad)(1,0) = -C/(2*sqrt(2*M_PI)*sqrtr) * (-sint*c2*A+sint*c2*B*cost+cost*s2*A+cost*cost*s2*B);
-      (*pgrad)(0,1) = C/(2.*sqrt(2*M_PI)*sqrtr) * (cost*s2*A-cost*cost*s2*B-sint*c2*A-sint*c2*B*cost+2*s2*B);
-      (*pgrad)(1,1) = C/(2.*sqrt(2*M_PI)*sqrtr) * (sint*s2*A-sint*s2*B*cost+cost*c2*A+cost*cost*c2*B);
+      (*pgrad)(0,0) = C/(2.*sqrt(2*M_PI)*sqrtr)
+	* (cost*c2*A-cost*cost*c2*B+sint*s2*A+sint*s2*B*cost+2*c2*B);
+      (*pgrad)(1,0) = -C/(2*sqrt(2*M_PI)*sqrtr)
+	* (-sint*c2*A+sint*c2*B*cost+cost*s2*A+cost*cost*s2*B);
+      (*pgrad)(0,1) = C/(2.*sqrt(2*M_PI)*sqrtr)
+	* (cost*s2*A-cost*cost*s2*B-sint*c2*A-sint*c2*B*cost+2*s2*B);
+      (*pgrad)(1,1) = C/(2.*sqrt(2*M_PI)*sqrtr)
+	* (sint*s2*A-sint*s2*B*cost+cost*c2*A+cost*cost*c2*B);
     }
   } else if (mode == 2) {
     scalar_type C1 = (lambda+3*mu)/(lambda+mu);
     U[0] = sqrtr/sqrt(2*M_PI) * C * s2 * (C1 + 2 + cost);
     U[1] = sqrtr/sqrt(2*M_PI) * C * c2 * (C1 - 2 + cost) * (-1.);
     if (pgrad) {
-      (*pgrad)(0,0) = C/(2.*sqrt(2*M_PI)*sqrtr) * (cost*s2*C1+2*cost*s2-cost*cost*s2-sint*c2*C1-2*sint*c2-sint*cost*c2+2*s2);
-      (*pgrad)(1,0) = C/(2.*sqrt(2*M_PI)*sqrtr) * (sint*s2*C1+2*sint*s2-sint*s2*cost+cost*c2*C1+2*cost*c2+cost*cost*c2);
-      (*pgrad)(0,1) = -C/(2.*sqrt(2*M_PI)*sqrtr) * (cost*c2*C1-2*cost*c2-cost*cost*c2+sint*s2*C1-2*sint*s2+sint*s2*cost+2*c2);
-      (*pgrad)(1,1) =  C/(2.*sqrt(2*M_PI)*sqrtr) * (-sint*c2*C1+2*sint*c2+sint*cost*c2+cost*s2*C1-2*cost*s2+cost*cost*s2);
+      (*pgrad)(0,0) = C/(2.*sqrt(2*M_PI)*sqrtr)
+	* (cost*s2*C1+2*cost*s2-cost*cost*s2-sint*c2*C1
+	   -2*sint*c2-sint*cost*c2+2*s2);
+      (*pgrad)(1,0) = C/(2.*sqrt(2*M_PI)*sqrtr)
+	* (sint*s2*C1+2*sint*s2-sint*s2*cost+cost*c2*C1
+	   +2*cost*c2+cost*cost*c2);
+      (*pgrad)(0,1) = -C/(2.*sqrt(2*M_PI)*sqrtr)
+	* (cost*c2*C1-2*cost*c2-cost*cost*c2+sint*s2*C1
+	   -2*sint*s2+sint*s2*cost+2*c2);
+      (*pgrad)(1,1) =  C/(2.*sqrt(2*M_PI)*sqrtr)
+	* (-sint*c2*C1+2*sint*c2+sint*cost*c2+cost*s2*C1
+	   -2*cost*s2+cost*cost*s2);
     }
   } else if (mode == 100) {
-    U[0] = - sqrtr3 * (c2 + 4./3 *(7*mu+3*lambda)/(lambda+mu)*c2*s2*s2-1./3*(7*mu+3*lambda)/(lambda+mu)*c2);
-    U[1] = - sqrtr3 * (s2+4./3*(lambda+5*mu)/(lambda+mu)*s2*s2*s2-(lambda+5*mu)/(lambda+mu)*s2);
+    U[0] = - sqrtr3 * (c2 + 4./3 *(7*mu+3*lambda)/(lambda+mu)*c2*s2*s2
+		       -1./3*(7*mu+3*lambda)/(lambda+mu)*c2);
+    U[1] = - sqrtr3 * (s2+4./3*(lambda+5*mu)/(lambda+mu)*s2*s2*s2
+		       -(lambda+5*mu)/(lambda+mu)*s2);
     if (pgrad) {
-      (*pgrad)(0,0) = 2*sqrtr*(-6*cost*c2*mu+7*cost*c2*c2*c2*mu-3*cost*c2*lambda+3*cost*c2*c2*c2*lambda-2*sint*s2*mu+
-			       7*sint*s2*c2*c2*mu-sint*s2*lambda+3*sint*s2*c2*c2*lambda)/(lambda+mu);
-      (*pgrad)(1,0) = -2*sqrtr*(6*sint*c2*mu-7*sint*c2*c2*c2*mu+3*sint*c2*lambda-3*sint*c2*c2*c2*lambda-2*cost*s2*mu+
-				7*cost*s2*c2*c2*mu-cost*s2*lambda+3*cost*s2*c2*c2*lambda)/(lambda+mu);
-      (*pgrad)(0,1) = 2*sqrtr*(-2*cost*s2*mu-cost*s2*lambda+cost*s2*c2*c2*lambda+5*cost*s2*c2*c2*mu+4*sint*c2*mu+
-			       sint*c2*lambda-sint*c2*c2*c2*lambda-5*sint*c2*c2*c2*mu)/(lambda+mu);
-      (*pgrad)(1,1) = 2*sqrtr*(-2*sint*s2*mu-sint*s2*lambda+sint*s2*c2*c2*lambda+5*sint*s2*c2*c2*mu-4*cost*c2*mu-
-			       cost*c2*lambda+cost*c2*c2*c2*lambda+5*cost*c2*c2*c2*mu)/(lambda+mu);
+      (*pgrad)(0,0) = 2*sqrtr*(-6*cost*c2*mu+7*cost*c2*c2*c2*mu
+			       -3*cost*c2*lambda+3*cost*c2*c2*c2*lambda
+			       -2*sint*s2*mu
+			       +7*sint*s2*c2*c2*mu-sint*s2*lambda
+			       +3*sint*s2*c2*c2*lambda)/(lambda+mu);
+      (*pgrad)(1,0) = -2*sqrtr*(6*sint*c2*mu-7*sint*c2*c2*c2*mu
+				+3*sint*c2*lambda-3*sint*c2*c2*c2*lambda
+				-2*cost*s2*mu
+				+7*cost*s2*c2*c2*mu-cost*s2*lambda
+				+3*cost*s2*c2*c2*lambda)/(lambda+mu);
+      (*pgrad)(0,1) = 2*sqrtr*(-2*cost*s2*mu-cost*s2*lambda
+			       +cost*s2*c2*c2*lambda+5*cost*s2*c2*c2*mu
+			       +4*sint*c2*mu
+			       +sint*c2*lambda-sint*c2*c2*c2*lambda
+			       -5*sint*c2*c2*c2*mu)/(lambda+mu);
+      (*pgrad)(1,1) = 2*sqrtr*(-2*sint*s2*mu-sint*s2*lambda
+			       +sint*s2*c2*c2*lambda+5*sint*s2*c2*c2*mu
+			       -4*cost*c2*mu
+			       -cost*c2*lambda+cost*c2*c2*c2*lambda
+			       +5*cost*c2*c2*c2*mu)/(lambda+mu);
     }
   } else if (mode == 101) {
-    U[0] = -4*sqrtr3*s2*(-lambda-2*mu+7*lambda*c2*c2+11*mu*c2*c2)/(3*lambda-mu);
+    U[0] = -4*sqrtr3*s2*(-lambda-2*mu+7*lambda*c2*c2
+			 +11*mu*c2*c2)/(3*lambda-mu);
     U[1] = -4*sqrtr3*c2*(-3*lambda+3*lambda*c2*c2-mu*c2*c2)/(3*lambda-mu);
     if (pgrad) {
-      (*pgrad)(0,0) = -6*sqrtr*(-cost*s2*lambda-2*cost*s2*mu+7*cost*s2*lambda*c2*c2+
-				11*cost*s2*mu*c2*c2+5*sint*c2*lambda+8*sint*c2*mu-
-				7*sint*c2*c2*c2*lambda-11*sint*c2*c2*c2*mu)/(3*lambda-mu);
-      (*pgrad)(1,0) = -6*sqrtr*(-sint*s2*lambda-2*sint*s2*mu+
-				7*sint*s2*lambda*c2*c2+
-				11*sint*s2*mu*c2*c2-5*cost*c2*lambda-8*cost*c2*mu+
-				7*cost*c2*c2*c2*lambda+11*cost*c2*c2*c2*mu)/(3*lambda-mu);
-      (*pgrad)(0,1) = -6*sqrtr*(-3*cost*c2*lambda+3*cost*c2*c2*c2*lambda-cost*c2*c2*c2*mu-
-				sint*s2*lambda+3*sint*s2*lambda*c2*c2-sint*s2*mu*c2*c2)/(3*lambda-mu);
-      (*pgrad)(1,1) = 6*sqrtr*(3*sint*c2*lambda-3*sint*c2*c2*c2*lambda+sint*c2*c2*c2*mu-
-			       cost*s2*lambda+
-			       3*cost*s2*lambda*c2*c2-cost*s2*mu*c2*c2)/(3*lambda-mu);
+      (*pgrad)(0,0) = -6*sqrtr*(-cost*s2*lambda-2*cost*s2*mu
+				+7*cost*s2*lambda*c2*c2
+				+11*cost*s2*mu*c2*c2+5*sint*c2*lambda
+				+8*sint*c2*mu-7*sint*c2*c2*c2*lambda
+				-11*sint*c2*c2*c2*mu)/(3*lambda-mu);
+      (*pgrad)(1,0) = -6*sqrtr*(-sint*s2*lambda-2*sint*s2*mu
+				+7*sint*s2*lambda*c2*c2
+				+11*sint*s2*mu*c2*c2-5*cost*c2*lambda
+				-8*cost*c2*mu+7*cost*c2*c2*c2*lambda
+				+11*cost*c2*c2*c2*mu)/(3*lambda-mu);
+      (*pgrad)(0,1) = -6*sqrtr*(-3*cost*c2*lambda+3*cost*c2*c2*c2*lambda
+				-cost*c2*c2*c2*mu-sint*s2*lambda
+				+3*sint*s2*lambda*c2*c2
+				-sint*s2*mu*c2*c2)/(3*lambda-mu);
+      (*pgrad)(1,1) = 6*sqrtr*(3*sint*c2*lambda
+			       -3*sint*c2*c2*c2*lambda+sint*c2*c2*c2*mu
+			       -cost*s2*lambda+3*cost*s2*lambda*c2*c2
+			       -cost*s2*mu*c2*c2)/(3*lambda-mu);
     }
 
   } else if (mode == 10166666) {
@@ -166,20 +204,29 @@ void sol_ref_infinite_plane(scalar_type nu, scalar_type E, scalar_type sigma, sc
     if (pgrad) {
       (*pgrad)(0,0) = 6*sqrtr*(-cost*s2*lambda+cost*s2*lambda*c2*c2-
 			       3*cost*s2*mu*c2*c2-2*sint*c2*mu+sint*c2*lambda-
-			       sint*c2*c2*c2*lambda+3*sint*c2*c2*c2*mu)/(lambda-3*mu);
+			       sint*c2*c2*c2*lambda
+			       +3*sint*c2*c2*c2*mu)/(lambda-3*mu);
       (*pgrad)(1,0) = 6*sqrtr*(-sint*s2*lambda+sint*s2*lambda*c2*c2-
 			       3*sint*s2*mu*c2*c2+2*cost*c2*mu-cost*c2*lambda+
-			       cost*c2*c2*c2*lambda-3*cost*c2*c2*c2*mu)/(lambda-3*mu);
-      (*pgrad)(0,1) = 6*sqrtr*(-3*cost*c2*lambda-6*cost*c2*mu+5*cost*c2*c2*c2*lambda+
+			       cost*c2*c2*c2*lambda
+			       -3*cost*c2*c2*c2*mu)/(lambda-3*mu);
+      (*pgrad)(0,1) = 6*sqrtr*(-3*cost*c2*lambda-6*cost*c2*mu
+			       +5*cost*c2*c2*c2*lambda+
 			       9*cost*c2*c2*c2*mu-sint*s2*lambda-2*sint*s2*mu+
-			       5*sint*s2*lambda*c2*c2+9*sint*s2*mu*c2*c2)/(lambda-3*mu);
-      (*pgrad)(1,1) = -6*sqrtr*(3*sint*c2*lambda+6*sint*c2*mu-5*sint*c2*c2*c2*lambda-
+			       5*sint*s2*lambda*c2*c2
+			       +9*sint*s2*mu*c2*c2)/(lambda-3*mu);
+      (*pgrad)(1,1) = -6*sqrtr*(3*sint*c2*lambda+6*sint*c2*mu
+				-5*sint*c2*c2*c2*lambda-
 				9*sint*c2*c2*c2*mu-cost*s2*lambda-2*cost*s2*mu+
-				5*cost*s2*lambda*c2*c2+9*cost*s2*mu*c2*c2)/(lambda-3*mu);
+				5*cost*s2*lambda*c2*c2
+				+9*cost*s2*mu*c2*c2)/(lambda-3*mu);
     }
   } else assert(0);
   if (isnan(U[0]))
-    cerr << "raaah not a number ... nu=" << nu << ", E=" << E << ", sig=" << sigma << ", a=" << a << ", xx=" << xx << ", y=" << y << ", r=" << r << ", sqrtr=" << sqrtr << ", cost=" << cost << ", U=" << U[0] << "," << U[1] << endl;
+    cerr << "raaah not a number ... nu=" << nu << ", E=" << E << ", sig="
+	 << sigma << ", a=" << a << ", xx=" << xx << ", y=" << y << ", r="
+	 << r << ", sqrtr=" << sqrtr << ", cost=" << cost << ", U=" << U[0]
+	 << "," << U[1] << endl;
   assert(!isnan(U[0]));
   assert(!isnan(U[1]));
 }
@@ -206,8 +253,7 @@ base_matrix sol_sigma(const base_node &x) {
 
 struct toto_function : public getfem::global_function {
   virtual scalar_type val(const getfem::fem_interpolation_context&c) const
-  { base_node P=c.xreal(); 
-    cout << "P = " << P << " -> toto renvoie " << gmm::sgn(P[1])*(1-P[0]) << "\n";
+  { base_node P=c.xreal();
     return 3*gmm::sgn(P[1])*(1-P[0]); }
 };
 
@@ -228,7 +274,8 @@ struct exact_solution {
 
   exact_solution(getfem::getfem_mesh &me) : mf(me) {}
   
-  void init(int mode, scalar_type lambda, scalar_type mu, getfem::level_set &ls) {
+  void init(int mode, scalar_type lambda, scalar_type mu,
+	    getfem::level_set &ls) {
     std::vector<getfem::pglobal_function> cfun(4);
     for (unsigned j=0; j < 4; ++j)
       cfun[j] = getfem::isotropic_crack_singular_2D(j, ls);
@@ -243,7 +290,7 @@ struct exact_solution {
       case 1: {
 	scalar_type A=2+2*mu/(lambda+2*mu), B=-2*(lambda+mu)/(lambda+2*mu);
 	/* "colonne" 1: ux, colonne 2: uy */
-	*it++ = 0;       *it++ = A-B;   /* sin(theta/2) */
+	*it++ = 0;       *it++ = A-B; /* sin(theta/2) */
 	*it++ = A+B;     *it++ = 0;   /* cos(theta/2) */
 	*it++ = -B;      *it++ = 0;   /* sin(theta/2)*sin(theta) */ 
 	*it++ = 0;       *it++ = B;   /* cos(theta/2)*cos(theta) */
@@ -280,7 +327,9 @@ struct crack_problem {
   getfem::mesh_fem_global_function mf_sing_u;
   getfem::mesh_fem_sum mf_u_sum;
 
-  getfem::mesh_fem& mf_u() { return mfls_u; } //_u_sum; }
+  getfem::mesh_fem& mf_u() { return mf_u_sum; }
+  // getfem::mesh_fem& mf_u() { return mfls_u; }
+  
 
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   getfem::mesh_fem mf_p;     /* mesh_fem for the pressure for mixed form     */
@@ -301,9 +350,9 @@ struct crack_problem {
   void init(void);
   void compute_error(plain_vector &U);
   crack_problem(void) : mls(mesh), mim(mls), mf_pre_u(mesh),
-			mfls_u(mls, mf_pre_u), mf_sing_u(mesh), mf_u_sum(mesh), mf_rhs(mesh),
-			mf_p(mesh), mf_coef(mesh), exact_sol(mesh), 
-			ls(mesh, 1, true) {}
+			mfls_u(mls, mf_pre_u), mf_sing_u(mesh), mf_u_sum(mesh),
+			mf_rhs(mesh), mf_p(mesh), mf_coef(mesh),
+			exact_sol(mesh),  ls(mesh, 1, true) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
@@ -315,7 +364,7 @@ void crack_problem::init(void) {
   const char *INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
   const char *SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION",
-					       "Name of simplex integration method");
+					 "Name of simplex integration method");
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
@@ -437,7 +486,8 @@ bool crack_problem::solve(plain_vector &U) {
   mim.adapt();
   mfls_u.adapt();
   std::vector<getfem::pglobal_function> vfunc(4);
-  for (size_type i = 0; i < 4; ++i) vfunc[i] = isotropic_crack_singular_2D(i, ls);
+  for (size_type i = 0; i < 4; ++i)
+    vfunc[i] = isotropic_crack_singular_2D(i, ls);
   
   mf_sing_u.set_functions(vfunc);
   mf_u_sum.set_mesh_fems(mfls_u, mf_sing_u);
@@ -525,7 +575,7 @@ int main(int argc, char *argv[]) {
   feenableexcept(FE_DIVBYZERO | FE_INVALID);
 #endif
 
-  //getfem::getfem_mesh_level_set_noisy();
+  // getfem::getfem_mesh_level_set_noisy();
 
 
   try {
@@ -540,7 +590,8 @@ int main(int argc, char *argv[]) {
       getfem::getfem_mesh mcut;
       p.mls.global_cut_mesh(mcut);
       getfem::mesh_fem mf(mcut, p.mf_u().get_qdim());
-      mf.set_finite_element(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 2, 0.01)"));
+      mf.set_finite_element
+	(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 2, 0.00001)"));
       plain_vector V(mf.nb_dof());
 
       getfem::interpolation(p.mf_u(), mf, U, V);
@@ -550,10 +601,12 @@ int main(int argc, char *argv[]) {
       sl.build(mcut, 
 	       getfem::slicer_build_mesh(mcut_refined), 6);
       getfem::mesh_im mim_refined(mcut_refined); 
-      mim_refined.set_integration_method(getfem::int_method_descriptor("IM_TRIANGLE(6)"));
+      mim_refined.set_integration_method(getfem::int_method_descriptor
+					 ("IM_TRIANGLE(6)"));
 
       getfem::mesh_fem mf_refined(mcut_refined, p.mf_u().get_qdim());
-      mf_refined.set_finite_element(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 1, 0.01)"));
+      mf_refined.set_finite_element
+	(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 1, 0.00001)"));
       plain_vector W(mf_refined.nb_dof());
       getfem::interpolation(p.mf_u(), mf_refined, U, W);
 
@@ -575,7 +628,6 @@ int main(int argc, char *argv[]) {
 	  "WarpVector -m BandedSurfaceMap -m Outline\n";
       }
       {
-
 	getfem::vtk_export exp("crack_exact.vtk");
 	exp.exporting(mf_refined);
 	exp.write_point_data(mf_refined, EXACT, 
@@ -584,7 +636,8 @@ int main(int argc, char *argv[]) {
 
       plain_vector DIFF(EXACT); gmm::add(gmm::scaled(W,-1),DIFF);
       cout << "ERROR L2:" << getfem::asm_L2_norm(mim_refined,mf_refined,DIFF) 
-	   << " H1:" << getfem::asm_H1_norm(mim_refined,mf_refined,DIFF) << "\n";
+	   << " H1:" << getfem::asm_H1_norm(mim_refined,mf_refined,DIFF)
+	   << "\n";
     }
   }
   DAL_STANDARD_CATCH_ERROR;

@@ -323,12 +323,15 @@ struct Chrono {
     cvi.zones.resize(0);
     for (dal::bv_visitor i(cvi.pmesh->convex_index()); !i.finished();++i) {
       std::string zone = prezone;
+      cout << "prezone for convex " << cv << " : " << zone << endl;
       for (size_type j = 0; j < level_sets.size(); ++j) {
 	if (zone[j] == '*' || zone[j] == '0') {
 	  int s = sub_simplex_is_not_crossed_by(cv, level_sets[j], i);
+	  cout << "s = " << s << endl;
 	  zone[j] = (s < 0) ? '-' : ((s > 0) ? '+' : '0');
 	}
       }
+      cout << "modified prezone for convex " << cv << " : " << zone << endl;
       merge_zoneset(cvi.zones, zone);
     }
     if (noisy) cout << "Number of zones for convex " << cv << " : "
@@ -737,9 +740,11 @@ struct Chrono {
     if (ls->has_secondary()) mls1 = ls->mls_of_convex(cv, 1);
     int p = 0;
     bool cutted = false;
-    scalar_type d2 = 0, d1 = 1, d0 = 0;
+    scalar_type d2 = 0, d1 = 1, d0 = 0, d0min = 0;
     for (size_type i = 0; i < pgt2->nb_points(); ++i) {
       d0 = mls0(cvi.pmesh->points_of_convex(sub_cv)[i]);
+      if (i == 0) d0min = gmm::abs(d0);
+      else d0min = std::min(d0min, gmm::abs(d0));
       if (ls->has_secondary())
 	d1 = std::min(d1, mls1(cvi.pmesh->points_of_convex(sub_cv)[i]));
      
@@ -748,7 +753,9 @@ struct Chrono {
       if (gmm::abs(d0) > gmm::abs(d2)) d2 = d0;
       if (!p2 || p*p2 < 0) cutted = true;
     }
-    if (cutted && d1 > +EPS) { cout << "ooops, je retourne 0" << endl; return 0; }
+    if (cutted && d1 > +EPS)
+      { cout << "ooops, je retourne 0" << endl; return 0; }
+    if (d0min < EPS &&  d1 > -EPS) return 0;
     return (d2 < 0.) ? -1 : 1;
   }
 
