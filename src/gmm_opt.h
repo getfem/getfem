@@ -98,6 +98,7 @@ namespace gmm {
     }
     return det;
   }
+  
 }
 
 #endif //  __GMM_OPT_H

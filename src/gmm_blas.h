@@ -29,16 +29,6 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-//
-// To be done
-//
-//   . mult : optimisable in some cases.
-//       (more iterators on vector and matrices, avoid repeated tests)
-//
-//   . add : best control on overlapping writing : origins.
-//
-
-
 #ifndef __GMM_BLAS_H
 #define __GMM_BLAS_H
 
@@ -216,7 +206,8 @@ namespace gmm {
   { return nnz(l, typename linalg_traits<L>::linalg_type()); }
 
   template <class L> inline size_type nnz(const L& l, abstract_vector) { 
-    typename linalg_traits<L>::const_iterator it = vect_const_begin(l), ite = vect_const_end(l);
+    typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
+      ite = vect_const_end(l);
     size_type res(0);
     for (; it != ite; ++it) ++res;
     return res;
@@ -229,13 +220,15 @@ namespace gmm {
 
   template <class L> inline size_type nnz(const L& l, row_major) {
     size_type res(0);
-    for (size_type i = 0; i < mat_nrows(l); ++i) res += nnz(mat_const_row(l, i));
+    for (size_type i = 0; i < mat_nrows(l); ++i)
+      res += nnz(mat_const_row(l, i));
     return res;
   } 
 
   template <class L> inline size_type nnz(const L& l, col_major) {
     size_type res(0);
-    for (size_type i = 0; i < mat_ncols(l); ++i) res += nnz(mat_const_col(l, i));
+    for (size_type i = 0; i < mat_ncols(l); ++i)
+      res += nnz(mat_const_col(l, i));
     return res;
   }
 
@@ -455,21 +448,12 @@ namespace gmm {
     typename std::iterator_traits<IT1>::value_type
     _vect_sp_dense(IT1 it, IT1 ite, IT2 it2) {
     typename std::iterator_traits<IT1>::value_type res(0);
-    size_type n = ((ite - it) >> 3);
-    for (size_type i = 0; i < n; ++i, ++it, ++it2) {
+    for (; it != ite; ++it, ++it2) {
       res += conj_product(*it, *it2);
-      res += conj_product(*++it, *++it2);
-      res += conj_product(*++it, *++it2);
-      res += conj_product(*++it, *++it2);
-      res += conj_product(*++it, *++it2);
-      res += conj_product(*++it, *++it2);
-      res += conj_product(*++it, *++it2);
-      res += conj_product(*++it, *++it2);
     }
-    for (; it != ite; ++it, ++it2) res += conj_product(*it, *it2);
     return res;
   }
-
+  
   template <class IT1, class V> inline
     typename std::iterator_traits<IT1>::value_type
     _vect_sp_sparse(IT1 it, IT1 ite, const V &v) {

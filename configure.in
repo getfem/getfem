@@ -117,7 +117,7 @@ dnl             CXXFLAGS="$CXXFLAGS -LANG:std  -O3 -ansiW "
 		WSHADOW="-Wshadow"
 		;;
 	esac
- 	CXXFLAGS="$CXXFLAGS -pipe -ftemplate-depth-40 -pedantic -O3 -Wall -W $WSHADOW -Wpointer-arith -Wcast-qual -Wwrite-strings -Wconversion -Wmissing-prototypes -Wredundant-decls"
+ 	CXXFLAGS="$CXXFLAGS -ftemplate-depth-40 -pedantic -O3 -Wall -W $WSHADOW -Wpointer-arith -Wcast-qual -Wwrite-strings -Wconversion -Wmissing-prototypes -Wredundant-decls"
 	;;
  icc | icpc)
 	echo "Using INTEL icc"

@@ -64,6 +64,7 @@ namespace gmm {
   template <class Matrix, class VecX, class VecY>
   inline void rank_one_update(Matrix &A, const VecX& x,
 			      const VecY& y, row_major) {
+    typedef typename linalg_traits<Matrix>::value_type value_type;
     size_type N = mat_nrows(A);
     if (N > vect_size(x) || mat_ncols(A) > vect_size(y))
       DAL_THROW(dimension_error,"dimensions mismatch");
@@ -79,7 +80,8 @@ namespace gmm {
       for (; it != ite; ++it, ++ity)
 	const_cast<T &>(*it) += conj_product(*itx, *ity);
 #   else
-      for (; it != ite; ++it, ++ity) *it += conj_product(*itx, *ity);
+      value_type tx = *itx;
+      for (; it != ite; ++it, ++ity) *it += conj_product(tx, *ity);
 #   endif
     }
   }
@@ -87,6 +89,7 @@ namespace gmm {
   template <class Matrix, class VecX, class VecY>
   inline void rank_one_update(Matrix &A, const VecX& x,
 			      const VecY& y, col_major) {
+    typedef typename linalg_traits<Matrix>::value_type value_type;
     size_type M = mat_ncols(A);
     if (mat_nrows(A) > vect_size(x) || M > vect_size(y))
       DAL_THROW(dimension_error,"dimensions mismatch");
@@ -102,7 +105,8 @@ namespace gmm {
       for (; it != ite; ++it, ++itx)
 	const_cast<T &>(*it) += conj_product(*itx, *ity);
 #   else
-      for (; it != ite; ++it, ++itx) *it += conj_product(*itx, *ity);
+      value_type ty = *ity;
+      for (; it != ite; ++it, ++itx) *it += conj_product(*itx, ty); 
 #   endif
     }
   }
@@ -146,11 +150,11 @@ namespace gmm {
 	  if (dal::abs(A(i,j)) > max) { jp = i; max = dal::abs(A(i,j)); }
 	ipvt[j] = jp + 1;
 	
-	if (A(jp, j) == value_type(0)) { info = j + 1; break; }
-	if (jp != j) for (i = 0; i < N; ++i) std::swap(A(jp, i), A(j, i));
+	if (max == value_type(0)) { info = j + 1; break; }
+        if (jp != j) for (i = 0; i < N; ++i) std::swap(A(jp, i), A(j, i));
 	
-	for (i = j+1; i < M; ++i) { A(i, j) /= A(j,j); c[i-j-1] = -A(i, j); }
-	for (i = j+1; i < N; ++i) r[i-j-1] = A(j, i);  // avoid the copy ?
+        for (i = j+1; i < M; ++i) { A(i, j) /= A(j,j); c[i-j-1] = -A(i, j); }
+        for (i = j+1; i < N; ++i) r[i-j-1] = A(j, i);  // avoid the copy ?
 	rank_one_update(sub_matrix(A, sub_interval(j+1, M-j-1),
 				   sub_interval(j+1, N-j-1)), c, r);
       }

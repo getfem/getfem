@@ -1,19 +1,20 @@
 check_PROGRAMS = \
 	dynamic_array \
 	dynamic_tas \
-	test_assembly \
-	laplacian \
 	elasto_statique  \
-	integration \
-	linalg \
-	poly \
-	test_mesh \
 	geo_trans \
 	geo_trans_inv \
+	integration \
+	laplacian \
+	linalg \
+	poly \
+	speed_test_for_gmm \
+	test_assembly \
 	test_int_set \
 	test_link_fem \
-	test_tree_sorted \
-	test_mat_elem
+	test_mat_elem \
+	test_mesh \
+	test_tree_sorted
 
 CLEANFILES = \
 	laplacian.res laplacian.mesh laplacian.dataelt \
@@ -32,6 +33,7 @@ linalg_SOURCES = linalg.C
 test_mesh_SOURCES = test_mesh.C
 geo_trans_SOURCES = geo_trans.C
 geo_trans_inv_SOURCES = geo_trans_inv.C
+speed_test_for_gmm_SOURCES = speed_test_for_gmm.C
 test_int_set_SOURCES = test_int_set.C
 test_link_fem_SOURCES = test_link_fem.C
 test_tree_sorted_SOURCES = test_tree_sorted.C
@@ -53,6 +55,7 @@ TESTS = \
 	$(top_srcdir)/tests/test_mesh.pl \
 	$(top_srcdir)/tests/geo_trans.pl \
 	$(top_srcdir)/tests/geo_trans_inv.pl \
+	$(top_srcdir)/tests/speed_test_for_gmm.pl \
 	$(top_srcdir)/tests/test_int_set.pl \
 	$(top_srcdir)/tests/test_link_fem.pl \
 	$(top_srcdir)/tests/test_tree_sorted.pl
@@ -69,6 +72,7 @@ EXTRA_DIST = \
 	test_mesh.pl \
 	geo_trans.pl \
 	geo_trans_inv.pl \
+	speed_test_for_gmm.pl \
 	test_int_set.pl \
 	test_link_fem.pl \
 	test_tree_sorted.pl \
