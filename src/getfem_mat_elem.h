@@ -66,6 +66,8 @@ namespace getfem
       template <class CONT> void gen_compute_on_face(base_tensor &t,
 						 const CONT &a, short_type f)
       { transfert_to_G(pa, a); compute_on_face(t, pa, f); }
+
+      virtual ~mat_elem_computation() {}
   };
 
   typedef mat_elem_computation *pmat_elem_computation;

@@ -110,7 +110,7 @@ namespace getfem
   }
   
   void mesh_fem_link_fem::mat_trans(base_matrix &M, const base_matrix &G,
-				    bgeot::pgeometric_trans pgt, bool wg) {
+				    bgeot::pgeometric_trans, bool wg) {
     if (to_be_computed) compute();
     size_type npt = G.ncols(), P = G.nrows();
     base_node pt(P), val(1);
@@ -246,15 +246,15 @@ namespace getfem
  
   void mesh_fem_link_fem::receipt(const MESH_CLEAR &)
     { to_be_computed = true; }
-  void mesh_fem_link_fem::receipt(const MESH_SUP_CONVEX &m)
+  void mesh_fem_link_fem::receipt(const MESH_SUP_CONVEX &)
     { to_be_computed = true; }
-  void mesh_fem_link_fem::receipt(const MESH_SWAP_CONVEX &m)
+  void mesh_fem_link_fem::receipt(const MESH_SWAP_CONVEX &)
     { to_be_computed = true; }
-  void mesh_fem_link_fem::receipt(const MESH_REFINE_CONVEX &m) {
+  void mesh_fem_link_fem::receipt(const MESH_REFINE_CONVEX &) {
     // ajouter la strategie au rafinement / derafinement
     DAL_THROW(internal_error, "internal error");
   }
-  void mesh_fem_link_fem::receipt(const MESH_UNREFINE_CONVEX &m){
+  void mesh_fem_link_fem::receipt(const MESH_UNREFINE_CONVEX &){
     // ajouter la strategie au rafinement / derafinement
     DAL_THROW(internal_error, "internal error");
   }
@@ -311,7 +311,7 @@ namespace getfem
     }
   }
 
-  void mesh_fem_link_fem::receipt(const MESH_FEM_DELETE &m) {
+  void mesh_fem_link_fem::receipt(const MESH_FEM_DELETE &) {
     sup_mf_link_fem(*pmf1, *pmf2);
   }
 
@@ -369,15 +369,15 @@ namespace getfem
     virtual size_type index_of_already_numerate_dof(size_type cv, size_type i)
       const { return pmflf->ind_of_dof(cv, i); }
     
-    void interpolation(const base_node &x, const base_matrix &G, 
-		       bgeot::pgeometric_trans pgt,
-		       const base_vector coeff, base_node &val) const {
+    void interpolation(const base_node &, const base_matrix &, 
+		       bgeot::pgeometric_trans,
+		       const base_vector, base_node &) const {
       DAL_THROW(internal_error,
 	  "You cannot interpolate this element, use the original element.");
     }
-    void interpolation_grad(const base_node &x, const base_matrix &G,
-			    bgeot::pgeometric_trans pgt,
-			    const base_vector coeff, base_matrix &val) const {
+    void interpolation_grad(const base_node &, const base_matrix &,
+			    bgeot::pgeometric_trans,
+			    const base_vector, base_matrix &) const {
       DAL_THROW(internal_error,
 	  "You cannot interpolate this element, use the original element.");
     }

@@ -818,7 +818,7 @@ namespace bgeot
       p->repartition.resize(p->cvr->structure()->nb_faces()+1);
       p->int_coeffs.resize(ptab.size());
       // volume
-      int i = 0;
+      size_type i = 0;
 
       double a1 = 0.063089104491502;
       double a2 = 0.249286745170910;
@@ -909,7 +909,7 @@ namespace bgeot
       p->repartition.resize(p->cvr->structure()->nb_faces()+1);
       p->int_coeffs.resize(ptab.size());
       // volume
-      int i = 0;
+      size_type i = 0;
       double r1  = 0.0651301029022;
       double r2  = 0.8697397941956;
       double r4  = 0.3128654960049;

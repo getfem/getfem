@@ -364,7 +364,6 @@ namespace bgeot
   
   pconvex_structure convex_product_structure(pconvex_structure a,
 					     pconvex_structure b) {
-    static bool initialized = false;
     if (_cv_pr_tab == 0) 
       _cv_pr_tab = new dal::FONC_TABLE<_cv_pr_light, _cv_pr_structure>();
     return _cv_pr_tab->add(_cv_pr_light(a, b));

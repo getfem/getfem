@@ -500,7 +500,7 @@ namespace dal
    
       tab_ref_with_selection(void) {}
       tab_ref_with_selection(const ITER &b, const ITER &e, const COND &c)
-	: _begin(b), cond(c), _end(e) { _begin = begin(); }
+	: _begin(b), _end(e), cond(c) { _begin = begin(); }
 
   };
 

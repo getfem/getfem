@@ -180,6 +180,8 @@ namespace getfem
       { DAL_THROW(internal_error, "internal error");}
       virtual void receipt(const MESH_FEM_TOUCH       &) 
       { DAL_THROW(internal_error, "internal error");}
+
+      virtual ~getfem_mesh_receiver() {}
   };
 
   /* refinement methods are :                                              */

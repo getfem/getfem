@@ -65,7 +65,7 @@ namespace dal
   void bit_vector::fill_false(size_type i1, size_type i2)
   {
     size_type f = i1 / WD_BIT, r = i1 & (WD_BIT-1), l = i2 / WD_BIT;
-    bit_support *q = & ((*((bit_container *)(this)))[l]);
+    (*((bit_container *)(this)))[l];
     
     if (r != 0) f++; l++;
     if (f < l)
@@ -75,8 +75,6 @@ namespace dal
     }
 
     // *q &= ((bit_support(-1)) >> (WD_BIT - r));
-
-    // cout << "fill false " << i1 << " : " << i2 << " : " << *q << " : " << ((bit_support(-1)) >> (WD_BIT - r)) << endl; getchar();
 
     ilast_false = i2;
   }

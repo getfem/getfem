@@ -92,30 +92,31 @@ namespace getfem
 
       if (nbp == n+1 && cvs == bgeot::simplex_structure(n))
       {
-	for (int k = 0; k < n; ++k)
-	  for (int l = k+1; l <= n; ++l)
+	for (dim_type k = 0; k < n; ++k)
+	  for (dim_type l = k+1; l <= n; ++l)
 	    el.add(edge_list_elt(m.ind_points_of_convex(i)[k],
 				 m.ind_points_of_convex(i)[l]));
       }
-      else if (nbp == (1 << n) && cvs == bgeot::parallelepiped_structure(n))
+      else if (nbp == (size_type(1) << n) 
+	       && cvs == bgeot::parallelepiped_structure(n))
       {
-	for (int k = 0; k < (1 << n); ++k)
-	  for (int j = 0; j < n; ++j)
+	for (size_type k = 0; k < (size_type(1) << n); ++k)
+	  for (dim_type j = 0; j < n; ++j)
 	    if ((k & (1 << j)) == 0)
 	      el.add(edge_list_elt(m.ind_points_of_convex(i)[k],
 				   m.ind_points_of_convex(i)[k | (1 << j)]));
       }
       else if (nbp == 2 * n && cvs == bgeot::prism_structure(n))
       {
-	for (int k = 0; k < n - 1; ++k)
-	  for (int l = k+1; l < n; ++l)
+	for (dim_type k = 0; k < n - 1; ++k)
+	  for (dim_type l = k+1; l < n; ++l)
 	  {
 	    el.add(edge_list_elt(m.ind_points_of_convex(i)[k],
 				 m.ind_points_of_convex(i)[l]));
 	    el.add(edge_list_elt(m.ind_points_of_convex(i)[k+n],
 				 m.ind_points_of_convex(i)[l+n]));
 	  }
-	for (int k = 0; k < n; ++k)
+	for (dim_type k = 0; k < n; ++k)
 	  el.add(edge_list_elt(m.ind_points_of_convex(i)[k],
 			       m.ind_points_of_convex(i)[k+n]));
       }

@@ -207,7 +207,7 @@ namespace getfem
       void receipt(const MESH_FEM_TOUCH &m);
       
       mesh_fem(getfem_mesh &me); 
-      ~mesh_fem(void);
+      virtual ~mesh_fem();
   };
   
 }  /* end of namespace getfem.                                             */

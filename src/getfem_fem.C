@@ -694,7 +694,7 @@ namespace getfem
      {
        is_lag = false; es_degree = l.nc+1;
        base_node pt(l.nc); 
-       int i,j;
+       size_type j;
        _PK_fem P1(_PK_femi_light(l.nc, 1));
 
        pt.fill(1./(l.nc+1)); /* barycenter of the convex */
@@ -702,10 +702,10 @@ namespace getfem
        add_node(bubble1_dof(l.nc), pt);
        _base.resize(nb_dof());
 
-       j = nb_dof()-1;
+       j = nb_dof() - 1;
        _base[j] = base_poly(l.nc, 0);
        _base[j].one();
-       for (i=0; i < P1.nb_dof(); i++) _base[j] *= P1.base()[i];
+       for (size_type i = 0; i < P1.nb_dof(); i++) _base[j] *= P1.base()[i];
      }
    };
 
@@ -737,7 +737,7 @@ namespace getfem
     
     /* Identifying Q1-parallelepiped.                                     */
 
-    if (nbp == (1 << n))
+    if (nbp == (size_type(1) << n))
       if (pgt->basic_structure() == bgeot::parallelepiped_structure(n))
     	return QK_fem(n, k);
 

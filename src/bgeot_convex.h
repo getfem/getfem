@@ -82,7 +82,7 @@ namespace bgeot
       void translate(const typename PT::vector_type &v);
       template <class CONT> void base_of_orthogonal(CONT &tab);
       convex(void) { }
-      convex(pconvex_structure c, const PT_TAB &t) : pts(t), cvs(c) {}
+      convex(pconvex_structure c, const PT_TAB &t) : cvs(c), pts(t) {}
       convex(pconvex_structure c) : cvs(c) {}
   };
 

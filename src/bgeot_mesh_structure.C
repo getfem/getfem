@@ -277,7 +277,7 @@ namespace bgeot
     dal::dynamic_array<mesh_convex_structure> cv;
     dal::dynamic_array<pconvex_structure> cvs;
     dal::bit_vector ncv;
-    int ic;
+    size_type ic;
 
     if (read_convex_structures_from_file(ist, cvs) != 0) return -1;
     
@@ -317,7 +317,7 @@ namespace bgeot
       { cerr << "CVMH : Syntax error reading mesh file" << endl; return -1; }
     }
 
-    for (ic << ncv; ic >= 0; ic << ncv)
+    for (ic << ncv; ic != size_type(-1); ic << ncv)
     {
       size_type i = add_convex(cv[ic].cstruct, cv_pt.begin() + cv[ic].pts);
       if (i != ic) swap_convex(i, ic);

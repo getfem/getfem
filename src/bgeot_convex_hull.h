@@ -46,12 +46,11 @@ namespace bgeot
   /* ******************************************************************** */
  
   template<class PT_TAB>
-    void convex_hull(mesh_structure &cv, const PT_TAB &point_list, int N,
+    void convex_hull(mesh_structure &cv, const PT_TAB &point_list, size_type N,
 		                                                  double EPS)
   { /* difference entre dimension des points et du convexe pas bien geree. */
 
     typedef typename PT_TAB::value_type PT;
-    dim_type Np = point_list[0].size();
     size_type nb = point_list.begin() - point_list.end();
     size_type i,j;
     dal::dynamic_array<typename PT::vector_type> vect_list;

@@ -197,7 +197,8 @@ namespace getfem
   int getfem_mesh::read_from_file(const std::string &name)
   { 
     std::ifstream o(name.c_str());
-    if (!o) DAL_THROW(file_not_found_error, "Mesh file '" << name << "' does not exist");
+    if (!o) DAL_THROW(file_not_found_error,
+		      "Mesh file '" << name << "' does not exist");
     return read_from_file(o);
   }
 

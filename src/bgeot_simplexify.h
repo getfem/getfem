@@ -44,16 +44,16 @@ namespace bgeot
 
   template<class PT_TAB>
     void simplexify(const mesh_structure &cvt, mesh_structure &sl,
-		    const PT_TAB &point_list, int N, double EPS)
+		    const PT_TAB &point_list, size_type N, double EPS)
   { // a refaire ...
     dal::bit_vector nn;
     dal::dynamic_array<mesh_structure> convex_list;
     std::vector<size_type> tab2(N+1);
-    int nc = 0;
+    size_type nc = 0;
     convex_list[0] = cvt;
     mesh_structure *cv;
 
-    while (nc >= 0)
+    while (nc != size_type(-1))
     {
       cv = &(convex_list[nc]);
 

@@ -699,7 +699,7 @@ namespace dal
   {
     size_type f, ni = i, ic;
     short_type dir;
-    tree_elt *pni = &(nodes[i]), *pnc;
+    tree_elt *pni = &(nodes[i]), *pnc = 0;
 
     if (pni->l == ST_NIL || pni->r == ST_NIL)
     {

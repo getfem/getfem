@@ -1,3 +1,4 @@
+/* -*- c++ -*- (enables emacs c++ mode)                                    */
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  LINK MeSsaGE library (linkmsg)                               */
@@ -64,10 +65,10 @@ namespace lmsg
   /*	SENDER CLASS.                                		          */
   /* ******************************************************************** */
 
-  class virtual_linkmsg_sender
-  {
-    public : 
-      virtual void sup_receiver(void *) = 0;
+  class virtual_linkmsg_sender {
+  public : 
+    virtual void sup_receiver(void *) = 0;
+    virtual ~virtual_linkmsg_sender() {}
   };
 
 
@@ -90,7 +91,7 @@ namespace lmsg
       void sup_receiver(void *);
       template<class T> void send(const T &) const;
       linkmsg_sender(void) {};
-      ~linkmsg_sender();
+      virtual ~linkmsg_sender();
   };
 
   template<class RECEIVER>

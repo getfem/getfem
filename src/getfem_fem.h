@@ -186,8 +186,8 @@ namespace getfem
     bool is_lagrange(void) const { return is_lag; }
     bool is_polynomial(void) const { return is_pol; }
     short_type estimated_degree(void) const { return es_degree; }
-    virtual void mat_trans(base_matrix &M, const base_matrix &G,
-			   bgeot::pgeometric_trans pgt) const
+    virtual void mat_trans(base_matrix &, const base_matrix &,
+			   bgeot::pgeometric_trans) const
       { DAL_THROW(internal_error, "This function should not be called."); }
     virtual void interpolation(const base_node &x, const base_matrix &G,
 			       bgeot::pgeometric_trans pgt,
@@ -233,6 +233,9 @@ namespace getfem
       ntarget_dim = 1; is_equiv = is_pol = is_lag = false;
       pspt_valid = false; do_grad = true;
     }
+
+    virtual ~virtual_fem() {}
+
   };
   
   

@@ -363,8 +363,8 @@ typedef unsigned char uint8_type;
   #define DAL_THROW(type, thestr) { \
     std::strstream msg; \
     msg << "in "__FILE__ << ", line " << __LINE__ << ": \n" << thestr << ends;\
-    std::string s = msg.str();      /* copy the content to the string */ \
-    msg.freeze(false);              /* and un-freeze the strstream in order to avoid the mem leak */ \
+    std::string s = msg.str();  /* copy the content to the string */ \
+    msg.freeze(false);/* and un-freeze the strstream to avoid the mem leak */ \
     throw (type)(s); \
   }
 #else

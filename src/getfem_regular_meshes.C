@@ -77,15 +77,15 @@ namespace getfem
       for (i = 0; i < nbs; i++)
       {
 	bgeot::ref_mesh_point_ind_ct tab2 = sl.ind_points_of_convex(i);
-	for (size_type l = 0; l < N+1; l++)
+	for (dim_type l = 0; l < N+1; l++)
 	  tab1[l] = tab3[(tab2[l] + ((total & 1) ? (nbpt/2) : 0)) % nbpt];
 	me.add_simplex(N, tab1.begin());
       }
 
-      for (i = 0; i < N; i++)
+      for (dim_type l = 0; l < N; l++)
       {
-	tab[i]++; total++;
-	if (i < N-1 && tab[i] >= iref[i]) { total -= tab[i]; tab[i] = 0; }
+	tab[l]++; total++;
+	if (l < N-1 && tab[l] >= iref[l]) { total -= tab[l]; tab[l] = 0; }
 	else break;
       }
     }
@@ -106,9 +106,9 @@ namespace getfem
       std::copy(aux.points_of_convex(cv).begin(),
 		aux.points_of_convex(cv).end(), ptab.begin());
 
-      for (int k = 0; k < iref[N-1]; ++k) {
+      for (size_type k = 0; k < iref[N-1]; ++k) {
 	
-	for (int j = 0; j < N; ++j) ptab[j+N] = ptab[j] + ivect[N-1];
+	for (dim_type j = 0; j < N; ++j) ptab[j+N] = ptab[j] + ivect[N-1];
 	me.add_prism_by_points(N, ptab.begin());
 	
 	std::copy(ptab.begin()+N, ptab.end(), ptab.begin());
@@ -147,10 +147,10 @@ namespace getfem
 
       me.add_convex(bgeot::parallelepiped_trans(N, 1), tab3.begin());
      
-      for (i = 0; i < N; i++)
+      for (dim_type l = 0; l < N; l++)
       {
-	tab[i]++; total++;
-	if (i < N-1 && tab[i] >= iref[i]) { total -= tab[i]; tab[i] = 0; }
+	tab[l]++; total++;
+	if (l < N-1 && tab[l] >= iref[l]) { total -= tab[l]; tab[l] = 0; }
 	else break;
       }
     }

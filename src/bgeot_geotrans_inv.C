@@ -63,7 +63,6 @@ namespace bgeot
   
   void geotrans_inv::points_in_box(dal::bit_vector &pt, const base_node &min,
 				   const base_node &max) const {
-    size_type s = min.size();
     TAB_TYPE::const_sorted_iterator it, ite;
     
     it = ptab.sorted_ge(min); ite = ptab.sorted_ge(max);

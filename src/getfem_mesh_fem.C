@@ -193,11 +193,11 @@ namespace getfem
     f_elems.swap(m.icv1, m.icv2);
     swap_boundaries_convex(m.icv1, m.icv2);
   }
-  void mesh_fem::receipt(const MESH_REFINE_CONVEX &m) { 
+  void mesh_fem::receipt(const MESH_REFINE_CONVEX &) { 
     // ajouter la strategie au rafinement / derafinement
     DAL_THROW(internal_error, "internal error");
   }
-  void mesh_fem::receipt(const MESH_UNREFINE_CONVEX &m) { 
+  void mesh_fem::receipt(const MESH_UNREFINE_CONVEX &) { 
     // ajouter la strategie au rafinement / derafinement
     DAL_THROW(internal_error, "internal error");
   }
@@ -318,7 +318,7 @@ namespace getfem
 	tab[i] = j;
       }
       
-      size_type k = add_convex_noverif(pf->structure(), tab.begin(), cv);
+      add_convex_noverif(pf->structure(), tab.begin(), cv);
       
       if (pile.empty()) cv = nn.take_first();
                  else { cv = pile.front(); pile.pop(); }
@@ -418,7 +418,7 @@ namespace getfem
            lmsg::mask(MESH_UNREFINE_CONVEX()) | lmsg::mask(MESH_FEM_TOUCH()));
   }
 
-  mesh_fem::~mesh_fem(void)
+  mesh_fem::~mesh_fem()
   {
     linked_mesh().lmsg_sender().send(MESH_FEM_DELETE((void *)(this)));
     sup_sender(_linked_mesh->lmsg_sender());
