@@ -155,7 +155,7 @@ namespace ftool
     const std::string *p = 0;
     size_type s = size_type(-1);
     if (it.index() == size_type(-1))
-      DAL_THROW(dal::failure_error, "Unknown method");
+      return "UNKNOWN"; //DAL_THROW(dal::failure_error, "Unknown method");
     while (it.index() != size_type(-1) && (*it).pm == pm) {
       if (((*it).name).size() < s) {
 	s = ((*it).name).size();
