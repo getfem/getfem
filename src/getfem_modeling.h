@@ -1786,7 +1786,7 @@ namespace getfem {
 //             1E-6 * gmm::mat_maxnorm(MS.tangent_matrix())) ? "" : "not ")
 // 	   <<  "symmetric. ";
 
-//      cout << "MM = " << MS.reduced_tangent_matrix() << endl;
+//       cout << "MM = " << MS.reduced_tangent_matrix() << endl;
 
 //       gmm::dense_matrix<value_type> MM(nreddof,nreddof), Q(nreddof,nreddof);
 //       std::vector<value_type> eigval(nreddof);

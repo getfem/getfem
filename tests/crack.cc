@@ -31,6 +31,7 @@
 #include <getfem_regular_meshes.h>
 #include <getfem_modeling.h>
 #include <getfem_mesh_im_level_set.h>
+#include <getfem_mesh_fem_level_set.h>
 #include <gmm.h>
 
 /* try to enable the SIGFPE if something evaluates to a Not-a-number
@@ -63,38 +64,18 @@ static scalar_type sol_lambda, sol_mu, alph = 0.3;
 
 base_small_vector sol_u(const base_node &x) {
   int N = x.size(); base_small_vector res(N);
-  for (int i = 0; i < N; ++i)
-    res[i] = alph * sin(gmm::vect_sp(sol_K.row(i), x));
   return res;
 }
 
 base_small_vector sol_f(const base_node &x) {
   int N = x.size();
-  base_small_vector res(N);
-  for (int i = 0; i < N; i++) {
-    res[i] = alph * ( sol_mu * gmm::vect_sp(sol_K.row(i), sol_K.row(i)) )
-                  * sin(gmm::vect_sp(sol_K.row(i), x));
-    for (int j = 0; j < N; j++)
-      res[i] += alph * ( (sol_lambda + sol_mu) * sol_K(j,j) * sol_K(j,i))
-	          * sin(gmm::vect_sp(sol_K.row(j), x));
-  }
+  base_small_vector res(N); res[N-1] = -1.0;
   return res;
 }
 
 base_matrix sol_sigma(const base_node &x) {
   int N = x.size();
   base_matrix res(N,N);
-  for (int i = 0; i < N; i++)
-    for (int j = 0; j <= i; j++) {
-      res(j,i) = res(i,j) = alph * sol_mu *
-	( sol_K(i,j) * cos(gmm::vect_sp(sol_K.row(i), x))
-       +  sol_K(j,i) * cos(gmm::vect_sp(sol_K.row(j), x))
-	);
-      if (i == j)
-	for (int k = 0; k < N; k++)
-	  res(i,j) += alph * sol_lambda * sol_K(k,k)
-	                         * cos(gmm::vect_sp(sol_K.row(k), x));
-    }
   return res;
 }
 
@@ -107,7 +88,9 @@ struct crack_problem {
   getfem::getfem_mesh mesh;  /* the mesh */
   getfem::mesh_level_set mls;       /* the integration methods.              */
   getfem::mesh_im_level_set mim;    /* the integration methods.              */
-  getfem::mesh_fem mf_u;     /* main mesh_fem, for the elastostatic solution */
+  getfem::mesh_fem mf_pre_u; 
+  getfem::mesh_fem_level_set mf_u;  /* main mesh_fem, for the elastostatic   */
+                                    /* solution */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   getfem::mesh_fem mf_p;     /* mesh_fem for the pressure for mixed form     */
   getfem::mesh_fem mf_coef;  /* mesh_fem used to represent pde coefficients  */
@@ -124,7 +107,8 @@ struct crack_problem {
   bool solve(plain_vector &U);
   void init(void);
   void compute_error(plain_vector &U);
-  crack_problem(void) : mls(mesh), mim(mls), mf_u(mesh), mf_rhs(mesh),
+  crack_problem(void) : mls(mesh), mim(mls), mf_pre_u(mesh),
+			mf_u(mls, mf_pre_u), mf_rhs(mesh),
 			mf_p(mesh), mf_coef(mesh), ls(mesh, 1, true) {}
 };
 
@@ -151,25 +135,11 @@ void crack_problem::init(void) {
 	    PARAM.int_value("NX", "Nomber of space steps "));
   getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
 			    PARAM.int_value("MESH_NOISED") != 0);
+  base_small_vector tt(N); tt[1] = -0.5;
+  mesh.translation(tt); 
   
-  bgeot::base_matrix M(N,N);
-  for (size_type i=0; i < N; ++i) {
-    static const char *t[] = {"LX","LY","LZ"};
-    M(i,i) = (i<3) ? PARAM.real_value(t[i],t[i]) : 1.0;
-  }
-  if (N>1) { M(0,1) = PARAM.real_value("INCLINE") * PARAM.real_value("LY"); }
-
-  /* scale the unit mesh to [LX,LY,..] and incline it */
-  mesh.transformation(M);
-
-
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
-  scalar_type FT = PARAM.real_value("FT", "parameter for exact solution");
   residue = PARAM.real_value("RESIDUE"); if (residue == 0.) residue = 1e-10;
-  gmm::resize(sol_K, N, N);
-  for (size_type i = 0; i < N; i++)
-    for (size_type j = 0; j < N; j++)
-      sol_K(i,j) = (i == j) ? FT : -FT;
 
   mu = PARAM.real_value("MU", "Lamé coefficient mu");
   lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
@@ -187,7 +157,7 @@ void crack_problem::init(void) {
   mim.set_integration_method(mesh.convex_index(), ppi);
   mls.add_level_set(ls);
   mim.set_simplex_im(sppi);
-  mf_u.set_finite_element(mesh.convex_index(), pf_u);
+  mf_pre_u.set_finite_element(mesh.convex_index(), pf_u);
   
   mixed_pressure =
     (PARAM.int_value("MIXED_PRESSURE","Mixed version or not.") != 0);
@@ -261,11 +231,16 @@ bool crack_problem::solve(plain_vector &U) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   size_type N = mesh.dim();
 
-  
-  gmm::fill_random(ls.values(0));
-  gmm::fill_random(ls.values(1)); // à remplacer !!
+  ls.reinit();  
+  for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
+    ls.values(0)[d] = (ls.get_mesh_fem().point_of_dof(d))[1];
+    ls.values(1)[d] = 0.5 - (ls.get_mesh_fem().point_of_dof(d))[0];
+  }
+
   mls.adapt();
   mim.adapt();
+  mf_u.adapt();
+  U.resize(mf_u.nb_dof());
 
 
   if (mixed_pressure) cout << "Number of dof for P: " << mf_p.nb_dof() << endl;
@@ -344,6 +319,9 @@ int main(int argc, char *argv[]) {
   feenableexcept(FE_DIVBYZERO | FE_INVALID);
 #endif
 
+  getfem::getfem_mesh_level_set_noisy();
+
+
   try {
     crack_problem p;
     p.PARAM.read_command_line(argc, argv);
@@ -353,11 +331,19 @@ int main(int argc, char *argv[]) {
     if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
     p.compute_error(U);
     if (p.PARAM.int_value("VTK_EXPORT")) {
+      getfem::getfem_mesh mcut;
+      p.mls.global_cut_mesh(mcut);
+      getfem::mesh_fem mf(mcut, p.mf_u.get_qdim());
+      mf.set_finite_element(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 2, 0.01)"));
+      plain_vector V(mf.nb_dof());
+      getfem::interpolation(p.mf_u, mf, U, V);
+
+
       cout << "export to " << p.datafilename + ".vtk" << "..\n";
       getfem::vtk_export exp(p.datafilename + ".vtk",
 			     p.PARAM.int_value("VTK_EXPORT")==1);
-      exp.exporting(p.mf_u); 
-      exp.write_point_data(p.mf_u, U, "elastostatic_displacement");
+      exp.exporting(mf); 
+      exp.write_point_data(mf, V, "elastostatic_displacement");
       cout << "export done, you can view the data file with (for example)\n"
 	"mayavi -d " << p.datafilename << ".vtk -f ExtractVectorNorm -f "
 	"WarpVector -m BandedSurfaceMap -m Outline\n";

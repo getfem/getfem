@@ -2,15 +2,15 @@
 //========================================================================
 //
 // Library : GEneric Tool for Finite Element Methods (getfem)
-// File    : getfem_fem_level_set.cc : definition of a finite element
-//           method reprensenting a discontinous field across some level sets.
-// Date    : March 09, 2005.
-// Author  : Yves Renard <Yves.Renard@insa-toulouse.fr>
-//           Julien Pommier <Julien.Pommier@insa-toulouse.fr>           
+// File    : getfem_level_set.cc : Dealing with level set representation.
+//           
+// Date    : January 31, 2005.
+// Authors : Yves Renard <Yves.Renard@insa-toulouse.fr>
+//           Julien Pommier <Julien.Pommier@insa-toulouse.fr>
 //
 //========================================================================
 //
-// Copyright (C) 2004-2005 Yves Renard
+// Copyright (C) 1999-2005 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -28,267 +28,140 @@
 //
 //========================================================================
 
+
 #include <getfem_fem_level_set.h>
 
 namespace getfem {
- 
-#ifdef lmdfjkdf
- 
-  void fem_level_set::update_from_context(void) const {
-    adapt(); // mettre un is_adapted ...
-  }
-
-  typedef std::vector<const std::string *> enrichment;
-
-  struct lt_enr {
-    bool operator()(const enrichment &s1, const enrichment &s2) const {
-      if (s1.size() < s2.size()) return true;
-      if (s2.size() < s1.size()) return false;
-      for (size_type i = 0; i < s1.size(); ++i) {
-	if (*(s1[i]) < *(s2[i])) return true;
-	if (*(s2[i]) < *(s1[i])) return false;
-      }
-      return false;
-    }
-  };
-
-  void adapt(void) {
-
-    dal::bit_vector enriched_dofs, enriched_elements;
-    std::set< enrichment,  lt_enr> enrichments;
-    std::vector< enrichment *> dof_enrichments(mf.nb_dof());
     
-    for (size_type i = 0; i < mf.nb_dof(); ++i) {
-      bgeot::mesh_convex_ind_ct ct = mf.convex_to_dof(i);
-      bool touch_cutted = false;
-      for (bgeot::mesh_convex_ind_ct::const_iterator it = ct.begin();
-	   it != ct.end(); ++it)
-	if (mls.convex_is_cutted(*it)) { touch_cutted = true; break; }
-      
-
-      if (touch_cutted) {
-	std::vector<const std::string *> zoneset;
-	
-	bgeot::mesh_convex_ind_ct ct = mf.convex_to_dof(i);
-	for (bgeot::mesh_convex_ind_ct::const_iterator it = ct.begin();
-	     it != ct.end(); ++it) {
-	  if (mls.convex_is_cutted(*it))
-	    mls.merge_zonesets(zoneset, mls.zoneset_of_element(*it));
-	  else
-	    mls.merge_zonesets(zoneset, primary_zone_of_element(*it));
-	}
-	
-	
-	if (zoneset.size() != 1) { // stockage dans un set et map
-	  dof_enrichments[i] = &(*(enrichments.insert(zoneset).first));
-	  cout << "number of zones for dof " << i << " : "
-	       << zoneset.size() << endl;
-	  enriched_dofs.add(i);
-	  for (bgeot::mesh_convex_ind_ct::const_iterator it = ct.begin();
-	       it != ct.end(); ++it) enriched_elements.add(*it);
-	}
-      }
-
-      
-
-    }
-    // + fabrication des méthodes éléments finis sur les convexes enrichis
-
-
-
-
-
-  }
-
-  size_type fem_level_set::nb_dof(size_type cv) const
-  { context_check(); return elements[cv].nb_dof; }
-  
-  size_type fem_level_set::index_of_global_dof
-  (size_type cv, size_type i) const
-  { return elements[cv].inddof[i]; }
-  
-  bgeot::pconvex_ref fem_level_set::ref_convex(size_type cv) const
-  { return mim.int_method_of_element(cv)->approx_method()->ref_convex(); }
-  
-  const bgeot::convex<base_node> &
-  fem_level_set::node_convex(size_type cv) const {
-    return *(bgeot::generic_dummy_convex_ref
-	     (dim(), nb_dof(cv),
-	      mim.linked_mesh().structure_of_convex(cv)->nb_faces()));
-  }
-  bgeot::pstored_point_tab fem_level_set::node_tab(size_type)
-    const { 
-    if (!pspt_valid)
-      { pspt = bgeot::store_point_tab(node_tab_); pspt_valid = true; }
-    return pspt;
-  }
-  
-  void fem_level_set::base_value(const base_node &, base_tensor &) const
-  { DAL_THROW(internal_error, "No base values, real only element."); }
-  void fem_level_set::grad_base_value(const base_node &,
-					 base_tensor &) const
-  { DAL_THROW(internal_error, "No grad values, real only element."); }
-  void fem_level_set::hess_base_value(const base_node &,
-					 base_tensor &) const
-  { DAL_THROW(internal_error, "No hess values, real only element."); }
-  
-  inline void fem_level_set::actualize_fictx(pfem pf, size_type cv,
-						const base_node &ptr) const {
-    if (fictx_cv != cv) {
-      if (pf->need_G()) 
-	bgeot::vectors_to_base_matrix
-	  (G, mf.linked_mesh().points_of_convex(cv));
-      fictx = fem_interpolation_context
-	(mf.linked_mesh().trans_of_convex(cv), pf, base_node(), G, cv);
-      fictx_cv = cv;
-    }
-    fictx.set_xref(ptr);
-  }
-  
-  void fem_level_set::real_base_value(const fem_interpolation_context& c, 
-					 base_tensor &t) const {
-    size_type nbdof = elements[c.convex_num()].nb_dof, cv;
-    mi2[1] = target_dim(); mi2[0] = nbdof;
-    t.adjust_sizes(mi2);
-    std::fill(t.begin(), t.end(), scalar_type(0));
-    if (nbdof == 0) return;
-    
-    if (c.have_pgp() && 
-	(&c.pgp()->get_point_tab() == 
-	 &mim.int_method_of_element(c.convex_num())->approx_method()->integration_points())) { 
-      gausspt_interpolation_data &gpid
-	= elements[c.convex_num()].gausspt[c.ii()];
-      if (gpid.flags & 1) {
-	cv = gpid.elt;
-	pfem pf = mf.fem_of_element(cv);
-	if (gpid.flags & 2) { t = gpid.base_val; return; }
-	actualize_fictx(pf, cv, gpid.ptref);
-	pf->real_base_value(fictx, taux);
-	for (size_type i = 0; i < pf->nb_dof(cv); ++i)
-	  if (gpid.local_dof[i] != size_type(-1))
-	    for (size_type j = 0; j < target_dim(); ++j)
-	      t(gpid.local_dof[i],j) = taux(i, j);
-	if (store_values) { gpid.base_val = t; gpid.flags |= 2; }
-      }
-    }
-    else {
-      if (find_a_point(c.xreal(), ptref, cv)) {
-	pfem pf = mf.fem_of_element(cv);
-	actualize_fictx(pf, cv, ptref);
-	pf->real_base_value(fictx, taux);
-	for (size_type i = 0; i < elements[cv].nb_dof; ++i)
-	  ind_dof[elements[cv].inddof[i]] = i;
-	for (size_type i = 0; i < pf->nb_dof(cv); ++i)
-	  for (size_type j = 0; j < target_dim(); ++j)
-	    if (ind_dof[mf.ind_dof_of_element(cv)[i]] != size_type(-1))
-	      t(ind_dof[mf.ind_dof_of_element(cv)[i]], j) = taux(i, j);
-	for (size_type i = 0; i < elements[cv].nb_dof; ++i)
-	  ind_dof[elements[cv].inddof[i]] = size_type(-1);
-      }
-    }
-    
-  }
-  
-  void fem_level_set::real_grad_base_value
-  (const fem_interpolation_context& c, base_tensor &t) const {
-    size_type nbdof = elements[c.convex_num()].nb_dof, cv;
-    mi3[2] = dim(); mi3[1] = target_dim(); mi3[0] = nbdof;
-    t.adjust_sizes(mi3);
-    std::fill(t.begin(), t.end(), scalar_type(0));
-    if (nbdof == 0) return;
-    
-    if (c.have_pgp()) { 
-      gausspt_interpolation_data &gpid
-	= elements[c.convex_num()].gausspt[c.ii()];
-      if (gpid.flags & 1) {
-	cv = gpid.elt;
-	pfem pf = mf.fem_of_element(cv);
-	if (gpid.flags & 4) { t = gpid.grad_val; return; }
-	actualize_fictx(pf, cv, gpid.ptref);
-	pf->real_grad_base_value(fictx, taux);
-
-	if (pif) {
-	  pif->grad(c.xreal(), trans);
-	  for (size_type i = 0; i < pf->nb_dof(cv); ++i)
-	    if (gpid.local_dof[i] != size_type(-1))
-	      for (size_type j = 0; j < target_dim(); ++j)
-		for (size_type k = 0; k < dim(); ++k) {
-		  scalar_type e(0);
-		  for (size_type l = 0; l < dim(); ++l)
-		    e += trans(l, k) * taux(i, j, l);
-		  t(gpid.local_dof[i], j, k) = e;
-		}
-	}
-	else {
-	  for (size_type i = 0; i < pf->nb_dof(cv); ++i)
-	    if (gpid.local_dof[i] != size_type(-1))
-	      for (size_type j = 0; j < target_dim(); ++j)
-		for (size_type k = 0; k < dim(); ++k)
-		  t(gpid.local_dof[i], j, k) = taux(i, j, k);
-	  if (store_values) { gpid.grad_val = t; gpid.flags |= 4; }
-	}
-      }
-    }
-    else {
-      if (find_a_point(c.xreal(), ptref, cv)) {
-	pfem pf = mf.fem_of_element(cv);
-	actualize_fictx(pf, cv, ptref);
-	fictx.set_xref(ptref);
-	pf->real_grad_base_value(fictx, taux);
-	for (size_type i = 0; i < nbdof; ++i)
-	  ind_dof[elements[cv].inddof[i]] = i;
-	if (pif) {
-	  pif->grad(c.xreal(), trans);
-	  for (size_type i = 0; i < pf->nb_dof(cv); ++i)
-	    for (size_type j = 0; j < target_dim(); ++j)
-	      for (size_type k = 0; k < dim(); ++k)
-		if (ind_dof[mf.ind_dof_of_element(cv)[i]] != size_type(-1)) {
-		  scalar_type e(0);
-		  for (size_type l = 0; l < dim(); ++l)
-		    e += trans(l, k) * taux(i, j, l);
-		  t(ind_dof[mf.ind_dof_of_element(cv)[i]],j,k) = e;
-		}
-	}
-	else {
-	  for (size_type i = 0; i < pf->nb_dof(cv); ++i)
-	    for (size_type j = 0; j < target_dim(); ++j)
-	      for (size_type k = 0; k < dim(); ++k)
-		if (ind_dof[mf.ind_dof_of_element(cv)[i]] != size_type(-1))
-		  t(ind_dof[mf.ind_dof_of_element(cv)[i]],j,k) = taux(i,j,k);
-	}
-	  for (size_type i = 0; i < nbdof; ++i)
-	    ind_dof[elements[cv].inddof[i]] = size_type(-1);
-      }
-    }
-  }
-  
-  void fem_level_set::real_hess_base_value
-  (const fem_interpolation_context&, base_tensor &) const
-  { DAL_THROW(internal_error, "Sorry, to be done."); }
-  
-  
-  fem_level_set::fem_level_set(const mesh_fem &mef_,
-			       const mesh_level_set &mls_)
-    : mf(mef_), mls(mls_) {
-    if (mef.get_qdim() != 1) 
-      DAL_THROW(dal::to_be_done_error,"fem_level_set do not handle qdim != 1");
-    this->add_dependency(mls);
-    this->add_dependency(mf);
-    is_pol = is_lag = false; es_degree = 5;
+  void fem_level_set::init() {
+    cvr = bfem->ref_convex(0);
+    dim_ = cvr->structure()->dim();
     is_equiv = real_element_defined = true;
-    ntarget_dim = 1;
-    update_from_context();
+    is_polycomp = is_pol = is_lag = false;
+    es_degree = 5; /* humm ... */
+    ntarget_dim = bfem->target_dim();
+ 
+    ls_index.sup(0, mls.nb_level_sets());
+
+    for (size_type i=0; i < mls.nb_level_sets(); ++i) {
+      char c = '*';
+      for (size_type k=0; k < bfem->nb_dof(0); ++k) {
+	if (dofzones[k]) {
+	  for (size_type j=0; j < dofzones[k]->size(); ++j) {
+	    char d = (*(*dofzones[k])[j])[i];
+	    if (c == '*') c = d;
+	    else if (c != d) { ls_index.add(i); break; }
+	  }
+	}
+      }
+    }
+    
+    init_cvs_node();
+    cout << "creating fem_level_sel:\n";
+    for (size_type k = 0; k < bfem->nb_dof(0); ++k) {
+      if (!dofzones[k]) {
+	add_node(bfem->dof_types()[k], bfem->node_of_dof(0,k));
+      } else {
+	for (size_type j = 0; j < dofzones[k]->size(); ++j) {
+	  cout << " -> +dof: '" << *(*dofzones[k])[j] << "'\n";
+	  add_node(xfem_dof(bfem->dof_types()[k], j+1000), /* +1000 to avoid messing with the real xfem */
+		   bfem->node_of_dof(0,k));
+	}
+      }
+    }
+    cout << "done (nb_dof=" << nb_dof(0) << ")\n";
   }
 
-  DAL_SIMPLE_KEY(special_femlevs_key, pfem);
+  void fem_level_set::base_value(const base_node &x, 
+				 base_tensor &t) const
+  { bfem->base_value(x, t); }
+  void fem_level_set::grad_base_value(const base_node &x, 
+				      base_tensor &t) const
+  { bfem->grad_base_value(x, t); }
+  void fem_level_set::hess_base_value(const base_node &x, 
+			     base_tensor &t) const
+  { bfem->hess_base_value(x, t); }
 
-  pfem new_fem_level_set(const mesh_fem &mef, const mesh_level_set &mls) {
-    pfem pf = new fem_level_set(mef, mls);
-    dal::add_stored_object(new special_femlevs_key(pf), pf);
-    return pf;
+  void fem_level_set::real_base_value(const fem_interpolation_context &c,
+				      base_tensor &t) const {
+    bgeot::multi_index mi(2);
+    mi[1] = target_dim(); mi[0] = nb_base(0);
+    t.adjust_sizes(mi);
+    base_tensor::iterator it = t.begin();
+    base_tensor tt; c.base_value(tt);
+    base_tensor::const_iterator itf = tt.begin();
+    std::vector<scalar_type> lsval(mls.nb_level_sets());
+    for (dal::bv_visitor i(ls_index); !i.finished(); ++i) {
+      mesher_level_set eval = mls.get_level_set(i)->
+	mls_of_convex(c.convex_num());
+      lsval[i] = eval(c.xref());
+    }
+    for (dim_type q = 0; q < target_dim(); ++q) {
+      for (size_type d = 0; d < bfem->nb_base(0); ++d, ++itf) {
+	if (dofzones[d]) { /* enriched dof ? */
+	  const dof_ls_enrichment &de = *dofzones[d];
+	  for (size_type k = 0; k < de.size(); ++k) {
+	    scalar_type v = *itf;
+	    for (dal::bv_visitor il(ls_index); !il.finished(); ++il) {
+	      if ((*de[k])[il] == '0') continue;
+	      if (((*de[k])[il] == '+' && lsval[il] < 0) ||
+		  ((*de[k])[il] == '-' && lsval[il] > 0))
+		v = 0;
+	    }
+	    *it++ = v;
+	  }
+	} else *it++ = *itf;
+      }
+    }
+    assert(it == t.end());
   }
 
-#endif
+  void fem_level_set::real_grad_base_value(const fem_interpolation_context &c,
+					   base_tensor &t) const {
+    bgeot::multi_index mi(3);
+    mi[2] = c.N(); mi[1] = target_dim(); mi[0] = nb_base(0);
+    t.adjust_sizes(mi);
 
-}  /* end of namespace getfem.                                            */
+    base_tensor tt; c.grad_base_value(tt);
+
+    base_tensor::iterator it = t.begin();
+    base_tensor::const_iterator itf = tt.begin();
+
+    std::vector<scalar_type> lsval(mls.nb_level_sets());
+    for (dal::bv_visitor i(ls_index); !i.finished(); ++i) {
+      mesher_level_set eval = mls.get_level_set(i)->
+	mls_of_convex(c.convex_num());
+      lsval[i] = eval(c.xref());
+      cout << "cv=" << c.convex_num() << ", xref=" << c.xref() << " (xreal=" << c.xreal() << " : lsval[" << i << "]=" << lsval[i] << "\n";
+    }
+    for (dim_type i = 0; i < c.N() ; ++i) {
+      for (dim_type q = 0; q < target_dim(); ++q) {
+	for (size_type d = 0; d < bfem->nb_base(0); ++d, ++itf) {
+	  if (dofzones[d]) { /* enriched dof ? */
+	    const dof_ls_enrichment &de = *dofzones[d];
+	    for (size_type k = 0; k < de.size(); ++k) {
+	      scalar_type v = *itf;
+	      for (dal::bv_visitor il(ls_index); !il.finished(); ++il) {
+		if ((*de[k])[il] == '0') continue;
+		if (((*de[k])[il] == '+' && lsval[il] < 0) ||
+		    ((*de[k])[il] == '-' && lsval[il] > 0))
+		  v = 0;
+	      }
+	      *it++ = v;
+	    }
+	  } else *it++ = *itf;
+	}
+      }
+    }
+    assert(it == t.end());
+  }
+  
+  void fem_level_set::real_hess_base_value(const fem_interpolation_context &,
+				  base_tensor &) const {
+    DAL_THROW(to_be_done_error,
+	      "Sorry order 2 derivatives for fem_level_set to be done.");
+  }
+
+
+}  /* end of namespace getfem.                                             */
 

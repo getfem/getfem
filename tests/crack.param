@@ -3,26 +3,20 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%% pde parameters :	        				      %%%%%
-LX = 1.0;		% size in X.
-LY = 1.0;	        % size in Y.
-LZ = 1.0;		% size in Z.
 % MU = 77.0;	        % Lamé coefficient.
 % LAMBDA = 107.0;   	% Lamé coefficient.
 MU = 1.0;	        % Lamé coefficient.
 LAMBDA = 1.0;   	% Lamé coefficient.
-INCLINE = 0;            % Incline of the mesh.
-
-FT = 0.1;               % parameter for the exact solution.
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 %MESH_TYPE = 'GT_LINEAR_QK(2,1)'; % linear rectangles
 %MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
-NX = 10;            	          % space step.
+NX = 8;            	          % space step.
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 
-FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 2)';
-%FEM_TYPE = 'FEM_PK(3,2)';  % PK element
+%FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 2)';
+FEM_TYPE = 'FEM_PK(2,1)';  % PK element
 %FEM_TYPE = 'FEM_QK(2,1)';  % Q1 fem for quadrangles
 %FEM_TYPE = 'FEM_PRODUCT(FEM_PK(2,1),FEM_PK(1,1))'; % tensorial product of FEM for prisms
 %FEM_TYPE = 'FEM_HERMITE_SEGMENT'; % (broken) Hermite fem on a segment

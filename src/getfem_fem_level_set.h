@@ -38,45 +38,42 @@
 #include <getfem_mesh_level_set.h>
 
 namespace getfem {
-
-  class fem_level_set : public virtual_fem, public context_dependencies {
-    
-  protected :
-
-    const mesh_fem &mf;    // mf represents the original finite element method
-                           // to be cutted.
-    const mesh_level_set &mls;
+  typedef std::vector<const std::string *> dof_enrichments;
   
-    void update_from_context(void) const;
+  class fem_level_set : public virtual_fem {
+    pfem bfem; /* the base FEM which is to be enriched */
+    const mesh_level_set &mls;
+    /* dof_ls_enrichment are stored in the parent mesh_fem 
+       the pointer is NULL for non enriched dofs
+     */
+    std::vector< const dof_ls_enrichment* > dofzones;
+    dal::bit_vector ls_index; /* lists only the significant level sets */
+  public:
+    template <typename IT_LS_ENRICH>
+    fem_level_set(IT_LS_ENRICH it,pfem pf, const mesh_level_set &mls_) : 
+      bfem(pf), mls(mls_) {
+      if (!(bfem->is_equivalent()))
+	DAL_THROW(to_be_done_error,
+		  "Sorry, fem_level_set for non tau-equivalent "
+		  "elements to be done.");
+      
+      dofzones.assign(it, it + bfem->nb_dof(0));
+      init();
+    }
+    void init();
+    void valid();
+    void base_value(const base_node &x, base_tensor &t) const;
+    void grad_base_value(const base_node &x, base_tensor &t) const;
+    void hess_base_value(const base_node &x, base_tensor &t) const;
 
-  public :
-
-    void adapt(void);
-
-    virtual size_type nb_dof(size_type cv) const;
-    virtual size_type index_of_global_dof(size_type cv, size_type i) const;
-    virtual bgeot::pconvex_ref ref_convex(size_type cv) const;
-    virtual const bgeot::convex<base_node> &node_convex(size_type cv) const;
-    virtual bgeot::pstored_point_tab node_tab(size_type) const;
-    void base_value(const base_node &, base_tensor &) const;
-    void grad_base_value(const base_node &, base_tensor &) const;
-    void hess_base_value(const base_node &, base_tensor &) const;
     void real_base_value(const fem_interpolation_context& c, 
-			 base_tensor &t) const;
+			 base_tensor &t) const;    
     void real_grad_base_value(const fem_interpolation_context& c, 
 			      base_tensor &t) const;
-    void real_hess_base_value(const fem_interpolation_context&, 
-			      base_tensor &) const;
-
-
-    fem_level_set(const mesh_fem &mef_, const mesh_level_set &mls_);
+    void real_hess_base_value(const fem_interpolation_context& c, 
+			      base_tensor &t) const;
+    
   };
-  
-  pfem new_fem_level_set(const mesh_fem &mef, const mesh_level_set &mls);
-  
-  inline void del_fem_level_set(pfem pf) { dal::del_stored_object(pf); }
-
-  
 }  /* end of namespace getfem.                                            */
 
 #endif

@@ -38,8 +38,6 @@
 
 namespace getfem {
 
-
-  
   class level_set {
 
   protected :
@@ -54,6 +52,7 @@ namespace getfem {
 
   public :
     
+    void reinit(void);
     std::vector<scalar_type> &values(unsigned i = 0)
     { return (i == 0) ? primary_ : secondary_; }
     const std::vector<scalar_type> &values(unsigned i = 0) const

@@ -63,6 +63,12 @@ namespace getfem {
     else return it->second;
   }
 
+  void level_set::reinit(void) {
+    mf->set_classical_finite_element(degree_);
+    primary_.resize(mf->nb_dof());
+    if (has_secondary()) secondary_.resize(mf->nb_dof());
+  }
+
   void level_set::sup_mesh_fem(getfem_mesh &mesh, dim_type o) {
     mesh_fem_tab& mesh_fems = dal::singleton<mesh_fem_tab>::instance();
     mf__key_ key(mesh, o);
@@ -76,8 +82,9 @@ namespace getfem {
 					    bool inverted) {
     std::vector<scalar_type> coeff(mf->nb_dof_of_element(cv));
     for (size_type i = 0; i < coeff.size(); ++i)
-      coeff[i] = (inverted ? scalar_type(1) : scalar_type(-1)) * 
+      coeff[i] = (!inverted ? scalar_type(1) : scalar_type(-1)) * 
 	values(lsnum)[mf->ind_dof_of_element(cv)[i]];
+    //cout << "mls_of_convex[lsnum=" << lsnum << "] : coeff = " << coeff << "\n";
     return mesher_level_set(mf->fem_of_element(cv), coeff);
   }
  

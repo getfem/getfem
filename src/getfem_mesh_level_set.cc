@@ -323,11 +323,9 @@ struct Chrono {
     cvi.zones.resize(0);
     for (dal::bv_visitor i(cvi.pmesh->convex_index()); !i.finished();++i) {
       std::string zone = prezone;
-      size_type j = 0;
-      for (std::set<plevel_set>::const_iterator it = level_sets.begin();
-	   it != level_sets.end(); ++it, ++j) {
+      for (size_type j = 0; j < level_sets.size(); ++j) {
 	if (zone[j] == '*' || zone[j] == '0') {
-	  int s = sub_simplex_is_not_crossed_by(cv, *it, i);
+	  int s = sub_simplex_is_not_crossed_by(cv, level_sets[j], i);
 	  zone[j] = (s < 0) ? '-' : ((s > 0) ? '+' : '0');
 	}
       }
@@ -344,7 +342,7 @@ struct Chrono {
     
     cut_cv[cv] = convex_info();
     cut_cv[cv].pmesh = pgetfem_mesh(new getfem_mesh);
-    cout << "cutting element " << cv << endl;
+    if (noisy) cout << "cutting element " << cv << endl;
     bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
     std::auto_ptr<mesher_signed_distance> ref_element(new_ref_element(pgt));
     std::vector<mesher_level_set> mesher_level_sets;
@@ -368,18 +366,16 @@ struct Chrono {
     ref_element->register_constraints(list_constraints);
     size_type nbeltconstraints = list_constraints.size();
     mesher_level_sets.reserve(nbtotls);
-    size_type ll = 0;
-    for (std::set<plevel_set>::const_iterator it = level_sets.begin();
-	 it != level_sets.end(); ++it, ++ll) {
+    for (size_type ll = 0; ll < level_sets.size(); ++ll) {
       if (primary[ll]) {
 	base_node X(n);
-	K = std::max(K, (*it)->degree());
-	mesher_level_sets.push_back((*it)->mls_of_convex(cv, 0));
+	K = std::max(K, (level_sets[ll])->degree());
+	mesher_level_sets.push_back(level_sets[ll]->mls_of_convex(cv, 0));
 	mesher_level_set &mls(mesher_level_sets.back());
 	list_constraints.push_back(&mesher_level_sets.back());
 	r0 = std::min(r0, curvature_radius_estimate(mls, X, true));
 	if (secondary[ll]) {
-	  mesher_level_sets.push_back((*it)->mls_of_convex(cv, 1));
+	  mesher_level_sets.push_back(level_sets[ll]->mls_of_convex(cv, 1));
 	  mesher_level_set &mls2(mesher_level_sets.back());
 	  list_constraints.push_back(&mesher_level_sets.back());
 	  r0 = std::min(r0, curvature_radius_estimate(mls2, X, true));
@@ -670,6 +666,34 @@ struct Chrono {
   }
 
 
+  void mesh_level_set::global_cut_mesh(getfem_mesh &m) const {
+    m.clear();
+    base_matrix G;
+    for (dal::bv_visitor cv(linked_mesh().convex_index()); 
+	 !cv.finished(); ++cv) {
+      if (convex_is_cut(cv)) {
+	getfem_mesh &mesh = *((cut_cv.find(cv))->second.pmesh);
+	bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
+	vectors_to_base_matrix(G, linked_mesh().points_of_convex(cv));
+	std::vector<size_type> pts(mesh.nb_points());
+	for (size_type i = 0; i < mesh.nb_points(); ++i)
+	  pts[i] = m.add_point(pgt->transform(mesh.points()[i], G));
+	
+	for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i)
+	  m.add_convex(mesh.trans_of_convex(i), 
+		       dal::index_ref_iterator(pts.begin(),
+			    mesh.ind_points_of_convex(i).begin()));
+
+      } else {
+	m.add_convex_by_points(linked_mesh().trans_of_convex(cv),
+			       linked_mesh().points_of_convex(cv).begin());
+
+      }
+    }
+
+
+  }
+
   void mesh_level_set::adapt(void) {
 
     // compute the elements touched by each level set
@@ -718,13 +742,13 @@ struct Chrono {
       d0 = mls0(cvi.pmesh->points_of_convex(sub_cv)[i]);
       if (ls->has_secondary())
 	d1 = std::min(d1, mls1(cvi.pmesh->points_of_convex(sub_cv)[i]));
-      
+     
       int p2 = ( (d0 < -EPS) ? -1 : ((d0 > EPS) ? +1 : 0));
       if (p == 0) p = p2;
       if (gmm::abs(d0) > gmm::abs(d2)) d2 = d0;
       if (!p2 || p*p2 < 0) cutted = true;
     }
-    if (cutted && d1 < -EPS) return 0;
+    if (cutted && d1 < -EPS) { cout << "ooops, je retourne 0" << endl; return 0; }
     return (d2 < 0.) ? -1 : 1;
   }
 
@@ -747,7 +771,7 @@ struct Chrono {
     */ 
     for (ref_mesh_dof_ind_ct::const_iterator it=dofs.begin();
 	 it != dofs.end(); ++it) {
-      scalar_type v = ls->values()[*it];
+      scalar_type v = ls->values(lsnum)[*it];
       int p2 = ( (v < -EPS) ? -1 : ((v > EPS) ? +1 : 0));
       if (p == -2) p=p2;
       if (!p2 || p*p2 < 0) return 0;
@@ -780,16 +804,15 @@ struct Chrono {
 					       std::string &zone) {
     prim.clear(); sec.clear();
     zone = std::string(level_sets.size(), '*');
-    unsigned lsnum = 0, k = 0;
-    for (std::set<plevel_set>::const_iterator it = level_sets.begin(); 
-	 it != level_sets.end(); ++it, ++lsnum, ++k) {
+    unsigned lsnum = 0;
+    for (size_type k = 0; k < level_sets.size(); ++k, ++lsnum) {
       if (noisy) cout << "testing cv " << cv << " with level set "
 		      << k << endl;
-      int s = is_not_crossed_by(cv, *it, 0);
+      int s = is_not_crossed_by(cv, level_sets[k], 0);
       if (!s) {
 	if (noisy) cout << "is cut \n";
-	if ((*it)->has_secondary()) {
-	  s = is_not_crossed_by(cv, *it, 1);
+	if (level_sets[k]->has_secondary()) {
+	  s = is_not_crossed_by(cv, level_sets[k], 1);
 	  if (!s) { sec.add(lsnum); prim.add(lsnum); }
 	  else if (s > 0) prim.add(lsnum); else zone[k] = '0';
 	}

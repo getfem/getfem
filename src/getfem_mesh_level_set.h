@@ -40,6 +40,8 @@
 
 namespace getfem {
 
+  typedef std::vector<const std::string *> dof_ls_enrichment;
+
   /// Describe an integration method linked to a mesh.
   class mesh_level_set : public getfem_mesh_receiver,
 			 public context_dependencies {
@@ -50,7 +52,7 @@ namespace getfem {
     mutable bool is_valid_, is_adapted_;
 
     typedef level_set *plevel_set;
-    std::set<plevel_set> level_sets; // set of level set
+    std::vector<plevel_set> level_sets; // set of level set
     
     typedef boost::intrusive_ptr<getfem_mesh> pgetfem_mesh;
 
@@ -63,6 +65,8 @@ namespace getfem {
     std::map<size_type, convex_info> cut_cv;
 
   public :
+    size_type nb_level_sets(void) const { return level_sets.size(); }
+    plevel_set get_level_set(size_type i) const { return level_sets[i]; }
     bool is_valid() const { return is_valid_; }
     void update_from_context(void) const { is_adapted_= false; }
     bool is_convex_cut(size_type i) const
@@ -99,24 +103,39 @@ namespace getfem {
     }
 
     void add_level_set(level_set &ls) {
-      level_sets.insert(&ls); touch();
-      is_adapted_ = false;
+      if (std::find(level_sets.begin(), level_sets.end(), &ls)
+	  == level_sets.end()) {
+	level_sets.push_back(&ls); touch();
+	is_adapted_ = false;
+      }
     }
     void sup_level_set(level_set &ls) {
-      level_sets.erase(&ls);
-      is_adapted_ = false;
-      touch();
+      std::vector<plevel_set>::iterator
+	it = std::find(level_sets.begin(), level_sets.end(), &ls);
+      if (it != level_sets.end()) {
+	level_sets.erase(it);
+	is_adapted_ = false;
+	touch();
+      }
     }
 
+    void global_cut_mesh(getfem_mesh &m) const;
     void adapt(void);
     void merge_zonesets(std::vector<const std::string *> &zones1,
 			const std::vector<const std::string *> &zones2) const;
     void merge_zoneset(std::vector<const std::string *> &zones,
 		       std::string z) const;
-    bool convex_is_cutted(size_type cv) const
+    bool convex_is_cut(size_type cv) const
     { return (cut_cv.find(cv) != cut_cv.end()); }
-    const std::string &primary_zone_of_convex(size_type cv)
+    const std::string &primary_zone_of_convex(size_type cv) const
     { return *(zones_of_convexes[cv]); }
+    const std::vector<const std::string *> &
+    zoneset_of_convex(size_type cv) const {
+      std::map<size_type, convex_info>::const_iterator it = cut_cv.find(cv);
+      if (it != cut_cv.end()) return (*it).second.zones;
+      DAL_THROW(internal_error, "You cannot call this function for "
+		"uncutted convexes");
+    }
     
     mesh_level_set(getfem_mesh &me);
     virtual ~mesh_level_set();

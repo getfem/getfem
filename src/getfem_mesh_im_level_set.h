@@ -77,6 +77,7 @@ namespace getfem {
 
     virtual pintegration_method int_method_of_element(size_type cv) 
       const;
+    ~mesh_im_level_set() { clear_build_methods(); }
   private:
     mesh_im_level_set(const mesh_im_level_set &);
     mesh_im_level_set & operator=(const mesh_im_level_set &);
