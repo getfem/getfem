@@ -88,7 +88,8 @@ namespace bgeot
       x += xn;
       y.fill(0.0);
       for (size_type k = 0; k < pgt->nb_points(); ++k) {
-	gmm::add(gmm::scaled(cvpts[k],pgt->poly_vector()[k].eval(x.begin())),y);
+	gmm::add(gmm::scaled(cvpts[k],
+		      scalar_type(pgt->poly_vector()[k].eval(x.begin()))),y);
       /*y.addmul(pgt->poly_vector()[k].eval(x.begin()), cvpts[k]);*/
       }
       // cout << "Point : " << x << " : " << y << " ptab : " << ptab[i] << endl; getchar();

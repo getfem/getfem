@@ -1,7 +1,7 @@
 #include <gmm.h>
 
 
-// sclalar product working also for matrices (to be done in GMM++ ...
+// scalar product working also for matrices (to be done in GMM++ ...
 template<class VAR> 
 typename gmm::linalg_traits<VAR>::value_type
 local_sp(const VAR &X, const VAR &Y)

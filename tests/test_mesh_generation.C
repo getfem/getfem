@@ -20,6 +20,99 @@ extern "C"
 #include <bgeot_kdtree.h>
 #include <typeinfo>
 
+
+
+
+
+
+
+// Test du gradient ...
+
+
+// scalar product working also for matrices (to be done in GMM++ ...
+template<class VAR> 
+typename gmm::linalg_traits<VAR>::value_type
+local_sp(const VAR &X, const VAR &Y)
+{ return local_sp(X, Y, typename gmm::linalg_traits<VAR>::linalg_type()); }
+
+template<class VAR> 
+typename gmm::linalg_traits<VAR>::value_type
+local_sp(const VAR &X, const VAR &Y, gmm::abstract_vector)
+{ return gmm::vect_sp(X, Y); }
+
+template<class VAR> 
+typename gmm::linalg_traits<VAR>::value_type
+local_sp(const VAR &X, const VAR &Y, gmm::abstract_matrix) {
+  typename gmm::linalg_traits<VAR>::value_type res(0);
+  for (gmm::size_type i = 0; i < gmm::mat_nrows(X); ++i) 
+    for (gmm::size_type j = 0; j < gmm::mat_ncols(X); ++j)
+      res += X(i, j) * Y(i, j);
+  return res;
+}
+
+
+
+// Make a test of the gradient around X.
+template <class FUNC, class GRAD, class VAR> 
+void test_grad_at(FUNC f, GRAD grad, const VAR &X) {
+  
+  typedef typename gmm::linalg_traits<VAR>::value_type T;
+  typedef typename gmm::number_traits<T>::magnitude_type R;
+  VAR Y(X), Z(X), G(X);
+  
+  grad(X, G);
+  T valx = f(X);
+
+  R eps(1), max_ratio(1), ecart, ecart_old, min_ecart(1);
+  gmm::fill_random(Z);
+  T derdir = local_sp(G, Z), estimate_derdir;
+  for (int i = 0; i < 10; ++i, eps /= R(10)) {
+    gmm::add(gmm::scaled(Z, eps), X, Y);
+    estimate_derdir = (f(Y) - valx) / eps;
+    ecart = gmm::abs(derdir - estimate_derdir);
+    min_ecart = std::min(ecart, min_ecart);
+    // The goal is of course to obtain a clear decreasing sequence
+    cout << " " << ecart;
+    if (i >= 1)
+      if (ecart != T(0)) max_ratio = std::max(max_ratio, ecart_old / ecart);
+      else max_ratio = R(10);
+    ecart_old = ecart;
+  }
+  cout << endl;
+  if (max_ratio < R(9) && min_ecart > 1E-9) {
+    cout << "ERROR, The gradient does not seem to be ok !! max_ratio = "
+	 << max_ratio << "\n";
+    exit(1);
+  }
+}
+
+template <class FUNC, class GRAD, class VAR> 
+void test_grad(FUNC f, GRAD grad, const VAR &X) {
+  VAR Y(X);
+  for (long i = 0; i < 10000; ++i) {
+    gmm::fill_random(Y); gmm::scale(Y, 0.0001); gmm::add(X, Y);
+    // gmm::scale(Y, rand() / 1000 + 1);
+    cout << "Expe " << i+1; //  << " X = " << Y;
+    test_grad_at(f, grad, Y);
+    cout << endl;
+  }
+  cout << "The gradient seems to be ok !!\n";
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 int ORIGINAL = 1;
 
 namespace getfem {
@@ -40,7 +133,7 @@ namespace getfem {
   */
 
   template <typename MAT, typename MAT2> void
-  squared_Frobenius_condition_number_gradient(const MAT& M, MAT2& G) { 
+  Frobenius_condition_number_sqr_gradient(const MAT& M, MAT2& G) { 
     typedef typename gmm::linalg_traits<MAT>::value_type T;
     typedef typename gmm::number_traits<T>::magnitude_type R;
     
@@ -376,22 +469,23 @@ namespace getfem {
 	}
 	gmm::mult(S,W,SW);
 	if (gmm::lu_det(SW) < 0) cost += 1e30;
-	else cost += gmm::Frobenius_condition_number(SW);
+	else cost += gmm::Frobenius_condition_number_sqr(SW);
       }
-      return cost;
+      return cost / scalar_type(nbt * N * N);
     }
 
     void fbcond_cost_function_derivative(const base_vector& c, base_vector &grad) {
       gmm::clear(grad);
       base_matrix Dcond(N,N), G(N,N), S(N,N);
+      unsigned nbt = gmm::mat_ncols(t);
       
-      for (unsigned i=0; i < gmm::mat_ncols(t); ++i) {
+      for (unsigned i=0; i < nbt; ++i) {
 	for (size_type j=0; j < N; ++j) {
 	  for (size_type k=0; k < N; ++k) {
 	    S(k,j) = c[t(j+1,i)*N+k] - c[t(0,i)*N+k];
 	  }
 	}
-	squared_Frobenius_condition_number_gradient(S,Dcond);
+	Frobenius_condition_number_sqr_gradient(S,Dcond);
 	gmm::mult(Dcond, gmm::transposed(W), G);
 	for (size_type j=0; j < N; ++j) {
 	  for (size_type k=0; k < N; ++k) {
@@ -401,12 +495,12 @@ namespace getfem {
 	}
       }
       for (unsigned i=0; i < pts.size(); ++i) {
-	if (pts_attr[i]->constraints.card() || pts_attr[i]->fixed) 
-	  for (size_type k=0; k < N; ++k) {
-	    grad[i*N+k] = 0;
-	  }
+ 	if (pts_attr[i]->constraints.card() || pts_attr[i]->fixed) 
+ 	  for (size_type k=0; k < N; ++k) {
+ 	    grad[i*N+k] = 0;
+ 	  }
       }
-      gmm::scale(grad, -1.);
+      gmm::scale(grad, scalar_type(1) / scalar_type(nbt * N * N));
     }
 
     struct fbcond_cost_function_object {
@@ -422,6 +516,7 @@ namespace getfem {
     };
 
     void optimize_quality() {
+	    cout << "Opt qual ...\n";
       base_vector X(pts.size() * N);
       for (unsigned i=0; i < pts.size(); ++i)
 	dal::copy_n(pts[i].const_begin(), N, X.begin() + i*N);
@@ -446,12 +541,16 @@ namespace getfem {
 	assert(gmm::lu_det(S) > 0);
 	assert(gmm::lu_det(SW) > 0);
       }
+
+      test_grad(fbcond_cost_function_object(*this),
+		fbcond_cost_function_derivative_object(*this),
+		X);
       
       cout << "Initial quality: " << fbcond_cost_function(X) << "\n";
       gmm::iteration iter; iter.set_noisy(1);
       gmm::bfgs(fbcond_cost_function_object(*this), 
 		fbcond_cost_function_derivative_object(*this),
-		X, 50, iter);
+		X, 3, iter);
 
       cout << "Final quality: " << fbcond_cost_function(X) << "\n";
       for (unsigned i=0; i < pts.size(); ++i)

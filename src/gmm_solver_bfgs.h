@@ -1,7 +1,7 @@
 /* *********************************************************************** */
 /*                                                                         */
 /* Library :  Generic Matrix Methods  (gmm)                                */
-/* File    :  gmm_solver_bfgs.h : a BFGS and a DFP algorithm               */
+/* File    :  gmm_solver_bfgs.h : BFGS and DFP algorithms                  */
 /*     									   */
 /* Date : October 14 2004.                                                 */
 /* Author : Yves Renard, Yves.Renard@insa-toulouse.fr                      */
@@ -116,22 +116,27 @@ namespace gmm {
     bfgs_invhessian<VECTOR> invhessian(version);
     VECTOR r(vect_size(x)), d(vect_size(x)), y(vect_size(x)), r2(vect_size(x));
     grad(x, r);
-    R lambda(0.001);
+    R lambda(0.001), valx = f(x), valy;
     
+    if (iter.get_noisy() >= 1) cout << "value " << valx << " ";
     while (! iter.finished_vect(r)) {
 
       invhessian.hmult(r, d); gmm::scale(d, T(-1));
       
       // Wolfe Line search
-      T valx = f(x), derivative = gmm::vect_sp(r, d), valy;    
+      R derivative = gmm::vect_sp(r, d);    
       R lambda_min(0), lambda_max(0), m1 = 0.27, m2 = 0.57;
-      bool unbounded = true, blocked = false;
+      bool unbounded = true, blocked = false, grad_computed = false;
       
       for(;;) {
 	add(x, scaled(d, lambda), y);
 	valy = f(y);
+	if (iter.get_noisy() >= 2) {
+	  cout << "Wolfe line search, lambda = " << lambda 
+	       << " value = " << f(y) << endl;
+	}
 	if (valy <= valx + m1 * lambda * derivative) {
-	  grad(y, r2);
+	  grad(y, r2); grad_computed = true;
 	  T derivative2 = gmm::vect_sp(r2, d);
 	  if (derivative2 >= m2*derivative) break;
 	  lambda_min = lambda;
@@ -142,15 +147,19 @@ namespace gmm {
 	}
 	if (unbounded) lambda *= R(10);
 	else  lambda = (lambda_max + lambda_min) / R(2);
-	if (lambda < R(1E-6)) { blocked = true; lambda = 0.001; break; }
+	if (valy <= R(2)*valx &&
+	    (lambda < R(1E-7) || lambda_max - lambda_min < R(1E-7)))
+	{ blocked = true; lambda = 0.001; break; }
       }
 
       // Rank two update
       ++iter;
+      if (!grad_computed) grad(y, r2);
       gmm::add(scaled(r2, -1), r);
       if (iter.get_iteration() % restart == 0 || blocked) invhessian.restart();
       else invhessian.update(gmm::scaled(d,lambda), gmm::scaled(r,-1));
-      copy(r2, r); copy(y, x);
+      copy(r2, r); copy(y, x); valx = valy;
+      if (iter.get_noisy() >= 1) cout << "BFGS value " << valx << "\t";
     }
 
   }

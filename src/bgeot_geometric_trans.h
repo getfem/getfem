@@ -135,7 +135,8 @@ namespace bgeot
     base_node P(ptab[0].size()); P.fill(0.0);
     size_type k = nb_points();
     for (size_type l = 0; l < k; ++l)
-      gmm::add(gmm::scaled(ptab[l],poly_vector()[l].eval(pt.begin())),P);
+      gmm::add(gmm::scaled(ptab[l],
+			   scalar_type(poly_vector()[l].eval(pt.begin()))),P);
       //P.addmul(poly_vector()[l].eval(pt.begin()),ptab[l]);
     return P;
   }

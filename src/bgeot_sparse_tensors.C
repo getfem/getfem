@@ -574,20 +574,20 @@ namespace bgeot {
     std::fill(vectorized_strides_.begin(), vectorized_strides_.end(), 0);
     vectorized_pr_dim = pri.size();
     for (vectorized_pr_dim = pri.size()-1; vectorized_pr_dim != index_type(-1); vectorized_pr_dim--) {
-      std::vector<packed_range_info>::const_iterator p = pri.begin() + vectorized_pr_dim;
+      std::vector<packed_range_info>::const_iterator pp = pri.begin() + vectorized_pr_dim;
       if (vectorized_pr_dim == pri.size()-1) {
-        if (p->have_regular_strides.count() == N) vectorized_size_ = p->range;
-        for (dim_type n=p->n; n < N; ++n) {
-          vectorized_strides_[n] = p->inc[n];
+        if (pp->have_regular_strides.count() == N) vectorized_size_ = pp->range;
+        for (dim_type n=pp->n; n < N; ++n) {
+          vectorized_strides_[n] = pp->inc[n];
         }
       } else {
-        if (p->have_regular_strides.count() != N) break;
+        if (pp->have_regular_strides.count() != N) break;
         bool still_ok = true;
-        for (dim_type n=p->n; n < N; ++n) {
-          if (stride_type(vectorized_strides_[n]*vectorized_size_) != p->inc[n]) still_ok = false;
+        for (dim_type n=pp->n; n < N; ++n) {
+          if (stride_type(vectorized_strides_[n]*vectorized_size_) != pp->inc[n]) still_ok = false;
         }
         if (still_ok) {
-          vectorized_size_ *= p->range;
+          vectorized_size_ *= pp->range;
         } else break;
       }
     }
