@@ -227,20 +227,22 @@ namespace getfem
   void approx_integration::add_point(base_node pt,scalar_type w,short_type f) {
     if (valid) DAL_THROW(internal_error, 
 			 "Impossible to modify a valid intergation method.");
-    ++f;
-    if (f > cvr->structure()->nb_faces())
-      DAL_THROW(internal_error, "Wrong argument.");
-    size_type i = pt_to_store[f].search(pt);
-    if (i == size_type(-1)) {
-      i = pt_to_store[f].add(pt);
-      int_coeffs.resize(int_coeffs.size() + 1); 
-      for (size_type j = f; j <= cvr->structure()->nb_faces(); ++j)
-	repartition[j] += 1;
-      for (size_type j = int_coeffs.size(); j > repartition[f]; --j)
-	int_coeffs[j-1] = int_coeffs[j-2];
-      int_coeffs[repartition[f]-1] = 0.0;
+    if (dal::abs(w) > 1.0E-12) {
+      ++f;
+      if (f > cvr->structure()->nb_faces())
+	DAL_THROW(internal_error, "Wrong argument.");
+      size_type i = pt_to_store[f].search(pt);
+      if (i == size_type(-1)) {
+	i = pt_to_store[f].add(pt);
+	int_coeffs.resize(int_coeffs.size() + 1); 
+	for (size_type j = f; j <= cvr->structure()->nb_faces(); ++j)
+	  repartition[j] += 1;
+	for (size_type j = int_coeffs.size(); j > repartition[f]; --j)
+	  int_coeffs[j-1] = int_coeffs[j-2];
+	int_coeffs[repartition[f]-1] = 0.0;
+      }
+      int_coeffs[((f == 0) ? 0 : repartition[f-1]) + i] += w;
     }
-    int_coeffs[((f == 0) ? 0 : repartition[f-1]) + i] += w;
   }
 
   void approx_integration::valid_method(void) {
@@ -398,62 +400,36 @@ namespace getfem
     }
 
     _Newton_Cotes_approx_integration(dim_type nc, short_type k)
-    {
-      cvr = bgeot::simplex_of_reference(nc);
+      // à simplifier en faisant la fonction qui place une methode sur une face
+      : approx_integration(bgeot::simplex_of_reference(nc)) {
       size_type R = bgeot::alpha(nc,k);
-      size_type R2 = (nc > 0) ? bgeot::alpha(nc-1,k) : 0;
       base_poly P;
       std::stringstream name;
       name << "IM_EXACT_SIMPLEX(" << int(nc) << ")";
       ppoly_integration ppi 
 	= int_method_descriptor(name.str())->method.ppi;
-      std::vector<size_type> fa(nc+1);
-      bgeot::stored_point_tab int_points;
-      int_points.resize(R + (nc+1) * R2);
-      int_coeffs.resize(R + (nc+1) * R2);
-      repartition.resize(nc+2);
-      repartition[0] = R;
-      for (short_type f = 0; f <= nc; ++f)
-      {
-	fa[f] = repartition[f];
-	repartition[f+1] = repartition[f] + R2;
-      }
 
       size_type sum = 0, l;
-      base_node c(nc); 
+      base_node c(nc), c2(nc); 
       c *= scalar_type(0.0);
       if (k == 0) c.fill(1.0 / scalar_type(nc+1));
 
-      for (size_type r = 0; r < R; ++r)
-      {
-	int_points[r] = c;
+      for (size_type r = 0; r < R; ++r) {
 	calc_base_func(P, k, c);
-	int_coeffs[r] = ppi->int_poly(P);
+	add_point(c, ppi->int_poly(P));
 
 	for (short_type f = 1; f <= nc; ++f)
 	  if (c[f-1] == 0.0)
-	  {
-	    int_points[fa[f]] = c;
-	    int_coeffs[fa[f]] = ppi->int_poly_on_face(P, f);
-	    (fa[f])++;
-	  }
-	if (k == 0)
-	{
-	  for (short_type f = 0; f <= nc; ++f)
-	  {
-	    int_points[fa[f]].resize(dim());
-	    int_points[fa[f]].fill(1.0 / scalar_type(nc));
-	    if (f > 0) int_points[fa[f]][f-1] = 0.0;
-	    int_coeffs[fa[f]] = ppi->int_poly_on_face(P, f);
+	    add_point(c, ppi->int_poly_on_face(P, f), f);
+	if (k == 0) {
+	  for (short_type f = 0; f <= nc; ++f) {
+	    c2.fill(1.0 / scalar_type(nc));
+	    if (f > 0) c2[f-1] = 0.0;
+	    add_point(c2, ppi->int_poly_on_face(P, f), f);
 	  }
 	}
-	else
-	if (sum == k)
-	{
-	  int_points[fa[0]] = c;
-	  int_coeffs[fa[0]] = ppi->int_poly_on_face(P, 0);
-	  (fa[0])++;
-	}  
+	else if (sum == k)
+	  add_point(c, ppi->int_poly_on_face(P, 0), 0);
 
 	if (k != 0) {
 	  l = 0; c[l] += 1.0 / scalar_type(k); sum++;
@@ -464,8 +440,7 @@ namespace getfem
 	  }
 	}
       }
-      pint_points = bgeot::store_point_tab(int_points);
-      valid = true;
+      valid_method();
     }
   };
 
@@ -716,6 +691,7 @@ namespace getfem
   /* ********************************************************************* */
 
   static papprox_integration triangle2bis_approx_integration(void) {
+    // euivalent to Newton-Cotes of order 2
     approx_integration *p = 
       new approx_integration(bgeot::simplex_of_reference(2));
     p->add_point(base_vector(1.0/2.0, 1.0/2.0), 1.0/6.0);
