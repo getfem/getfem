@@ -270,7 +270,6 @@ namespace getfem
     std::vector<size_type> tab;
     fem_dof fd;
 
-    size_type count = 0;
     cv = nn.take_first();
     bgeot::mesh_structure::clear();
 
@@ -279,10 +278,8 @@ namespace getfem
       /* ajout des voisins dans la pile.                                  */
 
       size_type nbp = _linked_mesh->nb_points_of_convex(cv);
-      pfem pf = fem_of_element(cv);
 
-      for (size_type i = 0; i < nbp; i++)
-      {
+      for (size_type i = 0; i < nbp; i++) {
 	size_type ip = _linked_mesh->ind_points_of_convex(cv)[i];
 	bgeot::mesh_convex_ind_ct::const_iterator 
 	  it = _linked_mesh->convex_to_point(ip).begin(),
@@ -290,16 +287,13 @@ namespace getfem
 	for ( ; it != ite; ++it)
 	  if (nn.is_in(*it)) { nn.sup(*it); pile.push(*it); }
       }
-      
+
       size_type nbd = nb_dof_of_element(cv);
+      pfem pf = fem_of_element(cv);
       pdof_description andof = already_numerate_dof(pf->dim());
       tab.resize(nbd);
-      for (size_type i = 0; i < nbd; i++)
-      {
-	
-	// std::cout << "dof " << i << " of convex " << cv << endl;
+      for (size_type i = 0; i < nbd; i++) {
 	fd.P = point_of_dof(cv, i); // optimisable ...
-	// std::cout << "point of dof : " << fd.P << endl;
 	fd.pnd = pf->dof_types()[i];
 	size_type j;
 	if (fd.pnd == andof) {
@@ -318,17 +312,19 @@ namespace getfem
 	  else
 	    j = dof_sort.add(fd);
 	}
-	count++;
 	tab[i] = j;
       }
 
-      size_type k = add_convex(
-	              f_elems[cv]->pf->structure(),
-		      tab.begin());
+      size_type k = add_convex_noverif(pf->structure(), tab.begin());
+      cout << "convex_index = " << convex_index() << endl;
+      cout << "pf->structure()->nb_points() = " << pf->structure()->nb_points() << endl;
+      cout << "k = " << k << " cv = " << cv << endl;
       if (k != cv) bgeot::mesh_structure::swap_convex(k, cv);
+      cout << "swap effectué\n";
       
       if (pile.empty()) cv = nn.take_first();
                  else { cv = pile.front(); pile.pop(); }
+      cout << "choix effectué\n";
     }
     
     dof_enumeration_made = true;

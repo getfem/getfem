@@ -96,8 +96,7 @@ namespace bgeot
 
     _gauss_approx_integration(short_type nbpt)
     {
-      if (nbpt > 32000)
-	throw std::out_of_range("_gauss_approx_integration : too much points");
+      if (nbpt > 32000) DAL_THROW(std::out_of_range, "too much points");
       
       cvr = simplex_of_reference(1);
       stored_point_tab int_points(nbpt+2);
@@ -296,7 +295,7 @@ namespace bgeot
 
     a_int_pro_integration(const a_int_pro_light &ls)
     {
-      cvr = convex_ref_product(ls.cv1->ref_convex(), ls.cv1->ref_convex());
+      cvr = convex_ref_product(ls.cv1->ref_convex(), ls.cv2->ref_convex());
       size_type n1 = ls.cv1->nb_points_on_convex();
       size_type n2 = ls.cv2->nb_points_on_convex();
       stored_point_tab int_points;

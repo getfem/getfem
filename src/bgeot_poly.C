@@ -37,7 +37,7 @@ namespace bgeot
 
   size_type alpha(short_type n, short_type d)
   {
-    #define STORED 100
+    #define STORED 150
     static bgeot::fsmatrix<size_type, STORED> M;
     static bool init = false;
     if (!init)

@@ -197,6 +197,9 @@ namespace bgeot
       { return convex_tab[i].cstruct->nb_points(); }
       void swap_convex(size_type i, size_type j);
 
+
+      template<class ITER>
+       size_type add_convex_noverif(pconvex_structure cs, ITER ipts);
       template<class ITER>
 	size_type add_convex(pconvex_structure cs,
 			     ITER ipts, bool *present = NULL);
@@ -337,25 +340,16 @@ namespace bgeot
     return true;
   }
 
-
   template<class ITER>
-    size_type mesh_structure::add_convex(pconvex_structure cs,
-					 ITER ipts, bool *present)
+    size_type mesh_structure::add_convex_noverif(pconvex_structure cs,
+						 ITER ipts)
   {
     short_type nb = cs->nb_points();
-    mesh_convex_with_points_ind_ct<ITER>
-      ct = convex_with_points(*this, nb, ipts);
-    size_type is = *(ct.begin());
-    if (present != NULL) *present = false;
-
-    if (!ct.empty() && structure_of_convex(is) == cs)
-    { if (present != NULL) *present = true; return is; }
-    
     mesh_convex_structure s; s.cstruct = cs; s.pts = point_links.alloc(nb);
     if (nb > 0)
       { point_lists[s.pts+nb-1] = 0; point_links[s.pts+nb-1].next = 0; }
     dal::copy_n(ipts, nb, point_lists.begin()+s.pts);
-    is = convex_tab.add(s);
+    size_type is = convex_tab.add(s);
 
     mesh_link_ct::iterator ipl = point_links.begin(); ipl += s.pts;
     for (short_type i = 0; i < nb; ++i, ++ipts, ++ipl)
@@ -366,6 +360,20 @@ namespace bgeot
     }
     
     return is;
+  }
+
+  template<class ITER>
+    size_type mesh_structure::add_convex(pconvex_structure cs,
+					 ITER ipts, bool *present) {
+    if (present != 0) *present = false;
+    mesh_convex_with_points_ind_ct<ITER>
+      ct = convex_with_points(*this, cs->nb_points(), ipts);
+    typename mesh_convex_with_points_ind_ct<ITER>::const_iterator
+      it = ct.begin(), ite = ct.end();
+    for (; it != ite; ++it)
+      if (structure_of_convex(*it) == cs)
+	{ if (present != 0) *present = true; return *it; }
+    return add_convex_noverif(cs, ipts);
   }
 
   template<class ITER>

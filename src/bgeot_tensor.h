@@ -170,7 +170,10 @@ namespace bgeot
     size_type dimt = (*mi)[ni], dim = m.nrows();
     
     if (dimt != m.ncols()) DAL_THROW(dimension_error, "dimensions mismatch");
-    
+    if (&t == this)
+      DAL_THROW(std::invalid_argument,
+		"does not work when t and *this are the same");
+
     (*mi)[ni] = dim;
     if (tmp->size() < dimt) tmp->resize(dimt);
     adjust_sizes(*mi);
@@ -180,24 +183,21 @@ namespace bgeot
     size_type ddt = t.coeff[ni]*(t.sizes()[ni]-1)-1, cot = t.coeff[ni];
     std::fill(mi->begin(), mi->end(), 0);
     for (;!mi->finished(sizes()); mi->incrementation(sizes()), ++pf, ++pft)
-      if ((*mi)[ni] != 0)
-	{ 
-	  for (short_type k = 0; k <= ni; ++k) (*mi)[k] = sizes()[k] - 1;
-	  pf += dd; pft += ddt;
+      if ((*mi)[ni] != 0) { 
+	for (short_type k = 0; k <= ni; ++k) (*mi)[k] = sizes()[k] - 1;
+	pf += dd; pft += ddt;
+      }
+      else {
+	const_iterator pl = pft; iterator pt = tmp->begin();
+	for(size_type k = 0; k < dimt; ++k, pl += cot, ++pt) *pt = *pl;
+	
+	iterator pff = pf;
+	for (size_type k = 0; k < dim; ++k, pff += co) {
+	  *pff = T(0); pt = tmp->begin(); pl = m.begin() + k;
+	  for (size_type l = 0; l < dimt; ++l, ++pt, pl += dim)
+	    *pff += (*pl) * (*pt);
 	}
-      else
-	{
-	  const_iterator pl = pft; iterator pt = tmp->begin();
-	  for(size_type k = 0; k < dimt; ++k, pl += cot, ++pt) *pt = *pl;
-	  
-	  iterator pff = pf; pl = m.begin();
-	  for (size_type k = 0; k < dim; ++k, pff += co)
-	    {
-	      *pff = T(0); pt = tmp->begin();
-	      for (size_type l = 0; l < dimt; ++l, ++pt, ++pl)
-		*pff += (*pl) * (*pt);
-	    }
-	}
+      }
   }
   
   template<class T> void tensor<T>::mat_reduction(const tensor &t,
@@ -213,6 +213,9 @@ namespace bgeot
     size_type dimt = (*mi)[ni], dim = m.ncols();
     if (dimt != m.nrows())
       DAL_THROW(dimension_error, "dimensions mismatch");
+    if (&t == this)
+      DAL_THROW(std::invalid_argument,
+		"does not work when t and *this are the same");
     
     (*mi)[ni] = dim;
     if (tmp->size() < dimt) tmp->resize(dimt);
@@ -223,24 +226,21 @@ namespace bgeot
     size_type ddt = t.coeff[ni]*(t.sizes()[ni]-1)-1, cot = t.coeff[ni];
     std::fill(mi->begin(), mi->end(), 0);
     for (;!mi->finished(sizes()); mi->incrementation(sizes()), ++pf, ++pft)
-      if ((*mi)[ni] != 0)
-	{ 
-	  for (short_type k = 0; k <= ni; ++k) (*mi)[k] = sizes()[k] - 1;
-	  pf += dd; pft += ddt;
+      if ((*mi)[ni] != 0) { 
+	for (short_type k = 0; k <= ni; ++k) (*mi)[k] = sizes()[k] - 1;
+	pf += dd; pft += ddt;
+      }
+      else {
+	const_iterator pl = pft; iterator pt = tmp->begin();
+	for(size_type k = 0; k < dimt; ++k, pl += cot, ++pt) *pt = *pl;
+	
+	iterator pff = pf; pl = m.begin();
+	for (size_type k = 0; k < dim; ++k, pff += co) {
+	  *pff = T(0); pt = tmp->begin();
+	  for (size_type l = 0; l < dimt; ++l, ++pt, ++pl)
+	    *pff += (*pl) * (*pt);
 	}
-      else
-	{
-	  const_iterator pl = pft; iterator pt = tmp->begin();
-	  for(size_type k = 0; k < dimt; ++k, pl += cot, ++pt) *pt = *pl;
-	  
-	  iterator pff = pf;
-	  for (size_type k = 0; k < dim; ++k, pff += co)
-	    {
-	      *pff = T(0); pt = tmp->begin(); pl = m.begin() + k;
-	      for (size_type l = 0; l < dimt; ++l, ++pt, pl += dim)
-		*pff += (*pl) * (*pt);
-	    }
-	}
+      }
   }
   
 

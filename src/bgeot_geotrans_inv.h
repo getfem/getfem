@@ -131,6 +131,10 @@ namespace bgeot
       /// Add point p to the list of points.
       size_type add_point(base_node p) { return ptab.add(p); }
       
+      /// Add point p to the list of points.
+      size_type add_point_norepeat(base_node p)
+      { return ptab.add_norepeat(p); }
+      
       /// Find all the points present in the box between min and max.
       void points_in_box(dal::bit_vector &pt, const base_node &min,
 			                      const base_node &max) const;

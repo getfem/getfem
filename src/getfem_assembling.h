@@ -354,49 +354,58 @@ namespace getfem
   /* ********************************************************************* */
 
   template<class MATRM, class MESH_FEM>
-    void mass_matrix(MATRM &M, MESH_FEM &mf, dim_type N)
+    void mass_matrix(MATRM &M, MESH_FEM &mf1, MESH_FEM &mf2, dim_type N)
   {
-    size_type cv;
-    dal::bit_vector nn = mf.convex_index();
+    size_type cv, nbd1, nbd2;
+    dal::bit_vector nn = mf1.convex_index();
     base_tensor t;
-    pfem pf1, pf1prec = NULL;
+    pfem pf1, pf1prec = 0, pf2, pf2prec = 0;
     pintegration_method pim, pimprec = (bgeot::papprox_integration)(NULL);
     bgeot::pgeometric_trans pgt, pgtprec = NULL;
     pmat_elem_type pme; pmat_elem_computation pmec;
     // M(0,0) = 1.0;  ??
 
+    if (&(mf1.linked_mesh()) != &(mf2.linked_mesh()))
+      DAL_THROW(std::invalid_argument,
+		"This assembling procedure only works on a single mesh");
+
     for (cv << nn; cv != ST_NIL; cv << nn)
     {
-      pf1 = mf.fem_of_element(cv);
-      pgt = mf.linked_mesh().trans_of_convex(cv);
-      pim = mf.int_method_of_element(cv);
-      if (pf1prec != pf1 || pgtprec != pgt || pimprec != pim)
+      pf1 = mf1.fem_of_element(cv); nbd1 = pf1->nb_dof();
+      pf2 = mf2.fem_of_element(cv); nbd2 = pf2->nb_dof();
+      pgt = mf1.linked_mesh().trans_of_convex(cv);
+      pim = mf1.int_method_of_element(cv);
+      if (pf1prec != pf1 || pf2prec != pf2 || pgtprec != pgt || pimprec != pim)
       {
-	pme = mat_elem_product(mat_elem_base(pf1), mat_elem_base(pf1));
+	pme = mat_elem_product(mat_elem_base(pf1), mat_elem_base(pf2));
 	pmec = mat_elem(pme, pim, pgt);
-	pf1prec = pf1; pgtprec = pgt; pimprec = pim;
+	pf1prec = pf1; pf2prec = pf2; pgtprec = pgt; pimprec = pim;
       }
-      pmec->gen_compute(t, mf.linked_mesh().points_of_convex(cv));
+      pmec->gen_compute(t, mf1.linked_mesh().points_of_convex(cv));
 
+      // cout << "t = " << t << endl;
+      
       base_tensor::iterator p = t.begin();
-      size_type nbd = mf.nb_dof_of_element(cv);
-      for (size_type i = 0; i < nbd; i++)
+      for (size_type i = 0; i < nbd2; i++)
       {
-	size_type dof1 = mf.ind_dof_of_element(cv)[i];
-	for (size_type j = 0; j < nbd; j++, ++p)
+	size_type dof2 = mf2.ind_dof_of_element(cv)[i];
+	// cout << "cv = " << cv << " dof2 = " << dof2 << endl;
+	for (size_type j = 0; j < nbd1; j++, ++p)
 	{
-	  size_type dof2 = mf.ind_dof_of_element(cv)[j];
-	  if (dof2 <= dof1)
-	    for (size_type k = 0; k < N; k++)
-	    {
-	      M(dof1*N + k, dof2*N + k) += (*p);
-	      M(dof2*N + k, dof1*N + k) = M(dof1*N + k, dof2*N + k);
-	    }
+	  size_type dof1 = mf1.ind_dof_of_element(cv)[j];
+	  // cout << "dof1 = " << dof1 << " dof2 = " << dof2 << endl;
+	  for (size_type k = 0; k < N; k++)
+	    M(dof1*N + k, dof2*N + k) += (*p);
 	}
       }
       if (p != t.end()) DAL_THROW(dal::internal_error, "internal error"); 
     }
   }
+
+  template<class MATRM, class MESH_FEM>
+    inline void mass_matrix(MATRM &M, MESH_FEM &mf, dim_type N)
+    { mass_matrix(M, mf, mf, N); }
+
 
   /* ********************************************************************* */
   /*	volumic source term.                                               */
@@ -509,6 +518,7 @@ namespace getfem
       for (i = j = k = 0; i < s; ++i)
 	if (nn[i]) G(i,j++) = 1.0; else B(i, k++) = 1.0;
       
+      // ...
       // il faut résoudre le système B^T D B UDDR = B^T UD
       // On a alors UDD = B UDDR
       // pour cela faire une factorisation LU (cf MATLAB null ...)

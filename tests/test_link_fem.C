@@ -27,10 +27,8 @@ struct lap_pb
   getfem::getfem_mesh mesh1, mesh2;
   getfem::mesh_fem     mef1,  mef2, meflink;
 
-  scalar_type LX, LY, LZ, residu;
-  int NX1, NX2, N, K;
-
-  int integration;
+  scalar_type LX, LY, LZ;
+  int NX1, NX2, N, K, KI, integration;
 
   ftool::md_param PARAM;
 
@@ -55,8 +53,8 @@ void lap_pb::init(void)
   NX1 = PARAM.int_value("NX1", "Nomber of sace steps ");
   NX2 = PARAM.int_value("NX2", "Nomber of sace steps ");
   integration = PARAM.int_value("INTEGRATION", "integration method");
-  residu = PARAM.real_value("RESIDU", "Residu for c.g.");
   K = PARAM.int_value("K", "Finite element degree");
+  KI = PARAM.int_value("KI", "Integration degree");
   
   /***********************************************************************/
   /*  BUILD MESH.                                                        */
@@ -90,8 +88,9 @@ void lap_pb::init(void)
 
   getfem::pintegration_method ppi;
   switch (integration) {
-  case 0 : ppi = bgeot::simplex_poly_integration(N); break;
-  case 1 : ppi = bgeot::Newton_Cotes_approx_integration(N,2*K); break;
+  case 0  : ppi = bgeot::simplex_poly_integration(N); break;
+  case 1  : ppi = bgeot::Newton_Cotes_approx_integration(N,KI); break;
+  case 2  : ppi = bgeot::Gauss_approx_integration((KI+1)/2);  break;
   case 11 : ppi = bgeot::triangle1_approx_integration(); break;
   case 12 : ppi = bgeot::triangle2_approx_integration(); break;
   case 13 : ppi = bgeot::triangle3_approx_integration(); break;
@@ -118,24 +117,49 @@ void lap_pb::init(void)
 void lap_pb::assemble(void)
 {
   int nb_dof1 = mef1.nb_dof(), nb_dof2 = mef2.nb_dof();
-  sparse_matrix_type RM(nb_dof1, nb_dof2);
+  sparse_matrix_type RM1(nb_dof2, nb_dof2);
+  double sum, diff;
   
   cout << "Number of dof : " << nb_dof1 << " : " << nb_dof2 << endl;
 
   cout << "Number of dof of interpolated method: " << meflink.nb_dof() << endl;
  
-  cout << "Assembling mass matrix" << endl;
-  getfem::mass_matrix(RM, mef1, meflink, 1);
+  cout << "Assembling interpolated mass matrix" << endl;
+  getfem::mass_matrix(RM1, meflink, meflink, 1);
 
-  cout << "Matrice de rigidite\n";
-  for (int i = 0; i < RM.nrows(); i++) { 
+  cout << "Matrice de masse\n";
+  sum = 0.0;
+  for (int i = 0; i < RM1.nrows(); i++) { 
     cout << "ligne " << i << " [ ";
-    for (int l = 0; l < RM.nrows(); l++)
-      if (RM(i, l) != 0.0)
-	cout << "(" << l << "," << RM(i, l) << ")  ";
+    for (int l = 0; l < RM1.nrows(); l++)
+      if (RM1(i, l) != 0.0) {
+	cout << "(" << l << "," << RM1(i, l) << ")  ";
+	sum += RM1(i, l);
+      }
     cout << "]" << endl;
   }
-  cout << endl << endl;
+  cout << endl << " sum: " << sum << endl << endl;
+
+  sparse_matrix_type RM2 = sparse_matrix_type(nb_dof2, nb_dof2);
+  cout << "Assembling normal mass matrix" << endl;
+  getfem::mass_matrix(RM2, mef2, 1);
+  
+  cout << "Matrice de masse\n";
+  sum = 0.0; diff = 0.0;
+  for (int i = 0; i < RM2.nrows(); i++) { 
+    cout << "ligne " << i << " [ ";
+    for (int l = 0; l < RM2.nrows(); l++) {
+      diff += dal::abs(RM2(i, l) - RM1(i, l));
+      if (RM2(i, l) != 0.0) {
+	cout << "(" << l << "," << RM2(i, l) << ")  ";
+	sum += RM2(i, l);
+      }
+    }
+    cout << "]" << endl;
+  }
+  cout << endl << " sum: " << sum << endl << endl;
+  cout << endl << " diff: " << diff << endl << endl;
+
   
 }
 

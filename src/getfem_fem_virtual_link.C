@@ -120,7 +120,7 @@ namespace getfem
     base_matrix::const_iterator itm = G.begin();
     for (size_type k = 0; k < npt; ++k, itm += P) {
       std::copy(itm, itm + P, pt.begin());
-      ind[k] = pmf2->linked_mesh().points().search(P);
+      ind[k] = pmf2->linked_mesh().points().search(pt);
       if (ind[k] == size_type(-1))
 	DAL_THROW(internal_error, "internal error.");
     }
@@ -131,6 +131,7 @@ namespace getfem
     std::fill(M.begin(), M.end(), 0.0);
 
     size_type nbgauss = cv_info_tab[cv2].indgausstab.size();
+    // cout << "nbgauss = " << nbgauss << endl;
 
     for (size_type k = 0; k < cv_info_tab[cv2].doftab.size(); ++k) {
       for (size_type j = 0; j < nbgauss; ++j) {
@@ -158,19 +159,20 @@ namespace getfem
 	    pf->interpolation(gauss_ptab[indg].localcoords, G1,
 			      pmf1->linked_mesh().trans_of_convex(cv1),
 			      coeff, val);
-	    M(k, j) = val[0];
+	    M(j, k) = val[0];
 	    if (wg) {
 	      pf->complete_interpolation_grad(gauss_ptab[indg].localcoords, G1,
 				      pmf1->linked_mesh().trans_of_convex(cv1),
 				      coeff, val2);
 	      for (dim_type n = 0; n < pmf2->linked_mesh().dim(); ++n)
-		M(k, j + (n+1)*nbgauss) = val2(0, n);
+		M(j + (n+1)*nbgauss, k) = val2(0, n);
 	    }
 	    coeff[nlocdof] = 0.0; cv1_old = cv1;
 	  }
 	}
       }
     }
+    // cout << "M = " << M << endl;
   }
 
 
@@ -188,6 +190,7 @@ namespace getfem
   }
     
   void mesh_fem_link_fem::compute(void) {
+    // cout << "Compute called\n";
     bgeot::geotrans_inv gti;
     dal::bit_vector nn = pmf2->convex_index();
     pintegration_method pim;
@@ -207,15 +210,15 @@ namespace getfem
       pgt = pmf2->linked_mesh().trans_of_convex(cv);
       cv_info_tab[cv].indgausstab.resize(nbpt);
       for (size_type k = 0; k < nbpt; ++k) {
-	size_type i = gti.add_point
-	  (pgt->transform(pim.integration_points()[i],
+	size_type i = gti.add_point_norepeat
+	  (pgt->transform(pim.integration_points()[k],
 			  pmf2->linked_mesh().points_of_convex(cv)));
+	// cout << " ind point ajouté : " << i << endl;
 	(gauss_to_cv[i]).push_back(cv);
 	maxgpt = std::max(i+1, maxgpt);
 	cv_info_tab[cv].indgausstab[k] = i;
       }
     }
-    
     dal::dynamic_array<base_node> ptab;
     dal::dynamic_array<size_type> itab;
     nn = pmf1->convex_index();
@@ -393,26 +396,36 @@ namespace getfem
 	  "You cannot interpolate this element, use the original element.");
     }
     void grad_base_value(const base_node &x, base_tensor &t) const {
-      if (!with_grad) 
-	DAL_THROW(internal_error,
-	  "This element has no gradient defined, use the adapted element");
+      // il faudrait vérifier dans mat_elem que le fait de passer di comme
+      // dimension donne le bon calcul quand des dimensions diferentes 
+      // interviennent.
       const bgeot::stored_point_tab *p = &(pai->integration_points());
       for (size_type i = 0; i < p->size(); ++i)
-	if (&((*p)[i]) == &x) {
+	if (&((*p)[i]) == &x) { 
 	  bgeot::multi_index mi(3);
 	  mi[2] = di; mi[1] = target_dim(); mi[0] = nb_base();
 	  t.adjust_sizes(mi);
 	  std::fill(t.begin(), t.end(), 0.0);
-	  for (dim_type k = 0; k < di; ++k)
-	    t[k * mi[0] + i + pai->nb_points() * (k+1)] = 1.0;
+	  if (with_grad)
+	    for (dim_type k = 0; k < di; ++k)
+	      t[k * mi[0] + i + pai->nb_points() * (k+1)] = 1.0;
 	  return;
 	}
       DAL_THROW(internal_error,
 	  "You cannot interpolate this element, use the original element.");
     }
     void hess_base_value(const base_node &x, base_tensor &t) const {
-      DAL_THROW(to_be_done_error,
-      "Sorry, for the moment, the Hessian is not available on this element.");
+      const bgeot::stored_point_tab *p = &(pai->integration_points());
+      for (size_type i = 0; i < p->size(); ++i)
+	if (&((*p)[i]) == &x) {
+	  bgeot::multi_index mi(4);
+	  mi[2] = di; mi[2] = di; mi[1] = target_dim(); mi[0] = nb_base();
+	  t.adjust_sizes(mi);
+	  std::fill(t.begin(), t.end(), 0.0);
+	  return;
+	}
+      DAL_THROW(internal_error,
+	  "You cannot interpolate this element, use the original element.");
     }
     
     _virtual_link_fem(const _virtual_link_fem_light &ls)

@@ -310,7 +310,7 @@ namespace getfem
     
     size_type R = nb_dof(), RR = nb_base();
     
-    if (!is_equivalent()) { M.resize(R, RR); mat_trans(M, G, pgt); }
+    if (!is_equivalent()) { M.resize(RR, R); mat_trans(M, G, pgt); }
     
     val.fill(0.0);
     for (size_type j = 0; j < RR; ++j) {
@@ -345,7 +345,7 @@ namespace getfem
     
     size_type R = nb_dof(), RR = nb_base();
     
-    if (!is_equivalent()) { M.resize(R, RR); mat_trans(M, G, pgt); }
+    if (!is_equivalent()) { M.resize(RR, R); mat_trans(M, G, pgt); }
     
     val.fill(0.0);
     
@@ -415,9 +415,9 @@ namespace getfem
   
   class mesh_fem;
   class pintegration_method;
-  pfem virtual_link_fem(const mesh_fem &mf1, const mesh_fem &mf2,
+  pfem virtual_link_fem(mesh_fem &mf1, mesh_fem &mf2,
 			pintegration_method pim);
-  pfem virtual_link_fem_with_gradient(const mesh_fem &mf1, const mesh_fem &mf2,
+  pfem virtual_link_fem_with_gradient(mesh_fem &mf1, mesh_fem &mf2,
 				      pintegration_method pim);
   
   //@}

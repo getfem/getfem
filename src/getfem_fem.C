@@ -44,7 +44,7 @@ namespace getfem
     
     size_type R = nb_dof(), RR = nb_base();
 
-    if (!is_equivalent()) { M.resize(R, RR); mat_trans(M, G, pgt); }
+    if (!is_equivalent()) { M.resize(RR, R); mat_trans(M, G, pgt); }
 
     val.fill(0.0);
     for (size_type j = 0; j < RR; ++j) {
@@ -83,7 +83,7 @@ namespace getfem
 
     base_tensor::const_iterator it = pfp->grad(ii).begin();
 
-    if (!is_equivalent()) { M.resize(R, RR); mat_trans(M, G, pgt); }
+    if (!is_equivalent()) { M.resize(RR, R); mat_trans(M, G, pgt); }
 
     val.fill(0.0);
     for (size_type k = 0; k < P; ++k) {
@@ -398,7 +398,7 @@ namespace getfem
   /*	Tensorial product of fem (for polynomial fem).                    */
   /* ******************************************************************** */
 
-  struct _pr_fem_int_light 
+  struct _pr_fem_int_light
   {
     ppolyfem fi1, fi2;
     bool operator < (const _pr_fem_int_light &ls) const

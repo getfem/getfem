@@ -335,7 +335,7 @@ namespace getfem
 	      ite = grad_reduction.end();
 	    for ( ; it != ite; ++it) {
 	      j = *p; k = (j < 2) ? j + 1 : 1; *p = k;
-	      mref[indcomp(ip, hi, k)].mat_reduction(mref[indcomp(ip, hi, j)],
+	      mref[indcomp(ip, hi, k)].mat_transp_reduction(mref[indcomp(ip, hi, j)],
 						     B, *it);
 	    }
 	  }
@@ -347,10 +347,10 @@ namespace getfem
 	    for (short_type l = 1; it != ite; ++it, l *= 2) {
 	      j = *p;  k = (j < 2) ? j + 1 : 1; *p = k;
 	      if (hi & l)
-		mref[indcomp(ip, hi, k)].mat_reduction(mref[indcomp(ip,hi,j)],
+		mref[indcomp(ip, hi, k)].mat_transp_reduction(mref[indcomp(ip,hi,j)],
 						       B32, *it);
 	      else
-	        mref[indcomp(ip, hi, k)].mat_reduction(mref[indcomp(ip,hi,j)],
+	        mref[indcomp(ip, hi, k)].mat_transp_reduction(mref[indcomp(ip,hi,j)],
 						       B3, *it);
 	    }
 	  }
@@ -384,14 +384,10 @@ namespace getfem
 	std::deque<pfem>::const_iterator iti = trans_reduction_pfi.begin();
 	for ( ; it != ite; ++it, ++iti) { 
 	  if ((*iti)->nb_dof() != M.nrows() || (*iti)->nb_base() != M.ncols())
-	    M.resize((*iti)->nb_dof(), (*iti)->nb_base());
+	    M.resize((*iti)->nb_base(), (*iti)->nb_dof());
 	  (*iti)->mat_trans(M, G, pgt);
-	  if (M.ncols() == M.nrows())
-	    t.mat_reduction(t, M, *it);
-	  else {
-	    base_tensor aux = t; // Optimisable (avoid copy).
-	    t.mat_reduction(aux, M, *it);
-	  }
+	  base_tensor aux = t; // Optimisable (avoid copy).
+	  t.mat_reduction(aux, M, *it);
 	}
       }
       
