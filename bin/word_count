@@ -15,10 +15,22 @@ sub catch { `rm -f $tmp1`; }
 $SIG{INT} = 'catch';
 
 sub read_line {
+  $comm = 0;
   while(1) {
     $li = <DATAF>; if (!($li)) { return; }
-    chomp($li); ($li, $a) = split('\/\/', $li, 2);
-    ($li, $a) = split('\/\*', $li, 2);
+    chomp($li);
+
+    if ($comm) {
+      if ($li  =~ /\*\//) { ($a, $li) = split('\*\/', $li, 2); $comm = 0; }
+      else { $li = ""; }
+    }
+    else {
+      ($li, $a) = split('\/\/', $li, 2);
+      if ($li =~ /\/\*/) {
+	($li, $a) = split('\/\*', $li, 2);
+	if (!($a  =~ /\*\//)) { $comm = 1; }
+      }
+    }
     $li2 = $li; $li2 =~s/\s//g;
     if ($li2) { return; }
   }
@@ -26,7 +38,7 @@ sub read_line {
 
 open(TMPF1, ">$tmp1") or die "Open file impossible : $!\n";
 
-$lss = `ls *.C *.h`;
+$lss = `ls *.[Ch]`;
 
 while ($lss) {
 

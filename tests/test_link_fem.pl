@@ -31,6 +31,7 @@ while (<F>) {
   }
 
 }
-if ($er == 1) { exit(1); }
+if ($er == 1) { `rm -f $tmp`; exit(1); }
 `./test_link_fem $tmp`;
+`rm -f $tmp`;
 if ($?) { exit(1); }

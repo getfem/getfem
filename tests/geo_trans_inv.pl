@@ -27,6 +27,7 @@ while (<F>) {
     print $_, <F>;
   }
 }
-if ($er == 1) { exit(1); }
+if ($er == 1) { `rm -f $tmp`; exit(1); }
 `./geo_trans_inv $tmp`;
+`rm -f $tmp`; 
 if ($?) { exit(1); }
