@@ -1,3 +1,8 @@
+2004-12-08  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* superlu/BLAS.c configure.in: added a f2c-ed BLAS, used when no
+	other suitable blas is found.
+
 2004-12-02  julien pommier  <pommier@gmm.insa-tlse.fr>
 
 	* src/bgeot_geotrans_inv.C (bgeot): Made inversion geometric

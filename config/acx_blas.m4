@@ -1,6 +1,6 @@
 AC_DEFUN([ACX_BLAS], [
 AC_PREREQ(2.50)
-AC_REQUIRE([AC_F77_LIBRARY_LDFLAGS])
+
 acx_blas_ok=no
 
 AC_ARG_WITH(blas,
@@ -13,9 +13,16 @@ case $with_blas in
 esac
 
 # Get fortran linker names of BLAS functions to check for.
-AC_F77_FUNC(sgemm)
-AC_F77_FUNC(dgemm)
-
+if test x"$F77"=="x"; then
+  echo "No fortran compiler found, assuming c-name for SGEMM is 'sgemm_'"
+  sgemm=sgemm_
+  dgemm=dgemm_
+else
+  echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  dnl AC_REQUIRE([AC_F77_LIBRARY_LDFLAGS])
+  AC_FC_FUNC(sgemm)
+  AC_FC_FUNC(dgemm)
+fi
 acx_blas_save_LIBS="$LIBS"
 LIBS="$LIBS $FLIBS"
 
@@ -38,14 +45,12 @@ if test $acx_blas_ok = no; then
 fi
 
 # BLAS in ATLAS library? (http://math-atlas.sourceforge.net/)
-# JE VIRE BLAS_LIBS="-lcblas -lf77blas -latlas"
-# ET JE METS BLAS_LIBS="-L/usr/lib/atlas/see -lblas"
 if test $acx_blas_ok = no; then
         AC_CHECK_LIB(atlas, ATL_xerbla,
                 [AC_CHECK_LIB(f77blas, $sgemm,
                 [AC_CHECK_LIB(cblas, cblas_dgemm,
                         [acx_blas_ok=yes
-                         BLAS_LIBS="-L/usr/lib/atlas/sse -lblas"],
+                         BLAS_LIBS="-lcblas -lf77blas -latlas"],
                         [], [-lf77blas -latlas])],
                         [], [-latlas])])
 fi
