@@ -62,8 +62,12 @@ namespace dal {
   stored_object_tab;
   struct stored_key_tab : public std::map<pstatic_stored_object,
 					  pstatic_stored_object_key> {
-    ~stored_key_tab()
-    { for (iterator it = begin(); it != end(); ++it) delete it->second; }
+    ~stored_key_tab() {
+      for (iterator it = begin(); it != end(); ++it) {
+	// cout << "it->second = " << it->second << " of type " << typeid(*(it->second)).name() << endl;
+	delete it->second;
+      }
+    }
   };
   
   // Gives a pointer to a key of an object from its pointer

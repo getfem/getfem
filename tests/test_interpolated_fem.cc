@@ -49,7 +49,6 @@ struct lap_pb {
   getfem::getfem_mesh mesh1, mesh2;
   getfem::mesh_im      mim1, mim2;
   getfem::mesh_fem     mef1,  mef2, mefinterpolated;
-  getfem::interpolated_fem ifem;
 
   scalar_type LX, LY, LZ;
   int NX1, NX2, N, K, KI, integration;
@@ -59,7 +58,7 @@ struct lap_pb {
   void assemble(void);
   void init(void);
   lap_pb(void) : mim1(mesh1), mim2(mesh2), mef1(mesh1), mef2(mesh2),
-		 mefinterpolated(mesh1), ifem(mef2, mim1) {}
+		 mefinterpolated(mesh1) {}
 };
 
 void lap_pb::init(void) {
@@ -139,7 +138,8 @@ void lap_pb::init(void) {
   mim2.set_integration_method(nn, ppi);
   mef2.set_finite_element(nn, getfem::fem_descriptor(meth));
   nn = mesh1.convex_index(N);
-  mefinterpolated.set_finite_element(nn, &ifem);
+  mefinterpolated.set_finite_element(nn,
+				     new getfem::interpolated_fem(mef2, mim1));
 }
 
 void lap_pb::assemble(void) {
@@ -227,7 +227,8 @@ void test2() {
   
   getfem::mesh_fem mflnk(m2);
   getfem::interpolated_fem ifem(mf1, mim);
-  mflnk.set_finite_element(m2.convex_index(), &ifem);
+  mflnk.set_finite_element(m2.convex_index(),
+			   new getfem::interpolated_fem(mf1, mim));
   sparse_matrix_type MM = sparse_matrix_type(mf2.nb_dof(), mflnk.nb_dof());
   getfem::asm_mass_matrix(MM, mim, mf2, mflnk);
   cout << "MM=" << MM << "\n";
