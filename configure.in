@@ -63,8 +63,8 @@ dnl 	CXXFLAGS="$CXXFLAGS -ptr `pwd`/cxx_repository -std strict_ansi -O3"
 	MEX_NEEDS_TWOCOMP="#"
 	;;
  g++* | c++)
- 	APPSCXXFLAGS="$CXXFLAGS -ftemplate-depth-40 -pedantic -O3 -Wall -W -Wtraditional -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings -Wconversion -Wmissing-prototypes -Wredundant-decls -Werror"
- 	CXXFLAGS="$CXXFLAGS -ftemplate-depth-40 -pedantic -O3 -Wall -W -Wtraditional -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings -Wconversion -Wmissing-prototypes -Wredundant-decls -Werror"
+ 	APPSCXXFLAGS="$CXXFLAGS -ftemplate-depth-40 -pedantic -O3 -Wall -W -Wtraditional -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings -Wconversion -Wmissing-prototypes -Wredundant-decls"
+ 	CXXFLAGS="$CXXFLAGS -ftemplate-depth-40 -pedantic -O3 -Wall -W -Wtraditional -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings -Wconversion -Wmissing-prototypes -Wredundant-decls"
 	MEX_NEEDS_TWOCOMP="#"
 	;;
  *)
