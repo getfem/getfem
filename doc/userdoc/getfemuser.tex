@@ -846,7 +846,7 @@ Most of the time, one only needs an enrichment on a subset of node of the origin
 
 \section{Interpolation of a finite element method on non-matching meshes}
 
-(Version 1.7, evolution of \cpp{virtual\_link\_fem}) A special finite element method is defined in \filename{getfem\_interpolated\_fem.h} which is not a real finite element method but allows to interpolate a finite element method defined on another mesh. When an assembling procedure has different finite element methods as arguments, the mesh on which those methods are defined should be the same. If you need to assemble a matrix with finite element methods defined on different meshes, you may use the finite element methods\\[0.5cm]
+(evolution of \cpp{virtual\_link\_fem}) A special finite element method is defined in \filename{getfem\_interpolated\_fem.h} which is not a real finite element method but allows to interpolate a finite element method defined on another mesh. When an assembling procedure has different finite element methods as arguments, the mesh on which those methods are defined should be the same. If you need to assemble a matrix with finite element methods defined on different meshes, you may use the finite element methods\\[0.5cm]
 \index{GETFEM!getfem::interpolated\_fem}
 \cpp{getfem::interpolated\_fem(getfem::mesh\_fem mf1, getfem::mesh\_fem mf2) }\\[0.2cm]
 Because each base function of the finite element method has to be interpolated, such a computation can be a haevy procedure. By default, the interpolated fem object store the interpolation. \\[0.5cm]
@@ -902,7 +902,7 @@ To view a solution, two perl scripts are provided (in the directory \filename{bi
 Both scripts use Gnuplot to draw the solution and thus you need to have a working distribution of Gnuplot installed on your system. \cpp{S} is a coefficient to zoom the solution. {\tt sc2dgnuplot} draw a scalar solution and {\tt dr2dgnuplot} a vectorial solution.\\You might want to check the Matlab interface for much more elaborated plotting functions.
 
 \subsection{Mesh slices}
-As of release 1.5, Getfem++ provides a \cpp{getfem::mesh_slice} class,
+Getfem++ provides a \cpp{getfem::mesh_slice} class,
 with support general slicing operations on a mesh (slicing with a
 plane, half-space, cylinder, sphere, isosurfaces, union or
 intersection of slices, etc..). A slice object may be considered as a
@@ -918,7 +918,7 @@ The file \filename{getfem\_export.h} defines the following function to interpola
 \cpp{getfem::interpolation\_solution(mef1, mef2, U, V); }\\[0.5cm]
 where \cpp{mef1}  is a variable of type \cpp{getfem::mesh\_fem} and describes the finite element method on which the solution is defined, \cpp{mef2} is the finite element method on which the solution will be interpolate,  \cpp{U} is a vector representing the solution and should be of size \cpp{mef1.nb\_dof()}, \cpp{V} is a vector on which the interpolation will be computed and should be of size \cpp{mef2.nb\_dof()}. IMPORTANT : \cpp{mef2} should be of Lagrange type for the interpolation to makes sense but the meshes linked to \cpp{mef1} and \cpp{mef2} may be different (and this is the interest of this function). There is no restriction for the dimension of the domain.\\
 
-(release 1.7) If you need to make more than one interpolation between the same finite element methods, it is better to use the function
+If you need to make more than one interpolation between the same finite element methods, it is better to use the function
 \cpp{getfem::interpolation\_solution(mef1, mef2, M); }\\[0.5cm]
 where \cpp{M} is a row matrix which will be filled with the linear map representing the interpolation (i.e. such that \cpp{V = MU}). The matrix should have the right dimensions (i.e. \cpp{mef2.nb\_dof()} x \cpp{mef1.nb\_dof()}).
 
@@ -926,7 +926,7 @@ where \cpp{M} is a row matrix which will be filled with the linear map represent
 
 \section{The model bricks}
 \index{model bricks}
-(Future release 1.7) Although it is possible to use assembly procedures on their own to make your finite element programs, it is now possible to use predefined bricks to build up very quickly a certain number of models. Most of the bricks are defined in \cpp{getfem_modeling.h}
+Although it is possible to use assembly procedures on their own to make your finite element programs, it is now possible to use predefined bricks to build up very quickly a certain number of models. Most of the bricks are defined in \cpp{getfem_modeling.h}
 
 \subsection{The model state variable}
 \index{GETFEM!getfem::model\_state}
