@@ -38,7 +38,6 @@ test_mat_elem_SOURCES = test_mat_elem.C
 
 INCLUDES = -I$(top_srcdir)/src -I../src
 LDADD    = ../src/.libs/libgetfem.a -lm @SUPLDFLAGS@
-AM_CXXFLAGS = @APPSCXXFLAGS@
 
 TESTS = \
 	$(top_srcdir)/tests/dynamic_array.pl \

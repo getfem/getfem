@@ -18,8 +18,6 @@ EXTRA_DIST = \
 	draw_mesh_example5.mesh \
 	draw_mesh_example6.mesh
 
-AM_CXXFLAGS = @APPSCXXFLAGS@
-
 INCLUDES = -I$(top_srcdir)/src -I../src
 LDADD    = ../src/.libs/libgetfem.a -lm @SUPLDFLAGS@
 

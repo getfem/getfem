@@ -81,7 +81,6 @@ case $CXX in
  	here=`pwd`
  	cd $srcdir
 dnl     il faut utiliser -tweak au lieu des repositories ...
-	APPSCXXFLAGS="$CXXFLAGS -tweak -fast -std strict_ansi -Wl,-S -nopure_cname"
 	CXXFLAGS="$CXXFLAGS -tweak -std strict_ansi -fast -Wl,-S -nopure_cname"
 dnl 	CXXFLAGS="$CXXFLAGS -ptr `pwd`/cxx_repository -std strict_ansi -O3"
  	cd $here
@@ -94,20 +93,17 @@ dnl 	CXXFLAGS="$CXXFLAGS -ptr `pwd`/cxx_repository -std strict_ansi -O3"
 dnl 		CXXFLAGS="$CXXFLAGS -LANG:std -O3 -OPT:Olimit=0:roundoff=3:div_split=ON:alias=typed -TARG:platform=ip25"
  		CXXFLAGS="$CXXFLAGS -LANG:std  -O3 "
 dnl             CXXFLAGS="$CXXFLAGS -LANG:std  -O3 -ansiW "
-		APPSCXXFLAGS="$CXXFLAGS"
 		SUPLDFLAGS="-lCio"
 		;;
 	*sun*)
 		echo "Using SUN C++ WorkShop Compiler"
 		CXXFLAGS="$CXXFLAGS +w2 -O3"
-		APPSCXXFLAGS="$CXXFLAGS"
 		;;
 	esac
 	;;
  aCC)
 	echo "Using HP ANSI C++ Compiler aCC"
 	CXXFLAGS="$CXXFLAGS -AA -fast"	
-	APPSCXXFLAGS="$CXXFLAGS"
 	;;
 	
  g++* | c++)
@@ -121,24 +117,20 @@ dnl             CXXFLAGS="$CXXFLAGS -LANG:std  -O3 -ansiW "
 		WSHADOW="-Wshadow"
 		;;
 	esac
- 	APPSCXXFLAGS="$CXXFLAGS -ftemplate-depth-40 -pedantic -O3 -Wall -W -Wtraditional $WSHADOW -Wpointer-arith -Wcast-qual -Wwrite-strings -Wconversion -Wmissing-prototypes -Wredundant-decls"
- 	CXXFLAGS="$CXXFLAGS -ftemplate-depth-40 -pedantic -O3 -Wall -W -Wtraditional $WSHADOW -Wpointer-arith -Wcast-qual -Wwrite-strings -Wconversion -Wmissing-prototypes -Wredundant-decls"
+ 	CXXFLAGS="$CXXFLAGS -pipe -ftemplate-depth-40 -pedantic -O3 -Wall -W -Wtraditional $WSHADOW -Wpointer-arith -Wcast-qual -Wwrite-strings -Wconversion -Wmissing-prototypes -Wredundant-decls"
 	;;
  icc | icpc)
 	echo "Using INTEL icc"
 dnl -tpp6 is for pentiumII and more
 dnl -Xc is for ansi conformance
 	CXXFLAGS="$CXXFLAGS -O3 -tpp6"
-	APPSCXXFLAGS="$CXXFLAGS"
 	;;
  *)
 	echo "Using a unknown compiler"
- 	APPSCXXFLAGS="$CXXFLAGS -O3"
  	CXXFLAGS="$CXXFLAGS -O3"
 	;;
 esac
 
-AC_SUBST(APPSCXXFLAGS)
 AC_SUBST(SUPLDFLAGS)
 
 
