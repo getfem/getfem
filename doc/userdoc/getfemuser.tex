@@ -82,7 +82,7 @@ You can also check if the compilation is correct with
   make check
 \end{alltt}
 
-If you want to use a different compiler than the one choosen
+If you want to use a different compiler than the one chosen
 automatically by the \texttt{./configure} script, just specify its
 name on the command line:
 \begin{alltt}
@@ -733,20 +733,20 @@ is used again, but an additionnal argument has been added: {\tt nbound} is the i
 there is two manner to take into account the Dirichlet condition on $\Gamma_{_D}$, changing the linear system or explicitly reduce to the kernel of the Dirichlet condition. For the first manner, the following function is defined \\[0.5cm]
 \index{GETFEM!getfem::assembling\_Dirichlet\_condition}
 {\tt getfem::assembling\_Dirichlet\_condition(RM, B, mef1, nbound, V, N);} \\[0.5cm]
-where {\tt nbound} is the index of the boundary in {\tt mef1} where the Dirichlet condition is applied, {\tt V} is the vector of the values of $U(x)$ on each degree of freedom of {\tt mef1} and {\tt N} is the dimension for vectorial problems (shold be {\tt 1} for scalar problems). This operation should be the last one because it transform the stiffness matrix {\tt RM}. It works only for Lagrange elements. At the end, one obtains the discrete system
+where {\tt nbound} is the index of the boundary in {\tt mef1} where the Dirichlet condition is applied, {\tt V} is the vector of the values of $U(x)$ on each degree of freedom of {\tt mef1} and {\tt N} is the dimension for vectorial problems (should be {\tt 1} for scalar problems). This operation should be the last one because it transform the stiffness matrix {\tt RM}. It works only for Lagrange elements. At the end, one obtains the discrete system
 $$ [RM] U = B, $$
 where $U$ is the discrete unknown.\\[0.5cm]
 
 For the second manner, one should use\\[0.5cm]
 \index{GETFEM!getfem::asm\_dirichlet\_constraints}
 {\tt getfem::asm\_dirichlet\_constraints($\tilde{H}$, $\tilde{R}$, mf\_u, mf\_rh,$H$, $R$, nbound)}.\\[0.5cm]
-See the Dirichlet condition as a general linear constraint that must satisfy the solution $u$. Here, $H$ is a (sparse) matrix, with {\tt mf\_rh.nb\_dof()} columns, and $n_c$ lines, where $n_c$ is the number of constraints. Hence $u$ must satisfy $Hu=R$, which is expressed on $mf\_rh$ (hopefully lagragian). This function just assemble these constraints into a new linear system $\tilde{H}u=\tilde{R}$, doing some additionnal simplification in order to obtain a ``simple'' constraints matrix.
+See the Dirichlet condition as a general linear constraint that must satisfy the solution $u$. Here, $H$ is a (sparse) matrix, with {\tt mf\_rh.nb\_dof()} columns, and $n_c$ lines, where $n_c$ is the number of constraints. Hence $u$ must satisfy $Hu=R$, which is expressed on $mf\_rh$ (hopefully Lagrangian). This function just assemble these constraints into a new linear system $\tilde{H}u=\tilde{R}$, doing some additional simplification in order to obtain a ``simple'' constraints matrix.
 \index{GETFEM!getfem::Dirichlet\_null_space}
 Then, one should call \\[0.5cm]{\tt getfem::Dirichlet\_null_space($\tilde{H}$, N, $\tilde{R}$, Ud)},\\[0.5cm] which will return a vector $U_d$ which satisfies $MU_d=B$, and an orthogonal basis $N$ of the kernel of $\tilde{H}$. Hence, the discrete system that must be solved is 
 $$ (N'[RM]N) U_{int}=N'(B-[RM]U_d),$$
 and the solution is $U=N.U_{int}+U_d$.
 A big advantage of this approach is to be generic, and do not prescribed for the finite element method {\tt mf\_u} to be of Lagrange type. If {\tt mf\_u} and 
-{\tt mf\_d} are different, there is implicitely a projection (with respect to the $L^2$ norm) of the data on the finite element {\tt mf\_u}.
+{\tt mf\_d} are different, there is implicitly a projection (with respect to the $L^2$ norm) of the data on the finite element {\tt mf\_u}.
 
 \subsection{Linear Elasticity problem}
 
@@ -759,7 +759,7 @@ CAUTION : Linear elasticity problem is a vectorial problem, so the target dimens
 
 In order to assemble source term, Neumann and Dirichlet conditions, same functions as in previous section can be used.
 
-\subsection{Stockes Problem with mixed finite element method}
+\subsection{Stokes Problem with mixed finite element method}
 
 to be done ... (see the file {\tt getfem\_assembling.h}).
  
@@ -810,7 +810,7 @@ convex: {\tt comp(Base(\#1).Base(\#2))} is evaluated as a
 part is a reduction operation, {\tt C(:,j).Z(j)}: each named index
 (here $j$) is summed, i.e. the result is $\sum_jc_{i,j}z_j$.
 
-An other example is the assembly of the stiffness matrix for a vector laplacian:
+An other example is the assembly of the stiffness matrix for a vector Laplacian:
 \begin{alltt}
   getfem::generic_assembly assem;
   assem.push_mf(mf);
@@ -821,7 +821,7 @@ An other example is the assembly of the stiffness matrix for a vector laplacian:
             "M$1(#1,#1)+=sym(comp(vGrad(#1).vGrad(#1).Base(#2))(:,j,k,:,j,k,p).a(p))");
   assem.volumic_assembly();
 \end{alltt}
-Now the output is written in a sparse matrix, inserted with {\tt assem.push_mat(RM)}. The {\tt \$1} in {\tt M\$1(\#1,\#1)} just indicates that we refer to the first matrix ``pushed'' (it is optionnal, but if the assembly requires two matrices, the second one must be refered this way). The {\tt sym} function ensure that the result is symmetric (if this is not done, some round-off errors may cancel the symmetricity). Next, the {\tt comp} part evaluates a 7-dimensions tensor, 
+Now the output is written in a sparse matrix, inserted with {\tt assem.push_mat(RM)}. The {\tt \$1} in {\tt M\$1(\#1,\#1)} just indicates that we refer to the first matrix ``pushed'' (it is optional, but if the assembly requires two matrices, the second one must be referred this way). The {\tt sym} function ensure that the result is symmetric (if this is not done, some round-off errors may cancel the symmetricity). Next, the {\tt comp} part evaluates a 7-dimensions tensor, 
 $$\int\partial_k\varphi^{i}_{j}\partial_l\varphi^m_n\psi^p,$$
 where $\varphi^i_j$ is a $jth$ component of the $ith$ base function of {\tt mf} and $\psi^p$ is a (scalar) base function of the second {\tt mesh_fem}. Since we want to assemble
 $$\int a(x).\nabla\phi^i.\nabla\phi^j,\quad\text{with}\quad a(x)=\sum_pa^p\psi^p(x),$$
@@ -829,9 +829,9 @@ the reduction is:
 $$\sum_{j,k,p}\left(\int\partial_k\varphi^{i}_{j}\partial_k\varphi^m_j\psi^p\right)a^p$$
 In the {\tt
   comp} function, {\tt vGrad} was used instead of {\tt Grad} since we
-said that we were assembling a {\em vector} laplacian: that is why
+said that we were assembling a {\em vector} Laplacian: that is why
 each {\tt vGrad} part has three dimensions (dof number, component
-number, and derivative number). For a scalar laplacian, we could have
+number, and derivative number). For a scalar Laplacian, we could have
 used {\tt comp(Grad(\#1).Grad(\#1).Base(\#2))(:,k,:,k,p).a(p)}. But the
 vector form has the advantage to work in both vector and scalar case.
 
@@ -853,11 +853,11 @@ where $h$ is the Hooke tensor.
 Since we assume it is not constant, $h$ is given on the second {\tt
   mesh_fem}: $h_{ijkl}(x)=\sum_ph_{ijkl}^p\psi^p$.  Hence the first line
 declares that the first data ``pushed'' is indeed a five-dimensions
-tensor, the first fourth ones beeing all equal to the target dimension
-of the first {\tt mesh_fem}, and the last one beeing equal to the
+tensor, the first fourth ones being all equal to the target dimension
+of the first {\tt mesh_fem}, and the last one being equal to the
 number of degrees of freedom of the second {\tt mesh_fem}.  The {\tt
   comp} part still compute the same 7-dimensions tensor than for the
-vector laplacian case.  From this tensor, one evaluate
+vector Laplacian case.  From this tensor, one evaluate
 $\varepsilon(\varphi^i)_{jk}\varepsilon(\phi^l)_{mn}\psi^p$ via permutations, and finally the
 expression is reduced against the hook tensor.
 
@@ -867,7 +867,7 @@ Slices may be mixed with reduction operations {\tt t(:,4,i,i)} takes a slice at 
 
 {\tt mdim(\#2)} is evaluated as the mesh dimension associated to the second {\tt mesh_fem}, while {\tt qdim(\#2)} is the target dimension of the {\tt mesh_fem}.
 
-The diagonal of a tensor can be obtained with {\tt t\{:,:,3,3\}} (which is stricly equivalent to {\tt t\{1,2,3,3\}}: the colon is just here to improve the readability). This is the same operator than for permutation operations. Note that {\tt t\{:,:,1,1\}} or {\tt t\{:,:,4,4\}} are not valid operations. 
+The diagonal of a tensor can be obtained with {\tt t\{:,:,3,3\}} (which is strictly equivalent to {\tt t\{1,2,3,3\}}: the colon is just here to improve the readability). This is the same operator than for permutation operations. Note that {\tt t\{:,:,1,1\}} or {\tt t\{:,:,4,4\}} are not valid operations. 
 
 The {\tt print} command can be used to see the tensor: {\tt "print comp(Base(\#1));"} will print the integrals of the base functions for each convex.
 
@@ -889,7 +889,7 @@ Because each base function of the finite element method has to be interpolated, 
 
 The interpolation is made on each Gauss point of the integration method {\tt pim}, so that you have to use this integration method in the assembling procedure.\\[0.5cm]
 
-For instance if you need to compute the mass matrix between to different finite element methods defined on two different meshes, this is an example of code which interpole the second f.e.m. on the mesh of the first f.e.m., assuming that {\tt mf1} and {\tt mf2} describe the two finite element methods and {\tt pim} is the chosen integration method.\\[0.5cm]
+For instance if you need to compute the mass matrix between to different finite element methods defined on two different meshes, this is an example of code which interpol the second f.e.m. on the mesh of the first f.e.m., assuming that {\tt mf1} and {\tt mf2} describe the two finite element methods and {\tt pim} is the chosen integration method.\\[0.5cm]
 {\tt
   getfem::mesh\_fem mf\_interpole(mf1.linked\_mesh());\\[0.2cm]
   getfem::pfem pf = getfem::virtual\_link\_fem(mf2, mf\_interpole, pim);\\[0.2cm]
@@ -921,7 +921,7 @@ where {\tt mef} is a variable of type {\tt getfem::mesh\_fem} and describes the 
 The file {\tt getfem\_derivatives.h}  defines the following function to compute the gradient of a solution\\[0.5cm]
 \index{GETFEM!getfem::compute\_gradient}
 {\tt getfem::compute\_gradient(mef1, mef2, U, V); }\\[0.5cm]
-where {\tt mef1} is a variable of type {\tt getfem::mesh\_fem} and describes the finite element method on which the solution is defined, {\tt mef2} describes the fintie element method to compute the gradient, {\tt U} is a vector representing the solution and should be of size {\tt mef1.nb\_dof()}, {\tt V} is the vector on which the gradient will be computed and should be of size
+where {\tt mef1} is a variable of type {\tt getfem::mesh\_fem} and describes the finite element method on which the solution is defined, {\tt mef2} describes the finite element method to compute the gradient, {\tt U} is a vector representing the solution and should be of size {\tt mef1.nb\_dof()}, {\tt V} is the vector on which the gradient will be computed and should be of size
 {\tt N * mef2.nb\_dof()} where {\tt N} is the dimension of the domain. IMPORTANT : This function only work when {\tt mef2} is a Lagrange element. This element should be, most of the time, a discontinuous lagrangian element, because for usual element (for instance {\tt getfem::PK\_discontinuous\_fem(n, k)}), the gradient is not continuous.
 
 \section{Export and view a solution}
@@ -929,18 +929,18 @@ where {\tt mef1} is a variable of type {\tt getfem::mesh\_fem} and describes the
 The file {\tt getfem\_export.h} defines the following function to save a solution in a file\\[0.5cm]
 \index{GETFEM!getfem::save\_solution}
 {\tt getfem::save\_solution(filename, mef, U, K); }\\[0.5cm]
-where {\tt filename} is of type {\tt std::string}, {\tt mef}  is a variable of type {\tt getfem::mesh\_fem} and describes the finite element method on which the solution is defined, {\tt U} is a vector representing the solution and should be of size {\tt mef.nb\_dof()} and {\tt K} is the degree of the standard lagrange element used to save the solution. The solution is interpolated on each element on the more classical lagrange element of degree {\tt K} defined on this element.\\[0.5cm]
+where {\tt filename} is of type {\tt std::string}, {\tt mef}  is a variable of type {\tt getfem::mesh\_fem} and describes the finite element method on which the solution is defined, {\tt U} is a vector representing the solution and should be of size {\tt mef.nb\_dof()} and {\tt K} is the degree of the standard Lagrange element used to save the solution. The solution is interpolated on each element on the more classical Lagrange element of degree {\tt K} defined on this element.\\[0.5cm]
 To view a solution, two perl scripts are provided (in the directory {\tt bin/} of {\sc Getfem++} distribution) but work only for 2D domains and are very basic.\\[0.5cm]
 {\tt sc2dgnuplot filename}\\[0.5cm]
 {\tt dr2dgnuplot filename S}\\[0.5cm]
-Both scripts use Gnuplot to draw the solution and thus you need to have a working distribution of Gnuplot installed on your system. {\tt S} is a coefficient to zoom the solution. {\tt sc2dgnuplot} draw a scalar solution and {\tt dr2dgnuplot} a vectorial solution. See also the matlab interface for more elaborated draw procedures.
+Both scripts use Gnuplot to draw the solution and thus you need to have a working distribution of Gnuplot installed on your system. {\tt S} is a coefficient to zoom the solution. {\tt sc2dgnuplot} draw a scalar solution and {\tt dr2dgnuplot} a vectorial solution. See also the Matlab interface for more elaborated draw procedures.
 
 \section{Interpolation on different meshes}
 
 The file {\tt getfem\_export.h} defines the following function to interpolate a solution from a mesh and a finite element method  to another mesh and another Lagrange finite element method.\\[0.5cm]
 \index{GETFEM!getfem::interpolation\_solution}
 {\tt getfem::interpolation\_solution(mef1, mef2, U, V); }\\[0.5cm]
-where {\tt mef1}  is a variable of type {\tt getfem::mesh\_fem} and describes the finite element method on which the solution is defined, {\tt mef2} is the finite element method on which the solution will be interpolate,  {\tt U} is a vector representing the solution and should be of size {\tt mef1.nb\_dof()}, {\tt V} is a vector on which the interpolation will be computed and should be of size {\tt mef2.nb\_dof()}. IMPORTANT : {\tt mef2} should be of lagrange type for the interpolation to makes sense but the meshes linked to {\tt mef1} and {\tt mef2} may be different (and this is the interest of this function). There is no restriction for the dimension of the domain. 
+where {\tt mef1}  is a variable of type {\tt getfem::mesh\_fem} and describes the finite element method on which the solution is defined, {\tt mef2} is the finite element method on which the solution will be interpolate,  {\tt U} is a vector representing the solution and should be of size {\tt mef1.nb\_dof()}, {\tt V} is a vector on which the interpolation will be computed and should be of size {\tt mef2.nb\_dof()}. IMPORTANT : {\tt mef2} should be of Lagrange type for the interpolation to makes sense but the meshes linked to {\tt mef1} and {\tt mef2} may be different (and this is the interest of this function). There is no restriction for the dimension of the domain. 
  
 \section{Catch errors}
 \index{errors}
