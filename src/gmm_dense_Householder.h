@@ -183,7 +183,7 @@ namespace gmm {
       else beta = T(R(1) / mu);
       gmm::scale(V, beta);
     }
-    if (gmm::real(V[vect_size(V)-1]) * R(0) != R(0)) gmm::clear(V);
+    // if (gmm::real(V[vect_size(V)-1]) * R(0) != R(0)) gmm::clear(V);
     V[0] = T(1);
   }
 
