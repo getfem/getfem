@@ -64,7 +64,7 @@ namespace bgeot {
 
   template <class V> struct linalg_traits;
 
-  struct linalg_traits<abstract_null_type> {
+  template <> struct linalg_traits<abstract_null_type> {
     typedef abstract_null_type linalg_type;
     typedef abstract_null_type base_type;
     typedef void * iterator;
@@ -112,6 +112,7 @@ namespace bgeot {
 
     public :
       typedef typename linalg_traits<V>::base_type base_type;
+      simple_vector_ref(V &v) : l(&v) {}
       V &deref(void) { return *l; }
       const V &deref(void) const { return *l; }
       base_type &operator[](size_type i) { return (*l)[i]; }
@@ -160,6 +161,8 @@ namespace bgeot {
       const V *l;
 
     public :
+      simple_vector_const_ref(simple_vector_ref<V> &v) : l(&(v.deref())) {}
+      simple_vector_const_ref(const V &v) : l(&v) {}
       typedef typename linalg_traits<V>::base_type base_type;
       const V &deref(void) const { return *l; }
       base_type operator[](size_type i) const { return (*l)[i]; }
@@ -427,8 +430,8 @@ namespace bgeot {
     typedef abstract_plain storage_type;
     typedef abstract_null_type sub_row_type;
     typedef abstract_null_type const_sub_row_type;
-    typedef simple_vector_ref<vsvector<T> > sub_col_type;
-    typedef simple_vector_const_ref<vsvector<T> > const_sub_col_type;
+    typedef simple_vector_ref<linalg_type> sub_col_type;
+    typedef simple_vector_const_ref<linalg_type> const_sub_col_type;
     typedef col_major sub_orientation;
     size_type size(const linalg_type &v) { return v.size(); }
     size_type nrows(const linalg_type &v) { return v.size(); }
@@ -704,15 +707,14 @@ namespace bgeot {
   }
 
   template <class L1, class L2>
-  void copy_mat_by_col(const L1 &l1, L2 &l2)
-  {
+  void copy_mat_by_col(const L1 &l1, L2 &l2) {
     size_type nbc = mat_ncols(l1);
     for (size_type i = 0; i < nbc; ++i)
       copy_vect(mat_col(l1, i), mat_col(l2, i),
 		typename linalg_traits<typename linalg_traits<L1>
-		 ::const_sub_col_type>::storage_type(),
+		::const_sub_col_type>::storage_type(),
 		typename linalg_traits<typename linalg_traits<L2>
-		 ::sub_col_type>::storage_type());
+		::sub_col_type>::storage_type());
   }
   
 
