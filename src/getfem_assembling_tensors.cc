@@ -1587,16 +1587,29 @@ namespace getfem {
     std::sort(cvorder.begin(), cvorder.end(), cv_fem_compare(mftab));
   }
   
-  void generic_assembly::volumic_assembly() {
+  void generic_assembly::consistency_check() {
     if (mftab.size() == 0) ASM_THROW_ERROR("no mesh_fem for assembly!");
     if (imtab.size() == 0) ASM_THROW_ERROR("no mesh_im (integration methods) given for assembly!");
+    const getfem_mesh& m = imtab[0]->linked_mesh();
+    for (unsigned i=0; i < mftab.size(); ++i) {
+      if (&mftab[i]->linked_mesh() != &m)
+	ASM_THROW_ERROR("the mesh_fem/mesh_im live on different meshes!");
+    }
+    for (unsigned i=0; i < imtab.size(); ++i) {
+      if (&imtab[i]->linked_mesh() != &m)
+	ASM_THROW_ERROR("the mesh_fem/mesh_im live on different meshes!");
+    }
+  }
+
+  
+  void generic_assembly::volumic_assembly() {
+    consistency_check();
     volumic_assembly(mftab[0]->convex_index());
   }
 
   void generic_assembly::volumic_assembly(const dal::bit_vector& cvlst) {
     std::vector<size_type> cv;
-    if (mftab.size() == 0) ASM_THROW_ERROR("no mesh_fem for assembly!");
-    if (imtab.size() == 0) ASM_THROW_ERROR("no mesh_im (integration methods) given for assembly!");
+    consistency_check();
     get_convex_order(mftab, cvlst, cv);
     parse();
     for (size_type i=0; i < cv.size(); ++i)
@@ -1605,13 +1618,12 @@ namespace getfem {
 
   void generic_assembly::boundary_assembly(size_type boundary_number) {
     std::vector<size_type> cv;
-    if (mftab.size() == 0) ASM_THROW_ERROR("no mesh_fem for assembly!");
-    if (imtab.size() == 0) ASM_THROW_ERROR("no mesh_im (integration methods) given for assembly!");
+    consistency_check();
     get_convex_order(mftab, mftab[0]->convex_index(), cv);
     parse();
     for (size_type i=0; i < cv.size(); ++i) {
       mesh_cvf_set::face_bitset nf
-	=mftab[0]->linked_mesh().faces_of_convex_in_set(cv[i],boundary_number);
+	=mftab[0]->linked_mesh().faces_of_convex_in_set(boundary_number,cv[i]);
       size_type nbf
 	= mftab[0]->linked_mesh().structure_of_convex(cv[i])->nb_faces();
       for (unsigned f = 0; f < nbf; ++f)

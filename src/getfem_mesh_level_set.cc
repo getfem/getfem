@@ -377,9 +377,7 @@ struct Chrono {
       a level set with a secondary level set cut the space into 
       three parts '+' and '-' and '0' which is the half-space where the
       secondary level set is negative.
-
     */
-      
     // -   : 1
     // 0   : 2
     // +   : 4
@@ -439,7 +437,7 @@ struct Chrono {
       DAL_THROW(failure_error,
 		"An element is cut by more than 16 level_set, aborting");
 
-    /* 
+		/* 
      * Step 1 : build the signed distances, estimate the curvature radius
      *          and the degree K.
      */

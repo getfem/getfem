@@ -42,7 +42,7 @@ namespace getfem {
 	   !cv.finished(); ++cv) {
 	if (linked_mesh().set_is_boundary(b)) {
 	  mesh_cvf_set::face_bitset fb
-	    = linked_mesh().faces_of_convex_in_set(cv, b);
+	    = linked_mesh().faces_of_convex_in_set(b, cv);
 	  for (unsigned f = 0;
 	       f < linked_mesh().structure_of_convex(cv)->nb_faces(); ++f)
 	    if (fb[f]) {

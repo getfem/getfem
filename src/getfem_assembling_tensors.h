@@ -554,6 +554,7 @@ namespace getfem {
     tnode do_expr();
     void do_instr();
     void exec(size_type cv, dim_type face);
+    void consistency_check();
   public:
     /* parse the string 'str' and build the tree of vtensors */
     void parse();

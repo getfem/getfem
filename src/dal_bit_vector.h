@@ -286,6 +286,7 @@ namespace dal
      
       bit_vector(void) { clear(); }
       template <size_t N> bit_vector(const std::bitset<N> &bs) {
+	clear();
         for (size_type i=0; i < bs.size(); ++i) { if (bs[i]) add(i); }
       }
 

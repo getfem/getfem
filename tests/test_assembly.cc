@@ -149,7 +149,7 @@ namespace getfem {
 		"This assembling procedure only works on a single mesh");
   
     for (cv << nn; cv != ST_NIL; cv << nn) {
-      nf = mf.faces_of_convex_on_boundary(cv, boundary);
+      nf = dal::bit_vector(mf.linked_mesh().faces_of_convex_in_set(boundary, cv));
       if (nf.card() > 0) {
 	pf1 =     mf.fem_of_element(cv); nbd1 = pf1->nb_dof(cv);
 	pf2 = mfdata.fem_of_element(cv); nbd2 = pf2->nb_dof(cv);
@@ -243,7 +243,7 @@ namespace getfem {
 
     for (cv << nn; cv != ST_NIL; cv << nn)
       {
-	nf = mf1.linked_mesh().faces_of_convex_in_set(cv, boundary);
+	nf = mf1.linked_mesh().faces_of_convex_in_set(boundary,cv);
 	if (nf.count() > 0) {
 	  pf1 = mf1.fem_of_element(cv); nbd1 = pf1->nb_dof(cv);
 	  pf2 = mf2.fem_of_element(cv); nbd2 = pf2->nb_dof(cv);
@@ -348,7 +348,7 @@ namespace getfem {
 
     for (cv << nn; cv != ST_NIL; cv << nn)
       {
-	nf = mf_u.faces_of_convex_on_boundary(cv, boundary);
+	nf = dal::bit_vector(mf_u.linked_mesh().faces_of_convex_in_set(boundary,cv));
 	if (nf.card() > 0)
 	  {
 	    size_type f, nbdof_u, nbdof_d;

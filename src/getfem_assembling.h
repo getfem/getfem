@@ -683,7 +683,7 @@ namespace getfem
     /* step 2 : simplification of simple dirichlet conditions */
     dal::bit_vector bv = mf_u.linked_mesh().convexes_in_set(boundary);
     for (dal::bv_visitor cv(bv); !cv.finished(); ++cv) {
-      nf = mf_u.linked_mesh().faces_of_convex_in_set(cv, boundary);
+      nf = mf_u.linked_mesh().faces_of_convex_in_set(boundary, cv);
       size_type nbf = mf_u.linked_mesh().structure_of_convex(cv)->nb_faces();
       /* don't try anything with vector elements */
       if (mf_u.fem_of_element(cv)->target_dim() != 1) continue;

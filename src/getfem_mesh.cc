@@ -94,7 +94,7 @@ namespace getfem {
   }
 
   const mesh_cvf_set::face_bitset &getfem_mesh::faces_of_convex_in_set
-    (size_type c, size_type b) const {
+    (size_type b, size_type c) const {
     return (valid_cvf_sets[b]) ? 
       cvf_sets[b].faces_of_convex(c)
       : dal::singleton<empty_face_bitset>::instance().bv;

@@ -336,7 +336,7 @@ namespace getfem
   { return linked_mesh().convexes_in_set(b); }
   inline const mesh_cvf_set::face_bitset &
   mesh_fem::faces_of_convex_on_boundary(size_type c, size_type b) const 
-  { return linked_mesh().faces_of_convex_in_set(c,b); }
+  { return linked_mesh().faces_of_convex_in_set(b,c); }
   inline const dal::bit_vector &
   mesh_fem::get_valid_boundaries() const 
   { return linked_mesh().get_valid_sets(); }

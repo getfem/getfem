@@ -347,7 +347,7 @@ namespace getfem {
     { return (valid_cvf_sets[s] && cvf_sets[s].is_elt(c, f)); }
     const dal::bit_vector &convexes_in_set(size_type s) const;
     const mesh_cvf_set::face_bitset
-      &faces_of_convex_in_set(size_type c, size_type s) const;
+      &faces_of_convex_in_set(size_type s, size_type cv) const;
     const dal::bit_vector &get_valid_sets() const { return valid_cvf_sets; }
     void sup_convex_from_sets(size_type c);
     

@@ -277,8 +277,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
   for (dal::bv_visitor cv(mesh.convexes_in_set(NEUMANN_BOUNDARY_NUM));
        !cv.finished(); ++cv) {
     getfem::pfem pf = mf_rhs.fem_of_element(cv);
-    getfem::mesh_cvf_set::face_bitset fb = mesh.faces_of_convex_in_set(cv,
-						      NEUMANN_BOUNDARY_NUM);
+    getfem::mesh_cvf_set::face_bitset fb = 
+      mesh.faces_of_convex_in_set(NEUMANN_BOUNDARY_NUM, cv);
     for (unsigned f = 0; f < MAX_FACES_PER_CV; ++f) if (fb[f]) {
       for (size_type l = 0; l< pf->structure(cv)->nb_points_of_face(f); ++l) {
 	size_type n = pf->structure(cv)->ind_points_of_face(f)[l];
