@@ -79,6 +79,8 @@
 // #if defined(__GNUC__) || (defined(__sgi) && defined(_STANDARD_C_PLUS_PLUS))
 #define STD_NEEDED std::
 using std::endl;
+using std::cout;
+using std::cerr;
 // #else
 //   #define STD_NEEDED
 // #endif
@@ -277,6 +279,16 @@ typedef unsigned char uint8_type;
   // };
 
 #endif
+
+/* ********************************************************************** */
+/*	Getfem++ generic errors.                     			  */
+/* ********************************************************************** */
+
+class internal_error : public logic_error {
+public:
+  internal_error (const string& what_arg): logic_error (what_arg) { }
+};
+
 
 } /* end of namespace dal.                                                */
 
