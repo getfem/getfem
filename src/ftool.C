@@ -49,7 +49,7 @@ namespace ftool
     tms t; times(&t); return double(t.tms_utime) / ttclk; }
 #else
   double uclock_sec(void)
-  { return clock()/CLOCKS_PER_SEC; }
+  { return double(clock())/double(CLOCKS_PER_SEC); }
 #endif
 
   bool read_untill(std::istream &ist, const char *st)
