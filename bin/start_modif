@@ -50,7 +50,7 @@ print MAKEFILE "CPLUSOPTDEBUG = \$(COMP) \$(OPTIONS_STANDARD)";
 print MAKEFILE " \$(OPTIONS_BOTH) \n";
 print MAKEFILE "INCLUDES = -I ./include \$(INCLUDES_STANDARD) \$(INCLUDES_GETFEM) \$(INCLUDES_MTL)";
 print MAKEFILE " \$(INCLUDES_ITL) -I$rootlib\/include \n\n\n";
-print MAKEFILE "LIB = \$(GETFEM_LIB) -lm\n";
+print MAKEFILE "LIB = \$(GETFEM_LIB) \$(LIB_X11) -lm\n";
 
 print MAKEFILE "\n\n", '# Objects to compile : ', "\n";
 
@@ -103,7 +103,7 @@ while($listeC)
   $fi2 =~ s/\.o/_h/;
 #  $fi2 =~ s/\.o/.h/;
   print MAKEFILE "\n", "programs\/$fi1 : $fi \$(GETFEM_LIB) \n";
-  print MAKEFILE "\t", '$(CPLUS) $(COPT) $(INCLUDES) ./sources/*.o $(LIB) ', $fi, " -o programs\/$fi1", "\n";
+  print MAKEFILE "\t", '$(CPLUS) $(COPT) $(INCLUDES) ./sources/*.o ', $fi, " -o programs\/$fi1", ' $(LIB) ', "\n";
 
 }
 
