@@ -189,15 +189,15 @@ namespace getfem
 	}
 	else if (nbpt == Np) {
 	  std::vector<getfem::base_node> pnode(1 << DIM);
-	  size_type j;
-	  for (int i = 0, j = 0; i <= (1 << DIM); ++i) {
+	  size_type j = 0;
+	  for (int i = 0; i <= (1 << DIM); ++i) {
 	    pnode[i] = ptab[j];
 	    size_type k = i + 1, l = K-1;
 	    while (!(k & 1)) { l *= K+1; k >>= 1; }
 	    j += l + 1;
 	  }
-	  int i = mesh.add_parallelepiped_by_points(DIM, pnode.begin());
-	  mef.set_finite_element(i, getfem::QK_fem(DIM, K),
+	  j = mesh.add_parallelepiped_by_points(DIM, pnode.begin());
+	  mef.set_finite_element(j, getfem::QK_fem(DIM, K),
 				 bgeot::parallelepiped_poly_integration(DIM));
 	}
 	else if (nbpt == bgeot::alpha(DIM - 1, K) * bgeot::alpha(1, K)) {

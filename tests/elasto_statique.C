@@ -203,7 +203,7 @@ void pb_data::assemble(void)
   ST1 = linalg_vector(nb_dof_data2); ST2 = linalg_vector(nb_dof_data2);
   std::fill(ST1.begin(), ST1.end(), lambda);
   std::fill(ST2.begin(), ST2.end(), G);
-  assembling_rigidity_matrix_for_linear_elasticity(RM,mef,mef_data2,ST1,ST2);
+  getfem::assembling_rigidity_matrix_for_linear_elasticity(RM,mef,mef_data2,ST1,ST2);
 
   // cout << "Assemblage du terme source" << endl;
   ST1 = linalg_vector(nb_dof_data * N);

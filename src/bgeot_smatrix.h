@@ -4,7 +4,7 @@
 /* Library :  Dynamic Array Library (dal)                                  */
 /* File    :  bgeot_smatrix.h : a example of non optimized sparse matrix   */
 /*                              type.                                      */
-/*            Please use a specialized matrix modulus instead.             */
+/*            Please use a specialized matrix package instead.             */
 /*     									   */
 /*                                                                         */
 /* Date : February 01, 1998.                                               */
@@ -67,8 +67,6 @@ namespace bgeot
     };
     
     typedef dal::dynamic_tree_sorted<elt_m, _elt_m_comp, 3> _line_m;
-
-  protected:
     
     size_type nbc, nbl;      /* Number of columns and lines.           	*/
     std::vector<_line_m> li; /* array of lines.                         */
@@ -76,8 +74,6 @@ namespace bgeot
     /* Initialisation and copy.                                   	*/
     
     void init(size_type l, size_type c) { nbl = l; nbc = c; li.resize(l); }
-    
-  public:
     
     /* read and write operations.                                       */
     
@@ -116,8 +112,6 @@ namespace bgeot
 			 const smatrix<R>& m2, size_type j);
     template<class R> friend R partial_ll_product(const smatrix<R>& m1, size_type i,
 				 const smatrix<R>& m2, size_type j, size_type k);
-    template<class R> friend R lv_product(const smatrix<R> &m1, size_type i,
-				   const typename smatrix<R>::vector_type &v);
 
     void l_mul(size_type l, T x);
 

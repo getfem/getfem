@@ -70,7 +70,7 @@ struct lap_pb
 void lap_pb::init(void)
 {
   dal::bit_vector nn;
-  size_type i, j, k, h;
+  size_type i, j, k;
 
   /***********************************************************************/
   /* READING PARAMETER FILE                                              */

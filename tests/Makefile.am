@@ -36,7 +36,7 @@ test_int_set_SOURCES = test_int_set.C
 test_tree_sorted_SOURCES = test_tree_sorted.C
 
 INCLUDES = -I$(top_srcdir)/src
-LDADD    = ../src/.libs/libgetfem.a -lm
+LDADD    = ../src/.libs/libgetfem.a -lm @SUPLDFLAGS@
 CXXFLAGS = @APPSCXXFLAGS@
 
 TESTS = \

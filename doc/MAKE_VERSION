@@ -1,9 +1,9 @@
 Liste des items a passer en revue pour fabriquer une nouvelle version
 
 
-- Mettre a jour les fichier de la racine :  README, NEWS, INSTALL ...
+- Mettre a jour les fichier de la racine :  README, NEWS, INSTALL, CONTAINS ...
 
-- Passer les documentations en revue et le actualiser si necessaire
+- Passer les documentations en revue et les actualiser si necessaire
 
 - gmake dist
 

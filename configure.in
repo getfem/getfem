@@ -15,7 +15,7 @@ AC_CONFIG_AUX_DIR([config])
 
 PACKAGE="getfem++"
 MAJOR_VERSION="1"
-MINOR_VERSION="1"
+MINOR_VERSION="2"
 VERSION=$MAJOR_VERSION.$MINOR_VERSION
 echo "configuring $PACKAGE $VERSION..."
 
@@ -39,6 +39,7 @@ USER_CXXFLAGS="$CXXFLAGS"
 AC_PROG_CXX(cxx KCC CC cc++ xlC aCC g++ c++)
 AC_PROG_CXXCPP
 CXXFLAGS="${USER_CXXFLAGS}"
+SUPLDFLAGS=""
 
 AC_LANG_CPLUSPLUS
 
@@ -58,6 +59,7 @@ dnl 	CXXFLAGS="$CXXFLAGS -ptr `pwd`/cxx_repository -std strict_ansi -O3"
  CC)
 	APPSCXXFLAGS="$CXXFLAGS -LANG:std -O3"
  	CXXFLAGS="$CXXFLAGS -LANG:std -O3"
+	SUPLDFLAGS="-lCio"
 	MEX_NEEDS_TWOCOMP="#"
 	;;
  g++* | c++)
@@ -73,6 +75,7 @@ dnl 	CXXFLAGS="$CXXFLAGS -ptr `pwd`/cxx_repository -std strict_ansi -O3"
 esac
 
 AC_SUBST(APPSCXXFLAGS)
+AC_SUBST(SUPLDFLAGS)
 
 
 dnl ------------------------------------------------------------------------

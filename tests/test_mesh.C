@@ -73,7 +73,7 @@ template<class MESH> void test_mesh(MESH &m)
   { vects[i] = VECT(dim); vects[i].fill(0.0); vects[i][i] = 1.0; iref[i] = 3; }
   
 
-  parallelepiped_regular_simplex_mesh(m, dim,pt1, vects.begin(), iref.begin());
+  getfem::parallelepiped_regular_simplex_mesh(m, dim,pt1, vects.begin(), iref.begin());
 	    
 
   m.write_to_file("test_mesh.mesh");
