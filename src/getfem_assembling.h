@@ -324,6 +324,7 @@ namespace getfem
 	  pmec->gen_compute_on_face(t,mf_u.linked_mesh().points_of_convex(cv),
 				    f);
 	  base_tensor::iterator p = t.begin();
+	  scalar_type vmax = bgeot::vect_norminf(t);
 
 	  for (size_type j = 0; j < nbdof_u; j++) {
 	    size_type dof_j = mf_u.ind_dof_of_element(cv)[j];
@@ -339,7 +340,18 @@ namespace getfem
 		    /* get Q[ii][jj] for the degree of freedom 'dof_d' */
 		    scalar_type data = Q[(jj*N+ii) + N*N*(dof_d)];
 
-		    M(dof_i*N+ii, dof_j*N+jj) += data* (*p);
+		    /* we filter out noise since this matrix can be used 
+		       as a constraints matrix for dirichlet conditions,
+		       noise may lead to 'fictive' dirichlet condition
+		       (this is the case for ex. with laplace/PK(1,4)) */
+		    if (data != 0. && vmax != .0 && (*p)/vmax > 1e-5) {
+		      /*
+			cerr << "QU : adding " << data << "*" << (*p) << " at dof_i=" << 
+			dof_i << "*" << N << "+" << ii << ", dof_j=" << dof_i << "*" << 
+			N << "+" << ii << endl;
+		      */
+		      M(dof_i*N+ii, dof_j*N+jj) += data* (*p);
+		    }
 		  }
 		}
 		p++;
