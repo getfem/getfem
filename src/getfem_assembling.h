@@ -363,29 +363,34 @@ namespace getfem
      size(R) = Qdim(mf_u)   * nb_dof(mf_rh);
 
      this function is able to "simplify" the dirichlet constraints (see below)
+     version = +1 : build H
+	       +2 : build R
+	       +4 : simplify
+	       (for instance version = 7 do everything).
    */
   template<class MAT, class VECT>
   void asm_dirichlet_constraints(MAT &M, VECT &B, const mesh_fem &mf_u,
 				 const mesh_fem &mf_rh,
 				 const VECT &H, const VECT &R,
-				 size_type boundary, bool simplify = true) {
+				 size_type boundary, int version = 7) {
     dal::bit_vector nf;
     pfem pf_u, pf_rh;
     
     if (mf_rh.get_qdim() != 1)
       DAL_THROW(std::invalid_argument,
 		"invalid data mesh fem for dirichlet (Qdim=1 required)");
-    asm_qu_term(M, mf_u, mf_rh, H, boundary);
-    asm_source_term(B, mf_u, mf_rh, R, boundary);
+    if (version & 1) {
+      asm_qu_term(M, mf_u, mf_rh, H, boundary);
+      std::vector<size_type> ind(0);
+      dal::bit_vector bdof = mf_u.dof_on_boundary(boundary);
+      for (size_type i = 0; i < mf_u.nb_dof(); ++i)
+	if (!(bdof[i])) ind.push_back(i);
+      gmm::clear(gmm::sub_matrix(M, gmm::sub_index(ind)));
+    }
+    if (version & 2) asm_source_term(B, mf_u, mf_rh, R, boundary);
 
-    std::vector<size_type> ind(0);
-    dal::bit_vector bdof = mf_u.dof_on_boundary(boundary);
-    for (size_type i = 0; i < mf_u.nb_dof(); ++i)
-      if (!(bdof[i])) ind.push_back(i);
-    gmm::clear(gmm::sub_matrix(M, gmm::sub_index(ind)));
-    
     /* step 2 : simplification of simple dirichlet conditions */
-    if (simplify) {
+    if (version & 4) {
       dal::bit_vector bv = mf_u.convex_on_boundary(boundary);
       for (dal::bv_visitor cv(bv); !cv.finished(); ++cv) {
 	nf = mf_u.faces_of_convex_on_boundary(cv, boundary);
@@ -425,19 +430,22 @@ namespace getfem
 		    size_type dof_u=mf_u.ind_dof_of_element(cv)[ind_u*Q + q];
 		    
 		    /* "erase" the row */
-		    for (size_type k=0; k<mf_u.nb_dof_of_element(cv); ++k) {
-		      size_type dof_k = mf_u.ind_dof_of_element(cv)[k];
-		      M(dof_u, dof_k) = 0.0;
-		    }
+		    if (version & 1)
+		      for (size_type k=0; k<mf_u.nb_dof_of_element(cv); ++k) {
+			size_type dof_k = mf_u.ind_dof_of_element(cv)[k];
+			M(dof_u, dof_k) = 0.0;
+		      }
 		    
 		    size_type dof_rh = mf_rh.ind_dof_of_element(cv)[ind_rh];
 		    /* set the "simplified" row */
-		    for (unsigned jj=0; jj < Q; jj++) {
-		      size_type dof_u2
-			= mf_u.ind_dof_of_element(cv)[ind_u*Q+jj];
-		      M(dof_u, dof_u2) = H[(jj*Q+q) + Q*Q*(dof_rh)];
-		    }
-		    B[dof_u] = R[dof_rh*Q+q];
+		    if (version & 1)
+		      for (unsigned jj=0; jj < Q; jj++) {
+			size_type dof_u2
+			  = mf_u.ind_dof_of_element(cv)[ind_u*Q+jj];
+			M(dof_u, dof_u2) = H[(jj*Q+q) + Q*Q*(dof_rh)];
+		      }
+		    if (version & 2)
+		      B[dof_u] = R[dof_rh*Q+q];
 		  }
 		}
 	      }      
@@ -452,7 +460,7 @@ namespace getfem
   void asm_dirichlet_constraints(MAT &M, VECT &B, const mesh_fem &mf_u,
 				 const mesh_fem &mf_rh,
 				 const VECT &R, size_type boundary,
-				 bool simplify = true) {
+				 int version = 7) {
     if (mf_rh.get_qdim() != 1) 
       DAL_THROW(std::invalid_argument,
 		"mf_rh should be a scalar (qdim=1) mesh_fem");
@@ -462,7 +470,7 @@ namespace getfem
     for (size_type i=0; i < N; ++i)
       for (size_type q=0; q < Q; ++q)  H[i*Q*Q+q*Q+q]=1;
    
-    asm_dirichlet_constraints(M, B, mf_u, mf_rh, H, R, boundary, simplify);
+    asm_dirichlet_constraints(M, B, mf_u, mf_rh, H, R, boundary, version);
   }
 
   /* ********************************************************************* */

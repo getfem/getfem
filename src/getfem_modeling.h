@@ -394,24 +394,26 @@ namespace getfem {
       nb_const = sub_problem.main_mesh_fem().dof_on_boundary(boundary).card();
     }
 
-    void compute_constraints(void) {
+    void compute_constraints(int version) {
       mesh_fem &mf_u = sub_problem.main_mesh_fem();
       size_type nd = mf_u.nb_dof();
       C_MATRIX H(nd, nd);
       VECTOR V(nd);
       asm_dirichlet_constraints(H, V, sub_problem.main_mesh_fem(),
-				mf_data, B_, boundary);
-      gmm::clean(H, gmm::mat_maxnorm(H) * gmm::default_tol(value_type())
-		 * value_type(100));
+				mf_data, B_, boundary, version);
+      if (version & 1)
+	gmm::clean(H, gmm::mat_maxnorm(H) * gmm::default_tol(value_type())
+		   * value_type(100));
       
       std::vector<size_type> ind(0);
       dal::bit_vector bdof = mf_u.dof_on_boundary(boundary);
       for (size_type i = bdof.take_first(); i != size_type(-1); i << bdof)
         ind.push_back(i);
       nb_const = ind.size();
-      gmm::resize(G, nb_const, nd);
+      if (version & 1) gmm::resize(G, nb_const, nd);
       gmm::sub_index SUBI(ind);
-      gmm::copy(gmm::sub_matrix(H, SUBI, gmm::sub_interval(0, nd)), G);
+      if (version & 1) 
+	gmm::copy(gmm::sub_matrix(H, SUBI, gmm::sub_interval(0, nd)), G);
       gmm::resize(CRHS, nb_const);
       gmm::copy(gmm::sub_vector(V, SUBI), CRHS);
       this->computed();
@@ -425,14 +427,14 @@ namespace getfem {
     
     virtual size_type nb_constraints(void) {
       if (this->context_changed())
-	{ this->force_recompute(); compute_constraints(); }
+	{ this->force_recompute(); compute_constraints(7); }
       return sub_problem.nb_constraints() + nb_const;
     }
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
 				    size_type j0 = 0, bool modified = false) {
       sub_problem.compute_tangent_matrix(MS, i0, j0, modified);
       react(MS, i0, modified);
-      if (this->to_be_computed()) compute_constraints();
+      if (this->to_be_computed()) compute_constraints(7);
       if (this->to_be_transferred()) {
 	size_type nd = sub_problem.main_mesh_fem().nb_dof();
 	size_type ncs = sub_problem.nb_constraints();
@@ -450,7 +452,7 @@ namespace getfem {
     { return sub_problem.main_mesh_fem(); }
 
     void changing_rhs(const VECTOR &B__)
-    { fixing_dimensions(); gmm::copy(B__, B_); this->force_recompute(); }
+    { fixing_dimensions(); gmm::copy(B__, B_); compute_constraints(6); }
 
     // Constructor which does not define the rhs
     mdbrick_Dirichlet(mdbrick_abstract<MODEL_STATE> &problem,
@@ -503,22 +505,23 @@ namespace getfem {
       gmm::resize(B_, mf_data.nb_dof() * qmult);
     }
 
-    void compute_constraints(void) {
+    void compute_constraints(int version) {
       mesh_fem &mf_u = sub_problem.main_mesh_fem();
       size_type nd = mf_u.nb_dof();
       C_MATRIX H(nd, nd);
       VECTOR V(nd);
       asm_dirichlet_constraints(H, V, sub_problem.main_mesh_fem(),
-				mf_data, B_, boundary, false);
+				mf_data, B_, boundary, version);
 
       std::vector<size_type> ind(0);
       dal::bit_vector bdof = mf_u.dof_on_boundary(boundary);
       for (size_type i = bdof.take_first(); i != size_type(-1); i << bdof)
         ind.push_back(i);
       nb_const = ind.size();
-      gmm::resize(G, nb_const, nd);
+      if (version & 1) gmm::resize(G, nb_const, nd);
       gmm::sub_index SUBI(ind);
-      gmm::copy(gmm::sub_matrix(H, SUBI, gmm::sub_interval(0, nd)), G);
+      if (version & 1)
+	gmm::copy(gmm::sub_matrix(H, SUBI, gmm::sub_interval(0, nd)), G);
       gmm::resize(CRHS, nb_const);
       gmm::copy(gmm::sub_vector(V, SUBI), CRHS);
       this->computed();
@@ -530,7 +533,7 @@ namespace getfem {
     virtual bool is_coercive(void) { return false; }
     virtual size_type nb_dof(void) {
       if (this->context_changed())
-	{ fixing_dimensions();this->force_recompute(); compute_constraints(); }
+	{ fixing_dimensions();this->force_recompute(); compute_constraints(3);}
       return sub_problem.nb_dof() + dof_on_bound.card();
     }
     virtual size_type nb_constraints(void)
@@ -540,7 +543,7 @@ namespace getfem {
       sub_problem.compute_tangent_matrix(MS, i0, j0, modified);
       react(MS, i0, modified);
       if (this->to_be_computed())
-	{ fixing_dimensions(); compute_constraints(); }
+	{ fixing_dimensions(); compute_constraints(3); }
       if (this->to_be_transferred()) {
 	gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), dof_on_bound.card());
 	gmm::sub_interval SUBJ(i0, sub_problem.nb_dof());
@@ -554,7 +557,7 @@ namespace getfem {
       sub_problem.compute_residu(MS, i0);
       react(MS, i0, false);
       if (this->to_be_computed())
-	{ fixing_dimensions(); compute_constraints(); }
+	{ fixing_dimensions(); compute_constraints(3); }
       gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), dof_on_bound.card());
       gmm::sub_interval SUBJ(i0, sub_problem.nb_dof());
       gmm::mult(G, gmm::sub_vector(MS.state(), SUBJ),
@@ -565,7 +568,7 @@ namespace getfem {
     { return sub_problem.main_mesh_fem(); }
 
     void changing_rhs(const VECTOR &B__)
-    { fixing_dimensions(); gmm::copy(B__, B_); this->force_recompute(); }
+    { fixing_dimensions(); gmm::copy(B__, B_); compute_constraints(2); }
 
     // Constructor which does not define the rhs
     mdbrick_Dirichlet_with_multipliers(mdbrick_abstract<MODEL_STATE> &problem,
@@ -589,7 +592,6 @@ namespace getfem {
     }
     
   };
-
   
   /* ******************************************************************** */
   /*		Generic solvers.                                          */

@@ -49,7 +49,7 @@ using bgeot::base_matrix; /* small dense matrix. */
    using the predefined types in Gmm++ */
 typedef getfem::modeling_standard_sparse_vector sparse_vector;
 typedef getfem::modeling_standard_sparse_matrix sparse_matrix;
-typedef getfem::modeling_standard_plain_vector plain_vector;
+typedef getfem::modeling_standard_plain_vector  plain_vector;
 
 /**************************************************************************/
 /*  Exact solution.                                                       */
