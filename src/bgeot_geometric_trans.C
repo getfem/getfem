@@ -89,7 +89,7 @@ namespace bgeot
       DAL_THROW(failure_error, "Bad type of parameters");
     int n = int(::floor(params[0].num() + 0.01));
     int k = int(::floor(params[1].num() + 0.01));
-    if (n <= 0 || n >= 100 || k < 0 || k > 150 ||
+    if (n < 0 || n >= 100 || k < 0 || k > 150 ||
 	double(n) != params[0].num() || double(k) != params[1].num())
       DAL_THROW(failure_error, "Bad parameters");
     return new _simplex_trans(n, k);

@@ -240,7 +240,8 @@ namespace getfem
   /* Approximated integration                                              */
   /* ********************************************************************* */
 
-  void approx_integration::add_point(base_node pt,scalar_type w,short_type f) {
+  void approx_integration::add_point(const base_node &pt,
+				     scalar_type w,short_type f) {
     if (valid) DAL_THROW(internal_error, 
 			 "Impossible to modify a valid integration method.");
     if (dal::abs(w) > 1.0E-12) {
@@ -261,9 +262,52 @@ namespace getfem
     }
   }
 
-  void approx_integration::add_point_norepeat(base_node pt,scalar_type w,short_type f) {
-    short_type f2 = f; f2++;
+  void approx_integration::add_point_norepeat(const base_node &pt,
+					      scalar_type w,
+					      short_type f) {
+    short_type f2 = f; ++f2;
     if (pt_to_store[f2].search(pt) == size_type(-1)) add_point(pt,w,f);
+  }
+
+  void approx_integration::add_point_full_symmetric(base_node pt,
+						    scalar_type w) {
+    dim_type n = cvr->structure()->dim();
+    dim_type k;
+    base_node pt2(n);
+    if (n+1 == cvr->structure()->nb_faces()) {
+      // simplices
+      base_node pt3(n+1);
+      std::copy(pt.begin(), pt.end(), pt3.begin());
+      pt3[n] = 1;  for (k = 0; k < n; ++k) pt3[n] -= pt[k];
+      std::vector<int> ind(n); std::fill(ind.begin(), ind.end(), 0);
+      std::vector<bool> ind2(n+1); 
+      for (;;) {
+	
+	std::fill(ind2.begin(), ind2.end(), false);
+	bool good = true;
+	for (k = 0; k < n; ++k) 
+	  if (ind2[ind[k]]) { good = false; break; } else ind2[ind[k]] = true;
+	if (good) {
+	  for (k = 0; k < n; ++k) pt2[k] = pt3[ind[k]];
+	  add_point_norepeat(pt2, w);
+	}
+	// for (k = 0; k < n; ++k) cout << "ind[" << int(k) << "]=" << ind[k] << endl;
+	ind[0]++; k = 0;
+	while(ind[k] == n+1) { ind[k++] = 0; if (k == n) return; ind[k]++; }
+      }
+    }
+    else if (cvr->structure()->nb_points() == (size_type(1) << n)) {
+      // parallelepidedic
+      for (size_type i = 0; i < (size_type(1) << n); ++i) {
+	for (k = 0; k < n; ++k)
+	  if (i & (size_type(1) << k)) pt2[k]=pt[k]; else pt2[k] = 1.0-pt[k];
+	add_point_norepeat(pt2, w);
+      }
+    }
+    else
+      DAL_THROW(failure_error, "Fully symmetric option is only valid for"
+		"simplices and parallelepipedic elements");
+
   }
 
   void approx_integration::add_method_on_face(pintegration_method ppi,
@@ -315,9 +359,10 @@ namespace getfem
   /* ********************************************************************* */
   /* methods stored in getfem_im_list.h                                    */
   /* ********************************************************************* */
-  /// search a method in the getfem_im_list.
-
+  
+  /// search a method in getfem_im_list.h
   pintegration_method im_list_integration(std::string name) {
+    // cerr << "searching " << name << endl;
     for (int i = 0; i < NB_IM; ++i)
       if (!strcmp(name.data(), im_desc_tab[i].method_name)) {
 	bgeot::pgeometric_trans pgt
@@ -329,20 +374,21 @@ namespace getfem
 	for (size_type j = 0; j < im_desc_tab[i].nb_points; ++j) {
 	  for (dim_type k = 0; k < N; ++k)
 	    pt[k] = im_desc_real[fr + j * (N+1) + k];
-	  p->add_point(pt, im_desc_real[fr + j * (N+1) + N]);
-	  // ajouter la gestion des symétries
+	  if (im_desc_node_type[im_desc_tab[i].firsttype + j])
+	    p->add_point_full_symmetric(pt, im_desc_real[fr + j * (N+1) + N]);
+	  else
+	    p->add_point(pt, im_desc_real[fr + j * (N+1) + N]);
 	}
 
-	for (short_type f = 0; f < pgt->structure()->nb_faces(); ++f) {
+	for (short_type f = 0; N > 0 && f < pgt->structure()->nb_faces(); ++f)
 	  p->add_method_on_face
 	    (int_method_descriptor
 	     (im_desc_face_meth[im_desc_tab[i].firstface + f]), f);
-	}
 
 	p->valid_method();
+        // cerr << "finding " << name << endl;
 	return new integration_method(p);
       }
-    
     return 0;
   }
 
@@ -555,8 +601,10 @@ namespace getfem
       
       std::stringstream name2;
       name2 << "IM_NC(" << int(nc-1) << "," << int(k) << ")";
-      for (short_type f = 0; f < structure()->nb_faces(); ++f)
+      for (short_type f = 0; f < structure()->nb_faces(); ++f) {
+	cout << "method on face : " << name2.str() << endl;
 	add_method_on_face(int_method_descriptor(name2.str()), f);
+      }
     }
     valid_method();
   }
@@ -752,193 +800,193 @@ namespace getfem
   /*    Integration on a triangle                                          */
   /* ********************************************************************* */
 
-  static void triangle_add_point_full_symmetric(approx_integration *p, 
-                                                long_scalar_type c1, 
-                                                long_scalar_type c2,
-                                                long_scalar_type w) {
-    long_scalar_type c3 = 1.-c1-c2;
-    p->add_point_norepeat(base_vector(c1,c2),w);
-    p->add_point_norepeat(base_vector(c2,c1),w);
-    p->add_point_norepeat(base_vector(c1,c3),w);
-    p->add_point_norepeat(base_vector(c3,c1),w);
-    p->add_point_norepeat(base_vector(c2,c3),w);
-    p->add_point_norepeat(base_vector(c3,c2),w);
-  }
-  static void triangle_add_point_full_symmetric(approx_integration *p, 
-                                                long_scalar_type c, 
-                                                long_scalar_type w) {
-    triangle_add_point_full_symmetric(p,c,c,w);
-  }
+//   static void triangle_add_point_full_symmetric(approx_integration *p, 
+//                                                 long_scalar_type c1, 
+//                                                 long_scalar_type c2,
+//                                                 long_scalar_type w) {
+//     long_scalar_type c3 = 1.-c1-c2;
+//     p->add_point_norepeat(base_vector(c1,c2),w);
+//     p->add_point_norepeat(base_vector(c2,c1),w);
+//     p->add_point_norepeat(base_vector(c1,c3),w);
+//     p->add_point_norepeat(base_vector(c3,c1),w);
+//     p->add_point_norepeat(base_vector(c2,c3),w);
+//     p->add_point_norepeat(base_vector(c3,c2),w);
+//   }
+//   static void triangle_add_point_full_symmetric(approx_integration *p, 
+//                                                 long_scalar_type c, 
+//                                                 long_scalar_type w) {
+//     triangle_add_point_full_symmetric(p,c,c,w);
+//   }
 
-  static pintegration_method approx_triangle(im_param_list &params) {
-    if (params.size() != 1)
-      DAL_THROW(failure_error, 
-	   "Bad number of parameters : " << params.size() << " should be 1.");
-    if (params[0].type() != 0)
-      DAL_THROW(failure_error, "Bad type of parameters");
-    int n = int(::floor(params[0].num() + 0.01));
-    if (n <= 0 || n >= 100 || double(n) != params[0].num())
-      DAL_THROW(failure_error, "Bad parameters");
+//   static pintegration_method approx_triangle(im_param_list &params) {
+//     if (params.size() != 1)
+//       DAL_THROW(failure_error, 
+// 	   "Bad number of parameters : " << params.size() << " should be 1.");
+//     if (params[0].type() != 0)
+//       DAL_THROW(failure_error, "Bad type of parameters");
+//     int n = int(::floor(params[0].num() + 0.01));
+//     if (n <= 0 || n >= 100 || double(n) != params[0].num())
+//       DAL_THROW(failure_error, "Bad parameters");
 
-    approx_integration *p
-      = new approx_integration(bgeot::simplex_of_reference(2));
+//     approx_integration *p
+//       = new approx_integration(bgeot::simplex_of_reference(2));
 
-    switch (n) {
-    case 1: 
-      p->add_point(base_vector(1.0/3.0, 1.0/3.0), 0.5);
-      break;
-    case 2: 
-      p->add_point(base_vector(1.0/6.0, 1.0/6.0), 1.0/6.0);
-      p->add_point(base_vector(2.0/3.0, 1.0/6.0), 1.0/6.0);
-      p->add_point(base_vector(1.0/6.0, 2.0/3.0), 1.0/6.0);
-      break;
-    case 3: 
-      p->add_point(base_vector(1.0/3.0, 1.0/3.0), -27.0/96.0);
-      p->add_point(base_vector(1.0/5.0, 1.0/5.0), 25.0/96.0);
-      p->add_point(base_vector(3.0/5.0, 1.0/5.0), 25.0/96.0);
-      p->add_point(base_vector(1.0/5.0, 3.0/5.0), 25.0/96.0);
-      break;
-    case 4: 
-      {  
-	double a = 0.445948490915965;
-	double b = 0.091576213509771;
-	double c = 0.111690794839005;
-	double d = 0.054975871827661;
-	p->add_point(base_vector(a, a),             c);
-	p->add_point(base_vector(1.0 - 2.0 * a, a), c);
-	p->add_point(base_vector(a, 1.0 - 2.0 * a), c);
-	p->add_point(base_vector(b, b),             d);
-	p->add_point(base_vector(1.0 - 2.0 * b, b), d);
-	p->add_point(base_vector(b, 1.0 - 2.0 * b), d);
-      }
-      break;
-    case 5:  
-      {
-	double a = 0.470142064105115;
-	double b = 0.101286507323456;
-	double c = 0.0661970763942530;
-	double d = 0.0629695902724135;
-	p->add_point(base_vector(a, a),             c);
-	p->add_point(base_vector(1.0 - 2.0 * a, a), c);
-	p->add_point(base_vector(a, 1.0 - 2.0 * a), c);
-	p->add_point(base_vector(b, b),             d);
-	p->add_point(base_vector(1.0 - 2.0 * b, b), d);
-	p->add_point(base_vector(b, 1.0 - 2.0 * b), d);
-	p->add_point(base_vector(1.0/3.0, 1.0/3.0), 9.0/80.0);
-      }
-      break;
-    case 6: 
-      {
-	double a1 = 0.063089104491502;
-	double a2 = 0.249286745170910;
-	double aa = 0.310352451033785;
-	double bb = 0.053145049844816;
-	p->add_point(base_vector(a1, a1),             0.050844906370206 * 0.5);
-	p->add_point(base_vector(1.0 - 2.0 * a1, a1), 0.050844906370206 * 0.5);
-	p->add_point(base_vector(a1, 1.0 - 2.0 * a1), 0.050844906370206 * 0.5);
-	p->add_point(base_vector(a2, a2),             0.116786275726378 * 0.5);
-	p->add_point(base_vector(1.0 - 2.0 * a2, a2), 0.116786275726378 * 0.5);
-	p->add_point(base_vector(a2, 1.0 - 2.0 * a2), 0.116786275726378 * 0.5);
-	p->add_point(base_vector(aa, bb), 0.082851075618374 * 0.5);
-	p->add_point(base_vector(aa, 1.0 - aa - bb), 0.082851075618374 * 0.5);
-	p->add_point(base_vector(bb, aa), 0.082851075618374 * 0.5);
-	p->add_point(base_vector(bb, 1.0 - aa - bb), 0.082851075618374 * 0.5);
-	p->add_point(base_vector(1.0 - aa - bb, aa), 0.082851075618374 * 0.5);
-	p->add_point(base_vector(1.0 - aa - bb, bb), 0.082851075618374 * 0.5);
-      }
-      break;
-    case 7:
-      {
-	double r1  = 0.0651301029022;
-	double r2  = 0.8697397941956;
-	double r4  = 0.3128654960049;
-	double r5  = 0.6384441885698;
-	double r6  = 0.0486903154253;
-	double r10 = 0.2603459660790;
-	double r11 = 0.4793080678419;
-	double r13 = 0.3333333333333;
-	double w1  = 0.0533472356088;
-	double w4  = 0.0771137608903;
-	double w10 = 0.1756152574332;
-	double w13 = -0.1495700444677;
-	p->add_point(base_vector(r1, r1),   w1  * 0.5);
-	p->add_point(base_vector(r2, r1),   w1  * 0.5);
-	p->add_point(base_vector(r1, r2),   w1  * 0.5);
-	p->add_point(base_vector(r4, r6),   w4  * 0.5);
-	p->add_point(base_vector(r5, r4),   w4  * 0.5);
-	p->add_point(base_vector(r6, r5),   w4  * 0.5);
-	p->add_point(base_vector(r5, r6),   w4  * 0.5);
-	p->add_point(base_vector(r4, r5),   w4  * 0.5);
-	p->add_point(base_vector(r6, r4),   w4  * 0.5);
-	p->add_point(base_vector(r10, r10), w10 * 0.5);
-	p->add_point(base_vector(r11, r10), w10 * 0.5);
-	p->add_point(base_vector(r10, r11), w10 * 0.5);
-	p->add_point(base_vector(r13, r13), w13 * 0.5);
-      }
-      break;
-    case 13:
-      /*
-	taken from the  Encyclopaedia of Cubature Formulas
-	 http://www.cs.kuleuven.ac.be/~nines/research/ecf/ecf.html
-      */
-      {
-        triangle_add_point_full_symmetric
-	  (p, /* +3 */
-	   LONG_SCAL(0.5),
-	   LONG_SCAL(0.00267845189554543044455908674650066));
-        triangle_add_point_full_symmetric
-	  (p, /* +1 */
-	   LONG_SCAL(0.333333333333333333333333333333333),
-	   LONG_SCAL(0.0293480398063595158995969648597808));
-        triangle_add_point_full_symmetric
-	  (p, /* +3 */
-	   LONG_SCAL(0.0246071886432302181878499494124643),
-	   LONG_SCAL(0.00392538414805004016372590903990464));
-        triangle_add_point_full_symmetric
-	  (p, /* +3 */
-	   LONG_SCAL(0.420308753101194683716920537182100),
-	   LONG_SCAL(0.0253344765879434817105476355306468));
-        triangle_add_point_full_symmetric
-	  (p, /* +3 */
-	   LONG_SCAL(0.227900255506160619646298948153592),
-	   LONG_SCAL(0.0250401630452545330803738542916538));
-        triangle_add_point_full_symmetric
-	  (p, /* +3 */
-	   LONG_SCAL(0.116213058883517905247155321839271),
-	   LONG_SCAL(0.0158235572961491595176634480481793));
-        triangle_add_point_full_symmetric
-	  (p, /* +3 */
-	   LONG_SCAL(0.476602980049079152951254215211496),
-	   LONG_SCAL(0.0157462815379843978450278590138683));
-        triangle_add_point_full_symmetric
-	  (p, /* +6 */
-	   LONG_SCAL(0.851775587145410469734660003794168),
-	   LONG_SCAL(0.0227978945382486125477207592747430),
-	   LONG_SCAL(0.00790126610763037567956187298486575));
-        triangle_add_point_full_symmetric
-	  (p, /* +6 */
-	   LONG_SCAL(0.692797317566660854594116289398433),
-	   LONG_SCAL(0.0162757709910885409437036075960413),
-	   LONG_SCAL(0.00799081889046420266145965132482933));
-        triangle_add_point_full_symmetric
-	  (p, /* +6 */
-	   LONG_SCAL(0.637955883864209538412552782122039),
-	   LONG_SCAL(0.0897330604516053590796290561145196),
-	   LONG_SCAL(0.0182757511120486476280967518782978));
-        /* total : 37 points */
-        assert(p->nb_points() == 37);
-      }
-      break;
-    default : DAL_THROW(failure_error, "Method not implemented");
-    }  
+//     switch (n) {
+//     case 1: 
+//       p->add_point(base_vector(1.0/3.0, 1.0/3.0), 0.5);
+//       break;
+//     case 2: 
+//       p->add_point(base_vector(1.0/6.0, 1.0/6.0), 1.0/6.0);
+//       p->add_point(base_vector(2.0/3.0, 1.0/6.0), 1.0/6.0);
+//       p->add_point(base_vector(1.0/6.0, 2.0/3.0), 1.0/6.0);
+//       break;
+//     case 3: 
+//       p->add_point(base_vector(1.0/3.0, 1.0/3.0), -27.0/96.0);
+//       p->add_point(base_vector(1.0/5.0, 1.0/5.0), 25.0/96.0);
+//       p->add_point(base_vector(3.0/5.0, 1.0/5.0), 25.0/96.0);
+//       p->add_point(base_vector(1.0/5.0, 3.0/5.0), 25.0/96.0);
+//       break;
+//     case 4: 
+//       {  
+// 	double a = 0.445948490915965;
+// 	double b = 0.091576213509771;
+// 	double c = 0.111690794839005;
+// 	double d = 0.054975871827661;
+// 	p->add_point(base_vector(a, a),             c);
+// 	p->add_point(base_vector(1.0 - 2.0 * a, a), c);
+// 	p->add_point(base_vector(a, 1.0 - 2.0 * a), c);
+// 	p->add_point(base_vector(b, b),             d);
+// 	p->add_point(base_vector(1.0 - 2.0 * b, b), d);
+// 	p->add_point(base_vector(b, 1.0 - 2.0 * b), d);
+//       }
+//       break;
+//     case 5:  
+//       {
+// 	double a = 0.470142064105115;
+// 	double b = 0.101286507323456;
+// 	double c = 0.0661970763942530;
+// 	double d = 0.0629695902724135;
+// 	p->add_point(base_vector(a, a),             c);
+// 	p->add_point(base_vector(1.0 - 2.0 * a, a), c);
+// 	p->add_point(base_vector(a, 1.0 - 2.0 * a), c);
+// 	p->add_point(base_vector(b, b),             d);
+// 	p->add_point(base_vector(1.0 - 2.0 * b, b), d);
+// 	p->add_point(base_vector(b, 1.0 - 2.0 * b), d);
+// 	p->add_point(base_vector(1.0/3.0, 1.0/3.0), 9.0/80.0);
+//       }
+//       break;
+//     case 6: 
+//       {
+// 	double a1 = 0.063089104491502;
+// 	double a2 = 0.249286745170910;
+// 	double aa = 0.310352451033785;
+// 	double bb = 0.053145049844816;
+// 	p->add_point(base_vector(a1, a1),             0.050844906370206 * 0.5);
+// 	p->add_point(base_vector(1.0 - 2.0 * a1, a1), 0.050844906370206 * 0.5);
+// 	p->add_point(base_vector(a1, 1.0 - 2.0 * a1), 0.050844906370206 * 0.5);
+// 	p->add_point(base_vector(a2, a2),             0.116786275726378 * 0.5);
+// 	p->add_point(base_vector(1.0 - 2.0 * a2, a2), 0.116786275726378 * 0.5);
+// 	p->add_point(base_vector(a2, 1.0 - 2.0 * a2), 0.116786275726378 * 0.5);
+// 	p->add_point(base_vector(aa, bb), 0.082851075618374 * 0.5);
+// 	p->add_point(base_vector(aa, 1.0 - aa - bb), 0.082851075618374 * 0.5);
+// 	p->add_point(base_vector(bb, aa), 0.082851075618374 * 0.5);
+// 	p->add_point(base_vector(bb, 1.0 - aa - bb), 0.082851075618374 * 0.5);
+// 	p->add_point(base_vector(1.0 - aa - bb, aa), 0.082851075618374 * 0.5);
+// 	p->add_point(base_vector(1.0 - aa - bb, bb), 0.082851075618374 * 0.5);
+//       }
+//       break;
+//     case 7:
+//       {
+// 	double r1  = 0.0651301029022;
+// 	double r2  = 0.8697397941956;
+// 	double r4  = 0.3128654960049;
+// 	double r5  = 0.6384441885698;
+// 	double r6  = 0.0486903154253;
+// 	double r10 = 0.2603459660790;
+// 	double r11 = 0.4793080678419;
+// 	double r13 = 0.3333333333333;
+// 	double w1  = 0.0533472356088;
+// 	double w4  = 0.0771137608903;
+// 	double w10 = 0.1756152574332;
+// 	double w13 = -0.1495700444677;
+// 	p->add_point(base_vector(r1, r1),   w1  * 0.5);
+// 	p->add_point(base_vector(r2, r1),   w1  * 0.5);
+// 	p->add_point(base_vector(r1, r2),   w1  * 0.5);
+// 	p->add_point(base_vector(r4, r6),   w4  * 0.5);
+// 	p->add_point(base_vector(r5, r4),   w4  * 0.5);
+// 	p->add_point(base_vector(r6, r5),   w4  * 0.5);
+// 	p->add_point(base_vector(r5, r6),   w4  * 0.5);
+// 	p->add_point(base_vector(r4, r5),   w4  * 0.5);
+// 	p->add_point(base_vector(r6, r4),   w4  * 0.5);
+// 	p->add_point(base_vector(r10, r10), w10 * 0.5);
+// 	p->add_point(base_vector(r11, r10), w10 * 0.5);
+// 	p->add_point(base_vector(r10, r11), w10 * 0.5);
+// 	p->add_point(base_vector(r13, r13), w13 * 0.5);
+//       }
+//       break;
+//     case 13:
+//       /*
+// 	taken from the  Encyclopaedia of Cubature Formulas
+// 	 http://www.cs.kuleuven.ac.be/~nines/research/ecf/ecf.html
+//       */
+//       {
+//         triangle_add_point_full_symmetric
+// 	  (p, /* +3 */
+// 	   LONG_SCAL(0.5),
+// 	   LONG_SCAL(0.00267845189554543044455908674650066));
+//         triangle_add_point_full_symmetric
+// 	  (p, /* +1 */
+// 	   LONG_SCAL(0.333333333333333333333333333333333),
+// 	   LONG_SCAL(0.0293480398063595158995969648597808));
+//         triangle_add_point_full_symmetric
+// 	  (p, /* +3 */
+// 	   LONG_SCAL(0.0246071886432302181878499494124643),
+// 	   LONG_SCAL(0.00392538414805004016372590903990464));
+//         triangle_add_point_full_symmetric
+// 	  (p, /* +3 */
+// 	   LONG_SCAL(0.420308753101194683716920537182100),
+// 	   LONG_SCAL(0.0253344765879434817105476355306468));
+//         triangle_add_point_full_symmetric
+// 	  (p, /* +3 */
+// 	   LONG_SCAL(0.227900255506160619646298948153592),
+// 	   LONG_SCAL(0.0250401630452545330803738542916538));
+//         triangle_add_point_full_symmetric
+// 	  (p, /* +3 */
+// 	   LONG_SCAL(0.116213058883517905247155321839271),
+// 	   LONG_SCAL(0.0158235572961491595176634480481793));
+//         triangle_add_point_full_symmetric
+// 	  (p, /* +3 */
+// 	   LONG_SCAL(0.476602980049079152951254215211496),
+// 	   LONG_SCAL(0.0157462815379843978450278590138683));
+//         triangle_add_point_full_symmetric
+// 	  (p, /* +6 */
+// 	   LONG_SCAL(0.851775587145410469734660003794168),
+// 	   LONG_SCAL(0.0227978945382486125477207592747430),
+// 	   LONG_SCAL(0.00790126610763037567956187298486575));
+//         triangle_add_point_full_symmetric
+// 	  (p, /* +6 */
+// 	   LONG_SCAL(0.692797317566660854594116289398433),
+// 	   LONG_SCAL(0.0162757709910885409437036075960413),
+// 	   LONG_SCAL(0.00799081889046420266145965132482933));
+//         triangle_add_point_full_symmetric
+// 	  (p, /* +6 */
+// 	   LONG_SCAL(0.637955883864209538412552782122039),
+// 	   LONG_SCAL(0.0897330604516053590796290561145196),
+// 	   LONG_SCAL(0.0182757511120486476280967518782978));
+//         /* total : 37 points */
+//         assert(p->nb_points() == 37);
+//       }
+//       break;
+//     default : DAL_THROW(failure_error, "Method not implemented");
+//     }  
     
-    std::stringstream name;
-    name << "IM_GAUSS1D(" << n << ")";
-    for (short_type f = 0; f < p->structure()->nb_faces(); ++f)
-      p->add_method_on_face(int_method_descriptor(name.str()), f);
-    p->valid_method();
-    return new integration_method(p);
-  }
+//     std::stringstream name;
+//     name << "IM_GAUSS1D(" << n << ")";
+//     for (short_type f = 0; f < p->structure()->nb_faces(); ++f)
+//       p->add_method_on_face(int_method_descriptor(name.str()), f);
+//     p->valid_method();
+//     return new integration_method(p);
+//   }
 
 
   /* ********************************************************************* */
@@ -1095,11 +1143,12 @@ namespace getfem
     _im_naming_system->add_suffix("NC_PARALLELEPIPED", Newton_Cotes_para);
     _im_naming_system->add_suffix("NC_PRISM", Newton_Cotes_prism);
     _im_naming_system->add_suffix("GAUSS_PARALLELEPIPED", Gauss_paramul);
-    _im_naming_system->add_suffix("TRIANGLE", approx_triangle);
+    //    _im_naming_system->add_suffix("TRIANGLE", approx_triangle);
     _im_naming_system->add_suffix("QUAD", approx_quad);
     _im_naming_system->add_suffix("TETRAHEDRON", approx_tetra);
     _im_naming_system->add_suffix("STRUCTURED_COMPOSITE",
 				  structured_composite_int_method);
+    _im_naming_system->add_generic_function(im_list_integration);
   }
   
   pintegration_method int_method_descriptor(std::string name) {

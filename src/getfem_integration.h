@@ -140,8 +140,11 @@ namespace getfem
       scalar_type coeff_on_face(short_type f, size_type i) const
       { return int_coeffs[repartition[f] + i]; }
 
-      void add_point(base_node pt, scalar_type w, short_type f=short_type(-1));
-      void add_point_norepeat(base_node pt, scalar_type w, short_type f=short_type(-1));
+      void add_point(const base_node &pt, scalar_type w,
+		     short_type f=short_type(-1));
+      void add_point_norepeat(const base_node &pt, scalar_type w,
+			      short_type f=short_type(-1));
+      void add_point_full_symmetric(base_node pt, scalar_type w);
       void add_method_on_face(pintegration_method ppi, short_type f);
       void valid_method(void);
 

@@ -172,8 +172,11 @@ Historique :
 
 
 
-. Vers la version 1.5 : 8 x précision pour certains calcul élémentaires
-
+. Vers la version 1.5 :
+	. 8 x précision (ou 4 x) pour certains calculs
+          élémentaires
+	. methode de quadratures sur des fichiers
+	. méthodes composites et hierarchiques composites en 3D
 
 
 ------------------------------------------

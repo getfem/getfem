@@ -473,7 +473,8 @@ namespace bgeot
   {
     o << '[';
     for (typename VECT::size_type l=1; l < v.size(); l++ ) o << v[l-1] << ' ';
-    o << v[v.size()-1] << ']';
+    if (v.size()) o << v[v.size()-1]; 
+    o << ']';
   }
 
   /// Print v on the output stream o. For instance, cout $<<$ v;
