@@ -4,7 +4,7 @@
 /* File    :  gmm_precond_choleskyt.h : Incomplete Cholesky with fill-in   */
 /*                                      and threshlod.                     */
 /*     									   */
-/* Date : June 5, 2003.                                                    */
+/* Date : June 30, 2003.                                                    */
 /* Author : Yves Renard, Yves.Renard@gmm.insa-tlse.fr                      */
 /*                                                                         */
 /* *********************************************************************** */
@@ -111,7 +111,7 @@ namespace gmm {
   }
 
   template <class Matrix, class V1, class V2> inline
-  void transposed_mult(const choleskyt_precond<Matrix>& P,const V1 &v1,V2 &v2)
+  void transposed_mult(const choleskyt_precond<Matrix>& P,const V1 &v1, V2 &v2)
   { mult(P, v1, v2); }
 
   template <class Matrix, class V1, class V2> inline
