@@ -46,6 +46,7 @@ include_HEADERS =                      \
 	gmm.h                          \
 	gmm_matrix.h                   \
 	gmm_solvers.h                  \
+	gmm_iter.h                  \
 	gmm_vector.h                   \
 	gmm_transposed.h               \
 	gmm_scaled.h                   \
