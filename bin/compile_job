@@ -147,12 +147,11 @@ while($listeC)
 {
   ($fi, $listeC) = split('\s', $listeC, 2);
   $fi1 = $fi;
-  $fi1 =~ s/\.C/$extmatcom/g;
+  $fi1 =~ s/.C//g;
   $fi1 =~ s/matlabcom\//lib\//g;
   print MAKEFILE "\n", "$fi1 : $fi \$(GETFEM_LIB) .\/sources\/*.o \n";
-  print MAKEFILE "\t", 'cd ../lib; mex -O $(INCLUDES) libgetfem.so ';
-  $fi1 =~ s/lib\//\.\.\/lib\//g;
-  print MAKEFILE "..\/getfem++\/$fi -o $fi1\n";
+  $fi1 =~ s/lib\///g;
+  print MAKEFILE "\t", 'cd ../lib; $(CPLUS) $(COPT)  -c $(INCLUDES)', "..\/getfem++\/$fi -o $fi1.o", '; mex -O $(INCLUDES) libgetfem.so ', "..\/getfem++\/$fi -o $fi1\n";
 }
 
 
