@@ -8,21 +8,8 @@ check_PROGRAMS = \
 	test_mesh \
 	geo_trans \
 	test_int_set \
+	test_link_fem \
 	test_tree_sorted
-
-EXTRA_DIST = \
-	dynamic_array.pl \
-	dynamic_tas.pl \
-	laplacian.pl \
-	elasto_statique.pl  \
-	integration.pl \
-	poly.pl \
-	test_mesh.pl \
-	geo_trans.pl \
-	test_int_set.pl \
-	test_tree_sorted.pl \
-	laplacian.param \
-	elasto_statique.param
 
 dynamic_array_SOURCES = dynamic_array.C 
 dynamic_tas_SOURCES = dynamic_tas.C 
@@ -33,6 +20,7 @@ poly_SOURCES = poly.C
 test_mesh_SOURCES = test_mesh.C
 geo_trans_SOURCES = geo_trans.C
 test_int_set_SOURCES = test_int_set.C
+test_link_fem_SOURCES = test_link_fem.C
 test_tree_sorted_SOURCES = test_tree_sorted.C
 
 INCLUDES = -I$(top_srcdir)/src
@@ -49,6 +37,13 @@ TESTS = \
 	test_mesh.pl \
 	geo_trans.pl \
 	test_int_set.pl \
+	test_link_fem.pl \
 	test_tree_sorted.pl
+
+EXTRA_DIST = \
+	$(TESTS) \
+	laplacian.param \
+	elasto_statique.param \
+	test_link_fem.param
 
 TESTS_ENVIRONMENT = perl
