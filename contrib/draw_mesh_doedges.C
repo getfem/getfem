@@ -1,4 +1,3 @@
-
 #include <getfem_export.h>
 
 using bgeot::size_type;
