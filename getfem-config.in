@@ -23,7 +23,7 @@ SRC_LALDFLAGS="$builddir/src/libgetfem.la @LIBS@"
 SRC_STATICLDFLAGS="$builddir/src/.libs/libgetfem.a @LIBS@"
 
 CFLAGS="@CPPFLAGS@ -I$includedir"
-SRC_CFLAGS="@CPPFLAGS@ -I$srcdir/src -I$builddir/src"
+SRC_CFLAGS="-I$srcdir/src -I$builddir/src @CPPFLAGS@"
 
 build="@BUILDER@-@BUILDDATE@"
 configure_args="@CONFIGURE_ARGS@"
