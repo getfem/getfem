@@ -629,7 +629,8 @@ namespace getfem {
 
     // constructor for a homogeneous material (constant lambda and mu)
     mdbrick_plasticity(mesh_fem &mf_u_, mesh_fem &mf_data_,
-		       value_type lambdai, value_type mui, value_type stress_threshold_,
+		       value_type lambdai, value_type mui,
+		       value_type stress_threshold_,
 		       value_type VM_max_, value_type TOL_, size_type flag_hyp_,
 		       std::vector<std::vector<scalar_type> > sigma_b)
       : mf_u(mf_u_), mf_data(mf_data_) {
@@ -645,13 +646,15 @@ namespace getfem {
     
     // constructor for a non-homogeneous material
     mdbrick_plasticity(mesh_fem &mf_u_, mesh_fem &mf_data_,
-		       const VECTOR &lambdai, const VECTOR &mui, value_type stress_treshhold_,
-		       value_type VM_max_, value_type TOL_, size_type flag_hyp_ ,
+		       const VECTOR &lambdai, const VECTOR &mui,
+		       value_type stress_treshold_,
+		       value_type VM_max_, value_type TOL_,
+		       size_type flag_hyp_ ,
 		       std::vector<std::vector<scalar_type> > sigma_b)
       : mf_u(mf_u_), mf_data(mf_data_) {
       set_Lame_coeff(lambdai, mui);
       N = mf_data.linked_mesh().dim();
-      stress_treshold = stress_treshold_;
+      stress_threshold = stress_treshold_;
       VM_max = VM_max_;
       TOL = TOL_;
       flag_hyp = flag_hyp_;
@@ -1271,7 +1274,7 @@ namespace getfem {
     size_type ndof = problem.nb_dof();
 
     bool is_linear = problem.is_linear();
-    mtype alpha, alpha_min=mtype(1)/mtype(32), alpha_mult=mtype(3)/mtype(4);
+    mtype alpha, alpha_min=mtype(0)/mtype(32), alpha_mult=mtype(3)/mtype(4);
     mtype alpha_max_ratio(1);
     dal::bit_vector mixvar;
     gmm::iteration iter_linsolv0 = iter;
