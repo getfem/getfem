@@ -241,6 +241,7 @@ namespace getfem {
 				size_type j0 = 0) = 0;
     virtual mesh_fem &main_mesh_fem(void) = 0;
     virtual bool is_linear(void) = 0;
+    virtual bool is_symmetric(void) = 0;
     virtual bool is_coercive(void) = 0;
     virtual void mixed_variables(dal::bit_vector &, size_type = 0) = 0;
     mdbrick_abstract(void) :  to_compute(true), to_transfer(true),
@@ -271,6 +272,7 @@ namespace getfem {
 
     virtual bool is_linear(void) { return true; }
     virtual bool is_coercive(void) { return true; }
+    virtual bool is_symmetric(void) { return true; }
     virtual void mixed_variables(dal::bit_vector &, size_type = 0) {}
     virtual size_type nb_dof(void) { return mf_u.nb_dof(); }
     virtual size_type nb_constraints(void) { return 0; }
@@ -414,6 +416,7 @@ namespace getfem {
 
     virtual bool is_linear(void) { return true; }
     virtual bool is_coercive(void) { return true; }
+    virtual bool is_symmetric(void) { return true; }
     virtual void mixed_variables(dal::bit_vector &, size_type = 0) {}
     virtual size_type nb_dof(void) { return mf_u.nb_dof(); }
     virtual size_type nb_constraints(void) { return 0; }
@@ -556,6 +559,7 @@ namespace getfem {
 
     virtual bool is_linear(void) { return true; }
     virtual bool is_coercive(void) { return false; }
+    virtual bool is_symmetric(void) { return true; }
     virtual void mixed_variables(dal::bit_vector &, size_type = 0) {}
     virtual size_type nb_dof(void) { return mf_u.nb_dof(); }
     virtual size_type nb_constraints(void) { return 0; }
@@ -674,6 +678,7 @@ namespace getfem {
 
     virtual bool is_linear(void) { return sub_problem.is_linear(); }
     virtual bool is_coercive(void) { return sub_problem.is_coercive(); }
+    virtual bool is_symmetric(void) { return sub_problem.is_symmetric(); }
     virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0)
     { sub_problem.mixed_variables(b, i0); }
     virtual size_type nb_dof(void) { return sub_problem.nb_dof(); }
@@ -748,6 +753,7 @@ namespace getfem {
 
     virtual bool is_linear(void) { return sub_problem.is_linear(); }
     virtual bool is_coercive(void) { return false; }
+    virtual bool is_symmetric(void) { return sub_problem.is_symmetric(); }
     virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0)
     { sub_problem.mixed_variables(b, i0); }
     virtual size_type nb_dof(void) { return sub_problem.nb_dof(); }    
@@ -840,6 +846,7 @@ namespace getfem {
     
     virtual bool is_linear(void)   { return sub_problem.is_linear(); }
     virtual bool is_coercive(void) { return false; }
+    virtual bool is_symmetric(void) { return sub_problem.is_symmetric(); }
     virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0) {
       sub_problem.mixed_variables(b, i0);
       if (this->context_changed()) {
@@ -977,6 +984,7 @@ namespace getfem {
     virtual bool is_linear(void)   { return sub_problem.is_linear(); }
     virtual bool is_coercive(void) 
     { return (!with_multipliers && sub_problem.is_coercive()); }
+    virtual bool is_symmetric(void) { return sub_problem.is_symmetric(); }
     virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0) {
       sub_problem.mixed_variables(b, i0);
       if (with_multipliers) {
@@ -1133,7 +1141,10 @@ namespace getfem {
     dal::bit_vector mixvar;
     gmm::iteration iter_linsolv0 = iter;
     iter_linsolv0.set_maxiter(10000);
-    if (!is_linear) { iter_linsolv0.reduce_noisy(); iter_linsolv0.set_resmax(iter.get_resmax()/100000.0); }
+    if (!is_linear) { 
+      iter_linsolv0.reduce_noisy();
+      iter_linsolv0.set_resmax(iter.get_resmax()/100.0);
+    }
 
 
     MS.adapt_sizes(problem); // to be sure it is ok, but should be done before
@@ -1183,7 +1194,8 @@ namespace getfem {
 	else {
 	  if (iter.get_noisy())
 	    cout << "there is " << mixvar.card() << " mixed variables\n";
-	  gmm::ilut_precond<T_MATRIX> P(MS.reduced_tangent_matrix(),100,1E-10);
+	  // gmm::ilut_precond<T_MATRIX> P(MS.reduced_tangent_matrix(),100,1E-10);
+	  gmm::ilu_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
 	  // gmm::identity_matrix P;
 	  gmm::gmres(MS.reduced_tangent_matrix(), dr, 
 		     gmm::scaled(MS.reduced_residu(),  value_type(-1)),

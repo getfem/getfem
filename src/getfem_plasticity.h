@@ -421,7 +421,8 @@ namespace getfem {
       
       virtual void mixed_variables(dal::bit_vector &, size_type = 0) {}
       virtual bool is_linear(void) { return false; }
-      virtual bool is_coercive(void) { return false; } // means we use LU factorisation instead of conjugate gradient
+      virtual bool is_coercive(void) { return false; }
+      virtual bool is_symmetric(void) { return true; }
       virtual size_type nb_dof(void) { return mf_u.nb_dof(); }
       virtual size_type nb_constraints(void) { return 0; }
       

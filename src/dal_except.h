@@ -197,7 +197,7 @@ namespace dal {
 #define DAL_WARNING(level_, thestr) {                                 \
     std::stringstream msg;                                            \
     msg << "Level " << level_ << " Warning in "__FILE__ << ", line "  \
-        << __LINE__ << " " << DAL_PRETTY_FUNCTION << ": \n" << thestr << ends; \
+        << __LINE__ << " " << DAL_PRETTY_FUNCTION << ": " << thestr << ends; \
     if ((level_) <= dal::warning_level::level())                      \
        std::cerr << msg.str() << std::endl;                           \
   } 

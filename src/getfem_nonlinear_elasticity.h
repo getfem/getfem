@@ -428,6 +428,7 @@ namespace getfem {
 
     virtual bool is_linear(void) { return false; }
     virtual bool is_coercive(void) { return true; }
+    virtual bool is_symmetric(void) { return true; }
     virtual void mixed_variables(dal::bit_vector &, size_type = 0) {}
     virtual size_type nb_dof(void) { return mf_u.nb_dof(); }
     virtual size_type nb_constraints(void) { return 0; }
@@ -641,6 +642,7 @@ namespace getfem {
     
     virtual bool is_linear(void)   { return false; }
     virtual bool is_coercive(void) { return false; }
+    virtual bool is_symmetric(void) { return sub_problem.is_symmetric(); }
     virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0) {
       sub_problem.mixed_variables(b, i0);
       b.add(i0 + sub_problem.nb_dof(), mf_p.nb_dof());

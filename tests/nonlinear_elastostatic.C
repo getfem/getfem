@@ -96,7 +96,7 @@ template <typename MODEL_STATE> void
     size_type ndof = problem.nb_dof();
     bool is_linear = problem.is_linear();
     //mtype alpha, alpha_min=mtype(1)/mtype(32), alpha_mult=mtype(3)/mtype(4);
-    mtype alpha, alpha_min=mtype(1)/mtype(8), alpha_mult=mtype(2)/mtype(3);
+    mtype alpha, alpha_min=mtype(1)/mtype(1024), alpha_mult=mtype(2)/mtype(3);
     mtype alpha_max_ratio(1);
     dal::bit_vector mixvar;
     gmm::iteration iter_linsolv0 = iter;
@@ -129,9 +129,10 @@ template <typename MODEL_STATE> void
 	     << (gmm::is_symmetric(MS.tangent_matrix()) ? "" : "not ")
 	     <<  "symmetric. ";
 
-      if (0)
+      if (1)
       {
-	gmm::dense_matrix<double> MM(ndof, ndof);
+	size_type srtm = gmm::mat_nrows(MS.reduced_tangent_matrix());
+	gmm::dense_matrix<double> MM(srtm, srtm);
 	gmm::copy(MS.reduced_tangent_matrix(), MM);
 	gmm::lu_solve(MM, dr, gmm::scaled(MS.reduced_residu(), value_type(-1)));
       }
@@ -148,7 +149,7 @@ template <typename MODEL_STATE> void
       VECTOR stateinit(ndof);
       gmm::copy(MS.state(), stateinit);
       
-      {
+      if (0) {
 	problem.compute_residu(MS);
 	MS.compute_reduced_system();
 	scalar_type r0 = MS.reduced_residu_norm();
@@ -438,8 +439,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
     iter = gmm::iteration(residu, PARAM.int_value("NOISY"), maxit ? maxit : 40000);
     cout << "|U0| = " << gmm::vect_norm2(MS.state()) << "\n";
 
-    getfem::standard_solve(MS, final_model, iter);
-    // getfem::nl_solve(MS, final_model, iter);
+    // getfem::standard_solve(MS, final_model, iter);
+    getfem::nl_solve(MS, final_model, iter);
 
     ELAS.get_solution(MS, U);
     char s[100]; sprintf(s, "step%d", step+1);
