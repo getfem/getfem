@@ -26,7 +26,7 @@ void test_procedure(const MAT1 &_m1, const MAT2 &_m2, const MAT3 &_m3) {
 
   R error = mat_euclidean_norm(m4)
     - mat_euclidean_norm(m1) * mat_euclidean_norm(m2);
-  if (error > prec * R(10O))
+  if (error > prec * R(100))
     DAL_THROW(gmm::failure_error, "Inconsistence of fröbenius norm" << error);
 
   error = mat_norm1(m4) - mat_norm1(m1) * mat_norm1(m2);
