@@ -1,0 +1,32 @@
+#!/usr/bin/perl
+
+$nb_file = 0;
+$nb_scaned = 0;
+$tabdep[0] = "null";
+
+sub add_fname
+{
+  my $fname   = $_[0];
+  for ($i = 0; $i < $nb_file; $i++)
+  {
+    if ($tabdep[$i] eq $fname) { return; }
+  }
+  $tabdep[$nb_file++] = $_;
+}
+
+
+open F, "file_dependencies $ARGV[0] |" or die;
+while (<F>) { chomp $_; add_fname($_); } close F;
+
+while ($nb_scaned < $nb_file)
+{
+  # print "scanning $tabdep[$nb_scaned]\n";
+  open F, "file_dependencies  include\/$tabdep[$nb_scaned++] |" or die;
+  while (<F>) { chomp $_; add_fname($_); }
+  close F;
+}
+
+for ($i = 0; $i < $nb_file; $i++)
+{
+  print $tabdep[$i], "\n";
+}
