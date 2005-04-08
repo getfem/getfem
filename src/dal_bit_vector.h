@@ -349,7 +349,7 @@ namespace dal
   public:
     bv_visitor(const dal::bit_vector& b) : 
       it(((const bit_container&)b).begin()+b.first()/WD_BIT),
-      ilast(b.last()+1), ind(b.first()) {
+      ilast(b.last()+1), ind(b.first()), v(0) {
       if (ind < ilast) {
 	v = *it; v >>= (ind&WD_MASK);
       }

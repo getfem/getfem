@@ -41,7 +41,11 @@ SIMPLEX_INTEGRATION = 'IM_TRIANGLE(6)';
 
 CUTOFF=0.3;
 
-ADDITIONAL_CRACK = 1;
+ADDITIONAL_CRACK = 0;
+ENRICHMENT_OPTION = 2 % 1 = global functions with cutoff
+	              % 2 = standard XFEM on a fixed zone 
+RADIUS_ENR_AREA = 0.1;
+
 
 RESIDUE = 1E-9;     	% residue for conjugate gradient.
 

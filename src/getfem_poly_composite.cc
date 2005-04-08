@@ -217,6 +217,7 @@ namespace getfem
 	      t[1] = pm->add_point(B);
 	      t[2] = pm->add_point(C);
 	      t[4] = pm->add_point(E);
+	      t[3] = t[5] = t[6] = t[7] = size_type(-1);
 	      if (k > 1 && ci+cj+ck < k-1) {
 		t[3] = pm->add_point(D);
 		t[5] = pm->add_point(F);

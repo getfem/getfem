@@ -33,6 +33,7 @@
 #include <getfem_modeling.h>
 #include <getfem_mesh_im_level_set.h>
 #include <getfem_mesh_fem_level_set.h>
+#include <getfem_mesh_fem_product.h>
 #include <getfem_mesh_fem_global_function.h>
 #include <getfem_mesh_fem_sum.h>
 #include <gmm.h>
@@ -238,23 +239,6 @@ base_small_vector sol_f(const base_node &x) {
   return res;
 }
 
-struct toto_function : public getfem::global_function {
-  virtual scalar_type val(const getfem::fem_interpolation_context&c) const
-  { base_node P=c.xreal();
-    return 3*gmm::sgn(P[1])*(1-P[0]); }
-};
-
-struct toto_solution {
-  getfem::mesh_fem_global_function mf;
-  getfem::base_vector U;
-
-  toto_solution(getfem::getfem_mesh &me) : mf(me) {}
-  void init() {
-    U.resize(2); U[0] = 0; U[1] = .1;
-    mf.set_functions(new toto_function());
-  }
-}; 
-
 struct exact_solution {
   getfem::mesh_fem_global_function mf;
   getfem::base_vector U;
@@ -312,6 +296,8 @@ struct crack_problem {
   getfem::mesh_fem mf_pre_u; 
   getfem::mesh_fem_level_set mfls_u; 
   getfem::mesh_fem_global_function mf_sing_u;
+  getfem::mesh_fem mf_partition_of_unity;
+  getfem::mesh_fem_product mf_product;
   getfem::mesh_fem_sum mf_u_sum;
 
   getfem::mesh_fem& mf_u() { return mf_u_sum; }
@@ -330,17 +316,22 @@ struct crack_problem {
   
   scalar_type residue;       /* max residue for the iterative solvers        */
   bool mixed_pressure, add_crack;
-  scalar_type cutoff_radius;
-
+  scalar_type cutoff_radius, enr_area_radius;
+  int enrichment_option;
+  
   std::string datafilename;
   ftool::md_param PARAM;
 
   bool solve(plain_vector &U);
   void init(void);
   crack_problem(void) : mls(mesh), mim(mls), mf_pre_u(mesh),
-			mfls_u(mls, mf_pre_u), mf_sing_u(mesh), mf_u_sum(mesh),
+			mfls_u(mls, mf_pre_u), mf_sing_u(mesh),
+			mf_partition_of_unity(mesh),
+			mf_product(mf_partition_of_unity, mf_sing_u),
+			mf_u_sum(mesh),
 			mf_rhs(mesh), mf_p(mesh), mf_coef(mesh),
-			exact_sol(mesh),  ls(mesh, 1, true),  ls2(mesh, 2, true), ls3(mesh, 1, true) {}
+			exact_sol(mesh),  ls(mesh, 1, true),
+			ls2(mesh, 2, true), ls3(mesh, 1, true) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
@@ -355,6 +346,8 @@ void crack_problem::init(void) {
 					 "Name of simplex integration method");
 
   add_crack = (PARAM.int_value("ADDITIONAL_CRACK", "An additional crack ?") != 0);
+  enrichment_option = PARAM.int_value("ENRICHMENT_OPTION",
+				      "Enrichment option");
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
@@ -373,6 +366,8 @@ void crack_problem::init(void) {
   
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residue = PARAM.real_value("RESIDUE"); if (residue == 0.) residue = 1e-10;
+  enr_area_radius = PARAM.real_value("RADIUS_ENR_AREA",
+				     "radius of the enrichment area");
 
   mu = PARAM.real_value("MU", "Lamé coefficient mu");
   lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
@@ -392,6 +387,7 @@ void crack_problem::init(void) {
   if (add_crack) { mls.add_level_set(ls2); mls.add_level_set(ls3); }
   mim.set_simplex_im(sppi);
   mf_pre_u.set_finite_element(mesh.convex_index(), pf_u);
+  mf_partition_of_unity.set_classical_finite_element(1);
   
   mixed_pressure =
     (PARAM.int_value("MIXED_PRESSURE","Mixed version or not.") != 0);
@@ -477,10 +473,30 @@ bool crack_problem::solve(plain_vector &U) {
   mfls_u.adapt();
   std::vector<getfem::pglobal_function> vfunc(4);
   for (size_type i = 0; i < 4; ++i)
-    vfunc[i] = isotropic_crack_singular_2D(i, ls, cutoff_radius);
+    vfunc[i] = isotropic_crack_singular_2D(i, ls,
+			 (enrichment_option == 2) ? 0.0 : cutoff_radius);
   
   mf_sing_u.set_functions(vfunc);
-  mf_u_sum.set_mesh_fems(mf_sing_u, mfls_u);
+
+  if (enrichment_option == 2) {
+    dal::bit_vector enriched_dofs;
+    plain_vector X(mf_partition_of_unity.nb_dof());
+    plain_vector Y(mf_partition_of_unity.nb_dof());
+    getfem::interpolation(ls.get_mesh_fem(), mf_partition_of_unity,
+			  ls.values(1), X);
+    getfem::interpolation(ls.get_mesh_fem(), mf_partition_of_unity,
+			  ls.values(0), Y);
+    for (size_type j = 0; j < mf_partition_of_unity.nb_dof(); ++j) {
+      if (gmm::sqr(X[j]) + gmm::sqr(Y[j]) <= gmm::sqr(enr_area_radius))
+	enriched_dofs.add(j);
+    }
+    if (enriched_dofs.card() < 3)
+      DAL_WARNING(0, "There is " << enriched_dofs.card() <<
+		  " enriched dofs for the crack tip");
+    mf_product.set_enrichment(enriched_dofs);
+    mf_u_sum.set_mesh_fems(mf_product, mfls_u);
+  }
+  else mf_u_sum.set_mesh_fems(mf_sing_u, mfls_u);
 
 
   U.resize(mf_u().nb_dof());

@@ -2,9 +2,9 @@
 //========================================================================
 //
 // Library : GEneric Tool for Finite Element Methods (getfem)
-// File    : getfem_mesh_fem_level_set.h : definition of a finite element
-//           method reprensenting a discontinous field across some level sets.
-// Date    : March 09, 2005.
+// File    : getfem_mesh_fem_product.h : definition of a finite element
+//           method reprensenting a "product" of two mesh_fem.
+// Date    : April 8, 2005.
 // Author  : Yves Renard <Yves.Renard@insa-toulouse.fr>
 //           Julien Pommier <Julien.Pommier@insa-toulouse.fr>           
 //
@@ -27,36 +27,58 @@
 // Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //========================================================================
+// To be corrected : dependencies. The mesh fem using this fem will not
+//                   depend on the mesh fem arguments.
 
 
 
-#ifndef GETFEM_MESH_FEM_LEVEL_SET_H__
-#define GETFEM_MESH_FEM_LEVEL_SET_H__
+#ifndef GETFEM_MESH_PRODUCT_H__
+#define GETFEM_MESH_PRODUCT_H__
 
-#include <getfem_mesh_level_set.h>
 #include <getfem_mesh_fem.h>
-#include <getfem_fem_level_set.h>
 
 namespace getfem {
+  
+  class fem_product : public virtual_fem {
+    pfem pfems[2];
+    size_type cv, xfem_index;
+    dal::bit_vector enriched_dof1;
+    
+  public:
 
-  /// Describe an adaptable integration method linked to a mesh.
-  class mesh_fem_level_set : public mesh_fem {
+    fem_product(pfem pf1_, pfem pf2_, size_type i, size_type xfi, const dal::bit_vector &nn)
+      : cv(i), xfem_index(xfi),  enriched_dof1(nn)
+    { pfems[0] = pf1_; pfems[1] = pf2_; init(); }
+    void init();
+    void valid();
+    void base_value(const base_node &x, base_tensor &t) const;
+    void grad_base_value(const base_node &x, base_tensor &t) const;
+    void hess_base_value(const base_node &x, base_tensor &t) const;
+
+    void real_base_value(const fem_interpolation_context& c, 
+			 base_tensor &t) const;    
+    void real_grad_base_value(const fem_interpolation_context& c, 
+			      base_tensor &t) const;
+    void real_hess_base_value(const fem_interpolation_context& c, 
+			      base_tensor &t) const;
+    
+  };
+
+
+  class mesh_fem_product : public mesh_fem {
   protected :
-    const mesh_level_set &mls;
-    const mesh_fem &mf;
+    const mesh_fem &mf1, &mf2;
+
     mutable std::vector<pfem> build_methods;
     mutable bool is_adapted;
-    mutable dal::bit_vector enriched_dofs, enriched_elements;
-    mutable std::set< dof_ls_enrichment > enrichments;
-    mutable std::vector<const dof_ls_enrichment *> dof_enrichments;
     size_type xfem_index;
+    dal::bit_vector enriched_dof;
     void clear_build_methods();
-    void build_method_of_convex(size_type cv);
 
   public :
-    void update_from_context(void) const { is_adapted = false; }
     void adapt(void);
-    void clear(void); // to be modified
+    void update_from_context(void) const { is_adapted = false; }
+    void clear(void);
     
     void receipt(const MESH_CLEAR &);
     void receipt(const MESH_DELETE &);
@@ -68,17 +90,16 @@ namespace getfem {
       return mesh_fem::memsize(); // + ... ;
     }
     
-    mesh_fem_level_set(const mesh_level_set &me, const mesh_fem &mef);
-
-    ~mesh_fem_level_set() { clear_build_methods(); }
-  private:
-    mesh_fem_level_set(const mesh_fem_level_set &);
-    mesh_fem_level_set & operator=(const mesh_fem_level_set &);
+    mesh_fem_product(const mesh_fem &me1, const mesh_fem &me2)
+      : mesh_fem(me1.linked_mesh()), mf1(me1), mf2(me2)
+    { is_adapted = false; xfem_index = reserve_xfem_index(); }
+    void set_enrichment(const dal::bit_vector &nn)
+    { enriched_dof = nn; adapt(); }
+    
+    ~mesh_fem_product() { clear_build_methods(); }
   };
 
 
-
-  
 }  /* end of namespace getfem.                                            */
 
 #endif

@@ -105,7 +105,7 @@ namespace getfem {
       max_dof = std::max(max_dof, dofs.card());
       elements[cv].inddof.resize(dofs.card());
       i = 0;
-      for (dal::bv_visitor idof(dofs); !idof.finished(); ++idof, i)
+      for (dal::bv_visitor idof(dofs); !idof.finished(); ++idof)
 	{ elements[cv].inddof[i] = idof; ind_dof[idof] = i++; }
       for (size_type k = 0; k < pai->nb_points(); ++k) {
 	gausspt_interpolation_data &gpid = elements[cv].gausspt[k];

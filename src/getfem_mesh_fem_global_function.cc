@@ -84,7 +84,7 @@ namespace getfem {
   }
   
   void global_function_fem::real_hess_base_value
-  (const fem_interpolation_context& c, base_tensor &t) const { 
+  (const fem_interpolation_context&, base_tensor & ) const { 
     DAL_THROW(dal::to_be_done_error, "");
     /*
     mih.resize(4); 

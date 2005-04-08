@@ -1333,7 +1333,7 @@ run_tests(getfem::mesh_im &mim,
       c.init();
       for (size_type cnt = 0; cnt < nloop; ++cnt) {
 	c.tic();
-	s2 = getfem::asm_L2_norm(mim, mf, V2, mf.convex_index());
+	s2 = getfem::asm_L2_norm(mim, mf, V2);
 	c.toc(); cout << "#" << flushy;
       }
       cout << "done " << c << endl;
@@ -1370,7 +1370,7 @@ run_tests(getfem::mesh_im &mim,
       c.init();
       for (size_type cnt = 0; cnt < nloop; ++cnt) {
 	c.tic();
-	s2 = getfem::asm_H1_norm(mim, mfq, V2q, mfq.convex_index());
+	s2 = getfem::asm_H1_norm(mim, mfq, V2q);
 	c.toc(); cout << "#" << flushy;
       }
       cout << "done " << c << endl;

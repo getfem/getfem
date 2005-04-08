@@ -43,6 +43,7 @@ namespace getfem {
   class fem_level_set : public virtual_fem {
     pfem bfem; /* the base FEM which is to be enriched */
     const mesh_level_set &mls;
+    size_type xfem_index;
     /* dof_ls_enrichment are stored in the parent mesh_fem 
        the pointer is NULL for non enriched dofs
      */
@@ -50,8 +51,9 @@ namespace getfem {
     dal::bit_vector ls_index; /* lists only the significant level sets */
   public:
     template <typename IT_LS_ENRICH>
-    fem_level_set(IT_LS_ENRICH it,pfem pf, const mesh_level_set &mls_) : 
-      bfem(pf), mls(mls_) {
+    fem_level_set(IT_LS_ENRICH it,pfem pf, const mesh_level_set &mls_,
+		  size_type xfi) : 
+      bfem(pf), mls(mls_), xfem_index(xfi) {
       if (!(bfem->is_equivalent()))
 	DAL_THROW(to_be_done_error,
 		  "Sorry, fem_level_set for non tau-equivalent "

@@ -67,6 +67,7 @@ namespace getfem {
   pdof_description to_coord_dof(pdof_description p, dim_type ct);
 
   pdof_description xfem_dof(pdof_description p, size_type ind);
+  size_type reserve_xfem_index(void);
 
   /** Gives a total order on the dof description compatible with the
    *   identification.
@@ -78,8 +79,6 @@ namespace getfem {
   bool dof_compatibility(pdof_description, pdof_description);
   /// Returns the xfem_index of dof (0 for normal dof)
   size_type dof_xfem_index(pdof_description);
-
-  enum { XFEM_INDEX_START = 1000 };
   
   /* ******************************************************************** */
   /*	Classes for description of a finite element.                      */
@@ -254,18 +253,23 @@ namespace getfem {
     virtual size_type index_of_global_dof(size_type, size_type) const
       { DAL_THROW(internal_error, "internal error."); }
 
+    void add_node(const pdof_description &d, const base_node &pt) ;
+    void init_cvs_node(void);
+    void unfreeze_cvs_node(void);
+
+    virtual_fem &operator =(const virtual_fem &f) { 
+      copy(f); return *this;
+    }
     virtual_fem(void) { 
       ntarget_dim = 1; dim_ = 1; 
       is_equiv = is_pol = is_polycomp = is_lag = false;
       pspt_valid = false; hier_raff = 0; real_element_defined = false;
       es_degree = 5;
     }
-
-    void add_node(const pdof_description &d, const base_node &pt) ;
-    void init_cvs_node(void);
-    void unfreeze_cvs_node(void);
-
-    virtual_fem &operator =(const virtual_fem &f) {
+    virtual_fem(const virtual_fem& f) : dal::static_stored_object() { copy(f); }
+    virtual ~virtual_fem() {}
+  private:
+    void copy(const virtual_fem &f) {
       dof_types_ = f.dof_types_;
       cvs_node = f.cvs_node;
       cv_node = f.cv_node;
@@ -282,10 +286,7 @@ namespace getfem {
       real_element_defined = f.real_element_defined;
       es_degree = f.es_degree;
       hier_raff = f.hier_raff;
-      return *this;
     }
-
-    virtual ~virtual_fem() {}
   };
 
   

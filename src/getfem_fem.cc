@@ -249,6 +249,11 @@ namespace getfem
     return &(tab[tab.add_norepeat(l)]);
   }
 
+  size_type reserve_xfem_index(void) {
+    static size_type ind = 100;
+    return ind += 1000;
+  }
+
   pdof_description xfem_dof(pdof_description p, size_type ind) {
     dof_d_tab& tab = dal::singleton<dof_d_tab>::instance();
     dof_description l = *p; l.xfem_index = ind;

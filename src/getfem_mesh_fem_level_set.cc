@@ -50,6 +50,7 @@ namespace getfem {
   mesh_fem_level_set::mesh_fem_level_set(const mesh_level_set &me,
 					 const mesh_fem &mef)
     : mesh_fem(mef.linked_mesh()), mls(me), mf(mef) {
+    xfem_index = reserve_xfem_index();
     if (mf.get_qdim() != 1)
       DAL_THROW(to_be_done_error, "base mesh_fem for mesh_fem_level_set has "
 		"to be of qdim one for the moment ...");
@@ -64,7 +65,7 @@ namespace getfem {
       pfem pf = new fem_level_set(index_ref_iterator
 				  (dof_enrichments.begin(),
 				   mf.ind_dof_of_element(cv).begin()) ,
-				  mf.fem_of_element(cv), mls);
+				  mf.fem_of_element(cv), mls, xfem_index);
       dal::add_stored_object(new special_mfls_key(pf), pf,
 			     pf->ref_convex(0),
 			     pf->node_tab(0));

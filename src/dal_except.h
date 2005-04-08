@@ -147,13 +147,14 @@ namespace dal {
   
     static void set_exception_callback(exception_callback *e)
       { which_except(e); }
-
+    virtual ~exception_callback() {}
   };
 
   /* crashing callback for debug mode */
   struct exception_callback_debug : public dal::exception_callback  {
     virtual void callback(const std::string& msg)
     { cerr << msg << endl; *(int *)(0) = 0; }
+    virtual ~exception_callback_debug() {}
   };
 
   /** user function for changing the default exception callback */ 

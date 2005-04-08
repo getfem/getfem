@@ -63,8 +63,8 @@ namespace getfem {
 	add_node(bfem->dof_types()[k], bfem->node_of_dof(0,k));
       } else {
 	for (size_type j = 0; j < dofzones[k]->size(); ++j) {
-	  cout << " -> +dof: '" << *(*dofzones[k])[j] << "'\n";
-	  add_node(xfem_dof(bfem->dof_types()[k], j+XFEM_INDEX_START), /* +1000 to avoid messing with the real xfem */
+	  // cout << " -> +dof: '" << *(*dofzones[k])[j] << "'\n";
+	  add_node(xfem_dof(bfem->dof_types()[k], j+xfem_index),
 		   bfem->node_of_dof(0,k));
 	}
       }
