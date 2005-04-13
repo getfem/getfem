@@ -575,7 +575,8 @@ int main(int argc, char *argv[]) {
     p.mesh.write_to_file(p.datafilename + ".mesh");
     plain_vector U(p.mf_u().nb_dof());
     if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
-    if (p.PARAM.int_value("VTK_EXPORT")) {
+    
+    {
       getfem::getfem_mesh mcut;
       p.mls.global_cut_mesh(mcut);
       getfem::mesh_fem mf(mcut, p.mf_u().get_qdim());
@@ -605,7 +606,7 @@ int main(int argc, char *argv[]) {
       getfem::interpolation(p.exact_sol.mf, mf_refined, 
 			    p.exact_sol.U, EXACT);
 
-
+      if (p.PARAM.int_value("VTK_EXPORT"))
       {
 	cout << "export to " << p.datafilename + ".vtk" << "..\n";
 	getfem::vtk_export exp(p.datafilename + ".vtk",
@@ -615,16 +616,14 @@ int main(int argc, char *argv[]) {
 	cout << "export done, you can view the data file with (for example)\n"
 	  "mayavi -d " << p.datafilename << ".vtk -f ExtractVectorNorm -f "
 	  "WarpVector -m BandedSurfaceMap -m Outline\n";
-      }
-      {
-	getfem::vtk_export exp("crack_exact.vtk");
-	exp.exporting(mf_refined);
-	exp.write_point_data(mf_refined, EXACT, 
-			     "reference solution");
+      
+	getfem::vtk_export exp2("crack_exact.vtk");
+	exp2.exporting(mf_refined);
+	exp2.write_point_data(mf_refined, EXACT, "reference solution");
       }
 
-      cout << "ERROR L2:" << getfem::asm_L2_dist(p.mim, p.mf_u(), U, p.exact_sol.mf, p.exact_sol.U)
-	   << " H1:" << getfem::asm_H1_dist(p.mim, p.mf_u(), U, p.exact_sol.mf, p.exact_sol.U)
+      cout << "L2 ERROR:" << getfem::asm_L2_dist(p.mim, p.mf_u(), U, p.exact_sol.mf, p.exact_sol.U) << endl
+	   << "H1 ERROR:" << getfem::asm_H1_dist(p.mim, p.mf_u(), U, p.exact_sol.mf, p.exact_sol.U)
 	   << "\n";
       
       plain_vector DIFF(EXACT); gmm::add(gmm::scaled(W,-1),DIFF);

@@ -5,20 +5,27 @@ sub catch { `rm -f $tmp`; exit(1); }
 $SIG{INT} = 'catch';
 
 open(TMPF, ">$tmp") or die "Open file impossible : $!\n";
-print TMPF "MU = 1.0;\n";
-print TMPF "LAMBDA = 1.0;\n";
-print TMPF "MESH_NOISE = 0.0;\n";
-print TMPF "MESH_TYPE = 'GT_PK(2,1)';\n";
-print TMPF "MIXED_PRESSURE=0;\n";
-print TMPF "INTEGRATION = 'IM_TRIANGLE(4)';\n";
-print TMPF "SIMPLEX_INTEGRATION = 'IM_TRIANGLE(4)';\n";
-print TMPF "NX = 5;\n";
-print TMPF "RESIDU = 1E-9;\n";
-print TMPF "CUTOFF=0.3;\n";
-print TMPF "ADDITIONAL_CRACK = 1;\nENRICHMENT_OPTION = 1\n";
-print TMPF "FEM_TYPE = 'FEM_PK(2,1)';\nRADIUS_ENR_AREA = 0.2;\n";
-print TMPF "ROOTFILENAME = 'crack';\n";
-print TMPF "\n\n";
+print TMPF <<
+MU = 1.0;
+LAMBDA = 1.0;
+MESH_NOISE = 0;
+MESH_TYPE = 'GT_PK(2,1)';
+MIXED_PRESSURE=0;
+INTEGRATION = 'IM_TRIANGLE(6)';
+SIMPLEX_INTEGRATION = 'IM_TRIANGLE(6)';
+NX = 16;
+RESIDU = 1E-9;
+CUTOFF=0.3;
+ADDITIONAL_CRACK = 0;
+ENRICHMENT_OPTION = 2;
+FEM_TYPE = 'FEM_PK(2,1)';
+FEM_TYPE_P = 'FEM_PK_DISCONTINUOUS(2,0)';
+DATA_FEM_TYPE = 'FEM_PK(2,1)';
+RADIUS_ENR_AREA = 0.2;
+ROOTFILENAME = 'crack';
+VTK_EXPORT = 0;
+
+;
 close(TMPF);
 
 
@@ -27,6 +34,14 @@ $er = 0;
 open F, "./crack $tmp 2>&1 |" or die;
 while (<F>) {
   # print $_;
+  if ($_ =~ /H1 ERROR/) {
+    ($a, $b) = split(':', $_);
+    if ($b > 0.12) { print "\nError too large\n"; $er = 1; }
+  }
+  if ($_ =~ /L2 ERROR/) {
+    ($a, $b) = split(':', $_);
+    if ($b > 0.0025) { print "\nError too large\n"; $er = 1; }
+  }
   if ($_ =~ /error has been detected/)
   {
     $er = 1;

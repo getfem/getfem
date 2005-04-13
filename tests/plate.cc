@@ -223,8 +223,8 @@ void plate_problem::compute_error(plain_vector &U) {
   scalar_type h1 = gmm::sqr(getfem::asm_H1_norm(mim, mf_rhs, V));
   scalar_type linf = gmm::vect_norminf(V);
   mf_rhs.set_qdim(1);
-  cout << "L2 error on membrane displacement = " << sqrt(l2) << endl
-       << "H1 error on membrane displacement = " << sqrt(h1) << endl
+  cout << "L2 error on membrane displacement     = " << sqrt(l2) << endl
+       << "H1 error on membrane displacement     = " << sqrt(h1) << endl
        << "Linfty error on membrane displacement = " << linf << endl;
 
   getfem::interpolation(mf_theta, mf_rhs,
@@ -238,8 +238,8 @@ void plate_problem::compute_error(plain_vector &U) {
   h1 = gmm::sqr(getfem::asm_H1_norm(mim, mf_rhs, V));
   linf = gmm::vect_norminf(V);
   mf_rhs.set_qdim(1);
-  cout << "L2 error on rotation = " << sqrt(l2) << endl
-       << "H1 error on rotation = " << sqrt(h1) << endl
+  cout << "L2 error on rotation     = " << sqrt(l2) << endl
+       << "H1 error on rotation     = " << sqrt(h1) << endl
        << "Linfty error on rotation = " << linf << endl;
 
   gmm::resize(V, mf_rhs.nb_dof());
@@ -254,8 +254,8 @@ void plate_problem::compute_error(plain_vector &U) {
   linf = gmm::vect_norminf(V);
 
   cout.precision(16);
-  cout << "L2 error on normal displacement = " << sqrt(l2) << endl
-       << "H1 error on normal displacement = " << sqrt(h1) << endl
+  cout << "L2 error on normal displacement     = " << sqrt(l2) << endl
+       << "H1 error on normal displacement     = " << sqrt(h1) << endl
        << "Linfty error on normal displacement = " << linf << endl;
 }
 
