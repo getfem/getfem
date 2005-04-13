@@ -194,7 +194,7 @@ void plate_problem::init(void) {
 base_small_vector plate_problem::theta_exact(base_node P) {
   base_small_vector theta(2);
   theta[0] = (-pressure / (32. * mu * epsilon * epsilon * epsilon))
-    * (4. * pow(P[0] - LX * .5, 3) - 3 * LX * LX * (P[0] - LX * .5));
+    * (4. * pow(P[0] - LX*.5, 3) - 3*LX*LX*(P[0] - LX * .5));
   theta[1] = 0;
   return theta;
 }
@@ -202,7 +202,7 @@ base_small_vector plate_problem::theta_exact(base_node P) {
 scalar_type plate_problem::u3_exact(base_node P) {
   return (pressure / (32. * mu * epsilon * epsilon * epsilon))
     * P[0] * (P[0] - LX)
-    * (gmm::sqr(P[0] - LX * .5) -1.25*LX*LX-(mixed ? 0 : 8.*epsilon*epsilon));
+    * (gmm::sqr(P[0]-LX*.5) - 1.25*LX*LX - (mixed ? 0. : (16.*epsilon*epsilon)));
 }
 
 

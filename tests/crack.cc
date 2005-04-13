@@ -580,7 +580,7 @@ int main(int argc, char *argv[]) {
       p.mls.global_cut_mesh(mcut);
       getfem::mesh_fem mf(mcut, p.mf_u().get_qdim());
       mf.set_finite_element
-	(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 2, 0.01)"));
+	(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 2, 0.0001)"));
       plain_vector V(mf.nb_dof());
 
       getfem::interpolation(p.mf_u(), mf, U, V);
@@ -595,7 +595,7 @@ int main(int argc, char *argv[]) {
 
       getfem::mesh_fem mf_refined(mcut_refined, p.mf_u().get_qdim());
       mf_refined.set_finite_element
-	(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 1, 0.01)"));
+	(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 1, 0.0001)"));
       plain_vector W(mf_refined.nb_dof());
       getfem::interpolation(p.mf_u(), mf_refined, U, W);
 
