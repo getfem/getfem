@@ -223,9 +223,9 @@ void plate_problem::compute_error(plain_vector &U) {
   scalar_type h1 = gmm::sqr(getfem::asm_H1_norm(mim, mf_rhs, V));
   scalar_type linf = gmm::vect_norminf(V);
   mf_rhs.set_qdim(1);
-  cout << "L2 error = " << sqrt(l2) << endl
-       << "H1 error = " << sqrt(h1) << endl
-       << "Linfty error = " << linf << endl;
+  cout << "L2 error on membrane displacement = " << sqrt(l2) << endl
+       << "H1 error on membrane displacement = " << sqrt(h1) << endl
+       << "Linfty error on membrane displacement = " << linf << endl;
 
   getfem::interpolation(mf_theta, mf_rhs,
 			gmm::sub_vector(U, gmm::sub_interval(i1+i2, i3)), V);
@@ -234,13 +234,13 @@ void plate_problem::compute_error(plain_vector &U) {
 	     gmm::sub_vector(V, gmm::sub_interval(i*2, 2)));
   }
   mf_rhs.set_qdim(2);
-  l2 += gmm::sqr(getfem::asm_L2_norm(mim, mf_rhs, V));
-  h1 += gmm::sqr(getfem::asm_H1_norm(mim, mf_rhs, V));
-  linf = std::max(linf, gmm::vect_norminf(V));
+  l2 = gmm::sqr(getfem::asm_L2_norm(mim, mf_rhs, V));
+  h1 = gmm::sqr(getfem::asm_H1_norm(mim, mf_rhs, V));
+  linf = gmm::vect_norminf(V);
   mf_rhs.set_qdim(1);
-  cout << "L2 error = " << sqrt(l2) << endl
-       << "H1 error = " << sqrt(h1) << endl
-       << "Linfty error = " << linf << endl;
+  cout << "L2 error on rotation = " << sqrt(l2) << endl
+       << "H1 error on rotation = " << sqrt(h1) << endl
+       << "Linfty error on rotation = " << linf << endl;
 
   gmm::resize(V, mf_rhs.nb_dof());
   getfem::interpolation(mf_u3, mf_rhs,
@@ -249,14 +249,14 @@ void plate_problem::compute_error(plain_vector &U) {
   for (size_type i = 0; i < mf_rhs.nb_dof(); ++i)
     V[i] -= u3_exact(mf_rhs.point_of_dof(i));
 
-  l2 += gmm::sqr(getfem::asm_L2_norm(mim, mf_rhs, V));
-  h1 += gmm::sqr(getfem::asm_H1_norm(mim, mf_rhs, V));
-  linf = std::max(linf, gmm::vect_norminf(V));
+  l2 = gmm::sqr(getfem::asm_L2_norm(mim, mf_rhs, V));
+  h1 = gmm::sqr(getfem::asm_H1_norm(mim, mf_rhs, V));
+  linf = gmm::vect_norminf(V);
 
   cout.precision(16);
-  cout << "L2 error = " << sqrt(l2) << endl
-       << "H1 error = " << sqrt(h1) << endl
-       << "Linfty error = " << linf << endl;
+  cout << "L2 error on normal displacement = " << sqrt(l2) << endl
+       << "H1 error on normal displacement = " << sqrt(h1) << endl
+       << "Linfty error on normal displacement = " << linf << endl;
 }
 
 /**************************************************************************/

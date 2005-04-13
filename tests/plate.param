@@ -9,13 +9,13 @@ LY = 1.0;	        % size in Y.
 % LAMBDA = 107.0;   	% Lamé coefficient.
 MU = 1.0;	        % Lamé coefficient.
 LAMBDA = 0.0;   	% Lamé coefficient.
-EPSILON = 0.1;        % thickness of the plate
+EPSILON = 0.01;        % thickness of the plate
 
 PRESSURE = 100.0;       % pressure on the top surface of the plate
 			%  (will be multiplied by EPSILON^3.
 
 
-NX = 10;
+NX = 20;
 RESIDU = 1E-9;     	% residu for iterative methods.
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
 MIXED = 0;
