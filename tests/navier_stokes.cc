@@ -58,7 +58,7 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
  */
 struct navier_stokes_problem {
 
-  enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
+  enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1 };
   getfem::getfem_mesh mesh;  /* the mesh */
   getfem::mesh_im  mim;      /* integration methods.                         */
   getfem::mesh_fem mf_u;     /* main mesh_fem, for the velocity              */
@@ -261,7 +261,8 @@ bool navier_stokes_problem::solve() {
   // dynamic problem
   //
 
-  plain_vector DF(mf_u.nb_dof()), U0(mf_u.nb_dof()), USTAR(mf_u.nb_dof()), USTARbis(mf_u.nb_dof());
+  plain_vector DF(mf_u.nb_dof()), U0(mf_u.nb_dof()), USTAR(mf_u.nb_dof()),
+    USTARbis(mf_u.nb_dof());
   
   gmm::iteration iter(residu, noisy);
   getfem::standard_model_state MSL(laplacian_dyn);

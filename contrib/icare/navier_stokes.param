@@ -17,6 +17,8 @@ DT = 0.001;                       % Time step
 T = 0.3;                          % Final time
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 NOISY=1;
+OPTION = 1; % 1 = Stokes avec schéma de splitting 1
+	    % 2 = Navier Stokes ...
 
 %FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(3, 2)';
 %FEM_TYPE = 'FEM_PK(3,3)';  % PK method
@@ -41,4 +43,4 @@ RESIDU = 1E-9;     	% residu for conjugate gradient.
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'navier_stokes';     % Root of data files.
 DX_EXPORT = 1 % export solution to a .vtk file ?
-DT_EXPORT = 0.0001;
+DT_EXPORT = 0.01;

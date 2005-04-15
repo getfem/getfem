@@ -25,6 +25,99 @@
 #include <getfem_modeling.h>
 #include <gmm.h>
 
+
+
+
+namespace getfem {
+
+  /* ******************************************************************** */
+  /*	terme div(uuT).                                                   */
+  /* ******************************************************************** */
+
+
+  template<typename MAT, typename VEC>
+  void asm_NS_uuT(const MAT &M, const mesh_im &mim,
+			 const mesh_fem &mf, const VEC &U0) {
+    generic_assembly assem;    
+    assem.set("u=data(#1); "
+	      "t = comp(vGrad(#1).vBase(#1).vBase(#1));"
+	      "M(#1, #1)+=u(i).t(:,j,k,i,j,:,k);"
+	      "M(#1, #1)+=u(i).t(i,j,j,:,k,:,k)");
+    assem.push_mi(mim);
+    assem.push_mf(mf);
+    assem.push_data(U0);
+    assem.push_mat(const_cast<MAT&>(M));
+    assem.volumic_assembly();
+  }
+
+
+  template<typename MODEL_STATE = standard_model_state>
+  class mdbrick_NS_uuT : public mdbrick_abstract<MODEL_STATE> {
+
+    typedef typename MODEL_STATE::vector_type VECTOR;
+    typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
+    typedef typename MODEL_STATE::value_type value_type;
+    mdbrick_abstract<MODEL_STATE> &sub_problem;
+    VECTOR U0;
+    size_type num_fem, i1, nbd;
+    T_MATRIX K;
+
+  public :
+
+    virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0)
+    { sub_problem.mixed_variables(b, i0); }
+    virtual size_type nb_constraints(void)
+    { return sub_problem.nb_constraints(); }
+    virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
+					size_type j0 = 0, bool = false) {
+      mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
+      sub_problem.compute_tangent_matrix(MS, i0, j0, true);
+      gmm::sub_interval SUBI(this->mesh_fem_positions[num_fem], mf_u.nb_dof());
+      gmm::resize(K, mf_u.nb_dof(), mf_u.nb_dof());
+      asm_NS_uuT(K, *(this->mesh_ims[0]), mf_u, U0);
+      gmm::add(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI));
+    }
+    virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
+				size_type j0 = 0) {
+      sub_problem.compute_residu(MS, i0, j0);
+      react(MS, i0, false);
+      mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
+      gmm::sub_interval SUBI(this->mesh_fem_positions[num_fem],mf_u.nb_dof());
+      typename gmm::sub_vector_type<VECTOR *, gmm::sub_interval>::vector_type
+	SUBV = gmm::sub_vector(MS.residu(), SUBI);
+      gmm::mult_add(K, gmm::sub_vector(MS.state(), SUBI), SUBV);
+    }
+
+    template <class VEC> void set_U0(const VEC &q) {
+      gmm::resize(U0, gmm::vect_size(q));
+      gmm::copy(q, U0);
+    }
+
+    void init_(void) {
+      this->add_sub_brick(sub_problem);
+      this->proper_is_coercive_ = false;
+      this->proper_is_symmetric_ = false;
+      this->update_from_context();
+    }
+
+    // Constructor which homogeneous diagonal Q
+    mdbrick_NS_uuT(mdbrick_abstract<MODEL_STATE> &problem,
+		   size_type num_fem_=0) 
+      : sub_problem(problem), num_fem(num_fem_)
+      { init_(); }
+
+  };
+
+
+
+
+}
+
+
+
+
+
+
 /* try to enable the SIGFPE if something evaluates to a Not-a-number
  * of infinity during computations
  */
@@ -61,7 +154,7 @@ struct navier_stokes_problem {
   scalar_type nu, dt, T, dtexport;
 
   scalar_type residu;        /* max residu for the iterative solvers         */
-  int noisy, dxexport;
+  int noisy, dxexport, option;
 
   std::string datafilename;
   ftool::md_param PARAM;
@@ -111,6 +204,7 @@ void navier_stokes_problem::init(void) {
   T = PARAM.real_value("T", "Final time");
   dtexport = PARAM.real_value("DT_EXPORT", "Final time");
   noisy = PARAM.int_value("NOISY", "");
+  option = PARAM.int_value("OPTION", "option");
   dxexport = PARAM.int_value("DX_EXPORT", "");
   mf_u.set_qdim(N);
 
@@ -205,12 +299,22 @@ bool navier_stokes_problem::solve() {
   // getfem::mdbrick_isotropic_linearized_elasticity<>
   //  laplacian(mim, mf_u, mf_coef, 0.0, nu, true);
 
+  
+  
+  getfem::mdbrick_NS_uuT<> laplacian_uuT(laplacian);
+
+  
+  getfem::mdbrick_abstract<> *laplacian_nonlin = &laplacian;
+  if (option == 2) {
+    laplacian_nonlin = &laplacian_uuT;
+  }
+
   // Volumic source term
   plain_vector F(nb_dof_rhs * N);
   for (size_type i = 0; i < nb_dof_rhs; ++i)
     gmm::copy(sol_f(mf_rhs.point_of_dof(i), 0.),
 	      gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
-  getfem::mdbrick_source_term<> laplacian_f(laplacian, mf_rhs, F);
+  getfem::mdbrick_source_term<> laplacian_f(*laplacian_nonlin, mf_rhs, F);
 
 
   // Dirichlet condition brick.
@@ -279,6 +383,9 @@ bool navier_stokes_problem::solve() {
   for (scalar_type t = dt; t <= T; t += dt) {
 
     iter.init();
+    if (option == 2) {
+      laplacian_uuT.set_U0(U0);
+    }
     for (size_type i = 0; i < nb_dof_rhs; ++i)
       gmm::copy(sol_f(mf_rhs.point_of_dof(i), t),
 		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
@@ -294,8 +401,6 @@ bool navier_stokes_problem::solve() {
     getfem::standard_solve(MSL, laplacian_dyn, iter);
     gmm::copy(laplacian.get_solution(MSL), USTAR);
 
-
-
     iter.init();
     gmm::mult(laplacian_dyn.mass_matrix(), gmm::scaled(USTAR, 1./dt), DF);
     mixed_dyn.set_DF(DF);
@@ -309,17 +414,6 @@ bool navier_stokes_problem::solve() {
     cout << "norm de U0 : " << getfem::asm_L2_norm(mim, mf_u, U0) << endl;
     
     cout << "error = " << gmm::vect_dist2(U0, F) << endl;
-
-//     {
-//       getfem::vtk_export exp_vtk1(datafilename + "_v.vtk", 0);
-//       exp_vtk1.exporting(mf_u); 
-//       exp_vtk1.write_point_data(mf_u, U0, "velocity");
-//       getfem::vtk_export exp_vtk2(datafilename + "_p.vtk", 0);
-//       exp_vtk2.exporting(mf_p); 
-//       exp_vtk2.write_point_data(mf_p, mixed_p.get_pressure(MSM), "pressure");
-//       // mayavi -d navier_stokes_p.vtk -f WarpScalar -m BandedSurfaceMap -m Outline
-//     }
-//     getchar();
 
     if (dxexport && t >= t_export-dt/20.0) {
       exp->write_point_data(mf_u, U0);

@@ -135,6 +135,7 @@ EXTRA_DIST = \
 	elastostatic.pl                   \
 	stokes.pl                         \
 	navier_stokes.pl                  \
+	navier_stokes.param               \
 	helmholtz.pl                      \
 	integration.pl                    \
 	poly.pl                           \

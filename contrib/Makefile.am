@@ -1,3 +1,5 @@
+SUBDIRS = icare 
+
 bin_PROGRAMS = \
 	draw_mesh_doedges
 
