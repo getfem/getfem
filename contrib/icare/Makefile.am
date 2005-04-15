@@ -5,7 +5,7 @@ check_PROGRAMS =                 \
 
 CLEANFILES = navier_stokes.data
 
-navier_stokes_SOURCES = navier_stokes.cc
+navier_stokes_SOURCES = navier_stokes.cc navier_stokes.h
 
 
 INCLUDES = -I$(top_srcdir)/src -I../../src

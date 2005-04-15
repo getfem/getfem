@@ -77,6 +77,7 @@ include_HEADERS =                          \
 	getfem_linearized_plates.h         \
 	getfem_Coulomb_friction.h          \
 	getfem_nonlinear_elasticity.h      \
+	getfem_Navier_Stokes.h             \
 	getfem_superlu.h		   \
 	getfem_plasticity.h                \
 	getfem_mesher.h                    \

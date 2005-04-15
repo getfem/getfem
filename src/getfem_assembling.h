@@ -505,8 +505,8 @@ namespace getfem
 
 
   /**
-     assembly of $\int_\Omega a(x)\nabla u.\nabla v$ , where $a(x)$ is scalar.
-  */
+   * assembly of $\int_\Omega a(x)\nabla u.\nabla v$.
+   */
   template<typename MAT>
   void asm_stiffness_matrix_for_homogeneous_laplacian(const MAT &M_,
 						      const mesh_im &mim, 
@@ -520,6 +520,21 @@ namespace getfem
     assem.volumic_assembly();
   }
 
+  /**
+   * assembly of $\int_\Omega a(x)\nabla u.\nabla v$.
+   */
+  template<typename MAT>
+  void asm_stiffness_matrix_for_homogeneous_laplaciann_componentwise
+  (const MAT &M_, const mesh_im &mim, const mesh_fem &mf) {
+    MAT &M = const_cast<MAT &>(M_);
+     generic_assembly
+       assem("M$1(#1,#1)+="
+	     "sym(comp(vGrad(#1).vGrad(#1))(:,k,i,:,k,i))");
+    assem.push_mi(mim);
+    assem.push_mf(mf);
+    assem.push_mat(M);
+    assem.volumic_assembly();
+  }
 
   /**
    * assembly of $\int_\Omega a(x)\nabla u.\nabla v$ , where $a(x)$ is scalar.

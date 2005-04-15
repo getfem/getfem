@@ -71,6 +71,7 @@
 /* MDBRICK_LINEAR_PLATE          897523                                    */
 /* MDBRICK_MIXED_LINEAR_PLATE    213456                                    */
 /* MDBRICK_COULOMB_FRICTION      434245                                    */
+/* MDBRICK__NAVIER_STOKES        394329
 /*                                                                         */
 /***************************************************************************/
 
@@ -170,7 +171,7 @@ namespace getfem {
 					 NS, constraints_rhs(), Ud);
     gmm::resize(NS, ndof, nbcols);
     gmm::resize(SM, nbcols, nbcols);
-    cout << "NS = " << NS << endl;
+    //cout << "NS = " << NS << endl;
     VECTOR RHaux(ndof);
     gmm::mult(tangent_matrix(), Ud, residu(), RHaux);
     gmm::resize(reduced_residu_, nbcols);
