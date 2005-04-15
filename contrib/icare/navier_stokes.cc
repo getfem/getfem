@@ -24,7 +24,7 @@
 #include <getfem_export.h>   /* export functions (save solution in a file)  */
 #include <getfem_regular_meshes.h>
 #include <getfem_modeling.h>
-#include <gmm.h>
+#include <getfem_Navier_Stokes.h>
 #include "navier_stokes.h"
 
 
@@ -177,15 +177,16 @@ void navier_stokes_problem::init(void) {
 /*  Model.                                                                */
 /**************************************************************************/
 
-scalar_type nu_;
+scalar_type NU_;
 
 base_small_vector sol_f(const base_small_vector &P, scalar_type t) {
   base_small_vector res(P.size());
   scalar_type x = P[0], y = P[1];
-  res[0] = -16.*y*x*x+16.*y*x+8.*x*x-8.*x+32.*nu_*t*y
-    -16.*nu_*t+8.*t*x*x-8.*t*x;
-  res[1] =  16.*x*y*y-16.*y*x-8.*y*y+8.*y-32.*nu_*t*x
-    +16.*nu_*t+8.*t*y*y-8.*t*y;
+  res[0] = -16.*y*x*x+16.*y*x+8.*x*x-8.*x+32.*NU_*t*y
+    -16.*NU_*t+8.*t*x*x-8.*t*x;
+  res[1] =  16.*x*y*y-16.*y*x-8.*y*y+8.*y-32.*NU_*t*x
+    +16.*NU_*t+8.*t*y*y-8.*t*y;
+  // gmm::clear(res);
   return res;
 }
 
@@ -194,7 +195,7 @@ base_small_vector Dir_cond(const base_small_vector &P, scalar_type t) {
   scalar_type x = P[0], y = P[1];
   res[0] =  2.*(2.*y-1.)*(1.-1.*gmm::sqr(2.*x-1.))*t;
   res[1] = -2.*(2.*x-1.)*(1.-1.*gmm::sqr(2.*y-1.))*t;
-  //if (x > .5) res[0] = res[1] = 0;
+  // if (x > .5) res[0] = res[1] = 0;
   return res;
 }
 
@@ -204,24 +205,40 @@ bool navier_stokes_problem::solve() {
 
   cout << "Number of dof for u : " << mf_u.nb_dof() << endl;
   cout << "Number of dof for p : " << mf_p.nb_dof() << endl;
-  nu_ = nu;
+  NU_ = nu;
   // 
   // definition of the Laplacian problem
   //
 
-  // Laplacian brick.
-  getfem::mdbrick_scalar_elliptic<> laplacian(mim, mf_u, mf_coef, nu, true);
-  // getfem::mdbrick_isotropic_linearized_elasticity<>
-  //  laplacian(mim, mf_u, mf_coef, 0.0, nu, true);
-
-  
-  
-  getfem::mdbrick_NS_uuT<> laplacian_uuT(laplacian);
-
-  
-  getfem::mdbrick_abstract<> *laplacian_nonlin = &laplacian;
-  if (option == 2) {
-    laplacian_nonlin = &laplacian_uuT;
+  // Velocity brick.  
+  std::auto_ptr<getfem::mdbrick_abstract<> > velocity_nonlin, velocity;
+  getfem::mdbrick_NS_uuT<> *velocity_NS_uuT = 0;
+  getfem::mdbrick_scalar_elliptic<> *basic_velocity = 0;
+  getfem::mdbrick_navier_stokes<> *global_velocity = 0;
+  switch (option) {
+    case 1 : case 2 :
+      basic_velocity
+	= new getfem::mdbrick_scalar_elliptic<>(mim, mf_u, mf_coef, nu, true);
+      if (option == 2) {
+	velocity.reset(basic_velocity);
+	velocity_nonlin.reset(velocity_NS_uuT
+			      = new getfem::mdbrick_NS_uuT<>(*velocity));
+      }
+      else velocity_nonlin.reset(basic_velocity);
+      break;
+    case 3 :
+      global_velocity 
+	= new getfem::mdbrick_navier_stokes<>(mim, mf_u, mf_p, nu);
+      velocity.reset(global_velocity);
+      { // Condition on the pressure
+	sparse_matrix G(1, mf_p.nb_dof());
+	G(0,0) = 1.;
+	plain_vector gr(1);
+	velocity_nonlin.reset(new getfem::mdbrick_constraint<>
+			      (*global_velocity, G, gr, 1));
+      }
+      break;
+    default : DAL_THROW(dal::failure_error, "This option does not exist");
   }
 
   // Volumic source term
@@ -229,19 +246,19 @@ bool navier_stokes_problem::solve() {
   for (size_type i = 0; i < nb_dof_rhs; ++i)
     gmm::copy(sol_f(mf_rhs.point_of_dof(i), 0.),
 	      gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
-  getfem::mdbrick_source_term<> laplacian_f(*laplacian_nonlin, mf_rhs, F);
+  getfem::mdbrick_source_term<> velocity_f(*velocity_nonlin, mf_rhs, F);
 
 
   // Dirichlet condition brick.
   for (size_type i = 0; i < nb_dof_rhs; ++i)
     gmm::copy(Dir_cond(mf_rhs.point_of_dof(i), 0.),
 	      gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
-  getfem::mdbrick_Dirichlet<> laplacian_dir(laplacian_f, mf_rhs,
+  getfem::mdbrick_Dirichlet<> velocity_dir(velocity_f, mf_rhs,
 					  F, DIRICHLET_BOUNDARY_NUM);
   
   // Dynamic brick.
-  getfem::mdbrick_dynamic<> laplacian_dyn(laplacian_dir, mf_coef, 1.);
-  laplacian_dyn.set_dynamic_coeff(1.0/dt, 1.0);
+  getfem::mdbrick_dynamic<> velocity_dyn(velocity_dir, mf_coef, 1.);
+  velocity_dyn.set_dynamic_coeff(1.0/dt, 1.0);
 
   // 
   // definition of the mixed problem
@@ -277,7 +294,7 @@ bool navier_stokes_problem::solve() {
     USTARbis(mf_u.nb_dof());
   
   gmm::iteration iter(residu, noisy);
-  getfem::standard_model_state MSL(laplacian_dyn);
+  getfem::standard_model_state MSL(velocity_dyn);
   getfem::standard_model_state MSM(mixed_dyn);
   
   std::auto_ptr<getfem::dx_export> exp;
@@ -299,34 +316,41 @@ bool navier_stokes_problem::solve() {
 
     iter.init();
     if (option == 2) {
-      laplacian_uuT.set_U0(U0);
+      velocity_NS_uuT->set_U0(U0);
     }
     for (size_type i = 0; i < nb_dof_rhs; ++i)
       gmm::copy(sol_f(mf_rhs.point_of_dof(i), t),
 		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
-    laplacian_f.set_rhs(F);
+    velocity_f.set_rhs(F);
     for (size_type i = 0; i < nb_dof_rhs; ++i)
       gmm::copy(Dir_cond(mf_rhs.point_of_dof(i), t),
 		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
-    laplacian_dir.set_rhs(F);
+    velocity_dir.set_rhs(F);
 
     
-    gmm::mult(laplacian_dyn.mass_matrix(), gmm::scaled(U0, 1./dt), DF);
-    laplacian_dyn.set_DF(DF);
-    getfem::standard_solve(MSL, laplacian_dyn, iter);
-    gmm::copy(laplacian.get_solution(MSL), USTAR);
+    gmm::mult(velocity_dyn.mass_matrix(), gmm::scaled(U0, 1./dt), DF);
+    velocity_dyn.set_DF(DF);
+    getfem::standard_solve(MSL, velocity_dyn, iter);
 
-    iter.init();
-    gmm::mult(laplacian_dyn.mass_matrix(), gmm::scaled(USTAR, 1./dt), DF);
-    mixed_dyn.set_DF(DF);
-    for (size_type i = 0; i < nb_dof_rhs; ++i)
-      gmm::copy(Dir_cond(mf_rhs.point_of_dof(i), t),
+    if (option == 1 || option == 2) {
+      gmm::copy(basic_velocity->get_solution(MSL), USTAR);
+    
+      iter.init();
+      gmm::mult(velocity_dyn.mass_matrix(), gmm::scaled(USTAR, 1./dt), DF);
+      mixed_dyn.set_DF(DF);
+      for (size_type i = 0; i < nb_dof_rhs; ++i)
+	gmm::copy(Dir_cond(mf_rhs.point_of_dof(i), t),
 		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
-    mixed_dir.set_rhs(F);
-    getfem::standard_solve(MSM, mixed_dyn, iter);
-    gmm::copy(mixed.get_solution(MSM), U0);
+      mixed_dir.set_rhs(F);
+      getfem::standard_solve(MSM, mixed_dyn, iter);
+      gmm::copy(mixed.get_solution(MSM), U0);
+    }
+    if (option == 3) {
+      gmm::copy(global_velocity->get_velocity(MSL), U0);
+    }
     
-    cout << "norm de U0 : " << getfem::asm_L2_norm(mim, mf_u, U0) << endl;
+    cout << "Kinetic energy : " <<
+      0.5 * gmm::vect_sp(velocity_dyn.mass_matrix(), U0, U0) << endl;
     
     cout << "error = " << gmm::vect_dist2(U0, F) << endl;
 

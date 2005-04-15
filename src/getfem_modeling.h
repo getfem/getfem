@@ -71,7 +71,7 @@
 /* MDBRICK_LINEAR_PLATE          897523                                    */
 /* MDBRICK_MIXED_LINEAR_PLATE    213456                                    */
 /* MDBRICK_COULOMB_FRICTION      434245                                    */
-/* MDBRICK__NAVIER_STOKES        394329
+/* MDBRICK_NAVIER_STOKES         394329                                    */
 /*                                                                         */
 /***************************************************************************/
 
@@ -1780,6 +1780,7 @@ namespace getfem {
       }
       
 //       if (iter.get_noisy())
+//      cout << "tangent matrix " << MS.tangent_matrix() << endl;
 // 	cout << "tangent matrix is "
 // 	   << (gmm::is_symmetric(MS.tangent_matrix(),
 //             1E-6 * gmm::mat_maxnorm(MS.tangent_matrix())) ? "" : "not ")

@@ -6,7 +6,7 @@
 LX = 1.0;		% size in X.
 LY = 1.0;	        % size in Y.
 LZ = 1.0;		% size in Z.
-NU = .1;	        % Viscosity coefficient.
+NU = .001;	        % Viscosity coefficient.
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 %MESH_TYPE = 'GT_PK(3,1)';        % linear triangles
@@ -17,8 +17,9 @@ DT = 0.001;                       % Time step
 T = 0.1;                          % Final time
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 NOISY=1;
-OPTION = 2; % 1 = Stokes avec schéma de splitting 1
+OPTION = 3; % 1 = Stokes avec schéma de splitting 1
 	    % 2 = Navier Stokes ...
+	    % 3 = Navier Stokes with energy conserving midpoint scheme
 
 %FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(3, 2)';
 %FEM_TYPE = 'FEM_PK(3,3)';  % PK method

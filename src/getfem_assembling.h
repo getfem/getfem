@@ -524,7 +524,7 @@ namespace getfem
    * assembly of $\int_\Omega a(x)\nabla u.\nabla v$.
    */
   template<typename MAT>
-  void asm_stiffness_matrix_for_homogeneous_laplaciann_componentwise
+  void asm_stiffness_matrix_for_homogeneous_laplacian_componentwise
   (const MAT &M_, const mesh_im &mim, const mesh_fem &mf) {
     MAT &M = const_cast<MAT &>(M_);
      generic_assembly

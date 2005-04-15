@@ -2,9 +2,9 @@
 //========================================================================
 //
 // Library : GEneric Tool for Finite Element Methods (getfem)
-// File    : getfem_nonlinear_elasticity.h : 
+// File    : getfem_Navier_Stokes.h : 
 //           
-// Date    : July 6, 2004.
+// Date    : April 15, 2005.
 // Authors : Yves Renard <Yves.Renard@insa-toulouse.fr>
 //           Julien Pommier <Julien.Pommier@insa-toulouse.fr>
 //
@@ -55,7 +55,7 @@ namespace getfem {
     assem.push_mi(mim);
     assem.push_mf(mf);
     assem.push_mat(const_cast<MAT&>(M));
-    assem.push_vec(U);
+    assem.push_data(U);
     assem.volumic_assembly();
   }
 
@@ -75,7 +75,7 @@ namespace getfem {
     assem.push_mi(mim);
     assem.push_mf(mf);
     assem.push_vec(const_cast<VECT1&>(V));
-    assem.push_vec(U);
+    assem.push_data(U);
     assem.volumic_assembly();
   }
 
@@ -105,8 +105,7 @@ namespace getfem {
     virtual void mixed_variables(dal::bit_vector &, size_type = 0) {}
     virtual size_type nb_constraints(void) { return 0; }
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
-					size_type = 0, bool modified = false) {
-      size_type nb = AHL.nb_params();
+					size_type = 0, bool = false) {
       gmm::sub_interval SUBI(i0, this->nb_dof());
       gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBI));
       asm_stiffness_matrix_for_homogeneous_laplacian_componentwise
@@ -147,7 +146,11 @@ namespace getfem {
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_navier_stokes : public mdbrick_abstract<MODEL_STATE>  {
     
+    typedef typename MODEL_STATE::vector_type VECTOR;
+    typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
     typedef typename MODEL_STATE::value_type value_type;
+    typedef typename gmm::sub_vector_type<VECTOR *,
+				 gmm::sub_interval>::vector_type SUBVECTOR;
 
     mdbrick_pre_navier_stokes<MODEL_STATE> velocity_part;
     mdbrick_linear_incomp<MODEL_STATE> sub_problem;
@@ -163,6 +166,9 @@ namespace getfem {
     { sub_problem.compute_tangent_matrix(MS, i0, j0, modified); }
     virtual void compute_residu(MODEL_STATE &MS, size_type i0=0,size_type j0=0)
     { sub_problem.compute_residu(MS, i0, j0); }
+
+    SUBVECTOR get_velocity(MODEL_STATE &MS) 
+    { return velocity_part.get_solution(MS); }
 
     mdbrick_navier_stokes(mesh_im &mim, mesh_fem &mf_u, mesh_fem &mf_p,
 			  value_type nu)
