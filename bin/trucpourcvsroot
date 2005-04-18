@@ -1,0 +1,3 @@
+#!/bin/bash
+l=$(find . -type f -name 'Root' | xargs echo );
+for i in $l; do echo "gmmcvs:/var/lib/cvs" > $i; done;
