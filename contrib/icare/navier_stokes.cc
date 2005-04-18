@@ -28,10 +28,6 @@
 #include "navier_stokes.h"
 
 
-
-
-
-
 /* try to enable the SIGFPE if something evaluates to a Not-a-number
  * of infinity during computations
  */
@@ -207,7 +203,7 @@ bool navier_stokes_problem::solve() {
   cout << "Number of dof for p : " << mf_p.nb_dof() << endl;
   NU_ = nu;
   // 
-  // definition of the Laplacian problem
+  // definition of the first problem
   //
 
   // Velocity brick.  
@@ -261,7 +257,7 @@ bool navier_stokes_problem::solve() {
   velocity_dyn.set_dynamic_coeff(1.0/dt, 1.0);
 
   // 
-  // definition of the mixed problem
+  // definition of the second problem
   //
 
   getfem::mdbrick_mass_matrix<> mixed(mim, mf_u, mf_coef, 1./dt, true);
@@ -381,7 +377,7 @@ int main(int argc, char *argv[]) {
     p.PARAM.read_command_line(argc, argv);
     p.init();
     p.mesh.write_to_file(p.datafilename + ".mesh");
-    if (!p.solve()) DAL_THROW(dal::failure_error,"Solve has failed");
+    p.solve();
   }
   DAL_STANDARD_CATCH_ERROR;
 
