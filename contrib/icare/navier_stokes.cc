@@ -348,7 +348,7 @@ bool navier_stokes_problem::solve() {
     cout << "Kinetic energy : " <<
       0.5 * gmm::vect_sp(velocity_dyn.mass_matrix(), U0, U0) << endl;
     
-    cout << "error = " << gmm::vect_dist2(U0, F) << endl;
+    cout << "t = " << t << " error = " << gmm::vect_dist2(U0, F) << endl;
 
     if (dxexport && t >= t_export-dt/20.0) {
       exp->write_point_data(mf_u, U0);
