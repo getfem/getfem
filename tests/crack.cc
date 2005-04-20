@@ -35,6 +35,7 @@
 #include <getfem_mesh_fem_level_set.h>
 #include <getfem_mesh_fem_product.h>
 #include <getfem_mesh_fem_global_function.h>
+#include <getfem_spider_fem.h>
 #include <getfem_mesh_fem_sum.h>
 #include <gmm.h>
 
@@ -299,6 +300,8 @@ struct crack_problem {
   getfem::mesh_fem mf_partition_of_unity;
   getfem::mesh_fem_product mf_product;
   getfem::mesh_fem_sum mf_u_sum;
+  getfem::spider_fem *spider;
+  getfem::mesh_fem mf_us;
 
   getfem::mesh_fem& mf_u() { return mf_u_sum; }
   // getfem::mesh_fem& mf_u() { return mfls_u; }
@@ -328,7 +331,7 @@ struct crack_problem {
 			mfls_u(mls, mf_pre_u), mf_sing_u(mesh),
 			mf_partition_of_unity(mesh),
 			mf_product(mf_partition_of_unity, mf_sing_u),
-			mf_u_sum(mesh),
+			mf_u_sum(mesh), mf_us(mesh),
 			mf_rhs(mesh), mf_p(mesh), mf_coef(mesh),
 			exact_sol(mesh),  ls(mesh, 1, true),
 			ls2(mesh, 2, true), ls3(mesh, 1, true) {}
@@ -389,6 +392,11 @@ void crack_problem::init(void) {
   mf_pre_u.set_finite_element(mesh.convex_index(), pf_u);
   mf_partition_of_unity.set_classical_finite_element(1);
   
+  if (enrichment_option == 3) {
+    spider = new getfem::spider_fem(R,mim,Nr,Ntheta,K,translation,theta0);
+    mf_us.set_finite_element(mesh.convex_index(),spider->get_pfem());
+  }
+
   mixed_pressure =
     (PARAM.int_value("MIXED_PRESSURE","Mixed version or not.") != 0);
   if (mixed_pressure) {
@@ -477,6 +485,32 @@ bool crack_problem::solve(plain_vector &U) {
 			 (enrichment_option == 2) ? 0.0 : cutoff_radius);
   
   mf_sing_u.set_functions(vfunc);
+
+
+  switch (enrichment_option) {
+  case 1 : mf_u_sum.set_mesh_fems(mf_sing_u, mfls_u); break;
+  case 2 : 
+    {
+      dal::bit_vector enriched_dofs;
+      plain_vector X(mf_partition_of_unity.nb_dof());
+      plain_vector Y(mf_partition_of_unity.nb_dof());
+      getfem::interpolation(ls.get_mesh_fem(), mf_partition_of_unity,
+			    ls.values(1), X);
+      getfem::interpolation(ls.get_mesh_fem(), mf_partition_of_unity,
+			    ls.values(0), Y);
+      for (size_type j = 0; j < mf_partition_of_unity.nb_dof(); ++j) {
+	if (gmm::sqr(X[j]) + gmm::sqr(Y[j]) <= gmm::sqr(enr_area_radius))
+	  enriched_dofs.add(j);
+      }
+      if (enriched_dofs.card() < 3)
+	DAL_WARNING(0, "There is " << enriched_dofs.card() <<
+		    " enriched dofs for the crack tip");
+      mf_product.set_enrichment(enriched_dofs);
+      mf_u_sum.set_mesh_fems(mf_product, mfls_u);
+    }
+    break;
+  case 3 : mf_u_sum.set_mesh_fems(mf_us, mfls_u); break;
+  }
 
   if (enrichment_option == 2) {
     dal::bit_vector enriched_dofs;

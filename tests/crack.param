@@ -12,7 +12,7 @@ LAMBDA = 1.0;   	% Lamé coefficient.
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 %MESH_TYPE = 'GT_LINEAR_QK(2,1)'; % linear rectangles
 %MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
-NX = 10;            	          % space step.
+NX = 20;            	          % space step.
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 
 %FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 2)';
@@ -39,11 +39,12 @@ INTEGRATION = 'IM_TRIANGLE(6)'; % quadrature rule for polynomials up
 
 SIMPLEX_INTEGRATION = 'IM_TRIANGLE(6)';
 
-CUTOFF=0.3;
+CUTOFF=0.2;
 
 ADDITIONAL_CRACK = 0;
-ENRICHMENT_OPTION = 2 % 1 = global functions with cutoff
-	              % 2 = standard XFEM on a fixed zone 
+ENRICHMENT_OPTION = 1; % 1 = global functions with cutoff
+	               % 2 = standard XFEM on a fixed zone 
+		       % 3 = with spider fem
 RADIUS_ENR_AREA = 0.1;
 
 
