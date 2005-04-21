@@ -317,6 +317,12 @@ struct crack_problem {
   getfem::level_set ls;      /* The two level sets defining the crack.       */
   getfem::level_set ls2, ls3;  /* The two level sets defining the additional crack.       */
   
+  base_small_vector translation;
+  scalar_type theta0;
+  scalar_type R;
+  unsigned Nr;
+  unsigned Ntheta;
+  int K;
   scalar_type residue;       /* max residue for the iterative solvers        */
   bool mixed_pressure, add_crack;
   scalar_type cutoff_radius, enr_area_radius;
@@ -355,6 +361,16 @@ void crack_problem::init(void) {
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
 
+  R = PARAM.real_value("R","R ");
+  Nr = PARAM.int_value("Nr","Nr ");
+  Ntheta = PARAM.int_value("Ntheta","Ntheta ");
+  K = PARAM.int_value("K","K ");
+
+  translation.resize(2); 
+  translation[0] =0;
+  translation[1] =0.5;
+  theta0 =0;
+  
   /* First step : build the mesh */
   bgeot::pgeometric_trans pgt = 
     bgeot::geometric_trans_descriptor(MESH_TYPE);
@@ -384,7 +400,7 @@ void crack_problem::init(void) {
     getfem::int_method_descriptor(INTEGRATION);
   getfem::pintegration_method sppi = 
     getfem::int_method_descriptor(SIMPLEX_INTEGRATION);
-
+  
   mim.set_integration_method(mesh.convex_index(), ppi);
   mls.add_level_set(ls);
   if (add_crack) { mls.add_level_set(ls2); mls.add_level_set(ls3); }

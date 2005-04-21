@@ -994,7 +994,7 @@ namespace getfem {
       do {
 	cout << " @[";
 	for (size_type i=0; i < child(0).ranges().size(); ++i)
-	  cout << (i>0?",":"") << mti.index(i);
+	  cout <<(i>0?",":"") << mti.index(i);
 	cout << "] = " << mti.p(0) << endl;
       } while (mti.qnext1());
     }

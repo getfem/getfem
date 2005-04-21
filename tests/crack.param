@@ -7,7 +7,10 @@
 % LAMBDA = 107.0;   	% Lamé coefficient.
 MU = 1.0;	        % Lamé coefficient.
 LAMBDA = 1.0;   	% Lamé coefficient.
-
+R =  0.2;
+Nr =  10;               %size of the cartesian mesh in r
+Ntheta = 10;            %size of the cartesian mesh in theta
+K=2;                    %dimension of the  spider fem 
 %%%%%   discretisation parameters  :                     	      %%%%%
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 %MESH_TYPE = 'GT_LINEAR_QK(2,1)'; % linear rectangles

@@ -40,20 +40,22 @@ namespace getfem {
 
   struct Xfem_sqrtr : public virtual_Xfem_func {
     virtual scalar_type val(const Xfem_func_context &c) { return ::sqrt(c.xreal[0]); }
+                                                               /* comportement au fond de la fissure en racine r*/
     virtual base_small_vector grad(const Xfem_func_context &c)
     { base_small_vector V(2); V[0] = 1. / (2.* ::sqrt(c.xreal[0])); return V; }
     virtual base_matrix hess(const Xfem_func_context &c)
     { base_matrix m(2,2); m(0,0) = -1. / (4.* ::sqrt(c.xreal[0])*c.xreal[0]); return m; }
   };
 
-  struct interpolated_transformation : public virtual_interpolated_func {
+  struct interpolated_transformation : public virtual_interpolated_func{
+    /* la transormation et son gradient en coo polaires */
     base_small_vector trans;
     scalar_type theta0;
      
     virtual void val(const base_node &xreal, base_node &v) const {
       base_node w =  xreal - trans;
       v[0] = gmm::vect_norm2(w);
-      v[1] = atan2(w[0], w[1]) - theta0;
+      v[1] = atan2(w[1], w[0]) - theta0;
     }
     virtual void grad(const base_small_vector &xreal, base_matrix &m) const {
       base_node w =  xreal - trans;
@@ -132,7 +134,7 @@ namespace getfem {
 	
 	std::stringstream ppiname;
 	cartesian_fem.set_finite_element(cartesian.convex_index(),& enriched_Qk);  
-	  mim.set_integration_method(cartesian.convex_index(),getfem::int_method_descriptor("IM_TRIANGLE(6)"));//IM_GAUSS_PARALLELEPIPED(2,20)" );
+	  mim.set_integration_method(cartesian.convex_index(),getfem::int_method_descriptor("IM_TRIANGLE(10)"));//IM_GAUSS_PARALLELEPIPED(2,20)" );
 	dal::bit_vector blocked_dof = cartesian_fem.dof_on_boundary(0);
 
 	final_fem = new interpolated_fem(cartesian_fem, mim/*target_fem*/, &itt, blocked_dof);

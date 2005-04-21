@@ -66,7 +66,7 @@ namespace getfem
     /*
     */
     virtual scalar_type val(const Xfem_func_context&) { DAL_THROW(dal::failure_error,"this Xfem_func has no value"); }
-    virtual base_small_vector grad(const Xfem_func_context&) { DAL_THROW(dal::failure_error,"this Xfem_func has no gradient"); }
+    virtual base_small_vector grad(const Xfem_func_context&) { DAL_THROW(dal::failure_error,"this Xfem_func has no gradient"); }  
     virtual base_matrix hess(const Xfem_func_context&) { DAL_THROW(dal::failure_error,"this Xfem_func has no hessian"); }
     virtual ~virtual_Xfem_func() {}
   };
