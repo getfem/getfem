@@ -91,6 +91,8 @@ namespace getfem {
     mesh_fem_sum(getfem_mesh &me) : mesh_fem(me) { is_adapted = false; }
     void set_mesh_fems(const std::vector<const mesh_fem *> &mefs)
     { mfs = mefs; adapt(); }
+    void set_mesh_fems(const mesh_fem &mf1)
+    { mfs.clear(); mfs.push_back(&mf1); adapt(); }
     void set_mesh_fems(const mesh_fem &mf1, const mesh_fem &mf2)
     { mfs.clear(); mfs.push_back(&mf1); mfs.push_back(&mf2);  adapt(); }
     void set_mesh_fems(const mesh_fem &mf1, const mesh_fem &mf2, const mesh_fem &mf3)

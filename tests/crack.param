@@ -8,9 +8,9 @@
 MU = 1.0;	        % Lamé coefficient.
 LAMBDA = 1.0;   	% Lamé coefficient.
 R =  0.2;
-Nr =  10;               %size of the cartesian mesh in r
-Ntheta = 10;            %size of the cartesian mesh in theta
-K=2;                    %dimension of the  spider fem 
+Nr =  10;               % size of the cartesian mesh in r for spider fem
+Ntheta = 10;            % size of the cartesian mesh in theta for spider fem
+K=2;                    % order of the  spider fem 
 %%%%%   discretisation parameters  :                     	      %%%%%
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 %MESH_TYPE = 'GT_LINEAR_QK(2,1)'; % linear rectangles
@@ -45,7 +45,8 @@ SIMPLEX_INTEGRATION = 'IM_TRIANGLE(6)';
 CUTOFF=0.2;
 
 ADDITIONAL_CRACK = 0;
-ENRICHMENT_OPTION = 1; % 1 = global functions with cutoff
+ENRICHMENT_OPTION = 1; % 0 = Pas d'enrichissement
+		       % 1 = global functions with cutoff
 	               % 2 = standard XFEM on a fixed zone 
 		       % 3 = with spider fem
 RADIUS_ENR_AREA = 0.1;

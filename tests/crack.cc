@@ -526,6 +526,7 @@ bool crack_problem::solve(plain_vector &U) {
     }
     break;
   case 3 : mf_u_sum.set_mesh_fems(mf_us, mfls_u); break;
+  default : mf_u_sum.set_mesh_fems(mfls_u); break;
   }
 
   if (enrichment_option == 2) {
