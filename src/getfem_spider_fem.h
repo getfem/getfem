@@ -33,6 +33,7 @@
 #define GETFEM_SPIDER_FEM_H__
 
 #include <getfem_interpolated_fem.h>
+#include <getfem_Xfem.h>
 #include <getfem_regular_meshes.h>
 
 namespace getfem {
@@ -121,7 +122,7 @@ namespace getfem {
 	  base_node un = cartesian.normal_of_face_of_convex(it->cv, it->f);
 	  un /= gmm::vect_norm2(un);
 	  if (un[0] >= 0.8) { // new Neumann face
-	    cartesian_fem.add_boundary_elt(0, it->cv, it->f);
+	    cartesian.add_face_to_set(0, it->cv, it->f);
 	  }
 	}
 
@@ -135,7 +136,7 @@ namespace getfem {
 	std::stringstream ppiname;
 	cartesian_fem.set_finite_element(cartesian.convex_index(),& enriched_Qk);  
 	  mim.set_integration_method(cartesian.convex_index(),getfem::int_method_descriptor("IM_TRIANGLE(10)"));//IM_GAUSS_PARALLELEPIPED(2,20)" );
-	dal::bit_vector blocked_dof = cartesian_fem.dof_on_boundary(0);
+	dal::bit_vector blocked_dof = cartesian_fem.dof_on_set(0);
 
 	final_fem = new interpolated_fem(cartesian_fem, mim/*target_fem*/, &itt, blocked_dof);
       }
