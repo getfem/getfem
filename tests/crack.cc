@@ -529,27 +529,6 @@ bool crack_problem::solve(plain_vector &U) {
   default : mf_u_sum.set_mesh_fems(mfls_u); break;
   }
 
-  if (enrichment_option == 2) {
-    dal::bit_vector enriched_dofs;
-    plain_vector X(mf_partition_of_unity.nb_dof());
-    plain_vector Y(mf_partition_of_unity.nb_dof());
-    getfem::interpolation(ls.get_mesh_fem(), mf_partition_of_unity,
-			  ls.values(1), X);
-    getfem::interpolation(ls.get_mesh_fem(), mf_partition_of_unity,
-			  ls.values(0), Y);
-    for (size_type j = 0; j < mf_partition_of_unity.nb_dof(); ++j) {
-      if (gmm::sqr(X[j]) + gmm::sqr(Y[j]) <= gmm::sqr(enr_area_radius))
-	enriched_dofs.add(j);
-    }
-    if (enriched_dofs.card() < 3)
-      DAL_WARNING(0, "There is " << enriched_dofs.card() <<
-		  " enriched dofs for the crack tip");
-    mf_product.set_enrichment(enriched_dofs);
-    mf_u_sum.set_mesh_fems(mf_product, mfls_u);
-  }
-  else mf_u_sum.set_mesh_fems(mf_sing_u, mfls_u);
-
-
   U.resize(mf_u().nb_dof());
 
 
