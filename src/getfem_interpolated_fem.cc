@@ -162,9 +162,8 @@ namespace getfem {
   inline void interpolated_fem::actualize_fictx(pfem pf, size_type cv,
 						const base_node &ptr) const {
     if (fictx_cv != cv) {
-      if (pf->need_G()) 
-	bgeot::vectors_to_base_matrix
-	  (G, mf.linked_mesh().points_of_convex(cv));
+      bgeot::vectors_to_base_matrix
+	(G, mf.linked_mesh().points_of_convex(cv));
       fictx = fem_interpolation_context
 	(mf.linked_mesh().trans_of_convex(cv), pf, base_node(), G, cv);
       fictx_cv = cv;
@@ -203,14 +202,15 @@ namespace getfem {
 	pfem pf = mf.fem_of_element(cv);
 	actualize_fictx(pf, cv, ptref);
 	pf->real_base_value(fictx, taux);
-	for (size_type i = 0; i < elements[cv].nb_dof; ++i)
-	  ind_dof[elements[cv].inddof[i]] = i;
+	for (size_type i = 0; i < elements[c.convex_num()].nb_dof; ++i)
+	  ind_dof[elements[c.convex_num()].inddof[i]] = i;
 	for (size_type i = 0; i < pf->nb_dof(cv); ++i)
 	  for (size_type j = 0; j < target_dim(); ++j)
-	    if (ind_dof[mf.ind_dof_of_element(cv)[i]] != size_type(-1))
+	    if (ind_dof[mf.ind_dof_of_element(cv)[i]] != size_type(-1)) {
 	      t(ind_dof[mf.ind_dof_of_element(cv)[i]], j) = taux(i, j);
-	for (size_type i = 0; i < elements[cv].nb_dof; ++i)
-	  ind_dof[elements[cv].inddof[i]] = size_type(-1);
+	    }
+	for (size_type i = 0; i < elements[c.convex_num()].nb_dof; ++i)
+	  ind_dof[elements[c.convex_num()].inddof[i]] = size_type(-1);
       }
     }
     
@@ -260,7 +260,6 @@ namespace getfem {
       if (find_a_point(c.xreal(), ptref, cv)) {
 	pfem pf = mf.fem_of_element(cv);
 	actualize_fictx(pf, cv, ptref);
-	fictx.set_xref(ptref);
 	pf->real_grad_base_value(fictx, taux);
 	for (size_type i = 0; i < nbdof; ++i)
 	  ind_dof[elements[cv].inddof[i]] = i;
@@ -307,7 +306,7 @@ namespace getfem {
     this->add_dependency(mf);
     this->add_dependency(mim);
     is_pol = is_lag = false; es_degree = 5;
-    is_equiv = false; real_element_defined = true;
+    is_equiv = real_element_defined = true;
     gmm::resize(trans, mf.linked_mesh().dim(), mf.linked_mesh().dim());
     ntarget_dim = 1; // An extension for vectorial elements should be easy
     // The detection should be done and the multilication of components

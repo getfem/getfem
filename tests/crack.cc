@@ -304,7 +304,7 @@ struct crack_problem {
   getfem::mesh_fem mf_us;
 
   getfem::mesh_fem& mf_u() { return mf_u_sum; }
-  // getfem::mesh_fem& mf_u() { return mfls_u; }
+  //getfem::mesh_fem& mf_u() { return mfls_u; }
   
 
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
@@ -340,7 +340,7 @@ struct crack_problem {
 			mf_u_sum(mesh), mf_us(mesh),
 			mf_rhs(mesh), mf_p(mesh), mf_coef(mesh),
 			exact_sol(mesh),  ls(mesh, 1, true),
-			ls2(mesh, 2, true), ls3(mesh, 1, true) {}
+			ls2(mesh, 1, true), ls3(mesh, 1, true) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
@@ -367,8 +367,8 @@ void crack_problem::init(void) {
   spider_K = PARAM.int_value("SPIDER_K","K ");
 
   translation.resize(2); 
-  translation[0] =0;
-  translation[1] =0.5;
+  translation[0] =0.5;
+  translation[1] =0.;
   theta0 =0;
   
   /* First step : build the mesh */
@@ -597,7 +597,7 @@ int main(int argc, char *argv[]) {
   feenableexcept(FE_DIVBYZERO | FE_INVALID);
 #endif
 
-  // getfem::getfem_mesh_level_set_noisy();
+  //getfem::getfem_mesh_level_set_noisy();
 
 
   try {

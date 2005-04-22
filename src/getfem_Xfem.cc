@@ -105,12 +105,13 @@ namespace getfem
     Xfem_func_context ctx(c); 
     base_tensor::iterator it = t.begin();
     fem_interpolation_context c0 = c;
+    base_tensor tt; 
     if (pfb) {
       if (c0.have_pfp())
 	c0.set_pfp(fem_precomp(pfb, &c0.pfp()->get_point_tab()));
       else  c0.set_pf(pfb); 
+      c0.base_value(tt);
     }
-    base_tensor tt; c0.base_value(tt);
     base_tensor::const_iterator itf = tt.begin();
     std::vector<fem_interpolation_context> vc; get_fem_interpolation_context_tab(c, vc);
     for (dim_type q = 0; q < target_dim(); ++q) {
@@ -135,12 +136,13 @@ namespace getfem
     
     Xfem_func_context ctx(c);
     fem_interpolation_context c0 = c;
+    base_tensor tt; 
     if (pfb) {
       if (c0.have_pfp())
 	c0.set_pfp(fem_precomp(pfb, &c0.pfp()->get_point_tab()));
       else  c0.set_pf(pfb); 
+      c0.grad_base_value(tt);
     }
-    base_tensor tt; c0.grad_base_value(tt);
 
     base_tensor::iterator it = t.begin();
     base_tensor::const_iterator itvf = tt.begin();

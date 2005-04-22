@@ -68,12 +68,18 @@ namespace gmm {
       T *p = &(A(0,0));
       if (N <= 3) {
 	switch (N) {
-	case 1 : det = *p; *p = T(1) / det; break;
-	case 2 : det = (*p) * (*(p+3)) - (*(p+1)) * (*(p+2));
-	  std::swap(*p, *(p+3));
-	  *p++ /= det; *p++ /= -det; *p++ /= -det; *p++ /= det; break;
-	case 3 :
-	  {
+	  case 1 : {
+	    det = *p; 
+	    if (det==0) DAL_THROW(failure_error, "non invertible matrix"); 
+	    *p = T(1) / det; 
+	  } break;
+	  case 2 : {
+	    det = (*p) * (*(p+3)) - (*(p+1)) * (*(p+2));
+	    if (det==0) DAL_THROW(failure_error, "non invertible matrix");
+	    std::swap(*p, *(p+3));
+	    *p++ /= det; *p++ /= -det; *p++ /= -det; *p++ /= det; 
+	  } break;
+	  case 3 : {
 	    T a, b, c, d, e, f, g, h, i;
 	    a =   (*(p+4)) * (*(p+8)) - (*(p+5)) * (*(p+7));
 	    b = - (*(p+1)) * (*(p+8)) + (*(p+2)) * (*(p+7));
@@ -85,10 +91,11 @@ namespace gmm {
 	    h = - (*(p+0)) * (*(p+7)) + (*(p+1)) * (*(p+6));
 	    i =   (*(p+0)) * (*(p+4)) - (*(p+1)) * (*(p+3));
 	    det = (*p) * a + (*(p+1)) * d + (*(p+2)) * g;
+	    if (det==0) DAL_THROW(failure_error, "non invertible matrix");
 	    *p++ = a / det; *p++ = b / det; *p++ = c / det; 
 	    *p++ = d / det; *p++ = e / det; *p++ = f / det; 
 	    *p++ = g / det; *p++ = h / det; *p++ = i / det; 
-	  }
+	  } break;
 	}
       }
       else {

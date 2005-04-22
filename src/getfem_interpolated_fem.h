@@ -135,16 +135,18 @@ namespace getfem {
 			      base_tensor &) const;
 
 
+  private:
     interpolated_fem(const mesh_fem &mef, const mesh_im &meim,
 		     pinterpolated_func pif_ = 0,
 		     dal::bit_vector blocked_dof = dal::bit_vector(),
 		     bool store_val = true);
+    
+    friend pfem new_interpolated_fem(const mesh_fem &mef, const mesh_im &mim,
+				     pinterpolated_func pif = 0,
+				     dal::bit_vector blocked_dof = dal::bit_vector(),
+				     bool store_val = true);
   };
   
-  pfem new_interpolated_fem(const mesh_fem &mef, const mesh_im &mim,
-			    pinterpolated_func pif = 0,
-			    dal::bit_vector blocked_dof = dal::bit_vector(),
-			    bool store_val = true);
   
   inline void del_interpolated_fem(pfem pf) { dal::del_stored_object(pf); }
 

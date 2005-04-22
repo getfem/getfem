@@ -1791,13 +1791,13 @@ namespace getfem {
 
 //       cout << "MM = " << MS.reduced_tangent_matrix() << endl;
 
-//       gmm::dense_matrix<value_type> MM(nreddof,nreddof), Q(nreddof,nreddof);
-//       std::vector<value_type> eigval(nreddof);
-//       gmm::copy(MS.reduced_tangent_matrix(), MM);
-//       // gmm::symmetric_qr_algorithm(MM, eigval, Q);
-//       gmm::implicit_qr_algorithm(MM, eigval, Q);
-//       std::sort(eigval.begin(), eigval.end(), sort_abs_val_<value_type>());
-//       cout << "eival = " << eigval << endl;
+      gmm::dense_matrix<value_type> MM(nreddof,nreddof), Q(nreddof,nreddof);
+      std::vector<value_type> eigval(nreddof);
+      gmm::copy(MS.reduced_tangent_matrix(), MM);
+      // gmm::symmetric_qr_algorithm(MM, eigval, Q);
+      gmm::implicit_qr_algorithm(MM, eigval, Q);
+      std::sort(eigval.begin(), eigval.end(), sort_abs_val_<value_type>());
+      cout << "eival = " << eigval << endl;
 //       cout << "vectp : " << gmm::mat_col(Q, nreddof-1) << endl;
 //       cout << "vectp : " << gmm::mat_col(Q, nreddof-2) << endl;
 
@@ -1811,7 +1811,7 @@ namespace getfem {
 	cout << "there is " << mixvar.card() << " mixed variables\n";
       }
 
-      // if (0) {
+      //if (0) {
       if ((ndof < 200000 && dim <= 2) || (ndof < 10000 && dim <= 3)
 	  || (ndof < 1000)) {
 	
