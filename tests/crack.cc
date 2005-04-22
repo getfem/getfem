@@ -319,12 +319,12 @@ struct crack_problem {
   
   base_small_vector translation;
   scalar_type theta0;
-  scalar_type R;
-  unsigned Nr;
-  unsigned Ntheta;
-  int K;
+  scalar_type spider_radius;
+  unsigned spider_Nr;
+  unsigned spider_Ntheta;
+  int spider_K;
   scalar_type residue;       /* max residue for the iterative solvers        */
-  bool mixed_pressure, add_crack;
+  bool mixed_pressure, add_crack, dir_with_mult;
   scalar_type cutoff_radius, enr_area_radius;
   int enrichment_option;
   
@@ -361,10 +361,10 @@ void crack_problem::init(void) {
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
 
-  R = PARAM.real_value("R","R ");
-  Nr = PARAM.int_value("Nr","Nr ");
-  Ntheta = PARAM.int_value("Ntheta","Ntheta ");
-  K = PARAM.int_value("K","K ");
+  spider_radius = PARAM.real_value("SPIDER_RADIUS","spider_radius");
+  spider_Nr = PARAM.int_value("SPIDER_NR","Spider_Nr ");
+  spider_Ntheta = PARAM.int_value("SPIDER_NTHETA","Ntheta ");
+  spider_K = PARAM.int_value("SPIDER_K","K ");
 
   translation.resize(2); 
   translation[0] =0;
@@ -409,12 +409,15 @@ void crack_problem::init(void) {
   mf_partition_of_unity.set_classical_finite_element(1);
   
   if (enrichment_option == 3) {
-    spider = new getfem::spider_fem(R,mim,Nr,Ntheta,K,translation,theta0);
+    spider = new getfem::spider_fem(spider_radius, mim, spider_Nr,
+				    spider_Ntheta, spider_K, translation,
+				    theta0);
     mf_us.set_finite_element(mesh.convex_index(),spider->get_pfem());
   }
 
   mixed_pressure =
     (PARAM.int_value("MIXED_PRESSURE","Mixed version or not.") != 0);
+  dir_with_mult = (PARAM.int_value("DIRICHLET_WITH_MULTIPLIERS") != 0);
   if (mixed_pressure) {
     const char *FEM_TYPE_P  = PARAM.string_value("FEM_TYPE_P","FEM name P");
     mf_p.set_finite_element(mesh.convex_index(),
@@ -479,15 +482,18 @@ bool crack_problem::solve(plain_vector &U) {
   if (add_crack) {
     ls2.reinit();
     for (size_type d = 0; d < ls2.get_mesh_fem().nb_dof(); ++d) {
-      ls2.values(0)[d] = gmm::vect_dist2(ls2.get_mesh_fem().point_of_dof(d), base_node(0.5, 0.0)) - 0.25;
-      ls2.values(1)[d] = gmm::vect_dist2(ls2.get_mesh_fem().point_of_dof(d), base_node(0.25, 0.0)) - 0.27;
+      ls2.values(0)[d] = gmm::vect_dist2(ls2.get_mesh_fem().point_of_dof(d),
+					 base_node(0.5, 0.0)) - 0.25;
+      ls2.values(1)[d] = gmm::vect_dist2(ls2.get_mesh_fem().point_of_dof(d),
+					 base_node(0.25, 0.0)) - 0.27;
     }
     ls2.touch();
     
     ls3.reinit();
     for (size_type d = 0; d < ls3.get_mesh_fem().nb_dof(); ++d) {
       ls3.values(0)[d] = (ls.get_mesh_fem().point_of_dof(d))[0] - 0.25;
-      ls3.values(1)[d] = gmm::vect_dist2(ls3.get_mesh_fem().point_of_dof(d), base_node(0.25, 0.0)) - 0.35;
+      ls3.values(1)[d] = gmm::vect_dist2(ls3.get_mesh_fem().point_of_dof(d),
+					 base_node(0.25, 0.0)) - 0.35;
     }
     ls3.touch();
   }
@@ -531,7 +537,6 @@ bool crack_problem::solve(plain_vector &U) {
 
   U.resize(mf_u().nb_dof());
 
-
   if (mixed_pressure) cout << "Number of dof for P: " << mf_p.nb_dof() << endl;
   cout << "Number of dof for u: " << mf_u().nb_dof() << endl;
 
@@ -559,17 +564,14 @@ bool crack_problem::solve(plain_vector &U) {
   // Neumann condition brick.
   getfem::mdbrick_source_term<> NEUMANN(VOL_F, mf_rhs, F,NEUMANN_BOUNDARY_NUM);
   
-  
   gmm::clear(F);
 
   //toto_solution toto(mf_rhs.linked_mesh()); toto.init();
   //assert(toto.mf.nb_dof() == 1);
   // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> final_model(NEUMANN, 
-					  //mf_rhs, F, 
-					  exact_sol.mf, exact_sol.U, 
-					  //toto.mf, toto.U,
-					  DIRICHLET_BOUNDARY_NUM, 0, true);
+  getfem::mdbrick_Dirichlet<> final_model(NEUMANN, exact_sol.mf, exact_sol.U, 
+					  DIRICHLET_BOUNDARY_NUM, 0,
+					  dir_with_mult);
 
   // Generic solve.
   cout << "Total number of variables : " << final_model.nb_dof() << endl;

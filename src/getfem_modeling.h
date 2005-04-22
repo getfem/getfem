@@ -1725,6 +1725,9 @@ namespace getfem {
   // problem, etc ...
   // This is in fact a model for your own solver.
 
+  template <typename T> struct sort_abs_val_
+  { bool operator()(T x, T y) { return (gmm::abs(x) < gmm::abs(y)); } };
+
   template <typename MODEL_STATE> void
   standard_solve(MODEL_STATE &MS, mdbrick_abstract<MODEL_STATE> &problem,
 	gmm::iteration &iter) {
@@ -1788,13 +1791,13 @@ namespace getfem {
 
 //       cout << "MM = " << MS.reduced_tangent_matrix() << endl;
 
-//       gmm::dense_matrix<value_type> MM(nreddof,nreddof), Q(nreddof,nreddof);
-//       std::vector<value_type> eigval(nreddof);
-//       gmm::copy(MS.reduced_tangent_matrix(), MM);
-//       // gmm::symmetric_qr_algorithm(MM, eigval, Q);
-//       gmm::implicit_qr_algorithm(MM, eigval, Q);
-//       std::sort(eigval.begin(), eigval.end());
-//       cout << "eival = " << eigval << endl;
+      gmm::dense_matrix<value_type> MM(nreddof,nreddof), Q(nreddof,nreddof);
+      std::vector<value_type> eigval(nreddof);
+      gmm::copy(MS.reduced_tangent_matrix(), MM);
+      // gmm::symmetric_qr_algorithm(MM, eigval, Q);
+      gmm::implicit_qr_algorithm(MM, eigval, Q);
+      std::sort(eigval.begin(), eigval.end(), sort_abs_val_<value_type>());
+      cout << "eival = " << eigval << endl;
 //       cout << "vectp : " << gmm::mat_col(Q, nreddof-1) << endl;
 //       cout << "vectp : " << gmm::mat_col(Q, nreddof-2) << endl;
 

@@ -7,15 +7,11 @@
 % LAMBDA = 107.0;   	% Lamé coefficient.
 MU = 1.0;	        % Lamé coefficient.
 LAMBDA = 1.0;   	% Lamé coefficient.
-R =  0.2;
-Nr =  10;               % size of the cartesian mesh in r for spider fem
-Ntheta = 10;            % size of the cartesian mesh in theta for spider fem
-K=2;                    % order of the  spider fem 
 %%%%%   discretisation parameters  :                     	      %%%%%
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 %MESH_TYPE = 'GT_LINEAR_QK(2,1)'; % linear rectangles
 %MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
-NX = 10;            	          % space step.
+NX = 5;            	          % space step.
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 
 %FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 2)';
@@ -27,29 +23,31 @@ FEM_TYPE = 'FEM_PK(2, 1)';  % PK element
 MIXED_PRESSURE=0;       % Mixed version or not.
 % FEM_TYPE_P = 'FEM_PK(3,1)';  % P1 for triangles
 FEM_TYPE_P = 'FEM_PK_DISCONTINUOUS(2,0)';  % Discontinuous P1 for triangles
-
+DIRICHLET_WITH_MULTIPLIERS = 0;
 
 % DATA_FEM_TYPE must be defined if your main FEM is not Lagrangian
 DATA_FEM_TYPE = 'FEM_PK(2,1)';
 
 %INTEGRATION = 'IM_TETRAHEDRON(6)'; % quadrature rule for polynomials up
-                               % to degree 6 on tetra
-INTEGRATION = 'IM_TRIANGLE(6)'; % quadrature rule for polynomials up
-                               % to degree 6 on triangles
+                                    % to degree 6 on tetra
 %INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 5)';
 %INTEGRATION = 'IM_EXACT_SIMPLEX(2)'; % exact integration on triangles
 %INTEGRATION = 'IM_NC(2,6)';     % newton-cotes of degree 6 on triangles
 
 SIMPLEX_INTEGRATION = 'IM_TRIANGLE(6)';
-
-CUTOFF=0.2;
+INTEGRATION = 'IM_TRIANGLE(6)';
 
 ADDITIONAL_CRACK = 1;
-ENRICHMENT_OPTION = 2; % 0 = Pas d'enrichissement
+ENRICHMENT_OPTION = 0; % 0 = Pas d'enrichissement
 		       % 1 = global functions with cutoff
 	               % 2 = standard XFEM on a fixed zone 
 		       % 3 = with spider fem
 RADIUS_ENR_AREA = 0.1;
+CUTOFF=0.2;
+SPIDER_RADIUS =  0.2;
+SPIDER_NR =  3;         % size of the cartesian mesh in r for spider fem
+SPIDER_NTHETA = 5;      % size of the cartesian mesh in theta for spider fem
+SPIDER_K=1;             % order of the  spider fem 
 
 
 RESIDUE = 1E-9;     	% residue for conjugate gradient.
