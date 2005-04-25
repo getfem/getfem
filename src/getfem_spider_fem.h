@@ -51,7 +51,7 @@ namespace getfem {
   };
 
   struct interpolated_transformation : public virtual_interpolated_func{
-    /* la transormation et son gradient en coo polaires */
+    /* Polar transformation and its gradient. */
     base_small_vector trans;
     scalar_type theta0;
      
@@ -64,8 +64,7 @@ namespace getfem {
       base_node w =  xreal - trans;
       scalar_type r = gmm::vect_norm2(w); assert(gmm::abs(r)>1e-30);
       m(0,0) = w[0] / r; m(0,1) = w[1] / r;
-      m(1,0) = -xreal[1] / gmm::sqr(r);
-      m(1,0) = xreal[0] / gmm::sqr(r);
+      m(1,0) = -w[1] / gmm::sqr(r); m(1,1) = w[0] / gmm::sqr(r);
     }
     virtual void hess(const base_node &, base_matrix &) const
     { DAL_THROW(dal::failure_error,"this interpolated_func has no hessian"); }
@@ -76,28 +75,29 @@ namespace getfem {
 
 
   class spider_fem {
+    
+  protected :
+    
+    getfem_mesh cartesian;
+    mesh_fem cartesian_fem;
+    pfem Qk;
+    Xfem enriched_Qk;
+    scalar_type R;
+    unsigned Nr, Ntheta, K;
+    Xfem_sqrtr Sqrtr;
+    pfem final_fem;
+    interpolated_transformation itt;
 
-    protected :
-
-      getfem_mesh cartesian;
-      mesh_fem cartesian_fem;
-      pfem Qk;
-      Xfem enriched_Qk;
-      scalar_type R;
-      unsigned Nr, Ntheta, K;
-      Xfem_sqrtr Sqrtr;
-      pfem final_fem;
-      interpolated_transformation itt;
-
-    public :
-
-      pfem get_pfem(void) { return final_fem; }
-      
+  public :
+    
+    pfem get_pfem(void) { return final_fem; }
+    
     ~spider_fem () { if (final_fem) del_interpolated_fem(final_fem); }
-      
-    spider_fem(scalar_type R_, mesh_im &mim/*mesh_fem &target_fem*/, unsigned Nr_, unsigned Ntheta_,
-	     unsigned K_, base_small_vector translation, scalar_type theta0)
-        : cartesian_fem(cartesian), enriched_Qk(0), R(R_), Nr(Nr_), Ntheta(Ntheta_), K(K_), final_fem(0) {
+    
+    spider_fem(scalar_type R_, mesh_im &mim, unsigned Nr_, unsigned Ntheta_,
+	       unsigned K_, base_small_vector translation, scalar_type theta0)
+        : cartesian_fem(cartesian), enriched_Qk(0), R(R_), Nr(Nr_),
+	  Ntheta(Ntheta_), K(K_), final_fem(0) {
         
 	itt.trans = translation;
 	itt.theta0 = theta0;
@@ -134,12 +134,12 @@ namespace getfem {
 	enriched_Qk.add_func(Qk, &Sqrtr);
 	enriched_Qk.valid();
 
-	cartesian_fem.set_finite_element(cartesian.convex_index(),&enriched_Qk);  
+	cartesian_fem.set_finite_element(cartesian.convex_index(),
+					 &enriched_Qk);  
 	dal::bit_vector blocked_dof = cartesian_fem.dof_on_set(0);
-
-	final_fem = new_interpolated_fem(cartesian_fem, mim/*target_fem*/, &itt, blocked_dof);
+	
+	final_fem = new_interpolated_fem(cartesian_fem, mim,&itt,blocked_dof);
       }
-
   };
 
 

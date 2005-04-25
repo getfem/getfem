@@ -408,7 +408,7 @@ void crack_problem::init(void) {
   mf_pre_u.set_finite_element(mesh.convex_index(), pf_u);
   mf_partition_of_unity.set_classical_finite_element(1);
   
-  if (enrichment_option == 3) {
+  if (enrichment_option == 3 || enrichment_option == 4) {
     spider = new getfem::spider_fem(spider_radius, mim, spider_Nr,
 				    spider_Ntheta, spider_K, translation,
 				    theta0);
@@ -531,8 +531,8 @@ bool crack_problem::solve(plain_vector &U) {
       mf_u_sum.set_mesh_fems(mf_product, mfls_u);
     }
     break;
-  case 3 : // mf_u_sum.set_mesh_fems(mf_us, mfls_u); break;
-    mf_u_sum.set_mesh_fems(mf_us); break;
+  case 3 : mf_u_sum.set_mesh_fems(mf_us); break;
+  case 4 : mf_u_sum.set_mesh_fems(mf_us, mfls_u); break;
   default : mf_u_sum.set_mesh_fems(mfls_u); break;
   }
 
