@@ -304,7 +304,7 @@ struct crack_problem {
   getfem::mesh_fem mf_us;
 
   getfem::mesh_fem& mf_u() { return mf_u_sum; }
-  //getfem::mesh_fem& mf_u() { return mfls_u; }
+  // getfem::mesh_fem& mf_u() { return mf_us; }
   
 
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
@@ -531,7 +531,8 @@ bool crack_problem::solve(plain_vector &U) {
       mf_u_sum.set_mesh_fems(mf_product, mfls_u);
     }
     break;
-  case 3 : mf_u_sum.set_mesh_fems(mf_us, mfls_u); break;
+  case 3 : // mf_u_sum.set_mesh_fems(mf_us, mfls_u); break;
+    mf_u_sum.set_mesh_fems(mf_us); break;
   default : mf_u_sum.set_mesh_fems(mfls_u); break;
   }
 

@@ -40,12 +40,14 @@ namespace getfem {
 
 
   struct Xfem_sqrtr : public virtual_Xfem_func {
-    virtual scalar_type val(const Xfem_func_context &c) { return ::sqrt(c.xreal[0]); }
-                                                               /* comportement au fond de la fissure en racine r*/
+    virtual scalar_type val(const Xfem_func_context &c)
+    { return ::sqrt(c.xreal[0]); }
     virtual base_small_vector grad(const Xfem_func_context &c)
     { base_small_vector V(2); V[0] = 1. / (2.* ::sqrt(c.xreal[0])); return V; }
-    virtual base_matrix hess(const Xfem_func_context &c)
-    { base_matrix m(2,2); m(0,0) = -1. / (4.* ::sqrt(c.xreal[0])*c.xreal[0]); return m; }
+    virtual base_matrix hess(const Xfem_func_context &c) {
+      base_matrix m(2,2); m(0,0) = -1. / (4.* ::sqrt(c.xreal[0])*c.xreal[0]);
+      return m;
+    }
   };
 
   struct interpolated_transformation : public virtual_interpolated_func{
