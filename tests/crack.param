@@ -11,7 +11,7 @@ LAMBDA = 1.0;   	% Lamé coefficient.
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 %MESH_TYPE = 'GT_LINEAR_QK(2,1)'; % linear rectangles
 %MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
-NX = 40;            	          % space step.
+NX = 20;            	          % space step.
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 
 %FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 2)';
@@ -39,20 +39,20 @@ INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 5)';
 %INTEGRATION = 'IM_TRIANGLE(6)';
 
 ADDITIONAL_CRACK = 0;
-ENRICHMENT_OPTION = 3; % 0 = Pas d'enrichissement
-		       % 1 = global functions with cutoff
-	               % 2 = standard XFEM on a fixed zone 
-		       % 3 = with spider fem
+ENRICHMENT_OPTION = 3;  % 0 = Pas d'enrichissement
+		        % 1 = global functions with cutoff
+	                % 2 = standard XFEM on a fixed zone 
+		        % 3 = with spider fem
 
 RADIUS_ENR_AREA = 0.1;
 CUTOFF=0.2;
 SPIDER_RADIUS =  .8;
-SPIDER_NR =  20;         % size of the cartesian mesh in r for spider fem
-SPIDER_NTHETA = 20;      % size of the cartesian mesh in theta for spider fem
+SPIDER_NR =  10;        % size of the cartesian mesh in r for spider fem
+SPIDER_NTHETA = 10;     % size of the cartesian mesh in theta for spider fem
 SPIDER_K=2;             % order of the  spider fem 
 
 
-RESIDUE = 1E-9;     	% residue for conjugate gradient.
+RESIDUE = 1E-9;     	% residue for iterative methods if any.
 
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'crack';     % Root of data files.
