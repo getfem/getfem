@@ -102,7 +102,7 @@ namespace getfem {
   (const MAT &RM1, const MAT &RM2, const MAT3 &RM3, const MAT &RM4,
    const mesh_im &mim, const mesh_fem &mf_u3, const mesh_fem &mf_theta,
    const mesh_fem &mfdata, const VECT &MU) {
-    typedef typename gmm::linalg_traits<MAT>::value_type value_type;
+    typedef typename gmm::linalg_traits<VECT>::value_type value_type;
 
     if (mfdata.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
@@ -116,24 +116,30 @@ namespace getfem {
 			   "t2=comp(vBase(#2).vBase(#2).Base(#3));"
 			   "M$4(#2,#2)+=sym(A(k,:).t2(k,i,l,i,j).mu(j).A(l,:));"
 			   "t3=comp(Grad(#1).vBase(#2).Base(#3));"
-			   "M$2(#1,#2)+=t3(:,i,:,i,j).mu(j);"
-			   "M$3(#1,#2)+=t3(:,i,:,i,j).mu(j);"
+			   "M$2(#1,#2)+=t3(:,i,l,i,j).mu(j).A(l,:);"
+			   "M$3(#1,#2)+=t3(:,i,l,i,j).mu(j).A(l,:);"
 			   );
 
-    gmm::dense_matrix<value_type> A(8,8);
-    // remplir A;
-
+    std::vector<value_type> A(64);
+    // remplissage de A :
+    std::fill(A.begin(), A.end(), 0.) ;
+    A[ 0] = 0.5 ;   A[16] = 0.5 ;   A[36] = 0.5 ;   A[52] = 0.5 ;
+    A[ 2] = 0.5 ;   A[18] = 0.5 ;   A[38] = 0.5 ;   A[54] = 0.5 ;
+    A[ 9] = 0.5 ;   A[27] = 0.5 ;   A[41] = 0.5 ;   A[59] = 0.5 ;
+    A[13] = 0.5 ;   A[31] = 0.5 ;   A[45] = 0.5 ;   A[63] = 0.5 ;
+    
     assem.push_mi(mim);
     assem.push_mf(mf_u3);
     assem.push_mf(mf_theta);
     assem.push_mf(mfdata);
     assem.push_data(MU);
-    // assem.push_data(A);
+    assem.push_data(A);
     assem.push_mat(const_cast<MAT &>(RM1));
     assem.push_mat(const_cast<MAT &>(RM2));
     assem.push_mat(const_cast<MAT3 &>(RM3));
     assem.push_mat(const_cast<MAT &>(RM4));
     assem.volumic_assembly();
+    //cout << "RM3 = " << RM3 << endl; getchar();
   }
 
 
