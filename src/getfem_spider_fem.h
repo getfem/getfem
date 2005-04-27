@@ -116,16 +116,13 @@ namespace getfem {
 	V[1] = -M_PI;
 	cartesian.translation(V); 
 
-
 	getfem::convex_face_ct border_faces;
 	getfem::outer_faces_of_mesh(cartesian, border_faces);
 	for (getfem::convex_face_ct::const_iterator it = border_faces.begin();
 	     it != border_faces.end(); ++it) {
 	  base_node un = cartesian.normal_of_face_of_convex(it->cv, it->f);
 	  un /= gmm::vect_norm2(un);
-	  if (un[0] >= 0.8) { // new Neumann face
-	    cartesian.add_face_to_set(0, it->cv, it->f);
-	  }
+	  if (un[0] >= 0.8) cartesian.add_face_to_set(0, it->cv, it->f);
 	}
 
 	std::stringstream Qkname;
@@ -137,6 +134,7 @@ namespace getfem {
 	cartesian_fem.set_finite_element(cartesian.convex_index(),
 					 &enriched_Qk);  
 	dal::bit_vector blocked_dof = cartesian_fem.dof_on_set(0);
+	//	cout << "blocked dofs = " <<  blocked_dof << endl;
 	
 	final_fem = new_interpolated_fem(cartesian_fem, mim,&itt,blocked_dof);
       }
