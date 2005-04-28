@@ -188,7 +188,7 @@ namespace getfem {
       gmm::scale(mu, value_type(2) * epsilon);
       asm_stiffness_matrix_for_linear_elasticity
 	(gmm::sub_matrix(K, I1), mim, mf_ut, mf_data, lambda, mu);
-      gmm::scale(mu, value_type(1) / value_type(2));
+      // gmm::scale(mu, value_type(1) / value_type(2));
       if (mitc) 
 	asm_stiffness_matrix_for_plate_transverse_shear_mitc
 	  (gmm::sub_matrix(K, I2), mim_subint, mf_u3, mf_theta, mf_data, mu);
@@ -196,7 +196,8 @@ namespace getfem {
 	asm_stiffness_matrix_for_plate_transverse_shear
 	  (gmm::sub_matrix(K, I2), mim_subint, mf_u3, mf_theta, mf_data, mu);
       gmm::scale(lambda, epsilon * epsilon / value_type(3));
-      gmm::scale(mu, value_type(2) * epsilon * epsilon / value_type(3));
+      // gmm::scale(mu, value_type(2) * epsilon * epsilon / value_type(3));
+      gmm::scale(mu, epsilon * epsilon / value_type(3));
       asm_stiffness_matrix_for_linear_elasticity
 	(gmm::sub_matrix(K, I3), mim, mf_theta, mf_data, lambda, mu);
       this->computed();
@@ -381,24 +382,6 @@ namespace getfem {
     assem.volumic_assembly();
   }
 
-  //   template<class MAT> void affiche_moi_valp(const MAT &M) {
-  //     size_type nrows = gmm::mat_nrows(M);
-  //     size_type ncols = gmm::mat_ncols(M);
-  //     size_type nreddof = std::min(nrows, ncols);
-  //     gmm::dense_matrix<double> MM(nreddof, nreddof);
-  //     if (nrows < ncols)
-  //       gmm::mult(M, gmm::transposed(M), MM);
-  //     else if (nrows > ncols)
-  //       gmm::mult(gmm::transposed(M), M, MM);
-  //     else 
-  //       gmm::copy(M, MM);
-  //     std::vector<double> eigval(nreddof);
-  //     gmm::symmetric_qr_algorithm(MM, eigval);
-  //     //     std::sort(eigval.begin(), eigval.end(), Esort);
-  //     cout << "eival = " << eigval << endl;
-  //   }
-
-
   /* ******************************************************************** */
   /*		Mixed linear plate model brick.                           */
   /* ******************************************************************** */
@@ -452,8 +435,8 @@ namespace getfem {
       
       asm_stiffness_matrix_for_linear_elasticity
 	(gmm::sub_matrix(K, I3), mim, mf_theta, mf_data, lambda, mu);
-      //       gmm::scale(gmm::sub_matrix(K, I3),
-      //  		 value_type(2) * epsilon * epsilon * epsilon / value_type(3));
+      //   gmm::scale(gmm::sub_matrix(K, I3),
+      //  	 value_type(2) * epsilon * epsilon * epsilon / value_type(3));
       
       
       asm_coupling_u3theta(gmm::sub_matrix(K, I2, I3), mim, mf_u3, mf_theta);
