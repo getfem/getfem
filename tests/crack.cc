@@ -511,7 +511,7 @@ bool crack_problem::solve(plain_vector &U) {
 
   switch (enrichment_option) {
   case 1 : mf_u_sum.set_mesh_fems(mf_sing_u, mfls_u); break;
-  case 2 : 
+  case 2 :
     {
       dal::bit_vector enriched_dofs;
       plain_vector X(mf_partition_of_unity.nb_dof());

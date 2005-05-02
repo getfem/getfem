@@ -70,8 +70,7 @@ namespace getfem {
 			   "M$4(#2,#2)+=sym(t2(:,i,:,i,j).mu(j));"
 			   "t3=comp(Grad(#1).vBase(#2).Base(#3));"
 			   "M$2(#1,#2)+=t3(:,i,:,i,j).mu(j);"
-			   "M$3(#1,#2)+=t3(:,i,:,i,j).mu(j);"
-			   );
+			   "M$3(#1,#2)+=t3(:,i,:,i,j).mu(j);");
     assem.push_mi(mim);
     assem.push_mf(mf_u3);
     assem.push_mf(mf_theta);

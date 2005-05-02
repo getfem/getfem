@@ -11,7 +11,7 @@ LAMBDA = 1.0;   	% Lamé coefficient.
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 %MESH_TYPE = 'GT_LINEAR_QK(2,1)'; % linear rectangles
 %MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
-NX = 40;            	          % space step.
+NX = 10;            	          % space step.
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 
 %FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 2)';
@@ -47,8 +47,8 @@ ENRICHMENT_OPTION = 4;  % 0 = Pas d'enrichissement
 
 RADIUS_ENR_AREA = 0.1;
 CUTOFF=0.2;
-SPIDER_RADIUS =  .05;
-SPIDER_NR =  15;        % size of the cartesian mesh in r for spider fem
+SPIDER_RADIUS =  .3;
+SPIDER_NR =  5;        % size of the cartesian mesh in r for spider fem
 SPIDER_NTHETA = 15;     % size of the cartesian mesh in theta for spider fem
 SPIDER_K=1;             % order of the  spider fem 
 

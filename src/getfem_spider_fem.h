@@ -135,7 +135,7 @@ namespace getfem {
 					 &enriched_Qk);  
 	dal::bit_vector blocked_dof = cartesian_fem.dof_on_set(0);
 	//	cout << "blocked dofs = " <<  blocked_dof << endl;
-	
+
 	final_fem = new_interpolated_fem(cartesian_fem, mim,&itt,blocked_dof);
       }
   };

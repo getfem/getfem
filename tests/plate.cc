@@ -72,7 +72,7 @@ struct plate_problem {
   scalar_type pressure;
   scalar_type residu;        /* max residu for the iterative solvers         */
   scalar_type LX;
-  bool mixed, symmetrized;
+  bool mixed, symmetrized, mitc;
 
   std::string datafilename;
   ftool::md_param PARAM;
@@ -127,6 +127,7 @@ void plate_problem::init(void) {
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residu = PARAM.real_value("RESIDU"); if (residu == 0.) residu = 1e-10;
   mixed = (PARAM.int_value("MIXED", "Mixed version ?") != 0);
+  mitc = (PARAM.int_value("MITC", "Mitc version ?") != 0);
   symmetrized = (PARAM.int_value("SYMMETRIZED",
 				 "Mixed symmetrized version ?") != 0);
 
@@ -202,7 +203,7 @@ base_small_vector plate_problem::theta_exact(base_node P) {
 scalar_type plate_problem::u3_exact(base_node P) {
   return (pressure / (32. * mu * epsilon * epsilon * epsilon))
     * P[0] * (P[0] - LX)
-    * (gmm::sqr(P[0]-LX*.5) - 1.25*LX*LX - (mixed ? 0. : (16.*epsilon*epsilon)));
+    * (gmm::sqr(P[0]-LX*.5)- 1.25*LX*LX - (mixed ? 0. : (8.*epsilon*epsilon)));
 }
 
 
@@ -276,6 +277,7 @@ bool plate_problem::solve(plain_vector &U) {
   getfem::mdbrick_isotropic_linearized_plate<>
     ELAS1(mim, mim_subint, mf_ut, mf_u3, mf_theta, mf_coef, lambda,
 	  mu, epsilon);
+  if (mitc) ELAS1.set_mitc();
 
   getfem::mdbrick_mixed_isotropic_linearized_plate<>
     ELAS2(mim, mf_ut, mf_u3, mf_theta, mf_coef, lambda, mu, epsilon,
