@@ -1,4 +1,4 @@
-// -*- c++ -*- (enables emacs c++ mode) 
+// -*- c++ -*- (enables emacs c++ mode)
 /* *********************************************************************** */
 /*                                                                         */
 /* Copyright (C) 2002-2005 Yves Renard, Michel Salaün.                     */
@@ -72,7 +72,14 @@ struct plate_problem {
   scalar_type pressure;
   scalar_type residu;        /* max residu for the iterative solvers         */
   scalar_type LX;
-  bool mixed, symmetrized, mitc;
+  bool mixed, symmetrized;
+  bool mitc;
+  int sol_ref;               // sol_ref = 0 : simple support on the vertical edges
+                             // sol_ref = 1 : homogeneous on the vertical edges
+                             // sol_ref = 2 : homogeneous on the 4 vertical edges with solution u3 = sin²(x)*sin²(y)
+  scalar_type eta;           // usefull only if sol_ref == 2 :
+                             // eta = 0 => Kirchoff-Love
+			     // eta = small => Mindlin  
 
   std::string datafilename;
   ftool::md_param PARAM;
@@ -112,7 +119,7 @@ void plate_problem::init(void) {
     DAL_THROW(getfem::failure_error, "For a plate problem, N should be 2");
   std::vector<size_type> nsubdiv(N);
   std::fill(nsubdiv.begin(),nsubdiv.end(),
-	    PARAM.int_value("NX", "Nomber of space steps "));
+	    PARAM.int_value("NX", "Number of space steps "));
   getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
 			    PARAM.int_value("MESH_NOISED") != 0);
   
@@ -130,7 +137,20 @@ void plate_problem::init(void) {
   mitc = (PARAM.int_value("MITC", "Mitc version ?") != 0);
   symmetrized = (PARAM.int_value("SYMMETRIZED",
 				 "Mixed symmetrized version ?") != 0);
-
+  
+  mitc = (PARAM.int_value("MITC") != 0 ) ;
+  cout << "MITC = " ;
+  if (mitc) cout << "true \n" ; else cout << "false \n" ;
+  sol_ref = (PARAM.int_value("SOL_REF") ) ;
+  eta = (PARAM.real_value("ETA") );
+  cout << "SOL_REF = " ;
+  if (sol_ref==0) cout << "appui simple aux 2 bords verticaux\n" ;
+  if (sol_ref==1) cout << "encastrement aux 2 bords verticaux\n" ;
+  if (sol_ref==2) {
+  cout << "encastrement aux 4 bords verticaux, solution en sin(x)^2*sin(y)^2\n" ;
+  cout << "eta = " << eta <<"\n";
+  }
+  
   mu = PARAM.real_value("MU", "Lamé coefficient mu");
   lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
   pressure = PARAM.real_value("PRESSURE",
@@ -189,21 +209,47 @@ void plate_problem::init(void) {
     if (gmm::abs(un[1]) <= 1.0E-7) { // new Neumann face
       mesh.add_face_to_set(SIMPLY_FIXED_BOUNDARY_NUM, it->cv, it->f);
     }
+    if ((sol_ref == 2)&&(gmm::abs(un[0]) <= 1.0E-7)){ 
+      mesh.add_face_to_set(SIMPLY_FIXED_BOUNDARY_NUM, it ->cv, it ->f);
+    }
   }
 }
 
 base_small_vector plate_problem::theta_exact(base_node P) {
   base_small_vector theta(2);
-  theta[0] = (-pressure / (32. * mu * epsilon * epsilon * epsilon))
-    * (4. * pow(P[0] - LX*.5, 3) - 3*LX*LX*(P[0] - LX * .5));
-  theta[1] = 0;
+  if (sol_ref == 0) { // appui simple aux 2 bords
+     theta[0] = (-pressure / (32. * mu * epsilon * epsilon * epsilon))
+              * (4. * pow(P[0] - LX * .5, 3) - 3 * LX * LX * (P[0] - LX * .5));
+     theta[1] = 0;
+   }
+  if (sol_ref == 1) {       // encastrement aux 2 bords
+     theta[0] = (-pressure / (16. * mu * epsilon * epsilon * epsilon))
+              * P[0] * ( 2.*P[0]*P[0] - 3.* P[0] * LX + LX * LX ) ;
+     theta[1] = 0;
+     }
+  if (sol_ref == 2) { // encastrement aux 4 bords et sols vraiment 2D, non polynomiale
+     theta[0] = - (1. + eta) * M_PI * sin(2.*M_PI*P[0]) * sin(M_PI*P[1])* sin(M_PI*P[1]) ;
+     theta[1] = - (1. + eta) * M_PI * sin(2.*M_PI*P[1]) * sin(M_PI*P[0])* sin(M_PI*P[0]) ;}
+  
   return theta;
 }
 
 scalar_type plate_problem::u3_exact(base_node P) {
-  return (pressure / (32. * mu * epsilon * epsilon * epsilon))
-    * P[0] * (P[0] - LX)
-    * (gmm::sqr(P[0]-LX*.5)- 1.25*LX*LX - (mixed ? 0. : (8.*epsilon*epsilon)));
+  if (sol_ref <= 2){
+	if (sol_ref == 0)  
+	return (pressure / (32. * mu * epsilon * epsilon * epsilon))
+	* P[0] * (P[0] - LX)
+	* (gmm::sqr(P[0] - LX * .5) -1.25*LX*LX-(mixed ? 0 : 8.*epsilon*epsilon));
+	if (sol_ref == 1)
+	return (pressure /(32.* mu * epsilon * epsilon * epsilon))
+	* P[0] * (P[0] - LX)
+	* ( P[0] * P[0] - LX * P[0] - 8. * epsilon *epsilon) ;
+	if (sol_ref == 2) 
+	return  sin(M_PI*P[0]) * sin(M_PI*P[0]) * sin(M_PI*P[1]) * sin(M_PI*P[1]) ;}
+  else{
+  	cout << " indice de solution de référence incorrect\n" ;
+  return 0. ;
+  }
 }
 
 
@@ -224,9 +270,9 @@ void plate_problem::compute_error(plain_vector &U) {
   scalar_type h1 = gmm::sqr(getfem::asm_H1_norm(mim, mf_rhs, V));
   scalar_type linf = gmm::vect_norminf(V);
   mf_rhs.set_qdim(1);
-  cout << "L2 error on membrane displacement     = " << sqrt(l2) << endl
-       << "H1 error on membrane displacement     = " << sqrt(h1) << endl
-       << "Linfty error on membrane displacement = " << linf << endl;
+  cout << "L2 error = " << sqrt(l2) << endl
+       << "H1 error = " << sqrt(h1) << endl
+       << "Linfty error = " << linf << endl;
 
   getfem::interpolation(mf_theta, mf_rhs,
 			gmm::sub_vector(U, gmm::sub_interval(i1+i2, i3)), V);
@@ -235,13 +281,13 @@ void plate_problem::compute_error(plain_vector &U) {
 	     gmm::sub_vector(V, gmm::sub_interval(i*2, 2)));
   }
   mf_rhs.set_qdim(2);
-  l2 = gmm::sqr(getfem::asm_L2_norm(mim, mf_rhs, V));
-  h1 = gmm::sqr(getfem::asm_H1_norm(mim, mf_rhs, V));
-  linf = gmm::vect_norminf(V);
+  l2 += gmm::sqr(getfem::asm_L2_norm(mim, mf_rhs, V));
+  h1 += gmm::sqr(getfem::asm_H1_norm(mim, mf_rhs, V));
+  linf = std::max(linf, gmm::vect_norminf(V));
   mf_rhs.set_qdim(1);
-  cout << "L2 error on rotation     = " << sqrt(l2) << endl
-       << "H1 error on rotation     = " << sqrt(h1) << endl
-       << "Linfty error on rotation = " << linf << endl;
+  cout << "L2 error = " << sqrt(l2) << endl
+       << "H1 error = " << sqrt(h1) << endl
+       << "Linfty error = " << linf << endl;
 
   gmm::resize(V, mf_rhs.nb_dof());
   getfem::interpolation(mf_u3, mf_rhs,
@@ -250,14 +296,16 @@ void plate_problem::compute_error(plain_vector &U) {
   for (size_type i = 0; i < mf_rhs.nb_dof(); ++i)
     V[i] -= u3_exact(mf_rhs.point_of_dof(i));
 
-  l2 = gmm::sqr(getfem::asm_L2_norm(mim, mf_rhs, V));
-  h1 = gmm::sqr(getfem::asm_H1_norm(mim, mf_rhs, V));
-  linf = gmm::vect_norminf(V);
+  l2 += gmm::sqr(getfem::asm_L2_norm(mim, mf_rhs, V));
+  h1 += gmm::sqr(getfem::asm_H1_norm(mim, mf_rhs, V));
+  linf = std::max(linf, gmm::vect_norminf(V));
 
   cout.precision(16);
-  cout << "L2 error on normal displacement     = " << sqrt(l2) << endl
-       << "H1 error on normal displacement     = " << sqrt(h1) << endl
-       << "Linfty error on normal displacement = " << linf << endl;
+  cout << "L2 error = " << sqrt(l2) << endl
+       << "H1 error = " << sqrt(h1) << endl
+       << "Linfty error = " << linf << endl;
+       
+  
 }
 
 /**************************************************************************/
@@ -271,7 +319,7 @@ bool plate_problem::solve(plain_vector &U) {
   cout << "Number of dof for u3: " << mf_u3.nb_dof() << endl;
   cout << "Number of dof for theta: " << mf_theta.nb_dof() << endl;
 
-  getfem::mdbrick_abstract<> *ELAS;
+  getfem::mdbrick_abstract<> *ELAS,*SIMPLE ;
 
   // Linearized plate brick.
   getfem::mdbrick_isotropic_linearized_plate<>
@@ -279,6 +327,8 @@ bool plate_problem::solve(plain_vector &U) {
 	  mu, epsilon);
   if (mitc) ELAS1.set_mitc();
 
+  if (mitc) ELAS1.set_mitc();
+  
   getfem::mdbrick_mixed_isotropic_linearized_plate<>
     ELAS2(mim, mf_ut, mf_u3, mf_theta, mf_coef, lambda, mu, epsilon,
 	  symmetrized);
@@ -286,14 +336,51 @@ bool plate_problem::solve(plain_vector &U) {
   if (mixed) ELAS = &ELAS2; else ELAS = &ELAS1;
 
   // Defining the surface source term.
-  plain_vector F(nb_dof_rhs * 3);
-  for (size_type i = 0; i < nb_dof_rhs; ++i) F[3*i+2] = pressure;
-  getfem::mdbrick_plate_source_term<> VOL_F(*ELAS, mf_rhs, F);
+  plain_vector F(nb_dof_rhs * 3); 
+  plain_vector M(nb_dof_rhs * 2);
+  if (sol_ref == 2) {
+     base_small_vector P(2) ;
+     scalar_type E, nu, sx, sy, cx, cy, s2x, s2y, c2x, c2y ;
+     E = mu * (2. * mu + 3. * lambda) / (mu + lambda) ;
+     nu = lambda / 2. / ( mu + lambda) ;
+     for (size_type i = 0; i < nb_dof_rhs; ++i) {
+       P   = mf_rhs.point_of_dof(i);
+       sx  = sin(M_PI*P[0]) ;
+       cx  = cos(M_PI*P[0]) ;
+       sy  = sin(M_PI*P[1]) ;
+       cy  = cos(M_PI*P[1]) ;
+       c2x = cos(2.*M_PI*P[0]) ;
+       c2y = cos(2.*M_PI*P[1]) ;
+       s2x = sin(2.*M_PI*P[0]) ;
+       s2y = sin(2.*M_PI*P[1]) ;
+       F[3*i+2] = 2. * epsilon * E * M_PI * M_PI * eta *
+                  ( sy * sy * c2x + sx * sx * c2y ) / ( 1. + nu ) ;
+       M[2*i]   = (epsilon * epsilon * epsilon * E * M_PI * s2x / 3. / (1. + nu)) * (
+                  (4. * M_PI * M_PI * (1. + eta) * (2. * c2y - 1.) / (1.- nu))  
+		  - 3. * eta  * sy * sy / epsilon / epsilon ) ;
+       M[2*i+1] = (epsilon * epsilon * epsilon * E * M_PI * s2y / 3. / (1. + nu)) * (
+                  (4. * M_PI * M_PI * (1. + eta) * (2. * c2x - 1.) / (1.- nu))  
+		  - 3. * eta  * sx * sx / epsilon / epsilon ) ;
+     }
+  }
+  else  // sol_ref = 0 or 1
+     for (size_type i = 0; i < nb_dof_rhs; ++i) {
+       F[3*i+2] = pressure;
+  }
   
-  getfem::mdbrick_plate_simple_support<> SIMPLE
+  getfem::mdbrick_plate_source_term<> VOL_F(*ELAS, mf_rhs, F, M);
+  
+  getfem::mdbrick_plate_simple_support<> SIMPLE0
     (VOL_F, mf_rhs, SIMPLY_FIXED_BOUNDARY_NUM, 0, 1);
-
-  getfem::mdbrick_plate_closing<> final_model(SIMPLE, 0, 1);
+  getfem::mdbrick_plate_clamped_support<> SIMPLE1
+    (VOL_F, mf_rhs, SIMPLY_FIXED_BOUNDARY_NUM, 0, 1);
+    
+  if (sol_ref == 0) SIMPLE = &SIMPLE0 ;
+  if (sol_ref == 1) SIMPLE = &SIMPLE1 ;
+  if (sol_ref == 2) SIMPLE = &SIMPLE1 ;
+  
+  
+  getfem::mdbrick_plate_closing<> final_model(*SIMPLE, 0, 1);
   
 
   // Generic solve.
@@ -320,7 +407,13 @@ bool plate_problem::solve(plain_vector &U) {
 //       "mayavi -d " << datafilename << ".vtk -f ExtractVectorNorm -f "
 //       "WarpVector -m BandedSurfaceMap -m Outline\n";
   }
-
+    if (PARAM.int_value("DX_EXPORT")) {
+    cout << "export to " << datafilename + ".dx" << "..\n";
+    getfem::dx_export exp(datafilename + ".dx",
+			   PARAM.int_value("DX_EXPORT")==1);
+    exp.exporting(mf_u3); 
+    exp.write_point_data(mf_u3, U, "plate_normal_displacement");
+  }
   // Solution extraction
   gmm::resize(U, ELAS->nb_dof());
   if (mixed) gmm::copy(ELAS2.get_solution(MS), U);
@@ -345,6 +438,7 @@ int main(int argc, char *argv[]) {
     plate_problem p;
     p.PARAM.read_command_line(argc, argv);
     p.init();
+    if ((p.sol_ref == 0) || (p.sol_ref ==1))
     p.pressure *= p.epsilon * p.epsilon * p.epsilon;
     p.mesh.write_to_file(p.datafilename + ".mesh");
     plain_vector U;
