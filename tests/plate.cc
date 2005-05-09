@@ -76,7 +76,8 @@ struct plate_problem {
   bool mitc;
   int sol_ref;               // sol_ref = 0 : simple support on the vertical edges
                              // sol_ref = 1 : homogeneous on the vertical edges
-                             // sol_ref = 2 : homogeneous on the 4 vertical edges with solution u3 = sin²(x)*sin²(y)
+                             // sol_ref = 2 : homogeneous on the 4 vertical
+                             //       edges with solution u3 = sin²(x)*sin²(y)
   scalar_type eta;           // usefull only if sol_ref == 2 :
                              // eta = 0 => Kirchoff-Love
 			     // eta = small => Mindlin  
@@ -236,20 +237,19 @@ base_small_vector plate_problem::theta_exact(base_node P) {
 
 scalar_type plate_problem::u3_exact(base_node P) {
   if (sol_ref <= 2){
-	if (sol_ref == 0)  
-	return (pressure / (32. * mu * epsilon * epsilon * epsilon))
+    if (sol_ref == 0)  
+      return (pressure / (32. * mu * epsilon * epsilon * epsilon))
 	* P[0] * (P[0] - LX)
 	* (gmm::sqr(P[0] - LX * .5) -1.25*LX*LX-(mixed ? 0 : 8.*epsilon*epsilon));
-	if (sol_ref == 1)
-	return (pressure /(32.* mu * epsilon * epsilon * epsilon))
+    if (sol_ref == 1)
+      return (pressure /(32.* mu * epsilon * epsilon * epsilon))
 	* P[0] * (P[0] - LX)
 	* ( P[0] * P[0] - LX * P[0] - 8. * epsilon *epsilon) ;
-	if (sol_ref == 2) 
-	return  sin(M_PI*P[0]) * sin(M_PI*P[0]) * sin(M_PI*P[1]) * sin(M_PI*P[1]) ;}
-  else{
-  	cout << " indice de solution de référence incorrect\n" ;
-  return 0. ;
-  }
+    if (sol_ref == 2) 
+      return  sin(M_PI*P[0]) * sin(M_PI*P[0]) * sin(M_PI*P[1]) * sin(M_PI*P[1]) ;}
+  else DAL_THROW(dal::failure_error, 
+		 "indice de solution de référence incorrect");
+  return 0;
 }
 
 
@@ -319,7 +319,7 @@ bool plate_problem::solve(plain_vector &U) {
   cout << "Number of dof for u3: " << mf_u3.nb_dof() << endl;
   cout << "Number of dof for theta: " << mf_theta.nb_dof() << endl;
 
-  getfem::mdbrick_abstract<> *ELAS,*SIMPLE ;
+  getfem::mdbrick_abstract<> *ELAS, *SIMPLE(0);
 
   // Linearized plate brick.
   getfem::mdbrick_isotropic_linearized_plate<>
