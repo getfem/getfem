@@ -227,20 +227,17 @@ base_small_vector plate_problem::theta_exact(base_node P) {
 }
 
 scalar_type plate_problem::u3_exact(base_node P) {
-  if (sol_ref <= 2){
-    if (sol_ref == 0)  
-      return (pressure / (32. * mu * epsilon * epsilon * epsilon))
-	* P[0] * (P[0] - 1.)
-	* (gmm::sqr(P[0] - .5) -1.25-(mixed ? 0 : 8.*epsilon*epsilon));
-    if (sol_ref == 1)
-      return (pressure /(32.* mu * epsilon * epsilon * epsilon))
-	* P[0] * (P[0] - 1.)
-	* ( P[0] * P[0] - P[0] - 8. * epsilon *epsilon) ;
-    if (sol_ref == 2) 
-      return  sin(M_PI*P[0]) * sin(M_PI*P[0]) * sin(M_PI*P[1]) * sin(M_PI*P[1]) ;}
-  else DAL_THROW(dal::failure_error, 
+  switch(sol_ref) {
+  case 0 : return (pressure / (32. * mu * epsilon * epsilon * epsilon))
+      * P[0] * (P[0] - 1.)
+      * (gmm::sqr(P[0] - .5) -1.25-(mixed ? 0 : 8.*epsilon*epsilon));
+  case 1 : return (pressure /(32.* mu * epsilon * epsilon * epsilon))
+      * P[0] * (P[0] - 1.)
+      * ( P[0] * P[0] - P[0] - 8. * epsilon *epsilon) ;
+  case 2 : return  gmm::sqr(sin(M_PI*P[0])) * gmm::sqr(sin(M_PI*P[1]));
+  default : DAL_THROW(dal::failure_error, 
 		 "indice de solution de référence incorrect");
-  return 0;
+  }
 }
 
 

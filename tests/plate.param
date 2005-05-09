@@ -14,7 +14,7 @@ EPSILON = 0.1;          % thickness of the plate
 
 %%%%% parameters for testing some analytical solutions :
  			
-SOL_REF = 0;            % boundary conditions :
+SOL_REF = 2;            % boundary conditions :
 			% 0 = simple support on the vertical edges.
 			%     valid if lambda = 0 
                         % 1 = homogeneous Dirichlet on the vertical edges.
