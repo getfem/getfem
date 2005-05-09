@@ -6,8 +6,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%% pde parameters :	      %%%%%
-LX = 1.0;		% size in X.
-LY = 1.0;	        % size in Y.
 % MU = 77.0;	        % Lamé coefficient.
 % LAMBDA = 107.0;   	% Lamé coefficient.
 MU = 1.0;	        % Lamé coefficient.
@@ -16,7 +14,7 @@ EPSILON = 0.1;          % thickness of the plate
 
 %%%%% parameters for testing some analytical solutions :
  			
-SOL_REF = 2;            % boundary conditions :
+SOL_REF = 0;            % boundary conditions :
 			% 0 = simple support on the vertical edges.
 			%     valid if lambda = 0 
                         % 1 = homogeneous Dirichlet on the vertical edges.
@@ -24,7 +22,7 @@ SOL_REF = 2;            % boundary conditions :
                         % 2 = Clamped on the four edges 
 			%     (solution u3 = sin^2(x)*sin^2(y)
 			
-PRESSURE = 1.0;         % pressure on the top surface of the plate 
+PRESSURE = 100.0;       % pressure on the top surface of the plate 
 			% (only usefull if SOL_REF = 0 or 1)  
 			% will be multiplied by EPSILON^3.
 			  

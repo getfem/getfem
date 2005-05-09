@@ -6,9 +6,6 @@ $SIG{INT} = 'catch';
 
 open(TMPF, ">$tmp") or die "Open file impossible : $!\n";
 print TMPF <<
-LX = 1.0;		% size in X.
-LY = 1.0;	        % size in Y.
-LZ = 1.0;		% size in Z.
 MU = 1.0;	        % Lamé coefficient.
 LAMBDA = 0.0;   	% Lamé coefficient.
 EPSILON = 0.01;          % thickness of the plate
@@ -27,6 +24,8 @@ ROOTFILENAME = 'plate';     % Root of data files.
 VTK_EXPORT = 2 % export solution to a .vtk file ?
 MIXED = 1;
 SYMMETRIZED = 1;
+SOL_REF = 2;
+ETA = 0.;
 
 ;
 close(TMPF);

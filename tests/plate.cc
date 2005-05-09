@@ -71,7 +71,6 @@ struct plate_problem {
   scalar_type epsilon;       /* thickness of the plate.                      */
   scalar_type pressure;
   scalar_type residu;        /* max residu for the iterative solvers         */
-  scalar_type LX;
   bool mixed, symmetrized;
   bool mitc;
   int sol_ref;               // sol_ref = 0 : simple support on the vertical edges
@@ -123,14 +122,6 @@ void plate_problem::init(void) {
 	    PARAM.int_value("NX", "Number of space steps "));
   getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
 			    PARAM.int_value("MESH_NOISED") != 0);
-  
-  LX =  PARAM.real_value("LX");
-  bgeot::base_matrix M(N,N);
-  for (size_type i=0; i < N; ++i) {
-    static const char *t[] = {"LX","LY","LZ"};
-    M(i,i) = (i<3) ? PARAM.real_value(t[i],t[i]) : 1.0;
-  }
-  mesh.transformation(M);
 
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residu = PARAM.real_value("RESIDU"); if (residu == 0.) residu = 1e-10;
@@ -220,12 +211,12 @@ base_small_vector plate_problem::theta_exact(base_node P) {
   base_small_vector theta(2);
   if (sol_ref == 0) { // appui simple aux 2 bords
      theta[0] = (-pressure / (32. * mu * epsilon * epsilon * epsilon))
-              * (4. * pow(P[0] - LX * .5, 3) - 3 * LX * LX * (P[0] - LX * .5));
+              * (4. * pow(P[0] - .5, 3) - 3 * (P[0] - .5));
      theta[1] = 0;
    }
   if (sol_ref == 1) {       // encastrement aux 2 bords
      theta[0] = (-pressure / (16. * mu * epsilon * epsilon * epsilon))
-              * P[0] * ( 2.*P[0]*P[0] - 3.* P[0] * LX + LX * LX ) ;
+              * P[0] * ( 2.*P[0]*P[0] - 3.* P[0] + 1. ) ;
      theta[1] = 0;
      }
   if (sol_ref == 2) { // encastrement aux 4 bords et sols vraiment 2D, non polynomiale
@@ -239,12 +230,12 @@ scalar_type plate_problem::u3_exact(base_node P) {
   if (sol_ref <= 2){
     if (sol_ref == 0)  
       return (pressure / (32. * mu * epsilon * epsilon * epsilon))
-	* P[0] * (P[0] - LX)
-	* (gmm::sqr(P[0] - LX * .5) -1.25*LX*LX-(mixed ? 0 : 8.*epsilon*epsilon));
+	* P[0] * (P[0] - 1.)
+	* (gmm::sqr(P[0] - .5) -1.25-(mixed ? 0 : 8.*epsilon*epsilon));
     if (sol_ref == 1)
       return (pressure /(32.* mu * epsilon * epsilon * epsilon))
-	* P[0] * (P[0] - LX)
-	* ( P[0] * P[0] - LX * P[0] - 8. * epsilon *epsilon) ;
+	* P[0] * (P[0] - 1.)
+	* ( P[0] * P[0] - P[0] - 8. * epsilon *epsilon) ;
     if (sol_ref == 2) 
       return  sin(M_PI*P[0]) * sin(M_PI*P[0]) * sin(M_PI*P[1]) * sin(M_PI*P[1]) ;}
   else DAL_THROW(dal::failure_error, 
