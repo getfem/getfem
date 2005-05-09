@@ -329,8 +329,10 @@ bool plate_problem::solve(plain_vector &U) {
   if (sol_ref == 2) {
      base_small_vector P(2) ;
      scalar_type E, nu, sx, sy, cx, cy, s2x, s2y, c2x, c2y ;
-     E = mu * (2. * mu + 3. * lambda) / (mu + lambda) ;
-     nu = lambda / 2. / ( mu + lambda) ;
+     // E = mu * (2. * mu + 3. * lambda) / (mu + lambda) ;
+     // nu = lambda / 2. / ( mu + lambda) ;
+     E = 4.*mu*(mu+lambda) / (2. * mu + lambda);
+     nu = lambda / (2. * mu + lambda);
      for (size_type i = 0; i < nb_dof_rhs; ++i) {
        P   = mf_rhs.point_of_dof(i);
        sx  = sin(M_PI*P[0]) ;
