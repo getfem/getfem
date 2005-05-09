@@ -41,7 +41,7 @@
 /*                     coercive.                                           */
 /*  - compute_tangent_matrix(MS, i0, j0, modified) : the brick has to call */
 /*        the compute_tangent_matrix(MS, i0,modified) of sub-problem(s) if */
-/*        any and to compute  its own part of the tangentand constraint    */
+/*        any and to compute  its own part of the tangent and constraint   */
 /*        matrices (i0 and j0 are the shifts in the matrices defined in MS)*/
 /*        modified indicates if the part of the tangent matrix dedicated   */
 /*        to this brick will be modified by other bricks.                  */

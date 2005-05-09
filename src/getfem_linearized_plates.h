@@ -622,7 +622,7 @@ namespace getfem {
     typedef typename MODEL_STATE::vector_type VECTOR;
     typedef typename MODEL_STATE::value_type value_type;
 
-    mdbrick_source_term<MODEL_STATE> *ut_part,*u3_part,*phi_part,*sub_problem;
+    mdbrick_source_term<MODEL_STATE> *ut_part,*theta_part,*u3_part,*phi_part,*sub_problem;
 
   public :
 
@@ -639,9 +639,10 @@ namespace getfem {
 
     mdbrick_plate_source_term(mdbrick_abstract<MODEL_STATE> &problem,
 			      mesh_fem &mf_data, const VECTOR &B,
+			      const VECTOR &M,
 			      size_type bound = size_type(-1),
 			      size_type num_fem = 0) {
-      ut_part = phi_part = u3_part = 0;
+      ut_part = phi_part = u3_part = theta_part = 0;
       bool mixed = false, symmetrized = false;
       if (problem.get_mesh_fem_info(num_fem).brick_ident
 	  == MDBRICK_LINEAR_PLATE)
@@ -663,8 +664,11 @@ namespace getfem {
 		gmm::sub_vector(Bt, gmm::sub_slice(0, n, 2)));
       gmm::copy(gmm::sub_vector(B, gmm::sub_slice(1, n, 3)),
 		gmm::sub_vector(Bt, gmm::sub_slice(1, n, 2)));
+      theta_part = new mdbrick_source_term<MODEL_STATE>
+	(problem, mf_data, M, bound, num_fem+2);
+
       ut_part = sub_problem = new mdbrick_source_term<MODEL_STATE>
-	(problem, mf_data, Bt, bound, num_fem);
+	(*theta_part, mf_data, Bt, bound, num_fem);
       VECTOR Bn(n);
       gmm::copy(gmm::sub_vector(B, gmm::sub_slice(2, n, 3)), Bn);
       if (!mixed || symmetrized)
@@ -687,6 +691,7 @@ namespace getfem {
       delete ut_part;
       if (u3_part) delete u3_part;
       if (phi_part) delete phi_part;
+      if (theta_part) delete theta_part;
     }
     
   };
