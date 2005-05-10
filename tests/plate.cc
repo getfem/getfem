@@ -129,8 +129,7 @@ void plate_problem::init(void) {
   mitc = (PARAM.int_value("MITC", "Mitc version ?") != 0);
   symmetrized = (PARAM.int_value("SYMMETRIZED",
 				 "Mixed symmetrized version ?") != 0);
-  
-  mitc = (PARAM.int_value("MITC") != 0 ) ;
+
   cout << "MITC = " ;
   if (mitc) cout << "true \n" ; else cout << "false \n" ;
   sol_ref = (PARAM.int_value("SOL_REF") ) ;
@@ -313,7 +312,6 @@ bool plate_problem::solve(plain_vector &U) {
   getfem::mdbrick_isotropic_linearized_plate<>
     ELAS1(mim, mim_subint, mf_ut, mf_u3, mf_theta, mf_coef, lambda,
 	  mu, epsilon);
-  if (mitc) ELAS1.set_mitc();
 
   if (mitc) ELAS1.set_mitc();
   
@@ -344,13 +342,13 @@ bool plate_problem::solve(plain_vector &U) {
        s2x = sin(2.*M_PI*P[0]) ;
        s2y = sin(2.*M_PI*P[1]) ;
        F[3*i+2] = 2. * epsilon * E * M_PI * M_PI * eta *
-                  ( sy * sy * c2x + sx * sx * c2y ) / ( 1. + nu ) ;
+	 ( sy * sy * c2x + sx * sx * c2y ) / ( 1. + nu ) ;
        M[2*i]   = (epsilon * epsilon * epsilon * E * M_PI * s2x / 3. / (1. + nu)) * (
-                  (4. * M_PI * M_PI * (1. + eta) * (2. * c2y - 1.) / (1.- nu))  
-		  - 3. * eta  * sy * sy / epsilon / epsilon ) ;
-       M[2*i+1] = (epsilon * epsilon * epsilon * E * M_PI * s2y / 3. / (1. + nu)) * (
-                  (4. * M_PI * M_PI * (1. + eta) * (2. * c2x - 1.) / (1.- nu))  
-		  - 3. * eta  * sx * sx / epsilon / epsilon ) ;
+										     (4. * M_PI * M_PI * (1. + eta) * (2. * c2y - 1.) / (1.- nu))  
+										     - 3. * eta  * sy * sy / epsilon / epsilon ) ;
+       M[2*i+1] = (gmm::sqr(epsilon) * epsilon * E * M_PI * s2y / 3. / (1. + nu))
+	 * ( (4. * M_PI * M_PI * (1. + eta) * (2. * c2x - 1.) / (1.- nu))  
+	     - 3. * eta  * sx * sx / gmm::sqr(epsilon)) ;
      }
   }
   else  // sol_ref = 0 or 1
