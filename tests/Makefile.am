@@ -1,7 +1,7 @@
 SUBDIRS = meshes
 
 if QHULL
-optprogs = test_mesh_generation test_mesh_im_level_set crack
+optprogs = test_mesh_generation test_mesh_im_level_set crack crackPlate
 optpl = $(top_srcdir)/tests/test_mesh_im_level_set.pl \
         $(top_srcdir)/tests/crack.pl
 else
@@ -81,6 +81,7 @@ if QHULL
 test_mesh_generation_SOURCES = test_mesh_generation.cc 
 test_mesh_im_level_set_SOURCES = test_mesh_im_level_set.cc 
 crack_SOURCES = crack.cc
+crackPlate_SOURCES = crackPlate.cc
 endif
 #test_fem_SOURCES = test_fem.cc
 dynamic_friction_SOURCES = dynamic_friction.cc
@@ -151,6 +152,7 @@ EXTRA_DIST = \
 	test_mat_elem.pl                  \
 	crack.pl                          \
 	crack.param                       \
+	crackPlate.param                  \
 	laplacian.param                   \
 	plate.param                       \
 	plate.pl                          \

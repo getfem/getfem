@@ -9,8 +9,8 @@
 % MU = 77.0;	        % Lamé coefficient.
 % LAMBDA = 107.0;   	% Lamé coefficient.
 MU = 1.0;	        % Lamé coefficient.
-LAMBDA = 0.0;   	% Lamé coefficient.
-EPSILON = 0.001;          % thickness of the plate
+LAMBDA = 1.0;   	% Lamé coefficient.
+EPSILON = 0.001;        % thickness of the plate
 
 %%%%% parameters for testing some analytical solutions :
  			
@@ -26,39 +26,40 @@ PRESSURE = 100.0;       % pressure on the top surface of the plate
 			% (only usefull if SOL_REF = 0 or 1)  
 			% will be multiplied by EPSILON^3.
 			  
-ETA = 0.0;              % only usefull if SOL_REF = 2 :
+ETA = 0.0;             % only usefull if SOL_REF = 2 :
 			% if eta  = 0 => solution of the Kirchoff-Love model
 			% if eta != 0 => solution of the Mindlin-Reissner model
+			% To be taken of order epsilon^2 ?
 
 %%%%% parameters for computation :
 
 
 NX = 20;                % number of element on an edge.
 RESIDU = 1E-9;     	% residu for iterative methods.
-MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
+MESH_NOISED = 1;        % Set to one if you want to "shake" the mesh
 MIXED = 0;
 MITC = 0;
 SYMMETRIZED = 0;
 
 %%%%% parameters for quadrangles
 
-% MESH_TYPE = 'GT_LINEAR_QK(2)'; % linear rectangles
+MESH_TYPE = 'GT_LINEAR_QK(2)'; % linear rectangles
 
 MESH_TYPE = 'GT_QK(2,1)'; % linear rectangles
 FEM_TYPE_UT = 'FEM_QK(2,1)';
-FEM_TYPE_U3 = 'FEM_QK(2,2)';
+FEM_TYPE_U3 = 'FEM_QK(2,1)';
 FEM_TYPE_THETA= 'FEM_QK(2,1)';
 INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2, 10)';
-INTEGRATION_CT = 'IM_GAUSS_PARALLELEPIPED(2, 10)';
+INTEGRATION_CT = 'IM_GAUSS_PARALLELEPIPED(2, 1)';
 
 
 %%%%% parameters for triangles
 
 % MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 % FEM_TYPE_UT = 'FEM_PK(2,1)';
-% FEM_TYPE_U3 = 'FEM_PK(2,1)';
-% % FEM_TYPE_THETA = 'FEM_PK(2,2)';
-% FEM_TYPE_THETA = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 1)';
+% FEM_TYPE_U3 = 'FEM_PK(2,2)';
+% FEM_TYPE_THETA = 'FEM_PK(2,1)';
+% % FEM_TYPE_THETA = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 1)';
 % INTEGRATION = 'IM_TRIANGLE(6)';
 % INTEGRATION_CT = 'IM_TRIANGLE(6)';
 

@@ -14,8 +14,7 @@ FEM_TYPE_UT = 'FEM_QK(2,1)';
 FEM_TYPE_U3 = 'FEM_QK(2,1)';
 FEM_TYPE_THETA= 'FEM_QK(2,1)';
 INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2, 10)';
-INTEGRATION_CT = 'IM_GAUSS_PARALLELEPIPED(2, 10)';
-SIMPLEX_INTEGRATION = 'IM_TETRAHEDRON(6)'; % quadrature rule for polynomials up
+SIMPLEX_INTEGRATION = 'IM_TRIANGLE(6)'; % quadrature rule for polynomials up
                                    % to degree 6 on tetra
 				   
 NX = 10;            	          % space step.
@@ -25,8 +24,9 @@ MESH_NOISE = 0;                % Set to one if you want to "shake" the mesh
 DATA_FEM_TYPE = 'FEM_QK(2,1)';
 
 CUTOFF=0.3;
-ENRICHMENT_OPTION = 2 % 1 = global functions with cutoff
-	              % 2 = standard XFEM on a fixed zone 
+ENRICHMENT_OPTION = 0	% 0 = without enrichment
+			% 1 = global functions with cutoff
+	              	% 2 = standard XFEM on a fixed zone 
 RADIUS_ENR_AREA = 0.1;
 RESIDU = 1E-9;     	% residue for conjugate gradient.
 

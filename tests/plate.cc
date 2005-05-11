@@ -325,11 +325,8 @@ bool plate_problem::solve(plain_vector &U) {
   plain_vector F(nb_dof_rhs * 3); 
   plain_vector M(nb_dof_rhs * 2);
   if (sol_ref == 2) {
-     base_small_vector P(2) ;
-     scalar_type E, nu, sx, sy, cx, cy, s2x, s2y, c2x, c2y;
-     scalar_type eps2 = gmm::sqr(epsilon) ;
-     // E = mu * (2. * mu + 3. * lambda) / (mu + lambda) ;
-     // nu = lambda / 2. / ( mu + lambda) ;
+    base_small_vector P(2) ;
+     scalar_type E, nu, sx, sy, cx, cy, s2x, s2y, c2x, c2y ;
      E = 4.*mu*(mu+lambda) / (2. * mu + lambda);
      nu = lambda / (2. * mu + lambda);
      for (size_type i = 0; i < nb_dof_rhs; ++i) {
@@ -343,13 +340,13 @@ bool plate_problem::solve(plain_vector &U) {
        s2x = sin(2.*M_PI*P[0]) ;
        s2y = sin(2.*M_PI*P[1]) ;
        F[3*i+2] = 2. * epsilon * E * M_PI * M_PI * eta *
-	 ( sy * sy * c2x + sx * sx * c2y ) / ( 1. + nu ) ;
-       M[2*i]   = (eps2 * epsilon * E * M_PI * s2x / 3. / (1. + nu))
+                  ( sy * sy * c2x + sx * sx * c2y ) / ( 1. + nu ) ;
+       M[2*i]   = (epsilon * epsilon * epsilon * E * M_PI * s2x / 3. / (1. + nu))
 	 * ( (4. * M_PI * M_PI * (1. + eta) * (2. * c2y - 1.) / (1.- nu))  
-	     - 3. * eta  * sy * sy / eps2 ) ;
-       M[2*i+1] = (eps2 * epsilon * E * M_PI * s2y / 3. / (1. + nu))
-	 * ( (4. * M_PI * M_PI * (1. + eta) * (2. * c2x - 1.) / (1.- nu))  
-	     - 3. * eta  * sx * sx / eps2) ;
+	      - 3. * eta  * sy * sy / epsilon / epsilon ) ;
+       M[2*i+1] = (epsilon * epsilon * epsilon * E * M_PI * s2y / 3. / (1. + nu))
+	 * (  (4. * M_PI * M_PI * (1. + eta) * (2. * c2x - 1.) / (1.- nu))  
+	       - 3. * eta  * sx * sx / epsilon / epsilon ) ;
      }
   }
   else  // sol_ref = 0 or 1

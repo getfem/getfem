@@ -44,7 +44,7 @@ struct crackPlate_problem{
   enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
   getfem::getfem_mesh mesh;  /* the mesh */
   getfem::mesh_level_set mls;       /* the integration methods.              */
-  getfem::mesh_im_level_set mim, mim_subint;    /* the integration methods.              */
+  getfem::mesh_im_level_set mim;    /* the integration methods.              */
   getfem::mesh_fem mf_pre_ut, mf_pre_u3, mf_pre_theta ; 
   getfem::mesh_fem_level_set mfls_ut, mfls_u3, mfls_theta ; 
   getfem::mesh_fem_global_function mf_sing_ut, mf_sing_u3, mf_sing_theta ;
@@ -72,7 +72,7 @@ struct crackPlate_problem{
   // methods
   bool solve(plain_vector &U);
   void init(void);
-  crackPlate_problem(void) : mls(mesh), mim(mls), mim_subint(mls),
+  crackPlate_problem(void) : mls(mesh), mim(mls),
   			mf_pre_ut(mesh), mf_pre_u3(mesh), mf_pre_theta(mesh), 
 			mfls_ut(mls, mf_pre_ut), mfls_u3(mls, mf_pre_u3), mfls_theta(mls, mf_pre_theta),
 			mf_sing_ut(mesh),mf_sing_u3(mesh),mf_sing_theta(mesh),
@@ -94,8 +94,6 @@ void crackPlate_problem::init(void) {
   const char *FEM_TYPE_THETA = PARAM.string_value("FEM_TYPE_THETA","FEM name");
   const char *INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
-  const char *INTEGRATION_CT = PARAM.string_value("INTEGRATION_CT",
-					       "Name of integration method");
   const char *SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION",
 					 "Name of simplex integration method");
   enrichment_option = PARAM.int_value("ENRICHMENT_OPTION",
@@ -106,7 +104,6 @@ void crackPlate_problem::init(void) {
   cout << "FEM_TYPE_U3="  << FEM_TYPE_U3 << "\n";
   cout << "FEM_TYPE_THETA="  << FEM_TYPE_THETA << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
-  cout << "INTEGRATION_CT=" << INTEGRATION_CT << "\n";
   
   // build the mesh :
   bgeot::pgeometric_trans pgt = 
@@ -146,11 +143,8 @@ void crackPlate_problem::init(void) {
     getfem::int_method_descriptor(INTEGRATION);
   getfem::pintegration_method sppi = 
     getfem::int_method_descriptor(SIMPLEX_INTEGRATION);
-  getfem::pintegration_method ppi_ct = 
-    getfem::int_method_descriptor(INTEGRATION_CT) ;
     
   mim.set_integration_method(mesh.convex_index(), ppi);
-  mim_subint.set_integration_method(mesh.convex_index(), ppi_ct) ;
   mls.add_level_set(ls);
   mim.set_simplex_im(sppi);
   mf_pre_ut.set_finite_element(mesh.convex_index(), pf_ut);
@@ -212,7 +206,6 @@ bool crackPlate_problem::solve(plain_vector &U) {
   
   mls.adapt();
   mim.adapt();
-  mim_subint.adapt();
   mfls_ut.adapt();
   mfls_u3.adapt();
   mfls_theta.adapt();
@@ -273,7 +266,7 @@ getfem::mdbrick_abstract<> *ELAS, *SIMPLE;
 
   // Linearized plate brick.
   getfem::mdbrick_isotropic_linearized_plate<>
-    ELAS1(mim, mim_subint, mf_ut(), mf_u3(), mf_theta(), mf_coef, lambda,
+    ELAS1(mim, mim, mf_ut(), mf_u3(), mf_theta(), mf_coef, lambda,
 	  mu, epsilon);
   if (mitc) ELAS1.set_mitc();  
   ELAS = &ELAS1;
@@ -313,9 +306,6 @@ int main(int argc, char *argv[]) {
 #ifdef GETFEM_HAVE_FEENABLEEXCEPT /* trap SIGFPE */
   feenableexcept(FE_DIVBYZERO | FE_INVALID);
 #endif
-
-  // getfem::getfem_mesh_level_set_noisy();
-
 
   try {
     crackPlate_problem p;
