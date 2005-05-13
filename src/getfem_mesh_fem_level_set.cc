@@ -88,35 +88,23 @@ namespace getfem {
       
 
       if (touch_cut) {
-	std::vector<const std::string *> zoneset;
+	mesh_level_set::zoneset zones;
 	
 	for (bgeot::mesh_convex_ind_ct::const_iterator it = ct.begin();
 	     it != ct.end(); ++it) {
 	  if (mls.convex_is_cut(*it)) {
-	    mls.merge_zonesets(zoneset, mls.zoneset_of_convex(*it));
-	    cout << "Zones : ";
-	    for (size_type ll = 0; ll <  mls.zoneset_of_convex(*it).size(); ++ll)
-	      cout << " " << *(mls.zoneset_of_convex(*it)[ll]);
-	    cout << endl;
+	    mls.merge_zoneset(zones, mls.zoneset_of_convex(*it));
 	  }
 	  else {
-	    mls.merge_zoneset(zoneset, mls.primary_zone_of_convex(*it));
-	    cout << "Zone : " << mls.primary_zone_of_convex(*it) << endl;
+	    mls.merge_zoneset(zones, mls.primary_zone_of_convex(*it));
 	  }
 	}
 	
 	cout << "number of zones for dof " << i << "  "
-	     << mf.point_of_dof(i) << " : " << zoneset.size() << endl;
+	     << mf.point_of_dof(i) << " : " << zones.size() << endl;
 
-	if (zoneset.size() != 1) { // stockage dans un set et map
-	  std::sort(zoneset.begin(), zoneset.end());
-	  cout << "Zones : ";
-	  for (size_type ll = 0; ll < zoneset.size(); ++ll)
-	    cout << " " << *(zoneset[ll]);
-	  cout << endl;
-	  dof_enrichments[i] = &(*(enrichments.insert(zoneset).first));
-	  cout << "number of zones for dof " << i << " : "
-	       << zoneset.size() << endl;
+	if (zones.size() != 1) { // stockage dans un set et map
+	  dof_enrichments[i] = &(*(enrichments.insert(zones).first));
 	  enriched_dofs.add(i);
 	  for (bgeot::mesh_convex_ind_ct::const_iterator it = ct.begin();
 	       it != ct.end(); ++it) enriched_elements.add(*it);

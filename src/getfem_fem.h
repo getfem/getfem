@@ -349,7 +349,7 @@ namespace getfem {
    *  discontinuous fem of degree k on a geometric convex cvs (coming 
    *  from the geometric trans).
    */
-  pfem classical_discontinuous_fem(bgeot::pgeometric_trans pg, short_type k);
+  pfem classical_discontinuous_fem(bgeot::pgeometric_trans pg, short_type k, scalar_type alpha=0);
 
   pfem fem_descriptor(std::string name);
   /*  List of elements :

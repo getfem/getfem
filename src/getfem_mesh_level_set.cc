@@ -276,63 +276,71 @@ struct Chrono {
 		    << " simplexes [" << ftool::uclock_sec()-t0 << "sec]\n";
   }
 
-  inline static char char_are_compatible(char a, char b) {
-    if (a == '0' || b == '0') return '0';
-    if (a == b) return a;
-    return 0;
+  static bool intersects(const mesh_level_set::zone &z1, 
+			 const mesh_level_set::zone &z2) {
+    for (std::set<const std::string *>::const_iterator it = z1.begin(); it != z1.end();
+	 ++it)
+      if (z2.find(*it) != z2.end()) return true;
+    return false;
   }
 
-  static bool string_are_compatible(const std::string &a,
-				    const std::string &b) {
-    for (size_type i = 0; i < a.size(); ++i)
-      if (!char_are_compatible(a[i], b[i])) return false;
-    return true;
-  }
-
-  static void string_merge(std::string &a, const std::string &b) {
-    for (size_type i = 0; i < a.size(); ++i)
-      a[i] = char_are_compatible(a[i], b[i]);
-  }
-
-  void mesh_level_set::merge_zoneset(std::vector<const std::string *> &zones,
-				     std::string z) const {
-    size_type i = 0, j = 0, k = size_type(-1);
-    for (; i < zones.size(); ++i, ++j) {
-      if (i != j) zones[j] = zones[i];
-      if (*(zones[j]) == z) return;
-      if (string_are_compatible(*(zones[j]), z)) {
-	if (k == size_type(-1)) k = j; else j--;
-	string_merge(z, (*zones[k]));
-	zones[k] = &(*(diff_zones.insert(z).first));
+  void mesh_level_set::merge_zoneset(zoneset &zones1,
+				     const zoneset &zones2) const {
+    for (std::set<const zone *>::const_iterator it2 = zones2.begin(); 
+	 it2 != zones2.end(); ++it2) {
+      zone z = *(*it2);
+      for (std::set<const zone *>::iterator it1 = zones1.begin(); 
+	   it1 != zones1.end(); ) {
+	if (intersects(z, *(*it1))) {
+	  z.insert((*it1)->begin(), (*it1)->end());
+	  zones1.erase(it1++);
+	}
+	else ++it1;
       }
+      zones1.insert(&(*(allzones.insert(z).first)));
     }
-    if (k == size_type(-1)) zones.push_back(&(*(diff_zones.insert(z).first)));
-    else zones.resize(j);
   }
 
-  void mesh_level_set::merge_zonesets(std::vector<const std::string *> &zones1,
-				      const std::vector<const std::string *>
-				      &zones2) const {
-    for (size_type i = 0; i < zones2.size(); ++i)
-      merge_zoneset(zones1, *(zones2[i]));
+  /* recursively replace '0' by '+' and '-', and the add the new zones */
+  static void add_sub_zones_no_zero(std::string &s, 
+				    mesh_level_set::zone &z, 
+				    std::set<std::string> &allsubzones) {
+    size_t i = s.find('0');
+    if (i != size_t(-1)) {
+      s[i] = '+'; add_sub_zones_no_zero(s, z, allsubzones);
+      s[i] = '-'; add_sub_zones_no_zero(s, z, allsubzones);
+    } else {
+      z.insert(&(*(allsubzones.insert(s).first)));
+    }
   }
 
+  void mesh_level_set::merge_zoneset(zoneset &zones1,
+				     const std::string &subz) const {
+    // very sub-optimal
+    zone z; std::string s(subz);
+    add_sub_zones_no_zero(s, z, allsubzones);
+    zoneset zs;
+    zs.insert(&(*(allzones.insert(z).first)));
+    merge_zoneset(zones1, zs);
+  }
+
+  /* prezone was filled for the whole convex by find_crossing_level_set. 
+     This information is now refined for each sub-convex.
+  */
   void mesh_level_set::find_zones_of_element(size_type cv,
 					     std::string &prezone) {
     convex_info &cvi = cut_cv[cv];
-    cvi.zones.resize(0);
+    cvi.zones.clear();
     for (dal::bv_visitor i(cvi.pmesh->convex_index()); !i.finished();++i) {
-      std::string zone = prezone;
-      cout << "prezone for convex " << cv << " : " << zone << endl;
+      std::string subz = prezone;
+      cout << "prezone for convex " << cv << " : " << subz << endl;
       for (size_type j = 0; j < level_sets.size(); ++j) {
-	if (zone[j] == '*' || zone[j] == '0') {
+	if (subz[j] == '*' || subz[j] == '0') {
 	  int s = sub_simplex_is_not_crossed_by(cv, level_sets[j], i);
-	  cout << "s = " << s << endl;
-	  zone[j] = (s < 0) ? '-' : ((s > 0) ? '+' : '0');
+	  subz[j] = (s < 0) ? '-' : ((s > 0) ? '+' : '0');
 	}
       }
-      cout << "modified prezone for convex " << cv << " : " << zone << endl;
-      merge_zoneset(cvi.zones, zone);
+      merge_zoneset(cvi.zones, subz);
     }
     if (noisy) cout << "Number of zones for convex " << cv << " : "
 		    << cvi.zones.size() << endl;
@@ -703,18 +711,21 @@ struct Chrono {
     // for each element touched, compute the sub mesh
     //   then compute the adapted integration method
     cut_cv.clear();
-    diff_zones.clear();
-    std::string zone;
+    allsubzones.clear();
+    zones_of_convexes.clear();
+    allzones.clear();
+
+    std::string z;
     for (dal::bv_visitor cv(linked_mesh().convex_index()); 
 	 !cv.finished(); ++cv) {
       dal::bit_vector prim, sec;
-      find_crossing_level_set(cv, prim, sec, zone);
-      zones_of_convexes[cv] = &(*(diff_zones.insert(zone).first));
+      find_crossing_level_set(cv, prim, sec, z);
+      zones_of_convexes[cv] = &(*(allsubzones.insert(z).first));
       if (noisy) cout << "element " << cv << " cut level sets : "
-		      << prim << " zone : " << zone << endl;
+		      << prim << " zone : " << z << endl;
       if (prim.card()) {
 	cut_element(cv, prim, sec);
-	find_zones_of_element(cv, zone);
+	find_zones_of_element(cv, z);
       }
     }
     if (noisy) {
@@ -808,9 +819,9 @@ struct Chrono {
   void mesh_level_set::find_crossing_level_set(size_type cv,
 					       dal::bit_vector &prim,
 					       dal::bit_vector &sec,
-					       std::string &zone) {
+					       std::string &z) {
     prim.clear(); sec.clear();
-    zone = std::string(level_sets.size(), '*');
+    z = std::string(level_sets.size(), '*');
     unsigned lsnum = 0;
     for (size_type k = 0; k < level_sets.size(); ++k, ++lsnum) {
       if (noisy) cout << "testing cv " << cv << " with level set "
@@ -821,11 +832,11 @@ struct Chrono {
 	if (level_sets[k]->has_secondary()) {
 	  s = is_not_crossed_by(cv, level_sets[k], 1);
 	  if (!s) { sec.add(lsnum); prim.add(lsnum); }
-	  else if (s < 0) prim.add(lsnum); else zone[k] = '0';
+	  else if (s < 0) prim.add(lsnum); else z[k] = '0';
 	}
 	else prim.add(lsnum);
       }
-      else zone[k] = (s < 0) ? '-' : '+';
+      else z[k] = (s < 0) ? '-' : '+';
     }
   }
 

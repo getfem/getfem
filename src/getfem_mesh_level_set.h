@@ -40,13 +40,20 @@
 
 namespace getfem {
 
-  typedef std::vector<const std::string *> dof_ls_enrichment;
-
-  /// Describe an integration method linked to a mesh.
   class mesh_level_set : public getfem_mesh_receiver,
 			 public context_dependencies {
+  public:
+    typedef std::string subzone;
+    typedef std::set<const subzone *> zone;
+    typedef std::set<const zone*> zoneset;
   protected :
-    mutable std::set<std::string> diff_zones;
+
+    mutable std::set<subzone> allsubzones;
+
+    mutable std::set<zone> allzones;
+
+    
+
     dal::dynamic_array<const std::string *> zones_of_convexes;
     getfem_mesh *linked_mesh_;
     mutable bool is_valid_, is_adapted_;
@@ -58,7 +65,7 @@ namespace getfem {
 
     struct convex_info {
       pgetfem_mesh pmesh;
-      std::vector<const std::string *> zones;
+      zoneset zones;
       convex_info() : pmesh(0) {}
     };
 
@@ -119,22 +126,20 @@ namespace getfem {
       }
     }
 
+    /** fill m with the (non-conformal) "cut" mesh. */
     void global_cut_mesh(getfem_mesh &m) const;
+    /** do all the work (cut the convexes wrt the levelsets) */
     void adapt(void);
-    void merge_zonesets(std::vector<const std::string *> &zones1,
-			const std::vector<const std::string *> &zones2) const;
-    void merge_zoneset(std::vector<const std::string *> &zones,
-		       std::string z) const;
+    void merge_zoneset(zoneset &zones1, const zoneset &zones2) const;
+    void merge_zoneset(zoneset &zones1, const std::string &subz) const;
     bool convex_is_cut(size_type cv) const
     { return (cut_cv.find(cv) != cut_cv.end()); }
     const std::string &primary_zone_of_convex(size_type cv) const
     { return *(zones_of_convexes[cv]); }
-    const std::vector<const std::string *> &
-    zoneset_of_convex(size_type cv) const {
+    const zoneset &zoneset_of_convex(size_type cv) const {
       std::map<size_type, convex_info>::const_iterator it = cut_cv.find(cv);
       if (it != cut_cv.end()) return (*it).second.zones;
-      DAL_THROW(internal_error, "You cannot call this function for "
-		"uncutted convexes");
+      DAL_THROW(internal_error, "You cannot call this function for uncut convexes");
     }
     
     mesh_level_set(getfem_mesh &me);
@@ -145,11 +150,16 @@ namespace getfem {
     mesh_level_set(const mesh_level_set &);
     mesh_level_set & operator=(const mesh_level_set &);
     void cut_element(size_type cv, const dal::bit_vector &primary,
-		     const dal::bit_vector &secondary);    
+		     const dal::bit_vector &secondary);     
     int is_not_crossed_by(size_type c, plevel_set ls, unsigned lsnum);
     int sub_simplex_is_not_crossed_by(size_type cv, plevel_set ls,
 				      size_type sub_cv);
     void find_zones_of_element(size_type cv, std::string &prezone);
+
+    /** For each levelset, if the convex cv is crossed, add the levelset number
+	into 'prim' (and 'sec' is the levelset has a secondary part).
+	zone is also filled with '0', '+', and '-'.
+    */
     void find_crossing_level_set(size_type cv, 
 				 dal::bit_vector &prim, 
 				 dal::bit_vector &sec, std::string &zone);

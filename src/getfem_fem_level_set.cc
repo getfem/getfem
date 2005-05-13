@@ -43,17 +43,27 @@ namespace getfem {
  
     ls_index.sup(0, mls.nb_level_sets());
 
+    common_ls_zones.resize(mls.nb_level_sets());
+    /* fill ls_index .. */
     for (size_type i=0; i < mls.nb_level_sets(); ++i) {
       char c = '*';
       for (size_type k=0; k < bfem->nb_dof(0); ++k) {
-	if (dofzones[k]) {
-	  for (size_type j=0; j < dofzones[k]->size(); ++j) {
-	    char d = (*(*dofzones[k])[j])[i];
-	    if (c == '*') c = d;
-	    else if (c != d) { ls_index.add(i); break; }
+	const mesh_level_set::zoneset *ze = dofzones[k];
+	if (ze) {
+	  for (mesh_level_set::zoneset::const_iterator itz = ze->begin();
+	       itz != ze->end(); ++itz) {
+	    const mesh_level_set::zone *z = *itz;
+	    for (mesh_level_set::zone::iterator it = z->begin(); 
+		 it != z->end(); ++it) {
+	      assert((**it).size() == mls.nb_level_sets());
+	      char d = (*(*it))[i];
+	      if (c == '*') c = d;
+	      else if (c != d) { ls_index.add(i); break; }	      
+	    }
 	  }
 	}
       }
+      common_ls_zones[i] = c;
     }
     
     init_cvs_node();
@@ -82,6 +92,31 @@ namespace getfem {
 			     base_tensor &) const
   { DAL_THROW(internal_error, "No base values, real only element.");  }
 
+  void fem_level_set::find_zone_id(const fem_interpolation_context &c, 
+				   std::vector<unsigned> &ids) const {
+    ids.resize(dofzones.size());
+    std::string z(common_ls_zones);
+    for (dal::bv_visitor i(ls_index); !i.finished(); ++i) {
+      mesher_level_set eval = mls.get_level_set(i)->
+	mls_of_convex(c.convex_num());
+      scalar_type v = eval(c.xref());
+      z[i] = (v > 0) ? '+' : '-';
+    }
+    for (unsigned d=0; d < ids.size(); ++d) {
+      ids[d] = unsigned(-1);
+      if (!dofzones[d]) continue;
+      unsigned cnt = 0;
+      for (mesh_level_set::zoneset::const_iterator it = dofzones[d]->begin();
+	   it != dofzones[d]->end() && ids[d] == unsigned(-1); ++it, ++cnt) {
+	for (mesh_level_set::zone::const_iterator it2 = (*it)->begin();
+	     it2 != (*it)->end(); ++it2) {
+	  if (z == *(*it2)) { ids[d] = cnt; break; }
+	}
+      }
+      assert(ids[d] != unsigned(-1)); 
+    }
+  }
+
   void fem_level_set::real_base_value(const fem_interpolation_context &c,
 				      base_tensor &t) const {
     bgeot::multi_index mi(2);
@@ -94,25 +129,14 @@ namespace getfem {
     else  c0.set_pf(bfem); 
     base_tensor tt; c0.base_value(tt);
     base_tensor::const_iterator itf = tt.begin();
-    std::vector<scalar_type> lsval(mls.nb_level_sets());
-    for (dal::bv_visitor i(ls_index); !i.finished(); ++i) {
-      mesher_level_set eval = mls.get_level_set(i)->
-	mls_of_convex(c.convex_num());
-      lsval[i] = eval(c.xref());
-    }
+
+    std::vector<unsigned> zid;
+    find_zone_id(c, zid);
     for (dim_type q = 0; q < target_dim(); ++q) {
       for (size_type d = 0; d < bfem->nb_base(0); ++d, ++itf) {
 	if (dofzones[d]) { /* enriched dof ? */
-	  const dof_ls_enrichment &de = *dofzones[d];
-	  for (size_type k = 0; k < de.size(); ++k) {
-	    scalar_type v = *itf;
-	    for (dal::bv_visitor il(ls_index); !il.finished(); ++il) {
-	      if ((*de[k])[il] == '0') continue;
-	      if (((*de[k])[il] == '+' && lsval[il] < 0) ||
-		  ((*de[k])[il] == '-' && lsval[il] > 0))
-		v = 0;
-	    }
-	    *it++ = v;
+	  for (size_type k = 0; k < dofzones[d]->size(); ++k) {
+	    *it++ = (k == zid[d]) ? *itf : 0;
 	  }
 	} else *it++ = *itf;
       }
@@ -134,27 +158,15 @@ namespace getfem {
     base_tensor::iterator it = t.begin();
     base_tensor::const_iterator itf = tt.begin();
 
-    std::vector<scalar_type> lsval(mls.nb_level_sets());
-    for (dal::bv_visitor i(ls_index); !i.finished(); ++i) {
-      mesher_level_set eval = mls.get_level_set(i)->
-	mls_of_convex(c.convex_num());
-      lsval[i] = eval(c.xref());
-      //cout << "cv=" << c.convex_num() << ", xref=" << c.xref() << " (xreal=" << c.xreal() << " : lsval[" << i << "]=" << lsval[i] << "\n";
-    }
+    std::vector<unsigned> zid;
+    find_zone_id(c, zid);
+
     for (dim_type i = 0; i < c.N() ; ++i) {
       for (dim_type q = 0; q < target_dim(); ++q) {
 	for (size_type d = 0; d < bfem->nb_base(0); ++d, ++itf) {
 	  if (dofzones[d]) { /* enriched dof ? */
-	    const dof_ls_enrichment &de = *dofzones[d];
-	    for (size_type k = 0; k < de.size(); ++k) {
-	      scalar_type v = *itf;
-	      for (dal::bv_visitor il(ls_index); !il.finished(); ++il) {
-		if ((*de[k])[il] == '0') continue;
-		if (((*de[k])[il] == '+' && lsval[il] < 0) ||
-		    ((*de[k])[il] == '-' && lsval[il] > 0))
-		  v = 0;
-	      }
-	      *it++ = v;
+	    for (size_type k = 0; k < dofzones[d]->size(); ++k) {
+	      *it++ = (k == zid[d]) ? *itf : 0;
 	    }
 	  } else *it++ = *itf;
 	}

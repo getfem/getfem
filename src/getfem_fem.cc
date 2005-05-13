@@ -733,33 +733,43 @@ namespace getfem
   /* parallelepiped fems.                                                 */
   /* ******************************************************************** */
 
-  static pfem QK_fem_(fem_param_list &params, const std::string& fempk,
-		      const std::string femqk) {
-    if (params.size() != 2)
+  static pfem QK_fem_(fem_param_list &params, bool discontinuous) {
+    const char *fempk = discontinuous ? "FEM_PK_DISCONTINUOUS" : "FEM_PK";
+    const char *femqk = discontinuous ? "FEM_QK_DISCONTINUOUS" : "FEM_QK";
+    if (!(params.size() == 2 || (discontinuous && params.size() == 3)))
       DAL_THROW(failure_error, 
-	   "Bad number of parameters : " << params.size() << " should be 2.");
-    if (params[0].type() != 0 || params[1].type() != 0)
+		"Bad number of parameters : " << params.size() << " should be 2.");
+    if ((params[0].type() != 0 || params[1].type() != 0) ||
+	params.size() == 3 && params[2].type() != 0)
       DAL_THROW(failure_error, "Bad type of parameters");
+
     int n = int(::floor(params[0].num() + 0.01));
     int k = int(::floor(params[1].num() + 0.01));
+    char alpha[128]; alpha[0] = 0;
+    if (discontinuous && params.size() == 3) {
+      scalar_type v = params[2].num();
+      if (v < 0 || v > 1) DAL_THROW(failure_error, "Bad value for alpha: " << v);
+      sprintf(alpha, ",%g", v);
+      cout << "ALPHA=" << alpha << " v=" << v << "\n";
+    }
     if (n <= 0 || n >= 100 || k < 0 || k > 150 ||
 	double(n) != params[0].num() || double(k) != params[1].num())
       DAL_THROW(failure_error, "Bad parameters");
     std::stringstream name;
     if (n == 1)
-      name << fempk << "(1," << k << ")";
+      name << fempk << "(1," << k << alpha << ")";
     else 
       name << "FEM_PRODUCT(" << femqk << "(" << n-1 << ","
-	   << k << ")," << fempk << "(1," << k << "))";
+	   << k << alpha << ")," << fempk << "(1," << k << alpha << "))";
     return fem_descriptor(name.str());
   }
   static pfem QK_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &) {
-    return QK_fem_(params, "FEM_PK", "FEM_QK");
+    return QK_fem_(params, false);
   }
   static pfem QK_discontinuous_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &) {
-    return QK_fem_(params, "FEM_PK_DISCONTINUOUS", "FEM_QK_DISCONTINUOUS");
+    return QK_fem_(params, true);
   }
 
   
@@ -1112,7 +1122,8 @@ namespace getfem
   /*	classical fem                                                     */
   /* ******************************************************************** */
 
-  static pfem classical_fem_(const char *suffix, bgeot::pgeometric_trans pgt,
+  static pfem classical_fem_(const char *suffix, const char *arg, 
+			     bgeot::pgeometric_trans pgt,
 			     short_type k) {
     static bgeot::pgeometric_trans pgt_last = 0;
     static short_type k_last = short_type(-1);
@@ -1148,23 +1159,26 @@ namespace getfem
     // To be completed
 
     if (found) {
-      name << int(n) << ',' << int(k) << ')';
+      name << int(n) << ',' << int(k) << arg << ')';
       fm_last = fem_descriptor(name.str());
       pgt_last = pgt;
       k_last = k;
       return fm_last;
     }
  
+
     DAL_THROW(to_be_done_error,
 	      "This element is not taken into account. Contact us");
   }
 
   pfem classical_fem(bgeot::pgeometric_trans pgt, short_type k) {
-    return classical_fem_("", pgt, k);
+    return classical_fem_("", "", pgt, k);
   }
   
-  pfem classical_discontinuous_fem(bgeot::pgeometric_trans pgt, short_type k) {
-    return classical_fem_("_DISCONTINUOUS", pgt, k);
+  pfem classical_discontinuous_fem(bgeot::pgeometric_trans pgt, short_type k, scalar_type alpha) {
+    char arg[128]; arg[0] = 0;
+    if (alpha) sprintf(arg, ",%g", alpha); 
+    return classical_fem_("_DISCONTINUOUS", arg, pgt, k);
   }
   
   /* ******************************************************************** */

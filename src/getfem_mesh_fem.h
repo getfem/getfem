@@ -197,11 +197,13 @@ namespace getfem
     */
     void set_classical_finite_element(const dal::bit_vector &cvs, 
 				      dim_type fem_degree);
-    /** Similar to set_classical_finite_element, but uses discontinuous 
-     * lagrange elements
+    /** Similar to set_classical_finite_element, but uses
+     * discontinuous lagrange elements. 0 <= alpha <= 1, 0 => usual
+     * dof nodes, greater values move the nodes toward the center of
+     * gravity
      */
     void set_classical_discontinuous_finite_element(const dal::bit_vector &cvs, 
-						    dim_type fem_degree);
+						    dim_type fem_degree,scalar_type alpha=0);
     /** shortcut for
      * set_classical_finite_element(linked_mesh().convex_index(),...)
      */
@@ -210,7 +212,7 @@ namespace getfem
      *  set_classical_discontinuous_finite_element(linked_mesh().convex_index()
      *  ,...)
      */
-    void set_classical_discontinuous_finite_element(dim_type fem_degree);
+    void set_classical_discontinuous_finite_element(dim_type fem_degree,scalar_type alpha=0);
     
     /** return the fem associated with an element (in no fem is
 	associated, the function will crash! use the convex_index() of

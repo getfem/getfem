@@ -1,3 +1,7 @@
+2005-05-13  Julien Pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/getfem_fem.cc (getfem): Added 'alpha' param. for FEM_QK_DISCONTINUOUS.
+
 2005-03-11 Julien pommier, Yves Renard
 
 	* getfem_fem_level_set.h,  getfem_fem_level_set.cc,

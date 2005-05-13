@@ -226,9 +226,8 @@ void test2() {
 			 getfem::fem_descriptor("FEM_PK(1,3)"));
   
   getfem::mesh_fem mflnk(m2);
-  getfem::interpolated_fem ifem(mf1, mim);
-  mflnk.set_finite_element(m2.convex_index(),
-			   getfem::new_interpolated_fem(mf1, mim));
+  getfem::pfem ifem = getfem::new_interpolated_fem(mf1, mim);
+  mflnk.set_finite_element(m2.convex_index(), ifem);
   sparse_matrix_type MM = sparse_matrix_type(mf2.nb_dof(), mflnk.nb_dof());
   getfem::asm_mass_matrix(MM, mim, mf2, mflnk);
   cout << "MM=" << MM << "\n";

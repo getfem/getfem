@@ -129,18 +129,18 @@ namespace getfem {
   { set_classical_finite_element(linked_mesh().convex_index(), fem_degree); }
 
   void mesh_fem::set_classical_discontinuous_finite_element
-  (const dal::bit_vector &cvs, dim_type fem_degree) {
+  (const dal::bit_vector &cvs, dim_type fem_degree, scalar_type alpha) {
     for (dal::bv_visitor cv(cvs); !cv.finished(); ++cv) {
       pfem pf = getfem::classical_discontinuous_fem
-	(linked_mesh().trans_of_convex(cv), fem_degree);
+	(linked_mesh().trans_of_convex(cv), fem_degree, alpha);
       set_finite_element(cv, pf);
     }
   }
 
   void mesh_fem::set_classical_discontinuous_finite_element
-  (dim_type fem_degree) { 
+  (dim_type fem_degree, scalar_type alpha) { 
     set_classical_discontinuous_finite_element(linked_mesh().convex_index(),
-					       fem_degree);
+					       fem_degree,alpha);
   }
 
   base_node mesh_fem::point_of_dof(size_type cv, size_type i) const {

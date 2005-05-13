@@ -37,18 +37,43 @@
 
 #include <getfem_mesh_level_set.h>
 
+
 namespace getfem {
-  typedef std::vector<const std::string *> dof_enrichments;
-  
+  /*
+  struct zoneset_t {    
+    typedef unsigned char zid_t;
+    dal::bit_vector ls_idx;
+    std::vector<zid_t> table;
+    zid_t &operator()(const std::string &p) {
+      return table[getpos(p)];
+    }
+    size_type getpos(const std::string &s) {
+      size_type p2 = 1, pos = 0;
+      for (dal::bv_visitor i(ls_idx); !i.finished(); ++i, p2 *= 2) {
+	pos += (s[i] == '+') ? p2 : 0;
+      }
+      return pos;
+    }
+    void merge(const zoneset_t &z) {
+      dal::bit_vector idx2 = ls_idx | z.ls_idx;
+      std::vector<size_type> s1, s2 = strides_for(idx2)
+    }
+  };
+  */
+
+  /** 
+    the fem_level_set is intended to always be used via a
+    mesh_fem_level_set objects.
+  */
   class fem_level_set : public virtual_fem {
     pfem bfem; /* the base FEM which is to be enriched */
     const mesh_level_set &mls;
     size_type xfem_index;
-    /* dof_ls_enrichment are stored in the parent mesh_fem 
-       the pointer is NULL for non enriched dofs
-     */
-    std::vector< const dof_ls_enrichment* > dofzones;
+    std::vector< const mesh_level_set::zoneset * > dofzones;
     dal::bit_vector ls_index; /* lists only the significant level sets */
+    std::string common_ls_zones;
+    void find_zone_id(const fem_interpolation_context &c, 
+		      std::vector<unsigned> &ids) const;
   public:
     template <typename IT_LS_ENRICH>
     fem_level_set(IT_LS_ENRICH it,pfem pf, const mesh_level_set &mls_,

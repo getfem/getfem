@@ -47,8 +47,8 @@ namespace getfem {
     mutable std::vector<pfem> build_methods;
     mutable bool is_adapted;
     mutable dal::bit_vector enriched_dofs, enriched_elements;
-    mutable std::set< dof_ls_enrichment > enrichments;
-    mutable std::vector<const dof_ls_enrichment *> dof_enrichments;
+    mutable std::set<std::set<const mesh_level_set::zone *> > enrichments;
+    mutable std::vector< const std::set<const mesh_level_set::zone *> *> dof_enrichments;
     size_type xfem_index;
     void clear_build_methods();
     void build_method_of_convex(size_type cv);

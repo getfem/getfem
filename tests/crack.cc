@@ -608,13 +608,24 @@ int main(int argc, char *argv[]) {
     p.mesh.write_to_file(p.datafilename + ".mesh");
     plain_vector U(p.mf_u().nb_dof());
     if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
+
+ //    for (size_type i = 0; i < p.mf_u().nb_dof(); ++i) {
+//       size_type cv = p.mf_u().first_convex_of_dof(i);
+//       size_type j = p.mf_u().ind_in_first_convex_of_dof(i);
+//       if ((p.mf_u().fem_of_element(cv)->dof_types()[j/2]) != getfem::global_dof(2))
+//       // if (!(getfem::dof_xfem_index(p.mf_u().fem_of_element(cv)->dof_types()[j/2]) > 1500))
+// 	U[i] = 0;
+//       else 
+// 	cout << "An xfem index : " << getfem::dof_xfem_index(p.mf_u().fem_of_element(cv)->dof_types()[j/2]) << " : " << p.mf_u().point_of_dof(i) << endl;
+//     }
     
     {
       getfem::getfem_mesh mcut;
       p.mls.global_cut_mesh(mcut);
       getfem::mesh_fem mf(mcut, p.mf_u().get_qdim());
-      mf.set_finite_element
-	(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 2, 0.0001)"));
+      mf.set_classical_discontinuous_finite_element(2, 0.001);
+      // mf.set_finite_element
+      //	(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 2, 0.0001)"));
       plain_vector V(mf.nb_dof());
 
       getfem::interpolation(p.mf_u(), mf, U, V);
@@ -628,8 +639,7 @@ int main(int argc, char *argv[]) {
 					 ("IM_TRIANGLE(6)"));
 
       getfem::mesh_fem mf_refined(mcut_refined, p.mf_u().get_qdim());
-      mf_refined.set_finite_element
-	(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 1, 0.0001)"));
+      mf_refined.set_classical_discontinuous_finite_element(2, 0.001);
       plain_vector W(mf_refined.nb_dof());
       getfem::interpolation(p.mf_u(), mf_refined, U, W);
 
@@ -644,8 +654,10 @@ int main(int argc, char *argv[]) {
 	cout << "export to " << p.datafilename + ".vtk" << "..\n";
 	getfem::vtk_export exp(p.datafilename + ".vtk",
 			       p.PARAM.int_value("VTK_EXPORT")==1);
-	exp.exporting(mf); 
-	exp.write_point_data(mf, V, "elastostatic_displacement");
+	exp.exporting(mf_refined); 
+	exp.write_point_data(mf_refined, W, "elastostatic_displacement");
+	// exp.exporting(mf); 
+	// exp.write_point_data(mf, V, "elastostatic_displacement");
 	cout << "export done, you can view the data file with (for example)\n"
 	  "mayavi -d " << p.datafilename << ".vtk -f ExtractVectorNorm -f "
 	  "WarpVector -m BandedSurfaceMap -m Outline\n";
