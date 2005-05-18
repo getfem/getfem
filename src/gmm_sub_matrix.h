@@ -408,7 +408,8 @@ namespace gmm {
   }
   
 
-
+#ifdef GMM_USES_MPI
+  
 
 //   template <typename M, typename SUBI1, typename SUBI2>  inline
 //     typename select_return<typename sub_matrix_type<const M *, SUBI1, SUBI2>
@@ -441,7 +442,7 @@ namespace gmm {
 
 
 
-
+#endif
 
 
 
