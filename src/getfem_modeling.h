@@ -88,6 +88,14 @@
 #include <gmm_precond_ilutp.h>
 #include <gmm_superlu_interface.h>
 #include <gmm_dense_qr.h>
+#include <gmm_matrix.h>
+#include <gmm_solver_Schwarz_additive.h>
+#include <set>
+
+#ifdef GMM_USES_METIS
+extern "C" void METIS_PartMeshNodal(int *, int *, int *, int *, int *, int *, int *, int *, int *);
+// #include <metis.h>
+#endif
 
 namespace getfem {
 
@@ -116,8 +124,65 @@ namespace getfem {
     T_MATRIX SM;
     gmm::col_matrix<gmm::rsvector<value_type> > NS; /* constraints nullspace */
     VECTOR reduced_residu_, Ud;
+
+#ifdef GMM_USES_MPI
+    std::vector<dal::bit_vector> local_domains;
+    std::map<const getfem_mesh *, size_type> mesh_set;
+#endif
+
   public :
 
+#if defined(GMM_USES_MPI) && defined(GMM_USES_METIS)
+    const dal::bit_vector &local_domain(const getfem_mesh &mesh)
+    { return local_domains[mesh_set[&mesh]]; }
+
+    void build_local_domains(mdbrick_abstract<model_state> &problem) {
+      int rank, size;
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+      MPI_Comm_size(MPI_COMM_WORLD, &size);
+      
+      mesh_set.clear();
+      for (size_type i = 0; i < problem.nb_mesh_fems(); ++i) {
+	mesh_set[&(problem.get_mesh_fem(i).linked_mesh())] = 0;
+      }
+      local_domains.clear();
+      local_domains.resize(mesh_set.size());
+      size_type nset = 0;
+
+      for (std::map<const getfem_mesh *, size_type>::iterator it = mesh_set.begin();
+	   it != mesh_set.end(); ++it, ++nset) {
+	it->second = nset;
+	int ne = int((it->first)->nb_convex());
+	int nn = int((it->first)->nb_points()), k = 0, etype = 0, numflag = 0;
+	int edgecut;
+      
+	bgeot::pconvex_structure cvs
+	  = (it->first)->structure_of_convex((it->first)->convex_index().first())->basic_structure();
+	
+	if (cvs == bgeot::simplex_structure(2)) { k = 3; etype = 1; }
+	else if (cvs == bgeot::simplex_structure(3)) { k = 4; etype = 2; }
+	else if (cvs == bgeot::parallelepiped_structure(2)) { k = 4; etype = 4; }
+	else if (cvs == bgeot::parallelepiped_structure(3)) { k = 8; etype = 3; }
+	else DAL_THROW(failure_error, "This kind of element is not taken into account");
+	
+	std::vector<int> elmnts(ne*k), npart(nn), eparts(ne);
+	int j = 0;
+	// Adapter la boucle aux transformations d'ordre élevé.
+	for (dal::bv_visitor i((it->first)->convex_index()); !i.finished(); ++i, ++j)
+	  for (int l = 0; l < k; ++l) elmnts[j*k+l] = (it->first)->ind_points_of_convex(i)[l];
+	
+	METIS_PartMeshNodal(&ne, &nn, &(elmnts[0]), &etype, &numflag, &size, &edgecut,
+			    &(eparts[0]), &(npart[0]));
+
+	for (size_type i = 0; i < ne; ++i)
+	  if (eparts[i] == rank) local_domains[nset].add(i);
+      }
+      
+    }
+#endif
+
+    const gmm::col_matrix<gmm::rsvector<value_type> > &nullspace_matrix(void)
+    { return NS; }
     const T_MATRIX &tangent_matrix(void) const 
     { return tangent_matrix_; }
     T_MATRIX &tangent_matrix(void) { return tangent_matrix_; }
@@ -378,13 +443,14 @@ namespace getfem {
     mesh_fem_info_ &get_mesh_fem_info(size_type i)
     { return mesh_fems_info[i]; }
     mesh_fem &get_mesh_fem(size_type i) { return *(mesh_fems[i]); }
+    size_type get_mesh_fem_position(size_type i) { return mesh_fem_positions[i]; }
     size_type nb_mesh_fems(void) { return mesh_fems.size(); }
 
     dim_type dim(void) { return mesh_fems[0]->linked_mesh().dim(); }
     virtual size_type nb_dof(void) { return nb_total_dof; }
     virtual size_type nb_constraints(void) = 0;
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
-				  size_type j0=0, bool modified = false) = 0;
+					size_type j0=0, bool modified = false) = 0;
     virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
 				size_type j0 = 0) = 0;
     bool is_linear(void) { return is_linear_; }
@@ -396,6 +462,56 @@ namespace getfem {
     { proper_is_linear_ = proper_is_symmetric_ = proper_is_coercive_ = true; }
     virtual ~mdbrick_abstract() {}
   };
+
+  /* ******************************************************************** */
+  /*		Function for extracting matrix structure.                 */
+  /* ******************************************************************** */
+//   void tangent_matrix_structure_single_mf(MODEL_STATE &MS, mesh_fem &mf_u, 
+// 					  size_type i0) {
+//     for (size_type i = 0; i < mf_u.nb_dof(); ++i) {
+//       bgeot::mesh_convex_ind_ct ct = mf_u.convex_to_dof(i);
+//       bgeot::mesh_convex_ind_ct::const_iterator it = ct.begin(), ite = ct.end();
+//       for (; it != ite; ++it) {
+// 	ref_mesh_dof_ind_ct ctd = mf_u.ind_dof_of_element(*it);
+// 	ref_mesh_dof_ind_ct::const_iterator itd = ctd.begin(), itde = ctd.end();
+// 	  for (; itd != itde; ++itd) {
+// 	    (MS.tangent_matrix())(i0 + i, i0 + *itd) = scalar_type(1);
+// 	  }
+//       }
+//     }
+//   }
+
+//   void tangent_matrix_structure_double_mf(MODEL_STATE &MS, mesh_fem &mf_u, mesh_fem &mf_v, 
+// 					  size_type i0, size_type i1) {
+//     for (size_type i = 0; i < mf_u.nb_dof(); ++i) {
+//       bgeot::mesh_convex_ind_ct ct = mf_u.convex_to_dof(i);
+//       bgeot::mesh_convex_ind_ct::const_iterator it = ct.begin(), ite = ct.end();
+//       for (; it != ite; ++it) {
+// 	ref_mesh_dof_ind_ct ctd = mf_v.ind_dof_of_element(*it);
+// 	ref_mesh_dof_ind_ct::const_iterator itd = ctd.begin(), itde = ctd.end();
+// 	  for (; itd != itde; ++itd) {
+// 	    (MS.tangent_matrix())(i0 + i, i1 + *itd) = scalar_type(1);
+// 	    (MS.tangent_matrix())(i1 + *itd, i0 + i) = scalar_type(1);
+// 	  }
+//       }
+//     }
+//   }
+
+//   void tangent_matrix_structure_single_mf_on_boundary(MODEL_STATE &MS, mesh_fem &mf_u, 
+// 						      size_type i0, int boundary) {
+//     dal::bit_vector nn = mf_u.dof_on_set(boundary);
+//     for (dal::bv_visitor i(nn); !i.finished(); ++i) {
+//       bgeot::mesh_convex_ind_ct ct = mf_u.convex_to_dof(i);
+//       bgeot::mesh_convex_ind_ct::const_iterator it = ct.begin(), ite = ct.end();
+//       for (; it != ite; ++it) {
+// 	ref_mesh_dof_ind_ct ctd = mf_u.ind_dof_of_element(*it);
+// 	ref_mesh_dof_ind_ct::const_iterator itd = ctd.begin(), itde = ctd.end();
+// 	  for (; itd != itde; ++itd) {
+// 	    (MS.tangent_matrix())(i0 + i, i0 + *itd) = scalar_type(1);
+// 	  }
+//       }
+//     }
+//   }
 
   /* ******************************************************************** */
   /*		general scalar elliptic brick.                            */
@@ -428,6 +544,7 @@ namespace getfem {
 
     virtual void mixed_variables(dal::bit_vector &, size_type = 0) {}
     virtual size_type nb_constraints(void) { return 0; }
+
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
 					size_type = 0, bool modified = false);
     virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
@@ -587,6 +704,7 @@ namespace getfem {
 
     virtual void mixed_variables(dal::bit_vector &, size_type = 0) {}
     virtual size_type nb_constraints(void) { return 0; }
+
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
 					size_type = 0, bool modified = false);
     virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
@@ -649,7 +767,11 @@ namespace getfem {
     }
     else { gmm::copy(lambda_, lambda); gmm::copy(mu_, mu); }
     asm_stiffness_matrix_for_linear_elasticity(K, mim, mf_u, mf_data,
-					       lambda, mu);
+					       lambda, mu
+#ifdef GMM_USES_MPI
+    , MS.local_domain(mf_u.linked_mesh())
+#endif
+    );
     this->computed();
   }
 
@@ -875,6 +997,7 @@ namespace getfem {
 
     virtual void mixed_variables(dal::bit_vector &, size_type = 0) {}
     virtual size_type nb_constraints(void) { return 0; }
+
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
 					size_type = 0, bool modified = false) {
       if (modified && !matrix_stored) 
@@ -1007,6 +1130,7 @@ namespace getfem {
     { sub_problem.mixed_variables(b, i0); }
     virtual size_type nb_constraints(void)
     { return sub_problem.nb_constraints(); }
+
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
 				     size_type j0 = 0, bool modified = false)
     { sub_problem.compute_tangent_matrix(MS, i0, j0, modified); }
@@ -1082,6 +1206,7 @@ namespace getfem {
     { sub_problem.mixed_variables(b, i0); }
     virtual size_type nb_constraints(void)
     { return sub_problem.nb_constraints(); }
+
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
 					size_type j0 = 0, bool = false) {
       sub_problem.compute_tangent_matrix(MS, i0, j0, true);
@@ -1168,13 +1293,17 @@ namespace getfem {
     VECTOR epsilon_; // penalization coefficient if any.
     size_type num_fem, i1, nbd;
 
-    void compute_B() {
+    void compute_B(MODEL_STATE &MS) {
       mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
       i1 = this->mesh_fem_positions[num_fem];
       nbd = mf_u.nb_dof();
       size_type nd = mf_u.nb_dof(), ndd = mf_p.nb_dof();
       gmm::clear(B); gmm::resize(B, ndd, nd);
-      asm_stokes_B(B, *(this->mesh_ims[0]), mf_u, mf_p);
+      asm_stokes_B(B, *(this->mesh_ims[0]), mf_u, mf_p
+#ifdef GMM_USES_MPI
+		   , MS.local_domain(mf_u.linked_mesh())
+#endif
+		   );
  
 //        gmm::dense_matrix<value_type> MM(ndd, ndd);
 //        std::vector<value_type> eigval(ndd);
@@ -1188,7 +1317,11 @@ namespace getfem {
 	if (homogeneous) std::fill(epsilon.begin(), epsilon.end(),epsilon_[0]);
 	else gmm::copy(epsilon_, epsilon);
 	gmm::clear(M); gmm::resize(M, ndd, ndd);
-	asm_mass_matrix_param(M, *(this->mesh_ims[0]), mf_p, mf_data, epsilon);
+	asm_mass_matrix_param(M, *(this->mesh_ims[0]), mf_p, mf_data, epsilon
+#ifdef GMM_USES_MPI
+			      , size_type(-1), MS.local_domain(mf_u.linked_mesh())
+#endif
+			      );
 	gmm::scale(M, value_type(-1));
       }
       this->computed();
@@ -1198,22 +1331,17 @@ namespace getfem {
     
     virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0) {
       sub_problem.mixed_variables(b, i0);
-      this->context_check();
-      if (this->to_be_computed()) {
-	this->force_recompute();
-	compute_B();
-      }
       b.add(i0 + sub_problem.nb_dof(), mf_p.nb_dof());
     }
     
-    virtual size_type nb_constraints(void) {
-      return sub_problem.nb_constraints();
-    }
+    virtual size_type nb_constraints(void)
+    { return sub_problem.nb_constraints(); }
+    
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
 				    size_type j0 = 0, bool modified = false) {
       sub_problem.compute_tangent_matrix(MS, i0, j0, modified);
       react(MS, i0, modified);
-      if (this->to_be_computed()) compute_B();
+      if (this->to_be_computed()) compute_B(MS);
       
       if (this->to_be_transferred()) {
 	gmm::sub_interval SUBI(i0+sub_problem.nb_dof(), mf_p.nb_dof());
@@ -1232,7 +1360,7 @@ namespace getfem {
 				size_type j0 = 0) {
       sub_problem.compute_residu(MS, i0, j0);
       react(MS, i0, false);
-      if (this->to_be_computed()) compute_B();
+      if (this->to_be_computed()) compute_B(MS);
      
       gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), mf_p.nb_dof());
       gmm::sub_interval SUBJ(i0+i1, nbd);
@@ -1273,7 +1401,7 @@ namespace getfem {
 		      mesh_fem &mf_p_, size_type num_fem_=0)
       : sub_problem(problem), mf_p(mf_p_), mf_data(mf_p_),
 	penalized(false), num_fem(num_fem_)
-    { init_(); compute_B(); }
+    { init_(); }
 
     // Constructor for the nearly incompressibility condition
     mdbrick_linear_incomp(mdbrick_abstract<MODEL_STATE> &problem,
@@ -1281,14 +1409,14 @@ namespace getfem {
 			  size_type num_fem_=0)
       : sub_problem(problem), mf_p(mf_p_), mf_data(mf_data_),
 	penalized(true), num_fem(num_fem_)
-    { set_coeff(epsilon); init_(); compute_B(); }
+    { set_coeff(epsilon); init_(); }
 
     mdbrick_linear_incomp(mdbrick_abstract<MODEL_STATE> &problem,
 			  mesh_fem &mf_p_, mesh_fem &mf_data_,
 			  const VECTOR& epsilon, size_type num_fem_=0)
       : sub_problem(problem), mf_p(mf_p_), mf_data(mf_data_),
 	penalized(true), num_fem(num_fem_)
-    { set_coeff(epsilon); init_(); compute_B(); }
+    { set_coeff(epsilon); init_();  }
 
   };
 
@@ -1416,10 +1544,10 @@ namespace getfem {
 	if (with_multipliers) {
 	  gmm::sub_interval SUBI(i0+sub_problem.nb_dof(), nb_const);
 	  gmm::sub_interval SUBJ(i0+i1, nbd);
-	  gmm::copy(G, gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBJ));
+	  gmm::copy(G, gmm::sub_matrix_toto(MS.tangent_matrix(), SUBI, SUBJ));
 	  gmm::copy(gmm::transposed(G),
-		    gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBI));
-	  gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBI));
+		    gmm::sub_matrix_toto(MS.tangent_matrix(), SUBJ, SUBI));
+	  gmm::clear(gmm::sub_matrix_toto(MS.tangent_matrix(), SUBI, SUBI));
 	}
 	else {	  
 	  size_type ncs = sub_problem.nb_constraints();
@@ -1757,7 +1885,9 @@ namespace getfem {
       iter_linsolv0.set_resmax(iter.get_resmax()/100.0);
     }
 
-
+#ifdef GMM_USES_MPI
+    double t_init = MPI_Wtime();
+#endif
     MS.adapt_sizes(problem); // to be sure it is ok, but should be done before
     problem.compute_residu(MS);
     problem.compute_tangent_matrix(MS);
@@ -1765,6 +1895,115 @@ namespace getfem {
     // cout << "CM = " << MS.constraints_matrix() << endl;
 
     MS.compute_reduced_system();
+#ifdef GMM_USES_MPI
+    cout << "comput tangent residu reduction time = " << MPI_Wtime() - t_init << endl;
+#endif
+#ifdef GMM_USES_METIS
+    
+    double t_ref = MPI_Wtime();
+
+    MS.build_local_domains(problem);
+
+    std::set<const getfem_mesh *> mesh_set;
+    for (size_type i = 0; i < problem.nb_mesh_fems(); ++i) {
+      mesh_set.insert(&(problem.get_mesh_fem(i).linked_mesh()));
+    }
+
+    cout << "You have " << mesh_set.size() << " meshes\n";
+
+    std::vector< std::vector<int> > eparts(mesh_set.size());
+    size_type nset = 0;
+    int nparts = 8;//(ndof / 1000)+1; // number of sub-domains.
+
+    // Quand il y a plusieurs maillages, on découpe tous les maillages en autant de parties
+    // et on regroupe les ddl de chaque partition par numéro de sous-partie.
+    for (std::set<const getfem_mesh *>::iterator it = mesh_set.begin();
+	 it != mesh_set.end(); ++it, ++nset) {
+      int ne = int((*it)->nb_convex());
+      int nn = int((*it)->nb_points()), k = 0, etype = 0, numflag = 0;
+      int edgecut;
+      
+      bgeot::pconvex_structure cvs
+	= (*it)->structure_of_convex((*it)->convex_index().first())->basic_structure();
+      
+      if (cvs == bgeot::simplex_structure(2)) { k = 3; etype = 1; }
+      else if (cvs == bgeot::simplex_structure(3)) { k = 4; etype = 2; }
+      else if (cvs == bgeot::parallelepiped_structure(2)) { k = 4; etype = 4; }
+      else if (cvs == bgeot::parallelepiped_structure(3)) { k = 8; etype = 3; }
+      else DAL_THROW(failure_error, "This kind of element is not taken into account");
+
+      
+      std::vector<int> elmnts(ne*k), npart(nn);
+      eparts[nset].resize(ne);
+      int j = 0;
+      // Adapter la boucle aux transformations d'ordre élevé.
+      for (dal::bv_visitor i((*it)->convex_index()); !i.finished(); ++i, ++j)
+	for (int l = 0; l < k; ++l) elmnts[j*k+l] = (*it)->ind_points_of_convex(i)[l];
+
+      METIS_PartMeshNodal(&ne, &nn, &(elmnts[0]), &etype, &numflag, &nparts, &edgecut,
+			  &(eparts[nset][0]), &(npart[0]));
+    }
+
+    std::vector<dal::bit_vector> Bidof(nparts);
+    size_type apos = 0;
+    for (size_type i = 0; i < problem.nb_mesh_fems(); ++i) {
+      const mesh_fem &mf = problem.get_mesh_fem(i);
+      nset = 0;
+      for (std::set<const getfem_mesh *>::iterator it = mesh_set.begin();
+	   it != mesh_set.end(); ++it, ++nset)
+	if (*it == &(mf.linked_mesh())) break; 
+      size_type pos = problem.get_mesh_fem_position(i);
+      if (pos != apos)
+	DAL_THROW(failure_error, "Multiplicators are not taken into account");
+      size_type length = mf.nb_dof();
+      apos += length;
+      for (dal::bv_visitor j(mf.convex_index()); !j.finished(); ++j) {
+	size_type k = eparts[nset][j];
+	for (size_type l = 0; l < mf.nb_dof_of_element(i); ++l)
+	  Bidof[k].add(mf.ind_dof_of_element(j)[l] + pos);
+      }
+      if (apos != ndof)
+	DAL_THROW(failure_error, "Multiplicators are not taken into account");
+    }
+
+    std::vector< gmm::row_matrix< gmm::rsvector<value_type> > > Bi(nparts);    
+    for (size_type i = 0; i < nparts; ++i) {
+      gmm::resize(Bi[i], ndof, Bidof[i].card());
+      size_type k = 0;
+      for (dal::bv_visitor j(Bidof[i]); !j.finished(); ++j, ++k)
+	Bi[i](j, k) = value_type(1);
+    }
+
+    std::vector< gmm::row_matrix< gmm::rsvector<value_type> > > Bib(nparts);
+    gmm::col_matrix< gmm::rsvector<value_type> > Bitemp;
+    if (problem.nb_constraints() > 0) {
+      for (size_type i = 0; i < nparts; ++i) {
+	gmm::resize(Bib[i], gmm::mat_ncols(MS.nullspace_matrix()),
+		    gmm::mat_ncols(Bi[i]));
+       	gmm::mult(gmm::transposed(MS.nullspace_matrix()), Bi[i], Bib[i]);
+	
+	gmm::resize(Bitemp, gmm::mat_nrows(Bib[i]), gmm::mat_ncols(Bib[i]));
+	gmm::copy(Bib[i], Bitemp);
+	scalar_type EPS = gmm::mat_norminf(Bitemp) * gmm::default_tol(scalar_type());
+	size_type k = 0;
+	for (size_type j = 0; j < gmm::mat_ncols(Bitemp); ++j, ++k) {
+	  // Il faudrait faire une orthogonalisation de Schmidt ici pour des cas
+	  // plus ellaborés.
+	  if (k != j) Bitemp.swap_col(j, k);
+	  if (gmm::vect_norm2(gmm::mat_col(Bitemp, k)) < EPS) --k;
+	}
+	gmm::resize(Bitemp, gmm::mat_nrows(Bib[i]), k);
+	gmm::resize(Bib[i], gmm::mat_nrows(Bib[i]), k);
+	gmm::copy(Bitemp, Bib[i]);
+	// cout << "Bib[" << i << "] = " <<  Bib[i] << endl;
+	// cout << "Bi[" << i << "] = " <<  Bi[i] << endl;
+      }
+    } else std::swap(Bi, Bib);
+
+    cout << "METIS time = " << MPI_Wtime() - t_ref << endl;
+
+
+#endif
 
     // cout << "RTM = " << MS.reduced_tangent_matrix() << endl;
     
@@ -1780,6 +2019,9 @@ namespace getfem {
       if (!(iter.first())) {
 	problem.compute_tangent_matrix(MS);
 	MS.compute_reduced_system();
+#ifdef GMM_USES_METIS
+        DAL_THROW(failure_error, "oups ...");
+#endif
       }
       
 //       if (iter.get_noisy())
@@ -1800,18 +2042,34 @@ namespace getfem {
 //       cout << "eival = " << eigval << endl;
 //       cout << "vectp : " << gmm::mat_col(Q, nreddof-1) << endl;
 //       cout << "vectp : " << gmm::mat_col(Q, nreddof-2) << endl;
-
 //       double emax, emin;
 //       cout << "condition number" << condition_number(MM,emax,emin) << endl;
 //       cout << "emin = " << emin << endl;
 //       cout << "emax = " << emax << endl;
 
       if (iter.get_noisy()) {
+	cout << "there is " << gmm::mat_nrows(MS.constraints_matrix()) << " constraints\n";
 	problem.mixed_variables(mixvar);
 	cout << "there is " << mixvar.card() << " mixed variables\n";
       }
 
-      //if (0) {
+#ifdef GMM_USES_METIS
+#ifdef GMM_USES_MPI
+    double t_ref,t_final;
+    t_ref=MPI_Wtime();
+    cout<<"begin Seq AS"<<endl;
+#endif
+      sequential_additive_schwarz(MS.reduced_tangent_matrix(), dr,
+				  gmm::scaled(MS.reduced_residu(), value_type(-1)),
+				  0, Bib, iter_linsolv, gmm::using_superlu(),
+				  gmm::using_cg());
+#ifdef GMM_USES_MPI
+    t_final=MPI_Wtime();
+    cout<<"temps Seq AS "<< t_final-t_ref<<endl;
+#endif
+#else
+      // if (0) {
+
       if ((ndof < 200000 && dim <= 2) || (ndof < 10000 && dim <= 3)
 	  || (ndof < 1000)) {
 	
@@ -1850,7 +2108,9 @@ namespace getfem {
 	    DAL_WARNING(2,"gmres did not converge!");
 	}
       }
-      MS.unreduced_solution(dr,d);
+#endif
+
+     MS.unreduced_solution(dr,d);
 
       if (is_linear) {
 	gmm::add(d, MS.state());

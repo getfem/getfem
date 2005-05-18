@@ -29,10 +29,14 @@
 
 #ifndef GETFEM_SUPERLU
 #define GETFEM_SUPERLU
+#ifndef GMM_USES_SUPERLU
+#define GMM_USES_SUPERLU
+#endif
 #include <gmm_kernel.h>
 #include <getfem_config.h>
 
 namespace gmm {
+
   template<typename T>
   void SuperLU_solve(const gmm::csc_matrix<T> &A, T *X_, T *B, double& rcond_, int permc_spec = 3);
   

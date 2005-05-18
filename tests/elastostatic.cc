@@ -26,12 +26,17 @@
  * a good example of use of Getfem++.
 */
 
+#include <getfem_superlu.h>
 #include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
 #include <getfem_export.h>   /* export functions (save solution in a file)  */
 #include <getfem_regular_meshes.h>
 #include <getfem_modeling.h>
 #include <gmm.h>
 
+#ifdef GMM_USES_MPI
+#include <mpi.h>
+#include <mpi++.h>
+#endif
 /* try to enable the SIGFPE if something evaluates to a Not-a-number
  * of infinity during computations
  */
@@ -49,9 +54,15 @@ using bgeot::base_matrix; /* small dense matrix. */
 /* definition of some matrix/vector types. These ones are built
  * using the predefined types in Gmm++
  */
-typedef getfem::modeling_standard_sparse_vector sparse_vector;
-typedef getfem::modeling_standard_sparse_matrix sparse_matrix;
+#ifndef GMM_USES_MPI
+typedef getfem::modeling_standard_sparse_matrix Tsparse_matrix;
+typedef getfem::modeling_standard_sparse_matrix Csparse_matrix;
 typedef getfem::modeling_standard_plain_vector  plain_vector;
+#else
+typedef gmm::mpi_distributed_matrix<getfem::modeling_standard_sparse_matrix> Tsparse_matrix;
+typedef getfem::modeling_standard_sparse_matrix Csparse_matrix;
+typedef getfem::modeling_standard_plain_vector  plain_vector;
+#endif
 
 /**************************************************************************/
 /*  Exact solution.                                                       */
@@ -247,6 +258,8 @@ void elastostatic_problem::compute_error(plain_vector &U) {
 /*  Model.                                                                */
 /**************************************************************************/
 
+typedef getfem::model_state<Tsparse_matrix, Csparse_matrix, plain_vector> Model_State;
+
 bool elastostatic_problem::solve(plain_vector &U) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   size_type N = mesh.dim();
@@ -255,12 +268,12 @@ bool elastostatic_problem::solve(plain_vector &U) {
   cout << "Number of dof for u: " << mf_u.nb_dof() << endl;
 
   // Linearized elasticity brick.
-  getfem::mdbrick_isotropic_linearized_elasticity<>
+  getfem::mdbrick_isotropic_linearized_elasticity<Model_State>
     ELAS(mim, mf_u, mf_coef, mixed_pressure ? 0.0 : lambda, mu);
 
-  getfem::mdbrick_linear_incomp<> INCOMP(ELAS, mf_p, mf_coef, 1.0/lambda);
+  getfem::mdbrick_linear_incomp<Model_State> INCOMP(ELAS, mf_p, mf_coef, 1.0/lambda);
 
-  getfem::mdbrick_abstract<> *pINCOMP;
+  getfem::mdbrick_abstract<Model_State> *pINCOMP;
   if (mixed_pressure) pINCOMP = &INCOMP; else pINCOMP = &ELAS;
 
   // Defining the volumic source term.
@@ -270,7 +283,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
 		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
   
   // Volumic source term brick.
-  getfem::mdbrick_source_term<> VOL_F(*pINCOMP, mf_rhs, F);
+  getfem::mdbrick_source_term<Model_State> VOL_F(*pINCOMP, mf_rhs, F);
 
   // Defining the Neumann condition right hand side.
   base_small_vector un(N), v(N);
@@ -292,7 +305,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
   }
 
   // Neumann condition brick.
-  getfem::mdbrick_source_term<> NEUMANN(VOL_F, mf_rhs, F,NEUMANN_BOUNDARY_NUM);
+  getfem::mdbrick_source_term<Model_State> NEUMANN(VOL_F, mf_rhs, F,NEUMANN_BOUNDARY_NUM);
   
   // Defining the Dirichlet condition value.
   for (size_type i = 0; i < nb_dof_rhs; ++i)
@@ -300,18 +313,29 @@ bool elastostatic_problem::solve(plain_vector &U) {
 		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
 
   // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> final_model(NEUMANN, mf_rhs,
+  getfem::mdbrick_Dirichlet<Model_State> final_model(NEUMANN, mf_rhs,
 					  F, DIRICHLET_BOUNDARY_NUM);
 
   // Generic solve.
   cout << "Total number of variables : " << final_model.nb_dof() << endl;
-  getfem::standard_model_state MS(final_model);
+  Model_State MS(final_model);
   gmm::iteration iter(residue, 1, 40000);
+#ifdef GMM_USES_MPI
+    double t_init=MPI_Wtime();
+#endif
   getfem::standard_solve(MS, final_model, iter);
 
+#ifdef GMM_USES_MPI
+    cout<<"temps standard solve "<< MPI_Wtime()-t_init<<endl;
+#endif
+#ifdef GMM_USES_MPI
+    double t_ref=MPI_Wtime();
+#endif
   // Solution extraction
   gmm::copy(ELAS.get_solution(MS), U);
-
+#ifdef GMM_USES_MPI
+    cout<<"temps copy elas "<< MPI_Wtime()-t_ref<<endl;
+#endif
   return (iter.converged());
 }
   
@@ -320,6 +344,11 @@ bool elastostatic_problem::solve(plain_vector &U) {
 /**************************************************************************/
 
 int main(int argc, char *argv[]) {
+#ifdef GMM_USES_MPI
+  int rank;
+    MPI_Init(&argc,&argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
   dal::exception_callback_debug cb;
   dal::exception_callback::set_exception_callback(&cb); // to debug ...
 
@@ -327,14 +356,29 @@ int main(int argc, char *argv[]) {
   feenableexcept(FE_DIVBYZERO | FE_INVALID);
 #endif
 
-  try {    
+  try {
+    static double t_resol = 0.0;
+    double t_ref,t_final;
+
     elastostatic_problem p;
     p.PARAM.read_command_line(argc, argv);
     p.init();
     p.mesh.write_to_file(p.datafilename + ".mesh");
     plain_vector U(p.mf_u.nb_dof());
+#ifdef GMM_USES_MPI
+    t_ref=MPI_Wtime();
+    cout<<"begining resol"<<endl;
+#endif
     if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
+
+#ifdef GMM_USES_MPI
+    t_final=MPI_Wtime();
+    t_resol += t_final-t_ref;
+    cout<<"end resol"<<endl;
+    cout<<"["<< rank <<"] temps Resol "<< t_final-t_ref << " t_tot = " << t_resol << endl;
+#endif
     p.compute_error(U);
+
     if (p.PARAM.int_value("VTK_EXPORT")) {
       cout << "export to " << p.datafilename + ".vtk" << "..\n";
       getfem::vtk_export exp(p.datafilename + ".vtk",
@@ -347,6 +391,8 @@ int main(int argc, char *argv[]) {
     }
   }
   DAL_STANDARD_CATCH_ERROR;
-
+#ifdef GMM_USES_MPI
+   MPI_Finalize();
+#endif
   return 0; 
 }

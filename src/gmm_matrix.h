@@ -927,6 +927,122 @@ namespace gmm
   { mult_const(m, v1, v2, linalg_const_cast(v3)); }
 
 }
+  /* ******************************************************************** */
+  /*		                                            		  */
+  /*		Distributed matrices                                	  */
+  /*		                                            		  */
+  /* ******************************************************************** */
+
+#ifdef GMM_USES_MPI
+  
+#include <mpi.h>
+#include <mpi++.h>
+ 
+namespace gmm { 
+  
+  template <typename MAT> struct mpi_distributed_matrix {
+    MAT M;
+
+    mpi_distributed_matrix(size_type n, size_type m) : M(n, m) {}
+    mpi_distributed_matrix() {}
+  };
+
+  template <typename T> int mpi_type(T)
+  { DAL_THROW(failure_error, "Sorry unsupported type"); }
+  int mpi_type(double) { return MPI_DOUBLE; }
+  int mpi_type(float) { return MPI_FLOAT; }
+  int mpi_type(long double) { return MPI_LONG_DOUBLE; }
+  int mpi_type(std::complex<float>) { return MPI_COMPLEX; }
+  int mpi_type(std::complex<double>) { return MPI_DOUBLE_COMPLEX; }
+
+  template <typename MAT, typename V1, typename V2>
+  inline void mult_add(const mpi_distributed_matrix<MAT> &m, const V1 &v1, V2 &v2) {
+    typedef typename linalg_traits<V2>::value_type T;
+    std::vector<T> v3(vect_size(v2)), v4(vect_size(v2));
+    gmm::mult(m.M, v1, v3);
+    if (is_sparse(v2)) DAL_WARNING(2, "Using a plain temporary, here.");
+
+    MPI_Allreduce(&(v3[0]), &(v4[0]),gmm::vect_size(v2), mpi_type(T()),
+		  MPI_SUM,MPI_COMM_WORLD);
+    gmm::add(v4, v2);
+  }
+
+  template <typename MAT, typename V1, typename V2>
+  void mult_add(const mpi_distributed_matrix<MAT> &m, const V1 &v1, const V2 &v2_)
+  { mult_add(m, v1, const_cast<V2 &>(v2_)); }
+
+  template <typename MAT, typename V1, typename V2>
+  inline void mult(const mpi_distributed_matrix<MAT> &m, const V1 &v1, const V2 &v2_)
+  { V2 &v2 = const_cast<V2 &>(v2_); clear(v2); mult_add(m, v1, v2); }
+
+  template <typename MAT, typename V1, typename V2>
+  inline void mult(const mpi_distributed_matrix<MAT> &m, const V1 &v1, V2 &v2)
+  { clear(v2); mult_add(m, v1, v2); }
+
+  template <typename MAT, typename V1, typename V2, typename V3>
+  inline void mult(const mpi_distributed_matrix<MAT> &m, const V1 &v1, const V2 &v2, const V3 &v3_)
+  { V3 &v3 = const_cast<V3 &>(v3_); gmm::copy(v2, v3); mult_add(m, v1, v3); }
+
+  template <typename MAT, typename V1, typename V2, typename V3>
+  inline void mult(const mpi_distributed_matrix<MAT> &m, const V1 &v1, const V2 &v2, V3 &v3)
+  { gmm::copy(v2, v3); mult_add(m, v1, v3); }
+  
+
+  template <typename MAT> inline size_type mat_nrows(const mpi_distributed_matrix<MAT> &M) 
+  { return mat_nrows(M.M); }
+  template <typename MAT> inline size_type mat_ncols(const mpi_distributed_matrix<MAT> &M) 
+  { return mat_nrows(M.M); }
+  template <typename MAT> inline void resize(mpi_distributed_matrix<MAT> &M, size_type m, size_type n)
+  { resize(M.M, m, n); }
+  template <typename MAT> inline void clear(mpi_distributed_matrix<MAT> &M)
+  { clear(M.M); }
+  
+
+  // For compute reduced system
+  template <typename MAT1, typename MAT2> inline void mult(const MAT1 &M1,
+							   const mpi_distributed_matrix<MAT2> &M2,
+							   mpi_distributed_matrix<MAT2> &M3)
+  { mult(M1, M2.M, M3.M); }
+  template <typename MAT1, typename MAT2> inline void mult(const mpi_distributed_matrix<MAT2> &M2,
+							   const MAT1 &M1,
+							   mpi_distributed_matrix<MAT2> &M3)
+  { mult(M2.M, M1, M3.M); }
+  template <typename MAT1, typename MAT2, typename MAT3>
+  inline void mult(const MAT1 &M1, const mpi_distributed_matrix<MAT2> &M2,
+		   MAT3 &M3)
+  { mult(M1, M2.M, M3); }
+  template <typename MAT1, typename MAT2, typename MAT3>
+  inline void mult(const MAT1 &M1, const mpi_distributed_matrix<MAT2> &M2,
+		   const MAT3 &M3)
+  { mult(M1, M2.M, M3); }
+
+  template <typename MAT> struct linalg_traits<mpi_distributed_matrix<MAT> > {
+    typedef mpi_distributed_matrix<MAT> this_type;
+    typedef MAT origin_type;
+    typedef linalg_false is_reference;
+    typedef abstract_matrix linalg_type;
+    typedef typename linalg_traits<MAT>::value_type value_type;
+    typedef typename linalg_traits<MAT>::reference reference;
+    typedef typename linalg_traits<MAT>::storage_type storage_type;
+    typedef abstract_null_type sub_row_type;
+    typedef abstract_null_type const_sub_row_type;
+    typedef abstract_null_type row_iterator;
+    typedef abstract_null_type const_row_iterator;
+    typedef abstract_null_type sub_col_type;
+    typedef abstract_null_type const_sub_col_type;
+    typedef abstract_null_type col_iterator;
+    typedef abstract_null_type const_col_iterator;
+    typedef abstract_null_type sub_orientation;
+    typedef abstract_null_type index_sorted;
+    static size_type nrows(const this_type &m) { return nrows(m.M); }
+    static size_type ncols(const this_type &m) { return ncols(m.M); }
+    static void do_clear(this_type &m) { clear(m.M); }
+  };
+
+}
+
+
+#endif
 
 namespace std {
   template <typename V> void swap(gmm::row_matrix<V> &m1, gmm::row_matrix<V> &m2)
@@ -940,6 +1056,8 @@ namespace std {
   template <typename T, int shift> void 
   swap(gmm::csr_matrix<T,shift> &m1, gmm::csr_matrix<T,shift> &m2) { m1.swap(m2); }
 }
+
+
 
 
 #endif /* GMM_MATRIX_H__ */

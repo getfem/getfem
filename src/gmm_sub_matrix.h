@@ -31,6 +31,7 @@
 #define GMM_SUB_MATRIX_H__
 
 #include <gmm_sub_vector.h>
+#include <gmm_matrix.h>
 
 namespace gmm {
 
@@ -406,6 +407,43 @@ namespace gmm {
       ::matrix_type, const M *>::return_type(linalg_cast(m), si1, si1);
   }
   
+
+
+
+//   template <typename M, typename SUBI1, typename SUBI2>  inline
+//     typename select_return<typename sub_matrix_type<const M *, SUBI1, SUBI2>
+//     ::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI2>::matrix_type,
+//     M *>::return_type
+//   sub_matrix(mpi_distributed_matrix<M> &m, const SUBI1 &si1, const SUBI2 &si2)
+//   { return sub_matrix(m.M, si1, si2); }
+
+  template <typename MAT, typename SUBI1, typename SUBI2>  inline
+  typename select_return<typename sub_matrix_type<const MAT *, SUBI1, SUBI2>
+  ::matrix_type, typename sub_matrix_type<MAT *, SUBI1, SUBI2>::matrix_type,
+			 const MAT *>::return_type
+  sub_matrix_toto(const mpi_distributed_matrix<MAT> &m, const SUBI1 &si1, const SUBI2 &si2)
+  { return 10;/* sub_matrix(m.M, si1, si2); */ }
+
+  template <typename M, typename SUBI1>  inline
+    typename select_return<typename sub_matrix_type<const M *, SUBI1, SUBI1>
+    ::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI1>::matrix_type,
+    M *>::return_type
+  sub_matrix(mpi_distributed_matrix<M> &m, const SUBI1 &si1) 
+  { return sub_matrix(m.M, si1, si1); }
+
+  template <typename M, typename SUBI1>  inline
+    typename select_return<typename sub_matrix_type<const M *, SUBI1, SUBI1>
+    ::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI1>::matrix_type,
+    const M *>::return_type
+  sub_matrix(const mpi_distributed_matrix<M> &m, const SUBI1 &si1)
+  { return sub_matrix(m.M, si1, si1); }
+
+
+
+
+
+
+
 
 }
 

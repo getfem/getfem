@@ -83,6 +83,9 @@ namespace gmm {
       rho = vect_hp(PS, z, r);
       copy(z, p);
 
+#ifdef GMM_USES_MPI
+	double t_prec = MPI_Wtime(), t_tot = 0;
+#endif
       while (!iter.finished_vect(r)) {
 
 	if (!iter.first()) { 
@@ -96,6 +99,11 @@ namespace gmm {
 	add(scaled(p, a), x);
 	add(scaled(q, -a), r);
 	rho_1 = rho;
+
+#ifdef GMM_USES_MPI
+	t_tot = MPI_Wtime() - t_prec;
+	cout << "temps CG : " << t_tot << endl; 
+#endif
 	++iter;
       }
     }
