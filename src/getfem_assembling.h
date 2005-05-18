@@ -199,7 +199,8 @@ namespace getfem
    *  boundary) 
    */
   template<typename MAT>
-  void asm_mass_matrix(MAT &M, const mesh_im &mim, const mesh_fem &mf_u1, const mesh_fem &mf_u2,
+  void asm_mass_matrix(MAT &M, const mesh_im &mim, const mesh_fem &mf_u1,
+		       const mesh_fem &mf_u2,
 		       size_type boundary=size_type(-1)) {
     generic_assembly assem;
     if (&mf_u1 != &mf_u2)
@@ -226,9 +227,10 @@ namespace getfem
    *  (on the whole mesh or on the specified boundary) 
    */
   template<typename MAT, typename VECT>
-  void asm_mass_matrix_param(MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem &mfdata,
+  void asm_mass_matrix_param(MAT &M, const mesh_im &mim, const mesh_fem &mf_u,
+			     const mesh_fem &mfdata,
 			     const VECT &F, size_type boundary=size_type(-1),
-			     const dal::bit_vector &domain = mf_u.convex_index()) {
+			     const dal::bit_vector &domain) {
     generic_assembly assem;
     if (mf_u.get_qdim() == 1)
       assem.set("F=data(#2);"
@@ -245,6 +247,15 @@ namespace getfem
       assem.volumic_assembly(domain);
     else assem.boundary_assembly(boundary);
   }
+
+  template<typename MAT, typename VECT> inline
+  void asm_mass_matrix_param(MAT &M, const mesh_im &mim, const mesh_fem &mf_u,
+			     const mesh_fem &mfdata,
+			     const VECT &F, size_type boundary=size_type(-1)) {
+    asm_mass_matrix_param(M, mim, mf_u, mfdata, F, boundary,
+			  mf_u.convex_index());
+  }
+  
 
   /*  source term (for both volumic sources and boundary (neumann) sources.
    *  real version.
@@ -406,7 +417,7 @@ namespace getfem
 						  const mesh_fem &mfdata,
 						  const VECT &LAMBDA,
 						  const VECT &MU,
-						  const dal::bit_vector &domain = mf.convex_index()) {
+					      const dal::bit_vector &domain) {
     MAT &RM = const_cast<MAT &>(RM_);
     if (mfdata.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
@@ -434,17 +445,17 @@ namespace getfem
     assem.push_mat(RM);
     assem.volumic_assembly(domain);
   }
-
-// template<class MAT, class VECT>
-//   void asm_stiffness_matrix_for_linear_elasticity(const MAT &RM_,
-// 						  const mesh_im &mim, 
-// 						  const mesh_fem &mf,
-// 						  const mesh_fem &mfdata,
-// 						  const VECT &LAMBDA,
-// 						  const VECT &MU) {
-//     asm_stiffness_matrix_for_linear_elasticity(RM_, mim, mf, mfdata, LAMBDA, MU, mf.convex_index());
-//   }
- 
+  
+  template<class MAT, class VECT>
+  void asm_stiffness_matrix_for_linear_elasticity(const MAT &RM_,
+						  const mesh_im &mim, 
+						  const mesh_fem &mf,
+						  const mesh_fem &mfdata,
+						  const VECT &LAMBDA,
+						  const VECT &MU) {
+    asm_stiffness_matrix_for_linear_elasticity(RM_, mim, mf, mfdata,
+					       LAMBDA, MU, mf.convex_index());
+  }
 
   /** 
       Stiffness matrix for linear elasticity, with a general Hooke tensor. This is more a
@@ -504,8 +515,8 @@ namespace getfem
   }
 
   template<typename MAT>
-  void asm_stokes_B(MAT &B, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem &mf_p,
-		    const dal::bit_vector &domain = mf_u.convex_index()) {
+  void asm_stokes_B(MAT &B, const mesh_im &mim, const mesh_fem &mf_u,
+		    const mesh_fem &mf_p, const dal::bit_vector &domain) {
     if (mf_p.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     // generic_assembly assem("M$1(#1,#2)+=comp(vGrad(#1).Base(#2))(:,i,i,:);");
@@ -517,7 +528,11 @@ namespace getfem
     assem.volumic_assembly(domain);
   }
 
-
+  template<typename MAT>
+  void asm_stokes_B(MAT &B, const mesh_im &mim, const mesh_fem &mf_u,
+		    const mesh_fem &mf_p) {
+    asm_stokes_B(B, mim, mf_u, mf_p, mf_u.convex_index());
+  }
   /**
    * assembly of $\int_\Omega a(x)\nabla u.\nabla v$.
    */
