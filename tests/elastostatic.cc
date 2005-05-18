@@ -357,8 +357,10 @@ int main(int argc, char *argv[]) {
 #endif
 
   try {
+#ifdef GMM_USES_MPI
     static double t_resol = 0.0;
     double t_ref,t_final;
+#endif
 
     elastostatic_problem p;
     p.PARAM.read_command_line(argc, argv);

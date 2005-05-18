@@ -1544,10 +1544,10 @@ namespace getfem {
 	if (with_multipliers) {
 	  gmm::sub_interval SUBI(i0+sub_problem.nb_dof(), nb_const);
 	  gmm::sub_interval SUBJ(i0+i1, nbd);
-	  gmm::copy(G, gmm::sub_matrix_toto(MS.tangent_matrix(), SUBI, SUBJ));
+	  gmm::copy(G, gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBJ));
 	  gmm::copy(gmm::transposed(G),
-		    gmm::sub_matrix_toto(MS.tangent_matrix(), SUBJ, SUBI));
-	  gmm::clear(gmm::sub_matrix_toto(MS.tangent_matrix(), SUBI, SUBI));
+		    gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBI));
+	  gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBI));
 	}
 	else {	  
 	  size_type ncs = sub_problem.nb_constraints();
