@@ -35,7 +35,7 @@
 
 #ifdef GMM_USES_MPI
 #include <mpi.h>
-#include <mpi++.h>
+// #include <mpi++.h>
 #endif
 /* try to enable the SIGFPE if something evaluates to a Not-a-number
  * of infinity during computations

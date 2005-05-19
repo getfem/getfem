@@ -936,7 +936,7 @@ namespace gmm
 #ifdef GMM_USES_MPI
   
 #include <mpi.h>
-#include <mpi++.h>
+// #include <mpi++.h>
  
 namespace gmm { 
   

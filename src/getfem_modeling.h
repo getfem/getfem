@@ -174,7 +174,7 @@ namespace getfem {
 	METIS_PartMeshNodal(&ne, &nn, &(elmnts[0]), &etype, &numflag, &size, &edgecut,
 			    &(eparts[0]), &(npart[0]));
 
-	for (size_type i = 0; i < ne; ++i)
+	for (size_type i = 0; i < size_type(ne); ++i)
 	  if (eparts[i] == rank) local_domains[nset].add(i);
       }
       
@@ -698,7 +698,7 @@ namespace getfem {
     bool matrix_stored;
     T_MATRIX K;
 
-    void compute_K(void);
+    void compute_K(MODEL_STATE &MS);
 
   public :
 
@@ -757,7 +757,7 @@ namespace getfem {
 
 
   template<typename MODEL_STATE>
-   void mdbrick_isotropic_linearized_elasticity<MODEL_STATE>::compute_K(void) {
+   void mdbrick_isotropic_linearized_elasticity<MODEL_STATE>::compute_K(MODEL_STATE &MS) {
     gmm::clear(K);
     gmm::resize(K, this->nb_dof(), this->nb_dof());
     VECTOR lambda(mf_data.nb_dof()), mu(mf_data.nb_dof());
@@ -786,7 +786,7 @@ namespace getfem {
     gmm::sub_interval SUBI(i0, this->nb_dof());
     if (this->to_be_computed()
 	|| (!matrix_stored && this->to_be_transferred()))
-      compute_K();
+      compute_K(MS);
     if (this->to_be_transferred()) { 
       gmm::copy(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI));
       this->transferred();
@@ -800,7 +800,7 @@ namespace getfem {
     react(MS, i0, false);
     gmm::sub_interval SUBI(i0, this->nb_dof());
     if (this->to_be_computed()) { 
-      compute_K();
+      compute_K(MS);
       if (!matrix_stored) {
 	gmm::copy(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI)); 
 	gmm::clear(K);
@@ -1870,7 +1870,6 @@ namespace getfem {
     //        max residu.
 
     size_type ndof = problem.nb_dof();
-    size_type dim = problem.dim();
 
     bool is_linear = problem.is_linear();
     // mtype alpha, alpha_min=mtype(1)/mtype(20);
@@ -1967,7 +1966,7 @@ namespace getfem {
     }
 
     std::vector< gmm::row_matrix< gmm::rsvector<value_type> > > Bi(nparts);    
-    for (size_type i = 0; i < nparts; ++i) {
+    for (size_type i = 0; i < size_type(nparts); ++i) {
       gmm::resize(Bi[i], ndof, Bidof[i].card());
       size_type k = 0;
       for (dal::bv_visitor j(Bidof[i]); !j.finished(); ++j, ++k)
@@ -1977,7 +1976,7 @@ namespace getfem {
     std::vector< gmm::row_matrix< gmm::rsvector<value_type> > > Bib(nparts);
     gmm::col_matrix< gmm::rsvector<value_type> > Bitemp;
     if (problem.nb_constraints() > 0) {
-      for (size_type i = 0; i < nparts; ++i) {
+      for (size_type i = 0; i < size_type(nparts); ++i) {
 	gmm::resize(Bib[i], gmm::mat_ncols(MS.nullspace_matrix()),
 		    gmm::mat_ncols(Bi[i]));
        	gmm::mult(gmm::transposed(MS.nullspace_matrix()), Bi[i], Bib[i]);
@@ -2068,9 +2067,11 @@ namespace getfem {
     cout<<"temps Seq AS "<< t_final-t_ref<<endl;
 #endif
 #else
-      // if (0) {
+    size_type dim = problem.dim();
 
-      if ((ndof < 200000 && dim <= 2) || (ndof < 10000 && dim <= 3)
+    // if (0) {
+    
+    if ((ndof < 200000 && dim <= 2) || (ndof < 10000 && dim <= 3)
 	  || (ndof < 1000)) {
 	
 	// cout << "M = " << MS.reduced_tangent_matrix() << endl;

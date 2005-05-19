@@ -141,7 +141,7 @@ namespace gmm {
     
     if (iter.get_noisy()) cout << "Init pour sub dom ";
 #ifdef GMM_USES_MPI
-    int i,size,tranche,borne_sup,borne_inf,rank;
+    int size,tranche,borne_sup,borne_inf,rank;
     double t_ref,t_final;
     t_ref=MPI_Wtime();
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -152,7 +152,7 @@ namespace gmm {
     if (rank==size-1) borne_sup=nb_sub;
 
     cout << "Nombre de sous domaines " << borne_sup - borne_inf << endl;
-    for (size_type i = borne_inf; i < borne_sup; ++i) {
+    for (size_type i = size_type(borne_inf); i < size_type(borne_sup); ++i) {
       cout << "Sous domaines " << i << " : " << mat_ncols((*vB)[i]) << endl;
 #else
     for (size_type i = 0; i < nb_sub; ++i) {
@@ -202,7 +202,7 @@ namespace gmm {
     borne_sup=(rank+1)*tranche;
     if (rank==size-1) borne_sup=nb_sub;
     t_ref = MPI_Wtime();
-    for (size_type i = borne_inf; i < borne_sup; ++i)
+    for (size_type i = size_type(borne_inf); i < size_type(borne_sup); ++i)
 #else
     for (size_type i = 0; i < M.fi.size(); ++i)
 #endif
@@ -220,7 +220,7 @@ namespace gmm {
 
     gmm::clear(q);
 #ifdef GMM_USES_MPI
-    for (size_type i = borne_inf; i < borne_sup; ++i)
+    for (size_type i = size_type(borne_inf); i < size_type(borne_sup); ++i)
 #else
       for (size_type i = 0; i < M.gi.size(); ++i)
 #endif
@@ -328,14 +328,14 @@ namespace gmm {
     std::vector<value_type> gbis(nb_dof);
 #ifdef GMM_USES_MPI
     double t_init=MPI_Wtime();
-    int i,size,tranche,borne_sup,borne_inf,rank;
+    int size,tranche,borne_sup,borne_inf,rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     tranche=nb_sub/size;
     borne_inf=rank*tranche;
     borne_sup=(rank+1)*tranche;
     if (rank==size-1) borne_sup=nb_sub;
-    for (size_type i = borne_inf; i < borne_sup; ++i)
+    for (size_type i = size_type(borne_inf); i < size_type(borne_sup); ++i)
     //    for (size_type i = rank; i < nb_sub; i+=size)
 #else
     for (size_type i = 0; i < nb_sub; ++i)
