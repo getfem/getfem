@@ -59,7 +59,8 @@ typedef getfem::modeling_standard_sparse_matrix Tsparse_matrix;
 typedef getfem::modeling_standard_sparse_matrix Csparse_matrix;
 typedef getfem::modeling_standard_plain_vector  plain_vector;
 #else
-typedef gmm::mpi_distributed_matrix<getfem::modeling_standard_sparse_matrix> Tsparse_matrix;
+typedef gmm::mpi_distributed_matrix<getfem::modeling_standard_sparse_matrix>
+  Tsparse_matrix;
 typedef getfem::modeling_standard_sparse_matrix Csparse_matrix;
 typedef getfem::modeling_standard_plain_vector  plain_vector;
 #endif
@@ -122,7 +123,7 @@ struct elastostatic_problem {
   getfem::mesh_fem mf_coef;  /* mesh_fem used to represent pde coefficients  */
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
 
-  scalar_type residue;        /* max residue for the iterative solvers         */
+  scalar_type residue;       /* max residue for the iterative solvers        */
   bool mixed_pressure;
 
   std::string datafilename;
@@ -258,7 +259,8 @@ void elastostatic_problem::compute_error(plain_vector &U) {
 /*  Model.                                                                */
 /**************************************************************************/
 
-typedef getfem::model_state<Tsparse_matrix, Csparse_matrix, plain_vector> Model_State;
+typedef getfem::model_state<Tsparse_matrix, Csparse_matrix, plain_vector>
+        Model_State;
 
 bool elastostatic_problem::solve(plain_vector &U) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
@@ -305,7 +307,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
   }
 
   // Neumann condition brick.
-  getfem::mdbrick_source_term<Model_State> NEUMANN(VOL_F, mf_rhs, F,NEUMANN_BOUNDARY_NUM);
+  getfem::mdbrick_source_term<Model_State>
+    NEUMANN(VOL_F, mf_rhs, F,NEUMANN_BOUNDARY_NUM);
   
   // Defining the Dirichlet condition value.
   for (size_type i = 0; i < nb_dof_rhs; ++i)
@@ -346,8 +349,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
 int main(int argc, char *argv[]) {
 #ifdef GMM_USES_MPI
   int rank;
-    MPI_Init(&argc,&argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Init(&argc,&argv);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
   dal::exception_callback_debug cb;
   dal::exception_callback::set_exception_callback(&cb); // to debug ...
@@ -377,7 +380,8 @@ int main(int argc, char *argv[]) {
     t_final=MPI_Wtime();
     t_resol += t_final-t_ref;
     cout<<"end resol"<<endl;
-    cout<<"["<< rank <<"] temps Resol "<< t_final-t_ref << " t_tot = " << t_resol << endl;
+    cout<<"["<< rank <<"] temps Resol "<< t_final-t_ref << " t_tot = "
+	<< t_resol << endl;
 #endif
     p.compute_error(U);
 
