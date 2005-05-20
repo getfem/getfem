@@ -183,8 +183,7 @@ namespace getfem {
 
     const gmm::col_matrix<gmm::rsvector<value_type> > &nullspace_matrix(void)
     { return NS; }
-    const T_MATRIX &tangent_matrix(void) const 
-    { return tangent_matrix_; }
+    const T_MATRIX &tangent_matrix(void) const { return tangent_matrix_; }
     T_MATRIX &tangent_matrix(void) { return tangent_matrix_; }
     const C_MATRIX &constraints_matrix(void) const 
     { return constraints_matrix_; }
@@ -1091,8 +1090,11 @@ namespace getfem {
     mesh_fem &mf_data;
     VECTOR B_;
     VECTOR F_;
+    VECTOR auxF;
     size_type boundary, qmult, num_fem;
     size_type i1, nbd;
+    bool have_auxF;
+
 
     void compute_F(void) {
       mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
@@ -1122,8 +1124,15 @@ namespace getfem {
   public :
 
     const VECTOR &source_term(void) {
-      if (this->to_be_computed()) {compute_F();}
+      if (this->to_be_computed()) { compute_F();}
       return F_;
+    }
+
+    template <class VECT> void set_auxF(const VECT &V) {
+      have_auxF = true;
+      mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
+      gmm::resize(auxF, mf_u.nb_dof());
+      gmm::copy(V, auxF);
     }
 
     virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0)
@@ -1142,6 +1151,10 @@ namespace getfem {
       
       gmm::add(gmm::scaled(F_, value_type(-1)), gmm::sub_vector(MS.residu(),
 	       gmm::sub_interval(i0+i1, nbd)));
+      if (have_auxF)
+	gmm::add(gmm::scaled(auxF, value_type(-1)),
+		 gmm::sub_vector(MS.residu(),
+				 gmm::sub_interval(i0+i1, nbd)));
 
     }
 
@@ -1152,7 +1165,7 @@ namespace getfem {
 			mesh_fem &mf_data_, const VECTOR &B__,
 			size_type bound = size_type(-1), size_type num_fem_=0)
       : sub_problem(problem), mf_data(mf_data_), boundary(bound),
-	num_fem(num_fem_) {
+	num_fem(num_fem_), have_auxF(false) {
       this->add_dependency(mf_data);
       this->add_sub_brick(problem);
       if (bound != size_type(-1))
@@ -1336,6 +1349,8 @@ namespace getfem {
     
     virtual size_type nb_constraints(void)
     { return sub_problem.nb_constraints(); }
+
+    const T_MATRIX &get_B(void) { return B; }
     
     virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
 				    size_type j0 = 0, bool modified = false) {
