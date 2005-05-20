@@ -73,16 +73,18 @@ namespace getfem {
     touched = false;
   }
   
-  void context_dependencies::context_check(void) const {
+  bool context_dependencies::context_check(void) const {
     if (state == CONTEXT_CHANGED) {
       state = CONTEXT_NORMAL;
       iterator_list it = dependencies.begin(), ite = dependencies.end();
       for (; it != ite; ++it)
 	{ (*it)->context_check(); (*it)->touched = false; }
       update_from_context();
+      return true;
     }
     else if (state == CONTEXT_INVALID)
       DAL_THROW(failure_error, "Invalid context");
+    return false;
   }
   
   void context_dependencies::touch(void) const {

@@ -90,7 +90,8 @@ namespace getfem {
     void sup_dependency(const context_dependencies &cd)
     { cd.sup_dependent_(*this); sup_dependency_(cd); }
     bool context_valid(void) const { return (state != CONTEXT_INVALID); }
-    void context_check(void) const;
+    /* return true if update_from_context was called */
+    bool context_check(void) const;
     void touch(void) const;
     static long new_ident(void); // outdated function
     virtual ~context_dependencies();

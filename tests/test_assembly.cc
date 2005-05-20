@@ -826,15 +826,19 @@ void gen_mesh(getfem::getfem_mesh& mesh) {
       mesh.points()[i][j] += d;
     }
     }*/
+  for (unsigned cv=0; cv < std::min(mesh.convex_index().card(),
+			   param.NX*param.Ndim*param.Ndim*10); cv += 2) {
+    mesh.add_face_to_set(1, cv, (cv/4) % (param.Ndim > 1 ? 3 : 2)); 
+  }
+  mesh.add_face_to_set(1,0,0);
 }
 
 void init_mesh_fem(getfem::mesh_fem &mf, bool datamf) {
-  size_type cv;
   if (datamf)
     mf.set_classical_finite_element(param.Kdata);
   else {
     dal::bit_vector cvlst = mf.linked_mesh().convex_index();
-    for (cv << cvlst; cv != size_type(-1); cv << cvlst) {      
+    for (dal::bv_visitor cv(cvlst); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
       if ((cv+1) % 100) {
 	mf.set_finite_element(cv, getfem::classical_fem(pgt,param.K));
@@ -842,10 +846,6 @@ void init_mesh_fem(getfem::mesh_fem &mf, bool datamf) {
 	mf.set_finite_element(cv, getfem::classical_fem(pgt,param.K2));
       }
     }
-  }
-  for (cv=0; cv < std::min(mf.convex_index().card(),
-			   param.NX*param.Ndim*param.Ndim*10); cv += 2) {
-    mf.linked_mesh().add_face_to_set(1, cv, (cv/4) % (param.Ndim > 1 ? 3 : 2)); 
   }
 }
 
@@ -1527,6 +1527,8 @@ int main(int argc, char *argv[])
      getfem::getfem_mesh m(2);
      m.add_triangle_by_points(mknode(0.,0.),mknode(1.2,0.),mknode(0.1,1.5));     
      m.add_triangle_by_points(mknode(0.,0.),mknode(-1.2,0.),mknode(0.1,1.5));
+     m.add_face_to_set(1, 0, 0);
+     m.add_face_to_set(1, 0, 1);
      getfem::mesh_fem mf(m);
      classical_mesh_fem(mf, 2);     
      getfem::mesh_fem mfq(m); 

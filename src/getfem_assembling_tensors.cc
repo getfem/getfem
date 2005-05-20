@@ -1577,8 +1577,10 @@ namespace getfem {
     for (dal::bv_visitor cv(candidates); !cv.finished(); ++cv) {
       if (m.convex_index().is_in(cv)) {
         for (size_type i=0; i < mftab.size(); ++i)
-          if (!mftab[i]->convex_index().is_in(cv))
+          if (!mftab[i]->convex_index().is_in(cv)) {
+	    mftab[i]->write_to_file(cerr);
             ASM_THROW_ERROR("the convex " << cv << " has no FEM for the #" << i+1 << " mesh_fem");	  
+	  }
         cvorder.push_back(cv);
       } else {
         ASM_THROW_ERROR("the convex " << cv << " is not part of the mesh");
@@ -1632,7 +1634,6 @@ namespace getfem {
   }
 
   void generic_assembly::assembly(const region_ref &rr) {
-    cerr << " boundaries: " << rr.id << " " << imtab[0]->linked_mesh().get_valid_sets() << " == " << mftab[0]->linked_mesh().get_valid_sets() << "\n";
     rr.from_mesh(imtab[0]->linked_mesh());
     const region &r = rr.get();
     if (r.is_boundary()) {
