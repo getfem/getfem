@@ -1630,4 +1630,15 @@ namespace getfem {
 	if (nf[f]) exec(cv[i], f);
     }
   }
+
+  void generic_assembly::assembly(const region_ref &rr) {
+    cerr << " boundaries: " << rr.id << " " << imtab[0]->linked_mesh().get_valid_sets() << " == " << mftab[0]->linked_mesh().get_valid_sets() << "\n";
+    rr.from_mesh(imtab[0]->linked_mesh());
+    const region &r = rr.get();
+    if (r.is_boundary()) {
+      /* TODO : pas suffisant!! */
+      assert(rr.id != size_type(-1));
+      boundary_assembly(rr.id); 
+    } else volumic_assembly(r.cvindex);
+  }
 } /* end of namespace */

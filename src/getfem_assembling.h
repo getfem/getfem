@@ -41,14 +41,14 @@ namespace getfem
    */
   template<typename VEC>
   scalar_type asm_L2_norm(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-			  size_type cvset=size_type(-1)) {
-    return sqrt(asm_L2_norm_sqr(mim, mf,U,cvset,
+			  const region_ref &rg=region_ref::all_convexes()) {
+    return sqrt(asm_L2_norm_sqr(mim, mf,U,rg,
 				typename gmm::linalg_traits<VEC>::value_type()));
   }
 
   template<typename VEC, typename T>
   scalar_type asm_L2_norm_sqr(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-			      size_type cvset, T) {
+			      const region_ref &rg, T) {
     generic_assembly assem;    
     if (mf.get_qdim() == 1)
       assem.set("u=data(#1); V()+=u(i).u(j).comp(Base(#1).Base(#1))(i,j)");
@@ -60,16 +60,17 @@ namespace getfem
     assem.push_data(U);
     std::vector<scalar_type> v(1);
     assem.push_vec(v);
-    if (cvset+1) assem.boundary_assembly(cvset);
-    else         assem.volumic_assembly();
+    /*if (cvset+1) assem.boundary_assembly(cvset);
+      else         assem.volumic_assembly();*/
+    assem.assembly(rg);
     return v[0];
   }
 
   template<typename VEC, typename T>
   scalar_type asm_L2_norm_sqr(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-			      size_type cvset=size_type(-1), std::complex<T>) {
-    return asm_L2_norm_sqr(mim, mf,gmm::real_part(U),cvset,T()) + 
-      asm_L2_norm_sqr(mim, mf,gmm::imag_part(U),cvset,T());
+			      const region_ref &rg, std::complex<T>) {
+    return asm_L2_norm_sqr(mim, mf,gmm::real_part(U),rg,T()) + 
+      asm_L2_norm_sqr(mim, mf,gmm::imag_part(U),rg,T());
   }
 
   /**
@@ -79,7 +80,8 @@ namespace getfem
   template<typename VEC1, typename VEC2>
   scalar_type asm_L2_dist(const mesh_im &mim, 
 			  const mesh_fem &mf1, const VEC1 &U1,
-			  const mesh_fem &mf2, const VEC2 &U2) {    
+			  const mesh_fem &mf2, const VEC2 &U2, 
+			  const region_ref &rg = region_ref::all_convexes()) {    
     generic_assembly assem;    
     if (mf1.get_qdim() == 1)
       assem.set("u1=data$1(#1); u2=data$2(#2); "
@@ -98,7 +100,7 @@ namespace getfem
     assem.push_data(U2);
     std::vector<scalar_type> v(1);
     assem.push_vec(v);
-    assem.volumic_assembly();
+    assem.assembly(rg);
     return sqrt(v[0]);
   }
 
@@ -108,13 +110,13 @@ namespace getfem
    */
   template<typename VEC>
   scalar_type asm_H1_semi_norm(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-			       size_type cvset=size_type(-1)) {
-    return sqrt(asm_H1_semi_norm_sqr(mim, mf,U,cvset,typename gmm::linalg_traits<VEC>::value_type()));
+			       const region_ref &rg = region_ref::all_convexes()) {
+    return sqrt(asm_H1_semi_norm_sqr(mim, mf,U,rg,typename gmm::linalg_traits<VEC>::value_type()));
   }
 
   template<typename VEC, typename T>
   scalar_type asm_H1_semi_norm_sqr(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-				   size_type cvset, T) {
+				   const region_ref &rg, T) {
     generic_assembly assem;    
     if (mf.get_qdim() == 1)
       assem.set("u=data(#1); V()+=u(i).u(j).comp(Grad(#1).Grad(#1))(i,d,j,d)");
@@ -126,24 +128,23 @@ namespace getfem
     assem.push_data(U);
     std::vector<scalar_type> v(1);
     assem.push_vec(v);
-    if (cvset == size_type(-1))
-      assem.volumic_assembly();
-    else assem.boundary_assembly(cvset);
+    assem.assembly(rg);
     return v[0];
   }
 
   template<typename VEC, typename T>
   scalar_type asm_H1_semi_norm_sqr(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-				   size_type cvset, std::complex<T>) {
-    return asm_H1_semi_norm_sqr(mim, mf, gmm::real_part(U), cvset, T()) + 
-      asm_H1_semi_norm_sqr(mim, mf, gmm::imag_part(U), cvset, T());
+				   const region_ref &rg, std::complex<T>) {
+    return asm_H1_semi_norm_sqr(mim, mf, gmm::real_part(U), rg, T()) + 
+      asm_H1_semi_norm_sqr(mim, mf, gmm::imag_part(U), rg, T());
   }
 
   
   template<typename VEC1, typename VEC2>
   scalar_type asm_H1_semi_dist(const mesh_im &mim, 
 			       const mesh_fem &mf1, const VEC1 &U1,
-			       const mesh_fem &mf2, const VEC2 &U2) {    
+			       const mesh_fem &mf2, const VEC2 &U2,
+			       const region_ref &rg = region_ref::all_convexes()) {    
     generic_assembly assem;    
     if (mf1.get_qdim() == 1)
       assem.set("u1=data$1(#1); u2=data$2(#2); "
@@ -162,7 +163,7 @@ namespace getfem
     assem.push_data(U2);
     std::vector<scalar_type> v(1);
     assem.push_vec(v);
-    assem.volumic_assembly();
+    assem.assembly(rg);
     return sqrt(v[0]);    
   }
 
@@ -171,27 +172,31 @@ namespace getfem
    */
   template<typename VEC>
   scalar_type asm_H1_norm(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-			  size_type cvset=size_type(-1)) {
-    return sqrt(gmm::sqr(asm_L2_norm(mim, mf, U, cvset))
-		+gmm::sqr(asm_H1_semi_norm(mim, mf, U, cvset)));
+			  const region_ref &rg = region_ref::all_convexes()) {
+    return sqrt(gmm::sqr(asm_L2_norm(mim, mf, U, rg))
+		+gmm::sqr(asm_H1_semi_norm(mim, mf, U, rg)));
   }
   
+  /**
+   * Compute the H1 distance between U1 and U2
+   */
   template<typename VEC1, typename VEC2>
   scalar_type asm_H1_dist(const mesh_im &mim, 
-			       const mesh_fem &mf1, const VEC1 &U1,
-			       const mesh_fem &mf2, const VEC2 &U2) {
-    return sqrt(gmm::sqr(asm_L2_dist(mim,mf1,U1,mf2,U2)) + 
-		gmm::sqr(asm_H1_semi_dist(mim,mf1,U1,mf2,U2)));
+			  const mesh_fem &mf1, const VEC1 &U1,
+			  const mesh_fem &mf2, const VEC2 &U2,
+			  const region_ref &rg = region_ref::all_convexes()) {
+    return sqrt(gmm::sqr(asm_L2_dist(mim,mf1,U1,mf2,U2,rg)) + 
+		gmm::sqr(asm_H1_semi_dist(mim,mf1,U1,mf2,U2,rg)));
   }
 
   /** 
    *  generic mass matrix assembly (on the whole mesh or on the specified
-   *  boundary) 
+   *  convex set or boundary) 
    */
   template<typename MAT>
   void asm_mass_matrix(const MAT &M, const mesh_im &mim, const mesh_fem &mf_u1,
-		       size_type boundary=size_type(-1)) {
-    asm_mass_matrix(const_cast<MAT &>(M), mim, mf_u1, mf_u1, boundary);
+		       const region_ref &rg = region_ref::all_convexes()) {
+    asm_mass_matrix(const_cast<MAT &>(M), mim, mf_u1, mf_u1, rg);
   }
 
   /** 
@@ -201,7 +206,7 @@ namespace getfem
   template<typename MAT>
   void asm_mass_matrix(MAT &M, const mesh_im &mim, const mesh_fem &mf_u1,
 		       const mesh_fem &mf_u2,
-		       size_type boundary=size_type(-1)) {
+		       const region_ref &rg = region_ref::all_convexes()) {
     generic_assembly assem;
     if (&mf_u1 != &mf_u2)
       if (mf_u1.get_qdim() == 1 && mf_u2.get_qdim() == 1)
@@ -217,9 +222,7 @@ namespace getfem
     assem.push_mf(mf_u1);
     assem.push_mf(mf_u2);
     assem.push_mat(M);
-    if (boundary==size_type(-1)) 
-      assem.volumic_assembly();
-    else assem.boundary_assembly(boundary);
+    assem.assembly(rg);
   }
 
   /** 
@@ -229,8 +232,8 @@ namespace getfem
   template<typename MAT, typename VECT>
   void asm_mass_matrix_param(MAT &M, const mesh_im &mim, const mesh_fem &mf_u,
 			     const mesh_fem &mfdata,
-			     const VECT &F, size_type boundary=size_type(-1),
-			     const dal::bit_vector &domain) {
+			     const VECT &F, 			       
+			     const region_ref &rg = region_ref::all_convexes()) {
     generic_assembly assem;
     if (mf_u.get_qdim() == 1)
       assem.set("F=data(#2);"
@@ -243,19 +246,24 @@ namespace getfem
     assem.push_mf(mfdata);
     assem.push_data(F);
     assem.push_mat(M);
-    if (boundary==size_type(-1)) 
-      assem.volumic_assembly(domain);
-    else assem.boundary_assembly(boundary);
+    assem.assembly(rg);
   }
 
-  template<typename MAT, typename VECT> inline
-  void asm_mass_matrix_param(MAT &M, const mesh_im &mim, const mesh_fem &mf_u,
-			     const mesh_fem &mfdata,
-			     const VECT &F, size_type boundary=size_type(-1)) {
-    asm_mass_matrix_param(M, mim, mf_u, mfdata, F, boundary,
-			  mf_u.convex_index());
+
+
+  /** 
+   *  source term (for both volumic sources and boundary (neumann) sources.
+   */
+  template<typename VECT1, typename VECT2>
+  void asm_source_term(VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
+		       const mesh_fem &mfdata, const VECT2 &F,
+		       const region_ref &rg = region_ref::all_convexes()) {
+    if (mfdata.get_qdim() != 1)
+      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
+    asm_source_term(B, mim, mf, mfdata, F, rg,
+		    typename gmm::linalg_traits<VECT2>::value_type());
   }
-  
+
 
   /*  source term (for both volumic sources and boundary (neumann) sources.
    *  real version.
@@ -263,7 +271,7 @@ namespace getfem
   template<typename VECT1, typename VECT2, typename T>
   void asm_source_term(const VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
 		       const mesh_fem &mfdata, const VECT2 &F,
-		       size_type boundary, T) {
+		       const region_ref &rg, T) {
     generic_assembly assem;
     if (mf.get_qdim() == 1)
       assem.set("F=data(#2); V(#1)+=comp(Base(#1).Base(#2))(:,j).F(j);");
@@ -275,8 +283,7 @@ namespace getfem
     assem.push_mf(mfdata);
     assem.push_data(F);
     assem.push_vec(const_cast<VECT1&>(B));
-    (boundary == size_type(-1)) ?
-      assem.volumic_assembly() : assem.boundary_assembly(boundary);
+    assem.assembly(rg);
   }
 
   /*  source term (for both volumic sources and boundary (neumann) sources.
@@ -285,40 +292,10 @@ namespace getfem
   template<typename VECT1, typename VECT2, typename T>
   void asm_source_term(VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
 		       const mesh_fem &mfdata, const VECT2 &F,
-		       size_type boundary, std::complex<T>) {
-    /*    generic_assembly assem;
-	  if (mf.get_qdim() == 1)
-	  assem.set("Fr=data$1(#2); V$1(#1)+=comp(Base(#1).Base(#2))(:,j).Fr(j);"
-	  "Fi=data$2(#2); V$2(#1)+=comp(Base(#1).Base(#2))(:,j).Fi(j);");
-	  else
-	  assem.set("Fr=data$1(qdim(#1),#2); Fi=data$2(qdim(#1),#2);"
-	  "V$1(#1)+=comp(vBase(#1).Base(#2))(:,i,j).Fr(i,j);"
-	  "V$2(#1)+=comp(vBase(#1).Base(#2))(:,i,j).Fi(i,j);");
-	  assem.push_mf(mf);
-	  assem.push_mf(mfdata);
-	  assem.push_data(gmm::real_part(F));
-	  assem.push_data(gmm::imag_part(F));
-	  assem.push_vec(gmm::real_part(B));
-	  assem.push_vec(gmm::imag_part(B));
-	  (boundary == size_type(-1)) ?
-	  assem.volumic_assembly() : assem.boundary_assembly(boundary);*/
-    asm_source_term(gmm::real_part(B), mim, mf, mfdata, gmm::real_part(F), boundary, T());
-    asm_source_term(gmm::imag_part(B), mim, mf, mfdata, gmm::imag_part(F), boundary, T());
+		       const region_ref &rg, std::complex<T>) {
+    asm_source_term(gmm::real_part(B), mim, mf, mfdata, gmm::real_part(F), rg, T());
+    asm_source_term(gmm::imag_part(B), mim, mf, mfdata, gmm::imag_part(F), rg, T());
   }
-
-  /** 
-   *  source term (for both volumic sources and boundary (neumann) sources.
-   */
-  template<typename VECT1, typename VECT2>
-  void asm_source_term(VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
-		       const mesh_fem &mfdata, const VECT2 &F,
-		       size_type boundary=size_type(-1)) {
-    if (mfdata.get_qdim() != 1)
-      DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
-    asm_source_term(B, mim, mf, mfdata, F, boundary,
-		    typename gmm::linalg_traits<VECT2>::value_type());
-  }
-
 
 
   template <typename V> bool is_Q_symmetric(const V& Q, size_type q, size_type nbd) {

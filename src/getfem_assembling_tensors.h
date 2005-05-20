@@ -564,6 +564,8 @@ namespace getfem {
     void volumic_assembly(const dal::bit_vector& cvlst);
     /* do the assembly on the specified boundary */
     void boundary_assembly(size_type boundary_number);
+    /* do the assembly on the specified region (boundary or set of convexes) */
+    void assembly(const region_ref &region);
   };
 }  /* end of namespace getfem.                                             */
 

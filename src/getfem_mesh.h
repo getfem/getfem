@@ -32,11 +32,11 @@
 #define GETFEM_MESH_H__
 
 #include <bitset>
+#include <dal_shared_ptr.h>
 #include <bgeot_mesh.h>
 #include <bgeot_geotrans_inv.h>
 #include <linkmsg.h>
 #include <getfem_context.h>
-
 namespace getfem {
 
   /* ********************************************************************* */
@@ -141,6 +141,8 @@ namespace getfem {
     mesh_cvf_set(bool is_bound_) { is_bound = is_bound_; }
     mesh_cvf_set() {}
   };
+
+  typedef mesh_cvf_set region;
 
   /* ********************************************************************* */
   /*								   	   */
@@ -326,6 +328,10 @@ namespace getfem {
       cvf_sets[d] = mesh_cvf_set(is_bound);
       return d;
     }
+    const region& get_region(size_type id) const { 
+      if (set_exists(id)) return cvf_sets[id]; 
+      else DAL_THROW(dal::failure_error, "no such region");
+    }
     size_type add_convex_set(void) { return add_cvf_set(false); }
     size_type add_face_set(void) { return add_cvf_set(true); }
     bool set_exists(size_type s) const { return valid_cvf_sets[s]; }
@@ -435,6 +441,33 @@ namespace getfem {
    * of the jacobian of the geometric transformation */
   scalar_type convex_radius_estimate(bgeot::pgeometric_trans pgt,
 				     const base_matrix& pts);
+
+  
+  class region_ref {
+  public:
+    size_type id;
+    mutable const region* p;
+    mutable dal::shared_ptr<region> p_;
+  public:
+    static region_ref all_convexes() { return region_ref(size_type(-1)); }
+    region_ref(dal::bit_vector &bv) { set_bv(bv); }
+    region_ref(size_type id_) : id(id_), p(0) {}
+    region_ref(const region &s) : id(size_type(-2)), p(&s) {}
+    void from_mesh(const getfem_mesh &m) const { 
+      if (!p) {
+	if (id == size_type(-1))
+	  set_bv(m.convex_index());
+	else if (id != size_type(-2))
+	  p = &m.get_region(id);
+      }
+      /* TODO : verifier que la liste des convexes est bien inclue dans m.convex_index */
+    }
+    const region& get() const { return *p; }
+  private:
+    void set_bv(const dal::bit_vector &bv) const
+    { p_.reset(new region(false)); p=p_.get(); p_->cvindex = bv; }
+  };
+
 
   /* 
      stores a convex face. if f == -1, it is the whole convex
