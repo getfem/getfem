@@ -41,14 +41,14 @@ namespace getfem
    */
   template<typename VEC>
   scalar_type asm_L2_norm(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-			  const region_ref &rg=region_ref::all_convexes()) {
+			  const region_ref rg=region_ref::all_convexes()) {
     return sqrt(asm_L2_norm_sqr(mim, mf,U,rg,
 				typename gmm::linalg_traits<VEC>::value_type()));
   }
 
   template<typename VEC, typename T>
   scalar_type asm_L2_norm_sqr(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-			      const region_ref &rg, T) {
+			      const region_ref rg, T) {
     generic_assembly assem;    
     if (mf.get_qdim() == 1)
       assem.set("u=data(#1); V()+=u(i).u(j).comp(Base(#1).Base(#1))(i,j)");
@@ -68,7 +68,7 @@ namespace getfem
 
   template<typename VEC, typename T>
   scalar_type asm_L2_norm_sqr(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-			      const region_ref &rg, std::complex<T>) {
+			      const region_ref rg, std::complex<T>) {
     return asm_L2_norm_sqr(mim, mf,gmm::real_part(U),rg,T()) + 
       asm_L2_norm_sqr(mim, mf,gmm::imag_part(U),rg,T());
   }
@@ -81,7 +81,7 @@ namespace getfem
   scalar_type asm_L2_dist(const mesh_im &mim, 
 			  const mesh_fem &mf1, const VEC1 &U1,
 			  const mesh_fem &mf2, const VEC2 &U2, 
-			  const region_ref &rg = region_ref::all_convexes()) {    
+			  const region_ref rg = region_ref::all_convexes()) {    
     generic_assembly assem;    
     if (mf1.get_qdim() == 1)
       assem.set("u1=data$1(#1); u2=data$2(#2); "
@@ -110,13 +110,13 @@ namespace getfem
    */
   template<typename VEC>
   scalar_type asm_H1_semi_norm(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-			       const region_ref &rg = region_ref::all_convexes()) {
+			       const region_ref rg = region_ref::all_convexes()) {
     return sqrt(asm_H1_semi_norm_sqr(mim, mf,U,rg,typename gmm::linalg_traits<VEC>::value_type()));
   }
 
   template<typename VEC, typename T>
   scalar_type asm_H1_semi_norm_sqr(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-				   const region_ref &rg, T) {
+				   const region_ref rg, T) {
     generic_assembly assem;    
     if (mf.get_qdim() == 1)
       assem.set("u=data(#1); V()+=u(i).u(j).comp(Grad(#1).Grad(#1))(i,d,j,d)");
@@ -134,7 +134,7 @@ namespace getfem
 
   template<typename VEC, typename T>
   scalar_type asm_H1_semi_norm_sqr(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-				   const region_ref &rg, std::complex<T>) {
+				   const region_ref rg, std::complex<T>) {
     return asm_H1_semi_norm_sqr(mim, mf, gmm::real_part(U), rg, T()) + 
       asm_H1_semi_norm_sqr(mim, mf, gmm::imag_part(U), rg, T());
   }
@@ -144,7 +144,7 @@ namespace getfem
   scalar_type asm_H1_semi_dist(const mesh_im &mim, 
 			       const mesh_fem &mf1, const VEC1 &U1,
 			       const mesh_fem &mf2, const VEC2 &U2,
-			       const region_ref &rg = region_ref::all_convexes()) {    
+			       const region_ref rg = region_ref::all_convexes()) {    
     generic_assembly assem;    
     if (mf1.get_qdim() == 1)
       assem.set("u1=data$1(#1); u2=data$2(#2); "
@@ -172,7 +172,7 @@ namespace getfem
    */
   template<typename VEC>
   scalar_type asm_H1_norm(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-			  const region_ref &rg = region_ref::all_convexes()) {
+			  const region_ref rg = region_ref::all_convexes()) {
     return sqrt(gmm::sqr(asm_L2_norm(mim, mf, U, rg))
 		+gmm::sqr(asm_H1_semi_norm(mim, mf, U, rg)));
   }
@@ -184,7 +184,7 @@ namespace getfem
   scalar_type asm_H1_dist(const mesh_im &mim, 
 			  const mesh_fem &mf1, const VEC1 &U1,
 			  const mesh_fem &mf2, const VEC2 &U2,
-			  const region_ref &rg = region_ref::all_convexes()) {
+			  const region_ref rg = region_ref::all_convexes()) {
     return sqrt(gmm::sqr(asm_L2_dist(mim,mf1,U1,mf2,U2,rg)) + 
 		gmm::sqr(asm_H1_semi_dist(mim,mf1,U1,mf2,U2,rg)));
   }
@@ -195,7 +195,7 @@ namespace getfem
    */
   template<typename MAT>
   void asm_mass_matrix(const MAT &M, const mesh_im &mim, const mesh_fem &mf_u1,
-		       const region_ref &rg = region_ref::all_convexes()) {
+		       const region_ref rg = region_ref::all_convexes()) {
     asm_mass_matrix(const_cast<MAT &>(M), mim, mf_u1, mf_u1, rg);
   }
 
@@ -206,7 +206,7 @@ namespace getfem
   template<typename MAT>
   void asm_mass_matrix(MAT &M, const mesh_im &mim, const mesh_fem &mf_u1,
 		       const mesh_fem &mf_u2,
-		       const region_ref &rg = region_ref::all_convexes()) {
+		       const region_ref rg = region_ref::all_convexes()) {
     generic_assembly assem;
     if (&mf_u1 != &mf_u2)
       if (mf_u1.get_qdim() == 1 && mf_u2.get_qdim() == 1)
@@ -233,7 +233,7 @@ namespace getfem
   void asm_mass_matrix_param(MAT &M, const mesh_im &mim, const mesh_fem &mf_u,
 			     const mesh_fem &mfdata,
 			     const VECT &F, 			       
-			     const region_ref &rg = region_ref::all_convexes()) {
+			     const region_ref rg = region_ref::all_convexes()) {
     generic_assembly assem;
     if (mf_u.get_qdim() == 1)
       assem.set("F=data(#2);"
@@ -257,7 +257,7 @@ namespace getfem
   template<typename VECT1, typename VECT2>
   void asm_source_term(VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
 		       const mesh_fem &mfdata, const VECT2 &F,
-		       const region_ref &rg = region_ref::all_convexes()) {
+		       const region_ref rg = region_ref::all_convexes()) {
     if (mfdata.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     asm_source_term(B, mim, mf, mfdata, F, rg,
@@ -271,7 +271,7 @@ namespace getfem
   template<typename VECT1, typename VECT2, typename T>
   void asm_source_term(const VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
 		       const mesh_fem &mfdata, const VECT2 &F,
-		       const region_ref &rg, T) {
+		       const region_ref rg, T) {
     generic_assembly assem;
     if (mf.get_qdim() == 1)
       assem.set("F=data(#2); V(#1)+=comp(Base(#1).Base(#2))(:,j).F(j);");
@@ -292,7 +292,7 @@ namespace getfem
   template<typename VECT1, typename VECT2, typename T>
   void asm_source_term(VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
 		       const mesh_fem &mfdata, const VECT2 &F,
-		       const region_ref &rg, std::complex<T>) {
+		       const region_ref rg, std::complex<T>) {
     asm_source_term(gmm::real_part(B), mim, mf, mfdata, gmm::real_part(F), rg, T());
     asm_source_term(gmm::imag_part(B), mim, mf, mfdata, gmm::imag_part(F), rg, T());
   }
@@ -315,7 +315,7 @@ namespace getfem
 		    const mesh_im &mim, 
 		    const mesh_fem &mf_u, 
 		    const mesh_fem &mf_d, const VECT &Q, 
-		    size_type boundary, T) {
+		    const region_ref rg, T) {
     generic_assembly assem;
     assert(mf_u.nb_dof() <= gmm::mat_nrows(M));
     assert(mf_u.nb_dof() <= gmm::mat_ncols(M));
@@ -337,10 +337,7 @@ namespace getfem
     assem.push_mf(mf_d);
     assem.push_data(Q);
     assem.push_mat(const_cast<MAT&>(M));
-    if (boundary == size_type(-1))
-      assem.volumic_assembly();
-    else
-      assem.boundary_assembly(boundary);
+    assem.assembly(rg);
   }
 
   template<typename MAT, typename VECT, typename T>
@@ -348,9 +345,9 @@ namespace getfem
 		    const mesh_im &mim, 
 		    const mesh_fem &mf_u, 
 		    const mesh_fem &mf_d, const VECT &Q, 
-		    size_type boundary, std::complex<T>) {
-    asm_qu_term_(gmm::real_part(M), mim, mf_u, mf_d, gmm::real_part(Q), boundary, T());
-    asm_qu_term_(gmm::imag_part(M), mim, mf_u, mf_d, gmm::imag_part(Q), boundary, T());
+		    const region_ref rg, std::complex<T>) {
+    asm_qu_term_(gmm::real_part(M), mim, mf_u, mf_d, gmm::real_part(Q), rg, T());
+    asm_qu_term_(gmm::imag_part(M), mim, mf_u, mf_d, gmm::imag_part(Q), rg, T());
   }
 
   /**
@@ -376,10 +373,10 @@ namespace getfem
 		   const mesh_im &mim, 
 		   const mesh_fem &mf_u, 
 		   const mesh_fem &mf_d, const VECT &Q, 
-		   size_type boundary=size_type(-1)) {
+		   const region_ref rg = region_ref::all_convexes()) {
     if (mf_d.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
-    asm_qu_term_(const_cast<MAT&>(M), mim, mf_u, mf_d, Q, boundary, 
+    asm_qu_term_(const_cast<MAT&>(M), mim, mf_u, mf_d, Q, rg, 
 		 typename gmm::linalg_traits<VECT>::value_type());
   }
 
@@ -394,7 +391,7 @@ namespace getfem
 						  const mesh_fem &mfdata,
 						  const VECT &LAMBDA,
 						  const VECT &MU,
-					      const dal::bit_vector &domain) {
+						  const region_ref rg = region_ref::all_convexes()) {
     MAT &RM = const_cast<MAT &>(RM_);
     if (mfdata.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
@@ -420,18 +417,7 @@ namespace getfem
     assem.push_data(LAMBDA);
     assem.push_data(MU);
     assem.push_mat(RM);
-    assem.volumic_assembly(domain);
-  }
-  
-  template<class MAT, class VECT>
-  void asm_stiffness_matrix_for_linear_elasticity(const MAT &RM_,
-						  const mesh_im &mim, 
-						  const mesh_fem &mf,
-						  const mesh_fem &mfdata,
-						  const VECT &LAMBDA,
-						  const VECT &MU) {
-    asm_stiffness_matrix_for_linear_elasticity(RM_, mim, mf, mfdata,
-					       LAMBDA, MU, mf.convex_index());
+    assem.assembly(rg);
   }
 
   /** 
@@ -443,7 +429,8 @@ namespace getfem
 						   const mesh_im &mim, 
 						   const mesh_fem &mf, 
 						   const mesh_fem &mfdata, 
-						   const VECT &H) {
+						   const VECT &H,
+						   const region_ref rg = region_ref::all_convexes()) {
     if (mfdata.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     /* e = strain tensor,
@@ -459,7 +446,7 @@ namespace getfem
     assem.push_mf(mfdata);
     assem.push_data(H);
     assem.push_mat(RM);
-    assem.volumic_assembly();
+    assem.assembly(rg);
   }
 
   /** two-in-one assembly of stokes equation:
@@ -470,7 +457,8 @@ namespace getfem
   void asm_stokes(MAT &K, MAT &BT, 
 		  const mesh_im &mim, 
 		  const mesh_fem &mf_u, const mesh_fem &mf_p,
-		  const mesh_fem &mf_d, const VECT &viscos) {
+		  const mesh_fem &mf_d, const VECT &viscos,
+		  const region_ref rg = region_ref::all_convexes()) {
     if (mf_d.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     generic_assembly assem("visc=data$1(#3); "
@@ -488,12 +476,13 @@ namespace getfem
     assem.push_data(viscos);
     assem.push_mat(K);
     assem.push_mat(BT);
-    assem.volumic_assembly();
+    assem.assembly(rg);
   }
 
   template<typename MAT>
   void asm_stokes_B(MAT &B, const mesh_im &mim, const mesh_fem &mf_u,
-		    const mesh_fem &mf_p, const dal::bit_vector &domain) {
+		    const mesh_fem &mf_p, 
+		    const region_ref rg = region_ref::all_convexes()) {
     if (mf_p.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     // generic_assembly assem("M$1(#1,#2)+=comp(vGrad(#1).Base(#2))(:,i,i,:);");
@@ -502,28 +491,24 @@ namespace getfem
     assem.push_mf(mf_p);
     assem.push_mf(mf_u);
     assem.push_mat(B);
-    assem.volumic_assembly(domain);
+    assem.assembly(rg);
   }
 
-  template<typename MAT>
-  void asm_stokes_B(MAT &B, const mesh_im &mim, const mesh_fem &mf_u,
-		    const mesh_fem &mf_p) {
-    asm_stokes_B(B, mim, mf_u, mf_p, mf_u.convex_index());
-  }
   /**
    * assembly of $\int_\Omega a(x)\nabla u.\nabla v$.
    */
   template<typename MAT>
   void asm_stiffness_matrix_for_homogeneous_laplacian(const MAT &M_,
 						      const mesh_im &mim, 
-						      const mesh_fem &mf) {
+						      const mesh_fem &mf, 
+						      const region_ref rg = region_ref::all_convexes()) {
     MAT &M = const_cast<MAT &>(M_);
     generic_assembly 
       assem("M$1(#1,#1)+=sym(comp(Grad(#1).Grad(#1))(:,i,:,i))");
     assem.push_mi(mim);
     assem.push_mf(mf);
     assem.push_mat(M);
-    assem.volumic_assembly();
+    assem.assembly(rg);
   }
 
   /**
@@ -531,7 +516,8 @@ namespace getfem
    */
   template<typename MAT>
   void asm_stiffness_matrix_for_homogeneous_laplacian_componentwise
-  (const MAT &M_, const mesh_im &mim, const mesh_fem &mf) {
+  (const MAT &M_, const mesh_im &mim, const mesh_fem &mf, 
+   const region_ref rg = region_ref::all_convexes()) {
     MAT &M = const_cast<MAT &>(M_);
      generic_assembly
        assem("M$1(#1,#1)+="
@@ -539,7 +525,7 @@ namespace getfem
     assem.push_mi(mim);
     assem.push_mf(mf);
     assem.push_mat(M);
-    assem.volumic_assembly();
+    assem.assembly(rg);
   }
 
   /**
@@ -550,7 +536,8 @@ namespace getfem
 					  const mesh_im &mim,
 					  const mesh_fem &mf,
 					  const mesh_fem &mfdata,
-					  const VECT &A) {
+					  const VECT &A, 
+					  const region_ref rg = region_ref::all_convexes()) {
     if (mfdata.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     generic_assembly
@@ -563,17 +550,18 @@ namespace getfem
     assem.push_mf(mfdata);
     assem.push_data(A);
     assem.push_mat(M);
-    assem.volumic_assembly();
+    assem.assembly(rg);
   }
 
   /** The same but on each component of mf when mf has a qdim > 1 
    */
   template<typename MAT, typename VECT>
   void asm_stiffness_matrix_for_laplacian_componentwise(MAT &M, 
-						 const mesh_im &mim,
-						 const mesh_fem &mf,
-						 const mesh_fem &mfdata,
-						 const VECT &A) {
+							const mesh_im &mim,
+							const mesh_fem &mf,
+							const mesh_fem &mfdata,
+							const VECT &A,
+		    const region_ref rg = region_ref::all_convexes()) {
     if (mfdata.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     generic_assembly
@@ -586,7 +574,7 @@ namespace getfem
     assem.push_mf(mfdata);
     assem.push_data(A);
     assem.push_mat(M);
-    assem.volumic_assembly();
+    assem.assembly(rg);
   }
 
   /**
@@ -613,7 +601,8 @@ namespace getfem
 						const mesh_im &mim, 
 						const mesh_fem &mf,
 						const mesh_fem &mfdata,
-						const VECT &A)
+						const VECT &A, 
+		    const region_ref rg = region_ref::all_convexes())
   {
     if (mfdata.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
@@ -625,7 +614,7 @@ namespace getfem
     assem.push_mf(mfdata);
     assem.push_data(A);
     assem.push_mat(M);
-    assem.volumic_assembly();
+    assem.assembly(rg);
   }
 
   /** The same but on each component of mf when mf has a qdim > 1 
@@ -633,7 +622,8 @@ namespace getfem
   template<typename MAT, typename VECT>
   void asm_stiffness_matrix_for_scalar_elliptic_componentwise
   (MAT &M, const mesh_im &mim, const mesh_fem &mf,
-   const mesh_fem &mfdata, const VECT &A)
+   const mesh_fem &mfdata, const VECT &A, 
+   const region_ref rg = region_ref::all_convexes())
   {
     if (mfdata.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
@@ -645,7 +635,7 @@ namespace getfem
     assem.push_mf(mfdata);
     assem.push_data(A);
     assem.push_mat(M);
-    assem.volumic_assembly();
+    assem.assembly(rg);
   }
 
 
@@ -657,29 +647,31 @@ namespace getfem
   */
   template<typename MAT, typename VECT>
   void asm_Helmholtz(MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem &mf_data,
-		     const VECT &K_squared) {
-    asm_Helmholtz(M, mim, mf_u, mf_data, K_squared,
+		     const VECT &K_squared, 
+		    const region_ref rg = region_ref::all_convexes()) {
+    asm_Helmholtz(M, mim, mf_u, mf_data, K_squared,rg,
 		  typename gmm::linalg_traits<VECT>::value_type());
   }
 
   template<typename MAT, typename VECT, typename T>
   void asm_Helmholtz(MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem &mf_data,
-		     const VECT &K_squared, T) {
-    asm_Helmholtz_real(M, mim, mf_u, mf_data, K_squared);
+		     const VECT &K_squared, const region_ref rg, T) {
+    asm_Helmholtz_real(M, mim, mf_u, mf_data, K_squared, rg);
   }
 
   template<typename MAT, typename VECT, typename T>
   void asm_Helmholtz(MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem &mf_data,
-		     const VECT &K_squared, std::complex<T>) {
+		     const VECT &K_squared, const region_ref rg, std::complex<T>) {
     asm_Helmholtz_cplx(gmm::real_part(M), gmm::imag_part(M), mim, mf_u, mf_data,
-		       gmm::real_part(K_squared), gmm::imag_part(K_squared));
+		       gmm::real_part(K_squared), gmm::imag_part(K_squared), rg);
   }
 
 
   template<typename MATr, typename MATi, typename VECTr, typename VECTi>  
   void asm_Helmholtz_cplx(const MATr &Mr, const MATi &Mi, const mesh_im &mim, const mesh_fem &mf_u,
 			  const mesh_fem &mf_data,
-			  const VECTr &K_squaredr, const VECTi &K_squaredi) {
+			  const VECTr &K_squaredr, const VECTi &K_squaredi, 
+			  const region_ref rg = region_ref::all_convexes()) {
     generic_assembly assem("Kr=data$1(#2); Ki=data$2(#2);"
 			   "m = comp(Base(#1).Base(#1).Base(#2)); "
 			   "M$1(#1,#1)+=sym(m(:,:,i).Kr(i) - "
@@ -692,12 +684,13 @@ namespace getfem
     assem.push_data(K_squaredi); //gmm::imag_part(K_squared));
     assem.push_mat(const_cast<MATr&>(Mr));
     assem.push_mat(const_cast<MATi&>(Mi));
-    assem.volumic_assembly();
+    assem.assembly(rg);
   }
 
   template<typename MAT, typename VECT>  
   void asm_Helmholtz_real(const MAT &M, const mesh_im &mim, const mesh_fem &mf_u,
-			  const mesh_fem &mf_data, const VECT &K_squared) {
+			  const mesh_fem &mf_data, const VECT &K_squared, 
+			  const region_ref rg = region_ref::all_convexes()) {
     generic_assembly assem("K=data$1(#2);"
 			   "m = comp(Base(#1).Base(#1).Base(#2)); "
 			   "M$1(#1,#1)+=sym(m(:,:,i).K(i) - "
@@ -707,7 +700,7 @@ namespace getfem
     assem.push_mf(mf_data);
     assem.push_data(K_squared);
     assem.push_mat(const_cast<MAT&>(M));
-    assem.volumic_assembly();
+    assem.assembly(rg);
   }
 
   enum { ASMDIR_BUILDH = 1, ASMDIR_BUILDR = 2, ASMDIR_SIMPLIFY = 4,

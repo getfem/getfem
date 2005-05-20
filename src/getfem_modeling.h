@@ -1277,7 +1277,6 @@ namespace getfem {
       nbd = mf_u.nb_dof();
       size_type nd = mf_u.nb_dof(), ndd = mf_p.nb_dof();
       gmm::clear(B); gmm::resize(B, ndd, nd);
-      cout << "mfp = "; mf_p.write_to_file(cout);
       asm_stokes_B(B, *(this->mesh_ims.at(0)), mf_u, mf_p
 #ifdef GMM_USES_MPI
 		   , MS.local_domain(mf_u.linked_mesh())
