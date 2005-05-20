@@ -211,11 +211,12 @@ bool navier_stokes_problem::solve() {
   getfem::mdbrick_NS_uuT<> *velocity_NS_uuT = 0;
   getfem::mdbrick_scalar_elliptic<> *basic_velocity = 0;
   getfem::mdbrick_navier_stokes<> *global_velocity = 0;
+  sparse_matrix B;
   switch (option) {
-    case 1 : case 2 :
+  case 1 : case 2 : case 4 :
       basic_velocity
 	= new getfem::mdbrick_scalar_elliptic<>(mim, mf_u, mf_coef, nu, true);
-      if (option == 2) {
+      if (option == 2 || option == 4) {
 	velocity.reset(basic_velocity);
 	velocity_nonlin.reset(velocity_NS_uuT
 			      = new getfem::mdbrick_NS_uuT<>(*velocity));
@@ -235,6 +236,10 @@ bool navier_stokes_problem::solve() {
       }
       break;
     default : DAL_THROW(dal::failure_error, "This option does not exist");
+  }
+
+  if (option == 4) {
+    asm_stokes_B(B, mim, mf_u, mf_p);
   }
 
   // Volumic source term
@@ -257,41 +262,77 @@ bool navier_stokes_problem::solve() {
   velocity_dyn.set_dynamic_coeff(1.0/dt, 1.0);
 
   // 
-  // definition of the second problem
+  // definition of the pressure problem for splitting schemes
   //
 
-  getfem::mdbrick_mass_matrix<> mixed(mim, mf_u, mf_coef, 1./dt, true);
-  
-  // Pressure term
-  getfem::mdbrick_linear_incomp<> mixed_p(mixed, mf_p);
+  getfem::mdbrick_mass_matrix<> *mixed = 0;
+  getfem::mdbrick_linear_incomp<> *mixed_p = 0;
+  getfem::mdbrick_constraint<> *set_pressure = 0;
+  getfem::mdbrick_Dirichlet<> *mixed_dir = 0;
+  getfem::mdbrick_dynamic<> *mixed_dyn = 0;
 
-  // Condition on the pressure
-  sparse_matrix G(1, mf_p.nb_dof());
-  G(0,0) = 1.;
-  plain_vector gr(1);
-  getfem::mdbrick_constraint<> set_pressure(mixed_p, G, gr, 1);
-  
-  // Dirichlet condition brick.
-  for (size_type i = 0; i < nb_dof_rhs; ++i)
-    gmm::copy(Dir_cond(mf_rhs.point_of_dof(i), 0.),
-	      gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
-  getfem::mdbrick_Dirichlet<> mixed_dir(set_pressure, mf_rhs,
-					F, DIRICHLET_BOUNDARY_NUM);
+  if (option == 1 || option == 2) {
 
-  // Dynamic brick.
-  getfem::mdbrick_dynamic<> mixed_dyn(mixed_dir, mf_coef, 1.);
-  mixed_dyn.set_dynamic_coeff(0.0, 1.0);
+    mixed = new getfem::mdbrick_mass_matrix<>(mim, mf_u, mf_coef, 1./dt, true);
+  
+    // Pressure term
+    mixed_p = new getfem::mdbrick_linear_incomp<>(*mixed, mf_p);
+
+    // Condition on the pressure
+    sparse_matrix G(1, mf_p.nb_dof());
+    G(0,0) = 1.;
+    plain_vector gr(1);
+    set_pressure = new getfem::mdbrick_constraint<>(*mixed_p, G, gr, 1);
+    
+    // Dirichlet condition brick.
+    for (size_type i = 0; i < nb_dof_rhs; ++i)
+      gmm::copy(Dir_cond(mf_rhs.point_of_dof(i), 0.),
+		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
+    mixed_dir = new getfem::mdbrick_Dirichlet<>(*set_pressure, mf_rhs,
+					    F, DIRICHLET_BOUNDARY_NUM);
+    
+    // Dynamic brick.
+    mixed_dyn = new getfem::mdbrick_dynamic<>(*mixed_dir, mf_coef, 1.);
+    mixed_dyn->set_dynamic_coeff(0.0, 1.0);
+
+  }
+
+  // 
+  // Poisson problem for prediction correction scheme
+  //
+  
+  getfem::mdbrick_scalar_elliptic<> *poisson = 0;
+  getfem::mdbrick_constraint<> *poisson_setonedof = 0;
+  getfem::mdbrick_source_term<> *poisson_source = 0;
+  if (option == 4) {
+    poisson = new getfem::mdbrick_scalar_elliptic<>(mim, mf_p, mf_coef,
+						    1.0, true);
+    sparse_matrix G(1, mf_p.nb_dof());
+    G(0,0) = 1.;
+    plain_vector gr(1);
+    poisson_setonedof = new getfem::mdbrick_constraint<>(*poisson, G, gr, 1);
+    plain_vector FF(mf_rhs.nb_dof());
+    poisson_source = new  getfem::mdbrick_source_term<>(*poisson_setonedof,
+							mf_rhs, FF);
+  }
+
+
 
   // 
   // dynamic problem
   //
 
   plain_vector DF(mf_u.nb_dof()), U0(mf_u.nb_dof()), USTAR(mf_u.nb_dof()),
-    USTARbis(mf_u.nb_dof());
+    USTARbis(mf_u.nb_dof()), P0(mf_p.nb_dof()), P1(mf_p.nb_dof());
   
   gmm::iteration iter(residu, noisy);
   getfem::standard_model_state MSL(velocity_dyn);
-  getfem::standard_model_state MSM(mixed_dyn);
+  getfem::standard_model_state *MSM = 0;
+
+  if (option == 1 || option == 2)
+    MSM = new getfem::standard_model_state(*mixed_dyn);
+  if (option == 4)
+    MSM = new getfem::standard_model_state(*poisson_source);
   
   std::auto_ptr<getfem::dx_export> exp;
   getfem::stored_mesh_slice sl;
@@ -311,7 +352,7 @@ bool navier_stokes_problem::solve() {
   for (scalar_type t = dt; t <= T; t += dt) {
 
     iter.init();
-    if (option == 2) {
+    if (option == 2 || option == 4) {
       velocity_NS_uuT->set_U0(U0);
     }
     for (size_type i = 0; i < nb_dof_rhs; ++i)
@@ -325,24 +366,38 @@ bool navier_stokes_problem::solve() {
 
     
     gmm::mult(velocity_dyn.mass_matrix(), gmm::scaled(U0, 1./dt), DF);
+    if (option == 4)
+      gmm::mult_add(gmm::transposed(B), gmm::scaled(P0, -1.), DF);
     velocity_dyn.set_DF(DF);
     getfem::standard_solve(MSL, velocity_dyn, iter);
 
-    if (option == 1 || option == 2) {
+    switch (option) {
+    case 1 : case 2 :
       gmm::copy(basic_velocity->get_solution(MSL), USTAR);
-    
+      
       iter.init();
       gmm::mult(velocity_dyn.mass_matrix(), gmm::scaled(USTAR, 1./dt), DF);
-      mixed_dyn.set_DF(DF);
+      mixed_dyn->set_DF(DF);
       for (size_type i = 0; i < nb_dof_rhs; ++i)
 	gmm::copy(Dir_cond(mf_rhs.point_of_dof(i), t),
-		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
-      mixed_dir.set_rhs(F);
-      getfem::standard_solve(MSM, mixed_dyn, iter);
-      gmm::copy(mixed.get_solution(MSM), U0);
-    }
-    if (option == 3) {
+		  gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
+      mixed_dir->set_rhs(F);
+      getfem::standard_solve(*MSM, *mixed_dyn, iter);
+      gmm::copy(mixed->get_solution(*MSM), U0);
+      break;
+    case 3 :
       gmm::copy(global_velocity->get_velocity(MSL), U0);
+    case 4 :
+      gmm::copy(basic_velocity->get_solution(MSL), USTAR);
+      gmm::mult(B, USTAR, P1);
+      poisson_source->set_auxF(P1);
+      iter.init();
+      getfem::standard_solve(*MSM, *poisson_source, iter);
+      gmm::mult(gmm::transposed(B), poisson->get_solution(*MSM), USTARbis);
+      iter.init();
+      gmm::cg(velocity_dyn.mass_matrix(), U0, USTARbis,
+	      gmm::identity_matrix(), iter);
+      gmm::add(USTAR, U0);
     }
     
     cout << "Kinetic energy : " <<
