@@ -1578,7 +1578,6 @@ namespace getfem {
       if (m.convex_index().is_in(cv)) {
         for (size_type i=0; i < mftab.size(); ++i)
           if (!mftab[i]->convex_index().is_in(cv)) {
-	    mftab[i]->write_to_file(cerr);
             ASM_THROW_ERROR("the convex " << cv << " has no FEM for the #" << i+1 << " mesh_fem");	  
 	  }
         cvorder.push_back(cv);
