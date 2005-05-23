@@ -25,38 +25,31 @@
 // along with this program; if not, write to the Free Software Foundation,
 // Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-//========================================================================
-/*                                                                         */
-/* Required properties of a model brick :                                  */
-/*                                                                         */
-/*  A model brick is either a fondamental brick (like linearized           */
-/*  elasticity brick, platicity brick ...) or a modifier brick which refer */
-/*  to a sub brick.                                                        */
-/*  The virtual functions of a brick :                                     */
-/*  - nb_dof() : number of total variables including the variables of the  */
-/*        sub-problem(s) if any : to be redefine olny if there is          */
-/*        additional dof not coming from proper mesh_fems                  */
-/*  - nb_constraints() : number of linear constraints on the system        */
-/*        including the constraints defined in the sub-problem(s) if any.  */
-/*                     coercive.                                           */
-/*  - compute_tangent_matrix(MS, i0, j0, modified) : the brick has to call */
-/*        the compute_tangent_matrix(MS, i0,modified) of sub-problem(s) if */
-/*        any and to compute  its own part of the tangent and constraint   */
-/*        matrices (i0 and j0 are the shifts in the matrices defined in MS)*/
-/*        modified indicates if the part of the tangent matrix dedicated   */
-/*        to this brick will be modified by other bricks.                  */
-/*  - compute_residu(MS, i0, j0) : the brick has to call the               */
-/*        compute_residu(MS, i0, modified) of sub-problem(s) if any and    */
-/*        has to compute its own part of the residu of the linear system   */
-/*        and of the constraint system (i0 and j0 are the shifts in the    */
-/*        residu vectors defined in MS)                                    */
-/*  - mixed_variables(bv, i0) : indicates in bv the indices of the         */
-/*        variables which are considered as multipliers or mixed variables.*/
-/*                                                                         */
-/* Dependencies.                                                           */
-/*   A brick depends at least on some mesh_fem structures and has to       */
-/* react if some changements occur in these mesh_fem structures.           */
-/*                                                                         */
+
+
+/*
+  Requirements for a model brick :                                  
+                                                                         
+  A model brick is either a fondamental brick (like linearized
+  elasticity brick, platicity brick ...) or a modifier brick which
+  refer to a sub brick.
+
+  A new brick should define:
+
+  - proper_update() , which is called each time the brick should
+  update itself.
+  This function is expected to assign the correct values to
+  'proper_nb_dof' (the nb of new dof introduced by this brick),
+  'proper_nb_constraints' and proper_mixed_variables.
+
+  - do_compute_tangent_matrix(MS, i0, j0) . This function should
+  compute its own part of the tangent and constraint matrices (i0 and
+  j0 are the shifts in the matrices stored in the model_state MS)
+
+  - do_compute_residu(MS, i0, j0) . Same as above for the residu
+  vector stored in MS.
+*/
+
 /***************************************************************************/
 /*                                                                         */
 /* Brick idents :                                                          */
@@ -356,14 +349,28 @@ namespace getfem {
 
     std::vector<mdbrick_abstract *> sub_bricks;
     
+    /* all proper_* specify data which is specific to this brick:
+       'proper_mesh_fems' is the list of mesh_fems used by this brick,
+       while 'mesh_fems' is 'proper_mesh_fems' plus the list of
+       mesh_fems of all the parent bricks.
+    */
     std::vector<mesh_fem *> proper_mesh_fems;
     std::vector<mesh_im *> proper_mesh_ims;
     std::vector<mesh_fem_info_> proper_mesh_fems_info;
     std::vector<boundary_cond_info_> proper_boundary_cond_info;
+    /* flags indicating how this brick affect the linearity/coercivity
+       etc properties of the problem */
     bool proper_is_linear_, proper_is_symmetric_, proper_is_coercive_;
-    size_type proper_nb_constraints, proper_additional_dof;
+    /* number of new degrees of freedom introduced by this brick */
+    size_type proper_additional_dof;
+    /* number of new constraints introduced by this brick */
+    size_type proper_nb_constraints;
+    /* in the 'proper_additional_dof' dof, indicate which ones
+       correspound to mixed variables */
     dal::bit_vector proper_mixed_variables;
 
+    /* below is the "global" information, relating to this brick and
+       all its parent bricks */
     mutable std::vector<mesh_fem *> mesh_fems;
     mutable std::vector<mesh_im *> mesh_ims;
     mutable std::vector<mesh_fem_info_> mesh_fems_info;
@@ -372,12 +379,16 @@ namespace getfem {
     mutable size_type nb_total_dof, nb_total_constraints;
     mutable dal::bit_vector total_mixed_variables;
 
+    /* the brick owns the block starting at index MS_i0 in the global
+       tangent matrix */
     size_type MS_i0;
 
+    /* the brick-specific update procedure */
     virtual void proper_update(void) = 0;
     // The following function is just for the const cast on "this".
     inline void proper_update_(void) { proper_update(); }
 
+    /* method inherited from getfem::context_dependencies */
     void update_from_context(void) const {
       nb_total_dof = 0;
       nb_total_constraints = 0;
@@ -386,6 +397,7 @@ namespace getfem {
       is_symmetric_ = proper_is_symmetric_;
       is_coercive_ = proper_is_coercive_;
       mesh_fems.resize(0); mesh_ims.resize(0); mesh_fem_positions.resize(0);
+      /* get information from parent bricks */
       for (size_type i = 0; i < sub_bricks.size(); ++i) {
 	for (size_type j = 0; j < sub_bricks[i]->mesh_fems.size(); ++j) {
 	  mesh_fems.push_back(sub_bricks[i]->mesh_fems[j]);
@@ -409,6 +421,7 @@ namespace getfem {
 	nb_total_dof += sub_bricks[i]->nb_total_dof;
 	nb_total_constraints += sub_bricks[i]->nb_total_constraints;
       }
+      /* merge with information from this brick */
       for (size_type j = 0; j < proper_mesh_fems.size(); ++j) {
 	mesh_fems.push_back(proper_mesh_fems[j]);
 	mesh_fems_info.push_back(proper_mesh_fems_info[j]);
@@ -422,6 +435,7 @@ namespace getfem {
 	  .add_boundary(proper_boundary_cond_info[j].num_bound,
 			proper_boundary_cond_info[j].bc);
       }
+      /* call the customizable update procedure */
       const_cast<mdbrick_abstract *>(this)->proper_update_();
       nb_total_dof += proper_additional_dof;
       nb_total_constraints += proper_nb_constraints;
@@ -471,7 +485,12 @@ namespace getfem {
     size_type nb_mesh_fems(void) { return mesh_fems.size(); }
 
     dim_type dim(void) { return mesh_fems[0]->linked_mesh().dim(); }
+    /** total number of variables including the variables of the
+	sub-problem(s) if any */
     size_type nb_dof(void) { return nb_total_dof; }
+
+    /** number of linear constraints on the system including the
+	constraints defined in the sub-problem(s) if any. */
     size_type nb_constraints(void) { return nb_total_constraints; };
 
     virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
