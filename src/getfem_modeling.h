@@ -85,11 +85,6 @@
 #include <gmm_solver_Schwarz_additive.h>
 #include <set>
 
-#ifdef GMM_USES_METIS
-extern "C" void METIS_PartMeshNodal(int *, int *, int *, int *, int *, int *, int *, int *, int *);
-// #include <metis.h>
-#endif
-
 namespace getfem {
 
   /* ******************************************************************** */
@@ -118,64 +113,7 @@ namespace getfem {
     gmm::col_matrix<gmm::rsvector<value_type> > NS; /* constraints nullspace */
     VECTOR reduced_residu_, Ud;
 
-#ifdef GMM_USES_MPI
-    std::vector<dal::bit_vector> local_domains;
-    std::map<const getfem_mesh *, size_type> mesh_set;
-#endif
-
   public :
-
-#if defined(GMM_USES_MPI) && defined(GMM_USES_METIS)
-    const dal::bit_vector &local_domain(const getfem_mesh &mesh)
-    { return local_domains[mesh_set[&mesh]]; }
-
-    void build_local_domains(mdbrick_abstract<model_state> &problem) {
-      int rank, size;
-      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-      MPI_Comm_size(MPI_COMM_WORLD, &size);
-      
-      mesh_set.clear();
-      for (size_type i = 0; i < problem.nb_mesh_fems(); ++i) {
-	mesh_set[&(problem.get_mesh_fem(i).linked_mesh())] = 0;
-      }
-      local_domains.clear();
-      local_domains.resize(mesh_set.size());
-      size_type nset = 0;
-
-      for (std::map<const getfem_mesh *, size_type>::iterator it
-	     = mesh_set.begin(); it != mesh_set.end(); ++it, ++nset) {
-	it->second = nset;
-	int ne = int((it->first)->nb_convex());
-	int nn = int((it->first)->nb_points()), k = 0, etype = 0, numflag = 0;
-	int edgecut;
-      
-	bgeot::pconvex_structure cvs = (it->first)->structure_of_convex
-	  ((it->first)->convex_index().first())->basic_structure();
-	
-	if (cvs == bgeot::simplex_structure(2)) { k = 3; etype = 1; }
-	else if (cvs == bgeot::simplex_structure(3)) { k = 4; etype = 2; }
-	else if (cvs == bgeot::parallelepiped_structure(2)) { k=4; etype = 4; }
-	else if (cvs == bgeot::parallelepiped_structure(3)) { k=8; etype = 3; }
-	else DAL_THROW(failure_error,
-		       "This kind of element is not taken into account");
-	
-	std::vector<int> elmnts(ne*k), npart(nn), eparts(ne);
-	int j = 0;
-	// Adapter la boucle aux transformations d'ordre élevé.
-	for (dal::bv_visitor i((it->first)->convex_index()); !i.finished();
-	     ++i, ++j)
-	  for (int l = 0; l < k; ++l)
-	    elmnts[j*k+l] = (it->first)->ind_points_of_convex(i)[l];
-	
-	METIS_PartMeshNodal(&ne, &nn, &(elmnts[0]), &etype, &numflag,
-			    &size, &edgecut, &(eparts[0]), &(npart[0]));
-
-	for (size_type i = 0; i < size_type(ne); ++i)
-	  if (eparts[i] == rank) local_domains[nset].add(i);
-      }
-      
-    }
-#endif
 
     const gmm::col_matrix<gmm::rsvector<value_type> > &nullspace_matrix(void)
     { return NS; }
@@ -1652,8 +1590,6 @@ namespace getfem {
 #ifdef GMM_USES_METIS
     
     double t_ref = MPI_Wtime();
-
-    MS.build_local_domains(problem);
 
     std::set<const getfem_mesh *> mesh_set;
     for (size_type i = 0; i < problem.nb_mesh_fems(); ++i) {

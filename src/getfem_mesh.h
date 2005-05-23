@@ -37,6 +37,13 @@
 #include <bgeot_geotrans_inv.h>
 #include <linkmsg.h>
 #include <getfem_context.h>
+
+#if defined(GMM_USES_MPI) && defined(GMM_USES_METIS)
+extern "C" void METIS_PartMeshNodal(int *, int *, int *, int *, int *, int *, int *, int *, int *);
+#include <mpi.h>
+#endif
+
+
 namespace getfem {
 
   /* ********************************************************************* */
@@ -365,6 +372,41 @@ namespace getfem {
 	{ valid_cvf_sets.sup(b); cvf_sets[b].clear(); touch(); }
     }
     void swap_convex_in_sets(size_type c1, size_type c2);
+
+#if defined(GMM_USES_MPI) && defined(GMM_USES_METIS)
+
+    const region& get_mpi_region(void) {
+      int ne = int(nb_convex());
+      int nn = int(nb_points()), k = 0, etype = 0, numflag = 0;
+      int edgecut;
+      
+      bgeot::pconvex_structure cvs = structure_of_convex
+	(convex_index().first())->basic_structure();
+      
+      if (cvs == bgeot::simplex_structure(2)) { k = 3; etype = 1; }
+      else if (cvs == bgeot::simplex_structure(3)) { k = 4; etype = 2; }
+      else if (cvs == bgeot::parallelepiped_structure(2)) { k=4; etype = 4; }
+      else if (cvs == bgeot::parallelepiped_structure(3)) { k=8; etype = 3; }
+      else DAL_THROW(failure_error,
+		     "This kind of element is not taken into account");
+      
+      std::vector<int> elmnts(ne*k), npart(nn), eparts(ne);
+      int j = 0;
+      // Adapter la boucle aux transformations d'ordre eleve.
+      for (dal::bv_visitor i(convex_index()); !i.finished();
+	   ++i, ++j)
+	for (int l = 0; l < k; ++l)
+	  elmnts[j*k+l] = (ind_points_of_convex(i)[l];
+      
+      METIS_PartMeshNodal(&ne, &nn, &(elmnts[0]), &etype, &numflag,
+			  &size, &edgecut, &(eparts[0]), &(npart[0]));
+      
+      for (size_type i = 0; i < size_type(ne); ++i)
+	if (eparts[i] == rank) a_new_region...add(i);
+      
+    }
+    
+#endif
 
     void optimize_structure(void);
     void clear(void);
