@@ -750,7 +750,6 @@ namespace getfem
       scalar_type v = params[2].num();
       if (v < 0 || v > 1) DAL_THROW(failure_error, "Bad value for alpha: " << v);
       sprintf(alpha, ",%g", v);
-      cout << "ALPHA=" << alpha << " v=" << v << "\n";
     }
     if (n <= 0 || n >= 100 || k < 0 || k > 150 ||
 	double(n) != params[0].num() || double(k) != params[1].num())
@@ -795,6 +794,35 @@ namespace getfem
     else 
       name << "FEM_PRODUCT(FEM_PK(" << n-1 << "," << k << "),FEM_PK(1,"
 	   << k << "))";
+    return fem_descriptor(name.str());
+  }
+
+  static pfem PK_prism_discontinuous_fem(fem_param_list &params,
+	std::vector<dal::pstatic_stored_object> &) {
+    if (params.size() != 2 && params.size() != 3)
+      DAL_THROW(failure_error, 
+	   "Bad number of parameters : " << params.size() << " should be 2.");
+    if (params[0].type() != 0 || params[1].type() != 0 ||
+	(params.size() == 3 && params[2].type() != 0))
+      DAL_THROW(failure_error, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    int k = int(::floor(params[1].num() + 0.01));
+    char alpha[128]; alpha[0] = 0;
+    if (params.size() == 3) {
+      scalar_type v = params[2].num();
+      if (v < 0 || v > 1) DAL_THROW(failure_error, "Bad value for alpha: " << v);
+      sprintf(alpha, ",%g", v);
+    }
+    if (n <= 1 || n >= 100 || k < 0 || k > 150 ||
+	double(n) != params[0].num() || double(k) != params[1].num())
+      DAL_THROW(failure_error, "Bad parameters");
+    std::stringstream name;
+    if (n == 2)
+      name << "FEM_QK_DISCONTINUOUS(1," << k << alpha << ")";
+    else 
+      name << "FEM_PRODUCT(FEM_PK_DISCONTINUOUS(" << n-1 << "," << k << alpha
+	   << "),FEM_PK_DISCONTINUOUS(1,"
+	   << k << alpha << "))";
     return fem_descriptor(name.str());
   }
 
@@ -1200,6 +1228,7 @@ namespace getfem
       add_suffix("QK_DISCONTINUOUS", QK_discontinuous_fem);
       add_suffix("PK_PRISM", PK_prism_fem);
       add_suffix("PK_DISCONTINUOUS", PK_discontinuous_fem);
+      add_suffix("PK_PRISM_DISCONTINUOUS", PK_prism_discontinuous_fem);
       add_suffix("PK_WITH_CUBIC_BUBBLE", PK_with_cubic_bubble);
       add_suffix("PRODUCT", product_fem);
       add_suffix("P1_NONCONFORMING", P1_nonconforming_fem);

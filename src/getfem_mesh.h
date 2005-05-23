@@ -381,6 +381,7 @@ namespace getfem {
                        /* not handle geotrans */
   };
 
+  void extrude(const getfem_mesh& in, getfem_mesh& out, unsigned nb_layers);
 
  template<class ITER>
     size_type getfem_mesh::add_convex_by_points(bgeot::pgeometric_trans pgt,
@@ -442,7 +443,7 @@ namespace getfem {
   scalar_type convex_radius_estimate(bgeot::pgeometric_trans pgt,
 				     const base_matrix& pts);
 
-  
+
   class region_ref {
   public:
     size_type id;
@@ -467,7 +468,6 @@ namespace getfem {
     void set_bv(const dal::bit_vector &bv) const
     { p_.reset(new region(false)); p=p_.get(); p_->cvindex = bv; }
   };
-
 
   /* 
      stores a convex face. if f == -1, it is the whole convex
