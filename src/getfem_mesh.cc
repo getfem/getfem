@@ -624,4 +624,35 @@ namespace getfem {
     }
   }
 
+
+  void extrude(const getfem_mesh& in, getfem_mesh& out, unsigned nb_layers) {
+    unsigned dim = in.dim();
+    base_node pt(dim+1);
+    out.clear();
+    size_type nbpt = in.points().index().last()+1;
+    if (nbpt != in.points().index().card()) 
+      DAL_THROW(dal::failure_error, "please optimize the mesh before using it as a base for prismatic mesh");
+    for (size_type i = 0; i < nbpt; ++i) {
+      std::copy(in.points()[i].begin(), in.points()[i].end(),pt.begin());
+      pt[dim] = 0.0;
+      for (size_type j = 0; j <= nb_layers; ++j, pt[dim] += 1.0 / nb_layers)
+	out.add_point(pt);
+    }
+  
+    std::vector<size_type> tab;
+    for (dal::bv_visitor cv(in.convex_index()); !cv.finished(); ++cv) {
+      size_type nbp = in.nb_points_of_convex(cv);
+      tab.resize(2*nbp);
+      for (size_type j = 0; j < nb_layers; ++j) {
+	for (size_type k = 0; k < nbp; ++k)
+	  tab[k] = (nb_layers+1)*in.ind_points_of_convex(cv)[k] + j;
+	for (size_type k = 0; k < nbp; ++k)
+	  tab[k+nbp] = (nb_layers+1)*in.ind_points_of_convex(cv)[k] + j + 1;
+	bgeot::pgeometric_trans pgt = 
+	  bgeot::product_geotrans(in.trans_of_convex(cv), bgeot::simplex_geotrans(1,1));      
+	out.add_convex(pgt, tab.begin());
+      }
+    }
+  }
+
 }  /* end of namespace getfem.                                             */
