@@ -1069,29 +1069,23 @@ A brick represents a basic problem (elasticity, Helmholtz, Poisson problems ...)
 Each brick will participate on the global linear system to be solved (the tangent system for non linear problem). A brick is an object which derives from \cpp{mdbrick_abstract} with the following virtual methods to be defined:\\[0.5cm]
 
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
-  \cpp{brick.nbdof()} & number of total variables including the variables
-  of the sub-problem(s) if any.  \\ \hline
 
-  \cpp{brick.nb_constraints()} & number of linear constraints on the system
-  including the constraints defined in the sub-problem(s) if any. \\ \hline
+  \cpp{brick.proper_update()} & which is called each time the brick should
+  update itself. In particular, 
+  this function is expected to assign the correct values to
+  'proper_nb_dof' (the nb of new dof introduced by this brick),
+  'proper_nb_constraints' and 'proper_mixed_variables'. It may also precompute
+  certain components (like stiffness matrices for linear problems).\\ \hline
 
-  \cpp{brick.compute_tangent_matrix}\cpp{(MS, i0, j0, modified)} & the brick
-  has to call the \cpp{compute_tangent_matrix(MS, i0,modified)} of
-  sub-problem(s) if any and to compute its own part of the tangent and
+  \cpp{brick.do_compute_tangent_matrix}\cpp{(MS, i0, j0)} & the brick
+  has to compute its own part of the tangent and
   constraint matrices (i0 and j0 are optional arguments representing
-  the shifts in the matrices defined in MS) modified indicates if the
-  part of the tangent matrix dedicated to this brick will be modified by
-  other bricks.\\ \hline
+  the shifts in the matrices defined in MS).\\ \hline
 
-  \cpp{brick.compute_residu(MS, i0, j0)} & the brick has to call the
-  \cpp{compute_residu(MS, i0, modified)} of sub-problem(s) if any and has
+  \cpp{brick.do_compute_residu(MS, i0, j0)} & the brick has
   to compute its own part of the residu of the linear system and of
   the constraint system (i0 and j0 are the shifts in the residu vectors
   defined in MS). \\ \hline
-
-  \cpp{brick.mixed_variables(bv, i0)} & indicates in bv
-  (a \cpp{dal::bit_vector}) the indices of the variables which are
-  considered as multipliers or mixed variables\\ \hline
 
 \end{ctableau}
 
@@ -1105,15 +1099,15 @@ $$ -div(k\nabla u) = ... $$
 
 where $u$ is a scalar field and $k$ is a positive scalar or a symmetric positive definite order two tensor field. There is two constructors for this brick. The first one is for constant scalar coefficient $k$:
 \begin{alltt}
-  getfem::mdbrick_scalar_elliptic<MODEL_STATE> brick(mim, mf_u, mf_data, k, mat_stored);
+  getfem::mdbrick_scalar_elliptic<MODEL_STATE> brick(mim, mf_u, mf_data, k);
 \end{alltt}
-where \cpp{mim} is a variable of type \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mf_u} and \cpp{mf_data} are two valid fem descriptor on the same mesh. \cpp{mf_u} describe the finite element method used for the unknown and \cpp{mf_data} the finite element method used for the parameter $k$. As $k$ is constant \cpp{mf_data} will be chosen to be a constant fem like $P_0$ or $Q_0$ elements. \cpp{k} is a real defining a constant \cpp{k} and \cpp{mat_stored} is an optional parameter (the default value is \cpp{false}) specifying if the stiffness matrix has to be stored in the brick or not. Storing the stiffness matrix in the brick will have a memory cost but allows not to recompute it each time when \cpp{compute_tangent_matrix(...)} is called.
+where \cpp{mim} is a variable of type \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mf_u} and \cpp{mf_data} are two valid fem descriptor on the same mesh. \cpp{mf_u} describe the finite element method used for the unknown and \cpp{mf_data} the finite element method used for the parameter $k$. As $k$ is constant \cpp{mf_data} will be chosen to be a constant fem like $P_0$ or $Q_0$ elements. \cpp{k} is a real defining a constant \cpp{k}. Storing the stiffness matrix in the brick will have a memory cost but allows not to recompute it each time when \cpp{compute_tangent_matrix(...)} is called.
 
 The second constructor is for an arbitrary coefficient $k$:
 \begin{alltt}
-  getfem::mdbrick_scalar_elliptic<MODEL_STATE> brick(mim, mf_u, mf_data, k, laplace, mat_stored);
+  getfem::mdbrick_scalar_elliptic<MODEL_STATE> brick(mim, mf_u, mf_data, k, laplace);
 \end{alltt}
-where \cpp{mim} is a variable of type \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mf_u} and \cpp{mf_data} are still two valid fem descriptor on the same mesh. Very often, \cpp{k} is still constant or piecewise constant which meand that \cpp{mf_data} will be chosen to be a constant fem like $P_0$ or $Q_0$ elements. \cpp{k} is a vector of type \cpp{MODEL_STATE::vector_type} where \cpp{MODEL_STATE} is the type of model state variable used. \cpp{laplace} is a boolean, it has to be \cpp{true} if \cpp{k} is scalar and \cpp{false} if \cpp{k} is an order two tensor value. The vector \cpp{k} will be filled with either one tensorial or scalar value if the coefficient is constant or with a value on each degree of freedom of \cpp{mf_data} if not. \cpp{mat_stored} is still an optional parameter (the default value is false) specifying if the stiffness matrix has to be stored in the brick or not.
+where \cpp{mim} is a variable of type \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mf_u} and \cpp{mf_data} are still two valid fem descriptor on the same mesh. Very often, \cpp{k} is still constant or piecewise constant which meand that \cpp{mf_data} will be chosen to be a constant fem like $P_0$ or $Q_0$ elements. \cpp{k} is a vector of type \cpp{MODEL_STATE::vector_type} where \cpp{MODEL_STATE} is the type of model state variable used. \cpp{laplace} is a boolean, it has to be \cpp{true} if \cpp{k} is scalar and \cpp{false} if \cpp{k} is an order two tensor value. The vector \cpp{k} will be filled with either one tensorial or scalar value if the coefficient is constant or with a value on each degree of freedom of \cpp{mf_data} if not.
 
 The following additional methods are available on this brick:
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
@@ -1214,13 +1208,13 @@ $\varepsilon(u)$ is the small strain tensor, $\sigma$ is the stress tensor, $\la
 There is two constructors for this brick. The first one is for constant Lamé coefficients:
 \begin{alltt}
   getfem::mdbrick_isotropic_linearized_elasticity<MODEL_STATE>
-     brick(mim, mf_u, mf_data, lambda, mu, mat_stored);
+     brick(mim, mf_u, mf_data, lambda, mu);
 \end{alltt}
-where \cpp{mim} is a variable of type \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mf_u} and \cpp{mf_data} are two valid fem descriptor on the same mesh. \cpp{mf_u} describe the finite element method used for the unknown and \cpp{mf_data} the finite element method used for the Lamé coefficients. As they are constant \cpp{mf_data} will be chosen to be a constant fem like $P_0$ or $Q_0$ elements. \cpp{lambda} and \cpp{mu} are two real defining the constant Lamé coefficients. \cpp{mat_stored} is an optional parameter (the default value is \cpp{false}) specifying if the stiffness matrix has to be stored in the brick or not. Storing the stiffness matrix in the brick will have a memory cost but allows not to recompute it each time when \cpp{compute_tangent_matrix(...)} is called.
+where \cpp{mim} is a variable of type \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mf_u} and \cpp{mf_data} are two valid fem descriptor on the same mesh. \cpp{mf_u} describe the finite element method used for the unknown and \cpp{mf_data} the finite element method used for the Lamé coefficients. As they are constant \cpp{mf_data} will be chosen to be a constant fem like $P_0$ or $Q_0$ elements. \cpp{lambda} and \cpp{mu} are two real defining the constant Lamé coefficients. Storing the stiffness matrix in the brick will have a memory cost but allows not to recompute it each time when \cpp{compute_tangent_matrix(...)} is called.
 
 The second constructor is for non homogeneous Lamé coefficients:
 \begin{alltt}
-  getfem::mdbrick_isotropic_linearized_elasticity(mim, mf_u, mf_data, lambda, mu, mat_stored);
+  getfem::mdbrick_isotropic_linearized_elasticity(mim, mf_u, mf_data, lambda, mu);
 \end{alltt}
 It has the same form but here \cpp{lambda} and \cpp{mu} are two vectors of type \cpp{MODEL_STATE::vector_type} defining the Lamé coefficients on \cpp{mf_data}.
 
@@ -1266,9 +1260,9 @@ where $k$ the wave number is a real or complex value. For a complex version, a c
 
 The constructor is
 \begin{alltt}
-  getfem::mdbrick_Helmholtz<MODEL_STATE> brick(mim, mf_u, mf_data, k, mat_stored);
+  getfem::mdbrick_Helmholtz<MODEL_STATE> brick(mim, mf_u, mf_data, k);
 \end{alltt}
-where \cpp{mim} is a variable of type \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mf_u} and \cpp{mf_data} are two valid fem descriptor on the same mesh. \cpp{mf_u} describe the finite element method used for the unknown and \cpp{mf_data} the finite element method used for the wave number. \cpp{k} is a real or a vector of type \cpp{MODEL_STATE::vector_type} defining the wave number and  \cpp{mat_stored} is an optional parameter (the default value is \cpp{false}) specifying if the stiffness matrix has to be stored in the brick or not. Storing the stiffness matrix in the brick will have a memory cost but allows not to recompute it each time when \cpp{compute_tangent_matrix(...)} is called.
+where \cpp{mim} is a variable of type \cpp{getfem::mesh\_im} defining the integration method used, \cpp{mf_u} and \cpp{mf_data} are two valid fem descriptor on the same mesh. \cpp{mf_u} describe the finite element method used for the unknown and \cpp{mf_data} the finite element method used for the wave number. \cpp{k} is a real or a vector of type \cpp{MODEL_STATE::vector_type} defining the wave number. Storing the stiffness matrix in the brick will have a memory cost but allows not to recompute it each time when \cpp{compute_tangent_matrix(...)} is called.
 
 The following additional methods are available on this brick:
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline

@@ -1,6 +1,11 @@
+2005-05-19 Julien pommier, Yves Renard
+
+	* getfem_modeling.h, Simplification of the model bricks system.
+
 2005-05-13  Julien Pommier  <pommier@gmm.insa-tlse.fr>
 
-	* src/getfem_fem.cc (getfem): Added 'alpha' param. for FEM_QK_DISCONTINUOUS.
+	* src/getfem_fem.cc (getfem): Added 'alpha' param.
+	for FEM_QK_DISCONTINUOUS.
 
 2005-03-11 Julien pommier, Yves Renard
 
