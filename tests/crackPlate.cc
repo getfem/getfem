@@ -70,7 +70,7 @@ struct crackPlate_problem{
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
   scalar_type epsilon, pressure ;
   // methods
-  bool solve(plain_vector &U);
+  bool solve(plain_vector &UT, plain_vector &U3, plain_vector &THETA);
   void init(void);
   crackPlate_problem(void) : mls(mesh), mim(mls),
   			mf_pre_ut(mesh), mf_pre_u3(mesh), mf_pre_theta(mesh), 
@@ -191,11 +191,11 @@ void crackPlate_problem::init(void) {
 
 }
 
-bool crackPlate_problem::solve(plain_vector &U) {
+bool crackPlate_problem::solve(plain_vector &UT, plain_vector &U3, plain_vector &THETA) {
 
   cout << "solving\n" ;
   size_type nb_dof_rhs = mf_rhs.nb_dof();
-  size_type N = mesh.dim();
+  //size_type N = mesh.dim();
 
   ls.reinit();  
   for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
@@ -232,37 +232,46 @@ bool crackPlate_problem::solve(plain_vector &U) {
   mf_sing_u3.set_functions(u3func);
   mf_sing_theta.set_functions(theta_func);
   
-  if (enrichment_option == 2) {
-    dal::bit_vector enriched_dofs;
-    plain_vector X(mf_partition_of_unity.nb_dof());
-    plain_vector Y(mf_partition_of_unity.nb_dof());
-    getfem::interpolation(ls.get_mesh_fem(), mf_partition_of_unity,
-			  ls.values(1), X);
-    getfem::interpolation(ls.get_mesh_fem(), mf_partition_of_unity,
-			  ls.values(0), Y);
-    for (size_type j = 0; j < mf_partition_of_unity.nb_dof(); ++j) {
-      if (gmm::sqr(X[j]) + gmm::sqr(Y[j]) <= gmm::sqr(enr_area_radius))
-	enriched_dofs.add(j);
+  switch (enrichment_option) {
+  case 1 : 
+    {
+      mf_ut_sum.set_mesh_fems(mf_sing_ut, mfls_ut);
+      mf_u3_sum.set_mesh_fems(mf_sing_u3, mfls_u3);
+      mf_theta_sum.set_mesh_fems(mf_sing_theta, mfls_theta);
+      }
+    break;
+  case 2 :
+    {
+      dal::bit_vector enriched_dofs;
+      plain_vector X(mf_partition_of_unity.nb_dof());
+      plain_vector Y(mf_partition_of_unity.nb_dof());
+      getfem::interpolation(ls.get_mesh_fem(), mf_partition_of_unity,
+			    ls.values(1), X);
+      getfem::interpolation(ls.get_mesh_fem(), mf_partition_of_unity,
+			    ls.values(0), Y);
+      for (size_type j = 0; j < mf_partition_of_unity.nb_dof(); ++j) {
+	if (gmm::sqr(X[j]) + gmm::sqr(Y[j]) <= gmm::sqr(enr_area_radius))
+	  enriched_dofs.add(j);
+      }
+      if (enriched_dofs.card() < 3)
+	DAL_WARNING(0, "There is " << enriched_dofs.card() <<
+		    " enriched dofs for the crack tip");
+      mf_ut_product.set_enrichment(enriched_dofs);
+      mf_u3_product.set_enrichment(enriched_dofs);
+      mf_theta_product.set_enrichment(enriched_dofs);
+      mf_ut_sum.set_mesh_fems(mf_ut_product, mfls_ut);
+      mf_u3_sum.set_mesh_fems(mf_u3_product, mfls_u3);
+      mf_theta_sum.set_mesh_fems(mf_theta_product, mfls_theta);
     }
-    if (enriched_dofs.card() < 3)
-      DAL_WARNING(0, "There is " << enriched_dofs.card() <<
-		  " enriched dofs for the crack tip");
-    mf_ut_product.set_enrichment(enriched_dofs);
-    mf_u3_product.set_enrichment(enriched_dofs);
-    mf_theta_product.set_enrichment(enriched_dofs);
-    mf_ut_sum.set_mesh_fems(mf_ut_product, mfls_ut);
-    mf_u3_sum.set_mesh_fems(mf_u3_product, mfls_u3);
-    mf_theta_sum.set_mesh_fems(mf_theta_product, mfls_theta);
+    break;
+  default : {
+  mf_ut_sum.set_mesh_fems(mfls_ut);
+  mf_u3_sum.set_mesh_fems(mfls_u3);
+  mf_theta_sum.set_mesh_fems(mfls_theta);}
+   break;
   }
-  else { 
-    mf_ut_sum.set_mesh_fems(mf_sing_ut, mfls_ut);
-    mf_u3_sum.set_mesh_fems(mf_sing_u3, mfls_u3);
-    mf_theta_sum.set_mesh_fems(mf_sing_theta, mfls_theta);
-    }
 
-  U.resize(mf_ut().nb_dof() + mf_u3().nb_dof() + mf_theta().nb_dof());
-  
-getfem::mdbrick_abstract<> *ELAS, *SIMPLE;
+  getfem::mdbrick_abstract<> *ELAS, *SIMPLE;
 
   // Linearized plate brick.
   getfem::mdbrick_isotropic_linearized_plate<>
@@ -274,8 +283,11 @@ getfem::mdbrick_abstract<> *ELAS, *SIMPLE;
   // Defining the surface source term.
   plain_vector F(nb_dof_rhs * 3); 
   plain_vector M(nb_dof_rhs * 2);
-  for (size_type i = 0; i < nb_dof_rhs; ++i) F[3*i+2] = pressure;
-  
+  for (size_type i = 0; i < nb_dof_rhs; ++i){
+    if (mf_rhs.point_of_dof(i)[1] > 0 )
+      F[3*i+2] = pressure;
+    else F[3*i+2] = -pressure;
+  }  
   getfem::mdbrick_plate_source_term<> VOL_F(*ELAS, mf_rhs, F, M);
   
   getfem::mdbrick_plate_clamped_support<> SIMPLE1
@@ -291,6 +303,18 @@ getfem::mdbrick_abstract<> *ELAS, *SIMPLE;
   gmm::iteration iter(residu, 1, 40000);
   getfem::standard_solve(MS, final_model, iter);
   
+  /*affichage de la solution */    
+  gmm::resize(U3, mf_u3().nb_dof());
+  gmm::copy(ELAS1.get_u3(MS), U3);  
+
+  gmm::resize(UT, mf_ut().nb_dof());
+  gmm::copy(ELAS1.get_ut(MS), UT);
+
+  gmm::resize(THETA, mf_theta().nb_dof());
+  gmm::copy(ELAS1.get_theta(MS), THETA);  
+  cout << "vecteur solution u3 : \n" << U3 << "\n" ;
+//   gmm::resize(U, mf_ut().nb_dof() + mf_u3().nb_dof() + mf_theta().nb_dof() );
+//   gmm::copy(ELAS1.get_solution(MS), U);
   return (iter.converged());
 }
 
@@ -306,15 +330,156 @@ int main(int argc, char *argv[]) {
 #ifdef GETFEM_HAVE_FEENABLEEXCEPT /* trap SIGFPE */
   feenableexcept(FE_DIVBYZERO | FE_INVALID);
 #endif
+  feenableexcept(FE_DIVBYZERO | FE_INVALID);
 
   try {
     crackPlate_problem p;
     p.PARAM.read_command_line(argc, argv);
     p.init();
     p.mesh.write_to_file(p.datafilename + ".mesh") ;
-    plain_vector U(p.mf_ut().nb_dof() + p.mf_u3().nb_dof() 
-      + p.mf_theta().nb_dof());
-    if (!p.solve(U)) DAL_THROW(dal::failure_error, "Solve has failed");
+    plain_vector UT, U3, THETA;
+    if (!p.solve(UT, U3, THETA)) DAL_THROW(dal::failure_error, "Solve has failed");
+    
+    cout << "post-traitement pour l'affichage :\n" ;
+    getfem::getfem_mesh mcut;
+    p.mls.global_cut_mesh(mcut);
+
+    getfem::stored_mesh_slice sl;
+    getfem::getfem_mesh mcut_triangles_only;
+    sl.build(mcut, 
+	     getfem::slicer_build_mesh(mcut_triangles_only), 1);
+
+
+    getfem::mesh_fem mf(mcut_triangles_only, 1);
+    mf.set_classical_discontinuous_finite_element(2, 0.001);
+//     mf.set_finite_element
+//       	(getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 2, 0.0001)"));
+//     getfem::pfem pmf = getfem::fem_descriptor
+//         ("FEM_PRODUCT(FEM_PK_DISCONTINUOUS(1, 2, 0.0001), FEM_PK_DISCONTINUOUS(1, 2, 0.0001))") ;
+//     mf.set_finite_element(pmf) ; 
+    plain_vector V3(mf.nb_dof()), VT(mf.nb_dof()*2), VTHETA(mf.nb_dof()*2);    
+    getfem::interpolation(p.mf_ut(), mf, UT, VT);
+    getfem::interpolation(p.mf_u3(), mf, U3, V3);
+    getfem::interpolation(p.mf_theta(), mf, THETA, VTHETA);
+    
+
+    getfem::getfem_mesh m3d; getfem::extrude(mcut_triangles_only,m3d,1);
+    getfem::base_matrix trans(3,3); 
+    trans(0,0) = trans(1,1) = 1; trans(2,2) = p.epsilon;
+    m3d.transformation(trans);
+    getfem::mesh_fem mf3d(m3d);
+    mf3d.set_classical_discontinuous_finite_element(2, 0.001);
+
+    plain_vector V(mf3d.nb_dof()*3);
+    bgeot::kdtree tree; tree.reserve(mf.nb_dof());
+    for (unsigned i=0; i < mf.nb_dof(); ++i)
+      tree.add_point_with_id(mf.point_of_dof(i),i);
+    bgeot::kdtree_tab_type pts;
+    for (unsigned i=0; i < mf3d.nb_dof(); ++i) {
+      base_node P = mf3d.point_of_dof(i);
+      base_node P2d0(2), P2d1(2); 
+      scalar_type EPS = 1e-6;
+      P2d0[0] = P[0]-EPS; P2d0[1] = P[1]-EPS;
+      P2d1[0] = P[0]+EPS; P2d1[1] = P[1]+EPS;
+      tree.points_in_box(pts, P2d0, P2d1);
+      //cout << "P = " << P << ", P2d0=" << P2d0 << " " << P2d1 << ", pts.size=" << pts.size() << "\n";
+      assert(pts.size() == 1);
+      size_type j=pts[0].i;
+      scalar_type x3 = P[2];
+      assert(finite(VTHETA[2*j]));
+      assert(finite(VT[2*j]));
+      V[3*i+0] = VT[2*j+0] + x3 * VTHETA.at(2*j+0);
+      V[3*i+1] = VT[2*j+1] + x3 * VTHETA[2*j+1];
+      V[3*i+2] = V3[j];
+      assert(finite(V[3*i]));
+      assert(finite(V[3*i+1]));
+      assert(finite(V[3*i+2]));
+    }
+
+    
+//     getfem::stored_mesh_slice sl;
+//     getfem::getfem_mesh mcut_refined;
+//     sl.build(mcut, 
+// 	getfem::slicer_build_mesh(mcut_refined), 4);
+//     getfem::mesh_im mim_refined(mcut_refined); 
+//     mim_refined.set_integration_method(getfem::int_method_descriptor
+// 					("IM_TRIANGLE(6)"));
+// 
+//     getfem::mesh_fem mf_refined(mcut_refined, p.mf_u3().get_qdim());
+//     mf_refined.set_finite_element
+//     (getfem::fem_descriptor("FEM_PK_DISCONTINUOUS(2, 1, 0.0001)"));
+//     plain_vector W(mf_refined.nb_dof());
+//     getfem::interpolation(p.mf_u3(), mf_refined, U, W);
+
+//     plain_vector EXACT(mf_refined.nb_dof());
+//     p.exact_sol.mf.set_qdim(2);
+//     assert(p.exact_sol.mf.nb_dof() == p.exact_sol.U.size());
+//     getfem::interpolation(p.exact_sol.mf, mf_refined, 
+// 			p.exact_sol.U, EXACT);
+
+    if (p.PARAM.int_value("VTK_EXPORT"))
+      {
+	cout << "export to " << p.datafilename + ".vtk" << "..\n";
+	getfem::vtk_export exp(p.datafilename + ".vtk",
+			       p.PARAM.int_value("VTK_EXPORT")==1);
+	exp.exporting(mf3d); 
+	exp.write_point_data(mf3d, V, "plate_normal_displacement");
+	cout << "export done, you can view the data file with (for example)\n"
+	  "mayavi -d " << p.datafilename << ".vtk -f ExtractVectorNorm -f "
+	  "WarpVector -m BandedSurfaceMap -m Outline\n";
+      
+// 	getfem::vtk_export exp2("crack_exact.vtk");
+// 	exp2.exporting(mf_refined);
+// 	exp2.write_point_data(mf_refined, EXACT, "reference solution");
+      }
+      
+    if (p.PARAM.int_value("DX_EXPORT"))
+      {
+	cout << "export to " << p.datafilename + ".dx" << "..\n";
+	getfem::dx_export exp(p.datafilename + ".dx",
+			       p.PARAM.int_value("DX_EXPORT")==1);
+
+	/*
+	exp.exporting(mf3d); 
+	exp.write_point_data(mf3d, V, "plate_normal_displacement");
+      	*/
+	
+	/* opendx ne supporte pas les prismes... */
+	getfem::stored_mesh_slice sl_tetra;
+	getfem::getfem_mesh mtetra;
+	sl_tetra.build(m3d, getfem::slicer_build_mesh(mtetra), 1);
+	getfem::mesh_fem mftetra(mtetra,3); 
+	mftetra.set_classical_discontinuous_finite_element(1, 0.001);
+	
+	plain_vector Vtetra(mftetra.nb_dof());
+	mf3d.set_qdim(3);
+	getfem::interpolation(mf3d, mftetra, V, Vtetra);
+	
+	exp.exporting(mftetra);
+	exp.write_point_data(mftetra, Vtetra, "plate_displacement");
+	
+//     mf.set_finite_element
+
+
+
+// 	getfem::dx_export exp2("crack_exact.vtk");
+// 	exp2.exporting(mf_refined);
+// 	exp2.write_point_data(mf_refined, EXACT, "reference solution");
+      }
+
+//       cout << "L2 ERROR:" << getfem::asm_L2_dist(p.mim, p.mf_u(), U, p.exact_sol.mf, p.exact_sol.U) << endl
+// 	   << "H1 ERROR:" << getfem::asm_H1_dist(p.mim, p.mf_u(), U, p.exact_sol.mf, p.exact_sol.U)
+// 	   << "\n";
+//       
+//       plain_vector DIFF(EXACT); gmm::add(gmm::scaled(W,-1),DIFF);
+//       cout << "OLD ERROR L2:" << getfem::asm_L2_norm(mim_refined,mf_refined,DIFF) 
+// 	   << " H1:" << getfem::asm_H1_dist(mim_refined,mf_refined,EXACT,mf_refined,W)
+// 	   << "\n";
+// 
+//       cout << "ex = " << p.exact_sol.U << "\n";
+//       cout << "U  = " << gmm::sub_vector(U, gmm::sub_interval(0,8)) << "\n";
+    
+    cout << "fin du programme atteinte \n" ;
   }
   
     DAL_STANDARD_CATCH_ERROR;
