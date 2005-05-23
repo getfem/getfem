@@ -545,10 +545,11 @@ bool crack_problem::solve(plain_vector &U) {
   getfem::mdbrick_isotropic_linearized_elasticity<>
     ELAS(mim, mf_u(), mf_coef, mixed_pressure ? 0.0 : lambda, mu);
 
-  getfem::mdbrick_linear_incomp<> INCOMP(ELAS, mf_p, mf_coef, 1.0/lambda);
-
   getfem::mdbrick_abstract<> *pINCOMP;
-  if (mixed_pressure) pINCOMP = &INCOMP; else pINCOMP = &ELAS;
+  if (mixed_pressure)
+    pINCOMP = new getfem::mdbrick_linear_incomp<>(ELAS, mf_p, mf_coef,
+						  1.0/lambda);
+  else pINCOMP = &ELAS;
 
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs * N);

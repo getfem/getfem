@@ -12,20 +12,22 @@ EPSILON = 0.01;          % thickness of the plate
 PRESSURE = 0.01;         % pressure on the top surface of the plate.
 MESH_TYPE = 'GT_QK(2,1)'; % linear rectangles
 NX = 10;            	          % space step.
-MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
+MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
 FEM_TYPE_UT = 'FEM_QK(2,1)';
-FEM_TYPE_U3 = 'FEM_QK(2,1)';
-FEM_TYPE_THETA= 'FEM_QK(2,2)';
+FEM_TYPE_U3 = 'FEM_QK(2,2)';
+FEM_TYPE_THETA= 'FEM_QK(2,1)';
 DATA_FEM_TYPE = 'FEM_QK(2,1)';
 INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,4)';
 INTEGRATION_CT = 'IM_GAUSS_PARALLELEPIPED(2,4)';
 RESIDU = 1E-9;     	% residu for conjugate gradient.
 ROOTFILENAME = 'plate';     % Root of data files.
-VTK_EXPORT = 2 % export solution to a .vtk file ?
-MIXED = 1;
-SYMMETRIZED = 1;
-SOL_REF = 2;
+VTK_EXPORT = 0 % export solution to a .vtk file ?
+MIXED = 0;
+MITC = 0;
+SYMMETRIZED = 0;
+SOL_REF = 0;
 ETA = 0.;
+DX_EXPORT = 0;
 
 ;
 close(TMPF);

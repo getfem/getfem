@@ -365,8 +365,7 @@ namespace getfem {
     size_type proper_additional_dof;
     /* number of new constraints introduced by this brick */
     size_type proper_nb_constraints;
-    /* in the 'proper_additional_dof' dof, indicate which ones
-       correspound to mixed variables */
+    /* in the dofs, indicates which ones correspound to mixed variables */
     dal::bit_vector proper_mixed_variables;
 
     /* below is the "global" information, relating to this brick and
@@ -524,8 +523,8 @@ namespace getfem {
     bool is_coercive(void) const { return is_coercive_; }
     const dal::bit_vector &mixed_variables(void) const
     { return total_mixed_variables; };
-    mdbrick_abstract(void) : proper_nb_constraints(0),
-			     proper_additional_dof(0), MS_i0(0)
+    mdbrick_abstract(void) : proper_additional_dof(0), proper_nb_constraints(0),
+			     MS_i0(0)
     { proper_is_linear_ = proper_is_symmetric_ = proper_is_coercive_ = true; }
     virtual ~mdbrick_abstract() {}
   };
@@ -1313,12 +1312,15 @@ namespace getfem {
     }
 
     virtual void proper_update(void) {
-       compute_constraints(ASMDIR_BUILDH + ASMDIR_BUILDR);
-       this->proper_mixed_variables.clear();
-       this->proper_additional_dof = with_multipliers ? nb_const : 0;
-       this->proper_nb_constraints = with_multipliers ? 0 : nb_const;
-       if (with_multipliers)
-	 this->proper_mixed_variables.add(sub_problem.nb_dof(), nb_const);
+      mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
+      if (gmm::vect_size(B_) == 0)
+	gmm::resize(B_, mf_data.nb_dof() * mf_u.get_qdim());
+      compute_constraints(ASMDIR_BUILDH + ASMDIR_BUILDR);
+      this->proper_mixed_variables.clear();
+      this->proper_additional_dof = with_multipliers ? nb_const : 0;
+      this->proper_nb_constraints = with_multipliers ? 0 : nb_const;
+      if (with_multipliers)
+	this->proper_mixed_variables.add(sub_problem.nb_dof(), nb_const);
     }
 
   public :
@@ -1381,9 +1383,7 @@ namespace getfem {
 		      size_type num_fem_=0, bool with_mult = false)
       : sub_problem(problem), mf_data(mf_data_), boundary(bound),
 	num_fem(num_fem_), with_H(false), with_multipliers(with_mult) {
-      mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
-      gmm::resize(B_, mf_data.nb_dof() * mf_u.get_qdim());
-      gmm::clear(B_); init_();
+      init_();
     }
 
     // Constructor defining the rhs
@@ -1423,8 +1423,7 @@ namespace getfem {
 
     template <class MAT, class VEC>
     void set_constraints_(const MAT &G_, const VEC &RHS) {
-      mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
-      gmm::resize(G, gmm::mat_nrows(G_), mf_u.nb_dof());
+      gmm::resize(G, gmm::mat_nrows(G_), gmm::mat_ncols(G_));
       gmm::resize(CRHS, gmm::mat_nrows(G_));
       gmm::copy(G_, G); gmm::copy(RHS, CRHS);
     }

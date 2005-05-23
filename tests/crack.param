@@ -41,7 +41,7 @@ INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 5), 5))';
 %INTEGRATION = 'IM_TRIANGLE(6)';
 
 ADDITIONAL_CRACK = 0;
-ENRICHMENT_OPTION = 4;  % 0 = Pas d'enrichissement
+ENRICHMENT_OPTION = 2;  % 0 = Pas d'enrichissement
 		        % 1 = global functions with cutoff
 	                % 2 = standard XFEM on a fixed zone
 			% 3 = spider fem alone
