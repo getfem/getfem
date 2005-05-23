@@ -227,7 +227,7 @@ void friction_problem::stationary(plain_vector &U0, plain_vector &LN,
 
   // Linearized elasticity brick.
   getfem::mdbrick_isotropic_linearized_elasticity<>
-    ELAS(mim, mf_u, mf_coef, lambda, mu, true);
+    ELAS(mim, mf_u, mf_coef, lambda, mu);
 
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs * N);
@@ -323,7 +323,7 @@ void friction_problem::solve(void) {
 
   // Linearized elasticity brick.
   getfem::mdbrick_isotropic_linearized_elasticity<>
-    ELAS(mim, mf_u, mf_coef, lambda, mu, true);
+    ELAS(mim, mf_u, mf_coef, lambda, mu);
 
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs * N);

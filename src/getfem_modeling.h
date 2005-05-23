@@ -40,7 +40,7 @@
   update itself.
   This function is expected to assign the correct values to
   'proper_nb_dof' (the nb of new dof introduced by this brick),
-  'proper_nb_constraints' and proper_mixed_variables.
+  'proper_nb_constraints' and 'proper_mixed_variables'.
 
   - do_compute_tangent_matrix(MS, i0, j0) . This function should
   compute its own part of the tangent and constraint matrices (i0 and
@@ -1047,8 +1047,8 @@ namespace getfem {
     mdbrick_abstract<MODEL_STATE> &sub_problem;
     mesh_fem &mf_data;
     VECTOR Q;
-    bool homogeneous;
     size_type boundary, num_fem, i1, nbd;
+    bool homogeneous;
     T_MATRIX K;
 
     virtual void proper_update(void) {
@@ -1072,12 +1072,12 @@ namespace getfem {
   public :
 
     virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
-					   size_type j0) {
+					   size_type) {
       gmm::sub_interval SUBI(i0+i1, nbd);
       gmm::add(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI));
     }
     virtual void do_compute_residu(MODEL_STATE &MS, size_type i0,
-				   size_type j0) {
+				   size_type) {
       gmm::sub_interval SUBI(i0+i1, nbd);
       typename gmm::sub_vector_type<VECTOR *, gmm::sub_interval>::vector_type
 	SUBV = gmm::sub_vector(MS.residu(), SUBI);

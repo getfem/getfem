@@ -388,16 +388,10 @@ namespace getfem {
   template<typename MODEL_STATE = standard_model_state> 
     class mdbrick_plasticity : public mdbrick_abstract<MODEL_STATE> {
       
-      typedef typename MODEL_STATE::vector_type VECTOR;
-      typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
-      typedef typename MODEL_STATE::value_type value_type;
-      typedef typename gmm::sub_vector_type<VECTOR *,
-				 gmm::sub_interval>::vector_type SUBVECTOR;
+      TYPEDEF_MODEL_STATE_TYPES;
 
-      gmm::sub_interval SUBU;
       mesh_im &mim;
-      mesh_fem &mf_u;
-      mesh_fem &mf_data;
+      mesh_fem &mf_u, &mf_data;
       VECTOR lambda_, mu_;
       bool homogeneous;
       VECTOR stress_threshold_;
@@ -424,13 +418,12 @@ namespace getfem {
 	}
       }
 
+      void proper_update(void) {}
+
       public:
       
-      virtual void mixed_variables(dal::bit_vector &, size_type = 0) {}
-      virtual size_type nb_constraints(void) { return 0; }
-      
       SUBVECTOR get_solution(MODEL_STATE &MS) {
-	SUBU = gmm::sub_interval (this->first_index(), this->nb_dof());
+	gmm::sub_interval SUBU(this->first_index(), mf_u.nb_dof());
 	return gmm::sub_vector(MS.state(), SUBU);
       }
       
@@ -442,11 +435,10 @@ namespace getfem {
 	}
       }
       
-      virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
-					  size_type = 0, bool = false) {
-	
-	gmm::sub_interval SUBI(i0, this->nb_dof());      
-	T_MATRIX K(this->nb_dof(), this->nb_dof());
+      virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
+					     size_type) {
+	gmm::sub_interval SUBI(i0, mf_u.nb_dof());      
+	T_MATRIX K(mf_u.nb_dof(), mf_u.nb_dof());
 	VECTOR lambda(mf_data.nb_dof()), mu(mf_data.nb_dof()),
 	  stress_threshold(mf_data.nb_dof());
 
@@ -461,14 +453,13 @@ namespace getfem {
 	gmm::copy(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI));
       }
       
-      virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
-				  size_type = 0) {
+      virtual void do_compute_residu(MODEL_STATE &MS, size_type i0, size_type) {
 	VECTOR lambda(mf_data.nb_dof()), mu(mf_data.nb_dof()),
 	  stress_threshold(mf_data.nb_dof());
 	fill_coeff(lambda, mu, stress_threshold);
 
-	gmm::sub_interval SUBI(i0, this->nb_dof());        
-	VECTOR K(this->nb_dof());
+	gmm::sub_interval SUBI(i0, mf_u.nb_dof());        
+	VECTOR K(mf_u.nb_dof());
 	plasticity_projection proj(mim, mf_u, mf_data, MS.state(),
 				   stress_threshold,
 				   lambda, mu, &t_proj, sigma_bar,
@@ -483,7 +474,7 @@ namespace getfem {
 	VECTOR lambda(mf_data.nb_dof()), mu(mf_data.nb_dof()),
 	  stress_threshold(mf_data.nb_dof());
 	fill_coeff(lambda, mu, stress_threshold);
-	VECTOR K(this->nb_dof());
+	VECTOR K(mf_u.nb_dof());
 	
 	plasticity_projection proj(mim, mf_u, mf_data, MS.state(),
 				   stress_threshold,

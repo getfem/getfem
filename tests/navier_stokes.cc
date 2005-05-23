@@ -208,7 +208,7 @@ bool navier_stokes_problem::solve() {
   //
 
   // Laplacian brick.
-  getfem::mdbrick_scalar_elliptic<> laplacian(mim, mf_u, mf_coef, nu, true);
+  getfem::mdbrick_scalar_elliptic<> laplacian(mim, mf_u, mf_coef, nu);
   // getfem::mdbrick_isotropic_linearized_elasticity<>
   //  laplacian(mim, mf_u, mf_coef, 0.0, nu, true);
 
@@ -235,7 +235,7 @@ bool navier_stokes_problem::solve() {
   // definition of the mixed problem
   //
 
-  getfem::mdbrick_mass_matrix<> mixed(mim, mf_u, mf_coef, 1./dt, true);
+  getfem::mdbrick_mass_matrix<> mixed(mim, mf_u, mf_coef, 1./dt);
   
   // Pressure term
   getfem::mdbrick_linear_incomp<> mixed_p(mixed, mf_p);

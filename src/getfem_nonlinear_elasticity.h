@@ -390,28 +390,20 @@ namespace getfem {
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_nonlinear_elasticity : public mdbrick_abstract<MODEL_STATE> {
 
-    typedef typename MODEL_STATE::vector_type VECTOR;
-    typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
-    typedef typename MODEL_STATE::value_type value_type;
-    typedef typename gmm::sub_vector_type<VECTOR *,
-				 gmm::sub_interval>::vector_type SUBVECTOR;
+    TYPEDEF_MODEL_STATE_TYPES;
 
-    gmm::sub_interval SUBU;
     const abstract_hyperelastic_law &AHL;
     mesh_im &mim;
-    mesh_fem &mf_u;
-    mesh_fem &mf_data;
+    mesh_fem &mf_u, &mf_data;
     VECTOR PARAMS_;
     bool homogeneous;
 
+    virtual void proper_update(void) {}
+
   public :
 
-    virtual void mixed_variables(dal::bit_vector &, size_type = 0) {}
-    virtual size_type nb_constraints(void) { return 0; }
-    virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
-					size_type = 0, bool modified = false) {
-      //cout << "mdbrick_nonlinear_elasticity::compute_tangent_matrix\n";
-      react(MS, i0, modified);
+    virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
+					   size_type) {
       size_type nb = AHL.nb_params();
       VECTOR PARAMS(mf_data.nb_dof() * nb);
       if (homogeneous) {
@@ -422,15 +414,13 @@ namespace getfem {
       else
 	gmm::copy(PARAMS_, PARAMS);
 
-      gmm::sub_interval SUBI(i0, this->nb_dof());
+      gmm::sub_interval SUBI(i0, mf_u.nb_dof());
       gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBI));
       asm_nonlinear_elasticity_tangent_matrix
 	(gmm::sub_matrix(MS.tangent_matrix(), SUBI), mim, mf_u,
 	 gmm::sub_vector(MS.state(), SUBI), mf_data, PARAMS,  AHL);
     }
-    virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
-				size_type = 0) {
-      react(MS, i0, false);
+    virtual void do_compute_residu(MODEL_STATE &MS, size_type i0, size_type) {
       size_type nb = AHL.nb_params();
       VECTOR PARAMS(mf_data.nb_dof() * nb);
       if (homogeneous) {
@@ -441,7 +431,7 @@ namespace getfem {
       else
 	gmm::copy(PARAMS_, PARAMS);
 
-      gmm::sub_interval SUBI(i0, this->nb_dof());
+      gmm::sub_interval SUBI(i0, mf_u.nb_dof());
       gmm::clear(gmm::sub_vector(MS.residu(), SUBI));
       asm_nonlinear_elasticity_rhs(gmm::sub_vector(MS.residu(), SUBI), mim,
 				   mf_u, gmm::sub_vector(MS.state(), SUBI), 
@@ -456,7 +446,7 @@ namespace getfem {
     }
 
     SUBVECTOR get_solution(MODEL_STATE &MS) {
-      SUBU = gmm::sub_interval (this->first_index(), this->nb_dof());
+      gmm::sub_interval SUBU(this->first_index(), mf_u.nb_dof());
       return gmm::sub_vector(MS.state(), SUBU);
     }
 
@@ -506,6 +496,7 @@ namespace getfem {
 
   template<typename VECT1> class incomp_nonlinear_term 
     : public getfem::nonlinear_elem_term {
+
     const mesh_fem &mf;
     const VECT1 &U;
     size_type N;
@@ -623,36 +614,26 @@ namespace getfem {
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_nonlinear_incomp : public mdbrick_abstract<MODEL_STATE>  {
     
-    typedef typename MODEL_STATE::vector_type VECTOR;
-    typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
-    typedef typename MODEL_STATE::value_type value_type;
-    typedef typename gmm::number_traits<value_type>::magnitude_type R;
-
+    TYPEDEF_MODEL_STATE_TYPES;
+   
     mdbrick_abstract<MODEL_STATE> &sub_problem;
     mesh_fem &mf_p;
     size_type num_fem;
 
-  public :
-    
-    virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0) {
-      sub_problem.mixed_variables(b, i0);
-      b.add(i0 + sub_problem.nb_dof(), mf_p.nb_dof());
-    }
-    
-    virtual size_type nb_constraints(void) {
-      return sub_problem.nb_constraints();
+    virtual void proper_update(void) {
+      this->proper_mixed_variables.clear();
+      this->proper_mixed_variables.add(sub_problem.nb_dof(), mf_p.nb_dof());
     }
 
-    virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
-				    size_type j0 = 0, bool modified = false) {
+  public :
+
+    virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
+					   size_type) {
       mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
       size_type i1 = this->mesh_fem_positions[num_fem];
-      sub_problem.compute_tangent_matrix(MS, i0, j0, modified);
       gmm::sub_interval SUBI(i0+sub_problem.nb_dof(), mf_p.nb_dof()); /* P */
       gmm::sub_interval SUBJ(i0+i1, mf_u.nb_dof());           /* U */
-
       T_MATRIX B(mf_u.nb_dof(), mf_p.nb_dof());
-
       asm_nonlinear_incomp_tangent_matrix(gmm::sub_matrix(MS.tangent_matrix(),
 							  SUBJ, SUBJ), B,
 					  *(this->mesh_ims[0]), mf_u, mf_p, 
@@ -664,16 +645,12 @@ namespace getfem {
       gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBI));
     }
 
-    virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
-				size_type j0 = 0) {
+    virtual void do_compute_residu(MODEL_STATE &MS, size_type i0, size_type) {
       mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
-      size_type i1 = this->mesh_fem_positions[num_fem];      
-      sub_problem.compute_residu(MS, i0, j0);
-     
+      size_type i1 = this->mesh_fem_positions[num_fem];
       gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), mf_p.nb_dof());
       gmm::sub_interval SUBJ(i0+i1, mf_u.nb_dof());
       gmm::clear(gmm::sub_vector(MS.residu(), SUBI));
-
       asm_nonlinear_incomp_rhs(gmm::sub_vector(MS.residu(), SUBJ),
 			       gmm::sub_vector(MS.residu(), SUBI),
 			       *(this->mesh_ims[0]), mf_u, mf_p, 
