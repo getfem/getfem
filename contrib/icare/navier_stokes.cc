@@ -215,7 +215,7 @@ bool navier_stokes_problem::solve() {
   switch (option) {
   case 1 : case 2 : case 4 :
       basic_velocity
-	= new getfem::mdbrick_scalar_elliptic<>(mim, mf_u, mf_coef, nu, true);
+	= new getfem::mdbrick_scalar_elliptic<>(mim, mf_u, mf_coef, nu);
       if (option == 2 || option == 4) {
 	velocity.reset(basic_velocity);
 	velocity_nonlin.reset(velocity_NS_uuT
@@ -273,7 +273,7 @@ bool navier_stokes_problem::solve() {
 
   if (option == 1 || option == 2) {
 
-    mixed = new getfem::mdbrick_mass_matrix<>(mim, mf_u, mf_coef, 1./dt, true);
+    mixed = new getfem::mdbrick_mass_matrix<>(mim, mf_u, mf_coef, 1./dt);
   
     // Pressure term
     mixed_p = new getfem::mdbrick_linear_incomp<>(*mixed, mf_p);
@@ -306,7 +306,7 @@ bool navier_stokes_problem::solve() {
   getfem::mdbrick_source_term<> *poisson_source = 0;
   if (option == 4) {
     poisson = new getfem::mdbrick_scalar_elliptic<>(mim, mf_p, mf_coef,
-						    1.0, true);
+						    1.0);
     sparse_matrix G(1, mf_p.nb_dof());
     G(0,0) = 1.;
     plain_vector gr(1);

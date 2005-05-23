@@ -33,35 +33,31 @@ namespace getfem {
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_NS_uuT : public mdbrick_abstract<MODEL_STATE> {
 
-    typedef typename MODEL_STATE::vector_type VECTOR;
-    typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
-    typedef typename MODEL_STATE::value_type value_type;
+    TYPEDEF_MODEL_STATE_TYPES;
+    
     mdbrick_abstract<MODEL_STATE> &sub_problem;
     VECTOR U0;
     size_type num_fem, i1, nbd;
     T_MATRIX K;
 
+    virtual void proper_update(void) {}
+
   public :
 
-    virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0)
-    { sub_problem.mixed_variables(b, i0); }
-    virtual size_type nb_constraints(void)
-    { return sub_problem.nb_constraints(); }
-    virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
-					size_type j0 = 0, bool = false) {
+    virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
+					size_type) {
       mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
-      sub_problem.compute_tangent_matrix(MS, i0, j0, true);
-      gmm::sub_interval SUBI(this->mesh_fem_positions[num_fem], mf_u.nb_dof());
+      gmm::sub_interval SUBI(i0+this->mesh_fem_positions[num_fem],
+			     mf_u.nb_dof());
       gmm::resize(K, mf_u.nb_dof(), mf_u.nb_dof());
       asm_NS_uuT(K, *(this->mesh_ims[0]), mf_u, U0);
       gmm::add(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI));
     }
-    virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
-				size_type j0 = 0) {
-      sub_problem.compute_residu(MS, i0, j0);
-      react(MS, i0, false);
+    virtual void do_compute_residu(MODEL_STATE &MS, size_type i0,
+				size_type) {
       mesh_fem &mf_u = *(this->mesh_fems[num_fem]);
-      gmm::sub_interval SUBI(this->mesh_fem_positions[num_fem],mf_u.nb_dof());
+      gmm::sub_interval SUBI(i0+this->mesh_fem_positions[num_fem],
+			     mf_u.nb_dof());
       typename gmm::sub_vector_type<VECTOR *, gmm::sub_interval>::vector_type
 	SUBV = gmm::sub_vector(MS.residu(), SUBI);
       gmm::mult_add(K, gmm::sub_vector(MS.state(), SUBI), SUBV);
@@ -82,8 +78,7 @@ namespace getfem {
     // Constructor which homogeneous diagonal Q
     mdbrick_NS_uuT(mdbrick_abstract<MODEL_STATE> &problem,
 		   size_type num_fem_=0) 
-      : sub_problem(problem), num_fem(num_fem_)
-      { init_(); }
+      : sub_problem(problem), num_fem(num_fem_) { init_(); }
 
   };
 }

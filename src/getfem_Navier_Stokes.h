@@ -89,23 +89,18 @@ namespace getfem {
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_pre_navier_stokes : public mdbrick_abstract<MODEL_STATE> {
 
-    typedef typename MODEL_STATE::vector_type VECTOR;
-    typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
-    typedef typename MODEL_STATE::value_type value_type;
-    typedef typename gmm::sub_vector_type<VECTOR *,
-				 gmm::sub_interval>::vector_type SUBVECTOR;
+    TYPEDEF_MODEL_STATE_TYPES;
 
-    gmm::sub_interval SUBU;
     mesh_im &mim;
     mesh_fem &mf_u;
     value_type nu;
 
+    virtual void proper_update(void) {}
+
   public :
 
-    virtual void mixed_variables(dal::bit_vector &, size_type = 0) {}
-    virtual size_type nb_constraints(void) { return 0; }
-    virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
-					size_type = 0, bool = false) {
+    virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
+					   size_type) {
       gmm::sub_interval SUBI(i0, this->nb_dof());
       gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBI));
       asm_stiffness_matrix_for_homogeneous_laplacian_componentwise
@@ -114,9 +109,7 @@ namespace getfem {
       asm_navier_stokes_tgm(gmm::sub_matrix(MS.tangent_matrix(), SUBI),
 			    mim, mf_u, gmm::sub_vector(MS.state(), SUBI));
     }
-    virtual void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
-				size_type = 0) {
-      react(MS, i0, false);
+    virtual void do_compute_residu(MODEL_STATE &MS, size_type i0, size_type) {
       gmm::sub_interval SUBI(i0, this->nb_dof());
       gmm::clear(gmm::sub_vector(MS.residu(), SUBI));
       asm_navier_stokes_rhs(gmm::sub_vector(MS.residu(), SUBI), mim,
@@ -124,7 +117,7 @@ namespace getfem {
     }
 
     SUBVECTOR get_solution(MODEL_STATE &MS) {
-      SUBU = gmm::sub_interval (this->first_index(), this->nb_dof());
+      gmm::sub_interval SUBU(this->first_index(), this->nb_dof());
       return gmm::sub_vector(MS.state(), SUBU);
     }
 
@@ -155,17 +148,13 @@ namespace getfem {
     mdbrick_pre_navier_stokes<MODEL_STATE> velocity_part;
     mdbrick_linear_incomp<MODEL_STATE> sub_problem;
 
+    virtual void proper_update(void) {}
+
   public :
 
-    virtual void mixed_variables(dal::bit_vector &b, size_type i0 = 0)
-    { sub_problem.mixed_variables(b, i0); }
-    virtual size_type nb_constraints(void) 
-    { return sub_problem.nb_constraints(); }
-    virtual void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
-					size_type j0 = 0, bool modified=false)
-    { sub_problem.compute_tangent_matrix(MS, i0, j0, modified); }
-    virtual void compute_residu(MODEL_STATE &MS, size_type i0=0,size_type j0=0)
-    { sub_problem.compute_residu(MS, i0, j0); }
+    virtual void do_compute_tangent_matrix(MODEL_STATE &, size_type,
+					size_type) {}
+    virtual void do_compute_residu(MODEL_STATE &, size_type, size_type) {}
 
     SUBVECTOR get_velocity(MODEL_STATE &MS) 
     { return velocity_part.get_solution(MS); }
