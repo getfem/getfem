@@ -319,6 +319,52 @@ bool crackPlate_problem::solve(plain_vector &UT, plain_vector &U3, plain_vector 
 }
 
 /************************************************************
+ * subroutine for evaluating Von Mises
+ ************************************************************/
+
+ template <typename VEC1, typename VEC2>
+void calcul_von_mises(const getfem::mesh_fem &mf_u, const VEC1 &U,
+		      const getfem::mesh_fem &mf_vm, VEC2 &VM,
+		      scalar_type mu=1) {
+  /* DU=gf_compute(mfu,U,'gradient',mf_vm);
+     
+  // from the derivative, we compute the von mises stress
+  VM=zeros(1,gf_mesh_fem_get(mf_vm,'nbdof'));
+  N=gf_mesh_get(m,'dim');
+  for i=1:size(DU,3),
+  t=DU(:,:,i);
+  E=(t+t')/2;
+  VM(i) = sum(E(:).^2) - (1./N)*sum(diag(E))^2;
+  end;
+  VM = 4*pde.mu{1}^2*VM;
+  */
+  assert(mf_vm.get_qdim() == 1); 
+  unsigned N = mf_u.linked_mesh().dim(); assert(N == mf_u.get_qdim());
+  std::vector<scalar_type> DU(mf_vm.nb_dof() * N * N);
+
+  getfem::compute_gradient(mf_u, mf_vm, U, DU);
+  
+  gmm::resize(VM, mf_vm.nb_dof());
+  scalar_type vm_min, vm_max;
+  for (size_type i=0; i < mf_vm.nb_dof(); ++i) {
+    VM[i] = 0;
+    scalar_type sdiag = 0.;
+    for (unsigned j=0; j < N; ++j) {
+      sdiag += DU[i*N*N + j*N + j];
+      for (unsigned k=0; k < N; ++k) {
+	scalar_type e = .5*(DU[i*N*N + j*N + k] + DU[i*N*N + k*N + j]);
+	VM[i] += e*e;	
+      }      
+    }
+    VM[i] -= 1./N * sdiag * sdiag;
+    vm_min = (i == 0 ? VM[0] : std::min(vm_min, VM[i]));
+    vm_max = (i == 0 ? VM[0] : std::max(vm_max, VM[i]));
+    assert(VM[i] > -1e-6);
+  }
+  cout << "Von Mises : min=" << 4*mu*mu*vm_min << ", max=" << 4*mu*mu*vm_max << "\n";
+  gmm::scale(VM, 4*mu*mu);
+}
+/************************************************************
  * main program
  ************************************************************/
  
@@ -454,6 +500,13 @@ int main(int argc, char *argv[]) {
 	plain_vector Vtetra(mftetra.nb_dof());
 	mf3d.set_qdim(3);
 	getfem::interpolation(mf3d, mftetra, V, Vtetra);
+	
+	/* evaluating Von Mises*/
+	getfem::mesh_fem mf_vm(mtetra,1) ; 
+	mf_vm.set_classical_discontinuous_finite_element(1, 0.001);
+	plain_vector VM(mf_vm.nb_dof()) ;
+	calcul_von_mises(mftetra, Vtetra, mf_vm, VM, p.mu) ;
+	/* */
 	
 	exp.exporting(mftetra);
 	exp.write_point_data(mftetra, Vtetra, "plate_displacement");
