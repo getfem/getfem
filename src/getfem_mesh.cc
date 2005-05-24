@@ -113,10 +113,49 @@ namespace getfem {
   }
 
   getfem_mesh::getfem_mesh(dim_type NN) {
+#if defined(GMM_USES_MPI) && defined(GMM_USES_METIS)
+    modified = true;
+#endif
     dimension = NN; eps_p = 1.0E-10;
     pts.comparator() = dal::lexicographical_less<base_node,
                 dal::approx_less<base_node::value_type> >(eps_p);
   }
+
+#if defined(GMM_USES_MPI) && defined(GMM_USES_METIS)
+
+    void getfem_mesh::compute_mpi_region(void) {
+      int ne = int(nb_convex());
+      int nn = int(nb_points()), k = 0, etype = 0, numflag = 0;
+      int edgecut;
+      
+      bgeot::pconvex_structure cvs = structure_of_convex
+	(convex_index().first())->basic_structure();
+      
+      if (cvs == bgeot::simplex_structure(2)) { k = 3; etype = 1; }
+      else if (cvs == bgeot::simplex_structure(3)) { k = 4; etype = 2; }
+      else if (cvs == bgeot::parallelepiped_structure(2)) { k=4; etype = 4; }
+      else if (cvs == bgeot::parallelepiped_structure(3)) { k=8; etype = 3; }
+      else DAL_THROW(failure_error,
+		     "This kind of element is not taken into account");
+      
+      std::vector<int> elmnts(ne*k), npart(nn), eparts(ne);
+      int j = 0;
+      // Adapter la boucle aux transformations d'ordre eleve.
+      for (dal::bv_visitor i(convex_index()); !i.finished();
+	   ++i, ++j)
+	for (int l = 0; l < k; ++l)
+	  elmnts[j*k+l] = ind_points_of_convex(i)[l];
+			   
+      METIS_PartMeshNodal(&ne, &nn, &(elmnts[0]), &etype, &numflag,
+			  &size, &edgecut, &(eparts[0]), &(npart[0]));
+      
+      for (size_type i = 0; i < size_type(ne); ++i)
+	if (eparts[i] == rank) mpi_region.add_convex(i);
+      modified = false;
+    }    
+    
+#endif
+
 
   size_type getfem_mesh::add_point(const base_node &pt, bool norepeat) {
     if (dimension == dim_type(-1)) dimension = pt.size();
