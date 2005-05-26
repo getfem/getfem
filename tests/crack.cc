@@ -448,17 +448,10 @@ void crack_problem::init(void) {
   /* set boundary conditions
    * (Neuman on the upper face, Dirichlet elsewhere) */
   cout << "Selecting Neumann and Dirichlet boundaries\n";
-  getfem::convex_face_ct border_faces;
+  getfem::mesh_region border_faces;
   getfem::outer_faces_of_mesh(mesh, border_faces);
-  for (getfem::convex_face_ct::const_iterator it = border_faces.begin();
-       it != border_faces.end(); ++it) {
-    assert(it->f != size_type(-1));
-    /*base_node un = mesh.normal_of_face_of_convex(it->cv, it->f);
-    un /= gmm::vect_norm2(un);
-    if (gmm::abs(un[N-1] - 1.0) >= 1.0E-7) { // new Neumann face
-      mesh.add_face_to_set(NEUMANN_BOUNDARY_NUM, it->cv, it->f);
-      } else {*/
-      mesh.add_face_to_set(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
+  for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
+    mesh.add_face_to_set(DIRICHLET_BOUNDARY_NUM, i.cv(), i.f());
   }
 
   exact_sol.init(1, lambda, mu, ls);

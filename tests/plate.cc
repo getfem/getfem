@@ -190,18 +190,17 @@ void plate_problem::init(void) {
   /* set boundary conditions
    * (Neuman on the upper face, Dirichlet elsewhere) */
   cout << "Selecting Neumann and Dirichlet boundaries\n";
-  getfem::convex_face_ct border_faces;
+  getfem::mesh_region border_faces;
   getfem::outer_faces_of_mesh(mesh, border_faces);
-  for (getfem::convex_face_ct::const_iterator it = border_faces.begin();
-       it != border_faces.end(); ++it) {
-    assert(it->f != size_type(-1));
-    base_node un = mesh.normal_of_face_of_convex(it->cv, it->f);
+  for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
+    assert(i.is_face());
+    base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
     un /= gmm::vect_norm2(un);
     if (gmm::abs(un[1]) <= 1.0E-7) { // new Neumann face
-      mesh.add_face_to_set(SIMPLY_FIXED_BOUNDARY_NUM, it->cv, it->f);
+      mesh.add_face_to_set(SIMPLY_FIXED_BOUNDARY_NUM, i.cv(), i.f());
     }
     if ((sol_ref == 2)&&(gmm::abs(un[0]) <= 1.0E-7)){ 
-      mesh.add_face_to_set(SIMPLY_FIXED_BOUNDARY_NUM, it ->cv, it ->f);
+      mesh.add_face_to_set(SIMPLY_FIXED_BOUNDARY_NUM, i.cv(), i.f());
     }
   }
 }

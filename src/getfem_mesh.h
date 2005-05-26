@@ -423,17 +423,28 @@ namespace getfem {
     bool is_face() const { return f != size_type(-1); }
     convex_face(size_type cv_, size_type f_=size_type(-1)) : cv(cv_), f(f_) {}
     convex_face() : cv(size_type(-1)), f(size_type(-1)) {}
-  };
+  } IS_DEPRECATED;
   typedef std::vector<convex_face> convex_face_ct;
 
   /** returns a list of "exterior" faces of a mesh
    * (i.e. faces which are not shared by two convexes) 
    * + convexes whose dimension is smaller that m.dim()
    */
-  void  outer_faces_of_mesh(const getfem::getfem_mesh &m, 
+  void  outer_faces_of_mesh(const getfem_mesh &m, 
 			const dal::bit_vector& cvlst, convex_face_ct& flist);
-  inline void  outer_faces_of_mesh(const getfem::getfem_mesh &m, 
+  inline void  outer_faces_of_mesh(const getfem_mesh &m, 
+				   convex_face_ct& flist) IS_DEPRECATED;
+  void  outer_faces_of_mesh(const getfem_mesh &m, 
 				   convex_face_ct& flist) {
+    outer_faces_of_mesh(m,m.convex_index(),flist);
+  }
+
+  void  outer_faces_of_mesh(const getfem_mesh &m, 
+			    const mesh_region &cvlst,
+			    mesh_region &flist);
+
+  inline void  outer_faces_of_mesh(const getfem_mesh &m, 
+				   mesh_region &flist) {
     outer_faces_of_mesh(m,m.convex_index(),flist);
   }
 

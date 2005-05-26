@@ -161,15 +161,14 @@ void Helmholtz_problem::init(void) {
 
   /* select boundaries */
   cout << "Selecting Robin and Dirichlet boundaries\n";
-  getfem::convex_face_ct border_faces;
+  getfem::mesh_region border_faces;
   getfem::outer_faces_of_mesh(mesh, border_faces);
-  for (getfem::convex_face_ct::const_iterator it = border_faces.begin();
-       it != border_faces.end(); ++it) {
-    assert(it->f != size_type(-1));
-    if (bgeot::vect_norm2(mesh.points_of_face_of_convex(it->cv,
-							it->f)[0]) > 5.) {
-      mesh.region(ROBIN_BOUNDARY_NUM).add(it->cv, it->f);
-    } else mesh.region(DIRICHLET_BOUNDARY_NUM).add(it->cv, it->f);
+  for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
+    assert(i.is_face());
+    if (bgeot::vect_norm2(mesh.points_of_face_of_convex(i.cv(),
+							i.f())[0]) > 5.) {
+      mesh.region(ROBIN_BOUNDARY_NUM).add(i.cv(),i.f());
+    } else mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());
   }
 }
 

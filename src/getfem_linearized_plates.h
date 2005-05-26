@@ -782,16 +782,15 @@ namespace getfem {
       
       getfem_mesh *mesh = &(mf_theta->linked_mesh());
     
-      getfem::convex_face_ct border_faces;
+      getfem::mesh_region border_faces;
       getfem::outer_faces_of_mesh(*mesh, border_faces);
       dal::bit_vector vb = mesh->get_valid_sets();
       
-      for (getfem::convex_face_ct::const_iterator it = border_faces.begin();
-	   it != border_faces.end(); ++it) {
+      for (getfem::mr_visitor it(border_faces); !it.finished(); ++it) {
 	bool add = true;
 	// cout << "face " << it->f << " of cv " << it->cv << "boundaries : ";
 	for (dal::bv_visitor i(vb); !i.finished(); ++i) {
-	  if (mesh->region(i).is_in(it->cv,it->f)) {
+	  if (mesh->region(i).is_in(it.cv(),it.f())) {
 	    // cout << i << endl;
 	    bound_cond_type bct = this->boundary_type(num_fem, i);
 	    if (bct != MDBRICK_UNDEFINED && bct != MDBRICK_NEUMANN) add = false;
@@ -800,7 +799,9 @@ namespace getfem {
 	}
 	
 	if (add) {
-	  cv_nums.push_back(it->cv); face_nums.push_back(it->f); allclamped = false;
+	  cv_nums.push_back(it.cv()); 
+	  face_nums.push_back(it.f()); 
+	  allclamped = false;
 	  // cout << " adding";
 	}
 	// cout << endl;

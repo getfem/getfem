@@ -614,6 +614,24 @@ namespace getfem {
     }
   }
 
+  void  outer_faces_of_mesh(const getfem_mesh &m, 
+			    const mesh_region &cvlst,
+			    mesh_region &flist) {
+    cvlst.error_if_not_convexes();
+    for (mr_visitor i(cvlst); !i.finished(); ++i) {
+      if (m.structure_of_convex(i.cv())->dim() == m.dim()) {
+	for (size_type f = 0; f < m.structure_of_convex(i.cv())->nb_faces(); f++) {
+	  if (bgeot::neighbour_of_convex(m,i.cv(),f).empty()) {
+	    flist.add(i.cv(),f);
+	  }
+	}
+      } else {
+	flist.add(i.cv());
+      }
+    }
+  }
+
+
 
   void extrude(const getfem_mesh& in, getfem_mesh& out, unsigned nb_layers) {
     unsigned dim = in.dim();

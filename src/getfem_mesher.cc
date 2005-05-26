@@ -968,18 +968,17 @@ namespace getfem {
       }
       if (degree>1) {
 	//m.optimize_structure();
-	getfem::convex_face_ct border_faces;
+	getfem::mesh_region border_faces;
 	getfem::outer_faces_of_mesh(m, border_faces);
 	dal::bit_vector ptdone; ptdone.sup(0,m.points_index().last_true());
-	for (getfem::convex_face_ct::const_iterator it = border_faces.begin();
-	     it != border_faces.end(); ++it) {
+	for (getfem::mr_visitor it(border_faces); !it.finished(); ++it) {
 	  bgeot::ind_ref_mesh_point_ind_ct fpts_
-	    = m.ind_points_of_face_of_convex(it->cv, it->f);
+	    = m.ind_points_of_face_of_convex(it.cv(), it.f());
 	  std::vector<size_type> fpts(fpts_.size());
 	  std::copy(fpts_.begin(), fpts_.end(), fpts.begin());
 	  interpolate_face(m, ptdone, fpts, 
-			   m.trans_of_convex(it->cv)->structure()
-			   ->faces_structure()[it->f]);
+			   m.trans_of_convex(it.cv())->structure()
+			   ->faces_structure()[it.f()]);
 	}
       }
     }

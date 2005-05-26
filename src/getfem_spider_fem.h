@@ -116,13 +116,12 @@ namespace getfem {
 	V[1] = -M_PI;
 	cartesian.translation(V); 
 
-	getfem::convex_face_ct border_faces;
+	getfem::mesh_region border_faces;
 	getfem::outer_faces_of_mesh(cartesian, border_faces);
-	for (getfem::convex_face_ct::const_iterator it = border_faces.begin();
-	     it != border_faces.end(); ++it) {
-	  base_node un = cartesian.normal_of_face_of_convex(it->cv, it->f);
+	for (getfem::mr_visitor it(border_faces); !it.finished(); ++it) {
+	  base_node un = cartesian.normal_of_face_of_convex(it.cv(), it.f());
 	  un /= gmm::vect_norm2(un);
-	  if (un[0] >= 0.8) cartesian.add_face_to_set(0, it->cv, it->f);
+	  if (un[0] >= 0.8) cartesian.add_face_to_set(0, it.cv(), it.f());
 	}
 
 	std::stringstream Qkname;

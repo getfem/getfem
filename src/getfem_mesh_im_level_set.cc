@@ -94,17 +94,16 @@ namespace getfem {
       }
     }
     
-    convex_face_ct border_faces;
-    outer_faces_of_mesh(mesh, border_faces);
-    for (convex_face_ct::const_iterator it = border_faces.begin();
-	 it != border_faces.end(); ++it) {
-      vectors_to_base_matrix(G, mesh.points_of_convex(it->cv));
-      bgeot::geotrans_interpolation_context c(mesh.trans_of_convex(it->cv),
+    getfem::mesh_region border_faces;
+    getfem::outer_faces_of_mesh(mesh, border_faces);
+    for (getfem::mr_visitor it(border_faces); !it.finished(); ++it) {
+      vectors_to_base_matrix(G, mesh.points_of_convex(it.cv()));
+      bgeot::geotrans_interpolation_context c(mesh.trans_of_convex(it.cv()),
 					      pai->point(0), G);
-      for (size_type j = 0; j < pai->nb_points_on_face(it->f); ++j) {
-	c.set_xref(pai->point_on_face(it->f, j));
-	new_approx->add_point(c.xreal(), pai->coeff_on_face(it->f, j)
-			     * gmm::abs(c.J()), it->f);
+      for (size_type j = 0; j < pai->nb_points_on_face(it.f()); ++j) {
+	c.set_xref(pai->point_on_face(it.f(), j));
+	new_approx->add_point(c.xreal(), pai->coeff_on_face(it.f(), j)
+			     * gmm::abs(c.J()), it.f());
       }
     }
     new_approx->valid_method();
