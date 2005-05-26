@@ -229,7 +229,7 @@ namespace getfem {
   {
     size_type cv, nbd1, nbd2, f;
     dal::bit_vector nn = mf1.convex_index();
-    getfem::mesh_cvf_set::face_bitset nf;
+    getfem::mesh_region::face_bitset nf;
     base_tensor t;
     pfem pf1, pf1prec = 0, pf2, pf2prec = 0;
     pintegration_method pim, pimprec = 0;
@@ -1177,7 +1177,7 @@ run_tests(getfem::mesh_im &mim,
       c.init();
       for (size_type cnt = 0; cnt < nloop_bound; ++cnt) {
 	gmm::clear(M2); c.tic();
-	getfem::asm_mass_matrix(M2, mim, mfq, mfdq, 1);
+	getfem::asm_mass_matrix(M2, mim, mfq, mfdq, size_type(1));
 	c.toc(); cout << "#" << flushy;
       }
       cout << "done " << c << endl;    
@@ -1193,7 +1193,7 @@ run_tests(getfem::mesh_im &mim,
       c.init();
       for (size_type cnt = 0; cnt < nloop_bound; ++cnt) {
 	gmm::clear(V1); c.tic(); //gmm::resize(M1, mfq.nb_dof(),mfq.nb_dof());
-	getfem::old_asm_volumic_source_term(V1, mim, mf, mfd, A, 1);
+	getfem::old_asm_volumic_source_term(V1, mim, mf, mfd, A, 1u);
 	c.toc(); cout << "#" << flushy;
       }
       cout << "done " << c << endl;

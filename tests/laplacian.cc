@@ -210,20 +210,17 @@ void laplacian_problem::assembly(void)
   
   cout << "Assembling Neumann condition" << endl;
   /* Fill F with Grad(sol_u).n .. a bit complicated */
-  for (dal::bv_visitor cv(mesh.convexes_in_set(NEUMANN_BOUNDARY_NUM));
-       !cv.finished(); ++cv) {
+  for (getfem::mr_visitor i(mesh.region(NEUMANN_BOUNDARY_NUM));
+       !i.finished(); ++i) {
+    size_type cv = i.cv(), f = i.f();
     getfem::pfem pf = mf_rhs.fem_of_element(cv);
-    getfem::mesh_cvf_set::face_bitset fb = 
-      mesh.faces_of_convex_in_set(NEUMANN_BOUNDARY_NUM, cv);
-    for (unsigned f = 0; f < MAX_FACES_PER_CV; ++f) if (fb[f]) {
-      for (size_type l = 0; l< pf->structure(cv)->nb_points_of_face(f); ++l) {
-	size_type n = pf->structure(cv)->ind_points_of_face(f)[l];
-	base_small_vector un
-	  = mesh.normal_of_face_of_convex(cv, f, pf->node_of_dof(cv, n));
-	un /= gmm::vect_norm2(un);
-	size_type dof = mf_rhs.ind_dof_of_element(cv)[n];
-	F[dof] = gmm::vect_sp(sol_grad(mf_rhs.point_of_dof(dof)), un);
-      }
+    for (size_type l = 0; l< pf->structure(cv)->nb_points_of_face(f); ++l) {
+      size_type n = pf->structure(cv)->ind_points_of_face(f)[l];
+      base_small_vector un
+	= mesh.normal_of_face_of_convex(cv, f, pf->node_of_dof(cv, n));
+      un /= gmm::vect_norm2(un);
+      size_type dof = mf_rhs.ind_dof_of_element(cv)[n];
+      F[dof] = gmm::vect_sp(sol_grad(mf_rhs.point_of_dof(dof)), un);
     }
   }
   getfem::asm_source_term(B, mim, mf_u, mf_rhs, F, NEUMANN_BOUNDARY_NUM);

@@ -753,13 +753,13 @@ namespace getfem {
 
   template<class VEC>
   void asm_constraint_on_theta(const VEC &V, const mesh_im &mim, 
-			       const mesh_fem &mf_theta, size_type boundary) {
+			       const mesh_fem &mf_theta, const mesh_region &boundary) {
     generic_assembly assem("t=comp(vBase(#1).Normal());"
 			   "V(#1)+= t(:,2,1) - t(:,1,2);");
     assem.push_mi(mim);
     assem.push_mf(mf_theta);
     assem.push_vec(const_cast<VEC &>(V));
-    assem.boundary_assembly(boundary);
+    assem.assembly(boundary);
   }
 
   template<typename MODEL_STATE = standard_model_state>
@@ -791,7 +791,7 @@ namespace getfem {
 	bool add = true;
 	// cout << "face " << it->f << " of cv " << it->cv << "boundaries : ";
 	for (dal::bv_visitor i(vb); !i.finished(); ++i) {
-	  if (mesh->is_face_in_set(i,it->cv,it->f)) {
+	  if (mesh->region(i).is_in(it->cv,it->f)) {
 	    // cout << i << endl;
 	    bound_cond_type bct = this->boundary_type(num_fem, i);
 	    if (bct != MDBRICK_UNDEFINED && bct != MDBRICK_NEUMANN) add = false;
@@ -850,19 +850,20 @@ namespace getfem {
 	gmm::resize(CO, 0, 0);
       }
       else {
-	size_type boundary = mf_theta->linked_mesh().add_face_set();
+	mesh_region boundary;
+	//size_type boundary = mf_theta->linked_mesh().add_face_set();
 	gmm::resize(CO, comp_conn, mf_theta->nb_dof());
 	for (size_type k = 0; k < comp_conn; ++k) {
 	  for (size_type i = 0; i < comp_conns.size(); ++i)
-	    if (comp_conns[i] == k)
-	      mf_theta->linked_mesh().add_face_to_set(boundary, cv_nums[i],
-						      face_nums[i]);
-
+	    if (comp_conns[i] == k) {
+	      boundary.add(cv_nums[i], face_nums[i]);
+	      //mf_theta->linked_mesh().add_face_to_set(boundary, cv_nums[i], face_nums[i]);
+	    }
 	  std::vector<value_type> V(mf_theta->nb_dof());
 	  asm_constraint_on_theta(V, *(this->mesh_ims[0]), *mf_theta,
 				  boundary);
 	  gmm::copy(V, gmm::mat_row(CO, k));
-	  mf_theta->linked_mesh().sup_set(boundary);
+	  //mf_theta->linked_mesh().sup_set(boundary);
 	}
 	// cout << "CO = " << CO << endl;
       }

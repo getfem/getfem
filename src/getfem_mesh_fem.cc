@@ -34,28 +34,22 @@
 
 namespace getfem {
   
-  dal::bit_vector mesh_fem::dof_on_set(size_type b) const {
+  dal::bit_vector mesh_fem::dof_on_set(const mesh_region &b) const {
     if (!dof_enumeration_made) this->enumerate_dof();
     dal::bit_vector res;
-    if (linked_mesh().set_exists(b)) {
-      for (dal::bv_visitor cv(linked_mesh().convexes_in_set(b));
-	   !cv.finished(); ++cv) {
-	if (linked_mesh().set_is_boundary(b)) {
-	  mesh_cvf_set::face_bitset fb
-	    = linked_mesh().faces_of_convex_in_set(b, cv);
-	  for (unsigned f = 0;
-	       f < linked_mesh().structure_of_convex(cv)->nb_faces(); ++f)
-	    if (fb[f]) {
-	    size_type nbb =
-	      dof_structure.structure_of_convex(cv)->nb_points_of_face(f);
-	    for (size_type i = 0; i < nbb; ++i) {
-	      size_type n = Qdim / fem_of_element(cv)->target_dim();
-	      for (size_type ll = 0; ll < n; ++ll)
-	       res.add(dof_structure.ind_points_of_face_of_convex(cv,f)[i]+ll);
-	    }
+    for (getfem::mr_visitor v(b,linked_mesh()); !v.finished(); ++v) {
+      size_type cv = v.cv();
+      if (convex_index().is_in(cv)) {
+	if (v.is_face()) {
+	  size_type f = v.f();
+	  size_type nbb =
+	    dof_structure.structure_of_convex(cv)->nb_points_of_face(f);
+	  for (size_type i = 0; i < nbb; ++i) {
+	    size_type n = Qdim / fem_of_element(cv)->target_dim();
+	    for (size_type ll = 0; ll < n; ++ll)
+	      res.add(dof_structure.ind_points_of_face_of_convex(cv,f)[i]+ll);
 	  }
-        }
-	else {
+	} else {
 	  size_type nbb =
 	    dof_structure.structure_of_convex(cv)->nb_points();
 	  for (size_type i = 0; i < nbb; ++i) {

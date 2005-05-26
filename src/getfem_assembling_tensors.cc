@@ -1623,7 +1623,7 @@ namespace getfem {
     get_convex_order(mftab, mftab[0]->convex_index(), cv);
     parse();
     for (size_type i=0; i < cv.size(); ++i) {
-      mesh_cvf_set::face_bitset nf
+      mesh_region::face_bitset nf
 	=mftab[0]->linked_mesh().faces_of_convex_in_set(boundary_number,cv[i]);
       size_type nbf
 	= mftab[0]->linked_mesh().structure_of_convex(cv[i])->nb_faces();
@@ -1632,13 +1632,13 @@ namespace getfem {
     }
   }
 
-  void generic_assembly::assembly(const region_ref &rr) {
-    rr.from_mesh(imtab[0]->linked_mesh());
-    const region &r = rr.get();
-    if (r.is_boundary()) {
+  void generic_assembly::assembly(const mesh_region &r) {
+    r.from_mesh(imtab[0]->linked_mesh());
+    r.error_if_not_homogeneous();
+    if (r.is_only_faces()) {
       /* TODO : pas suffisant!! */
-      assert(rr.id != size_type(-1));
-      boundary_assembly(rr.id); 
-    } else volumic_assembly(r.cvindex);
+      assert(r.id() != size_type(-1));
+      boundary_assembly(r.id()); 
+    } else volumic_assembly(r.index());
   }
 } /* end of namespace */

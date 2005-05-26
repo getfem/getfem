@@ -168,8 +168,8 @@ void Helmholtz_problem::init(void) {
     assert(it->f != size_type(-1));
     if (bgeot::vect_norm2(mesh.points_of_face_of_convex(it->cv,
 							it->f)[0]) > 5.) {
-      mesh.add_face_to_set(ROBIN_BOUNDARY_NUM, it->cv, it->f);
-    } else mesh.add_face_to_set(DIRICHLET_BOUNDARY_NUM, it->cv, it->f);
+      mesh.region(ROBIN_BOUNDARY_NUM).add(it->cv, it->f);
+    } else mesh.region(DIRICHLET_BOUNDARY_NUM).add(it->cv, it->f);
   }
 }
 

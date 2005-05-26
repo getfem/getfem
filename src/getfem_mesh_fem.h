@@ -274,8 +274,8 @@ namespace getfem
     /// Gives the total number of degrees of freedom.
     size_type nb_dof(void) const
       { if (!dof_enumeration_made) enumerate_dof(); return nb_total_dof; }
-    dal::bit_vector dof_on_set(size_type b) const;
-    dal::bit_vector dof_on_boundary(size_type b) const IS_DEPRECATED;
+    dal::bit_vector dof_on_set(const mesh_region &b) const;
+    dal::bit_vector dof_on_boundary(const mesh_region &b) const IS_DEPRECATED;
     /// Add to the boundary b the face f of the element i.
     void add_boundary_elt(size_type b, size_type c, short_type f) IS_DEPRECATED;
     /// Says whether or not element i is on the boundary b. 
@@ -284,8 +284,8 @@ namespace getfem
       const IS_DEPRECATED;
     /** returns the list of convexes on the boundary b */
     const dal::bit_vector &convex_on_boundary(size_type b) const IS_DEPRECATED;
-    const mesh_cvf_set::face_bitset
-      &faces_of_convex_on_boundary(size_type c, size_type b) const 
+    mesh_region::face_bitset
+    faces_of_convex_on_boundary(size_type c, size_type b) const 
       IS_DEPRECATED;
     /** returns the list of boundary numbers */
     const dal::bit_vector &get_valid_boundaries() const IS_DEPRECATED;
@@ -321,22 +321,22 @@ namespace getfem
   };
 
   inline dal::bit_vector 
-  mesh_fem::dof_on_boundary(size_type b) const
-  { return  dof_on_set(b); }
+  mesh_fem::dof_on_boundary(const mesh_region &b) const
+  { b.from_mesh(linked_mesh()); return dof_on_set(b); }
 
   inline void 
   mesh_fem::add_boundary_elt(size_type b, size_type c, short_type f) 
-  { linked_mesh().add_face_to_set(b, c, f); }
+  { linked_mesh().region(b).add(c, f); }
   inline bool 
   mesh_fem::is_convex_on_boundary(size_type c, size_type b) const 
-  { return linked_mesh().is_convex_in_set(b, c); }
+  { return linked_mesh().region(b).is_in(c); }
   inline bool 
   mesh_fem::is_face_on_boundary(size_type b, size_type c, short_type f)
-    const  { return linked_mesh().is_face_in_set(b,c,f); }
+    const  { return linked_mesh().region(b).is_in(c,f); }
   inline const dal::bit_vector &
   mesh_fem::convex_on_boundary(size_type b) const 
   { return linked_mesh().convexes_in_set(b); }
-  inline const mesh_cvf_set::face_bitset &
+  inline mesh_region::face_bitset
   mesh_fem::faces_of_convex_on_boundary(size_type c, size_type b) const 
   { return linked_mesh().faces_of_convex_in_set(b,c); }
   inline const dal::bit_vector &
@@ -347,7 +347,7 @@ namespace getfem
   { linked_mesh().sup_convex_from_sets(c); }
   inline void 
   mesh_fem::sup_boundary_elt(size_type b, size_type c, short_type f)
-  { linked_mesh().sup_face_from_set(b,c,f); }
+  { linked_mesh().region(b).sup(c,f); }
   inline void 
   mesh_fem::sup_boundary(size_type b) 
   { linked_mesh().sup_set(b); }

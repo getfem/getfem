@@ -461,7 +461,7 @@ namespace getfem {
     bool is_coercive(void) const { return is_coercive_; }
     const dal::bit_vector &mixed_variables(void) const
     { return total_mixed_variables; };
-    mdbrick_abstract(void) : proper_additional_dof(0), proper_nb_constraints(0),
+    mdbrick_abstract(void) : proper_additional_dof(0), proper_nb_constraints(0), 
 			     MS_i0(0)
     { proper_is_linear_ = proper_is_symmetric_ = proper_is_coercive_ = true; }
     virtual ~mdbrick_abstract() {}
@@ -1009,12 +1009,12 @@ namespace getfem {
   public :
 
     virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
-					   size_type) {
+					   size_type /*j0*/ ) {
       gmm::sub_interval SUBI(i0+i1, nbd);
       gmm::add(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI));
     }
     virtual void do_compute_residu(MODEL_STATE &MS, size_type i0,
-				   size_type) {
+				   size_type /*j0*/ ) {
       gmm::sub_interval SUBI(i0+i1, nbd);
       typename gmm::sub_vector_type<VECTOR *, gmm::sub_interval>::vector_type
 	SUBV = gmm::sub_vector(MS.residu(), SUBI);

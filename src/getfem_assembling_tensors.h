@@ -565,7 +565,8 @@ namespace getfem {
     /* do the assembly on the specified boundary */
     void boundary_assembly(size_type boundary_number);
     /* do the assembly on the specified region (boundary or set of convexes) */
-    void assembly(const region_ref &region);
+    void assembly(const mesh_region &region = 
+		  mesh_region::all_convexes());
   };
 }  /* end of namespace getfem.                                             */
 

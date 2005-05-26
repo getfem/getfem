@@ -32,68 +32,19 @@
 #include <getfem_mesh.h>
 
 namespace getfem {
- bool mesh_cvf_set::is_elt(size_type c, short_type f) const {
-    return (cvindex[c]) ? ((faces[cv_in.search(c)])[f]) : false;
-  }
-
-  void mesh_cvf_set::add_elt(size_type c, short_type f) {
-    if (f >= MAX_FACES_PER_CV) 
-      DAL_THROW(internal_error, "Number of face too large");
-    if (!is_bound)
-      DAL_THROW(internal_error,
-		"This selection does not represent a boundary");
-    faces[  (cvindex[c]) ? cv_in.search(c) : cv_in.add(c)  ][f] = true; 
-    cvindex.add(c);
-  }
-  
-  void mesh_cvf_set::sup_elt(size_type c, short_type f) {
-    if (cvindex[c]) { 
-      size_type i = cv_in.search(c);
-      faces[i][f] = false;
-      if (faces[i].count() == 0) cvindex.sup(c);
-    }
-  }
-
-  void mesh_cvf_set::sup_convex(size_type c) {
-    if (cvindex[c]) { 
-      size_type i = cv_in.search(c); faces[i].reset();
-      cvindex.sup(c); cv_in.sup(i);
-    }
-  }
-
   struct empty_bit_vector {
     dal::bit_vector bv;
   };
   struct empty_face_bitset {
-     mesh_cvf_set::face_bitset bv;
+     mesh_region::face_bitset bv;
   };
-
-  const mesh_cvf_set::face_bitset
-    &mesh_cvf_set::faces_of_convex(size_type c) const {
-    return (cvindex[c]) ? faces[cv_in.search(c)]
-      : dal::singleton<empty_face_bitset>::instance().bv;
-  }
-
-  void mesh_cvf_set::swap_convex(size_type c1, size_type c2) {
-    size_type i1, i2;
-    face_bitset b1, b2;
-    if (cvindex[c1])
-      { i1=cv_in.search(c1); b1=faces[i1]; faces[i1].reset(); cv_in.sup(i1); }
-    if (cvindex[c2])
-      { i2=cv_in.search(c2); b2=faces[i2]; faces[i2].reset(); cv_in.sup(i2); }
-    if (cvindex[c1])
-      { i1 = cv_in.add(c2);  faces[i1] = b1; }
-    if (cvindex[c2])
-      { i2 = cv_in.add(c1);  faces[i2] = b2; }
-    cvindex.swap(c1, c2);
-  }
 
   const dal::bit_vector &getfem_mesh::convexes_in_set(size_type b) const {
     return (valid_cvf_sets[b]) ?  
-      cvf_sets[b].cvindex : dal::singleton<empty_bit_vector>::instance().bv;
+      cvf_sets[b].index() : dal::singleton<empty_bit_vector>::instance().bv;
   }
 
-  const mesh_cvf_set::face_bitset &getfem_mesh::faces_of_convex_in_set
+  mesh_region::face_bitset getfem_mesh::faces_of_convex_in_set
     (size_type b, size_type c) const {
     return (valid_cvf_sets[b]) ? 
       cvf_sets[b].faces_of_convex(c)
@@ -102,7 +53,7 @@ namespace getfem {
 
   void getfem_mesh::sup_convex_from_sets(size_type c) {
     for (dal::bv_visitor i(valid_cvf_sets); !i.finished(); ++i)
-      cvf_sets[i].sup_convex(c);
+      cvf_sets[i].sup(c);
     touch();
   }
 
@@ -539,10 +490,10 @@ namespace getfem {
     ost << '\n' << "END MESH STRUCTURE DESCRIPTION" << '\n';
 
     for (dal::bv_visitor bnum(valid_cvf_sets); !bnum.finished(); ++bnum) {
-      if (set_is_boundary(bnum)) {
+      if (set_is_boundary(size_type(bnum))) {
 	ost << " BEGIN BOUNDARY " << bnum;
 	size_type cnt = 0;
-	for (dal::bv_visitor cv(cvf_sets[bnum].cvindex); !cv.finished();
+	for (dal::bv_visitor cv(cvf_sets[bnum].index()); !cv.finished();
 	     ++cv) {
 	  for (size_type f = 0; f < MAX_FACES_PER_CV; ++f)
 	    if (cvf_sets[bnum].faces_of_convex(cv)[f]) {
@@ -555,7 +506,7 @@ namespace getfem {
       else {
 	ost << " BEGIN CONVEX SET " << bnum;
 	size_type cnt = 0;
-	for (dal::bv_visitor cv(cvf_sets[bnum].cvindex); !cv.finished();
+	for (dal::bv_visitor cv(cvf_sets[bnum].index()); !cv.finished();
 	     ++cv, ++cnt) {
 	  if ((cnt % 20) == 0) ost << '\n' << " ";
 	  ost << " " << cv;

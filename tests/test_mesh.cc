@@ -92,9 +92,18 @@ template<class MESH> void test_mesh(MESH &m) {
   getfem::parallelepiped_regular_simplex_mesh(m, dim,pt1, vects.begin(), iref.begin());
 	    
 
+  m.add_convex_to_set(3,0);
+
+  m.region(3).add(0);
+  m.region(3).add(3);
+  m.region(3).add(2);
+
+  m.region(4).add(0);
+  m.sup_convex(0);
+  m.sup_convex(1);
+  m.optimize_structure();
   m.write_to_file("test_mesh.mesh");
   m.write_to_file(cout);
-
 }
 
 void

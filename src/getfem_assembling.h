@@ -41,14 +41,14 @@ namespace getfem
    */
   template<typename VEC>
   scalar_type asm_L2_norm(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-			  const region_ref rg=region_ref::all_convexes()) {
+			  const mesh_region &rg=mesh_region::all_convexes()) {
     return sqrt(asm_L2_norm_sqr(mim, mf,U,rg,
 				typename gmm::linalg_traits<VEC>::value_type()));
   }
 
   template<typename VEC, typename T>
   scalar_type asm_L2_norm_sqr(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-			      const region_ref rg, T) {
+			      const mesh_region &rg, T) {
     generic_assembly assem;    
     if (mf.get_qdim() == 1)
       assem.set("u=data(#1); V()+=u(i).u(j).comp(Base(#1).Base(#1))(i,j)");
@@ -68,7 +68,7 @@ namespace getfem
 
   template<typename VEC, typename T>
   scalar_type asm_L2_norm_sqr(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-			      const region_ref rg, std::complex<T>) {
+			      const mesh_region &rg, std::complex<T>) {
     return asm_L2_norm_sqr(mim, mf,gmm::real_part(U),rg,T()) + 
       asm_L2_norm_sqr(mim, mf,gmm::imag_part(U),rg,T());
   }
@@ -81,7 +81,7 @@ namespace getfem
   scalar_type asm_L2_dist(const mesh_im &mim, 
 			  const mesh_fem &mf1, const VEC1 &U1,
 			  const mesh_fem &mf2, const VEC2 &U2, 
-			  const region_ref rg = region_ref::all_convexes()) {    
+			  const mesh_region &rg = mesh_region::all_convexes()) {    
     generic_assembly assem;    
     if (mf1.get_qdim() == 1)
       assem.set("u1=data$1(#1); u2=data$2(#2); "
@@ -110,13 +110,13 @@ namespace getfem
    */
   template<typename VEC>
   scalar_type asm_H1_semi_norm(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-			       const region_ref rg = region_ref::all_convexes()) {
+			       const mesh_region &rg = mesh_region::all_convexes()) {
     return sqrt(asm_H1_semi_norm_sqr(mim, mf,U,rg,typename gmm::linalg_traits<VEC>::value_type()));
   }
 
   template<typename VEC, typename T>
   scalar_type asm_H1_semi_norm_sqr(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-				   const region_ref rg, T) {
+				   const mesh_region &rg, T) {
     generic_assembly assem;    
     if (mf.get_qdim() == 1)
       assem.set("u=data(#1); V()+=u(i).u(j).comp(Grad(#1).Grad(#1))(i,d,j,d)");
@@ -134,7 +134,7 @@ namespace getfem
 
   template<typename VEC, typename T>
   scalar_type asm_H1_semi_norm_sqr(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-				   const region_ref rg, std::complex<T>) {
+				   const mesh_region &rg, std::complex<T>) {
     return asm_H1_semi_norm_sqr(mim, mf, gmm::real_part(U), rg, T()) + 
       asm_H1_semi_norm_sqr(mim, mf, gmm::imag_part(U), rg, T());
   }
@@ -144,7 +144,7 @@ namespace getfem
   scalar_type asm_H1_semi_dist(const mesh_im &mim, 
 			       const mesh_fem &mf1, const VEC1 &U1,
 			       const mesh_fem &mf2, const VEC2 &U2,
-			       const region_ref rg = region_ref::all_convexes()) {    
+			       const mesh_region &rg = mesh_region::all_convexes()) {    
     generic_assembly assem;    
     if (mf1.get_qdim() == 1)
       assem.set("u1=data$1(#1); u2=data$2(#2); "
@@ -172,7 +172,7 @@ namespace getfem
    */
   template<typename VEC>
   scalar_type asm_H1_norm(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
-			  const region_ref rg = region_ref::all_convexes()) {
+			  const mesh_region &rg = mesh_region::all_convexes()) {
     return sqrt(gmm::sqr(asm_L2_norm(mim, mf, U, rg))
 		+gmm::sqr(asm_H1_semi_norm(mim, mf, U, rg)));
   }
@@ -184,7 +184,7 @@ namespace getfem
   scalar_type asm_H1_dist(const mesh_im &mim, 
 			  const mesh_fem &mf1, const VEC1 &U1,
 			  const mesh_fem &mf2, const VEC2 &U2,
-			  const region_ref rg = region_ref::all_convexes()) {
+			  const mesh_region &rg = mesh_region::all_convexes()) {
     return sqrt(gmm::sqr(asm_L2_dist(mim,mf1,U1,mf2,U2,rg)) + 
 		gmm::sqr(asm_H1_semi_dist(mim,mf1,U1,mf2,U2,rg)));
   }
@@ -195,7 +195,7 @@ namespace getfem
    */
   template<typename MAT>
   void asm_mass_matrix(const MAT &M, const mesh_im &mim, const mesh_fem &mf_u1,
-		       const region_ref rg = region_ref::all_convexes()) {
+		       const mesh_region &rg = mesh_region::all_convexes()) {
     asm_mass_matrix(const_cast<MAT &>(M), mim, mf_u1, mf_u1, rg);
   }
 
@@ -206,7 +206,7 @@ namespace getfem
   template<typename MAT>
   void asm_mass_matrix(MAT &M, const mesh_im &mim, const mesh_fem &mf_u1,
 		       const mesh_fem &mf_u2,
-		       const region_ref rg = region_ref::all_convexes()) {
+		       const mesh_region &rg = mesh_region::all_convexes()) {
     generic_assembly assem;
     if (&mf_u1 != &mf_u2)
       if (mf_u1.get_qdim() == 1 && mf_u2.get_qdim() == 1)
@@ -233,7 +233,7 @@ namespace getfem
   void asm_mass_matrix_param(MAT &M, const mesh_im &mim, const mesh_fem &mf_u,
 			     const mesh_fem &mfdata,
 			     const VECT &F, 			       
-			     const region_ref rg = region_ref::all_convexes()) {
+			     const mesh_region &rg = mesh_region::all_convexes()) {
     generic_assembly assem;
     if (mf_u.get_qdim() == 1)
       assem.set("F=data(#2);"
@@ -257,7 +257,7 @@ namespace getfem
   template<typename VECT1, typename VECT2>
   void asm_source_term(VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
 		       const mesh_fem &mfdata, const VECT2 &F,
-		       const region_ref rg = region_ref::all_convexes()) {
+		       const mesh_region &rg = mesh_region::all_convexes()) {
     if (mfdata.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     asm_source_term(B, mim, mf, mfdata, F, rg,
@@ -271,7 +271,7 @@ namespace getfem
   template<typename VECT1, typename VECT2, typename T>
   void asm_source_term(const VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
 		       const mesh_fem &mfdata, const VECT2 &F,
-		       const region_ref rg, T) {
+		       const mesh_region &rg, T) {
     generic_assembly assem;
     if (mf.get_qdim() == 1)
       assem.set("F=data(#2); V(#1)+=comp(Base(#1).Base(#2))(:,j).F(j);");
@@ -292,7 +292,7 @@ namespace getfem
   template<typename VECT1, typename VECT2, typename T>
   void asm_source_term(VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
 		       const mesh_fem &mfdata, const VECT2 &F,
-		       const region_ref rg, std::complex<T>) {
+		       const mesh_region &rg, std::complex<T>) {
     asm_source_term(gmm::real_part(B), mim, mf, mfdata, gmm::real_part(F), rg, T());
     asm_source_term(gmm::imag_part(B), mim, mf, mfdata, gmm::imag_part(F), rg, T());
   }
@@ -315,7 +315,7 @@ namespace getfem
 		    const mesh_im &mim, 
 		    const mesh_fem &mf_u, 
 		    const mesh_fem &mf_d, const VECT &Q, 
-		    const region_ref rg, T) {
+		    const mesh_region &rg, T) {
     generic_assembly assem;
     assert(mf_u.nb_dof() <= gmm::mat_nrows(M));
     assert(mf_u.nb_dof() <= gmm::mat_ncols(M));
@@ -345,7 +345,7 @@ namespace getfem
 		    const mesh_im &mim, 
 		    const mesh_fem &mf_u, 
 		    const mesh_fem &mf_d, const VECT &Q, 
-		    const region_ref rg, std::complex<T>) {
+		    const mesh_region &rg, std::complex<T>) {
     asm_qu_term_(gmm::real_part(M), mim, mf_u, mf_d, gmm::real_part(Q), rg, T());
     asm_qu_term_(gmm::imag_part(M), mim, mf_u, mf_d, gmm::imag_part(Q), rg, T());
   }
@@ -373,7 +373,7 @@ namespace getfem
 		   const mesh_im &mim, 
 		   const mesh_fem &mf_u, 
 		   const mesh_fem &mf_d, const VECT &Q, 
-		   const region_ref rg = region_ref::all_convexes()) {
+		   const mesh_region &rg = mesh_region::all_convexes()) {
     if (mf_d.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     asm_qu_term_(const_cast<MAT&>(M), mim, mf_u, mf_d, Q, rg, 
@@ -391,7 +391,7 @@ namespace getfem
 						  const mesh_fem &mfdata,
 						  const VECT &LAMBDA,
 						  const VECT &MU,
-						  const region_ref rg = region_ref::all_convexes()) {
+						  const mesh_region &rg = mesh_region::all_convexes()) {
     MAT &RM = const_cast<MAT &>(RM_);
     if (mfdata.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
@@ -430,7 +430,7 @@ namespace getfem
 						   const mesh_fem &mf, 
 						   const mesh_fem &mfdata, 
 						   const VECT &H,
-						   const region_ref rg = region_ref::all_convexes()) {
+						   const mesh_region &rg = mesh_region::all_convexes()) {
     if (mfdata.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     /* e = strain tensor,
@@ -458,7 +458,7 @@ namespace getfem
 		  const mesh_im &mim, 
 		  const mesh_fem &mf_u, const mesh_fem &mf_p,
 		  const mesh_fem &mf_d, const VECT &viscos,
-		  const region_ref rg = region_ref::all_convexes()) {
+		  const mesh_region &rg = mesh_region::all_convexes()) {
     if (mf_d.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     generic_assembly assem("visc=data$1(#3); "
@@ -482,7 +482,7 @@ namespace getfem
   template<typename MAT>
   void asm_stokes_B(MAT &B, const mesh_im &mim, const mesh_fem &mf_u,
 		    const mesh_fem &mf_p, 
-		    const region_ref rg = region_ref::all_convexes()) {
+		    const mesh_region &rg = mesh_region::all_convexes()) {
     if (mf_p.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     // generic_assembly assem("M$1(#1,#2)+=comp(vGrad(#1).Base(#2))(:,i,i,:);");
@@ -501,7 +501,7 @@ namespace getfem
   void asm_stiffness_matrix_for_homogeneous_laplacian(const MAT &M_,
 						      const mesh_im &mim, 
 						      const mesh_fem &mf, 
-						      const region_ref rg = region_ref::all_convexes()) {
+						      const mesh_region &rg = mesh_region::all_convexes()) {
     MAT &M = const_cast<MAT &>(M_);
     generic_assembly 
       assem("M$1(#1,#1)+=sym(comp(Grad(#1).Grad(#1))(:,i,:,i))");
@@ -517,7 +517,7 @@ namespace getfem
   template<typename MAT>
   void asm_stiffness_matrix_for_homogeneous_laplacian_componentwise
   (const MAT &M_, const mesh_im &mim, const mesh_fem &mf, 
-   const region_ref rg = region_ref::all_convexes()) {
+   const mesh_region &rg = mesh_region::all_convexes()) {
     MAT &M = const_cast<MAT &>(M_);
      generic_assembly
        assem("M$1(#1,#1)+="
@@ -537,7 +537,7 @@ namespace getfem
 					  const mesh_fem &mf,
 					  const mesh_fem &mfdata,
 					  const VECT &A, 
-					  const region_ref rg = region_ref::all_convexes()) {
+					  const mesh_region &rg = mesh_region::all_convexes()) {
     if (mfdata.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     generic_assembly
@@ -561,7 +561,7 @@ namespace getfem
 							const mesh_fem &mf,
 							const mesh_fem &mfdata,
 							const VECT &A,
-		    const region_ref rg = region_ref::all_convexes()) {
+		    const mesh_region &rg = mesh_region::all_convexes()) {
     if (mfdata.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     generic_assembly
@@ -602,7 +602,7 @@ namespace getfem
 						const mesh_fem &mf,
 						const mesh_fem &mfdata,
 						const VECT &A, 
-		    const region_ref rg = region_ref::all_convexes())
+		    const mesh_region &rg = mesh_region::all_convexes())
   {
     if (mfdata.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
@@ -623,7 +623,7 @@ namespace getfem
   void asm_stiffness_matrix_for_scalar_elliptic_componentwise
   (MAT &M, const mesh_im &mim, const mesh_fem &mf,
    const mesh_fem &mfdata, const VECT &A, 
-   const region_ref rg = region_ref::all_convexes())
+   const mesh_region &rg = mesh_region::all_convexes())
   {
     if (mfdata.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
@@ -648,20 +648,20 @@ namespace getfem
   template<typename MAT, typename VECT>
   void asm_Helmholtz(MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem &mf_data,
 		     const VECT &K_squared, 
-		    const region_ref rg = region_ref::all_convexes()) {
+		    const mesh_region &rg = mesh_region::all_convexes()) {
     asm_Helmholtz(M, mim, mf_u, mf_data, K_squared,rg,
 		  typename gmm::linalg_traits<VECT>::value_type());
   }
 
   template<typename MAT, typename VECT, typename T>
   void asm_Helmholtz(MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem &mf_data,
-		     const VECT &K_squared, const region_ref rg, T) {
+		     const VECT &K_squared, const mesh_region &rg, T) {
     asm_Helmholtz_real(M, mim, mf_u, mf_data, K_squared, rg);
   }
 
   template<typename MAT, typename VECT, typename T>
   void asm_Helmholtz(MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem &mf_data,
-		     const VECT &K_squared, const region_ref rg, std::complex<T>) {
+		     const VECT &K_squared, const mesh_region &rg, std::complex<T>) {
     asm_Helmholtz_cplx(gmm::real_part(M), gmm::imag_part(M), mim, mf_u, mf_data,
 		       gmm::real_part(K_squared), gmm::imag_part(K_squared), rg);
   }
@@ -671,7 +671,7 @@ namespace getfem
   void asm_Helmholtz_cplx(const MATr &Mr, const MATi &Mi, const mesh_im &mim, const mesh_fem &mf_u,
 			  const mesh_fem &mf_data,
 			  const VECTr &K_squaredr, const VECTi &K_squaredi, 
-			  const region_ref rg = region_ref::all_convexes()) {
+			  const mesh_region &rg = mesh_region::all_convexes()) {
     generic_assembly assem("Kr=data$1(#2); Ki=data$2(#2);"
 			   "m = comp(Base(#1).Base(#1).Base(#2)); "
 			   "M$1(#1,#1)+=sym(m(:,:,i).Kr(i) - "
@@ -690,7 +690,7 @@ namespace getfem
   template<typename MAT, typename VECT>  
   void asm_Helmholtz_real(const MAT &M, const mesh_im &mim, const mesh_fem &mf_u,
 			  const mesh_fem &mf_data, const VECT &K_squared, 
-			  const region_ref rg = region_ref::all_convexes()) {
+			  const mesh_region &rg = mesh_region::all_convexes()) {
     generic_assembly assem("K=data$1(#2);"
 			   "m = comp(Base(#1).Base(#1).Base(#2)); "
 			   "M$1(#1,#1)+=sym(m(:,:,i).K(i) - "
@@ -727,86 +727,80 @@ namespace getfem
 				 const mesh_im &mim, const mesh_fem &mf_u,
 				 const mesh_fem &mf_h, const mesh_fem &mf_r,
 				 const VECT2 &h_data, const VECT3 &r_data,
-				 size_type boundary,
+				 const mesh_region &region,
 				 int version =  ASMDIR_BUILDALL) {
-    mesh_cvf_set::face_bitset nf;
+    mesh_region::face_bitset nf;
     pfem pf_u, pf_rh;
-    
+
+    region.from_mesh(mim.linked_mesh()).error_if_not_faces();
     if (mf_h.get_qdim() != 1 || mf_r.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     if (version & ASMDIR_BUILDH) {
-      asm_qu_term(H, mim, mf_u, mf_h, h_data, boundary);
+      asm_qu_term(H, mim, mf_u, mf_h, h_data, region);
       std::vector<size_type> ind(0);
-      dal::bit_vector bdof = mf_u.dof_on_set(boundary);
+      dal::bit_vector bdof = mf_u.dof_on_set(region);
       // gmm::clean(H, 1E-15 * gmm::mat_maxnorm(H));
       for (size_type i = 0; i < mf_u.nb_dof(); ++i)
 	if (!(bdof[i])) ind.push_back(i);
       gmm::clear(gmm::sub_matrix(H, gmm::sub_index(ind)));
     }
-    if (version & ASMDIR_BUILDR) asm_source_term(R, mim, mf_u, mf_r, r_data, boundary);
+    if (version & ASMDIR_BUILDR) asm_source_term(R, mim, mf_u, mf_r, r_data, region);
     if (!(version & ASMDIR_SIMPLIFY)) return;
 
     /* step 2 : simplification of simple dirichlet conditions */
     if (&mf_r == &mf_h) {
-      dal::bit_vector bv = mf_u.linked_mesh().convexes_in_set(boundary);
-      for (dal::bv_visitor cv(bv); !cv.finished(); ++cv) {
-	nf = mf_u.linked_mesh().faces_of_convex_in_set(boundary, cv);
-	size_type nbf = mf_u.linked_mesh().structure_of_convex(cv)->nb_faces();
+      for (mr_visitor v(region); !v.finished(); v.next()) {
+	size_type cv = v.cv(), f = v.f();
+	if (f >= mf_u.linked_mesh().structure_of_convex(cv)->nb_faces()) continue;
+	pf_u = mf_u.fem_of_element(cv); 
+	pf_rh = mf_r.fem_of_element(cv);
 	/* don't try anything with vector elements */
 	if (mf_u.fem_of_element(cv)->target_dim() != 1) continue;
-	if (nf.count() > 0) {
-	  pf_u = mf_u.fem_of_element(cv); 
-	  pf_rh = mf_r.fem_of_element(cv);
+	bgeot::pconvex_structure cvs_u = pf_u->structure(cv);
+	bgeot::pconvex_structure cvs_rh = pf_rh->structure(cv);
+	for (size_type i = 0; i < cvs_u->nb_points_of_face(f); ++i) {
 	  
-	  for (size_type f = 0; f < nbf; ++f)
-	    if (nf[f]) {
-	      bgeot::pconvex_structure cvs_u = pf_u->structure(cv);
-	      bgeot::pconvex_structure cvs_rh = pf_rh->structure(cv);
-	      for (size_type i = 0; i < cvs_u->nb_points_of_face(f); ++i) {
+	  size_type Q = mf_u.get_qdim();  // pf_u->target_dim() (==1)
+	  
+	  size_type ind_u = cvs_u->ind_points_of_face(f)[i];
+	  pdof_description tdof_u = pf_u->dof_types()[ind_u];
+	  
+	  for (size_type j = 0; j < cvs_rh->nb_points_of_face(f); ++j) {
+	    size_type ind_rh = cvs_rh->ind_points_of_face(f)[j];
+	    pdof_description tdof_rh = pf_rh->dof_types()[ind_rh];
+	    /*
+	      same kind of dof and same location of dof ? 
+	      => then the previous was not useful for this dofs (introducing
+	      a mass matrix which is not diagonal in the constraints matrix)
+	      -> the constraint is simplified:
+	      we replace \int{(H_j.psi_j)*phi_i}=\int{R_j.psi_j} (sum over j)
+	      with             H_j*phi_i = R_j     
+	    */
+	    if (tdof_u == tdof_rh &&
+		bgeot::vect_dist2_sqr((*(pf_u->node_tab(cv)))[ind_u], 
+				      (*(pf_rh->node_tab(cv)))[ind_rh])
+		< 1.0E-14) {
+	      /* the dof might be "duplicated" */
+	      for (size_type q = 0; q < Q; ++q) {
+		size_type dof_u = mf_u.ind_dof_of_element(cv)[ind_u*Q + q];
 		
-		size_type Q = mf_u.get_qdim();  // pf_u->target_dim() (==1)
+		/* "erase" the row */
+		if (version & ASMDIR_BUILDH)
+		  for (size_type k=0; k < mf_u.nb_dof_of_element(cv); ++k)
+		    H(dof_u, mf_u.ind_dof_of_element(cv)[k]) = 0.0;
 		
-		size_type ind_u = cvs_u->ind_points_of_face(f)[i];
-		pdof_description tdof_u = pf_u->dof_types()[ind_u];
-		
-		for (size_type j = 0; j < cvs_rh->nb_points_of_face(f); ++j) {
-		  size_type ind_rh = cvs_rh->ind_points_of_face(f)[j];
-		  pdof_description tdof_rh = pf_rh->dof_types()[ind_rh];
-		  /*
-		    same kind of dof and same location of dof ? 
-		    => then the previous was not useful for this dofs (introducing
-		    a mass matrix which is not diagonal in the constraints matrix)
-		    -> the constraint is simplified:
-		    we replace \int{(H_j.psi_j)*phi_i}=\int{R_j.psi_j} (sum over j)
-		    with             H_j*phi_i = R_j     
-		  */
-		  if (tdof_u == tdof_rh &&
-		      bgeot::vect_dist2_sqr((*(pf_u->node_tab(cv)))[ind_u], 
-					    (*(pf_rh->node_tab(cv)))[ind_rh])
-		      < 1.0E-14) {
-		    /* the dof might be "duplicated" */
-		    for (size_type q = 0; q < Q; ++q) {
-		      size_type dof_u = mf_u.ind_dof_of_element(cv)[ind_u*Q + q];
-		      
-		      /* "erase" the row */
-		      if (version & ASMDIR_BUILDH)
-			for (size_type k=0; k < mf_u.nb_dof_of_element(cv); ++k)
-			  H(dof_u, mf_u.ind_dof_of_element(cv)[k]) = 0.0;
-		      
-		      size_type dof_rh = mf_r.ind_dof_of_element(cv)[ind_rh];
-		      /* set the "simplified" row */
-		      if (version & ASMDIR_BUILDH)
-			for (unsigned jj=0; jj < Q; jj++) {
-			  size_type dof_u2
-			    = mf_u.ind_dof_of_element(cv)[ind_u*Q+jj];
-			  H(dof_u, dof_u2) = h_data[(jj*Q+q) + Q*Q*(dof_rh)];
-			}
-		      if (version & ASMDIR_BUILDR) R[dof_u] = r_data[dof_rh*Q+q];
-		    }
+		size_type dof_rh = mf_r.ind_dof_of_element(cv)[ind_rh];
+		/* set the "simplified" row */
+		if (version & ASMDIR_BUILDH)
+		  for (unsigned jj=0; jj < Q; jj++) {
+		    size_type dof_u2
+		      = mf_u.ind_dof_of_element(cv)[ind_u*Q+jj];
+		    H(dof_u, dof_u2) = h_data[(jj*Q+q) + Q*Q*(dof_rh)];
 		  }
-		}
+		if (version & ASMDIR_BUILDR) R[dof_u] = r_data[dof_rh*Q+q];
 	      }
 	    }
+	  }
 	}
       }
     }

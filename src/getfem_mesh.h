@@ -37,6 +37,7 @@
 #include <bgeot_geotrans_inv.h>
 #include <linkmsg.h>
 #include <getfem_context.h>
+#include <getfem_mesh_region.h>
 
 #if defined(GMM_USES_MPI) && defined(GMM_USES_METIS)
 extern "C" void METIS_PartMeshNodal(int *, int *, int *, int *, int *, int *, int *, int *, int *);
@@ -101,58 +102,6 @@ namespace getfem {
 
   /* ********************************************************************* */
   /*								   	   */
-  /*	II. Class convex or face set                        		   */
-  /*									   */
-  /* ********************************************************************* */
-
-  ///  Describe a selection of convexes or a selection of faces of convexes
-  struct mesh_cvf_set  {
-    
-    typedef std::bitset<MAX_FACES_PER_CV> face_bitset;
-    bool is_bound;
-    dal::bit_vector cvindex;
-    dal::dynamic_tree_sorted<size_type> cv_in;
-    dal::dynamic_array<face_bitset> faces;
-    /** Add the convex to the convex set.
-     */
-    void add_convex(size_type c) { cvindex.add(c); }
-    /** Return true if the convex is referenced.
-     */
-    bool is_convex(size_type c) const { return cvindex[c]; }
-    /** Return true if the face f of convex c is part of the boundary
-     */
-    bool is_elt(size_type c, short_type f) const;
-    /** Add a boudary element from the face f of the convex of index
-     *          i of the mesh.
-     */
-    void add_elt(size_type c) { cvindex.add(c); }
-    /** Add a convex to a set of convexes.
-     */
-    void add_elt(size_type c, short_type f);
-    /** Delete a boudary element which is the face f of the convex of 
-     *          index i of the mesh.
-     */
-    void sup_elt(size_type c, short_type f);
-    /** Delete all boudary element linked with the convex of 
-     *          index i of the mesh.
-     */
-    void sup_convex(size_type c);
-    /** Gives in a structure face_bitset all the faces of convex
-     *          of index i on the boundary.
-     */
-    const face_bitset &faces_of_convex(size_type c) const;
-    bool is_boundary(void) const { return is_bound; }
-    void swap_convex(size_type c1, size_type c2);
-    size_type nb_convex(void) { return cvindex.card(); }
-    void clear(void) { cv_in.clear(); faces.clear(); cvindex.clear(); }
-    mesh_cvf_set(bool is_bound_) { is_bound = is_bound_; }
-    mesh_cvf_set() {}
-  };
-
-  typedef mesh_cvf_set region;
-
-  /* ********************************************************************* */
-  /*								   	   */
   /*	III. Class getfem_mesh                                 		   */
   /*									   */
   /* ********************************************************************* */
@@ -177,7 +126,7 @@ namespace getfem {
     dal::dynamic_array<bgeot::pgeometric_trans> gtab;
     dal::bit_vector trans_exists;
     
-    dal::dynamic_array<mesh_cvf_set> cvf_sets;
+    dal::dynamic_array<mesh_region> cvf_sets;
     dal::bit_vector valid_cvf_sets;
     
 #if defined(GMM_USES_MPI) && defined(GMM_USES_METIS)
@@ -342,44 +291,41 @@ namespace getfem {
     void translation(base_small_vector);
     void transformation(base_matrix);
     
-
-    size_type add_cvf_set(bool is_bound) {
-      size_type d = valid_cvf_sets.first_false(); valid_cvf_sets.add(d);
-      cvf_sets[d] = mesh_cvf_set(is_bound);
-      return d;
-    }
-    const region& get_region(size_type id) const { 
+    const mesh_region region(size_type id) const { 
       if (set_exists(id)) return cvf_sets[id]; 
-      else DAL_THROW(dal::failure_error, "no such region");
+      else return mesh_region();
     }
-    size_type add_convex_set(void) { return add_cvf_set(false); }
-    size_type add_face_set(void) { return add_cvf_set(true); }
+    mesh_region region(size_type id) {
+      if (set_exists(id)) return cvf_sets[id]; 
+      else return mesh_region();
+    }
     bool set_exists(size_type s) const { return valid_cvf_sets[s]; }
-    bool set_is_boundary(size_type s) const
-    { return cvf_sets[s].is_boundary(); }
+    bool set_is_boundary(const mesh_region &rg) const
+    { return rg.from_mesh(*this).is_boundary(); }
     void add_convex_to_set(size_type s, size_type c) {
       if (!(valid_cvf_sets[s]))
-	{ cvf_sets[s] = mesh_cvf_set(false); valid_cvf_sets.add(s); }
-      cvf_sets[s].add_convex(c); touch();
+	{ cvf_sets[s] = mesh_region(); valid_cvf_sets.add(s); }
+      cvf_sets[s].add(c); touch();
     }
     void add_face_to_set(size_type s, size_type c, short_type f) {
       if (!(valid_cvf_sets[s]))
-	{ cvf_sets[s] = mesh_cvf_set(true); valid_cvf_sets.add(s); }
-      cvf_sets[s].add_elt(c, f); touch();
+	{ cvf_sets[s] = mesh_region(); valid_cvf_sets.add(s); }
+      cvf_sets[s].add(c, f); touch();
     }
-    bool is_convex_in_set(size_type s, size_type c) const
-    { return (valid_cvf_sets[s] && cvf_sets[s].is_convex(c)); }
+    /*    bool is_convex_in_set(size_type s, size_type c) const
+    { return (valid_cvf_sets[s] && cvf_sets[s].is_in(c)); }
     bool is_face_in_set(size_type s, size_type c, short_type f) const
-    { return (valid_cvf_sets[s] && cvf_sets[s].is_elt(c, f)); }
+    { return (valid_cvf_sets[s] && cvf_sets[s].is_in(c, f)); }
+    */
     const dal::bit_vector &convexes_in_set(size_type s) const;
-    const mesh_cvf_set::face_bitset
-      &faces_of_convex_in_set(size_type s, size_type cv) const;
+    mesh_region::face_bitset
+    faces_of_convex_in_set(size_type s, size_type cv) const;
     const dal::bit_vector &get_valid_sets() const { return valid_cvf_sets; }
     void sup_convex_from_sets(size_type c);
     
 
     void sup_face_from_set(size_type b, size_type c, short_type f)
-    { if (valid_cvf_sets[b]) { cvf_sets[b].sup_elt(c,f); touch(); } }
+    { if (valid_cvf_sets[b]) { cvf_sets[b].sup(c,f); touch(); } }
     void sup_set(size_type b) {
       if (valid_cvf_sets[b])
 	{ valid_cvf_sets.sup(b); cvf_sets[b].clear(); touch(); }
@@ -461,32 +407,6 @@ namespace getfem {
    * of the jacobian of the geometric transformation */
   scalar_type convex_radius_estimate(bgeot::pgeometric_trans pgt,
 				     const base_matrix& pts);
-
-
-  class region_ref {
-  public:
-    size_type id;
-    mutable const region* p;
-    mutable dal::shared_ptr<region> p_;
-  public:
-    static region_ref all_convexes() { return region_ref(size_type(-1)); }
-    region_ref(dal::bit_vector &bv) { set_bv(bv); }
-    region_ref(size_type id_) : id(id_), p(0) {}
-    region_ref(const region &s) : id(size_type(-2)), p(&s) {}
-    void from_mesh(const getfem_mesh &m) const { 
-      if (!p) {
-	if (id == size_type(-1))
-	  set_bv(m.convex_index());
-	else if (id != size_type(-2))
-	  p = &m.get_region(id);
-      }
-      /* TODO : verifier que la liste des convexes est bien inclue dans m.convex_index */
-    }
-    const region& get() const { return *p; }
-  private:
-    void set_bv(const dal::bit_vector &bv) const
-    { p_.reset(new region(false)); p=p_.get(); p_->cvindex = bv; }
-  };
 
   /* 
      stores a convex face. if f == -1, it is the whole convex

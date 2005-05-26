@@ -43,7 +43,7 @@
 namespace bgeot {
 
   // The number of faces for a convex is limited in certain applications
-#  define MAX_FACES_PER_CV 32
+#  define MAX_FACES_PER_CV 31
 
   class convex_structure;
 
