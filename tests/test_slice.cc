@@ -60,9 +60,9 @@ main() {
   getfem::base_node x1; bgeot::sc(x1) = 0,0.1;
   getfem::base_node n1;  bgeot::sc(n1) = 1,-1;  
 
-  getfem::convex_face_ct cvlst; 
-  cvlst.push_back(getfem::convex_face(0,size_type(-1)));
-  cvlst.push_back(getfem::convex_face(1,size_type(-1)));
+  getfem::mesh_region cvlst; 
+  cvlst.add(0);
+  cvlst.add(1);
   cout << "ok\n";
   getfem::stored_mesh_slice sl; sl.build(m, getfem::slicer_half_space(x0,n0,false), 10);
   cout << sl << endl;

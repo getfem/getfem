@@ -112,6 +112,13 @@ namespace getfem {
     return bs;
   }
 
+  size_type size() const {
+    size_type sz=0;
+    for (map_t::const_iterator it = rp().m.begin(); it != rp().m.end(); ++it)
+      sz += (*it).count();
+    return sz;
+  }
+
   void mesh_region::error_if_not_faces() const {
     if (!is_only_faces()) 
       DAL_THROW(dal::failure_error, 

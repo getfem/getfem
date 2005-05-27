@@ -123,7 +123,7 @@ namespace getfem {
        @param cvlst the list of convex numbers (or convex faces) of m that will 
        be taken into account for the slice
     */
-    void exec(size_type nrefine, convex_face_ct& cvlst); 
+    void exec(size_type nrefine, const mesh_region& cvlst); 
     void exec(size_type nrefine = 1);
     /**
        build a new mesh slice given:
@@ -212,9 +212,9 @@ namespace getfem {
     std::vector<slice_node::faces_ct> convex_faces;
     bool test_bound(const slice_simplex& s, slice_node::faces_ct& fmask, 
                     const mesh_slicer::cs_nodes_ct& nodes) const;
-    void build_from(const getfem_mesh& m, const convex_face_ct& cvflst);
+    void build_from(const getfem_mesh& m, const mesh_region& cvflst);
   public:
-    slicer_boundary(const getfem_mesh& m, slicer_action &sA, const convex_face_ct& fbound);
+    slicer_boundary(const getfem_mesh& m, slicer_action &sA, const mesh_region& fbound);
     slicer_boundary(const getfem_mesh& m, slicer_action &sA = slicer_none::static_instance());
     void exec(mesh_slicer &ms);
   };

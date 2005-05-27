@@ -43,22 +43,22 @@ namespace getfem {
 
   /* boundary extraction */
   slicer_boundary::slicer_boundary(const getfem_mesh& m, slicer_action &sA, 
-				   const convex_face_ct& cvflst) : A(&sA) {
+				   const mesh_region& cvflst) : A(&sA) {
     build_from(m,cvflst);
   }
 
   slicer_boundary::slicer_boundary(const getfem_mesh& m, slicer_action &sA) : A(&sA) {
-    convex_face_ct cvflist;
+    mesh_region cvflist;
     outer_faces_of_mesh(m, cvflist);
     build_from(m,cvflist);
   }
 
-  void slicer_boundary::build_from(const getfem_mesh& m, const convex_face_ct& cvflst) {
+  void slicer_boundary::build_from(const getfem_mesh& m, const mesh_region& cvflst) {
     if (m.convex_index().card()==0) return;
     convex_faces.resize(m.convex_index().last()+1, slice_node::faces_ct(0L));
-    for (size_type i=0; i < cvflst.size(); ++i) 
-      if (cvflst[i].is_face() && cvflst[i].f<32) convex_faces[cvflst[i].cv][cvflst[i].f]=1;
-      else convex_faces[cvflst[i].cv].set();
+    for (mr_visitor i(cvflst); !i.finished(); ++i) 
+      if (i.is_face()) convex_faces[i.cv()][i.f()]=1;
+      else convex_faces[i.cv()].set();
     /* set the mask to 1 for all other possible faces of the convexes, which may 
        appear after slicing the convex, hence they will be part of the "boundary" */
     for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
@@ -609,7 +609,7 @@ namespace getfem {
     }
   }
 
-  void mesh_slicer::exec(size_type nrefine, convex_face_ct& cvlst) {
+  void mesh_slicer::exec(size_type nrefine, const mesh_region& cvlst) {
     std::vector<base_node> cvm_pts;
     const getfem_mesh *cvm = 0;
     const bgeot::mesh_structure *cvms = 0;
@@ -617,10 +617,10 @@ namespace getfem {
     bgeot::pgeotrans_precomp pgp = 0;
     std::vector<slice_node::faces_ct> points_on_faces;
 
-    for (convex_face_ct::const_iterator it = cvlst.begin(); it != cvlst.end(); ++it) {
+    for (mr_visitor it(cvlst); !it.finished(); ++it) {
       bool revert_orientation = false;
 
-      update_cv_data((*it).cv,(*it).f);      
+      update_cv_data(it.cv(),it.f());      
       /* update structure-dependent data */
       if (prev_cvr != cvr) {
 	cvm = getfem::refined_simplex_mesh_for_convex(cvr, nrefine);
@@ -683,10 +683,7 @@ namespace getfem {
   }
 
   void mesh_slicer::exec(size_type nrefine) {
-    convex_face_ct lst; lst.reserve(m.convex_index().card());
-    for (dal::bv_visitor ic(m.convex_index()); !ic.finished(); ++ic) 
-      lst.push_back(convex_face(ic));
-    exec(nrefine,lst);
+    exec(nrefine,mesh_region(m.convex_index()));
   }
   
   /* apply slice ops to an already stored slice object */

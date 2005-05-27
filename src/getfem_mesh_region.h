@@ -52,6 +52,7 @@ namespace getfem {
     void clear();
     void swap_convex(size_type cv1, size_type cv2);
     bool is_in(size_type cv, size_type f = size_type(-1)) const;
+    size_type size() const;
     size_type nb_convex() const { return rp().m.size(); }  
     bool is_empty() const;
     bool is_only_faces() const;
