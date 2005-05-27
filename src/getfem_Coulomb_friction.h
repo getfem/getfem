@@ -55,13 +55,12 @@ namespace getfem {
     T_MATRIX BN, BT;
     VECTOR gap, threshold, WT, WN, friction_coef, RLN, RLT;
     value_type r, alpha, beta;
-    size_type d;
+    size_type d, nbc;
 
     mesh_fem *mf_u;
     gmm::sub_interval SUBU, SUBN, SUBT;
     
     bool Tresca_version, symmetrized, contact_only, stationary;
-
 
     template<typename VEC> static void ball_projection(const VEC &x,
 						       value_type radius) {
@@ -116,7 +115,18 @@ namespace getfem {
     }
 
     void proper_update(void) {
-      this->proper_additional_dof = gmm::mat_nrows(BN)+gmm::mat_nrows(BT);
+      mf_u = this->mesh_fems[num_fem];
+      d = mf_u->linked_mesh().dim();
+      r = value_type(1);
+      beta = value_type(1);
+      alpha = value_type(1);
+      gmm::resize(BN, nbc, mf_u->nb_dof());
+      gmm::resize(BT, nbc*(d-1), mf_u->nb_dof());
+      gmm::resize(gap, nbc); gmm::resize(friction_coef, nbc);
+      gmm::resize(threshold, nbc); gmm::resize(WT, mf_u->nb_dof());
+      gmm::resize(WN, mf_u->nb_dof());
+      this->proper_additional_dof = gmm::mat_nrows(BN)
+	+ (contact_only ? 0 : gmm::mat_nrows(BT));
       this->proper_mixed_variables.clear();
       this->proper_mixed_variables.add(sub_problem.nb_dof(),
 				       this->proper_additional_dof);
@@ -243,21 +253,11 @@ namespace getfem {
       }
     }
 
-    void init(size_type nbc) {
+    void init(void) {
       this->add_sub_brick(sub_problem);
       this->proper_is_linear_ = this->proper_is_coercive_ = false;
       this->proper_is_symmetric_ = symmetrized && contact_only;
       this->update_from_context();
-      mf_u = this->mesh_fems[num_fem];
-      d = mf_u->linked_mesh().dim();
-      r = value_type(1);
-      beta = value_type(1);
-      alpha = value_type(1);
-      gmm::resize(BN, nbc, mf_u->nb_dof());
-      gmm::resize(BT, nbc*(d-1), mf_u->nb_dof());
-      gmm::resize(gap, nbc); gmm::resize(friction_coef, nbc);
-      gmm::resize(threshold, nbc); gmm::resize(WT, mf_u->nb_dof());
-      gmm::resize(WN, mf_u->nb_dof());
     }
 
     void set_stationary(bool b) { stationary = b; }
@@ -290,7 +290,8 @@ namespace getfem {
      scalar_type FC_, const MAT &BT_, size_type num_fem_=0)
       : sub_problem(problem), num_fem(num_fem_) {
       contact_only = false; Tresca_version = symmetrized = stationary = false;
-      init(gmm::mat_nrows(BN_));
+      nbc = gmm::mat_nrows(BN_);
+      init();
       gmm::copy(BN_, BN); gmm::copy(BT_, BT); gmm::copy(gap_, gap);
       std::fill(friction_coef.begin(), friction_coef.end(), FC_);
     }
@@ -300,7 +301,8 @@ namespace getfem {
     (mdbrick_abstract<MODEL_STATE> &problem, const MAT &BN_, const VEC &gap_,
      size_type num_fem_=0) : sub_problem(problem), num_fem(num_fem_) {
       contact_only = true; Tresca_version = symmetrized = stationary = false;
-      init(gmm::mat_nrows(BN_));
+      nbc = gmm::mat_nrows(BN_);
+      init();
       gmm::copy(BN_, BN); gmm::copy(gap_, gap);
     }
 

@@ -101,7 +101,7 @@ namespace getfem {
 			  &size, &edgecut, &(eparts[0]), &(npart[0]));
       
       for (size_type i = 0; i < size_type(ne); ++i)
-	if (eparts[i] == rank) mpi_region.add_convex(i);
+	if (eparts[i] == rank) mpi_region.add(i);
       modified = false;
     }    
     
