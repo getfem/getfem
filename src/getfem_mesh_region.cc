@@ -112,10 +112,10 @@ namespace getfem {
     return bs;
   }
 
-  size_type size() const {
+  size_type mesh_region::size() const {
     size_type sz=0;
     for (map_t::const_iterator it = rp().m.begin(); it != rp().m.end(); ++it)
-      sz += (*it).count();
+      sz += (*it).second.count();
     return sz;
   }
 
