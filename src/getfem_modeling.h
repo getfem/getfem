@@ -239,7 +239,8 @@ namespace getfem {
 
   enum bound_cond_type { MDBRICK_UNDEFINED, MDBRICK_DIRICHLET, MDBRICK_NEUMANN,
 			 MDBRICK_SIMPLE_SUPPORT, MDBRICK_CLAMPED_SUPPORT,
-			 MDBRICK_FOURIER_ROBIN };
+			 MDBRICK_FOURIER_ROBIN, MDBRICK_NAVIERSTOKESNONREF1
+  };
 
 #define TYPEDEF_MODEL_STATE_TYPES                                         \
     typedef typename MODEL_STATE::vector_type VECTOR;                     \
@@ -656,12 +657,14 @@ namespace getfem {
 	std::fill(mu.begin(), mu.end(), value_type(mu_[0]));
       }
       else { gmm::copy(lambda_, lambda); gmm::copy(mu_, mu); }
-      asm_stiffness_matrix_for_linear_elasticity(K, mim, mf_u, mf_data,
-						 lambda, mu
 #ifdef GMM_USES_MPI
-			     , MS.local_domain(mf_u.linked_mesh())
+      asm_stiffness_matrix_for_linear_elasticity
+	(K.local_matrix(), mim, mf_u, mf_data, lambda, mu,
+	 mf_u.linked_mesh().get_mpi_region());
+#else
+      asm_stiffness_matrix_for_linear_elasticity
+	(K, mim, mf_u, mf_data, lambda, mu);		     
 #endif
-			     );
     }
 
     void set_Lame_coeff_(value_type lambdai, value_type mui) {
@@ -1092,22 +1095,26 @@ namespace getfem {
       nbd = mf_u.nb_dof();
       size_type nd = mf_u.nb_dof(), ndd = mf_p.nb_dof();
       gmm::clear(B); gmm::resize(B, ndd, nd);
-      asm_stokes_B(B, *(this->mesh_ims.at(0)), mf_u, mf_p
 #ifdef GMM_USES_MPI
-		   , MS.local_domain(mf_u.linked_mesh())
+      asm_stokes_B(B.local_matrix(), *(this->mesh_ims.at(0)), mf_u, mf_p,
+		   mf_u.linked_mesh().get_mpi_region());
+#else 
+      asm_stokes_B(B, *(this->mesh_ims.at(0)), mf_u, mf_p);
 #endif
-		   );
       if (penalized) {
 	VECTOR epsilon(mf_data.nb_dof());
 	if (homogeneous) std::fill(epsilon.begin(), epsilon.end(),epsilon_[0]);
 	else gmm::copy(epsilon_, epsilon);
 	gmm::clear(M); gmm::resize(M, ndd, ndd);
-	asm_mass_matrix_param(M, *(this->mesh_ims[0]), mf_p, mf_data, epsilon
 #ifdef GMM_USES_MPI
-			      , size_type(-1), MS.local_domain(mf_u.linked_mesh())
-#endif
-			      );
+	asm_mass_matrix_param(M.local_matrix(), *(this->mesh_ims[0]), mf_p,
+			      mf_data, epsilon,
+			      mf_u.linked_mesh().get_mpi_region());
+	gmm::scale(M.local_matrix(), value_type(-1));
+#else
+	asm_mass_matrix_param(M, *(this->mesh_ims[0]), mf_p, mf_data, epsilon);
 	gmm::scale(M, value_type(-1));
+#endif
       }
       this->proper_mixed_variables.clear();
       this->proper_mixed_variables.add(sub_problem.nb_dof(), mf_p.nb_dof());

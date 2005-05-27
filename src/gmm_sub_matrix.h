@@ -415,7 +415,7 @@ namespace gmm {
   typename select_return<typename sub_matrix_type<const M *, SUBI1, SUBI2>
   ::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI2>::matrix_type,
    M *>::return_type
-   sub_matrix(mpi_distributed_matrix<M> &m, const SUBI1 &si1, const SUBI2 &si2)
+   sub_matrix_toto(mpi_distributed_matrix<M> &m, const SUBI1 &si1, const SUBI2 &si2)
   { return sub_matrix(m.M, si1, si2); }
 
   template <typename MAT, typename SUBI1, typename SUBI2>  inline
@@ -430,7 +430,7 @@ namespace gmm {
     typename select_return<typename sub_matrix_type<const M *, SUBI1, SUBI1>
     ::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI1>::matrix_type,
     M *>::return_type
-  sub_matrix(mpi_distributed_matrix<M> &m, const SUBI1 &si1) 
+  sub_matrix_toto(mpi_distributed_matrix<M> &m, const SUBI1 &si1) 
   { return sub_matrix(m.M, si1, si1); }
 
   template <typename M, typename SUBI1>  inline

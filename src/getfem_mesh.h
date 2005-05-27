@@ -40,7 +40,8 @@
 #include <getfem_mesh_region.h>
 
 #if defined(GMM_USES_MPI) && defined(GMM_USES_METIS)
-extern "C" void METIS_PartMeshNodal(int *, int *, int *, int *, int *, int *, int *, int *, int *);
+extern "C" void METIS_PartMeshNodal(int *, int *, int *, int *,
+				    int *, int *, int *, int *, int *);
 #include <mpi.h>
 #endif
 
@@ -76,8 +77,7 @@ namespace getfem {
     MESH_SWAP_CONVEX(void) {}
   };
 
-  class getfem_mesh_receiver : public lmsg::virtual_linkmsg_receiver
-  {
+  class getfem_mesh_receiver : public lmsg::virtual_linkmsg_receiver {
     public :
 
       virtual void receipt(const MESH_CLEAR           &)
@@ -131,14 +131,14 @@ namespace getfem {
     
 #if defined(GMM_USES_MPI) && defined(GMM_USES_METIS)
     bool modified;
-    region mpi_region;
+    mesh_region mpi_region;
 
     void touch(void) { modified = true; context_dependencies::touch(); }    
     void compute_mpi_region(void);
     
   public :
     
-    const region& get_mpi_region(void)
+    const mesh_region& get_mpi_region(void)
     { if (modified) compute_mpi_region(); return mpi_region; }
 #endif
 

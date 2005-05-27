@@ -945,6 +945,9 @@ namespace gmm {
 
     mpi_distributed_matrix(size_type n, size_type m) : M(n, m) {}
     mpi_distributed_matrix() {}
+
+    const MAT &local_matrix(void) const { return M; }
+    MAT &local_matrix(void) { return M; }
   };
 
   template <typename T> int mpi_type(T)
@@ -956,7 +959,8 @@ namespace gmm {
   int mpi_type(std::complex<double>) { return MPI_DOUBLE_COMPLEX; }
 
   template <typename MAT, typename V1, typename V2>
-  inline void mult_add(const mpi_distributed_matrix<MAT> &m, const V1 &v1, V2 &v2) {
+  inline void mult_add(const mpi_distributed_matrix<MAT> &m, const V1 &v1,
+		       V2 &v2) {
     typedef typename linalg_traits<V2>::value_type T;
     std::vector<T> v3(vect_size(v2)), v4(vect_size(v2));
     gmm::mult(m.M, v1, v3);
@@ -968,55 +972,64 @@ namespace gmm {
   }
 
   template <typename MAT, typename V1, typename V2>
-  void mult_add(const mpi_distributed_matrix<MAT> &m, const V1 &v1, const V2 &v2_)
+  void mult_add(const mpi_distributed_matrix<MAT> &m, const V1 &v1,
+		const V2 &v2_)
   { mult_add(m, v1, const_cast<V2 &>(v2_)); }
 
   template <typename MAT, typename V1, typename V2>
-  inline void mult(const mpi_distributed_matrix<MAT> &m, const V1 &v1, const V2 &v2_)
+  inline void mult(const mpi_distributed_matrix<MAT> &m, const V1 &v1,
+		   const V2 &v2_)
   { V2 &v2 = const_cast<V2 &>(v2_); clear(v2); mult_add(m, v1, v2); }
 
   template <typename MAT, typename V1, typename V2>
-  inline void mult(const mpi_distributed_matrix<MAT> &m, const V1 &v1, V2 &v2)
+  inline void mult(const mpi_distributed_matrix<MAT> &m, const V1 &v1,
+		   V2 &v2)
   { clear(v2); mult_add(m, v1, v2); }
 
   template <typename MAT, typename V1, typename V2, typename V3>
-  inline void mult(const mpi_distributed_matrix<MAT> &m, const V1 &v1, const V2 &v2, const V3 &v3_)
+  inline void mult(const mpi_distributed_matrix<MAT> &m, const V1 &v1,
+		   const V2 &v2, const V3 &v3_)
   { V3 &v3 = const_cast<V3 &>(v3_); gmm::copy(v2, v3); mult_add(m, v1, v3); }
 
   template <typename MAT, typename V1, typename V2, typename V3>
-  inline void mult(const mpi_distributed_matrix<MAT> &m, const V1 &v1, const V2 &v2, V3 &v3)
+  inline void mult(const mpi_distributed_matrix<MAT> &m, const V1 &v1,
+		   const V2 &v2, V3 &v3)
   { gmm::copy(v2, v3); mult_add(m, v1, v3); }
   
 
-  template <typename MAT> inline size_type mat_nrows(const mpi_distributed_matrix<MAT> &M) 
+  template <typename MAT> inline
+  size_type mat_nrows(const mpi_distributed_matrix<MAT> &M) 
   { return mat_nrows(M.M); }
-  template <typename MAT> inline size_type mat_ncols(const mpi_distributed_matrix<MAT> &M) 
+  template <typename MAT> inline
+  size_type mat_ncols(const mpi_distributed_matrix<MAT> &M) 
   { return mat_nrows(M.M); }
-  template <typename MAT> inline void resize(mpi_distributed_matrix<MAT> &M, size_type m, size_type n)
+  template <typename MAT> inline
+  void resize(mpi_distributed_matrix<MAT> &M, size_type m, size_type n)
   { resize(M.M, m, n); }
   template <typename MAT> inline void clear(mpi_distributed_matrix<MAT> &M)
   { clear(M.M); }
   
 
   // For compute reduced system
-  template <typename MAT1, typename MAT2> inline void mult(const MAT1 &M1,
-							   const mpi_distributed_matrix<MAT2> &M2,
-							   mpi_distributed_matrix<MAT2> &M3)
+  template <typename MAT1, typename MAT2> inline
+  void mult(const MAT1 &M1, const mpi_distributed_matrix<MAT2> &M2,
+	    mpi_distributed_matrix<MAT2> &M3)
   { mult(M1, M2.M, M3.M); }
-  template <typename MAT1, typename MAT2> inline void mult(const mpi_distributed_matrix<MAT2> &M2,
-							   const MAT1 &M1,
-							   mpi_distributed_matrix<MAT2> &M3)
+  template <typename MAT1, typename MAT2> inline
+  void mult(const mpi_distributed_matrix<MAT2> &M2,
+	    const MAT1 &M1, mpi_distributed_matrix<MAT2> &M3)
   { mult(M2.M, M1, M3.M); }
-  template <typename MAT1, typename MAT2, typename MAT3>
-  inline void mult(const MAT1 &M1, const mpi_distributed_matrix<MAT2> &M2,
+  template <typename MAT1, typename MAT2, typename MAT3> inline
+  void mult(const MAT1 &M1, const mpi_distributed_matrix<MAT2> &M2,
 		   MAT3 &M3)
   { mult(M1, M2.M, M3); }
-  template <typename MAT1, typename MAT2, typename MAT3>
-  inline void mult(const MAT1 &M1, const mpi_distributed_matrix<MAT2> &M2,
+  template <typename MAT1, typename MAT2, typename MAT3> inline
+  void mult(const MAT1 &M1, const mpi_distributed_matrix<MAT2> &M2,
 		   const MAT3 &M3)
   { mult(M1, M2.M, M3); }
 
-  template <typename MAT> struct linalg_traits<mpi_distributed_matrix<MAT> > {
+  template <typename MAT>
+  struct linalg_traits<mpi_distributed_matrix<MAT> > {
     typedef mpi_distributed_matrix<MAT> this_type;
     typedef MAT origin_type;
     typedef linalg_false is_reference;
@@ -1045,16 +1058,21 @@ namespace gmm {
 #endif
 
 namespace std {
-  template <typename V> void swap(gmm::row_matrix<V> &m1, gmm::row_matrix<V> &m2)
+  template <typename V>
+  void swap(gmm::row_matrix<V> &m1, gmm::row_matrix<V> &m2)
   { m1.swap(m2); }
-  template <typename V> void swap(gmm::col_matrix<V> &m1, gmm::col_matrix<V> &m2)
+  template <typename V>
+  void swap(gmm::col_matrix<V> &m1, gmm::col_matrix<V> &m2)
   { m1.swap(m2); }
-  template <typename T> void swap(gmm::dense_matrix<T> &m1, gmm::dense_matrix<T> &m2)
+  template <typename T>
+  void swap(gmm::dense_matrix<T> &m1, gmm::dense_matrix<T> &m2)
   { m1.swap(m2); }
   template <typename T, int shift> void 
-  swap(gmm::csc_matrix<T,shift> &m1, gmm::csc_matrix<T,shift> &m2) { m1.swap(m2); }
+  swap(gmm::csc_matrix<T,shift> &m1, gmm::csc_matrix<T,shift> &m2)
+  { m1.swap(m2); }
   template <typename T, int shift> void 
-  swap(gmm::csr_matrix<T,shift> &m1, gmm::csr_matrix<T,shift> &m2) { m1.swap(m2); }
+  swap(gmm::csr_matrix<T,shift> &m1, gmm::csr_matrix<T,shift> &m2)
+  { m1.swap(m2); }
 }
 
 
