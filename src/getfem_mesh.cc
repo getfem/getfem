@@ -75,9 +75,16 @@ namespace getfem {
 #if defined(GMM_USES_MPI) && defined(GMM_USES_METIS)
 
     void getfem_mesh::compute_mpi_region(void) {
+
+
+
+
       int ne = int(nb_convex());
       int nn = int(nb_points()), k = 0, etype = 0, numflag = 0;
-      int edgecut;
+      int edgecut, size, rank;
+
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+      MPI_Comm_size(MPI_COMM_WORLD, &size);
       
       bgeot::pconvex_structure cvs = structure_of_convex
 	(convex_index().first())->basic_structure();

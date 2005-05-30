@@ -32,6 +32,8 @@
 
 #include <gmm_vector.h>
 #include <gmm_sub_vector.h>
+#include <gmm_sub_matrix.h>
+#include <gmm_transposed.h>
 
 namespace gmm
 {
@@ -952,11 +954,27 @@ namespace gmm {
 
   template <typename T> int mpi_type(T)
   { DAL_THROW(failure_error, "Sorry unsupported type"); }
-  int mpi_type(double) { return MPI_DOUBLE; }
-  int mpi_type(float) { return MPI_FLOAT; }
-  int mpi_type(long double) { return MPI_LONG_DOUBLE; }
-  int mpi_type(std::complex<float>) { return MPI_COMPLEX; }
-  int mpi_type(std::complex<double>) { return MPI_DOUBLE_COMPLEX; }
+  inline int mpi_type(double) { return MPI_DOUBLE; }
+  inline int mpi_type(float) { return MPI_FLOAT; }
+  inline int mpi_type(long double) { return MPI_LONG_DOUBLE; }
+  inline int mpi_type(std::complex<float>) { return MPI_COMPLEX; }
+  inline int mpi_type(std::complex<double>) { return MPI_DOUBLE_COMPLEX; }
+
+  template <typename MAT1, typename MAT2>
+  inline void copy(const mpi_distributed_matrix<MAT1> &m1, mpi_distributed_matrix<MAT2> &m2)
+  { copy(m1.M, m2.M); }
+  template <typename MAT1, typename MAT2>
+  inline void copy(const mpi_distributed_matrix<MAT1> &m1, const mpi_distributed_matrix<MAT2> &m2)
+  { copy(m1.M, m2.M); }
+  
+  template <typename MAT1, typename MAT2>
+  inline void copy(const mpi_distributed_matrix<MAT1> &m1, MAT2 &m2)
+  { copy(m1.M, m2); }
+  template <typename MAT1, typename MAT2>
+  inline void copy(const mpi_distributed_matrix<MAT1> &m1, const MAT2 &m2)
+  { copy(m1.M, m2); }
+  
+  
 
   template <typename MAT, typename V1, typename V2>
   inline void mult_add(const mpi_distributed_matrix<MAT> &m, const V1 &v1,
@@ -1027,6 +1045,60 @@ namespace gmm {
   void mult(const MAT1 &M1, const mpi_distributed_matrix<MAT2> &M2,
 		   const MAT3 &M3)
   { mult(M1, M2.M, M3); }
+
+  template <typename M, typename SUBI1, typename SUBI2>
+  struct sub_matrix_type<const mpi_distributed_matrix<M> *, SUBI1, SUBI2>
+  { typedef abstract_null_type matrix_type; };
+
+  template <typename M, typename SUBI1, typename SUBI2>
+  struct sub_matrix_type<mpi_distributed_matrix<M> *, SUBI1, SUBI2>
+  { typedef abstract_null_type matrix_type; };
+
+  template <typename M, typename SUBI1, typename SUBI2>  inline
+  typename select_return<typename sub_matrix_type<const M *, SUBI1, SUBI2>
+  ::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI2>::matrix_type,
+   M *>::return_type
+   sub_matrix(mpi_distributed_matrix<M> &m, const SUBI1 &si1, const SUBI2 &si2)
+  { return sub_matrix(m.M, si1, si2); }
+
+  template <typename MAT, typename SUBI1, typename SUBI2>  inline
+  typename select_return<typename sub_matrix_type<const MAT *, SUBI1, SUBI2>
+  ::matrix_type, typename sub_matrix_type<MAT *, SUBI1, SUBI2>::matrix_type,
+			 const MAT *>::return_type
+  sub_matrix(const mpi_distributed_matrix<MAT> &m, const SUBI1 &si1,
+	     const SUBI2 &si2)
+  { return sub_matrix(m.M, si1, si2);  }
+
+  template <typename M, typename SUBI1>  inline
+    typename select_return<typename sub_matrix_type<const M *, SUBI1, SUBI1>
+    ::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI1>::matrix_type,
+    M *>::return_type
+  sub_matrix(mpi_distributed_matrix<M> &m, const SUBI1 &si1) 
+  { return sub_matrix(m.M, si1, si1); }
+
+  template <typename M, typename SUBI1>  inline
+    typename select_return<typename sub_matrix_type<const M *, SUBI1, SUBI1>
+    ::matrix_type, typename sub_matrix_type<M *, SUBI1, SUBI1>::matrix_type,
+    const M *>::return_type
+  sub_matrix(const mpi_distributed_matrix<M> &m, const SUBI1 &si1)
+  { return sub_matrix(m.M, si1, si1); }
+
+
+  template <typename L> struct transposed_return<const mpi_distributed_matrix<L> *> 
+  { typedef abstract_null_type return_type; };
+  template <typename L> struct transposed_return<mpi_distributed_matrix<L> *> 
+  { typedef abstract_null_type return_type; };
+  
+  template <typename L> inline typename transposed_return<const L *>::return_type
+  transposed(const mpi_distributed_matrix<L> &l)
+  { return transposed(l.M); }
+
+  template <typename L> inline typename transposed_return<L *>::return_type
+  transposed(mpi_distributed_matrix<L> &l)
+  { return transposed(l.M); }
+
+
+
 
   template <typename MAT>
   struct linalg_traits<mpi_distributed_matrix<MAT> > {
