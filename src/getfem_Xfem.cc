@@ -102,7 +102,7 @@ namespace getfem
     mi[1] = target_dim(); mi[0] = nb_base(0);
     t.adjust_sizes(mi);
     scalar_type a;
-    Xfem_func_context ctx(c); 
+    Xfem_func_context ctx(c);
     base_tensor::iterator it = t.begin();
     fem_interpolation_context c0 = c;
     base_tensor tt; 

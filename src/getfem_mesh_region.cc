@@ -4,6 +4,12 @@
 namespace getfem {
   typedef mesh_region::face_bitset face_bitset;
 
+  void mesh_region::touch_parent_mesh() {
+    if (parent_mesh) {
+      parent_mesh->touch_from_region(id_);
+    }
+  }
+
   const mesh_region& mesh_region::from_mesh(const getfem_mesh &m) const {
     if (!p.get()) {
       mesh_region *r = const_cast<mesh_region*>(this);
@@ -38,6 +44,7 @@ namespace getfem {
 
   void mesh_region::add(size_type cv, size_type f) { 
     wp().m[cv].set(f+1,1); 
+    touch_parent_mesh();
   }
 
   void mesh_region::sup(size_type cv, size_type f) { 
@@ -45,11 +52,12 @@ namespace getfem {
     if (it != wp().m.end()) {
       (*it).second.set(f+1,0); 
       if ((*it).second.none()) wp().m.erase(it); 
+      touch_parent_mesh();
     }
   }
 
   void mesh_region::clear() { 
-    wp().m.clear(); wp().index_.clear();
+    wp().m.clear(); wp().index_.clear(); touch_parent_mesh();
   }
 
   void mesh_region::clean() {
@@ -60,10 +68,10 @@ namespace getfem {
 	wp().m.erase(it);
       }
     }
+    touch_parent_mesh();
   }
 
   void mesh_region::swap_convex(size_type cv1, size_type cv2) {
-    cerr << "swap_convex(" << cv1 << "," << cv2 << ")\n";
     map_t::iterator it1 = wp().m.find(cv1), it2 = wp().m.find(cv2),
       ite = wp().m.end();
     face_bitset f1, f2;
@@ -74,12 +82,12 @@ namespace getfem {
     else if (it2 != ite) wp().m.erase(it2);
     if (!f2.none()) wp().m[cv1] = f2;
     else if (it1 != ite) wp().m.erase(it1);
-    cerr << "f1 = " << f1 << ", f2 =" << f2 << "\n";
+    touch_parent_mesh();
   }
   
   bool mesh_region::is_in(size_type cv, size_type f) const {
     map_t::const_iterator it = rp().m.find(cv);
-    if (it == rp().m.end() || f >= MAX_FACES_PER_CV-1) return false;
+    if (it == rp().m.end() || f+1 >= MAX_FACES_PER_CV) return false;
     return ((*it).second)[f+1];
   }
 

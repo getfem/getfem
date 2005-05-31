@@ -292,45 +292,29 @@ namespace getfem {
     void transformation(base_matrix);
     
     const mesh_region region(size_type id) const { 
-      if (set_exists(id)) return cvf_sets[id]; 
-      else return mesh_region();
+      if (has_region(id)) return cvf_sets[id]; 
+      else return mesh_region(const_cast<getfem_mesh&>(*this),id);
     }
-    mesh_region region(size_type id) {
-      if (set_exists(id)) return cvf_sets[id]; 
-      else return mesh_region();
+    /* return a reference such that operator= works as expected */
+    mesh_region &region(size_type id) { 
+      if (!has_region(id)) 
+	/* will be added into valid_cvf_sets 
+	   later via mesh_region::maybe_notify_parent_mesh */
+	cvf_sets[id] = mesh_region(*this,id); 
+      return cvf_sets[id];
     }
-    bool set_exists(size_type s) const { return valid_cvf_sets[s]; }
-    bool set_is_boundary(const mesh_region &rg) const
-    { return rg.from_mesh(*this).is_boundary(); }
-    void add_convex_to_set(size_type s, size_type c) {
-      if (!(valid_cvf_sets[s]))
-	{ cvf_sets[s] = mesh_region(); valid_cvf_sets.add(s); }
-      cvf_sets[s].add(c); touch();
-    }
-    void add_face_to_set(size_type s, size_type c, short_type f) {
-      if (!(valid_cvf_sets[s]))
-	{ cvf_sets[s] = mesh_region(); valid_cvf_sets.add(s); }
-      cvf_sets[s].add(c, f); touch();
-    }
-    /*    bool is_convex_in_set(size_type s, size_type c) const
-    { return (valid_cvf_sets[s] && cvf_sets[s].is_in(c)); }
-    bool is_face_in_set(size_type s, size_type c, short_type f) const
-    { return (valid_cvf_sets[s] && cvf_sets[s].is_in(c, f)); }
-    */
-    const dal::bit_vector &convexes_in_set(size_type s) const;
-    mesh_region::face_bitset
-    faces_of_convex_in_set(size_type s, size_type cv) const;
-    const dal::bit_vector &get_valid_sets() const { return valid_cvf_sets; }
-    void sup_convex_from_sets(size_type c);
+    bool has_region(size_type s) const { return valid_cvf_sets[s]; }
+    void add_face_to_set(size_type s, size_type c, short_type f) IS_DEPRECATED;
+    const dal::bit_vector &regions_index() const { return valid_cvf_sets; }
     
-
+    /*
     void sup_face_from_set(size_type b, size_type c, short_type f)
-    { if (valid_cvf_sets[b]) { cvf_sets[b].sup(c,f); touch(); } }
-    void sup_set(size_type b) {
+    { if (valid_cvf_sets[b]) { cvf_sets[b].sup(c,f); touch(); } }*/
+    void sup_region(size_type b) {
       if (valid_cvf_sets[b])
 	{ valid_cvf_sets.sup(b); cvf_sets[b].clear(); touch(); }
     }
-    void swap_convex_in_sets(size_type c1, size_type c2);
+    void sup_convex_from_regions(size_type c);
     void optimize_structure(void);
     void clear(void);
     
@@ -341,10 +325,19 @@ namespace getfem {
     void copy_from(const getfem_mesh& m); /* might be the copy constructor */
     size_type memsize() const;
     ~getfem_mesh() { lmsg_sender().send(MESH_DELETE()); }
+
+    friend class mesh_region;
   private:
+    void swap_convex_in_regions(size_type c1, size_type c2);
+    void touch_from_region(size_type id) { valid_cvf_sets.add(id); touch(); }
     void to_edges() {} /* to be done, the to_edges of mesh_structure does   */
                        /* not handle geotrans */
   };
+
+  inline void getfem_mesh::add_face_to_set(size_type s, size_type c, short_type f) {
+    region(s).add(c,f);
+  }
+
 
   void extrude(const getfem_mesh& in, getfem_mesh& out, unsigned nb_layers);
 

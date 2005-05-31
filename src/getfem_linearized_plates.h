@@ -57,7 +57,8 @@ namespace getfem {
   void asm_stiffness_matrix_for_plate_transverse_shear
   (const MAT &RM1, const MAT &RM2, const MAT3 &RM3, const MAT &RM4,
    const mesh_im &mim, const mesh_fem &mf_u3, const mesh_fem &mf_theta,
-   const mesh_fem &mfdata, const VECT &MU) {
+   const mesh_fem &mfdata, const VECT &MU,
+   const mesh_region &rg = mesh_region::all_convexes()) {
     if (mfdata.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     
@@ -80,7 +81,7 @@ namespace getfem {
     assem.push_mat(const_cast<MAT &>(RM2));
     assem.push_mat(const_cast<MAT3 &>(RM3));
     assem.push_mat(const_cast<MAT &>(RM4));
-    assem.volumic_assembly();
+    assem.assembly(rg);
   }
   
   template<class MAT, class VECT>
@@ -100,7 +101,8 @@ namespace getfem {
   void asm_stiffness_matrix_for_plate_transverse_shear_mitc
   (const MAT &RM1, const MAT &RM2, const MAT3 &RM3, const MAT &RM4,
    const mesh_im &mim, const mesh_fem &mf_u3, const mesh_fem &mf_theta,
-   const mesh_fem &mfdata, const VECT &MU) {
+   const mesh_fem &mfdata, const VECT &MU,
+   const mesh_region &rg = mesh_region::all_convexes()) {
     typedef typename gmm::linalg_traits<VECT>::value_type value_type;
 
     if (mfdata.get_qdim() != 1)
@@ -137,7 +139,7 @@ namespace getfem {
     assem.push_mat(const_cast<MAT &>(RM2));
     assem.push_mat(const_cast<MAT3 &>(RM3));
     assem.push_mat(const_cast<MAT &>(RM4));
-    assem.volumic_assembly();
+    assem.assembly(rg);
     //cout << "RM3 = " << RM3 << endl; getchar();
   }
 
@@ -315,7 +317,8 @@ namespace getfem {
   template<class MAT>
   void asm_coupling_u3theta(const MAT &RM, const mesh_im &mim,
 			    const mesh_fem &mf_u3,
-			    const mesh_fem &mf_theta) {
+			    const mesh_fem &mf_theta,
+			    const mesh_region &rg = mesh_region::all_convexes()) {
     
     if (mf_u3.get_qdim() != 1 || mf_theta.get_qdim() != 2)
       DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
@@ -325,13 +328,14 @@ namespace getfem {
     assem.push_mf(mf_u3);
     assem.push_mf(mf_theta);
     assem.push_mat(const_cast<MAT &>(RM));
-    assem.volumic_assembly();
+    assem.assembly(rg);
   }
 
   template<class MAT>
   void asm_coupling_psitheta(const MAT &RM,  const mesh_im &mim,
 			     const mesh_fem &mf_u3,
-			     const mesh_fem &mf_theta) {
+			     const mesh_fem &mf_theta,
+			     const mesh_region &rg = mesh_region::all_convexes()) {
     
     if (mf_u3.get_qdim() != 1 || mf_theta.get_qdim() != 2)
       DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
@@ -341,7 +345,7 @@ namespace getfem {
     assem.push_mf(mf_u3);
     assem.push_mf(mf_theta);
     assem.push_mat(const_cast<MAT &>(RM));
-    assem.volumic_assembly();
+    assem.assembly(rg);
   }
 
   /* ******************************************************************** */
@@ -784,7 +788,7 @@ namespace getfem {
     
       getfem::mesh_region border_faces;
       getfem::outer_faces_of_mesh(*mesh, border_faces);
-      dal::bit_vector vb = mesh->get_valid_sets();
+      dal::bit_vector vb = mesh->regions_index();
       
       for (getfem::mr_visitor it(border_faces); !it.finished(); ++it) {
 	bool add = true;
@@ -852,19 +856,16 @@ namespace getfem {
       }
       else {
 	mesh_region boundary;
-	//size_type boundary = mf_theta->linked_mesh().add_face_set();
 	gmm::resize(CO, comp_conn, mf_theta->nb_dof());
 	for (size_type k = 0; k < comp_conn; ++k) {
 	  for (size_type i = 0; i < comp_conns.size(); ++i)
 	    if (comp_conns[i] == k) {
 	      boundary.add(cv_nums[i], face_nums[i]);
-	      //mf_theta->linked_mesh().add_face_to_set(boundary, cv_nums[i], face_nums[i]);
 	    }
 	  std::vector<value_type> V(mf_theta->nb_dof());
 	  asm_constraint_on_theta(V, *(this->mesh_ims[0]), *mf_theta,
 				  boundary);
 	  gmm::copy(V, gmm::mat_row(CO, k));
-	  //mf_theta->linked_mesh().sup_set(boundary);
 	}
 	// cout << "CO = " << CO << endl;
       }

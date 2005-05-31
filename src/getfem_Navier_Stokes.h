@@ -40,8 +40,9 @@ namespace getfem {
   template<typename MAT, typename VECT>
   void asm_navier_stokes_tgm(const MAT &M, 
 			     const mesh_im &mim, 
-			     const getfem::mesh_fem &mf,
-			     const VECT &U) {
+			     const mesh_fem &mf,
+			     const VECT &U,
+			     const mesh_region &rg = mesh_region::all_convexes()) {
     if (mf.get_qdim() != mf.linked_mesh().dim())
       DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
 
@@ -56,14 +57,15 @@ namespace getfem {
     assem.push_mf(mf);
     assem.push_mat(const_cast<MAT&>(M));
     assem.push_data(U);
-    assem.volumic_assembly();
+    assem.assembly(rg);
   }
 
   template<typename VECT1, typename VECT2> 
   void asm_navier_stokes_rhs(const VECT1 &V, 
 			     const mesh_im &mim, 
-			     const getfem::mesh_fem &mf,
-			     const VECT2 &U) {
+			     const mesh_fem &mf,
+			     const VECT2 &U,
+			     const mesh_region &rg = mesh_region::all_convexes()) {
     if (mf.get_qdim() != mf.linked_mesh().dim())
       DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
 
@@ -76,7 +78,7 @@ namespace getfem {
     assem.push_mf(mf);
     assem.push_vec(const_cast<VECT1&>(V));
     assem.push_data(U);
-    assem.volumic_assembly();
+    assem.assembly(rg);
   }
 
 

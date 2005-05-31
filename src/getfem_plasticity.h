@@ -332,7 +332,8 @@ namespace getfem {
 			      const mesh_im &mim, 
 			      const mesh_fem &mf,
 			      const mesh_fem &mfdata,
-			      nonlinear_elem_term *plast)
+			      nonlinear_elem_term *plast,
+			      const mesh_region &rg = mesh_region::all_convexes())
   {
     if (mf.get_qdim() != mf.linked_mesh().dim())
       DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
@@ -344,7 +345,7 @@ namespace getfem {
     assem.push_mf(mfdata);
     assem.push_nonlinear_term(plast);
     assem.push_vec(V);
-    assem.volumic_assembly();
+    assem.assembly(rg);
   }
 
   /** 
@@ -356,7 +357,8 @@ namespace getfem {
 			      const mesh_fem &mf,
 			      const mesh_fem &mfdata,
 			      const VECT &LAMBDA, const VECT &MU,
-			      nonlinear_elem_term *gradplast)
+			      nonlinear_elem_term *gradplast,
+			      const mesh_region &rg = mesh_region::all_convexes())
   {
     if (mf.get_qdim() != mf.linked_mesh().dim())
       DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
@@ -372,7 +374,7 @@ namespace getfem {
     assem.push_data(MU);
     assem.push_nonlinear_term(gradplast);
     assem.push_mat(H);
-    assem.volumic_assembly();
+    assem.assembly(rg);
   }
 
 

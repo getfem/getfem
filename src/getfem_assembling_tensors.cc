@@ -1576,11 +1576,13 @@ namespace getfem {
     const getfem_mesh& m = mftab[0]->linked_mesh();      
     for (dal::bv_visitor cv(candidates); !cv.finished(); ++cv) {
       if (m.convex_index().is_in(cv)) {
+	bool ok = true;
         for (size_type i=0; i < mftab.size(); ++i)
           if (!mftab[i]->convex_index().is_in(cv)) {
-            ASM_THROW_ERROR("the convex " << cv << " has no FEM for the #" << i+1 << " mesh_fem");	  
+	    ok = false;
+            //ASM_THROW_ERROR("the convex " << cv << " has no FEM for the #" << i+1 << " mesh_fem");	  
 	  }
-        cvorder.push_back(cv);
+        if (ok) cvorder.push_back(cv);
       } else {
         ASM_THROW_ERROR("the convex " << cv << " is not part of the mesh");
       }
@@ -1602,7 +1604,7 @@ namespace getfem {
     }
   }
 
-  
+  /*  
   void generic_assembly::volumic_assembly() {
     consistency_check();
     volumic_assembly(mftab[0]->convex_index());
@@ -1624,21 +1626,29 @@ namespace getfem {
     parse();
     for (size_type i=0; i < cv.size(); ++i) {
       mesh_region::face_bitset nf
-	=mftab[0]->linked_mesh().faces_of_convex_in_set(boundary_number,cv[i]);
+	=mftab[0]->linked_mesh().region(boundary_number).faces_of_convex(cv[i]);
       size_type nbf
 	= mftab[0]->linked_mesh().structure_of_convex(cv[i])->nb_faces();
       for (unsigned f = 0; f < nbf; ++f)
 	if (nf[f]) exec(cv[i], f);
     }
-  }
+    }*/
 
   void generic_assembly::assembly(const mesh_region &r) {
+    std::vector<size_type> cv;
     r.from_mesh(imtab[0]->linked_mesh());
     r.error_if_not_homogeneous();
-    if (r.is_only_faces()) {
-      /* TODO : pas suffisant!! */
-      assert(r.id() != size_type(-1));
-      boundary_assembly(r.id()); 
-    } else volumic_assembly(r.index());
+
+    consistency_check();
+    get_convex_order(mftab, r.index(), cv);
+    parse();
+    for (size_type i=0; i < cv.size(); ++i) {
+      mesh_region::face_bitset nf = r[cv[i]];
+      dim_type f = dim_type(-1);
+      while (nf.any()) {
+	if (nf[0]) exec(cv[i],f);
+	nf >>= 1; f+=1;
+      }
+    }
   }
 } /* end of namespace */

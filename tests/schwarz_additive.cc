@@ -160,7 +160,7 @@ void pb_data::init(ftool::md_param &params) {
       if (bgeot::neighbour_of_convex(mesh, j, i).empty()) {
 	gmm::copy(mesh.normal_of_face_of_convex(j, i, 0), un);
 	un /= bgeot::vect_norm2(un);	
-	if (gmm::abs(un[N-1] - 1.0) < 1.0E-3) mesh.add_face_to_set(0, j, i);
+	if (gmm::abs(un[N-1] - 1.0) < 1.0E-3) mesh.region(0).add(j, i);
       }
     }
   }

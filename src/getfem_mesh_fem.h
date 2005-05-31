@@ -335,25 +335,25 @@ namespace getfem
     const  { return linked_mesh().region(b).is_in(c,f); }
   inline const dal::bit_vector &
   mesh_fem::convex_on_boundary(size_type b) const 
-  { return linked_mesh().convexes_in_set(b); }
+  { return linked_mesh().region(b).index(); }
   inline mesh_region::face_bitset
   mesh_fem::faces_of_convex_on_boundary(size_type c, size_type b) const 
-  { return linked_mesh().faces_of_convex_in_set(b,c); }
+  { return linked_mesh().region(b).faces_of_convex(c); }
   inline const dal::bit_vector &
   mesh_fem::get_valid_boundaries() const 
-  { return linked_mesh().get_valid_sets(); }
+  { return linked_mesh().regions_index(); }
   inline void 
   mesh_fem::sup_boundaries_of_convex(size_type c)  
-  { linked_mesh().sup_convex_from_sets(c); }
+  { linked_mesh().sup_convex_from_regions(c); }
   inline void 
   mesh_fem::sup_boundary_elt(size_type b, size_type c, short_type f)
   { linked_mesh().region(b).sup(c,f); }
   inline void 
   mesh_fem::sup_boundary(size_type b) 
-  { linked_mesh().sup_set(b); }
-  inline void 
+  { linked_mesh().sup_region(b); }
+  /*inline void 
   mesh_fem::swap_boundaries_convex(size_type c1, size_type c2) 
-  { linked_mesh().swap_convex_in_sets(c1, c2); }
+  { linked_mesh().swap_convex_in_sets(c1, c2); }*/
 
 }  /* end of namespace getfem.                                             */
 

@@ -332,7 +332,8 @@ namespace getfem {
 					       const VECT1 &U,
 					       const getfem::mesh_fem &mf_data,
 					       const VECT2 &PARAMS,
-				     const abstract_hyperelastic_law &AHL) {
+					       const abstract_hyperelastic_law &AHL,
+					       const mesh_region &rg = mesh_region::all_convexes()) {
     MAT &K = const_cast<MAT &>(K_);
     if (mf.get_qdim() != mf.linked_mesh().dim())
       DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
@@ -350,7 +351,7 @@ namespace getfem {
     assem.push_mf(mf_data);
     assem.push_nonlinear_term(&nterm);
     assem.push_mat(K);
-    assem.volumic_assembly();
+    assem.assembly(rg);
   }
 
 
@@ -361,7 +362,8 @@ namespace getfem {
 				    const VECT2 &U,
 				    const getfem::mesh_fem &mf_data,
 				    const VECT3 &PARAMS,
-				    const abstract_hyperelastic_law &AHL) {
+				    const abstract_hyperelastic_law &AHL,
+				    const mesh_region &rg = mesh_region::all_convexes()) {
     VECT1 &R = const_cast<VECT1 &>(R_);
     if (mf.get_qdim() != mf.linked_mesh().dim())
       DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
@@ -377,7 +379,7 @@ namespace getfem {
     assem.push_mf(mf_data);
     assem.push_nonlinear_term(&nterm);
     assem.push_vec(R);
-    assem.volumic_assembly();
+    assem.assembly(rg);
   }
 
 
@@ -541,7 +543,8 @@ namespace getfem {
 					   const mesh_im &mim,
 					   const mesh_fem &mf_u,
 					   const mesh_fem &mf_p,
-					   const VECT1 &U, const VECT2 &P) {
+					   const VECT1 &U, const VECT2 &P,
+					   const mesh_region &rg = mesh_region::all_convexes()) {
     MAT1 &K = const_cast<MAT1 &>(K_);
     MAT2 &B = const_cast<MAT2 &>(B_);
     if (mf_u.get_qdim() != mf_u.linked_mesh().dim())
@@ -574,7 +577,7 @@ namespace getfem {
     assem.push_mat(K);
     assem.push_mat(B);
     assem.push_data(P);
-    assem.volumic_assembly();
+    assem.assembly(rg);
   }
 
 
@@ -583,7 +586,8 @@ namespace getfem {
 				const mesh_im &mim,
 				const getfem::mesh_fem &mf_u,
 				const getfem::mesh_fem &mf_p,
-				const VECT2 &U, const VECT3 &P) {
+				const VECT2 &U, const VECT3 &P,
+				const mesh_region &rg = mesh_region::all_convexes()) {
     VECT1 &R_U = const_cast<VECT1 &>(R_U_);
     VECT1 &R_P = const_cast<VECT1 &>(R_P_);
     if (mf_u.get_qdim() != mf_u.linked_mesh().dim())
@@ -607,7 +611,7 @@ namespace getfem {
     assem.push_vec(R_U);
     assem.push_vec(R_P);
     assem.push_data(P);
-    assem.volumic_assembly();
+    assem.assembly(rg);
   }
 
 

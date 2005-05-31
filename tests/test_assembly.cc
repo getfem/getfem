@@ -149,7 +149,7 @@ namespace getfem {
 		"This assembling procedure only works on a single mesh");
   
     for (cv << nn; cv != ST_NIL; cv << nn) {
-      nf = dal::bit_vector(mf.linked_mesh().faces_of_convex_in_set(boundary, cv));
+      nf = dal::bit_vector(mf.linked_mesh().region(boundary).faces_of_convex(cv));
       if (nf.card() > 0) {
 	pf1 =     mf.fem_of_element(cv); nbd1 = pf1->nb_dof(cv);
 	pf2 = mfdata.fem_of_element(cv); nbd2 = pf2->nb_dof(cv);
@@ -243,7 +243,7 @@ namespace getfem {
 
     for (cv << nn; cv != ST_NIL; cv << nn)
       {
-	nf = mf1.linked_mesh().faces_of_convex_in_set(boundary,cv);
+	nf = mf1.linked_mesh().region(boundary).faces_of_convex(cv);
 	if (nf.count() > 0) {
 	  pf1 = mf1.fem_of_element(cv); nbd1 = pf1->nb_dof(cv);
 	  pf2 = mf2.fem_of_element(cv); nbd2 = pf2->nb_dof(cv);
@@ -348,7 +348,7 @@ namespace getfem {
 
     for (cv << nn; cv != ST_NIL; cv << nn)
       {
-	nf = dal::bit_vector(mf_u.linked_mesh().faces_of_convex_in_set(boundary,cv));
+	nf = dal::bit_vector(mf_u.linked_mesh().region(boundary).faces_of_convex(cv));
 	if (nf.card() > 0)
 	  {
 	    size_type f, nbdof_u, nbdof_d;
@@ -748,7 +748,7 @@ namespace getfem {
     assem.push_data(LAMBDA);
     assem.push_data(MU);
     assem.push_mat(RM);
-    assem.volumic_assembly();
+    assem.assembly();
   }
 
   template<typename VEC>
@@ -764,7 +764,7 @@ namespace getfem {
     assem.push_data(U);
     bgeot::vsvector<scalar_type> v(1);
     assem.push_vec(v);
-    assem.volumic_assembly();
+    assem.assembly();
     return sqrt(v[0]);
   }
 
@@ -781,7 +781,7 @@ namespace getfem {
     assem.push_data(U);
     bgeot::vsvector<scalar_type> v(1);
     assem.push_vec(v);
-    assem.volumic_assembly();
+    assem.assembly();
     return sqrt(v[0] + gmm::sqr(old2_asm_L2_norm(mim,mf,U)));
   }
 
@@ -828,9 +828,9 @@ void gen_mesh(getfem::getfem_mesh& mesh) {
     }*/
   for (unsigned cv=0; cv < std::min(mesh.convex_index().card(),
 			   param.NX*param.Ndim*param.Ndim*10); cv += 2) {
-    mesh.add_face_to_set(1, cv, (cv/4) % (param.Ndim > 1 ? 3 : 2)); 
+    mesh.region(1).add(cv, (cv/4) % (param.Ndim > 1 ? 3 : 2)); 
   }
-  mesh.add_face_to_set(1,0,0);
+  mesh.region(1).add(0,0);
 }
 
 void init_mesh_fem(getfem::mesh_fem &mf, bool datamf) {
@@ -1457,7 +1457,7 @@ void test_nonlin(const getfem::mesh_im &mim, const getfem::mesh_fem &mf)
       assem.push_nonlinear_term(&bidon);
       assem.push_vec(V1);
       assem.push_vec(V2);
-      assem.volumic_assembly();
+      assem.assembly();
       gmm::add(gmm::scaled(V2,-1.),V1);
       scalar_type err = gmm::vect_norm2(V1);
       cout << "i=" << bidon.i << ", j=" << bidon.j << " |V1-V2| = " << err << "\n";
@@ -1480,7 +1480,7 @@ void inline_red_test(const getfem::mesh_im &mim, const getfem::mesh_fem &mf1, co
   assem.push_data(V);
   std::vector<scalar_type> v1(1);
   assem.push_vec(v1);
-  assem.volumic_assembly();
+  assem.assembly();
   
   cout << "OLD SCHOOL\n";
   getfem::generic_assembly assem2;
@@ -1493,7 +1493,7 @@ void inline_red_test(const getfem::mesh_im &mim, const getfem::mesh_fem &mf1, co
   assem2.push_data(V);
   std::vector<scalar_type> v2(1);
   assem2.push_vec(v2);
-  assem2.volumic_assembly();
+  assem2.assembly();
 
   cout << "v1 = " << v1 << ", v2 = " << v2 << endl;
   assert(gmm::abs(v1[0]-v2[0]) < 1e-14);
@@ -1527,8 +1527,8 @@ int main(int argc, char *argv[])
      getfem::getfem_mesh m(2);
      m.add_triangle_by_points(mknode(0.,0.),mknode(1.2,0.),mknode(0.1,1.5));     
      m.add_triangle_by_points(mknode(0.,0.),mknode(-1.2,0.),mknode(0.1,1.5));
-     m.add_face_to_set(1, 0, 0);
-     m.add_face_to_set(1, 0, 1);
+     m.region(1).add(0, 0);
+     m.region(1).add(0, 1);
      getfem::mesh_fem mf(m);
      classical_mesh_fem(mf, 2);     
      getfem::mesh_fem mfq(m); 

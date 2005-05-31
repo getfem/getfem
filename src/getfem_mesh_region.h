@@ -30,14 +30,18 @@ namespace getfem {
     };
     dal::shared_ptr<impl> p;
     size_type id_;
+    getfem_mesh *parent_mesh;
     impl &wp() { return *p.get(); }
     const impl &rp() const { return *p.get(); }
     void clean();
+    void touch_parent_mesh();
   public:
-    mesh_region() : p(new impl), id_(size_type(-3)) {}
-    mesh_region(size_type boundid) : id_(boundid) {}
+    mesh_region() : p(new impl), id_(size_type(-3)), parent_mesh(0) {}
+    mesh_region(size_type boundid) : id_(boundid), parent_mesh(0) {}
+    mesh_region(getfem_mesh& m, size_type boundid) : 
+      p(new impl), id_(boundid), parent_mesh(&m) {}
     mesh_region(const dal::bit_vector &bv) : 
-      p(new impl), id_(size_type(-3)) { add(bv); }
+      p(new impl), id_(size_type(-3)), parent_mesh(0) { add(bv); }
     static mesh_region all_convexes() {
       return mesh_region(size_type(-1)); 
     }
@@ -63,7 +67,7 @@ namespace getfem {
     void error_if_not_faces() const;
     void error_if_not_convexes() const;
     void error_if_not_homogeneous() const;
-
+    
     class visitor {
       mesh_region::map_t::const_iterator it,ite;
       face_bitset c;

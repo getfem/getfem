@@ -157,9 +157,9 @@ void stokes_problem::init(void) {
     base_node un = mesh.normal_of_face_of_convex(it.cv(), it.f());
     un /= gmm::vect_norm2(un);
     if (gmm::abs(un[N-1] - 1.0) < 1.0E-7) { // new Neumann face
-      mesh.add_face_to_set(NEUMANN_BOUNDARY_NUM, it.cv(), it.f());
+      mesh.region(NEUMANN_BOUNDARY_NUM).add(it.cv(), it.f());
     } else {
-      mesh.add_face_to_set(DIRICHLET_BOUNDARY_NUM, it.cv(), it.f());
+      mesh.region(DIRICHLET_BOUNDARY_NUM).add(it.cv(), it.f());
     }
   }
 }

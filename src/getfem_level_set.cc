@@ -80,6 +80,9 @@ namespace getfem {
 
   mesher_level_set level_set::mls_of_convex(size_type cv, unsigned lsnum,
 					    bool inverted) const {
+    if (!mf->linked_mesh().convex_index().is_in(cv)) 
+      DAL_THROW(dal::failure_error, "convex " << cv << " is not in the level set mesh!");
+    if (!mf->fem_of_element(cv)) DAL_INTERNAL_ERROR("");
     std::vector<scalar_type> coeff(mf->nb_dof_of_element(cv));
     for (size_type i = 0; i < coeff.size(); ++i)
       coeff[i] = (!inverted ? scalar_type(1) : scalar_type(-1)) * 

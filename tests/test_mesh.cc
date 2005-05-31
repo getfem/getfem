@@ -90,20 +90,43 @@ template<class MESH> void test_mesh(MESH &m) {
   
 
   getfem::parallelepiped_regular_simplex_mesh(m, dim,pt1, vects.begin(), iref.begin());
-	    
+  m.write_to_file("test_mesh.mesh");
+  getfem::getfem_mesh m3; m3.read_from_file("test_mesh.mesh");
+  m.copy_from(m3);
 
-  m.add_convex_to_set(3,0);
+  cout << "0 before set_exists(3): " << m.has_region(3) << "\n";
+  m.region(3).is_in(87);
+  cout << "0 after  set_exists(3): " << m.has_region(3) << "\n";
+  cout << "1 before set_exists(3): " << m.has_region(3) << "\n";
+  m.region(3).add(0);
+  cout << "1 after  set_exists(3): " << m.has_region(3) << "\n";
 
   m.region(3).add(0);
-  m.region(3).add(3);
+  m.region(3).add(3,1);
   m.region(3).add(2);
-
   m.region(4).add(0);
+  m.region(4).add(5);
+  cout << "m.region(3)=" << m.region(3) << "\n";
+  assert(m.region(3).is_in(0));
   m.sup_convex(0);
   m.sup_convex(1);
+  assert(!m.region(3).is_in(0));
   m.optimize_structure();
   m.write_to_file("test_mesh.mesh");
-  m.write_to_file(cout);
+
+  getfem::getfem_mesh m2; m2.read_from_file("test_mesh.mesh");
+  assert(m.convex_index().card() == m2.convex_index().card());
+  cout << "m2.regions_index=" << m2.regions_index() << "\n";
+  assert(m2.regions_index().is_in(3));
+  assert(m2.regions_index().is_in(4));
+  assert(m2.region(4).index().card() == 1);
+  assert(m2.region(4).is_in(5));
+  assert(!m2.region(4).is_in(0,0));
+  assert(m2.region(3).index().card() == 2);
+  assert(m2.region(3).is_in(3,1));
+  assert(m2.region(3).is_in(2));
+  assert(!m2.region(3).is_in(0));
+  //m.write_to_file(cout);
 }
 
 void

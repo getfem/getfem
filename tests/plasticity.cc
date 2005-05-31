@@ -181,9 +181,9 @@ void plasticity_problem::init(void)
     un /= gmm::vect_norm2(un);
 
     if (gmm::abs(un[0] - 1.0) < 1.0E-7)
-      mesh.add_face_to_set(NEUMANN_BOUNDARY_NUM, it.cv(), it.f());
+      mesh.region(NEUMANN_BOUNDARY_NUM).add(it.cv(), it.f());
     else if (gmm::abs(un[0] + 1.0) < 1.0E-7) 
-      mesh.add_face_to_set(DIRICHLET_BOUNDARY_NUM, it.cv(), it.f());
+      mesh.region(DIRICHLET_BOUNDARY_NUM).add(it.cv(), it.f());
       
   }
  

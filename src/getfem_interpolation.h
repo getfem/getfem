@@ -149,6 +149,8 @@ namespace getfem {
     for (dal::bv_visitor cv(mf_source.convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt=mf_source.linked_mesh().trans_of_convex(cv);
       pfem pf_s = mf_source.fem_of_element(cv);
+      if (!mf_target.convex_index().is_in(cv)) 
+	continue;
       pfem pf_t = mf_target.fem_of_element(cv);
       size_type nbd_s = pf_s->nb_dof(cv);
       size_type nbd_t = pf_t->nb_dof(cv);
@@ -237,12 +239,13 @@ namespace getfem {
     base_tensor Z;
     std::vector<size_type> dof_source;
 
-    for (dal::bv_visitor cv(mesh.convex_index()); !cv.finished(); ++cv) {
+    for (dal::bv_visitor cv(mf_source.convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt=mesh.trans_of_convex(cv);
       mti.points_on_convex(cv, itab);
       if (itab.size() == 0) continue;
 
       pfem pf_s = mf_source.fem_of_element(cv);
+      //cerr << "pf_s = "<< pf_s << ", mf_source.cvidx = " << mf_source.convex_index().is_in(cv) << " cv=" << cv << "\n";
       if (pf_s->need_G()) 
 	bgeot::vectors_to_base_matrix(G, mesh.points_of_convex(cv));
 

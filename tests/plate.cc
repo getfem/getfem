@@ -197,10 +197,10 @@ void plate_problem::init(void) {
     base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
     un /= gmm::vect_norm2(un);
     if (gmm::abs(un[1]) <= 1.0E-7) { // new Neumann face
-      mesh.add_face_to_set(SIMPLY_FIXED_BOUNDARY_NUM, i.cv(), i.f());
+      mesh.region(SIMPLY_FIXED_BOUNDARY_NUM).add(i.cv(), i.f());
     }
     if ((sol_ref == 2)&&(gmm::abs(un[0]) <= 1.0E-7)){ 
-      mesh.add_face_to_set(SIMPLY_FIXED_BOUNDARY_NUM, i.cv(), i.f());
+      mesh.region(SIMPLY_FIXED_BOUNDARY_NUM).add(i.cv(), i.f());
     }
   }
 }

@@ -1,3 +1,12 @@
+2005-05-30  julien pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/getfem_mesh_region.h: replaced mesh_cvf_set with the
+	getfem::mesh_region structure, which can hold sets of
+	convexes/faces of convexes, and is now used as an argument to the
+	assembly functions. The generic_assembly::volumic_assembly() and
+	boundary_assembly() methods were merged into
+	generic_assembly::assembly(const mesh_region&).
+
 2005-05-19 Julien pommier, Yves Renard
 
 	* getfem_modeling.h, Simplification of the model bricks system.

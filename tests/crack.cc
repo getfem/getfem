@@ -303,8 +303,8 @@ struct crack_problem {
   getfem::spider_fem *spider;
   getfem::mesh_fem mf_us;
 
-  getfem::mesh_fem& mf_u() { return mf_u_sum; }
-  // getfem::mesh_fem& mf_u() { return mf_us; }
+  //getfem::mesh_fem& mf_u() { return mf_u_sum; }
+  getfem::mesh_fem& mf_u() { return mf_us; }
   
 
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
@@ -413,6 +413,11 @@ void crack_problem::init(void) {
 				    spider_Ntheta, spider_K, translation,
 				    theta0);
     mf_us.set_finite_element(mesh.convex_index(),spider->get_pfem());
+    for (dal::bv_visitor_c i(mf_us.convex_index()); !i.finished(); ++i) {
+      if (mf_us.fem_of_element(i)->nb_dof(i) == 0) {
+	mf_us.set_finite_element(i,0);
+      }
+    }
   }
 
   mixed_pressure =
@@ -451,7 +456,7 @@ void crack_problem::init(void) {
   getfem::mesh_region border_faces;
   getfem::outer_faces_of_mesh(mesh, border_faces);
   for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
-    mesh.add_face_to_set(DIRICHLET_BOUNDARY_NUM, i.cv(), i.f());
+    mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
   }
 
   exact_sol.init(1, lambda, mu, ls);
@@ -466,6 +471,7 @@ bool crack_problem::solve(plain_vector &U) {
   size_type N = mesh.dim();
 
   ls.reinit();  
+  cout << "ls.get_mesh_fem().nb_dof() = " << ls.get_mesh_fem().nb_dof() << "\n";
   for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
     ls.values(0)[d] = (ls.get_mesh_fem().point_of_dof(d))[1];
     ls.values(1)[d] = -0.5 + (ls.get_mesh_fem().point_of_dof(d))[0];
@@ -579,6 +585,46 @@ bool crack_problem::solve(plain_vector &U) {
 
   return (iter.converged());
 }
+
+template<typename VEC, typename VEC2>
+static void test_projection_exact_sol(const getfem::mesh_im &mim,
+				      const getfem::mesh_fem &mf_u,
+				      const getfem::mesh_fem &mf_exact,
+				      const VEC& Uexact, VEC2 &U) {
+  sparse_matrix M(mf_u.nb_dof(),mf_u.nb_dof());
+  asm_mass_matrix(M, mim, mf_u);
+  plain_vector B(mf_u.nb_dof());
+  asm_source_term(B, mim, mf_u, mf_exact, Uexact);
+  gmm::iteration iter(1e-9);
+  gmm::cg(M,U,B,gmm::identity_matrix(),iter);
+  cout << "|Uproj|=" << gmm::vect_norm2(U) << "\n";
+
+  scalar_type sum=0;
+  for (size_type i = 0; i < M.nrows(); i+=2) { 
+    scalar_type slig = 0;
+    for (size_type l = 0; l < M.nrows(); l++) {
+      slig = slig + M(i, l);
+    }
+    sum += slig;
+  }
+  cout << endl << " sum: " << sum << endl << endl;
+
+  getfem::mesh_fem mf(mf_u.linked_mesh(),2); 
+  mf.set_classical_finite_element(1);
+  sparse_matrix Q(mf_u.nb_dof(),mf_u.nb_dof());
+  asm_stiffness_matrix_for_homogeneous_laplacian_componentwise(Q, mim, mf_u);
+  sum=0;
+  for (size_type i = 0; i < Q.nrows(); i+=2) {
+    scalar_type slig = 0;
+    for (size_type l = 0; l < Q.ncols(); l++) {
+      slig = slig + Q(i, l);
+    }
+    sum += slig;
+    cout << "i=" <<i<< " : " << slig << "\n";
+  }
+  cout << endl << " sum2: " << sum << endl << endl;
+  
+}
   
 /**************************************************************************/
 /*  main program.                                                         */
@@ -614,6 +660,10 @@ int main(int argc, char *argv[]) {
 //     }
     
     {
+
+      test_projection_exact_sol(p.mim, p.mf_u(), p.exact_sol.mf, p.exact_sol.U, U);
+
+
       getfem::getfem_mesh mcut;
       p.mls.global_cut_mesh(mcut);
       getfem::mesh_fem mf(mcut, p.mf_u().get_qdim());
@@ -637,11 +687,12 @@ int main(int argc, char *argv[]) {
       plain_vector W(mf_refined.nb_dof());
       getfem::interpolation(p.mf_u(), mf_refined, U, W);
 
-      plain_vector EXACT(mf_refined.nb_dof());
       p.exact_sol.mf.set_qdim(2);
       assert(p.exact_sol.mf.nb_dof() == p.exact_sol.U.size());
+      plain_vector EXACT(mf_refined.nb_dof());
       getfem::interpolation(p.exact_sol.mf, mf_refined, 
 			    p.exact_sol.U, EXACT);
+
 
       if (p.PARAM.int_value("VTK_EXPORT"))
       {

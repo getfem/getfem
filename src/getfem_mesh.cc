@@ -32,32 +32,14 @@
 #include <getfem_mesh.h>
 
 namespace getfem {
-  struct empty_bit_vector {
-    dal::bit_vector bv;
-  };
-  struct empty_face_bitset {
-     mesh_region::face_bitset bv;
-  };
 
-  const dal::bit_vector &getfem_mesh::convexes_in_set(size_type b) const {
-    return (valid_cvf_sets[b]) ?  
-      cvf_sets[b].index() : dal::singleton<empty_bit_vector>::instance().bv;
-  }
-
-  mesh_region::face_bitset getfem_mesh::faces_of_convex_in_set
-    (size_type b, size_type c) const {
-    return (valid_cvf_sets[b]) ? 
-      cvf_sets[b].faces_of_convex(c)
-      : dal::singleton<empty_face_bitset>::instance().bv;
-  }
-
-  void getfem_mesh::sup_convex_from_sets(size_type c) {
+  void getfem_mesh::sup_convex_from_regions(size_type c) {
     for (dal::bv_visitor i(valid_cvf_sets); !i.finished(); ++i)
       cvf_sets[i].sup(c);
     touch();
   }
 
-  void getfem_mesh::swap_convex_in_sets(size_type c1, size_type c2) {
+  void getfem_mesh::swap_convex_in_regions(size_type c1, size_type c2) {
     for (dal::bv_visitor i(valid_cvf_sets); !i.finished(); ++i)
       cvf_sets[i].swap_convex(c1, c2);
     touch();
@@ -207,7 +189,7 @@ namespace getfem {
   void getfem_mesh::sup_convex(size_type ic) {
     bgeot::mesh<base_node>::sup_convex(ic);
     trans_exists[ic] = false;
-    sup_convex_from_sets(ic);
+    sup_convex_from_regions(ic);
     lmsg_sender().send(MESH_SUP_CONVEX(ic)); touch();
   }
 
@@ -216,7 +198,7 @@ namespace getfem {
       bgeot::mesh<base_node>::swap_convex(i,j);
       trans_exists.swap(i, j);
       gtab.swap(i,j);
-      swap_convex_in_sets(i, j);
+      swap_convex_in_regions(i, j);
       lmsg_sender().send(MESH_SWAP_CONVEX(i, j)); touch();
     }
   }
@@ -387,51 +369,6 @@ namespace getfem {
 	  cv_pt[cv[ic].pts+i] = gmm::abs(atoi(tmp));
 	}
       }
-      else if (strcmp(tmp, "BEGIN")==0) {
-	ftool::get_token(ist, tmp, 1023);
-	if (!strcmp(tmp, "BOUNDARY")) {
-	  ftool::get_token(ist, tmp, 1023);
-	  size_type bnum = atoi(tmp);
-	  while (true) {
-	    ftool::get_token(ist, tmp, 1023);
-	    if (strcmp(tmp, "END")!=0) {
-	      size_type ic = atoi(tmp);
-	      char *sf = strchr(tmp, '/');
-	      if (sf) {
-		size_type f = atoi(sf+1);
-		add_face_to_set(bnum, ic, f);
-	      } else DAL_THROW(failure_error, "Syntax error in boundary "
-			       << bnum);
-	    } else break;
-	  }
-	  ftool::get_token(ist, tmp, 1023);
-	  ftool::get_token(ist, tmp, 1023);
-	  ftool::get_token(ist, tmp, 1023);
-	}
-	else if (!strcmp(tmp, "CONVEX")) {
-	  ftool::get_token(ist, tmp, 1023);
-	  if (!strcmp(tmp, "SET")) {
-	    ftool::get_token(ist, tmp, 1023);
-	    size_type bnum = atoi(tmp);
-	    
-	    while (true) {
-	    ftool::get_token(ist, tmp, 1023);
-	    if (strcmp(tmp, "END")!=0) {
-	      size_type ic = atoi(tmp);
-	      add_convex_to_set(bnum, ic);
-	    } else break;
-	  }
-	  ftool::get_token(ist, tmp, 1023);
-	  ftool::get_token(ist, tmp, 1023);
-	  }
-	  else DAL_THROW(failure_error, "Syntax error in file at token '"
-		       << tmp << "' [pos=" << std::streamoff(ist.tellg())
-		       << "]");
-	}
-	else DAL_THROW(failure_error, "Syntax error in file at token '"
-		       << tmp << "' [pos=" << std::streamoff(ist.tellg())
-		       << "]");
-      }
       else if (strlen(tmp)) {
 	DAL_THROW(failure_error, "Syntax error reading a mesh file "
 		  " at pos " << std::streamoff(ist.tellg())
@@ -441,10 +378,44 @@ namespace getfem {
 		  << "(missing BEGIN MESH/END MESH ?)");
       }
     }
+    ist >> ftool::skip("MESH STRUCTURE DESCRIPTION");
 
     for (dal::bv_visitor ic(ncv); !ic.finished(); ++ic) {
       size_type i = add_convex(cv[ic].cstruct, cv_pt.begin() + cv[ic].pts);
       if (i != ic) swap_convex(i, ic);
+    }
+
+    tend = false;
+    while (!tend) {
+      tend = !ftool::get_token(ist, tmp, 1023);
+      bool error = false;
+      if (strcmp(tmp, "BEGIN")==0) {
+	ftool::get_token(ist, tmp, 1023);
+	if (strcmp(tmp, "BOUNDARY")==0 ||
+	    strcmp(tmp, "REGION")==0) {
+	  ftool::get_token(ist, tmp, 1023);
+	  size_type bnum = atoi(tmp);
+	  while (true) {
+	    ftool::get_token(ist, tmp, 1023);
+	    if (strcmp(tmp, "END")!=0) {
+	      for (unsigned i=0; tmp[i]; ++i) 
+		if (!isdigit(tmp[i]) && tmp[i]!='/')
+		  DAL_THROW(failure_error, "Syntax error in file at token '"
+			    << tmp << "'");
+	      size_type ic = atoi(tmp);
+	      char *sf = strchr(tmp, '/');
+	      if (sf) {
+		size_type f = atoi(sf+1);
+		region(bnum).add(ic, f);
+	      } else region(bnum).add(ic);
+	    } else break;
+	  }
+	  ftool::get_token(ist, tmp, 1023);
+	  ftool::get_token(ist, tmp, 1023);
+	} else DAL_THROW(failure_error, "Syntax error in file at token '"
+			 << tmp << "' [pos=" << std::streamoff(ist.tellg())
+			 << "]");
+      } else tend=true;
     }
   }
 
@@ -497,8 +468,8 @@ namespace getfem {
     ost << '\n' << "END MESH STRUCTURE DESCRIPTION" << '\n';
 
     for (dal::bv_visitor bnum(valid_cvf_sets); !bnum.finished(); ++bnum) {
-      if (set_is_boundary(size_type(bnum))) {
-	ost << " BEGIN BOUNDARY " << bnum;
+      /*if (region(bnum).is_boundary()) {
+	ost << " BEGIN BOUNDARY " << bnum;	
 	size_type cnt = 0;
 	for (dal::bv_visitor cv(cvf_sets[bnum].index()); !cv.finished();
 	     ++cv) {
@@ -520,6 +491,9 @@ namespace getfem {
 	}
 	ost << '\n' << " END CONVEX SET " << bnum << '\n';
       }
+      */
+      ost << " BEGIN REGION " << bnum << "\n" << region(bnum) << "\n"
+	  << " END REGION " << bnum << "\n";
     }
   }
 

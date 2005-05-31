@@ -78,7 +78,7 @@ namespace getfem {
   }
    
   void mesh_fem::set_finite_element(size_type cv, pfem pf) {
-    if (pf == NULL) {
+    if (pf == 0) {
       if (fe_convex.is_in(cv)) {
 	fe_convex.sup(cv);
 	dof_enumeration_made = false;

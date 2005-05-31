@@ -50,6 +50,26 @@ namespace getfem {
     }
   };
 
+//   struct Xfem_sqrtr : public virtual_Xfem_func {
+//     virtual scalar_type val(const Xfem_func_context &c)
+//     { return -::pow(c.xreal[0], 3.0); }
+//     virtual base_small_vector grad(const Xfem_func_context &c)
+//     { base_small_vector V(2); V[0] = 45*(c.xreal[0]); return V; }
+//     virtual base_matrix hess(const Xfem_func_context &c) {
+//       DAL_THROW(failure_error, "toto");
+//     }
+//   };
+
+//   struct Xfem_sqrtr : public virtual_Xfem_func {
+//     virtual scalar_type val(const Xfem_func_context &c)
+//     { return 1; }
+//     virtual base_small_vector grad(const Xfem_func_context &c)
+//     { base_small_vector V(2); return V; }
+//     virtual base_matrix hess(const Xfem_func_context &c) {
+//       DAL_THROW(failure_error, "toto");
+//     }
+//   };
+
   struct interpolated_transformation : public virtual_interpolated_func{
     /* Polar transformation and its gradient. */
     base_small_vector trans;
@@ -121,7 +141,7 @@ namespace getfem {
 	for (getfem::mr_visitor it(border_faces); !it.finished(); ++it) {
 	  base_node un = cartesian.normal_of_face_of_convex(it.cv(), it.f());
 	  un /= gmm::vect_norm2(un);
-	  if (un[0] >= 0.8) cartesian.add_face_to_set(0, it.cv(), it.f());
+	  if (un[0] >= 0.8) cartesian.region(0).add(it.cv(), it.f());
 	}
 
 	std::stringstream Qkname;

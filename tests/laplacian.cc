@@ -180,9 +180,9 @@ void laplacian_problem::init(void)
     base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
     un /= gmm::vect_norm2(un);
     if (gmm::abs(un[N-1] - 1.0) < 1.0E-7) { // new Neumann face
-      mesh.add_face_to_set(NEUMANN_BOUNDARY_NUM, i.cv(), i.f());
+      mesh.region(NEUMANN_BOUNDARY_NUM).add(i.cv(), i.f());
     } else {
-      mesh.add_face_to_set(DIRICHLET_BOUNDARY_NUM, i.cv(), i.f());
+      mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
     }
   }
 }
