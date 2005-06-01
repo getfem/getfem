@@ -57,13 +57,13 @@ namespace gmm {
 	}
       }
     }
-    return T(0);
+    return T(1);
   }
 
   template <typename T> T lu_inverse(const dense_matrix<T> &A_) {
     dense_matrix<T>& A = const_cast<dense_matrix<T> &>(A_);
     size_type N = mat_nrows(A);
-    T det(0);
+    T det(1);
     if (N) {
       T *p = &(A(0,0));
       if (N <= 3) {
