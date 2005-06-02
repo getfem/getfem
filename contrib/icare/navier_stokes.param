@@ -34,7 +34,7 @@ FEM_TYPE_P = 'FEM_QK(2,1)';  % Q1 for quadrangles
 DATA_FEM_TYPE = 'FEM_QK(2,2)';
 
 % INTEGRATION = 'IM_TRIANGLE(6)'; % quadrature rule for polynomials up
-                               % to degree 6 on triangles
+                                  % to degree 6 on triangles
 % INTEGRATION = 'IM_TETRAHEDRON(6)'; % quadrature rule for polynomials up
                                % to degree 6 on tetra
 INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,10)'; % Product of two

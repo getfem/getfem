@@ -11,7 +11,7 @@ navier_stokes_SOURCES = navier_stokes.cc navier_stokes.h
 INCLUDES = -I$(top_srcdir)/src -I../../src
 LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@
 
-TESTS = $(top_srcdir)/tests/navier_stokes.pl
+TESTS = $(top_srcdir)/contrib/icare/navier_stokes.pl
 
 EXTRA_DIST = \
 	navier_stokes.pl                  \

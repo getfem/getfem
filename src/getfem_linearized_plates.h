@@ -318,7 +318,8 @@ namespace getfem {
   void asm_coupling_u3theta(const MAT &RM, const mesh_im &mim,
 			    const mesh_fem &mf_u3,
 			    const mesh_fem &mf_theta,
-			    const mesh_region &rg = mesh_region::all_convexes()) {
+			    const mesh_region &rg
+			    = mesh_region::all_convexes()) {
     
     if (mf_u3.get_qdim() != 1 || mf_theta.get_qdim() != 2)
       DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
@@ -335,7 +336,8 @@ namespace getfem {
   void asm_coupling_psitheta(const MAT &RM,  const mesh_im &mim,
 			     const mesh_fem &mf_u3,
 			     const mesh_fem &mf_theta,
-			     const mesh_region &rg = mesh_region::all_convexes()) {
+			     const mesh_region &rg
+			     = mesh_region::all_convexes()) {
     
     if (mf_u3.get_qdim() != 1 || mf_theta.get_qdim() != 2)
       DAL_THROW(std::logic_error, "wrong qdim for the mesh_fem");
