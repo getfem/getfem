@@ -66,6 +66,9 @@
   \newcommand{\sum}{\htmlsym{sum}}
   \newcommand{\int}{{\Large\htmlsym{int}}}
 }
+\texonly{
+  \newcommand{\WEB}[2]{\href{#1}{#2}}
+}
 \T \newcommand{\Div}{\textrm{div}}
 \W \newcommand{\Div}{div}
 \T \newcommand{\Grad}{\textrm{grad}}
@@ -182,7 +185,8 @@ This object is able to store any element in any dimension even if you mix elemen
 
 There is no meshing procedures in \gf  to mesh complex geometries. This is not the goal of this package. But you can easily load a mesh from any format (some procedures are in \filename{getfem_import.h} to load meshes from some public domain mesh generator).\\[0.5cm]
 
-The structure \cpp{getfem::getfem\_mesh } may contains also a description about sub part of a mesh such as a part of the boundary or sub set of elements.
+The structure \cpp{getfem::getfem\_mesh } may contains also a description about a region of the mesh, such as a boundary or a set of elements. This is handled via a container of convexes and convex faces , \cpp{getfem::mesh\_region}.
+
 
 \subsection{Add an element to a mesh}
 Suppose the variable mesh has been declared by
@@ -242,7 +246,7 @@ Specialized functions exist also: \\[0.5cm]
   mesh.add\_prism\_by\_points(N, itp);
 \end{cppcode}
 
-The order of the points in the array of point is not important for simplices. For other element, it is important to respect the order shown in figure \ref{fig:elem}.
+The order of the points in the array of point is not important for simplices (except if you care about the orientation of your simplices). For other element, it is important to respect the order shown in figure \ref{fig:elem}.
 
 \begin{figure}[htb]
   \begin{center}
@@ -283,6 +287,17 @@ For instance, to build a mesh with tetrahedrons for a unit cube with $10×10×10$ 
 \end{cppcode}
 
 Remark: \cpp{base\_node} and \cpp{base\_small\_vector} are almost identical, they are both ``small'' vector classes (they cannot store more than 16 elements), used to describe geometrical points, and geometrical vectors. Their memory footprint is lower than a \cpp{std::vector}.
+
+\subsection{Mesh regions}
+A mesh object can contain many \cpp{getfem::mesh\_region} objects. These objects are containers for a set of convexes and convex faces. They are used to define boundaries, or a partition of the mesh for parallel solvers, etc.
+\begin{cppcode}
+  mesh.region(30).add(3);   // add convex 3 into region 30
+  mesh.region(30).add(4,3); // add face 3 of convex 4 into region 30
+  mesh.sup_convex(4);  // the correspounding entry will be removed from mesh.region(30)
+  for (getfem::mr\_visitor i(mesh.region(30)); !i.finished(); ++i) \{
+    cout << "convex: " << i.cv() << " face:" << i.f() << endl;
+  \}
+\end{cppcode}
 
 \subsection{Methods of the \cpp{getfem_mesh} object}
 
@@ -359,7 +374,7 @@ The list is not exhaustive.
   \cpp{mesh.clear()} & delete all elements and points from the mesh.
   \\ \hline
 
-  \cpp{mesh.optimize\_structure()} & compact the structure. \\ \hline
+  \cpp{mesh.optimize\_structure()} & compact the structure (renumbers points and convexes such that there is not hole in their numbering). \\ \hline
   
   \cpp{mesh.trans\_of\_convex(i)} & geometric transformation of the
   element of index \cpp{i}. return a \cpp{bgeot::pgeometric\_trans}
@@ -381,64 +396,50 @@ The list is not exhaustive.
   \cpp{mesh.convex\_radius\_estimate(ic)} & gives an estimate of the
   radius of element \cpp{ic}. \\ \hline 
   
-  \cpp{i = mesh.add\_convex\_set()} & create a new set of convexes.
-  Return the index \cpp{i} of this set. \\ \hline
-   
-  \cpp{i = mesh.add\_face\_set()} & create a new set of faces
-  (representation of a boundary). Return the index \cpp{i} of this set. \\
-  \hline
-  
-  \cpp{b = mesh.set_exists(i)} & return a boolean. Says if the set of
-  index \cpp{i} exists or not.\\ \hline
-  
-  \cpp{b = mesh.set_is_boundary(i)} & return a boolean. Says if the
-  set of index \cpp{i} is a set of convexes or a set of faces.\\ 
-  \hline
+  \cpp{mesh.region(irg)} & return a \cpp{getfem::mesh\_region}. 
+  The region is stored in the mesh, and can contain a set of convex
+  numbers and or convex faces. \\ \hline
 
-  \cpp{b = mesh.set_is_boundary(i)} & return a boolean. Says if the
-  set of index \cpp{i} is a set of convexes or a set of faces.\\ 
-  \hline
-  
-  \cpp{add_convex_to_set(i, c)} & add the convex of index \cpp{c} to
-  the set of index \cpp{i}.\\ \hline
-  
-  \cpp{add_face_to_set(i, c, f)} & add the face of local index \cpp{f}
-  of the convex of index \cpp{c} to the set of index \cpp{i}.\\ \hline
-  
-  \cpp{b = is_convex_in_set(i, c)} & return a boolean. Says if the set
-  of index \cpp{i} contains the convex of index \cpp{c} or a face of
-  this convex.\\ \hline
-  
-  \cpp{b = is_face_in_set(i, c, f)} & return a boolean. Says if the
-  set of index \cpp{i} contains the face of local index \cpp{f} of the
-  convex of index \cpp{c}.\\ \hline
-  
-  \cpp{convexes_in_set(i)} & return a \cpp{dal::bit\_vector} which
-  represents the indices of all the convexes which are present in the set of
-  index \cpp{i}, or if it is a faces set, the indices of all the
-  convexes having a face in this set.\\ \hline
-  
-  \cpp{faces_of_convex_in_set(i, c)} & return a
-  \cpp{getfem::mesh_cvf_set::face_bitset} which represents the local
-  indices of all the faces of the convex of index \cpp{c} which are
-  present in the set of index \cpp{i}.\\ \hline
-
-  \cpp{sup_face_from_set(i, c, f)} & delete the face of local index \cpp{f}
-  of the convex of index \cpp{c} from the set of index \cpp{i}.\\ \hline
-
-  \cpp{sup_set(size_type b)} & delete the set of index \cpp{i}. \\
-  \hline
-
+  \cpp{mesh.has\_region(irg)} & returns true if the region of index \cpp{irg} has been created.\\ \hline
 \end{ctableau}
 
-\index{DAL!dal::bit\_vector}
-About the object \cpp{dal::bit\_vector}, which is very close to \cpp{std::bit\_vector} but with additional functionalities to represent a set of non negative integers. If \cpp{nn} is declared to be a \cpp{dal::bit\_vector}, the two instructions \cpp{nn.add(6)} or \cpp{nn[6] = true} are equivalent and means that integer 6 is added to the set. In a same way \cpp{nn.sup(6)} or \cpp{nn[6] = false} remove the integer 6 from the set. The instruction \cpp{nn.add(6, 10)} add the whole interval from 6 to 10 to the set (i.e. here 6, 7, 8, 9 and 10). To iterate on a \cpp{dal::bit\_vector}, it is possible to use iterators as usual,  but, most of the time, as this object represents a set of integer, one just wants to iterate on the integers included into the set. This is possible with the operator
-\cpp{i << nn; }\\[0.5cm]
-This operator takes the first index such that \cpp{nn[i] == true} and remove it (it makes nn[i] = false). If \cpp{nn} is empty, the returned value for \cpp{i} is -1. For instance, here is the code to iterate on the points of a mesh and print it to the standard output
+The methods of the convexes/convex faces container \cpp{getfem::mesh\_region} are:
+\begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
+  \cpp{add(ic)} & add the convex of index \cpp{ic} to the region\\ \hline
+  \cpp{add(ic,f)} & add the face number \cpp{f} of the convex \cpp{ic}\\ \hline
+  \cpp{sup(ic)}, \cpp{sup(ic,f)} & remove the convex or the convex face from the region\\ \hline
+  \cpp{is\_in(ic)}, \cpp{is\_in(ic,f)} & return true if the convex (or convex face) is in the region.\\ \hline
+  \cpp{is\_only\_faces()} & return true if the region does not contain any convex.\\ \hline
+  \cpp{is\_only\_convexes()} & return true if the region does not contain any convex face.\\ \hline
+  \cpp{index()} & return a \cpp{dal::bit\_vector} containing the list of convexes which are stored (or whose faces are stored) in the region.\\ \hline
+\end{ctableau}
+
+Iteration over a \cpp{getfem::mesh\_region} should be done with \cpp{getfem::mr\_visitor}:
 \begin{cppcode}
-  dal::bit\_vector nn = mesh.points\_index();
-  bgeot::size\_type i;
-  for (i << nn; i != bgeot::size\_type(-1); i << nn)
+  getfem::mesh\_region &rg = mesh.region(2);
+  for (getfem::mr\_visitor i(rg); !i.finished(); ++i) \{
+    cout << "contains convex " < < i.cv();
+    if (i.is\_face()) cout  << "face " << i.f() << endl;
+  \}
+\end{cppcode}
+
+\index{DAL!dal::bit\_vector} About the object \cpp{dal::bit\_vector},
+which is very close to \cpp{std::bitset} but with additional
+functionalities to represent a set of non negative integers. If
+\cpp{nn} is declared to be a \cpp{dal::bit\_vector}, the two
+instructions \cpp{nn.add(6)} or \cpp{nn[6] = true} are equivalent and
+means that integer 6 is added to the set. In a same way
+\cpp{nn.sup(6)} or \cpp{nn[6] = false} remove the integer 6 from the
+set. The instruction \cpp{nn.add(6, 10)} adds the whole interval from
+6 to 10 to the set (i.e. here 6, 7, 8, 9 and 10). To iterate on a
+\cpp{dal::bit\_vector}, it is possible to use iterators as usual, but,
+most of the time, as this object represents a set of integer, one just
+wants to iterate on the integers included into the set. The simplest way to do that is to use the pseudo-iterator \cpp{dal::bv\_visitor}. 
+
+For instance, here is the code to iterate on
+the points of a mesh and print it to the standard output
+\begin{cppcode}
+  for (dal::bv\_visitor i(mesh.points\_index()); !i.finished(); ++i)
     cout << "Point of index " << i << " of the mesh : " << mesh.points()[i] << endl;
 \end{cppcode}
 The numeration of faces on usual elements is given in figure~\ref{fig:elemf}.
@@ -462,8 +463,7 @@ In \filename{getfem\_mesh.h}, two methods are defined to load meshes from file a
 
   \cpp{mesh.write\_to\_file(const std::string \&name)} & save the mesh into a file.\\ \hline
 
-  \cpp{mesh.read\_from\_file(const std::string \&name)} & load the mesh from a file. \hline
-
+  \cpp{mesh.read\_from\_file(const std::string \&name)} & load the mesh from a file.\\ \hline
 \end{ctableau}
 
 A little tool allows to display a mesh using Gnuplot (and Perl). This tool is present in the directory \filename{contrib/} and of course you need to have a working distribution of Gnuplot installed on your system. This little tool is built when you execute a {\tt make} instruction on the root directory of \gf . So, if \gf  is normally installed on your system, you can change your current directory to \filename{contrib/} and execute the command \\[0.5cm]
@@ -525,7 +525,7 @@ where \cpp{i} is the index of the element and \cpp{ppf} is the descriptor of the
 which set the finite elements for either the convexes listed in the \cpp{bit\_vector cvs}, or all the convexes of the mesh.
 
 The list of all available descriptors of finite element methods is in the file \filename{getfem\_fem.h}. A short description is also given in \cite{BASCOMP}. 
-Descriptors for finite element methods and integration methods are available thanks to the follofing function\\[0.5cm]
+Descriptors for finite element methods and integration methods are available thanks to the following function\\[0.5cm]
 \index{GETFEM!getfem::fem\_descriptor("name")}\index{GETFEM!getfem::pfem}
 \begin{cppcode}
   getfem::pfem ppf = getfem::fem\_descriptor("name of method");
@@ -564,18 +564,20 @@ where \cpp{i} is still the index of the triangle. It is also possible to select 
  mef.set\_finite\_element(mesh.convex\_index(), getfem::fem\_descriptor("FEM\_PK(2, 1)"));
 \end{cppcode}
 selects the method on all the elements of the mesh.\\[0.5cm]
-IMPORTANT: If the finite element represents an unknown for a vectorial problem (such as linear elasticity), one should use
-\cpp{mef.set\_qdim(Q)}\\[0.5cm]
-to set the target dimension (see
-\cite{BASCOMP} for the definition of the target dimension $Q$)\\[0.5cm]
+IMPORTANT: If the finite element represents an unknown for a vectorial
+problem (such as the displacement for linear elasticity), one should
+use \cpp{mef.set\_qdim(Q)} to set the target dimension (see
+\cite{BASCOMP} for the definition of the target dimension $Q$).\\[0.5cm]
 If the target dimension $Q$ is set to a value different of $1$, the
 scalar FEMs (such as $P_k$ fems etc.) are automatically
 ``vectorized'', i.e. each scalar degree of freedom is duplicated $Q$
 times, from the \cpp{mesh\_fem} object point of vue. To sum it up,
 \begin{itemize}
-\item if the fem of the $ith$ element is a real vector FEMs, \cpp{mef.get\_qdim() == mef.fem\_of\_element(i)->target\_dim()} \\ and\\ \cpp{
-    mef.nb\_dof\_of\_element(i) == mef.fem\_of\_element(i).nb\_dof()}.
-\item if the fem has a \cpp{target\_dim} equal to $1$, \cpp{mef.nb\_dof\_of\_element(i) == mef.get\_qdim()*mef.fem\_of\_element(i).nb\_dof()}.
+\item if the fem of the $ith$ element is intrinsically a vector FEM,\\
+ \cpp{mef.get\_qdim() == mef.fem\_of\_element(i)->target\_dim()} 
+\\ and\\ \cpp{mef.nb\_dof\_of\_element(i) == mef.fem\_of\_element(i).nb\_dof()}.
+\item if the fem has a \cpp{target\_dim} equal to $1$, \\
+\cpp{mef.nb\_dof\_of\_element(i) == mef.get\_qdim()*mef.fem\_of\_element(i).nb\_dof()}.
 \end{itemize}
 
 
@@ -814,7 +816,7 @@ something that will be executed for each convex \cpp{cv} of the mesh. The terms
 \cpp{\#1} and \cpp{\#2} refer to the first \cpp{mesh\_fem} and the second one
 (i.e. \cpp{mf} and \cpp{mfdata}).  The instruction \cpp{Z=data(\#2);}
 means that for each convex, the ``tensor'' \cpp{Z} will receive the values of the first data argument provided with \cpp{push\_data},
-at indexes corresponding to the degrees of freedom attached to the convex of the second (\cpp{\#2}) \cpp{mesh_fem} (here, \cpp{Z $\leftarrow$ F[mfdata.ind_dof_of_element(cv)]}. The
+at indexes corresponding to the degrees of freedom attached to the convex of the second (\cpp{\#2}) \cpp{mesh_fem} (here, \cpp{Z = F[mfdata.ind_dof_of_element(cv)]}. The
 part \cpp{V(\#1)+=\ldots} means that the result of the next expression will be
 accumulated into the output vector (provided with \cpp{push\_vec}). Here
 again, \cpp{\#1} means that we will write the result at indexes
@@ -826,7 +828,7 @@ convex: \cpp{comp(Base(\#1).Base(\#2))} is evaluated as a
 part is a reduction operation, \cpp{C(:,j).Z(j)}: each named index
 (here $j$) is summed, i.e. the result is $\sum_j c_{i,j} z_j$.
 
-The integration method used inside \cpp{comp(Base(#1).Base(#2))} is
+The integration method used inside \cpp{comp(Base(\#1).Base(\#2))} is
 the one of the first \cpp{mesh\_fem} referenced (here, the
 \cpp{mesh\_fem \#1}). If you need to use integration methods from another \cpp{mesh\_fem}, you can specify it as the first argument of \cpp{comp}, for example \cpp{comp(\#3, Base(\#1).Grad(\#2))} (New in getfem++-1.7).
 
@@ -838,7 +840,7 @@ An other example is the assembly of the stiffness matrix for a vector Laplacian:
   assem.push_data(A);
   assem.push_mat(SM);
   assem.set("a=data$1(#2);"
-            "M$1(#1,#1)+=sym(comp(vGrad(#1).vGrad(#1).Base(#2))(:,j,k,:,j,k,p).a(p))");
+            "M$1(\#1,\#1)+=sym(comp(vGrad(\#1).vGrad(\#1).Base(\#2))(:,j,k,:,j,k,p).a(p))");
   assem.volumic_assembly();
 \end{cppcode}
 Now the output is written in a sparse matrix, inserted with \cpp{assem.push_mat(SM)}. The \cpp{\$1} in \cpp{M\$1(\#1,\#1)} just indicates that we refer to the first matrix ``pushed'' (it is optional, but if the assembly requires two matrices, the second one must be referred this way). The \cpp{sym} function ensure that the result is symmetric (if this is not done, some round-off errors may cancel the symmetricity). Next, the \cpp{comp} part evaluates a 7D tensor, 
@@ -919,7 +921,7 @@ If there is more than one data array, output array  or output sparse matrix, one
 \section{Incorporate new finite element methods in \gf }
 
 Basically, It is sufficient to describe an element on the reference element, i.e. to describe each base function of each degree of freedom. Vectorial elements and non-equivalent elements are partially supported ... (supported by the finite element kernel but none vector element is implemented for now).\\[0.5cm]
-To be done ... please read \cite{BASCOMP} for more details and see the file \filename{getfem\_fem.C} for practical implementation.
+To be done ... please read \cite{BASCOMP} for more details and see the file \filename{getfem\_fem.cc} for practical implementation.
 
 \section{Incorporate new approximated integration methods in \gf }
 
@@ -1019,7 +1021,11 @@ where \cpp{mef1} is a variable of type \cpp{getfem::mesh\_fem} and describes the
 
 \section{Export and view a solution}
 
-(outdated section, use vtk format and mayavi to see the result, see examples in tests directory)
+If you have installed the Matlab interface, you can simply use \cpp{mesh_fem::write_to_file} and save the solution as a plain text file, and then, load them into Matlab. See the getfem-matlab interface documentation for more details.
+
+Two other file formats are supported for export: the \WEB{http://http://www.kitware.com/}{VTK file format} and the \WEB{http://www.opendx.org/}{OpenDX} file format.
+
+Examples of use can be found in the examples of the tests directory. 
 
 \subsection{Mesh slices}
 Getfem++ provides a \cpp{getfem::mesh_slice} class,
@@ -1028,7 +1034,7 @@ plane, half-space, cylinder, sphere, isosurfaces, union or
 intersection of slices, etc..). A slice object may be considered as a
 P1 discontinuous \cpp{mesh_fem} with fast interpolation ability.  See
 \filename{getfem_mesh_slices.h} for more information, and the
-\filename{gf_slice.C} file of the getfem-matlab interface for an
+\filename{gf_slice.cc} file of the getfem-matlab interface for an
 example of use.
 
 \section{Interpolation on different meshes}
@@ -1097,7 +1103,7 @@ model state variable.
 The Scalar elliptic brick is a basic brick representing a term such as\\
 $$ -div(k\nabla u) = ... $$
 
-where $u$ is a scalar field and $k$ is a positive scalar or a symmetric positive definite order two tensor field. There is two constructors for this brick. The first one is for constant scalar coefficient $k$:
+where $u$ is a scalar field and $k$ is a positive scalar or a symmetric positive definite order two tensor field. There are two constructors for this brick. The first one is for constant scalar coefficient $k$:
 \begin{alltt}
   getfem::mdbrick_scalar_elliptic<MODEL_STATE> brick(mim, mf_u, mf_data, k);
 \end{alltt}
@@ -1119,7 +1125,7 @@ The following additional methods are available on this brick:
   explanation). Set the coefficient \cpp{k}.  \\ \hline
 
   \cpp{brick.get_solution(MS, V)} & After a solve, extract the solution of the
-  model state variable MS and put it in the vector V. \hline
+  model state variable MS and put it in the vector V.\\ \hline
 \end{ctableau}
 ~\\
 
@@ -1137,8 +1143,7 @@ where \cpp{problem} is the problem on which the source term will be added (a sca
 The following additional methods are available on this brick:
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
 
-  \cpp{brick.set_rhs(F)} & change the value of the source term.  \hline
-
+  \cpp{brick.set_rhs(F)} & change the value of the source term.  \\ \hline
 \end{ctableau}
 
 
@@ -1154,8 +1159,7 @@ where  \cpp{problem} is the problem on which the Dirichlet condition will be add
 The following additional methods are available on this brick:
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
 
-  \cpp{brick.set_rhs(F)} & change the value of the data. \hline
-  
+  \cpp{brick.set_rhs(F)} & change the value of the data. \\ \hline  
 \end{ctableau}
 
 \subsection{Example of a complete Poisson problem}
@@ -1205,7 +1209,7 @@ $$ \ \ \ \sigma = \lambda\mbox{tr}(\varepsilon(u))I + 2\mu\varepsilon(u); \ \ \ 
 
 $\varepsilon(u)$ is the small strain tensor, $\sigma$ is the stress tensor, $\lambda$ and $\mu$ are the Lamé coefficients. This represents the system of linearized isotropic elasticity. It can also be used with $\lambda=0$ together with the linear incompressible brick to build the Stokes problem.
 
-There is two constructors for this brick. The first one is for constant Lamé coefficients:
+There are two constructors for this brick. The first one is for constant Lamé coefficients:
 \begin{alltt}
   getfem::mdbrick_isotropic_linearized_elasticity<MODEL_STATE>
      brick(mim, mf_u, mf_data, lambda, mu);
@@ -1226,9 +1230,9 @@ The following additional methods are available on this brick:
   \cpp{MODEL_STATE::vector_type}. Set the coefficients in the non-homogeneous case.  \\ \hline
 
   \cpp{brick.get_solution(MS, V)} & After a solve, extract the solution of the
-  model state variable MS and put it in the vector V. \hline
+  model state variable MS and put it in the vector V.\\ \hline
 \end{ctableau}
-The program \cpp{elastostatic.C} in the tests directory of Getfem++ distribution can be taken as a model of use of this brick.
+The program \cpp{elastostatic.cc} in the tests directory of Getfem++ distribution can be taken as a model of use of this brick.
 
 \subsection{Qu term brick}
 This brick allows to add boundary conditions of Fourier-Robin type like\\
@@ -1249,14 +1253,13 @@ where \cpp{problem} is the problem on which the condition will be added, \cpp{mf
 The following additional methods are available on this brick:
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
 
-  \cpp{brick.set_Q(q)} & change the value of Q. \cpp{q} is either a real value or a vectors of type \cpp{MODEL_STATE::vector_type}. \hline
-  
+  \cpp{brick.set_Q(q)} & change the value of Q. \cpp{q} is either a real value or a vectors of type \cpp{MODEL_STATE::vector_type}. \\ \hline 
 \end{ctableau}
 
 \subsection{Helmholtz brick}
 This brick represent the complex or real Helmholtz problem \\
 $$ \Delta u + k^2 u = 0; $$
-where $k$ the wave number is a real or complex value. For a complex version, a complex model state variable has to be used (for example \cpp{getfem::standard_complex_model_state}, see \cpp{helmholtz.C} in the tests directory)
+where $k$ the wave number is a real or complex value. For a complex version, a complex model state variable has to be used (for example \cpp{getfem::standard_complex_model_state}, see \cpp{helmholtz.cc} in the tests directory)
 
 The constructor is
 \begin{alltt}
@@ -1271,7 +1274,7 @@ The following additional methods are available on this brick:
   \cpp{MODEL_STATE::vector_type}.  \\ \hline
 
   \cpp{brick.get_solution(MS, V)} & After a solve, extract the solution of the
-  model state variable MS and put it in the vector V. \hline
+  model state variable MS and put it in the vector V. \\ \hline
 \end{ctableau}
 
 \subsection{linear incompressibility (or nearly incompressibility) brick}
@@ -1297,7 +1300,7 @@ The following additional methods are available on this brick:
 \begin{ctableau}{|m{0.4\linewidth}|m{0.55\linewidth}|}{ll}\hline
   \cpp{brick.set_coeff(epsilon)} & with \cpp{epsilon} either a real or
   a vector of type \cpp{MODEL_STATE::vector_type}, set the penalization
-  parameter in the nearly incompressible case.  \hline
+  parameter in the nearly incompressible case. \\ \hline
 \end{ctableau}
 ~\\
 
@@ -1328,7 +1331,7 @@ For instance, the following program defines a Stokes problem with a source term 
   stokes.get_solution(MS, U);
 \end{cppcode}
 
-A example for a nearly incompressibility condition can be found in the program \cpp{elastostatic.C} in tests directory.
+A example for a nearly incompressibility condition can be found in the program \cpp{elastostatic.cc} in tests directory.
 
 \subsection{Small displacement plasticity brick}
 This brick modelizes small-displacement quasi-static plasticity problems. It is defined in \cpp{getfem_plasticity.h}
@@ -1348,7 +1351,7 @@ A brick behaves like a black-box, that is defined by its constructor. A construc
 \end{itemize}
 
 
-Using that constructor, you can build the problem like with any other bricks, adding the Volumic, Neumann and Dirichlet bricks as usual (look at elastostatic.C and plasticity.C in tests directory for examples), and call the solver with \cpp{getfem::standard_solve(MS, final_model, iter);}.
+Using that constructor, you can build the problem like with any other bricks, adding the Volumic, Neumann and Dirichlet bricks as usual (look at \cpp{elastostatic.cc} and \cpp{plasticity.cc} in tests directory for examples), and call the solver with \cpp{getfem::standard_solve(MS, final_model, iter);}.
 
 
 Once it's done, you need to know what the results are. 
@@ -1358,9 +1361,9 @@ You can know the displacement using \cpp{brick.get_solution(MS, U);} where MS is
 To get the constraints, you can use \cpp{brick.compute_constraints(MS);} followed by \cpp{brick.get_proj(proj);}, where proj is a \cpp{std::vector<std::vector<scalar_type> >}.
 
 \subsection{Contact and friction conditions brick}
-(to be documented, see the test program dynamic_friction.C)
+(to be documented, see the test program \cpp{dynamic_friction.cc})
 \subsection{Linearized plate brick}
-(to be documented, see the test program plate.C)
+(to be documented, see the test program \cpp{plate.cc})
 \subsection{Large strain elasticity brick}
 This brick represent a large strain elasticity problem. It is defined in \cpp{getfem_nonlinear_elasticity.h}
 
@@ -1378,7 +1381,7 @@ The Saint-Venant Kirchhoff law is a linearized law defined with the two Lamé coe
 
 \cpp{mf_u} and \cpp{mf_data} are two valid fem descriptor on the same mesh. \cpp{mf_u} describe the finite element method used for the unknown and \cpp{mf_data} the finite element method used for the parameters of the selected hyperelastic law. \cpp{k} is a vector of type \cpp{MODEL_STATE::vector_type} defining the parameters on \cpp{mf_data}.
 
-The program \cpp{nonlinear_elastostatic.C} in tests directory is an example of use of this brick with or without an incompressibility condition.
+The program \cpp{nonlinear_elastostatic.cc} in tests directory is an example of use of this brick with or without an incompressibility condition.
 
 \subsection{Large strain incompressibility brick}
 This brick allows to add an incompressibility condition in a large strain problem of type\\
@@ -1393,7 +1396,7 @@ The constructor is:
 
 where  \cpp{problem} is the problem on which the incompressibility condition is applied, \cpp{mf_p} is the finite element description for the pressure (be aware that the LBB inf-sup condition has to be satisfied between the \cpp{main_mesh_fem()} and \cpp{mf_p}. \cpp{num_fem} is an optional parameter allowing to choose a fem is the problem has several fems.
 
-The program \cpp{nonlinear_elastostatic.C} in tests directory is an example of use of this brick.
+The program \cpp{nonlinear_elastostatic.cc} in tests directory is an example of use of this brick.
 
 \section{Catch errors}
 \index{errors}
