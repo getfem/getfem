@@ -303,8 +303,8 @@ struct crack_problem {
   getfem::spider_fem *spider;
   getfem::mesh_fem mf_us;
 
-  //getfem::mesh_fem& mf_u() { return mf_u_sum; }
-  getfem::mesh_fem& mf_u() { return mf_us; }
+  getfem::mesh_fem& mf_u() { return mf_u_sum; }
+  // getfem::mesh_fem& mf_u() { return mf_us; }
   
 
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
@@ -544,6 +544,8 @@ bool crack_problem::solve(plain_vector &U) {
   getfem::mdbrick_isotropic_linearized_elasticity<>
     ELAS(mim, mf_u(), mf_coef, mixed_pressure ? 0.0 : lambda, mu);
 
+  cout << "Stifness matrix: " << ELAS.stiffness_matrix() << endl;
+
   getfem::mdbrick_abstract<> *pINCOMP;
   if (mixed_pressure)
     pINCOMP = new getfem::mdbrick_linear_incomp<>(ELAS, mf_p, mf_coef,
@@ -661,7 +663,7 @@ int main(int argc, char *argv[]) {
     
     {
 
-      test_projection_exact_sol(p.mim, p.mf_u(), p.exact_sol.mf, p.exact_sol.U, U);
+      // test_projection_exact_sol(p.mim, p.mf_u(), p.exact_sol.mf, p.exact_sol.U, U);
 
 
       getfem::getfem_mesh mcut;
