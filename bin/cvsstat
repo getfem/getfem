@@ -1,4 +1,4 @@
-#!/bin/tcsh
+#!/bin/csh
 
 cvs status |& grep "Needs"
 cvs status |& grep "Locally"

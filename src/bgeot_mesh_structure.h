@@ -296,6 +296,12 @@ namespace bgeot
       {}
   }; 
 
+  /**
+     gives a container with the indexes of all elements in 'mesh'
+     having a certain set of points for vertices. The set of points is
+     describe by an iterator 'ipts' on an array and the number of
+     points 'nb'.
+  */
   template<class ITER> mesh_convex_with_points_ind_ct<ITER>
     convex_with_points(const mesh_structure &ms, short_type nb, ITER ipts)
   {
@@ -315,8 +321,13 @@ namespace bgeot
   mesh_face_convex_ind_ct face_of_convex(const mesh_structure &ms, 
 					 size_type ic, short_type iff);
 
+  /**
+     gives a container with the indexes of all elements in 'mesh'
+     having the common face of local index 'f' of element 'ic' (except
+     element 'ic' itself).
+  */
   mesh_face_convex_ind_ct neighbour_of_convex(const mesh_structure &ms, 
-					      size_type ic, short_type iff);
+					      size_type ic, short_type f);
 
   /* ******************************************************************** */
   /* template member functions of mesh_structure.                         */

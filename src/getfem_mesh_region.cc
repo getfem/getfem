@@ -29,6 +29,7 @@ namespace getfem {
     else return face_bitset();
   }
 
+  /* may be optimized .. */
   const dal::bit_vector &mesh_region::index() const {
     rp().index_.clear();
     for (map_t::const_iterator it = rp().m.begin(); 
@@ -42,7 +43,7 @@ namespace getfem {
     for (dal::bv_visitor i(bv); !i.finished(); ++i) add(i);
   }
 
-  void mesh_region::add(size_type cv, size_type f) { 
+  void mesh_region::add(size_type cv, size_type f) {
     wp().m[cv].set(f+1,1); 
     touch_parent_mesh();
   }
@@ -143,7 +144,8 @@ namespace getfem {
 		"Expecting a set of convexes or a set of faces, but not a mixed set");
   }
 
-  mesh_region::visitor::visitor(const mesh_region &s, const getfem_mesh &m) : cv_(size_type(-1)), f_(size_type(-1)), finished_(false) {
+  mesh_region::visitor::visitor(const mesh_region &s, const getfem_mesh &m) : 
+    cv_(size_type(-1)), f_(size_type(-1)), finished_(false) {
     s.from_mesh(m);
     init(s);
   }
