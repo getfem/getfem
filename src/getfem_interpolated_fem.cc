@@ -112,8 +112,10 @@ namespace getfem {
 	if (gpid.flags) {
 	  size_type nbd = mf.fem_of_element(gpid.elt)->nb_dof(gpid.elt);
 	  gpid.local_dof.resize(nbd);
-	  for (i = 0; i < nbd; ++i)
-	    gpid.local_dof[i] = ind_dof[mf.ind_dof_of_element(gpid.elt)[i]];
+	  for (i = 0; i < nbd; ++i) {
+	    size_type ndof = mf.ind_dof_of_element(gpid.elt)[i];
+	    gpid.local_dof[i] = dofs.is_in(ndof) ? ind_dof[ndof] : size_type(-1);
+	  }
 	}
       }
       alldofs |= dofs;

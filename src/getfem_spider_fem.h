@@ -50,26 +50,6 @@ namespace getfem {
     }
   };
 
-//   struct Xfem_sqrtr : public virtual_Xfem_func {
-//     virtual scalar_type val(const Xfem_func_context &c)
-//     { return -::pow(c.xreal[0], 3.0); }
-//     virtual base_small_vector grad(const Xfem_func_context &c)
-//     { base_small_vector V(2); V[0] = 45*(c.xreal[0]); return V; }
-//     virtual base_matrix hess(const Xfem_func_context &c) {
-//       DAL_THROW(failure_error, "toto");
-//     }
-//   };
-
-//   struct Xfem_sqrtr : public virtual_Xfem_func {
-//     virtual scalar_type val(const Xfem_func_context &c)
-//     { return 1; }
-//     virtual base_small_vector grad(const Xfem_func_context &c)
-//     { base_small_vector V(2); return V; }
-//     virtual base_matrix hess(const Xfem_func_context &c) {
-//       DAL_THROW(failure_error, "toto");
-//     }
-//   };
-
   struct interpolated_transformation : public virtual_interpolated_func{
     /* Polar transformation and its gradient. */
     base_small_vector trans;
