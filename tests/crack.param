@@ -33,7 +33,7 @@ DATA_FEM_TYPE = 'FEM_QK(2,1)';
                                     % to degree 6 on tetra
 SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 5)';
 %INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 10)';
-INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 4), 40)';
+INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 4), 5)';
 %INTEGRATION = 'IM_EXACT_SIMPLEX(2)'; % exact integration on triangles
 %INTEGRATION = 'IM_NC(2,6)';     % newton-cotes of degree 6 on triangles
 
@@ -49,7 +49,7 @@ ENRICHMENT_OPTION = 4;  % 0 = Pas d'enrichissement
 
 RADIUS_ENR_AREA = 0.3;
 CUTOFF=0.5;
-SPIDER_RADIUS =  0.05;
+SPIDER_RADIUS =  0.3;
 SPIDER_NR =  10;         % size of the cartesian mesh in r for spider fem
 SPIDER_NTHETA = 10;      % size of the cartesian mesh in theta for spider fem
 SPIDER_K=1;             % order of the  spider fem 
