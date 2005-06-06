@@ -11,7 +11,7 @@ LAMBDA = 1.0;   	% Lamé coefficient.
 %MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 MESH_TYPE = 'GT_LINEAR_QK(2)'; % linear rectangles
 %MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
-NX = 2;            	          % space step.
+NX = 10;            	          % space step.
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 
 %FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2, 2)';
@@ -33,7 +33,7 @@ DATA_FEM_TYPE = 'FEM_QK(2,1)';
                                     % to degree 6 on tetra
 SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 5)';
 %INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 10)';
-INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 4), 5)';
+INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 4), 40)';
 %INTEGRATION = 'IM_EXACT_SIMPLEX(2)'; % exact integration on triangles
 %INTEGRATION = 'IM_NC(2,6)';     % newton-cotes of degree 6 on triangles
 
@@ -41,7 +41,7 @@ INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 4), 5)';
 %INTEGRATION = 'IM_TRIANGLE(6)';
 
 ADDITIONAL_CRACK = 0;
-ENRICHMENT_OPTION = 3;  % 0 = Pas d'enrichissement
+ENRICHMENT_OPTION = 4;  % 0 = Pas d'enrichissement
 		        % 1 = global functions with cutoff
 	                % 2 = standard XFEM on a fixed zone
 			% 3 = spider fem alone
@@ -49,9 +49,9 @@ ENRICHMENT_OPTION = 3;  % 0 = Pas d'enrichissement
 
 RADIUS_ENR_AREA = 0.3;
 CUTOFF=0.5;
-SPIDER_RADIUS =  0.2;
-SPIDER_NR =  2;         % size of the cartesian mesh in r for spider fem
-SPIDER_NTHETA = 2;      % size of the cartesian mesh in theta for spider fem
+SPIDER_RADIUS =  0.05;
+SPIDER_NR =  10;         % size of the cartesian mesh in r for spider fem
+SPIDER_NTHETA = 10;      % size of the cartesian mesh in theta for spider fem
 SPIDER_K=1;             % order of the  spider fem 
 
 

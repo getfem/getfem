@@ -56,7 +56,6 @@ namespace bgeot {
       DAL_THROW(dal::failure_error, "unable to compute B\n");
     } else {
       size_type P = pgt_->structure()->dim();
-      B_.resize(N(), P);
       base_matrix K(N(),P), CS(P,P);
       if (have_pgp()) {
 	gmm::mult(G(), pgp_->grad(ii_), K);
