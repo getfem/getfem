@@ -544,8 +544,6 @@ bool crack_problem::solve(plain_vector &U) {
   getfem::mdbrick_isotropic_linearized_elasticity<>
     ELAS(mim, mf_u(), mf_coef, mixed_pressure ? 0.0 : lambda, mu);
 
-  //cout << "Stifness matrix: " << ELAS.stiffness_matrix() << endl;
-
   getfem::mdbrick_abstract<> *pINCOMP;
   if (mixed_pressure)
     pINCOMP = new getfem::mdbrick_linear_incomp<>(ELAS, mf_p, mf_coef,
@@ -587,49 +585,6 @@ bool crack_problem::solve(plain_vector &U) {
 
   return (iter.converged());
 }
-
-template<typename VEC, typename VEC2>
-static void test_projection_exact_sol(const getfem::mesh_im &mim,
-				      const getfem::mesh_fem &mf_u,
-				      const getfem::mesh_fem &mf_exact,
-				      const VEC& Uexact, VEC2 &U) {
-  sparse_matrix M(mf_u.nb_dof(),mf_u.nb_dof());
-  asm_mass_matrix(M, mim, mf_u);
-  plain_vector B(mf_u.nb_dof());
-  asm_source_term(B, mim, mf_u, mf_exact, Uexact);
-
-  if (mf_u.nb_dof() < 10) 
-    cout << "M = " << M << "\nB=" << B << "\n";
-  gmm::iteration iter(1e-9);
-  gmm::cg(M,U,B,gmm::identity_matrix(),iter);
-  cout << "|Uproj|=" << gmm::vect_norm2(U) << "\n";
-
-  scalar_type sum=0;
-  for (size_type i = 0; i < M.nrows(); i+=2) { 
-    scalar_type slig = 0;
-    for (size_type l = 0; l < M.nrows(); l++) {
-      slig = slig + M(i, l);
-    }
-    sum += slig;
-  }
-  cout << endl << " sum: " << sum << endl << endl;
-
-  getfem::mesh_fem mf(mf_u.linked_mesh(),2); 
-  mf.set_classical_finite_element(1);
-  sparse_matrix Q(mf_u.nb_dof(),mf_u.nb_dof());
-  asm_stiffness_matrix_for_homogeneous_laplacian_componentwise(Q, mim, mf_u);
-  sum=0;
-  for (size_type i = 0; i < Q.nrows(); i+=2) {
-    scalar_type slig = 0;
-    for (size_type l = 0; l < Q.ncols(); l++) {
-      slig = slig + Q(i, l);
-    }
-    sum += slig;
-    //cout << "i=" <<i<< " : " << slig << "\n";
-  }
-  cout << endl << " sum2: " << sum << endl << endl;
-  
-}
   
 /**************************************************************************/
 /*  main program.                                                         */
@@ -654,29 +609,7 @@ int main(int argc, char *argv[]) {
     plain_vector U(p.mf_u().nb_dof());
     if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
 
-
-    // for (size_type ii = 0; ii < p.mf_u().nb_dof(); ++ii)
-    // if (!(ii % 2)) {
     {
-      //cout << "voici la fonction de base " << ii << endl;
-      //gmm::clear(U);
-	//U[4] = U[0] = 1.0;
-
- //    for (size_type i = 0; i < p.mf_u().nb_dof(); ++i) {
-//       size_type cv = p.mf_u().first_convex_of_dof(i);
-//       size_type j = p.mf_u().ind_in_first_convex_of_dof(i);
-//       if ((p.mf_u().fem_of_element(cv)->dof_types()[j/2]) != getfem::global_dof(2))
-//       // if (!(getfem::dof_xfem_index(p.mf_u().fem_of_element(cv)->dof_types()[j/2]) > 1500))
-// 	U[i] = 0;
-//       else 
-// 	cout << "An xfem index : " << getfem::dof_xfem_index(p.mf_u().fem_of_element(cv)->dof_types()[j/2]) << " : " << p.mf_u().point_of_dof(i) << endl;
-//     }
-    
- 
-
-      //test_projection_exact_sol(p.mim, p.mf_u(), p.exact_sol.mf, p.exact_sol.U, U);
-      //cout << "U = " << U << "\n";
-
       getfem::getfem_mesh mcut;
       p.mls.global_cut_mesh(mcut);
       getfem::mesh_fem mf(mcut, p.mf_u().get_qdim());
@@ -707,8 +640,7 @@ int main(int argc, char *argv[]) {
 			    p.exact_sol.U, EXACT);
 
 
-      if (p.PARAM.int_value("VTK_EXPORT"))
-      {
+      if (p.PARAM.int_value("VTK_EXPORT")) {
 	cout << "export to " << p.datafilename + ".vtk" << "..\n";
 	getfem::vtk_export exp(p.datafilename + ".vtk",
 			       p.PARAM.int_value("VTK_EXPORT")==1);
@@ -737,11 +669,7 @@ int main(int argc, char *argv[]) {
       cout << "ex = " << p.exact_sol.U << "\n";
       cout << "U  = " << gmm::sub_vector(U, gmm::sub_interval(0,8)) << "\n";
 
-
-    //getchar();
     }
-
-
 
   }
   DAL_STANDARD_CATCH_ERROR;
