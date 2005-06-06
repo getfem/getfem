@@ -1499,6 +1499,31 @@ void inline_red_test(const getfem::mesh_im &mim, const getfem::mesh_fem &mf1, co
   assert(gmm::abs(v1[0]-v2[0]) < 1e-14);
 }
 
+void test_gradgt(const getfem::mesh_im &mim, const getfem::mesh_fem &mf1) {
+  std::vector<scalar_type> U(mf1.nb_dof()); gmm::fill_random(U);
+  getfem::generic_assembly assem;    
+  assem.set(//"u=data(#1);"
+            "V()+=comp()"); //Grad(#1)(:,d).GradGT()(d,:))(i,:);");
+  assem.push_mi(mim);
+  //assem.push_mf(mf1);
+  //assem.push_mf(mf2);
+  assem.push_data(U);
+  std::vector<scalar_type> v1(1);
+  assem.push_vec(v1);
+  assem.assembly();
+  scalar_type vref=v1[0];
+  v1[0]=0;
+  
+  getfem::generic_assembly assem2;    
+
+  assem2.set("V()+=comp(GradGT().GradGTInv())(i,k,k,j); print comp(GradGT()); print comp(GradGTInv()); ");
+  assem2.push_mi(mim);
+  assem2.push_vec(v1);
+  assem2.assembly();
+  cout << "test_gradgt: V1=" << v1[0] << " ==?== " << vref << "\n";
+  assert(std::abs(v1[0]-vref*mim.linked_mesh().dim()) < 1e-6);
+}
+
 #endif /* ASSEMBLY_CHECK */
 
 int main(int argc, char *argv[])
@@ -1543,7 +1568,7 @@ int main(int argc, char *argv[])
      getfem::mesh_im mim(m);
      init_mesh_im(mim, true);
      inline_red_test(mim,mf,mfd);
-
+     test_gradgt(mim,mf);
      run_tests(mim,mf,mfq,mfd,mfdq,do_new,do_old,tests,1,1);
    }
 

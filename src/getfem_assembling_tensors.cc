@@ -365,7 +365,7 @@ namespace getfem {
 				     
     ATN_tensor *data;
     std::vector<const mesh_fem*> auxmf; /* used only by nonlinear terms */
-    typedef enum { BASE=1, GRAD=2, HESS=3, NORMAL=4, NONLIN=5, DATA=6 } op_type;
+    typedef enum { BASE=1, GRAD=2, HESS=3, NORMAL=4, GRADGT=5, GRADGTINV=6, NONLIN=7, DATA=8 } op_type;
     op_type op; /* the numerical values indicates the number 
 		   of dimensions in the tensor */
     bool vectorize; /* true if vectorization was required (adds
@@ -430,6 +430,13 @@ namespace getfem {
 	assert(&owner->get_im());
 	assert(owner->get_im().linked_mesh().dim() != dim_type(-1));
 	rng.push_back(owner->get_im().linked_mesh().dim());
+	break;
+      case GRADGT:
+      case GRADGTINV:
+	assert(pmf==0);
+	assert(&owner->get_im());
+	rng.push_back(owner->get_im().linked_mesh().dim()); // N
+	rng.push_back(owner->get_im().linked_mesh().structure_of_convex(cv)->dim()); // P
 	break;
       default:
 	unsigned d = 0;
@@ -574,16 +581,19 @@ namespace getfem {
 
     /* called when the FEM has changed */
     void update_pmat_elem(size_type cv) {
-      pme = NULL;
+      pme = 0;
       for (size_type i=0; i < mfcomp.size(); ++i) {
         if (mfcomp[i].op == mf_comp::DATA) continue;
 	pfem fem = (mfcomp[i].pmf ? mfcomp[i].pmf->fem_of_element(cv) : NULL);
-	pmat_elem_type pme2 = NULL;
+	pmat_elem_type pme2 = 0;
 	switch (mfcomp[i].op) {
 	  case mf_comp::BASE: pme2 = mat_elem_base(fem); break;
 	  case mf_comp::GRAD: pme2 = mat_elem_grad(fem); break;
 	  case mf_comp::HESS: pme2 = mat_elem_hessian(fem); break;
-  	case mf_comp::NORMAL: pme2 = mat_elem_unit_normal(); break;
+	  case mf_comp::NORMAL: pme2 = mat_elem_unit_normal(); break;
+	  case mf_comp::GRADGT:
+	  case mf_comp::GRADGTINV: 
+	    pme2 = mat_elem_grad_geotrans(mfcomp[i].op == mf_comp::GRADGTINV); break;
 	  case mf_comp::NONLIN: {
 	      std::vector<pfem> ftab(1+mfcomp[i].auxmf.size()); 
 	      ftab[0] = fem;
@@ -593,10 +603,11 @@ namespace getfem {
 	    } break;
           case mf_comp::DATA: /*ignore*/;
         } 
-        if (pme == NULL) pme = pme2;
+        if (pme == 0) pme = pme2;
         else pme = mat_elem_product(pme, pme2);
       }
-      if (pme == NULL) ASM_THROW_ERROR("no Base() or Grad() or etc!");
+      
+      if (pme == 0) pme = mat_elem_empty(); //ASM_THROW_ERROR("no Base() or Grad() or etc!");
     }
 
    
@@ -614,6 +625,10 @@ namespace getfem {
 	tsz *= tref.card();
 	d += tref.ndim();
       } else if (mc.op == mf_comp::NORMAL) {
+	tsz = add_dim(rng, d++, tsz, tref);
+      } else if (mc.op == mf_comp::GRADGT || 
+		 mc.op == mf_comp::GRADGTINV) {
+	tsz = add_dim(rng, d++, tsz, tref);
 	tsz = add_dim(rng, d++, tsz, tref);
       } else {
         size_type target_dim = mc.pmf->fem_of_element(cv)->target_dim();
@@ -691,7 +706,7 @@ namespace getfem {
 	 changes of pgt or integration method does not affect shape
 	 (only the mat_elem) */
       cv_shape_update = cv;
-      shape_updated_ = false;
+      shape_updated_ = (pme == 0); //false;
       for (size_type i=0; i < nchilds(); ++i)
         shape_updated_ = shape_updated_ || child(i).is_shape_updated();
       for (size_type i=0; shape_updated_ == false && i < mfcomp.size(); ++i) {
@@ -1110,8 +1125,10 @@ namespace getfem {
     bool in_data = false;
     /* the first optinal argument is the "main" mesh_im, i.e. the one
        whose integration methods are used, (and whose linked_mesh is
-       used for mf_comp::NORMAL computation). If not given, then the first mesh_im
-       pushed is used (then expect problems when assembling simultaneously on two different meshes).
+       used for mf_comp::NORMAL, mf_comp::GRADGT etc computations). If
+       not given, then the first mesh_im pushed is used (then expect
+       problems when assembling simultaneously on two different
+       meshes).
     */
     if (tok_type() == IMREF) {
       if (tok_imref_num() >= imtab.size()) 
@@ -1122,6 +1139,7 @@ namespace getfem {
       what.set_im(*imtab[0]);
     }
     do {
+      if (tok_type() == CLOSE_PAR) break;
       if (tok_type() != IDENT) ASM_THROW_PARSE_ERROR("expecting Base or Grad or Hess, Normal, etc..");
       std::string f = tok(); 
       const mesh_fem *pmf = 0;
@@ -1142,6 +1160,15 @@ namespace getfem {
 	advance();
 	accept(OPEN_PAR,"expecting '('"); accept(CLOSE_PAR,"expecting ')'");
 	pmf = 0; what.push_back(mf_comp(&what, pmf, mf_comp::NORMAL, false));
+      } else if (f.compare("GradGT") == 0 ||
+		 f.compare("GradGTInv") == 0) {
+	advance();
+	accept(OPEN_PAR,"expecting '('"); accept(CLOSE_PAR,"expecting ')'");
+	pmf = 0; 
+	what.push_back(mf_comp(&what, pmf, 
+			       f.compare("GradGT") == 0 ?
+			       mf_comp::GRADGT : 
+			       mf_comp::GRADGTINV, false));
       } else {
         if (vars.find(f) != vars.end()) {
           what.push_back(mf_comp(&what, vars[f]));
@@ -1569,13 +1596,13 @@ namespace getfem {
   /* reorder the convexes in order to minimize the number of
      shape modifications during the assembly (since this can be
      very expensive) */
-  static void get_convex_order(const std::deque<const mesh_fem *>& mftab, 
+  static void get_convex_order(const dal::bit_vector& cvlst,
+			       const std::deque<const mesh_fem *>& mftab, 
 			       const dal::bit_vector& candidates, 
 			       std::vector<size_type>& cvorder) {
     cvorder.reserve(candidates.card()); cvorder.resize(0);
-    const getfem_mesh& m = mftab[0]->linked_mesh();      
     for (dal::bv_visitor cv(candidates); !cv.finished(); ++cv) {
-      if (m.convex_index().is_in(cv)) {
+      if (cvlst.is_in(cv)) {
 	bool ok = true;
         for (size_type i=0; i < mftab.size(); ++i)
           if (!mftab[i]->convex_index().is_in(cv)) {
@@ -1591,7 +1618,7 @@ namespace getfem {
   }
   
   void generic_assembly::consistency_check() {
-    if (mftab.size() == 0) ASM_THROW_ERROR("no mesh_fem for assembly!");
+    //if (mftab.size() == 0) ASM_THROW_ERROR("no mesh_fem for assembly!");
     if (imtab.size() == 0) ASM_THROW_ERROR("no mesh_im (integration methods) given for assembly!");
     const getfem_mesh& m = imtab[0]->linked_mesh();
     for (unsigned i=0; i < mftab.size(); ++i) {
@@ -1636,11 +1663,11 @@ namespace getfem {
 
   void generic_assembly::assembly(const mesh_region &r) {
     std::vector<size_type> cv;
-    r.from_mesh(imtab[0]->linked_mesh());
+    r.from_mesh(imtab.at(0)->linked_mesh());
     r.error_if_not_homogeneous();
 
     consistency_check();
-    get_convex_order(mftab, r.index(), cv);
+    get_convex_order(imtab.at(0)->linked_mesh().convex_index(), mftab, r.index(), cv);
     parse();
     for (size_type i=0; i < cv.size(); ++i) {
       mesh_region::face_bitset nf = r[cv[i]];

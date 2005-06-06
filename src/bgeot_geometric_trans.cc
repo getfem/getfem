@@ -56,21 +56,33 @@ namespace bgeot {
       DAL_THROW(dal::failure_error, "unable to compute B\n");
     } else {
       size_type P = pgt_->structure()->dim();
-      base_matrix K(N(),P), CS(P,P);
-      if (have_pgp()) {
-	gmm::mult(G(), pgp_->grad(ii_), K);
-      } else {
-	base_matrix pc(pgt()->nb_points(), P); 
-	pgt()->gradient(xref(), pc);
-	gmm::mult(G(),pc,K);
-      }
+      base_matrix CS(P,P);
       if (P != N()) {
-	gmm::mult(gmm::transposed(K), K, CS);/*O*/
+	gmm::mult(gmm::transposed(K()), K(), CS);/*O*/
 	J_ = ::sqrt(gmm::lu_det(CS));
       } else {
-	J_ = gmm::abs(gmm::lu_det(K));
+	J_ = gmm::abs(gmm::lu_det(K()));
       }
     }
+  }
+
+  const base_matrix& geotrans_interpolation_context::K() const {
+    if (!have_K()) {
+      if (!have_G() || !have_pgt()) {
+	DAL_THROW(dal::failure_error, "unable to compute K\n");
+      } else {
+	size_type P = pgt_->structure()->dim();
+	K_.resize(N(), P);
+	if (have_pgp()) {
+	  gmm::mult(G(), pgp_->grad(ii_), K_);
+	} else {
+	  base_matrix pc(pgt()->nb_points(), P); 
+	  pgt()->gradient(xref(), pc);
+	  gmm::mult(G(),pc,K_);
+	}
+      }
+    }
+    return K_;
   }
 
   const base_matrix& geotrans_interpolation_context::B() const {
@@ -80,24 +92,14 @@ namespace bgeot {
       } else {
 	size_type P = pgt_->structure()->dim();
 	B_.resize(N(), P);
-	base_matrix K(N(),P), CS(P,P);
-	if (have_pgp()) {
-	  //const base_matrix& gr = pgp_->grad(ii_);
-	  //gmm::mult(gmm::transposed(pgp_->grad(ii_)), gmm::transposed(G()), K);/*O*/
-	  gmm::mult(G(), pgp_->grad(ii_), K);
-	} else {
-	  base_matrix pc(pgt()->nb_points(), P); 
-	  pgt()->gradient(xref(), pc);
-	  //gmm::mult(gmm::transposed(pc), gmm::transposed(G()), K);/*O*/
-	  gmm::mult(G(),pc,K);
-	}
 	if (P != N()) {
-	  gmm::mult(gmm::transposed(K), K, CS);/*O*/
+	  base_matrix CS(P,P);
+	  gmm::mult(gmm::transposed(K()), K(), CS);
 	  J_ = ::sqrt(gmm::lu_inverse(CS));
-	  gmm::mult(K, CS, B_);/*O*/
+	  gmm::mult(K(), CS, B_);
 	} else {
-	  //J_ = gmm::abs(gmm::lu_inverse(K)); B_.swap(K); /*O*/
-	 J_ = gmm::abs(gmm::lu_inverse(K)); gmm::copy(gmm::transposed(K), B_);
+	  gmm::copy(gmm::transposed(K()), B_);
+	  J_ = gmm::abs(gmm::lu_inverse(B_)); 
 	}
       }
     }
@@ -144,6 +146,7 @@ namespace bgeot {
   
  void geotrans_interpolation_context::set_ii(size_type ii__) { 
     if (ii_ == ii__) return;
+    if (have_K() && !pgt()->is_linear()) { K_.resize(0,0); }
     if (have_B() && !pgt()->is_linear()) { B_.resize(0,0); }
     if (have_B3() && !pgt()->is_linear()) { 
       B3_.resize(0,0); B32_.resize(0,0); }
@@ -153,6 +156,7 @@ namespace bgeot {
 
   void geotrans_interpolation_context::set_xref(const base_node& P) {
     xref_ = P;
+    if (have_K() && !pgt()->is_linear()) { K_.resize(0,0); }
     if (have_B() && !pgt()->is_linear()) { B_.resize(0,0); }
     if (have_B3() && !pgt()->is_linear()) { 
       B3_.resize(0,0); B32_.resize(0,0); }

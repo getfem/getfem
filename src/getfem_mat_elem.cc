@@ -136,20 +136,27 @@ namespace getfem {
 	  }
 	}
 	switch ((*it).t) {
-	case GETFEM_BASE_    : break;
-	case GETFEM_UNIT_NORMAL_    : computed_on_real_element = true; break;
-	case GETFEM_GRAD_    : ++k;
-	  if (!((*it).pfi->is_on_real_element())) grad_reduction.push_back(k);
-	  break;
-	case GETFEM_HESSIAN_ : ++k; hess_reduction.push_back(k); break;
-	case GETFEM_NONLINEAR_ :
-	  if ((*it).nl_part == 0) {
-	    for (dim_type ii = 1; ii < (*it).nlt->sizes().size(); ++ii) ++k;
-	    if (is_ppi) DAL_THROW(failure_error, "For nonlinear terms you have "
-				  "to use approximated integration");
-	    computed_on_real_element = true;
-	  }
-	  break;
+	  case GETFEM_BASE_    : break;
+	  case GETFEM_UNIT_NORMAL_ : 
+	  case GETFEM_GRAD_GEOTRANS_ :
+	  case GETFEM_GRAD_GEOTRANS_INV_ :
+	    computed_on_real_element = true; break;
+	  case GETFEM_GRAD_    : { 
+	    ++k;
+	    if (!((*it).pfi->is_on_real_element())) grad_reduction.push_back(k);
+	  } break;
+	  case GETFEM_HESSIAN_ : {
+	    ++k; 
+	    hess_reduction.push_back(k); 
+	  } break;
+	  case GETFEM_NONLINEAR_ : {
+	    if ((*it).nl_part == 0) {
+	      for (dim_type ii = 1; ii < (*it).nlt->sizes().size(); ++ii) ++k;
+	      if (is_ppi) DAL_THROW(failure_error, "For nonlinear terms you have "
+				    "to use approximated integration");
+	      computed_on_real_element = true;
+	    }
+	  } break;
 	}
       }
 
@@ -177,53 +184,67 @@ namespace getfem {
 	++mit; if ((*it).pfi && (*it).pfi->target_dim() > 1) ++mit;
 	
 	switch ((*it).t) {
-	case GETFEM_BASE_    :
-	  (*it).pfi->real_base_value(ctx, elmt_stored[k]);
-	  break;
-	case GETFEM_GRAD_    :
-	  if (trans) {
-	    (*it).pfi->real_grad_base_value(ctx, elmt_stored[k]);
-	    *mit++ = ctx.N();
-	  }
-	  else
-	    elmt_stored[k] = pfp[k]->grad(ctx.ii());
-	  break;
-	case GETFEM_HESSIAN_ :
-	  if (trans) {
-	    (*it).pfi->real_hess_base_value(ctx, elmt_stored[k]);
-	    *mit++ = gmm::sqr(ctx.N());
-	  }
-	  else {
-	    base_tensor tt = pfp[k]->hess(ctx.ii());
-	    bgeot::multi_index mim(3);
-	    mim[2] = gmm::sqr(tt.sizes()[2]); mim[1] = tt.sizes()[1];
-	    mim[0] = tt.sizes()[0];
-	    tt.adjust_sizes(mim);
-	    elmt_stored[k] = tt;
-	  }
-	  break;
-	case GETFEM_UNIT_NORMAL_ :
-	  *(mit-1) = ctx.N();
-	  { 
-	    bgeot::multi_index sz(1); sz[0] = ctx.N();
+	  case GETFEM_BASE_    :
+	    (*it).pfi->real_base_value(ctx, elmt_stored[k]);
+	    break;
+	  case GETFEM_GRAD_    :
+	    if (trans) {
+	      (*it).pfi->real_grad_base_value(ctx, elmt_stored[k]);
+	      *mit++ = ctx.N();
+	    }
+	    else
+	      elmt_stored[k] = pfp[k]->grad(ctx.ii());
+	    break;
+	  case GETFEM_HESSIAN_ :
+	    if (trans) {
+	      (*it).pfi->real_hess_base_value(ctx, elmt_stored[k]);
+	      *mit++ = gmm::sqr(ctx.N());
+	    }
+	    else {
+	      base_tensor tt = pfp[k]->hess(ctx.ii());
+	      bgeot::multi_index mim(3);
+	      mim[2] = gmm::sqr(tt.sizes()[2]); mim[1] = tt.sizes()[1];
+	      mim[0] = tt.sizes()[0];
+	      tt.adjust_sizes(mim);
+	      elmt_stored[k] = tt;
+	    }
+	    break;
+	  case GETFEM_UNIT_NORMAL_ :
+	    *(mit-1) = ctx.N();
+	    { 
+	      bgeot::multi_index sz(1); sz[0] = ctx.N();
+	      elmt_stored[k].adjust_sizes(sz);
+	    }
+	    std::copy(up.begin(), up.end(), elmt_stored[k].begin());
+	    break;
+	  case GETFEM_GRAD_GEOTRANS_ :
+	  case GETFEM_GRAD_GEOTRANS_INV_ : {
+	    size_type P = gmm::mat_ncols(ctx.K()), N=ctx.N();
+	    base_matrix Bt;
+	    if (it->t == GETFEM_GRAD_GEOTRANS_INV_) {
+	      Bt.resize(P,N); gmm::copy(gmm::transposed(ctx.B()),Bt);
+	    }
+	    const base_matrix &A = (it->t == GETFEM_GRAD_GEOTRANS_) ? ctx.K() : Bt;
+	    bgeot::multi_index sz(2);
+	    *(mit-1) = sz[0] = gmm::mat_nrows(A);
+	    *mit++ = sz[1] = gmm::mat_ncols(A);
 	    elmt_stored[k].adjust_sizes(sz);
-	  }
-	  std::copy(up.begin(), up.end(), elmt_stored[k].begin());
-	  break;
-	case GETFEM_NONLINEAR_ :
-	  if ((*it).nl_part != 0) { /* for auxiliary fem of the nonlinear_term, */
-	                            /* the "prepare" method is called           */
-	     (*it).nlt->prepare(ctx, (*it).nl_part);
-	    /* the dummy assistant multiplies everybody by 1
-	       -> not efficient ! */
-	    bgeot::multi_index sz(1); sz[0] = 1;
-	    elmt_stored[k].adjust_sizes(sz); elmt_stored[k][0] = 1.;
-	  } else {
-	    elmt_stored[k].adjust_sizes((*it).nlt->sizes());
-	    (*it).nlt->compute(ctx, elmt_stored[k]);
-	    for (dim_type ii = 1; ii < (*it).nlt->sizes().size(); ++ii) ++mit;
-	  }
-	  break;
+	    std::copy(A.begin(), A.end(), elmt_stored[k].begin());
+	  } break;
+	  case GETFEM_NONLINEAR_ :
+	    if ((*it).nl_part != 0) { /* for auxiliary fem of the nonlinear_term, */
+	      /* the "prepare" method is called           */
+	      (*it).nlt->prepare(ctx, (*it).nl_part);
+	      /* the dummy assistant multiplies everybody by 1
+		 -> not efficient ! */
+	      bgeot::multi_index sz(1); sz[0] = 1;
+	      elmt_stored[k].adjust_sizes(sz); elmt_stored[k][0] = 1.;
+	    } else {
+	      elmt_stored[k].adjust_sizes((*it).nlt->sizes());
+	      (*it).nlt->compute(ctx, elmt_stored[k]);
+	      for (dim_type ii = 1; ii < (*it).nlt->sizes().size(); ++ii) ++mit;
+	    }
+	    break;
 	}
       }
       
@@ -365,14 +386,19 @@ namespace getfem {
 	  }
 
 	  switch ((*it).t) {
-	  case GETFEM_GRAD_    : Q.derivative(*mit); ++mit; break;
-	  case GETFEM_HESSIAN_ :
-	    Q.derivative(*mit % dim); Q.derivative(*mit / dim);
-	    ++mit; break;
-	  case GETFEM_BASE_ : break;
-	  case GETFEM_UNIT_NORMAL_ :
-	  case GETFEM_NONLINEAR_ :
-	    DAL_THROW(failure_error, "No nonlinear term allowed here");
+	    case GETFEM_GRAD_    : Q.derivative(*mit); ++mit; break;
+	    case GETFEM_HESSIAN_ :
+	      Q.derivative(*mit % dim); Q.derivative(*mit / dim);
+	      ++mit; break;
+	    case GETFEM_BASE_ : break;
+	    case GETFEM_GRAD_GEOTRANS_:
+	    case GETFEM_GRAD_GEOTRANS_INV_:
+	    case GETFEM_UNIT_NORMAL_ :
+	    case GETFEM_NONLINEAR_ :
+	      DAL_THROW(failure_error, 
+			"Normals, gradients of geotrans and non linear terms "
+			"are not compatible with exact integration, "
+			"use an approximate method instead");
 	  }
 	  ++it;
 
@@ -393,6 +419,8 @@ namespace getfem {
 		++mit; break;
 	      case GETFEM_BASE_ : break;
 	      case GETFEM_UNIT_NORMAL_ :
+	      case GETFEM_GRAD_GEOTRANS_:
+	      case GETFEM_GRAD_GEOTRANS_INV_ :
 	      case GETFEM_NONLINEAR_ :
 		DAL_THROW(failure_error, "No nonlinear term allowed here");
 	      }

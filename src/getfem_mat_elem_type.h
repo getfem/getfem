@@ -39,7 +39,7 @@ namespace getfem {
 
   enum constituant_type
     { GETFEM_BASE_, GETFEM_GRAD_, GETFEM_HESSIAN_, GETFEM_NONLINEAR_,
-      GETFEM_UNIT_NORMAL_ };
+      GETFEM_UNIT_NORMAL_, GETFEM_GRAD_GEOTRANS_, GETFEM_GRAD_GEOTRANS_INV_ };
 
   class mat_elem_type;
   typedef boost::intrusive_ptr<const mat_elem_type> pmat_elem_type;
@@ -122,6 +122,12 @@ namespace getfem {
    *   which compute the unit normal on the boundary of the element 
    */
   pmat_elem_type mat_elem_unit_normal(void);
+  /** 
+      Return the gradient of the geometrical transformation ("K" in
+      the getfem++ kernel doc.), or its pseudo-inverse (transposed(B) in the
+      getfem++ kernel doc.).
+  */
+  pmat_elem_type mat_elem_grad_geotrans(bool inverted);
   /** Gives a pointer to the structure describing the elementary matrix
    *   which compute the integral of the hessian of the basic functions
    *    described by pfi. pfi is of type bgeot::pfem\_interpolation. 
@@ -148,6 +154,7 @@ namespace getfem {
    */
   pmat_elem_type mat_elem_product(pmat_elem_type a, pmat_elem_type b);
   
+  pmat_elem_type mat_elem_empty();
    //@}
 
 }  /* end of namespace getfem.                                             */

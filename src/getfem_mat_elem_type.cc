@@ -98,6 +98,14 @@ namespace getfem {
     return add_to_met_tab(f);
   }
 
+  pmat_elem_type mat_elem_grad_geotrans(bool inverted) {
+    mat_elem_type f; f.resize(1); 
+    f[0].t = (!inverted) ? GETFEM_GRAD_GEOTRANS_ : GETFEM_GRAD_GEOTRANS_INV_;
+    f[0].pfi = 0; f[0].nlt = 0;
+    f.get_mi().resize(2); f.get_mi()[0] = f.get_mi()[1] = 1;
+    return add_to_met_tab(f);    
+  }
+
   pmat_elem_type mat_elem_grad(pfem pfi) {
     mat_elem_type f; f.resize(1); f[0].t = GETFEM_GRAD_; f[0].pfi = pfi;
     f[0].nlt = 0;
@@ -159,55 +167,37 @@ namespace getfem {
 		      (*a).get_mi().end());
     f.get_mi().insert(f.get_mi().end(), (*b).get_mi().begin(),
 		      (*b).get_mi().end());
-
-    /*    mat_elem_type f; f.resize(a->size() + b->size());
-	  f.mi.resize(a->mi.size() + b->mi.size());
-    mat_elem_type::const_iterator ita = a->begin(), itae = a->end();
-    mat_elem_type::const_iterator itb = b->begin(), itbe = b->end(), it;
-    mat_elem_type::iterator itf = f.begin();
-    bgeot::multi_index::const_iterator itma = a->mi.begin();
-    bgeot::multi_index::const_iterator itmb = b->mi.begin(), *itm;
-    bgeot::multi_index::iterator itmf = f.mi.begin();
-    for( ;  ita != itae || itb != itbe; ++itf ) {
-      if (ita == itae)      { it = itb; ++itb; itm = &(itmb); }
-      else                  { it = ita; ++ita; itm = &(itma); }
-     
-      *itf = *it;
-      switch ((*it).t) { 
-      case GETFEM_BASE_      : *itmf++ = *(*itm)++; break;
-      case GETFEM_GRAD_      : *itmf++ = *(*itm)++; *itmf++ = *(*itm)++; break;
-      case GETFEM_HESSIAN_   : *itmf++ = *(*itm)++; *itmf++ = *(*itm)++; break;
-      case GETFEM_NONLINEAR_ :
-	for (dim_type i = 0; i < (*it).nlt->sizes().size(); ++i) *itmf++ = *(*itm)++;
-	break;
-      }
-    }
-    */
     return add_to_met_tab(f);
   }
 
+  pmat_elem_type mat_elem_empty() {
+    return add_to_met_tab(mat_elem_type());
+  }
   bgeot::multi_index mat_elem_type::sizes(size_type cv) const {
     bgeot::multi_index mii = mi;
     for (size_type i = 0, j = 0; i < size(); ++i, ++j) {
       switch ((*this)[i].t) {
-      case GETFEM_BASE_ :
-	mii[j] = (*this)[i].pfi->nb_base(cv);
-	if ((*this)[i].pfi->target_dim() != 1) ++j;
-	break;
-      case GETFEM_GRAD_ :
-	mii[j] = (*this)[i].pfi->nb_base(cv); ++j;
-	if ((*this)[i].pfi->target_dim() != 1) ++j;
-	break;     
-      case GETFEM_HESSIAN_   :
-	mii[j] = (*this)[i].pfi->nb_base(cv); ++j;
-	if ((*this)[i].pfi->target_dim() != 1) ++j;
-	break;
-      case GETFEM_UNIT_NORMAL_ :
-	break;
-      case GETFEM_NONLINEAR_ :
-	if ((*this)[i].nl_part == 0)
-	  { j+=(*this)[i].nlt->sizes().size(); --j; }
-	break;
+	case GETFEM_BASE_ :
+	  mii[j] = (*this)[i].pfi->nb_base(cv);
+	  if ((*this)[i].pfi->target_dim() != 1) ++j;
+	  break;
+	case GETFEM_GRAD_ :
+	  mii[j] = (*this)[i].pfi->nb_base(cv); ++j;
+	  if ((*this)[i].pfi->target_dim() != 1) ++j;
+	  break;     
+	case GETFEM_HESSIAN_   :
+	  mii[j] = (*this)[i].pfi->nb_base(cv); ++j;
+	  if ((*this)[i].pfi->target_dim() != 1) ++j;
+	  break;
+	case GETFEM_UNIT_NORMAL_ :
+	  break;
+	case GETFEM_NONLINEAR_ :
+	  if ((*this)[i].nl_part == 0)
+	    { j+=(*this)[i].nlt->sizes().size(); --j; }
+	  break;
+	case GETFEM_GRAD_GEOTRANS_:
+	case GETFEM_GRAD_GEOTRANS_INV_: 
+	  break;
       }
     }
     return mii;

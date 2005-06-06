@@ -333,7 +333,7 @@ namespace bgeot
     mutable base_node xref_; /* reference point */
     mutable base_node xreal_; /* transformed point */
     const base_matrix *G_; /* pointer to the matrix of real nodes of the convex */
-    mutable base_matrix B_, B3_, B32_; /* see documentation for more details */
+    mutable base_matrix K_,B_, B3_, B32_; /* see documentation for more details */
     pgeometric_trans pgt_;
     pgeotrans_precomp pgp_;
     pstored_point_tab pspt_; /* if pgp != 0, it is the same as pgp's one */
@@ -344,6 +344,7 @@ namespace bgeot
     bool have_xref() const { return !xref_.empty(); }
     bool have_xreal() const { return !xreal_.empty(); }
     bool have_G() const { return G_ != 0; }
+    bool have_K() const { return !K_.empty(); }
     bool have_B() const { return !B_.empty(); }
     bool have_B3() const { return !B3_.empty(); }
     bool have_B32() const { return !B32_.empty(); }
@@ -351,6 +352,7 @@ namespace bgeot
     bool have_pgp() const { return pgp_ != 0; }
     const base_node& xref() const;
     const base_node& xreal() const;
+    const base_matrix& K() const;
     const base_matrix& B() const;
     const base_matrix& B3() const;
     const base_matrix& B32() const;
