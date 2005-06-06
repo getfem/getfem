@@ -132,6 +132,8 @@ namespace getfem {
 #if defined(GMM_USES_MPI) && defined(GMM_USES_METIS)
     bool modified;
     mesh_region mpi_region;
+    dal::dynamic_array<mesh_region> mpi_sub_region;
+    dal::bit_vector valid_sub_regions;
 
     void touch(void) { modified = true; context_dependencies::touch(); }    
     void compute_mpi_region(void);
@@ -140,6 +142,14 @@ namespace getfem {
     
     const mesh_region& get_mpi_region(void)
     { if (modified) compute_mpi_region(); return mpi_region; }
+    const mesh_region& get_mpi_sub_region(size_type n) {
+      if (modified) compute_mpi_region();
+      if (n == size_type(-1)) return mpi_region;
+      if (!(valid_sub_regions.is_in(n))) compute_mpi_sub_region(n);
+      return mpi_sub_region[n];
+    }
+
+
 #endif
 
   public :

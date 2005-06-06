@@ -128,6 +128,8 @@ namespace gmm {
        const Matrix1 &A_, const std::vector<Matrix2> &vB_,
        iteration iter_, const Precond &P, double residu_) {
 
+    typedef typename linalg_traits<Matrix1>::value_type value_type;
+
     vB = &vB_; A = &A_; iter = iter_;
     residu = residu_;
     
@@ -141,8 +143,9 @@ namespace gmm {
     
     if (iter.get_noisy()) cout << "Init pour sub dom ";
 #ifdef GMM_USES_MPI
-    int size,tranche,borne_sup,borne_inf,rank;
+    int size,tranche,borne_sup,borne_inf,rank,tag1=11,tag2=12,sizepr = 0;
     double t_ref,t_final;
+    MPI_Status status;
     t_ref=MPI_Wtime();
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -152,25 +155,64 @@ namespace gmm {
     if (rank==size-1) borne_sup=nb_sub;
 
     cout << "Nombre de sous domaines " << borne_sup - borne_inf << endl;
-    for (size_type i = size_type(borne_inf); i < size_type(borne_sup); ++i) {
-      cout << "Sous domaines " << i << " : " << mat_ncols((*vB)[i]) << endl;
-#else
-    for (size_type i = 0; i < nb_sub; ++i) {
-#endif
-  
-      if (iter.get_noisy()) cout << i << " " << std::flush;
-      Matrix2 Maux(mat_ncols((*vB)[i]), mat_nrows((*vB)[i]));
+
+    int sizeA = mat_nrows(*A);
+    gmm::csc_matrix<value_type> Acsc(sizeA, sizeA), Acsctemp(sizeA, sizeA);
+    gmm::copy(*A, Acsc);
+
+    for (int nproc = 0; nproc < size; ++nproc) {
+      int next = (proc + 1) % size;
+      int previous = (proc + size - 1) % size;
       
-      gmm::resize(vAloc[i], mat_ncols((*vB)[i]), mat_ncols((*vB)[i]));      
-      gmm::mult(gmm::transposed((*vB)[i]), *A, Maux);
-      gmm::mult(Maux, (*vB)[i], vAloc[i]);
-      // cout << "Mat rig. loc. " << i << " = " << vAloc[i] << endl;
-      precond1[i].build_with(vAloc[i]);
-      gmm::resize(fi[i], mat_ncols((*vB)[i]));
-      gmm::resize(gi[i], mat_ncols((*vB)[i]));
-    }
+      for (size_type i = size_type(borne_inf); i < size_type(borne_sup); ++i) {
+	cout << "Sous domaines " << i << " : " << mat_ncols((*vB)[i]) << endl;
+#else
+	for (size_type i = 0; i < nb_sub; ++i) {
+#endif
+	  
+	  if (iter.get_noisy()) cout << i << " " << std::flush;
+	  Matrix2 Maux(mat_ncols((*vB)[i]), mat_nrows((*vB)[i]));
+	  
 #ifdef GMM_USES_MPI
-    t_final=MPI_Wtime();
+	  Matrix2 Maux2(mat_ncols((*vB)[i]), mat_ncols((*vB)[i]));
+	  if (nproc == 0) {
+	    gmm::resize(vAloc[i], mat_ncols((*vB)[i]), mat_ncols((*vB)[i]));
+	    gmm::clear(vAloc[i]);
+	  }
+	  gmm::mult(gmm::transposed((*vB)[i]), Acsc, Maux);
+	  gmm::mult(Maux, (*vB)[i], Maux2);
+	  gmm::add(Maux2, vAloc[i]);
+#else
+	  gmm::resize(vAloc[i], mat_ncols((*vB)[i]), mat_ncols((*vB)[i]));
+	  gmm::mult(gmm::transposed((*vB)[i]), *A, Maux);
+	  gmm::mult(Maux, (*vB)[i], vAloc[i]);
+#endif
+
+#ifdef GMM_USES_MPI
+	  if (nproc == size - 1) {
+#endif
+	    precond1[i].build_with(vAloc[i]);
+	    gmm::resize(fi[i], mat_ncols((*vB)[i]));
+	    gmm::resize(gi[i], mat_ncols((*vB)[i]));
+#ifndef GMM_USES_MPI
+	  }
+	}
+#else
+      }
+
+      if (nproc != size - 1) {
+	MPI_Sendrecv(Acsc.ir, sizeA, MPI_INT, next, tag1, Acsctemp.ir, sizeA,MPI_INT,previous,tag2,MPI_COMM_WORLD,&status);
+	MPI_Sendrecv(Acsc.jc, sizeA+1, MPI_INT, next, tag1, Acsctemp.jc, sizeA+1,MPI_INT,previous,tag2,MPI_COMM_WORLD,&status);
+	if (Acsctemp.jc[sizeA] > sizepr) {
+	  sizepr = Acsctemp.jc[sizeA];
+	  delete[] Acsctemp.pr;
+	  Acsctemp.pr = new value_type[sizepr];
+	}
+	MPI_Sendrecv(Acsc.pr, Acsc.jc[sizeA], mpi_type(value_type()), next, tag1, Acsctemp.pr, Acsctemp.jc[sizeA],mpi_type(value_type()),previous,tag2,MPI_COMM_WORLD,&status);
+	gmm::copy(Acsctemp, Acsc);
+      }
+    }
+      t_final=MPI_Wtime();
     cout<<"temps boucle precond "<< t_final-t_ref<<endl;
 #endif
     if (iter.get_noisy()) cout << "\n";

@@ -58,9 +58,6 @@ namespace getfem {
 
     void getfem_mesh::compute_mpi_region(void) {
 
-
-
-
       int ne = int(nb_convex());
       int nn = int(nb_points()), k = 0, etype = 0, numflag = 0;
       int edgecut, size, rank;
@@ -92,7 +89,19 @@ namespace getfem {
       for (size_type i = 0; i < size_type(ne); ++i)
 	if (eparts[i] == rank) mpi_region.add(i);
       modified = false;
-    }    
+
+      valid_sub_regions.clear();
+    }
+
+  void getfem_mesh::compute_mpi_sub_region(size_type n) {
+    if (valid_cvf_sets.is_in(n)) {
+      mpi_sub_region[n] = cvf_sets[n];
+      mpi_sub_region[n].intersect(mpi_region);
+    }
+    else
+      mpi_sub_region[n] = mesh_region();
+  }
+
     
 #endif
 

@@ -959,6 +959,9 @@ namespace gmm {
   inline int mpi_type(long double) { return MPI_LONG_DOUBLE; }
   inline int mpi_type(std::complex<float>) { return MPI_COMPLEX; }
   inline int mpi_type(std::complex<double>) { return MPI_DOUBLE_COMPLEX; }
+  inline int mpi_type(int) { return MPI_INT; }
+  inline int mpi_type(size_t)
+  { return (sizeof(int) == sizeof(size_t)) ? MPI_INT : MPI_LONG; }
 
   template <typename MAT1, typename MAT2>
   inline void copy(const mpi_distributed_matrix<MAT1> &m1, mpi_distributed_matrix<MAT2> &m2)

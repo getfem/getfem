@@ -242,9 +242,19 @@ namespace getfem {
 			 MDBRICK_FOURIER_ROBIN, MDBRICK_NAVIERSTOKESNONREF1
   };
 
+  template <typename MAT> struct T_MAT_TYPE {
+    typedef MAT T_MATRIX;
+  };
+
+#ifdef GMM_USES_MPI
+  template <typename MAT> struct T_MAT_TYPE<mpi_distributed_matrix<MAT> > {
+    typedef MAT T_MATRIX;
+  };
+#endif
+
 #define TYPEDEF_MODEL_STATE_TYPES                                         \
     typedef typename MODEL_STATE::vector_type VECTOR;                     \
-    typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;           \
+    typedef typename T_MAT_TYPE<typename MODEL_STATE::tangent_matrix_type>::T_MATRIX T_MATRIX; \
     typedef typename MODEL_STATE::constraints_matrix_type C_MATRIX;       \
     typedef typename MODEL_STATE::value_type value_type;                  \
     typedef typename gmm::number_traits<value_type>::magnitude_type R;    \
@@ -447,15 +457,24 @@ namespace getfem {
     virtual void do_compute_residu(MODEL_STATE &MS, size_type i0,
 				   size_type j0) = 0;
     void compute_residu(MODEL_STATE &MS, size_type i0 = 0,
-			size_type j0 = 0) {
+			size_type j0 = 0, bool first = true) {
       this->context_check();
       size_type i1 = MS_i0 = i0, j1 = j0;
       for (size_type i = 0; i < sub_bricks.size(); ++i) {
-	sub_bricks[i]->compute_residu(MS, i1, j1);
+	sub_bricks[i]->compute_residu(MS, i1, j1, false);
 	i1 += sub_bricks[i]->nb_dof();
 	j1 += sub_bricks[i]->nb_constraints();
       }
       do_compute_residu(MS, i0, j0);
+#ifdef GMM_USES_MPI
+      if (first) {
+	std::vector<value_type> resloc(gmm::vect_size(MS.residu()));
+	MPI_Allreduce(&((MS.residu())[0]), &(resloc[0]),
+		      gmm::vect_size(MS.residu()), mpi_type(value_type()),
+		      MPI_SUM, MPI_COMM_WORLD);
+	gmm::copy(resloc, MS.residu());
+      }
+#endif
     }
     bool is_linear(void) const { return is_linear_; }
     bool is_symmetric(void) const { return is_symmetric_; }
@@ -467,56 +486,6 @@ namespace getfem {
     { proper_is_linear_ = proper_is_symmetric_ = proper_is_coercive_ = true; }
     virtual ~mdbrick_abstract() {}
   };
-
-  /* ******************************************************************** */
-  /*		Function for extracting matrix structure.                 */
-  /* ******************************************************************** */
-//   void tangent_matrix_structure_single_mf(MODEL_STATE &MS, mesh_fem &mf_u, 
-// 					  size_type i0) {
-//     for (size_type i = 0; i < mf_u.nb_dof(); ++i) {
-//       bgeot::mesh_convex_ind_ct ct = mf_u.convex_to_dof(i);
-//       bgeot::mesh_convex_ind_ct::const_iterator it = ct.begin(), ite = ct.end();
-//       for (; it != ite; ++it) {
-// 	ref_mesh_dof_ind_ct ctd = mf_u.ind_dof_of_element(*it);
-// 	ref_mesh_dof_ind_ct::const_iterator itd = ctd.begin(), itde = ctd.end();
-// 	  for (; itd != itde; ++itd) {
-// 	    (MS.tangent_matrix())(i0 + i, i0 + *itd) = scalar_type(1);
-// 	  }
-//       }
-//     }
-//   }
-
-//   void tangent_matrix_structure_double_mf(MODEL_STATE &MS, mesh_fem &mf_u, mesh_fem &mf_v, 
-// 					  size_type i0, size_type i1) {
-//     for (size_type i = 0; i < mf_u.nb_dof(); ++i) {
-//       bgeot::mesh_convex_ind_ct ct = mf_u.convex_to_dof(i);
-//       bgeot::mesh_convex_ind_ct::const_iterator it = ct.begin(), ite = ct.end();
-//       for (; it != ite; ++it) {
-// 	ref_mesh_dof_ind_ct ctd = mf_v.ind_dof_of_element(*it);
-// 	ref_mesh_dof_ind_ct::const_iterator itd = ctd.begin(), itde = ctd.end();
-// 	  for (; itd != itde; ++itd) {
-// 	    (MS.tangent_matrix())(i0 + i, i1 + *itd) = scalar_type(1);
-// 	    (MS.tangent_matrix())(i1 + *itd, i0 + i) = scalar_type(1);
-// 	  }
-//       }
-//     }
-//   }
-
-//   void tangent_matrix_structure_single_mf_on_boundary(MODEL_STATE &MS, mesh_fem &mf_u, 
-// 						      size_type i0, int boundary) {
-//     dal::bit_vector nn = mf_u.dof_on_set(boundary);
-//     for (dal::bv_visitor i(nn); !i.finished(); ++i) {
-//       bgeot::mesh_convex_ind_ct ct = mf_u.convex_to_dof(i);
-//       bgeot::mesh_convex_ind_ct::const_iterator it = ct.begin(), ite = ct.end();
-//       for (; it != ite; ++it) {
-// 	ref_mesh_dof_ind_ct ctd = mf_u.ind_dof_of_element(*it);
-// 	ref_mesh_dof_ind_ct::const_iterator itd = ctd.begin(), itde = ctd.end();
-// 	  for (; itd != itde; ++itd) {
-// 	    (MS.tangent_matrix())(i0 + i, i0 + *itd) = scalar_type(1);
-// 	  }
-//       }
-//     }
-//   }
 
   /* ******************************************************************** */
   /*		general scalar elliptic brick.                            */
@@ -928,7 +897,13 @@ namespace getfem {
 		  " You have to change the rhs in that case.");
       gmm::resize(F_, mf_u.nb_dof());
       gmm::clear(F_);
-      asm_source_term(F_, *(this->mesh_ims[0]), mf_u, mf_data, B_, boundary);
+
+#ifdef GMM_USES_MPI 
+      asm_source_term(F_, *(this->mesh_ims[0]), mf_u, mf_data, B_,
+		      mf_u.linked_mesh().get_mpi_sub_region(boundary));
+#else
+      asm_source_term(F_, *(this->mesh_ims[0]), mf_u, mf_data, B_, boundary);	     
+#endif
     }
 
   public :
@@ -1229,11 +1204,31 @@ namespace getfem {
 
       if (!with_multipliers) version |= ASMDIR_SIMPLIFY;
       if (!with_H) {
-	asm_dirichlet_constraints(M, V, *(this->mesh_ims[0]), mf_u, mf_data,
-				  B_, boundary, version);
+#ifdef GMM_USES_MPI 
+	if (with_multipliers)
+	  asm_dirichlet_constraints(M, V, *(this->mesh_ims[0]), mf_u, mf_data,
+				B_, mf_u.linked_mesh().get_mpi_sub_region(boundary), version);   
+	else
+	  asm_dirichlet_constraints(M, V, *(this->mesh_ims[0]), mf_u, mf_data,
+				B_, boundary, version);
+#else
+      asm_dirichlet_constraints(M, V, *(this->mesh_ims[0]), mf_u, mf_data,
+				B_, boundary, version);    
+#endif
+	
       } else {
+#ifdef GMM_USES_MPI
+	if (with_multipliers)
+	  asm_dirichlet_constraints(M, V, *(this->mesh_ims[0]), mf_u, mf_data,mf_data,
+				    H_, B_, mf_u.linked_mesh().get_mpi_sub_region(boundary),
+				    version);
+	else
+	  asm_dirichlet_constraints(M, V, *(this->mesh_ims[0]), mf_u, mf_data,mf_data,
+				    H_, B_, boundary, version);
+#else
 	asm_dirichlet_constraints(M, V, *(this->mesh_ims[0]), mf_u, mf_data,mf_data,
 				  H_, B_, boundary, version);
+#endif
       }
 
       if (version & ASMDIR_BUILDH) {
@@ -1243,6 +1238,7 @@ namespace getfem {
 	dal::bit_vector nn = mf_u.dof_on_set(boundary);
 	// The following filter is not sufficient for an arbitrary matrix field
 	// H for the multipliers version. To be ameliorated.
+	
 	for (size_type i = nn.take_first(); i != size_type(-1); i << nn)
 	  if (!with_multipliers || gmm::vect_norm2(gmm::mat_row(M, i)) > tol)
 	    ind_ct.push_back(i);
