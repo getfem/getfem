@@ -95,8 +95,7 @@ namespace getfem {
 
   void getfem_mesh::compute_mpi_sub_region(size_type n) {
     if (valid_cvf_sets.is_in(n)) {
-      mpi_sub_region[n] = cvf_sets[n];
-      mpi_sub_region[n].intersect(mpi_region);
+      mpi_sub_region[n] = mesh_region::intersection(cvf_sets[n], mpi_region);
     }
     else
       mpi_sub_region[n] = mesh_region();

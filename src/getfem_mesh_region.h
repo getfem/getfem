@@ -57,6 +57,7 @@ namespace getfem {
     static mesh_region all_convexes() {
       return mesh_region(size_type(-1)); 
     }
+    static mesh_region intersection(const mesh_region& a, const mesh_region& b);
     size_type id() const { return id_; }
 
     /** for regions which have been built with just a number 'id',

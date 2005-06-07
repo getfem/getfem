@@ -128,6 +128,27 @@ namespace getfem {
     return sz;
   }
 
+  mesh_region mesh_region::intersection(const mesh_region &a, 
+					const mesh_region &b) {
+    map_t::const_iterator 
+      ita = a.rp().m.begin(), enda = a.rp().m.end(),
+      itb = b.rp().m.begin(), endb = b.rp().m.end();
+    mesh_region r;
+    while (ita != enda && itb != endb) {
+      if (ita->first < itb->first) ++ita;
+      else if (ita->first > itb->first) ++itb;
+      else {
+	face_bitset maska = ita->second, maskb = itb->second, bs;
+	if (maska[0] && !maskb[0]) bs = maskb;
+	else if (maskb[0] && !maska[0]) bs = maska;
+	else bs = maska & maskb;
+	if (bs.any()) r.wp().m.insert(r.wp().m.end(), std::make_pair(ita->first,bs));
+	++ita; ++itb;
+      }
+    }
+    return r;
+  }
+
   void mesh_region::error_if_not_faces() const {
     if (!is_only_faces()) 
       DAL_THROW(dal::failure_error, 

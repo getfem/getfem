@@ -199,6 +199,24 @@ void test_convex_quality(getfem::scalar_type dx, getfem::scalar_type dy) {
   }
 }
 
+void test_region() {
+  getfem::mesh_region a,b,r;
+  a.add(4);
+  a.add(9);
+  a.add(2);
+  a.add(5);
+  a.add(3,7);
+  a.add(3,3);
+  b.add(2);
+  b.add(3,2);
+  b.add(3,7);
+  b.add(9,1);
+  b.add(9,5);
+  b.add(8);
+  r = getfem::mesh_region::intersection(a,b);
+  cout << "a=" << a << "\nb=" << b << "a inter b=" << r << "\n";
+}
+
 class myexc : public dal::exception_callback {
   void callback(const std::string& s)
   { cerr << "exception launched: " << s << std::endl; }
@@ -220,6 +238,7 @@ int main(void)
   test_convex_quality(0.2,0);
   test_convex_quality(-0.2,0);
   test_convex_quality(-0.01,-0.2);
+  test_region();
   }
   DAL_STANDARD_CATCH_ERROR;
   return 0;
