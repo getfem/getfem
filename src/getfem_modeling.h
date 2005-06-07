@@ -466,15 +466,15 @@ namespace getfem {
 	j1 += sub_bricks[i]->nb_constraints();
       }
       do_compute_residu(MS, i0, j0);
-#ifdef GMM_USES_MPI
       if (first) {
+#ifdef GMM_USES_MPI
 	std::vector<value_type> resloc(gmm::vect_size(MS.residu()));
 	MPI_Allreduce(&((MS.residu())[0]), &(resloc[0]),
 		      gmm::vect_size(MS.residu()), mpi_type(value_type()),
 		      MPI_SUM, MPI_COMM_WORLD);
 	gmm::copy(resloc, MS.residu());
-      }
 #endif
+      }
     }
     bool is_linear(void) const { return is_linear_; }
     bool is_symmetric(void) const { return is_symmetric_; }
@@ -1553,11 +1553,6 @@ namespace getfem {
 	gmm::iteration &iter) {
 
     TYPEDEF_MODEL_STATE_TYPES;
-    typedef typename MODEL_STATE::vector_type VECTOR;
-    typedef typename MODEL_STATE::value_type value_type;
-    typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
-    typedef typename MODEL_STATE::constraints_matrix_type C_MATRIX;
-    typedef typename gmm::number_traits<value_type>::magnitude_type mtype;
 
     // TODO : take iter into account for the Newton. compute a consistent 
     //        max residu.

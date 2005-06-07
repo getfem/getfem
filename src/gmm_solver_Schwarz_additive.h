@@ -128,8 +128,6 @@ namespace gmm {
        const Matrix1 &A_, const std::vector<Matrix2> &vB_,
        iteration iter_, const Precond &P, double residu_) {
 
-    typedef typename linalg_traits<Matrix1>::value_type value_type;
-
     vB = &vB_; A = &A_; iter = iter_;
     residu = residu_;
     
@@ -196,8 +194,8 @@ namespace gmm {
 	    gmm::resize(gi[i], mat_ncols((*vB)[i]));
 #ifndef GMM_USES_MPI
 	  }
-	}
 #else
+	}
       }
 
       if (nproc != size - 1) {
