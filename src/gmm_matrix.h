@@ -963,9 +963,20 @@ namespace gmm {
   inline int mpi_type(size_t)
   { return (sizeof(int) == sizeof(size_t)) ? MPI_INT : MPI_LONG; }
 
+  
+  template <typename MAT> inline
+  MAT &eff_matrix(MAT &m) { return m; }
+  template <typename MAT> inline
+  const MAT &eff_matrix(const MAT &m) { return m; }
+  template <typename MAT> inline
+  MAT &eff_matrix(mpi_distributed_matrix<MAT> &m) { return m.M; }
+  template <typename MAT> inline
+  const MAT &eff_matrix(const mpi_distributed_matrix<MAT> &m) { return m.M; }
+  
+
   template <typename MAT1, typename MAT2>
   inline void copy(const mpi_distributed_matrix<MAT1> &m1, mpi_distributed_matrix<MAT2> &m2)
-  { copy(m1.M, m2.M); }
+  { copy(eff_matrix(m1), eff_matrix(m2)); }
   template <typename MAT1, typename MAT2>
   inline void copy(const mpi_distributed_matrix<MAT1> &m1, const mpi_distributed_matrix<MAT2> &m2)
   { copy(m1.M, m2.M); }

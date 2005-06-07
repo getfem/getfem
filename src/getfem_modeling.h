@@ -247,7 +247,8 @@ namespace getfem {
   };
 
 #ifdef GMM_USES_MPI
-  template <typename MAT> struct T_MAT_TYPE<mpi_distributed_matrix<MAT> > {
+  template <typename MAT>
+  struct T_MAT_TYPE<gmm::mpi_distributed_matrix<MAT> > {
     typedef MAT T_MATRIX;
   };
 #endif
@@ -470,7 +471,7 @@ namespace getfem {
 #ifdef GMM_USES_MPI
 	std::vector<value_type> resloc(gmm::vect_size(MS.residu()));
 	MPI_Allreduce(&((MS.residu())[0]), &(resloc[0]),
-		      gmm::vect_size(MS.residu()), mpi_type(value_type()),
+		      gmm::vect_size(MS.residu()), gmm::mpi_type(value_type()),
 		      MPI_SUM, MPI_COMM_WORLD);
 	gmm::copy(resloc, MS.residu());
 #endif
@@ -628,7 +629,7 @@ namespace getfem {
       else { gmm::copy(lambda_, lambda); gmm::copy(mu_, mu); }
 #ifdef GMM_USES_MPI
       asm_stiffness_matrix_for_linear_elasticity
-	(K.local_matrix(), mim, mf_u, mf_data, lambda, mu,
+	(K, mim, mf_u, mf_data, lambda, mu,
 	 mf_u.linked_mesh().get_mpi_region());
 #else
       asm_stiffness_matrix_for_linear_elasticity
@@ -1071,7 +1072,7 @@ namespace getfem {
       size_type nd = mf_u.nb_dof(), ndd = mf_p.nb_dof();
       gmm::clear(B); gmm::resize(B, ndd, nd);
 #ifdef GMM_USES_MPI
-      asm_stokes_B(B.local_matrix(), *(this->mesh_ims.at(0)), mf_u, mf_p,
+      asm_stokes_B(B, *(this->mesh_ims.at(0)), mf_u, mf_p,
 		   mf_u.linked_mesh().get_mpi_region());
 #else 
       asm_stokes_B(B, *(this->mesh_ims.at(0)), mf_u, mf_p);
@@ -1082,10 +1083,10 @@ namespace getfem {
 	else gmm::copy(epsilon_, epsilon);
 	gmm::clear(M); gmm::resize(M, ndd, ndd);
 #ifdef GMM_USES_MPI
-	asm_mass_matrix_param(M.local_matrix(), *(this->mesh_ims[0]), mf_p,
+	asm_mass_matrix_param(M, *(this->mesh_ims[0]), mf_p,
 			      mf_data, epsilon,
 			      mf_u.linked_mesh().get_mpi_region());
-	gmm::scale(M.local_matrix(), value_type(-1));
+	gmm::scale(M, value_type(-1));
 #else
 	asm_mass_matrix_param(M, *(this->mesh_ims[0]), mf_p, mf_data, epsilon);
 	gmm::scale(M, value_type(-1));

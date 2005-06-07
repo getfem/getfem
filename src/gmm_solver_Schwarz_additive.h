@@ -156,11 +156,11 @@ namespace gmm {
 
     int sizeA = mat_nrows(*A);
     gmm::csc_matrix<value_type> Acsc(sizeA, sizeA), Acsctemp(sizeA, sizeA);
-    gmm::copy(*A, Acsc);
+    gmm::copy(gmm::eff_matrix(*A), Acsc);
 
     for (int nproc = 0; nproc < size; ++nproc) {
-      int next = (proc + 1) % size;
-      int previous = (proc + size - 1) % size;
+      int next = (nproc + 1) % size;
+      int previous = (nproc + size - 1) % size;
       
       for (size_type i = size_type(borne_inf); i < size_type(borne_sup); ++i) {
 	cout << "Sous domaines " << i << " : " << mat_ncols((*vB)[i]) << endl;
@@ -201,7 +201,7 @@ namespace gmm {
       if (nproc != size - 1) {
 	MPI_Sendrecv(Acsc.ir, sizeA, MPI_INT, next, tag1, Acsctemp.ir, sizeA,MPI_INT,previous,tag2,MPI_COMM_WORLD,&status);
 	MPI_Sendrecv(Acsc.jc, sizeA+1, MPI_INT, next, tag1, Acsctemp.jc, sizeA+1,MPI_INT,previous,tag2,MPI_COMM_WORLD,&status);
-	if (Acsctemp.jc[sizeA] > sizepr) {
+	if (Acsctemp.jc[sizeA] > size_type(sizepr)) {
 	  sizepr = Acsctemp.jc[sizeA];
 	  delete[] Acsctemp.pr;
 	  Acsctemp.pr = new value_type[sizepr];

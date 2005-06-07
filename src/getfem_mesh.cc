@@ -99,6 +99,7 @@ namespace getfem {
     }
     else
       mpi_sub_region[n] = mesh_region();
+    valid_sub_regions.add(n);
   }
 
     

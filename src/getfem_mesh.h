@@ -137,7 +137,8 @@ namespace getfem {
 
     void touch(void) { modified = true; context_dependencies::touch(); }    
     void compute_mpi_region(void);
-    
+    void compute_mpi_sub_region(size_type);
+
   public :
     
     const mesh_region& get_mpi_region(void)

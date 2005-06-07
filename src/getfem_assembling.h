@@ -811,7 +811,8 @@ namespace getfem
 				 const mesh_im &mim, 
 				 const mesh_fem &mf_u,
 				 const mesh_fem &mf_r,
-				 const VECT &r_data, size_type boundary,
+				 const VECT &r_data, 
+				 const mesh_region &region,
 				 int version = ASMDIR_BUILDALL) {
     if (mf_r.get_qdim() != 1) 
       DAL_THROW(invalid_argument,"mf_r should be a scalar (qdim=1) mesh_fem");
@@ -829,7 +830,8 @@ namespace getfem
     for (size_type i=0; i < N; ++i)
       for (size_type q=0; q < Q; ++q)  h_data[i*Q*Q+q*Q+q]=1;
    
-    asm_dirichlet_constraints(H, R, mim, mf_u, mf_h, mf_r, h_data, r_data, boundary, version);
+    asm_dirichlet_constraints(H, R, mim, mf_u, mf_h, mf_r, h_data, r_data,
+			      region, version);
   }
 
   /**
