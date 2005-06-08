@@ -63,11 +63,14 @@ struct navier_stokes_problem {
   getfem::mesh_fem mf_coef;  /* mesh_fem used to represent pde coefficients  */
   scalar_type nu, dt, T, dtexport;
 
-  scalar_type residu;        /* max residu for the iterative solvers         */
-  int noisy, dxexport, option;
+  scalar_type residue;        /* max residue for the iterative solvers         */
+  int noisy, dxexport, option, sol_ref;
 
   std::string datafilename;
   ftool::md_param PARAM;
+
+  base_small_vector sol_f(const base_small_vector &P, scalar_type t);
+  base_small_vector Dir_cond(const base_small_vector &P, scalar_type t);
 
   bool solve(void);
   void init(void);
@@ -107,7 +110,7 @@ void navier_stokes_problem::init(void) {
   mesh.transformation(M);
 
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
-  residu = PARAM.real_value("RESIDU"); if (residu == 0.) residu = 1e-10;
+  residue = PARAM.real_value("RESIDUE"); if (residue == 0.) residue = 1e-10;
 
   nu = PARAM.real_value("NU", "Viscosity");
   dt = PARAM.real_value("DT", "Time step");
@@ -115,6 +118,7 @@ void navier_stokes_problem::init(void) {
   dtexport = PARAM.real_value("DT_EXPORT", "Final time");
   noisy = PARAM.int_value("NOISY", "");
   option = PARAM.int_value("OPTION", "option");
+  sol_ref = PARAM.int_value("SOL_REF", "reference solution");
   dxexport = PARAM.int_value("DX_EXPORT", "");
   mf_u.set_qdim(N);
 
@@ -174,23 +178,39 @@ void navier_stokes_problem::init(void) {
 
 scalar_type NU_;
 
-base_small_vector sol_f(const base_small_vector &P, scalar_type t) {
+base_small_vector navier_stokes_problem::sol_f(const base_small_vector &P,
+					       scalar_type t) {
   base_small_vector res(P.size());
   scalar_type x = P[0], y = P[1];
-  res[0] = -16.*y*x*x+16.*y*x+8.*x*x-8.*x+32.*NU_*t*y
-    -16.*NU_*t+8.*t*x*x-8.*t*x;
-  res[1] =  16.*x*y*y-16.*y*x-8.*y*y+8.*y-32.*NU_*t*x
-    +16.*NU_*t+8.*t*y*y-8.*t*y;
-  // gmm::clear(res);
+  switch (sol_ref) {
+  case 1 :
+    res[0] = -16.*y*x*x+16.*y*x+8.*x*x-8.*x+32.*NU_*t*y
+      -16.*NU_*t+8.*t*x*x-8.*t*x;
+    res[1] =  16.*x*y*y-16.*y*x-8.*y*y+8.*y-32.*NU_*t*x
+      +16.*NU_*t+8.*t*y*y-8.*t*y;
+    break;
+  case 2 :
+    break;
+  default : DAL_THROW(dal::failure_error, "Bad number of reference solution");
+  }
   return res;
 }
 
-base_small_vector Dir_cond(const base_small_vector &P, scalar_type t) {
+base_small_vector navier_stokes_problem::Dir_cond(const base_small_vector &P,
+						  scalar_type t) {
   base_small_vector res(P.size());
   scalar_type x = P[0], y = P[1];
-  res[0] =  2.*(2.*y-1.)*(1.-1.*gmm::sqr(2.*x-1.))*t;
-  res[1] = -2.*(2.*x-1.)*(1.-1.*gmm::sqr(2.*y-1.))*t;
-  // if (x > .5) res[0] = res[1] = 0;
+  switch (sol_ref) {
+  case 1 :
+    res[0] =  2.*(2.*y-1.)*(1.-1.*gmm::sqr(2.*x-1.))*t;
+    res[1] = -2.*(2.*x-1.)*(1.-1.*gmm::sqr(2.*y-1.))*t;
+    break;
+  case 2 :
+    res[0] = -cos(x)*sin(y)*exp(-2.*t*nu);
+    res[1] = -sin(x)*cos(y)*exp(-2.*t*nu);
+    break;
+  default : DAL_THROW(dal::failure_error, "Bad number of reference solution");
+  }
   return res;
 }
 
@@ -238,6 +258,7 @@ bool navier_stokes_problem::solve() {
   }
 
   if (option == 4) {
+    gmm::resize(B, mf_p.nb_dof(), mf_u.nb_dof());
     asm_stokes_B(B, mim, mf_u, mf_p);
   }
 
@@ -309,13 +330,11 @@ bool navier_stokes_problem::solve() {
     sparse_matrix G(1, mf_p.nb_dof());
     G(0,0) = 1.;
     plain_vector gr(1);
-    poisson_setonedof = new getfem::mdbrick_constraint<>(*poisson, G, gr, 1);
+    poisson_setonedof = new getfem::mdbrick_constraint<>(*poisson, G, gr);
     plain_vector FF(mf_rhs.nb_dof());
     poisson_source = new  getfem::mdbrick_source_term<>(*poisson_setonedof,
 							mf_rhs, FF);
   }
-
-
 
   // 
   // dynamic problem
@@ -323,8 +342,19 @@ bool navier_stokes_problem::solve() {
 
   plain_vector DF(mf_u.nb_dof()), U0(mf_u.nb_dof()), USTAR(mf_u.nb_dof()),
     USTARbis(mf_u.nb_dof()), P0(mf_p.nb_dof()), P1(mf_p.nb_dof());
+
+  if (option == 4 && sol_ref == 2) {
+    for (size_type i = 0; i < mf_p.nb_dof(); ++i) {
+      base_node pt = mf_p.point_of_dof(i);
+      P0[i] = -(cos(2.*pt[0]) + cos(2.*pt[1])) / 4.;
+    }
+    for (size_type i = 0; i < mf_p.nb_dof(); ++i) 
+      if (i % N == 0)
+	gmm::copy(Dir_cond(mf_u.point_of_dof(i), 0.),
+		  gmm::sub_vector(F, gmm::sub_interval(i, N)));
+  }
   
-  gmm::iteration iter(residu, noisy);
+  gmm::iteration iter(residue, noisy);
   getfem::standard_model_state MSL(velocity_dyn);
   getfem::standard_model_state *MSM = 0;
 
@@ -397,6 +427,7 @@ bool navier_stokes_problem::solve() {
       gmm::cg(velocity_dyn.mass_matrix(), U0, USTARbis,
 	      gmm::identity_matrix(), iter);
       gmm::add(USTAR, U0);
+      gmm::add(gmm::scaled(poisson->get_solution(*MSM), 1./dt), P0);
     }
     
     cout << "Kinetic energy : " <<

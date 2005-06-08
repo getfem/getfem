@@ -1120,6 +1120,9 @@ namespace getfem {
 		gmm::sub_vector(MS.residu(), SUBI));
       gmm::mult_add(gmm::transposed(B), gmm::sub_vector(MS.state(), SUBI),
 		    gmm::sub_vector(MS.residu(), SUBJ));
+      if (penalized) 
+	gmm::mult_add(M, gmm::sub_vector(MS.state(), SUBI),
+		      gmm::sub_vector(MS.residu(), SUBI));
     }
 
     SUBVECTOR get_pressure(MODEL_STATE &MS) {

@@ -17,30 +17,33 @@ DT = 0.001;                       % Time step
 T = 0.1;                          % Final time
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 NOISY=1;
-OPTION = 3; % 1 = Stokes avec schéma de splitting 1
+OPTION = 4; % 1 = Stokes avec schéma de splitting 1
 	    % 2 = Navier Stokes avec schéma de splitting 1
 	    % 3 = Navier Stokes with energy conserving midpoint scheme
 	    % 4 = Navier Stokes with prediction- correction scheme
 
+SOL_REF = 2; % 1 = Reference solution fo Stokes
+             % 2 = Reference solution for Navier Stokes
+
 %FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(3, 2)';
 %FEM_TYPE = 'FEM_PK(3,3)';  % PK method
-FEM_TYPE = 'FEM_QK(2,2)';  % QK method
+FEM_TYPE = 'FEM_QK(2,1)';  % QK method
 
 %FEM_TYPE_P = 'FEM_PK(3,1)';  % P1 for triangles
 FEM_TYPE_P = 'FEM_QK(2,1)';  % Q1 for quadrangles
 % FEM_TYPE_P = 'FEM_PK_DISCONTINUOUS(3,1)';  % Discontinuous P1 for triangles
 
 % DATA_FEM_TYPE must be defined if your main FEM is not Lagrangian
-DATA_FEM_TYPE = 'FEM_QK(2,2)';
+DATA_FEM_TYPE = 'FEM_QK(2,1)';
 
 % INTEGRATION = 'IM_TRIANGLE(6)'; % quadrature rule for polynomials up
                                   % to degree 6 on triangles
 % INTEGRATION = 'IM_TETRAHEDRON(6)'; % quadrature rule for polynomials up
                                % to degree 6 on tetra
-INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,10)'; % Product of two
+INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,5)'; % Product of two
                                          % IM_GAUSS1D(10) (for quadrangles)
 
-RESIDU = 1E-9;     	% residu for conjugate gradient.
+RESIDUE = 1E-9;     	% residu for conjugate gradient.
 
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'navier_stokes';     % Root of data files.
