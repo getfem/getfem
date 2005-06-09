@@ -67,7 +67,7 @@ struct navier_stokes_problem {
   getfem::mesh_fem mf_coef;  /* mesh_fem used to represent pde coefficients  */
   scalar_type nu, dt, T, dtexport;
 
-  scalar_type residu;        /* max residu for the iterative solvers         */
+  scalar_type residue;       /* max residue for the iterative solvers        */
   int noisy, dxexport;
 
   std::string datafilename;
@@ -111,12 +111,12 @@ void navier_stokes_problem::init(void) {
   mesh.transformation(M);
 
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
-  residu = PARAM.real_value("RESIDU"); if (residu == 0.) residu = 1e-10;
+  residue = PARAM.real_value("RESIDUE"); if (residue == 0.) residue = 1e-10;
 
   nu = PARAM.real_value("NU", "Viscosité");
   dt = PARAM.real_value("DT", "Time step");
   T = PARAM.real_value("T", "Final time");
-  dtexport = PARAM.real_value("DT_EXPORT", "Final time");
+  dtexport = PARAM.real_value("DT_EXPORT", "Time step for export");
   noisy = PARAM.int_value("NOISY", "");
   dxexport = PARAM.int_value("DX_EXPORT", "");
   mf_u.set_qdim(N);
@@ -172,7 +172,7 @@ void navier_stokes_problem::init(void) {
 }
 
 /**************************************************************************/
-/*  Model.                                                                */
+/*  Exact solutions.                                                      */
 /**************************************************************************/
 
 scalar_type nu_;
@@ -194,6 +194,10 @@ base_small_vector Dir_cond(const base_small_vector &P, scalar_type t) {
   res[1] = -2.*(2.*x-1.)*(1.-1.*gmm::sqr(2.*y-1.))*t;
   return res;
 }
+
+/**************************************************************************/
+/*  Model.                                                                */
+/**************************************************************************/
 
 bool navier_stokes_problem::solve() {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
@@ -262,8 +266,12 @@ bool navier_stokes_problem::solve() {
 
   plain_vector DF(mf_u.nb_dof()), U0(mf_u.nb_dof()), USTAR(mf_u.nb_dof()),
     USTARbis(mf_u.nb_dof());
+
+  for (size_type i = 0; i < mf_u.nb_dof(); ++i) 
+    if ((i % N) == 0) gmm::copy(Dir_cond(mf_u.point_of_dof(i), 0.),
+			      gmm::sub_vector(U0, gmm::sub_interval(i, N)));
   
-  gmm::iteration iter(residu, noisy);
+  gmm::iteration iter(residue, noisy);
   getfem::standard_model_state MSL(laplacian_dyn);
   getfem::standard_model_state MSM(mixed_dyn);
   
@@ -299,6 +307,7 @@ bool navier_stokes_problem::solve() {
     laplacian_dyn.set_DF(DF);
     getfem::standard_solve(MSL, laplacian_dyn, iter);
     gmm::copy(laplacian.get_solution(MSL), USTAR);
+    cout << " gmm::vect_dist2(U0, USTAR) = " << gmm::vect_dist2(U0, USTAR) << endl;
 
 
 
@@ -314,7 +323,7 @@ bool navier_stokes_problem::solve() {
     
     cout << "norm de U0 : " << getfem::asm_L2_norm(mim, mf_u, U0) << endl;
     
-    cout << "error = " << gmm::vect_dist2(U0, F) << endl;
+    cout << "t = " << t << " error = " << gmm::vect_dist2(U0, F) << endl;
 
 //     {
 //       getfem::vtk_export exp_vtk1(datafilename + "_v.vtk", 0);

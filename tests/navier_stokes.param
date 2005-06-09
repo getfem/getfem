@@ -36,7 +36,7 @@ DATA_FEM_TYPE = 'FEM_QK(2,2)';
 INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,10)'; % Product of two
                                          % IM_GAUSS1D(10) (for quadrangles)
 
-RESIDU = 1E-9;     	% residu for conjugate gradient.
+RESIDUE = 1E-9;     	% residu for conjugate gradient.
 
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'navier_stokes';     % Root of data files.
