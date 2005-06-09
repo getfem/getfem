@@ -61,7 +61,7 @@ struct navier_stokes_problem {
   getfem::mesh_fem mf_p;     /* mesh_fem for the pressure                    */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   getfem::mesh_fem mf_coef;  /* mesh_fem used to represent pde coefficients  */
-  scalar_type nu, dt, T, dtexport;
+  scalar_type nu, dt, T, dtexport, Re;
 
   scalar_type residue;        /* max residue for the iterative solvers         */
   int noisy, dxexport, option, sol_ref;
@@ -120,6 +120,7 @@ void navier_stokes_problem::init(void) {
   option = PARAM.int_value("OPTION", "option");
   sol_ref = PARAM.int_value("SOL_REF", "reference solution");
   dxexport = PARAM.int_value("DX_EXPORT", "");
+  Re = 1 / nu;
   mf_u.set_qdim(N);
 
   /* set the finite element on the mf_u */
@@ -178,6 +179,7 @@ void navier_stokes_problem::init(void) {
 
 scalar_type NU_;
 
+// valeur du terme source dans le cas de solution analytique
 base_small_vector navier_stokes_problem::sol_f(const base_small_vector &P,
 					       scalar_type t) {
   base_small_vector res(P.size());
@@ -189,13 +191,16 @@ base_small_vector navier_stokes_problem::sol_f(const base_small_vector &P,
     res[1] =  16.*x*y*y-16.*y*x-8.*y*y+8.*y-32.*NU_*t*x
       +16.*NU_*t+8.*t*y*y-8.*t*y;
     break;
-  case 2 :
+  case 2 : // Fn= - grad(P) + Un / dt
+    res[0] = sin(2.*x)*exp(-4.*t*NU_) - (cos(x)*sin(y)*exp(-2.*t*NU_) / dt);
+    res[1] = sin(2.*y)*exp(-4.*t*NU_) + (sin(x)*cos(y)*exp(-2.*t*NU_) / dt);
     break;
   default : DAL_THROW(dal::failure_error, "Bad number of reference solution");
   }
   return res;
 }
 
+// Valeur de la vitesse dans le cas de solution analytique
 base_small_vector navier_stokes_problem::Dir_cond(const base_small_vector &P,
 						  scalar_type t) {
   base_small_vector res(P.size());
