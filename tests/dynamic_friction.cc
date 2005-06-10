@@ -208,11 +208,11 @@ void friction_problem::init(void) {
 	base_node pt = mesh.points_of_face_of_convex(cv,f)[0];
 	if (un[N-1] < -0.000001 && (N != 3 || (bgeot::vect_dist2(pt, center)
 			   > .99*sqrt(25. + 15*15) && pt[N-1] < 20.1)))
-	  mesh.add_face_to_set(CONTACT_BOUNDARY, cv, f); 
-	if (un[0] > 0.98) mesh.add_face_to_set(PERIODIC_BOUNDARY1, cv, f); 
-	if (un[0] < -0.98) mesh.add_face_to_set(PERIODIC_BOUNDARY2, cv, f); 
+	  mesh.region(CONTACT_BOUNDARY).add(cv, f); 
+	if (un[0] > 0.98) mesh.region(PERIODIC_BOUNDARY1).add(cv, f); 
+	if (un[0] < -0.98) mesh.region(PERIODIC_BOUNDARY2).add(cv, f); 
 	if (un[N-1] > 0.1 && Dirichlet)
-	  mesh.add_face_to_set(DIRICHLET_BOUNDARY, cv, f);
+	  mesh.region(DIRICHLET_BOUNDARY).add(cv, f);
       }
     }
   }
@@ -229,7 +229,7 @@ void friction_problem::stationary(plain_vector &U0, plain_vector &LN,
 
   // Linearized elasticity brick.
   getfem::mdbrick_isotropic_linearized_elasticity<>
-    ELAS(mim, mf_u, mf_coef, lambda, mu, true);
+    ELAS(mim, mf_u, mf_coef, lambda, mu);
 
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs * N);
@@ -370,7 +370,7 @@ void friction_problem::solve(void) {
 
   // Linearized elasticity brick.
   getfem::mdbrick_isotropic_linearized_elasticity<>
-    ELAS(mim, mf_u, mf_coef, lambda, mu, true);
+    ELAS(mim, mf_u, mf_coef, lambda, mu);
 
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs * N);
