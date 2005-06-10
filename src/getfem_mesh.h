@@ -149,11 +149,16 @@ namespace getfem {
       if (!(valid_sub_regions.is_in(n))) compute_mpi_sub_region(n);
       return mpi_sub_region[n];
     }
-
+#else
+  public :
+    const mesh_region get_mpi_region(void)
+    { return mesh_region::all_convexes(); }
+    const mesh_region get_mpi_sub_region(size_type n) {
+      if (n == size_type(-1)) return get_mpi_region();
+      return cvf_sets[n];
+    }
 
 #endif
-
-  public :
     
     /// Constructor.
     getfem_mesh(dim_type NN = dim_type(-1)); 

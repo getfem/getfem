@@ -12,7 +12,7 @@ NU = 0.1;	        % Viscosity coefficient. (NU = 1 / Re)
 %MESH_TYPE = 'GT_PK(3,1)';        % linear triangles
 MESH_TYPE = 'GT_LINEAR_QK(2)';    % linear rectangles
 %MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
-NX = 10;            	          % space step.
+NX = 20;            	          % space step.
 DT = 0.001;                       % Time step
 T = 0.3;                          % Final time
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh

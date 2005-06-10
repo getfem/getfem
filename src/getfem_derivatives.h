@@ -107,6 +107,36 @@ namespace getfem
       }
     }
   }
+
+  template <typename VEC1, typename VEC2>
+  void interpolation_von_mises(const getfem::mesh_fem &mf_u, const VEC1 &U,
+			       const getfem::mesh_fem &mf_vm, VEC2 &VM,
+			       scalar_type mu=1) {
+    assert(mf_vm.get_qdim() == 1); 
+    unsigned N = mf_u.linked_mesh().dim(); assert(N == mf_u.get_qdim());
+    std::vector<scalar_type> DU(mf_vm.nb_dof() * N * N);
+    
+    getfem::compute_gradient(mf_u, mf_vm, U, DU);
+    
+    scalar_type vm_min, vm_max;
+    for (size_type i=0; i < mf_vm.nb_dof(); ++i) {
+      VM[i] = 0;
+      scalar_type sdiag = 0.;
+      for (unsigned j=0; j < N; ++j) {
+	sdiag += DU[i*N*N + j*N + j];
+	for (unsigned k=0; k < N; ++k) {
+	  scalar_type e = .5*(DU[i*N*N + j*N + k] + DU[i*N*N + k*N + j]);
+	  VM[i] += e*e;	
+	}
+      }
+      VM[i] -= 1./N * sdiag * sdiag;
+      vm_min = (i == 0 ? VM[0] : std::min(vm_min, VM[i]));
+      vm_max = (i == 0 ? VM[0] : std::max(vm_max, VM[i]));
+    }
+    cout << "Von Mises : min=" << 4*mu*mu*vm_min << ", max=" << 4*mu*mu*vm_max << "\n";
+    gmm::scale(VM, 4*mu*mu);
+  }
+
 }
 
 #endif

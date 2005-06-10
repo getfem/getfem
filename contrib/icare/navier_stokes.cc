@@ -190,8 +190,10 @@ base_small_vector navier_stokes_problem::sol_f(const base_small_vector &P,
              +16.*nu*t+8.*t*y*y-8.*t*y;
     break;
   case 2 : // Fn= - grad(P) + Un / dt
-    res[0] = sin(2.*x)*exp(-4.*t*nu) - (cos(x)*sin(y)*exp(-2.*t*nu) / dt);
-    res[1] = sin(2.*y)*exp(-4.*t*nu) + (sin(x)*cos(y)*exp(-2.*t*nu) / dt);
+    // res[0] = sin(2.*x)*exp(-4.*t*nu) - (cos(x)*sin(y)*exp(-2.*t*nu) / dt);
+    // res[1] = sin(2.*y)*exp(-4.*t*nu) + (sin(x)*cos(y)*exp(-2.*t*nu) / dt);
+    res[0] = -exp(-4.*t*nu)*sin(2.*x);
+    res[1] = -exp(-4.*t*nu)*sin(2.*y);
     break;
   default : DAL_THROW(dal::failure_error, "Bad reference solution number");
   }
@@ -210,7 +212,7 @@ base_small_vector navier_stokes_problem::Dir_cond(const base_small_vector &P,
     break;
   case 2 :
     res[0] = -cos(x)*sin(y)*exp(-2.*t*nu);
-    res[1] = -sin(x)*cos(y)*exp(-2.*t*nu);
+    res[1] = +sin(x)*cos(y)*exp(-2.*t*nu);
     break;
   default : DAL_THROW(dal::failure_error, "Bad reference solution number");
   }
@@ -424,16 +426,24 @@ bool navier_stokes_problem::solve() {
       gmm::copy(basic_velocity->get_solution(MSL), USTAR);
       cout << " gmm::vect_dist2(U0, USTAR) = " << gmm::vect_dist2(U0, USTAR) << endl;
       gmm::mult(B, USTAR, P1);
+      cout << "div ustar = " << gmm::vect_norm2(P1) << endl;
       poisson_source->set_auxF(P1);
       iter.init();
       getfem::standard_solve(*MSM, *poisson_source, iter);
-      gmm::mult(gmm::transposed(B), poisson->get_solution(*MSM), USTARbis);
-      iter.init();
-      gmm::iteration iter2 = iter; iter2.reduce_noisy();
-      gmm::cg(velocity_dyn.mass_matrix(), U0, USTARbis,
-	      gmm::identity_matrix(), iter2);
+      gmm::mult(gmm::transposed(B), gmm::scaled(poisson->get_solution(*MSM), -1.), USTARbis);
+      if (1) {
+	gmm::iteration iter2 = iter; iter2.reduce_noisy(); iter2.init();
+	gmm::cg(velocity_dyn.mass_matrix(), U0, USTARbis,
+		gmm::identity_matrix(), iter2);
+      }
+      else
+	gmm::copy(USTARbis, U0);
+
       gmm::add(USTAR, U0);
       gmm::add(gmm::scaled(poisson->get_solution(*MSM), 1./dt), P0);
+      
+      gmm::mult(B, U0, P1);
+      cout << "div u0 = " << gmm::vect_norm2(P1) << endl;
     }
     
     cout << "Kinetic energy : " <<

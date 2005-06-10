@@ -627,14 +627,9 @@ namespace getfem {
 	std::fill(mu.begin(), mu.end(), value_type(mu_[0]));
       }
       else { gmm::copy(lambda_, lambda); gmm::copy(mu_, mu); }
-#ifdef GMM_USES_MPI
       asm_stiffness_matrix_for_linear_elasticity
 	(K, mim, mf_u, mf_data, lambda, mu,
 	 mf_u.linked_mesh().get_mpi_region());
-#else
-      asm_stiffness_matrix_for_linear_elasticity
-	(K, mim, mf_u, mf_data, lambda, mu);		     
-#endif
     }
 
     void set_Lame_coeff_(value_type lambdai, value_type mui) {
@@ -1071,26 +1066,17 @@ namespace getfem {
       nbd = mf_u.nb_dof();
       size_type nd = mf_u.nb_dof(), ndd = mf_p.nb_dof();
       gmm::clear(B); gmm::resize(B, ndd, nd);
-#ifdef GMM_USES_MPI
       asm_stokes_B(B, *(this->mesh_ims.at(0)), mf_u, mf_p,
 		   mf_u.linked_mesh().get_mpi_region());
-#else 
-      asm_stokes_B(B, *(this->mesh_ims.at(0)), mf_u, mf_p);
-#endif
       if (penalized) {
 	VECTOR epsilon(mf_data.nb_dof());
 	if (homogeneous) std::fill(epsilon.begin(), epsilon.end(),epsilon_[0]);
 	else gmm::copy(epsilon_, epsilon);
 	gmm::clear(M); gmm::resize(M, ndd, ndd);
-#ifdef GMM_USES_MPI
 	asm_mass_matrix_param(M, *(this->mesh_ims[0]), mf_p,
-			      mf_data, epsilon,
+			      mf_data, epsilon, 
 			      mf_u.linked_mesh().get_mpi_region());
 	gmm::scale(M, value_type(-1));
-#else
-	asm_mass_matrix_param(M, *(this->mesh_ims[0]), mf_p, mf_data, epsilon);
-	gmm::scale(M, value_type(-1));
-#endif
       }
       this->proper_mixed_variables.clear();
       this->proper_mixed_variables.add(sub_problem.nb_dof(), mf_p.nb_dof());
