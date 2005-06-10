@@ -31,6 +31,7 @@
 #include <getfem_import.h>
 #include <getfem_regular_meshes.h>
 #include <getfem_Coulomb_friction.h>
+#include <getfem_derivatives.h>
 #include <gmm.h>
 #include <fstream>
 /* try to enable the SIGFPE if something evaluates to a Not-a-number
@@ -68,6 +69,7 @@ struct friction_problem {
   getfem::mesh_fem mf_u;     /* main mesh_fem, for the friction solution     */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   getfem::mesh_fem mf_coef;  /* mesh_fem used to represent pde coefficients  */
+  getfem::mesh_fem mf_vm;    /* mesh_fem used for the VonMises stress        */ 
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
   scalar_type rho, PG;       /* density, and gravity                         */
   scalar_type friction_coef; /* friction coefficient.                        */
@@ -89,7 +91,7 @@ struct friction_problem {
   void stationary(plain_vector &U0, plain_vector &LN, plain_vector &LT);
   void solve(void);
   void init(void);
-  friction_problem(void) : mim(mesh), mf_u(mesh), mf_rhs(mesh), mf_coef(mesh) {}
+  friction_problem(void) : mim(mesh), mf_u(mesh), mf_rhs(mesh), mf_coef(mesh), mf_vm(mesh) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
@@ -175,7 +177,7 @@ void friction_problem::init(void) {
 
   mim.set_integration_method(mesh.convex_index(), ppi);
   mf_u.set_finite_element(mesh.convex_index(), pf_u);
-
+  mf_vm.set_classical_discontinuous_finite_element(1);
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
   const char *data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
@@ -206,11 +208,11 @@ void friction_problem::init(void) {
 	base_node pt = mesh.points_of_face_of_convex(cv,f)[0];
 	if (un[N-1] < -0.000001 && (N != 3 || (bgeot::vect_dist2(pt, center)
 			   > .99*sqrt(25. + 15*15) && pt[N-1] < 20.1)))
-	  mesh.region(CONTACT_BOUNDARY).add(cv, f); 
-	if (un[0] > 0.98) mesh.region(PERIODIC_BOUNDARY1).add(cv, f); 
-	if (un[0] < -0.98) mesh.region(PERIODIC_BOUNDARY2).add(cv, f); 
+	  mesh.add_face_to_set(CONTACT_BOUNDARY, cv, f); 
+	if (un[0] > 0.98) mesh.add_face_to_set(PERIODIC_BOUNDARY1, cv, f); 
+	if (un[0] < -0.98) mesh.add_face_to_set(PERIODIC_BOUNDARY2, cv, f); 
 	if (un[N-1] > 0.1 && Dirichlet)
-	  mesh.region(DIRICHLET_BOUNDARY).add(cv, f);
+	  mesh.add_face_to_set(DIRICHLET_BOUNDARY, cv, f);
       }
     }
   }
@@ -227,7 +229,7 @@ void friction_problem::stationary(plain_vector &U0, plain_vector &LN,
 
   // Linearized elasticity brick.
   getfem::mdbrick_isotropic_linearized_elasticity<>
-    ELAS(mim, mf_u, mf_coef, lambda, mu);
+    ELAS(mim, mf_u, mf_coef, lambda, mu, true);
 
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs * N);
@@ -307,6 +309,51 @@ void friction_problem::stationary(plain_vector &U0, plain_vector &LN,
 
 }
 
+
+template <typename VEC1, typename VEC2>
+void calcul_von_mises(const getfem::mesh_fem &mf_u, const VEC1 &U,
+		      const getfem::mesh_fem &mf_vm, VEC2 &VM,
+		      scalar_type mu=1) {
+  /* DU=gf_compute(mfu,U,'gradient',mf_vm);
+     
+  // from the derivative, we compute the von mises stress
+  VM=zeros(1,gf_mesh_fem_get(mf_vm,'nbdof'));
+  N=gf_mesh_get(m,'dim');
+  for i=1:size(DU,3),
+  t=DU(:,:,i);
+  E=(t+t')/2;
+  VM(i) = sum(E(:).^2) - (1./N)*sum(diag(E))^2;
+  end;
+  VM = 4*pde.mu{1}^2*VM;
+  */
+  assert(mf_vm.get_qdim() == 1); 
+  unsigned N = mf_u.linked_mesh().dim(); assert(N == mf_u.get_qdim());
+  std::vector<scalar_type> DU(mf_vm.nb_dof() * N * N);
+
+  getfem::compute_gradient(mf_u, mf_vm, U, DU);
+  
+  gmm::resize(VM, mf_vm.nb_dof());
+  scalar_type vm_min, vm_max;
+  for (size_type i=0; i < mf_vm.nb_dof(); ++i) {
+    VM[i] = 0;
+    scalar_type sdiag = 0.;
+    for (unsigned j=0; j < N; ++j) {
+      sdiag += DU[i*N*N + j*N + j];
+      for (unsigned k=0; k < N; ++k) {
+	scalar_type e = .5*(DU[i*N*N + j*N + k] + DU[i*N*N + k*N + j]);
+	VM[i] += e*e;	
+      }      
+    }
+    VM[i] -= 1./N * sdiag * sdiag;
+    vm_min = (i == 0 ? VM[0] : std::min(vm_min, VM[i]));
+    vm_max = (i == 0 ? VM[0] : std::max(vm_max, VM[i]));
+    assert(VM[i] > -1e-6);
+  }
+  cout << "Von Mises : min=" << 4*mu*mu*vm_min << ", max=" << 4*mu*mu*vm_max << "\n";
+  gmm::scale(VM, 4*mu*mu);
+}
+
+
 /**************************************************************************/
 /*  Model.                                                                */
 /**************************************************************************/
@@ -323,7 +370,7 @@ void friction_problem::solve(void) {
 
   // Linearized elasticity brick.
   getfem::mdbrick_isotropic_linearized_elasticity<>
-    ELAS(mim, mf_u, mf_coef, lambda, mu);
+    ELAS(mim, mf_u, mf_coef, lambda, mu, true);
 
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs * N);
@@ -452,14 +499,23 @@ void friction_problem::solve(void) {
     exp->exporting_mesh_edges();
     exp->write_point_data(mf_u, U0, "stepinit"); 
     exp->serie_add_object("deformationsteps");
+    std::vector<scalar_type> VM;
+    calcul_von_mises(mf_u, U0, mf_vm, VM, mu);
+    exp->write_point_data(mf_vm, VM, "vonmises"); 
+    exp->serie_add_object("vonmisessteps");
   }
   
-  std::ofstream output1((datafilename + "_iter.txt").c_str());   
-  std::ofstream output2((datafilename + "_energy.txt").c_str());
-  std::ofstream output3((datafilename + "_velocity.txt").c_str());
-  std::ofstream output4((datafilename + "_normalstress.txt").c_str());
-  std::ofstream output5((datafilename + "_displacement.txt").c_str());
+  std::ofstream output1((datafilename + "_result.dat").c_str());   
+//   std::ofstream output2((datafilename + "_energy.txt").c_str());
+//   std::ofstream output3((datafilename + "_velocity.txt").c_str());
+//   std::ofstream output4((datafilename + "_normalstress.txt").c_str());
+//   std::ofstream output5((datafilename + "_displacement.txt").c_str());
   
+  std::ofstream Houari1("iter", std::ios::out);   
+  std::ofstream Houari2("nrj", std::ios::out);
+  std::ofstream Houari3("vts", std::ios::out);
+  std::ofstream Houari4("FN0", std::ios::out);
+  std::ofstream Houari5("depl", std::ios::out);
   
   while (t <= T) {
 
@@ -695,13 +751,27 @@ void friction_problem::solve(void) {
 	gmm::mult(gmm::transposed(BN), LN1, LLN1);
 	gmm::copy(gmm::sub_vector(U1, gmm::sub_interval(ref_dof,N)), UU1);
 	gmm::copy(gmm::sub_vector(V1, gmm::sub_interval(ref_dof,N)), VV1);
-	output1 << t/dt << "\n";
-	output2 << J1 << "\n";
-	output3 << gmm::vect_norm2(VV1) << "\n";
-	output4 << -LLN1[ref_dof+N-1] << "\n";
-	output5 <<  gmm::vect_norm2(UU1) << "\n";
+
+	output1 << t/dt << J1 << "\n";
+// 	output2 << J1 << "\n";
+// 	output3 << gmm::vect_norm2(VV1) << "\n";
+// 	output4 << -LLN1[ref_dof+N-1] << "\n";
+// 	output5 <<  gmm::vect_norm2(UU1) << "\n";
+
+	Houari1 << t/dt << "\n";
+	Houari2 << J1   << "\n";
+	Houari3 << VV1[N-1] << "\n";
+	Houari4 << -LLN1[ref_dof+N-1]   << "\n";
+	Houari5 << UU1[N-1] << "\n";
+      
+
 	exp->write_point_data(mf_u, U0);
 	exp->serie_add_object("deformationsteps");
+	std::vector<scalar_type> VM;
+	calcul_von_mises(mf_u, U0, mf_vm, VM, mu);
+	exp->write_point_data(mf_vm, VM); 
+	exp->serie_add_object("vonmisessteps");
+
 	t_export += dtexport;
       }
     }

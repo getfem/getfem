@@ -429,8 +429,9 @@ bool navier_stokes_problem::solve() {
       getfem::standard_solve(*MSM, *poisson_source, iter);
       gmm::mult(gmm::transposed(B), poisson->get_solution(*MSM), USTARbis);
       iter.init();
+      gmm::iteration iter2 = iter; iter2.reduce_noisy();
       gmm::cg(velocity_dyn.mass_matrix(), U0, USTARbis,
-	      gmm::identity_matrix(), iter);
+	      gmm::identity_matrix(), iter2);
       gmm::add(USTAR, U0);
       gmm::add(gmm::scaled(poisson->get_solution(*MSM), 1./dt), P0);
     }
