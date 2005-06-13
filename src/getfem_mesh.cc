@@ -397,7 +397,7 @@ namespace getfem {
     tend = false;
     while (!tend) {
       tend = !ftool::get_token(ist, tmp, 1023);
-      bool error = false;
+      // bool error = false;
       if (strcmp(tmp, "BEGIN")==0) {
 	ftool::get_token(ist, tmp, 1023);
 	if (strcmp(tmp, "BOUNDARY")==0 ||

@@ -17,12 +17,12 @@ DT = 0.001;                       % Time step
 T = 0.3;                          % Final time
 MESH_NOISE = 0; % Set to one if you want to "shake" the mesh
 NOISY=1;
-OPTION = 4; % 1 = Stokes avec schéma de splitting 1
+OPTION = 1; % 1 = Stokes avec schéma de splitting 1
 	    % 2 = Navier Stokes avec schéma de splitting 1
 	    % 3 = Navier Stokes with energy conserving midpoint scheme
 	    % 4 = Navier Stokes with prediction- correction scheme
 
-SOL_REF = 2; % 1 = Reference solution for Stokes
+SOL_REF = 1; % 1 = Reference solution for Stokes
              % 2 = Reference solution for Navier Stokes
 
 %FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(3, 2)';
