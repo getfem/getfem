@@ -506,8 +506,8 @@ namespace getfem {
     T_MATRIX K;
 
     void proper_update(void) {
-      gmm::clear(K);
       gmm::resize(K, mf_u.nb_dof(), mf_u.nb_dof());
+      gmm::clear(K);
       size_type n = laplacian ? 1 : gmm::sqr(mf_u.linked_mesh().dim());
       VECTOR coeffs(n * mf_data.nb_dof());
       if (homogeneous) {
@@ -619,8 +619,8 @@ namespace getfem {
     T_MATRIX K;
 
     virtual void proper_update(void) {
-      gmm::clear(K);
       gmm::resize(K, mf_u.nb_dof(), mf_u.nb_dof());
+      gmm::clear(K);
       VECTOR lambda(mf_data.nb_dof()), mu(mf_data.nb_dof());
       if (homogeneous) {
 	std::fill(lambda.begin(), lambda.end(), value_type(lambda_[0]));
@@ -1734,7 +1734,7 @@ namespace getfem {
     t_ref=MPI_Wtime();
     cout<<"begin Seq AS"<<endl;
 #endif
-      sequential_additive_schwarz(MS.reduced_tangent_matrix(), dr,
+      additive_schwarz(MS.reduced_tangent_matrix(), dr,
 				  gmm::scaled(MS.reduced_residu(), value_type(-1)),
 				  0, Bib, iter_linsolv, gmm::using_superlu(),
 				  gmm::using_cg());

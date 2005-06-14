@@ -64,30 +64,34 @@ namespace getfem {
 
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
       MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+      if (size < 2) { mpi_region = mesh_region::all_convexes(); }
+      else {
       
-      bgeot::pconvex_structure cvs = structure_of_convex
-	(convex_index().first())->basic_structure();
-      
-      if (cvs == bgeot::simplex_structure(2)) { k = 3; etype = 1; }
-      else if (cvs == bgeot::simplex_structure(3)) { k = 4; etype = 2; }
-      else if (cvs == bgeot::parallelepiped_structure(2)) { k=4; etype = 4; }
-      else if (cvs == bgeot::parallelepiped_structure(3)) { k=8; etype = 3; }
-      else DAL_THROW(failure_error,
-		     "This kind of element is not taken into account");
-      
-      std::vector<int> elmnts(ne*k), npart(nn), eparts(ne);
-      int j = 0;
-      // Adapter la boucle aux transformations d'ordre eleve.
-      for (dal::bv_visitor i(convex_index()); !i.finished();
-	   ++i, ++j)
-	for (int l = 0; l < k; ++l)
-	  elmnts[j*k+l] = ind_points_of_convex(i)[l];
-			   
-      METIS_PartMeshNodal(&ne, &nn, &(elmnts[0]), &etype, &numflag,
-			  &size, &edgecut, &(eparts[0]), &(npart[0]));
-      
-      for (size_type i = 0; i < size_type(ne); ++i)
-	if (eparts[i] == rank) mpi_region.add(i);
+	bgeot::pconvex_structure cvs = structure_of_convex
+	  (convex_index().first())->basic_structure();
+	
+	if (cvs == bgeot::simplex_structure(2)) { k = 3; etype = 1; }
+	else if (cvs == bgeot::simplex_structure(3)) { k = 4; etype = 2; }
+	else if (cvs == bgeot::parallelepiped_structure(2)) { k=4; etype = 4; }
+	else if (cvs == bgeot::parallelepiped_structure(3)) { k=8; etype = 3; }
+	else DAL_THROW(failure_error,
+		       "This kind of element is not taken into account");
+	
+	std::vector<int> elmnts(ne*k), npart(nn), eparts(ne);
+	int j = 0;
+	// Adapter la boucle aux transformations d'ordre eleve.
+	for (dal::bv_visitor i(convex_index()); !i.finished();
+	     ++i, ++j)
+	  for (int l = 0; l < k; ++l)
+	    elmnts[j*k+l] = ind_points_of_convex(i)[l];
+	
+	METIS_PartMeshNodal(&ne, &nn, &(elmnts[0]), &etype, &numflag,
+			    &size, &edgecut, &(eparts[0]), &(npart[0]));
+	
+	for (size_type i = 0; i < size_type(ne); ++i)
+	  if (eparts[i] == rank) mpi_region.add(i);
+      }
       modified = false;
 
       valid_sub_regions.clear();

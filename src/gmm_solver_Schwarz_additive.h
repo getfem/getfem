@@ -141,7 +141,7 @@ namespace gmm {
     
     if (iter.get_noisy()) cout << "Init pour sub dom ";
 #ifdef GMM_USES_MPI
-    int size,tranche,borne_sup,borne_inf,rank,tag1=11,tag2=12,sizepr = 0;
+    int size,tranche,borne_sup,borne_inf,rank,tag1=11,tag2=12,tag3=13,sizepr = 0;
     double t_ref,t_final;
     MPI_Status status;
     t_ref=MPI_Wtime();
@@ -155,13 +155,14 @@ namespace gmm {
     cout << "Nombre de sous domaines " << borne_sup - borne_inf << endl;
 
     int sizeA = mat_nrows(*A);
-    gmm::csc_matrix<value_type> Acsc(sizeA, sizeA), Acsctemp(sizeA, sizeA);
-    gmm::copy(gmm::eff_matrix(*A), Acsc);
+    gmm::csr_matrix<value_type> Acsr(sizeA, sizeA), Acsrtemp(sizeA, sizeA);
+    gmm::copy(gmm::eff_matrix(*A), Acsr);
+    int next = (rank + 1) % size;
+    int previous = (rank + size - 1) % size;
+    //communication of local information on ring pattern
+    //Each process receive  Nproc-1 contributions 
 
     for (int nproc = 0; nproc < size; ++nproc) {
-      int next = (nproc + 1) % size;
-      int previous = (nproc + size - 1) % size;
-      
       for (size_type i = size_type(borne_inf); i < size_type(borne_sup); ++i) {
 	cout << "Sous domaines " << i << " : " << mat_ncols((*vB)[i]) << endl;
 #else
@@ -177,7 +178,7 @@ namespace gmm {
 	    gmm::resize(vAloc[i], mat_ncols((*vB)[i]), mat_ncols((*vB)[i]));
 	    gmm::clear(vAloc[i]);
 	  }
-	  gmm::mult(gmm::transposed((*vB)[i]), Acsc, Maux);
+	  gmm::mult(gmm::transposed((*vB)[i]), Acsr, Maux);
 	  gmm::mult(Maux, (*vB)[i], Maux2);
 	  gmm::add(Maux2, vAloc[i]);
 #else
@@ -187,27 +188,34 @@ namespace gmm {
 #endif
 
 #ifdef GMM_USES_MPI
-	  if (nproc == size - 1) {
+	  if (nproc == size - 1 ) {
 #endif
 	    precond1[i].build_with(vAloc[i]);
 	    gmm::resize(fi[i], mat_ncols((*vB)[i]));
 	    gmm::resize(gi[i], mat_ncols((*vB)[i]));
-#ifndef GMM_USES_MPI
+#ifdef GMM_USES_MPI
 	  }
 #else
 	}
+#endif
+#ifdef GMM_USES_MPI
       }
-
       if (nproc != size - 1) {
-	MPI_Sendrecv(Acsc.ir, sizeA, MPI_INT, next, tag1, Acsctemp.ir, sizeA,MPI_INT,previous,tag2,MPI_COMM_WORLD,&status);
-	MPI_Sendrecv(Acsc.jc, sizeA+1, MPI_INT, next, tag1, Acsctemp.jc, sizeA+1,MPI_INT,previous,tag2,MPI_COMM_WORLD,&status);
-	if (Acsctemp.jc[sizeA] > size_type(sizepr)) {
-	  sizepr = Acsctemp.jc[sizeA];
-	  delete[] Acsctemp.pr;
-	  Acsctemp.pr = new value_type[sizepr];
+	MPI_Sendrecv(Acsr.ir, sizeA, MPI_INT, next, tag1,
+		     Acsrtemp.ir, sizeA,MPI_INT,previous,tag1,
+		     MPI_COMM_WORLD,&status);
+	MPI_Sendrecv(Acsr.jc, sizeA+1, MPI_INT, next, tag2,
+		     Acsrtemp.jc, sizeA+1,MPI_INT,previous,tag2,
+		     MPI_COMM_WORLD,&status);
+	if (Acsrtemp.jc[sizeA] > size_type(sizepr)) {
+	  sizepr = Acsrtemp.jc[sizeA];
+	  delete[] Acsrtemp.pr;
+	  Acsrtemp.pr = new value_type[sizepr];
 	}
-	MPI_Sendrecv(Acsc.pr, Acsc.jc[sizeA], mpi_type(value_type()), next, tag1, Acsctemp.pr, Acsctemp.jc[sizeA],mpi_type(value_type()),previous,tag2,MPI_COMM_WORLD,&status);
-	gmm::copy(Acsctemp, Acsc);
+	MPI_Sendrecv(Acsr.pr, Acsr.jc[sizeA], mpi_type(value_type()), next, tag3, 
+		     Acsrtemp.pr, Acsrtemp.jc[sizeA],mpi_type(value_type()),previous,tag3,
+		     MPI_COMM_WORLD,&status);
+	gmm::copy(Acsrtemp, Acsr);
       }
     }
       t_final=MPI_Wtime();
@@ -356,7 +364,7 @@ namespace gmm {
   template <typename Matrix1, typename Matrix2,
 	    typename Vector2, typename Vector3, typename Precond,
 	    typename local_solver, typename global_solver>
-  void sequential_additive_schwarz(
+  void additive_schwarz(
     add_schwarz_mat<Matrix1, Matrix2, Precond, local_solver> &ASM, Vector3 &u,
     const Vector2 &f, iteration &iter, const global_solver&) {
 
@@ -423,7 +431,7 @@ namespace gmm {
   template <typename Matrix1, typename Matrix2,
 	    typename Vector2, typename Vector3, typename Precond,
 	    typename local_solver, typename global_solver>
-  void sequential_additive_schwarz(const Matrix1 &A, Vector3 &u,
+  void additive_schwarz(const Matrix1 &A, Vector3 &u,
 				  const Vector2 &f, const Precond &P,
 				  const std::vector<Matrix2> &vB,
 				  iteration &iter, local_solver,
@@ -434,7 +442,7 @@ namespace gmm {
     iter2.set_maxiter(size_type(-1));
     add_schwarz_mat<Matrix1, Matrix2, Precond, local_solver>
       ASM(A, vB, iter2, P, iter.get_resmax());
-    sequential_additive_schwarz(ASM, u, f, iter, global_solver());
+    additive_schwarz(ASM, u, f, iter, global_solver());
   }
 
   /* ******************************************************************** */

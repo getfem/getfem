@@ -239,15 +239,15 @@ int pb_data::solve_schwarz(int version) {
   
   gmm::iteration iter(residu, 1, 1000000);
   switch (version) {
-  case 3 : gmm::sequential_additive_schwarz(RM, U, F,
+  case 3 : gmm::additive_schwarz(RM, U, F,
 	      gmm::ildlt_precond<general_sparse_matrix>(), vB, iter,
 	      gmm::using_cg(), gmm::using_cg());
     break;
-  case 4 : gmm::sequential_additive_schwarz(RM, U, F,
+  case 4 : gmm::additive_schwarz(RM, U, F,
 	      gmm::ilu_precond<general_sparse_matrix>(), vB, iter,
 	      gmm::using_gmres(), gmm::using_gmres());
     break;
-  case 5 : gmm::sequential_additive_schwarz(RM, U, F,
+  case 5 : gmm::additive_schwarz(RM, U, F,
 	      gmm::ilu_precond<general_sparse_matrix>(), vB, iter,
 	      gmm::using_superlu(), gmm::using_cg());
     break;

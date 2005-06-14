@@ -29,7 +29,7 @@ FEM_TYPE = 'FEM_PK(2,1)';  % PK element
 %FEM_TYPE = 'FEM_PK_HIERARCHICAL(2,2)'; % Hierarchical PK on simplexes
 %FEM_TYPE = 'FEM_PK_HIERARCHICAL_COMPOSITE(2,1,2)'; % Hierarchical PK with s divisions
 
-MIXED_PRESSURE=1;       % Mixed version or not.
+MIXED_PRESSURE=0;       % Mixed version or not.
 % FEM_TYPE_P = 'FEM_PK(3,1)';  % P1 for triangles
 FEM_TYPE_P = 'FEM_PK_DISCONTINUOUS(2,0)';  % Discontinuous P1 for triangles
 
