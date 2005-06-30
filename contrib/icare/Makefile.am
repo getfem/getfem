@@ -1,21 +1,21 @@
 # SUBDIRS = 
 
 check_PROGRAMS =                 \
-	navier_stokes
+	icare
 
-CLEANFILES = navier_stokes.data
+CLEANFILES = icare.data
 
-navier_stokes_SOURCES = navier_stokes.cc navier_stokes.h
+icare_SOURCES = icare.cc icare.h
 
 
 INCLUDES = -I$(top_srcdir)/src -I../../src
 LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@
 
-TESTS = $(top_srcdir)/contrib/icare/navier_stokes.pl
+TESTS = $(top_srcdir)/contrib/icare/icare.pl
 
 EXTRA_DIST = \
-	navier_stokes.pl                  \
-	navier_stokes.param
+	icare.pl                  \
+	icare.param
 
 
 TESTS_ENVIRONMENT = perl
