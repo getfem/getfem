@@ -148,7 +148,11 @@ namespace dal {
   { o->pointer_ref_count_++; }
 
   inline void intrusive_ptr_release(const static_stored_object *o)
-  { if (--(o->pointer_ref_count_) == 0) delete o; }
+  { 
+    //cout << "intrusive_ptr_release(" << typeid(*o).name() << ")@" << o << " refcnt=" << o->pointer_ref_count_ << "\n";
+    assert(o->pointer_ref_count_ > 0);
+    if (--(o->pointer_ref_count_) == 0) delete o; 
+  }
 
 
   /** Gives a pointer to an object from a key pointer. */

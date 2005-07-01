@@ -163,6 +163,18 @@ namespace getfem {
     points().resort();
   }
 
+  void getfem_mesh::bounding_box(base_node& Pmin, base_node& Pmax) const {
+    bool is_first = true;
+    Pmin.clear(); Pmax.clear(); 
+    for (dal::bv_visitor i(points().index()); !i.finished(); ++i) {
+      if (is_first) { Pmin = Pmax = points()[i]; is_first = false; }
+      else for (unsigned j=0; j < dim(); ++j) {
+	Pmin[j] = std::min(Pmin[j], points()[i][j]);
+	Pmax[j] = std::max(Pmax[j], points()[i][j]);
+      }
+    }
+  }
+
   void getfem_mesh::clear(void) {
     bgeot::mesh<base_node>::clear();
     gtab.clear(); trans_exists.clear();

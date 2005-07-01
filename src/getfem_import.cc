@@ -39,6 +39,48 @@ namespace getfem {
   /* mesh file from gmsh [http://www.geuz.org/gmsh/] 
      structure: $NOD list_of_nodes $ENDNOD $ELT list_of_elt $ENDELT
   */
+
+  struct gmsh_cv_info {
+    unsigned id, type, region;
+    bgeot::pgeometric_trans pgt;
+    std::vector<size_type> nodes;
+    void set_pgt() {
+      switch (type) {
+	case 1: { /* LINE */
+	  pgt = bgeot::simplex_geotrans(1,1);
+	} break;
+	case 2: { /* TRIANGLE */
+	  pgt = bgeot::simplex_geotrans(2,1);
+	} break;
+	case 3: { /* QUADRANGLE */
+	  pgt = bgeot::parallelepiped_geotrans(2,1);
+	} break;
+	case 4: { /* TETRAHEDRON */
+	  pgt = bgeot::simplex_geotrans(3,1);
+	} break;
+	case 5: { /* HEXAHEDRON */
+	  pgt = bgeot::parallelepiped_geotrans(3,1);
+	} break;
+	case 6: { /* PRISM */
+	  pgt = bgeot::prism_geotrans(3,1);
+	} break;
+	case 7: { /* PYRAMID */
+	  DAL_THROW(failure_error, "sorry pyramidal convexes not done for the moment..");
+	} break;
+	case 15: { /* POINT */
+	  DAL_WARNING(2, "ignoring point element");
+	} break;
+	default: { /* UNKNOWN .. */
+	  /* second order elements : to be done .. */
+	  DAL_THROW(failure_error, "the gmsh element type " << type << "is unknown..");
+	} break;
+      }
+    }
+    bool operator<(const gmsh_cv_info& other) const {
+      return pgt->dim() > other.pgt->dim();
+    }
+  };
+
   static void import_gmsh_msh_file(std::ifstream& f, getfem_mesh& m) {
     /* read the node list */
     ftool::read_until(f, "$NOD");
@@ -59,50 +101,53 @@ namespace getfem {
     ftool::read_until(f, "$ELM");
     size_type nb_cv;
     f >> nb_cv;
-    std::vector<size_type> cv_nodes;
+    std::vector<gmsh_cv_info> cvlst(nb_cv);
     for (size_type cv=0; cv < nb_cv; ++cv) {
-      size_type cv_id, cv_type, cv_region, cv_dummy, cv_nb_nodes;
-      f >> cv_id >> cv_type >> cv_region >> cv_dummy >> cv_nb_nodes;
-      cv_id--; /* numbering starts at 1 */
-      cv_nodes.resize(cv_nb_nodes);
+      gmsh_cv_info &ci = cvlst[cv];
+      unsigned dummy, cv_nb_nodes;
+      f >> ci.id >> ci.type >> ci.region >> dummy >> cv_nb_nodes;
+      ci.id--; /* numbering starts at 1 */
+      ci.nodes.resize(cv_nb_nodes);
       for (size_type i=0; i < cv_nb_nodes; ++i) {
 	size_type j;
 	f >> j;
-	cv_nodes[i] = msh_node_2_getfem_node.search(j);
-	if (cv_nodes[i] == size_type(-1)) 
+	ci.nodes[i] = msh_node_2_getfem_node.search(j);
+	if (ci.nodes[i] == size_type(-1)) 
 	  DAL_THROW(failure_error, "Invalid node ID " << j 
-		    << " in gmsh convex " << cv_id);
+		    << " in gmsh convex " << ci.id);
       }
-      switch (cv_type) {
-      case 1: { /* LINE */
-	m.add_segment(cv_nodes[0], cv_nodes[1]);
-      } break;
-      case 2: { /* TRIANGLE */
-	m.add_triangle(cv_nodes[0], cv_nodes[1], cv_nodes[2]);
-      } break;
-      case 3: { /* QUADRANGLE */
-	m.add_parallelepiped(2,cv_nodes.begin());
-      } break;
-      case 4: { /* TETRAHEDRON */
-	m.add_simplex(3,cv_nodes.begin());
-      } break;
-      case 5: { /* HEXAHEDRON */
-	m.add_parallelepiped(3,cv_nodes.begin());
-      } break;
-      case 6: { /* PRISM */
-	m.add_prism(3,cv_nodes.begin());
-      } break;
-      case 7: { /* PYRAMID */
-	DAL_THROW(failure_error, "sorry pyramidal convexes not done for the moment..");
-      } break;
-      case 15: { /* POINT */
-	DAL_WARNING(2, "ignoring point element");
-      } break;
-      default: { /* UNKNOWN .. */
-	DAL_THROW(failure_error, "the gmsh element type " << cv_type << "is unknown..");
-      } break;
-      }	
+      ci.set_pgt();
     }
+    if (cvlst.size()) {
+      std::sort(cvlst.begin(), cvlst.end());
+      unsigned N = cvlst.front().pgt->dim();
+      for (size_type cv=0; cv < nb_cv; ++cv) {
+	bool cvok = false;
+	gmsh_cv_info &ci = cvlst[cv];
+	//cout << "importing cv dim=" << int(ci.pgt->dim()) << " N=" << N << "\n";
+	if (ci.pgt->dim() == N) {
+	  size_type ic = m.add_convex(ci.pgt, ci.nodes.begin()); cvok = true;
+	  //m.region(ci.region).add(ic);
+	}/* else if (ci.pgt->dim() == N-1) {
+	  bgeot::mesh_convex_ind_ct ct = m.convex_to_point(ci.nodes[0]);
+	  for (bgeot::mesh_convex_ind_ct::const_iterator it = ct.begin();
+	       it != ct.end(); ++it) {
+	    for (unsigned face=0; face < m.structure_of_convex(*it)->nb_faces(); ++face) {
+	      if (m.is_convex_face_has_points(*it,face,ci.nodes.size(),ci.nodes.begin())) {
+		m.region(ci.region).add(*it,face);
+		cvok = true;
+	      }
+	    }
+	  }
+	  if (!cvok) cout << "face not found ... \n";
+	  else cout << "face found!\n";
+	  }
+	if (!cvok)
+	  DAL_WARNING(2, "gmsh import ignored a convex of type "
+	  << bgeot::name_of_geometric_trans(ci.pgt));*/
+      }
+    }
+    maybe_remove_last_dimension(m);
   }
 
   /* mesh file from GiD [http://gid.cimne.upc.es/]
@@ -376,6 +421,16 @@ namespace getfem {
     else if (filename.compare(0,10,"emc2_mesh:") == 0)
       getfem::import_mesh(filename.substr(10), "emc2_mesh", mesh);
     else mesh.read_from_file(filename);
+  }
+
+  void maybe_remove_last_dimension(getfem_mesh &m) {
+    bool is_flat;
+    unsigned N = m.dim(); if (N < 1) return;
+    for (dal::bv_visitor i(m.points().index()); !i.finished(); ++i)
+      if (m.points()[i][N-1] != 0) is_flat = 0;
+    base_matrix M(N-1,N); 
+    for (unsigned i=0; i < N-1; ++i) M(i,i) = 1;
+    m.transformation(M);
   }
 
 }

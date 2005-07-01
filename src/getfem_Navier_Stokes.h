@@ -48,11 +48,11 @@ namespace getfem {
 
     getfem::generic_assembly assem;
     assem.set("u=data(#1);"
-	      "t=comp(vBase(#1).vGrad(#1).vBase(#1));"
-	      "M(#1, #1) += u(i).t(:,k,i,j,k,:,j);"
-	      "M(#1, #1) += u(i).t(:,k,:,j,k,i,j);"
-	      "M(#1, #1) += u(i).t(:,k,i,j,j,:,k)/2;"
-	      "M(#1, #1) += u(i).t(:,j,:,k,k,i,j)/2;");
+	      "t=comp(vGrad(#1).vBase(#1).vBase(#1));"
+	      "M(#1, #1) += u(i).t(i,k,j,:,k,:,j);"
+	      "M(#1, #1) += u(i).t(:,j,k,:,k,i,j);"
+	      "M(#1, #1) += u(i).t(i,j,j,:,k,:,k)/2;"
+	      "M(#1, #1) += u(i).t(:,k,k,:,j,i,j)/2;");
     assem.push_mi(mim);
     assem.push_mf(mf);
     assem.push_mat(const_cast<MAT&>(M));
@@ -96,24 +96,28 @@ namespace getfem {
     mesh_im &mim;
     mesh_fem &mf_u;
     value_type nu;
+    T_MATRIX K;
 
-    virtual void proper_update(void) {}
+    virtual void proper_update(void) {
+      gmm::resize(K, mf_u.nb_dof(), mf_u.nb_dof());
+      gmm::clear(K);
+      asm_stiffness_matrix_for_homogeneous_laplacian_componentwise(K, mim, mf_u);
+      gmm::scale(K, nu);
+    }
 
   public :
 
     virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
 					   size_type) {
       gmm::sub_interval SUBI(i0, this->nb_dof());
-      gmm::clear(gmm::sub_matrix(MS.tangent_matrix(), SUBI));
-      asm_stiffness_matrix_for_homogeneous_laplacian_componentwise
-	(gmm::sub_matrix(MS.tangent_matrix(), SUBI), mim, mf_u);
-      gmm::scale(gmm::sub_matrix(MS.tangent_matrix(), SUBI), nu);
+      gmm::copy(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI));
       asm_navier_stokes_tgm(gmm::sub_matrix(MS.tangent_matrix(), SUBI),
 			    mim, mf_u, gmm::sub_vector(MS.state(), SUBI));
     }
     virtual void do_compute_residu(MODEL_STATE &MS, size_type i0, size_type) {
       gmm::sub_interval SUBI(i0, this->nb_dof());
-      gmm::clear(gmm::sub_vector(MS.residu(), SUBI));
+      gmm::mult(K, gmm::sub_vector(MS.state(), SUBI),
+		gmm::sub_vector(MS.residu(), SUBI));
       asm_navier_stokes_rhs(gmm::sub_vector(MS.residu(), SUBI), mim,
 			    mf_u, gmm::sub_vector(MS.state(), SUBI));
     }
@@ -160,6 +164,9 @@ namespace getfem {
 
     SUBVECTOR get_velocity(MODEL_STATE &MS) 
     { return velocity_part.get_solution(MS); }
+
+    SUBVECTOR get_pressure(MODEL_STATE &MS) 
+    { return sub_problem.get_pressure(MS); }
 
     mdbrick_navier_stokes(mesh_im &mim, mesh_fem &mf_u, mesh_fem &mf_p,
 			  value_type nu)

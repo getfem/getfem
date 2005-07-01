@@ -37,8 +37,6 @@ using bgeot::scalar_type;
 using bgeot::opt_long_scalar_type;
 using bgeot::dim_type;
 
-bool do_heavy_checks = false;
-
 void print_method(getfem::pintegration_method ppi) {
   cout << "methode : " << getfem::name_of_int_method(ppi) << endl;
   getfem::papprox_integration pai = ppi->approx_method();
@@ -76,6 +74,7 @@ static void check_method(const std::string& im_name, getfem::pintegration_method
   m.add_convex_by_points(pgt, pgt->convex_ref()->points().begin());
   mf1.set_finite_element(m.convex_index(),getfem::classical_fem(pgt,k/2));
   mf2.set_finite_element(m.convex_index(),getfem::classical_fem(pgt,(k-k/2)));
+
   matrix_collection &mc = ME[std::make_pair(pgt,k)];
   getfem::pmat_elem_type pme = getfem::mat_elem_product(getfem::mat_elem_base(mf1.fem_of_element(0)),getfem::mat_elem_base(mf2.fem_of_element(0)));
   getfem::pmat_elem_computation pmec = getfem::mat_elem(pme, ppi, pgt);
@@ -206,18 +205,23 @@ static void check_methods() {
     sprintf(s,"IM_EXACT_SIMPLEX(1)"); ppi = getfem::int_method_descriptor(s);
     check_method(s,ppi,k,bgeot::simplex_geotrans(1,1));
   }
+
+  
+
   for (size_type d=2; d < 5; ++d) {
     for (size_type k=0; k < 7-d; ++k) {
       sprintf(s,"IM_EXACT_SIMPLEX(%d)",int(d)); ppi = getfem::int_method_descriptor(s);
       check_method(s,ppi,k,bgeot::simplex_geotrans(d,1));
     }
   }
+
   for (std::vector<size_type>::const_iterator it = TRIANGLE_D().begin(); it != TRIANGLE_D().end(); ++it) {
     sprintf(s,"IM_TRIANGLE(%d)",int(*it)); ppi = getfem::int_method_descriptor(s);
     for (size_type k=1; k <= *it; ++k) { 
       check_method(s,ppi,k,bgeot::simplex_geotrans(2,1));
     }
   }
+
   for (size_type d=2; d < 5; ++d) {
     for (size_type i=1; i < 8; ++i) {
       for (size_type k=0; k < std::min(i,5-d); ++k) {
@@ -296,6 +300,8 @@ static void check_methods() {
       }
     }
   }
+
+
 
   {
     sprintf(s,"IM_STRUCTURED_COMPOSITE(IM_GAUSS1D(3),4)");
@@ -392,9 +398,14 @@ int main(int argc, char **argv)
   /*exception_cb cb;
   dal::exception_callback::set_exception_callback(&cb);
   */
-  if (argc == 2 && strcmp(argv[1], "-all")) do_heavy_checks = true;
-  
   try {
+    char s[600]; sprintf(s,"IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(3,2),2)");
+    //check_method(s, getfem::int_method_descriptor(s), 2, bgeot::parallelepiped_linear_geotrans(3));
+    getfem::pfem pf = getfem::QK_fem(2,1); //getfem::classical_fem(bgeot::parallelepiped_linear_geotrans(2),1);
+    return 100;
+
+
+
     int ok = 0;
     getfem::pintegration_method im_none = getfem::int_method_descriptor("IM_NONE()");
     try {
@@ -403,11 +414,11 @@ int main(int argc, char **argv)
       ok = 1;
     }
     if (!ok) throw(dal::failure_error("IM_NONE failed..\n"));
-    print_some_methods();
+    //print_some_methods();
     check_methods();
     int failcnt = inspect_results();
     cout << "\nOrders of some approximate integration methods:\n";
-    check_orders();
+    //check_orders();
     if (failcnt) { cerr << "an error occured with " << failcnt << " integration methods\n"; return 1; }
   }
   DAL_STANDARD_CATCH_ERROR;

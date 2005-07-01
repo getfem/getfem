@@ -1300,6 +1300,13 @@ namespace getfem {
       if (!(this->context_check())) compute_constraints(ASMDIR_BUILDR);
     }
 
+    void set_H(const VECTOR &H__) {
+      with_H = true;
+      gmm::resize(H_, gmm::vect_size(H__));
+      gmm::copy(H__, H_);
+      if (!(this->context_check())) compute_constraints(ASMDIR_BUILDH);
+    }
+
     void init_(void) {
       this->add_dependency(mf_data);
       this->add_sub_brick(sub_problem);

@@ -435,6 +435,9 @@ namespace getfem
   public :
     void calc_base_func(base_poly &p, size_type i, short_type K) const;
     PK_fem_(dim_type nc, short_type k);
+    ~PK_fem_() {
+      cout << "in ~PK_fem(" << int(dim()) << "," << int(estimated_degree()) << ") @ " << this << "\n";
+    }
   };
   
   void PK_fem_::calc_base_func(base_poly &p, size_type i, short_type K) const {

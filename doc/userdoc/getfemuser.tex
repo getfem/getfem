@@ -499,7 +499,7 @@ The following is an example of how to load a mesh and extract information on it.
           cout << cvs->ind\_points\_of\_face(f)[k] << " "; 
           cout << " and global indexes : ";
           for (bgeot::size\_type k = 0; k < cvs->nb\_points\_of\_face(f); ++k) 
-            cout << mesh.ind\_points\_of\_convex(i)(cvs->ind\_points\_of\_face(f)[k]) << " ";
+            cout << mesh.ind\_points\_of\_convex(i)[cvs->ind\_points\_of\_face(f)[k]] << " ";
         \}
      \}
      

@@ -22,10 +22,11 @@
 
 #include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
 #include <getfem_export.h>   /* export functions (save solution in a file)  */
+#include <getfem_import.h>
 #include <getfem_regular_meshes.h>
 #include <getfem_modeling.h>
 #include <getfem_Navier_Stokes.h>
-#include "navier_stokes.h"
+#include "icare.h"
 
 
 /* try to enable the SIGFPE if something evaluates to a Not-a-number
@@ -49,32 +50,92 @@ typedef getfem::modeling_standard_sparse_vector sparse_vector;
 typedef getfem::modeling_standard_sparse_matrix sparse_matrix;
 typedef getfem::modeling_standard_plain_vector  plain_vector;
 
-enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1 };
+enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1, NONREFLECTIVE_BOUNDARY_NUM };
+
+
+struct problem_definition;
+
+/*
+ * structure for the navier_stokes problem
+ */
+struct navier_stokes_problem {
+
+  getfem::getfem_mesh mesh;  /* the mesh */
+  base_node BBmin, BBmax;    /* bounding box of the mesh */
+  getfem::mesh_im  mim;      /* integration methods.                         */
+  getfem::mesh_fem mf_u;     /* main mesh_fem, for the velocity              */
+  getfem::mesh_fem mf_p;     /* mesh_fem for the pressure                    */
+  getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
+  getfem::mesh_fem mf_coef;  /* mesh_fem used to represent pde coefficients  */
+  scalar_type Re;            /* Reynolds number */
+  scalar_type nu;            /* 1/Re */
+  scalar_type dt, T, dt_export;
+  unsigned N;
+  scalar_type residue;       /* max residue for the iterative solvers        */
+  int noisy;
+  int export_to_opendx;
+
+  std::auto_ptr<getfem::dx_export> exp;
+  getfem::stored_mesh_slice sl;
+  bool first_export;
+  scalar_type t_export;
+  void do_export(scalar_type t);
+
+  typedef enum { METHOD_SPLITTING_STOKES = 0,      /* cf. works of Michel Fournie */
+	 METHOD_SPLITTING = 1,             /* cf. works of Michel Fournie */
+	 METHOD_FULLY_CONSERVATIVE = 2, 
+	 METHOD_PREDICTION_CORRECTION = 3  /* cf. works of Marianna Braza */
+  } option_t;
+  option_t option;
+
+  std::auto_ptr<problem_definition> pdef;
+
+  std::string datafilename;
+  ftool::md_param PARAM;
+
+  plain_vector Un1, Un0, Pn1, Pn0; /* U_{n+1}, U_{n}, P_{n+1} and P_{n} */
+
+  base_small_vector sol_f(const base_small_vector &P, scalar_type t);
+  base_small_vector Dir_cond(const base_small_vector &P, scalar_type t);
+
+  void solve(void);
+  void solve_METHOD_SPLITTING(bool);
+  void solve_FULLY_CONSERVATIVE();
+  void solve_PREDICTION_CORRECTION();
+  void init(void);
+  navier_stokes_problem(void) : mim(mesh), mf_u(mesh), mf_p(mesh),
+				mf_rhs(mesh), mf_coef(mesh) {}
+};
 
 struct problem_definition {
   virtual void choose_boundaries(navier_stokes_problem &p) {
-    getfem::outer_faces_of_mesh(p.mesh, mesh.region(DIRICHLET_BOUNDARY_NUM));
+    getfem::outer_faces_of_mesh(p.mesh, p.mesh.region(DIRICHLET_BOUNDARY_NUM));
   }
   virtual void validate_solution(navier_stokes_problem &p, scalar_type t) {
-    plain_vector H,R; dirichlet_condition(p, t, H, R);
+    plain_vector R; dirichlet_condition(p, t, R);
+    p.mf_rhs.set_qdim(p.N);
     scalar_type err = getfem::asm_L2_dist(p.mim, 
 					  p.mf_u, p.Un1,
 					  p.mf_rhs, R);
+    p.mf_rhs.set_qdim(1);
     cout << " L2 error(t=" << t <<") : " << err << "\n";
   }
   virtual void dirichlet_condition(navier_stokes_problem &p,
 				   const base_node &x, scalar_type t,
 				   base_small_vector &r) = 0;
   virtual void dirichlet_condition_h(navier_stokes_problem &p,
-				   const base_node &x, scalar_type t,
+				     const base_node &, scalar_type /*t*/,
 				     base_matrix &h) {
     h.resize(p.N, p.N); gmm::copy(gmm::identity_matrix(), h);
   }
   virtual void source_term(navier_stokes_problem &p,
 			   const base_node &x, scalar_type t,
 			   base_small_vector &F) = 0;
-  virtual void initial_pressure(navier_stokes_problem &, const base_node &) {
+  virtual scalar_type initial_pressure(navier_stokes_problem &, const base_node &) {
     return 0.;
+  }
+  virtual base_small_vector initial_velocity(navier_stokes_problem &p, const base_node &P) {
+    base_small_vector r; dirichlet_condition(p,P,0,r); return r;
   }
   void dirichlet_condition(navier_stokes_problem &p, scalar_type t, 
 			   plain_vector &R) {
@@ -93,46 +154,52 @@ struct problem_definition {
     base_matrix h;
     for (unsigned i=0; i < p.mf_rhs.nb_dof(); ++i) {
       dirichlet_condition_h(p, p.mf_rhs.point_of_dof(i), t, h);
-      gmm::copy(base_vector(h), gmm::sub_vector(H, gmm::sub_interval(i*N*N, N*N)));
+      for (unsigned j=0; j < N*N; ++j) H[i*N*N+j] = h[j];
     }
   }
   void source_term(navier_stokes_problem &p, scalar_type t, plain_vector &F) {
     unsigned N = p.mesh.dim();
     gmm::resize(F, N*p.mf_rhs.nb_dof());
-    for (unsigned i=0; i < p.mf_rhs.nb_dof(); ++i)
-      gmm::copy(source_term(p.mf_rhs.point_of_dof(i), t),
-		gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
+    base_small_vector f;
+    for (unsigned i=0; i < p.mf_rhs.nb_dof(); ++i) {
+      source_term(p, p.mf_rhs.point_of_dof(i), t, f);
+      gmm::copy(f, gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
+    }
   }
   
   void initial_condition_u(navier_stokes_problem &p, plain_vector &U0) {
-    plain_vector R, F(p.mf_u.nb_dof());
-    dirichlet_condition(p, 0., R);
-    /* L2 projection from mf_rhs onto mf_u */
-    sparse_matrix M;
+    plain_vector R(p.N*p.mf_rhs.nb_dof()), F(p.mf_u.nb_dof());
+    for (unsigned i=0; i < p.mf_rhs.nb_dof(); ++i) {
+      base_small_vector r = initial_velocity(p, p.mf_rhs.point_of_dof(i));
+      gmm::copy(r, gmm::sub_vector(R, gmm::sub_interval(i*p.N, p.N)));
+    }
+    /* L2 projection from mf_rhs onto mf_u (we cannot interpolate directly onto mf_u
+     since it can be non-lagrangian) */
+    sparse_matrix M(p.mf_u.nb_dof(), p.mf_u.nb_dof());
     getfem::asm_mass_matrix(M, p.mim, p.mf_u);
     getfem::asm_source_term(F, p.mim, p.mf_u, p.mf_rhs, R);
     gmm::iteration iter(1E-13);
     gmm::cg(M, U0, F, gmm::identity_matrix(), iter);
   }
   void initial_condition_p(navier_stokes_problem &p, plain_vector &P0) {
-    plain_vector PP(mf_rhs.nb_dof());
+    plain_vector PP(p.mf_rhs.nb_dof());
 
     for (unsigned i=0; i < p.mf_rhs.nb_dof(); ++i)
       PP[i] = initial_pressure(p, p.mf_rhs.point_of_dof(i));
 
     /* L2 projection from mf_rhs onto mf_p */
     plain_vector F(p.mf_p.nb_dof());
-    sparse_matrix M;
+    sparse_matrix M(p.mf_p.nb_dof(), p.mf_p.nb_dof());
     getfem::asm_mass_matrix(M, p.mim, p.mf_p);
     getfem::asm_source_term(F, p.mim, p.mf_p, p.mf_rhs, PP);
     gmm::iteration iter(1E-13);
     gmm::cg(M, P0, F, gmm::identity_matrix(), iter);
   }
-
+  virtual ~problem_definition() {}
 };
 
 struct problem_definition_Stokes_analytic : public problem_definition {
-  virtual void dirichlet_condition(navier_stokes_problem &,
+  virtual void dirichlet_condition(navier_stokes_problem &p,
 				   const base_node &P, scalar_type t,
 				   base_small_vector &r) {
     r = base_small_vector(p.N);
@@ -151,21 +218,21 @@ struct problem_definition_Stokes_analytic : public problem_definition {
 };
 
 struct problem_definition_Green_Taylor_analytic : public problem_definition {
-  virtual void dirichlet_condition(navier_stokes_problem &,
+  virtual void dirichlet_condition(navier_stokes_problem &p,
 				   const base_node &P, scalar_type t,
 				   base_small_vector &r) {
     r = base_small_vector(p.N);
     scalar_type x = P[0], y = P[1];
     r[0] =  -cos(x)*sin(y)*exp(-2*t*p.nu);
-    r[1] =  +sin(x)*cos(y)*exp(-2*t*p.ny);
+    r[1] =  +sin(x)*cos(y)*exp(-2*t*p.nu);
   }
   virtual void source_term(navier_stokes_problem &p,
 			   const base_node &P, scalar_type t,
 			   base_small_vector &F) {
     scalar_type x = P[0], y = P[1];
     F = base_small_vector(p.N);
-    F[0] = -exp(-4.*t*nu)*sin(2.*x);
-    F[1] = -exp(-4.*t*nu)*sin(2.*y);
+    F[0] = -exp(-4.*t*p.nu)*sin(2.*x);
+    F[1] = -exp(-4.*t*p.nu)*sin(2.*y);
   }
   virtual scalar_type initial_pressure(navier_stokes_problem &p,
 				       const base_node &P) {
@@ -177,8 +244,19 @@ struct problem_definition_Green_Taylor_analytic : public problem_definition {
 struct problem_rotating_cylinder : public problem_definition {
   scalar_type alpha;
   
+  virtual void choose_boundaries(navier_stokes_problem &p) {
+    getfem::mesh_region r; 
+    getfem::outer_faces_of_mesh(p.mesh, r);
+    for (getfem::mr_visitor i(r); !i.finished(); ++i) {
+      base_node G = dal::mean_value(p.mesh.points_of_face_of_convex(i.cv(),i.f()));
+      if (gmm::abs(G[0] - p.BBmax[0]) < 1e-7)
+	p.mesh.region(NONREFLECTIVE_BOUNDARY_NUM).add(i.cv(),i.f());
+      else 
+	p.mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(),i.f());
+    }
+  }
   virtual void dirichlet_condition(navier_stokes_problem &p,
-				   const base_node &P, scalar_type t,
+				   const base_node &P, scalar_type /*t*/,
 				   base_small_vector &r) {
     r = base_small_vector(p.N);
     scalar_type x = P[0], y = P[1];
@@ -196,71 +274,34 @@ struct problem_rotating_cylinder : public problem_definition {
   }
 
   virtual void dirichlet_condition_h(navier_stokes_problem &p,
-				     const base_node &P, scalar_type t,
+				     const base_node &P, scalar_type /*t*/,
 				     base_matrix &h) {
     h.resize(p.N,p.N);
     scalar_type y = P[1];   
     gmm::copy(gmm::identity_matrix(), h);
-    if (gmm::abs(y- BBmin[1]) < 1e-7 || gmm::abs(y - BBmax[1]) < 1e-7)
-      h(0,0) = 0;
+    if (gmm::abs(y- p.BBmin[1]) < 1e-7 || gmm::abs(y - p.BBmax[1]) < 1e-7)
+      h(1,1) = 0;
   }
 
    virtual void source_term(navier_stokes_problem &p,
-			   const base_node &P, scalar_type t,
+			    const base_node &, scalar_type /*t*/,
 			   base_small_vector &F) {
     F = base_small_vector(p.N);
   }
   
-
-  problem_rotating_cylinder(scalar_type aa) : a(aa) {}
+  void validate_solution(navier_stokes_problem &p, scalar_type t) {
+    cout << "Validate_solution : t = " << t << " , |u| = " 
+	 << gmm::vect_norm2(p.Un1) << ", |p|=" << gmm::vect_norm2(p.Pn1) << "\n";
+  }
+  virtual base_small_vector initial_velocity(navier_stokes_problem &, const base_node &P) {
+    base_small_vector r(2); r[0] = 1; r[1] = 0; return r;
+  }
+  virtual scalar_type initial_pressure(navier_stokes_problem &, const base_node &P) {
+    return 0.;
+  }
+  problem_rotating_cylinder(scalar_type aa) : alpha(aa) {}
 };
 
-/*
- * structure for the navier_stokes problem
- */
-struct navier_stokes_problem {
-
-  getfem::getfem_mesh mesh;  /* the mesh */
-  getfem::mesh_im  mim;      /* integration methods.                         */
-  getfem::mesh_fem mf_u;     /* main mesh_fem, for the velocity              */
-  getfem::mesh_fem mf_p;     /* mesh_fem for the pressure                    */
-  getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
-  getfem::mesh_fem mf_coef;  /* mesh_fem used to represent pde coefficients  */
-  scalar_type Re;            /* Reynolds number */
-  scalar_type nu;            /* 1/Re */
-  scalar_type dt, T, dt_export;
-  unsigned N;
-  scalar_type residue;       /* max residue for the iterative solvers        */
-  int noisy;
-  int export_to_opendx;
-
-  std::auto_ptr<getfem::dx_export> exp;
-  getfem::stored_mesh_slice sl;
-  bool first_export;
-  scalar_type t_export;
-  void export();
-
-  enum { METHOD_SPLITTING_STOKES = 0,      /* cf. works of Michel Fournie */
-	 METHOD_SPLITTING = 1,             /* cf. works of Michel Fournie */
-	 METHOD_FULLY_CONSERVATIVE = 2, 
-	 METHOD_PREDICTION_CORRECTION = 3, /* cf. works of Marianna Braza */
-  } option;
-
-  std::auto_ptr<problem_definition> pdef;
-
-  std::string datafilename;
-  ftool::md_param PARAM;
-
-  plain_vector Un1, Un0, Pn1, Pn0; /* U_{n+1}, U_{n}, P_{n+1} and P_{n} */
-
-  base_small_vector sol_f(const base_small_vector &P, scalar_type t);
-  base_small_vector Dir_cond(const base_small_vector &P, scalar_type t);
-
-  bool solve(void);
-  void init(void);
-  navier_stokes_problem(void) : mim(mesh), mf_u(mesh), mf_p(mesh),
-				mf_rhs(mesh), mf_coef(mesh) {}
-};
 
 /*
  * Read parameters from the .param file, build the mesh, set finite element
@@ -271,7 +312,6 @@ void navier_stokes_problem::init(void) {
   const char *FEM_TYPE_P  = PARAM.string_value("FEM_TYPE_P","FEM name P");
   const char *INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
-  cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
 
@@ -279,7 +319,7 @@ void navier_stokes_problem::init(void) {
     (PARAM.string_value("MESHNAME", "Nom du fichier de maillage"));
 
   /* First step : build the mesh */
-  if (meshname.compare(0,5, "regular:")==0) {
+  if (meshname.compare(0,8, "regular:")==0) {
     const char *MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
     bgeot::pgeometric_trans pgt = 
       bgeot::geometric_trans_descriptor(MESH_TYPE);
@@ -299,15 +339,17 @@ void navier_stokes_problem::init(void) {
     getfem::import_mesh(meshname, mesh);
     N = mesh.dim();
   }
+  mesh.bounding_box(BBmin, BBmax);
+  cout << "mesh bounding box: " << BBmin << " ... " << BBmax << "\n";
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residue = PARAM.real_value("RESIDUE"); if (residue == 0.) residue = 1e-10;
 
   nu = PARAM.real_value("NU", "Viscosity");
   dt = PARAM.real_value("DT", "Time step");
   T = PARAM.real_value("T", "Final time");
-  dtexport = PARAM.real_value("DT_EXPORT", "Time step for export");
+  dt_export = PARAM.real_value("DT_EXPORT", "Time step for export");
   noisy = PARAM.int_value("NOISY", "");
-  option = PARAM.int_value("OPTION", "option");
+  option = option_t(PARAM.int_value("OPTION", "option"));
 
   int prob = PARAM.int_value("PROBLEM", "the problem");
   switch (prob) {
@@ -318,7 +360,7 @@ void navier_stokes_problem::init(void) {
   }
 
   export_to_opendx = PARAM.int_value("DX_EXPORT", "");
-  first_export = false;
+  first_export = true;
 
   Re = 1 / nu;
   mf_u.set_qdim(N);
@@ -360,7 +402,7 @@ void navier_stokes_problem::init(void) {
 }
 
 
-void solve() {
+void navier_stokes_problem::solve() {
   cout << "Number of dof for u : " << mf_u.nb_dof() << endl;
   cout << "Number of dof for p : " << mf_p.nb_dof() << endl;
   gmm::resize(Un0, mf_u.nb_dof());
@@ -375,6 +417,7 @@ void solve() {
     default: DAL_THROW(dal::failure_error, "unknown method");
   }
 }
+
 /**************************************************************************/
 /*  Model.                                                                */
 /**************************************************************************/
@@ -394,7 +437,7 @@ void navier_stokes_problem::solve_METHOD_SPLITTING(bool stokes_only) {
   std::auto_ptr<getfem::mdbrick_NS_uuT<> > velocity_nonlin;
   if (!stokes_only) {
     velocity_nonlin.reset(new getfem::mdbrick_NS_uuT<>(velocity));
-    previous = &velocity_nonlin;
+    previous = velocity_nonlin.get();
   }
   
   // Volumic source term
@@ -404,9 +447,13 @@ void navier_stokes_problem::solve_METHOD_SPLITTING(bool stokes_only) {
 
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<> velocity_dir(velocity_f, mf_rhs, DIRICHLET_BOUNDARY_NUM);
-  
+ 
+  // Non-reflective condition brick
+  getfem::mdbrick_NS_nonref1<> nonreflective(velocity_dir, mf_u, 
+					     NONREFLECTIVE_BOUNDARY_NUM, dt);
+ 
   // Dynamic brick.
-  getfem::mdbrick_dynamic<> velocity_dyn(velocity_dir, mf_coef, 1.);
+  getfem::mdbrick_dynamic<> velocity_dyn(nonreflective, mf_coef, 1.);
   velocity_dyn.set_dynamic_coeff(1.0/dt, 1.0);
 
   // 
@@ -446,50 +493,44 @@ void navier_stokes_problem::solve_METHOD_SPLITTING(bool stokes_only) {
   pdef->initial_condition_u(*this, Un0);
   
   gmm::iteration iter(residue, noisy);
-  getfem::standard_model_state MSL(velocity_dyn);
-  getfem::standard_model_state MSM(mixed_dyn);
-
+  getfem::standard_model_state MSL(velocity_dyn), MSM(mixed_dyn);
+  
+  do_export(0);
   for (scalar_type t = dt; t <= T; t += dt) {
 
-    iter.init();
-    if (!stokes_only) velocity_NS_uuT->set_U0(Un0);
+    if (!stokes_only) velocity_nonlin->set_U0(Un0);
     pdef->source_term(*this, t, F);
     velocity_f.set_rhs(F);
     pdef->dirichlet_condition(*this, t, F);
     velocity_dir.set_rhs(F);
+    nonreflective.set_Un(Un0);
     
     gmm::mult(velocity_dyn.mass_matrix(), gmm::scaled(Un0, 1./dt), DF);
     velocity_dyn.set_DF(DF);
+    iter.init();
     getfem::standard_solve(MSL, velocity_dyn, iter);
 
-    gmm::copy(basic_velocity->get_solution(MSL), Un1);
-    cout << " gmm::vect_dist2(Un0, USTAR) = " << gmm::vect_dist2(Un0, Un1) << endl;
-      
-    iter.init();
+    gmm::copy(velocity.get_solution(MSL), Un1);
     gmm::mult(velocity_dyn.mass_matrix(), gmm::scaled(Un1, 1./dt), DF);
     mixed_dyn.set_DF(DF);
     mixed_dir.set_rhs(F);
-    getfem::standard_solve(*MSM, *mixed_dyn, iter);
-    gmm::copy(mixed.get_solution(*MSM), Un1);
-    gmm::copy(mixed_p.get_pressure(*MSM), Pn1);
+    iter.init();
+    getfem::standard_solve(MSM, mixed_dyn, iter);
+    gmm::copy(mixed.get_solution(MSM), Un1);
+    gmm::copy(mixed_p.get_pressure(MSM), Pn1);
 
-    pdef->validate_solution(*this);
+    pdef->validate_solution(*this, t);
 
-    gmm::copy(Un1, Un0);
+    gmm::copy(Un1, Un0); gmm::copy(Pn1, Pn0);
+    do_export(t);
   }
 }
 
 
 
-bool navier_stokes_problem::solve_FULLY_CONSERVATIVE() {
+void navier_stokes_problem::solve_FULLY_CONSERVATIVE() {
 
-  // Velocity brick.  
-  getfem::mdbrick_abstract<>  *velocity_nonlin, *velocity;
-  getfem::mdbrick_NS_uuT<> *velocity_NS_uuT = 0;
-  getfem::mdbrick_scalar_elliptic<> *basic_velocity = 0;
-  getfem::mdbrick_navier_stokes<> *global_velocity = 0;
-  sparse_matrix B;
-  
+  // Velocity brick.    
   getfem::mdbrick_navier_stokes<> velocity(mim, mf_u, mf_p, nu);
   // Condition on the pressure
   sparse_matrix G(1, mf_p.nb_dof());
@@ -506,8 +547,12 @@ bool navier_stokes_problem::solve_FULLY_CONSERVATIVE() {
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<> velocity_dir(velocity_f, mf_rhs, DIRICHLET_BOUNDARY_NUM);
   
+  // Non-reflective condition brick
+  getfem::mdbrick_NS_nonref1<> nonreflective(velocity_dir, mf_u, 
+					     NONREFLECTIVE_BOUNDARY_NUM, dt);
+
   // Dynamic brick.
-  getfem::mdbrick_dynamic<> velocity_dyn(velocity_dir, mf_coef, 1.);
+  getfem::mdbrick_dynamic<> velocity_dyn(nonreflective, mf_coef, 1.);
   velocity_dyn.set_dynamic_coeff(1.0/dt, 1.0);
 
   // 
@@ -521,36 +566,36 @@ bool navier_stokes_problem::solve_FULLY_CONSERVATIVE() {
   gmm::iteration iter(residue, noisy);
   getfem::standard_model_state MSL(velocity_dyn);
   
+  do_export(0);
   for (scalar_type t = dt; t <= T; t += dt) {
 
-    iter.init();
   
     pdef->source_term(*this, t, F);
     velocity_f.set_rhs(F);
     pdef->dirichlet_condition(*this, t, F);
     velocity_dir.set_rhs(F);
+    nonreflective.set_Un(Un0);
 
     gmm::mult(velocity_dyn.mass_matrix(), gmm::scaled(Un0, 1./dt), DF);
     velocity_dyn.set_DF(DF);
+    iter.init();
     getfem::standard_solve(MSL, velocity_dyn, iter);
 
-    gmm::copy(global_velocity->get_velocity(MSL), Un1);
+    gmm::copy(velocity.get_velocity(MSL), Un1);
+    gmm::copy(velocity.get_pressure(MSL), Pn1);
    
-    pdef->validate_solution(*this);
-    
-    gmm::copy(Un1, Un0);
+    pdef->validate_solution(*this, t);     
+
+    gmm::copy(Un1, Un0); gmm::copy(Pn1, Pn0);
+    do_export(t);
   }
 }
 
 
-bool navier_stokes_problem::solve_PREDICTION_CORRECTION() {
+void navier_stokes_problem::solve_PREDICTION_CORRECTION() {
   // Velocity brick.  
-  sparse_matrix B;
   getfem::mdbrick_scalar_elliptic<> velocity(mim, mf_u, mf_coef, nu);
   getfem::mdbrick_NS_uuT<> velocity_nonlin(velocity);
-
-  gmm::resize(B, mf_p.nb_dof(), mf_u.nb_dof());
-  asm_stokes_B(B, mim, mf_u, mf_p);
 
   // Volumic source term
   getfem::mdbrick_source_term<> velocity_f(velocity_nonlin, 
@@ -560,8 +605,12 @@ bool navier_stokes_problem::solve_PREDICTION_CORRECTION() {
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<> velocity_dir(velocity_f, mf_rhs, DIRICHLET_BOUNDARY_NUM);
   
+  // Non-reflective condition brick
+  getfem::mdbrick_NS_nonref1<> nonreflective(velocity_dir, mf_u, 
+					     NONREFLECTIVE_BOUNDARY_NUM, dt);
+
   // Dynamic brick.
-  getfem::mdbrick_dynamic<> velocity_dyn(velocity_dir, mf_coef, 1.);
+  getfem::mdbrick_dynamic<> velocity_dyn(nonreflective, mf_coef, 1.);
   velocity_dyn.set_dynamic_coeff(1.0/dt, 1.0);
 
   // 
@@ -574,24 +623,27 @@ bool navier_stokes_problem::solve_PREDICTION_CORRECTION() {
   getfem::mdbrick_source_term<> poisson_source(poisson_setonedof,
 					       mf_rhs, plain_vector(mf_rhs.nb_dof()));
 
+  sparse_matrix B(mf_p.nb_dof(), mf_u.nb_dof());
+  asm_stokes_B(B, mim, mf_u, mf_p);
+
   // 
   // dynamic problem
   //
-  plain_vector DF(mf_u.nb_dof()), F(mf_rhs.nb_dof()), USTAR(mf_rhs.nb_dof());
+  plain_vector DF(mf_u.nb_dof()), F(mf_rhs.nb_dof()), 
+    USTAR(mf_u.nb_dof()), USTARbis(mf_u.nb_dof());
 
   pdef->initial_condition_u(*this, Un0);
   pdef->initial_condition_p(*this, Pn0);
 
   gmm::iteration iter(residue, noisy);
-  getfem::standard_model_state MSL(velocity_dyn);
-  getfem::standard_model_state MSM(poisson_source);
+  getfem::standard_model_state MSL(velocity_dyn), MSM(poisson_source);
   
-
+  do_export(0);
   for (scalar_type t = dt; t <= T; t += dt) {
 
-    iter.init();
 
-    velocity_NS_uuT.set_U0(Un0);
+    velocity_nonlin.set_U0(Un0);
+    nonreflective.set_Un(Un0);
     pdef->source_term(*this, t, F);
     velocity_f.set_rhs(F);
     pdef->dirichlet_condition(*this, t, F);
@@ -600,52 +652,52 @@ bool navier_stokes_problem::solve_PREDICTION_CORRECTION() {
     gmm::mult(velocity_dyn.mass_matrix(), gmm::scaled(Un0, 1./dt), DF);
     gmm::mult_add(gmm::transposed(B), gmm::scaled(Pn0, -1.), DF);
     velocity_dyn.set_DF(DF);
+    iter.init();
     getfem::standard_solve(MSL, velocity_dyn, iter);
 
-    gmm::copy(basic_velocity->get_solution(MSL), USTAR);
-    cout << " gmm::vect_dist2(Un0, USTAR) = " << gmm::vect_dist2(Un0, USTAR) << endl;
+    gmm::copy(velocity.get_solution(MSL), USTAR);
     gmm::mult(B, USTAR, Pn1);
-    cout << "div ustar = " << gmm::vect_norm2(Pn1) << endl;
-    poisson_source->set_auxF(Pn1);
+ 
+    poisson_source.set_auxF(Pn1);
     iter.init();
-    getfem::standard_solve(*MSM, *poisson_source, iter);
-    gmm::mult(gmm::transposed(B), gmm::scaled(poisson->get_solution(*MSM), -1.), USTARbis);
+    getfem::standard_solve(MSM, poisson_source, iter);
+    gmm::mult(gmm::transposed(B), gmm::scaled(poisson.get_solution(MSM), -1.), USTARbis);
 
     gmm::iteration iter2 = iter; iter2.reduce_noisy(); iter2.init();
     gmm::cg(velocity_dyn.mass_matrix(), Un1, USTARbis,
 	    gmm::identity_matrix(), iter2);
 
     gmm::add(USTAR, Un1);
-    gmm::add(gmm::scaled(poisson->get_solution(*MSM), 1./dt), Pn0, Pn1);
+    gmm::add(gmm::scaled(poisson.get_solution(MSM), 1./dt), Pn0, Pn1);
     
-    pdef->validate_solution(*this);
+    pdef->validate_solution(*this, t);
     
     gmm::copy(Un1, Un0); gmm::copy(Pn1, Pn0);
+    do_export(t);
   }
 }
 
 
-void navier_stokes_problem::export() {
+void navier_stokes_problem::do_export(scalar_type t) {
   if (!export_to_opendx) return;
   if (first_export) {
-    std::auto_ptr<getfem::dx_export> exp;
-    getfem::stored_mesh_slice sl;
     exp.reset(new getfem::dx_export(datafilename + ".dx", false));
     if (N <= 2)
-      sl.build(mesh, getfem::slicer_none(),4);
+      sl.build(mesh, getfem::slicer_none(),2);
     else
-      sl.build(mesh, getfem::slicer_boundary(mesh),4);
+      sl.build(mesh, getfem::slicer_boundary(mesh),2);
     exp->exporting(sl,true);
     exp->exporting_mesh_edges();
-    exp->write_point_data(mf_u, Un0, "stepinit"); 
-    exp->serie_add_object("deformationsteps");
     t_export = 0;
     first_export = false;
   } else if (t >= t_export-dt/20.0) {
-    exp->write_point_data(mf_u, Un0);
-    exp->serie_add_object("deformationsteps");
-    t_export += dtexport;
+    t_export += dt_export;
   }
+  exp->write_point_data(mf_u, Un0);
+  exp->serie_add_object("velocity");
+  cout << "Saving Pressure, |p| = " << gmm::vect_norm2(Pn1) << "\n";
+  exp->write_point_data(mf_p, Pn1);
+  exp->serie_add_object("pressure");
 }
 
 /**************************************************************************/

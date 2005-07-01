@@ -280,7 +280,7 @@ namespace getfem {
     template<class ITER>
     size_type add_prism_by_points(dim_type di, const ITER &ps);
     
-    /// Delete the convex of index i from the mesh.
+    /// Delete the convex of index ic from the mesh.
     void sup_convex(size_type ic);
     /** Swap the indexes of the convex of indexes i and j 
      *          in the whole structure.
@@ -304,9 +304,13 @@ namespace getfem {
     scalar_type convex_quality_estimate(size_type ic) const;
     scalar_type convex_radius_estimate(size_type ic) const;
     scalar_type minimal_convex_radius_estimate() const;
+    /** apply the given translation to each mesh node */
     void translation(base_small_vector);
+    /** apply the given matrix transformation to each mesh node */
     void transformation(base_matrix);
-    
+    /** return the bounding box [Pmin - Pmax] of the mesh */
+    void bounding_box(base_node& Pmin, base_node &Pmax) const;
+    /** return the region of index 'id'. Regions are automagically created */
     const mesh_region region(size_type id) const { 
       if (has_region(id)) return cvf_sets[id]; 
       else return mesh_region(const_cast<getfem_mesh&>(*this),id);
@@ -331,6 +335,8 @@ namespace getfem {
 	{ valid_cvf_sets.sup(b); cvf_sets[b].clear(); touch(); }
     }
     void sup_convex_from_regions(size_type c);
+    /** packs the mesh : renumbers convexes and nodes such that there
+	is no holes in their numbering */
     void optimize_structure(void);
     void clear(void);
     

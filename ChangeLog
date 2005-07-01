@@ -1,3 +1,10 @@
+2005-06-30  Julien Pommier  <pommier@gmm.insa-tlse.fr>
+
+	* src/getfem_import.cc: updated the gmsh import such that it uses
+	the 'gmsh physical regions' as getfem mesh regions.
+
+	* src/getfem_mesh.h: added 'bounding_box' method
+
 2005-05-30  julien pommier  <pommier@gmm.insa-tlse.fr>
 
 	* src/getfem_mesh_region.h: replaced mesh_cvf_set with the

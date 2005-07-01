@@ -20,9 +20,9 @@ namespace getfem {
 		  const mesh_region &rg = mesh_region::all_convexes()) {
     generic_assembly assem;    
     assem.set("u=data(#1); "
-	      "t = comp(vGrad(#1).vBase(#1).vBase(#1));"
-	      "M(#1, #1)+=u(i).t(:,j,k,i,k,:,j)"
-	      // ";M(#1, #1)+=u(i).t(:,j,j,i,k,:,k)" // optional
+	      "t = comp(vBase(#1).vBase(#1).vGrad(#1));"
+	      "M(#1, #1)+=u(i).t(i,k,:,j,:,j,k)"
+	      // ";M(#1, #1)+=u(i).t(i,k,:,k,:,j,j)" // optional (or *0.5)
 	      );
     assem.push_mi(mim);
     assem.push_mf(mf);
@@ -52,6 +52,7 @@ namespace getfem {
       gmm::sub_interval SUBI(i0+this->mesh_fem_positions[num_fem],
 			     mf_u.nb_dof());
       gmm::resize(K, mf_u.nb_dof(), mf_u.nb_dof());
+      gmm::clear(K);
       asm_NS_uuT(K, *(this->mesh_ims[0]), mf_u, U0);
       gmm::add(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI));
     }
@@ -119,7 +120,7 @@ namespace getfem {
     mdbrick_abstract<MODEL_STATE> &sub_problem;
     mesh_fem &mf_lambda;
     T_MATRIX B, M;
-    VECTOR Un; // penalization coefficient if any.
+    VECTOR Un;
     size_type num_fem, i1, nbd, boundary;
     value_type dt;
     dal::bit_vector doflambda;
@@ -131,17 +132,16 @@ namespace getfem {
       i1 = this->mesh_fem_positions.at(num_fem);
       nbd = mf_u.nb_dof();
       size_type nd = mf_u.nb_dof(), ndd = mf_lambda.nb_dof();
-      T_MATRIX Baux(ndd, nd);
+      T_MATRIX Baux(nd, ndd);
     
-      asm_mass_matrix(Baux, *(this->mesh_ims.at(0)), mf_u, mf_lambda, boundary);
-      gmm::scale(Baux, 1./dt);
+      asm_mass_matrix(Baux, *(this->mesh_ims.at(0)), mf_lambda, mf_u, boundary);
       doflambda = mf_lambda.dof_on_set(boundary);
       for (dal::bv_visitor i(doflambda); !i.finished(); ++i)
 	indices.push_back(i);
       gmm::resize(M, doflambda.card(), doflambda.card());
       SUBK = gmm::sub_index(indices);
-      gmm::resize(B, ndd, doflambda.card());
-      gmm::copy(gmm::sub_matrix(Baux, gmm::sub_interval(0, ndd), SUBK), B); 
+      gmm::resize(B, doflambda.card(), ndd);
+      gmm::copy(gmm::sub_matrix(Baux, SUBK, gmm::sub_interval(0, ndd)), B);
       this->proper_mixed_variables.clear();
       this->proper_mixed_variables.add(sub_problem.nb_dof(), doflambda.card());
       this->proper_additional_dof = doflambda.card();
@@ -159,10 +159,15 @@ namespace getfem {
       gmm::copy(gmm::transposed(B),
 		gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBI));
       gmm::copy(M, gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBI));
+      gmm::clean(B, 1E-10);
+      cout << "B = " << B << endl;
+      T_MATRIX C(doflambda.card(), doflambda.card());
+      gmm::mult(B, gmm::transposed(B), C);
+      cout << "cond = " << gmm::condition_number(C) << endl;
     }
     virtual void do_compute_residu(MODEL_STATE &MS, size_type i0,
 				   size_type) {
-      gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), mf_lambda.nb_dof());
+      gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), doflambda.card());
       gmm::sub_interval SUBJ(i0+i1, nbd);
       cout << "B.size=" << gmm::mat_nrows(B) << "," << gmm::mat_ncols(B) << "\n";
       gmm::mult(B, gmm::sub_vector(MS.state(), SUBJ),
@@ -182,13 +187,15 @@ namespace getfem {
       gmm::copy(B__, Un);
       T_MATRIX Maux(mf_lambda.nb_dof(), mf_lambda.nb_dof());
       asm_mass_matrix_param_un(Maux, *(this->mesh_ims.at(0)), mf_lambda, mf_u,
-			       Un, boundary);
+ 			       Un, boundary);
+      // asm_mass_matrix(Maux, *(this->mesh_ims.at(0)), mf_lambda, mf_u, boundary);
       gmm::copy(gmm::sub_matrix(Maux, SUBK, SUBK), M);
+      gmm::scale(M, dt);
     }
 
     void set_dt(value_type dt_) {
       this->context_check();
-      gmm::scale(B, dt / dt_); dt = dt_; 
+      gmm::scale(M, dt / dt_); dt = dt_; 
     }
 
     void init_(void) {

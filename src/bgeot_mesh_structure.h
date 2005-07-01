@@ -212,7 +212,9 @@ namespace bgeot
       { size_type t[2]; t[0] = a; t[1] = b; sup_convex_with_points(&t[0], 2); }
     size_type add_face_of_convex(size_type ic, short_type f);
     void add_faces_of_convex(size_type ic);
+    /** build a new mesh, such that its convexes are the faces of the convexes of the previous one */
     void to_faces(dim_type n);
+    /** build a new mesh, such that its convexes are the edges of the convexes of the previous one */
     void to_edges(void);
     
     mesh_convex_ind_ct convex_to_point(size_type ip) const
@@ -220,9 +222,13 @@ namespace bgeot
     
     mesh_point_search_ind_ct ind_points_to_point(size_type ip) const;
     
+    /** return true if the convex ic contains the nb points pointed by pit  */
     template<class ITER>
       bool is_convex_has_points(size_type ic,short_type nb, ITER pit) const;
     
+    /**
+       return true if the face face_num of convex ic contains the nb points pointed by pit
+    */
     template<class ITER> 
       bool is_convex_face_has_points(size_type ic, size_type face_num,
 				     short_type nb, ITER pit) const;
