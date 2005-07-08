@@ -87,6 +87,12 @@ namespace getfem {
 
 
   /* ******************************************************************** */
+  /*		Boundary pressure term.                                   */
+  /* ******************************************************************** */
+
+
+
+  /* ******************************************************************** */
   /*		A non-reflective condition.                               */
   /* ******************************************************************** */
 
@@ -98,11 +104,16 @@ namespace getfem {
   void asm_mass_matrix_param_un(MAT &M, const mesh_im &mim,
 				const mesh_fem &mf_u,
 				const mesh_fem &mfdata,
-				const VECT &F, 			       
+				const VECT &F, scalar_type nudt,		       
 				const mesh_region &rg = mesh_region::all_convexes()) {
     generic_assembly assem;
-    assem.set("F=data(#2);"
-	      "M(#1,#1)+=sym(comp(vBase(#1).vBase(#1).vBase(#2).Normal())(:,i,:,i,j,k,k).F(j));");
+
+    std::stringstream s;
+    s << "F=data(#2);"
+      "M(#1,#1)+=sym(comp(vBase(#1).vBase(#1).vBase(#2).Normal())(:,i,:,i,j,k,k).F(j))*("
+      << nudt << ");";
+
+    assem.set(s.str());
     assem.push_mi(mim);
     assem.push_mf(mf_u);
     assem.push_mf(mfdata);
@@ -111,18 +122,24 @@ namespace getfem {
     assem.assembly(rg);
   }
 
- 
+  /**
+    du/dt + u.n * du/dn = 0
+    
+    handled as:
+      du/dt - u.n * lambda = 0
+                    lambda = -du/dn
+  */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_NS_nonref1 : public mdbrick_abstract<MODEL_STATE>  {
     
     TYPEDEF_MODEL_STATE_TYPES;
 
     mdbrick_abstract<MODEL_STATE> &sub_problem;
-    mesh_fem &mf_lambda;
+    mesh_fem &mf_lambda; /* lambda = -du/dn on the boundary */
     T_MATRIX B, M;
     VECTOR Un;
     size_type num_fem, i1, nbd, boundary;
-    value_type dt;
+    value_type dt, nu;
     dal::bit_vector doflambda;
     std::vector<size_type> indices;
     gmm::sub_index SUBK;
@@ -159,17 +176,11 @@ namespace getfem {
       gmm::copy(gmm::transposed(B),
 		gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBI));
       gmm::copy(M, gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBI));
-      gmm::clean(B, 1E-10);
-      cout << "B = " << B << endl;
-      T_MATRIX C(doflambda.card(), doflambda.card());
-      gmm::mult(B, gmm::transposed(B), C);
-      cout << "cond = " << gmm::condition_number(C) << endl;
     }
     virtual void do_compute_residu(MODEL_STATE &MS, size_type i0,
 				   size_type) {
       gmm::sub_interval SUBI(i0 + sub_problem.nb_dof(), doflambda.card());
       gmm::sub_interval SUBJ(i0+i1, nbd);
-      cout << "B.size=" << gmm::mat_nrows(B) << "," << gmm::mat_ncols(B) << "\n";
       gmm::mult(B, gmm::sub_vector(MS.state(), SUBJ),
 		gmm::sub_vector(MS.residu(), SUBI));
       gmm::mult_add(gmm::transposed(B), gmm::sub_vector(MS.state(), SUBI),
@@ -187,7 +198,7 @@ namespace getfem {
       gmm::copy(B__, Un);
       T_MATRIX Maux(mf_lambda.nb_dof(), mf_lambda.nb_dof());
       asm_mass_matrix_param_un(Maux, *(this->mesh_ims.at(0)), mf_lambda, mf_u,
- 			       Un, boundary);
+ 			       Un, -dt/nu, boundary);
       // asm_mass_matrix(Maux, *(this->mesh_ims.at(0)), mf_lambda, mf_u, boundary);
       gmm::copy(gmm::sub_matrix(Maux, SUBK, SUBK), M);
       gmm::scale(M, dt);
@@ -199,16 +210,15 @@ namespace getfem {
     }
 
     void init_(void) {
-      this->add_proper_mesh_fem(mf_lambda, MDBRICK_NS_NONREF1);
       this->add_sub_brick(sub_problem);
       this->proper_is_coercive_ = false;
       this->update_from_context();
     }
 
     mdbrick_NS_nonref1(mdbrick_abstract<MODEL_STATE> &problem,
-		       mesh_fem &mf_lambda_, size_type bound, value_type dt_, 
-		       size_type num_fem_=0)
-      : sub_problem(problem), mf_lambda(mf_lambda_), num_fem(num_fem_), boundary(bound), dt(dt_)
+		       mesh_fem &mf_lambda_, size_type bound, value_type dt_,
+		       value_type nu_, size_type num_fem_=0)
+      : sub_problem(problem), mf_lambda(mf_lambda_), num_fem(num_fem_), boundary(bound), dt(dt_), nu(nu_)
     { init_(); }
 
   };

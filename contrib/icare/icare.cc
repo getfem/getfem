@@ -266,7 +266,8 @@ struct problem_rotating_cylinder : public problem_definition {
     if (gmm::abs(x-p.BBmax[0]) < 1e-7) on_cylinder = false;
     if (gmm::abs(y-p.BBmax[1]) < 1e-7) on_cylinder = false;
     if (!on_cylinder) {
-      r[0] = 1; r[1] = 0;
+      if (!(gmm::abs(y- p.BBmin[1]) < 1e-7 || gmm::abs(y - p.BBmax[1]) < 1e-7))
+	r[0] = 1;
     } else {
       r[0] = -2.*alpha*y; /* HYPOTHESIS: cylinder centered at (0,0) */
       r[1] = 2.*alpha*x;
@@ -280,7 +281,7 @@ struct problem_rotating_cylinder : public problem_definition {
     scalar_type y = P[1];   
     gmm::copy(gmm::identity_matrix(), h);
     if (gmm::abs(y- p.BBmin[1]) < 1e-7 || gmm::abs(y - p.BBmax[1]) < 1e-7)
-      h(1,1) = 0;
+      h(0,0) = 0;
   }
 
    virtual void source_term(navier_stokes_problem &p,
@@ -293,10 +294,10 @@ struct problem_rotating_cylinder : public problem_definition {
     cout << "Validate_solution : t = " << t << " , |u| = " 
 	 << gmm::vect_norm2(p.Un1) << ", |p|=" << gmm::vect_norm2(p.Pn1) << "\n";
   }
-  virtual base_small_vector initial_velocity(navier_stokes_problem &, const base_node &P) {
+  virtual base_small_vector initial_velocity(navier_stokes_problem &, const base_node &) {
     base_small_vector r(2); r[0] = 1; r[1] = 0; return r;
   }
-  virtual scalar_type initial_pressure(navier_stokes_problem &, const base_node &P) {
+  virtual scalar_type initial_pressure(navier_stokes_problem &, const base_node &) {
     return 0.;
   }
   problem_rotating_cylinder(scalar_type aa) : alpha(aa) {}
@@ -450,7 +451,7 @@ void navier_stokes_problem::solve_METHOD_SPLITTING(bool stokes_only) {
  
   // Non-reflective condition brick
   getfem::mdbrick_NS_nonref1<> nonreflective(velocity_dir, mf_u, 
-					     NONREFLECTIVE_BOUNDARY_NUM, dt);
+					     NONREFLECTIVE_BOUNDARY_NUM, dt, nu);
  
   // Dynamic brick.
   getfem::mdbrick_dynamic<> velocity_dyn(nonreflective, mf_coef, 1.);
@@ -549,7 +550,7 @@ void navier_stokes_problem::solve_FULLY_CONSERVATIVE() {
   
   // Non-reflective condition brick
   getfem::mdbrick_NS_nonref1<> nonreflective(velocity_dir, mf_u, 
-					     NONREFLECTIVE_BOUNDARY_NUM, dt);
+					     NONREFLECTIVE_BOUNDARY_NUM, dt, nu);
 
   // Dynamic brick.
   getfem::mdbrick_dynamic<> velocity_dyn(nonreflective, mf_coef, 1.);
@@ -607,10 +608,10 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION() {
   
   // Non-reflective condition brick
   getfem::mdbrick_NS_nonref1<> nonreflective(velocity_dir, mf_u, 
-					     NONREFLECTIVE_BOUNDARY_NUM, dt);
+					      NONREFLECTIVE_BOUNDARY_NUM, dt, nu);
 
   // Dynamic brick.
-  getfem::mdbrick_dynamic<> velocity_dyn(nonreflective, mf_coef, 1.);
+    getfem::mdbrick_dynamic<> velocity_dyn(nonreflective, mf_coef, 1.);
   velocity_dyn.set_dynamic_coeff(1.0/dt, 1.0);
 
   // 
