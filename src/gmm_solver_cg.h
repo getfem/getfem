@@ -84,7 +84,8 @@ namespace gmm {
       copy(z, p);
 
 #ifdef GMM_USES_MPI
-	double t_prec = MPI_Wtime(), t_tot = 0;
+      double t_ref, t_prec = MPI_Wtime(), t_tot = 0;
+      static double tmult_tot = 0.0;
 #endif
       while (!iter.finished_vect(r)) {
 
@@ -93,8 +94,67 @@ namespace gmm {
 	  rho = vect_hp(PS, z, r);
 	  add(z, scaled(p, rho / rho_1), p);
 	}
-	
+#ifdef GMM_USES_MPI
+t_ref = MPI_Wtime();
+    cout << "mult CG " << endl;
+#endif	
 	mult(A, p, q);
+#ifdef GMM_USES_MPI
+    tmult_tot += MPI_Wtime()-t_ref;
+    cout << "tmult_tot CG = " << tmult_tot << endl;
+#endif
+	a = rho / vect_hp(PS, q, p);	
+	add(scaled(p, a), x);
+	add(scaled(q, -a), r);
+	rho_1 = rho;
+
+#ifdef GMM_USES_MPI
+	t_tot = MPI_Wtime() - t_prec;
+	cout << "temps CG : " << t_tot << endl; 
+#endif
+	++iter;
+      }
+    }
+  }
+
+  template <typename Matrix, typename Matps, typename Precond, 
+            typename Vector1, typename Vector2>
+  void cg(const Matrix& A, Vector1& x, const Vector2& b, const Matps& PS,
+	  const gmm::identity_matrix &, iteration &iter) {
+
+    typedef typename temporary_dense_vector<Vector1>::vector_type temp_vector;
+    typedef typename linalg_traits<Vector1>::value_type T;
+
+    T rho, rho_1(0), a;
+    temp_vector p(vect_size(x)), q(vect_size(x)), r(vect_size(x));
+    iter.set_rhsnorm(gmm::sqrt(gmm::abs(vect_hp(PS, b, b))));
+
+    if (iter.get_rhsnorm() == 0.0)
+      clear(x);
+    else {
+      mult(A, scaled(x, T(-1)), b, r);
+      rho = vect_hp(PS, r, r);
+      copy(r, p);
+
+#ifdef GMM_USES_MPI
+      double t_ref, t_prec = MPI_Wtime(), t_tot = 0;
+      static double tmult_tot = 0.0;
+#endif
+      while (!iter.finished_vect(r)) {
+
+	if (!iter.first()) { 
+	  rho = vect_hp(PS, r, r);
+	  add(r, scaled(p, rho / rho_1), p);
+	}
+#ifdef GMM_USES_MPI
+t_ref = MPI_Wtime();
+    cout << "mult CG " << endl;
+#endif	
+	mult(A, p, q);
+#ifdef GMM_USES_MPI
+    tmult_tot += MPI_Wtime()-t_ref;
+    cout << "tmult_tot CG = " << tmult_tot << endl;
+#endif
 	a = rho / vect_hp(PS, q, p);	
 	add(scaled(p, a), x);
 	add(scaled(q, -a), r);

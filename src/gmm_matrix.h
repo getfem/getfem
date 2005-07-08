@@ -504,6 +504,10 @@ namespace gmm
     template <typename PT1, typename PT2, typename PT3, int cshift>
     void init_with(const csc_matrix_ref<PT1,PT2,PT3,cshift>& B)
     { init_with_good_format(B); }
+    template <typename U, int cshift>    
+    void init_with(const csc_matrix<U, cshift>& B)
+    { init_with_good_format(B); }
+
     void init_with_identity(size_type n);
 
     csc_matrix(void) : pr(0), ir(0), jc(0), nc(0), nr(0) {}
@@ -649,6 +653,9 @@ namespace gmm
     { init_with_good_format(B); }
     template <typename PT1, typename PT2, typename PT3, int cshift>
     void init_with(const csr_matrix_ref<PT1,PT2,PT3,cshift>& B)
+    { init_with_good_format(B); }
+    template <typename U, int cshift>
+    void init_with(const csr_matrix<U, cshift>& B)
     { init_with_good_format(B); }
 
     template <typename Matrix> void init_with(const Matrix &A);
@@ -988,6 +995,16 @@ namespace gmm {
   inline void copy(const mpi_distributed_matrix<MAT1> &m1, const MAT2 &m2)
   { copy(m1.M, m2); }
   
+
+  template <typename MATSP, typename V1, typename V2> inline
+  typename strongest_value_type3<V1,V2,MATSP>::value_type
+  vect_sp(const mpi_distributed_matrix<MATSP> &ps, const V1 &v1, const V2 &v2) {
+    typedef typename strongest_value_type3<V1,V2,MATSP>::value_type T;
+    T res = vect_sp(ps.M, v1, v2), rest;
+    MPI_Allreduce(&res, &rest, 1, mpi_type(T()), MPI_SUM,MPI_COMM_WORLD);
+    return rest;
+  }
+
   
 
   template <typename MAT, typename V1, typename V2>
@@ -995,12 +1012,19 @@ namespace gmm {
 		       V2 &v2) {
     typedef typename linalg_traits<V2>::value_type T;
     std::vector<T> v3(vect_size(v2)), v4(vect_size(v2));
+    static double tmult_tot = 0.0;
+    static double tmult_tot2 = 0.0;
+    double t_ref = MPI_Wtime();
     gmm::mult(m.M, v1, v3);
     if (is_sparse(v2)) DAL_WARNING(2, "Using a plain temporary, here.");
-
+    double t_ref2 = MPI_Wtime();
     MPI_Allreduce(&(v3[0]), &(v4[0]),gmm::vect_size(v2), mpi_type(T()),
 		  MPI_SUM,MPI_COMM_WORLD);
+    tmult_tot2 = MPI_Wtime()-t_ref2;
+    cout << "reduce mult mpi = " << tmult_tot2 << endl;
     gmm::add(v4, v2);
+    tmult_tot = MPI_Wtime()-t_ref;
+    cout << "tmult mpi = " << tmult_tot << endl;
   }
 
   template <typename MAT, typename V1, typename V2>

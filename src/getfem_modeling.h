@@ -1595,7 +1595,7 @@ namespace getfem {
 
     std::vector< std::vector<int> > eparts(mesh_set.size());
     size_type nset = 0;
-    int nparts = 8;//(ndof / 1000)+1; // number of sub-domains.
+    int nparts = 32;//(ndof / 1000)+1; // number of sub-domains.
 
     // Quand il y a plusieurs maillages, on découpe tous les maillages en autant de parties
     // et on regroupe les ddl de chaque partition par numéro de sous-partie.

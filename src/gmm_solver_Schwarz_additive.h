@@ -141,7 +141,7 @@ namespace gmm {
     
     if (iter.get_noisy()) cout << "Init pour sub dom ";
 #ifdef GMM_USES_MPI
-    int size,tranche,borne_sup,borne_inf,rank,tag1=11,tag2=12,tag3=13,sizepr = 0;
+    int size,tranche,borne_sup,borne_inf,rank,tag1=11,tag2=12,tag3=13,sizepr = 0,tab[4];
     double t_ref,t_final;
     MPI_Status status;
     t_ref=MPI_Wtime();
@@ -151,6 +151,7 @@ namespace gmm {
     borne_inf=rank*tranche;
     borne_sup=(rank+1)*tranche;
     if (rank==size-1) borne_sup=nb_sub;
+
 
     cout << "Nombre de sous domaines " << borne_sup - borne_inf << endl;
 
@@ -163,7 +164,10 @@ namespace gmm {
     //Each process receive  Nproc-1 contributions 
 
     for (int nproc = 0; nproc < size; ++nproc) {
-      for (size_type i = size_type(borne_inf); i < size_type(borne_sup); ++i) {
+      //      for (size_type i = size_type(borne_inf); i < size_type(borne_sup); ++i) {
+     for (size_type j = 0; j < size_type(nb_sub/size); ++j) {
+      size_type i=(rank+size*(j-1)+nb_sub)%nb_sub;
+
 	cout << "Sous domaines " << i << " : " << mat_ncols((*vB)[i]) << endl;
 #else
 	for (size_type i = 0; i < nb_sub; ++i) {
@@ -199,19 +203,21 @@ namespace gmm {
 	}
 #endif
 #ifdef GMM_USES_MPI
-      }
+     }
       if (nproc != size - 1) {
-	MPI_Sendrecv(Acsr.ir, sizeA, MPI_INT, next, tag1,
-		     Acsrtemp.ir, sizeA,MPI_INT,previous,tag1,
-		     MPI_COMM_WORLD,&status);
 	MPI_Sendrecv(Acsr.jc, sizeA+1, MPI_INT, next, tag2,
 		     Acsrtemp.jc, sizeA+1,MPI_INT,previous,tag2,
 		     MPI_COMM_WORLD,&status);
 	if (Acsrtemp.jc[sizeA] > size_type(sizepr)) {
 	  sizepr = Acsrtemp.jc[sizeA];
-	  delete[] Acsrtemp.pr;
+	  delete[] Acsrtemp.pr; delete[] Acsrtemp.ir;
 	  Acsrtemp.pr = new value_type[sizepr];
+	  Acsrtemp.ir = new unsigned int[sizepr];
 	}
+	MPI_Sendrecv(Acsr.ir, Acsr.jc[sizeA], MPI_INT, next, tag1,
+		     Acsrtemp.ir, Acsrtemp.jc[sizeA],MPI_INT,previous,tag1,
+		     MPI_COMM_WORLD,&status);
+	
 	MPI_Sendrecv(Acsr.pr, Acsr.jc[sizeA], mpi_type(value_type()), next, tag3, 
 		     Acsrtemp.pr, Acsrtemp.jc[sizeA],mpi_type(value_type()),previous,tag3,
 		     MPI_COMM_WORLD,&status);
@@ -233,13 +239,18 @@ namespace gmm {
     static double tmult_tot = 0.0;
     double t_ref = MPI_Wtime();
 #endif
+    cout << "tmult AS begin " << endl;
     mult(*(M.A), p, q);
 #ifdef GMM_USES_MPI
     tmult_tot += MPI_Wtime()-t_ref;
     cout << "tmult_tot = " << tmult_tot << endl;
 #endif
     std::vector<double> qbis(gmm::vect_size(q));
+    std::vector<double> qter(gmm::vect_size(q));
 #ifdef GMM_USES_MPI
+    MPI_Status status;
+    MPI_Request request,request1;
+    int tag=111;
     int size,tranche,borne_sup,borne_inf,rank,nb_sub;
     nb_sub=M.fi.size();
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -249,12 +260,19 @@ namespace gmm {
     borne_inf=rank*tranche;
     borne_sup=(rank+1)*tranche;
     if (rank==size-1) borne_sup=nb_sub;
+    int next = (rank + 1) % size;
+    int previous = (rank + size - 1) % size;
     t_ref = MPI_Wtime();
-    for (size_type i = size_type(borne_inf); i < size_type(borne_sup); ++i)
+//     for (size_type i = size_type(borne_inf); i < size_type(borne_sup); ++i)
+     for (size_type j = 0; j < size_type(nb_sub/size); ++j)
 #else
+
     for (size_type i = 0; i < M.fi.size(); ++i)
 #endif
       {
+#ifdef GMM_USES_MPI
+      size_type i=(rank+size*(j-1)+nb_sub)%nb_sub;
+#endif
 	gmm::mult(gmm::transposed((*(M.vB))[i]), q, M.fi[i]);
        M.iter.init();
        AS_local_solve(local_solver(), (M.vAloc)[i], (M.gi)[i],
@@ -263,27 +281,56 @@ namespace gmm {
        }
 
 #ifdef GMM_USES_MPI
-    cout << "The AS loop time " <<  MPI_Wtime() - t_ref << endl;
+    cout << "First  AS loop time " <<  MPI_Wtime() - t_ref << endl;
 #endif
 
     gmm::clear(q);
 #ifdef GMM_USES_MPI
-    for (size_type i = size_type(borne_inf); i < size_type(borne_sup); ++i)
+    t_ref = MPI_Wtime();
+     for (size_type j = 0; j < size_type(nb_sub/size); ++j)
+
 #else
       for (size_type i = 0; i < M.gi.size(); ++i)
 #endif
 	{
+
 #ifdef GMM_USES_MPI
+      size_type i=(rank+size*(j-1)+nb_sub)%nb_sub;
 	  gmm::mult((*(M.vB))[i], M.gi[i], qbis,qbis);
 #else
 	  gmm::mult((*(M.vB))[i], M.gi[i], q, q);
 #endif
 	}
+#ifdef GMM_USES_MPI
+     //WARNING this add only if you use the ring pattern below
+		// need to do this below if using a n explicit ring pattern communication
+
+//      add(qbis,q,q);
+    cout << "Second AS loop time " <<  MPI_Wtime() - t_ref << endl;
+#endif
+
 
 #ifdef GMM_USES_MPI
+    int tag1=11;
     static double t_tot = 0.0;
     double t_final;
     t_ref=MPI_Wtime();
+//     int next = (rank + 1) % size;
+//     int previous = (rank + size - 1) % size;
+    //communication of local information on ring pattern
+    //Each process receive  Nproc-1 contributions 
+
+//     if (size > 1) {
+//     for (int nproc = 0; nproc < size-1; ++nproc) 
+//       {
+
+// 	MPI_Sendrecv(&(qbis[0]), gmm::vect_size(q), MPI_DOUBLE, next, tag1,
+// 		   &(qter[0]), gmm::vect_size(q),MPI_DOUBLE,previous,tag1,
+// 		   MPI_COMM_WORLD,&status);
+// 	gmm::copy(qter, qbis);
+// 	add(qbis,q,q);
+//       }
+//     }
     MPI_Allreduce(&(qbis[0]), &(q[0]),gmm::vect_size(q), MPI_DOUBLE,
 		  MPI_SUM,MPI_COMM_WORLD);
     t_final=MPI_Wtime();
@@ -324,7 +371,7 @@ namespace gmm {
   template <typename ASM_type, typename Vect>
   void AS_global_solve(using_cg, const ASM_type &ASM, Vect &x,
 		       const Vect &b, iteration &iter)
-  { cg(ASM, x, b, *(ASM.A),  identity_matrix(), iter); }
+  { cg(ASM, x, b, *(ASM.A), identity_matrix(), iter); }
 
   template <typename ASM_type, typename Vect>
   void AS_global_solve(using_gmres, const ASM_type &ASM, Vect &x,
@@ -383,13 +430,18 @@ namespace gmm {
     borne_inf=rank*tranche;
     borne_sup=(rank+1)*tranche;
     if (rank==size-1) borne_sup=nb_sub;
-    for (size_type i = size_type(borne_inf); i < size_type(borne_sup); ++i)
+//     for (size_type i = size_type(borne_inf); i < size_type(borne_sup); ++i)
+     for (size_type j = 0; j < size_type(nb_sub/size); ++j)
+
     //    for (size_type i = rank; i < nb_sub; i+=size)
 #else
     for (size_type i = 0; i < nb_sub; ++i)
 #endif
     {
-      //      cout<<"rank = "<<rank<<" i = "<<i<<endl;
+
+#ifdef GMM_USES_MPI
+      size_type i=(rank+size*(j-1)+nb_sub)%nb_sub;
+#endif
       gmm::mult(gmm::transposed((*(ASM.vB))[i]), f, ASM.fi[i]);
       ASM.iter.init();
       AS_local_solve(local_solver(), ASM.vAloc[i], ASM.gi[i], ASM.fi[i],

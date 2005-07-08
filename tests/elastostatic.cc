@@ -316,7 +316,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
 
   // Dirichlet condition brick.
   getfem::mdbrick_Dirichlet<Model_State> final_model(NEUMANN, mf_rhs,
-					  F, DIRICHLET_BOUNDARY_NUM);
+						     F, DIRICHLET_BOUNDARY_NUM);
 
   // Generic solve.
   cout << "Total number of variables : " << final_model.nb_dof() << endl;
