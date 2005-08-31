@@ -33,8 +33,7 @@
 #include <map>
 #include <gmm_interface.h>
 
-namespace gmm
-{
+namespace gmm {
 
   /*************************************************************************/
   /*                                                                       */
