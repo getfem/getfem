@@ -28,6 +28,9 @@
 //
 //========================================================================
 
+/**\file dal_backtrace.h
+   \brief Get debug information.
+*/
 #ifndef DAL_BACKTRACE
 #define DAL_BACKTRACE
 

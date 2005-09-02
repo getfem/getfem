@@ -31,7 +31,6 @@
 #include <getfem_regular_meshes.h>
 #include <gmm.h>
 
-
 /* try to enable the SIGFPE if something evaluates to a Not-a-number
  * of infinity during computations
  */
@@ -275,6 +274,9 @@ bool laplacian_problem::solve(void) {
   // gmm::ilu_precond<sparse_matrix_type> P(SM);
   cout << "Time to compute preconditionner : "
        << ftool::uclock_sec() - time << " seconds\n";
+
+  
+  //gmm::HarwellBoeing_IO::write("SM", SM); 
 
   gmm::cg(SM, U, B, P, iter);
   // gmm::gmres(SM, U, B, P, 50, iter);

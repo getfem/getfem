@@ -411,7 +411,7 @@ namespace bgeot {
   }
 
   /*
-    return the local basis (i.e. the norm in the first column, and the
+    return the local basis (i.e. the normal in the first column, and the
     tangent vectors in the other columns 
   */
   base_matrix 

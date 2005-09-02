@@ -27,13 +27,17 @@
 //
 //========================================================================
 
-#ifndef COMMA_INIT
-#define COMMA_INIT
+/**\file bgeot_comma_init.h
+   \brief convenient initialization of vectors via overload of "operator,".
+   \code
+   std::vector<double> foo; bgeot::sc(foo) += 1,3,4;
+   \endcode
 
-/* 
    highly inspired by the boost init.hpp (C) Thorsten Ottosen
    (http://www.cs.auc.dk/~nesotto/init/)    
 */
+#ifndef COMMA_INIT
+#define COMMA_INIT
 
 /**
  *  Template class which forwards insertions to the

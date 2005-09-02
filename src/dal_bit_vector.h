@@ -31,14 +31,18 @@
 #ifndef DAL_BIT_VECTOR_H__
 #define DAL_BIT_VECTOR_H__
 
-/* *********************************************************************** */
-/* Remarks                                                                 */
-/* 									   */
-/* - As a convention, the default value of a bit is false.                 */
-/* 									   */
-/* - Some operations can be optimized (card, first_true ... for instance)  */
-/*                                                                         */
-/* *********************************************************************** */
+
+/** \file dal_bit_vector.h
+    \brief Provide a dynamic bit container.
+    
+    Provide a dynamic bit container, which can also be considered as a
+    set of integers.
+    
+    As a convention, the default value of a bit is false.  The main
+    member functions are dal::bit_vector::is_in,
+    dal::bit_vector::add, dal::bit_vector::sup. Iterate over the
+    bit_vector with dal::bv_visitor
+*/
 
 #include <dal_basic.h>
 #include <limits.h>
@@ -165,6 +169,7 @@ namespace dal
     bool operator<(bit_const_iterator x) const { return ind < x.ind; }
   };
 
+  ///Dynamic bit container. 
   class bit_vector : public bit_container
   {
     public :
@@ -268,10 +273,15 @@ namespace dal
 	  - sizeof(bit_container);
       }
       size_type card(void) const;
+      /// index of first non-zero entry (size_type(-1) if the bit_vector is empty)
       size_type first_true(void) const;
+      /// index of first zero entry (size_type(-1) if the bit_vector is empty)
       size_type first_false(void) const;
+      /// index of last non-zero entry (size_type(-1) if the bit_vector is empty)
       size_type last_true(void) const;
+      /// index of last zero entry (size_type(-1) if the bit_vector is empty)
       size_type last_false(void) const;
+      /// remove all elements found in bv
       bit_vector &setminus(const bit_vector &bv);
       bit_vector &operator |=(const bit_vector &bv);
       bit_vector &operator &=(const bit_vector &bv);
@@ -290,16 +300,17 @@ namespace dal
         for (size_type i=0; i < bs.size(); ++i) { if (bs[i]) add(i); }
       }
 
-    /** ICONT is any container of integer values, which are inserted into the bit_vector
-     */
-      template <typename ICONT> dal::bit_vector& merge_from(const ICONT& c) {
-        for (typename ICONT::const_iterator it = c.begin(); it != c.end(); ++it) add(*it);
-	return *this;
-      }
+    /// merges the integer values of the supplied container into the bit_vector
+    template <typename ICONT> dal::bit_vector& merge_from(const ICONT& c) {
+      for (typename ICONT::const_iterator it = c.begin(); it != c.end(); ++it) add(*it);
+      return *this;
+    }
+    /// merges the integer values of the supplied iterator range into the bit_vector
     template <typename IT> dal::bit_vector& merge_from(IT b, IT e) {
       while (b != e) { add(*b++); }
       return *this;
     }
+    /// return true if the supplied bit_vector is a subset of the current bit_vector
     bool contains(const dal::bit_vector &other) const;
    
   /* ********************************************************************* */
@@ -309,7 +320,7 @@ namespace dal
   /* ********************************************************************* */
   
     public : 
-
+    /// return true if (*this)[i] == true
     bool is_in(size_type i) const { 
       if (i < ifirst_true || i > ilast_true) return false;
       else return (((*(const bit_container*)(this))[i / WD_BIT]) & 
@@ -334,10 +345,11 @@ namespace dal
      bit_vector::const_iterator (much faster)
 
      example:
+     \code
      for (bv_visitor i(v); !i.finished(); ++i) {
        .... (use i as an unsigned int)
      }
-
+     \endcode
      CAUTION: use bv_visitor_c instead of bv_visitor if the class bv_visitor need to store a copy of the bit_vector 
      (if the original is destroyed just after the creation...)
   */
@@ -384,6 +396,7 @@ namespace dal
     operator dal::bit_vector::size_type() const { return dal::bit_vector::size_type(v); }
   };
 
+  /// extract index of first entry in the bit_vector
   inline int &operator << (int &i, bit_vector &s)
   { i = s.take_first(); return i; }
   inline const int &operator >> (const int &i, bit_vector &s)

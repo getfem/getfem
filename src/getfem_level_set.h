@@ -28,7 +28,9 @@
 //
 //========================================================================
 
-
+/**\file getfem_level_set.h
+   \brief Define level-sets.
+*/
 #ifndef GETFEM_LEVEL_SET_H__
 #define GETFEM_LEVEL_SET_H__
 
@@ -37,6 +39,14 @@
 #include <getfem_mesher.h>
 
 namespace getfem {
+  /** \brief Define a level-set.  
+
+      In getfem, a levelset is one or two scalar functions, defined on
+      a lagrange polynomial mesh_fem.
+      
+      The (optional) second function is a way to limit the level-set
+      to handle cracks for example.
+  */
 
   class level_set : public context_dependencies {
 

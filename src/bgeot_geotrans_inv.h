@@ -9,7 +9,7 @@
 //
 //========================================================================
 //
-// Copyright (C) 2000-2005 Yves Renard
+// Copyright (C) 2000-2005 Yves Renard, Julien Pommier
 //
 // This file is a part of GETFEM++
 //
@@ -26,6 +26,24 @@
 // Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //========================================================================
+
+/**\file bgeot_geotrans_inv.h
+   \brief Inversion of geometric transformations.
+
+   Inversion means: given a set of convexes and a point, find:
+
+     - a subset of candidate convexes, which are likely to contain the
+     point (using bgeot::kdtree).
+
+     - on these candidate convexes, invert the geometric
+     transformation, i.e. find the corresponding coordinates on the
+     reference element.
+
+   Inversion of a geometric transformation is not a trivial task,
+   especially with non-linear geometric transformations. This is the
+   central part of interpolation routines from a getfem::mesh_fem onto
+   another.
+*/
 
 #ifndef BGEOT_GEOTRANS_INV_H__
 #define BGEOT_GEOTRANS_INV_H__

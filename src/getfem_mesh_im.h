@@ -27,7 +27,9 @@
 //
 //========================================================================
 
-
+/**\file getfem_mesh_im.h
+   \brief Define the getfem::mesh_im class (integration of getfem::mesh_fem).
+*/
 #ifndef GETFEM_MESH_IM_H__
 #define GETFEM_MESH_IM_H__
 
@@ -48,24 +50,32 @@ namespace getfem {
     bool is_valid() const { return is_valid_; }
     void update_from_context(void) const {}
 
-    /** Gives in a structure dal::bit\_vector all convexes of the
-     *          mesh where an integration method is defined.
+    /** Get the set of convexes where an integration method has been assigned.
      */
     inline const dal::bit_vector &convex_index(void) const
     { return im_convexes; }
     
-    /// Gives a reference to the linked mesh of type getfem\_mesh.
+    /// Give a reference to the linked mesh of type getfem\_mesh.
     getfem_mesh &linked_mesh(void) const { return *linked_mesh_; }
-    /** Set the integration method on the convex of index i
+    /** Set the integration method of a convex.
+
+	@param cv the convex number
+
+	@param pim the integration method, typically obtained with
+	\code getfem::int_method_descriptor("IM_SOMETHING(..)") 
+	\endcode
      */
     void set_integration_method(size_type cv, pintegration_method pim);
     /** Set the integration method on all the convexes of indexes in bv,
-     *  which is of type dal::bit\_vector.
+     *  which is of type dal::bit_vector.
      */
     void set_integration_method(const dal::bit_vector &cvs, 
 				pintegration_method pim);
     /** shortcut for
-	set_integration_method(linked_mesh().convex_index(),ppi); */
+	\code 
+	set_integration_method(linked_mesh().convex_index(),ppi); 
+	\endcode
+    */
     void set_integration_method(pintegration_method ppi);
     /** Set an approximate integration method chosen to be exact for
 	polynomials of degree 'im_degree'
@@ -98,9 +108,21 @@ namespace getfem {
     
     mesh_im(getfem_mesh &me);
     virtual ~mesh_im();
+    /** Read the mesh_im from a stream.
+        @param ist the stream. */
     void read_from_file(std::istream &ist);
+    /** Read the mesh_im from a file.
+        @param name the file name. */
     void read_from_file(const std::string &name);
+    /** Write the mesh_im to a stream. */
     void write_to_file(std::ostream &ost) const;
+    /** Write the mesh_im to a file. 
+
+	@param name the file name
+
+	@param with_mesh if set, then the linked_mesh() will also be
+	saved to the file.
+    */
     void write_to_file(const std::string &name, bool with_mesh=false) const;
   private:
     mesh_im(const mesh_im &);

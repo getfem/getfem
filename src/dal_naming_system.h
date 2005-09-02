@@ -39,15 +39,14 @@
 
 namespace dal {
 
-  /* ********************************************************************* */
-  /*                                                                       */
-  /*   Naming system                                                       */
-  /*                                                                       */
-  /* ********************************************************************* */
+  /** \file dal_naming_system.h
+      \brief Naming system.
+  */
 
-  /** This class associates a name to a method descriptor and store
-   *  method descriptors. Methods may have parameters such as integer or
-   *  other methods.
+
+  /** Associate a name to a method descriptor and store method descriptors. 
+   *
+   * Methods may have parameters such as integer or other methods.
    *  The class METHOD have to derive from dal::static_stored_object
    */
   template <class METHOD> class naming_system {

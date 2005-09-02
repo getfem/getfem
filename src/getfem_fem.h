@@ -27,6 +27,11 @@
 //
 //========================================================================
 
+/**\file getfem_fem.h 
+   \brief Definition of the finite element methods.
+
+   This file defines the getfem::virtual_fem class, which is the common base class of all FEM.
+*/
 
 #ifndef GETFEM_FEM_H__
 #define GETFEM_FEM_H__
@@ -38,59 +43,100 @@
 #include <deque>
 
 namespace getfem {
-  /************************************************************************/
-  /*	Class for description of an interpolation dof.                    */
-  /************************************************************************/
-  
+
+  /** @defgroup dofdescr Dof description
+   *  This set of functions gives a pointer to dof descriptions and
+   *  tests the compatibility between two dof descriptions.
+   *  A dof description describes a type of dof (Lagrange type, Hermite type ...)
+   *  in order to be able to say wether two dofs are to be identified or not.
+   *  The construction of dof type with the tensorial product is taken into account,
+   *  making the dof_description structure a little bit complex (this structure will
+   *  probably evoluate in the future).
+   *  @{
+   */
+
   struct dof_description;
 
-  /// Pointer on a dof_description
+  /// Type representing a pointer on a dof_description
   typedef dof_description *pdof_description;
   
-  /// Description of a unique dof of lagrange type (value at the node).
-  pdof_description lagrange_dof(dim_type);
+  /** @brief Description of a unique dof of lagrange type (value at the node).
+   * @param d the dimension of the reference element (2 for triangles, 3 for tetrahedrons ...)
+   */
+  pdof_description lagrange_dof(dim_type d);
+  
   /** Description of a unique dof of derivative type. 
    *  (a derivative at the node).
+   *  @param d the dimension of the reference element.
+   *  @param r corresponds to the variable number for which the derivative is taken (0 <= r < d)
    */
-  pdof_description derivative_dof(dim_type, dim_type);
+  pdof_description derivative_dof(dim_type d, dim_type r);
+  
   /** Description of a unique dof of normal derivative type
    *  (normal derivative at the node, regarding a face).
+   *  @param d the dimension of the reference element.
    */  
-  pdof_description norm_derivative_dof(dim_type);
-  /// Description of a unique dof of mean value type.
-  pdof_description mean_value_dof(dim_type);
+  pdof_description norm_derivative_dof(dim_type d);
+
+  /** Description of a unique dof of mean value type.
+   *  @param d the dimension of the reference element.
+   */
+  pdof_description mean_value_dof(dim_type d);
   
-  pdof_description global_dof(dim_type);
+  /** Description of a global dof, i.e. a numbered dof having a global scope.
+   *  @param d the dimension of the reference element.
+   */
+  pdof_description global_dof(dim_type d);
+
   /// Product description of the descriptions *pnd1 and *pnd2.
-  pdof_description product_dof(pdof_description, pdof_description);
+  pdof_description product_dof(pdof_description pnd1, pdof_description pnd2);
 
   pdof_description to_coord_dof(pdof_description p, dim_type ct);
 
+  /// Description of a special dof for Xfem
   pdof_description xfem_dof(pdof_description p, size_type ind);
+
+  /// Returns the xfem_index of dof (0 for normal dof)
+  size_type dof_xfem_index(pdof_description);
+
   size_type reserve_xfem_index(void);
+  dim_type coord_index_of_dof(pdof_description a);
 
   /** Gives a total order on the dof description compatible with the
    *   identification.
    */
   int dof_description_compare(pdof_description a, pdof_description b);
+
   /// Says if the dof is linkable.
   bool dof_linkable(pdof_description);
+
   /// Says if the two dofs can be identified.
   bool dof_compatibility(pdof_description, pdof_description);
-  /// Returns the xfem_index of dof (0 for normal dof)
-  size_type dof_xfem_index(pdof_description);
+
+
+  /* @} */
   
   /* ******************************************************************** */
   /*	Classes for description of a finite element.                      */
   /* ******************************************************************** */
   
+  /** @defgroup pfem Finite element description
+   *
+   * @{
+   */
+
+
   class virtual_fem;
-  typedef boost::intrusive_ptr<const virtual_fem> pfem;
+
+  /** type of pointer on a fem description @see getfem::virtual_fem */ 
+  typedef boost::intrusive_ptr<const getfem::virtual_fem> pfem;
+  
   struct fem_precomp_; 
-  typedef boost::intrusive_ptr<const fem_precomp_> pfem_precomp;
+  typedef boost::intrusive_ptr<const getfem::fem_precomp_> pfem_precomp;
 
   class fem_interpolation_context;
   
+  /** \brief Base class for finite element description */
   class virtual_fem : virtual public dal::static_stored_object {
 
   protected :
@@ -100,15 +146,22 @@ namespace getfem {
     bgeot::convex<base_node> cv_node;
     mutable bgeot::pstored_point_tab pspt;
     mutable bool pspt_valid;
-    bgeot::pconvex_ref cvr; // reference element.
-    mutable dim_type ntarget_dim, dim_;
-    bool is_equiv, is_lag, is_pol, is_polycomp, real_element_defined;
-    short_type es_degree, hier_raff;
+    bgeot::pconvex_ref cvr; /// reference element.
+    mutable dim_type ntarget_dim; /// dimension of the target space
+    mutable dim_type dim_; /// dimension of the reference element 
+    bool is_equiv; /// true if the FEM is equivalent
+    bool is_lag; /// true if the FEM is of Lagrange type
+    bool is_pol; /// true if the FEM is polynomial
+    bool is_polycomp; /// true if the FEM is polynomial composite
+    bool real_element_defined;
+    short_type es_degree; /// estimated polynomial degree of the FEM
+    short_type hier_raff; /// hierarchical refinement of the FEM
     
   public :
     /// Number of degrees of freedom.
     virtual size_type nb_dof(size_type) const
     { return dof_types_.size(); }
+    /// Number of basis functions.
     virtual size_type nb_base(size_type cv) const
     { return nb_dof(cv); }
     /// Number of components (nb_dof() * dimension of the target space).
@@ -116,7 +169,7 @@ namespace getfem {
       { return nb_base(c) * ntarget_dim; }
     size_type nb_components(size_type c) const
       { return nb_dof(c) * ntarget_dim; }
-    /// Gives the array of pointer on dof description.
+    /// Get the array of pointer on dof description.
     const std::vector<pdof_description> &dof_types(void) const 
       { return dof_types_; }
     short_type hierarchical_raff(void) const { return hier_raff; }
@@ -125,8 +178,9 @@ namespace getfem {
     dim_type &dim(void) { return dim_; }
     /// dimension of the target space.
     dim_type target_dim(void) const { return ntarget_dim; }
-    /// Gives the convex of the reference element.
+    /// Return the convex of the reference element.
     virtual bgeot::pconvex_ref ref_convex(size_type) const { return cvr; }
+    /// @internal
     bgeot::pconvex_ref &mref_convex() { return cvr; }
     /// Gives the convex of the reference element.
     bgeot::pconvex_structure basic_structure(size_type cv) const
@@ -425,7 +479,7 @@ namespace getfem {
   };
   
 
-  /**
+  /** \brief Handles precomputations for FEM.
      statically allocates a fem-precomputation object, and returns a
      pointer to it. The precomputations are "cached", i.e. they are
      stored in a global pool and if this function is called two times
@@ -641,6 +695,8 @@ namespace getfem {
       }
     }
   }
+
+  /* @} */
 
 }  /* end of namespace getfem.                                            */
 

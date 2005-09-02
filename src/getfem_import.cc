@@ -126,7 +126,7 @@ namespace getfem {
 	gmsh_cv_info &ci = cvlst[cv];
 	//cout << "importing cv dim=" << int(ci.pgt->dim()) << " N=" << N << "\n";
 	if (ci.pgt->dim() == N) {
-	  size_type ic = m.add_convex(ci.pgt, ci.nodes.begin()); cvok = true;
+	  /*size_type ic = */m.add_convex(ci.pgt, ci.nodes.begin()); cvok = true;
 	  //m.region(ci.region).add(ic);
 	}/* else if (ci.pgt->dim() == N-1) {
 	  bgeot::mesh_convex_ind_ct ct = m.convex_to_point(ci.nodes[0]);

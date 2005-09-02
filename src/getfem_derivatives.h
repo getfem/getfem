@@ -28,6 +28,9 @@
 //
 //========================================================================
 
+/**\file getfem_derivatives.h
+   \brief Compute the gradient of a field on a getfem::mesh_fem.
+*/
 #ifndef GETFEM_DERIVATIVES_H__
 #define GETFEM_DERIVATIVES_H__
 
@@ -35,16 +38,19 @@
 
 namespace getfem
 {
-  /*
-    mf_target should be a lagrange discontinous element
-    does not work with vectorial elements. ... to be done ...
+  /** Compute the gradient of a field on a getfem::mesh_fem.
+      @param mf the source mesh_fem.
+      @param U the source field.
+      @param mf_target should be a lagrange discontinous element
+      does not work with vectorial elements. ... to be done ...
+      @param V contains on output the gradient of U, evaluated on mf_target.
 
-    mf_target may have the same Qdim than mf, or it may
-    be a scalar mesh_fem, in which case the derivatives are stored in
-    the order: DxUx,DyUx,DzUx,DxUy,DyUy,...
+      mf_target may have the same Qdim than mf, or it may
+      be a scalar mesh_fem, in which case the derivatives are stored in
+      the order: DxUx,DyUx,DzUx,DxUy,DyUy,...
 
-    in any case, the size of V should be N*(mf.qdim)*(mf_target.nbdof/mf_target.qdim)
-    elements (this is not checked by the function!)
+      in any case, the size of V should be N*(mf.qdim)*(mf_target.nbdof/mf_target.qdim)
+      elements (this is not checked by the function!)
   */
   template<class VECT1, class VECT2>
   void compute_gradient(const mesh_fem &mf, const mesh_fem &mf_target,
@@ -108,6 +114,8 @@ namespace getfem
     }
   }
 
+  /**Compute the Von-Mises stress of a field.
+   */
   template <typename VEC1, typename VEC2>
   void interpolation_von_mises(const getfem::mesh_fem &mf_u, const VEC1 &U,
 			       const getfem::mesh_fem &mf_vm, VEC2 &VM,

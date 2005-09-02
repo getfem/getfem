@@ -27,15 +27,18 @@
 //
 //========================================================================
 
+/** \file dal_algobase.h 
+    \brief Miscelleanous algorithms on containers.
+*/
 
 #ifndef DAL_ALGOBASE_H__
 #define DAL_ALGOBASE_H__
 #include <dal_std.h>
 #include <dal_except.h>
 #include <functional>
+
 namespace dal
 {
-
   /* ********************************************************************* */
   /* Definitition de classes de comparaison.                               */
   /* retournant un int.                                                    */

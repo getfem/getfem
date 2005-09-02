@@ -682,6 +682,8 @@ void navier_stokes_problem::solve_PREDICTION_CORRECTION() {
 void navier_stokes_problem::do_export(scalar_type t) {
   if (!export_to_opendx) return;
   if (first_export) {
+    mf_u.write_to_file("icare.mf_u", true);
+
     exp.reset(new getfem::dx_export(datafilename + ".dx", false));
     if (N <= 2)
       sl.build(mesh, getfem::slicer_none(),2);
@@ -694,6 +696,11 @@ void navier_stokes_problem::do_export(scalar_type t) {
   } else if (t >= t_export-dt/20.0) {
     t_export += dt_export;
   }
+  
+  static int cnt = 0;
+  char s[128]; sprintf(s, "icare.U%d", cnt++);
+  gmm::vecsave(s, Un0);
+
   exp->write_point_data(mf_u, Un0);
   exp->serie_add_object("velocity");
   cout << "Saving Pressure, |p| = " << gmm::vect_norm2(Pn1) << "\n";

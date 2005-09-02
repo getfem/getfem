@@ -27,11 +27,11 @@
 //
 //========================================================================
 
+/**\file bgeot_sparse_tensors.h
+   \brief Sparse tensors, used during the assembly.
 
-/* 
-   "sparse" tensors: these are not handle like sparse matrices
+   "sparse" tensors: these are not handled like sparse matrices
    
-
    As an example, let say that we have a tensor t(i,j,k,l) of
    dimensions 4x2x3x3, with t(i,j,k,l!=k) == 0. 
    
@@ -49,7 +49,6 @@
 
    If we add information about the location of the non-null elements
    (by mean of strides), then we have an object of type 'tensor_ref'
-
    
    Iteration on the data of one or more tensor should be done via the
    'multi_tensor_iterator', which can iterate over common non-null

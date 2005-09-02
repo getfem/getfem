@@ -27,7 +27,9 @@
 //
 //========================================================================
 
-
+/**\file getfem_context.h
+   \brief Deal with interdependencies of objects (getfem::context_dependencies).
+*/
 #ifndef GETFEM_CONTEXT_H__
 #define GETFEM_CONTEXT_H__
 
@@ -35,35 +37,40 @@
 #include <list>
 
 namespace getfem {
+  /**Deal with interdependencies of objects.
 
-  // An object can be in three different states :
-  //   NORMAL  : no change is necessary
-  //   CHANGED : something in the context has changed and the update function
-  //             of the object has to be called.
-  //   INVALID : one of the dependencies desappears, the object is invalid
-  //             and should no longer be used.
-  //
-  // add_dependency(ct) : add a dependency to the dependency list.
-  // touch()            : significate to the dependent objects that something
-  //                      has change in the object. This make the dependent
-  //                      objects to be in the CHANGED state
-  // context_check()    : check if the object has to be updated. if it is the
-  //                      case it makes first a check to the dependency list
-  //                      and call the update function of the object.
-  //                      (the update function of the dependencies are called
-  //                      before the update function of the current object).
-  // context_valid()    : says if the object has still a valid context
-  //
-  // Remarks :
-  // - A protection against round dependencies exists. In this case, the order
-  //   of call of the update functions can be arbitrary
-  // - Detection of context changes is very fast (control the state). the touch
-  //   operation can cover the whole tree of dependent object.
-  //   But this is the case only for the first touch operation because once
-  //   a dependent object is in the CHANGED state it will not be considered
-  //   by next touch operations.
+   An object can be in three different states :
+     NORMAL  : no change is necessary
+     CHANGED : something in the context has changed and the update function
+               of the object has to be called.
+     INVALID : one of the dependencies desappears, the object is invalid
+               and should no longer be used.
+  
+   add_dependency(ct) : add a dependency to the dependency list.
 
+   touch()            : significate to the dependent objects that something
+                        has change in the object. This make the dependent
+                        objects to be in the CHANGED state
 
+   context_check()    : check if the object has to be updated. if it is the
+                        case it makes first a check to the dependency list
+                        and call the update function of the object.
+                        (the update function of the dependencies are called
+                        before the update function of the current object).
+
+   context_valid()    : says if the object has still a valid context
+  
+   Remarks :
+
+   - A protection against round dependencies exists. In this case, the
+   order of call of the update functions can be arbitrary
+
+   - Detection of context changes is very fast (control the
+   state). the touch operation can cover the whole tree of dependent
+   object.  But this is the case only for the first touch operation
+   because once a dependent object is in the CHANGED state it will not
+   be considered by next touch operations.
+  */
   class context_dependencies {
 
   protected :
@@ -82,15 +89,15 @@ namespace getfem {
 
   public :
     
-    // this function has to be defined and should update the object when
-    // the context is modified.
+    /** this function has to be defined and should update the object when
+	the context is modified. */
     virtual void update_from_context(void) const = 0;
 
     void add_dependency(const context_dependencies &cd);
     void sup_dependency(const context_dependencies &cd)
     { cd.sup_dependent_(*this); sup_dependency_(cd); }
     bool context_valid(void) const { return (state != CONTEXT_INVALID); }
-    /* return true if update_from_context was called */
+    /** return true if update_from_context was called */
     bool context_check(void) const;
     void touch(void) const;
     static long new_ident(void); // outdated function
@@ -98,11 +105,6 @@ namespace getfem {
     context_dependencies() : state(CONTEXT_NORMAL), touched(true) {}
 
   };
-
-
-
-
-
 
 }  /* end of namespace getfem.                                             */
 

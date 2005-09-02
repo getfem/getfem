@@ -26,6 +26,10 @@
 // Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //========================================================================
+
+/**\file ftool.h
+   \brief "File Tools"
+*/
 #ifndef FTOOL_H
 #define FTOOL_H
 
@@ -66,6 +70,7 @@ namespace ftool
   /*       Clock functions.                                                */
   /* ********************************************************************* */
 
+  /** get CPU time, in seconds. */
 # ifdef HAVE_SYS_TIMES
   inline double uclock_sec(void) {
     static double ttclk = 0.;

@@ -28,7 +28,9 @@
 //
 //========================================================================
 
-
+/**\file getfem_export.h
+   \brief Export solutions to various formats.
+*/
 #ifndef GETFEM_EXPORT_H__
 #define GETFEM_EXPORT_H__
 
@@ -49,7 +51,8 @@ namespace getfem {
     return s2;
   }
 
-  /** 
+  /** \brief VTK export.
+
       export class to VTK ( http://www.kitware.com/vtk.html ) file format 
       (not the XML format, but the old format)
 
@@ -246,7 +249,8 @@ namespace getfem {
   }
 
 
-  /** A (quite large) class for exportation of data to IBM OpenDX
+  /** \brief A (quite large) class for exportation of data to IBM OpenDX.
+
                      http://www.opendx.org/
 
       This class is more capable than the VTK export, as it is
@@ -303,7 +307,7 @@ namespace getfem {
        you can put whatever you want -- call this before any write_dataset or write_mesh */
     void set_header(const std::string& s);
     void write_mesh();
-    /* add an object (typically the name of a data field) to a
+    /** add an object (typically the name of a data field) to a
        'series', i.e.  an aggregate of consecutive objects. Using
        'series' is useful for animations in opendx 
 
@@ -315,9 +319,10 @@ namespace getfem {
 			  const std::string &object_name);
     void serie_add_object(const std::string &serie_name) 
     { serie_add_object(serie_name, current_data_name()); }
-    /* name of current mesh (use exporting(...) to change the current mesh) */
+    /** return the name of current mesh (use exporting(...) to change
+	the current mesh) */
     std::string current_mesh_name() { return current_mesh().name; }
-    /* name of last written data_set */
+    /** return the name of last written data_set */
     std::string current_data_name() { return current_data().name; }
     template<class VECT> void 
     write_point_data(const getfem::mesh_fem &mf, 

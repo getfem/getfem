@@ -27,15 +27,12 @@
 //
 //========================================================================
 
+/**\file getfem_mesh_fem.h
+   \brief Define the getfem::mesh_fem class
+*/
 
 #ifndef GETFEM_MESH_FEM_H__
 #define GETFEM_MESH_FEM_H__
-
-/* *********************************************************************** */
-/*									   */
-/* Ameliorations :                                                         */
-/*    - faire un vrai Cutill-Mc Kee pour la numerotation des ddl.          */
-/* *********************************************************************** */
 
 #include <getfem_mesh.h>
 #include <getfem_fem.h>
@@ -94,8 +91,8 @@ namespace getfem
 
   };
 
-  /*
-    structure for iteration over the dofs when Qdim != 1 and target_dim == 1
+  /** \internal \brief structure for iteration over the dofs when Qdim
+      != 1 and target_dim == 1
   */
   template <class CONT> class tab_scal_to_vect {
   public :
@@ -149,7 +146,11 @@ namespace getfem
     ind_ref_mesh_dof_ind_ct;
   
 
-  /// Describe a finite element method linked to a mesh.
+  /** Describe a finite element method linked to a mesh.
+   *    
+   *  @see getfem_mesh
+   *  @see mesh_im
+   */
   class mesh_fem : public getfem_mesh_receiver, public context_dependencies {
   protected :
     
@@ -169,65 +170,89 @@ namespace getfem
 
     bool is_valid(void) { return is_valid_; }
 
-    /** Gives in a structure dal::bit\_vector all convexes of the
-     *          mesh where a finite element is defined.
+    /** Get the set of convexes where a finite element has been assigned.
      */
     inline const dal::bit_vector &convex_index(void) const
       { return fe_convex; }
     
-    /// Gives a reference to the linked mesh of type getfem\_mesh.
+    /// Return a reference to the underlying mesh.
     getfem_mesh &linked_mesh(void) const { return *linked_mesh_; }
 
+    /** Return the Q dimension. A mesh_fem used for scalar fields has
+	Q=1, for vector fields, Q is typically equal to
+	linked_mesh().dim().
+     */
     dim_type get_qdim() const { return Qdim; }
+    /** Change the Q dimension */
     void     set_qdim(dim_type q) { if (q != Qdim) 
       { Qdim = q; dof_enumeration_made = false; touch(); }}
 
-    /** Set on the convex of index i the integrable finite element method.
-     */
+    /** Set the finite element method of a convex.
+	@param cv the convex number.
+	@param pf the finite element.
+    */
     void set_finite_element(size_type cv, pfem pf);	
-    /** Set on all the convexes of indexes in bv, which is of type
-     *          dal::bit\_vector, the finite element method
-     *          with the description pf which is of type pfem.
-     */
-    void set_finite_element(const dal::bit_vector &cvs, pfem ppf);
+    /** Set the finite element on a set of convexes.
+	@param cvs the set of convex indexes, as a dal::bit_vector.
+	@param pf the finite element, typically obtained with
+	\code getfem::fem_descriptor("FEM_SOMETHING(..)") 
+	\endcode
+    */
+    void set_finite_element(const dal::bit_vector &cvs, pfem pf);
     /** shortcut for set_finite_element(linked_mesh().convex_index(),pf); */
     void set_finite_element(pfem pf);
     /** Set a classical (i.e. lagrange polynomial) finite element on
-	the convexes listed in cvs (using getfem::classical_fem).
+	a set of convexes.
+	@param cvs the set of convexes, as a dal::bit_vector.
+	@param fem_degree the polynomial degree of the finite element.
     */
     void set_classical_finite_element(const dal::bit_vector &cvs, 
 				      dim_type fem_degree);
     /** Similar to set_classical_finite_element, but uses
-     * discontinuous lagrange elements. 0 <= alpha <= 1, 0 => usual
-     * dof nodes, greater values move the nodes toward the center of
-     * gravity
+	discontinuous lagrange elements. 
+
+	@param cvs the set of convexes, as a dal::bit_vector.
+	@param fem_degree the polynomial degree of the finite element.
+	@param alpha the node inset, 0 <= alpha < 1, where 0 implies
+	usual dof nodes, greater values move the nodes toward the
+	center of gravity, and 1 means that all degrees of freedom
+	collapse on the center of gravity.
      */
     void set_classical_discontinuous_finite_element(const dal::bit_vector &cvs, 
 						    dim_type fem_degree,scalar_type alpha=0);
-    /** shortcut for
+    /** Shortcut for
      * set_classical_finite_element(linked_mesh().convex_index(),...)
      */
     void set_classical_finite_element(dim_type fem_degree);
-    /** shortcut for
+    /** Shortcut for
      *  set_classical_discontinuous_finite_element(linked_mesh().convex_index()
      *  ,...)
      */
     void set_classical_discontinuous_finite_element(dim_type fem_degree,scalar_type alpha=0);
     
-    /** return the fem associated with an element (in no fem is
+    /** Return the fem associated with an element (in no fem is
 	associated, the function will crash! use the convex_index() of
 	the mesh_fem to check that a fem is associated to a given
 	convex) */
     pfem fem_of_element(size_type cv) const { return  f_elems[cv]; }
-    /** Gives an array of the degrees of freedom of the element
-     *           of the convex of index i. 
+    /** Give an array of the dof numbers a of convex.
+     *  @param cv the convex number.
+     *  @return a pseudo-container of the dof number.
      */
     ref_mesh_dof_ind_ct
-      ind_dof_of_element(size_type ic) const {
+      ind_dof_of_element(size_type cv) const {
       if (!dof_enumeration_made) enumerate_dof();
-      return ref_mesh_dof_ind_ct(dof_structure.ind_points_of_convex(ic),
-				 Qdim /fem_of_element(ic)->target_dim());
+      return ref_mesh_dof_ind_ct(dof_structure.ind_points_of_convex(cv),
+				 Qdim /fem_of_element(cv)->target_dim());
     }
+    /** Give an array of the dof numbers lying of a convex face (all
+      	degrees of freedom whose associated base function is non-zero
+	on the convex face).
+	@param cv the convex number.
+	@param f the face number.
+	@return a pseudo-container of the dof number.
+    */
+    
     ind_ref_mesh_dof_ind_ct
     ind_dof_of_face_of_element(size_type cv, short_type f) const {
       if (!dof_enumeration_made) enumerate_dof();
@@ -235,45 +260,64 @@ namespace getfem
 	(dof_structure.ind_points_of_face_of_convex(cv, f),
 	 Qdim /fem_of_element(cv)->target_dim());
     }
+    /** Return the number of dof lying on the given convex face.
+	@param cv the convex number.
+	@param f the face number.
+    */
     size_type nb_dof_of_face_of_element(size_type cv, short_type f) const {
       pfem pf = f_elems[cv];
       return dof_structure.structure_of_convex(cv)->nb_points_of_face(f)
 	* Qdim / pf->target_dim();
     }
 
-    /** Gives the number of  degrees of freedom of the element
-     *           of the convex of index i. 
-     */
+    /** Return the number of  degrees of freedom attached to a given convex.
+	@param cv the convex number.
+    */
     size_type nb_dof_of_element(size_type cv) const
     { pfem pf = f_elems[cv]; return pf->nb_dof(cv) * Qdim / pf->target_dim(); }
-    /** Gives the point (base_node)  corresponding to the 
-     *          degree of freedom i  of the element of index cv.
-     */
+    
+    /* Return the geometrical location of a degree of freedom in the reference convex.
+	@param cv the convex number.
+	@param i the local dof number.
     const base_node &reference_point_of_dof(size_type cv,size_type i) const {
       pfem pf = f_elems[cv];
       return pf->node_of_dof(cv, i * pf->target_dim() / Qdim);
     }
-    /** Gives the point (base_node) corresponding to the degree of freedom
-     *  i of the element of index cv in the element of reference.
+    */
+    /** Return the geometrical location of a degree of freedom.
+	@param cv the convex number.
+	@param i the local dof number.
      */
     base_node point_of_dof(size_type cv, size_type i) const;
-    /** Gives the point (base_node)  corresponding to the 
-     *          degree of freedom with global index i.
-     */
+    /** Return the geometrical location of a degree of freedom.
+	@param d the global dof number.
+    */
     base_node point_of_dof(size_type d) const;
-    /* Gives the dof component number (0<= x <Qdim) */
+    /** Return the dof component number (0<= x <Qdim) */
     dim_type dof_qdim(size_type d) const;
-    /** Shortcut for convex_to_dof(d)[0] */
+    /** Shortcut for convex_to_dof(d)[0] 
+	@param d the global dof number.
+    */
     size_type first_convex_of_dof(size_type d) const;
+    /** Return the local index of the degree of freedom in the first convex that is attached to it (i.e. first_convex_of_dof(d)).
+	@param d the global dof number.
+    */
     size_type ind_in_first_convex_of_dof(size_type d) const;
-    /** Return the list of convexes attached to the specified dof */
-    bgeot::mesh_convex_ind_ct convex_to_dof(size_type ip) const;
-    /** Renumbers the degrees of freedom. You should not have
-     * to call this function */
+    /** Return the list of convexes attached to the specified dof 
+	@param d the global dof number.
+	@return an array of convex numbers.
+     */
+    bgeot::mesh_convex_ind_ct convex_to_dof(size_type d) const;
+    /** Renumber the degrees of freedom. You should not have
+     * to call this function, as it is done automagically */
     void enumerate_dof(void) const;
-    /// Gives the total number of degrees of freedom.
+    /// Return the total number of degrees of freedom.
     size_type nb_dof(void) const
       { if (!dof_enumeration_made) enumerate_dof(); return nb_total_dof; }
+    /** Get a list of dof lying on a given mesh_region.
+	@param b the mesh_region.
+	@return the list in a dal::bit_vector.
+    */
     dal::bit_vector dof_on_set(const mesh_region &b) const;
     dal::bit_vector dof_on_boundary(const mesh_region &b) const IS_DEPRECATED;
     /// Add to the boundary b the face f of the element i.
@@ -310,13 +354,29 @@ namespace getfem
 	sizeof(mesh_fem) - sizeof(bgeot::mesh_structure) +
 	f_elems.memsize() + fe_convex.memsize();
     }
-    
+    /** Build a new mesh_fem. A getfem_mesh object must be supplied. 
+	@param me the linked mesh.
+	@param Q the Q dimension (see mesh_fem::get_qdim).
+    */
     mesh_fem(getfem_mesh &me, dim_type Q = 1);
     virtual ~mesh_fem();
     void clear(void);
+    /** Read the mesh_fem from a stream. 
+	@param ist the stream.
+     */
     void read_from_file(std::istream &ist);
+    /** Read the mesh_fem from a file.
+        @param name the file name. */
     void read_from_file(const std::string &name);
+    /** Write the mesh_fem to a stream. */
     void write_to_file(std::ostream &ost) const;
+    /** Write the mesh_fem to a file. 
+
+	@param name the file name
+
+	@param with_mesh if set, then the linked_mesh() will also be
+	saved to the file.
+    */
     void write_to_file(const std::string &name, bool with_mesh=false) const;
   };
 

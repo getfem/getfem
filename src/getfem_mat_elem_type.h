@@ -26,7 +26,9 @@
 // Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //========================================================================
-
+/**\file getfem_mat_elem_type.h
+   \brief Build elementary tensors descriptors, used by generic assembly.
+*/
 
 #ifndef GETFEM_MAT_ELEM_TYPE_H__
 #define GETFEM_MAT_ELEM_TYPE_H__

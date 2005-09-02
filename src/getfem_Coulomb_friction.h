@@ -28,7 +28,9 @@
 //
 //========================================================================
 
-
+/**\file getfem_Coulomb_friction.h
+   \brief Unilateral contact and Coulomb friction condition brick.
+*/
 #ifndef GETFEM_COULOMB_FRICTION_H__
 #define GETFEM_COULOMB_FRICTION_H__
 

@@ -27,6 +27,11 @@
 //
 //========================================================================
 
+/**\file bgeot_vector.h
+   \brief some (old) vector class, and some typedefs.
+
+   vsvector should be replaced by gmm calls.
+*/
 
 #ifndef BGEOT_VECTOR_H__
 #define BGEOT_VECTOR_H__
@@ -231,6 +236,7 @@ namespace bgeot
   typedef vsvector<scalar_type> base_vector;
   typedef small_vector<scalar_type> base_small_vector;
   //typedef vsvector<scalar_type> base_small_vector;
+  /// type used for points of any (reasonnably small) dimension.
   typedef base_small_vector base_node;
 
   /*  template<class T>

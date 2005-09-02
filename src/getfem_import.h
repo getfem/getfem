@@ -27,6 +27,10 @@
 //
 //========================================================================
 
+/**\file getfem_import.h 
+   \brief Import mesh files from various formats.
+*/
+
 #ifndef GETFEM_IMPORT_H__
 #define GETFEM_IMPORT_H__
 

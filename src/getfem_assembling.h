@@ -28,6 +28,9 @@
 //
 //========================================================================
 
+/**\file getfem_assembling.h
+   \brief Miscelleanous assembly routines for common PDEs.
+*/
 
 #ifndef GETFEM_ASSEMBLING_H__
 #define GETFEM_ASSEMBLING_H__

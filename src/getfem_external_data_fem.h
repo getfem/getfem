@@ -27,6 +27,9 @@
 //
 //========================================================================
 
+/**\file getfem_external_data_fem.h
+   \brief A pseudo FEM allowing to define any function on a getfem::mesh_fem. 
+*/
 #include <getfem_fem.h>
 #include <getfem_mesh_fem.h>
 #include <bgeot_geotrans_inv.h>
@@ -34,9 +37,12 @@
 namespace getfem
 {
 
-  // Element to be derived. Overload at least real_base_value.
-  // always 1 ddl
+  /** A pseudo FEM allowing to define any function on a getfem::mesh_fem.
 
+      Inheriting from this FEM, it is possible to define a mesh_fem which interpolates exactly a given function. The resulting mesh_fem is scalar, and has only 1 dof.
+
+      Overload at least real_base_value.
+  */
   class external_data_fem : public virtual_fem {
     
   public :    

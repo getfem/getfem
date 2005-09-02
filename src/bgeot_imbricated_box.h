@@ -27,6 +27,9 @@
 //
 //========================================================================
 
+/**\file bgeot_imbricated_box.h
+   \brief A comparison function for bgeot::base_node
+*/
 #ifndef BGEOT_IMBRICATED_BOX
 #define BGEOT_IMBRICATED_BOX
 
@@ -36,7 +39,7 @@ namespace bgeot {
   inline scalar_type sfloor(scalar_type x)
   { return (x >= 0) ? floor(x) : -floor(-x); }
 
-  /// Sort order for a rapid localization in bgeot::geotrans_inv
+  /// A comparison function for bgeot::base_node
   struct imbricated_box_less
     : public std::binary_function<base_node, base_node, int>
   { 

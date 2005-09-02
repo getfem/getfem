@@ -28,7 +28,9 @@
 //
 //========================================================================
 
-
+/**\file getfem_mesh_fem_global_function.h
+   \brief Define mesh_fem whose base functions are global function given by the user.
+*/
 #ifndef GETFEM_GLOBAL_FUNCTION_FEM_H__
 #define GETFEM_GLOBAL_FUNCTION_FEM_H__
 
@@ -36,6 +38,7 @@
 #include <getfem_mesh_fem.h>
 
 namespace getfem {
+  /// inherit from this class to define new global functions.
   struct global_function : virtual public dal::static_stored_object {
     virtual scalar_type val(const fem_interpolation_context&) const
     { DAL_THROW(dal::failure_error,
@@ -83,6 +86,10 @@ namespace getfem {
   
   inline void del_global_function_fem(pfem pf) { dal::del_stored_object(pf); }
 
+  /** mesh_fem whose base functions are global functions (function
+      defined on the whole mesh) given by the user. This is much more
+      powerful than getfem::external_data_fem.
+  */
   class mesh_fem_global_function : public mesh_fem {
   protected :
     mutable std::map<bgeot::pconvex_ref, pfem> build_methods;

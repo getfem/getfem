@@ -28,7 +28,9 @@
 //
 //========================================================================
 
-
+/**\file getfem_Navier_Stokes.h
+   \brief Navier-Stokes dynamic brick.
+*/
 #ifndef GETFEM_NAVIER_STOKES_H__
 #define GETFEM_NAVIER_STOKES_H__
 

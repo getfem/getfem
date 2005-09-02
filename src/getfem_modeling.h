@@ -27,7 +27,10 @@
 //
 
 
-/*
+/**
+   \file getfem_modeling.h
+   \brief Model Bricks
+
   Requirements for a model brick :                                  
                                                                          
   A model brick is either a fondamental brick (like linearized

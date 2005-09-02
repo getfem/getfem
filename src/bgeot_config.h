@@ -27,6 +27,9 @@
 //
 //========================================================================
 
+/**\file bgeot_config.h
+   \brief defines and typedefs for namespace bgeot
+*/
 #ifndef BGEOT_CONFIG_H__
 #define BGEOT_CONFIG_H__
 
@@ -34,6 +37,7 @@
 #include <dal_except.h>
 #include <gmm_kernel.h>
 #include <gmm_dense_lu.h>
+#include <getfem_boost/noncopyable.hpp>
 
 #ifdef GETFEM_HAVE_QDLIB
 // #  define NO_INLINE
@@ -45,9 +49,11 @@
 #  include <qd/fpu.h>
 #endif
 
+/// Basic Geometric Tools
 namespace bgeot
 {
   static const size_t ST_NIL = size_t(-1);
+  /// Dimension type (<255)
   typedef dal::uint8_type dim_type;
   typedef dal::uint16_type short_type;
   typedef size_t size_type;

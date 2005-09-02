@@ -27,7 +27,9 @@
 //
 //========================================================================
 
-
+/**\file bgeot_tensor.h
+   \brief tensor class, used in mat_elem computations.
+*/
 #ifndef BGEOT_TENSOR_H__
 #define BGEOT_TENSOR_H__
 

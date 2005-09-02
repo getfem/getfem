@@ -27,7 +27,40 @@
 //
 //========================================================================
 
+/** \file dal_static_stored_objects.h 
+    \brief Stores interdependent getfem objects.
 
+    Stored object :  
+
+    A type of object to be stored should derive from
+    dal::static_stored_object and a key should inherit from
+    static_stored_object_key with an overloaded "compare" method.
+
+    To store a new object, you have to test if the object is not
+    already stored and then call dal::add_stored_object:
+    \code
+    if (!search_stored_object(your_object_key(parameters))) {
+      add_stored_object(new your_object_key(parameters),
+                        new your_object(parameters));
+    }
+    \endcode
+    You can add a dependency of your new object with
+    \code
+    add_dependency(pointer_on_your_object,
+                   pointer_on_the_object_object_from_which_it_depends,
+                   permanence);
+    \endcode
+    and then your object will be automatically deleted if the second object is
+    deleted.
+    The dependency can be added within the add_stored_object call:
+    \code
+    add_stored_object(new your_object_key(parameters), 
+                      new your_object(parameters),
+                      dependency);
+    \endcode
+
+    Boost intrusive_ptr are used.
+*/
 #ifndef DAL_STATIC_STORED_OBJECTS_H__
 #define DAL_STATIC_STORED_OBJECTS_H__
 
@@ -35,31 +68,6 @@
 #include <getfem_boost/intrusive_ptr.hpp>
 
 namespace dal {
-
-
-  // Stored object :  
-  // A type of object to be stored should derive from static_stored_object
-  // and a key should derive from  static_stored_object_key with an overloaded
-  // method compare.
-  // 
-  // To store a new object, you have to test if the object is not
-  // already stored and then to call add_stored_object:
-  // 
-  // if (!search_stored_object(your_object_key(parameters))) {
-  //   add_stored_object(new your_object_key(parameters),
-  //                     new your_object(parameters));
-  // }
-  // You can add a dependency of your new object with
-  // add_dependency(pointer_on_your_object,
-  //                pointer_on_the_object_object_from_which_it_depends,
-  //                permanence)
-  // your object will be automatically deleted if the second object is
-  // deleted.
-  // The dependency can be added when the addition is done by
-  // add_stored_object(new your_object_key(parameters), 
-  //                   new your_object(parameters),
-  //                   dependence)
-  // Boost intrusive pointer are used
 
   enum permanence { PERMANENT_STATIC_OBJECT = 0, // not deletable object
 		    STRONG_STATIC_OBJECT = 1,    // preferable not to delete it

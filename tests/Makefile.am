@@ -38,6 +38,7 @@ check_PROGRAMS =                 \
 	$(optprogs)              \
 	plasticity               \
 	navier_stokes            \
+	getfemStokes \
 	dynamic_friction
 
 CLEANFILES = \
@@ -49,7 +50,7 @@ CLEANFILES = \
 	plasticity.mesh plasticity.U plasticity.sigmabar \
 	plasticity.meshfem plasticity.coef ii_files/* auto_gmm*
 
-
+getfemStokes_SOURCES = getfemStokes.cpp
 dynamic_array_SOURCES = dynamic_array.cc 
 dynamic_tas_SOURCES = dynamic_tas.cc 
 test_small_vector_SOURCES = test_small_vector.cc

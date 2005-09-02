@@ -27,7 +27,11 @@
 //
 //========================================================================
 
+/**\file dal_tree_sorted.h
+   \brief a balanced tree stored in a dal::dynamic_array
 
+   Oneday this will be replaced with a std::map.
+*/
 #ifndef DAL_TREE_SORTED_H__
 #define DAL_TREE_SORTED_H__
 

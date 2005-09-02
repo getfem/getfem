@@ -26,9 +26,12 @@
 // Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //========================================================================
-// To be corrected : dependencies. The mesh fem using this fem will not
-//                   depend on the mesh fem arguments.
+/**\file getfem_interpolated_fem.h
+   \brief FEM which interpolates a mesh_fem on a different mesh.
 
+   To be corrected : dependencies. The mesh fem using this fem will
+   not depend on the mesh fem arguments.
+*/
 
 
 #ifndef GETFEM_INTERPOLATED_FEM_H__
@@ -70,6 +73,7 @@ namespace getfem {
     // mf1 element and dof of the interpolated element.
   };
 
+  /// FEM which interpolates a mesh_fem on a different mesh.
   class interpolated_fem : public virtual_fem, public context_dependencies {
     
   protected :

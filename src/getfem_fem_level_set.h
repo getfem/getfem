@@ -27,9 +27,13 @@
 // Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //========================================================================
-// To be corrected : dependencies. The mesh fem using this fem will not
-//                   depend on the mesh fem arguments.
 
+/**\file getfem_fem_level_set.h
+   \brief FEM associated with getfem::mesh_fem_level_set objects.
+
+   To be fixed : dependencies. The mesh fem using this fem will not
+   depend on the mesh fem arguments.
+*/
 
 
 #ifndef GETFEM_FEM_LEVEL_SET_H__
@@ -61,9 +65,7 @@ namespace getfem {
   };
   */
 
-  /** 
-    the fem_level_set is intended to always be used via a
-    mesh_fem_level_set objects.
+  /** FEM associated with getfem::mesh_fem_level_set objects.
   */
   class fem_level_set : public virtual_fem {
     pfem bfem; /* the base FEM which is to be enriched */

@@ -27,7 +27,9 @@
 //
 //========================================================================
 
-
+/**\file bgeot_simplexify.h
+   \brief simplexify a convex (broken..)
+*/
 
 #ifndef BGEOT_SIMPLEXIFY_H__
 #define BGEOT_SIMPLEXIFY_H__

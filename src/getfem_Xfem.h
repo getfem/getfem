@@ -27,21 +27,24 @@
 //
 //========================================================================
 
-/*
-  what is an Xfem ?
+/**\file getfem_Xfem.h
+   \brief eXtended Finite Element Method.
 
-  It is a "base" fem (for example PK(2,2)), with additional base functions.
-  These additionnal base functions are the product of:
+   what is an Xfem ?
+
+   It is a "base" fem (for example PK(2,2)), with additional base
+   functions.
+   These additionnal base functions are the product of:
    - a global function (the virtual_Xfem_func)
    - base functions of another fem (for example PK(2,1))
 
-  The Xfem is built using the add_func member function, which takes as
-  parameters, a global function and a fem.
+   The Xfem is built using the add_func member function, which takes
+   as parameters, a global function and a fem.
 
-  example of use: enrichment of the finite elements space with
-  particular functions, which may represent discontinuities of the
-  field in some elements, or singularities in the field (crack tip
-  functions..)
+   example of use: enrichment of the finite elements space with
+   particular functions, which may represent discontinuities of the
+   field in some elements, or singularities in the field (crack tip
+   functions..)
 */
 
 #include <getfem_fem.h>

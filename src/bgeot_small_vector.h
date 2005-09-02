@@ -27,6 +27,9 @@
 //
 //========================================================================
 
+/**\file bgeot_small_vector.h
+   \brief Small (dim < 8) vectors.
+*/
 #ifndef BGEOT_SMALL_VECTOR_H
 #define BGEOT_SMALL_VECTOR_H
 
@@ -146,10 +149,9 @@ namespace bgeot {
     static_block_allocator() { if (!palloc) palloc=&dal::singleton<block_allocator,1000>::instance(); } //new block_allocator(); }
   };
   
-  /**
-    small_vector class: container for small vectors of POD types. Should be as fast as 
-    std::vector<T> while beeing smaller and uses copy-on-write. The gain is especially
-    valuable on 64 architectures.
+  /** container for small vectors of POD (Plain Old Data) types. Should be as fast as 
+      std::vector<T> while beeing smaller and uses copy-on-write. The gain is especially
+      valuable on 64 bits architectures.
   */
   template<typename T> class small_vector : public static_block_allocator {
     typedef block_allocator::node_id node_id;

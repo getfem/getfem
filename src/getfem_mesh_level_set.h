@@ -29,7 +29,9 @@
 //
 //========================================================================
 
-
+/**\file getfem_mesh_level_set.h
+   \brief Keep informations about a mesh crossed by level-sets. 
+*/
 #ifndef GETFEM_MESH_LEVEL_SET_H__
 #define GETFEM_MESH_LEVEL_SET_H__
 
@@ -39,7 +41,9 @@
 
 
 namespace getfem {
-
+  /** \brief Keep informations about a mesh crossed by level-sets.
+      Cut convexes with respect to the level sets.
+  */
   class mesh_level_set : public getfem_mesh_receiver,
 			 public context_dependencies {
   public:
@@ -72,6 +76,7 @@ namespace getfem {
     std::map<size_type, convex_info> cut_cv;
 
   public :
+    /// Get number of level-sets referenced in this object.
     size_type nb_level_sets(void) const { return level_sets.size(); }
     plevel_set get_level_set(size_type i) const { return level_sets[i]; }
     bool is_valid() const { return is_valid_; }
@@ -108,7 +113,7 @@ namespace getfem {
       }
       return res;
     }
-
+    /** add a new level set. Only a reference is kept, no copy done. */
     void add_level_set(level_set &ls) {
       if (std::find(level_sets.begin(), level_sets.end(), &ls)
 	  == level_sets.end()) {

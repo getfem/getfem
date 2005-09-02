@@ -27,7 +27,9 @@
 //
 //========================================================================
 
-
+/**\file getfem_spider_fem.h
+   \brief work in progress...
+*/
 
 #ifndef GETFEM_SPIDER_FEM_H__
 #define GETFEM_SPIDER_FEM_H__

@@ -31,9 +31,11 @@
 #ifndef DAL_REF_H__
 #define DAL_REF_H__
 
-/* *********************************************************************** */
-/* WARNING : modifiying the container infirm the validity of references.   */
-/* *********************************************************************** */
+/** \file dal_ref.h
+    \brief Provide some simple pseudo-containers.
+    
+    WARNING : modifiying the container infirm the validity of references.
+ */
 
 
 #include <iterator>
@@ -216,10 +218,7 @@ namespace dal
 //   };
 
 
-  /* ********************************************************************* */
-  /* Reference with reference on index.                                    */
-  /* ********************************************************************* */
-
+  /// iterator over a dal::tab_ref_index_ref<ITER,ITER_INDEX>
   template<typename ITER, typename ITER_INDEX>
     struct tab_ref_index_ref_iterator_
     {
@@ -280,6 +279,10 @@ namespace dal
     return tab_ref_index_ref_iterator_<ITER,ITER_INDEX>(it, it_i);
   }
 
+  /** indexed array reference (given a container X, and a set of indexes I, 
+      this class provides a pseudo-container Y such that
+      \code Y[i] = X[I[i]] \endcode
+  */
   template<typename ITER, typename ITER_INDEX> class tab_ref_index_ref {
   public :
     
@@ -392,6 +395,9 @@ namespace dal
     return tab_ref_reg_spaced_iterator_<ITER>(it, stride);
   }
 
+  /**
+     provide a "strided" view a of container
+  */
   template<typename ITER> class tab_ref_reg_spaced
   {
     public :
@@ -447,10 +453,7 @@ namespace dal
 
   };
 
-  /* ********************************************************************* */
-  /* Reference elements selected with a condition.                         */
-  /* ********************************************************************* */
-
+  /// iterator over a tab_ref_with_selection
   template<typename ITER, typename COND> 
     struct tab_ref_with_selection_iterator_ : public ITER
   {
@@ -475,6 +478,10 @@ namespace dal
     
   };
 
+  /**
+     given a container X and a predicate P, provide pseudo-container Y
+     of all elements of X such that P(X[i]).
+  */
   template<typename ITER, typename COND> class tab_ref_with_selection
   {
     public :

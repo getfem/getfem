@@ -27,7 +27,9 @@
 //
 //========================================================================
 
-
+/**\file bgeot_convex.h
+   \brief Convex objects (structure + vertices)
+*/
 
 #ifndef BGEOT_CONVEX_H__
 #define BGEOT_CONVEX_H__
@@ -35,7 +37,12 @@
 #include <bgeot_convex_structure.h>
 
 namespace bgeot {
-  
+
+  /** \defgroup convexes Convexes */
+  /** \addtogroup convexes */
+  /*@{*/
+
+  /// generic definition of a convex ( bgeot::convex_structure + vertices coordinates )
   template<class PT, class PT_TAB = std::vector<PT> > class convex {
   public :
     
@@ -61,11 +68,14 @@ namespace bgeot {
 			      cvs->ind_points_of_face(i).end() );
     }
     
+    /// Return "direct" points. These are the subset of points than can be used to build a direct vector basis. (rarely used)
     ref_convex_pt_ct dir_points(void) const { 
       return ref_convex_pt_ct(pts.begin(), cvs->dir_points_.begin(),
 			      cvs->dir_points_.end() );
     }
-    
+    /** Direct points for a given face.
+	@param i the face number.
+    */
     dref_convex_pt_ct dir_points_of_face(short_type i) const {
       return dref_convex_pt_ct(pts.begin(),
 			       cvs->ind_dir_points_of_face(i).begin(),
@@ -77,19 +87,23 @@ namespace bgeot {
     PT_TAB &points(void) { return pts; }
     short_type nb_points(void) const { return cvs->nb_points(); }
     
-    void translate(const typename PT::vector_type &v);
+    //void translate(const typename PT::vector_type &v);
     //template <class CONT> void base_of_orthogonal(CONT &tab);
     convex(void) { }
+    /** Build a convex object.
+	@param c the convex structure.
+	@param t the points array.
+    */
     convex(pconvex_structure c, const PT_TAB &t) : cvs(c), pts(t) {}
     convex(pconvex_structure c) : cvs(c) {}
   };
-
-  template<class PT, class PT_TAB>
+  /*@}*/
+  /*template<class PT, class PT_TAB>
     void convex<PT, PT_TAB>::translate(const typename PT::vector_type &v) {
     typename PT_TAB::iterator b = pts.begin(), e = pts.end();
     for ( ; b != e ; ++b) *b += v;
   }
-
+  */
   /*  
   template<class PT, class PT_TAB> template<class CONT>
     void convex<PT, PT_TAB>::base_of_orthogonal(CONT &tab)

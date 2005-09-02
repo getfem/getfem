@@ -27,7 +27,9 @@
 // Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //========================================================================
-
+/**\file getfem_linearized_plates.h
+   \brief Define a linear plate model brick.
+*/
 
 #ifndef GETFEM_LINEARIZED_PLATES_H__
 #define GETFEM_LINEARIZED_PLATES_H__

@@ -27,6 +27,18 @@
 //
 //========================================================================
 
+/**\file getfem_mesh_slicers.h
+   \brief Define various mesh slicers.
+   
+   Mesh slices are analogous to a refined P1-discontinuous mesh\_fem, a list of nodes/simplexes on which the interpolation is very fast.
+
+   A slice is built from a mesh, by applying some slicing operations
+   (cut the mesh with a plane, intersect with a sphere, take the
+   boundary faces, etc..).
+
+   They are used for post-treatment (exportation of results to VTK or OpenDX, etc.)
+*/
+
 #ifndef GETFEM_MESH_SLICERS_H
 #define GETFEM_MESH_SLICERS_H
 
@@ -37,11 +49,11 @@
 #include <bgeot_rtree.h>
 
 namespace getfem {
-  /**
-   * node data in a slice: contains both real position,
-   * and position in the reference convex
+  /** \internal \brief node data in a slice.
+
+      Contains both real position, and position in the reference
+      convex
    */
-  
   struct slice_node {
     typedef std::bitset<32> faces_ct; /** broken for convexes with more
                                        * than 32 faces. */
@@ -57,9 +69,10 @@ namespace getfem {
   };
   
 
-  /**
-   * simplex data in a slice: just a list of slice_node ids.
-   */
+  /** \internal \brief simplex data in a slice.
+      
+      Just a list of slice_node ids.
+  */
   struct slice_simplex {
     std::vector<size_type> inodes;
     size_type dim() const { return inodes.size()-1; }
@@ -71,13 +84,15 @@ namespace getfem {
     { return inodes != o.inodes; }
   };
 
-  /**
-   * mesh slice: a list of nodes/simplexes, which can be seen as
-   *  a P1 discontinuous mesh_fem on which the interpolation is very fast
-   */
   class slicer_action;
   class stored_mesh_slice;
 
+  /** \brief Apply a serie a slicing operations to a mesh.
+      
+      No output is produced by this object, the real output obtained
+      with the side-effect of certain getfem::mesh_slicer objects
+      (such as getfem::slicer_build_stored_mesh_slice).
+  */
   class mesh_slicer {
     std::deque<slicer_action*> action; /* pointed actions are not deleted */
   public:
@@ -99,7 +114,6 @@ namespace getfem {
 
     void pack(); /* not used, indeed */
     void update_nodes_index();
-
     mesh_slicer(const getfem_mesh& m_) : m(m_), pgt(0), cvr(0) {}
     void push_back_action(slicer_action &a) { action.push_back(&a); }
     void push_front_action(slicer_action &a) { action.push_front(&a); }
@@ -116,8 +130,7 @@ namespace getfem {
       else DAL_THROW(dal::internal_error,"");
     }
     void simplex_orientation(slice_simplex& s);
-    /**
-       build a new mesh_slice given:
+    /**\brief build a new mesh_slice.
        @param m the mesh that is to be sliced
        @param nrefine number of refinments for each convex of the original mesh
        @param cvlst the list of convex numbers (or convex faces) of m that will 
@@ -126,12 +139,12 @@ namespace getfem {
     void exec(size_type nrefine, const mesh_region& cvlst); 
     void exec(size_type nrefine = 1);
     /**
-       build a new mesh slice given:
+       \brief build a new mesh slice.
        @param sl an initial stored_mesh_slice
     */
     void exec(const stored_mesh_slice& sms);
     /**
-       build a new mesh_slice than can be used to interpolate a field
+       \brief build a new mesh_slice than can be used to interpolate a field
        on a fixed set of points.
 
        @param m the mesh that is to be sliced
@@ -160,9 +173,8 @@ namespace getfem {
   };
 
   /**
-     use this structure to specify that the mesh must be deformed 
+     Use this structure to specify that the mesh must be deformed before the slicing operation.
      (with a mesh_fem and an associated field)
-     before the slicing 
   */
   template<typename VEC> class mesh_slice_cv_dof_data : public mesh_slice_cv_dof_data_base {
     const VEC u;
@@ -182,10 +194,11 @@ namespace getfem {
   };
   
 
-  /**
-     generic slicer class: given a list of slice_simplex/slice_node, it 
-     build a news list of slice_simplex/slice_node, indicating which ones 
-     are in the slice with the bit_vector splx_in
+  /** \brief generic slicer class.
+      
+  Given a list of slice_simplex/slice_node, it build a news list of
+  slice_simplex/slice_node, indicating which ones are in the slice
+  with the bit_vector splx_in.
   */
   class slicer_action {
   public:
@@ -194,9 +207,7 @@ namespace getfem {
     virtual ~slicer_action() {}
   };
 
-  /** 
-      this slicer does nothing! 
-  */
+  /** This slicer does nothing. */
   class slicer_none : public slicer_action {
   public:
     slicer_none() {}
@@ -204,9 +215,7 @@ namespace getfem {
     static slicer_none& static_instance();
   };
 
-  /**
-     extraction of the boundary of a slice
-  */
+  /** Extraction of the boundary of a slice. */
   class slicer_boundary : public slicer_action {
     slicer_action *A;
     std::vector<slice_node::faces_ct> convex_faces;
@@ -219,7 +228,7 @@ namespace getfem {
     void exec(mesh_slicer &ms);
   };
 
-  /* apply a precompted deformation to the slice nodes */
+  /* Apply a precomputed deformation to the slice nodes */
   class slicer_apply_deformation : public slicer_action {
     mesh_slice_cv_dof_data_base *defdata;
     pfem pf;
@@ -237,13 +246,13 @@ namespace getfem {
   };
 
   /**
-     base class for general slices of a mesh (planar, sphere, cylinder,isosurface)
+     Base class for general slices of a mesh (planar, sphere, cylinder,isosurface)
   */
   class slicer_volume : public slicer_action {
   public:
     enum {VOLIN=-1, VOLBOUND=0, VOLOUT=+1, VOLSPLIT=+2}; 
   protected:
-    /*
+    /**
       orient defines the kind of slicing :
         VOLIN -> keep the inside of the volume,
 	VOLBOUND -> its boundary,
@@ -254,7 +263,8 @@ namespace getfem {
     int orient;
     dal::bit_vector pt_in, pt_bin;    
     
-    /* overload either 'prepare' or 'test_point' */
+    /** Overload either 'prepare' or 'test_point'.
+     */
     virtual void prepare(size_type /*cv*/, const mesh_slicer::cs_nodes_ct& nodes, const dal::bit_vector& nodes_index) {
       pt_in.clear(); pt_bin.clear();
       for (dal::bv_visitor i(nodes_index); !i.finished(); ++i) {
@@ -264,14 +274,13 @@ namespace getfem {
       }
     }
     virtual void test_point(const base_node&, bool& in, bool& bound) const { in=true; bound=true; }
-
-    /* edge_intersect should always be overloaded */
+    /** edge_intersect should always be overloaded */
     virtual scalar_type edge_intersect(size_type /*i*/, size_type /*j*/, 
 				       const mesh_slicer::cs_nodes_ct& /*nodes*/) const = 0;
 
     slicer_volume(int orient_) : orient(orient_) {}
 
-    /* utility function */
+    /** Utility function */
     static scalar_type trinom(scalar_type a, scalar_type b, scalar_type c) {
       scalar_type delta = b*b - 4*a*c;
       if (delta < 0.) return 1./EPS;
@@ -288,7 +297,7 @@ namespace getfem {
   };
 
   /**
-     slices a mesh with a half-space (or its boundary)
+     Slice a mesh with a half-space (or its boundary).
   */
   class slicer_half_space : public slicer_volume {
     const base_node x0, n; /* normal directed from inside toward outside */
@@ -313,7 +322,7 @@ namespace getfem {
   };
 
   /**
-     slices a mesh with a sphere (or its boundary)
+     Slices a mesh with a sphere (or its boundary).
   */
   class slicer_sphere : public slicer_volume {
     base_node x0;
@@ -341,7 +350,7 @@ namespace getfem {
   };
   
   /**
-     slices a mesh with a cylinder (or its boundary)
+     Slices a mesh with a cylinder (or its boundary).
   */
   class slicer_cylinder : public slicer_volume {
     base_node x0, d;
@@ -370,7 +379,7 @@ namespace getfem {
 
 
   /**
-     extract an isosurface
+     Extract an isosurface.
   */
   class slicer_isovalues : public slicer_volume {
     std::auto_ptr<const mesh_slice_cv_dof_data_base> mfU;
@@ -395,7 +404,7 @@ namespace getfem {
   };
 
   /** 
-      slices a mesh with another mesh (of same dimension,
+      Slices a mesh with another mesh. (of same dimension,
       and whose convex are preferably linear). Note that slicing
       a refined mesh with a rough mesh should be faster than slicing 
       a rough mesh with a refined mesh.
@@ -422,7 +431,7 @@ namespace getfem {
   };
 
   /**
-     intersection of two slices
+     Build the intersection of two slices
   */
   class slicer_intersect : public slicer_action {
     slicer_action *A, *B;
@@ -432,7 +441,7 @@ namespace getfem {
   };
 
   /**
-     complementary of a slice
+     Build the complementary of a slice
   */
   class slicer_complementary : public slicer_action {
     slicer_action *A;
@@ -442,7 +451,7 @@ namespace getfem {
   };
   
   /**
-     slicer whose side-effect is to compute the area of the
+     Slicer whose side-effect is to compute the area of the
      slice. Note that if the slice is composed of simplexes of many
      dimensions, the resulting area is nonsense.
   */
@@ -455,24 +464,33 @@ namespace getfem {
   };
 
   /**
-     slicer whose side-effect is to build the list of edges
-     (i.e. segments) and store them in a mesh object (hence all common
-     nodes/edges are eliminated) slice_edges contains the list of
-     edges which where not part of the original mesh, but became
-     apparent when some convex faces were sliced.  (this slicer is not
-     useful for anything but visualization of sliced meshes)
+     Slicer whose side-effect is to build the list of edges
+     (i.e. segments) and store them in a getfem_mesh object. 
+
+     Hence all common nodes/edges are eliminated.  (this slicer
+     is not useful for anything but visualization of sliced meshes)
   */
   class slicer_build_edges_mesh : public slicer_action {
     getfem_mesh& edges_m;
     dal::bit_vector *pslice_edges;
   public:
+    /**  @param edges_m_ the mesh that will be filled with edges. */
     slicer_build_edges_mesh(getfem_mesh& edges_m_) : edges_m(edges_m_), pslice_edges(0) {}
+    /**  @param edges_m_ the mesh that will be filled with edges.
+	 @param bv will contain on output the list of edges numbers
+     (as convex numbers in edges_m_) which where not part of the
+     original mesh, but became apparent when some convex faces were
+     sliced. 
+    */
     slicer_build_edges_mesh(getfem_mesh& edges_m_, dal::bit_vector& bv) : edges_m(edges_m_), pslice_edges(&bv) {}
     void exec(mesh_slicer &ms);
   };
 
   /**
-     slicer whose side-effect is to build a mesh from the slice simplexes
+     Slicer whose side-effect is to build a getfem_mesh from the slice
+     simplexes.  Hence using slices is a good way to simplexify a
+     mesh, however keep in mind that high order geometric
+     transformation will be simplexified with linear simplexes!
   */
   class slicer_build_mesh : public slicer_action {
     getfem_mesh& m;
@@ -482,11 +500,14 @@ namespace getfem {
   };    
 
   /**
-     contract or expand each convex with respect to its gravity center
+     Contract or expand each convex with respect to its gravity center
   */
   class slicer_explode : public slicer_action {
-    scalar_type coef; /* < 1 => contraction, > 1 -> expansion */
+    scalar_type coef;
   public:
+    /**
+       @param c < 1 => contraction, > 1 -> expansion.
+    */
     slicer_explode(scalar_type c) : coef(c) {}
     void exec(mesh_slicer &ms);
   };

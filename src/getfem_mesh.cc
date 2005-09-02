@@ -49,6 +49,7 @@ namespace getfem {
 #if defined(GMM_USES_MPI) && defined(GMM_USES_METIS)
     modified = true;
 #endif
+    cuthill_mckee_uptodate = false;
     dimension = NN; eps_p = 1.0E-10;
     pts.comparator() = dal::lexicographical_less<base_node,
                 dal::approx_less<base_node::value_type> >(eps_p);
@@ -142,6 +143,14 @@ namespace getfem {
 	while (i < j && j != ST_NIL && !(points().index()[j])) --j;
 	if (i < j && j != ST_NIL ) swap_points(i, j);
       }
+  }
+
+  const std::vector<size_type> &getfem_mesh::cuthill_mckee_ordering() const {
+    if (!cuthill_mckee_uptodate) {
+      bgeot::cuthill_mckee_on_convexes(*this, cmk_order);
+      cuthill_mckee_uptodate = true;
+    }
+    return cmk_order;
   }
 
   void getfem_mesh::translation(base_small_vector V)
@@ -437,9 +446,9 @@ namespace getfem {
 	  }
 	  ftool::get_token(ist, tmp, 1023);
 	  ftool::get_token(ist, tmp, 1023);
-	} else DAL_THROW(failure_error, "Syntax error in file at token '"
+	} else tend = true; /*else DAL_THROW(failure_error, "Syntax error in file at token '"
 			 << tmp << "' [pos=" << std::streamoff(ist.tellg())
-			 << "]");
+			 << "]");*/
       } else tend=true;
     }
   }
@@ -517,8 +526,8 @@ namespace getfem {
 	ost << '\n' << " END CONVEX SET " << bnum << '\n';
       }
       */
-      ost << " BEGIN REGION " << bnum << "\n" << region(bnum) << "\n"
-	  << " END REGION " << bnum << "\n";
+      ost << "BEGIN REGION " << bnum << "\n" << region(bnum) << "\n"
+	  << "END REGION " << bnum << "\n";
     }
   }
 

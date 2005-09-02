@@ -28,7 +28,9 @@
 //
 //========================================================================
 
-
+/**\file getfem_nonlinear_elasticity.h
+   \brief Non-linear elasticty brick.
+*/
 #ifndef GETFEM_NONLINEAR_ELASTICITY_H__
 #define GETFEM_NONLINEAR_ELASTICITY_H__
 
@@ -51,6 +53,9 @@ namespace getfem {
     return flags;
   }
 
+  /** Base class for material law. 
+      Inherit from this class to define a new law.
+   */
   struct abstract_hyperelastic_law {
     mutable int uvflag;
     size_type nb_params_;
@@ -117,7 +122,10 @@ namespace getfem {
   };
 
   // TODO : fonctions à mettre dans le .C
-
+  /** Saint-Venant / Kirchhoff hyperelastic law. 
+      
+      This is the linear law used in linear elasticity, it is not well suited to large strain.. (the convexes may become flat) 
+  */
   struct SaintVenant_Kirchhoff_hyperelastic_law : 
     public abstract_hyperelastic_law {
     /* W = lambda*0.5*trace(E)^2 + mu*tr(E^2) */
@@ -148,6 +156,10 @@ namespace getfem {
     SaintVenant_Kirchhoff_hyperelastic_law(void) { nb_params_ = 2; }
   };
 
+  /** Mooney-Rivlin hyperelastic law 
+      
+      To be used for incompressible problems (with getfem::mdbrick_nonlinear_incomp).
+  */
   struct Mooney_Rivlin_hyperelastic_law : public abstract_hyperelastic_law {
     virtual scalar_type strain_energy(const base_matrix &E,
 				      const base_vector &params) const {
@@ -179,6 +191,10 @@ namespace getfem {
     Mooney_Rivlin_hyperelastic_law(void) { nb_params_ = 2; }
   };
 
+  /** Ciarlet-Geymonat hyperelastic law.
+      
+      A "good" law.
+  */
   struct Ciarlet_Geymonat_hyperelastic_law : public abstract_hyperelastic_law {
     // parameters are lambda=params[0], mu=params[1], gamma'(1)=params[2]
     // The parameters gamma'(1) has to verify gamma'(1) in ]-lambda/2-mu, -mu[
@@ -246,7 +262,7 @@ namespace getfem {
   };
 
 
-
+  /** C
   template<typename VECT1, typename VECT2> class elasticity_nonlinear_term 
     : public getfem::nonlinear_elem_term {
     const mesh_fem &mf;

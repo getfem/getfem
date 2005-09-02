@@ -30,15 +30,19 @@
 #ifndef BGEOT_KDTREE_H
 #define BGEOT_KDTREE_H
 
+/** \file bgeot_kdtree.h
+    \brief Simple implementation of a KD-tree.
+
+    Basically, a KD-tree is a balanced N-dimensional tree.
+*/
 #include <bgeot_vector.h>
 
 namespace bgeot {
   struct kdtree_elt_base;
-  /* 
-     stores both the point and the associated
-     index. std::pair<size_type,base_node> is not ok since it does not
+  /// store a point and the associated index for the kdtree. 
+  /* std::pair<size_type,base_node> is not ok since it does not
      have a suitable overloaded swap function ...
-   */
+  */
   struct index_node_pair {
     size_type i;
     base_node n;
@@ -48,20 +52,31 @@ namespace bgeot {
     void swap(index_node_pair& other) { std::swap(i,other.i); n.swap(other.n);}
   };
 
+  /// store a set of points with associated indexes.
   typedef std::vector<index_node_pair> kdtree_tab_type;
 
-  class kdtree {
+  /** Balanced tree over a set of points.
+   *
+   * Once the tree have been built, it is possible to query very
+   * quickly for the list of points lying in a given box. Note that
+   * this is not a dynamic structure: once you start to call
+   * kdtree::points_in_box, you should not use anymore kdtree::add_point.
+   */
+  class kdtree : public boost::noncopyable {
     dim_type N; /* dimension of points */
     kdtree_elt_base *tree;
     kdtree_tab_type pts;
   public:
     kdtree() : N(0), tree(0) {}
     ~kdtree() { clear_tree(); }
+    /// reset the tree, remove all points
     void clear() { clear_tree(); pts.clear(); N = 0; }
     void reserve(size_type n) { pts.reserve(n); }
+    /// insert a new point
     size_type add_point(const base_node& n) { 
       size_type i = pts.size(); add_point_with_id(n,i); return i;
     }
+    /// insert a new point, with an associated number.
     void add_point_with_id(const base_node& n, size_type i) {
       if (pts.size() == 0) N = n.size(); 
       else if (N != n.size()) 
@@ -77,8 +92,6 @@ namespace bgeot {
 		       const base_node &min, 
 		       const base_node &max);
   private:
-    void operator=(const kdtree&) {} /* non-copiable */
-    kdtree(const kdtree&) {} /*non-copiable */
     typedef std::vector<size_type>::const_iterator ITER;  
     void clear_tree();
   };

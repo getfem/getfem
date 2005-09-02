@@ -27,6 +27,10 @@
 //
 //========================================================================
 
+/**\file getfem_plasticity.h
+   \brief Plasticity model brick.
+*/
+
 #ifndef GETFEM_PLASTICITY__
 #define GETFEM_PLASTICITY__
 
@@ -181,7 +185,7 @@ namespace getfem {
     VM_projection(size_type flag_hyp_ = 0) : type_proj(flag_hyp_) {}
   };
   
-  // Compute the projection of D*e + sigma_bar_ on a Gauss point.
+  /** Compute the projection of D*e + sigma_bar_ on a Gauss point. */
   class plasticity_projection : public nonlinear_elem_term {
   protected:
     base_vector params, coeff;

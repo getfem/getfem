@@ -1,7 +1,6 @@
 			BUGS AND REMARKS
 
-Kutill Mc Kee algorithm to numerate degrees of freedom is not
-completely correct and should be corrected.  Bad accuracy of loads in
+Bad accuracy of loads in
 Newton-Cotes integration formulaes for hight degrees.
 
 getfem_slices have some missing triangles with complex slices.

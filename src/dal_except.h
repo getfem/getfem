@@ -28,6 +28,10 @@
 //
 //========================================================================
 
+/** \file dal_except.h 
+    \brief Definition of basic exceptions.
+*/
+
 #ifndef DAL_EXCEPT_H__
 #define DAL_EXCEPT_H__
 

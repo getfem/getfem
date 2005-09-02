@@ -396,5 +396,62 @@ namespace bgeot
   }
 
 
+  static double enumerate_dof_time = 0;
+  void cuthill_mckee_on_convexes(const bgeot::mesh_structure &ms, 
+				 std::vector<size_type> &cmk) {
+    const dal::bit_vector &cvlst = ms.convex_index();
+    cmk.reserve(cvlst.card()); cmk.resize(0);
+    if (ms.convex_index().card() == 0) return;
+    std::deque<int> pile;
+    std::vector<size_type> tab, connectivity(cvlst.last_true()+1),
+      temp(cvlst.last_true()+1);
+    
+    size_type cv = cvlst.first_true();
+
+    std::fill(connectivity.begin(), connectivity.end(), size_type(-1));
+    double t = ftool::uclock_sec();
+
+    /* count neighbours for each convex */
+    for (dal::bv_visitor j(cvlst); !j.finished(); ++j) {
+      ref_mesh_point_ind_ct ct = ms.ind_points_of_convex(j);
+      ref_mesh_point_ind_ct::const_iterator itp = ct.begin(), itpe = ct.end(); 
+      size_type nei = 0;
+
+      for (; itp != itpe; ++itp) {
+	size_type ip = *itp;
+	mesh_convex_ind_ct::const_iterator 
+	  it = ms.convex_to_point(ip).begin(),
+	  ite =  ms.convex_to_point(ip).end();
+	for ( ; it != ite; ++it) if (temp[*it] != j+1) { temp[*it] = j+1; nei++; }
+      }
+      connectivity[j] = nei-1;
+      if (nei < connectivity[cv]) cv = j;
+    }
+
+    /* do the cuthill mckee */
+    connectivity[cv] = size_type(-1);
+    while (cv != size_type(-1)) {
+      cmk.push_back(cv);
+      size_type nbp = ms.nb_points_of_convex(cv);
+
+      for (size_type i = 0; i < nbp; i++) {
+	size_type ip = ms.ind_points_of_convex(cv)[i];
+	bgeot::mesh_convex_ind_ct::const_iterator 
+	  it = ms.convex_to_point(ip).begin(),
+	  ite =  ms.convex_to_point(ip).end();
+	for ( ; it != ite; ++it)
+	  if (connectivity[*it] != size_type(-1))
+	    { connectivity[*it] = size_type(-1); pile.push_front(*it); }
+      }
+      if (pile.empty()) {
+	cv = std::min_element(connectivity.begin(), connectivity.end()) - connectivity.begin();
+	if (connectivity[cv] == size_type(-1)) break;
+      }
+      else { cv = pile.back(); pile.pop_back(); }
+    }
+    
+    enumerate_dof_time += ftool::uclock_sec() - t;
+    cerr << "cuthill_mckee_on_convexes: " << enumerate_dof_time << " sec\n";
+  }
 
 }  /* end of namespace bgeot.                                              */

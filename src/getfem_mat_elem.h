@@ -27,16 +27,20 @@
 //
 //========================================================================
 
+/**\file getfem_mat_elem.h
+   \brief elementary computations (used by the generic assembly).
+
+   This is the kernel of getfem..
+*/
 
 #ifndef GETFEM_MAT_ELEM_H__
 #define GETFEM_MAT_ELEM_H__
 
-#include <bgeot_geometric_trans.h>
 #include <getfem_mat_elem_type.h>
 #include <getfem_fem.h>
 
 namespace getfem {
-  /** (optional) callback to be called for each point of the
+  /** @internal (optional) callback to be called for each point of the
       integration (i.e. only with approximate integrations). It is
       used by getfem_assembling_tensors to perform reductions before
       integration.
@@ -48,18 +52,24 @@ namespace getfem {
     */
     std::vector<const bgeot::base_tensor*> eltm;
     /** executes the callback
+
         @param t the destination tensor
-        @param first indicates if this is the first integration point (in that case,
-               t should be set to the correct size and filled with zeros)
-        @param c the current coefficient (contains the norm of Jacobian and the integration weight)
+
+        @param first indicates if this is the first integration point
+        (in that case, t should be set to the correct size and filled
+        with zeros)
+
+        @param c the current coefficient (contains the norm of
+        Jacobian and the integration weight)
     */
     virtual void exec(bgeot::base_tensor &t, bool first, scalar_type c) = 0;
     virtual ~mat_elem_integration_callback() {}
   };
 
-  /** 
-      this class (whose intances are returned by the mat_elem function, see below)
-      holds all computations of elementary integrals over convexes or faces of convexes
+  /** @internal
+      this class (whose instances are returned by the mat_elem
+      function, see below) holds all computations of elementary
+      integrals over convexes or faces of convexes. 
   */
   class mat_elem_computation : virtual public dal::static_stored_object {
   protected : 
@@ -109,9 +119,10 @@ namespace getfem {
   pmat_elem_computation;
 
   /** 
-      allocate a structure for computation (integration over elements or faces
-      of elements) of elementary tensors. Internally this structure is linked to a 
-      "cache" which stores some pre-computed data.
+      allocate a structure for computation (integration over elements
+      or faces of elements) of elementary tensors. Internally this
+      structure is linked to a "cache" which stores some pre-computed
+      data.
   */ 
   pmat_elem_computation mat_elem(pmat_elem_type pm, 
 				 pintegration_method pi,

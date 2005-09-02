@@ -27,6 +27,23 @@
 //
 //========================================================================
 
+/*! \mainpage Getfem++ Doxygen doc.
+ *
+ * \section Introduction
+ *
+ * This documentation has been generated from the Getfem++ sources.
+ *
+ * \section Part1..
+ *
+ * \subsection subsection...
+ *  
+ * etc...
+ */
+
+/**\file getfem_config.h
+   \brief defines and typedefs for namespace getfem
+*/
+
 
 #ifndef GETFEM_CONFIG_H__
 #define GETFEM_CONFIG_H__

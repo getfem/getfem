@@ -31,6 +31,10 @@
 #ifndef BGEOT_POLY_H__
 #define BGEOT_POLY_H__
 
+/** \file bgeot_poly.h
+    \brief Multivariate polynomials.
+*/
+
 #include <bgeot_config.h>
 #include <vector>
 

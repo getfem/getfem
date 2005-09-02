@@ -27,7 +27,9 @@
 //
 //========================================================================
 
-
+/**\file dal_shared_ptr.h
+   \brief A (very simplified and rough) version of boost::shared_ptr.
+*/
 #ifndef DAL_SHARED_PTR_H__
 #define DAL_SHARED_PTR_H__
 

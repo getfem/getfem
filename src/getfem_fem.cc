@@ -161,8 +161,6 @@ namespace getfem
   enum ddl_type { LAGRANGE, NORM_DERIVATIVE, DERIVATIVE, MEAN_VALUE, BUBBLE1, 
 		  LAGRANGE_NONCONFORMING, GLOBAL_DOF};
 
-  enum coord_type { NORMAL = -2, TANGENTIAL = -1, FIRST = 0, SECOND, THIRD };
-
   struct ddl_elem {
     ddl_type t;
     dal::int16_type hier_degree;
@@ -180,12 +178,12 @@ namespace getfem
   struct dof_description {
     std::vector<ddl_elem> ddl_desc;
     bool linkable;
-    coord_type coord_index;
+    dim_type coord_index;
     size_type xfem_index;
     bool all_faces;
 
     dof_description(void)
-    { linkable = true; all_faces = false; coord_index = FIRST; xfem_index = 0; }
+    { linkable = true; all_faces = false; coord_index = 0; xfem_index = 0; }
   };
 
   struct dof_description_comp__ {
@@ -234,6 +232,7 @@ namespace getfem
       dof_description l;
       l.all_faces = true;
       l.ddl_desc.resize(n);
+      l.linkable = false;
       std::fill(l.ddl_desc.begin(), l.ddl_desc.end(), ddl_elem(LAGRANGE));
       p_old = &(tab[tab.add_norepeat(l)]);
       n_old = n;
@@ -264,7 +263,7 @@ namespace getfem
   pdof_description to_coord_dof(pdof_description p, dim_type ct) {
     dof_d_tab& tab = dal::singleton<dof_d_tab>::instance();
     dof_description l = *p;
-    l.coord_index = coord_type(ct);
+    l.coord_index = ct;
     return &(tab[tab.add_norepeat(l)]);
   }
   
@@ -322,6 +321,7 @@ namespace getfem
     dof_description l;
     l.all_faces = true;
     l.ddl_desc.resize(n);
+    l.linkable = false;
     std::fill(l.ddl_desc.begin(), l.ddl_desc.end(),ddl_elem(GLOBAL_DOF));
     return &(tab[tab.add_norepeat(l)]);
   }
@@ -387,6 +387,9 @@ namespace getfem
   
   size_type dof_xfem_index(pdof_description a) 
   { return a->xfem_index; }
+
+  dim_type coord_index_of_dof(pdof_description a)
+  { return a->coord_index; }
 
   bool dof_hierarchical_compatibility(pdof_description a, pdof_description b)
   { 
@@ -1249,11 +1252,13 @@ namespace getfem
     }
   };
   
+  /// get a fem descriptor from a string name of a fem.
   pfem fem_descriptor(std::string name) {
     size_type i = 0;
     return dal::singleton<fem_naming_system>::instance().method(name, i);
   }
 
+  /// get the string name of a fem descriptor.
   std::string name_of_fem(pfem p) {
     try {
       return dal::singleton<fem_naming_system>::instance().shorter_name_of_method(p);

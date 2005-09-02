@@ -27,6 +27,9 @@
 //
 //========================================================================
 
+/**\file getfem_mesh_im_level_set.h
+   \brief a subclass of mesh_im which is conformal to a number of level sets.
+*/
 
 #ifndef GETFEM_MESH_IM_LEVEL_SET_H__
 #define GETFEM_MESH_IM_LEVEL_SET_H__

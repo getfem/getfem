@@ -27,6 +27,9 @@
 //
 //========================================================================
 
+/**\file getfem_mesh_slice.h
+   \brief Define the class getfem::stored_mesh_slice.
+ */
 #ifndef GETFEM_MESH_SLICE_H
 #define GETFEM_MESH_SLICE_H
 
@@ -35,6 +38,8 @@
 namespace getfem {
   class slicer_build_stored_mesh_slice;
 
+  /** The output of a getfem::mesh_slicer which has been recorded. 
+   @see getfem::slicer_build_stored_mesh_slice */
   class stored_mesh_slice {
   protected:
     /* nodes lists and simplexes lists for each convex of the original mesh */
@@ -71,33 +76,52 @@ namespace getfem {
     friend class mesh_slicer;
   public:
     stored_mesh_slice() : poriginal_mesh(0), points_cnt(0), dim_(size_type(-1)) { }
+    /** Shortcut constructor to simplexify a mesh with refinement. */
     stored_mesh_slice(const getfem::getfem_mesh& m, size_type nrefine = 1) 
       : poriginal_mesh(0), points_cnt(0), dim_(size_type(-1)) { 
       this->build(m, slicer_none(), nrefine);
     };
     virtual ~stored_mesh_slice() {}
+    /** return the number of convexes of the original mesh referenced
+	in the slice */
     size_type nb_convex() const { return cvlst.size(); }
+    /** return the original convex number of the 'ic'th convex
+	referenced in the slice */
     size_type convex_num(size_type ic) const { return cvlst[ic].cv_num; }
+    /** change the slice dimension (append zeros or truncate node coordinates..) */
     void set_dim(size_type newdim);
+    /** return the slice dimension */
     size_type dim() const { return dim_; }
+    /** return a pointer to the original mesh */
     const getfem_mesh& linked_mesh() const { return *poriginal_mesh; }
+    /** return the simplex count, in an array.
+	@param c contains the number of simplexes of dimension 0, 1, ... dim().
+    */
     void nb_simplexes(std::vector<size_type>& c) const { c = simplex_cnt; }
+    /** Return the number of simplexes of dimension sdim */
     size_type nb_simplexes(size_type sdim) const { return simplex_cnt[sdim]; }
+    /** Return the number of nodes in the slice */
     size_type nb_points() const { return points_cnt; }
+    /** Return the list of nodes for the 'ic'th convex of the slice. */
     const mesh_slicer::cs_nodes_ct& nodes(size_type ic) const { return cvlst[ic].nodes; }
     mesh_slicer::cs_nodes_ct& nodes(size_type ic) { return cvlst[ic].nodes; }
+    
+    /** Return the list of simplexes for the 'ic'th convex of the slice. */
     const mesh_slicer::cs_simplexes_ct& simplexes(size_type ic) const { return cvlst[ic].simplexes; }
     size_type memsize() const;
     void clear() { poriginal_mesh = 0; cvlst.clear(); points_cnt = 0; 
       dim_ = size_type(-1); cv2pos.clear(); simplex_cnt.clear(); clear_merged_nodes(); }
-    /** merges with another mesh slice */
+    /** \brief merge with another mesh slice. */
     void merge(const stored_mesh_slice& sl);
 
-    /** build a list of merged nodes, i.e. nodes which have the same
-	geometrical location but were extracted from two different
-	convexes will be considered as one same node. Use for
-	exportation purposes, as VTK and OpenDX do not like
-	'discontinuous' meshes */
+    /** \brief build a list of merged nodes.
+
+         build a list of merged nodes, i.e. nodes which have the same
+         geometrical location but were extracted from two different
+         convexes will be considered as one same node. Use for
+         exportation purposes, as VTK and OpenDX do not like
+         'discontinuous' meshes
+    */
     void merge_nodes() const;
     size_type nb_merged_nodes() const 
       { return merged_nodes_idx.size() - 1; }
@@ -115,10 +139,14 @@ namespace getfem {
     }
     void clear_merged_nodes() const;
 
-    /* extract the list of mesh edges into 'edges' (size = 2* number
-       of edges). 'slice_edges' indicates which one were created after
-       slicing.  The from_merged_nodes flag may be used if you want to
-       use (and merge common edges according to) the merged points */
+    /** \brief Extract the list of mesh edges.
+	
+         extract the list of mesh edges into 'edges' (size = 2* number
+         of edges). 'slice_edges' indicates which one were created
+         after slicing.  The from_merged_nodes flag may be used if you
+         want to use (and merge common edges according to) the merged
+         points 
+    */
     void get_edges(std::vector<size_type> &edges,
 		   dal::bit_vector &slice_edges,
 		   bool from_merged_nodes) const;
@@ -128,25 +156,40 @@ namespace getfem {
 	       mesh_slicer::cs_simplexes_ct cv_simplexes, 
 		    dim_type fcnt, const dal::bit_vector& splx_in);
 
+    /** Build the slice, by applying a slicer_action operation. */
     void build(const getfem::getfem_mesh& m, const slicer_action &a, 
 	       size_type nrefine = 1) { build(m,&a,0,0,nrefine); }
+    /** Build the slice, by applying two slicer_action operations. */
     void build(const getfem::getfem_mesh& m, const slicer_action &a, const slicer_action &b, 
 	       size_type nrefine = 1) { build(m,&a,&b,0,nrefine); }
+    /** Build the slice, by applying three slicer_action operations. */
     void build(const getfem::getfem_mesh& m, const slicer_action &a, const slicer_action &b, const slicer_action &c, 
 	       size_type nrefine = 1) { build(m,&a,&b,&c,nrefine); }
     void build(const getfem::getfem_mesh& m, const slicer_action *a, const slicer_action *b, const slicer_action *c, 
 	       size_type nrefine);
     
       
-    /* apply the listed slicer_action(s) to the slice object -- 
-       the stored_mesh_slice is not modified */
+    /** \brief Apply the listed slicer_action(s) to the slice object.
+
+    the stored_mesh_slice is not modified. This can be used to build a
+    new stored_mesh_slice from a stored_mesh_slice.
+    */
     void replay(slicer_action &a) const { replay(&a,0,0); }
     void replay(slicer_action &a, slicer_action &b) const { replay(&a, &b, 0); }
     void replay(slicer_action &a, slicer_action &b, slicer_action &c) const { replay(&a, &b, &c); }
     void replay(slicer_action *a, slicer_action *b, slicer_action *c) const;
 
-    /** interpolation of a mesh_fem on a slice (the mesh_fem
-	and the slice must share the same mesh, of course)
+    /** \brief Interpolation of a mesh_fem on a slice.
+
+        The mesh_fem and the slice must share the same mesh, of course.
+
+	@param mf the mesh_fem
+
+	@param U a vector whose dimension is a multiple of
+	mf.nb_dof(), the field to be interpolated.
+
+	@param V on output, a vector corresponding to the interpolated
+	field on the slice (values given on each node of the slice).
     */
     template<typename V1, typename V2> void 
     interpolate(const getfem::mesh_fem &mf, const V1& U, V2& V) const {
@@ -195,9 +238,9 @@ namespace getfem {
     }
   };
 
-  /**
-     slicer whose side effect is to build a stored_mesh_slice object
-   */
+  /** \brief a getfem::mesh_slicer whose side effect is to build a
+      stored_mesh_slice object.
+  */
   class slicer_build_stored_mesh_slice : public slicer_action {
     stored_mesh_slice &sl;
   public:

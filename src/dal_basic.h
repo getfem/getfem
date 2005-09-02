@@ -27,7 +27,9 @@
 //
 //========================================================================
 
-
+/**\file dal_basic.h
+   \brief Dynamic array class.
+*/
 #ifndef DAL_BASIC_H__
 #define DAL_BASIC_H__
 
@@ -42,6 +44,7 @@
 #include <vector>
 #include <dal_algobase.h>
 
+/// Dynamic Array Library
 namespace dal
 {
   template<class T, unsigned char pks = 5> class dynamic_array;
@@ -168,6 +171,8 @@ namespace dal
    * called, a control is made on i and an allocation is made if 
    * needed. The allocation is made by blocks of n elements, where
    * $n = 2^{pks}$. $pks$ is an optional parameter assumed to be 5.
+   */
+  /*
    * \subsubsection*{Example of code}
    *  If T is any type (with or without trivial constructor/destructor, 
    *  and with constructor T(0) and T(1)), the

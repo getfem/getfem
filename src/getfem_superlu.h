@@ -27,6 +27,14 @@
 //
 //========================================================================
 
+/**\file getfem_superlu.h
+   \brief SuperLU interface for getfem
+   
+   We do not use gmm_superlu_interface.h for a good reason. This file
+   does not include any of the superlu headers, hence when getfem is
+   installed, it does not need to install the superlu headers.
+*/
+
 #ifndef GETFEM_SUPERLU
 #define GETFEM_SUPERLU
 #ifndef GMM_USES_SUPERLU
@@ -39,7 +47,15 @@ namespace gmm {
 
   template<typename T>
   void SuperLU_solve(const gmm::csc_matrix<T> &A, T *X_, T *B, double& rcond_, int permc_spec = 3);
-  
+  /** solve a sparse linear system AX=B (float, double, complex<float>
+      or complex<double>) via SuperLU.
+
+      @param A the matrix (a copy is made if A is not a gmm::csc_matrix)
+      @param X the solution.
+      @param B the right hand side.
+      @param rcond_ contains on output an estimate of the condition number of A.
+      @param permc_spec specify the kind of renumbering than SuperLU should do.
+  */
   template<typename MAT, typename V1, typename V2>
   void SuperLU_solve(const MAT &A, const V1& X, const V2& B, double& rcond_, int permc_spec = 3) {
     typedef typename gmm::linalg_traits<MAT>::value_type T;
@@ -56,10 +72,16 @@ namespace gmm {
   
   class SuperLU_factor_impl_common;
 
+  /** Factorization of a sparse matrix with SuperLU.
+      
+      This class can be used as a preconditioner for gmm iterative solvers.
+  */
   template <class T> class SuperLU_factor {
     SuperLU_factor_impl_common *impl;
   public :
     enum { LU_NOTRANSP, LU_TRANSP, LU_CONJUGATED };
+
+    /** Do the factorization of the supplied sparse matrix. */
     template <class MAT> void build_with(const MAT &A,  int permc_spec = 3) {
       int m = mat_nrows(A), n = mat_ncols(A);
       gmm::csc_matrix<T> csc_A(m,n); 
@@ -68,9 +90,11 @@ namespace gmm {
     }
     void build_with(const gmm::csc_matrix<T> &A, int permc_spec = 3);
     template <typename VECTX, typename VECTB> 
-    /* transp = LU_NOTRANSP   -> solves Ax = B
+    /** After factorization, do the triangular solves.
+       transp = LU_NOTRANSP   -> solves Ax = B
        transp = LU_TRANSP     -> solves A'x = B
-       transp = LU_CONJUGATED -> solves conj(A)X = B */
+       transp = LU_CONJUGATED -> solves conj(A)X = B 
+    */
     void solve(const VECTX &X, const VECTB &B, int transp=LU_NOTRANSP) const {
       gmm::copy(B, rhs());
       solve(transp);
@@ -84,10 +108,6 @@ namespace gmm {
     float memsize() const;
     SuperLU_factor(const SuperLU_factor& other);
     SuperLU_factor& operator=(const SuperLU_factor& other);
-  private:
-    /*    SuperLU_factor(const SuperLU_factor&);
-    SuperLU_factor& operator=(const SuperLU_factor& other);
-    */
   };
 
   template <typename T, typename V1, typename V2> inline

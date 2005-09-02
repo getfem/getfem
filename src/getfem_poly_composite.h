@@ -27,6 +27,11 @@
 //
 //========================================================================
 
+/**\file getfem_poly_composite.h
+   \brief Handle composite polynomials.
+
+   Composite polynomials are used in hierarchical FEM.
+*/
 
 #ifndef GETFEM_POLY_COMPOSITE_H__
 #define GETFEM_POLY_COMPOSITE_H__
@@ -91,9 +96,25 @@ namespace getfem
   void structured_mesh_for_convex(bgeot::pconvex_ref cvr, short_type k,
 				  pgetfem_mesh &pm, pmesh_precomposite &pmp, bool force_simplexification=false);
 
+  /** simplexify a convex_ref.
+      @param cvr the convex_ref.
+      @param k the refinement level.
+      @return a pointer to a statically allocated mesh. Do no free it!
+  */
   const getfem_mesh *
   refined_simplex_mesh_for_convex(bgeot::pconvex_ref cvr, short_type k);
 
+  /** simplexify the faces of a convex_ref
+
+      @param cvr the convex_ref.
+
+      @param k the refinement level.
+
+      @return vector of pointers to a statically allocated
+      mesh_structure objects. Do no free them! The point numbers in
+      the mesh_structure refer to the points of the mesh given by
+      refined_simplex_mesh_for_convex.
+  */      
   const std::vector<bgeot::mesh_structure*>&
   refined_simplex_mesh_for_convex_faces(bgeot::pconvex_ref cvr, short_type k);
 }  /* end of namespace getfem.                                            */

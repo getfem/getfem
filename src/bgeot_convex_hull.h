@@ -27,7 +27,9 @@
 //
 //========================================================================
 
-
+/**\file bgeot_convex_hull.h
+   \brief convex hull of a set of points (broken..)
+*/
 
 #ifndef BGEOT_CONVEX_HULL_H__
 #define BGEOT_CONVEX_HULL_H__

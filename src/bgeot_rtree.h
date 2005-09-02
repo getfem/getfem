@@ -30,6 +30,10 @@
 #ifndef BGEOT_RTREE_H
 #define BGEOT_RTREE_H
 
+/** \file bgeot_rtree.h
+    \brief region-tree for window/point search on a set of rectangles.
+*/
+
 #include <set>
 #include <bgeot_vector.h>
 
@@ -42,7 +46,12 @@ namespace bgeot {
 
   struct rtree_elt_base;
 
-  class rtree {
+  /** Balanced tree of n-dimensional rectangles.
+   *
+   * This is not a dynamic structure. Once a query has been made on the
+   * tree, new boxes should not be added.
+   */
+  class rtree : public boost::noncopyable {
   public:
     typedef std::deque<box_index> box_cont;
     typedef std::vector<const box_index*> pbox_cont;
@@ -72,8 +81,6 @@ namespace bgeot {
     { pbox_set bs; find_boxes_at_point(P, bs);  pbox_set_to_idvec(bs, idvec); }
     void dump();
   private:
-    void operator=(const rtree&) {} /* non-copiable */
-    rtree(const rtree&) {} /*non-copiable */
     void build_tree();
     void destroy_tree();
     static void pbox_set_to_idvec(pbox_set bs, std::vector<size_type>& idvec) {

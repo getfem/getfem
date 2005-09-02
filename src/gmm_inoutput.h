@@ -93,7 +93,7 @@ namespace gmm {
     return *width;
   }
       
-      /** matrix input/output for Harwell-Boeing format */
+  /** matrix input/output for Harwell-Boeing format */
   struct HarwellBoeing_IO {
     int nrows() const { return Nrow; }
     int ncols() const { return Ncol; }
@@ -104,13 +104,13 @@ namespace gmm {
     HarwellBoeing_IO() { clear(); }
     HarwellBoeing_IO(const char *filename) { clear(); open(filename); }
     ~HarwellBoeing_IO() { close(); }
-    /* open filename and reads header */
+    /** open filename and reads header */
     void open(const char *filename);
-    /* read the opened file */
+    /** read the opened file */
     template <typename T, int shift> void read(csc_matrix<T, shift>& A);
     template <typename MAT> void read(MAT &M);
-    /* save the matrix */
     template <typename T, int shift> static void write(const char *filename, const csc_matrix<T, shift>& A);
+    /** static method for saving the matrix */
     template <typename MAT> static void write(const char *filename, const MAT& A);
   private:
     FILE *f;
@@ -917,7 +917,11 @@ namespace gmm {
     gmm::copy(A,tmp); 
     MatrixMarket_IO::write(filename, tmp);
   }
-  
+
+  template<typename VEC> static void vecsave(std::string fname, const VEC& V) {
+    std::ofstream f(fname.c_str()); f.precision(16);
+    for (size_type i=0; i < V.size(); ++i) f << V[i] << "\n"; 
+  }
 }
 
 

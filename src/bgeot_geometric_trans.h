@@ -27,7 +27,9 @@
 //
 //========================================================================
 
-
+/** \file bgeot_geometric_trans.h 
+    \brief Geometric transformations on convexes.
+*/ 
 
 #ifndef BGEOT_GEOMETRIC_TRANSFORMATION_H__
 #define BGEOT_GEOMETRIC_TRANSFORMATION_H__
@@ -130,7 +132,7 @@ namespace bgeot
   template<class CONT>
     base_node geometric_trans::transform(const base_node &pt,
 					 const CONT &ptab) const {
-    base_node P(ptab[0].size()); P.fill(0.0);
+    base_node P(ptab[0].size());
     size_type k = nb_points();
     for (size_type l = 0; l < k; ++l)
       gmm::add(gmm::scaled(ptab[l],
@@ -139,7 +141,8 @@ namespace bgeot
     return P;
   }
 
-  typedef boost::intrusive_ptr<const geometric_trans> pgeometric_trans;
+  /** pointer type for a geometric transformation */
+  typedef boost::intrusive_ptr<const bgeot::geometric_trans> pgeometric_trans;
   class geotrans_interpolation_context;
 
   template<class CONT>
@@ -180,8 +183,15 @@ namespace bgeot
   pgeometric_trans linear_product_geotrans(pgeometric_trans pg1,
 					   pgeometric_trans pg2);
 
+  /**
+     Get the geometric transformation from its string name.
+     @see name_of_geometric_trans
+  */
   pgeometric_trans geometric_trans_descriptor(std::string name);
-  /* List :
+  /**
+     Get the string name of a geometric transformation.
+     
+  List of possible names:
    * GT_PK(N,K)   : Transformation on simplexes, dim N, degree K
    * GT_QK(N,K)   : Transformation on parallelepipeds, dim N, degree K
    * GT_PRISM(N,K)          : Transformation on prisms, dim N, degree K
@@ -202,7 +212,7 @@ namespace bgeot
   base_small_vector compute_normal(const geotrans_interpolation_context& c,
 				   size_type face);
 
-  /** return the local basis (i.e. the norm in the first column, and the
+  /** return the local basis (i.e. the normal in the first column, and the
    *  tangent vectors in the other columns 
    */
   base_matrix 
@@ -265,6 +275,7 @@ namespace bgeot
   void geotrans_precomp_::transform(const CONT& G, size_type j,
 				    VEC& pt) const {
     size_type k = 0;
+    gmm::clear(pt);
     if (c.empty()) init_val();
     for (typename CONT::const_iterator itk = G.begin(); 
          itk != G.end(); ++itk, ++k) {

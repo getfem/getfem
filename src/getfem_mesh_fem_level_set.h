@@ -28,7 +28,9 @@
 //
 //========================================================================
 
-
+/**\file getfem_mesh_fem_level_set.h
+   \brief a subclass of mesh_fem which is conformal to a number of level sets.
+*/
 
 #ifndef GETFEM_MESH_FEM_LEVEL_SET_H__
 #define GETFEM_MESH_FEM_LEVEL_SET_H__
@@ -39,8 +41,7 @@
 
 namespace getfem {
 
-  /// Describe an adaptable integration method linked to a mesh.
-  class mesh_fem_level_set : public mesh_fem {
+  class mesh_fem_level_set : public mesh_fem, public boost::noncopyable {
   protected :
     const mesh_level_set &mls;
     const mesh_fem &mf;
@@ -71,9 +72,6 @@ namespace getfem {
     mesh_fem_level_set(const mesh_level_set &me, const mesh_fem &mef);
 
     ~mesh_fem_level_set() { clear_build_methods(); }
-  private:
-    mesh_fem_level_set(const mesh_fem_level_set &);
-    mesh_fem_level_set & operator=(const mesh_fem_level_set &);
   };
 
 
