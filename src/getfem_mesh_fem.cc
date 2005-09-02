@@ -156,18 +156,6 @@ namespace getfem {
     return ind_in_first_convex_of_dof(d) % (Qdim / tdim);
   }
 
-  struct dof_comp_ { 
-    dal::approx_less<scalar_type> comp;
-    int operator()(const fem_dof& m, const fem_dof& n) const { 
-      int d = dal::lexicographical_compare(m.P.begin(), m.P.end(),
-					   n.P.begin(), n.P.end(), comp);
-      if (d != 0) return d;
-      return dof_description_compare(m.pnd, n.pnd);
-    }
-    dof_comp_(double e = 1.0E-10) : comp(e) { }
-  };
-  
-
   size_type mesh_fem::first_convex_of_dof(size_type d) const {
     for (size_type i = d; i != d - Qdim && i != size_type(-1); --i) {
       size_type j = dof_structure.first_convex_of_point(i);
@@ -194,167 +182,195 @@ namespace getfem {
     return bgeot::mesh_convex_ind_ct();
   }
 
+  struct dof_comp_ { 
+    dal::approx_less<scalar_type> comp;
+    int operator()(const fem_dof& m, const fem_dof& n) const { 
+      int d = dal::lexicographical_compare(m.P.begin(), m.P.end(),
+					   n.P.begin(), n.P.end(), comp);
+      if (d != 0) return (d < 0);
+      return dof_description_compare(m.pnd, n.pnd) < 0;
+    }
+    dof_comp_(double e = 1.0E-10) : comp(e) { }
+  };
+
+  typedef std::map<fem_dof, size_type, dof_comp_> dof_sort_type;
+
+  static double enumerate_dof_time = 0;
+
+  /// Enumeration of dofs
   void mesh_fem::enumerate_dof(void) const {
-    dal::bit_vector nn = fe_convex;
-    std::queue<int> pile;
-    dal::dynamic_tree_sorted<fem_dof, dof_comp_, 10> dof_sort;
+    if (fe_convex.card() == 0) return;
+    const std::vector<size_type> &cmk = linked_mesh().cuthill_mckee_ordering();
+    double t = ftool::uclock_sec();
+
+    dof_sort_type dof_sort;
     dal::bit_vector encountered_global_dof;
     dal::dynamic_array<size_type> ind_global_dof;
     std::vector<size_type> tab;
-    size_type cv;
+    size_type nbdof = 0;
+
+    size_type cv = fe_convex.first_true();
     fem_dof fd;
 
-    cv = nn.take_first();
     dof_structure.clear();
     encountered_global_dof.clear();
 
-    while (cv != ST_NIL) {
-      /* ajout des voisins dans la pile.                                  */
-
-      size_type nbp = linked_mesh_->nb_points_of_convex(cv);
-
-      for (size_type i = 0; i < nbp; i++) {
-	size_type ip = linked_mesh_->ind_points_of_convex(cv)[i];
-	bgeot::mesh_convex_ind_ct::const_iterator 
-	  it = linked_mesh_->convex_to_point(ip).begin(),
-	  ite =  linked_mesh_->convex_to_point(ip).end();
-	for ( ; it != ite; ++it)
-	  if (nn.is_in(*it)) { nn.sup(*it); pile.push(*it); }
-      }
-
+    bgeot::pstored_point_tab pspt_old = 0;
+    bgeot::pgeometric_trans pgt_old = 0;
+    bgeot::pgeotrans_precomp pgp = 0;
+    for (size_type icv=0; icv < cmk.size(); ++icv) {
+      cv = cmk[icv];
+      if (!fe_convex.is_in(cv)) continue;
       pfem pf = fem_of_element(cv);
+      bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
+      bgeot::pstored_point_tab pspt = pf->node_tab(cv);
+      if (pgt != pgt_old || pspt != pspt_old)
+	pgp = bgeot::geotrans_precomp(pgt, pspt);
+      pgt_old = pgt; pspt_old = pspt;
+      
       size_type nbd = pf->nb_dof(cv); 
       pdof_description andof = global_dof(pf->dim());
       tab.resize(nbd);
+
       for (size_type i = 0; i < nbd; i++) {
-	fd.P = linked_mesh().trans_of_convex(cv)->transform
-	  (pf->node_of_dof(cv, i), linked_mesh().points_of_convex(cv));
-	//point_of_dof(cv,i); 
+	fd.P.resize(linked_mesh().dim()); 
 	fd.pnd = pf->dof_types()[i];
-	size_type j = 0, j_old = 0;
+ 
 	if (fd.pnd == andof) {
-	  // cout << "detecting a specialdof\n";
 	  size_type num = pf->index_of_global_dof(cv, i);
 	  if (!(encountered_global_dof[num])) {
-	    if (pf->target_dim() == 1 && Qdim != 1) {
-	      for (size_type k = 0; k < Qdim; ++k) {
-		fd.pnd = to_coord_dof(andof, k);
-		j = dof_sort.add(fd);
-		if (k == 0) ind_global_dof[num] = j;
-		else if (j != j_old + 1) {
-		  dof_sort.swap(j, j_old+1);
-		}
-		j_old = j;
-	      }
-	    } else {
-	      ind_global_dof[num] = dof_sort.add(fd);
-	    }
+	    ind_global_dof[num] = nbdof;
+	    nbdof += (pf->target_dim() == 1 && Qdim != 1) ? Qdim : 1;
 	    encountered_global_dof[num] = true;
 	  }
 	  tab[i] = ind_global_dof[num];
-	} else if (pf->target_dim() == 1 && Qdim != 1) {
-	  pdof_description paux = fd.pnd;
-	  for (size_type k = 0; k < Qdim; ++k) {
-	    fd.pnd = to_coord_dof(paux, k);
-	    
-	    if (dof_linkable(fd.pnd))
-	      j = dof_sort.add_norepeat(fd);
-	      else
-		j = dof_sort.add(fd);
-	    if (k == 0)
-	      tab[i] = j;
-	    else if (j != j_old + 1) {
-	      dof_sort.swap(j, j_old+1);
-	    }
-	    j_old = j;
-	  }
+	} else if (!dof_linkable(fd.pnd)) {
+	  tab[i] = nbdof;
+	  nbdof += (pf->target_dim() == 1 && Qdim != 1) ? Qdim : 1;
 	} else {
-	  if (dof_linkable(fd.pnd))
-	    j = dof_sort.add_norepeat(fd);
-	  else
-	    j = dof_sort.add(fd);
-	  tab[i] = j;
+	  pgp->transform(linked_mesh().points_of_convex(cv), i, fd.P);
+
+	  std::pair<dof_sort_type::iterator, bool> pa = dof_sort.insert(std::make_pair(fd, nbdof));
+	  if (pa.second) {
+	    tab[i] = nbdof;
+	    nbdof += (pf->target_dim() == 1 && Qdim != 1) ? Qdim : 1;
+	  }
+	  else { tab[i] = pa.first->second; }
 	}
       }
-      
       dof_structure.add_convex_noverif(pf->structure(cv), tab.begin(), cv);
-      
-      if (pile.empty()) cv = nn.take_first();
-                 else { cv = pile.front(); pile.pop(); }
     }
     
     dof_enumeration_made = true;
-    nb_total_dof = (dof_sort.card() == 0) ? 0 : dof_sort.index().last_true()+1;
+    nb_total_dof = nbdof;
+    
+    enumerate_dof_time += ftool::uclock_sec() - t;
+    cerr << "enumerate_dof_time: " << enumerate_dof_time << " sec\n";
   }
 
-/*     void mesh_fem::enumerate_dof(void) A finir ...  */
-/*   { */
-     /* L'algorithme de parcours est de type avancement par front          */
-     /* Le tri des ddl prend pas mal de memoire ... faire autrement ?      */
-     /* on peut deja ne pas stocker les noeuds interieurs.                 */
-/*     dal::int_set nn = fe_convex; */
-/*     std::queue<int> pile; */
-/*     dal::dynamic_tree_sorted<dof_, dof_comp_, 10 > dof_sort; */
-/*     dal::dynamic_array<int> front1, front2; */
 
-/*     int *tab = new int[10000]; */
-/*     int *degree = new int[nn.last_true() + 1]; */
-/*     int cv, nbp, i, ip, ncv, nbd, fd, degree_min, first_cv; */
-/*     dof_ P; */
+//     typedef dal::dynamic_tree_sorted<fem_dof, dof_comp_, 10> dof_sort_type;
 
-     /* 1-) On cherche le convexe de degree minimal (moins de voisins).    */
+//   static size_type add_vect_dof_to_dof_sort(dof_sort_type &dof_sort, fem_dof &fd, dim_type Qdim) {
+//     pdof_description paux = fd.pnd;
+//     size_type j0(0), j;
+//     bool present = false;
+//     for (size_type k = 0; k < Qdim; ++k) {
+//       fd.pnd = to_coord_dof(paux, k);
+      
+//       if (dof_linkable(fd.pnd))
+// 	j = dof_sort.add_norepeat(fd, false, &present);
+//       else
+// 	j = dof_sort.add(fd);
+//       if (k == 0) { 
+// 	j0 = j;
+// 	if (present) {
+// 	  bool ok = true;
+// 	  for (size_type l = 1; l < Qdim; ++l)
+// 	    if (coord_index_of_dof(dof_sort[j+l].pnd) != l) ok = false;
+// 	  if (ok) break;
+// 	}
+//       }
+//       else if (j != j0 + k) dof_sort.swap(j, j0+k);
+//     }
+//     return j0;
+//   }
 
-/*     degree_min = -1; */
-/*     dal::int_set nm = nn; */
-/*     for (cv << nm; cv >= 0; cv << nm)  il faut un iterateur sur nn.     */
-/*     { */
-/*       degree[cv] = 0; */
-/*       nbp = linked_mesh_->nb_points_of_convex(cv); */
-/*       for (i = 0; i < nbp; i++) */
-/*       { */
-/* 	ip = linked_mesh_->ind_point_of_convex(cv, i); */
-/* 	nbd = linked_mesh_->convex_to_point(ip, tab); */
-/* 	ssert(nbd < 10000); */
-/* 	for (i = 0; i < nbd; i++) */
-/* 	{ */
-/* 	  ncv = tab[i]; */
-/* 	  if (nn.is_in(ncv)) degree[cv]++;  cette strategie compte les  */
- 	  /* voisins avec un poids correspondant au nombre de points      */
- 	  /* communs.                                                     */
-/* 	} */
-/*       } */
-/*       if (degree_min == -1 && degree_min > degree[cv]) */
-/* 	{ degree_min = degree[cv]; first_cv = cv; } */
-/*     } */
+//   static double enumerate_dof_time = 0;
 
-     /* 2-) construction du premier front.                                 */
-/*     if (degree_min != -1) */
-/*     { front1[0] = first_cv; front1[1] = -2; nn[first_cv] = false; } */
-/*     else */
-/*       front1[0] = -2; */
+//   /// Enumeration of dofs
+//   void mesh_fem::enumerate_dof(void) const {
+//     if (fe_convex.card() == 0) return;
+//     const std::vector<size_type> &cmk = linked_mesh().cuthill_mckee_ordering();
+//     double t = ftool::uclock_sec();
 
-     /* 3-) iterations sur les fronts.                                    */
+//     dal::dynamic_tree_sorted<fem_dof, dof_comp_, 10> dof_sort;
+//     dal::bit_vector encountered_global_dof;
+//     dal::dynamic_array<size_type> ind_global_dof;
+//     std::vector<size_type> tab;
+
+//     size_type cv = fe_convex.first_true();
+//     fem_dof fd;
+
+//     dof_structure.clear();
+//     encountered_global_dof.clear();
+
+//     bgeot::pstored_point_tab pspt_old = 0;
+//     bgeot::pgeometric_trans pgt_old = 0;
+//     bgeot::pgeotrans_precomp pgp = 0;
+//     for (size_type icv=0; icv < cmk.size(); ++icv) {
+//       cv = cmk[icv];
+//       if (!fe_convex.is_in(cv)) continue;
+//       pfem pf = fem_of_element(cv);
+//       bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
+//       bgeot::pstored_point_tab pspt = pf->node_tab(cv);
+//       if (pgt != pgt_old || pspt != pspt_old)
+// 	pgp = bgeot::geotrans_precomp(pgt, pspt);
+//       pgt_old = pgt; pspt_old = pspt;
+      
+//       size_type nbd = pf->nb_dof(cv); 
+//       pdof_description andof = global_dof(pf->dim());
+//       tab.resize(nbd);
+
+//       for (size_type i = 0; i < nbd; i++) {
+// 	fd.P.resize(linked_mesh().dim()); 
+// 	fd.pnd = pf->dof_types()[i];
+	
+// 	if (dof_linkable(fd.pnd))
+// 	  pgp->transform(linked_mesh().points_of_convex(cv), i, fd.P);
+// 	else fd.P = linked_mesh().points_of_convex(cv)[0];
+ 
+// 	if (fd.pnd == andof) {
+// 	  // cout << "detecting a specialdof\n";
+// 	  size_type num = pf->index_of_global_dof(cv, i);
+// 	  if (!(encountered_global_dof[num])) {
+// 	    if (pf->target_dim() == 1 && Qdim != 1)
+// 	      ind_global_dof[num] = add_vect_dof_to_dof_sort(dof_sort, fd, Qdim);
+// 	    else
+// 	      ind_global_dof[num] = dof_sort.add(fd);
+// 	    encountered_global_dof[num] = true;
+// 	  }
+// 	  tab[i] = ind_global_dof[num];
+// 	} else if (pf->target_dim() == 1 && Qdim != 1) {
+// 	  tab[i] = add_vect_dof_to_dof_sort(dof_sort, fd, Qdim);
+// 	} else {
+// 	  if (dof_linkable(fd.pnd))
+// 	    tab[i] = dof_sort.add_norepeat(fd);
+// 	  else
+// 	    tab[i] = dof_sort.add(fd);
+// 	}
+//       }
+      
+//       dof_structure.add_convex_noverif(pf->structure(cv), tab.begin(), cv);
+//    }
     
-/*     dof_list.clear(); */
-/*     while (front1[0] != -2) */
-/*     { */
-/*       i = 0;  + boucle sur les fronts.        */
-/*       j = 0; */
-/*       while (front1[i] >= 0) */
-/*       { */
-/* 	cv = front1[i++]; */
-/* 	nbp = linked_mesh_->nb_points_of_convex(cv); */
-/* 	nbd = linked_mesh_->convex_to_point(ip, tab); */
-/* 	ssert(nbd < 10000); extraire une fonction qui ajoute les ddl d'un cv*/
-/* 	for (i = 0; i < nbd; i++) */
-/* 	{ */
-/* 	  ncv = tab[i]; */
-/* 	  if (nn.is_in(ncv)) { nn.sup(ncv); front2[j++] = ncv;  + tri  } */
-/* 	} */
-/*       } */
-/*       if (j > 0 && front2[j-1] >= 0) front2[j++] = -1; */
-/*     } */
-/*   } */
+//     dof_enumeration_made = true;
+//     nb_total_dof = (dof_sort.card() == 0) ? 0 : dof_sort.index().last_true()+1;
+
+//     enumerate_dof_time += ftool::uclock_sec() - t;
+//     cerr << "enumerate_dof_time: " << enumerate_dof_time << " sec\n";
+//   }
+
 
   void mesh_fem::clear(void) {
     fe_convex.clear();
@@ -406,13 +422,11 @@ namespace getfem {
       } else if (strcmp(tmp, "BEGIN")==0) {
 	ftool::get_token(ist, tmp, 1023);
 	if (!strcmp(tmp,"DOF_ENUMERATION")) {
-	  //cerr << "begin dof enumeration" << '\n';
 	  dal::bit_vector doflst;
 	  dof_structure.clear(); dof_enumeration_made = false; touch();
 	  while (true) {
 	    ftool::get_token(ist, tmp, 1023);
 	    if (strcmp(tmp, "END")==0) { 
-	      //cerr << "end of dof enumeration\n"; 
 	      break;
 	    }
 	    size_type ic = atoi(tmp);
@@ -420,15 +434,12 @@ namespace getfem {
 	    if (convex_index().is_in(ic) && strlen(tmp) &&
 		tmp[strlen(tmp)-1] == ':') {
 	      tab.resize(nb_dof_of_element(ic));
-	      //cerr << "convex " << ic << ", tab=";
 	      for (size_type i=0; i < fem_of_element(ic)->nb_dof(ic); i++) {
 		ist >> tab[i];
 		for (size_type q=0; q < size_type(get_qdim())
 		       / fem_of_element(ic)->target_dim(); ++q)
 		  doflst.add(tab[i]+q);
-		//cerr << tab[i] << ",";
 	      }
-	      //cerr << '\n';
 	      dof_structure.add_convex_noverif
 		(fem_of_element(ic)->structure(ic), tab.begin(), ic);
 	    } else DAL_THROW(failure_error, "Missing convex or wrong number "
