@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file getfem_Xfem.h
-   \brief eXtended Finite Element Method.
+/**@file getfem_Xfem.h
+   @brief eXtended Finite Element Method.
 
    what is an Xfem ?
 

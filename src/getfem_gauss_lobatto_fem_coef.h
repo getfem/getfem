@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file getfem_gauss_lobatto_fem_coef.h
-   \brief data for FEM_PK_GAUSSLOBATTO1D
+/**@file getfem_gauss_lobatto_fem_coef.h
+   @brief data for FEM_PK_GAUSSLOBATTO1D
  */
 static const double fem_coef_gausslob_1[4] =
   { 1.000000000000000e+00, -1.000000000000000e+00, 0.000000000000000e-01,

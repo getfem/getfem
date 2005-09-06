@@ -27,17 +27,21 @@
 // Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //========================================================================
+
+/**@file gmm_precond_mr_approx_inverse.h
+   @brief Approximate inverse via MR iteration.
+*/
+
 #ifndef GMM_PRECOND_MR_APPROX_INVERSE_H
 #define GMM_PRECOND_MR_APPROX_INVERSE_H
 
-/* Approximate inverse via MR iteration
- * see P301 of Saad book
- */
 
 #include <gmm_precond.h>
 
 namespace gmm {
 
+  /** Approximate inverse via MR iteration (see P301 of Saad book).
+   */
   template <typename Matrix>
   struct mr_approx_inverse_precond {
 

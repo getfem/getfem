@@ -32,8 +32,8 @@
 #ifndef BGEOT_CONVEX_STRUCTURE_H__
 #define BGEOT_CONVEX_STRUCTURE_H__
 
-/** \file bgeot_convex_structure.h
- * \brief Definition of convex structures
+/** @file bgeot_convex_structure.h
+    @brief Definition of convex structures
  */
 
 #include <dal_ref.h>
@@ -45,7 +45,7 @@
 #include <dal_static_stored_objects.h>
 
 namespace bgeot {
-  /** \defgroup convex_structure Convex Structure */
+  /** @defgroup convex_structure Convex Structure */
   /*@{*/
 
   // The number of faces for a convex is limited in certain applications
@@ -64,7 +64,7 @@ namespace bgeot {
   /**  Structure of a convex.  
    *
    * This class is not to be manipulate by itself. Use
-   * pconvex\_structure and the functions written to produce the
+   * pconvex_structure and the functions written to produce the
    * convex structures from classicals convexes (simplexes, polygonals
    * ...). The reason is that there is no need for having more than
    * one convex structure for the same type of convex.

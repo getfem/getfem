@@ -30,8 +30,8 @@
 // To be corrected : dependencies. The mesh fem using this fem will not
 //                   depend on the mesh fem arguments.
 
-/**\file getfem_mesh_fem_product.h
-   \brief NEED A DESCRIPTION!
+/**@file getfem_mesh_fem_product.h
+   @brief NEED A DESCRIPTION!
 */
 
 #ifndef GETFEM_MESH_FEM_PRODUCT_H__

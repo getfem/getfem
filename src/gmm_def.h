@@ -27,6 +27,9 @@
 //
 //========================================================================
 
+/**@file gmm_def.h
+   @brief Basic definitions and tools of GMM.
+*/
 #ifndef GMM_DEF_H__
 #define GMM_DEF_H__
 

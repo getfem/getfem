@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file bgeot_mesh_structure.h
-   \brief Mesh structure definition
+/**@file bgeot_mesh_structure.h
+   @brief Mesh structure definition
 */
 
 #ifndef BGEOT_MESH_STRUCTURE_H__
@@ -147,7 +147,7 @@ namespace bgeot
     size_type size() { size_type n=0; for (iterator i = begin(); i != end(); ++i) ++n; return n; }
   };
   
-  /**@defgroup mesh Mesh */
+  /**@addtogroup mesh */
   ///@{
   /** Mesh structure definition. 
       At this point, the mesh is just a graph: the points have no associated coordinates

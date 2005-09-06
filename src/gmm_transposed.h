@@ -27,6 +27,9 @@
 //
 //========================================================================
 
+/**@file gmm_transposed.h
+   @brief Generic transposed matrices
+*/
 #ifndef GMM_TRANSPOSED_H__
 #define GMM_TRANSPOSED_H__
 

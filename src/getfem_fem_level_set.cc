@@ -27,7 +27,7 @@
 // Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //========================================================================
-/**\file getfem_fem_level_set.h
+/**\file getfem_fem_level_set.cc
    \brief a FEM which should be used with getfem::mesh_fem_level_set.
 */
 #include <getfem_fem_level_set.h>

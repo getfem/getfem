@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file bgeot_convex_intersect.h
-   \brief REMOVE THIS FILE!
+/**@file bgeot_convex_intersect.h
+   @brief REMOVE THIS FILE!
 */
 
 #ifndef BGEOT_CONVEX_INTERSECTION_H__

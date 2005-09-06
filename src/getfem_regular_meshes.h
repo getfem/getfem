@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file getfem_regular_meshes.h
-   \brief Build regular meshes.
+/**@file getfem_regular_meshes.h
+   @brief Build regular meshes.
 */
 #ifndef GETFEM_REGULAR_MESHES_H__
 #define GETFEM_REGULAR_MESHES_H__
@@ -102,14 +102,14 @@ namespace getfem
      @param m the output mesh.
 
      @param pgt the geometric transformation to use. For example, use 
-     \code
+     @code
      pgt = geometric_trans_descriptor("GT_PK(2,1"); // to build a mesh of triangles
      pgt = geometric_trans_descriptor("QK(3,2)"); // to build a mesh of order 2 parallelepipeded
-     \endcode
+     @endcode
 
      @param nsubdiv is the number of cells in each direction.  
 
-     @param noised , if set, will cause the interior nodes to be randomly "shaken".
+     @param noised if set, will cause the interior nodes to be randomly "shaken".
    */
   void regular_unit_mesh(getfem_mesh& m, std::vector<size_type> nsubdiv, 
 			 bgeot::pgeometric_trans pgt, bool noised = false);

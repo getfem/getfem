@@ -27,6 +27,9 @@
 //
 //========================================================================
 
+/**@file gmm_opt.h
+   @brief Optimization for some small cases (inversion of 2x2 matrices etc.)
+*/
 #ifndef GMM_OPT_H__
 #define GMM_OPT_H__
 

@@ -27,6 +27,9 @@
 //
 //========================================================================
 
+/**@file gmm_scaled.h
+   @brief get a scaled view of a vector/matrix.
+*/
 #ifndef GMM_SCALED_H__
 #define GMM_SCALED_H__
 

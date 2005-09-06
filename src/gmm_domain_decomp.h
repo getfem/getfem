@@ -27,6 +27,9 @@
 //
 //========================================================================
 
+/** @file gmm_domain_decomp.h
+    @brief Domain decomposition.
+*/
 #ifndef GMM_DOMAIN_DECOMP_H__
 #define GMM_DOMAIN_DECOMP_H__
 

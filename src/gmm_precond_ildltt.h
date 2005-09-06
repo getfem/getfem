@@ -26,6 +26,10 @@
 // Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //========================================================================
+/**@file gmm_precond_ildltt.h
+   @brief incomplete LDL^t (cholesky) preconditioner with fill-in and threshold.
+*/
+
 #ifndef GMM_PRECOND_ILDLTT_H
 #define GMM_PRECOND_ILDLTT_H
 
@@ -36,7 +40,8 @@
 #include <gmm_precond_ilut.h>
 
 namespace gmm {
-
+  /** incomplete LDL^t (cholesky) preconditioner with fill-in and
+      threshold. */
   template <typename Matrix>
   class ildltt_precond  {
   public :

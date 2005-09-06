@@ -28,8 +28,8 @@
 //
 //========================================================================
 
-/**\file getfem_Coulomb_friction.h
-   \brief Unilateral contact and Coulomb friction condition brick.
+/**@file getfem_Coulomb_friction.h
+   @brief Unilateral contact and Coulomb friction condition brick.
 */
 #ifndef GETFEM_COULOMB_FRICTION_H__
 #define GETFEM_COULOMB_FRICTION_H__
@@ -38,14 +38,14 @@
 
 namespace getfem {
 
-  /* ******************************************************************** */
-  /*   	Unilateral contact and Coulomb friction condition brick.          */
-  /*    (for conformal small displacement problems)                       */
-  /* ******************************************************************** */
 
 # define MDBRICK_COULOMB_FRICTION 434245
 
-
+  /**
+     Unilateral contact and Coulomb friction condition brick.
+     (for conformal small displacement problems)
+     @ingroup bricks
+   */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_Coulomb_friction : public mdbrick_abstract<MODEL_STATE>  {
     
@@ -314,4 +314,4 @@ namespace getfem {
 }  /* end of namespace getfem.                                             */
 
 
-#endif /* GETFEM_NONLINEAR_ELASTICITY_H__ */
+#endif /* GETFEM_COULOMB_FRICTION_H__ */

@@ -27,8 +27,8 @@
 // Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //========================================================================
-/**\file getfem_mesh_fem_sum.h
-   \brief Implement a special mesh_fem with merges the FEMs of two (or more) mesh_fems.
+/**@file getfem_mesh_fem_sum.h
+   @brief Implement a special mesh_fem with merges the FEMs of two (or more) mesh_fems.
 */
 
 
@@ -40,7 +40,7 @@
 namespace getfem {
   typedef std::vector<const std::string *> dof_enrichments;
   
-  /** \internal FEM used in mesh_fem_sum objects. */
+  /** @internal FEM used in mesh_fem_sum objects. */
   class fem_sum : public virtual_fem {
     std::vector<pfem> pfems; /* the fems to be summed */
     size_type cv;
@@ -65,7 +65,7 @@ namespace getfem {
   };
 
 
-  /** \brief Implement a special mesh_fem with merges the FEMs of two (or more) mesh_fems.*/
+  /** @brief Implement a special mesh_fem with merges the FEMs of two (or more) mesh_fems.*/
   class mesh_fem_sum : public mesh_fem {
   protected :
     std::vector<const mesh_fem *> mfs;

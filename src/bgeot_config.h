@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file bgeot_config.h
-   \brief defines and typedefs for namespace bgeot
+/**@file bgeot_config.h
+   @brief defines and typedefs for namespace bgeot
 */
 #ifndef BGEOT_CONFIG_H__
 #define BGEOT_CONFIG_H__

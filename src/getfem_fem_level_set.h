@@ -28,8 +28,8 @@
 //
 //========================================================================
 
-/**\file getfem_fem_level_set.h
-   \brief FEM associated with getfem::mesh_fem_level_set objects.
+/**@file getfem_fem_level_set.h
+   @brief FEM associated with getfem::mesh_fem_level_set objects.
 
    To be fixed : dependencies. The mesh fem using this fem will not
    depend on the mesh fem arguments.

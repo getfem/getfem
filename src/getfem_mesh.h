@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file getfem_mesh.h
-   \brief Define a getfem::getfem_mesh object.
+/**@file getfem_mesh.h
+   @brief Define a getfem::getfem_mesh object.
 */
 
 #ifndef GETFEM_MESH_H__
@@ -79,6 +79,8 @@ namespace getfem {
     MESH_SWAP_CONVEX(void) {}
   };
 
+  /** base class for objects that receive notification messages from a
+      mesh. */
   class getfem_mesh_receiver : public lmsg::virtual_linkmsg_receiver {
     public :
 
@@ -130,18 +132,18 @@ namespace getfem {
       there might be holes in the numbering. To loop over the set of
       valid points in the mesh, one should use
 
-      \code
+      @code
       for (dal::bv_visitor ip(mesh.points_index()); !ip.finished(); ++ip) {
       ...
       }
-      \endcode
+      @endcode
 
       instead of 
       
-      \code
+      @code
       for (size_type ip = 0; ip < mesh.nb_points(); ++ip) {
       }
-      \endcode
+      @endcode
       (same thing for the convexes, always use convex_index()).
   */
   class getfem_mesh : virtual public dal::static_stored_object,
@@ -212,6 +214,7 @@ namespace getfem {
 	function does not create a new point, and returns the index of the
 	already existing point.
 	@param pt the point coordinates.
+	@param norepeat should not be used.
     */
     size_type add_point(const base_node &pt, bool norepeat = true);
     /// Give the number of geometrical nodes in the mesh.
@@ -225,7 +228,7 @@ namespace getfem {
     /** Search a point given its coordinates.
 	@param pt the point that is searched.
 	@return the point index if pt was found in (or approximatively in)
-	the mesh nodes, size\_type(-1) if not found.
+	the mesh nodes, size_type(-1) if not found.
     */
     size_type search_point(const base_node &pt) const
     { return pts.search(pt); }
@@ -305,15 +308,15 @@ namespace getfem {
     size_type add_parallelepiped(dim_type di, const ITER &ipts);
     /** Add a parallelepiped to the mesh. 
 	@param di dimension of the parallelepiped
-	@param ipts iterator on the list of point coordinates.
+	@param ps iterator on the list of point coordinates.
 	@return the number of the new convex.
     */
     template<class ITER>
     size_type add_parallelepiped_by_points(dim_type di, const ITER &ps);
     /* Add a parallelepiped of dimension dim to the
-     *          mesh. org is the point of type base\_node representing
+     *          mesh. org is the point of type base_node representing
      *          the origine and "it" is an iterator on a list of
-     *          vectors of type base\_vector.
+     *          vectors of type base_vector.
      *          Return the index of the convex in the mesh.
 
     template<class ITER>
@@ -330,7 +333,7 @@ namespace getfem {
     
     /** Add a prism to the mesh. 
 	@param di dimension of the prism
-	@param ipts iterator on the list of point coordinates.
+	@param ps iterator on the list of point coordinates.
 	@return the number of the new convex.
     */
     template<class ITER>

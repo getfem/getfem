@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file bgeot_mesh.h
-   \brief Basic mesh class.
+/**@file bgeot_mesh.h
+   @brief Basic mesh class.
 */
 
 #ifndef BGEOT_MESH_H__
@@ -46,7 +46,7 @@ namespace bgeot {
   /**@defgroup mesh Mesh */
   ///@{
 
-  /**\brief Basic mesh class. @see getfem::getfem_mesh.*/
+  /**@brief Basic mesh class. @see getfem::getfem_mesh.*/
   template<class PT, class PT_TAB = mesh_point_ct<PT> > class mesh
     : public mesh_structure
   {

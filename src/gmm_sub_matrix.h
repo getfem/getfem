@@ -27,6 +27,10 @@
 //
 //========================================================================
 
+/**@file gmm_sub_matrix.h
+   @brief Generic sub-matrices.
+*/
+
 #ifndef GMM_SUB_MATRIX_H__
 #define GMM_SUB_MATRIX_H__
 

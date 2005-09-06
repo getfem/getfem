@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file getfem_mesh_slice.h
-   \brief Define the class getfem::stored_mesh_slice.
+/**@file getfem_mesh_slice.h
+   @brief Define the class getfem::stored_mesh_slice.
  */
 #ifndef GETFEM_MESH_SLICE_H
 #define GETFEM_MESH_SLICE_H
@@ -111,10 +111,10 @@ namespace getfem {
     size_type memsize() const;
     void clear() { poriginal_mesh = 0; cvlst.clear(); points_cnt = 0; 
       dim_ = size_type(-1); cv2pos.clear(); simplex_cnt.clear(); clear_merged_nodes(); }
-    /** \brief merge with another mesh slice. */
+    /** @brief merge with another mesh slice. */
     void merge(const stored_mesh_slice& sl);
 
-    /** \brief build a list of merged nodes.
+    /** @brief build a list of merged nodes.
 
          build a list of merged nodes, i.e. nodes which have the same
          geometrical location but were extracted from two different
@@ -139,7 +139,7 @@ namespace getfem {
     }
     void clear_merged_nodes() const;
 
-    /** \brief Extract the list of mesh edges.
+    /** @brief Extract the list of mesh edges.
 	
          extract the list of mesh edges into 'edges' (size = 2* number
          of edges). 'slice_edges' indicates which one were created
@@ -169,7 +169,7 @@ namespace getfem {
 	       size_type nrefine);
     
       
-    /** \brief Apply the listed slicer_action(s) to the slice object.
+    /** @brief Apply the listed slicer_action(s) to the slice object.
 
     the stored_mesh_slice is not modified. This can be used to build a
     new stored_mesh_slice from a stored_mesh_slice.
@@ -179,7 +179,7 @@ namespace getfem {
     void replay(slicer_action &a, slicer_action &b, slicer_action &c) const { replay(&a, &b, &c); }
     void replay(slicer_action *a, slicer_action *b, slicer_action *c) const;
 
-    /** \brief Interpolation of a mesh_fem on a slice.
+    /** @brief Interpolation of a mesh_fem on a slice.
 
         The mesh_fem and the slice must share the same mesh, of course.
 
@@ -238,7 +238,7 @@ namespace getfem {
     }
   };
 
-  /** \brief a getfem::mesh_slicer whose side effect is to build a
+  /** @brief a getfem::mesh_slicer whose side effect is to build a
       stored_mesh_slice object.
   */
   class slicer_build_stored_mesh_slice : public slicer_action {

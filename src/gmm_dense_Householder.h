@@ -28,12 +28,17 @@
 //
 //========================================================================
 
+/**@file gmm_dense_Householder.h
+   @brief Householder for dense matrices.
+*/
+
 #ifndef GMM_DENSE_HOUSEHOLDER_H
 #define GMM_DENSE_HOUSEHOLDER_H
 
 #include <gmm_kernel.h>
 
 namespace gmm {
+  ///@cond DOXY_SHOW_ALL_FUNCTIONS
 
   /* ********************************************************************* */
   /*    Rank one update  (complex and real version)                        */
@@ -77,6 +82,7 @@ namespace gmm {
     }
   }
   
+  ///@endcond
   template <typename Matrix, typename VecX, typename VecY>
   inline void rank_one_update(const Matrix &AA, const VecX& x,
 			      const VecY& y) {
@@ -84,6 +90,7 @@ namespace gmm {
     rank_one_update(A, x, y, typename principal_orientation_type<typename
 		    linalg_traits<Matrix>::sub_orientation>::potype());
   }
+  ///@cond DOXY_SHOW_ALL_FUNCTIONS
 
   /* ********************************************************************* */
   /*    Rank two update  (complex and real version)                        */
@@ -133,6 +140,7 @@ namespace gmm {
     }
   }
   
+  ///@endcond
   template <typename Matrix, typename VecX, typename VecY>
   inline void rank_two_update(const Matrix &AA, const VecX& x,
 			      const VecY& y) {
@@ -140,6 +148,7 @@ namespace gmm {
     rank_two_update(A, x, y, typename principal_orientation_type<typename
 		    linalg_traits<Matrix>::sub_orientation>::potype());
   }
+  ///@cond DOXY_SHOW_ALL_FUNCTIONS
 
   /* ********************************************************************* */
   /*    Householder vector computation (complex and real version)          */
@@ -199,6 +208,8 @@ namespace gmm {
 	      scaled(V, value_type(magnitude_type(-2)/vect_norm2_sqr(V))), W);
     rank_one_update(A, W, V);
   }
+
+  ///@endcond
 
   /* ********************************************************************* */
   /*    Hessemberg reduction with Householder.                             */
@@ -295,7 +306,7 @@ namespace gmm {
     for (size_type j = 0; j < mat_nrows(A); ++j)
       Apply_Givens_rotation_right(A(j,i), A(j,k), c, s);
   }
-
+  
 }
 
 #endif

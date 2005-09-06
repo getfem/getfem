@@ -28,8 +28,8 @@
 //
 //========================================================================
 
-/**\file getfem_Navier_Stokes.h
-   \brief Navier-Stokes dynamic brick.
+/**@file getfem_Navier_Stokes.h
+   @brief Navier-Stokes dynamic brick.
 */
 #ifndef GETFEM_NAVIER_STOKES_H__
 #define GETFEM_NAVIER_STOKES_H__
@@ -39,6 +39,10 @@
 
 namespace getfem {
 
+  /**
+     assembly of Tangent matrix for Navier-Stokes.
+     @ingroup asm
+  */
   template<typename MAT, typename VECT>
   void asm_navier_stokes_tgm(const MAT &M, 
 			     const mesh_im &mim, 
@@ -62,6 +66,10 @@ namespace getfem {
     assem.assembly(rg);
   }
 
+  /**
+     assembly of right hand side for Navier-Stokes.
+     @ingroup asm
+  */
   template<typename VECT1, typename VECT2> 
   void asm_navier_stokes_rhs(const VECT1 &V, 
 			     const mesh_im &mim, 
@@ -84,12 +92,9 @@ namespace getfem {
   }
 
 
-  /* ******************************************************************** */
-  /*	Incompressible Navier-Stokes brick.                               */
-  /* ******************************************************************** */
-
 # define MDBRICK_NAVIER_STOKES 394329
 
+  /** Internal brick for mdbrick_pre_navier_stokes */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_pre_navier_stokes : public mdbrick_abstract<MODEL_STATE> {
 
@@ -144,6 +149,10 @@ namespace getfem {
 
 
 
+  /**
+     Incompressible Navier-Stokes brick.
+     @ingroup bricks
+  */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_navier_stokes : public mdbrick_abstract<MODEL_STATE>  {
     

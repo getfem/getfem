@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file getfem_mesh_fem.h
-   \brief Define the getfem::mesh_fem class
+/**@file getfem_mesh_fem.h
+   @brief Define the getfem::mesh_fem class
 */
 
 #ifndef GETFEM_MESH_FEM_H__
@@ -91,7 +91,7 @@ namespace getfem
 
   };
 
-  /** \internal \brief structure for iteration over the dofs when Qdim
+  /** @internal @brief structure for iteration over the dofs when Qdim
       != 1 and target_dim == 1
   */
   template <class CONT> class tab_scal_to_vect {
@@ -195,8 +195,8 @@ namespace getfem
     /** Set the finite element on a set of convexes.
 	@param cvs the set of convex indexes, as a dal::bit_vector.
 	@param pf the finite element, typically obtained with
-	\code getfem::fem_descriptor("FEM_SOMETHING(..)") 
-	\endcode
+	@code getfem::fem_descriptor("FEM_SOMETHING(..)") 
+	@endcode
     */
     void set_finite_element(const dal::bit_vector &cvs, pfem pf);
     /** shortcut for set_finite_element(linked_mesh().convex_index(),pf); */

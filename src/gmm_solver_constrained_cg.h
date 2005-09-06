@@ -51,7 +51,8 @@
 // OR OTHER RIGHTS.
 //=======================================================================
 
-
+/**@file gmm_solver_constrained_cg.h
+   @brief Constrained conjugate gradient. */
 //  preconditionning does not work
 
 #ifndef GMM_SOLVER_CCG_H__
@@ -110,8 +111,7 @@ namespace gmm {
     }
   }
   
-  // Compute the minimum of 1/2((Ax).x) - bx under the contraint Cx <= f
-
+  /** Compute the minimum of @f$ 1/2((Ax).x) - bx @f$ under the contraint @f$ Cx <= f @f$ */
   template < typename Matrix,  typename CMatrix, typename Matps,
 	     typename VectorX, typename VectorB, typename VectorF,
 	     typename Preconditioner >

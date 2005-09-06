@@ -28,9 +28,11 @@
 //
 //========================================================================
 
-/**\file getfem_assembling.h
-   \brief Miscelleanous assembly routines for common PDEs.
+/**@file getfem_assembling.h
+   @brief Miscelleanous assembly routines for common PDEs.
 */
+
+/**@defgroup asm Assembly routines*/
 
 #ifndef GETFEM_ASSEMBLING_H__
 #define GETFEM_ASSEMBLING_H__
@@ -40,7 +42,8 @@
 namespace getfem
 {
   /**
-   * compute $\|U\|2_$, U might be real or complex
+     compute @f$ \|U\|_2 @f$, U might be real or complex
+     @ingroup asm
    */
   template<typename VEC>
   scalar_type asm_L2_norm(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
@@ -79,6 +82,8 @@ namespace getfem
   /**
      Compute the distance between U1 and U2, defined on two different mesh_fems 
      (but sharing the same mesh), without interpolating U1 on mf2.
+     
+     @ingroup asm
   */
   template<typename VEC1, typename VEC2>
   scalar_type asm_L2_dist(const mesh_im &mim, 
@@ -109,7 +114,8 @@ namespace getfem
 
   
   /**
-   * compute $\|\nabla U\|2_$, U might be real or complex
+     compute @f$\|\nabla U\|_2@f$, U might be real or complex
+     @ingroup asm
    */
   template<typename VEC>
   scalar_type asm_H1_semi_norm(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
@@ -171,8 +177,9 @@ namespace getfem
   }
 
   /** 
-   *   compute the H1 norm of U.
-   */
+      compute the H1 norm of U.
+      @ingroup asm
+  */
   template<typename VEC>
   scalar_type asm_H1_norm(const mesh_im &mim, const mesh_fem &mf, const VEC &U,
 			  const mesh_region &rg = mesh_region::all_convexes()) {
@@ -181,7 +188,8 @@ namespace getfem
   }
   
   /**
-   * Compute the H1 distance between U1 and U2
+     Compute the H1 distance between U1 and U2
+     @ingroup asm
    */
   template<typename VEC1, typename VEC2>
   scalar_type asm_H1_dist(const mesh_im &mim, 
@@ -193,8 +201,9 @@ namespace getfem
   }
 
   /** 
-   *  generic mass matrix assembly (on the whole mesh or on the specified
-   *  convex set or boundary) 
+     generic mass matrix assembly (on the whole mesh or on the specified
+     convex set or boundary) 
+     @ingroup asm
    */
   template<typename MAT>
   void asm_mass_matrix(const MAT &M, const mesh_im &mim, const mesh_fem &mf_u1,
@@ -229,8 +238,9 @@ namespace getfem
   }
 
   /** 
-   *  generic mass matrix assembly with an additional parameter
-   *  (on the whole mesh or on the specified boundary) 
+     generic mass matrix assembly with an additional parameter
+     (on the whole mesh or on the specified boundary) 
+     @ingroup asm
    */
   template<typename MAT, typename VECT>
   void asm_mass_matrix_param(MAT &M, const mesh_im &mim, const mesh_fem &mf_u,
@@ -255,7 +265,8 @@ namespace getfem
 
 
   /** 
-   *  source term (for both volumic sources and boundary (neumann) sources.
+      source term (for both volumic sources and boundary (neumann) sources.
+      @ingroup asm
    */
   template<typename VECT1, typename VECT2>
   void asm_source_term(VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
@@ -268,8 +279,9 @@ namespace getfem
   }
 
 
-  /*  source term (for both volumic sources and boundary (neumann) sources.
-   *  real version.
+  /*
+     source term (for both volumic sources and boundary (neumann) sources.
+     real version.
    */
   template<typename VECT1, typename VECT2, typename T>
   void asm_source_term(const VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
@@ -354,9 +366,9 @@ namespace getfem
   }
 
   /**
-     assembles $\int{qu.v}$
+     assembly of @f$\int{qu.v}@f$
 
-     (if $u$ is a vector field of size $N$, $q$ is a square matrix $N\timesN$
+     (if @f$u@f$ is a vector field of size @f$N@f$, @f$q@f$ is a square matrix @f$N\times N@f$
      used by assem_general_boundary_conditions
 
      convention: Q is of the form 
@@ -370,6 +382,7 @@ namespace getfem
      (fortran style)
 
      Works for both volumic assembly and boundary assembly
+     @ingroup asm
   */
   template<typename MAT, typename VECT>
   void asm_qu_term(const MAT &M, 
@@ -386,6 +399,7 @@ namespace getfem
 
   /** 
       Stiffness matrix for linear elasticity, with Lamé coefficients
+      @ingroup asm
   */
   template<class MAT, class VECT>
   void asm_stiffness_matrix_for_linear_elasticity(const MAT &RM_,
@@ -424,8 +438,11 @@ namespace getfem
   }
 
   /** 
-      Stiffness matrix for linear elasticity, with a general Hooke tensor. This is more a
-      demonstration of generic assembly than something useful !
+      Stiffness matrix for linear elasticity, with a general Hooke
+      tensor. This is more a demonstration of generic assembly than
+      something useful !  
+
+      @ingroup asm
   */
   template<typename MAT, typename VECT> void
   asm_stiffness_matrix_for_linear_elasticity_Hooke(MAT &RM,
@@ -453,8 +470,10 @@ namespace getfem
   }
 
   /** two-in-one assembly of stokes equation:
-   *  linear elasticty part and p.div(v) term are assembled at the
-   *  same time. 
+     linear elasticty part and p.div(v) term are assembled at the
+     same time. 
+
+     @ingroup asm
    */
   template<typename MAT, typename VECT>
   void asm_stokes(MAT &K, MAT &BT, 
@@ -482,6 +501,12 @@ namespace getfem
     assem.assembly(rg);
   }
 
+  /**
+     Build the mixed pressure term @f$ B = - \int p.div u @f$
+
+     @ingroup asm
+  */
+     
   template<typename MAT>
   void asm_stokes_B(MAT &B, const mesh_im &mim, const mesh_fem &mf_u,
 		    const mesh_fem &mf_p, 
@@ -498,7 +523,9 @@ namespace getfem
   }
 
   /**
-   * assembly of $\int_\Omega a(x)\nabla u.\nabla v$.
+     assembly of @f$\int_\Omega a(x)\nabla u.\nabla v@f$.
+
+     @ingroup asm
    */
   template<typename MAT>
   void asm_stiffness_matrix_for_homogeneous_laplacian(const MAT &M_,
@@ -515,7 +542,8 @@ namespace getfem
   }
 
   /**
-   * assembly of $\int_\Omega a(x)\nabla u.\nabla v$.
+     assembly of @f$\int_\Omega a(x)\nabla u.\nabla v@f$.
+     @ingroup asm
    */
   template<typename MAT>
   void asm_stiffness_matrix_for_homogeneous_laplacian_componentwise
@@ -532,7 +560,8 @@ namespace getfem
   }
 
   /**
-   * assembly of $\int_\Omega a(x)\nabla u.\nabla v$ , where $a(x)$ is scalar.
+     assembly of @f$\int_\Omega a(x)\nabla u.\nabla v@f$ , where @f$a(x)@f$ is scalar.
+     @ingroup asm
    */
   template<typename MAT, typename VECT>
   void asm_stiffness_matrix_for_laplacian(MAT &M, 
@@ -581,23 +610,27 @@ namespace getfem
   }
 
   /**
-     assembly of $\int_\Omega A(x)\nabla u.\nabla v$, where $A(x)$
+     assembly of @f$\int_\Omega A(x)\nabla u.\nabla v@f$, where @f$A(x)@f$
      is a NxN matrix.
      Arguments:
-     - M  : a sparse matrix of dimensions mf.nb_dof() x mf.nb_dof()
+     @param M a sparse matrix of dimensions mf.nb_dof() x mf.nb_dof()
 
-     - mf : the mesh_fem that describes the solution, with
-     mf.get_qdim() == N.
+     @param mim the mesh_im.
 
-     - mfdata : the mesh_fem that describes the coefficients of A
-     (mfdata.get_qdim() == 1).
+     @param mf : the mesh_fem that describes the solution, with
+     @c mf.get_qdim() == @c N.
 
-     - A__ : a (very large) vector, which is a flattened (n x n x
+     @param mfdata the mesh_fem that describes the coefficients of @c A
+     (@c mfdata.get_qdim() == 1).
+
+     @param A a (very large) vector, which is a flattened (n x n x
      mfdata.nb_dof()) 3D array. For each dof of mfdata, it contains
-     the n x n coefficients of A. As usual, the order is the
-     "fortran-order", i.e. A__ = [A_11(dof1) A_21(dof1) A_31(dof1)
+     the n x n coefficients of @f$A@f$. As usual, the order is the
+     "fortran-order", i.e. @c A = [A_11(dof1) A_21(dof1) A_31(dof1)
      A_12(dof1) A_22(dof1) ... A_33(dof) A_11(dof2)
      .... A_33(lastdof)]
+
+     @ingroup asm
   */
   template<typename MAT, typename VECT>
   void asm_stiffness_matrix_for_scalar_elliptic(MAT &M, 
@@ -643,10 +676,12 @@ namespace getfem
 
 
   /** 
-      assembly of the term $\int_\Omega Ku.v - \nabla u.\nabla v$, 
-      for the helmholtz equation ($\Delta u$ + k^2u = 0$, with $K=k^2$).
+      assembly of the term @f$\int_\Omega Ku.v - \nabla u.\nabla v@f$, 
+      for the helmholtz equation (@f$\Delta u + k^2u = 0@f$, with @f$K=k^2@f$).
 
       The argument K_squared may be a real or a complex-valued vector.
+
+     @ingroup asm
   */
   template<typename MAT, typename VECT>
   void asm_Helmholtz(MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem &mf_data,
@@ -723,6 +758,8 @@ namespace getfem
      |ASMDIR_BUILDR : build R
      |ASMDIR_SIMPLIFY : simplify
      |ASMDIR_BUILDALL : do everything.
+
+     @ingroup asm
   */
 
   template<typename MAT, typename VECT1, typename VECT2, typename VECT3>
@@ -808,7 +845,11 @@ namespace getfem
       }
     }
   }
-  
+
+  /**
+     simplest version of asm_dirichlet_constraints.
+     @ingroup asm
+  */
   template<typename MAT, typename VECT>
   void asm_dirichlet_constraints(MAT &H, VECT &R, 
 				 const mesh_im &mim, 
@@ -839,11 +880,15 @@ namespace getfem
 
   /**
      Faster (and simpler) assembly of simple Dirichlet conditions (
-     u(x) = F(x) on a boundary) 
-     
-     The input matrix RM and the right hand side B are modified to
-     enforce the Dirichlet condition. The symmetry properties of RM
-     are kept.
+     u(x) = F(x) on a boundary). 
+
+     @param mf should be Lagrangian.
+     @param boundary the boundary number.
+     @param F the dirichlet condition value.
+     @param RM,B are modified to enforce the Dirichlet condition. The
+     symmetry properties of RM are kept.
+
+     @ingroup asm
   */
   template<typename MATRM, typename VECT1, typename VECT2>
   void assembling_Dirichlet_condition(MATRM &RM, VECT1 &B,
@@ -922,6 +967,8 @@ namespace getfem
       solution of minimal norm of H*U = R in U0 and return the
       dimension of the kernel. The function is based on a
       Gramm-Schmidt algorithm.
+
+      @ingroup asm
   */
   template<typename MAT1, typename MAT2, typename VECT>
   size_type Dirichlet_nullspace(const MAT1 &H, MAT2 &NS,
@@ -1032,7 +1079,7 @@ namespace getfem
     
     return nbase;
   }
-  
+
 }  /* end of namespace getfem.                                             */
 
 

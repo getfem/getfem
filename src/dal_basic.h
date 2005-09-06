@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file dal_basic.h
-   \brief Dynamic array class.
+/**@file dal_basic.h
+   @brief Dynamic array class.
 */
 #ifndef DAL_BASIC_H__
 #define DAL_BASIC_H__
@@ -166,28 +166,26 @@ namespace dal
   };
   
   /**  Dynamic Array. Defines the basic container of the library which is 
-   *  dal::dynamic\_array$<$T, pks$>$. This container is virtually an
+   *  dal::dynamic_array<T, pks>. This container is virtually an
    * infinite array of element of type T. When a random acces tab[i] is
    * called, a control is made on i and an allocation is made if 
    * needed. The allocation is made by blocks of n elements, where
-   * $n = 2^{pks}$. $pks$ is an optional parameter assumed to be 5.
-   */
-  /*
-   * \subsubsection*{Example of code}
+   * @f$n = 2^{pks}@f$. @f$pks@f$ is an optional parameter assumed to be 5.
+   *
+   * <h3>Example of code</h3>
    *  If T is any type (with or without trivial constructor/destructor, 
    *  and with constructor T(0) and T(1)), the
-   *  following code is valid: \\ \\
-   * { \tt
-   *  \#include<dal_basic.h> \\ \\
-   *  dal::dynamic_array<T> tab; \\
-   *  tab[50] = T(0); // to be sure to have at least 50 elements \\
-   *  std::fill(tab.begin(), tab.end(), T(0)); // at least 50 elements
-   *  are initialized \\ \\
+   *  following code is valid:
+   * @code
+   *  #include<dal_basic.h>
+   *  dal::dynamic_array<T> tab;
+   *  tab[50] = T(0); // to be sure to have at least 50 elements
+   *  std::fill(tab.begin(), tab.end(), T(0)); // at least 50 elements are initialized
    *  dal::dynamic_array<T>::iterator it = tab.begin(); 
-   *  dal::dynamic_array<T>::iterator ite = it + 50;  \\
+   *  dal::dynamic_array<T>::iterator ite = it + 50; 
    *  for( ; it != ite; ++it)
    *    { *it = T(1); } // only the 50 first elements are changed.
-   * }
+   * @endcode
    */
   template<class T, unsigned char pks> class dynamic_array {
   public :

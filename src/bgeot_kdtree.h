@@ -30,8 +30,8 @@
 #ifndef BGEOT_KDTREE_H
 #define BGEOT_KDTREE_H
 
-/** \file bgeot_kdtree.h
-    \brief Simple implementation of a KD-tree.
+/** @file bgeot_kdtree.h
+    @brief Simple implementation of a KD-tree.
 
     Basically, a KD-tree is a balanced N-dimensional tree.
 */

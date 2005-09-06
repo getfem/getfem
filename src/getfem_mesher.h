@@ -28,8 +28,8 @@
 //
 //========================================================================
 
-/**\file getfem_mesher.h
-   \brief a broken mesher.
+/**@file getfem_mesher.h
+   @brief a broken mesher.
 */
 
 #ifndef GETFEM_MESHER_H__

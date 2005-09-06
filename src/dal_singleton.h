@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file dal_singleton.h
-   \brief A simple singleton implementation
+/**@file dal_singleton.h
+   @brief A simple singleton implementation
 
    Not thread safe, of course.
 */
@@ -75,10 +75,10 @@ namespace dal {
   /** singleton class. 
 
      usage: 
-     \code
+     @code
      foo &f = singleton<foo>::instance();
      const foo &f = singleton<foo>::const_instance();
-     \endcode
+     @endcode
      the LEV template arguments allows one to choose the order of destruction
      of the singletons:
        lowest LEV will be destroyed first.

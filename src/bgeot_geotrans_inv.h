@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file bgeot_geotrans_inv.h
-   \brief Inversion of geometric transformations.
+/**@file bgeot_geotrans_inv.h
+   @brief Inversion of geometric transformations.
 
    Inversion means: given a set of convexes and a point, find:
 
@@ -78,6 +78,7 @@ namespace bgeot {
        @return true if the n is inside the convex
        @param n node on the real element 
        @param n_ref computed node on the reference convex
+       @param IN_EPS a threshold.
     */
     bool invert(const base_node& n, base_node& n_ref,
 		scalar_type IN_EPS=1e-12) {
@@ -165,15 +166,17 @@ namespace bgeot {
      *  minmax box of its nodes times a factor 1.2. If the transformation is
      *  linear, the factor is 1.0.
      *
-     *  @param cv the convex points (as given by getfem_mesh::convex(ic))
+     *  @param cv the convex points (as given by getfem_mesh::convex(ic)).
      *
      *  @param pgt the geometric trans (as given by
-     *  getfem_mesh::trans_of_convex(ic))
+     *  getfem_mesh::trans_of_convex(ic)).
      *
      *  @param pftab container for the coordinates of points in the reference
      *  convex (should be of size nb_points())
      *
-     *  @param itab the indices of points found in the convex
+     *  @param itab the indices of points found in the convex.
+     *
+     *  @param bruteforce use a brute force search (only for debugging purposes).
      *
      *  @return the number of points in the convex (i.e. the size of itab,
      *  and pftab)

@@ -28,8 +28,8 @@
 //========================================================================
 
 
-/**\file bgeot_convex_ref.h
-   \brief Reference convexes
+/**@file bgeot_convex_ref.h
+   @brief Reference convexes
 */
 #ifndef BGEOT_CONVEX_REF_H__
 #define BGEOT_CONVEX_REF_H__
@@ -38,7 +38,7 @@
 
 namespace bgeot {
 
-  /** \defgroup refconvexes Reference Convexes*/
+  /** @defgroup refconvexes Reference Convexes*/
   /*@{*/
 
   /** Point tab storage. */

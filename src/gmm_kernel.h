@@ -27,6 +27,10 @@
 //
 //========================================================================
 
+/**@file gmm_kernel.h 
+   @brief Include the base gmm files.
+ */
+
 #ifndef GMM_KERNEL_H__
 #define GMM_KERNEL_H__
 

@@ -30,21 +30,27 @@
 #ifndef GMM_PRECOND_ILDLT_H
 #define GMM_PRECOND_ILDLT_H
 
-// Incomplete Level 0 Cholesky Preconditioner.
-// For use with symmetric real or hermitian complex sparse matrices.
-//
-// Notes: The idea under a concrete Preconditioner such 
-//        as Incomplete Cholesky is to create a Preconditioner
-//        object to use in iterative methods. 
-//
-
-// Y. Renard : Transformed in LDLT for stability reason.
-//             U=LT is stored in csr format. D is stored on the diagonal of U.
+/**@file gmm_precond_ildlt.h
+   @brief Incomplete Level 0 Cholesky Preconditioner.
+*/
 
 #include <gmm_precond.h>
 
 namespace gmm {
 
+  /** Incomplete Level 0 Cholesky Preconditioner.
+      
+  For use with symmetric real or hermitian complex sparse matrices.
+
+  Notes: The idea under a concrete Preconditioner such as Incomplete
+  Cholesky is to create a Preconditioner object to use in iterative
+  methods.
+
+
+  Y. Renard : Transformed in LDLT for stability reason.
+  
+  U=LT is stored in csr format. D is stored on the diagonal of U.
+  */
   template <typename Matrix>
   class ildlt_precond {
 

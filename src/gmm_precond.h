@@ -31,7 +31,10 @@
 
 #include <gmm_kernel.h>
 
-/* *********************************************************************** */
+/** @file gmm_precond.h
+ *  @brief gmm preconditioners.
+ */
+
 /* Preconditioner concept :                                                */
 /*                                                                         */
 /* A the matrix, P the preconditioner PA well conditioned.                 */

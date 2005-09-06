@@ -27,6 +27,9 @@
 //
 //========================================================================
 
+/**@file gmm_dense_lu.h
+   @brief LU factorizations and determinant computation for dense matrices.
+*/
 #ifndef GMM_DENSE_LU_H
 #define GMM_DENSE_LU_H
 
@@ -36,16 +39,16 @@
 namespace gmm {
 
 
-  // LU Factorization of a general (dense) matrix (real or complex)
-  //
-  // This is the outer product (a level-2 operation) form of the LU
-  // Factorization with pivoting algorithm . This is equivalent to
-  // LAPACK's dgetf2. Also see "Matrix Computations" 3rd Ed.  by Golub
-  // and Van Loan section 3.2.5 and especially page 115.
-  // 
-  // The pivot indices in ipvt are indexed starting from 1
-  // so that this is compatible with LAPACK (Fortran).
-  //
+  /** LU Factorization of a general (dense) matrix (real or complex).
+  
+  This is the outer product (a level-2 operation) form of the LU
+  Factorization with pivoting algorithm . This is equivalent to
+  LAPACK's dgetf2. Also see "Matrix Computations" 3rd Ed.  by Golub
+  and Van Loan section 3.2.5 and especially page 115.
+  
+  The pivot indices in ipvt are indexed starting from 1
+  so that this is compatible with LAPACK (Fortran).
+  */
   template <typename DenseMatrix, typename Pvector>
   size_type lu_factor(DenseMatrix& A, Pvector& ipvt) {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
@@ -77,9 +80,8 @@ namespace gmm {
     return info;
   }
   
-  //  LU Solve : Solve equation Ax=b, given an LU factored matrix.
+  /** LU Solve : Solve equation Ax=b, given an LU factored matrix.*/
   //  Thanks to Valient Gough for this routine!
-  //
   template <typename DenseMatrix, typename VectorB, typename VectorX,
 	    typename Pvector>
   void lu_solve(const DenseMatrix &LU, const Pvector& pvector, 
@@ -122,8 +124,7 @@ namespace gmm {
   }
 
 
-  // LU Inverse : Given an LU factored matrix, construct the inverse 
-  //              of the matrix.
+  ///@cond DOXY_SHOW_ALL_FUNCTIONS
   template <typename DenseMatrixLU, typename DenseMatrix, typename Pvector>
   void lu_inverse(const DenseMatrixLU& LU, const Pvector& pvector,
 		  DenseMatrix& AInv, col_major) {
@@ -155,7 +156,9 @@ namespace gmm {
       tmp[i] = T(0);
     }
   }
-  
+  ///@endcond  
+
+  /** Given an LU factored matrix, build the inverse of the matrix. */
   template <typename DenseMatrixLU, typename DenseMatrix, typename Pvector>
   void lu_inverse(const DenseMatrixLU& LU, const Pvector& pvector,
 		  const DenseMatrix& AInv_) {
@@ -164,6 +167,8 @@ namespace gmm {
 	       linalg_traits<DenseMatrix>::sub_orientation>::potype());
   }
 
+  /** Given an LU factored matrix, build the inverse of the matrix, and
+      return the determinant */
   template <typename DenseMatrix>
   typename linalg_traits<DenseMatrix>::value_type
   lu_inverse(const DenseMatrix& A_) {
@@ -179,6 +184,7 @@ namespace gmm {
     return lu_det(B, ipvt);
   }
 
+  /** Compute the matrix determinant (via a LU factorization) */
   template <typename DenseMatrixLU, typename Pvector>
   typename linalg_traits<DenseMatrixLU>::value_type
   lu_det(const DenseMatrixLU& LU, const Pvector &pvector) {

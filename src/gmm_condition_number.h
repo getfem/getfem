@@ -28,6 +28,9 @@
 //
 //========================================================================
 
+/**@file gmm_condition_number.h
+   @brief computation of the condition number of dense matrices.
+*/
 #ifndef GMM_CONDITION_NUMBER_H__
 #define GMM_CONDITION_NUMBER_H__
 
@@ -35,10 +38,14 @@
 
 namespace gmm {
 
-  /** computation of the condition number using SVD
-   * (with symmetric_qr_algorithm => dense matrices only)
-   */
+  /** computation of the condition number of dense matrices using SVD.
 
+      Uses symmetric_qr_algorithm => dense matrices only.
+
+      @param M a matrix.
+      @param emin smallest (in magnitude) eigenvalue
+      @param emax largest eigenvalue.
+   */
   template <typename MAT> 
   typename number_traits<typename 
   linalg_traits<MAT>::value_type>::magnitude_type
@@ -106,10 +113,8 @@ namespace gmm {
   Frobenius_condition_number(const MAT& M)
   { return sqrt(Frobenius_condition_number_sqr(M)); }
 
-  /** estimation of the condition number (to be done ...)
-   * (using symmetric_qr_algorithm => dense matrices only)
+  /** estimation of the condition number (TO BE DONE...)
    */
-
   template <typename MAT> 
   typename number_traits<typename 
   linalg_traits<MAT>::value_type>::magnitude_type

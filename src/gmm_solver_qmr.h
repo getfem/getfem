@@ -27,6 +27,10 @@
 // Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //========================================================================
+
+/**@file gmm_solver_qmr.h
+   @brief Quasi-Minimal Residual iterative solver.
+*/
 #ifndef GMM_QMR_H
 #define GMM_QMR_H
 
@@ -35,17 +39,18 @@
 
 namespace gmm {
 
-  //: Quasi-Minimal Residual
-  //
-  //  This routine solves the unsymmetric linear system Ax = b using the
-  //  Quasi-Minimal Residual method.
-  // 
-  //See: R. W. Freund and N. M. Nachtigal, A quasi-minimal residual method for 
-  //non-Hermitian linear systems, Numerical Math., 60(1991), pp. 315-339
-  //
-  // Preconditioner -  Incomplete LU, Incomplete LU with threshold,
-  //                   SSOR or identity_preconditioner.
-
+  /** Quasi-Minimal Residual.
+     
+     This routine solves the unsymmetric linear system Ax = b using
+     the Quasi-Minimal Residual method.
+   
+     See: R. W. Freund and N. M. Nachtigal, A quasi-minimal residual
+     method for non-Hermitian linear systems, Numerical Math.,
+     60(1991), pp. 315-339
+  
+     Preconditioner -  Incomplete LU, Incomplete LU with threshold,
+                       SSOR or identity_preconditioner.
+  */
   template <typename Matrix, typename Vector, typename VectorB,
 	    typename Precond1>
   void qmr(const Matrix &A, Vector &x, const VectorB &b, const Precond1 &M1,

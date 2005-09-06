@@ -28,6 +28,9 @@
 //
 //========================================================================
 
+/**@file gmm_inoutput.h
+   @brief Input/output on sparse matrices (Harwell-Boeing and Matrix-Market formats).
+*/
 #ifndef GMM_INOUTPUT_H
 #define GMM_INOUTPUT_H
 

@@ -28,6 +28,10 @@
 //
 //========================================================================
 
+/**@file gmm_modified_gram_schmidt.h
+   @brief Modified Gram-Schmidt orthogonalization
+*/
+
 #ifndef GMM_MODIFIED_GRAM_SCHMIDT_H
 #define GMM_MODIFIED_GRAM_SCHMIDT_H
 

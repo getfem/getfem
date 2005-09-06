@@ -27,8 +27,8 @@
 // Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //========================================================================
-/**\file getfem_linearized_plates.h
-   \brief Define a linear plate model brick.
+/**@file getfem_linearized_plates.h
+   @brief Define a linear plate model brick.
 */
 
 #ifndef GETFEM_LINEARIZED_PLATES_H__
@@ -42,6 +42,7 @@ namespace getfem {
   /*		Linear plate specific assembly procedures.                */
   /* ******************************************************************** */
 
+  /**@ingroup asm*/
   template<class MAT, class VECT>
   void asm_stiffness_matrix_for_plate_transverse_shear
   (const MAT &RM, const mesh_im &mim, const mesh_fem &mf_u3,
@@ -55,6 +56,7 @@ namespace getfem {
        gmm::sub_matrix(RM, I2), mim, mf_u3, mf_theta, mfdata, MU);
   }
 
+  /**@ingroup asm*/
   template<class MAT, class MAT3, class VECT>
   void asm_stiffness_matrix_for_plate_transverse_shear
   (const MAT &RM1, const MAT &RM2, const MAT3 &RM3, const MAT &RM4,
@@ -86,6 +88,7 @@ namespace getfem {
     assem.assembly(rg);
   }
   
+  /**@ingroup asm*/
   template<class MAT, class VECT>
   void asm_stiffness_matrix_for_plate_transverse_shear_mitc
   (const MAT &RM, const mesh_im &mim, const mesh_fem &mf_u3,
@@ -99,6 +102,7 @@ namespace getfem {
        gmm::sub_matrix(RM, I2), mim, mf_u3, mf_theta, mfdata, MU);
   }
 
+  /**@ingroup asm*/
   template<class MAT, class MAT3, class VECT>
   void asm_stiffness_matrix_for_plate_transverse_shear_mitc
   (const MAT &RM1, const MAT &RM2, const MAT3 &RM3, const MAT &RM4,
@@ -152,6 +156,10 @@ namespace getfem {
 
 # define MDBRICK_LINEAR_PLATE 897523
 
+  /**
+     Linear plate model brick
+     @ingroup bricks
+  */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_isotropic_linearized_plate
     : public mdbrick_abstract<MODEL_STATE> {
@@ -316,6 +324,7 @@ namespace getfem {
   /*		Mixed linear plate specific assembly procedures.          */
   /* ******************************************************************** */
 
+  /**@ingroup asm*/
   template<class MAT>
   void asm_coupling_u3theta(const MAT &RM, const mesh_im &mim,
 			    const mesh_fem &mf_u3,
@@ -334,6 +343,7 @@ namespace getfem {
     assem.assembly(rg);
   }
 
+  /**@ingroup asm*/
   template<class MAT>
   void asm_coupling_psitheta(const MAT &RM,  const mesh_im &mim,
 			     const mesh_fem &mf_u3,
@@ -358,6 +368,9 @@ namespace getfem {
 
 # define MDBRICK_MIXED_LINEAR_PLATE 213456
 
+  /** 
+      Mixed linear plate model brick.
+  */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_mixed_isotropic_linearized_plate
     : public mdbrick_abstract<MODEL_STATE> {
@@ -550,10 +563,9 @@ namespace getfem {
   };
 
 
-  /* ******************************************************************** */
-  /*		plate source term model brick.                            */
-  /* ******************************************************************** */
-
+  /**
+     Plate source term brick.
+  */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_plate_source_term : public mdbrick_abstract<MODEL_STATE>  {
     
@@ -629,10 +641,10 @@ namespace getfem {
     
   };
 
-  /* ******************************************************************** */
-  /*		Simple support condition for plate model brick.           */
-  /* ******************************************************************** */
 
+  /**
+     Simple support condition for plate model brick.
+  */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_plate_simple_support : public mdbrick_abstract<MODEL_STATE>  {
     
@@ -690,10 +702,10 @@ namespace getfem {
     
   };
 
-  /* ******************************************************************** */
-  /*		Clamped condition for plate model brick.                  */
-  /* ******************************************************************** */
 
+  /**
+     Clamped condition for plate model brick.
+  */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_plate_clamped_support: public mdbrick_abstract<MODEL_STATE> {
     
@@ -759,6 +771,7 @@ namespace getfem {
   /*		Free edges condition for mixed plate model brick.         */
   /* ******************************************************************** */
 
+  /**@ingroup asm*/
   template<class VEC>
   void asm_constraint_on_theta(const VEC &V, const mesh_im &mim, 
 			       const mesh_fem &mf_theta, const mesh_region &boundary) {
@@ -770,6 +783,9 @@ namespace getfem {
     assem.assembly(boundary);
   }
 
+  /**
+     Free edges condition for mixed plate model brick.
+   */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_plate_closing: public mdbrick_abstract<MODEL_STATE> {
  

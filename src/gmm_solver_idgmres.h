@@ -28,6 +28,9 @@
 //
 //========================================================================
 
+/**@file gmm_solver_idgmres.h
+   @brief Implicitly restarted and deflated Generalized Minimum Residual.
+*/
 #ifndef GMM_IDGMRES_H
 #define GMM_IDGMRES_H
 
@@ -36,24 +39,6 @@
 #include <gmm_dense_sylvester.h>
 
 namespace gmm {
-
-  // Implicitly restarted and deflated Generalized Minimum Residual
-  //
-  //   See: C. Le Calvez, B. Molina, Implicitly restarted and deflated
-  //        FOM and GMRES, numerical applied mathematics,
-  //        (30) 2-3 (1999) pp191-212.
-  //
-  //
-  // A : Real or complex unsymmetric matrix.
-  // x : initial guess vector and final result.
-  // b : right hand side
-  // M : preconditionner
-  // m : size of the subspace between two restarts
-  // p : number of converged ritz values seeked
-  // k : size of the remaining Krylov subspace when the p ritz values
-  //      have not yet converged 0 <= p <= k < m.
-  // tol_vp : tolerance on the ritz values.
-
 
   template <typename T> compare_vp {
     bool operator()(const std::pair<T, size_type> &a,
@@ -101,6 +86,24 @@ namespace gmm {
   }
 
 
+  /** Implicitly restarted and deflated Generalized Minimum Residual
+
+      See: C. Le Calvez, B. Molina, Implicitly restarted and deflated
+      FOM and GMRES, numerical applied mathematics,
+      (30) 2-3 (1999) pp191-212.
+      
+      @param A Real or complex unsymmetric matrix.
+      @param x initial guess vector and final result.
+      @param b right hand side
+      @param M preconditionner
+      @param m size of the subspace between two restarts
+      @param p number of converged ritz values seeked
+      @param k size of the remaining Krylov subspace when the p ritz values
+      have not yet converged 0 <= p <= k < m.
+      @param tol_vp : tolerance on the ritz values.
+      @param outer
+      @param KS
+  */
   template < typename Mat, typename Vec, typename VecB, typename Precond,
 	     typename Basis >
   void idgmres(const Mat &A, Vec &x, const VecB &b, const Precond &M,

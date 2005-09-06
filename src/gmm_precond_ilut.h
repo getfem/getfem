@@ -30,14 +30,9 @@
 #ifndef GMM_PRECOND_ILUT_H
 #define GMM_PRECOND_ILUT_H
 
-//: ILUT:  Incomplete LU with threshold and K fill-in Preconditioner.
-//  The algorithm of ILUT(A, 0, 1.0e-6) is slower than ILU(A). If No fill-in 
-//  is arrowed, you can use ILU instead of ILUT.
-//
-// Notes: The idea under a concrete Preconditioner such 
-//        as ilut is to create a Preconditioner
-//        object to use in iterative methods. 
-//
+/**@file gmm_precond_ilut.h
+   @brief ILUT:  Incomplete LU with threshold and K fill-in Preconditioner.
+*/
 
 /*
   Performane comparing for SSOR, ILU and ILUT based on sherman 5 matrix 
@@ -59,6 +54,14 @@ namespace gmm {
     { return (gmm::abs(a.e) > gmm::abs(b.e)); }
   };
 
+  /** Incomplete LU with threshold and K fill-in Preconditioner.
+
+  The algorithm of ILUT(A, 0, 1.0e-6) is slower than ILU(A). If No
+  fill-in is arrowed, you can use ILU instead of ILUT.
+
+  Notes: The idea under a concrete Preconditioner such as ilut is to
+  create a Preconditioner object to use in iterative methods.
+  */
   template <typename Matrix>
   class ilut_precond  {
   public :

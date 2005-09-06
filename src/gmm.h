@@ -27,6 +27,9 @@
 //
 //========================================================================
 
+/**@file gmm.h
+   @brief Include common gmm files.
+*/
 #ifndef GMM_H__
 #define GMM_H__
 

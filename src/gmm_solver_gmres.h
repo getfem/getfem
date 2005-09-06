@@ -28,6 +28,9 @@
 //
 //========================================================================
 
+/**@file gmm_solver_gmres.h
+   @brief GMRES (Generalized Minimum Residual) iterative solver.
+*/
 #ifndef GMM_KRYLOV_GMRES_H
 #define GMM_KRYLOV_GMRES_H
 
@@ -37,15 +40,14 @@
 
 namespace gmm {
 
-  // Generalized Minimum Residual
-  //
-  //   This solve the unsymmetric linear system Ax = b using restarted GMRES.
-  //
-  //   See: Y. Saad and M. Schulter. GMRES: A generalized minimum residual
-  //   algorithm for solving nonsysmmetric linear systems, SIAM
-  //   J. Sci. Statist. Comp.  7(1986), pp, 856-869
-  //
-
+  /** Generalized Minimum Residual
+   
+      This solve the unsymmetric linear system Ax = b using restarted GMRES.
+      
+      See: Y. Saad and M. Schulter. GMRES: A generalized minimum residual
+      algorithm for solving nonsysmmetric linear systems, SIAM
+      J. Sci. Statist. Comp.  7(1986), pp, 856-869
+  */
   template <typename Mat, typename Vec, typename VecB, typename Precond,
 	    typename Basis >
   void gmres(const Mat &A, Vec &x, const VecB &b, const Precond &M,

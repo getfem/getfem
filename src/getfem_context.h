@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file getfem_context.h
-   \brief Deal with interdependencies of objects (getfem::context_dependencies).
+/**@file getfem_context.h
+   @brief Deal with interdependencies of objects (getfem::context_dependencies).
 */
 #ifndef GETFEM_CONTEXT_H__
 #define GETFEM_CONTEXT_H__

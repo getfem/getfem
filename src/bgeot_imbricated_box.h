@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file bgeot_imbricated_box.h
-   \brief A comparison function for bgeot::base_node
+/**@file bgeot_imbricated_box.h
+   @brief A comparison function for bgeot::base_node
 */
 #ifndef BGEOT_IMBRICATED_BOX
 #define BGEOT_IMBRICATED_BOX

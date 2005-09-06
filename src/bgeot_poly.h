@@ -31,8 +31,8 @@
 #ifndef BGEOT_POLY_H__
 #define BGEOT_POLY_H__
 
-/** \file bgeot_poly.h
-    \brief Multivariate polynomials.
+/** @file bgeot_poly.h
+    @brief Multivariate polynomials.
 */
 
 #include <bgeot_config.h>
@@ -47,9 +47,9 @@ namespace bgeot
   typedef dal::uint16_type short_type;
   ///
   
-  /** Return the value of $\frac{(n+p)!}{n!p!}$ which
-   * is the number of monomials of a polynomial of $n$
-   * variables and degree $d$
+  /** Return the value of @f$ \frac{(n+p)!}{n!p!} @f$ which
+   * is the number of monomials of a polynomial of @f$n@f$
+   * variables and degree @f$d@f$.
    */
   size_type alpha(short_type n, short_type d);
   
@@ -94,63 +94,75 @@ namespace bgeot
   };
   
   /**
-   * This class deals with the plain polynomials with
-   * several variables. The coefficients are abstract ($<$T$>$).
-   * A polynomial of $n$ variables and degree $d$ is stored in a vector
-   * of $\alpha_d^n$ components.
-   * \subsubsection*{Example of code}
-   *   the following code is valid :
-   *   { \tt
+   * This class deals with plain polynomials with
+   * several variables. 
    *
-   *   \noindent \#include<bgeot_poly.h> \\ \\
-   *   bgeot::polynomial<double> P, Q; \\
-   *   P = bgeot::polynomial<double>(2,2,1); // P = x \\
-   *   Q = bgeot::polynomial<double>(2,2,2); // Q = y \\
-   *   P += Q; // P is equal to x+y. \\
-   *   P *= Q; // P is equal to xy + $y^2$ \\ \\ 
-   *   bgeot::power_index pi(P.dim()); \\
-   *   bgeot::polynomial<double>::const_iterator ite = Q.end(); \\
-   *   bgeot::polynomial<double>::const_iterator itb = Q.begin(); \\
-   *   for ( ; itb != ite; ++itb, ++pi) \\
-   *     if (*itq != double(0)) \\
-   *       cout "there is x to the power " << pi[0] \\
-   *             << " and y to the power " \\
-   *             << pi[1] << " and a coefficient " << *itq << endl; \\
-   *  }
-   *     \subsubsection*{Monomials ordering}
-   *       The constant coefficient is placed first with the index 0.\\
+   * A polynomial of @f$n@f$ variables and degree @f$d@f$ is stored in a vector
+   * of @f$\alpha_d^n@f$ components.
+   *
+   * <h3>Example of code</h3>
+   *
+   *   the following code is valid :
+   *   @code
+   *   #include<bgeot_poly.h>
+   *   bgeot::polynomial<double> P, Q;
+   *   P = bgeot::polynomial<double>(2,2,1); // P = x
+   *   Q = bgeot::polynomial<double>(2,2,2); // Q = y
+   *   P += Q; // P is equal to x+y. 
+   *   P *= Q; // P is equal to xy + y^2
+   *   bgeot::power_index pi(P.dim()); 
+   *   bgeot::polynomial<double>::const_iterator ite = Q.end();
+   *   bgeot::polynomial<double>::const_iterator itb = Q.begin();
+   *   for ( ; itb != ite; ++itb, ++pi)
+   *     if (*itq != double(0))
+   *       cout "there is x to the power " << pi[0]
+   *             << " and y to the power "
+   *             << pi[1] << " and a coefficient " << *itq << endl;
+   *  @endcode
+   *
+   *  <h3>Monomials ordering.</h3>
+   *
+   *       The constant coefficient is placed first with the index 0.
    *       Two monomials of different degrees are ordered following
    *       there respective degree.
+   *
    *       If two monomials have the same degree, they are ordered with the
    *       degree of the mononomials without the n firsts variables which
    *       have the same degree. The index of the monomial
-   *       $ x 0_^{i_0}x_1^{i_1} ... x_{n-1}^{i_{n-1}} $
+   *       @f$ x_0^{i_0}x_1^{i_1} ... x_{n-1}^{i_{n-1}} @f$
    *       is then
-   *       $ \alpha_{d-1}^{n} + \alpha_{d-i_0-1}^{n-1} 
-   *          + \alpha_{d-i_0-i_1-1}^{n-2} + ... + \alpha_{i_{n-1}-1}^{1}, $
-   *       where $d = \sum_{l=0}^{n-1} i_l$ is the degree of the monomial.
-   *       (by convention $\alpha_{-1}^{n} = 0$).
-   *     \subsubsection*{Dealing with the vector of power}
+   *       @f$ \alpha_{d-1}^{n} + \alpha_{d-i_0-1}^{n-1} 
+   *          + \alpha_{d-i_0-i_1-1}^{n-2} + ... + \alpha_{i_{n-1}-1}^{1}, @f$
+   *       where @f$d = \sum_{l=0}^{n-1} i_l@f$ is the degree of the monomial.
+   *       (by convention @f$\alpha_{-1}^{n} = 0@f$).
+   *
+   *  <h3>Dealing with the vector of power.</h3>
+   *
    *        The answer to the question : what is the next and previous
-   *        monomial of $x_0^{i_0}x_1^{i_1} ... x_{n-1}^{i_{n-1}}$ in the
-   *        vector is the following :\\
-   *        To take the next coefficient, let $l$ be the last index between 0
-   *        and $n-2$ such that $i_l \ne 0$ ($l = -1$ if there is not), then
-   *        make the operations $a = i_{n-1}; i_{n-1} = 0; i_{l+1} = a+1;
-   *        \mbox{ if } l \ge 0 \mbox{ then } i_l = i_l - 1$.\\
-   *        To take the previous coefficient, let $l$ be the last index 
-   *        between 0 and $n-1$ such that $i_l \ne 0$ (if there is not, there
-   *        is no previous monomial) then make the operations $a = i_l;
+   *        monomial of @f$x_0^{i_0}x_1^{i_1} ... x_{n-1}^{i_{n-1}}@f$ in the
+   *        vector is the following :
+   *
+   *        To take the next coefficient, let @f$l@f$ be the last index between 0
+   *        and @f$n-2@f$ such that @f$i_l \ne 0@f$ (@f$l = -1@f$ if there is not), then
+   *        make the operations @f$a = i_{n-1}; i_{n-1} = 0; i_{l+1} = a+1;
+   *        \mbox{ if } l \ge 0 \mbox{ then } i_l = i_l - 1@f$.
+   *
+   *        To take the previous coefficient, let @f$l@f$ be the last index 
+   *        between 0 and @f$n-1@f$ such that @f$i_l \ne 0@f$ (if there is not, there
+   *        is no previous monomial) then make the operations @f$a = i_l;
    *        i_l = 0; i_{n-1} = a - 1; \mbox{ if } l \ge 1 \mbox{ then } 
-   *        i_{l-1} = i_{l-1} + 1$.
-   *     \subsubsection*{Direct product multiplication}
+   *        i_{l-1} = i_{l-1} + 1@f$.
+   *
+   *  <h3>Direct product multiplication.</h3>
+   *
    *        This direct product multiplication of P and Q is the
    *        multiplication considering that the variables of Q follow the
    *        variables of P. The result is a polynomial with the number of
-   *        variables of P plus the number of variables of Q.\\
-   *        The resulting polynomials have a smaller degree.\\
-   *     \subsubsection*{Horner scheme to evaluate polynomials}
-   *        To do ...
+   *        variables of P plus the number of variables of Q.
+   *        The resulting polynomials have a smaller degree.
+   *
+   *  @todo <h3>Horner scheme to evaluate polynomials.</h3>
+   *
    */
   template<typename T> class polynomial : public std::vector<T> {
   protected :
@@ -421,7 +433,7 @@ namespace bgeot
   }
 
 
-  /// Print P to the output stream o. for instance cout $<<$ P;
+  /// Print P to the output stream o. for instance cout << P;
   template<typename T>  std::ostream &operator <<(std::ostream &o,
 						     const polynomial<T>& P) { 
     bool first = true; size_type n = 0;

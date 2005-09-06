@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/** \file dal_algobase.h 
-    \brief Miscelleanous algorithms on containers.
+/** @file dal_algobase.h 
+    @brief Miscelleanous algorithms on containers.
 */
 
 #ifndef DAL_ALGOBASE_H__

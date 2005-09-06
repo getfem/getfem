@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file getfem_poly_composite.h
-   \brief Handle composite polynomials.
+/**@file getfem_poly_composite.h
+   @brief Handle composite polynomials.
 
    Composite polynomials are used in hierarchical FEM.
 */

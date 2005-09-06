@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file dal_shared_ptr.h
-   \brief A (very simplified and rough) version of boost::shared_ptr.
+/**@file dal_shared_ptr.h
+   @brief A (very simplified and rough) version of boost::shared_ptr.
 */
 #ifndef DAL_SHARED_PTR_H__
 #define DAL_SHARED_PTR_H__
@@ -40,9 +40,10 @@
 namespace dal {
   /**
      a (very simplified and rough) version of boost::shared_ptr
-      .. not thread safe ..
-      .. no fancy operators ..
-     + possibility to handle non-refcounted pointers (i.e. normal pointers)
+     
+     - not thread safe.
+     - no fancy operators
+     - possibility to handle non-refcounted pointers (i.e. normal pointers)
 
      caution: should not be used for data allocated with new[] 
   */

@@ -26,19 +26,29 @@
 // Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //========================================================================
+
+/**@file gmm_precond_ilutp.h
+   @brief ILUTP: Incomplete LU with threshold and K fill-in Preconditioner and
+   column pivoting.
+
+   
+*/
 #ifndef GMM_PRECOND_ILUTP_H
 #define GMM_PRECOND_ILUTP_H
-
-// ILUTP:  Incomplete LU with threshold and K fill-in Preconditioner and
-//         column pivoting (See Yousef Saad, Iterative Methods for
-//         sparse linear systems, PWS Publishing Company, section 10.4.4
-
-// TODO : store the permutation by cycles to avoid the temporary vector
 
 #include <gmm_precond_ilut.h>
 
 namespace gmm {
 
+  /**
+     ILUTP: Incomplete LU with threshold and K fill-in Preconditioner and
+     column pivoting.
+   
+     See Yousef Saad, Iterative Methods for
+     sparse linear systems, PWS Publishing Company, section 10.4.4
+
+      TODO : store the permutation by cycles to avoid the temporary vector
+  */
   template <typename Matrix>
   class ilutp_precond  {
   public :

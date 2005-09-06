@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file getfem_plasticity.h
-   \brief Plasticity model brick.
+/**@file getfem_plasticity.h
+   @brief Plasticity model brick.
 */
 
 #ifndef GETFEM_PLASTICITY__
@@ -330,6 +330,7 @@ namespace getfem {
 
   /** 
      Right hand side vector for plasticity 
+      @ingroup asm
   */
   template<typename VECT> 
   void asm_rhs_for_plasticity(VECT &V, 
@@ -354,6 +355,7 @@ namespace getfem {
 
   /** 
       Left hand side matrix for plasticity
+      @ingroup asm
   */
   template<typename MAT,typename VECT> 
   void asm_lhs_for_plasticity(MAT &H, 
@@ -385,12 +387,15 @@ namespace getfem {
   /* ******************************************************************** */
   /*		Plasticity bricks.                                        */
   /* ******************************************************************** */  
-  /* TODO :
-   *  - plan strain, plan stress  (cf flag_hyp) 
-   */
-
 # define MDBRICK_SMALL_DEF_PLASTICITY 556433
   
+  /**
+     Plasticity brick (small deformations).
+
+     @todo plane strain, plane stress  (cf flag_hyp).
+     @ingroup bricks
+   */
+
   template<typename MODEL_STATE = standard_model_state> 
     class mdbrick_plasticity : public mdbrick_abstract<MODEL_STATE> {
       
@@ -519,8 +524,8 @@ namespace getfem {
 	this->update_from_context();
       }
 
-      // constructor for a homogeneous material (constant lambda, mu and
-      // stress_threshold)
+      /** constructor for a homogeneous material (constant lambda, mu and
+	  stress_threshold */
       mdbrick_plasticity(mesh_im &mim_, mesh_fem &mf_u_, mesh_fem &mf_data_,
 			 value_type lambdai, value_type mui,
 			 value_type stress_threshold,
@@ -528,7 +533,7 @@ namespace getfem {
 	: mim(mim_), mf_u(mf_u_), mf_data(mf_data_), t_proj(t_proj_)
       { set_coeff(lambdai, mui, stress_threshold); init_(); }
 
-      // constructor for a non-homogeneous material
+      /// constructor for a non-homogeneous material
       mdbrick_plasticity(mesh_im &mim_, mesh_fem &mf_u_, mesh_fem &mf_data_,
 			 const VECTOR &lambdai, const VECTOR &mui,
 			 const VECTOR &stress_threshold,

@@ -26,8 +26,8 @@
 // Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //========================================================================
-/**\file getfem_mat_elem_type.h
-   \brief Build elementary tensors descriptors, used by generic assembly.
+/**@file getfem_mat_elem_type.h
+   @brief Build elementary tensors descriptors, used by generic assembly.
 */
 
 #ifndef GETFEM_MAT_ELEM_TYPE_H__
@@ -92,7 +92,7 @@ namespace getfem {
   };
 
   /** Description of an elementary matrix.  This class 
-   *  is not to be manipulate by itself. Use pmat\_elem\_type and
+   *  is not to be manipulate by itself. Use pmat_elem_type and
    *  the functions written to produce those descriptions.
    */ 
   struct mat_elem_type
@@ -110,17 +110,16 @@ namespace getfem {
   //@{
   
   
-  /** Gives a pointer to the structure describing the elementary matrix
+  /** Give a pointer to the structure describing the elementary matrix
    *   which compute the integral of the basic functions described by pfi.
-   *    pfi is of type bgeot::pfem\_interpolation.
    */
   pmat_elem_type mat_elem_base(pfem pfi);
-  /** Gives a pointer to the structure describing the elementary matrix
+  /** Give a pointer to the structure describing the elementary matrix
    *   which compute the integral of the gradient of the basic functions
-   *    described by pfi. pfi is of type bgeot::pfem\_interpolation.
+   *    described by pfi. 
    */
   pmat_elem_type mat_elem_grad(pfem pfi);
-  /** Gives a pointer to the structure describing the elementary matrix
+  /** Give a pointer to the structure describing the elementary matrix
    *   which compute the unit normal on the boundary of the element 
    */
   pmat_elem_type mat_elem_unit_normal(void);
@@ -130,12 +129,12 @@ namespace getfem {
       getfem++ kernel doc.).
   */
   pmat_elem_type mat_elem_grad_geotrans(bool inverted);
-  /** Gives a pointer to the structure describing the elementary matrix
+  /** Give a pointer to the structure describing the elementary matrix
    *   which compute the integral of the hessian of the basic functions
-   *    described by pfi. pfi is of type bgeot::pfem\_interpolation. 
+   *    described by pfi.
    */
     pmat_elem_type mat_elem_hessian(pfem pfi);
-  /** Gives a pointer to the structure describing the elementary
+  /** Give a pointer to the structure describing the elementary
     matrix which compute the integral of a nonlinear term.  
     
     The pnonlinear_elem_term must not be destroyed, at any time!
@@ -150,9 +149,9 @@ namespace getfem {
   pmat_elem_type mat_elem_nonlinear(pnonlinear_elem_term,
 				    std::vector<pfem> pfi);
 
-  /** Gives a pointer to the structure describing the elementary matrix
-   *   which compute the integral of product described by
-   *   *pet1 and *pet2.
+  /** Give a pointer to the structure describing the elementary matrix
+   *   which computes the integral of product described by
+   *   *a and *b.
    */
   pmat_elem_type mat_elem_product(pmat_elem_type a, pmat_elem_type b);
   

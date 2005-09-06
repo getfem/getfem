@@ -39,8 +39,8 @@
 
 namespace dal {
 
-  /** \file dal_naming_system.h
-      \brief Naming system.
+  /** @file dal_naming_system.h
+      @brief Naming system.
   */
 
 

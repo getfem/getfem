@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file getfem_mat_elem.h
-   \brief elementary computations (used by the generic assembly).
+/**@file getfem_mat_elem.h
+   @brief elementary computations (used by the generic assembly).
 
    This is the kernel of getfem..
 */

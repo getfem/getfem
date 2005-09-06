@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file bgeot_vector.h
-   \brief some (old) vector class, and some typedefs.
+/**@file bgeot_vector.h
+   @brief some (old) vector class, and some typedefs.
 
    vsvector should be replaced by gmm calls.
 */
@@ -169,7 +169,7 @@ namespace bgeot
   using gmm::vect_norm2;
   using gmm::vect_norm2_sqr;
 
-  /// Gives $\displaystyle (\sum_{i=0..(n-1)} |v_i - w_i|^2)$.
+  /// Gives @f$(\sum_{i=0..(n-1)} |v_i - w_i|^2)@f$.
   template<class VEC> double vect_dist2_sqr(const VEC &v, const VEC &w)
   {
     typename VEC::const_iterator d1 = v.begin(), e = v.end();
@@ -180,7 +180,7 @@ namespace bgeot
     return res;
   }
 
-  /// Gives $\displaystyle (\sum_{i=0..(n-1)} |v_i - w_i|^2)^{1/2}$.
+  /// Gives @f$(\sum_{i=0..(n-1)} |v_i - w_i|^2)^{1/2}@f$.
   template<class VEC> double vect_dist2(const VEC &v, const VEC &w) {
     return sqrt(vect_dist2_sqr(v,w));
   }

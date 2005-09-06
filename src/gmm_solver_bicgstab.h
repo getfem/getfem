@@ -49,6 +49,10 @@
 // OR OTHER RIGHTS.
 //=======================================================================
 
+/**@file gmm_solver_bicgstab.h
+   @brief BiCGStab iterative solver.
+*/
+
 #ifndef GMM_SOLVER_BICGSTAB_H__
 #define GMM_SOLVER_BICGSTAB_H__
 

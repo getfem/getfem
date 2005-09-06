@@ -28,6 +28,9 @@
 //
 //========================================================================
 
+/**@file gmm_dense_qr.h
+   @brief Dense QR factorization.
+*/
 #ifndef GMM_DENSE_QR_H
 #define GMM_DENSE_QR_H
 
@@ -36,10 +39,9 @@
 namespace gmm {
 
 
-  /* ********************************************************************* */
-  /* QR factorization using Householder method (complex and real version). */
-  /* ********************************************************************* */
-
+  /**
+     QR factorization using Householder method (complex and real version).
+  */
   template <typename MAT1>
   void qr_factor(const MAT1 &A_) { 
     MAT1 &A = const_cast<MAT1 &>(A_);
@@ -103,7 +105,7 @@ namespace gmm {
     }
   }  
 
-  // Compute the QR factorization, where Q is assembled.
+  /** Compute the QR factorization, where Q is assembled. */
   template <typename MAT1, typename MAT2, typename MAT3>
     void qr_factor(const MAT1 &A, const MAT2 &QQ, const MAT3 &RR) { 
     MAT2 &Q = const_cast<MAT2 &>(QQ); MAT3 &R = const_cast<MAT3 &>(RR); 
@@ -136,10 +138,7 @@ namespace gmm {
     }
   }
 
-  /* ********************************************************************* */
-  /*    Compute eigenvalue vector.                                         */
-  /* ********************************************************************* */
-
+  ///@cond DOXY_SHOW_ALL_FUNCTIONS
   template <typename TA, typename TV, typename Ttol, 
 	    typename MAT, typename VECT>
   void extract_eig(const MAT &A, VECT &V, Ttol tol, TA, TV) {
@@ -255,6 +254,10 @@ namespace gmm {
       }
   }
 
+  ///@endcond
+  /**
+     Compute eigenvalue vector.
+  */
   template <typename MAT, typename Ttol, typename VECT> inline
   void extract_eig(const MAT &A, const VECT &V, Ttol tol) {
     extract_eig(A, const_cast<VECT&>(V), tol,

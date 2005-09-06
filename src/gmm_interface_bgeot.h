@@ -27,6 +27,9 @@
 //
 //========================================================================
 
+/**@file gmm_interface_bgeot.h
+   @brief interface for bgeot::vsvectors
+*/
 #ifndef GMM_INTERFACE_BGEOT_H__
 #define GMM_INTERFACE_BGEOT_H__
 

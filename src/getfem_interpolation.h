@@ -28,8 +28,8 @@
 //
 //========================================================================
 
-/**\file getfem_interpolation.h
-   \brief Interpolation of fields from a mesh_fem onto another.
+/**@file getfem_interpolation.h
+   @brief Interpolation of fields from a mesh_fem onto another.
 */
 
 #ifndef GETFEM_INTERPOLATION_H__
@@ -87,7 +87,7 @@ namespace getfem {
   /* ------------------------------ Interface -----------------------------*/
 
   /**
-     \brief interpolation/extrapolation of (mf_source, U) on mf_target.
+     @brief interpolation/extrapolation of (mf_source, U) on mf_target.
      - mf_target must be of lagrange type.
      - mf_target's qdim should be equal to mf_source qdim, or equal to 1
      - U.size() >= mf_source.get_qdim()
@@ -102,7 +102,7 @@ namespace getfem {
 		     const VECTU &U, VECTV &V, bool extrapolation = false);
 
   /**
-     \brief Build the interpolation matrix of mf_source on mf_target.
+     @brief Build the interpolation matrix of mf_source on mf_target.
      the matrix M is
      such that (V = M*U) == interpolation(mf_source, mf_target, U, V).
 

@@ -29,8 +29,8 @@
 //
 //========================================================================
 
-/**\file getfem_mesh_level_set.h
-   \brief Keep informations about a mesh crossed by level-sets. 
+/**@file getfem_mesh_level_set.h
+   @brief Keep informations about a mesh crossed by level-sets. 
 */
 #ifndef GETFEM_MESH_LEVEL_SET_H__
 #define GETFEM_MESH_LEVEL_SET_H__
@@ -41,7 +41,7 @@
 
 
 namespace getfem {
-  /** \brief Keep informations about a mesh crossed by level-sets.
+  /** @brief Keep informations about a mesh crossed by level-sets.
       Cut convexes with respect to the level sets.
   */
   class mesh_level_set : public getfem_mesh_receiver,
@@ -88,7 +88,7 @@ namespace getfem {
       DAL_THROW(failure_error, "This element is not cut !");
     }
     
-    /// Gives a reference to the linked mesh of type getfem\_mesh.
+    /// Gives a reference to the linked mesh of type getfem_mesh.
     getfem_mesh &linked_mesh(void) const { return *linked_mesh_; }
     void clear(void);
     /* explicit calls to parent class 

@@ -26,6 +26,11 @@
 // Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //========================================================================
+
+/**@file gmm_precond_diagonal.h
+   @brief Diagonal matrix preconditoner.
+*/
+
 #ifndef GMM_PRECOND_DIAGONAL_H
 #define GMM_PRECOND_DIAGONAL_H
 
@@ -33,6 +38,7 @@
 
 namespace gmm {
 
+  /** Diagonal preconditioner. */
   template<typename Matrix> struct diagonal_precond {
     typedef typename linalg_traits<Matrix>::value_type value_type;
     typedef typename number_traits<value_type>::magnitude_type magnitude_type;

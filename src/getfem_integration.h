@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file getfem_integration.h
-   \brief Integration methods (exact and approximated) on convexes
+/**@file getfem_integration.h
+   @brief Integration methods (exact and approximated) on convexes
 */
 #ifndef GETFEM_INTEGRATION_H__
 #define GETFEM_INTEGRATION_H__

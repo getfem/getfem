@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file bgeot_sparse_tensors.h
-   \brief Sparse tensors, used during the assembly.
+/**@file bgeot_sparse_tensors.h
+   @brief Sparse tensors, used during the assembly.
 
    "sparse" tensors: these are not handled like sparse matrices
    

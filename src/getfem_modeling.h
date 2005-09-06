@@ -28,29 +28,10 @@
 
 
 /**
-   \file getfem_modeling.h
-   \brief Model Bricks
-
-  Requirements for a model brick :                                  
-                                                                         
-  A model brick is either a fondamental brick (like linearized
-  elasticity brick, platicity brick ...) or a modifier brick which
-  refer to a sub brick.
-
-  A new brick should define:
-
-  - proper_update() , which is called each time the brick should
-  update itself.
-  This function is expected to assign the correct values to
-  'proper_nb_dof' (the nb of new dof introduced by this brick),
-  'proper_nb_constraints' and 'proper_mixed_variables'.
-
-  - do_compute_tangent_matrix(MS, i0, j0) . This function should
-  compute its own part of the tangent and constraint matrices (i0 and
-  j0 are the shifts in the matrices stored in the model_state MS)
-
-  - do_compute_residu(MS, i0, j0) . Same as above for the residu
-  vector stored in MS.
+   @file getfem_modeling.h
+   @brief Model Bricks
+   @see model_state
+   @see mdbrick_abstract
 */
 
 /***************************************************************************/
@@ -90,12 +71,25 @@
 
 namespace getfem {
 
+  /**@defgroup bricks Model Bricks
+   */
+
   /* ******************************************************************** */
   /*		Generic definitions.                                      */
   /* ******************************************************************** */
  
   template<typename MODEL_STATE> class mdbrick_abstract;
 
+  /** Model State : contains all storage needed by the bricks (@see mdbrick_abstract)
+      @ingroup bricks
+
+      The model state is 
+        - a tangent matrix (the linear system that is solved)
+	- a constraints matrix (the Dirichlet conditions etc.), and its right hand side.
+	- a state (the solution of the linear system)
+	- a residu (residu_ = A*x - B)
+	- the same information, reduced (i.e. after removal of the constraints).
+  */
   template<typename T_MATRIX, typename C_MATRIX, typename VECTOR>
   class model_state {
   public :    
@@ -149,6 +143,7 @@ namespace getfem {
 	gmm::mult(NS, U_reduced, Ud, U);
       else gmm::copy(U_reduced, U);
     }
+    /** Apply the constraints to the linear system */
     void compute_reduced_system();
     void compute_reduced_residu();
     VECTOR &residu(void) { return residu_; }
@@ -220,21 +215,28 @@ namespace getfem {
     }
   } 
 
-
+  /** Default real sparse vector type for bricks @ingroup bricks */
   typedef gmm::rsvector<scalar_type> modeling_standard_sparse_vector;
+  /** Default real sparse matrix type for bricks @ingroup bricks */
   typedef gmm::col_matrix<modeling_standard_sparse_vector>
                                     modeling_standard_sparse_matrix;
+  /** Default real dense vector type for bricks @ingroup bricks */
   typedef std::vector<scalar_type> modeling_standard_plain_vector;
 
+  /** Default complex sparse vector type for bricks @ingroup bricks */
   typedef gmm::rsvector<complex_type> modeling_standard_complex_sparse_vector;
+  /** Default complex sparse matrix type for bricks @ingroup bricks */
   typedef gmm::col_matrix<modeling_standard_complex_sparse_vector>
                                     modeling_standard_complex_sparse_matrix;
+  /** Default complex dense vector type for bricks @ingroup bricks */
   typedef std::vector<complex_type> modeling_standard_complex_plain_vector;
 
+  /** Default real model_state for bricks @ingroup bricks */
   typedef model_state<modeling_standard_sparse_matrix,
 		      modeling_standard_sparse_matrix,
 		      modeling_standard_plain_vector > standard_model_state;
 
+  /** Default complex model_state for bricks @ingroup bricks */
   typedef model_state<modeling_standard_complex_sparse_matrix,
 		      modeling_standard_complex_sparse_matrix,
 		      modeling_standard_complex_plain_vector >
@@ -266,15 +268,36 @@ namespace getfem {
 		  gmm::sub_interval>::vector_type SUBVECTOR
 
 
-  /*
-   *   Abstract model brick
-   */
+  /**
+     Abstract model brick.
+     @ingroup bricks 
+
+     Requirements for a model brick :                                  
+     
+     A model brick is either a fondamental brick (like linearized
+     elasticity brick, platicity brick ...) or a modifier brick which
+     refer to a sub brick.
+
+     A new brick should define:
+     
+     - @c proper_update() , which is called each time the brick should
+     update itself.  This function is expected to assign the correct
+     values to @c proper_nb_dof (the nb of new dof introduced by this
+     brick), @c proper_nb_constraints and @c proper_mixed_variables.
+
+     - @c do_compute_tangent_matrix(MS, i0, j0) . This function should
+     compute its own part of the tangent and constraint matrices (@c i0 and
+     @c j0 are the shifts in the matrices stored in the model_state MS)
+     
+     - @c do_compute_residu(MS, i0, j0) . Same as above for the residu
+     vector stored in MS.
+  */
 
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_abstract : public context_dependencies {
 
   public :
-    TYPEDEF_MODEL_STATE_TYPES;
+    TYPEDEF_MODEL_STATE_TYPES; // usual set of typedefs
 
     struct mesh_fem_info_ {
       size_type brick_ident; // basic model brick using the mesh_fem
@@ -302,7 +325,7 @@ namespace getfem {
 
     std::vector<mdbrick_abstract *> sub_bricks;
     
-    /* all proper_* specify data which is specific to this brick:
+    /** all proper_* specify data which is specific to this brick:
        'proper_mesh_fems' is the list of mesh_fems used by this brick,
        while 'mesh_fems' is 'proper_mesh_fems' plus the list of
        mesh_fems of all the parent bricks.
@@ -311,18 +334,18 @@ namespace getfem {
     std::vector<mesh_im *> proper_mesh_ims;
     std::vector<mesh_fem_info_> proper_mesh_fems_info;
     std::vector<boundary_cond_info_> proper_boundary_cond_info;
-    /* flags indicating how this brick affect the linearity/coercivity
+    /** flags indicating how this brick affect the linearity/coercivity
        etc properties of the problem */
     bool proper_is_linear_, proper_is_symmetric_, proper_is_coercive_;
-    /* number of new degrees of freedom introduced by this brick */
+    /** number of new degrees of freedom introduced by this brick */
     size_type proper_additional_dof;
-    /* number of new constraints introduced by this brick */
+    /** number of new constraints introduced by this brick */
     size_type proper_nb_constraints;
-    /* in the dofs, indicates which ones correspound to mixed variables */
+    /** in the dofs, indicates which ones correspound to mixed variables */
     dal::bit_vector proper_mixed_variables;
 
-    /* below is the "global" information, relating to this brick and
-       all its parent bricks */
+    /** below is the "global" information, relating to this brick and
+	all its parent bricks */
     mutable std::vector<mesh_fem *> mesh_fems;
     mutable std::vector<mesh_im *> mesh_ims;
     mutable std::vector<mesh_fem_info_> mesh_fems_info;
@@ -331,16 +354,16 @@ namespace getfem {
     mutable size_type nb_total_dof, nb_total_constraints;
     mutable dal::bit_vector total_mixed_variables;
 
-    /* the brick owns the block starting at index MS_i0 in the global
+    /** the brick owns the block starting at index @c MS_i0 in the global
        tangent matrix */
     size_type MS_i0;
 
-    /* the brick-specific update procedure */
+    /** the brick-specific update procedure */
     virtual void proper_update(void) = 0;
     // The following function is just for the const cast on "this".
     inline void proper_update_(void) { proper_update(); }
 
-    /* method inherited from getfem::context_dependencies */
+    /** method inherited from getfem::context_dependencies */
     void update_from_context(void) const {
       nb_total_dof = 0;
       nb_total_constraints = 0;
@@ -447,6 +470,10 @@ namespace getfem {
 
     virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
 					   size_type j0) = 0;
+    /** update (if necessary) the tangent matrix stored.
+	@param MS the model state (which contains the tangent matrix)
+	@param i0,j0 position at which the tangent matrix is to be written in MS.tangent_matrix
+    */
     void compute_tangent_matrix(MODEL_STATE &MS, size_type i0 = 0,
 					size_type j0=0) {
       this->context_check();
@@ -496,7 +523,18 @@ namespace getfem {
   /* ******************************************************************** */
 
 # define MDBRICK_SCALAR_ELLIPTIC 174397
+  
+  /** General scalar elliptic brick ( @f$ (\alpha \nabla u).\nabla v @f$ ).
+      
+      @f$\alpha@f$ may be a scalar or a @f$N\times N@f$ tensor field.
+      
+      If @c mf_u is a vector mesh_fem (qdim > 1), then the assembly is
+      done componentwise.
 
+      @see asm_stiffness_matrix_for_laplacian, asm_stiffness_matrix_for_scalar_elliptic
+      
+      @ingroup bricks 
+  */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_scalar_elliptic : public mdbrick_abstract<MODEL_STATE> {
 
@@ -534,7 +572,12 @@ namespace getfem {
 						   mf_data,coeffs);
       }
     }
-    
+    /** set @f$\alpha@f$.
+	@param laplace if true the coeffs (@f$\alpha(x)@f$) are supposed to describe a
+	scalar field on mf_data. If false the coeffs are expected as a
+	tensor field on mf_data.
+	@param @f$\alpha(x)@f$ interpolated on mf_data.
+    */
     void set_coeff_(const VECTOR &coeffs, bool laplace) {
       laplacian = laplace;
       homogeneous = false;
@@ -568,6 +611,7 @@ namespace getfem {
 		gmm::sub_vector(MS.residu(), SUBI)); 
     }
     
+    /// Shortcut for a constant scalar coefficient.
     void set_coeff(value_type a) {
       homogeneous = true; laplacian = true;
       gmm::resize(coeffs_, 1); coeffs_[0] = a;
@@ -589,14 +633,14 @@ namespace getfem {
       this->update_from_context();
     }
 
-    // constructor for the Laplace operator
+    /// constructor for the Laplace operator
     mdbrick_scalar_elliptic(mesh_im &mim_, mesh_fem &mf_u_, mesh_fem &mf_data_,
 			    value_type a)
       : mim(mim_), mf_u(mf_u_), mf_data(mf_data_),  homogeneous(true),
 	laplacian(true)
     { gmm::resize(coeffs_, 1); coeffs_[0] = a; init_(); }
 
-    // constructor for a non-homogeneous material
+    /// constructor for a non-homogeneous material
     mdbrick_scalar_elliptic(mesh_im &mim_, mesh_fem &mf_u_, mesh_fem &mf_data_,
        const VECTOR &coeff, bool laplace) : mim(mim_), mf_u(mf_u_),
 					    mf_data(mf_data_)
@@ -609,6 +653,11 @@ namespace getfem {
 
 # define MDBRICK_LIN_ISO_ELASTICITY 852327
 
+  /** Linear elasticity brick ( @f$ \int \sigma(u):\varepsilon(v) @f$ ).
+
+      @see asm_stiffness_matrix_for_linear_elasticity
+      @ingroup bricks
+   */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_isotropic_linearized_elasticity
     : public mdbrick_abstract<MODEL_STATE> {
@@ -619,7 +668,7 @@ namespace getfem {
     mesh_fem &mf_u, &mf_data;
     VECTOR lambda_, mu_;
     bool homogeneous;
-    T_MATRIX K;
+    T_MATRIX K; /* stores the linear elasticity stiffness matrix. */
 
     virtual void proper_update(void) {
       gmm::resize(K, mf_u.nb_dof(), mf_u.nb_dof());
@@ -670,6 +719,7 @@ namespace getfem {
     void set_Lame_coeff(const VECTOR &lambdai, const VECTOR &mui)
     { set_Lame_coeff_(lambdai, mui); this->force_update(); }
 
+    /// get the solution displacement
     SUBVECTOR get_solution(MODEL_STATE &MS) {
       gmm::sub_interval SUBU = gmm::sub_interval(this->first_index(),
 						 mf_u.nb_dof());
@@ -683,14 +733,14 @@ namespace getfem {
       this->update_from_context();
     }
 
-    // constructor for a homogeneous material (constant lambda and mu)
+    /// constructor for a homogeneous material (constant lambda and mu)
     mdbrick_isotropic_linearized_elasticity
     (mesh_im &mim_, mesh_fem &mf_u_, mesh_fem &mf_data_,
      value_type lambdai, value_type mui)
       : mim(mim_), mf_u(mf_u_), mf_data(mf_data_)
     { set_Lame_coeff_(lambdai, mui); init_(); }
 
-    // constructor for a non-homogeneous material
+    /// constructor for a non-homogeneous material
     mdbrick_isotropic_linearized_elasticity
     (mesh_im &mim_, mesh_fem &mf_u_, mesh_fem &mf_data_,
      const VECTOR &lambdai, const VECTOR &mui)
@@ -707,6 +757,12 @@ namespace getfem {
 
 # define MDBRICK_MASS_MATRIX 756543
 
+  /**
+     Mass-matrix brick ( @f$\int \rho u.v @f$ ). 
+
+     @see asm_mass_matrix_param
+     @ingroup bricks
+  */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_mass_matrix
     : public mdbrick_abstract<MODEL_STATE> {
@@ -772,13 +828,13 @@ namespace getfem {
       this->update_from_context();
     }
 
-    // constructor for a homogeneous material (constant lambda and mu)
+    /// constructor for a homogeneous @f$\rho@f$ coefficient.
     mdbrick_mass_matrix
     (mesh_im &mim_, mesh_fem &mf_u_, mesh_fem &mf_data_, value_type rhoi)
       : mim(mim_), mf_u(mf_u_), mf_data(mf_data_), homogeneous(true)
     { gmm::resize(rho_, 1); rho_[0] = rhoi; init_(); }
 
-    // constructor for a non-homogeneous material
+    /// constructor for a non-homogeneous @f$\rho@f$ coefficient.
     mdbrick_mass_matrix
     (mesh_im &mim_, mesh_fem &mf_u_, mesh_fem &mf_data_, const VECTOR &rhoi)
       : mim(mim_), mf_u(mf_u_), mf_data(mf_data_), homogeneous(false)
@@ -791,6 +847,10 @@ namespace getfem {
 
 # define MDBRICK_HELMHOLTZ 354864
 
+  /** Helmholtz brick ( @f$\int k^2 u.v - \nabla u.\nabla v@f$ )
+      @see asm_Helmholtz
+      @ingroup bricks
+   */
  template<typename MODEL_STATE = standard_model_state>
   class mdbrick_Helmholtz
     : public mdbrick_abstract<MODEL_STATE> {
@@ -858,12 +918,12 @@ namespace getfem {
       this->update_from_context();
     }
 
-    // constructor for a homogeneous wave number
+    /// constructor for a homogeneous wave number
     mdbrick_Helmholtz(mesh_im &mim_, mesh_fem &mf_u_, mesh_fem &mf_data_,
 		      value_type k) : mim(mim_), mf_u(mf_u_), mf_data(mf_data_)
     { set_wave_number_(k); init_(); }
 
-    // constructor for a non-homogeneous wave number
+    /// constructor for a non-homogeneous wave number
     mdbrick_Helmholtz(mesh_im &mim_, mesh_fem &mf_u_, mesh_fem &mf_data_,
 		      const VECTOR &k)
       : mim(mim_), mf_u(mf_u_), mf_data(mf_data_)
@@ -876,6 +936,14 @@ namespace getfem {
   /*		Source term brick.                                        */
   /* ******************************************************************** */
 
+  /**
+     Source term brick ( @f$ \int f.v @f$ ).
+     
+     Update the right hand side of the linear system.
+
+     @see asm_source_term
+     @ingroup bricks
+  */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_source_term : public mdbrick_abstract<MODEL_STATE>  {
 
@@ -932,7 +1000,7 @@ namespace getfem {
       gmm::resize(B_, gmm::vect_size(B__)); gmm::copy(B__, B_);
       this->force_update();
     }    
-    // Constructor defining the rhs
+    /// Constructor defining the rhs
     mdbrick_source_term(mdbrick_abstract<MODEL_STATE> &problem,
 			mesh_fem &mf_data_, const VECTOR &B__,
 			size_type bound = size_type(-1), size_type num_fem_=0)
@@ -952,6 +1020,17 @@ namespace getfem {
   /*		Q.U term (for Fourier-Robin conditions)                   */
   /* ******************************************************************** */
 
+  /**
+     Q.U term brick ( @f$ \int (qu).v @f$ ) with @f$ q(x) @f$ a @f$N 
+     \times N@f$ matrix field (assuming @c N = @c mf_u.get_qdim();)
+
+     This brick updates the tangent matrix. Integration is done on a
+     boundary or on the whole mesh. Can be used for Fourier-Robin
+     boundary conditions.
+
+     @see asm_qu_term
+     @ingroup bricks
+  */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_QU_term
     : public mdbrick_abstract<MODEL_STATE> {
@@ -1021,7 +1100,7 @@ namespace getfem {
       this->update_from_context();
     }
 
-    // Constructor which homogeneous diagonal Q
+    /// Constructor which homogeneous diagonal Q
     mdbrick_QU_term(mdbrick_abstract<MODEL_STATE> &problem,
 		    mesh_fem &mf_data_, value_type q=value_type(1),
 		    size_type bound = size_type(-1), size_type num_fem_=0) 
@@ -1029,7 +1108,7 @@ namespace getfem {
 	num_fem(num_fem_), homogeneous(true)
     { gmm::resize(Q, 1); Q[0] = q; init_(); }
 
-    // Constructor defining an arbitrary Q
+    /// Constructor defining an arbitrary Q
     mdbrick_QU_term(mdbrick_abstract<MODEL_STATE> &problem,
 		    mesh_fem &mf_data_, const VECTOR &q,
 		    size_type bound = size_type(-1), size_type num_fem_=0)
@@ -1048,9 +1127,22 @@ namespace getfem {
 
 # define MDBRICK_LINEAR_INCOMP 239898
 
-  // for nearly incompressible elasticity, p = -lambda div u
-  // sigma = 2 mu epsilon(u) -p I
+  /**
+     Mixed linear incompressible condition brick.
 
+     Update the tangent matrix with a pressure term:
+       @f[
+         T \longrightarrow 
+          \begin{array}{ll} T & B \\ B^t & M \end{array}
+       @f]
+       with @f$ B = - \int p.div u @f$ and @f$ M = \int \epsilon p.q @f$ ( @f$ \epsilon @f$ is a penalization coefficient ).
+
+       For nearly incompressible elasticity, 
+       @f[ p = -\lambda \textrm{div}~u @f]
+       @f[ \sigma = 2 \mu \varepsilon(u) -p I @f]
+     @see asm_stokes_B
+     @ingroup bricks
+  */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_linear_incomp : public mdbrick_abstract<MODEL_STATE>  {
     
@@ -1119,15 +1211,15 @@ namespace getfem {
 			     mf_p.nb_dof());
       return gmm::sub_vector(MS.state(), SUBU);
     }
-
+    /// set the penalization coefficient
      void set_coeff(value_type epsiloni) {
-      homogeneous = true;
+       homogeneous = true; penalized = true;
       gmm::resize(epsilon_, 1); epsilon_[0] = epsiloni;
       this->force_update();
     }
 
     void set_coeff(const VECTOR &epsiloni) {
-      homogeneous = false;
+      homogeneous = false; penalized = true;
       gmm::resize(epsilon_, mf_data.nb_dof()); gmm::copy(epsiloni, epsilon_);
       this->force_update();
     }
@@ -1140,14 +1232,14 @@ namespace getfem {
       this->update_from_context();
     }
 
-    // Constructor for the incompressibility condition
+    /// Constructor for the incompressibility condition
     mdbrick_linear_incomp(mdbrick_abstract<MODEL_STATE> &problem,
 		      mesh_fem &mf_p_, size_type num_fem_=0)
       : sub_problem(problem), mf_p(mf_p_), mf_data(mf_p_),
 	penalized(false), num_fem(num_fem_)
     { init_(); }
 
-    // Constructor for the nearly incompressibility condition
+    /// Constructor for the nearly incompressibility condition
     mdbrick_linear_incomp(mdbrick_abstract<MODEL_STATE> &problem,
 		      mesh_fem &mf_p_, mesh_fem &mf_data_, value_type epsilon,
 			  size_type num_fem_=0)
@@ -1171,6 +1263,21 @@ namespace getfem {
   /*		Dirichlet condition bricks.                               */
   /* ******************************************************************** */
 
+  /**
+     Dirichlet condition brick.
+
+     This brick updates the constraints matrix and its right hand side
+     (except if Lagrange multipliers are used).
+
+     The general form for a Dirichlet condition is @f[ \int h(x)u(x).v
+     = \int r(x).v \forall v@f] where @f$ h(x) @f$ is a @f$ N \times N
+     @f$ matrix (by default, the identity matrix), and @f$ r(x) @f$ is
+     the right hand side for the Dirichlet condition (0 for
+     homogeneous conditions).
+
+     @see asm_dirichlet_constraints
+     @ingroup bricks
+  */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_Dirichlet : public mdbrick_abstract<MODEL_STATE>  {
     
@@ -1296,13 +1403,18 @@ namespace getfem {
 		  CRHS, gmm::sub_vector(MS.constraints_rhs(), SUBI));
       }
     }
-
-    void set_rhs(const VECTOR &B__) {
-      gmm::resize(B_, gmm::vect_size(B__));
-      gmm::copy(B__, B_);
+    /** change the @f$ r(x) @f$ right hand side.
+	@param R a vector of size @c Q*mf_data.nb_dof() .
+    */
+    void set_rhs(const VECTOR &R) {
+      gmm::resize(B_, gmm::vect_size(R));
+      gmm::copy(R, B_);
       if (!(this->context_check())) compute_constraints(ASMDIR_BUILDR);
     }
 
+    /** change the @f$ h(x) @f$ matrix field
+	@param H__ a @c Q*Q*mf_data.nb_dof() vector, where @c Q = @c mf_u.get_qdim().
+    */
     void set_H(const VECTOR &H__) {
       with_H = true;
       gmm::resize(H_, gmm::vect_size(H__));
@@ -1318,7 +1430,10 @@ namespace getfem {
       this->update_from_context();
     }
 
-    // Constructor which does not define the rhs (0 rhs in fact)
+    /** Constructor which does not define the rhs (i.e. which sets an homogeneous Dirichlet condition)
+	@param bound the boundary number for the dirichlet condition.
+	@param with_mult if true, the Dirichlet condition is enforced via Lagrange multipliers. If false, it is directly enforced.
+    */
     mdbrick_Dirichlet(mdbrick_abstract<MODEL_STATE> &problem,
 		      mesh_fem &mf_data_, size_type bound,
 		      size_type num_fem_=0, bool with_mult = false)
@@ -1327,7 +1442,7 @@ namespace getfem {
       init_();
     }
 
-    // Constructor defining the rhs
+    /// Constructor setting a non-homogeneous Dirichlet condition.
     mdbrick_Dirichlet(mdbrick_abstract<MODEL_STATE> &problem,
 		      mesh_fem &mf_data_, const VECTOR &B__,
 		      size_type bound, size_type num_fem_=0, 
@@ -1341,7 +1456,13 @@ namespace getfem {
   /* ******************************************************************** */
   /*	                 Constraint brick.                                */
   /* ******************************************************************** */
+  /** Insert a constraint @c G*U=R into the problem.
+      
+      @c G is a @c nc * @c mf_u.nb_dof() constraint matrix (@c nc is the number of constraints to be added by this brick).
 
+      This is a more general form of the mdbrick_Dirichlet.
+      @ingroup bricks
+  */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_constraint : public mdbrick_abstract<MODEL_STATE>  {
      
@@ -1445,6 +1566,9 @@ namespace getfem {
   /*  dynamic brick : not stabilized, could change a lot in the future    */
   /* ******************************************************************** */
 
+  /**
+     dynamic brick : not stabilized, could change a lot in the future.
+  */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_dynamic : public mdbrick_abstract<MODEL_STATE>  {
     
@@ -1539,15 +1663,27 @@ namespace getfem {
   /*		Generic solvers.                                          */
   /* ******************************************************************** */
 
-  // standard_solve represent a default solver for the model brick system.
-  // Of course it could be not adapted for a particular problem, so it could
-  // be copied and adapted to change solvers, add a special traitement on the
-  // problem, etc ...
-  // This is in fact a model for your own solver.
 
   template <typename T> struct sort_abs_val_
   { bool operator()(T x, T y) { return (gmm::abs(x) < gmm::abs(y)); } };
 
+  /** A default solver for the model brick system.  
+      
+      Of course it could be not very well suited for a particular
+      problem, so it could be copied and adapted to change solvers,
+      add a special traitement on the problem, etc ...  This is in
+      fact a model for your own solver.
+
+      For small problems, a direct solver is used
+      (getfem::SuperLU_solve), for larger problems, a conjugate
+      gradient gmm::cg (if the problem is coercive) or a gmm::gmres is
+      used (preconditionned with an incomplete factorization).
+
+      When MPI/METIS is enabled, a partition is done via METIS, and the
+      gmm::additive_schwarz is used as the parallel solver.
+
+      @ingroup bricks
+  */
   template <typename MODEL_STATE> void
   standard_solve(MODEL_STATE &MS, mdbrick_abstract<MODEL_STATE> &problem,
 	gmm::iteration &iter) {
@@ -1585,7 +1721,7 @@ namespace getfem {
 #ifdef GMM_USES_MPI
     cout << "comput tangent residu reduction time = " << MPI_Wtime() - t_init << endl;
 #endif
-#ifdef GMM_USES_METIS
+#ifdef GMM_USES_METIS /* use a domain partition ? */
     
     double t_ref = MPI_Wtime();
 
@@ -1621,7 +1757,7 @@ namespace getfem {
       std::vector<int> elmnts(ne*k), npart(nn);
       eparts[nset].resize(ne);
       int j = 0;
-      // Adapter la boucle aux transformations d'ordre élevé.
+      // should be adapted for high order geotrans
       for (dal::bv_visitor i((*it)->convex_index()); !i.finished(); ++i, ++j)
 	for (int l = 0; l < k; ++l) elmnts[j*k+l] = (*it)->ind_points_of_convex(i)[l];
 
@@ -1672,8 +1808,7 @@ namespace getfem {
 	scalar_type EPS = gmm::mat_norminf(Bitemp) * gmm::default_tol(scalar_type());
 	size_type k = 0;
 	for (size_type j = 0; j < gmm::mat_ncols(Bitemp); ++j, ++k) {
-	  // Il faudrait faire une orthogonalisation de Schmidt ici pour des cas
-	  // plus ellaborés.
+	  // should do Schmidt orthogonalization for most sofisticated cases 
 	  if (k != j) Bitemp.swap_col(j, k);
 	  if (gmm::vect_norm2(gmm::mat_col(Bitemp, k)) < EPS) --k;
 	}
@@ -1688,7 +1823,7 @@ namespace getfem {
     cout << "METIS time = " << MPI_Wtime() - t_ref << endl;
 
 
-#endif
+#endif // GMM_USES_METIS
 
     // cout << "RTM = " << MS.reduced_tangent_matrix() << endl;
     
@@ -1739,20 +1874,20 @@ namespace getfem {
       }
 
 #ifdef GMM_USES_METIS
-#ifdef GMM_USES_MPI
+# ifdef GMM_USES_MPI
     double t_ref,t_final;
     t_ref=MPI_Wtime();
     cout<<"begin Seq AS"<<endl;
-#endif
+# endif
       additive_schwarz(MS.reduced_tangent_matrix(), dr,
 				  gmm::scaled(MS.reduced_residu(), value_type(-1)),
 				  0, Bib, iter_linsolv, gmm::using_superlu(),
 				  gmm::using_cg());
-#ifdef GMM_USES_MPI
+# ifdef GMM_USES_MPI
     t_final=MPI_Wtime();
     cout<<"temps Seq AS "<< t_final-t_ref<<endl;
-#endif
-#else
+# endif
+#else // !GMM_USES_METIS
     size_type dim = problem.dim();
 
     // if (0) {
@@ -1767,7 +1902,7 @@ namespace getfem {
 		      gmm::scaled(MS.reduced_residu(), value_type(-1)),
 		      rcond);
 	if (iter.get_noisy()) cout << "condition number: " << 1.0/rcond<< endl;
-      }
+    }
       else {
 	if (problem.is_coercive()) {
 	  gmm::ildlt_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
@@ -1795,7 +1930,7 @@ namespace getfem {
 	    DAL_WARNING(2,"gmres did not converge!");
 	}
       }
-#endif
+#endif // !GMM_USES_METIS
 
      MS.unreduced_solution(dr,d);
 

@@ -27,6 +27,10 @@
 //
 //========================================================================
 
+/**@file gmm_sub_vector.h
+   @brief Generic sub-vectors.
+*/
+
 #ifndef GMM_SUB_VECTOR_H__
 #define GMM_SUB_VECTOR_H__
 

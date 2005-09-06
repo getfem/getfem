@@ -51,12 +51,9 @@
 // OR OTHER RIGHTS.
 //=======================================================================
 
-//: Iteration
-//
-//  The Iteration object calculates whether the solution has reached the
-//  desired accuracy, or whether the maximum number of iterations has
-//  been reached. The method finished() checks the convergence
-//  The first() method is used to determine the first iteration of the loop.
+/**@file gmm_iter.h
+   @brief Iteration object.
+*/
 
 #ifndef GMM_ITER_H__
 #define GMM_ITER_H__
@@ -65,6 +62,13 @@
 
 namespace gmm {
 
+  /**  The Iteration object calculates whether the solution has reached the
+       desired accuracy, or whether the maximum number of iterations has
+       been reached. 
+
+       The method finished() checks the convergence.  The first()
+       method is used to determine the first iteration of the loop.
+  */
   class iteration {
   protected :
     double rhsn;       /* Right hand side norm.                            */

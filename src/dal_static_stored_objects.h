@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/** \file dal_static_stored_objects.h 
-    \brief Stores interdependent getfem objects.
+/** @file dal_static_stored_objects.h 
+    @brief Stores interdependent getfem objects.
 
     Stored object :  
 
@@ -38,26 +38,26 @@
 
     To store a new object, you have to test if the object is not
     already stored and then call dal::add_stored_object:
-    \code
+    @code
     if (!search_stored_object(your_object_key(parameters))) {
       add_stored_object(new your_object_key(parameters),
                         new your_object(parameters));
     }
-    \endcode
+    @endcode
     You can add a dependency of your new object with
-    \code
+    @code
     add_dependency(pointer_on_your_object,
                    pointer_on_the_object_object_from_which_it_depends,
                    permanence);
-    \endcode
+    @endcode
     and then your object will be automatically deleted if the second object is
     deleted.
     The dependency can be added within the add_stored_object call:
-    \code
+    @code
     add_stored_object(new your_object_key(parameters), 
                       new your_object(parameters),
                       dependency);
-    \endcode
+    @endcode
 
     Boost intrusive_ptr are used.
 */

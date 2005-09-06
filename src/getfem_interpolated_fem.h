@@ -26,8 +26,8 @@
 // Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //========================================================================
-/**\file getfem_interpolated_fem.h
-   \brief FEM which interpolates a mesh_fem on a different mesh.
+/**@file getfem_interpolated_fem.h
+   @brief FEM which interpolates a mesh_fem on a different mesh.
 
    To be corrected : dependencies. The mesh fem using this fem will
    not depend on the mesh fem arguments.

@@ -31,8 +31,8 @@
 #ifndef DAL_REF_H__
 #define DAL_REF_H__
 
-/** \file dal_ref.h
-    \brief Provide some simple pseudo-containers.
+/** @file dal_ref.h
+    @brief Provide some simple pseudo-containers.
     
     WARNING : modifiying the container infirm the validity of references.
  */
@@ -281,7 +281,7 @@ namespace dal
 
   /** indexed array reference (given a container X, and a set of indexes I, 
       this class provides a pseudo-container Y such that
-      \code Y[i] = X[I[i]] \endcode
+      @code Y[i] = X[I[i]] @endcode
   */
   template<typename ITER, typename ITER_INDEX> class tab_ref_index_ref {
   public :

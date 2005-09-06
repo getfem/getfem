@@ -28,8 +28,8 @@
 //
 //========================================================================
 
-/**\file dal_std.h
-   \brief basic setup for dal (includes, typedefs etc.)
+/**@file dal_std.h
+   @brief basic setup for dal (includes, typedefs etc.)
 */
 #ifndef DAL_STD_H__
 #define DAL_STD_H__

@@ -40,8 +40,8 @@
  * etc...
  */
 
-/**\file getfem_config.h
-   \brief defines and typedefs for namespace getfem
+/**@file getfem_config.h
+   @brief defines and typedefs for namespace getfem
 */
 
 

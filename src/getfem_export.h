@@ -28,8 +28,8 @@
 //
 //========================================================================
 
-/**\file getfem_export.h
-   \brief Export solutions to various formats.
+/**@file getfem_export.h
+   @brief Export solutions to various formats.
 */
 #ifndef GETFEM_EXPORT_H__
 #define GETFEM_EXPORT_H__
@@ -51,7 +51,7 @@ namespace getfem {
     return s2;
   }
 
-  /** \brief VTK export.
+  /** @brief VTK export.
 
       export class to VTK ( http://www.kitware.com/vtk.html ) file format 
       (not the XML format, but the old format)
@@ -249,7 +249,7 @@ namespace getfem {
   }
 
 
-  /** \brief A (quite large) class for exportation of data to IBM OpenDX.
+  /** @brief A (quite large) class for exportation of data to IBM OpenDX.
 
                      http://www.opendx.org/
 

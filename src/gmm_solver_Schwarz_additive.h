@@ -28,6 +28,7 @@
 //
 //========================================================================
 
+/**@file gmm_solver_Schwarz_additive.h*/
 
 #ifndef GMM_SOLVERS_SCHWARZ_ADDITIVE_H__
 #define GMM_SOLVERS_SCHWARZ_ADDITIVE_H__ 

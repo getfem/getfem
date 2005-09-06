@@ -28,8 +28,8 @@
 //
 //========================================================================
 
-/**\file getfem_nonlinear_elasticity.h
-   \brief Non-linear elasticty brick.
+/**@file getfem_nonlinear_elasticity.h
+   @brief Non-linear elasticty brick.
 */
 #ifndef GETFEM_NONLINEAR_ELASTICITY_H__
 #define GETFEM_NONLINEAR_ELASTICITY_H__
@@ -191,7 +191,7 @@ namespace getfem {
     Mooney_Rivlin_hyperelastic_law(void) { nb_params_ = 2; }
   };
 
-  /** Ciarlet-Geymonat hyperelastic law.
+  /** Ciarlet-Geymonat hyperelastic law ( @f$ W=~_1i_1(L) + \frac{~}{2}i_2(L) + 8ci_3(L) - \frac{~_1}{2} \textrm{log}~\textrm{det}~C @f$ )
       
       A "good" law.
   */
@@ -262,7 +262,6 @@ namespace getfem {
   };
 
 
-  /** C
   template<typename VECT1, typename VECT2> class elasticity_nonlinear_term 
     : public getfem::nonlinear_elem_term {
     const mesh_fem &mf;
@@ -341,6 +340,11 @@ namespace getfem {
     
   };
 
+
+  /** 
+      Tangent matrix for the non-linear elasticity 
+      @ingroup asm
+   */
   template<typename MAT, typename VECT1, typename VECT2> 
   void asm_nonlinear_elasticity_tangent_matrix(const MAT &K_, 
 					       const mesh_im &mim, 
@@ -361,7 +365,7 @@ namespace getfem {
       /*assem("t=comp(NonLin(#1,#2).vGrad(#1).vGrad(#1)); "
 	    "M(#1,#1)+= sym(t(i,j,k,l,:,i,j,:,k,l))");
       */
-      assem("M(#1,#1)+=sym(comp(NonLin(#1,#2)(i,j,k,l).vGrad(#1)(:,i,j).vGrad(#1)(:,k,l)))");
+  assem("M(#1,#1)+=sym(comp(NonLin(#1,#2)(i,j,k,l).vGrad(#1)(:,i,j).vGrad(#1)(:,k,l)))");
     assem.push_mi(mim);
     assem.push_mf(mf);
     assem.push_mf(mf_data);
@@ -371,6 +375,9 @@ namespace getfem {
   }
 
 
+  /**
+      @ingroup asm
+  */
   template<typename VECT1, typename VECT2, typename VECT3> 
   void asm_nonlinear_elasticity_rhs(const VECT1 &R_, 
 				    const mesh_im &mim, 
@@ -399,12 +406,19 @@ namespace getfem {
   }
 
 
-  /* ******************************************************************** */
-  /*		Nonlinear elasticity brick.                               */
-  /* ******************************************************************** */
-
 # define MDBRICK_NONLINEAR_ELASTICITY 821357
 
+  /** Non-linear elasticity brick  ( @f$ \int (I+\nabla u)\hat{\hat{\sigma}}:\nabla v = l(v)  @f$ ).
+      
+      @f$ \hat{\hat{\sigma}} @f$ is known as the second Piola-Kirchhoff stress tensor, and is given by \f[ \hat{\hat{\sigma}} = -\frac{\partial}{\partial L}W(L) \f],
+      with @f$W@f$ the strain energy of the material, and @f$L=\frac{1}{2}\left(\nabla u^t\nabla u + \nabla u^t + \nabla u\right)@f$ is the Green-Lagrange strain tensor.
+
+      This brick handle the computation of the tangent matrix and the
+      right hand side for large strain problems, with hyperelastic
+      material laws.
+  
+      @ingroup bricks
+   */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_nonlinear_elasticity : public mdbrick_abstract<MODEL_STATE> {
 
@@ -554,6 +568,7 @@ namespace getfem {
     }
   };
 
+  /**@ingroup asm*/
   template<typename MAT1, typename MAT2, typename VECT1, typename VECT2> 
   void asm_nonlinear_incomp_tangent_matrix(const MAT1 &K_, const MAT2 &B_,
 					   const mesh_im &mim,
@@ -597,6 +612,8 @@ namespace getfem {
   }
 
 
+  /**@ingroup asm
+   */
   template<typename VECT1, typename VECT2, typename VECT3> 
   void asm_nonlinear_incomp_rhs(const VECT1 &R_U_, const VECT1 &R_P_, 
 				const mesh_im &mim,
@@ -630,7 +647,9 @@ namespace getfem {
     assem.assembly(rg);
   }
 
-
+  /** Incompressible non-linear elasticity brick.
+      @ingroup bricks
+   */
   template<typename MODEL_STATE = standard_model_state>
   class mdbrick_nonlinear_incomp : public mdbrick_abstract<MODEL_STATE>  {
     

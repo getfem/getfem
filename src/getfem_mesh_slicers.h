@@ -27,10 +27,10 @@
 //
 //========================================================================
 
-/**\file getfem_mesh_slicers.h
-   \brief Define various mesh slicers.
+/**@file getfem_mesh_slicers.h
+   @brief Define various mesh slicers.
    
-   Mesh slices are analogous to a refined P1-discontinuous mesh\_fem, a list of nodes/simplexes on which the interpolation is very fast.
+   Mesh slices are analogous to a refined P1-discontinuous mesh_fem, a list of nodes/simplexes on which the interpolation is very fast.
 
    A slice is built from a mesh, by applying some slicing operations
    (cut the mesh with a plane, intersect with a sphere, take the
@@ -49,7 +49,7 @@
 #include <bgeot_rtree.h>
 
 namespace getfem {
-  /** \internal \brief node data in a slice.
+  /** @internal @brief node data in a slice.
 
       Contains both real position, and position in the reference
       convex
@@ -69,7 +69,7 @@ namespace getfem {
   };
   
 
-  /** \internal \brief simplex data in a slice.
+  /** @internal @brief simplex data in a slice.
       
       Just a list of slice_node ids.
   */
@@ -87,7 +87,7 @@ namespace getfem {
   class slicer_action;
   class stored_mesh_slice;
 
-  /** \brief Apply a serie a slicing operations to a mesh.
+  /** @brief Apply a serie a slicing operations to a mesh.
       
       No output is produced by this object, the real output obtained
       with the side-effect of certain getfem::mesh_slicer objects
@@ -114,6 +114,9 @@ namespace getfem {
 
     void pack(); /* not used, indeed */
     void update_nodes_index();
+    /** mesh_slicer constructor. Use mesh_slicer::exec to build the slice.
+	@param m_ the mesh that is going to be sliced.
+    */
     mesh_slicer(const getfem_mesh& m_) : m(m_), pgt(0), cvr(0) {}
     void push_back_action(slicer_action &a) { action.push_back(&a); }
     void push_front_action(slicer_action &a) { action.push_front(&a); }
@@ -130,8 +133,7 @@ namespace getfem {
       else DAL_THROW(dal::internal_error,"");
     }
     void simplex_orientation(slice_simplex& s);
-    /**\brief build a new mesh_slice.
-       @param m the mesh that is to be sliced
+    /**@brief build a new mesh_slice.
        @param nrefine number of refinments for each convex of the original mesh
        @param cvlst the list of convex numbers (or convex faces) of m that will 
        be taken into account for the slice
@@ -139,18 +141,13 @@ namespace getfem {
     void exec(size_type nrefine, const mesh_region& cvlst); 
     void exec(size_type nrefine = 1);
     /**
-       \brief build a new mesh slice.
-       @param sl an initial stored_mesh_slice
+       @brief build a new mesh slice.
+       @param sms an initial stored_mesh_slice
     */
     void exec(const stored_mesh_slice& sms);
     /**
-       \brief build a new mesh_slice than can be used to interpolate a field
+       @brief build a new mesh_slice than can be used to interpolate a field
        on a fixed set of points.
-
-       @param m the mesh that is to be sliced
-       @param ms a slicer
-       @param cvlst the list of convex numbers (or convex faces) of m that will 
-       be taken into account for the slice       
        @param pts the list of points
      */
      void exec(const std::vector<base_node>& pts);
@@ -194,7 +191,7 @@ namespace getfem {
   };
   
 
-  /** \brief generic slicer class.
+  /** @brief generic slicer class.
       
   Given a list of slice_simplex/slice_node, it build a news list of
   slice_simplex/slice_node, indicating which ones are in the slice

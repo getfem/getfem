@@ -32,8 +32,8 @@
 #define DAL_BIT_VECTOR_H__
 
 
-/** \file dal_bit_vector.h
-    \brief Provide a dynamic bit container.
+/** @file dal_bit_vector.h
+    @brief Provide a dynamic bit container.
     
     Provide a dynamic bit container, which can also be considered as a
     set of integers.
@@ -345,11 +345,11 @@ namespace dal
      bit_vector::const_iterator (much faster)
 
      example:
-     \code
+     @code
      for (bv_visitor i(v); !i.finished(); ++i) {
        .... (use i as an unsigned int)
      }
-     \endcode
+     @endcode
      CAUTION: use bv_visitor_c instead of bv_visitor if the class bv_visitor need to store a copy of the bit_vector 
      (if the original is destroyed just after the creation...)
   */

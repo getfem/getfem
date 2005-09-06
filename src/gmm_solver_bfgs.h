@@ -26,6 +26,10 @@
 // Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //========================================================================
+
+/**@file gmm_solver_bfgs.h 
+   @brief Implements BFGS (Broyden, Fletcher, Goldfarb, Shanno) algorithm.
+ */
 #ifndef GMM_BFGS_H
 #define GMM_BFGS_H
 

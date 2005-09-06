@@ -2,7 +2,7 @@
 //========================================================================
 //
 // Library : Generic Matrix Methods  (gmm)
-// File    : gmm_vector_to_matrix.h : generic sub matrices.
+// File    : gmm_vector_to_matrix.h : View vectors as row or column matrices.
 //           
 // Date    : December 6, 2003.
 // Author  : Yves Renard <Yves.Renard@insa-toulouse.fr>
@@ -27,6 +27,8 @@
 //
 //========================================================================
 
+/**@file gmm_vector_to_matrix.h
+   @brief View vectors as row or column matrices. */
 #ifndef GMM_VECTOR_TO_MATRIX_H__
 #define GMM_VECTOR_TO_MATRIX_H__
 

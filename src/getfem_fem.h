@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file getfem_fem.h 
-   \brief Definition of the finite element methods.
+/**@file getfem_fem.h 
+   @brief Definition of the finite element methods.
 
    This file defines the getfem::virtual_fem class, which is the common base class of all FEM.
 */
@@ -136,7 +136,7 @@ namespace getfem {
 
   class fem_interpolation_context;
   
-  /** \brief Base class for finite element description */
+  /** @brief Base class for finite element description */
   class virtual_fem : virtual public dal::static_stored_object {
 
   protected :
@@ -479,7 +479,7 @@ namespace getfem {
   };
   
 
-  /** \brief Handles precomputations for FEM.
+  /** @brief Handles precomputations for FEM.
      statically allocates a fem-precomputation object, and returns a
      pointer to it. The precomputations are "cached", i.e. they are
      stored in a global pool and if this function is called two times
@@ -499,30 +499,34 @@ namespace getfem {
      when this structure will be destroyed.  */
   pfem_precomp fem_precomp(pfem pf, bgeot::pstored_point_tab pspt);
 
-  /**
-     handles a pool (i.e. a set) of fem_precomp. The difference with
-     the global fem_precomp function is that these fem_precomp objects
-     are freed when the fem_precomp_pool is destroyed (they can eat
-     much memory). An example of use can be found in the
-     interpolation_solution functions of getfem_export.h
-
-     @param pf a pointer to the fem object.
-     @param pspt a pointer to a list of points in the reference convex.CAUTION:
-     this array must not be destroyed as long as the fem_precomp is used!!
-
-     Moreover pspt is supposed to identify uniquely the set of
-     points. This means that you should NOT alter its content until
-     the fem_precomp_pool is destroyed.
-  */
+  /** Request for the removal of a pfem_precomp */
   inline void delete_fem_precomp(pfem_precomp pfp)
   { dal::del_stored_object(pfp); }
 
 
+  /**
+     handle a pool (i.e. a set) of fem_precomp. The difference with
+     the global fem_precomp function is that these fem_precomp objects
+     are freed when the fem_precomp_pool is destroyed (they can eat
+     much memory). An example of use can be found in the
+     getfem::interpolation_solution functions of getfem_export.h
+  */
   class fem_precomp_pool {
     std::set<pfem_precomp> precomps;
     
   public :
     
+    /** Request a pfem_precomp. If not already in the pool, the
+	pfem_precomp is computed, and added to the pool.
+	
+        @param pf a pointer to the fem object.
+	@param pspt a pointer to a list of points in the reference convex.CAUTION:
+	this array must not be destroyed as long as the fem_precomp is used!!
+	
+	Moreover pspt is supposed to identify uniquely the set of
+	points. This means that you should NOT alter its content until
+	the fem_precomp_pool is destroyed.
+    */
     pfem_precomp operator()(pfem pf, bgeot::pstored_point_tab pspt) {
       pfem_precomp p = fem_precomp(pf, pspt);
       precomps.insert(p);

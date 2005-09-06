@@ -28,8 +28,8 @@
 //
 //========================================================================
 
-/**\file getfem_mesh_fem_level_set.h
-   \brief a subclass of mesh_fem which is conformal to a number of level sets.
+/**@file getfem_mesh_fem_level_set.h
+   @brief a subclass of mesh_fem which is conformal to a number of level sets.
 */
 
 #ifndef GETFEM_MESH_FEM_LEVEL_SET_H__

@@ -28,8 +28,8 @@
 //
 //========================================================================
 
-/**\file getfem_derivatives.h
-   \brief Compute the gradient of a field on a getfem::mesh_fem.
+/**@file getfem_derivatives.h
+   @brief Compute the gradient of a field on a getfem::mesh_fem.
 */
 #ifndef GETFEM_DERIVATIVES_H__
 #define GETFEM_DERIVATIVES_H__

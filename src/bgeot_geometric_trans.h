@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/** \file bgeot_geometric_trans.h 
-    \brief Geometric transformations on convexes.
+/** @file bgeot_geometric_trans.h 
+    @brief Geometric transformations on convexes.
 */ 
 
 #ifndef BGEOT_GEOMETRIC_TRANSFORMATION_H__
@@ -42,51 +42,58 @@ namespace bgeot
 {
   /**  Description of a geometric transformation between a
    * reference element and a real element.
-   * Geometric  nodes  and  vector  of polynomials. This class 
-   * is not  to be  manipulate  by itself.  Use pgeometric\_trans  and
-   * the   functions   written   to   produce   the   basic  geometric
-   * transformations.
-   *   \subsubsection*{Description of the geometry}
-   *     Let $T \in\ {I\hspace{-0.3em}R}^N$ be a real element and
-   *     $\overline{T} \in\ {I\hspace{-0.3em}R}^P$ be a reference element,
-   *      with $N >= P$. \\
-   *     The geometric nodes of $\overline{T}$ are the points
-   *     $\overline{g}^i \in\ {I\hspace{-0.3em}R}^P$, for $i = 0 .. n_g-1$,
+   *
+   * Geometric nodes and vector of polynomials. This class is not to
+   * be manipulate by itself.  Use bgeot::pgeometric_trans and the
+   * functions written to produce the basic geometric transformations.
+   *
+   * <h3>Description of the geometry</h3>
+   *     Let @f$T \in\ {I\hspace{-0.3em}R}^N@f$ be a real element and
+   *     @f$\overline{T} \in\ {I\hspace{-0.3em}R}^P@f$ be a reference element,
+   *      with @f$N >= P@f$.
+   *
+   *     The geometric nodes of @f$\overline{T}@f$ are the points
+   *     @f$\overline{g}^i \in\ {I\hspace{-0.3em}R}^P@f$, for @f$i = 0 .. n_g-1@f$,
    *     and the corresponding (via the geometric transformation) nodes of
-   *     $T$ are the points $g^i \in\ {I\hspace{-0.3em}R}^N$. 
-   *   \subsubsection*{Geometric transformation}
-   *     The geometric transformation is the application \\
-   *     $ \begin{array}{rl}
+   *     @f$T@f$ are the points @f$g^i \in\ {I\hspace{-0.3em}R}^N@f$. 
+   *
+   *  <h3>Geometric transformation</h3>
+   *     The geometric transformation is the application
+   *     @f[ \begin{array}{rl}
    *        \tau : \overline{T} & \longrightarrow \ T, \\
    *               \overline{x} & \longmapsto \ \ x,
-   *     \end{array} $ \\
-   *     which should be a diffeomorphism between $\overline{T}$ and $T$. It
-   *     is assumed that there exists a polynomial vector \\
-   *     $ \underline{\cal N}(\overline{x})
-   *        = \left({\cal N}i_(\overline{x})\right)i_, \ \ i = 0 .. n_g-1, $ \\
-   *     defined on $\overline{T}$ of size $n_g$, such that the transformation
-   *     $\tau$ can be written \\
-   *     $ \tau(\overline{x}) = \sum_{i = 0}^{n_g-1} {\cal N}i_(\overline{x})
-   *     g^i. $ \\
-   *     Denoting by \\
-   *     $ \underline{\underline{G}} = (g^0; g^1; ...;g^{n_g-1}), $ \\
-   *     The matrix in which each column is a geometric node of $T$,
-   *     the transformation $\tau$ can be written as \\
-   *     $ \tau(\overline{x}) = \underline{\underline{G}} \ 
-   *        \underline{\cal N}(\overline{x}). $ \\
-   *   \subsubsection*{Gradient of the transformation}
-   *     The gradient of the transformation is \\
-   *     $ \nabla \tau(\overline{x}) = 
-   *     \left( \frac{\partial \tau_i}{\partial \overline{x}j_} \right)_{ij}
+   *     \end{array} @f]
+   *     which should be a diffeomorphism between @f$\overline{T}@f$ and @f$T@f$. It
+   *     is assumed that there exists a polynomial vector 
+   *     @f$ \underline{\cal N}(\overline{x})
+   *        = \left({\cal N}i_(\overline{x})\right)i_, \ \ i = 0 .. n_g-1, @f$ 
+   *     defined on @f$\overline{T}@f$ of size @f$n_g@f$, such that the transformation
+   *     @f$\tau@f$ can be written 
+   *     @f$ \tau(\overline{x}) = \sum_{i = 0}^{n_g-1} {\cal N}i_(\overline{x})
+   *     g^i@f$.
+   *
+   *     Denoting by 
+   *     @f$ \underline{\underline{G}} = (g^0; g^1; ...;g^{n_g-1}), @f$ 
+   *     The matrix in which each column is a geometric node of @f$T@f$,
+   *     the transformation @f$\tau@f$ can be written as 
+   *     @f$ \tau(\overline{x}) = \underline{\underline{G}} \ 
+   *        \underline{\cal N}(\overline{x}). @f$ 
+   *
+   *  <h3>Gradient of the transformation</h3>
+   *     The gradient of the transformation is 
+   *     @f[ \nabla \tau(\overline{x}) = 
+   *     \left( \frac{\partial \tau_i}{\partial \overline{x}_j} \right)_{ij}
    *     = \left( \sum_{l = 0}^{n_g-1}g^l_i
-   *     \frac{\partial {\cal N}l_(\overline{x})}{\partial \overline{x}j_}
+   *     \frac{\partial {\cal N}l_(\overline{x})}{\partial \overline{x}_j}
    *     \right)_{ij} = \underline{\underline{G}}\ \nabla
-   *     \underline{\cal N}(\overline{x}), $ \\
-   *     Remark : $\underline{\underline{G}}$ is a $N \times n_g$ matrix,
-   *       $\nabla \underline{\cal N}(\overline{x})$ is a $n_g \times P$
-   *       matrix, and thus $\nabla \tau(\overline{x})$ is a $N \times P$
+   *     \underline{\cal N}(\overline{x}), @f]
+   *
+   *     Remark : @f$\underline{\underline{G}}@f$ is a @f$N \times n_g@f$ matrix,
+   *       @f$\nabla \underline{\cal N}(\overline{x})@f$ is a @f$n_g \times P@f$
+   *       matrix, and thus @f$\nabla \tau(\overline{x})@f$ is a @f$N \times P@f$
    *       matrix.
-   *   \subsubsection*{Inverse transformation and pseudo-inverse}
+   *
+   *  <h3>Inverse transformation and pseudo-inverse</h3>
    *     to do ...
    */
   class geometric_trans : virtual public dal::static_stored_object {
@@ -250,9 +257,10 @@ namespace bgeot
     /**
      *  Apply the geometric transformation from the reference convex to
      *  the convex whose vertices are stored in G, to the set of points
-     *  listed in pspt. @param G any container of vertices of the transformed
-     *  convex
-     *  @result pt_tab transformed points
+     *  listed in pspt. 
+     *  @param G any container of vertices of the transformed
+     *  convex.
+     *  @param pt_tab on output, the transformed points.
      */
     template <typename CONT> 
     void transform(const CONT& G,

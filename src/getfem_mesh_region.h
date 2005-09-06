@@ -28,8 +28,8 @@
 //
 //========================================================================
 
-/**\file getfem_mesh_region.h
-   \brief  region objects (set of convexes and/or convex faces)
+/**@file getfem_mesh_region.h
+   @brief  region objects (set of convexes and/or convex faces)
 */
 
 #ifndef GETFEM_MESH_REGION

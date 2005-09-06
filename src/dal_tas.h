@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file dal_tas.h
-   \brief Heap implementation.
+/**@file dal_tas.h
+   @brief Heap implementation.
 */
 #ifndef DAL_TAS_H__
 #define DAL_TAS_H__

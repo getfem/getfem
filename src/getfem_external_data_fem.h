@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file getfem_external_data_fem.h
-   \brief A pseudo FEM allowing to define any function on a getfem::mesh_fem. 
+/**@file getfem_external_data_fem.h
+   @brief A pseudo FEM allowing to define any function on a getfem::mesh_fem. 
 */
 #include <getfem_fem.h>
 #include <getfem_mesh_fem.h>

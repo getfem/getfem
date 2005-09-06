@@ -26,7 +26,9 @@
 // Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //========================================================================
-
+/**@file gmm_vector.h
+   @brief Declaration of the vector types (gmm::rsvector , gmm::wsvector , gmm::slvector ,..)
+*/
 #ifndef GMM_VECTOR_H__
 #define GMM_VECTOR_H__
 
@@ -176,6 +178,9 @@ namespace gmm {
   };
 
 
+  /**
+     sparse vector built upon std::map. Read and write access are quite fast (log n)
+  */
   template<typename T> class wsvector : public std::map<size_type, T> {
   public:
     
@@ -398,6 +403,9 @@ namespace gmm {
     rsvector_const_iterator(const IT &i) : it(i) {}
   };
 
+  /**
+     sparse vector built upon std::vector. Read access is fast, but insertion is O(n) 
+  */
   template<typename T> class rsvector : public std::vector<elt_rsvector_<T> > {
   public:
     
@@ -828,6 +836,8 @@ namespace gmm {
   };
 
 
+  /** skyline vector.
+   */
   template <typename T> class slvector {
     
   public :

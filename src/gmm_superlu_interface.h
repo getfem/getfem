@@ -27,7 +27,9 @@
 //
 //========================================================================
 
-
+/**@file gmm_superlu_interface.h
+   @brief Interface with SuperLU (LU direct solver for sparse matrices).
+*/
 #if defined(GMM_USES_SUPERLU) && !defined(GETFEM_VERSION)
 
 #ifndef GMM_SUPERLU_INTERFACE_H

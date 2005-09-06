@@ -49,6 +49,9 @@
 // OR OTHER RIGHTS.
 //=======================================================================
 
+/**@file gmm_solver_cg.h
+   @brief Conjugate gradient iterative solver. 
+*/
 #ifndef GMM_SOLVER_CG_H__
 #define GMM_SOLVER_CG_H__
 

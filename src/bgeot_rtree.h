@@ -30,8 +30,8 @@
 #ifndef BGEOT_RTREE_H
 #define BGEOT_RTREE_H
 
-/** \file bgeot_rtree.h
-    \brief region-tree for window/point search on a set of rectangles.
+/** @file bgeot_rtree.h
+    @brief region-tree for window/point search on a set of rectangles.
 */
 
 #include <set>

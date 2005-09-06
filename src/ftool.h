@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file ftool.h
-   \brief "File Tools"
+/**@file ftool.h
+   @brief "File Tools"
 */
 #ifndef FTOOL_H
 #define FTOOL_H

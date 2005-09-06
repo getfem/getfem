@@ -27,12 +27,16 @@
 //
 //========================================================================
 
+/**@file gmm_conjugated.h
+   @brief handle conjugation of complex matrices/vectors.
+*/
 #ifndef GMM_CONJUGATED_H__
 #define GMM_CONJUGATED_H__
 
 #include <gmm_def.h>
 
 namespace gmm {
+  ///@cond DOXY_SHOW_ALL_FUNCTIONS
 
   /* ********************************************************************* */
   /*		Conjugated references on vectors            		   */
@@ -344,13 +348,16 @@ namespace gmm {
 		       typename linalg_traits<L>::linalg_type		       
 		       >::return_type return_type;
   };
-  
+
+  ///@endcond
+  /** return a conjugated view of the input matrix or vector. */
   template <typename L> inline
   typename conjugated_return<L>::return_type
   conjugated(const L &v) {
     return conjugated(v, typename linalg_traits<L>::value_type(),
 		      typename linalg_traits<L>::linalg_type());
   }
+  ///@cond DOXY_SHOW_ALL_FUNCTIONS
 
   template <typename L, typename T, typename LT> inline
   const L & conjugated(const L &v, T, LT) { return v; }
@@ -377,7 +384,7 @@ namespace gmm {
   conjugated_col_matrix_const_ref<L> conjugated(const L &v, col_major)
   { return conjugated_col_matrix_const_ref<L>(v); }
   
-
+  ///@endcond
   
 
 }

@@ -27,6 +27,10 @@
 //
 //========================================================================
 
+/**@file gmm_sub_index.h
+   @brief sub-indexes.
+*/
+
 #ifndef GMM_SUB_INDEX_H__
 #define GMM_SUB_INDEX_H__
 

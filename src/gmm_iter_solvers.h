@@ -27,7 +27,9 @@
 //
 //========================================================================
 
-
+/**@file gmm_iter_solvers.h
+   @brief Include standard gmm iterative solvers (cg, gmres, ...)
+*/
 #ifndef GMM_ITER_SOLVERS_H__
 #define GMM_ITER_SOLVERS_H__
 

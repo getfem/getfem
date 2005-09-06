@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file getfem_assembling_tensors.h
-   \brief Generic assembly implementation.
+/**@file getfem_assembling_tensors.h
+   @brief Generic assembly implementation.
 */
 #ifndef GETFEM_ASSEMBLING_TENSORS_H__
 #define GETFEM_ASSEMBLING_TENSORS_H__

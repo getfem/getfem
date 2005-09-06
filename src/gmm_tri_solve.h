@@ -50,6 +50,10 @@
 //
 //===========================================================================
 
+/**@file gmm_tri_solve.h
+   @brief Solve triangular linear system for dense matrices.
+*/
+
 #ifndef GMM_TRI_SOLVE_H__
 #define GMM_TRI_SOLVE_H__
 

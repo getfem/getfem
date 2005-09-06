@@ -27,6 +27,9 @@
 //
 //========================================================================
 
+/**@file gmm_real_part.h
+   @brief extract the real/imaginary part of vectors/matrices 
+*/
 #ifndef GMM_REAL_PART_H
 #define GMM_REAL_PART_H
 

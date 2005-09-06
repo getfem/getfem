@@ -27,6 +27,10 @@
 //
 //========================================================================
 
+/** @file gmm_matrix.h
+    @brief Declaration of some matrix types (gmm::dense_matrix, gmm::row_matrix, gmm::col_matrix, gmm::csc_matrix, etc.)
+*/
+
 #ifndef GMM_MATRIX_H__
 #define GMM_MATRIX_H__
 

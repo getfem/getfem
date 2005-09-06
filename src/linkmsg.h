@@ -30,6 +30,9 @@
 /*                                                                         */
 /* *********************************************************************** */
 
+/**@file linkmsg.h
+   @brief structure for managing Messages between objects.
+*/
 
 #ifndef LINKMSG_H__
 #define LINKMSG_H__

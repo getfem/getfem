@@ -27,6 +27,10 @@
 //
 //========================================================================
 
+/**@file gmm_blas.h
+   @brief Basic linear algebra functions.
+*/
+
 #ifndef GMM_BLAS_H__
 #define GMM_BLAS_H__
 
@@ -47,16 +51,20 @@ namespace gmm {
   /*		Miscellaneous                           		  */
   /* ******************************************************************** */
 
-
+  /** clear (fill with zeros) a vector or matrix. */
   template <typename L> inline void clear(L &l)
   { linalg_traits<L>::do_clear(l); }
-
+  /** @cond DOXY_SHOW_ALL_FUNCTIONS 
+      skip all these redundant definitions in doxygen documentation..
+   */
   template <typename L> inline void clear(const L &l)
   { linalg_traits<L>::do_clear(linalg_const_cast(l)); }
 
-  template <typename L> inline size_type nnz(const L& l)
+  ///@endcond
+  /** count the number of non-zero entries of a vector or matrix. */  template <typename L> inline size_type nnz(const L& l)
   { return nnz(l, typename linalg_traits<L>::linalg_type()); }
 
+  ///@cond DOXY_SHOW_ALL_FUNCTIONS
   template <typename L> inline size_type nnz(const L& l, abstract_vector) { 
     typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
       ite = vect_const_end(l);
@@ -84,9 +92,12 @@ namespace gmm {
     return res;
   }
 
+  ///@endcond
+  /** fill a vector or matrix with random value (uniform [0,1]). */
   template <typename L> inline void fill_random(L& l)
   { fill_random(l, typename linalg_traits<L>::linalg_type()); }
 
+  ///@cond DOXY_SHOW_ALL_FUNCTIONS
   template <typename L> inline void fill_random(const L& l) {
     fill_random(linalg_const_cast(l),
 		typename linalg_traits<L>::linalg_type());
@@ -103,8 +114,14 @@ namespace gmm {
 	l(i,j) = gmm::random(typename linalg_traits<L>::value_type());
   }
 
+  ///@endcond
+  /** fill a vector or matrix with random value.
+      @param l a vector or matrix.
+      @param cfill probability of a non-zero value.
+  */
   template <typename L> inline void fill_random(L& l, double cfill)
   { fill_random(l, cfill, typename linalg_traits<L>::linalg_type()); }
+  ///@cond DOXY_SHOW_ALL_FUNCTIONS
 
   template <typename L> inline void fill_random(const L& l, double cfill) {
     fill_random(linalg_const_cast(l), cfill,
@@ -140,7 +157,7 @@ namespace gmm {
     for (size_type j=0; j < mat_ncols(l); ++j) fill_random(mat_col(l,j),cfill);
   }
 
-  /** resize a vector **/
+  /* resize a vector */
   template <typename V> inline
   void resize(V &v, size_type n, linalg_false) {
     linalg_traits<V>::resize(v, n);
@@ -156,10 +173,13 @@ namespace gmm {
     DAL_THROW(failure_error, "You cannot resize a reference");
   }
 
-  template <typename V> inline
+  ///@endcond
+  /** resize a vector. */
+   template <typename V> inline
   void resize(V &v, size_type n) {
     resize(v, n, typename linalg_traits<V>::is_reference());
   }
+  ///@cond DOXY_SHOW_ALL_FUNCTIONS
 
   /** resize a matrix **/
   template <typename M> inline
@@ -177,12 +197,14 @@ namespace gmm {
     DAL_THROW(failure_error, "You cannot resize a reference");
   }
 
+  ///@endcond 
+  /** resize a matrix */
   template <typename M> inline
   void resize(M &v, size_type m, size_type n) {
     resize(v, m, n, typename linalg_traits<M>::is_reference());
   }
+  ///@cond
 
-  /** reshape a matrix **/
   template <typename M> inline
   void reshape(M &v, size_type m, size_type n, linalg_false) {
     linalg_traits<M>::reshape(v, m, n);
@@ -198,16 +220,21 @@ namespace gmm {
     DAL_THROW(failure_error, "You cannot reshape a reference");
   }
 
+  ///@endcond 
+  /** reshape a matrix */
   template <typename M> inline
   void reshape(M &v, size_type m, size_type n) {
     reshape(v, m, n, typename linalg_traits<M>::is_reference());
   }
+  ///@cond DOXY_SHOW_ALL_FUNCTIONS
   
 
   /* ******************************************************************** */
   /*		Scalar product                             		  */
   /* ******************************************************************** */
 
+  ///@endcond
+  /** scalar product between two vectors */
   template <typename V1, typename V2> inline
   typename strongest_value_type<V1,V2>::value_type
     vect_sp(const V1 &v1, const V2 &v2) {
@@ -219,12 +246,18 @@ namespace gmm {
 		   typename linalg_traits<V2>::storage_type());
   }
 
+  /** scalar product between two vectors, using a matrix.
+      @param ps the matrix of the scalar product.
+      @param v1 the first vector
+      @param v2 the second vector
+  */
   template <typename MATSP, typename V1, typename V2> inline
   typename strongest_value_type3<V1,V2,MATSP>::value_type
     vect_sp(const MATSP &ps, const V1 &v1, const V2 &v2) {
     return vect_sp_with_mat(ps, v1, v2,
 			    typename linalg_traits<MATSP>::sub_orientation());
   }
+  ///@cond DOXY_SHOW_ALL_FUNCTIONS
 
   template <typename MATSP, typename V1, typename V2> inline
     typename strongest_value_type3<V1,V2,MATSP>::value_type
@@ -451,12 +484,14 @@ namespace gmm {
   /* ******************************************************************** */
   /*		Hermitian product                             		  */
   /* ******************************************************************** */
-
+  ///@endcond
+  /** Hermitian product. */
   template <typename V1, typename V2>
   inline typename strongest_value_type<V1,V2>::value_type
   vect_hp(const V1 &v1, const V2 &v2)
   { return vect_sp(v1, conjugated(v2)); }
 
+  /** Hermitian product with a matrix. */
   template <typename MATSP, typename V1, typename V2> inline
   typename strongest_value_type3<V1,V2,MATSP>::value_type
     vect_hp(const MATSP &ps, const V1 &v1, const V2 &v2) {
@@ -467,6 +502,7 @@ namespace gmm {
   /*		Trace of a matrix                             		  */
   /* ******************************************************************** */
   
+  /** Trace of a matrix */
    template <typename M>
    typename linalg_traits<M>::value_type
    mat_trace(const M &m) {
@@ -481,6 +517,7 @@ namespace gmm {
   /*		Euclidean norm                             		  */
   /* ******************************************************************** */
 
+  /** Euclidean norm of a vector. */
   template <typename V>
   typename number_traits<typename linalg_traits<V>::value_type>
   ::magnitude_type
@@ -494,12 +531,15 @@ namespace gmm {
     return res;
   }
 
+  /** squared Euclidean norm of a vector. */
   template <typename V> inline
    typename number_traits<typename linalg_traits<V>::value_type>
    ::magnitude_type 
   vect_norm2(const V &v)
   { return sqrt(vect_norm2_sqr(v)); }
   
+
+  /** squared Euclidean distance between two vectors */
   template <typename V1, typename V2> inline
    typename number_traits<typename linalg_traits<V1>::value_type>
    ::magnitude_type
@@ -533,12 +573,13 @@ namespace gmm {
     return res;
   }
  
+  /** Euclidean distance between two vectors */
   template <typename V1, typename V2> inline
    typename number_traits<typename linalg_traits<V1>::value_type>
    ::magnitude_type
   vect_dist2(const V1 &v1, const V2 &v2)
   { return sqrt(vect_dist2_sqr(v1, v2)); }
-
+  ///@cond DOXY_SHOW_ALL_FUNCTIONS
   template <typename M>
    typename number_traits<typename linalg_traits<M>::value_type>
    ::magnitude_type
@@ -560,7 +601,8 @@ namespace gmm {
       res += vect_norm2_sqr(mat_const_col(m, i));
     return res;
   }
-
+  ///@endcond
+  /** squared Euclidean norm of a matrix. */
   template <typename M> inline
    typename number_traits<typename linalg_traits<M>::value_type>
    ::magnitude_type
@@ -570,6 +612,7 @@ namespace gmm {
 		     linalg_traits<M>::sub_orientation>::potype());
   }
 
+  /** Euclidean norm of a matrix. */
   template <typename M> inline
    typename number_traits<typename linalg_traits<M>::value_type>
    ::magnitude_type
@@ -579,7 +622,7 @@ namespace gmm {
   /* ******************************************************************** */
   /*		vector norm1                                    	  */
   /* ******************************************************************** */
-
+  /** 1-norm of a vector */
   template <typename V>
   typename number_traits<typename linalg_traits<V>::value_type>
   ::magnitude_type
@@ -595,7 +638,7 @@ namespace gmm {
   /* ******************************************************************** */
   /*		vector Infinity norm                              	  */
   /* ******************************************************************** */
-
+  /** Infinity norm of a vector. */
   template <typename V>
   typename number_traits<typename linalg_traits<V>::value_type>
   ::magnitude_type 
@@ -611,7 +654,7 @@ namespace gmm {
   /* ******************************************************************** */
   /*		matrix norm1                                    	  */
   /* ******************************************************************** */
-
+  ///@cond DOXY_SHOW_ALL_FUNCTIONS
   template <typename M>
    typename number_traits<typename linalg_traits<M>::value_type>
    ::magnitude_type
@@ -654,7 +697,8 @@ namespace gmm {
    ::magnitude_type
    mat_norm1(const M &m, row_and_col)
   { return mat_norm1(m, col_major()); }
-
+  ///@endcond
+  /** 1-norm of a matrix */
   template <typename M>
    typename number_traits<typename linalg_traits<M>::value_type>
    ::magnitude_type
@@ -666,7 +710,7 @@ namespace gmm {
   /* ******************************************************************** */
   /*		matrix Infinity norm                              	  */
   /* ******************************************************************** */
-
+  ///@cond DOXY_SHOW_ALL_FUNCTIONS
   template <typename M>
    typename number_traits<typename linalg_traits<M>::value_type>
    ::magnitude_type
@@ -709,7 +753,8 @@ namespace gmm {
    ::magnitude_type
    mat_norminf(const M &m, row_and_col)
   { return mat_norminf(m, row_major()); }
-
+  ///@endcond
+  /** infinity-norm of a matrix.*/
   template <typename M>
    typename number_traits<typename linalg_traits<M>::value_type>
    ::magnitude_type
@@ -720,7 +765,7 @@ namespace gmm {
   /* ******************************************************************** */
   /*		Max norm for matrices                              	  */
   /* ******************************************************************** */
-
+  ///@cond DOXY_SHOW_ALL_FUNCTIONS
   template <typename M>
    typename number_traits<typename linalg_traits<M>::value_type>
    ::magnitude_type
@@ -742,7 +787,8 @@ namespace gmm {
       res = std::max(res, vect_norminf(mat_const_col(m,i)));
     return res;
   }
-
+  ///@endcond
+  /** max-norm of a matrix. */
   template <typename M>
    typename number_traits<typename linalg_traits<M>::value_type>
    ::magnitude_type
@@ -755,86 +801,91 @@ namespace gmm {
   /* ******************************************************************** */
   /*		Clean                                    		  */
   /* ******************************************************************** */
+  /** Clean a vector or matrix (replace near-zero entries with zeroes). */
+  template <typename L> inline void clean(L &l, double threshold)
+  { clean(l, threshold, typename linalg_traits<L>::linalg_type()); }
+  ///@cond DOXY_SHOW_ALL_FUNCTIONS
 
-  template <typename L> inline void clean(L &l, double seuil)
-  { clean(l, seuil, typename linalg_traits<L>::linalg_type()); }
+  template <typename L> inline void clean(const L &l, double threshold)
+  { clean(linalg_const_cast(l), threshold); }
 
-  template <typename L> inline void clean(const L &l, double seuil)
-  { clean(linalg_const_cast(l), seuil); }
-
-  template <typename L> inline void clean(L &l, double seuil,abstract_vector) {
-    clean(l, seuil, typename linalg_traits<L>::storage_type(),
+  template <typename L> inline void clean(L &l, double threshold,abstract_vector) {
+    clean(l, threshold, typename linalg_traits<L>::storage_type(),
 	  typename linalg_traits<L>::value_type());
   }
 
   template <typename L, typename T>
-  void clean(L &l, double seuil, abstract_dense, T) {
+  void clean(L &l, double threshold, abstract_dense, T) {
     typedef typename number_traits<T>::magnitude_type R;
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
     for (; it != ite; ++it)
-      if (gmm::abs(*it) < R(seuil)) *it = T(0);
+      if (gmm::abs(*it) < R(threshold)) *it = T(0);
   }
 
   template <typename L, typename T>
-  void clean(L &l, double seuil, abstract_skyline, T)
-  { clean(l, seuil, abstract_dense(), T()); }
+  void clean(L &l, double threshold, abstract_skyline, T)
+  { clean(l, threshold, abstract_dense(), T()); }
 
   template <typename L, typename T>
-  void clean(L &l, double seuil, abstract_sparse, T) {
+  void clean(L &l, double threshold, abstract_sparse, T) {
     typedef typename number_traits<T>::magnitude_type R;
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
     for (; it != ite; ++it) // to be optimized ...
-      if (gmm::abs(*it) < R(seuil)) {
+      if (gmm::abs(*it) < R(threshold)) {
 	l[it.index()] = T(0);
 	it = vect_begin(l); ite = vect_end(l);
       }
   }
 
   template <typename L, typename T>
-  void clean(L &l, double seuil, abstract_dense, std::complex<T>) {
+  void clean(L &l, double threshold, abstract_dense, std::complex<T>) {
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
     for (; it != ite; ++it){
-      if (gmm::abs((*it).real()) < T(seuil))
+      if (gmm::abs((*it).real()) < T(threshold))
 	*it = std::complex<T>(T(0), (*it).imag());
-      if (gmm::abs((*it).imag()) < T(seuil))
+      if (gmm::abs((*it).imag()) < T(threshold))
 	*it = std::complex<T>((*it).real(), T(0));
     }
   }
 
   template <typename L, typename T>
-  void clean(L &l, double seuil, abstract_skyline, std::complex<T>)
-  { clean(l, seuil, abstract_dense(), std::complex<T>()); }
+  void clean(L &l, double threshold, abstract_skyline, std::complex<T>)
+  { clean(l, threshold, abstract_dense(), std::complex<T>()); }
 
   template <typename L, typename T>
-  void clean(L &l, double seuil, abstract_sparse, std::complex<T>) {
+  void clean(L &l, double threshold, abstract_sparse, std::complex<T>) {
     typename linalg_traits<L>::iterator it = vect_begin(l), ite = vect_end(l);
     for (; it != ite; ++it) { // to be optimized ...
-      if (gmm::abs((*it).real()) < T(seuil)) {
+      if (gmm::abs((*it).real()) < T(threshold)) {
 	l[it.index()] = std::complex<T>(T(0), (*it).imag());
 	it = vect_begin(l); ite = vect_end(l); continue;
       }
-      if (gmm::abs((*it).imag()) < T(seuil)) {
+      if (gmm::abs((*it).imag()) < T(threshold)) {
 	l[it.index()] = std::complex<T>((*it).real(), T(0));
 	it = vect_begin(l); ite = vect_end(l); continue;
       }
     }
   }
 
-  template <typename L> inline void clean(L &l, double seuil,abstract_matrix) {
-    clean(l, seuil, typename principal_orientation_type<typename
+  template <typename L> inline void clean(L &l, double threshold,abstract_matrix) {
+    clean(l, threshold, typename principal_orientation_type<typename
 	  linalg_traits<L>::sub_orientation>::potype());
   }
   
-  template <typename L> void clean(L &l, double seuil, row_major)
-  { for (size_type i = 0; i < mat_nrows(l); ++i) clean(mat_row(l, i), seuil); }
+  template <typename L> void clean(L &l, double threshold, row_major)
+  { for (size_type i = 0; i < mat_nrows(l); ++i) clean(mat_row(l, i), threshold); }
 
-  template <typename L> void clean(L &l, double seuil, col_major)
-  { for (size_type i = 0; i < mat_ncols(l); ++i) clean(mat_col(l, i), seuil); }
+  template <typename L> void clean(L &l, double threshold, col_major)
+  { for (size_type i = 0; i < mat_ncols(l); ++i) clean(mat_col(l, i), threshold); }
 
   /* ******************************************************************** */
   /*		Copy                                    		  */
   /* ******************************************************************** */
-
+  ///@endcond
+  /** Copy vectors or matrices. 
+      @param l1 source vector or matrix.
+      @param l2 destination.
+  */
   template <typename L1, typename L2> inline
   void copy(const L1& l1, L2& l2) { 
     if ((const void *)(&l1) != (const void *)(&l2)) {
@@ -845,6 +896,7 @@ namespace gmm {
 	   typename linalg_traits<L2>::linalg_type());
     }
   }
+  ///@cond DOXY_SHOW_ALL_FUNCTIONS
 
   template <typename L1, typename L2> inline
   void copy(const L1& l1, const L2& l2) { copy(l1, linalg_const_cast(l2)); }
@@ -1138,11 +1190,16 @@ namespace gmm {
   /*   repeated arguments or with overlapping part of a same object.      */
   /*   In the latter case, conflicts are still possible.                  */
   /* ******************************************************************** */
-  
+  ///@endcond
+  /** Add two vectors or matrices
+      @param l1
+      @param l2 contains on output, l2+l1.
+  */
   template <typename L1, typename L2> inline
     void add(const L1& l1, L2& l2) {
       add_spec(l1, l2, typename linalg_traits<L2>::linalg_type());
   }
+  ///@cond
 
   template <typename L1, typename L2> inline
   void add(const L1& l1, const L2& l2) { add(l1, linalg_const_cast(l2)); }
@@ -1297,12 +1354,18 @@ namespace gmm {
   void add(const L1& l1, L2& l2, col_major, col_and_row)
   { add(l1, l2, col_major(), col_major()); }
 
-
+  ///@endcond
+  /** Addition of two vectors/matrices
+      @param l1
+      @param l2
+      @param l3 contains l1+l2 on output
+  */
   template <typename L1, typename L2, typename L3> inline
   void add(const L1& l1, const L2& l2, L3& l3) {
     add_spec(l1, l2, l3, typename linalg_traits<L2>::linalg_type());
   }
-  
+  ///@cond DOXY_SHOW_ALL_FUNCTIONS
+
   template <typename L1, typename L2, typename L3> inline
   void add(const L1& l1, const L2& l2, const L3& l3)
   { add(l1, l2, linalg_const_cast(l3)); }
@@ -1531,11 +1594,17 @@ namespace gmm {
   /* ******************************************************************** */
   /*		Matrix-vector mult                                    	  */
   /* ******************************************************************** */
-
+  ///@endcond
+  /** matrix-vector or matrix-matrix product.
+      @param l1 a matrix.
+      @param l2 a vector or matrix.
+      @param l3 the product l1*l2.
+  */
   template <typename L1, typename L2, typename L3> inline
   void mult(const L1& l1, const L2& l2, L3& l3) {
     mult_dispatch(l1, l2, l3, typename linalg_traits<L2>::linalg_type());
   }
+  ///@cond DOXY_SHOW_ALL_FUNCTIONS
 
   template <typename L1, typename L2, typename L3> inline
   void mult(const L1& l1, const L2& l2, const L3& l3)
@@ -1662,7 +1731,8 @@ namespace gmm {
   void mult(const L1& l1, const L2& l2, const L3& l3, const L4& l4)
   { mult(l1, l2, l3, linalg_const_cast(l4)); } 
 
-
+  ///@endcond
+  /** Multiply-accumulate. l3 += l1*l2; */
   template <typename L1, typename L2, typename L3> inline
   void mult_add(const L1& l1, const L2& l2, L3& l3) {
     size_type m = mat_nrows(l1), n = mat_ncols(l1);
@@ -1681,6 +1751,7 @@ namespace gmm {
 		linalg_traits<L1>::sub_orientation>::potype());
     }
   }
+  ///@cond DOXY_SHOW_ALL_FUNCTIONS
 
   template <typename L1, typename L2, typename L3> inline
   void mult_add(const L1& l1, const L2& l2, const L3& l3)
@@ -2052,7 +2123,11 @@ namespace gmm {
   /*		Symmetry test.                                     	  */
   /* ******************************************************************** */
 
-  // test if A is symmetric
+  ///@endcond
+  /** test if A is symmetric.
+      @param A a matrix.
+      @param tol a threshold.
+  */
   template <typename MAT> inline
   bool is_symmetric(const MAT &A, magnitude_of_linalg(MAT) tol
 		    = magnitude_of_linalg(MAT)(-1)) {
@@ -2061,6 +2136,7 @@ namespace gmm {
     if (mat_nrows(A) != mat_ncols(A)) return false;
     return is_symmetric(A, tol, typename linalg_traits<MAT>::storage_type());
   }
+  ///@cond DOXY_SHOW_ALL_FUNCTIONS
 
   template <typename MAT> 
   bool is_symmetric(const MAT &A, magnitude_of_linalg(MAT) tol, 
@@ -2112,7 +2188,11 @@ namespace gmm {
 		    abstract_skyline)
   { return is_symmetric(A, tol, abstract_sparse()); }
 
-  // test if A is hermitian
+  ///@endcond
+  /** test if A is Hermitian.
+      @param A a matrix.
+      @param tol a threshold.
+  */
   template <typename MAT> inline
   bool is_hermitian(const MAT &A, magnitude_of_linalg(MAT) tol
 		    = magnitude_of_linalg(MAT)(-1)) {
@@ -2121,6 +2201,7 @@ namespace gmm {
     if (mat_nrows(A) != mat_ncols(A)) return false;
     return is_hermitian(A, tol, typename linalg_traits<MAT>::storage_type());
   }
+  ///@cond DOXY_SHOW_ALL_FUNCTIONS
 
   template <typename MAT> 
   bool is_hermitian(const MAT &A, magnitude_of_linalg(MAT) tol,
@@ -2171,7 +2252,7 @@ namespace gmm {
   bool is_hermitian(const MAT &A, magnitude_of_linalg(MAT) tol, 
 		    abstract_skyline)
   { return is_hermitian(A, tol, abstract_sparse()); }
-
+  ///@endcond
 }
 
 

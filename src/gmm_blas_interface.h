@@ -28,6 +28,9 @@
 //
 //========================================================================
 
+/**@file gmm_blas_interface.h
+   @brief gmm interface for BLAS.
+*/
 
 #if defined(GETFEM_USES_BLAS) || defined(GMM_USES_BLAS) \
   || defined(GMM_USES_LAPACK) || defined(GMM_USES_ATLAS)

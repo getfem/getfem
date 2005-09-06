@@ -27,6 +27,9 @@
 //
 //========================================================================
 
+/** @file gmm_dense_sylvester.h
+    @brief Sylvester equation solver.
+*/
 #ifndef GMM_DENSE_SYLVESTER_H
 #define GMM_DENSE_SYLVESTER_H
 

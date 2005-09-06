@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file getfem_superlu.h
-   \brief SuperLU interface for getfem
+/**@file getfem_superlu.h
+   @brief SuperLU interface for getfem
    
    We do not use gmm_superlu_interface.h for a good reason. This file
    does not include any of the superlu headers, hence when getfem is

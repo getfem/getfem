@@ -28,8 +28,8 @@
 //
 //========================================================================
 
-/**\file getfem_mesh_fem_global_function.h
-   \brief Define mesh_fem whose base functions are global function given by the user.
+/**@file getfem_mesh_fem_global_function.h
+   @brief Define mesh_fem whose base functions are global function given by the user.
 */
 #ifndef GETFEM_GLOBAL_FUNCTION_FEM_H__
 #define GETFEM_GLOBAL_FUNCTION_FEM_H__

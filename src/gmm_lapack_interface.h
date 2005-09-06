@@ -27,6 +27,9 @@
 //
 //========================================================================
 
+/**@file gmm_lapack_interface.h
+   @brief gmm interface for LAPACK
+*/
 
 #if defined(GMM_USES_LAPACK) || defined(GMM_USES_ATLAS)
 

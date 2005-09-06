@@ -27,6 +27,11 @@
 //
 //========================================================================
 
+
+/**@file gmm_interface.h
+   @brief gmm interface for STL vectors.
+*/
+
 #ifndef GMM_INTERFACE_H__
 #define GMM_INTERFACE_H__
 

@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file bgeot_convex.h
-   \brief Convex objects (structure + vertices)
+/**@file bgeot_convex.h
+   @brief Convex objects (structure + vertices)
 */
 
 #ifndef BGEOT_CONVEX_H__
@@ -38,8 +38,8 @@
 
 namespace bgeot {
 
-  /** \defgroup convexes Convexes */
-  /** \addtogroup convexes */
+  /** @defgroup convexes Convexes */
+  /** @addtogroup convexes */
   /*@{*/
 
   /// generic definition of a convex ( bgeot::convex_structure + vertices coordinates )

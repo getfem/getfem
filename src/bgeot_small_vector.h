@@ -27,8 +27,8 @@
 //
 //========================================================================
 
-/**\file bgeot_small_vector.h
-   \brief Small (dim < 8) vectors.
+/**@file bgeot_small_vector.h
+   @brief Small (dim < 8) vectors.
 */
 #ifndef BGEOT_SMALL_VECTOR_H
 #define BGEOT_SMALL_VECTOR_H
@@ -126,7 +126,7 @@ namespace bgeot {
       }
     }
     /* allocation of a chunk */
-    node_id allocate(size_type n);
+    node_id allocate(block_allocator::size_type n);
     /* deallocation of a chunk */
     void deallocate(node_id nid);
     void memstats();
@@ -137,8 +137,8 @@ namespace bgeot {
       memcpy(obj_data(id2),obj_data(id),obj_sz(id));
       return id2;
     }
-    void insert_block_into_unfilled(size_type bid);
-    void remove_block_from_unfilled(size_type bid);
+    void insert_block_into_unfilled(block_allocator::size_type bid);
+    void remove_block_from_unfilled(block_allocator::size_type bid);
   };
   
   /* common class for all mini_vec, provides access to the common static allocator */

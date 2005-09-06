@@ -27,10 +27,15 @@
 // Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //========================================================================
+
+/**@file gmm_precond_ilu.h
+   @brief Incomplete LU without fill-in Preconditioner.
+*/
+
 #ifndef GMM_PRECOND_ILU_H
 #define GMM_PRECOND_ILU_H
 
-//  Incomplete LU without fill-in Preconditioner.
+//  
 //
 // Notes: The idea under a concrete Preconditioner such 
 //        as Incomplete LU is to create a Preconditioner
@@ -40,7 +45,7 @@
 #include <gmm_precond.h>
 
 namespace gmm {
-
+  /** Incomplete LU without fill-in Preconditioner. */
   template <typename Matrix>
   class ilu_precond {
 
