@@ -257,6 +257,10 @@ namespace getfem
       @see @ref im_list 
   */
   pintegration_method int_method_descriptor(std::string name);
+
+  /** Get the string name of an integration method .
+   */
+  std::string name_of_int_method(pintegration_method p);
   
   /**
      return an exact integration method for convex type handled by pgt.
@@ -271,12 +275,15 @@ namespace getfem
   */
   pintegration_method classical_approx_im(bgeot::pgeometric_trans pgt, dim_type degree);
 
+  /// return IM_EXACT_SIMPLEX(n)
   pintegration_method exact_simplex_im(size_type n);
+  /// return IM_EXACT_PARALLELEPIPED(n)
   pintegration_method exact_parallelepiped_im(size_type n);
+  /// return IM_EXACT_PRISM(n)
   pintegration_method exact_prism_im(size_type n);
+  /// use classical_exact_im instead.
   pintegration_method exact_classical_im(bgeot::pgeometric_trans pgt) IS_DEPRECATED;
 
-  std::string name_of_int_method(pintegration_method p);
   class mesh_precomposite;
   class mesh_im;
   papprox_integration composite_approx_int_method(const mesh_precomposite &mp, 
