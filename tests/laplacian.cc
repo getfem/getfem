@@ -19,11 +19,14 @@
 /*                                                                         */
 /* *********************************************************************** */
 
-/**
- * Laplacian (Poisson) problem.
- *
- * This program is used to check that getfem++ is working. This is also 
- * a good example of use of Getfem++.
+/**@file laplacian.cc
+   @brief Laplacian (Poisson) problem.
+ 
+   The laplace equation is solved on a regular mesh of the unit
+   square, and is compared to the analytical solution.
+
+   This program is used to check that getfem++ is working. This is
+   also a good example of use of Getfem++.  
 */
 
 #include <getfem_assembling.h> /* import assembly methods (and comp. of norms) */

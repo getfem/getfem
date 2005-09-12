@@ -20,10 +20,13 @@
 /* *********************************************************************** */
 
 /**
- * Nonlinear Elastostatic problem (large strain).
- *
- * This program is used to check that getfem++ is working. This is also 
- * a good example of use of Getfem++.
+   @file nonlinear_elastostatic.cc
+   @brief Nonlinear Elastostatic problem (large strain).
+
+   A rubber bar is submitted to a large torsion.
+   
+   This program is used to check that getfem++ is working. This is also 
+   a good example of use of Getfem++.
 */
 
 #include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
@@ -218,7 +221,9 @@ struct elastostatic_problem {
 // }
 
 /* Read parameters from the .param file, build the mesh, set finite element
- * and integration methods and selects the boundaries.
+   and integration methods and selects the boundaries.
+
+   (this is boilerplate code, not very interesting)
  */
 void elastostatic_problem::init(void) {
   const char *MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
@@ -333,6 +338,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
   l.test_derivatives(3, 0.000001, p);
   l.test_derivatives(3, 0.0000001, p);
   */
+
+  /* choose the material law */
   getfem::abstract_hyperelastic_law *pl = 0;
   switch (law_num) {
     case 0:
@@ -412,17 +419,20 @@ bool elastostatic_problem::solve(plain_vector &U) {
   plain_vector F2(nb_dof_rhs * N);
   gmm::clear(F2);
 
-  
+  // Dirichlet condition
   getfem::mdbrick_Dirichlet<> final_model(VOL_F, mf_rhs,
 					  F2, DIRICHLET_BOUNDARY_NUM,
 					  PARAM.int_value("USE_MULTIPLIERS"));
 
-  // Generic solve.
+  // Generic solver.
   getfem::standard_model_state MS(final_model);
   size_type maxit = PARAM.int_value("MAXITER"); 
   gmm::iteration iter;
 
 
+  /* prepare the export routine for OpenDX (all time steps will be exported) 
+     (can be viewed with "dx -edit nonlinear_elastostatic.net")
+  */
   getfem::dx_export exp(datafilename + ".dx",
 			PARAM.int_value("VTK_EXPORT")==1);
   getfem::stored_mesh_slice sl; sl.build(mesh, getfem::slicer_boundary(mesh),8); 
@@ -438,6 +448,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
     VOL_F.set_rhs(DF);
 
     if (N>2) {
+      /* Apply the gradual torsion/extension */
       scalar_type torsion = PARAM.real_value("TORSION","Amplitude of the torsion");
       torsion *= (step+1)/scalar_type(nb_step);
       scalar_type extension = PARAM.real_value("EXTENSION","Amplitude of the extension");
@@ -452,12 +463,14 @@ bool elastostatic_problem::solve(plain_vector &U) {
 	F2[i*N+2] = extension * P[2];
       }
     }
+    /* update the imposed displacement  */
     final_model.set_rhs(F2);
 
     cout << "step " << step << ", number of variables : " << final_model.nb_dof() << endl;
     iter = gmm::iteration(residu, PARAM.int_value("NOISY"), maxit ? maxit : 40000);
     cout << "|U0| = " << gmm::vect_norm2(MS.state()) << "\n";
 
+    /* let the default non-linear solve (Newton) do its job */
     getfem::standard_solve(MS, final_model, iter);
     // getfem::nl_solve(MS, final_model, iter);
 
@@ -470,6 +483,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
 
     gmm::copy(ELAS.get_solution(MS), U);
     //char s[100]; sprintf(s, "step%d", step+1);
+
+    /* append the new displacement to the exported opendx file */
     exp.write_point_data(mf_u, U); //, s);
     exp.serie_add_object("deformationsteps");
   }

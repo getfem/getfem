@@ -340,7 +340,7 @@ namespace bgeot
 
 
 
-  /* the geotrans_interpolation_context structure is passed as the
+  /** the geotrans_interpolation_context structure is passed as the
      argument of geometric transformation interpolation
      functions. This structure can be partially filled (for example
      the xreal will be computed if needed as long as pgp+ii is known).
@@ -349,15 +349,15 @@ namespace bgeot
      are heavily described in the Getfem++ Kernel Documentation.
   */
   class geotrans_interpolation_context {
-    mutable base_node xref_; /* reference point */
-    mutable base_node xreal_; /* transformed point */
-    const base_matrix *G_; /* pointer to the matrix of real nodes of the convex */
-    mutable base_matrix K_,B_, B3_, B32_; /* see documentation for more details */
+    mutable base_node xref_; /** reference point */
+    mutable base_node xreal_; /** transformed point */
+    const base_matrix *G_; /** pointer to the matrix of real nodes of the convex */
+    mutable base_matrix K_,B_, B3_, B32_; /** see documentation (getfem kernel doc) for more details */
     pgeometric_trans pgt_;
     pgeotrans_precomp pgp_;
-    pstored_point_tab pspt_; /* if pgp != 0, it is the same as pgp's one */
-    size_type ii_; /* index of current point in the pgp */
-    mutable scalar_type J_; /* Jacobian */
+    pstored_point_tab pspt_; /** if pgp != 0, it is the same as pgp's one */
+    size_type ii_; /** index of current point in the pgp */
+    mutable scalar_type J_; /** Jacobian */
     void compute_J(void) const;
   public:
     bool have_xref() const { return !xref_.empty(); }
@@ -369,14 +369,18 @@ namespace bgeot
     bool have_B32() const { return !B32_.empty(); }
     bool have_pgt() const { return pgt_ != 0; }
     bool have_pgp() const { return pgp_ != 0; }
+    /// coordinates of the current point, in the reference convex.
     const base_node& xref() const;
+    /// coordinates of the current point, in the real convex.
     const base_node& xreal() const;
+    /// See getfem kernel doc for these matrices
     const base_matrix& K() const;
     const base_matrix& B() const;
     const base_matrix& B3() const;
     const base_matrix& B32() const;
     bgeot::pgeometric_trans pgt() const { return pgt_; }
     const base_matrix& G() const { return *G_; }
+    /** get the Jacobian of the geometric trans (taken at point @c xref() ) */
     scalar_type J() const { if (J_ < scalar_type(0)) compute_J(); return J_; }
     size_type N() const { if (have_G()) return G().nrows(); 
       else if (have_xreal()) return xreal_.size(); 

@@ -1252,13 +1252,13 @@ namespace getfem
     }
   };
   
-  /// get a fem descriptor from a string name of a fem.
+  // get a fem descriptor from a string name of a fem.
   pfem fem_descriptor(std::string name) {
     size_type i = 0;
     return dal::singleton<fem_naming_system>::instance().method(name, i);
   }
 
-  /// get the string name of a fem descriptor.
+  // get the string name of a fem descriptor.
   std::string name_of_fem(pfem p) {
     try {
       return dal::singleton<fem_naming_system>::instance().shorter_name_of_method(p);

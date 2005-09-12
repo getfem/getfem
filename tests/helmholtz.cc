@@ -20,10 +20,13 @@
 /* *********************************************************************** */
 
 /**
- * Helmholtz problem (Delta(u) + k^2 u = 0)
- *
- * This program is used to check that getfem++ is working. This is also 
- * a good example of use of Getfem++.
+   @file helmholtz.cc
+   @brief Helmholtz problem (Delta(u) + k^2 u = 0)
+
+   Diffraction of a plane wave by a circular obstacle. 
+
+   This program is used to check that getfem++ is working. This is also 
+   a good example of use of Getfem++.
 */
 
 #include <getfem_assembling.h> /* import assembly methods (and norms comp.) */

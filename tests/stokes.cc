@@ -20,11 +20,16 @@
 /* *********************************************************************** */
 
 /**
- * Stokes problem.
- *
- * This program is used to check that getfem++ is working. This is also 
- * a good example of use of Getfem++.
- */
+   @file stokes.cc
+   @brief Solve the stokes problem (incompressible viscuous fluid).
+   
+   This program is used to check that getfem++ is working. This is also 
+   a good example of use of Getfem++.
+   
+   This file is almost identical to @link elastostatic.cc
+   tests/elastostatic.cc@endlink, except than an
+   getfem::mdbrick_linear_incomp brick is inserted.
+*/
 
 #include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
 #include <getfem_export.h>   /* export functions (save solution in a file)  */

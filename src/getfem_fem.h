@@ -31,6 +31,57 @@
    @brief Definition of the finite element methods.
 
    This file defines the getfem::virtual_fem class, which is the common base class of all FEM.
+
+   @section fem_list List of FEM known by getfem::fem_descriptor :
+   
+   - "FEM_PK(N,K)" : classical Lagrange element PK on a simplex.
+
+   - "FEM_PK_DISCONTINUOUS(N,K,alpha)" : discontinuous Lagrange
+   element PK on a simplex.
+
+   - "FEM_QK(N,K)" : classical Lagrange element QK on a parellepiped.
+
+   - "FEM_QK_DISCONTINUOUS(N,K,alpha)" : discontinuous Lagrange
+   element QK on a parallelepiped.
+
+   - "FEM_PK_PRISM(N,K)" : classical Lagrange element PK on a prism.
+
+   - "FEM_PK_PRISM_DISCONTINUOUS(N,K,alpha)" : classical discontinuous
+   Lagrange element PK on a prism.
+
+   - "FEM_PK_WITH_CUBIC_BUBBLE(N,K)" : classical Lagrange element PK
+   on a simplex with an additional volumic bubble function.
+
+   - "FEM_PRODUCT(FEM1,FEM2)" : tensorial product of two polynomial
+   elements
+
+   -  "FEM_P1_NONCONFORMING" : Nonconforming P1 method on a
+   triangle.
+
+   - "FEM_P1_BUBBLE_FACE(N)" : P1 method on a simplex with an
+   additional bubble function on face 0.
+
+   - "FEM_P1_BUBBLE_FACE_LAG" : P1 method on a simplex with an
+   additional lagrange dof on face 0.
+
+   - "FEM_HERMITE_SEGMENT" : Hermite element on the segment \todo fix hermite segment
+
+   - "FEM_PK_HIERARCHICAL(N,K)" : PK element with a hierarchical basis
+
+   - "FEM_QK_HIERARCHICAL(N,K)" : QK element with a hierarchical basis
+
+   - "FEM_PK_PRISM_HIERARCHICAL(N,K)" : PK element on a prism with a
+   hierarchical basis
+
+   - "FEM_STRUCTURED_COMPOSITE(FEM, K)" : Composite fem on a grid with
+   K divisions
+
+   - "FEM_PK_HIERARCHICAL_COMPOSITE(N,K,S)" : PK composite element on
+   a grid with S subdivisions and with a hierarchical basis
+
+   - "FEM_PK_FULL_HIERARCHICAL_COMPOSITE(N,K,S)" : PK composite
+   element with S subdivisions and a hierarchical basis on both degree
+   and subdivision
 */
 
 #ifndef GETFEM_FEM_H__
@@ -158,17 +209,22 @@ namespace getfem {
     short_type hier_raff; /// hierarchical refinement of the FEM
     
   public :
-    /// Number of degrees of freedom.
-    virtual size_type nb_dof(size_type) const
+    /** Number of degrees of freedom. 
+
+       @param cv the convex number for this FEM. This information is
+       rarely used, by is needed by some "special" FEMs, such as
+       getfem::interpolated_fem.
+    */
+    virtual size_type nb_dof(size_type /*cv*/) const
     { return dof_types_.size(); }
     /// Number of basis functions.
     virtual size_type nb_base(size_type cv) const
     { return nb_dof(cv); }
     /// Number of components (nb_dof() * dimension of the target space).
-    size_type nb_base_components(size_type c) const
-      { return nb_base(c) * ntarget_dim; }
-    size_type nb_components(size_type c) const
-      { return nb_dof(c) * ntarget_dim; }
+    size_type nb_base_components(size_type cv) const
+      { return nb_base(cv) * ntarget_dim; }
+    size_type nb_components(size_type cv) const
+      { return nb_dof(cv) * ntarget_dim; }
     /// Get the array of pointer on dof description.
     const std::vector<pdof_description> &dof_types(void) const 
       { return dof_types_; }
@@ -198,14 +254,21 @@ namespace getfem {
       }
       return pspt;
     }
-    /// Gives the node corresponding to the dof i.
+    /** Gives the node corresponding to the dof i.
+	@param cv the convex number for this FEM. This information is
+	rarely used, by is needed by some "special" FEMs, such as
+	getfem::interpolated_fem.
+	@param i the local dof number (<tt>i < nb_dof(cv)</tt>)
+    */
     const base_node &node_of_dof(size_type cv, size_type i) const
       { return (*(node_tab(cv)))[i];}
     bool is_on_real_element(void) const { return real_element_defined; }
     bool is_equivalent(void) const { return is_equiv; }
     bool need_G(void) const
     { return !(is_equivalent()) || real_element_defined; }
+    /// true if the base functions are such that @f$ \varphi_i(\textrm{node\_of\_dof(j)}) = \delta_{ij} @f$
     bool is_lagrange(void) const { return is_lag; }
+    /// true if the base functions are polynomials
     bool is_polynomial(void) const { return is_pol; }
     bool is_polynomialcomp(void) const { return is_polycomp; }
     bool &is_polynomialcomp(void) { return is_polycomp; }
@@ -218,89 +281,82 @@ namespace getfem {
     virtual void mat_trans(base_matrix &, const base_matrix &,
 			   bgeot::pgeometric_trans) const
       { DAL_THROW(internal_error, "This function should not be called."); }
-    /** Function which interpolates in a arbitrary point x given on the
-     *  reference element. coeff is the vector of coefficient relatively to
-     *  the shape functions. G and pgt represent the geometric transformation
-     *  for non-equivalent elements.
-     *  This method take all cases into account (non tau-equivalent element)
-     */
+    /** Interpolate at an arbitrary point x given on the reference
+	element.
+	
+	@param c the fem_interpolation_context, should have been
+	suitably initialized for the point of evaluation.
+
+	@param coeff is the vector of coefficient relatively to
+	the base functions, its length should be @c Qdim*this->nb_dof().
+
+	@param val contains the interpolated value, on output (its
+	size should be @c Qdim*this->target_dim()).
+	
+	@param Qdim is the optional Q dimension, if the FEM is
+	considered as a "vectorized" one.
+    */
     template<typename CVEC, typename VVEC> 
     void interpolation(const fem_interpolation_context& c, 
 		       const CVEC& coeff, VVEC &val, dim_type Qdim) const;
 
-    /** Function which interpolates in a arbitrary point x given on the
-     *  reference element.
-     *  This method take all cases into account (non tau-equivalent element)
-     *  the result is the matrix M such that M * coeff gives the value of
-     *  the interpolation (i.e. the result of the latter function).
+    /** Build the interpolation matrix for the interpolation at a
+	fixed point x, given on the reference element.
+
+	The matrix @c M is filled, such that for a given @c coeff
+	vector, the interpolation is given by @c M*coeff.
      */
     template <typename MAT>
     void interpolation(const fem_interpolation_context& c, 
 		       MAT &M, dim_type Qdim) const;
 
-    /** Function which interpolates in the ii th point of pfp. coeff is the
-     *  vector of coefficient relatively to the shape functions. G and pgt
-     *  represent the geometric transformation for non-equivalent elements.
-     *  Qdim takes into account a vectorisation of the element.
-     *  This method take all cases into account (non tau-equivalent element)
-     */
-    /** Function which interpolates the gradient in a arbitrary point x
-     *  given on the reference element. coeff is the vector of coefficient
-     *  relatively to the shape functions. G and pgt
-     *  represent the geometric transformation for non-equivalent elements.
-     *  Qdim take into account a vectorisation of the element.
-     *  This method take all cases into account (non tau-equivalent element
-     *  and correction of the gradient via the gradient of the geometric
-     *  transformation).
-     *  This function is essentially used by virtual_link_fem.
-     *  The gradient is stored in the rows of val, which should be
-     *  a 'Qdim' x 'N' matrix.
+    /** Interpolation of the gradient. The output is stored in the @f$
+	Q\times N@f$ matrix @c val.
      */
     template<typename CVEC, typename VMAT> 
     void interpolation_grad(const fem_interpolation_context& c, 
 			    const CVEC& coeff, VMAT &val,
 			    dim_type Qdim=1) const;
       
-    /** Gives the value of all components of the base functions at the
+    /** Give the value of all components of the base functions at the
      *  point x of the reference element. Basic function used essentially
      *  by fem_precomp.
      */
     virtual void base_value(const base_node &x, base_tensor &t) const = 0;
-    /** Gives the value of all gradients (on ref. element) of the components
+
+    /** Give the value of all gradients (on ref. element) of the components
      *  of the base functions at the point x of the reference element.
      *  Basic function used essentially by fem_precomp.
      */
     virtual void grad_base_value(const base_node &x, base_tensor &t) const = 0;
-    /** Gives the value of all hessians (on ref. element) of the components
+
+    /** Give the value of all hessians (on ref. element) of the components
      *  of the base functions at the point x of the reference element.
      *  Basic function used essentially by fem_precomp.
      */
     virtual void hess_base_value(const base_node &x, base_tensor &t) const = 0;
-    /** Gives the value of all components of the base functions at the point
-     *  ii of the pgp possibly using information on pfp and G.
-     *  Used by elementary computations.
-     *  Matrix M for non tau-equivalent elements not taken into account.
-     */
+
+    /** Give the value of all components of the base functions at the
+	current point of the fem_interpolation_context.  Used by
+	elementary computations.  Matrix M for non tau-equivalent
+	elements not taken into account.
+    */
     virtual void real_base_value(const fem_interpolation_context &c, 
 				 base_tensor &t) const;
 
-    /** Gives the value of all gradients on the real element of the components
-     *  of the base functions at the point ii of the pgp possibly using
-     *  information on pfp, G and B. B is the matrix wich transforms the
-     *  gradient on the reference element to the gradient on the real element.
-     *  Used by elementary computations.
-     *  Matrix M for non tau-equivalent elements not taken into account.
-     */
+    /** Give the gradient of all components of the base functions at the
+	current point of the fem_interpolation_context.  Used by
+	elementary computations.  Matrix M for non tau-equivalent
+	elements not taken into account.
+    */
     virtual void real_grad_base_value(const fem_interpolation_context &c, 
 				      base_tensor &t) const;
-/** Gives the value of all hessians on the real element of the components
-     *  of the base functions at the point ii of the pgp possibly using
-     *  information on pfp, G, B2 and B32. B2 and B32 are the matrices used
-     *  to transform a Hessian on reference element to a Hessian on real
-     *  element. Used by elementary computations.
-     *  Matrix M for non tau-equivalent elements not taken into account.
-     */
 
+    /** Give the hessian of all components of the base functions at the
+	current point of the fem_interpolation_context.  Used by
+	elementary computations.  Matrix M for non tau-equivalent
+	elements not taken into account.
+    */
     virtual void real_hess_base_value(const fem_interpolation_context &c, 
 				      base_tensor &t) const;
     
@@ -343,7 +399,11 @@ namespace getfem {
     }
   };
 
-  
+  /**
+     virtual_fem implementation as a vector of generic functions. The
+     class FUNC should provide "derivative" and "eval" member
+     functions (this is the case for bgeot::polynomial<T>).
+  */
   template <class FUNC> class fem : public virtual_fem {
   protected :
     std::vector<FUNC> base_;
@@ -392,74 +452,58 @@ namespace getfem {
     
   };
   
+  /** Classical polynomial FEM. */
   typedef const fem<base_poly> * ppolyfem;
+  /** Polynomial composite FEM */
   typedef const fem<polynomial_composite> * ppolycompfem;
   
-  /** Gives a pointer on the structures describing the more classical fem
-   *  of degree k on a geometric convex cvs (coming from the geometric trans).
-   */
-  pfem classical_fem(bgeot::pgeometric_trans pg, short_type k);
-  /** Gives a pointer on the structures describing the more classical
-   *  discontinuous fem of degree k on a geometric convex cvs (coming 
-   *  from the geometric trans).
-   */
+  /** Give a pointer on the structures describing the classical
+      polynomial fem of degree k on a given convex type.
+
+      @param pgt the geometric transformation (which defines the convex type).
+      @param k the degree of the fem.
+      @return a ppolyfem.
+  */
+  pfem classical_fem(bgeot::pgeometric_trans pgt, short_type k);
+  
+  /** Give a pointer on the structures describing the classical
+      polynomial discontinuous fem of degree k on a given convex type.
+
+      @param pgt the geometric transformation (which defines the convex type).
+
+      @param k the degree of the fem.
+
+      @param alpha the "inset" factor for the dof nodes: with alpha =
+      0, the nodes are located as usual (i.e. with node on the convex border), 
+      and for 0 < alpha < 1, they converge to the center of gravity of the convex.
+
+      @return a ppolyfem.
+  */
   pfem classical_discontinuous_fem(bgeot::pgeometric_trans pg, short_type k, scalar_type alpha=0);
 
+  /** get a fem descriptor from its string name. */
   pfem fem_descriptor(std::string name);
-  /*  List of elements :
-   *  "FEM_PK(N,K)"                      : classical Lagrange element PK on a
-   *                                     :  simplex
-   *  "FEM_PK_DISCONTINUOUS(N,K)"        : discontinuous Lagrange element PK
-   *                                     :  on a simplex
-   *  "FEM_QK(N,K)"                      : classical Lagrange element QK on a
-   *                                     :  parellepiped
-   *  "FEM_PK_PRISM(N,K)"                : classical Lagrange element PK on a
-   *                                     :  prism
-   *  "FEM_PK_WITH_CUBIC_BUBBLE(N,K)"    : classical Lagrange element PK on a
-   *                                     :  simplex with an additional volumic
-   *                                     :  bubble function.
-   *  "FEM_PRODUCT(FEM1,FEM2)"           : tensorial product of two polynomial
-   *                                     :  elements
-   *  "FEM_P1_NONCONFORMING"             : Nonconforming P1 method on a
-   *                                     :  triangle.
-   *  "FEM_P1_BUBBLE_FACE(N)"            : P1 method on a simplex with an
-   *                                     :  additional bubble function on
-   *                                     :  face 0.
-   *  "FEM_P1_BUBBLE_FACE_LAG"           : P1 method on a simplex with an
-   *                                     :  additional lagrange dof on face 0.
-   *  "FEM_HERMITE_SEGMENT"              : Hermite element on the segment
-   *  "FEM_PK_HIERARCHICAL(N,K)"         : PK element with a hierarchical basis
-   *  "FEM_QK_HIERARCHICAL(N,K)"         : QK element with a hierarchical basis
-   *  "FEM_PK_PRISM_HIERARCHICAL(N,K)"   : PK element on a prism with a
-   *                                     :  hierarchical basis
-   *  "FEM_STRUCTURED_COMPOSITE(FEM, K)" : Composite fem on a grid with
-   *                                     :  K divisions
-   *  "FEM_PK_HIERARCHICAL_COMPOSITE(N,K,S)" : PK composite element on a grid
-   *                                     :  with S subdivisions and with a
-   *                                     : hierarchical basis
-   *  "FEM_PK_FULL_HIERARCHICAL_COMPOSITE(N,K,S)" : PK composite element with
-   *                                     :  S subdivisions and a hierarchical
-   *                                     :  basis on both degree and
-   *                                     :  subdivision
-   */
+
+  /** get the string name of a fem descriptor. */
+  std::string name_of_fem(pfem p);
 
   pfem PK_fem(size_type n, short_type k);
   pfem QK_fem(size_type n, short_type k);
   pfem PK_prism_fem(size_type n, short_type k);
 
-  std::string name_of_fem(pfem p);
 
   /**
-   * Pre-computations on a fem.     
-   */
-  
+     Pre-computations on a fem (given a fixed set of points on the
+     reference convex, this object computes the value/gradient/hessian
+     of all base functions on this set of points and stores them.
+  */
   class fem_precomp_ : virtual public dal::static_stored_object {
   protected:      
     pfem pf;
     bgeot::pstored_point_tab pspt;
-    mutable std::vector<base_tensor> c;
-    mutable std::vector<base_tensor> pc;
-    mutable std::vector<base_tensor> hpc;
+    mutable std::vector<base_tensor> c; /// store values of base functions
+    mutable std::vector<base_tensor> pc; /// store gradients of base functions
+    mutable std::vector<base_tensor> hpc; /// store hessians of base functions
   public:    
     inline const base_tensor &val(size_type i) const
     { if (c.empty()) init_val(); return c[i]; }
@@ -470,7 +514,6 @@ namespace getfem {
     inline pfem get_pfem() const { return pf; }
     inline const bgeot::stored_point_tab& get_point_tab() const
     { return *pspt; }
-
     fem_precomp_(pfem, bgeot::pstored_point_tab);
   private:
     void init_val() const;
@@ -479,24 +522,23 @@ namespace getfem {
   };
   
 
-  /** @brief Handles precomputations for FEM.
-     statically allocates a fem-precomputation object, and returns a
-     pointer to it. The precomputations are "cached", i.e. they are
-     stored in a global pool and if this function is called two times
-     with the same arguments, a pointer to the same object will be
-     returned.
+  /** @brief Handles precomputations for FEM.  statically allocates a
+     fem-precomputation object, and returns a pointer to it. The
+     fem_precomp_ objects are "cached", i.e. they are stored in a
+     global pool and if this function is called two times with the
+     same arguments, a pointer to the same object will be returned.
 
-     @param pf a pointer to the fem object.
-     @param pspt a pointer to a list of points in the reference convex.CAUTION:
-     this array must not be destroyed as long as the fem_precomp is used!!. 
+     @param pf a pointer to the fem object.  @param pspt a pointer to
+     a list of points in the reference convex.CAUTION: this array must
+     not be destroyed as long as the fem_precomp is used!!.
 
      Moreover pspt is supposed to identify uniquely the set of
      points. This means that you should NOT alter its content at any
      time after using this function.
 
-     If you need a set of "temporary" fem_precomp, create them
-     via a geotrans_precomp_pool structure. All memory will be freed
-     when this structure will be destroyed.  */
+     If you need a set of "temporary" getfem::fem_precomp_, create
+     them via a getfem::fem_precomp_pool structure. All memory will be
+     freed when this structure will be destroyed.  */
   pfem_precomp fem_precomp(pfem pf, bgeot::pstored_point_tab pspt);
 
   /** Request for the removal of a pfem_precomp */
@@ -541,27 +583,41 @@ namespace getfem {
   };
   
     
-  /* the fem_interpolation_context structure is passed as the argument
-     of fem interpolation functions. This structure can be partially
-     filled (for example the xreal will be computed if needed as long
-     as pgp+ii is known)
+  /** structure passed as the argument of fem interpolation
+      functions. This structure can be partially filled (for example
+      the xreal will be computed if needed as long as pgp+ii is known).
   */
   class fem_interpolation_context :
     public bgeot::geotrans_interpolation_context {
 
-    mutable base_matrix M_;
-    pfem pf_;
-    pfem_precomp pfp_;
-    size_type convex_num_;
+    mutable base_matrix M_; /// optional transformation matrix (for non tau-equivalent fems)
+    pfem pf_;               /// current fem 
+    pfem_precomp pfp_;      /// optional fem_precomp_ (speed up the computations)
+    size_type convex_num_;  /// the convex number (info needed by some specific FEMs)
   public:
+    /// true if a fem_precomp_ has been supplied.
     bool have_pfp() const { return pfp_ != 0; }
+    /// true if the pfem is available.
     bool have_pf() const { return pf_ != 0; }
+    /// non tau-equivalent transformation matrix.
     const base_matrix& M() const;
+    /** fill the tensor with the values of the base functions (taken
+	at point @c this->xref())
+    */
     void base_value(base_tensor& t) const;
+    /** fill the tensor with the gradient of the base functions (taken
+	at point @c this->xref())
+    */
     void grad_base_value(base_tensor& t) const;
+    /** fill the tensor with the hessian of the base functions (taken
+	at point @c this->xref())
+    */
     void hess_base_value(base_tensor& t) const;
+    /** get the current FEM descriptor */
     const pfem pf() const { return pf_; }
+    /** get the current convex number */
     size_type convex_num() const;
+    /** get the current fem_precomp_ */
     pfem_precomp pfp() const { return pfp_; }
     void set_pfp(pfem_precomp newpfp);
     void set_pf(pfem newpf);

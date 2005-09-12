@@ -20,10 +20,16 @@
 /* *********************************************************************** */
 
 /**
- * Linear Elastostatic problem.
- *
- * This program is used to check that getfem++ is working. This is also 
- * a good example of use of Getfem++.
+   @file elastostatic.cc
+   @brief Linear Elastostatic problem. A dummy linear
+   elastotatic problem is solved on a regular mesh, and is compared to
+   the analytical solution.
+
+   This program is used to check that getfem++ is working. This is also 
+   a good example of use of Getfem++.
+
+   @see laplacian.cc
+   @see nonlinear_elastostatic.cc
 */
 
 #include <getfem_superlu.h>

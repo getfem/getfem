@@ -29,6 +29,35 @@
 
 /**@file getfem_integration.h
    @brief Integration methods (exact and approximated) on convexes
+
+   @section im_list List of integration methods for getfem::int_method_descriptor
+
+   - "IM_EXACT_SIMPLEX(n)"             : exact integration on simplexes.
+   - "IM_PRODUCT(IM1, IM2)"            : product of two integration methods
+   - "IM_EXACT_PARALLELEPIPED(n)"      : exact integration on parallelepipeds
+   - "IM_EXACT_PRISM(n)"               : exact integration on prisms
+   - "IM_GAUSS1D(K)"                   : Gauss method on the segment, 
+                                         order K=1, 3, 5, 7, ..., 99.
+   - "IM_GAUSSLOBATTO1D(K)"            : Gauss-Lobatto method on the segment, 
+                                         order K=1, 3, 5, 7, ..., 99.
+   - "IM_NC(N,K)"                      : Newton-Cotes approximative 
+                                         integration on simplexes, order K
+   - "IM_NC_PARALLELEPIPED(N,K)"       : product of Newton-Cotes integration 
+                                         on parallelepipeds
+   - "IM_NC_PRISM(N,K)"                : product of Newton-Cotes integration
+                                         on prisms
+   - "IM_GAUSS_PARALLELEPIPED(N,K)"    : product of Gauss1D integration
+                                         on parallelepipeds (K=1,3,..99)
+   - "IM_TRIANGLE(K)"                  : Gauss methods on triangles (K=1..10,13,17,19)
+   - "IM_QUAD(K)"                      : Gauss methods on quadrilaterons
+                                         (K=2, 3, 5, 7, 9, 17)
+   - "IM_HEXAHEDRON(K)"                : Gauss methods on hexahedrons (K=5,9,11)
+   - "IM_TETRAHEDRON(K)"               : Gauss methods on tetrahedrons
+                                         (K=1, 2, 3, 5, 6, or 8)
+   - "IM_SIMPLEX4D(3)"                 : Gauss method on a 4-dimensional simplex.
+   - "IM_CUBE4D(K)"                    : Gauss method on a 4-dimensional cube (K=5,9).
+   - "IM_STRUCTURED_COMPOSITE(IM1, K)" : Composite method on a grid with
+                                         K divisions
 */
 #ifndef GETFEM_INTEGRATION_H__
 #define GETFEM_INTEGRATION_H__
@@ -224,30 +253,15 @@ namespace getfem
   };
 
 
+  /** Get an integration method from its name 
+      @see @ref im_list 
+  */
   pintegration_method int_method_descriptor(std::string name);
-  /* List :
-   * "IM_EXACT_SIMPLEX(n)"             : exact integration on simplexes.
-   * "IM_PRODUCT(IM1, IM2)"            : product of two integration methods
-   * "IM_EXACT_PARALLELEPIPED(n)"      : exact integration on parallelepipeds
-   * "IM_EXACT_PRISM(n)"               : exact integration on prisms
-   * "IM_GAUSS1D(K)"                   : Gauss method on the segment, order K
-   * "IM_NC(N,K)"                      : Newton-Cotes approximative 
-   *                                     integration on simplexes, order K
-   * "IM_NC_PARALLELEPIPED(N,K)"       : product of Newton-Cotes integration 
-   *                                     on parallelepipeds
-   * "IM_NC_PRISM(N,K)"                : product of Newton-Cotes integration
-   *                                     on prisms
-   * "IM_GAUSS_PARALLELEPIPED(N,K)"    : product of Gauss1D integration
-   *                                     on parallelepipeds
-   * "IM_TRIANGLE(K)"                  : Gauss methods on triangles (K=1..7)
-   * "IM_QUAD(K)"                      : Gauss methods on quadrilaterons
-   *                                     (K=2, 3 or 5)
-   * "IM_TETRAHEDRON(K)"               : Gauss methods on tetrahedrons
-   *                                     (K=1, 2, 3 or 5)
-   * "IM_STRUCTURED_COMPOSITE(IM1, K)" : Composite method on a grid with
-   *                                     K divisions
-   */
   
+  /**
+     return an exact integration method for convex type handled by pgt.
+     If pgt is not linear, classical_exact_im will fail.
+  */
   pintegration_method classical_exact_im(bgeot::pgeometric_trans pgt);
   /**
      try to find an approximate integration method for the geometric

@@ -20,6 +20,10 @@
 /*                                                                         */
 /* *********************************************************************** */
 
+/**@file icare.cc
+   @brief Fluid flow (Navier-Stokes) around an obstacle.
+*/
+
 #include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
 #include <getfem_export.h>   /* export functions (save solution in a file)  */
 #include <getfem_import.h>
