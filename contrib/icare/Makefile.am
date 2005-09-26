@@ -1,13 +1,11 @@
 # SUBDIRS = 
 
 check_PROGRAMS =                 \
-	icare LIC
+	icare
 
 CLEANFILES = icare.data
 
 icare_SOURCES = icare.cc icare.h
-
-LIC_SOURCES = LIC.cc
 
 INCLUDES = -I$(top_srcdir)/src -I../../src
 LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@

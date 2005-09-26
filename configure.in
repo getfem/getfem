@@ -324,7 +324,7 @@ echo "Configuration of SuperLU done"
 dnl -----------------------------QD TESTS--------------------------------
 AC_ARG_WITH(qd-lib-dir, [  --with-qd-lib-dir       directory in which the libqd.a can be found],
 	QDLIB="$withval/libqd.a",QDLIB="$GFPREFIX/lib/libqd.a")
-AC_ARG_WITH(qd-include-dir, [  --with-include-dir      directory in which the qd.h header can be found],
+AC_ARG_WITH(qd-include-dir, [  --with-qd-include-dir      directory in which the qd.h header can be found],
 	QDINC="-I$withval",QDINC="-I$GFPREFIX/include")
 AC_ARG_ENABLE(dd,
  [  --enable-dd             enable the use of the qd library (some computation will be done with double-double precision, usefull for high order FEMs)],
