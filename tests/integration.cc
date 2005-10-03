@@ -399,10 +399,10 @@ int main(int argc, char **argv)
   dal::exception_callback::set_exception_callback(&cb);
   */
   try {
-    char s[600]; sprintf(s,"IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(3,2),2)");
+    /*char s[600]; sprintf(s,"IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(3,2),2)");
     //check_method(s, getfem::int_method_descriptor(s), 2, bgeot::parallelepiped_linear_geotrans(3));
     getfem::pfem pf = getfem::QK_fem(2,1); //getfem::classical_fem(bgeot::parallelepiped_linear_geotrans(2),1);
-    return 100;
+    return 100;*/
 
 
 

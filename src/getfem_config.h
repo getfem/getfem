@@ -28,6 +28,8 @@
 //========================================================================
 
 /*! @mainpage Getfem++ reference documentation.
+
+  <center><img src="../logo_getfem_small.png"></center>
  
   @section intro Introduction
  

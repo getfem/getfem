@@ -54,7 +54,7 @@ namespace getfem {
 	  for (mesh_level_set::zoneset::const_iterator itz = ze->begin();
 	       itz != ze->end(); ++itz) {
 	    const mesh_level_set::zone *z = *itz;
-	    for (mesh_level_set::zone::iterator it = z->begin(); 
+	    for (mesh_level_set::zone::const_iterator it = z->begin(); 
 		 it != z->end(); ++it) {
 	      assert((**it).size() == mls.nb_level_sets());
 	      char d = (*(*it))[i];

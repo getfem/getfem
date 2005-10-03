@@ -33,7 +33,7 @@ sub start_program { # (N, K, NX, OPTION, SOLVER)
 
  # print "def = $def\n";
 
-  open F, "./laplacian $tmp $def 2>&1 |" or die;
+  open F, "./laplacian $tmp $def 2>&1 |" or die("laplacian not found");
   while (<F>) {
     if ($_ =~ /L2 error/) {
   #    print $_;
@@ -48,7 +48,12 @@ sub start_program { # (N, K, NX, OPTION, SOLVER)
     }
  # print $_;
   }
-  close(F); if ($?) { `rm -f $tmp`; exit(1); }
+  close(F); 
+  if ($?) { 
+    #`rm -f $tmp`; 
+    print "./laplacian $tmp $def 2>&1 failed\n";
+    exit(1); 
+  }
 }
 
 start_program("");
@@ -91,7 +96,7 @@ start_program("-d 'MESH_TYPE=\"GT_QK(2,1)\"' -d 'FEM_TYPE=\"FEM_PRODUCT(FEM_PK_G
 
 print ".\n";
 
-`rm -f $tmp`;
+#`rm -f $tmp`;
 if ($er == 1) { exit(1); }
 
 

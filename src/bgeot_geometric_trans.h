@@ -134,6 +134,8 @@ namespace bgeot
 	if the transformation is linear, x is not used at all */
     void gradient(const base_node& x, base_matrix& pc) const;
     virtual ~geometric_trans() {}
+  protected:
+    geometric_trans() {}
   };
 
   template<class CONT>
@@ -230,6 +232,11 @@ namespace bgeot
   /* ********************************************************************* */
   /*       Precomputation on geometric transformations.                    */
   /* ********************************************************************* */
+
+
+  class geotrans_precomp_;
+  typedef boost::intrusive_ptr<const geotrans_precomp_> pgeotrans_precomp;
+
   
   /**
    *  precomputed geometric transformation operations use this for
@@ -271,11 +278,22 @@ namespace bgeot
     base_node transform(size_type i, const base_matrix &G) const;
     pgeometric_trans get_trans() const { return pgt; }
     inline const stored_point_tab& get_point_tab() const { return *pspt; }
+  protected:
     geotrans_precomp_(pgeometric_trans pg, pstored_point_tab ps);
+
   private:
     void init_val() const;
     void init_grad() const;
     void init_hess() const;
+
+
+    /**
+     *  precomputes a geometric transformation for a fixed set of 
+     *  points in the reference convex. 
+     */
+    friend pgeotrans_precomp
+    geotrans_precomp(pgeometric_trans pg, pstored_point_tab ps);
+
   };
 
 
@@ -305,15 +323,6 @@ namespace bgeot
     }
   }
   
-  typedef boost::intrusive_ptr<const geotrans_precomp_> pgeotrans_precomp;
-  
-  /**
-   *  precomputes a geometric transformation for a fixed set of 
-   *  points in the reference convex. 
-   */
-  pgeotrans_precomp geotrans_precomp(pgeometric_trans pg,
-				     pstored_point_tab pspt);
-
   void delete_geotrans_precomp(pgeotrans_precomp pgp);
 
   /**
@@ -379,6 +388,7 @@ namespace bgeot
     const base_matrix& B3() const;
     const base_matrix& B32() const;
     bgeot::pgeometric_trans pgt() const { return pgt_; }
+    /** matrix whose columns are the vertices of the convex */
     const base_matrix& G() const { return *G_; }
     /** get the Jacobian of the geometric trans (taken at point @c xref() ) */
     scalar_type J() const { if (J_ < scalar_type(0)) compute_J(); return J_; }
@@ -387,7 +397,9 @@ namespace bgeot
       else DAL_THROW(dal::failure_error, "cannot get N"); }
     size_type ii() const { return ii_; }
     bgeot::pgeotrans_precomp pgp() const { return pgp_; }
+    /** change the current point (assuming a geotrans_precomp_ is used) */
     void set_ii(size_type ii__);
+    /** change the current point (coordinates given in the reference convex) */
     void set_xref(const base_node& P);
     geotrans_interpolation_context();
     geotrans_interpolation_context(bgeot::pgeotrans_precomp pgp__, 

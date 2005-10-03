@@ -133,13 +133,19 @@ namespace dal {
 
   typedef const static_stored_object_key *pstatic_stored_object_key;
   
+  /**
+     base class for reference-counted getfem objects (via
+     boost::intrusive_ptr).
+     
+     @see dal_static_stored_objects.h
+  */
   class static_stored_object {
     mutable long pointer_ref_count_;
     
     
   public :
     static_stored_object(void) : pointer_ref_count_(0) {}
-    virtual ~static_stored_object() {}
+    virtual ~static_stored_object() { assert(pointer_ref_count_ == 0); }
     friend void intrusive_ptr_add_ref(const static_stored_object *o);
     friend void intrusive_ptr_release(const static_stored_object *o);
   };

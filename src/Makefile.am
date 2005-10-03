@@ -1,6 +1,7 @@
 include_HEADERS =                          \
 	getfem_boost/workaround.hpp        \
 	getfem_boost/intrusive_ptr.hpp     \
+	getfem_boost/noncopyable.hpp       \
 	dal_algobase.h                     \
 	dal_singleton.h		           \
 	dal_alloc.h                        \

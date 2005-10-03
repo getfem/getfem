@@ -412,21 +412,21 @@ namespace getfem
     cv_node.points()[nb] = pt;
     dof_types_.resize(nb+1);
     dof_types_[nb] = d;
-    cvs_node.add_point_adaptative(nb, short_type(-1));
-    for (short_type f = 0; f < cvs_node.nb_faces(); ++f)
+    cvs_node->add_point_adaptative(nb, short_type(-1));
+    for (short_type f = 0; f < cvs_node->nb_faces(); ++f)
       if (d->all_faces || gmm::abs(cvr->is_in_face(f, pt)) < 1.0E-7)
-	cvs_node.add_point_adaptative(nb, f);
+	cvs_node->add_point_adaptative(nb, f);
     pspt_valid = false;
   }
 
   void virtual_fem::init_cvs_node(void) {
-    cvs_node.init_for_adaptative(cvr->structure());
-    cv_node = bgeot::convex<base_node>(&cvs_node);
+    cvs_node->init_for_adaptative(cvr->structure());
+    cv_node = bgeot::convex<base_node>(cvs_node);
     pspt_valid = false;
   }
 
   void virtual_fem::unfreeze_cvs_node(void) {
-    cv_node.structure() = &cvs_node;
+    cv_node.structure() = cvs_node;
     pspt_valid = false;
   }
 
@@ -438,9 +438,7 @@ namespace getfem
   public :
     void calc_base_func(base_poly &p, size_type i, short_type K) const;
     PK_fem_(dim_type nc, short_type k);
-    ~PK_fem_() {
-      cout << "in ~PK_fem(" << int(dim()) << "," << int(estimated_degree()) << ") @ " << this << "\n";
-    }
+    ~PK_fem_() {}
   };
   
   void PK_fem_::calc_base_func(base_poly &p, size_type i, short_type K) const {

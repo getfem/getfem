@@ -131,8 +131,14 @@ namespace bgeot {
 	if (pprod2) *pprod2 = prod_b;
 	return prod_a ? true : false;
       }
+  protected:
     convex_structure() { prod_a = prod_b = 0; }
+    friend boost::intrusive_ptr<convex_structure> new_convex_structure();
   };
+
+  inline boost::intrusive_ptr<convex_structure> new_convex_structure() {
+    return boost::intrusive_ptr<convex_structure>(new convex_structure);
+  }
 
   /** @name functions on convex structures
    */

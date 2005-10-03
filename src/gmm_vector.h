@@ -338,9 +338,20 @@ namespace gmm {
 
   template<typename T> struct elt_rsvector_ {
     size_type c; T e;
-    elt_rsvector_(void) {  }
-    elt_rsvector_(size_type cc) { c = cc; }
-    elt_rsvector_(size_type cc, const T &ee) { c = cc; e = ee; }
+    /* e is initialized by default to avoid some false warnings of valgrind..
+       (from http://valgrind.org/docs/manual/mc-manual.html:
+      
+       When memory is read into the CPU's floating point registers, the
+       relevant V bits are read from memory and they are immediately
+       checked. If any are invalid, an uninitialised value error is
+       emitted. This precludes using the floating-point registers to copy
+       possibly-uninitialised memory, but simplifies Valgrind in that it
+       does not have to track the validity status of the floating-point
+       registers.
+    */
+    elt_rsvector_(void) : e(0) {}
+    elt_rsvector_(size_type cc) : c(cc), e(0) {}
+    elt_rsvector_(size_type cc, const T &ee) : c(cc), e(ee) {}
     bool operator < (const elt_rsvector_ &a) const { return c < a.c; }
     bool operator == (const elt_rsvector_ &a) const { return c == a.c; }
     bool operator != (const elt_rsvector_ &a) const { return c != a.c; }
@@ -499,19 +510,20 @@ namespace gmm {
     else {
       elt_rsvector_<T> ev(c, e);
       if (nb_stored() == 0) {
-	base_type_::resize(1);
-	*(this->begin()) = ev;
+	base_type_::resize(1,ev);
       }
       else {
 	iterator it = std::lower_bound(this->begin(), this->end(), ev);
 	if (it != this->end() && it->c == c) it->e = e;
 	else {
 	  size_type ind = it - this->begin();
-	  base_type_::resize(nb_stored()+1);
-	  it = this->begin() + ind;
-	  for (iterator ite = this->end() - 1; ite != it; --ite)
-	    *ite = *(ite-1);
-	  *it = ev;  // à verifier
+	  base_type_::resize(nb_stored()+1, ev);
+	  if (ind != nb_stored() - 1) {
+	    it = this->begin() + ind;
+	    for (iterator ite = this->end() - 1; ite != it; --ite)
+	      *ite = *(ite-1);
+	    *it = ev;
+	  }
 	}
       }
     }

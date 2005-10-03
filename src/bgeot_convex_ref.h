@@ -88,10 +88,10 @@ namespace bgeot {
     pstored_point_tab ppoints;
     mutable mesh_structure *psimplexified_convex;
     mutable const convex_of_reference *basic_convex_ref_;
-  public :
     convex_of_reference() : convex<base_node>(), psimplexified_convex(0),
 			    basic_convex_ref_(0) {}
 
+  public :
     /// return a negative or null number if the base_node is in the convex.
     virtual scalar_type is_in(const base_node &) const = 0;
     /// return a null (or almost zero) if pt is in the face of the convex.

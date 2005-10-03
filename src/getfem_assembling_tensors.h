@@ -57,12 +57,12 @@ namespace getfem {
   using bgeot::multi_tensor_iterator;
   using bgeot::TDIter;
 
-  /* 
+  class ATN_tensor;
+
+  /*
      base class for the tree built from the expression of the tensor assembly
      (ATN == Assembly Tree Node)
   */
-  class ATN_tensor;
-
   class ATN {
     std::deque< ATN_tensor* > childs_;
     std::string name_;   /* the name is a part of the parsed string */
@@ -453,7 +453,10 @@ namespace getfem {
 
 
 
-  /* main class for generic assembly */
+  /** Generic assembly of vectors, matrices. 
+      
+      Many examples of use available @link asm here@endlink.
+   */
   class generic_assembly : public asm_tokenizer {
     std::deque<const mesh_fem *> mftab;/* list of the mesh_fem used in the computation */
     std::deque<const mesh_im *> imtab;/* list of the mesh_im used in the computation */
@@ -509,29 +512,37 @@ namespace getfem {
     const std::deque<base_asm_data*>& data() const { return indata; }
     const std::deque<base_asm_vec*>& vec() const { return outvec; }
     const std::deque<base_asm_mat*>& mat() const { return outmat; }
+    /// Add a new mesh_fem
     void push_mf(const mesh_fem& mf_) { mftab.push_back(&mf_); }
+    /// Add a new mesh_im
     void push_mi(const mesh_im& im_) { imtab.push_back(&im_); }
+    /// Add a new non-linear term
     void push_nonlinear_term(pnonlinear_elem_term net) {
       innonlin.push_back(net);
     }
+    /// Add a new data (dense array)
     template< typename VEC > void push_data(const VEC& d) { 
       indata.push_back(new asm_data<VEC>(&d)); 
     }
+    /// Add a new output vector
     template< typename VEC > void push_vec(VEC& v) { 
       asm_vec<VEC> *pv = new asm_vec<VEC>(&(gmm::linalg_cast(v)));
       outvec.push_back(pv);
     }
+    /// Add a new output vector (fake const version..)
     template< typename VEC > void push_vec(const VEC& v) { 
       asm_vec<VEC> *pv = new asm_vec<VEC>(&(gmm::linalg_cast(v)));
       outvec.push_back(pv);
     }
+    /// Add a new output matrix (fake const version..)
     template< typename MAT > void push_mat(const MAT& m) { 
       outmat.push_back(new asm_mat<MAT>(&(gmm::linalg_cast(m)))); 
     }
+    /// Add a new output matrix
     template< typename MAT > void push_mat(MAT& m) { 
       outmat.push_back(new asm_mat<MAT>(&(gmm::linalg_cast(m)))); 
     }
-
+    /// used by the getfem_interface..
     void set_vec_factory(base_vec_factory *fact) { vec_fact = fact; }
     void set_mat_factory(base_mat_factory *fact) { mat_fact = fact; }
 
@@ -567,7 +578,8 @@ namespace getfem {
     //void volumic_assembly(const dal::bit_vector& cvlst);
     /* do the assembly on the specified boundary */
     //void boundary_assembly(size_type boundary_number);
-    /* do the assembly on the specified region (boundary or set of convexes) */
+
+    /** do the assembly on the specified region (boundary or set of convexes) */
     void assembly(const mesh_region &region = 
 		  mesh_region::all_convexes());
   };

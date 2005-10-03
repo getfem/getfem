@@ -193,7 +193,12 @@ namespace getfem {
   protected :
 
     mutable std::vector<pdof_description> dof_types_;
-    bgeot::convex_structure cvs_node;
+    /* this convex structure is "owned" by the virtual_fem 
+       (a deep copy is made when virtual_fems are copied) 
+       But cvs_node has to be a pointer, as bgeot::convex_structure
+       inherits from dal::static_stored_object
+    */
+    boost::intrusive_ptr<bgeot::convex_structure> cvs_node;
     bgeot::convex<base_node> cv_node;
     mutable bgeot::pstored_point_tab pspt;
     mutable bool pspt_valid;
@@ -375,15 +380,18 @@ namespace getfem {
       is_equiv = is_pol = is_polycomp = is_lag = false;
       pspt_valid = false; hier_raff = 0; real_element_defined = false;
       es_degree = 5;
+      cvs_node = bgeot::new_convex_structure();
     }
     virtual_fem(const virtual_fem& f) : dal::static_stored_object() { copy(f); }
     virtual ~virtual_fem() {}
   private:
     void copy(const virtual_fem &f) {
       dof_types_ = f.dof_types_;
-      cvs_node = f.cvs_node;
+
+      cvs_node = bgeot::new_convex_structure();
+      *cvs_node = *f.cvs_node; // deep copy
       cv_node = f.cv_node;
-      cv_node.structure() = &(cvs_node);
+      cv_node.structure() = cvs_node;
       pspt = 0;
       pspt_valid = false;
       cvr = f.cvr;

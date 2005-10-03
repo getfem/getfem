@@ -1406,9 +1406,9 @@ namespace getfem {
     /** change the @f$ r(x) @f$ right hand side.
 	@param R a vector of size @c Q*mf_data.nb_dof() .
     */
-    void set_rhs(const VECTOR &R) {
-      gmm::resize(B_, gmm::vect_size(R));
-      gmm::copy(R, B_);
+    void set_rhs(const VECTOR &R_) {
+      gmm::resize(B_, gmm::vect_size(R_));
+      gmm::copy(R_, B_);
       if (!(this->context_check())) compute_constraints(ASMDIR_BUILDR);
     }
 
