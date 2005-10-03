@@ -1,4 +1,5 @@
-#!/bin/csh
+#!/bin/sh
 
-cvs status |& grep "Needs"
-cvs status |& grep "Locally"
+cvs status 2>1| grep "Needs"
+cvs status 2>1| grep "Locally"
+
