@@ -1,5 +1,4 @@
 #!/bin/sh
 
-cvs status 2>1| grep "Needs"
-cvs status 2>1| grep "Locally"
+cvs status 2>1| grep "Needs\|Locally"
 
