@@ -984,6 +984,20 @@ namespace gmm {
   template<typename T> inline T default_min(std::complex<T>)
   { return default_min(T()); }
 
+  
+  /*
+    use safe_divide to avoid NaNs when dividing very small complex
+    numbers, for example
+    std::complex<float>(1e-23,1e-30)/std::complex<float>(1e-23,1e-30)
+  */
+  template<typename T> inline T safe_divide(T a, T b) { return a/b; }
+  template<typename T> inline std::complex<T>
+  safe_divide(std::complex<T> a, std::complex<T> b) {
+    T m = std::max(gmm::abs(b.real()), gmm::abs(b.imag()));
+    a = std::complex<T>(a.real()/m, a.imag()/m);
+    b = std::complex<T>(b.real()/m, b.imag()/m);
+    return a / b;
+  }
 
 
   /* ******************************************************************** */

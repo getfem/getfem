@@ -95,8 +95,11 @@ namespace gmm {
 	gmm::mult(A, gmm::scaled(m, T(-1)), r);
 	gmm::add(ei, r);
 	gmm::mult(A, r, Ar);
-	gmm::add(gmm::scaled(r, vect_sp(r, Ar) / vect_sp(Ar, Ar)), m);
-	gmm::clean(m, threshold * gmm::vect_norm2(m));
+	T nAr = vect_sp(Ar,Ar);
+	if (gmm::abs(nAr) > R(0)) {
+	  gmm::add(gmm::scaled(r, gmm::safe_divide(vect_sp(r, Ar), vect_sp(Ar, Ar))), m);
+	  gmm::clean(m, threshold * gmm::vect_norm2(m));
+	} else gmm::clear(m);
       }
       if (gmm::vect_norm2(m) == R(0)) m[i] = alpha;
       gmm::copy(m, M.col(i));

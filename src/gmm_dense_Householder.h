@@ -162,7 +162,7 @@ namespace gmm {
     R mu = vect_norm2(V), abs_v0 = gmm::abs(V[0]);
     if (mu != R(0))
       gmm::scale(V, (abs_v0 == R(0)) ? T(R(1) / mu)
-		 : ((abs_v0 / V[0]) / (abs_v0 + mu)));
+		 : (safe_divide(T(abs_v0), V[0]) / (abs_v0 + mu)));
     if (gmm::real(V[vect_size(V)-1]) * R(0) != R(0)) gmm::clear(V);
     V[0] = T(1);
   }
@@ -278,9 +278,9 @@ namespace gmm {
     if (bb == R(0)) { c = T(1); s = T(0);   return; }
     if (aa == R(0)) { c = T(0); s = b / bb; return; }
     if (bb > aa)
-      { T t = -a/b; s = T(R(1) / (sqrt(R(1)+gmm::abs_sqr(t)))); c = s * t; }
+      { T t = -safe_divide(a,b); s = T(R(1) / (sqrt(R(1)+gmm::abs_sqr(t)))); c = s * t; }
     else
-      { T t = -b/a; c = T(R(1) / (sqrt(R(1)+gmm::abs_sqr(t)))); s = c * t; }
+      { T t = -safe_divide(b,a); c = T(R(1) / (sqrt(R(1)+gmm::abs_sqr(t)))); s = c * t; }
   }
 
   // Apply Q* v
