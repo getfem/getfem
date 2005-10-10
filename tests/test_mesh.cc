@@ -27,6 +27,7 @@
 #endif
 
 using getfem::size_type;
+using getfem::base_node;
 
 template<class MESH> void test_mesh(MESH &m) {
   
@@ -222,6 +223,28 @@ class myexc : public dal::exception_callback {
   { cerr << "exception launched: " << s << std::endl; }
 };
 
+void test_convex_ref() {
+  for (unsigned k=1; k <= 2; ++k) {
+    bgeot::pconvex_ref cvr  = bgeot::simplex_of_reference(1,k);
+    base_node P(1); P[0] = .5;
+    assert(gmm::abs(cvr->is_in(P)+.5) < 1e-6);
+    P[0] = -.1;  assert(gmm::abs(cvr->is_in(P)-.1) < 1e-6);
+    P[0] = 1.1;  assert(gmm::abs(cvr->is_in(P)-.1) < 1e-6);
+    
+    cvr  = bgeot::simplex_of_reference(2,k);
+    assert(gmm::abs(cvr->is_in(base_node(0,0))) < 1e-6);
+    assert(gmm::abs(cvr->is_in(base_node(0.5,0.5))) < 1e-6);
+    assert(cvr->is_in(base_node(0.25,0.25)) < -.2);
+    assert(cvr->is_in(base_node(0.85,0.85)) > .2);
+    assert(cvr->is_in(base_node(-0.25,0.05)) > .2);
+    assert(cvr->is_in(base_node(0.05, -0.25)) > .2);
+
+    cvr = bgeot::parallelepiped_of_reference(3);
+    assert(gmm::abs(cvr->is_in(base_node(.5,.5,.5))+.5) < 1e-6);
+    assert(gmm::abs(cvr->is_in(base_node(-.5,-.5,-.5))-.5) < 1e-6);
+  }
+}
+
 int main(void)
 {
 #ifdef GETFEM_HAVE_FEENABLEEXCEPT /* trap SIGFPE */
@@ -231,7 +254,7 @@ int main(void)
   try {
     cout << "sizeof(size_type)=" << sizeof(size_type) << endl;
   getfem::getfem_mesh m1;
-
+  test_convex_ref();
   test_convex_simplif();
   test_mesh(m1);
   test_convex_simplif();

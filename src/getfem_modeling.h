@@ -269,36 +269,13 @@ namespace getfem {
 
 
   /**
-     Abstract model brick.
+     Common base class for real and complex model bricks.
      @ingroup bricks 
 
-     Requirements for a model brick :                                  
-     
-     A model brick is either a fondamental brick (like linearized
-     elasticity brick, platicity brick ...) or a modifier brick which
-     refer to a sub brick.
-
-     A new brick should define:
-     
-     - @c proper_update() , which is called each time the brick should
-     update itself.  This function is expected to assign the correct
-     values to @c proper_nb_dof (the nb of new dof introduced by this
-     brick), @c proper_nb_constraints and @c proper_mixed_variables.
-
-     - @c do_compute_tangent_matrix(MS, i0, j0) . This function should
-     compute its own part of the tangent and constraint matrices (@c i0 and
-     @c j0 are the shifts in the matrices stored in the model_state MS)
-     
-     - @c do_compute_residu(MS, i0, j0) . Same as above for the residu
-     vector stored in MS.
+     @see getfem::mdbrick_abstract
   */
-
-  template<typename MODEL_STATE = standard_model_state>
-  class mdbrick_abstract : public context_dependencies {
-
+  class mdbrick_abstract_common_base : public context_dependencies {
   public :
-    TYPEDEF_MODEL_STATE_TYPES; // usual set of typedefs
-
     struct mesh_fem_info_ {
       size_type brick_ident; // basic model brick using the mesh_fem
       size_type info;        // flags
@@ -308,14 +285,12 @@ namespace getfem {
       void add_boundary(size_type b, bound_cond_type bc)
       { boundaries[b] = bc; }
       bound_cond_type boundary_type(size_type b) {
-	typename std::map<size_type, bound_cond_type>::const_iterator it;
+	std::map<size_type, bound_cond_type>::const_iterator it;
 	it = boundaries.find(b);
 	return it != boundaries.end() ? it->second : MDBRICK_UNDEFINED;
       }
     };
-
   protected :
-
     struct boundary_cond_info_ {
       size_type num_fem, num_bound;
       bound_cond_type bc;
@@ -323,7 +298,7 @@ namespace getfem {
 	: num_fem(a), num_bound(b), bc(d) {}
     };
 
-    std::vector<mdbrick_abstract *> sub_bricks;
+    std::vector<mdbrick_abstract_common_base *> sub_bricks;
     
     /** all proper_* specify data which is specific to this brick:
        'proper_mesh_fems' is the list of mesh_fems used by this brick,
@@ -411,7 +386,7 @@ namespace getfem {
 			proper_boundary_cond_info[j].bc);
       }
       /* call the customizable update procedure */
-      const_cast<mdbrick_abstract *>(this)->proper_update_();
+      const_cast<mdbrick_abstract_common_base *>(this)->proper_update_();
       nb_total_dof += proper_additional_dof;
       nb_total_constraints += proper_nb_constraints;
       total_mixed_variables |= proper_mixed_variables;
@@ -420,7 +395,7 @@ namespace getfem {
     void force_update(void)
     { if (!this->context_check()) update_from_context(); }
 
-    void add_sub_brick(mdbrick_abstract &mdb) {
+    void add_sub_brick(mdbrick_abstract_common_base &mdb) {
       sub_bricks.push_back(&mdb);
       add_dependency(mdb);
     }
@@ -468,6 +443,46 @@ namespace getfem {
 	constraints defined in the sub-problem(s) if any. */
     size_type nb_constraints(void) { return nb_total_constraints; };
 
+    bool is_linear(void) const { return is_linear_; }
+    bool is_symmetric(void) const { return is_symmetric_; }
+    bool is_coercive(void) const { return is_coercive_; }
+    const dal::bit_vector &mixed_variables(void) const
+    { return total_mixed_variables; };
+    mdbrick_abstract_common_base(void) : proper_additional_dof(0), proper_nb_constraints(0), 
+			     MS_i0(0)
+    { proper_is_linear_ = proper_is_symmetric_ = proper_is_coercive_ = true; }
+    virtual ~mdbrick_abstract_common_base() {}
+  };
+
+  /**
+     Abstract model brick.
+     @ingroup bricks 
+
+     Requirements for a model brick :                                  
+     
+     A model brick is either a fondamental brick (like linearized
+     elasticity brick, platicity brick ...) or a modifier brick which
+     refer to a sub brick.
+
+     A new brick should define:
+     
+     - @c proper_update() , which is called each time the brick should
+     update itself.  This function is expected to assign the correct
+     values to @c proper_nb_dof (the nb of new dof introduced by this
+     brick), @c proper_nb_constraints and @c proper_mixed_variables.
+
+     - @c do_compute_tangent_matrix(MS, i0, j0) . This function should
+     compute its own part of the tangent and constraint matrices (@c i0 and
+     @c j0 are the shifts in the matrices stored in the model_state MS)
+     
+     - @c do_compute_residu(MS, i0, j0) . Same as above for the residu
+     vector stored in MS.
+  */
+  template<typename MODEL_STATE = standard_model_state>
+  class mdbrick_abstract : public mdbrick_abstract_common_base {
+  public :
+    TYPEDEF_MODEL_STATE_TYPES; // usual set of typedefs
+    
     virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
 					   size_type j0) = 0;
     /** update (if necessary) the tangent matrix stored.
@@ -479,7 +494,7 @@ namespace getfem {
       this->context_check();
       size_type i1 = MS_i0 = i0, j1 = j0;
       for (size_type i = 0; i < sub_bricks.size(); ++i) {
-	sub_bricks[i]->compute_tangent_matrix(MS, i1, j1);
+	((mdbrick_abstract*)sub_bricks[i])->compute_tangent_matrix(MS, i1, j1);
 	i1 += sub_bricks[i]->nb_dof();
 	j1 += sub_bricks[i]->nb_constraints();
       }
@@ -492,7 +507,7 @@ namespace getfem {
       this->context_check();
       size_type i1 = MS_i0 = i0, j1 = j0;
       for (size_type i = 0; i < sub_bricks.size(); ++i) {
-	sub_bricks[i]->compute_residu(MS, i1, j1, false);
+	((mdbrick_abstract*)sub_bricks[i])->compute_residu(MS, i1, j1, false);
 	i1 += sub_bricks[i]->nb_dof();
 	j1 += sub_bricks[i]->nb_constraints();
       }
@@ -507,15 +522,6 @@ namespace getfem {
 #endif
       }
     }
-    bool is_linear(void) const { return is_linear_; }
-    bool is_symmetric(void) const { return is_symmetric_; }
-    bool is_coercive(void) const { return is_coercive_; }
-    const dal::bit_vector &mixed_variables(void) const
-    { return total_mixed_variables; };
-    mdbrick_abstract(void) : proper_additional_dof(0), proper_nb_constraints(0), 
-			     MS_i0(0)
-    { proper_is_linear_ = proper_is_symmetric_ = proper_is_coercive_ = true; }
-    virtual ~mdbrick_abstract() {}
   };
 
   /* ******************************************************************** */
@@ -635,7 +641,7 @@ namespace getfem {
 
     /// constructor for the Laplace operator
     mdbrick_scalar_elliptic(mesh_im &mim_, mesh_fem &mf_u_, mesh_fem &mf_data_,
-			    value_type a)
+			    value_type a=1)
       : mim(mim_), mf_u(mf_u_), mf_data(mf_data_),  homogeneous(true),
 	laplacian(true)
     { gmm::resize(coeffs_, 1); coeffs_[0] = a; init_(); }
@@ -830,7 +836,7 @@ namespace getfem {
 
     /// constructor for a homogeneous @f$\rho@f$ coefficient.
     mdbrick_mass_matrix
-    (mesh_im &mim_, mesh_fem &mf_u_, mesh_fem &mf_data_, value_type rhoi)
+    (mesh_im &mim_, mesh_fem &mf_u_, mesh_fem &mf_data_, value_type rhoi=1)
       : mim(mim_), mf_u(mf_u_), mf_data(mf_data_), homogeneous(true)
     { gmm::resize(rho_, 1); rho_[0] = rhoi; init_(); }
 
@@ -1715,7 +1721,8 @@ namespace getfem {
     problem.compute_residu(MS);
     problem.compute_tangent_matrix(MS);
 
-    // cout << "CM = " << MS.constraints_matrix() << endl;
+    //cout << "CM = " << MS.constraints_matrix() << endl;
+    //cout << "TM = " << MS.tangent_matrix() << endl;
 
     MS.compute_reduced_system();
 #ifdef GMM_USES_MPI

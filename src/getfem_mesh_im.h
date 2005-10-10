@@ -87,7 +87,7 @@ namespace getfem {
 	no integration is associated, the function will crash! use the
 	convex_index() of the mesh_im to check that a fem is
 	associated to a given convex) */
-    pintegration_method int_method_of_element(size_type cv) const
+    virtual pintegration_method int_method_of_element(size_type cv) const
     { return  ims[cv]; }
     void clear(void);
     /* explicit calls to parent class 

@@ -43,6 +43,8 @@
 namespace getfem {
   /** @brief Keep informations about a mesh crossed by level-sets.
       Cut convexes with respect to the level sets.
+
+      Note that the cutting won't be conformal.
   */
   class mesh_level_set : public getfem_mesh_receiver,
 			 public context_dependencies {

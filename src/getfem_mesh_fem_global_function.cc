@@ -223,9 +223,6 @@ namespace getfem {
     virtual scalar_type val(const fem_interpolation_context& c) const {
       update_mls(c.convex_num());
       scalar_type x = mls1(c.xref()), y = mls0(c.xref());
-//       cout << "Xreal = " << c.xreal()
-//            << " f(" << x << ", " << y << ", " << l << ") = "
-// 	      << sing_function(x, y, l) << endl;
       scalar_type v=sing_function(x, y, l);
       return v*cutoff(x,y);
     }
@@ -246,16 +243,28 @@ namespace getfem {
     virtual void grad(const fem_interpolation_context& c,
 		      base_small_vector &v) const {
       update_mls(c.convex_num());
-      base_small_vector dx(2), dy(2), dfs(2), dfc(2), dfr(2), df(2);
+      size_type P = c.xref().size();
+      base_small_vector dx(P), dy(P), dfs(2), dfc(2), dfr(2), df(P);
       scalar_type x = mls1.grad(c.xref(), dx), y = mls0.grad(c.xref(), dy);
+      if (x*x + y*y < 1e-20) {
+	cerr << "crack_singular::grad: xreal = " << c.xreal() << ", x_crack = " << x << ", y_crack=" << y << "\n";
+	cerr << "ii=" << c.ii() << "\n";
+	cerr << "G=" << c.G() << "\n";
+	cerr << "pgp=" << c.pgp() << "\n";
+	cerr << "xref=" << c.xref() << "\n";
+	cerr << name_of_geometric_trans(c.pgp()->get_trans()) << "\n";
+	cerr << c.pgp()->get_point_tab() << "\n";
+	//throw int(3);
+      }
       scalar_type fc = cutoff(x,y), fs = sing_function(x,y,l);
       dfs = sing_function_grad(x, y, l);
       dfc = cutoff_grad(x,y);
       dfr = fs*dfc + fc*dfs;
+      dfr.resize(P);
 
       gmm::mult(c.B(), dfr, df);
-      v[0] = df[0]*dx[0] + df[1]*dy[0];
-      v[1] = df[0]*dx[1] + df[1]*dy[1];
+      for (size_type i = 0; i < P; ++i)
+	v[i] = df[0]*dx[i] + df[1]*dy[i];
     }
 
     virtual void hess(const fem_interpolation_context&, base_matrix &) const

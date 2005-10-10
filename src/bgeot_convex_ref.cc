@@ -130,10 +130,10 @@ namespace bgeot {
       if (pt.size() != cvs->dim())
 	throw dimension_error
 	  ("K_simplex_of_ref_::is_in : Dimension does not match");
-      scalar_type e = -1.0, r = 0.0;
+      scalar_type e = -1.0, r = (pt.size() > 0) ? -pt[0] : 0.0;
       base_node::const_iterator it = pt.begin(), ite = pt.end();
-      for (; it != ite; e += *it, ++it) r = std::min(r, *it);
-      return std::max(-r, e);
+      for (; it != ite; e += *it, ++it) r = std::max(r, -(*it));
+      return std::max(r, e);
     }
     scalar_type is_in_face(short_type f, const base_node &pt) const {
       // return a null number if pt is in the face of the convex
@@ -213,6 +213,7 @@ namespace bgeot {
 	  ("product_ref_::is_in : Dimension does not match");
       std::copy(pt.begin(), pt.begin()+n1, pt1.begin());
       std::copy(pt.begin()+n1,   pt.end(), pt2.begin());
+      //cout << "pt = " << pt << " 1 : " << cvr1->is_in(pt1) << " 2 : " <<  cvr2->is_in(pt2) << endl;
       return std::max(cvr1->is_in(pt1), cvr2->is_in(pt2));
     }
 

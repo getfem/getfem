@@ -288,7 +288,8 @@ namespace getfem
         ppts[kk] = pids.at(pos);
       }
       pm->add_convex(bgeot::parallelepiped_linear_geotrans(n), ppts.begin());
-      kk=0; while (kk <= n) { kcnt[kk]++; if (kcnt[kk] == k) { kcnt[kk] = 0; kk++; } else break; }
+      kcnt[(kk = 0)]++;
+      while (kk < n && kcnt[kk] == k) { kcnt[kk] = 0; kcnt[++kk]++; }
     }
   }
 

@@ -463,6 +463,7 @@ AC_CONFIG_FILES(\
 	tests/meshes/Makefile \
 	contrib/Makefile \
 	contrib/icare/Makefile \
+	contrib/delaminated_crack/Makefile \
 	bin/Makefile \
 getfem-config getfem-config-notinstalled gmm-config)
 AC_OUTPUT

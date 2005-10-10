@@ -53,8 +53,8 @@ namespace getfem {
       if (linked_mesh_->structure_of_convex(cv)->basic_structure() 
 	  != pim->structure())
 	DAL_THROW(std::logic_error,
-		  "Incompatibility between integration method " 
-		  " and mesh element ");
+		  "Incompatibility between integration method " << getfem::name_of_int_method(pim) << 
+		  " and mesh element " << bgeot::name_of_geometric_trans(linked_mesh_->trans_of_convex(cv)));
       im_convexes.add(cv);
       ims[cv] = pim;
       touch();

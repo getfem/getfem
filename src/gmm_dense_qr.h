@@ -764,7 +764,6 @@ namespace gmm {
 				  sub_matrix(eigvect, SUBJ, SUBK), compvect);
 
       symmetric_qr_stop_criterion(diag, sdiag, p, q, tol*R(2));
-      
       if (++ite > n*100) DAL_THROW(failure_error, "QR algorithm failed.");
     }
     

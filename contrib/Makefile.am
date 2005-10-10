@@ -1,4 +1,4 @@
-SUBDIRS = icare 
+SUBDIRS = icare delaminated_crack
 
 bin_PROGRAMS = \
 	draw_mesh_doedges

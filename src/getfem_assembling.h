@@ -237,6 +237,59 @@ namespace getfem
     assem.assembly(rg);
   }
 
+  /*
+    assembly of a matrix with 1 parameter (real or complex)
+    (the most common here for the assembly routines below)
+  */
+  template <typename MAT, typename VECT>
+  void asm_matrix_real_or_complex_1_param(MAT &M, 
+					  const mesh_im &mim, 
+					  const mesh_fem &mf_u,
+					  const mesh_fem &mf_data,
+					  const VECT &A, 
+					  const mesh_region &rg,
+					  const char *assembly_description) {
+    asm_matrix_real_or_complex_1_param_(M, mim, mf_u, mf_data, A, rg, 
+					assembly_description,
+					typename gmm::linalg_traits<VECT>::value_type());
+  }
+
+  /* real version */
+  template<typename MAT, typename VECT, typename T>
+  void asm_matrix_real_or_complex_1_param_(const MAT &M, 
+					   const mesh_im &mim, 
+					   const mesh_fem &mf_u,
+					   const mesh_fem &mf_data,
+					   const VECT &A, 
+					   const mesh_region &rg,
+					   const char *assembly_description, T) {
+    generic_assembly assem(assembly_description);
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_data);
+    assem.push_data(A);
+    assem.push_mat(const_cast<MAT&>(M));
+    assem.assembly(rg);
+  }
+
+  /* complex version */
+  template<typename MAT, typename VECT, typename T>
+  void asm_matrix_real_or_complex_1_param_(MAT &M, 
+					   const mesh_im &mim, 
+					   const mesh_fem &mf_u,
+					   const mesh_fem &mf_data,
+					   const VECT &A, 
+					   const mesh_region &rg,
+					   const char *assembly_description, std::complex<T>) {
+    asm_matrix_real_or_complex_1_param_(gmm::real_part(M),mim,mf_u,mf_data,gmm::real_part(A),rg,
+					assembly_description, T());
+    asm_matrix_real_or_complex_1_param_(gmm::imag_part(M),mim,mf_u,mf_data,gmm::imag_part(A),rg,
+					assembly_description, T());
+  }
+
+  
+  
+
   /** 
      generic mass matrix assembly with an additional parameter
      (on the whole mesh or on the specified boundary) 
@@ -244,24 +297,15 @@ namespace getfem
    */
   template<typename MAT, typename VECT>
   void asm_mass_matrix_param(MAT &M, const mesh_im &mim, const mesh_fem &mf_u,
-			     const mesh_fem &mfdata,
+			     const mesh_fem &mf_data,
 			     const VECT &F, 			       
 			     const mesh_region &rg = mesh_region::all_convexes()) {
-    generic_assembly assem;
-    if (mf_u.get_qdim() == 1)
-      assem.set("F=data(#2);"
-		"M(#1,#1)+=sym(comp(Base(#1).Base(#1).Base(#2))(:,:,i).F(i))");
-    else
-      assem.set("F=data(#2);"
-		"M(#1,#1)+=sym(comp(vBase(#1).vBase(#1).Base(#2))(:,i,:,i,j).F(j));");
-    assem.push_mi(mim);
-    assem.push_mf(mf_u);
-    assem.push_mf(mfdata);
-    assem.push_data(F);
-    assem.push_mat(M);
-    assem.assembly(rg);
-  }
+    const char *s1 = "F=data(#2); M(#1,#1)+=sym(comp(Base(#1).Base(#1).Base(#2))(:,:,i).F(i))";
+    const char *s2 = "F=data(#2); M(#1,#1)+=sym(comp(vBase(#1).vBase(#1).Base(#2))(:,i,:,i,j).F(j));";
 
+    asm_matrix_real_or_complex_1_param(M,mim,mf_u,mf_data,F,rg,
+				       (mf_u.get_qdim() == 1) ? s1 : s2);
+  }
 
 
   /** 
@@ -270,22 +314,19 @@ namespace getfem
    */
   template<typename VECT1, typename VECT2>
   void asm_source_term(VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
-		       const mesh_fem &mfdata, const VECT2 &F,
+		       const mesh_fem &mf_data, const VECT2 &F,
 		       const mesh_region &rg = mesh_region::all_convexes()) {
-    if (mfdata.get_qdim() != 1)
+    if (mf_data.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
-    asm_source_term(B, mim, mf, mfdata, F, rg,
-		    typename gmm::linalg_traits<VECT2>::value_type());
+    asm_source_term_(B, mim, mf, mf_data, F, rg,
+		     typename gmm::linalg_traits<VECT2>::value_type());
   }
 
 
-  /*
-     source term (for both volumic sources and boundary (neumann) sources.
-     real version.
-   */
+  /* real version. */
   template<typename VECT1, typename VECT2, typename T>
-  void asm_source_term(const VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
-		       const mesh_fem &mfdata, const VECT2 &F,
+  void asm_source_term_(const VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
+			const mesh_fem &mf_data, const VECT2 &F,
 		       const mesh_region &rg, T) {
     generic_assembly assem;
     if (mf.get_qdim() == 1)
@@ -295,21 +336,19 @@ namespace getfem
 		"V(#1)+=comp(vBase(#1).Base(#2))(:,i,j).F(i,j);");
     assem.push_mi(mim);
     assem.push_mf(mf);
-    assem.push_mf(mfdata);
+    assem.push_mf(mf_data);
     assem.push_data(F);
     assem.push_vec(const_cast<VECT1&>(B));
     assem.assembly(rg);
   }
 
-  /*  source term (for both volumic sources and boundary (neumann) sources.
-   *  complex version.
-   */
+  /* complex version. */
   template<typename VECT1, typename VECT2, typename T>
-  void asm_source_term(VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
-		       const mesh_fem &mfdata, const VECT2 &F,
+  void asm_source_term_(VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
+		       const mesh_fem &mf_data, const VECT2 &F,
 		       const mesh_region &rg, std::complex<T>) {
-    asm_source_term(gmm::real_part(B), mim, mf, mfdata, gmm::real_part(F), rg, T());
-    asm_source_term(gmm::imag_part(B), mim, mf, mfdata, gmm::imag_part(F), rg, T());
+    asm_source_term_(gmm::real_part(B), mim, mf, mf_data, gmm::real_part(F), rg, T());
+    asm_source_term_(gmm::imag_part(B), mim, mf, mf_data, gmm::imag_part(F), rg, T());
   }
 
 
@@ -323,46 +362,6 @@ namespace getfem
 	  if (Q[k*q*q+i*q+j] != Q[k*q*q+j*q+i])
 	    return false;
     return true;
-  }
-
-  template<typename MAT, typename VECT, typename T>
-  void asm_qu_term_(const MAT &M, 
-		    const mesh_im &mim, 
-		    const mesh_fem &mf_u, 
-		    const mesh_fem &mf_d, const VECT &Q, 
-		    const mesh_region &rg, T) {
-    generic_assembly assem;
-    assert(mf_u.nb_dof() <= gmm::mat_nrows(M));
-    assert(mf_u.nb_dof() <= gmm::mat_ncols(M));
-    if (mf_u.get_qdim() == 1)
-      assem.set("Q=data$1(#2);"
-		"M(#1,#1)+=comp(Base(#1).Base(#1).Base(#2))(:,:,k).Q(k);");
-    else {
-      if (is_Q_symmetric(Q,mf_u.get_qdim(),mf_d.nb_dof()))
-	assem.set("Q=data$1(qdim(#1),qdim(#1),#2);"
-		  "M(#1,#1)+=sym(comp(vBase(#1).vBase(#1).Base(#2))"
-		  "(:,i,:,j,k).Q(i,j,k));");
-      else
-	assem.set("Q=data$1(qdim(#1),qdim(#1),#2);"
-		  "M(#1,#1)+=comp(vBase(#1).vBase(#1).Base(#2))"
-		  "(:,i,:,j,k).Q(i,j,k);");
-    }
-    assem.push_mi(mim);
-    assem.push_mf(mf_u);
-    assem.push_mf(mf_d);
-    assem.push_data(Q);
-    assem.push_mat(const_cast<MAT&>(M));
-    assem.assembly(rg);
-  }
-
-  template<typename MAT, typename VECT, typename T>
-  void asm_qu_term_(MAT &M, 
-		    const mesh_im &mim, 
-		    const mesh_fem &mf_u, 
-		    const mesh_fem &mf_d, const VECT &Q, 
-		    const mesh_region &rg, std::complex<T>) {
-    asm_qu_term_(gmm::real_part(M), mim, mf_u, mf_d, gmm::real_part(Q), rg, T());
-    asm_qu_term_(gmm::imag_part(M), mim, mf_u, mf_d, gmm::imag_part(Q), rg, T());
   }
 
   /**
@@ -385,17 +384,30 @@ namespace getfem
      @ingroup asm
   */
   template<typename MAT, typename VECT>
-  void asm_qu_term(const MAT &M, 
+  void asm_qu_term(MAT &M, 
 		   const mesh_im &mim, 
 		   const mesh_fem &mf_u, 
 		   const mesh_fem &mf_d, const VECT &Q, 
-		   const mesh_region &rg = mesh_region::all_convexes()) {
+		   const mesh_region &rg) {
+    generic_assembly assem;
     if (mf_d.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
-    asm_qu_term_(const_cast<MAT&>(M), mim, mf_u, mf_d, Q, rg, 
-		 typename gmm::linalg_traits<VECT>::value_type());
+    assert(mf_u.nb_dof() <= gmm::mat_nrows(M));
+    assert(mf_u.nb_dof() <= gmm::mat_ncols(M));
+    const char *asm_str = "";
+    if (mf_u.get_qdim() == 1)
+      asm_str = "Q=data$1(#2); M(#1,#1)+=comp(Base(#1).Base(#1).Base(#2))(:,:,k).Q(k);";
+    else
+      if (is_Q_symmetric(Q,mf_u.get_qdim(),mf_d.nb_dof()))
+	asm_str = "Q=data$1(qdim(#1),qdim(#1),#2);"
+		  "M(#1,#1)+=sym(comp(vBase(#1).vBase(#1).Base(#2))"
+		  "(:,i,:,j,k).Q(i,j,k));";
+      else
+        asm_str = "Q=data$1(qdim(#1),qdim(#1),#2);"
+		  "M(#1,#1)+=comp(vBase(#1).vBase(#1).Base(#2))"
+		  "(:,i,:,j,k).Q(i,j,k);";
+    asm_matrix_real_or_complex_1_param(M, mim, mf_u, mf_d, Q, rg, asm_str);
   }
-
 
   /** 
       Stiffness matrix for linear elasticity, with Lamé coefficients
@@ -405,12 +417,12 @@ namespace getfem
   void asm_stiffness_matrix_for_linear_elasticity(const MAT &RM_,
 						  const mesh_im &mim, 
 						  const mesh_fem &mf,
-						  const mesh_fem &mfdata,
+						  const mesh_fem &mf_data,
 						  const VECT &LAMBDA,
 						  const VECT &MU,
 						  const mesh_region &rg = mesh_region::all_convexes()) {
     MAT &RM = const_cast<MAT &>(RM_);
-    if (mfdata.get_qdim() != 1)
+    if (mf_data.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     
     if (mf.get_qdim() != mf.linked_mesh().dim())
@@ -430,7 +442,7 @@ namespace getfem
 			   "+ t(:,i,i,:,j,j,k).lambda(k))");
     assem.push_mi(mim);
     assem.push_mf(mf);
-    assem.push_mf(mfdata);
+    assem.push_mf(mf_data);
     assem.push_data(LAMBDA);
     assem.push_data(MU);
     assem.push_mat(RM);
@@ -448,10 +460,10 @@ namespace getfem
   asm_stiffness_matrix_for_linear_elasticity_Hooke(MAT &RM,
 						   const mesh_im &mim, 
 						   const mesh_fem &mf, 
-						   const mesh_fem &mfdata, 
+						   const mesh_fem &mf_data, 
 						   const VECT &H,
 						   const mesh_region &rg = mesh_region::all_convexes()) {
-    if (mfdata.get_qdim() != 1)
+    if (mf_data.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
     /* e = strain tensor,
        M = a_{i,j,k,l}e_{i,j}(u)e_{k,l}(v)
@@ -463,7 +475,7 @@ namespace getfem
 			   "M(#1,#1)+= sym(e(:,i,j,:,k,l,p).a(i,j,k,l,p))");
     assem.push_mi(mim);
     assem.push_mf(mf);
-    assem.push_mf(mfdata);
+    assem.push_mf(mf_data);
     assem.push_data(H);
     assem.push_mat(RM);
     assem.assembly(rg);
@@ -542,7 +554,7 @@ namespace getfem
   }
 
   /**
-     assembly of @f$\int_\Omega a(x)\nabla u.\nabla v@f$.
+     assembly of @f$\int_\Omega \nabla u.\nabla v@f$.
      @ingroup asm
    */
   template<typename MAT>
@@ -567,46 +579,33 @@ namespace getfem
   void asm_stiffness_matrix_for_laplacian(MAT &M, 
 					  const mesh_im &mim,
 					  const mesh_fem &mf,
-					  const mesh_fem &mfdata,
+					  const mesh_fem &mf_data,
 					  const VECT &A, 
 					  const mesh_region &rg = mesh_region::all_convexes()) {
-    if (mfdata.get_qdim() != 1)
+    if (mf_data.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
-    generic_assembly
-      assem("a=data$1(#2); M$1(#1,#1)+="
-	    "sym(comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j))");
-    //generic_assembly assem("a=data$1(#2); M$1(#1,#1)"
-    //        "+=comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j)");
-    assem.push_mi(mim);
-    assem.push_mf(mf);
-    assem.push_mf(mfdata);
-    assem.push_data(A);
-    assem.push_mat(M);
-    assem.assembly(rg);
+    asm_matrix_real_or_complex_1_param(M, mim, mf, mf_data, A, rg, 
+				       "a=data$1(#2); M$1(#1,#1)+="
+				       "sym(comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j))");
   }
+  
 
-  /** The same but on each component of mf when mf has a qdim > 1 
-   */
+
+  /** The same as getfem::asm_stiffness_matrix_for_laplacian , but on
+      each component of mf when mf has a qdim > 1
+  */
   template<typename MAT, typename VECT>
   void asm_stiffness_matrix_for_laplacian_componentwise(MAT &M, 
 							const mesh_im &mim,
 							const mesh_fem &mf,
-							const mesh_fem &mfdata,
+							const mesh_fem &mf_data,
 							const VECT &A,
 		    const mesh_region &rg = mesh_region::all_convexes()) {
-    if (mfdata.get_qdim() != 1)
+    if (mf_data.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
-    generic_assembly
-      assem("a=data$1(#2); M$1(#1,#1)+="
-	    "sym(comp(vGrad(#1).vGrad(#1).Base(#2))(:,k,i,:,k,i,j).a(j))");
-    //generic_assembly assem("a=data$1(#2); M$1(#1,#1)"
-    //        "+=comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j)");
-    assem.push_mi(mim);
-    assem.push_mf(mf);
-    assem.push_mf(mfdata);
-    assem.push_data(A);
-    assem.push_mat(M);
-    assem.assembly(rg);
+    asm_matrix_real_or_complex_1_param(M, mim, mf, mf_data, A, rg,
+				       "a=data$1(#2); M$1(#1,#1)+="
+				       "sym(comp(vGrad(#1).vGrad(#1).Base(#2))(:,k,i,:,k,i,j).a(j))");
   }
 
   /**
@@ -620,11 +619,11 @@ namespace getfem
      @param mf : the mesh_fem that describes the solution, with
      @c mf.get_qdim() == @c N.
 
-     @param mfdata the mesh_fem that describes the coefficients of @c A
-     (@c mfdata.get_qdim() == 1).
+     @param mf_data the mesh_fem that describes the coefficients of @c A
+     (@c mf_data.get_qdim() == 1).
 
      @param A a (very large) vector, which is a flattened (n x n x
-     mfdata.nb_dof()) 3D array. For each dof of mfdata, it contains
+     mf_data.nb_dof()) 3D array. For each dof of mf_data, it contains
      the n x n coefficients of @f$A@f$. As usual, the order is the
      "fortran-order", i.e. @c A = [A_11(dof1) A_21(dof1) A_31(dof1)
      A_12(dof1) A_22(dof1) ... A_33(dof) A_11(dof2)
@@ -636,42 +635,33 @@ namespace getfem
   void asm_stiffness_matrix_for_scalar_elliptic(MAT &M, 
 						const mesh_im &mim, 
 						const mesh_fem &mf,
-						const mesh_fem &mfdata,
+						const mesh_fem &mf_data,
 						const VECT &A, 
 		    const mesh_region &rg = mesh_region::all_convexes())
   {
-    if (mfdata.get_qdim() != 1)
+    if (mf_data.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
-    generic_assembly assem("a=data$1(mdim(#1),mdim(#1),#2);"
-			   "M$1(#1,#1)+=comp(Grad(#1).Grad(#1).Base(#2))"
-			   "(:,i,:,j,k).a(j,i,k)");
-    assem.push_mi(mim);
-    assem.push_mf(mf);
-    assem.push_mf(mfdata);
-    assem.push_data(A);
-    assem.push_mat(M);
-    assem.assembly(rg);
+    asm_matrix_real_or_complex_1_param(M,mim,mf,mf_data,A,rg,
+				       "a=data$1(mdim(#1),mdim(#1),#2);"
+				       "M$1(#1,#1)+=comp(Grad(#1).Grad(#1).Base(#2))"
+				       "(:,i,:,j,k).a(j,i,k)");
   }
+
 
   /** The same but on each component of mf when mf has a qdim > 1 
    */
   template<typename MAT, typename VECT>
   void asm_stiffness_matrix_for_scalar_elliptic_componentwise
   (MAT &M, const mesh_im &mim, const mesh_fem &mf,
-   const mesh_fem &mfdata, const VECT &A, 
+   const mesh_fem &mf_data, const VECT &A, 
    const mesh_region &rg = mesh_region::all_convexes())
   {
-    if (mfdata.get_qdim() != 1)
+    if (mf_data.get_qdim() != 1)
       DAL_THROW(invalid_argument, "invalid data mesh fem (Qdim=1 required)");
-    generic_assembly assem("a=data$1(mdim(#1),mdim(#1),#2);"
-			   "M$1(#1,#1)+=comp(vGrad(#1).vGrad(#1).Base(#2))"
-			   "(:,l,i,:,l,j,k).a(j,i,k)");
-    assem.push_mi(mim);
-    assem.push_mf(mf);
-    assem.push_mf(mfdata);
-    assem.push_data(A);
-    assem.push_mat(M);
-    assem.assembly(rg);
+    asm_matrix_real_or_complex_1_param(M,mim,mf,mf_data,A,rg,
+				       "a=data$1(mdim(#1),mdim(#1),#2);"
+				       "M$1(#1,#1)+=comp(vGrad(#1).vGrad(#1).Base(#2))"
+				       "(:,l,i,:,l,j,k).a(j,i,k)");
   }
 
 

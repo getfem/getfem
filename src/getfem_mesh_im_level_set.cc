@@ -80,7 +80,16 @@ namespace getfem {
     papprox_integration pai = regular_simplex_pim->approx_method();
     approx_integration *new_approx = new approx_integration(pgt->convex_ref());
     base_matrix KK(n,n), CS(n,n);
-    base_matrix pc(pgt2->nb_points(), n); 
+    base_matrix pc(pgt2->nb_points(), n);
+
+    mesh.write_to_file("totom.mesh");
+    // std::ofstream totof("totof");
+    base_matrix G2;
+    vectors_to_base_matrix(G2, linked_mesh().points_of_convex(cv));
+    bgeot::geotrans_interpolation_context cc(linked_mesh().trans_of_convex(cv),
+					     pai->point(0), G2);
+
+
     for (dal::bv_visitor i(mesh.convex_index()); !i.finished(); ++i) {
       vectors_to_base_matrix(G, mesh.points_of_convex(i));
       bgeot::geotrans_interpolation_context c(mesh.trans_of_convex(i),
@@ -91,19 +100,43 @@ namespace getfem {
 	gmm::mult(G,pc,KK);
 	scalar_type J = gmm::lu_det(KK);
 	new_approx->add_point(c.xreal(), pai->coeff(j) * gmm::abs(J));
+	cc.set_xref(c.xreal());
+	//totof << c.xreal()[0] << "\t" << c.xreal()[1] << "\t" << c.xreal()[2] << "\n";
       }
     }
     
     getfem::mesh_region border_faces;
     getfem::outer_faces_of_mesh(mesh, border_faces);
     for (getfem::mr_visitor it(border_faces); !it.finished(); ++it) {
+      base_node B = dal::mean_value(mesh.points_of_face_of_convex(it.cv(), it.f()));
+      //cout << "pgt->convex_ref()->points() = " << pgt->convex_ref()->points() << "\n";
+      //cout << "is in = " << pgt->convex_ref()->is_in(B) << " B = " << B << endl;
+
+      // faces inside the convex (may happen since the mesh is not conformal)
+      if (pgt->convex_ref()->is_in(B) < -1E-7) continue; 
+
+      size_type ff(size_type(-1));
+      for (size_type fi = 0; fi < pgt->structure()->nb_faces(); ++fi)
+	if (gmm::abs(pgt->convex_ref()->is_in_face(fi, B)) < 1E-6) ff = fi;
+
+      if (ff == size_type(-1)) DAL_INTERNAL_ERROR("");
+
       vectors_to_base_matrix(G, mesh.points_of_convex(it.cv()));
       bgeot::geotrans_interpolation_context c(mesh.trans_of_convex(it.cv()),
 					      pai->point(0), G);
+      pgt2 = mesh.trans_of_convex(it.cv());
+      base_small_vector un = pgt2->normals()[it.f()], up(mesh.dim());
+      gmm::mult(c.B(), un, up);
+      scalar_type nup = bgeot::vect_norm2(up);
+
       for (size_type j = 0; j < pai->nb_points_on_face(it.f()); ++j) {
 	c.set_xref(pai->point_on_face(it.f(), j));
 	new_approx->add_point(c.xreal(), pai->coeff_on_face(it.f(), j)
-			     * gmm::abs(c.J()), it.f());
+			      * gmm::abs(c.J()) * nup, ff);
+
+	cc.set_xref(c.xreal());
+	
+	// totof << c.xreal()[0] << "\t" << c.xreal()[1] << "\t" << c.xreal()[2] << "\t" << pai->coeff_on_face(it.f(), j)*gmm::abs(c.J()) << "\n";
       }
     }
     new_approx->valid_method();

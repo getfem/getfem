@@ -94,7 +94,10 @@ namespace bgeot {
   public :
     /// return a negative or null number if the base_node is in the convex.
     virtual scalar_type is_in(const base_node &) const = 0;
-    /// return a null (or almost zero) if pt is in the face of the convex.
+    /** return a null (or almost zero) if pt is in the face of the convex.
+     *  Does not control if the point is in the convex, but if a point
+     *  supposed to be in a convex is in this face.
+     */
     virtual scalar_type is_in_face(short_type, const base_node &) const =0;
     /// return the normal vector for each face.
     const std::vector<base_small_vector> &normals(void) const
