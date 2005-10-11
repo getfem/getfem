@@ -220,7 +220,7 @@ bool crack_problem::solve(plain_vector &U) {
   cout << "ls.get_mesh_fem().nb_dof() = " << ls.get_mesh_fem().nb_dof() << "\n";
   for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
     ls.values(0)[d] = (ls.get_mesh_fem().point_of_dof(d))[N-1];
-    ls.values(1)[d] = (ls.get_mesh_fem().point_of_dof(d))[0];
+    ls.values(1)[d] = (ls.get_mesh_fem().point_of_dof(d))[0] + 0.3 - gmm::sqr((ls.get_mesh_fem().point_of_dof(d))[1])*2.0;
   }
   ls.touch();
 
@@ -340,23 +340,22 @@ int main(int argc, char *argv[]) {
     {
       getfem::getfem_mesh mcut;
       p.mls.global_cut_mesh(mcut);
-      getfem::mesh_fem mf(mcut, p.mf_u().get_qdim());
-      mf.set_classical_discontinuous_finite_element(2, 0.001);
+//       getfem::mesh_fem mf(mcut, p.mf_u().get_qdim());
+//       mf.set_classical_discontinuous_finite_element(2, 0.001);
 
-      plain_vector V(mf.nb_dof());
-      getfem::interpolation(p.mf_u(), mf, U, V);
+//       plain_vector V(mf.nb_dof());
+//       getfem::interpolation(p.mf_u(), mf, U, V);
 
       getfem::stored_mesh_slice sl;
       getfem::getfem_mesh mcut_refined;
-      sl.build(mcut, 
-	       getfem::slicer_build_mesh(mcut_refined), 4);
+      sl.build(mcut, getfem::slicer_build_mesh(mcut_refined), 2);
       /*getfem::mesh_im mim_refined(mcut_refined); 
       
       mim_refined.set_integration_method(getfem::int_method_descriptor
 					 (p.mesh.dim() == 2 ? "IM_TRIANGLE(6)" : "IM_TETRAHEDRON(6)"));
       */
       getfem::mesh_fem mf_refined(mcut_refined, p.mf_u().get_qdim());
-      mf_refined.set_classical_discontinuous_finite_element(2, 0.001);
+      mf_refined.set_classical_discontinuous_finite_element(1, 0.001);
       plain_vector W(mf_refined.nb_dof());
       getfem::interpolation(p.mf_u(), mf_refined, U, W);
 
