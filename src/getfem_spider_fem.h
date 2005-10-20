@@ -52,6 +52,18 @@ namespace getfem {
     }
   };
 
+  /*
+  struct Xfem_sqrtr : public virtual_Xfem_func {
+    virtual scalar_type val(const Xfem_func_context &c)
+    { return 1; }
+    virtual base_small_vector grad(const Xfem_func_context &c)
+    { base_small_vector V(2); return V; }
+    virtual base_matrix hess(const Xfem_func_context &c) {
+      base_matrix m(2,2); return m;
+    }
+  };
+  */
+
   struct interpolated_transformation : public virtual_interpolated_func{
     /* Polar transformation and its gradient. */
     base_small_vector trans;
@@ -95,7 +107,6 @@ namespace getfem {
     pfem get_pfem(void) { return final_fem; }
     
     ~spider_fem () { if (final_fem) del_interpolated_fem(final_fem); }
-    
     spider_fem(scalar_type R_, mesh_im &mim, unsigned Nr_, unsigned Ntheta_,
 	       unsigned K_, base_small_vector translation, scalar_type theta0)
         : cartesian_fem(cartesian), enriched_Qk(0), R(R_), Nr(Nr_),
@@ -139,6 +150,21 @@ namespace getfem {
 
 	final_fem = new_interpolated_fem(cartesian_fem, mim,&itt,blocked_dof);
       }
+    void check() {
+      const interpolated_fem &ife = dynamic_cast<const interpolated_fem&>(*final_fem);
+      dal::bit_vector bv = ife.interpolated_convexes();
+      cerr << "interpolated_convexes: nb=" << bv.card() << "; " << bv << "\n";
+      unsigned ming, maxg;
+      scalar_type meang;
+      ife.gauss_pts_stats(ming,maxg,meang);
+      cerr << " gauss pts in interpolated mesh_fem convexes: min=" << ming << ", max=" << maxg << ", meang=" << meang << "\n";
+      if (bv.card() != cartesian.convex_index().card()) {
+	cerr << cartesian.convex_index().card() - bv.card() << 
+	  "convexes missed by interpolated_fem, increase the "
+	  "number of integration points";
+	DAL_INTERNAL_ERROR("");
+      }
+    }
   };
 
 

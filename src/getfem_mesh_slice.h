@@ -203,6 +203,8 @@ namespace getfem {
       coeff.resize(qqdim);
       for (size_type i=0; i < nb_convex(); ++i) {
         size_type cv = convex_num(i);
+	if (!mf.convex_index().is_in(cv)) 
+	  DAL_THROW(dal::failure_error, "convex " << cv << " has no fem");
         refpts.resize(nodes(i).size());
         for (size_type j=0; j < refpts.size(); ++j)
 	  refpts[j] = nodes(i)[j].pt_ref;

@@ -62,8 +62,8 @@ namespace getfem {
 
 
   struct gausspt_interpolation_data {
-    size_type elt;        // element of mf1 under this gauss point
-    size_type flags;      // flags & 1 : there is an element or not
+    size_type elt;        // convex of the interpolated mesh_fem under this gauss point
+    size_type iflags;      // flags & 1 : there is an element or not
     // flags & 2 : base_val is stored
     // flags & 4 : grad_val is stored
     base_node ptref;      // coords on reference element of mf1 element
@@ -71,9 +71,13 @@ namespace getfem {
     base_tensor grad_val; // optional storage of the grad base values
     std::vector<size_type> local_dof; // correspondance between dof of the
     // mf1 element and dof of the interpolated element.
+    gausspt_interpolation_data() : elt(size_type(-1)), iflags(size_type(-1)) {}
   };
 
-  /// FEM which interpolates a mesh_fem on a different mesh.
+  /** FEM which interpolates a mesh_fem on a different mesh.
+
+    Note that the memory cost of this method is extremely high!
+  */
   class interpolated_fem : public virtual_fem, public context_dependencies {
     
   protected :
@@ -84,6 +88,8 @@ namespace getfem {
       size_type nb_dof;
       std::vector<gausspt_interpolation_data> gausspt;
       std::vector<size_type> inddof;
+      pintegration_method pim; // for DEBUG
+      elt_interpolation_data() : nb_dof(0), pim(0) {}
     }; 
 
     const mesh_fem &mf;    // mf represents the original finite element method
@@ -99,7 +105,7 @@ namespace getfem {
     mutable std::vector<elt_interpolation_data> elements;
     mutable bgeot::rtree boxtree; // Tree containing the bounding box
                                   // of mf1 elements
-    mutable std::vector<size_type> ind_dof;
+    mutable std::vector<size_type> ind_dof; /* all functions using this work array should keep it full of size_type(-1) */
     mutable size_type cv_stored;
     mutable bgeot::rtree::pbox_set boxlst;
     mutable bgeot::geotrans_inv_convex gic;
@@ -138,20 +144,32 @@ namespace getfem {
     void real_hess_base_value(const fem_interpolation_context&, 
 			      base_tensor &) const;
 
-
+    /** return the list of convexes of the interpolated mesh_fem which
+       contain at least one gauss point (should be all convexes)! */
+    dal::bit_vector interpolated_convexes() const;
+    
+    /** return the min/max/mean number of gauss points in the convexes of the interpolated mesh_fem */
+    void gauss_pts_stats(unsigned &ming, unsigned &maxg, scalar_type &meang) const; 
   private:
     interpolated_fem(const mesh_fem &mef, const mesh_im &meim,
 		     pinterpolated_func pif_ = 0,
 		     dal::bit_vector blocked_dof = dal::bit_vector(),
 		     bool store_val = true);
     
+    /** create a new interpolated FEM. 
+	@param mef the mesh_fem that will be interpolated.
+	@param mim the integration method on the final mesh (not the mesh of mef!).
+	@param pif an optional geometric transformation applied to mef.linked_mesh() (used for getfem::spider_fem)
+	@param blocked_dof list of dof of mef which won't be interpolated.
+	@param store_val if true, the values/gradients of interpolated base function are cached at each gauss point (eats much memory).
+    */
     friend pfem new_interpolated_fem(const mesh_fem &mef, const mesh_im &mim,
 				     pinterpolated_func pif = 0,
 				     dal::bit_vector blocked_dof = dal::bit_vector(),
 				     bool store_val = true);
   };
   
-  
+  /** release an interpolated fem */
   inline void del_interpolated_fem(pfem pf) { dal::del_stored_object(pf); }
 
   

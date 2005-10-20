@@ -17,7 +17,7 @@ void test_2d() {
   getfem::getfem_mesh m; m.read_from_file("meshes/disc_2D_degree3.mesh");
   getfem::mesh_fem mf(m);
   getfem::mesh_level_set mls(m);
-  getfem::mesh_im_level_set mim(mls,
+  getfem::mesh_im_level_set mim(mls, getfem::mesh_im_level_set::INTEGRATE_ALL,
 				getfem::int_method_descriptor("IM_TRIANGLE(6)"));
   getfem::level_set ls1(m, 2), ls2(m, 2), ls3(m, 2);
   const getfem::mesh_fem &ls1mf = ls1.get_mesh_fem();
@@ -86,7 +86,7 @@ void test_3d() {
   getfem::getfem_mesh m; m.read_from_file("meshes/ball_3D_P2_84_elements.mesh");
   getfem::mesh_fem mf(m);
   getfem::mesh_level_set mls(m);
-  getfem::mesh_im_level_set mim(mls,
+  getfem::mesh_im_level_set mim(mls, getfem::mesh_im_level_set::INTEGRATE_ALL, 
 				getfem::int_method_descriptor("IM_TETRAHEDRON(6)"));
   getfem::level_set ls1(m, 2), ls2(m, 2), ls3(m, 2);
   const getfem::mesh_fem &ls1mf = ls1.get_mesh_fem();

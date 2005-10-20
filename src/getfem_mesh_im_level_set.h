@@ -40,7 +40,9 @@
 
 namespace getfem {
 
-  /// Describe an adaptable integration method linked to a mesh.
+  /** Describe an adaptable integration method linked to a mesh cutted by
+   * a level set.
+   */
   class mesh_im_level_set : public mesh_im {
   protected :
     pintegration_method regular_simplex_pim;
@@ -51,10 +53,13 @@ namespace getfem {
 		       by a levelset */
     mutable std::vector<pintegration_method> build_methods;
     mutable bool is_adapted;
+    int integrate_where; // INTEGRATE_INSIDE or INTEGRATE_OUTSIDE
+
     void clear_build_methods();
     void build_method_of_convex(size_type cv) const;
 
   public :
+    enum { INTEGRATE_INSIDE = 1, INTEGRATE_OUTSIDE = 2, INTEGRATE_ALL = 2+1, INTEGRATE_BOUNDARY = 4};
     void update_from_context(void) const { is_adapted = false; }
     void adapt(void) const;
     void clear(void); // to be modified
@@ -75,7 +80,9 @@ namespace getfem {
       return mesh_im::memsize(); // + ... ;
     }
     
-    mesh_im_level_set(mesh_level_set &me, pintegration_method reg = 0,
+    mesh_im_level_set(mesh_level_set &me, 
+		      int integrate_where_ = INTEGRATE_ALL,
+		      pintegration_method reg = 0,
 		      pintegration_method sing = 0);
 
     virtual pintegration_method int_method_of_element(size_type cv) 

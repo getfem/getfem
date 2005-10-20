@@ -1597,12 +1597,13 @@ namespace getfem {
      shape modifications during the assembly (since this can be
      very expensive) */
   static void get_convex_order(const dal::bit_vector& cvlst,
+			       const std::deque<const mesh_im *>& imtab, 
 			       const std::deque<const mesh_fem *>& mftab, 
 			       const dal::bit_vector& candidates, 
 			       std::vector<size_type>& cvorder) {
     cvorder.reserve(candidates.card()); cvorder.resize(0);
     for (dal::bv_visitor cv(candidates); !cv.finished(); ++cv) {
-      if (cvlst.is_in(cv)) {
+      if (cvlst.is_in(cv) && imtab[0]->int_method_of_element(cv) != im_none()) {
 	bool ok = true;
         for (size_type i=0; i < mftab.size(); ++i)
           if (!mftab[i]->convex_index().is_in(cv)) {
@@ -1610,8 +1611,10 @@ namespace getfem {
             //ASM_THROW_ERROR("the convex " << cv << " has no FEM for the #" << i+1 << " mesh_fem");	  
 	  }
         if (ok) cvorder.push_back(cv);
-      } else {
+      } else if (!imtab[0]->linked_mesh().convex_index().is_in(cv)) {
         ASM_THROW_ERROR("the convex " << cv << " is not part of the mesh");
+      } else {
+	/* skip convexes without integration method */
       }
     }
     std::sort(cvorder.begin(), cvorder.end(), cv_fem_compare(mftab));
@@ -1631,43 +1634,13 @@ namespace getfem {
     }
   }
 
-  /*  
-  void generic_assembly::volumic_assembly() {
-    consistency_check();
-    volumic_assembly(mftab[0]->convex_index());
-  }
-
-  void generic_assembly::volumic_assembly(const dal::bit_vector& cvlst) {
-    std::vector<size_type> cv;
-    consistency_check();
-    get_convex_order(mftab, cvlst, cv);
-    parse();
-    for (size_type i=0; i < cv.size(); ++i)
-      exec(cv[i], dim_type(-1));
-  }
-
-  void generic_assembly::boundary_assembly(size_type boundary_number) {
-    std::vector<size_type> cv;
-    consistency_check();
-    get_convex_order(mftab, mftab[0]->convex_index(), cv);
-    parse();
-    for (size_type i=0; i < cv.size(); ++i) {
-      mesh_region::face_bitset nf
-	=mftab[0]->linked_mesh().region(boundary_number).faces_of_convex(cv[i]);
-      size_type nbf
-	= mftab[0]->linked_mesh().structure_of_convex(cv[i])->nb_faces();
-      for (unsigned f = 0; f < nbf; ++f)
-	if (nf[f]) exec(cv[i], f);
-    }
-    }*/
-
   void generic_assembly::assembly(const mesh_region &r) {
     std::vector<size_type> cv;
     r.from_mesh(imtab.at(0)->linked_mesh());
     r.error_if_not_homogeneous();
 
     consistency_check();
-    get_convex_order(imtab.at(0)->linked_mesh().convex_index(), mftab, r.index(), cv);
+    get_convex_order(imtab.at(0)->convex_index(), imtab, mftab, r.index(), cv);
     parse();
     for (size_type i=0; i < cv.size(); ++i) {
       mesh_region::face_bitset nf = r[cv[i]];

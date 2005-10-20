@@ -879,6 +879,7 @@ namespace getfem
   }
 
   std::string name_of_int_method(pintegration_method p) {
+    if (!p) return "IM_NONE";
     return dal::singleton<im_naming_system>::instance().shorter_name_of_method(p);
   }
 
@@ -1023,6 +1024,12 @@ namespace getfem
     degree_last = degree;
     pgt_last = pgt;
     return im_last;
+  }
+
+  pintegration_method im_none(void) { 
+     static pintegration_method im_last = 0;
+     if (!im_last) im_last = int_method_descriptor("IM_NONE");
+     return im_last;
   }
 
   /* try to integrate all monomials up to order 'order' and return the 

@@ -72,6 +72,7 @@ struct crack_problem {
   getfem::getfem_mesh mesh;  /* the mesh */
   getfem::mesh_level_set mls;       /* the level set aware mesh.             */
   getfem::mesh_im_level_set mim;    /* the integration methods.              */
+  getfem::mesh_im_level_set mim_crack;    /* the integration on the crack.   */
   getfem::mesh_fem mf_pre_u; 
   getfem::mesh_fem_level_set mfls_u; 
   getfem::mesh_fem_global_function mf_sing_u;
@@ -100,7 +101,7 @@ struct crack_problem {
 
   bool solve(plain_vector &U);
   void init(void);
-  crack_problem(void) : mls(mesh), mim(mls), mf_pre_u(mesh),
+  crack_problem(void) : mls(mesh), mim(mls), mim_crack(mls, getfem::mesh_im_level_set::INTEGRATE_BOUNDARY), mf_pre_u(mesh),
 			mfls_u(mls, mf_pre_u), mf_sing_u(mesh),
 			mf_partition_of_unity(mesh),
 			mf_product(mf_partition_of_unity, mf_sing_u),
@@ -161,9 +162,12 @@ void crack_problem::init(void) {
   getfem::pintegration_method sppi = 
     getfem::int_method_descriptor(SIMPLEX_INTEGRATION);
   
+
   mim.set_integration_method(mesh.convex_index(), ppi);
+  mim_crack.set_integration_method(mesh.convex_index(), ppi);
   mls.add_level_set(ls);
   mim.set_simplex_im(sppi);
+  mim_crack.set_simplex_im(sppi);
   mf_pre_u.set_finite_element(mesh.convex_index(), pf_u);
   mf_partition_of_unity.set_classical_finite_element(1);
 
@@ -199,7 +203,7 @@ void crack_problem::init(void) {
   for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) {
     base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
     un /= gmm::vect_norm2(un);
-    if (gmm::abs(un[0] - 1.0) >= 1.0E-7) { // new Neumann face
+    if (gmm::abs(un[0] + 1.0) >= 1.0E-7) { // new Neumann face
       mesh.region(NEUMANN_BOUNDARY_NUM).add(i.cv(), i.f());
     } else {
       mesh.region(DIRICHLET_BOUNDARY_NUM).add(i.cv(), i.f());
@@ -219,19 +223,23 @@ bool crack_problem::solve(plain_vector &U) {
   ls.reinit();  
   cout << "ls.get_mesh_fem().nb_dof() = " << ls.get_mesh_fem().nb_dof() << "\n";
   for (size_type d = 0; d < ls.get_mesh_fem().nb_dof(); ++d) {
-    ls.values(0)[d] = (ls.get_mesh_fem().point_of_dof(d))[N-1];
-    ls.values(1)[d] = (ls.get_mesh_fem().point_of_dof(d))[0] + 0.3 - gmm::sqr((ls.get_mesh_fem().point_of_dof(d))[1])*2.0;
+    const base_node P = ls.get_mesh_fem().point_of_dof(d);
+    ls.values(0)[d] = P[N-1];
+    ls.values(1)[d] = -P[0] + .2 - P[1]; //+ 0.3 - gmm::sqr((ls.get_mesh_fem().point_of_dof(d))[1])*2.0;
   }
   ls.touch();
 
   mls.adapt();
   mim.adapt();
+  mim_crack.adapt();
 
-  cout << "testing mim..\n";
+  cout << "testing mims..\n";
   getfem::mesh_fem mf(mim.linked_mesh()); mf.set_classical_finite_element(0);
   scalar_type vol1 = gmm::sqr(getfem::asm_L2_norm(mim, mf, std::vector<double>(mf.nb_dof(), 1.0)));
   scalar_type surf1 = gmm::sqr(getfem::asm_L2_norm(mim, mf, std::vector<double>(mf.nb_dof(), 1.0), NEUMANN_BOUNDARY_NUM));
+  scalar_type surfcrack =  gmm::sqr(getfem::asm_L2_norm(mim_crack, mf, std::vector<double>(mf.nb_dof(), 1.0)));
 
+  cout << "surface of the crack : " << surfcrack << endl;
   cout << "volume of mesh is " << vol1 << " surf = " << surf1 << "\n";
   getfem::mesh_im mim2(mim.linked_mesh()); mim2.set_integration_method(mim.linked_mesh().convex_index(), 6);
   scalar_type vol2 = gmm::sqr(getfem::asm_L2_norm(mim2, mf, std::vector<double>(mf.nb_dof(), 1.0)));
@@ -240,7 +248,10 @@ bool crack_problem::solve(plain_vector &U) {
   assert(gmm::abs(vol1-vol2) < 1e-5);
   assert(gmm::abs(surf1-surf2) < 1e-5);
 
-
+  
+  cerr << "CV INDEX: " << mim_crack.convex_index() << "\n";
+  for (dal::bv_visitor i(mim_crack.convex_index()); !i.finished(); ++i)
+    cerr << "     !!!!!!!!!!!!!!!!!!! " << mim_crack.int_method_of_element(i) << "\n";
 
   mfls_u.adapt();
   std::vector<getfem::pglobal_function> vfunc(4);
@@ -338,6 +349,7 @@ int main(int argc, char *argv[]) {
     if (!p.solve(U)) DAL_THROW(dal::failure_error,"Solve has failed");
 
     {
+      cout << "Post processing...\n";
       getfem::getfem_mesh mcut;
       p.mls.global_cut_mesh(mcut);
 //       getfem::mesh_fem mf(mcut, p.mf_u().get_qdim());
@@ -348,17 +360,12 @@ int main(int argc, char *argv[]) {
 
       getfem::stored_mesh_slice sl;
       getfem::getfem_mesh mcut_refined;
-      sl.build(mcut, getfem::slicer_build_mesh(mcut_refined), 2);
-      /*getfem::mesh_im mim_refined(mcut_refined); 
-      
-      mim_refined.set_integration_method(getfem::int_method_descriptor
-					 (p.mesh.dim() == 2 ? "IM_TRIANGLE(6)" : "IM_TETRAHEDRON(6)"));
-      */
+      sl.build(mcut, /*getfem::slicer_boundary(mcut), */getfem::slicer_build_mesh(mcut_refined), 2);
+
       getfem::mesh_fem mf_refined(mcut_refined, p.mf_u().get_qdim());
       mf_refined.set_classical_discontinuous_finite_element(1, 0.001);
       plain_vector W(mf_refined.nb_dof());
       getfem::interpolation(p.mf_u(), mf_refined, U, W);
-
 
       if (p.PARAM.int_value("VTK_EXPORT")) {
 	cout << "export to " << p.datafilename + ".vtk" << "..\n";
@@ -366,8 +373,6 @@ int main(int argc, char *argv[]) {
 			       p.PARAM.int_value("VTK_EXPORT")==1);
 	exp.exporting(mf_refined); 
 	exp.write_point_data(mf_refined, W, "elastostatic_displacement");
-	// exp.exporting(mf); 
-	// exp.write_point_data(mf, V, "elastostatic_displacement");
 	cout << "export done, you can view the data file with (for example)\n"
 	  "mayavi -d " << p.datafilename << ".vtk -f ExtractVectorNorm -f "
 	  "WarpVector -m BandedSurfaceMap -m Outline\n";

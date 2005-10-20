@@ -408,17 +408,17 @@ void crack_problem::init(void) {
   mf_pre_u.set_finite_element(mesh.convex_index(), pf_u);
   mf_partition_of_unity.set_classical_finite_element(1);
   
-  if (enrichment_option == 3 || enrichment_option == 4) {
-    spider = new getfem::spider_fem(spider_radius, mim, spider_Nr,
-				    spider_Ntheta, spider_K, translation,
-				    theta0);
-    mf_us.set_finite_element(mesh.convex_index(),spider->get_pfem());
-    for (dal::bv_visitor_c i(mf_us.convex_index()); !i.finished(); ++i) {
-      if (mf_us.fem_of_element(i)->nb_dof(i) == 0) {
-	mf_us.set_finite_element(i,0);
-      }
-    }
-  }
+//   if (enrichment_option == 3 || enrichment_option == 4) {
+//     spider = new getfem::spider_fem(spider_radius, mim, spider_Nr,
+// 				    spider_Ntheta, spider_K, translation,
+// 				    theta0);
+//     mf_us.set_finite_element(mesh.convex_index(),spider->get_pfem());
+//     for (dal::bv_visitor_c i(mf_us.convex_index()); !i.finished(); ++i) {
+//       if (mf_us.fem_of_element(i)->nb_dof(i) == 0) {
+// 	mf_us.set_finite_element(i,0);
+//       }
+//     }
+//   }
 
   mixed_pressure =
     (PARAM.int_value("MIXED_PRESSURE","Mixed version or not.") != 0);
@@ -508,6 +508,21 @@ bool crack_problem::solve(plain_vector &U) {
   mf_sing_u.set_functions(vfunc);
 
 
+  if (enrichment_option == 3 || enrichment_option == 4) {
+    spider = new getfem::spider_fem(spider_radius, mim, spider_Nr,
+				    spider_Ntheta, spider_K, translation,
+				    theta0);
+    mf_us.set_finite_element(mesh.convex_index(),spider->get_pfem());
+    for (dal::bv_visitor_c i(mf_us.convex_index()); !i.finished(); ++i) {
+      if (mf_us.fem_of_element(i)->nb_dof(i) == 0) {
+	mf_us.set_finite_element(i,0);
+      }
+    }
+    spider->check();
+  }
+
+
+
   switch (enrichment_option) {
   case 1 : mf_u_sum.set_mesh_fems(mf_sing_u, mfls_u); break;
   case 2 :
@@ -530,8 +545,10 @@ bool crack_problem::solve(plain_vector &U) {
       mf_u_sum.set_mesh_fems(mf_product, mfls_u);
     }
     break;
-  case 3 : mf_u_sum.set_mesh_fems(mf_us); break;
-  case 4 : mf_u_sum.set_mesh_fems(mf_us, mfls_u); break;
+    case 3 : mf_u_sum.set_mesh_fems(mf_us); break;
+  case 4 : 
+    mf_u_sum.set_mesh_fems(mf_us, mfls_u); 
+    break;
   default : mf_u_sum.set_mesh_fems(mfls_u); break;
   }
 
@@ -622,8 +639,13 @@ int main(int argc, char *argv[]) {
 
       getfem::stored_mesh_slice sl;
       getfem::getfem_mesh mcut_refined;
+      unsigned NX = p.PARAM.int_value("NX"), nn;
+      if (NX < 6) nn = 24;
+      else if (NX < 12) nn = 8;
+      else if (NX < 30) nn = 4;
+      else nn = 2;
       sl.build(mcut, 
-	       getfem::slicer_build_mesh(mcut_refined), 4);
+	       getfem::slicer_build_mesh(mcut_refined), nn);
       getfem::mesh_im mim_refined(mcut_refined); 
       mim_refined.set_integration_method(getfem::int_method_descriptor
 					 ("IM_TRIANGLE(6)"));
@@ -631,6 +653,20 @@ int main(int argc, char *argv[]) {
       getfem::mesh_fem mf_refined(mcut_refined, p.mf_u().get_qdim());
       mf_refined.set_classical_discontinuous_finite_element(2, 0.001);
       plain_vector W(mf_refined.nb_dof());
+
+
+
+      /*assert(U.size() == p.mf_u().nb_dof());
+      {
+	for (unsigned d=0; d < p.mf_u().nb_dof(); ++d) {
+	  const base_node P = p.mf_u().point_of_dof(d);
+	  U.at(d) = (d&1) ? 0 : 1;
+	  //cerr << "d = " << d << ", P=" << P << "\n";
+	}
+      }
+      cerr << "LLLLLLLLLLLLLLLLLLL2 = " << gmm::sqr(getfem::asm_L2_norm(p.mim, p.mf_u(), U)) << "\n";
+      */
+
       getfem::interpolation(p.mf_u(), mf_refined, U, W);
 
       p.exact_sol.mf.set_qdim(2);

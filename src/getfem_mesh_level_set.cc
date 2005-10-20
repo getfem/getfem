@@ -502,7 +502,7 @@ struct Chrono {
       for (size_type i = 0; i < gmm::mat_ncols(simplexes); ++i) {
 	size_type j = mesh.add_convex(bgeot::simplex_geotrans(n,1),
 				      gmm::vect_const_begin(gmm::mat_col(simplexes, i)));
-	/* remove flat convexes => beware the final mesh may no be conformal ! */
+	/* remove flat convexes => beware the final mesh may not be conformal ! */
  	if (mesh.convex_quality_estimate(j) < 1E-12) mesh.sup_convex(j);
  	else {
 	  std::vector<scalar_type> signs(list_constraints.size());
@@ -552,8 +552,6 @@ struct Chrono {
 	}
       }
 
-      mesh.write_to_file("totog.mesh");
-      
       if (noisy) {
 	getfem::stored_mesh_slice sl;
 	sl.build(mesh, getfem::slicer_none(), 1);

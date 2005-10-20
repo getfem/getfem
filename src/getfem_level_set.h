@@ -69,9 +69,9 @@ namespace getfem {
     const std::vector<scalar_type> &values(unsigned i = 0) const
     { return (i == 0) ? primary_ : secondary_; }
 
-    mesher_level_set mls_of_convex(size_type cv, unsigned i = 0,
+    mesher_level_set mls_of_convex(size_type cv, unsigned lsnum = 0,
 				   bool inverted = false) const;
-    bool has_secondary(void) { return with_secondary; }
+    bool has_secondary(void) const { return with_secondary; }
     mesh_fem &get_mesh_fem(void) { return *mf; }
     dim_type degree() const { return degree_; }
     level_set(getfem_mesh &mesh, dim_type deg = dim_type(1),

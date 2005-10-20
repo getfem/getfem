@@ -283,6 +283,8 @@ namespace getfem
   pintegration_method exact_prism_im(size_type n);
   /// use classical_exact_im instead.
   pintegration_method exact_classical_im(bgeot::pgeometric_trans pgt) IS_DEPRECATED;
+  /// return IM_NONE
+  pintegration_method im_none(void);
 
   class mesh_precomposite;
   class mesh_im;

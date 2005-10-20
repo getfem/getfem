@@ -50,7 +50,8 @@ namespace getfem {
     if (pim == NULL)
       { if (im_convexes.is_in(cv)) { im_convexes.sup(cv); touch(); } }
     else if (!im_convexes.is_in(cv) || ims[cv] != pim) {
-      if (linked_mesh_->structure_of_convex(cv)->basic_structure() 
+      if (pim->type() != IM_NONE && 
+	  linked_mesh_->structure_of_convex(cv)->basic_structure() 
 	  != pim->structure())
 	DAL_THROW(std::logic_error,
 		  "Incompatibility between integration method " << getfem::name_of_int_method(pim) << 

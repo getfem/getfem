@@ -111,6 +111,7 @@ namespace getfem {
 	DAL_THROW(dal::failure_error, 
 		  "Attempt to use IM_NONE integration method in assembly!\n");
       }
+
       faces_computed = volume_computed = false;
       is_linear = pgt->is_linear();
       computed_on_real_element = !is_linear || (prefer_comp_on_real_element && !is_ppi);

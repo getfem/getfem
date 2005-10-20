@@ -505,7 +505,10 @@ namespace getfem {
     for (dal::bv_visitor i(ms.nodes_index); !i.finished(); ++i)
       pid[i] = m.add_point(ms.nodes[i].pt);
     for (dal::bv_visitor i(ms.splx_in); !i.finished(); ++i) {
-      m.add_convex(bgeot::simplex_geotrans(ms.dim(),1),
+      for (unsigned j=0; j < ms.simplexes.at(i).inodes.size(); ++j) {
+	assert(m.points_index().is_in(pid.at(ms.simplexes.at(i).inodes[j])));
+      }
+      m.add_convex(bgeot::simplex_geotrans(ms.simplexes[i].dim(),1),
 		   dal::index_ref_iterator(pid.begin(),
 					   ms.simplexes[i].inodes.begin()));
     }
