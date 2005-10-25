@@ -15,11 +15,11 @@ PG = 9810; 		% gravitation constante (on earth) (mm/s^2).
 %PG = 1000000; 		% gravitation constante (on jupiter !) (mm/s^2).
 RHO = 6e-6;     	% "realistic" density for steel
 T = 0.3;
-DT = 0.0001;             % Time step
+DT = 0.0001;            % Time step
  
 %%%%%   discretisation parameters  :                     	      %%%%%
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
-% MESH_TYPE = 'GT_QK(3,1)'; % 
+% MESH_TYPE = 'GT_QK(3,1)';       % 
 %MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
 NX = 10;            	          % space step.
 MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
@@ -50,8 +50,8 @@ FOUNDATION_HSPEED = 0.0;   % Horizontal velocity of the rigid foundation
 STATIONARY = 0;            % Initial condition is the stationary solution ?
 PERT_STATIONARY = 0.0;     % Perturbation of the initial velocity
 
-FEM_TYPE = 'FEM_PK(2, 2)';     % Main FEM
-DATA_FEM_TYPE = 'FEM_PK(2,2)'; % must be defined for non-Lagrangian main FEM
+FEM_TYPE = 'FEM_PK(2, 2)';      % Main FEM
+DATA_FEM_TYPE = 'FEM_PK(2,2)';  % must be defined for non-Lagrangian main FEM
 INTEGRATION = 'IM_TRIANGLE(6)'; % Quadrature rule
 % INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3,6)'; % Quadrature rule
 
