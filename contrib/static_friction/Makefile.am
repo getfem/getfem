@@ -1,20 +1,20 @@
 # SUBDIRS = 
 
 check_PROGRAMS =                 \
-	delaminated_crack
+	static_friction
 
 CLEANFILES = 
 
-delaminated_crack_SOURCES = delaminated_crack.cc
+static_friction_SOURCES = static_friction.cc
 
 INCLUDES = -I$(top_srcdir)/src -I../../src
 LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@
 
-TESTS = $(top_srcdir)/contrib/delaminated_crack/delaminated_crack.pl
+TESTS = $(top_srcdir)/contrib/static_friction/static_friction.pl
 
 EXTRA_DIST = \
-	delaminated_crack.pl                  \
-	delaminated_crack.param
+	static_friction.pl                  \
+	static_friction.param
 
 
 TESTS_ENVIRONMENT = perl
