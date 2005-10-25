@@ -23,7 +23,7 @@
  *
  * This program is used to check that getfem++ is working. This is also 
  * a good example of use of Getfem++.
-*/
+ */
 
 
 #include <getfem_assembling.h> /* import assembly methods (and norms comp.) */
@@ -372,6 +372,11 @@ void friction_problem::solve(void) {
   getfem::mdbrick_isotropic_linearized_elasticity<>
     ELAS(mim, mf_u, mf_coef, lambda, mu);
 
+  scalar_type h = mesh.minimal_convex_radius_estimate();
+  cout << "minimal convex radius estimate : " << h << endl;
+  cout << "CFL estimate = "
+       << h / gmm::sqrt((lambda + 2.0 * mu) / rho) << endl;
+
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs * N);
   plain_vector f(N); f[N-1] = -rho*PG;
@@ -636,9 +641,10 @@ void friction_problem::solve(void) {
       gmm::add(V0, V1);      
       break;
     case 2 : case 7 :
-      gmm::copy(U1, V1);
+      gmm::copy(U1, V1); gmm::copy(U1, Udemi);
       gmm::add(gmm::scaled(V1, 2.), gmm::scaled(U0, -1.), U1);
       gmm::add(gmm::scaled(U1, 2./dt), gmm::scaled(U0, -2./dt), V1);
+      gmm::copy(gmm::scaled(V1, 0.5), Vdemi);
       J_friction1 = J_friction0 + dt * 0.5 * gmm::vect_sp(BT, V1, LT1);
       gmm::add(gmm::scaled(V0, -1), V1);
 
@@ -702,12 +708,12 @@ void friction_problem::solve(void) {
 //       cout << "Contact pressure : " << LN1 << endl;
 //     }
 
-    scalar_type J1;
-    if (scheme == 5 || scheme == 6)
-      J1 = 0.5*gmm::vect_sp(ELAS.stiffness_matrix(), Udemi, Udemi)
+    scalar_type J1(0), Jdemi(0);
+    if (scheme == 5 || scheme == 6 || scheme == 2)
+      J1 = Jdemi = 0.5*gmm::vect_sp(ELAS.stiffness_matrix(), Udemi, Udemi)
       + 0.5 * gmm::vect_sp(DYNAMIC.mass_matrix(), Vdemi, Vdemi)
       - gmm::vect_sp(VOL_F.source_term(), Udemi);
-    else
+    if (scheme != 5 && scheme != 6)
       J1 = 0.5*gmm::vect_sp(ELAS.stiffness_matrix(), U1, U1)
       + 0.5 * gmm::vect_sp(DYNAMIC.mass_matrix(), V1, V1)
       - gmm::vect_sp(VOL_F.source_term(), U1);
@@ -735,8 +741,11 @@ void friction_problem::solve(void) {
 	}
       }
 
-      cout << "t = " << t << " energy : " << J1
-	   << " friction energy : " << J_friction1
+      cout << "t = " << t << " energy : ";
+      if (scheme == 5 || scheme == 6) cout << Jdemi;
+      else if (scheme == 2) cout << J1 << " energy at midpoint : " << Jdemi;
+      else cout << J1;
+      cout << " friction energy : " << J_friction1
 	   << " app. fric. coef : " << Friction_coef_ap
 	   << " (st " << nbst << ", sl " << nbsl << ")" << endl;
       dt = std::min(2.*dt, dt0);
@@ -775,7 +784,6 @@ void friction_problem::solve(void) {
 	t_export += dtexport;
       }
     }
-    
   }
 }
   
