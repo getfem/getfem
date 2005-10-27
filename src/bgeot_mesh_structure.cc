@@ -396,7 +396,7 @@ namespace bgeot
   }
 
 
-  static double enumerate_dof_time = 0;
+  // static double enumerate_dof_time = 0;
   void cuthill_mckee_on_convexes(const bgeot::mesh_structure &ms, 
 				 std::vector<size_type> &cmk) {
     const dal::bit_vector &cvlst = ms.convex_index();
@@ -409,7 +409,7 @@ namespace bgeot
     size_type cv = cvlst.first_true();
 
     std::fill(connectivity.begin(), connectivity.end(), size_type(-1));
-    double t = ftool::uclock_sec();
+    // double t = ftool::uclock_sec();
 
     /* count neighbours for each convex */
     for (dal::bv_visitor j(cvlst); !j.finished(); ++j) {
@@ -450,8 +450,8 @@ namespace bgeot
       else { cv = pile.back(); pile.pop_back(); }
     }
     
-    enumerate_dof_time += ftool::uclock_sec() - t;
-    cerr << "cuthill_mckee_on_convexes: " << enumerate_dof_time << " sec\n";
+    // enumerate_dof_time += ftool::uclock_sec() - t;
+    // cerr << "cuthill_mckee_on_convexes: " << enumerate_dof_time << " sec\n";
   }
 
 }  /* end of namespace bgeot.                                              */

@@ -119,9 +119,6 @@ namespace getfem {
     void proper_update(void) {
       mf_u = this->mesh_fems[num_fem];
       d = mf_u->linked_mesh().dim();
-      r = value_type(1);
-      beta = value_type(1);
-      alpha = value_type(1);
       gmm::resize(BN, nbc, mf_u->nb_dof());
       gmm::resize(BT, nbc*(d-1), mf_u->nb_dof());
       gmm::resize(gap, nbc); gmm::resize(friction_coef, nbc);
@@ -259,6 +256,9 @@ namespace getfem {
       this->add_sub_brick(sub_problem);
       this->proper_is_linear_ = this->proper_is_coercive_ = false;
       this->proper_is_symmetric_ = symmetrized && contact_only;
+      r = value_type(1);
+      beta = value_type(1);
+      alpha = value_type(1);
       this->update_from_context();
     }
 

@@ -195,13 +195,13 @@ namespace getfem {
 
   typedef std::map<fem_dof, size_type, dof_comp_> dof_sort_type;
 
-  static double enumerate_dof_time = 0;
+  // static double enumerate_dof_time = 0;
 
   /// Enumeration of dofs
   void mesh_fem::enumerate_dof(void) const {
     if (fe_convex.card() == 0) return;
     const std::vector<size_type> &cmk = linked_mesh().cuthill_mckee_ordering();
-    double t = ftool::uclock_sec();
+    // double t = ftool::uclock_sec();
 
     dof_sort_type dof_sort;
     dal::bit_vector encountered_global_dof;
@@ -264,8 +264,8 @@ namespace getfem {
     dof_enumeration_made = true;
     nb_total_dof = nbdof;
     
-    enumerate_dof_time += ftool::uclock_sec() - t;
-    cerr << "enumerate_dof_time: " << enumerate_dof_time << " sec\n";
+    // enumerate_dof_time += ftool::uclock_sec() - t;
+    // cerr << "enumerate_dof_time: " << enumerate_dof_time << " sec\n";
   }
 
 

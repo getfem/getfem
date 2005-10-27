@@ -552,7 +552,7 @@ void friction_problem::solve(void) {
 	// new generation
 	for (size_type i = first_computed; i < population; ++i) {
 	  int n = (rand() & 255);
-	  if (n < 220) { // Evolution by mixing
+	  if (n < 230) { // Evolution by mixing
 	    size_type a = (rand() % first_computed);
 	    size_type b = (rand() % first_computed);
 	    while (a == b) b = (rand() % first_computed);
@@ -573,7 +573,7 @@ void friction_problem::solve(void) {
 	    gmm::iteration iter(residue, noisy, 40000);
 	    getfem::standard_solve(MS2, FRICTION2, iter);  
 	    gmm::copy(MS2.state(), MS.state());
-	    gmm::iteration iterbis(residue, noisy, 5);
+	    gmm::iteration iterbis(residue, noisy, 2);
 	    getfem::standard_solve(MS, FRICTION, iterbis);
 	    situation_of(gmm::sub_vector(MS.state(),
 					 gmm::sub_interval(0, mf_u.nb_dof())),
@@ -620,7 +620,6 @@ void friction_problem::solve(void) {
       sl.build(mesh, getfem::slicer_boundary(mesh),4);
     exp.exporting(sl,true);
     exp.exporting_mesh_edges();
-    std::vector<scalar_type> U(mf_u.nb_dof());
     exp.write_point_data(mf_u, U);
     exp.serie_add_object("deformationsteps");
     std::vector<scalar_type> VM;
