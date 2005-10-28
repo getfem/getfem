@@ -490,7 +490,8 @@ void friction_problem::solve(void) {
 
   getfem::mdbrick_Coulomb_friction<>
     FRICTION(DIRICHLET, BN, gap, friction_coef, BT);
-  
+  FRICTION.set_r(r);
+
   cout << "Total number of variables: " << FRICTION.nb_dof() << endl;
   getfem::standard_model_state MS(FRICTION);
  
@@ -511,6 +512,7 @@ void friction_problem::solve(void) {
       // Specific brick for the linear system
       getfem::mdbrick_genetic_Coulomb_friction<>
 	FRICTION2(DIRICHLET, BN, gap, friction_coef, BT);
+      FRICTION2.set_r(r);
       getfem::standard_model_state MS2(FRICTION2);
       FRICTION.compute_tangent_matrix(MS);
       size_type first_computed = 0, nbiter = 0;

@@ -1464,7 +1464,8 @@ namespace getfem {
   /* ******************************************************************** */
   /** Insert a constraint @c G*U=R into the problem.
       
-      @c G is a @c nc * @c mf_u.nb_dof() constraint matrix (@c nc is the number of constraints to be added by this brick).
+      @c G is a @c nc * @c mf_u.nb_dof() constraint matrix
+      (@c nc is the number of constraints to be added by this brick).
 
       This is a more general form of the mdbrick_Dirichlet.
       @ingroup bricks
@@ -1875,9 +1876,9 @@ namespace getfem {
 //       cout << "emax = " << emax << endl;
 
       if (iter.get_noisy()) {
-	cout << "there is " << gmm::mat_nrows(MS.constraints_matrix()) << " constraints\n";
+	cout << "there are " << gmm::mat_nrows(MS.constraints_matrix()) << " constraints\n";
 	mixvar = problem.mixed_variables();
-	cout << "there is " << mixvar.card() << " mixed variables\n";
+	cout << "there are " << mixvar.card() << " mixed variables\n";
       }
 
 #ifdef GMM_USES_METIS
