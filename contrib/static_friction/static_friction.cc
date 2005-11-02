@@ -63,6 +63,7 @@ struct friction_problem {
   getfem::getfem_mesh mesh;  /* the mesh */
   getfem::mesh_im  mim;      /* integration methods.                         */
   getfem::mesh_fem mf_u;     /* main mesh_fem, for the friction solution     */
+  getfem::mesh_fem mf_l;     /* mesh_fem for the multipliers.                */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   getfem::mesh_fem mf_coef;  /* mesh_fem used to represent pde coefficients  */
   getfem::mesh_fem mf_vm;    /* mesh_fem used for the VonMises stress        */
@@ -73,6 +74,7 @@ struct friction_problem {
   scalar_type residue;       /* max residue for the iterative solvers        */
   
   size_type N, noisy, method, population, Dirichlet, Neumann;
+  size_type contact_condition;
   scalar_type r;
   scalar_type dtexport;
   scalar_type Dirichlet_ratio, Neumann_intensity;
@@ -84,7 +86,8 @@ struct friction_problem {
   void solve(void);
   void init(void);
   friction_problem(void)
-    : mim(mesh), mf_u(mesh), mf_rhs(mesh), mf_coef(mesh), mf_vm(mesh) {}
+    : mim(mesh), mf_u(mesh), mf_l(mesh), mf_rhs(mesh), mf_coef(mesh),
+      mf_vm(mesh) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
@@ -93,6 +96,8 @@ struct friction_problem {
 void friction_problem::init(void) {
   const char *MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
   const char *FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
+  const char *FEM_TYPE_L  = PARAM.string_value("FEM_TYPE_L",
+					       "FEM name for multipliers");
   const char *INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
@@ -142,16 +147,21 @@ void friction_problem::init(void) {
   r = PARAM.real_value("R", "augmentation parameter");
   method = PARAM.int_value("METHOD", "solve method");
   population = PARAM.int_value("POPULATION", "genetic population");
+  contact_condition = PARAM.int_value("CONTACT_CONDITION",
+				      "type of contact condition");
   noisy = (PARAM.int_value("NOISY", "verbosity of iterative methods") != 0);
   mf_u.set_qdim(N);
+  mf_l.set_qdim(N);
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = getfem::fem_descriptor(FEM_TYPE);
+  getfem::pfem pf_l = getfem::fem_descriptor(FEM_TYPE_L);
   getfem::pintegration_method ppi = 
     getfem::int_method_descriptor(INTEGRATION);
 
   mim.set_integration_method(mesh.convex_index(), ppi);
   mf_u.set_finite_element(mesh.convex_index(), pf_u);
+  mf_l.set_finite_element(mesh.convex_index(), pf_l);
   mf_vm.set_classical_discontinuous_finite_element(1);
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
@@ -227,7 +237,7 @@ void calcul_von_mises(const getfem::mesh_fem &mf_u, const VEC1 &U,
 }
 
 /**************************************************************************/
-/*  Friction model brick for genetic algorithm.                           */
+/*  Friction model brick for genetic algorithm (2D only).                 */
 /**************************************************************************/
 
 namespace getfem {
@@ -253,7 +263,6 @@ namespace getfem {
     void proper_update(void) {
       mf_u = this->mesh_fems[num_fem];
       d = mf_u->linked_mesh().dim();
-      r = value_type(1);
       gmm::resize(BN, nbc, mf_u->nb_dof());
       gmm::resize(BT, nbc*(d-1), mf_u->nb_dof());
       gmm::resize(gap, nbc); gmm::resize(friction_coef, nbc);
@@ -363,6 +372,7 @@ namespace getfem {
       this->proper_is_linear_ = true; 
       this->proper_is_coercive_ = false;
       this->proper_is_symmetric_ =  false;
+      r = value_type(1);
       this->update_from_context();
     }
 
@@ -472,26 +482,59 @@ void friction_problem::solve(void) {
 					DIRICHLET_BOUNDARY);
   
   // contact condition for Lagrange elements
-  dal::bit_vector cn = mf_u.dof_on_set(CONTACT_BOUNDARY);
-  dal::bit_vector dn = mf_u.dof_on_set(DIRICHLET_BOUNDARY);
-  cn.setminus(dn);
-  size_type nbc = cn.card()/N;
+  dal::bit_vector cn, dn;
+  size_type nbc;
+  if (contact_condition == 0) {
+    cn = mf_u.dof_on_set(CONTACT_BOUNDARY);
+    dn = mf_u.dof_on_set(DIRICHLET_BOUNDARY);
+  }
+  else {
+    cn = mf_l.dof_on_set(CONTACT_BOUNDARY);
+    dn = mf_l.dof_on_set(DIRICHLET_BOUNDARY);
+  }
+  cn.setminus(dn); // not to be done for P0 ...
+  nbc = cn.card()/N;
+
   sparse_matrix BN(nbc, mf_u.nb_dof());
   sparse_matrix BT((N-1)*nbc, mf_u.nb_dof());
   plain_vector gap(nbc);
-  size_type jj = 0;
-  for (dal::bv_visitor i(cn); !i.finished(); ++i)
-    if (i % N == 0) {
-      BN(jj, i+N-1) = -1.;
-      gap[jj] = mf_u.point_of_dof(i)[N-1];
-      for (size_type k = 0; k < N-1; ++k) BT((N-1)*jj+k, i+k) = 1.;
-      ++jj;
-    }
+
+  if (contact_condition == 0) {
+    size_type jj = 0;
+    for (dal::bv_visitor i(cn); !i.finished(); ++i)
+      if (i % N == 0) {
+	BN(jj, i+N-1) = -1.;
+	gap[jj] = mf_u.point_of_dof(i)[N-1];
+	if (noisy)
+	  cout << "mf_u.point_of_dof(i) = " << mf_u.point_of_dof(i) << endl;
+	for (size_type k = 0; k < N-1; ++k) BT((N-1)*jj+k, i+k) = 1.;
+	++jj;
+      }
+  } else {
+    sparse_matrix MM(mf_l.nb_dof(), mf_u.nb_dof());
+    std::vector<size_type> ind(nbc);
+    size_type jj = 0;
+    for (dal::bv_visitor i(cn); !i.finished(); ++i) 
+      if (i % N == 0) ind[jj++] = i;
+    cout << "ind = " << ind << endl;
+    cout << "nbdof = " << mf_l.nb_dof() << " : " << mf_u.nb_dof() << endl;
+    gmm::sub_index SUBI(ind);
+    gmm::sub_interval SUBJ(0, mf_u.nb_dof());
+    getfem::asm_mass_matrix(MM, mim, mf_u, mf_l, CONTACT_BOUNDARY);
+    gmm::copy(gmm::sub_matrix(MM, SUBI, SUBJ), BN);
+    gmm::copy(gmm::sub_matrix(MM, SUBI, SUBJ),
+	      gmm::sub_matrix(BT, gmm::sub_slice(0, nbc, N-1), SUBJ));
+    if (N > 2)
+      gmm::copy(gmm::sub_matrix(MM, SUBI, SUBJ),
+		gmm::sub_matrix(BT, gmm::sub_slice(1, nbc, N-1), SUBJ));
+  }
+
+
 
   getfem::mdbrick_Coulomb_friction<>
     FRICTION(DIRICHLET, BN, gap, friction_coef, BT);
   FRICTION.set_r(r);
-
+  
   cout << "Total number of variables: " << FRICTION.nb_dof() << endl;
   getfem::standard_model_state MS(FRICTION);
  
@@ -610,9 +653,20 @@ void friction_problem::solve(void) {
   cout << "Final residu : " <<  MS.reduced_residu_norm() << endl;
   cout << "Norm of solution : " << gmm::vect_norm2(U) << endl;
 
-  // gmm::copy(FRICTION.get_LN(MS), LN1);
-  // gmm::copy(FRICTION.get_LT(MS), LT1);
-    
+  {
+    plain_vector LN1(nbc), LT1(nbc*(N-1));
+    gmm::copy(FRICTION.get_LN(MS), LN1);
+    cout << "contact stress : " << LN1 << endl;
+    gmm::copy(FRICTION.get_LT(MS), LT1);
+    cout << "friction stress : " << LT1 << endl;
+    std::ofstream file1("normal_stress"), file2("tangential_stress");
+    for (size_type i = 0; i < nbc; ++i) {
+      file1 << LN1[i] << endl;
+      file2 << LT1[i*(N-1)] << endl;
+    }
+    file1.close(); file2.close();
+  } 
+  
   if (dxexport) {
     getfem::dx_export exp(datafilename + ".dx", false);
     getfem::stored_mesh_slice sl;

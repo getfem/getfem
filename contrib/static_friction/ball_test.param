@@ -10,7 +10,7 @@ LZ = 30.0;		% size in Z.
 %LAMBDA = 11500;   	% Lamé coefficient.
 MU = 5;
 LAMBDA = 10;
-FRICTION_COEF = 0.2;    % Friction coefficient.
+FRICTION_COEF = 10.0;    % Friction coefficient.
 % PG = 9810; 		% gravitation constante (on earth) (mm/s^2).
 % PG = 1000000; 	% gravitation constante (on jupiter !) (mm/s^2).
 PG=12000
@@ -25,7 +25,7 @@ NX = 100;            	          % space step.
 MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
 RESIDUE = 1E-9;     	% residue for Newton.
 
-METHOD = 0;             % 0 = Newton.
+METHOD = 1;             % 0 = Newton.
 			% 1 = genetic for 2D problem only.
 NOISY = 0;
 POPULATION = 100;       % Parameter for genetic algorithm
@@ -39,8 +39,12 @@ NEUMANN = 0;            % 0 = no non homogeneous Neumann Boundary
 NEUMANN_INTENSITY = -0.0;
 
 DIRICHLET_RATIO = -0.1;  % parametre pour la condition de Dirichlet
+CONTACT_CONDITION = 1;  % 0 = Condition almost conformal in u
+			% 1 = Condition almost conformal in forces on contact
+			%     boundary with FEM_TYPE_L for the multipliers
 
 FEM_TYPE = 'FEM_PK(2, 2)';      % Main FEM
+FEM_TYPE_L = 'FEM_PK(2, 1)';    % FEM fo the multipliers
 %DATA_FEM_TYPE = 'FEM_PK(2,1)'; % must be defined for non-Lagrangian main FEM
 INTEGRATION = 'IM_TRIANGLE(6)'; % Quadrature rule
 % INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3,6)'; % Quadrature rule
@@ -64,9 +68,9 @@ INTEGRATION = 'IM_TRIANGLE(6)'; % Quadrature rule
 %%%%% disque en P2 %%%%%
 % MESHNAME='meshes/disc_P2_h11.mesh';
 % MESHNAME='meshes/disc_P2_h8.mesh';
-% MESHNAME='../../../tests/meshes/disc_P2_h6.mesh';
+% MESHNAME='meshes/disc_P2_h6.mesh';
 % MESHNAME='meshes/disc_P2_h4.mesh';
-MESHNAME='../../../tests/meshes/disc_P2_h2.mesh';
+MESHNAME='meshes/disc_P2_h2.mesh';
 % MESHNAME='meshes/disc_P2_h1.mesh';
 % MESHNAME='meshes/disc_P2_h0.5.mesh';
 % MESHNAME='meshes/disc_P2_h0.3.mesh';

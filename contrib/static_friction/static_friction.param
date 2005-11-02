@@ -39,8 +39,13 @@ NEUMANN = 1;            % 0 = no non homogeneous Neumann Boundary
 NEUMANN_INTENSITY = -0.0;
 
 DIRICHLET_RATIO = 0.0;  % parametre pour la condition de Dirichlet
+CONTACT_CONDITION = 1;  % 0 = Condition almost conformal in u
+			% 1 = Condition almost conformal in forces on contact
+			%     boundary with FEM_TYPE_L for the multipliers
+
 
 FEM_TYPE = 'FEM_PK(2, 1)';      % Main FEM
+FEM_TYPE_L = 'FEM_PK(2, 1)';    % FEM fo the multipliers
 %DATA_FEM_TYPE = 'FEM_PK(2,1)'; % must be defined for non-Lagrangian main FEM
 INTEGRATION = 'IM_TRIANGLE(6)'; % Quadrature rule
 % INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3,6)'; % Quadrature rule
